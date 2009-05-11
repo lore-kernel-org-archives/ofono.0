@@ -1,34 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1253454699327769527=="
+Content-Type: multipart/mixed; boundary="===============4033777732419914453=="
 MIME-Version: 1.0
-From: Gay, John (GE Infra, Energy, Non-GE) <John.Gay@ge.com>
-Subject: Ofono and Openmoko?
-Date: Mon, 11 May 2009 18:12:12 -0400
-Message-ID: <D3698A818473C549A8329FD095A052EF09BBE076@CINMLVEM24.e2k.ad.ge.com>
+From: Kok, Auke <auke-jan.h.kok@intel.com>
+Subject: Re: waste of resources...?
+Date: Mon, 11 May 2009 16:26:54 -0700
+Message-ID: <4A08B43E.3070305@intel.com>
+In-Reply-To: <20090511215141.GA4776@marple>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1253454699327769527==
+--===============4033777732419914453==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Just saw the announcement on LWN and had a quick tour of the fledgling
-site and I wanted to say great to have you aboard!
+M. Dietrich wrote:
+> Hi ofono,
+> =
 
-I've got an Openmoko FreeRunner phone I'm currently using qtExtended on.
-I was wondering if anyone had looked at porting this for the FreeRunner
-yet? I'd love to see what this project can offer together and along with
-the other mobile phone stacks.
+> after many, many other initiatives of free, open mobile development
+> platforms that do not fit the communities requirements, why again
+> starting a new one?
+> =
 
-Hope this project flourishes as more open platforms emerge allowing more
-targets to develop for and opening the publics eyes to what they've been
-missing by vender lock-in. Having lived in Ireland for the first decade
-of mobile phones, returning to America was a real shock to see what they
-do without that most of the world takes for granted.
+> why don't u use already given apis and platforms, help development of
+> those and enhance them?
+> =
+
+> why not use for example pyneo? it brings a clean modern design not
+> only for telephony but for all needs of mobile devices and a reference
+> implementation is in place...
+
+Perhaps a python-based stack is not interesting for those distributors that=
+ are
+aiming at a more 'undressed' / 'embedded' implementation?
+
+Have you looked at the design/implementation? Perhaps your extended knowled=
+ge
+could benefit both pyneo and ofono...
 
 Cheers,
 
-	John Gay
+Auke
 
---===============1253454699327769527==--
+--===============4033777732419914453==--
 
