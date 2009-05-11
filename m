@@ -1,34 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============1706249943400465209=="
+Content-Type: multipart/mixed; boundary="===============7237539614000759013=="
 MIME-Version: 1.0
-From: Sousou, Imad <imad.sousou@intel.com>
-Subject: [ofono] test
-Date: Mon, 11 May 2009 11:09:34 -0600
-Message-ID: <E1A1564674E5754FB00AB9AC949D5E32604ACCA28D@rrsmsx501.amr.corp.intel.com>
+From: M. Dietrich <mdt@pyneo.org>
+Subject: waste of resources...?
+Date: Mon, 11 May 2009 23:51:41 +0200
+Message-ID: <20090511215141.GA4776@marple>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1706249943400465209==
+--===============7237539614000759013==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Test test
+Hi ofono,
 
+after many, many other initiatives of free, open mobile development
+platforms that do not fit the communities requirements, why again
+starting a new one?
 
---===============1706249943400465209==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+why don't u use already given apis and platforms, help development of
+those and enhance them?
 
-PGh0bWw+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNvbnRlbnQ9InRl
-eHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRvciIgY29udGVu
-dD0iTWljcm9zb2Z0IEV4Y2hhbmdlIFNlcnZlciI+CjwhLS0gY29udmVydGVkIGZyb20gcnRmIC0t
-Pgo8c3R5bGU+PCEtLSAuRW1haWxRdW90ZSB7IG1hcmdpbi1sZWZ0OiAxcHQ7IHBhZGRpbmctbGVm
-dDogNHB0OyBib3JkZXItbGVmdDogIzgwMDAwMCAycHggc29saWQ7IH0gLS0+PC9zdHlsZT4KPC9o
-ZWFkPgo8Ym9keT4KPGZvbnQgZmFjZT0iQ2FsaWJyaSwgc2Fucy1zZXJpZiIgc2l6ZT0iMiI+Cjxk
-aXY+VGVzdCB0ZXN0Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IDwvZGl2Pgo8
-ZGl2PiZuYnNwOzwvZGl2Pgo8L2ZvbnQ+CjwvYm9keT4KPC9odG1sPgo=
+why not use for example pyneo? it brings a clean modern design not
+only for telephony but for all needs of mobile devices and a reference
+implementation is in place...
 
---===============1706249943400465209==--
+best regards,
+	michael
+
+--===============7237539614000759013==--
 
