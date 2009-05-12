@@ -1,46 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============4033777732419914453=="
+Content-Type: multipart/mixed; boundary="===============2924429901806228496=="
 MIME-Version: 1.0
-From: Kok, Auke <auke-jan.h.kok@intel.com>
-Subject: Re: waste of resources...?
-Date: Mon, 11 May 2009 16:26:54 -0700
-Message-ID: <4A08B43E.3070305@intel.com>
-In-Reply-To: <20090511215141.GA4776@marple>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: Blog Title needs a change
+Date: Tue, 12 May 2009 10:11:21 +0800
+Message-ID: <38D9F46DFF92C54980D2F2C1E8EE3130019CF22BF1@pdsmsx503.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4033777732419914453==
+--===============2924429901806228496==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-M. Dietrich wrote:
-> Hi ofono,
-> =
+Blog http://ofono.org/blogs/feed now has the title "ConnMan Blogs", which n=
+eeds a change to match ofono.
 
-> after many, many other initiatives of free, open mobile development
-> platforms that do not fit the communities requirements, why again
-> starting a new one?
-> =
 
-> why don't u use already given apis and platforms, help development of
-> those and enhance them?
-> =
+Thanks & Best Regards,
+Gu, Yang
+Tel.:  +86 21 61166245, +86 21 61165000-6245, 8821 Ext. 6245 (iNet)
 
-> why not use for example pyneo? it brings a clean modern design not
-> only for telephony but for all needs of mobile devices and a reference
-> implementation is in place...
+--===============2924429901806228496==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-Perhaps a python-based stack is not interesting for those distributors that=
- are
-aiming at a more 'undressed' / 'embedded' implementation?
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPE1FVEEgSFRUUC1FUVVJVj0iQ29udGVudC1UeXBlIiBD
+T05URU5UPSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBuYW1lPUdlbmVyYXRv
+ciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+CjxzdHlsZT4K
+PCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5Olw1
+QjhCXDRGNTM7CglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2Zv
+bnQtZmFtaWx5OiJDYW1icmlhIE1hdGgiOwoJcGFub3NlLTE6MiA0IDUgMyA1IDQgNiAzIDIgNDt9
+CkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxpYnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAy
+IDQgMyAyIDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IlxAXDVCOEJcNEY1MyI7CglwYW5v
+c2UtMToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OiJDb21p
+YyBTYW5zIE1TIjsKCXBhbm9zZS0xOjMgMTUgNyAyIDMgMyAyIDIgMiA0O30KIC8qIFN0eWxlIERl
+ZmluaXRpb25zICovCiBwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFsCgl7
+bWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCXRleHQtYWxpZ246anVzdGlmeTsK
+CXRleHQtanVzdGlmeTppbnRlci1pZGVvZ3JhcGg7Cglmb250LXNpemU6MTAuNXB0OwoJZm9udC1m
+YW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBlcmxpbmsK
+CXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0aW9uOnVu
+ZGVybGluZTt9CmE6dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe21zby1zdHls
+ZS1wcmlvcml0eTo5OTsKCWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7
+fQpzcGFuLkVtYWlsU3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7Cglm
+b250LWZhbWlseToiQXJpYWwiLCJzYW5zLXNlcmlmIjsKCWNvbG9yOndpbmRvd3RleHQ7fQouTXNv
+Q2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1vbmx5O30KIC8qIFBhZ2UgRGVmaW5p
+dGlvbnMgKi8KIEBwYWdlIFNlY3Rpb24xCgl7c2l6ZTo2MTIuMHB0IDc5Mi4wcHQ7CgltYXJnaW46
+NzIuMHB0IDkwLjBwdCA3Mi4wcHQgOTAuMHB0O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9u
+MTt9Ci0tPgo8L3N0eWxlPgo8IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlZGVmYXVs
+dHMgdjpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1b
+aWYgZ3RlIG1zbyA5XT48eG1sPgogPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgogIDxvOmlk
+bWFwIHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgogPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2Vu
+ZGlmXS0tPgo8L2hlYWQ+Cgo8Ym9keSBsYW5nPVpILUNOIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGUg
+c3R5bGU9J3RleHQtanVzdGlmeS10cmltOnB1bmN0dWF0aW9uJz4KCjxkaXYgY2xhc3M9U2VjdGlv
+bjE+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1mYW1p
+bHk6IkFyaWFsIiwic2Fucy1zZXJpZiInPkJsb2cKPGEgaHJlZj0iaHR0cDovL29mb25vLm9yZy9i
+bG9ncy9mZWVkIj5odHRwOi8vb2Zvbm8ub3JnL2Jsb2dzL2ZlZWQ8L2E+IG5vdyBoYXMgdGhlCnRp
+dGxlICYjODIyMDtDb25uTWFuIEJsb2dzJiM4MjIxOywgd2hpY2ggbmVlZHMgYSBjaGFuZ2UgdG8g
+bWF0Y2ggb2Zvbm8uIDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48
+c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LWZhbWlseToiQXJpYWwiLCJzYW5zLXNlcmlmIic+
+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
+bmc9RU4tVVMgc3R5bGU9J2ZvbnQtZmFtaWx5OiJBcmlhbCIsInNhbnMtc2VyaWYiJz48bzpwPiZu
+YnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWwgYWxpZ249bGVmdCBzdHls
+ZT0nbXNvLW1hcmdpbi10b3AtYWx0OmF1dG87bXNvLW1hcmdpbi1ib3R0b20tYWx0OgphdXRvO3Rl
+eHQtYWxpZ246bGVmdCc+PGI+PGk+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1mYW1pbHk6
+IkNvbWljIFNhbnMgTVMiJz5UaGFua3MKJmFtcDsgQmVzdCBSZWdhcmRzLDwvc3Bhbj48L2k+PC9i
+PjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMi4wcHQ7CmZvbnQtZmFtaWx5OiYj
+MjM0MzU7JiMyMDMwNzsnPjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1h
+bCBhbGlnbj1sZWZ0IHN0eWxlPSdtc28tbWFyZ2luLXRvcC1hbHQ6YXV0bzttc28tbWFyZ2luLWJv
+dHRvbS1hbHQ6CmF1dG87dGV4dC1hbGlnbjpsZWZ0Jz48Yj48aT48c3BhbiBsYW5nPUVOLVVTIHN0
+eWxlPSdmb250LXNpemU6MTMuNXB0Owpmb250LWZhbWlseToiVGltZXMgTmV3IFJvbWFuIiwic2Vy
+aWYiJz5HdSwgWWFuZzwvc3Bhbj48L2k+PC9iPjxzcGFuIGxhbmc9RU4tVVMKc3R5bGU9J2ZvbnQt
+c2l6ZToxMi4wcHQ7Zm9udC1mYW1pbHk6JiMyMzQzNTsmIzIwMzA3Oyc+PG86cD48L286cD48L3Nw
+YW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxiPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2Zv
+bnQtc2l6ZToxMi4wcHQ7Zm9udC1mYW1pbHk6CiJUaW1lcyBOZXcgUm9tYW4iLCJzZXJpZiI7Y29s
+b3I6YmxhY2snPlRlbC46PC9zcGFuPjwvYj48c3BhbiBsYW5nPUVOLVVTCnN0eWxlPSdmb250LXNp
+emU6MTIuMHB0O2ZvbnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4iLCJzZXJpZiI7Y29sb3I6Ymxh
+Y2snPiZuYnNwOworODYgMjEmbmJzcDs2MTE2NjI0NSwgKzg2IDIxIDYxMTY1MDAwLTYyNDUsIDg4
+MjEgRXh0LiA2MjQ1IChpTmV0KTwvc3Bhbj48c3BhbgpsYW5nPUVOLVVTPjxvOnA+PC9vOnA+PC9z
+cGFuPjwvcD4KCjwvZGl2PgoKPC9ib2R5PgoKPC9odG1sPgo=
 
-Have you looked at the design/implementation? Perhaps your extended knowled=
-ge
-could benefit both pyneo and ofono...
-
-Cheers,
-
-Auke
-
---===============4033777732419914453==--
+--===============2924429901806228496==--
 
