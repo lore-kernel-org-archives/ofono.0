@@ -1,40 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============2832338048780842005=="
+Content-Type: multipart/mixed; boundary="===============8689118032157565058=="
 MIME-Version: 1.0
-From: Christensen, Mikkel <mlc@ti.com>
-Subject: RE: SMS, Packet service and multiplexing
-Date: Wed, 13 May 2009 21:34:52 +0200
-Message-ID: <E49DAF743FB3E9469ED423C0D3DB5F1CA95D7116@dnce01.ent.ti.com>
-In-Reply-To: <1242240875.27899.11.camel@localhost.localdomain>
+From: Eugene Girshov <egirshov@yandex.ru>
+Subject: PS calls
+Date: Thu, 14 May 2009 00:03:19 +0400
+Message-ID: <126831242244999@webmail104.yandex.ru>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2832338048780842005==
+--===============8689118032157565058==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> > Freesmartphone.org does have a 07.10 (27.010) Multiplexer
-> > that does the trick of multiplexing.
-> =
+Hi,
 
-> we are looking at an option to finally put such a multiplexer into the =
+Is there any plans to add support for VoIP calls and PS domain?
+I mean that from UI developer perspective the API might look quite similar
+to what you offer for CS call.
+Also, there are several attempts to expose SIP/IMS network capabilities
+in UE, like JSR 281 - do you think it might be relevant to your project?
 
-> kernel (where it belongs). The userspace solution generates too many =
+Regards,
+Eugene
 
-> context switches and introduces latency when we are connecting via =
-
-> EDGE or UMTS and shuffle a lot of data over that line.
-> =
-
-
-Putting it into the Kernel is a great idea and will improve performance esp=
-ecially when we move to the higher data rates of HSPA. Looking forward to s=
-ee it. =
-
-
-Best regards,
- Mikkel
-
-
---===============2832338048780842005==--
+--===============8689118032157565058==--
 
