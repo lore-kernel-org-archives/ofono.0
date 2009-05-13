@@ -1,52 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============3059920713103099635=="
+Content-Type: multipart/mixed; boundary="===============6316761309190547245=="
 MIME-Version: 1.0
-From: Jean-Christian de Rivaz <jc@eclis.ch>
-Subject: Re: SMS, Packet service and multiplexing
-Date: Wed, 13 May 2009 20:34:49 +0200
-Message-ID: <4A0B12C9.9060909@eclis.ch>
-In-Reply-To: <200905131314.19664.denkenz@gmail.com>
+From: Christensen, Mikkel <mlc@ti.com>
+Subject: RE: SMS, Packet service and multiplexing
+Date: Wed, 13 May 2009 20:41:35 +0200
+Message-ID: <E49DAF743FB3E9469ED423C0D3DB5F1CA95D70FC@dnce01.ent.ti.com>
+In-Reply-To: <4A0B12C9.9060909@eclis.ch>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3059920713103099635==
+--===============6316761309190547245==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
 
-Denis Kenzior a =C3=A9crit :
-> On Wednesday 13 May 2009 12:51:11 Jean-Christian de Rivaz wrote:
->> After taking a overview of the code, I cannot found how SMS and packet
-> =
+> I work on a project where we use a Wavecom modem. We chose to use a =
 
-> oFono is by no means a finished product, there are plenty of areas that a=
-re =
+> second serial line to handle the PPP stream. If Ofono have working SMS =
 
-> still not finished, SMS being one of them.  We're actively working on SMS=
- at =
+> and packet service multiplexing, we will probably evaluate it use into a =
 
-> the moment.  Some initial SMS utilities were pushed out yesterday.
+> next revision of the project product so we can save a serial line.
 
-I see it now after a git pull. Thanks.
+Freesmartphone.org does have a 07.10 (27.010) Multiplexer that does the tri=
+ck of multiplexing.
 
->> service are handled. Using packet service will require some multiplexing
->> as I understand.
-> =
+http://git.freesmartphone.org/
 
-> Again, this is not yet supported in oFono, patches and ideas are welcome.
+Best regards,
+ Mikkel Christensen
 
-I work on a project where we use a Wavecom modem. We chose to use a =
 
-second serial line to handle the PPP stream. If Ofono have working SMS =
-
-and packet service multiplexing, we will probably evaluate it use into a =
-
-next revision of the project product so we can save a serial line.
-
-Regards,
-
-Jean-Christian de Rivaz
-
---===============3059920713103099635==--
+--===============6316761309190547245==--
 
