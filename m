@@ -1,54 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============2151805028283670949=="
+Content-Type: multipart/mixed; boundary="===============1358755265760228985=="
 MIME-Version: 1.0
-From: Eugene Girshov <egirshov@yandex.ru>
-Subject: Re: PS calls
-Date: Thu, 14 May 2009 13:53:41 +0400
-Message-ID: <225141242294821@webmail87.yandex.ru>
-In-Reply-To: <200905131550.36507.denkenz@gmail.com>
+From: Arnaud Ebalard <arno@natisbad.org>
+Subject: Addition of ofono ML to Gmane
+Date: Mon, 18 May 2009 12:30:32 +0000
+Message-ID: <87octqlhjf.fsf@small.ssi.corp>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2151805028283670949==
+--===============1358755265760228985==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis!
+Hi,
 
-Thank you for clarifications
+I asked for the addition of ofono ML to Gmane (http://gmane.org) for
+those using the service. The group should be created by this message.
 
-Regards,
-Eugene
+Cheers,
 
-14.05.09, 00:50, "Denis Kenzior" <denkenz@gmail.com>:
+a+
 
-> Hi Eugene,
-> On Wednesday 13 May 2009 15:03:19 Eugene Girshov wrote:
-> > Hi,
-> >
-> > Is there any plans to add support for VoIP calls and PS domain?
-> > I mean that from UI developer perspective the API might look quite simi=
-lar
-> > to what you offer for CS call.
-> > Also, there are several attempts to expose SIP/IMS network capabilities
-> > in UE, like JSR 281 - do you think it might be relevant to your project?
-> >
-> SIP & IMS are currently not the focus of the core development team.  We h=
-ave =
-
-> to make 2G & 3G features work before we start looking into 4G.
-> > Regards,
-> > Eugene
-> > _______________________________________________
-> > ofono mailing list
-> > ofono(a)ofono.org
-> > http://lists.ofono.org/listinfo/ofono
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
-
---===============2151805028283670949==--
+--===============1358755265760228985==--
 
