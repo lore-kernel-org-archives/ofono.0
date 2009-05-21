@@ -1,43 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============6751636278666078246=="
+Content-Type: multipart/mixed; boundary="===============5141484551264076102=="
 MIME-Version: 1.0
-From: Marcel Holtmann <holtmann@linux.intel.com>
-Subject: Re: ofono Digest, Vol 1, Issue 5
-Date: Tue, 19 May 2009 20:09:24 -0700
-Message-ID: <1242788964.3147.15.camel@localhost.localdomain>
-In-Reply-To: <a0b5f4b30905191805k2dc0cf52i5346c351061dbefe@mail.gmail.com>
+From: sudishm m <sudimenon@gmail.com>
+Date: Wed, 20 May 2009 23:31:38 -0700
+Message-ID: <2620c09f0905202331g73a88e6etacfe3fc6f4813646@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6751636278666078246==
+--===============5141484551264076102==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-please do me a favor and don't hijack the digest thread. This makes it
-kind hard to figure out what's your actual topic of the posting and it
-is might easily overlooked.
+how do I donload the source code, to my PC and build it.Please provide
+instructions to do so,
 
-> I want to download the source code of ofono by:
-> git clone git://git.kernel.org/pub/scm/network/ofono/ofono.git
-> =
+Sudish
 
-> it failed with the following info:
-> =
+--===============5141484551264076102==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> Initialized empty Git repository in /home/ubuntu/ofono/.git/
-> git.kernel.org[0: 130.239.17.7]: errno=3DConnection timed out
-> fatal: unable to connect a socket (Connection timed out)
+PGRpdj5IaSw8L2Rpdj4KPGRpdj6gPC9kaXY+CjxkaXY+aG93IGRvIEkgZG9ubG9hZCB0aGUgc291
+cmNlIGNvZGUsIHRvIG15IFBDIGFuZCBidWlsZCBpdC5QbGVhc2UgcHJvdmlkZSBpbnN0cnVjdGlv
+bnMgdG8gZG8gc28sPC9kaXY+CjxkaXY+oDwvZGl2Pgo8ZGl2PlN1ZGlzaDwvZGl2Pgo=
 
-the timeout seems to be a problem on your side. Does pinging
-git.kernel.org works? Can you view git.kernel.org in your browser.
-
-Regards
-
-Marcel
-
-
-
---===============6751636278666078246==--
+--===============5141484551264076102==--
 
