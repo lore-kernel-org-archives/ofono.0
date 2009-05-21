@@ -1,32 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============5141484551264076102=="
+Content-Type: multipart/mixed; boundary="===============7009143176983515027=="
 MIME-Version: 1.0
-From: sudishm m <sudimenon@gmail.com>
-Date: Wed, 20 May 2009 23:31:38 -0700
-Message-ID: <2620c09f0905202331g73a88e6etacfe3fc6f4813646@mail.gmail.com>
+From: Leandro Dorileo <ldorileo@gmail.com>
+Subject: Re:
+Date: Thu, 21 May 2009 08:38:34 -0400
+Message-ID: <d68f80d90905210538g776d1104hb59e756e296a43cb@mail.gmail.com>
+In-Reply-To: <2620c09f0905202331g73a88e6etacfe3fc6f4813646@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5141484551264076102==
+--===============7009143176983515027==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi
 
-how do I donload the source code, to my PC and build it.Please provide
-instructions to do so,
+On Thu, May 21, 2009 at 2:31 AM, sudishm m <sudimenon@gmail.com> wrote:
+> Hi,
+>
+> how do I donload the source code, to my PC and build it.Please provide
+> instructions to do so,
 
-Sudish
+You can find instructions in the project`s website[1]. All you need is
+to clone the git repository[2]. Here[3] you find out more instructions
+about git.
 
---===============5141484551264076102==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdj5IaSw8L2Rpdj4KPGRpdj6gPC9kaXY+CjxkaXY+aG93IGRvIEkgZG9ubG9hZCB0aGUgc291
-cmNlIGNvZGUsIHRvIG15IFBDIGFuZCBidWlsZCBpdC5QbGVhc2UgcHJvdmlkZSBpbnN0cnVjdGlv
-bnMgdG8gZG8gc28sPC9kaXY+CjxkaXY+oDwvZGl2Pgo8ZGl2PlN1ZGlzaDwvZGl2Pgo=
+[1] - http://ofono.org/downloads
+[2] - git://git.kernel.org/pub/scm/network/ofono/ofono.git
+[3] - http://git-scm.com/
 
---===============5141484551264076102==--
+Regards...
+
+-- =
+
+(=C2=B0=3D   Leandro Dorileo
+//\    ldorileo(a)gmail.com   -   http://www.dorilex.net
+V_/  Software is a matter of freedom.
+
+--===============7009143176983515027==--
 
