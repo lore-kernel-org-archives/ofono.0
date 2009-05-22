@@ -1,34 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3048459687292509893=="
+Content-Type: multipart/mixed; boundary="===============1199266419511111397=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: Could you help to add the tag/keyword in mail list title?
-Date: Fri, 22 May 2009 16:55:54 +0300
-Message-ID: <1243000554.1163.6.camel@little.research.nokia.com>
-In-Reply-To: <fc047ac70905220557u6ba95de0sb9902bcfd2da40f4@mail.gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: failed to download source code!
+Date: Fri, 22 May 2009 09:43:41 -0700
+Message-ID: <1243010621.3147.101.camel@localhost.localdomain>
+In-Reply-To: <200905221000.34635.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3048459687292509893==
+--===============1199266419511111397==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-pe, 2009-05-22 kello 14:57 +0200, ext Luis Santiago kirjoitti:
-> Also, there are people who receive different mailing lists, it would
-> definitely help having a tag to sort things out.
+Hi Remi
 
-Try filtering based on the List-Id header field. I subscribe to around
-100 mailing lists, and have never found myself lacking of a tag in the
-Subject field to properly sort them.
+> > Initialized empty Git repository in /home/ubuntu/ofono/.git/
+> > git.kernel.org<http://git.kernel.org/>[0: 130.239.17.7]: errno=3DConnec=
+tion
+> > timed out fatal: unable to connect a socket (Connection timed out)
+> =
 
-Cheers,
-Aki
+> It looks like a firewall on your end is blocking the git protocol.
+> =
 
--- =
+> I would recommend using HTTP instead, but it seems the HTTP repository is =
 
-Aki Niemi
-Maemo Software, Nokia Devices R&D
+> broken: git complains about missing infos/refs :(
+
+forgot the update-server-info hook. Should be fixed now.
+
+Regards
+
+Marcel
 
 
---===============3048459687292509893==--
+
+--===============1199266419511111397==--
 
