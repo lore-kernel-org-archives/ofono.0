@@ -1,69 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============4151079675180862540=="
+Content-Type: multipart/mixed; boundary="===============6162221954091721010=="
 MIME-Version: 1.0
 From: Charles Wyble <charles@thewybles.com>
 Subject: Re: Could you help to add the tag/keyword in mail list title?
-Date: Fri, 22 May 2009 10:22:04 -0700
-Message-ID: <4A16DF3C.60208@thewybles.com>
-In-Reply-To: <1242957949.3147.95.camel@localhost.localdomain>
+Date: Fri, 22 May 2009 10:22:33 -0700
+Message-ID: <4A16DF59.4020302@thewybles.com>
+In-Reply-To: <fc047ac70905220557u6ba95de0sb9902bcfd2da40f4@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4151079675180862540==
+--===============6162221954091721010==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 
 
-Marcel Holtmann wrote:
-> Hi Halley,
+Luis Santiago wrote:
+> I agree on having a tag. It just gets in the way of normal daily email.
 > =
 
->> There is no tag like [Ofono dev] in the title of this mail list
+> Also, there are people who receive different mailing lists, it would =
+
+> definitely help having a tag to sort things out.
 > =
 
-> and that is on purpose!
+
+Yep. Exactly. I too would like to see a tag added.
+
+
+> Regards,
 > =
 
-> I know that for Exchange/Outlook users this must be painful, but I can't
-> stand these tags that are meaningless anyway. Just automatically sort
-> the mailing into a subfolder.
+> Luis Santiago
+> =
 
+> =
 
+> On Thu, May 21, 2009 at 10:05 PM, Marcel Holtmann <marcel@holtmann.org =
 
+> <mailto:marcel@holtmann.org>> wrote:
+> =
 
-Um. Don't presume that someone is using proprietary software just =
+>     Hi Halley,
+> =
 
-because they ask for a tag. That's a really horrible attitude in my mind.
+>      > There is no tag like [Ofono dev] in the title of this mail list
+> =
 
-Some of us have all e-mail come to our inbox for linear reading. I would =
+>     and that is on purpose!
+> =
 
-also like to see a tag added to the subject.
+>     I know that for Exchange/Outlook users this must be painful, but I ca=
+n't
+>     stand these tags that are meaningless anyway. Just automatically sort
+>     the mailing into a subfolder.
+> =
 
-It's unfortunate that an open source project outright refuses a request =
+>     Regards
+> =
 
-instead of attempting to work with it's members and reach a compromise.
+>     Marcel
+> =
 
+> =
 
-The attitude of several posts so far have been rather condescending, and =
+> =
 
-as such I don't have high hopes for this project.
+>     _______________________________________________
+>     ofono mailing list
+>     ofono(a)ofono.org <mailto:ofono@ofono.org>
+>     http://lists.ofono.org/listinfo/ofono
+> =
 
-Hopefully more refined members of the project at the various corporate =
+> =
 
-sponsors will step in and set things right. I realize that many =
+> =
 
-engineers have substantial problems relating to ideas/approaches outside =
+> ------------------------------------------------------------------------
+> =
 
-their way of thinking, and as such often need handlers. Hopefully those =
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
-handlers will emerge here and get this project on the right track.
-
-The suits do serve a purpose. :)
-
-Charles Wyble (suit)
-
-
-
---===============4151079675180862540==--
+--===============6162221954091721010==--
 
