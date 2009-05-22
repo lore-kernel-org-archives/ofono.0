@@ -1,40 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============1199266419511111397=="
+Content-Type: multipart/mixed; boundary="===============4151079675180862540=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: failed to download source code!
-Date: Fri, 22 May 2009 09:43:41 -0700
-Message-ID: <1243010621.3147.101.camel@localhost.localdomain>
-In-Reply-To: <200905221000.34635.remi.denis-courmont@nokia.com>
+From: Charles Wyble <charles@thewybles.com>
+Subject: Re: Could you help to add the tag/keyword in mail list title?
+Date: Fri, 22 May 2009 10:22:04 -0700
+Message-ID: <4A16DF3C.60208@thewybles.com>
+In-Reply-To: <1242957949.3147.95.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1199266419511111397==
+--===============4151079675180862540==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi
 
-> > Initialized empty Git repository in /home/ubuntu/ofono/.git/
-> > git.kernel.org<http://git.kernel.org/>[0: 130.239.17.7]: errno=3DConnec=
-tion
-> > timed out fatal: unable to connect a socket (Connection timed out)
+
+Marcel Holtmann wrote:
+> Hi Halley,
 > =
 
-> It looks like a firewall on your end is blocking the git protocol.
+>> There is no tag like [Ofono dev] in the title of this mail list
 > =
 
-> I would recommend using HTTP instead, but it seems the HTTP repository is =
+> and that is on purpose!
+> =
 
-> broken: git complains about missing infos/refs :(
-
-forgot the update-server-info hook. Should be fixed now.
-
-Regards
-
-Marcel
+> I know that for Exchange/Outlook users this must be painful, but I can't
+> stand these tags that are meaningless anyway. Just automatically sort
+> the mailing into a subfolder.
 
 
 
---===============1199266419511111397==--
+
+Um. Don't presume that someone is using proprietary software just =
+
+because they ask for a tag. That's a really horrible attitude in my mind.
+
+Some of us have all e-mail come to our inbox for linear reading. I would =
+
+also like to see a tag added to the subject.
+
+It's unfortunate that an open source project outright refuses a request =
+
+instead of attempting to work with it's members and reach a compromise.
+
+
+The attitude of several posts so far have been rather condescending, and =
+
+as such I don't have high hopes for this project.
+
+Hopefully more refined members of the project at the various corporate =
+
+sponsors will step in and set things right. I realize that many =
+
+engineers have substantial problems relating to ideas/approaches outside =
+
+their way of thinking, and as such often need handlers. Hopefully those =
+
+handlers will emerge here and get this project on the right track.
+
+The suits do serve a purpose. :)
+
+Charles Wyble (suit)
+
+
+
+--===============4151079675180862540==--
 
