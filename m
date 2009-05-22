@@ -1,60 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============5073159188297057971=="
+Content-Type: multipart/mixed; boundary="===============5564385736616363691=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Could you help to add the tag/keyword in mail list title?
-Date: Fri, 22 May 2009 11:37:00 -0700
-Message-ID: <1243017420.3147.110.camel@localhost.localdomain>
-In-Reply-To: <4A16E02B.1010107@thewybles.com>
+Date: Fri, 22 May 2009 11:41:57 -0700
+Message-ID: <1243017717.3147.115.camel@localhost.localdomain>
+In-Reply-To: <4A16DF3C.60208@thewybles.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5073159188297057971==
+--===============5564385736616363691==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Charles,
 
-> > pe, 2009-05-22 kello 14:57 +0200, ext Luis Santiago kirjoitti:
-> >> Also, there are people who receive different mailing lists, it would
-> >> definitely help having a tag to sort things out.
+> >> There is no tag like [Ofono dev] in the title of this mail list
 > > =
 
-> > Try filtering based on the List-Id header field. I subscribe to around
-> > 100 mailing lists, and have never found myself lacking of a tag in the
-> > Subject field to properly sort them.
+> > and that is on purpose!
 > > =
 
+> > I know that for Exchange/Outlook users this must be painful, but I can't
+> > stand these tags that are meaningless anyway. Just automatically sort
+> > the mailing into a subfolder.
+>
+> Um. Don't presume that someone is using proprietary software just =
+
+> because they ask for a tag. That's a really horrible attitude in my mind.
 > =
 
-> Good for you. However some of us do eye based filtering and want to =
+> Some of us have all e-mail come to our inbox for linear reading. I would =
 
-> rapidly pick out messages.
+> also like to see a tag added to the subject.
+
+if you like to do that, then that is your choice. Why don't you do your
+tagging inside Thuderbird then?
+
+> It's unfortunate that an open source project outright refuses a request =
+
+> instead of attempting to work with it's members and reach a compromise.
+>
+> The attitude of several posts so far have been rather condescending, and =
+
+> as such I don't have high hopes for this project.
 > =
 
-> Obviously people can filter on numerous headers. Try to adjust your =
+> Hopefully more refined members of the project at the various corporate =
 
-> thinking a bit and realize that maybe just maybe we are intelligent and =
+> sponsors will step in and set things right. I realize that many =
 
-> know that, and don't want the tag for automated filtering but for visual =
+> engineers have substantial problems relating to ideas/approaches outside =
 
-> filtering?
-> =
+> their way of thinking, and as such often need handlers. Hopefully those =
 
-> It's amazing what happens when one stops and thinks before firing off a =
+> handlers will emerge here and get this project on the right track.
 
-> knee jerk reaction. It's unfortunate that so many engineers take that =
+If you wanna start a flame-war then please find a different mailing
+list.
 
-> approach. *sighs*
-
-if you let run all your emails into one INBOX and don't let your mail
-server or mail client filter/tag for you, then you might wanna re-think
-your method of working. Except you have to much spare time on your hand.
-
-The tags are pretty bad when people have to CC multiple mailing list.
-While cross-posting is not a good idea to begin with, in some cases it
-can NOT be avoided. And I wanna have that working smoothly. So no tags
-on this mailing list.
+We have to deal with cross-postings eventually and therefore, this
+mailing list will not have tags in the subject line.
 
 Regards
 
@@ -62,5 +68,5 @@ Marcel
 
 
 
---===============5073159188297057971==--
+--===============5564385736616363691==--
 
