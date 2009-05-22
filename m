@@ -1,33 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============7070768967694919573=="
+Content-Type: multipart/mixed; boundary="===============5073159188297057971=="
 MIME-Version: 1.0
-From: Charles Wyble <charles@thewybles.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Could you help to add the tag/keyword in mail list title?
-Date: Fri, 22 May 2009 10:55:29 -0700
-Message-ID: <4A16E711.6020604@thewybles.com>
-In-Reply-To: <1243014065.6308.4.camel@brutus>
+Date: Fri, 22 May 2009 11:37:00 -0700
+Message-ID: <1243017420.3147.110.camel@localhost.localdomain>
+In-Reply-To: <4A16E02B.1010107@thewybles.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7070768967694919573==
+--===============5073159188297057971==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Charles,
 
+> > pe, 2009-05-22 kello 14:57 +0200, ext Luis Santiago kirjoitti:
+> >> Also, there are people who receive different mailing lists, it would
+> >> definitely help having a tag to sort things out.
+> > =
 
-Daniel Ribeiro wrote:
-> Em Sex, 2009-05-22 =C3=A0s 10:22 -0700, Charles Wyble escreveu:
->> Yep. Exactly. I too would like to see a tag added.
+> > Try filtering based on the List-Id header field. I subscribe to around
+> > 100 mailing lists, and have never found myself lacking of a tag in the
+> > Subject field to properly sort them.
+> > =
+
 > =
 
-> Good, you could have expressed this on a single email instead of 6
-> emails on the same thread with < 10minutes interval. :)
+> Good for you. However some of us do eye based filtering and want to =
 
-Well I was replying to each one individually and addressing the =
+> rapidly pick out messages.
+> =
 
-attitudes expressed in them.
+> Obviously people can filter on numerous headers. Try to adjust your =
 
-Trying to make the (open source) world a better place. :)
+> thinking a bit and realize that maybe just maybe we are intelligent and =
 
---===============7070768967694919573==--
+> know that, and don't want the tag for automated filtering but for visual =
+
+> filtering?
+> =
+
+> It's amazing what happens when one stops and thinks before firing off a =
+
+> knee jerk reaction. It's unfortunate that so many engineers take that =
+
+> approach. *sighs*
+
+if you let run all your emails into one INBOX and don't let your mail
+server or mail client filter/tag for you, then you might wanna re-think
+your method of working. Except you have to much spare time on your hand.
+
+The tags are pretty bad when people have to CC multiple mailing list.
+While cross-posting is not a good idea to begin with, in some cases it
+can NOT be avoided. And I wanna have that working smoothly. So no tags
+on this mailing list.
+
+Regards
+
+Marcel
+
+
+
+--===============5073159188297057971==--
 
