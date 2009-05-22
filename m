@@ -1,109 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============8562033106179723540=="
+Content-Type: multipart/mixed; boundary="===============7882599555195834255=="
 MIME-Version: 1.0
 From: Charles Wyble <charles@thewybles.com>
 Subject: Re: Could you help to add the tag/keyword in mail list title?
-Date: Fri, 22 May 2009 10:23:47 -0700
-Message-ID: <4A16DFA3.4020709@thewybles.com>
-In-Reply-To: <acf8ce860905220607x4d831cd6h2a8db5c4d9f885a0@mail.gmail.com>
+Date: Fri, 22 May 2009 10:24:11 -0700
+Message-ID: <4A16DFBB.6020001@thewybles.com>
+In-Reply-To: <E1A1564674E5754FB00AB9AC949D5E32605CB8E8D8@rrsmsx501.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8562033106179723540==
+--===============7882599555195834255==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Or you could add a tag to the subject and we wouldn't have to add a =
 
-label. :)
 
-Adam McKerlie wrote:
-> If your using gmail, just add your own label through a filter.
-> =
+Sousou, Imad wrote:
+>>> I know that for Exchange/Outlook users this must be painful, but I can't
+>>> stand these tags that are meaningless anyway. Just automatically sort
+>>> the mailing into a subfolder.
+>>>
+> I like tags, but not for filtering... but because tag+subject makes it ea=
+sy to scan your inbox and get context, specially for those of us who subscr=
+ibe to many mailing lists
 
-> On Fri, May 22, 2009 at 9:05 AM, Leandro Dorileo <ldorileo@gmail.com =
 
-> <mailto:ldorileo@gmail.com>> wrote:
-> =
+Yep exactly. Right on.
 
->     Hi
-> =
-
->     On Fri, May 22, 2009 at 8:57 AM, Luis Santiago
->     <cs.lpsantiago(a)gmail.com <mailto:cs.lpsantiago@gmail.com>> wrote:
->      > I agree on having a tag. It just gets in the way of normal daily
->     email.
->      >
->      > Also, there are people who receive different mailing lists, it wou=
-ld
->      > definitely help having a tag to sort things out.
-> =
-
-> =
-
->     You can use any headers the mailing list uses to filter the messages.=
-..
-> =
-
->      >
->      > Regards,
->      >
->      > Luis Santiago
->      >
->      >
->      > On Thu, May 21, 2009 at 10:05 PM, Marcel Holtmann
->     <marcel(a)holtmann.org <mailto:marcel@holtmann.org>>
->      > wrote:
->      >>
->      >> Hi Halley,
->      >>
->      >> > There is no tag like [Ofono dev] in the title of this mail list
->      >>
->      >> and that is on purpose!
->      >>
->      >> I know that for Exchange/Outlook users this must be painful, but
->     I can't
->      >> stand these tags that are meaningless anyway. Just automatically
->     sort
->      >> the mailing into a subfolder.
->      >>
-> =
-
-> =
-
-> =
-
-> =
-
-> =
-
-> =
-
-> =
-
->     --
->     (=C2=B0=3D   Leandro Dorileo
->     //\    ldorileo(a)gmail.com <mailto:ldorileo@gmail.com>   -  =
-
->     http://www.dorilex.net
->     V_/  Software is a matter of freedom.
->     _______________________________________________
->     ofono mailing list
->     ofono(a)ofono.org <mailto:ofono@ofono.org>
->     http://lists.ofono.org/listinfo/ofono
-> =
-
-> =
-
-> =
-
-> ------------------------------------------------------------------------
-> =
-
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
-
---===============8562033106179723540==--
+--===============7882599555195834255==--
 
