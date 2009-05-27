@@ -1,98 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============5585645242409280719=="
+Content-Type: multipart/mixed; boundary="===============4253181970906765928=="
 MIME-Version: 1.0
-From: Li, Minjun <minjun.li@intel.com>
-Date: Wed, 27 May 2009 08:56:31 +0800
-Message-ID: <61563CE63B4F854986A895DA7AD3C17709D989BD16@pdsmsx502.ccr.corp.intel.com>
+From: Leandro Dorileo <ldorileo@gmail.com>
+Subject: Re:
+Date: Tue, 26 May 2009 22:23:29 -0300
+Message-ID: <d68f80d90905261823w126e7ed8qc8762e5f2a681468@mail.gmail.com>
+In-Reply-To: <61563CE63B4F854986A895DA7AD3C17709D989BD16@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5585645242409280719==
+--===============4253181970906765928==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Folks,
-I have made a patch for minor bugs in functions of dial_callback and voicec=
-all_busy in /src/voicecall.c.
+Hi Minjun
 
-Best Regards,
-Minjun
+On Tue, May 26, 2009 at 9:56 PM, Li, Minjun <minjun.li@intel.com> wrote:
+> Hi Folks,
+>
+> I have made a patch for minor bugs in functions of dial_callback and
+> voicecall_busy in /src/voicecall.c.
 
+Could you provide us with more detailed informations about the bugs
+you're supposed to fix with your patch?
 
---===============5585645242409280719==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+Reviewing you patch I found you changed the behavior of the original
+code, touching that part of code you can even have made the bug
+"disapeared" but not fixed the bug you discovered.
 
-PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
-bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxucz0iaHR0
-cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPE1FVEEgSFRUUC1FUVVJVj0i
-Q29udGVudC1UeXBlIiBDT05URU5UPSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0
-YSBuYW1lPUdlbmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMSAoZmlsdGVyZWQgbWVk
-aXVtKSI+CjxzdHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJ
-e2ZvbnQtZmFtaWx5OiYjMjM0MzU7JiMyMDMwNzs7CglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEg
-MSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OiJcQCYjMjM0MzU7JiMyMDMwNzsiOwoJcGFu
-b3NlLTE6MiAxIDYgMCAzIDEgMSAxIDEgMTt9CiAvKiBTdHlsZSBEZWZpbml0aW9ucyAqLwogcC5N
-c29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowY207CgltYXJn
-aW4tYm90dG9tOi4wMDAxcHQ7Cgl0ZXh0LWFsaWduOmp1c3RpZnk7Cgl0ZXh0LWp1c3RpZnk6aW50
-ZXItaWRlb2dyYXBoOwoJZm9udC1zaXplOjEwLjVwdDsKCWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcg
-Um9tYW4iO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRl
-Y29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2Vk
-Cgl7Y29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxT
-dHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OkFy
-aWFsOwoJY29sb3I6d2luZG93dGV4dDt9CiAvKiBQYWdlIERlZmluaXRpb25zICovCiBAcGFnZSBT
-ZWN0aW9uMQoJe3NpemU6NTk1LjNwdCA4NDEuOXB0OwoJbWFyZ2luOjcyLjBwdCA5MC4wcHQgNzIu
-MHB0IDkwLjBwdDsKCWxheW91dC1ncmlkOjE1LjZwdDt9CmRpdi5TZWN0aW9uMQoJe3BhZ2U6U2Vj
-dGlvbjE7fQotLT4KPC9zdHlsZT4KCjwvaGVhZD4KCjxib2R5IGxhbmc9WkgtQ04gbGluaz1ibHVl
-IHZsaW5rPXB1cnBsZSBzdHlsZT0ndGV4dC1qdXN0aWZ5LXRyaW06cHVuY3R1YXRpb24nPgoKPGRp
-diBjbGFzcz1TZWN0aW9uMSBzdHlsZT0nbGF5b3V0LWdyaWQ6MTUuNnB0Jz4KCjxwIGNsYXNzPU1z
-b05vcm1hbD48Zm9udCBzaXplPTEgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdm
-b250LXNpemU6CjkuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsJz5IaSBGb2xrcyw8bzpwPjwvbzpwPjwv
-c3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MSBmYWNlPUFy
-aWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToKOS4wcHQ7Zm9udC1mYW1pbHk6
-QXJpYWwnPkkgaGF2ZSBtYWRlIGEgcGF0Y2ggZm9yIG1pbm9yIGJ1Z3MgaW4gZnVuY3Rpb25zIG9m
-IGRpYWxfY2FsbGJhY2sKYW5kIHZvaWNlY2FsbF9idXN5IGluIC9zcmMvdm9pY2VjYWxsLmMuPG86
-cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXpl
-PTEgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6CjkuMHB0O2Zv
-bnQtZmFtaWx5OkFyaWFsJz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAg
-Y2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPSJUaW1lcyBOZXcgUm9tYW4iPjxzcGFu
-IGxhbmc9RU4tVVMKc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPkJlc3QgUmVnYXJkcyw8bzpwPjwv
-bzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBm
-YWNlPSJUaW1lcyBOZXcgUm9tYW4iPjxzcGFuIGxhbmc9RU4tVVMKc3R5bGU9J2ZvbnQtc2l6ZTox
-MC4wcHQnPk1pbmp1bjwvc3Bhbj48L2ZvbnQ+PGZvbnQgc2l6ZT0zIGZhY2U9JiMyMzQzNTsmIzIw
-MzA3Oz48c3BhbgpsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTIuMHB0O2ZvbnQtZmFtaWx5
-OiYjMjM0MzU7JiMyMDMwNzsnPjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cgo8ZGl2PgoK
-PHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPSJUaW1lcyBOZXcgUm9tYW4iPjxz
-cGFuIGxhbmc9RU4tVVMKc3R5bGU9J2ZvbnQtc2l6ZToxMC41cHQnPiZuYnNwOzxvOnA+PC9vOnA+
-PC9zcGFuPjwvZm9udD48L3A+Cgo8L2Rpdj4KCjwvZGl2PgoKPC9ib2R5PgoKPC9odG1sPgo=
+regards...
 
---===============5585645242409280719==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-minor-bug-in-dial_callback-and-voicecall_busy.patch"
+-- =
 
-RnJvbSA4NTJlNTM1OTMwNzBkZDAzNDZhNzM4NWE2MmExMGMxYzA5NDZiNWMwIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiByb290IDxyb290QG1pbmp1bi5sb2NhbGRvbWFpbj4KRGF0ZTog
-VHVlLCAyNiBNYXkgMjAwOSAwODo0ODo1NyArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIG1pbm9yIGJ1
-ZyBpbiBkaWFsX2NhbGxiYWNrIGFuZCB2b2ljZWNhbGxfYnVzeQoKLS0tCiBzcmMvdm9pY2VjYWxs
-LmMgfCAgICA0ICsrLS0KIDEgZmlsZXMgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAyIGRlbGV0
-aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy92b2ljZWNhbGwuYyBiL3NyYy92b2ljZWNhbGwuYwpp
-bmRleCBiYmM3YmY1Li44MzE4MTQzIDEwMDY0NAotLS0gYS9zcmMvdm9pY2VjYWxsLmMKKysrIGIv
-c3JjL3ZvaWNlY2FsbC5jCkBAIC0xOTgsNyArMTk4LDcgQEAgc3RhdGljIERCdXNNZXNzYWdlICp2
-b2ljZWNhbGxfYnVzeShEQnVzQ29ubmVjdGlvbiAqY29ubiwKIAkJY2FsbC0+c3RhdHVzICE9IENB
-TExfU1RBVFVTX1dBSVRJTkcpCiAJCXJldHVybiBkYnVzX2dzbV9mYWlsZWQobXNnKTsKIAotCWlm
-ICghdm9pY2VjYWxscy0+b3BzLT5yZWxlYXNlX3NwZWNpZmljKQorCWlmICghdm9pY2VjYWxscy0+
-b3BzLT5zZXRfdWR1YikKIAkJcmV0dXJuIGRidXNfZ3NtX25vdF9pbXBsZW1lbnRlZChtc2cpOwog
-CiAJaWYgKHZvaWNlY2FsbHMtPmZsYWdzICYgVk9JQ0VDQUxMU19GTEFHX1BFTkRJTkcpCkBAIC0x
-NDQ0LDcgKzE0NDQsNyBAQCBzdGF0aWMgdm9pZCBkaWFsX2NhbGxiYWNrKGNvbnN0IHN0cnVjdCBv
-Zm9ub19lcnJvciAqZXJyb3IsIHZvaWQgKmRhdGEpCiAJCX0KIAogCQlvZm9ub19kZWJ1ZygiUmVn
-aXN0ZXJpbmcgbmV3IGNhbGw6ICVkIiwgY2FsbC0+aWQpOwotCQl2b2ljZWNhbGxfZGJ1c19yZWdp
-c3Rlcih2b2ljZWNhbGxfY3JlYXRlKG1vZGVtLCBjYWxsKSk7CisJCXZvaWNlY2FsbF9kYnVzX3Jl
-Z2lzdGVyKHYpOwogCiAJCWNhbGxzLT5jYWxsX2xpc3QgPSBnX3NsaXN0X2luc2VydF9zb3J0ZWQo
-Y2FsbHMtPmNhbGxfbGlzdCwgdiwKIAkJCQkJY2FsbF9jb21wYXJlKTsKLS0gCjEuNi4wLjMKCg==
+(=C2=B0=3D   Leandro Dorileo
+//\    ldorileo(a)gmail.com   -   http://www.dorilex.net
+V_/  Software is a matter of freedom.
 
---===============5585645242409280719==--
+--===============4253181970906765928==--
 
