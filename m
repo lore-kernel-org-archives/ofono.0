@@ -1,188 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============7199932139830548232=="
+Content-Type: multipart/mixed; boundary="===============5585645242409280719=="
 MIME-Version: 1.0
-From: Shane Bryan <shane.bryan@linux.intel.com>
-Subject: Re: [PATCH] Add dbus .service file to auto start ofonod
-Date: Tue, 26 May 2009 14:58:30 -0700
-Message-ID: <20090526145830.5edb497e@cyclone>
-In-Reply-To: <1243078511.13042.1.camel@localhost.localdomain>
+From: Li, Minjun <minjun.li@intel.com>
+Date: Wed, 27 May 2009 08:56:31 +0800
+Message-ID: <61563CE63B4F854986A895DA7AD3C17709D989BD16@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7199932139830548232==
+--===============5585645242409280719==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Sat, 23 May 2009 13:35:11 +0200
-marcel at holtmann.org (Marcel Holtmann) wrote:
+Hi Folks,
+I have made a patch for minor bugs in functions of dial_callback and voicec=
+all_busy in /src/voicecall.c.
 
-> actually it would be better if we just do ofono.service.in (drop the
-> org in front of it) and then let autoconf fixup the actually
-> configured prefix.
-> =
-
-
-Ok, new patch attached, this time taking ofono.service.in and
-generating org.ofono.service by autoconf/automake rules that define
-the .service file name as well as the "Name" and "Exec" values in the
-generated file =
+Best Regards,
+Minjun
 
 
-Shane...
+--===============5585645242409280719==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-From ce040278b6f2f58a97f69e0c67e4339f0e67f398 Mon Sep 17 00:00:00 2001
-From: Shane Bryan <shane.bryan@linux.intel.com>
-Date: Tue, 26 May 2009 14:22:41 -0700
-Subject: [PATCH] Install auto generated dbus system-service file
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxucz0iaHR0
+cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPE1FVEEgSFRUUC1FUVVJVj0i
+Q29udGVudC1UeXBlIiBDT05URU5UPSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0
+YSBuYW1lPUdlbmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMSAoZmlsdGVyZWQgbWVk
+aXVtKSI+CjxzdHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJ
+e2ZvbnQtZmFtaWx5OiYjMjM0MzU7JiMyMDMwNzs7CglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEg
+MSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OiJcQCYjMjM0MzU7JiMyMDMwNzsiOwoJcGFu
+b3NlLTE6MiAxIDYgMCAzIDEgMSAxIDEgMTt9CiAvKiBTdHlsZSBEZWZpbml0aW9ucyAqLwogcC5N
+c29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowY207CgltYXJn
+aW4tYm90dG9tOi4wMDAxcHQ7Cgl0ZXh0LWFsaWduOmp1c3RpZnk7Cgl0ZXh0LWp1c3RpZnk6aW50
+ZXItaWRlb2dyYXBoOwoJZm9udC1zaXplOjEwLjVwdDsKCWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcg
+Um9tYW4iO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRl
+Y29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2Vk
+Cgl7Y29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxT
+dHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OkFy
+aWFsOwoJY29sb3I6d2luZG93dGV4dDt9CiAvKiBQYWdlIERlZmluaXRpb25zICovCiBAcGFnZSBT
+ZWN0aW9uMQoJe3NpemU6NTk1LjNwdCA4NDEuOXB0OwoJbWFyZ2luOjcyLjBwdCA5MC4wcHQgNzIu
+MHB0IDkwLjBwdDsKCWxheW91dC1ncmlkOjE1LjZwdDt9CmRpdi5TZWN0aW9uMQoJe3BhZ2U6U2Vj
+dGlvbjE7fQotLT4KPC9zdHlsZT4KCjwvaGVhZD4KCjxib2R5IGxhbmc9WkgtQ04gbGluaz1ibHVl
+IHZsaW5rPXB1cnBsZSBzdHlsZT0ndGV4dC1qdXN0aWZ5LXRyaW06cHVuY3R1YXRpb24nPgoKPGRp
+diBjbGFzcz1TZWN0aW9uMSBzdHlsZT0nbGF5b3V0LWdyaWQ6MTUuNnB0Jz4KCjxwIGNsYXNzPU1z
+b05vcm1hbD48Zm9udCBzaXplPTEgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdm
+b250LXNpemU6CjkuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsJz5IaSBGb2xrcyw8bzpwPjwvbzpwPjwv
+c3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MSBmYWNlPUFy
+aWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToKOS4wcHQ7Zm9udC1mYW1pbHk6
+QXJpYWwnPkkgaGF2ZSBtYWRlIGEgcGF0Y2ggZm9yIG1pbm9yIGJ1Z3MgaW4gZnVuY3Rpb25zIG9m
+IGRpYWxfY2FsbGJhY2sKYW5kIHZvaWNlY2FsbF9idXN5IGluIC9zcmMvdm9pY2VjYWxsLmMuPG86
+cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXpl
+PTEgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6CjkuMHB0O2Zv
+bnQtZmFtaWx5OkFyaWFsJz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAg
+Y2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPSJUaW1lcyBOZXcgUm9tYW4iPjxzcGFu
+IGxhbmc9RU4tVVMKc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPkJlc3QgUmVnYXJkcyw8bzpwPjwv
+bzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBm
+YWNlPSJUaW1lcyBOZXcgUm9tYW4iPjxzcGFuIGxhbmc9RU4tVVMKc3R5bGU9J2ZvbnQtc2l6ZTox
+MC4wcHQnPk1pbmp1bjwvc3Bhbj48L2ZvbnQ+PGZvbnQgc2l6ZT0zIGZhY2U9JiMyMzQzNTsmIzIw
+MzA3Oz48c3BhbgpsYW5nPUVOLVVTIHN0eWxlPSdmb250LXNpemU6MTIuMHB0O2ZvbnQtZmFtaWx5
+OiYjMjM0MzU7JiMyMDMwNzsnPjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cgo8ZGl2PgoK
+PHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPSJUaW1lcyBOZXcgUm9tYW4iPjxz
+cGFuIGxhbmc9RU4tVVMKc3R5bGU9J2ZvbnQtc2l6ZToxMC41cHQnPiZuYnNwOzxvOnA+PC9vOnA+
+PC9zcGFuPjwvZm9udD48L3A+Cgo8L2Rpdj4KCjwvZGl2PgoKPC9ib2R5PgoKPC9odG1sPgo=
 
-Signed-off-by: Shane Bryan <shane.bryan@linux.intel.com>
----
- configure.ac         |    9 +++++++++
- src/Makefile.am      |   16 ++++++++++++++--
- src/ofono.service.in |    4 ++++
- 3 files changed, 27 insertions(+), 2 deletions(-)
- create mode 100644 src/ofono.service.in
-
-diff --git a/configure.ac b/configure.ac
-index 36fec5f..023f2ab 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -73,6 +73,15 @@ else
- fi
- AC_SUBST(DBUS_DATADIR)
- =
-
-+DBUS_SYSTEM_SERVICEDIR=3D"${datadir}/dbus-1/system-services"
-+AC_SUBST(DBUS_SYSTEM_SERVICEDIR)
-+
-+DBUS_SERVICE_PREFIX=3D"org"
-+AC_SUBST(DBUS_SERVICE_PREFIX)
-+
-+DBUS_SERVICE_NAME=3D"$DBUS_SERVICE_PREFIX.$PACKAGE"
-+AC_SUBST(DBUS_SERVICE_NAME)
-+
- AC_SUBST([GDBUS_CFLAGS], ['$(DBUS_CFLAGS) -I$(top_srcdir)/gdbus'])
- AC_SUBST([GDBUS_LIBS], ['$(top_builddir)/gdbus/libgdbus.la $(DBUS_LIBS)'])
- =
-
-diff --git a/src/Makefile.am b/src/Makefile.am
-index 38c97bd..b6688bd 100644
---- a/src/Makefile.am
-+++ b/src/Makefile.am
-@@ -3,6 +3,18 @@ if DATAFILES
- dbusdir =3D @DBUS_DATADIR@
- =
-
- dbus_DATA =3D ofono.conf
-+
-+servicedir =3D @DBUS_SYSTEM_SERVICEDIR@
-+service_in_files =3D ofono.service.in
-+service_DATA =3D @DBUS_SERVICE_NAME(a).service
-+
-+$(service_DATA): $(service_in_files) Makefile
-+	$(edit) $< >$@
-+
-+edit =3D sed \
-+	-e 's|@sbindir[@]|$(sbindir)|g' \
-+	-e 's|@sbin_PROGRAMS[@]|$(sbin_PROGRAMS)|g' \
-+	-e 's|@DBUS_SERVICE_NAME[@]|$(DBUS_SERVICE_NAME)|g'
- endif
- =
-
- sbin_PROGRAMS =3D ofonod
-@@ -22,7 +34,7 @@ ofonod_LDFLAGS =3D -Wl,--export-dynamic -Wl,--version-scr=
-ipt=3Dofono.ver
- =
-
- ofonod_DEPENDENCIES =3D ofono.ver
- =
-
--CLEANFILES =3D ofono.ver ofono.exp
-+CLEANFILES =3D ofono.ver ofono.exp $(service_DATA)
- =
-
- if MAINTAINER_MODE
- plugindir =3D $(abs_top_srcdir)/plugins/.libs
-@@ -35,7 +47,7 @@ AM_CFLAGS =3D @GTHREAD_CFLAGS@ @GLIB_CFLAGS@ @GDBUS_CFLAG=
-S@ @GATCHAT_CFLAGS@ \
- =
-
- INCLUDES =3D -I$(top_builddir)/include -I$(top_builddir)
- =
-
--EXTRA_DIST =3D ofono.conf
-+EXTRA_DIST =3D $(dbus_DATA) $(service_DATA) $(service_in_files)
- =
-
- MAINTAINERCLEANFILES =3D Makefile.in
- =
-
-diff --git a/src/ofono.service.in b/src/ofono.service.in
-new file mode 100644
-index 0000000..16c9bd6
---- /dev/null
-+++ b/src/ofono.service.in
-@@ -0,0 +1,4 @@
-+[D-BUS Service]
-+Name=3D@DBUS_SERVICE_NAME@
-+Exec=3D@sbindir@/@sbin_PROGRAMS@
-+User=3Droot
--- =
-
-1.6.0.4
-
-
-
---===============7199932139830548232==
-Content-Type: text/x-patch
+--===============5585645242409280719==
+Content-Type: application/octet-stream
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment;
- filename="0001-Install-auto-generated-dbus-system-service-file.patch"
+ filename="0001-minor-bug-in-dial_callback-and-voicecall_busy.patch"
 
-PkZyb20gY2UwNDAyNzhiNmYyZjU4YTk3ZjY5ZTBjNjdlNDMzOWYwZTY3ZjM5OCBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogU2hhbmUgQnJ5YW4gPHNoYW5lLmJyeWFuQGxpbnV4LmludGVs
-LmNvbT4KRGF0ZTogVHVlLCAyNiBNYXkgMjAwOSAxNDoyMjo0MSAtMDcwMApTdWJqZWN0OiBbUEFU
-Q0hdIEluc3RhbGwgYXV0byBnZW5lcmF0ZWQgZGJ1cyBzeXN0ZW0tc2VydmljZSBmaWxlCgpTaWdu
-ZWQtb2ZmLWJ5OiBTaGFuZSBCcnlhbiA8c2hhbmUuYnJ5YW5AbGludXguaW50ZWwuY29tPgotLS0K
-IGNvbmZpZ3VyZS5hYyAgICAgICAgIHwgICAgOSArKysrKysrKysKIHNyYy9NYWtlZmlsZS5hbSAg
-ICAgIHwgICAxNiArKysrKysrKysrKysrKy0tCiBzcmMvb2Zvbm8uc2VydmljZS5pbiB8ICAgIDQg
-KysrKwogMyBmaWxlcyBjaGFuZ2VkLCAyNyBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygtKQog
-Y3JlYXRlIG1vZGUgMTAwNjQ0IHNyYy9vZm9uby5zZXJ2aWNlLmluCgpkaWZmIC0tZ2l0IGEvY29u
-ZmlndXJlLmFjIGIvY29uZmlndXJlLmFjCmluZGV4IDM2ZmVjNWYuLjAyM2YyYWIgMTAwNjQ0Ci0t
-LSBhL2NvbmZpZ3VyZS5hYworKysgYi9jb25maWd1cmUuYWMKQEAgLTczLDYgKzczLDE1IEBAIGVs
-c2UKIGZpCiBBQ19TVUJTVChEQlVTX0RBVEFESVIpCiAKK0RCVVNfU1lTVEVNX1NFUlZJQ0VESVI9
-IiR7ZGF0YWRpcn0vZGJ1cy0xL3N5c3RlbS1zZXJ2aWNlcyIKK0FDX1NVQlNUKERCVVNfU1lTVEVN
-X1NFUlZJQ0VESVIpCisKK0RCVVNfU0VSVklDRV9QUkVGSVg9Im9yZyIKK0FDX1NVQlNUKERCVVNf
-U0VSVklDRV9QUkVGSVgpCisKK0RCVVNfU0VSVklDRV9OQU1FPSIkREJVU19TRVJWSUNFX1BSRUZJ
-WC4kUEFDS0FHRSIKK0FDX1NVQlNUKERCVVNfU0VSVklDRV9OQU1FKQorCiBBQ19TVUJTVChbR0RC
-VVNfQ0ZMQUdTXSwgWyckKERCVVNfQ0ZMQUdTKSAtSSQodG9wX3NyY2RpcikvZ2RidXMnXSkKIEFD
-X1NVQlNUKFtHREJVU19MSUJTXSwgWyckKHRvcF9idWlsZGRpcikvZ2RidXMvbGliZ2RidXMubGEg
-JChEQlVTX0xJQlMpJ10pCiAKZGlmZiAtLWdpdCBhL3NyYy9NYWtlZmlsZS5hbSBiL3NyYy9NYWtl
-ZmlsZS5hbQppbmRleCAzOGM5N2JkLi5iNjY4OGJkIDEwMDY0NAotLS0gYS9zcmMvTWFrZWZpbGUu
-YW0KKysrIGIvc3JjL01ha2VmaWxlLmFtCkBAIC0zLDYgKzMsMTggQEAgaWYgREFUQUZJTEVTCiBk
-YnVzZGlyID0gQERCVVNfREFUQURJUkAKIAogZGJ1c19EQVRBID0gb2Zvbm8uY29uZgorCitzZXJ2
-aWNlZGlyID0gQERCVVNfU1lTVEVNX1NFUlZJQ0VESVJACitzZXJ2aWNlX2luX2ZpbGVzID0gb2Zv
-bm8uc2VydmljZS5pbgorc2VydmljZV9EQVRBID0gQERCVVNfU0VSVklDRV9OQU1FQC5zZXJ2aWNl
-CisKKyQoc2VydmljZV9EQVRBKTogJChzZXJ2aWNlX2luX2ZpbGVzKSBNYWtlZmlsZQorCSQoZWRp
-dCkgJDwgPiRACisKK2VkaXQgPSBzZWQgXAorCS1lICdzfEBzYmluZGlyW0BdfCQoc2JpbmRpcil8
-ZycgXAorCS1lICdzfEBzYmluX1BST0dSQU1TW0BdfCQoc2Jpbl9QUk9HUkFNUyl8ZycgXAorCS1l
-ICdzfEBEQlVTX1NFUlZJQ0VfTkFNRVtAXXwkKERCVVNfU0VSVklDRV9OQU1FKXxnJwogZW5kaWYK
-IAogc2Jpbl9QUk9HUkFNUyA9IG9mb25vZApAQCAtMjIsNyArMzQsNyBAQCBvZm9ub2RfTERGTEFH
-UyA9IC1XbCwtLWV4cG9ydC1keW5hbWljIC1XbCwtLXZlcnNpb24tc2NyaXB0PW9mb25vLnZlcgog
-CiBvZm9ub2RfREVQRU5ERU5DSUVTID0gb2Zvbm8udmVyCiAKLUNMRUFORklMRVMgPSBvZm9uby52
-ZXIgb2Zvbm8uZXhwCitDTEVBTkZJTEVTID0gb2Zvbm8udmVyIG9mb25vLmV4cCAkKHNlcnZpY2Vf
-REFUQSkKIAogaWYgTUFJTlRBSU5FUl9NT0RFCiBwbHVnaW5kaXIgPSAkKGFic190b3Bfc3JjZGly
-KS9wbHVnaW5zLy5saWJzCkBAIC0zNSw3ICs0Nyw3IEBAIEFNX0NGTEFHUyA9IEBHVEhSRUFEX0NG
-TEFHU0AgQEdMSUJfQ0ZMQUdTQCBAR0RCVVNfQ0ZMQUdTQCBAR0FUQ0hBVF9DRkxBR1NAIFwKIAog
-SU5DTFVERVMgPSAtSSQodG9wX2J1aWxkZGlyKS9pbmNsdWRlIC1JJCh0b3BfYnVpbGRkaXIpCiAK
-LUVYVFJBX0RJU1QgPSBvZm9uby5jb25mCitFWFRSQV9ESVNUID0gJChkYnVzX0RBVEEpICQoc2Vy
-dmljZV9EQVRBKSAkKHNlcnZpY2VfaW5fZmlsZXMpCiAKIE1BSU5UQUlORVJDTEVBTkZJTEVTID0g
-TWFrZWZpbGUuaW4KIApkaWZmIC0tZ2l0IGEvc3JjL29mb25vLnNlcnZpY2UuaW4gYi9zcmMvb2Zv
-bm8uc2VydmljZS5pbgpuZXcgZmlsZSBtb2RlIDEwMDY0NAppbmRleCAwMDAwMDAwLi4xNmM5YmQ2
-Ci0tLSAvZGV2L251bGwKKysrIGIvc3JjL29mb25vLnNlcnZpY2UuaW4KQEAgLTAsMCArMSw0IEBA
-CitbRC1CVVMgU2VydmljZV0KK05hbWU9QERCVVNfU0VSVklDRV9OQU1FQAorRXhlYz1Ac2JpbmRp
-ckAvQHNiaW5fUFJPR1JBTVNACitVc2VyPXJvb3QKLS0gCjEuNi4wLjQKCg==
+RnJvbSA4NTJlNTM1OTMwNzBkZDAzNDZhNzM4NWE2MmExMGMxYzA5NDZiNWMwIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiByb290IDxyb290QG1pbmp1bi5sb2NhbGRvbWFpbj4KRGF0ZTog
+VHVlLCAyNiBNYXkgMjAwOSAwODo0ODo1NyArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIG1pbm9yIGJ1
+ZyBpbiBkaWFsX2NhbGxiYWNrIGFuZCB2b2ljZWNhbGxfYnVzeQoKLS0tCiBzcmMvdm9pY2VjYWxs
+LmMgfCAgICA0ICsrLS0KIDEgZmlsZXMgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAyIGRlbGV0
+aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy92b2ljZWNhbGwuYyBiL3NyYy92b2ljZWNhbGwuYwpp
+bmRleCBiYmM3YmY1Li44MzE4MTQzIDEwMDY0NAotLS0gYS9zcmMvdm9pY2VjYWxsLmMKKysrIGIv
+c3JjL3ZvaWNlY2FsbC5jCkBAIC0xOTgsNyArMTk4LDcgQEAgc3RhdGljIERCdXNNZXNzYWdlICp2
+b2ljZWNhbGxfYnVzeShEQnVzQ29ubmVjdGlvbiAqY29ubiwKIAkJY2FsbC0+c3RhdHVzICE9IENB
+TExfU1RBVFVTX1dBSVRJTkcpCiAJCXJldHVybiBkYnVzX2dzbV9mYWlsZWQobXNnKTsKIAotCWlm
+ICghdm9pY2VjYWxscy0+b3BzLT5yZWxlYXNlX3NwZWNpZmljKQorCWlmICghdm9pY2VjYWxscy0+
+b3BzLT5zZXRfdWR1YikKIAkJcmV0dXJuIGRidXNfZ3NtX25vdF9pbXBsZW1lbnRlZChtc2cpOwog
+CiAJaWYgKHZvaWNlY2FsbHMtPmZsYWdzICYgVk9JQ0VDQUxMU19GTEFHX1BFTkRJTkcpCkBAIC0x
+NDQ0LDcgKzE0NDQsNyBAQCBzdGF0aWMgdm9pZCBkaWFsX2NhbGxiYWNrKGNvbnN0IHN0cnVjdCBv
+Zm9ub19lcnJvciAqZXJyb3IsIHZvaWQgKmRhdGEpCiAJCX0KIAogCQlvZm9ub19kZWJ1ZygiUmVn
+aXN0ZXJpbmcgbmV3IGNhbGw6ICVkIiwgY2FsbC0+aWQpOwotCQl2b2ljZWNhbGxfZGJ1c19yZWdp
+c3Rlcih2b2ljZWNhbGxfY3JlYXRlKG1vZGVtLCBjYWxsKSk7CisJCXZvaWNlY2FsbF9kYnVzX3Jl
+Z2lzdGVyKHYpOwogCiAJCWNhbGxzLT5jYWxsX2xpc3QgPSBnX3NsaXN0X2luc2VydF9zb3J0ZWQo
+Y2FsbHMtPmNhbGxfbGlzdCwgdiwKIAkJCQkJY2FsbF9jb21wYXJlKTsKLS0gCjEuNi4wLjMKCg==
 
---===============7199932139830548232==--
+--===============5585645242409280719==--
 
