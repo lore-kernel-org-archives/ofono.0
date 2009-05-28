@@ -1,32 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============3809093756332042740=="
+Content-Type: multipart/mixed; boundary="===============8698477759014855930=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: two patches for voicecall.c
-Date: Wed, 27 May 2009 10:03:24 -0500
-Message-ID: <200905271003.25070.denkenz@gmail.com>
-In-Reply-To: <61563CE63B4F854986A895DA7AD3C17709D989BF6F@pdsmsx502.ccr.corp.intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+Subject: Re: Code standards
+Date: Thu, 28 May 2009 10:13:23 +0200
+Message-ID: <354ee9be34719bf307ce077240498e6c@chewa.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3809093756332042740==
+--===============8698477759014855930==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Minjun,
 
-On Wednesday 27 May 2009 02:46:00 Li, Minjun wrote:
-> Hi Folks,
-> I have made 2 patches for minor bugs in functions of voicecall_busy and
-> dial_callback in /src/voicecall.c. The first one is to use the function
-> pointer set_udub to replace release_specific. The second one is to delete
-> the repeated calling of voicecall_create in dial_callback function, since
-> it was called in previous line in the same function.
+    Hello,
 
-Both patches have been applied upstream.  Thanks!
+> > I assume the coding styles are the "usual" ones, and the last thing I
+want is =
 
-Regards,
--Denis
+> > to start a flame war about those. But which C dialect is Ofono supposed
+to be =
 
---===============3809093756332042740==--
+> > written in? plain C89, C89 syntax + C99 library, full C99, GNU C... ?
+
+> the coding style of oFono is the same as for the Linux kernel, BlueZ,
+> ConnMan, obexd etc. So basically checkpatch.pl patches are fine.
+
+I am not wondering what the cosmetic style is. I am wondering what parts of
+the C language are used. Namely many (most?) C programmers claim to use
+ANSI C a.k.a. C89 even though there are using lots of GNU C and/or C99
+extensions. Inline functions, C++-styled comments, non-constant variable
+initializers, variadic macros, named initializers for structs and
+fixed-size integer types and (v)snprintf() are perhaps the most commonly
+used C99 features. Restricted pointers, variable-sized arrays, mixed
+variables and code (including C++-style for() loops), new printf() format
+modifiers (e.g. %zu for size_t), booleans and compound initializers are
+arguably more "controversial" or less commonly used, but nevertheless
+standard.
+I tend pretty much all of them (and avoid GNU-specifics like a :? b)
+because I don't care about legacy compilers like gcc 2.x or MSVC, but I
+don't want to start a religion war.
+
+A related issue is how careful/pedantic use of integer types should be.
+Kernel core or glib tend to be sloppy about int vs (s)size_t.
+
+> When using ./bootstrap-configure is used it enables a certain set of GCC
+> warnings and it should be warnings free. So that is good measurement for
+> the style details ;)
+
+As a matter of fact, current HEAD is failing here with gcc 4.3:
+../../src/voicecall.c: In function =E2=80=98ofono_voicecall_notify=E2=80=99:
+../../src/voicecall.c:1239: error: =E2=80=98v=E2=80=99 may be used uninitia=
+lized in
+this function
+
+-- =
+
+R=C3=A9mi
+
+
+--===============8698477759014855930==--
 
