@@ -1,75 +1,156 @@
-Content-Type: multipart/mixed; boundary="===============3670232802201335988=="
+Content-Type: multipart/mixed; boundary="===============6465716443634668460=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Code standards
-Date: Thu, 28 May 2009 10:08:12 -0500
-Message-ID: <200905281008.13228.denkenz@gmail.com>
-In-Reply-To: <354ee9be34719bf307ce077240498e6c@chewa.net>
+From: Li, Minjun <minjun.li@intel.com>
+Subject: add a common removing and unregistering exit function for interfaces
+ when manager_free and manager_destroy function is called
+Date: Tue, 02 Jun 2009 09:18:23 +0800
+Message-ID: <61563CE63B4F854986A895DA7AD3C17709D9919BA4@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3670232802201335988==
+--===============6465716443634668460==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Folks,
+Because I found that manager_destroy function is lack of some exit function=
+ calls comparing to manager_free function, I add a common removing and unre=
+gistering exit function for interfaces when manager_free and manager_destro=
+y function is called.
 
-> I am not wondering what the cosmetic style is. I am wondering what parts =
-of
-> the C language are used. Namely many (most?) C programmers claim to use
-> ANSI C a.k.a. C89 even though there are using lots of GNU C and/or C99
-> extensions. Inline functions, C++-styled comments, non-constant variable
-> initializers, variadic macros, named initializers for structs and
-> fixed-size integer types and (v)snprintf() are perhaps the most commonly
-
-There is no formal written down standard.  Do keep in mind that oFono is a =
-
-core linux daemon, hence we don't care about compilers other than gcc.  Tha=
-t =
-
-means we use lots of _GNU_SOURCE and gcc extensions, especially when they m=
-ake =
-
-the code simpler and easier to follow.
-
-As a simple rule: if a certain style element has been used in oFono before,=
- it =
-
-is safe to assume it can be used again.  However, the maintainers have the =
-
-final say on coding style issues.
-
-> used C99 features. Restricted pointers, variable-sized arrays, mixed
-> variables and code (including C++-style for() loops), new printf() format
-> modifiers (e.g. %zu for size_t), booleans and compound initializers are
-> arguably more "controversial" or less commonly used, but nevertheless
-> standard.
-> I tend pretty much all of them (and avoid GNU-specifics like a :? b)
-> because I don't care about legacy compilers like gcc 2.x or MSVC, but I
-> don't want to start a religion war.
->
-> A related issue is how careful/pedantic use of integer types should be.
-> Kernel core or glib tend to be sloppy about int vs (s)size_t.
->
-> > When using ./bootstrap-configure is used it enables a certain set of GCC
-> > warnings and it should be warnings free. So that is good measurement for
-> > the style details ;)
->
-> As a matter of fact, current HEAD is failing here with gcc 4.3:
-> ../../src/voicecall.c: In function =E2=80=98ofono_voicecall_notify=E2=80=
-=99:
-> ../../src/voicecall.c:1239: error: =E2=80=98v=E2=80=99 may be used uninit=
-ialized in
-> this function
-
-This was not being reported on gcc 4.3.2, but has been fixed upstream =
-
-nevertheless.
-
-Regards,
--Denis
+Best Regards,
+Minjun
 
 
---===============3670232802201335988==--
+--===============6465716443634668460==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxucz0iaHR0
+cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPE1FVEEgSFRUUC1FUVVJVj0i
+Q29udGVudC1UeXBlIiBDT05URU5UPSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0
+YSBuYW1lPUdlbmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMSAoZmlsdGVyZWQgbWVk
+aXVtKSI+CjxzdHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJ
+e2ZvbnQtZmFtaWx5OiYjMjM0MzU7JiMyMDMwNzs7CglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEg
+MSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OiJcQCYjMjM0MzU7JiMyMDMwNzsiOwoJcGFu
+b3NlLTE6MiAxIDYgMCAzIDEgMSAxIDEgMTt9CiAvKiBTdHlsZSBEZWZpbml0aW9ucyAqLwogcC5N
+c29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowY207CgltYXJn
+aW4tYm90dG9tOi4wMDAxcHQ7Cgl0ZXh0LWFsaWduOmp1c3RpZnk7Cgl0ZXh0LWp1c3RpZnk6aW50
+ZXItaWRlb2dyYXBoOwoJZm9udC1zaXplOjEwLjVwdDsKCWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcg
+Um9tYW4iO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRl
+Y29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2Vk
+Cgl7Y29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxT
+dHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OkFy
+aWFsOwoJY29sb3I6d2luZG93dGV4dDt9CiAvKiBQYWdlIERlZmluaXRpb25zICovCiBAcGFnZSBT
+ZWN0aW9uMQoJe3NpemU6NTk1LjNwdCA4NDEuOXB0OwoJbWFyZ2luOjcyLjBwdCA5MC4wcHQgNzIu
+MHB0IDkwLjBwdDsKCWxheW91dC1ncmlkOjE1LjZwdDt9CmRpdi5TZWN0aW9uMQoJe3BhZ2U6U2Vj
+dGlvbjE7fQotLT4KPC9zdHlsZT4KCjwvaGVhZD4KCjxib2R5IGxhbmc9WkgtQ04gbGluaz1ibHVl
+IHZsaW5rPXB1cnBsZSBzdHlsZT0ndGV4dC1qdXN0aWZ5LXRyaW06cHVuY3R1YXRpb24nPgoKPGRp
+diBjbGFzcz1TZWN0aW9uMSBzdHlsZT0nbGF5b3V0LWdyaWQ6MTUuNnB0Jz4KCjxwIGNsYXNzPU1z
+b05vcm1hbD48Zm9udCBzaXplPTEgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdm
+b250LXNpemU6CjkuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsJz5IaSBGb2xrcyw8bzpwPjwvbzpwPjwv
+c3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MSBmYWNlPUFy
+aWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToKOS4wcHQ7Zm9udC1mYW1pbHk6
+QXJpYWwnPkJlY2F1c2UgSSBmb3VuZCB0aGF0IG1hbmFnZXJfZGVzdHJveSBmdW5jdGlvbiBpcyBs
+YWNrCm9mIHNvbWUgZXhpdCBmdW5jdGlvbiBjYWxscyBjb21wYXJpbmcgdG8gbWFuYWdlcl9mcmVl
+IGZ1bmN0aW9uLCBJIGFkZCBhIGNvbW1vbiByZW1vdmluZwphbmQgdW5yZWdpc3RlcmluZyBleGl0
+IGZ1bmN0aW9uIGZvciBpbnRlcmZhY2VzIHdoZW4gbWFuYWdlcl9mcmVlIGFuZAptYW5hZ2VyX2Rl
+c3Ryb3kgZnVuY3Rpb24gaXMgY2FsbGVkLjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cgo8
+cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0xIGZhY2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1V
+UyBzdHlsZT0nZm9udC1zaXplOgo5LjBwdDtmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8
+L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIg
+ZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48c3BhbiBsYW5nPUVOLVVTCnN0eWxlPSdmb250LXNpemU6
+MTAuMHB0Jz5CZXN0IFJlZ2FyZHMsPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNs
+YXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48c3BhbiBs
+YW5nPUVOLVVTCnN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz5NaW5qdW48L3NwYW4+PC9mb250Pjxm
+b250IHNpemU9MyBmYWNlPSYjMjM0MzU7JiMyMDMwNzs+PHNwYW4KbGFuZz1FTi1VUyBzdHlsZT0n
+Zm9udC1zaXplOjEyLjBwdDtmb250LWZhbWlseTomIzIzNDM1OyYjMjAzMDc7Jz48bzpwPjwvbzpw
+Pjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPGRpdj4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXpl
+PTIgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48c3BhbiBsYW5nPUVOLVVTCnN0eWxlPSdmb250LXNp
+emU6MTAuNXB0Jz4mbmJzcDs8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPC9kaXY+Cgo8
+L2Rpdj4KCjwvYm9keT4KCjwvaHRtbD4K
+
+--===============6465716443634668460==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Adding-a-remove-and-unregister-function-for-interfac.patch"
+
+RnJvbSA0NDNlMmQ5MmRhMmQ3NDZkZGQzODU5ZjgzNjVlYjhiMTU1MTI3ZmRjIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBNaW5qdW4gTGkgPG1pbmp1bi5saUBpbnRlbC5jb20+CkRhdGU6
+IE1vbiwgMSBKdW4gMjAwOSAwOTowOTo1NCArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIEFkZGluZyBh
+IHJlbW92ZSBhbmQgdW5yZWdpc3RlciBmdW5jdGlvbiBmb3IgaW50ZXJmYWNlcwoKLS0tCiBkcml2
+ZXJzL2F0bW9kZW0vYXRtb2RlbS5jICAgICAgICAgICAgICB8ICAgMzcgKysrKysrKysrKysrKysr
+KystLS0tLS0tLS0tLS0tLQogMSBmaWxlcyBjaGFuZ2VkLCAyMCBpbnNlcnRpb25zKCspLCAxNyBk
+ZWxldGlvbnMoLSkKIG1vZGUgY2hhbmdlIDEwMDY0NCA9PiAxMDA3NTUgZHJpdmVycy9hdG1vZGVt
+L2F0LmgKIG1vZGUgY2hhbmdlIDEwMDY0NCA9PiAxMDA3NTUgZHJpdmVycy9hdG1vZGVtL2F0bW9k
+ZW0uYwogbW9kZSBjaGFuZ2UgMTAwNjQ0ID0+IDEwMDc1NSBkcml2ZXJzL2F0bW9kZW0vY2FsbC1i
+YXJyaW5nLmMKIG1vZGUgY2hhbmdlIDEwMDY0NCA9PiAxMDA3NTUgZHJpdmVycy9hdG1vZGVtL2Nh
+bGwtZm9yd2FyZGluZy5jCiBtb2RlIGNoYW5nZSAxMDA2NDQgPT4gMTAwNzU1IGRyaXZlcnMvYXRt
+b2RlbS9jYWxsLW1ldGVyLmMKIG1vZGUgY2hhbmdlIDEwMDY0NCA9PiAxMDA3NTUgZHJpdmVycy9h
+dG1vZGVtL2NhbGwtc2V0dGluZ3MuYwogbW9kZSBjaGFuZ2UgMTAwNjQ0ID0+IDEwMDc1NSBkcml2
+ZXJzL2F0bW9kZW0vbmV0d29yay1yZWdpc3RyYXRpb24uYwogbW9kZSBjaGFuZ2UgMTAwNjQ0ID0+
+IDEwMDc1NSBkcml2ZXJzL2F0bW9kZW0vc2Vzc2lvbi5jCiBtb2RlIGNoYW5nZSAxMDA2NDQgPT4g
+MTAwNzU1IGRyaXZlcnMvYXRtb2RlbS9zZXNzaW9uLmgKIG1vZGUgY2hhbmdlIDEwMDY0NCA9PiAx
+MDA3NTUgZHJpdmVycy9hdG1vZGVtL3NpbS5jCiBtb2RlIGNoYW5nZSAxMDA2NDQgPT4gMTAwNzU1
+IGRyaXZlcnMvYXRtb2RlbS9zbXMuYwogbW9kZSBjaGFuZ2UgMTAwNjQ0ID0+IDEwMDc1NSBkcml2
+ZXJzL2F0bW9kZW0vdXNzZC5jCiBtb2RlIGNoYW5nZSAxMDA2NDQgPT4gMTAwNzU1IGRyaXZlcnMv
+YXRtb2RlbS92b2ljZWNhbGwuYwoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS9hdC5oIGIv
+ZHJpdmVycy9hdG1vZGVtL2F0LmgKb2xkIG1vZGUgMTAwNjQ0Cm5ldyBtb2RlIDEwMDc1NQpkaWZm
+IC0tZ2l0IGEvZHJpdmVycy9hdG1vZGVtL2F0bW9kZW0uYyBiL2RyaXZlcnMvYXRtb2RlbS9hdG1v
+ZGVtLmMKb2xkIG1vZGUgMTAwNjQ0Cm5ldyBtb2RlIDEwMDc1NQppbmRleCAyZjFlNDMwLi42ZGYx
+NTk4Ci0tLSBhL2RyaXZlcnMvYXRtb2RlbS9hdG1vZGVtLmMKKysrIGIvZHJpdmVycy9hdG1vZGVt
+L2F0bW9kZW0uYwpAQCAtOTAsMTkgKzkwLDEwIEBAIHN0YXRpYyB2b2lkIGF0X2Rlc3Ryb3koc3Ry
+dWN0IGF0X2RhdGEgKmF0KQogCWdfZnJlZShhdCk7CiB9CiAKLXN0YXRpYyB2b2lkIG1hbmFnZXJf
+ZnJlZShncG9pbnRlciB1c2VyKQorc3RhdGljIHZvaWQgZm9vX2ZyZWUoc3RydWN0IGF0X2RhdGEg
+KmF0KQogewotCUdTTGlzdCAqbDsKLQotCWZvciAobCA9IGdfcGVuZGluZzsgbDsgbCA9IGwtPm5l
+eHQpCi0JCWdfaW9fY2hhbm5lbF91bnJlZihsLT5kYXRhKTsKLQotCWdfc2xpc3RfZnJlZShnX3Bl
+bmRpbmcpOwotCi0JZm9yIChsID0gZ19zZXNzaW9uczsgbDsgbCA9IGwtPm5leHQpIHsKLQkJc3Ry
+dWN0IGF0X2RhdGEgKmF0ID0gbC0+ZGF0YTsKLQotCQlhdF9zbXNfZXhpdChhdC0+bW9kZW0pOwor
+CWlmIChhdCl7CisJICAgIGF0X3Ntc19leGl0KGF0LT5tb2RlbSk7CiAJCWF0X2NhbGxfZm9yd2Fy
+ZGluZ19leGl0KGF0LT5tb2RlbSk7CiAJCWF0X2NhbGxfc2V0dGluZ3NfZXhpdChhdC0+bW9kZW0p
+OwogCQlhdF9uZXR3b3JrX3JlZ2lzdHJhdGlvbl9leGl0KGF0LT5tb2RlbSk7CkBAIC0xMTIsOSAr
+MTAzLDIzIEBAIHN0YXRpYyB2b2lkIG1hbmFnZXJfZnJlZShncG9pbnRlciB1c2VyKQogCQlhdF91
+c3NkX2V4aXQoYXQtPm1vZGVtKTsKIAkJYXRfc2ltX2V4aXQoYXQtPm1vZGVtKTsKIAkJb2Zvbm9f
+bW9kZW1fdW5yZWdpc3RlcihhdC0+bW9kZW0pOwotCiAJCWF0X2Rlc3Ryb3koYXQpOwogCX0KK30K
+Kworc3RhdGljIHZvaWQgbWFuYWdlcl9mcmVlKGdwb2ludGVyIHVzZXIpCit7CisJR1NMaXN0ICps
+OworCisJZm9yIChsID0gZ19wZW5kaW5nOyBsOyBsID0gbC0+bmV4dCkKKwkJZ19pb19jaGFubmVs
+X3VucmVmKGwtPmRhdGEpOworCisJZ19zbGlzdF9mcmVlKGdfcGVuZGluZyk7CisKKwlmb3IgKGwg
+PSBnX3Nlc3Npb25zOyBsOyBsID0gbC0+bmV4dCkgeworCQlzdHJ1Y3QgYXRfZGF0YSAqYXQgPSBs
+LT5kYXRhOworCQlmb29fZnJlZShhdCk7CisJfQogCiAJZ19zbGlzdF9mcmVlKGdfc2Vzc2lvbnMp
+OwogfQpAQCAtNDIxLDEyICs0MjYsMTAgQEAgc3RhdGljIERCdXNNZXNzYWdlICptYW5hZ2VyX2Rl
+c3Ryb3koREJ1c0Nvbm5lY3Rpb24gKmNvbm4sIERCdXNNZXNzYWdlICptc2csCiAJCWlmIChzdHJj
+bXAoYXQtPm1vZGVtLT5wYXRoLCBwYXRoKSkKIAkJCWNvbnRpbnVlOwogCi0JCWF0X25ldHdvcmtf
+cmVnaXN0cmF0aW9uX2V4aXQoYXQtPm1vZGVtKTsKLQkJYXRfdm9pY2VjYWxsX2V4aXQoYXQtPm1v
+ZGVtKTsKLQkJb2Zvbm9fbW9kZW1fdW5yZWdpc3RlcihhdC0+bW9kZW0pOworCQlmb29fZnJlZShh
+dCk7CiAKIAkJZ19zZXNzaW9ucyA9IGdfc2xpc3RfcmVtb3ZlKGdfc2Vzc2lvbnMsIGF0KTsKLQkJ
+YXRfZGVzdHJveShhdCk7CisJCQogCiAJCW1vZGVtX2xpc3QoJm1vZGVtcyk7CiAJCWRidXNfZ3Nt
+X3NpZ25hbF9hcnJheV9wcm9wZXJ0eV9jaGFuZ2VkKGNvbm4sICIvIiwKZGlmZiAtLWdpdCBhL2Ry
+aXZlcnMvYXRtb2RlbS9jYWxsLWJhcnJpbmcuYyBiL2RyaXZlcnMvYXRtb2RlbS9jYWxsLWJhcnJp
+bmcuYwpvbGQgbW9kZSAxMDA2NDQKbmV3IG1vZGUgMTAwNzU1CmRpZmYgLS1naXQgYS9kcml2ZXJz
+L2F0bW9kZW0vY2FsbC1mb3J3YXJkaW5nLmMgYi9kcml2ZXJzL2F0bW9kZW0vY2FsbC1mb3J3YXJk
+aW5nLmMKb2xkIG1vZGUgMTAwNjQ0Cm5ldyBtb2RlIDEwMDc1NQpkaWZmIC0tZ2l0IGEvZHJpdmVy
+cy9hdG1vZGVtL2NhbGwtbWV0ZXIuYyBiL2RyaXZlcnMvYXRtb2RlbS9jYWxsLW1ldGVyLmMKb2xk
+IG1vZGUgMTAwNjQ0Cm5ldyBtb2RlIDEwMDc1NQpkaWZmIC0tZ2l0IGEvZHJpdmVycy9hdG1vZGVt
+L2NhbGwtc2V0dGluZ3MuYyBiL2RyaXZlcnMvYXRtb2RlbS9jYWxsLXNldHRpbmdzLmMKb2xkIG1v
+ZGUgMTAwNjQ0Cm5ldyBtb2RlIDEwMDc1NQpkaWZmIC0tZ2l0IGEvZHJpdmVycy9hdG1vZGVtL25l
+dHdvcmstcmVnaXN0cmF0aW9uLmMgYi9kcml2ZXJzL2F0bW9kZW0vbmV0d29yay1yZWdpc3RyYXRp
+b24uYwpvbGQgbW9kZSAxMDA2NDQKbmV3IG1vZGUgMTAwNzU1CmRpZmYgLS1naXQgYS9kcml2ZXJz
+L2F0bW9kZW0vc2Vzc2lvbi5jIGIvZHJpdmVycy9hdG1vZGVtL3Nlc3Npb24uYwpvbGQgbW9kZSAx
+MDA2NDQKbmV3IG1vZGUgMTAwNzU1CmRpZmYgLS1naXQgYS9kcml2ZXJzL2F0bW9kZW0vc2Vzc2lv
+bi5oIGIvZHJpdmVycy9hdG1vZGVtL3Nlc3Npb24uaApvbGQgbW9kZSAxMDA2NDQKbmV3IG1vZGUg
+MTAwNzU1CmRpZmYgLS1naXQgYS9kcml2ZXJzL2F0bW9kZW0vc2ltLmMgYi9kcml2ZXJzL2F0bW9k
+ZW0vc2ltLmMKb2xkIG1vZGUgMTAwNjQ0Cm5ldyBtb2RlIDEwMDc1NQpkaWZmIC0tZ2l0IGEvZHJp
+dmVycy9hdG1vZGVtL3Ntcy5jIGIvZHJpdmVycy9hdG1vZGVtL3Ntcy5jCm9sZCBtb2RlIDEwMDY0
+NApuZXcgbW9kZSAxMDA3NTUKZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS91c3NkLmMgYi9k
+cml2ZXJzL2F0bW9kZW0vdXNzZC5jCm9sZCBtb2RlIDEwMDY0NApuZXcgbW9kZSAxMDA3NTUKZGlm
+ZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS92b2ljZWNhbGwuYyBiL2RyaXZlcnMvYXRtb2RlbS92
+b2ljZWNhbGwuYwpvbGQgbW9kZSAxMDA2NDQKbmV3IG1vZGUgMTAwNzU1Ci0tIAoxLjYuMC4zCgo=
+
+--===============6465716443634668460==--
 
