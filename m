@@ -1,36 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============7028525216213969378=="
+Content-Type: multipart/mixed; boundary="===============1516828219340070451=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: failed to start ofonod....
-Date: Thu, 11 Jun 2009 12:21:18 +0300
-Message-ID: <9abb677a75928bf307cc854d4aabff72@localhost>
-In-Reply-To: <a0b5f4b30906110055j38ae0005t86f114ead305d8da@mail.gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: MNC/MCC as string?
+Date: Thu, 11 Jun 2009 13:46:55 +0200
+Message-ID: <1244720815.27363.10.camel@violet>
+In-Reply-To: <9b1cac640906101041g48ca9b8dv1b9f50d0c843381d@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7028525216213969378==
+--===============1516828219340070451==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Denis,
 
-On Thu, 11 Jun 2009 15:55:58 +0800, WuYongbo <wilbur.unail@gmail.com>
-wrote:
-> *$ sudo ofonod  -n -d
-> ofonod[25234]: oFono version 0.0
-> ofonod[25234]: Unable to hop onto D-Bus: Connection ":1.646" is not
-allowed
-> to own the service "org.ofono" due to security policies in the
-> configuration
-> file
-> ofonod[25234]: Exit
+> I understand perfectly.  But remember, oFono does not expose the user
+> to such details.  Manual registration is accomplished by using
+> Register() method (with no arguments) of the NetworkOperator
+> interface.  The internal storage representation is never exposed.
+> Thus it doesn't matter whether internally it is a string or short,
+> etc.
+> =
 
-Try:
+> The attributes are really only for informational purposes only.  The
+> user would not base his decision on the mcc/mnc, but on the operator
+> name.  =
 
-$ sudo /etc/init.d/dbus reload
+> =
 
-Cheers,
-Aki
+> So before we start changing the D-Bus APIs, we need to answer these
+> two questions:
+>   - Can a country/administrative domain have both 001 and 01 MNCs such
+> that the use of string for the MNC is actually necessary.
+>   - What does the user find easier to use, a string or a short?
 
---===============7028525216213969378==--
+I wasn't aware of this and so it might be better to just expose these as
+an operator id string. So we might not even split into MCC/MNC at all
+since it is meaning less anyway.
+
+That said, we do want some exposure of these values since it is an easy
+way to determine geo location help and switch timezones etc. However I
+am now thinking that me might just add a Country property and do the
+proper translation inside oFono. Since we mostly care about these ones
+most.
+
+Regards
+
+Marcel
+
+
+
+--===============1516828219340070451==--
 
