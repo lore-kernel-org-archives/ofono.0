@@ -1,36 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============4286796349652915931=="
+Content-Type: multipart/mixed; boundary="===============3761793738812526119=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: MNC/MCC as string?
-Date: Thu, 11 Jun 2009 21:10:31 +0300
-Message-ID: <ed18d858e2e6705f94676a5798fb0d2c@localhost>
-In-Reply-To: <1244720815.27363.10.camel@violet>
+Date: Thu, 11 Jun 2009 13:24:16 -0500
+Message-ID: <200906111324.16685.denkenz@gmail.com>
+In-Reply-To: <a26fd138dc308308288592371b2202e2@localhost>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4286796349652915931==
+--===============3761793738812526119==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Aki,
 
-On Thu, 11 Jun 2009 13:46:55 +0200, Marcel Holtmann <marcel@holtmann.org>
-wrote:
-> That said, we do want some exposure of these values since it is an easy
-> way to determine geo location help and switch timezones etc. =
+On Thursday 11 June 2009 13:00:48 Aki Niemi wrote:
+> On Thu, 11 Jun 2009 09:32:38 -0500, Denis Kenzior <denkenz@gmail.com>
+>
+> wrote:
+> > About the only thing that MCC/MNC is useful for is to display it during
+> > manual
+> > operator selection.
+>
+> That's not true. In fact, I'd say manual operator selection is just about
+> the last
+> place where the codes should be displayed.
 
+The point is MCCMNC is not something the user should realy be exposed to.  =
+It =
 
-For geolocation, cell ID and LAC are more useful, especially coupled with
-information on neighboring cells, RTT measurements, etc. We will probably
-need to expose this information some way.
+is useful to dis-ambiguate the carrier by Country when you're in a border =
 
-Also, typically networks provide date-time, timezone and DST information
-via NITZ [1].
+area, but that is about it. Country property can do this just as well.
 
-Cheers,
-Aki
+>
+> > MCC/MNC is not helpful at all for countries like U.S.
+> > with 4+ timezones and the same carrier id across all of them.  A country
+> > property would work just as well for this.
+>
+> For geolocation help, sure, but there are other places where MNC/MCC are
+> used as keys to databases containing operator-specific information, like
+> default Internet APN names and such.
+>
 
-[1] http://en.wikipedia.org/wiki/NITZ
+Then lets design this into oFono instead of exposing an obscure attribute.
 
---===============4286796349652915931==--
+Regards,
+-Denis
+
+--===============3761793738812526119==--
 
