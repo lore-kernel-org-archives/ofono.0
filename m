@@ -1,43 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============0813789315150323286=="
+Content-Type: multipart/mixed; boundary="===============6205768697139735949=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: failed to start ofonod....
-Date: Thu, 11 Jun 2009 13:47:41 +0200
-Message-ID: <1244720861.27363.11.camel@violet>
-In-Reply-To: <9abb677a75928bf307cc854d4aabff72@localhost>
+From: Jan Luebbe <jluebbe@lasnet.de>
+Subject: Re: MNC/MCC as string?
+Date: Thu, 11 Jun 2009 16:04:38 +0200
+Message-ID: <1244729078.5792.187.camel@polaris>
+In-Reply-To: <1244720815.27363.10.camel@violet>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0813789315150323286==
+--===============6205768697139735949==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
-
-> > *$ sudo ofonod  -n -d
-> > ofonod[25234]: oFono version 0.0
-> > ofonod[25234]: Unable to hop onto D-Bus: Connection ":1.646" is not
-> allowed
-> > to own the service "org.ofono" due to security policies in the
-> > configuration
-> > file
-> > ofonod[25234]: Exit
+On Thu, 2009-06-11 at 13:46 +0200, Marcel Holtmann wrote:
+> Hi Denis,
 > =
 
-> Try:
+> > The attributes are really only for informational purposes only.  The
+> > user would not base his decision on the mcc/mnc, but on the operator
+> > name.  =
+
+> > =
+
+> > So before we start changing the D-Bus APIs, we need to answer these
+> > two questions:
+> >   - Can a country/administrative domain have both 001 and 01 MNCs such
+> > that the use of string for the MNC is actually necessary.
+> >   - What does the user find easier to use, a string or a short?
 > =
 
-> $ sudo /etc/init.d/dbus reload
+> I wasn't aware of this and so it might be better to just expose these as
+> an operator id string. So we might not even split into MCC/MNC at all
+> since it is meaning less anyway.
 
-if you need that, then your system is messed up. D-Bus should use
-inotify and auto-detect policy changes and reload them.
+This is probably the way to go...
 
-Regards
+> That said, we do want some exposure of these values since it is an easy
+> way to determine geo location help and switch timezones etc. However I
+> am now thinking that me might just add a Country property and do the
+> proper translation inside oFono. Since we mostly care about these ones
+> most.
 
-Marcel
+While inferring the country from MCC sounds nice, there are some corner
+cases where is causes problems:
+
+Digicel Bermuda uses 310/38 (or 310/038?), 310 is the US MCC:
+http://dougtoombs.com/2008/07/23/bermuda-the-iphone-and-att-beware-the-data=
+-roaming/
+
+Montenegro used MCC 220 (Serbia) before it switched to MCC 297.
+
+Wikipedia has a list:
+http://en.wikipedia.org/wiki/Mobile_Network_Code
+
+If you plan to ship such a list with ofono, maybe
+http://git.freesmartphone.org/?p=3Dframework.git;a=3Dblob;f=3Detc/freesmart=
+phone/ogsmd/networks.tab
+can be useful for you. OTOH, Nokia probably has a better list.
+
+Jan
 
 
-
---===============0813789315150323286==--
+--===============6205768697139735949==--
 
