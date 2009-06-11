@@ -1,66 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============6205768697139735949=="
+Content-Type: multipart/mixed; boundary="===============4113969489598753773=="
 MIME-Version: 1.0
-From: Jan Luebbe <jluebbe@lasnet.de>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: MNC/MCC as string?
-Date: Thu, 11 Jun 2009 16:04:38 +0200
-Message-ID: <1244729078.5792.187.camel@polaris>
+Date: Thu, 11 Jun 2009 09:32:38 -0500
+Message-ID: <200906110932.39143.denkenz@gmail.com>
 In-Reply-To: <1244720815.27363.10.camel@violet>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6205768697139735949==
+--===============4113969489598753773==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2009-06-11 at 13:46 +0200, Marcel Holtmann wrote:
-> Hi Denis,
-> =
-
-> > The attributes are really only for informational purposes only.  The
-> > user would not base his decision on the mcc/mnc, but on the operator
-> > name.  =
-
-> > =
-
-> > So before we start changing the D-Bus APIs, we need to answer these
-> > two questions:
-> >   - Can a country/administrative domain have both 001 and 01 MNCs such
-> > that the use of string for the MNC is actually necessary.
-> >   - What does the user find easier to use, a string or a short?
-> =
+Hi Marcel,
 
 > I wasn't aware of this and so it might be better to just expose these as
 > an operator id string. So we might not even split into MCC/MNC at all
 > since it is meaning less anyway.
 
-This is probably the way to go...
+I'm tending to agree, which is why I wanted to start the conversation.  =
 
+
+By the way, just so that we're all clear, here's the relevant quote from th=
+e =
+
+standard:
+
+"
+MCC, Mobile country code (octet 2 and 3) =
+
+The MCC field is coded as in ITU-T Rec. E212, Annex A. =
+
+
+MNC, Mobile network code (octet 3 bits 5 to 8, octet 4)  =
+
+The coding of this field is the responsibility of each administration but B=
+CD =
+
+coding shall be used. The MNC shall consist of 2 or 3 digits. For PCS 1900 =
+for =
+
+NA, Federal regulation mandates that a 3-digit MNC shall be used. However a =
+
+network operator may decide to use only two digits in the MNC in the LAI ov=
+er =
+
+the radio interface. In this case, bits 5 to 8 of octet 3 shall be coded as =
+
+"1111". Mobile equipment shall accept LAI coded in such a way.
+"
+
+>
 > That said, we do want some exposure of these values since it is an easy
 > way to determine geo location help and switch timezones etc. However I
 > am now thinking that me might just add a Country property and do the
 > proper translation inside oFono. Since we mostly care about these ones
 > most.
+>
 
-While inferring the country from MCC sounds nice, there are some corner
-cases where is causes problems:
+About the only thing that MCC/MNC is useful for is to display it during man=
+ual =
 
-Digicel Bermuda uses 310/38 (or 310/038?), 310 is the US MCC:
-http://dougtoombs.com/2008/07/23/bermuda-the-iphone-and-att-beware-the-data=
--roaming/
+operator selection.  MCC/MNC is not helpful at all for countries like U.S. =
 
-Montenegro used MCC 220 (Serbia) before it switched to MCC 297.
+with 4+ timezones and the same carrier id across all of them.  A country =
 
-Wikipedia has a list:
-http://en.wikipedia.org/wiki/Mobile_Network_Code
+property would work just as well for this.  What standard do we want to use =
 
-If you plan to ship such a list with ofono, maybe
-http://git.freesmartphone.org/?p=3Dframework.git;a=3Dblob;f=3Detc/freesmart=
-phone/ogsmd/networks.tab
-can be useful for you. OTOH, Nokia probably has a better list.
+here? ITU 212? ISO 3166? or E164?
 
-Jan
+Any objections from actually removing the MCC/MNC Properties?
 
+Regards,
+-Denis
 
---===============6205768697139735949==--
+--===============4113969489598753773==--
 
