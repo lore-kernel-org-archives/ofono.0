@@ -1,53 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3761793738812526119=="
+Content-Type: multipart/mixed; boundary="===============9218261858036702975=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Aki Niemi <aki@protocolpolice.com>
 Subject: Re: MNC/MCC as string?
-Date: Thu, 11 Jun 2009 13:24:16 -0500
-Message-ID: <200906111324.16685.denkenz@gmail.com>
-In-Reply-To: <a26fd138dc308308288592371b2202e2@localhost>
+Date: Thu, 11 Jun 2009 22:02:24 +0300
+Message-ID: <a661a52193386f37e83d540de4099e6a@localhost>
+In-Reply-To: <1244743827.27363.53.camel@violet>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3761793738812526119==
+--===============9218261858036702975==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Aki,
 
-On Thursday 11 June 2009 13:00:48 Aki Niemi wrote:
-> On Thu, 11 Jun 2009 09:32:38 -0500, Denis Kenzior <denkenz@gmail.com>
->
-> wrote:
-> > About the only thing that MCC/MNC is useful for is to display it during
-> > manual
-> > operator selection.
->
-> That's not true. In fact, I'd say manual operator selection is just about
-> the last
-> place where the codes should be displayed.
+On Thu, 11 Jun 2009 20:10:27 +0200, Marcel Holtmann <marcel@holtmann.org>
+wrote:
+>> For geolocation help, sure, but there are other places where MNC/MCC are
+>> used as keys to databases containing operator-specific information, like
+>> default Internet APN names and such.
+> =
 
-The point is MCCMNC is not something the user should realy be exposed to.  =
-It =
+> shouldn't we just integrate that database into oFono directly or as
+> something like ofono-info.git that will be installed along with (for
+> easier updates).
 
-is useful to dis-ambiguate the carrier by Country when you're in a border =
+This particular database of default APN names, maybe, although I think it's
+really oFono users like Connman that should integrate with that
+information. =
 
-area, but that is about it. Country property can do this just as well.
 
->
-> > MCC/MNC is not helpful at all for countries like U.S.
-> > with 4+ timezones and the same carrier id across all of them.  A country
-> > property would work just as well for this.
->
-> For geolocation help, sure, but there are other places where MNC/MCC are
-> used as keys to databases containing operator-specific information, like
-> default Internet APN names and such.
->
+However, this wouldn't be the only database ever, so we would still need a
+way to reliably identify a specific operator.
 
-Then lets design this into oFono instead of exposing an obscure attribute.
+Cheers,
+Aki
 
-Regards,
--Denis
-
---===============3761793738812526119==--
+--===============9218261858036702975==--
 
