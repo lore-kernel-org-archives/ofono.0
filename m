@@ -1,49 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============0937627890666078744=="
+Content-Type: multipart/mixed; boundary="===============7794660831250518410=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: MNC/MCC as string?
-Date: Thu, 11 Jun 2009 15:08:08 -0500
-Message-ID: <200906111508.08653.denkenz@gmail.com>
-In-Reply-To: <cb0e8d6f9acaa0c755e042ab8dda6dbd@localhost>
+Date: Thu, 11 Jun 2009 22:33:05 +0200
+Message-ID: <1244752385.27363.67.camel@violet>
+In-Reply-To: <200906112258.12298.remi@remlab.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0937627890666078744==
+--===============7794660831250518410==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Aki,
+Hi Remi,
 
-On Thursday 11 June 2009 14:38:49 Aki Niemi wrote:
-> On Thu, 11 Jun 2009 21:18:02 +0200, Marcel Holtmann <marcel@holtmann.or=
-g>
->
-> wrote:
-> >> However, this wouldn't be the only database ever, so we would still ne=
-ed
-> >> a
-> >> way to reliably identify a specific operator.
+> > > >> For geolocation help, sure, but there are other places where MNC/M=
+CC
+> > > >> are used as keys to databases containing operator-specific
+> > > >> information, like default Internet APN names and such.
+> > > >
+> > > > shouldn't we just integrate that database into oFono directly or as
+> > > > something like ofono-info.git that will be installed along with (for
+> > > > easier updates).
+> > >
+> > > This particular database of default APN names, maybe, although I think
+> > > it's really oFono users like Connman that should integrate with that
+> > > information.
+> > >
+> > > However, this wouldn't be the only database ever, so we would still n=
+eed
+> > > a way to reliably identify a specific operator.
 > >
-> > if we are unclear about the format and the users at this moment,
->
-> The format should be 's' in D-Bus and in struct ofono_network_operator:
->
->    char mnc[4];
->    char mcc[4];
->
-> And as for users, we need access to both MNC and MCC.
->
-> What part of this is unclear?
+> > if we are unclear about the format and the users at this moment, I
+> > prefer we remove that interface and just keep it around as a TODO item
+> > to add it later.
+> =
 
-Please submit a patch to the mailing list reflecting how you think it shoul=
-d be =
+> I don't see any lack of clarity. It is a series of two or three digits.
+> =
 
-implemented.  If it looks reasonable then I'll integrate it.
+> Anyway, if the database has a hole, we probably will have to return the =
 
-Regards,
--Denis
+> MNC/MCC anyway (ever tried scanning for network with an old phone in a fo=
+reign =
+
+> country?). Then there is also the uniqueness problem. MNC/MCC pair solves =
+
+> that.
+
+if the database has a whole or we don't have the network provider string
+then we can just show the MNC/MCC in that case. That is pretty simple.
+No need to put extra burden into the userspace application and have it
+looking for two strings.
+
+I don't understand your uniqueness issue. We will have unique object
+path for every network. What else does userspace needs?
+
+Regards
+
+Marcel
 
 
---===============0937627890666078744==--
+
+--===============7794660831250518410==--
 
