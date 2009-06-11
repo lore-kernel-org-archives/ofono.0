@@ -1,86 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2108708572992443591=="
+Content-Type: multipart/mixed; boundary="===============2543597079014326650=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: MNC/MCC as string?
-Date: Thu, 11 Jun 2009 09:16:38 +0300
-Message-ID: <7bc2c3262bf41a8bdc07149a9fea3098@localhost>
-In-Reply-To: <200906101115.20159.denkenz@gmail.com>
+From: WuYongbo <wilbur.unail@gmail.com>
+Subject: failed to start ofonod....
+Date: Thu, 11 Jun 2009 15:55:58 +0800
+Message-ID: <a0b5f4b30906110055j38ae0005t86f114ead305d8da@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2108708572992443591==
+--===============2543597079014326650==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi all,
 
-On Wed, 10 Jun 2009 11:15:19 -0500, Denis Kenzior <denkenz@gmail.com>
-wrote:
-> It doesn't seem this clear-cut.  E.g. according to my Neo on with
-T-Mobile
-> US =
+I got the source code by git-clone and built it successfully.
+but failed to start ofonod....
 
-> SIM:
-> =
+*$ sudo ofonod  -n -d
+ofonod[25234]: oFono version 0.0
+ofonod[25234]: Unable to hop onto D-Bus: Connection ":1.646" is not allowed
+to own the service "org.ofono" due to security policies in the configuration
+file
+ofonod[25234]: Exit
+*
+OS: ubuntu 9.04*
 
-> AT+COPS?
-> +COPS: 0,0,"T-Mobile"
-> OK
-> AT+COPS=3D3,2
-> OK
-> AT+COPS?
-> +COPS: 0,2,"31026"
-> OK
-> AT+COPS=3D2
-> OK
-> +CREG: 0
-> AT+COPS=3D1,2,"31026"
-> OK
-> +CREG: 2
-> +CREG: 1,"99EC","1A11"
-> =
+*--
+Good luck !
 
-> At least according to wikipedia the real MCC/MNC of T-Mobile is 310260. =
+--===============2543597079014326650==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-Go
-> =
+SGkgYWxsLCA8YnI+PGJyPkkgZ290IHRoZSBzb3VyY2UgY29kZSBieSBnaXQtY2xvbmUgYW5kIGJ1
+aWx0IGl0IHN1Y2Nlc3NmdWxseS48YnI+YnV0IGZhaWxlZCB0byBzdGFydCBvZm9ub2QuLi4uPGJy
+Pjxicj48aT48c3BhbiBzdHlsZT0iY29sb3I6IHJnYig1MSwgNTEsIDI1NSk7Ij4kIHN1ZG8gb2Zv
+bm9koCAtbiAtZDwvc3Bhbj48YnIgc3R5bGU9ImNvbG9yOiByZ2IoNTEsIDUxLCAyNTUpOyI+Cjxz
+cGFuIHN0eWxlPSJjb2xvcjogcmdiKDUxLCA1MSwgMjU1KTsiPm9mb25vZFsyNTIzNF06IG9Gb25v
+IHZlcnNpb24gMC4wPC9zcGFuPjxiciBzdHlsZT0iY29sb3I6IHJnYig1MSwgNTEsIDI1NSk7Ij48
+c3BhbiBzdHlsZT0iY29sb3I6IHJnYig1MSwgNTEsIDI1NSk7Ij5vZm9ub2RbMjUyMzRdOiBVbmFi
+bGUgdG8gaG9wIG9udG8gRC1CdXM6IENvbm5lY3Rpb24gJnF1b3Q7OjEuNjQ2JnF1b3Q7IGlzIG5v
+dCBhbGxvd2VkIHRvIG93biB0aGUgc2VydmljZSAmcXVvdDtvcmcub2Zvbm8mcXVvdDsgZHVlIHRv
+IHNlY3VyaXR5IHBvbGljaWVzIGluIHRoZSBjb25maWd1cmF0aW9uIGZpbGU8L3NwYW4+PGJyIHN0
+eWxlPSJjb2xvcjogcmdiKDUxLCA1MSwgMjU1KTsiPgo8c3BhbiBzdHlsZT0iY29sb3I6IHJnYig1
+MSwgNTEsIDI1NSk7Ij5vZm9ub2RbMjUyMzRdOiBFeGl0PC9zcGFuPjxiciBjbGVhcj0iYWxsIj48
+L2k+PGJyPk9TOiB1YnVudHUgOS4wNDxpPjxicj48YnI+PC9pPi0tIDxicj5Hb29kIGx1Y2sgITxi
+cj4K
 
-> figure.
-
-I think this might be a separate issue with some North American operators
-that seem to pad also 3-digit codes, effectively dropping that trailing
-zero. Perhaps this is for legacy reasons.
- =
-
->> Nokia modems both send and receive MNC/MCC pairs as Binary Coded Decimal
->> (BCD) strings. Any 2 digit MNC is padded with 0xF. Problem is, when
->> listing
->> operators, the conversion of MNC codes from BCD to short loses this
->> information, and will result in manual network selection failing (BCD
->> '001'
->> -> short '1' -> BCD '01F' !=3D BCD '001').
->>
->> Anyone opposed to changing the mnc and mcc code types from short to
->> string?
->>
-> =
-
-> I agree that this does seem to be an issue, so no problems in changing
-> this.  =
-
-> Do you consider this an implementation issue only (e.g. APIs do not
-change)
-> or =
-
-> do you want to change the NetworkOperator attributes to a string as well?
-
-
-I would go ahead and change them as well. In theory, there could exist both
-2- and 3-digit MNCs within a single MCC, for which having strings is the
-safest option.
-
-Cheers,
-Aki
-
---===============2108708572992443591==--
+--===============2543597079014326650==--
 
