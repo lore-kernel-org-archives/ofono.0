@@ -1,56 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============0865798182530947799=="
+Content-Type: multipart/mixed; boundary="===============0937627890666078744=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: MNC/MCC as string?
-Date: Thu, 11 Jun 2009 22:58:12 +0300
-Message-ID: <200906112258.12298.remi@remlab.net>
-In-Reply-To: <1244747882.27363.65.camel@violet>
+Date: Thu, 11 Jun 2009 15:08:08 -0500
+Message-ID: <200906111508.08653.denkenz@gmail.com>
+In-Reply-To: <cb0e8d6f9acaa0c755e042ab8dda6dbd@localhost>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0865798182530947799==
+--===============0937627890666078744==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Le jeudi 11 juin 2009 22:18:02 Marcel Holtmann, vous avez =C3=A9crit :
-> Hi Aki,
+Aki,
+
+On Thursday 11 June 2009 14:38:49 Aki Niemi wrote:
+> On Thu, 11 Jun 2009 21:18:02 +0200, Marcel Holtmann <marcel@holtmann.or=
+g>
 >
-> > >> For geolocation help, sure, but there are other places where MNC/MCC
-> > >> are used as keys to databases containing operator-specific
-> > >> information, like default Internet APN names and such.
-> > >
-> > > shouldn't we just integrate that database into oFono directly or as
-> > > something like ofono-info.git that will be installed along with (for
-> > > easier updates).
+> wrote:
+> >> However, this wouldn't be the only database ever, so we would still ne=
+ed
+> >> a
+> >> way to reliably identify a specific operator.
 > >
-> > This particular database of default APN names, maybe, although I think
-> > it's really oFono users like Connman that should integrate with that
-> > information.
-> >
-> > However, this wouldn't be the only database ever, so we would still need
-> > a way to reliably identify a specific operator.
+> > if we are unclear about the format and the users at this moment,
 >
-> if we are unclear about the format and the users at this moment, I
-> prefer we remove that interface and just keep it around as a TODO item
-> to add it later.
+> The format should be 's' in D-Bus and in struct ofono_network_operator:
+>
+>    char mnc[4];
+>    char mcc[4];
+>
+> And as for users, we need access to both MNC and MCC.
+>
+> What part of this is unclear?
 
-I don't see any lack of clarity. It is a series of two or three digits.
+Please submit a patch to the mailing list reflecting how you think it shoul=
+d be =
 
-Anyway, if the database has a hole, we probably will have to return the =
+implemented.  If it looks reasonable then I'll integrate it.
 
-MNC/MCC anyway (ever tried scanning for network with an old phone in a fore=
-ign =
-
-country?). Then there is also the uniqueness problem. MNC/MCC pair solves =
-
-that.
-
--- =
-
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net/
+Regards,
+-Denis
 
 
---===============0865798182530947799==--
+--===============0937627890666078744==--
 
