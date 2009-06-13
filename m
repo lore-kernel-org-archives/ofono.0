@@ -1,56 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============4767634298780183599=="
+Content-Type: multipart/mixed; boundary="===============0118181430252700605=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: MNC/MCC as string?
-Date: Fri, 12 Jun 2009 12:56:54 +0200
-Message-ID: <a183fc99d677ed75caa3dc7b2ff2e32c@chewa.net>
-In-Reply-To: <1244801553.8688.0.camel@violet>
+Date: Fri, 12 Jun 2009 20:01:31 -0500
+Message-ID: <200906122001.31511.denkenz@gmail.com>
+In-Reply-To: <45ab3d8b5d84d03dda8ea19180f36991@localhost>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4767634298780183599==
+--===============0118181430252700605==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Aki,
+
+> Take two attached.
+
+I've pushed the patch out as well as an addendum patch that took care of so=
+me =
+
+new and existing style issues.  Also a small fix to the test case as a resu=
+lt =
+
+of the API changes.
+
+Regards,
+-Denis
 
 
-
-On Fri, 12 Jun 2009 12:12:33 +0200, Marcel Holtmann <marcel@holtmann.org>
-wrote:
-> Hi Aki,
-> =
-
->> Anyway, here it is. Please test; seems to work for me on my N95.
-> =
-
-> +static void extract_mcc_mnc(const char *str, char *mcc, char *mnc)
->  {
-> -       int num =3D 0;
-> -       unsigned int i;
-> -
->         /* Three digit country code */
-> -       for (i =3D 0; i < 3; i++)
-> -               num =3D num * 10 + (int)(str[i] - '0');
-> -
-> -       *mcc =3D num;
-> -
-> -       num =3D 0;
-> +       strncpy(mcc, str, sizeof(mcc));
-> +       mcc[3] =3D '\0';
-> =
-
-> maybe I am blind, but how is this suppose to work. The sizeof(mmc) is 1
-> byte.
-
-Actually, it is the size of a pointer, which will work (by accident) on
-32-bits platform, and overflow on others. =
-
-
--- =
-
-R=C3=A9mi Denis-Courmont
-
-
---===============4767634298780183599==--
+--===============0118181430252700605==--
 
