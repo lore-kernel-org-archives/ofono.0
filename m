@@ -1,27 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============2379439501214414830=="
+Content-Type: multipart/mixed; boundary="===============7288073212289004392=="
 MIME-Version: 1.0
 From: Li, Zhigang <zhigang.li@intel.com>
-Subject: About PhoneSim functions status
-Date: Tue, 16 Jun 2009 10:15:22 +0800
-Message-ID: <B94C62E7C2870743865418621F040C130203DA196E@pdsmsx502.ccr.corp.intel.com>
+Subject: Network registeration mode
+Date: Tue, 16 Jun 2009 16:25:17 +0800
+Message-ID: <B94C62E7C2870743865418621F040C130203DA1B52@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2379439501214414830==
+--===============7288073212289004392==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
-Does the SS feature (CB, CF, Identification service, CW and CM) ready in ph=
-onesim? =
-
-I found only part of CF, CW can work with PhoneSIM and there is no CB inter=
-face at all. =
+Hi All,
+About the Mode properties in NetworkRegistration, if we don't provide write=
+ attributes how user can register the network manually?
+I saw there was SetProperty Methods but removed now. =
 
 
 Thanks
 
 
---===============2379439501214414830==--
+--===============7288073212289004392==--
 
