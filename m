@@ -1,357 +1,269 @@
-Content-Type: multipart/mixed; boundary="===============7918905596263380640=="
+Content-Type: multipart/mixed; boundary="===============8171742716433856193=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] Teach USSD to recognise password change strings.
-Date: Thu, 18 Jun 2009 06:04:23 +0200
-Message-ID: <1245297863-15310-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH] Add CallBarring::ChangePassword for setting a new service
+ password.
+Date: Thu, 18 Jun 2009 06:04:34 +0200
+Message-ID: <1245297874-15334-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7918905596263380640==
+--===============8171742716433856193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is slightly hacky, part of ussd.c responsible for registering services
-is duplicated and parse_ss_control_string is modified to accept a fourth
-SI fragment in the input string.
+Depends on "[PATCH] Teach USSD to recognise password change strings."
 ---
- src/common.c       |    3 +-
- src/common.h       |    2 +-
- src/modem.h        |    1 +
- src/ussd.c         |  144 ++++++++++++++++++++++++++++++++++++++++++++++++=
-+---
- src/ussd.h         |   10 ++++
- unit/test-common.c |   10 +++-
- 6 files changed, 159 insertions(+), 11 deletions(-)
+ src/call-barring.c |  158 ++++++++++++++++++++++++++++++++++++++++++++++--=
+----
+ src/driver.h       |    3 +
+ 2 files changed, 144 insertions(+), 17 deletions(-)
 
-diff --git a/src/common.c b/src/common.c
-index 8653432..a9166bf 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -465,7 +465,7 @@ const char *ss_control_type_to_string(enum ss_control_t=
-ype type)
- gboolean parse_ss_control_string(char *str, int *ss_type,
- 					char **sc, char **sia,
- 					char **sib, char **sic,
--					char **dn)
-+					char **sid, char **dn)
- {
- 	int len =3D strlen(str);
- 	int cur =3D 0;
-@@ -533,6 +533,7 @@ gboolean parse_ss_control_string(char *str, int *ss_typ=
-e,
- 	NEXT_FIELD(c, *sia);
- 	NEXT_FIELD(c, *sib);
- 	NEXT_FIELD(c, *sic);
-+	NEXT_FIELD(c, *sid);
- =
-
- 	if (*c =3D=3D '\0')
- 		ret =3D TRUE;
-diff --git a/src/common.h b/src/common.h
-index 1c0a776..0f7684e 100644
---- a/src/common.h
-+++ b/src/common.h
-@@ -192,7 +192,7 @@ gboolean valid_ussd_string(const char *str);
- gboolean parse_ss_control_string(char *str, int *ss_type,
- 					char **sc, char **sia,
- 					char **sib, char **sic,
--					char **dn);
-+					char **sid, char **dn);
- =
-
- const char *ss_control_type_to_string(enum ss_control_type type);
- =
-
-diff --git a/src/modem.h b/src/modem.h
-index 22655f7..bbe7f99 100644
---- a/src/modem.h
-+++ b/src/modem.h
-@@ -28,6 +28,7 @@ struct ofono_modem {
- 	void 		*userdata;
- =
-
- 	GSList *ss_control_list;
-+	GSList *ss_passwd_list;
- =
-
- 	struct ofono_modem_data *modem_info;
- 	struct network_registration_data *network_registration;
-diff --git a/src/ussd.c b/src/ussd.c
-index 7225398..d2251c8 100644
---- a/src/ussd.c
-+++ b/src/ussd.c
-@@ -165,22 +165,148 @@ void ss_control_unregister(struct ofono_modem *modem=
-, const char *str,
- 						l->data);
+diff --git a/src/call-barring.c b/src/call-barring.c
+index 6cbbafb..bc56d32 100644
+--- a/src/call-barring.c
++++ b/src/call-barring.c
+@@ -341,6 +341,28 @@ static void cb_ss_set_lock_callback(const struct ofono=
+_error *error,
+ 	cb_ss_query_next_lock(modem);
  }
  =
 
-+struct ss_passwd_entry {
-+	char *service;
-+	ss_passwd_cb_t cb;
-+};
-+
-+static struct ss_passwd_entry *ss_passwd_entry_create(const char *service,
-+							ss_passwd_cb_t cb)
++static const char *cb_ss_service_to_fac(const char *svc)
 +{
-+	struct ss_passwd_entry *r;
++	if (!strcmp(svc, "33"))
++		return "AO";
++	else if (!strcmp(svc, "331"))
++		return "OI";
++	else if (!strcmp(svc, "332"))
++		return "OX";
++	else if (!strcmp(svc, "35"))
++		return "AI";
++	else if (!strcmp(svc, "351"))
++		return "IR";
++	else if (!strcmp(svc, "330"))
++		return "AB";
++	else if (!strcmp(svc, "333"))
++		return "AG";
++	else if (!strcmp(svc, "353"))
++		return "AC";
 +
-+	r =3D g_try_new0(struct ss_passwd_entry, 1);
-+
-+	if (!r)
-+		return r;
-+
-+	r->service =3D g_strdup(service);
-+	r->cb =3D cb;
-+
-+	return r;
++	return NULL;
 +}
 +
-+static void ss_passwd_entry_destroy(struct ss_passwd_entry *ca)
+ static gboolean cb_ss_control(struct ofono_modem *modem,
+ 				enum ss_control_type type, const char *sc,
+ 				const char *sia, const char *sib,
+@@ -367,23 +389,8 @@ static gboolean cb_ss_control(struct ofono_modem *mode=
+m,
+ 	ofono_debug("type: %d, sc: %s, sia: %s, sib: %s, sic: %s, dn: %s",
+ 			type, sc, sia, sib, sic, dn);
+ =
+
+-	if (!strcmp(sc, "33"))
+-		fac =3D "AO";
+-	else if (!strcmp(sc, "331"))
+-		fac =3D "OI";
+-	else if (!strcmp(sc, "332"))
+-		fac =3D "OX";
+-	else if (!strcmp(sc, "35"))
+-		fac =3D "AI";
+-	else if (!strcmp(sc, "351"))
+-		fac =3D "IR";
+-	else if (!strcmp(sc, "330"))
+-		fac =3D "AB";
+-	else if (!strcmp(sc, "333"))
+-		fac =3D "AG";
+-	else if (!strcmp(sc, "353"))
+-		fac =3D "AC";
+-	else
++	fac =3D cb_ss_service_to_fac(sc);
++	if (!fac)
+ 		return FALSE;
+ =
+
+ 	cb_set_query_bounds(cb, fac, type =3D=3D SS_CONTROL_TYPE_QUERY);
+@@ -476,6 +483,63 @@ bad_format:
+ 	return TRUE;
+ }
+ =
+
++static void cb_set_passwd_callback(const struct ofono_error *error, void *=
+data)
 +{
-+	g_free(ca->service);
-+	g_free(ca);
++	struct ofono_modem *modem =3D data;
++	struct call_barring_data *cb =3D modem->call_barring;
++	DBusMessage *reply;
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
++		reply =3D dbus_message_new_method_return(cb->pending);
++	else {
++		reply =3D dbus_gsm_failed(cb->pending);
++		ofono_debug("Changing Call Barring password via SS failed");
++	}
++
++	dbus_gsm_pending_reply(&cb->pending, reply);
 +}
 +
-+static gint ss_passwd_entry_compare(gconstpointer a, gconstpointer b)
++static gboolean cb_ss_passwd(struct ofono_modem *modem, const char *sc,
++				const char *old, const char *new,
++				DBusMessage *msg)
 +{
-+	const struct ss_passwd_entry *ca =3D a;
-+	const struct ss_passwd_entry *cb =3D b;
-+	int ret;
++	struct call_barring_data *cb =3D modem->call_barring;
++	DBusConnection *conn =3D dbus_gsm_connection();
++	DBusMessage *reply;
++	const char *fac;
 +
-+	ret =3D strcmp(ca->service, cb->service);
++	if (cb->pending) {
++		reply =3D dbus_gsm_busy(msg);
++		g_dbus_send_message(conn, reply);
 +
-+	if (ret)
-+		return ret;
++		return TRUE;
++	}
 +
-+	if (ca->cb < cb->cb)
-+		return -1;
++	ofono_debug("Received call barring ss password change request");
 +
-+	if (ca->cb > cb->cb)
-+		return 1;
++	ofono_debug("sc: %s", sc);
 +
-+	return 0;
-+}
-+
-+static gint ss_passwd_entry_find_by_service(gconstpointer a, gconstpointer=
- b)
-+{
-+	const struct ss_passwd_entry *ca =3D a;
-+
-+	return strcmp(ca->service, b);
-+}
-+
-+gboolean ss_passwd_register(struct ofono_modem *modem, const char *str,
-+				ss_passwd_cb_t cb)
-+{
-+	struct ss_passwd_entry *entry;
-+
-+	if (!modem)
++	if (!strcmp(sc, ""))
++		fac =3D "AB";
++	else
++		fac =3D cb_ss_service_to_fac(sc);
++	if (!fac)
 +		return FALSE;
 +
-+	entry =3D ss_passwd_entry_create(str, cb);
++	if (!is_valid_pin(old) || !is_valid_pin(new))
++		goto bad_format;
 +
-+	if (!entry)
-+		return FALSE;
++	cb->pending =3D dbus_message_ref(msg);
++	cb->ops->set_passwd(modem, fac, old, new,
++			cb_set_passwd_callback, modem);
 +
-+	modem->ss_passwd_list =3D g_slist_append(modem->ss_passwd_list, entry);
-+
++	return TRUE;
++bad_format:
++	reply =3D dbus_gsm_invalid_format(msg);
++	g_dbus_send_message(conn, reply);
 +	return TRUE;
 +}
 +
-+void ss_passwd_unregister(struct ofono_modem *modem, const char *str,
-+				ss_passwd_cb_t cb)
-+{
-+	const struct ss_passwd_entry entry =3D { (char *)str, cb };
-+	GSList *l;
-+
-+	if (!modem)
-+		return;
-+
-+	l =3D g_slist_find_custom(modem->ss_passwd_list, &entry,
-+				ss_passwd_entry_compare);
-+
-+	if (!l)
-+		return;
-+
-+	ss_passwd_entry_destroy(l->data);
-+	modem->ss_passwd_list =3D g_slist_remove(modem->ss_passwd_list,
-+						l->data);
-+}
-+
-+static gboolean recognized_passwd_change_string(struct ofono_modem *modem,
-+						int type, char *sc,
-+						char *sia, char *sib,
-+						char *sic, char *sid,
-+						char *dn, DBusMessage *msg)
-+{
-+	GSList *l =3D modem->ss_passwd_list;
-+
-+	switch (type) {
-+	case SS_CONTROL_TYPE_ACTIVATION:
-+	case SS_CONTROL_TYPE_REGISTRATION:
-+		break;
-+
-+	default:
-+		return FALSE;
-+	}
-+
-+	if (strcmp(sc, "03") || strlen(dn) || strcmp(sic, sid))
-+		return FALSE;
-+
-+	while ((l =3D g_slist_find_custom(l, sia,
-+			ss_passwd_entry_find_by_service)) !=3D NULL) {
-+		struct ss_passwd_entry *entry =3D l->data;
-+
-+		if (entry->cb(modem, sia, sib, sic, msg))
-+			return TRUE;
-+
-+		l =3D l->next;
-+	}
-+
-+	return FALSE;
-+}
-+
- static gboolean recognized_control_string(struct ofono_modem *modem,
- 						const char *ss_str,
- 						DBusMessage *msg)
+ static void cb_register_ss_controls(struct ofono_modem *modem)
  {
- 	char *str =3D g_strdup(ss_str);
--	char *sc, *sia, *sib, *sic, *dn;
-+	char *sc, *sia, *sib, *sic, *sid, *dn;
- 	int type;
- 	gboolean ret =3D FALSE;
+ 	ss_control_register(modem, "33", cb_ss_control);
+@@ -486,6 +550,15 @@ static void cb_register_ss_controls(struct ofono_modem=
+ *modem)
+ 	ss_control_register(modem, "330", cb_ss_control);
+ 	ss_control_register(modem, "333", cb_ss_control);
+ 	ss_control_register(modem, "353", cb_ss_control);
++	ss_passwd_register(modem, "", cb_ss_passwd);
++	ss_passwd_register(modem, "33", cb_ss_passwd);
++	ss_passwd_register(modem, "331", cb_ss_passwd);
++	ss_passwd_register(modem, "332", cb_ss_passwd);
++	ss_passwd_register(modem, "35", cb_ss_passwd);
++	ss_passwd_register(modem, "351", cb_ss_passwd);
++	ss_passwd_register(modem, "330", cb_ss_passwd);
++	ss_passwd_register(modem, "333", cb_ss_passwd);
++	ss_passwd_register(modem, "353", cb_ss_passwd);
+ }
  =
 
- 	ofono_debug("parsing control string");
+ static void cb_unregister_ss_controls(struct ofono_modem *modem)
+@@ -498,6 +571,15 @@ static void cb_unregister_ss_controls(struct ofono_mod=
+em *modem)
+ 	ss_control_unregister(modem, "330", cb_ss_control);
+ 	ss_control_unregister(modem, "333", cb_ss_control);
+ 	ss_control_unregister(modem, "353", cb_ss_control);
++	ss_passwd_unregister(modem, "", cb_ss_passwd);
++	ss_passwd_unregister(modem, "33", cb_ss_passwd);
++	ss_passwd_unregister(modem, "331", cb_ss_passwd);
++	ss_passwd_unregister(modem, "332", cb_ss_passwd);
++	ss_passwd_unregister(modem, "35", cb_ss_passwd);
++	ss_passwd_unregister(modem, "351", cb_ss_passwd);
++	ss_passwd_unregister(modem, "330", cb_ss_passwd);
++	ss_passwd_unregister(modem, "333", cb_ss_passwd);
++	ss_passwd_unregister(modem, "353", cb_ss_passwd);
+ }
  =
 
--	if (parse_ss_control_string(str, &type, &sc, &sia, &sib, &sic, &dn)) {
-+	if (parse_ss_control_string(str, &type, &sc,
-+				&sia, &sib, &sic, &sid, &dn)) {
- 		GSList *l =3D modem->ss_control_list;
+ static struct call_barring_data *call_barring_create(void)
+@@ -896,6 +978,46 @@ static DBusMessage *cb_disable_ag(DBusConnection *conn=
+, DBusMessage *msg,
+ 	return cb_disable_all(conn, msg, data, "AG");
+ }
  =
 
--		ofono_debug("Got parse result: %d, %s, %s, %s, %s, %s",
--				type, sc, sia, sib, sic, dn);
-+		ofono_debug("Got parse result: %d, %s, %s, %s, %s, %s, %s",
-+				type, sc, sia, sib, sic, sid, dn);
- =
-
- 		while ((l =3D g_slist_find_custom(l, sc,
- 				ss_control_entry_find_by_service)) !=3D NULL) {
-@@ -193,6 +319,13 @@ static gboolean recognized_control_string(struct ofono=
-_modem *modem,
- =
-
- 			l =3D l->next;
- 		}
++static DBusMessage *cb_set_passwd(DBusConnection *conn, DBusMessage *msg,
++					void *data)
++{
++	struct ofono_modem *modem =3D data;
++	struct call_barring_data *cb =3D modem->call_barring;
++	DBusMessageIter iter;
++	const char *old_passwd, *new_passwd;
 +
-+		/* A password change string needs to be treated separately
-+		 * because it uses a fourth SI and is thus not a valid
-+		 * control string.  */
-+		if (recognized_passwd_change_string(modem, type, sc,
-+					sia, sib, sic, sid, dn, msg))
-+			goto out;
- 	}
- =
-
- 	/* TODO: Handle all strings that control voice calls */
-@@ -205,9 +338,6 @@ static gboolean recognized_control_string(struct ofono_=
-modem *modem,
- 	 * by SEND and are not valid USSD requests.
- 	 */
- =
-
--	/* TODO: Handle Password registration according to 22.030 Section 6.5.4
--	 */
--
- out:
- 	g_free(str);
- =
-
-diff --git a/src/ussd.h b/src/ussd.h
-index 5b956e5..5f40f61 100644
---- a/src/ussd.h
-+++ b/src/ussd.h
-@@ -26,8 +26,18 @@ typedef gboolean (*ss_control_cb_t)(struct ofono_modem *=
-modem,
- 					const char *sic, const char *dn,
- 					DBusMessage *msg);
- =
-
-+typedef gboolean (*ss_passwd_cb_t)(struct ofono_modem *modem, const char *=
-sc,
-+					const char *old, const char *new,
-+					DBusMessage *msg);
++	if (cb->pending)
++		return dbus_gsm_busy(msg);
 +
- gboolean ss_control_register(struct ofono_modem *modem, const char *str,
- 				ss_control_cb_t cb);
- =
-
- void ss_control_unregister(struct ofono_modem *modem, const char *str,
- 				ss_control_cb_t cb);
++	if (!dbus_message_iter_init(msg, &iter))
++		return dbus_gsm_invalid_args(msg);
 +
-+gboolean ss_passwd_register(struct ofono_modem *modem, const char *str,
-+				ss_passwd_cb_t cb);
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return dbus_gsm_invalid_args(msg);
 +
-+void ss_passwd_unregister(struct ofono_modem *modem, const char *str,
-+				ss_passwd_cb_t cb);
-diff --git a/unit/test-common.c b/unit/test-common.c
-index 5c753d3..96509bd 100644
---- a/unit/test-common.c
-+++ b/unit/test-common.c
-@@ -57,6 +57,7 @@ static void test_invalid()
- 	char *sia;
- 	char *sib;
- 	char *sic;
-+	char *sid;
- 	char *dn;
- 	int type;
++	dbus_message_iter_get_basic(&iter, &old_passwd);
++	if (!is_valid_pin(old_passwd))
++		return dbus_gsm_invalid_format(msg);
++
++	dbus_message_iter_next(&iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return dbus_gsm_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &new_passwd);
++	if (!is_valid_pin(new_passwd))
++		return dbus_gsm_invalid_format(msg);
++
++	if (!cb->ops->set_passwd)
++		return dbus_gsm_not_implemented(msg);
++
++	cb->pending =3D dbus_message_ref(msg);
++	cb->ops->set_passwd(modem, "AB", old_passwd, new_passwd,
++			cb_set_passwd_callback, modem);
++
++	return NULL;
++}
++
+ static GDBusMethodTable cb_methods[] =3D {
+ 	{ "GetProperties",	"",	"a{sv}",	cb_get_properties,
+ 							G_DBUS_METHOD_FLAG_ASYNC },
+@@ -907,6 +1029,8 @@ static GDBusMethodTable cb_methods[] =3D {
+ 							G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ "DisableAllOutgoing",	"s",	"",		cb_disable_ag,
+ 							G_DBUS_METHOD_FLAG_ASYNC },
++	{ "ChangePassword",	"ss",	"",		cb_set_passwd,
++							G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ }
+ };
  =
 
-@@ -71,7 +72,9 @@ static void test_invalid()
- 		str =3D strdup(invalid_strings[i]);
+diff --git a/src/driver.h b/src/driver.h
+index 0172a52..f18ece2 100644
+--- a/src/driver.h
++++ b/src/driver.h
+@@ -391,6 +391,9 @@ struct ofono_call_barring_ops {
+ 			ofono_generic_cb_t cb, void *data);
+ 	void (*query)(struct ofono_modem *modem, const char *lock, int cls,
+ 			ofono_call_barring_cb_t cb, void *data);
++	void (*set_passwd)(struct ofono_modem *modem, const char *lock,
++			const char *old_passwd, const char *new_passwd,
++			ofono_generic_cb_t cb, void *data);
+ };
  =
 
- 		ret =3D parse_ss_control_string(str, &type, &sc,
--						&sia, &sib, &sic, &dn);
-+						&sia, &sib, &sic, &sid, &dn);
-+		if (strlen(sid))
-+			ret =3D FALSE;
- =
-
- 		g_assert(ret =3D=3D FALSE);
- =
-
-@@ -105,6 +108,7 @@ static void test_valid()
- 	char *sia;
- 	char *sib;
- 	char *sic;
-+	char *sid;
- 	char *dn;
- 	int type;
- 	gboolean ret;
-@@ -119,7 +123,9 @@ static void test_valid()
- 		str =3D strdup(valid_strings[i]);
- =
-
- 		ret =3D parse_ss_control_string(str, &type, &sc,
--						&sia, &sib, &sic, &dn);
-+						&sia, &sib, &sic, &sid, &dn);
-+		if (strlen(sid))
-+			ret =3D FALSE;
- =
-
- 		g_assert(ret =3D=3D TRUE);
- =
-
+ int ofono_call_barring_register(struct ofono_modem *modem,
 -- =
 
 1.6.0
 
 
---===============7918905596263380640==--
+--===============8171742716433856193==--
 
