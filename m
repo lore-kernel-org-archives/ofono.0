@@ -1,482 +1,249 @@
-Content-Type: multipart/mixed; boundary="===============6665764807771812571=="
+Content-Type: multipart/mixed; boundary="===============1228938744417065737=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] Change sim_ops plugin interface to allow acces to linear
- fixed files
-Date: Thu, 18 Jun 2009 05:44:44 +0200
-Message-ID: <1245296684-15235-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH] Read own numbers from EFmsisdn instead of AT+CNUM.
+Date: Thu, 18 Jun 2009 05:44:56 +0200
+Message-ID: <1245296696-15259-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6665764807771812571==
+--===============1228938744417065737==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-(iow record based files), both read and update access.
-Implement writing sim files through AT.
+This was found to be more portable.  On the other hand this doesn't give
+the service type or speed information per number.
 
-Depends on "[PATCH] Use GET RESPONSE sim command to retrieve EF length."
+Depends on "[PATCH] Change sim_ops plugin interface to allow acces to linea=
+r fixed files."
 ---
- drivers/atmodem/sim.c |  199 +++++++++++++++++++++++++++++++++++++++++++--=
-----
- src/driver.h          |   31 ++++++--
- src/sim.c             |   16 ++--
- 3 files changed, 210 insertions(+), 36 deletions(-)
+ drivers/atmodem/sim.c |    1 +
+ src/driver.h          |   22 +++++++++++
+ src/sim.c             |   99 +++++++++++++++++++++++++++++++++++++++++----=
+---
+ 3 files changed, 107 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index a2aebb8..66e951e 100644
+index 66e951e..165bb65 100644
 --- a/drivers/atmodem/sim.c
 +++ b/drivers/atmodem/sim.c
-@@ -41,20 +41,22 @@
- static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
- static const char *cnum_prefix[] =3D { "+CNUM:", NULL };
- =
-
--static void at_crsm_len_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+static void at_crsm_info_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
- {
- 	struct cb_data *cbd =3D user_data;
- 	GAtResultIter iter;
--	ofono_sim_file_len_cb_t cb =3D cbd->cb;
-+	ofono_sim_file_info_cb_t cb =3D cbd->cb;
- 	struct ofono_error error;
- 	const guint8 *response;
- 	gint sw1, sw2, len;
-+	int flen, rlen;
-+	enum ofono_simfile_struct str;
- =
-
--	dump_response("at_crsm_len_cb", ok, result);
-+	dump_response("at_crsm_info_cb", ok, result);
- 	decode_at_error(&error, g_at_result_final_response(result));
- =
-
- 	if (!ok) {
--		cb(&error, -1, cbd->data);
-+		cb(&error, -1, -1, -1, cbd->data);
- 		return;
- 	}
- =
-
-@@ -63,29 +65,38 @@ static void at_crsm_len_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- 	if (!g_at_result_iter_next(&iter, "+CRSM:")) {
- 		DECLARE_FAILURE(e);
- =
-
--		cb(&e, -1, cbd->data);
-+		cb(&e, -1, -1, -1, cbd->data);
- 		return;
- 	}
- =
-
- 	g_at_result_iter_next_number(&iter, &sw1);
--	g_at_result_iter_next_number(&iter, &len);
-+	g_at_result_iter_next_number(&iter, &sw2);
- =
-
- 	if (!g_at_result_iter_next_hexstring(&iter, &response, &len) ||
- 		(sw1 !=3D 0x90 && sw1 !=3D 0x91 && sw1 !=3D 0x92) ||
--		(sw1 =3D=3D 0x90 && sw2 !=3D 0x00) || len < 14) {
-+		(sw1 =3D=3D 0x90 && sw2 !=3D 0x00) ||
-+		len < 14 || response[6] !=3D 0x04 ||
-+		(response[13] =3D=3D 0x01 && len < 15)) {
- 		DECLARE_FAILURE(e);
- =
-
--		cb(&e, -1, cbd->data);
-+		cb(&e, -1, -1, -1, cbd->data);
- 		return;
- 	}
- =
-
--	ofono_debug("crsm_len_cb: %02x, %02x, %i", sw1, sw2, len);
-+	ofono_debug("crsm_info_cb: %02x, %02x, %i", sw1, sw2, len);
-+
-+	flen =3D (response[2] << 8) | response[3];
-+	str =3D response[13];
-+	if (str =3D=3D 0x01)
-+		rlen =3D response[14];
-+	else
-+		rlen =3D 0;
- =
-
--	cb(&error, (response[2] << 8) | response[3], cbd->data);
-+	cb(&error, flen, str, rlen, cbd->data);
- }
- =
-
--static void at_sim_read_file_len(struct ofono_modem *modem, int fileid,
--					ofono_sim_file_len_cb_t cb,
-+static void at_sim_read_info(struct ofono_modem *modem, int fileid,
-+					ofono_sim_file_info_cb_t cb,
- 					void *data)
- {
- 	struct at_data *at =3D ofono_modem_userdata(modem);
-@@ -97,7 +108,7 @@ static void at_sim_read_file_len(struct ofono_modem *mod=
-em, int fileid,
- =
-
- 	snprintf(buf, sizeof(buf), "AT+CRSM=3D192,%i,0,0,15", fileid);
- 	if (g_at_chat_send(at->parser, buf, crsm_prefix,
--				at_crsm_len_cb, cbd, g_free) > 0)
-+				at_crsm_info_cb, cbd, g_free) > 0)
- 		return;
- =
-
- error:
-@@ -106,11 +117,12 @@ error:
- =
-
- 	{
- 		DECLARE_FAILURE(error);
--		cb(&error, -1, data);
-+		cb(&error, -1, -1, -1, data);
- 	}
- }
- =
-
--static void at_crsm_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+static void at_crsm_read_cb(gboolean ok, GAtResult *result,
-+		gpointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
- 	GAtResultIter iter;
-@@ -119,7 +131,7 @@ static void at_crsm_cb(gboolean ok, GAtResult *result, =
+@@ -430,6 +430,7 @@ static void at_cnum_cb(gboolean ok, GAtResult *result, =
 gpointer user_data)
- 	const guint8 *response;
- 	gint sw1, sw2, len;
+ 		numbers[count].speed =3D -1;
+ 		numbers[count].service =3D -1;
+ 		numbers[count].itc =3D -1;
++		numbers[count].npi =3D -1;
  =
 
--	dump_response("at_crsm_cb", ok, result);
-+	dump_response("at_crsm_read_cb", ok, result);
- 	decode_at_error(&error, g_at_result_final_response(result));
- =
-
- 	if (!ok) {
-@@ -147,14 +159,14 @@ static void at_crsm_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 		return;
- 	}
- =
-
--	ofono_debug("crsm_cb: %02x, %02x, %d", sw1, sw2, len);
-+	ofono_debug("crsm_read_cb: %02x, %02x, %d", sw1, sw2, len);
- =
-
- 	cb(&error, response, len, cbd->data);
- }
- =
-
--static void at_sim_read_file(struct ofono_modem *modem, int fileid, int st=
-art,
--					int length, ofono_sim_read_cb_t cb,
--					void *data)
-+static void at_sim_read_binary(struct ofono_modem *modem, int fileid,
-+					int start, int length,
-+					ofono_sim_read_cb_t cb, void *data)
- {
- 	struct at_data *at =3D ofono_modem_userdata(modem);
- 	struct cb_data *cbd =3D cb_data_new(modem, cb, data);
-@@ -166,7 +178,34 @@ static void at_sim_read_file(struct ofono_modem *modem=
-, int fileid, int start,
- 	snprintf(buf, sizeof(buf), "AT+CRSM=3D176,%i,%i,%i,%i", fileid,
- 			start >> 8, start & 0xff, length);
- 	if (g_at_chat_send(at->parser, buf, crsm_prefix,
--				at_crsm_cb, cbd, g_free) > 0)
-+				at_crsm_read_cb, cbd, g_free) > 0)
-+		return;
-+
-+error:
-+	if (cbd)
-+		g_free(cbd);
-+
-+	{
-+		DECLARE_FAILURE(error);
-+		cb(&error, NULL, 0, data);
-+	}
-+}
-+
-+static void at_sim_read_record(struct ofono_modem *modem, int fileid,
-+					int record, int length,
-+					ofono_sim_read_cb_t cb, void *data)
-+{
-+	struct at_data *at =3D ofono_modem_userdata(modem);
-+	struct cb_data *cbd =3D cb_data_new(modem, cb, data);
-+	char buf[64];
-+
-+	if (!cbd)
-+		goto error;
-+
-+	snprintf(buf, sizeof(buf), "AT+CRSM=3D178,%i,%i,4,%i", fileid,
-+			record + 1, length);
-+	if (g_at_chat_send(at->parser, buf, crsm_prefix,
-+				at_crsm_read_cb, cbd, g_free) > 0)
- 		return;
- =
-
- error:
-@@ -179,6 +218,117 @@ error:
- 	}
- }
- =
-
-+static void at_crsm_update_cb(gboolean ok, GAtResult *result,
-+		gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	GAtResultIter iter;
-+	ofono_generic_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+	gint sw1, sw2;
-+
-+	dump_response("at_crsm_update_cb", ok, result);
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (!ok) {
-+		cb(&error, cbd->data);
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CRSM:")) {
-+		DECLARE_FAILURE(e);
-+
-+		cb(&e, cbd->data);
-+		return;
-+	}
-+
-+	g_at_result_iter_next_number(&iter, &sw1);
-+	g_at_result_iter_next_number(&iter, &sw2);
-+	if ((sw1 !=3D 0x90 && sw1 !=3D 0x91 && sw1 !=3D 0x92 && sw1 !=3D 0x9f) ||
-+		(sw1 =3D=3D 0x90 && sw2 !=3D 0x00)) {
-+		DECLARE_FAILURE(e);
-+
-+		cb(&e, cbd->data);
-+		return;
-+	}
-+
-+	ofono_debug("crsm_update_cb: %02x, %02x", sw1, sw2);
-+
-+	cb(&error, cbd->data);
-+}
-+
-+static void at_sim_update_binary(struct ofono_modem *modem, int fileid,
-+					int start, int length,
-+					const unsigned char *value,
-+					ofono_generic_cb_t cb, void *data)
-+{
-+	struct at_data *at =3D ofono_modem_userdata(modem);
-+	struct cb_data *cbd =3D cb_data_new(modem, cb, data);
-+	char *buf =3D g_try_new(char, 36 + length * 2);
-+	int len, ret;
-+
-+	if (!cbd || !buf)
-+		goto error;
-+
-+	len =3D sprintf(buf, "AT+CRSM=3D214,%i,%i,%i,%i,", fileid,
-+			start >> 8, start & 0xff, length);
-+	for (; length; length--)
-+		len +=3D sprintf(buf + len, "%02hhx", *value++);
-+	ret =3D g_at_chat_send(at->parser, buf, crsm_prefix,
-+				at_crsm_update_cb, cbd, g_free);
-+
-+	g_free(buf);
-+
-+	if (ret > 0)
-+		return;
-+
-+error:
-+	if (cbd)
-+		g_free(cbd);
-+
-+	{
-+		DECLARE_FAILURE(error);
-+		cb(&error, data);
-+	}
-+}
-+
-+static void at_sim_update_record(struct ofono_modem *modem, int fileid,
-+					int record, int length,
-+					const unsigned char *value,
-+					ofono_generic_cb_t cb, void *data)
-+{
-+	struct at_data *at =3D ofono_modem_userdata(modem);
-+	struct cb_data *cbd =3D cb_data_new(modem, cb, data);
-+	char *buf =3D g_try_new(char, 36 + length * 2);
-+	int len, ret;
-+
-+	if (!cbd || !buf)
-+		goto error;
-+
-+	len =3D sprintf(buf, "AT+CRSM=3D220,%i,%i,4,%i,", fileid,
-+			record + 1, length);
-+	for (; length; length--)
-+		len +=3D sprintf(buf + len, "%02hhx", *value++);
-+	ret =3D g_at_chat_send(at->parser, buf, crsm_prefix,
-+				at_crsm_update_cb, cbd, g_free);
-+
-+	g_free(buf);
-+
-+	if (ret > 0)
-+		return;
-+
-+error:
-+	if (cbd)
-+		g_free(cbd);
-+
-+	{
-+		DECLARE_FAILURE(error);
-+		cb(&error, data);
-+	}
-+}
-+
- static void at_cimi_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
-@@ -317,8 +467,11 @@ error:
- }
- =
-
- static struct ofono_sim_ops ops =3D {
--	.read_file_len 		=3D at_sim_read_file_len,
--	.read_file 		=3D at_sim_read_file,
-+	.read_file_info		=3D at_sim_read_info,
-+	.read_file_transparent	=3D at_sim_read_binary,
-+	.read_file_linear	=3D at_sim_read_record,
-+	.write_file_transparent	=3D at_sim_update_binary,
-+	.write_file_linear	=3D at_sim_update_record,
- 	.read_imsi		=3D at_read_imsi,
- 	.read_own_numbers	=3D at_read_msisdn,
- };
+ 		g_at_result_iter_skip_next(&iter);
+ 		g_at_result_iter_next_number(&iter, &numbers[count].service);
 diff --git a/src/driver.h b/src/driver.h
-index 61504dd..36b9a08 100644
+index 36b9a08..793414e 100644
 --- a/src/driver.h
 +++ b/src/driver.h
-@@ -98,6 +98,13 @@ struct ofono_own_number {
+@@ -96,6 +96,28 @@ struct ofono_own_number {
+ 	int speed;
+ 	int service;
  	int itc;
++	int npi;
++};
++
++/* 24.008 Section 10.5.4.7 */
++enum ofono_number_type {
++	OFONO_NUMBER_TYPE_UNKNOWN =3D 0,
++	OFONO_NUMBER_TYPE_INTERNATIONAL =3D 1,
++	OFONO_NUMBER_TYPE_NATIONAL =3D 2,
++	OFONO_NUMBER_TYPE_NETWORK_SPECIFIC =3D 3,
++	OFONO_NUMBER_TYPE_DEDICATED_ACCESS =3D 4,
++	OFONO_NUMBER_TYPE_RESERVED =3D 7
++};
++
++enum ofono_numbering_plan {
++	OFONO_NUMBERING_PLAN_UNKNOWN =3D 0,
++	OFONO_NUMBERING_PLAN_ISDN =3D 1,
++	OFONO_NUMBERING_PLAN_DATA =3D 3,
++	OFONO_NUMBERING_PLAN_TELEX =3D 4,
++	OFONO_NUMBERING_PLAN_NATIONAL =3D 8,
++	OFONO_NUMBERING_PLAN_PRIVATE =3D 9,
++	OFONO_NUMBERING_PLAN_RESERVED_CTS =3D 11,
++	OFONO_NUMBERING_PLAN_RESERVED =3D 15
  };
  =
 
-+/* 51.011 Section 9.3 */
-+enum ofono_simfile_struct {
-+	OFONO_SIM_FILE_TRANSPARENT =3D 0,
-+	OFONO_SIM_FILE_FIXED =3D 1,
-+	OFONO_SIM_FILE_CYCLIC =3D 3
-+};
-+
- /* Notification functions, the integer values here should map to
-  * values obtained from the modem.  The enumerations are the same
-  * as the values for the fields found in 3GPP TS 27.007
-@@ -156,8 +163,10 @@ typedef void (*ofono_call_meter_puct_query_cb_t)(const=
- struct ofono_error *error
- typedef void (*ofono_call_barring_cb_t)(const struct ofono_error *error,
- 					int status, void *data);
- =
-
--typedef void (*ofono_sim_file_len_cb_t)(const struct ofono_error *error,
--					int length, void *data);
-+typedef void (*ofono_sim_file_info_cb_t)(const struct ofono_error *error,
-+					int filelength,
-+					enum ofono_simfile_struct structure,
-+					int recordlength, void *data);
- =
-
- typedef void (*ofono_sim_read_cb_t)(const struct ofono_error *error,
- 					const unsigned char *sdata, int length,
-@@ -363,10 +372,20 @@ int ofono_call_barring_register(struct ofono_modem *m=
-odem,
- void ofono_call_barring_unregister(struct ofono_modem *modem);
- =
-
- struct ofono_sim_ops {
--	void (*read_file_len)(struct ofono_modem *modem, int fileid,
--			ofono_sim_file_len_cb_t cb, void *data);
--	void (*read_file)(struct ofono_modem *modem, int fileid, int start,
--			int length, ofono_sim_read_cb_t cb, void *data);
-+	void (*read_file_info)(struct ofono_modem *modem, int fileid,
-+			ofono_sim_file_info_cb_t cb, void *data);
-+	void (*read_file_transparent)(struct ofono_modem *modem, int fileid,
-+			int start, int length,
-+			ofono_sim_read_cb_t cb, void *data);
-+	void (*read_file_linear)(struct ofono_modem *modem, int fileid,
-+			int record, int length,
-+			ofono_sim_read_cb_t cb, void *data);
-+	void (*write_file_transparent)(struct ofono_modem *modem, int fileid,
-+			int start, int length, const unsigned char *value,
-+			ofono_generic_cb_t cb, void *data);
-+	void (*write_file_linear)(struct ofono_modem *modem, int fileid,
-+			int record, int length, const unsigned char *value,
-+			ofono_generic_cb_t cb, void *data);
- 	void (*read_imsi)(struct ofono_modem *modem,
- 			ofono_imsi_cb_t cb, void *data);
- 	void (*read_own_numbers)(struct ofono_modem *modem,
+ /* 51.011 Section 9.3 */
 diff --git a/src/sim.c b/src/sim.c
-index acec7bb..9c85292 100644
+index 9c85292..e25b210 100644
 --- a/src/sim.c
 +++ b/src/sim.c
-@@ -237,16 +237,18 @@ static void sim_spn_read_cb(const struct ofono_error =
-*error,
- 		sim_spn_notify(modem, l->data);
+@@ -51,6 +51,10 @@ struct sim_manager_data {
+ 	int dcbyte;
+ =
+
+ 	GSList *update_spn_notify;
++
++	int own_numbers_num;
++	int own_numbers_size;
++	int own_numbers_current;
+ };
+ =
+
+ static char **own_numbers_by_type(GSList *own_numbers, int type)
+@@ -181,6 +185,7 @@ static GDBusMethodTable sim_manager_methods[] =3D {
+ static GDBusSignalTable sim_manager_signals[] =3D { { } };
+ =
+
+ enum sim_fileids {
++	SIM_EFMSISDN_FILEID =3D 0x6f40,
+ 	SIM_EFSPN_FILEID =3D 0x6f46,
+ };
+ =
+
+@@ -285,31 +290,94 @@ static gboolean sim_retrieve_imsi(void *user_data)
+ 	return FALSE;
  }
  =
 
--static void sim_spn_len_cb(const struct ofono_error *error,
--		int length, void *data)
-+static void sim_spn_info_cb(const struct ofono_error *error,
-+		int length, enum ofono_simfile_struct structure, int dummy,
-+		void *data)
+-static void sim_own_number_cb(const struct ofono_error *error, int num,
+-			const struct ofono_own_number *own, void *data)
++static void sim_msisdn_read_cb(const struct ofono_error *error,
++		const unsigned char *sdata, int length, void *data)
  {
  	struct ofono_modem *modem =3D data;
  	struct sim_manager_data *sim =3D modem->sim_manager;
+-	int i;
++	struct ofono_own_number *ph;
++	int number_len;
++	int ton_npi;
++	int i, digit;
  =
 
--	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR || length <=3D 1)
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR || length <=3D 1 ||
-+			structure !=3D OFONO_SIM_FILE_TRANSPARENT)
- 		return;
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
+-		return;
++		goto skip;
  =
 
--	sim->ops->read_file(modem, SIM_EFSPN_FILEID, 0, length,
-+	sim->ops->read_file_transparent(modem, SIM_EFSPN_FILEID, 0, length,
- 			sim_spn_read_cb, modem);
+-	for (i =3D 0; i < num; i++) {
+-		struct ofono_own_number *ph;
++	if (length < sim->own_numbers_size)
++		goto skip;
+ =
+
+-		if (own[i].phone_number.number[0] =3D=3D '\0')
+-			continue;
++	/* Skip Alpha-Identifier field */
++	sdata +=3D sim->own_numbers_size - 14;
++
++	number_len =3D *sdata++;
++	ton_npi =3D *sdata++;
++
++	if (number_len > 11 || ton_npi =3D=3D 0xff)
++		goto skip;
++
++	ph =3D g_new(struct ofono_own_number, 1);
++
++	ph->speed =3D -1;
++	ph->service =3D -1;
++	ph->itc =3D -1;
++	ph->npi =3D (ton_npi >> 0) & 15;
++	ph->phone_number.type =3D (ton_npi >> 4) & 7;
+ =
+
+-		ph =3D g_new(struct ofono_own_number, 1);
++	if (number_len > 10)
++		number_len =3D 10;
++	number_len *=3D 2;
++	if (number_len > OFONO_MAX_PHONE_NUMBER_LENGTH)
++		number_len =3D OFONO_MAX_PHONE_NUMBER_LENGTH;
+ =
+
+-		memcpy(ph, &own[i], sizeof(struct ofono_own_number));
++	for (i =3D 0; i < number_len; i ++) {
++		digit =3D *sdata;
++		/* BCD coded */
++		if (i & 1) {
++			sdata ++;
++			digit >>=3D 4;
++		}
++		digit &=3D 0xf;
+ =
+
+-		sim->own_numbers =3D g_slist_prepend(sim->own_numbers, ph);
++		if (digit > 9)
++			break;
++
++		ph->phone_number.number[i] =3D '0' + digit;
+ 	}
++	memset(&ph->phone_number.number[i], 0,
++			OFONO_MAX_PHONE_NUMBER_LENGTH - i);
++
++	sim->own_numbers =3D g_slist_prepend(sim->own_numbers, ph);
++
++skip:
++	sim->own_numbers_current ++;
++	if (sim->own_numbers_current < sim->own_numbers_num)
++		sim->ops->read_file_linear(modem, SIM_EFMSISDN_FILEID,
++				sim->own_numbers_current,
++				sim->own_numbers_size,
++				sim_msisdn_read_cb, modem);
++	else
++		/* All records retrieved */
++		if (sim->own_numbers)
++			sim->own_numbers =3D g_slist_reverse(sim->own_numbers);
++}
++
++static void sim_msisdn_info_cb(const struct ofono_error *error,
++		int length, enum ofono_simfile_struct structure,
++		int record_length, void *data)
++{
++	struct ofono_modem *modem =3D data;
++	struct sim_manager_data *sim =3D modem->sim_manager;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR || length < 14 ||
++			record_length < 14 ||
++			structure !=3D OFONO_SIM_FILE_FIXED)
++		return;
+ =
+
+-	if (sim->own_numbers)
+-		sim->own_numbers =3D g_slist_reverse(sim->own_numbers);
++	sim->own_numbers_current =3D 0;
++	sim->own_numbers_size =3D record_length;
++	sim->own_numbers_num =3D length / record_length;
++	sim->ops->read_file_linear(modem, SIM_EFMSISDN_FILEID, 0,
++			record_length, sim_msisdn_read_cb, modem);
  }
  =
 
-@@ -255,8 +257,8 @@ static gboolean sim_retrieve_spn(void *user_data)
+ static gboolean sim_retrieve_own_number(void *user_data)
+@@ -317,7 +385,8 @@ static gboolean sim_retrieve_own_number(void *user_data)
  	struct ofono_modem *modem =3D user_data;
  	struct sim_manager_data *sim =3D modem->sim_manager;
  =
 
--	sim->ops->read_file_len(modem, SIM_EFSPN_FILEID,
--			sim_spn_len_cb, modem);
-+	sim->ops->read_file_info(modem, SIM_EFSPN_FILEID,
-+			sim_spn_info_cb, modem);
+-	sim->ops->read_own_numbers(modem, sim_own_number_cb, modem);
++	sim->ops->read_file_info(modem, SIM_EFMSISDN_FILEID,
++			sim_msisdn_info_cb, modem);
  =
 
  	return FALSE;
  }
-@@ -341,7 +343,7 @@ static void initialize_sim_manager(struct ofono_modem *=
+@@ -349,7 +418,7 @@ static void initialize_sim_manager(struct ofono_modem *=
 modem)
- =
-
- 	modem_add_interface(modem, SIM_MANAGER_INTERFACE);
- =
-
--	if (modem->sim_manager->ops->read_file)
-+	if (modem->sim_manager->ops->read_file_transparent)
- 		g_timeout_add(0, sim_retrieve_spn, modem);
- =
-
  	if (modem->sim_manager->ops->read_imsi)
+ 		g_timeout_add(0, sim_retrieve_imsi, modem);
+ =
+
+-	if (modem->sim_manager->ops->read_own_numbers)
++	if (modem->sim_manager->ops->read_file_linear)
+ 		g_timeout_add(0, sim_retrieve_own_number, modem);
+ }
+ =
+
 -- =
 
 1.6.0
 
 
---===============6665764807771812571==--
+--===============1228938744417065737==--
 
