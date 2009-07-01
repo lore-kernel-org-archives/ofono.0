@@ -1,27 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============1822165337330302196=="
+Content-Type: multipart/mixed; boundary="===============2825475424341953134=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] fix test compile
-Date: Wed, 24 Jun 2009 20:01:13 -0500
-Message-ID: <200906242001.14564.denkenz@gmail.com>
-In-Reply-To: <20090624165125.1a66f6ef@cyclone>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH] Add support for tty on character device.
+Date: Wed, 01 Jul 2009 22:51:27 +0300
+Message-ID: <904d95fd0db8d940b2eb52b2f3ad8810@localhost>
+In-Reply-To: <4A368135.8070805@inz.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1822165337330302196==
+--===============2825475424341953134==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> unit/test-sms.c: g_print format errors on x86_64 compiles, using %zd
-> and %ld as appropriate.
->
-> Shane...
 
-Patch has been applied.  Thanks.
+On Mon, 15 Jun 2009 20:13:25 +0300, Santtu Lakkala <inz@inz.fi> wrote:
+> Adds support for using ttys through a serial device directly.
 
-Regards,
--Denis
+Pushed, thanks!
 
---===============1822165337330302196==--
+Cheers,
+Aki
+
+--===============2825475424341953134==--
 
