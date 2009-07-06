@@ -1,29 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============4228748367211408598=="
+Content-Type: multipart/mixed; boundary="===============8054136992323569017=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] Add USC-2 to UTF-8 conversion utility function.
-Date: Mon, 06 Jul 2009 09:51:02 +0300
-Message-ID: <cf7c4201a49ed38c71aa45b007dd821b@localhost>
-In-Reply-To: <1246763625-17183-1-git-send-email-andrew.zaborowski@intel.com>
+Date: Mon, 06 Jul 2009 11:26:26 -0500
+Message-ID: <200907061126.26644.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4228748367211408598==
+--===============8054136992323569017==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi,
 
-On Sun,  5 Jul 2009 05:13:45 +0200, Andrzej Zaborowski
-<andrew.zaborowski@intel.com> wrote:
-> +
-> +	ret =3D g_utf16_to_utf8((const gunichar2 *) buffer, i / 2,
-> +			NULL, items_written, &error);
+The rest of the codebase uses g_convert which handles the necessary magic o=
+f =
 
-Why not use iconv() with UCS-2BE to UTF-8?
+invoking iconv.  So this function is really not necessary, use g_convert(bu=
+f, =
 
-Cheers,
-Aki
+bufsize, "UTF-8//TRANSLIT", "UCS-2BE",... instead.
 
---===============4228748367211408598==--
+Regards,
+-Denis
+
+
+--===============8054136992323569017==--
 
