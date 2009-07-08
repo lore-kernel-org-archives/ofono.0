@@ -1,47 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5886396547494155245=="
+Content-Type: multipart/mixed; boundary="===============1862699908113328426=="
 MIME-Version: 1.0
-From: Vasiliy Tolstov <v.tolstov@selfip.ru>
+From: Admin <Admin@oose-berlin.de>
 Subject: Re: oFono Features
-Date: Wed, 08 Jul 2009 15:48:27 +0400
-Message-ID: <1247053707.26972.23.camel@localhost>
+Date: Wed, 08 Jul 2009 14:43:58 +0200
+Message-ID: <4A54948E.3090202@oose-berlin.de>
 In-Reply-To: <96ac7dbf5a4b7c1e9d9dd8a79f3001ca@chewa.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5886396547494155245==
+--===============1862699908113328426==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-=D0=92 =D0=A1=D1=80=D0=B4, 08/07/2009 =D0=B2 13:45 +0200, R=C3=A9mi Denis-C=
-ourmont =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> On Wed, 08 Jul 2009 13:23:14 +0200, Admin <Admin@oose-berlin.de> wrote:
-> > Hello
-> > I am interested to know which kind of feature range the ofono platform
-> > is intended to have once. Specially are there plans to provide a
-> > framework of ready-to-use gadgets, i.e. for user interfaces, graphics,
-> > application components ?
-> =
 
-> I am not sure what you mean. We certainly intend to provide some context
-> informations relevant to the modem, such as operator network name, radio
-> technology, signal strength... that you can use to fill in UI gadgets.
-> =
+--===============1862699908113328426==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> But Ofono is fundamentally a set of DBus APIs. It is not intended to
-> include actual "UI" code in my understanding.
-> =
+PCFET0NUWVBFIGh0bWwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMDEgVHJhbnNpdGlvbmFs
+Ly9FTiI+CjxodG1sPgo8aGVhZD4KICA8bWV0YSBjb250ZW50PSJ0ZXh0L2h0bWw7Y2hhcnNldD1V
+VEYtOCIgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIj4KPC9oZWFkPgo8Ym9keSBiZ2NvbG9yPSIj
+ZmZmZmZmIiB0ZXh0PSIjMDAwMDAwIj4KSGVsbG8gUsOpbWk8YnI+CndlbGwgSSB3YXMgYXNraW5n
+LCBiZWNhdXNlIHRoZSBwYXBlcnMgLyBibG9ncyBzcGVhayBhYm91dCBzb21ldGhpbmcKbGlrZSAi
+YmlydGggb2YgYSBjb21wZXRpdGlvbiBmcmFtZXdvcmsgdG8gQW5kcm9pZCIuIEkgZG9uJ3Qgd2Fu
+dCB0bwpldmFsdWF0ZSBidXQgdGhlIGludGVudGlvbiBzZWVtcyB0byBiZSBkaWZmZXJlcmVudCB0
+aGVuLCBhcGFydCBmcm9tIHRoZQpmYWN0cyB0aGF0IG9uZSBpcyBDL0MrKyBhbmQgdGhlIG90aGVy
+IGlzIEphdmEuPGJyPgpSZWdhcmRzLCBBbGV4YW5kZXI8YnI+Cjxicj4KUsOpbWkgRGVuaXMtQ291
+cm1vbnQgc2NocmllYjoKPGJsb2NrcXVvdGUgY2l0ZT0ibWlkOTZhYzdkYmY1YTRiN2MxZTlkOWRk
+OGE3OWYzMDAxY2FAY2hld2EubmV0IgogdHlwZT0iY2l0ZSI+CiAgPHByZSB3cmFwPSIiPk9uIFdl
+ZCwgMDggSnVsIDIwMDkgMTM6MjM6MTQgKzAyMDAsIEFkbWluIDxhIGNsYXNzPSJtb3otdHh0LWxp
+bmstcmZjMjM5NkUiIGhyZWY9Im1haWx0bzpBZG1pbkBvb3NlLWJlcmxpbi5kZSI+Jmx0O0FkbWlu
+QG9vc2UtYmVybGluLmRlJmd0OzwvYT4gd3JvdGU6CiAgPC9wcmU+CiAgPGJsb2NrcXVvdGUgdHlw
+ZT0iY2l0ZSI+CiAgICA8cHJlIHdyYXA9IiI+SGVsbG8KSSBhbSBpbnRlcmVzdGVkIHRvIGtub3cg
+d2hpY2gga2luZCBvZiBmZWF0dXJlIHJhbmdlIHRoZSBvZm9ubyBwbGF0Zm9ybQppcyBpbnRlbmRl
+ZCB0byBoYXZlIG9uY2UuIFNwZWNpYWxseSBhcmUgdGhlcmUgcGxhbnMgdG8gcHJvdmlkZSBhCmZy
+YW1ld29yayBvZiByZWFkeS10by11c2UgZ2FkZ2V0cywgaS5lLiBmb3IgdXNlciBpbnRlcmZhY2Vz
+LCBncmFwaGljcywKYXBwbGljYXRpb24gY29tcG9uZW50cyA/CiAgICA8L3ByZT4KICA8L2Jsb2Nr
+cXVvdGU+CiAgPHByZSB3cmFwPSIiPjwhLS0tLT4KSSBhbSBub3Qgc3VyZSB3aGF0IHlvdSBtZWFu
+LiBXZSBjZXJ0YWlubHkgaW50ZW5kIHRvIHByb3ZpZGUgc29tZSBjb250ZXh0CmluZm9ybWF0aW9u
+cyByZWxldmFudCB0byB0aGUgbW9kZW0sIHN1Y2ggYXMgb3BlcmF0b3IgbmV0d29yayBuYW1lLCBy
+YWRpbwp0ZWNobm9sb2d5LCBzaWduYWwgc3RyZW5ndGguLi4gdGhhdCB5b3UgY2FuIHVzZSB0byBm
+aWxsIGluIFVJIGdhZGdldHMuCgpCdXQgT2Zvbm8gaXMgZnVuZGFtZW50YWxseSBhIHNldCBvZiBE
+QnVzIEFQSXMuIEl0IGlzIG5vdCBpbnRlbmRlZCB0bwppbmNsdWRlIGFjdHVhbCAiVUkiIGNvZGUg
+aW4gbXkgdW5kZXJzdGFuZGluZy4KCiAgPC9wcmU+CjwvYmxvY2txdW90ZT4KPC9ib2R5Pgo8L2h0
+bWw+Cg==
 
-
-
-Hello! Can You tell me is the oFono is reade to do things like:
-send and recieve sms, doing outgoing calling , recive incoming call ?
-
--- =
-
-Vasiliy Tolstov <v.tolstov@selfip.ru>
-Selfip.Ru
-
-
---===============5886396547494155245==--
+--===============1862699908113328426==--
 
