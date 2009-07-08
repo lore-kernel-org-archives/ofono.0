@@ -1,52 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============1862699908113328426=="
+Content-Type: multipart/mixed; boundary="===============8904227845175121852=="
 MIME-Version: 1.0
-From: Admin <Admin@oose-berlin.de>
+From: Aki Niemi <aki@protocolpolice.com>
 Subject: Re: oFono Features
-Date: Wed, 08 Jul 2009 14:43:58 +0200
-Message-ID: <4A54948E.3090202@oose-berlin.de>
-In-Reply-To: <96ac7dbf5a4b7c1e9d9dd8a79f3001ca@chewa.net>
+Date: Wed, 08 Jul 2009 16:42:06 +0300
+Message-ID: <c68ffa9cc40b4886d3919d1d3092c9e9@localhost>
+In-Reply-To: <4A54948E.3090202@oose-berlin.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1862699908113328426==
+--===============8904227845175121852==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 
---===============1862699908113328426==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+On Wed, 08 Jul 2009 14:43:58 +0200, Admin <Admin@oose-berlin.de> wrote:
+>  well I was asking, because the papers / blogs speak about something like
+> "birth of a competition framework to Android". I don't want to evaluate
+but
+> the intention seems to be differerent then, apart from the facts that one
+> is C/C++ and the other is Java.
 
-PCFET0NUWVBFIGh0bWwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMDEgVHJhbnNpdGlvbmFs
-Ly9FTiI+CjxodG1sPgo8aGVhZD4KICA8bWV0YSBjb250ZW50PSJ0ZXh0L2h0bWw7Y2hhcnNldD1V
-VEYtOCIgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIj4KPC9oZWFkPgo8Ym9keSBiZ2NvbG9yPSIj
-ZmZmZmZmIiB0ZXh0PSIjMDAwMDAwIj4KSGVsbG8gUsOpbWk8YnI+CndlbGwgSSB3YXMgYXNraW5n
-LCBiZWNhdXNlIHRoZSBwYXBlcnMgLyBibG9ncyBzcGVhayBhYm91dCBzb21ldGhpbmcKbGlrZSAi
-YmlydGggb2YgYSBjb21wZXRpdGlvbiBmcmFtZXdvcmsgdG8gQW5kcm9pZCIuIEkgZG9uJ3Qgd2Fu
-dCB0bwpldmFsdWF0ZSBidXQgdGhlIGludGVudGlvbiBzZWVtcyB0byBiZSBkaWZmZXJlcmVudCB0
-aGVuLCBhcGFydCBmcm9tIHRoZQpmYWN0cyB0aGF0IG9uZSBpcyBDL0MrKyBhbmQgdGhlIG90aGVy
-IGlzIEphdmEuPGJyPgpSZWdhcmRzLCBBbGV4YW5kZXI8YnI+Cjxicj4KUsOpbWkgRGVuaXMtQ291
-cm1vbnQgc2NocmllYjoKPGJsb2NrcXVvdGUgY2l0ZT0ibWlkOTZhYzdkYmY1YTRiN2MxZTlkOWRk
-OGE3OWYzMDAxY2FAY2hld2EubmV0IgogdHlwZT0iY2l0ZSI+CiAgPHByZSB3cmFwPSIiPk9uIFdl
-ZCwgMDggSnVsIDIwMDkgMTM6MjM6MTQgKzAyMDAsIEFkbWluIDxhIGNsYXNzPSJtb3otdHh0LWxp
-bmstcmZjMjM5NkUiIGhyZWY9Im1haWx0bzpBZG1pbkBvb3NlLWJlcmxpbi5kZSI+Jmx0O0FkbWlu
-QG9vc2UtYmVybGluLmRlJmd0OzwvYT4gd3JvdGU6CiAgPC9wcmU+CiAgPGJsb2NrcXVvdGUgdHlw
-ZT0iY2l0ZSI+CiAgICA8cHJlIHdyYXA9IiI+SGVsbG8KSSBhbSBpbnRlcmVzdGVkIHRvIGtub3cg
-d2hpY2gga2luZCBvZiBmZWF0dXJlIHJhbmdlIHRoZSBvZm9ubyBwbGF0Zm9ybQppcyBpbnRlbmRl
-ZCB0byBoYXZlIG9uY2UuIFNwZWNpYWxseSBhcmUgdGhlcmUgcGxhbnMgdG8gcHJvdmlkZSBhCmZy
-YW1ld29yayBvZiByZWFkeS10by11c2UgZ2FkZ2V0cywgaS5lLiBmb3IgdXNlciBpbnRlcmZhY2Vz
-LCBncmFwaGljcywKYXBwbGljYXRpb24gY29tcG9uZW50cyA/CiAgICA8L3ByZT4KICA8L2Jsb2Nr
-cXVvdGU+CiAgPHByZSB3cmFwPSIiPjwhLS0tLT4KSSBhbSBub3Qgc3VyZSB3aGF0IHlvdSBtZWFu
-LiBXZSBjZXJ0YWlubHkgaW50ZW5kIHRvIHByb3ZpZGUgc29tZSBjb250ZXh0CmluZm9ybWF0aW9u
-cyByZWxldmFudCB0byB0aGUgbW9kZW0sIHN1Y2ggYXMgb3BlcmF0b3IgbmV0d29yayBuYW1lLCBy
-YWRpbwp0ZWNobm9sb2d5LCBzaWduYWwgc3RyZW5ndGguLi4gdGhhdCB5b3UgY2FuIHVzZSB0byBm
-aWxsIGluIFVJIGdhZGdldHMuCgpCdXQgT2Zvbm8gaXMgZnVuZGFtZW50YWxseSBhIHNldCBvZiBE
-QnVzIEFQSXMuIEl0IGlzIG5vdCBpbnRlbmRlZCB0bwppbmNsdWRlIGFjdHVhbCAiVUkiIGNvZGUg
-aW4gbXkgdW5kZXJzdGFuZGluZy4KCiAgPC9wcmU+CjwvYmxvY2txdW90ZT4KPC9ib2R5Pgo8L2h0
-bWw+Cg==
+Ahh, the blogosphere. That infinite source of reliable and accurate
+technical information. No, oFono is not a competitor to Android. It's just
+not a fair comparison. Then again, oFono isn't completely dissimilar to
+Andoird's Radio Interface Layer (RIL). But hey, where's the fun in
+comparing apples with apples?
 
---===============1862699908113328426==--
+Cheers,
+Aki
+
+--===============8904227845175121852==--
 
