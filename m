@@ -1,49 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============6080190215181684440=="
+Content-Type: multipart/mixed; boundary="===============3471264173644817315=="
 MIME-Version: 1.0
-From: Xu, Martin <martin.xu@intel.com>
-Subject: RE: The very first oFono release
-Date: Sat, 11 Jul 2009 09:07:47 +0800
-Message-ID: <9F0C1DB20AFA954FA1DA05309350433D7B577726@pdsmsx503.ccr.corp.intel.com>
+From: Jeremiah Foster <jeremiah@jeremiahfoster.com>
+Subject: Re: The very first oFono release
+Date: Mon, 13 Jul 2009 00:15:44 +0200
+Message-ID: <31BD9C0F-EDFD-4339-899C-4E712463CD07@jeremiahfoster.com>
 In-Reply-To: <1247252160.9709.89.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6080190215181684440==
+--===============3471264173644817315==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-\>-----Original Message-----
->From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf Of
->Marcel Holtmann
->Sent: 2009=E5=B9=B47=E6=9C=8811=E6=97=A5 2:56
->To: ofono(a)ofono.org
->Subject: The very first oFono release
->
->Hello everyone,
->
->I just went ahead and tagged version 0.1 of oFono. We have announced
->this project about 3 month ago, but the actual code base is a little bit
->older of course. And at some point we have to start making releases :)
->
->	http://www.kernel.org/pub/linux/network/ofono/
->
->Not everything is fully functional at this point of time, but simple
->voice call handling with an AT based modem (or phone simulator) should
->be working fine. If anything fails, please send bug reports to the
->mailing list and we will fix it.
->
->Basic SMS support is available and within the next releases we will make
->sure it works properly. After that the work on GPRS/HSPA with smooth
->integration into ConnMan will start. Just to give everybody a heads up.
->
->I also think it is a good time for package maintainers to look into
->making oFono available in their distributions. And give feedback on
->things that don't integrate well.
->
-Congratulations!
-I will investigate and verify it from Moblin side. ;-)
 
---===============6080190215181684440==--
+On Jul 10, 2009, at 20:56, Marcel Holtmann wrote:
+>
+> I also think it is a good time for package maintainers to look into
+> making oFono available in their distributions. And give feedback on
+> things that don't integrate well.
+
+The first sticking point, at least from a debian perspective, is this  =
+
+line in the README file;
+Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
+
+This does not fit with debian's free software guidelines[0].  =
+
+Specifically point 7;
+
+"The rights attached to the program must apply to all to whom the  =
+
+program is redistributed without the need for execution of an  =
+
+additional license by those parties."
+
+Until that line in the README file is changed, ofono cannot be  =
+
+packaged for debian and placed into debian's free software repositories.
+
+Regards,
+
+Jeremiah
+
+0. http://www.debian.org/social_contract
+
+
+
+--===============3471264173644817315==--
 
