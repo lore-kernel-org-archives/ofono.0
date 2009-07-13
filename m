@@ -1,44 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============0767773384590264353=="
+Content-Type: multipart/mixed; boundary="===============0656779304160787614=="
 MIME-Version: 1.0
-From: Marko Saukko <marko.saukko@gmail.com>
-Subject: Problems with voice call.
-Date: Mon, 13 Jul 2009 09:13:26 +0300
-Message-ID: <4A5AD086.7040103@gmail.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+Subject: Re: The very first oFono release
+Date: Mon, 13 Jul 2009 09:04:01 +0200
+Message-ID: <4a2e0412bb7c4c0fd69cc769728d2dd7@chewa.net>
+In-Reply-To: <31BD9C0F-EDFD-4339-899C-4E712463CD07@jeremiahfoster.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0767773384590264353==
+--===============0656779304160787614==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
 
-I'm trying to make a voice call with oFono. I'm using Option GlobeSurfer
-ICON 225 HSDPA/UMTS USB as the modem. If I understood correctly voice
-call should be possible with the dbus-messages used below. However, I
-end up with an error "Operation failed".
 
-$ dbus-send --system --print-reply --dest=3Dorg.ofono /
-org.ofono.at.Manager.Create string:"dev:/dev/ttyHS0" string:"at"
-method return sender=3D:1.540 -> dest=3D:1.544 reply_serial=3D2
-   object path "/modem1"
 
-$ dbus-send --system --print-reply --dest=3Dorg.ofono /modem1
-org.ofono.VoiceCallManager.Dial string:"+000000000000" string:"default"
-Error org.ofono.Error.Failed: Operation failed
+On Mon, 13 Jul 2009 00:15:44 +0200, Jeremiah Foster
+<jeremiah@jeremiahfoster.com> wrote:
+> =
 
-When the second dbus-message is sent the following messages are printed
-by the ofonod:
+> On Jul 10, 2009, at 20:56, Marcel Holtmann wrote:
+>>
+>> I also think it is a good time for package maintainers to look into
+>> making oFono available in their distributions. And give feedback on
+>> things that don't integrate well.
+> =
 
-ofonod[19113]: atd_cb got result: 0
-ofonod[19113]: Final response: ERROR
-ofonod[19113]: Dial callback returned error: (null)
+> The first sticking point, at least from a debian perspective, is this
+> line in the README file;
+> Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
 
-Are the messages I sent to the ofonod correct?
+10:03 redenisc(a)leon /usr/src/linux-2.6% grep "All rights reserved" */*.c
+crypto/aes_generic.c: * All rights reserved.
+crypto/fcrypt.c: * All rights reserved.
+crypto/gf128mul.c: Copyright (c) 2003, Dr Brian Gladman, Worcester, UK.  =
 
-Regards,
-Marko
+All rights reserved.
+fs/compat_binfmt_elf.c: * Copyright (C) 2007 Red Hat, Inc.  All rights
+reserved.
+lib/crc-t10dif.c: * Copyright (c) 2007 Oracle Corporation.  All rights
+reserved.
+lib/kobject_uevent.c: * Copyright (C) 2004 Red Hat, Inc.  All rights
+reserved.
+lib/kobject_uevent.c: * Copyright (C) 2004 Novell, Inc.  All rights
+reserved.
+lib/kobject_uevent.c: * Copyright (C) 2004 IBM, Inc. All rights reserved.
+scripts/unifdef.c: * Copyright (c) 2002 - 2005 Tony Finch <dot@dotat.at>. =
 
---===============0767773384590264353==--
+All rights reserved.
+scripts/unifdef.c: *    The Regents of the University of California.  All
+rights reserved.
+scripts/unifdef.c:      The Regents of the University of California.  All
+rights reserved.\n";
+
+Should I suggest to debian-legal that they remove the linux-kernel packages
+because it has "All rights reserved"? Seriously...
+
+-- =
+
+R=C3=A9mi Denis-Courmont
+
+
+--===============0656779304160787614==--
 
