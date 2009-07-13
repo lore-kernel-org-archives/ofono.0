@@ -1,52 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============6939316814867331942=="
+Content-Type: multipart/mixed; boundary="===============4760826019303125541=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Compiler errors.
-Date: Mon, 13 Jul 2009 13:26:40 +0200
-Message-ID: <1247484400.9709.138.camel@localhost.localdomain>
-In-Reply-To: <4A5ACA4C.2000802@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Problems with voice call.
+Date: Mon, 13 Jul 2009 10:47:36 -0500
+Message-ID: <200907131047.37127.denkenz@gmail.com>
+In-Reply-To: <4A5AD086.7040103@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6939316814867331942==
+--===============4760826019303125541==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Marko,
 
-> with the latest oFono git version I'm getting the following compiler
-> errors when using gcc (Ubuntu 4.3.3-5ubuntu4) 4.3.3.
-> =
+> Hi,
+>
+> I'm trying to make a voice call with oFono. I'm using Option GlobeSurfer
+> ICON 225 HSDPA/UMTS USB as the modem. If I understood correctly voice
+> call should be possible with the dbus-messages used below. However, I
+> end up with an error "Operation failed".
 
-> ----
-> =
+Operation failed literally means the modem replied with an error of some so=
+rt.
 
-> gcc -DHAVE_CONFIG_H -I. -I.. -I../include -I../src
-> -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include   -g -O2 -Werror
-> -Wextra -Wno-unused-parameter -Wno-missing-field-initializers
-> -Wdeclaration-after-statement -Wmissing-declarations -Wredundant-decls
-> -Wcast-align -MT smsutil.o -MD -MP -MF .deps/smsutil.Tpo -c -o smsutil.o
-> `test -f '../src/smsutil.c' || echo './'`../src/smsutil.c
-> cc1: warnings being treated as errors
-> ../src/smsutil.c: In function =E2=80=98sms_extract_common=E2=80=99:
-> ../src/smsutil.c:1442: error: =E2=80=98dcs=E2=80=99 may be used uninitial=
-ized in this
-> function
-> ../src/smsutil.c:1441: error: =E2=80=98udhi=E2=80=99 may be used uninitia=
-lized in this
-> function
+>
+> $ dbus-send --system --print-reply --dest=3Dorg.ofono /
+> org.ofono.at.Manager.Create string:"dev:/dev/ttyHS0" string:"at"
+> method return sender=3D:1.540 -> dest=3D:1.544 reply_serial=3D2
+>    object path "/modem1"
 
-I didn't see them when building the release, but some distro compilers
-are a different.
+Looks good.
 
-Denis, care to fix these please.
+>
+> $ dbus-send --system --print-reply --dest=3Dorg.ofono /modem1
+> org.ofono.VoiceCallManager.Dial string:"+000000000000" string:"default"
+> Error org.ofono.Error.Failed: Operation failed
 
-Regards
+For wrong arguments, the error would be something like InvalidArguments or =
 
-Marcel
+InvalidFormat.
 
+>
+> When the second dbus-message is sent the following messages are printed
+> by the ofonod:
+>
+> ofonod[19113]: atd_cb got result: 0
+> ofonod[19113]: Final response: ERROR
+> ofonod[19113]: Dial callback returned error: (null)
 
+This means that ATD final response was ERROR.  Are you sure your modem actu=
+ally =
 
---===============6939316814867331942==--
+supports voice calls?
+
+Regards,
+-Denis
+
+--===============4760826019303125541==--
 
