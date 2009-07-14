@@ -1,79 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============1072243263820522069=="
+Content-Type: multipart/mixed; boundary="===============6398080211960304406=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Problems with voice call.
-Date: Tue, 14 Jul 2009 10:34:18 -0500
-Message-ID: <200907141034.19444.denkenz@gmail.com>
-In-Reply-To: <4A5C1CA4.8060204@gmail.com>
+Subject: Re: [PATCH] Read EF-PNN,
+ EF-OPL and override network names accordingly.
+Date: Tue, 14 Jul 2009 15:53:27 -0500
+Message-ID: <200907141553.28390.denkenz@gmail.com>
+In-Reply-To: <1246763655-17301-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1072243263820522069==
+--===============6398080211960304406==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marko,
+Hi,
 
-> Hi denkenz,
->
-> thanks for the reply. I was not sure about the voice call features of
-> the modem. Now when I searched the answer I found out that the modem
-> does not in fact support voice calls.
+Patch has been applied.  However, I've completely (juding by 40 or so commi=
+ts) =
 
-Yes, oFono's current implementation does not understand hardware specifics.=
-  =
+refactored how SIM filesystem is handled in oFono so I might have introduce=
+d =
 
-The current atmodem driver assumes a fully featured modem with perfect flue=
-ncy =
+some bugs.  Could you test to make sure it is working as intended?
 
-in 27.007 & 27.005.  Obviously this is wrong for real modems.  Mostly this =
-is =
-
-because we were concentrating on getting the high level features working, =
-
-before delving into hardware specifics.
-
->
-> I did not realize this at first, because ofono offered the possibility
-> for voice calls (loaded for example the VoiceCallManager interface). For
-> SMS ofonod says
->
-> ofonod[7906]: SMS not supported by this modem.  If this is in error
-> please submit patches to support this hardware
->
-> however the modem has a support for SMS, which I also tested with the
-> windows drivers that were delivered with the modem.
->
-
-I've seen this reported at least twice now.  Which means that my SMS suppor=
-t =
-
-detection in atmodem driver is probably not quite correct.  Would you be ab=
-le =
-
-to report at which point in the drivers/atmodem/sms.c initialization that t=
-his =
-
-fails?
-
-> Maybe there could be similar "not supported" feature for the voice call
-> plugins?
-
-27.005 defines at least some rudimentary way to detect whether SMS is suppo=
-rted =
-
-by the modem or not.  Unfortunately 27.007 doesn't have an equivalent for =
-
-voice calls.  The generic driver will do its best to figure out what is =
-
-supported or not supported, but it will be up to the device-specific driver=
- to =
-
-have the final say.
+Can you submit some unit tests with sample PNN/OPL data?
 
 Regards,
 -Denis
 
---===============1072243263820522069==--
+--===============6398080211960304406==--
 
