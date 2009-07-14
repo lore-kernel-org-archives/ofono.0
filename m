@@ -1,30 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============5226557170959281926=="
+Content-Type: multipart/mixed; boundary="===============6297121810620881698=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Compiler errors.
-Date: Tue, 14 Jul 2009 07:25:35 +0200
-Message-ID: <1247549135.4549.17.camel@violet>
-In-Reply-To: <4A5ACA4C.2000802@gmail.com>
+From: Marko Saukko <marko.saukko@gmail.com>
+Subject: Re: Problems with voice call.
+Date: Tue, 14 Jul 2009 08:50:28 +0300
+Message-ID: <4A5C1CA4.8060204@gmail.com>
+In-Reply-To: <200907131047.37127.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5226557170959281926==
+--===============6297121810620881698==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marko,
+Hi denkenz,
 
-> with the latest oFono git version I'm getting the following compiler
-> errors when using gcc (Ubuntu 4.3.3-5ubuntu4) 4.3.3.
+thanks for the reply. I was not sure about the voice call features of
+the modem. Now when I searched the answer I found out that the modem
+does not in fact support voice calls.
 
-so Denis and I fixed all of these now.
+I did not realize this at first, because ofono offered the possibility
+for voice calls (loaded for example the VoiceCallManager interface). For
+SMS ofonod says
 
-Regards
+ofonod[7906]: SMS not supported by this modem.  If this is in error
+please submit patches to support this hardware
 
-Marcel
+however the modem has a support for SMS, which I also tested with the
+windows drivers that were delivered with the modem.
 
+Maybe there could be similar "not supported" feature for the voice call
+plugins?
 
+Regards,
+Marko
 
---===============5226557170959281926==--
+--===============6297121810620881698==--
 
