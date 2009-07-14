@@ -1,35 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============7160551775772210853=="
+Content-Type: multipart/mixed; boundary="===============5226557170959281926=="
 MIME-Version: 1.0
-From: Li, Zhigang <zhigang.li@intel.com>
-Subject: Problems of CF setting and GSM string 
-Date: Tue, 14 Jul 2009 13:13:45 +0800
-Message-ID: <B94C62E7C2870743865418621F040C130203F12ABF@pdsmsx502.ccr.corp.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Compiler errors.
+Date: Tue, 14 Jul 2009 07:25:35 +0200
+Message-ID: <1247549135.4549.17.camel@violet>
+In-Reply-To: <4A5ACA4C.2000802@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7160551775772210853==
+--===============5226557170959281926==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-HI,
-Test against the 0.1 version,
-Tow problem were detected, =
+Hi Marko,
+
+> with the latest oFono git version I'm getting the following compiler
+> errors when using gcc (Ubuntu 4.3.3-5ubuntu4) 4.3.3.
+
+so Denis and I fixed all of these now.
+
+Regards
+
+Marcel
 
 
-1, only set CF no reply timer can't successful, and I have to set no reply =
-number or disable it first.
-   Cf.setproperties("VoiceNoReply",dbusInt16(30))
 
-2, *SC***SIC# don't support in GSM string
-   *61***30#
-Are they known issue? or anything I did wrong
-
-Also only CF need update DATA,FAX,SMS in the future, right? =
-
-
-Thanks
-Zhigang
-
---===============7160551775772210853==--
+--===============5226557170959281926==--
 
