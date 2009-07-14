@@ -1,50 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2975922167278457862=="
+Content-Type: multipart/mixed; boundary="===============1057909313841237980=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Problems with voice call.
-Date: Tue, 14 Jul 2009 08:17:36 +0200
-Message-ID: <1247552256.4549.18.camel@violet>
-In-Reply-To: <4A5C1CA4.8060204@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Problems of CF setting and GSM string
+Date: Tue, 14 Jul 2009 10:21:31 -0500
+Message-ID: <200907141021.32117.denkenz@gmail.com>
+In-Reply-To: <B94C62E7C2870743865418621F040C130203F12ABF@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2975922167278457862==
+--===============1057909313841237980==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marko,
+Hi Zhigang,
 
-> thanks for the reply. I was not sure about the voice call features of
-> the modem. Now when I searched the answer I found out that the modem
-> does not in fact support voice calls.
-> =
+> HI,
+> Test against the 0.1 version,
+> Tow problem were detected,
+>
+> 1, only set CF no reply timer can't successful, and I have to set no reply
+> number or disable it first. Cf.setproperties("VoiceNoReply",dbusInt16(30))
 
-> I did not realize this at first, because ofono offered the possibility
-> for voice calls (loaded for example the VoiceCallManager interface). For
-> SMS ofonod says
-> =
+This is on purpose, oFono won't let you set the NoReplyTimeout if no NoRepl=
+y =
 
-> ofonod[7906]: SMS not supported by this modem.  If this is in error
-> please submit patches to support this hardware
-> =
+condition is set.
 
-> however the modem has a support for SMS, which I also tested with the
-> windows drivers that were delivered with the modem.
-> =
+>
+> 2, *SC***SIC# don't support in GSM string
+>    *61***30#
+> Are they known issue? or anything I did wrong
 
-> Maybe there could be similar "not supported" feature for the voice call
-> plugins?
+It is supported, but in the case of call forwarding, you must provide a SIA =
 
-we need better hardware detection and enumeration and might have to add
-detailed feature mask to each modem. So we can tell if such a modem
-supports voice calls etc.
+(phone number) otherwise oFono treats this as an invalid call forwarding =
 
-Regards
+request.  What you're trying to do is register call forwarding no reply =
 
-Marcel
+condition with no number, but a 30 second timeout.  It makes no sense.
 
+>
+> Also only CF need update DATA,FAX,SMS in the future, right?
 
+Once oFono has meaningful support for these call types, then in some form, =
 
---===============2975922167278457862==--
+yes.  But until then, there's no sense in exposing these features.
+
+Regards,
+-Denis
+
+--===============1057909313841237980==--
 
