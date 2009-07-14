@@ -1,33 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============6398080211960304406=="
+Content-Type: multipart/mixed; boundary="===============6184394302567206428=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Read EF-PNN,
- EF-OPL and override network names accordingly.
-Date: Tue, 14 Jul 2009 15:53:27 -0500
-Message-ID: <200907141553.28390.denkenz@gmail.com>
-In-Reply-To: <1246763655-17301-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH] Cache EF-PNN, EF-OPL sim files on disk.
+Date: Tue, 14 Jul 2009 15:54:22 -0500
+Message-ID: <200907141554.22706.denkenz@gmail.com>
+In-Reply-To: <1246763672-17349-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6398080211960304406==
+--===============6184394302567206428==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+> This uses plain files in /var/cache/ofono for storing contents of the
+> operator lists to avoid possibly numerous queries to the SIM on every
+> startup.  Files are indexed with IMSI.  I'm not 100% sure about the
+> autoconf magic.
+>
+> Users need to rerun bootstrap-configure after applying this.
 
-Patch has been applied.  However, I've completely (juding by 40 or so commi=
-ts) =
+Can you rebase and resubmit this patch?  The changes to sim.c and network.c =
 
-refactored how SIM filesystem is handled in oFono so I might have introduce=
-d =
+were a bit extensive.
 
-some bugs.  Could you test to make sure it is working as intended?
-
-Can you submit some unit tests with sample PNN/OPL data?
-
-Regards,
+Thanks,
 -Denis
 
---===============6398080211960304406==--
+--===============6184394302567206428==--
 
