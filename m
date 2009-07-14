@@ -1,62 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============4760826019303125541=="
+Content-Type: multipart/mixed; boundary="===============7160551775772210853=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Problems with voice call.
-Date: Mon, 13 Jul 2009 10:47:36 -0500
-Message-ID: <200907131047.37127.denkenz@gmail.com>
-In-Reply-To: <4A5AD086.7040103@gmail.com>
+From: Li, Zhigang <zhigang.li@intel.com>
+Subject: Problems of CF setting and GSM string 
+Date: Tue, 14 Jul 2009 13:13:45 +0800
+Message-ID: <B94C62E7C2870743865418621F040C130203F12ABF@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4760826019303125541==
+--===============7160551775772210853==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marko,
+HI,
+Test against the 0.1 version,
+Tow problem were detected, =
 
-> Hi,
->
-> I'm trying to make a voice call with oFono. I'm using Option GlobeSurfer
-> ICON 225 HSDPA/UMTS USB as the modem. If I understood correctly voice
-> call should be possible with the dbus-messages used below. However, I
-> end up with an error "Operation failed".
 
-Operation failed literally means the modem replied with an error of some so=
-rt.
+1, only set CF no reply timer can't successful, and I have to set no reply =
+number or disable it first.
+   Cf.setproperties("VoiceNoReply",dbusInt16(30))
 
->
-> $ dbus-send --system --print-reply --dest=3Dorg.ofono /
-> org.ofono.at.Manager.Create string:"dev:/dev/ttyHS0" string:"at"
-> method return sender=3D:1.540 -> dest=3D:1.544 reply_serial=3D2
->    object path "/modem1"
+2, *SC***SIC# don't support in GSM string
+   *61***30#
+Are they known issue? or anything I did wrong
 
-Looks good.
+Also only CF need update DATA,FAX,SMS in the future, right? =
 
->
-> $ dbus-send --system --print-reply --dest=3Dorg.ofono /modem1
-> org.ofono.VoiceCallManager.Dial string:"+000000000000" string:"default"
-> Error org.ofono.Error.Failed: Operation failed
 
-For wrong arguments, the error would be something like InvalidArguments or =
+Thanks
+Zhigang
 
-InvalidFormat.
-
->
-> When the second dbus-message is sent the following messages are printed
-> by the ofonod:
->
-> ofonod[19113]: atd_cb got result: 0
-> ofonod[19113]: Final response: ERROR
-> ofonod[19113]: Dial callback returned error: (null)
-
-This means that ATD final response was ERROR.  Are you sure your modem actu=
-ally =
-
-supports voice calls?
-
-Regards,
--Denis
-
---===============4760826019303125541==--
+--===============7160551775772210853==--
 
