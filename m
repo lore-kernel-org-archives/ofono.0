@@ -1,69 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============9220331192446643903=="
+Content-Type: multipart/mixed; boundary="===============7379600057376942397=="
 MIME-Version: 1.0
-From: Marko Saukko <marko.saukko@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Problems with voice call.
-Date: Wed, 15 Jul 2009 08:56:59 +0300
-Message-ID: <4A5D6FAB.8090500@gmail.com>
-In-Reply-To: <200907141034.19444.denkenz@gmail.com>
+Date: Wed, 15 Jul 2009 11:51:20 -0500
+Message-ID: <200907151151.21627.denkenz@gmail.com>
+In-Reply-To: <4A5D6FAB.8090500@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9220331192446643903==
+--===============7379600057376942397==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Marko,
 
+> 788                 while (g_at_result_iter_next_number(&iter, &mode))
+> 789                         if (mode =3D=3D 1)
+> 790                                 supported =3D TRUE;
+
+This is me being dyslexic.  It should be looking for mode =3D=3D 0 instead.
+
+> With E51 the SMS error is returned from function at_cpms_query_cb()
+> on line 764.
 >
-> I've seen this reported at least twice now.  Which means that my SMS supp=
-ort
-> detection in atmodem driver is probably not quite correct.  Would you be =
-able
-> to report at which point in the drivers/atmodem/sms.c initialization that=
- this
-> fails?
+> 764                 return at_sms_not_supported(modem);
 >
 
-With the Option iCON 225 USB modem the SMS error is sent in function
-at_cmgf_query_cb() at line 795.
+This is strange, what does the E51 return for "AT+CPMS=3D?"
 
-795                 return at_sms_not_supported(modem);
+I've pushed fixes to the initialization and this is working at least for th=
+e =
 
-This is because the mode variable is always set to 0 at line 788
-(while loop is executed only onces) and the supported stays at value FALSE:
-
-788                 while (g_at_result_iter_next_number(&iter, &mode))
-789                         if (mode =3D=3D 1)
-790                                 supported =3D TRUE;
-
-
-
-I also tested oFono with the Nokia E51 phone which if I have understood
-correctly supports of sending SMS messages at least on Windows
-with PC Suite software. The result is a bit different.
-
-With E51 the SMS error is returned from function at_cpms_query_cb()
-on line 764.
-
-764                 return at_sms_not_supported(modem);
-
-This is because it does not go inside the while loop starting at line 741,
-and the me_supported and sm_supported stays FALSE:
-
-740
-741                         while (g_at_result_iter_next_string(&iter, &sto=
-re)) {
-742                                 if (!strcmp(store, "ME"))
-743                                         me_supported[mem] =3D TRUE;
-744                                 else if (!strcmp(store, "SM"))
-745                                         sm_supported[mem] =3D TRUE;
-746                         }
-747
-
+Neo and on our simulator.  Can you report if your devices get further?
 
 Regards,
-Marko
+-Denis
 
---===============9220331192446643903==--
+--===============7379600057376942397==--
 
