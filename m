@@ -1,38 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============0218417330493038119=="
+Content-Type: multipart/mixed; boundary="===============7008139433669209150=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Juha Korpi <juha.k.korpi@welho.com>
 Subject: Re: Problems with voice call.
-Date: Thu, 16 Jul 2009 11:46:27 -0500
-Message-ID: <200907161146.28172.denkenz@gmail.com>
-In-Reply-To: <20090716174751.ssob1ux42soo4o8o@webmail.welho.com>
+Date: Thu, 16 Jul 2009 21:36:45 +0300
+Message-ID: <20090716213645.x0n06lmc0c8cwko0@webmail.welho.com>
+In-Reply-To: <200907161146.28172.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0218417330493038119==
+--===============7008139433669209150==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Juha,
+Hi Denis,
 
-> I am using Nokia 6021 and there seems to be same problem(I guess):
+the experimental support was working fine. I was even able to send a SMS.
+
+Thanks
+Juha Korpi
+
+
+Lainaus Denis Kenzior <denkenz@gmail.com>:
+
+> Hi Juha,
 >
-> ofonod[8320]: Response line: +CPMS: ("ME","SM"),("ME","SM"),("MT")
+>> I am using Nokia 6021 and there seems to be same problem(I guess):
+>>
+>> ofonod[8320]: Response line: +CPMS: ("ME","SM"),("ME","SM"),("MT")
+>
+> Your problem is a bit different.  CPMS here reports:
+> mem1: "ME", "SM"
+> mem2: "ME", "SM"
+> mem3: "MT"
+>
+> oFono was confused by "MT" setting.  I've added experimental support for =
+such
+> devices.  Please report back if oFono gets further in the initialization
+> process.
+>
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
-Your problem is a bit different.  CPMS here reports:
-mem1: "ME", "SM"
-mem2: "ME", "SM"
-mem3: "MT"
 
-oFono was confused by "MT" setting.  I've added experimental support for su=
-ch =
 
-devices.  Please report back if oFono gets further in the initialization =
 
-process.
-
-Regards,
--Denis
-
---===============0218417330493038119==--
+--===============7008139433669209150==--
 
