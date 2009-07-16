@@ -1,41 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============7379600057376942397=="
+Content-Type: multipart/mixed; boundary="===============5272608033675943966=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Marko Saukko <marko.saukko@gmail.com>
 Subject: Re: Problems with voice call.
-Date: Wed, 15 Jul 2009 11:51:20 -0500
-Message-ID: <200907151151.21627.denkenz@gmail.com>
-In-Reply-To: <4A5D6FAB.8090500@gmail.com>
+Date: Thu, 16 Jul 2009 08:36:59 +0300
+Message-ID: <4A5EBC7B.6060203@gmail.com>
+In-Reply-To: <200907151151.21627.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7379600057376942397==
+--===============5272608033675943966==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marko,
+Hi Denis,
 
-> 788                 while (g_at_result_iter_next_number(&iter, &mode))
-> 789                         if (mode =3D=3D 1)
-> 790                                 supported =3D TRUE;
+With Option iCON 225 the SMS service started to work and I was also able
+to send SMS message with the following command:
 
-This is me being dyslexic.  It should be looking for mode =3D=3D 0 instead.
+$ dbus-send --system --print-reply --dest=3Dorg.ofono /modem1
+org.ofono.SmsManager.SendMessage array:string:"+358000000000"
+string:"ofono test message"
 
-> With E51 the SMS error is returned from function at_cpms_query_cb()
-> on line 764.
->
-> 764                 return at_sms_not_supported(modem);
->
 
-This is strange, what does the E51 return for "AT+CPMS=3D?"
+The Nokia E51 returns still the SMS error thing. To AT+CPMS=3D? the E51
+returns the following:
++CPMS: (),(),()
 
-I've pushed fixes to the initialization and this is working at least for th=
-e =
+OK
 
-Neo and on our simulator.  Can you report if your devices get further?
+There is also following errors printed by the ofonod when modem is
+created with E51:
+
+...
+ofonod[14999]: at_crsm_info_cb got result: 0
+ofonod[14999]: Final response: ERROR
+ofonod[14999]: cops_numeric_cb got result: 1
+...
+ofonod[14999]: at_crsm_info_cb got result: 0
+ofonod[14999]: Final response: ERROR
+ofonod[14999]: cmgf_query_cb got result: 1
+...
+ofonod[14999]: at_crsm_info_cb got result: 0
+ofonod[14999]: Final response: ERROR
+ofonod[14999]: cpms_query_cb got result: 1
+ofonod[14999]: Response line: +CPMS: (),(),()
+ofonod[14999]: SMS not supported by this modem.  If this is in error
+please submit patches to support this hardware
+
+
 
 Regards,
--Denis
+Marko
 
---===============7379600057376942397==--
+--===============5272608033675943966==--
 
