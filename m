@@ -1,35 +1,19 @@
-Content-Type: multipart/mixed; boundary="===============5776973573981147535=="
+Content-Type: multipart/mixed; boundary="===============0827708796242945021=="
 MIME-Version: 1.0
-From: Juha Korpi <juha.k.korpi@welho.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Problems with voice call.
-Date: Thu, 16 Jul 2009 17:47:51 +0300
-Message-ID: <20090716174751.ssob1ux42soo4o8o@webmail.welho.com>
+Date: Thu, 16 Jul 2009 10:08:31 -0500
+Message-ID: <200907161008.31736.denkenz@gmail.com>
 In-Reply-To: <4A5EBC7B.6060203@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5776973573981147535==
+--===============0827708796242945021==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-
-I am using Nokia 6021 and there seems to be same problem(I guess):
-
-ofonod[8320]: at_cpms_query_cb got result: 1
-ofonod[8320]: Final response: OK
-ofonod[8320]: Response line: +CPMS: ("ME","SM"),("ME","SM"),("MT")
-ofonod[8320]: at_cpms_query_cb
-ofonod[8320]: SMS not supported by this modem.  If this is in error  =
-
-please submit patches to support this hardware
--- =
-
-Juha Korpi
-
-
-Lainaus Marko Saukko <marko.saukko@gmail.com>:
+Hi Marko,
 
 > Hi Denis,
 >
@@ -39,45 +23,24 @@ Lainaus Marko Saukko <marko.saukko@gmail.com>:
 > $ dbus-send --system --print-reply --dest=3Dorg.ofono /modem1
 > org.ofono.SmsManager.SendMessage array:string:"+358000000000"
 > string:"ofono test message"
->
->
+
+Excellent.
+
 > The Nokia E51 returns still the SMS error thing. To AT+CPMS=3D? the E51
 > returns the following:
 > +CPMS: (),(),()
 >
 > OK
->
-> There is also following errors printed by the ofonod when modem is
-> created with E51:
->
-> ...
-> ofonod[14999]: at_crsm_info_cb got result: 0
-> ofonod[14999]: Final response: ERROR
-> ofonod[14999]: cops_numeric_cb got result: 1
-> ...
-> ofonod[14999]: at_crsm_info_cb got result: 0
-> ofonod[14999]: Final response: ERROR
-> ofonod[14999]: cmgf_query_cb got result: 1
-> ...
-> ofonod[14999]: at_crsm_info_cb got result: 0
-> ofonod[14999]: Final response: ERROR
-> ofonod[14999]: cpms_query_cb got result: 1
-> ofonod[14999]: Response line: +CPMS: (),(),()
-> ofonod[14999]: SMS not supported by this modem.  If this is in error
-> please submit patches to support this hardware
->
->
->
-> Regards,
-> Marko
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
 
+Are you running this over bluetooth?  Perhaps this has a really cut down at =
 
+command set in bluetooth serial profile.  The other possibility is that you =
 
+need to send some initialization commands first, (maybe AT+CFUN=3D1 would d=
+o it?)
 
---===============5776973573981147535==--
+Regards,
+-Denis
+
+--===============0827708796242945021==--
 
