@@ -1,46 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============0827708796242945021=="
+Content-Type: multipart/mixed; boundary="===============0218417330493038119=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Problems with voice call.
-Date: Thu, 16 Jul 2009 10:08:31 -0500
-Message-ID: <200907161008.31736.denkenz@gmail.com>
-In-Reply-To: <4A5EBC7B.6060203@gmail.com>
+Date: Thu, 16 Jul 2009 11:46:27 -0500
+Message-ID: <200907161146.28172.denkenz@gmail.com>
+In-Reply-To: <20090716174751.ssob1ux42soo4o8o@webmail.welho.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0827708796242945021==
+--===============0218417330493038119==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marko,
+Hi Juha,
 
-> Hi Denis,
+> I am using Nokia 6021 and there seems to be same problem(I guess):
 >
-> With Option iCON 225 the SMS service started to work and I was also able
-> to send SMS message with the following command:
->
-> $ dbus-send --system --print-reply --dest=3Dorg.ofono /modem1
-> org.ofono.SmsManager.SendMessage array:string:"+358000000000"
-> string:"ofono test message"
+> ofonod[8320]: Response line: +CPMS: ("ME","SM"),("ME","SM"),("MT")
 
-Excellent.
+Your problem is a bit different.  CPMS here reports:
+mem1: "ME", "SM"
+mem2: "ME", "SM"
+mem3: "MT"
 
-> The Nokia E51 returns still the SMS error thing. To AT+CPMS=3D? the E51
-> returns the following:
-> +CPMS: (),(),()
->
-> OK
+oFono was confused by "MT" setting.  I've added experimental support for su=
+ch =
 
-Are you running this over bluetooth?  Perhaps this has a really cut down at =
+devices.  Please report back if oFono gets further in the initialization =
 
-command set in bluetooth serial profile.  The other possibility is that you =
-
-need to send some initialization commands first, (maybe AT+CFUN=3D1 would d=
-o it?)
+process.
 
 Regards,
 -Denis
 
---===============0827708796242945021==--
+--===============0218417330493038119==--
 
