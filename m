@@ -1,54 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============7008139433669209150=="
+Content-Type: multipart/mixed; boundary="===============0569809741598764422=="
 MIME-Version: 1.0
-From: Juha Korpi <juha.k.korpi@welho.com>
+From: Marko Saukko <marko.saukko@gmail.com>
 Subject: Re: Problems with voice call.
-Date: Thu, 16 Jul 2009 21:36:45 +0300
-Message-ID: <20090716213645.x0n06lmc0c8cwko0@webmail.welho.com>
-In-Reply-To: <200907161146.28172.denkenz@gmail.com>
+Date: Fri, 17 Jul 2009 09:51:17 +0300
+Message-ID: <4A601F65.9020309@gmail.com>
+In-Reply-To: <200907161008.31736.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7008139433669209150==
+--===============0569809741598764422==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-the experimental support was working fine. I was even able to send a SMS.
+I'm running the E51 over USB connection. The AT+CFUN=3D1 did not help:
 
-Thanks
-Juha Korpi
+AT+CFUN=3D1
+OK
+AT+CPMS=3D?
++CPMS: (),(),()
 
+OK
 
-Lainaus Denis Kenzior <denkenz@gmail.com>:
+P.S. The SMS service is also now working with Nokia 6100 (connected with
+ Nokia CA-42 cable).
 
-> Hi Juha,
->
->> I am using Nokia 6021 and there seems to be same problem(I guess):
->>
->> ofonod[8320]: Response line: +CPMS: ("ME","SM"),("ME","SM"),("MT")
->
-> Your problem is a bit different.  CPMS here reports:
-> mem1: "ME", "SM"
-> mem2: "ME", "SM"
-> mem3: "MT"
->
-> oFono was confused by "MT" setting.  I've added experimental support for =
-such
-> devices.  Please report back if oFono gets further in the initialization
-> process.
->
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+Regards,
+Marko
 
-
-
-
---===============7008139433669209150==--
+--===============0569809741598764422==--
 
