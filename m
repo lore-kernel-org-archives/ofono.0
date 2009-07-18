@@ -1,333 +1,336 @@
-Content-Type: multipart/mixed; boundary="===============7023286509184094354=="
+Content-Type: multipart/mixed; boundary="===============8166959746187066456=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH] Read EF-PNN,
- EF-OPL and override network names  accordingly.
-Date: Sat, 18 Jul 2009 01:36:35 +0200
-Message-ID: <fb249edb0907171636w58f8af6aud94bbea0b24c5192@mail.gmail.com>
-In-Reply-To: <200907141553.28390.denkenz@gmail.com>
+Subject: [PATCH] Cache EF-PNN, EF-OPL sim files on disk.
+Date: Sat, 18 Jul 2009 06:34:48 +0200
+Message-ID: <1247891688-10028-1-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <200907141554.22706.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7023286509184094354==
+--===============8166959746187066456==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/7/14 Denis Kenzior <denkenz@gmail.com>:
-> Patch has been applied. =C2=A0However, I've completely (juding by 40 or s=
-o commits)
-> refactored how SIM filesystem is handled in oFono so I might have introdu=
-ced
-> some bugs. =C2=A0Could you test to make sure it is working as intended?
+This uses plain files in /var/cache/ofono for storing contents of the
+operator lists to avoid possibly numerous queries to the SIM on every
+startup.  Files are indexed with IMSI.  I'm not 100% sure about the
+autoconf magic.
 
-Attaching some fixes for the new code, the test and a clean-up patch
-(feel free to drop parts).  Note all the recent commits broke
-bisectability badly.
+Users need to rerun bootstrap-configure after applying this.
 
-Wouldn't it be useful for the service provider name to be available as
-SimManager property?
+File format slightly changed in this second version (make it as simple as
+possible).
+---
+ bootstrap-configure |    3 +-
+ configure.ac        |    5 ++
+ src/sim.c           |  193 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 3 files changed, 200 insertions(+), 1 deletions(-)
 
-Regards
+diff --git a/bootstrap-configure b/bootstrap-configure
+index cc82e1a..cea17bf 100755
+--- a/bootstrap-configure
++++ b/bootstrap-configure
+@@ -12,4 +12,5 @@ fi
+ 		--prefix=3D/usr \
+ 		--mandir=3D/usr/share/man \
+ 		--sysconfdir=3D/etc \
+-		--disable-datafiles
++		--disable-datafiles \
++		--localstatedir=3D/var
+diff --git a/configure.ac b/configure.ac
+index 640c3cd..a7cf947 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -96,6 +96,11 @@ AC_ARG_ENABLE(datafiles, AC_HELP_STRING([--disable-dataf=
+iles],
+ =
 
---===============7023286509184094354==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="0001-Make-PNN-OPL-work.patch"
+ AM_CONDITIONAL(DATAFILES, test "${enable_datafiles}" !=3D "no")
+ =
 
-RnJvbSAyY2NkMGYyOTM5NGQzZTY2YmQ1NTNlMTljZjczOWE4Y2U1YThkNzAwIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogU2F0LCAxOCBKdWwgMjAwOSAwMTo0MjozMSArMDIwMApTdWJqZWN0
-OiBbUEFUQ0hdIE1ha2UgUE5OIC8gT1BMIHdvcmsuCgotLS0KIHNyYy9uZXR3b3JrLmMgfCAgICA0
-ICsrLS0KIHNyYy9zaW11dGlsLmMgfCAgIDEyICsrKysrKysrLS0tLQogMiBmaWxlcyBjaGFuZ2Vk
-LCAxMCBpbnNlcnRpb25zKCspLCA2IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9uZXR3
-b3JrLmMgYi9zcmMvbmV0d29yay5jCmluZGV4IDU2Y2E5MjQuLjk2OWM2MzcgMTAwNjQ0Ci0tLSBh
-L3NyYy9uZXR3b3JrLmMKKysrIGIvc3JjL25ldHdvcmsuYwpAQCAtMTIwNiwxMiArMTIwNiwxMiBA
-QCBzdGF0aWMgdm9pZCBzaW1fb3BsX3JlYWRfY2Ioc3RydWN0IG9mb25vX21vZGVtICptb2RlbSwg
-aW50IG9rLAogCWlmIChzdHJ1Y3R1cmUgIT0gT0ZPTk9fU0lNX0ZJTEVfU1RSVUNUVVJFX0ZJWEVE
-KQogCQlyZXR1cm47CiAKLQlpZiAobGVuZ3RoIDwgOCB8fCByZWNvcmRfbGVuZ3RoIDwgOCB8fCBs
-ZW5ndGggPCByZWNvcmRfbGVuZ3RoKQorCWlmIChyZWNvcmRfbGVuZ3RoIDwgOCB8fCBsZW5ndGgg
-PCByZWNvcmRfbGVuZ3RoKQogCQlyZXR1cm47CiAKIAl0b3RhbCA9IGxlbmd0aCAvIHJlY29yZF9s
-ZW5ndGg7CiAKLQlzaW1fZW9uc19hZGRfcG5uX3JlY29yZChuZXRyZWctPmVvbnMsIHJlY29yZCwg
-ZGF0YSwgcmVjb3JkX2xlbmd0aCk7CisJc2ltX2VvbnNfYWRkX29wbF9yZWNvcmQobmV0cmVnLT5l
-b25zLCBkYXRhLCByZWNvcmRfbGVuZ3RoKTsKIAogCWlmIChyZWNvcmQgIT0gdG90YWwpCiAJCXJl
-dHVybjsKZGlmZiAtLWdpdCBhL3NyYy9zaW11dGlsLmMgYi9zcmMvc2ltdXRpbC5jCmluZGV4IDE2
-ZmFkMTYuLjI2ZDFiYWQgMTAwNjQ0Ci0tLSBhL3NyYy9zaW11dGlsLmMKKysrIGIvc3JjL3NpbXV0
-aWwuYwpAQCAtMzM4LDEzICszMzgsMTcgQEAgc3RhdGljIHN0cnVjdCBzaW1fZW9uc19vcGVyYXRv
-cl9pbmZvICoKIAogCQlmb3IgKGkgPSAwOyBpIDwgT0ZPTk9fTUFYX01DQ19MRU5HVEg7IGkrKykK
-IAkJCWlmIChtY2NbaV0gIT0gb3BsLT5tY2NbaV0gJiYKLQkJCQkJIShvcGwtPm1jY1tpXSA9PSAn
-ZCcgJiYgbWNjW2ldKSkKLQkJCQljb250aW51ZTsKKwkJCQkJIShvcGwtPm1jY1tpXSA9PSAnYicg
-JiYgbWNjW2ldKSkKKwkJCQlicmVhazsKKwkJaWYgKGkgPCBPRk9OT19NQVhfTUNDX0xFTkdUSCkK
-KwkJCWNvbnRpbnVlOwogCiAJCWZvciAoaSA9IDA7IGkgPCBPRk9OT19NQVhfTU5DX0xFTkdUSDsg
-aSsrKQogCQkJaWYgKG1uY1tpXSAhPSBvcGwtPm1uY1tpXSAmJgotCQkJCQkhKG9wbC0+bW5jW2ld
-ID09ICdkJyAmJiBtbmNbaV0pKQotCQkJCWNvbnRpbnVlOworCQkJCQkhKG9wbC0+bW5jW2ldID09
-ICdiJyAmJiBtbmNbaV0pKQorCQkJCWJyZWFrOworCQlpZiAoaSA8IE9GT05PX01BWF9NTkNfTEVO
-R1RIKQorCQkJY29udGludWU7CiAKIAkJaWYgKG9wbC0+bGFjX3RhY19sb3cgPT0gMCAmJiBvcGwt
-PmxhY190YWNfaGlnaCA9PSAweGZmZmUpCiAJCQlicmVhazsKLS0gCjEuNi4wCgo=
++eval "eval LOCALSTATE_DIR=3D$localstatedir"
++AC_SUBST(LOCALSTATE_DIR)
++AC_DEFINE_UNQUOTED(CONFIG_LOCALSTATEDIR, "$LOCALSTATE_DIR",
++		   [Define to the location where state is stored.])
++
+ COMPILER_FLAGS
+ =
 
---===============7023286509184094354==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="0002-Clean-up-in-sim.c.patch"
+ AC_OUTPUT(Makefile gdbus/Makefile gatchat/Makefile gisi/Makefile
+diff --git a/src/sim.c b/src/sim.c
+index 86f2e98..e3590ba 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -29,6 +29,10 @@
+ #include <dbus/dbus.h>
+ #include <glib.h>
+ #include <gdbus.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <fcntl.h>
++#include <errno.h>
+ =
 
-RnJvbSA0ZjE0YTk0ZmZjZTg2MWU1YTBjNDEyYWNmOTQ0MGM2YjlhNmZmNzI1IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogU2F0LCAxOCBKdWwgMjAwOSAwMTo0Mjo1NCArMDIwMApTdWJqZWN0
-OiBbUEFUQ0hdIENsZWFuLXVwIGluIHNpbS5jLgoKLS0tCiBzcmMvc2ltLmMgfCAgIDI2ICsrKysr
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tCiAxIGZpbGVzIGNoYW5nZWQsIDUgaW5zZXJ0aW9ucygrKSwg
-MjEgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvc3JjL3NpbS5jIGIvc3JjL3NpbS5jCmluZGV4
-IGJkOTI4MzYuLjg2ZjJlOTggMTAwNjQ0Ci0tLSBhL3NyYy9zaW0uYworKysgYi9zcmMvc2ltLmMK
-QEAgLTY1LDEzICs2NSw2IEBAIHN0cnVjdCBzaW1fbWFuYWdlcl9kYXRhIHsKIAlHU0xpc3QgKnJl
-YWR5X25vdGlmeTsKIAlnYm9vbGVhbiByZWFkeTsKIAlHUXVldWUgKnNpbW9wX3E7Ci0KLQlHU0xp
-c3QgKnNwZGk7Ci0KLQlHU0xpc3QgKm9wbDsKLQlpbnQgb3BsX251bTsKLQlpbnQgb3BsX3NpemU7
-Ci0JaW50IG9wbF9jdXJyZW50OwogfTsKIAogc3RhdGljIGNoYXIgKipnZXRfb3duX251bWJlcnMo
-R1NMaXN0ICpvd25fbnVtYmVycykKQEAgLTEyNywxOCArMTIwLDYgQEAgc3RhdGljIHZvaWQgc2lt
-X21hbmFnZXJfZGVzdHJveShncG9pbnRlciB1c2VyZGF0YSkKIAkJZ19xdWV1ZV9mcmVlKGRhdGEt
-PnNpbW9wX3EpOwogCQlkYXRhLT5zaW1vcF9xID0gTlVMTDsKIAl9Ci0KLQlpZiAoZGF0YS0+c3Bk
-aSkgewotCQlnX3NsaXN0X2ZvcmVhY2goZGF0YS0+c3BkaSwgKEdGdW5jKWdfZnJlZSwgTlVMTCk7
-Ci0JCWdfc2xpc3RfZnJlZShkYXRhLT5zcGRpKTsKLQkJZGF0YS0+c3BkaSA9IE5VTEw7Ci0JfQot
-Ci0JaWYgKGRhdGEtPm9wbCkgewotCQlnX3NsaXN0X2ZvcmVhY2goZGF0YS0+b3BsLCAoR0Z1bmMp
-Z19mcmVlLCBOVUxMKTsKLQkJZ19zbGlzdF9mcmVlKGRhdGEtPm9wbCk7Ci0JCWRhdGEtPm9wbCA9
-IE5VTEw7Ci0JfQogfQogCiBzdGF0aWMgREJ1c01lc3NhZ2UgKnNpbV9nZXRfcHJvcGVydGllcyhE
-QnVzQ29ubmVjdGlvbiAqY29ubiwKQEAgLTE4MSw3ICsxNjIsMTAgQEAgc3RhdGljIEdEQnVzTWV0
-aG9kVGFibGUgc2ltX21hbmFnZXJfbWV0aG9kc1tdID0gewogCXsgfQogfTsKIAotc3RhdGljIEdE
-QnVzU2lnbmFsVGFibGUgc2ltX21hbmFnZXJfc2lnbmFsc1tdID0geyB7IH0gfTsKK3N0YXRpYyBH
-REJ1c1NpZ25hbFRhYmxlIHNpbV9tYW5hZ2VyX3NpZ25hbHNbXSA9IHsKKwl7ICJQcm9wZXJ0eUNo
-YW5nZWQiLAkic3YiIH0sCisJeyB9Cit9OwogCiAKIHN0YXRpYyB2b2lkIHNpbV9tc2lzZG5fcmVh
-ZF9jYihzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtLCBpbnQgb2ssCkBAIC0yMDIsNyArMTg2LDcg
-QEAgc3RhdGljIHZvaWQgc2ltX21zaXNkbl9yZWFkX2NiKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9k
-ZW0sIGludCBvaywKIAlpZiAoc3RydWN0dXJlICE9IE9GT05PX1NJTV9GSUxFX1NUUlVDVFVSRV9G
-SVhFRCkKIAkJcmV0dXJuOwogCi0JaWYgKGxlbmd0aCA8IDE0IHx8IHJlY29yZF9sZW5ndGggPCAx
-NCB8fCBsZW5ndGggPCByZWNvcmRfbGVuZ3RoKQorCWlmIChyZWNvcmRfbGVuZ3RoIDwgMTQgfHwg
-bGVuZ3RoIDwgcmVjb3JkX2xlbmd0aCkKIAkJcmV0dXJuOwogCiAJdG90YWwgPSBsZW5ndGggLyBy
-ZWNvcmRfbGVuZ3RoOwpkaWZmIC0tZ2l0IGEvc3JjL25ldHdvcmsuYyBiL3NyYy9uZXR3b3JrLmMK
-aW5kZXggMTE1MmIyOC4uZTI2NDM3NCAxMDA2NDQKLS0tIGEvc3JjL25ldHdvcmsuYworKysgYi9z
-cmMvbmV0d29yay5jCkBAIC04OSw3ICs4OSw3IEBAIHN0YXRpYyB2b2lkIHJlZ2lzdHJhdGlvbl9z
-dGF0dXNfY2FsbGJhY2soY29uc3Qgc3RydWN0IG9mb25vX2Vycm9yICplcnJvciwKIHN0cnVjdCBu
-ZXR3b3JrX29wZXJhdG9yX2RhdGEgewogCXN0cnVjdCBvZm9ub19uZXR3b3JrX29wZXJhdG9yICpp
-bmZvOwogCXN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW07Ci0Jc3RydWN0IHNpbV9lb25zX29wZXJh
-dG9yX2luZm8gKmVvbnNfaW5mbzsKKwljb25zdCBzdHJ1Y3Qgc2ltX2VvbnNfb3BlcmF0b3JfaW5m
-byAqZW9uc19pbmZvOwogfTsKIAogc3RhdGljIGlubGluZSBjb25zdCBjaGFyICpuZXR3b3JrX29w
-ZXJhdG9yX3N0YXR1c190b19zdHJpbmcoaW50IHN0YXR1cykKQEAgLTQyNywxMSArNDI3LDExIEBA
-IHN0YXRpYyB2b2lkIHNldF9uZXR3b3JrX29wZXJhdG9yX25hbWUoc3RydWN0IG9mb25vX21vZGVt
-ICptb2RlbSwKIAogc3RhdGljIHZvaWQgc2V0X25ldHdvcmtfb3BlcmF0b3JfZW9uc19pbmZvKHN0
-cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0sCiAJCQkJc3RydWN0IG5ldHdvcmtfb3BlcmF0b3JfZGF0
-YSAqb3BkLAotCQkJCXN0cnVjdCBzaW1fZW9uc19vcGVyYXRvcl9pbmZvICplb25zX2luZm8pCisJ
-CQkJY29uc3Qgc3RydWN0IHNpbV9lb25zX29wZXJhdG9yX2luZm8gKmVvbnNfaW5mbykKIHsKIAlz
-dHJ1Y3QgbmV0d29ya19yZWdpc3RyYXRpb25fZGF0YSAqbmV0cmVnID0gbW9kZW0tPm5ldHdvcmtf
-cmVnaXN0cmF0aW9uOwogCURCdXNDb25uZWN0aW9uICpjb25uID0gZGJ1c19nc21fY29ubmVjdGlv
-bigpOwotCXN0cnVjdCBzaW1fZW9uc19vcGVyYXRvcl9pbmZvICpvbGRfZW9uc19pbmZvID0gb3Bk
-LT5lb25zX2luZm87CisJY29uc3Qgc3RydWN0IHNpbV9lb25zX29wZXJhdG9yX2luZm8gKm9sZF9l
-b25zX2luZm8gPSBvcGQtPmVvbnNfaW5mbzsKIAljb25zdCBjaGFyICpwYXRoOwogCWNvbnN0IGNo
-YXIgKm9sZG5hbWU7CiAJY29uc3QgY2hhciAqbmV3bmFtZTsKQEAgLTEyMjYsNyArMTIyNiw3IEBA
-IHN0YXRpYyB2b2lkIHNpbV9vcGxfcmVhZF9jYihzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtLCBp
-bnQgb2ssCiAKIAlmb3IgKGwgPSBuZXRyZWctPm9wZXJhdG9yX2xpc3Q7IGw7IGwgPSBsLT5uZXh0
-KSB7CiAJCXN0cnVjdCBuZXR3b3JrX29wZXJhdG9yX2RhdGEgKm9wZCA9IGwtPmRhdGE7Ci0JCXN0
-cnVjdCBzaW1fZW9uc19vcGVyYXRvcl9pbmZvICplb25zX2luZm87CisJCWNvbnN0IHN0cnVjdCBz
-aW1fZW9uc19vcGVyYXRvcl9pbmZvICplb25zX2luZm87CiAKIAkJZW9uc19pbmZvID0gc2ltX2Vv
-bnNfbG9va3VwKG5ldHJlZy0+ZW9ucywgb3BkLT5pbmZvLT5tY2MsCiAJCQkJCQlvcGQtPmluZm8t
-Pm1uYyk7CmRpZmYgLS1naXQgYS9zcmMvc2ltdXRpbC5jIGIvc3JjL3NpbXV0aWwuYwppbmRleCAy
-NmQxYmFkLi4xNDMwZWMzIDEwMDY0NAotLS0gYS9zcmMvc2ltdXRpbC5jCisrKyBiL3NyYy9zaW11
-dGlsLmMKQEAgLTMyLDYgKzMyLDEzIEBACiAjaW5jbHVkZSAidXRpbC5oIgogI2luY2x1ZGUgInNt
-c3V0aWwuaCIKIAorc3RydWN0IHNpbV9lb25zIHsKKwlzdHJ1Y3Qgc2ltX2VvbnNfb3BlcmF0b3Jf
-aW5mbyAqcG5uX2xpc3Q7CisJR1NMaXN0ICpvcGxfbGlzdDsKKwlnYm9vbGVhbiBwbm5fdmFsaWQ7
-CisJaW50IHBubl9tYXg7Cit9OworCiBzdHJ1Y3Qgc3BkaV9vcGVyYXRvciB7CiAJY2hhciBtY2Nb
-T0ZPTk9fTUFYX01DQ19MRU5HVEggKyAxXTsKIAljaGFyIG1uY1tPRk9OT19NQVhfTU5DX0xFTkdU
-SCArIDFdOwpAQCAtMTcxLDYgKzE3OCwxMCBAQCBzdGF0aWMgZ2ludCBzcGRpX29wZXJhdG9yX2Nv
-bXBhcmUoZ2NvbnN0cG9pbnRlciBhLCBnY29uc3Rwb2ludGVyIGIpCiAJcmV0dXJuIHN0cmNtcChv
-cGEtPm1uYywgb3BiLT5tbmMpOwogfQogCitzdHJ1Y3Qgc2ltX3NwZGkgeworCUdTTGlzdCAqb3Bl
-cmF0b3JzOworfTsKKwogc3RydWN0IHNpbV9zcGRpICpzaW1fc3BkaV9uZXcoY29uc3QgZ3VpbnQ4
-ICp0bHYsIGludCBsZW5ndGgpCiB7CiAJY29uc3QgZ3VpbnQ4ICpwbG1uX2xpc3Q7CkBAIC0yOTAs
-MTEgKzMwMSwxMSBAQCBzdGF0aWMgc3RydWN0IG9wbF9vcGVyYXRvciAqb3BsX29wZXJhdG9yX2Fs
-bG9jKGNvbnN0IGd1aW50OCAqcmVjb3JkKQogfQogCiB2b2lkIHNpbV9lb25zX2FkZF9vcGxfcmVj
-b3JkKHN0cnVjdCBzaW1fZW9ucyAqZW9ucywKLQkJCQljb25zdCBndWludDggKnRsdiwgaW50IGxl
-bmd0aCkKKwkJCQljb25zdCBndWludDggKmNvbnRlbnRzLCBpbnQgbGVuZ3RoKQogewogCXN0cnVj
-dCBvcGxfb3BlcmF0b3IgKm9wZXI7CiAKLQlvcGVyID0gb3BsX29wZXJhdG9yX2FsbG9jKHRsdik7
-CisJb3BlciA9IG9wbF9vcGVyYXRvcl9hbGxvYyhjb250ZW50cyk7CiAKIAlpZiAob3Blci0+aWQg
-PiBlb25zLT5wbm5fbWF4KSB7CiAJCWdfZnJlZShvcGVyKTsKQEAgLTMyNCw3ICszMzUsNyBAQCB2
-b2lkIHNpbV9lb25zX2ZyZWUoc3RydWN0IHNpbV9lb25zICplb25zKQogCWdfZnJlZShlb25zKTsK
-IH0KIAotc3RhdGljIHN0cnVjdCBzaW1fZW9uc19vcGVyYXRvcl9pbmZvICoKK3N0YXRpYyBjb25z
-dCBzdHJ1Y3Qgc2ltX2VvbnNfb3BlcmF0b3JfaW5mbyAqCiAJc2ltX2VvbnNfbG9va3VwX2NvbW1v
-bihzdHJ1Y3Qgc2ltX2VvbnMgKmVvbnMsCiAJCQkJY29uc3QgY2hhciAqbWNjLCBjb25zdCBjaGFy
-ICptbmMsCiAJCQkJZ2Jvb2xlYW4gaGF2ZV9sYWMsIGd1aW50MTYgbGFjKQpAQCAtMzcyLDE0ICsz
-ODMsMTUgQEAgc3RhdGljIHN0cnVjdCBzaW1fZW9uc19vcGVyYXRvcl9pbmZvICoKIAlyZXR1cm4g
-JmVvbnMtPnBubl9saXN0W29wbC0+aWQgLSAxXTsKIH0KIAotc3RydWN0IHNpbV9lb25zX29wZXJh
-dG9yX2luZm8gKnNpbV9lb25zX2xvb2t1cChzdHJ1Y3Qgc2ltX2VvbnMgKmVvbnMsCitjb25zdCBz
-dHJ1Y3Qgc2ltX2VvbnNfb3BlcmF0b3JfaW5mbyAqc2ltX2VvbnNfbG9va3VwKHN0cnVjdCBzaW1f
-ZW9ucyAqZW9ucywKIAkJCQkJCWNvbnN0IGNoYXIgKm1jYywKIAkJCQkJCWNvbnN0IGNoYXIgKm1u
-YykKIHsKIAlyZXR1cm4gc2ltX2VvbnNfbG9va3VwX2NvbW1vbihlb25zLCBtY2MsIG1uYywgRkFM
-U0UsIDApOwogfQogCi1zdHJ1Y3Qgc2ltX2VvbnNfb3BlcmF0b3JfaW5mbyAqc2ltX2VvbnNfbG9v
-a3VwX3dpdGhfbGFjKHN0cnVjdCBzaW1fZW9ucyAqZW9ucywKK2NvbnN0IHN0cnVjdCBzaW1fZW9u
-c19vcGVyYXRvcl9pbmZvICpzaW1fZW9uc19sb29rdXBfd2l0aF9sYWMoCisJCQkJCQkJc3RydWN0
-IHNpbV9lb25zICplb25zLAogCQkJCQkJCWNvbnN0IGNoYXIgKm1jYywKIAkJCQkJCQljb25zdCBj
-aGFyICptbmMsCiAJCQkJCQkJZ3VpbnQxNiBsYWMpCmRpZmYgLS1naXQgYS9zcmMvc2ltdXRpbC5o
-IGIvc3JjL3NpbXV0aWwuaAppbmRleCBmYjBhMWI4Li5kNzQ3MDZhIDEwMDY0NAotLS0gYS9zcmMv
-c2ltdXRpbC5oCisrKyBiL3NyYy9zaW11dGlsLmgKQEAgLTMwLDEwICszMCw2IEBAIGVudW0gc2lt
-X2ZpbGVpZCB7CiAjZGVmaW5lIFNJTV9FRlNQTl9EQ19IT01FX1BMTU5fQklUIDB4MQogI2RlZmlu
-ZSBTSU1fRUZTUE5fRENfUk9BTUlOR19TUE5fQklUIDB4MgogCi1zdHJ1Y3Qgc2ltX3NwZGkgewot
-CUdTTGlzdCAqb3BlcmF0b3JzOwotfTsKLQogc3RydWN0IHNpbV9lb25zX29wZXJhdG9yX2luZm8g
-ewogCWNoYXIgKmxvbmduYW1lOwogCWdib29sZWFuIGxvbmdfY2k7CkBAIC00MiwyNSArMzgsMTkg
-QEAgc3RydWN0IHNpbV9lb25zX29wZXJhdG9yX2luZm8gewogCWNoYXIgKmluZm87CiB9OwogCi1z
-dHJ1Y3Qgc2ltX2VvbnMgewotCXN0cnVjdCBzaW1fZW9uc19vcGVyYXRvcl9pbmZvICpwbm5fbGlz
-dDsKLQlHU0xpc3QgKm9wbF9saXN0OwotCWdib29sZWFuIHBubl92YWxpZDsKLQlpbnQgcG5uX21h
-eDsKLX07Ci0KIHN0cnVjdCBzaW1fZW9ucyAqc2ltX2VvbnNfbmV3KGludCBwbm5fcmVjb3Jkcyk7
-CiB2b2lkIHNpbV9lb25zX2FkZF9wbm5fcmVjb3JkKHN0cnVjdCBzaW1fZW9ucyAqZW9ucywgaW50
-IHJlY29yZCwKIAkJCQljb25zdCBndWludDggKnRsdiwgaW50IGxlbmd0aCk7CiBnYm9vbGVhbiBz
-aW1fZW9uc19wbm5faXNfZW1wdHkoc3RydWN0IHNpbV9lb25zICplb25zKTsKIHZvaWQgc2ltX2Vv
-bnNfYWRkX29wbF9yZWNvcmQoc3RydWN0IHNpbV9lb25zICplb25zLAotCQkJCWNvbnN0IGd1aW50
-OCAqdGx2LCBpbnQgbGVuZ3RoKTsKKwkJCQljb25zdCBndWludDggKmNvbnRlbnRzLCBpbnQgbGVu
-Z3RoKTsKIHZvaWQgc2ltX2VvbnNfb3B0aW1pemUoc3RydWN0IHNpbV9lb25zICplb25zKTsKLXN0
-cnVjdCBzaW1fZW9uc19vcGVyYXRvcl9pbmZvICpzaW1fZW9uc19sb29rdXBfd2l0aF9sYWMoc3Ry
-dWN0IHNpbV9lb25zICplb25zLAotCQkJCQkJCWNvbnN0IGNoYXIgKm1jYywKLQkJCQkJCQljb25z
-dCBjaGFyICptbmMsCi0JCQkJCQkJZ3VpbnQxNiBsYWMpOwotc3RydWN0IHNpbV9lb25zX29wZXJh
-dG9yX2luZm8gKnNpbV9lb25zX2xvb2t1cChzdHJ1Y3Qgc2ltX2VvbnMgKmVvbnMsCitjb25zdCBz
-dHJ1Y3Qgc2ltX2VvbnNfb3BlcmF0b3JfaW5mbyAqc2ltX2VvbnNfbG9va3VwX3dpdGhfbGFjKAor
-CQkJCQkJc3RydWN0IHNpbV9lb25zICplb25zLAorCQkJCQkJY29uc3QgY2hhciAqbWNjLAorCQkJ
-CQkJY29uc3QgY2hhciAqbW5jLAorCQkJCQkJZ3VpbnQxNiBsYWMpOworY29uc3Qgc3RydWN0IHNp
-bV9lb25zX29wZXJhdG9yX2luZm8gKnNpbV9lb25zX2xvb2t1cChzdHJ1Y3Qgc2ltX2VvbnMgKmVv
-bnMsCiAJCQkJCQljb25zdCBjaGFyICptY2MsCiAJCQkJCQljb25zdCBjaGFyICptbmMpOwogdm9p
-ZCBzaW1fZW9uc19mcmVlKHN0cnVjdCBzaW1fZW9ucyAqZW9ucyk7Ci0tIAoxLjYuMAoK
+ #include "ofono.h"
+ =
 
---===============7023286509184094354==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0003-Don-t-dereference-before-the-null-check.patch"
+@@ -267,6 +271,34 @@ static gboolean sim_retrieve_imsi(void *user_data)
+ 	return FALSE;
+ }
+ =
 
-RnJvbSBiNDEzOTVjMjRmMjliMGI2ODUyNmZhYjM0OGRjZTQ1ZDg4MzhiN2FhIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogU2F0LCAxOCBKdWwgMjAwOSAwMTo0NDo1NCArMDIwMApTdWJqZWN0
-OiBbUEFUQ0hdIERvbid0IGRlcmVmZXJlbmNlIGJlZm9yZSB0aGUgbnVsbCBjaGVjay4KCi0tLQog
-c3JjL25ldHdvcmsuYyB8ICAgIDYgKysrKy0tCiAxIGZpbGVzIGNoYW5nZWQsIDQgaW5zZXJ0aW9u
-cygrKSwgMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9zcmMvbmV0d29yay5jIGIvc3JjL25l
-dHdvcmsuYwppbmRleCA5NjljNjM3Li4xNDZiNDlmIDEwMDY0NAotLS0gYS9zcmMvbmV0d29yay5j
-CisrKyBiL3NyYy9uZXR3b3JrLmMKQEAgLTMzOSw3ICszMzksNyBAQCBzdGF0aWMgY2hhciAqZ2V0
-X29wZXJhdG9yX2Rpc3BsYXlfbmFtZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogewogCXN0
-cnVjdCBuZXR3b3JrX3JlZ2lzdHJhdGlvbl9kYXRhICpuZXRyZWcgPSBtb2RlbS0+bmV0d29ya19y
-ZWdpc3RyYXRpb247CiAJc3RydWN0IG5ldHdvcmtfb3BlcmF0b3JfZGF0YSAqY3VycmVudCA9IG5l
-dHJlZy0+Y3VycmVudF9vcGVyYXRvcjsKLQlzdHJ1Y3Qgb2Zvbm9fbmV0d29ya19vcGVyYXRvciAq
-b3AgPSBjdXJyZW50LT5pbmZvOworCXN0cnVjdCBvZm9ub19uZXR3b3JrX29wZXJhdG9yICpvcDsK
-IAljb25zdCBjaGFyICpwbG1uOwogCXN0YXRpYyBjaGFyIG5hbWVbMTAyNF07CiAJaW50IGxlbiA9
-IHNpemVvZihuYW1lKTsKQEAgLTM0OSwxMSArMzQ5LDEzIEBAIHN0YXRpYyBjaGFyICpnZXRfb3Bl
-cmF0b3JfZGlzcGxheV9uYW1lKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCiAJICogUExNTiBv
-ciByb2FtaW5nIGFuZCBvbiBjb25maWd1cmF0aW9uIGJpdHMgZnJvbSB0aGUgU0lNLCBhbGwKIAkg
-KiB0b2dldGhlciB0aGVyZSBhcmUgZm91ciBjYXNlcyB0byBjb25zaWRlci4gICovCiAKLQlpZiAo
-IW5ldHJlZy0+Y3VycmVudF9vcGVyYXRvcikgeworCWlmICghY3VycmVudCkgewogCQlnX3N0cmxj
-cHkobmFtZSwgIiIsIGxlbik7CiAJCXJldHVybiBuYW1lOwogCX0KIAorCW9wID0gY3VycmVudC0+
-aW5mbzsKKwogCXBsbW4gPSBvcC0+bmFtZTsKIAlpZiAoY3VycmVudC0+ZW9uc19pbmZvICYmIGN1
-cnJlbnQtPmVvbnNfaW5mby0+bG9uZ25hbWUpCiAJCXBsbW4gPSBjdXJyZW50LT5lb25zX2luZm8t
-PmxvbmduYW1lOwotLSAKMS42LjAKCg==
++static int create_dirs(const char *filename, const mode_t mode)
++{
++	struct stat st;
++	char *dir;
++	const char *prev, *next;
++	int err;
++
++	err =3D stat(filename, &st);
++	if (!err && S_ISREG(st.st_mode))
++		return 0;
++
++	dir =3D g_malloc(strlen(filename) + 1);
++	strcpy(dir, "/");
++
++	for (prev =3D filename; next =3D strchr(prev + 1, '/'); prev =3D next)
++		if (next > prev + 1) {
++			strncat(dir, prev + 1, next - prev);
++
++			if (mkdir(dir, mode) && errno !=3D EEXIST) {
++				g_free(dir);
++				return -1;
++			}
++		}
++
++	g_free(dir);
++	return 0;
++}
++
+ static void sim_op_error(struct ofono_modem *modem)
+ {
+ 	struct sim_manager_data *sim =3D modem->sim_manager;
+@@ -280,6 +312,11 @@ static void sim_op_error(struct ofono_modem *modem)
+ 		g_timeout_add(0, sim_op_next, modem);
+ }
+ =
 
---===============7023286509184094354==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0004-Use-registration-status-constants-consistently.patch"
++#define SIM_CACHE_MODE 0600
++#define SIM_CACHE_PATH CONFIG_LOCALSTATEDIR "/cache/ofono/%s/%04x"
++#define SIM_CACHE_PATH_LEN(imsilen) (strlen(SIM_CACHE_PATH) - 2 + imsilen)
++#define SIM_CACHE_HEADER_SIZE 6
++
+ static void sim_op_retrieve_cb(const struct ofono_error *error,
+ 				const unsigned char *data, int len, void *user)
+ {
+@@ -288,6 +325,10 @@ static void sim_op_retrieve_cb(const struct ofono_erro=
+r *error,
+ 	struct sim_file_op *op =3D g_queue_peek_head(sim->simop_q);
+ 	int total =3D op->length / op->record_length;
+ =
 
-RnJvbSA5ZWZlZjhmMzQ4MTM4MmU2Y2NkOGM4ZjQ4OGQ3YjczYmI2YTU0MDg3IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogU2F0LCAxOCBKdWwgMjAwOSAwMTo0NToyMiArMDIwMApTdWJqZWN0
-OiBbUEFUQ0hdIFVzZSByZWdpc3RyYXRpb24gc3RhdHVzIGNvbnN0YW50cyBjb25zaXN0ZW50bHku
-CgotLS0KIHNyYy9uZXR3b3JrLmMgfCAgIDEwICsrKysrKystLS0KIDEgZmlsZXMgY2hhbmdlZCwg
-NyBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9uZXR3b3Jr
-LmMgYi9zcmMvbmV0d29yay5jCmluZGV4IDE0NmI0OWYuLjExNTJiMjggMTAwNjQ0Ci0tLSBhL3Ny
-Yy9uZXR3b3JrLmMKKysrIGIvc3JjL25ldHdvcmsuYwpAQCAtOTU0LDcgKzk1NCw4IEBAIHZvaWQg
-b2Zvbm9fbmV0d29ya19yZWdpc3RyYXRpb25fbm90aWZ5KHN0cnVjdCBvZm9ub19tb2RlbSAqbW9k
-ZW0sIGludCBzdGF0dXMsCiAJaWYgKG5ldHJlZy0+dGVjaG5vbG9neSAhPSB0ZWNoKQogCQlzZXRf
-cmVnaXN0cmF0aW9uX3RlY2hub2xvZ3kobW9kZW0sIHRlY2gpOwogCi0JaWYgKG5ldHJlZy0+c3Rh
-dHVzID09IDEgfHwgbmV0cmVnLT5zdGF0dXMgPT0gNSkgeworCWlmIChuZXRyZWctPnN0YXR1cyA9
-PSBORVRXT1JLX1JFR0lTVFJBVElPTl9TVEFUVVNfUkVHSVNURVJFRCB8fAorCQluZXRyZWctPnN0
-YXR1cyA9PSBORVRXT1JLX1JFR0lTVFJBVElPTl9TVEFUVVNfUk9BTUlORykgewogCQlpZiAobmV0
-cmVnLT5vcHMtPmN1cnJlbnRfb3BlcmF0b3IpCiAJCQluZXRyZWctPm9wcy0+Y3VycmVudF9vcGVy
-YXRvcihtb2RlbSwKIAkJCQkJY3VycmVudF9vcGVyYXRvcl9jYWxsYmFjaywgbW9kZW0pOwpAQCAt
-MTE0MiwxMyArMTE0MywxNiBAQCBzdGF0aWMgdm9pZCBpbml0X3JlZ2lzdHJhdGlvbl9zdGF0dXMo
-Y29uc3Qgc3RydWN0IG9mb25vX2Vycm9yICplcnJvciwKIAkvKiBCb290c3RyYXAgb3VyIHNpZ25h
-bCBzdHJlbmd0aCB2YWx1ZSB3aXRob3V0IHdhaXRpbmcgZm9yIHRoZQogCSAqIHN0YWNrIHRvIHJl
-cG9ydCBpdAogCSAqLwotCWlmIChuZXRyZWctPnN0YXR1cyA9PSAxIHx8IG5ldHJlZy0+c3RhdHVz
-ID09IDUpIHsKKwlpZiAobmV0cmVnLT5zdGF0dXMgPT0gTkVUV09SS19SRUdJU1RSQVRJT05fU1RB
-VFVTX1JFR0lTVEVSRUQgfHwKKwkJbmV0cmVnLT5zdGF0dXMgPT0gTkVUV09SS19SRUdJU1RSQVRJ
-T05fU1RBVFVTX1JPQU1JTkcpIHsKIAkJaWYgKG5ldHJlZy0+b3BzLT5zaWduYWxfc3RyZW5ndGgp
-CiAJCQluZXRyZWctPm9wcy0+c2lnbmFsX3N0cmVuZ3RoKG1vZGVtLAogCQkJCQlzaWduYWxfc3Ry
-ZW5ndGhfY2FsbGJhY2ssIG1vZGVtKTsKIAl9CiAKLQlpZiAoQVVUT19SRUdJU1RFUiAmJiAoc3Rh
-dHVzID09IDAgfHwgc3RhdHVzID09IDMpKQorCWlmIChBVVRPX1JFR0lTVEVSICYmCisJCShzdGF0
-dXMgPT0gTkVUV09SS19SRUdJU1RSQVRJT05fU1RBVFVTX05PVF9SRUdJU1RFUkVEIHx8CisJCSBz
-dGF0dXMgPT0gTkVUV09SS19SRUdJU1RSQVRJT05fU1RBVFVTX0RFTklFRCkpCiAJCW5ldHJlZy0+
-b3BzLT5yZWdpc3Rlcl9hdXRvKG1vZGVtLCByZWdpc3Rlcl9jYWxsYmFjaywgbW9kZW0pOwogfQog
-Ci0tIAoxLjYuMAoK
++	char *imsi =3D sim->imsi;
++	char *path;
++	int fd, ret;
++
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+ 		if (op->current =3D=3D 1)
+ 			sim_op_error(modem);
+@@ -298,6 +339,23 @@ static void sim_op_retrieve_cb(const struct ofono_erro=
+r *error,
+ 	op->cb(modem, 1, op->structure, op->length, op->current,
+ 		data, op->record_length, op->userdata);
+ =
 
---===============7023286509184094354==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="0005-Test-EONS-handling.patch"
++	if (imsi) {
++		/* Cache the record */
++		path =3D g_strdup_printf(SIM_CACHE_PATH, imsi, op->id);
++		fd =3D open(path, O_WRONLY);
++		g_free(path);
++
++		if (fd =3D=3D -1)
++			goto next;
++
++		if (lseek(fd, (op->current - 1) * op->record_length +
++					SIM_CACHE_HEADER_SIZE, SEEK_SET) !=3D
++				(off_t) -1)
++			write(fd, data, op->record_length);
++		close(fd);
++	}
++
++next:
+ 	if (op->current =3D=3D total) {
+ 		op =3D g_queue_pop_head(sim->simop_q);
+ =
 
-RnJvbSA0YWQxMzMwYmIyMWM3NmExOTAyZmVjMjFiZTU0NDIyOTA4Y2E4OGJjIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogU2F0LCAxOCBKdWwgMjAwOSAwMzoyOTo1NyArMDIwMApTdWJqZWN0
-OiBbUEFUQ0hdIFRlc3QgRU9OUyBoYW5kbGluZy4KCi0tLQogdW5pdC9NYWtlZmlsZS5hbSAgICB8
-ICAgIDUgKystCiB1bml0L3Rlc3Qtc2ltdXRpbC5jIHwgICA3OSArKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysKIDIgZmlsZXMgY2hhbmdlZCwgODMgaW5z
-ZXJ0aW9ucygrKSwgMSBkZWxldGlvbnMoLSkKIGNyZWF0ZSBtb2RlIDEwMDY0NCB1bml0L3Rlc3Qt
-c2ltdXRpbC5jCgpkaWZmIC0tZ2l0IGEvdW5pdC9NYWtlZmlsZS5hbSBiL3VuaXQvTWFrZWZpbGUu
-YW0KaW5kZXggYTFjNTUxMC4uZDk5NjQ2NSAxMDA2NDQKLS0tIGEvdW5pdC9NYWtlZmlsZS5hbQor
-KysgYi91bml0L01ha2VmaWxlLmFtCkBAIC0xLDUgKzEsNSBAQAogCi1ub2luc3RfUFJPR1JBTVMg
-PSB0ZXN0LWNvbW1vbiB0ZXN0LXV0aWwgdGVzdC1zbXMKK25vaW5zdF9QUk9HUkFNUyA9IHRlc3Qt
-Y29tbW9uIHRlc3QtdXRpbCB0ZXN0LXNtcyB0ZXN0LXNpbXV0aWwKIAogdGVzdF9jb21tb25fU09V
-UkNFUyA9IHRlc3QtY29tbW9uLmMgJCh0b3Bfc3JjZGlyKS9zcmMvY29tbW9uLmMKIApAQCAtOCw2
-ICs4LDkgQEAgdGVzdF91dGlsX1NPVVJDRVMgPSB0ZXN0LXV0aWwuYyAkKHRvcF9zcmNkaXIpL3Ny
-Yy91dGlsLmMKIHRlc3Rfc21zX1NPVVJDRVMgPSB0ZXN0LXNtcy5jICQodG9wX3NyY2Rpcikvc3Jj
-L3V0aWwuYyBcCiAJCQkJCSQodG9wX3NyY2Rpcikvc3JjL3Ntc3V0aWwuYwogCit0ZXN0X3NpbXV0
-aWxfU09VUkNFUyA9IHRlc3Qtc2ltdXRpbC5jICQodG9wX3NyY2Rpcikvc3JjL3V0aWwuYyBcCisJ
-CQkJCSQodG9wX3NyY2Rpcikvc3JjL3NpbXV0aWwuYworCiBMREFERCA9IEBHTElCX0xJQlNAIEBH
-VEhSRUFEX0xJQlNACiAKIEFNX0NGTEFHUyA9IEBHVEhSRUFEX0NGTEFHU0AgQEdMSUJfQ0ZMQUdT
-QApkaWZmIC0tZ2l0IGEvdW5pdC90ZXN0LXNpbXV0aWwuYyBiL3VuaXQvdGVzdC1zaW11dGlsLmMK
-bmV3IGZpbGUgbW9kZSAxMDA2NDQKaW5kZXggMDAwMDAwMC4uNTk0NWFmMAotLS0gL2Rldi9udWxs
-CisrKyBiL3VuaXQvdGVzdC1zaW11dGlsLmMKQEAgLTAsMCArMSw3OSBAQAorLyoKKyAqCisgKiAg
-b0Zvbm8gLSBPcGVuIFNvdXJjZSBUZWxlcGhvbnkKKyAqCisgKiAgQ29weXJpZ2h0IChDKSAyMDA4
-LTIwMDkgIEludGVsIENvcnBvcmF0aW9uLiBBbGwgcmlnaHRzIHJlc2VydmVkLgorICoKKyAqICBU
-aGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTsgeW91IGNhbiByZWRpc3RyaWJ1dGUgaXQgYW5k
-L29yIG1vZGlmeQorICogIGl0IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVi
-bGljIExpY2Vuc2UgdmVyc2lvbiAyIGFzCisgKiAgcHVibGlzaGVkIGJ5IHRoZSBGcmVlIFNvZnR3
-YXJlIEZvdW5kYXRpb24uCisgKgorICogIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0
-aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLAorICogIGJ1dCBXSVRIT1VUIEFOWSBXQVJS
-QU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mCisgKiAgTUVSQ0hBTlRB
-QklMSVRZIG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZQorICog
-IEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuCisgKgorICogIFlv
-dSBzaG91bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBM
-aWNlbnNlCisgKiAgYWxvbmcgd2l0aCB0aGlzIHByb2dyYW07IGlmIG5vdCwgd3JpdGUgdG8gdGhl
-IEZyZWUgU29mdHdhcmUKKyAqICBGb3VuZGF0aW9uLCBJbmMuLCA1MSBGcmFua2xpbiBTdCwgRmlm
-dGggRmxvb3IsIEJvc3RvbiwgTUEgIDAyMTEwLTEzMDEgIFVTQQorICoKKyAqLworCisjaW5jbHVk
-ZSA8c3RyaW5nLmg+CisjaW5jbHVkZSA8c3RkaW8uaD4KKyNpbmNsdWRlIDxhc3NlcnQuaD4KKyNp
-bmNsdWRlIDxnbGliLmg+CisKKyNpbmNsdWRlICJzaW11dGlsLmgiCisKK2NvbnN0IHVuc2lnbmVk
-IGNoYXIgdmFsaWRfZWZvcGxbXSA9IHsKKwkweDQyLCAweGY2LCAweDFkLCAweDAwLCAweDAwLCAw
-eGZmLCAweGZlLCAweDAxLAorfTsKKworY29uc3QgdW5zaWduZWQgY2hhciB2YWxpZF9lZnBubltd
-WzI4XSA9IHsKKwl7IDB4NDMsIDB4MGEsIDB4MDAsIDB4NTQsIDB4NzUsIDB4NzgsIDB4MjAsIDB4
-NDMsIDB4NmYsIDB4NmQsCisJICAweDZkLCAweGZmLCAweGZmLCAweGZmLCAweGZmLCAweGZmLCAw
-eGZmLCAweGZmLCAweGZmLCAweGZmLCB9LAorCXsgMHg0MywgMHgwNSwgMHgwMCwgMHg0QywgMHg2
-RiwgMHg2RSwgMHg2NywgMHg0NSwgMHgwNiwgMHgwMCwKKwkgIDB4NTMsIDB4NjgsIDB4NkYsIDB4
-NzIsIDB4NzQsIDB4RkYsIDB4RkYsIDB4RkYsIDB4RkYsIDB4RkYsIH0KK307CisKK3N0YXRpYyB2
-b2lkIHRlc3RfZW9ucygpCit7CisJY29uc3Qgc3RydWN0IHNpbV9lb25zX29wZXJhdG9yX2luZm8g
-Km9wX2luZm87CisJc3RydWN0IHNpbV9lb25zICplb25zX2luZm87CisKKwllb25zX2luZm8gPSBz
-aW1fZW9uc19uZXcoMik7CisKKwlnX2Fzc2VydChzaW1fZW9uc19wbm5faXNfZW1wdHkoZW9uc19p
-bmZvKSk7CisKKwlzaW1fZW9uc19hZGRfcG5uX3JlY29yZChlb25zX2luZm8sIDEsCisJCQl2YWxp
-ZF9lZnBublswXSwgc2l6ZW9mKHZhbGlkX2VmcG5uWzBdKSk7CisJZ19hc3NlcnQoIXNpbV9lb25z
-X3Bubl9pc19lbXB0eShlb25zX2luZm8pKTsKKworCXNpbV9lb25zX2FkZF9wbm5fcmVjb3JkKGVv
-bnNfaW5mbywgMiwKKwkJCXZhbGlkX2VmcG5uWzFdLCBzaXplb2YodmFsaWRfZWZwbm5bMV0pKTsK
-KwlnX2Fzc2VydCghc2ltX2VvbnNfcG5uX2lzX2VtcHR5KGVvbnNfaW5mbykpOworCisJc2ltX2Vv
-bnNfYWRkX29wbF9yZWNvcmQoZW9uc19pbmZvLCB2YWxpZF9lZm9wbCwgc2l6ZW9mKHZhbGlkX2Vm
-b3BsKSk7CisJc2ltX2VvbnNfb3B0aW1pemUoZW9uc19pbmZvKTsKKworCW9wX2luZm8gPSBzaW1f
-ZW9uc19sb29rdXAoZW9uc19pbmZvLCAiMjQ2IiwgIjgyIik7CisJZ19hc3NlcnQoIW9wX2luZm8p
-OworCW9wX2luZm8gPSBzaW1fZW9uc19sb29rdXAoZW9uc19pbmZvLCAiMjQ2IiwgIjgxIik7CisJ
-Z19hc3NlcnQob3BfaW5mbyk7CisKKwlnX2Fzc2VydCghc3RyY21wKG9wX2luZm8tPmxvbmduYW1l
-LCAiVHV4IENvbW0iKSk7CisJZ19hc3NlcnQoIW9wX2luZm8tPnNob3J0bmFtZSk7CisJZ19hc3Nl
-cnQoIW9wX2luZm8tPmluZm8pOworCisJc2ltX2VvbnNfZnJlZShlb25zX2luZm8pOworfQorCitp
-bnQgbWFpbihpbnQgYXJnYywgY2hhciAqKmFyZ3YpCit7CisJZ190ZXN0X2luaXQoJmFyZ2MsICZh
-cmd2LCBOVUxMKTsKKworCWdfdGVzdF9hZGRfZnVuYygiL3Rlc3RzaW11dGlsL0VPTlMgSGFuZGxp
-bmciLCB0ZXN0X2VvbnMpOworCisJcmV0dXJuIGdfdGVzdF9ydW4oKTsKK30KLS0gCjEuNi4wCgo=
+@@ -362,6 +420,38 @@ static void sim_op_info_cb(const struct ofono_error *e=
+rror, int length,
+ 	struct sim_manager_data *sim =3D modem->sim_manager;
+ 	struct sim_file_op *op =3D g_queue_peek_head(sim->simop_q);
+ =
 
---===============7023286509184094354==--
++	char *imsi =3D sim->imsi;
++	char *path;
++	unsigned char fileinfo[6];
++	int fd =3D -1;
++
++	/* Even if the file doesn't exist, cache this fact so we don't
++	 * try and fail every time.  */
++	if (imsi) {
++		path =3D g_strdup_printf(SIM_CACHE_PATH, imsi, op->id);
++		if (create_dirs(path, SIM_CACHE_MODE | S_IXUSR) =3D=3D 0)
++			fd =3D open(path, O_WRONLY | O_CREAT, SIM_CACHE_MODE);
++		g_free(path);
++
++		if (fd =3D=3D -1) {
++			ofono_debug("Error %i creating cache file for "
++					"fileid %04x, IMSI %s",
++					errno, op->id, imsi);
++			goto process_result;
++		}
++
++		fileinfo[0] =3D error->type;
++		fileinfo[1] =3D length >> 8;
++		fileinfo[2] =3D length & 0xff;
++		fileinfo[3] =3D structure;
++		fileinfo[4] =3D record_length >> 8;
++		fileinfo[5] =3D record_length & 0xff;
++
++		write(fd, fileinfo, 6);
++		close(fd);
++	}
++
++process_result:
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+ 		sim_op_error(modem);
+ 		return;
+@@ -396,6 +486,106 @@ static gboolean sim_op_next(gpointer user_data)
+ 	return FALSE;
+ }
+ =
+
++struct sim_cache_callback {
++	ofono_sim_file_read_cb_t cb;
++	void *userdata;
++	struct ofono_modem *modem;
++	int error;
++	int fd;
++	enum ofono_sim_file_structure structure;
++	unsigned int record_length;
++	unsigned int total;
++};
++
++static gboolean sim_op_cached_callback(gpointer user)
++{
++	struct sim_cache_callback *cbs =3D user;
++	guint8 buffer[cbs->record_length];
++	unsigned int record;
++
++	if (cbs->error !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		cbs->cb(cbs->modem, 0, 0, 0, 0, 0, 0, 0);
++		goto cleanup;
++	}
++
++	for (record =3D 0; record < cbs->total; record++) {
++		if (read(cbs->fd, buffer, cbs->record_length) <
++				(int) cbs->record_length) {
++			cbs->cb(cbs->modem, 0, 0, 0, 0, 0, 0, 0);
++			break;
++		}
++
++		cbs->cb(cbs->modem, 1, cbs->structure,
++				cbs->record_length * cbs->total, record + 1,
++				buffer, cbs->record_length, cbs->userdata);
++	}
++
++cleanup:
++	close(cbs->fd);
++	g_free(cbs);
++
++	return FALSE;
++}
++
++static gboolean sim_op_check_cached(struct ofono_modem *modem, int fileid,
++			ofono_sim_file_read_cb_t cb, void *data)
++{
++	struct sim_manager_data *sim =3D modem->sim_manager;
++	char *imsi =3D sim->imsi;
++	char *path;
++	int fd;
++	unsigned char fileinfo[SIM_CACHE_HEADER_SIZE];
++	ssize_t len;
++	struct ofono_error error;
++	unsigned int file_length;
++	enum ofono_sim_file_structure structure;
++	unsigned int record_length;
++	struct sim_cache_callback *cbs;
++
++	if (!imsi)
++		return FALSE;
++
++	path =3D g_strdup_printf(SIM_CACHE_PATH, imsi, fileid);
++	fd =3D open(path, O_RDONLY);
++	g_free(path);
++
++	if (fd =3D=3D -1) {
++		if (errno !=3D ENOENT)
++			ofono_debug("Error %i opening cache file for "
++					"fileid %04x, IMSI %s",
++					errno, fileid, imsi);
++
++		return FALSE;
++	}
++
++	len =3D read(fd, fileinfo, SIM_CACHE_HEADER_SIZE);
++	if (len !=3D SIM_CACHE_HEADER_SIZE)
++		return FALSE;
++
++	error.type =3D fileinfo[0];
++	file_length =3D (fileinfo[1] << 8) | fileinfo[2];
++	structure =3D fileinfo[3];
++	record_length =3D (fileinfo[4] << 8) | fileinfo[5];
++
++	if (structure =3D=3D OFONO_SIM_FILE_STRUCTURE_TRANSPARENT)
++		record_length =3D file_length;
++	if (record_length =3D=3D 0 || file_length < record_length)
++		return FALSE;
++
++	cbs =3D g_new(struct sim_cache_callback, 1);
++	cbs->cb =3D cb;
++	cbs->userdata =3D data;
++	cbs->modem =3D modem;
++	cbs->error =3D error.type;
++	cbs->fd =3D fd;
++	cbs->structure =3D structure;
++	cbs->record_length =3D record_length;
++	cbs->total =3D file_length / record_length;
++	g_timeout_add(0, sim_op_cached_callback, cbs);
++
++	return TRUE;
++}
++
+ int ofono_sim_read(struct ofono_modem *modem, int id,
+ 			ofono_sim_file_read_cb_t cb, void *data)
+ {
+@@ -408,6 +598,9 @@ int ofono_sim_read(struct ofono_modem *modem, int id,
+ 	if (modem->sim_manager =3D=3D NULL)
+ 		return -1;
+ =
+
++	if (sim_op_check_cached(modem, id, cb, data))
++		return 0;
++
+ 	if (!sim->ops)
+ 		return -1;
+ =
+
+-- =
+
+1.6.0
+
+
+--===============8166959746187066456==--
 
