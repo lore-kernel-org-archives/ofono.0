@@ -1,47 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============5210709671777599833=="
+Content-Type: multipart/mixed; boundary="===============7264369975773747330=="
 MIME-Version: 1.0
-From: andrzej zaborowski <balrogg@gmail.com>
-Subject: Re: [PATCH] Cache EF-PNN, EF-OPL sim files on disk.
-Date: Mon, 20 Jul 2009 16:56:39 +0200
-Message-ID: <fb249edb0907200756u6cbe701fhea3e82b50eff7567@mail.gmail.com>
-In-Reply-To: <1248099857.4549.124.camel@violet>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] Return SIM file access conditions from read_file_info.
+Date: Mon, 27 Jul 2009 18:13:09 -0500
+Message-ID: <200907271813.10545.denkenz@gmail.com>
+In-Reply-To: <1248106299-5861-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5210709671777599833==
+--===============7264369975773747330==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/7/20 Marcel Holtmann <marcel@holtmann.org>:
->> This uses plain files in /var/cache/ofono for storing contents of the
->> operator lists to avoid possibly numerous queries to the SIM on every
->> startup. =C2=A0Files are indexed with IMSI. =C2=A0I'm not 100% sure abou=
-t the
->> autoconf magic.
->
-> please have a look into BlueZ or ConnMan and use STORAGEDIR for the base
-> path of /var/lib/ofono.
+Hi,
 
-Okay.
+I've pushed this patch with some modifications afterward.  From reading the =
 
->
-> Can we just use GKeyFile to store these files? It would make reading and
-> adding them a lot easier.
+spec myself, I noticed that our interpretations are a 'bit' different.
 
-I didn't know about GKeyFile but I considered BlueZ textfile after
-Denis suggested them.  The values in GKeyFile are UTF-8 encoded with
-some characters reserved so we would need either very heavy escaping
-or storing the SIM file contents hex encoded.  Keys would be only
-perhaps "FileInfo" and "Record1"..."RecordN" because SIM files are
-nothing like key-value pairs.  If you think the reading convenience is
-worth the parsing overhead, then I can change the patch to use
-GKeyFile or json or xml.
+According to TS 11.11 9.3:
+- Read is in byte 9, upper 4 bits
+- Update is in byte 9, lower 4 bits
+- Increate is in byte 10, upper 4 bits
+- Rehabilitate is in byte 11, upper 4 bits
+- Invalidate is in byte 11, lower 4 bits
 
-Supposedly this is only a form caching so there shouldn't be need for
-reading or adding these files, they can get overwritten at any time.
+I've reworked the code according to the above spec.
 
-Regards
+Yet in your implementation they were in bytes 10-12 with lower & upper =
 
---===============5210709671777599833==--
+swapped.  E.g. Read in byte 10, lower 4 bits.
+
+Can you confirm that my interpretation is correct, or am I missing somethin=
+g?
+
+Regards,
+-Denis
+
+--===============7264369975773747330==--
 
