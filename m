@@ -1,43 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============0497901999610310275=="
+Content-Type: multipart/mixed; boundary="===============5892914342524182078=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH] Return SIM file access conditions from read_file_info.
-Date: Tue, 28 Jul 2009 01:24:12 +0200
-Message-ID: <fb249edb0907271624x71206a51ya06b4b9bea481dc@mail.gmail.com>
-In-Reply-To: <200907271813.10545.denkenz@gmail.com>
+From: Andres Salomon <dilinger@collabora.co.uk>
+Subject: [PATCH] add manpage for ofonod
+Date: Mon, 27 Jul 2009 21:37:57 -0400
+Message-ID: <20090727213757.6ae93605@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0497901999610310275==
+--===============5892914342524182078==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/7/28 Denis Kenzior <denkenz@gmail.com>:
-> I've pushed this patch with some modifications afterward. =C2=A0From read=
-ing the
-> spec myself, I noticed that our interpretations are a 'bit' different.
->
-> According to TS 11.11 9.3:
-> - Read is in byte 9, upper 4 bits
-> - Update is in byte 9, lower 4 bits
-> - Increate is in byte 10, upper 4 bits
-> - Rehabilitate is in byte 11, upper 4 bits
-> - Invalidate is in byte 11, lower 4 bits
->
-> I've reworked the code according to the above spec.
->
-> Yet in your implementation they were in bytes 10-12 with lower & upper
-> swapped. =C2=A0E.g. Read in byte 10, lower 4 bits.
->
-> Can you confirm that my interpretation is correct, or am I missing someth=
-ing?
+Hi,
 
-Yes, this is correct and I was about to send a new patch for it,
-tested on a real SIM.  My doc to pdf converter doesn't display the
-tables (with bitfields) correctly in GSM specs.
+I created this manpage for Debian; feel free to use it.  The license
+is the same as oFono's.
 
-Regards
+---
+ doc/Makefile.am |    2 ++
+ doc/ofonod.8    |   35 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 37 insertions(+), 0 deletions(-)
+ create mode 100644 doc/ofonod.8
 
---===============0497901999610310275==--
+diff --git a/doc/Makefile.am b/doc/Makefile.am
+index dae164a..85f6023 100644
+--- a/doc/Makefile.am
++++ b/doc/Makefile.am
+@@ -2,3 +2,5 @@
+ EXTRA_DIST =3D overview.txt
+ =
+
+ MAINTAINERCLEANFILES =3D Makefile.in
++
++man_MANS =3D ofonod.8
+diff --git a/doc/ofonod.8 b/doc/ofonod.8
+new file mode 100644
+index 0000000..474d7fb
+--- /dev/null
++++ b/doc/ofonod.8
+@@ -0,0 +1,35 @@
++.\"
++.\" ofonod(8)
++.\"
++.\" Copyright (C) 2009  Collabora Ltd.
++.TH ofonod 8 "Jul 2009"
++.SH NAME
++ofonod \- oFono mobile telephony daemon
++.SH SYNOPSIS
++.B "ofonod [options]"
++.SH DESCRIPTION
++.B ofonod
++is a daemon which provides an oFono stack for interfacing mobile telephony=
+ devices.
++oFono is controlled through \fID-Bus\fP; for example, one can tell
++.B ofonod
++to send AT commands over /dev/rfcomm0 by calling the \fID-Bus\fP method or=
+g.ofono.at.Manager.Create.
++.I "/etc/dbus-1/system.d/ofono.conf"
++is used to manage \fID-Bus\fP permissions for oFono.
++.SH OPTIONS
++.TP
++.B --debug, -d
++Enable debug information output.
++.TP
++.B --nodetach, -n
++Don't run as daemon in background.
++.TP
++.SH SEE ALSO
++.PP
++\&\fIdbus-send\fR\|(1)
++
++.SH FILES
++.BR /etc/dbus-1/system.d/ofono.conf
++.SH AUTHOR
++.br
++This man page was written by Andres Salomon <dilinger@collabora.co.uk>.
++
+-- =
+
+1.6.3.3
+
+
+--===============5892914342524182078==--
 
