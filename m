@@ -1,86 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============5892914342524182078=="
+Content-Type: multipart/mixed; boundary="===============0657194611737407295=="
 MIME-Version: 1.0
-From: Andres Salomon <dilinger@collabora.co.uk>
-Subject: [PATCH] add manpage for ofonod
-Date: Mon, 27 Jul 2009 21:37:57 -0400
-Message-ID: <20090727213757.6ae93605@mycelium.queued.net>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH] Cache EF-PNN, EF-OPL sim files on disk.
+Date: Tue, 28 Jul 2009 03:39:46 +0200
+Message-ID: <fb249edb0907271839q22487b47mcd51c67fc6666fb9@mail.gmail.com>
+In-Reply-To: <200907271813.47067.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5892914342524182078==
+--===============0657194611737407295==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+2009/7/28 Denis Kenzior <denkenz@gmail.com>:
+>> This uses plain files in /var/cache/ofono for storing contents of the
+>> operator lists to avoid possibly numerous queries to the SIM on every
+>> startup. =C2=A0Files are indexed with IMSI. =C2=A0I'm not 100% sure abou=
+t the
+>> autoconf magic.
+>>
+>> Users need to rerun bootstrap-configure after applying this.
+>
+> This patch has been pushed.
 
-I created this manpage for Debian; feel free to use it.  The license
-is the same as oFono's.
+Thanks.  Attaching rebased patch to use Bluez autoconf snippet for
+setting STORAGEDIR.
 
----
- doc/Makefile.am |    2 ++
- doc/ofonod.8    |   35 +++++++++++++++++++++++++++++++++++
- 2 files changed, 37 insertions(+), 0 deletions(-)
- create mode 100644 doc/ofonod.8
+Regards
 
-diff --git a/doc/Makefile.am b/doc/Makefile.am
-index dae164a..85f6023 100644
---- a/doc/Makefile.am
-+++ b/doc/Makefile.am
-@@ -2,3 +2,5 @@
- EXTRA_DIST =3D overview.txt
- =
+--===============0657194611737407295==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Use-STORAGEDIR-autoconf-voodoo-from-Bluez.patch"
 
- MAINTAINERCLEANFILES =3D Makefile.in
-+
-+man_MANS =3D ofonod.8
-diff --git a/doc/ofonod.8 b/doc/ofonod.8
-new file mode 100644
-index 0000000..474d7fb
---- /dev/null
-+++ b/doc/ofonod.8
-@@ -0,0 +1,35 @@
-+.\"
-+.\" ofonod(8)
-+.\"
-+.\" Copyright (C) 2009  Collabora Ltd.
-+.TH ofonod 8 "Jul 2009"
-+.SH NAME
-+ofonod \- oFono mobile telephony daemon
-+.SH SYNOPSIS
-+.B "ofonod [options]"
-+.SH DESCRIPTION
-+.B ofonod
-+is a daemon which provides an oFono stack for interfacing mobile telephony=
- devices.
-+oFono is controlled through \fID-Bus\fP; for example, one can tell
-+.B ofonod
-+to send AT commands over /dev/rfcomm0 by calling the \fID-Bus\fP method or=
-g.ofono.at.Manager.Create.
-+.I "/etc/dbus-1/system.d/ofono.conf"
-+is used to manage \fID-Bus\fP permissions for oFono.
-+.SH OPTIONS
-+.TP
-+.B --debug, -d
-+Enable debug information output.
-+.TP
-+.B --nodetach, -n
-+Don't run as daemon in background.
-+.TP
-+.SH SEE ALSO
-+.PP
-+\&\fIdbus-send\fR\|(1)
-+
-+.SH FILES
-+.BR /etc/dbus-1/system.d/ofono.conf
-+.SH AUTHOR
-+.br
-+This man page was written by Andres Salomon <dilinger@collabora.co.uk>.
-+
--- =
+RnJvbSA4NTdhYjI0NDdjZTBmOGRkM2U2OWFiMDVmNzhhYjZjYjRkZDNlN2U3IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGJhbHJvZ0B6YWJvci5vcmc+
+CkRhdGU6IE1vbiwgMjcgSnVsIDIwMDkgMTg6MzY6MTEgKzAyMDAKU3ViamVjdDogW1BBVENIXSBV
+c2UgU1RPUkFHRURJUiBhdXRvY29uZiB2b29kb28gZnJvbSBCbHVlei4KCi0tLQogY29uZmlndXJl
+LmFjIHwgICAyNSArKysrKysrKysrKysrKysrKysrLS0tLS0tCiBzcmMvc2ltLmMgICAgfCAgICAy
+ICstCiAyIGZpbGVzIGNoYW5nZWQsIDIwIGluc2VydGlvbnMoKyksIDcgZGVsZXRpb25zKC0pCgpk
+aWZmIC0tZ2l0IGEvY29uZmlndXJlLmFjIGIvY29uZmlndXJlLmFjCmluZGV4IGY4MjliNDcuLmE1
+YjQ4ODQgMTAwNjQ0Ci0tLSBhL2NvbmZpZ3VyZS5hYworKysgYi9jb25maWd1cmUuYWMKQEAgLTgs
+OCArOCw2IEBAIG00X2lmZGVmKFtBTV9TSUxFTlRfUlVMRVNdLCBbQU1fU0lMRU5UX1JVTEVTKFt5
+ZXNdKV0pCiAKIEFNX01BSU5UQUlORVJfTU9ERQogCi1BQ19QUkVGSVhfREVGQVVMVCgvdXNyL2xv
+Y2FsKQotCiBBQ19MQU5HX0MKIAogQUNfUFJPR19DQwpAQCAtOTYsMTAgKzk0LDI1IEBAIEFDX0FS
+R19FTkFCTEUoZGF0YWZpbGVzLCBBQ19IRUxQX1NUUklORyhbLS1kaXNhYmxlLWRhdGFmaWxlc10s
+CiAKIEFNX0NPTkRJVElPTkFMKERBVEFGSUxFUywgdGVzdCAiJHtlbmFibGVfZGF0YWZpbGVzfSIg
+IT0gIm5vIikKIAotZXZhbCAiZXZhbCBMT0NBTFNUQVRFX0RJUj0kbG9jYWxzdGF0ZWRpciIKLUFD
+X1NVQlNUKExPQ0FMU1RBVEVfRElSKQotQUNfREVGSU5FX1VOUVVPVEVEKENPTkZJR19MT0NBTFNU
+QVRFRElSLCAiJExPQ0FMU1RBVEVfRElSIiwKLQkJICAgW0RlZmluZSB0byB0aGUgbG9jYXRpb24g
+d2hlcmUgc3RhdGUgaXMgc3RvcmVkLl0pCitBQ19QUkVGSVhfREVGQVVMVCgvdXNyL2xvY2FsKQor
+CitpZiAodGVzdCAiJHtwcmVmaXh9IiA9ICJOT05FIik7IHRoZW4KKwlkbmwgbm8gcHJlZml4IGFu
+ZCBubyBsb2NhbHN0YXRlZGlyLCBzbyBkZWZhdWx0IHRvIC92YXIKKwlpZiAodGVzdCAiJGxvY2Fs
+c3RhdGVkaXIiID0gJyR7cHJlZml4fS92YXInKTsgdGhlbgorCQlBQ19TVUJTVChbbG9jYWxzdGF0
+ZWRpcl0sIFsnL3ZhciddKQorCWZpCisKKwlwcmVmaXg9IiR7YWNfZGVmYXVsdF9wcmVmaXh9Igor
+ZmkKKworaWYgKHRlc3QgIiRsb2NhbHN0YXRlZGlyIiA9ICcke3ByZWZpeH0vdmFyJyk7IHRoZW4K
+KwlzdG9yYWdlZGlyPSIke3ByZWZpeH0vdmFyL2xpYi9vZm9ubyIKK2Vsc2UKKwlzdG9yYWdlZGly
+PSIke2xvY2Fsc3RhdGVkaXJ9L2xpYi9vZm9ubyIKK2ZpCisKK0FDX0RFRklORV9VTlFVT1RFRChT
+VE9SQUdFRElSLCAiJHtzdG9yYWdlZGlyfSIsCisJCQlbRGlyZWN0b3J5IGZvciB0aGUgc3RvcmFn
+ZSBmaWxlc10pCiAKIENPTVBJTEVSX0ZMQUdTCiAKZGlmZiAtLWdpdCBhL3NyYy9zaW0uYyBiL3Ny
+Yy9zaW0uYwppbmRleCBmZjRlNjNkLi41MTIyZWU1IDEwMDY0NAotLS0gYS9zcmMvc2ltLmMKKysr
+IGIvc3JjL3NpbS5jCkBAIC0zMTUsNyArMzE1LDcgQEAgc3RhdGljIHZvaWQgc2ltX29wX2Vycm9y
+KHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCiB9CiAKICNkZWZpbmUgU0lNX0NBQ0hFX01PREUg
+MDYwMAotI2RlZmluZSBTSU1fQ0FDSEVfUEFUSCBDT05GSUdfTE9DQUxTVEFURURJUiAiL2xpYi9v
+Zm9uby8lcy8lMDR4IgorI2RlZmluZSBTSU1fQ0FDSEVfUEFUSCBTVE9SQUdFRElSICIvJXMvJTA0
+eCIKICNkZWZpbmUgU0lNX0NBQ0hFX1BBVEhfTEVOKGltc2lsZW4pIChzdHJsZW4oU0lNX0NBQ0hF
+X1BBVEgpIC0gMiArIGltc2lsZW4pCiAjZGVmaW5lIFNJTV9DQUNIRV9IRUFERVJfU0laRSA2CiAK
+LS0gCjEuNi4xCgo=
 
-1.6.3.3
-
-
---===============5892914342524182078==--
+--===============0657194611737407295==--
 
