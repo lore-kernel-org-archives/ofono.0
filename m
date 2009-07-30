@@ -1,60 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============0480152507583978310=="
+Content-Type: multipart/mixed; boundary="===============5480595088540934962=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Network information can't be updated dynamically
-Date: Wed, 29 Jul 2009 21:45:40 -0500
-Message-ID: <200907292145.40433.denkenz@gmail.com>
-In-Reply-To: <B94C62E7C2870743865418621F040C1302053C502B@pdsmsx502.ccr.corp.intel.com>
+From: Li, Zhigang <zhigang.li@intel.com>
+Subject: sms segment fault with 160 char
+Date: Thu, 30 Jul 2009 11:35:07 +0800
+Message-ID: <B94C62E7C2870743865418621F040C1302053C5096@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0480152507583978310==
+--===============5480595088540934962==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
+There was segment fault during send 160 char sms.
+The content is 160 char like: abcdefghijklmnopqrstuvwxyz0123456789][=3D+...=
+.......
 
-> No, if ofono don't request it and the modem can't send the response
+ofonod[12988]: Response line: +CSCA: "+8613800210500",145
+ofonod[12988]: csca_query_cb: 8613800210500, 145
+ofonod[12988]: Got 1 recipients
+ofonod[12988]: ref: 1, offset: 3
+ofonod[12988]: pdu_len: 155, tpdu_len: 154
+ofonod[12988]: pdu_len: 36, tpdu_len: 35
+ofonod[12988]: tx_next: 0x82660f0
+ofonod[12988]: at_cmgs_cb got result: 1
+ofonod[12988]: Final response: OK
+ofonod[12988]: Response line: +CMGS: 31
+ofonod[12988]: Got MR: 31
+ofonod[12988]: tx_finished
+ofonod[12988]: Peeking in the queue
+ofonod[12988]: Scheduling next
+Segmentation fault
 
-I think you have no idea what you're talking about.  The 'spec' way of doin=
-g =
+Basically the "[ ]' will be encoded as UCS2, but it is 7bit according messa=
+ge head in fact.
+So there were two problem:
+1, tpdu_len was wrong: the problem was in sms encode
+2, send more segment had issue.
+ =
 
-this is sending AT+CREG=3D2, at which point the modem will send a +CREG: =
-
-unsolicited result code whenever the registration state changes (e.g. roami=
-ng, =
-
-searching, home, etc).  See 27.007 Section 7.2.  =
+Thanks
+Zhigang
 
 
-oFono also requests the registration status whenever any registration =
 
-operation is performed.  This works, you can even test it on phonesim if yo=
-u =
 
-like.
-
->
-> >> Suppose UI want to show the status, which interface can be used?
-> >
-> >You use the NetworkRegistration interface, 'Status' property.
->
-> That's the point; the status can't be changed because ofono only get the
-> status at modem/networking initialization, during registered to roaming
-> ofono don't know the changing even modem update the information correctly
-
-Again, you're wrong.  Take a look at ofono_network_registration_notify in =
-
-src/network.c and and creg_notify in drivers/atmodem/network-registration.c.
-
-I ask you again, are you sure your modem is actually switching its status, =
-and =
-
-if so, can you provide a debug trace?
-
-Regards,
--Denis
-
---===============0480152507583978310==--
+--===============5480595088540934962==--
 
