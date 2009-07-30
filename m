@@ -1,63 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============3932031288749502427=="
+Content-Type: multipart/mixed; boundary="===============6721531413565584216=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/4] Don't use g_slist_length to check for empty lists.
-Date: Thu, 30 Jul 2009 10:05:10 +0200
-Message-ID: <1248941110-13176-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 3/4] Fix possible memory leak on SIM reading error.
+Date: Thu, 30 Jul 2009 10:05:32 +0200
+Message-ID: <1248941132-13206-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3932031288749502427==
+--===============6721531413565584216==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-A glib Anti-pattern according to http://www.burtonini.com/blog
+This would also stall the SIM op queue if there's a read error for a record
+other than the first.  The other solution would be "goto next;" (keep
+reading further records).
 ---
- src/voicecall.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+ src/sim.c |    4 +---
+ 1 files changed, 1 insertions(+), 3 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 409d97a..b343ed6 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -897,7 +897,7 @@ static DBusMessage *manager_hangup_all(DBusConnection *=
-conn,
- 	if (!calls->ops->release_specific)
- 		return dbus_gsm_not_implemented(msg);
+diff --git a/src/sim.c b/src/sim.c
+index deab6bd..695744f 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -317,9 +317,7 @@ static void sim_op_retrieve_cb(const struct ofono_error=
+ *error,
+ 	int fd;
  =
 
--	if (g_slist_length(calls->call_list) =3D=3D 0) {
-+	if (calls->call_list =3D=3D NULL) {
- 		DBusMessage *reply =3D dbus_message_new_method_return(msg);
- 		return reply;
- 	}
-@@ -1009,7 +1009,7 @@ static DBusMessage *multiparty_hangup(DBusConnection =
-*conn,
- 	if (!calls->ops->release_all_active)
- 		return dbus_gsm_not_implemented(msg);
- =
-
--	if (g_slist_length(calls->multiparty_list) =3D=3D 0) {
-+	if (calls->multiparty_list =3D=3D NULL) {
- 		DBusMessage *reply =3D dbus_message_new_method_return(msg);
- 		return reply;
- 	}
-@@ -1362,7 +1362,7 @@ static void multirelease_callback(const struct ofono_=
-error *error, void *data)
- 	DBusConnection *conn =3D dbus_gsm_connection();
- 	DBusMessage *reply;
- =
-
--	if (g_slist_length(calls->release_list)) {
-+	if (calls->release_list !=3D NULL) {
- 		voicecalls_release_next(modem);
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		if (op->current =3D=3D 1)
+-			sim_op_error(modem);
+-
++		sim_op_error(modem);
  		return;
  	}
+ =
+
 -- =
 
 1.6.1
 
 
---===============3932031288749502427==--
+--===============6721531413565584216==--
 
