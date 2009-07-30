@@ -1,45 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============8029132124276859983=="
+Content-Type: multipart/mixed; boundary="===============3361220575603412742=="
 MIME-Version: 1.0
-From: Li, Zhigang <zhigang.li@intel.com>
-Subject: RE: Network information can't be updated dynamically
-Date: Thu, 30 Jul 2009 15:22:14 +0800
-Message-ID: <B94C62E7C2870743865418621F040C1302055CCE30@pdsmsx502.ccr.corp.intel.com>
-In-Reply-To: <200907292145.40433.denkenz@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: sms segment fault with 160 char
+Date: Thu, 30 Jul 2009 10:28:09 -0500
+Message-ID: <200907301028.09597.denkenz@gmail.com>
+In-Reply-To: <B94C62E7C2870743865418621F040C1302053C514F@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8029132124276859983==
+--===============3361220575603412742==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, Denis
+Hi,
 
->-----Original Message-----
->From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf Of
->Denis Kenzior
->Sent: 2009=E5=B9=B47=E6=9C=8830=E6=97=A5 10:46
->To: ofono(a)ofono.org
->Subject: Re: Network information can't be updated dynamically
+> Please see the log of phonesim:
+>  AT+CMGS=3D18 :
+>
+> 0011000B815128010272F40000A70461F1980C :
+> +CMGS: 0
+> OK
 
->I ask you again, are you sure your modem is actually switching its status,=
- and
->if so, can you provide a debug trace?
+Destination: 158210202..
+Content: abcd
 
- Thanks your clarification, I take phone as modem, unfortunately the stupid=
- phone didn=E2=80=99t' update the information, and the status always is roa=
-ming.
-I will try a real modem. =
+> AT+CMGS=3D18 :
+>
+> 0011000B813118567873F20000A704B2D88C06 :
+> +CMGS: 0
+> OK
+> The content is different, and it should be abcd
 
+Destination: 138165873..
+Content: 2134
 
-Thanks
-Zhigang
+So I don't understand, you're physically sending two different SMSs here.
 
->_______________________________________________
->ofono mailing list
->ofono(a)ofono.org
->http://lists.ofono.org/listinfo/ofono
+>
+> In real network:
+> Because I use phone as modem so maybe something wrong in at response.
+> Whatever it was wrong behavior:
+> The number1 target device received two message:
+>  1, content: abcd
+>  2, content: number1
 
---===============8029132124276859983==--
+Again, you're sending two SMSes according to the log.  First with 2 =
+
+recipients, and second with a single one.  This means three SMSes are sent, =
+
+and presumably one of the recipients will get 2 of them.  All three get sen=
+t =
+
+eventually.  What is the problem?
+
+Regards,
+-Denis
+
+--===============3361220575603412742==--
 
