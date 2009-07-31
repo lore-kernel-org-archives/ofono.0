@@ -1,40 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============3672995745487790532=="
+Content-Type: multipart/mixed; boundary="===============8887552801268240646=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/4] Fix possible memory leak on SIM reading error.
-Date: Fri, 31 Jul 2009 10:09:44 -0500
-Message-ID: <200907311009.45230.denkenz@gmail.com>
-In-Reply-To: <1248941132-13206-1-git-send-email-andrew.zaborowski@intel.com>
+From: Andres Salomon <dilinger@collabora.co.uk>
+Subject: ofono build error on ARM
+Date: Fri, 31 Jul 2009 11:13:10 -0400
+Message-ID: <20090731111310.177802f7@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3672995745487790532==
+--===============8887552801268240646==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-> This would also stall the SIM op queue if there's a read error for a reco=
-rd
-> other than the first.  The other solution would be "goto next;" (keep
-> reading further records).
+I'm seeing the following build error when building ofono on an HTC G1
+phone:
 
-Patch has been applied.
+gcc -DHAVE_CONFIG_H -I. -I.. -I/usr/include/glib-2.0
+-I/usr/lib/glib-2.0/include -g -O2 -g -Werror -Wextra
+-Wno-unused-parameter -Wno-missing-field-initializers
+-Wdeclaration-after-statement -Wmissing-declarations -Wredundant-decls
+-Wcast-align -MT netlink.lo -MD -MP -MF .deps/netlink.Tpo -c netlink.c
+-fPIC -DPIC -o .libs/netlink.o
 
-This really shouldn't happen in practice, but if it does, we should also lo=
-ok =
+cc1: warnings being treated as errors
+netlink.c: In function =E2=80=98g_pn_nl_process=E2=80=99:
+netlink.c:75: error: cast increases required alignment of target type
+netlink.c:107: error: cast increases required alignment of target type
+netlink.c:109: error: cast increases required alignment of target type
+make[2]: *** [netlink.lo] Error 1
 
-to see if the read callback functions don't cleanup or don't behave properl=
-y =
+This is on a Debian lenny system.  The code in question is (for
+example):
 
-as a result of an error mid-stream.  It looks like at least sim_msisdn_read=
-_cb =
+                for (rta =3D IFA_RTA(ifa);
 
-might be affected.  Could you check?
+Which expands to:
 
-Regards,
--Denis
+for (rta =3D =
 
---===============3672995745487790532==--
+((struct rtattr*)  ( ((char*)(ifa)) + ( ((sizeof(struct ifaddrmsg))+4 -1) &=
+ ~(4 -1) )))
+;
+
+I believe the compiler is not liking the cast from char* to rtattr*,
+but I'm not certain.
+
+gcc info:
+
+localhost:~/ofono#  gcc -v
+Using built-in specs.
+Target: arm-linux-gnueabi
+Configured with: ../src/configure -v --with-pkgversion=3D'Debian 4.3.2-1.1'=
+ --with-bugurl=3Dfile:///usr/share/doc/gcc-4.3/README.Bugs --enable-languag=
+es=3Dc,c++,fortran,objc,obj-c++ --prefix=3D/usr --enable-shared --with-syst=
+em-zlib --libexecdir=3D/usr/lib --without-included-gettext --enable-threads=
+=3Dposix --enable-nls --with-gxx-include-dir=3D/usr/include/c++/4.3 --progr=
+am-suffix=3D-4.3 --enable-clocale=3Dgnu --enable-libstdcxx-debug --enable-o=
+bjc-gc --enable-mpfr --disable-libssp --disable-sjlj-exceptions --enable-ch=
+ecking=3Drelease --build=3Darm-linux-gnueabi --host=3Darm-linux-gnueabi --t=
+arget=3Darm-linux-gnueabi
+Thread model: posix
+gcc version 4.3.2 (Debian 4.3.2-1.1) =
+
+
+localhost:~/ofono# cat /proc/cpuinfo =
+
+Processor	: ARMv6-compatible processor rev 2 (v6l)
+BogoMIPS	: 383.38
+Features	: swp half thumb fastmult edsp java =
+
+CPU implementer	: 0x41
+CPU architecture: 6TEJ
+CPU variant	: 0x1
+CPU part	: 0xb36
+CPU revision	: 2
+Cache type	: write-back
+Cache clean	: cp15 c7 ops
+Cache lockdown	: format C
+Cache format	: Harvard
+I size		: 32768
+I assoc		: 4
+I line length	: 32
+I sets		: 256
+D size		: 32768
+D assoc		: 4
+D line length	: 32
+D sets		: 256
+
+Hardware	: trout
+Revision	: 0080
+Serial		: 0000000000000000
+
+
+
+--===============8887552801268240646==--
 
