@@ -1,80 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============2002185349285939258=="
+Content-Type: multipart/mixed; boundary="===============2674580094608772839=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
-Subject: Re: ofono build error on ARM
-Date: Sat, 01 Aug 2009 18:56:54 +0300
-Message-ID: <200908011856.54384.remi@remlab.net>
-In-Reply-To: <1249139209.3491.1.camel@localhost.localdomain>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 3/4] Fix possible memory leak on SIM reading error.
+Date: Sun, 02 Aug 2009 00:46:36 +0200
+Message-ID: <fb249edb0908011546l190ba835iee40da872d98e478@mail.gmail.com>
+In-Reply-To: <200907311009.45230.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2002185349285939258==
+--===============2674580094608772839==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Le samedi 1 ao=C3=BBt 2009 18:06:49 Marcel Holtmann, vous avez =C3=A9crit :
-> > > cc1: warnings being treated as errors
-> > > netlink.c: In function =E2=80=98g_pn_nl_process=E2=80=99:
-> > > netlink.c:75: error: cast increases required alignment of target type
-> > > netlink.c:107: error: cast increases required alignment of target type
-> > > netlink.c:109: error: cast increases required alignment of target type
-> > > make[2]: *** [netlink.lo] Error 1
-> >
-> > I think there is no way to fix this. It comes from the Netlink packet
-> > format and macros, which are confusing gcc. That's why I hate to enfore
-> > -Werror.
->
-> we only enforce -Werror for the developers and it is important to have
-> gcc help us catch mistakes that might be easily overlooked.
+Hi,
 
-If I recall correctly, `-Werror' is enforced when maintainer mode is enable=
-d. =
+2009/7/31 Denis Kenzior <denkenz@gmail.com>:
+> This really shouldn't happen in practice, but if it does, we should also =
+look
+> to see if the read callback functions don't cleanup or don't behave prope=
+rly
+> as a result of an error mid-stream. =C2=A0It looks like at least sim_msis=
+dn_read_cb
+> might be affected. =C2=A0Could you check?
 
-Really, turning off maintainer mode is primilarly useful to binary package =
+Right, the attached diff adds the needed checks assuming there will be
+no more callbacks after an error.
 
-maintainers who *might* not want to trigger autotools updates. Then again, =
+Regards
 
-some might waht to have them anyway... I find the underlying assumption to =
-be =
+--===============2674580094608772839==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Make-sure-SIM-read-callbacks-die-cleanly.patch"
 
-a bit restrictive if not flawed.
+RnJvbSAxMjg5ZjQzN2IyOTM0YmExNGNmNzU3NzQzNTYxZmE2YmRlNzQxZTdhIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogU2F0LCAxIEF1ZyAyMDA5IDE0OjE3OjQzICswMjAwClN1YmplY3Q6
+IFtQQVRDSF0gTWFrZSBzdXJlIFNJTSByZWFkIGNhbGxiYWNrcyBkaWUgY2xlYW5seS4KCi0tLQog
+c3JjL25ldHdvcmsuYyB8ICAgMTIgKysrKysrKysrLS0tCiBzcmMvc2ltLmMgICAgIHwgICAgNCAr
+Ky0tCiAyIGZpbGVzIGNoYW5nZWQsIDExIGluc2VydGlvbnMoKyksIDUgZGVsZXRpb25zKC0pCgpk
+aWZmIC0tZ2l0IGEvc3JjL25ldHdvcmsuYyBiL3NyYy9uZXR3b3JrLmMKaW5kZXggODEzNWZkMi4u
+MzNhMWY2NSAxMDA2NDQKLS0tIGEvc3JjL25ldHdvcmsuYworKysgYi9zcmMvbmV0d29yay5jCkBA
+IC0xMjAyLDggKzEyMDIsMTIgQEAgc3RhdGljIHZvaWQgc2ltX29wbF9yZWFkX2NiKHN0cnVjdCBv
+Zm9ub19tb2RlbSAqbW9kZW0sIGludCBvaywKIAlpbnQgdG90YWw7CiAJR1NMaXN0ICpsOwogCi0J
+aWYgKCFvaykKKwlpZiAoIW9rKSB7CisJCWlmIChyZWNvcmQgPiAwKQorCQkJZ290byBvcHRpbWl6
+ZTsKKwogCQlyZXR1cm47CisJfQogCiAJaWYgKHN0cnVjdHVyZSAhPSBPRk9OT19TSU1fRklMRV9T
+VFJVQ1RVUkVfRklYRUQpCiAJCXJldHVybjsKQEAgLTEyMTgsNiArMTIyMiw3IEBAIHN0YXRpYyB2
+b2lkIHNpbV9vcGxfcmVhZF9jYihzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtLCBpbnQgb2ssCiAJ
+aWYgKHJlY29yZCAhPSB0b3RhbCkKIAkJcmV0dXJuOwogCitvcHRpbWl6ZToKIAlzaW1fZW9uc19v
+cHRpbWl6ZShuZXRyZWctPmVvbnMpOwogCiAJZm9yIChsID0gbmV0cmVnLT5vcGVyYXRvcl9saXN0
+OyBsOyBsID0gbC0+bmV4dCkgewpAQCAtMTI0MSw3ICsxMjQ2LDcgQEAgc3RhdGljIHZvaWQgc2lt
+X3Bubl9yZWFkX2NiKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0sIGludCBvaywKIAlpbnQgdG90
+YWw7CiAKIAlpZiAoIW9rKQotCQlyZXR1cm47CisJCWdvdG8gY2hlY2s7CiAKIAlpZiAoc3RydWN0
+dXJlICE9IE9GT05PX1NJTV9GSUxFX1NUUlVDVFVSRV9GSVhFRCkKIAkJcmV0dXJuOwpAQCAtMTI1
+NiwxMSArMTI2MSwxMiBAQCBzdGF0aWMgdm9pZCBzaW1fcG5uX3JlYWRfY2Ioc3RydWN0IG9mb25v
+X21vZGVtICptb2RlbSwgaW50IG9rLAogCiAJc2ltX2VvbnNfYWRkX3Bubl9yZWNvcmQobmV0cmVn
+LT5lb25zLCByZWNvcmQsIGRhdGEsIHJlY29yZF9sZW5ndGgpOwogCitjaGVjazoKIAkvKiBJZiBQ
+Tk4gaXMgbm90IHByZXNlbnQgdGhlbiBPUEwgaXMgbm90IHVzZWZ1bCwgZG9uJ3QKIAkgKiByZXRy
+aWV2ZSBpdC4gIElmIE9QTCBpcyBub3QgdGhlcmUgdGhlbiBQTk5bMV0gd2lsbAogCSAqIHN0aWxs
+IGJlIHVzZWQgZm9yIHRoZSBIUExNTiBhbmQvb3IgRUhQTE1OLCBpZiBQTk4KIAkgKiBpcyBwcmVz
+ZW50LiAgKi8KLQlpZiAocmVjb3JkID09IHRvdGFsICYmICFzaW1fZW9uc19wbm5faXNfZW1wdHko
+bmV0cmVnLT5lb25zKSkKKwlpZiAoKHJlY29yZCA9PSB0b3RhbCB8fCAhb2spICYmICFzaW1fZW9u
+c19wbm5faXNfZW1wdHkobmV0cmVnLT5lb25zKSkKIAkJb2Zvbm9fc2ltX3JlYWQobW9kZW0sIFNJ
+TV9FRk9QTF9GSUxFSUQsIHNpbV9vcGxfcmVhZF9jYiwgTlVMTCk7CiB9CiAKZGlmZiAtLWdpdCBh
+L3NyYy9zaW0uYyBiL3NyYy9zaW0uYwppbmRleCA2ZTE0NGY0Li4xZmNiNjNlIDEwMDY0NAotLS0g
+YS9zcmMvc2ltLmMKKysrIGIvc3JjL3NpbS5jCkBAIC0xODAsNyArMTgwLDcgQEAgc3RhdGljIHZv
+aWQgc2ltX21zaXNkbl9yZWFkX2NiKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0sIGludCBvaywK
+IAlzdHJ1Y3Qgb2Zvbm9fcGhvbmVfbnVtYmVyICpwaDsKIAogCWlmICghb2spCi0JCXJldHVybjsK
+KwkJZ290byBjaGVjazsKIAogCWlmIChzdHJ1Y3R1cmUgIT0gT0ZPTk9fU0lNX0ZJTEVfU1RSVUNU
+VVJFX0ZJWEVEKQogCQlyZXR1cm47CkBAIC0yMDAsNyArMjAwLDcgQEAgc3RhdGljIHZvaWQgc2lt
+X21zaXNkbl9yZWFkX2NiKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0sIGludCBvaywKIAlzaW0t
+Pm93bl9udW1iZXJzID0gZ19zbGlzdF9wcmVwZW5kKHNpbS0+b3duX251bWJlcnMsIHBoKTsKIAog
+Y2hlY2s6Ci0JaWYgKHJlY29yZCA9PSB0b3RhbCAmJiBzaW0tPm93bl9udW1iZXJzKSB7CisJaWYg
+KChyZWNvcmQgPT0gdG90YWwgfHwgIW9rKSAmJiBzaW0tPm93bl9udW1iZXJzKSB7CiAJCWNoYXIg
+Kipvd25fbnVtYmVyczsKIAkJREJ1c0Nvbm5lY3Rpb24gKmNvbm4gPSBvZm9ub19kYnVzX2dldF9j
+b25uZWN0aW9uKCk7CiAKLS0gCjEuNi4xCgo=
 
-> I would have to look into these one and how we can fix them properly.
-
-As far as I understand, those warnings come from casting receive buffers in=
-to =
-
-structure with higher-order alignment requirement  - with some of your =
-
-competitors' CPU architectures anyway ;) Arguably, those are caused by =
-
-kernel/libc headers, not Ofono. I will check on Monday if we can fix them b=
-y =
-
-promoting the receive buffers to larger integer types, but it might make th=
-e =
-
-code worse.
-
-But generally, there remain a problem that some warnings might simply be =
-
-bogus, or not under our control. For instance -outside of Ofono- I'm yet to =
-
-find a way around dummy variable "clobber warnings" when using POSIX thread =
-
-cancellation cleanup handlers. Sure, I could make all variables volatile, b=
-ut =
-
-I refuse to damage optimizations for the sake of bogus warnings...
-
-The real shame is that -Werror-* is dysfunctional in GCC :(
-
--- =
-
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net/
-
-
---===============2002185349285939258==--
+--===============2674580094608772839==--
 
