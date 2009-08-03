@@ -1,38 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============5200240603852561404=="
+Content-Type: multipart/mixed; boundary="===============6314237492784889343=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
-Subject: Re: ofono build error on ARM
-Date: Mon, 03 Aug 2009 09:48:54 +0200
-Message-ID: <9d3db6ff9cd187b6be7af38a1cbd1953@chewa.net>
-In-Reply-To: <200908011856.54384.remi@remlab.net>
+Subject: [PATCH] Fix configure script on bash 2.0
+Date: Mon, 03 Aug 2009 09:51:00 +0200
+Message-ID: <18372951c46e3c3120ff2515b30865d2@chewa.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5200240603852561404==
+--===============6314237492784889343==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+   Hello,
 
-On Sat, 1 Aug 2009 18:56:54 +0300, "R=C3=A9mi Denis-Courmont" <remi@remla=
-b.net>
-wrote:
-> As far as I understand, those warnings come from casting receive buffers
-> into structure with higher-order alignment requirement  - with some of
-> your competitors' CPU architectures anyway ;) Arguably, those are caused
-> by kernel/libc headers, not Ofono. I will check on Monday if we can fix
-> them by promoting the receive buffers to larger integer types, but it
-might
-> make the code worse.
-
-Nope. The problem is that netlink is internally casting pointers to char*
-for arithmetic operation, and then back to struct whatever. This confuses
-gcc, even though it should be a non-issue at run-time.
++=3D seems to be a bash3ism. Use a more portable syntax.
 
 -- =
 
 R=C3=A9mi Denis-Courmont
 
+--===============6314237492784889343==
+Content-Type: text/plain
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Fix-configure-script-on-bash-2.0.patch"
 
---===============5200240603852561404==--
+RnJvbSBkMWI0MzgyZWNhOGU0OWM1NmNjM2RkNWZiNWEwODNkYWIyMWZhOGMzIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiA9P3V0Zi04P3E/Uj1DMz1BOW1pPTIwRGVuaXMtQ291cm1vbnQ/
+PSA8cmVtaS5kZW5pcy1jb3VybW9udEBub2tpYS5jb20+CkRhdGU6IE1vbiwgMyBBdWcgMjAwOSAx
+MDo0Mjo1MSArMDMwMApTdWJqZWN0OiBbUEFUQ0hdIEZpeCBjb25maWd1cmUgc2NyaXB0IG9uIGJh
+c2ggMi4wCgouLi9jb25maWd1cmU6IGxpbmUgMTE4ODU6IENGTEFHUys9IC1XZXJyb3IgLVdleHRy
+YTogY29tbWFuZCBub3QgZm91bmQKLi4vY29uZmlndXJlOiBsaW5lIDExODg2OiBDRkxBR1MrPSAt
+V25vLXVudXNlZC1wYXJhbWV0ZXI6IGNvbW1hbmQgbm90IGZvdW5kCi4uL2NvbmZpZ3VyZTogbGlu
+ZSAxMTg4NzogQ0ZMQUdTKz0gLVduby1taXNzaW5nLWZpZWxkLWluaXRpYWxpemVyczogY29tbWFu
+ZCBub3QgZm91bmQKLi4vY29uZmlndXJlOiBsaW5lIDExODg4OiBDRkxBR1MrPSAtV2RlY2xhcmF0
+aW9uLWFmdGVyLXN0YXRlbWVudDogY29tbWFuZCBub3QgZm91bmQKLi4vY29uZmlndXJlOiBsaW5l
+IDExODg5OiBDRkxBR1MrPSAtV21pc3NpbmctZGVjbGFyYXRpb25zOiBjb21tYW5kIG5vdCBmb3Vu
+ZAouLi9jb25maWd1cmU6IGxpbmUgMTE4OTA6IENGTEFHUys9IC1XcmVkdW5kYW50LWRlY2xzOiBj
+b21tYW5kIG5vdCBmb3VuZAouLi9jb25maWd1cmU6IGxpbmUgMTE4OTE6IENGTEFHUys9IC1XY2Fz
+dC1hbGlnbjogY29tbWFuZCBub3QgZm91bmQKLS0tCiBhY2luY2x1ZGUubTQgfCAgIDE0ICsrKysr
+KystLS0tLS0tCiAxIGZpbGVzIGNoYW5nZWQsIDcgaW5zZXJ0aW9ucygrKSwgNyBkZWxldGlvbnMo
+LSkKCmRpZmYgLS1naXQgYS9hY2luY2x1ZGUubTQgYi9hY2luY2x1ZGUubTQKaW5kZXggNDU5NDA3
+My4uODRjMTA4MSAxMDA2NDQKLS0tIGEvYWNpbmNsdWRlLm00CisrKyBiL2FjaW5jbHVkZS5tNApA
+QCAtMTUsMTIgKzE1LDEyIEBAIEFDX0RFRlVOKFtDT01QSUxFUl9GTEFHU10sIFsKIAkJQ0ZMQUdT
+PSItV2FsbCAtTzIgLURfRk9SVElGWV9TT1VSQ0U9MiIKIAlmaQogCWlmICh0ZXN0ICIkVVNFX01B
+SU5UQUlORVJfTU9ERSIgPSAieWVzIik7IHRoZW4KLQkJQ0ZMQUdTKz0iIC1XZXJyb3IgLVdleHRy
+YSIKLQkJQ0ZMQUdTKz0iIC1Xbm8tdW51c2VkLXBhcmFtZXRlciIKLQkJQ0ZMQUdTKz0iIC1Xbm8t
+bWlzc2luZy1maWVsZC1pbml0aWFsaXplcnMiCi0JCUNGTEFHUys9IiAtV2RlY2xhcmF0aW9uLWFm
+dGVyLXN0YXRlbWVudCIKLQkJQ0ZMQUdTKz0iIC1XbWlzc2luZy1kZWNsYXJhdGlvbnMiCi0JCUNG
+TEFHUys9IiAtV3JlZHVuZGFudC1kZWNscyIKLQkJQ0ZMQUdTKz0iIC1XY2FzdC1hbGlnbiIKKwkJ
+Q0ZMQUdTPSIkQ0ZMQUdTIC1XZXJyb3IgLVdleHRyYSIKKwkJQ0ZMQUdTPSIkQ0ZMQUdTIC1Xbm8t
+dW51c2VkLXBhcmFtZXRlciIKKwkJQ0ZMQUdTPSIkQ0ZMQUdTIC1Xbm8tbWlzc2luZy1maWVsZC1p
+bml0aWFsaXplcnMiCisJCUNGTEFHUz0iJENGTEFHUyAtV2RlY2xhcmF0aW9uLWFmdGVyLXN0YXRl
+bWVudCIKKwkJQ0ZMQUdTPSIkQ0ZMQUdTIC1XbWlzc2luZy1kZWNsYXJhdGlvbnMiCisJCUNGTEFH
+Uz0iJENGTEFHUyAtV3JlZHVuZGFudC1kZWNscyIKKwkJQ0ZMQUdTPSIkQ0ZMQUdTIC1XY2FzdC1h
+bGlnbiIKIAlmaQogXSkKLS0gCjEuNi4wLjQKCg==
+
+--===============6314237492784889343==--
 
