@@ -1,162 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============7065924988281302560=="
+Content-Type: multipart/mixed; boundary="===============3158492616937251421=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] Loop on EINTR returned from file io calls in sim.c
-Date: Mon, 03 Aug 2009 15:38:49 +0200
-Message-ID: <1249306729-13403-1-git-send-email-andrew.zaborowski@intel.com>
+From: Li, Zhigang <zhigang.li@intel.com>
+Subject: segment fault in latest version
+Date: Tue, 04 Aug 2009 11:31:49 +0800
+Message-ID: <B94C62E7C2870743865418621F040C1302055CD715@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7065924988281302560==
+--===============3158492616937251421==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/sim.c |   31 ++++++++++++++++++++-----------
- 1 files changed, 20 insertions(+), 11 deletions(-)
+Hi,
+Does its known issue of segment fault in latest version?
+I think the version of yesterday is ok
+[root(a)zgli src]# ./ofonod -dn
+ofonod[3314]: oFono version 0.2
+ofonod[3314]: plugin.c:__ofono_plugin_init() =
 
-diff --git a/src/sim.c b/src/sim.c
-index 90e8251..b437b75 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -23,6 +23,9 @@
- #include <config.h>
- #endif
- =
+ofonod[3314]: history.c:ofono_history_driver_register() driver: 0x8082280 n=
+ame: Example Call History
+ofonod[3314]: Seting up AT channel
+ofonod[3314]: Example History Probe for modem: 0x9e02ce0
+ofonod[3314]: SIMManager interface for modem: /modem1 created
+ofonod[3314]: Registered call forwarding interface
+ofonod[3314]: Registered call settings interface
+ofonod[3314]: Sending voice initialization commands
+ofonod[3314]: NetworkRegistration interface for modem: /modem1 created
+ofonod[3314]: voicecall_init: registering to notifications
+ofonod[3314]: csms_query_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: +CSMS: (0)
+ofonod[3314]: CSMS query parsed successfully
+ofonod[3314]: at_list_charsets_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: +CSCS: ("GSM","IRA","8859-1","UTF-8","UCS2")
+ofonod[3314]: attr_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: Sony Ericsson
+ofonod[3314]: at_cimi_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: 460028210210167
+ofonod[3314]: cimi_cb: 460028210210167
+ofonod[3314]: at_creg_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: +CREG: 2,5,"188E","00006302"
+ofonod[3314]: creg_cb: 5, 6286, 25346, -1
+ofonod[3314]: at_list_storages_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: +CPBS: ("ME","SM","FD","DC","LD","MC","RC")
+ofonod[3314]: attr_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: AAD-3352021-BV
+ofonod[3314]: at_crsm_info_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: +CRSM: 148,4
+ofonod[3314]: cops_numeric_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: +COPS: 1,2,"46000",0 =
 
-+#define _GNU_SOURCE
-+#include <unistd.h>
-+
- #include <string.h>
- #include <stdio.h>
- =
+ofonod[3314]: Cops numeric got mcc: 460, mnc: 00
+ofonod[3314]: cops_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: +COPS: 1,0,"China Mobile",0 =
 
-@@ -32,7 +35,6 @@
- #include <sys/types.h>
- #include <fcntl.h>
- #include <errno.h>
--#include <unistd.h>
- =
+ofonod[3314]: cops_cb: China Mobile, 460 00 0
+ofonod[3314]: csq_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: +CSQ: 13,99
+ofonod[3314]: csq_cb: 13
+ofonod[3314]: csms_status_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: +CSMS: 0,1,1,1
+ofonod[3314]: attr_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: R1BA038 081016 1346 1208-0527_CHINA_SI
+ofonod[3314]: at_crsm_info_cb got result: 1
+ofonod[3314]: Final response: OK
+ofonod[3314]: Response line: +CRSM: 148,4
+Segmentation fault
 
- #include "ofono.h"
- =
+Thanks
+zgli
 
-@@ -45,6 +47,12 @@
- =
-
- #define SIM_MANAGER_INTERFACE "org.ofono.SimManager"
- =
-
-+#ifdef TEMP_FAILURE_RETRY
-+#define TFR TEMP_FAILURE_RETRY
-+#else
-+#define TFR
-+#endif
-+
- static gboolean sim_op_next(gpointer user_data);
- static gboolean sim_op_retrieve_next(gpointer user);
- =
-
-@@ -335,7 +343,7 @@ static void sim_op_retrieve_cb(const struct ofono_error=
- *error,
- 	if (op->cache && imsi) {
- 		/* Cache the record */
- 		path =3D g_strdup_printf(SIM_CACHE_PATH, imsi, op->id);
--		fd =3D open(path, O_WRONLY);
-+		fd =3D TFR(open(path, O_WRONLY));
- =
-
- 		if (fd =3D=3D -1)
- 			goto next;
-@@ -343,8 +351,8 @@ static void sim_op_retrieve_cb(const struct ofono_error=
- *error,
- 		if (lseek(fd, (op->current - 1) * op->record_length +
- 					SIM_CACHE_HEADER_SIZE, SEEK_SET) !=3D
- 				(off_t) -1)
--			r =3D write(fd, data, op->record_length);
--		close(fd);
-+			r =3D TFR(write(fd, data, op->record_length));
-+		TFR(close(fd));
- =
-
- 		if (r < op->record_length) {
- 			op->cache =3D 0;
-@@ -459,7 +467,8 @@ static void sim_op_info_cb(const struct ofono_error *er=
-ror, int length,
- 	if (op->cache && imsi) {
- 		path =3D g_strdup_printf(SIM_CACHE_PATH, imsi, op->id);
- 		if (create_dirs(path, SIM_CACHE_MODE | S_IXUSR) =3D=3D 0)
--			fd =3D open(path, O_WRONLY | O_CREAT, SIM_CACHE_MODE);
-+			fd =3D TFR(open(path, O_WRONLY | O_CREAT,
-+						SIM_CACHE_MODE));
- =
-
- 		if (fd =3D=3D -1) {
- 			ofono_debug("Error %i creating cache file for "
-@@ -475,8 +484,8 @@ static void sim_op_info_cb(const struct ofono_error *er=
-ror, int length,
- 		fileinfo[4] =3D record_length >> 8;
- 		fileinfo[5] =3D record_length & 0xff;
- =
-
--		r =3D write(fd, fileinfo, 6);
--		close(fd);
-+		r =3D TFR(write(fd, fileinfo, 6));
-+		TFR(close(fd));
- =
-
- 		if (r < 6) {
- 			op->cache =3D 0;
-@@ -571,7 +580,7 @@ static gboolean sim_op_cached_callback(gpointer user)
- 	}
- =
-
- 	for (record =3D 0; record < cbs->total; record++) {
--		if (read(cbs->fd, buffer, cbs->record_length) <
-+		if (TFR(read(cbs->fd, buffer, cbs->record_length)) <
- 				(int) cbs->record_length) {
- 			cbs->cb(cbs->modem, 0, 0, 0, 0, 0, 0, 0);
- 			break;
-@@ -583,7 +592,7 @@ static gboolean sim_op_cached_callback(gpointer user)
- 	}
- =
-
- cleanup:
--	close(cbs->fd);
-+	TFR(close(cbs->fd));
- 	g_free(cbs);
- =
-
- 	return FALSE;
-@@ -608,7 +617,7 @@ static gboolean sim_op_check_cached(struct ofono_modem =
-*modem, int fileid,
- 		return FALSE;
- =
-
- 	path =3D g_strdup_printf(SIM_CACHE_PATH, imsi, fileid);
--	fd =3D open(path, O_RDONLY);
-+	fd =3D TFR(open(path, O_RDONLY));
- 	g_free(path);
- =
-
- 	if (fd =3D=3D -1) {
-@@ -620,7 +629,7 @@ static gboolean sim_op_check_cached(struct ofono_modem =
-*modem, int fileid,
- 		return FALSE;
- 	}
- =
-
--	len =3D read(fd, fileinfo, SIM_CACHE_HEADER_SIZE);
-+	len =3D TFR(read(fd, fileinfo, SIM_CACHE_HEADER_SIZE));
- 	if (len !=3D SIM_CACHE_HEADER_SIZE)
- 		return FALSE;
- =
-
--- =
-
-1.6.1
-
-
---===============7065924988281302560==--
+--===============3158492616937251421==--
 
