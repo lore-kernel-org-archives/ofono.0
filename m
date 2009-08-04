@@ -1,49 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============4316036860630517637=="
+Content-Type: multipart/mixed; boundary="===============2377354894407374773=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: segment fault in latest version
-Date: Tue, 04 Aug 2009 15:18:50 -0500
-Message-ID: <200908041518.51284.denkenz@gmail.com>
-In-Reply-To: <B94C62E7C2870743865418621F040C1302055CD775@pdsmsx502.ccr.corp.intel.com>
+Subject: Re: Compile error
+Date: Tue, 04 Aug 2009 15:20:18 -0500
+Message-ID: <200908041520.18979.denkenz@gmail.com>
+In-Reply-To: <20090804092231.4e8c8677@cyclone>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4316036860630517637==
+--===============2377354894407374773==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi
+Hi,
 
-> #0  sim_eons_pnn_is_empty (eons=3D0x8088ce0) at simutil.c:253
-> #1  0x08060dc5 in sim_op_error (modem=3D0x8088ce0) at sim.c:297
-> #2  0x08061758 in sim_op_info_cb (error=3D0xbfffefcc, length=3D-1,
->     structure=3D4294967295, record_length=3D-1, access=3D0x0, data=3D0x80=
-88ce0)
->     at sim.c:425
-> #3  0x0806a4a1 in at_crsm_info_cb (ok=3D1, result=3D0xbffff038,
->     user_data=3D0x808a560) at atmodem/sim.c:83
-> #4  0x0806fc39 in g_at_chat_finish_command (p=3D0x8087c30,
->     ok=3D<value optimized out>, final=3D0x8089dc8 "OK") at gatchat.c:347
-> #5  0x080705e7 in g_at_chat_handle_command_response (
->     line=3D<value optimized out>, cmd=3D<value optimized out>,
->     p=3D<value optimized out>) at gatchat.c:402
-> #6  have_line (line=3D<value optimized out>, cmd=3D<value optimized out>,
->     p=3D<value optimized out>) at gatchat.c:481
-> #7  0x080709d6 in new_bytes (p=3D<value optimized out>) at gatchat.c:671
-> #8  received_data (p=3D<value optimized out>) at gatchat.c:759
-> #9  0x006a641b in ?? () from /lib/libglib-2.0.so.0
-> #10 0x0066f1e8 in g_main_context_dispatch () from /lib/libglib-2.0.so.0
-> #11 0x006727f8 in ?? () from /lib/libglib-2.0.so.0
-> #12 0x00672caf in g_main_loop_run () from /lib/libglib-2.0.so.0
-> #13 0x0804c6ad in main (argc=3D1, argv=3D0xbffff464) at main.c:148
+> On Tue, 04 Aug 2009 08:25:09 +0300
+>
+> Marko Saukko <marko.saukko@gmail.com> wrote:
+> > Hi,
+> >
+> > I'm getting following error when compiling the latest git version with
+> > gcc (Ubuntu 4.3.3-5ubuntu4) 4.3.3.
+>
+> Attached is a patch to fix the errors.
 
-This should now be fixed in the latest version.  Can you please check and =
+Andrew & myself have fixed this properly yesterday, the patch should now be =
 
-report if this still goes kaboom?
+pushed upstream.
 
 Regards,
 -Denis
 
---===============4316036860630517637==--
+
+--===============2377354894407374773==--
 
