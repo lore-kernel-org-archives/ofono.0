@@ -1,32 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5363256351429549846=="
+Content-Type: multipart/mixed; boundary="===============5382540652363342424=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/4] Add a MessageWaiting interface to track message
- waiting indications.
-Date: Tue, 04 Aug 2009 15:23:29 -0500
-Message-ID: <200908041523.29580.denkenz@gmail.com>
-In-Reply-To: <fb249edb0908031456u6598afb8v44810757bba08288@mail.gmail.com>
+From: Shane Bryan <shane.bryan@linux.intel.com>
+Subject: Re: Compile error
+Date: Tue, 04 Aug 2009 13:57:56 -0700
+Message-ID: <20090804135756.7a6659fe@cyclone>
+In-Reply-To: <200908041520.18979.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5363256351429549846==
+--===============5382540652363342424==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+On Tue, 4 Aug 2009 15:20:18 -0500
+Denis Kenzior <denkenz@gmail.com> wrote:
 
-I've pushed this patch and heavily customized it afterwards to simplify the =
+> Hi,
+> =
 
-logic a bit.  Can you check that it is still working as intended?
+> > On Tue, 04 Aug 2009 08:25:09 +0300
+> >
+> > Marko Saukko <marko.saukko@gmail.com> wrote:
+> > > Hi,
+> > >
+> > > I'm getting following error when compiling the latest git version
+> > > with gcc (Ubuntu 4.3.3-5ubuntu4) 4.3.3.
+> >
+> > Attached is a patch to fix the errors.
+> =
 
-Writing of MBDN fields is still missing.  Can you send another patch for th=
-is?  =
+> Andrew & myself have fixed this properly yesterday, the patch should
+> now be pushed upstream.
 
-Also one fo writing of MSISDN records in SimManager would be good as well.
+Heh, figures... I was too lazy to pull latest and check before I fired
+off my temp fix.  Thanks for pushing a fix though!
 
-Regards,
--Denis
+-- =
 
---===============5363256351429549846==--
+Shane...
+
+--===============5382540652363342424==--
 
