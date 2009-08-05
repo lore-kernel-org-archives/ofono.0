@@ -1,105 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============2417746602326347244=="
+Content-Type: multipart/mixed; boundary="===============8571400490967438331=="
 MIME-Version: 1.0
-From: andrzej zaborowski <balrogg@gmail.com>
-Subject: Re: [PATCH 4/4] Add a MessageWaiting interface to track message
- waiting indications.
-Date: Wed, 05 Aug 2009 16:18:09 +0200
-Message-ID: <fb249edb0908050718h4088267ep5260658fccfa76c2@mail.gmail.com>
-In-Reply-To: <200908041523.29580.denkenz@gmail.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: light test report for ofono v0.2
+Date: Thu, 06 Aug 2009 00:09:45 +0800
+Message-ID: <38D9F46DFF92C54980D2F2C1E8EE313001A7604D4E@pdsmsx503.ccr.corp.intel.com>
+In-Reply-To: <E2263E4A5B2284449EEBD0AAB751098402CE04E009@PDSMSX501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2417746602326347244==
+--===============8571400490967438331==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/8/4 Denis Kenzior <denkenz@gmail.com>:
-> I've pushed this patch and heavily customized it afterwards to simplify t=
-he
-> logic a bit. =C2=A0Can you check that it is still working as intended?
+>4) timeout when reading records at the first time
+Reading records from SIM card requires more time than default timeout of D-=
+Bus, so you will get timeout error when you invoke the method via D-Bus for=
+ the first time. The result will be cached once oFono gets all the records,=
+ thus you may get the records very quickly for the second, third, .., time.
+I will try to update the test case to retrieve the records in an asynchrono=
+us way.
 
-It is kind of working but one of the things "simplified away" is using
-the D-Bus interface even without working EF-MBDN or EF-MWIS files on
-the SIM, i.e. if the write fails then the user never finds out there
-was a notification.
+Regards,
+-Yang
 
-Consistently with the change to return invalid_args on D-Bus type
-mismatch, I'm attaching a diff to do the same thing for other
-interfaces we have.
-
-You might want to add G_DBUS_METHOD_FLAG_ASYNC to SetProperty
-signature and remove mw_update declaration which is now unused.  Also
-the check in cache_info should probably be if (r < len).
-
->
-> Writing of MBDN fields is still missing. =C2=A0Can you send another patch=
- for this?
-
-Sent separately.
-
-> Also one fo writing of MSISDN records in SimManager would be good as well.
-
-Will get on it today.
-
-Regards
-
---===============2417746602326347244==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Use-invalid_args-instead-of-invalid_format.patch"
-
-RnJvbSA0MDk2ZjA3YjhiMDgwMDU4NjZlZTY5MTg4NzYzZTU4ODU1NzRlZDhjIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogV2VkLCA1IEF1ZyAyMDA5IDA3OjE3OjEwICswMjAwClN1YmplY3Q6
-IFtQQVRDSF0gVXNlIGludmFsaWRfYXJncyBpbnN0ZWFkIG9mIGludmFsaWRfZm9ybWF0CgotLS0K
-IHNyYy9jYWxsLWJhcnJpbmcuYyAgfCAgICA0ICsrLS0KIHNyYy9jYWxsLW1ldGVyLmMgICAgfCAg
-ICA0ICsrLS0KIHNyYy9jYWxsLXNldHRpbmdzLmMgfCAgICA0ICsrLS0KIDMgZmlsZXMgY2hhbmdl
-ZCwgNiBpbnNlcnRpb25zKCspLCA2IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9jYWxs
-LWJhcnJpbmcuYyBiL3NyYy9jYWxsLWJhcnJpbmcuYwppbmRleCAzNmRlYWY3Li4zODZhMTI3IDEw
-MDY0NAotLS0gYS9zcmMvY2FsbC1iYXJyaW5nLmMKKysrIGIvc3JjL2NhbGwtYmFycmluZy5jCkBA
-IC04ODIsMTMgKzg4MiwxMyBAQCBzdGF0aWMgREJ1c01lc3NhZ2UgKmNiX3NldF9wcm9wZXJ0eShE
-QnVzQ29ubmVjdGlvbiAqY29ubiwgREJ1c01lc3NhZ2UgKm1zZywKIAlkYnVzX21lc3NhZ2VfaXRl
-cl9yZWN1cnNlKCZpdGVyLCAmdmFyKTsKIAogCWlmIChkYnVzX21lc3NhZ2VfaXRlcl9nZXRfYXJn
-X3R5cGUoJnZhcikgIT0gREJVU19UWVBFX1NUUklORykKLQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3Jf
-aW52YWxpZF9mb3JtYXQobXNnKTsKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9hcmdz
-KG1zZyk7CiAKIAlkYnVzX21lc3NhZ2VfaXRlcl9nZXRfYmFzaWMoJnZhciwgJnZhbHVlKTsKIAog
-CWlmICghY2JfbG9ja19wcm9wZXJ0eV9sb29rdXAobmFtZSwgdmFsdWUsIEJFQVJFUl9DTEFTU19W
-T0lDRSwKIAkJCQkJJmxvY2ssICZjbHMsICZtb2RlKSkKLQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3Jf
-aW52YWxpZF9mb3JtYXQobXNnKTsKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9hcmdz
-KG1zZyk7CiAKIAlpZiAoZGJ1c19tZXNzYWdlX2l0ZXJfbmV4dCgmaXRlcikpIHsKIAkJaWYgKGRi
-dXNfbWVzc2FnZV9pdGVyX2dldF9hcmdfdHlwZSgmaXRlcikgIT0gREJVU19UWVBFX1NUUklORykK
-ZGlmZiAtLWdpdCBhL3NyYy9jYWxsLW1ldGVyLmMgYi9zcmMvY2FsbC1tZXRlci5jCmluZGV4IDQy
-MWZlMGMuLjYxNDc1NDAgMTAwNjQ0Ci0tLSBhL3NyYy9jYWxsLW1ldGVyLmMKKysrIGIvc3JjL2Nh
-bGwtbWV0ZXIuYwpAQCAtNTg0LDcgKzU4NCw3IEBAIHN0YXRpYyBEQnVzTWVzc2FnZSAqY21fc2V0
-X3Byb3BlcnR5KERCdXNDb25uZWN0aW9uICpjb25uLCBEQnVzTWVzc2FnZSAqbXNnLAogCQlyZXR1
-cm4gX19vZm9ub19lcnJvcl9pbnZhbGlkX2FyZ3MobXNnKTsKIAogCWlmIChkYnVzX21lc3NhZ2Vf
-aXRlcl9nZXRfYXJnX3R5cGUoJml0ZXIpICE9IERCVVNfVFlQRV9TVFJJTkcpCi0JCQlyZXR1cm4g
-X19vZm9ub19lcnJvcl9pbnZhbGlkX2FyZ3MobXNnKTsKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3Jf
-aW52YWxpZF9hcmdzKG1zZyk7CiAKIAlkYnVzX21lc3NhZ2VfaXRlcl9nZXRfYmFzaWMoJml0ZXIs
-ICZwYXNzd2QpOwogCkBAIC01OTYsNyArNTk2LDcgQEAgc3RhdGljIERCdXNNZXNzYWdlICpjbV9z
-ZXRfcHJvcGVydHkoREJ1c0Nvbm5lY3Rpb24gKmNvbm4sIERCdXNNZXNzYWdlICptc2csCiAJCQlj
-b250aW51ZTsKIAogCQlpZiAoZGJ1c19tZXNzYWdlX2l0ZXJfZ2V0X2FyZ190eXBlKCZ2YXIpICE9
-IHByb3BlcnR5LT50eXBlKQotCQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9mb3JtYXQo
-bXNnKTsKKwkJCXJldHVybiBfX29mb25vX2Vycm9yX2ludmFsaWRfYXJncyhtc2cpOwogCiAJCXJl
-dHVybiBwcm9wZXJ0eS0+c2V0KG1zZywgbW9kZW0sICZ2YXIsIHBhc3N3ZCk7CiAJfQpkaWZmIC0t
-Z2l0IGEvc3JjL2NhbGwtc2V0dGluZ3MuYyBiL3NyYy9jYWxsLXNldHRpbmdzLmMKaW5kZXggMThl
-ODE4OS4uOWZjYjU5ZSAxMDA2NDQKLS0tIGEvc3JjL2NhbGwtc2V0dGluZ3MuYworKysgYi9zcmMv
-Y2FsbC1zZXR0aW5ncy5jCkBAIC0xMTY3LDcgKzExNjcsNyBAQCBzdGF0aWMgREJ1c01lc3NhZ2Ug
-KmNzX3NldF9wcm9wZXJ0eShEQnVzQ29ubmVjdGlvbiAqY29ubiwgREJ1c01lc3NhZ2UgKm1zZywK
-IAkJY29uc3QgY2hhciAqc2V0dGluZzsKIAogCQlpZiAoZGJ1c19tZXNzYWdlX2l0ZXJfZ2V0X2Fy
-Z190eXBlKCZ2YXIpICE9IERCVVNfVFlQRV9TVFJJTkcpCi0JCQlyZXR1cm4gX19vZm9ub19lcnJv
-cl9pbnZhbGlkX2Zvcm1hdChtc2cpOworCQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9h
-cmdzKG1zZyk7CiAKIAkJZGJ1c19tZXNzYWdlX2l0ZXJfZ2V0X2Jhc2ljKCZ2YXIsICZzZXR0aW5n
-KTsKIApAQCAtMTE3Niw3ICsxMTc2LDcgQEAgc3RhdGljIERCdXNNZXNzYWdlICpjc19zZXRfcHJv
-cGVydHkoREJ1c0Nvbm5lY3Rpb24gKmNvbm4sIERCdXNNZXNzYWdlICptc2csCiAJCWNvbnN0IGNo
-YXIgKnNldHRpbmc7CiAKIAkJaWYgKGRidXNfbWVzc2FnZV9pdGVyX2dldF9hcmdfdHlwZSgmdmFy
-KSAhPSBEQlVTX1RZUEVfU1RSSU5HKQotCQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9m
-b3JtYXQobXNnKTsKKwkJCXJldHVybiBfX29mb25vX2Vycm9yX2ludmFsaWRfYXJncyhtc2cpOwog
-CiAJCWRidXNfbWVzc2FnZV9pdGVyX2dldF9iYXNpYygmdmFyLCAmc2V0dGluZyk7CiAKLS0gCjEu
-Ni4xCgo=
-
---===============2417746602326347244==--
+--===============8571400490967438331==--
 
