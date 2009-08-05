@@ -1,38 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============3805710093761601623=="
+Content-Type: multipart/mixed; boundary="===============5223836630386307832=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Implement writing EF-MBDN on SetProperty or Enhanced
- Voicemail IE.
-Date: Wed, 05 Aug 2009 13:59:00 -0500
-Message-ID: <200908051359.00649.denkenz@gmail.com>
-In-Reply-To: <1249456120-10263-1-git-send-email-andrew.zaborowski@intel.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: [PATCH 4/4] Add a MessageWaiting interface to track message
+ waiting indications.
+Date: Wed, 05 Aug 2009 21:18:25 +0200
+Message-ID: <fb249edb0908051218l3315aa74v4aaf82ee372bdb3b@mail.gmail.com>
+In-Reply-To: <200908051247.46922.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3805710093761601623==
+--===============5223836630386307832==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+2009/8/5 Denis Kenzior <denkenz@gmail.com>:
+> Sorry I don't quite follow. =C2=A0The mw_set_indicator function sets the =
+value and
+> emits the signals regardless of whether the MWIS file could be written. =
+=C2=A0Can
+> you explain some more?
+>
+> For setting mailbox numbers, a working EF-MBDN is required since the only
+> alternative would be to store them on the filesystem.
 
-> I've not tested this on a real SIM yet.
-> ---
->  src/message-waiting.c |   51
-> ++++++++++++++++++++++++++++++++++++------------ src/simutil.c         |  =
+mw_set_indicator does the right thing, I missed this fact.  But when a
+mailbox number is set or received from network all clients get a
+PropertyChanged and the new number can be retrieved from the interface
+but only when the store succeeded, previously it would be available
+regardless of MBDN on the card and the writing to card was secondary.
+The number is kind of important if you want to hear the messages.
 
-> 27 +++++++++++++++++++++++++
->  src/simutil.h         |    2 +
->  src/smsutil.c         |   47 +++++++++++++++++++++++++++++---------------
->  src/smsutil.h         |    8 +++++++
->  5 files changed, 106 insertions(+), 29 deletions(-)
+Regards
 
-I've broken up your patch into several smaller patches, but should be =
-
-otherwise unchanged.  Should now be upstream.
-
-Thanks,
--Denis
-
---===============3805710093761601623==--
+--===============5223836630386307832==--
 
