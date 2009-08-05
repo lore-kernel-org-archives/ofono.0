@@ -1,48 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============1596079389969683987=="
+Content-Type: multipart/mixed; boundary="===============3285731154468183898=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH] Implement writing EF-MBDN on SetProperty or Enhanced
- Voicemail IE.
-Date: Wed, 05 Aug 2009 18:33:49 +0200
-Message-ID: <fb249edb0908050933v78a979abrcde608cf71f00ef7@mail.gmail.com>
-In-Reply-To: <1249456120-10263-1-git-send-email-andrew.zaborowski@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 4/4] Add a MessageWaiting interface to track message
+ waiting indications.
+Date: Wed, 05 Aug 2009 12:47:46 -0500
+Message-ID: <200908051247.46922.denkenz@gmail.com>
+In-Reply-To: <fb249edb0908050718h4088267ep5260658fccfa76c2@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1596079389969683987==
+--===============3285731154468183898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/8/5 Andrzej Zaborowski <andrew.zaborowski@intel.com>:
-> I've not tested this on a real SIM yet.
+Hi,
 
-It needs the attached fix since the record numbers passed to the
-plugin are now 1-based.
+> It is kind of working but one of the things "simplified away" is using
+> the D-Bus interface even without working EF-MBDN or EF-MWIS files on
+> the SIM, i.e. if the write fails then the user never finds out there
+> was a notification.
 
-Regards
+Sorry I don't quite follow.  The mw_set_indicator function sets the value a=
+nd =
 
---===============1596079389969683987==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Fix-record-number-in-at_sim_update_record.patch"
+emits the signals regardless of whether the MWIS file could be written.  Ca=
+n =
 
-RnJvbSAyYjY4OWJlMGM4Y2ViYzc3MzY3OWE2MGE0MTAzY2ZmMjliNmIyOWQ1IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogV2VkLCA1IEF1ZyAyMDA5IDExOjI1OjIxICswMjAwClN1YmplY3Q6
-IFtQQVRDSF0gRml4IHJlY29yZCBudW1iZXIgaW4gYXRfc2ltX3VwZGF0ZV9yZWNvcmQuCgotLS0K
-IGRyaXZlcnMvYXRtb2RlbS9zaW0uYyB8ICAgIDIgKy0KIDEgZmlsZXMgY2hhbmdlZCwgMSBpbnNl
-cnRpb25zKCspLCAxIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS9z
-aW0uYyBiL2RyaXZlcnMvYXRtb2RlbS9zaW0uYwppbmRleCA3NDhjZjZhLi45MGYwMmUyIDEwMDY0
-NAotLS0gYS9kcml2ZXJzL2F0bW9kZW0vc2ltLmMKKysrIGIvZHJpdmVycy9hdG1vZGVtL3NpbS5j
-CkBAIC0zMjEsNyArMzIxLDcgQEAgc3RhdGljIHZvaWQgYXRfc2ltX3VwZGF0ZV9yZWNvcmQoc3Ry
-dWN0IG9mb25vX21vZGVtICptb2RlbSwgaW50IGZpbGVpZCwKIAkJZ290byBlcnJvcjsKIAogCWxl
-biA9IHNwcmludGYoYnVmLCAiQVQrQ1JTTT0yMjAsJWksJWksNCwlaSwiLCBmaWxlaWQsCi0JCQly
-ZWNvcmQgKyAxLCBsZW5ndGgpOworCQkJcmVjb3JkLCBsZW5ndGgpOwogCiAJZm9yICg7IGxlbmd0
-aDsgbGVuZ3RoLS0pCiAJCWxlbiArPSBzcHJpbnRmKGJ1ZiArIGxlbiwgIiUwMmhoeCIsICp2YWx1
-ZSsrKTsKLS0gCjEuNi4xCgo=
+you explain some more?
 
---===============1596079389969683987==--
+For setting mailbox numbers, a working EF-MBDN is required since the only =
+
+alternative would be to store them on the filesystem.
+
+>
+> Consistently with the change to return invalid_args on D-Bus type
+> mismatch, I'm attaching a diff to do the same thing for other
+> interfaces we have.
+
+Patch has been applied.
+
+>
+> You might want to add G_DBUS_METHOD_FLAG_ASYNC to SetProperty
+> signature and remove mw_update declaration which is now unused.  Also
+> the check in cache_info should probably be if (r < len).
+
+Yep, yep and yep.  Thanks.
+
+Regards,
+-Denis
+
+--===============3285731154468183898==--
 
