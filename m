@@ -1,53 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============0220437357994392385=="
+Content-Type: multipart/mixed; boundary="===============2160493576555839347=="
 MIME-Version: 1.0
 From: Andres Salomon <dilinger@collabora.co.uk>
-Subject: [PATCH 1/2] atmodem: ensure the modem is in a sane state
-Date: Wed, 05 Aug 2009 17:51:19 -0400
-Message-ID: <20090805175119.72a57a10@mycelium.queued.net>
+Subject: [PATCH 2/2] gatchat: add a GARBAGE state to handle random crud from a
+ terminal adapter
+Date: Wed, 05 Aug 2009 17:51:31 -0400
+Message-ID: <20090805175131.2054657b@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0220437357994392385==
+--===============2160493576555839347==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From 4c1d96e52fb706a219dcd7f0985b2d8edd403d64 Mon Sep 17 00:00:00 2001
+I've got a version of this that works w/ denkenz's new parser stuff;
+let me know if I should send that instead.
+
+
+
+From d6e942c2e0e2f51c5391e61aa7b5ac7326de28ea Mon Sep 17 00:00:00 2001
 From: Andres Salomon <dilinger@collabora.co.uk>
-Date: Tue, 4 Aug 2009 21:17:32 -0400
-Subject: [PATCH 1/2] atmodem: ensure the modem is in a sane state
+Date: Tue, 4 Aug 2009 21:33:09 -0400
+Subject: [PATCH 2/2] gatchat: add a GARBAGE state to handle random crud fro=
+m a terminal adapter
 
-The HTC G1 modem appears to start in mode V0 by default.  oFono doesn't
-specify the default mode that it starts it, so it gets confused by the G1's
-responses.
+When the TA sends random crap, oFono's parser gets confused and doesn't
+process the next few results (which causes oFono not to send further comman=
+ds,
+and thus initialization never finishes).  This is less than ideal.
 
-This patch sets the default to verbose mode on, (command) echo off, and
-quiet mode off.  Thanks to Denis Kenzior for pointing out the V0 problem
-in the first place.
+This patch adds a new state; when the parser gets something that doesn't
+look like a proper response, it will simply ignore the entire line.  This
+allows initialization to continue when the TA does send spurious lines.
 ---
- drivers/atmodem/atmodem.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ gatchat/gatchat.c |   12 ++++++++++--
+ 1 files changed, 10 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/atmodem/atmodem.c b/drivers/atmodem/atmodem.c
-index fc255b3..822cff2 100644
---- a/drivers/atmodem/atmodem.c
-+++ b/drivers/atmodem/atmodem.c
-@@ -293,6 +293,9 @@ error:
+diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
+index 15cc934..8f00862 100644
+--- a/gatchat/gatchat.c
++++ b/gatchat/gatchat.c
+@@ -55,7 +55,8 @@ enum chat_state {
+ 	PARSER_STATE_PDU_CR,
+ 	PARSER_STATE_PDU_COMPLETE,
+ 	PARSER_STATE_PROMPT,
+-	PARSER_STATE_PROMPT_COMPLETE
++	PARSER_STATE_PROMPT_COMPLETE,
++	PARSER_STATE_GARBAGE,
+ };
  =
 
- static void send_init_commands(const char *vendor, GAtChat *parser)
- {
-+	/* ensure modem is in a known state; verbose on, echo/quiet off */
-+	g_at_chat_send(parser, "ATE0Q0V1", NULL, NULL, NULL, NULL);
+ struct at_command {
+@@ -555,7 +556,9 @@ static inline void parse_char(GAtChat *chat, char byte)
+ 				chat->state =3D PARSER_STATE_PROMPT;
+ 			else
+ 				chat->state =3D PARSER_STATE_RESPONSE;
+-		}
++		} else
++			/* TA sent something we don't understand; ignore it */
++			chat->state =3D PARSER_STATE_GARBAGE;
+ 		break;
+ =
+
+ 	case PARSER_STATE_INITIAL_CR:
+@@ -623,6 +626,11 @@ static inline void parse_char(GAtChat *chat, char byte)
+ 			chat->state =3D PARSER_STATE_RESPONSE;
+ 		break;
+ =
+
++	case PARSER_STATE_GARBAGE:
++		if (byte =3D=3D '\n')
++			chat->state =3D PARSER_STATE_IDLE;
++		break;
 +
- 	if (!strcmp(vendor, "ti_calypso")) {
- 		int flags =3D g_at_chat_get_flags(parser);
- =
-
+ 	case PARSER_STATE_RESPONSE_COMPLETE:
+ 	case PARSER_STATE_PDU_COMPLETE:
+ 	case PARSER_STATE_MULTILINE_COMPLETE:
 -- =
 
 1.6.3.3
 
 
---===============0220437357994392385==--
+--===============2160493576555839347==--
 
