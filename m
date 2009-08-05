@@ -1,85 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============2160493576555839347=="
+Content-Type: multipart/mixed; boundary="===============5744780403948115250=="
 MIME-Version: 1.0
-From: Andres Salomon <dilinger@collabora.co.uk>
-Subject: [PATCH 2/2] gatchat: add a GARBAGE state to handle random crud from a
- terminal adapter
-Date: Wed, 05 Aug 2009 17:51:31 -0400
-Message-ID: <20090805175131.2054657b@mycelium.queued.net>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/2] atmodem: add serial line debugging to gatchat
+Date: Wed, 05 Aug 2009 17:09:12 -0500
+Message-ID: <200908051709.12869.denkenz@gmail.com>
+In-Reply-To: <20090805173313.450a0e20@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2160493576555839347==
+--===============5744780403948115250==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I've got a version of this that works w/ denkenz's new parser stuff;
-let me know if I should send that instead.
+Hi Andres,
 
+>  drivers/atmodem/atmodem.c |   13 ++++++++++++-
+>  gatchat/gatchat.c         |   33 ++++++++++++++++++++++++++++++---
+>  gatchat/gatchat.h         |    7 +++++--
+>  include/log.h             |    5 +++++
+>  src/log.c                 |   39 +++++++++++++++++++++++++++++++++------
+>  src/main.c                |    1 +
+>  6 files changed, 86 insertions(+), 12 deletions(-)
 
+Send two separate patches, one for gatchat related functionality.  One for =
+the =
 
-From d6e942c2e0e2f51c5391e61aa7b5ac7326de28ea Mon Sep 17 00:00:00 2001
-From: Andres Salomon <dilinger@collabora.co.uk>
-Date: Tue, 4 Aug 2009 21:33:09 -0400
-Subject: [PATCH 2/2] gatchat: add a GARBAGE state to handle random crud fro=
-m a terminal adapter
+ofono integration.
 
-When the TA sends random crap, oFono's parser gets confused and doesn't
-process the next few results (which causes oFono not to send further comman=
-ds,
-and thus initialization never finishes).  This is less than ideal.
+> +static void g_at_chat_debug_log(GAtChat *chat, gboolean is_read,
+> +		char *str, gsize len)
 
-This patch adds a new state; when the parser gets something that doesn't
-look like a proper response, it will simply ignore the entire line.  This
-allows initialization to continue when the TA does send spurious lines.
----
- gatchat/gatchat.c |   12 ++++++++++--
- 1 files changed, 10 insertions(+), 2 deletions(-)
+I suggest you use const char *str here
 
-diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
-index 15cc934..8f00862 100644
---- a/gatchat/gatchat.c
-+++ b/gatchat/gatchat.c
-@@ -55,7 +55,8 @@ enum chat_state {
- 	PARSER_STATE_PDU_CR,
- 	PARSER_STATE_PDU_COMPLETE,
- 	PARSER_STATE_PROMPT,
--	PARSER_STATE_PROMPT_COMPLETE
-+	PARSER_STATE_PROMPT_COMPLETE,
-+	PARSER_STATE_GARBAGE,
- };
- =
+> +{
+> +	char type =3D is_read ? '<' : '>';
+> +	char *tmp;
+> +
+> +	if (!chat->debugf || !len)
+> +		return;
+> +
+> +	if (len > 1024) {
+> +		/* let's keep it to a reasonable length.. */
+> +		chat->debugf("%c (ignoring string of length %d)\n", type, len);
 
- struct at_command {
-@@ -555,7 +556,9 @@ static inline void parse_char(GAtChat *chat, char byte)
- 				chat->state =3D PARSER_STATE_PROMPT;
- 			else
- 				chat->state =3D PARSER_STATE_RESPONSE;
--		}
-+		} else
-+			/* TA sent something we don't understand; ignore it */
-+			chat->state =3D PARSER_STATE_GARBAGE;
- 		break;
- =
+27.007 specifies a max command result length of 2048, Section 5.1:
+"the total number of characters, including line terminators, in the =
 
- 	case PARSER_STATE_INITIAL_CR:
-@@ -623,6 +626,11 @@ static inline void parse_char(GAtChat *chat, char byte)
- 			chat->state =3D PARSER_STATE_RESPONSE;
- 		break;
- =
+information text shall not exceed 2048 characters."
 
-+	case PARSER_STATE_GARBAGE:
-+		if (byte =3D=3D '\n')
-+			chat->state =3D PARSER_STATE_IDLE;
-+		break;
-+
- 	case PARSER_STATE_RESPONSE_COMPLETE:
- 	case PARSER_STATE_PDU_COMPLETE:
- 	case PARSER_STATE_MULTILINE_COMPLETE:
--- =
+> +		return;
+> +	}
+> +
+> +	str[len] =3D '\0';	/* XXX: is it safe to overwrite this byte? */
 
-1.6.3.3
+Probably not
 
+> +	tmp =3D g_strescape(str, "\"");
+> +	chat->debugf("%c %s\n", type, tmp);
+> +	g_free(tmp);
+> +}
+> +
+> -GAtChat *g_at_chat_new(GIOChannel *channel, int flags)
+> +GAtChat *g_at_chat_new(GIOChannel *channel, int flags, GAtDebugFunc
 
---===============2160493576555839347==--
+Lets make the debug function settable / gettable.  I.e. something like:
+
+g_at_chat_set_debug_info(GAtChat *chat, GAtDebugFunc *debugf, void *debugda=
+ta)
+g_at_chat_get_debug_func(GAtChat *chat)
+g_at_chat_get_debug_data(GAtChat *chat)
+
+>  GAtChat *g_at_chat_ref(GAtChat *chat)
+> diff --git a/gatchat/gatchat.h b/gatchat/gatchat.h
+> index 969f6f4..4353e08 100644
+> --- a/gatchat/gatchat.h
+> +++ b/gatchat/gatchat.h
+> @@ -36,6 +36,8 @@ typedef void (*GAtResultFunc)(gboolean success, GAtResu=
+lt
+> *result, gpointer user_data);
+>  typedef void (*GAtNotifyFunc)(GAtResult *result, gpointer user_data);
+>  typedef void (*GAtDisconnectFunc)(gpointer user_data);
+> +typedef void (*GAtDebugFunc)(const char *format, ...)
+> +		__attribute__((format(printf, 1, 2)));
+>
+
+make the signature a simple void (*foo)(const char *str, void *data);
+
+Regards,
+-Denis
+
+--===============5744780403948115250==--
 
