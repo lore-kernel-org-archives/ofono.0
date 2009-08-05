@@ -1,436 +1,105 @@
-Content-Type: multipart/mixed; boundary="===============8562366000391032564=="
+Content-Type: multipart/mixed; boundary="===============2417746602326347244=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] Implement writing EF-MBDN on SetProperty or Enhanced
- Voicemail IE.
-Date: Wed, 05 Aug 2009 09:08:40 +0200
-Message-ID: <1249456120-10263-1-git-send-email-andrew.zaborowski@intel.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: [PATCH 4/4] Add a MessageWaiting interface to track message
+ waiting indications.
+Date: Wed, 05 Aug 2009 16:18:09 +0200
+Message-ID: <fb249edb0908050718h4088267ep5260658fccfa76c2@mail.gmail.com>
+In-Reply-To: <200908041523.29580.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8562366000391032564==
+--===============2417746602326347244==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I've not tested this on a real SIM yet.
----
- src/message-waiting.c |   51 ++++++++++++++++++++++++++++++++++++---------=
----
- src/simutil.c         |   27 +++++++++++++++++++++++++
- src/simutil.h         |    2 +
- src/smsutil.c         |   47 +++++++++++++++++++++++++++++---------------
- src/smsutil.h         |    8 +++++++
- 5 files changed, 106 insertions(+), 29 deletions(-)
+2009/8/4 Denis Kenzior <denkenz@gmail.com>:
+> I've pushed this patch and heavily customized it afterwards to simplify t=
+he
+> logic a bit. =C2=A0Can you check that it is still working as intended?
 
-diff --git a/src/message-waiting.c b/src/message-waiting.c
-index 14a6e9c..568cea6 100644
---- a/src/message-waiting.c
-+++ b/src/message-waiting.c
-@@ -164,12 +164,12 @@ static DBusMessage *mw_get_properties(DBusConnection =
-*conn,
- 	return reply;
- }
- =
+It is kind of working but one of the things "simplified away" is using
+the D-Bus interface even without working EF-MBDN or EF-MWIS files on
+the SIM, i.e. if the write fails then the user never finds out there
+was a notification.
 
--static void mbdn_set_cb(gboolean ok, void *data)
-+static void mbdn_set_cb(struct ofono_modem *modem, int ok, void *data)
- {
- 	struct mbdn_set_request *req =3D data;
- 	struct ofono_phone_number *old =3D &req->mw->mailbox_number[req->mailbox];
- 	const char *property;
--	DBusMessage *reply;
-+	DBusMessage *reply =3D 0; /* Quiet a warning */
- =
+Consistently with the change to return invalid_args on D-Bus type
+mismatch, I'm attaching a diff to do the same thing for other
+interfaces we have.
 
- 	if (!ok) {
- 		if (req->msg)
-@@ -208,11 +208,19 @@ out:
- 	g_free(req);
- }
- =
+You might want to add G_DBUS_METHOD_FLAG_ASYNC to SetProperty
+signature and remove mw_update declaration which is now unused.  Also
+the check in cache_info should probably be if (r < len).
 
--static void set_mbdn(struct ofono_modem *modem, int mailbox,
-+static DBusMessage *set_mbdn(struct ofono_modem *modem, int mailbox,
- 			const char *number, DBusMessage *msg)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	struct mbdn_set_request *req;
-+	unsigned char efmbdn[255];
-+
-+	if (modem->message_waiting->efmbdn_record_id[mailbox] =3D=3D 0) {
-+		if (msg)
-+			return __ofono_error_failed(msg);
-+
-+		return NULL;
-+	}
- =
+>
+> Writing of MBDN fields is still missing. =C2=A0Can you send another patch=
+ for this?
 
- 	req =3D g_new0(struct mbdn_set_request, 1);
- =
+Sent separately.
 
-@@ -222,8 +230,19 @@ static void set_mbdn(struct ofono_modem *modem, int ma=
-ilbox,
- 	string_to_phone_number(number, &req->number);
- 	req->msg =3D dbus_message_ref(msg);
- =
+> Also one fo writing of MSISDN records in SimManager would be good as well.
 
--	/* TODO: Fill the actual sim_write data */
--	mbdn_set_cb(TRUE, req);
-+	sim_adn_build(efmbdn, req->mw->efmbdn_length, &req->number);
-+
-+	if (ofono_sim_write(modem, SIM_EFMBDN_FILEID, mbdn_set_cb,
-+			OFONO_SIM_FILE_STRUCTURE_FIXED,
-+			req->mw->efmbdn_record_id[mailbox],
-+			efmbdn, req->mw->efmbdn_length, req) =3D=3D -1) {
-+		g_free(req);
-+
-+		if (msg)
-+			return __ofono_error_failed(msg);
-+	}
-+
-+	return NULL;
- }
- =
+Will get on it today.
 
- static DBusMessage *mw_set_property(DBusConnection *conn, DBusMessage *msg,
-@@ -275,8 +294,7 @@ static DBusMessage *mw_set_property(DBusConnection *con=
-n, DBusMessage *msg,
- 		if (g_str_equal(cur_number, value))
- 			return dbus_message_new_method_return(msg);
- =
+Regards
 
--		set_mbdn(modem, i, value, msg);
--		return NULL;
-+		return set_mbdn(modem, i, value, msg);
- 	}
- =
+--===============2417746602326347244==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Use-invalid_args-instead-of-invalid_format.patch"
 
- 	return __ofono_error_invalid_args(msg);
-@@ -599,6 +617,7 @@ static void handle_enhanced_voicemail_iei(struct ofono_=
-modem *modem,
- {
- 	int profile, n;
- 	gboolean set;
-+	struct sms_address mailbox_address;
- =
+RnJvbSA0MDk2ZjA3YjhiMDgwMDU4NjZlZTY5MTg4NzYzZTU4ODU1NzRlZDhjIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogV2VkLCA1IEF1ZyAyMDA5IDA3OjE3OjEwICswMjAwClN1YmplY3Q6
+IFtQQVRDSF0gVXNlIGludmFsaWRfYXJncyBpbnN0ZWFkIG9mIGludmFsaWRfZm9ybWF0CgotLS0K
+IHNyYy9jYWxsLWJhcnJpbmcuYyAgfCAgICA0ICsrLS0KIHNyYy9jYWxsLW1ldGVyLmMgICAgfCAg
+ICA0ICsrLS0KIHNyYy9jYWxsLXNldHRpbmdzLmMgfCAgICA0ICsrLS0KIDMgZmlsZXMgY2hhbmdl
+ZCwgNiBpbnNlcnRpb25zKCspLCA2IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9jYWxs
+LWJhcnJpbmcuYyBiL3NyYy9jYWxsLWJhcnJpbmcuYwppbmRleCAzNmRlYWY3Li4zODZhMTI3IDEw
+MDY0NAotLS0gYS9zcmMvY2FsbC1iYXJyaW5nLmMKKysrIGIvc3JjL2NhbGwtYmFycmluZy5jCkBA
+IC04ODIsMTMgKzg4MiwxMyBAQCBzdGF0aWMgREJ1c01lc3NhZ2UgKmNiX3NldF9wcm9wZXJ0eShE
+QnVzQ29ubmVjdGlvbiAqY29ubiwgREJ1c01lc3NhZ2UgKm1zZywKIAlkYnVzX21lc3NhZ2VfaXRl
+cl9yZWN1cnNlKCZpdGVyLCAmdmFyKTsKIAogCWlmIChkYnVzX21lc3NhZ2VfaXRlcl9nZXRfYXJn
+X3R5cGUoJnZhcikgIT0gREJVU19UWVBFX1NUUklORykKLQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3Jf
+aW52YWxpZF9mb3JtYXQobXNnKTsKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9hcmdz
+KG1zZyk7CiAKIAlkYnVzX21lc3NhZ2VfaXRlcl9nZXRfYmFzaWMoJnZhciwgJnZhbHVlKTsKIAog
+CWlmICghY2JfbG9ja19wcm9wZXJ0eV9sb29rdXAobmFtZSwgdmFsdWUsIEJFQVJFUl9DTEFTU19W
+T0lDRSwKIAkJCQkJJmxvY2ssICZjbHMsICZtb2RlKSkKLQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3Jf
+aW52YWxpZF9mb3JtYXQobXNnKTsKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9hcmdz
+KG1zZyk7CiAKIAlpZiAoZGJ1c19tZXNzYWdlX2l0ZXJfbmV4dCgmaXRlcikpIHsKIAkJaWYgKGRi
+dXNfbWVzc2FnZV9pdGVyX2dldF9hcmdfdHlwZSgmaXRlcikgIT0gREJVU19UWVBFX1NUUklORykK
+ZGlmZiAtLWdpdCBhL3NyYy9jYWxsLW1ldGVyLmMgYi9zcmMvY2FsbC1tZXRlci5jCmluZGV4IDQy
+MWZlMGMuLjYxNDc1NDAgMTAwNjQ0Ci0tLSBhL3NyYy9jYWxsLW1ldGVyLmMKKysrIGIvc3JjL2Nh
+bGwtbWV0ZXIuYwpAQCAtNTg0LDcgKzU4NCw3IEBAIHN0YXRpYyBEQnVzTWVzc2FnZSAqY21fc2V0
+X3Byb3BlcnR5KERCdXNDb25uZWN0aW9uICpjb25uLCBEQnVzTWVzc2FnZSAqbXNnLAogCQlyZXR1
+cm4gX19vZm9ub19lcnJvcl9pbnZhbGlkX2FyZ3MobXNnKTsKIAogCWlmIChkYnVzX21lc3NhZ2Vf
+aXRlcl9nZXRfYXJnX3R5cGUoJml0ZXIpICE9IERCVVNfVFlQRV9TVFJJTkcpCi0JCQlyZXR1cm4g
+X19vZm9ub19lcnJvcl9pbnZhbGlkX2FyZ3MobXNnKTsKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3Jf
+aW52YWxpZF9hcmdzKG1zZyk7CiAKIAlkYnVzX21lc3NhZ2VfaXRlcl9nZXRfYmFzaWMoJml0ZXIs
+ICZwYXNzd2QpOwogCkBAIC01OTYsNyArNTk2LDcgQEAgc3RhdGljIERCdXNNZXNzYWdlICpjbV9z
+ZXRfcHJvcGVydHkoREJ1c0Nvbm5lY3Rpb24gKmNvbm4sIERCdXNNZXNzYWdlICptc2csCiAJCQlj
+b250aW51ZTsKIAogCQlpZiAoZGJ1c19tZXNzYWdlX2l0ZXJfZ2V0X2FyZ190eXBlKCZ2YXIpICE9
+IHByb3BlcnR5LT50eXBlKQotCQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9mb3JtYXQo
+bXNnKTsKKwkJCXJldHVybiBfX29mb25vX2Vycm9yX2ludmFsaWRfYXJncyhtc2cpOwogCiAJCXJl
+dHVybiBwcm9wZXJ0eS0+c2V0KG1zZywgbW9kZW0sICZ2YXIsIHBhc3N3ZCk7CiAJfQpkaWZmIC0t
+Z2l0IGEvc3JjL2NhbGwtc2V0dGluZ3MuYyBiL3NyYy9jYWxsLXNldHRpbmdzLmMKaW5kZXggMThl
+ODE4OS4uOWZjYjU5ZSAxMDA2NDQKLS0tIGEvc3JjL2NhbGwtc2V0dGluZ3MuYworKysgYi9zcmMv
+Y2FsbC1zZXR0aW5ncy5jCkBAIC0xMTY3LDcgKzExNjcsNyBAQCBzdGF0aWMgREJ1c01lc3NhZ2Ug
+KmNzX3NldF9wcm9wZXJ0eShEQnVzQ29ubmVjdGlvbiAqY29ubiwgREJ1c01lc3NhZ2UgKm1zZywK
+IAkJY29uc3QgY2hhciAqc2V0dGluZzsKIAogCQlpZiAoZGJ1c19tZXNzYWdlX2l0ZXJfZ2V0X2Fy
+Z190eXBlKCZ2YXIpICE9IERCVVNfVFlQRV9TVFJJTkcpCi0JCQlyZXR1cm4gX19vZm9ub19lcnJv
+cl9pbnZhbGlkX2Zvcm1hdChtc2cpOworCQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9h
+cmdzKG1zZyk7CiAKIAkJZGJ1c19tZXNzYWdlX2l0ZXJfZ2V0X2Jhc2ljKCZ2YXIsICZzZXR0aW5n
+KTsKIApAQCAtMTE3Niw3ICsxMTc2LDcgQEAgc3RhdGljIERCdXNNZXNzYWdlICpjc19zZXRfcHJv
+cGVydHkoREJ1c0Nvbm5lY3Rpb24gKmNvbm4sIERCdXNNZXNzYWdlICptc2csCiAJCWNvbnN0IGNo
+YXIgKnNldHRpbmc7CiAKIAkJaWYgKGRidXNfbWVzc2FnZV9pdGVyX2dldF9hcmdfdHlwZSgmdmFy
+KSAhPSBEQlVTX1RZUEVfU1RSSU5HKQotCQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9m
+b3JtYXQobXNnKTsKKwkJCXJldHVybiBfX29mb25vX2Vycm9yX2ludmFsaWRfYXJncyhtc2cpOwog
+CiAJCWRidXNfbWVzc2FnZV9pdGVyX2dldF9iYXNpYygmdmFyLCAmc2V0dGluZyk7CiAKLS0gCjEu
+Ni4xCgo=
 
- 	if (length < 3)
- 		return;
-@@ -614,9 +633,10 @@ static void handle_enhanced_voicemail_iei(struct ofono=
-_modem *modem,
- 		if (discard)
- 			*discard =3D (iei[0] & (1 << 4)) ? FALSE : TRUE;
- =
-
--		/* TODO: VM_MAILBOX_ACCESS_ADDRESS */
--		n =3D 2 + (iei[1] + 1) / 2;
--		if (length < n + 11)
-+		/* VM_MAILBOX_ACCESS_ADDRESS */
-+		n =3D 0;
-+		if (!sms_decode_address_field(iei + 1, length - 1, &n,
-+					FALSE, &mailbox_address))
- 			return;
- =
-
- 		/* TODO: VM_MESSAGE_PRIORITY_INDICATION */
-@@ -636,9 +656,10 @@ static void handle_enhanced_voicemail_iei(struct ofono=
-_modem *modem,
- 		if (discard)
- 			*discard =3D (iei[0] & (1 << 4)) ? FALSE : TRUE;
- =
-
--		/* TODO: VM_MAILBOX_ACCESS_ADDRESS */
--		n =3D 2 + (iei[1] + 1) / 2;
--		if (length < n + 11)
-+		/* VM_MAILBOX_ACCESS_ADDRESS */
-+		n =3D 0;
-+		if (!sms_decode_address_field(iei + 1, length - 1, &n,
-+					FALSE, &mailbox_address))
- 			return;
- =
-
- 		/* Other parameters currently not supported */
-@@ -647,6 +668,10 @@ static void handle_enhanced_voicemail_iei(struct ofono=
-_modem *modem,
- 		mw_set_indicator(modem, profile, SMS_MWI_TYPE_VOICE,
- 					set, iei[n + 2]);
- 	}
-+
-+	if (mailbox_address.address[0] !=3D '\0')
-+		set_mbdn(modem, SMS_MWI_TYPE_VOICE,
-+				sms_address_to_string(&mailbox_address), NULL);
- }
- =
-
- void ofono_handle_sms_mwi(struct ofono_modem *modem,
-diff --git a/src/simutil.c b/src/simutil.c
-index 51b1f5c..7a0830e 100644
---- a/src/simutil.c
-+++ b/src/simutil.c
-@@ -426,3 +426,30 @@ gboolean sim_adn_parse(const unsigned char *data, int =
-length,
- =
-
- 	return TRUE;
- }
-+
-+void sim_adn_build(unsigned char *data, int length,
-+			const struct ofono_phone_number *ph)
-+{
-+	int number_len =3D strlen(ph->number);
-+
-+	/* Alpha-Identifier field */
-+	if (length > 14) {
-+		memset(data, 0xff, length - 14);
-+		data +=3D length - 14;
-+	}
-+
-+	number_len =3D (number_len + 1) / 2;
-+	*data++ =3D number_len + 1;
-+
-+	/* Use given number type and 'Unknown' for Numbering Plan */
-+	*data++ =3D 0x80 | (ph->type << 4) | 0;
-+
-+	encode_bcd_number(ph->number, data);
-+	memset(data + number_len, 0xff, 10 - number_len);
-+	data +=3D 10;
-+
-+	/* CCP1 unused */
-+	*data++ =3D 0xff;
-+	/* Ext1 unused */
-+	*data++ =3D 0xff;
-+}
-diff --git a/src/simutil.h b/src/simutil.h
-index c2b1e20..9d198db 100644
---- a/src/simutil.h
-+++ b/src/simutil.h
-@@ -82,3 +82,5 @@ static inline enum sim_file_access file_access_condition_=
-decode(int bcd)
- =
-
- gboolean sim_adn_parse(const unsigned char *data, int length,
- 			struct ofono_phone_number *ph);
-+void sim_adn_build(unsigned char *data, int length,
-+			const struct ofono_phone_number *ph);
-diff --git a/src/smsutil.c b/src/smsutil.c
-index ad38ed9..ba2bbc1 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -110,6 +110,17 @@ static inline int to_semi_oct(char in)
- 	return digit;
- }
- =
-
-+void encode_bcd_number(const char *number, unsigned char *out)
-+{
-+	while (number[0] !=3D '\0' && number[1] !=3D '\0') {
-+		*out =3D to_semi_oct(*number++);
-+		*out++ |=3D to_semi_oct(*number++) << 4;
-+	}
-+
-+	if (*number)
-+		*out =3D to_semi_oct(*number) | 0xf0;
-+}
-+
- /* Returns whether the DCS could be parsed successfully, e.g. no reserved
-  * values were used
-  */
-@@ -446,8 +457,8 @@ static gboolean encode_validity_period(const struct sms=
-_validity_period *vp,
- 	return FALSE;
- }
- =
-
--static gboolean encode_address(const struct sms_address *in, gboolean sc,
--				unsigned char *pdu, int *offset)
-+gboolean sms_encode_address_field(const struct sms_address *in, gboolean s=
-c,
-+					unsigned char *pdu, int *offset)
- {
- 	size_t len =3D strlen(in->address);
- 	unsigned char addr_len =3D 0;
-@@ -533,9 +544,9 @@ out:
- 	return TRUE;
- }
- =
-
--static gboolean decode_address(const unsigned char *pdu, int len,
--				int *offset, gboolean sc,
--				struct sms_address *out)
-+gboolean sms_decode_address_field(const unsigned char *pdu, int len,
-+					int *offset, gboolean sc,
-+					struct sms_address *out)
- {
- 	unsigned char addr_len;
- 	unsigned char addr_type;
-@@ -635,7 +646,7 @@ static gboolean encode_deliver(const struct sms_deliver=
- *in, unsigned char *pdu,
- =
-
- 	set_octet(pdu, offset, oct);
- =
-
--	if (encode_address(&in->oaddr, FALSE, pdu, offset) =3D=3D FALSE)
-+	if (sms_encode_address_field(&in->oaddr, FALSE, pdu, offset) =3D=3D FALSE)
- 		return FALSE;
- =
-
- 	set_octet(pdu, offset, in->pid);
-@@ -672,7 +683,8 @@ static gboolean decode_deliver(const unsigned char *pdu=
-, int len,
- 	out->deliver.udhi =3D is_bit_set(octet, 6);
- 	out->deliver.rp =3D is_bit_set(octet, 7);
- =
-
--	if (!decode_address(pdu, len, &offset, FALSE, &out->deliver.oaddr))
-+	if (!sms_decode_address_field(pdu, len, &offset,
-+					FALSE, &out->deliver.oaddr))
- 		return FALSE;
- =
-
- 	if (!next_octet(pdu, len, &offset, &out->deliver.pid))
-@@ -883,7 +895,7 @@ static gboolean encode_status_report(const struct sms_s=
-tatus_report *in,
- =
-
- 	set_octet(pdu, offset, in->mr);
- =
-
--	if (!encode_address(&in->raddr, FALSE, pdu, offset))
-+	if (!sms_encode_address_field(&in->raddr, FALSE, pdu, offset))
- 		return FALSE;
- =
-
- 	if (!encode_scts(&in->scts, pdu, offset))
-@@ -935,8 +947,8 @@ static gboolean decode_status_report(const unsigned cha=
-r *pdu, int len,
- 	if (!next_octet(pdu, len, &offset, &out->status_report.mr))
- 		return FALSE;
- =
-
--	if (!decode_address(pdu, len, &offset, FALSE,
--				&out->status_report.raddr))
-+	if (!sms_decode_address_field(pdu, len, &offset, FALSE,
-+					&out->status_report.raddr))
- 		return FALSE;
- =
-
- 	if (!decode_scts(pdu, len, &offset, &out->status_report.scts))
-@@ -1173,7 +1185,7 @@ static gboolean encode_submit(const struct sms_submit=
- *in,
- =
-
- 	set_octet(pdu, offset, in->mr);
- =
-
--	if (encode_address(&in->daddr, FALSE, pdu, offset) =3D=3D FALSE)
-+	if (sms_encode_address_field(&in->daddr, FALSE, pdu, offset) =3D=3D FALSE)
- 		return FALSE;
- =
-
- 	set_octet(pdu, offset, in->pid);
-@@ -1215,7 +1227,8 @@ static gboolean decode_submit(const unsigned char *pd=
-u, int len,
- 	if (!next_octet(pdu, len, &offset, &out->submit.mr))
- 		return FALSE;
- =
-
--	if (!decode_address(pdu, len, &offset, FALSE, &out->submit.daddr))
-+	if (!sms_decode_address_field(pdu, len, &offset,
-+					FALSE, &out->submit.daddr))
- 		return FALSE;
- =
-
- 	if (!next_octet(pdu, len, &offset, &out->submit.pid))
-@@ -1265,7 +1278,7 @@ static gboolean encode_command(const struct sms_comma=
-nd *in,
- =
-
- 	set_octet(pdu, offset, in->mn);
- =
-
--	if (!encode_address(&in->daddr, FALSE, pdu, offset))
-+	if (!sms_encode_address_field(&in->daddr, FALSE, pdu, offset))
- 		return FALSE;
- =
-
- 	set_octet(pdu, offset, in->cdl);
-@@ -1305,7 +1318,8 @@ static gboolean decode_command(const unsigned char *p=
-du, int len,
- 	if (!next_octet(pdu, len, &offset, &out->command.mn))
- 		return FALSE;
- =
-
--	if (!decode_address(pdu, len, &offset, FALSE, &out->command.daddr))
-+	if (!sms_decode_address_field(pdu, len, &offset,
-+					FALSE, &out->command.daddr))
- 		return FALSE;
- =
-
- 	if (!next_octet(pdu, len, &offset, &out->command.cdl))
-@@ -1328,7 +1342,7 @@ gboolean sms_encode(const struct sms *in, int *len, i=
-nt *tpdu_len,
- =
-
- 	if (in->type =3D=3D SMS_TYPE_DELIVER || in->type =3D=3D SMS_TYPE_SUBMIT ||
- 			in->type =3D=3D SMS_TYPE_COMMAND)
--		if (!encode_address(&in->sc_addr, TRUE, pdu, &offset))
-+		if (!sms_encode_address_field(&in->sc_addr, TRUE, pdu, &offset))
- 			return FALSE;
- =
-
- 	tpdu_start =3D offset;
-@@ -1396,7 +1410,8 @@ gboolean sms_decode(const unsigned char *pdu, int len=
-, gboolean outgoing,
- 		return FALSE;
- =
-
- 	if (tpdu_len < len) {
--		if (!decode_address(pdu, len, &offset, TRUE, &out->sc_addr))
-+		if (!sms_decode_address_field(pdu, len, &offset,
-+						TRUE, &out->sc_addr))
- 			return FALSE;
- 	}
- =
-
-diff --git a/src/smsutil.h b/src/smsutil.h
-index d362aa9..95d0c78 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -401,6 +401,7 @@ static inline unsigned char bit_field(unsigned char oct=
-, int start, int num)
- }
- =
-
- void extract_bcd_number(const unsigned char *buf, int len, char *out);
-+void encode_bcd_number(const char *number, unsigned char *out);
- =
-
- gboolean sms_decode(const unsigned char *pdu, int len, gboolean outgoing,
- 			int tpdu_len, struct sms *out);
-@@ -408,6 +409,13 @@ gboolean sms_decode(const unsigned char *pdu, int len,=
- gboolean outgoing,
- gboolean sms_encode(const struct sms *in, int *len, int *tpdu_len,
- 			unsigned char *pdu);
- =
-
-+gboolean sms_decode_address_field(const unsigned char *pdu, int len,
-+					int *offset, gboolean sc,
-+					struct sms_address *out);
-+
-+gboolean sms_encode_address_field(const struct sms_address *in, gboolean s=
-c,
-+					unsigned char *pdu, int *offset);
-+
- int sms_udl_in_bytes(guint8 ud_len, guint8 dcs);
- =
-
- time_t sms_scts_to_time(const struct sms_scts *scts, struct tm *remote);
--- =
-
-1.6.1
-
-
---===============8562366000391032564==--
+--===============2417746602326347244==--
 
