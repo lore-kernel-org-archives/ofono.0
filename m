@@ -1,33 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============2317355679789891949=="
+Content-Type: multipart/mixed; boundary="===============3805710093761601623=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] Implement writing EF-MBDN on SetProperty or Enhanced
  Voicemail IE.
-Date: Wed, 05 Aug 2009 12:48:18 -0500
-Message-ID: <200908051248.18378.denkenz@gmail.com>
-In-Reply-To: <fb249edb0908050933v78a979abrcde608cf71f00ef7@mail.gmail.com>
+Date: Wed, 05 Aug 2009 13:59:00 -0500
+Message-ID: <200908051359.00649.denkenz@gmail.com>
+In-Reply-To: <1249456120-10263-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2317355679789891949==
+--===============3805710093761601623==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Andrew,
 
-> 2009/8/5 Andrzej Zaborowski <andrew.zaborowski@intel.com>:
-> > I've not tested this on a real SIM yet.
->
-> It needs the attached fix since the record numbers passed to the
-> plugin are now 1-based.
->
+> I've not tested this on a real SIM yet.
+> ---
+>  src/message-waiting.c |   51
+> ++++++++++++++++++++++++++++++++++++------------ src/simutil.c         |  =
 
-Patch has been applied.  Thanks.
+> 27 +++++++++++++++++++++++++
+>  src/simutil.h         |    2 +
+>  src/smsutil.c         |   47 +++++++++++++++++++++++++++++---------------
+>  src/smsutil.h         |    8 +++++++
+>  5 files changed, 106 insertions(+), 29 deletions(-)
 
-Regards,
+I've broken up your patch into several smaller patches, but should be =
+
+otherwise unchanged.  Should now be upstream.
+
+Thanks,
 -Denis
 
-
---===============2317355679789891949==--
+--===============3805710093761601623==--
 
