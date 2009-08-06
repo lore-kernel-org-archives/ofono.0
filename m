@@ -1,62 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============7819712539518901319=="
+Content-Type: multipart/mixed; boundary="===============8389639285618264412=="
 MIME-Version: 1.0
-From: andrzej zaborowski <balrogg@gmail.com>
-Subject: Re: [PATCH 4/4] Add a MessageWaiting interface to track message
- waiting indications.
-Date: Fri, 07 Aug 2009 05:25:10 +0200
-Message-ID: <fb249edb0908062025y39be4855ub305387906d8ed92@mail.gmail.com>
-In-Reply-To: <200908051436.00016.denkenz@gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] Reorder statements to make SIM op queue more robust.
+Date: Thu, 06 Aug 2009 22:29:12 +0200
+Message-ID: <1249590552-18714-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7819712539518901319==
+--===============8389639285618264412==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/8/5 Denis Kenzior <denkenz@gmail.com>:
-> Hi Andrew,
->
->> > For setting mailbox numbers, a working EF-MBDN is required since the o=
-nly
->> > alternative would be to store them on the filesystem.
->>
->> mw_set_indicator does the right thing, I missed this fact. =C2=A0But whe=
-n a
->> mailbox number is set or received from network all clients get a
->> PropertyChanged and the new number can be retrieved from the interface
->> but only when the store succeeded, previously it would be available
->> regardless of MBDN on the card and the writing to card was secondary.
->> The number is kind of important if you want to hear the messages.
->
-> So you're right that even if we get an enhanced voice mail notification m=
-essage
-> the Mailbox number won't be signaled unless we have the SIM provisioned w=
-ith
-> EF-MBI & EF-MBDN.
->
-> The problem is, if we don't have the SIM files available, then the next t=
-ime
-> oFono is restarted this information is lost anyway until the next MWI
-> notification arrives. =C2=A0So you're back to not being able to dial the =
-mailbox.
->
-> This is also an issue with the indications themselves. =C2=A0If we don't =
-have EF-
-> MWIS provisioned, the information is lost when oFono is restarted. =C2=A0=
-So we're
-> now inconsistent between MBDN/MWIS, so maybe we shouldn't update them eit=
-her
-> in this case.
+This allows ofono_sim_read and ofono_sim_write callbacks to queue new
+read or write operations.  The callback must not be called between
+removing the operation from queue and checking queue length.
+---
+ src/sim.c |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
 
-True.  (or update them both in this case)
+diff --git a/src/sim.c b/src/sim.c
+index 3376462..b7832f5 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -304,6 +304,9 @@ static void sim_op_error(struct ofono_modem *modem)
+ 	struct sim_manager_data *sim =3D modem->sim_manager;
+ 	struct sim_file_op *op =3D g_queue_pop_head(sim->simop_q);
+ =
 
-It would make sense for the providers to resend the MWI information
-everytime subscriber connects the network and then it would be less
-problematic in case the information couldn't be written to SIM, but I
-don't know if they ever do this.
++	if (g_queue_get_length(sim->simop_q) > 0)
++		g_timeout_add(0, sim_op_next, modem);
++
+ 	if (op->is_read =3D=3D TRUE)
+ 		((ofono_sim_file_read_cb_t) op->cb)
+ 			(modem, 0, 0, 0, 0, 0, 0, op->userdata);
+@@ -312,9 +315,6 @@ static void sim_op_error(struct ofono_modem *modem)
+ 			(modem, 0, op->userdata);
+ =
 
-Regards
+ 	sim_file_op_free(op);
+-
+-	if (g_queue_get_length(sim->simop_q) > 0)
+-		g_timeout_add(0, sim_op_next, modem);
+ }
+ =
 
---===============7819712539518901319==--
+ static gboolean cache_record(const char *path, int current, int record_len,
+@@ -517,15 +517,15 @@ static void sim_op_write_cb(const struct ofono_error =
+*error, void *data)
+ 	struct sim_file_op *op =3D g_queue_pop_head(sim->simop_q);
+ 	ofono_sim_file_write_cb_t cb =3D op->cb;
+ =
+
++	if (g_queue_get_length(sim->simop_q) > 0)
++		g_timeout_add(0, sim_op_next, modem);
++
+ 	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
+ 		cb(modem, 1, op->userdata);
+ 	else
+ 		cb(modem, 0, op->userdata);
+ =
+
+ 	sim_file_op_free(op);
+-
+-	if (g_queue_get_length(sim->simop_q) > 0)
+-		g_timeout_add(0, sim_op_next, modem);
+ }
+ =
+
+ static gboolean sim_op_next(gpointer user_data)
+-- =
+
+1.6.1
+
+
+--===============8389639285618264412==--
 
