@@ -1,56 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============4761838111537234433=="
+Content-Type: multipart/mixed; boundary="===============2993920281999509724=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Segmentation fault
-Date: Thu, 06 Aug 2009 17:03:37 -0500
-Message-ID: <200908061703.37562.denkenz@gmail.com>
-In-Reply-To: <4A7AC3BF.1090008@gmail.com>
+Subject: Re: [PATCH 2/2] gatchat: add a GARBAGE state to handle random crud
+ from a terminal adapter
+Date: Thu, 06 Aug 2009 17:06:41 -0500
+Message-ID: <200908061706.41763.denkenz@gmail.com>
+In-Reply-To: <20090805175131.2054657b@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4761838111537234433==
+--===============2993920281999509724==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marko,
+Hi Andres,
 
-> [root(a)localhost ~]# dbus-send --print-reply --system --dest=3Dorg.ofono=
- /
-> org.ofono.at.Manager.Create string:"dev:/dev/ttyACM0" string:"at"
-> method return sender=3D:1.404 -> dest=3D:1.405 reply_serial=3D2
->    object path "/modem1"
-> [root(a)localhost ~]# dbus-send --print-reply --system --dest=3Dorg.ofono=
- /
-> org.ofono.at.Manager.Destroy objpath:"/modem1"
-> method return sender=3D:1.404 -> dest=3D:1.406 reply_serial=3D2
-> [root(a)localhost ~]# dbus-send --print-reply --system --dest=3Dorg.ofono=
- /
-> org.ofono.at.Manager.Create string:"dev:/dev/ttyACM0" string:"at"
-> method return sender=3D:1.404 -> dest=3D:1.407 reply_serial=3D2
->    object path "/modem2"
+> I've got a version of this that works w/ denkenz's new parser stuff;
+> let me know if I should send that instead.
 >
-> gdb output:
 >
-> ofonod[2191]: SIMManager interface for modem: /modem2 created
-> ofonod[2191]: Registered call forwarding interface
-> ofonod[2191]: Registered call settings interface
-> ofonod[2191]: Sending voice initialization commands
-> ofonod[2191]: cops_list_cb got result: 1
-> ofonod[2191]: Final response: OK
-> ofonod[2191]: Got 0 elements
 >
-> Program received signal SIGSEGV, Segmentation fault.
-> operator_list_callback (error=3D0xbfffe85c, total=3D0, list=3D0x0,
-> data=3D0x80888f0) at network.c:981
-> 981     network.c: No such file or directory.
->         in network.c
+> From d6e942c2e0e2f51c5391e61aa7b5ac7326de28ea Mon Sep 17 00:00:00 2001
+> From: Andres Salomon <dilinger@collabora.co.uk>
+> Date: Tue, 4 Aug 2009 21:33:09 -0400
+> Subject: [PATCH 2/2] gatchat: add a GARBAGE state to handle random crud
+> from a terminal adapter
+>
+> When the TA sends random crap, oFono's parser gets confused and doesn't
+> process the next few results (which causes oFono not to send further
+> commands, and thus initialization never finishes).  This is less than
+> ideal.
+>
+> This patch adds a new state; when the parser gets something that doesn't
+> look like a proper response, it will simply ignore the entire line.  This
+> allows initialization to continue when the TA does send spurious lines.
 
-This should not be fixed upstream.  Can you check if this is still broken?
+I've incorporated a modified version of this into the new default gsmv1 par=
+ser =
+
+as part of the customizable parser patch.  This is now upstream, and I'd li=
+ke =
+
+to hear about how well it works.
 
 Regards,
 -Denis
 
 
---===============4761838111537234433==--
+
+
+--===============2993920281999509724==--
 
