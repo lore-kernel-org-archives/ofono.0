@@ -1,35 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============0979680811293986332=="
+Content-Type: multipart/mixed; boundary="===============7819712539518901319=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] atmodem: add serial line debugging to gatchat
-Date: Thu, 06 Aug 2009 17:08:04 -0500
-Message-ID: <200908061708.05162.denkenz@gmail.com>
-In-Reply-To: <20090806012105.5e85fac7@mycelium.queued.net>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: [PATCH 4/4] Add a MessageWaiting interface to track message
+ waiting indications.
+Date: Fri, 07 Aug 2009 05:25:10 +0200
+Message-ID: <fb249edb0908062025y39be4855ub305387906d8ed92@mail.gmail.com>
+In-Reply-To: <200908051436.00016.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0979680811293986332==
+--===============7819712539518901319==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andres,
-
-> How's the following?  I didn't create any g_at_chat_get_debug*
-> functions; I figure those can be created later when someone has a use
-> for them.
+2009/8/5 Denis Kenzior <denkenz@gmail.com>:
+> Hi Andrew,
 >
+>> > For setting mailbox numbers, a working EF-MBDN is required since the o=
+nly
+>> > alternative would be to store them on the filesystem.
+>>
+>> mw_set_indicator does the right thing, I missed this fact. =C2=A0But whe=
+n a
+>> mailbox number is set or received from network all clients get a
+>> PropertyChanged and the new number can be retrieved from the interface
+>> but only when the store succeeded, previously it would be available
+>> regardless of MBDN on the card and the writing to card was secondary.
+>> The number is kind of important if you want to hear the messages.
+>
+> So you're right that even if we get an enhanced voice mail notification m=
+essage
+> the Mailbox number won't be signaled unless we have the SIM provisioned w=
+ith
+> EF-MBI & EF-MBDN.
+>
+> The problem is, if we don't have the SIM files available, then the next t=
+ime
+> oFono is restarted this information is lost anyway until the next MWI
+> notification arrives. =C2=A0So you're back to not being able to dial the =
+mailbox.
+>
+> This is also an issue with the indications themselves. =C2=A0If we don't =
+have EF-
+> MWIS provisioned, the information is lost when oFono is restarted. =C2=A0=
+So we're
+> now inconsistent between MBDN/MWIS, so maybe we shouldn't update them eit=
+her
+> in this case.
 
-The first patch has been applied, but cleaned up heavily afterwards.  For n=
-ow, =
+True.  (or update them both in this case)
 
-the new functionality can be accessed by setting the OFONO_AT_DEBUG =
+It would make sense for the providers to resend the MWI information
+everytime subscriber connects the network and then it would be less
+problematic in case the information couldn't be written to SIM, but I
+don't know if they ever do this.
 
-environment variable.
+Regards
 
-Regards,
--Denis
-
-
---===============0979680811293986332==--
+--===============7819712539518901319==--
 
