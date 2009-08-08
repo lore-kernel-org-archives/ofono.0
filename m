@@ -1,41 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============5764372563811602602=="
+Content-Type: multipart/mixed; boundary="===============8608249192528918466=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Make SimManager property SubscriberNumbers writable.
-Date: Fri, 07 Aug 2009 15:52:43 -0500
-Message-ID: <200908071552.43740.denkenz@gmail.com>
-In-Reply-To: <1249590572-18743-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: Segmentation fault
+Date: Fri, 07 Aug 2009 20:15:50 -0500
+Message-ID: <200908072015.51768.denkenz@gmail.com>
+In-Reply-To: <4A7BB877.8010709@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5764372563811602602==
+--===============8608249192528918466==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Marko,
 
-> This implements writing SubscriberNumbers if the SIM allows this (optional
-> to the SIM provider).  Because the property is an array of phone numbers,
-> setting the property needs to write multiple records on the SIM so it's n=
-ot
-> atomic and potentially can fail partially.  In this case we have to report
-> a write error to DBus client but at the same time file may be changed and
-> we send a PropertyChanged.
+> Here is a small script which can be used to test this. With Nokia E51 it
+> always segfaults before the 100 is reached. Sometimes it is able to do
+> sequence multiple times and sometimes only create-destroy-create is enoug=
+h.
+>
 
-I applied he patch but made some fixes.  Namely you can set the subscriber =
+I seem to have fixed this issue, it was related to a g_source(s) that were =
 
-number array to any value with number of elements 0 .. # of records in =
+never being cleaned up.  =
 
-EFmsisdn.
 
-I also fixed sim_adn_parse/sim_adn_build functions to report the TON proper=
-ly.
+I've now run the script twice (fun to have 100 phonesim windows popping up) =
 
-Can you do some more testing to make sure it is working as intended?
+and have not encountered a segfault.
+
+Please report back if this is still broken.
 
 Regards,
 -Denis
 
---===============5764372563811602602==--
+--===============8608249192528918466==--
 
