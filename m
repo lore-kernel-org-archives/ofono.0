@@ -1,31 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1445657353477324964=="
+Content-Type: multipart/mixed; boundary="===============0885267011139657994=="
 MIME-Version: 1.0
-From: Andres Salomon <dilinger@collabora.co.uk>
-Subject: HTC G1 support
-Date: Wed, 12 Aug 2009 20:25:17 -0400
-Message-ID: <20090812202517.630e9568@mycelium.queued.net>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 4/4] Add a MessageWaiting interface to track message
+ waiting indications.
+Date: Fri, 14 Aug 2009 15:07:48 +0300
+Message-ID: <a32762a20908140507w1564cabbw51faa79dd2e33c57@mail.gmail.com>
+In-Reply-To: <200908121113.51953.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1445657353477324964==
+--===============0885267011139657994==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+2009/8/12 Denis Kenzior <denkenz@gmail.com>:
+> =C2=A0So there are two issues here:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0- There is absolutely no standard data format =
+for such vendor commands. =C2=A0So
+> coming up with a higher level API that supports all modems might be trick=
+y.
 
-The following git repo contains patches that allows oFono to work on a
-G1 phone.  I'm testing this in a debian chroot, using a phone running a
-1.51JF image (kernel 2.6.27-00392-g8312baf).  So far I've successfully
-sent and received SMS messages, placed and received voice calls, and
-imported the phone book.
+Agree, this might be a problem. And in the worst case, might force
+drivers to do data format conversions anyway.
 
-git clone git://git.collabora.co.uk/git/user/dilinger/ofono-g1
-http://git.collabora.co.uk/?p=3Duser/dilinger/ofono-g1;a=3Dsummary
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0- This presents the issue of having many more =
+code paths to debug inside the
+> core and potentially many more plugin functions to implement.
+>
+> I'd like to keep the core as clean and small as possible. =C2=A0What is y=
+our
+> feeling for the level of bloat such higher level APIs will introduce in
+> comparison to a giant if-else statement inside the driver itself?
 
-Just throwing this out there in case others are flailing at oFono on a
-G1 as well..
+At least with the current set of EF types, I think we can manage
+faking it in the driver code.
 
+Cheers,
+Aki
 
---===============1445657353477324964==--
+--===============0885267011139657994==--
 
