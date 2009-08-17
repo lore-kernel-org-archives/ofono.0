@@ -1,34 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============4389394671219505111=="
+Content-Type: multipart/mixed; boundary="===============4307897172669145743=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Missing file in repo
-Date: Fri, 14 Aug 2009 10:07:34 -0500
-Message-ID: <200908141007.35744.denkenz@gmail.com>
-In-Reply-To: <e6430ef40597b86b1d4af03634f1c964@chewa.net>
+From: Marko Saukko <marko.saukko@gmail.com>
+Subject: How to hangup outgoing call, before terminating end answers?
+Date: Mon, 17 Aug 2009 12:26:57 +0300
+Message-ID: <4A892261.40504@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4389394671219505111==
+--===============4307897172669145743==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi,
 
-> Seems like a file is missing in GIT:
->
-> In file included from ../../plugins/example_history.c:33:
-> ../../src/driver.h:22:25: error: ofono/types.h: No such file or directory
+Currently when a call is created with Dial method the object path for
+the call (e.g. /modem1/voicecall01) is returned only after the
+terminating end has answered to the call. So is it possible to Hangup
+the call from the originating end before terminating end answers the call?
 
-types.h is a new include that has been added.  The current automake magic =
 
-seems to not handle this case well.  make clean; make inside include/ shoul=
-d =
+Create the call:
+$ dbus-send --print-reply --system --dest=3Dorg.ofono /modem1
+org.ofono.VoiceCallManager.Dial string:"+358000000000" string:"default"
 
-stop the compiler complaining.
+The following do not work as the /modem1/voicecall01 does not exist:
+$ dbus-send --system --print-reply --dest=3Dorg.ofono /modem1/voicecall01
+org.ofono.VoiceCall.Hangup
+Error org.freedesktop.DBus.Error.UnknownMethod: Method "Hangup" with
+signature "" on interface "org.ofono.VoiceCall" doesn't exist
+
+$ dbus-send --system --print-reply --dest=3Dorg.ofono /modem1/voicecall01
+org.ofono.VoiceCall.Busy
+Error org.freedesktop.DBus.Error.UnknownMethod: Method "Busy" with
+signature "" on interface "org.ofono.VoiceCall" doesn't exist
+
+
+The VoiceCallManager.HangupAll does not work either:
+$ dbus-send --print-reply --system --dest=3Dorg.ofono /modem1
+org.ofono.VoiceCallManager.HangupAll
+Error org.ofono.Error.InProgress: Operation already in progress
+
 
 Regards,
--Denis
+Marko
 
---===============4389394671219505111==--
+--===============4307897172669145743==--
 
