@@ -1,138 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============5546425543400530544=="
+Content-Type: multipart/mixed; boundary="===============5313540544512349274=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Read EFad and expose MNC length in IMSI as a SimManager property.
-Date: Wed, 19 Aug 2009 18:00:24 +0200
-Message-ID: <1250697624-6618-1-git-send-email-andrew.zaborowski@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Can't send second message in v0.3
+Date: Wed, 19 Aug 2009 09:47:54 -0500
+Message-ID: <200908190947.54960.denkenz@gmail.com>
+In-Reply-To: <B94C62E7C2870743865418621F040C130206BE7BBC@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5546425543400530544==
+--===============5313540544512349274==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Alternatively we could expose the MNC as a separate property.
----
- src/sim.c     |   50 ++++++++++++++++++++++++++++++++++++++++++++++++++
- src/simutil.h |    1 +
- 2 files changed, 51 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/src/sim.c b/src/sim.c
-index 39976b3..0af02cd 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -77,6 +77,7 @@ struct sim_file_op {
- struct sim_manager_data {
- 	struct ofono_sim_ops *ops;
- 	char *imsi;
-+	int mnc_length;
- 	GSList *own_numbers;
- 	GSList *new_numbers;
- 	GSList *ready_notify;
-@@ -164,6 +165,7 @@ static DBusMessage *sim_get_properties(DBusConnection *=
-conn,
- 	DBusMessageIter iter;
- 	DBusMessageIter dict;
- 	char **own_numbers;
-+	unsigned char mnc_len;
- =
+> Hi,
+> Can't send second message in v0.3 version and latest version, but it's ok
+> in v0.2. In phonesim can't reproduce this issue.
+>
+> Ofonod log: V0.3
+> ofonod[9884]: csca_query_cb: 8613800210500, 145
+> ofonod[9884]: Got 1 recipients
+> ofonod[9884]: ref: 1, offset: 0
+> ofonod[9884]: pdu_len: 20, tpdu_len: 19
+> ofonod[9884]: tx_next: 0x9bee070
+> ofonod[9884]: Got 1 recipients
+> ofonod[9884]: ref: 2, offset: 0
+> ofonod[9884]: pdu_len: 20, tpdu_len: 19
 
- 	reply =3D dbus_message_new_method_return(msg);
- 	if (!reply)
-@@ -179,6 +181,13 @@ static DBusMessage *sim_get_properties(DBusConnection =
-*conn,
- 		ofono_dbus_dict_append(&dict, "SubscriberIdentity",
- 					DBUS_TYPE_STRING, &sim->imsi);
- =
+This is strange.  Can you set the OFONO_AT_DEBUG environment variable and r=
+e-
+run ofonod?
 
-+	if (sim->mnc_length) {
-+		mnc_len =3D sim->mnc_length;
-+
-+		ofono_dbus_dict_append(&dict, "MNCLength",
-+					DBUS_TYPE_BYTE, &mnc_len);
-+	}
-+
- 	own_numbers =3D get_own_numbers(sim->own_numbers);
- =
+E.g. export OFONO_AT_DEBUG=3D1; ofonod -nd
 
- 	ofono_dbus_dict_append_array(&dict, "SubscriberNumbers",
-@@ -432,15 +441,56 @@ check:
- 	sim->new_numbers =3D NULL;
- }
- =
+Report the AT trace so I can understand what is happening.  Sounds like the =
 
-+static void sim_ad_read_cb(struct ofono_modem *modem, int ok,
-+				enum ofono_sim_file_structure structure,
-+				int length, int record,
-+				const unsigned char *data,
-+				int record_length, void *userdata)
-+{
-+	struct sim_manager_data *sim =3D userdata;
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	int new_mnc_length;
-+	unsigned char value;
-+	struct ofono_phone_number ph;
-+
-+	if (!ok)
-+		return;
-+
-+	if (structure !=3D OFONO_SIM_FILE_STRUCTURE_TRANSPARENT)
-+		return;
-+
-+	if (length < 4)
-+		return;
-+
-+	new_mnc_length =3D data[3] & 0xf;
-+
-+	if (sim->mnc_length !=3D new_mnc_length) {
-+		sim->mnc_length =3D new_mnc_length;
-+
-+		value =3D new_mnc_length;
-+		ofono_dbus_signal_property_changed(conn, modem->path,
-+						SIM_MANAGER_INTERFACE,
-+						"MNCLength", DBUS_TYPE_BYTE,
-+						&value);
-+	}
-+}
-+
- static void sim_own_numbers_update(struct ofono_modem *modem)
- {
- 	ofono_sim_read(modem, SIM_EFMSISDN_FILEID,
- 			sim_msisdn_read_cb, modem->sim_manager);
- }
- =
+modem is not sending the first fragment.
 
-+static void sim_mnc_length_update(struct ofono_modem *modem)
-+{
-+	ofono_sim_read(modem, SIM_EFAD_FILEID,
-+			sim_ad_read_cb, modem->sim_manager);
-+}
-+
- static void sim_ready(struct ofono_modem *modem)
- {
- 	sim_own_numbers_update(modem);
-+	sim_mnc_length_update(modem);
- }
- =
-
- static void sim_imsi_cb(const struct ofono_error *error, const char *imsi,
-diff --git a/src/simutil.h b/src/simutil.h
-index c0d3d52..9bb5323 100644
---- a/src/simutil.h
-+++ b/src/simutil.h
-@@ -22,6 +22,7 @@
- enum sim_fileid {
- 	SIM_EFMSISDN_FILEID =3D 0x6f40,
- 	SIM_EFSPN_FILEID =3D 0x6f46,
-+	SIM_EFAD_FILEID =3D 0x6fad,
- 	SIM_EFPNN_FILEID =3D 0x6fc5,
- 	SIM_EFOPL_FILEID =3D 0x6fc6,
- 	SIM_EFMBDN_FILEID =3D 0x6fc7,
--- =
-
-1.6.1
+Regards,
+-Denis
 
 
---===============5546425543400530544==--
+--===============5313540544512349274==--
 
