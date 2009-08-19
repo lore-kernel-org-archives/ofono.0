@@ -1,200 +1,243 @@
-Content-Type: multipart/mixed; boundary="===============1731800851693699538=="
+Content-Type: multipart/mixed; boundary="===============5361898310703492672=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Decode and encode alpha-identifier fields in EFadn format utils.
-Date: Wed, 19 Aug 2009 22:08:34 +0200
-Message-ID: <1250712514-9140-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Expose service dialling numbers stored on SIM through SimManager.
+Date: Wed, 19 Aug 2009 22:09:27 +0200
+Message-ID: <1250712567-9169-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1731800851693699538==
+--===============5361898310703492672==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Also fix the number length passed to extract_bcd_number in sim_adn_parse.
 ---
- src/message-waiting.c |    5 +++--
- src/sim.c             |    5 +++--
- src/simutil.c         |   42 +++++++++++++++++++++++++++++++++++++-----
- src/simutil.h         |    5 +++--
- 4 files changed, 46 insertions(+), 11 deletions(-)
+The ServiceDiallingNumbers property now returns a list of strings (alpha
+identifiers interleaved with dialling numbers) and this is a little hacky
+but returning a dictionary would make the interface more hassle to use so
+I'm not sure what's better.
+---
+ src/sim.c     |  117 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+---
+ src/simutil.h |    1 +
+ 2 files changed, 111 insertions(+), 7 deletions(-)
 
-diff --git a/src/message-waiting.c b/src/message-waiting.c
-index ccb137e..abca027 100644
---- a/src/message-waiting.c
-+++ b/src/message-waiting.c
-@@ -230,7 +230,7 @@ static DBusMessage *set_mbdn(struct ofono_modem *modem,=
- int mailbox,
- =
-
- 	efmbdn_length =3D req->mw->efmbdn_length > 0 ?
- 		req->mw->efmbdn_length : 14;
--	sim_adn_build(efmbdn, efmbdn_length, &req->number);
-+	sim_adn_build(efmbdn, efmbdn_length, &req->number, NULL);
- =
-
- 	if (req->mw->efmbdn_length > 0)
- 		r =3D ofono_sim_write(modem, SIM_EFMBDN_FILEID, mbdn_set_cb,
-@@ -404,7 +404,8 @@ static void mw_mbdn_read_cb(struct ofono_modem *modem, =
-int ok,
- 	if (i =3D=3D 5)
- 		return;
- =
-
--	if (sim_adn_parse(data, record_length, &mw->mailbox_number[i]) =3D=3D FAL=
-SE)
-+	if (sim_adn_parse(data, record_length, &mw->mailbox_number[i], NULL) =3D=
-=3D
-+			FALSE)
- 		mw->mailbox_number[i].number[0] =3D '\0';
- =
-
- 	if (mw_mailbox_property_name[i]) {
 diff --git a/src/sim.c b/src/sim.c
-index 0af02cd..2298cbf 100644
+index 2298cbf..2287458 100644
 --- a/src/sim.c
 +++ b/src/sim.c
-@@ -249,7 +249,8 @@ static gboolean set_own_numbers(struct ofono_modem *mod=
-em,
- 	for (record =3D 1; record <=3D sim->efmsisdn_records; record++) {
- 		if (new_numbers) {
- 			number =3D new_numbers->data;
--			sim_adn_build(efmsisdn, sim->efmsisdn_length, number);
-+			sim_adn_build(efmsisdn, sim->efmsisdn_length,
-+					number, NULL);
- 			new_numbers =3D new_numbers->next;
- 		} else
- 			memset(efmsisdn, 0xff, sim->efmsisdn_length);
-@@ -401,7 +402,7 @@ static void sim_msisdn_read_cb(struct ofono_modem *mode=
-m, int ok,
- 	sim->efmsisdn_length =3D record_length;
- 	sim->efmsisdn_records =3D total;
+@@ -80,6 +80,7 @@ struct sim_manager_data {
+ 	int mnc_length;
+ 	GSList *own_numbers;
+ 	GSList *new_numbers;
++	GSList *service_numbers;
+ 	GSList *ready_notify;
+ 	gboolean ready;
+ 	GQueue *simop_q;
+@@ -89,6 +90,11 @@ struct sim_manager_data {
+ 	unsigned char efmsisdn_records;
+ };
  =
 
--	if (sim_adn_parse(data, record_length, &ph) =3D=3D TRUE) {
-+	if (sim_adn_parse(data, record_length, &ph, NULL) =3D=3D TRUE) {
- 		struct ofono_phone_number *own;
- =
-
- 		own =3D g_new(struct ofono_phone_number, 1);
-diff --git a/src/simutil.c b/src/simutil.c
-index 1dc310b..41d5149 100644
---- a/src/simutil.c
-+++ b/src/simutil.c
-@@ -403,7 +403,7 @@ const struct sim_eons_operator_info *sim_eons_lookup_wi=
-th_lac(
++struct service_number {
++	char *id;
++	struct ofono_phone_number ph;
++};
++
+ struct msisdn_set_request {
+ 	struct ofono_modem *modem;
+ 	int pending;
+@@ -118,11 +124,39 @@ static char **get_own_numbers(GSList *own_numbers)
+ 	return ret;
  }
  =
 
- gboolean sim_adn_parse(const unsigned char *data, int length,
--			struct ofono_phone_number *ph)
-+			struct ofono_phone_number *ph, char **identifier)
- {
- 	int number_len;
- 	int ton_npi;
-@@ -411,19 +411,31 @@ gboolean sim_adn_parse(const unsigned char *data, int=
- length,
- 	if (length < 14)
- 		return FALSE;
- =
-
--	/* Skip Alpha-Identifier field */
-+	/* Alpha-Identifier field */
-+	if (identifier) {
-+		if (length > 14)
-+			*identifier =3D sim_string_to_utf8(data, length - 14);
-+		 else
-+			*identifier =3D NULL;
-+	}
- 	data +=3D length - 14;
- =
-
- 	number_len =3D *data++;
- 	ton_npi =3D *data++;
- =
-
--	if (number_len > 11 || ton_npi =3D=3D 0xff)
-+	if (number_len > 11 || ton_npi =3D=3D 0xff) {
-+		if (identifier && *identifier) {
-+			g_free(*identifier);
-+			*identifier =3D NULL;
-+		}
++static char **get_service_numbers(GSList *service_numbers)
++{
++	int nelem;
++	GSList *l;
++	struct service_number *num;
++	char **ret;
 +
- 		return FALSE;
++	nelem =3D g_slist_length(service_numbers) * 2;
++
++	ret =3D g_new0(char *, nelem + 1);
++
++	nelem =3D 0;
++	for (l =3D service_numbers; l; l =3D l->next) {
++		num =3D l->data;
++
++		ret[nelem++] =3D g_strdup(num->id);
++		ret[nelem++] =3D g_strdup(phone_number_to_string(&num->ph));
 +	}
- =
-
- 	ph->type =3D ton_npi;
- =
-
- 	/* BCD coded, however the TON/NPI is given by the first byte */
--	number_len =3D (number_len - 1) * 2;
-+	number_len -=3D 1;
- =
-
- 	extract_bcd_number(data, number_len, ph->number);
- =
-
-@@ -431,13 +443,33 @@ gboolean sim_adn_parse(const unsigned char *data, int=
- length,
++
++	return ret;
++}
++
+ static void sim_file_op_free(struct sim_file_op *node)
+ {
+ 	g_free(node);
  }
  =
 
- void sim_adn_build(unsigned char *data, int length,
--			const struct ofono_phone_number *ph)
-+			const struct ofono_phone_number *ph,
-+			const char *identifier)
++static void service_number_free(struct service_number *num)
++{
++	g_free(num->id);
++	g_free(num);
++}
++
+ static struct sim_manager_data *sim_manager_create()
  {
- 	int number_len =3D strlen(ph->number);
-+	unsigned char *gsm_identifier;
-+	long gsm_bytes;
- =
-
- 	/* Alpha-Identifier field */
- 	if (length > 14) {
- 		memset(data, 0xff, length - 14);
-+
-+		if (identifier) {
-+			/* TODO: figure out when the identifier needs to
-+			 * be encoded in UCS2 and do this.
-+			 */
-+			gsm_identifier =3D convert_utf8_to_gsm(identifier,
-+					-1, NULL, &gsm_bytes, 0);
-+
-+			if (gsm_identifier) {
-+				if (gsm_bytes > length - 14)
-+					gsm_bytes =3D length - 14;
-+
-+				memcpy(data, gsm_identifier, gsm_bytes);
-+				g_free(gsm_identifier);
-+			}
-+		}
-+
- 		data +=3D length - 14;
+ 	return g_try_new0(struct sim_manager_data, 1);
+@@ -144,6 +178,13 @@ static void sim_manager_destroy(gpointer userdata)
+ 		data->own_numbers =3D NULL;
  	}
  =
 
-diff --git a/src/simutil.h b/src/simutil.h
-index 9bb5323..dccbe7b 100644
---- a/src/simutil.h
-+++ b/src/simutil.h
-@@ -83,6 +83,7 @@ static inline enum sim_file_access file_access_condition_=
-decode(int bcd)
++	if (data->service_numbers) {
++		g_slist_foreach(data->service_numbers,
++				(GFunc)service_number_free, NULL);
++		g_slist_free(data->service_numbers);
++		data->service_numbers =3D NULL;
++	}
++
+ 	if (data->simop_source) {
+ 		g_source_remove(data->simop_source);
+ 		data->simop_source =3D 0;
+@@ -165,6 +206,7 @@ static DBusMessage *sim_get_properties(DBusConnection *=
+conn,
+ 	DBusMessageIter iter;
+ 	DBusMessageIter dict;
+ 	char **own_numbers;
++	char **service_numbers;
+ 	unsigned char mnc_len;
+ =
+
+ 	reply =3D dbus_message_new_method_return(msg);
+@@ -194,6 +236,15 @@ static DBusMessage *sim_get_properties(DBusConnection =
+*conn,
+ 					DBUS_TYPE_STRING, &own_numbers);
+ 	g_strfreev(own_numbers);
+ =
+
++	if (sim->service_numbers) {
++		service_numbers =3D get_service_numbers(sim->service_numbers);
++
++		ofono_dbus_dict_append_array(&dict, "ServiceDiallingNumbers",
++						DBUS_TYPE_STRING,
++						&service_numbers);
++		g_strfreev(service_numbers);
++	}
++
+ 	dbus_message_iter_close_container(&iter, &dict);
+ =
+
+ 	return reply;
+@@ -476,22 +527,74 @@ static void sim_ad_read_cb(struct ofono_modem *modem,=
+ int ok,
+ 	}
  }
  =
 
- gboolean sim_adn_parse(const unsigned char *data, int length,
--			struct ofono_phone_number *ph);
-+			struct ofono_phone_number *ph, char **identifier);
- void sim_adn_build(unsigned char *data, int length,
--			const struct ofono_phone_number *ph);
-+			const struct ofono_phone_number *ph,
-+			const char *identifier);
+-static void sim_own_numbers_update(struct ofono_modem *modem)
++static void sim_sdn_read_cb(struct ofono_modem *modem, int ok,
++				enum ofono_sim_file_structure structure,
++				int length, int record,
++				const unsigned char *data,
++				int record_length, void *userdata)
+ {
+-	ofono_sim_read(modem, SIM_EFMSISDN_FILEID,
+-			sim_msisdn_read_cb, modem->sim_manager);
++	struct sim_manager_data *sim =3D userdata;
++	int total;
++	struct ofono_phone_number ph;
++	char *alpha;
++	char **service_numbers;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++
++	if (!ok)
++		goto check;
++
++	if (structure !=3D OFONO_SIM_FILE_STRUCTURE_FIXED)
++		return;
++
++	if (record_length < 14 || length < record_length)
++		return;
++
++	total =3D length / record_length;
++
++	if (sim_adn_parse(data, record_length, &ph, &alpha) =3D=3D TRUE && alpha)=
+ {
++		struct service_number *sdn;
++
++		sdn =3D g_new(struct service_number, 1);
++		sdn->id =3D alpha;
++		memcpy(&sdn->ph, &ph, sizeof(struct ofono_phone_number));
++
++		sim->service_numbers =3D
++			g_slist_prepend(sim->service_numbers, sdn);
++	}
++
++	if (record !=3D total)
++		return;
++
++check:
++	/* All records retrieved */
++	if (sim->service_numbers) {
++		sim->service_numbers =3D g_slist_reverse(sim->service_numbers);
++
++		service_numbers =3D get_service_numbers(sim->service_numbers);
++
++		ofono_dbus_signal_array_property_changed(conn, modem->path,
++						SIM_MANAGER_INTERFACE,
++						"ServiceDiallingNumbers",
++						DBUS_TYPE_STRING,
++						&service_numbers);
++		g_strfreev(service_numbers);
++	}
+ }
+ =
+
+-static void sim_mnc_length_update(struct ofono_modem *modem)
++static void sim_own_numbers_update(struct ofono_modem *modem)
+ {
+-	ofono_sim_read(modem, SIM_EFAD_FILEID,
+-			sim_ad_read_cb, modem->sim_manager);
++	ofono_sim_read(modem, SIM_EFMSISDN_FILEID,
++			sim_msisdn_read_cb, modem->sim_manager);
+ }
+ =
+
+ static void sim_ready(struct ofono_modem *modem)
+ {
+ 	sim_own_numbers_update(modem);
+-	sim_mnc_length_update(modem);
++
++	ofono_sim_read(modem, SIM_EFAD_FILEID,
++			sim_ad_read_cb, modem->sim_manager);
++	ofono_sim_read(modem, SIM_EFSDN_FILEID,
++			sim_sdn_read_cb, modem->sim_manager);
+ }
+ =
+
+ static void sim_imsi_cb(const struct ofono_error *error, const char *imsi,
+diff --git a/src/simutil.h b/src/simutil.h
+index dccbe7b..de3e55e 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -22,6 +22,7 @@
+ enum sim_fileid {
+ 	SIM_EFMSISDN_FILEID =3D 0x6f40,
+ 	SIM_EFSPN_FILEID =3D 0x6f46,
++	SIM_EFSDN_FILEID =3D 0x6f49,
+ 	SIM_EFAD_FILEID =3D 0x6fad,
+ 	SIM_EFPNN_FILEID =3D 0x6fc5,
+ 	SIM_EFOPL_FILEID =3D 0x6fc6,
 -- =
 
 1.6.1
 
 
---===============1731800851693699538==--
+--===============5361898310703492672==--
 
