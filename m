@@ -1,280 +1,166 @@
-Content-Type: multipart/mixed; boundary="===============4208742980717927618=="
+Content-Type: multipart/mixed; boundary="===============9169935400747829852=="
 MIME-Version: 1.0
-From: Li, Zhigang <zhigang.li@intel.com>
-Subject: RE: Can't send second message in v0.3
-Date: Thu, 20 Aug 2009 09:54:35 +0800
-Message-ID: <B94C62E7C2870743865418621F040C130206BE7C94@pdsmsx502.ccr.corp.intel.com>
-In-Reply-To: <200908190947.54960.denkenz@gmail.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: Read EFad and expose MNC length in IMSI as a SimManager property.
+Date: Thu, 20 Aug 2009 10:09:50 +0800
+Message-ID: <38D9F46DFF92C54980D2F2C1E8EE313001AB3CC719@pdsmsx503.ccr.corp.intel.com>
+In-Reply-To: <1250697624-6618-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4208742980717927618==
+--===============9169935400747829852==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
->This is strange.  Can you set the OFONO_AT_DEBUG environment variable and =
-re-
->run ofonod?
+Several minor comments on this patch:
+1. How about unify all the mnc_length to be unsigned char?
+2. For this piece of code:
+>+		value =3D new_mnc_length;
+>+		ofono_dbus_signal_property_changed(conn, modem->path,
+>+						SIM_MANAGER_INTERFACE,
+>+						"MNCLength", DBUS_TYPE_BYTE,
+>+						&value);
+Is it necessary to use temporary variable value? Why not use &sim->mnc_leng=
+th instead of &value?
+
+3. In function sim_ad_read_cb(), variable "ph" is defined by not used. Curr=
+ent build system is not smart enough to check if all the variables are used=
+ or not. I sugguest to add some option, such as -Wunused, in our build syst=
+em to check this kind of situation.
+
+
+Regards,
+-Yang
+
+
+>-----Original Message-----
+>From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
+lf
+>Of Andrzej Zaborowski
+>Sent: Thursday, August 20, 2009 12:00 AM
+>To: ofono(a)ofono.org
+>Subject: Read EFad and expose MNC length in IMSI as a SimManager property.
 >
->E.g. export OFONO_AT_DEBUG=3D1; ofonod -nd
+>Alternatively we could expose the MNC as a separate property.
+>---
+> src/sim.c     |   50
+>++++++++++++++++++++++++++++++++++++++++++++++++++
+> src/simutil.h |    1 +
+> 2 files changed, 51 insertions(+), 0 deletions(-)
 >
->Report the AT trace so I can understand what is happening.  Sounds like the
->modem is not sending the first fragment.
+>diff --git a/src/sim.c b/src/sim.c
+>index 39976b3..0af02cd 100644
+>--- a/src/sim.c
+>+++ b/src/sim.c
+>@@ -77,6 +77,7 @@ struct sim_file_op {
+> struct sim_manager_data {
+> 	struct ofono_sim_ops *ops;
+> 	char *imsi;
+>+	int mnc_length;
+> 	GSList *own_numbers;
+> 	GSList *new_numbers;
+> 	GSList *ready_notify;
+>@@ -164,6 +165,7 @@ static DBusMessage
+>*sim_get_properties(DBusConnection *conn,
+> 	DBusMessageIter iter;
+> 	DBusMessageIter dict;
+> 	char **own_numbers;
+>+	unsigned char mnc_len;
+>
+> 	reply =3D dbus_message_new_method_return(msg);
+> 	if (!reply)
+>@@ -179,6 +181,13 @@ static DBusMessage
+>*sim_get_properties(DBusConnection *conn,
+> 		ofono_dbus_dict_append(&dict, "SubscriberIdentity",
+> 					DBUS_TYPE_STRING, &sim->imsi);
+>
+>+	if (sim->mnc_length) {
+>+		mnc_len =3D sim->mnc_length;
+>+
+>+		ofono_dbus_dict_append(&dict, "MNCLength",
+>+					DBUS_TYPE_BYTE, &mnc_len);
+>+	}
+>+
+> 	own_numbers =3D get_own_numbers(sim->own_numbers);
+>
+> 	ofono_dbus_dict_append_array(&dict, "SubscriberNumbers",
+>@@ -432,15 +441,56 @@ check:
+> 	sim->new_numbers =3D NULL;
+> }
+>
+>+static void sim_ad_read_cb(struct ofono_modem *modem, int ok,
+>+				enum ofono_sim_file_structure structure,
+>+				int length, int record,
+>+				const unsigned char *data,
+>+				int record_length, void *userdata)
+>+{
+>+	struct sim_manager_data *sim =3D userdata;
+>+	DBusConnection *conn =3D ofono_dbus_get_connection();
+>+	int new_mnc_length;
+>+	unsigned char value;
+>+	struct ofono_phone_number ph;
+>+
+>+	if (!ok)
+>+		return;
+>+
+>+	if (structure !=3D OFONO_SIM_FILE_STRUCTURE_TRANSPARENT)
+>+		return;
+>+
+>+	if (length < 4)
+>+		return;
+>+
+>+	new_mnc_length =3D data[3] & 0xf;
+>+
+>+	if (sim->mnc_length !=3D new_mnc_length) {
+>+		sim->mnc_length =3D new_mnc_length;
+>+
+>+		value =3D new_mnc_length;
+>+		ofono_dbus_signal_property_changed(conn, modem->path,
+>+						SIM_MANAGER_INTERFACE,
+>+						"MNCLength", DBUS_TYPE_BYTE,
+>+						&value);
+>+	}
+>+}
+>+
+> static void sim_own_numbers_update(struct ofono_modem *modem)
+> {
+> 	ofono_sim_read(modem, SIM_EFMSISDN_FILEID,
+> 			sim_msisdn_read_cb, modem->sim_manager);
+> }
+>
+>+static void sim_mnc_length_update(struct ofono_modem *modem)
+>+{
+>+	ofono_sim_read(modem, SIM_EFAD_FILEID,
+>+			sim_ad_read_cb, modem->sim_manager);
+>+}
+>+
+> static void sim_ready(struct ofono_modem *modem)
+> {
+> 	sim_own_numbers_update(modem);
+>+	sim_mnc_length_update(modem);
+> }
+>
+> static void sim_imsi_cb(const struct ofono_error *error, const char *imsi,
+>diff --git a/src/simutil.h b/src/simutil.h
+>index c0d3d52..9bb5323 100644
+>--- a/src/simutil.h
+>+++ b/src/simutil.h
+>@@ -22,6 +22,7 @@
+> enum sim_fileid {
+> 	SIM_EFMSISDN_FILEID =3D 0x6f40,
+> 	SIM_EFSPN_FILEID =3D 0x6f46,
+>+	SIM_EFAD_FILEID =3D 0x6fad,
+> 	SIM_EFPNN_FILEID =3D 0x6fc5,
+> 	SIM_EFOPL_FILEID =3D 0x6fc6,
+> 	SIM_EFMBDN_FILEID =3D 0x6fc7,
+>--
+>1.6.1
+>
+>_______________________________________________
+>ofono mailing list
+>ofono(a)ofono.org
+>http://lists.ofono.org/listinfo/ofono
 
-ofonod[15312]: oFono version 0.3
-ofonod[15312]: plugin.c:__ofono_plugin_init() =
-
-ofonod[15312]: Seting up AT channel
-ofonod[15312]: SIMManager interface for modem: /modem1 created
-ofonod[15312]: Registered call forwarding interface
-ofonod[15312]: Registered call settings interface
-ofonod[15312]: Sending voice initialization commands
-ofonod[15312]: > AT+CIMI\r
-ofonod[15312]: < AT+CIMI\r
-ofonod[15312]: < \r\n460028210210167\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_cimi_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: 460028210210167
-ofonod[15312]: cimi_cb: 460028210210167
-ofonod[15312]: > AT+CREG=3D2\r
-ofonod[15312]: < AT+CREG=3D2\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: NetworkRegistration interface for modem: /modem1 created
-ofonod[15312]: > AT+CRC=3D1\r
-ofonod[15312]: < AT+CRC=3D1\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: > AT+CLIP=3D1\r
-ofonod[15312]: < AT+CLIP=3D1\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: > AT+COLP=3D1\r
-ofonod[15312]: < AT+COLP=3D1\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: > AT+CSSN=3D1,1\r
-ofonod[15312]: < AT+CSSN=3D1,1\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: > AT+CCWA=3D1\r
-ofonod[15312]: < AT+CCWA=3D1\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: voicecall_init: registering to notifications
-ofonod[15312]: > AT+CAOC=3D2\r
-ofonod[15312]: < AT+CAOC=3D2\r\r\nOK\r\n
-ofonod[15312]: > AT+CCWE=3D1\r
-ofonod[15312]: < AT+CCWE=3D1\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: > AT+CSMS=3D?\r
-ofonod[15312]: < AT+CSMS=3D?\r
-ofonod[15312]: < \r\n+CSMS: (0)\r\n\r\nOK\r\n
-ofonod[15312]: csms_query_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CSMS: (0)
-ofonod[15312]: CSMS query parsed successfully
-ofonod[15312]: > AT+CSCS=3D?\r
-ofonod[15312]: < AT+CSCS=3D?\r
-ofonod[15312]: < \r\n+CSCS: ("GSM","IRA","8859-1","UTF-8","UCS2")\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_list_charsets_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CSCS: ("GSM","IRA","8859-1","UTF-8","UCS2")
-ofonod[15312]: > AT+CGMI\r
-ofonod[15312]: < AT+CGMI\r
-ofonod[15312]: < \r\nSony Ericsson\r\n\r\nOK\r\n
-ofonod[15312]: attr_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: Sony Ericsson
-ofonod[15312]: > AT+CRSM=3D192,28480,0,0,15\r
-ofonod[15312]: < AT+CRSM=3D192,28480,0,0,15\r
-ofonod[15312]: < \r\n+CRSM: 148,4\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_crsm_info_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CRSM: 148,4
-ofonod[15312]: > AT+CREG?\r
-ofonod[15312]: < AT+CREG?\r
-ofonod[15312]: < \r\n+CREG: 2,5,"188E","00006302"\r\n\r\nOK\r\n
-ofonod[15312]: at_creg_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CREG: 2,5,"188E","00006302"
-ofonod[15312]: creg_cb: 5, 6286, 25346, -1
-ofonod[15312]: > AT+CSMS=3D0\r
-ofonod[15312]: < AT+CSMS=3D0\r
-ofonod[15312]: < \r\n+CSMS: 1,1,1\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: > AT+CPBS=3D?\r
-ofonod[15312]: < AT+CPBS=3D?\r
-ofonod[15312]: < \r\n+CPBS: ("ME","SM","FD","DC","LD","MC","RC")\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_list_storages_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CPBS: ("ME","SM","FD","DC","LD","MC","RC")
-ofonod[15312]: > AT+CGMM\r
-ofonod[15312]: < AT+CGMM\r
-ofonod[15312]: < \r\nAAD-3352021-BV\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: attr_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: AAD-3352021-BV
-ofonod[15312]: > AT+CRSM=3D192,28613,0,0,15\r
-ofonod[15312]: < AT+CRSM=3D192,28613,0,0,15\r
-ofonod[15312]: < \r\n+CRSM: 148,4\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_crsm_info_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CRSM: 148,4
-ofonod[15312]: > AT+COPS=3D3,2\r
-ofonod[15312]: < AT+COPS=3D3,2\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: > AT+COPS?\r
-ofonod[15312]: < AT+COPS?\r
-ofonod[15312]: < \r\n+COPS: 0,2,"46000",0 \r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: cops_numeric_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +COPS: 0,2,"46000",0 =
-
-ofonod[15312]: Cops numeric got mcc: 460, mnc: 00
-ofonod[15312]: > AT+COPS=3D3,0\r
-ofonod[15312]: < AT+COPS=3D3,0\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: > AT+COPS?\r
-ofonod[15312]: < AT+COPS?\r
-ofonod[15312]: < \r\n+COPS: 0,0,"China Mobile",0 \r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: cops_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +COPS: 0,0,"China Mobile",0 =
-
-ofonod[15312]: cops_cb: China Mobile, 460 00 0
-ofonod[15312]: > AT+CSQ\r
-ofonod[15312]: < AT+CSQ\r
-ofonod[15312]: < \r\n+CSQ: 19,99\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: csq_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CSQ: 19,99
-ofonod[15312]: csq_cb: 19
-ofonod[15312]: > AT+CSMS?\r
-ofonod[15312]: < AT+CSMS?\r
-ofonod[15312]: < \r\n+CSMS: 0,1,1,1\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: csms_status_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CSMS: 0,1,1,1
-ofonod[15312]: > AT+CGMR\r
-ofonod[15312]: < AT+CGMR\r
-ofonod[15312]: < \r\nR1BA038 081016 1346 1208-0527_CHINA_SI\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: attr_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: R1BA038 081016 1346 1208-0527_CHINA_SI
-ofonod[15312]: > AT+CRSM=3D192,28486,0,0,15\r
-ofonod[15312]: < AT+CRSM=3D192,28486,0,0,15\r
-ofonod[15312]: < \r\n+CRSM: 148,4\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_crsm_info_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CRSM: 148,4
-ofonod[15312]: > AT+CMGF=3D?\r
-ofonod[15312]: < AT+CMGF=3D?\r
-ofonod[15312]: < \r\n+CMGF: (0)\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: cmgf_query_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CMGF: (0)
-ofonod[15312]: > AT+CGSN\r
-ofonod[15312]: < AT+CGSN\r
-ofonod[15312]: < \r\n352022031549734\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: attr_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: 352022031549734
-ofonod[15312]: > AT+CPMS=3D?\r
-ofonod[15312]: < AT+CPMS=3D?\r
-ofonod[15312]: < \r\n+CPMS: ("ME","SM"),("ME","SM"),("ME","SM")\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: cpms_query_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CPMS: ("ME","SM"),("ME","SM"),("ME","SM")
-ofonod[15312]: > AT+CMGF=3D0\r
-ofonod[15312]: < AT+CMGF=3D0\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_cmgf_set_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: > AT+CPMS=3D"ME","ME","ME"\r
-ofonod[15312]: < AT+CPMS=3D"ME","ME","ME"\r
-ofonod[15312]: < \r\n+CPMS: 13,39031,13,39031,13,39031\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_cpms_set_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CPMS: 13,39031,13,39031,13,39031
-ofonod[15312]: > AT+CNMI=3D?\r
-ofonod[15312]: < AT+CNMI=3D?\r
-ofonod[15312]: < \r\n+CNMI: (2),(0,1,3),(0,2),(0,1),(0)\r\n\r\nOK\r\n
-ofonod[15312]: at_cnmi_query_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CNMI: (2),(0,1,3),(0,2),(0,1),(0)
-ofonod[15312]: > AT+CNMI=3D2,1,2,1,0\r
-ofonod[15312]: < AT+CNMI=3D2,1,2,1,0\r
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: MessageWaiting interface for modem: /modem1 created
-ofonod[15312]: SmsManager interface for modem: /modem1 created
-ofonod[15312]: > AT+CRSM=3D192,28618,0,0,15\r
-ofonod[15312]: < AT+CRSM=3D192,28618,0,0,15\r
-ofonod[15312]: < \r\n+CRSM: 148,4\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_crsm_info_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CRSM: 148,4
-ofonod[15312]: Unable to read waiting messages numbers from SIM
-ofonod[15312]: > AT+CRSM=3D192,28617,0,0,15\r
-ofonod[15312]: < AT+CRSM=3D192,28617,0,0,15\r
-ofonod[15312]: < \r\n+CRSM: 148,4\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_crsm_info_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CRSM: 148,4
-ofonod[15312]: Unable to read mailbox identifies from SIM
-ofonod[15312]: > AT+COPS=3D?\r
-ofonod[15312]: < AT+COPS=3D?\r
-ofonod[15312]: < \r\n+COPS: (1,"China Mobile","CHN CMCC","46000",0),(3,"Chi=
-na Unicom","CHN CU-GSM","46001",2)\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: cops_list_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +COPS: (1,"China Mobile","CHN CMCC","46000",0=
-),(3,"China Unicom","CHN CU-GSM","46001",2)
-ofonod[15312]: Got 2 elements
-ofonod[15312]: Got 2 operators
-ofonod[15312]: Operator: China Mobile, 460, 00, status: 1, 0
-ofonod[15312]: Operator: China Unicom, 460, 01, status: 3, 2
-ofonod[15312]: > AT+CSCA?\r
-ofonod[15312]: < AT+CSCA?\r
-ofonod[15312]: < \r\n+CSCA: "+8613800210500",145\r\n
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: at_csca_cb got result: 1
-ofonod[15312]: Final response: OK
-ofonod[15312]: Response line: +CSCA: "+8613800210500",145
-ofonod[15312]: csca_query_cb: 8613800210500, 145
-ofonod[15312]: Got 1 recipients
-ofonod[15312]: ref: 1, offset: 0
-ofonod[15312]: pdu_len: 22, tpdu_len: 21
-ofonod[15312]: tx_next: 0x8b8a248
-ofonod[15312]: > AT+CMGS=3D21\r
-ofonod[15312]: < AT+CMGS=3D21\r
-ofonod[15312]: < \r\n> =
-
-ofonod[15312]: > 0011000B813118567873F20000A707EDF27C1E3E9701<CtrlZ>
-ofonod[15312]: < 0011000B813118567873F20000A707EDF27C1E3E9701<CtrlZ>
-ofonod[15312]: < \r\n+CMGS: 124
-ofonod[15312]: < \r\nOK\r\n
-ofonod[15312]: Got 1 recipients
-ofonod[15312]: ref: 2, offset: 0
-ofonod[15312]: pdu_len: 22, tpdu_len: 21
-
-Thanks
-
-
---===============4208742980717927618==--
+--===============9169935400747829852==--
 
