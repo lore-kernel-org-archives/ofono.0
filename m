@@ -1,17 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============0415811002548486386=="
+Content-Type: multipart/mixed; boundary="===============2363383658481675514=="
 MIME-Version: 1.0
-From: Fu, Elva <elva.fu@intel.com>
-Subject: light test report for ofono v0.3
-Date: Tue, 25 Aug 2009 11:46:26 +0800
-Message-ID: <E2263E4A5B2284449EEBD0AAB7510984066EA87674@PDSMSX501.ccr.corp.intel.com>
-In-Reply-To: <B94C62E7C2870743865418621F040C130206BE80DA@pdsmsx502.ccr.corp.intel.com>
+From: Nagarajan, Guru <guru.nagarajan@intel.com>
+Subject: RE: light test report for ofono v0.3
+Date: Mon, 24 Aug 2009 21:31:27 -0700
+Message-ID: <BC67582D4FC8ED45BAABE48343BF5711036B14BAF4@azsmsx501.amr.corp.intel.com>
+In-Reply-To: <E2263E4A5B2284449EEBD0AAB7510984066EA87674@PDSMSX501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0415811002548486386==
+--===============2363383658481675514==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
+
+Thanks Elva. =
+
+
+-----Original Message-----
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of Fu, Elva
+Sent: Monday, August 24, 2009 8:46 PM
+To: ofono(a)ofono.org
+Subject: light test report for ofono v0.3
 
 Test Environment
 -------------------------------
@@ -88,5 +98,10 @@ Sim		Read IMSI			pass
 -------------------------------
 
 Elva
---===============0415811002548486386==--
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
+
+--===============2363383658481675514==--
 
