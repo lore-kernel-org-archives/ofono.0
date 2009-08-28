@@ -1,239 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============8758394699662670695=="
+Content-Type: multipart/mixed; boundary="===============7029458809109551458=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: Expose service dialling numbers stored on SIM through SimManager.
-Date: Wed, 26 Aug 2009 02:43:29 +0200
-Message-ID: <fb249edb0908251743v13a1850ei3d08b09c85b3b03@mail.gmail.com>
-In-Reply-To: <9b1cac640908250941p616e9906vfcef484891d23787@mail.gmail.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: Problem with $(NM)
+Date: Fri, 28 Aug 2009 10:10:09 +0800
+Message-ID: <38D9F46DFF92C54980D2F2C1E8EE313001AB65F186@pdsmsx503.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8758394699662670695==
+--===============7029458809109551458==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi all, =
 
-2009/8/25 Denis Kenzior <denkenz@gmail.com>:
-> Please re-base and resubmit this patch, it does not apply cleanly after t=
-he
-> latest round of changes.
-> Also, lets return a dictionary. =C2=A0Applications already need to parse
-> GetProperties, which is a dictionary of strings to variants, so
-> string->string shouldn't be a big deal.
->
->>
->> +
->> + =C2=A0 =C2=A0 =C2=A0 if (sim_adn_parse(data, record_length, &ph, &alph=
-a) =3D=3D TRUE &&
->> alpha) {
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct service_number=
- *sdn;
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sdn =3D g_new(struct =
-service_number, 1);
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sdn->id =3D alpha;
->
-> Lets make sure that the id is non-empty. =C2=A0If it is empty, we should =
-we use
-> the phone number as the id unless you can think of something better.
->
->>
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 memcpy(&sdn->ph, &ph,=
- sizeof(struct ofono_phone_number));
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sim->service_numbers =
-=3D
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 g_slist_prepend(sim->service_numbers, sdn);
->
-> Do we want to check for id uniqueness here?
+If you used the latest code, and met the problem that $(NM) couldn't be sub=
+stituted correctly, here is the phenomenon, reason and solution.
 
-Thanks for the remarks, incorporated them in the patch and updated it
-to current.
+Phenomenon: There is a build error till almost the end of whole build, and =
+the error message looks like:
+gdbus/mainloop.o gdbus/object.o gdbus/watch.o gisi/netlink.o gisi/socket.o =
+gisi/client.o gisi/pep.o gisi/pipe.o drivers/isimodem/isimodem.o drivers/is=
+imodem/phonebook.o drivers/isimodem/devinfo.o drivers/isimodem/network-regi=
+stration.o drivers/isimodem/voicecall.o drivers/isimodem/sms.o drivers/isim=
+odem/sim.o drivers/isimodem/ssn.o drivers/isimodem/ussd.o drivers/isimodem/=
+call-forwarding.o drivers/isimodem/call-settings.o drivers/isimodem/call-ba=
+rring.o drivers/isimodem/call-meter.o gatchat/gatchat.o gatchat/gatresult.o=
+ gatchat/gatsyntax.o gatchat/ringbuffer.o drivers/atmodem/atmodem.o drivers=
+/atmodem/call-settings.o drivers/atmodem/sms.o drivers/atmodem/call-forward=
+ing.o drivers/atmodem/call-meter.o drivers/atmodem/network-registration.o d=
+rivers/atmodem/sim.o drivers/atmodem/ussd.o drivers/atmodem/voicecall.o dri=
+vers/atmodem/call-barring.o drivers/atmodem/phonebook.o drivers/atmodem/ssn=
+.o drivers/atmodem/devinfo.o plugins/generic_at.o plugins/example_history.o=
+ src/main.o src/log.o src/plugin.o src/modem.o src/common.o src/manager.o s=
+rc/dbus.o src/util.o src/network.o src/voicecall.o src/ussd.o src/sms.o src=
+/call-settings.o src/call-forwarding.o src/call-meter.o src/smsutil.o src/s=
+sn.o src/call-barring.o src/sim.o src/phonebook.o src/history.o src/message=
+-waiting.o src/simutil.o | gawk '{ print $3 }' | sort -u | \
+                                /bin/grep -E -e '^ofono_' -e '^g_dbus_' > s=
+rc/ofono.exp
+/bin/sh: gdbus/mainloop.o: Permission denied
 
-Regards
+Reason:
+In latest Makefile.am, $(NM) is used as below:
+src/ofono.exp: $(src_ofonod_OBJECTS)
+	$(AM_V_GEN)$(NM) $^ | $(AWK) '{ print $$3 }' | sort -u | \
+				$(EGREP) -e '^ofono_' -e '^g_dbus_' > $@
 
---===============8758394699662670695==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0003-Expose-service-dialling-numbers-stored-on-SIM-throug.patch"
+The error shows that $(NM) wasn't substituted with correct value. $(NM) sho=
+uld be substituted by libtool, and my libtool is somewhat buggy to substitu=
+te it correctly. By the way, I'm using Fedora 10, and the libtool in it is =
+version 1.5.26. =
 
-RnJvbSBlYWRkYWYwMmIyN2ZiOGYyOTlhMzE4NTFkOWYxYmJiNTJmNTQyMWNjIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogV2VkLCAyNiBBdWcgMjAwOSAwNDoyNzowNCArMDIwMApTdWJqZWN0
-OiBbUEFUQ0hdIEV4cG9zZSBzZXJ2aWNlIGRpYWxsaW5nIG51bWJlcnMgc3RvcmVkIG9uIFNJTSB0
-aHJvdWdoIFNpbU1hbmFnZXIuCgotLS0KIGluY2x1ZGUvZGJ1cy5oIHwgICAgOSArKysrCiBzcmMv
-ZGJ1cy5jICAgICB8ICAgODAgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwogc3JjL3Np
-bS5jICAgICAgfCAgMTQ0ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrLS0tCiBzcmMvc2ltdXRpbC5oICB8ICAgIDEgKwogNCBmaWxlcyBjaGFuZ2Vk
-LCAyMjcgaW5zZXJ0aW9ucygrKSwgNyBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9pbmNsdWRl
-L2RidXMuaCBiL2luY2x1ZGUvZGJ1cy5oCmluZGV4IDFkOWY1OWYuLjVhNDIxMTkgMTAwNjQ0Ci0t
-LSBhL2luY2x1ZGUvZGJ1cy5oCisrKyBiL2luY2x1ZGUvZGJ1cy5oCkBAIC01Miw2ICs1Miw5IEBA
-IHZvaWQgb2Zvbm9fZGJ1c19kaWN0X2FwcGVuZChEQnVzTWVzc2FnZUl0ZXIgKmRpY3QsIGNvbnN0
-IGNoYXIgKmtleSwgaW50IHR5cGUsCiB2b2lkIG9mb25vX2RidXNfZGljdF9hcHBlbmRfYXJyYXko
-REJ1c01lc3NhZ2VJdGVyICpkaWN0LCBjb25zdCBjaGFyICprZXksCiAJCQkJCWludCB0eXBlLCB2
-b2lkICp2YWwpOwogCit2b2lkIG9mb25vX2RidXNfZGljdF9hcHBlbmRfZGljdChEQnVzTWVzc2Fn
-ZUl0ZXIgKmRpY3QsIGNvbnN0IGNoYXIgKmtleSwKKwkJCQkJaW50IHR5cGUsIHZvaWQgKnZhbCk7
-CisKIGludCBvZm9ub19kYnVzX3NpZ25hbF9wcm9wZXJ0eV9jaGFuZ2VkKERCdXNDb25uZWN0aW9u
-ICpjb25uLCBjb25zdCBjaGFyICpwYXRoLAogCQkJCQljb25zdCBjaGFyICppbnRlcmZhY2UsIGNv
-bnN0IGNoYXIgKm5hbWUsCiAJCQkJCWludCB0eXBlLCB2b2lkICp2YWx1ZSk7CkBAIC02Miw2ICs2
-NSwxMiBAQCBpbnQgb2Zvbm9fZGJ1c19zaWduYWxfYXJyYXlfcHJvcGVydHlfY2hhbmdlZChEQnVz
-Q29ubmVjdGlvbiAqY29ubiwKIAkJCQkJCWNvbnN0IGNoYXIgKm5hbWUsIGludCB0eXBlLAogCQkJ
-CQkJdm9pZCAqdmFsdWUpOwogCitpbnQgb2Zvbm9fZGJ1c19zaWduYWxfZGljdF9wcm9wZXJ0eV9j
-aGFuZ2VkKERCdXNDb25uZWN0aW9uICpjb25uLAorCQkJCQkJY29uc3QgY2hhciAqcGF0aCwKKwkJ
-CQkJCWNvbnN0IGNoYXIgKmludGVyZmFjZSwKKwkJCQkJCWNvbnN0IGNoYXIgKm5hbWUsIGludCB0
-eXBlLAorCQkJCQkJdm9pZCAqdmFsdWUpOworCiAjaWZkZWYgX19jcGx1c3BsdXMKIH0KICNlbmRp
-ZgpkaWZmIC0tZ2l0IGEvc3JjL2RidXMuYyBiL3NyYy9kYnVzLmMKaW5kZXggYjI3MWU4OS4uYjI0
-ODZmNCAxMDA2NDQKLS0tIGEvc3JjL2RidXMuYworKysgYi9zcmMvZGJ1cy5jCkBAIC0xMTIsNiAr
-MTEyLDU5IEBAIHZvaWQgb2Zvbm9fZGJ1c19kaWN0X2FwcGVuZF9hcnJheShEQnVzTWVzc2FnZUl0
-ZXIgKmRpY3QsIGNvbnN0IGNoYXIgKmtleSwKIAlkYnVzX21lc3NhZ2VfaXRlcl9jbG9zZV9jb250
-YWluZXIoZGljdCwgJmVudHJ5KTsKIH0KIAorc3RhdGljIHZvaWQgYXBwZW5kX2RpY3RfdmFyaWFu
-dChEQnVzTWVzc2FnZUl0ZXIgKml0ZXIsIGludCB0eXBlLCB2b2lkICp2YWwpCit7CisJREJ1c01l
-c3NhZ2VJdGVyIHZhcmlhbnQsIGFycmF5LCBlbnRyeTsKKwljaGFyIHR5cGVzaWdbNV07CisJY2hh
-ciBhcnJheXNpZ1s2XTsKKwljb25zdCB2b2lkICoqdmFsX2FycmF5ID0gKihjb25zdCB2b2lkICoq
-Kil2YWw7CisJaW50IGk7CisKKwlhcnJheXNpZ1swXSA9IERCVVNfVFlQRV9BUlJBWTsKKwlhcnJh
-eXNpZ1sxXSA9IHR5cGVzaWdbMF0gPSBEQlVTX0RJQ1RfRU5UUllfQkVHSU5fQ0hBUjsKKwlhcnJh
-eXNpZ1syXSA9IHR5cGVzaWdbMV0gPSBEQlVTX1RZUEVfU1RSSU5HOworCWFycmF5c2lnWzNdID0g
-dHlwZXNpZ1syXSA9IHR5cGU7CisJYXJyYXlzaWdbNF0gPSB0eXBlc2lnWzNdID0gREJVU19ESUNU
-X0VOVFJZX0VORF9DSEFSOworCWFycmF5c2lnWzVdID0gdHlwZXNpZ1s0XSA9ICdcMCc7CisKKwlk
-YnVzX21lc3NhZ2VfaXRlcl9vcGVuX2NvbnRhaW5lcihpdGVyLCBEQlVTX1RZUEVfVkFSSUFOVCwK
-KwkJCQkJCWFycmF5c2lnLCAmdmFyaWFudCk7CisKKwlkYnVzX21lc3NhZ2VfaXRlcl9vcGVuX2Nv
-bnRhaW5lcigmdmFyaWFudCwgREJVU19UWVBFX0FSUkFZLAorCQkJCQkJdHlwZXNpZywgJmFycmF5
-KTsKKworCWZvciAoaSA9IDA7IHZhbF9hcnJheVtpXTsgaSArPSAyKSB7CisJCWRidXNfbWVzc2Fn
-ZV9pdGVyX29wZW5fY29udGFpbmVyKCZhcnJheSwgREJVU19UWVBFX0RJQ1RfRU5UUlksCisJCQkJ
-CQkJTlVMTCwgJmVudHJ5KTsKKworCQlkYnVzX21lc3NhZ2VfaXRlcl9hcHBlbmRfYmFzaWMoJmVu
-dHJ5LCBEQlVTX1RZUEVfU1RSSU5HLAorCQkJCQkJJih2YWxfYXJyYXlbaSArIDBdKSk7CisJCWRi
-dXNfbWVzc2FnZV9pdGVyX2FwcGVuZF9iYXNpYygmZW50cnksIHR5cGUsCisJCQkJCQkmKHZhbF9h
-cnJheVtpICsgMV0pKTsKKworCQlkYnVzX21lc3NhZ2VfaXRlcl9jbG9zZV9jb250YWluZXIoJmFy
-cmF5LCAmZW50cnkpOworCX0KKworCWRidXNfbWVzc2FnZV9pdGVyX2Nsb3NlX2NvbnRhaW5lcigm
-dmFyaWFudCwgJmFycmF5KTsKKworCWRidXNfbWVzc2FnZV9pdGVyX2Nsb3NlX2NvbnRhaW5lcihp
-dGVyLCAmdmFyaWFudCk7Cit9CisKK3ZvaWQgb2Zvbm9fZGJ1c19kaWN0X2FwcGVuZF9kaWN0KERC
-dXNNZXNzYWdlSXRlciAqZGljdCwgY29uc3QgY2hhciAqa2V5LAorCQkJCWludCB0eXBlLCB2b2lk
-ICp2YWwpCit7CisJREJ1c01lc3NhZ2VJdGVyIGVudHJ5OworCisJZGJ1c19tZXNzYWdlX2l0ZXJf
-b3Blbl9jb250YWluZXIoZGljdCwgREJVU19UWVBFX0RJQ1RfRU5UUlksCisJCQkJCQlOVUxMLCAm
-ZW50cnkpOworCisJZGJ1c19tZXNzYWdlX2l0ZXJfYXBwZW5kX2Jhc2ljKCZlbnRyeSwgREJVU19U
-WVBFX1NUUklORywgJmtleSk7CisKKwlhcHBlbmRfZGljdF92YXJpYW50KCZlbnRyeSwgdHlwZSwg
-dmFsKTsKKworCWRidXNfbWVzc2FnZV9pdGVyX2Nsb3NlX2NvbnRhaW5lcihkaWN0LCAmZW50cnkp
-OworfQorCiBpbnQgb2Zvbm9fZGJ1c19zaWduYWxfcHJvcGVydHlfY2hhbmdlZChEQnVzQ29ubmVj
-dGlvbiAqY29ubiwKIAkJCQkJY29uc3QgY2hhciAqcGF0aCwKIAkJCQkJY29uc3QgY2hhciAqaW50
-ZXJmYWNlLApAQCAtMTY1LDYgKzIxOCwzMyBAQCBpbnQgb2Zvbm9fZGJ1c19zaWduYWxfYXJyYXlf
-cHJvcGVydHlfY2hhbmdlZChEQnVzQ29ubmVjdGlvbiAqY29ubiwKIAlyZXR1cm4gZ19kYnVzX3Nl
-bmRfbWVzc2FnZShjb25uLCBzaWduYWwpOwogfQogCitpbnQgb2Zvbm9fZGJ1c19zaWduYWxfZGlj
-dF9wcm9wZXJ0eV9jaGFuZ2VkKERCdXNDb25uZWN0aW9uICpjb25uLAorCQkJCQkJY29uc3QgY2hh
-ciAqcGF0aCwKKwkJCQkJCWNvbnN0IGNoYXIgKmludGVyZmFjZSwKKwkJCQkJCWNvbnN0IGNoYXIg
-Km5hbWUsCisJCQkJCQlpbnQgdHlwZSwgdm9pZCAqdmFsdWUpCisKK3sKKwlEQnVzTWVzc2FnZSAq
-c2lnbmFsOworCURCdXNNZXNzYWdlSXRlciBpdGVyOworCisJc2lnbmFsID0gZGJ1c19tZXNzYWdl
-X25ld19zaWduYWwocGF0aCwgaW50ZXJmYWNlLCAiUHJvcGVydHlDaGFuZ2VkIik7CisKKwlpZiAo
-IXNpZ25hbCkgeworCQlvZm9ub19lcnJvcigiVW5hYmxlIHRvIGFsbG9jYXRlIG5ldyAlcy5Qcm9w
-ZXJ0eUNoYW5nZWQgc2lnbmFsIiwKKwkJCQlpbnRlcmZhY2UpOworCQlyZXR1cm4gLTE7CisJfQor
-CisJZGJ1c19tZXNzYWdlX2l0ZXJfaW5pdF9hcHBlbmQoc2lnbmFsLCAmaXRlcik7CisKKwlkYnVz
-X21lc3NhZ2VfaXRlcl9hcHBlbmRfYmFzaWMoJml0ZXIsIERCVVNfVFlQRV9TVFJJTkcsICZuYW1l
-KTsKKworCWFwcGVuZF9kaWN0X3ZhcmlhbnQoJml0ZXIsIHR5cGUsIHZhbHVlKTsKKworCXJldHVy
-biBnX2RidXNfc2VuZF9tZXNzYWdlKGNvbm4sIHNpZ25hbCk7Cit9CisKIERCdXNNZXNzYWdlICpf
-X29mb25vX2Vycm9yX2ludmFsaWRfYXJncyhEQnVzTWVzc2FnZSAqbXNnKQogewogCXJldHVybiBn
-X2RidXNfY3JlYXRlX2Vycm9yKG1zZywgREJVU19HU01fRVJST1JfSU5URVJGQUNFCmRpZmYgLS1n
-aXQgYS9zcmMvc2ltLmMgYi9zcmMvc2ltLmMKaW5kZXggNmY4NDA2Yi4uNTVhMWViZiAxMDA2NDQK
-LS0tIGEvc3JjL3NpbS5jCisrKyBiL3NyYy9zaW0uYwpAQCAtNzksNiArNzksNyBAQCBzdHJ1Y3Qg
-b2Zvbm9fc2ltIHsKIAl1bnNpZ25lZCBjaGFyIG1uY19sZW5ndGg7CiAJR1NMaXN0ICpvd25fbnVt
-YmVyczsKIAlHU0xpc3QgKm5ld19udW1iZXJzOworCUdTTGlzdCAqc2VydmljZV9udW1iZXJzOwog
-CWdib29sZWFuIHJlYWR5OwogCUdRdWV1ZSAqc2ltb3BfcTsKIAlnaW50IHNpbW9wX3NvdXJjZTsK
-QEAgLTEwNSw2ICsxMDYsMTEgQEAgc3RydWN0IHNpbV9yZWFkeV93YXRjaCB7CiAJb2Zvbm9fZGVz
-dHJveV9mdW5jIGRlc3Ryb3k7CiB9OwogCitzdHJ1Y3Qgc2VydmljZV9udW1iZXIgeworCWNoYXIg
-KmlkOworCXN0cnVjdCBvZm9ub19waG9uZV9udW1iZXIgcGg7Cit9OworCiBzdGF0aWMgY2hhciAq
-KmdldF9vd25fbnVtYmVycyhHU0xpc3QgKm93bl9udW1iZXJzKQogewogCWludCBuZWxlbSA9IDA7
-CkBAIC0xMjcsMTEgKzEzMywzOSBAQCBzdGF0aWMgY2hhciAqKmdldF9vd25fbnVtYmVycyhHU0xp
-c3QgKm93bl9udW1iZXJzKQogCXJldHVybiByZXQ7CiB9CiAKK3N0YXRpYyBjaGFyICoqZ2V0X3Nl
-cnZpY2VfbnVtYmVycyhHU0xpc3QgKnNlcnZpY2VfbnVtYmVycykKK3sKKwlpbnQgbmVsZW07CisJ
-R1NMaXN0ICpsOworCXN0cnVjdCBzZXJ2aWNlX251bWJlciAqbnVtOworCWNoYXIgKipyZXQ7CisK
-KwluZWxlbSA9IGdfc2xpc3RfbGVuZ3RoKHNlcnZpY2VfbnVtYmVycykgKiAyOworCisJcmV0ID0g
-Z19uZXcwKGNoYXIgKiwgbmVsZW0gKyAxKTsKKworCW5lbGVtID0gMDsKKwlmb3IgKGwgPSBzZXJ2
-aWNlX251bWJlcnM7IGw7IGwgPSBsLT5uZXh0KSB7CisJCW51bSA9IGwtPmRhdGE7CisKKwkJcmV0
-W25lbGVtKytdID0gZ19zdHJkdXAobnVtLT5pZCk7CisJCXJldFtuZWxlbSsrXSA9IGdfc3RyZHVw
-KHBob25lX251bWJlcl90b19zdHJpbmcoJm51bS0+cGgpKTsKKwl9CisKKwlyZXR1cm4gcmV0Owor
-fQorCiBzdGF0aWMgdm9pZCBzaW1fZmlsZV9vcF9mcmVlKHN0cnVjdCBzaW1fZmlsZV9vcCAqbm9k
-ZSkKIHsKIAlnX2ZyZWUobm9kZSk7CiB9CiAKK3N0YXRpYyB2b2lkIHNlcnZpY2VfbnVtYmVyX2Zy
-ZWUoc3RydWN0IHNlcnZpY2VfbnVtYmVyICpudW0pCit7CisJZ19mcmVlKG51bS0+aWQpOworCWdf
-ZnJlZShudW0pOworfQorCiBzdGF0aWMgREJ1c01lc3NhZ2UgKnNpbV9nZXRfcHJvcGVydGllcyhE
-QnVzQ29ubmVjdGlvbiAqY29ubiwKIAkJCQkJREJ1c01lc3NhZ2UgKm1zZywgdm9pZCAqZGF0YSkK
-IHsKQEAgLTE0MCw2ICsxNzQsNyBAQCBzdGF0aWMgREJ1c01lc3NhZ2UgKnNpbV9nZXRfcHJvcGVy
-dGllcyhEQnVzQ29ubmVjdGlvbiAqY29ubiwKIAlEQnVzTWVzc2FnZUl0ZXIgaXRlcjsKIAlEQnVz
-TWVzc2FnZUl0ZXIgZGljdDsKIAljaGFyICoqb3duX251bWJlcnM7CisJY2hhciAqKnNlcnZpY2Vf
-bnVtYmVyczsKIAogCXJlcGx5ID0gZGJ1c19tZXNzYWdlX25ld19tZXRob2RfcmV0dXJuKG1zZyk7
-CiAJaWYgKCFyZXBseSkKQEAgLTE2NSw2ICsyMDAsMTUgQEAgc3RhdGljIERCdXNNZXNzYWdlICpz
-aW1fZ2V0X3Byb3BlcnRpZXMoREJ1c0Nvbm5lY3Rpb24gKmNvbm4sCiAJCQkJCURCVVNfVFlQRV9T
-VFJJTkcsICZvd25fbnVtYmVycyk7CiAJZ19zdHJmcmVldihvd25fbnVtYmVycyk7CiAKKwlpZiAo
-c2ltLT5zZXJ2aWNlX251bWJlcnMpIHsKKwkJc2VydmljZV9udW1iZXJzID0gZ2V0X3NlcnZpY2Vf
-bnVtYmVycyhzaW0tPnNlcnZpY2VfbnVtYmVycyk7CisKKwkJb2Zvbm9fZGJ1c19kaWN0X2FwcGVu
-ZF9kaWN0KCZkaWN0LCAiU2VydmljZURpYWxsaW5nTnVtYmVycyIsCisJCQkJCQlEQlVTX1RZUEVf
-U1RSSU5HLAorCQkJCQkJJnNlcnZpY2VfbnVtYmVycyk7CisJCWdfc3RyZnJlZXYoc2VydmljZV9u
-dW1iZXJzKTsKKwl9CisKIAlkYnVzX21lc3NhZ2VfaXRlcl9jbG9zZV9jb250YWluZXIoJml0ZXIs
-ICZkaWN0KTsKIAogCXJldHVybiByZXBseTsKQEAgLTQ0NCwxNiArNDg4LDkxIEBAIHN0YXRpYyB2
-b2lkIHNpbV9hZF9yZWFkX2NiKGludCBvaywKIAl9CiB9CiAKLXN0YXRpYyB2b2lkIHNpbV9vd25f
-bnVtYmVyc191cGRhdGUoc3RydWN0IG9mb25vX3NpbSAqc2ltKQorc3RhdGljIGdpbnQgc2Vydmlj
-ZV9udW1iZXJfY29tcGFyZShnY29uc3Rwb2ludGVyIGEsIGdjb25zdHBvaW50ZXIgYikKIHsKLQlv
-Zm9ub19zaW1fcmVhZChzaW0sIFNJTV9FRk1TSVNETl9GSUxFSUQsCi0JCQlzaW1fbXNpc2RuX3Jl
-YWRfY2IsIHNpbSk7CisJY29uc3Qgc3RydWN0IHNlcnZpY2VfbnVtYmVyICpzZG4gPSBhOworCWNv
-bnN0IGNoYXIgKmlkID0gYjsKKworCXJldHVybiBzdHJjbXAoc2RuLT5pZCwgaWQpOwogfQogCi1z
-dGF0aWMgdm9pZCBzaW1fbW5jX2xlbmd0aF91cGRhdGUoc3RydWN0IG9mb25vX3NpbSAqc2ltKQor
-c3RhdGljIHZvaWQgc2ltX3Nkbl9yZWFkX2NiKGludCBvaywKKwkJCQllbnVtIG9mb25vX3NpbV9m
-aWxlX3N0cnVjdHVyZSBzdHJ1Y3R1cmUsCisJCQkJaW50IGxlbmd0aCwgaW50IHJlY29yZCwKKwkJ
-CQljb25zdCB1bnNpZ25lZCBjaGFyICpkYXRhLAorCQkJCWludCByZWNvcmRfbGVuZ3RoLCB2b2lk
-ICp1c2VyZGF0YSkKIHsKLQlvZm9ub19zaW1fcmVhZChzaW0sIFNJTV9FRkFEX0ZJTEVJRCwKLQkJ
-CXNpbV9hZF9yZWFkX2NiLCBzaW0pOworCXN0cnVjdCBvZm9ub19zaW0gKnNpbSA9IHVzZXJkYXRh
-OworCWludCB0b3RhbDsKKwlzdHJ1Y3Qgb2Zvbm9fcGhvbmVfbnVtYmVyIHBoOworCWNoYXIgKmFs
-cGhhOworCWNoYXIgKipzZXJ2aWNlX251bWJlcnM7CisJREJ1c0Nvbm5lY3Rpb24gKmNvbm4gPSBv
-Zm9ub19kYnVzX2dldF9jb25uZWN0aW9uKCk7CisJY29uc3QgY2hhciAqcGF0aCA9IF9fb2Zvbm9f
-YXRvbV9nZXRfcGF0aChzaW0tPmF0b20pOworCisJaWYgKCFvaykKKwkJZ290byBjaGVjazsKKwor
-CWlmIChzdHJ1Y3R1cmUgIT0gT0ZPTk9fU0lNX0ZJTEVfU1RSVUNUVVJFX0ZJWEVEKQorCQlyZXR1
-cm47CisKKwlpZiAocmVjb3JkX2xlbmd0aCA8IDE0IHx8IGxlbmd0aCA8IHJlY29yZF9sZW5ndGgp
-CisJCXJldHVybjsKKworCXRvdGFsID0gbGVuZ3RoIC8gcmVjb3JkX2xlbmd0aDsKKworCWlmIChz
-aW1fYWRuX3BhcnNlKGRhdGEsIHJlY29yZF9sZW5ndGgsICZwaCwgJmFscGhhKSA9PSBUUlVFKSB7
-CisJCXN0cnVjdCBzZXJ2aWNlX251bWJlciAqc2RuOworCisJCWlmICghYWxwaGEgfHwgYWxwaGFb
-MF0gPT0gJ1wwJykgeworCQkJaWYgKGFscGhhKQorCQkJCWdfZnJlZShhbHBoYSk7CisKKwkJCS8q
-IFVzZSBwaG9uZSBudW1iZXIgaWYgSWQgaXMgdW5hdmFpbGFibGUgKi8KKwkJCWFscGhhID0gZ19z
-dHJkdXAocGhvbmVfbnVtYmVyX3RvX3N0cmluZygmcGgpKTsKKwkJfQorCisJCWlmIChzaW0tPnNl
-cnZpY2VfbnVtYmVycyAmJgorCQkJCWdfc2xpc3RfZmluZF9jdXN0b20oc2ltLT5zZXJ2aWNlX251
-bWJlcnMsCisJCQkJCWFscGhhLCBzZXJ2aWNlX251bWJlcl9jb21wYXJlKSkgeworCQkJb2Zvbm9f
-ZXJyb3IoIkR1cGxpY2F0ZSBFRnNkbiBlbnRyaWVzIGZvciBgJXMnXG4iLAorCQkJCQlhbHBoYSk7
-CisJCQlnX2ZyZWUoYWxwaGEpOworCisJCQlnb3RvIGNoZWNrOworCQl9CisKKwkJc2RuID0gZ19u
-ZXcoc3RydWN0IHNlcnZpY2VfbnVtYmVyLCAxKTsKKwkJc2RuLT5pZCA9IGFscGhhOworCQltZW1j
-cHkoJnNkbi0+cGgsICZwaCwgc2l6ZW9mKHN0cnVjdCBvZm9ub19waG9uZV9udW1iZXIpKTsKKwor
-CQlzaW0tPnNlcnZpY2VfbnVtYmVycyA9CisJCQlnX3NsaXN0X3ByZXBlbmQoc2ltLT5zZXJ2aWNl
-X251bWJlcnMsIHNkbik7CisJfQorCisJaWYgKHJlY29yZCAhPSB0b3RhbCkKKwkJcmV0dXJuOwor
-CitjaGVjazoKKwkvKiBBbGwgcmVjb3JkcyByZXRyaWV2ZWQgKi8KKwlpZiAoc2ltLT5zZXJ2aWNl
-X251bWJlcnMpIHsKKwkJc2ltLT5zZXJ2aWNlX251bWJlcnMgPSBnX3NsaXN0X3JldmVyc2Uoc2lt
-LT5zZXJ2aWNlX251bWJlcnMpOworCisJCXNlcnZpY2VfbnVtYmVycyA9IGdldF9zZXJ2aWNlX251
-bWJlcnMoc2ltLT5zZXJ2aWNlX251bWJlcnMpOworCisJCW9mb25vX2RidXNfc2lnbmFsX2RpY3Rf
-cHJvcGVydHlfY2hhbmdlZChjb25uLCBwYXRoLAorCQkJCQkJU0lNX01BTkFHRVJfSU5URVJGQUNF
-LAorCQkJCQkJIlNlcnZpY2VEaWFsbGluZ051bWJlcnMiLAorCQkJCQkJREJVU19UWVBFX1NUUklO
-RywKKwkJCQkJCSZzZXJ2aWNlX251bWJlcnMpOworCQlnX3N0cmZyZWV2KHNlcnZpY2VfbnVtYmVy
-cyk7CisJfQorfQorCitzdGF0aWMgdm9pZCBzaW1fb3duX251bWJlcnNfdXBkYXRlKHN0cnVjdCBv
-Zm9ub19zaW0gKnNpbSkKK3sKKwlvZm9ub19zaW1fcmVhZChzaW0sIFNJTV9FRk1TSVNETl9GSUxF
-SUQsCisJCQlzaW1fbXNpc2RuX3JlYWRfY2IsIHNpbSk7CiB9CiAKIHN0YXRpYyB2b2lkIHNpbV9y
-ZWFkeSh2b2lkICp1c2VyKQpAQCAtNDYxLDcgKzU4MCwxMSBAQCBzdGF0aWMgdm9pZCBzaW1fcmVh
-ZHkodm9pZCAqdXNlcikKIAlzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW0gPSB1c2VyOwogCiAJc2ltX293
-bl9udW1iZXJzX3VwZGF0ZShzaW0pOwotCXNpbV9tbmNfbGVuZ3RoX3VwZGF0ZShzaW0pOworCisJ
-b2Zvbm9fc2ltX3JlYWQoc2ltLCBTSU1fRUZBRF9GSUxFSUQsCisJCQlzaW1fYWRfcmVhZF9jYiwg
-c2ltKTsKKwlvZm9ub19zaW1fcmVhZChzaW0sIFNJTV9FRlNETl9GSUxFSUQsCisJCQlzaW1fc2Ru
-X3JlYWRfY2IsIHNpbSk7CiB9CiAKIHN0YXRpYyB2b2lkIHNpbV9pbXNpX2NiKGNvbnN0IHN0cnVj
-dCBvZm9ub19lcnJvciAqZXJyb3IsIGNvbnN0IGNoYXIgKmltc2ksCkBAIC0xMTUwLDYgKzEyNzMs
-MTMgQEAgc3RhdGljIHZvaWQgc2ltX3JlbW92ZShzdHJ1Y3Qgb2Zvbm9fYXRvbSAqYXRvbSkKIAkJ
-c2ltLT5vd25fbnVtYmVycyA9IE5VTEw7CiAJfQogCisJaWYgKHNpbS0+c2VydmljZV9udW1iZXJz
-KSB7CisJCWdfc2xpc3RfZm9yZWFjaChzaW0tPnNlcnZpY2VfbnVtYmVycywKKwkJCQkoR0Z1bmMp
-c2VydmljZV9udW1iZXJfZnJlZSwgTlVMTCk7CisJCWdfc2xpc3RfZnJlZShzaW0tPnNlcnZpY2Vf
-bnVtYmVycyk7CisJCXNpbS0+c2VydmljZV9udW1iZXJzID0gTlVMTDsKKwl9CisKIAlpZiAoc2lt
-LT5zaW1vcF9zb3VyY2UpIHsKIAkJZ19zb3VyY2VfcmVtb3ZlKHNpbS0+c2ltb3Bfc291cmNlKTsK
-IAkJc2ltLT5zaW1vcF9zb3VyY2UgPSAwOwpkaWZmIC0tZ2l0IGEvc3JjL3NpbXV0aWwuaCBiL3Ny
-Yy9zaW11dGlsLmgKaW5kZXggZGNjYmU3Yi4uZGUzZTU1ZSAxMDA2NDQKLS0tIGEvc3JjL3NpbXV0
-aWwuaAorKysgYi9zcmMvc2ltdXRpbC5oCkBAIC0yMiw2ICsyMiw3IEBACiBlbnVtIHNpbV9maWxl
-aWQgewogCVNJTV9FRk1TSVNETl9GSUxFSUQgPSAweDZmNDAsCiAJU0lNX0VGU1BOX0ZJTEVJRCA9
-IDB4NmY0NiwKKwlTSU1fRUZTRE5fRklMRUlEID0gMHg2ZjQ5LAogCVNJTV9FRkFEX0ZJTEVJRCA9
-IDB4NmZhZCwKIAlTSU1fRUZQTk5fRklMRUlEID0gMHg2ZmM1LAogCVNJTV9FRk9QTF9GSUxFSUQg
-PSAweDZmYzYsCi0tIAoxLjYuMQoK
 
---===============8758394699662670695==--
+Solution (either one is OK):
+1. Add "AC_SUBST(NM) " in configure.ac
+2. Change your libtool. In file /usr/share/aclocal/libtool.m4, in section A=
+C_PROG_NM, Add one line as below:
+NM=3D"$lt_cv_path_NM"
+AC_SUBST([NM])  #This line is added
+])# AC_PROG_NM
+
+
+Regards,
+-Yang
+
+
+
+--===============7029458809109551458==--
 
