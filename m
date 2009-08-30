@@ -1,106 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============5814252305160518822=="
+Content-Type: multipart/mixed; boundary="===============5082030120134637107=="
 MIME-Version: 1.0
 From: Andres Salomon <dilinger@collabora.co.uk>
-Subject: [PATCH 3/3] G1: Add G1-specific SMS support
-Date: Sun, 30 Aug 2009 00:07:18 -0400
-Message-ID: <20090830040718.GA28091@mycelium.queued.net>
+Subject: [PATCH 1/3] G1: Add initial HTC G1 modem support
+Date: Sun, 30 Aug 2009 00:06:56 -0400
+Message-ID: <20090830040656.GA28039@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5814252305160518822==
+--===============5082030120134637107==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is based on the atmodem SMS code, with lots of stuff dropped.
+This series adds support for the HTC G1 phone (that is, the Google
+phone).
 
-The G1's modem advertises support for CNMI mode 2, but attempting to
-set that actually fails.  Instead, we _need_ to use mode 1.  Along
-those lines, CNMA doesn't appear to work properly, so we disable it
-and use CMTI rather than CMT for PDUs.  CDS notifications (for status
-notifications) are disabled completely.
+G1 plugin is based on generic_at, with a bunch of stuff dropped
+and simplified.  We use AT+CFUN=3D1 for powering on rather than having
+a configurable init string.  We also manually set the default state
+during init (the G1 appears to start in mode V0 by default).  The
+device (/dev/smd0) is hardcoded.
 ---
- Makefile.am     |    3 +-
- plugins/g1.c    |    7 +-
- plugins/g1sms.c |  554 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am  |    5 +
+ configure.ac |    8 ++-
+ plugins/g1.c |  309 ++++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- plugins/g1sms.h |   29 +++
- 4 files changed, 591 insertions(+), 2 deletions(-)
- create mode 100644 plugins/g1sms.c
- create mode 100644 plugins/g1sms.h
+ 3 files changed, 321 insertions(+), 1 deletions(-)
+ create mode 100644 plugins/g1.c
 
 diff --git a/Makefile.am b/Makefile.am
-index a2d3569..72997c1 100644
+index 7ee6536..a2d3569 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -80,7 +80,8 @@ endif
- =
-
- if G1MODEM
- builtin_modules +=3D g1
--builtin_sources +=3D plugins/g1.c
-+builtin_sources +=3D plugins/g1.c \
-+				plugins/g1sms.c
+@@ -78,6 +78,11 @@ builtin_modules +=3D generic_at
+ builtin_sources +=3D plugins/generic_at.c
  endif
  =
 
++if G1MODEM
++builtin_modules +=3D g1
++builtin_sources +=3D plugins/g1.c
++endif
++
  if MAINTAINER_MODE
+ builtin_modules +=3D example_history
+ builtin_sources +=3D plugins/example_history.c
+diff --git a/configure.ac b/configure.ac
+index a299a13..5deabb8 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -65,10 +65,16 @@ AC_ARG_ENABLE(isimodem, AC_HELP_STRING([--disable-isimo=
+dem],
+ 					[enable_isimodem=3D${enableval}])
+ AM_CONDITIONAL(ISIMODEM, test "${enable_isimodem}" !=3D "no")
+ =
+
++AC_ARG_ENABLE(g1, AC_HELP_STRING([--disable-g1],
++				[disable HTC G1 modem support]),
++					[enable_g1=3D${enableval}])
++AM_CONDITIONAL(G1MODEM, test "${enable_g1}" !=3D "no")
++
+ AC_ARG_ENABLE(atmodem, AC_HELP_STRING([--disable-atmodem],
+                                 [disable ETSI AT modem support]),
+                                         [enable_atmodem=3D${enableval}])
+-AM_CONDITIONAL(ATMODEM, test "${enable_atmodem}" !=3D "no")
++AM_CONDITIONAL(ATMODEM, [test "${enable_atmodem}" !=3D "no" ||
++			test "${enable_g1}" !=3D "no"])
+ =
+
+ AC_CHECK_LIB(dl, dlopen, dummy=3Dyes,
+ 			AC_MSG_ERROR(dynamic linking loader is required))
 diff --git a/plugins/g1.c b/plugins/g1.c
-index b0208bc..5d7c279 100644
---- a/plugins/g1.c
-+++ b/plugins/g1.c
-@@ -33,6 +33,7 @@
- =
-
- #include <glib.h>
- #include <gatchat.h>
-+#include "g1sms.h"
- =
-
- #define OFONO_API_SUBJECT_TO_CHANGE
- #include <ofono/plugin.h>
-@@ -334,7 +335,7 @@ static int g1_populate(struct ofono_modem *modem)
- 	ofono_call_meter_create(modem, "generic_at", chat);
- 	ofono_call_barring_create(modem, "generic_at", chat);
- 	ofono_ssn_create(modem, "generic_at", chat);
--	ofono_sms_create(modem, "generic_at", chat);
-+	ofono_sms_create(modem, "HTC G1", chat);
- 	ofono_phonebook_create(modem, "generic_at", chat);
- =
-
- 	mw =3D ofono_message_waiting_create(modem);
-@@ -357,6 +358,8 @@ static int g1_init(void)
- {
- 	int err;
- =
-
-+	g1_sms_init();
-+
- 	err =3D ofono_modem_driver_register(&g1_driver);
- 	if (err)
- 		goto done;
-@@ -385,6 +388,8 @@ static void g1_exit(void)
- {
- 	ofono_modem_remove(g1_modem);
- 	ofono_modem_driver_unregister(&g1_driver);
-+
-+	g1_sms_exit();
- }
- =
-
- OFONO_PLUGIN_DEFINE(g1, "HTC G1 modem driver", VERSION,
-diff --git a/plugins/g1sms.c b/plugins/g1sms.c
 new file mode 100644
-index 0000000..617bb6a
+index 0000000..70e4914
 --- /dev/null
-+++ b/plugins/g1sms.c
-@@ -0,0 +1,554 @@
++++ b/plugins/g1.c
+@@ -0,0 +1,309 @@
 +/*
-+ *
 + *  oFono - Open Source Telephony
 + *
 + *  Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2009  Collabora Ltd.  All rights reserved.
++ *  Copyright (C) 2009  Collabora Ltd. All rights reserved.
 + *
 + *  This program is free software; you can redistribute it and/or modify
 + *  it under the terms of the GNU General Public License version 2 as
@@ -122,580 +102,294 @@ index 0000000..617bb6a
 +#include <config.h>
 +#endif
 +
-+#define _GNU_SOURCE
 +#include <string.h>
++#include <sys/socket.h>
++#include <termios.h>
++#include <fcntl.h>
++#include <unistd.h>
 +#include <stdlib.h>
-+#include <stdio.h>
++#include <errno.h>
 +
 +#include <glib.h>
++#include <gatchat.h>
++#include <gatsyntax.h>
 +
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
 +#include <ofono/log.h>
 +#include <ofono/modem.h>
++#include <ofono/call-barring.h>
++#include <ofono/call-forwarding.h>
++#include <ofono/call-meter.h>
++#include <ofono/call-settings.h>
++#include <ofono/devinfo.h>
++#include <ofono/message-waiting.h>
++#include <ofono/netreg.h>
++#include <ofono/phonebook.h>
++#include <ofono/sim.h>
 +#include <ofono/sms.h>
-+#include "smsutil.h"
-+#include "util.h"
++#include <ofono/ssn.h>
++#include <ofono/ussd.h>
++#include <ofono/voicecall.h>
 +
-+#include "gatchat.h"
-+#include "gatresult.h"
++#define MODEM_DEVICE "/dev/smd0"
 +
-+#include "drivers/atmodem/at.h"
++static struct ofono_modem *g1_modem =3D NULL;
 +
-+static const char *csca_prefix[] =3D { "+CSCA:", NULL };
-+static const char *csms_prefix[] =3D { "+CSMS:", NULL };
-+static const char *cmgf_prefix[] =3D { "+CMGF:", NULL };
-+static const char *cpms_prefix[] =3D { "+CPMS:", NULL };
-+static const char *cnmi_prefix[] =3D { "+CNMI:", NULL };
-+static const char *cmgs_prefix[] =3D { "+CMGS:", NULL };
-+static const char *none_prefix[] =3D { NULL };
-+
-+static const char *storages[] =3D {
-+	"SM",
-+	"ME",
-+	"MT",
-+};
-+
-+#define SM_STORE 0
-+#define ME_STORE 1
-+#define MT_STORE 2
-+
-+struct sms_data {
-+	int store;
-+	int incoming;
++struct g1_data {
 +	GAtChat *chat;
++	GIOChannel *io;
 +};
 +
-+struct cpms_request {
-+	struct ofono_sms *sms;
-+	int store;
-+	int index;
-+};
-+
-+static void at_csca_set_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
++static void connect_destroy(gpointer user)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_sms_sca_set_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
++	struct ofono_modem *modem =3D user;
++	struct g1_data *d =3D ofono_modem_get_data(modem);
 +
-+	dump_response("csca_set_cb", ok, result);
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	cb(&error, cbd->data);
++	d->io =3D NULL;
 +}
 +
-+static void at_csca_set(struct ofono_sms *sms,
-+			const struct ofono_phone_number *sca,
-+			ofono_sms_sca_set_cb_t cb, void *user_data)
++static void g1_debug(const char *str, void *data)
 +{
-+	struct sms_data *data =3D ofono_sms_get_data(sms);
-+	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+	char buf[64];
-+
-+	if (!cbd)
-+		goto error;
-+
-+	sprintf(buf, "AT+CSCA=3D\"%s\",%d", sca->number, sca->type);
-+
-+	if (g_at_chat_send(data->chat, buf, csca_prefix,
-+				at_csca_set_cb, cbd, g_free) > 0)
-+		return;
-+
-+error:
-+	if (cbd)
-+		g_free(cbd);
-+
-+	{
-+		DECLARE_FAILURE(error);
-+		cb(&error, user_data);
-+	}
++	DBG("%s", str);
 +}
 +
-+static void at_csca_query_cb(gboolean ok, GAtResult *result, gpointer user=
-_data)
++static gboolean connect_cb(GIOChannel *io, GIOCondition cond, gpointer use=
+r)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	GAtResultIter iter;
-+	ofono_sms_sca_query_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+	struct ofono_phone_number sca;
-+	const char *number;
++	struct ofono_modem *modem =3D user;
++	struct g1_data *d =3D ofono_modem_get_data(modem);
++	int err =3D 0;
++	gboolean success;
++	GAtSyntax *syntax;
 +
-+	dump_response("at_csca_cb", ok, result);
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (!ok) {
-+		cb(&error, NULL, cbd->data);
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CSCA:"))
-+		goto err;
-+
-+	if (!g_at_result_iter_next_string(&iter, &number))
-+		goto err;
-+
-+	if (number[0] =3D=3D '+') {
-+		number =3D number + 1;
-+		sca.type =3D 145;
-+	} else
-+		sca.type =3D 129;
-+
-+	strncpy(sca.number, number, OFONO_MAX_PHONE_NUMBER_LENGTH);
-+	sca.number[OFONO_MAX_PHONE_NUMBER_LENGTH] =3D '\0';
-+
-+	g_at_result_iter_next_number(&iter, &sca.type);
-+
-+	ofono_debug("csca_query_cb: %s, %d", sca.number, sca.type);
-+
-+	cb(&error, &sca, cbd->data);
-+
-+	return;
-+
-+err:
-+	{
-+		DECLARE_FAILURE(error);
-+		cb(&error, NULL, cbd->data);
-+	}
-+}
-+
-+static void at_csca_query(struct ofono_sms *sms, ofono_sms_sca_query_cb_t =
-cb,
-+					void *user_data)
-+{
-+	struct sms_data *data =3D ofono_sms_get_data(sms);
-+	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+
-+	if (!cbd)
-+		goto error;
-+
-+	if (g_at_chat_send(data->chat, "AT+CSCA?", csca_prefix,
-+				at_csca_query_cb, cbd, g_free) > 0)
-+		return;
-+
-+error:
-+	if (cbd)
-+		g_free(cbd);
-+
-+	{
-+		DECLARE_FAILURE(error);
-+		cb(&error, NULL, user_data);
-+	}
-+}
-+
-+static void at_cmgs_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	GAtResultIter iter;
-+	ofono_sms_submit_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+	int mr;
-+
-+	dump_response("at_cmgs_cb", ok, result);
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (!ok) {
-+		cb(&error, -1, cbd->data);
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CMGS:"))
-+		goto err;
-+
-+	if (!g_at_result_iter_next_number(&iter, &mr))
-+		goto err;
-+
-+	ofono_debug("Got MR: %d", mr);
-+
-+	cb(&error, mr, cbd->data);
-+	return;
-+
-+err:
-+	{
-+		DECLARE_FAILURE(error);
-+		cb(&error, -1, cbd->data);
-+	}
-+}
-+
-+static void at_cmgs(struct ofono_sms *sms, unsigned char *pdu, int pdu_len,
-+			int tpdu_len, int mms, ofono_sms_submit_cb_t cb,
-+			void *user_data)
-+{
-+	struct sms_data *data =3D ofono_sms_get_data(sms);
-+	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+	char buf[512];
-+	int len;
-+
-+	if (!cbd)
-+		goto error;
-+
-+	if (mms) {
-+		sprintf(buf, "AT+CMMS=3D%d", mms);
-+		g_at_chat_send(data->chat, buf, none_prefix,
-+				NULL, NULL, NULL);
-+	}
-+
-+	len =3D sprintf(buf, "AT+CMGS=3D%d\r", tpdu_len);
-+	encode_hex_own_buf(pdu, pdu_len, 0, buf+len);
-+
-+	if (g_at_chat_send(data->chat, buf, cmgs_prefix,
-+				at_cmgs_cb, cbd, g_free) > 0)
-+		return;
-+
-+error:
-+	if (cbd)
-+		g_free(cbd);
-+
-+	{
-+		DECLARE_FAILURE(error);
-+		cb(&error, -1, user_data);
-+	}
-+}
-+
-+static gboolean at_parse_pdu_common(GAtResult *result, const char *prefix,
-+					const char **pdu, int *pdulen)
-+{
-+	GAtResultIter iter;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, prefix))
++	if (cond & G_IO_NVAL)
 +		return FALSE;
 +
-+	if (!strcmp(prefix, "+CMT:") && !g_at_result_iter_skip_next(&iter))
-+		return FALSE;
++	if (cond & G_IO_OUT) {
++		int sock =3D g_io_channel_unix_get_fd(io);
++		socklen_t len =3D sizeof(err);
 +
-+	if (!g_at_result_iter_next_number(&iter, pdulen))
-+		return FALSE;
++		if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &err, &len) < 0)
++			err =3D errno =3D=3D ENOTSOCK ? 0 : errno;
++	} else if (cond & (G_IO_HUP | G_IO_ERR))
++		err =3D ECONNRESET;
 +
-+	*pdu =3D g_at_result_pdu(result);
++	success =3D !err;
 +
-+	return TRUE;
++	DBG("io ref: %d", io->ref_count);
++
++	if (success =3D=3D FALSE)
++		goto error;
++
++	syntax =3D g_at_syntax_new_gsmv1();
++	d->chat =3D g_at_chat_new(io, syntax);
++	g_at_syntax_unref(syntax);
++
++	DBG("io ref: %d", io->ref_count);
++
++	if (!d->chat)
++		goto error;
++
++	if (getenv("OFONO_AT_DEBUG") !=3D NULL)
++		g_at_chat_set_debug(d->chat, g1_debug, NULL);
++
++	/* ensure modem is in a known state; verbose on, echo/quiet off */
++	g_at_chat_send(d->chat, "ATE0Q0V1", NULL, NULL, NULL, NULL);
++
++	/* power up modem */
++	g_at_chat_send(d->chat, "AT+CFUN=3D1", NULL, NULL, NULL, NULL);
++
++	ofono_modem_set_powered(modem, TRUE);
++
++	return FALSE;
++
++error:
++	ofono_modem_set_powered(modem, FALSE);
++	return FALSE;
 +}
 +
-+static void at_cbm_notify(GAtResult *result, gpointer user_data)
++static GIOChannel *tty_connect(const char *tty)
 +{
-+	int pdulen;
-+	const char *pdu;
++	GIOChannel *io;
++	int sk;
++	struct termios newtio;
 +
-+	dump_response("at_cbm_notify", TRUE, result);
++	sk =3D open(tty, O_RDWR | O_NOCTTY);
 +
-+	if (!at_parse_pdu_common(result, "+CBM:", &pdu, &pdulen)) {
-+		ofono_error("Unable to parse CBM notification");
-+		return;
++	if (sk < 0) {
++		ofono_error("Can't open TTY %s: %s(%d)",
++				tty, strerror(errno), errno);
++		return NULL;
 +	}
 +
-+	ofono_debug("Got new Cell Broadcast via CBM: %s, %d", pdu, pdulen);
-+}
++	newtio.c_cflag =3D B115200 | CRTSCTS | CLOCAL | CREAD;
++	newtio.c_iflag =3D IGNPAR;
++	newtio.c_oflag =3D 0;
++	newtio.c_lflag =3D 0;
 +
-+static void at_cmgr_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_sms *sms =3D user_data;
-+	GAtResultIter iter;
-+	const char *hexpdu;
-+	unsigned char pdu[164];
-+	long pdu_len;
-+	int tpdu_len;
++	newtio.c_cc[VTIME] =3D 1;
++	newtio.c_cc[VMIN] =3D 5;
 +
-+	dump_response("at_cmgr_notify", TRUE, result);
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CMGR:"))
-+		goto err;
-+
-+	if (!g_at_result_iter_skip_next(&iter))
-+		goto err;
-+
-+	if (!g_at_result_iter_skip_next(&iter))
-+		goto err;
-+
-+	if (!g_at_result_iter_next_number(&iter, &tpdu_len))
-+		goto err;
-+
-+	hexpdu =3D g_at_result_pdu(result);
-+
-+	ofono_debug("Got PDU: %s, with len: %d", hexpdu, tpdu_len);
-+
-+	decode_hex_own_buf(hexpdu, -1, &pdu_len, 0, pdu);
-+	ofono_sms_deliver_notify(sms, pdu, pdu_len, tpdu_len);
-+	return;
-+
-+err:
-+	ofono_error("Unable to parse CMGR response");
-+}
-+
-+static void at_cmgr_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	if (!ok)
-+		ofono_error("Received a CMTI indication but CMGR failed!");
-+}
-+
-+static void at_cmgd_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	if (!ok)
-+		ofono_error("Unable to delete received SMS");
-+}
-+
-+static void at_cmti_cpms_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-+{
-+	struct cpms_request *req =3D user_data;
-+	struct ofono_sms *sms =3D req->sms;
-+	struct sms_data *data =3D ofono_sms_get_data(sms);
-+	char buf[128];
-+
-+	if (!ok) {
-+		ofono_error("Received CMTI, but CPMS request failed");
-+		return;
++	tcflush(sk, TCIFLUSH);
++	if (tcsetattr(sk, TCSANOW, &newtio) < 0) {
++		ofono_error("Can't change serial settings: %s(%d)",
++				strerror(errno), errno);
++		close(sk);
++		return NULL;
 +	}
 +
-+	data->store =3D req->store;
++	io =3D g_io_channel_unix_new(sk);
++	g_io_channel_set_close_on_unref(io, TRUE);
 +
-+	sprintf(buf, "AT+CMGR=3D%d", req->index);
-+	g_at_chat_send(data->chat, buf, none_prefix, at_cmgr_cb, NULL, NULL);
-+
-+	/* We don't buffer SMS on the SIM/ME, send along a CMGD as well */
-+	sprintf(buf, "AT+CMGD=3D%d", req->index);
-+	g_at_chat_send(data->chat, buf, none_prefix, at_cmgd_cb, NULL, NULL);
-+}
-+
-+static void at_cmti_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_sms *sms =3D user_data;
-+	struct sms_data *data =3D ofono_sms_get_data(sms);
-+	const char *strstore;
-+	int store;
-+	GAtResultIter iter;
-+	int index;
-+
-+	dump_response("at_cmti_notify", TRUE, result);
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CMTI:"))
-+		goto err;
-+
-+	if (!g_at_result_iter_next_string(&iter, &strstore))
-+		goto err;
-+
-+	if (!strcmp(strstore, "ME"))
-+		store =3D ME_STORE;
-+	else if (!strcmp(strstore, "SM"))
-+		store =3D SM_STORE;
-+	else
-+		goto err;
-+
-+	if (!g_at_result_iter_next_number(&iter, &index))
-+		goto err;
-+
-+	ofono_debug("Got a CMTI indication at %s, index: %d", strstore, index);
-+
-+	if (store =3D=3D data->store) {
-+		struct cpms_request req;
-+
-+		req.sms =3D sms;
-+		req.store =3D store;
-+		req.index =3D index;
-+
-+		at_cmti_cpms_cb(TRUE, NULL, &req);
-+	} else {
-+		char buf[128];
-+		const char *incoming =3D storages[data->incoming];
-+		struct cpms_request *req =3D g_new(struct cpms_request, 1);
-+
-+		req->sms =3D sms;
-+		req->store =3D store;
-+		req->index =3D index;
-+
-+		sprintf(buf, "AT+CPMS=3D\"%s\",\"%s\",\"%s\"",
-+			strstore, strstore, incoming);
-+
-+		g_at_chat_send(data->chat, buf, cpms_prefix, at_cmti_cpms_cb,
-+				req, g_free);
++	if (g_io_channel_set_flags(io, G_IO_FLAG_NONBLOCK,
++					NULL) !=3D G_IO_STATUS_NORMAL) {
++		g_io_channel_unref(io);
++		return NULL;
 +	}
 +
-+	return;
-+
-+err:
-+	ofono_error("Unable to parse CMTI notification");
++	return io;
 +}
 +
-+static void at_sms_initialized(struct ofono_sms *sms)
++static int g1_probe(struct ofono_modem *modem)
 +{
-+	struct sms_data *data =3D ofono_sms_get_data(sms);
++	struct g1_data *d;
 +
-+	g_at_chat_register(data->chat, "+CMTI:", at_cmti_notify, FALSE,
-+				sms, NULL);
-+	g_at_chat_register(data->chat, "+CBM:", at_cbm_notify, TRUE,
-+				sms, NULL);
-+
-+	/* We treat CMGR just like a notification */
-+	g_at_chat_register(data->chat, "+CMGR:", at_cmgr_notify, TRUE,
-+				sms, NULL);
-+
-+	ofono_sms_register(sms);
-+}
-+
-+static void at_sms_not_supported(struct ofono_sms *sms)
-+{
-+	ofono_error("SMS not supported by this modem.  If this is in error"
-+			" please submit patches to support this hardware");
-+
-+	ofono_sms_remove(sms);
-+}
-+
-+static void at_cnmi_set_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	struct ofono_sms *sms =3D user_data;
-+
-+	if (!ok)
-+		return at_sms_not_supported(sms);
-+
-+	at_sms_initialized(sms);
-+}
-+
-+static void at_cpms_set_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	struct ofono_sms *sms =3D user_data;
-+	struct sms_data *data =3D ofono_sms_get_data(sms);
-+
-+	dump_response("at_cpms_set_cb", ok, result);
-+	if (!ok) {
-+		at_sms_not_supported(sms);
-+		return;
-+	}
-+
-+	/* the G1 is very particular about CNMI; mode 1 is required */
-+	g_at_chat_send(data->chat, "AT+CNMI=3D1,1,2,0,1", cnmi_prefix,
-+			at_cnmi_set_cb, sms, NULL);
-+}
-+
-+static void at_cmgf_set_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	struct ofono_sms *sms =3D user_data;
-+	struct sms_data *data =3D ofono_sms_get_data(sms);
-+
-+	dump_response("at_cmgf_set_cb", ok, result);
-+
-+	if (!ok) {
-+		at_sms_not_supported(sms);
-+		return;
-+	}
-+
-+	g_at_chat_send(data->chat, "AT+CPMS=3D\"ME\",\"ME\",\"ME\"", cpms_prefix,
-+			at_cpms_set_cb, sms, NULL);
-+}
-+
-+static void at_csms_set_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct ofono_sms *sms =3D user_data;
-+	struct sms_data *data =3D ofono_sms_get_data(sms);
-+
-+	dump_response("at_csms_set_cb", ok, result);
-+
-+	if (!ok) {
-+		at_sms_not_supported(sms);
-+		return;
-+	}
-+
-+	/* use ME for everything */
-+	data->store =3D ME_STORE;
-+	data->incoming =3D ME_STORE;
-+
-+	g_at_chat_send(data->chat, "AT+CMGF=3D0", cmgf_prefix,
-+			at_cmgf_set_cb, sms, NULL);
-+}
-+
-+static int at_sms_probe(struct ofono_sms *sms)
-+{
-+	GAtChat *chat =3D ofono_sms_get_data(sms);
-+	struct sms_data *data;
-+
-+	data =3D g_new0(struct sms_data, 1);
-+	data->chat =3D chat;
-+
-+	ofono_sms_set_data(sms, data);
-+
-+	g_at_chat_send(data->chat, "AT+CSMS=3D0", csms_prefix,
-+			at_csms_set_cb, sms, NULL);
++	d =3D g_new0(struct g1_data, 1);
++	if (!d)
++		return -ENOMEM;
++	ofono_modem_set_data(modem, d);
 +
 +	return 0;
 +}
 +
-+static int at_sms_remove(struct ofono_sms *sms)
++static int g1_remove(struct ofono_modem *modem)
 +{
-+	struct sms_data *data =3D ofono_sms_get_data(sms);
-+
-+	g_free(data);
++	g_free(ofono_modem_get_data(modem));
 +
 +	return 0;
 +}
 +
-+static struct ofono_sms_driver g1_driver =3D {
++static int g1_enable(struct ofono_modem *modem)
++{
++	struct g1_data *d =3D ofono_modem_get_data(modem);
++	GIOChannel *io;
++	GIOCondition cond;
++
++	DBG("");
++
++	io =3D tty_connect(MODEM_DEVICE);
++	if (io =3D=3D NULL)
++		return -EINVAL;
++
++	DBG("io ref: %d", io->ref_count);
++
++	cond =3D G_IO_OUT | G_IO_ERR | G_IO_HUP | G_IO_NVAL;
++	g_io_add_watch_full(io, G_PRIORITY_DEFAULT, cond, connect_cb,
++				modem, connect_destroy);
++
++	DBG("io ref: %d", io->ref_count);
++
++	g_io_channel_unref(io);
++
++	DBG("io ref: %d", io->ref_count);
++	d->io =3D io;
++
++	return -EINPROGRESS;
++}
++
++static int g1_disable(struct ofono_modem *modem)
++{
++	struct g1_data *d =3D ofono_modem_get_data(modem);
++
++	if (d->io) {
++		g_io_channel_close(d->io);
++		d->io =3D NULL;
++	}
++
++	if (d->chat) {
++		g_at_chat_unref(d->chat);
++		d->chat =3D NULL;
++	}
++
++	return 0;
++}
++
++static int g1_populate(struct ofono_modem *modem)
++{
++	struct g1_data *d =3D ofono_modem_get_data(modem);
++	GAtChat *chat =3D d->chat;
++	struct ofono_message_waiting *mw;
++
++	ofono_devinfo_create(modem, "generic_at", chat);
++	ofono_ussd_create(modem, "generic_at", chat);
++	ofono_sim_create(modem, "generic_at", chat);
++	ofono_call_forwarding_create(modem, "generic_at", chat);
++	ofono_call_settings_create(modem, "generic_at", chat);
++	ofono_netreg_create(modem, "generic_at", chat);
++	ofono_voicecall_create(modem, "generic_at", chat);
++	ofono_call_meter_create(modem, "generic_at", chat);
++	ofono_call_barring_create(modem, "generic_at", chat);
++	ofono_ssn_create(modem, "generic_at", chat);
++	ofono_sms_create(modem, "generic_at", chat);
++	ofono_phonebook_create(modem, "generic_at", chat);
++
++	mw =3D ofono_message_waiting_create(modem);
++	if (mw)
++		ofono_message_waiting_register(mw);
++
++	return 0;
++}
++
++static struct ofono_modem_driver g1_driver =3D {
 +	.name =3D "HTC G1",
-+	.probe =3D at_sms_probe,
-+	.remove =3D at_sms_remove,
-+	.sca_query	=3D at_csca_query,
-+	.sca_set	=3D at_csca_set,
-+	.submit		=3D at_cmgs,
++	.probe =3D g1_probe,
++	.remove =3D g1_remove,
++	.enable =3D g1_enable,
++	.disable =3D g1_disable,
++	.populate =3D g1_populate,
 +};
 +
-+void g1_sms_init()
++static int g1_init(void)
 +{
-+	ofono_sms_driver_register(&g1_driver);
++	int err;
++
++	err =3D ofono_modem_driver_register(&g1_driver);
++	if (err)
++		goto done;
++
++	g1_modem =3D ofono_modem_create("G1", "HTC G1");
++	if (!g1_modem) {
++		err =3D -EIO;
++		goto unreg;
++	}
++
++	err =3D ofono_modem_register(g1_modem);
++	if (err)
++		goto remove;
++
++	return 0;
++
++remove:
++	ofono_modem_remove(g1_modem);
++unreg:
++	ofono_modem_driver_unregister(&g1_driver);
++done:
++	return err;
 +}
 +
-+void g1_sms_exit()
++static void g1_exit(void)
 +{
-+	ofono_sms_driver_unregister(&g1_driver);
++	ofono_modem_remove(g1_modem);
++	ofono_modem_driver_unregister(&g1_driver);
 +}
-diff --git a/plugins/g1sms.h b/plugins/g1sms.h
-new file mode 100644
-index 0000000..482ce61
---- /dev/null
-+++ b/plugins/g1sms.h
-@@ -0,0 +1,29 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2009  Collabora Ltd.  All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
 +
-+#ifndef __G1SMS_H
-+#define __G1SMS_H
-+
-+extern void g1_sms_init(void);
-+extern void g1_sms_exit(void);
-+
-+#endif
++OFONO_PLUGIN_DEFINE(g1, "HTC G1 modem driver", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT,
++			g1_init, g1_exit)
 -- =
 
 1.6.3.3
 
---===============5814252305160518822==--
+--===============5082030120134637107==--
 
