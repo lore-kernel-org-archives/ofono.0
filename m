@@ -1,61 +1,151 @@
-Content-Type: multipart/mixed; boundary="===============7646127707169315575=="
+Content-Type: multipart/mixed; boundary="===============0595072621764964281=="
 MIME-Version: 1.0
 From: Andres Salomon <dilinger@collabora.co.uk>
-Subject: driver callback naming
-Date: Sat, 29 Aug 2009 18:01:15 -0400
-Message-ID: <20090829180115.4d5744e5@mycelium.queued.net>
+Subject: [PATCH 2/3] G1: Add a G1 syntax for parsing
+Date: Sun, 30 Aug 2009 00:07:08 -0400
+Message-ID: <20090830040708.GA28068@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7646127707169315575==
+--===============0595072621764964281==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+This is based on the generic_at parser, with unnecessary stuff removed.
 
-Slightly bikesheddy, but.. The ofono_modem_driver callback naming is
-pretty confusing.  Currently, it's:
+The G1 routinely screws up CRLFs, so the parser needs to account for
+that.  This parser ignores leading CRLFs (which is what reference-ril
+does as well), as well as trailing LFs (which are sometimes left out).
+CRs are used as end-of-message indicators.  Since we're not bothering
+tracking CRLFs, there's also no need for a GARBAGE state, or MULTILINE
+stuff.
+---
+ plugins/g1.c |   87 ++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++-
+ 1 files changed, 85 insertions(+), 2 deletions(-)
 
+diff --git a/plugins/g1.c b/plugins/g1.c
+index 70e4914..b0208bc 100644
+--- a/plugins/g1.c
++++ b/plugins/g1.c
+@@ -33,7 +33,6 @@
+ =
 
-static struct ofono_modem_driver g1_driver =3D {
-        .name =3D "HTC G1",
-        .probe =3D g1_probe,
-        .enable =3D g1_enable,
-        .disable =3D g1_disable,
-        .remove =3D g1_remove,
-        .populate =3D g1_populate,
-};
+ #include <glib.h>
+ #include <gatchat.h>
+-#include <gatsyntax.h>
+ =
 
+ #define OFONO_API_SUBJECT_TO_CHANGE
+ #include <ofono/plugin.h>
+@@ -62,6 +61,90 @@ struct g1_data {
+ 	GIOChannel *io;
+ };
+ =
 
-I'm used to probe/remove in the kernel being used for device detection
-and allocating related resources (as well as powering up or down pci
-devices and such), but the enable/disable names tell me nothing.
-What's being enabled?  Is 'probe' just a thin layer that detects
-whether a device is present and then defers to 'enable' to set it
-up (and if so, should we it called 'detect' or something that
-doesn't imply a kernel-like 'probe' function)?  Denkenz informs me that
-it's for setting power to devices; if that's the case, a better name
-might be powerup/powerdown.
++/* Supply our own syntax parser */
++
++enum G1_STATE_ {
++	G1_STATE_IDLE =3D 0,
++	G1_STATE_RESPONSE,
++	G1_STATE_GUESS_PDU,
++	G1_STATE_PDU,
++	G1_STATE_PROMPT,
++};
++
++static void g1_hint(GAtSyntax *syntax, GAtSyntaxExpectHint hint)
++{
++	if (hint =3D=3D G_AT_SYNTAX_EXPECT_PDU)
++		syntax->state =3D G1_STATE_GUESS_PDU;
++}
++
++static GAtSyntaxResult g1_feed(GAtSyntax *syntax,
++		const char *bytes, gsize *len)
++{
++	gsize i =3D 0;
++	GAtSyntaxResult res =3D G_AT_SYNTAX_RESULT_UNSURE;
++
++	while (i < *len) {
++		char byte =3D bytes[i];
++
++		switch (syntax->state) {
++		case G1_STATE_IDLE:
++			if (byte =3D=3D '\r' || byte =3D=3D '\n')
++				/* ignore */;
++			else if (byte =3D=3D '>')
++				syntax->state =3D G1_STATE_PROMPT;
++			else
++				syntax->state =3D G1_STATE_RESPONSE;
++			break;
++
++		case G1_STATE_RESPONSE:
++			if (byte =3D=3D '\r') {
++				syntax->state =3D G1_STATE_IDLE;
++
++				i +=3D 1;
++				res =3D G_AT_SYNTAX_RESULT_LINE;
++				goto out;
++			}
++			break;
++
++		case G1_STATE_GUESS_PDU:
++			/* keep going until we find a LF that leads the PDU */
++			if (byte =3D=3D '\n')
++				syntax->state =3D G1_STATE_PDU;
++			break;
++
++		case G1_STATE_PDU:
++			if (byte =3D=3D '\r') {
++				syntax->state =3D G1_STATE_IDLE;
++
++				i +=3D 1;
++				res =3D G_AT_SYNTAX_RESULT_PDU;
++				goto out;
++			}
++			break;
++
++		case G1_STATE_PROMPT:
++			if (byte =3D=3D ' ') {
++				syntax->state =3D G1_STATE_IDLE;
++				i +=3D 1;
++				res =3D G_AT_SYNTAX_RESULT_PROMPT;
++				goto out;
++			}
++
++			syntax->state =3D G1_STATE_RESPONSE;
++			return G_AT_SYNTAX_RESULT_UNSURE;
++
++		default:
++			break;
++		};
++
++		i +=3D 1;
++	}
++
++out:
++	*len =3D i;
++	return res;
++}
++
+ static void connect_destroy(gpointer user)
+ {
+ 	struct ofono_modem *modem =3D user;
+@@ -102,7 +185,7 @@ static gboolean connect_cb(GIOChannel *io, GIOCondition=
+ cond, gpointer user)
+ 	if (success =3D=3D FALSE)
+ 		goto error;
+ =
 
-Of course, I'm also wondering why there needs to be two separate layers
-of calls in the first place.  Why not have drivers register everything
-from within probe, call ofono_set_powered(modem, TRUE) once the device
-is ready, and be done with it?
+-	syntax =3D g_at_syntax_new_gsmv1();
++	syntax =3D g_at_syntax_new_full(g1_feed, g1_hint, G1_STATE_IDLE);
+ 	d->chat =3D g_at_chat_new(io, syntax);
+ 	g_at_syntax_unref(syntax);
+ =
 
-This question comes up because sending SIGTERM to the
-daemon ends up calling g1_exit, which (in my case) was freeing the
-ofono_modem->private_data first, and then calling ofono_modem_remove.
-This in turn was calling the 'disable' callback, which expected
-ofono_modem->private_data to exist.
+-- =
 
-The only reason why this doesn't blow up in the generic_at plugin is
-because the driver_data is leaked.  If one were to free it from
-generic_at_exit in the wrong place (since it's allocated from
-generic_at_init, it would make sense to free it in generic_at_exit),
-one would see the same SEGV/SIGBUS/SIGILL errors upon ctrl-c.
+1.6.3.3
 
-
-
---===============7646127707169315575==--
+--===============0595072621764964281==--
 
