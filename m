@@ -1,39 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============5953660618541865004=="
+Content-Type: multipart/mixed; boundary="===============7410841646022875655=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] G1: Add G1-specific SMS support
-Date: Tue, 01 Sep 2009 12:16:56 -0500
-Message-ID: <200909011216.56476.denkenz@gmail.com>
-In-Reply-To: <20090830040718.GA28091@mycelium.queued.net>
+From: Jean-Christian de Rivaz <jc@eclis.ch>
+Subject: Re: GPRS support for Ofono
+Date: Tue, 01 Sep 2009 21:02:43 +0200
+Message-ID: <4A9D6FD3.7040207@eclis.ch>
+In-Reply-To: <a4e57c0e0909010409m1ccd4326scf28151fe8afb859@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5953660618541865004==
+--===============7410841646022875655==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andres,
+Ismo Puustinen a =C3=A9crit :
+> I started working on Ofono GPRS support.
 
-> This is based on the atmodem SMS code, with lots of stuff dropped.
->
-> The G1's modem advertises support for CNMI mode 2, but attempting to
-> set that actually fails.  Instead, we _need_ to use mode 1.  Along
-> those lines, CNMA doesn't appear to work properly, so we disable it
-> and use CMTI rather than CMT for PDUs.  CDS notifications (for status
-> notifications) are disabled completely.
+Hello,
 
-So as we discussed on IRC, this one should really be rolled up into the =
+With GPRS support, Ofono become very interesting!
 
-generic_at sms driver, since the only change of substance is the cnmi mode =
+I failed to understand how the "isi_gprs" code in your patch communicate
+with a PPP stack. For example, I currently use a project where the APN
+is configured and a connection open with it. Then a pppd process is
+started to establish the IP link. It seem that you make this in a other
+(and certainly better) way, but I missed the big picture.
 
-selection specific to the g1.  We need a driver quirk system to be figured =
-out =
+Best Regards,
 
-first though.
+Jean-Christian de Rivaz
 
-Regards,
--Denis
-
---===============5953660618541865004==--
+--===============7410841646022875655==--
 
