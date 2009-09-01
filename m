@@ -1,37 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============5542103565499229566=="
+Content-Type: multipart/mixed; boundary="===============5323904248943897346=="
 MIME-Version: 1.0
-From: Christensen, Mikkel <mlc@ti.com>
-Subject: RE: GPRS support for Ofono
-Date: Tue, 01 Sep 2009 21:27:53 +0200
-Message-ID: <E49DAF743FB3E9469ED423C0D3DB5F1CCE9168A6@dnce01.ent.ti.com>
-In-Reply-To: <4A9D6FD3.7040207@eclis.ch>
+From: Jean-Christian de Rivaz <jc@eclis.ch>
+Subject: Re: GPRS support for Ofono
+Date: Tue, 01 Sep 2009 22:17:36 +0200
+Message-ID: <4A9D8160.6000404@eclis.ch>
+In-Reply-To: <200909012225.47712.remi@remlab.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5542103565499229566==
+--===============5323904248943897346==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Sep 01, 2009 at 14:02:43, Jean-Christian de Rivaz wrote:
-> I failed to understand how the "isi_gprs" code in your patch =
+R=C3=A9mi Denis-Courmont a =C3=A9crit :
+> Le mardi 1 septembre 2009 22:02:43 Jean-Christian de Rivaz, vous avez =C3=
+=A9crit :
+>> With GPRS support, Ofono become very interesting!
+>>
+>> I failed to understand how the "isi_gprs" code in your patch communicate
+>> with a PPP stack.
+> =
 
-> communicate with a PPP stack. For example, I currently use a project =
+> That would be because it does NOT use a PPP stack.
+> =
 
-> where the APN is configured and a connection open with it. Then a pppd =
+> ISI modems have their own IP path using a dedicated kernel driver =
 
-> process is started to establish the IP link. It seem that you make =
+> (net/phonet/pep-gprs.c in Linux 2.6.28 amd later). There is no point in u=
+sing =
 
-> this in a other (and certainly
-> better) way, but I missed the big picture.
+> the PPP line discipline.
 
-The best way to do this is without PPP and this is probably what Ismo is do=
-ing. You would just create a new net_device like "eth0" and hide all the IS=
-I and cellular messaging behind that interface providing a clean IP network=
- device.
+Thanks for the explanation. I will start learning how phonet works. But
+I expect there exists a PPP stack somewhere in phonet because the modem
+I use don't have one. And I don't think it's possible to have a IP link
+over GPRS without the PPP protocol between them.
 
-Best regards,
- Mikkel Christensen=20
+Jean-Christian de Rivaz
 
---===============5542103565499229566==--
+--===============5323904248943897346==--
 
