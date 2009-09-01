@@ -1,257 +1,210 @@
-Content-Type: multipart/mixed; boundary="===============5430366691566633665=="
+Content-Type: multipart/mixed; boundary="===============0034017722475212121=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Write state of SMS assembly to disk and restore on startup.
-Date: Tue, 01 Sep 2009 10:09:27 -0500
-Message-ID: <9b1cac640909010809g423184bbod704e5de5a27bf86@mail.gmail.com>
-In-Reply-To: <1250908843-10576-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 1/3] G1: Add initial HTC G1 modem support
+Date: Tue, 01 Sep 2009 12:13:26 -0500
+Message-ID: <200909011213.26591.denkenz@gmail.com>
+In-Reply-To: <20090830040656.GA28039@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5430366691566633665==
+--===============0034017722475212121==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Andres,
 
-On Fri, Aug 21, 2009 at 9:40 PM, Andrzej Zaborowski <
-andrew.zaborowski@intel.com> wrote:
-
-> This way we can continue receiving segmented messages over a reset or
-> crash.
-> ---
->  src/common.c     |   29 +++++++
->  src/common.h     |   10 +++
->  src/sim.c        |   34 --------
->  src/sms.c        |   14 +++-
->  src/smsutil.c    |  237
-> +++++++++++++++++++++++++++++++++++++++++++++++++++++-
->  src/smsutil.h    |    3 +-
->  unit/Makefile.am |    6 +-
->  unit/test-sms.c  |    4 +-
->  8 files changed, 293 insertions(+), 44 deletions(-)
+> This series adds support for the HTC G1 phone (that is, the Google
+> phone).
 >
->
-Somehow this patch fell through the cracks completely.  Can you rebase and
-resend?
-
-
+> G1 plugin is based on generic_at, with a bunch of stuff dropped
+> and simplified.  We use AT+CFUN=3D1 for powering on rather than having
+> a configurable init string.  We also manually set the default state
+> during init (the G1 appears to start in mode V0 by default).  The
+> device (/dev/smd0) is hardcoded.
+> +static gboolean connect_cb(GIOChannel *io, GIOCondition cond, gpointer
+> user) +{
+> +	struct ofono_modem *modem =3D user;
+> +	struct g1_data *d =3D ofono_modem_get_data(modem);
+> +	int err =3D 0;
+> +	gboolean success;
+> +	GAtSyntax *syntax;
 > +
-> +int create_dirs(const char *filename, const mode_t mode)
+> +	if (cond & G_IO_NVAL)
+> +		return FALSE;
+> +
+> +	if (cond & G_IO_OUT) {
+> +		int sock =3D g_io_channel_unix_get_fd(io);
+> +		socklen_t len =3D sizeof(err);
+> +
+> +		if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &err, &len) < 0)
+> +			err =3D errno =3D=3D ENOTSOCK ? 0 : errno;
+> +	} else if (cond & (G_IO_HUP | G_IO_ERR))
+> +		err =3D ECONNRESET;
+> +
+> +	success =3D !err;
+> +
+> +	DBG("io ref: %d", io->ref_count);
+> +
+> +	if (success =3D=3D FALSE)
+> +		goto error;
+> +
+> +	syntax =3D g_at_syntax_new_gsmv1();
+> +	d->chat =3D g_at_chat_new(io, syntax);
+> +	g_at_syntax_unref(syntax);
+> +
+> +	DBG("io ref: %d", io->ref_count);
+> +
+> +	if (!d->chat)
+> +		goto error;
+> +
+
+Since this is a tty, you probably don't need this function at all.
+
+> +static GIOChannel *tty_connect(const char *tty)
 > +{
->
-
-Can we move this part to storage.c instead of common.c to be more consistent
-with connman & bluez?
-
-
+> +	GIOChannel *io;
+> +	int sk;
+> +	struct termios newtio;
 > +
-> +#ifdef TEMP_FAILURE_RETRY
-> +#define TFR TEMP_FAILURE_RETRY
-> +#else
-> +#define TFR
-> +#endif
+> +	sk =3D open(tty, O_RDWR | O_NOCTTY);
 > +
-> +#include <fcntl.h>
+> +	if (sk < 0) {
+> +		ofono_error("Can't open TTY %s: %s(%d)",
+> +				tty, strerror(errno), errno);
+> +		return NULL;
+> +	}
 > +
-> +int create_dirs(const char *filename, const mode_t mode);
->
-
-storage.c as well.
-
-
-> +static GSList *sms_assembly_add_fragment_backup(struct sms_assembly
-> *assembly,
-> +                                       const struct sms *sms, time_t ts,
-> +                                       const struct sms_address *addr,
-> +                                       guint16 ref, guint8 max, guint8
-> seq,
-> +                                       gboolean backup);
+> +	newtio.c_cflag =3D B115200 | CRTSCTS | CLOCAL | CREAD;
+> +	newtio.c_iflag =3D IGNPAR;
+> +	newtio.c_oflag =3D 0;
+> +	newtio.c_lflag =3D 0;
 > +
-> +#define SMS_BACKUP_MODE 0600
-> +#define SMS_BACKUP_PATH STORAGEDIR "/%s/sms"
-> +#define SMS_BACKUP_PATH_DIR SMS_BACKUP_PATH "/%s-%i-%i"
-> +#define SMS_BACKUP_PATH_FILE SMS_BACKUP_PATH_DIR "/%03i"
+> +	newtio.c_cc[VTIME] =3D 1;
+> +	newtio.c_cc[VMIN] =3D 5;
 > +
-> +#define SMS_ADDR_FMT "%21[0-9+*#]"
->
-
-These really belong at the top of the file.  Includes, Defines, globals,
-forward declarations, structure definitions in that order.
-
-
+> +	tcflush(sk, TCIFLUSH);
+> +	if (tcsetattr(sk, TCSANOW, &newtio) < 0) {
+> +		ofono_error("Can't change serial settings: %s(%d)",
+> +				strerror(errno), errno);
+> +		close(sk);
+> +		return NULL;
+> +	}
 > +
-> +static void sms_assembly_load(struct sms_assembly *assembly,
-> +                               const struct dirent *dir)
+> +	io =3D g_io_channel_unix_new(sk);
+> +	g_io_channel_set_close_on_unref(io, TRUE);
+> +
+> +	if (g_io_channel_set_flags(io, G_IO_FLAG_NONBLOCK,
+> +					NULL) !=3D G_IO_STATUS_NORMAL) {
+> +		g_io_channel_unref(io);
+> +		return NULL;
+> +	}
+> +
+> +	return io;
+> +}
+
+You might want to see if using g_at_chat_new_from_tty works here.  If not, =
+
+then the opening the tty should be broken out into a separate utility funct=
+ion =
+
+that can be used from multiple drivers.
+
+> +static int g1_enable(struct ofono_modem *modem)
 > +{
-> +       for (; len--; free(segments[len])) {
->
-
-Please don't do such evilness.  I don't even understand how this can work.
-
-
-> +               fd =3D TFR(open(path, O_RDONLY));
-> +               g_free(path);
+> +	struct g1_data *d =3D ofono_modem_get_data(modem);
+> +	GIOChannel *io;
+> +	GIOCondition cond;
 > +
-> +               if (fd =3D=3D -1)
-> +                       continue;
+> +	DBG("");
 > +
-> +               if (fstat(fd, &segment_stat) !=3D 0) {
-> +                       TFR(close(fd));
-> +                       continue;
-> +               }
+> +	io =3D tty_connect(MODEM_DEVICE);
+> +	if (io =3D=3D NULL)
+> +		return -EINVAL;
 > +
-> +               r =3D TFR(read(fd, buf, sizeof(buf)));
->
+> +	DBG("io ref: %d", io->ref_count);
+> +
+> +	cond =3D G_IO_OUT | G_IO_ERR | G_IO_HUP | G_IO_NVAL;
+> +	g_io_add_watch_full(io, G_PRIORITY_DEFAULT, cond, connect_cb,
+> +				modem, connect_destroy);
+> +
+> +	DBG("io ref: %d", io->ref_count);
+> +
+> +	g_io_channel_unref(io);
+> +
+> +	DBG("io ref: %d", io->ref_count);
+> +	d->io =3D io;
+> +
+> +	return -EINPROGRESS;
+> +}
 
-This part should be a utility function in storage.c.  We repeat almost the
-same code in sim.c
+So I know the generic_at driver does this, but in a real device driver this=
+ is =
 
+wrong.  You should probably be using AT+CFUN=3D1 here.  If the g1 supports =
+even =
+
+more drastic power up/down options, then these should be used.
 
 > +
-> +               if (r > 0 && sms_deserialize(buf, &segment, r)) {
-> +                       if (sms_assembly_add_fragment_backup(assembly,
-> +                                               &segment,
-> +                                               segment_stat.st_mtime,
-> +                                               &addr, ref, max, seq,
-> FALSE)) {
-> +                               /* This can't happen */
-> +                       }
->
-
-We read it from the backup store and almost immediately overwrite the backup
-store?  Seems inefficient.
-
-
-> +       if (create_dirs(path, SMS_BACKUP_MODE | S_IXUSR)) {
-> +               g_free(path);
-> +               return FALSE;
-> +       }
+> +static int g1_disable(struct ofono_modem *modem)
+> +{
+> +	struct g1_data *d =3D ofono_modem_get_data(modem);
 > +
-> +       fd =3D TFR(open(path, O_WRONLY | O_CREAT, SMS_BACKUP_MODE));
-> +       if (fd =3D=3D -1) {
-> +               g_free(path);
-> +               return FALSE;
-> +       }
+> +	if (d->io) {
+> +		g_io_channel_close(d->io);
+> +		d->io =3D NULL;
+> +	}
 > +
-> +       if (TFR(write(fd, buf, len)) < len) {
-> +               TFR(close(fd));
-> +               unlink(path);
-> +               g_free(path);
-> +               return FALSE;
-> +       }
+> +	if (d->chat) {
+> +		g_at_chat_unref(d->chat);
+> +		d->chat =3D NULL;
+> +	}
 > +
-> +       g_free(path);
-> +       TFR(close(fd));
->
+> +	return 0;
+> +}
 
-Again, sounds like this should be a utility function in storage.c
+Same thing here.  AT+CFUN=3D0 or AT+CFUN=3D4.
 
-Regards,
+> +static int g1_init(void)
+> +{
+> +	int err;
+> +
+> +	err =3D ofono_modem_driver_register(&g1_driver);
+> +	if (err)
+> +		goto done;
+> +
+> +	g1_modem =3D ofono_modem_create("G1", "HTC G1");
+> +	if (!g1_modem) {
+> +		err =3D -EIO;
+> +		goto unreg;
+> +	}
+> +
+> +	err =3D ofono_modem_register(g1_modem);
+> +	if (err)
+> +		goto remove;
+> +
+> +	return 0;
+> +
+> +remove:
+> +	ofono_modem_remove(g1_modem);
+> +unreg:
+> +	ofono_modem_driver_unregister(&g1_driver);
+> +done:
+> +	return err;
+> +}
+> +
+
+I'd really like to see some sort of detection mechanism here.  Even if it i=
+s a =
+
+basic 'if exists /dev/smd0' or reading something from /proc.  As I don't =
+
+necessarily want to see the g1 showing up everywhere.
+
+Regads,
 -Denis
 
---===============5430366691566633665==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-SGkgQW5kcmV3LDxicj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPk9uIEZyaSwgQXVnIDIx
-LCAyMDA5IGF0IDk6NDAgUE0sIEFuZHJ6ZWogWmFib3Jvd3NraSA8c3BhbiBkaXI9Imx0ciI+Jmx0
-OzxhIGhyZWY9Im1haWx0bzphbmRyZXcuemFib3Jvd3NraUBpbnRlbC5jb20iIHRhcmdldD0iX2Js
-YW5rIj5hbmRyZXcuemFib3Jvd3NraUBpbnRlbC5jb208L2E+Jmd0Ozwvc3Bhbj4gd3JvdGU6PGJy
-PgoKPGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0iYm9yZGVyLWxlZnQ6IDFw
-eCBzb2xpZCByZ2IoMjA0LCAyMDQsIDIwNCk7IG1hcmdpbjogMHB0IDBwdCAwcHQgMC44ZXg7IHBh
-ZGRpbmctbGVmdDogMWV4OyI+ClRoaXMgd2F5IHdlIGNhbiBjb250aW51ZSByZWNlaXZpbmcgc2Vn
-bWVudGVkIG1lc3NhZ2VzIG92ZXIgYSByZXNldCBvcjxicj4KY3Jhc2guPGJyPgotLS08YnI+CqBz
-cmMvY29tbW9uLmMgoCCgIHwgoCAyOSArKysrKysrPGJyPgqgc3JjL2NvbW1vbi5oIKAgoCB8IKAg
-MTAgKysrPGJyPgqgc3JjL3NpbS5jIKAgoCCgIKB8IKAgMzQgLS0tLS0tLS08YnI+CqBzcmMvc21z
-LmMgoCCgIKAgoHwgoCAxNCArKystPGJyPgqgc3JjL3Ntc3V0aWwuYyCgIKB8IKAyMzcgKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKystPGJyPgqgc3Jj
-L3Ntc3V0aWwuaCCgIKB8IKAgoDMgKy08YnI+CqB1bml0L01ha2VmaWxlLmFtIHwgoCCgNiArLTxi
-cj4KoHVuaXQvdGVzdC1zbXMuYyCgfCCgIKA0ICstPGJyPgqgOCBmaWxlcyBjaGFuZ2VkLCAyOTMg
-aW5zZXJ0aW9ucygrKSwgNDQgZGVsZXRpb25zKC0pPGJyPgo8YnI+PC9ibG9ja3F1b3RlPjxkaXY+
-PGJyPlNvbWVob3cgdGhpcyBwYXRjaCBmZWxsIHRocm91Z2ggdGhlIGNyYWNrcyBjb21wbGV0ZWx5
-LqAgQ2FuIHlvdSByZWJhc2UgYW5kIHJlc2VuZD88YnI+oDwvZGl2PjxibG9ja3F1b3RlIGNsYXNz
-PSJnbWFpbF9xdW90ZSIgc3R5bGU9ImJvcmRlci1sZWZ0OiAxcHggc29saWQgcmdiKDIwNCwgMjA0
-LCAyMDQpOyBtYXJnaW46IDBwdCAwcHQgMHB0IDAuOGV4OyBwYWRkaW5nLWxlZnQ6IDFleDsiPgoK
-CgorPGJyPgoraW50IGNyZWF0ZV9kaXJzKGNvbnN0IGNoYXIgKmZpbGVuYW1lLCBjb25zdCBtb2Rl
-X3QgbW9kZSk8YnI+Cit7PGJyPjwvYmxvY2txdW90ZT48ZGl2Pjxicj5DYW4gd2UgbW92ZSB0aGlz
-IHBhcnQgdG8gc3RvcmFnZS5jIGluc3RlYWQgb2YgY29tbW9uLmMgdG8gYmUgbW9yZSBjb25zaXN0
-ZW50IHdpdGggY29ubm1hbiAmYW1wOyBibHVlej88YnI+oDwvZGl2PjxibG9ja3F1b3RlIGNsYXNz
-PSJnbWFpbF9xdW90ZSIgc3R5bGU9ImJvcmRlci1sZWZ0OiAxcHggc29saWQgcmdiKDIwNCwgMjA0
-LCAyMDQpOyBtYXJnaW46IDBwdCAwcHQgMHB0IDAuOGV4OyBwYWRkaW5nLWxlZnQ6IDFleDsiPgoK
-CgorPGJyPgorI2lmZGVmIFRFTVBfRkFJTFVSRV9SRVRSWTxicj4KKyNkZWZpbmUgVEZSIFRFTVBf
-RkFJTFVSRV9SRVRSWTxicj4KKyNlbHNlPGJyPgorI2RlZmluZSBURlI8YnI+CisjZW5kaWY8YnI+
-Cis8YnI+CisjaW5jbHVkZSAmbHQ7ZmNudGwuaCZndDs8YnI+Cis8YnI+CitpbnQgY3JlYXRlX2Rp
-cnMoY29uc3QgY2hhciAqZmlsZW5hbWUsIGNvbnN0IG1vZGVfdCBtb2RlKTs8YnI+PC9ibG9ja3F1
-b3RlPjxkaXY+PGJyPnN0b3JhZ2UuYyBhcyB3ZWxsLjxicj6gPC9kaXY+PGJsb2NrcXVvdGUgY2xh
-c3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0iYm9yZGVyLWxlZnQ6IDFweCBzb2xpZCByZ2IoMjA0LCAy
-MDQsIDIwNCk7IG1hcmdpbjogMHB0IDBwdCAwcHQgMC44ZXg7IHBhZGRpbmctbGVmdDogMWV4OyI+
-CgoKCitzdGF0aWMgR1NMaXN0ICpzbXNfYXNzZW1ibHlfYWRkX2ZyYWdtZW50X2JhY2t1cChzdHJ1
-Y3Qgc21zX2Fzc2VtYmx5ICphc3NlbWJseSw8YnI+CisgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAg
-oCCgIKAgoCCgIKAgoCBjb25zdCBzdHJ1Y3Qgc21zICpzbXMsIHRpbWVfdCB0cyw8YnI+CisgoCCg
-IKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCBjb25zdCBzdHJ1Y3Qgc21zX2FkZHJl
-c3MgKmFkZHIsPGJyPgorIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgZ3Vp
-bnQxNiByZWYsIGd1aW50OCBtYXgsIGd1aW50OCBzZXEsPGJyPgorIKAgoCCgIKAgoCCgIKAgoCCg
-IKAgoCCgIKAgoCCgIKAgoCCgIKAgZ2Jvb2xlYW4gYmFja3VwKTs8YnI+Cis8YnI+CisjZGVmaW5l
-IFNNU19CQUNLVVBfTU9ERSAwNjAwPGJyPgorI2RlZmluZSBTTVNfQkFDS1VQX1BBVEggU1RPUkFH
-RURJUiAmcXVvdDsvJXMvc21zJnF1b3Q7PGJyPgorI2RlZmluZSBTTVNfQkFDS1VQX1BBVEhfRElS
-IFNNU19CQUNLVVBfUEFUSCAmcXVvdDsvJXMtJWktJWkmcXVvdDs8YnI+CisjZGVmaW5lIFNNU19C
-QUNLVVBfUEFUSF9GSUxFIFNNU19CQUNLVVBfUEFUSF9ESVIgJnF1b3Q7LyUwM2kmcXVvdDs8YnI+
-Cis8YnI+CisjZGVmaW5lIFNNU19BRERSX0ZNVCAmcXVvdDslMjFbMC05KyojXSZxdW90Ozxicj48
-L2Jsb2NrcXVvdGU+PGRpdj48YnI+VGhlc2UgcmVhbGx5IGJlbG9uZyBhdCB0aGUgdG9wIG9mIHRo
-ZSBmaWxlLqAgSW5jbHVkZXMsIERlZmluZXMsIGdsb2JhbHMsIGZvcndhcmQgZGVjbGFyYXRpb25z
-LCBzdHJ1Y3R1cmUgZGVmaW5pdGlvbnMgaW4gdGhhdCBvcmRlci48YnI+oDxicj48L2Rpdj48Ymxv
-Y2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJib3JkZXItbGVmdDogMXB4IHNvbGlk
-IHJnYigyMDQsIDIwNCwgMjA0KTsgbWFyZ2luOiAwcHQgMHB0IDBwdCAwLjhleDsgcGFkZGluZy1s
-ZWZ0OiAxZXg7Ij4KCis8YnI+CitzdGF0aWMgdm9pZCBzbXNfYXNzZW1ibHlfbG9hZChzdHJ1Y3Qg
-c21zX2Fzc2VtYmx5ICphc3NlbWJseSw8YnI+CisgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCg
-IKAgY29uc3Qgc3RydWN0IGRpcmVudCAqZGlyKTxicj4KK3s8YnI+CisgoCCgIKAgZm9yICg7IGxl
-bi0tOyBmcmVlKHNlZ21lbnRzW2xlbl0pKSB7PGJyPjwvYmxvY2txdW90ZT48ZGl2Pjxicj5QbGVh
-c2UgZG9uJiMzOTt0IGRvIHN1Y2ggZXZpbG5lc3MuoCBJIGRvbiYjMzk7dCBldmVuIHVuZGVyc3Rh
-bmQgaG93IHRoaXMgY2FuIHdvcmsuPGJyPqA8L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxf
-cXVvdGUiIHN0eWxlPSJib3JkZXItbGVmdDogMXB4IHNvbGlkIHJnYigyMDQsIDIwNCwgMjA0KTsg
-bWFyZ2luOiAwcHQgMHB0IDBwdCAwLjhleDsgcGFkZGluZy1sZWZ0OiAxZXg7Ij4KKyCgIKAgoCCg
-IKAgoCCgIGZkID0gVEZSKG9wZW4ocGF0aCwgT19SRE9OTFkpKTs8YnI+CisgoCCgIKAgoCCgIKAg
-oCBnX2ZyZWUocGF0aCk7PGJyPgorPGJyPgorIKAgoCCgIKAgoCCgIKAgaWYgKGZkID09IC0xKTxi
-cj4KKyCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgY29udGludWU7PGJyPgorPGJyPgorIKAgoCCgIKAg
-oCCgIKAgaWYgKGZzdGF0KGZkLCAmYW1wO3NlZ21lbnRfc3RhdCkgIT0gMCkgezxicj4KKyCgIKAg
-oCCgIKAgoCCgIKAgoCCgIKAgVEZSKGNsb3NlKGZkKSk7PGJyPgorIKAgoCCgIKAgoCCgIKAgoCCg
-IKAgoCBjb250aW51ZTs8YnI+CisgoCCgIKAgoCCgIKAgoCB9PGJyPgorPGJyPgorIKAgoCCgIKAg
-oCCgIKAgciA9IFRGUihyZWFkKGZkLCBidWYsIHNpemVvZihidWYpKSk7PGJyPjwvYmxvY2txdW90
-ZT48ZGl2Pjxicj5UaGlzIHBhcnQgc2hvdWxkIGJlIGEgdXRpbGl0eSBmdW5jdGlvbiBpbiBzdG9y
-YWdlLmMuoCBXZSByZXBlYXQgYWxtb3N0IHRoZSBzYW1lIGNvZGUgaW4gc2ltLmM8YnI+oDwvZGl2
-PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9ImJvcmRlci1sZWZ0OiAxcHgg
-c29saWQgcmdiKDIwNCwgMjA0LCAyMDQpOyBtYXJnaW46IDBwdCAwcHQgMHB0IDAuOGV4OyBwYWRk
-aW5nLWxlZnQ6IDFleDsiPgoKKzxicj4KKyCgIKAgoCCgIKAgoCCgIGlmIChyICZndDsgMCAmYW1w
-OyZhbXA7IHNtc19kZXNlcmlhbGl6ZShidWYsICZhbXA7c2VnbWVudCwgcikpIHs8YnI+CisgoCCg
-IKAgoCCgIKAgoCCgIKAgoCCgIGlmIChzbXNfYXNzZW1ibHlfYWRkX2ZyYWdtZW50X2JhY2t1cChh
-c3NlbWJseSw8YnI+CisgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAg
-oCCgICZhbXA7c2VnbWVudCw8YnI+CisgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCg
-IKAgoCCgIKAgoCCgIHNlZ21lbnRfc3RhdC5zdF9tdGltZSw8YnI+CisgoCCgIKAgoCCgIKAgoCCg
-IKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgICZhbXA7YWRkciwgcmVmLCBtYXgsIHNlcSwg
-RkFMU0UpKSB7PGJyPgorIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIC8qIFRoaXMgY2Fu
-JiMzOTt0IGhhcHBlbiAqLzxicj4KKyCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgfTxicj48L2Jsb2Nr
-cXVvdGU+PGRpdj48YnI+V2UgcmVhZCBpdCBmcm9tIHRoZSBiYWNrdXAgc3RvcmUgYW5kIGFsbW9z
-dCBpbW1lZGlhdGVseSBvdmVyd3JpdGUgdGhlIGJhY2t1cCBzdG9yZT+gIFNlZW1zIGluZWZmaWNp
-ZW50Ljxicj6gPC9kaXY+PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0iYm9y
-ZGVyLWxlZnQ6IDFweCBzb2xpZCByZ2IoMjA0LCAyMDQsIDIwNCk7IG1hcmdpbjogMHB0IDBwdCAw
-cHQgMC44ZXg7IHBhZGRpbmctbGVmdDogMWV4OyI+CgorIKAgoCCgIGlmIChjcmVhdGVfZGlycyhw
-YXRoLCBTTVNfQkFDS1VQX01PREUgfCBTX0lYVVNSKSkgezxicj4KKyCgIKAgoCCgIKAgoCCgIGdf
-ZnJlZShwYXRoKTs8YnI+CisgoCCgIKAgoCCgIKAgoCByZXR1cm4gRkFMU0U7PGJyPgorIKAgoCCg
-IH08YnI+Cis8YnI+CisgoCCgIKAgZmQgPSBURlIob3BlbihwYXRoLCBPX1dST05MWSB8IE9fQ1JF
-QVQsIFNNU19CQUNLVVBfTU9ERSkpOzxicj4KKyCgIKAgoCBpZiAoZmQgPT0gLTEpIHs8YnI+Cisg
-oCCgIKAgoCCgIKAgoCBnX2ZyZWUocGF0aCk7PGJyPgorIKAgoCCgIKAgoCCgIKAgcmV0dXJuIEZB
-TFNFOzxicj4KKyCgIKAgoCB9PGJyPgorPGJyPgorIKAgoCCgIGlmIChURlIod3JpdGUoZmQsIGJ1
-ZiwgbGVuKSkgJmx0OyBsZW4pIHs8YnI+CisgoCCgIKAgoCCgIKAgoCBURlIoY2xvc2UoZmQpKTs8
-YnI+CisgoCCgIKAgoCCgIKAgoCB1bmxpbmsocGF0aCk7PGJyPgorIKAgoCCgIKAgoCCgIKAgZ19m
-cmVlKHBhdGgpOzxicj4KKyCgIKAgoCCgIKAgoCCgIHJldHVybiBGQUxTRTs8YnI+CisgoCCgIKAg
-fTxicj4KKzxicj4KKyCgIKAgoCBnX2ZyZWUocGF0aCk7PGJyPgorIKAgoCCgIFRGUihjbG9zZShm
-ZCkpOzxicj48L2Jsb2NrcXVvdGU+PGRpdj48YnI+QWdhaW4sIHNvdW5kcyBsaWtlIHRoaXMgc2hv
-dWxkIGJlIGEgdXRpbGl0eSBmdW5jdGlvbiBpbiBzdG9yYWdlLmM8YnI+PGJyPjwvZGl2PjxkaXY+
-UmVnYXJkcyw8YnI+LURlbmlzIDxicj48L2Rpdj48L2Rpdj48YnI+Cg==
-
---===============5430366691566633665==--
+--===============0034017722475212121==--
 
