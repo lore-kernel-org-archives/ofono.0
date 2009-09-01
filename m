@@ -1,43 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============5323904248943897346=="
+Content-Type: multipart/mixed; boundary="===============8028729478586692288=="
 MIME-Version: 1.0
-From: Jean-Christian de Rivaz <jc@eclis.ch>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
 Subject: Re: GPRS support for Ofono
-Date: Tue, 01 Sep 2009 22:17:36 +0200
-Message-ID: <4A9D8160.6000404@eclis.ch>
-In-Reply-To: <200909012225.47712.remi@remlab.net>
+Date: Tue, 01 Sep 2009 23:26:01 +0300
+Message-ID: <200909012326.01493.remi@remlab.net>
+In-Reply-To: <4A9D8160.6000404@eclis.ch>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5323904248943897346==
+--===============8028729478586692288==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-R=C3=A9mi Denis-Courmont a =C3=A9crit :
-> Le mardi 1 septembre 2009 22:02:43 Jean-Christian de Rivaz, vous avez =C3=
+Le mardi 1 septembre 2009 23:17:36 Jean-Christian de Rivaz, vous avez =C3=
 =A9crit :
->> With GPRS support, Ofono become very interesting!
->>
->> I failed to understand how the "isi_gprs" code in your patch communicate
->> with a PPP stack.
-> =
+> Thanks for the explanation. I will start learning how phonet works. But
+> I expect there exists a PPP stack somewhere in phonet because the modem
+> I use don't have one.
 
-> That would be because it does NOT use a PPP stack.
-> =
+ISI modems have a PPP "server-side" implementation to handle USB CDC ACM an=
+d =
 
-> ISI modems have their own IP path using a dedicated kernel driver =
+BlueTooth DUN. But there is only one instance per modem, so we reserve it f=
+or =
 
-> (net/phonet/pep-gprs.c in Linux 2.6.28 amd later). There is no point in u=
-sing =
+the dumb Windows PC that we may be connected to ;)
 
-> the PPP line discipline.
+> And I don't think it's possible to have a IP link
+> over GPRS without the PPP protocol between them.
 
-Thanks for the explanation. I will start learning how phonet works. But
-I expect there exists a PPP stack somewhere in phonet because the modem
-I use don't have one. And I don't think it's possible to have a IP link
-over GPRS without the PPP protocol between them.
+It might be possible in the standard, but I have not found any network =
 
-Jean-Christian de Rivaz
+offering such a PP over GPRS data service.
 
---===============5323904248943897346==--
+-- =
+
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net/
+
+--===============8028729478586692288==--
 
