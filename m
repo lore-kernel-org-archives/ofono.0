@@ -1,34 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============8422130982252948365=="
+Content-Type: multipart/mixed; boundary="===============5953660618541865004=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] G1: Add a G1 syntax for parsing
-Date: Tue, 01 Sep 2009 12:14:55 -0500
-Message-ID: <200909011214.56106.denkenz@gmail.com>
-In-Reply-To: <20090830040708.GA28068@mycelium.queued.net>
+Subject: Re: [PATCH 3/3] G1: Add G1-specific SMS support
+Date: Tue, 01 Sep 2009 12:16:56 -0500
+Message-ID: <200909011216.56476.denkenz@gmail.com>
+In-Reply-To: <20090830040718.GA28091@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8422130982252948365==
+--===============5953660618541865004==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andres,
 
-> This is based on the generic_at parser, with unnecessary stuff removed.
+> This is based on the atmodem SMS code, with lots of stuff dropped.
 >
-> The G1 routinely screws up CRLFs, so the parser needs to account for
-> that.  This parser ignores leading CRLFs (which is what reference-ril
-> does as well), as well as trailing LFs (which are sometimes left out).
-> CRs are used as end-of-message indicators.  Since we're not bothering
-> tracking CRLFs, there's also no need for a GARBAGE state, or MULTILINE
-> stuff.
-> ---
+> The G1's modem advertises support for CNMI mode 2, but attempting to
+> set that actually fails.  Instead, we _need_ to use mode 1.  Along
+> those lines, CNMA doesn't appear to work properly, so we disable it
+> and use CMTI rather than CMT for PDUs.  CDS notifications (for status
+> notifications) are disabled completely.
 
-This one looks fine to me.
+So as we discussed on IRC, this one should really be rolled up into the =
+
+generic_at sms driver, since the only change of substance is the cnmi mode =
+
+selection specific to the g1.  We need a driver quirk system to be figured =
+out =
+
+first though.
 
 Regards,
 -Denis
 
---===============8422130982252948365==--
+--===============5953660618541865004==--
 
