@@ -1,85 +1,118 @@
-Content-Type: multipart/mixed; boundary="===============0130123357509737957=="
+Content-Type: multipart/mixed; boundary="===============4657965112512124746=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
 Subject: Re: GPRS support for Ofono
-Date: Wed, 02 Sep 2009 10:28:52 -0500
-Message-ID: <200909021028.52347.denkenz@gmail.com>
-In-Reply-To: <a32762a20909020534r5d169e36id3ddbb981ca9d187@mail.gmail.com>
+Date: Wed, 02 Sep 2009 18:38:29 +0300
+Message-ID: <200909021838.29834.remi@remlab.net>
+In-Reply-To: <200909021000.23069.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0130123357509737957==
+--===============4657965112512124746==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Le mercredi 2 septembre 2009 18:00:22 Denis Kenzior, vous avez =C3=A9crit :
+> Actually this one is missing from the API proposal.  Marcel already wanted
+> the context type (internet, mms, wap, etc) information.  I've updated the
+> proposed API in git.
 
-> > We are not going to expose Attach() or Detach() method. As explained
-> > there are global anyway and so pointless to expose. This can be handled
-> > in the background without bothering the higher level application with
-> > these details.
+This is not going to work.
+
+Depending on the operator, you may have more than one "type" for a single =
+
+context (e.g. WAP+MMS), or worse, multiple contexts of the same type (e.g. =
+
+Internet with only Web and Internet with full IP).
+
+> As discussed previously, we want oFono to manage this data, since it can =
+do
+> this by using the IMSI.  So if you insert a different operator SIM your A=
+PN
+> settings are magically updated for that operator.
+
+I have a feeling this does not work either. If I upgrade my subscription, t=
+he =
+
+APN may change while not the IMSI, no?
+
+> > In my proposal the "Status" variable was a three-state variable,
+> > having the states "attached", "detached" and "suspended". "Suspended"
+> > was specified to mean that the GPRS was attached, but temporarily not
+> > available (for instance because of a 2G phone call or temporary loss
+> > of cellular connectivity). In the IRC discussion someone said that
+> > this property would not be part of Denis's API because the tri-state
+> > variables were bad and the "suspended" status was not supported by
 >
-> AFAIK, attach status of GPRS has both regulatory aspects to consider
-> (some operators require always attached vs. some prohibit it) as well
-> as power consumption issues (auto-attach might draw more power than
-> on-demand, although there's an inverse effect on latency). These are
-> issues you need to take into account, and higher layers in the stack
-> definitely *need* to be aware of as well. Also, I don' t think oFono
-> is the correct place for these decisions -> better expose a necessary
-> API and let upper layers deal with it.
+> So the general rule is that if a feature isn't explicitly allowed in
+> 27.007, we do not support it.  There are exceptions to this of course. =
 
-I know you guys are coming from mobile phone perspective, but that one isn'=
-t =
+> 27.007 only supports two states for context: activated and deactivated.
 
-the only scenario.  We have netbooks/laptops with gprs data cards to consid=
-er =
+Our general rule is that if we have a UI requirement, or better an actual u=
+se =
 
-as well.  Hardcoding operator requirements is also not an option, since SIM =
+case for it, we support it. Suspended GPRS fits both.
 
-cards can be changed.
-
-I fundamentally disagree that the logic should be in the higher layers.  oF=
-ono =
-
-has all the information to handle this, and can be hinted on what is =
-
-appropriate behavior easily enough.  oFono should simply store the auto-att=
-ach =
-
-preferences in its IMSI-indexed preference store.  The operator can bootstr=
-ap =
-
-these preferences if required.
-
+> > spec 27.007. However, the problem is that Maemo 5 already has UI
+> > support for indicating that the connection is suspended, and that
+> > makes it harder to drop the feature. Could the "suspended" status enum
+> > still be left there, and just have the modems that don't support the
+> > feature to never go to "suspended" mode?
 >
-> In general, I appreciate the attempt to hide ugly details from
-> applications, but unfortunately some things can't well be hidden.
-> Another unrelated, but similar issue is network scanning. It just
-> isn't going to work without us exposing it in the D-Bus API
-> explicitly.
+> I'd rather not.
 >
+> If this feature is really required, then some sort of heuristic can be
+> applied.  (e.g. Powered on, Attached on, but context is deactivated most
+> likely means temporary unavailability of resources)
 
-Modem drivers will have some control over whether the scan is performed =
+Is this some kind of joke? Don't you know the difference between pause and =
 
-automatically, but denying the capability for everyone is not the right thi=
-ng =
+stop on your MP3 player and between suspend to memory and power off on your =
 
-to do either.
+computer?
 
-> The reason is simple, Nokia modems suspend GPRS when scanning (or
-> registering), simply because the operation will take roughly three
-> times as long with GPRS attached. You will find this feature in
-> current phones, too.
+Second guessing does not fit in my definition of "easy to use self-
+documenting" for an API.
 
-Then ideally you should have two scan modes, periodic and user initiated.  =
-For =
+> This really belong in the kernel.  Only the kernel can reliably know when=
+ a
+> network interface has been brought down and notify the interested
+> applications with the statistics.
 
-periodic mode we don't care how long it takes. =
+You're missing the point.
 
+Yes, any body can extract the statistics for a running context. But data =
 
-Regards,
--Denis
+counters are cumulating. To compute the sum properly, there are but two =
 
---===============0130123357509737957==--
+options:
+# Either the GPRS middleware requests kernel per-interface statistics right =
+
+before destroying the interface, and sums with the earlier total.
+# Or the modem does it internally.
+
+There is no way some random userland interface application can do it just b=
+y =
+
+requesting the kernel, since it cannot know when to request those statistic=
+s.
+
+> Nokia hardware supports this explicitly, but many others don't.
+
+That's irrelevant. Hardware support helps in the sense that it can include =
+
+statistics for contexts external to Ofono. If the hardware does not support =
+
+it, then it needs to be done manually in the GPRS middleware.
+
+That won't make the requirement go away.
+
+-- =
+
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net/
+
+--===============4657965112512124746==--
 
