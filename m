@@ -1,86 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============1603340690452366894=="
+Content-Type: multipart/mixed; boundary="===============6048695390119092210=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
 Subject: Re: GPRS support for Ofono
-Date: Tue, 01 Sep 2009 17:50:25 -0500
-Message-ID: <200909011750.26044.denkenz@gmail.com>
+Date: Wed, 02 Sep 2009 08:39:31 +0200
+Message-ID: <8ecd5e23a3430057ddafaddb86c1def2@chewa.net>
 In-Reply-To: <1251844960.1266.53.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1603340690452366894==
+--===============6048695390119092210==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
 
-> > Service		org.ofono
-> > Interface	org.ofono.DataConnectionManager
->
-> I think this should be GPRSManager or something to clearly separate
-> between GRPS connections and actual data connection,
+On Tue, 01 Sep 2009 15:42:40 -0700, Marcel Holtmann <marcel@holtmann.org>
+wrote:
 
-Two reasons for this:
-	- Purpose of DataConnectionManager is easier to understand for people new =
-to =
+> Our current assumption is that the basic setup of IP address, netmask
+> and broadcast are done by oFono. Only routing and DNS are up to other
+> programs like ConnMan for example.
 
-GSM.  Whereas GPRSManager really doesn't tell them anything.  Everywhere el=
-se =
+WHAAAAAAAAAAT? No way. There is just no way.
 
-we tend to use more easily understood terminology than what is used in the =
+We need to support letting the calling program configure the routing
+parameters manually. For instance, if we want to connect to multiple
+primary access points, it simply won't work if Ofono configures everything.
+Instead, we need to either setup source routing or separate network
+name-spaces. Ofono does not know what the caller intends to do with the APN
+(and should not need to), so it cannot configure IP parameters. Besides, it
+makes very little if any sense to configure IP parameters but not DNS.
 
-specifications.
+-- =
 
-	- GPRS is not easily Carmel-cased.  E.g. we'd have to name it GprsManager.
+R=C3=A9mi Denis-Courmont
 
-> > 		object RemoveContext()
-> >
-> > 			Removes a primary context.  All secondary contexts, if
-> > 			any, associated with the primary context are also
-> > 			removed.
->
-> I assume this is void RemoveContext(object context)
 
-You're absolutely correct.
-
-> > Properties	array{object} PrimaryContexts [readonly]
-> >
-> > 			List of all primary contexts objects.
->
-> Calling this just Contexts seems to more reasonable. See comment about
-> interface name below.
-
-That sounds fine to me.
-
-> > Primary Data Context hierarchy
-> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> >
-> > Service		org.ofono
-> > Interface	org.ofono.PrimaryDataContext
->
-> I would prefer if we just call this GRPSContext and explain that this is
-> for the primary context. The confusion between primary context and
-> secondary context is some GSM specific non-sense.
-
-Should we just simply name this 'Context' and name the secondary pdp contex=
-t =
-
-'SubContext'?
-
-> > 		array{string} DomainNameServers [readonly, optional]
-> >
-> > 			Holds the list of domain name servers for this
-> > 			context.
->
-> What about the gateway value. In theory we can just route it to the
-> interface, but if the device fakes a real Ethernet interface and the
-> gateway is in a different subnet we need a proper host route first.
-
-Yes, this one needs to be added.  Good catch.
-
-Regards,
--Denis
-
---===============1603340690452366894==--
+--===============6048695390119092210==--
 
