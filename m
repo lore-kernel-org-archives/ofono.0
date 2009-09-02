@@ -1,57 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============9157963663256586082=="
+Content-Type: multipart/mixed; boundary="===============3382756580150835769=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: GPRS support for Ofono
-Date: Thu, 03 Sep 2009 00:10:59 +0300
-Message-ID: <200909030010.59564.remi@remlab.net>
-In-Reply-To: <1251925263.1266.124.camel@localhost.localdomain>
+Date: Wed, 02 Sep 2009 14:18:50 -0700
+Message-ID: <1251926330.1266.129.camel@localhost.localdomain>
+In-Reply-To: <200909030010.59564.remi@remlab.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9157963663256586082==
+--===============3382756580150835769==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Le jeudi 3 septembre 2009 00:01:03 Marcel Holtmann, vous avez =C3=A9crit :
-> > It's probably difficult if the PC client is allowed to redefine GPRS
-> > contexts, but otherwise oFono should at least be able to report the tot=
-al
-> > tx/rx for the context's it has defined. The BT DUN / USB bridge could
-> > call into oFono and trigger a poll of all the stats to update them, e.g.
-> > when a BT DUN connection is disconnected.
->
-> how should it do this if oFono is not in the mix. If you are using
-> Bluetooth DUN and point it to a virtual TTY, then you are out of look.
-> If using USB CDC ACM then same applies.
->
-> The real solution here is Bluetooth PAN and USB CDC Ether which do
-> properly interact with the networking stack.
+Hi Remi,
 
-When we have patched all the Windows PC of the world, we can consider it.
+> > > It's probably difficult if the PC client is allowed to redefine GPRS
+> > > contexts, but otherwise oFono should at least be able to report the t=
+otal
+> > > tx/rx for the context's it has defined. The BT DUN / USB bridge could
+> > > call into oFono and trigger a poll of all the stats to update them, e=
+.g.
+> > > when a BT DUN connection is disconnected.
+> >
+> > how should it do this if oFono is not in the mix. If you are using
+> > Bluetooth DUN and point it to a virtual TTY, then you are out of look.
+> > If using USB CDC ACM then same applies.
+> >
+> > The real solution here is Bluetooth PAN and USB CDC Ether which do
+> > properly interact with the networking stack.
+> =
 
-In the mean time, AT+PPP emulation is required. Some modems do provide data =
+> When we have patched all the Windows PC of the world, we can consider it.
 
-counters including that. I've seen it as a requirement that I would rather =
+my approach would be to try and see how far we get this pushing towards
+PAN and CDC Ether :)
 
-have avoided but could not. It's ugly and arguably stupid, but required =
+> In the mean time, AT+PPP emulation is required. Some modems do provide da=
+ta =
 
-anyway. In fact, if Ofono won't do it, ConnMan will have to, which is proba=
-bly =
+> counters including that. I've seen it as a requirement that I would rathe=
+r =
 
-by all means worse.
+> have avoided but could not. It's ugly and arguably stupid, but required =
 
-You can argue that it should be a driver-specific feature, but it has to be =
+> anyway. In fact, if Ofono won't do it, ConnMan will have to, which is pro=
+bably =
 
-there. Hence, I would guess that more than one driver will support eventual=
-ly, =
+> by all means worse.
 
-at which point it should probably be in the common API.
+Actually it is worth for high-speed modems with a network interface and
+no internal PPP emulation, we would have to do that emulation somewhere
+in the host stack. And now my brain hurts :(
 
--- =
+> You can argue that it should be a driver-specific feature, but it has to =
+be =
 
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net/
+> there. Hence, I would guess that more than one driver will support eventu=
+ally, =
 
---===============9157963663256586082==--
+> at which point it should probably be in the common API.
+
+We have to figure something out, but right I would prefer if we GPRS up
+and running and after that tackle the statistics part. Since without
+GPRS, we don't need the statistics ;)
+
+Regards
+
+Marcel
+
+
+
+--===============3382756580150835769==--
 
