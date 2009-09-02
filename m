@@ -1,71 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============3052208124607774273=="
+Content-Type: multipart/mixed; boundary="===============8514181354355453724=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: GPRS support for Ofono
-Date: Wed, 02 Sep 2009 10:36:09 -0500
-Message-ID: <200909021036.09618.denkenz@gmail.com>
-In-Reply-To: <a32762a20909020832j4084cb9dud84f7304dfc9c440@mail.gmail.com>
+Date: Wed, 02 Sep 2009 11:26:16 -0500
+Message-ID: <200909021126.16772.denkenz@gmail.com>
+In-Reply-To: <200909021838.29834.remi@remlab.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3052208124607774273==
+--===============8514181354355453724==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi Remi,
 
-> Hi Denis,
+> Le mercredi 2 septembre 2009 18:00:22 Denis Kenzior, vous avez =C3=A9crit=
+ :
+> > Actually this one is missing from the API proposal.  Marcel already
+> > wanted the context type (internet, mms, wap, etc) information.  I've
+> > updated the proposed API in git.
 >
-> 2009/9/2 Denis Kenzior <denkenz@gmail.com>:
-> > So the general rule is that if a feature isn't explicitly allowed in
-> > 27.007, we do not support it.  There are exceptions to this of course.
-> >  27.007 only supports two states for context: activated and deactivated.
+> This is not going to work.
 >
-> Ahem. Just like access selection mode is not in 27.007, yet Nokia has
-> it, and most AT modems have proprietary commands to query and set it
-> [1]. Maybe you call that the necessary exception to the rule, but I
-> think we might as well change the rule to:
+> Depending on the operator, you may have more than one "type" for a single
+> context (e.g. WAP+MMS), or worse, multiple contexts of the same type (e.g.
+> Internet with only Web and Internet with full IP).
 
-So my stance on BandSelection is that we want a standard interface _if and =
+Worst case we make the field completely freeform.  Right now we really only =
 
-only if_ we can support it reliably across the majority of modems.  You mig=
-ht =
-
-still find me telling every modem manufacturer to simply implement their ow=
-n =
-
-BandSelection interface if this cannot be done.
-
-The same goes for Neighbor Cell Info or any other stuff that isn't mandated=
- by =
-
-27.007.
+care about "internet" type for connman.
 
 >
-> >> spec 27.007. However, the problem is that Maemo 5 already has UI
-> >> support for indicating that the connection is suspended, and that
-> >> makes it harder to drop the feature. Could the "suspended" status enum
-> >> still be left there, and just have the modems that don't support the
-> >> feature to never go to "suspended" mode?
-> >
-> > I'd rather not.
-> >
-> > If this feature is really required, then some sort of heuristic can be
-> > applied.  (e.g. Powered on, Attached on, but context is deactivated most
-> > likely means temporary unavailability of resources)
+> > As discussed previously, we want oFono to manage this data, since it can
+> > do this by using the IMSI.  So if you insert a different operator SIM
+> > your APN settings are magically updated for that operator.
 >
-> You want the UI to implement this heuristic, when the modem plugin has
-> explicit knowledge of that state, but isn't telling? Please explain
-> how that makes the UI simpler?
+> I have a feeling this does not work either. If I upgrade my subscription,
+> the APN may change while not the IMSI, no?
 
-Then expose this signal on Nokia-only interface and be done with it.  Why d=
-oes =
+Yes, but then you will probably receive an SMS/OTA message with new connect=
+ion =
 
-everything have to be part of the oFono official APIs?
+details.  Which either oFono or some external application will apply to you=
+r =
+
+GPRS settings.
+
+> > This really belong in the kernel.  Only the kernel can reliably know wh=
+en
+> > a network interface has been brought down and notify the interested
+> > applications with the statistics.
+>
+> You're missing the point.
+>
+> Yes, any body can extract the statistics for a running context. But data
+> counters are cumulating. To compute the sum properly, there are but two
+> options:
+> # Either the GPRS middleware requests kernel per-interface statistics rig=
+ht
+> before destroying the interface, and sums with the earlier total.
+> # Or the modem does it internally.
+
+I know why you want this, but I'm still against the counter being an oFono =
+
+driver API.  There needs to be a proper kernel interface that signals the =
+
+application when an interface has gone away with the rx/tx details.  This w=
+ay =
+
+we handle this generically for all modems without relying on some intrinsic =
+
+hardware capabilities.
+
+The rx/tx counter not being reported via PropertyChanged is also a bad idea =
+
+since it breaks our API conventions.  I can deal with a one-time signal bei=
+ng =
+
+emitted when the interface has gone away though.
 
 Regards,
 -Denis
 
---===============3052208124607774273==--
+--===============8514181354355453724==--
 
