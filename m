@@ -1,79 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============0231761514234518904=="
+Content-Type: multipart/mixed; boundary="===============4854813392261393009=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: GPRS support for Ofono
-Date: Wed, 02 Sep 2009 14:01:03 -0700
-Message-ID: <1251925263.1266.124.camel@localhost.localdomain>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C9680035E2@orsmsx508.amr.corp.intel.com>
+Subject: Re: GPRS support for Ofono
+Date: Wed, 02 Sep 2009 14:09:33 -0700
+Message-ID: <1251925773.1266.126.camel@localhost.localdomain>
+In-Reply-To: <200909021536.11275.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0231761514234518904==
+--===============4854813392261393009==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
+Hi Denis,
 
-> > > > I know why you want this, but I'm still against the counter being an
-> > > > oFono driver API.  There needs to be a proper kernel interface that
-> > > > signals the application when an interface has gone away with the rx=
-/tx
-> > > > details.  This way we handle this generically for all modems without
-> > > > relying on some intrinsic hardware capabilities.
+> > > >> The reason is simple, Nokia modems suspend GPRS when scanning (or
+> > > >> registering), simply because the operation will take roughly three
+> > > >> times as long with GPRS attached. You will find this feature in
+> > > >> current phones, too.
+> > > >
+> > > > Then ideally you should have two scan modes, periodic and user
+> > > > initiated.  For periodic mode we don't care how long it takes.
 > > >
-> > > This still doesn't solve the case where the modem is accessed from a =
-PC
-> > > client and forwards PPP data as that data will not go through any
-> > > network interface, e.g. BT DUN or USB tethering.
-> > =
-
-> > The cases you describe imply that oFono is not even in control of the g=
-prs
-> > context.  How would we track/report the tx/rx statistics in that case?
+> > > +1
+> >
+> > Sounds like a plan. So we do need an /etc/ofono/main.conf :)
 > =
 
-> It's probably difficult if the PC client is allowed to redefine GPRS cont=
-exts, but otherwise oFono should at least be able to report the total tx/rx=
- for the context's it has defined. The BT DUN / USB bridge could call into =
-oFono and trigger a poll of all the stats to update them, e.g. when a BT DU=
-N connection is disconnected.
+> So my current thinking is to introduce a method to NetworkRegistration =
 
-how should it do this if oFono is not in the mix. If you are using
-Bluetooth DUN and point it to a virtual TTY, then you are out of look.
-If using USB CDC ACM then same applies.
+> property called 'ProposeOperatorScan' and a new property called =
 
-The real solution here is Bluetooth PAN and USB CDC Ether which do
-properly interact with the networking stack.
+> 'OperatorScanInterval'.  The driver api can then support a (non-standard =
 
-> > > The modem is really in the best position to provide the most reliable
-> > > information on data usage. You can still use statistics from the netw=
-ork
-> > > interfaces as a fall-back in case the modem can not provide this
-> > > information.
-> > =
-
-> > I don't disagree, but not every modem can track these statistics and th=
-is
-> > isn't described by 27.007.  I suggest the initial support should be
-> > enabled by the modem driver implementing a custom D-Bus interface and =
-
-> > expose these details however it wishes.
+> *gasp*) option to say whether this scan was initiated actively or not.
 > =
 
-> The modem driver has no desires of its own :-) It really comes down to wh=
-at the UI needs and I doubt that the UI wants to deal with this on a modem =
-by modem basis, but sure it's a possibility.
+> Maybe the Nokia modems can use this information not to drop the GPRS link=
+ if =
 
-The current consent is that we might send a one time signal with all
-statistics details once the interface goes away. Or we can make the
-kernel help us here.
+> it isn't an active scan being performed.
 
-However I prefer that we sit this out a little and play with what is
-possible before knocking down an API. I am not even sure what different
-hardware would give us and how things need to work. I don't see us
-having enough information to understand what is needed from a hardware,
-driver or oFono core point of view.
+I really prefer if we put this into /etc/ofono/main.conf since the UI
+should not configure this at all. It is more a one time setting based on
+what the integrator expects as a behavior.
 
 Regards
 
@@ -81,5 +52,5 @@ Marcel
 
 
 
---===============0231761514234518904==--
+--===============4854813392261393009==--
 
