@@ -1,45 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============4909167916039533463=="
+Content-Type: multipart/mixed; boundary="===============7531834081540253563=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: RE: GPRS support for Ofono
-Date: Wed, 02 Sep 2009 10:51:33 -0700
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C96800356B@orsmsx508.amr.corp.intel.com>
-In-Reply-To: <1251896518.1266.100.camel@localhost.localdomain>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: GPRS support for Ofono
+Date: Wed, 02 Sep 2009 12:46:00 -0500
+Message-ID: <200909021246.01315.denkenz@gmail.com>
+In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C968003549@orsmsx508.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4909167916039533463==
+--===============7531834081540253563==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> > > I am still not seeing the point in what suspended will do for us and
-> > > the UI. And that Maemo 5 exposed such a state in the UI is not an =
+Hi Waldo,
 
-> > > argument to keep doing it. I asked this before, what are we suppose t=
-o =
+> > I know why you want this, but I'm still against the counter being an
+> > oFono driver API.  There needs to be a proper kernel interface that
+> > signals the application when an interface has gone away with the rx/tx
+> > details.  This way we handle this generically for all modems without
+> > relying on some intrinsic hardware capabilities.
+>
+> This still doesn't solve the case where the modem is accessed from a PC
+> client and forwards PPP data as that data will not go through any network
+> interface, e.g. BT DUN or USB tethering.
 
-> > > be doing when we get signaled suspended?
-> >
-> > User, as well as intelligent (connectivity-aware) applications, need to
-> > know about this so that they understand why "Internet" is momentarily
-> > broken. It's as simple as that.
+The cases you describe imply that oFono is not even in control of the gprs =
 
-+1
+context.  How would we track/report the tx/rx statistics in that case?
 
-> > Oh we could also use the network device carrier flag, and then use
-> > Netlink (and we probably should do that too), but we all know how =
+>
+> The modem is really in the best position to provide the most reliable
+> information on data usage. You can still use statistics from the network
+> interfaces as a fall-back in case the modem can not provide this
+> information.
 
-> > horrible Netlink is from userland.
-> =
+I don't disagree, but not every modem can track these statistics and this =
 
-> Using IFF_RUNNING and IFF_LOWER_UP sounds more reasonable then some
-> suspended state.
+isn't described by 27.007.  I suggest the initial support should be enabled=
+ by =
 
-IF_OPER_DORMANT seems a more accurate reflection of the state.
+the modem driver implementing a custom D-Bus interface and expose these =
 
-Cheers,
-Waldo
+details however it wishes.
 
---===============4909167916039533463==--
+Regards,
+-Denis
+
+--===============7531834081540253563==--
 
