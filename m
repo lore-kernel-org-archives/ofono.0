@@ -1,56 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============2532044878576901176=="
+Content-Type: multipart/mixed; boundary="===============2865233160556687914=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: RE: GPRS support for Ofono
-Date: Wed, 02 Sep 2009 11:41:17 -0700
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9680035E2@orsmsx508.amr.corp.intel.com>
-In-Reply-To: <200909021246.01315.denkenz@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: GPRS support for Ofono
+Date: Wed, 02 Sep 2009 13:37:43 -0700
+Message-ID: <1251923864.1266.104.camel@localhost.localdomain>
+In-Reply-To: <a32762a20909020842q1005da84s1a6816be5e103d2e@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2532044878576901176==
+--===============2865233160556687914==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> > > I know why you want this, but I'm still against the counter being an
-> > > oFono driver API.  There needs to be a proper kernel interface that
-> > > signals the application when an interface has gone away with the rx/tx
-> > > details.  This way we handle this generically for all modems without
-> > > relying on some intrinsic hardware capabilities.
+Hi Aki,
+
+> >> AFAIK, attach status of GPRS has both regulatory aspects to consider
+> >> (some operators require always attached vs. some prohibit it) as well
+> >> as power consumption issues (auto-attach might draw more power than
+> >> on-demand, although there's an inverse effect on latency). These are
+> >> issues you need to take into account, and higher layers in the stack
+> >> definitely *need* to be aware of as well. Also, I don' t think oFono
+> >> is the correct place for these decisions -> better expose a necessary
+> >> API and let upper layers deal with it.
 > >
-> > This still doesn't solve the case where the modem is accessed from a PC
-> > client and forwards PPP data as that data will not go through any
-> > network interface, e.g. BT DUN or USB tethering.
+> > I know you guys are coming from mobile phone perspective, but that one =
+isn't
+> > the only scenario.  We have netbooks/laptops with gprs data cards to co=
+nsider
+> > as well.  Hardcoding operator requirements is also not an option, since=
+ SIM
+> > cards can be changed.
+> >
+> > I fundamentally disagree that the logic should be in the higher layers.=
+  oFono
+> > has all the information to handle this, and can be hinted on what is
+> > appropriate behavior easily enough.  oFono should simply store the auto=
+-attach
+> > preferences in its IMSI-indexed preference store.  The operator can boo=
+tstrap
+> > these preferences if required.
 > =
 
-> The cases you describe imply that oFono is not even in control of the gprs
-> context.  How would we track/report the tx/rx statistics in that case?
+> Operator requirements were only half of the story. You need to be able
+> to disable auto-attach in low power conditions, and this logic
+> definitely doesn't belong in oFono. This applies equally well to
+> mobile phones as it does to laptops/netbooks.
 
-It's probably difficult if the PC client is allowed to redefine GPRS contex=
-ts, but otherwise oFono should at least be able to report the total tx/rx f=
-or the context's it has defined. The BT DUN / USB bridge could call into oF=
-ono and trigger a poll of all the stats to update them, e.g. when a BT DUN =
-connection is disconnected.
+this a different requirement. Where do you get your low power
+information from? I would prefer that we add a plugin that gets informed
+of this low power situation and then is able to adjust such things.
 
-> > The modem is really in the best position to provide the most reliable
-> > information on data usage. You can still use statistics from the network
-> > interfaces as a fall-back in case the modem can not provide this
-> > information.
+I am against exposing this in user application/UI API. I am with you
+that such requirements have to be met, but not via the D-Bus API. So
+these kind of policy details are device/manufacturer specific and having
+a custom plugins that can be enabled by the integrator sounds best to me
+if a config file is not flexible enough.
+
+> >> In general, I appreciate the attempt to hide ugly details from
+> >> applications, but unfortunately some things can't well be hidden.
+> >> Another unrelated, but similar issue is network scanning. It just
+> >> isn't going to work without us exposing it in the D-Bus API
+> >> explicitly.
+> >>
+> >
+> > Modem drivers will have some control over whether the scan is performed
+> > automatically, but denying the capability for everyone is not the right=
+ thing
+> > to do either.
 > =
 
-> I don't disagree, but not every modem can track these statistics and this
-> isn't described by 27.007.  I suggest the initial support should be
-> enabled by the modem driver implementing a custom D-Bus interface and =
+> Agree, and I don't think that was what I was suggesting either.
+> =
 
-> expose these details however it wishes.
+> >> The reason is simple, Nokia modems suspend GPRS when scanning (or
+> >> registering), simply because the operation will take roughly three
+> >> times as long with GPRS attached. You will find this feature in
+> >> current phones, too.
+> >
+> > Then ideally you should have two scan modes, periodic and user initiate=
+d.  For
+> > periodic mode we don't care how long it takes.
+> =
 
-The modem driver has no desires of its own :-) It really comes down to what=
- the UI needs and I doubt that the UI wants to deal with this on a modem by=
- modem basis, but sure it's a possibility.
+> +1
 
-Cheers,
-Waldo
+Sounds like a plan. So we do need an /etc/ofono/main.conf :)
 
---===============2532044878576901176==--
+Regards
+
+Marcel
+
+
+
+--===============2865233160556687914==--
 
