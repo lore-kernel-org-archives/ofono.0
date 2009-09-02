@@ -1,77 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============9000428473390364558=="
+Content-Type: multipart/mixed; boundary="===============3052208124607774273=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: GPRS support for Ofono
-Date: Wed, 02 Sep 2009 18:42:44 +0300
-Message-ID: <a32762a20909020842q1005da84s1a6816be5e103d2e@mail.gmail.com>
-In-Reply-To: <200909021028.52347.denkenz@gmail.com>
+Date: Wed, 02 Sep 2009 10:36:09 -0500
+Message-ID: <200909021036.09618.denkenz@gmail.com>
+In-Reply-To: <a32762a20909020832j4084cb9dud84f7304dfc9c440@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9000428473390364558==
+--===============3052208124607774273==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/9/2 Denis Kenzior <denkenz@gmail.com>:
->> AFAIK, attach status of GPRS has both regulatory aspects to consider
->> (some operators require always attached vs. some prohibit it) as well
->> as power consumption issues (auto-attach might draw more power than
->> on-demand, although there's an inverse effect on latency). These are
->> issues you need to take into account, and higher layers in the stack
->> definitely *need* to be aware of as well. Also, I don' t think oFono
->> is the correct place for these decisions -> better expose a necessary
->> API and let upper layers deal with it.
+Hi Aki,
+
+> Hi Denis,
 >
-> I know you guys are coming from mobile phone perspective, but that one is=
-n't
-> the only scenario. =C2=A0We have netbooks/laptops with gprs data cards to=
- consider
-> as well. =C2=A0Hardcoding operator requirements is also not an option, si=
-nce SIM
-> cards can be changed.
+> 2009/9/2 Denis Kenzior <denkenz@gmail.com>:
+> > So the general rule is that if a feature isn't explicitly allowed in
+> > 27.007, we do not support it.  There are exceptions to this of course.
+> >  27.007 only supports two states for context: activated and deactivated.
 >
-> I fundamentally disagree that the logic should be in the higher layers. =
-=C2=A0oFono
-> has all the information to handle this, and can be hinted on what is
-> appropriate behavior easily enough. =C2=A0oFono should simply store the a=
-uto-attach
-> preferences in its IMSI-indexed preference store. =C2=A0The operator can =
-bootstrap
-> these preferences if required.
+> Ahem. Just like access selection mode is not in 27.007, yet Nokia has
+> it, and most AT modems have proprietary commands to query and set it
+> [1]. Maybe you call that the necessary exception to the rule, but I
+> think we might as well change the rule to:
 
-Operator requirements were only half of the story. You need to be able
-to disable auto-attach in low power conditions, and this logic
-definitely doesn't belong in oFono. This applies equally well to
-mobile phones as it does to laptops/netbooks.
+So my stance on BandSelection is that we want a standard interface _if and =
 
->> In general, I appreciate the attempt to hide ugly details from
->> applications, but unfortunately some things can't well be hidden.
->> Another unrelated, but similar issue is network scanning. It just
->> isn't going to work without us exposing it in the D-Bus API
->> explicitly.
->>
+only if_ we can support it reliably across the majority of modems.  You mig=
+ht =
+
+still find me telling every modem manufacturer to simply implement their ow=
+n =
+
+BandSelection interface if this cannot be done.
+
+The same goes for Neighbor Cell Info or any other stuff that isn't mandated=
+ by =
+
+27.007.
+
 >
-> Modem drivers will have some control over whether the scan is performed
-> automatically, but denying the capability for everyone is not the right t=
-hing
-> to do either.
-
-Agree, and I don't think that was what I was suggesting either.
-
->> The reason is simple, Nokia modems suspend GPRS when scanning (or
->> registering), simply because the operation will take roughly three
->> times as long with GPRS attached. You will find this feature in
->> current phones, too.
+> >> spec 27.007. However, the problem is that Maemo 5 already has UI
+> >> support for indicating that the connection is suspended, and that
+> >> makes it harder to drop the feature. Could the "suspended" status enum
+> >> still be left there, and just have the modems that don't support the
+> >> feature to never go to "suspended" mode?
+> >
+> > I'd rather not.
+> >
+> > If this feature is really required, then some sort of heuristic can be
+> > applied.  (e.g. Powered on, Attached on, but context is deactivated most
+> > likely means temporary unavailability of resources)
 >
-> Then ideally you should have two scan modes, periodic and user initiated.=
- =C2=A0For
-> periodic mode we don't care how long it takes.
+> You want the UI to implement this heuristic, when the modem plugin has
+> explicit knowledge of that state, but isn't telling? Please explain
+> how that makes the UI simpler?
 
-+1
+Then expose this signal on Nokia-only interface and be done with it.  Why d=
+oes =
 
-Cheers,
-Aki
+everything have to be part of the oFono official APIs?
 
---===============9000428473390364558==--
+Regards,
+-Denis
+
+--===============3052208124607774273==--
 
