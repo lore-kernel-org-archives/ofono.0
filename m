@@ -1,34 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============8219488715599296448=="
+Content-Type: multipart/mixed; boundary="===============4328132668627931582=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/2] G1: Add initial HTC G1 modem support
-Date: Wed, 02 Sep 2009 16:08:47 -0700
-Message-ID: <1251932927.1266.130.camel@localhost.localdomain>
-In-Reply-To: <20090902190300.3dd38bf8@mycelium.queued.net>
+Subject: Re: [PATCH 2/2] G1: Add a G1 syntax for parsing
+Date: Wed, 02 Sep 2009 16:12:03 -0700
+Message-ID: <1251933123.1266.131.camel@localhost.localdomain>
+In-Reply-To: <20090902190336.67cc9648@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8219488715599296448==
+--===============4328132668627931582==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andreas,
 
-> G1 plugin is based on generic_at, with a bunch of stuff dropped
-> and simplified.  We use AT+CFUN=3D1 for powering on rather than having
-> a configurable init string.  We also manually set the default state
-> during init (the G1 appears to start in mode V0 by default).  The
-> device (/dev/smd0) is hardcoded.
-> ---
->  Makefile.am  |    3 +
->  plugins/g1.c |  182 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  2 files changed, 185 insertions(+), 0 deletions(-)
->  create mode 100644 plugins/g1.c
+> This is based on the generic_at parser, with unnecessary stuff removed.
+> =
 
-patch has been applied. I did have a trailing whitespace mistake, but I
-think git was just being paranoid.
+> The G1 routinely screws up CRLFs, so the parser needs to account for
+> that.  This parser ignores leading CRLFs (which is what reference-ril
+> does as well), as well as trailing LFs (which are sometimes left out).
+> CRs are used as end-of-message indicators.  Since we're not bothering
+> tracking CRLFs, there's also no need for a GARBAGE state, or MULTILINE
+> stuff.
+> ---
+>  plugins/g1.c |   87 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++-
+>  1 files changed, 85 insertions(+), 2 deletions(-)
+
+this patch has been applied now, too. Thanks.
 
 Regards
 
@@ -36,5 +37,5 @@ Marcel
 
 
 
---===============8219488715599296448==--
+--===============4328132668627931582==--
 
