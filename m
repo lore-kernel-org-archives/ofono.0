@@ -1,46 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============3395581331324724924=="
+Content-Type: multipart/mixed; boundary="===============8587428173012987392=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Comments about ofono-0.4 release
-Date: Wed, 02 Sep 2009 20:56:24 -0700
-Message-ID: <1251950184.1266.142.camel@localhost.localdomain>
+Subject: Support for GSM data cards
+Date: Thu, 03 Sep 2009 01:47:11 -0700
+Message-ID: <1251967631.1266.155.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3395581331324724924==
+--===============8587428173012987392==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi guys,
 
-since we had so much movement in the source code, I went ahead and
-tagged a new version. So welcome our 0.4 release.
+so I started working on udev integration and auto-detection and pushed a
+few new drivers into the upstream oFono repository. It know has drivers
+for Android/HTC G1, Ericsson MBM, Option HSO, Novatel and Huawai modems.
+An example of three devices attached to the same system would look then
+like this:
 
-The internal modem driver and feature frameworks got a whole re-write,
-but I am not going into that details here. Go and join the IRC if you
-really care about it ;)
+[ /mbm2 ]
+    Powered =3D 1
+    Interfaces =3D org.ofono.SmsManager org.ofono.NetworkRegistration =
 
-With this release the generic_at driver is gone and replaced by modem
-configuration driver and a separate one for phone simulator. So the file
-you wanna look at is /etc/ofono/modem.conf now. It lets you specify
-various modems and which driver they are suppose to be used. The file is
-pretty self explanatory.
+    Model =3D F3507g
+    Manufacturer =3D Ericsson
+    Serial =3D 0115xxxxxxxxxx
+    Revision =3D R1B003
+    [ org.ofono.SmsManager ]
+        ServiceCenterAddress =3D +17057969300
+    [ org.ofono.NetworkRegistration ]
+        Status =3D registered
+        Operator =3D ROGERS
+        AvailableOperators =3D /mbm2/operator/302720 =
 
-In addition the phone simulator driver, we now have a working driver for
-the Android/HTC G1 devices. And an initial driver for the Ericsson MBM
-laptop cards that at least adds support for SMS text messaging.
+        LocationAreaCode =3D 65080
+        CellId =3D 1305559
 
-The daemon can also now be built with udev support. This is by default
-enabled, but can be disabled if required or the target platform doesn't
-use udev. The udev support will extend the modem configuration file and
-allow for dynamic modem configuration. We are not there yet at this
-point of time, but should be getting there pretty soon.
+[ /huawei1 ]
+    Powered =3D 1
+    Interfaces =3D org.ofono.NetworkRegistration =
 
-And as an extra goody, I converted to a full non-recursive build system
-which should speed up everything and also allow the linker to do a
-better job in stripping unused symbols. The biggest advantage of course
-is when using automake-1.11, it looks way more sexy now :)
+    Model =3D E160
+    Manufacturer =3D huawei
+    Serial =3D 3538xxxxxxxxxx
+    Revision =3D 11.604.18.01.00
+    [ org.ofono.NetworkRegistration ]
+        Status =3D roaming
+        Operator =3D CAN Rogers Wirel
+        AvailableOperators =3D /huawei1/operator/302720 =
+
+
+[ /hso0 ]
+    Powered =3D 1
+    Interfaces =3D org.ofono.SmsManager org.ofono.NetworkRegistration =
+
+    Model =3D GlobeTrotter HSDPA Modem
+    Manufacturer =3D Option N.V.
+    Serial =3D 3597xxxxxxxxxx
+    Revision =3D 2.5.13Hd (Date: Feb 18 2008, Time: 18:32:40)
+    [ org.ofono.SmsManager ]
+        ServiceCenterAddress =3D +491710760000
+    [ org.ofono.NetworkRegistration ]
+        Status =3D roaming
+        Operator =3D Rogers Wireless - T-Mobile D
+        AvailableOperators =3D /hso0/operator/302720 =
+
+        LocationAreaCode =3D 16100
+        CellId =3D 47738
+
+All of the drivers are far from finished. The best working one is the
+Ericsson MBM right now. I even managed to send a text message via the
+SMS interface. When trying that with an Option device the AT parser
+hangs itself. So we need some quirk there. Everybody is welcome to debug
+it and send a patch.
+
+The Novatel and Huawei devices, don't seem to support SMS. Or they do
+and don't report it correctly. Also the Novatel card has problems with
+the network registration. It refuses to work. This needs also to be
+debugged.
+
+If the drivers network registration does work, then it looks nicely like
+the following output:
+
+[ /mbm2 ]
+    [ /mbm2/operator/302720 ]
+        Status =3D current
+        MobileNetworkCode =3D 720
+        Technology =3D UTRAN
+        Name =3D ROGERS
+        MobileCountryCode =3D 302
+
+[ /huawei1 ]
+    [ /huawei1/operator/302720 ]
+        Status =3D current
+        MobileNetworkCode =3D 720
+        Technology =3D UTRAN
+        Name =3D CAN Rogers Wirel
+        MobileCountryCode =3D 302
+
+[ /hso0 ]
+    [ /hso0/operator/302720 ]
+        Status =3D current
+        MobileNetworkCode =3D 720
+        Technology =3D GSM
+        Name =3D Rogers Wireless - T-Mobile D
+        MobileCountryCode =3D 302
+
+The MBM device contains a local SIM card and the other two are actually
+roaming.
+
+The goal for these data cards should be to support text messaging and
+GPRS (once we defined and implemented that interface). Any help is more
+than welcome.
 
 Regards
 
@@ -48,5 +121,5 @@ Marcel
 
 
 
---===============3395581331324724924==--
+--===============8587428173012987392==--
 
