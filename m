@@ -1,32 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1126076525826084007=="
+Content-Type: multipart/mixed; boundary="===============3395581331324724924=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] G1: Add an SMS quirk for CNMI mode
-Date: Wed, 02 Sep 2009 19:06:53 -0700
-Message-ID: <1251943613.1266.132.camel@localhost.localdomain>
-In-Reply-To: <20090902215909.7b7a6c52@mycelium.queued.net>
+Subject: Comments about ofono-0.4 release
+Date: Wed, 02 Sep 2009 20:56:24 -0700
+Message-ID: <1251950184.1266.142.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1126076525826084007==
+--===============3395581331324724924==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andres,
+Hi guys,
 
-> The G1 doesn't support mode2, despite advertising it.
-> The G1 chokes w/ an "Error 303" when we specify NMI mode 2.  Adding a qui=
-rk
-> to drop that mode from the supported list (just use mode 1) allows the G1
-> to properly deal with SMS.
-> ---
->  drivers/atmodem/sms.c    |   19 ++++++++++++++-----
->  drivers/atmodem/vendor.h |    1 +
->  plugins/g1.c             |    3 +++
->  3 files changed, 18 insertions(+), 5 deletions(-)
+since we had so much movement in the source code, I went ahead and
+tagged a new version. So welcome our 0.4 release.
 
-patch has been applied. Thanks.
+The internal modem driver and feature frameworks got a whole re-write,
+but I am not going into that details here. Go and join the IRC if you
+really care about it ;)
+
+With this release the generic_at driver is gone and replaced by modem
+configuration driver and a separate one for phone simulator. So the file
+you wanna look at is /etc/ofono/modem.conf now. It lets you specify
+various modems and which driver they are suppose to be used. The file is
+pretty self explanatory.
+
+In addition the phone simulator driver, we now have a working driver for
+the Android/HTC G1 devices. And an initial driver for the Ericsson MBM
+laptop cards that at least adds support for SMS text messaging.
+
+The daemon can also now be built with udev support. This is by default
+enabled, but can be disabled if required or the target platform doesn't
+use udev. The udev support will extend the modem configuration file and
+allow for dynamic modem configuration. We are not there yet at this
+point of time, but should be getting there pretty soon.
+
+And as an extra goody, I converted to a full non-recursive build system
+which should speed up everything and also allow the linker to do a
+better job in stripping unused symbols. The biggest advantage of course
+is when using automake-1.11, it looks way more sexy now :)
 
 Regards
 
@@ -34,5 +48,5 @@ Marcel
 
 
 
---===============1126076525826084007==--
+--===============3395581331324724924==--
 
