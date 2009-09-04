@@ -1,46 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5285373196275941658=="
+Content-Type: multipart/mixed; boundary="===============1930063454631874505=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] G1: Add an SMS quirk for CNMI mode
-Date: Thu, 03 Sep 2009 10:56:15 -0500
-Message-ID: <200909031056.16232.denkenz@gmail.com>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C968003A49@orsmsx508.amr.corp.intel.com>
+Subject: TI Calypso Driver
+Date: Thu, 03 Sep 2009 23:32:50 -0500
+Message-ID: <200909032332.51432.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5285373196275941658==
+--===============1930063454631874505==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
+Hi guys,
 
-> Instead of having vendor checks all over the place, wouldn't it be cleaner
-> if the plugin had a way to provide/fix cnmi_opts?
+I submitted a preliminary driver for TI Calypso based devices (e.g. OpenMok=
+o =
 
-For now we decided to do it this way, since providing arbitrary properties =
-per =
+Freerunner).  It works well enough that I can power up / down the modem, =
 
-atom seemed to be too much.  The hope is that there are not many modems tha=
-t =
+register to the network, scan operators, etc.  Voice calls & SMS features =
 
-blatantly lie about what they can do (like the G1)  If quirks get out of ha=
-nd =
+should also work.
 
-we can revisit this.
-
-In the meantime if you need to override the entire cnmi string, do somethin=
-g =
-
-like:
-	if (data->vendor =3D=3D OFONO_VENDOR_WALDOS_MODEM) {
-		sprintf(buf, "AT+CNMI=3D....");
-		supported =3D TRUE;
-	} else if (build_cnmi_string(buf, cnmi_opts, data))
-		supported =3D TRUE;
+Simply insert the following lines into modem.conf to enable this device:
+[calypso]
+Driver=3Dcalypso
+Device=3D/dev/ttySAC0
 
 Regards,
 -Denis
 
---===============5285373196275941658==--
+--===============1930063454631874505==--
 
