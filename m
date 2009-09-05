@@ -1,92 +1,166 @@
-Content-Type: multipart/mixed; boundary="===============2356313992083873585=="
+Content-Type: multipart/mixed; boundary="===============4626974171408015766=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Add support for SMS national language identifiers
-Date: Fri, 04 Sep 2009 11:21:20 -0500
-Message-ID: <200909041121.21109.denkenz@gmail.com>
-In-Reply-To: <a32762a20909040827k7a3b439dlb4fa9d4083f26150@mail.gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: Read messages left over in ME storage on startup.
+Date: Sat, 05 Sep 2009 07:16:12 +0200
+Message-ID: <fb249edb0909042216j1cfcad7bmab81195fd68e6f4e@mail.gmail.com>
+In-Reply-To: <9b1cac640908241632n6584836eu9cf59091124295ee@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2356313992083873585==
+--===============4626974171408015766==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi,
 
-> Hi All,
+2009/8/25 Denis Kenzior <denkenz@gmail.com>:
+> On Fri, Aug 21, 2009 at 9:35 PM, Andrzej Zaborowski
+> <andrew.zaborowski@intel.com> wrote:
+>> On modems that don't support +CMT (or for class 2 SMSes) the messages are
+>> stored in the modem and then read and deleted from there in two separate
+>> steps with no warranty that deletion succeeds or (more likely) power is
+>> cut before the deletion happens. =C2=A0Over time the memory may become f=
+ull
+>> and if we don't want to deal with this condition we need to check on
+>> startup if there are messages we haven't deleted.
+>>
+>> We can't differentiate between those messages and those the user already
+>> had on the SIM / modem before installing ofono or switching phones, so we
+>> might want to deliver messages with REC READ status with some kind of
+>> indication that these are potentially old so the UI doesn't emit spurious
+>> alerts. =C2=A0We don't do this now and just deliver as usual.
 >
-> Here is a set of patches to add support for decoding SMSs that have
-> been encoded using national language tables instead of the default GSM
-> 7bit tables. I was planning to push a couple of these patches
-> directly, but the changes turned out a bit more extensive than I
-> originally thought. Please take a look and comment.
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 hexpdu =3D g_at_resul=
+t_pdu(result);
+>
+> You can't use g_at_result_pdu on messages that haven't been flagged to
+> expect a PDU. =C2=A0Right now this only works for g_at_chat_register style
+> unsolicited notifications for which the 'expect_pdu' has been set to TRUE.
 
-Just a couple of minor nitpicks:
-+struct single_shift_table {
-+	struct codepoint *table;
-+	unsigned int len;
-+};
-+
-+static struct single_shift_table gsm_single_shift[] =3D
-+{
-+	{ default_ext_gsm, TABLE_SIZE(default_ext_gsm) },
-+	{ turkish_ext_gsm, TABLE_SIZE(turkish_ext_gsm) },
-+	{ spanish_ext_gsm, TABLE_SIZE(spanish_ext_gsm) },
-+	{ portuguese_ext_gsm, TABLE_SIZE(portuguese_ext_gsm) }
-+};
-+
-+static struct single_shift_table unicode_single_shift[] =3D
-+{
-+	{ default_ext_unicode, TABLE_SIZE(default_ext_unicode) },
-+	{ turkish_ext_unicode, TABLE_SIZE(turkish_ext_unicode) },
-+	{ spanish_ext_unicode, TABLE_SIZE(spanish_ext_unicode) },
-+	{ portuguese_ext_unicode, TABLE_SIZE(portuguese_ext_unicode) }
-+};
-+
-+static const unsigned short *gsm_locking_shift[] =3D
-+{
-+	default_gsm,
-+	turkish_gsm,
-+	default_gsm,
-+	portuguese_gsm
-+};
-+
-+static struct codepoint *unicode_locking_shift[] =3D
-+{
-+	default_unicode,
-+	turkish_unicode,
-+	default_unicode,
-+	portuguese_unicode
+Right, I now changed it to use the new g_at_chat_send_pdu_listing
+function (I had an almost identical change in my tree) and tested with
+non-empty SMS store on card.
 
-Can we put all of these into a single table?
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0ofono_sms_manager_register(modem, &ops);
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 /* Inspect and free the incoming SMS storage */
+>> + =C2=A0 =C2=A0 =C2=A0 if (at->sms->incoming =3D=3D MT_STORE)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 at_cmgl_set_cpms(mode=
+m, ME_STORE);
+>> + =C2=A0 =C2=A0 =C2=A0 else
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 at_cmgl_set_cpms(mode=
+m, at->sms->incoming);
+>> =C2=A0}
+>
+> It might be worth to scan both ME & SM stores. =C2=A0Especially since MT
+> literally means combined SM + ME store.
 
-+char *convert_gsm_to_utf8_with_lang(const unsigned char *text, long len,
-+					long *items_read, long *items_written,
-+					unsigned char terminator,
-+					unsigned int locking_lang,
-+					unsigned int single_lang)
+We already do this, in at_cmgl_done after listing ME_STORE we repeat
+the commands for SM_STORE.
 
-locking_lang & single_lang should be unsigned char or an enum.
+Regards
 
-+gboolean sms_extract_language_variant(const struct sms *sms, int *locking,
-+					int *single);
+--===============4626974171408015766==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Read-messages-left-over-in-ME-storage-on-startup.patch"
 
-locking & single should use guint8.
+RnJvbSA0NDBkMTRmNzgxZTI5MTI1ZmMxZGM4MTkzYjU2NDVhMTFiNGZhNDRkIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogRnJpLCA0IFNlcCAyMDA5IDE2OjQ4OjAzICswMjAwClN1YmplY3Q6
+IFtQQVRDSF0gUmVhZCBtZXNzYWdlcyBsZWZ0IG92ZXIgaW4gTUUgc3RvcmFnZSBvbiBzdGFydHVw
+LgoKT24gbW9kZW1zIHRoYXQgZG9uJ3Qgc3VwcG9ydCArQ01UIChvciBmb3IgY2xhc3MgMiBTTVNl
+cykgdGhlIG1lc3NhZ2VzIGFyZQpzdG9yZWQgaW4gdGhlIG1vZGVtIGFuZCB0aGVuIHJlYWQgYW5k
+IGRlbGV0ZWQgZnJvbSB0aGVyZSBpbiB0d28gc2VwYXJhdGUKc3RlcHMgd2l0aCBubyB3YXJyYW50
+eSB0aGF0IGRlbGV0aW9uIHN1Y2NlZWRzIG9yIChtb3JlIGxpa2VseSkgcG93ZXIgaXMKY3V0IGJl
+Zm9yZSB0aGUgZGVsZXRpb24gaGFwcGVucy4gIE92ZXIgdGltZSB0aGUgbWVtb3J5IG1heSBiZWNv
+bWUgZnVsbAphbmQgaWYgd2UgZG9uJ3Qgd2FudCB0byBkZWFsIHdpdGggdGhpcyBjb25kaXRpb24g
+d2UgbmVlZCB0byBjaGVjayBvbgpzdGFydHVwIGlmIHRoZXJlIGFyZSBtZXNzYWdlcyB3ZSBoYXZl
+bid0IGRlbGV0ZWQuCgpXZSBjYW4ndCBkaWZmZXJlbnRpYXRlIGJldHdlZW4gdGhvc2UgbWVzc2Fn
+ZXMgYW5kIHRob3NlIHRoZSB1c2VyIGFscmVhZHkKaGFkIG9uIHRoZSBTSU0gLyBtb2RlbSBiZWZv
+cmUgaW5zdGFsbGluZyBvZm9ubyBvciBzd2l0Y2hpbmcgcGhvbmVzLCBzbyB3ZQptaWdodCB3YW50
+IHRvIGRlbGl2ZXIgbWVzc2FnZXMgd2l0aCBSRUMgUkVBRCBzdGF0dXMgd2l0aCBzb21lIGtpbmQg
+b2YKaW5kaWNhdGlvbiB0aGF0IHRoZXNlIGFyZSBwb3RlbnRpYWxseSBvbGQgc28gdGhlIFVJIGRv
+ZXNuJ3QgZW1pdCBzcHVyaW91cwphbGVydHMuICBXZSBkb24ndCBkbyB0aGlzIG5vdyBhbmQganVz
+dCBkZWxpdmVyIGFzIHVzdWFsLgotLS0KIGRyaXZlcnMvYXRtb2RlbS9zbXMuYyB8ICAxMjUgKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwogMSBmaWxlcyBj
+aGFuZ2VkLCAxMjUgaW5zZXJ0aW9ucygrKSwgMCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9k
+cml2ZXJzL2F0bW9kZW0vc21zLmMgYi9kcml2ZXJzL2F0bW9kZW0vc21zLmMKaW5kZXggZmM1MzQ4
+MC4uZmE2Mjc3NCAxMDA2NDQKLS0tIGEvZHJpdmVycy9hdG1vZGVtL3Ntcy5jCisrKyBiL2RyaXZl
+cnMvYXRtb2RlbS9zbXMuYwpAQCAtNDgsMTAgKzQ4LDEyIEBAIHN0YXRpYyBjb25zdCBjaGFyICpj
+bWdmX3ByZWZpeFtdID0geyAiK0NNR0Y6IiwgTlVMTCB9Owogc3RhdGljIGNvbnN0IGNoYXIgKmNw
+bXNfcHJlZml4W10gPSB7ICIrQ1BNUzoiLCBOVUxMIH07CiBzdGF0aWMgY29uc3QgY2hhciAqY25t
+aV9wcmVmaXhbXSA9IHsgIitDTk1JOiIsIE5VTEwgfTsKIHN0YXRpYyBjb25zdCBjaGFyICpjbWdz
+X3ByZWZpeFtdID0geyAiK0NNR1M6IiwgTlVMTCB9Oworc3RhdGljIGNvbnN0IGNoYXIgKmNtZ2xf
+cHJlZml4W10gPSB7ICIrQ01HTDoiLCBOVUxMIH07CiBzdGF0aWMgY29uc3QgY2hhciAqbm9uZV9w
+cmVmaXhbXSA9IHsgTlVMTCB9OwogCiBzdGF0aWMgZ2Jvb2xlYW4gc2V0X2NtZ2YoZ3BvaW50ZXIg
+dXNlcl9kYXRhKTsKIHN0YXRpYyBnYm9vbGVhbiBzZXRfY3BtcyhncG9pbnRlciB1c2VyX2RhdGEp
+Oworc3RhdGljIHZvaWQgYXRfY21nbF9zZXRfY3BtcyhzdHJ1Y3Qgb2Zvbm9fc21zICpzbXMsIGlu
+dCBzdG9yZSk7CiAKICNkZWZpbmUgTUFYX0NNR0ZfUkVUUklFUyAxMAogI2RlZmluZSBNQVhfQ1BN
+U19SRVRSSUVTIDEwCkBAIC00OTksNiArNTAxLDEyMyBAQCBlcnI6CiAJb2Zvbm9fZXJyb3IoIlVu
+YWJsZSB0byBwYXJzZSBDTVRJIG5vdGlmaWNhdGlvbiIpOwogfQogCitzdGF0aWMgdm9pZCBhdF9j
+bWdsX2RvbmUoc3RydWN0IG9mb25vX3NtcyAqc21zKQoreworCXN0cnVjdCBzbXNfZGF0YSAqZGF0
+YSA9IG9mb25vX3Ntc19nZXRfZGF0YShzbXMpOworCisJaWYgKGRhdGEtPmluY29taW5nID09IE1U
+X1NUT1JFICYmIGRhdGEtPnN0b3JlID09IE1FX1NUT1JFKQorCQlhdF9jbWdsX3NldF9jcG1zKHNt
+cywgU01fU1RPUkUpOworfQorCitzdGF0aWMgdm9pZCBhdF9jbWdsX25vdGlmeShHQXRSZXN1bHQg
+KnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKQoreworCXN0cnVjdCBvZm9ub19zbXMgKnNtcyA9
+IHVzZXJfZGF0YTsKKwlzdHJ1Y3Qgc21zX2RhdGEgKmRhdGEgPSBvZm9ub19zbXNfZ2V0X2RhdGEo
+c21zKTsKKwlHQXRSZXN1bHRJdGVyIGl0ZXI7CisJY29uc3QgY2hhciAqaGV4cGR1OworCXVuc2ln
+bmVkIGNoYXIgcGR1WzE2NF07CisJbG9uZyBwZHVfbGVuOworCWludCB0cGR1X2xlbjsKKwlpbnQg
+aW5kZXg7CisJaW50IHN0YXR1czsKKwljaGFyIGJ1ZlsxNl07CisKKwlkdW1wX3Jlc3BvbnNlKCJh
+dF9jbWdsX25vdGlmeSIsIFRSVUUsIHJlc3VsdCk7CisKKwlnX2F0X3Jlc3VsdF9pdGVyX2luaXQo
+Jml0ZXIsIHJlc3VsdCk7CisKKwl3aGlsZSAoZ19hdF9yZXN1bHRfaXRlcl9uZXh0KCZpdGVyLCAi
+K0NNR0w6IikpIHsKKwkJaWYgKCFnX2F0X3Jlc3VsdF9pdGVyX25leHRfbnVtYmVyKCZpdGVyLCAm
+aW5kZXgpKQorCQkJZ290byBlcnI7CisKKwkJaWYgKCFnX2F0X3Jlc3VsdF9pdGVyX25leHRfbnVt
+YmVyKCZpdGVyLCAmc3RhdHVzKSkKKwkJCWdvdG8gZXJyOworCisJCWlmICghZ19hdF9yZXN1bHRf
+aXRlcl9za2lwX25leHQoJml0ZXIpKQorCQkJZ290byBlcnI7CisKKwkJaWYgKCFnX2F0X3Jlc3Vs
+dF9pdGVyX25leHRfbnVtYmVyKCZpdGVyLCAmdHBkdV9sZW4pKQorCQkJZ290byBlcnI7CisKKwkJ
+LyogT25seSBNVCBtZXNzYWdlcyAqLworCQlpZiAoc3RhdHVzICE9IDAgJiYgc3RhdHVzICE9IDEp
+CisJCQljb250aW51ZTsKKworCQloZXhwZHUgPSBnX2F0X3Jlc3VsdF9wZHUocmVzdWx0KTsKKwor
+CQlvZm9ub19kZWJ1ZygiRm91bmQgYW4gb2xkIFNNUyBQRFU6ICVzLCB3aXRoIGxlbjogJWQiLAor
+CQkJCWhleHBkdSwgdHBkdV9sZW4pOworCisJCWRlY29kZV9oZXhfb3duX2J1ZihoZXhwZHUsIC0x
+LCAmcGR1X2xlbiwgMCwgcGR1KTsKKwkJb2Zvbm9fc21zX2RlbGl2ZXJfbm90aWZ5KHNtcywgcGR1
+LCBwZHVfbGVuLCB0cGR1X2xlbik7CisKKwkJLyogV2UgZG9uJ3QgYnVmZmVyIFNNUyBvbiB0aGUg
+U0lNL01FLCBzZW5kIGFsb25nIGEgQ01HRCAqLworCQlzcHJpbnRmKGJ1ZiwgIkFUK0NNR0Q9JWQi
+LCBpbmRleCk7CisJCWdfYXRfY2hhdF9zZW5kKGRhdGEtPmNoYXQsIGJ1Ziwgbm9uZV9wcmVmaXgs
+CisJCQkJYXRfY21nZF9jYiwgTlVMTCwgTlVMTCk7CisJfQorCXJldHVybjsKKworZXJyOgorCW9m
+b25vX2Vycm9yKCJVbmFibGUgdG8gcGFyc2UgQ01HTCByZXNwb25zZSIpOworfQorCitzdGF0aWMg
+dm9pZCBhdF9jbWdsX2NiKGdib29sZWFuIG9rLCBHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIg
+dXNlcl9kYXRhKQoreworCXN0cnVjdCBvZm9ub19zbXMgKnNtcyA9IHVzZXJfZGF0YTsKKworCWlm
+ICghb2spCisJCW9mb25vX2Vycm9yKCJJbml0aWFsIGxpc3RpbmcgU01TIHN0b3JhZ2UgZmFpbGVk
+ISIpOworCisJYXRfY21nbF9kb25lKHNtcyk7Cit9CisKK3N0YXRpYyB2b2lkIGF0X2NtZ2xfY3Bt
+c19jYihnYm9vbGVhbiBvaywgR0F0UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVyIHVzZXJfZGF0YSkK
+K3sKKwlzdHJ1Y3QgY3Btc19yZXF1ZXN0ICpyZXEgPSB1c2VyX2RhdGE7CisJc3RydWN0IG9mb25v
+X3NtcyAqc21zID0gcmVxLT5zbXM7CisJc3RydWN0IHNtc19kYXRhICpkYXRhID0gb2Zvbm9fc21z
+X2dldF9kYXRhKHNtcyk7CisKKwlpZiAoIW9rKSB7CisJCW9mb25vX2Vycm9yKCJJbml0aWFsIENQ
+TVMgcmVxdWVzdCBmYWlsZWQiKTsKKwkJYXRfY21nbF9kb25lKHNtcyk7CisJCXJldHVybjsKKwl9
+CisKKwlkYXRhLT5zdG9yZSA9IHJlcS0+c3RvcmU7CisKKwlnX2F0X2NoYXRfc2VuZF9wZHVfbGlz
+dGluZyhkYXRhLT5jaGF0LCAiQVQrQ01HTD00IiwgY21nbF9wcmVmaXgsCisJCQkJCWF0X2NtZ2xf
+bm90aWZ5LCBhdF9jbWdsX2NiLCBzbXMsIE5VTEwpOworfQorCitzdGF0aWMgdm9pZCBhdF9jbWds
+X3NldF9jcG1zKHN0cnVjdCBvZm9ub19zbXMgKnNtcywgaW50IHN0b3JlKQoreworCXN0cnVjdCBz
+bXNfZGF0YSAqZGF0YSA9IG9mb25vX3Ntc19nZXRfZGF0YShzbXMpOworCisJaWYgKHN0b3JlID09
+IGRhdGEtPnN0b3JlKSB7CisJCXN0cnVjdCBjcG1zX3JlcXVlc3QgcmVxOworCisJCXJlcS5zbXMg
+PSBzbXM7CisJCXJlcS5zdG9yZSA9IHN0b3JlOworCisJCWF0X2NtZ2xfY3Btc19jYihUUlVFLCBO
+VUxMLCAmcmVxKTsKKwl9IGVsc2UgeworCQljaGFyIGJ1ZlsxMjhdOworCQljb25zdCBjaGFyICpy
+ZWFkd3JpdGUgPSBzdG9yYWdlc1tzdG9yZV07CisJCWNvbnN0IGNoYXIgKmluY29taW5nID0gc3Rv
+cmFnZXNbZGF0YS0+aW5jb21pbmddOworCQlzdHJ1Y3QgY3Btc19yZXF1ZXN0ICpyZXEgPSBnX25l
+dyhzdHJ1Y3QgY3Btc19yZXF1ZXN0LCAxKTsKKworCQlyZXEtPnNtcyA9IHNtczsKKwkJcmVxLT5z
+dG9yZSA9IHN0b3JlOworCisJCXNwcmludGYoYnVmLCAiQVQrQ1BNUz1cIiVzXCIsXCIlc1wiLFwi
+JXNcIiIsCisJCQlyZWFkd3JpdGUsIHJlYWR3cml0ZSwgaW5jb21pbmcpOworCisJCWdfYXRfY2hh
+dF9zZW5kKGRhdGEtPmNoYXQsIGJ1ZiwgY3Btc19wcmVmaXgsIGF0X2NtZ2xfY3Btc19jYiwKKwkJ
+CQlyZXEsIGdfZnJlZSk7CisJfQorfQorCiBzdGF0aWMgdm9pZCBhdF9zbXNfaW5pdGlhbGl6ZWQo
+c3RydWN0IG9mb25vX3NtcyAqc21zKQogewogCXN0cnVjdCBzbXNfZGF0YSAqZGF0YSA9IG9mb25v
+X3Ntc19nZXRfZGF0YShzbXMpOwpAQCAtNTE2LDYgKzYzNSwxMiBAQCBzdGF0aWMgdm9pZCBhdF9z
+bXNfaW5pdGlhbGl6ZWQoc3RydWN0IG9mb25vX3NtcyAqc21zKQogCWdfYXRfY2hhdF9yZWdpc3Rl
+cihkYXRhLT5jaGF0LCAiK0NNR1I6IiwgYXRfY21ncl9ub3RpZnksIFRSVUUsCiAJCQkJc21zLCBO
+VUxMKTsKIAorCS8qIEluc3BlY3QgYW5kIGZyZWUgdGhlIGluY29taW5nIFNNUyBzdG9yYWdlICov
+CisJaWYgKGRhdGEtPmluY29taW5nID09IE1UX1NUT1JFKQorCQlhdF9jbWdsX3NldF9jcG1zKHNt
+cywgTUVfU1RPUkUpOworCWVsc2UKKwkJYXRfY21nbF9zZXRfY3BtcyhzbXMsIGRhdGEtPmluY29t
+aW5nKTsKKwogCW9mb25vX3Ntc19yZWdpc3RlcihzbXMpOwogfQogCi0tIAoxLjYuMQoK
 
-+enum sms_language {
-+	SMS_LANGUAGE_DEFAULT =3D 0,
-+	SMS_LANGUAGE_TURKISH =3D 1,
-+	SMS_LANGUAGE_SPANISH =3D 2,
-+	SMS_LANGUAGE_PORTUGUESE =3D 3
-+};
-+
-
-This part isn't used anywhere, should we just keep this out for now?
-
-Regards,
--Denis
-
---===============2356313992083873585==--
+--===============4626974171408015766==--
 
