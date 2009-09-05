@@ -1,440 +1,557 @@
-Content-Type: multipart/mixed; boundary="===============0527600328616484917=="
+Content-Type: multipart/mixed; boundary="===============2985418355582879835=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: Write state of SMS assembly to disk and restore on startup.
-Date: Sat, 05 Sep 2009 07:24:44 +0200
-Message-ID: <fb249edb0909042224o582b0a6dsd3ae04b747c5cadd@mail.gmail.com>
-In-Reply-To: <9b1cac640909010809g423184bbod704e5de5a27bf86@mail.gmail.com>
+Subject: [PATCH] [RFC] Do the PIN check in SIMManager
+Date: Sat, 05 Sep 2009 09:25:53 +0200
+Message-ID: <1252135553-32722-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0527600328616484917==
+--===============2985418355582879835==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/9/1 Denis Kenzior <denkenz@gmail.com>:
-> On Fri, Aug 21, 2009 at 9:40 PM, Andrzej Zaborowski
-> <andrew.zaborowski@intel.com> wrote:
->> This way we can continue receiving segmented messages over a reset or
->> crash.
->> ---
->> =C2=A0src/common.c =C2=A0 =C2=A0 | =C2=A0 29 +++++++
->> =C2=A0src/common.h =C2=A0 =C2=A0 | =C2=A0 10 +++
->> =C2=A0src/sim.c =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=A0 34 --------
->> =C2=A0src/sms.c =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=A0 14 +++-
->> =C2=A0src/smsutil.c =C2=A0 =C2=A0| =C2=A0237
->> +++++++++++++++++++++++++++++++++++++++++++++++++++++-
->> =C2=A0src/smsutil.h =C2=A0 =C2=A0| =C2=A0 =C2=A03 +-
->> =C2=A0unit/Makefile.am | =C2=A0 =C2=A06 +-
->> =C2=A0unit/test-sms.c =C2=A0| =C2=A0 =C2=A04 +-
->> =C2=A08 files changed, 293 insertions(+), 44 deletions(-)
->>
->
->> +int create_dirs(const char *filename, const mode_t mode)
->> +{
->
-> Can we move this part to storage.c instead of common.c to be more consist=
-ent
-> with connman & bluez?
+This adds checking whether PIN is required during SIM initialisation and
+delaying the sim ready notifications until after correct PIN is given.
+According to 31.102 the IMSI should be retrieved after the PIN check
+however on the SIMs I've tried it can be retrieved before authentication
+and I think it would make sense to provide the imsi to the clients so
+they know which card they're authenticating to if they're swapping cards.
+---
+ drivers/atmodem/sim.c |  171 +++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ include/sim.h         |   13 ++++
+ include/types.h       |   20 ++++++
+ src/sim.c             |  136 ++++++++++++++++++++++++++++++++++++++-
+ src/simutil.c         |   24 +++++++
+ src/simutil.h         |    2 +
+ 6 files changed, 365 insertions(+), 1 deletions(-)
 
-Ok, I moved the common part of the file reading / writing to storage.c
-but some of the file access in sim.c is still doing it manually
-because there's lseeking in the middle.
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 8333670..fdb972a 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -431,6 +431,174 @@ error:
+ 	}
+ }
+ =
 
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (r > 0 && sms_dese=
-rialize(buf, &segment, r)) {
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 if (sms_assembly_add_fragment_backup(assembly,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 &segment,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 segment_stat.st_mtime,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 &addr, ref, max, seq,
->> FALSE)) {
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* This can't happen */
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 }
->
-> We read it from the backup store and almost immediately overwrite the bac=
-kup
-> store?=C2=A0 Seems inefficient.
++static struct {
++	enum ofono_sim_passwd_type type;
++	const char *name;
++} const at_sim_name[] =3D {
++	{ OFONO_PASSWD_SIM_PIN, "SIM PIN" },
++	{ OFONO_PASSWD_SIM_PUK, "SIM PUK" },
++	{ OFONO_PASSWD_PHSIM_PIN, "PH-SIM PIN" },
++	{ OFONO_PASSWD_PHFSIM_PIN, "PH-FSIM PIN" },
++	{ OFONO_PASSWD_PHFSIM_PUK, "PH-FSIM PUK" },
++	{ OFONO_PASSWD_SIM_PIN2, "SIM PIN2" },
++	{ OFONO_PASSWD_SIM_PUK2, "SIM PUK2" },
++	{ OFONO_PASSWD_PHNET_PIN, "PH-NET PIN" },
++	{ OFONO_PASSWD_PHNET_PUK, "PH-NET PUK" },
++	{ OFONO_PASSWD_PHNETSUB_PIN, "PH-NETSUB PIN" },
++	{ OFONO_PASSWD_PHNETSUB_PUK, "PH-NETSUB PUK" },
++	{ OFONO_PASSWD_PHSP_PIN, "PH-SP PIN" },
++	{ OFONO_PASSWD_PHSP_PUK, "PH-SP PUK" },
++	{ OFONO_PASSWD_PHCORP_PIN, "PH-CORP PIN" },
++	{ OFONO_PASSWD_PHCORP_PUK, "PH-CORP PUK" },
++};
++
++static void at_cpin_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	GAtResultIter iter;
++	ofono_sim_passwd_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++	const char *pin_required;
++	int pin_type;
++	int i;
++	int len =3D sizeof(at_sim_name) / sizeof(*at_sim_name);
++
++	dump_response("at_cpin_cb", ok, result);
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		cb(&error, -1, cbd->data);
++		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CPIN:")) {
++		DECLARE_FAILURE(e);
++
++		cb(&e, -1, cbd->data);
++		return;
++	}
++
++	pin_required =3D g_at_result_iter_raw_line(&iter);
++
++	pin_type =3D -1;
++	if (!strcmp(pin_required, "READY"))
++		pin_type =3D OFONO_PASSWD_NONE;
++	else
++		for (i =3D 0; i < len; i++)
++			if (!g_str_has_suffix(pin_required,
++						at_sim_name[i].name))
++				pin_type =3D at_sim_name[i].type;
++
++	if (pin_type =3D=3D -1) {
++		DECLARE_FAILURE(e);
++
++		cb(&e, -1, cbd->data);
++		return;
++	}
++
++	ofono_debug("crsm_pin_cb: %s", pin_required);
++
++	cb(&error, pin_type, cbd->data);
++}
++
++static void at_pin_query(struct ofono_sim *sim, ofono_sim_passwd_cb_t cb,
++			void *data)
++{
++	GAtChat *chat =3D ofono_sim_get_data(sim);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	if (!cbd)
++		goto error;
++
++	if (g_at_chat_send(chat, "AT+CPIN?", NULL,
++				at_cpin_cb, cbd, g_free) > 0)
++		return;
++
++error:
++	if (cbd)
++		g_free(cbd);
++
++	{
++		DECLARE_FAILURE(error);
++		cb(&error, -1, data);
++	}
++}
++
++static void at_cpin_set_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_sim_passwd_send_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	dump_response("at_cpin_set_cb", ok, result);
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	cb(&error, cbd->data);
++}
++
++static void at_pin_send(struct ofono_sim *sim, const char *passwd,
++			ofono_sim_passwd_send_cb_t cb, void *data)
++{
++	GAtChat *chat =3D ofono_sim_get_data(sim);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[64];
++	int ret;
++
++	if (!cbd)
++		goto error;
++
++	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\"", passwd);
++
++	ret =3D g_at_chat_send(chat, buf, NULL, at_cpin_set_cb, cbd, g_free);
++
++	memset(buf, 0, sizeof(buf));
++
++	if (ret > 0)
++		return;
++
++error:
++	if (cbd)
++		g_free(cbd);
++
++	{
++		DECLARE_FAILURE(error);
++		cb(&error, data);
++	}
++}
++
++static void at_pin_send_puk(struct ofono_sim *sim, const char *puk,
++				const char *passwd,
++				ofono_sim_passwd_send_cb_t cb, void *data)
++{
++	GAtChat *chat =3D ofono_sim_get_data(sim);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[64];
++	int ret;
++
++	if (!cbd)
++		goto error;
++
++	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\",\"%s\"", puk, passwd);
++
++	ret =3D g_at_chat_send(chat, buf, NULL, at_cpin_set_cb, cbd, g_free);
++
++	memset(buf, 0, sizeof(buf));
++
++	if (ret > 0)
++		return;
++
++error:
++	if (cbd)
++		g_free(cbd);
++
++	{
++		DECLARE_FAILURE(error);
++		cb(&error, data);
++	}
++}
++
+ static gboolean at_sim_register(gpointer user)
+ {
+ 	struct ofono_sim *sim =3D user;
+@@ -467,6 +635,9 @@ static struct ofono_sim_driver driver =3D {
+ 	.write_file_linear	=3D at_sim_update_record,
+ 	.write_file_cyclic	=3D at_sim_update_cyclic,
+ 	.read_imsi		=3D at_read_imsi,
++	.query_passwd_state	=3D at_pin_query,
++	.send_passwd		=3D at_pin_send,
++	.send_new_passwd	=3D at_pin_send_puk,
+ };
+ =
 
-The FALSE in the last parameter tells the function not to write the
-backup, I had renamed the function to sms_assembly_add_fragment_backup
-and made a wrapper under the old name.  I agree the naming is poor.
+ void at_sim_init()
+diff --git a/include/sim.h b/include/sim.h
+index 1da486c..90bedae 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -64,6 +64,12 @@ typedef void (*ofono_sim_file_read_cb_t)(int ok,
+ =
 
-Sending updated patches in attachments.
+ typedef void (*ofono_sim_file_write_cb_t)(int ok, void *userdata);
+ =
 
-Regards
++typedef void (*ofono_sim_passwd_cb_t)(const struct ofono_error *error,
++					int passwd_type, void *data);
++
++typedef void (*ofono_sim_passwd_send_cb_t)(const struct ofono_error *error,
++					void *data);
++
+ struct ofono_sim_driver {
+ 	const char *name;
+ 	int (*probe)(struct ofono_sim *sim, unsigned int vendor, void *data);
+@@ -90,6 +96,13 @@ struct ofono_sim_driver {
+ 			ofono_sim_write_cb_t cb, void *data);
+ 	void (*read_imsi)(struct ofono_sim *sim,
+ 			ofono_sim_imsi_cb_t cb, void *data);
++	void (*query_passwd_state)(struct ofono_sim *sim,
++			ofono_sim_passwd_cb_t cb, void *data);
++	void (*send_passwd)(struct ofono_sim *sim, const char *passwd,
++			ofono_sim_passwd_send_cb_t cb, void *data);
++	void (*send_new_passwd)(struct ofono_sim *sim, const char *puk,
++			const char *passwd,
++			ofono_sim_passwd_send_cb_t cb, void *data);
+ };
+ =
 
---===============0527600328616484917==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-Move-create_dirs-to-storage.c-add-file-read-write-u.patch"
+ int ofono_sim_driver_register(const struct ofono_sim_driver *d);
+diff --git a/include/types.h b/include/types.h
+index 6a9681d..99e2ca5 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -91,6 +91,26 @@ struct ofono_call {
+ 	int clip_validity;
+ };
+ =
 
-RnJvbSBmOTg2YTE3NTM2ZGNhNzA3YmE2Mjk0ZDE3ZWZhM2MyOTA3ZThmMTQ3IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogU2F0LCA1IFNlcCAyMDA5IDAzOjEyOjE5ICswMjAwClN1YmplY3Q6
-IFtQQVRDSCAxLzJdIE1vdmUgY3JlYXRlX2RpcnMgdG8gc3RvcmFnZS5jLCBhZGQgZmlsZSByZWFk
-L3dyaXRlIHV0aWxpdGllcwoKLS0tCiBNYWtlZmlsZS5hbSAgIHwgICAgMiArLQogc3JjL3NpbS5j
-ICAgICB8ICAgNjkgKystLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQogc3JjL3N0b3JhZ2Uu
-YyB8ICAxMjUgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrCiBzcmMvc3RvcmFnZS5oIHwgICAzNiArKysrKysrKysrKysrKysrCiA0IGZpbGVz
-IGNoYW5nZWQsIDE2NiBpbnNlcnRpb25zKCspLCA2NiBkZWxldGlvbnMoLSkKIGNyZWF0ZSBtb2Rl
-IDEwMDY0NCBzcmMvc3RvcmFnZS5jCiBjcmVhdGUgbW9kZSAxMDA2NDQgc3JjL3N0b3JhZ2UuaAoK
-ZGlmZiAtLWdpdCBhL01ha2VmaWxlLmFtIGIvTWFrZWZpbGUuYW0KaW5kZXggOWJjMzIxYy4uMDY4
-Y2E5NiAxMDA2NDQKLS0tIGEvTWFrZWZpbGUuYW0KKysrIGIvTWFrZWZpbGUuYW0KQEAgLTE0MCw3
-ICsxNDAsNyBAQCBzcmNfb2Zvbm9kX1NPVVJDRVMgPSAkKGdkYnVzX3NvdXJjZXMpICQoYnVpbHRp
-bl9zb3VyY2VzKSBcCiAJCQlzcmMvY2FsbC1tZXRlci5jIHNyYy9zbXN1dGlsLmggc3JjL3Ntc3V0
-aWwuYyBcCiAJCQlzcmMvc3NuLmMgc3JjL2NhbGwtYmFycmluZy5jIHNyYy9zaW0uYyBcCiAJCQlz
-cmMvcGhvbmVib29rLmMgc3JjL2hpc3RvcnkuYyBzcmMvbWVzc2FnZS13YWl0aW5nLmMgXAotCQkJ
-c3JjL3NpbXV0aWwuaCBzcmMvc2ltdXRpbC5jCisJCQlzcmMvc2ltdXRpbC5oIHNyYy9zaW11dGls
-LmMgc3JjL3N0b3JhZ2UuaCBzcmMvc3RvcmFnZS5jCiAKIHNyY19vZm9ub2RfTERBREQgPSAkKGJ1
-aWx0aW5fbGliYWRkKSBcCiAJCQlAR0xJQl9MSUJTQCBAR1RIUkVBRF9MSUJTQCBAREJVU19MSUJT
-QCAtbGRsCmRpZmYgLS1naXQgYS9zcmMvc2ltLmMgYi9zcmMvc2ltLmMKaW5kZXggZjUzYmU5ZC4u
-YTA3MmM4YyAxMDA2NDQKLS0tIGEvc3JjL3NpbS5jCisrKyBiL3NyYy9zaW0uYwpAQCAtNDEsMTIg
-KzQxLDcgQEAKICNpbmNsdWRlICJ1dGlsLmgiCiAjaW5jbHVkZSAic21zdXRpbC5oIgogI2luY2x1
-ZGUgInNpbXV0aWwuaCIKLQotI2lmZGVmIFRFTVBfRkFJTFVSRV9SRVRSWQotI2RlZmluZSBURlIg
-VEVNUF9GQUlMVVJFX1JFVFJZCi0jZWxzZQotI2RlZmluZSBURlIKLSNlbmRpZgorI2luY2x1ZGUg
-InN0b3JhZ2UuaCIKIAogI2RlZmluZSBTSU1fTUFOQUdFUl9JTlRFUkZBQ0UgIm9yZy5vZm9uby5T
-aW1NYW5hZ2VyIgogCkBAIC02MTcsMzQgKzYxMiw2IEBAIHN0YXRpYyB2b2lkIHNpbV9yZXRyaWV2
-ZV9pbXNpKHN0cnVjdCBvZm9ub19zaW0gKnNpbSkKIAlzaW0tPmRyaXZlci0+cmVhZF9pbXNpKHNp
-bSwgc2ltX2ltc2lfY2IsIHNpbSk7CiB9CiAKLXN0YXRpYyBpbnQgY3JlYXRlX2RpcnMoY29uc3Qg
-Y2hhciAqZmlsZW5hbWUsIGNvbnN0IG1vZGVfdCBtb2RlKQotewotCXN0cnVjdCBzdGF0IHN0Owot
-CWNoYXIgKmRpcjsKLQljb25zdCBjaGFyICpwcmV2LCAqbmV4dDsKLQlpbnQgZXJyOwotCi0JZXJy
-ID0gc3RhdChmaWxlbmFtZSwgJnN0KTsKLQlpZiAoIWVyciAmJiBTX0lTUkVHKHN0LnN0X21vZGUp
-KQotCQlyZXR1cm4gMDsKLQotCWRpciA9IGdfbWFsbG9jKHN0cmxlbihmaWxlbmFtZSkgKyAxKTsK
-LQlzdHJjcHkoZGlyLCAiLyIpOwotCi0JZm9yIChwcmV2ID0gZmlsZW5hbWU7IChuZXh0ID0gc3Ry
-Y2hyKHByZXYgKyAxLCAnLycpKTsgcHJldiA9IG5leHQpCi0JCWlmIChuZXh0ID4gcHJldiArIDEp
-IHsKLQkJCXN0cm5jYXQoZGlyLCBwcmV2ICsgMSwgbmV4dCAtIHByZXYpOwotCi0JCQlpZiAobWtk
-aXIoZGlyLCBtb2RlKSAmJiBlcnJubyAhPSBFRVhJU1QpIHsKLQkJCQlnX2ZyZWUoZGlyKTsKLQkJ
-CQlyZXR1cm4gLTE7Ci0JCQl9Ci0JCX0KLQotCWdfZnJlZShkaXIpOwotCXJldHVybiAwOwotfQot
-CiBzdGF0aWMgdm9pZCBzaW1fb3BfZXJyb3Ioc3RydWN0IG9mb25vX3NpbSAqc2ltKQogewogCXN0
-cnVjdCBzaW1fZmlsZV9vcCAqb3AgPSBnX3F1ZXVlX3BvcF9oZWFkKHNpbS0+c2ltb3BfcSk7CkBA
-IC03NjksMzMgKzczNiw2IEBAIHN0YXRpYyBnYm9vbGVhbiBzaW1fb3BfcmV0cmlldmVfbmV4dChn
-cG9pbnRlciB1c2VyKQogCXJldHVybiBGQUxTRTsKIH0KIAotc3RhdGljIGdib29sZWFuIGNhY2hl
-X2luZm8oY29uc3QgY2hhciAqcGF0aCwgY29uc3QgdW5zaWduZWQgY2hhciAqaW5mbywgaW50IGxl
-bikKLXsKLQlpbnQgZmQ7Ci0JaW50IHI7Ci0KLQlpZiAoY3JlYXRlX2RpcnMocGF0aCwgU0lNX0NB
-Q0hFX01PREUgfCBTX0lYVVNSKSAhPSAwKQotCQlyZXR1cm4gRkFMU0U7Ci0KLQlmZCA9IFRGUihv
-cGVuKHBhdGgsIE9fV1JPTkxZIHwgT19DUkVBVCwgU0lNX0NBQ0hFX01PREUpKTsKLQotCWlmIChm
-ZCA9PSAtMSkgewotCQlvZm9ub19kZWJ1ZygiRXJyb3IgJWkgY3JlYXRpbmcgY2FjaGUgZmlsZSAl
-cyIsCi0JCQkJZXJybm8sIHBhdGgpOwotCQlyZXR1cm4gRkFMU0U7Ci0JfQotCi0JciA9IFRGUih3
-cml0ZShmZCwgaW5mbywgbGVuKSk7Ci0JVEZSKGNsb3NlKGZkKSk7Ci0KLQlpZiAociA8IGxlbikg
-ewotCQl1bmxpbmsocGF0aCk7Ci0JCXJldHVybiBGQUxTRTsKLQl9Ci0KLQlyZXR1cm4gVFJVRTsK
-LX0KLQogc3RhdGljIHZvaWQgc2ltX29wX2luZm9fY2IoY29uc3Qgc3RydWN0IG9mb25vX2Vycm9y
-ICplcnJvciwgaW50IGxlbmd0aCwKIAkJCQllbnVtIG9mb25vX3NpbV9maWxlX3N0cnVjdHVyZSBz
-dHJ1Y3R1cmUsCiAJCQkJaW50IHJlY29yZF9sZW5ndGgsCkBAIC04MzgsNyArNzc4LDYgQEAgc3Rh
-dGljIHZvaWQgc2ltX29wX2luZm9fY2IoY29uc3Qgc3RydWN0IG9mb25vX2Vycm9yICplcnJvciwg
-aW50IGxlbmd0aCwKIAlzaW0tPnNpbW9wX3NvdXJjZSA9IGdfdGltZW91dF9hZGQoMCwgc2ltX29w
-X3JldHJpZXZlX25leHQsIHNpbSk7CiAKIAlpZiAob3AtPmNhY2hlICYmIGltc2kpIHsKLQkJY2hh
-ciAqcGF0aCA9IGdfc3RyZHVwX3ByaW50ZihTSU1fQ0FDSEVfUEFUSCwgaW1zaSwgb3AtPmlkKTsK
-IAkJdW5zaWduZWQgY2hhciBmaWxlaW5mb1s2XTsKIAogCQlmaWxlaW5mb1swXSA9IGVycm9yLT50
-eXBlOwpAQCAtODQ4LDkgKzc4Nyw5IEBAIHN0YXRpYyB2b2lkIHNpbV9vcF9pbmZvX2NiKGNvbnN0
-IHN0cnVjdCBvZm9ub19lcnJvciAqZXJyb3IsIGludCBsZW5ndGgsCiAJCWZpbGVpbmZvWzRdID0g
-cmVjb3JkX2xlbmd0aCA+PiA4OwogCQlmaWxlaW5mb1s1XSA9IHJlY29yZF9sZW5ndGggJiAweGZm
-OwogCi0JCW9wLT5jYWNoZSA9IGNhY2hlX2luZm8ocGF0aCwgZmlsZWluZm8sIDYpOwotCi0JCWdf
-ZnJlZShwYXRoKTsKKwkJaWYgKHdyaXRlX2ZpbGUoZmlsZWluZm8sIDYsIFNJTV9DQUNIRV9NT0RF
-LAorCQkJCQlTSU1fQ0FDSEVfUEFUSCwgaW1zaSwgb3AtPmlkKSAhPSA2KQorCQkJb3AtPmNhY2hl
-ID0gRkFMU0U7CiAJfQogfQogCmRpZmYgLS1naXQgYS9zcmMvc3RvcmFnZS5jIGIvc3JjL3N0b3Jh
-Z2UuYwpuZXcgZmlsZSBtb2RlIDEwMDY0NAppbmRleCAwMDAwMDAwLi5kNjZmMjBmCi0tLSAvZGV2
-L251bGwKKysrIGIvc3JjL3N0b3JhZ2UuYwpAQCAtMCwwICsxLDEyNSBAQAorLyoKKyAqCisgKiAg
-b0Zvbm8gLSBPcGVuIFNvdXJjZSBUZWxlcGhvbnkKKyAqCisgKiAgQ29weXJpZ2h0IChDKSAyMDA4
-LTIwMDkgIEludGVsIENvcnBvcmF0aW9uLiBBbGwgcmlnaHRzIHJlc2VydmVkLgorICoKKyAqICBU
-aGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTsgeW91IGNhbiByZWRpc3RyaWJ1dGUgaXQgYW5k
-L29yIG1vZGlmeQorICogIGl0IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVi
-bGljIExpY2Vuc2UgdmVyc2lvbiAyIGFzCisgKiAgcHVibGlzaGVkIGJ5IHRoZSBGcmVlIFNvZnR3
-YXJlIEZvdW5kYXRpb24uCisgKgorICogIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0
-aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLAorICogIGJ1dCBXSVRIT1VUIEFOWSBXQVJS
-QU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mCisgKiAgTUVSQ0hBTlRB
-QklMSVRZIG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZQorICog
-IEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuCisgKgorICogIFlv
-dSBzaG91bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBM
-aWNlbnNlCisgKiAgYWxvbmcgd2l0aCB0aGlzIHByb2dyYW07IGlmIG5vdCwgd3JpdGUgdG8gdGhl
-IEZyZWUgU29mdHdhcmUKKyAqICBGb3VuZGF0aW9uLCBJbmMuLCA1MSBGcmFua2xpbiBTdCwgRmlm
-dGggRmxvb3IsIEJvc3RvbiwgTUEgIDAyMTEwLTEzMDEgIFVTQQorICoKKyAqLworCisjaWZkZWYg
-SEFWRV9DT05GSUdfSAorI2luY2x1ZGUgPGNvbmZpZy5oPgorI2VuZGlmCisKKyNkZWZpbmUgX0dO
-VV9TT1VSQ0UKKyNpbmNsdWRlIDxzdHJpbmcuaD4KKyNpbmNsdWRlIDxzdGRhcmcuaD4KKyNpbmNs
-dWRlIDxzeXMvdHlwZXMuaD4KKyNpbmNsdWRlIDxzeXMvc3RhdC5oPgorI2luY2x1ZGUgPHVuaXN0
-ZC5oPgorI2luY2x1ZGUgPGVycm5vLmg+CisKKyNpbmNsdWRlIDxnbGliLmg+CisKKyNpbmNsdWRl
-IDxvZm9uby90eXBlcy5oPgorI2luY2x1ZGUgInN0b3JhZ2UuaCIKKworaW50IGNyZWF0ZV9kaXJz
-KGNvbnN0IGNoYXIgKmZpbGVuYW1lLCBjb25zdCBtb2RlX3QgbW9kZSkKK3sKKwlzdHJ1Y3Qgc3Rh
-dCBzdDsKKwljaGFyICpkaXI7CisJY29uc3QgY2hhciAqcHJldiwgKm5leHQ7CisJaW50IGVycjsK
-KworCWVyciA9IHN0YXQoZmlsZW5hbWUsICZzdCk7CisJaWYgKCFlcnIgJiYgU19JU1JFRyhzdC5z
-dF9tb2RlKSkKKwkJcmV0dXJuIDA7CisKKwlkaXIgPSBnX21hbGxvYyhzdHJsZW4oZmlsZW5hbWUp
-ICsgMSk7CisJc3RyY3B5KGRpciwgIi8iKTsKKworCWZvciAocHJldiA9IGZpbGVuYW1lOyAobmV4
-dCA9IHN0cmNocihwcmV2ICsgMSwgJy8nKSk7IHByZXYgPSBuZXh0KQorCQlpZiAobmV4dCA+IHBy
-ZXYgKyAxKSB7CisJCQlzdHJuY2F0KGRpciwgcHJldiArIDEsIG5leHQgLSBwcmV2KTsKKworCQkJ
-aWYgKG1rZGlyKGRpciwgbW9kZSkgJiYgZXJybm8gIT0gRUVYSVNUKSB7CisJCQkJZ19mcmVlKGRp
-cik7CisJCQkJcmV0dXJuIC0xOworCQkJfQorCQl9CisKKwlnX2ZyZWUoZGlyKTsKKwlyZXR1cm4g
-MDsKK30KKworc3NpemVfdCByZWFkX2ZpbGUodW5zaWduZWQgY2hhciAqYnVmZmVyLCBzaXplX3Qg
-bGVuLAorCQkJY29uc3QgY2hhciAqcGF0aF9mbXQsIC4uLikgeworCXZhX2xpc3QgYXA7CisJY2hh
-ciAqcGF0aDsKKwlzc2l6ZV90IHI7CisJaW50IGZkOworCisJdmFfc3RhcnQoYXAsIHBhdGhfZm10
-KTsKKwlwYXRoID0gZ19zdHJkdXBfdnByaW50ZihwYXRoX2ZtdCwgYXApOworCXZhX2VuZChhcCk7
-CisKKwlmZCA9IFRGUihvcGVuKHBhdGgsIE9fUkRPTkxZKSk7CisKKwlnX2ZyZWUocGF0aCk7CisK
-KwlpZiAoZmQgPT0gLTEpCisJCXJldHVybiAtMTsKKworCXIgPSBURlIocmVhZChmZCwgYnVmZmVy
-LCBsZW4pKTsKKworCVRGUihjbG9zZShmZCkpOworCisJcmV0dXJuIHI7Cit9CisKK3NzaXplX3Qg
-d3JpdGVfZmlsZShjb25zdCB1bnNpZ25lZCBjaGFyICpidWZmZXIsIHNpemVfdCBsZW4sIG1vZGVf
-dCBtb2RlLAorCQkJY29uc3QgY2hhciAqcGF0aF9mbXQsIC4uLikgeworCXZhX2xpc3QgYXA7CisJ
-Y2hhciAqcGF0aDsKKwlzc2l6ZV90IHI7CisJaW50IGZkOworCisJdmFfc3RhcnQoYXAsIHBhdGhf
-Zm10KTsKKwlwYXRoID0gZ19zdHJkdXBfdnByaW50ZihwYXRoX2ZtdCwgYXApOworCXZhX2VuZChh
-cCk7CisKKwlpZiAoY3JlYXRlX2RpcnMocGF0aCwgbW9kZSB8IFNfSVhVU1IpICE9IDApIHsKKwkJ
-Z19mcmVlKHBhdGgpOworCQlyZXR1cm4gLTE7CisJfQorCisJZmQgPSBURlIob3BlbihwYXRoLCBP
-X1dST05MWSB8IE9fQ1JFQVQgfCBPX1RSVU5DLCBtb2RlKSk7CisJaWYgKGZkID09IC0xKSB7CisJ
-CWdfZnJlZShwYXRoKTsKKwkJcmV0dXJuIC0xOworCX0KKworCXIgPSBURlIod3JpdGUoZmQsIGJ1
-ZmZlciwgbGVuKSk7CisKKwlURlIoY2xvc2UoZmQpKTsKKworCWlmIChyICE9IChzc2l6ZV90KSBs
-ZW4pIHsKKwkJdW5saW5rKHBhdGgpOworCQlyID0gLTE7CisJfQorCisJZ19mcmVlKHBhdGgpOwor
-CXJldHVybiByOworfQpkaWZmIC0tZ2l0IGEvc3JjL3N0b3JhZ2UuaCBiL3NyYy9zdG9yYWdlLmgK
-bmV3IGZpbGUgbW9kZSAxMDA2NDQKaW5kZXggMDAwMDAwMC4uMzA1YzRhNQotLS0gL2Rldi9udWxs
-CisrKyBiL3NyYy9zdG9yYWdlLmgKQEAgLTAsMCArMSwzNiBAQAorLyoKKyAqCisgKiAgb0Zvbm8g
-LSBPcGVuIFNvdXJjZSBUZWxlcGhvbnkKKyAqCisgKiAgQ29weXJpZ2h0IChDKSAyMDA4LTIwMDkg
-IEludGVsIENvcnBvcmF0aW9uLiBBbGwgcmlnaHRzIHJlc2VydmVkLgorICoKKyAqICBUaGlzIHBy
-b2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTsgeW91IGNhbiByZWRpc3RyaWJ1dGUgaXQgYW5kL29yIG1v
-ZGlmeQorICogIGl0IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExp
-Y2Vuc2UgdmVyc2lvbiAyIGFzCisgKiAgcHVibGlzaGVkIGJ5IHRoZSBGcmVlIFNvZnR3YXJlIEZv
-dW5kYXRpb24uCisgKgorICogIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9w
-ZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLAorICogIGJ1dCBXSVRIT1VUIEFOWSBXQVJSQU5UWTsg
-d2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mCisgKiAgTUVSQ0hBTlRBQklMSVRZ
-IG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZQorICogIEdOVSBH
-ZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuCisgKgorICogIFlvdSBzaG91
-bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNl
-CisgKiAgYWxvbmcgd2l0aCB0aGlzIHByb2dyYW07IGlmIG5vdCwgd3JpdGUgdG8gdGhlIEZyZWUg
-U29mdHdhcmUKKyAqICBGb3VuZGF0aW9uLCBJbmMuLCA1MSBGcmFua2xpbiBTdCwgRmlmdGggRmxv
-b3IsIEJvc3RvbiwgTUEgIDAyMTEwLTEzMDEgIFVTQQorICoKKyAqLworCisjaWZkZWYgVEVNUF9G
-QUlMVVJFX1JFVFJZCisjZGVmaW5lIFRGUiBURU1QX0ZBSUxVUkVfUkVUUlkKKyNlbHNlCisjZGVm
-aW5lIFRGUgorI2VuZGlmCisKKyNpbmNsdWRlIDxmY250bC5oPgorCitpbnQgY3JlYXRlX2RpcnMo
-Y29uc3QgY2hhciAqZmlsZW5hbWUsIGNvbnN0IG1vZGVfdCBtb2RlKTsKKworc3NpemVfdCByZWFk
-X2ZpbGUodW5zaWduZWQgY2hhciAqYnVmZmVyLCBzaXplX3QgbGVuLAorCQkJY29uc3QgY2hhciAq
-cGF0aF9mbXQsIC4uLik7CisKK3NzaXplX3Qgd3JpdGVfZmlsZShjb25zdCB1bnNpZ25lZCBjaGFy
-ICpidWZmZXIsIHNpemVfdCBsZW4sIG1vZGVfdCBtb2RlLAorCQkJY29uc3QgY2hhciAqcGF0aF9m
-bXQsIC4uLik7Ci0tIAoxLjYuMQoK
++enum ofono_sim_passwd_type {
++	OFONO_PASSWD_NONE =3D 0,
++
++	OFONO_PASSWD_SIM_PIN,
++	OFONO_PASSWD_SIM_PUK,
++	OFONO_PASSWD_PHSIM_PIN,
++	OFONO_PASSWD_PHFSIM_PIN,
++	OFONO_PASSWD_PHFSIM_PUK,
++	OFONO_PASSWD_SIM_PIN2,
++	OFONO_PASSWD_SIM_PUK2,
++	OFONO_PASSWD_PHNET_PIN,
++	OFONO_PASSWD_PHNET_PUK,
++	OFONO_PASSWD_PHNETSUB_PIN,
++	OFONO_PASSWD_PHNETSUB_PUK,
++	OFONO_PASSWD_PHSP_PIN,
++	OFONO_PASSWD_PHSP_PUK,
++	OFONO_PASSWD_PHCORP_PIN,
++	OFONO_PASSWD_PHCORP_PUK,
++};
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/src/sim.c b/src/sim.c
+index a072c8c..44f0a3b 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -55,6 +55,7 @@ static GSList *g_drivers =3D NULL;
+ static gboolean sim_op_next(gpointer user_data);
+ static gboolean sim_op_retrieve_next(gpointer user);
+ static void sim_own_numbers_update(struct ofono_sim *sim);
++static void sim_pin_check(struct ofono_sim *sim);
+ =
 
---===============0527600328616484917==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0003-Write-state-of-SMS-assembly-to-disk-and-restore-on-s.patch"
+ struct sim_file_op {
+ 	int id;
+@@ -77,6 +78,8 @@ struct ofono_sim {
+ 	GSList *service_numbers;
+ 	gboolean sdn_ready;
+ 	gboolean ready;
++	gboolean pin_ready;
++	int pin_type;
+ 	GQueue *simop_q;
+ 	gint simop_source;
+ 	unsigned char efmsisdn_length;
+@@ -86,6 +89,7 @@ struct ofono_sim {
+ 	const struct ofono_sim_driver *driver;
+ 	void *driver_data;
+ 	struct ofono_atom *atom;
++	DBusMessage *pending;
+ };
+ =
 
-RnJvbSAzOWViZjBjZTY0N2VhMzdmOTM3MDI4ZDQ5MWI1YTUzMGEzMDc0MDY4IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogU2F0LCA1IFNlcCAyMDA5IDAzOjE2OjAyICswMjAwClN1YmplY3Q6
-IFtQQVRDSCAyLzJdIFdyaXRlIHN0YXRlIG9mIFNNUyBhc3NlbWJseSB0byBkaXNrIGFuZCByZXN0
-b3JlIG9uIHN0YXJ0dXAuCgpUaGlzIHdheSB3ZSBjYW4gY29udGludWUgcmVjZWl2aW5nIHNlZ21l
-bnRlZCBtZXNzYWdlcyBvdmVyIGEgcmVzZXQgb3IKY3Jhc2guCi0tLQogTWFrZWZpbGUuYW0gICAg
-IHwgICAgNSArLQogc3JjL2NvbW1vbi5jICAgIHwgICAgMSArCiBzcmMvc21zLmMgICAgICAgfCAg
-IDU4ICsrKysrKysrKysrKysrKy0KIHNyYy9zbXN1dGlsLmMgICB8ICAyMTQgKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrLQogc3JjL3Ntc3V0aWwu
-aCAgIHwgICAgMyArLQogdW5pdC90ZXN0LXNtcy5jIHwgICAgNCArLQogNiBmaWxlcyBjaGFuZ2Vk
-LCAyNzYgaW5zZXJ0aW9ucygrKSwgOSBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9NYWtlZmls
-ZS5hbSBiL01ha2VmaWxlLmFtCmluZGV4IDA2OGNhOTYuLjIxNDA3M2YgMTAwNjQ0Ci0tLSBhL01h
-a2VmaWxlLmFtCisrKyBiL01ha2VmaWxlLmFtCkBAIC0yMDQsMTIgKzIwNCwxMyBAQCB1bml0X3Rl
-c3RfdXRpbF9TT1VSQ0VTID0gdW5pdC90ZXN0LXV0aWwuYyBzcmMvdXRpbC5jCiB1bml0X3Rlc3Rf
-dXRpbF9MREFERCA9IEBHTElCX0xJQlNACiB1bml0X29iamVjdHMgKz0gJCh1bml0X3Rlc3RfdXRp
-bHNfT0JKRUNUUykKIAotdW5pdF90ZXN0X3Ntc19TT1VSQ0VTID0gdW5pdC90ZXN0LXNtcy5jIHNy
-Yy91dGlsLmMgc3JjL3Ntc3V0aWwuYwordW5pdF90ZXN0X3Ntc19TT1VSQ0VTID0gdW5pdC90ZXN0
-LXNtcy5jIHNyYy91dGlsLmMgc3JjL3Ntc3V0aWwuYyBzcmMvc3RvcmFnZS5jCiB1bml0X3Rlc3Rf
-c21zX0xEQUREID0gQEdMSUJfTElCU0AKIHVuaXRfb2JqZWN0cyArPSAkKHVuaXRfdGVzdF9zbXNf
-T0JKRUNUUykKIAogdW5pdF90ZXN0X3NpbXV0aWxfU09VUkNFUyA9IHVuaXQvdGVzdC1zaW11dGls
-LmMgc3JjL3V0aWwuYyBcCi0JCQkJCQlzcmMvc2ltdXRpbC5jIHNyYy9zbXN1dGlsLmMKKwkJCQkJ
-CXNyYy9zaW11dGlsLmMgc3JjL3Ntc3V0aWwuYyBcCisJCQkJCQlzcmMvc3RvcmFnZS5jCiB1bml0
-X3Rlc3Rfc2ltdXRpbF9MREFERCA9IEBHTElCX0xJQlNACiB1bml0X29iamVjdHMgKz0gJCh1bml0
-X3Rlc3Rfc2ltdXRpbF9PQkpFQ1RTKQogCmRpZmYgLS1naXQgYS9zcmMvY29tbW9uLmMgYi9zcmMv
-Y29tbW9uLmMKaW5kZXggZmY5NGZjMC4uNjM4ODRhMyAxMDA2NDQKLS0tIGEvc3JjL2NvbW1vbi5j
-CisrKyBiL3NyYy9jb21tb24uYwpAQCAtMjYsNiArMjYsNyBAQAogI2RlZmluZSBfR05VX1NPVVJD
-RQogI2luY2x1ZGUgPHN0cmluZy5oPgogI2luY2x1ZGUgPGN0eXBlLmg+CisjaW5jbHVkZSA8ZXJy
-bm8uaD4KIAogI2luY2x1ZGUgPGdsaWIuaD4KIApkaWZmIC0tZ2l0IGEvc3JjL3Ntcy5jIGIvc3Jj
-L3Ntcy5jCmluZGV4IGZlNzY1ODAuLjE0OWVjZDAgMTAwNjQ0Ci0tLSBhL3NyYy9zbXMuYworKysg
-Yi9zcmMvc21zLmMKQEAgLTU3LDYgKzU3LDkgQEAgc3RydWN0IG9mb25vX3NtcyB7CiAJZ2ludCB0
-eF9zb3VyY2U7CiAJc3RydWN0IG9mb25vX21lc3NhZ2Vfd2FpdGluZyAqbXc7CiAJdW5zaWduZWQg
-aW50IG13X3dhdGNoOworCXN0cnVjdCBvZm9ub19zaW0gKnNpbTsKKwl1bnNpZ25lZCBpbnQgc2lt
-X3dhdGNoOworCXVuc2lnbmVkIGludCBpbXNpX3dhdGNoOwogCWNvbnN0IHN0cnVjdCBvZm9ub19z
-bXNfZHJpdmVyICpkcml2ZXI7CiAJdm9pZCAqZHJpdmVyX2RhdGE7CiAJc3RydWN0IG9mb25vX2F0
-b20gKmF0b207CkBAIC03ODUsNiArNzg4LDE3IEBAIHN0YXRpYyB2b2lkIHNtc191bnJlZ2lzdGVy
-KHN0cnVjdCBvZm9ub19hdG9tICphdG9tKQogCQlfX29mb25vX21vZGVtX3JlbW92ZV9hdG9tX3dh
-dGNoKG1vZGVtLCBzbXMtPm13X3dhdGNoKTsKIAkJc21zLT5td193YXRjaCA9IDA7CiAJfQorCisJ
-aWYgKHNtcy0+c2ltX3dhdGNoKSB7CisJCWlmIChzbXMtPmltc2lfd2F0Y2gpIHsKKwkJCW9mb25v
-X3NpbV9yZW1vdmVfcmVhZHlfd2F0Y2goc21zLT5zaW0sCisJCQkJCQkJc21zLT5pbXNpX3dhdGNo
-KTsKKwkJCXNtcy0+aW1zaV93YXRjaCA9IDA7CisJCX0KKworCQlfX29mb25vX21vZGVtX3JlbW92
-ZV9hdG9tX3dhdGNoKG1vZGVtLCBzbXMtPnNpbV93YXRjaCk7CisJCXNtcy0+c2ltX3dhdGNoID0g
-MDsKKwl9CiB9CiAKIHN0YXRpYyB2b2lkIHNtc19yZW1vdmUoc3RydWN0IG9mb25vX2F0b20gKmF0
-b20pCkBAIC04MzYsNyArODUwLDYgQEAgc3RydWN0IG9mb25vX3NtcyAqb2Zvbm9fc21zX2NyZWF0
-ZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtLAogCiAJc21zLT5zY2EudHlwZSA9IDEyOTsKIAlz
-bXMtPnJlZiA9IDE7Ci0Jc21zLT5hc3NlbWJseSA9IHNtc19hc3NlbWJseV9uZXcoKTsKIAlzbXMt
-PnR4cSA9IGdfcXVldWVfbmV3KCk7CiAJc21zLT5hdG9tID0gX19vZm9ub19tb2RlbV9hZGRfYXRv
-bShtb2RlbSwgT0ZPTk9fQVRPTV9UWVBFX1NNUywKIAkJCQkJCXNtc19yZW1vdmUsIHNtcyk7CkBA
-IC04NzAsMTIgKzg4Myw0NSBAQCBzdGF0aWMgdm9pZCBtd193YXRjaChzdHJ1Y3Qgb2Zvbm9fYXRv
-bSAqYXRvbSwKIAlzbXMtPm13ID0gX19vZm9ub19hdG9tX2dldF9kYXRhKGF0b20pOwogfQogCitz
-dGF0aWMgdm9pZCBzbXNfZ290X2ltc2kodm9pZCAqZGF0YSkKK3sKKwlzdHJ1Y3Qgb2Zvbm9fc21z
-ICpzbXMgPSBkYXRhOworCWNvbnN0IGNoYXIgKmltc2kgPSBvZm9ub19zaW1fZ2V0X2ltc2koc21z
-LT5zaW0pOworCisJc21zLT5hc3NlbWJseSA9IHNtc19hc3NlbWJseV9uZXcoaW1zaSk7Cit9CisK
-K3N0YXRpYyB2b2lkIHNpbV93YXRjaChzdHJ1Y3Qgb2Zvbm9fYXRvbSAqYXRvbSwKKwkJCWVudW0g
-b2Zvbm9fYXRvbV93YXRjaF9jb25kaXRpb24gY29uZCwgdm9pZCAqZGF0YSkKK3sKKwlzdHJ1Y3Qg
-b2Zvbm9fc21zICpzbXMgPSBkYXRhOworCisJaWYgKGNvbmQgPT0gT0ZPTk9fQVRPTV9XQVRDSF9D
-T05ESVRJT05fVU5SRUdJU1RFUkVEKSB7CisJCXNtcy0+aW1zaV93YXRjaCA9IDA7CisKKwkJaWYg
-KHNtcy0+YXNzZW1ibHkpIHsKKwkJCXNtc19hc3NlbWJseV9mcmVlKHNtcy0+YXNzZW1ibHkpOwor
-CQkJc21zLT5hc3NlbWJseSA9IE5VTEw7CisJCX0KKworCQlyZXR1cm47CisJfQorCisJc21zLT5z
-aW0gPSBfX29mb25vX2F0b21fZ2V0X2RhdGEoYXRvbSk7CisJc21zLT5pbXNpX3dhdGNoID0gb2Zv
-bm9fc2ltX2FkZF9yZWFkeV93YXRjaChzbXMtPnNpbSwgc21zX2dvdF9pbXNpLAorCQkJCQkJCXNt
-cywgTlVMTCk7CisKKwlpZiAob2Zvbm9fc2ltX2dldF9yZWFkeShzbXMtPnNpbSkpCisJCXNtc19n
-b3RfaW1zaShzbXMpOworfQorCiB2b2lkIG9mb25vX3Ntc19yZWdpc3RlcihzdHJ1Y3Qgb2Zvbm9f
-c21zICpzbXMpCiB7CiAJREJ1c0Nvbm5lY3Rpb24gKmNvbm4gPSBvZm9ub19kYnVzX2dldF9jb25u
-ZWN0aW9uKCk7CiAJc3RydWN0IG9mb25vX21vZGVtICptb2RlbSA9IF9fb2Zvbm9fYXRvbV9nZXRf
-bW9kZW0oc21zLT5hdG9tKTsKIAljb25zdCBjaGFyICpwYXRoID0gX19vZm9ub19hdG9tX2dldF9w
-YXRoKHNtcy0+YXRvbSk7CiAJc3RydWN0IG9mb25vX2F0b20gKm13X2F0b207CisJc3RydWN0IG9m
-b25vX2F0b20gKnNpbV9hdG9tOwogCiAJaWYgKCFnX2RidXNfcmVnaXN0ZXJfaW50ZXJmYWNlKGNv
-bm4sIHBhdGgsCiAJCQkJCVNNU19NQU5BR0VSX0lOVEVSRkFDRSwKQEAgLTg5OSw2ICs5NDUsMTYg
-QEAgdm9pZCBvZm9ub19zbXNfcmVnaXN0ZXIoc3RydWN0IG9mb25vX3NtcyAqc21zKQogCWlmICht
-d19hdG9tICYmIF9fb2Zvbm9fYXRvbV9nZXRfcmVnaXN0ZXJlZChtd19hdG9tKSkKIAkJbXdfd2F0
-Y2gobXdfYXRvbSwgT0ZPTk9fQVRPTV9XQVRDSF9DT05ESVRJT05fUkVHSVNURVJFRCwgc21zKTsK
-IAorCXNtcy0+c2ltX3dhdGNoID0gX19vZm9ub19tb2RlbV9hZGRfYXRvbV93YXRjaChtb2RlbSwK
-KwkJCQkJT0ZPTk9fQVRPTV9UWVBFX1NJTSwKKwkJCQkJc2ltX3dhdGNoLCBzbXMsIE5VTEwpOwor
-CisJc2ltX2F0b20gPSBfX29mb25vX21vZGVtX2ZpbmRfYXRvbShtb2RlbSwgT0ZPTk9fQVRPTV9U
-WVBFX1NJTSk7CisKKwlpZiAoc2ltX2F0b20gJiYgX19vZm9ub19hdG9tX2dldF9yZWdpc3RlcmVk
-KHNpbV9hdG9tKSkKKwkJc2ltX3dhdGNoKHNpbV9hdG9tLAorCQkJCU9GT05PX0FUT01fV0FUQ0hf
-Q09ORElUSU9OX1JFR0lTVEVSRUQsIHNtcyk7CisKIAlfX29mb25vX2F0b21fcmVnaXN0ZXIoc21z
-LT5hdG9tLCBzbXNfdW5yZWdpc3Rlcik7CiB9CiAKZGlmZiAtLWdpdCBhL3NyYy9zbXN1dGlsLmMg
-Yi9zcmMvc21zdXRpbC5jCmluZGV4IGZjZmY5YWEuLjc5YjUwNDggMTAwNjQ0Ci0tLSBhL3NyYy9z
-bXN1dGlsLmMKKysrIGIvc3JjL3Ntc3V0aWwuYwpAQCAtMjMsMTYgKzIzLDM4IEBACiAjaW5jbHVk
-ZSA8Y29uZmlnLmg+CiAjZW5kaWYKIAorI2RlZmluZSBfR05VX1NPVVJDRQogI2luY2x1ZGUgPHN0
-ZGlvLmg+CiAjaW5jbHVkZSA8c3RkbGliLmg+CiAjaW5jbHVkZSA8c3RyaW5nLmg+CisjaW5jbHVk
-ZSA8ZGlyZW50Lmg+CisjaW5jbHVkZSA8c3lzL3R5cGVzLmg+CisjaW5jbHVkZSA8c3lzL3N0YXQu
-aD4KKyNpbmNsdWRlIDx1bmlzdGQuaD4KKwogI2luY2x1ZGUgPGdsaWIuaD4KIAorI2luY2x1ZGUg
-InR5cGVzLmgiCisjaW5jbHVkZSAiY29tbW9uLmgiCiAjaW5jbHVkZSAidXRpbC5oIgorI2luY2x1
-ZGUgInN0b3JhZ2UuaCIKICNpbmNsdWRlICJzbXN1dGlsLmgiCiAKICNkZWZpbmUgdW5pbml0aWFs
-aXplZF92YXIoeCkgeCA9IHgKIAorI2RlZmluZSBTTVNfQkFDS1VQX01PREUgMDYwMAorI2RlZmlu
-ZSBTTVNfQkFDS1VQX1BBVEggU1RPUkFHRURJUiAiLyVzL3NtcyIKKyNkZWZpbmUgU01TX0JBQ0tV
-UF9QQVRIX0RJUiBTTVNfQkFDS1VQX1BBVEggIi8lcy0laS0laSIKKyNkZWZpbmUgU01TX0JBQ0tV
-UF9QQVRIX0ZJTEUgU01TX0JBQ0tVUF9QQVRIX0RJUiAiLyUwM2kiCisKKyNkZWZpbmUgU01TX0FE
-RFJfRk1UICIlMjFbMC05KyojXSIKKworc3RhdGljIEdTTGlzdCAqc21zX2Fzc2VtYmx5X2FkZF9m
-cmFnbWVudF9iYWNrdXAoc3RydWN0IHNtc19hc3NlbWJseSAqYXNzZW1ibHksCisJCQkJCWNvbnN0
-IHN0cnVjdCBzbXMgKnNtcywgdGltZV90IHRzLAorCQkJCQljb25zdCBzdHJ1Y3Qgc21zX2FkZHJl
-c3MgKmFkZHIsCisJCQkJCWd1aW50MTYgcmVmLCBndWludDggbWF4LCBndWludDggc2VxLAorCQkJ
-CQlnYm9vbGVhbiBiYWNrdXApOworCiB2b2lkIGV4dHJhY3RfYmNkX251bWJlcihjb25zdCB1bnNp
-Z25lZCBjaGFyICpidWYsIGludCBsZW4sIGNoYXIgKm91dCkKIHsKIAlzdGF0aWMgY29uc3QgY2hh
-ciBkaWdpdF9sdXRbXSA9ICIwMTIzNDU2Nzg5KiNhYmNcMCI7CkBAIC0yMTA2LDkgKzIxMjgsMTc3
-IEBAIGNoYXIgKnNtc19kZWNvZGVfdGV4dChHU0xpc3QgKnNtc19saXN0KQogCXJldHVybiB1dGY4
-OwogfQogCi1zdHJ1Y3Qgc21zX2Fzc2VtYmx5ICpzbXNfYXNzZW1ibHlfbmV3KCkKK3N0YXRpYyBp
-bnQgc21zX3NlcmlhbGl6ZSh1bnNpZ25lZCBjaGFyICpidWYsIGNvbnN0IHN0cnVjdCBzbXMgKnNt
-cykKK3sKKwlpbnQgbGVuLCB0cGR1X2xlbjsKKworCXNtc19lbmNvZGUoc21zLCAmbGVuLCAmdHBk
-dV9sZW4sIGJ1ZiArIDEpOworCWJ1ZlswXSA9IHRwZHVfbGVuOworCisJcmV0dXJuIGxlbjsKK30K
-Kworc3RhdGljIGdib29sZWFuIHNtc19kZXNlcmlhbGl6ZShjb25zdCB1bnNpZ25lZCBjaGFyICpi
-dWYsCisJCXN0cnVjdCBzbXMgKnNtcywgaW50IGxlbikKK3sKKwlpZiAobGVuIDwgMSkKKwkJcmV0
-dXJuIEZBTFNFOworCisJcmV0dXJuIHNtc19kZWNvZGUoYnVmICsgMSwgbGVuIC0gMSwgRkFMU0Us
-IGJ1ZlswXSwgc21zKTsKK30KKworc3RhdGljIHZvaWQgc21zX2Fzc2VtYmx5X2xvYWQoc3RydWN0
-IHNtc19hc3NlbWJseSAqYXNzZW1ibHksCisJCQkJY29uc3Qgc3RydWN0IGRpcmVudCAqZGlyKQor
-eworCXN0cnVjdCBzbXNfYWRkcmVzcyBhZGRyOworCWNoYXIgc3RyYWRkcltzaXplb2YoYWRkci5h
-ZGRyZXNzKSArIDFdOworCWd1aW50MTYgcmVmOworCWd1aW50OCBtYXg7CisJZ3VpbnQ4IHNlcTsK
-KwljaGFyICpwYXRoOworCWludCBsZW47CisJc3RydWN0IHN0YXQgc2VnbWVudF9zdGF0OworCXN0
-cnVjdCBkaXJlbnQgKipzZWdtZW50czsKKwljaGFyICplbmRwOworCWludCByOworCWludCBpOwor
-CXVuc2lnbmVkIGNoYXIgYnVmWzE3N107CisJc3RydWN0IHNtcyBzZWdtZW50OworCisJaWYgKGRp
-ci0+ZF90eXBlICE9IERUX0RJUikKKwkJcmV0dXJuOworCisJaWYgKHNzY2FuZihkaXItPmRfbmFt
-ZSwgU01TX0FERFJfRk1UICItJWhpLSVoaGkiLAorCQkJCXN0cmFkZHIsICZyZWYsICZtYXgpIDwg
-MykKKwkJcmV0dXJuOworCXNtc19hZGRyZXNzX2Zyb21fc3RyaW5nKCZhZGRyLCBzdHJhZGRyKTsK
-KworCXBhdGggPSBnX3N0cmR1cF9wcmludGYoU01TX0JBQ0tVUF9QQVRIICIvJXMiLAorCQkJYXNz
-ZW1ibHktPmltc2ksIGRpci0+ZF9uYW1lKTsKKwlsZW4gPSBzY2FuZGlyKHBhdGgsICZzZWdtZW50
-cywgTlVMTCwgdmVyc2lvbnNvcnQpOworCWdfZnJlZShwYXRoKTsKKworCWlmIChsZW4gPCAwKQor
-CQlyZXR1cm47CisKKwlmb3IgKGkgPSAwOyBpIDwgbGVuOyBpKyspIHsKKwkJaWYgKHNlZ21lbnRz
-W2ldLT5kX3R5cGUgIT0gRFRfUkVHKQorCQkJY29udGludWU7CisKKwkJc2VxID0gc3RydG9sKHNl
-Z21lbnRzW2ldLT5kX25hbWUsICZlbmRwLCAxMCk7CisJCWlmICgqZW5kcCAhPSAnXDAnKQorCQkJ
-Y29udGludWU7CisKKwkJciA9IHJlYWRfZmlsZShidWYsIHNpemVvZihidWYpLCBTTVNfQkFDS1VQ
-X1BBVEggIi8lcy8lcyIsCisJCQkJYXNzZW1ibHktPmltc2ksCisJCQkJZGlyLT5kX25hbWUsIHNl
-Z21lbnRzW2ldLT5kX25hbWUpOworCQlpZiAociA8IDApCisJCQljb250aW51ZTsKKworCQlpZiAo
-IXNtc19kZXNlcmlhbGl6ZShidWYsICZzZWdtZW50LCByKSkKKwkJCWNvbnRpbnVlOworCisJCXBh
-dGggPSBnX3N0cmR1cF9wcmludGYoU01TX0JBQ0tVUF9QQVRIICIvJXMvJXMiLAorCQkJCWFzc2Vt
-Ymx5LT5pbXNpLAorCQkJCWRpci0+ZF9uYW1lLCBzZWdtZW50c1tpXS0+ZF9uYW1lKTsKKwkJciA9
-IHN0YXQocGF0aCwgJnNlZ21lbnRfc3RhdCk7CisJCWdfZnJlZShwYXRoKTsKKworCQlpZiAociAh
-PSAwKQorCQkJY29udGludWU7CisKKwkJaWYgKHNtc19hc3NlbWJseV9hZGRfZnJhZ21lbnRfYmFj
-a3VwKGFzc2VtYmx5LCAmc2VnbWVudCwKKwkJCQkJCXNlZ21lbnRfc3RhdC5zdF9tdGltZSwKKwkJ
-CQkJCSZhZGRyLCByZWYsIG1heCwgc2VxLCBGQUxTRSkpIHsKKwkJCS8qIFRoaXMgc2hvdWxkIG5v
-dCBoYXBwZW4gKi8KKwkJfQorCX0KKworCWZvciAoaSA9IDA7IGkgPCBsZW47IGkrKykKKwkJZnJl
-ZShzZWdtZW50c1tpXSk7CisKKwlmcmVlKHNlZ21lbnRzKTsKK30KKworc3RhdGljIGdib29sZWFu
-IHNtc19hc3NlbWJseV9zdG9yZShzdHJ1Y3Qgc21zX2Fzc2VtYmx5ICphc3NlbWJseSwKKwkJCQlz
-dHJ1Y3Qgc21zX2Fzc2VtYmx5X25vZGUgKm5vZGUsCisJCQkJY29uc3Qgc3RydWN0IHNtcyAqc21z
-LCBndWludDggc2VxKQoreworCXVuc2lnbmVkIGNoYXIgYnVmWzE3N107CisJaW50IGxlbjsKKwor
-CWlmICghYXNzZW1ibHktPmltc2kpCisJCXJldHVybiBGQUxTRTsKKworCWxlbiA9IHNtc19zZXJp
-YWxpemUoYnVmLCBzbXMpOworCisJaWYgKHdyaXRlX2ZpbGUoYnVmLCBsZW4sIFNNU19CQUNLVVBf
-TU9ERSwKKwkJCQlTTVNfQkFDS1VQX1BBVEhfRklMRSwgYXNzZW1ibHktPmltc2ksCisJCQkJc21z
-X2FkZHJlc3NfdG9fc3RyaW5nKCZub2RlLT5hZGRyKSwKKwkJCQlub2RlLT5yZWYsIG5vZGUtPm1h
-eF9mcmFnbWVudHMsIHNlcSkgIT0gbGVuKQorCQlyZXR1cm4gRkFMU0U7CisKKwlyZXR1cm4gVFJV
-RTsKK30KKworc3RhdGljIHZvaWQgc21zX2Fzc2VtYmx5X2JhY2t1cF9mcmVlKHN0cnVjdCBzbXNf
-YXNzZW1ibHkgKmFzc2VtYmx5LAorCQkJCQlzdHJ1Y3Qgc21zX2Fzc2VtYmx5X25vZGUgKm5vZGUp
-Cit7CisJY2hhciAqcGF0aDsKKwlpbnQgc2VxOworCisJaWYgKCFhc3NlbWJseS0+aW1zaSkKKwkJ
-cmV0dXJuOworCisJZm9yIChzZXEgPSAwOyBzZXEgPCBub2RlLT5tYXhfZnJhZ21lbnRzOyBzZXEr
-KykgeworCQlpbnQgb2Zmc2V0ID0gc2VxIC8gMzI7CisJCWludCBiaXQgPSAxIDw8IChzZXEgJSAz
-Mik7CisKKwkJaWYgKG5vZGUtPmJpdG1hcFtvZmZzZXRdICYgYml0KSB7CisJCQlwYXRoID0gZ19z
-dHJkdXBfcHJpbnRmKFNNU19CQUNLVVBfUEFUSF9GSUxFLAorCQkJCQlhc3NlbWJseS0+aW1zaSwK
-KwkJCQkJc21zX2FkZHJlc3NfdG9fc3RyaW5nKCZub2RlLT5hZGRyKSwKKwkJCQkJbm9kZS0+cmVm
-LCBub2RlLT5tYXhfZnJhZ21lbnRzLCBzZXEpOworCQkJdW5saW5rKHBhdGgpOworCQkJZ19mcmVl
-KHBhdGgpOworCQl9CisJfQorCisJcGF0aCA9IGdfc3RyZHVwX3ByaW50ZihTTVNfQkFDS1VQX1BB
-VEhfRElSLCBhc3NlbWJseS0+aW1zaSwKKwkJCQlzbXNfYWRkcmVzc190b19zdHJpbmcoJm5vZGUt
-PmFkZHIpLAorCQkJCW5vZGUtPnJlZiwgbm9kZS0+bWF4X2ZyYWdtZW50cyk7CisJcm1kaXIocGF0
-aCk7CisJZ19mcmVlKHBhdGgpOworfQorCitzdHJ1Y3Qgc21zX2Fzc2VtYmx5ICpzbXNfYXNzZW1i
-bHlfbmV3KGNvbnN0IGNoYXIgKmltc2kpCiB7Ci0JcmV0dXJuIGdfbmV3MChzdHJ1Y3Qgc21zX2Fz
-c2VtYmx5LCAxKTsKKwlzdHJ1Y3Qgc21zX2Fzc2VtYmx5ICpyZXQgPSBnX25ldzAoc3RydWN0IHNt
-c19hc3NlbWJseSwgMSk7CisJY2hhciAqcGF0aDsKKwlzdHJ1Y3QgZGlyZW50ICoqZW50cmllczsK
-KwlpbnQgbGVuOworCisJaWYgKGltc2kpIHsKKwkJcmV0LT5pbXNpID0gaW1zaTsKKworCQkvKiBS
-ZXN0b3JlIHN0YXRlIGZyb20gYmFja3VwICovCisKKwkJcGF0aCA9IGdfc3RyZHVwX3ByaW50ZihT
-TVNfQkFDS1VQX1BBVEgsIGltc2kpOworCQlsZW4gPSBzY2FuZGlyKHBhdGgsICZlbnRyaWVzLCBO
-VUxMLCBhbHBoYXNvcnQpOworCQlnX2ZyZWUocGF0aCk7CisKKwkJaWYgKGxlbiA8IDApCisJCQly
-ZXR1cm4gcmV0OworCisJCXdoaWxlIChsZW4tLSkgeworCQkJc21zX2Fzc2VtYmx5X2xvYWQocmV0
-LCBlbnRyaWVzW2xlbl0pOworCQkJZnJlZShlbnRyaWVzW2xlbl0pOworCQl9CisKKwkJZnJlZShl
-bnRyaWVzKTsKKwl9CisKKwlyZXR1cm4gcmV0OwogfQogCiB2b2lkIHNtc19hc3NlbWJseV9mcmVl
-KHN0cnVjdCBzbXNfYXNzZW1ibHkgKmFzc2VtYmx5KQpAQCAtMjEzMiw2ICsyMzIyLDE2IEBAIEdT
-TGlzdCAqc21zX2Fzc2VtYmx5X2FkZF9mcmFnbWVudChzdHJ1Y3Qgc21zX2Fzc2VtYmx5ICphc3Nl
-bWJseSwKIAkJCQkJY29uc3Qgc3RydWN0IHNtc19hZGRyZXNzICphZGRyLAogCQkJCQlndWludDE2
-IHJlZiwgZ3VpbnQ4IG1heCwgZ3VpbnQ4IHNlcSkKIHsKKwlyZXR1cm4gc21zX2Fzc2VtYmx5X2Fk
-ZF9mcmFnbWVudF9iYWNrdXAoYXNzZW1ibHksIHNtcywKKwkJCQkJCXRzLCBhZGRyLCByZWYsIG1h
-eCwgc2VxLCBUUlVFKTsKK30KKworc3RhdGljIEdTTGlzdCAqc21zX2Fzc2VtYmx5X2FkZF9mcmFn
-bWVudF9iYWNrdXAoc3RydWN0IHNtc19hc3NlbWJseSAqYXNzZW1ibHksCisJCQkJCWNvbnN0IHN0
-cnVjdCBzbXMgKnNtcywgdGltZV90IHRzLAorCQkJCQljb25zdCBzdHJ1Y3Qgc21zX2FkZHJlc3Mg
-KmFkZHIsCisJCQkJCWd1aW50MTYgcmVmLCBndWludDggbWF4LCBndWludDggc2VxLAorCQkJCQln
-Ym9vbGVhbiBiYWNrdXApCit7CiAJaW50IG9mZnNldCA9IHNlcSAvIDMyOwogCWludCBiaXQgPSAx
-IDw8IChzZXEgJSAzMik7CiAJR1NMaXN0ICpsOwpAQCAtMjIwNSwxMSArMjQwNSwxNyBAQCBvdXQ6
-CiAJbm9kZS0+Yml0bWFwW29mZnNldF0gfD0gYml0OwogCW5vZGUtPm51bV9mcmFnbWVudHMgKz0g
-MTsKIAotCWlmIChub2RlLT5udW1fZnJhZ21lbnRzIDwgbm9kZS0+bWF4X2ZyYWdtZW50cykKKwlp
-ZiAobm9kZS0+bnVtX2ZyYWdtZW50cyA8IG5vZGUtPm1heF9mcmFnbWVudHMpIHsKKwkJaWYgKGJh
-Y2t1cCkKKwkJCXNtc19hc3NlbWJseV9zdG9yZShhc3NlbWJseSwgbm9kZSwgc21zLCBzZXEpOwor
-CiAJCXJldHVybiBOVUxMOworCX0KIAogCWNvbXBsZXRlZCA9IG5vZGUtPmZyYWdtZW50X2xpc3Q7
-CiAKKwlzbXNfYXNzZW1ibHlfYmFja3VwX2ZyZWUoYXNzZW1ibHksIG5vZGUpOworCiAJaWYgKHBy
-ZXYpCiAJCXByZXYtPm5leHQgPSBsLT5uZXh0OwogCWVsc2UKQEAgLTIyNDMsNiArMjQ0OSw4IEBA
-IHZvaWQgc21zX2Fzc2VtYmx5X2V4cGlyZShzdHJ1Y3Qgc21zX2Fzc2VtYmx5ICphc3NlbWJseSwg
-dGltZV90IGJlZm9yZSkKIAkJCWNvbnRpbnVlOwogCQl9CiAKKwkJc21zX2Fzc2VtYmx5X2JhY2t1
-cF9mcmVlKGFzc2VtYmx5LCBub2RlKTsKKwogCQlnX3NsaXN0X2ZvcmVhY2gobm9kZS0+ZnJhZ21l
-bnRfbGlzdCwgKEdGdW5jKWdfZnJlZSwgMCk7CiAJCWdfc2xpc3RfZnJlZShub2RlLT5mcmFnbWVu
-dF9saXN0KTsKIAkJZ19mcmVlKG5vZGUpOwpkaWZmIC0tZ2l0IGEvc3JjL3Ntc3V0aWwuaCBiL3Ny
-Yy9zbXN1dGlsLmgKaW5kZXggOTVkMGM3OC4uZjY1NDFiNiAxMDA2NDQKLS0tIGEvc3JjL3Ntc3V0
-aWwuaAorKysgYi9zcmMvc21zdXRpbC5oCkBAIC0zNjAsNiArMzYwLDcgQEAgc3RydWN0IHNtc19h
-c3NlbWJseV9ub2RlIHsKIH07CiAKIHN0cnVjdCBzbXNfYXNzZW1ibHkgeworCWNvbnN0IGNoYXIg
-Kmltc2k7CiAJR1NMaXN0ICphc3NlbWJseV9saXN0OwogfTsKIApAQCAtNDU0LDcgKzQ1NSw3IEBA
-IGdib29sZWFuIHNtc19leHRyYWN0X2NvbmNhdGVuYXRpb24oY29uc3Qgc3RydWN0IHNtcyAqc21z
-LCBndWludDE2ICpyZWZfbnVtLAogdW5zaWduZWQgY2hhciAqc21zX2RlY29kZV9kYXRhZ3JhbShH
-U0xpc3QgKnNtc19saXN0LCBsb25nICpvdXRfbGVuKTsKIGNoYXIgKnNtc19kZWNvZGVfdGV4dChH
-U0xpc3QgKnNtc19saXN0KTsKIAotc3RydWN0IHNtc19hc3NlbWJseSAqc21zX2Fzc2VtYmx5X25l
-dygpOworc3RydWN0IHNtc19hc3NlbWJseSAqc21zX2Fzc2VtYmx5X25ldyhjb25zdCBjaGFyICpp
-bXNpKTsKIHZvaWQgc21zX2Fzc2VtYmx5X2ZyZWUoc3RydWN0IHNtc19hc3NlbWJseSAqYXNzZW1i
-bHkpOwogR1NMaXN0ICpzbXNfYXNzZW1ibHlfYWRkX2ZyYWdtZW50KHN0cnVjdCBzbXNfYXNzZW1i
-bHkgKmFzc2VtYmx5LAogCQkJCQljb25zdCBzdHJ1Y3Qgc21zICpzbXMsIHRpbWVfdCB0cywKZGlm
-ZiAtLWdpdCBhL3VuaXQvdGVzdC1zbXMuYyBiL3VuaXQvdGVzdC1zbXMuYwppbmRleCA1MmQ2ODU5
-Li5hOTRjZDRiIDEwMDY0NAotLS0gYS91bml0L3Rlc3Qtc21zLmMKKysrIGIvdW5pdC90ZXN0LXNt
-cy5jCkBAIC02MTksNyArNjE5LDcgQEAgc3RhdGljIHZvaWQgdGVzdF9hc3NlbWJseSgpCiAJdW5z
-aWduZWQgY2hhciBwZHVbMTY0XTsKIAlsb25nIHBkdV9sZW47CiAJc3RydWN0IHNtcyBzbXM7Ci0J
-c3RydWN0IHNtc19hc3NlbWJseSAqYXNzZW1ibHkgPSBzbXNfYXNzZW1ibHlfbmV3KCk7CisJc3Ry
-dWN0IHNtc19hc3NlbWJseSAqYXNzZW1ibHkgPSBzbXNfYXNzZW1ibHlfbmV3KE5VTEwpOwogCWd1
-aW50MTYgcmVmOwogCWd1aW50OCBtYXg7CiAJZ3VpbnQ4IHNlcTsKQEAgLTc3Niw3ICs3NzYsNyBA
-QCBzdGF0aWMgdm9pZCB0ZXN0X3ByZXBhcmVfY29uY2F0KCkKIAlzdHJ1Y3Qgc21zICpzbXM7CiAJ
-c3RydWN0IHNtcyBkZWNvZGVkOwogCWludCBwZHVfbGVuLCB0cGR1X2xlbjsKLQlzdHJ1Y3Qgc21z
-X2Fzc2VtYmx5ICphc3NlbWJseSA9IHNtc19hc3NlbWJseV9uZXcoKTsKKwlzdHJ1Y3Qgc21zX2Fz
-c2VtYmx5ICphc3NlbWJseSA9IHNtc19hc3NlbWJseV9uZXcoTlVMTCk7CiAJZ3VpbnQxNiByZWY7
-CiAJZ3VpbnQ4IG1heDsKIAlndWludDggc2VxOwotLSAKMS42LjEKCg==
+ struct msisdn_set_request {
+@@ -95,6 +99,7 @@ struct msisdn_set_request {
+ 	DBusMessage *msg;
+ };
+ =
 
---===============0527600328616484917==--
++
+ struct sim_ready_watch {
+ 	unsigned int id;
+ 	ofono_sim_ready_notify_cb_t notify;
+@@ -171,6 +176,8 @@ static DBusMessage *sim_get_properties(DBusConnection *=
+conn,
+ 	DBusMessageIter dict;
+ 	char **own_numbers;
+ 	char **service_numbers;
++	dbus_bool_t pin_needed;
++	const char *pin_name;
+ =
+
+ 	reply =3D dbus_message_new_method_return(msg);
+ 	if (!reply)
+@@ -205,6 +212,18 @@ static DBusMessage *sim_get_properties(DBusConnection =
+*conn,
+ 		g_strfreev(service_numbers);
+ 	}
+ =
+
++	pin_needed =3D !sim->pin_ready;
++	ofono_dbus_dict_append(&dict, "WaitingForPIN",
++				DBUS_TYPE_BOOLEAN, &pin_needed);
++
++	if (sim->pin_type !=3D OFONO_PASSWD_NONE) {
++		pin_name =3D sim_passwd_name(sim->pin_type);
++
++		ofono_dbus_dict_append(&dict, "PINTypeRequired",
++					DBUS_TYPE_STRING,
++					(void *) &pin_name);
++	}
++
+ 	dbus_message_iter_close_container(&iter, &dict);
+ =
+
+ 	return reply;
+@@ -353,10 +372,64 @@ error:
+ 	return __ofono_error_invalid_args(msg);
+ }
+ =
+
++static void sim_send_pin_cb(const struct ofono_error *error, void *data)
++{
++	struct ofono_sim *sim =3D data;
++	DBusMessage *reply;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
++		reply =3D __ofono_error_failed(sim->pending);
++	else
++		reply =3D dbus_message_new_method_return(sim->pending);
++
++
++	__ofono_dbus_pending_reply(&sim->pending, reply);
++
++	/* Re-check the authentication status and update DBus properties
++	 * as needed.  We need to do this regardless of whether the password
++	 * given was correct: if it was incorrect, the number of retries
++	 * may have expired and a different password is being requested now.
++	 * If it was correct, possibly proceed with SIM initialisation.
++	 */
++	sim_pin_check(sim);
++}
++
++static DBusMessage *sim_send_pin(DBusConnection *conn, DBusMessage *msg,
++					void *data)
++{
++	struct ofono_sim *sim =3D data;
++	DBusMessageIter iter;
++	const char *pin;
++
++	if (!sim->driver->send_passwd)
++		return __ofono_error_not_implemented(msg);
++
++	if (sim->pending)
++		return __ofono_error_busy(msg);
++
++	if (!dbus_message_iter_init(msg, &iter))
++		return __ofono_error_invalid_args(msg);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &pin);
++
++	if (!is_valid_pin(pin))
++		return __ofono_error_invalid_format(msg);
++
++	sim->pending =3D dbus_message_ref(msg);
++	sim->driver->send_passwd(sim, pin, sim_send_pin_cb, sim);
++
++	return NULL;
++}
++
+ static GDBusMethodTable sim_methods[] =3D {
+ 	{ "GetProperties",	"",	"a{sv}",	sim_get_properties	},
+ 	{ "SetProperty",	"sv",	"",		sim_set_property,
+ 							G_DBUS_METHOD_FLAG_ASYNC },
++	{ "SendPIN",	"s",	"",			sim_send_pin,
++							G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ }
+ };
+ =
+
+@@ -612,6 +685,67 @@ static void sim_retrieve_imsi(struct ofono_sim *sim)
+ 	sim->driver->read_imsi(sim, sim_imsi_cb, sim);
+ }
+ =
+
++static void sim_pin_check_done(struct ofono_sim *sim)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(sim->atom);
++	dbus_bool_t value =3D FALSE;
++
++	if (sim->pin_ready =3D=3D FALSE) {
++		sim->pin_ready =3D TRUE;
++
++		ofono_dbus_signal_property_changed(conn, path,
++							SIM_MANAGER_INTERFACE,
++							"WaitingForPIN",
++							DBUS_TYPE_BOOLEAN,
++							&value);
++	}
++
++	sim_retrieve_imsi(sim);
++}
++
++static void sim_pin_query_cb(const struct ofono_error *error, int pin_type,
++		void *data)
++{
++	struct ofono_sim *sim =3D data;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(sim->atom);
++	const char *pin_name;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		ofono_error("Querrying PIN authentication state failed");
++
++		sim_pin_check_done(sim);
++		return;
++	}
++
++	if (sim->pin_type !=3D pin_type) {
++		sim->pin_type =3D pin_type;
++		pin_name =3D sim_passwd_name(pin_type);
++
++		ofono_dbus_signal_property_changed(conn, path,
++							SIM_MANAGER_INTERFACE,
++							"PINTypeRequired",
++							DBUS_TYPE_STRING,
++							&pin_name);
++	}
++
++	if (pin_type =3D=3D OFONO_PASSWD_NONE)
++		sim_pin_check_done(sim);
++}
++
++static void sim_pin_check(struct ofono_sim *sim)
++{
++	if (!sim->driver->query_passwd_state) {
++		sim_pin_check_done(sim);
++		return;
++	}
++
++	sim->pin_ready =3D FALSE;
++
++	sim->driver->query_passwd_state(sim, sim_pin_query_cb, sim);
++}
++
+ static void sim_op_error(struct ofono_sim *sim)
+ {
+ 	struct sim_file_op *op =3D g_queue_pop_head(sim->simop_q);
+@@ -1312,7 +1446,7 @@ void ofono_sim_register(struct ofono_sim *sim)
+ 	 * arbitrary files to be written or read, assuming their presence
+ 	 * in the EFust
+ 	 */
+-	sim_retrieve_imsi(sim);
++	sim_pin_check(sim);
+ }
+ =
+
+ void ofono_sim_remove(struct ofono_sim *sim)
+diff --git a/src/simutil.c b/src/simutil.c
+index b80e014..2b26700 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -488,3 +488,27 @@ void sim_adn_build(unsigned char *data, int length,
+ 	/* Ext1 unused */
+ 	*data++ =3D 0xff;
+ }
++
++static const char *const passwd_name[] =3D {
++	[OFONO_PASSWD_NONE] =3D "None",
++	[OFONO_PASSWD_SIM_PIN] =3D "SIM PIN",
++	[OFONO_PASSWD_SIM_PUK] =3D "SIM PUK",
++	[OFONO_PASSWD_PHSIM_PIN] =3D "PH-SIM PIN",
++	[OFONO_PASSWD_PHFSIM_PIN] =3D "PH-FSIM PIN",
++	[OFONO_PASSWD_PHFSIM_PUK] =3D "PH-FSIM PUK",
++	[OFONO_PASSWD_SIM_PIN2] =3D "SIM PIN2",
++	[OFONO_PASSWD_SIM_PUK2] =3D "SIM PUK2",
++	[OFONO_PASSWD_PHNET_PIN] =3D "PH-NET PIN",
++	[OFONO_PASSWD_PHNET_PUK] =3D "PH-NET PUK",
++	[OFONO_PASSWD_PHNETSUB_PIN] =3D "PH-NETSUB PIN",
++	[OFONO_PASSWD_PHNETSUB_PUK] =3D "PH-NETSUB PUK",
++	[OFONO_PASSWD_PHSP_PIN] =3D "PH-SP PIN",
++	[OFONO_PASSWD_PHSP_PUK] =3D "PH-SP PUK",
++	[OFONO_PASSWD_PHCORP_PIN] =3D "PH-CORP PIN",
++	[OFONO_PASSWD_PHCORP_PUK] =3D "PH-CORP PUK",
++};
++
++const char *sim_passwd_name(enum ofono_sim_passwd_type type)
++{
++	return passwd_name[type];
++}
+diff --git a/src/simutil.h b/src/simutil.h
+index de3e55e..fc4f063 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -88,3 +88,5 @@ gboolean sim_adn_parse(const unsigned char *data, int len=
+gth,
+ void sim_adn_build(unsigned char *data, int length,
+ 			const struct ofono_phone_number *ph,
+ 			const char *identifier);
++
++const char *sim_passwd_name(enum ofono_sim_passwd_type type);
+-- =
+
+1.6.1
+
+
+--===============2985418355582879835==--
 
