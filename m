@@ -1,33 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============6932055128737352626=="
+Content-Type: multipart/mixed; boundary="===============0430093486436144574=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Read messages left over in ME storage on startup.
-Date: Tue, 08 Sep 2009 16:56:18 -0500
-Message-ID: <200909081656.18473.denkenz@gmail.com>
-In-Reply-To: <fb249edb0909042216j1cfcad7bmab81195fd68e6f4e@mail.gmail.com>
+Subject: Re: Write state of SMS assembly to disk and restore on startup.
+Date: Tue, 08 Sep 2009 16:58:27 -0500
+Message-ID: <200909081658.27564.denkenz@gmail.com>
+In-Reply-To: <fb249edb0909042224o582b0a6dsd3ae04b747c5cadd@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6932055128737352626==
+--===============0430093486436144574==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andrew,
 
-> > It might be worth to scan both ME & SM stores.  Especially since MT
-> > literally means combined SM + ME store.
->
-> We already do this, in at_cmgl_done after listing ME_STORE we repeat
-> the commands for SM_STORE.
->
+Both patches have been applied.
 
-Yep I missed this part.  Looks good to me.
+I had to fix up a few things in order to make this actually work.  Please =
 
-Patch has been applied.
+review the changes and make sure they're OK with you.
 
-Regards,
+Thanks,
 -Denis
 
---===============6932055128737352626==--
+--===============0430093486436144574==--
 
