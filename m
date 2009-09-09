@@ -1,28 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============0430093486436144574=="
+Content-Type: multipart/mixed; boundary="===============0219933437017151801=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Write state of SMS assembly to disk and restore on startup.
-Date: Tue, 08 Sep 2009 16:58:27 -0500
-Message-ID: <200909081658.27564.denkenz@gmail.com>
-In-Reply-To: <fb249edb0909042224o582b0a6dsd3ae04b747c5cadd@mail.gmail.com>
+From: Zhao, Lihan <lihan.zhao@intel.com>
+Subject: how to run ofono together with simulator
+Date: Wed, 09 Sep 2009 05:44:08 +0000
+Message-ID: <61563CE63B4F854986A895DA7AD3C17709DD94A01E@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0430093486436144574==
+--===============0219933437017151801==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi,
 
-Both patches have been applied.
+I'm focus on Ofono's validating porting.
 
-I had to fix up a few things in order to make this actually work.  Please =
+Now I have compiled ofono on my computer under the guide of INSTALL file. a=
+nd I need to run ofono with simulator so that I can test the cases.
 
-review the changes and make sure they're OK with you.
+Could you please help to solve this problem?
 
-Thanks,
--Denis
+Thank you!
 
---===============0430093486436144574==--
+Best Regards,
+Lihan
+
+
+--===============0219933437017151801==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
+dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEgbmFtZT1HZW5lcmF0b3Ig
+Y29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTIgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+Cjwh
+LS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseTpTaW1T
+dW47CglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OlNpbVN1bjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQpAZm9udC1mYWNlCgl7
+Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KQGZv
+bnQtZmFjZQoJe2ZvbnQtZmFtaWx5OlNpbVN1bjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAx
+IDE7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWws
+IGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJdGV4
+dC1hbGlnbjpqdXN0aWZ5OwoJdGV4dC1qdXN0aWZ5OmludGVyLWlkZW9ncmFwaDsKCWZvbnQtc2l6
+ZToxMC41cHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBz
+cGFuLk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0
+ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0Zv
+bGxvd2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNv
+cmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVy
+c29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xv
+cjp3aW5kb3d0ZXh0O30KLk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25s
+eTt9CiAvKiBQYWdlIERlZmluaXRpb25zICovCiBAcGFnZSBTZWN0aW9uMQoJe3NpemU6NjEyLjBw
+dCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA5MC4wcHQgNzIuMHB0IDkwLjBwdDt9CmRpdi5TZWN0
+aW9uMQoJe3BhZ2U6U2VjdGlvbjE7fQotLT4KPC9zdHlsZT4KPCEtLVtpZiBndGUgbXNvIDldPjx4
+bWw+CiA8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3ht
+bD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlbGF5b3V0IHY6
+ZXh0PSJlZGl0Ij4KICA8bzppZG1hcCB2OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KIDwvbzpzaGFw
+ZWxheW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgoKPGJvZHkgbGFuZz1aSC1DTiBsaW5r
+PWJsdWUgdmxpbms9cHVycGxlIHN0eWxlPSd0ZXh0LWp1c3RpZnktdHJpbTpwdW5jdHVhdGlvbic+
+Cgo8ZGl2IGNsYXNzPVNlY3Rpb24xPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4t
+VVM+SGksPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
+bmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFs
+PjxzcGFuIGxhbmc9RU4tVVM+SSYjODIxNzttIGZvY3VzIG9uIE9mb25vJiM4MjE3O3MgdmFsaWRh
+dGluZwpwb3J0aW5nLjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48
+c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1z
+b05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPk5vdyBJIGhhdmUgY29tcGlsZWQgb2Zvbm8gb24gbXkg
+Y29tcHV0ZXIgdW5kZXIKdGhlIGd1aWRlIG9mIElOU1RBTEwgZmlsZS4gYW5kIEkgbmVlZCB0byBy
+dW4gb2Zvbm8gd2l0aCBzaW11bGF0b3Igc28gdGhhdCBJIGNhbgp0ZXN0IHRoZSBjYXNlcy48bzpw
+PjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48
+bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFu
+Zz1FTi1VUz5Db3VsZCB5b3UgcGxlYXNlIGhlbHAgdG8gc29sdmUgdGhpcwpwcm9ibGVtPyA8bzpw
+PjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48
+bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFu
+Zz1FTi1VUz5UaGFuayB5b3UhPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9y
+bWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xh
+c3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtZmFtaWx5OiJUaW1lcyBO
+ZXcgUm9tYW4iLCJzZXJpZiInPkJlc3QKUmVnYXJkcyw8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8
+cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1mYW1pbHk6IlRp
+bWVzIE5ldyBSb21hbiIsInNlcmlmIic+TGloYW48bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBj
+bGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48
+L3A+Cgo8L2Rpdj4KCjwvYm9keT4KCjwvaHRtbD4K
+
+--===============0219933437017151801==--
 
