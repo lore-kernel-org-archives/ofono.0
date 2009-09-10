@@ -1,69 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============8231626343457028446=="
+Content-Type: multipart/mixed; boundary="===============4544239835257876690=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] Keep modem->powered_pending up to date after set_powered.
-Date: Thu, 10 Sep 2009 18:57:11 +0200
-Message-ID: <1252601831-7907-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH] Message Waiting fixes
+Date: Thu, 10 Sep 2009 17:03:28 +0200
+Message-ID: <fb249edb0909100803j28bb1622x5a58c6d9b6c01934@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8231626343457028446==
+--===============4544239835257876690==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Without this once a request to power up the modem fails, modem.c won't
-retry even when asked.
----
- src/modem.c |    9 ++++++---
- 1 files changed, 6 insertions(+), 3 deletions(-)
+Hi,
+attached are two more changes to make the message waiting interface
+functional with notifications from the network (I only properly tested
+the SIM access part before).
 
-diff --git a/src/modem.c b/src/modem.c
-index ed6f870..5e6e582 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -462,6 +462,11 @@ static int set_powered(struct ofono_modem *modem, ofon=
-o_bool_t powered)
- 			err =3D driver->disable(modem);
- 	}
- =
+Regards
 
-+	if (err =3D=3D 0)
-+		modem->powered =3D powered;
-+	else if (err !=3D EINPROGRESS)
-+		modem->powered_pending =3D modem->powered;
-+
- 	return err;
- }
- =
+--===============4544239835257876690==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0002-Fix-parsing-of-Enhanced-Voicemail-notifications.patch"
 
-@@ -472,6 +477,7 @@ static gboolean set_powered_timeout(gpointer user)
- 	DBG("modem: %p", modem);
- =
+RnJvbSA1ZDk4ZjgzNjBiYjQ2ZDVjMTBhMmE2MTNmMTA5MzRiNTE1M2ViNWQwIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogVGh1LCAxMCBTZXAgMjAwOSAxODozNzo0MCArMDIwMApTdWJqZWN0
+OiBbUEFUQ0hdIEZpeCBwYXJzaW5nIG9mIEVuaGFuY2VkIFZvaWNlbWFpbCBub3RpZmljYXRpb25z
+LgoKLS0tCiBzcmMvbWVzc2FnZS13YWl0aW5nLmMgfCAgIDE4ICsrKysrKysrKysrKy0tLS0tLQog
+MSBmaWxlcyBjaGFuZ2VkLCAxMiBpbnNlcnRpb25zKCspLCA2IGRlbGV0aW9ucygtKQoKZGlmZiAt
+LWdpdCBhL3NyYy9tZXNzYWdlLXdhaXRpbmcuYyBiL3NyYy9tZXNzYWdlLXdhaXRpbmcuYwppbmRl
+eCAzNjY2ODc1Li4wNTc2NjBjIDEwMDY0NAotLS0gYS9zcmMvbWVzc2FnZS13YWl0aW5nLmMKKysr
+IGIvc3JjL21lc3NhZ2Utd2FpdGluZy5jCkBAIC01NTQsNyArNTU0LDcgQEAgc3RhdGljIHZvaWQg
+aGFuZGxlX2VuaGFuY2VkX3ZvaWNlbWFpbF9pZWkoc3RydWN0IG9mb25vX21lc3NhZ2Vfd2FpdGlu
+ZyAqbXcsCiAJCS8qIDkuMi4zLjI0LjEzLjEgRW5oYW5jZWQgVm9pY2UgTWFpbCBOb3RpZmljYXRp
+b24gKi8KIAogCQkvKiBNVUxUSVBMRV9TVUJTQ1JJQkVSX1BST0ZJTEUgKi8KLQkJcHJvZmlsZSA9
+IChpZWlbMF0gPj4gMikgJiAzOworCQlwcm9maWxlID0gKChpZWlbMF0gPj4gMikgJiAzKSArIDE7
+CiAKIAkJLyogU01fU1RPUkFHRSAqLwogCQlpZiAoZGlzY2FyZCkKQEAgLTU3MCwxNCArNTcwLDE3
+IEBAIHN0YXRpYyB2b2lkIGhhbmRsZV9lbmhhbmNlZF92b2ljZW1haWxfaWVpKHN0cnVjdCBvZm9u
+b19tZXNzYWdlX3dhaXRpbmcgKm13LAogCiAJCS8qIE90aGVyIHBhcmFtZXRlcnMgY3VycmVudGx5
+IG5vdCBzdXBwb3J0ZWQgKi8KIAotCQlzZXQgPSBpZWlbbiArIDJdID4gMCA/IFRSVUUgOiBGQUxT
+RTsKKwkJaWYgKGxlbmd0aCA8IG4gKyAzKQorCQkJcmV0dXJuOworCisJCXNldCA9IGllaVtuICsg
+MV0gPiAwID8gVFJVRSA6IEZBTFNFOwogCQltd19zZXRfaW5kaWNhdG9yKG13LCBwcm9maWxlLCBT
+TVNfTVdJX1RZUEVfVk9JQ0UsCi0JCQkJCXNldCwgaWVpW24gKyAyXSk7CisJCQkJCXNldCwgaWVp
+W24gKyAxXSk7CiAJfSBlbHNlIHsKIAkJLyogOS4yLjMuMjQuMTMuMiBFbmhhbmNlZCBWb2ljZSBE
+ZWxldGUgQ29uZmlybWF0aW9uICovCiAKIAkJLyogTVVMVElQTEVfU1VCU0NSSUJFUl9QUk9GSUxF
+ICovCi0JCXByb2ZpbGUgPSAoaWVpWzBdID4+IDIpICYgMzsKKwkJcHJvZmlsZSA9ICgoaWVpWzBd
+ID4+IDIpICYgMykgKyAxOwogCiAJCS8qIFNNX1NUT1JBR0UgKi8KIAkJaWYgKGRpc2NhcmQpCkBA
+IC01OTEsOSArNTk0LDEyIEBAIHN0YXRpYyB2b2lkIGhhbmRsZV9lbmhhbmNlZF92b2ljZW1haWxf
+aWVpKHN0cnVjdCBvZm9ub19tZXNzYWdlX3dhaXRpbmcgKm13LAogCiAJCS8qIE90aGVyIHBhcmFt
+ZXRlcnMgY3VycmVudGx5IG5vdCBzdXBwb3J0ZWQgKi8KIAotCQlzZXQgPSBpZWlbbiArIDJdID4g
+MCA/IFRSVUUgOiBGQUxTRTsKKwkJaWYgKGxlbmd0aCA8IG4gKyAzKQorCQkJcmV0dXJuOworCisJ
+CXNldCA9IGllaVtuICsgMV0gPiAwID8gVFJVRSA6IEZBTFNFOwogCQltd19zZXRfaW5kaWNhdG9y
+KG13LCBwcm9maWxlLCBTTVNfTVdJX1RZUEVfVk9JQ0UsCi0JCQkJCXNldCwgaWVpW24gKyAyXSk7
+CisJCQkJCXNldCwgaWVpW24gKyAxXSk7CiAJfQogCiAJaWYgKG1haWxib3hfYWRkcmVzcy5hZGRy
+ZXNzWzBdICE9ICdcMCcpCi0tIAoxLjYuMQoK
 
- 	modem->timeout =3D 0;
-+	modem->powered_pending =3D modem->powered;
- =
+--===============4544239835257876690==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0003-Fix-generation-of-Message-Waiting-PropertyChanged-si.patch"
 
- 	if (modem->pending !=3D NULL) {
- 		DBusMessage *reply;
-@@ -530,9 +536,6 @@ static DBusMessage *modem_set_property(DBusConnection *=
-conn,
- 			return NULL;
- 		}
- =
+RnJvbSA1MTMzNTU5MDRmZTcxMmJlNDc4NDQ3MjYwMzdhYTllYmI4ODQzYzZhIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogVGh1LCAxMCBTZXAgMjAwOSAxODozOTowNyArMDIwMApTdWJqZWN0
+OiBbUEFUQ0hdIEZpeCBnZW5lcmF0aW9uIG9mIE1lc3NhZ2UgV2FpdGluZyBQcm9wZXJ0eUNoYW5n
+ZWQgc2lnbmFscy4KCi0tLQogc3JjL21lc3NhZ2Utd2FpdGluZy5jIHwgICAgNiArKystLS0KIDEg
+ZmlsZXMgY2hhbmdlZCwgMyBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdp
+dCBhL3NyYy9tZXNzYWdlLXdhaXRpbmcuYyBiL3NyYy9tZXNzYWdlLXdhaXRpbmcuYwppbmRleCAw
+NTc2NjBjLi45NGE1YjZjIDEwMDY0NAotLS0gYS9zcmMvbWVzc2FnZS13YWl0aW5nLmMKKysrIGIv
+c3JjL21lc3NhZ2Utd2FpdGluZy5jCkBAIC0yMTEsNyArMjExLDcgQEAgc3RhdGljIERCdXNNZXNz
+YWdlICpzZXRfbWJkbihzdHJ1Y3Qgb2Zvbm9fbWVzc2FnZV93YWl0aW5nICptdywgaW50IG1haWxi
+b3gsCiAJcmVxLT5tdyA9IG13OwogCXJlcS0+bWFpbGJveCA9IG1haWxib3g7CiAJc3RyaW5nX3Rv
+X3Bob25lX251bWJlcihudW1iZXIsICZyZXEtPm51bWJlcik7Ci0JcmVxLT5tc2cgPSBkYnVzX21l
+c3NhZ2VfcmVmKG1zZyk7CisJcmVxLT5tc2cgPSBtc2cgPyBkYnVzX21lc3NhZ2VfcmVmKG1zZykg
+OiBOVUxMOwogCiAJc2ltX2Fkbl9idWlsZChlZm1iZG4sIHJlcS0+bXctPmVmbWJkbl9sZW5ndGgs
+ICZyZXEtPm51bWJlciwgTlVMTCk7CiAKQEAgLTQ2OCw3ICs0NjgsNyBAQCBzdGF0aWMgdm9pZCBt
+d19zZXRfaW5kaWNhdG9yKHN0cnVjdCBvZm9ub19tZXNzYWdlX3dhaXRpbmcgKm13LCBpbnQgcHJv
+ZmlsZSwKIAkJaW5kaWNhdGlvbiA9IHByZXNlbnQ7CiAJCW13LT5tZXNzYWdlc1t0eXBlXS5pbmRp
+Y2F0aW9uID0gcHJlc2VudDsKIAotCQlpZiAoIW13X21lc3NhZ2Vfd2FpdGluZ19wcm9wZXJ0eV9u
+YW1lW3R5cGVdKQorCQlpZiAobXdfbWVzc2FnZV93YWl0aW5nX3Byb3BlcnR5X25hbWVbdHlwZV0p
+CiAJCQlvZm9ub19kYnVzX3NpZ25hbF9wcm9wZXJ0eV9jaGFuZ2VkKGNvbm4sIHBhdGgsCiAJCQkJ
+CU1FU1NBR0VfV0FJVElOR19JTlRFUkZBQ0UsCiAJCQkJCW13X21lc3NhZ2Vfd2FpdGluZ19wcm9w
+ZXJ0eV9uYW1lW3R5cGVdLApAQCAtNDgwLDcgKzQ4MCw3IEBAIHN0YXRpYyB2b2lkIG13X3NldF9p
+bmRpY2F0b3Ioc3RydWN0IG9mb25vX21lc3NhZ2Vfd2FpdGluZyAqbXcsIGludCBwcm9maWxlLAog
+CiAJCW13LT5tZXNzYWdlc1t0eXBlXS5tZXNzYWdlX2NvdW50ID0gbWVzc2FnZXM7CiAKLQkJaWYg
+KCFtd19tZXNzYWdlX3dhaXRpbmdfcHJvcGVydHlfbmFtZVt0eXBlXSkKKwkJaWYgKG13X21lc3Nh
+Z2Vfd2FpdGluZ19wcm9wZXJ0eV9uYW1lW3R5cGVdKQogCQkJb2Zvbm9fZGJ1c19zaWduYWxfcHJv
+cGVydHlfY2hhbmdlZChjb25uLCBwYXRoLAogCQkJCQlNRVNTQUdFX1dBSVRJTkdfSU5URVJGQUNF
+LAogCQkJCQltd19tZXNzYWdlX2NvdW50X3Byb3BlcnR5X25hbWVbdHlwZV0sCi0tIAoxLjYuMQoK
 
--		modem->powered =3D powered;
--		modem->powered_pending =3D powered;
--
- 		g_dbus_send_reply(conn, msg, DBUS_TYPE_INVALID);
- =
-
- 		ofono_dbus_signal_property_changed(conn, modem->path,
--- =
-
-1.6.1
-
-
---===============8231626343457028446==--
+--===============4544239835257876690==--
 
