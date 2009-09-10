@@ -1,30 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============7119509208409819562=="
+Content-Type: multipart/mixed; boundary="===============7455296888903939585=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Message Waiting fixes
-Date: Thu, 10 Sep 2009 16:31:41 -0500
-Message-ID: <200909101631.41576.denkenz@gmail.com>
-In-Reply-To: <fb249edb0909100803j28bb1622x5a58c6d9b6c01934@mail.gmail.com>
+Subject: Re: [PATCH] Keep modem->powered_pending up to date after set_powered.
+Date: Thu, 10 Sep 2009 16:32:10 -0500
+Message-ID: <200909101632.11264.denkenz@gmail.com>
+In-Reply-To: <1252601831-7907-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7119509208409819562==
+--===============7455296888903939585==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-> Hi,
-> attached are two more changes to make the message waiting interface
-> functional with notifications from the network (I only properly tested
-> the SIM access part before).
->
+> Without this once a request to power up the modem fails, modem.c won't
+> retry even when asked.
 
-Patches have been applied and pushed.  Thanks.
+Good catch.  Patch has been applied.
 
 Regards,
 -Denis
 
---===============7119509208409819562==--
+--===============7455296888903939585==--
 
