@@ -1,39 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============3955847500393340138=="
+Content-Type: multipart/mixed; boundary="===============3716254365163550132=="
 MIME-Version: 1.0
-From: mgwpub@gmail.com
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: TI Calypso Driver
-Date: Fri, 11 Sep 2009 19:16:20 +0300
-Message-ID: <4AAA77D4.1050408@gmail.com>
-In-Reply-To: <200909032332.51432.denkenz@gmail.com>
+Date: Fri, 11 Sep 2009 12:01:20 -0500
+Message-ID: <200909111201.20722.denkenz@gmail.com>
+In-Reply-To: <4AAA767B.8090206@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3955847500393340138==
+--===============3716254365163550132==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-> Simply insert the following lines into modem.conf to enable this device:
-> [calypso]
-> Driver=3Dcalypso
-> Device=3D/dev/ttySAC0
+> Hi Denis,
+>
+> > Simply insert the following lines into modem.conf to enable this device:
+> > [calypso]
+> > Driver=3Dcalypso
+> > Device=3D/dev/ttySAC0
+>
+> thanks for the driver. I tried to use it via network, but I dont see
+> dbus object pathes for the device.
 
-thanks for the driver. I tried to use it via network, but I dont see =
+Make sure that your modem.conf is properly configured and resides int he pr=
+oper =
 
-dbus object pathes for the device.
+sysconfig directory.
 
-I use pty [1] on my workstation and netcat on the freerunner to forward =
+Also, the calypso modem driver assumes it is running natively on the =
 
-the at-commands. I can use /dev/pts/3 with cu to send at commands, but =
+Freerunner.  If you want to use this over the network, you can use the =
 
-ofono doesnt show the object path for the modem.
+phonesim driver.  This one can be connected to any TCP socket exporting the=
+ AT =
 
-Best regards.
+command modem. =
 
 
-[1]http://svn.openmoko.org/trunk/src/host/qemu-neo1973/pty.c
+[calypsonet]
+Driver=3Dphonesim
+Address=3D192.168.0.202 # or whatever your GTA0x IP is
+Port=3D2000 # or whatever GTA0X port is
+Modem=3Dcalypso
 
---===============3955847500393340138==--
+Then setup netcat or ser2net to forward he raw tty over the network.
+
+Regards,
+-Denis
+
+--===============3716254365163550132==--
 
