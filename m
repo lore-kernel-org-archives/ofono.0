@@ -1,34 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============8960867983160270685=="
+Content-Type: multipart/mixed; boundary="===============0824396358775076956=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
 Subject: Re: Bug in sms
-Date: Wed, 16 Sep 2009 14:14:30 +0200
-Message-ID: <fb249edb0909160514l1e6ea5b1q4071af4dc475a6c7@mail.gmail.com>
-In-Reply-To: <38D9F46DFF92C54980D2F2C1E8EE313001AB9212FC@pdsmsx503.ccr.corp.intel.com>
+Date: Wed, 16 Sep 2009 14:15:36 +0200
+Message-ID: <fb249edb0909160515o3f920c6btfdaa870aa40417c1@mail.gmail.com>
+In-Reply-To: <fb249edb0909160514l1e6ea5b1q4071af4dc475a6c7@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8960867983160270685==
+--===============0824396358775076956==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Oops, forgot to attach.
 
-2009/9/16 Gu, Yang <yang.gu@intel.com>:
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0Today I tried oFono with my cell phone, but it=
- crashed when starting up.
-> The problem happens in function at_cmgl_notify() of file drivers/atmodem/=
-sms.c.
-> In my case, strlen(hexpdu) =3D=3D 338, but the buffer "pdu" has maximum s=
-ize of
-> 164. So after decode_hex_own_buf(), some memory was written unexpectedly.
+--===============0824396358775076956==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0002-Check-received-PDUs-fit-in-the-buffer-fix-buffer-si.patch"
 
-The attached patch adds length check everywehere decode_hex_own_buf()
-is used with a static buffer and also enlarges the buffers to account
-for SMSC included in a PDU.
+RnJvbSBiNWVkNDg2YWQ5NGZhNTQ5ZDhmMzBhZDA1NGU3ZWRjYjUyNTYwMzAxIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogV2VkLCAxNiBTZXAgMjAwOSAxNjowMzo1MCArMDIwMApTdWJqZWN0
+OiBbUEFUQ0hdIENoZWNrIHJlY2VpdmVkIFBEVXMgZml0IGluIHRoZSBidWZmZXIsIGZpeCBidWZm
+ZXIgc2l6ZS4KCi0tLQogZHJpdmVycy9hdG1vZGVtL3Ntcy5jIHwgICAxNyArKysrKysrKysrKysr
+Ky0tLQogMSBmaWxlcyBjaGFuZ2VkLCAxNCBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygtKQoK
+ZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS9zbXMuYyBiL2RyaXZlcnMvYXRtb2RlbS9zbXMu
+YwppbmRleCAzYjdlOWU0Li5kNDI1ODE4IDEwMDY0NAotLS0gYS9kcml2ZXJzL2F0bW9kZW0vc21z
+LmMKKysrIGIvZHJpdmVycy9hdG1vZGVtL3Ntcy5jCkBAIC0zMTQsNyArMzE0LDcgQEAgc3RhdGlj
+IHZvaWQgYXRfY210X25vdGlmeShHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRh
+KQogCWNvbnN0IGNoYXIgKmhleHBkdTsKIAlsb25nIHBkdV9sZW47CiAJaW50IHRwZHVfbGVuOwot
+CXVuc2lnbmVkIGNoYXIgcGR1WzE2NF07CisJdW5zaWduZWQgY2hhciBwZHVbMTc2XTsKIAljaGFy
+IGJ1ZlsyNTZdOwogCiAJZHVtcF9yZXNwb25zZSgiYXRfY210X25vdGlmeSIsIFRSVUUsIHJlc3Vs
+dCk7CkBAIC0zMjQsNiArMzI0LDExIEBAIHN0YXRpYyB2b2lkIGF0X2NtdF9ub3RpZnkoR0F0UmVz
+dWx0ICpyZXN1bHQsIGdwb2ludGVyIHVzZXJfZGF0YSkKIAkJcmV0dXJuOwogCX0KIAorCWlmIChz
+dHJsZW4oaGV4cGR1KSA+IHNpemVvZihwZHUpICogMikgeworCQlvZm9ub19lcnJvcigiQmFkIFBE
+VSBsZW5ndGggaW4gQ01UIG5vdGlmaWNhdGlvbiIpOworCQlyZXR1cm47CisJfQorCiAJb2Zvbm9f
+ZGVidWcoIkdvdCBuZXcgU01TIERlbGl2ZXIgUERVIHZpYSBDTVQ6ICVzLCAlZCIsIGhleHBkdSwg
+dHBkdV9sZW4pOwogCiAJZGVjb2RlX2hleF9vd25fYnVmKGhleHBkdSwgLTEsICZwZHVfbGVuLCAw
+LCBwZHUpOwpAQCAtMzQ0LDcgKzM0OSw3IEBAIHN0YXRpYyB2b2lkIGF0X2NtZ3Jfbm90aWZ5KEdB
+dFJlc3VsdCAqcmVzdWx0LCBncG9pbnRlciB1c2VyX2RhdGEpCiAJc3RydWN0IG9mb25vX3NtcyAq
+c21zID0gdXNlcl9kYXRhOwogCUdBdFJlc3VsdEl0ZXIgaXRlcjsKIAljb25zdCBjaGFyICpoZXhw
+ZHU7Ci0JdW5zaWduZWQgY2hhciBwZHVbMTY0XTsKKwl1bnNpZ25lZCBjaGFyIHBkdVsxNzZdOwog
+CWxvbmcgcGR1X2xlbjsKIAlpbnQgdHBkdV9sZW47CiAKQEAgLTM2Niw2ICszNzEsOSBAQCBzdGF0
+aWMgdm9pZCBhdF9jbWdyX25vdGlmeShHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9k
+YXRhKQogCiAJaGV4cGR1ID0gZ19hdF9yZXN1bHRfcGR1KHJlc3VsdCk7CiAKKwlpZiAoc3RybGVu
+KGhleHBkdSkgPiBzaXplb2YocGR1KSAqIDIpCisJCWdvdG8gZXJyOworCiAJb2Zvbm9fZGVidWco
+IkdvdCBQRFU6ICVzLCB3aXRoIGxlbjogJWQiLCBoZXhwZHUsIHRwZHVfbGVuKTsKIAogCWRlY29k
+ZV9oZXhfb3duX2J1ZihoZXhwZHUsIC0xLCAmcGR1X2xlbiwgMCwgcGR1KTsKQEAgLTQ4NSw3ICs0
+OTMsNyBAQCBzdGF0aWMgdm9pZCBhdF9jbWdsX25vdGlmeShHQXRSZXN1bHQgKnJlc3VsdCwgZ3Bv
+aW50ZXIgdXNlcl9kYXRhKQogCXN0cnVjdCBzbXNfZGF0YSAqZGF0YSA9IG9mb25vX3Ntc19nZXRf
+ZGF0YShzbXMpOwogCUdBdFJlc3VsdEl0ZXIgaXRlcjsKIAljb25zdCBjaGFyICpoZXhwZHU7Ci0J
+dW5zaWduZWQgY2hhciBwZHVbMTY0XTsKKwl1bnNpZ25lZCBjaGFyIHBkdVsxNzZdOwogCWxvbmcg
+cGR1X2xlbjsKIAlpbnQgdHBkdV9sZW47CiAJaW50IGluZGV4OwpAQCAtNTE4LDYgKzUyNiw5IEBA
+IHN0YXRpYyB2b2lkIGF0X2NtZ2xfbm90aWZ5KEdBdFJlc3VsdCAqcmVzdWx0LCBncG9pbnRlciB1
+c2VyX2RhdGEpCiAJCW9mb25vX2RlYnVnKCJGb3VuZCBhbiBvbGQgU01TIFBEVTogJXMsIHdpdGgg
+bGVuOiAlZCIsCiAJCQkJaGV4cGR1LCB0cGR1X2xlbik7CiAKKwkJaWYgKHN0cmxlbihoZXhwZHUp
+ID4gc2l6ZW9mKHBkdSkgKiAyKQorCQkJY29udGludWU7CisKIAkJZGVjb2RlX2hleF9vd25fYnVm
+KGhleHBkdSwgLTEsICZwZHVfbGVuLCAwLCBwZHUpOwogCQlvZm9ub19zbXNfZGVsaXZlcl9ub3Rp
+Znkoc21zLCBwZHUsIHBkdV9sZW4sIHRwZHVfbGVuKTsKIAotLSAKMS42LjEKCg==
 
-Regards
-
---===============8960867983160270685==--
+--===============0824396358775076956==--
 
