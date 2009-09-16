@@ -1,153 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============6743054065827049683=="
+Content-Type: multipart/mixed; boundary="===============1784803902210191133=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH] Present list of preferred languages on SimManager
- interface.
-Date: Wed, 16 Sep 2009 14:54:49 +0200
-Message-ID: <fb249edb0909160554p6b42b637w718cd467663b277e@mail.gmail.com>
-In-Reply-To: <fb249edb0909141033o6ed93fe6p3fbc0e50fcffbb9f@mail.gmail.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: netlink.c:97: error: cast increases required alignment of target
+ type
+Date: Wed, 16 Sep 2009 17:00:07 +0300
+Message-ID: <a32762a20909160700o2c059252h5beb82083a8a627c@mail.gmail.com>
+In-Reply-To: <84y6og3vi4.fsf@sauna.l.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6743054065827049683==
+--===============1784803902210191133==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/9/14 Andrzej Zaborowski <andrew.zaborowski@intel.com>:
-> 2009/9/14 Denis Kenzior <denkenz@gmail.com>:
->>> + =C2=A0 =C2=A0 /* According to 31.102 the EFli is read first and EFpl =
-is then
->>> + =C2=A0 =C2=A0 =C2=A0* only read if none of the EFli languages are sup=
-ported by user
->>> + =C2=A0 =C2=A0 =C2=A0* interface. =C2=A051.011 mandates the exact oppo=
-site, making EFpl/EFelp
->>> + =C2=A0 =C2=A0 =C2=A0* preferred over EFlp (same ID as EFli, different=
- format).
->>> + =C2=A0 =C2=A0 =C2=A0* However we don't depend on the user interface a=
-nd so
->>> + =C2=A0 =C2=A0 =C2=A0* need to read both files now.
->>> + =C2=A0 =C2=A0 =C2=A0*/
->>> + =C2=A0 =C2=A0 ofono_sim_read(sim, SIM_EFLI_FILEID, sim_efli_read_cb, =
-sim);
->>> + =C2=A0 =C2=A0 ofono_sim_read(sim, SIM_EFPL_FILEID, sim_efpl_read_cb, =
-sim);
->>
->> Strictly speaking 31.101 & 31.102 supersede 51.011.
->
-> I think that was the plan but apparently they don't have all contents
-> 51.011 has, and 31.102 even explicitely refers to 51.011 for the EFpl
-> format (which 51.011 only says is defined by ETSI).
->
-> Also the card I tested has a 5 byte EFli / EFlp, filled with 0xff
-> bytes, which means it must be in the 51.011 format so the document is
-> not obsolete.
+Hi,
 
-So here's another version generated on top of HEAD and with an attempt
-to detect when the card uses EFlp format instead of EFli.
+2009/9/15 Timo Juhani Lindfors <timo.lindfors@iki.fi>:
+>> =C2=A0 CC =C2=A0 =C2=A0 gdbus/watch.o
+>> =C2=A0 CC =C2=A0 =C2=A0 gisi/netlink.o
+>> cc1: warnings being treated as errors
+>> gisi/netlink.c: In function 'g_pn_nl_process':
+>> gisi/netlink.c:97: error: cast increases required alignment of target ty=
+pe
+>> gisi/netlink.c:129: error: cast increases required alignment of target t=
+ype
+>> gisi/netlink.c:130: error: cast increases required alignment of target t=
+ype
 
-Regards
+This was discussed some weeks ago, and that warning is bogus in this
+case, but there wasn't a clean workaround for it.
 
---===============6743054065827049683==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Present-list-of-preferred-languages-on-SimManager-in.patch"
+> on armel (openmoko gta02) debian unstable system with gcc 4:4.3.3-9
+> apparently since in mainstainer mode -Wcast-align complains about
 
-RnJvbSA3NjNhMGIxMmE2NjM2ZDdmMWVjNWJlOTlkOGZlMjRjNTkyNWM2Njc4IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogTW9uLCAxNCBTZXAgMjAwOSAyMToyNTowNSArMDIwMApTdWJqZWN0
-OiBbUEFUQ0hdIFByZXNlbnQgbGlzdCBvZiBwcmVmZXJyZWQgbGFuZ3VhZ2VzIG9uIFNpbU1hbmFn
-ZXIgaW50ZXJmYWNlLgoKUGF0Y2ggbWFkZSBvbiB0b3Agb2YgW1BBVENIXSBEbyB0aGUgUElOIGNo
-ZWNrIGluIFNJTU1hbmFnZXIuCi0tLQogc3JjL3NpbS5jICAgICB8ICAxMjQgKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrCiBzcmMvc2ltdXRp
-bC5oIHwgICAgMiArCiAyIGZpbGVzIGNoYW5nZWQsIDEyNiBpbnNlcnRpb25zKCspLCAwIGRlbGV0
-aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9zaW0uYyBiL3NyYy9zaW0uYwppbmRleCAzODg2NDg1
-Li43YTQyZWU3IDEwMDY0NAotLS0gYS9zcmMvc2ltLmMKKysrIGIvc3JjL3NpbS5jCkBAIC04MCwx
-MCArODAsMTMgQEAgc3RydWN0IG9mb25vX3NpbSB7CiAJZ2Jvb2xlYW4gcmVhZHk7CiAJZ2Jvb2xl
-YW4gcGluX3JlYWR5OwogCWludCBwaW5fdHlwZTsKKwljaGFyICoqbGFuZ3VhZ2VfcHJlZnM7CiAJ
-R1F1ZXVlICpzaW1vcF9xOwogCWdpbnQgc2ltb3Bfc291cmNlOwogCXVuc2lnbmVkIGNoYXIgZWZt
-c2lzZG5fbGVuZ3RoOwogCXVuc2lnbmVkIGNoYXIgZWZtc2lzZG5fcmVjb3JkczsKKwl1bnNpZ25l
-ZCBjaGFyICplZmxpOworCXVuc2lnbmVkIGNoYXIgZWZsaV9sZW5ndGg7CiAJdW5zaWduZWQgaW50
-IG5leHRfcmVhZHlfd2F0Y2hfaWQ7CiAJR1NMaXN0ICpyZWFkeV93YXRjaGVzOwogCWNvbnN0IHN0
-cnVjdCBvZm9ub19zaW1fZHJpdmVyICpkcml2ZXI7CkBAIC0yMjQsNiArMjI3LDExIEBAIHN0YXRp
-YyBEQnVzTWVzc2FnZSAqc2ltX2dldF9wcm9wZXJ0aWVzKERCdXNDb25uZWN0aW9uICpjb25uLAog
-CQkJCQkodm9pZCAqKSAmcGluX25hbWUpOwogCX0KIAorCWlmIChzaW0tPmxhbmd1YWdlX3ByZWZz
-KQorCQlvZm9ub19kYnVzX2RpY3RfYXBwZW5kX2FycmF5KCZkaWN0LCAiUHJlZmVycmVkTGFuZ3Vh
-Z2VzIiwKKwkJCQkJCURCVVNfVFlQRV9TVFJJTkcsCisJCQkJCQkmc2ltLT5sYW5ndWFnZV9wcmVm
-cyk7CisKIAlkYnVzX21lc3NhZ2VfaXRlcl9jbG9zZV9jb250YWluZXIoJml0ZXIsICZkaWN0KTsK
-IAogCXJldHVybiByZXBseTsKQEAgLTc0Niw2ICs3NTQsMTE2IEBAIHN0YXRpYyB2b2lkIHNpbV9w
-aW5fY2hlY2soc3RydWN0IG9mb25vX3NpbSAqc2ltKQogCXNpbS0+ZHJpdmVyLT5xdWVyeV9wYXNz
-d2Rfc3RhdGUoc2ltLCBzaW1fcGluX3F1ZXJ5X2NiLCBzaW0pOwogfQogCitzdGF0aWMgdm9pZCBz
-aW1fZWZsaV9yZWFkX2NiKGludCBvaywKKwkJCQllbnVtIG9mb25vX3NpbV9maWxlX3N0cnVjdHVy
-ZSBzdHJ1Y3R1cmUsCisJCQkJaW50IGxlbmd0aCwgaW50IHJlY29yZCwKKwkJCQljb25zdCB1bnNp
-Z25lZCBjaGFyICpkYXRhLAorCQkJCWludCByZWNvcmRfbGVuZ3RoLCB2b2lkICp1c2VyZGF0YSkK
-K3sKKwlzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW0gPSB1c2VyZGF0YTsKKworCWlmICghb2sgfHwgc3Ry
-dWN0dXJlICE9IE9GT05PX1NJTV9GSUxFX1NUUlVDVFVSRV9UUkFOU1BBUkVOVCkKKwkJcmV0dXJu
-OworCisJaWYgKGxlbmd0aCA8IDIpCisJCXJldHVybjsKKworCXNpbS0+ZWZsaSA9IGdfbWVtZHVw
-KGRhdGEsIGxlbmd0aCk7CisJc2ltLT5lZmxpX2xlbmd0aCA9IGxlbmd0aDsKK30KKworc3RhdGlj
-IHZvaWQgcGFyc2VfbGFuZ3VhZ2VfbGlzdChjaGFyICoqb3V0X2xpc3QsIGludCAqY291bnQsCisJ
-CQkJY29uc3QgdW5zaWduZWQgY2hhciAqc2ltX2xpc3QsIGludCBsZW5ndGgpCit7CisJaW50IGks
-IGo7CisKKwlsZW5ndGgtLTsKKworCWZvciAoaSA9IDA7IGkgPCBsZW5ndGg7IGkgKz0gMikgewor
-CQlpZiAoc2ltX2xpc3RbaV0gPT0gMHhmZiB8fCBzaW1fbGlzdFtpICsgMV0gPT0gMHhmZikKKwkJ
-CWNvbnRpbnVlOworCisJCWZvciAoaiA9IDA7IGogPCAqY291bnQ7IGorKykKKwkJCWlmICghbWVt
-Y21wKG91dF9saXN0W2pdLCBzaW1fbGlzdCArIGksIDIpKQorCQkJCWJyZWFrOworCQlpZiAoaiA8
-ICpjb3VudCkKKwkJCWNvbnRpbnVlOworCisJCS8qIElTTyA2MzkgY29kZXMgY29udGFpbiBvbmx5
-IGNoYXJhY3RlcnMgdGhhdCBhcmUgY29kZWQKKwkJICogaWRlbnRpY2FsbHkgaW4gU01TIDcgYml0
-IGNoYXJzZXQsIEFTQ0lJIG9yIFVURjggc28KKwkJICogbm8gY29udmVyc2lvbi4KKwkJICovCisJ
-CW91dF9saXN0WygqY291bnQpKytdID0gZ19zdHJuZHVwKChjaGFyICopIHNpbV9saXN0ICsgaSwg
-Mik7CisJfQorfQorCitzdGF0aWMgdm9pZCBzaW1fZWZwbF9yZWFkX2NiKGludCBvaywKKwkJCQll
-bnVtIG9mb25vX3NpbV9maWxlX3N0cnVjdHVyZSBzdHJ1Y3R1cmUsCisJCQkJaW50IGxlbmd0aCwg
-aW50IHJlY29yZCwKKwkJCQljb25zdCB1bnNpZ25lZCBjaGFyICpkYXRhLAorCQkJCWludCByZWNv
-cmRfbGVuZ3RoLCB2b2lkICp1c2VyZGF0YSkKK3sKKwlzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW0gPSB1
-c2VyZGF0YTsKKwl1bnNpZ25lZCBjaGFyICplZmxpID0gc2ltLT5lZmxpOworCWNvbnN0IHVuc2ln
-bmVkIGNoYXIgKmVmcGwgPSBkYXRhOworCWludCBlZmxpX2xlbmd0aCA9IHNpbS0+ZWZsaV9sZW5n
-dGg7CisJaW50IGVmcGxfbGVuZ3RoID0gbGVuZ3RoOworCWludCBjb3VudDsKKwljb25zdCBjaGFy
-ICpwYXRoID0gX19vZm9ub19hdG9tX2dldF9wYXRoKHNpbS0+YXRvbSk7CisJREJ1c0Nvbm5lY3Rp
-b24gKmNvbm4gPSBvZm9ub19kYnVzX2dldF9jb25uZWN0aW9uKCk7CisKKwlpZiAoIW9rIHx8IHN0
-cnVjdHVyZSAhPSBPRk9OT19TSU1fRklMRV9TVFJVQ1RVUkVfVFJBTlNQQVJFTlQpCisJCWVmcGwg
-PSBOVUxMOworCisJaWYgKGxlbmd0aCA8IDIpCisJCWVmcGwgPSBOVUxMOworCisJc2ltLT5sYW5n
-dWFnZV9wcmVmcyA9IGdfbmV3MChjaGFyICosCisJCQkJCShlZmxpX2xlbmd0aCArIGVmcGxfbGVu
-Z3RoKSAvIDIgKyAxKTsKKworCWNvdW50ID0gMDsKKworCS8qIE1ha2UgYSBsaXN0IG9mIGxhbmd1
-YWdlcyBpbiBib3RoIGZpbGVzIGluIG9yZGVyIG9mIHByZWZlcmVuY2VzCisJICogZm9sbG93aW5n
-IDMxLjEwMi4KKwkgKi8KKworCWlmIChlZmxpICYmIGVmcGwgJiYgZWZsaVswXSA9PSAweGZmICYm
-IGVmbGlbMV0gPT0gMHhmZikgeworCQlwYXJzZV9sYW5ndWFnZV9saXN0KHNpbS0+bGFuZ3VhZ2Vf
-cHJlZnMsICZjb3VudCwKKwkJCQkJZWZwbCwgZWZwbF9sZW5ndGgpOworCQllZnBsID0gTlVMTDsK
-Kwl9CisKKwlpZiAoZWZsaSkgeworCQlwYXJzZV9sYW5ndWFnZV9saXN0KHNpbS0+bGFuZ3VhZ2Vf
-cHJlZnMsICZjb3VudCwKKwkJCQkJZWZsaSwgZWZsaV9sZW5ndGgpOworCQlnX2ZyZWUoZWZsaSk7
-CisJCXNpbS0+ZWZsaSA9IE5VTEw7CisJfQorCisJaWYgKGVmcGwpCisJCXBhcnNlX2xhbmd1YWdl
-X2xpc3Qoc2ltLT5sYW5ndWFnZV9wcmVmcywgJmNvdW50LAorCQkJCQllZnBsLCBlZnBsX2xlbmd0
-aCk7CisKKwlvZm9ub19kYnVzX3NpZ25hbF9hcnJheV9wcm9wZXJ0eV9jaGFuZ2VkKGNvbm4sIHBh
-dGgsCisJCQkJCQkJU0lNX01BTkFHRVJfSU5URVJGQUNFLAorCQkJCQkJCSJQcmVmZXJyZWRMYW5n
-dWFnZXMiLAorCQkJCQkJCURCVVNfVFlQRV9TVFJJTkcsCisJCQkJCQkJJnNpbS0+bGFuZ3VhZ2Vf
-cHJlZnMpOworfQorCitzdGF0aWMgdm9pZCBzaW1fcmV0cmlldmVfZWZsaShzdHJ1Y3Qgb2Zvbm9f
-c2ltICpzaW0pCit7CisJLyogQWNjb3JkaW5nIHRvIDMxLjEwMiB0aGUgRUZsaSBpcyByZWFkIGZp
-cnN0IGFuZCBFRnBsIGlzIHRoZW4KKwkgKiBvbmx5IHJlYWQgaWYgbm9uZSBvZiB0aGUgRUZsaSBs
-YW5ndWFnZXMgYXJlIHN1cHBvcnRlZCBieSB1c2VyCisJICogaW50ZXJmYWNlLiAgNTEuMDExIG1h
-bmRhdGVzIHRoZSBleGFjdCBvcHBvc2l0ZSwgbWFraW5nIEVGcGwvRUZlbHAKKwkgKiBwcmVmZXJy
-ZWQgb3ZlciBFRmxwIChzYW1lIElEIGFzIEVGbGksIGRpZmZlcmVudCBmb3JtYXQpLgorCSAqIEhv
-d2V2ZXIgd2UgZG9uJ3QgZGVwZW5kIG9uIHRoZSB1c2VyIGludGVyZmFjZSBhbmQgc28KKwkgKiBu
-ZWVkIHRvIHJlYWQgYm90aCBmaWxlcyBub3cuCisJICovCisJb2Zvbm9fc2ltX3JlYWQoc2ltLCBT
-SU1fRUZMSV9GSUxFSUQsIHNpbV9lZmxpX3JlYWRfY2IsIHNpbSk7CisJb2Zvbm9fc2ltX3JlYWQo
-c2ltLCBTSU1fRUZQTF9GSUxFSUQsIHNpbV9lZnBsX3JlYWRfY2IsIHNpbSk7Cit9CisKIHN0YXRp
-YyB2b2lkIHNpbV9vcF9lcnJvcihzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW0pCiB7CiAJc3RydWN0IHNp
-bV9maWxlX29wICpvcCA9IGdfcXVldWVfcG9wX2hlYWQoc2ltLT5zaW1vcF9xKTsKQEAgLTEzNTcs
-NiArMTQ3NSwxMSBAQCBzdGF0aWMgdm9pZCBzaW1fcmVtb3ZlKHN0cnVjdCBvZm9ub19hdG9tICph
-dG9tKQogCQlzaW0tPnNlcnZpY2VfbnVtYmVycyA9IE5VTEw7CiAJfQogCisJaWYgKHNpbS0+bGFu
-Z3VhZ2VfcHJlZnMpIHsKKwkJZ19zdHJmcmVldihzaW0tPmxhbmd1YWdlX3ByZWZzKTsKKwkJc2lt
-LT5sYW5ndWFnZV9wcmVmcyA9IE5VTEw7CisJfQorCiAJaWYgKHNpbS0+c2ltb3Bfc291cmNlKSB7
-CiAJCWdfc291cmNlX3JlbW92ZShzaW0tPnNpbW9wX3NvdXJjZSk7CiAJCXNpbS0+c2ltb3Bfc291
-cmNlID0gMDsKQEAgLTE0NDYsNiArMTU2OSw3IEBAIHZvaWQgb2Zvbm9fc2ltX3JlZ2lzdGVyKHN0
-cnVjdCBvZm9ub19zaW0gKnNpbSkKIAkgKiBhcmJpdHJhcnkgZmlsZXMgdG8gYmUgd3JpdHRlbiBv
-ciByZWFkLCBhc3N1bWluZyB0aGVpciBwcmVzZW5jZQogCSAqIGluIHRoZSBFRnVzdAogCSAqLwor
-CXNpbV9yZXRyaWV2ZV9lZmxpKHNpbSk7CiAJc2ltX3Bpbl9jaGVjayhzaW0pOwogfQogCmRpZmYg
-LS1naXQgYS9zcmMvc2ltdXRpbC5oIGIvc3JjL3NpbXV0aWwuaAppbmRleCBmYzRmMDYzLi5kMTUx
-N2VkIDEwMDY0NAotLS0gYS9zcmMvc2ltdXRpbC5oCisrKyBiL3NyYy9zaW11dGlsLmgKQEAgLTIw
-LDYgKzIwLDggQEAKICAqLwogCiBlbnVtIHNpbV9maWxlaWQgeworCVNJTV9FRlBMX0ZJTEVJRCA9
-IDB4MmYwNSwKKwlTSU1fRUZMSV9GSUxFSUQgPSAweDZmMDUsCiAJU0lNX0VGTVNJU0ROX0ZJTEVJ
-RCA9IDB4NmY0MCwKIAlTSU1fRUZTUE5fRklMRUlEID0gMHg2ZjQ2LAogCVNJTV9FRlNETl9GSUxF
-SUQgPSAweDZmNDksCi0tIAoxLjYuMQoK
+First of all, you probably should configure --disable-isimodem, which
+excludes gisi as well, since the openmoko surely doesn't have a Nokia
+modem in it. ;)
 
---===============6743054065827049683==--
+Also, distributors really should build without maintainer mode, which
+makes the problem go away. It does suck for us, though, when building
+in scratchbox armel target.
+
+Cheers,
+Aki
+
+--===============1784803902210191133==--
 
