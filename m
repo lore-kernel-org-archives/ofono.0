@@ -1,16 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============0492547611440955717=="
+Content-Type: multipart/mixed; boundary="===============5199625241233401729=="
 MIME-Version: 1.0
-From: Zhao, Lihan <lihan.zhao@intel.com>
-Subject: how ofono runs with simulator
-Date: Wed, 16 Sep 2009 12:38:33 +0800
-Message-ID: <61563CE63B4F854986A895DA7AD3C17709DD9B5ED6@pdsmsx502.ccr.corp.intel.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: how ofono runs with simulator
+Date: Wed, 16 Sep 2009 12:56:13 +0800
+Message-ID: <38D9F46DFF92C54980D2F2C1E8EE313001AB9211B2@pdsmsx503.ccr.corp.intel.com>
+In-Reply-To: <61563CE63B4F854986A895DA7AD3C17709DD9B5ED6@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0492547611440955717==
+--===============5199625241233401729==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
+
+The following steps work for latest 0.4 version:
+
+1. Modify modem.conf to config your simulator
+# Sample for using phone simulator
+[phonesim]
+Driver=3Dphonesim
+Address=3D127.0.0.1
+Port=3D12345
+
+2. Start simulator by
+Phonesim -p 12345 -gui data/moblin.xml
+
+3. Start ofono by
+ofonod -nd
+
+4. power on the modem
+dbus-send --system --print-reply --dest=3Dorg.ofono /phonesim0 org.ofono.Mo=
+dem.SetProperty string:Powered variant:boolean:true
+
+BTW, if you have a mobile phone, there is another way to use it instead of =
+the simulator. =
+
+
+Regards,
+-Yang
+
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of Zhao, Lihan
+Sent: Wednesday, September 16, 2009 12:39 PM
+To: ofono(a)ofono.org
+Subject: how ofono runs with simulator
 
 Hi,
 
@@ -27,64 +60,5 @@ Best Regards,
 Lihan
 
 
---===============0492547611440955717==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
-dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEgbmFtZT1HZW5lcmF0b3Ig
-Y29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTIgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+Cjwh
-LS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseTpTaW1T
-dW47CglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
-aWx5OlNpbVN1bjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQpAZm9udC1mYWNlCgl7
-Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KQGZv
-bnQtZmFjZQoJe2ZvbnQtZmFtaWx5OlNpbVN1bjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAx
-IDE7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWws
-IGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJdGV4
-dC1hbGlnbjpqdXN0aWZ5OwoJdGV4dC1qdXN0aWZ5OmludGVyLWlkZW9ncmFwaDsKCWZvbnQtc2l6
-ZToxMC41cHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBz
-cGFuLk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0
-ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0Zv
-bGxvd2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNv
-cmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVy
-c29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xv
-cjp3aW5kb3d0ZXh0O30KLk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25s
-eTt9CiAvKiBQYWdlIERlZmluaXRpb25zICovCiBAcGFnZSBTZWN0aW9uMQoJe3NpemU6NjEyLjBw
-dCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA5MC4wcHQgNzIuMHB0IDkwLjBwdDt9CmRpdi5TZWN0
-aW9uMQoJe3BhZ2U6U2VjdGlvbjE7fQotLT4KPC9zdHlsZT4KPCEtLVtpZiBndGUgbXNvIDldPjx4
-bWw+CiA8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3ht
-bD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlbGF5b3V0IHY6
-ZXh0PSJlZGl0Ij4KICA8bzppZG1hcCB2OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KIDwvbzpzaGFw
-ZWxheW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgoKPGJvZHkgbGFuZz1aSC1DTiBsaW5r
-PWJsdWUgdmxpbms9cHVycGxlIHN0eWxlPSd0ZXh0LWp1c3RpZnktdHJpbTpwdW5jdHVhdGlvbic+
-Cgo8ZGl2IGNsYXNzPVNlY3Rpb24xPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4t
-VVM+SGksPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
-bmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFs
-PjxzcGFuIGxhbmc9RU4tVVM+SSBoYXZlIGdvdCB0aGUgc291cmNlIGNvZGUgdGhyb3VnaCBnaXQs
-IGFuZApJIGJ1aWxkIGl0IGFzIHRoZSBIQUNLSU5HIGd1aWRlcy48bzpwPjwvbzpwPjwvc3Bhbj48
-L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpw
-Pjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5CdXQgbm93
-IEkgZG8gbm90IGhhdmUgYSBtb2RlbSwgYW5kIGNhbm5vdApydW4gb2Zvbm8gb24gdGhlIHRydWUg
-ZW52aXJvbm1lbnQuPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxz
-cGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNv
-Tm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+SSBoYXZlIG9uZSBzaW11bGF0b3IsIGNhbiBhbnlvbmUg
-a25vdyBob3cKdG8gcnVuIG9mb25vIHdpdGggc2ltdWxhdG9yPzxvOnA+PC9vOnA+PC9zcGFuPjwv
-cD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9vOnA+
-PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPlRoYW5rIHlv
-dSE8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1F
-Ti1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNw
-YW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1mYW1pbHk6IlRpbWVzIE5ldyBSb21hbiIsInNlcmlm
-Iic+QmVzdApSZWdhcmRzLDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1h
-bD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250LWZhbWlseToiVGltZXMgTmV3IFJvbWFuIiwi
-c2VyaWYiJz5MaWhhbjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48
-c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4KCjwvZGl2PgoKPC9i
-b2R5PgoKPC9odG1sPgo=
-
---===============0492547611440955717==--
+--===============5199625241233401729==--
 
