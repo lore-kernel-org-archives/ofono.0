@@ -1,155 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============7341374534809014618=="
+Content-Type: multipart/mixed; boundary="===============6462760561858209582=="
 MIME-Version: 1.0
 From: andrzej zaborowski <balrogg@gmail.com>
-Subject: Re: [PATCH] [RFC] Do the PIN check in SIMManager
-Date: Wed, 23 Sep 2009 22:47:54 +0200
-Message-ID: <fb249edb0909231347ha981387ge221b34f1e2e4839@mail.gmail.com>
-In-Reply-To: <200909220012.29847.denkenz@gmail.com>
+Subject: Re: [PATCH] Present list of preferred languages on SimManager
+ interface.
+Date: Wed, 23 Sep 2009 22:52:21 +0200
+Message-ID: <fb249edb0909231352w440052d4n83bdc818c27f414a@mail.gmail.com>
+In-Reply-To: <200909171450.40482.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7341374534809014618==
+--===============6462760561858209582==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-
-2009/9/22 Denis Kenzior <denkenz@gmail.com>:
->> authentication, you have to give the old password from before it was
->> changed to "", i.e to disable and enable SIM PIN, do:
->> SimManager.ChangePin("pin", "1234", "")
->> SimManager.ChangePin("pin", "1234", "1234")
+2009/9/17 Denis Kenzior <denkenz@gmail.com>:
+>> 2009/9/16 Andrzej Zaborowski <andrew.zaborowski@intel.com>:
+>> > So here's another version generated on top of HEAD and with an attempt
+>> > to detect when the card uses EFlp format instead of EFli.
 >>
->> rather than the more logical
->>
->> SimManager.ChangePin("pin", "1234", "")
->> SimManager.ChangePin("pin, "", "1234)
->>
->> The other problem is that if changing the password succeeds but
->> enabling authentiation fails, ChangePin still returns failure
+>> Sorry, I sent the wrong file, here's the *actual* new version.
 >
-> I added LockPin and UnlockPin methods to take care of these two cases.
+> Patch has been applied. =C2=A0I cleaned it up a little afterward. =C2=A0L=
+et me know if I
+> broke anything.
 
-Should we have a read-only property so clients know what the current
-state is?  Unfortunately this would be some 6 properties and 6 more
-commands on startup, for little gain.  I attached a diff to add plugin
-interface for this without dbus interface.  The other two changes are
-just clean-up.
+The only corner case where order is now different is when the first
+item in EFli is empty and other items aren't.  Attached a cosmetic
+patch.
 
 Regards
 
---===============7341374534809014618==
+--===============6462760561858209582==
 Content-Type: text/x-patch
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment;
- filename="0001-Update-sim-api.txt-ChangePin-no-longer-disables-pin.patch"
+ filename="0002-Rename-eflp_format-to-efli_format-the-opposite.patch"
 
-RnJvbSA4ZjYzZjc4NjAyNzFmNjM0YTUxMDZmNjhkMTBmZjczMzEzNDNkZWE1IE1vbiBTZXAgMTcg
+RnJvbSBiMDMyM2E3NTg3MjEzOGZmZDg4M2Q4NDNiNGQwYmM4MTZjMzY3YTJkIE1vbiBTZXAgMTcg
 MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogV2VkLCAyMyBTZXAgMjAwOSAyMzoxNzowNiArMDIwMApTdWJqZWN0
-OiBbUEFUQ0hdIFVwZGF0ZSBzaW0tYXBpLnR4dDogQ2hhbmdlUGluIG5vIGxvbmdlciBkaXNhYmxl
-cyBwaW4uCgotLS0KIGRvYy9zaW0tYXBpLnR4dCB8ICAgIDMgKy0tCiAxIGZpbGVzIGNoYW5nZWQs
-IDEgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9kb2Mvc2ltLWFw
-aS50eHQgYi9kb2Mvc2ltLWFwaS50eHQKaW5kZXggY2FmMmRjNC4uZjg3ZGJlYiAxMDA2NDQKLS0t
-IGEvZG9jL3NpbS1hcGkudHh0CisrKyBiL2RvYy9zaW0tYXBpLnR4dApAQCAtMTQsOCArMTQsNyBA
-QCBNZXRob2RzCQlkaWN0IEdldFByb3BlcnRpZXMoKQogCiAJCUNoYW5nZVBpbihzdHJpbmcgdHlw
-ZSwgc3RyaW5nIG9sZHBpbiwgc3RyaW5nIG5ld3BpbikKIAotCQkJQ2hhbmdlcyB0aGUgcGluIGdp
-dmVuIGJ5IHN0cmluZyB0eXBlLiAgSWYgbmV3cGluIGlzCi0JCQllbXB0eSwgdGhpcyBoYXMgdGhl
-IGVmZmVjdCBvZiBkaXNhYmxpbmcgdGhlIHBpbi4KKwkJCUNoYW5nZXMgdGhlIHBpbiBnaXZlbiBi
-eSBzdHJpbmcgdHlwZS4KIAogCQlFbnRlclBpbihzdHJpbmcgdHlwZSwgc3RyaW5nIHBpbikKIAot
-LSAKMS42LjEKCg==
+QGludGVsLmNvbT4KRGF0ZTogV2VkLCAyMyBTZXAgMjAwOSAyMzoyMzo0MyArMDIwMApTdWJqZWN0
+OiBbUEFUQ0hdIFJlbmFtZSBlZmxwX2Zvcm1hdCB0byBlZmxpX2Zvcm1hdCwgc2VtYW50aWNhbGx5
+IG9wcG9zaXRlLgoKLS0tCiBzcmMvc2ltLmMgfCAgICA4ICsrKystLS0tCiAxIGZpbGVzIGNoYW5n
+ZWQsIDQgaW5zZXJ0aW9ucygrKSwgNCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9zcmMvc2lt
+LmMgYi9zcmMvc2ltLmMKaW5kZXggMWE0ZWRjNC4uZWMwMDNlZSAxMDA2NDQKLS0tIGEvc3JjL3Np
+bS5jCisrKyBiL3NyYy9zaW0uYwpAQCAtMTA2NSw3ICsxMDY1LDcgQEAgc3RhdGljIHZvaWQgc2lt
+X2VmcGxfcmVhZF9jYihpbnQgb2ssCiAJc3RydWN0IG9mb25vX3NpbSAqc2ltID0gdXNlcmRhdGE7
+CiAJY29uc3QgY2hhciAqcGF0aCA9IF9fb2Zvbm9fYXRvbV9nZXRfcGF0aChzaW0tPmF0b20pOwog
+CURCdXNDb25uZWN0aW9uICpjb25uID0gb2Zvbm9fZGJ1c19nZXRfY29ubmVjdGlvbigpOwotCWdi
+b29sZWFuIGVmbHBfZm9ybWF0ID0gVFJVRTsKKwlnYm9vbGVhbiBlZmxpX2Zvcm1hdCA9IFRSVUU7
+CiAJR1NMaXN0ICplZmxpID0gTlVMTDsKIAlHU0xpc3QgKmVmcGwgPSBOVUxMOwogCkBAIC0xMDc3
+LDkgKzEwNzcsOSBAQCBzdGF0aWMgdm9pZCBzaW1fZWZwbF9yZWFkX2NiKGludCBvaywKIAogc2tp
+cF9lZnBsOgogCWlmIChzaW0tPmVmbGkgJiYgc2ltLT5lZmxpX2xlbmd0aCA+IDApIHsKLQkJZWZs
+cF9mb3JtYXQgPSBzaW1fZWZsaV9mb3JtYXQoc2ltLT5lZmxpLCBzaW0tPmVmbGlfbGVuZ3RoKTsK
+KwkJZWZsaV9mb3JtYXQgPSBzaW1fZWZsaV9mb3JtYXQoc2ltLT5lZmxpLCBzaW0tPmVmbGlfbGVu
+Z3RoKTsKIAotCQlpZiAoZWZscF9mb3JtYXQpCisJCWlmIChlZmxpX2Zvcm1hdCkKIAkJCWVmbGkg
+PSBwYXJzZV9sYW5ndWFnZV9saXN0KHNpbS0+ZWZsaSwgc2ltLT5lZmxpX2xlbmd0aCk7CiAJCWVs
+c2UKIAkJCWVmbGkgPSBwYXJzZV9lZmxwKHNpbS0+ZWZsaSwgc2ltLT5lZmxpX2xlbmd0aCk7CkBA
+IC0xMDk2LDcgKzEwOTYsNyBAQCBza2lwX2VmcGw6CiAJICogcHJlZmVyZW5jZSB0byB0aGUgRUZQ
+TCBhdCB0aGUgTUYgdW5sZXNzLi4uCiAJICogT3RoZXJ3aXNlIGluIG9yZGVyIG9mIHByZWZlcmVu
+Y2UgYWNjb3JkaW5nIHRvIFRTIDUxLjAxMQogCSAqLwotCWlmIChlZmxwX2Zvcm1hdCkKKwlpZiAo
+ZWZsaV9mb3JtYXQpCiAJCXNpbS0+bGFuZ3VhZ2VfcHJlZnMgPSBjb25jYXRfbGFuZ19wcmVmcyhl
+ZmxpLCBlZnBsKTsKIAllbHNlCiAJCXNpbS0+bGFuZ3VhZ2VfcHJlZnMgPSBjb25jYXRfbGFuZ19w
+cmVmcyhlZnBsLCBlZmxpKTsKLS0gCjEuNi4xCgo=
 
---===============7341374534809014618==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0003-Add-a-plugin-interface-for-getting-PIN-lock-state.patch"
-
-RnJvbSBhYjAxMzFlNzk3ZmUwOTA0OWIzMWJlYjJhMWJmNjIyNTE1ZWFiNzhmIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogVGh1LCAyNCBTZXAgMjAwOSAwMDozMzoyOCArMDIwMApTdWJqZWN0
-OiBbUEFUQ0hdIEFkZCBwbHVnaW4gaW50ZXJmYWNlIGZvciBnZXR0aW5nIFBJTiBsb2NrIHN0YXRl
-LgoKSXQgbWF5IGJlIHVzZWZ1bCB0byBoYXZlIHRoZSBpbmZvcm1hdGlvbiBvZiB3aGV0aGVyIGNh
-cmQgaXMgY3VycmVudGx5CmxvY2tlZCBhbmQgZW1pdCBldmVudHMgd2hlbiB0aGlzIGNoYW5nZXMg
-YnV0IGlmIHdlIHdhbnQgdG8gaGF2ZSBpdCBhcyBhCnByb3BlcnR5LCB3ZSB3b3VsZCBuZWVkIHBy
-b3BlcnRpZXMgZm9yIGFsbCB0eXBlcyBvZiBsb2NrcyBhbmQgaXQgd291bGRuJ3QKYmUgYWxsIHRo
-YXQgdXNlZnVsLgotLS0KIGRyaXZlcnMvYXRtb2RlbS9zaW0uYyB8ICAgNjEgKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwogaW5jbHVkZS9zaW0uaCAgICAg
-ICAgIHwgICAgNiArKysrKwogMiBmaWxlcyBjaGFuZ2VkLCA2NyBpbnNlcnRpb25zKCspLCAwIGRl
-bGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS9zaW0uYyBiL2RyaXZlcnMv
-YXRtb2RlbS9zaW0uYwppbmRleCBiN2Q4MzY4Li5kMDRiNzM2IDEwMDY0NAotLS0gYS9kcml2ZXJz
-L2F0bW9kZW0vc2ltLmMKKysrIGIvZHJpdmVycy9hdG1vZGVtL3NpbS5jCkBAIC02MzQsNiArNjM0
-LDY2IEBAIGVycm9yOgogCUNBTExCQUNLX1dJVEhfRkFJTFVSRShjYiwgZGF0YSk7CiB9CiAKK3N0
-YXRpYyB2b2lkIGF0X2xvY2tfc3RhdHVzX2NiKGdib29sZWFuIG9rLCBHQXRSZXN1bHQgKnJlc3Vs
-dCwKKwkJZ3BvaW50ZXIgdXNlcl9kYXRhKQoreworCXN0cnVjdCBjYl9kYXRhICpjYmQgPSB1c2Vy
-X2RhdGE7CisJR0F0UmVzdWx0SXRlciBpdGVyOworCW9mb25vX3NpbV9sb2NrZWRfY2JfdCBjYiA9
-IGNiZC0+Y2I7CisJc3RydWN0IG9mb25vX2Vycm9yIGVycm9yOworCWludCBsb2NrZWQ7CisKKwlk
-dW1wX3Jlc3BvbnNlKCJhdF9sb2NrX3N0YXR1c19jYiIsIG9rLCByZXN1bHQpOworCWRlY29kZV9h
-dF9lcnJvcigmZXJyb3IsIGdfYXRfcmVzdWx0X2ZpbmFsX3Jlc3BvbnNlKHJlc3VsdCkpOworCisJ
-aWYgKCFvaykgeworCQljYigmZXJyb3IsIC0xLCBjYmQtPmRhdGEpOworCQlyZXR1cm47CisJfQor
-CisJZ19hdF9yZXN1bHRfaXRlcl9pbml0KCZpdGVyLCByZXN1bHQpOworCisJaWYgKCFnX2F0X3Jl
-c3VsdF9pdGVyX25leHQoJml0ZXIsICIrQ0xDSzoiKSkgeworCQlDQUxMQkFDS19XSVRIX0ZBSUxV
-UkUoY2IsIC0xLCBjYmQtPmRhdGEpOworCQlyZXR1cm47CisJfQorCisJZ19hdF9yZXN1bHRfaXRl
-cl9uZXh0X251bWJlcigmaXRlciwgJmxvY2tlZCk7CisKKwlvZm9ub19kZWJ1ZygibG9ja19zdGF0
-dXNfY2I6ICVpIiwgbG9ja2VkKTsKKworCWNiKCZlcnJvciwgbG9ja2VkLCBjYmQtPmRhdGEpOwor
-fQorCitzdGF0aWMgdm9pZCBhdF9waW5fcXVlcnlfZW5hYmxlZChzdHJ1Y3Qgb2Zvbm9fc2ltICpz
-aW0sCisJCQkJZW51bSBvZm9ub19zaW1fcGFzc3dvcmRfdHlwZSBwYXNzd2RfdHlwZSwKKwkJCQlv
-Zm9ub19zaW1fbG9ja2VkX2NiX3QgY2IsIHZvaWQgKmRhdGEpCit7CisJR0F0Q2hhdCAqY2hhdCA9
-IG9mb25vX3NpbV9nZXRfZGF0YShzaW0pOworCXN0cnVjdCBjYl9kYXRhICpjYmQgPSBjYl9kYXRh
-X25ldyhjYiwgZGF0YSk7CisJY2hhciBidWZbNjRdOworCXVuc2lnbmVkIGludCBsZW4gPSBzaXpl
-b2YoYXRfY2xja19jcHdkX2ZhYykgLyBzaXplb2YoKmF0X2NsY2tfY3B3ZF9mYWMpOworCisJaWYg
-KCFjYmQpCisJCWdvdG8gZXJyb3I7CisKKwlpZiAocGFzc3dkX3R5cGUgPj0gbGVuIHx8ICFhdF9j
-bGNrX2Nwd2RfZmFjW3Bhc3N3ZF90eXBlXSkKKwkJZ290byBlcnJvcjsKKworCXNucHJpbnRmKGJ1
-Ziwgc2l6ZW9mKGJ1ZiksICJBVCtDTENLPVwiJXNcIiwyIiwKKwkJCWF0X2NsY2tfY3B3ZF9mYWNb
-cGFzc3dkX3R5cGVdKTsKKworCWlmIChnX2F0X2NoYXRfc2VuZChjaGF0LCBidWYsIE5VTEwsCisJ
-CQkJYXRfbG9ja19zdGF0dXNfY2IsIGNiZCwgZ19mcmVlKSA+IDApCisJCXJldHVybjsKKworZXJy
-b3I6CisJaWYgKGNiZCkKKwkJZ19mcmVlKGNiZCk7CisKKwlDQUxMQkFDS19XSVRIX0ZBSUxVUkUo
-Y2IsIC0xLCBkYXRhKTsKK30KKwogc3RhdGljIGdib29sZWFuIGF0X3NpbV9yZWdpc3RlcihncG9p
-bnRlciB1c2VyKQogewogCXN0cnVjdCBvZm9ub19zaW0gKnNpbSA9IHVzZXI7CkBAIC02NzUsNiAr
-NzM1LDcgQEAgc3RhdGljIHN0cnVjdCBvZm9ub19zaW1fZHJpdmVyIGRyaXZlciA9IHsKIAkucmVz
-ZXRfcGFzc3dkCQk9IGF0X3Bpbl9zZW5kX3B1aywKIAkubG9jawkJCT0gYXRfcGluX2VuYWJsZSwK
-IAkuY2hhbmdlX3Bhc3N3ZAkJPSBhdF9jaGFuZ2VfcGFzc3dkLAorCS5xdWVyeV9sb2NrZWQJCT0g
-YXRfcGluX3F1ZXJ5X2VuYWJsZWQsCiB9OwogCiB2b2lkIGF0X3NpbV9pbml0KCkKZGlmZiAtLWdp
-dCBhL2luY2x1ZGUvc2ltLmggYi9pbmNsdWRlL3NpbS5oCmluZGV4IGFmMmZkMWUuLmZhNTI3NmIg
-MTAwNjQ0Ci0tLSBhL2luY2x1ZGUvc2ltLmgKKysrIGIvaW5jbHVkZS9zaW0uaApAQCAtOTEsNiAr
-OTEsOSBAQCB0eXBlZGVmIHZvaWQgKCpvZm9ub19zaW1fcGFzc3dkX2NiX3QpKGNvbnN0IHN0cnVj
-dCBvZm9ub19lcnJvciAqZXJyb3IsCiB0eXBlZGVmIHZvaWQgKCpvZm9ub19zaW1fbG9ja191bmxv
-Y2tfY2JfdCkoY29uc3Qgc3RydWN0IG9mb25vX2Vycm9yICplcnJvciwKIAkJCQkJdm9pZCAqZGF0
-YSk7CiAKK3R5cGVkZWYgdm9pZCAoKm9mb25vX3NpbV9sb2NrZWRfY2JfdCkoY29uc3Qgc3RydWN0
-IG9mb25vX2Vycm9yICplcnJvciwKKwkJCQkJaW50IGxvY2tlZCwgdm9pZCAqZGF0YSk7CisKIHN0
-cnVjdCBvZm9ub19zaW1fZHJpdmVyIHsKIAljb25zdCBjaGFyICpuYW1lOwogCWludCAoKnByb2Jl
-KShzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW0sIHVuc2lnbmVkIGludCB2ZW5kb3IsIHZvaWQgKmRhdGEp
-OwpAQCAtMTMxLDYgKzEzNCw5IEBAIHN0cnVjdCBvZm9ub19zaW1fZHJpdmVyIHsKIAl2b2lkICgq
-bG9jaykoc3RydWN0IG9mb25vX3NpbSAqc2ltLCBlbnVtIG9mb25vX3NpbV9wYXNzd29yZF90eXBl
-IHR5cGUsCiAJCQlpbnQgZW5hYmxlLCBjb25zdCBjaGFyICpwYXNzd2QsCiAJCQlvZm9ub19zaW1f
-bG9ja191bmxvY2tfY2JfdCBjYiwgdm9pZCAqZGF0YSk7CisJdm9pZCAoKnF1ZXJ5X2xvY2tlZCko
-c3RydWN0IG9mb25vX3NpbSAqc2ltLAorCQkJZW51bSBvZm9ub19zaW1fcGFzc3dvcmRfdHlwZSB0
-eXBlLAorCQkJb2Zvbm9fc2ltX2xvY2tlZF9jYl90IGNiLCB2b2lkICpkYXRhKTsKIH07CiAKIGlu
-dCBvZm9ub19zaW1fZHJpdmVyX3JlZ2lzdGVyKGNvbnN0IHN0cnVjdCBvZm9ub19zaW1fZHJpdmVy
-ICpkKTsKLS0gCjEuNi4xCgo=
-
---===============7341374534809014618==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0004-Remove-unused-struct-field.patch"
-
-RnJvbSAzNTU0Njk2NmVmMTEwNzExNTAwMzQ4MTkyOGFhMTJkNmI0NzJjZTdkIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogVGh1LCAyNCBTZXAgMjAwOSAwMDozNToxNSArMDIwMApTdWJqZWN0
-OiBbUEFUQ0hdIFJlbW92ZSB1bnVzZWQgc3RydWN0IGZpZWxkLgoKLS0tCiBzcmMvc2ltLmMgfCAg
-ICAxIC0KIDEgZmlsZXMgY2hhbmdlZCwgMCBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9ucygtKQoK
-ZGlmZiAtLWdpdCBhL3NyYy9zaW0uYyBiL3NyYy9zaW0uYwppbmRleCBlYzAwM2VlLi43NDZjN2E4
-IDEwMDY0NAotLS0gYS9zcmMvc2ltLmMKKysrIGIvc3JjL3NpbS5jCkBAIC04Niw3ICs4Niw2IEBA
-IHN0cnVjdCBvZm9ub19zaW0gewogCXVuc2lnbmVkIGNoYXIgZWZtc2lzZG5fcmVjb3JkczsKIAl1
-bnNpZ25lZCBjaGFyICplZmxpOwogCXVuc2lnbmVkIGNoYXIgZWZsaV9sZW5ndGg7Ci0JdW5zaWdu
-ZWQgaW50IG5leHRfcmVhZHlfd2F0Y2hfaWQ7CiAJc3RydWN0IG9mb25vX3dhdGNobGlzdCAqcmVh
-ZHlfd2F0Y2hlczsKIAljb25zdCBzdHJ1Y3Qgb2Zvbm9fc2ltX2RyaXZlciAqZHJpdmVyOwogCXZv
-aWQgKmRyaXZlcl9kYXRhOwotLSAKMS42LjEKCg==
-
---===============7341374534809014618==--
+--===============6462760561858209582==--
 
