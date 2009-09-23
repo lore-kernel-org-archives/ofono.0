@@ -1,42 +1,155 @@
-Content-Type: multipart/mixed; boundary="===============1337276266923441836=="
+Content-Type: multipart/mixed; boundary="===============7341374534809014618=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: andrzej zaborowski <balrogg@gmail.com>
 Subject: Re: [PATCH] [RFC] Do the PIN check in SIMManager
-Date: Tue, 22 Sep 2009 00:12:29 -0500
-Message-ID: <200909220012.29847.denkenz@gmail.com>
-In-Reply-To: <fb249edb0909171157w3b00b220o2538793c09016d81@mail.gmail.com>
+Date: Wed, 23 Sep 2009 22:47:54 +0200
+Message-ID: <fb249edb0909231347ha981387ge221b34f1e2e4839@mail.gmail.com>
+In-Reply-To: <200909220012.29847.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1337276266923441836==
+--===============7341374534809014618==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi,
 
-> And here's a version that implements most of what's specified in
-> doc/sim-api.txt.  There are two caveats: when you re-enable SIM PIN
-
-Patch has been applied, thanks.
-
-> authentication, you have to give the old password from before it was
-> changed to "", i.e to disable and enable SIM PIN, do:
-> SimManager.ChangePin("pin", "1234", "")
-> SimManager.ChangePin("pin", "1234", "1234")
+2009/9/22 Denis Kenzior <denkenz@gmail.com>:
+>> authentication, you have to give the old password from before it was
+>> changed to "", i.e to disable and enable SIM PIN, do:
+>> SimManager.ChangePin("pin", "1234", "")
+>> SimManager.ChangePin("pin", "1234", "1234")
+>>
+>> rather than the more logical
+>>
+>> SimManager.ChangePin("pin", "1234", "")
+>> SimManager.ChangePin("pin, "", "1234)
+>>
+>> The other problem is that if changing the password succeeds but
+>> enabling authentiation fails, ChangePin still returns failure
 >
-> rather than the more logical
->
-> SimManager.ChangePin("pin", "1234", "")
-> SimManager.ChangePin("pin, "", "1234)
->
-> The other problem is that if changing the password succeeds but
-> enabling authentiation fails, ChangePin still returns failure
+> I added LockPin and UnlockPin methods to take care of these two cases.
 
-I added LockPin and UnlockPin methods to take care of these two cases.
+Should we have a read-only property so clients know what the current
+state is?  Unfortunately this would be some 6 properties and 6 more
+commands on startup, for little gain.  I attached a diff to add plugin
+interface for this without dbus interface.  The other two changes are
+just clean-up.
 
-Regards,
--Denis
+Regards
 
---===============1337276266923441836==--
+--===============7341374534809014618==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Update-sim-api.txt-ChangePin-no-longer-disables-pin.patch"
+
+RnJvbSA4ZjYzZjc4NjAyNzFmNjM0YTUxMDZmNjhkMTBmZjczMzEzNDNkZWE1IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogV2VkLCAyMyBTZXAgMjAwOSAyMzoxNzowNiArMDIwMApTdWJqZWN0
+OiBbUEFUQ0hdIFVwZGF0ZSBzaW0tYXBpLnR4dDogQ2hhbmdlUGluIG5vIGxvbmdlciBkaXNhYmxl
+cyBwaW4uCgotLS0KIGRvYy9zaW0tYXBpLnR4dCB8ICAgIDMgKy0tCiAxIGZpbGVzIGNoYW5nZWQs
+IDEgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9kb2Mvc2ltLWFw
+aS50eHQgYi9kb2Mvc2ltLWFwaS50eHQKaW5kZXggY2FmMmRjNC4uZjg3ZGJlYiAxMDA2NDQKLS0t
+IGEvZG9jL3NpbS1hcGkudHh0CisrKyBiL2RvYy9zaW0tYXBpLnR4dApAQCAtMTQsOCArMTQsNyBA
+QCBNZXRob2RzCQlkaWN0IEdldFByb3BlcnRpZXMoKQogCiAJCUNoYW5nZVBpbihzdHJpbmcgdHlw
+ZSwgc3RyaW5nIG9sZHBpbiwgc3RyaW5nIG5ld3BpbikKIAotCQkJQ2hhbmdlcyB0aGUgcGluIGdp
+dmVuIGJ5IHN0cmluZyB0eXBlLiAgSWYgbmV3cGluIGlzCi0JCQllbXB0eSwgdGhpcyBoYXMgdGhl
+IGVmZmVjdCBvZiBkaXNhYmxpbmcgdGhlIHBpbi4KKwkJCUNoYW5nZXMgdGhlIHBpbiBnaXZlbiBi
+eSBzdHJpbmcgdHlwZS4KIAogCQlFbnRlclBpbihzdHJpbmcgdHlwZSwgc3RyaW5nIHBpbikKIAot
+LSAKMS42LjEKCg==
+
+--===============7341374534809014618==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0003-Add-a-plugin-interface-for-getting-PIN-lock-state.patch"
+
+RnJvbSBhYjAxMzFlNzk3ZmUwOTA0OWIzMWJlYjJhMWJmNjIyNTE1ZWFiNzhmIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogVGh1LCAyNCBTZXAgMjAwOSAwMDozMzoyOCArMDIwMApTdWJqZWN0
+OiBbUEFUQ0hdIEFkZCBwbHVnaW4gaW50ZXJmYWNlIGZvciBnZXR0aW5nIFBJTiBsb2NrIHN0YXRl
+LgoKSXQgbWF5IGJlIHVzZWZ1bCB0byBoYXZlIHRoZSBpbmZvcm1hdGlvbiBvZiB3aGV0aGVyIGNh
+cmQgaXMgY3VycmVudGx5CmxvY2tlZCBhbmQgZW1pdCBldmVudHMgd2hlbiB0aGlzIGNoYW5nZXMg
+YnV0IGlmIHdlIHdhbnQgdG8gaGF2ZSBpdCBhcyBhCnByb3BlcnR5LCB3ZSB3b3VsZCBuZWVkIHBy
+b3BlcnRpZXMgZm9yIGFsbCB0eXBlcyBvZiBsb2NrcyBhbmQgaXQgd291bGRuJ3QKYmUgYWxsIHRo
+YXQgdXNlZnVsLgotLS0KIGRyaXZlcnMvYXRtb2RlbS9zaW0uYyB8ICAgNjEgKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwogaW5jbHVkZS9zaW0uaCAgICAg
+ICAgIHwgICAgNiArKysrKwogMiBmaWxlcyBjaGFuZ2VkLCA2NyBpbnNlcnRpb25zKCspLCAwIGRl
+bGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS9zaW0uYyBiL2RyaXZlcnMv
+YXRtb2RlbS9zaW0uYwppbmRleCBiN2Q4MzY4Li5kMDRiNzM2IDEwMDY0NAotLS0gYS9kcml2ZXJz
+L2F0bW9kZW0vc2ltLmMKKysrIGIvZHJpdmVycy9hdG1vZGVtL3NpbS5jCkBAIC02MzQsNiArNjM0
+LDY2IEBAIGVycm9yOgogCUNBTExCQUNLX1dJVEhfRkFJTFVSRShjYiwgZGF0YSk7CiB9CiAKK3N0
+YXRpYyB2b2lkIGF0X2xvY2tfc3RhdHVzX2NiKGdib29sZWFuIG9rLCBHQXRSZXN1bHQgKnJlc3Vs
+dCwKKwkJZ3BvaW50ZXIgdXNlcl9kYXRhKQoreworCXN0cnVjdCBjYl9kYXRhICpjYmQgPSB1c2Vy
+X2RhdGE7CisJR0F0UmVzdWx0SXRlciBpdGVyOworCW9mb25vX3NpbV9sb2NrZWRfY2JfdCBjYiA9
+IGNiZC0+Y2I7CisJc3RydWN0IG9mb25vX2Vycm9yIGVycm9yOworCWludCBsb2NrZWQ7CisKKwlk
+dW1wX3Jlc3BvbnNlKCJhdF9sb2NrX3N0YXR1c19jYiIsIG9rLCByZXN1bHQpOworCWRlY29kZV9h
+dF9lcnJvcigmZXJyb3IsIGdfYXRfcmVzdWx0X2ZpbmFsX3Jlc3BvbnNlKHJlc3VsdCkpOworCisJ
+aWYgKCFvaykgeworCQljYigmZXJyb3IsIC0xLCBjYmQtPmRhdGEpOworCQlyZXR1cm47CisJfQor
+CisJZ19hdF9yZXN1bHRfaXRlcl9pbml0KCZpdGVyLCByZXN1bHQpOworCisJaWYgKCFnX2F0X3Jl
+c3VsdF9pdGVyX25leHQoJml0ZXIsICIrQ0xDSzoiKSkgeworCQlDQUxMQkFDS19XSVRIX0ZBSUxV
+UkUoY2IsIC0xLCBjYmQtPmRhdGEpOworCQlyZXR1cm47CisJfQorCisJZ19hdF9yZXN1bHRfaXRl
+cl9uZXh0X251bWJlcigmaXRlciwgJmxvY2tlZCk7CisKKwlvZm9ub19kZWJ1ZygibG9ja19zdGF0
+dXNfY2I6ICVpIiwgbG9ja2VkKTsKKworCWNiKCZlcnJvciwgbG9ja2VkLCBjYmQtPmRhdGEpOwor
+fQorCitzdGF0aWMgdm9pZCBhdF9waW5fcXVlcnlfZW5hYmxlZChzdHJ1Y3Qgb2Zvbm9fc2ltICpz
+aW0sCisJCQkJZW51bSBvZm9ub19zaW1fcGFzc3dvcmRfdHlwZSBwYXNzd2RfdHlwZSwKKwkJCQlv
+Zm9ub19zaW1fbG9ja2VkX2NiX3QgY2IsIHZvaWQgKmRhdGEpCit7CisJR0F0Q2hhdCAqY2hhdCA9
+IG9mb25vX3NpbV9nZXRfZGF0YShzaW0pOworCXN0cnVjdCBjYl9kYXRhICpjYmQgPSBjYl9kYXRh
+X25ldyhjYiwgZGF0YSk7CisJY2hhciBidWZbNjRdOworCXVuc2lnbmVkIGludCBsZW4gPSBzaXpl
+b2YoYXRfY2xja19jcHdkX2ZhYykgLyBzaXplb2YoKmF0X2NsY2tfY3B3ZF9mYWMpOworCisJaWYg
+KCFjYmQpCisJCWdvdG8gZXJyb3I7CisKKwlpZiAocGFzc3dkX3R5cGUgPj0gbGVuIHx8ICFhdF9j
+bGNrX2Nwd2RfZmFjW3Bhc3N3ZF90eXBlXSkKKwkJZ290byBlcnJvcjsKKworCXNucHJpbnRmKGJ1
+Ziwgc2l6ZW9mKGJ1ZiksICJBVCtDTENLPVwiJXNcIiwyIiwKKwkJCWF0X2NsY2tfY3B3ZF9mYWNb
+cGFzc3dkX3R5cGVdKTsKKworCWlmIChnX2F0X2NoYXRfc2VuZChjaGF0LCBidWYsIE5VTEwsCisJ
+CQkJYXRfbG9ja19zdGF0dXNfY2IsIGNiZCwgZ19mcmVlKSA+IDApCisJCXJldHVybjsKKworZXJy
+b3I6CisJaWYgKGNiZCkKKwkJZ19mcmVlKGNiZCk7CisKKwlDQUxMQkFDS19XSVRIX0ZBSUxVUkUo
+Y2IsIC0xLCBkYXRhKTsKK30KKwogc3RhdGljIGdib29sZWFuIGF0X3NpbV9yZWdpc3RlcihncG9p
+bnRlciB1c2VyKQogewogCXN0cnVjdCBvZm9ub19zaW0gKnNpbSA9IHVzZXI7CkBAIC02NzUsNiAr
+NzM1LDcgQEAgc3RhdGljIHN0cnVjdCBvZm9ub19zaW1fZHJpdmVyIGRyaXZlciA9IHsKIAkucmVz
+ZXRfcGFzc3dkCQk9IGF0X3Bpbl9zZW5kX3B1aywKIAkubG9jawkJCT0gYXRfcGluX2VuYWJsZSwK
+IAkuY2hhbmdlX3Bhc3N3ZAkJPSBhdF9jaGFuZ2VfcGFzc3dkLAorCS5xdWVyeV9sb2NrZWQJCT0g
+YXRfcGluX3F1ZXJ5X2VuYWJsZWQsCiB9OwogCiB2b2lkIGF0X3NpbV9pbml0KCkKZGlmZiAtLWdp
+dCBhL2luY2x1ZGUvc2ltLmggYi9pbmNsdWRlL3NpbS5oCmluZGV4IGFmMmZkMWUuLmZhNTI3NmIg
+MTAwNjQ0Ci0tLSBhL2luY2x1ZGUvc2ltLmgKKysrIGIvaW5jbHVkZS9zaW0uaApAQCAtOTEsNiAr
+OTEsOSBAQCB0eXBlZGVmIHZvaWQgKCpvZm9ub19zaW1fcGFzc3dkX2NiX3QpKGNvbnN0IHN0cnVj
+dCBvZm9ub19lcnJvciAqZXJyb3IsCiB0eXBlZGVmIHZvaWQgKCpvZm9ub19zaW1fbG9ja191bmxv
+Y2tfY2JfdCkoY29uc3Qgc3RydWN0IG9mb25vX2Vycm9yICplcnJvciwKIAkJCQkJdm9pZCAqZGF0
+YSk7CiAKK3R5cGVkZWYgdm9pZCAoKm9mb25vX3NpbV9sb2NrZWRfY2JfdCkoY29uc3Qgc3RydWN0
+IG9mb25vX2Vycm9yICplcnJvciwKKwkJCQkJaW50IGxvY2tlZCwgdm9pZCAqZGF0YSk7CisKIHN0
+cnVjdCBvZm9ub19zaW1fZHJpdmVyIHsKIAljb25zdCBjaGFyICpuYW1lOwogCWludCAoKnByb2Jl
+KShzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW0sIHVuc2lnbmVkIGludCB2ZW5kb3IsIHZvaWQgKmRhdGEp
+OwpAQCAtMTMxLDYgKzEzNCw5IEBAIHN0cnVjdCBvZm9ub19zaW1fZHJpdmVyIHsKIAl2b2lkICgq
+bG9jaykoc3RydWN0IG9mb25vX3NpbSAqc2ltLCBlbnVtIG9mb25vX3NpbV9wYXNzd29yZF90eXBl
+IHR5cGUsCiAJCQlpbnQgZW5hYmxlLCBjb25zdCBjaGFyICpwYXNzd2QsCiAJCQlvZm9ub19zaW1f
+bG9ja191bmxvY2tfY2JfdCBjYiwgdm9pZCAqZGF0YSk7CisJdm9pZCAoKnF1ZXJ5X2xvY2tlZCko
+c3RydWN0IG9mb25vX3NpbSAqc2ltLAorCQkJZW51bSBvZm9ub19zaW1fcGFzc3dvcmRfdHlwZSB0
+eXBlLAorCQkJb2Zvbm9fc2ltX2xvY2tlZF9jYl90IGNiLCB2b2lkICpkYXRhKTsKIH07CiAKIGlu
+dCBvZm9ub19zaW1fZHJpdmVyX3JlZ2lzdGVyKGNvbnN0IHN0cnVjdCBvZm9ub19zaW1fZHJpdmVy
+ICpkKTsKLS0gCjEuNi4xCgo=
+
+--===============7341374534809014618==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0004-Remove-unused-struct-field.patch"
+
+RnJvbSAzNTU0Njk2NmVmMTEwNzExNTAwMzQ4MTkyOGFhMTJkNmI0NzJjZTdkIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogVGh1LCAyNCBTZXAgMjAwOSAwMDozNToxNSArMDIwMApTdWJqZWN0
+OiBbUEFUQ0hdIFJlbW92ZSB1bnVzZWQgc3RydWN0IGZpZWxkLgoKLS0tCiBzcmMvc2ltLmMgfCAg
+ICAxIC0KIDEgZmlsZXMgY2hhbmdlZCwgMCBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9ucygtKQoK
+ZGlmZiAtLWdpdCBhL3NyYy9zaW0uYyBiL3NyYy9zaW0uYwppbmRleCBlYzAwM2VlLi43NDZjN2E4
+IDEwMDY0NAotLS0gYS9zcmMvc2ltLmMKKysrIGIvc3JjL3NpbS5jCkBAIC04Niw3ICs4Niw2IEBA
+IHN0cnVjdCBvZm9ub19zaW0gewogCXVuc2lnbmVkIGNoYXIgZWZtc2lzZG5fcmVjb3JkczsKIAl1
+bnNpZ25lZCBjaGFyICplZmxpOwogCXVuc2lnbmVkIGNoYXIgZWZsaV9sZW5ndGg7Ci0JdW5zaWdu
+ZWQgaW50IG5leHRfcmVhZHlfd2F0Y2hfaWQ7CiAJc3RydWN0IG9mb25vX3dhdGNobGlzdCAqcmVh
+ZHlfd2F0Y2hlczsKIAljb25zdCBzdHJ1Y3Qgb2Zvbm9fc2ltX2RyaXZlciAqZHJpdmVyOwogCXZv
+aWQgKmRyaXZlcl9kYXRhOwotLSAKMS42LjEKCg==
+
+--===============7341374534809014618==--
 
