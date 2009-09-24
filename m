@@ -1,46 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============0117963650510872369=="
+Content-Type: multipart/mixed; boundary="===============2468918703525277803=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: failed to start ofonod....
-Date: Thu, 24 Sep 2009 09:10:37 -0700
-Message-ID: <1253808637.2931.14.camel@localhost.localdomain>
-In-Reply-To: <61563CE63B4F854986A895DA7AD3C17709DE9071F1@pdsmsx502.ccr.corp.intel.com>
+Subject: Re: [Patch]Unref GIOChannel in g_at_chat_new_from_tty
+Date: Thu, 24 Sep 2009 10:02:47 -0700
+Message-ID: <1253811767.2931.18.camel@localhost.localdomain>
+In-Reply-To: <0463F45F3606F4428ED35AC8C709F92E089B3D5AEE@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0117963650510872369==
+--===============2468918703525277803==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lihan,
+Hi Zhenhua,
 
-> I also face the problem when I install ofono on a new machine.
+> Attached is the patch to unref GIOChannel in g_at_chat_new_from_tty. If t=
+he =
+
+> GAtChat is created from g_at_chat_new, the reference count of channel is =
+
+> increased by g_io_add_watch_full(channel), so we need to unref it.
 > =
 
->  =
+> If GAtChat is failed to create, we also need to unref channel to free it.
 
-> =
-
-> Unable to hop onto D-Bus
-> =
-
->  =
-
-> =
-
-> I run as root, but the same error as WuYongbo and no configure
-> directory =E2=80=9Cofono=E2=80=9D under /etc
-> =
-
->  =
-
-> =
-
-> By the way, I manually installed dbus-1-dev and dbus-glib-1-dev,
-> unless ./bootstrap-configure reminds that DBUS>=3D1.0 is required.
-
-you need to copy the D-Bus security policy before it will work.
+patch has been applied. Thanks.
 
 Regards
 
@@ -48,5 +33,5 @@ Marcel
 
 
 
---===============0117963650510872369==--
+--===============2468918703525277803==--
 
