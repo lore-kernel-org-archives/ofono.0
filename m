@@ -1,292 +1,629 @@
-Content-Type: multipart/mixed; boundary="===============1063189047856432012=="
+Content-Type: multipart/mixed; boundary="===============1541050722448573310=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: [PATCH] Add call-volume interface to allow user adjust speaker and
- mic volume
-Date: Fri, 25 Sep 2009 17:20:03 +0800
-Message-ID: <0463F45F3606F4428ED35AC8C709F92E089B3D5FCC@pdsmsx502.ccr.corp.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] Add call-volume interface to allow user adjust speaker
+ and mic volume
+Date: Fri, 25 Sep 2009 06:41:35 -0700
+Message-ID: <1253886095.2931.42.camel@localhost.localdomain>
+In-Reply-To: <0463F45F3606F4428ED35AC8C709F92E089B3D5FCC@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1063189047856432012==
+--===============1541050722448573310==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Zhenhua,
 
-Attached is the patch to add call-volume interface for Ofono. It exposes two
-properties: 'SpeakerVolume' and 'MicrophoneVolume' to allow user could cont=
-rol
-phone volume through lower level driver. The ofono_call_volume_notify() is
-used to report call volume property change notification to the upper =
+>  Makefile.am           |    4 +-
+>  include/call-volume.h |   67 +++++++++
+>  src/call-volume.c     |  374 +++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  src/ofono.h           |    1 +
+>  4 files changed, 444 insertions(+), 2 deletions(-)
+>  create mode 100644 include/call-volume.h
+>  create mode 100644 src/call-volume.c
+> =
 
-application.
+> diff --git a/Makefile.am b/Makefile.am
+> index 02f8835..522c1b5 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -10,7 +10,7 @@ include_HEADERS =3D include/log.h include/plugin.h incl=
+ude/history.h \
+>                         include/phonebook.h include/ssn.h include/ussd.h \
+>                         include/sms.h include/sim.h include/message-waiti=
+ng.h \
+>                         include/netreg.h include/voicecall.h include/devi=
+nfo.h \
+> -                       include/cbs.h
+> +                       include/cbs.h include/call-volume.h
+>  =
 
-The default volume could be stored in the modem.conf or query from remote.
-Each driver could report value in percentage to call-volume through
-ofono_call_volume_notify(). And then the call-volume will sync volume with =
-remote
-side right after probe().
+>  nodist_include_HEADERS =3D include/version.h
+>  =
 
-Please review it.
+> @@ -163,7 +163,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sou=
+rces) \
+>                         src/ssn.c src/call-barring.c src/sim.c \
+>                         src/phonebook.c src/history.c src/message-waiting=
+.c \
+>                         src/simutil.h src/simutil.c src/storage.h \
+> -                       src/storage.c src/cbs.c src/watch.c
+> +                       src/storage.c src/cbs.c src/watch.c src/call-volu=
+me.c
+>  =
 
-Regards,
-Zhenhua
-=20
+>  src_ofonod_LDADD =3D $(builtin_libadd) \
+>                         @GLIB_LIBS@ @GTHREAD_LIBS@ @DBUS_LIBS@ -ldl
+> diff --git a/include/call-volume.h b/include/call-volume.h
+> new file mode 100644
+> index 0000000..f36d2f4
+> --- /dev/null
+> +++ b/include/call-volume.h
+> @@ -0,0 +1,67 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifndef __OFONO_CALL_VOLUME_H
+> +#define __OFONO_CALL_VOLUME_H
+> +
+> +#ifdef __cplusplus
+> +extern "C" {
+> +#endif
+> +
+> +#include <ofono/types.h>
+> +#include <ofono/dbus.h>
+> +
+> +struct ofono_call_volume;
+> +
+> +typedef void (*ofono_call_volume_cb_t)(const struct ofono_error *error,
+> +                                       void *data);
+> +
+> +struct ofono_call_volume_driver {
+> +       const char *name;
+> +       int (*probe)(struct ofono_call_volume *cv, unsigned int vendor,
+> +                       void *data);
+> +       void (*remove)(struct ofono_call_volume *cv);
+> +       void (*speaker_volume)(struct ofono_call_volume *cv, unsigned int=
+ percent,
+> +                       ofono_call_volume_cb_t cb, void *data);
+> +       void (*microphone_volume)(struct ofono_call_volume *cv, unsigned =
+int percent,
+> +                       ofono_call_volume_cb_t cb, void *data);
+> +};
+> +
+> +void ofono_call_volume_notify(struct ofono_call_volume *cv,
+> +                                       const char *property, unsigned in=
+t percent);
+> +
+> +int ofono_call_volume_driver_register(const struct ofono_call_volume_dri=
+ver *d);
+> +void ofono_call_volume_driver_unregister(const struct ofono_call_volume_=
+driver *d);
+> +
+> +struct ofono_call_volume *ofono_call_volume_create(struct ofono_modem *m=
+odem,
+> +                                       unsigned int vendor, const char *=
+driver, void *data);
+> +
+> +void ofono_call_volume_register(struct ofono_call_volume *cv);
+> +void ofono_call_volume_remove(struct ofono_call_volume *cv);
+> +
+> +void ofono_call_volume_set_data(struct ofono_call_volume *cv, void *data=
+);
+> +void *ofono_call_volume_get_data(struct ofono_call_volume *cv);
+> +
+> +#ifdef __cplusplus
+> +}
+> +#endif
+> +
+> +#endif /* __OFONO_CALL_VOLUME_H */
+> diff --git a/src/call-volume.c b/src/call-volume.c
+> new file mode 100644
+> index 0000000..aa740c0
+> --- /dev/null
+> +++ b/src/call-volume.c
+> @@ -0,0 +1,374 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#define _GNU_SOURCE
+> +#include <string.h>
+> +#include <stdlib.h>
+> +#include <stdio.h>
+> +#include <errno.h>
+> +#include <unistd.h>
+> +
+> +#include <glib.h>
+> +
+> +#include <ofono/log.h>
+> +#include <ofono/modem.h>
+> +#include <ofono/call-volume.h>
+> +
+> +#include <gdbus.h>
+> +#include "ofono.h"
+> +#include "common.h"
+> +
+> +#define CALL_VOLUME_INTERFACE "org.ofono.CallVolume"
 
---===============1063189047856432012==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Add-call-volume-interface-to-allow-user-to-adjust-sp.patch"
+we have to stop doing this. Start using this:
 
-RnJvbSA4N2M4Yzg2ZGYyM2VmOWY1NzA1YmEyNjAyMDFiYTg1YjA1ZGI3YjZmIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBaaGVuaHVhIFpoYW5nIDx6aGVuaHVhLnpoYW5nQGludGVsLmNv
-bT4KRGF0ZTogRnJpLCAyNSBTZXAgMjAwOSAwMDo0NzoyMiArMDgwMApTdWJqZWN0OiBbUEFUQ0hd
-IEFkZCBjYWxsLXZvbHVtZSBpbnRlcmZhY2UgdG8gYWxsb3cgdXNlciB0byBhZGp1c3Qgc3BlYWtl
-ciBhbmQgbWljcm9waG9uZSB2b2x1bWUuCgotLS0KIE1ha2VmaWxlLmFtICAgICAgICAgICB8ICAg
-IDQgKy0KIGluY2x1ZGUvY2FsbC12b2x1bWUuaCB8ICAgNjcgKysrKysrKysrCiBzcmMvY2FsbC12
-b2x1bWUuYyAgICAgfCAgMzc0ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysKIHNyYy9vZm9uby5oICAgICAgICAgICB8ICAgIDEgKwogNCBmaWxlcyBjaGFu
-Z2VkLCA0NDQgaW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKIGNyZWF0ZSBtb2RlIDEwMDY0
-NCBpbmNsdWRlL2NhbGwtdm9sdW1lLmgKIGNyZWF0ZSBtb2RlIDEwMDY0NCBzcmMvY2FsbC12b2x1
-bWUuYwoKZGlmZiAtLWdpdCBhL01ha2VmaWxlLmFtIGIvTWFrZWZpbGUuYW0KaW5kZXggMDJmODgz
-NS4uNTIyYzFiNSAxMDA2NDQKLS0tIGEvTWFrZWZpbGUuYW0KKysrIGIvTWFrZWZpbGUuYW0KQEAg
-LTEwLDcgKzEwLDcgQEAgaW5jbHVkZV9IRUFERVJTID0gaW5jbHVkZS9sb2cuaCBpbmNsdWRlL3Bs
-dWdpbi5oIGluY2x1ZGUvaGlzdG9yeS5oIFwKIAkJCWluY2x1ZGUvcGhvbmVib29rLmggaW5jbHVk
-ZS9zc24uaCBpbmNsdWRlL3Vzc2QuaCBcCiAJCQlpbmNsdWRlL3Ntcy5oIGluY2x1ZGUvc2ltLmgg
-aW5jbHVkZS9tZXNzYWdlLXdhaXRpbmcuaCBcCiAJCQlpbmNsdWRlL25ldHJlZy5oIGluY2x1ZGUv
-dm9pY2VjYWxsLmggaW5jbHVkZS9kZXZpbmZvLmggXAotCQkJaW5jbHVkZS9jYnMuaAorCQkJaW5j
-bHVkZS9jYnMuaCBpbmNsdWRlL2NhbGwtdm9sdW1lLmgKIAogbm9kaXN0X2luY2x1ZGVfSEVBREVS
-UyA9IGluY2x1ZGUvdmVyc2lvbi5oCiAKQEAgLTE2Myw3ICsxNjMsNyBAQCBzcmNfb2Zvbm9kX1NP
-VVJDRVMgPSAkKGdkYnVzX3NvdXJjZXMpICQoYnVpbHRpbl9zb3VyY2VzKSBcCiAJCQlzcmMvc3Nu
-LmMgc3JjL2NhbGwtYmFycmluZy5jIHNyYy9zaW0uYyBcCiAJCQlzcmMvcGhvbmVib29rLmMgc3Jj
-L2hpc3RvcnkuYyBzcmMvbWVzc2FnZS13YWl0aW5nLmMgXAogCQkJc3JjL3NpbXV0aWwuaCBzcmMv
-c2ltdXRpbC5jIHNyYy9zdG9yYWdlLmggXAotCQkJc3JjL3N0b3JhZ2UuYyBzcmMvY2JzLmMgc3Jj
-L3dhdGNoLmMKKwkJCXNyYy9zdG9yYWdlLmMgc3JjL2Nicy5jIHNyYy93YXRjaC5jIHNyYy9jYWxs
-LXZvbHVtZS5jCiAKIHNyY19vZm9ub2RfTERBREQgPSAkKGJ1aWx0aW5fbGliYWRkKSBcCiAJCQlA
-R0xJQl9MSUJTQCBAR1RIUkVBRF9MSUJTQCBAREJVU19MSUJTQCAtbGRsCmRpZmYgLS1naXQgYS9p
-bmNsdWRlL2NhbGwtdm9sdW1lLmggYi9pbmNsdWRlL2NhbGwtdm9sdW1lLmgKbmV3IGZpbGUgbW9k
-ZSAxMDA2NDQKaW5kZXggMDAwMDAwMC4uZjM2ZDJmNAotLS0gL2Rldi9udWxsCisrKyBiL2luY2x1
-ZGUvY2FsbC12b2x1bWUuaApAQCAtMCwwICsxLDY3IEBACisvKgorICoKKyAqICBvRm9ubyAtIE9w
-ZW4gU291cmNlIFRlbGVwaG9ueQorICoKKyAqICBDb3B5cmlnaHQgKEMpIDIwMDgtMjAwOSAgSW50
-ZWwgQ29ycG9yYXRpb24uIEFsbCByaWdodHMgcmVzZXJ2ZWQuCisgKgorICogIFRoaXMgcHJvZ3Jh
-bSBpcyBmcmVlIHNvZnR3YXJlOyB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5
-CisgKiAgaXQgdW5kZXIgdGhlIHRlcm1zIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5z
-ZSB2ZXJzaW9uIDIgYXMKKyAqICBwdWJsaXNoZWQgYnkgdGhlIEZyZWUgU29mdHdhcmUgRm91bmRh
-dGlvbi4KKyAqCisgKiAgVGhpcyBwcm9ncmFtIGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRo
-YXQgaXQgd2lsbCBiZSB1c2VmdWwsCisgKiAgYnV0IFdJVEhPVVQgQU5ZIFdBUlJBTlRZOyB3aXRo
-b3V0IGV2ZW4gdGhlIGltcGxpZWQgd2FycmFudHkgb2YKKyAqICBNRVJDSEFOVEFCSUxJVFkgb3Ig
-RklUTkVTUyBGT1IgQSBQQVJUSUNVTEFSIFBVUlBPU0UuICBTZWUgdGhlCisgKiAgR05VIEdlbmVy
-YWwgUHVibGljIExpY2Vuc2UgZm9yIG1vcmUgZGV0YWlscy4KKyAqCisgKiAgWW91IHNob3VsZCBo
-YXZlIHJlY2VpdmVkIGEgY29weSBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UKKyAq
-ICBhbG9uZyB3aXRoIHRoaXMgcHJvZ3JhbTsgaWYgbm90LCB3cml0ZSB0byB0aGUgRnJlZSBTb2Z0
-d2FyZQorICogIEZvdW5kYXRpb24sIEluYy4sIDUxIEZyYW5rbGluIFN0LCBGaWZ0aCBGbG9vciwg
-Qm9zdG9uLCBNQSAgMDIxMTAtMTMwMSAgVVNBCisgKgorICovCisKKyNpZm5kZWYgX19PRk9OT19D
-QUxMX1ZPTFVNRV9ICisjZGVmaW5lIF9fT0ZPTk9fQ0FMTF9WT0xVTUVfSAorCisjaWZkZWYgX19j
-cGx1c3BsdXMKK2V4dGVybiAiQyIgeworI2VuZGlmCisKKyNpbmNsdWRlIDxvZm9uby90eXBlcy5o
-PgorI2luY2x1ZGUgPG9mb25vL2RidXMuaD4KKworc3RydWN0IG9mb25vX2NhbGxfdm9sdW1lOwor
-Cit0eXBlZGVmIHZvaWQgKCpvZm9ub19jYWxsX3ZvbHVtZV9jYl90KShjb25zdCBzdHJ1Y3Qgb2Zv
-bm9fZXJyb3IgKmVycm9yLAorCQkJCQl2b2lkICpkYXRhKTsKKworc3RydWN0IG9mb25vX2NhbGxf
-dm9sdW1lX2RyaXZlciB7CisJY29uc3QgY2hhciAqbmFtZTsKKwlpbnQgKCpwcm9iZSkoc3RydWN0
-IG9mb25vX2NhbGxfdm9sdW1lICpjdiwgdW5zaWduZWQgaW50IHZlbmRvciwKKwkJCXZvaWQgKmRh
-dGEpOworCXZvaWQgKCpyZW1vdmUpKHN0cnVjdCBvZm9ub19jYWxsX3ZvbHVtZSAqY3YpOworCXZv
-aWQgKCpzcGVha2VyX3ZvbHVtZSkoc3RydWN0IG9mb25vX2NhbGxfdm9sdW1lICpjdiwgdW5zaWdu
-ZWQgaW50IHBlcmNlbnQsCisJCQlvZm9ub19jYWxsX3ZvbHVtZV9jYl90IGNiLCB2b2lkICpkYXRh
-KTsKKwl2b2lkICgqbWljcm9waG9uZV92b2x1bWUpKHN0cnVjdCBvZm9ub19jYWxsX3ZvbHVtZSAq
-Y3YsIHVuc2lnbmVkIGludCBwZXJjZW50LAorCQkJb2Zvbm9fY2FsbF92b2x1bWVfY2JfdCBjYiwg
-dm9pZCAqZGF0YSk7Cit9OworCit2b2lkIG9mb25vX2NhbGxfdm9sdW1lX25vdGlmeShzdHJ1Y3Qg
-b2Zvbm9fY2FsbF92b2x1bWUgKmN2LAorCQkJCQljb25zdCBjaGFyICpwcm9wZXJ0eSwgdW5zaWdu
-ZWQgaW50IHBlcmNlbnQpOworCitpbnQgb2Zvbm9fY2FsbF92b2x1bWVfZHJpdmVyX3JlZ2lzdGVy
-KGNvbnN0IHN0cnVjdCBvZm9ub19jYWxsX3ZvbHVtZV9kcml2ZXIgKmQpOwordm9pZCBvZm9ub19j
-YWxsX3ZvbHVtZV9kcml2ZXJfdW5yZWdpc3Rlcihjb25zdCBzdHJ1Y3Qgb2Zvbm9fY2FsbF92b2x1
-bWVfZHJpdmVyICpkKTsKKworc3RydWN0IG9mb25vX2NhbGxfdm9sdW1lICpvZm9ub19jYWxsX3Zv
-bHVtZV9jcmVhdGUoc3RydWN0IG9mb25vX21vZGVtICptb2RlbSwKKwkJCQkJdW5zaWduZWQgaW50
-IHZlbmRvciwgY29uc3QgY2hhciAqZHJpdmVyLCB2b2lkICpkYXRhKTsKKwordm9pZCBvZm9ub19j
-YWxsX3ZvbHVtZV9yZWdpc3RlcihzdHJ1Y3Qgb2Zvbm9fY2FsbF92b2x1bWUgKmN2KTsKK3ZvaWQg
-b2Zvbm9fY2FsbF92b2x1bWVfcmVtb3ZlKHN0cnVjdCBvZm9ub19jYWxsX3ZvbHVtZSAqY3YpOwor
-Cit2b2lkIG9mb25vX2NhbGxfdm9sdW1lX3NldF9kYXRhKHN0cnVjdCBvZm9ub19jYWxsX3ZvbHVt
-ZSAqY3YsIHZvaWQgKmRhdGEpOwordm9pZCAqb2Zvbm9fY2FsbF92b2x1bWVfZ2V0X2RhdGEoc3Ry
-dWN0IG9mb25vX2NhbGxfdm9sdW1lICpjdik7CisKKyNpZmRlZiBfX2NwbHVzcGx1cworfQorI2Vu
-ZGlmCisKKyNlbmRpZiAvKiBfX09GT05PX0NBTExfVk9MVU1FX0ggKi8KZGlmZiAtLWdpdCBhL3Ny
-Yy9jYWxsLXZvbHVtZS5jIGIvc3JjL2NhbGwtdm9sdW1lLmMKbmV3IGZpbGUgbW9kZSAxMDA2NDQK
-aW5kZXggMDAwMDAwMC4uYWE3NDBjMAotLS0gL2Rldi9udWxsCisrKyBiL3NyYy9jYWxsLXZvbHVt
-ZS5jCkBAIC0wLDAgKzEsMzc0IEBACisvKgorICoKKyAqICBvRm9ubyAtIE9wZW4gU291cmNlIFRl
-bGVwaG9ueQorICoKKyAqICBDb3B5cmlnaHQgKEMpIDIwMDgtMjAwOSAgSW50ZWwgQ29ycG9yYXRp
-b24uIEFsbCByaWdodHMgcmVzZXJ2ZWQuCisgKgorICogIFRoaXMgcHJvZ3JhbSBpcyBmcmVlIHNv
-ZnR3YXJlOyB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5CisgKiAgaXQgdW5k
-ZXIgdGhlIHRlcm1zIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSB2ZXJzaW9uIDIg
-YXMKKyAqICBwdWJsaXNoZWQgYnkgdGhlIEZyZWUgU29mdHdhcmUgRm91bmRhdGlvbi4KKyAqCisg
-KiAgVGhpcyBwcm9ncmFtIGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRoYXQgaXQgd2lsbCBi
-ZSB1c2VmdWwsCisgKiAgYnV0IFdJVEhPVVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2ZW4gdGhl
-IGltcGxpZWQgd2FycmFudHkgb2YKKyAqICBNRVJDSEFOVEFCSUxJVFkgb3IgRklUTkVTUyBGT1Ig
-QSBQQVJUSUNVTEFSIFBVUlBPU0UuICBTZWUgdGhlCisgKiAgR05VIEdlbmVyYWwgUHVibGljIExp
-Y2Vuc2UgZm9yIG1vcmUgZGV0YWlscy4KKyAqCisgKiAgWW91IHNob3VsZCBoYXZlIHJlY2VpdmVk
-IGEgY29weSBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UKKyAqICBhbG9uZyB3aXRo
-IHRoaXMgcHJvZ3JhbTsgaWYgbm90LCB3cml0ZSB0byB0aGUgRnJlZSBTb2Z0d2FyZQorICogIEZv
-dW5kYXRpb24sIEluYy4sIDUxIEZyYW5rbGluIFN0LCBGaWZ0aCBGbG9vciwgQm9zdG9uLCBNQSAg
-MDIxMTAtMTMwMSAgVVNBCisgKgorICovCisKKyNpZmRlZiBIQVZFX0NPTkZJR19ICisjaW5jbHVk
-ZSA8Y29uZmlnLmg+CisjZW5kaWYKKworI2RlZmluZSBfR05VX1NPVVJDRQorI2luY2x1ZGUgPHN0
-cmluZy5oPgorI2luY2x1ZGUgPHN0ZGxpYi5oPgorI2luY2x1ZGUgPHN0ZGlvLmg+CisjaW5jbHVk
-ZSA8ZXJybm8uaD4KKyNpbmNsdWRlIDx1bmlzdGQuaD4KKworI2luY2x1ZGUgPGdsaWIuaD4KKwor
-I2luY2x1ZGUgPG9mb25vL2xvZy5oPgorI2luY2x1ZGUgPG9mb25vL21vZGVtLmg+CisjaW5jbHVk
-ZSA8b2Zvbm8vY2FsbC12b2x1bWUuaD4KKworI2luY2x1ZGUgPGdkYnVzLmg+CisjaW5jbHVkZSAi
-b2Zvbm8uaCIKKyNpbmNsdWRlICJjb21tb24uaCIKKworI2RlZmluZSBDQUxMX1ZPTFVNRV9JTlRF
-UkZBQ0UgIm9yZy5vZm9uby5DYWxsVm9sdW1lIgorCisjZGVmaW5lIENBTExfVk9MVU1FX0ZMQUdf
-UEVORElORyAweDEKKworc3RhdGljIEdTTGlzdCAqZ19kcml2ZXJzID0gTlVMTDsKKworc3RydWN0
-IG9mb25vX2NhbGxfdm9sdW1lIHsKKwlEQnVzTWVzc2FnZSAqcGVuZGluZzsKKwljb25zdCBzdHJ1
-Y3Qgb2Zvbm9fY2FsbF92b2x1bWVfZHJpdmVyICpkcml2ZXI7CisJaW50IGZsYWdzOworCXZvaWQg
-KmRyaXZlcl9kYXRhOworCXN0cnVjdCBvZm9ub19hdG9tICphdG9tOworCisJdW5zaWduZWQgaW50
-IHNwZWFrZXJfdm9sdW1lOworCXVuc2lnbmVkIGludCBtaWNyb3Bob25lX3ZvbHVtZTsKKworCXVu
-c2lnbmVkIGludCB0ZW1wX3ZvbHVtZTsgLyogdGVtcCB2b2x1bWUgYmVmb3JlIGl0IGlzIGFjY2Vw
-dGVkIGJ5IHJlbW90ZSAqLworfTsKKworc3RhdGljIHZvaWQgY2FsbF92b2x1bWVfdW5yZWdpc3Rl
-cihzdHJ1Y3Qgb2Zvbm9fYXRvbSAqYXRvbSk7CisKK3ZvaWQgb2Zvbm9fY2FsbF92b2x1bWVfbm90
-aWZ5KHN0cnVjdCBvZm9ub19jYWxsX3ZvbHVtZSAqY3YsCisJCQkJCQljb25zdCBjaGFyICpwcm9w
-ZXJ0eSwKKwkJCQkJCXVuc2lnbmVkIGludCBwZXJjZW50KQoreworCURCdXNDb25uZWN0aW9uICpj
-b25uID0gb2Zvbm9fZGJ1c19nZXRfY29ubmVjdGlvbigpOworCWNvbnN0IGNoYXIgKnBhdGggPSBf
-X29mb25vX2F0b21fZ2V0X3BhdGgoY3YtPmF0b20pOworCisJaWYoIXN0cmNtcChwcm9wZXJ0eSwg
-IlNwZWFrZXJWb2x1bWUiKSkgeworCQljdi0+c3BlYWtlcl92b2x1bWUgPSBwZXJjZW50OworCX0K
-KworCWlmICghc3RyY21wKHByb3BlcnR5LCAiTWljcm9waG9uZVZvbHVtZSIpKSB7CisJCWN2LT5t
-aWNyb3Bob25lX3ZvbHVtZSA9IHBlcmNlbnQ7CisJfQorCisJb2Zvbm9fZGJ1c19zaWduYWxfcHJv
-cGVydHlfY2hhbmdlZChjb25uLCBwYXRoLCBDQUxMX1ZPTFVNRV9JTlRFUkZBQ0UsCisJCQkJCQlw
-cm9wZXJ0eSwgREJVU19UWVBFX1VJTlQzMiwKKwkJCQkJCSZwZXJjZW50KTsKK30KKworc3RhdGlj
-IERCdXNNZXNzYWdlICpjdl9nZXRfcHJvcGVydGllcyhEQnVzQ29ubmVjdGlvbiAqY29ubiwKKwkJ
-CQkJCURCdXNNZXNzYWdlICptc2csIHZvaWQgKmRhdGEpCit7CisJc3RydWN0IG9mb25vX2NhbGxf
-dm9sdW1lICpjdiA9IGRhdGE7CisJREJ1c01lc3NhZ2UgKnJlcGx5OworCURCdXNNZXNzYWdlSXRl
-ciBpdGVyLCBkaWN0OworCXVuc2lnbmVkIGludCBzcGVha2VyX3ZvbHVtZSA9IGN2LT5zcGVha2Vy
-X3ZvbHVtZTsKKwl1bnNpZ25lZCBpbnQgbWljcm9waG9uZV92b2x1bWUgPSBjdi0+bWljcm9waG9u
-ZV92b2x1bWU7CisKKwlpZiAoY3YtPnBlbmRpbmcpCisJCXJldHVybiBfX29mb25vX2Vycm9yX2J1
-c3kobXNnKTsKKworCWN2LT5wZW5kaW5nID0gZGJ1c19tZXNzYWdlX3JlZihtc2cpOworCisJcmVw
-bHkgPSBkYnVzX21lc3NhZ2VfbmV3X21ldGhvZF9yZXR1cm4oY3YtPnBlbmRpbmcpOworCisJaWYg
-KCFyZXBseSkKKwkJcmV0dXJuIE5VTEw7CisKKwlkYnVzX21lc3NhZ2VfaXRlcl9pbml0X2FwcGVu
-ZChyZXBseSwgJml0ZXIpOworCisJZGJ1c19tZXNzYWdlX2l0ZXJfb3Blbl9jb250YWluZXIoJml0
-ZXIsIERCVVNfVFlQRV9BUlJBWSwKKwkJCQkJT0ZPTk9fUFJPUEVSVElFU19BUlJBWV9TSUdOQVRV
-UkUsCisJCQkJCSZkaWN0KTsKKworCW9mb25vX2RidXNfZGljdF9hcHBlbmQoJmRpY3QsICJTcGVh
-a2VyVm9sdW1lIiwgREJVU19UWVBFX1VJTlQzMiwKKwkJCQkJJnNwZWFrZXJfdm9sdW1lKTsKKwor
-CW9mb25vX2RidXNfZGljdF9hcHBlbmQoJmRpY3QsICJNaWNyb3Bob25lVm9sdW1lIiwKKwkJCQkJ
-REJVU19UWVBFX1VJTlQzMiwgJm1pY3JvcGhvbmVfdm9sdW1lKTsKKworCWRidXNfbWVzc2FnZV9p
-dGVyX2Nsb3NlX2NvbnRhaW5lcigmaXRlciwgJmRpY3QpOworCisJX19vZm9ub19kYnVzX3BlbmRp
-bmdfcmVwbHkoJmN2LT5wZW5kaW5nLCByZXBseSk7CisKKwlyZXR1cm4gTlVMTDsKK30KKworc3Rh
-dGljIHZvaWQgZ2VuZXJpY19jYWxsYmFjayhjb25zdCBzdHJ1Y3Qgb2Zvbm9fZXJyb3IgKmVycm9y
-LCB2b2lkICpkYXRhKQoreworCXN0cnVjdCBvZm9ub19jYWxsX3ZvbHVtZSAqY3YgPSBkYXRhOwor
-CURCdXNDb25uZWN0aW9uICpjb25uID0gb2Zvbm9fZGJ1c19nZXRfY29ubmVjdGlvbigpOworCURC
-dXNNZXNzYWdlICpyZXBseTsKKworCWN2LT5mbGFncyAmPSB+Q0FMTF9WT0xVTUVfRkxBR19QRU5E
-SU5HOworCisJaWYgKCFjdi0+cGVuZGluZykKKwkJcmV0dXJuOworCisJaWYgKGVycm9yLT50eXBl
-ID09IE9GT05PX0VSUk9SX1RZUEVfTk9fRVJST1IpCisJCXJlcGx5ID0gZGJ1c19tZXNzYWdlX25l
-d19tZXRob2RfcmV0dXJuKGN2LT5wZW5kaW5nKTsKKwllbHNlCisJCXJlcGx5ID0gX19vZm9ub19l
-cnJvcl9mYWlsZWQoY3YtPnBlbmRpbmcpOworCisJZ19kYnVzX3NlbmRfbWVzc2FnZShjb25uLCBy
-ZXBseSk7CisKKwlkYnVzX21lc3NhZ2VfdW5yZWYoY3YtPnBlbmRpbmcpOworCWN2LT5wZW5kaW5n
-ID0gTlVMTDsKK30KKworc3RhdGljIHZvaWQgc3Zfc2V0X2NhbGxiYWNrKGNvbnN0IHN0cnVjdCBv
-Zm9ub19lcnJvciAqZXJyb3IsIHZvaWQgKmRhdGEpCit7CisJc3RydWN0IG9mb25vX2NhbGxfdm9s
-dW1lICpjdiA9IGRhdGE7CisKKwlpZiAoZXJyb3ItPnR5cGUgIT0gT0ZPTk9fRVJST1JfVFlQRV9O
-T19FUlJPUikgeworCQlvZm9ub19kZWJ1ZygiRXJyb3Igb2NjdXJyZWQgZHVyaW5nIFNwZWFrZXIg
-Vm9sdW1lIHNldDogJXMiLAorCQkJCQkJdGVsZXBob255X2Vycm9yX3RvX3N0cihlcnJvcikpOwor
-CX0gZWxzZSB7CisJCWN2LT5zcGVha2VyX3ZvbHVtZSA9IGN2LT50ZW1wX3ZvbHVtZTsKKwl9CisK
-KwlnZW5lcmljX2NhbGxiYWNrKGVycm9yLCBkYXRhKTsKK30KKworc3RhdGljIHZvaWQgbXZfc2V0
-X2NhbGxiYWNrKGNvbnN0IHN0cnVjdCBvZm9ub19lcnJvciAqZXJyb3IsIHZvaWQgKmRhdGEpCit7
-CisJc3RydWN0IG9mb25vX2NhbGxfdm9sdW1lICpjdiA9IGRhdGE7CisKKwlpZiAoZXJyb3ItPnR5
-cGUgIT0gT0ZPTk9fRVJST1JfVFlQRV9OT19FUlJPUikgeworCQlvZm9ub19kZWJ1ZygiRXJyb3Ig
-b2NjdXJyZWQgZHVyaW5nIE1pY3JvcGhvbmUgVm9sdW1lIHNldDogJXMiLAorCQkJCQkJdGVsZXBo
-b255X2Vycm9yX3RvX3N0cihlcnJvcikpOworCX0gZWxzZSB7CisJCWN2LT5taWNyb3Bob25lX3Zv
-bHVtZSA9IGN2LT50ZW1wX3ZvbHVtZTsKKwl9CisKKwlnZW5lcmljX2NhbGxiYWNrKGVycm9yLCBk
-YXRhKTsKK30KKworc3RhdGljIERCdXNNZXNzYWdlICpjdl9zZXRfY2FsbF92b2x1bWUoREJ1c01l
-c3NhZ2UgKm1zZywgc3RydWN0IG9mb25vX2NhbGxfdm9sdW1lICpjdiwKKwkJCQkJIGNvbnN0IGNo
-YXIgKnByb3BlcnR5LCB1bnNpZ25lZCBpbnQgcGVyY2VudCkKK3sKKwlpZiAocGVyY2VudCA+IDEw
-MCkKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9mb3JtYXQobXNnKTsKKworCURCRygi
-c2V0ICVzIHZvbHVtZSB0byAlZCBwZXJjZW50IiwgcHJvcGVydHksIHBlcmNlbnQpOworCisJY3Yt
-PmZsYWdzIHw9IENBTExfVk9MVU1FX0ZMQUdfUEVORElORzsKKwljdi0+dGVtcF92b2x1bWUgPSBw
-ZXJjZW50OworCisJaWYgKG1zZykKKwkJY3YtPnBlbmRpbmcgPSBkYnVzX21lc3NhZ2VfcmVmKG1z
-Zyk7CisKKwlpZighc3RyY21wKHByb3BlcnR5LCAiU3BlYWtlclZvbHVtZSIpKSB7CisJCWlmICgh
-Y3YtPmRyaXZlci0+c3BlYWtlcl92b2x1bWUpIHsKKwkJCXJldHVybiAobXNnICE9IE5VTEwpP19f
-b2Zvbm9fZXJyb3Jfbm90X2ltcGxlbWVudGVkKG1zZyk6TlVMTDsKKwkJfQorCQljdi0+ZHJpdmVy
-LT5zcGVha2VyX3ZvbHVtZShjdiwgcGVyY2VudCwgc3Zfc2V0X2NhbGxiYWNrLCBjdik7CisJfQor
-CisJaWYgKCFzdHJjbXAocHJvcGVydHksICJNaWNyb3Bob25lVm9sdW1lIikpIHsKKwkJaWYgKCFj
-di0+ZHJpdmVyLT5taWNyb3Bob25lX3ZvbHVtZSkKKwkJCXJldHVybiAobXNnICE9IE5VTEwpP19f
-b2Zvbm9fZXJyb3Jfbm90X2ltcGxlbWVudGVkKG1zZyk6TlVMTDsKKwkJY3YtPmRyaXZlci0+bWlj
-cm9waG9uZV92b2x1bWUoY3YsIHBlcmNlbnQsIG12X3NldF9jYWxsYmFjaywgY3YpOworCX0KKwor
-CXJldHVybiBOVUxMOworfQorCitzdGF0aWMgREJ1c01lc3NhZ2UgKmN2X3NldF9wcm9wZXJ0eShE
-QnVzQ29ubmVjdGlvbiAqY29ubiwgREJ1c01lc3NhZ2UgKm1zZywKKwkJCQkJdm9pZCAqZGF0YSkK
-K3sKKwlzdHJ1Y3Qgb2Zvbm9fY2FsbF92b2x1bWUgKmN2ID0gZGF0YTsKKwlEQnVzTWVzc2FnZUl0
-ZXIgaXRlcjsKKwlEQnVzTWVzc2FnZUl0ZXIgdmFyOworCWNvbnN0IGNoYXIgKnByb3BlcnR5Owor
-CXVuc2lnbmVkIGludCBwZXJjZW50OworCisJaWYgKGN2LT5wZW5kaW5nKQorCQlyZXR1cm4gX19v
-Zm9ub19lcnJvcl9idXN5KG1zZyk7CisKKwlpZiAoIWRidXNfbWVzc2FnZV9pdGVyX2luaXQobXNn
-LCAmaXRlcikpCisJCXJldHVybiBfX29mb25vX2Vycm9yX2ludmFsaWRfYXJncyhtc2cpOworCisJ
-aWYgKGRidXNfbWVzc2FnZV9pdGVyX2dldF9hcmdfdHlwZSgmaXRlcikgIT0gREJVU19UWVBFX1NU
-UklORykKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9hcmdzKG1zZyk7CisKKwlkYnVz
-X21lc3NhZ2VfaXRlcl9nZXRfYmFzaWMoJml0ZXIsICZwcm9wZXJ0eSk7CisJZGJ1c19tZXNzYWdl
-X2l0ZXJfbmV4dCgmaXRlcik7CisKKwlpZiAoZGJ1c19tZXNzYWdlX2l0ZXJfZ2V0X2FyZ190eXBl
-KCZpdGVyKSAhPSBEQlVTX1RZUEVfVkFSSUFOVCkKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52
-YWxpZF9hcmdzKG1zZyk7CisKKwlkYnVzX21lc3NhZ2VfaXRlcl9yZWN1cnNlKCZpdGVyLCAmdmFy
-KTsKKworCWlmIChkYnVzX21lc3NhZ2VfaXRlcl9nZXRfYXJnX3R5cGUoJnZhcikgIT0gREJVU19U
-WVBFX1VJTlQzMikKKwkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9hcmdzKG1zZyk7CisK
-KwlkYnVzX21lc3NhZ2VfaXRlcl9nZXRfYmFzaWMoJnZhciwgJnBlcmNlbnQpOworCisJcmV0dXJu
-IGN2X3NldF9jYWxsX3ZvbHVtZShtc2csIGN2LCBwcm9wZXJ0eSwgcGVyY2VudCk7Cit9CisKK3N0
-YXRpYyBHREJ1c01ldGhvZFRhYmxlIGN2X21ldGhvZHNbXSA9IHsKKwl7ICJHZXRQcm9wZXJ0aWVz
-IiwJIiIsCSJhe3N2fSIsCWN2X2dldF9wcm9wZXJ0aWVzLAorCQkJCQkJCUdfREJVU19NRVRIT0Rf
-RkxBR19BU1lOQ30sCisJeyAiU2V0UHJvcGVydHkiLAkic3YiLAkiIiwJCWN2X3NldF9wcm9wZXJ0
-eSwKKwkJCQkJCQlHX0RCVVNfTUVUSE9EX0ZMQUdfQVNZTkMgfSwKKwl7IH0KK307CisKK3N0YXRp
-YyBHREJ1c1NpZ25hbFRhYmxlIGN2X3NpZ25hbHNbXSA9IHsKKwl7ICJQcm9wZXJ0eUNoYW5nZWQi
-LAkic3YiIH0sCisJeyB9Cit9OworCitzdGF0aWMgdm9pZCBjYWxsX3ZvbHVtZV9yZW1vdmUoc3Ry
-dWN0IG9mb25vX2F0b20gKmF0b20pCit7CisJc3RydWN0IG9mb25vX2NhbGxfdm9sdW1lICpjdiA9
-IF9fb2Zvbm9fYXRvbV9nZXRfZGF0YShhdG9tKTsKKworCURCRygiYXRvbTogJXAiLCBhdG9tKTsK
-KworCWlmIChjdj09IE5VTEwpCisJCXJldHVybjsKKworCWlmIChjdi0+ZHJpdmVyICYmIGN2LT5k
-cml2ZXItPnJlbW92ZSkKKwkJY3YtPmRyaXZlci0+cmVtb3ZlKGN2KTsKKworCWdfZnJlZShjdik7
-Cit9CisKK3N0cnVjdCBvZm9ub19jYWxsX3ZvbHVtZSAqb2Zvbm9fY2FsbF92b2x1bWVfY3JlYXRl
-KHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0sCisJCQkJCXVuc2lnbmVkIGludCB2ZW5kb3IsCisJ
-CQkJCWNvbnN0IGNoYXIgKmRyaXZlciwKKwkJCQkJdm9pZCAqZGF0YSkKK3sKKwlzdHJ1Y3Qgb2Zv
-bm9fY2FsbF92b2x1bWUgKmN2OworCUdTTGlzdCAqbDsKKworCWlmIChkcml2ZXIgPT0gTlVMTCkK
-KwkJcmV0dXJuIE5VTEw7CisKKwljdiA9IGdfdHJ5X25ldzAoc3RydWN0IG9mb25vX2NhbGxfdm9s
-dW1lLCAxKTsKKwljdi0+c3BlYWtlcl92b2x1bWUgPSAxMDA7CisJY3YtPm1pY3JvcGhvbmVfdm9s
-dW1lID0gMTAwOworCisJaWYgKGN2ID09IE5VTEwpCisJCXJldHVybiBOVUxMOworCisJY3YtPmF0
-b20gPSBfX29mb25vX21vZGVtX2FkZF9hdG9tKG1vZGVtLAorCQkJCQkJT0ZPTk9fQVRPTV9UWVBF
-U19DQUxMX1ZPTFVNRSwKKwkJCQkJCWNhbGxfdm9sdW1lX3JlbW92ZSwgY3YpOworCisJZm9yIChs
-ID0gZ19kcml2ZXJzOyBsOyBsID0gbC0+bmV4dCkgeworCQljb25zdCBzdHJ1Y3Qgb2Zvbm9fY2Fs
-bF92b2x1bWVfZHJpdmVyICpkcnYgPSBsLT5kYXRhOworCisJCWlmIChnX3N0cmNtcDAoZHJ2LT5u
-YW1lLCBkcml2ZXIpKQorCQkJY29udGludWU7CisKKwkJaWYgKGRydi0+cHJvYmUoY3YsIHZlbmRv
-ciwgZGF0YSkgPCAwKQorCQkJY29udGludWU7CisKKwkJY3YtPmRyaXZlciA9IGRydjsKKwkJYnJl
-YWs7CisJfQorCisJaWYgKGN2LT5kcml2ZXIpIHsKKwkJY3Zfc2V0X2NhbGxfdm9sdW1lKE5VTEws
-IGN2LCAiU3BlYWtlclZvbHVtZSIsIGN2LT5zcGVha2VyX3ZvbHVtZSk7CisJCWN2X3NldF9jYWxs
-X3ZvbHVtZShOVUxMLCBjdiwgIk1pY3JvcGhvbmVWb2x1bWUiLCBjdi0+bWljcm9waG9uZV92b2x1
-bWUpOworCX0KKworCXJldHVybiBjdjsKK30KKwordm9pZCBvZm9ub19jYWxsX3ZvbHVtZV9yZWdp
-c3RlcihzdHJ1Y3Qgb2Zvbm9fY2FsbF92b2x1bWUgKmN2KQoreworCURCdXNDb25uZWN0aW9uICpj
-b25uID0gb2Zvbm9fZGJ1c19nZXRfY29ubmVjdGlvbigpOworCXN0cnVjdCBvZm9ub19tb2RlbSAq
-bW9kZW0gPSBfX29mb25vX2F0b21fZ2V0X21vZGVtKGN2LT5hdG9tKTsKKwljb25zdCBjaGFyICpw
-YXRoID0gX19vZm9ub19hdG9tX2dldF9wYXRoKGN2LT5hdG9tKTsKKworCWlmICghZ19kYnVzX3Jl
-Z2lzdGVyX2ludGVyZmFjZShjb25uLCBwYXRoLAorCQkJCQlDQUxMX1ZPTFVNRV9JTlRFUkZBQ0Us
-CisJCQkJCWN2X21ldGhvZHMsIGN2X3NpZ25hbHMsIE5VTEwsCisJCQkJCWN2LCBOVUxMKSkgewor
-CQlvZm9ub19lcnJvcigiQ291bGQgbm90IGNyZWF0ZSAlcyBpbnRlcmZhY2UiLAorCQkJCUNBTExf
-Vk9MVU1FX0lOVEVSRkFDRSk7CisKKwkJcmV0dXJuOworCX0KKworCW9mb25vX21vZGVtX2FkZF9p
-bnRlcmZhY2UobW9kZW0sIENBTExfVk9MVU1FX0lOVEVSRkFDRSk7CisKKwlfX29mb25vX2F0b21f
-cmVnaXN0ZXIoY3YtPmF0b20sIGNhbGxfdm9sdW1lX3VucmVnaXN0ZXIpOworfQorCit2b2lkIGNh
-bGxfdm9sdW1lX3VucmVnaXN0ZXIoc3RydWN0IG9mb25vX2F0b20gKmF0b20pCit7CisJREJ1c0Nv
-bm5lY3Rpb24gKmNvbm4gPSBvZm9ub19kYnVzX2dldF9jb25uZWN0aW9uKCk7CisJc3RydWN0IG9m
-b25vX2NhbGxfdm9sdW1lICpjdiA9IF9fb2Zvbm9fYXRvbV9nZXRfZGF0YShhdG9tKTsKKwlzdHJ1
-Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtID0gX19vZm9ub19hdG9tX2dldF9tb2RlbShhdG9tKTsKKwlj
-b25zdCBjaGFyICpwYXRoID0gX19vZm9ub19hdG9tX2dldF9wYXRoKGF0b20pOworCUdTTGlzdCAq
-bDsKKworCW9mb25vX21vZGVtX3JlbW92ZV9pbnRlcmZhY2UobW9kZW0sIENBTExfVk9MVU1FX0lO
-VEVSRkFDRSk7CisJZ19kYnVzX3VucmVnaXN0ZXJfaW50ZXJmYWNlKGNvbm4sIHBhdGgsCisJCQkJ
-CUNBTExfVk9MVU1FX0lOVEVSRkFDRSk7Cit9CisKK2ludCBvZm9ub19jYWxsX3ZvbHVtZV9kcml2
-ZXJfcmVnaXN0ZXIoY29uc3Qgc3RydWN0IG9mb25vX2NhbGxfdm9sdW1lX2RyaXZlciAqZCkKK3sK
-KwlEQkcoImRyaXZlcjogJXAsIG5hbWU6ICVzIiwgZCwgZC0+bmFtZSk7CisKKwlpZiAoZC0+cHJv
-YmUgPT0gTlVMTCkKKwkJcmV0dXJuIC1FSU5WQUw7CisKKwlnX2RyaXZlcnMgPSBnX3NsaXN0X3By
-ZXBlbmQoZ19kcml2ZXJzLCAodm9pZCAqKWQpOworCisJcmV0dXJuIDA7Cit9CisKK3ZvaWQgb2Zv
-bm9fY2FsbF92b2x1bWVfZHJpdmVyX3VucmVnaXN0ZXIoY29uc3Qgc3RydWN0IG9mb25vX2NhbGxf
-dm9sdW1lX2RyaXZlciAqZCkKK3sKKwlEQkcoImRyaXZlcjogJXAsIG5hbWU6ICVzIiwgZCwgZC0+
-bmFtZSk7CisKKwlnX2RyaXZlcnMgPSBnX3NsaXN0X3JlbW92ZShnX2RyaXZlcnMsICh2b2lkICop
-ZCk7Cit9CisKK3ZvaWQgb2Zvbm9fY2FsbF92b2x1bWVfcmVtb3ZlKHN0cnVjdCBvZm9ub19jYWxs
-X3ZvbHVtZSAqY3YpCit7CisJX19vZm9ub19hdG9tX2ZyZWUoY3YtPmF0b20pOworfQorCit2b2lk
-IG9mb25vX2NhbGxfdm9sdW1lX3NldF9kYXRhKHN0cnVjdCBvZm9ub19jYWxsX3ZvbHVtZSAqY3Ys
-IHZvaWQgKmRhdGEpCit7CisJY3YtPmRyaXZlcl9kYXRhID0gZGF0YTsKK30KKwordm9pZCAqb2Zv
-bm9fY2FsbF92b2x1bWVfZ2V0X2RhdGEoc3RydWN0IG9mb25vX2NhbGxfdm9sdW1lICpjdikKK3sK
-KwlyZXR1cm4gY3YtPmRyaXZlcl9kYXRhOworfQorCmRpZmYgLS1naXQgYS9zcmMvb2Zvbm8uaCBi
-L3NyYy9vZm9uby5oCmluZGV4IDA2NTk5ODkuLjQwOWE5ZTIgMTAwNjQ0Ci0tLSBhL3NyYy9vZm9u
-by5oCisrKyBiL3NyYy9vZm9uby5oCkBAIC0xMDUsNiArMTA1LDcgQEAgZW51bSBvZm9ub19hdG9t
-X3R5cGUgewogCU9GT05PX0FUT01fVFlQRV9TU04gPSAxMiwKIAlPRk9OT19BVE9NX1RZUEVfTUVT
-U0FHRV9XQUlUSU5HID0gMTMsCiAJT0ZPTk9fQVRPTV9UWVBFX0NCUyA9IDE0LAorCU9GT05PX0FU
-T01fVFlQRVNfQ0FMTF9WT0xVTUUgPSAxNSwKIH07CiAKIGVudW0gb2Zvbm9fYXRvbV93YXRjaF9j
-b25kaXRpb24gewotLSAKMS42LjEuMwoK
+#define FOO_INTERFACE  OFONO_SERVICE ".FooInterface"
 
---===============1063189047856432012==--
+> +#define CALL_VOLUME_FLAG_PENDING 0x1
+> +
+> +static GSList *g_drivers =3D NULL;
+> +
+> +struct ofono_call_volume {
+> +       DBusMessage *pending;
+> +       const struct ofono_call_volume_driver *driver;
+> +       int flags;
+> +       void *driver_data;
+> +       struct ofono_atom *atom;
+> +
+> +       unsigned int speaker_volume;
+> +       unsigned int microphone_volume;
+> +
+> +       unsigned int temp_volume; /* temp volume before it is accepted by=
+ remote */
+> +};
+> +
+> +static void call_volume_unregister(struct ofono_atom *atom);
+
+That forward declaration seems pointless unless I actually missed
+something. No forward declaration unless they are really needed. Just
+shuffle the code around.
+
+> +void ofono_call_volume_notify(struct ofono_call_volume *cv,
+> +                                               const char *property,
+> +                                               unsigned int percent)
+> +{
+> +       DBusConnection *conn =3D ofono_dbus_get_connection();
+> +       const char *path =3D __ofono_atom_get_path(cv->atom);
+> +
+> +       if(!strcmp(property, "SpeakerVolume")) {
+> +               cv->speaker_volume =3D percent;
+> +       }
+
+Coding style. Actually twice. No space behind if and single if
+statements need no { }.
+
+> +
+> +       if (!strcmp(property, "MicrophoneVolume")) {
+> +               cv->microphone_volume =3D percent;
+> +       }
+
+No  { } needed.
+
+> +       ofono_dbus_signal_property_changed(conn, path, CALL_VOLUME_INTERF=
+ACE,
+> +                                               property, DBUS_TYPE_UINT3=
+2,
+> +                                               &percent);
+> +}
+> +
+> +static DBusMessage *cv_get_properties(DBusConnection *conn,
+> +                                               DBusMessage *msg, void *d=
+ata)
+> +{
+> +       struct ofono_call_volume *cv =3D data;
+> +       DBusMessage *reply;
+> +       DBusMessageIter iter, dict;
+> +       unsigned int speaker_volume =3D cv->speaker_volume;
+> +       unsigned int microphone_volume =3D cv->microphone_volume;
+
+What is this variable non-sense for. You can use cv->speaker_volume
+directly from D-Bus message append functions. Only for certain strings
+you need this.
+
+> +
+> +       if (cv->pending)
+> +               return __ofono_error_busy(msg);
+> +
+> +       cv->pending =3D dbus_message_ref(msg);
+> +
+> +       reply =3D dbus_message_new_method_return(cv->pending);
+> +
+> +       if (!reply)
+> +               return NULL;
+
+What is this empty line for? Just don't do that. The error check
+logically belongs to the function creating reply.
+
+Also who unrefs cv->pending in this case?
+
+> +       dbus_message_iter_init_append(reply, &iter);
+> +
+> +       dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+> +                                       OFONO_PROPERTIES_ARRAY_SIGNATURE,
+> +                                       &dict);
+> +
+> +       ofono_dbus_dict_append(&dict, "SpeakerVolume", DBUS_TYPE_UINT32,
+> +                                       &speaker_volume);
+> +
+> +       ofono_dbus_dict_append(&dict, "MicrophoneVolume",
+> +                                       DBUS_TYPE_UINT32, &microphone_vol=
+ume);
+
+Why do we use UINT32 for percentage values? A BYTE would be clearly
+enough.
+
+> +
+> +       dbus_message_iter_close_container(&iter, &dict);
+> +
+> +       __ofono_dbus_pending_reply(&cv->pending, reply);
+> +
+> +       return NULL;
+> +}
+> +
+> +static void generic_callback(const struct ofono_error *error, void *data)
+> +{
+> +       struct ofono_call_volume *cv =3D data;
+> +       DBusConnection *conn =3D ofono_dbus_get_connection();
+> +       DBusMessage *reply;
+> +
+> +       cv->flags &=3D ~CALL_VOLUME_FLAG_PENDING;
+> +
+> +       if (!cv->pending)
+> +               return;
+> +
+> +       if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
+> +               reply =3D dbus_message_new_method_return(cv->pending);
+> +       else
+> +               reply =3D __ofono_error_failed(cv->pending);
+> +
+> +       g_dbus_send_message(conn, reply);
+> +
+> +       dbus_message_unref(cv->pending);
+> +       cv->pending =3D NULL;
+> +}
+> +
+> +static void sv_set_callback(const struct ofono_error *error, void *data)
+> +{
+> +       struct ofono_call_volume *cv =3D data;
+> +
+> +       if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> +               ofono_debug("Error occurred during Speaker Volume set: %s=
+",
+> +                                               telephony_error_to_str(er=
+ror));
+> +       } else {
+> +               cv->speaker_volume =3D cv->temp_volume;
+> +       }
+> +
+> +       generic_callback(error, data);
+> +}
+> +
+> +static void mv_set_callback(const struct ofono_error *error, void *data)
+> +{
+> +       struct ofono_call_volume *cv =3D data;
+> +
+> +       if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> +               ofono_debug("Error occurred during Microphone Volume set:=
+ %s",
+> +                                               telephony_error_to_str(er=
+ror));
+> +       } else {
+> +               cv->microphone_volume =3D cv->temp_volume;
+> +       }
+> +
+> +       generic_callback(error, data);
+> +}
+
+So personally I think the ofono_debug() call makes these two function
+hard to read and more complicated than needed. If we really want to
+display this error then either use ofono_error() or just don't bother at
+all with any kind of output.
+
+> +static DBusMessage *cv_set_call_volume(DBusMessage *msg, struct ofono_ca=
+ll_volume *cv,
+> +                                        const char *property, unsigned i=
+nt percent)
+> +{
+> +       if (percent > 100)
+> +               return __ofono_error_invalid_format(msg);
+> +
+> +       DBG("set %s volume to %d percent", property, percent);
+> +
+> +       cv->flags |=3D CALL_VOLUME_FLAG_PENDING;
+> +       cv->temp_volume =3D percent;
+> +
+> +       if (msg)
+> +               cv->pending =3D dbus_message_ref(msg);
+> +
+> +       if(!strcmp(property, "SpeakerVolume")) {
+> +               if (!cv->driver->speaker_volume) {
+> +                       return (msg !=3D NULL)?__ofono_error_not_implemen=
+ted(msg):NULL;
+> +               }
+> +               cv->driver->speaker_volume(cv, percent, sv_set_callback, =
+cv);
+> +       }
+
+So the space after if is missing again. And this return statement is not
+readable at all. It violates coding style and makes my brain hurt. Redo
+this it becomes readable. Cramping everything in one line is just no
+helpful.
+
+> +
+> +       if (!strcmp(property, "MicrophoneVolume")) {
+> +               if (!cv->driver->microphone_volume)
+> +                       return (msg !=3D NULL)?__ofono_error_not_implemen=
+ted(msg):NULL;
+> +               cv->driver->microphone_volume(cv, percent, mv_set_callbac=
+k, cv);
+> +       }
+
+See comment above.
+
+> +
+> +       return NULL;
+> +}
+> +
+> +static DBusMessage *cv_set_property(DBusConnection *conn, DBusMessage *m=
+sg,
+> +                                       void *data)
+> +{
+> +       struct ofono_call_volume *cv =3D data;
+> +       DBusMessageIter iter;
+> +       DBusMessageIter var;
+> +       const char *property;
+> +       unsigned int percent;
+> +
+> +       if (cv->pending)
+> +               return __ofono_error_busy(msg);
+> +
+> +       if (!dbus_message_iter_init(msg, &iter))
+> +               return __ofono_error_invalid_args(msg);
+> +
+> +       if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
+> +               return __ofono_error_invalid_args(msg);
+> +
+> +       dbus_message_iter_get_basic(&iter, &property);
+> +       dbus_message_iter_next(&iter);
+> +
+> +       if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
+> +               return __ofono_error_invalid_args(msg);
+> +
+> +       dbus_message_iter_recurse(&iter, &var);
+> +
+> +       if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_UINT32)
+> +               return __ofono_error_invalid_args(msg);
+> +
+> +       dbus_message_iter_get_basic(&var, &percent);
+> +
+> +       return cv_set_call_volume(msg, cv, property, percent);
+> +}
+> +
+> +static GDBusMethodTable cv_methods[] =3D {
+> +       { "GetProperties",      "",     "a{sv}",        cv_get_properties,
+> +                                                       G_DBUS_METHOD_FLA=
+G_ASYNC},
+> +       { "SetProperty",        "sv",   "",             cv_set_property,
+> +                                                       G_DBUS_METHOD_FLA=
+G_ASYNC },
+> +       { }
+> +};
+
+I am missing the point why GetProperties has to be done async. That
+looks like too much overhead for something just returning stored values.
+
+> +
+> +static GDBusSignalTable cv_signals[] =3D {
+> +       { "PropertyChanged",    "sv" },
+> +       { }
+> +};
+> +
+> +static void call_volume_remove(struct ofono_atom *atom)
+> +{
+> +       struct ofono_call_volume *cv =3D __ofono_atom_get_data(atom);
+> +
+> +       DBG("atom: %p", atom);
+> +
+> +       if (cv=3D=3D NULL)
+> +               return;
+> +
+> +       if (cv->driver && cv->driver->remove)
+> +               cv->driver->remove(cv);
+> +
+> +       g_free(cv);
+> +}
+> +
+> +struct ofono_call_volume *ofono_call_volume_create(struct ofono_modem *m=
+odem,
+> +                                       unsigned int vendor,
+> +                                       const char *driver,
+> +                                       void *data)
+> +{
+> +       struct ofono_call_volume *cv;
+> +       GSList *l;
+> +
+> +       if (driver =3D=3D NULL)
+> +               return NULL;
+> +
+> +       cv =3D g_try_new0(struct ofono_call_volume, 1);
+> +       cv->speaker_volume =3D 100;
+> +       cv->microphone_volume =3D 100;
+> +
+> +       if (cv =3D=3D NULL)
+> +               return NULL;
+
+How do you expect this to work actually? If cv =3D=3D NULL, then your
+assignment are NULL pointer dereferences and the daemon will crash. Your
+error handling is not protecting it.
+
+> +
+> +       cv->atom =3D __ofono_modem_add_atom(modem,
+> +                                               OFONO_ATOM_TYPES_CALL_VOL=
+UME,
+> +                                               call_volume_remove, cv);
+> +
+> +       for (l =3D g_drivers; l; l =3D l->next) {
+> +               const struct ofono_call_volume_driver *drv =3D l->data;
+> +
+> +               if (g_strcmp0(drv->name, driver))
+> +                       continue;
+> +
+> +               if (drv->probe(cv, vendor, data) < 0)
+> +                       continue;
+> +
+> +               cv->driver =3D drv;
+> +               break;
+> +       }
+> +
+> +       if (cv->driver) {
+> +               cv_set_call_volume(NULL, cv, "SpeakerVolume", cv->speaker=
+_volume);
+> +               cv_set_call_volume(NULL, cv, "MicrophoneVolume", cv->micr=
+ophone_volume);
+> +       }
+> +
+> +       return cv;
+> +}
+> +
+> +void ofono_call_volume_register(struct ofono_call_volume *cv)
+> +{
+> +       DBusConnection *conn =3D ofono_dbus_get_connection();
+> +       struct ofono_modem *modem =3D __ofono_atom_get_modem(cv->atom);
+> +       const char *path =3D __ofono_atom_get_path(cv->atom);
+> +
+> +       if (!g_dbus_register_interface(conn, path,
+> +                                       CALL_VOLUME_INTERFACE,
+> +                                       cv_methods, cv_signals, NULL,
+> +                                       cv, NULL)) {
+> +               ofono_error("Could not create %s interface",
+> +                               CALL_VOLUME_INTERFACE);
+> +
+> +               return;
+> +       }
+> +
+> +       ofono_modem_add_interface(modem, CALL_VOLUME_INTERFACE);
+> +
+> +       __ofono_atom_register(cv->atom, call_volume_unregister);
+> +}
+> +
+> +void call_volume_unregister(struct ofono_atom *atom)
+> +{
+> +       DBusConnection *conn =3D ofono_dbus_get_connection();
+> +       struct ofono_call_volume *cv =3D __ofono_atom_get_data(atom);
+> +       struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
+> +       const char *path =3D __ofono_atom_get_path(atom);
+> +       GSList *l;
+> +
+> +       ofono_modem_remove_interface(modem, CALL_VOLUME_INTERFACE);
+> +       g_dbus_unregister_interface(conn, path,
+> +                                       CALL_VOLUME_INTERFACE);
+> +}
+> +
+> +int ofono_call_volume_driver_register(const struct ofono_call_volume_dri=
+ver *d)
+> +{
+> +       DBG("driver: %p, name: %s", d, d->name);
+> +
+> +       if (d->probe =3D=3D NULL)
+> +               return -EINVAL;
+> +
+> +       g_drivers =3D g_slist_prepend(g_drivers, (void *)d);
+
+I really hate these casts only because of const driver declaration.
+
+Personally I am against it, but I see some value behind having this
+const. However there has to be a space between the cast and the
+variable.
+
+> +
+> +       return 0;
+> +}
+> +
+> +void ofono_call_volume_driver_unregister(const struct ofono_call_volume_=
+driver *d)
+> +{
+> +       DBG("driver: %p, name: %s", d, d->name);
+> +
+> +       g_drivers =3D g_slist_remove(g_drivers, (void *)d);
+> +}
+
+See comment above.
+
+> +
+> +void ofono_call_volume_remove(struct ofono_call_volume *cv)
+> +{
+> +       __ofono_atom_free(cv->atom);
+> +}
+> +
+> +void ofono_call_volume_set_data(struct ofono_call_volume *cv, void *data)
+> +{
+> +       cv->driver_data =3D data;
+> +}
+> +
+> +void *ofono_call_volume_get_data(struct ofono_call_volume *cv)
+> +{
+> +       return cv->driver_data;
+> +}
+> +
+> diff --git a/src/ofono.h b/src/ofono.h
+> index 0659989..409a9e2 100644
+> --- a/src/ofono.h
+> +++ b/src/ofono.h
+> @@ -105,6 +105,7 @@ enum ofono_atom_type {
+>         OFONO_ATOM_TYPE_SSN =3D 12,
+>         OFONO_ATOM_TYPE_MESSAGE_WAITING =3D 13,
+>         OFONO_ATOM_TYPE_CBS =3D 14,
+> +       OFONO_ATOM_TYPES_CALL_VOLUME =3D 15,
+>  };
+>  =
+
+>  enum ofono_atom_watch_condition {
+
+Regards
+
+Marcel
+
+
+
+--===============1541050722448573310==--
 
