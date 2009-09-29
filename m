@@ -1,34 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============7644940827638967269=="
+Content-Type: multipart/mixed; boundary="===============4743488797847222351=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Present list of preferred languages on SimManager
- interface.
-Date: Mon, 28 Sep 2009 13:29:01 -0500
-Message-ID: <200909281329.01488.denkenz@gmail.com>
-In-Reply-To: <fb249edb0909251156jc5f3715tdab09b2ab5a359d4@mail.gmail.com>
+Subject: Re: [PATCH] Add call-volume interface to allow user adjust speaker
+ and mic volume
+Date: Tue, 29 Sep 2009 15:00:48 -0500
+Message-ID: <200909291500.48474.denkenz@gmail.com>
+In-Reply-To: <0463F45F3606F4428ED35AC8C709F92E089B65947F@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7644940827638967269==
+--===============4743488797847222351==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Zhenhua,
 
-> Hi Denis,
->
-> 2009/9/24 Denis Kenzior <denkenz@gmail.com>:
-> > I pushed a patch to simply ignore EFli if the first
-> > entry is 0xffff
->
-> I moved the check a little up because at that point the raw EFli would
-> have been freed already (see attached).
+Your patch has been applied.  I refactored much of it afterwards :)  Let me =
 
-Good catch, I fixed it slightly differently upstream.
+know if I have broken something.
 
 Regards,
 -Denis
 
---===============7644940827638967269==--
+--===============4743488797847222351==--
 
