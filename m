@@ -1,129 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============0097728442924496561=="
+Content-Type: multipart/mixed; boundary="===============6588042314125612999=="
 MIME-Version: 1.0
-From: Andres Salomon <dilinger@collabora.co.uk>
-Subject: [PATCH] G1: move chat handling into enable callback
-Date: Tue, 29 Sep 2009 23:53:59 -0400
-Message-ID: <20090929235359.2b3dffd7@mycelium.queued.net>
+From: Jeroen Wouters <woutersj@gmail.com>
+Subject: Re: how ofono runs with simulator
+Date: Thu, 01 Oct 2009 13:44:47 +0200
+Message-ID: <4AC4962F.708@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0097728442924496561==
+--===============6588042314125612999==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Gu, Yang wrote:
+> The following steps work for latest 0.4 version:
+>
+> 1. Modify modem.conf to config your simulator
+> # Sample for using phone simulator
+> [phonesim]
+> Driver=3Dphonesim
+> Address=3D127.0.0.1
+> Port=3D12345
+>
+> 2. Start simulator by
+> Phonesim -p 12345 -gui data/moblin.xml
+>
+> 3. Start ofono by
+> ofonod -nd
+> =
 
-This updates the g1 code to create the GAtChat object in the enable() callb=
-ack,
-and to unref it in the disable() callback.  This is more in line with what
-the other plugins do, and as a bonus fixes a segfault when powering down
-the G1 modem..
+> 4. power on the modem
+> dbus-send --system --print-reply --dest=3Dorg.ofono /phonesim0 org.ofono.=
+Modem.SetProperty string:Powered variant:boolean:true
 
-Signed-off-by: Andres Salomon <dilinger@collabora.co.uk>
----
- plugins/g1.c |   48 ++++++++++++++++++++++--------------------------
- 1 files changed, 22 insertions(+), 26 deletions(-)
 
-diff --git a/plugins/g1.c b/plugins/g1.c
-index 5c53a12..0414f49 100644
---- a/plugins/g1.c
-+++ b/plugins/g1.c
-@@ -57,39 +57,14 @@ static void g1_debug(const char *str, void *data)
- /* Detect hardware, and initialize if found */
- static int g1_probe(struct ofono_modem *modem)
- {
--	GAtSyntax *syntax;
--	GAtChat *chat;
--	const char *device;
--
- 	DBG("");
- =
+Where can I find the moblin.xml file and the source code for the version of=
+ phonesim you used?
+I've looked for the xml file, but I can't find it. I've also tried the step=
+s you describe with Ofono 0.6 and the phonesim version I found here:
+https://svn.openmoko.org/trunk/src/host/qemu-neo1973/phonesim/
+and with a couple of other XML response files I found on the net, but whate=
+ver I do in the phonesim GUI, there is no response from Ofono.
+Also, in Ofono, the /phonesim0 modem appears, but only has a org.ofono.SimM=
+anager interface, no VoiceCallManager.
 
--	device =3D ofono_modem_get_string(modem, "Device");
--	if (device =3D=3D NULL)
--		return -EINVAL;
--
--	syntax =3D g_at_syntax_new_gsm_permissive();
--	chat =3D g_at_chat_new_from_tty(device, syntax);
--	g_at_syntax_unref(syntax);
--
--	if (chat =3D=3D NULL)
--		return -EIO;
--
--	if (getenv("OFONO_AT_DEBUG") !=3D NULL)
--		g_at_chat_set_debug(chat, g1_debug, NULL);
--
--	ofono_modem_set_data(modem, chat);
--
- 	return 0;
- }
- =
-
- static void g1_remove(struct ofono_modem *modem)
- {
--	GAtChat *chat =3D ofono_modem_get_data(modem);
--
- 	DBG("");
--
--	ofono_modem_set_data(modem, NULL);
--	g_at_chat_unref(chat);
- }
- =
-
- static void cfun_set_on_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-@@ -105,10 +80,28 @@ static void cfun_set_on_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- /* power up hardware */
- static int g1_enable(struct ofono_modem *modem)
- {
--	GAtChat *chat =3D ofono_modem_get_data(modem);
-+	GAtSyntax *syntax;
-+	GAtChat *chat;
-+	const char *device;
- =
-
- 	DBG("");
- =
-
-+	device =3D ofono_modem_get_string(modem, "Device");
-+	if (device =3D=3D NULL)
-+		return -EINVAL;
-+
-+	syntax =3D g_at_syntax_new_gsm_permissive();
-+	chat =3D g_at_chat_new_from_tty(device, syntax);
-+	g_at_syntax_unref(syntax);
-+
-+	if (chat =3D=3D NULL)
-+		return -EIO;
-+
-+	if (getenv("OFONO_AT_DEBUG") !=3D NULL)
-+		g_at_chat_set_debug(chat, g1_debug, NULL);
-+
-+	ofono_modem_set_data(modem, chat);
-+
- 	/* ensure modem is in a known state; verbose on, echo/quiet off */
- 	g_at_chat_send(chat, "ATE0Q0V1", NULL, NULL, NULL, NULL);
- =
-
-@@ -137,6 +130,9 @@ static int g1_disable(struct ofono_modem *modem)
- 	/* power down modem */
- 	g_at_chat_send(chat, "AT+CFUN=3D0", NULL, cfun_set_off_cb, modem, NULL);
- =
-
-+	g_at_chat_unref(chat);
-+	ofono_modem_set_data(modem, NULL);
-+
- 	return 0;
- }
- =
-
--- =
-
-1.6.4.3
+Thanks,
+Jeroen
 
 
 
-
---===============0097728442924496561==--
+--===============6588042314125612999==--
 
