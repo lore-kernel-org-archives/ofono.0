@@ -1,33 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============4792477201886390686=="
+Content-Type: multipart/mixed; boundary="===============8836138720878334936=="
 MIME-Version: 1.0
 From: Andres Salomon <dilinger@collabora.co.uk>
-Subject: [PATCH] Check if unpacking of an sms buffer succeeds
-Date: Fri, 02 Oct 2009 20:01:07 -0400
-Message-ID: <20091002200107.6bfa8afe@mycelium.queued.net>
+Subject: Re: [PATCH] Check if unpacking of an sms buffer succeeds
+Date: Fri, 02 Oct 2009 20:09:55 -0400
+Message-ID: <20091002200955.5865f49d@mycelium.queued.net>
+In-Reply-To: <20091002200107.6bfa8afe@mycelium.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4792477201886390686==
+--===============8836138720878334936==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-And here's one from a coworker that was necessary in order for him to
-make use of oFono..
+Resending, as the previous patch was apparently mangled.
 
 
-
+From 5a0e8a4d4947d8252df83f0d6c7226d944c83cf2 Mon Sep 17 00:00:00 2001
 From: Sjoerd Simons <sjoerd.simons@collabora.co.uk>
-Date: Fri, 2 Oct 2009 23:32:37 +0000 (+0100)
-Subject: Check if unpacking of an sms buffer succeeds
-X-Git-Url: http://git.collabora.co.uk/?p=3Duser%2Fsjoerd%2Fofono.git;a=3Dco=
-mmitdiff_plain;h=3De457a55999f0d52393e048ff68763fc3b2fd1f44
-
-Check if unpacking of an sms buffer succeeds
+Date: Fri, 2 Oct 2009 20:07:56 -0400
+Subject: [PATCH] Check if unpacking of an sms buffer succeeds
 
 There are cases in which sms unpack_7bit_own_buf can fail (for example when
 receiving an empty sms), in that case bail out instead of crashing...
 ---
+ src/smsutil.c |    5 +++--
+ 1 files changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/src/smsutil.c b/src/smsutil.c
 index 106a39a..f389d29 100644
@@ -48,8 +46,12 @@ index 106a39a..f389d29 100644
 
  			/* Take care of improperly split fragments */
  			if (buf[written-1] =3D=3D 0x1b)
+-- =
+
+1.6.4.3
 
 
 
---===============4792477201886390686==--
+
+--===============8836138720878334936==--
 
