@@ -1,57 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============0619201575137654079=="
+Content-Type: multipart/mixed; boundary="===============7100794463413632998=="
 MIME-Version: 1.0
 From: Pekka Pessi <ppessi@gmail.com>
-Subject: [PATCH] voicecall: allow sending DTMF tones while call is in alerting
- state
-Date: Thu, 08 Oct 2009 19:59:53 +0300
-Message-ID: <1255021194-31138-2-git-send-email-ppessi@gmail.com>
-In-Reply-To: <1255021194-31138-1-git-send-email-ppessi@gmail.com>
+Subject: [PATCH] voicecall: allow P or , within the dial string
+Date: Thu, 08 Oct 2009 19:59:54 +0300
+Message-ID: <1255021194-31138-3-git-send-email-ppessi@gmail.com>
+In-Reply-To: <1255021194-31138-2-git-send-email-ppessi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0619201575137654079==
+--===============7100794463413632998==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-2nd stage dialing may be done before call gets connected.
+"DTMF control digit separator" is used as pause according to GSM 02.07.
+According to GSM 11.11 it is stored as BCD code 1100 in the SIM card. Nokia
+modems use 'p' to represent pause. AT commands use ',' to represent pause.
+
+Note that the interpretation of 'p' and ',' differs when used as a part of a
+dial strings. When a dial string is separated from the phone number by ',',
+sending the dial string starts after call is alerting. When a dial string is
+separated by 'p' (DTMF control digit separator), dial string is sent only
+after call is connected.
 ---
- src/voicecall.c |    6 +++++-
- 1 files changed, 5 insertions(+), 1 deletions(-)
+ src/voicecall.c |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
 diff --git a/src/voicecall.c b/src/voicecall.c
-index 1be907a..bd5358c 100644
+index bd5358c..c69c822 100644
 --- a/src/voicecall.c
 +++ b/src/voicecall.c
-@@ -138,7 +138,7 @@ static const char *call_status_to_string(int status)
- 	case CALL_STATUS_DIALING:
- 		return "dialing";
- 	case CALL_STATUS_ALERTING:
--	return "alerting";
-+		return "alerting";
- 	case CALL_STATUS_INCOMING:
- 		return "incoming";
- 	case CALL_STATUS_WAITING:
-@@ -561,6 +561,10 @@ static gboolean voicecalls_have_connected(struct ofono=
-_voicecall *vc)
+@@ -1121,6 +1121,12 @@ static DBusMessage *manager_tone(DBusConnection *con=
+n,
+ 				(tones[i] >=3D 'A' && tones[i] <=3D 'D'))
+ 			continue;
  =
 
- 		if (v->call->status =3D=3D CALL_STATUS_ACTIVE)
- 			return TRUE;
++		/* Pause can be described with P or , */
++		if (tones[i] =3D=3D 'P' || tones[i] =3D=3D ',') {
++			tones[i] =3D 'p';
++			continue;
++		}
 +
-+		/* Connected for 2nd stage dialing */
-+		if (v->call->status =3D=3D CALL_STATUS_ALERTING)
-+			return TRUE;
+ 		g_free(tones);
+ 		return __ofono_error_invalid_format(msg);
  	}
- =
-
- 	return FALSE;
 -- =
 
 1.6.0.4
 
 
---===============0619201575137654079==--
+--===============7100794463413632998==--
 
