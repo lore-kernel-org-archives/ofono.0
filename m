@@ -1,140 +1,114 @@
-Content-Type: multipart/mixed; boundary="===============0488697043564843384=="
+Content-Type: multipart/mixed; boundary="===============8149173082062331969=="
 MIME-Version: 1.0
-From: Olivier Le Thanh Duong <oliver.le.thanh.duong@collabora.co.uk>
-Subject: Subject: RFC Migrate from RFC2822 to ISO8601 for time representations
-Date: Mon, 05 Oct 2009 17:55:20 +0000
-Message-ID: <4ACA3207.8050303@collabora.co.uk>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: [PATCH] Autotool improvements.
+Date: Thu, 08 Oct 2009 19:51:31 +0300
+Message-ID: <1255020691-30867-1-git-send-email-ppessi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0488697043564843384==
+--===============8149173082062331969==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-the format used to represent time in ofono is currently RFC2822 which is =
-
-complex and a bit deprecated. I think it would be better to move to =
-
-ISO8601 which is a well used and supported [1] format and simpler to parse.
-
-RFC2822 date example: Mon, 05 Oct 2009 19:31:32 +0200
-ISO8601 date example: 2009-10-05T19:31:26+0200
-
-
-The proposed patch makes this transition.
-
-Any comments?
-
-Regards,
-Olivier
-
-[1] for example Glib has a g_time_val_from_iso8601 which understand =
-
-timezone compared to strptime which doesn't support %z
-
- From 16359eccfcb4a7a5444e6f87729008192edefc5e Mon Sep 17 00:00:00 2001
-From: Olivier Le Thanh Duong <olivier.le.thanh@collabora.co.uk>
-Date: Mon, 5 Oct 2009 19:10:25 +0200
-Subject: [PATCH] Migrate from RFC2822 to ISO8601 for time representations
-
+Bootstrap script now tries to use explicitly versioned automake, which makes
+life easier with scratchbox and friends. Bootstrap also uses autoreconf
+instead of explictly running various autotools.
 ---
-  plugins/example_history.c |    6 +++---
-  src/sms.c                 |    4 ++--
-  src/voicecall.c           |    2 +-
-  unit/test-sms.c           |    4 ++--
-  4 files changed, 8 insertions(+), 8 deletions(-)
+ Makefile.am  |    2 ++
+ bootstrap    |   38 +++++++++++++++++++++++++++++++++-----
+ configure.ac |    3 ++-
+ 3 files changed, 37 insertions(+), 6 deletions(-)
 
-diff --git a/plugins/example_history.c b/plugins/example_history.c
-index 384c88d..d923a8e 100644
---- a/plugins/example_history.c
-+++ b/plugins/example_history.c
-@@ -68,11 +68,11 @@ static void example_history_call_ended(struct =
+diff --git a/Makefile.am b/Makefile.am
+index cf84bf7..9ade516 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,6 +1,8 @@
+ =
 
-ofono_history_context *context,
-  	else
-  		ofono_debug("From: %s", from);
+ AM_MAKEFLAGS =3D --no-print-directory
+ =
 
--	strftime(buf, 127, "%a, %d %b %Y %H:%M:%S %z", localtime(&start));
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", localtime(&start));
-  	buf[127] =3D '\0';
-  	ofono_debug("StartTime: %s", buf);
++ACLOCAL_AMFLAGS =3D -I m4
++
+ includedir =3D @includedir@/ofono
+ =
 
--	strftime(buf, 127, "%a, %d %b %Y %H:%M:%S %z", localtime(&end));
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", localtime(&end));
-  	buf[127] =3D '\0';
-  	ofono_debug("EndTime: %s", buf);
-  }
-@@ -96,7 +96,7 @@ static void example_history_call_missed(struct =
+ include_HEADERS =3D include/log.h include/plugin.h include/history.h \
+diff --git a/bootstrap b/bootstrap
+index 053f5c8..c751b3c 100755
+--- a/bootstrap
++++ b/bootstrap
+@@ -1,7 +1,35 @@
+ #!/bin/sh
+ =
 
-ofono_history_context *context,
-  		from =3D phone_number_to_string(&call->phone_number);
+-aclocal && \
+-    autoheader && \
+-        libtoolize --automake --copy --force &&
+-	    automake --add-missing --copy && \
+-		autoconf
++if test -z "$AUTOMAKE"
++then
++    for version in 1.10 1.11 1.12
++    do =
 
-  	ofono_debug("From: %s", from);
--	strftime(buf, 127, "%a, %d %b %Y %H:%M:%S %z", localtime(&when));
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", localtime(&when));
-  	buf[127] =3D '\0';
-  	ofono_debug("When: %s", buf);
-  }
-diff --git a/src/sms.c b/src/sms.c
-index 141f288..e02ac85 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -467,11 +467,11 @@ static void dispatch_text_message(struct ofono_sms =
++	if which automake-$version > /dev/null
++	then
++	    AUTOMAKE=3Dautomake-$version ACLOCAL=3Daclocal-$version
++	    export AUTOMAKE ACLOCAL
++	    break
++	fi
++   done
++fi
++
++if test -z "$AUTOMAKE"
++then
++    for version in 1.10 1.11 1.12
++    do =
 
-*sms,
++	if automake --version | head -1 | fgrep -q $version
++	then
++	    AUTOMAKE=3Dautomake ACLOCAL=3Daclocal
++	    export AUTOMAKE ACLOCAL
++	fi
++    done
++fi
++
++# Remove libtool files (in case they conflict with older libtool)
++rm -f m4/libtool.m4 \
++      m4/lt~obsolete.m4 \
++      m4/ltoptions.m4 \
++      m4/ltsugar.m4 \
++      m4/ltversion.m4
++
++autoreconf --install --force "$@"
+diff --git a/configure.ac b/configure.ac
+index 4cc4449..55fd281 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1,8 +1,9 @@
+ AC_PREREQ(2.60)
+ AC_INIT(ofono, 0.7)
+ =
 
-  	ts =3D sms_scts_to_time(scts, &remote);
+-AM_INIT_AUTOMAKE([foreign subdir-objects])
++AM_INIT_AUTOMAKE([foreign subdir-objects 1.10])
+ AM_CONFIG_HEADER(config.h)
++AC_CONFIG_MACRO_DIR([m4])
+ =
 
--	strftime(buf, 127, "%a, %d %b %Y %H:%M:%S %z", localtime(&ts));
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", localtime(&ts));
-  	buf[127] =3D '\0';
-  	ofono_dbus_dict_append(&dict, "LocalSentTime", DBUS_TYPE_STRING, &str);
+ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+ =
 
--	strftime(buf, 127, "%a, %d %b %Y %H:%M:%S %z", &remote);
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", &remote);
-  	buf[127] =3D '\0';
-  	ofono_dbus_dict_append(&dict, "SentTime", DBUS_TYPE_STRING, &str);
-
-diff --git a/src/voicecall.c b/src/voicecall.c
-index eff6321..3f70f9e 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -164,7 +164,7 @@ static const char *time_to_str(const time_t *t)
-  {
-  	static char buf[128];
-
--	strftime(buf, 127, "%a, %d %b %Y %H:%M:%S %z", localtime(t));
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", localtime(t));
-  	buf[127] =3D '\0';
-
-  	return buf;
-diff --git a/unit/test-sms.c b/unit/test-sms.c
-index ac4f1ff..9c1528c 100644
---- a/unit/test-sms.c
-+++ b/unit/test-sms.c
-@@ -59,12 +59,12 @@ static void print_scts(struct sms_scts *scts, const =
-
-char *prefix)
-
-  	ts =3D sms_scts_to_time(scts, &remote);
-
--	strftime(buf, 127, "%a, %d %b %Y %H:%M:%S %z", localtime(&ts));
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", localtime(&ts));
-  	buf[127] =3D '\0';
-
-  	g_print("local time: %s\n", buf);
-
--	strftime(buf, 127, "%a, %d %b %Y %H:%M:%S %z", &remote);
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", &remote);
-  	buf[127] =3D '\0';
-
-  	g_print("remote time: %s\n", buf);
 -- =
 
-1.6.3.3
+1.6.0.4
 
---===============0488697043564843384==--
+
+--===============8149173082062331969==--
 
