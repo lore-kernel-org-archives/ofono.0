@@ -1,155 +1,153 @@
-Content-Type: multipart/mixed; boundary="===============8722110267045699809=="
+Content-Type: multipart/mixed; boundary="===============6354692250412635249=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Pekka Pessi <ppessi@gmail.com>
 Subject: Re: [PATCH] voicecall: allow P or , within the dial string
-Date: Thu, 08 Oct 2009 15:37:08 -0500
-Message-ID: <200910081537.09150.denkenz@gmail.com>
-In-Reply-To: <80fd4e750910081230i4a774e10nfabf3a2b201b3852@mail.gmail.com>
+Date: Fri, 09 Oct 2009 05:30:26 +0300
+Message-ID: <80fd4e750910081930j383c197fxca48c3bbdf7b6b0a@mail.gmail.com>
+In-Reply-To: <200910081537.09150.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8722110267045699809==
+--===============6354692250412635249==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Denis,
 
-> 2009/10/8 Denis Kenzior <denkenz@gmail.com>:
-> >> "DTMF control digit separator" is used as pause according to GSM 02.07.
-> >> According to GSM 11.11 it is stored as BCD code 1100 in the SIM card.
-> >> Nokia modems use 'p' to represent pause. AT commands use ',' to
-> >> represent pause.
-> >
-> > Strictly speaking AT modems use 'C' to represent the pause.  Can you
-> > point me to any spec that actually says ',' and 'p' are used the way you
-> > describe?
+>> >> "DTMF control digit separator" is used as pause according to GSM 02.0=
+7.
+>> >> According to GSM 11.11 it is stored as BCD code 1100 in the SIM card.
+>> >> Nokia modems use 'p' to represent pause. AT commands use ',' to
+>> >> represent pause.
+>> >
+>> > Strictly speaking AT modems use 'C' to represent the pause. =C2=A0Can =
+you
+>> > point me to any spec that actually says ',' and 'p' are used the way y=
+ou
+>> > describe?
+>>
+>> C?
 >
-> C?
-
-Unless I'm missing something, the DTMF 'C' digit refers exactly to what you=
-'re =
-
-trying to achieve with 'p' and ','
-
-Check TS 11.11 Table 12.  'C' is mentioned as the DTMF Control digit separa=
-tor =
-
-from TS 02.07.
-
-Also, quoting 27.007 for valid input to VTS:  "A single ASCII character in =
-the =
-
-set 0 9, #,*,A D. This is interpreted as a single ACSII character whose =
-
-duration is set by the +VTD command."
-
-It sounds like 'p' is entirely an MMI convention, not anything defined by a =
-
-standard...
-
+> Unless I'm missing something, the DTMF 'C' digit refers exactly to what y=
+ou're
+> trying to achieve with 'p' and ','
 >
-> RFC 4967 uses 'X' to wait for call completion, and 'P' for pause.
+> Check TS 11.11 Table 12. =C2=A0'C' is mentioned as the DTMF Control digit=
+ separator
+> from TS 02.07.
+
+You mean binary code 0b1100 aka hex code 0xC? It would be otherwise
+known as DTMF digit 'A'. Welcome to wonderful world of phones.
+
+Have a peek in src/smsutil.c to_semi_octet().
+
+> Also, quoting 27.007 for valid input to VTS: =C2=A0"A single ASCII charac=
+ter in the
+> set 0 9, #,*,A D. This is interpreted as a single ACSII character whose
+> duration is set by the +VTD command."
+
+Yep. Those are actual tones sent within media, however. There are 16
+different DTMF tones, 0-9, *, # A, B, C and D have each different
+tone. If you say at+vts=3D"A" while call is going on, other end hears a
+tone. If you say at+vts=3D"C", different tone is heard.
+
+GSM 11.11 cheated and used the DTMF digits from A to D for other
+purpose: 'A' (0b1100, 0xC) for the separating dial string from the
+phone number, 'B' for FDN wildcard, 'C' for quoting, and 'D' for
+padding.
+
+> It sounds like 'p' is entirely an MMI convention, not anything defined by=
+ a
+> standard...
+
+Exactly.
+
+>> RFC 4967 uses 'X' to wait for call completion, and 'P' for pause.
 >
+> oFono does not (yet) care about SIP.
 
-oFono does not (yet) care about SIP.
+But we care about dial strings, right?
 
-> Nokia modems use 'p' to represent DMTF control digit separator. GSM
-> 02.07 specifies how the DTMF control digit separator is used when
-> making calls. The dtmf digits in the dial string are sent after the
-> call gets connected. The extra separator characters represent extra
-> delays.
+>> Nokia modems use 'p' and '?' for that purpose (extended bcd code
+>> 0b1100 =3D> 'p', extended bcd code 0b1101 =3D> '?'). =C2=A0I think G1 us=
+es ','
+>> instead of 'p'. Either one is fine.
 
-Yes, however 02.07 never mentions 'p' or ','.  Quoting: "The way in which t=
-he =
+> Yes, you're talking about the 'C' (1100) and 'D' (1101') DTMF characters,=
+ as
+> above. =C2=A0I have no problem handling 'P', 'p', ',' and 'X' or whatever=
+ at the D-
+> Bus API level.
 
-separator is entered and display in the ME, is left to the individual =
+Cool.
 
-manufacturer's MMI."
+>However, what gets sent down to the modem must be according to
+> some standard. =C2=A0Doing otherwise leads to chaos.
 
-Since 'C' is defined by the standard, that is what oFono core should use.  =
-If =
+There is no standard. We should specify one.
 
-Nokia modems prefer 'p' over C, simply convert these in the specific driver.
-
-> The dial string stored  in the SIM card along with a phone number
-> cannot contain DTMF digits A-D. However, the other dialstrings do not
-> share the same limitation and they can can contain full set of DTMF
-> digits, 0-9, *, #, A, B, C, and D. The special bcd coded digits (dtmf
-> control digit separator and wildcard) from the SIM card must be mapped
-> outside this set.
-
-SIM storage is a nightmare.  The problem is that on the SIM the following =
-
-characters are valid: 0-9, 'A', 'B', 'C', 'D'.  'F' is used as an endmark =
-
-(e.g. empty) character.  'E' has been deprecated and not used for anything.=
-  =
-
-Much of the confusion stems from the fact that 'A' maps to '*' and 'B' maps=
- to =
-
-'#'.  Whenever you store anything on the SIM, you have to convert '*' and '=
-#' =
-
-back to 'A' and 'B'.  oFono does this for you when writing to / from the SI=
-M.
-
-The EFadn, EFsdn, etc can definitely contain the full set above for the SSC=
- / =
-
-Dialing Number fields.  However, the 'C' and 'D' characters cannot actually=
- be =
-
-sent to the network.
-
-In fact 'D' is particularly evil since it requires special handling in the =
-UI.  =
-
-Hence 'D' should be stripped from the valid DTMF set that oFono supports.
-
-'C' is used as a separator in its first occurrence, but also as a pause =
-
-character for all subsequent occurrences.
-
+>> An why to include pause in the tones string in the first place? The
+>> current API does not provide any feedback of the sent dtmf digits to
+>> the application or between ofono driver and core, so the only way to
+>> implement pauses between digits is to include them in the dial string
+>> and hope the driver can do something about them.
 >
-> Nokia modems use 'p' and '?' for that purpose (extended bcd code
-> 0b1100 =3D> 'p', extended bcd code 0b1101 =3D> '?').  I think G1 uses ','
-> instead of 'p'. Either one is fine.
+> I still wonder about this myself. =C2=A0Strictly speaking all modems shou=
+ld support
+> the 'C' digit. =C2=A0In the worst case the modem driver can simulate a 3 =
+second
+> delay itself. =C2=A0Whether this should be encouraged or not is questiona=
+ble.
 
-Yes, you're talking about the 'C' (1100) and 'D' (1101') DTMF characters, a=
-s =
+I'm afraid the modem driver has to implement pause either by itself or
+with some modem-specific command.
 
-above.  I have no problem handling 'P', 'p', ',' and 'X' or whatever at the=
- D-
-Bus API level.  However, what gets sent down to the modem must be according=
- to =
+Each DTMF digit is sent using 24.008/Q.931 "Start DTMF" message,
+followed by "Stop DTMF". Start DTMF contains DTMF digit encoded as a
+single IRA character (from the set of 0-9, *, # and A-D). If there is
+pause (like one defined in 02.07), modem just don't send next "Start
+DTMF" for 3 seconds.
 
-some standard.  Doing otherwise leads to chaos.
+AT+VTS tries to hide that, you just give digit and its duration.
 
-> An why to include pause in the tones string in the first place? The
-> current API does not provide any feedback of the sent dtmf digits to
-> the application or between ofono driver and core, so the only way to
-> implement pauses between digits is to include them in the dial string
-> and hope the driver can do something about them.
+Any layer above modem driver has no control on duration of dtmf
+digits, nor any idea when the pause gets started and when next digit
+should be sent.
 
-I still wonder about this myself.  Strictly speaking all modems should supp=
-ort =
+...
+> However, I agree that the current situation is less than ideal. =C2=A0Ide=
+as /
+> suggestions welcome.
 
-the 'C' digit.  In the worst case the modem driver can simulate a 3 second =
+I'd propose that we allow dial strings in phone numbers, like,
 
-delay itself.  Whether this should be encouraged or not is questionable.
+"8188080p1234#pp6789#" (Nokia)
+"8188080(a)1234#,,6789#" (V.250)
 
-'D' should be never sent to oFono in the first place, it is entirely an MMI =
+Both strings mean same, after call gets connected, there is 3 second
+pause, then digits 1234# are sent, again 6 second pause, and digits
+6789# are sent.
 
-issue.
+Both will be stored on SIM phonebook in same format. When phone number
+is read from SIM card, Ofono modem driver should return it in V.250
+format.
 
-However, I agree that the current situation is less than ideal.  Ideas / =
+Ofono should also accept dial strings like
 
-suggestions welcome.
+"8188080,1234#,6789#ABCD#"
 
-Regards,
--Denis
+where the , means that voicecall should start sending DTMF digits 3
+seconds after first RINGING.
 
---===============8722110267045699809==--
+If a string starting with 'p' or '@' is given to SendTones() before
+call is connected, driver waits until call is connected before sending
+it to network. If call is already connected, ',', 'p' or '@' are
+interpreted as pause of 3 seconds.
+
+-- =
+
+Pekka.Pessi mail at nokia.com
+
+--===============6354692250412635249==--
 
