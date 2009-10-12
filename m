@@ -1,391 +1,2074 @@
-Content-Type: multipart/mixed; boundary="===============0272969124585913304=="
+Content-Type: multipart/mixed; boundary="===============1840708683042669149=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: [PATCH] support preferred network
-Date: Mon, 12 Oct 2009 18:07:21 +0800
-Message-ID: <38D9F46DFF92C54980D2F2C1E8EE313001B100E533@pdsmsx503.ccr.corp.intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [RFC] GPRS context setup and teardown
+ (doc/dataconnectionmanager-api.txt)
+Date: Mon, 12 Oct 2009 23:35:59 +0200
+Message-ID: <1255383359-31470-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0272969124585913304==
+--===============1840708683042669149==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
-	This feature is to support operator preferred network and user preferred n=
-etwork. Operator preferred network is readonly, while user preferred networ=
-k is readwrite. A corresponding test script is also added, and you can use =
-it like: ./test-preferred-network 'UserPreferredNetworks' '10001' '10002' '=
-10003'.
+here's a one-big-patch that adds the DataConnectionManager interface
+according to doc/dataconnectionmanager-api.txt without any glue for
+the multiplexer or PPP setup.  Only AT backend is implemented.
+
+One issue with the AT implementation of the api is that "Powered" (a
+read-write property) can be set independently of "Attached" (read-only
+property) and remain set when "Attached" is clear.  The semantics would
+be that the network doesn't have resources to let the modem attach,
+but the modem waits for the resources to become available and then
+attaches.  On AT the modem is in this state only when executing +CGATT,
+so currently the code will rerun +CGATT as soon as the previous one
+returns with error, probably starving other commands.  A possible
+workaround would be for "Powered" to flip back to False after the modem
+fails to attach once, or give up on having separate properties.
+Alternatively we could re-try to attach periodically but on one modem
+I've tried +CGATT fails after about 1 minute (that's the Calypso) and
+on another only about 0.5s (Nokia phones with AT emulation).
+
+When "Powered"  is set and "RoamingAllowed" is clear and we manage to
+attach and find that we're roaming, ofono resets "Powered".
+
+We may want to catch the user trying to dial *99***1# which is the
+backwards compatibility quirk for old modems (same way ofono parses
+USSD strings).
+---
+ Makefile.am                       |   12 +-
+ doc/dataconnectionmanager-api.txt |    2 +-
+ drivers/atmodem/atmodem.c         |    2 +
+ drivers/atmodem/atmodem.h         |    3 +
+ drivers/atmodem/data-connection.c |  649 ++++++++++++++++++++++
+ include/data-connection.h         |   89 +++
+ include/types.h                   |   10 +
+ plugins/phonesim.c                |    3 +
+ src/data-connection.c             | 1074 +++++++++++++++++++++++++++++++++=
+++++
+ src/ofono.h                       |    2 +
+ 10 files changed, 1841 insertions(+), 5 deletions(-)
+ create mode 100644 drivers/atmodem/data-connection.c
+ create mode 100644 include/data-connection.h
+ create mode 100644 src/data-connection.c
+
+diff --git a/Makefile.am b/Makefile.am
+index cf84bf7..600dd08 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -10,7 +10,8 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
+e/history.h \
+ 			include/phonebook.h include/ssn.h include/ussd.h \
+ 			include/sms.h include/sim.h include/message-waiting.h \
+ 			include/netreg.h include/voicecall.h include/devinfo.h \
+-			include/cbs.h include/call-volume.h
++			include/cbs.h include/call-volume.h \
++			include/data-connection.h
+ =
+
+ nodist_include_HEADERS =3D include/version.h
+ =
+
+@@ -108,7 +109,8 @@ builtin_sources +=3D $(gatchat_sources) \
+ 				drivers/atmodem/call-volume.c \
+ 				drivers/atmodem/vendor.h \
+ 				drivers/atmodem/atutil.h \
+-				drivers/atmodem/atutil.c
++				drivers/atmodem/atutil.c \
++				drivers/atmodem/data-connection.c
+ =
+
+ builtin_modules +=3D calypsomodem
+ builtin_sources +=3D drivers/atmodem/atutil.h \
+@@ -165,7 +167,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
+es) \
+ 			src/ssn.c src/call-barring.c src/sim.c \
+ 			src/phonebook.c src/history.c src/message-waiting.c \
+ 			src/simutil.h src/simutil.c src/storage.h \
+-			src/storage.c src/cbs.c src/watch.c src/call-volume.c
++			src/storage.c src/cbs.c src/watch.c src/call-volume.c \
++			src/data-connection.c
+ =
+
+ src_ofonod_LDADD =3D $(builtin_libadd) \
+ 			@GLIB_LIBS@ @GTHREAD_LIBS@ @DBUS_LIBS@ -ldl
+@@ -197,7 +200,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt \
+ 		doc/manager-api.txt doc/modem-api.txt doc/network-api.txt \
+ 			doc/voicecallmanager-api.txt doc/voicecall-api.txt \
+ 			doc/call-forwarding-api.txt doc/call-settings-api.txt \
+-			doc/call-meter-api.txt
++			doc/call-meter-api.txt \
++			doc/dataconnectionmanager-api.txt
+ =
+
+ test_files =3D test/test-manager test/test-modem test/test-voicecall \
+ 		test/test-network-registration test/test-phonebook \
+diff --git a/doc/dataconnectionmanager-api.txt b/doc/dataconnectionmanager-=
+api.txt
+index e2bcf7c..982005e 100644
+--- a/doc/dataconnectionmanager-api.txt
++++ b/doc/dataconnectionmanager-api.txt
+@@ -42,7 +42,7 @@ Signals		PropertyChanged(string property, variant value)
+ =
+
+ Properties	array{object} PrimaryContexts [readonly]
+ =
+
+-			List of all primary contexts objects.
++			List of all primary context objects.
+ =
+
+ 		boolean Attached [readonly]
+ =
+
+diff --git a/drivers/atmodem/atmodem.c b/drivers/atmodem/atmodem.c
+index 7cfcf6a..026d8e0 100644
+--- a/drivers/atmodem/atmodem.c
++++ b/drivers/atmodem/atmodem.c
+@@ -48,6 +48,7 @@ static int atmodem_init(void)
+ 	at_netreg_init();
+ 	at_cbs_init();
+ 	at_call_volume_init();
++	at_data_connection_init();
+ =
+
+ 	return 0;
+ }
+@@ -68,6 +69,7 @@ static void atmodem_exit(void)
+ 	at_voicecall_exit();
+ 	at_cbs_exit();
+ 	at_call_volume_exit();
++	at_data_connection_exit();
+ }
+ =
+
+ OFONO_PLUGIN_DEFINE(atmodem, "AT modem driver", VERSION,
+diff --git a/drivers/atmodem/atmodem.h b/drivers/atmodem/atmodem.h
+index 8c61073..46c3780 100644
+--- a/drivers/atmodem/atmodem.h
++++ b/drivers/atmodem/atmodem.h
+@@ -62,3 +62,6 @@ extern void at_cbs_exit();
+ =
+
+ extern void at_call_volume_init();
+ extern void at_call_volume_exit();
++
++extern void at_data_connection_init();
++extern void at_data_connection_exit();
+diff --git a/drivers/atmodem/data-connection.c b/drivers/atmodem/data-conne=
+ction.c
+new file mode 100644
+index 0000000..77e9fa2
+--- /dev/null
++++ b/drivers/atmodem/data-connection.c
+@@ -0,0 +1,649 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++
++#include <glib.h>
++
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/data-connection.h>
++
++#include "gatchat.h"
++#include "gatresult.h"
++
++#include "atmodem.h"
++
++static const char *cgdcont_prefix[] =3D { "+CGDCONT:", NULL };
++static const char *cgact_prefix[] =3D { "+CGACT:", NULL };
++static const char *none_prefix[] =3D { NULL };
++
++struct data_connection_data {
++	GSList *primary_id_range;
++	GSList *contexts;
++	GSList *new_contexts; /* Not yet defined contexts */
++	GAtChat *chat;
++};
++
++struct set_attached_req {
++	struct ofono_data_connection *dc;
++	int attached;
++	ofono_data_connection_cb_t cb;
++	void *data;
++};
++
++struct set_active_req {
++	struct ofono_data_connection *dc;
++	struct ofono_data_context *ctx;
++	int active;
++	ofono_data_connection_cb_t cb;
++	void *data;
++};
++
++static gint context_id_compare(gconstpointer a, gconstpointer b)
++{
++	const struct ofono_data_context *ctxa =3D a;
++	const gint *id =3D b;
++
++	return ctxa->id - *id;
++}
++
++static gint context_compare(gconstpointer a, gconstpointer b)
++{
++	const struct ofono_data_context *ctxa =3D a;
++	const struct ofono_data_context *ctxb =3D a;
++
++	return ctxa->id - ctxb->id;
++}
++
++static void context_free(struct ofono_data_context *ctx)
++{
++	if (ctx->apn)
++		g_free(ctx->apn);
++
++	if (ctx->username) {
++		memset(ctx->username, 0, strlen(ctx->username));
++		g_free(ctx->username);
++	}
++
++	if (ctx->password) {
++		memset(ctx->password, 0, strlen(ctx->password));
++		g_free(ctx->password);
++	}
++
++	g_free(ctx);
++}
++
++static unsigned int find_next_primary_id(struct data_connection_data *d)
++{
++	GSList *l;
++	gint i, *range;
++
++	for (l =3D d->primary_id_range; l; l =3D l->next)
++		for (range =3D l->data, i =3D range[0]; i <=3D range[1]; i++)
++			if (!g_slist_find_custom(d->contexts, &i,
++							context_id_compare))
++				return i;
++
++	return 0;
++}
++
++static void detached(struct ofono_data_connection *dc)
++{
++	struct data_connection_data *dcd =3D ofono_data_connection_get_data(dc);
++	GSList *l;
++	struct ofono_data_context *ctx;
++
++	for (l =3D dcd->contexts; l; l =3D l->next) {
++		ctx =3D l->data;
++		if (ctx->active) {
++			ctx->active =3D 0;
++
++			ofono_data_connection_deactivated(dc, ctx->id);
++		}
++	}
++}
++
++static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct set_attached_req *req =3D user_data;
++	struct ofono_error error;
++
++	dump_response("cgatt_cb", ok, result);
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (ok && !req->attached)
++		detached(req->dc);
++
++	req->cb(&error, req->data);
++}
++
++static void at_ps_set_attached(struct ofono_data_connection *dc,
++				int attached, ofono_data_connection_cb_t cb,
++				void *data)
++{
++	struct data_connection_data *dcd =3D ofono_data_connection_get_data(dc);
++	struct set_attached_req *req;
++	char buf[64];
++
++	req =3D g_new0(struct set_attached_req, 1);
++	if (!req)
++		goto error;
++
++	req->dc =3D dc;
++	req->attached =3D attached;
++	req->cb =3D cb;
++	req->data =3D data;
++
++	sprintf(buf, "AT+CGATT=3D%i", attached ? 1 : 0);
++
++	if (g_at_chat_send(dcd->chat, buf, none_prefix,
++				at_cgatt_cb, req, g_free) > 0)
++		return;
++
++error:
++	if (req)
++		g_free(req);
++
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
++static void at_cgact_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct set_active_req *req =3D user_data;
++	struct data_connection_data *dcd =3D
++		ofono_data_connection_get_data(req->dc);
++	struct ofono_error error;
++	GSList *l;
++	struct ofono_data_context *ctx;
++
++	dump_response("cgact_cb", ok, result);
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (ok) {
++		if (req->ctx) {
++			req->ctx->active =3D req->active;
++
++			if (!req->active)
++				ofono_data_connection_deactivated(req->dc,
++								req->ctx->id);
++		} else
++			for (l =3D dcd->contexts; l; l =3D l->next) {
++				ctx =3D l->data;
++
++				if (g_slist_find(dcd->new_contexts, ctx))
++					continue;
++
++				ctx->active =3D req->active;
++
++				if (!req->active)
++					ofono_data_connection_deactivated(
++							req->dc, ctx->id);
++			}
++	}
++
++	req->cb(&error, req->data);
++}
++
++static void at_cgdcont_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
++{
++	struct set_active_req *req =3D user_data;
++	struct data_connection_data *dcd =3D
++		ofono_data_connection_get_data(req->dc);
++	struct ofono_error error;
++	char buf[64];
++
++	dump_response("cgdcont_cb", ok, result);
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		req->cb(&error, req->data);
++
++		g_free(req);
++		return;
++	}
++
++	/* Context is no longer undefined */
++	dcd->new_contexts =3D g_slist_remove(dcd->new_contexts, req->ctx);
++
++	sprintf(buf, "AT+CGACT=3D1,%u", req->ctx->id);
++
++	if (g_at_chat_send(dcd->chat, buf, none_prefix,
++				at_cgact_cb, req, g_free) > 0)
++		return;
++
++	CALLBACK_WITH_FAILURE(req->cb, req->data);
++
++	g_free(req);
++}
++
++static void at_pdp_set_active(struct ofono_data_connection *dc, unsigned i=
+d,
++				int active, ofono_data_connection_cb_t cb,
++				void *data)
++{
++	struct data_connection_data *dcd =3D ofono_data_connection_get_data(dc);
++	struct set_active_req *req =3D NULL;
++	char buf[64];
++	struct ofono_data_context *ctx;
++	gint cid =3D id;
++	int len;
++	GSList *l;
++
++	l =3D g_slist_find_custom(dcd->contexts, &cid, context_id_compare);
++	if (!l)
++		goto error;
++
++	ctx =3D l->data;
++
++	req =3D g_new0(struct set_active_req, 1);
++	if (!req)
++		goto error;
++
++	req->dc =3D dc;
++	req->ctx =3D ctx;
++	req->active =3D active;
++	req->cb =3D cb;
++	req->data =3D data;
++
++	if (active) {
++		len =3D sprintf(buf, "AT+CGDCONT=3D%u,\"IP\"", id);
++		if (ctx->apn)
++			snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
++					ctx->apn);
++
++		if (g_at_chat_send(dcd->chat, buf, none_prefix,
++					at_cgdcont_cb, req, NULL) > 0)
++			return;
++	} else {
++		sprintf(buf, "AT+CGACT=3D0,%u", id);
++
++		if (g_at_chat_send(dcd->chat, buf, none_prefix,
++					at_cgact_cb, req, g_free) > 0)
++			return;
++	}
++
++error:
++	if (req)
++		g_free(req);
++
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
++static void at_pdp_set_active_all(struct ofono_data_connection *dc,
++				int active, ofono_data_connection_cb_t cb,
++				void *data)
++{
++	struct data_connection_data *dcd =3D ofono_data_connection_get_data(dc);
++	struct set_active_req *req;
++	char buf[64];
++
++	req =3D g_new0(struct set_active_req, 1);
++	if (!req)
++		goto error;
++
++	req->dc =3D dc;
++	req->active =3D active;
++	req->cb =3D cb;
++	req->data =3D data;
++
++	sprintf(buf, "AT+CGACT=3D%i", active ? 1 : 0);
++
++	if (g_at_chat_send(dcd->chat, buf, none_prefix,
++				at_cgact_cb, req, g_free) > 0)
++		return;
++
++error:
++	if (req)
++		g_free(req);
++
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
++static void at_pdp_alloc(struct ofono_data_connection *dc,
++				ofono_data_connection_alloc_cb_t cb,
++				void *data)
++{
++	struct data_connection_data *dcd =3D ofono_data_connection_get_data(dc);
++	struct ofono_data_context *ctx;
++	struct ofono_error e;
++	unsigned id =3D find_next_primary_id(dcd);
++
++	if (!id) {
++		CALLBACK_WITH_FAILURE(cb, NULL, data);
++
++		return;
++	}
++
++	ctx =3D g_try_new0(struct ofono_data_context, 1);
++	if (!ctx) {
++		CALLBACK_WITH_FAILURE(cb, NULL, data);
++
++		return;
++	}
++
++	ctx->id =3D id;
++	ctx->apn =3D g_strdup("");
++	ctx->username =3D g_strdup("");
++	ctx->password =3D g_strdup("");
++
++	dcd->new_contexts =3D g_slist_insert_sorted(dcd->new_contexts,
++						ctx, context_compare);
++	dcd->contexts =3D g_slist_insert_sorted(dcd->contexts,
++						ctx, context_compare);
++
++	/* The context will be defined (+CGDCONT) lazily, once it's needed
++	 * and the parameters are already set in ctx.  Right now just call
++	 * back */
++	e.type =3D OFONO_ERROR_TYPE_NO_ERROR;
++	e.error =3D 0;
++	cb(&e, ctx, data);
++
++	ofono_data_connection_notify(dc, ctx);
++}
++
++static void at_pdp_undefine_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	dump_response("undefine_cb", ok, result);
++
++	if (!ok)
++		ofono_error("Undefining primary context failed");
++}
++
++static void at_pdp_free(struct ofono_data_connection *dc, unsigned id,
++			ofono_data_connection_cb_t cb, void *data)
++{
++	struct data_connection_data *dcd =3D ofono_data_connection_get_data(dc);
++	struct ofono_error e;
++	char buf[64];
++	struct ofono_data_context *ctx;
++	GSList *l;
++	gint cid =3D id;
++
++	l =3D g_slist_find_custom(dcd->contexts, &cid, context_id_compare);
++	if (!l) {
++		CALLBACK_WITH_FAILURE(cb, data);
++
++		return;
++	}
++
++	ctx =3D l->data;
++	if (ctx->active) {
++		CALLBACK_WITH_FAILURE(cb, data);
++
++		return;
++	}
++
++	/* We can call back already -- even if the request to undefine
++	 * the context fails, the ID can be re-used.  */
++	e.type =3D OFONO_ERROR_TYPE_NO_ERROR;
++	e.error =3D 0;
++	cb(&e, data);
++
++	context_free(ctx);
++	dcd->contexts =3D g_slist_remove(dcd->contexts, ctx);
++
++	if (g_slist_find(dcd->new_contexts, ctx)) {
++		dcd->new_contexts =3D g_slist_remove(dcd->new_contexts, ctx);
++		return;
++	}
++
++	sprintf(buf, "AT+CGDCONT=3D%u", id);
++
++	g_at_chat_send(dcd->chat, buf, none_prefix,
++			at_pdp_undefine_cb, NULL, NULL);
++}
++
++static void at_cgact_read_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct ofono_data_connection *dc =3D user_data;
++	struct data_connection_data *dcd =3D ofono_data_connection_get_data(dc);
++	gint cid, state;
++	GAtResultIter iter;
++	struct ofono_data_context *ctx;
++	GSList *l;
++
++	dump_response("cgact_read_cb", ok, result);
++
++	if (!ok)
++		return;
++
++	while (g_at_result_iter_next(&iter, "+CGACT:")) {
++		if (!g_at_result_iter_next_number(&iter, &cid))
++			continue;
++
++		if (!g_at_result_iter_next_number(&iter, &state))
++			continue;
++
++		l =3D g_slist_find_custom(dcd->contexts, &cid,
++					context_id_compare);
++		if (!l)
++			continue;
++
++		ctx =3D l->data;
++		if (ctx->active !=3D state) {
++			ctx->active =3D state;
++
++			if (state)
++				continue;
++
++			ofono_data_connection_deactivated(dc, ctx->id);
++		}
++	}
++}
++
++static void cgev_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_data_connection *dc =3D user_data;
++	struct data_connection_data *dcd =3D ofono_data_connection_get_data(dc);
++	GAtResultIter iter;
++	const char *event;
++
++	if (!g_at_result_iter_next(&iter, "+CGEV:"))
++		return;
++
++	if (!g_at_result_iter_next_unquoted_string(&iter, &event))
++		return;
++
++	if (g_str_has_prefix(event, "REJECT "))
++		return;
++
++	if (g_str_has_prefix(event, "NW REACT ") ||
++			g_str_has_prefix(event, "NW DEACT ") ||
++			g_str_has_prefix(event, "ME DEACT ")) {
++		/* Ask what primary contexts are active now */
++		g_at_chat_send(dcd->chat, "AT+CGACT?", cgact_prefix,
++				at_cgact_read_cb, dc, NULL);
++
++		return;
++	}
++
++	if (g_str_has_prefix(event, "NW DETACH ") ||
++			g_str_has_prefix(event, "ME DETACH ")) {
++		detached(dc);
++
++		ofono_data_connection_detached(dc);
++
++		return;
++	}
++
++	if (g_str_has_prefix(event, "NW CLASS ") ||
++			g_str_has_prefix(event, "ME CLASS "))
++		return;
++}
++
++static void cgreg_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_data_connection *dc =3D user_data;
++	GAtResultIter iter;
++	gint status, tech =3D -1;
++	int lac =3D -1, ci =3D -1;
++	const char *str;
++
++	dump_response("cgreg_notify", TRUE, result);
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CGREG:"))
++		return;
++
++	g_at_result_iter_next_number(&iter, &status);
++
++	if (g_at_result_iter_next_string(&iter, &str))
++		lac =3D strtol(str, NULL, 16);
++	else
++		goto out;
++
++	if (g_at_result_iter_next_string(&iter, &str))
++		ci =3D strtol(str, NULL, 16);
++	else
++		goto out;
++
++	g_at_result_iter_next_number(&iter, &tech);
++
++out:
++	ofono_debug("cgreg_notify: %d, %d, %d, %d", status, lac, ci, tech);
++
++	if (status !=3D 1 && status !=3D 5)
++		detached(dc);
++
++	ofono_data_netreg_status_notify(dc, status, lac, ci, tech);
++}
++
++static void at_cgdcont_test_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct ofono_data_connection *dc =3D user_data;
++	struct data_connection_data *dcd =3D ofono_data_connection_get_data(dc);
++	GAtResultIter iter;
++	gint range[2];
++	GSList *ranges =3D NULL;
++	const char *pdp_type;
++
++	if (!ok)
++		goto error;
++
++	g_at_result_iter_init(&iter, result);
++
++	while (g_at_result_iter_next(&iter, "+CGDCONT:")) {
++		if (!g_at_result_iter_open_list(&iter))
++			goto next;
++
++		while (g_at_result_iter_next_range(&iter, &range[0],
++							&range[1]))
++			ranges =3D g_slist_prepend(ranges,
++					g_memdup(range, sizeof(range)));
++
++		if (!g_at_result_iter_close_list(&iter))
++			goto next;
++
++		if (!ranges || range[1] < range[0])
++			goto next;
++
++		if (!g_at_result_iter_next_string(&iter, &pdp_type))
++			goto next;
++
++		/* We look for IP PDPs */
++		if (!strcmp(pdp_type, "IP"))
++			break;
++
++next:
++		if (ranges) {
++			g_slist_foreach(ranges, (GFunc) g_free, NULL);
++			g_slist_free(ranges);
++			ranges =3D NULL;
++		}
++	}
++	if (!ranges)
++		goto error;
++
++	dcd->primary_id_range =3D g_slist_reverse(ranges);
++
++	ofono_debug("data_connection_init: registering to notifications");
++
++	g_at_chat_register(dcd->chat, "+CGEV:", cgev_notify, FALSE, dc, NULL);
++	g_at_chat_register(dcd->chat, "+CGREG:", cgreg_notify, FALSE, dc, NULL);
++
++	ofono_data_connection_register(dc);
++
++	return;
++
++error:
++	ofono_data_connection_remove(dc);
++}
++
++static int at_data_connection_probe(struct ofono_data_connection *dc,
++					unsigned int vendor, void *data)
++{
++	GAtChat *chat =3D data;
++	struct data_connection_data *dcd;
++
++	dcd =3D g_new0(struct data_connection_data, 1);
++	dcd->chat =3D chat;
++
++	ofono_data_connection_set_data(dc, dcd);
++
++	g_at_chat_send(chat, "AT+CGREG=3D2", NULL, NULL, NULL, NULL);
++	g_at_chat_send(chat, "AT+CGAUTO=3D0", NULL, NULL, NULL, NULL);
++	g_at_chat_send(chat, "AT+CGEREP=3D2,1", NULL, NULL, NULL, NULL);
++	g_at_chat_send(chat, "AT+CGDCONT=3D?", cgdcont_prefix,
++			at_cgdcont_test_cb, dc, NULL);
++	return 0;
++}
++
++static void at_data_connection_remove(struct ofono_data_connection *dc)
++{
++	struct data_connection_data *dcd =3D ofono_data_connection_get_data(dc);
++
++	g_slist_foreach(dcd->contexts, (GFunc) context_free, NULL);
++	g_slist_free(dcd->contexts);
++	g_slist_free(dcd->new_contexts);
++	g_free(dcd);
++}
++
++static struct ofono_data_connection_driver driver =3D {
++	.name			=3D "atmodem",
++	.probe			=3D at_data_connection_probe,
++	.remove			=3D at_data_connection_remove,
++	.set_attached		=3D at_ps_set_attached,
++	.set_active		=3D at_pdp_set_active,
++	.set_active_all		=3D at_pdp_set_active_all,
++	.create_context		=3D at_pdp_alloc,
++	.remove_context		=3D at_pdp_free,
++};
++
++void at_data_connection_init()
++{
++	ofono_data_connection_driver_register(&driver);
++}
++
++void at_data_connection_exit()
++{
++	ofono_data_connection_driver_unregister(&driver);
++}
+diff --git a/include/data-connection.h b/include/data-connection.h
+new file mode 100644
+index 0000000..24b68a8
+--- /dev/null
++++ b/include/data-connection.h
+@@ -0,0 +1,89 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifndef __OFONO_DATA_CONNECTION_H
++#define __OFONO_DATA_CONNECTION_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include <ofono/types.h>
++
++struct ofono_data_connection;
++
++typedef void (*ofono_data_connection_cb_t)(const struct ofono_error *error,
++						void *data);
++
++typedef void (*ofono_data_connection_alloc_cb_t)(
++						const struct ofono_error *error,
++						struct ofono_data_context *ctx,
++						void *data);
++
++struct ofono_data_connection_driver {
++	const char *name;
++	int (*probe)(struct ofono_data_connection *dc, unsigned int vendor,
++			void *data);
++	void (*remove)(struct ofono_data_connection *dc);
++	void (*set_attached)(struct ofono_data_connection *dc,
++				int attached, ofono_data_connection_cb_t cb,
++				void *data);
++	void (*set_active)(struct ofono_data_connection *dc, unsigned id,
++				int active, ofono_data_connection_cb_t cb,
++				void *data);
++	void (*set_active_all)(struct ofono_data_connection *dc,
++				int active, ofono_data_connection_cb_t cb,
++				void *data);
++	void (*create_context)(struct ofono_data_connection *dc,
++				ofono_data_connection_alloc_cb_t cb,
++				void *data);
++	void (*remove_context)(struct ofono_data_connection *dc, unsigned id,
++				ofono_data_connection_cb_t cb, void *data);
++};
++
++void ofono_data_connection_notify(struct ofono_data_connection *dc,
++					struct ofono_data_context *ctx);
++void ofono_data_connection_deactivated(struct ofono_data_connection *dc,
++					unsigned id);
++void ofono_data_connection_detached(struct ofono_data_connection *dc);
++void ofono_data_netreg_status_notify(struct ofono_data_connection *dc,
++					int status, int lac, int ci, int tech);
++
++int ofono_data_connection_driver_register(
++				const struct ofono_data_connection_driver *d);
++void ofono_data_connection_driver_unregister(
++				const struct ofono_data_connection_driver *d);
++
++struct ofono_data_connection *ofono_data_connection_create(
++		struct ofono_modem *modem, unsigned int vendor,
++		const char *driver, void *data);
++void ofono_data_connection_register(struct ofono_data_connection *dc);
++void ofono_data_connection_remove(struct ofono_data_connection *dc);
++
++void ofono_data_connection_set_data(struct ofono_data_connection *dc,
++					void *data);
++void *ofono_data_connection_get_data(struct ofono_data_connection *dc);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __OFONO_DATA_CONNECTION_H */
+diff --git a/include/types.h b/include/types.h
+index 6a9681d..44428fb 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -91,6 +91,16 @@ struct ofono_call {
+ 	int clip_validity;
+ };
+ =
+
++struct ofono_data_context {
++	unsigned id;
++	int type;
++	int direction;
++	int active;
++	char *apn;
++	char *username;
++	char *password;
++};
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 02ce443..26e170c 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -54,6 +54,7 @@
+ #include <ofono/ssn.h>
+ #include <ofono/ussd.h>
+ #include <ofono/voicecall.h>
++#include <ofono/data-connection.h>
+ =
+
+ #include <drivers/atmodem/vendor.h>
+ =
+
+@@ -285,6 +286,8 @@ static void phonesim_post_sim(struct ofono_modem *modem)
+ 		ofono_cbs_create(modem, 0, "atmodem", data->chat);
+ 	}
+ =
+
++	ofono_data_connection_create(modem, 0, "atmodem", data->chat);
++
+ 	mw =3D ofono_message_waiting_create(modem);
+ 	if (mw)
+ 		ofono_message_waiting_register(mw);
+diff --git a/src/data-connection.c b/src/data-connection.c
+new file mode 100644
+index 0000000..eab36c7
+--- /dev/null
++++ b/src/data-connection.c
+@@ -0,0 +1,1074 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <string.h>
++#include <stdio.h>
++#include <errno.h>
++
++#include <glib.h>
++#include <gdbus.h>
++
++#include "ofono.h"
++
++#include "common.h"
++
++#define DATA_CONNECTION_MANAGER_INTERFACE "org.ofono.DataConnectionManager"
++#define DATA_CONTEXT_INTERFACE "org.ofono.PrimaryDataContext"
++
++#define DATA_CONNECTION_FLAG_ATTACHING 0x1
++
++static GSList *g_drivers =3D NULL;
++
++struct ofono_data_connection {
++	GSList *contexts;
++	int attached;
++	int roaming_allowed;
++	int powered;
++	int status;
++	int location;
++	int cellid;
++	int technology;
++
++	int flags;
++	struct context *current_context;
++	DBusMessage *pending;
++	const struct ofono_data_connection_driver *driver;
++	void *driver_data;
++	struct ofono_atom *atom;
++};
++
++struct context {
++	struct ofono_data_context *context;
++	struct ofono_data_connection *dc;
++};
++
++static void dc_netreg_update(struct ofono_data_connection *dc);
++
++static gint context_compare(gconstpointer a, gconstpointer b)
++{
++	const struct context *ctxa =3D a;
++	const struct context *ctxb =3D a;
++
++	return ctxa->context->id - ctxb->context->id;
++}
++
++enum {
++	DATA_CONTEXT_TYPE_INTERNET,
++	DATA_CONTEXT_TYPE_MMS,
++	DATA_CONTEXT_TYPE_WAP,
++};
++
++static inline const char *data_context_type_to_string(int type)
++{
++	switch (type) {
++	case DATA_CONTEXT_TYPE_INTERNET:
++		return "internet";
++	case DATA_CONTEXT_TYPE_MMS:
++		return "mms";
++	case DATA_CONTEXT_TYPE_WAP:
++		return "wap";
++	}
++
++	return NULL;
++}
++
++static const char *dc_build_context_path(struct ofono_data_connection *dc,
++					const struct ofono_data_context *ctx)
++{
++	static char path[256];
++
++	snprintf(path, sizeof(path), "%s/primarycontext%02u",
++			__ofono_atom_get_path(dc->atom), ctx->id);
++
++	return path;
++}
++
++static struct context *dc_context_by_path(
++		struct ofono_data_connection *dc, const char *ctx_path)
++{
++	const char *path =3D __ofono_atom_get_path(dc->atom);
++	GSList *l;
++	unsigned id;
++
++	if (!g_str_has_prefix(ctx_path, path))
++		return NULL;
++
++	if (sscanf(ctx_path + strlen(path), "/primarycontext%2u", &id) !=3D 1)
++		return NULL;
++
++	for (l =3D dc->contexts; l; l =3D l->next) {
++		struct context *ctx =3D l->data;
++
++		if (ctx->context->id =3D=3D id)
++			return ctx;
++	}
++
++	return NULL;
++}
++
++static DBusMessage *dc_get_context_properties(DBusConnection *conn,
++						DBusMessage *msg, void *data)
++{
++	struct context *ctx =3D data;
++	DBusMessage *reply;
++	DBusMessageIter iter;
++	DBusMessageIter dict;
++	dbus_bool_t value;
++	const char *type =3D data_context_type_to_string(ctx->context->type);
++
++	reply =3D dbus_message_new_method_return(msg);
++	if (!reply)
++		return NULL;
++
++	dbus_message_iter_init_append(reply, &iter);
++
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					OFONO_PROPERTIES_ARRAY_SIGNATURE,
++					&dict);
++
++	value =3D ctx->context->active;
++	ofono_dbus_dict_append(&dict, "Active", DBUS_TYPE_BOOLEAN, &value);
++
++	ofono_dbus_dict_append(&dict, "AccessPointName",
++				DBUS_TYPE_STRING, &ctx->context->apn);
++
++	ofono_dbus_dict_append(&dict, "Type",
++				DBUS_TYPE_STRING, &type);
++
++	ofono_dbus_dict_append(&dict, "Username",
++				DBUS_TYPE_STRING, &ctx->context->username);
++
++	ofono_dbus_dict_append(&dict, "Passwod",
++				DBUS_TYPE_STRING, &ctx->context->password);
++
++	dbus_message_iter_close_container(&iter, &dict);
++
++	return reply;
++}
++
++static void context_set_active_callback(const struct ofono_error *error,
++					void *data)
++{
++	struct context *ctx =3D data;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	DBusMessage *reply;
++	const char *path;
++	dbus_bool_t value;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		ofono_debug("Activating context failed with error: %s",
++				telephony_error_to_str(error));
++
++		reply =3D __ofono_error_failed(ctx->dc->pending);
++		goto reply;
++	}
++
++	reply =3D dbus_message_new_method_return(ctx->dc->pending);
++
++	if (!ctx->context->active) /* Signal emitted elsewhere */
++		goto reply;
++
++	path =3D dc_build_context_path(ctx->dc, ctx->context);
++	value =3D ctx->context->active;
++	ofono_dbus_signal_property_changed(conn, path, DATA_CONTEXT_INTERFACE,
++						"Active", DBUS_TYPE_BOOLEAN,
++						&value);
++
++reply:
++	__ofono_dbus_pending_reply(&ctx->dc->pending, reply);
++}
++
++static DBusMessage *dc_set_context_property(DBusConnection *conn,
++						DBusMessage *msg, void *data)
++{
++	struct context *ctx =3D data;
++	DBusMessageIter iter;
++	DBusMessageIter var;
++	const char *property;
++	dbus_bool_t value;
++	const char *str;
++	const char *path;
++
++	if (ctx->dc->pending)
++		return __ofono_error_busy(msg);
++
++	if (!dbus_message_iter_init(msg, &iter))
++		return __ofono_error_invalid_args(msg);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &property);
++	dbus_message_iter_next(&iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_recurse(&iter, &var);
++
++	if (!strcmp(property, "Active")) {
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &value);
++
++		if ((dbus_bool_t) ctx->context->active =3D=3D value)
++			return dbus_message_new_method_return(msg);
++		if (ctx->dc->flags & DATA_CONNECTION_FLAG_ATTACHING)
++			return __ofono_error_busy(msg);
++		if (value && !ctx->dc->attached)
++			return __ofono_error_failed(msg);
++		if (!ctx->dc->driver->set_active)
++			return __ofono_error_not_implemented(msg);
++
++		ctx->dc->pending =3D dbus_message_ref(msg);
++
++		ctx->dc->driver->set_active(ctx->dc, ctx->context->id,
++						value,
++						context_set_active_callback,
++						ctx);
++
++		return NULL;
++	}
++
++	/* All other properties are read-only when context is active */
++	if (ctx->context->active)
++		return __ofono_error_invalid_args(msg);
++
++	if (!strcmp(property, "AccessPointName")) {
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &str);
++
++		if (ctx->context->apn)
++			g_free(ctx->context->apn);
++		ctx->context->apn =3D g_strdup(str);
++	} else if (!strcmp(property, "Type")) {
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &str);
++
++		if (!strcmp(str, "internet"))
++			ctx->context->type =3D DATA_CONTEXT_TYPE_INTERNET;
++		else
++			return __ofono_error_invalid_args(msg);
++	} else if (!strcmp(property, "Username")) {
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &str);
++
++		if (ctx->context->username)
++			g_free(ctx->context->username);
++		ctx->context->username =3D g_strdup(str);
++	} else if (!strcmp(property, "Password")) {
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &str);
++
++		if (ctx->context->password)
++			g_free(ctx->context->password);
++		ctx->context->password =3D g_strdup(str);
++	} else
++		return __ofono_error_invalid_args(msg);
++
++	path =3D dc_build_context_path(ctx->dc, ctx->context);
++	ofono_dbus_signal_property_changed(conn, path, DATA_CONTEXT_INTERFACE,
++						property, DBUS_TYPE_STRING,
++						&str);
++
++	return dbus_message_new_method_return(msg);
++}
++
++static GDBusMethodTable context_methods[] =3D {
++	{ "GetProperties",	"",	"a{sv}",	dc_get_context_properties },
++	{ "SetProperty",	"sv",	"",		dc_set_context_property,
++							G_DBUS_METHOD_FLAG_ASYNC },
++	{ }
++};
++
++static GDBusSignalTable context_signals[] =3D {
++	{ "PropertyChanged",	"sv" },
++	{ }
++};
++
++static struct context *context_create(struct ofono_data_connection *dc,
++					struct ofono_data_context *ctx)
++{
++	struct context *context =3D g_try_new0(struct context, 1);
++
++	if (!context)
++		return NULL;
++
++	context->context =3D ctx;
++	context->dc =3D dc;
++
++	return context;
++}
++
++static void context_destroy(gpointer userdata)
++{
++	struct context *ctx =3D userdata;
++
++	g_free(ctx);
++}
++
++static gboolean context_dbus_register(struct ofono_data_connection *dc,
++					struct context *ctx)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D dc_build_context_path(dc, ctx->context);
++
++	if (!g_dbus_register_interface(conn, path, DATA_CONTEXT_INTERFACE,
++					context_methods, context_signals,
++					NULL, ctx, context_destroy)) {
++		ofono_error("Could not register PrimaryContext %s", path);
++		context_destroy(ctx);
++
++		return FALSE;
++	}
++
++	return TRUE;
++}
++
++static gboolean context_dbus_unregister(struct ofono_data_connection *dc,
++					struct ofono_data_context *ctx)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D dc_build_context_path(dc, ctx);
++
++	return g_dbus_unregister_interface(conn, path, DATA_CONTEXT_INTERFACE);
++}
++
++static char **dc_contexts_path_list(struct ofono_data_connection *dc,
++					GSList *context_list)
++{
++	GSList *l;
++	char **i;
++	struct context *ctx;
++	char **objlist =3D g_new0(char *, g_slist_length(context_list) + 1);
++
++	if (!objlist)
++		return NULL;
++
++	for (i =3D objlist, l =3D context_list; l; l =3D l->next) {
++		ctx =3D l->data;
++		*i++ =3D g_strdup(dc_build_context_path(dc, ctx->context));
++	}
++
++	return objlist;
++}
++
++static void dc_generic_callback(const struct ofono_error *error, void *dat=
+a)
++{
++	struct ofono_data_connection *dc =3D data;
++	DBusMessage *reply;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
++		ofono_debug("command failed with error: %s",
++				telephony_error_to_str(error));
++
++	if (!dc->pending)
++		return;
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
++		reply =3D dbus_message_new_method_return(dc->pending);
++	else
++		reply =3D __ofono_error_failed(dc->pending);
++
++	__ofono_dbus_pending_reply(&dc->pending, reply);
++}
++
++static void dc_attach_callback(const struct ofono_error *error,
++					void *data)
++{
++	struct ofono_data_connection *dc =3D data;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path;
++	dbus_bool_t value;
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
++			(dc->flags & DATA_CONNECTION_FLAG_ATTACHING)) {
++		dc->attached =3D !dc->attached;
++
++		path =3D __ofono_atom_get_path(dc->atom);
++		value =3D dc->attached;
++		ofono_dbus_signal_property_changed(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					"Attached", DBUS_TYPE_BOOLEAN, &value);
++	}
++
++	dc->flags &=3D ~DATA_CONNECTION_FLAG_ATTACHING;
++
++	dc_netreg_update(dc);
++}
++
++static void dc_netreg_update(struct ofono_data_connection *dc)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	int attach;
++	int operator_ok;
++	const char *path;
++	dbus_bool_t value =3D 0;
++
++	operator_ok =3D dc->roaming_allowed ||
++		(dc->status !=3D NETWORK_REGISTRATION_STATUS_ROAMING);
++
++	attach =3D dc->powered && operator_ok;
++
++	if (dc->attached !=3D attach &&
++			!(dc->flags & DATA_CONNECTION_FLAG_ATTACHING)) {
++		dc->flags |=3D DATA_CONNECTION_FLAG_ATTACHING;
++
++		dc->driver->set_attached(dc, attach, dc_attach_callback, dc);
++
++		/* Prevent further attempts to attach */
++		if (!attach && dc->powered) {
++			dc->powered =3D 0;
++
++			path =3D __ofono_atom_get_path(dc->atom);
++			ofono_dbus_signal_property_changed(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					"Powered", DBUS_TYPE_BOOLEAN, &value);
++		}
++	}
++}
++
++static DBusMessage *dc_get_manager_properties(DBusConnection *conn,
++						DBusMessage *msg, void *data)
++{
++	struct ofono_data_connection *dc =3D data;
++	DBusMessage *reply;
++	DBusMessageIter iter;
++	DBusMessageIter dict;
++	char **objpath_list;
++	dbus_bool_t value;
++	const char *status =3D registration_status_to_string(dc->status);
++
++	reply =3D dbus_message_new_method_return(msg);
++	if (!reply)
++		return NULL;
++
++	dbus_message_iter_init_append(reply, &iter);
++
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					OFONO_PROPERTIES_ARRAY_SIGNATURE,
++					&dict);
++
++	objpath_list =3D dc_contexts_path_list(dc, dc->contexts);
++	if (!objpath_list)
++		return NULL;
++
++	ofono_dbus_dict_append_array(&dict, "PrimaryContexts",
++					DBUS_TYPE_OBJECT_PATH, &objpath_list);
++
++	g_strfreev(objpath_list);
++
++	value =3D dc->attached;
++	ofono_dbus_dict_append(&dict, "Attached", DBUS_TYPE_BOOLEAN, &value);
++
++	value =3D dc->roaming_allowed;
++	ofono_dbus_dict_append(&dict, "RoamingAllowed",
++				DBUS_TYPE_BOOLEAN, &value);
++
++	value =3D dc->powered;
++	ofono_dbus_dict_append(&dict, "Powered", DBUS_TYPE_BOOLEAN, &value);
++
++	ofono_dbus_dict_append(&dict, "Status", DBUS_TYPE_STRING, &status);
++
++	if (dc->location !=3D -1) {
++		dbus_uint16_t location =3D dc->location;
++		ofono_dbus_dict_append(&dict, "LocationAreaCode",
++					DBUS_TYPE_UINT16, &location);
++	}
++
++	if (dc->cellid !=3D -1) {
++		dbus_uint32_t cellid =3D dc->cellid;
++		ofono_dbus_dict_append(&dict, "CellId",
++					DBUS_TYPE_UINT32, &cellid);
++	}
++
++	if (dc->technology !=3D -1) {
++		const char *technology =3D
++			registration_tech_to_string(dc->technology);
++
++		ofono_dbus_dict_append(&dict, "Technology", DBUS_TYPE_STRING,
++					&technology);
++	}
++
++	dbus_message_iter_close_container(&iter, &dict);
++
++	return reply;
++}
++
++static DBusMessage *dc_set_manager_property(DBusConnection *conn,
++						DBusMessage *msg, void *data)
++{
++	struct ofono_data_connection *dc =3D data;
++	DBusMessageIter iter;
++	DBusMessageIter var;
++	const char *property;
++	dbus_bool_t value;
++	const char *path;
++
++	if (dc->pending)
++		return __ofono_error_busy(msg);
++
++	if (!dbus_message_iter_init(msg, &iter))
++		return __ofono_error_invalid_args(msg);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &property);
++	dbus_message_iter_next(&iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_recurse(&iter, &var);
++
++	if (!strcmp(property, "RoamingAllowed")) {
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &value);
++
++		dc->roaming_allowed =3D value;
++		dc_netreg_update(dc);
++	} else if (!strcmp(property, "Powered")) {
++		if (!dc->driver->set_attached)
++			return __ofono_error_not_implemented(msg);
++
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &value);
++
++		dc->powered =3D value;
++		dc_netreg_update(dc);
++	} else
++		return __ofono_error_invalid_args(msg);
++
++	path =3D __ofono_atom_get_path(dc->atom);
++	ofono_dbus_signal_property_changed(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					property, DBUS_TYPE_BOOLEAN, &value);
++
++	return dbus_message_new_method_return(msg);
++}
++
++static void dc_create_context_callback(const struct ofono_error *error,
++					struct ofono_data_context *ctx,
++					void *data)
++{
++	struct ofono_data_connection *dc =3D data;
++	DBusMessage *reply;
++	const char *path;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		ofono_debug("Creating new context failed with error: %s",
++				telephony_error_to_str(error));
++
++		reply =3D __ofono_error_failed(dc->pending);
++		goto error;
++	}
++
++	reply =3D dbus_message_new_method_return(dc->pending);
++
++	path =3D dc_build_context_path(dc, ctx);
++	dbus_message_append_args(reply, DBUS_TYPE_OBJECT_PATH, &path,
++					DBUS_TYPE_INVALID);
++
++error:
++	__ofono_dbus_pending_reply(&dc->pending, reply);
++}
++
++static DBusMessage *dc_create_context(DBusConnection *conn,
++					DBusMessage *msg, void *data)
++{
++	struct ofono_data_connection *dc =3D data;
++
++	if (dc->pending)
++		return __ofono_error_busy(msg);
++
++	if (!dc->driver->create_context)
++		return __ofono_error_not_implemented(msg);
++
++	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_INVALID))
++		return __ofono_error_invalid_args(msg);
++
++	dc->pending =3D dbus_message_ref(msg);
++
++	dc->driver->create_context(dc, dc_create_context_callback, dc);
++
++	return NULL;
++}
++
++static void dc_remove_context_callback(const struct ofono_error *error,
++					void *data)
++{
++	struct ofono_data_connection *dc =3D data;
++	DBusMessage *reply;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path;
++	char **objpath_list;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		ofono_error("Removing context failed with error: %s",
++				telephony_error_to_str(error));
++
++		reply =3D __ofono_error_failed(dc->pending);
++		goto error;
++	}
++
++	context_dbus_unregister(dc, dc->current_context->context);
++	dc->contexts =3D g_slist_remove(dc->contexts, dc->current_context);
++	dc->current_context =3D NULL;
++
++	objpath_list =3D dc_contexts_path_list(dc, dc->contexts);
++	if (!objpath_list) {
++		ofono_error("Could not allocate PrimaryContext objects list");
++		return;
++	}
++
++	path =3D __ofono_atom_get_path(dc->atom);
++	ofono_dbus_signal_array_property_changed(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					"PrimaryContexts",
++					DBUS_TYPE_OBJECT_PATH, &objpath_list);
++
++	g_strfreev(objpath_list);
++
++	reply =3D dbus_message_new_method_return(dc->pending);
++
++error:
++	__ofono_dbus_pending_reply(&dc->pending, reply);
++}
++
++static void dc_deactivate_context_callback(const struct ofono_error *error,
++						void *data)
++{
++	struct ofono_data_connection *dc =3D data;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		ofono_debug("Removing context failed with error: %s",
++				telephony_error_to_str(error));
++
++		dc->current_context =3D NULL;
++		__ofono_dbus_pending_reply(&dc->pending, __ofono_error_failed(
++						dc->pending));
++		return;
++	}
++
++	dc->driver->remove_context(dc, dc->current_context->context->id,
++					dc_remove_context_callback, dc);
++}
++
++static DBusMessage *dc_remove_context(DBusConnection *conn,
++					DBusMessage *msg, void *data)
++{
++	struct ofono_data_connection *dc =3D data;
++	struct context *ctx;
++	const char *path;
++
++	if (dc->pending)
++		return __ofono_error_busy(msg);
++
++	if (!dc->driver->remove_context)
++		return __ofono_error_not_implemented(msg);
++
++	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_OBJECT_PATH, &path,
++					DBUS_TYPE_INVALID))
++		return __ofono_error_invalid_args(msg);
++
++	if (path[0] =3D=3D '\0')
++		return __ofono_error_invalid_format(msg);
++
++	ctx =3D dc_context_by_path(dc, path);
++	if (!ctx)
++		return __ofono_error_not_found(msg);
++
++	dc->pending =3D dbus_message_ref(msg);
++	dc->current_context =3D ctx;
++
++	if (ctx->context->active && dc->driver->set_active) {
++		dc->driver->set_active(dc, ctx->context->id, 0,
++					dc_deactivate_context_callback, dc);
++
++		return NULL;
++	}
++
++	dc->driver->remove_context(dc, ctx->context->id,
++					dc_remove_context_callback, dc);
++
++	return NULL;
++}
++
++static DBusMessage *dc_deactivate_all(DBusConnection *conn,
++					DBusMessage *msg, void *data)
++{
++	struct ofono_data_connection *dc =3D data;
++
++	if (dc->pending)
++		return __ofono_error_busy(msg);
++
++	if (!dc->driver->set_active_all)
++		return __ofono_error_not_implemented(msg);
++
++	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_INVALID))
++		return __ofono_error_invalid_args(msg);
++
++	dc->pending =3D dbus_message_ref(msg);
++
++	dc->driver->set_active_all(dc, 0, dc_generic_callback, dc);
++
++	return NULL;
++}
++
++static GDBusMethodTable manager_methods[] =3D {
++	{ "GetProperties",	"",	"a{sv}",	dc_get_manager_properties },
++	{ "SetProperty",	"sv",	"",		dc_set_manager_property },
++	{ "CreateContext",	"",	"o",		dc_create_context,
++							G_DBUS_METHOD_FLAG_ASYNC },
++	{ "RemoveContext",	"o",	"",		dc_remove_context,
++							G_DBUS_METHOD_FLAG_ASYNC },
++	{ "DeactivateAll",	"",	"",		dc_deactivate_all,
++							G_DBUS_METHOD_FLAG_ASYNC },
++	{ }
++};
++
++static GDBusSignalTable manager_signals[] =3D {
++	{ "PropertyChanged",	"sv" },
++	{ }
++};
++
++void ofono_data_connection_notify(struct ofono_data_connection *dc,
++					struct ofono_data_context *ctx)
++{
++	struct context *context =3D context_create(dc, ctx);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path;
++	char **objpath_list;
++
++	if (!context) {
++		ofono_error("Unable to allocate context struct");
++		return;
++	}
++
++	ofono_debug("Registering new context: %i", ctx->id);
++	if (!context_dbus_register(dc, context))
++		return;
++
++	dc->contexts =3D g_slist_insert_sorted(dc->contexts,
++						context, context_compare);
++
++	objpath_list =3D dc_contexts_path_list(dc, dc->contexts);
++	if (!objpath_list) {
++		ofono_error("Unable to allocate PrimaryContext objects list");
++		return;
++	}
++
++	path =3D __ofono_atom_get_path(dc->atom);
++	ofono_dbus_signal_array_property_changed(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					"PrimaryContexts",
++					DBUS_TYPE_OBJECT_PATH, &objpath_list);
++
++	g_strfreev(objpath_list);
++}
++
++void ofono_data_connection_deactivated(struct ofono_data_connection *dc,
++					unsigned id)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D NULL; /* Suppress warning */
++	dbus_bool_t value =3D 0;
++	GSList *l;
++	struct context *ctx;
++
++	for (l =3D dc->contexts; l; l =3D l->next) {
++		ctx =3D l->data;
++
++		if (ctx->context->id =3D=3D id) {
++			path =3D dc_build_context_path(dc, ctx->context);
++			break;
++		}
++	}
++
++	ofono_dbus_signal_property_changed(conn, path, DATA_CONTEXT_INTERFACE,
++						"Active", DBUS_TYPE_BOOLEAN,
++						&value);
++
++}
++
++void ofono_data_connection_detached(struct ofono_data_connection *dc)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path;
++	dbus_bool_t value =3D 0;
++
++	if (dc->attached && !(dc->flags & DATA_CONNECTION_FLAG_ATTACHING)) {
++		dc->attached =3D 0;
++
++		path =3D __ofono_atom_get_path(dc->atom);
++		ofono_dbus_signal_property_changed(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					"Attached", DBUS_TYPE_BOOLEAN, &value);
++
++		dc_netreg_update(dc);
++	}
++}
++
++static void set_registration_status(struct ofono_data_connection *dc,
++					int status)
++{
++	const char *str_status =3D registration_status_to_string(status);
++	const char *path =3D __ofono_atom_get_path(dc->atom);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	dbus_bool_t attached;
++
++	dc->status =3D status;
++
++	ofono_dbus_signal_property_changed(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					"Status", DBUS_TYPE_STRING,
++					&str_status);
++
++	attached =3D (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
++			status !=3D NETWORK_REGISTRATION_STATUS_ROAMING);
++	if (dc->attached !=3D (int) attached &&
++			!(dc->flags & DATA_CONNECTION_FLAG_ATTACHING)) {
++		dc->attached =3D (int) attached;
++
++		ofono_dbus_signal_property_changed(conn, path,
++				DATA_CONNECTION_MANAGER_INTERFACE,
++				"Attached", DBUS_TYPE_BOOLEAN,
++				&attached);
++
++		dc_netreg_update(dc);
++	}
++}
++
++static void set_registration_location(struct ofono_data_connection *dc,
++					int lac)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(dc->atom);
++	dbus_uint16_t dbus_lac =3D lac;
++
++	if (lac > 0xffff)
++		return;
++
++	dc->location =3D lac;
++
++	if (dc->location =3D=3D -1)
++		return;
++
++	ofono_dbus_signal_property_changed(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					"LocationAreaCode",
++					DBUS_TYPE_UINT16, &dbus_lac);
++}
++
++static void set_registration_cellid(struct ofono_data_connection *dc, int =
+ci)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(dc->atom);
++	dbus_uint32_t dbus_ci =3D ci;
++
++	dc->cellid =3D ci;
++
++	if (dc->cellid =3D=3D -1)
++		return;
++
++	ofono_dbus_signal_property_changed(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					"CellId", DBUS_TYPE_UINT32,
++					&dbus_ci);
++}
++
++static void set_registration_technology(struct ofono_data_connection *dc,
++					int tech)
++{
++	const char *tech_str =3D registration_tech_to_string(tech);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(dc->atom);
++
++	dc->technology =3D tech;
++
++	if (dc->technology =3D=3D -1)
++		return;
++
++	ofono_dbus_signal_property_changed(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					"Technology", DBUS_TYPE_STRING,
++					&tech_str);
++}
++
++void ofono_data_netreg_status_notify(struct ofono_data_connection *dc,
++					int status, int lac, int ci, int tech)
++{
++	if (dc->status !=3D status)
++		set_registration_status(dc, status);
++
++	if (dc->location !=3D lac)
++		set_registration_location(dc, lac);
++
++	if (dc->cellid !=3D ci)
++		set_registration_cellid(dc, ci);
++
++	if (dc->technology !=3D tech)
++		set_registration_technology(dc, tech);
++}
++
++int ofono_data_connection_driver_register(
++		const struct ofono_data_connection_driver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
++
++	if (d->probe =3D=3D NULL)
++		return -EINVAL;
++
++	g_drivers =3D g_slist_prepend(g_drivers, (void *)d);
++
++	return 0;
++}
++
++void ofono_data_connection_driver_unregister(
++		const struct ofono_data_connection_driver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
++
++	g_drivers =3D g_slist_remove(g_drivers, (void *)d);
++}
++
++static void data_connection_unregister(struct ofono_atom *atom)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct ofono_data_connection *dc =3D __ofono_atom_get_data(atom);
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
++	const char *path =3D __ofono_atom_get_path(atom);
++
++	g_slist_free(dc->contexts);
++
++	ofono_modem_remove_interface(modem, DATA_CONNECTION_MANAGER_INTERFACE);
++	g_dbus_unregister_interface(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE);
++}
++
++static void data_connection_remove(struct ofono_atom *atom)
++{
++	struct ofono_data_connection *dc =3D __ofono_atom_get_data(atom);
++
++	DBG("atom: %p", atom);
++
++	if (dc =3D=3D NULL)
++		return;
++
++	if (dc->driver && dc->driver->remove)
++		dc->driver->remove(dc);
++
++	g_free(dc);
++}
++
++struct ofono_data_connection *ofono_data_connection_create(
++		struct ofono_modem *modem, unsigned int vendor,
++		const char *driver, void *data)
++{
++	struct ofono_data_connection *dc;
++	GSList *l;
++
++	if (driver =3D=3D NULL)
++		return NULL;
++
++	dc =3D g_try_new0(struct ofono_data_connection, 1);
++
++	if (dc =3D=3D NULL)
++		return NULL;
++
++	dc->atom =3D __ofono_modem_add_atom(modem,
++			OFONO_ATOM_TYPE_DATA_CONNECTION,
++			data_connection_remove, dc);
++
++	for (l =3D g_drivers; l; l =3D l->next) {
++		const struct ofono_data_connection_driver *drv =3D l->data;
++
++		if (g_strcmp0(drv->name, driver))
++			continue;
++
++		if (drv->probe(dc, vendor, data) < 0)
++			continue;
++
++		dc->driver =3D drv;
++		break;
++	}
++
++	dc->technology =3D -1;
++	dc->cellid =3D -1;
++	dc->location =3D -1;
++
++	return dc;
++}
++
++void ofono_data_connection_register(struct ofono_data_connection *dc)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(dc->atom);
++	const char *path =3D __ofono_atom_get_path(dc->atom);
++
++	if (!g_dbus_register_interface(conn, path,
++					DATA_CONNECTION_MANAGER_INTERFACE,
++					manager_methods, manager_signals, NULL,
++					dc, NULL)) {
++		ofono_error("Could not create %s interface",
++				DATA_CONNECTION_MANAGER_INTERFACE);
++
++		return;
++	}
++
++	ofono_modem_add_interface(modem, DATA_CONNECTION_MANAGER_INTERFACE);
++
++	__ofono_atom_register(dc->atom, data_connection_unregister);
++}
++
++void ofono_data_connection_remove(struct ofono_data_connection *dc)
++{
++	__ofono_atom_free(dc->atom);
++}
++
++void ofono_data_connection_set_data(struct ofono_data_connection *dc,
++					void *data)
++{
++	dc->driver_data =3D data;
++}
++
++void *ofono_data_connection_get_data(struct ofono_data_connection *dc)
++{
++	return dc->driver_data;
++}
+diff --git a/src/ofono.h b/src/ofono.h
+index 409a9e2..177e1fd 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -106,6 +106,7 @@ enum ofono_atom_type {
+ 	OFONO_ATOM_TYPE_MESSAGE_WAITING =3D 13,
+ 	OFONO_ATOM_TYPE_CBS =3D 14,
+ 	OFONO_ATOM_TYPES_CALL_VOLUME =3D 15,
++	OFONO_ATOM_TYPE_DATA_CONNECTION =3D 16,
+ };
+ =
+
+ enum ofono_atom_watch_condition {
+@@ -160,6 +161,7 @@ void __ofono_atom_free(struct ofono_atom *atom);
+ #include <ofono/sms.h>
+ #include <ofono/sim.h>
+ #include <ofono/voicecall.h>
++#include <ofono/data-connection.h>
+ =
+
+ #include <ofono/ssn.h>
+ =
+
+-- =
+
+1.6.1
 
 
-Regards,
--Yang
-
-
-
---===============0272969124585913304==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Support-preferred-network.patch"
-
-RnJvbSA1MDhlNWQxOWY4NTEyYzYwNzRhOWM4YmEyYmY4M2E2ODgwZjBjODdiIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogTW9u
-LCAxMiBPY3QgMjAwOSAxNzo1NDo1NyArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIFN1cHBvcnQgcHJl
-ZmVycmVkIG5ldHdvcmsKCi0tLQogTWFrZWZpbGUuYW0gICAgICAgICAgICAgICAgIHwgICAgNiAr
-LQogZHJpdmVycy9hdG1vZGVtL2F0bW9kZW0uaCAgIHwgICAgMiArCiBpbmNsdWRlL2RidXMuaCAg
-ICAgICAgICAgICAgfCAgICAxICsKIGluY2x1ZGUvcHJlZmVycmVkLW5ldHdvcmsuaCB8ICAgNDIg
-KysrKwogcGx1Z2lucy9waG9uZXNpbS5jICAgICAgICAgIHwgICAgNiArCiBzcmMvb2Zvbm8uaCAg
-ICAgICAgICAgICAgICAgfCAgICAxICsKIHNyYy9wcmVmZXJyZWQtbmV0d29yay5jICAgICB8ICA0
-ODcgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwogc3JjL3NpbXV0
-aWwuaCAgICAgICAgICAgICAgIHwgICAgMiArCiA4IGZpbGVzIGNoYW5nZWQsIDU0NSBpbnNlcnRp
-b25zKCspLCAyIGRlbGV0aW9ucygtKQogY3JlYXRlIG1vZGUgMTAwNjQ0IGluY2x1ZGUvcHJlZmVy
-cmVkLW5ldHdvcmsuaAogY3JlYXRlIG1vZGUgMTAwNjQ0IHNyYy9wcmVmZXJyZWQtbmV0d29yay5j
-CgpkaWZmIC0tZ2l0IGEvTWFrZWZpbGUuYW0gYi9NYWtlZmlsZS5hbQppbmRleCBjZjg0YmY3Li4w
-MDJmZmVhIDEwMDY0NAotLS0gYS9NYWtlZmlsZS5hbQorKysgYi9NYWtlZmlsZS5hbQpAQCAtMTAs
-NyArMTAsOCBAQCBpbmNsdWRlX0hFQURFUlMgPSBpbmNsdWRlL2xvZy5oIGluY2x1ZGUvcGx1Z2lu
-LmggaW5jbHVkZS9oaXN0b3J5LmggXAogCQkJaW5jbHVkZS9waG9uZWJvb2suaCBpbmNsdWRlL3Nz
-bi5oIGluY2x1ZGUvdXNzZC5oIFwKIAkJCWluY2x1ZGUvc21zLmggaW5jbHVkZS9zaW0uaCBpbmNs
-dWRlL21lc3NhZ2Utd2FpdGluZy5oIFwKIAkJCWluY2x1ZGUvbmV0cmVnLmggaW5jbHVkZS92b2lj
-ZWNhbGwuaCBpbmNsdWRlL2RldmluZm8uaCBcCi0JCQlpbmNsdWRlL2Nicy5oIGluY2x1ZGUvY2Fs
-bC12b2x1bWUuaAorCQkJaW5jbHVkZS9jYnMuaCBpbmNsdWRlL2NhbGwtdm9sdW1lLmggXAorCQkJ
-aW5jbHVkZS9wcmVmZXJyZWQtbmV0d29yay5oCiAKIG5vZGlzdF9pbmNsdWRlX0hFQURFUlMgPSBp
-bmNsdWRlL3ZlcnNpb24uaAogCkBAIC0xNjUsNyArMTY2LDggQEAgc3JjX29mb25vZF9TT1VSQ0VT
-ID0gJChnZGJ1c19zb3VyY2VzKSAkKGJ1aWx0aW5fc291cmNlcykgXAogCQkJc3JjL3Nzbi5jIHNy
-Yy9jYWxsLWJhcnJpbmcuYyBzcmMvc2ltLmMgXAogCQkJc3JjL3Bob25lYm9vay5jIHNyYy9oaXN0
-b3J5LmMgc3JjL21lc3NhZ2Utd2FpdGluZy5jIFwKIAkJCXNyYy9zaW11dGlsLmggc3JjL3NpbXV0
-aWwuYyBzcmMvc3RvcmFnZS5oIFwKLQkJCXNyYy9zdG9yYWdlLmMgc3JjL2Nicy5jIHNyYy93YXRj
-aC5jIHNyYy9jYWxsLXZvbHVtZS5jCisJCQlzcmMvc3RvcmFnZS5jIHNyYy9jYnMuYyBzcmMvd2F0
-Y2guYyBzcmMvY2FsbC12b2x1bWUuYyBcCisJCQlzcmMvcHJlZmVycmVkLW5ldHdvcmsuYwogCiBz
-cmNfb2Zvbm9kX0xEQUREID0gJChidWlsdGluX2xpYmFkZCkgXAogCQkJQEdMSUJfTElCU0AgQEdU
-SFJFQURfTElCU0AgQERCVVNfTElCU0AgLWxkbApkaWZmIC0tZ2l0IGEvZHJpdmVycy9hdG1vZGVt
-L2F0bW9kZW0uaCBiL2RyaXZlcnMvYXRtb2RlbS9hdG1vZGVtLmgKaW5kZXggOGM2MTA3My4uODY3
-NjcyYiAxMDA2NDQKLS0tIGEvZHJpdmVycy9hdG1vZGVtL2F0bW9kZW0uaAorKysgYi9kcml2ZXJz
-L2F0bW9kZW0vYXRtb2RlbS5oCkBAIC02MiwzICs2Miw1IEBAIGV4dGVybiB2b2lkIGF0X2Nic19l
-eGl0KCk7CiAKIGV4dGVybiB2b2lkIGF0X2NhbGxfdm9sdW1lX2luaXQoKTsKIGV4dGVybiB2b2lk
-IGF0X2NhbGxfdm9sdW1lX2V4aXQoKTsKK2V4dGVybiB2b2lkIGF0X3ByZWZuZXRfaW5pdCgpOwor
-ZXh0ZXJuIHZvaWQgYXRfcHJlZm5ldF9leGl0KCk7CmRpZmYgLS1naXQgYS9pbmNsdWRlL2RidXMu
-aCBiL2luY2x1ZGUvZGJ1cy5oCmluZGV4IDVhNDIxMTkuLjI1MmM0ZWIgMTAwNjQ0Ci0tLSBhL2lu
-Y2x1ZGUvZGJ1cy5oCisrKyBiL2luY2x1ZGUvZGJ1cy5oCkBAIC0zNyw2ICszNyw3IEBAIGV4dGVy
-biAiQyIgewogI2RlZmluZSBPRk9OT19DQUxMX01FVEVSX0lOVEVSRkFDRSAib3JnLm9mb25vLkNh
-bGxNZXRlciIKICNkZWZpbmUgT0ZPTk9fUEhPTkVCT09LX0lOVEVSRkFDRSAib3JnLm9mb25vLlBo
-b25lYm9vayIKICNkZWZpbmUgT0ZPTk9fQ0FMTF9TRVRUSU5HU19JTlRFUkZBQ0UgIm9yZy5vZm9u
-by5DYWxsU2V0dGluZ3MiCisjZGVmaW5lIE9GT05PX1BSRUZORVRfSU5URVJGQUNFICJvcmcub2Zv
-bm8uUHJlZmVycmVkTmV0d29yayIKIAogLyogRXNzZW50aWFsbHkgYXtzdn0gKi8KICNkZWZpbmUg
-T0ZPTk9fUFJPUEVSVElFU19BUlJBWV9TSUdOQVRVUkUgREJVU19ESUNUX0VOVFJZX0JFR0lOX0NI
-QVJfQVNfU1RSSU5HIFwKZGlmZiAtLWdpdCBhL2luY2x1ZGUvcHJlZmVycmVkLW5ldHdvcmsuaCBi
-L2luY2x1ZGUvcHJlZmVycmVkLW5ldHdvcmsuaApuZXcgZmlsZSBtb2RlIDEwMDY0NAppbmRleCAw
-MDAwMDAwLi5kNDQ0NDZjCi0tLSAvZGV2L251bGwKKysrIGIvaW5jbHVkZS9wcmVmZXJyZWQtbmV0
-d29yay5oCkBAIC0wLDAgKzEsNDIgQEAKKy8qCisgKgorICogIG9Gb25vIC0gT3BlbiBUZWxlcGhv
-bnkgc3RhY2sgZm9yIExpbnV4CisgKgorICogIENvcHlyaWdodCAoQykgMjAwOC0yMDA5ICBJbnRl
-bCBDb3Jwb3JhdGlvbi4gQWxsIHJpZ2h0cyByZXNlcnZlZC4KKyAqCisgKiAgVGhpcyBwcm9ncmFt
-IGlzIGZyZWUgc29mdHdhcmU7IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vciBtb2RpZnkK
-KyAqICBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNl
-IHZlcnNpb24gMiBhcworICogIHB1Ymxpc2hlZCBieSB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0
-aW9uLgorICoKKyAqICBUaGlzIHByb2dyYW0gaXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhvcGUgdGhh
-dCBpdCB3aWxsIGJlIHVzZWZ1bCwKKyAqICBidXQgV0lUSE9VVCBBTlkgV0FSUkFOVFk7IHdpdGhv
-dXQgZXZlbiB0aGUgaW1wbGllZCB3YXJyYW50eSBvZgorICogIE1FUkNIQU5UQUJJTElUWSBvciBG
-SVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRS4gIFNlZSB0aGUKKyAqICBHTlUgR2VuZXJh
-bCBQdWJsaWMgTGljZW5zZSBmb3IgbW9yZSBkZXRhaWxzLgorICoKKyAqICBZb3Ugc2hvdWxkIGhh
-dmUgcmVjZWl2ZWQgYSBjb3B5IG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZQorICog
-IGFsb25nIHdpdGggdGhpcyBwcm9ncmFtOyBpZiBub3QsIHdyaXRlIHRvIHRoZSBGcmVlIFNvZnR3
-YXJlCisgKiAgRm91bmRhdGlvbiwgSW5jLiwgNTEgRnJhbmtsaW4gU3QsIEZpZnRoIEZsb29yLCBC
-b3N0b24sIE1BICAwMjExMC0xMzAxICBVU0EKKyAqCisgKi8KKworI2lmbmRlZiBfX09GT05PX1BS
-RUZORVRfSAorI2RlZmluZSBfX09GT05PX1BSRUZORVRfSAorCisjaWZkZWYgX19jcGx1c3BsdXMK
-K2V4dGVybiAiQyIgeworI2VuZGlmCisKKyNpbmNsdWRlIDxvZm9uby90eXBlcy5oPgorCitzdHJ1
-Y3Qgb2Zvbm9fcHJlZm5ldDsKKworc3RydWN0IG9mb25vX3ByZWZuZXQgKm9mb25vX3ByZWZuZXRf
-Y3JlYXRlKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pOworCit2b2lkIG9mb25vX3ByZWZuZXRf
-cmVnaXN0ZXIoc3RydWN0IG9mb25vX3ByZWZuZXQgKnBuKTsKK3ZvaWQgb2Zvbm9fcHJlZm5ldF9y
-ZW1vdmUoc3RydWN0IG9mb25vX3ByZWZuZXQgKnBuKTsKKworI2lmZGVmIF9fY3BsdXNwbHVzCit9
-CisjZW5kaWYKKworI2VuZGlmCmRpZmYgLS1naXQgYS9wbHVnaW5zL3Bob25lc2ltLmMgYi9wbHVn
-aW5zL3Bob25lc2ltLmMKaW5kZXggMDJjZTQ0My4uYTIxMjc0MyAxMDA2NDQKLS0tIGEvcGx1Z2lu
-cy9waG9uZXNpbS5jCisrKyBiL3BsdWdpbnMvcGhvbmVzaW0uYwpAQCAtNTQsNiArNTQsNyBAQAog
-I2luY2x1ZGUgPG9mb25vL3Nzbi5oPgogI2luY2x1ZGUgPG9mb25vL3Vzc2QuaD4KICNpbmNsdWRl
-IDxvZm9uby92b2ljZWNhbGwuaD4KKyNpbmNsdWRlIDxvZm9uby9wcmVmZXJyZWQtbmV0d29yay5o
-PgogCiAjaW5jbHVkZSA8ZHJpdmVycy9hdG1vZGVtL3ZlbmRvci5oPgogCkBAIC0yNjEsNiArMjYy
-LDcgQEAgc3RhdGljIHZvaWQgcGhvbmVzaW1fcG9zdF9zaW0oc3RydWN0IG9mb25vX21vZGVtICpt
-b2RlbSkKIHsKIAlzdHJ1Y3QgcGhvbmVzaW1fZGF0YSAqZGF0YSA9IG9mb25vX21vZGVtX2dldF9k
-YXRhKG1vZGVtKTsKIAlzdHJ1Y3Qgb2Zvbm9fbWVzc2FnZV93YWl0aW5nICptdzsKKwlzdHJ1Y3Qg
-b2Zvbm9fcHJlZm5ldCAqcG47CiAKIAlEQkcoIiVwIiwgbW9kZW0pOwogCkBAIC0yODgsNiArMjkw
-LDEwIEBAIHN0YXRpYyB2b2lkIHBob25lc2ltX3Bvc3Rfc2ltKHN0cnVjdCBvZm9ub19tb2RlbSAq
-bW9kZW0pCiAJbXcgPSBvZm9ub19tZXNzYWdlX3dhaXRpbmdfY3JlYXRlKG1vZGVtKTsKIAlpZiAo
-bXcpCiAJCW9mb25vX21lc3NhZ2Vfd2FpdGluZ19yZWdpc3Rlcihtdyk7CisKKwlwbiA9IG9mb25v
-X3ByZWZuZXRfY3JlYXRlKG1vZGVtKTsKKwlpZiAocG4pCisJCW9mb25vX3ByZWZuZXRfcmVnaXN0
-ZXIocG4pOwogfQogCiBzdGF0aWMgc3RydWN0IG9mb25vX21vZGVtX2RyaXZlciBwaG9uZXNpbV9k
-cml2ZXIgPSB7CmRpZmYgLS1naXQgYS9zcmMvb2Zvbm8uaCBiL3NyYy9vZm9uby5oCmluZGV4IDQw
-OWE5ZTIuLmI1ZmYxOTAgMTAwNjQ0Ci0tLSBhL3NyYy9vZm9uby5oCisrKyBiL3NyYy9vZm9uby5o
-CkBAIC0xMDYsNiArMTA2LDcgQEAgZW51bSBvZm9ub19hdG9tX3R5cGUgewogCU9GT05PX0FUT01f
-VFlQRV9NRVNTQUdFX1dBSVRJTkcgPSAxMywKIAlPRk9OT19BVE9NX1RZUEVfQ0JTID0gMTQsCiAJ
-T0ZPTk9fQVRPTV9UWVBFU19DQUxMX1ZPTFVNRSA9IDE1LAorCU9GT05PX0FUT01fVFlQRV9QUkVG
-TkVUID0gMTYsCiB9OwogCiBlbnVtIG9mb25vX2F0b21fd2F0Y2hfY29uZGl0aW9uIHsKZGlmZiAt
-LWdpdCBhL3NyYy9wcmVmZXJyZWQtbmV0d29yay5jIGIvc3JjL3ByZWZlcnJlZC1uZXR3b3JrLmMK
-bmV3IGZpbGUgbW9kZSAxMDA2NDQKaW5kZXggMDAwMDAwMC4uMmNmMDg0ZAotLS0gL2Rldi9udWxs
-CisrKyBiL3NyYy9wcmVmZXJyZWQtbmV0d29yay5jCkBAIC0wLDAgKzEsNDg3IEBACisvKgorICog
-b0Zvbm8gLSBHU00gVGVsZXBob255IFN0YWNrIGZvciBMaW51eAorICoKKyAqIENvcHlyaWdodCAo
-QykgMjAwOC0yMDA5IEludGVsIENvcnBvcmF0aW9uLiAgQWxsIHJpZ2h0cyByZXNlcnZlZC4KKyAq
-CisgKiBUaGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTsgeW91IGNhbiByZWRpc3RyaWJ1dGUg
-aXQgYW5kL29yIG1vZGlmeQorICogaXQgdW5kZXIgdGhlIHRlcm1zIG9mIHRoZSBHTlUgR2VuZXJh
-bCBQdWJsaWMgTGljZW5zZSBhcyBwdWJsaXNoZWQgYnkKKyAqIHRoZSBGcmVlIFNvZnR3YXJlIEZv
-dW5kYXRpb247IGVpdGhlciB2ZXJzaW9uIDIgb2YgdGhlIExpY2Vuc2UsIG9yCisgKiAoYXQgeW91
-ciBvcHRpb24pIGFueSBsYXRlciB2ZXJzaW9uLgorICoKKyAqIFRoaXMgcHJvZ3JhbSBpcyBkaXN0
-cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLAorICogYnV0IFdJVEhP
-VVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2ZW4gdGhlIGltcGxpZWQgd2FycmFudHkgb2YKKyAq
-IE1FUkNIQU5UQUJJTElUWSBvciBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRS4gIFNl
-ZSB0aGUKKyAqIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuCisg
-KgorICogWW91IHNob3VsZCBoYXZlIHJlY2VpdmVkIGEgY29weSBvZiB0aGUgR05VIEdlbmVyYWwg
-UHVibGljIExpY2Vuc2UKKyAqIGFsb25nIHdpdGggdGhpcyBwcm9ncmFtOyBpZiBub3QsIHdyaXRl
-IHRvIHRoZSBGcmVlIFNvZnR3YXJlCisgKiBGb3VuZGF0aW9uLCBJbmMuLCA1MSBGcmFua2xpbiBT
-dCwgRmlmdGggRmxvb3IsIEJvc3RvbiwgTUEgIDAyMTEwLTEzMDEgIFVTQQorICoKKyAqLworCisj
-aWZkZWYgSEFWRV9DT05GSUdfSAorI2luY2x1ZGUgPGNvbmZpZy5oPgorI2VuZGlmCisKKyNkZWZp
-bmUgX0dOVV9TT1VSQ0UKKyNpbmNsdWRlIDxzdHJpbmcuaD4KKyNpbmNsdWRlIDxzdGRpby5oPgor
-I2luY2x1ZGUgPHN0ZGxpYi5oPgorI2luY2x1ZGUgPGN0eXBlLmg+CisjaW5jbHVkZSA8ZXJybm8u
-aD4KKworI2luY2x1ZGUgPGdsaWIuaD4KKyNpbmNsdWRlIDxnZGJ1cy5oPgorCisjaW5jbHVkZSAi
-b2Zvbm8uaCIKKyNpbmNsdWRlICJjb21tb24uaCIKKyNpbmNsdWRlICJzbXN1dGlsLmgiCisjaW5j
-bHVkZSAic2ltdXRpbC5oIgorI2luY2x1ZGUgInByZWZlcnJlZC1uZXR3b3JrLmgiCisKK2VudW0g
-ZWZfc3VwcG9ydCB7CisJRUZQTE1OV0FDVCwKKwlFRk9QTE1OV0FDVCwKKwlFRl9MQVNUID0gRUZP
-UExNTldBQ1QsCit9OworCitzdHJ1Y3QgZWYgeworCXVuc2lnbmVkIGNoYXIgKmN1cnJlbnQ7CisJ
-dW5zaWduZWQgY2hhciAqbmV3OworCXVuc2lnbmVkIGludCBsZW47CisJdW5zaWduZWQgaW50IGxl
-bl9yZWNvcmQ7CisJY2hhciAqbmFtZTsKKwlpbnQgY2FuX3NldDsKK307CisKK3N0cnVjdCBvZm9u
-b19wcmVmbmV0IHsKKwlzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW07CisJc3RydWN0IG9mb25vX2F0b20g
-KmF0b207CisJREJ1c01lc3NhZ2UgKnBlbmRpbmc7CisJc3RydWN0IGVmIGVmX2FycmF5W0VGX0xB
-U1QrMV07Cit9OworCitzdHJ1Y3QgcG5fZWYgeworCXN0cnVjdCBvZm9ub19wcmVmbmV0ICpwbjsK
-KwllbnVtIGVmX3N1cHBvcnQgZXM7Cit9OworCitzdGF0aWMgaW5saW5lIHN0cnVjdCBwbl9lZiAq
-cG5fZWZfbmV3KHN0cnVjdCBvZm9ub19wcmVmbmV0ICpwbiwKKwkJCQkJZW51bSBlZl9zdXBwb3J0
-IGVzKQoreworCXN0cnVjdCBwbl9lZiAqcmV0OworCisJcmV0ID0gZ190cnlfbmV3MChzdHJ1Y3Qg
-cG5fZWYsIDEpOworCisJaWYgKCFyZXQpCisJCXJldHVybiByZXQ7CisKKwlyZXQtPnBuID0gcG47
-CisJcmV0LT5lcyA9IGVzOworCisJcmV0dXJuIHJldDsKK30KKworLyogRXh0cmFjdCB2YWxpZCBw
-bG1ucyBmcm9tIHRoZSBFRiAqLworc3RhdGljIHZvaWQgZWZfZXh0cmFjdChzdHJ1Y3QgZWYgKmVm
-LCBjaGFyICoqKnBfbGlzdCkKK3sKKwlpbnQgaTsKKwlHU0xpc3QgKnBsbW5fbGlzdCA9IE5VTEw7
-CisJR1NMaXN0ICpsOworCWludCBsZW5fcmVjb3JkID0gZWYtPmxlbl9yZWNvcmQ7CisJaW50IHJl
-Y29yZHMgPSBlZi0+bGVuIC8gbGVuX3JlY29yZDsKKworCWlmIChyZWNvcmRzIDwgMSkKKwkJcmV0
-dXJuOworCisJZm9yIChpID0gMDsgaSA8IHJlY29yZHM7IGkrKykgeworCQljaGFyIHBsbW5bN107
-CisJCXVuc2lnbmVkIGNoYXIgcGxtbl90ZW1wWzNdOworCisJCWlmICgoZWYtPmN1cnJlbnRbaSps
-ZW5fcmVjb3JkXSA9PSAweEZGKSAmJgorCQkJKGVmLT5jdXJyZW50WzEraSpsZW5fcmVjb3JkXSA9
-PSAweEZGKSAmJgorCQkJCShlZi0+Y3VycmVudFsyK2kqbGVuX3JlY29yZF0gPT0gMHhGRikpCisJ
-CQlicmVhazsKKworCQlwbG1uX3RlbXBbMF0gPSBlZi0+Y3VycmVudFtpKmxlbl9yZWNvcmRdOwor
-CQlwbG1uX3RlbXBbMV0gPSAoKGVmLT5jdXJyZW50WzIraSpsZW5fcmVjb3JkXSAmIDB4RikgPDwg
-NCkgKworCQkJCQkoZWYtPmN1cnJlbnRbMStpKmxlbl9yZWNvcmRdICYgMHhGKTsKKwkJcGxtbl90
-ZW1wWzJdID0gKGVmLT5jdXJyZW50WzIraSpsZW5fcmVjb3JkXSA+PiA0KSArCisJCQkJCShlZi0+
-Y3VycmVudFsxK2kqbGVuX3JlY29yZF0gJiAweEYwKTsKKwkJZXh0cmFjdF9iY2RfbnVtYmVyKHBs
-bW5fdGVtcCwgMywgcGxtbik7CisJCXBsbW5bNl0gPSAnXDAnOworCisJCXBsbW5fbGlzdCA9IGdf
-c2xpc3RfcHJlcGVuZChwbG1uX2xpc3QsIGdfc3RyZHVwKHBsbW4pKTsKKwl9CisKKwlwbG1uX2xp
-c3QgPSBnX3NsaXN0X3JldmVyc2UocGxtbl9saXN0KTsKKwkqcF9saXN0ID0gZ19uZXcwKGNoYXIg
-KiwgZ19zbGlzdF9sZW5ndGgocGxtbl9saXN0KSArIDEpOworCWwgPSBwbG1uX2xpc3Q7CisJaSA9
-IDA7CisKKwl3aGlsZSAobCkgeworCQkoKnBfbGlzdClbaSsrXSA9IGwtPmRhdGE7CisJCWwgPSBs
-LT5uZXh0OworCX0KKworCWdfc2xpc3RfZnJlZShwbG1uX2xpc3QpOworfQorCitzdGF0aWMgREJ1
-c01lc3NhZ2UgKnByZWZuZXRfZ2V0X3Byb3BlcnRpZXMoREJ1c0Nvbm5lY3Rpb24gKmNvbm4sCisJ
-CQkJCQlEQnVzTWVzc2FnZSAqbXNnLCB2b2lkICpkYXRhKQoreworCXN0cnVjdCBvZm9ub19wcmVm
-bmV0ICpwbiA9IGRhdGE7CisJREJ1c01lc3NhZ2UgKnJlcGx5OworCURCdXNNZXNzYWdlSXRlciBp
-dGVyOworCURCdXNNZXNzYWdlSXRlciBkaWN0OworCWludCBpOworCisJcmVwbHkgPSBkYnVzX21l
-c3NhZ2VfbmV3X21ldGhvZF9yZXR1cm4obXNnKTsKKwlpZiAoIXJlcGx5KQorCQlyZXR1cm4gTlVM
-TDsKKworCWRidXNfbWVzc2FnZV9pdGVyX2luaXRfYXBwZW5kKHJlcGx5LCAmaXRlcik7CisKKwlk
-YnVzX21lc3NhZ2VfaXRlcl9vcGVuX2NvbnRhaW5lcigmaXRlciwgREJVU19UWVBFX0FSUkFZLAor
-CQkJCQlPRk9OT19QUk9QRVJUSUVTX0FSUkFZX1NJR05BVFVSRSwKKwkJCQkJJmRpY3QpOworCisJ
-Zm9yIChpID0gMDsgaSA8PSBFRl9MQVNUOyBpKyspIHsKKwkJY2hhciAqKmxpc3QgPSBOVUxMOwor
-CisJCWVmX2V4dHJhY3QoJnBuLT5lZl9hcnJheVtpXSwgJmxpc3QpOworCQlpZiAoIWxpc3QpCisJ
-CQljb250aW51ZTsKKworCQlvZm9ub19kYnVzX2RpY3RfYXBwZW5kX2FycmF5KCZkaWN0LCBwbi0+
-ZWZfYXJyYXlbaV0ubmFtZSwKKwkJCQkJREJVU19UWVBFX1NUUklORywgJmxpc3QpOworCQlnX3N0
-cmZyZWV2KGxpc3QpOworCX0KKworCWRidXNfbWVzc2FnZV9pdGVyX2Nsb3NlX2NvbnRhaW5lcigm
-aXRlciwgJmRpY3QpOworCisJcmV0dXJuIHJlcGx5OworfQorCitzdGF0aWMgdm9pZCBlZl9zZXRf
-Y2IoaW50IG9rLCB2b2lkICpkYXRhKQoreworCXN0cnVjdCBwbl9lZiAqcGUgPSBkYXRhOworCXN0
-cnVjdCBvZm9ub19wcmVmbmV0ICpwbiA9IHBlLT5wbjsKKwllbnVtIGVmX3N1cHBvcnQgZXMgPSBw
-ZS0+ZXM7CisJREJ1c0Nvbm5lY3Rpb24gKmNvbm4gPSBvZm9ub19kYnVzX2dldF9jb25uZWN0aW9u
-KCk7CisJY29uc3QgY2hhciAqcGF0aCA9IF9fb2Zvbm9fYXRvbV9nZXRfcGF0aChwbi0+YXRvbSk7
-CisJREJ1c01lc3NhZ2UgKnJlcGx5OworCisJaWYgKCFvaykgeworCQlyZXBseSA9IF9fb2Zvbm9f
-ZXJyb3JfZmFpbGVkKHBuLT5wZW5kaW5nKTsKKwkJZ19mcmVlKHBuLT5lZl9hcnJheVtlc10ubmV3
-KTsKKwl9IGVsc2UgeworCQljaGFyICoqbGlzdDsKKworCQlyZXBseSA9CWRidXNfbWVzc2FnZV9u
-ZXdfbWV0aG9kX3JldHVybihwbi0+cGVuZGluZyk7CisJCWdfZnJlZShwbi0+ZWZfYXJyYXlbZXNd
-LmN1cnJlbnQpOworCQlwbi0+ZWZfYXJyYXlbZXNdLmN1cnJlbnQgPSBwbi0+ZWZfYXJyYXlbZXNd
-Lm5ldzsKKwkJcG4tPmVmX2FycmF5W2VzXS5uZXcgPSBOVUxMOworCisJCWVmX2V4dHJhY3QoJnBu
-LT5lZl9hcnJheVtlc10sICZsaXN0KTsKKwkJb2Zvbm9fZGJ1c19zaWduYWxfYXJyYXlfcHJvcGVy
-dHlfY2hhbmdlZChjb25uLCBwYXRoLAorCQkJCQkJCU9GT05PX1BSRUZORVRfSU5URVJGQUNFLAor
-CQkJCQkJCXBuLT5lZl9hcnJheVtlc10ubmFtZSwKKwkJCQkJCQlEQlVTX1RZUEVfU1RSSU5HLAor
-CQkJCQkJCSZsaXN0KTsKKwkJZ19zdHJmcmVldihsaXN0KTsKKwl9CisKKwlnX2ZyZWUocGUpOwor
-CV9fb2Zvbm9fZGJ1c19wZW5kaW5nX3JlcGx5KCZwbi0+cGVuZGluZywgcmVwbHkpOworfQorCitz
-dGF0aWMgZ2Jvb2xlYW4gZWZfc2V0KHN0cnVjdCBvZm9ub19wcmVmbmV0ICpwbiwKKwkJCQllbnVt
-IGVmX3N1cHBvcnQgZXMsIERCdXNNZXNzYWdlICptc2cpCit7CisJaW50IGxlbiA9IHBuLT5lZl9h
-cnJheVtlc10ubGVuOworCXN0cnVjdCBwbl9lZiAqcGUgPSBwbl9lZl9uZXcocG4sIGVzKTsKKwor
-CWlmIChwbi0+cGVuZGluZykKKwkJcmV0dXJuIEZBTFNFOworCisJcG4tPnBlbmRpbmcgPSBkYnVz
-X21lc3NhZ2VfcmVmKG1zZyk7CisKKwlvZm9ub19zaW1fd3JpdGUocG4tPnNpbSwgU0lNX0VGUExN
-TldBQ1RfRklMRUlELAorCQllZl9zZXRfY2IsIE9GT05PX1NJTV9GSUxFX1NUUlVDVFVSRV9UUkFO
-U1BBUkVOVCwKKwkJMSwgcG4tPmVmX2FycmF5W2VzXS5uZXcsIGxlbiwgcGUpOworCisJcmV0dXJu
-IFRSVUU7Cit9CisKKy8qIFByZXBhcmUgRUYgZGF0YSBhY2NvcmRpbmcgdG8gdmFsaWQgZGF0YSBp
-biBsaXN0ICovCitzdGF0aWMgdW5zaWduZWQgY2hhciAqZWZfZ2VuKHN0cnVjdCBvZm9ub19wcmVm
-bmV0ICpwbiwKKwkJCWVudW0gZWZfc3VwcG9ydCBlcywgR1NMaXN0ICpsaXN0KQoreworCWludCBp
-OworCWludCBsZW4gPSBwbi0+ZWZfYXJyYXlbZXNdLmxlbjsKKwl1bnNpZ25lZCBjaGFyICpkYXRh
-ID0gZ19uZXcodW5zaWduZWQgY2hhciwgbGVuKTsKKwlpbnQgbGVuX3JlY29yZCA9IHBuLT5lZl9h
-cnJheVtlc10ubGVuX3JlY29yZDsKKwlpbnQgcmVjb3JkcyA9IGxlbiAvIGxlbl9yZWNvcmQ7CisJ
-R1NMaXN0ICpsID0gbGlzdDsKKworCWZvciAoaSA9IDA7IGkgPCByZWNvcmRzOyBpKyspCisJCWlm
-IChsKSB7CisJCQl1bnNpZ25lZCBjaGFyIGRhdGFfdGVtcFs2XTsKKworCQkJZ19hc3NlcnQoc3Ry
-bGVuKGwtPmRhdGEpID09IDUgfHwgc3RybGVuKGwtPmRhdGEpID09IDYpOworCQkJZW5jb2RlX2Jj
-ZF9udW1iZXIobC0+ZGF0YSwgZGF0YV90ZW1wKTsKKwkJCWRhdGFbaSpsZW5fcmVjb3JkXSA9IGRh
-dGFfdGVtcFswXTsKKwkJCWRhdGFbMStpKmxlbl9yZWNvcmRdID0gKGRhdGFfdGVtcFsxXSAmIDB4
-RikgKworCQkJCQkJCShkYXRhX3RlbXBbMl0gJiAweEYwKTsKKwkJCWRhdGFbMitpKmxlbl9yZWNv
-cmRdID0gKGRhdGFfdGVtcFsxXSA+PiA0KSArCisJCQkJCQkJKGRhdGFfdGVtcFsyXSA8PCA0KTsK
-KwkJCWRhdGFbMytpKmxlbl9yZWNvcmRdID0gMHhGRjsKKwkJCWRhdGFbNCtpKmxlbl9yZWNvcmRd
-ID0gMHhGRjsKKworCQkJbCA9IGwtPm5leHQ7CisJCX0gZWxzZQorCQkJbWVtc2V0KCZkYXRhW2kq
-bGVuX3JlY29yZF0sIDB4RkYsIGxlbl9yZWNvcmQpOworCXJldHVybiBkYXRhOworfQorCitzdGF0
-aWMgZ2Jvb2xlYW4gc3RyaW5nX2luX2xpc3QoY29uc3QgY2hhciAqcywgR1NMaXN0ICpsaXN0KQor
-eworCUdTTGlzdCAqbDsKKwlmb3IgKGwgPSBsaXN0OyBsOyBsID0gbC0+bmV4dCkKKwkJaWYgKCFz
-dHJjbXAocywgbC0+ZGF0YSkpCisJCQlyZXR1cm4gVFJVRTsKKwlyZXR1cm4gRkFMU0U7Cit9CisK
-K3N0YXRpYyBEQnVzTWVzc2FnZSAqZWZfc2V0X3Byb3BlcnR5KERCdXNNZXNzYWdlICptc2csIHZv
-aWQgKmRhdGEsCisJCQllbnVtIGVmX3N1cHBvcnQgZXMsIERCdXNNZXNzYWdlSXRlciAqcGl0ZXIp
-Cit7CisJc3RydWN0IG9mb25vX3ByZWZuZXQgKnBuID0gZGF0YTsKKwlzdHJ1Y3QgZWYgKnBlZiA9
-ICZwbi0+ZWZfYXJyYXlbZXNdOworCURCdXNNZXNzYWdlSXRlciB2YXI7CisJREJ1c01lc3NhZ2VJ
-dGVyIHZhcl9lbGVtOworCWNvbnN0IGNoYXIgKnZhbHVlOworCUdTTGlzdCAqbCA9IE5VTEw7CisJ
-Z2Jvb2xlYW4gb2sgPSBGQUxTRTsKKworCWlmICghcGVmLT5jYW5fc2V0KSB7CisJCW9mb25vX2Vy
-cm9yKCJQcm9wZXJ0eSAlcyBjYW4ndCBiZSBzZXQhIiwgcGVmLT5uYW1lKTsKKwkJcmV0dXJuIF9f
-b2Zvbm9fZXJyb3JfZmFpbGVkKG1zZyk7CisJfQorCisJZGJ1c19tZXNzYWdlX2l0ZXJfbmV4dChw
-aXRlcik7CisJaWYgKGRidXNfbWVzc2FnZV9pdGVyX2dldF9hcmdfdHlwZShwaXRlcikgIT0gREJV
-U19UWVBFX1ZBUklBTlQpCisJCXJldHVybiBfX29mb25vX2Vycm9yX2ludmFsaWRfYXJncyhtc2cp
-OworCisJZGJ1c19tZXNzYWdlX2l0ZXJfcmVjdXJzZShwaXRlciwgJnZhcik7CisJaWYgKGRidXNf
-bWVzc2FnZV9pdGVyX2dldF9hcmdfdHlwZSgmdmFyKSAhPSBEQlVTX1RZUEVfQVJSQVkgfHwKKwkJ
-ZGJ1c19tZXNzYWdlX2l0ZXJfZ2V0X2VsZW1lbnRfdHlwZSgmdmFyKSAhPSBEQlVTX1RZUEVfU1RS
-SU5HKQorCQkJcmV0dXJuIF9fb2Zvbm9fZXJyb3JfaW52YWxpZF9hcmdzKG1zZyk7CisKKwlkYnVz
-X21lc3NhZ2VfaXRlcl9yZWN1cnNlKCZ2YXIsICZ2YXJfZWxlbSk7CisKKwl3aGlsZSAoZGJ1c19t
-ZXNzYWdlX2l0ZXJfZ2V0X2FyZ190eXBlKCZ2YXJfZWxlbSkgIT0gREJVU19UWVBFX0lOVkFMSUQp
-IHsKKwkJaWYgKGRidXNfbWVzc2FnZV9pdGVyX2dldF9hcmdfdHlwZSgmdmFyX2VsZW0pICE9CisJ
-CQkJCQlEQlVTX1RZUEVfU1RSSU5HKQorCQkJZ290byBlcnJvcjsKKwkJZGJ1c19tZXNzYWdlX2l0
-ZXJfZ2V0X2Jhc2ljKCZ2YXJfZWxlbSwgJnZhbHVlKTsKKworCQlpZiAoKHN0cmxlbih2YWx1ZSkg
-IT0gNSkgJiYgKHN0cmxlbih2YWx1ZSkgIT0gNikpIHsKKwkJCW9mb25vX2Vycm9yKAorCQkJIlRo
-ZSBsZW5ndGggb2YgdmFsdWUgJXMgdG8gc2V0ICVzIGlzIGludmFsaWQhIiwKKwkJCXZhbHVlLCBw
-ZWYtPm5hbWUpOworCQkJZ290byBlcnJvcjsKKwkJfQorCisJCWlmICghc3RyaW5nX2luX2xpc3Qo
-dmFsdWUsIGwpKQorCQkJbCA9IGdfc2xpc3RfcHJlcGVuZChsLCBnX3N0cmR1cCh2YWx1ZSkpOwor
-CQllbHNlIHsKKwkJCW9mb25vX2Vycm9yKAorCQkJIlRoZSB2YWx1ZSAlcyB0byBzZXQgJXMgaXMg
-ZHVwbGljYXRlZCEiLAorCQkJdmFsdWUsIHBlZi0+bmFtZSk7CisJCQlnb3RvIGVycm9yOworCQl9
-CisKKwkJZGJ1c19tZXNzYWdlX2l0ZXJfbmV4dCgmdmFyX2VsZW0pOworCX0KKworCWlmICghbCkg
-eworCQlvZm9ub19lcnJvcigiVGhlcmUgaXMgbm90IHZhbGlkIHZhbHVlIHRvIHNldCAlcyIsIHBl
-Zi0+bmFtZSk7CisJCXJldHVybiBfX29mb25vX2Vycm9yX2ZhaWxlZChtc2cpOworCX0KKworCWlm
-IChnX3NsaXN0X2xlbmd0aChsKSA+IChwZWYtPmxlbiAvIHBlZi0+bGVuX3JlY29yZCkpIHsKKwkJ
-b2Zvbm9fZXJyb3IoIlRoZSBudW1iZXIgb2YgJXMgZXhjZWVkcyB0aGUgbGltaXRhdGlvbiEiLAor
-CQkJCQkJCQlwZWYtPm5hbWUpOworCQlnb3RvIGVycm9yOworCX0KKworCWwgPSBnX3NsaXN0X3Jl
-dmVyc2UobCk7CisJcGVmLT5uZXcgPSBlZl9nZW4ocG4sIGVzLCBsKTsKKwlpZiAoIW1lbWNtcChw
-ZWYtPmN1cnJlbnQsIHBlZi0+bmV3LCBwZWYtPmxlbikpIHsKKwkJb2Zvbm9fZXJyb3IoIk5ldyB2
-YWx1ZSBvZiAlcyBpcyB0aGUgc2FtZSB3aXRoIHRoZSBvbGQhIiwKKwkJCQkJCQkJcGVmLT5uYW1l
-KTsKKwkJZ19mcmVlKHBlZi0+bmV3KTsKKwkJZ290byBlcnJvcjsKKwl9CisKKwlvayA9IGVmX3Nl
-dChwbiwgZXMsIG1zZyk7CisJaWYgKCFvaykgeworCQlnX2ZyZWUocGVmLT5uZXcpOworCQlnb3Rv
-IGVycm9yOworCX0gZWxzZQorCQlyZXR1cm4gTlVMTDsKKworZXJyb3I6CisJZ19zbGlzdF9mb3Jl
-YWNoKGwsIChHRnVuYylnX2ZyZWUsIE5VTEwpOworCWdfc2xpc3RfZnJlZShsKTsKKwlyZXR1cm4g
-X19vZm9ub19lcnJvcl9mYWlsZWQobXNnKTsKK30KKworc3RhdGljIERCdXNNZXNzYWdlICpwcmVm
-bmV0X3NldF9wcm9wZXJ0eShEQnVzQ29ubmVjdGlvbiAqY29ubiwgREJ1c01lc3NhZ2UgKm1zZywK
-KwkJCQkJdm9pZCAqZGF0YSkKK3sKKwlzdHJ1Y3Qgb2Zvbm9fcHJlZm5ldCAqcG4gPSBkYXRhOwor
-CURCdXNNZXNzYWdlSXRlciBpdGVyOworCWNvbnN0IGNoYXIgKm5hbWU7CisJaW50IGk7CisKKwlp
-ZiAoIWRidXNfbWVzc2FnZV9pdGVyX2luaXQobXNnLCAmaXRlcikpCisJCXJldHVybiBfX29mb25v
-X2Vycm9yX2ludmFsaWRfYXJncyhtc2cpOworCisJaWYgKGRidXNfbWVzc2FnZV9pdGVyX2dldF9h
-cmdfdHlwZSgmaXRlcikgIT0gREJVU19UWVBFX1NUUklORykKKwkJcmV0dXJuIF9fb2Zvbm9fZXJy
-b3JfaW52YWxpZF9hcmdzKG1zZyk7CisKKwlkYnVzX21lc3NhZ2VfaXRlcl9nZXRfYmFzaWMoJml0
-ZXIsICZuYW1lKTsKKworCWZvciAoaSA9IDA7IGkgPD0gRUZfTEFTVDsgaSsrKQorCQlpZiAoIXN0
-cmNtcChuYW1lLCBwbi0+ZWZfYXJyYXlbaV0ubmFtZSkpCisJCQlyZXR1cm4gZWZfc2V0X3Byb3Bl
-cnR5KG1zZywgZGF0YSwgaSwgJml0ZXIpOworCisJb2Zvbm9fZXJyb3IoIlRoZSBwcm9wZXJ0eSBu
-YW1lICVzIGlzIG5vdCB2YWxpZCEiLCBuYW1lKTsKKwlyZXR1cm4gX19vZm9ub19lcnJvcl9mYWls
-ZWQobXNnKTsKK30KKworc3RhdGljIEdEQnVzTWV0aG9kVGFibGUgcHJlZm5ldF9tZXRob2RzW10g
-PSB7CisJeyAiR2V0UHJvcGVydGllcyIsCSIiLAkiYXtzdn0iLAlwcmVmbmV0X2dldF9wcm9wZXJ0
-aWVzIH0sCisJeyAiU2V0UHJvcGVydHkiLAkic3YiLAkiIiwJcHJlZm5ldF9zZXRfcHJvcGVydHks
-CisJCQkJCQlHX0RCVVNfTUVUSE9EX0ZMQUdfQVNZTkMgfSwKKwl7IH0KK307CisKK3N0YXRpYyBH
-REJ1c1NpZ25hbFRhYmxlIHByZWZuZXRfc2lnbmFsc1tdID0geworCXsgIlByb3BlcnR5Q2hhbmdl
-ZCIsCSJzdiIgfSwKKwl7IH0KK307CisKK3N0YXRpYyB2b2lkIHByZWZuZXRfdW5yZWdpc3Rlcihz
-dHJ1Y3Qgb2Zvbm9fYXRvbSAqYXRvbSkKK3sKKwlzdHJ1Y3Qgb2Zvbm9fcHJlZm5ldCAqcG4gPSBf
-X29mb25vX2F0b21fZ2V0X2RhdGEoYXRvbSk7CisJY29uc3QgY2hhciAqcGF0aCA9IF9fb2Zvbm9f
-YXRvbV9nZXRfcGF0aChwbi0+YXRvbSk7CisJREJ1c0Nvbm5lY3Rpb24gKmNvbm4gPSBvZm9ub19k
-YnVzX2dldF9jb25uZWN0aW9uKCk7CisJc3RydWN0IG9mb25vX21vZGVtICptb2RlbSA9IF9fb2Zv
-bm9fYXRvbV9nZXRfbW9kZW0ocG4tPmF0b20pOworCisJb2Zvbm9fbW9kZW1fcmVtb3ZlX2ludGVy
-ZmFjZShtb2RlbSwgT0ZPTk9fUFJFRk5FVF9JTlRFUkZBQ0UpOworCWdfZGJ1c191bnJlZ2lzdGVy
-X2ludGVyZmFjZShjb25uLCBwYXRoLCBPRk9OT19QUkVGTkVUX0lOVEVSRkFDRSk7Cit9CisKK3N0
-YXRpYyB2b2lkIHByZWZuZXRfcmVtb3ZlKHN0cnVjdCBvZm9ub19hdG9tICphdG9tKQoreworCXN0
-cnVjdCBvZm9ub19wcmVmbmV0ICpwbiA9IF9fb2Zvbm9fYXRvbV9nZXRfZGF0YShhdG9tKTsKKwlp
-bnQgaTsKKworCURCRygiYXRvbTogJXAiLCBhdG9tKTsKKworCWlmIChwbiA9PSBOVUxMKQorCQly
-ZXR1cm47CisKKwlmb3IgKGkgPSAwOyBpIDw9IEVGX0xBU1Q7IGkrKykKKwkJaWYgKHBuLT5lZl9h
-cnJheVtpXS5jdXJyZW50KQorCQkJZ19mcmVlKHBuLT5lZl9hcnJheVtpXS5jdXJyZW50KTsKKwor
-CWdfZnJlZShwbik7Cit9CisKK3N0cnVjdCBvZm9ub19wcmVmbmV0ICpvZm9ub19wcmVmbmV0X2Ny
-ZWF0ZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQoreworCXN0cnVjdCBvZm9ub19wcmVmbmV0
-ICpwbjsKKworCXBuID0gZ190cnlfbmV3MChzdHJ1Y3Qgb2Zvbm9fcHJlZm5ldCwgMSk7CisKKwlp
-ZiAocG4gPT0gTlVMTCkKKwkJcmV0dXJuIE5VTEw7CisKKwlwbi0+YXRvbSA9IF9fb2Zvbm9fbW9k
-ZW1fYWRkX2F0b20obW9kZW0sIE9GT05PX0FUT01fVFlQRV9QUkVGTkVULAorCQkJCQkJcHJlZm5l
-dF9yZW1vdmUsIHBuKTsKKworCXBuLT5lZl9hcnJheVtFRlBMTU5XQUNUXS5uYW1lID0gIlVzZXJQ
-cmVmZXJyZWROZXR3b3JrcyI7CisJcG4tPmVmX2FycmF5W0VGUExNTldBQ1RdLmxlbl9yZWNvcmQg
-PSA1OworCXBuLT5lZl9hcnJheVtFRlBMTU5XQUNUXS5jYW5fc2V0ID0gMTsKKwlwbi0+ZWZfYXJy
-YXlbRUZPUExNTldBQ1RdLm5hbWUgPSAiT3BlcmF0b3JQcmVmZXJyZWROZXR3b3JrcyI7CisJcG4t
-PmVmX2FycmF5W0VGT1BMTU5XQUNUXS5sZW5fcmVjb3JkID0gNTsKKwlwbi0+ZWZfYXJyYXlbRUZP
-UExNTldBQ1RdLmNhbl9zZXQgPSAwOworCisJcmV0dXJuIHBuOworfQorCitzdGF0aWMgdm9pZCBl
-Zl9yZWFkX2NiKGludCBvaywgaW50IGxlbiwgaW50IHJlY29yZCwgY29uc3QgdW5zaWduZWQgY2hh
-ciAqZGF0YSwKKwkJCQkJaW50IGxlbl9yZWNvcmQsIHZvaWQgKnVzZXJkYXRhKQoreworCXN0cnVj
-dCBwbl9lZiAqcGUgPSB1c2VyZGF0YTsKKwlzdHJ1Y3Qgb2Zvbm9fcHJlZm5ldCAqcG4gPSBwZS0+
-cG47CisJZW51bSBlZl9zdXBwb3J0IGVzID0gcGUtPmVzOworCisJaWYgKCFvaykKKwkJZ290byBl
-cnJvcjsKKworCXBuLT5lZl9hcnJheVtlc10ubGVuID0gbGVuOworCXBuLT5lZl9hcnJheVtlc10u
-Y3VycmVudCA9IGdfbmV3KHVuc2lnbmVkIGNoYXIsIGxlbik7CisJbWVtY3B5KHBuLT5lZl9hcnJh
-eVtlc10uY3VycmVudCwgZGF0YSwgbGVuKTsKK2Vycm9yOgorCWdfZnJlZShwZSk7Cit9CisKK3Zv
-aWQgb2Zvbm9fcHJlZm5ldF9yZWdpc3RlcihzdHJ1Y3Qgb2Zvbm9fcHJlZm5ldCAqcG4pCit7CisJ
-REJ1c0Nvbm5lY3Rpb24gKmNvbm4gPSBvZm9ub19kYnVzX2dldF9jb25uZWN0aW9uKCk7CisJY29u
-c3QgY2hhciAqcGF0aCA9IF9fb2Zvbm9fYXRvbV9nZXRfcGF0aChwbi0+YXRvbSk7CisJc3RydWN0
-IG9mb25vX21vZGVtICptb2RlbSA9IF9fb2Zvbm9fYXRvbV9nZXRfbW9kZW0ocG4tPmF0b20pOwor
-CXN0cnVjdCBvZm9ub19hdG9tICpzaW1fYXRvbTsKKworCWlmICghZ19kYnVzX3JlZ2lzdGVyX2lu
-dGVyZmFjZShjb25uLCBwYXRoLCBPRk9OT19QUkVGTkVUX0lOVEVSRkFDRSwKKwkJCQkJcHJlZm5l
-dF9tZXRob2RzLCBwcmVmbmV0X3NpZ25hbHMsCisJCQkJCU5VTEwsIHBuLCBOVUxMKSkgeworCQlv
-Zm9ub19lcnJvcigiQ291bGQgbm90IGNyZWF0ZSAlcyBpbnRlcmZhY2UiLAorCQkJCU9GT05PX1BS
-RUZORVRfSU5URVJGQUNFKTsKKworCQlyZXR1cm47CisJfQorCisJb2Zvbm9fbW9kZW1fYWRkX2lu
-dGVyZmFjZShtb2RlbSwgT0ZPTk9fUFJFRk5FVF9JTlRFUkZBQ0UpOworCisJc2ltX2F0b20gPSBf
-X29mb25vX21vZGVtX2ZpbmRfYXRvbShtb2RlbSwgT0ZPTk9fQVRPTV9UWVBFX1NJTSk7CisKKwlp
-ZiAoc2ltX2F0b20pIHsKKwkJc3RydWN0IHBuX2VmICpwZTsKKworCQlwbi0+c2ltID0gX19vZm9u
-b19hdG9tX2dldF9kYXRhKHNpbV9hdG9tKTsKKworCQlwZSA9IHBuX2VmX25ldyhwbiwgRUZQTE1O
-V0FDVCk7CisJCW9mb25vX3NpbV9yZWFkKHBuLT5zaW0sIFNJTV9FRlBMTU5XQUNUX0ZJTEVJRCwK
-KwkJCQlPRk9OT19TSU1fRklMRV9TVFJVQ1RVUkVfVFJBTlNQQVJFTlQsCisJCQkJZWZfcmVhZF9j
-YiwgcGUpOworCisJCXBlID0gcG5fZWZfbmV3KHBuLCBFRk9QTE1OV0FDVCk7CisJCW9mb25vX3Np
-bV9yZWFkKHBuLT5zaW0sIFNJTV9FRk9QTE1OV0FDVF9GSUxFSUQsCisJCQkJT0ZPTk9fU0lNX0ZJ
-TEVfU1RSVUNUVVJFX1RSQU5TUEFSRU5ULAorCQkJCWVmX3JlYWRfY2IsIHBlKTsKKwl9CisKKwlf
-X29mb25vX2F0b21fcmVnaXN0ZXIocG4tPmF0b20sIHByZWZuZXRfdW5yZWdpc3Rlcik7Cit9CisK
-K3ZvaWQgb2Zvbm9fcHJlZm5ldF9yZW1vdmUoc3RydWN0IG9mb25vX3ByZWZuZXQgKnBuKQorewor
-CV9fb2Zvbm9fYXRvbV9mcmVlKHBuLT5hdG9tKTsKK30KZGlmZiAtLWdpdCBhL3NyYy9zaW11dGls
-LmggYi9zcmMvc2ltdXRpbC5oCmluZGV4IGY0ZmJjZTMuLmMzMTJmNjAgMTAwNjQ0Ci0tLSBhL3Ny
-Yy9zaW11dGlsLmgKKysrIGIvc3JjL3NpbXV0aWwuaApAQCAtMzYsNiArMzYsOCBAQCBlbnVtIHNp
-bV9maWxlaWQgewogCVNJTV9FRkNCTUlSX0ZJTEVJRCA9IDB4NmY1MCwKIAlTSU1fRUZDQk1JX0ZJ
-TEVJRCA9IDB4NmY0NSwKIAlTSU1fRUZDQk1JRF9GSUxFSUQgPSAweDZmNDgsCisJU0lNX0VGUExN
-TldBQ1RfRklMRUlEID0gMHg2ZjYwLAorCVNJTV9FRk9QTE1OV0FDVF9GSUxFSUQgPSAweDZmNjEs
-CiB9OwogCiAvKiA1MS4wMTEgU2VjdGlvbiA5LjMgKi8KLS0gCjEuNi4wLjYKCg==
-
---===============0272969124585913304==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-Add-test-script-for-preferred-network.patch"
-
-RnJvbSA5MGQ3YjA1MTJhZGYzM2NmMTAzOWRjNDU4YTQ1MWMzNWY2MjNlY2QxIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogTW9u
-LCAxMiBPY3QgMjAwOSAxNzo1NTozOCArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIEFkZCB0ZXN0IHNj
-cmlwdCBmb3IgcHJlZmVycmVkIG5ldHdvcmsKCi0tLQogdGVzdC90ZXN0LXByZWZlcnJlZC1uZXR3
-b3JrIHwgICA1OSArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrCiAx
-IGZpbGVzIGNoYW5nZWQsIDU5IGluc2VydGlvbnMoKyksIDAgZGVsZXRpb25zKC0pCiBjcmVhdGUg
-bW9kZSAxMDA3NTUgdGVzdC90ZXN0LXByZWZlcnJlZC1uZXR3b3JrCgpkaWZmIC0tZ2l0IGEvdGVz
-dC90ZXN0LXByZWZlcnJlZC1uZXR3b3JrIGIvdGVzdC90ZXN0LXByZWZlcnJlZC1uZXR3b3JrCm5l
-dyBmaWxlIG1vZGUgMTAwNzU1CmluZGV4IDAwMDAwMDAuLmJjYjY1ODUKLS0tIC9kZXYvbnVsbAor
-KysgYi90ZXN0L3Rlc3QtcHJlZmVycmVkLW5ldHdvcmsKQEAgLTAsMCArMSw1OSBAQAorIyEvdXNy
-L2Jpbi9weXRob24KKworaW1wb3J0IGdvYmplY3QKKworaW1wb3J0IGRidXMKK2ltcG9ydCBkYnVz
-Lm1haW5sb29wLmdsaWIKK2ltcG9ydCBzeXMKKworZGVmIHByb3BlcnR5X2NoYW5nZWQobmFtZSwg
-dmFsdWUpOgorCXByaW50ICJQcmVmZXJyZWQgbmV0d29yayBwcm9wZXJ0eTogJyVzJyBjaGFuZ2Vk
-IHRvICclcyciICUgKG5hbWUsIHZhbHVlKQorCisJaWYgY2FuZXhpdDoKKwkJbWFpbmxvb3AucXVp
-dCgpOworCitpZiBfX25hbWVfXyA9PSAiX19tYWluX18iOgorCWlmIGxlbihzeXMuYXJndikgPCAz
-OgorCQlwcmludCAiVXNlYWdlOiAlcyA8cHJvcGVydHk+IDxuZXd2YWx1ZT4iICUgKHN5cy5hcmd2
-WzBdKQorCQlwcmludCAiUHJvcGVydGllcyBjYW4gYmU6IFVzZXJQcmVmZXJyZWROZXR3b3JrcyIK
-KwkJc3lzLmV4aXQoMSkKKworCWNhbmV4aXQgPSBGYWxzZQorCisJcHJvcGVydHkgPSBzeXMuYXJn
-dlsxXQorCW5ld3ZhbHVlID0gc3lzLmFyZ3ZbMjpdCisKKwlkYnVzLm1haW5sb29wLmdsaWIuREJ1
-c0dNYWluTG9vcChzZXRfYXNfZGVmYXVsdD1UcnVlKQorCisJYnVzID0gZGJ1cy5TeXN0ZW1CdXMo
-KQorCisJbWFuYWdlciA9IGRidXMuSW50ZXJmYWNlKGJ1cy5nZXRfb2JqZWN0KCdvcmcub2Zvbm8n
-LCAnLycpLAorCQkJCQkJCSdvcmcub2Zvbm8uTWFuYWdlcicpCisKKwltb2RlbXMgPSBtYW5hZ2Vy
-LkdldFByb3BlcnRpZXMoKVsnTW9kZW1zJ10KKworCXBuID0gZGJ1cy5JbnRlcmZhY2UoYnVzLmdl
-dF9vYmplY3QoJ29yZy5vZm9ubycsIG1vZGVtc1swXSksCisJCQkJCQknb3JnLm9mb25vLlByZWZl
-cnJlZE5ldHdvcmsnKQorCisJcG4uY29ubmVjdF90b19zaWduYWwoIlByb3BlcnR5Q2hhbmdlZCIs
-IHByb3BlcnR5X2NoYW5nZWQpCisKKwlwcm9wZXJ0aWVzID0gcG4uR2V0UHJvcGVydGllcygpCisK
-KwlwcmludCAiQ3VycmVudCBQcm9wZXJ0eSB2YWx1ZXM6IgorCXByaW50ICJVc2VyUHJlZmVycmVk
-TmV0d29ya3M6ICVzIiAlXAorCQkocHJvcGVydGllc1siVXNlclByZWZlcnJlZE5ldHdvcmtzIl0p
-CisJcHJpbnQgIk9wZXJhdG9yUHJlZmVycmVkTmV0d29ya3M6ICVzIiAlXAorCQkocHJvcGVydGll
-c1snT3BlcmF0b3JQcmVmZXJyZWROZXR3b3JrcyddKQorCisJdHJ5OgorCQlwbi5TZXRQcm9wZXJ0
-eShwcm9wZXJ0eSwgbmV3dmFsdWUpCisJZXhjZXB0IGRidXMuREJ1c0V4Y2VwdGlvbiwgZToKKwkJ
-cHJpbnQgIlVuYWJsZSB0byBzZXQgcHJvcGVydHk6ICIsIGUKKwkJc3lzLmV4aXQoMSk7CisKKwlw
-cmludCAiU2V0dGluZyBzdWNjZXNzZnVsIgorCisJY2FuZXhpdCA9IFRydWUKKworCW1haW5sb29w
-ID0gZ29iamVjdC5NYWluTG9vcCgpCisJbWFpbmxvb3AucnVuKCkKLS0gCjEuNi4wLjYKCg==
-
---===============0272969124585913304==--
+--===============1840708683042669149==--
 
