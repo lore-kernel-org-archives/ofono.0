@@ -1,168 +1,193 @@
-Content-Type: multipart/mixed; boundary="===============8557568770417318776=="
+Content-Type: multipart/mixed; boundary="===============8741693774255851916=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [RFC] GPRS context setup and teardown
- (doc/dataconnectionmanager-api.txt)
-Date: Mon, 12 Oct 2009 22:01:37 +0200
-Message-ID: <fb249edb0910121301o4269cd5cn5ecf83d69e04a0d6@mail.gmail.com>
-In-Reply-To: <1255383359-31470-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re-add Manager.Create / Remove
+Date: Wed, 14 Oct 2009 01:34:21 +0200
+Message-ID: <1255476861-1027-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8557568770417318776==
+--===============8741693774255851916==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/10/12 Andrzej Zaborowski <andrew.zaborowski@intel.com>:
-> here's a one-big-patch that adds the DataConnectionManager interface
-> according to doc/dataconnectionmanager-api.txt without any glue for
-> the multiplexer or PPP setup. =C2=A0Only AT backend is implemented.
+This is a small patch to revive Manager.Create and Manager.Remove that lets
+you create a modem over D-Bus dynamically, for example in python that could
+be:
+modem_path =3D manager.Create('phonesim', { 'Port': 12345, 'Address':
+'127.0.0.1' })
 
-This patch depends on 0001 attached, other patches are small
-independent changes that I had in queue.
+This is only posted for those who want to use the patch rather than for
+merging.
+---
+ src/manager.c |  134 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 134 insertions(+), 0 deletions(-)
 
-Regards
+diff --git a/src/manager.c b/src/manager.c
+index e35728a..9bf61ae 100644
+--- a/src/manager.c
++++ b/src/manager.c
+@@ -29,6 +29,8 @@
+ =
 
---===============8557568770417318776==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Move-network-registration-status-to-string-functions.patch"
+ #include "ofono.h"
+ =
 
-RnJvbSA2YmRmZWY2NTBmNjQ3NjZmMTNhYmFhNGI2NTM4ZDdmYWNkZWJkNmYzIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogTW9uLCAxMiBPY3QgMjAwOSAyMjozNzoxNCArMDIwMApTdWJqZWN0
-OiBbUEFUQ0ggMS81XSBNb3ZlIG5ldHdvcmsgcmVnaXN0cmF0aW9uIHN0YXR1cyB0byBzdHJpbmcg
-ZnVuY3Rpb25zIHRvIGNvbW1vbi5jCgpzbyB0aGF0IHRoZXkgY2FuIGJlIHVzZWQgaW4gZGF0YSBj
-b25uZWN0aW9uIHJlbGF0ZWQgbmV0d29yawpyZWdpc3RyYXRpb24gY29kZS4KLS0tCiBzcmMvY29t
-bW9uLmMgIHwgICA0NCArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-Kwogc3JjL2NvbW1vbi5oICB8ICAgIDMgKysrCiBzcmMvbmV0d29yay5jIHwgICA0NCAtLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQogMyBmaWxlcyBjaGFuZ2VkLCA0
-NyBpbnNlcnRpb25zKCspLCA0NCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9zcmMvY29tbW9u
-LmMgYi9zcmMvY29tbW9uLmMKaW5kZXggYjYyZTM0Yy4uMWIwMDJiZiAxMDA2NDQKLS0tIGEvc3Jj
-L2NvbW1vbi5jCisrKyBiL3NyYy9jb21tb24uYwpAQCAtNTk3LDMgKzU5Nyw0NyBAQCBnYm9vbGVh
-biBpc192YWxpZF9waW4oY29uc3QgY2hhciAqcGluKQogCiAJcmV0dXJuIFRSVUU7CiB9CisKK2Nv
-bnN0IGNoYXIgKnJlZ2lzdHJhdGlvbl9zdGF0dXNfdG9fc3RyaW5nKGludCBzdGF0dXMpCit7CisJ
-c3dpdGNoIChzdGF0dXMpIHsKKwljYXNlIE5FVFdPUktfUkVHSVNUUkFUSU9OX1NUQVRVU19OT1Rf
-UkVHSVNURVJFRDoKKwkJcmV0dXJuICJ1bnJlZ2lzdGVyZWQiOworCWNhc2UgTkVUV09SS19SRUdJ
-U1RSQVRJT05fU1RBVFVTX1JFR0lTVEVSRUQ6CisJCXJldHVybiAicmVnaXN0ZXJlZCI7CisJY2Fz
-ZSBORVRXT1JLX1JFR0lTVFJBVElPTl9TVEFUVVNfU0VBUkNISU5HOgorCQlyZXR1cm4gInNlYXJj
-aGluZyI7CisJY2FzZSBORVRXT1JLX1JFR0lTVFJBVElPTl9TVEFUVVNfREVOSUVEOgorCQlyZXR1
-cm4gImRlbmllZCI7CisJY2FzZSBORVRXT1JLX1JFR0lTVFJBVElPTl9TVEFUVVNfVU5LTk9XTjoK
-KwkJcmV0dXJuICJ1bmtub3duIjsKKwljYXNlIE5FVFdPUktfUkVHSVNUUkFUSU9OX1NUQVRVU19S
-T0FNSU5HOgorCQlyZXR1cm4gInJvYW1pbmciOworCX0KKworCXJldHVybiAiIjsKK30KKworY29u
-c3QgY2hhciAqcmVnaXN0cmF0aW9uX3RlY2hfdG9fc3RyaW5nKGludCB0ZWNoKQoreworCXN3aXRj
-aCAodGVjaCkgeworCWNhc2UgQUNDRVNTX1RFQ0hOT0xPR1lfR1NNOgorCQlyZXR1cm4gIkdTTSI7
-CisJY2FzZSBBQ0NFU1NfVEVDSE5PTE9HWV9HU01fQ09NUEFDVDoKKwkJcmV0dXJuICJHU01Db21w
-YWN0IjsKKwljYXNlIEFDQ0VTU19URUNITk9MT0dZX1VUUkFOOgorCQlyZXR1cm4gIlVUUkFOIjsK
-KwljYXNlIEFDQ0VTU19URUNITk9MT0dZX0dTTV9FR1BSUzoKKwkJcmV0dXJuICJHU00rRUdQUlMi
-OworCWNhc2UgQUNDRVNTX1RFQ0hOT0xPR1lfVVRSQU5fSFNEUEE6CisJCXJldHVybiAiVVRSQU4r
-SFNEUEEiOworCWNhc2UgQUNDRVNTX1RFQ0hOT0xPR1lfVVRSQU5fSFNVUEE6CisJCXJldHVybiAi
-VVRSQU4rSFNVUEEiOworCWNhc2UgQUNDRVNTX1RFQ0hOT0xPR1lfVVRSQU5fSFNEUEFfSFNVUEE6
-CisJCXJldHVybiAiVVRSQU4rSFNEUEErSFNVUEEiOworCWNhc2UgQUNDRVNTX1RFQ0hOT0xPR1lf
-RVVUUkFOOgorCQlyZXR1cm4gIkVVVFJBTiI7CisJZGVmYXVsdDoKKwkJcmV0dXJuICIiOworCX0K
-K30KZGlmZiAtLWdpdCBhL3NyYy9jb21tb24uaCBiL3NyYy9jb21tb24uaAppbmRleCAzODA1ZTIx
-Li4xYTVjOWVkIDEwMDY0NAotLS0gYS9zcmMvY29tbW9uLmgKKysrIGIvc3JjL2NvbW1vbi5oCkBA
-IC0xMzUsMyArMTM1LDYgQEAgY29uc3QgY2hhciAqc3NfY29udHJvbF90eXBlX3RvX3N0cmluZyhl
-bnVtIHNzX2NvbnRyb2xfdHlwZSB0eXBlKTsKIGNvbnN0IGNoYXIgKmJlYXJlcl9jbGFzc190b19z
-dHJpbmcoZW51bSBiZWFyZXJfY2xhc3MgY2xzKTsKIAogZ2Jvb2xlYW4gaXNfdmFsaWRfcGluKGNv
-bnN0IGNoYXIgKnBpbik7CisKK2NvbnN0IGNoYXIgKnJlZ2lzdHJhdGlvbl9zdGF0dXNfdG9fc3Ry
-aW5nKGludCBzdGF0dXMpOworY29uc3QgY2hhciAqcmVnaXN0cmF0aW9uX3RlY2hfdG9fc3RyaW5n
-KGludCB0ZWNoKTsKZGlmZiAtLWdpdCBhL3NyYy9uZXR3b3JrLmMgYi9zcmMvbmV0d29yay5jCmlu
-ZGV4IDBlNWQ1NWIuLmVmYTBiYzcgMTAwNjQ0Ci0tLSBhL3NyYy9uZXR3b3JrLmMKKysrIGIvc3Jj
-L25ldHdvcmsuYwpAQCAtMTE3LDUwICsxMTcsNiBAQCBzdGF0aWMgaW5saW5lIGNvbnN0IGNoYXIg
-Km5ldHdvcmtfb3BlcmF0b3Jfc3RhdHVzX3RvX3N0cmluZyhpbnQgc3RhdHVzKQogCXJldHVybiAi
-dW5rbm93biI7CiB9CiAKLXN0YXRpYyBpbmxpbmUgY29uc3QgY2hhciAqcmVnaXN0cmF0aW9uX3N0
-YXR1c190b19zdHJpbmcoaW50IHN0YXR1cykKLXsKLQlzd2l0Y2ggKHN0YXR1cykgewotCWNhc2Ug
-TkVUV09SS19SRUdJU1RSQVRJT05fU1RBVFVTX05PVF9SRUdJU1RFUkVEOgotCQlyZXR1cm4gInVu
-cmVnaXN0ZXJlZCI7Ci0JY2FzZSBORVRXT1JLX1JFR0lTVFJBVElPTl9TVEFUVVNfUkVHSVNURVJF
-RDoKLQkJcmV0dXJuICJyZWdpc3RlcmVkIjsKLQljYXNlIE5FVFdPUktfUkVHSVNUUkFUSU9OX1NU
-QVRVU19TRUFSQ0hJTkc6Ci0JCXJldHVybiAic2VhcmNoaW5nIjsKLQljYXNlIE5FVFdPUktfUkVH
-SVNUUkFUSU9OX1NUQVRVU19ERU5JRUQ6Ci0JCXJldHVybiAiZGVuaWVkIjsKLQljYXNlIE5FVFdP
-UktfUkVHSVNUUkFUSU9OX1NUQVRVU19VTktOT1dOOgotCQlyZXR1cm4gInVua25vd24iOwotCWNh
-c2UgTkVUV09SS19SRUdJU1RSQVRJT05fU1RBVFVTX1JPQU1JTkc6Ci0JCXJldHVybiAicm9hbWlu
-ZyI7Ci0JfQotCi0JcmV0dXJuICIiOwotfQotCi1zdGF0aWMgaW5saW5lIGNvbnN0IGNoYXIgKnJl
-Z2lzdHJhdGlvbl90ZWNoX3RvX3N0cmluZyhpbnQgdGVjaCkKLXsKLQlzd2l0Y2ggKHRlY2gpIHsK
-LQljYXNlIEFDQ0VTU19URUNITk9MT0dZX0dTTToKLQkJcmV0dXJuICJHU00iOwotCWNhc2UgQUND
-RVNTX1RFQ0hOT0xPR1lfR1NNX0NPTVBBQ1Q6Ci0JCXJldHVybiAiR1NNQ29tcGFjdCI7Ci0JY2Fz
-ZSBBQ0NFU1NfVEVDSE5PTE9HWV9VVFJBTjoKLQkJcmV0dXJuICJVVFJBTiI7Ci0JY2FzZSBBQ0NF
-U1NfVEVDSE5PTE9HWV9HU01fRUdQUlM6Ci0JCXJldHVybiAiR1NNK0VHUFJTIjsKLQljYXNlIEFD
-Q0VTU19URUNITk9MT0dZX1VUUkFOX0hTRFBBOgotCQlyZXR1cm4gIlVUUkFOK0hTRFBBIjsKLQlj
-YXNlIEFDQ0VTU19URUNITk9MT0dZX1VUUkFOX0hTVVBBOgotCQlyZXR1cm4gIlVUUkFOK0hTVVBB
-IjsKLQljYXNlIEFDQ0VTU19URUNITk9MT0dZX1VUUkFOX0hTRFBBX0hTVVBBOgotCQlyZXR1cm4g
-IlVUUkFOK0hTRFBBK0hTVVBBIjsKLQljYXNlIEFDQ0VTU19URUNITk9MT0dZX0VVVFJBTjoKLQkJ
-cmV0dXJuICJFVVRSQU4iOwotCWRlZmF1bHQ6Ci0JCXJldHVybiAiIjsKLQl9Ci19Ci0KIHN0YXRp
-YyB2b2lkIHJlZ2lzdGVyX2NhbGxiYWNrKGNvbnN0IHN0cnVjdCBvZm9ub19lcnJvciAqZXJyb3Is
-IHZvaWQgKmRhdGEpCiB7CiAJc3RydWN0IG9mb25vX25ldHJlZyAqbmV0cmVnID0gZGF0YTsKLS0g
-CjEuNi4xCgo=
++static GSList *modems;
++
+ static DBusMessage *manager_get_properties(DBusConnection *conn,
+ 						DBusMessage *msg, void *data)
+ {
+@@ -62,8 +64,140 @@ static DBusMessage *manager_get_properties(DBusConnecti=
+on *conn,
+ 	return reply;
+ }
+ =
 
---===============8557568770417318776==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-Always-return-a-string-from-telephony_error_to_str.patch"
++static DBusMessage *manager_modem_create(DBusConnection *conn,
++						DBusMessage *msg, void *data)
++{
++	DBusMessageIter iter;
++	DBusMessageIter var;
++	DBusMessageIter var_iter;
++	DBusMessageIter var_value;
++	DBusMessage *reply;
++	char *type;
++	char *property;
++	dbus_bool_t bool_value;
++	dbus_int32_t int_value;
++	char *str_value;
++	const char *path;
++	struct ofono_modem *modem;
++
++	if (!dbus_message_iter_init(msg, &iter))
++		return __ofono_error_invalid_args(msg);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &type);
++
++	modem =3D ofono_modem_create(type);
++	if (!modem)
++		return __ofono_error_failed(msg);
++
++	dbus_message_iter_next(&iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_ARRAY ||
++			dbus_message_iter_get_element_type(&iter) !=3D
++			DBUS_TYPE_DICT_ENTRY)
++		goto error;
++
++	dbus_message_iter_recurse(&iter, &var);
++
++	while (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_INVALID) {
++		if (dbus_message_iter_get_arg_type(&var) !=3D
++				DBUS_TYPE_DICT_ENTRY)
++			goto error;
++
++		dbus_message_iter_recurse(&var, &var_iter);
++
++		if (dbus_message_iter_get_arg_type(&var_iter) !=3D
++				DBUS_TYPE_STRING)
++			goto error;
++
++		dbus_message_iter_get_basic(&var_iter, &property);
++
++		dbus_message_iter_next(&var_iter);
++
++		if (dbus_message_iter_get_arg_type(&var_iter) !=3D
++				DBUS_TYPE_VARIANT)
++			goto error;
++
++		dbus_message_iter_recurse(&var_iter, &var_value);
++
++		switch (dbus_message_iter_get_arg_type(&var_value)) {
++		case DBUS_TYPE_STRING:
++			dbus_message_iter_get_basic(&var_value, &str_value);
++
++			ofono_modem_set_string(modem, property, str_value);
++			break;
++
++		case DBUS_TYPE_INT32:
++			dbus_message_iter_get_basic(&var_value, &int_value);
++
++			ofono_modem_set_integer(modem, property, int_value);
++			break;
++
++		case DBUS_TYPE_BOOLEAN:
++			dbus_message_iter_get_basic(&var_value, &bool_value);
++
++			ofono_modem_set_boolean(modem, property, bool_value);
++			break;
++
++		default:
++			goto error;
++		}
++
++		dbus_message_iter_next(&var);
++	}
++
++	if (ofono_modem_register(modem) < 0) {
++		ofono_modem_remove(modem);
++
++		return __ofono_error_failed(msg);
++	}
++
++	modems =3D g_slist_prepend(modems, modem);
++
++	reply =3D dbus_message_new_method_return(msg);
++	if (!reply)
++		return NULL;
++
++	path =3D ofono_modem_get_path(modem);
++	dbus_message_append_args(reply, DBUS_TYPE_OBJECT_PATH, &path,
++					DBUS_TYPE_INVALID);
++
++	return reply;
++error:
++	ofono_modem_remove(modem);
++
++	return __ofono_error_invalid_args(msg);
++}
++
++static DBusMessage *manager_modem_remove(DBusConnection *conn,
++						DBusMessage *msg, void *data)
++{
++	char *path;
++	struct ofono_modem *modem;
++	GSList *l;
++
++	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_OBJECT_PATH, &path,
++					DBUS_TYPE_INVALID))
++		return __ofono_error_invalid_args(msg);
++
++	for (l =3D modems; l; l =3D l->next) {
++		modem =3D l->data;
++
++		if (!strcmp(path, ofono_modem_get_path(modem))) {
++			ofono_modem_remove(modem);
++			return dbus_message_new_method_return(msg);
++		}
++	}
++
++	return __ofono_error_not_found(msg);
++}
++
+ static GDBusMethodTable manager_methods[] =3D {
+ 	{ "GetProperties",	"",	"a{sv}",	manager_get_properties },
++	{ "Create",		"sa{sv}",	"o",	manager_modem_create },
++	{ "Remove",		"o",	"",		manager_modem_remove },
+ 	{ }
+ };
+ =
 
-RnJvbSA3MzkzOGU0ZTEwMDU2NzJiOTlmOTI5OTVjMjZhNWZmNDFhMDFkNjU2IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogTW9uLCAxMiBPY3QgMjAwOSAyMjozOTo0NyArMDIwMApTdWJqZWN0
-OiBbUEFUQ0ggMi81XSBBbHdheXMgcmV0dXJuIGEgc3RyaW5nIGZyb20gdGVsZXBob255X2Vycm9y
-X3RvX3N0ci4KClNvIHRoYXQgaXQgY2FuIGJlIHVzZWQgYXMgYSBwcmludGYgYXJndW1lbnQgZGly
-ZWN0bHkuCi0tLQogc3JjL2NvbW1vbi5jIHwgICAgNCArKy0tCiAxIGZpbGVzIGNoYW5nZWQsIDIg
-aW5zZXJ0aW9ucygrKSwgMiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9zcmMvY29tbW9uLmMg
-Yi9zcmMvY29tbW9uLmMKaW5kZXggMWIwMDJiZi4uY2I3OTMzNCAxMDA2NDQKLS0tIGEvc3JjL2Nv
-bW1vbi5jCisrKyBiL3NyYy9jb21tb24uYwpAQCAtMjgwLDE0ICsyODAsMTQgQEAgY29uc3QgY2hh
-ciAqdGVsZXBob255X2Vycm9yX3RvX3N0cihjb25zdCBzdHJ1Y3Qgb2Zvbm9fZXJyb3IgKmVycm9y
-KQogCQltYXhlbnRyaWVzID0gc2l6ZW9mKGNlZXJfZXJyb3JzKSAvIHNpemVvZihzdHJ1Y3QgZXJy
-b3JfZW50cnkpOwogCQlicmVhazsKIAlkZWZhdWx0OgotCQlyZXR1cm4gMDsKKwkJcmV0dXJuICJV
-bmtub3duIGVycm9yIHR5cGUiOwogCX0KIAogCWZvciAoaSA9IDA7IGkgPCBtYXhlbnRyaWVzOyBp
-KyspCiAJCWlmIChlW2ldLmVycm9yID09IGVycm9yLT5lcnJvcikKIAkJCXJldHVybiBlW2ldLnN0
-cjsKIAotCXJldHVybiAwOworCXJldHVybiAiVW5rbm93biBlcnJvciI7CiB9CiAKIGludCBtbWlf
-c2VydmljZV9jb2RlX3RvX2JlYXJlcl9jbGFzcyhpbnQgY29kZSkKLS0gCjEuNi4xCgo=
+-- =
 
---===============8557568770417318776==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0003-Emit-debug-message-instead-of-an-error-when-SMS-stor.patch"
+1.6.1
 
-RnJvbSAzZjc3MTU1NTA3OWZhNzcwNDU1OTZmYTFiYzJiNTE2OTcwYTQzMjkwIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogTW9uLCAxMiBPY3QgMjAwOSAyMjo0MTozNSArMDIwMApTdWJqZWN0
-OiBbUEFUQ0ggMy81XSBFbWl0IGRlYnVnIG1lc3NhZ2UgaW5zdGVhZCBvZiBhbiBlcnJvciB3aGVu
-IFNNUyBzdG9yYWdlIGlzIGVtcHR5IG9uIGluaXQuCgotLS0KIGRyaXZlcnMvYXRtb2RlbS9zbXMu
-YyB8ICAgIDIgKy0KIDEgZmlsZXMgY2hhbmdlZCwgMSBpbnNlcnRpb25zKCspLCAxIGRlbGV0aW9u
-cygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS9zbXMuYyBiL2RyaXZlcnMvYXRtb2Rl
-bS9zbXMuYwppbmRleCBkNDI1ODE4Li5iM2Q2ZmY1IDEwMDY0NAotLS0gYS9kcml2ZXJzL2F0bW9k
-ZW0vc21zLmMKKysrIGIvZHJpdmVycy9hdG1vZGVtL3Ntcy5jCkBAIC01NDgsNyArNTQ4LDcgQEAg
-c3RhdGljIHZvaWQgYXRfY21nbF9jYihnYm9vbGVhbiBvaywgR0F0UmVzdWx0ICpyZXN1bHQsIGdw
-b2ludGVyIHVzZXJfZGF0YSkKIAlzdHJ1Y3Qgb2Zvbm9fc21zICpzbXMgPSB1c2VyX2RhdGE7CiAK
-IAlpZiAoIW9rKQotCQlvZm9ub19lcnJvcigiSW5pdGlhbCBsaXN0aW5nIFNNUyBzdG9yYWdlIGZh
-aWxlZCEiKTsKKwkJb2Zvbm9fZGVidWcoIkluaXRpYWwgbGlzdGluZyBTTVMgc3RvcmFnZSBmYWls
-ZWQhIik7CiAKIAlhdF9jbWdsX2RvbmUoc21zKTsKIH0KLS0gCjEuNi4xCgo=
 
---===============8557568770417318776==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0004-Don-t-crash-on-sms-messages-containing-only-UDH.patch"
-
-RnJvbSBmYzBjYjE5MmRlN2NiMGY2MjJhYTllNmQ2ODc5ODY1ZGUyZmUxNjliIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogTW9uLCAxMiBPY3QgMjAwOSAyMjo0MzowNCArMDIwMApTdWJqZWN0
-OiBbUEFUQ0ggNC81XSBEb24ndCBjcmFzaCBvbiBzbXMgbWVzc2FnZXMgY29udGFpbmluZyBvbmx5
-IFVESC4KCi0tLQogc3JjL3Ntc3V0aWwuYyB8ICAgIDMgKysrCiAxIGZpbGVzIGNoYW5nZWQsIDMg
-aW5zZXJ0aW9ucygrKSwgMCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9zcmMvc21zdXRpbC5j
-IGIvc3JjL3Ntc3V0aWwuYwppbmRleCBhNjE4ZDA3Li5kN2U4MWM3IDEwMDY0NAotLS0gYS9zcmMv
-c21zdXRpbC5jCisrKyBiL3NyYy9zbXN1dGlsLmMKQEAgLTIxMzMsNiArMjEzMyw5IEBAIGNoYXIg
-KnNtc19kZWNvZGVfdGV4dChHU0xpc3QgKnNtc19saXN0KQogCiAJCXVkbF9pbl9ieXRlcyA9IHNt
-c191ZGxfaW5fYnl0ZXModWRsLCBkY3MpOwogCisJCWlmICh1ZGxfaW5fYnl0ZXMgPT0gdGFrZW4p
-CisJCQljb250aW51ZTsKKwogCQlpZiAoY2hhcnNldCA9PSBTTVNfQ0hBUlNFVF83QklUKSB7CiAJ
-CQl1bnNpZ25lZCBjaGFyIGJ1ZlsxNjBdOwogCQkJbG9uZyB3cml0dGVuOwotLSAKMS42LjEKCg==
-
---===============8557568770417318776==--
+--===============8741693774255851916==--
 
