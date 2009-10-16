@@ -1,35 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============1062465469374723806=="
+Content-Type: multipart/mixed; boundary="===============3481068931425162630=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC] GPRS context setup and teardown
- (doc/dataconnectionmanager-api.txt)
-Date: Fri, 16 Oct 2009 13:23:49 -0500
-Message-ID: <200910161323.49534.denkenz@gmail.com>
-In-Reply-To: <fb249edb0910121301o4269cd5cn5ecf83d69e04a0d6@mail.gmail.com>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: [PATCH] API documentation fixes
+Date: Fri, 16 Oct 2009 12:18:23 -0700
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C99F9F33E4@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <4AD84144.3060602@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1062465469374723806==
+--===============3481068931425162630==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beh=
+alf
+> Of Marko Saukko
+> Sent: Friday, October 16, 2009 2:48 AM
+> To: ofono(a)ofono.org
+> Subject: [PATCH] API documentation fixes
+> =
 
-> 2009/10/12 Andrzej Zaborowski <andrew.zaborowski@intel.com>:
-> > here's a one-big-patch that adds the DataConnectionManager interface
-> > according to doc/dataconnectionmanager-api.txt without any glue for
-> > the multiplexer or PPP setup.  Only AT backend is implemented.
->
-> This patch depends on 0001 attached, other patches are small
-> independent changes that I had in queue.
+> Hi,
+> =
 
-I applied all four small patches.  Still reviewing the big patch :)
+> Fixes for API documentation.
+> =
 
-Regards,
--Denis
+> Regards,
+> Marko
 
+While you are at it,
+MobileCountryCode / MobileNetworkCode in doc/network-api.txt are still list=
+ed as uint16
 
+Cheers,
+Waldo
 
---===============1062465469374723806==--
+--===============3481068931425162630==--
 
