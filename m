@@ -1,115 +1,125 @@
-Content-Type: multipart/mixed; boundary="===============8973200901820712024=="
+Content-Type: multipart/mixed; boundary="===============7290579645847835441=="
 MIME-Version: 1.0
-From: Marko Saukko <marko.saukko@gmail.com>
-Subject: [PATCH] API documentation fixes
-Date: Fri, 16 Oct 2009 12:47:48 +0300
-Message-ID: <4AD84144.3060602@gmail.com>
+From: Fu, Elva <elva.fu@intel.com>
+Subject: light test report for oFono v0.7
+Date: Fri, 16 Oct 2009 18:00:15 +0800
+Message-ID: <E2263E4A5B2284449EEBD0AAB751098418E455B673@PDSMSX501.ccr.corp.intel.com>
+In-Reply-To: <E2263E4A5B2284449EEBD0AAB7510984066EA87674@PDSMSX501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8973200901820712024==
+--===============7290579645847835441==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Test Environment
+-------------------------------
+general PC (pre-installed FC11)
+	- oFono v0.7
+	- phonesim package
+mobile phone (use it as modem)
+-------------------------------
 
-Fixes for API documentation.
+Test Strategy&Approach
+-------------------------------
+1. Considering oFono release early release often, to make testing more effe=
+ctive, we will run our test cases based on oFono release selected. New feat=
+ure testing and bug verification may be involved too. we will not do testin=
+g on every release. :-)
+2. At early stage, we will focus on functional testing as some features are=
+ not ready and APIs are not stable enough. We will do deep testing in futur=
+e.
+-------------------------------
 
-Regards,
-Marko
+Test Scope
+-------------------------------
+    - we mainly focus on checking basic functionalities implemented in oFon=
+o v0.7 (voice call, sms, cell broadcast, phonebook, sim, supplementary serv=
+ice, modem, pin code etc.)
+    - voice call, multiparty call, phonebook, SIM and modem are tested in r=
+eal network env. For others, we test them through simulator.  =
 
----
- doc/call-settings-api.txt    |    4 ++--
- doc/sim-api.txt              |   10 +++++-----
- doc/voicecall-api.txt        |    2 +-
- doc/voicecallmanager-api.txt |    2 +-
- 4 files changed, 9 insertions(+), 9 deletions(-)
+-------------------------------
 
-diff --git a/doc/call-settings-api.txt b/doc/call-settings-api.txt
-index 870c748..5e5eb40 100644
---- a/doc/call-settings-api.txt
-+++ b/doc/call-settings-api.txt
-@@ -1,7 +1,7 @@
--Call Forwarding hierarchy
-+Call Settings hierarchy
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- Service		org.ofono
--Interface	org.ofono.CallForwarding
-+Interface	org.ofono.CallSettings
- Object path	[variable prefix]/{modem0,modem1,...}
+Test Summary
+-------------------------------
+test result is good and only 4 bugs were submitted. :-)
+Total 82 test cases were executed during this round of testing. =
 
- Methods		dict GetProperties()
-diff --git a/doc/sim-api.txt b/doc/sim-api.txt
-index 11ee4c8..9fe9a92 100644
---- a/doc/sim-api.txt
-+++ b/doc/sim-api.txt
-@@ -12,22 +12,22 @@ Methods		dict GetProperties()
+Pass: 	78
+Fail: 	4
+-------------------------------
 
- 			Possible Errors: [service].Error.InvalidArguments
+New Bugs
+-------------------------------
+6783 Can't receive a empty message  =
 
--		ChangePin(string type, string oldpin, string newpin)
-+		void ChangePin(string type, string oldpin, string newpin)
+6680 can't see call history information with oFono v0.7 version  =
 
- 			Changes the pin given by string type.
+6682 Segment fault in novatel modem driver  =
 
--		EnterPin(string type, string pin)
-+		void EnterPin(string type, string pin)
+5963 Supplementary Service interface will be locked after sending a USSD st=
+ring  =
 
- 			Enters the currently pending pin.  The type value must
- 			match the pin type being asked in the PinRequired
- 			property.
 
--		ResetPin(string type, string puk, string newpin)
-+		void ResetPin(string type, string puk, string newpin)
+We will do more investigation whether it was oFono or phonesim issues later=
+. :-)
+-------------------------------
 
- 			Provides the unblock key to the modem and if correct
- 			resets the pin to the new value of newpin.
+Details
+-------------------------------
+to make it readable, we summarized by feature list. :-)
+Features        	checkpoints                 		test results     				comment=
+s	=
 
--		LockPin(string type, string pin)
-+		void LockPin(string type, string pin)
+---------------------------------------------------------------------------=
+-------------------------------------------------
+Call history 	Missed call                    	work well except for bug6680
+                   	Outgoing call    			pass
+                   	Incoming call             		work well except for bug6682
+                   	Duration                 		pass
+                   	Date                           		pass
+SMS  		Send/receive          		work well except for bug6783
+                   	Receive class0        		pass
+                   	Set service center address     	pass
+                   	More recipients                	pass
+                   	More segments                  	pass
+Cell Broadcast 	Receive a CB message           	pass
+Voice call 	Dial                           		pass
+                   	Accept                         		pass
+                   	Reject                         		pass
+                   	Hold                           		pass
+                   	Receive                        		pass
+                   	Release                        		pass
+Multiparty call  	Create                          		pass
+                   	Hang up                         	pass
+                   	Private chat                    	pass
+                   	Hold                            		pass
+Voice mail 	Get number                      	pass
+                   	Set number                      	pass
+Sim Phonebook Read                            		pass
+SS  		CF                              		pass
+                   	CB                              		pass
+                   	CW                              		pass
+                   	CLIR/CLIP                       	pass
+Setting  	AOC                             	pass
+                   	CF/CB                           	pass
+GSM String      	General String                  	pass
+                   	USSD                            	fail due to bug5963
+Modem     	Basic function                  	pass
+Networking        Basic function                  	pass
+SIM   	            Read IMSI                       	pass
+                   	Read MSISDN                     	pass
+                   	Read Emergency number          	pass
+                   	Read SDN number                 	pass
+                  	Enable pin code                 	pass
+                   	Enter pin code                  	pass
+                   	Change pin code                 	pass
+                   	PUK code                        	pass
+---------------------------------------------------------------------------=
+-------------------------------------------------
 
- 			Activates the lock for the particular pin type.  The
- 			device will ask for a PIN automatically next time the
-@@ -35,7 +35,7 @@ Methods		dict GetProperties()
- 			re-inserter.  The current PIN is required for the
- 			operation to succeed.
-
--		UnlockPin(string type, string pin)
-+		void UnlockPin(string type, string pin)
-
- 			Deactivates the lock for the particular pin type.  The
- 			current PIN is required for the operation to succeed.
-diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-index 62db5a1..b360cca 100644
---- a/doc/voicecall-api.txt
-+++ b/doc/voicecall-api.txt
-@@ -3,7 +3,7 @@ VoiceCall hierarchy
-
- Service		org.ofono
- Interface	org.ofono.VoiceCall
--Object path	[variable prefix]/{modem0,modem1,...}/{call0,call1,...}
-+Object path	[variable prefix]/{modem0,modem1,...}/{voicecall01,voicecall02=
-,...}
-
- Methods		dict GetProperties()
-
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 361370a..7877ac5 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -70,7 +70,7 @@ Methods		dict GetProperties()
- 			Held calls is invalid, since in GSM a user can have
- 			only a single Held call at a time.
-
--		void HangupAllCalls()
-+		void HangupAll()
-
- 			Releases all calls.
-
--- =
-
-1.6.0.4
-
---===============8973200901820712024==--
+Elva
+--===============7290579645847835441==--
 
