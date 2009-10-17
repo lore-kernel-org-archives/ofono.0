@@ -1,57 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============0622924409761384155=="
+Content-Type: multipart/mixed; boundary="===============7821841389924847239=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Parse +CUSD responses.
-Date: Fri, 16 Oct 2009 17:47:04 -0500
-Message-ID: <200910161747.05507.denkenz@gmail.com>
-In-Reply-To: <fb249edb0910161412l7bf189bar4eb9a28062df067c@mail.gmail.com>
+From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
+Subject: RE: fix handsfree profile patch
+Date: Sat, 17 Oct 2009 10:55:30 +0800
+Message-ID: <0463F45F3606F4428ED35AC8C709F92E089B8718E6@pdsmsx502.ccr.corp.intel.com>
+In-Reply-To: <1255715235-10199-1-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0622924409761384155==
+--===============7821841389924847239==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Padovan,
 
-> > Actually valid_ussd_string will accept just about everything.
->
-> Ah true.  However I think we should never try to send a UCS2 USSD - we
-> would first need to know that the modem supports this (so a vendor
-> quirk set by the plugin would tell us this) and then that the network
-> supports this too.
+Gustavo F. Padovan wrote:
+> Hi Zhenhua,
+> =
 
-You're absolutely right that we shouldn't, I was just pointing out the need=
- to =
+> This patch fix compiler warnings into your HFP patch. I didn't looked
+> to the code and what it does yet. =
 
-always be paranoid ;)
+> =
 
-> > What about the evil set of DCSes which indicate a ISO639 2 character co=
-de
-> > preceding the message?
->
-> The comment refers to this.  I think 27.007 tries to say the modem has
-> to take care of this and only give us the actual characters of the
-> string.
->
-> "-       if TE character set other than "HEX" (refer command Select TE
-> Character Set +CSCS): MT/TA converts GSM alphabet into current TE
-> character set according to rules of 3GPP TS 27.005 [24] Annex A
 
-So this part really only talks about the modem performing character set =
+Thanks for your patch. I will turn on the maintainer mode from now on.
 
-conversion between GSM and IRA/UCS2/UTF8 or whatever is set by CSCS.  I =
+> Regards,
+> =
 
-suspect the DCS is simply never looked at by most networks/modems :)
+>     Gustavo
 
-Patch has been applied, with some fixes afterward.  I think this is good en=
-ough =
 
-until we find a network / modem that supports this stuff properly.
 
 Regards,
--Denis
+Zhenhua
 
---===============0622924409761384155==--
+--===============7821841389924847239==--
 
