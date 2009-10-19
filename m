@@ -1,39 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1382567367324766459=="
+Content-Type: multipart/mixed; boundary="===============7407261303555858576=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Handsfree profile plugins update
-Date: Mon, 19 Oct 2009 17:12:44 -0500
-Message-ID: <200910191712.45209.denkenz@gmail.com>
-In-Reply-To: <0463F45F3606F4428ED35AC8C709F92E089B871C95@pdsmsx502.ccr.corp.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Subject: RFC Migrate from RFC2822 to ISO8601 for time
+ representations
+Date: Tue, 20 Oct 2009 01:34:59 +0200
+Message-ID: <1255995299.10779.0.camel@localhost.localdomain>
+In-Reply-To: <200910191220.15942.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1382567367324766459==
+--===============7407261303555858576==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Denis,
 
-> Hi,
->
-> Attached is update patch for handsfree profile plugin. I move most stuff =
-in
-> drivers/hfpmodem/hfp.c into plugins/hfp.c and simplify them. GSList *indi=
-es
-> is replaced as two indexable arrays (cind_names and cind_values), to
-> improve efficiency when we need access name and value by index. The whole
-> logic is the same comparing with previous patch.
->
-> Thanks for Denis and Gustavo for comments. Please review it.
+> > the format used to represent time in ofono is currently RFC2822 which is
+> > complex and a bit deprecated. I think it would be better to move to
+> > ISO8601 which is a well used and supported [1] format and simpler to pa=
+rse.
+> =
 
-This patch has been applied with some additional fixes by me.  Please let m=
-e =
+> So I don't have a problem with the patch, since RFC822 does indeed have i=
+ssues =
 
-know if I broke something.
+> with i18n.  However, this will break existing applications which will nee=
+d to =
 
-Regards,
--Denis
+> be updated to the new format.
+> =
 
---===============1382567367324766459==--
+> If no one objects in the next 24 hours or so I will apply this one.
+
+go ahead and apply the patch. Lets break the apps now. I am perfectly
+fine with this patch and it makes sense.
+
+Regards
+
+Marcel
+
+
+
+--===============7407261303555858576==--
 
