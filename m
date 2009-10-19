@@ -1,43 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============4664324809779182614=="
+Content-Type: multipart/mixed; boundary="===============7440013207753926043=="
 MIME-Version: 1.0
-From: Ryan Raasch <ryan.raasch@gmail.com>
-Subject: [PATCH] When setting the serial port,
- the previous settings need to  be preserved.
-Date: Mon, 19 Oct 2009 19:18:38 +0200
-Message-ID: <632f5f310910191018k2e122a0bi915e7f6ffbfe5cd6@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Subject: RFC Migrate from RFC2822 to ISO8601 for time
+ representations
+Date: Mon, 19 Oct 2009 12:20:15 -0500
+Message-ID: <200910191220.15942.denkenz@gmail.com>
+In-Reply-To: <1255901578.3235.0.camel@raptor>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4664324809779182614==
+--===============7440013207753926043==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When setting the serial terminal before starting the daemon, this will
-prevent the overwriting of settings.
+Hi Olivier,
 
-Ryan
+> the format used to represent time in ofono is currently RFC2822 which is
+> complex and a bit deprecated. I think it would be better to move to
+> ISO8601 which is a well used and supported [1] format and simpler to pars=
+e.
 
----
- gatchat/gattty.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+So I don't have a problem with the patch, since RFC822 does indeed have iss=
+ues =
 
-diff --git a/gatchat/gattty.c b/gatchat/gattty.c
-index 63d26d4..ed0fadf 100644
---- a/gatchat/gattty.c
-+++ b/gatchat/gattty.c
-@@ -220,6 +220,7 @@ static int open_device(const char *tty, GHashTable *opt=
-ions)
- 	if (fd < 0)
- 		return -1;
+with i18n.  However, this will break existing applications which will need =
+to =
 
-+	tcgetattr(fd,&ti);
- 	tcflush(fd, TCIOFLUSH);
- 	tcsetattr(fd, TCSANOW, &ti);
+be updated to the new format.
 
--- =
+If no one objects in the next 24 hours or so I will apply this one.
 
-1.6.4.GIT
+Regards,
+-Denis
 
---===============4664324809779182614==--
+--===============7440013207753926043==--
 
