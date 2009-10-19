@@ -1,50 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============2015283296073653214=="
+Content-Type: multipart/mixed; boundary="===============0137736964070638980=="
 MIME-Version: 1.0
-From: Ryan Raasch <ryan.raasch@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] When setting the serial port,
- the previous settings need to    be preserved.
-Date: Mon, 19 Oct 2009 19:21:08 +0200
-Message-ID: <4ADCA004.7040302@gmail.com>
-In-Reply-To: <632f5f310910191018k2e122a0bi915e7f6ffbfe5cd6@mail.gmail.com>
+ the previous settings need to be preserved.
+Date: Mon, 19 Oct 2009 12:32:45 -0500
+Message-ID: <200910191232.45844.denkenz@gmail.com>
+In-Reply-To: <632f5f310910190728l2256681es4f8627b179d1ec84@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2015283296073653214==
+--===============0137736964070638980==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Oops. Sorry for duplicate email. I didn't get it in my inbox.
+Hi Ryan,
 
-Ryan
+> This took a while to locate. Shouldn't it be possible to use stty
+> outside the daemon, and then daemon would just continue as usual?
+>
+> In my case, the cread was being removed, so no input data could be read.
 
-Ryan Raasch wrote:
-> When setting the serial terminal before starting the daemon, this will
-> prevent the overwriting of settings.
-> =
+Sorry but the patch is wrong, since you're blowing away all options that ha=
+ve =
 
-> Ryan
-> =
+been set via the GHashTable.
 
-> ---
->  gatchat/gattty.c |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
-> =
+GAtTty is really a convenience method, if you need something specific, pass=
+ the =
 
-> diff --git a/gatchat/gattty.c b/gatchat/gattty.c
-> index 63d26d4..ed0fadf 100644
-> --- a/gatchat/gattty.c
-> +++ b/gatchat/gattty.c
-> @@ -220,6 +220,7 @@ static int open_device(const char *tty, GHashTable *o=
-ptions)
->  	if (fd < 0)
->  		return -1;
-> =
+option in the GHashTable or setup the fd however you wish by yourself.
 
-> +	tcgetattr(fd,&ti);
->  	tcflush(fd, TCIOFLUSH);
->  	tcsetattr(fd, TCSANOW, &ti);
->=20
+Regards,
+-Denis
 
---===============2015283296073653214==--
+--===============0137736964070638980==--
 
