@@ -1,71 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============4436825251285150131=="
+Content-Type: multipart/mixed; boundary="===============3536285882164617740=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] SetProperty method and Powered property missing from
- modem-api doc.
-Date: Mon, 19 Oct 2009 12:54:26 -0500
-Message-ID: <200910191254.26955.denkenz@gmail.com>
-In-Reply-To: <ae5fd6e50910190606m88b1ed9w2f7b1741ec4e01c@mail.gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: How to talk with FreeRunner?
+Date: Mon, 19 Oct 2009 20:22:08 +0200
+Message-ID: <fb249edb0910191122sbcf5747i4f937f711dfb5520@mail.gmail.com>
+In-Reply-To: <200910191213.02239.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4436825251285150131==
+--===============3536285882164617740==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marko,
+Hi,
 
-> SetProperty method and Powered Property where missing from modem-api.txt
-
-I'm having trouble applying this patch.  Are you using a private repository=
- by =
-
-any chance?
-
-git am --3way ~/merge/\[PATCH\]\ SetProperty\ method\ and\ Powered\ propert=
-y\ =
-
-missing\ from\ modem-api\ doc =
-
-Applying: SetProperty method and Powered property missing from modem-api do=
-c.
-error: patch failed: doc/modem-api.txt:12
-error: doc/modem-api.txt: patch does not apply
-Using index info to reconstruct a base tree...
-error: patch failed: doc/modem-api.txt:12
-error: doc/modem-api.txt: patch does not apply
-Did you hand edit your patch?
-It does not apply to blobs recorded in its index.
-Cannot fall back to three-way merge.
-Patch failed at 0001 SetProperty method and Powered property missing from =
-
-modem-api doc.
-When you have resolved this problem run "git am -3 --resolved".
-If you would prefer to skip this patch, instead run "git am -3 --skip".
-To restore the original branch and stop patching run "git am -3 --abort".
-
+2009/10/19 Denis Kenzior <denkenz@gmail.com>:
+>> =C2=A0 =C2=A0 =C2=A0 I just got a Openmoko FreeRunner and I wonder how o=
+Fono can talk with it.
+>> Use ser2net, but how? Can someone help on some simple steps or
+>> instructions? Thanks a lot! By the way, the OS installed in it is Android
+>> Cupcake. Need I change to other OS?
 >
-> Question:
+> There are a couple of ways:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0- Cross compile oFono itself to run directly o=
+n the device using the calypso
+> driver.
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0- Cross compile ser2net, but run oFono on the =
+desktop using the phonesim
+> driver.
 >
-> I'm not sure if the "On success a PropertyChanged signal will be emitted."
-> message is valid, as the PropertyChanged signal is sent only once when
-> doing for example the following:
+> Either way you will need the cross compiler and toolchain here:
+> http://wiki.openmoko.org/wiki/Toolchain
+>
+> Note that my device came stock with the OpenMoko rootfs, so I have no
+> experience with Android.
+>
+> For ser2net:
+> =C2=A0- Cross compile ser2net using the supplied toolchain, I don't remem=
+ber
+> exactly, but I think this will get you there: ./configure --prefix=3D/usr=
+ --
+> sysconfdir=3D/etc --host=3Darm-angstrom-linux-gnueabi
 
-To be pedantic: a successful method invocation does mean that a =
+You can possibly avoid the cross compiling if you're going to run
+oFono on PC anyway, by using netcat instead of ser2net.  Either
+"netcat" or "nc" is usually in the packages repo of any distribution.
+The command would be
+# nc -l -p 2000 < /dev/ttySAC0 > /dev/ttySAC0
 
-PropertyChanged will be emitted.  PropertyChanged is emitted only when the =
+All other steps would be same as Denis outlined.
 
-property has actually changed.  Thus if the property is being set to its =
+If you find that the port is spitting corrupt data, it's probably not
+initialised.  I use picocom to initialise ttys, it's:
+# picocom /dev/ttySAC0
+then ^a^q to quit picocom without resetting the port and then re-run nc.
 
-current value, oFono will not emit the signal (but return success to the =
+Regards
 
-caller)  However, the wording is probably OK since you generally set the =
-
-property to something that is different.
-
-Regards,
--Denis
-
---===============4436825251285150131==--
+--===============3536285882164617740==--
 
