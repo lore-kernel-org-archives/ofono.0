@@ -1,62 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============3536285882164617740=="
+Content-Type: multipart/mixed; boundary="===============1382567367324766459=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: How to talk with FreeRunner?
-Date: Mon, 19 Oct 2009 20:22:08 +0200
-Message-ID: <fb249edb0910191122sbcf5747i4f937f711dfb5520@mail.gmail.com>
-In-Reply-To: <200910191213.02239.denkenz@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] Handsfree profile plugins update
+Date: Mon, 19 Oct 2009 17:12:44 -0500
+Message-ID: <200910191712.45209.denkenz@gmail.com>
+In-Reply-To: <0463F45F3606F4428ED35AC8C709F92E089B871C95@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3536285882164617740==
+--===============1382567367324766459==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Zhenhua,
 
-2009/10/19 Denis Kenzior <denkenz@gmail.com>:
->> =C2=A0 =C2=A0 =C2=A0 I just got a Openmoko FreeRunner and I wonder how o=
-Fono can talk with it.
->> Use ser2net, but how? Can someone help on some simple steps or
->> instructions? Thanks a lot! By the way, the OS installed in it is Android
->> Cupcake. Need I change to other OS?
+> Hi,
 >
-> There are a couple of ways:
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0- Cross compile oFono itself to run directly o=
-n the device using the calypso
-> driver.
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0- Cross compile ser2net, but run oFono on the =
-desktop using the phonesim
-> driver.
+> Attached is update patch for handsfree profile plugin. I move most stuff =
+in
+> drivers/hfpmodem/hfp.c into plugins/hfp.c and simplify them. GSList *indi=
+es
+> is replaced as two indexable arrays (cind_names and cind_values), to
+> improve efficiency when we need access name and value by index. The whole
+> logic is the same comparing with previous patch.
 >
-> Either way you will need the cross compiler and toolchain here:
-> http://wiki.openmoko.org/wiki/Toolchain
->
-> Note that my device came stock with the OpenMoko rootfs, so I have no
-> experience with Android.
->
-> For ser2net:
-> =C2=A0- Cross compile ser2net using the supplied toolchain, I don't remem=
-ber
-> exactly, but I think this will get you there: ./configure --prefix=3D/usr=
- --
-> sysconfdir=3D/etc --host=3Darm-angstrom-linux-gnueabi
+> Thanks for Denis and Gustavo for comments. Please review it.
 
-You can possibly avoid the cross compiling if you're going to run
-oFono on PC anyway, by using netcat instead of ser2net.  Either
-"netcat" or "nc" is usually in the packages repo of any distribution.
-The command would be
-# nc -l -p 2000 < /dev/ttySAC0 > /dev/ttySAC0
+This patch has been applied with some additional fixes by me.  Please let m=
+e =
 
-All other steps would be same as Denis outlined.
+know if I broke something.
 
-If you find that the port is spitting corrupt data, it's probably not
-initialised.  I use picocom to initialise ttys, it's:
-# picocom /dev/ttySAC0
-then ^a^q to quit picocom without resetting the port and then re-run nc.
+Regards,
+-Denis
 
-Regards
-
---===============3536285882164617740==--
+--===============1382567367324766459==--
 
