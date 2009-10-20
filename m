@@ -1,92 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============7851025378434865898=="
+Content-Type: multipart/mixed; boundary="===============2947213520399822969=="
 MIME-Version: 1.0
-From: Ryan Raasch <ryan.raasch@gmail.com>
-Subject: Re: [PATCH] When setting the serial port,
- the previous settings need to be preserved.
-Date: Tue, 20 Oct 2009 09:43:01 +0200
-Message-ID: <4ADD6A05.8060301@gmail.com>
-In-Reply-To: <200910191232.45844.denkenz@gmail.com>
+From: DJDAS <djdas@djdas.net>
+Subject: Re: How to talk with FreeRunner?
+Date: Tue, 20 Oct 2009 10:09:06 +0200
+Message-ID: <4ADD7022.9040905@djdas.net>
+In-Reply-To: <fb249edb0910191122sbcf5747i4f937f711dfb5520@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7851025378434865898==
+--===============2947213520399822969==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Andrzej Zaborowski ha scritto:
+> Hi,
+>
+> 2009/10/19 Denis Kenzior <denkenz@gmail.com>:
+>   =
 
-Denis Kenzior wrote:
-> Hi Ryan,
-> =
+>>>       I just got a Openmoko FreeRunner and I wonder how oFono can talk =
+with it.
+>>> Use ser2net, but how? Can someone help on some simple steps or
+>>> instructions? Thanks a lot! By the way, the OS installed in it is Andro=
+id
+>>> Cupcake. Need I change to other OS?
+>>>       =
 
->> This took a while to locate. Shouldn't it be possible to use stty
->> outside the daemon, and then daemon would just continue as usual?
+>> There are a couple of ways:
+>>        - Cross compile oFono itself to run directly on the device using =
+the calypso
+>> driver.
+>>        - Cross compile ser2net, but run oFono on the desktop using the p=
+honesim
+>> driver.
 >>
->> In my case, the cread was being removed, so no input data could be read.
-> =
+>> Either way you will need the cross compiler and toolchain here:
+>> http://wiki.openmoko.org/wiki/Toolchain
+>>
+>> Note that my device came stock with the OpenMoko rootfs, so I have no
+>> experience with Android.
+>>
+>> For ser2net:
+>>  - Cross compile ser2net using the supplied toolchain, I don't remember
+>> exactly, but I think this will get you there: ./configure --prefix=3D/us=
+r --
+>> sysconfdir=3D/etc --host=3Darm-angstrom-linux-gnueabi
+>>     =
 
-> Sorry but the patch is wrong, since you're blowing away all options that =
-have =
-
-> been set via the GHashTable.
-
-Yea. Sorry. Put it in the wrong place, uggh. It should go before setting =
-
-the options, since the switches are or'ing and xor'ing.
-
-> =
-
-> GAtTty is really a convenience method, if you need something specific, pa=
-ss the =
-
-> option in the GHashTable or setup the fd however you wish by yourself.
-> =
-
-> Regards,
-> -Denis
-
-But, there is a problem with the opening of the serial port b/c the =
-
-CREAD flag is destroyed if it is active, making the serial port unreadable.
-
-Ryan
-
+>
+> You can possibly avoid the cross compiling if you're going to run
+> oFono on PC anyway, by using netcat instead of ser2net.  Either
+> "netcat" or "nc" is usually in the packages repo of any distribution.
+> The command would be
+> # nc -l -p 2000 < /dev/ttySAC0 > /dev/ttySAC0
+>
+> All other steps would be same as Denis outlined.
+>
+> If you find that the port is spitting corrupt data, it's probably not
+> initialised.  I use picocom to initialise ttys, it's:
+> # picocom /dev/ttySAC0
+> then ^a^q to quit picocom without resetting the port and then re-run nc.
+>
+> Regards
 > _______________________________________________
 > ofono mailing list
 > ofono(a)ofono.org
 > http://lists.ofono.org/listinfo/ofono
+>   =
 
---===============7851025378434865898==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="serial_port_enable_CREAD.patch"
+Hi all,
+I'm the project leader of a new Freerunner distribution which claims to =
 
-IGdhdGNoYXQvZ2F0dHR5LmMgfCAgIDI2ICsrKysrKysrKysrKysrKysrKysrKy0tLS0tCiAxIGZp
-bGVzIGNoYW5nZWQsIDIxIGluc2VydGlvbnMoKyksIDUgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0
-IGEvZ2F0Y2hhdC9nYXR0dHkuYyBiL2dhdGNoYXQvZ2F0dHR5LmMKaW5kZXggZWQwZmFkZi4uYWE5
-ZDNhNCAxMDA2NDQKLS0tIGEvZ2F0Y2hhdC9nYXR0dHkuYworKysgYi9nYXRjaGF0L2dhdHR0eS5j
-CkBAIC05Nyw2ICs5NywxOSBAQCBzdGF0aWMgZ2Jvb2xlYW4gc2V0X2JhdWQoY29uc3QgY2hhciAq
-YmF1ZCwgc3RydWN0IHRlcm1pb3MgKnRpKQogCXJldHVybiBUUlVFOwogfQogCitzdGF0aWMgZ2Jv
-b2xlYW4gc2V0X3JlYWQodmFsdWUsICZ0aSkKK3sKKwlpZiAoZ19zdHJfZXF1YWwoYml0cywgIm9m
-ZiIpKQorCQl0aS0+Y19jZmxhZyAmPSB+KENSRUFEKTsKKwllbHNlIGlmIChnX3N0cl9lcXVhbChi
-aXRzLCAib24iKSkKKwkJdGktPmNfY2ZsYWcgfD0gQ1JFQUQ7CisJZWxzZQorCQlyZXR1cm4gRkFM
-U0U7CisKKwlyZXR1cm4gVFJVRTsKKworfQorCiBzdGF0aWMgZ2Jvb2xlYW4gc2V0X3N0b3BfYml0
-cyhjb25zdCBjaGFyICpiaXRzLCBzdHJ1Y3QgdGVybWlvcyAqdGkpCiB7CiAJaWYgKGdfc3RyX2Vx
-dWFsKGJpdHMsICIxIikpCkBAIC0xODYsNiArMTk5LDEyIEBAIHN0YXRpYyBpbnQgb3Blbl9kZXZp
-Y2UoY29uc3QgY2hhciAqdHR5LCBHSGFzaFRhYmxlICpvcHRpb25zKQogCW1lbXNldCgmdGksIDAs
-IHNpemVvZih0aSkpOwogCWNmbWFrZXJhdygmdGkpOwogCisJZmQgPSBvcGVuKHR0eSwgT19SRFdS
-IHwgT19OT0NUVFkgfCBPX05PTkJMT0NLKTsKKwlpZiAoZmQgPCAwKQorCQlyZXR1cm4gLTE7CisK
-Kwl0Y2dldGF0dHIoZmQsJnRpKTsKKwogCWlmIChvcHRpb25zKSB7CiAJCUdIYXNoVGFibGVJdGVy
-IGl0ZXI7CiAJCWNvbnN0IGNoYXIgKmtleTsKQEAgLTIxMCwxNyArMjI5LDE0IEBAIHN0YXRpYyBp
-bnQgb3Blbl9kZXZpY2UoY29uc3QgY2hhciAqdHR5LCBHSGFzaFRhYmxlICpvcHRpb25zKQogCQkJ
-CW9rID0gc2V0X3J0c2N0cyh2YWx1ZSwgJnRpKTsKIAkJCWVsc2UgaWYgKGdfc3RyX2VxdWFsKGtl
-eSwgImxvY2FsIikpCiAJCQkJb2sgPSBzZXRfbG9jYWwodmFsdWUsICZ0aSk7CisJCQllbHNlIGlm
-IChnX3N0cl9lcXVhbChrZXksICJyZWFkIikpCisJCQkJb2sgPSBzZXRfcmVhZCh2YWx1ZSwgJnRp
-KTsKIAogCQkJaWYgKG9rID09IEZBTFNFKQogCQkJCXJldHVybiAtMTsKIAkJfQogCX0KIAotCWZk
-ID0gb3Blbih0dHksIE9fUkRXUiB8IE9fTk9DVFRZIHwgT19OT05CTE9DSyk7Ci0JaWYgKGZkIDwg
-MCkKLQkJcmV0dXJuIC0xOwotCi0JdGNnZXRhdHRyKGZkLCZ0aSk7CiAJdGNmbHVzaChmZCwgVENJ
-T0ZMVVNIKTsKIAl0Y3NldGF0dHIoZmQsIFRDU0FOT1csICZ0aSk7CiAK
+be AT MOST a stable telephone instead of replicate all the other =
 
---===============7851025378434865898==--
+distributions who claim to port the desktop-style distribution paradigm =
+
+to the Freerunner. In this way of think we planned to use oFono as the =
+
+main telephone stack because, following the mailing list since the =
+
+starting of the project, I believe oFono is a very well planned and =
+
+developed platform.
+At the moment I am able to cross compile oFono with my toolchain and it =
+
+works quite well on my Freerunner so if someone needs a tarball with =
+
+ofonod and everything "make install" produces I can provide them without =
+
+problems :)
+Thank you very much for your great work good bye.
+Dario.
+
+
+--===============2947213520399822969==--
 
