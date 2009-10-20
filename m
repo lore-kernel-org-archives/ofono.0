@@ -1,58 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============7974304279015767014=="
+Content-Type: multipart/mixed; boundary="===============7851025378434865898=="
 MIME-Version: 1.0
-From: Marko Saukko <marko.saukko@gmail.com>
-Subject: Re: [PATCH] SetProperty method and Powered property missing from
- modem-api doc.
-Date: Tue, 20 Oct 2009 09:32:14 +0300
-Message-ID: <4ADD596E.2000909@gmail.com>
-In-Reply-To: <200910191254.26955.denkenz@gmail.com>
+From: Ryan Raasch <ryan.raasch@gmail.com>
+Subject: Re: [PATCH] When setting the serial port,
+ the previous settings need to be preserved.
+Date: Tue, 20 Oct 2009 09:43:01 +0200
+Message-ID: <4ADD6A05.8060301@gmail.com>
+In-Reply-To: <200910191232.45844.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7974304279015767014==
+--===============7851025378434865898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
 
-Not sure what went wrong with the previous one. Here is a new patch (attach=
-ed).
+Denis Kenzior wrote:
+> Hi Ryan,
+> =
 
-Regards,
-Marko
+>> This took a while to locate. Shouldn't it be possible to use stty
+>> outside the daemon, and then daemon would just continue as usual?
+>>
+>> In my case, the cread was being removed, so no input data could be read.
+> =
 
---===============7974304279015767014==
+> Sorry but the patch is wrong, since you're blowing away all options that =
+have =
+
+> been set via the GHashTable.
+
+Yea. Sorry. Put it in the wrong place, uggh. It should go before setting =
+
+the options, since the switches are or'ing and xor'ing.
+
+> =
+
+> GAtTty is really a convenience method, if you need something specific, pa=
+ss the =
+
+> option in the GHashTable or setup the fd however you wish by yourself.
+> =
+
+> Regards,
+> -Denis
+
+But, there is a problem with the opening of the serial port b/c the =
+
+CREAD flag is destroyed if it is active, making the serial port unreadable.
+
+Ryan
+
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+
+--===============7851025378434865898==
 Content-Type: text/x-patch
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001--Added-SetProperty-method-and-Powered-property-to-m.patch"
+Content-Disposition: attachment; filename="serial_port_enable_CREAD.patch"
 
-PkZyb20gOWQyY2VlOTMzMjRiZDc2MmU2MDIxMWFhNTI1NjUzYzQ3Y2M5ODRhNCBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogTWFya28gU2F1a2tvIDxtYXJrby5zYXVra29AZ21haWwuY29t
-PgpEYXRlOiBUdWUsIDIwIE9jdCAyMDA5IDA5OjI1OjM4ICswMzAwClN1YmplY3Q6IFtQQVRDSF0g
-LSBBZGRlZCBTZXRQcm9wZXJ0eSBtZXRob2QgYW5kIFBvd2VyZWQgcHJvcGVydHkgdG8gbW9kZW0t
-YXBpIGRvYy4KCi0tLQogZG9jL21vZGVtLWFwaS50eHQgfCAgIDE3ICsrKysrKysrKysrKysrKyst
-CiAxIGZpbGVzIGNoYW5nZWQsIDE2IGluc2VydGlvbnMoKyksIDEgZGVsZXRpb25zKC0pCgpkaWZm
-IC0tZ2l0IGEvZG9jL21vZGVtLWFwaS50eHQgYi9kb2MvbW9kZW0tYXBpLnR4dAppbmRleCAzMDU4
-ODgwLi4wNmE0YWRhIDEwMDY0NAotLS0gYS9kb2MvbW9kZW0tYXBpLnR4dAorKysgYi9kb2MvbW9k
-ZW0tYXBpLnR4dApAQCAtMTIsMTIgKzEyLDI3IEBAIE1ldGhvZHMJCWRpY3QgR2V0UHJvcGVydGll
-cygpCiAKIAkJCVBvc3NpYmxlIEVycm9yczogW3NlcnZpY2VdLkVycm9yLkludmFsaWRBcmd1bWVu
-dHMKIAorCQl2b2lkIFNldFByb3BlcnR5KHN0cmluZyBwcm9wZXJ0eSwgdmFyaWFudCB2YWx1ZSkK
-KworCQkJQ2hhbmdlcyB0aGUgdmFsdWUgb2YgdGhlIHNwZWNpZmllZCBwcm9wZXJ0eS4gT25seQor
-CQkJcHJvcGVydGllcyB0aGF0IGFyZSBsaXN0ZWQgYXMgcmVhZC13cml0ZSBhcmUKKwkJCWNoYW5n
-ZWFibGUuIE9uIHN1Y2Nlc3MgYSBQcm9wZXJ0eUNoYW5nZWQgc2lnbmFsCisJCQl3aWxsIGJlIGVt
-aXR0ZWQuCisKKwkJCVBvc3NpYmxlIEVycm9yczogW3NlcnZpY2VdLkVycm9yLkludmFsaWRBcmd1
-bWVudHMKKwkJCQkJIFtzZXJ2aWNlXS5FcnJvci5Eb2VzTm90RXhpc3QKKwogU2lnbmFscwkJUHJv
-cGVydHlDaGFuZ2VkKHN0cmluZyBuYW1lLCB2YXJpYW50IHZhbHVlKQogCiAJCQlUaGlzIHNpZ25h
-bCBpbmRpY2F0ZXMgYSBjaGFuZ2VkIHZhbHVlIG9mIHRoZSBnaXZlbgogCQkJcHJvcGVydHkuCiAK
-LVByb3BlcnRpZXMJc3RyaW5nIE1hbnVmYWN0dXJlciBbcmVhZG9ubHksIG9wdGlvbmFsXQorUHJv
-cGVydGllcwlib29sZWFuIFBvd2VyZWQgW3JlYWR3cml0ZV0KKworCQkJQm9vbGVhbiByZXByZXNl
-bnRpbmcgdGhlIHBvd2VyIHN0YXRlIG9mIHRoZSBtb2RlbQorCQkJZGV2aWNlLgorCisJCXN0cmlu
-ZyBNYW51ZmFjdHVyZXIgW3JlYWRvbmx5LCBvcHRpb25hbF0KIAogCQkJU3RyaW5nIHJlcHJlc2Vu
-dGluZyB0aGUgbWFudWZhY3R1cmVyIG9mIHRoZSBtb2RlbQogCQkJZGV2aWNlLgotLSAKMS42LjAu
-NAoK
+IGdhdGNoYXQvZ2F0dHR5LmMgfCAgIDI2ICsrKysrKysrKysrKysrKysrKysrKy0tLS0tCiAxIGZp
+bGVzIGNoYW5nZWQsIDIxIGluc2VydGlvbnMoKyksIDUgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0
+IGEvZ2F0Y2hhdC9nYXR0dHkuYyBiL2dhdGNoYXQvZ2F0dHR5LmMKaW5kZXggZWQwZmFkZi4uYWE5
+ZDNhNCAxMDA2NDQKLS0tIGEvZ2F0Y2hhdC9nYXR0dHkuYworKysgYi9nYXRjaGF0L2dhdHR0eS5j
+CkBAIC05Nyw2ICs5NywxOSBAQCBzdGF0aWMgZ2Jvb2xlYW4gc2V0X2JhdWQoY29uc3QgY2hhciAq
+YmF1ZCwgc3RydWN0IHRlcm1pb3MgKnRpKQogCXJldHVybiBUUlVFOwogfQogCitzdGF0aWMgZ2Jv
+b2xlYW4gc2V0X3JlYWQodmFsdWUsICZ0aSkKK3sKKwlpZiAoZ19zdHJfZXF1YWwoYml0cywgIm9m
+ZiIpKQorCQl0aS0+Y19jZmxhZyAmPSB+KENSRUFEKTsKKwllbHNlIGlmIChnX3N0cl9lcXVhbChi
+aXRzLCAib24iKSkKKwkJdGktPmNfY2ZsYWcgfD0gQ1JFQUQ7CisJZWxzZQorCQlyZXR1cm4gRkFM
+U0U7CisKKwlyZXR1cm4gVFJVRTsKKworfQorCiBzdGF0aWMgZ2Jvb2xlYW4gc2V0X3N0b3BfYml0
+cyhjb25zdCBjaGFyICpiaXRzLCBzdHJ1Y3QgdGVybWlvcyAqdGkpCiB7CiAJaWYgKGdfc3RyX2Vx
+dWFsKGJpdHMsICIxIikpCkBAIC0xODYsNiArMTk5LDEyIEBAIHN0YXRpYyBpbnQgb3Blbl9kZXZp
+Y2UoY29uc3QgY2hhciAqdHR5LCBHSGFzaFRhYmxlICpvcHRpb25zKQogCW1lbXNldCgmdGksIDAs
+IHNpemVvZih0aSkpOwogCWNmbWFrZXJhdygmdGkpOwogCisJZmQgPSBvcGVuKHR0eSwgT19SRFdS
+IHwgT19OT0NUVFkgfCBPX05PTkJMT0NLKTsKKwlpZiAoZmQgPCAwKQorCQlyZXR1cm4gLTE7CisK
+Kwl0Y2dldGF0dHIoZmQsJnRpKTsKKwogCWlmIChvcHRpb25zKSB7CiAJCUdIYXNoVGFibGVJdGVy
+IGl0ZXI7CiAJCWNvbnN0IGNoYXIgKmtleTsKQEAgLTIxMCwxNyArMjI5LDE0IEBAIHN0YXRpYyBp
+bnQgb3Blbl9kZXZpY2UoY29uc3QgY2hhciAqdHR5LCBHSGFzaFRhYmxlICpvcHRpb25zKQogCQkJ
+CW9rID0gc2V0X3J0c2N0cyh2YWx1ZSwgJnRpKTsKIAkJCWVsc2UgaWYgKGdfc3RyX2VxdWFsKGtl
+eSwgImxvY2FsIikpCiAJCQkJb2sgPSBzZXRfbG9jYWwodmFsdWUsICZ0aSk7CisJCQllbHNlIGlm
+IChnX3N0cl9lcXVhbChrZXksICJyZWFkIikpCisJCQkJb2sgPSBzZXRfcmVhZCh2YWx1ZSwgJnRp
+KTsKIAogCQkJaWYgKG9rID09IEZBTFNFKQogCQkJCXJldHVybiAtMTsKIAkJfQogCX0KIAotCWZk
+ID0gb3Blbih0dHksIE9fUkRXUiB8IE9fTk9DVFRZIHwgT19OT05CTE9DSyk7Ci0JaWYgKGZkIDwg
+MCkKLQkJcmV0dXJuIC0xOwotCi0JdGNnZXRhdHRyKGZkLCZ0aSk7CiAJdGNmbHVzaChmZCwgVENJ
+T0ZMVVNIKTsKIAl0Y3NldGF0dHIoZmQsIFRDU0FOT1csICZ0aSk7CiAK
 
---===============7974304279015767014==--
+--===============7851025378434865898==--
 
