@@ -1,81 +1,105 @@
-Content-Type: multipart/mixed; boundary="===============1581055140338070458=="
+Content-Type: multipart/mixed; boundary="===============5892257996637658698=="
 MIME-Version: 1.0
-From: DJDAS <djdas@djdas.net>
-Subject: Re: How to talk with FreeRunner?
-Date: Tue, 20 Oct 2009 11:05:11 +0200
-Message-ID: <4ADD7D47.6090502@djdas.net>
-In-Reply-To: <38D9F46DFF92C54980D2F2C1E8EE313001B11DDFC4@pdsmsx503.ccr.corp.intel.com>
+From: Ryan Raasch <ryan.raasch@gmail.com>
+Subject: Re: [PATCH] When setting the serial port,
+ the previous settings need to be preserved.
+Date: Tue, 20 Oct 2009 11:10:22 +0200
+Message-ID: <4ADD7E7E.8030903@gmail.com>
+In-Reply-To: <4ADD6A05.8060301@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1581055140338070458==
+--===============5892257996637658698==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Gu, Yang ha scritto:
-> Very glad to hear this! Definitely I'm also interested with your steps to=
- build oFono, and get it work within FR. By the way, which OS and version a=
-re you using?
->
-> Regards,
-> -Yang
->   =
+Sorry. I have had a long few days. The last patch was just COMPLETELY =
 
+wrong :(
 
-Hi,
-it's quite simple (joking :P)! We prepared a VirtualBOX VM (starting =
+I think i got it right this time...
 
-from one prepared by a member of the Openmoko community list) with a =
+Apologies,
 
-toolchain similar to the one described in the OM wiki page mentioned =
+Ryan
 
-earlier in this thread but rebuilt from OpenEmbedded git repository. =
+Ryan Raasch wrote:
+> =
 
-After this I downloaded the sources (tried both stable release and git =
+> Denis Kenzior wrote:
+>> Hi Ryan,
+>>
+>>> This took a while to locate. Shouldn't it be possible to use stty
+>>> outside the daemon, and then daemon would just continue as usual?
+>>>
+>>> In my case, the cread was being removed, so no input data could be read.
+>>
+>> Sorry but the patch is wrong, since you're blowing away all options =
 
-snapshots) and it's a matter of ./configure && make && make install ;)
-If the list policy will let me send attachments I can send you the =
+>> that have been set via the GHashTable.
+> =
 
-package for the 0.7 version.
-The test environment is a prototype we realized from scratch (distro =
+> Yea. Sorry. Put it in the wrong place, uggh. It should go before setting =
 
-name: Neophysis, prototype code name: Armeniacum-RC2) and it's the core =
+> the options, since the switches are or'ing and xor'ing.
+> =
 
-with nothing more than the rootfs with some basic libraries, busybox, =
+>>
+>> GAtTty is really a convenience method, if you need something specific, =
 
-monolithic kernel 2.6.29, dbus and, obviously, ofonod starting quite =
+>> pass the option in the GHashTable or setup the fd however you wish by =
 
-after kernel boot. The startup time is about 15 secs with a X window =
+>> yourself.
+>>
+>> Regards,
+>> -Denis
+> =
 
-system without window managers (but we can provide a simple matchbox =
+> But, there is a problem with the opening of the serial port b/c the =
 
-package or, since yesterday ;) Echinos).
-Our target is to have a system booting in less than 35-40 secs with all =
+> CREAD flag is destroyed if it is active, making the serial port unreadabl=
+e.
+> =
 
-the phone system up and running.
-At the moment I tested the phone functionalities (calling and receiving =
+> Ryan
+> =
 
-simple voice calls, sending and receiving sms) using dbus commands from =
+>> _______________________________________________
+>> ofono mailing list
+>> ofono-bdc2hr5oBkPYtjvyW6yDsg(a)public.gmane.org
+>> http://lists.ofono.org/listinfo/ofono
+>=20
 
-the console and it works very well with the modem registered (no PIN in =
+--===============5892257996637658698==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="serial_port_enable_CREAD.patch"
 
-the SIM) in about 15-20 secs.
-I was wondering if someone can provide us a simple C application to test =
+ZGlmZiAtLWdpdCBhL2dhdGNoYXQvZ2F0dHR5LmMgYi9nYXRjaGF0L2dhdHR0eS5jCmluZGV4IDYz
+ZDI2ZDQuLmQ2MjQzMzYgMTAwNjQ0Ci0tLSBhL2dhdGNoYXQvZ2F0dHR5LmMKKysrIGIvZ2F0Y2hh
+dC9nYXR0dHkuYwpAQCAtOTcsNiArOTcsMTkgQEAgc3RhdGljIGdib29sZWFuIHNldF9iYXVkKGNv
+bnN0IGNoYXIgKmJhdWQsIHN0cnVjdCB0ZXJtaW9zICp0aSkKIAlyZXR1cm4gVFJVRTsKIH0KIAor
+c3RhdGljIGdib29sZWFuIHNldF9yZWFkKGNvbnN0IGNoYXIgKmJpdHMsIHN0cnVjdCB0ZXJtaW9z
+ICp0aSkKK3sKKwlpZiAoZ19zdHJfZXF1YWwoYml0cywgIm9mZiIpKQorCQl0aS0+Y19jZmxhZyAm
+PSB+KENSRUFEKTsKKwllbHNlIGlmIChnX3N0cl9lcXVhbChiaXRzLCAib24iKSkKKwkJdGktPmNf
+Y2ZsYWcgfD0gQ1JFQUQ7CisJZWxzZQorCQlyZXR1cm4gRkFMU0U7CisKKwlyZXR1cm4gVFJVRTsK
+KworfQorCiBzdGF0aWMgZ2Jvb2xlYW4gc2V0X3N0b3BfYml0cyhjb25zdCBjaGFyICpiaXRzLCBz
+dHJ1Y3QgdGVybWlvcyAqdGkpCiB7CiAJaWYgKGdfc3RyX2VxdWFsKGJpdHMsICIxIikpCkBAIC0x
+ODYsNiArMTk5LDEyIEBAIHN0YXRpYyBpbnQgb3Blbl9kZXZpY2UoY29uc3QgY2hhciAqdHR5LCBH
+SGFzaFRhYmxlICpvcHRpb25zKQogCW1lbXNldCgmdGksIDAsIHNpemVvZih0aSkpOwogCWNmbWFr
+ZXJhdygmdGkpOwogCisJZmQgPSBvcGVuKHR0eSwgT19SRFdSIHwgT19OT0NUVFkgfCBPX05PTkJM
+T0NLKTsKKwlpZiAoZmQgPCAwKQorCQlyZXR1cm4gLTE7CisKKwl0Y2dldGF0dHIoZmQsJnRpKTsK
+KwogCWlmIChvcHRpb25zKSB7CiAJCUdIYXNoVGFibGVJdGVyIGl0ZXI7CiAJCWNvbnN0IGNoYXIg
+KmtleTsKQEAgLTIxMCwxNiArMjI5LDE0IEBAIHN0YXRpYyBpbnQgb3Blbl9kZXZpY2UoY29uc3Qg
+Y2hhciAqdHR5LCBHSGFzaFRhYmxlICpvcHRpb25zKQogCQkJCW9rID0gc2V0X3J0c2N0cyh2YWx1
+ZSwgJnRpKTsKIAkJCWVsc2UgaWYgKGdfc3RyX2VxdWFsKGtleSwgImxvY2FsIikpCiAJCQkJb2sg
+PSBzZXRfbG9jYWwodmFsdWUsICZ0aSk7CisJCQllbHNlIGlmIChnX3N0cl9lcXVhbChrZXksICJy
+ZWFkIikpCisJCQkJb2sgPSBzZXRfcmVhZCh2YWx1ZSwgJnRpKTsKIAogCQkJaWYgKG9rID09IEZB
+TFNFKQogCQkJCXJldHVybiAtMTsKIAkJfQogCX0KIAotCWZkID0gb3Blbih0dHksIE9fUkRXUiB8
+IE9fTk9DVFRZIHwgT19OT05CTE9DSyk7Ci0JaWYgKGZkIDwgMCkKLQkJcmV0dXJuIC0xOwotCiAJ
+dGNmbHVzaChmZCwgVENJT0ZMVVNIKTsKIAl0Y3NldGF0dHIoZmQsIFRDU0FOT1csICZ0aSk7CiAK
 
-all the phone functionalities (OTOA the dbus notifications) because we =
-
-are very busy at the moment (we work on Neophysis on our spare time and =
-
-are about 10 people divided in development, graphics, system engineering =
-
-and documentation) and have no time to write down a proto in C language, =
-
-I saw in the sources the test applications are written in Python but we =
-
-haven't build the Python package yet so a C app would be very useful.
-Thank you in advance, bye.
-
-
---===============1581055140338070458==--
+--===============5892257996637658698==--
 
