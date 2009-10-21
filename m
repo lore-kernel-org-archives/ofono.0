@@ -1,80 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============8004325741161132268=="
+Content-Type: multipart/mixed; boundary="===============7300854487931046880=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: [PATCH 1/1] Catch +CIEV commands from AG
-Date: Tue, 20 Oct 2009 18:34:20 -0200
-Message-ID: <1256070860-24476-1-git-send-email-gustavo@padovan.org>
+From: Ryan Raasch <ryan.raasch@gmail.com>
+Subject: Re: [PATCH] When setting the serial port,
+ the previous settings need to be preserved.
+Date: Wed, 21 Oct 2009 10:43:36 +0200
+Message-ID: <4ADEC9B8.2050701@gmail.com>
+In-Reply-To: <200910201036.03028.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8004325741161132268==
+--===============7300854487931046880==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add a callback to get status update from AG side. +CIEV commands send
-updates such as roaming status, battery and signal level and call
-status.
----
- plugins/hfp.c |   30 ++++++++++++++++++++++++++++++
- 1 files changed, 30 insertions(+), 0 deletions(-)
+Hello,
 
-diff --git a/plugins/hfp.c b/plugins/hfp.c
-index 9733cfc..211c874 100644
---- a/plugins/hfp.c
-+++ b/plugins/hfp.c
-@@ -104,6 +104,33 @@ error:
- 	hfp_disable(modem);
- }
- =
+I have attached a small patch which allows gattty.c to enable/disable =
 
-+static void ciev_cb(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct hfp_data *data =3D ofono_modem_get_data(modem);
-+	GAtResultIter iter;
-+	int index, value, i;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CIEV:"))
-+		goto error;
-+
-+	g_at_result_iter_next_number(&iter, &index);
-+	g_at_result_iter_next_number(&iter, &value);
-+
-+	for (i =3D 0; i < HFP_INDICATOR_LAST; i++) {
-+		if (index !=3D data->cind_pos[i])
-+			continue;
-+
-+		data->cind_val[i] =3D value;
-+	}
-+	return;
-+
-+error:
-+	hfp_disable(modem);
-+}
-+
- static void cmer_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -116,6 +143,9 @@ static void cmer_cb(gboolean ok, GAtResult *result, gpo=
-inter user_data)
- =
+the read functionality on the serial port.
 
- 	g_at_chat_send(data->chat, "AT+CIND?", cind_prefix,
- 			cind_status_cb, modem, NULL);
-+
-+	g_at_chat_register(data->chat, "+CIEV:", ciev_cb, FALSE,
-+			modem, NULL);
- }
- =
+Cheers,
+Ryan
 
- static void cind_cb(gboolean ok, GAtResult *result, gpointer user_data)
--- =
+Denis Kenzior wrote:
+> Hi Ryan,
+> =
 
-1.6.4.4
+>>> You're blowing away the result of cfmakeraw.  Most of the devices are n=
+ot
+>>> true serial devices and so do not need any of the special options. =
 
+>>> Passing a NULL options GHashTable should result in cfmakeraw.  Why don't
+>>> you just pass all the options you need instead of using tcgetattr?
+>> Should i just move the tcgetattr() to happen before cfmakeraw()?
+> =
 
---===============8004325741161132268==--
+> Only one (executed last) will have effect, and I want it to be the cfmake=
+raw.  =
+
+> So simply get rid of tcgetattr.
+> =
+
+>>> The other parts of the patch look good to me.
+>> Ok. Why don't i just add the string options ("read", others...) in
+>> gattty.c?
+> =
+
+> This is what I would prefer.
+> =
+
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+
+--===============7300854487931046880==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="serial_port_enable_CREAD.patch"
+
+ZGlmZiAtLWdpdCBhL2dhdGNoYXQvZ2F0dHR5LmMgYi9nYXRjaGF0L2dhdHR0eS5jCmluZGV4IDYz
+ZDI2ZDQuLmYxOGVjYTQgMTAwNjQ0Ci0tLSBhL2dhdGNoYXQvZ2F0dHR5LmMKKysrIGIvZ2F0Y2hh
+dC9nYXR0dHkuYwpAQCAtOTcsNiArOTcsMTggQEAgc3RhdGljIGdib29sZWFuIHNldF9iYXVkKGNv
+bnN0IGNoYXIgKmJhdWQsIHN0cnVjdCB0ZXJtaW9zICp0aSkKIAlyZXR1cm4gVFJVRTsKIH0KIAor
+c3RhdGljIGdib29sZWFuIHNldF9yZWFkKGNvbnN0IGNoYXIgKmJpdHMsIHN0cnVjdCB0ZXJtaW9z
+ICp0aSkKK3sKKwlpZiAoZ19zdHJfZXF1YWwoYml0cywgIm9mZiIpKQorCQl0aS0+Y19jZmxhZyAm
+PSB+KENSRUFEKTsKKwllbHNlIGlmIChnX3N0cl9lcXVhbChiaXRzLCAib24iKSkKKwkJdGktPmNf
+Y2ZsYWcgfD0gQ1JFQUQ7CisJZWxzZQorCQlyZXR1cm4gRkFMU0U7CisKKwlyZXR1cm4gVFJVRTsK
+K30KKwogc3RhdGljIGdib29sZWFuIHNldF9zdG9wX2JpdHMoY29uc3QgY2hhciAqYml0cywgc3Ry
+dWN0IHRlcm1pb3MgKnRpKQogewogCWlmIChnX3N0cl9lcXVhbChiaXRzLCAiMSIpKQpAQCAtMjEw
+LDYgKzIyMiw4IEBAIHN0YXRpYyBpbnQgb3Blbl9kZXZpY2UoY29uc3QgY2hhciAqdHR5LCBHSGFz
+aFRhYmxlICpvcHRpb25zKQogCQkJCW9rID0gc2V0X3J0c2N0cyh2YWx1ZSwgJnRpKTsKIAkJCWVs
+c2UgaWYgKGdfc3RyX2VxdWFsKGtleSwgImxvY2FsIikpCiAJCQkJb2sgPSBzZXRfbG9jYWwodmFs
+dWUsICZ0aSk7CisJCQllbHNlIGlmIChnX3N0cl9lcXVhbChrZXksICJyZWFkIikpCisJCQkJb2sg
+PSBzZXRfcmVhZCh2YWx1ZSwgJnRpKTsKIAogCQkJaWYgKG9rID09IEZBTFNFKQogCQkJCXJldHVy
+biAtMTsK
+
+--===============7300854487931046880==--
 
