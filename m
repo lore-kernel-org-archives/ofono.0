@@ -1,28 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============4651981922429631263=="
+Content-Type: multipart/mixed; boundary="===============2122389784751351924=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] SetProperty method and Powered property missing from
- modem-api doc.
-Date: Wed, 21 Oct 2009 19:08:26 -0500
-Message-ID: <200910211908.26890.denkenz@gmail.com>
-In-Reply-To: <4ADD596E.2000909@gmail.com>
+Subject: Re: Subject: RFC Migrate from RFC2822 to ISO8601 for time
+ representations
+Date: Wed, 21 Oct 2009 19:09:02 -0500
+Message-ID: <200910211909.02877.denkenz@gmail.com>
+In-Reply-To: <1255901578.3235.0.camel@raptor>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4651981922429631263==
+--===============2122389784751351924==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marko,
+Hi Olivier,
 
-> Not sure what went wrong with the previous one. Here is a new patch
-> (attached).
-
-This patch has been applied.  Thanks!
+This patch has now been pushed upstream.  Thanks.
 
 Regards,
 -Denis
 
---===============4651981922429631263==--
+--===============2122389784751351924==--
 
