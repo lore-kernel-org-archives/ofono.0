@@ -1,57 +1,133 @@
-Content-Type: multipart/mixed; boundary="===============6893895831710309578=="
+Content-Type: multipart/mixed; boundary="===============8960412207782055887=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: [PATCH] Add voicecall driver for Handsfree profile
-Date: Sat, 24 Oct 2009 06:05:05 +0800
-Message-ID: <0463F45F3606F4428ED35AC8C709F92E089B924718@pdsmsx502.ccr.corp.intel.com>
-In-Reply-To: <6b53b1990910231123k2d53f94v66d4c320d9aa1706@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC] GPRS context setup and teardown
+ (doc/dataconnectionmanager-api.txt)
+Date: Fri, 23 Oct 2009 17:22:29 -0500
+Message-ID: <200910231722.29794.denkenz@gmail.com>
+In-Reply-To: <1255383359-31470-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6893895831710309578==
+--===============8960412207782055887==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Padovan,
+Hi Andrew,
 
-Gustavo F. Padovan wrote:
-> Hi Zhenhua,
-> =
+> Hi,
+> here's a one-big-patch that adds the DataConnectionManager interface
+> according to doc/dataconnectionmanager-api.txt without any glue for
+> the multiplexer or PPP setup.  Only AT backend is implemented.
 
-> on compiling your code I got this:
-> =
+Ok, so I took the patch and hacked on it for a while.  I disagreed with how =
 
-> cc1: warnings being treated as errors
-> drivers/hfpmodem/voicecall.c: In function 'chld_cb':
-> drivers/hfpmodem/voicecall.c:539: error: 'ag_mpty_feature' may be used
-> uninitialized in this function
-> make[1]: *** [drivers/hfpmodem/voicecall.o] Error 1
-> make: *** [all] Error 2
-> =
+you split up responsibilities, so much of the logic got moved into the core =
 
+and the driver was simplified.  Some parts might have been lost along the w=
+ay.
 
-The ag_mpty_feature should be initialized as 0 in chld_cb. Thanks for your
-comments. I will update patch and send out later.
- =
+I also decided to split up GPRS into two atoms to ease integration of hardw=
+are =
 
->> =
+that supports dedicated network interfaces.  This way the attach / GPRS =
 
->> Regards,
->> Zhenhua
->> =
+network registration parameters can be reused from the generic 'atmodem' =
 
->> =
+driver, while specific context handling can be customized.
 
->> _______________________________________________
->> ofono mailing list
->> ofono(a)ofono.org
->> http://lists.ofono.org/listinfo/ofono
+I'm happy to report that this actually sort of works with my MBM card.  I c=
+an =
 
+even define a GPRS context and activate it.  Of course the card crashes as =
+soon =
 
+as I do :)
+
+>
+> One issue with the AT implementation of the api is that "Powered" (a
+> read-write property) can be set independently of "Attached" (read-only
+> property) and remain set when "Attached" is clear.  The semantics would
+> be that the network doesn't have resources to let the modem attach,
+> but the modem waits for the resources to become available and then
+> attaches.  On AT the modem is in this state only when executing +CGATT,
+> so currently the code will rerun +CGATT as soon as the previous one
+> returns with error, probably starving other commands.  A possible
+> workaround would be for "Powered" to flip back to False after the modem
+> fails to attach once, or give up on having separate properties.
+> Alternatively we could re-try to attach periodically but on one modem
+> I've tried +CGATT fails after about 1 minute (that's the Calypso) and
+> on another only about 0.5s (Nokia phones with AT emulation).
+
+We should probably do both with some intelligence.  Right now we lose GPRS =
+
+registration when we run an operator scan (the modem turns off GPRS =
+
+automagically), so running CGATT afterwards is OK.  But then we should do i=
+t =
+
+in increasing timeouts.  E.g. 5 seconds, 10 seconds, etc and turn off entir=
+ely =
+
+once we have given up.
+
+I don't think this is necessary, all voice dial strings are suffixed by ';'=
+, so =
+
+dialing *99***1#; should result in an error.
+
+Some parts I still don't understand:
+
+in set_registration_status:
+        attached =3D (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
+                        status !=3D NETWORK_REGISTRATION_STATUS_ROAMING);
+        if (gprs->attached !=3D (int) attached &&
+                        !(gprs->flags & GPRS_FLAG_ATTACHING)) {
+                gprs->attached =3D (int) attached;
+
+                ofono_dbus_signal_property_changed(conn, path,
+                                DATA_CONNECTION_MANAGER_INTERFACE,
+                                "Attached", DBUS_TYPE_BOOLEAN,
+                                &attached);
+
+                gprs_netreg_update(gprs);
+        }
+
+I do not understand this logic at all.  Can't we always call =
+
+gprs_netreg_update here?  In my opinion Attached should only be emitted onc=
+e =
+
+it really has changed (e.g. in the callback)
+
+gprs_netreg_update:
+                /* Prevent further attempts to attach */
+                if (!attach && gprs->powered) {
+                        gprs->powered =3D 0;
+
+                        path =3D __ofono_atom_get_path(gprs->atom);
+                        ofono_dbus_signal_property_changed(conn, path,
+                                        DATA_CONNECTION_MANAGER_INTERFACE,
+                                        "Powered", DBUS_TYPE_BOOLEAN, &valu=
+e);
+                }
+
+This is just too evil.  Can't we set another flag that attached conditions =
+have =
+
+changed while we were attaching/detaching and that we should recheck those =
+
+conditions when we return from attach/detach?
+
+In gprs_set_property:
+
+You should really ignore set property requests that set the value to the =
+
+already set value.  Simply return success and don't do anything else.
 
 Regards,
-Zhenhua
+-Denis
 
---===============6893895831710309578==--
+--===============8960412207782055887==--
 
