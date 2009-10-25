@@ -1,58 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============0012994457230421655=="
+Content-Type: multipart/mixed; boundary="===============4539815139295931472=="
 MIME-Version: 1.0
-From: andrzej zaborowski <balrogg@gmail.com>
-Subject: Re: [RFC] GPRS context setup and teardown
- (doc/dataconnectionmanager-api.txt)
-Date: Sun, 25 Oct 2009 08:43:43 +0200
-Message-ID: <fb249edb0910242343h6198ac24vac6112b09d1d833a@mail.gmail.com>
-In-Reply-To: <fb249edb0910242339n7e1db5f1qf62747e0fef3970b@mail.gmail.com>
+From: Chris Pitchford <ofono@intrepid.cx>
+Subject: Incoming line identity and ALS
+Date: Sun, 25 Oct 2009 23:03:44 +0000
+Message-ID: <alpine.LNX.2.00.0910252301450.22627@boatman.intrepnet>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0012994457230421655==
+--===============4539815139295931472==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/10/25 andrzej zaborowski <balrogg@gmail.com>:
-> Now that I think of it if the current status is 'searching' then
-> possibly there's no point calling driver->set_attached (see second
-> patch).
+Hi all,
 
-I repeated the same typo in this patch, attached is a corrected version, so=
-rry.
+I've been looking through the 0.8 source code for some indication of ALS =
 
-Regards
+support.
 
---===============0012994457230421655==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-Don-t-ask-driver-to-attach-GPRS-if-modem-is-already.patch"
+ALS (or line-2) allow two different numbers to be attached to a mobile =
 
-RnJvbSBkMGYwMzMxZWE4ZDNmOGM0ZGY3NTA2OWNmY2EwODJiYjk5Y2UwZGZhIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogU3VuLCAyNSBPY3QgMjAwOSAwOTozNToyNiArMDEwMApTdWJqZWN0
-OiBbUEFUQ0ggMi8yXSBEb24ndCBhc2sgZHJpdmVyIHRvIGF0dGFjaCBHUFJTIGlmIG1vZGVtIGlz
-IGFscmVhZHkgc2VhcmNoaW5nIGZvciBvcGVyYXRvci4KCi0tLQogc3JjL2dwcnMuYyB8ICAgIDgg
-KysrKystLS0KIDEgZmlsZXMgY2hhbmdlZCwgNSBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygt
-KQoKZGlmZiAtLWdpdCBhL3NyYy9ncHJzLmMgYi9zcmMvZ3Bycy5jCmluZGV4IGJjYmE5OWMuLjI3
-NjljMjcgMTAwNjQ0Ci0tLSBhL3NyYy9ncHJzLmMKKysrIGIvc3JjL2dwcnMuYwpAQCAtNTQzLDcg
-KzU0Myw5IEBAIHN0YXRpYyB2b2lkIGdwcnNfbmV0cmVnX3VwZGF0ZShzdHJ1Y3Qgb2Zvbm9fZ3By
-cyAqZ3BycykKIAlhdHRhY2ggPSBncHJzLT5wb3dlcmVkICYmIG9wZXJhdG9yX29rOwogCiAJaWYg
-KGdwcnMtPmF0dGFjaGVkICE9IGF0dGFjaCAmJgotCQkJIShncHJzLT5mbGFncyAmIEdQUlNfRkxB
-R19BVFRBQ0hJTkcpKSB7CisJCQkhKGdwcnMtPmZsYWdzICYgR1BSU19GTEFHX0FUVEFDSElORykg
-JiYKKwkJCSEoYXR0YWNoICYmIGdwcnMtPnN0YXR1cyA9PQorCQkJCU5FVFdPUktfUkVHSVNUUkFU
-SU9OX1NUQVRVU19TRUFSQ0hJTkcpKSB7CiAJCWdwcnMtPmZsYWdzIHw9IEdQUlNfRkxBR19BVFRB
-Q0hJTkc7CiAKIAkJZ3Bycy0+ZHJpdmVyLT5zZXRfYXR0YWNoZWQoZ3BycywgYXR0YWNoLCBncHJz
-X2F0dGFjaF9jYWxsYmFjaywKQEAgLTg5Miw5ICs4OTQsOSBAQCBzdGF0aWMgdm9pZCBzZXRfcmVn
-aXN0cmF0aW9uX3N0YXR1cyhzdHJ1Y3Qgb2Zvbm9fZ3BycyAqZ3BycywgaW50IHN0YXR1cykKIAkJ
-CQlEQVRBX0NPTk5FQ1RJT05fTUFOQUdFUl9JTlRFUkZBQ0UsCiAJCQkJIkF0dGFjaGVkIiwgREJV
-U19UWVBFX0JPT0xFQU4sCiAJCQkJJmF0dGFjaGVkKTsKLQotCQlncHJzX25ldHJlZ191cGRhdGUo
-Z3Bycyk7CiAJfQorCisJZ3Byc19uZXRyZWdfdXBkYXRlKGdwcnMpOwogfQogCiBzdGF0aWMgdm9p
-ZCBzZXRfcmVnaXN0cmF0aW9uX2xvY2F0aW9uKHN0cnVjdCBvZm9ub19ncHJzICpncHJzLAotLSAK
-MS42LjEKCg==
+device. The device can accept calls from both numbers and make calls from =
 
---===============0012994457230421655==--
+either of the two numbers, effectively acting as if two lines were =
+
+attached to the device.
+
+http://en.wikipedia.org/wiki/Alternate_line_service
+
+AT+CNUM reports all of the lines available on a mobile device that =
+
+supports/is using ALS.
+
+I guess there are two problems for supporting ALS in ofono.
+
+First is selecting which line/number to use when making a call. I'm not =
+
+certain how handsets make this distinction and I wonder if it might be =
+
+vendor specific.. Changing out bound line seems to be set as a mode rather =
+
+than on a
+per-call basis. Switching out bound lines is sometimes locked with PIN1.
+
+The other problem is identifying which line was called by a remote caller. =
+
+I believe +CDIP includes this information (after each RING / +CRING)
+
+From what I've seen of the API, it has the ability to report the caller =
+
+identity for in bound calls and the dialed number for out bound calls, but =
+
+I can't seem to find any reference to the number called for in bound calls =
+
+which would be used to identify which line was ringing..
+
+I was wondering if this service has been considered for ofono or if =
+
+perhaps it is already there and I've missed it..
+
+Cheers
+
+Chris
+
+--===============4539815139295931472==--
 
