@@ -1,110 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============7361474283100316383=="
+Content-Type: multipart/mixed; boundary="===============4827699253799995469=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: andrzej zaborowski <balrogg@gmail.com>
 Subject: Re: [RFC] GPRS context setup and teardown
  (doc/dataconnectionmanager-api.txt)
-Date: Sat, 24 Oct 2009 22:43:58 -0500
-Message-ID: <200910242243.59094.denkenz@gmail.com>
-In-Reply-To: <fb249edb0910241702p2467ef4fgd09b9e42216dcfa7@mail.gmail.com>
+Date: Sun, 25 Oct 2009 08:39:27 +0200
+Message-ID: <fb249edb0910242339n7e1db5f1qf62747e0fef3970b@mail.gmail.com>
+In-Reply-To: <200910242243.59094.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7361474283100316383==
+--===============4827699253799995469==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-
-> > Lets suppose status=3Dregistered arrives and we're already attached.  H=
-ere
-> > attached will be set to FALSE, Attached property will be set to false a=
-nd
-> > emitted.  gprs_netreg_update will presumably reset Attached back to Tru=
-e.
+2009/10/25 Denis Kenzior <denkenz@gmail.com>:
+>> > Lets suppose status=3Dregistered arrives and we're already attached. =
+=C2=A0Here
+>> > attached will be set to FALSE, Attached property will be set to false =
+and
+>> > emitted. =C2=A0gprs_netreg_update will presumably reset Attached back =
+to True.
+>>
+>> Now I see it and you're absolutely right to be alerted, I set
+>> "attached" to the reverse of what it should be set to. =C2=A0We're attac=
+hed
+>> when we're either in REGISTERED or ROAMING state. =C2=A0If I had done it
+>> right then the logic would look simple (I suppose):
 >
-> Now I see it and you're absolutely right to be alerted, I set
-> "attached" to the reverse of what it should be set to.  We're attached
-> when we're either in REGISTERED or ROAMING state.  If I had done it
-> right then the logic would look simple (I suppose):
+> I still don't believe that it works. =C2=A0Suppose we're attached and reg=
+istered.
+> Now we get an indication that we're in 'searching' state. =C2=A0set attac=
+h to true,
+> compare with stored value (true). =C2=A0Ah, don't do anything -> not good.
 
-I still don't believe that it works.  Suppose we're attached and registered=
-.  =
+I tried to say that I agree that current code is wrong, but assuming
+the variable "attached" was set correctly, this would not happen (see
+attached patch).
 
-Now we get an indication that we're in 'searching' state.  set attach to tr=
-ue, =
+Now that I think of it if the current status is 'searching' then
+possibly there's no point calling driver->set_attached (see second
+patch).
 
-compare with stored value (true).  Ah, don't do anything -> not good.
-
-You also emit a signal that outright lies as to the current state.  Suppose =
-
-we're registered and just the cellid / lac / technology changes.  This =
-
-function still gets triggered and does a funky dance of emitting signals an=
-d =
-
-calling into the driver to attach / detach.
-
+> Resetting Powered in the core leads to strange situations where after com=
+ing
+> from an overseas trip you'd need to reset Powered back to on. =C2=A0I wou=
+ld find
+> that annoying.
 >
-> If either we already knew that we were in that state then there's
-> nothing to do.  Otherwise we set the D-Bus property to reflect current
-> state and call gprs_netreg_update to figure out if this is the state
-> we really wanted to be in.
+> The nice thing is I don't think we need to play the attach/detach dance. =
+=C2=A0We
+> can take advantage of the netreg atom's information. =C2=A0If we're roami=
+ng there,
+> we will be roaming on GPRS as well. =C2=A0If we're registered there, then=
+ we should
+> try to attach.
 
-This part is fine, but lets make it easy to understand, e.g. do all of this =
+That's a great idea, I will send a patch separately.
 
-inside gprs_netreg_update.
+Regards
 
->
-> If the notification indicates we were detached we will also need to
-> reset all current contexts to inactive here, originally I did this in
-> the driver.
+--===============4827699253799995469==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Fix-interpretation-of-new-GPRS-registration-status-s.patch"
 
-Yes, this is one of the parts I forgot to port over :(
+RnJvbSAwM2Y5YjM4ZDZhZTVkOThiY2ZiNDZjM2Y2MzZiNzkxZTAxOGI2NTE1IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogU3VuLCAyNSBPY3QgMjAwOSAwOToxNDo1NCArMDEwMApTdWJqZWN0
+OiBbUEFUQ0ggMS8yXSBGaXggaW50ZXJwcmV0YXRpb24gb2YgbmV3IEdQUlMgcmVnaXN0cmF0aW9u
+IHN0YXR1cyBzaWduYWwuCgotLS0KIHNyYy9ncHJzLmMgfCAgICA0ICsrLS0KIDEgZmlsZXMgY2hh
+bmdlZCwgMiBpbnNlcnRpb25zKCspLCAyIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9n
+cHJzLmMgYi9zcmMvZ3Bycy5jCmluZGV4IDE4MjdjZWIuLmJjYmE5OWMgMTAwNjQ0Ci0tLSBhL3Ny
+Yy9ncHJzLmMKKysrIGIvc3JjL2dwcnMuYwpAQCAtODgyLDggKzg4Miw4IEBAIHN0YXRpYyB2b2lk
+IHNldF9yZWdpc3RyYXRpb25fc3RhdHVzKHN0cnVjdCBvZm9ub19ncHJzICpncHJzLCBpbnQgc3Rh
+dHVzKQogCQkJCQkiU3RhdHVzIiwgREJVU19UWVBFX1NUUklORywKIAkJCQkJJnN0cl9zdGF0dXMp
+OwogCi0JYXR0YWNoZWQgPSAoc3RhdHVzICE9IE5FVFdPUktfUkVHSVNUUkFUSU9OX1NUQVRVU19S
+RUdJU1RFUkVEICYmCi0JCQlzdGF0dXMgIT0gTkVUV09SS19SRUdJU1RSQVRJT05fU1RBVFVTX1JP
+QU1JTkcpOworCWF0dGFjaGVkID0gKHN0YXR1cyA9PSBORVRXT1JLX1JFR0lTVFJBVElPTl9TVEFU
+VVNfUkVHSVNURVJFRCB8fAorCQkJc3RhdHVzID09IE5FVFdPUktfUkVHSVNUUkFUSU9OX1NUQVRV
+U19ST0FNSU5HKTsKIAlpZiAoZ3Bycy0+YXR0YWNoZWQgIT0gKGludCkgYXR0YWNoZWQgJiYKIAkJ
+CSEoZ3Bycy0+ZmxhZ3MgJiBHUFJTX0ZMQUdfQVRUQUNISU5HKSkgewogCQlncHJzLT5hdHRhY2hl
+ZCA9IChpbnQpIGF0dGFjaGVkOwotLSAKMS42LjEKCg==
 
-> This is a policy question, what do we do when the user disallowed
-> roaming but the modem wants to roam?  If we decide that we will not
-> retry to attach until the user pokes us again then "Powered" really
-> should be reset to false because even if the conditions you listed are
-> met we still won't attach.  Maybe instead we should do the retries
-> with increasing timeouts like you mentioned in another message, and
-> then "Powered" should stay set.
+--===============4827699253799995469==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0002-Don-t-ask-driver-to-attach-GPRS-if-modem-is-already.patch"
 
-Resetting Powered in the core leads to strange situations where after comin=
-g =
+RnJvbSBkMGYwMzMxZWE4ZDNmOGM0ZGY3NTA2OWNmY2EwODJiYjk5Y2UwZGZhIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogU3VuLCAyNSBPY3QgMjAwOSAwOTozNToyNiArMDEwMApTdWJqZWN0
+OiBbUEFUQ0ggMi8yXSBEb24ndCBhc2sgZHJpdmVyIHRvIGF0dGFjaCBHUFJTIGlmIG1vZGVtIGlz
+IGFscmVhZHkgc2VhcmNoaW5nIGZvciBvcGVyYXRvci4KCi0tLQogc3JjL2dwcnMuYyB8ICAgIDgg
+KysrKystLS0KIDEgZmlsZXMgY2hhbmdlZCwgNSBpbnNlcnRpb25zKCspLCAzIGRlbGV0aW9ucygt
+KQoKZGlmZiAtLWdpdCBhL3NyYy9ncHJzLmMgYi9zcmMvZ3Bycy5jCmluZGV4IGJjYmE5OWMuLjI3
+NjljMjcgMTAwNjQ0Ci0tLSBhL3NyYy9ncHJzLmMKKysrIGIvc3JjL2dwcnMuYwpAQCAtNTQzLDcg
+KzU0Myw5IEBAIHN0YXRpYyB2b2lkIGdwcnNfbmV0cmVnX3VwZGF0ZShzdHJ1Y3Qgb2Zvbm9fZ3By
+cyAqZ3BycykKIAlhdHRhY2ggPSBncHJzLT5wb3dlcmVkICYmIG9wZXJhdG9yX29rOwogCiAJaWYg
+KGdwcnMtPmF0dGFjaGVkICE9IGF0dGFjaCAmJgotCQkJIShncHJzLT5mbGFncyAmIEdQUlNfRkxB
+R19BVFRBQ0hJTkcpKSB7CisJCQkhKGdwcnMtPmZsYWdzICYgR1BSU19GTEFHX0FUVEFDSElORykg
+JiYKKwkJCSEoYXR0YWNoICYmIGdwcnMtPnN0YXR1cyAhPQorCQkJCU5FVFdPUktfUkVHSVNUUkFU
+SU9OX1NUQVRVU19TRUFSQ0hJTkcpKSB7CiAJCWdwcnMtPmZsYWdzIHw9IEdQUlNfRkxBR19BVFRB
+Q0hJTkc7CiAKIAkJZ3Bycy0+ZHJpdmVyLT5zZXRfYXR0YWNoZWQoZ3BycywgYXR0YWNoLCBncHJz
+X2F0dGFjaF9jYWxsYmFjaywKQEAgLTg5Miw5ICs4OTQsOSBAQCBzdGF0aWMgdm9pZCBzZXRfcmVn
+aXN0cmF0aW9uX3N0YXR1cyhzdHJ1Y3Qgb2Zvbm9fZ3BycyAqZ3BycywgaW50IHN0YXR1cykKIAkJ
+CQlEQVRBX0NPTk5FQ1RJT05fTUFOQUdFUl9JTlRFUkZBQ0UsCiAJCQkJIkF0dGFjaGVkIiwgREJV
+U19UWVBFX0JPT0xFQU4sCiAJCQkJJmF0dGFjaGVkKTsKLQotCQlncHJzX25ldHJlZ191cGRhdGUo
+Z3Bycyk7CiAJfQorCisJZ3Byc19uZXRyZWdfdXBkYXRlKGdwcnMpOwogfQogCiBzdGF0aWMgdm9p
+ZCBzZXRfcmVnaXN0cmF0aW9uX2xvY2F0aW9uKHN0cnVjdCBvZm9ub19ncHJzICpncHJzLAotLSAK
+MS42LjEKCg==
 
-from an overseas trip you'd need to reset Powered back to on.  I would find =
-
-that annoying.
-
-The nice thing is I don't think we need to play the attach/detach dance.  W=
-e =
-
-can take advantage of the netreg atom's information.  If we're roaming ther=
-e, =
-
-we will be roaming on GPRS as well.  If we're registered there, then we sho=
-uld =
-
-try to attach.
-
->
-> An unrelated thing: you keep the allowed cid range in the core and
-> only remember the min and max cid.  However I think (but don't know
-> where to check for it) that +CGDCONT=3D? is free to return (1,2) instead
-> of (1-2), or even (1-2,5-6,13).  Other AT commands do return ranges
-> with this syntax.
-
-You're absolutely correct that the syntax allows this.  My decision here wa=
-s =
-
-mostly a  matter of prudence.  I doubt any device actually uses a non-
-contiguous cid range.  If/once we do find one that does, we can add a new =
-
-set_sparse_range function (or something) in the core to take care of it.
-
-Regards,
--Denis
-
---===============7361474283100316383==--
+--===============4827699253799995469==--
 
