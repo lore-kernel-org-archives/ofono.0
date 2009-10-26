@@ -1,125 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============1835327937922851331=="
+Content-Type: multipart/mixed; boundary="===============8432574416997163973=="
 MIME-Version: 1.0
 From: Ryan Raasch <ryan.raasch@gmail.com>
-Subject: [PATCH 1/1] Extended  modem.conf
-Date: Mon, 26 Oct 2009 12:02:41 +0100
-Message-ID: <4AE581D1.30901@gmail.com>
+Subject: SIM PIN unlock
+Date: Mon, 26 Oct 2009 13:59:20 +0100
+Message-ID: <4AE59D28.3090304@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1835327937922851331==
+--===============8432574416997163973==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hello,
 
-This a patch for allowing the addition of more options to the generic =
+I have noticed a difference of ofono on startup. If the PIN number is =
 
-atgen driver. Comments :) ?
+not required, the daemon never gets past CRSM query, and the remaining =
 
-[generic]
-Driver=3Datgen
-Device=3D/dev/ttyS0
-Baud=3D115200
-Read=3Don
-Local=3Don
+interfaces are not added.
+
+But if the PIN number has not been entered, things work as they should.
+
+Scenario 1:
+
+The SIM card needs the PIN number to work.
+
+ofonod[8203]: attr_cb got result: 1
+ofonod[8203]: Final response: OK
+ofonod[8203]: Response line: SIEMENS
+ofonod[8203]: at_cpin_cb got result: 1
+ofonod[8203]: Final response: OK
+ofonod[8203]: Response line: +CPIN: SIM PIN
+ofonod[8203]: crsm_pin_cb: SIM PIN
+ofonod[8203]: at_crsm_info_cb got result: 0
+ofonod[8203]: Final response: ERROR
+ofonod[8203]: attr_cb got result: 1
+ofonod[8203]: Final response: OK
+ofonod[8203]: Response line: MC75
+ofonod[8203]: at_crsm_info_cb got result: 0
+ofonod[8203]: Final response: ERROR
+ofonod[8203]: attr_cb got result: 1
+ofonod[8203]: Final response: OK
+ofonod[8203]: Response line: REVISION 03.010
+ofonod[8203]: at_crsm_info_cb got result: 0
+ofonod[8203]: Final response: ERROR
+ofonod[8203]: src/voicecall.c:ecc_read_cb() 0
+ofonod[8203]: attr_cb got result: 1
+ofonod[8203]: Final response: OK
+ofonod[8203]: Response line: 35****
+ofonod[8203]: at_lock_unlock_cb got result: 1
+ofonod[8203]: Final response: OK
+ofonod[8203]: at_cpin_cb got result: 1
+ofonod[8203]: Final response: OK
+ofonod[8203]: Response line: +CPIN: READY
+ofonod[8203]: crsm_pin_cb: READY
+
+Scenario 2:
+
+The daemon has been restarted (following correct SIM PIN number insertion).
+
+ofonod[16456]: attr_cb got result: 1
+ofonod[16456]: Final response: OK
+ofonod[16456]: Response line: SIEMENS
+ofonod[16456]: at_cpin_cb got result: 1
+ofonod[16456]: Final response: OK
+ofonod[16456]: Response line: +CPIN: READY
+ofonod[16456]: crsm_pin_cb: READY
+
 
 Thanks,
 Ryan
 
---===============1835327937922851331==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="generic_atgen_opts.patch"
-
-ZGlmZiAtLWdpdCBhL2dhdGNoYXQvZ2F0dHR5LmMgYi9nYXRjaGF0L2dhdHR0eS5jCmluZGV4IGYx
-OGVjYTQuLjY0ZGQ4YWIgMTAwNjQ0Ci0tLSBhL2dhdGNoYXQvZ2F0dHR5LmMKKysrIGIvZ2F0Y2hh
-dC9nYXR0dHkuYwpAQCAtMjA4LDIxICsyMDgsMjEgQEAgc3RhdGljIGludCBvcGVuX2RldmljZShj
-b25zdCBjaGFyICp0dHksIEdIYXNoVGFibGUgKm9wdGlvbnMpCiAJCQkJCQkJKHZvaWQgKikgJnZh
-bHVlKSkgewogCQkJZ2Jvb2xlYW4gb2sgPSBGQUxTRTsKIAotCQkJaWYgKGdfc3RyX2VxdWFsKGtl
-eSwgImJhdWQiKSkKKwkJCWlmIChnX3N0cl9lcXVhbChrZXksICJCYXVkIikpCiAJCQkJb2sgPSBz
-ZXRfYmF1ZCh2YWx1ZSwgJnRpKTsKLQkJCWVsc2UgaWYgKGdfc3RyX2VxdWFsKGtleSwgInN0b3Bi
-aXRzIikpCisJCQllbHNlIGlmIChnX3N0cl9lcXVhbChrZXksICJTdG9wQml0cyIpKQogCQkJCW9r
-ID0gc2V0X3N0b3BfYml0cyh2YWx1ZSwgJnRpKTsKLQkJCWVsc2UgaWYgKGdfc3RyX2VxdWFsKGtl
-eSwgImRhdGFiaXRzIikpCisJCQllbHNlIGlmIChnX3N0cl9lcXVhbChrZXksICJEYXRhQml0cyIp
-KQogCQkJCW9rID0gc2V0X2RhdGFfYml0cyh2YWx1ZSwgJnRpKTsKLQkJCWVsc2UgaWYgKGdfc3Ry
-X2VxdWFsKGtleSwgInBhcml0eSIpKQorCQkJZWxzZSBpZiAoZ19zdHJfZXF1YWwoa2V5LCAiUGFy
-aXR5IikpCiAJCQkJb2sgPSBzZXRfcGFyaXR5KHZhbHVlLCAmdGkpOwotCQkJZWxzZSBpZiAoZ19z
-dHJfZXF1YWwoa2V5LCAieG9ueG9mZiIpKQorCQkJZWxzZSBpZiAoZ19zdHJfZXF1YWwoa2V5LCAi
-WG9uWG9mZiIpKQogCQkJCW9rID0gc2V0X3hvbnhvZmYodmFsdWUsICZ0aSk7Ci0JCQllbHNlIGlm
-IChnX3N0cl9lcXVhbChrZXksICJydHNjdHMiKSkKKwkJCWVsc2UgaWYgKGdfc3RyX2VxdWFsKGtl
-eSwgIlJ0c2N0cyIpKQogCQkJCW9rID0gc2V0X3J0c2N0cyh2YWx1ZSwgJnRpKTsKLQkJCWVsc2Ug
-aWYgKGdfc3RyX2VxdWFsKGtleSwgImxvY2FsIikpCisJCQllbHNlIGlmIChnX3N0cl9lcXVhbChr
-ZXksICJMb2NhbCIpKQogCQkJCW9rID0gc2V0X2xvY2FsKHZhbHVlLCAmdGkpOwotCQkJZWxzZSBp
-ZiAoZ19zdHJfZXF1YWwoa2V5LCAicmVhZCIpKQorCQkJZWxzZSBpZiAoZ19zdHJfZXF1YWwoa2V5
-LCAiUmVhZCIpKQogCQkJCW9rID0gc2V0X3JlYWQodmFsdWUsICZ0aSk7CiAKIAkJCWlmIChvayA9
-PSBGQUxTRSkKZGlmZiAtLWdpdCBhL3BsdWdpbnMvYXRnZW4uYyBiL3BsdWdpbnMvYXRnZW4uYwpp
-bmRleCBjMGZiYmIyLi4xMzM0NzJiIDEwMDY0NAotLS0gYS9wbHVnaW5zL2F0Z2VuLmMKKysrIGIv
-cGx1Z2lucy9hdGdlbi5jCkBAIC00OCw2ICs0OCwyNCBAQAogI2luY2x1ZGUgPG9mb25vL3Vzc2Qu
-aD4KICNpbmNsdWRlIDxvZm9uby92b2ljZWNhbGwuaD4KIAorc3RhdGljIGNvbnN0IGNoYXIqIF90
-dHlfb3B0c1tdID0KKyAgeworICAgICJCYXVkIiwKKyAgICAiUmVhZCIsCisgICAgIkxvY2FsIiwK
-KyAgICAiU3RvcEJpdHMiLAorICAgICJEYXRhQml0cyIsCisgICAgIlBhcml0eSIsCisgICAgIlhv
-blhvZmYiLAorICAgICJSdHNjdHMiLAorICAgIE5VTEwsCisgIH07CisKK3N0YXRpYyB2b2lkIF91
-bnJlZ2lzdGVyX29wdGlvbihncG9pbnRlciBkYXRhKQoreworCWdfZnJlZShkYXRhKTsKK30KKwog
-c3RhdGljIGludCBhdGdlbl9wcm9iZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogewogCXJl
-dHVybiAwOwpAQCAtNjgsMTQgKzg2LDI4IEBAIHN0YXRpYyBpbnQgYXRnZW5fZW5hYmxlKHN0cnVj
-dCBvZm9ub19tb2RlbSAqbW9kZW0pCiAJR0lPQ2hhbm5lbCAqY2hhbm5lbDsKIAlHQXRTeW50YXgg
-KnN5bnRheDsKIAljb25zdCBjaGFyICpkZXZpY2U7CisJY29uc3QgY2hhciAqdmFsdWU7CisJR0hh
-c2hUYWJsZSAqb3B0aW9ucyA9IE5VTEw7CisJaW50IGkgPSAwOwogCiAJREJHKCIlcCIsIG1vZGVt
-KTsKIAorCW9wdGlvbnMgPSBnX2hhc2hfdGFibGVfbmV3X2Z1bGwoZ19zdHJfaGFzaCwgZ19zdHJf
-ZXF1YWwsCisJCQkJCWdfZnJlZSwgX3VucmVnaXN0ZXJfb3B0aW9uKTsKKwogCWRldmljZSA9IG9m
-b25vX21vZGVtX2dldF9zdHJpbmcobW9kZW0sICJEZXZpY2UiKTsKIAlpZiAoIWRldmljZSkKIAkJ
-cmV0dXJuIC1FSU5WQUw7CiAKLQljaGFubmVsID0gZ19hdF90dHlfb3BlbihkZXZpY2UsIE5VTEwp
-OworCXdoaWxlKF90dHlfb3B0c1tpXSkKKwkgIHsKKwkgICAgdmFsdWUgPSBvZm9ub19tb2RlbV9n
-ZXRfc3RyaW5nKG1vZGVtLCBfdHR5X29wdHNbaV0pOworCSAgICBpZih2YWx1ZSkKKwkgICAgICBn
-X2hhc2hfdGFibGVfcmVwbGFjZShvcHRpb25zLCBnX3N0cmR1cChfdHR5X29wdHNbaV0pLCBnX3N0
-cmR1cCh2YWx1ZSkpOworCSAgICBpKys7CisJICB9OworCisJY2hhbm5lbCA9IGdfYXRfdHR5X29w
-ZW4oZGV2aWNlLCBvcHRpb25zKTsKIAlpZiAoIWNoYW5uZWwpCiAJCXJldHVybiAtRUlPOwogCkBA
-IC05Miw2ICsxMjQsOCBAQCBzdGF0aWMgaW50IGF0Z2VuX2VuYWJsZShzdHJ1Y3Qgb2Zvbm9fbW9k
-ZW0gKm1vZGVtKQogCiAJb2Zvbm9fbW9kZW1fc2V0X2RhdGEobW9kZW0sIGNoYXQpOwogCisJZ19o
-YXNoX3RhYmxlX2Rlc3Ryb3kob3B0aW9ucyk7CisKIAlyZXR1cm4gMDsKIH0KIApkaWZmIC0tZ2l0
-IGEvcGx1Z2lucy9tb2RlbWNvbmYuYyBiL3BsdWdpbnMvbW9kZW1jb25mLmMKaW5kZXggMTkyZmFh
-Ni4uNzFhYWQ4MSAxMDA2NDQKLS0tIGEvcGx1Z2lucy9tb2RlbWNvbmYuYworKysgYi9wbHVnaW5z
-L21vZGVtY29uZi5jCkBAIC03MiwxNiArNzIsODAgQEAgc3RhdGljIGludCBzZXRfYWRkcmVzcyhz
-dHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtLAogc3RhdGljIGludCBzZXRfZGV2aWNlKHN0cnVjdCBv
-Zm9ub19tb2RlbSAqbW9kZW0sCiAJCQkJCUdLZXlGaWxlICprZXlmaWxlLCBjb25zdCBjaGFyICpn
-cm91cCkKIHsKLQljaGFyICpkZXZpY2U7CisJY2hhciAqZGV2aWNlLCAqdmFsdWU7CiAKIAlkZXZp
-Y2UgPSBnX2tleV9maWxlX2dldF9zdHJpbmcoa2V5ZmlsZSwgZ3JvdXAsICJEZXZpY2UiLCBOVUxM
-KTsKIAlpZiAoIWRldmljZSkKIAkJcmV0dXJuIC1FSU5WQUw7CiAKIAlvZm9ub19tb2RlbV9zZXRf
-c3RyaW5nKG1vZGVtLCAiRGV2aWNlIiwgZGV2aWNlKTsKLQogCWdfZnJlZShkZXZpY2UpOwogCisJ
-dmFsdWUgPSBnX2tleV9maWxlX2dldF9zdHJpbmcoa2V5ZmlsZSwgZ3JvdXAsICJCYXVkIiwgTlVM
-TCk7CisJaWYgKHZhbHVlKSB7CisJCW9mb25vX21vZGVtX3NldF9zdHJpbmcobW9kZW0sICJCYXVk
-IiwgdmFsdWUpOworCQlnX2ZyZWUodmFsdWUpOworCX0KKwllbHNlCisJCW9mb25vX21vZGVtX3Nl
-dF9zdHJpbmcobW9kZW0sICJCYXVkIiwgIjExNTIwMCIpOworCisJdmFsdWUgPSBnX2tleV9maWxl
-X2dldF9zdHJpbmcoa2V5ZmlsZSwgZ3JvdXAsICJSZWFkIiwgTlVMTCk7CisJaWYgKHZhbHVlKSB7
-CisJCW9mb25vX21vZGVtX3NldF9zdHJpbmcobW9kZW0sICJSZWFkIiwgdmFsdWUpOworCQlnX2Zy
-ZWUodmFsdWUpOworCX0KKwllbHNlCisJCW9mb25vX21vZGVtX3NldF9zdHJpbmcobW9kZW0sICJS
-ZWFkIiwgIm9uIik7CisKKwl2YWx1ZSA9IGdfa2V5X2ZpbGVfZ2V0X3N0cmluZyhrZXlmaWxlLCBn
-cm91cCwgIkxvY2FsIiwgTlVMTCk7CisJaWYgKHZhbHVlKSB7CisJCW9mb25vX21vZGVtX3NldF9z
-dHJpbmcobW9kZW0sICJMb2NhbCIsIHZhbHVlKTsKKwkJZ19mcmVlKHZhbHVlKTsKKwl9CisJZWxz
-ZQorCQlvZm9ub19tb2RlbV9zZXRfc3RyaW5nKG1vZGVtLCAiTG9jYWwiLCAibm9uZSIpOworCisJ
-dmFsdWUgPSBnX2tleV9maWxlX2dldF9zdHJpbmcoa2V5ZmlsZSwgZ3JvdXAsICJTdG9wQml0cyIs
-IE5VTEwpOworCWlmICh2YWx1ZSkgeworCQlvZm9ub19tb2RlbV9zZXRfc3RyaW5nKG1vZGVtLCAi
-U3RvcEJpdHMiLCB2YWx1ZSk7CisJCWdfZnJlZSh2YWx1ZSk7CisJfQorCWVsc2UKKwkJb2Zvbm9f
-bW9kZW1fc2V0X3N0cmluZyhtb2RlbSwgIlN0b3BCaXRzIiwgIjEiKTsKKworCXZhbHVlID0gZ19r
-ZXlfZmlsZV9nZXRfc3RyaW5nKGtleWZpbGUsIGdyb3VwLCAiRGF0YUJpdHMiLCBOVUxMKTsKKwlp
-ZiAodmFsdWUpIHsKKwkJb2Zvbm9fbW9kZW1fc2V0X3N0cmluZyhtb2RlbSwgIkRhdGFCaXRzIiwg
-dmFsdWUpOworCQlnX2ZyZWUodmFsdWUpOworCX0KKwllbHNlCisJCW9mb25vX21vZGVtX3NldF9z
-dHJpbmcobW9kZW0sICJEYXRhYml0cyIsICI4Iik7CisKKwl2YWx1ZSA9IGdfa2V5X2ZpbGVfZ2V0
-X3N0cmluZyhrZXlmaWxlLCBncm91cCwgIlBhcml0eSIsIE5VTEwpOworCWlmICh2YWx1ZSkgewor
-CQlvZm9ub19tb2RlbV9zZXRfc3RyaW5nKG1vZGVtLCAiUGFyaXR5IiwgdmFsdWUpOworCQlnX2Zy
-ZWUodmFsdWUpOworCX0KKwllbHNlCisJCW9mb25vX21vZGVtX3NldF9zdHJpbmcobW9kZW0sICJQ
-YXJpdHkiLCAibm9uZSIpOworCisJdmFsdWUgPSBnX2tleV9maWxlX2dldF9zdHJpbmcoa2V5Zmls
-ZSwgZ3JvdXAsICJYb25Yb2ZmIiwgTlVMTCk7CisJaWYgKHZhbHVlKSB7CisJCW9mb25vX21vZGVt
-X3NldF9zdHJpbmcobW9kZW0sICJYb25Yb2ZmIiwgdmFsdWUpOworCQlnX2ZyZWUodmFsdWUpOwor
-CX0KKwllbHNlCisJCW9mb25vX21vZGVtX3NldF9zdHJpbmcobW9kZW0sICJYb25Yb2ZmIiwgIm9m
-ZiIpOworCisJdmFsdWUgPSBnX2tleV9maWxlX2dldF9zdHJpbmcoa2V5ZmlsZSwgZ3JvdXAsICJS
-dHNjdHMiLCBOVUxMKTsKKwlpZiAodmFsdWUpIHsKKwkJb2Zvbm9fbW9kZW1fc2V0X3N0cmluZyht
-b2RlbSwgIlJ0c2N0cyIsIHZhbHVlKTsKKwkJZ19mcmVlKHZhbHVlKTsKKwl9CisJZWxzZQorCQlv
-Zm9ub19tb2RlbV9zZXRfc3RyaW5nKG1vZGVtLCAiUnRzY3RzIiwgIm9uIik7CisKKwogCXJldHVy
-biAwOwogfQogCg==
-
---===============1835327937922851331==--
+--===============8432574416997163973==--
 
