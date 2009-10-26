@@ -1,64 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============4242485909143661628=="
+Content-Type: multipart/mixed; boundary="===============5457189395190176605=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Incoming line identity and ALS
-Date: Mon, 26 Oct 2009 11:53:37 -0500
-Message-ID: <200910261153.38050.denkenz@gmail.com>
-In-Reply-To: <20091026162708.14816kvlcut5xts0@boatman.intrepid.co.uk>
+From: Ryan Raasch <ryan.raasch@gmail.com>
+Subject: Re: SIM PIN unlock
+Date: Mon, 26 Oct 2009 17:57:09 +0100
+Message-ID: <4AE5D4E5.60602@gmail.com>
+In-Reply-To: <200910261106.42520.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4242485909143661628==
+--===============5457189395190176605==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Chris,
 
-> > CDIP (like CLIP) is issued after every RING/CRING.  Whereas CLIP returns
-> > the calling line identity, CDIP returns the called line identity (e.g.
-> > the phone number the remote caller dialed.)  According to the
-> > specification it is not reported for outbound calls.
->
-> It seems that my phone doesn't support CDIP, although it does support
-> line-2/ALS which is a bit odd. I'll investigate more on that..
 
-Many Phase 2+ devices only supported ALS and the rest of the CPHS standards=
-.  =
+Denis Kenzior wrote:
+> Hi Ryan,
+> =
 
-CPHS was largely merged into the 3G GSM standards.  If you're interested, =
+>> Hello,
+>>
+>> I have noticed a difference of ofono on startup. If the PIN number is
+>> not required, the daemon never gets past CRSM query, and the remaining
+>> interfaces are not added.
+> =
 
-google Common PCN Handset Specification.  This is where ALS comes from.
+> This works fine for other devices.  I would enable at command debugging (=
+export =
 
->
-> One thing I'm not certain about is whether CDIP would report which
-> line received the call, or which number the calller dialed as they
-> could be different. I know other areas deal with routing information,
-> but I wasn't sure which which number CDIP reported. It would be great
-> for ALS support if it were the line that received the call, rather
-> than the number dialed by the caller.. though that could be
-> interesting in other situations.
+> OFONO_AT_DEBUG=3D1) and watch for any signs of breakage.  The MC75 is kno=
+wn to =
 
-This is entirely up to the network.  The likely scenario is that the networ=
-k =
+> have a very bad AT command implementation that might be confusing the AT =
 
-will normalize the number according to the network's rules.  While this sou=
-nds =
+> parser.
+> =
 
-nice, it can still lead to some ambiguities.  E.g. in the US the following =
 
-numbers (as presented in CLIP) are equivalent:
-"15556677", 129
-"15556677", 145
-"5556677",129
+It seems that if the sim card is unlocked, then the remaining =
 
-> I'll do more investigation and try and come back with something more
-> constructive
+"cascading" functions are not called.
 
-Sounds good.
+query_manufacturer(info);
 
-Regards,
--Denis
+Got SIM READY
 
---===============4242485909143661628==--
+NOT CALLED...
+   	query_model(info);
+	query_revision(info);
+	query_serial(info);
+
+
+ofonod[3965]: src/sim.c:ofono_sim_add_ready_watch() 0x8eb15b0
+ofonod[3965]: src/sim.c:ofono_sim_add_ready_watch() 0x8eb15b0
+ofonod[3965]: > AT+CGMI\r
+ofonod[3965]: < AT+CGM
+ofonod[3965]: < I\r
+ofonod[3965]: < \r\nSIEME
+ofonod[3965]: < NS
+ofonod[3965]: < \r\n\r\nOK\r\n
+ofonod[3965]: attr_cb got result: 1
+ofonod[3965]: Final response: OK
+ofonod[3965]: Response line: SIEMENS
+ofonod[3965]: > AT+CPIN?\r
+ofonod[3965]: < AT+CPI
+ofonod[3965]: < N?\r
+ofonod[3965]: < \r\n+CPIN: READY\r\n\r\nO
+ofonod[3965]: < K\r
+ofonod[3965]: < \n
+ofonod[3965]: at_cpin_cb got result: 1
+ofonod[3965]: Final response: OK
+ofonod[3965]: Response line: +CPIN: READY
+ofonod[3965]: crsm_pin_cb: READY
+ofonod[3965]: > AT+CRSM=3D192,28421\r
+ofonod[3965]: < AT+CRSM=3D192
+ofonod[3965]: < ,28
+ofonod[3965]: < 421\r
+ofonod[3965]: < \r\n+CRSM: 144,0,850D00046F05040001FFAA03020
+ofonod[3965]: < 000\r\n\r\n
+ofonod[3965]: < \r\nOK\r\n
+
+Cheers,
+Ryan
+
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+
+--===============5457189395190176605==--
 
