@@ -1,44 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============6344116767626833541=="
+Content-Type: multipart/mixed; boundary="===============2238163048114522329=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/1] Extended modem.conf
-Date: Tue, 27 Oct 2009 20:20:05 +0900
-Message-ID: <1256642405.5768.14.camel@localhost.localdomain>
-In-Reply-To: <632f5f310910270242g5d1f594bse3a9085e542d27a@mail.gmail.com>
+From: Ryan Raasch <ryan.raasch@gmail.com>
+Subject: [PATCH 1/2] Altered the options for the modem.conf to include more
+ tty options.
+Date: Tue, 27 Oct 2009 13:54:31 +0100
+Message-ID: <632f5f310910270554q7a69a7dcj39bd947289b00bb3@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6344116767626833541==
+--===============2238163048114522329==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ryan,
+The modem.conf patch split into gatchat changes.
 
-> Allright. This is the one to consider. I used the checkpatch.pl, which
-> informed me of my wayward ways.
-> =
+Regards,
+Ryan
 
-> I read from previous mails that the signed-off is not needed, is that
-> still in effect?
+---
+ gatchat/gattty.c |   16 ++++++++--------
+ 1 files changed, 8 insertions(+), 8 deletions(-)
 
-yes, that is still true. We are not using Signed-off-by statements.
+diff --git a/gatchat/gattty.c b/gatchat/gattty.c
+index f18eca4..64dd8ab 100644
+--- a/gatchat/gattty.c
++++ b/gatchat/gattty.c
+@@ -208,21 +208,21 @@ static int open_device(const char *tty,
+GHashTable *options)
+ 							(void *) &value)) {
+ 			gboolean ok =3D FALSE;
 
-> ---
->  gatchat/gattty.c    |   16 +++++++-------
->  plugins/atgen.c     |   48 ++++++++++++++++++++++++++++++++++++++--
->  plugins/modemconf.c |   59 +++++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  3 files changed, 111 insertions(+), 12 deletions(-)
+-			if (g_str_equal(key, "baud"))
++			if (g_str_equal(key, "Baud"))
+ 				ok =3D set_baud(value, &ti);
+-			else if (g_str_equal(key, "stopbits"))
++			else if (g_str_equal(key, "StopBits"))
+ 				ok =3D set_stop_bits(value, &ti);
+-			else if (g_str_equal(key, "databits"))
++			else if (g_str_equal(key, "DataBits"))
+ 				ok =3D set_data_bits(value, &ti);
+-			else if (g_str_equal(key, "parity"))
++			else if (g_str_equal(key, "Parity"))
+ 				ok =3D set_parity(value, &ti);
+-			else if (g_str_equal(key, "xonxoff"))
++			else if (g_str_equal(key, "XonXoff"))
+ 				ok =3D set_xonxoff(value, &ti);
+-			else if (g_str_equal(key, "rtscts"))
++			else if (g_str_equal(key, "Rtscts"))
+ 				ok =3D set_rtscts(value, &ti);
+-			else if (g_str_equal(key, "local"))
++			else if (g_str_equal(key, "Local"))
+ 				ok =3D set_local(value, &ti);
+-			else if (g_str_equal(key, "read"))
++			else if (g_str_equal(key, "Read"))
+ 				ok =3D set_read(value, &ti);
 
-please split this into two patches. One that modifies gatchat/ and then
-the rest in a second patch.
+ 			if (ok =3D=3D FALSE)
+-- =
 
-Regards
+1.6.4.GIT
 
-Marcel
-
-
-
---===============6344116767626833541==--
+--===============2238163048114522329==--
 
