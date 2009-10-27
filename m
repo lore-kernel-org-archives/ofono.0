@@ -1,196 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============7820104290929981040=="
+Content-Type: multipart/mixed; boundary="===============7083676193676136862=="
 MIME-Version: 1.0
 From: Ryan Raasch <ryan.raasch@gmail.com>
-Subject: [PATCH 2/2] Altered the atgeneric modem to include the added
- modem.conf options.
-Date: Tue, 27 Oct 2009 13:55:16 +0100
-Message-ID: <632f5f310910270555r653f80b0m7b0009991664f55b@mail.gmail.com>
+Subject: Re: SIM PIN unlock
+Date: Tue, 27 Oct 2009 16:45:09 +0100
+Message-ID: <4AE71585.6040804@gmail.com>
+In-Reply-To: <fb249edb0910261045m5bf88ad6hd87aac5f30f35434@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7820104290929981040==
+--===============7083676193676136862==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The modem.conf options for the driver portion of the patch.
+Ok. I have narrowed it down a little.
+
+It seems to be the CRSM command reading the
+SIM_EFLI_FILEID when it succeeds.
+
+ofonod[6326]: > AT+CRSM=3D192,28421\r
+ofonod[6326]: < \r\n+CRSM: 144,
+ofonod[6326]: < 0,850D00046F05040001FFAA03020000\r\n\r\n
+ofonod[6326]: < \r\nOK\r\n
+
+goes no further....
+
+
+HACK:
+
+If I remove
+
+	ofono_sim_read(sim, SIM_EFLI_FILEID,
+         	                OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+                 	        sim_efli_read_cb, sim);
+
+from src/sim.c, the code works, for me.
+
+
+After i tried the above and it worked, i tried to re-enable the function =
+
+  call above, and put a breakpoint in sim_efli_read_cb(), and the code =
+
+execution never hit there.
+
+
+NOTE:
+
+After entering the pin code for the sim card, only SIM_EFMSISDN_FILEID =
+
+is read from the sim card, but maybe that is intentional, since it succeeds.
+
 
 Regards,
 Ryan
 
----
- plugins/atgen.c     |   48 ++++++++++++++++++++++++++++++++++++++--
- plugins/modemconf.c |   59 +++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 2 files changed, 103 insertions(+), 4 deletions(-)
 
-diff --git a/plugins/atgen.c b/plugins/atgen.c
-index c0fbbb2..db59e36 100644
---- a/plugins/atgen.c
-+++ b/plugins/atgen.c
-@@ -48,6 +48,24 @@
- #include <ofono/ussd.h>
- #include <ofono/voicecall.h>
+Andrzej Zaborowski wrote:
+> Hi Ryan,
+> =
 
-+static const char *tty_opts[] =3D
-+  {
-+	  "Baud",
-+	  "Read",
-+	  "Local",
-+	  "StopBits",
-+	  "DataBits",
-+	  "Parity",
-+	  "XonXoff",
-+	  "Rtscts",
-+	  NULL,
-+  };
-+
-+static void unregister_tty_option(gpointer data)
-+{
-+	g_free(data);
-+}
-+
- static int atgen_probe(struct ofono_modem *modem)
- {
- 	return 0;
-@@ -68,6 +86,9 @@ static int atgen_enable(struct ofono_modem *modem)
- 	GIOChannel *channel;
- 	GAtSyntax *syntax;
- 	const char *device;
-+	const char *value;
-+	GHashTable *options;
-+	int i =3D 0;
+> 2009/10/26 Ryan Raasch <ryan.raasch@gmail.com>:
+>> It seems that if the sim card is unlocked, then the remaining "cascading"
+>> functions are not called.
+>>
+>> query_manufacturer(info);
+>>
+>> Got SIM READY
+>>
+>> NOT CALLED...
+>> =C3=82  =C3=82  =C3=82  =C3=82 query_model(info);
+>> =C3=82  =C3=82  =C3=82  =C3=82 query_revision(info);
+>> =C3=82  =C3=82  =C3=82  =C3=82 query_serial(info);
+>>
+>>
+>> ofonod[3965]: src/sim.c:ofono_sim_add_ready_watch() 0x8eb15b0
+>> ofonod[3965]: src/sim.c:ofono_sim_add_ready_watch() 0x8eb15b0
+>> ofonod[3965]: > AT+CGMI\r
+>> ofonod[3965]: < AT+CGM
+>> ofonod[3965]: < I\r
+>> ofonod[3965]: < \r\nSIEME
+>> ofonod[3965]: < NS
+>> ofonod[3965]: < \r\n\r\nOK\r\n
+>> ofonod[3965]: attr_cb got result: 1
+>> ofonod[3965]: Final response: OK
+>> ofonod[3965]: Response line: SIEMENS
+>> ofonod[3965]: > AT+CPIN?\r
+>> ofonod[3965]: < AT+CPI
+>> ofonod[3965]: < N?\r
+>> ofonod[3965]: < \r\n+CPIN: READY\r\n\r\nO
+>> ofonod[3965]: < K\r
+>> ofonod[3965]: < \n
+>> ofonod[3965]: at_cpin_cb got result: 1
+>> ofonod[3965]: Final response: OK
+>> ofonod[3965]: Response line: +CPIN: READY
+>> ofonod[3965]: crsm_pin_cb: READY
+>> ofonod[3965]: > AT+CRSM=3D192,28421\r
+>> ofonod[3965]: < AT+CRSM=3D192
+>> ofonod[3965]: < ,28
+>> ofonod[3965]: < 421\r
+>> ofonod[3965]: < \r\n+CRSM: 144,0,850D00046F05040001FFAA03020
+>> ofonod[3965]: < 000\r\n\r\n
+>> ofonod[3965]: < \r\nOK\r\n
+> =
 
- 	DBG("%p", modem);
+> There seems to be an additional \r\n before the last OK (?).  I'm not
+> sure how this can result from the PIN request but maybe using the
+> permissive mode of the parser, like plugin/phonesim.c does, helps (or
+> not).  You also have echo enabled, shouldn't be a problem but maybe
+> worth trying without it.
+> =
 
-@@ -75,23 +96,44 @@ static int atgen_enable(struct ofono_modem *modem)
- 	if (!device)
- 		return -EINVAL;
+> Regards
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
--	channel =3D g_at_tty_open(device, NULL);
--	if (!channel)
-+	options =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+					g_free, unregister_tty_option);
-+	if (!options)
-+		return -ENOMEM;
-+
-+	while (tty_opts[i]) {
-+
-+		value =3D ofono_modem_get_string(modem, tty_opts[i]);
-+		if (value) {
-+			g_hash_table_replace(options, g_strdup(tty_opts[i]),
-+					     g_strdup(value));
-+		}
-+		i++;
-+	};
-+
-+	channel =3D g_at_tty_open(device, options);
-+	if (!channel) {
-+		g_hash_table_destroy(options);
- 		return -EIO;
-+	}
-
- 	syntax =3D g_at_syntax_new_gsmv1();
- 	chat =3D g_at_chat_new(channel, syntax);
- 	g_at_syntax_unref(syntax);
- 	g_io_channel_unref(channel);
-
--	if (!chat)
-+	if (!chat) {
-+		g_hash_table_destroy(options);
- 		return -ENOMEM;
-+	}
-
- 	if (getenv("OFONO_AT_DEBUG"))
- 		g_at_chat_set_debug(chat, atgen_debug, NULL);
-
- 	ofono_modem_set_data(modem, chat);
-
-+	g_hash_table_destroy(options);
-+
- 	return 0;
- }
-
-diff --git a/plugins/modemconf.c b/plugins/modemconf.c
-index 192faa6..6b317e6 100644
---- a/plugins/modemconf.c
-+++ b/plugins/modemconf.c
-@@ -72,7 +72,7 @@ static int set_address(struct ofono_modem *modem,
- static int set_device(struct ofono_modem *modem,
- 					GKeyFile *keyfile, const char *group)
- {
--	char *device;
-+	char *device, *value;
-
- 	device =3D g_key_file_get_string(keyfile, group, "Device", NULL);
- 	if (!device)
-@@ -82,6 +82,63 @@ static int set_device(struct ofono_modem *modem,
-
- 	g_free(device);
-
-+	value =3D g_key_file_get_string(keyfile, group, "Baud", NULL);
-+	if (value) {
-+		ofono_modem_set_string(modem, "Baud", value);
-+		g_free(value);
-+	} else
-+		ofono_modem_set_string(modem, "Baud", "115200");
-+
-+	value =3D g_key_file_get_string(keyfile, group, "Read", NULL);
-+	if (value) {
-+		ofono_modem_set_string(modem, "Read", value);
-+		g_free(value);
-+	} else
-+		ofono_modem_set_string(modem, "Read", "on");
-+
-+	value =3D g_key_file_get_string(keyfile, group, "Local", NULL);
-+	if (value) {
-+		ofono_modem_set_string(modem, "Local", value);
-+		g_free(value);
-+	} else
-+		ofono_modem_set_string(modem, "Local", "none");
-+
-+	value =3D g_key_file_get_string(keyfile, group, "StopBits", NULL);
-+	if (value) {
-+		ofono_modem_set_string(modem, "StopBits", value);
-+		g_free(value);
-+	} else
-+		ofono_modem_set_string(modem, "StopBits", "1");
-+
-+	value =3D g_key_file_get_string(keyfile, group, "DataBits", NULL);
-+	if (value) {
-+		ofono_modem_set_string(modem, "DataBits", value);
-+		g_free(value);
-+	} else
-+		ofono_modem_set_string(modem, "Databits", "8");
-+
-+	value =3D g_key_file_get_string(keyfile, group, "Parity", NULL);
-+	if (value) {
-+		ofono_modem_set_string(modem, "Parity", value);
-+		g_free(value);
-+	} else
-+		ofono_modem_set_string(modem, "Parity", "none");
-+
-+	value =3D g_key_file_get_string(keyfile, group, "XonXoff", NULL);
-+	if (value) {
-+		ofono_modem_set_string(modem, "XonXoff", value);
-+		g_free(value);
-+	} else
-+		ofono_modem_set_string(modem, "XonXoff", "off");
-+
-+	value =3D g_key_file_get_string(keyfile, group, "Rtscts", NULL);
-+	if (value) {
-+		ofono_modem_set_string(modem, "Rtscts", value);
-+		g_free(value);
-+	} else
-+		ofono_modem_set_string(modem, "Rtscts", "on");
-+
-+
- 	return 0;
- }
-
--- =
-
-1.6.4.GIT
-
---===============7820104290929981040==--
+--===============7083676193676136862==--
 
