@@ -1,33 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============2189233485775681838=="
+Content-Type: multipart/mixed; boundary="===============7398251705421960590=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] Extended  modem.conf
-Date: Mon, 26 Oct 2009 12:46:26 -0500
-Message-ID: <200910261246.27843.denkenz@gmail.com>
-In-Reply-To: <4AE581D1.30901@gmail.com>
+Subject: Re: [RfC] Retry registering packet radio to home PLMN when available.
+Date: Mon, 26 Oct 2009 19:06:58 -0500
+Message-ID: <200910261906.58614.denkenz@gmail.com>
+In-Reply-To: <1256577664-4459-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2189233485775681838==
+--===============7398251705421960590==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ryan,
+Hi Andrew,
 
-> Hello,
->
-> This a patch for allowing the addition of more options to the generic
-> atgen driver. Comments :) ?
+So I took this patch and the two earlier patches and applied them.  Thanks.
 
-Before I look further into this, please re-submit the patch and follow the =
+> Instead of setting DataConnectionManager.Powered to false after
+> failed attempts to register to home PLMN with packet radio when
+> RoamingAllowed is false, wait for the home PLMN to become available
+> retrying everytime the circuit switched radio manages to register
+> to home PLMN.  The downside is if the circuit switched radio is off,
+> we wait indefinitely.
 
-oFono code style conventions.  oFono uses kernel coding style and no =
+So I decided to simplify things even further.  Before we can attach we must=
+ be =
 
-maintainer will even look at patches that do not follow this convention.
+registered to the network (e.g. COPS issued), otherwise attach fails.  Sinc=
+e =
+
+we need netreg for this anyway, we might as well always rely on netreg's =
+
+registration status to base our attach / detach decisions on.
+
+To me this seems to be the most sensible way to approach this.  However, th=
+is =
+
+assumes that the modem can't be registered on netreg and roaming on gprs.
+
+It also might break down in low-signal conditions where packet radio has =
+
+signal but circuit-switched radio doesn't (which is interesting case where =
+
+COPS reports an operator, CGREG shows registered, but CREG shows unregister=
+ed)
+
+Comments?
 
 Regards,
 -Denis
 
---===============2189233485775681838==--
+--===============7398251705421960590==--
 
