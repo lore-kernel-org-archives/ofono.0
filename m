@@ -1,73 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============0850018242229117008=="
+Content-Type: multipart/mixed; boundary="===============1176239522138689441=="
 MIME-Version: 1.0
-From: Ryan Raasch <ryan.raasch@gmail.com>
-Subject: Re: SIM PIN unlock
-Date: Wed, 28 Oct 2009 15:17:15 +0100
-Message-ID: <4AE8526B.7000305@gmail.com>
-In-Reply-To: <200910271110.18713.denkenz@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RfC] Retry registering packet radio to home PLMN when available.
+Date: Wed, 28 Oct 2009 16:21:19 -0500
+Message-ID: <200910281621.19526.denkenz@gmail.com>
+In-Reply-To: <fb249edb0910280030w76287e59me10ddcde2ae8f8db@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0850018242229117008==
+--===============1176239522138689441==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Andrew,
+
+> One reason you might want to not register to network would be for power
+> saving.
+
+Sure, but remember there are two cases here:
+
+The device oFono is managing is a proper voice + data modem.  In which case =
+
+the likely scenario is that we want to always be registered to the voice =
+
+network and not register to GPRS network for power reasons.
+
+The second case is we're managing a GPRS-only data device.  In which case t=
+he =
+
+power considerations are flipped.
+
+>
+> It seems like a small gain for adding this dependency (which will seem
+> especially strange to users not knowing about this quirk we're relying
+> on).  The current picture is that we want to have an indication of
+> when we might be able to register back to home PLMN with gprs.  We
+> keep the gprs radio disabled and enable the circuit-switched radio
+> possibly with the only aim being to have that (possibly weak)
+
+For the devices that oFono is primarily targeting (e.g. voice + data device=
+s) =
+
+this behavior is exactly what we want, no?
+
+> indication.  Couldn't we instead use the gprs radio for the same
+> purpose?  We would simply prohibit activating contexts while roaming
+> and we would report Attached =3D false on D-Bus.
+
+I agree that we want to do this for data-only devices.  In which case I =
+
+suspect we need to have the driver tell oFono that it is a data-only device=
+.  =
+
+With implications that we always auto-attach, and either ignore RoamingAllo=
+wed =
+
+setting completely or do as you suggest and refuse to activate the context. =
 
 
-Denis Kenzior wrote:
-> Hi Ryan,
-> =
+The tricky part is how to report the operator.  Remember that it is quite =
 
->> Ok. I have narrowed it down a little.
->>
->> It seems to be the CRSM command reading the
->> SIM_EFLI_FILEID when it succeeds.
->>
->> ofonod[6326]: > AT+CRSM=3D192,28421\r
->> ofonod[6326]: < \r\n+CRSM: 144,
->> ofonod[6326]: < 0,850D00046F05040001FFAA03020000\r\n\r\n
->> ofonod[6326]: < \r\nOK\r\n
->>
->> goes no further....
-> =
+ambiguous what COPS=3D0 does.  On some devices it activates CSD radio.  On =
+some =
 
-> The parser is stuck because your modem is spewing garbage.  atgen plugin =
-uses =
+GPRS, and both on others.
 
-> the _really_ strict gsmv1 syntax.  I suggest you make a custom driver for=
- your =
+Regards.
+=3DDemos
 
-> device that uses the gsm_permissive syntax.
-> =
-
-This worked! Thank you. Could this be another option in modem.conf =
-
-(Syntax=3D[Permissive,GSM1])?
-
->> 	ofono_sim_read(sim, SIM_EFLI_FILEID,
->>          	                OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
->>                  	        sim_efli_read_cb, sim);
-> =
-
-> This is wrong and won't get you very far as there are about 20 other SIM =
-files =
-
-> that we read.
-
-I knew it was wrong, it was not a fix, just a localized point where my =
-
-device was failing.
-
-
-Regards,
-Ryan
-
-> =
-
-> Regards,
-> -Denis
->=20
-
---===============0850018242229117008==--
+--===============1176239522138689441==--
 
