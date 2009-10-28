@@ -1,52 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============6451644252223389419=="
+Content-Type: multipart/mixed; boundary="===============2237021419201711557=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: SIM PIN unlock
-Date: Tue, 27 Oct 2009 11:10:18 -0500
-Message-ID: <200910271110.18713.denkenz@gmail.com>
-In-Reply-To: <4AE71585.6040804@gmail.com>
+From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
+Subject: [PATCH 2/3] Inline release_id in voicecall.c
+Date: Wed, 28 Oct 2009 08:42:03 +0800
+Message-ID: <0463F45F3606F4428ED35AC8C709F92E089B924EED@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6451644252223389419==
+--===============2237021419201711557==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ryan,
+Inline release_id() in voicecall.c
 
-> Ok. I have narrowed it down a little.
->
-> It seems to be the CRSM command reading the
-> SIM_EFLI_FILEID when it succeeds.
->
-> ofonod[6326]: > AT+CRSM=3D192,28421\r
-> ofonod[6326]: < \r\n+CRSM: 144,
-> ofonod[6326]: < 0,850D00046F05040001FFAA03020000\r\n\r\n
-> ofonod[6326]: < \r\nOK\r\n
->
-> goes no further....
+---
+ drivers/atmodem/voicecall.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-The parser is stuck because your modem is spewing garbage.  atgen plugin us=
-es =
+diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
+index f0c8d93..51b3a19 100644
+--- a/drivers/atmodem/voicecall.c
++++ b/drivers/atmodem/voicecall.c
+@@ -104,7 +104,7 @@ static unsigned int alloc_next_id(struct voicecall_data=
+ *d)
+ 	return 0;
+ }
+ =
 
-the _really_ strict gsmv1 syntax.  I suggest you make a custom driver for y=
-our =
+-static void release_id(struct voicecall_data *d, unsigned int id)
++static inline void release_id(struct voicecall_data *d, unsigned int id)
+ {
+ 	d->id_list &=3D ~(0x1 << id);
+ }
+-- =
 
-device that uses the gsm_permissive syntax.
+1.6.2.5
 
-> 	ofono_sim_read(sim, SIM_EFLI_FILEID,
->          	                OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
->                  	        sim_efli_read_cb, sim);
-
-This is wrong and won't get you very far as there are about 20 other SIM fi=
-les =
-
-that we read.
 
 Regards,
--Denis
+Zhenhua
+=20
 
-
---===============6451644252223389419==--
+--===============2237021419201711557==--
 
