@@ -1,146 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============1905803657212552193=="
+Content-Type: multipart/mixed; boundary="===============0850018242229117008=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: [PATCH 1/3] Move and rename call_compare and
- call_compare_by_status	to atutil.c
-Date: Wed, 28 Oct 2009 17:52:54 +0800
-Message-ID: <0463F45F3606F4428ED35AC8C709F92E089B92521B@pdsmsx502.ccr.corp.intel.com>
-In-Reply-To: <0463F45F3606F4428ED35AC8C709F92E089B924EEC@pdsmsx502.ccr.corp.intel.com>
+From: Ryan Raasch <ryan.raasch@gmail.com>
+Subject: Re: SIM PIN unlock
+Date: Wed, 28 Oct 2009 15:17:15 +0100
+Message-ID: <4AE8526B.7000305@gmail.com>
+In-Reply-To: <200910271110.18713.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1905803657212552193==
+--===============0850018242229117008==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
 
-Zhang, Zhenhua wrote:
-> Hi,
+
+Denis Kenzior wrote:
+> Hi Ryan,
 > =
 
-> Below patch is to rename call_compare and call_compare_by_status into
-> atutil.c =
-
-> so that they could be shared by atmodem and hfpmodem drivers.
+>> Ok. I have narrowed it down a little.
+>>
+>> It seems to be the CRSM command reading the
+>> SIM_EFLI_FILEID when it succeeds.
+>>
+>> ofonod[6326]: > AT+CRSM=3D192,28421\r
+>> ofonod[6326]: < \r\n+CRSM: 144,
+>> ofonod[6326]: < 0,850D00046F05040001FFAA03020000\r\n\r\n
+>> ofonod[6326]: < \r\nOK\r\n
+>>
+>> goes no further....
 > =
 
-> ---
->  drivers/atmodem/atutil.c    |   27 +++++++++++++++++++++++++++
->  drivers/atmodem/atutil.h    |    2 ++
->  drivers/atmodem/voicecall.c |   39
->  +++++++-------------------------------- 3 files changed, 36
-> insertions(+), 32 deletions(-) =
+> The parser is stuck because your modem is spewing garbage.  atgen plugin =
+uses =
 
+> the _really_ strict gsmv1 syntax.  I suggest you make a custom driver for=
+ your =
+
+> device that uses the gsm_permissive syntax.
 > =
 
-> diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-> index 5d9ceb8..465d258 100644
-> --- a/drivers/atmodem/atutil.c
-> +++ b/drivers/atmodem/atutil.c
-> @@ -33,6 +33,7 @@
->  #include <ofono/types.h>
+This worked! Thank you. Could this be another option in modem.conf =
+
+(Syntax=3D[Permissive,GSM1])?
+
+>> 	ofono_sim_read(sim, SIM_EFLI_FILEID,
+>>          	                OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+>>                  	        sim_efli_read_cb, sim);
 > =
 
->  #include "atutil.h"
-> +#include "types.h"
-> =
+> This is wrong and won't get you very far as there are about 20 other SIM =
+files =
 
+> that we read.
 
-I removed #include "types.h" to avoid distcheck error. Other is
-unchanged.
+I knew it was wrong, it was not a fix, just a localized point where my =
+
+device was failing.
+
 
 Regards,
-Zhenhua
+Ryan
 
---===============1905803657212552193==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Move-and-rename-call_compare-and-call_compare_by_sta.patch"
+> =
 
-RnJvbSA4Zjk1YTg2NGFhZmYxZWQ1OWI5Yjc2Nzg2MWUxYzM2Mjc0ZGZiNTlhIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBaaGVuaHVhIFpoYW5nIDx6aGVuaHVhLnpoYW5nQGludGVsLmNv
-bT4KRGF0ZTogVGh1LCAyOSBPY3QgMjAwOSAwMToyMjowNiArMDgwMApTdWJqZWN0OiBbUEFUQ0gg
-MS8zXSBNb3ZlIGFuZCByZW5hbWUgY2FsbF9jb21wYXJlIGFuZCBjYWxsX2NvbXBhcmVfYnlfc3Rh
-dHVzIHRvIGF0dXRpbC5jCgpTbyB0aGF0IHRoZXkgY291bGQgYmUgc2hhcmVkIGJ5IGF0bW9kZW0g
-YW5kIGhmcG1vZGVtIGRyaXZlcnMuCi0tLQogZHJpdmVycy9hdG1vZGVtL2F0dXRpbC5jICAgIHwg
-ICAyNiArKysrKysrKysrKysrKysrKysrKysrKysrKwogZHJpdmVycy9hdG1vZGVtL2F0dXRpbC5o
-ICAgIHwgICAgMiArKwogZHJpdmVycy9hdG1vZGVtL3ZvaWNlY2FsbC5jIHwgICAzOSArKysrKysr
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KIDMgZmlsZXMgY2hhbmdlZCwgMzUgaW5z
-ZXJ0aW9ucygrKSwgMzIgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvZHJpdmVycy9hdG1vZGVt
-L2F0dXRpbC5jIGIvZHJpdmVycy9hdG1vZGVtL2F0dXRpbC5jCmluZGV4IDVkOWNlYjguLjU3ODUy
-MmYgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvYXRtb2RlbS9hdHV0aWwuYworKysgYi9kcml2ZXJzL2F0
-bW9kZW0vYXR1dGlsLmMKQEAgLTU1LDMgKzU1LDI5IEBAIHZvaWQgZGVjb2RlX2F0X2Vycm9yKHN0
-cnVjdCBvZm9ub19lcnJvciAqZXJyb3IsIGNvbnN0IGNoYXIgKmZpbmFsKQogCQllcnJvci0+ZXJy
-b3IgPSAwOwogCX0KIH0KKworZ2ludCBhdF91dGlsX2NhbGxfY29tcGFyZV9ieV9zdGF0dXMoZ2Nv
-bnN0cG9pbnRlciBhLCBnY29uc3Rwb2ludGVyIGIpCit7CisJY29uc3Qgc3RydWN0IG9mb25vX2Nh
-bGwgKmNhbGwgPSBhOworCWludCBzdGF0dXMgPSBHUE9JTlRFUl9UT19JTlQoYik7CisKKwlpZiAo
-c3RhdHVzICE9IGNhbGwtPnN0YXR1cykKKwkJcmV0dXJuIDE7CisKKwlyZXR1cm4gMDsKK30KKwor
-Z2ludCBhdF91dGlsX2NhbGxfY29tcGFyZShnY29uc3Rwb2ludGVyIGEsIGdjb25zdHBvaW50ZXIg
-YikKK3sKKwljb25zdCBzdHJ1Y3Qgb2Zvbm9fY2FsbCAqY2EgPSBhOworCWNvbnN0IHN0cnVjdCBv
-Zm9ub19jYWxsICpjYiA9IGI7CisKKwlpZiAoY2EtPmlkIDwgY2ItPmlkKQorCQlyZXR1cm4gLTE7
-CisKKwlpZiAoY2EtPmlkID4gY2ItPmlkKQorCQlyZXR1cm4gMTsKKworCXJldHVybiAwOworfQor
-CmRpZmYgLS1naXQgYS9kcml2ZXJzL2F0bW9kZW0vYXR1dGlsLmggYi9kcml2ZXJzL2F0bW9kZW0v
-YXR1dGlsLmgKaW5kZXggYzMwYzcwYi4uYWI5ZGIwNSAxMDA2NDQKLS0tIGEvZHJpdmVycy9hdG1v
-ZGVtL2F0dXRpbC5oCisrKyBiL2RyaXZlcnMvYXRtb2RlbS9hdHV0aWwuaApAQCAtMjEsNiArMjEs
-OCBAQAogCiB2b2lkIGRlY29kZV9hdF9lcnJvcihzdHJ1Y3Qgb2Zvbm9fZXJyb3IgKmVycm9yLCBj
-b25zdCBjaGFyICpmaW5hbCk7CiB2b2lkIGR1bXBfcmVzcG9uc2UoY29uc3QgY2hhciAqZnVuYywg
-Z2Jvb2xlYW4gb2ssIEdBdFJlc3VsdCAqcmVzdWx0KTsKK2dpbnQgYXRfdXRpbF9jYWxsX2NvbXBh
-cmVfYnlfc3RhdHVzKGdjb25zdHBvaW50ZXIgYSwgZ2NvbnN0cG9pbnRlciBiKTsKK2dpbnQgYXRf
-dXRpbF9jYWxsX2NvbXBhcmUoZ2NvbnN0cG9pbnRlciBhLCBnY29uc3Rwb2ludGVyIGIpOwogCiBz
-dHJ1Y3QgY2JfZGF0YSB7CiAJdm9pZCAqY2I7CmRpZmYgLS1naXQgYS9kcml2ZXJzL2F0bW9kZW0v
-dm9pY2VjYWxsLmMgYi9kcml2ZXJzL2F0bW9kZW0vdm9pY2VjYWxsLmMKaW5kZXggMjJhODAyZi4u
-ZjBjOGQ5MyAxMDA2NDQKLS0tIGEvZHJpdmVycy9hdG1vZGVtL3ZvaWNlY2FsbC5jCisrKyBiL2Ry
-aXZlcnMvYXRtb2RlbS92b2ljZWNhbGwuYwpAQCAtMTA5LDMxICsxMDksNiBAQCBzdGF0aWMgdm9p
-ZCByZWxlYXNlX2lkKHN0cnVjdCB2b2ljZWNhbGxfZGF0YSAqZCwgdW5zaWduZWQgaW50IGlkKQog
-CWQtPmlkX2xpc3QgJj0gfigweDEgPDwgaWQpOwogfQogCi1zdGF0aWMgZ2ludCBjYWxsX2NvbXBh
-cmVfYnlfc3RhdHVzKGdjb25zdHBvaW50ZXIgYSwgZ2NvbnN0cG9pbnRlciBiKQotewotCWNvbnN0
-IHN0cnVjdCBvZm9ub19jYWxsICpjYWxsID0gYTsKLQlpbnQgc3RhdHVzID0gR1BPSU5URVJfVE9f
-SU5UKGIpOwotCi0JaWYgKHN0YXR1cyAhPSBjYWxsLT5zdGF0dXMpCi0JCXJldHVybiAxOwotCi0J
-cmV0dXJuIDA7Ci19Ci0KLXN0YXRpYyBnaW50IGNhbGxfY29tcGFyZShnY29uc3Rwb2ludGVyIGEs
-IGdjb25zdHBvaW50ZXIgYikKLXsKLQljb25zdCBzdHJ1Y3Qgb2Zvbm9fY2FsbCAqY2EgPSBhOwot
-CWNvbnN0IHN0cnVjdCBvZm9ub19jYWxsICpjYiA9IGI7Ci0KLQlpZiAoY2EtPmlkIDwgY2ItPmlk
-KQotCQlyZXR1cm4gLTE7Ci0KLQlpZiAoY2EtPmlkID4gY2ItPmlkKQotCQlyZXR1cm4gMTsKLQot
-CXJldHVybiAwOwotfQotCiBzdGF0aWMgc3RydWN0IG9mb25vX2NhbGwgKmNyZWF0ZV9jYWxsKHN0
-cnVjdCB2b2ljZWNhbGxfZGF0YSAqZCwgaW50IHR5cGUsCiAJCQkJCWludCBkaXJlY3Rpb24sIGlu
-dCBzdGF0dXMsCiAJCQkJCWNvbnN0IGNoYXIgKm51bSwgaW50IG51bV90eXBlLCBpbnQgY2xpcCkK
-QEAgLTE1OSw3ICsxMzQsNyBAQCBzdGF0aWMgc3RydWN0IG9mb25vX2NhbGwgKmNyZWF0ZV9jYWxs
-KHN0cnVjdCB2b2ljZWNhbGxfZGF0YSAqZCwgaW50IHR5cGUsCiAKIAljYWxsLT5jbGlwX3ZhbGlk
-aXR5ID0gY2xpcDsKIAotCWQtPmNhbGxzID0gZ19zbGlzdF9pbnNlcnRfc29ydGVkKGQtPmNhbGxz
-LCBjYWxsLCBjYWxsX2NvbXBhcmUpOworCWQtPmNhbGxzID0gZ19zbGlzdF9pbnNlcnRfc29ydGVk
-KGQtPmNhbGxzLCBjYWxsLCBhdF91dGlsX2NhbGxfY29tcGFyZSk7CiAKIAlyZXR1cm4gY2FsbDsK
-IH0KQEAgLTIxMyw3ICsxODgsNyBAQCBzdGF0aWMgR1NMaXN0ICpwYXJzZV9jbGNjKEdBdFJlc3Vs
-dCAqcmVzdWx0KQogCQllbHNlCiAJCQljYWxsLT5jbGlwX3ZhbGlkaXR5ID0gMjsKIAotCQlsID0g
-Z19zbGlzdF9pbnNlcnRfc29ydGVkKGwsIGNhbGwsIGNhbGxfY29tcGFyZSk7CisJCWwgPSBnX3Ns
-aXN0X2luc2VydF9zb3J0ZWQobCwgY2FsbCwgYXRfdXRpbF9jYWxsX2NvbXBhcmUpOwogCX0KIAog
-CXJldHVybiBsOwpAQCAtNzI5LDEyICs3MDQsMTIgQEAgc3RhdGljIHZvaWQgcmluZ19ub3RpZnko
-R0F0UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVyIHVzZXJfZGF0YSkKIAogCS8qIFNlZSBjb21tZW50
-IGluIENSSU5HICovCiAJaWYgKGdfc2xpc3RfZmluZF9jdXN0b20odmQtPmNhbGxzLCBHSU5UX1RP
-X1BPSU5URVIoNSksCi0JCQkJY2FsbF9jb21wYXJlX2J5X3N0YXR1cykpCisJCQkJYXRfdXRpbF9j
-YWxsX2NvbXBhcmVfYnlfc3RhdHVzKSkKIAkJcmV0dXJuOwogCiAJLyogUklORyBjYW4gcmVwZWF0
-LCBpZ25vcmUgaWYgd2UgYWxyZWFkeSBoYXZlIGFuIGluY29taW5nIGNhbGwgKi8KIAlpZiAoZ19z
-bGlzdF9maW5kX2N1c3RvbSh2ZC0+Y2FsbHMsIEdJTlRfVE9fUE9JTlRFUig0KSwKLQkJCQljYWxs
-X2NvbXBhcmVfYnlfc3RhdHVzKSkKKwkJCQlhdF91dGlsX2NhbGxfY29tcGFyZV9ieV9zdGF0dXMp
-KQogCQlyZXR1cm47CiAKIAkvKiBHZW5lcmF0ZSBhbiBpbmNvbWluZyBjYWxsIG9mIHVua25vd24g
-dHlwZSAqLwpAQCAtNzY4LDEyICs3NDMsMTIgQEAgc3RhdGljIHZvaWQgY3Jpbmdfbm90aWZ5KEdB
-dFJlc3VsdCAqcmVzdWx0LCBncG9pbnRlciB1c2VyX2RhdGEpCiAJICogd2hlbiBhIHdhaXRpbmcg
-Y2FsbCBleGlzdHMgKGNhbm5vdCBoYXZlIHdhaXRpbmcgKyBpbmNvbWluZyBpbiBHU00pCiAJICov
-CiAJaWYgKGdfc2xpc3RfZmluZF9jdXN0b20odmQtPmNhbGxzLCBHSU5UX1RPX1BPSU5URVIoNSks
-Ci0JCQkJY2FsbF9jb21wYXJlX2J5X3N0YXR1cykpCisJCQkJYXRfdXRpbF9jYWxsX2NvbXBhcmVf
-Ynlfc3RhdHVzKSkKIAkJcmV0dXJuOwogCiAJLyogQ1JJTkcgY2FuIHJlcGVhdCwgaWdub3JlIGlm
-IHdlIGFscmVhZHkgaGF2ZSBhbiBpbmNvbWluZyBjYWxsICovCiAJaWYgKGdfc2xpc3RfZmluZF9j
-dXN0b20odmQtPmNhbGxzLCBHSU5UX1RPX1BPSU5URVIoNCksCi0JCQkJY2FsbF9jb21wYXJlX2J5
-X3N0YXR1cykpCisJCQkJYXRfdXRpbF9jYWxsX2NvbXBhcmVfYnlfc3RhdHVzKSkKIAkJcmV0dXJu
-OwogCiAJZ19hdF9yZXN1bHRfaXRlcl9pbml0KCZpdGVyLCByZXN1bHQpOwpAQCAtODE4LDcgKzc5
-Myw3IEBAIHN0YXRpYyB2b2lkIGNsaXBfbm90aWZ5KEdBdFJlc3VsdCAqcmVzdWx0LCBncG9pbnRl
-ciB1c2VyX2RhdGEpCiAJZHVtcF9yZXNwb25zZSgiY2xpcF9ub3RpZnkiLCBUUlVFLCByZXN1bHQp
-OwogCiAJbCA9IGdfc2xpc3RfZmluZF9jdXN0b20odmQtPmNhbGxzLCBHSU5UX1RPX1BPSU5URVIo
-NCksCi0JCQkJY2FsbF9jb21wYXJlX2J5X3N0YXR1cyk7CisJCQkJYXRfdXRpbF9jYWxsX2NvbXBh
-cmVfYnlfc3RhdHVzKTsKIAogCWlmIChsID09IE5VTEwpIHsKIAkJb2Zvbm9fZXJyb3IoIkNMSVAg
-Zm9yIHVua25vd24gY2FsbCIpOwotLSAKMS42LjIuNQoK
+> Regards,
+> -Denis
+>=20
 
---===============1905803657212552193==--
+--===============0850018242229117008==--
 
