@@ -1,105 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============7067848273146182139=="
+Content-Type: multipart/mixed; boundary="===============2506260170087157383=="
 MIME-Version: 1.0
-From: Ryan Raasch <ryan.raasch@gmail.com>
-Subject: Re: [PATCH 1/2] Added functionality to remove modem from system,
- if needed.
-Date: Thu, 29 Oct 2009 17:16:56 +0100
-Message-ID: <4AE9BFF8.5070202@gmail.com>
-In-Reply-To: <1256826011.5768.48.camel@localhost.localdomain>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] Altered the options for the modem.conf to include
+ more tty options.
+Date: Thu, 29 Oct 2009 11:22:12 -0500
+Message-ID: <200910291122.13080.denkenz@gmail.com>
+In-Reply-To: <632f5f310910270554q7a69a7dcj39bd947289b00bb3@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7067848273146182139==
+--===============2506260170087157383==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Ryan,
 
+> The modem.conf patch split into gatchat changes.
+>
 
-Marcel Holtmann wrote:
-> Hi Ryan,
-> =
+Patch has been applied.  Thanks.
 
->>>>  test/enable-modem |    6 +++++-
->>>>  1 files changed, 5 insertions(+), 1 deletions(-)
->>>>
->>>> diff --git a/test/enable-modem b/test/enable-modem
->>>> index 0f9f604..d44783d 100755
->>>> --- a/test/enable-modem
->>>> +++ b/test/enable-modem
->>>> @@ -1,6 +1,7 @@
->>>>  #!/usr/bin/python
->>>>  =
+Regards,
+-Denis
 
->>>>  import dbus
->>>> +import sys
->>>>  =
-
->>>>  bus =3D dbus.SystemBus()
->>>>  =
-
->>>> @@ -14,4 +15,7 @@ path =3D properties["Modems"][0]
->>>>  modem =3D dbus.Interface(bus.get_object('org.ofono', path),
->>>>  						'org.ofono.Modem')
->>>>  =
-
->>>> -modem.SetProperty("Powered", dbus.Boolean(1))
->>>> +if len(sys.argv) > 1 and sys.argv[1] =3D=3D '0' :
->>>> +    modem.SetProperty("Powered", dbus.Boolean(0))
->>>> +else :
->>>> +    modem.SetProperty("Powered", dbus.Boolean(1))
->>> if you want this, then add a disable-modem script.
->> Ok. If no one else thinks it may be needed, i won't. In my case, i =
-
->> thought it would be helpful to see what happens to the system to remove =
-
->> a modem out of the system, ie. power off. I would be nice to be able to =
-
->> set a toggle power to the modem, and allow the daemon to be in the =
-
->> correct state to recover.
-> =
-
-> I am fine with disable-modem script. I just never needed it so far.
-> Otherwise it would have been there.
-> =
-
->> I have tried toggling the power to the modem (has a switch on the board) =
-
->> when the daemon was running, and the daemon was not able to return to a =
-
->> known state.
-> =
-
-> Weird. Might need some udev magic to do the right thing. Or some special
-> handling inside the plugin.
-
-Yea. I haven't looked at that part of the code, only that AT+CRC is the =
-
-first command sent (if i remember right). Our modem sends a ^SYSSTART on =
-
-powerup, what causes ofonod to go back to its initial state?
-
-What is the "normal" start-up string for modems (i was told mc75 doesn't =
-
-really abide the norm) ?
-
-Thanks,
-Ryan
-> =
-
-> Regards
-> =
-
-> Marcel
-> =
-
-> =
-
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
-
---===============7067848273146182139==--
+--===============2506260170087157383==--
 
