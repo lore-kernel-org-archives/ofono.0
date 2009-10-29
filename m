@@ -1,45 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============3245211962344033984=="
+Content-Type: multipart/mixed; boundary="===============3298781131161257472=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] Altered the atgeneric modem to include the added
- modem.conf options.
-Date: Thu, 29 Oct 2009 11:25:06 -0500
-Message-ID: <200910291125.06961.denkenz@gmail.com>
-In-Reply-To: <632f5f310910270555r653f80b0m7b0009991664f55b@mail.gmail.com>
+Subject: Re: [PATCH 1/2] Added functionality to remove modem from system,
+ if needed.
+Date: Thu, 29 Oct 2009 11:27:05 -0500
+Message-ID: <200910291127.05401.denkenz@gmail.com>
+In-Reply-To: <1256826011.5768.48.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3245211962344033984==
+--===============3298781131161257472==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ryan,
+Hi,
 
-> The modem.conf options for the driver portion of the patch.
+> > I have tried toggling the power to the modem (has a switch on the board)
+> > when the daemon was running, and the daemon was not able to return to a
+> > known state.
+>
+> Weird. Might need some udev magic to do the right thing. Or some special
+> handling inside the plugin.
 
-Patch has been applied with some refactoring afterward.  I know you ran =
+What kind of modem is this?  If it is a UART modem then udev won't help her=
+e.  =
 
-checkpatch.pl, but please make sure you follow the coding standard even for =
+Custom plugin handling is required.
 
-parts which checkpatch.pl does not catch.  In particular:
+Regards,
+-Denis
 
-> +static const char *tty_opts[] =3D
-> +  {
-> +	  "Baud",
-> +	  "Read",
-> +	  "Local",
-> +	  "StopBits",
-> +	  "DataBits",
-> +	  "Parity",
-> +	  "XonXoff",
-> +	  "Rtscts",
-> +	  NULL,
-> +  };
-
-- There are spaces for indentation, ONLY tabs should be used.
-- The opening brace should be on the tty_opts line.
-
-
---===============3245211962344033984==--
+--===============3298781131161257472==--
 
