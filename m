@@ -1,28 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============2506260170087157383=="
+Content-Type: multipart/mixed; boundary="===============3245211962344033984=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] Altered the options for the modem.conf to include
- more tty options.
-Date: Thu, 29 Oct 2009 11:22:12 -0500
-Message-ID: <200910291122.13080.denkenz@gmail.com>
-In-Reply-To: <632f5f310910270554q7a69a7dcj39bd947289b00bb3@mail.gmail.com>
+Subject: Re: [PATCH 2/2] Altered the atgeneric modem to include the added
+ modem.conf options.
+Date: Thu, 29 Oct 2009 11:25:06 -0500
+Message-ID: <200910291125.06961.denkenz@gmail.com>
+In-Reply-To: <632f5f310910270555r653f80b0m7b0009991664f55b@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2506260170087157383==
+--===============3245211962344033984==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Ryan,
 
-> The modem.conf patch split into gatchat changes.
->
+> The modem.conf options for the driver portion of the patch.
 
-Patch has been applied.  Thanks.
+Patch has been applied with some refactoring afterward.  I know you ran =
 
-Regards,
--Denis
+checkpatch.pl, but please make sure you follow the coding standard even for =
 
---===============2506260170087157383==--
+parts which checkpatch.pl does not catch.  In particular:
+
+> +static const char *tty_opts[] =3D
+> +  {
+> +	  "Baud",
+> +	  "Read",
+> +	  "Local",
+> +	  "StopBits",
+> +	  "DataBits",
+> +	  "Parity",
+> +	  "XonXoff",
+> +	  "Rtscts",
+> +	  NULL,
+> +  };
+
+- There are spaces for indentation, ONLY tabs should be used.
+- The opening brace should be on the tty_opts line.
+
+
+--===============3245211962344033984==--
 
