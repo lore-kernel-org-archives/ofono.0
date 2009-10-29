@@ -1,41 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============8273450077643657979=="
+Content-Type: multipart/mixed; boundary="===============2924431200602934156=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] Added functionality to remove modem from system,
- if needed.
-Date: Thu, 29 Oct 2009 11:29:07 -0500
-Message-ID: <200910291129.07801.denkenz@gmail.com>
-In-Reply-To: <4AE9BFF8.5070202@gmail.com>
+From: Ryan Raasch <ryan.raasch@gmail.com>
+Subject: Re: [PATCH 2/2] Altered the atgeneric modem to include the added
+ modem.conf options.
+Date: Thu, 29 Oct 2009 17:29:34 +0100
+Message-ID: <632f5f310910290929m6604d070o502e7076298f2697@mail.gmail.com>
+In-Reply-To: <200910291125.06961.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8273450077643657979==
+--===============2924431200602934156==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ryan,
-
-> Yea. I haven't looked at that part of the code, only that AT+CRC is the
-> first command sent (if i remember right). Our modem sends a ^SYSSTART on
-> powerup, what causes ofonod to go back to its initial state?
-
-The core has no idea, everything is up to the modem driver.  Only the drive=
-r =
-
-knows when the powered up / down events happened.  The driver is responsibl=
-e =
-
-for informing the core.
-
+2009/10/29 Denis Kenzior <denkenz@gmail.com>:
+> Hi Ryan,
 >
-> What is the "normal" start-up string for modems (i was told mc75 doesn't
-> really abide the norm) ?
+>> The modem.conf options for the driver portion of the patch.
+>
+> Patch has been applied with some refactoring afterward. =C2=A0I know you =
+ran
+> checkpatch.pl, but please make sure you follow the coding standard even f=
+or
+> parts which checkpatch.pl does not catch. =C2=A0In particular:
+>
+>> +static const char *tty_opts[] =3D
+>> + =C2=A0{
+>> + =C2=A0 =C2=A0 =C2=A0 "Baud",
+>> + =C2=A0 =C2=A0 =C2=A0 "Read",
+>> + =C2=A0 =C2=A0 =C2=A0 "Local",
+>> + =C2=A0 =C2=A0 =C2=A0 "StopBits",
+>> + =C2=A0 =C2=A0 =C2=A0 "DataBits",
+>> + =C2=A0 =C2=A0 =C2=A0 "Parity",
+>> + =C2=A0 =C2=A0 =C2=A0 "XonXoff",
+>> + =C2=A0 =C2=A0 =C2=A0 "Rtscts",
+>> + =C2=A0 =C2=A0 =C2=A0 NULL,
+>> + =C2=A0};
+>
+> - There are spaces for indentation, ONLY tabs should be used.
+> - The opening brace should be on the tty_opts line.
+>
+Thanks. I will make sure next time.
 
-There isn't one, they are all different.
+Greetings,
+Ryan
 
-Regards,
--Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
---===============8273450077643657979==--
+--===============2924431200602934156==--
 
