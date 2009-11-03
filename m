@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============4783029750314665623=="
+Content-Type: multipart/mixed; boundary="===============3122428762912145685=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
 Subject: [PATCH 1/1] Create network registration driver for hfpmodem
-Date: Tue, 03 Nov 2009 15:04:42 -0200
-Message-ID: <1257267882-12881-1-git-send-email-padovan@profusion.mobi>
+Date: Tue, 03 Nov 2009 15:44:36 -0200
+Message-ID: <1257270276-13728-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4783029750314665623==
+--===============3122428762912145685==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,10 +19,10 @@ Network Operator name with +COPS commands.
  Makefile.am                             |    3 +-
  drivers/hfpmodem/hfpmodem.c             |    2 +
  drivers/hfpmodem/hfpmodem.h             |    3 +
- drivers/hfpmodem/network-registration.c |  365 +++++++++++++++++++++++++++=
+ drivers/hfpmodem/network-registration.c |  356 +++++++++++++++++++++++++++=
 ++++
  plugins/hfp.c                           |    1 +
- 5 files changed, 373 insertions(+), 1 deletions(-)
+ 5 files changed, 364 insertions(+), 1 deletions(-)
  create mode 100644 drivers/hfpmodem/network-registration.c
 
 diff --git a/Makefile.am b/Makefile.am
@@ -81,10 +81,10 @@ index c4e2a34..02f5a4b 100644
 diff --git a/drivers/hfpmodem/network-registration.c b/drivers/hfpmodem/net=
 work-registration.c
 new file mode 100644
-index 0000000..6cfaf57
+index 0000000..e163b79
 --- /dev/null
 +++ b/drivers/hfpmodem/network-registration.c
-@@ -0,0 +1,365 @@
+@@ -0,0 +1,356 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -143,7 +143,6 @@ index 0000000..6cfaf57
 +static void cops_cb(gboolean ok, GAtResult *result, gpointer user_data)
 +{
 +	struct cb_data *cbd =3D user_data;
-+	struct netreg_data *nd =3D ofono_netreg_get_data(cbd->user);
 +	ofono_netreg_operator_cb_t cb =3D cbd->cb;
 +	struct ofono_network_operator op;
 +	GAtResultIter iter;
@@ -155,23 +154,23 @@ index 0000000..6cfaf57
 +
 +	if (!ok) {
 +		cb(&error, NULL, cbd->data);
-+		goto out;
++		return;
 +	}
 +
 +	g_at_result_iter_init(&iter, result);
 +
 +	if (!g_at_result_iter_next(&iter, "+COPS:"))
-+		return;
++		goto error;
 +
 +	g_at_result_iter_skip_next(&iter);
 +
 +	ok =3D g_at_result_iter_next_number(&iter, &format);
 +
 +	if (ok =3D=3D FALSE || format !=3D 0)
-+		return;
++		goto error;
 +
 +	if (g_at_result_iter_next_string(&iter, &name) =3D=3D FALSE)
-+		return;
++		goto error;
 +
 +	strncpy(op.name, name, HFP_MAX_OPERATOR_NAME_LENGTH);
 +	op.name[HFP_MAX_OPERATOR_NAME_LENGTH] =3D '\0';
@@ -181,15 +180,10 @@ index 0000000..6cfaf57
 +
 +	cb(&error, &op, cbd->data);
 +
-+out:
-+	g_free(cbd);
-+
 +	return;
 +
 +error:
 +	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
-+
-+	g_free(cbd);
 +}
 +
 +static void ciev_notify(GAtResult *result, gpointer user_data)
@@ -362,15 +356,12 @@ index 0000000..6cfaf57
 +
 +	if (ok)
 +		ok =3D g_at_chat_send(nd->chat, "AT+COPS?", cops_prefix,
-+				cops_cb, cbd, NULL);
++				cops_cb, cbd, g_free);
 +
 +	if (ok)
 +		return;
 +
 +error:
-+	if (cbd)
-+		g_free(cbd);
-+
 +	CALLBACK_WITH_FAILURE(cb, NULL, data);
 +}
 +
@@ -471,5 +462,5 @@ index 5e94a05..be812cd 100644
 1.6.4.4
 
 
---===============4783029750314665623==--
+--===============3122428762912145685==--
 
