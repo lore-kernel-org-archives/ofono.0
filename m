@@ -1,68 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============0130026075555615073=="
+Content-Type: multipart/mixed; boundary="===============7778148416764844507=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 1/4] Add call_compare_by_phone_number utility function
-Date: Sat, 07 Nov 2009 15:21:25 +0800
-Message-ID: <1257578485.2888.12.camel@zzhan17-mobl.ccr.corp.intel.com>
+Subject: [PATCH 2/4] Move up release_call to avoid forward declaration
+Date: Sat, 07 Nov 2009 15:21:57 +0800
+Message-ID: <1257578517.2888.13.camel@zzhan17-mobl.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0130026075555615073==
+--===============7778148416764844507==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-These 4 patches are small enhancements and bugs fixing for HFP voice
-call driver.
-
-It's used by HFP voicecall driver to compare two calls. In some
-hardware, the call index may be shift when another call is released.
-So we cannot use call index to update status.
-
-For example, we have call #1 and call #2. When #1 is release, the
-index of #2 decrease to 1. But we need index num 2 in the driver.
-Otherwise, the core will be confused.
+Function body has no change.
 ---
- drivers/atmodem/atutil.c |    9 +++++++++
- drivers/atmodem/atutil.h |    1 +
- 2 files changed, 10 insertions(+), 0 deletions(-)
+ drivers/hfpmodem/voicecall.c |   52
++++++++++++++++++++++---------------------
+ 1 files changed, 26 insertions(+), 26 deletions(-)
 
-diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-index 26d0c25..687a466 100644
---- a/drivers/atmodem/atutil.c
-+++ b/drivers/atmodem/atutil.c
-@@ -67,6 +67,15 @@ gint at_util_call_compare_by_status(gconstpointer a,
-gconstpointer b)
- 	return 0;
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index 5104afa..e961d9a 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -130,6 +130,32 @@ static struct ofono_call *new_call_notify(struct
+ofono_voicecall *vc, int type,
+ 	return c;
  }
  =
 
-+gint at_util_call_compare_by_phone_number(gconstpointer a,
-gconstpointer b)
++static void release_call(struct ofono_voicecall *vc, struct ofono_call
+*call)
 +{
-+	const struct ofono_call *call =3D a;
-+	const struct ofono_phone_number *pb =3D b;
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++	enum ofono_disconnect_reason reason;
 +
-+	return memcmp(&call->phone_number, pb,
-+				sizeof(struct ofono_phone_number));
++	if (call =3D=3D NULL)
++		return;
++
++	if (vd->local_release & (0x1 << call->id))
++		reason =3D OFONO_DISCONNECT_REASON_LOCAL_HANGUP;
++	else
++		reason =3D OFONO_DISCONNECT_REASON_REMOTE_HANGUP;
++
++	ofono_voicecall_disconnected(vc, call->id, reason, NULL);
++	at_util_release_id(&vd->id_list, call->id);
++
++	vd->local_release =3D 0;
++
++	vd->calls =3D g_slist_remove(vd->calls, call);
++
++	if (call =3D=3D vd->call)
++		vd->call =3D NULL;
++
++	g_free(call);
 +}
 +
- gint at_util_call_compare(gconstpointer a, gconstpointer b)
+ static GSList *parse_clcc(GAtResult *result)
  {
- 	const struct ofono_call *ca =3D a;
-diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
-index 0444561..4ae1a27 100644
---- a/drivers/atmodem/atutil.h
-+++ b/drivers/atmodem/atutil.h
-@@ -22,6 +22,7 @@
- void decode_at_error(struct ofono_error *error, const char *final);
- void dump_response(const char *func, gboolean ok, GAtResult *result);
- gint at_util_call_compare_by_status(gconstpointer a, gconstpointer b);
-+gint at_util_call_compare_by_phone_number(gconstpointer a,
-gconstpointer b);
- gint at_util_call_compare(gconstpointer a, gconstpointer b);
- unsigned int at_util_alloc_next_id(unsigned int *id_list);
- void at_util_release_id(unsigned int *id_list, unsigned int id);
+ 	GAtResultIter iter;
+@@ -405,32 +431,6 @@ static void clip_notify(GAtResult *result, gpointer
+user_data)
+ 	ofono_voicecall_notify(vc, call);
+ }
+ =
+
+-static void release_call(struct ofono_voicecall *vc, struct ofono_call
+*call)
+-{
+-	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+-	enum ofono_disconnect_reason reason;
+-
+-	if (call =3D=3D NULL)
+-		return;
+-
+-	if (vd->local_release & (0x1 << call->id))
+-		reason =3D OFONO_DISCONNECT_REASON_LOCAL_HANGUP;
+-	else
+-		reason =3D OFONO_DISCONNECT_REASON_REMOTE_HANGUP;
+-
+-	ofono_voicecall_disconnected(vc, call->id, reason, NULL);
+-	at_util_release_id(&vd->id_list, call->id);
+-
+-	vd->local_release =3D 0;
+-
+-	vd->calls =3D g_slist_remove(vd->calls, call);
+-
+-	if (call =3D=3D vd->call)
+-		vd->call =3D NULL;
+-
+-	g_free(call);
+-}
+-
+ static void ciev_call_notify(struct ofono_voicecall *vc,
+ 				struct ofono_call *call,
+ 				unsigned int value)
 -- =
 
 1.6.2.5
@@ -70,5 +101,5 @@ gconstpointer b);
 
 
 
---===============0130026075555615073==--
+--===============7778148416764844507==--
 
