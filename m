@@ -1,38 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============8177679605544375895=="
+Content-Type: multipart/mixed; boundary="===============3899182276474389856=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 3/4] Reset the bit of local_release by call id
-Date: Sat, 07 Nov 2009 15:22:28 +0800
-Message-ID: <1257578549.2888.14.camel@zzhan17-mobl.ccr.corp.intel.com>
+Subject: [PATCH 4/4] Fix style issue of bit left-shifting
+Date: Sat, 07 Nov 2009 15:22:59 +0800
+Message-ID: <1257578579.2888.15.camel@zzhan17-mobl.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8177679605544375895==
+--===============3899182276474389856==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Reset the bit of local_release instead of reset the whole. Because
-in multi call, different bit is reset in differnet call.
+Change from 0x1 to 1
 ---
- drivers/hfpmodem/voicecall.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ drivers/hfpmodem/voicecall.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index e961d9a..2fed2f4 100644
+index 2fed2f4..b1d144b 100644
 --- a/drivers/hfpmodem/voicecall.c
 +++ b/drivers/hfpmodem/voicecall.c
-@@ -146,7 +146,7 @@ static void release_call(struct ofono_voicecall *vc,
+@@ -138,7 +138,7 @@ static void release_call(struct ofono_voicecall *vc,
 struct ofono_call *call)
- 	ofono_voicecall_disconnected(vc, call->id, reason, NULL);
- 	at_util_release_id(&vd->id_list, call->id);
+ 	if (call =3D=3D NULL)
+ 		return;
  =
 
--	vd->local_release =3D 0;
-+	vd->local_release &=3D ~(1 << call->id);
+-	if (vd->local_release & (0x1 << call->id))
++	if (vd->local_release & (1 << call->id))
+ 		reason =3D OFONO_DISCONNECT_REASON_LOCAL_HANGUP;
+ 	else
+ 		reason =3D OFONO_DISCONNECT_REASON_REMOTE_HANGUP;
+@@ -227,8 +227,8 @@ static void generic_cb(gboolean ok, GAtResult
+*result, gpointer user_data)
+ 		for (l =3D vd->calls; l; l =3D l->next) {
+ 			call =3D l->data;
  =
 
- 	vd->calls =3D g_slist_remove(vd->calls, call);
+-			if (req->affected_types & (0x1 << call->status))
+-				vd->local_release |=3D (0x1 << call->id);
++			if (req->affected_types & (1 << call->status))
++				vd->local_release |=3D (1 << call->id);
+ 		}
+ 	}
  =
 
 -- =
@@ -42,5 +53,5 @@ struct ofono_call *call)
 
 
 
---===============8177679605544375895==--
+--===============3899182276474389856==--
 
