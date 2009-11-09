@@ -1,38 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============3376998938815131195=="
+Content-Type: multipart/mixed; boundary="===============2215087586219804946=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] add create/destroy_interface to
- ofono_gprs_context_driver
-Date: Mon, 09 Nov 2009 10:59:11 -0600
-Message-ID: <200911091059.11821.denkenz@gmail.com>
-In-Reply-To: <1257752281-22251-2-git-send-email-martin.xu@intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+Subject: Re: netlink.c:97: error: cast increases required alignment of target
+ type
+Date: Mon, 09 Nov 2009 19:27:04 +0200
+Message-ID: <200911091927.04309.remi@remlab.net>
+In-Reply-To: <fb249edb0911090745mde77804k923afa48efcd98f8@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3376998938815131195==
+--===============2215087586219804946==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Le lundi 9 novembre 2009 17:45:25 andrzej zaborowski, vous avez =C3=A9crit :
+> Hi,
+> resurrecting this thread because I think there's no reason ofono
+> should not build on cpus with strict alignment rules, the netlink code
+> is actually aligned correctly.  These warnings are a result of
+> -Wcast-align, the compiler can't know that the casts in the macros are
+> safe, but they obviously are if you look at the arithmetics there.  In
+> the case of the netlink warnings they can be turned off for all users
+> of <linux/netlink.h> using a pragma or only for this cast by casting
+> to void * first (the only way according to gcc people), the first
+> attached file adds them (against linux), I'll send it to linux if
+> there's no better idea.  There are also similar warnings when casting
+> struct sockaddr_pn * to struct sockaddr * and these can be worked
+> around in ofono, see second patch, but probably should also be in
+> linux's include/linux/phonet.h instead.
 
-> @@ -57,6 +57,10 @@ struct ofono_gprs_context_driver {
->  	void (*deactivate_primary)(struct ofono_gprs_context *gc,
->  					unsigned int id,
->  					ofono_gprs_context_cb_t cb, void *data);
-> +	void (*create_interface)(struct ofono_gprs_context *gc,
-> +				struct ofono_gprs_primary_context *ctx);
-> +	void (*destroy_interface)(struct ofono_gprs_context *gc,
-> +				struct ofono_gprs_primary_context *ctx);
->  };
+Why do you change the sockaddr_pn type name?!
 
-I suggest we don't do this, but instead notify the core of the interface na=
-me =
+-- =
 
-in 'activate_primary' callback, assuming the activate was successful.
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net/
 
-Regards,
--Denis
-
---===============3376998938815131195==--
+--===============2215087586219804946==--
 
