@@ -1,32 +1,116 @@
-Content-Type: multipart/mixed; boundary="===============2739982229398777441=="
+Content-Type: multipart/mixed; boundary="===============8852090275732720796=="
 MIME-Version: 1.0
-From: Xu, Martin <martin.xu@intel.com>
-Subject: [PATCH */4] add interface property to primary context
-Date: Mon, 09 Nov 2009 15:42:53 +0800
-Message-ID: <9F0C1DB20AFA954FA1DA05309350433D888EF02E@pdsmsx503.ccr.corp.intel.com>
-In-Reply-To: <1257752281-22251-1-git-send-email-martin.xu@intel.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: netlink.c:97: error: cast increases required alignment of target
+ type
+Date: Mon, 09 Nov 2009 16:45:25 +0100
+Message-ID: <fb249edb0911090745mde77804k923afa48efcd98f8@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2739982229398777441==
+--===============8852090275732720796==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi:
-"Interface" property of Primary Context is needed by ofono plugin for Connm=
-an.
-These patches are used to implement "interface" property for Primary Contex=
-t. Below is the way to implement it.
-1.	Create "interface" in Primary Context creating =
+Hi,
+resurrecting this thread because I think there's no reason ofono
+should not build on cpus with strict alignment rules, the netlink code
+is actually aligned correctly.  These warnings are a result of
+-Wcast-align, the compiler can't know that the casts in the macros are
+safe, but they obviously are if you look at the arithmetics there.  In
+the case of the netlink warnings they can be turned off for all users
+of <linux/netlink.h> using a pragma or only for this cast by casting
+to void * first (the only way according to gcc people), the first
+attached file adds them (against linux), I'll send it to linux if
+there's no better idea.  There are also similar warnings when casting
+struct sockaddr_pn * to struct sockaddr * and these can be worked
+around in ofono, see second patch, but probably should also be in
+linux's include/linux/phonet.h instead.
 
-2.	 Destroy "interface" in Primary Context destroying
-3.	"interface" is created/destroyed by ofono_gprs_context_driver
-   a)	"interface" of MBM is inherited from NetworkInterface of modem which =
-is exported from kernel
-   b)	Others can use ofono_gprs_context_driver->create/destroy_interface() =
-to create/destroy interface such as ppp0 and tun0.
-Please review it.
+Regards
 
---===============2739982229398777441==--
+--===============8852090275732720796==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="linux-netlink-alignment-no-warn.patch"
+
+ZGlmZiAtLWdpdCBhL2luY2x1ZGUvbGludXgvaWZfYWRkci5oIGIvaW5jbHVkZS9saW51eC9pZl9h
+ZGRyLmgKaW5kZXggYTYwYzgyMS4uZDllN2QyZiAxMDA2NDQKLS0tIGEvaW5jbHVkZS9saW51eC9p
+Zl9hZGRyLmgKKysrIGIvaW5jbHVkZS9saW51eC9pZl9hZGRyLmgKQEAgLTU2LDcgKzU2LDcgQEAg
+c3RydWN0IGlmYV9jYWNoZWluZm8KIAogLyogYmFja3dhcmRzIGNvbXBhdGliaWxpdHkgZm9yIHVz
+ZXJzcGFjZSAqLwogI2lmbmRlZiBfX0tFUk5FTF9fCi0jZGVmaW5lIElGQV9SVEEocikgICgoc3Ry
+dWN0IHJ0YXR0ciopKCgoY2hhciopKHIpKSArIE5MTVNHX0FMSUdOKHNpemVvZihzdHJ1Y3QgaWZh
+ZGRybXNnKSkpKQorI2RlZmluZSBJRkFfUlRBKHIpICAoKHN0cnVjdCBydGF0dHIqKSh2b2lkKiko
+KChjaGFyKikocikpICsgTkxNU0dfQUxJR04oc2l6ZW9mKHN0cnVjdCBpZmFkZHJtc2cpKSkpCiAj
+ZGVmaW5lIElGQV9QQVlMT0FEKG4pIE5MTVNHX1BBWUxPQUQobixzaXplb2Yoc3RydWN0IGlmYWRk
+cm1zZykpCiAjZW5kaWYKIApkaWZmIC0tZ2l0IGEvaW5jbHVkZS9saW51eC9uZXRsaW5rLmggYi9p
+bmNsdWRlL2xpbnV4L25ldGxpbmsuaAppbmRleCA1YmEzOThlLi44ZjBmNzZkIDEwMDY0NAotLS0g
+YS9pbmNsdWRlL2xpbnV4L25ldGxpbmsuaAorKysgYi9pbmNsdWRlL2xpbnV4L25ldGxpbmsuaApA
+QCAtODEsNyArODEsNyBAQCBzdHJ1Y3Qgbmxtc2doZHIKICNkZWZpbmUgTkxNU0dfU1BBQ0UobGVu
+KSBOTE1TR19BTElHTihOTE1TR19MRU5HVEgobGVuKSkKICNkZWZpbmUgTkxNU0dfREFUQShubGgp
+ICAoKHZvaWQqKSgoKGNoYXIqKW5saCkgKyBOTE1TR19MRU5HVEgoMCkpKQogI2RlZmluZSBOTE1T
+R19ORVhUKG5saCxsZW4pCSAoKGxlbikgLT0gTkxNU0dfQUxJR04oKG5saCktPm5sbXNnX2xlbiks
+IFwKLQkJCQkgIChzdHJ1Y3Qgbmxtc2doZHIqKSgoKGNoYXIqKShubGgpKSArIE5MTVNHX0FMSUdO
+KChubGgpLT5ubG1zZ19sZW4pKSkKKwkJCQkgIChzdHJ1Y3Qgbmxtc2doZHIqKSh2b2lkKikoKChj
+aGFyKikobmxoKSkgKyBOTE1TR19BTElHTigobmxoKS0+bmxtc2dfbGVuKSkpCiAjZGVmaW5lIE5M
+TVNHX09LKG5saCxsZW4pICgobGVuKSA+PSAoaW50KXNpemVvZihzdHJ1Y3Qgbmxtc2doZHIpICYm
+IFwKIAkJCSAgIChubGgpLT5ubG1zZ19sZW4gPj0gc2l6ZW9mKHN0cnVjdCBubG1zZ2hkcikgJiYg
+XAogCQkJICAgKG5saCktPm5sbXNnX2xlbiA8PSAobGVuKSkKZGlmZiAtLWdpdCBhL2luY2x1ZGUv
+bGludXgvcnRuZXRsaW5rLmggYi9pbmNsdWRlL2xpbnV4L3J0bmV0bGluay5oCmluZGV4IGJhMzI1
+NGUuLmE4ZmEyYWUgMTAwNjQ0Ci0tLSBhL2luY2x1ZGUvbGludXgvcnRuZXRsaW5rLmgKKysrIGIv
+aW5jbHVkZS9saW51eC9ydG5ldGxpbmsuaApAQCAtMTQxLDcgKzE0MSw3IEBAIHN0cnVjdCBydGF0
+dHIKIAkJCSAocnRhKS0+cnRhX2xlbiA+PSBzaXplb2Yoc3RydWN0IHJ0YXR0cikgJiYgXAogCQkJ
+IChydGEpLT5ydGFfbGVuIDw9IChsZW4pKQogI2RlZmluZSBSVEFfTkVYVChydGEsYXR0cmxlbikJ
+KChhdHRybGVuKSAtPSBSVEFfQUxJR04oKHJ0YSktPnJ0YV9sZW4pLCBcCi0JCQkJIChzdHJ1Y3Qg
+cnRhdHRyKikoKChjaGFyKikocnRhKSkgKyBSVEFfQUxJR04oKHJ0YSktPnJ0YV9sZW4pKSkKKwkJ
+CQkgKHN0cnVjdCBydGF0dHIqKSh2b2lkKikoKChjaGFyKikocnRhKSkgKyBSVEFfQUxJR04oKHJ0
+YSktPnJ0YV9sZW4pKSkKICNkZWZpbmUgUlRBX0xFTkdUSChsZW4pCShSVEFfQUxJR04oc2l6ZW9m
+KHN0cnVjdCBydGF0dHIpKSArIChsZW4pKQogI2RlZmluZSBSVEFfU1BBQ0UobGVuKQlSVEFfQUxJ
+R04oUlRBX0xFTkdUSChsZW4pKQogI2RlZmluZSBSVEFfREFUQShydGEpICAgKCh2b2lkKikoKChj
+aGFyKikocnRhKSkgKyBSVEFfTEVOR1RIKDApKSkK
+
+--===============8852090275732720796==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="ofono-sockaddr_pn-alignment-no-warn.patch"
+
+ZGlmZiAtLWdpdCBhL2dpc2kvY2xpZW50LmMgYi9naXNpL2NsaWVudC5jCmluZGV4IGYwZGIyNGUu
+LjI2YWNlMTUgMTAwNjQ0Ci0tLSBhL2dpc2kvY2xpZW50LmMKKysrIGIvZ2lzaS9jbGllbnQuYwpA
+QCAtNjksNiArNjksOSBAQCBzdHJ1Y3QgX0dJc2lDbGllbnQgewogCXZvaWQgKmRlYnVnX2RhdGE7
+CiB9OwogCit0eXBlZGVmIHN0cnVjdCBzb2NrYWRkcl9wbiBfX2F0dHJpYnV0ZV9fICgoYWxpZ25l
+ZCAoX19hbGlnbm9mKHN0cnVjdCBzb2NrYWRkcikpKSkKKwlzb2NrYWRkcl9wbl9hbGlnbjsKKwog
+c3RhdGljIGdib29sZWFuIGdfaXNpX2NhbGxiYWNrKEdJT0NoYW5uZWwgKmNoYW5uZWwsIEdJT0Nv
+bmRpdGlvbiBjb25kLAogCQkJCWdwb2ludGVyIGRhdGEpOwogc3RhdGljIGdib29sZWFuIGdfaXNp
+X3RpbWVvdXQoZ3BvaW50ZXIgZGF0YSk7CkBAIC0yMzMsNyArMjM2LDcgQEAgR0lzaVJlcXVlc3Qg
+KmdfaXNpX3JlcXVlc3RfbWFrZShHSXNpQ2xpZW50ICpjbCwJY29uc3Qgdm9pZCAqX19yZXN0cmlj
+dCBidWYsCiAJCQkJR0lzaVJlc3BvbnNlRnVuYyBjYiwgdm9pZCAqb3BhcXVlKQogewogCXN0cnVj
+dCBpb3ZlYyBpb3ZbMl07Ci0JY29uc3Qgc3RydWN0IHNvY2thZGRyX3BuIGRzdCA9IHsKKwljb25z
+dCBzb2NrYWRkcl9wbl9hbGlnbiBkc3QgPSB7CiAJCS5zcG5fZmFtaWx5ID0gQUZfUEhPTkVULAog
+CQkuc3BuX3Jlc291cmNlID0gY2wtPnJlc291cmNlLAogCX07CkBAIC0zMjQsNyArMzI3LDcgQEAg
+dm9pZCBnX2lzaV9yZXF1ZXN0X2NhbmNlbChHSXNpUmVxdWVzdCAqcmVxKQogI2RlZmluZSBQTl9D
+T01NR1IgMHgxMAogI2RlZmluZSBQTlNfU1VCU0NSSUJFRF9SRVNPVVJDRVNfSU5ECTB4MTAKIAot
+c3RhdGljIGNvbnN0IHN0cnVjdCBzb2NrYWRkcl9wbiBjb21tZ3IgPSB7CitzdGF0aWMgY29uc3Qg
+c29ja2FkZHJfcG5fYWxpZ24gY29tbWdyID0gewogCS5zcG5fZmFtaWx5ID0gQUZfUEhPTkVULAog
+CS5zcG5fcmVzb3VyY2UgPSBQTl9DT01NR1IsCiB9OwpkaWZmIC0tZ2l0IGEvZ2lzaS9zb2NrZXQu
+YyBiL2dpc2kvc29ja2V0LmMKaW5kZXggNDM3M2U5ZC4uODgzYWExNCAxMDA2NDQKLS0tIGEvZ2lz
+aS9zb2NrZXQuYworKysgYi9naXNpL3NvY2tldC5jCkBAIC0zOCwxMCArMzgsMTMgQEAKIAogI2lu
+Y2x1ZGUgInNvY2tldC5oIgogCit0eXBlZGVmIHN0cnVjdCBzb2NrYWRkcl9wbiBfX2F0dHJpYnV0
+ZV9fICgoYWxpZ25lZCAoX19hbGlnbm9mKHN0cnVjdCBzb2NrYWRkcikpKSkKKwlzb2NrYWRkcl9w
+bl9hbGlnbjsKKwogR0lPQ2hhbm5lbCAqcGhvbmV0X25ldyhHSXNpTW9kZW0gKm1vZGVtLCB1aW50
+OF90IHJlc291cmNlKQogewogCUdJT0NoYW5uZWwgKmNoYW5uZWw7Ci0Jc3RydWN0IHNvY2thZGRy
+X3BuIGFkZHIgPSB7CisJc29ja2FkZHJfcG5fYWxpZ24gYWRkciA9IHsKIAkJLnNwbl9mYW1pbHkg
+PSBBRl9QSE9ORVQsCiAJCS5zcG5fcmVzb3VyY2UgPSByZXNvdXJjZSwKIAl9OwpAQCAtODMsNyAr
+ODYsNyBAQCBzaXplX3QgcGhvbmV0X3BlZWtfbGVuZ3RoKEdJT0NoYW5uZWwgKmNoYW5uZWwpCiBz
+c2l6ZV90IHBob25ldF9yZWFkKEdJT0NoYW5uZWwgKmNoYW5uZWwsIHZvaWQgKnJlc3RyaWN0IGJ1
+Ziwgc2l6ZV90IGxlbiwKIAkJCXVpbnQxNl90ICpyZXN0cmljdCBvYmosIHVpbnQ4X3QgKnJlc3Ry
+aWN0IHJlcykKIHsKLQlzdHJ1Y3Qgc29ja2FkZHJfcG4gYWRkcjsKKwlzb2NrYWRkcl9wbl9hbGln
+biBhZGRyOwogCXNvY2tsZW5fdCBhZGRybGVuID0gc2l6ZW9mKGFkZHIpOwogCXNzaXplX3QgcmV0
+OwogCg==
+
+--===============8852090275732720796==--
 
