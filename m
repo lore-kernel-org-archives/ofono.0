@@ -1,374 +1,290 @@
-Content-Type: multipart/mixed; boundary="===============6042136582389950588=="
+Content-Type: multipart/mixed; boundary="===============4255898781767300243=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 1/3] Work around Palm Pre SIM file reading quirk.
-Date: Tue, 10 Nov 2009 07:30:10 +0100
-Message-ID: <1257834610-22409-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 2/3] Add Palm Pre plugin
+Date: Tue, 10 Nov 2009 07:30:23 +0100
+Message-ID: <1257834623-22438-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6042136582389950588==
+--===============4255898781767300243==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I'm not sure if MSM is not a too generic name but it seems the G1's
-Qualcomm MSM suffers from similar problems.
 ---
- drivers/atmodem/sim.c    |   72 ++++++++++++++++++++++++++++--------------=
----
- drivers/atmodem/vendor.h |    1 +
- 2 files changed, 46 insertions(+), 27 deletions(-)
+ Makefile.am         |    3 +
+ plugins/modemconf.c |    3 +-
+ plugins/palmpre.c   |  219 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 3 files changed, 224 insertions(+), 1 deletions(-)
+ create mode 100644 plugins/palmpre.c
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index b14ddda..f28f663 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -37,9 +37,15 @@
- #include "gatchat.h"
- #include "gatresult.h"
- #include "simutil.h"
-+#include "vendor.h"
+diff --git a/Makefile.am b/Makefile.am
+index c3e06b4..0e08349 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -168,6 +168,9 @@ builtin_sources +=3D plugins/novatel.c
  =
 
- #include "atmodem.h"
+ builtin_modules +=3D hfp
+ builtin_sources +=3D plugins/hfp.c
++
++builtin_modules +=3D palmpre
++builtin_sources +=3D plugins/palmpre.c
+ endif
  =
 
-+struct sim_data {
+ if MAINTAINER_MODE
+diff --git a/plugins/modemconf.c b/plugins/modemconf.c
+index 4b66590..39a62b8 100644
+--- a/plugins/modemconf.c
++++ b/plugins/modemconf.c
+@@ -127,7 +127,8 @@ static struct ofono_modem *create_modem(GKeyFile *keyfi=
+le, const char *group)
+ =
+
+ 	if (!g_strcmp0(driver, "atgen") || !g_strcmp0(driver, "g1") ||
+ 						!g_strcmp0(driver, "calypso") ||
+-						!g_strcmp0(driver, "hfp"))
++						!g_strcmp0(driver, "hfp") ||
++						!g_strcmp0(driver, "palmpre"))
+ 		set_device(modem, keyfile, group);
+ =
+
+ 	g_free(driver);
+diff --git a/plugins/palmpre.c b/plugins/palmpre.c
+new file mode 100644
+index 0000000..37cb7b6
+--- /dev/null
++++ b/plugins/palmpre.c
+@@ -0,0 +1,219 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <errno.h>
++#include <stdlib.h>
++
++#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/devinfo.h>
++#include <ofono/message-waiting.h>
++#include <ofono/netreg.h>
++#include <ofono/sim.h>
++#include <ofono/phonebook.h>
++#include <ofono/voicecall.h>
++#include <ofono/gprs.h>
++#include <ofono/gprs-context.h>
++
++#include <drivers/atmodem/vendor.h>
++
++struct palmpre_data {
 +	GAtChat *chat;
-+	unsigned int vendor;
 +};
 +
- static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
- =
-
- static void at_crsm_info_cb(gboolean ok, GAtResult *result, gpointer user_=
++static int palmpre_probe(struct ofono_modem *modem)
++{
++	struct palmpre_data *data;
++
++	DBG("%p", modem);
++
++	data =3D g_try_new0(struct palmpre_data, 1);
++	if (!data)
++		return -ENOMEM;
++
++	ofono_modem_set_data(modem, data);
++
++	return 0;
++}
++
++static void palmpre_remove(struct ofono_modem *modem)
++{
++	struct palmpre_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_free(data);
++	ofono_modem_set_data(modem, NULL);
++}
++
++static void palmpre_debug(const char *str, void *user_data)
++{
++	ofono_info("%s", str);
++}
++
++static void cfun_set_on_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct ofono_modem *modem =3D user_data;
++
++	DBG("");
++
++	ofono_modem_set_powered(modem, ok);
++}
++
++static int palmpre_enable(struct ofono_modem *modem)
++{
++	struct palmpre_data *data =3D ofono_modem_get_data(modem);
++	GIOChannel *io;
++	GAtSyntax *syntax;
++	const char *device;
++	GHashTable *options;
++
++	DBG("%p", modem);
++
++	device =3D ofono_modem_get_string(modem, "Device");
++	if (!device)
++		device =3D "/dev/modem0";
++
++	options =3D g_hash_table_new(g_str_hash, g_str_equal);
++	if (!options)
++		return -ENOMEM;
++
++	g_hash_table_insert(options, "Baud", "115200");
++
++	io =3D g_at_tty_open(device, options);
++	g_hash_table_destroy(options);
++
++	if (!io)
++		return -EIO;
++
++	syntax =3D g_at_syntax_new_gsm_permissive();
++	data->chat =3D g_at_chat_new(io, syntax);
++	g_io_channel_unref(io);
++	g_at_syntax_unref(syntax);
++
++	if (!data->chat)
++		return -ENOMEM;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->chat, palmpre_debug, NULL);
++
++	/* Ensure terminal is in a known state */
++	g_at_chat_send(data->chat, "ATZ E0 +CMEE=3D1", NULL, NULL, NULL, NULL);
++
++	/* Power modem up */
++	g_at_chat_send(data->chat, "AT+CFUN=3D1", NULL,
++			cfun_set_on_cb, modem, NULL);
++
++	return 0;
++}
++
++static void cfun_set_off_cb(gboolean ok, GAtResult *result, gpointer user_=
 data)
-@@ -98,7 +104,7 @@ static void at_sim_read_info(struct ofono_sim *sim, int =
-fileid,
- 					ofono_sim_file_info_cb_t cb,
- 					void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
- =
-
-@@ -107,7 +113,10 @@ static void at_sim_read_info(struct ofono_sim *sim, in=
-t fileid,
- =
-
- 	snprintf(buf, sizeof(buf), "AT+CRSM=3D192,%i", fileid);
- =
-
--	if (g_at_chat_send(chat, buf, crsm_prefix,
-+	if (sd->vendor =3D=3D OFONO_VENDOR_MSM)
-+		strcat(buf, ",0,0,255"); /* Maximum possible length */
++{
++	GAtChat *chat =3D user_data;
 +
-+	if (g_at_chat_send(sd->chat, buf, crsm_prefix,
- 				at_crsm_info_cb, cbd, g_free) > 0)
- 		return;
- =
-
-@@ -162,7 +171,7 @@ static void at_sim_read_binary(struct ofono_sim *sim, i=
-nt fileid,
- 					int start, int length,
- 					ofono_sim_read_cb_t cb, void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
- =
-
-@@ -172,7 +181,7 @@ static void at_sim_read_binary(struct ofono_sim *sim, i=
-nt fileid,
- 	snprintf(buf, sizeof(buf), "AT+CRSM=3D176,%i,%i,%i,%i", fileid,
- 			start >> 8, start & 0xff, length);
- =
-
--	if (g_at_chat_send(chat, buf, crsm_prefix,
-+	if (g_at_chat_send(sd->chat, buf, crsm_prefix,
- 				at_crsm_read_cb, cbd, g_free) > 0)
- 		return;
- =
-
-@@ -187,7 +196,7 @@ static void at_sim_read_record(struct ofono_sim *sim, i=
-nt fileid,
- 					int record, int length,
- 					ofono_sim_read_cb_t cb, void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
- =
-
-@@ -197,7 +206,7 @@ static void at_sim_read_record(struct ofono_sim *sim, i=
-nt fileid,
- 	snprintf(buf, sizeof(buf), "AT+CRSM=3D178,%i,%i,4,%i", fileid,
- 			record, length);
- =
-
--	if (g_at_chat_send(chat, buf, crsm_prefix,
-+	if (g_at_chat_send(sd->chat, buf, crsm_prefix,
- 				at_crsm_read_cb, cbd, g_free) > 0)
- 		return;
- =
-
-@@ -251,7 +260,7 @@ static void at_sim_update_binary(struct ofono_sim *sim,=
- int fileid,
- 					const unsigned char *value,
- 					ofono_sim_write_cb_t cb, void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char *buf =3D g_try_new(char, 36 + length * 2);
- 	int len, ret;
-@@ -265,7 +274,7 @@ static void at_sim_update_binary(struct ofono_sim *sim,=
- int fileid,
- 	for (; length; length--)
- 		len +=3D sprintf(buf + len, "%02hhx", *value++);
- =
-
--	ret =3D g_at_chat_send(chat, buf, crsm_prefix,
-+	ret =3D g_at_chat_send(sd->chat, buf, crsm_prefix,
- 				at_crsm_update_cb, cbd, g_free);
- =
-
- 	g_free(buf);
-@@ -285,7 +294,7 @@ static void at_sim_update_record(struct ofono_sim *sim,=
- int fileid,
- 					const unsigned char *value,
- 					ofono_sim_write_cb_t cb, void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char *buf =3D g_try_new(char, 36 + length * 2);
- 	int len, ret;
-@@ -299,7 +308,7 @@ static void at_sim_update_record(struct ofono_sim *sim,=
- int fileid,
- 	for (; length; length--)
- 		len +=3D sprintf(buf + len, "%02hhx", *value++);
- =
-
--	ret =3D g_at_chat_send(chat, buf, crsm_prefix,
-+	ret =3D g_at_chat_send(sd->chat, buf, crsm_prefix,
- 				at_crsm_update_cb, cbd, g_free);
- =
-
- 	g_free(buf);
-@@ -318,7 +327,7 @@ static void at_sim_update_cyclic(struct ofono_sim *sim,=
- int fileid,
- 					int length, const unsigned char *value,
- 					ofono_sim_write_cb_t cb, void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char *buf =3D g_try_new(char, 36 + length * 2);
- 	int len, ret;
-@@ -331,7 +340,7 @@ static void at_sim_update_cyclic(struct ofono_sim *sim,=
- int fileid,
- 	for (; length; length--)
- 		len +=3D sprintf(buf + len, "%02hhx", *value++);
- =
-
--	ret =3D g_at_chat_send(chat, buf, crsm_prefix,
-+	ret =3D g_at_chat_send(sd->chat, buf, crsm_prefix,
- 				at_crsm_update_cb, cbd, g_free);
- =
-
- 	g_free(buf);
-@@ -378,13 +387,13 @@ static void at_cimi_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- static void at_read_imsi(struct ofono_sim *sim, ofono_sim_imsi_cb_t cb,
- 			void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- =
-
- 	if (!cbd)
- 		goto error;
- =
-
--	if (g_at_chat_send(chat, "AT+CIMI", NULL,
-+	if (g_at_chat_send(sd->chat, "AT+CIMI", NULL,
- 				at_cimi_cb, cbd, g_free) > 0)
- 		return;
- =
-
-@@ -466,13 +475,13 @@ static void at_cpin_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- static void at_pin_query(struct ofono_sim *sim, ofono_sim_passwd_cb_t cb,
- 			void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- =
-
- 	if (!cbd)
- 		goto error;
- =
-
--	if (g_at_chat_send(chat, "AT+CPIN?", NULL,
-+	if (g_at_chat_send(sd->chat, "AT+CPIN?", NULL,
- 				at_cpin_cb, cbd, g_free) > 0)
- 		return;
- =
-
-@@ -499,7 +508,7 @@ static void at_lock_unlock_cb(gboolean ok, GAtResult *r=
-esult,
- static void at_pin_send(struct ofono_sim *sim, const char *passwd,
- 			ofono_sim_lock_unlock_cb_t cb, void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
- 	int ret;
-@@ -509,7 +518,8 @@ static void at_pin_send(struct ofono_sim *sim, const ch=
-ar *passwd,
- =
-
- 	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\"", passwd);
- =
-
--	ret =3D g_at_chat_send(chat, buf, NULL, at_lock_unlock_cb, cbd, g_free);
-+	ret =3D g_at_chat_send(sd->chat, buf, NULL,
-+				at_lock_unlock_cb, cbd, g_free);
- =
-
- 	memset(buf, 0, sizeof(buf));
- =
-
-@@ -527,7 +537,7 @@ static void at_pin_send_puk(struct ofono_sim *sim, cons=
-t char *puk,
- 				const char *passwd,
- 				ofono_sim_lock_unlock_cb_t cb, void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
- 	int ret;
-@@ -537,7 +547,8 @@ static void at_pin_send_puk(struct ofono_sim *sim, cons=
-t char *puk,
- =
-
- 	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\",\"%s\"", puk, passwd);
- =
-
--	ret =3D g_at_chat_send(chat, buf, NULL, at_lock_unlock_cb, cbd, g_free);
-+	ret =3D g_at_chat_send(sd->chat, buf, NULL,
-+				at_lock_unlock_cb, cbd, g_free);
- =
-
- 	memset(buf, 0, sizeof(buf));
- =
-
-@@ -567,7 +578,7 @@ static void at_pin_enable(struct ofono_sim *sim,
- 				int enable, const char *passwd,
- 				ofono_sim_lock_unlock_cb_t cb, void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
- 	int ret;
-@@ -582,7 +593,8 @@ static void at_pin_enable(struct ofono_sim *sim,
- 	snprintf(buf, sizeof(buf), "AT+CLCK=3D\"%s\",%i,\"%s\"",
- 			at_clck_cpwd_fac[passwd_type], enable ? 1 : 0, passwd);
- =
-
--	ret =3D g_at_chat_send(chat, buf, NULL, at_lock_unlock_cb, cbd, g_free);
-+	ret =3D g_at_chat_send(sd->chat, buf, NULL,
-+				at_lock_unlock_cb, cbd, g_free);
- =
-
- 	memset(buf, 0, sizeof(buf));
- =
-
-@@ -601,7 +613,7 @@ static void at_change_passwd(struct ofono_sim *sim,
- 			const char *old, const char *new,
- 			ofono_sim_lock_unlock_cb_t cb, void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
- 	int ret;
-@@ -617,7 +629,8 @@ static void at_change_passwd(struct ofono_sim *sim,
- 	snprintf(buf, sizeof(buf), "AT+CPWD=3D\"%s\",\"%s\",\"%s\"",
- 			at_clck_cpwd_fac[passwd_type], old, new);
- =
-
--	ret =3D g_at_chat_send(chat, buf, NULL, at_lock_unlock_cb, cbd, g_free);
-+	ret =3D g_at_chat_send(sd->chat, buf, NULL,
-+				at_lock_unlock_cb, cbd, g_free);
- =
-
- 	memset(buf, 0, sizeof(buf));
- =
-
-@@ -666,7 +679,7 @@ static void at_pin_query_enabled(struct ofono_sim *sim,
- 				enum ofono_sim_password_type passwd_type,
- 				ofono_sim_locked_cb_t cb, void *data)
- {
--	GAtChat *chat =3D ofono_sim_get_data(sim);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[64];
- 	unsigned int len =3D sizeof(at_clck_cpwd_fac) / sizeof(*at_clck_cpwd_fac);
-@@ -680,7 +693,7 @@ static void at_pin_query_enabled(struct ofono_sim *sim,
- 	snprintf(buf, sizeof(buf), "AT+CLCK=3D\"%s\",2",
- 			at_clck_cpwd_fac[passwd_type]);
- =
-
--	if (g_at_chat_send(chat, buf, NULL,
-+	if (g_at_chat_send(sd->chat, buf, NULL,
- 				at_lock_status_cb, cbd, g_free) > 0)
- 		return;
- =
-
-@@ -704,8 +717,13 @@ static int at_sim_probe(struct ofono_sim *sim, unsigne=
-d int vendor,
- 				void *data)
- {
- 	GAtChat *chat =3D data;
-+	struct sim_data *sd;
++	DBG("");
 +
-+	sd =3D g_new0(struct sim_data, 1);
-+	sd->chat =3D chat;
-+	sd->vendor =3D vendor;
- =
-
--	ofono_sim_set_data(sim, chat);
-+	ofono_sim_set_data(sim, sd);
- 	g_idle_add(at_sim_register, sim);
- =
-
- 	return 0;
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index d88444f..5c2613c 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -23,4 +23,5 @@ enum ofono_vendor {
- 	OFONO_VENDOR_GENERIC =3D 0,
- 	OFONO_VENDOR_HTC_G1,
- 	OFONO_VENDOR_CALYPSO,
-+	OFONO_VENDOR_MSM,
- };
++	g_at_chat_unref(chat);
++}
++
++static int palmpre_disable(struct ofono_modem *modem)
++{
++	struct palmpre_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	/* Power modem down */
++	g_at_chat_send(data->chat, "AT+CFUN=3D0", NULL,
++			cfun_set_off_cb, data->chat, NULL);
++
++	ofono_modem_set_powered(modem, FALSE);
++
++	data->chat =3D NULL;
++
++	return 0;
++}
++
++static void palmpre_pre_sim(struct ofono_modem *modem)
++{
++	struct palmpre_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
++	ofono_sim_create(modem, OFONO_VENDOR_MSM, "atmodem", data->chat);
++	ofono_voicecall_create(modem, 0, "atmodem", data->chat);
++}
++
++static void palmpre_post_sim(struct ofono_modem *modem)
++{
++	struct palmpre_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_message_waiting *mw;
++	struct ofono_gprs *gprs;
++	struct ofono_gprs_context *gc;
++
++	DBG("%p", modem);
++
++	ofono_netreg_create(modem, 0, "atmodem", data->chat);
++	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
++
++	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->chat);
++	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
++
++	if (gprs && gc)
++		ofono_gprs_add_context(gprs, gc);
++
++	mw =3D ofono_message_waiting_create(modem);
++	if (mw)
++		ofono_message_waiting_register(mw);
++}
++
++static struct ofono_modem_driver palmpre_driver =3D {
++	.name		=3D "palmpre",
++	.probe		=3D palmpre_probe,
++	.remove		=3D palmpre_remove,
++	.enable		=3D palmpre_enable,
++	.disable	=3D palmpre_disable,
++	.pre_sim	=3D palmpre_pre_sim,
++	.post_sim	=3D palmpre_post_sim
++};
++
++static int palmpre_init(void)
++{
++	return ofono_modem_driver_register(&palmpre_driver);
++}
++
++static void palmpre_exit(void)
++{
++	ofono_modem_driver_unregister(&palmpre_driver);
++}
++
++OFONO_PLUGIN_DEFINE(palmpre, "Palm Pre driver", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, palmpre_init, palmpre_exit)
 -- =
 
 1.6.1
 
 
---===============6042136582389950588==--
+--===============4255898781767300243==--
 
