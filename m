@@ -1,48 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============5549062225621220250=="
+Content-Type: multipart/mixed; boundary="===============8741981424642891322=="
 MIME-Version: 1.0
-From: nishith.mahajan@nokia.com
-Subject: How can I contribute
-Date: Tue, 10 Nov 2009 04:45:30 +0000
-Message-ID: <3AD8493EC4C70A42A83026C5D590563443FDC6B329@NOK-EUMSG-05.mgdnok.nokia.com>
+From: Xu, Martin <martin.xu@intel.com>
+Subject: RE: How does ConnMan works with Ofono? RE: [PATCH */4] add
+ interface	property to primary context
+Date: Tue, 10 Nov 2009 12:52:38 +0800
+Message-ID: <9F0C1DB20AFA954FA1DA05309350433D8BB5B2B0@pdsmsx503.ccr.corp.intel.com>
+In-Reply-To: <9F0C1DB20AFA954FA1DA05309350433D8BB5B1FC@pdsmsx503.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5549062225621220250==
+--===============8741981424642891322==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-I was going through your oFono architecture and it seemed relly exiting.
-I have myself worked on Symbian Telephony Stack(TSY) and would like to cont=
-ribute to this new architecture.
-I am very new to open source and am not sure how to register for the same.
-Please do help me out.
+> ______________________________________
+> Ofono                         ConnMan
+> ------------------------------------------------------------------
+> =
 
-Thanks
-Nishith
+> 1.Modem                    device
+>   |
+>   | (create/load)
+>   |
+>   V
+> 2.PC_i                     Network
+>   |
+>   |(powered up)
+>   |
+>   V
+> 3.Attached PC_i----------->    Service (ready)
+ 3.Attached PC_i----------->    Service (idle)
 
+>                          |
+>                          |(connect)
+>                          |
+>                          V
+> 4.Activated PC_i           Service (associated)
+>                          |
+>                          |(configure/dhcp)
+>                          |
+>                          V
+> 5.                       Service (READY)
+> =
 
---===============5549062225621220250==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+> 1. ConnMan detects the Modem from Ofono and create corresponding device
+> 2. ConnMan detects the PC_i and create corresponding Network(First time,
+> ConnMan will ask Ofono to create PC_i)
+> 3. Once the PC_i attached ConnMan will create service
+> 4. When user connects service, ConnMan will ask ofono to activate PC_i.
+>    When PC_i is activated, Service in ConnMan is associated.
+> 5. ConnMan will configure/dhcp to ipconfigure the service, and then servi=
+ce in
+> READY state
+> _______________________________________________
+> connman mailing list
+> connman(a)connman.net
+> http://lists.connman.net/listinfo/connman
 
-PGh0bWw+CjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PSJDb250ZW50LVR5cGUiIGNvbnRlbnQ9InRl
-eHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxtZXRhIG5hbWU9IkdlbmVyYXRvciIgY29udGVu
-dD0iTWljcm9zb2Z0IEV4Y2hhbmdlIFNlcnZlciI+CjwhLS0gY29udmVydGVkIGZyb20gcnRmIC0t
-Pgo8c3R5bGU+PCEtLSAuRW1haWxRdW90ZSB7IG1hcmdpbi1sZWZ0OiAxcHQ7IHBhZGRpbmctbGVm
-dDogNHB0OyBib3JkZXItbGVmdDogIzgwMDAwMCAycHggc29saWQ7IH0gLS0+PC9zdHlsZT4KPC9o
-ZWFkPgo8Ym9keT4KPGZvbnQgZmFjZT0iQXJpYWwsIHNhbnMtc2VyaWYiIHNpemU9IjIiPgo8ZGl2
-PkhpLDwvZGl2Pgo8ZGl2Pkkgd2FzIGdvaW5nIHRocm91Z2ggeW91ciBvRm9ubyBhcmNoaXRlY3R1
-cmUgYW5kIGl0IHNlZW1lZCByZWxseSBleGl0aW5nLjwvZGl2Pgo8ZGl2PkkgaGF2ZSBteXNlbGYg
-d29ya2VkIG9uIFN5bWJpYW4gVGVsZXBob255IFN0YWNrKFRTWSkgYW5kIHdvdWxkIGxpa2UgdG8g
-Y29udHJpYnV0ZSB0byB0aGlzIG5ldyBhcmNoaXRlY3R1cmUuPC9kaXY+CjxkaXY+SSBhbSB2ZXJ5
-IG5ldyB0byBvcGVuIHNvdXJjZSBhbmQgYW0gbm90IHN1cmUgaG93IHRvIHJlZ2lzdGVyIGZvciB0
-aGUgc2FtZS48L2Rpdj4KPGRpdj5QbGVhc2UgZG8gaGVscCBtZSBvdXQuPC9kaXY+CjxkaXY+Jm5i
-c3A7PC9kaXY+CjxkaXY+VGhhbmtzPC9kaXY+CjxkaXY+TmlzaGl0aCA8L2Rpdj4KPGRpdj4mbmJz
-cDs8L2Rpdj4KPC9mb250Pgo8L2JvZHk+CjwvaHRtbD4K
-
---===============5549062225621220250==--
+--===============8741981424642891322==--
 
