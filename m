@@ -1,70 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============6954113423734195524=="
+Content-Type: multipart/mixed; boundary="===============7217900373364621137=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 3/3] Add SMS support for Palm Pre with a vendor quirk
-Date: Tue, 10 Nov 2009 07:30:39 +0100
-Message-ID: <1257834639-22467-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH] Accept ranges in +CSMS responses.
+Date: Tue, 10 Nov 2009 07:30:55 +0100
+Message-ID: <1257834655-22496-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6954113423734195524==
+--===============7217900373364621137==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/sms.c |    7 ++++---
- plugins/palmpre.c     |    2 ++
- 2 files changed, 6 insertions(+), 3 deletions(-)
+ drivers/atmodem/sms.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
-index b3d6ff5..20ab47a 100644
+index 20ab47a..dfccdb4 100644
 --- a/drivers/atmodem/sms.c
 +++ b/drivers/atmodem/sms.c
-@@ -680,9 +680,10 @@ static gboolean build_cnmi_string(char *buf, int *cnmi=
-_opts,
- 	const char *mode;
- 	int len =3D sprintf(buf, "AT+CNMI=3D");
+@@ -1043,7 +1043,7 @@ static void at_csms_query_cb(gboolean ok, GAtResult *=
+result,
+ 	struct sms_data *data =3D ofono_sms_get_data(sms);
+ 	gboolean cnma_supported =3D FALSE;
+ 	GAtResultIter iter;
+-	int status;
++	int status_min, status_max;
+ 	char buf[128];
  =
 
--	if (data->vendor =3D=3D OFONO_VENDOR_HTC_G1)
--		/* The G1 advertises support for mode 2, but returns an error
--		 * if we attempt to actually use it. */
-+	if (data->vendor =3D=3D OFONO_VENDOR_HTC_G1 ||
-+			data->vendor =3D=3D OFONO_VENDOR_MSM)
-+		/* These devices advertise support for mode 2, but return
-+		 * an error if we attempt to actually use it. */
- 		mode =3D "1";
- 	else
- 		/* Sounds like 2 is the sanest mode */
-diff --git a/plugins/palmpre.c b/plugins/palmpre.c
-index 37cb7b6..12add93 100644
---- a/plugins/palmpre.c
-+++ b/plugins/palmpre.c
-@@ -42,6 +42,7 @@
- #include <ofono/voicecall.h>
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
-+#include <ofono/sms.h>
+ 	dump_response("csms_query_cb", ok, result);
+@@ -1059,8 +1059,8 @@ static void at_csms_query_cb(gboolean ok, GAtResult *=
+result,
+ 	if (!g_at_result_iter_open_list(&iter))
+ 		goto out;
  =
 
- #include <drivers/atmodem/vendor.h>
+-	while (g_at_result_iter_next_number(&iter, &status))
+-		if (status =3D=3D 1)
++	while (g_at_result_iter_next_range(&iter, &status_min, &status_max))
++		if (status_min <=3D 1 && 1 <=3D status_max)
+ 			cnma_supported =3D TRUE;
  =
 
-@@ -182,6 +183,7 @@ static void palmpre_post_sim(struct ofono_modem *modem)
- 	DBG("%p", modem);
- =
-
- 	ofono_netreg_create(modem, 0, "atmodem", data->chat);
-+	ofono_sms_create(modem, OFONO_VENDOR_MSM, "atmodem", data->chat);
- 	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
- =
-
- 	gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->chat);
+ 	ofono_debug("CSMS query parsed successfully");
 -- =
 
 1.6.1
 
 
---===============6954113423734195524==--
+--===============7217900373364621137==--
 
