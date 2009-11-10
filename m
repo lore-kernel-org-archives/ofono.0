@@ -1,56 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5030764438588009863=="
+Content-Type: multipart/mixed; boundary="===============3023174837503320680=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] Update test script to newer api.
-Date: Tue, 10 Nov 2009 07:31:20 +0100
-Message-ID: <1257834680-22555-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH] Properly skip over quoted values
+Date: Tue, 10 Nov 2009 07:31:31 +0100
+Message-ID: <1257834691-22584-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5030764438588009863==
+--===============3023174837503320680==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Also remove an unused "import".
+Otherwise a left paren in a string can bring an obscure segfault.
 ---
- test/create-context |    2 +-
- test/test-phonebook |    2 --
- 2 files changed, 1 insertions(+), 3 deletions(-)
+ gatchat/gatresult.c |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
 
-diff --git a/test/create-context b/test/create-context
-index 138efd1..08f2960 100755
---- a/test/create-context
-+++ b/test/create-context
-@@ -25,7 +25,7 @@ for path in properties["Modems"]:
- 	properties =3D connmgr.GetProperties()
+diff --git a/gatchat/gatresult.c b/gatchat/gatresult.c
+index 3d07e13..688b26b 100644
+--- a/gatchat/gatresult.c
++++ b/gatchat/gatresult.c
+@@ -361,6 +361,17 @@ static gint skip_until(const char *line, int start, co=
+nst char delim)
+ 		if (line[i] =3D=3D delim)
+ 			return i;
  =
 
- 	if (properties["PrimaryContexts"] =3D=3D []):
--		path =3D connmgr.CreateContext()
-+		path =3D connmgr.CreateContext("Example", "internet")
- 	else:
- 		path =3D properties["PrimaryContexts"][0]
- =
-
-diff --git a/test/test-phonebook b/test/test-phonebook
-index 52004e8..8db25c1 100755
---- a/test/test-phonebook
-+++ b/test/test-phonebook
-@@ -1,7 +1,5 @@
- #!/usr/bin/python
- =
-
--import gobject
--
- import dbus
- =
-
- if __name__ =3D=3D "__main__":
++		if (line[i] =3D=3D '\"') {
++			i +=3D 1;
++			while (i < len && line[i] !=3D '\"')
++				i +=3D 1;
++
++			if (i < len)
++				i +=3D 1;
++
++			continue;
++		}
++
+ 		if (line[i] !=3D '(') {
+ 			i +=3D 1;
+ 			continue;
 -- =
 
 1.6.1
 
 
---===============5030764438588009863==--
+--===============3023174837503320680==--
 
