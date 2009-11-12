@@ -1,55 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============1227511050786376583=="
+Content-Type: multipart/mixed; boundary="===============6842778464566303046=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Ryan Raasch <ryan.raasch@gmail.com>
 Subject: Re: ppp
-Date: Thu, 12 Nov 2009 12:37:30 -0600
-Message-ID: <200911121237.30698.denkenz@gmail.com>
-In-Reply-To: <4AFC1478.9070801@gmail.com>
+Date: Thu, 12 Nov 2009 19:42:10 +0100
+Message-ID: <4AFC5702.50406@gmail.com>
+In-Reply-To: <200911121237.30698.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1227511050786376583==
+--===============6842778464566303046==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Ryan,
 
-> Hello,
->
-> We need a ppp interface for our modem. I was told on the chat forum that
-> a tap/tun device was to be used. Has anyone else started with this or
-> thought how to implement this?
 
-We're currently working on a userspace ppp implementation that will integra=
-te =
+Denis Kenzior wrote:
+> Hi Ryan,
+> =
 
-with GAtChat.  The goal here is to make it integrate well with the current =
+>> Hello,
+>>
+>> We need a ppp interface for our modem. I was told on the chat forum that
+>> a tap/tun device was to be used. Has anyone else started with this or
+>> thought how to implement this?
+> =
 
-multiplexed channel capability in GAtMux/GatChat and not need to involve an =
+> We're currently working on a userspace ppp implementation that will integ=
+rate =
 
-external daemon.
+> with GAtChat.  The goal here is to make it integrate well with the curren=
+t =
 
->
-> After reading briefly the code from pppd, the implementation, for a
-> first draft, is pretty straight forward (w/o encryption, etc. in
-> userspace). "Just" dial the apn, and hand over the tty fd to ppp via ioct=
-l.
->
+> multiplexed channel capability in GAtMux/GatChat and not need to involve =
+an =
 
-Unfortunately it is not that simple.  pppd requires a proper kernel file =
+> external daemon.
+> =
 
-descriptor to hand off to the kernel ppp line discipline.  In our userspace =
 
-implementation that is not the case.  1 kernel file descriptor is shared by =
+Wow. So ofono will not use the kernel space ppp and implement the ppp =
 
-potentially many GAtChat channels using a multiplexing protocol.  Hence why=
- we =
+stack in userspace?
 
-can't reuse the kernel implementation.
+>> After reading briefly the code from pppd, the implementation, for a
+>> first draft, is pretty straight forward (w/o encryption, etc. in
+>> userspace). "Just" dial the apn, and hand over the tty fd to ppp via ioc=
+tl.
+>>
+> =
 
-Regards,
--Denis
+> Unfortunately it is not that simple.  pppd requires a proper kernel file =
 
---===============1227511050786376583==--
+> descriptor to hand off to the kernel ppp line discipline.  In our userspa=
+ce =
+
+> implementation that is not the case.  1 kernel file descriptor is shared =
+by =
+
+> potentially many GAtChat channels using a multiplexing protocol.  Hence w=
+hy we =
+
+> can't reuse the kernel implementation.
+> =
+
+
+Yea. That's right.
+
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+
+--===============6842778464566303046==--
 
