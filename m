@@ -1,160 +1,124 @@
-Content-Type: multipart/mixed; boundary="===============0798510021895444278=="
+Content-Type: multipart/mixed; boundary="===============4493967039435593214=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] Add multi calls support for HFP voicecall driver
-Date: Wed, 11 Nov 2009 19:21:16 -0600
-Message-ID: <200911111921.17039.denkenz@gmail.com>
-In-Reply-To: <1257578748.2888.16.camel@zzhan17-mobl.ccr.corp.intel.com>
+From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
+Subject: RE: [PATCH 4/4] Fix: Fill in the phone number info for outgoing call
+Date: Thu, 12 Nov 2009 10:34:56 +0800
+Message-ID: <0463F45F3606F4428ED35AC8C709F92E089CA6A4CF@pdsmsx502.ccr.corp.intel.com>
+In-Reply-To: <200911111623.02579.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0798510021895444278==
+--===============4493967039435593214==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Denis,
 
->+static void reset_to_single_call(struct voicecall_data *vd)
->+{
->+       struct ofono_call *oc =3D vd->calls->data;
->+
->+       vd->call =3D oc;
->+       vd->cind_val[HFP_INDICATOR_CALL] =3D 1;
->+
->+       if (oc->direction =3D=3D 1)
->+               vd->cind_val[HFP_INDICATOR_CALLSETUP] =3D 1;
->+       else
->+               vd->cind_val[HFP_INDICATOR_CALLSETUP] =3D 3;
->+}
->+
+Denis Kenzior wrote:
+> Hi Zhenhua,
+> =
 
-I don't see how this is supposed to work.  What if the last call is a held =
+>> There're two cases of outgoing call: dial from HF or dial from phone.
+>> =
 
-call?
+>> In the first case, some phones may not support enhanced call status
+>> (AT+CLCC) to query outgoing number. So we need to pass struct
+>> atd_cb_data to fill in the number and type. Later, we invoke
+>> AT+CLCC to query phone number and overwrite ours if we are wrong.
+> =
 
-> +		if (c) {
-> +			nc =3D c->data;
-> +
-> +			if (memcmp(nc, oc, sizeof(struct ofono_call))) {
-> +				oc->status =3D nc->status;
-> +
-> +				/* If phone does not support multiparty call,
-> +				 * there will have only one active call at one
-> +				 * time. +CHUP only hang up current active call.
-> +				 */
-> +				if (oc->status =3D=3D CALL_STATUS_ACTIVE)
-> +					vd->call =3D oc;
+> This is actually not necessary.  The core already tracks the
+> outgoing number and fills it in if the dial returns before the
+> new call is notified.  This should be always the case in HFP,
+> since the ATD returns before CIEV is signaled, correct?
 
-Lets not set this silly variable anymore.  It has way too many meanings and =
+The reason to record outgoing number is for later clcc_poll_cb in multicall
+hanlding, because HFP doesn't have COLP so it don't know the outgoing
+number unless we do +CLCC poll. So we need to sync it.
 
-uses throughout the code (most of which can be easily simplified) for the l=
-ogic =
+>> +static GSList *parse_clcc(GAtResult *result) {
+>> +	GAtResultIter iter;
+>> +	GSList *l =3D NULL;
+>> +	int id, dir, status, type;
+>> +	struct ofono_call *call;
+>> +
+>> +	g_at_result_iter_init(&iter, result);
+>> +
+>> +	while (g_at_result_iter_next(&iter, "+CLCC:")) {
+>> +		const char *str =3D "";
+>> +		int number_type =3D 129;
+>> +
+>> +		if (!g_at_result_iter_next_number(&iter, &id))
+>> +			continue;
+>> +
+>> +		if (!g_at_result_iter_next_number(&iter, &dir))
+>> +			continue;
+>> +
+>> +		if (!g_at_result_iter_next_number(&iter, &status)) +			continue;
+>> +
+>> +		if (!g_at_result_iter_next_number(&iter, &type)) +			continue;
+>> +
+>> +		if (!g_at_result_iter_skip_next(&iter))
+>> +			continue;
+>> +
+>> +		if (g_at_result_iter_next_string(&iter, &str))
+>> +			g_at_result_iter_next_number(&iter, &number_type); +
+>> +		call =3D g_try_new0(struct ofono_call, 1);
+>> +
+>> +		if (!call)
+>> +			break;
+>> +
+>> +		call->id =3D id;
+>> +		call->direction =3D dir;
+>> +		call->status =3D status;
+>> +		call->type =3D type;
+>> +		strncpy(call->phone_number.number, str,
+>> +				OFONO_MAX_PHONE_NUMBER_LENGTH);
+>> +		call->phone_number.type =3D number_type;
+>> +
+>> +		if (strlen(call->phone_number.number) > 0)
+>> +			call->clip_validity =3D 0;
+>> +		else
+>> +			call->clip_validity =3D 2;
+>> +
+>> +		l =3D g_slist_insert_sorted(l, call, at_util_call_compare); +	}
+>> +
+>> +	return l;
+>> +}
+> =
 
-to be understandable.
+> If this function is a copy from atmodem, please put it into
+> atutils instead of duplicating it here.
 
-> +static void hfp_hold_all_active(struct ofono_voicecall *vc,
-> +				ofono_voicecall_cb_t cb, void *data)
-> +{
-> +	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-> +
-> +	if (check_mpty_feature(vc, AG_CHLD_2, cb, data)) {
-> +		hfp_template("AT+CHLD=3D2", vc, generic_cb, 0, cb, data);
-> +
-> +		/* Some phones fail to send response back after CHLD=3D2.
-> +		 * But if we have another dialing out call, we should hold
-> +		 * +CLCC until AG creates the new call.
-> +		 */
-> +		vd->clcc_source =3D g_timeout_add(POLL_CLCC_INTERVAL,
-> +						poll_clcc, vc);
+I will send a separate patch for that.
 
-This comment makes no sense.  If the phone doesn't respond after CHLD=3D2 t=
-he =
+>> +	ofono_voicecall_notify(vc, call);
+>> +
+> =
 
-parser is stuck and we're not sending CLCC out anyway.
+> As I mentioned above, you do not need to do this.  oFono will
+> synthesize the outgoing call properly.  Worst case we will
+> send a PropertyChanged signal after CLCC is polled and the new number
+> is obtained. =
 
-> +static void hfp_set_udub(struct ofono_voicecall *vc,
-> +				ofono_voicecall_cb_t cb, void *data)
-> +{
-> +	unsigned int incoming_or_waiting =3D (1 << 4) | (1 << 5);
-> +	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-> +	struct ofono_call *call =3D vd->call;
-> +	struct release_id_req *req;
-> +
-> +	if (vd->ag_mpty_features & AG_CHLD_0)
-> +		hfp_template("AT+CHLD=3D0", vc, generic_cb, incoming_or_waiting,
-> +					cb, data);
-> +	else {
-> +		req =3D g_try_new0(struct release_id_req, 1);
-> +
-> +		if (!req || !call) {
-> +			CALLBACK_WITH_FAILURE(cb, data);
-> +			return;
-> +		}
-> +
-> +		req->vc =3D vc;
-> +		req->cb =3D cb;
-> +		req->data =3D data;
-> +		req->id =3D call->id;
-> +
-> +		g_at_chat_send(vd->chat, "AT+CHUP", none_prefix,
-> +					release_id_cb, req, g_free);
-> +	}
+>
+> Also, there's actually two separate cases here.  Ideally I'd
+> like them separated into two patches.
+> =
 
-The core is quite specifically asking to set UDUB, not to hangup the call. =
- If =
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
-this is not supported, then we should say so.  Please get rid of this.
-
-> +}
-> +
-> +static void hfp_release_all_active(struct ofono_voicecall *vc,
-> +					ofono_voicecall_cb_t cb, void *data)
-> +{
-> +	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-> +
-> +	if (check_mpty_feature(vc, AG_CHLD_1, cb, data)) {
-> +		hfp_template("AT+CHLD=3D1", vc, generic_cb, 0x1, cb, data);
-> +
-> +		vd->clcc_source =3D g_timeout_add(POLL_CLCC_INTERVAL, poll_clcc,
-> +						vc);
-
-Why are we scheduling the CLCC before the CHLD returned?  We should wait un=
-til =
-
-CHLD fails or succeeds.
-
-> +static void hfp_release_specific(struct ofono_voicecall *vc, int id,
-> +				ofono_voicecall_cb_t cb, void *data)
-> +{
-> +	if (vd->ag_features & AG_FEATURE_ENHANCED_CALL_CONTROL) {
-> +		sprintf(buf, "AT+CHLD=3D1%d", id);
-
-Should we be checking CHLD_1X feature?
-
-> +
-> +		g_at_chat_send(vd->chat, buf, none_prefix,
-> +					release_id_cb, req, g_free);
-> +	} else if (id =3D=3D (int) vd->call->id)
-> +		g_at_chat_send(vd->chat, "AT+CHUP", none_prefix,
-> +					release_id_cb, req, g_free);
-
-In the case of a single active call we already send a CHUP.  Is this really =
-
-necessary here?
-
-> +	else
-> +		/* If the call is held, swap and then release it */
-> +		g_at_chat_send(vd->chat, "AT+CHLD=3D2", none_prefix,
-> +					swap_hold_cb, req, NULL);
-
-This breaks if the held call is a mpty call, since the entire mpty call is =
-
-released.  You also can't do this if a waiting call exists.
 
 
 Regards,
--Denis
+Zhenhua
 
---===============0798510021895444278==--
+
+--===============4493967039435593214==--
 
