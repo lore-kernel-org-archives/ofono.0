@@ -1,44 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============7666381045696639623=="
+Content-Type: multipart/mixed; boundary="===============2137686097428099172=="
 MIME-Version: 1.0
-From: Ryan Raasch <ryan.raasch@gmail.com>
-Subject: ppp
-Date: Thu, 12 Nov 2009 14:58:16 +0100
-Message-ID: <4AFC1478.9070801@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/3] Fix: Set data to NULL in hfpmodem drivers
+Date: Thu, 12 Nov 2009 11:24:53 -0600
+Message-ID: <200911121124.54003.denkenz@gmail.com>
+In-Reply-To: <1258043463.6363.1.camel@zzhan17-mobl.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7666381045696639623==
+--===============2137686097428099172==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Zhenhua,
 
-We need a ppp interface for our modem. I was told on the chat forum that =
-
-a tap/tun device was to be used. Has anyone else started with this or =
-
-thought how to implement this?
-
-After reading briefly the code from pppd, the implementation, for a =
-
-first draft, is pretty straight forward (w/o encryption, etc. in =
-
-userspace). "Just" dial the apn, and hand over the tty fd to ppp via ioctl.
-
-Steps (borrowed from pppd):
-
-1. Dial the apn (in ofonod).
-2. Some synchronization code.
-3. hand over tty fd to ppp driver via ioctl. the IP.
-
-I know i am simplifying the process.
-
-Is this the way to go?
-
+Patch has been applied. Thanks.
 
 Regards,
-Ryan
+-Denis
 
---===============7666381045696639623==--
+
+
+--===============2137686097428099172==--
 
