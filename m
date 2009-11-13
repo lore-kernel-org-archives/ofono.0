@@ -1,39 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============4191696287740095731=="
+Content-Type: multipart/mixed; boundary="===============3032930912824302355=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
 Subject: Re: ppp
-Date: Fri, 13 Nov 2009 12:30:21 +0100
-Message-ID: <528e30da2dd595aafc78a57a7dfafb0e@chewa.net>
-In-Reply-To: <200911121237.30698.denkenz@gmail.com>
+Date: Fri, 13 Nov 2009 12:31:56 +0100
+Message-ID: <2db41c0e79c2bd21b6ce7fc373039151@chewa.net>
+In-Reply-To: <alpine.LNX.2.00.0911121929570.21838@boatman.intrepnet>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4191696287740095731==
+--===============3032930912824302355==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 
-On Thu, 12 Nov 2009 12:37:30 -0600, Denis Kenzior <denkenz@gmail.com>
-wrote:
-> Unfortunately it is not that simple.  pppd requires a proper kernel file
-> descriptor to hand off to the kernel ppp line discipline.  In our
-> userspace implementation that is not the case.  1 kernel file descriptor
-> is shared by potentially many GAtChat channels using a multiplexing
-> protocol. =
+On Thu, 12 Nov 2009 19:39:40 +0000 (GMT), Chris Pitchford
+<ofono@intrepid.cx> wrote:
+> I'm not sure if the requirements of ppp in the kernel have chagned, but
+> couldn't something like this be repeated in this situation.. allowing
+pppd
+> to speak to a local socket/fifo/pair of pipes that is terminated in user
+> space?
 
-
-You _could_ create a PTS/PTY pair though...
-
-> Hence why we can't reuse the kernel implementation.
-
-...But I am not sure if the PPP line discipline works correctly on top of
-/dev/pts.
+In my understanding, PPP is a line discipline, meaning it can only run on a
+TTY character device device, not just any character device, and definitely
+not any random file descriptor.
 
 -- =
 
 R=C3=A9mi Denis-Courmont
 
 
---===============4191696287740095731==--
+--===============3032930912824302355==--
 
