@@ -1,81 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============8332254232809720325=="
+Content-Type: multipart/mixed; boundary="===============2009440763241861009=="
 MIME-Version: 1.0
-From: Chris Pitchford <ofono@intrepid.cx>
-Subject: Re: ppp
-Date: Thu, 12 Nov 2009 19:39:40 +0000
-Message-ID: <alpine.LNX.2.00.0911121929570.21838@boatman.intrepnet>
-In-Reply-To: <200911121237.30698.denkenz@gmail.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH 1/2] Rename call to active_call to be more meanful
+Date: Fri, 13 Nov 2009 22:14:14 +0800
+Message-ID: <1258121654.5426.0.camel@zzhan17-mobl.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8332254232809720325==
+--===============2009440763241861009==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Rename vd->call to vd->active_call in hfpmodem voicecall.c
+---
+ drivers/hfpmodem/voicecall.c |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
 
-On Thu, 12 Nov 2009, Denis Kenzior wrote:
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index 9ba72e4..60ac45d 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -53,7 +53,7 @@ static const char *chld_prefix[] =3D { "+CHLD:", NULL };
+ struct voicecall_data {
+ 	GAtChat *chat;
+ 	GSList *calls;
+-	struct ofono_call *call;
++	struct ofono_call *active_call;
+ 	unsigned int ag_features;
+ 	unsigned int ag_mpty_features;
+ 	unsigned char cind_pos[HFP_INDICATOR_LAST];
+@@ -103,7 +103,7 @@ static struct ofono_call *create_call(struct
+voicecall_data *d, int type,
+ =
 
->
-> Unfortunately it is not that simple.  pppd requires a proper kernel file
-> descriptor to hand off to the kernel ppp line discipline.  In our userspa=
-ce
-> implementation that is not the case.  1 kernel file descriptor is shared =
-by
-> potentially many GAtChat channels using a multiplexing protocol.  Hence w=
-hy we
-> can't reuse the kernel implementation.
->
+ 	call->clip_validity =3D clip;
+ =
 
-Not sure how relevant this is, but many many years ago (1997) I used a =
+-	d->call =3D call;
++	d->active_call =3D call;
+ =
 
-"telnet modem" to circumvent a firewall. It was a user land process that =
+ 	return call;
+ }
+@@ -339,8 +339,8 @@ static void release_call(struct ofono_voicecall *vc,
+struct ofono_call *call)
+ =
 
-presented a fake /dev/modem which I used using pppd and chat..
+ 	vd->calls =3D g_slist_remove(vd->calls, call);
+ =
 
-My machine was behind a firewall with a telnet proxy.. Using the software =
+-	if (call =3D=3D vd->call)
+-		vd->call =3D NULL;
++	if (call =3D=3D vd->active_call)
++		vd->active_call =3D NULL;
+ =
 
-+ pppd + chat, it was set up along the lines:
+ 	g_free(call);
+ }
+@@ -403,7 +403,7 @@ static void ciev_notify(GAtResult *result, gpointer
+user_data)
+ {
+ 	struct ofono_voicecall *vc =3D user_data;
+ 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+-	struct ofono_call *call =3D vd->call;
++	struct ofono_call *call =3D vd->active_call;
+ 	int index;
+ 	int value;
+ 	GAtResultIter iter;
+@@ -491,7 +491,7 @@ static int hfp_voicecall_probe(struct
+ofono_voicecall *vc, unsigned int vendor,
+ =
 
-start telnet modem which presented a /dev/modem.. start pppd using =
+ 	vd->chat =3D data->chat;
+ 	vd->ag_features =3D data->ag_features;
+-	vd->call =3D NULL;
++	vd->active_call =3D NULL;
+ =
 
-/dev/modem:
+ 	memcpy(vd->cind_pos, data->cind_pos, HFP_INDICATOR_LAST);
+ 	memcpy(vd->cind_val, data->cind_val, HFP_INDICATOR_LAST);
+-- =
 
-ATDT 1.2.3.4
-CONNECT 1.2.3.4
-the-telnet-proxy>
-telnet my.host 23
-connected to my.host:23
-login:
-mypppuser
-password:
-mypassword
-end of chat script... start pppd
-
-In this situation, pppd and the kernel device would have been =
-
-communicating with a local userland process. The TCP connection to 1.2.3.4 =
-
-created by the telnet modem could not have been used by the ppp interface =
-
-as the telnet modem was passing the streams in either direction =
-
-essentially joining the fd of the telnet connection and fd used by pppd..
-
-I'm not sure if the requirements of ppp in the kernel have chagned, but =
-
-couldn't something like this be repeated in this situation.. allowing pppd =
-
-to speak to a local socket/fifo/pair of pipes that is terminated in user =
-
-space?
-
-I'll see if I can drag the code out to see what it actually did.. and =
-
-even better see if I can get it to work on a 2.6 kernel!!
+1.6.2.5
 
 
 
 
---===============8332254232809720325==--
+--===============2009440763241861009==--
 
