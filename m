@@ -1,87 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============1635966554168129815=="
+Content-Type: multipart/mixed; boundary="===============2836712756521815657=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 2/2] Refactor code order and remove unusable variables
-Date: Fri, 13 Nov 2009 22:14:43 +0800
-Message-ID: <1258121683.5426.1.camel@zzhan17-mobl.ccr.corp.intel.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: Patch on unsupported AT command
+Date: Fri, 13 Nov 2009 15:11:33 +0800
+Message-ID: <38D9F46DFF92C54980D2F2C1E8EE313001B49C0DD6@pdsmsx503.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1635966554168129815==
+--===============2836712756521815657==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-No impact to code correctness for voicecall.
----
- drivers/hfpmodem/voicecall.c |   11 ++++-------
- 1 files changed, 4 insertions(+), 7 deletions(-)
+Hi all,
+	If some unsupported AT command is issued, different modem may have their o=
+wn response. Now at my hand is a Huawei modem (EM770W), and it returns "COM=
+MAND NOT SUPPORT". In my case, this modem doesn't support "AT+CGAUTO=3D0" i=
+n atmodem/gprs.c. Current oFono will hang there for it's not a valid return.
+	We may have some quirk to handle this problem, the same way as current cod=
+e in network-registration.c with CALYPSO. But I wonder if it's better to ad=
+d the response string into "terminator table", so that we don't need this k=
+ind of quirk here and there. I'm not sure if this is the better/best way to=
+ handle this problem. After all, the table may become larger and larger is =
+more and more specific terminator like this are added. =
 
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index 60ac45d..4b75904 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -99,10 +99,10 @@ static struct ofono_call *create_call(struct
-voicecall_data *d, int type,
- 		call->phone_number.type =3D num_type;
- 	}
- =
+	Comments are welcome!
 
--	d->calls =3D g_slist_insert_sorted(d->calls, call,
-at_util_call_compare);
--
- 	call->clip_validity =3D clip;
- =
-
-+	d->calls =3D g_slist_insert_sorted(d->calls, call,
-at_util_call_compare);
-+
- 	d->active_call =3D call;
- =
-
- 	return call;
-@@ -138,8 +138,6 @@ static void atd_cb(gboolean ok, GAtResult *result,
-gpointer user_data)
- 	struct ofono_voicecall *vc =3D cbd->user;
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
- 	ofono_voicecall_cb_t cb =3D cbd->cb;
--	int type =3D 128;
--	int validity =3D 2;
- 	struct ofono_error error;
- 	struct ofono_call *call;
- =
-
-@@ -150,7 +148,7 @@ static void atd_cb(gboolean ok, GAtResult *result,
-gpointer user_data)
- 	if (!ok)
- 		goto out;
- =
-
--	call =3D create_call(vd, 0, 0, CALL_STATUS_DIALING, NULL, type,
-validity);
-+	call =3D create_call(vd, 0, 0, CALL_STATUS_DIALING, NULL, 128, 2);
- =
-
- 	if (!call) {
- 		ofono_error("Unable to allocate call, "
-@@ -404,8 +402,7 @@ static void ciev_notify(GAtResult *result, gpointer
-user_data)
- 	struct ofono_voicecall *vc =3D user_data;
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
- 	struct ofono_call *call =3D vd->active_call;
--	int index;
--	int value;
-+	int index, value;
- 	GAtResultIter iter;
- =
-
- 	g_at_result_iter_init(&iter, result);
--- =
-
-1.6.2.5
+Regards,
+-Yang
 
 
+--===============2836712756521815657==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Add-terminator-for-unsupported-AT-command-of-Huawei.patch"
 
+RnJvbSA2Nzc2ZjkyZDg3YWZiNTZiMTFkYzhiNDRhMTUzZWI0NmJmMDNmN2RhIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogRnJp
+LCAxMyBOb3YgMjAwOSAxNDo0ODo1OCArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIEFkZCB0ZXJtaW5h
+dG9yIGZvciB1bnN1cHBvcnRlZCBBVCBjb21tYW5kIG9mIEh1YXdlaSBtb2RlbQoKLS0tCiBnYXRj
+aGF0L2dhdGNoYXQuYyB8ICAgIDMgKystCiAxIGZpbGVzIGNoYW5nZWQsIDIgaW5zZXJ0aW9ucygr
+KSwgMSBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9nYXRjaGF0L2dhdGNoYXQuYyBiL2dhdGNo
+YXQvZ2F0Y2hhdC5jCmluZGV4IDMyMDE1MGEuLjg4ODExYmEgMTAwNjQ0Ci0tLSBhL2dhdGNoYXQv
+Z2F0Y2hhdC5jCisrKyBiL2dhdGNoYXQvZ2F0Y2hhdC5jCkBAIC0zNzUsNyArMzc1LDggQEAgc3Rh
+dGljIHN0cnVjdCB0ZXJtaW5hdG9yX2luZm8gdGVybWluYXRvcl90YWJsZVtdID0gewogCXsgIk5P
+IEFOU1dFUiIsIC0xLCBGQUxTRSB9LAogCXsgIitDTVMgRVJST1I6IiwgMTEsIEZBTFNFIH0sCiAJ
+eyAiK0NNRSBFUlJPUjoiLCAxMSwgRkFMU0UgfSwKLQl7ICIrRVhUIEVSUk9SOiIsIDExLCBGQUxT
+RSB9CisJeyAiK0VYVCBFUlJPUjoiLCAxMSwgRkFMU0UgfSwKKwl7ICJDT01NQU5EIE5PVCBTVVBQ
+T1JUIiwgLTEsIEZBTFNFfSwKIH07CiAKIHN0YXRpYyBnYm9vbGVhbiBnX2F0X2NoYXRfaGFuZGxl
+X2NvbW1hbmRfcmVzcG9uc2UoR0F0Q2hhdCAqcCwKLS0gCjEuNi4yLjUKCg==
 
---===============1635966554168129815==--
+--===============2836712756521815657==--
 
