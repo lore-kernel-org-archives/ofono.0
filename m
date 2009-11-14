@@ -1,66 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============7249993307100981503=="
+Content-Type: multipart/mixed; boundary="===============5968065951589737002=="
 MIME-Version: 1.0
-From: Ryan Raasch <ryan.raasch@gmail.com>
-Subject: Re: Telit 864
-Date: Sat, 14 Nov 2009 17:44:57 +0100
-Message-ID: <4AFEDE89.1030401@gmail.com>
-In-Reply-To: <470459.12873.qm@web63407.mail.re1.yahoo.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: ppp
+Date: Sat, 14 Nov 2009 19:50:02 +0100
+Message-ID: <fb249edb0911141050m6432fe81qa492ceb8f7c1ae61@mail.gmail.com>
+In-Reply-To: <20091113115311.19074lc2vv2yavms@boatman.intrepid.co.uk>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7249993307100981503==
+--===============5968065951589737002==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Looks like it would work. Compile source, plugin usb cable, run export =
+Hi,
 
-OFONO_AT_DEBUG=3D1 && ofonod -d -n, run enable-modem script and see if runs.
+2009/11/13 Chris Pitchford <ofono@intrepid.cx>:
+> Is the line discipline so much of an issue when using ppp connected to a
+> fake tty? could that not be handed on the proxy side inside ofono?
 
-The data modem part isn't quite finished yet. Meaning you can't use pppd =
+I've not tried it on a non-tty but it definitely should work modulo
+potential bugs that need to be squashed.  It's supposed to work.
 
-or setup a network device for the rest of the sytem to use (using GPRS, =
+However by using a separate process to do ppp you add overhead.  The
+original idea in ofono as well as in other projects (think OpenMoko)
+was to have both ppp and multiplexing in the kernel to avoid the
+context switches when a lot of data is being sent, but this is not
+very portable and causes lots of other problems.  Having both in a
+single non-kernel process is going to be almost as fast and much more
+portable at the expense of reimplementing part of pppd.
 
-etc.). The rest works quite nicely.
+Regards
 
-Cheers,
-Ryan
-
-Fundu wrote:
-> Hi,
-> =
-
-> this is my first post, so please excuse me if it doesn't follow some set =
-rules.
-> =
-
-> Is the TELIT 864 module supported by ofono ? =
-
-> =
-
-> what i'm looking at is the ability to be able to communicate with the tel=
-it module over serial or usb and also use it as a data modem.
-> =
-
-> any insights would be appreciated.
-> =
-
-> thanks !
-> =
-
-> fundu
-> =
-
-> =
-
-> =
-
->       =
-
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
-
---===============7249993307100981503==--
+--===============5968065951589737002==--
 
