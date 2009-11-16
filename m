@@ -1,27 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============5872782898021702136=="
+Content-Type: multipart/mixed; boundary="===============3210016898076681548=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/4] Fix: Ignore repeated CCWA notify if have
-Date: Mon, 16 Nov 2009 10:17:54 -0600
-Message-ID: <200911161017.54589.denkenz@gmail.com>
-In-Reply-To: <1258380763.5437.3.camel@zzhan17-mobl.ccr.corp.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/1] add Settings property description to
+ dataconnectionmanger-api.txt
+Date: Mon, 16 Nov 2009 17:24:09 +0100
+Message-ID: <1258388649.2003.4.camel@violet>
+In-Reply-To: <200911161014.06069.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5872782898021702136==
+--===============3210016898076681548==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Denis,
 
-> Some phone like iPhone repeats CCWA notify. So we need to ignore
-> it when we already have waiting call.
+> > ---
+> >  doc/dataconnectionmanager-api.txt |   35
+> > +++++++++++++++++++++++------------ 1 files changed, 23 insertions(+), =
+12
+> > deletions(-)
+> >
+> =
 
-Applied.  Thanks.
+> Patch has been applied.  Thanks.
 
-Regards,
--Denis
+don't forget to fix the "optonal" typo ;)
 
---===============5872782898021702136==--
+Regards
+
+Marcel
+
+
+
+--===============3210016898076681548==--
 
