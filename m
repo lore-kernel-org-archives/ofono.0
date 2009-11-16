@@ -1,62 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============1644964898469792003=="
+Content-Type: multipart/mixed; boundary="===============4462140037525940313=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 2/4] Fix: No need to put active call on hold
-Date: Mon, 16 Nov 2009 22:11:44 +0800
-Message-ID: <1258380704.5437.1.camel@zzhan17-mobl.ccr.corp.intel.com>
+Subject: [PATCH 3/4] Fix: Avoid release dialing call when call is 0
+Date: Mon, 16 Nov 2009 22:12:21 +0800
+Message-ID: <1258380741.5437.2.camel@zzhan17-mobl.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1644964898469792003==
+--===============4462140037525940313==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-First, call->status should be 1 stead of 2 in the loop. Second,
-it's incorrect to set status to hold because later callheld=3D1
-will swap call status back. So active->hold->active again is
-not correct.
+If +CIEV call goes to 0, we may have another dialing call. We
+should not release this dialing call when call=3D0.
 ---
- drivers/hfpmodem/voicecall.c |   12 ------------
- 1 files changed, 0 insertions(+), 12 deletions(-)
+ drivers/hfpmodem/voicecall.c |   23 +++++++++++++++++++++--
+ 1 files changed, 21 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index ba4b4d5..d9c3c2a 100644
+index d9c3c2a..53d4fd1 100644
 --- a/drivers/hfpmodem/voicecall.c
 +++ b/drivers/hfpmodem/voicecall.c
-@@ -285,7 +285,6 @@ static void atd_cb(gboolean ok, GAtResult *result,
-gpointer user_data)
- 	int validity =3D 2;
- 	struct ofono_error error;
- 	struct ofono_call *call;
--	GSList *l;
+@@ -590,10 +590,11 @@ static void ciev_call_notify(struct
+ofono_voicecall *vc,
+ 	{
+ 		GSList *waiting;
+ 		GSList *incoming;
++		GSList *dialing;
  =
 
- 	dump_response("atd_cb", ok, result);
+ 		/* If call goes to 0, then we have no held or active calls
+ 		 * in the system.  The waiting calls are promoted to incoming
+-		 * calls
++		 * calls and dialing call is kept.
+ 		 */
+ 		waiting =3D g_slist_find_custom(vd->calls,
+ 					GINT_TO_POINTER(CALL_STATUS_WAITING),
+@@ -612,8 +613,26 @@ static void ciev_call_notify(struct ofono_voicecall
+*vc,
+ 		if (incoming)
+ 			vd->calls =3D g_slist_remove_link(vd->calls, incoming);
  =
 
-@@ -294,17 +293,6 @@ static void atd_cb(gboolean ok, GAtResult *result,
-gpointer user_data)
- 	if (!ok)
- 		goto out;
++		/* The dialing call should be kept dialing */
++		dialing =3D g_slist_find_custom(vd->calls,
++					GINT_TO_POINTER(CALL_STATUS_DIALING),
++					at_util_call_compare_by_status);
++
++		if (!dialing)
++			dialing =3D g_slist_find_custom(vd->calls,
++						GINT_TO_POINTER(
++							CALL_STATUS_ALERTING),
++						at_util_call_compare_by_status);
++
++		if (dialing)
++			vd->calls =3D g_slist_remove_link(vd->calls, dialing);
++
+ 		release_all_calls(vc);
+-		vd->calls =3D incoming;
++
++		if (incoming)
++			vd->calls =3D incoming;
++		else if (dialing)
++			vd->calls =3D dialing;
  =
 
--	/* On a success, make sure to put all active calls on hold */
--	for (l =3D vd->calls; l; l =3D l->next) {
--		call =3D l->data;
--
--		if (call->status !=3D 0)
--			continue;
--
--		call->status =3D 2;
--		ofono_voicecall_notify(vc, call);
--	}
--
- 	call =3D create_call(vd, 0, 0, CALL_STATUS_DIALING, NULL, type,
-validity);
- =
-
- 	if (!call) {
+ 		break;
+ 	}
 -- =
 
 1.6.2.5
@@ -64,5 +75,5 @@ validity);
 
 
 
---===============1644964898469792003==--
+--===============4462140037525940313==--
 
