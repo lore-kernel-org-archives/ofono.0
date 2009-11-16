@@ -1,31 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============1822966488524199531=="
+Content-Type: multipart/mixed; boundary="===============5872782898021702136=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] add Settings property description to
- dataconnectionmanger-api.txt
-Date: Mon, 16 Nov 2009 10:14:05 -0600
-Message-ID: <200911161014.06069.denkenz@gmail.com>
-In-Reply-To: <1258344304-981-1-git-send-email-martin.xu@intel.com>
+Subject: Re: [PATCH 4/4] Fix: Ignore repeated CCWA notify if have
+Date: Mon, 16 Nov 2009 10:17:54 -0600
+Message-ID: <200911161017.54589.denkenz@gmail.com>
+In-Reply-To: <1258380763.5437.3.camel@zzhan17-mobl.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1822966488524199531==
+--===============5872782898021702136==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi Zhenhua,
 
-> ---
->  doc/dataconnectionmanager-api.txt |   35
-> +++++++++++++++++++++++------------ 1 files changed, 23 insertions(+), 12
-> deletions(-)
->
+> Some phone like iPhone repeats CCWA notify. So we need to ignore
+> it when we already have waiting call.
 
-Patch has been applied.  Thanks.
+Applied.  Thanks.
 
 Regards,
 -Denis
 
---===============1822966488524199531==--
+--===============5872782898021702136==--
 
