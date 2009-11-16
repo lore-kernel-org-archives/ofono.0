@@ -1,48 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============7235252639509998743=="
+Content-Type: multipart/mixed; boundary="===============6750177963000487238=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
-Subject: Re: ppp
-Date: Sun, 15 Nov 2009 11:09:57 +0200
-Message-ID: <200911151109.57998.remi@remlab.net>
-In-Reply-To: <alpine.LNX.2.00.0911141915280.13597@boatman.intrepnet>
+From: Martin Xu <martin.xu@intel.com>
+Subject: [PATCH 1/1] add Settings property description to
+ dataconnectionmanger-api.txt
+Date: Mon, 16 Nov 2009 12:05:04 +0800
+Message-ID: <1258344304-981-1-git-send-email-martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7235252639509998743==
+--===============6750177963000487238==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Le samedi 14 novembre 2009 21:26:38 Chris Pitchford, vous avez =C3=A9crit :
-> When connecting to an APN for MMS services, there is the possibility of a
-> clash of IP addresses both with other APN connections and with other
-> internet connections (for example wifi)..
+---
+ doc/dataconnectionmanager-api.txt |   35 +++++++++++++++++++++++----------=
+--
+ 1 files changed, 23 insertions(+), 12 deletions(-)
 
-You'd have to implement TCP/IP in userspace also, which wouldn't be too nic=
-e. =
+diff --git a/doc/dataconnectionmanager-api.txt b/doc/dataconnectionmanager-=
+api.txt
+index 41fc02f..7afdf99 100644
+--- a/doc/dataconnectionmanager-api.txt
++++ b/doc/dataconnectionmanager-api.txt
+@@ -161,24 +161,35 @@ Properties	boolean Activated [readwrite]
+ 			purposes.  This value cannot be changed when the
+ 			context is active.
+ =
 
-With recent kernels (2.6.29 and up), you'd rather want to create a new netw=
-ork =
+-		string Interface [readonly, optional]
++		dict Settings [readonly, optonal]
+ =
 
-kernel namespace, containing the MMS interface and the one or few processes =
+-			Holds the interface of the network interface created
+-			by this context (e.g. "ppp0")
++			Holds all the IP network settings
+ =
 
-sending or receiving MMS.
+-		string Address [readonly, optional]
++			string Interface [readonly, optional]
+ =
 
-That avoids the IP range conflicts while not needing to reimplement TCP/IP.=
- It =
+-			Holds the IP address for this context.
++				Holds the interface of the network interface used
++				by this context (e.g. "ppp0" "usb0")
+ =
 
-also still works if the modem exposes GPRS through sone kernel driver such =
+-		string Netmask [readonly, optional]
++			string Method [readonly, optional]
+ =
 
-that you cannot cleanly send and receive IP packets in userspace anyway. =
+-			Holds the Netmask for this context.
++				Holds the IP network config method
++					"static"- Set IP network statically
++					"dhcp"  - Set IP network through DHCP
+ =
 
-Currently, there aren't any in oFono, as both PPP and Phonet can provide IP =
+-		array{string} DomainNameServers [readonly, optional]
++			string Address [readonly, optional]
+ =
 
-packets to userspace. But that does not mean there won't ever be any.
+-			Holds the list of domain name servers for this
+-			context.
++				Holds the IP address for this context.
+ =
 
+-		string Gateway [readonly, optional]
++			string Netmask [readonly, optional]
++
++				Holds the Netmask for this context.
++
++			array{string} DomainNameServers [readonly, optional]
++
++				Holds the list of domain name servers for this
++				context.
++
++			string Gateway [readonly, optional]
++
++				Holds the gateway IP for this connection.
+ =
+
+-			Holds the gateway IP for this connection.
 -- =
 
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net/
+1.6.1.3
 
---===============7235252639509998743==--
+
+--===============6750177963000487238==--
 
