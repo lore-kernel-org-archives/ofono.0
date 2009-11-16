@@ -1,27 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============3805163339440360516=="
+Content-Type: multipart/mixed; boundary="===============1822966488524199531=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] Fix: Remove released call from call lists
-Date: Mon, 16 Nov 2009 10:12:54 -0600
-Message-ID: <200911161012.55291.denkenz@gmail.com>
-In-Reply-To: <1258366845.24193.1.camel@zzhan17-mobl.ccr.corp.intel.com>
+Subject: Re: [PATCH 1/1] add Settings property description to
+ dataconnectionmanger-api.txt
+Date: Mon, 16 Nov 2009 10:14:05 -0600
+Message-ID: <200911161014.06069.denkenz@gmail.com>
+In-Reply-To: <1258344304-981-1-git-send-email-martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3805163339440360516==
+--===============1822966488524199531==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Martin,
 
-> We should remove the released call from the list to avoid
-> potiential double free problem.
+> ---
+>  doc/dataconnectionmanager-api.txt |   35
+> +++++++++++++++++++++++------------ 1 files changed, 23 insertions(+), 12
+> deletions(-)
+>
 
-The issue was actually in release_by_status.  Should now be fixed.
+Patch has been applied.  Thanks.
 
 Regards,
 -Denis
 
---===============3805163339440360516==--
+--===============1822966488524199531==--
 
