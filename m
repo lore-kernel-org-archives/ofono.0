@@ -1,36 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============0397109482534212345=="
+Content-Type: multipart/mixed; boundary="===============3649371034364394589=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] Fix: No need to put active call on hold
-Date: Mon, 16 Nov 2009 11:26:07 -0600
-Message-ID: <200911161126.08068.denkenz@gmail.com>
-In-Reply-To: <1258380704.5437.1.camel@zzhan17-mobl.ccr.corp.intel.com>
+Subject: Re: [PATCH 3/4] Fix: Avoid release dialing call when call is 0
+Date: Mon, 16 Nov 2009 11:49:27 -0600
+Message-ID: <200911161149.27268.denkenz@gmail.com>
+In-Reply-To: <1258380741.5437.2.camel@zzhan17-mobl.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0397109482534212345==
+--===============3649371034364394589==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Zhenhua,
 
-> First, call->status should be 1 stead of 2 in the loop. Second,
-> it's incorrect to set status to hold because later callheld=3D1
-> will swap call status back. So active->hold->active again is
-> not correct.
+> If +CIEV call goes to 0, we may have another dialing call. We
+> should not release this dialing call when call=3D0.
 
-Unfortunately we do need to put the calls on hold otherwise the core might =
+Yes, you're absolutely correct.
 
-pick the wrong call as the 'dialed' call.  Instead we now ignore the =
+I fixed it slightly differently.  The main issue was that it is possible to=
+ have =
 
-callheld=3D1 indicator in this situation.  Let me know if this still doesn'=
-t fix =
+a dialing and a waiting call under some circumstances.  Neither the current =
 
-this issue.
+code nor your fix handled that case.  The code is much simpler now as well.=
+  =
+
+Let me know if the issue persists.
 
 Regards,
 -Denis
 
---===============0397109482534212345==--
+--===============3649371034364394589==--
 
