@@ -1,116 +1,139 @@
-Content-Type: multipart/mixed; boundary="===============3970335837509774710=="
+Content-Type: multipart/mixed; boundary="===============3543720485747624354=="
 MIME-Version: 1.0
-From: Ryan Raasch <ryan.raasch@gmail.com>
-Subject: Re: Telit 864
-Date: Tue, 17 Nov 2009 10:18:10 +0100
-Message-ID: <4B026A52.5070404@gmail.com>
-In-Reply-To: <212294.47471.qm@web63406.mail.re1.yahoo.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: Patch on unsupported AT command
+Date: Tue, 17 Nov 2009 17:38:42 +0800
+Message-ID: <38D9F46DFF92C54980D2F2C1E8EE313001B4C0170D@pdsmsx503.ccr.corp.intel.com>
+In-Reply-To: <200911131105.47291.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3970335837509774710==
+--===============3543720485747624354==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-
-
-Fundu wrote:
-> Thanks Ryan !
-> =
-
-> so let me ask this then what's involved in getting data modem part workin=
-g ?
-> =
-
-Uhhh. This is not modem specific.
-
-> I can help a on that. Don't know what would be involved in that.
-> =
-
-> My area of comfort.
-> 1) C =
-
-> 2) linux drivers
-> 3) fair understanding of the telit AT command set.
-> =
-
-> not familiar with pppd and wonder how that would play into the picture ?
-
-My suggestion is to read up on pppd and its interaction with modems.
-
-http://en.wikipedia.org/wiki/Point-to-Point_Protocol_daemon
-
-http://tldp.org/HOWTO/PPP-HOWTO/
-
-Ryan
-> =
-
-> -fundu =
-
-> =
-
-> =
-
-> ----- Original Message ----
-> From: Ryan Raasch <ryan.raasch@gmail.com>
-> To: ofono(a)ofono.org
-> Sent: Sat, November 14, 2009 8:44:57 AM
-> Subject: Re: Telit 864
-> =
-
-> Looks like it would work. Compile source, plugin usb cable, run export OF=
-ONO_AT_DEBUG=3D1 && ofonod -d -n, run enable-modem script and see if runs.
-> =
-
-> The data modem part isn't quite finished yet. Meaning you can't use pppd =
-or setup a network device for the rest of the sytem to use (using GPRS, etc=
-.). The rest works quite nicely.
-> =
-
-> Cheers,
-> Ryan
-> =
-
-> Fundu wrote:
->> Hi,
+>-----Original Message-----
+>From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
+lf Of
+>Denis Kenzior
+>Sent: Saturday, November 14, 2009 1:06 AM
+>To: ofono(a)ofono.org
+>Subject: Re: Patch on unsupported AT command
+>
+>Hi Marcel,
+>
+>> Hi Denis,
 >>
->> this is my first post, so please excuse me if it doesn't follow some set=
- rules.
+>> > > I think this might need a GAtChat quirk function where we can add ex=
+tra
+>> > > terminator responses that will be recognized. And maybe even transla=
+ted
+>> > > into something meaningful.
+>> >
+>> > Originally I had the terminators freely definable on the GAtChat + some
+>> > hardcoded ones, but abandoned that approach since it didn't seem usefu=
+l.
+>> > Perhaps this needs to be resurrected.
+>> >
+>> > > Denis, or do you want this quirked in every plugin or modem driver?
+>> >
+>> > I do prefer non-standard terminators to be setup in the plugin/driver.
 >>
->> Is the TELIT 864 module supported by ofono ? =
+>> I meant adding something like g_at_chat_add_terminator() or so.
+>
+>Yes, that is what I meant as well.
 
->> what i'm looking at is the ability to be able to communicate with the te=
-lit module over serial or usb and also use it as a data modem.
->>
->> any insights would be appreciated.
->>
->> thanks !
->>
->> fundu
->>
->>
->>
->>       _______________________________________________
->> ofono mailing list
->> ofono(a)ofono.org
->> http://lists.ofono.org/listinfo/ofono
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
-> =
+Attached is the patch to support plugin specific terminator, and it support=
+s Huawei's special one "COMMAND NOT SUPPORT".
 
-> =
 
-> =
 
->       =
 
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+>Regards,
+>-Denis
+>_______________________________________________
+>ofono mailing list
+>ofono(a)ofono.org
+>http://lists.ofono.org/listinfo/ofono
 
---===============3970335837509774710==--
+--===============3543720485747624354==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Support-vendor-specific-terminator.patch"
+
+RnJvbSBhZGI4N2I4M2MzY2NkNmU1ZGJmYWZjY2ZkZTM5ZjViYzlmNzM3MjJjIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogVHVl
+LCAxNyBOb3YgMjAwOSAxNzozMDoxNyArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIFN1cHBvcnQgdmVu
+ZG9yIHNwZWNpZmljIHRlcm1pbmF0b3IKCi0tLQogZ2F0Y2hhdC9nYXRjaGF0LmMgfCAgIDQ0ICsr
+KysrKysrKysrKysrKysrKysrKysrKysrKystLS0tLS0tLS0tLS0tLS0tCiBnYXRjaGF0L2dhdGNo
+YXQuaCB8ICAgIDMgKysrCiBwbHVnaW5zL2h1YXdlaS5jICB8ICAgIDEgKwogMyBmaWxlcyBjaGFu
+Z2VkLCAzMiBpbnNlcnRpb25zKCspLCAxNiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9nYXRj
+aGF0L2dhdGNoYXQuYyBiL2dhdGNoYXQvZ2F0Y2hhdC5jCmluZGV4IDMyMDE1MGEuLmY5MjM4Zjgg
+MTAwNjQ0Ci0tLSBhL2dhdGNoYXQvZ2F0Y2hhdC5jCisrKyBiL2dhdGNoYXQvZ2F0Y2hhdC5jCkBA
+IC04OCw2ICs4OCw3IEBAIHN0cnVjdCBfR0F0Q2hhdCB7CiAJR1RpbWVyICp3YWtldXBfdGltZXI7
+CQkJLyogS2VlcCB0cmFjayBvZiBlbGFwc2VkIHRpbWUgKi8KIAlHQXRTeW50YXggKnN5bnRheDsK
+IAlnYm9vbGVhbiBkZXN0cm95ZWQ7CQkJLyogUmUtZW50cmFuY3kgZ3VhcmQgKi8KKwlHU0xpc3Qg
+KnRlcm1pbmF0b3JfdGFibGU7CiB9OwogCiBzdGF0aWMgZ2ludCBhdF9ub3RpZnlfbm9kZV9jb21w
+YXJlX2J5X2lkKGdjb25zdHBvaW50ZXIgYSwgZ2NvbnN0cG9pbnRlciBiKQpAQCAtMjUxLDYgKzI1
+MiwxMCBAQCBzdGF0aWMgdm9pZCBnX2F0X2NoYXRfY2xlYW51cChHQXRDaGF0ICpjaGF0KQogCWNo
+YXQtPnN5bnRheCA9IE5VTEw7CiAKIAljaGF0LT5jaGFubmVsID0gTlVMTDsKKworCWdfc2xpc3Rf
+Zm9yZWFjaChjaGF0LT50ZXJtaW5hdG9yX3RhYmxlLCAoR0Z1bmMpZ19mcmVlLCBOVUxMKTsKKwln
+X3NsaXN0X2ZyZWUoY2hhdC0+dGVybWluYXRvcl90YWJsZSk7CisJY2hhdC0+dGVybWluYXRvcl90
+YWJsZSA9IE5VTEw7CiB9CiAKIHN0YXRpYyB2b2lkIHJlYWRfd2F0Y2hlcl9kZXN0cm95X25vdGlm
+eShHQXRDaGF0ICpjaGF0KQpAQCAtMzY1LDI5ICszNzAsMjUgQEAgc3RydWN0IHRlcm1pbmF0b3Jf
+aW5mbyB7CiAJZ2Jvb2xlYW4gc3VjY2VzczsKIH07CiAKLXN0YXRpYyBzdHJ1Y3QgdGVybWluYXRv
+cl9pbmZvIHRlcm1pbmF0b3JfdGFibGVbXSA9IHsKLQl7ICJPSyIsIC0xLCBUUlVFIH0sCi0JeyAi
+RVJST1IiLCAtMSwgRkFMU0UgfSwKLQl7ICJOTyBESUFMVE9ORSIsIC0xLCBGQUxTRSB9LAotCXsg
+IkJVU1kiLCAtMSwgRkFMU0UgfSwKLQl7ICJOTyBDQVJSSUVSIiwgLTEsIEZBTFNFIH0sCi0JeyAi
+Q09OTkVDVCIsIC0xLCBUUlVFIH0sCi0JeyAiTk8gQU5TV0VSIiwgLTEsIEZBTFNFIH0sCi0JeyAi
+K0NNUyBFUlJPUjoiLCAxMSwgRkFMU0UgfSwKLQl7ICIrQ01FIEVSUk9SOiIsIDExLCBGQUxTRSB9
+LAotCXsgIitFWFQgRVJST1I6IiwgMTEsIEZBTFNFIH0KLX07Cit2b2lkIGdfYXRfY2hhdF9hZGRf
+dGVybWluYXRvcihHQXRDaGF0ICpjaGF0LCBjb25zdCBjaGFyICp0ZXJtaW5hdG9yLAorCQkJCQlp
+bnQgbGVuLCBnYm9vbGVhbiBzdWNjZXNzKQoreworCXN0cnVjdCB0ZXJtaW5hdG9yX2luZm8gKnRp
+ID0gZ19uZXcwKHN0cnVjdCB0ZXJtaW5hdG9yX2luZm8sIDEpOworCXRpLT50ZXJtaW5hdG9yID0g
+dGVybWluYXRvcjsKKwl0aS0+bGVuID0gbGVuOworCXRpLT5zdWNjZXNzID0gc3VjY2VzczsKKwlj
+aGF0LT50ZXJtaW5hdG9yX3RhYmxlID0gZ19zbGlzdF9wcmVwZW5kKGNoYXQtPnRlcm1pbmF0b3Jf
+dGFibGUsIHRpKTsKK30KIAogc3RhdGljIGdib29sZWFuIGdfYXRfY2hhdF9oYW5kbGVfY29tbWFu
+ZF9yZXNwb25zZShHQXRDaGF0ICpwLAogCQkJCQkJCXN0cnVjdCBhdF9jb21tYW5kICpjbWQsCiAJ
+CQkJCQkJY2hhciAqbGluZSkKIHsKLQlpbnQgaTsKLQlpbnQgc2l6ZSA9IHNpemVvZih0ZXJtaW5h
+dG9yX3RhYmxlKSAvIHNpemVvZihzdHJ1Y3QgdGVybWluYXRvcl9pbmZvKTsKKwlHU0xpc3QgKmw7
+CiAJaW50IGhpbnQ7CiAKLQlmb3IgKGkgPSAwOyBpIDwgc2l6ZTsgaSsrKSB7Ci0JCXN0cnVjdCB0
+ZXJtaW5hdG9yX2luZm8gKmluZm8gPSAmdGVybWluYXRvcl90YWJsZVtpXTsKKwlmb3IgKGwgPSBw
+LT50ZXJtaW5hdG9yX3RhYmxlOyBsOyBsID0gbC0+bmV4dCkgeworCQlzdHJ1Y3QgdGVybWluYXRv
+cl9pbmZvICppbmZvID0gbC0+ZGF0YTsKIAogCQlpZiAoaW5mby0+bGVuID09IC0xICYmICFzdHJj
+bXAobGluZSwgaW5mby0+dGVybWluYXRvcikpIHsKIAkJCWdfYXRfY2hhdF9maW5pc2hfY29tbWFu
+ZChwLCBpbmZvLT5zdWNjZXNzLCBsaW5lKTsKQEAgLTk1MSw2ICs5NTIsMTcgQEAgR0F0Q2hhdCAq
+Z19hdF9jaGF0X25ldyhHSU9DaGFubmVsICpjaGFubmVsLCBHQXRTeW50YXggKnN5bnRheCkKIAog
+CWNoYXQtPnN5bnRheCA9IGdfYXRfc3ludGF4X3JlZihzeW50YXgpOwogCisJZ19hdF9jaGF0X2Fk
+ZF90ZXJtaW5hdG9yKGNoYXQsICIrRVhUIEVSUk9SOiIsIDExLCBGQUxTRSk7CisJZ19hdF9jaGF0
+X2FkZF90ZXJtaW5hdG9yKGNoYXQsICIrQ01FIEVSUk9SOiIsIDExLCBGQUxTRSk7CisJZ19hdF9j
+aGF0X2FkZF90ZXJtaW5hdG9yKGNoYXQsICIrQ01TIEVSUk9SOiIsIDExLCBGQUxTRSk7CisJZ19h
+dF9jaGF0X2FkZF90ZXJtaW5hdG9yKGNoYXQsICJOTyBBTlNXRVIiLCAtMSwgRkFMU0UpOworCWdf
+YXRfY2hhdF9hZGRfdGVybWluYXRvcihjaGF0LCAiQ09OTkVDVCIsIC0xLCBUUlVFKTsKKwlnX2F0
+X2NoYXRfYWRkX3Rlcm1pbmF0b3IoY2hhdCwgIk5PIENBUlJJRVIiLCAtMSwgRkFMU0UpOworCWdf
+YXRfY2hhdF9hZGRfdGVybWluYXRvcihjaGF0LCAiQlVTWSIsIC0xLCBGQUxTRSk7CisJZ19hdF9j
+aGF0X2FkZF90ZXJtaW5hdG9yKGNoYXQsICJOTyBESUFMVE9ORSIsIC0xLCBGQUxTRSk7CisJZ19h
+dF9jaGF0X2FkZF90ZXJtaW5hdG9yKGNoYXQsICJFUlJPUiIsIC0xLCBGQUxTRSk7CisJZ19hdF9j
+aGF0X2FkZF90ZXJtaW5hdG9yKGNoYXQsICJPSyIsIC0xLCBUUlVFKTsKKwogCXJldHVybiBjaGF0
+OwogCiBlcnJvcjoKZGlmZiAtLWdpdCBhL2dhdGNoYXQvZ2F0Y2hhdC5oIGIvZ2F0Y2hhdC9nYXRj
+aGF0LmgKaW5kZXggZmU1Yjk3Yi4uYjE5MWYxYiAxMDA2NDQKLS0tIGEvZ2F0Y2hhdC9nYXRjaGF0
+LmgKKysrIGIvZ2F0Y2hhdC9nYXRjaGF0LmgKQEAgLTEyOCw2ICsxMjgsOSBAQCBnYm9vbGVhbiBn
+X2F0X2NoYXRfdW5yZWdpc3RlcihHQXRDaGF0ICpjaGF0LCBndWludCBpZCk7CiBnYm9vbGVhbiBn
+X2F0X2NoYXRfc2V0X3dha2V1cF9jb21tYW5kKEdBdENoYXQgKmNoYXQsIGNvbnN0IGNoYXIgKmNt
+ZCwKIAkJCQkJZ3VpbnQgdGltZW91dCwgZ3VpbnQgbXNlYyk7CiAKK3ZvaWQgZ19hdF9jaGF0X2Fk
+ZF90ZXJtaW5hdG9yKEdBdENoYXQgKmNoYXQsIGNvbnN0IGNoYXIgKnRlcm1pbmF0b3IsCisJCQkJ
+aW50IGxlbiwgZ2Jvb2xlYW4gc3VjY2Vzcyk7CisKIAogI2lmZGVmIF9fY3BsdXNwbHVzCiB9CmRp
+ZmYgLS1naXQgYS9wbHVnaW5zL2h1YXdlaS5jIGIvcGx1Z2lucy9odWF3ZWkuYwppbmRleCAyOGI3
+NjUwLi5kZjhlZjQwIDEwMDY0NAotLS0gYS9wbHVnaW5zL2h1YXdlaS5jCisrKyBiL3BsdWdpbnMv
+aHVhd2VpLmMKQEAgLTEwNyw2ICsxMDcsNyBAQCBzdGF0aWMgaW50IGh1YXdlaV9lbmFibGUoc3Ry
+dWN0IG9mb25vX21vZGVtICptb2RlbSkKIAogCXN5bnRheCA9IGdfYXRfc3ludGF4X25ld19nc212
+MSgpOwogCWRhdGEtPmNoYXQgPSBnX2F0X2NoYXRfbmV3KGNoYW5uZWwsIHN5bnRheCk7CisJZ19h
+dF9jaGF0X2FkZF90ZXJtaW5hdG9yKGRhdGEtPmNoYXQsICJDT01NQU5EIE5PVCBTVVBQT1JUIiwg
+LTEsIEZBTFNFKTsKIAlnX2F0X3N5bnRheF91bnJlZihzeW50YXgpOwogCWdfaW9fY2hhbm5lbF91
+bnJlZihjaGFubmVsKTsKIAotLSAKMS42LjIuNQoK
+
+--===============3543720485747624354==--
 
