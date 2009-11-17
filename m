@@ -1,58 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============4177714174951644035=="
+Content-Type: multipart/mixed; boundary="===============6824379850650949857=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Patch on unsupported AT command
-Date: Tue, 17 Nov 2009 11:56:15 -0600
-Message-ID: <200911171156.15968.denkenz@gmail.com>
-In-Reply-To: <38D9F46DFF92C54980D2F2C1E8EE313001B4C01793@pdsmsx503.ccr.corp.intel.com>
+Date: Tue, 17 Nov 2009 21:35:34 +0100
+Message-ID: <1258490134.2003.34.camel@violet>
+In-Reply-To: <200911171156.15968.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4177714174951644035==
+--===============6824379850650949857==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Denis,
 
-> Thanks for the comments. I have split the patch to two separate ones.
->
+> >+	g_at_chat_add_terminator(chat, "+EXT ERROR:", 11, FALSE);
+> >+	g_at_chat_add_terminator(chat, "+CME ERROR:", 11, FALSE);
+> >+	g_at_chat_add_terminator(chat, "+CMS ERROR:", 11, FALSE);
+> >+	g_at_chat_add_terminator(chat, "NO ANSWER", -1, FALSE);
+> >+	g_at_chat_add_terminator(chat, "CONNECT", -1, TRUE);
+> >+	g_at_chat_add_terminator(chat, "NO CARRIER", -1, FALSE);
+> >+	g_at_chat_add_terminator(chat, "BUSY", -1, FALSE);
+> >+	g_at_chat_add_terminator(chat, "NO DIALTONE", -1, FALSE);
+> >+	g_at_chat_add_terminator(chat, "ERROR", -1, FALSE);
+> >+	g_at_chat_add_terminator(chat, "OK", -1, TRUE);
+> =
 
-Two problems:
+> I really don't like this.  Lets keep the non-standard terminators in a =
 
->+void g_at_chat_add_terminator(GAtChat *chat, const char *terminator,
->+					int len, gboolean success)
->+{
->+	struct terminator_info *ti =3D g_new0(struct terminator_info, 1);
->+	ti->terminator =3D terminator;
->+	ti->len =3D len;
->+	ti->success =3D success;
->+	chat->terminator_table =3D g_slist_prepend(chat->terminator_table, ti);
->+}
+> separate list.  I don't want the vast majority of the drivers incurring t=
+he =
 
-You're not strdup'ing the terminator string here.  For safety reasons I =
+> cost of multiple g_new/g_frees.
 
-suggest this be done.
+I have to agree on this. We should keep the penalty for well behaving
+cards as small as possible.
 
->+	g_at_chat_add_terminator(chat, "+EXT ERROR:", 11, FALSE);
->+	g_at_chat_add_terminator(chat, "+CME ERROR:", 11, FALSE);
->+	g_at_chat_add_terminator(chat, "+CMS ERROR:", 11, FALSE);
->+	g_at_chat_add_terminator(chat, "NO ANSWER", -1, FALSE);
->+	g_at_chat_add_terminator(chat, "CONNECT", -1, TRUE);
->+	g_at_chat_add_terminator(chat, "NO CARRIER", -1, FALSE);
->+	g_at_chat_add_terminator(chat, "BUSY", -1, FALSE);
->+	g_at_chat_add_terminator(chat, "NO DIALTONE", -1, FALSE);
->+	g_at_chat_add_terminator(chat, "ERROR", -1, FALSE);
->+	g_at_chat_add_terminator(chat, "OK", -1, TRUE);
+Regards
 
-I really don't like this.  Lets keep the non-standard terminators in a =
+Marcel
 
-separate list.  I don't want the vast majority of the drivers incurring the =
 
-cost of multiple g_new/g_frees.
 
-Regards,
--Denis
-
---===============4177714174951644035==--
+--===============6824379850650949857==--
 
