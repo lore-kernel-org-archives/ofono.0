@@ -1,135 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7418390930284365868=="
+Content-Type: multipart/mixed; boundary="===============4177714174951644035=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: Patch on unsupported AT command
-Date: Wed, 18 Nov 2009 00:27:20 +0800
-Message-ID: <38D9F46DFF92C54980D2F2C1E8EE313001B4C01793@pdsmsx503.ccr.corp.intel.com>
-In-Reply-To: <1258454446.2003.6.camel@violet>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Patch on unsupported AT command
+Date: Tue, 17 Nov 2009 11:56:15 -0600
+Message-ID: <200911171156.15968.denkenz@gmail.com>
+In-Reply-To: <38D9F46DFF92C54980D2F2C1E8EE313001B4C01793@pdsmsx503.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7418390930284365868==
+--===============4177714174951644035==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Yang,
 
->> Attached is the patch to support plugin specific terminator, and it supp=
-orts Huawei's
->special one "COMMAND NOT SUPPORT".
+> Thanks for the comments. I have split the patch to two separate ones.
 >
->you need to split this into a GAtChat specific patch and oFono plugin
->patch.
 
-Thanks for the comments. I have split the patch to two separate ones. =
+Two problems:
 
+>+void g_at_chat_add_terminator(GAtChat *chat, const char *terminator,
+>+					int len, gboolean success)
+>+{
+>+	struct terminator_info *ti =3D g_new0(struct terminator_info, 1);
+>+	ti->terminator =3D terminator;
+>+	ti->len =3D len;
+>+	ti->success =3D success;
+>+	chat->terminator_table =3D g_slist_prepend(chat->terminator_table, ti);
+>+}
 
->
->Regards
->
->Marcel
->
->
->_______________________________________________
->ofono mailing list
->ofono(a)ofono.org
->http://lists.ofono.org/listinfo/ofono
+You're not strdup'ing the terminator string here.  For safety reasons I =
+
+suggest this be done.
+
+>+	g_at_chat_add_terminator(chat, "+EXT ERROR:", 11, FALSE);
+>+	g_at_chat_add_terminator(chat, "+CME ERROR:", 11, FALSE);
+>+	g_at_chat_add_terminator(chat, "+CMS ERROR:", 11, FALSE);
+>+	g_at_chat_add_terminator(chat, "NO ANSWER", -1, FALSE);
+>+	g_at_chat_add_terminator(chat, "CONNECT", -1, TRUE);
+>+	g_at_chat_add_terminator(chat, "NO CARRIER", -1, FALSE);
+>+	g_at_chat_add_terminator(chat, "BUSY", -1, FALSE);
+>+	g_at_chat_add_terminator(chat, "NO DIALTONE", -1, FALSE);
+>+	g_at_chat_add_terminator(chat, "ERROR", -1, FALSE);
+>+	g_at_chat_add_terminator(chat, "OK", -1, TRUE);
+
+I really don't like this.  Lets keep the non-standard terminators in a =
+
+separate list.  I don't want the vast majority of the drivers incurring the =
+
+cost of multiple g_new/g_frees.
 
 Regards,
--Yang
+-Denis
 
---===============7418390930284365868==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Framework-to-support-standard-and-non-standard-termi.patch"
-
-RnJvbSAwNjY0MDI3NzRjMGE2MWNmNjQyMTVkYmY3NjBkN2I2NmQ3NmFkNDk4IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogV2Vk
-LCAxOCBOb3YgMjAwOSAwMDoyMTo0MCArMDgwMApTdWJqZWN0OiBbUEFUQ0ggMS8yXSBGcmFtZXdv
-cmsgdG8gc3VwcG9ydCBzdGFuZGFyZCBhbmQgbm9uLXN0YW5kYXJkIHRlcm1pbmF0b3JzCgotLS0K
-IGdhdGNoYXQvZ2F0Y2hhdC5jIHwgICA0NCArKysrKysrKysrKysrKysrKysrKysrKysrKysrLS0t
-LS0tLS0tLS0tLS0tLQogZ2F0Y2hhdC9nYXRjaGF0LmggfCAgICAzICsrKwogMiBmaWxlcyBjaGFu
-Z2VkLCAzMSBpbnNlcnRpb25zKCspLCAxNiBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9nYXRj
-aGF0L2dhdGNoYXQuYyBiL2dhdGNoYXQvZ2F0Y2hhdC5jCmluZGV4IDMyMDE1MGEuLmY5MjM4Zjgg
-MTAwNjQ0Ci0tLSBhL2dhdGNoYXQvZ2F0Y2hhdC5jCisrKyBiL2dhdGNoYXQvZ2F0Y2hhdC5jCkBA
-IC04OCw2ICs4OCw3IEBAIHN0cnVjdCBfR0F0Q2hhdCB7CiAJR1RpbWVyICp3YWtldXBfdGltZXI7
-CQkJLyogS2VlcCB0cmFjayBvZiBlbGFwc2VkIHRpbWUgKi8KIAlHQXRTeW50YXggKnN5bnRheDsK
-IAlnYm9vbGVhbiBkZXN0cm95ZWQ7CQkJLyogUmUtZW50cmFuY3kgZ3VhcmQgKi8KKwlHU0xpc3Qg
-KnRlcm1pbmF0b3JfdGFibGU7CiB9OwogCiBzdGF0aWMgZ2ludCBhdF9ub3RpZnlfbm9kZV9jb21w
-YXJlX2J5X2lkKGdjb25zdHBvaW50ZXIgYSwgZ2NvbnN0cG9pbnRlciBiKQpAQCAtMjUxLDYgKzI1
-MiwxMCBAQCBzdGF0aWMgdm9pZCBnX2F0X2NoYXRfY2xlYW51cChHQXRDaGF0ICpjaGF0KQogCWNo
-YXQtPnN5bnRheCA9IE5VTEw7CiAKIAljaGF0LT5jaGFubmVsID0gTlVMTDsKKworCWdfc2xpc3Rf
-Zm9yZWFjaChjaGF0LT50ZXJtaW5hdG9yX3RhYmxlLCAoR0Z1bmMpZ19mcmVlLCBOVUxMKTsKKwln
-X3NsaXN0X2ZyZWUoY2hhdC0+dGVybWluYXRvcl90YWJsZSk7CisJY2hhdC0+dGVybWluYXRvcl90
-YWJsZSA9IE5VTEw7CiB9CiAKIHN0YXRpYyB2b2lkIHJlYWRfd2F0Y2hlcl9kZXN0cm95X25vdGlm
-eShHQXRDaGF0ICpjaGF0KQpAQCAtMzY1LDI5ICszNzAsMjUgQEAgc3RydWN0IHRlcm1pbmF0b3Jf
-aW5mbyB7CiAJZ2Jvb2xlYW4gc3VjY2VzczsKIH07CiAKLXN0YXRpYyBzdHJ1Y3QgdGVybWluYXRv
-cl9pbmZvIHRlcm1pbmF0b3JfdGFibGVbXSA9IHsKLQl7ICJPSyIsIC0xLCBUUlVFIH0sCi0JeyAi
-RVJST1IiLCAtMSwgRkFMU0UgfSwKLQl7ICJOTyBESUFMVE9ORSIsIC0xLCBGQUxTRSB9LAotCXsg
-IkJVU1kiLCAtMSwgRkFMU0UgfSwKLQl7ICJOTyBDQVJSSUVSIiwgLTEsIEZBTFNFIH0sCi0JeyAi
-Q09OTkVDVCIsIC0xLCBUUlVFIH0sCi0JeyAiTk8gQU5TV0VSIiwgLTEsIEZBTFNFIH0sCi0JeyAi
-K0NNUyBFUlJPUjoiLCAxMSwgRkFMU0UgfSwKLQl7ICIrQ01FIEVSUk9SOiIsIDExLCBGQUxTRSB9
-LAotCXsgIitFWFQgRVJST1I6IiwgMTEsIEZBTFNFIH0KLX07Cit2b2lkIGdfYXRfY2hhdF9hZGRf
-dGVybWluYXRvcihHQXRDaGF0ICpjaGF0LCBjb25zdCBjaGFyICp0ZXJtaW5hdG9yLAorCQkJCQlp
-bnQgbGVuLCBnYm9vbGVhbiBzdWNjZXNzKQoreworCXN0cnVjdCB0ZXJtaW5hdG9yX2luZm8gKnRp
-ID0gZ19uZXcwKHN0cnVjdCB0ZXJtaW5hdG9yX2luZm8sIDEpOworCXRpLT50ZXJtaW5hdG9yID0g
-dGVybWluYXRvcjsKKwl0aS0+bGVuID0gbGVuOworCXRpLT5zdWNjZXNzID0gc3VjY2VzczsKKwlj
-aGF0LT50ZXJtaW5hdG9yX3RhYmxlID0gZ19zbGlzdF9wcmVwZW5kKGNoYXQtPnRlcm1pbmF0b3Jf
-dGFibGUsIHRpKTsKK30KIAogc3RhdGljIGdib29sZWFuIGdfYXRfY2hhdF9oYW5kbGVfY29tbWFu
-ZF9yZXNwb25zZShHQXRDaGF0ICpwLAogCQkJCQkJCXN0cnVjdCBhdF9jb21tYW5kICpjbWQsCiAJ
-CQkJCQkJY2hhciAqbGluZSkKIHsKLQlpbnQgaTsKLQlpbnQgc2l6ZSA9IHNpemVvZih0ZXJtaW5h
-dG9yX3RhYmxlKSAvIHNpemVvZihzdHJ1Y3QgdGVybWluYXRvcl9pbmZvKTsKKwlHU0xpc3QgKmw7
-CiAJaW50IGhpbnQ7CiAKLQlmb3IgKGkgPSAwOyBpIDwgc2l6ZTsgaSsrKSB7Ci0JCXN0cnVjdCB0
-ZXJtaW5hdG9yX2luZm8gKmluZm8gPSAmdGVybWluYXRvcl90YWJsZVtpXTsKKwlmb3IgKGwgPSBw
-LT50ZXJtaW5hdG9yX3RhYmxlOyBsOyBsID0gbC0+bmV4dCkgeworCQlzdHJ1Y3QgdGVybWluYXRv
-cl9pbmZvICppbmZvID0gbC0+ZGF0YTsKIAogCQlpZiAoaW5mby0+bGVuID09IC0xICYmICFzdHJj
-bXAobGluZSwgaW5mby0+dGVybWluYXRvcikpIHsKIAkJCWdfYXRfY2hhdF9maW5pc2hfY29tbWFu
-ZChwLCBpbmZvLT5zdWNjZXNzLCBsaW5lKTsKQEAgLTk1MSw2ICs5NTIsMTcgQEAgR0F0Q2hhdCAq
-Z19hdF9jaGF0X25ldyhHSU9DaGFubmVsICpjaGFubmVsLCBHQXRTeW50YXggKnN5bnRheCkKIAog
-CWNoYXQtPnN5bnRheCA9IGdfYXRfc3ludGF4X3JlZihzeW50YXgpOwogCisJZ19hdF9jaGF0X2Fk
-ZF90ZXJtaW5hdG9yKGNoYXQsICIrRVhUIEVSUk9SOiIsIDExLCBGQUxTRSk7CisJZ19hdF9jaGF0
-X2FkZF90ZXJtaW5hdG9yKGNoYXQsICIrQ01FIEVSUk9SOiIsIDExLCBGQUxTRSk7CisJZ19hdF9j
-aGF0X2FkZF90ZXJtaW5hdG9yKGNoYXQsICIrQ01TIEVSUk9SOiIsIDExLCBGQUxTRSk7CisJZ19h
-dF9jaGF0X2FkZF90ZXJtaW5hdG9yKGNoYXQsICJOTyBBTlNXRVIiLCAtMSwgRkFMU0UpOworCWdf
-YXRfY2hhdF9hZGRfdGVybWluYXRvcihjaGF0LCAiQ09OTkVDVCIsIC0xLCBUUlVFKTsKKwlnX2F0
-X2NoYXRfYWRkX3Rlcm1pbmF0b3IoY2hhdCwgIk5PIENBUlJJRVIiLCAtMSwgRkFMU0UpOworCWdf
-YXRfY2hhdF9hZGRfdGVybWluYXRvcihjaGF0LCAiQlVTWSIsIC0xLCBGQUxTRSk7CisJZ19hdF9j
-aGF0X2FkZF90ZXJtaW5hdG9yKGNoYXQsICJOTyBESUFMVE9ORSIsIC0xLCBGQUxTRSk7CisJZ19h
-dF9jaGF0X2FkZF90ZXJtaW5hdG9yKGNoYXQsICJFUlJPUiIsIC0xLCBGQUxTRSk7CisJZ19hdF9j
-aGF0X2FkZF90ZXJtaW5hdG9yKGNoYXQsICJPSyIsIC0xLCBUUlVFKTsKKwogCXJldHVybiBjaGF0
-OwogCiBlcnJvcjoKZGlmZiAtLWdpdCBhL2dhdGNoYXQvZ2F0Y2hhdC5oIGIvZ2F0Y2hhdC9nYXRj
-aGF0LmgKaW5kZXggZmU1Yjk3Yi4uYjE5MWYxYiAxMDA2NDQKLS0tIGEvZ2F0Y2hhdC9nYXRjaGF0
-LmgKKysrIGIvZ2F0Y2hhdC9nYXRjaGF0LmgKQEAgLTEyOCw2ICsxMjgsOSBAQCBnYm9vbGVhbiBn
-X2F0X2NoYXRfdW5yZWdpc3RlcihHQXRDaGF0ICpjaGF0LCBndWludCBpZCk7CiBnYm9vbGVhbiBn
-X2F0X2NoYXRfc2V0X3dha2V1cF9jb21tYW5kKEdBdENoYXQgKmNoYXQsIGNvbnN0IGNoYXIgKmNt
-ZCwKIAkJCQkJZ3VpbnQgdGltZW91dCwgZ3VpbnQgbXNlYyk7CiAKK3ZvaWQgZ19hdF9jaGF0X2Fk
-ZF90ZXJtaW5hdG9yKEdBdENoYXQgKmNoYXQsIGNvbnN0IGNoYXIgKnRlcm1pbmF0b3IsCisJCQkJ
-aW50IGxlbiwgZ2Jvb2xlYW4gc3VjY2Vzcyk7CisKIAogI2lmZGVmIF9fY3BsdXNwbHVzCiB9Ci0t
-IAoxLjYuMi41Cgo=
-
---===============7418390930284365868==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-Support-Huawei-specific-terminator.patch"
-
-RnJvbSBiMmM5NTVkNWYwZWUyM2JmNTUzYjg0NTcwYmQ5MTkyMjlmNmM3MjI4IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogV2Vk
-LCAxOCBOb3YgMjAwOSAwMDoyMjoyOSArMDgwMApTdWJqZWN0OiBbUEFUQ0ggMi8yXSBTdXBwb3J0
-IEh1YXdlaSBzcGVjaWZpYyB0ZXJtaW5hdG9yCgotLS0KIHBsdWdpbnMvaHVhd2VpLmMgfCAgICAx
-ICsKIDEgZmlsZXMgY2hhbmdlZCwgMSBpbnNlcnRpb25zKCspLCAwIGRlbGV0aW9ucygtKQoKZGlm
-ZiAtLWdpdCBhL3BsdWdpbnMvaHVhd2VpLmMgYi9wbHVnaW5zL2h1YXdlaS5jCmluZGV4IDI4Yjc2
-NTAuLmRmOGVmNDAgMTAwNjQ0Ci0tLSBhL3BsdWdpbnMvaHVhd2VpLmMKKysrIGIvcGx1Z2lucy9o
-dWF3ZWkuYwpAQCAtMTA3LDYgKzEwNyw3IEBAIHN0YXRpYyBpbnQgaHVhd2VpX2VuYWJsZShzdHJ1
-Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogCiAJc3ludGF4ID0gZ19hdF9zeW50YXhfbmV3X2dzbXYx
-KCk7CiAJZGF0YS0+Y2hhdCA9IGdfYXRfY2hhdF9uZXcoY2hhbm5lbCwgc3ludGF4KTsKKwlnX2F0
-X2NoYXRfYWRkX3Rlcm1pbmF0b3IoZGF0YS0+Y2hhdCwgIkNPTU1BTkQgTk9UIFNVUFBPUlQiLCAt
-MSwgRkFMU0UpOwogCWdfYXRfc3ludGF4X3VucmVmKHN5bnRheCk7CiAJZ19pb19jaGFubmVsX3Vu
-cmVmKGNoYW5uZWwpOwogCi0tIAoxLjYuMi41Cgo=
-
---===============7418390930284365868==--
+--===============4177714174951644035==--
 
