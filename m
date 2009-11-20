@@ -1,122 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============4558512864157888849=="
+Content-Type: multipart/mixed; boundary="===============7290123860740817146=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: RE: [PATCH] Fix: Poll CLCC to replace the code in call_held=1
-Date: Fri, 20 Nov 2009 09:52:04 +0800
-Message-ID: <0463F45F3606F4428ED35AC8C709F92E089CDD1DF8@pdsmsx502.ccr.corp.intel.com>
-In-Reply-To: <1258612747.2003.174.camel@violet>
+Date: Fri, 20 Nov 2009 09:38:18 +0100
+Message-ID: <1258706298.16863.1.camel@violet>
+In-Reply-To: <0463F45F3606F4428ED35AC8C709F92E089CDD1DF8@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4558512864157888849==
+--===============7290123860740817146==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Zhenhua,
 
-Marcel Holtmann wrote:
-> Hi Zhenhua,
-> =
+> >> When using CHLD=3D2x in multiparty call, call_held is 1 and we should
+> >> not swap all active->held. So we cannot save this pull in private
+> >> chat. ---
+> >>  drivers/hfpmodem/voicecall.c |   50
+> >> +++++------------------------------------
+> >>  1 files changed, 6 insertions(+), 44 deletions(-)
+> > =
 
->> When using CHLD=3D2x in multiparty call, call_held is 1 and we should
->> not swap all active->held. So we cannot save this pull in private
->> chat. ---
->>  drivers/hfpmodem/voicecall.c |   50
->> +++++------------------------------------
->>  1 files changed, 6 insertions(+), 44 deletions(-)
-> =
-
-> patch is corrupted. Please send again or better even use git
-> send-email for sending it. =
-
-
-Thanks Marcel. Patch has been attached. The evolution wrapped the line
-that over 80 characters so the patch is corrupted. I will try to use git =
-
-send-email next time.
-
-> Regards
-> =
-
-> Marcel
-> =
+> > patch is corrupted. Please send again or better even use git
+> > send-email for sending it. =
 
 > =
 
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+> Thanks Marcel. Patch has been attached. The evolution wrapped the line
+> that over 80 characters so the patch is corrupted. I will try to use git =
+
+> send-email next time.
+
+patch has been applied. Thanks.
+
+Regards
+
+Marcel
 
 
-Regards,
-Zhenhua
 
-
---===============4558512864157888849==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Fix-Poll-CLCC-to-replace-the-code-in-call_held-1.patch"
-
-RnJvbSA2ZDI3MDlhODljYjZhNGRjY2YwYmM3NTlhMzhlMDk1MTEzOTBiNzhjIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBaaGVuaHVhIFpoYW5nIDx6aGVuaHVhLnpoYW5nQGludGVsLmNv
-bT4KRGF0ZTogV2VkLCAxOCBOb3YgMjAwOSAxNDo1NToxNSArMDgwMApTdWJqZWN0OiBbUEFUQ0hd
-IEZpeDogUG9sbCBDTENDIHRvIHJlcGxhY2UgdGhlIGNvZGUgaW4gY2FsbF9oZWxkPTEKCldoZW4g
-dXNpbmcgQ0hMRD0yeCBpbiBtdWx0aXBhcnR5IGNhbGwsIGNhbGxfaGVsZCBpcyAxIGFuZCB3ZQpz
-aG91bGQgbm90IHN3YXAgYWxsIGFjdGl2ZS0+aGVsZC4gU28gd2UgY2Fubm90IHNhdmUgdGhpcyBw
-dWxsCmluIHByaXZhdGUgY2hhdC4KLS0tCiBkcml2ZXJzL2hmcG1vZGVtL3ZvaWNlY2FsbC5jIHwg
-ICA1MCArKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQogMSBmaWxlcyBj
-aGFuZ2VkLCA2IGluc2VydGlvbnMoKyksIDQ0IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2Ry
-aXZlcnMvaGZwbW9kZW0vdm9pY2VjYWxsLmMgYi9kcml2ZXJzL2hmcG1vZGVtL3ZvaWNlY2FsbC5j
-CmluZGV4IDM1OTFiNzQuLjUyY2RmZDcgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvaGZwbW9kZW0vdm9p
-Y2VjYWxsLmMKKysrIGIvZHJpdmVycy9oZnBtb2RlbS92b2ljZWNhbGwuYwpAQCAtNjAsNyArNjAs
-NiBAQCBzdHJ1Y3Qgdm9pY2VjYWxsX2RhdGEgewogCWludCBjaW5kX3ZhbFtIRlBfSU5ESUNBVE9S
-X0xBU1RdOwogCXVuc2lnbmVkIGludCBpZF9saXN0OwogCXVuc2lnbmVkIGludCBsb2NhbF9yZWxl
-YXNlOwotCW9mb25vX2Jvb2xfdCBpZ25vcmVfY2FsbGhlbGRfMTsKIH07CiAKIHN0cnVjdCByZWxl
-YXNlX2lkX3JlcSB7CkBAIC0zMjIsOCArMzIxLDYgQEAgc3RhdGljIHZvaWQgYXRkX2NiKGdib29s
-ZWFuIG9rLCBHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKQogCiAJCWNhbGwt
-PnN0YXR1cyA9IENBTExfU1RBVFVTX0hFTEQ7CiAJCW9mb25vX3ZvaWNlY2FsbF9ub3RpZnkodmMs
-IGNhbGwpOwotCi0JCXZkLT5pZ25vcmVfY2FsbGhlbGRfMSA9IFRSVUU7CiAJfQogCiAJY2FsbCA9
-IGNyZWF0ZV9jYWxsKHZkLCAwLCAwLCBDQUxMX1NUQVRVU19ESUFMSU5HLCBOVUxMLCB0eXBlLCB2
-YWxpZGl0eSk7CkBAIC04MzksMTUgKzgzNiw2IEBAIHN0YXRpYyB2b2lkIGNpZXZfY2FsbGhlbGRf
-bm90aWZ5KHN0cnVjdCBvZm9ub192b2ljZWNhbGwgKnZjLAogCXN0cnVjdCBvZm9ub19jYWxsICpj
-YWxsOwogCXVuc2lnbmVkIGludCBjYWxsaGVsZCA9IHZkLT5jaW5kX3ZhbFtIRlBfSU5ESUNBVE9S
-X0NBTExIRUxEXTsKIAotCS8qIFdoZW4gQVREIGlzIHNlbnQgd2hlbiBhbm90aGVyIGNhbGwgaXMg
-YWN0aXZlLCB3ZSB3aWxsIHJlY2VpdmUKLQkgKiBjYWxsaGVsZD0xLCB0aGVuIGNhbGxzZXR1cD0y
-LiAgV2UgaGF2ZSBhbHJlYWR5IHBsYWNlZCBhY3RpdmUKLQkgKiBjYWxscyBvbiBob2xkIGluIGF0
-ZF9jYiwgc28gaWdub3JlIHRoZSBjYWxsaGVsZCBpbiB0aGlzIGNhc2UKLQkgKi8KLQlpZiAodmQt
-Pmlnbm9yZV9jYWxsaGVsZF8xID09IFRSVUUgJiYgdmFsdWUgPT0gMSkgewotCQl2ZC0+aWdub3Jl
-X2NhbGxoZWxkXzEgPSBGQUxTRTsKLQkJZ290byBvdXQ7Ci0JfQotCiAJc3dpdGNoICh2YWx1ZSkg
-ewogCWNhc2UgMDoKIAkJLyogV2UgaGF2ZSB0byBwb2xsIGhlcmUsIHdlIGhhdmUgbm8gaWRlYSB3
-aGV0aGVyIHRoZSBjYWxsIHdhcwpAQCAtODU5LDM4ICs4NDcsMTMgQEAgc3RhdGljIHZvaWQgY2ll
-dl9jYWxsaGVsZF9ub3RpZnkoc3RydWN0IG9mb25vX3ZvaWNlY2FsbCAqdmMsCiAJCWJyZWFrOwog
-CiAJY2FzZSAxOgotCXsKLQkJR1NMaXN0ICp3YWl0aW5nOwotCi0JCXdhaXRpbmcgPSBnX3NsaXN0
-X2ZpbmRfY3VzdG9tKHZkLT5jYWxscywKLQkJCQkJR0lOVF9UT19QT0lOVEVSKENBTExfU1RBVFVT
-X1dBSVRJTkcpLAotCQkJCQlhdF91dGlsX2NhbGxfY29tcGFyZV9ieV9zdGF0dXMpOwotCi0JCWZv
-ciAobCA9IHZkLT5jYWxsczsgbDsgbCA9IGwtPm5leHQpIHsKLQkJCWNhbGwgPSBsLT5kYXRhOwot
-Ci0JCQlpZiAod2FpdGluZykgewotCQkJCWlmIChjYWxsLT5zdGF0dXMgPT0gQ0FMTF9TVEFUVVNf
-V0FJVElORykgewotCQkJCQljYWxsLT5zdGF0dXMgPSBDQUxMX1NUQVRVU19BQ1RJVkU7Ci0JCQkJ
-CW9mb25vX3ZvaWNlY2FsbF9ub3RpZnkodmMsIGNhbGwpOwotCQkJCX0gZWxzZSBpZiAoY2FsbC0+
-c3RhdHVzID09IENBTExfU1RBVFVTX0FDVElWRSkgewotCQkJCQljYWxsLT5zdGF0dXMgPSBDQUxM
-X1NUQVRVU19IRUxEOwotCQkJCQlvZm9ub192b2ljZWNhbGxfbm90aWZ5KHZjLCBjYWxsKTsKLQkJ
-CQl9Ci0JCQl9IGVsc2UgewotCQkJCWlmIChjYWxsLT5zdGF0dXMgPT0gQ0FMTF9TVEFUVVNfQUNU
-SVZFKSB7Ci0JCQkJCWNhbGwtPnN0YXR1cyA9IENBTExfU1RBVFVTX0hFTEQ7Ci0JCQkJCW9mb25v
-X3ZvaWNlY2FsbF9ub3RpZnkodmMsIGNhbGwpOwotCQkJCX0gZWxzZSBpZiAoY2FsbC0+c3RhdHVz
-ID09IENBTExfU1RBVFVTX0hFTEQpIHsKLQkJCQkJY2FsbC0+c3RhdHVzID0gQ0FMTF9TVEFUVVNf
-QUNUSVZFOwotCQkJCQlvZm9ub192b2ljZWNhbGxfbm90aWZ5KHZjLCBjYWxsKTsKLQkJCQl9Ci0J
-CQl9Ci0JCX0KLQorCQkvKiBXZSBoYXZlIHRvIHBvbGwgaGVyZSwgd2UgaGF2ZSBubyBpZGVhIHdo
-ZXRoZXIgdGhlIGNhbGwgd2FzCisJCSAqIGFjY2VwdGVkIGJ5IENITEQ9MSBvciBzd2FwcGVkIGJ5
-IENITEQ9MiBvciBvbmUgY2FsbCB3YXMKKwkJICogY2hvc2VkIGZvciBwcml2YXRlIGNoYXQgYnkg
-Q0hMRD0yeAorCQkgKi8KKwkJZ19hdF9jaGF0X3NlbmQodmQtPmNoYXQsICJBVCtDTENDIiwgY2xj
-Y19wcmVmaXgsCisJCQkJY2xjY19wb2xsX2NiLCB2YywgTlVMTCk7CiAJCWJyZWFrOwotCX0KLQog
-CWNhc2UgMjoKIAkJaWYgKGNhbGxoZWxkID09IDApIHsKIAkJCWZvciAobCA9IHZkLT5jYWxsczsg
-bDsgbCA9IGwtPm5leHQpIHsKQEAgLTkwNyw3ICs4NzAsNiBAQCBzdGF0aWMgdm9pZCBjaWV2X2Nh
-bGxoZWxkX25vdGlmeShzdHJ1Y3Qgb2Zvbm9fdm9pY2VjYWxsICp2YywKIAkJCXJlbGVhc2Vfd2l0
-aF9zdGF0dXModmMsIENBTExfU1RBVFVTX0FDVElWRSk7CiAJfQogCi1vdXQ6CiAJdmQtPmNpbmRf
-dmFsW0hGUF9JTkRJQ0FUT1JfQ0FMTEhFTERdID0gdmFsdWU7CiB9CiAKLS0gCjEuNi4yLjUKCg==
-
---===============4558512864157888849==--
+--===============7290123860740817146==--
 
