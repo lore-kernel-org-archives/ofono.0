@@ -1,165 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============7354737987486120204=="
+Content-Type: multipart/mixed; boundary="===============2063786754123586618=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: Patch on unsupported AT command
-Date: Fri, 20 Nov 2009 17:02:02 +0800
-Message-ID: <38D9F46DFF92C54980D2F2C1E8EE313001B4CCBAAB@pdsmsx503.ccr.corp.intel.com>
-In-Reply-To: <1258490134.2003.34.camel@violet>
+From: morphis@gravedo.de
+Subject: Palm Pre modem plugin
+Date: Fri, 20 Nov 2009 12:45:44 +0100
+Message-ID: <3f617f05e6577dad60f6bde6f439783a@localhost>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7354737987486120204==
+--===============2063786754123586618==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 
->-----Original Message-----
->From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf Of
->Marcel Holtmann
->Sent: Wednesday, November 18, 2009 4:36 AM
->To: ofono(a)ofono.org
->Subject: Re: Patch on unsupported AT command
->
->Hi Denis,
->
->> >+	g_at_chat_add_terminator(chat, "+EXT ERROR:", 11, FALSE);
->> >+	g_at_chat_add_terminator(chat, "+CME ERROR:", 11, FALSE);
->> >+	g_at_chat_add_terminator(chat, "+CMS ERROR:", 11, FALSE);
->> >+	g_at_chat_add_terminator(chat, "NO ANSWER", -1, FALSE);
->> >+	g_at_chat_add_terminator(chat, "CONNECT", -1, TRUE);
->> >+	g_at_chat_add_terminator(chat, "NO CARRIER", -1, FALSE);
->> >+	g_at_chat_add_terminator(chat, "BUSY", -1, FALSE);
->> >+	g_at_chat_add_terminator(chat, "NO DIALTONE", -1, FALSE);
->> >+	g_at_chat_add_terminator(chat, "ERROR", -1, FALSE);
->> >+	g_at_chat_add_terminator(chat, "OK", -1, TRUE);
->>
->> I really don't like this.  Lets keep the non-standard terminators in a
->> separate list.  I don't want the vast majority of the drivers incurring =
-the
->> cost of multiple g_new/g_frees.
->
->I have to agree on this. We should keep the penalty for well behaving
->cards as small as possible.
+Hey,
 
-Thank you for the comments. Modified patches are attached!
+I saw you added some time ago support for the Palm Pre MSM Modem. I am
+working =
+
+on the FSO (http://www.freesmartphone.org/) side to support this kind of
+MSM =
+
+modem as well. I am are currently stucked with the binary protocol spoken =
+
+between modem and userland in webOS.
+
+The Problem why we do this is the following: As I and some other people
+find out, =
+
+there is no support on the data channel (the one you use in oFono to speak
+
+plain AT with the modem) for unsolicited responses.
+
+So the only option is to support the binary protocol to get minimally the =
+
+response from the modem when for example a call arrives.
+
+So my question is: How do you want to manage this with your plugin for the
+
+Palm Pre modem? Do you even plan to use the serial interface on the =
+
+/dev/modemuart port? =
 
 
->Regards
->
->Marcel
->
->
->_______________________________________________
->ofono mailing list
->ofono(a)ofono.org
->http://lists.ofono.org/listinfo/ofono
+regards,
+morphis
 
 
-Regards,
--Yang
-
---===============7354737987486120204==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Framework-to-support-non-standard-terminator.patch"
-
-RnJvbSA4NmY4NTI2MzAyYjQyZTc2OTA4ZmE1MGM0M2MxNDE5YjZkNDJjNTcwIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogRnJp
-LCAyMCBOb3YgMjAwOSAxNjo1MzoyMCArMDgwMApTdWJqZWN0OiBbUEFUQ0ggMS8yXSBGcmFtZXdv
-cmsgdG8gc3VwcG9ydCBub24tc3RhbmRhcmQgdGVybWluYXRvcgoKLS0tCiBnYXRjaGF0L2dhdGNo
-YXQuYyB8ICAgNjggKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKystLS0t
-LS0tLS0tLQogZ2F0Y2hhdC9nYXRjaGF0LmggfCAgICAzICsrCiAyIGZpbGVzIGNoYW5nZWQsIDU2
-IGluc2VydGlvbnMoKyksIDE1IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2dhdGNoYXQvZ2F0
-Y2hhdC5jIGIvZ2F0Y2hhdC9nYXRjaGF0LmMKaW5kZXggMzIwMTUwYS4uMTdmOTExOCAxMDA2NDQK
-LS0tIGEvZ2F0Y2hhdC9nYXRjaGF0LmMKKysrIGIvZ2F0Y2hhdC9nYXRjaGF0LmMKQEAgLTg4LDYg
-Kzg4LDEzIEBAIHN0cnVjdCBfR0F0Q2hhdCB7CiAJR1RpbWVyICp3YWtldXBfdGltZXI7CQkJLyog
-S2VlcCB0cmFjayBvZiBlbGFwc2VkIHRpbWUgKi8KIAlHQXRTeW50YXggKnN5bnRheDsKIAlnYm9v
-bGVhbiBkZXN0cm95ZWQ7CQkJLyogUmUtZW50cmFuY3kgZ3VhcmQgKi8KKwlHU0xpc3QgKnRlcm1p
-bmF0b3JfbGlzdDsJCS8qIE5vbi1zdGFuZGFyZCB0ZXJtaW5hdG9yICovCit9OworCitzdHJ1Y3Qg
-dGVybWluYXRvcl9pbmZvIHsKKwljb25zdCBjaGFyICp0ZXJtaW5hdG9yOworCWludCBsZW47CisJ
-Z2Jvb2xlYW4gc3VjY2VzczsKIH07CiAKIHN0YXRpYyBnaW50IGF0X25vdGlmeV9ub2RlX2NvbXBh
-cmVfYnlfaWQoZ2NvbnN0cG9pbnRlciBhLCBnY29uc3Rwb2ludGVyIGIpCkBAIC0yMDQsNiArMjEx
-LDE0IEBAIHN0YXRpYyB2b2lkIGF0X2NvbW1hbmRfZGVzdHJveShzdHJ1Y3QgYXRfY29tbWFuZCAq
-Y21kKQogCWdfZnJlZShjbWQpOwogfQogCitzdGF0aWMgdm9pZCBmcmVlX3Rlcm1pbmF0b3Ioc3Ry
-dWN0IHRlcm1pbmF0b3JfaW5mbyAqdGkpCit7CisJZ19mcmVlKChjaGFyICopdGktPnRlcm1pbmF0
-b3IpOworCXRpLT50ZXJtaW5hdG9yID0gTlVMTDsKKwlnX2ZyZWUodGkpOworCXRpID0gTlVMTDsK
-K30KKwogc3RhdGljIHZvaWQgZ19hdF9jaGF0X2NsZWFudXAoR0F0Q2hhdCAqY2hhdCkKIHsKIAlz
-dHJ1Y3QgYXRfY29tbWFuZCAqYzsKQEAgLTI1MSw2ICsyNjYsMTMgQEAgc3RhdGljIHZvaWQgZ19h
-dF9jaGF0X2NsZWFudXAoR0F0Q2hhdCAqY2hhdCkKIAljaGF0LT5zeW50YXggPSBOVUxMOwogCiAJ
-Y2hhdC0+Y2hhbm5lbCA9IE5VTEw7CisKKwlpZiAoY2hhdC0+dGVybWluYXRvcl9saXN0KSB7CisJ
-CWdfc2xpc3RfZm9yZWFjaChjaGF0LT50ZXJtaW5hdG9yX2xpc3QsCisJCQkJCShHRnVuYylmcmVl
-X3Rlcm1pbmF0b3IsIE5VTEwpOworCQlnX3NsaXN0X2ZyZWUoY2hhdC0+dGVybWluYXRvcl9saXN0
-KTsKKwkJY2hhdC0+dGVybWluYXRvcl9saXN0ID0gTlVMTDsKKwl9CiB9CiAKIHN0YXRpYyB2b2lk
-IHJlYWRfd2F0Y2hlcl9kZXN0cm95X25vdGlmeShHQXRDaGF0ICpjaGF0KQpAQCAtMzU5LDEyICsz
-ODEsNiBAQCBzdGF0aWMgdm9pZCBnX2F0X2NoYXRfZmluaXNoX2NvbW1hbmQoR0F0Q2hhdCAqcCwg
-Z2Jvb2xlYW4gb2ssCiAJYXRfY29tbWFuZF9kZXN0cm95KGNtZCk7CiB9CiAKLXN0cnVjdCB0ZXJt
-aW5hdG9yX2luZm8gewotCWNvbnN0IGNoYXIgKnRlcm1pbmF0b3I7Ci0JaW50IGxlbjsKLQlnYm9v
-bGVhbiBzdWNjZXNzOwotfTsKLQogc3RhdGljIHN0cnVjdCB0ZXJtaW5hdG9yX2luZm8gdGVybWlu
-YXRvcl90YWJsZVtdID0gewogCXsgIk9LIiwgLTEsIFRSVUUgfSwKIAl7ICJFUlJPUiIsIC0xLCBG
-QUxTRSB9LApAQCAtMzc4LDYgKzM5NCwzMiBAQCBzdGF0aWMgc3RydWN0IHRlcm1pbmF0b3JfaW5m
-byB0ZXJtaW5hdG9yX3RhYmxlW10gPSB7CiAJeyAiK0VYVCBFUlJPUjoiLCAxMSwgRkFMU0UgfQog
-fTsKIAordm9pZCBnX2F0X2NoYXRfYWRkX3Rlcm1pbmF0b3IoR0F0Q2hhdCAqY2hhdCwgY29uc3Qg
-Y2hhciAqdGVybWluYXRvciwKKwkJCQkJaW50IGxlbiwgZ2Jvb2xlYW4gc3VjY2VzcykKK3sKKwlz
-dHJ1Y3QgdGVybWluYXRvcl9pbmZvICp0aSA9IGdfbmV3MChzdHJ1Y3QgdGVybWluYXRvcl9pbmZv
-LCAxKTsKKwl0aS0+dGVybWluYXRvciA9IHN0cmR1cCh0ZXJtaW5hdG9yKTsKKwl0aS0+bGVuID0g
-bGVuOworCXRpLT5zdWNjZXNzID0gc3VjY2VzczsKKwljaGF0LT50ZXJtaW5hdG9yX2xpc3QgPSBn
-X3NsaXN0X3ByZXBlbmQoY2hhdC0+dGVybWluYXRvcl9saXN0LCB0aSk7Cit9CisKK3N0YXRpYyBn
-Ym9vbGVhbiBtZWV0X3Rlcm1pbmF0b3IoR0F0Q2hhdCAqY2hhdCwKKwkJCQlzdHJ1Y3QgdGVybWlu
-YXRvcl9pbmZvICppbmZvLCBjaGFyICpsaW5lKQoreworCWlmIChpbmZvLT5sZW4gPT0gLTEgJiYg
-IXN0cmNtcChsaW5lLCBpbmZvLT50ZXJtaW5hdG9yKSkgeworCQlnX2F0X2NoYXRfZmluaXNoX2Nv
-bW1hbmQoY2hhdCwgaW5mby0+c3VjY2VzcywgbGluZSk7CisJCXJldHVybiBUUlVFOworCX0KKwor
-CWlmIChpbmZvLT5sZW4gPiAwICYmICFzdHJuY21wKGxpbmUsIGluZm8tPnRlcm1pbmF0b3IsIGlu
-Zm8tPmxlbikpIHsKKwkJZ19hdF9jaGF0X2ZpbmlzaF9jb21tYW5kKGNoYXQsIGluZm8tPnN1Y2Nl
-c3MsIGxpbmUpOworCQlyZXR1cm4gVFJVRTsKKwl9CisKKwlyZXR1cm4gRkFMU0U7Cit9CisKIHN0
-YXRpYyBnYm9vbGVhbiBnX2F0X2NoYXRfaGFuZGxlX2NvbW1hbmRfcmVzcG9uc2UoR0F0Q2hhdCAq
-cCwKIAkJCQkJCQlzdHJ1Y3QgYXRfY29tbWFuZCAqY21kLAogCQkJCQkJCWNoYXIgKmxpbmUpCkBA
-IC0zODUsMjAgKzQyNywxNiBAQCBzdGF0aWMgZ2Jvb2xlYW4gZ19hdF9jaGF0X2hhbmRsZV9jb21t
-YW5kX3Jlc3BvbnNlKEdBdENoYXQgKnAsCiAJaW50IGk7CiAJaW50IHNpemUgPSBzaXplb2YodGVy
-bWluYXRvcl90YWJsZSkgLyBzaXplb2Yoc3RydWN0IHRlcm1pbmF0b3JfaW5mbyk7CiAJaW50IGhp
-bnQ7CisJR1NMaXN0ICpsOwogCiAJZm9yIChpID0gMDsgaSA8IHNpemU7IGkrKykgewotCQlzdHJ1
-Y3QgdGVybWluYXRvcl9pbmZvICppbmZvID0gJnRlcm1pbmF0b3JfdGFibGVbaV07Ci0KLQkJaWYg
-KGluZm8tPmxlbiA9PSAtMSAmJiAhc3RyY21wKGxpbmUsIGluZm8tPnRlcm1pbmF0b3IpKSB7Ci0J
-CQlnX2F0X2NoYXRfZmluaXNoX2NvbW1hbmQocCwgaW5mby0+c3VjY2VzcywgbGluZSk7CisJCWlm
-IChtZWV0X3Rlcm1pbmF0b3IocCwgJnRlcm1pbmF0b3JfdGFibGVbaV0sIGxpbmUpKQogCQkJcmV0
-dXJuIFRSVUU7Ci0JCX0KKwl9CiAKLQkJaWYgKGluZm8tPmxlbiA+IDAgJiYKLQkJCSFzdHJuY21w
-KGxpbmUsIGluZm8tPnRlcm1pbmF0b3IsIGluZm8tPmxlbikpIHsKLQkJCWdfYXRfY2hhdF9maW5p
-c2hfY29tbWFuZChwLCBpbmZvLT5zdWNjZXNzLCBsaW5lKTsKKwlmb3IgKGwgPSBwLT50ZXJtaW5h
-dG9yX2xpc3Q7IGw7IGwgPSBsLT5uZXh0KSB7CisJCWlmIChtZWV0X3Rlcm1pbmF0b3IocCwgbC0+
-ZGF0YSwgbGluZSkpCiAJCQlyZXR1cm4gVFJVRTsKLQkJfQogCX0KIAogCWlmIChjbWQtPnByZWZp
-eGVzKSB7CmRpZmYgLS1naXQgYS9nYXRjaGF0L2dhdGNoYXQuaCBiL2dhdGNoYXQvZ2F0Y2hhdC5o
-CmluZGV4IGZlNWI5N2IuLmIxOTFmMWIgMTAwNjQ0Ci0tLSBhL2dhdGNoYXQvZ2F0Y2hhdC5oCisr
-KyBiL2dhdGNoYXQvZ2F0Y2hhdC5oCkBAIC0xMjgsNiArMTI4LDkgQEAgZ2Jvb2xlYW4gZ19hdF9j
-aGF0X3VucmVnaXN0ZXIoR0F0Q2hhdCAqY2hhdCwgZ3VpbnQgaWQpOwogZ2Jvb2xlYW4gZ19hdF9j
-aGF0X3NldF93YWtldXBfY29tbWFuZChHQXRDaGF0ICpjaGF0LCBjb25zdCBjaGFyICpjbWQsCiAJ
-CQkJCWd1aW50IHRpbWVvdXQsIGd1aW50IG1zZWMpOwogCit2b2lkIGdfYXRfY2hhdF9hZGRfdGVy
-bWluYXRvcihHQXRDaGF0ICpjaGF0LCBjb25zdCBjaGFyICp0ZXJtaW5hdG9yLAorCQkJCWludCBs
-ZW4sIGdib29sZWFuIHN1Y2Nlc3MpOworCiAKICNpZmRlZiBfX2NwbHVzcGx1cwogfQotLSAKMS42
-LjUuMgoK
-
---===============7354737987486120204==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-Support-Huawei-specific-terminator.patch"
-
-RnJvbSA3MTZiZjQ1NDIzZmMyNTUzNzA3Mjk4NWRkM2Q1ODQ5NDYyYzBiMTJkIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogRnJp
-LCAyMCBOb3YgMjAwOSAxNjo1NDowNSArMDgwMApTdWJqZWN0OiBbUEFUQ0ggMi8yXSBTdXBwb3J0
-IEh1YXdlaSBzcGVjaWZpYyB0ZXJtaW5hdG9yCgotLS0KIHBsdWdpbnMvaHVhd2VpLmMgfCAgICAx
-ICsKIDEgZmlsZXMgY2hhbmdlZCwgMSBpbnNlcnRpb25zKCspLCAwIGRlbGV0aW9ucygtKQoKZGlm
-ZiAtLWdpdCBhL3BsdWdpbnMvaHVhd2VpLmMgYi9wbHVnaW5zL2h1YXdlaS5jCmluZGV4IDA4ZjBl
-MDEuLmU4M2Y5YzEgMTAwNjQ0Ci0tLSBhL3BsdWdpbnMvaHVhd2VpLmMKKysrIGIvcGx1Z2lucy9o
-dWF3ZWkuYwpAQCAtMTA3LDYgKzEwNyw3IEBAIHN0YXRpYyBpbnQgaHVhd2VpX2VuYWJsZShzdHJ1
-Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogCiAJc3ludGF4ID0gZ19hdF9zeW50YXhfbmV3X2dzbXYx
-KCk7CiAJZGF0YS0+Y2hhdCA9IGdfYXRfY2hhdF9uZXcoY2hhbm5lbCwgc3ludGF4KTsKKwlnX2F0
-X2NoYXRfYWRkX3Rlcm1pbmF0b3IoZGF0YS0+Y2hhdCwgIkNPTU1BTkQgTk9UIFNVUFBPUlQiLCAt
-MSwgRkFMU0UpOwogCWdfYXRfc3ludGF4X3VucmVmKHN5bnRheCk7CiAJZ19pb19jaGFubmVsX3Vu
-cmVmKGNoYW5uZWwpOwogCi0tIAoxLjYuNS4yCgo=
-
---===============7354737987486120204==--
+--===============2063786754123586618==--
 
