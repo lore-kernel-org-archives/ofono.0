@@ -1,101 +1,108 @@
-Content-Type: multipart/mixed; boundary="===============3893354076461305915=="
+Content-Type: multipart/mixed; boundary="===============3640787171921714497=="
 MIME-Version: 1.0
-From: morphis@gravedo.de
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Palm Pre modem plugin
-Date: Sat, 21 Nov 2009 12:05:48 +0100
-Message-ID: <20091121110548.GA31278@nirvana>
-In-Reply-To: <1258799604.25879.29.camel@localhost.localdomain>
+Date: Sat, 21 Nov 2009 19:12:36 +0100
+Message-ID: <1258827156.22343.26.camel@localhost.localdomain>
+In-Reply-To: <20091121110548.GA31278@nirvana>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3893354076461305915==
+--===============3640787171921714497==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Sat, Nov 21, 2009 at 11:33:24AM +0100, Marcel Holtmann wrote:
-> Hi Morphis,
-> =
+Hi Morphis,
 
-> > > > I saw you added some time ago support for the Palm Pre MSM Modem. I=
- am
-> > > > working =
+> > > > > I saw you added some time ago support for the Palm Pre MSM Modem.=
+ I am
+> > > > > working =
 
-> > > > on the FSO (http://www.freesmartphone.org/) side to support this ki=
-nd of
-> > > > MSM =
+> > > > > on the FSO (http://www.freesmartphone.org/) side to support this =
+kind of
+> > > > > MSM =
 
-> > > > modem as well. I am are currently stucked with the binary protocol =
-spoken =
+> > > > > modem as well. I am are currently stucked with the binary protoco=
+l spoken =
 
-> > > > between modem and userland in webOS.
+> > > > > between modem and userland in webOS.
+> > > > > =
+
+> > > > > The Problem why we do this is the following: As I and some other =
+people
+> > > > > find out, =
+
+> > > > > there is no support on the data channel (the one you use in oFono=
+ to speak
+> > > > > =
+
+> > > > > plain AT with the modem) for unsolicited responses.
+> > > > > =
+
+> > > > > So the only option is to support the binary protocol to get minim=
+ally the =
+
+> > > > > response from the modem when for example a call arrives.
+> > > > > =
+
+> > > > > So my question is: How do you want to manage this with your plugi=
+n for the
+> > > > > =
+
+> > > > > Palm Pre modem? Do you even plan to use the serial interface on t=
+he =
+
+> > > > > /dev/modemuart port? =
+
 > > > > =
 
-> > > > The Problem why we do this is the following: As I and some other pe=
-ople
-> > > > find out, =
-
-> > > > there is no support on the data channel (the one you use in oFono t=
-o speak
-> > > > =
-
-> > > > plain AT with the modem) for unsolicited responses.
-> > > > =
-
-> > > > So the only option is to support the binary protocol to get minimal=
-ly the =
-
-> > > > response from the modem when for example a call arrives.
-> > > > =
-
-> > > > So my question is: How do you want to manage this with your plugin =
-for the
-> > > > =
-
-> > > > Palm Pre modem? Do you even plan to use the serial interface on the =
-
-> > > > /dev/modemuart port? =
-
+> > > > I expect that at some point someone does a MSM plugin that talks th=
+is
+> > > > binary protocol and it will work with more Qualcomm based devices t=
+han
+> > > > the Palm Pre. We will see. However any patches are more than welcom=
+e.
 > > > =
 
-> > > I expect that at some point someone does a MSM plugin that talks this
-> > > binary protocol and it will work with more Qualcomm based devices than
-> > > the Palm Pre. We will see. However any patches are more than welcome.
+> > > No patches from me for oFono as I am a FSO fan boy :) =
+
 > > =
 
-> > No patches from me for oFono as I am a FSO fan boy :) =
-
+> > I think we need to convert you :)
 > =
 
-> I think we need to convert you :)
+> You can try but I think it's currently impossible :)
 
-You can try but I think it's currently impossible :)
+for oFono we have a pretty much brought spectrum and if the Qualcomm
+GOBI cards use a similar protocol to what we find in the Palm Pre, then
+you might wanna actually consider going for oFono. Since we will be
+pushing oFono as the main telephony stack for desktops, laptops and
+netbooks. Using it on actual mobile phones is just a side product.
 
+And I did see FSO using the SMS PDU engine from oFono already, so you
+might switch over ;)
+
+> > To be honest it would be way simpler for you to write a MSM plugin for
+> > oFono since it is actually designed to support binary protocols like the
+> > Nokia Phonet in the first place.
 > =
 
-> To be honest it would be way simpler for you to write a MSM plugin for
-> oFono since it is actually designed to support binary protocols like the
-> Nokia Phonet in the first place.
+> What do mean with that? If I look at fsogsmd (the vala implementation of
+> the fso gsm daemon) it's even abstracted so I can easily implement a
+> binary protocol as we found in the Palm Pre modem.
 
-What do mean with that? If I look at fsogsmd (the vala implementation of
-the fso gsm daemon) it's even abstracted so I can easily implement a
-binary protocol as we found in the Palm Pre modem.
+If you wanna go for FSO, then by all means go for it. If they finally
+have a proper abstraction layer then all the better. With all the weird
+integration work we have done so far, we are pretty happy with our
+current design and have the flexibility we need and it worked out better
+for us than we ever dreamed it would.
 
-> =
+Regards
 
-> Regards
->=20
+Marcel
 
---===============3893354076461305915==
-Content-Type: application/pgp-signature
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="signature.asc"
 
-LS0tLS1CRUdJTiBQR1AgU0lHTkFUVVJFLS0tLS0KVmVyc2lvbjogR251UEcgdjEuNC4xMCAoR05V
-L0xpbnV4KQoKaUVZRUFSRUNBQVlGQWtzSHlZd0FDZ2tRcWxpNGFTWGl3TThxSkFDZlRVZjI3RHZs
-Yjh3Q01YQlgrNG5Mb0JJSQoyNGdBb0k5SWprdjNVNU1kdmxSZ1JzYVRTS2JKQmhmWAo9WmhSagot
-LS0tLUVORCBQR1AgU0lHTkFUVVJFLS0tLS0K
 
---===============3893354076461305915==--
+--===============3640787171921714497==--
 
