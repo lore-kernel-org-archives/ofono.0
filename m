@@ -1,43 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2389260721328456868=="
+Content-Type: multipart/mixed; boundary="===============5038051747767354867=="
 MIME-Version: 1.0
-From: andrzej zaborowski <balrogg@gmail.com>
+From: Nicola Mfb <nicola.mfb@gmail.com>
 Subject: Re: Palm Pre modem plugin
-Date: Sat, 21 Nov 2009 20:29:41 +0100
-Message-ID: <fb249edb0911211129gb616612q6b6b2a305de6744e@mail.gmail.com>
-In-Reply-To: <20091121101445.GA4375@nirvana>
+Date: Sat, 21 Nov 2009 20:47:41 +0100
+Message-ID: <359c5480911211147o23607b25q247a19a6f6abee17@mail.gmail.com>
+In-Reply-To: <1258827156.22343.26.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2389260721328456868==
+--===============5038051747767354867==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2009/11/21  <morphis@gravedo.de>:
-> I am currently working on the implementation of
-> the basics I found out about the protocol. I split the whole code into
-> two projects: msmcommd and libmsmcomm. msmcommd is a daemon which does
-> all the link layer protocol handling which is required to speak probably
-> with the modem. The library libmsmcomm is an easy utilitiy to format
-> the different messages type and decode them on receive.
->
-> The link layer part is nearly done. Establishment of a link should work
-> and on the handling of sending and receiving data I am currently
-> working.
->
-> When libmsmcomm and msmcommd are done I have the plan to open from
-> fsogsmd a network channel to msmcommd and send all my telephony commands
-> to msmcommd whichs put them into link layer frames and sends them to the
-> modem.
+Hi!
+FSO is not only ogsmd, but manages resource handling to save power,
+alsa state change for audio routing, networking, hardware led (lights,
+vibration), suspending resume, rtc wakeup alarms, pim contacts, music
+playing and so on, it's a full featured framework to abstract the
+entire smartphone with a nice api.
 
-I like the idea of libmsmcomm as a library, this means it may be easy
-in the future to make an oFono plugin linked against the library.  I
-don't think having a separate daemon and another communication channel
-between what is eventually a dialer or sms app, and the modem is such
-a good idea (with the D-Bus socket, D-Bus daemon, FSO and serial
-driver already there)
+For that reason it attracts a lot of api consumers that have the
+possibility to write code and having it running on all FSO supported
+devices without going at a low level to achieve specific machine
+tasks.
 
-Regards
+Add the fact that there are entire linux distros already carrying of
+FSO and a lot of application FSO based, (openembedded derived, gentoo,
+debian etc.)
 
---===============2389260721328456868==--
+As of that I'm able to imagine only few reasons to use ofono instead of fso.
+The first may be is ofono may implement some important missing
+features, but is nosense becouse is open, so FSO may pickup what they
+need (and the contrary).
+The second may be that many peoples were bored by the python
+implementation, but now FSO2 is going further with vala resulting in c
+speed, so this may be minimal.
+The third is to experiment, we for example are coding a wrapper daemon
+to use oFono or FSO, or oFono and FSO (with the gsmd module disabled).
+The forth and worring is that a developer may be *forced* to use
+ofono, as the target device has some closed parts necessary for the os
+that does not work anymore if you remove ofono and use FSO.
+
+So, instead of discuss oFono vs FSO, I'd like to know what is the long
+time strategy and how to address these issues, and of course if I
+missed some important points.
+
+Best Regards.
+
+      Niko
+
+--===============5038051747767354867==--
 
