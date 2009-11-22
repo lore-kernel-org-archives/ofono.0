@@ -1,52 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============4877016680344493006=="
+Content-Type: multipart/mixed; boundary="===============4051145476217343074=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Palm Pre modem plugin
-Date: Sun, 22 Nov 2009 15:21:27 +0100
-Message-ID: <1258899687.8454.19.camel@localhost.localdomain>
-In-Reply-To: <fb249edb0911211129gb616612q6b6b2a305de6744e@mail.gmail.com>
+Date: Sun, 22 Nov 2009 15:24:03 +0100
+Message-ID: <1258899843.8454.23.camel@localhost.localdomain>
+In-Reply-To: <200911200708.31068.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4877016680344493006==
+--===============4051145476217343074==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrzej,
+Hi guys,
 
-> > I am currently working on the implementation of
-> > the basics I found out about the protocol. I split the whole code into
-> > two projects: msmcommd and libmsmcomm. msmcommd is a daemon which does
-> > all the link layer protocol handling which is required to speak probably
-> > with the modem. The library libmsmcomm is an easy utilitiy to format
-> > the different messages type and decode them on receive.
-> >
-> > The link layer part is nearly done. Establishment of a link should work
-> > and on the handling of sending and receiving data I am currently
-> > working.
-> >
-> > When libmsmcomm and msmcommd are done I have the plan to open from
-> > fsogsmd a network channel to msmcommd and send all my telephony commands
-> > to msmcommd whichs put them into link layer frames and sends them to the
-> > modem.
+> >The forth and worring is that a developer may be forced to use
+> >ofono, as the target device has some closed parts necessary for the os
+> >that does not work anymore if you remove ofono and use FSO.
 > =
 
-> I like the idea of libmsmcomm as a library, this means it may be easy
-> in the future to make an oFono plugin linked against the library.  I
-> don't think having a separate daemon and another communication channel
-> between what is eventually a dialer or sms app, and the modem is such
-> a good idea (with the D-Bus socket, D-Bus daemon, FSO and serial
-> driver already there)
+> Please do not post these crazy conspiracy theories here.  oFono is GPLed =
+for =
 
-I do think that a native integration directly into the oFono source code
-as msmmodem might be better. However the second daemon solution is
-stupid and causes too much overhead.
+> exactly this reason.
 
-Also I did look into the QMI stuff a little bit and I think we might
-have to actually create a QMI subsystem in the Linux kernel like we have
-for Phonet since with USB the network interface and the management
-interface do share endpoints as far as I can tell so far.
+let me point this out once again. oFono is 100% GPL source code and this
+means that all plugins, drivers or extensions have to be released under
+GPL. This was our first and important item when creating oFono. We want
+a full open source telephony stack. No binary code running inside the
+daemon ever.
+
+Seems like everybody assumes that a GSM telephony system needs to have
+closed source components, but on the host CPU, we disagree with this and
+strongly enforce open source.
+
+We only draw the line with the UI elements like dialer etc. These are
+components that involve branding, customization and differentiation of
+products and since they talk via D-Bus they can be closed source. And to
+keep the complexity in the UI components minimal we handle all the
+details in the daemon.
 
 Regards
 
@@ -54,5 +47,5 @@ Marcel
 
 
 
---===============4877016680344493006==--
+--===============4051145476217343074==--
 
