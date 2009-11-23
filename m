@@ -1,41 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============7553067705206873077=="
+Content-Type: multipart/mixed; boundary="===============1176799654571114471=="
 MIME-Version: 1.0
-From: Fundu <fundu_1999@yahoo.com>
-Subject: Re: Telit 864
-Date: Mon, 23 Nov 2009 11:29:25 -0800
-Message-ID: <603532.22267.qm@web63404.mail.re1.yahoo.com>
-In-Reply-To: <4B026A52.5070404@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: oFono running on new Freerunner distribution
+Date: Mon, 23 Nov 2009 15:05:18 -0600
+Message-ID: <200911231505.18505.denkenz@gmail.com>
+In-Reply-To: <4B0AA845.1020100@djdas.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7553067705206873077==
+--===============1176799654571114471==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Dario,
 
-Ryan,
-> so let me ask this then what's involved in getting data modem part workin=
-g ?
-> =
+> GREAT!!!! It worked!!! :)
+> It registers in less than one minute! :)
+> I noticed I don't need to call the Register method of
+> NetworkRegistration interface but I just need to power up the modem, is
+> it ok?
 
->>Uhhh. This is not modem specific.
-Are the AT commands common between all modems then ? Aren't there TELIT spe=
-cific AT commands that need to be considered here ?
+By default the netreg atom registers you automatically.  However it does =
 
+remember the setting, so if you choose manual registration or deregister fr=
+om =
 
->>My suggestion is to read up on pppd and its interaction with modems.
+the network it will not attempt to register you the next time you reboot.
 
->>http://en.wikipedia.org/wiki/Point-to-Point_Protocol_daemon
+> I have another question but maybe it's my fault: I noticed if I want to
+> hangup a call during its "alerting" state, I can't, the other party
+> continues ringing even if I call the hangup method on the correct path (
+> /calypso0/voicecall01). What am I missing?
 
->>http://tldp.org/HOWTO/PPP-HOWTO/
+This seems to be a peculiarity of the Calypso modem.  When using ATD on an =
 
+uninitialized port the ATD returns immediately.  This means that =
 
-I looked at the ppp document. Wondering how what changes are required to ma=
-ke the communication between the pppd and the module ?
+dialing/alerting calls can be hung up.  However, we use CPI indications and =
 
+for some reason the ATD behavior changes when this is used.  ATD now only =
 
-     =20
+returns when a call connects, which means we can't hangup dialing/alerting =
 
---===============7553067705206873077==--
+calls, as you point out.  There are a couple of solutions we can try, stay =
+
+tuned.
+
+Regards,
+-Denis
+
+--===============1176799654571114471==--
 
