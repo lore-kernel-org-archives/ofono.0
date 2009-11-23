@@ -1,53 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============1214019724915384544=="
+Content-Type: multipart/mixed; boundary="===============4522664416666388750=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH 1/1] emit settings signal before active signal
-Date: Mon, 23 Nov 2009 09:09:03 +0100
-Message-ID: <1258963743.2993.15.camel@violet>
-In-Reply-To: <9F0C1DB20AFA954FA1DA05309350433D8C09E071@pdsmsx503.ccr.corp.intel.com>
+Subject: Re: Palm Pre modem plugin
+Date: Mon, 23 Nov 2009 09:14:46 +0100
+Message-ID: <1258964086.2993.20.camel@violet>
+In-Reply-To: <359c5480911220638u422e7c09scabfdeb175fd494f@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1214019724915384544==
+--===============4522664416666388750==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi Nicola,
 
-> > > ---
-> > >  src/gprs.c |   13 +++++++------
-> > >  1 files changed, 7 insertions(+), 6 deletions(-)
-> > =
-
-> > quick question on why? I did remember that Denis and I talked about on
-> > IRC, but I forgot what our conclusion on the order of these two signals
-> > was. We should really document this. Do you remember? And please prepare
-> > a patch that also puts a comment about this in the API documentation.
-> I can find below log
+> >>The forth and worring is that a developer may be forced to use
+> >>ofono, as the target device has some closed parts necessary for the os
+> >>that does not work anymore if you remove ofono and use FSO.
+> >
+> > Please do not post these crazy conspiracy theories here.  oFono is GPLe=
+d for
+> > exactly this reason.
 > =
 
-> (2:02:38 AM) holtmann: Not sure if we need the Settings empty, but for co=
-mpletion it makes sense.
-> (2:03:05 AM) holtmann: We might wanna emit the Settings empty before Acti=
-vated false, so that ConnMan can clean up the interface before it goes away.
-> (2:03:27 AM) denkenz: What's the difference?
-> (2:03:54 AM) denkenz: strictly speaking we shouldn't even bother for empt=
-y settings
-> (2:04:05 AM) denkenz: useless signal anyway
-> (2:04:13 AM) holtmann: Yeah. Just easier for some code path in ConnMan.
->  (2:04:49 AM) denkenz: holtmann: ok, that's simple enough anyway
-> =
+> May you elaborate about that? May not a close source project use oFono
+> by calling it's DBus API?
 
-> I cannot find the conclusion on active TRUE order. But I think it should =
-the same with active FALSE. =
+see my other email I wrote to explain it a little bit more. Yes, you can
+write an UI and keep it closed source. This is on purpose.
 
-> So ConnMan can setup interface before set network connected.
-
-sounds good enough for me. Patch has been applied.
-
-However please submit a patch that updates the documentation with the
-details about the signal order.
+However the D-Bus API is designed in a way that your UI is simple to
+begin with since we moved all the logic into the daemon. This is the big
+difference to the FSO GSM part. oFono does the heavy and complex work
+and all that is 100% GPL. Exactly how it should be.
 
 Regards
 
@@ -55,5 +41,5 @@ Marcel
 
 
 
---===============1214019724915384544==--
+--===============4522664416666388750==--
 
