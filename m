@@ -1,57 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0886404414948385616=="
+Content-Type: multipart/mixed; boundary="===============1973874848249111379=="
 MIME-Version: 1.0
-From: DJDAS <djdas@djdas.net>
-Subject: Re: oFono running on new Freerunner distribution
-Date: Mon, 23 Nov 2009 16:20:37 +0100
-Message-ID: <4B0AA845.1020100@djdas.net>
-In-Reply-To: <4B0A754F.40601@djdas.net>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Patch on unsupported AT command
+Date: Mon, 23 Nov 2009 17:08:27 +0100
+Message-ID: <1258992507.2967.2.camel@violet>
+In-Reply-To: <200911230454.36858.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0886404414948385616==
+--===============1973874848249111379==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-DJDAS ha scritto:
-> Hi Denis,
->> Hi Dario,
->>  =
+Hi Denis,
 
->>> Do I have to take the git code or these features are already in the
->>> current 0.10 version?
->>>     =
+> > This is first of all violating the coding style with the indentation on
+> > the second line of the if, but it is also way too complicated.
+> =
 
->>
->> This change was made after 0.10 was tagged.  So you'll need the git =
+> There is actually a reason for this. =
 
->> version.
->>
->>   =
+> =
 
->
-> OK, I'm pulling from the git, I'll let you know ASAP.
-> Bye,
-> Dario.
+> >
+> > 	if (info->len =3D=3D -1 && !strcmp(line, info->terminator)
+> > 		return TRUE;
+> =
 
-GREAT!!!! It worked!!! :)
-It registers in less than one minute! :)
-I noticed I don't need to call the Register method of =
+> This part checks for static terminators, like "OK" or "BUSY" or ERROR.  W=
+e do =
 
-NetworkRegistration interface but I just need to power up the modem, is =
+> whole string comparison here.
+> =
 
-it ok?
-I have another question but maybe it's my fault: I noticed if I want to =
+> >
+> > 	if (info->len > 0 && !strncmp(line, info->terminator, ...))
+> > 		return TRUE;
+> =
 
-hangup a call during its "alerting" state, I can't, the other party =
+> This part checks for variable terminators.  E.g. +CMS ERROR: XXX.  These =
+are =
 
-continues ringing even if I call the hangup method on the correct path ( =
+> well defined by the standard so we only do a prefix comparison for these.
 
-/calypso0/voicecall01). What am I missing?
-Thank you very much in advance, bye.
-Bye,
-Dario.
+and your point is? I was just going by the pure algorithmic of the if
+statement to make it actually readable without getting a headache ;)
+
+Regards
+
+Marcel
 
 
---===============0886404414948385616==--
+
+
+--===============1973874848249111379==--
 
