@@ -1,54 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============1176799654571114471=="
+Content-Type: multipart/mixed; boundary="===============0416472782807397634=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: oFono running on new Freerunner distribution
-Date: Mon, 23 Nov 2009 15:05:18 -0600
-Message-ID: <200911231505.18505.denkenz@gmail.com>
-In-Reply-To: <4B0AA845.1020100@djdas.net>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: First release with GPRS support
+Date: Tue, 24 Nov 2009 01:33:40 +0100
+Message-ID: <1259022820.2967.20.camel@violet>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1176799654571114471==
+--===============0416472782807397634==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dario,
+Hello everyone,
 
-> GREAT!!!! It worked!!! :)
-> It registers in less than one minute! :)
-> I noticed I don't need to call the Register method of
-> NetworkRegistration interface but I just need to power up the modem, is
-> it ok?
+I just tagged, pushed and uploaded 0.11 release of oFono. Besides the
+usual bug fixes in various areas, this comes now with GPRS support. If
+you happen to have a Ericsson MBM or Option HSO based modem, then you
+under lucky ones who can try GPRS support.
 
-By default the netreg atom registers you automatically.  However it does =
+To configure your Primary GPRS Context, you can use the create-context
+script from within the test directory:
 
-remember the setting, so if you choose manual registration or deregister fr=
-om =
+	create-context <apn>
 
-the network it will not attempt to register you the next time you reboot.
+You just have to give it the APN from your GPRS network settings. And
+then list-contexts will show you the configured context. A context needs
+to only configured once by SIM card. It will be stored on a per SIM card
+basis and restored after restart.
 
-> I have another question but maybe it's my fault: I noticed if I want to
-> hangup a call during its "alerting" state, I can't, the other party
-> continues ringing even if I call the hangup method on the correct path (
-> /calypso0/voicecall01). What am I missing?
+To activate or deactivate the actual connect, activate-context and/or
+deactivate-context can be used. On success just call list-contexts again
+and you will see your IP settings.
 
-This seems to be a peculiarity of the Calypso modem.  When using ATD on an =
+The integration of oFono GPRS support for ConnMan is work in progress
+and we hope to finish that pretty soon. So the next ConnMan release
+should be able to talk to oFono for data connections.
 
-uninitialized port the ATD returns immediately.  This means that =
+Regards
 
-dialing/alerting calls can be hung up.  However, we use CPI indications and =
+Marcel
 
-for some reason the ATD behavior changes when this is used.  ATD now only =
 
-returns when a call connects, which means we can't hangup dialing/alerting =
 
-calls, as you point out.  There are a couple of solutions we can try, stay =
-
-tuned.
-
-Regards,
--Denis
-
---===============1176799654571114471==--
+--===============0416472782807397634==--
 
