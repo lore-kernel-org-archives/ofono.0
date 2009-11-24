@@ -1,46 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============8367544469068375051=="
+Content-Type: multipart/mixed; boundary="===============7314565309576788842=="
 MIME-Version: 1.0
-From: Li, Zhigang <zhigang.li@intel.com>
-Subject: patch for more segments of sms
-Date: Tue, 24 Nov 2009 11:04:02 +0800
-Message-ID: <B94C62E7C2870743865418621F040C13020944A46F@pdsmsx502.ccr.corp.intel.com>
+From: Ryan M. Raasch <ryan.raasch@gmail.com>
+Subject: [PATCH] Added test script to enter pin to sim card.
+Date: Tue, 24 Nov 2009 10:46:24 +0100
+Message-ID: <1259055984-30527-1-git-send-email-ryan.raasch@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8367544469068375051==
+--===============7314565309576788842==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi =
+---
+ test/enter-pin.py |   28 ++++++++++++++++++++++++++++
+ 1 files changed, 28 insertions(+), 0 deletions(-)
+ create mode 100755 test/enter-pin.py
 
-Please review this patch which fixed more segments of sms issue.
+diff --git a/test/enter-pin.py b/test/enter-pin.py
+new file mode 100755
+index 0000000..77de93a
+--- /dev/null
++++ b/test/enter-pin.py
+@@ -0,0 +1,28 @@
++#!/usr/bin/env python
++import dbus
++import sys
++
++bus =3D dbus.SystemBus()
++
++manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++                         'org.ofono.Manager')
++
++properties =3D manager.GetProperties()
++
++path =3D properties["Modems"][0]
++
++if len(path)=3D=3D0:
++    print "No modems found"
++    exit
++
++modem =3D dbus.Interface(bus.get_object('org.ofono', path),
++                       'org.ofono.SimManager')
++properties =3D modem.GetProperties()
++if properties.has_key('PinRequired') and properties['PinRequired'] =3D=3D =
+sys.argv[1] :
++    modem.EnterPin(sys.argv[1], sys.argv[2])
++elif properties.has_key('PinRequired') and properties['PinRequired'] =3D=
+=3D 'none' :
++    print "Pin not needed"
++elif properties.has_key('PinRequired'):
++    print "Error: Pin type not supported (%s !=3D %s)" % (sys.argv[1],prop=
+erties['PinRequired'])
++
++
+-- =
 
-Also you can find the bug detail information at http://bugzilla.moblin.org/=
-show_bug.cgi?id=3D8157
-Also thanks Yang great help =
+1.6.4.GIT
 
 
-Thanks
-Zhigang
-
-
---===============8367544469068375051==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="patch_sms.obj"
-
-ZGlmZiAtLWdpdCBhL3NyYy9zbXMuYyBiL3NyYy9zbXMuYwppbmRleCBkZGYxNTIzLi5iMzdmMTYx
-IDEwMDY0NAotLS0gYS9zcmMvc21zLmMKKysrIGIvc3JjL3Ntcy5jCkBAIC0zODgsNyArMzg4LDcg
-QEAgc3RhdGljIHN0cnVjdCB0eF9xdWV1ZV9lbnRyeSAqY3JlYXRlX3R4X3F1ZXVlX2VudHJ5KEdT
-TGlzdCAqbXNnX2xpc3QpCiAgICAgICAgZW50cnktPnBkdXMgPSBnX25ldzAoc3RydWN0IHBlbmRp
-bmdfcGR1LCBlbnRyeS0+bnVtX3BkdXMpOwogCiAgICAgICAgZm9yIChsID0gbXNnX2xpc3Q7IGw7
-IGwgPSBsLT5uZXh0KSB7Ci0gICAgICAgICAgICAgICBzdHJ1Y3QgcGVuZGluZ19wZHUgKnBkdSA9
-ICZlbnRyeS0+cGR1c1tpXTsKKyAgICAgICAgICAgICAgIHN0cnVjdCBwZW5kaW5nX3BkdSAqcGR1
-ID0gJmVudHJ5LT5wZHVzW2krK107CiAgICAgICAgICAgICAgICBzdHJ1Y3Qgc21zICpzID0gbC0+
-ZGF0YTsKIAogICAgICAgICAgICAgICAgc21zX2VuY29kZShzLCAmcGR1LT5wZHVfbGVuLCAmcGR1
-LT50cGR1X2xlbiwgcGR1LT5wZHUpOwoK
-
---===============8367544469068375051==--
+--===============7314565309576788842==--
 
