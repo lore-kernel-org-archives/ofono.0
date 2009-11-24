@@ -1,47 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============0416472782807397634=="
+Content-Type: multipart/mixed; boundary="===============3098102133878968322=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: First release with GPRS support
-Date: Tue, 24 Nov 2009 01:33:40 +0100
-Message-ID: <1259022820.2967.20.camel@violet>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: oFono running on new Freerunner distribution
+Date: Mon, 23 Nov 2009 19:58:50 -0600
+Message-ID: <200911231958.51455.denkenz@gmail.com>
+In-Reply-To: <200911231505.18505.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0416472782807397634==
+--===============3098102133878968322==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello everyone,
+> This seems to be a peculiarity of the Calypso modem.  When using ATD on an
+> uninitialized port the ATD returns immediately.  This means that
+> dialing/alerting calls can be hung up.  However, we use CPI indications a=
+nd
+> for some reason the ATD behavior changes when this is used.  ATD now only
+> returns when a call connects, which means we can't hangup dialing/alerting
+> calls, as you point out.  There are a couple of solutions we can try, stay
+> tuned.
 
-I just tagged, pushed and uploaded 0.11 release of oFono. Besides the
-usual bug fixes in various areas, this comes now with GPRS support. If
-you happen to have a Ericsson MBM or Option HSO based modem, then you
-under lucky ones who can try GPRS support.
+I pushed an experimental fix.  Let me know if you can now hangup alerting =
 
-To configure your Primary GPRS Context, you can use the create-context
-script from within the test directory:
+calls.  It did not make it into release 0.11 though.
 
-	create-context <apn>
+Regards,
+-Denis
 
-You just have to give it the APN from your GPRS network settings. And
-then list-contexts will show you the configured context. A context needs
-to only configured once by SIM card. It will be stored on a per SIM card
-basis and restored after restart.
-
-To activate or deactivate the actual connect, activate-context and/or
-deactivate-context can be used. On success just call list-contexts again
-and you will see your IP settings.
-
-The integration of oFono GPRS support for ConnMan is work in progress
-and we hope to finish that pretty soon. So the next ConnMan release
-should be able to talk to oFono for data connections.
-
-Regards
-
-Marcel
-
-
-
---===============0416472782807397634==--
+--===============3098102133878968322==--
 
