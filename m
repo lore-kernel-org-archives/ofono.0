@@ -1,171 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============1033415964999288491=="
+Content-Type: multipart/mixed; boundary="===============0268556158665424646=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: RE: Patch on unsupported AT command
-Date: Wed, 25 Nov 2009 00:01:12 +0800
-Message-ID: <38D9F46DFF92C54980D2F2C1E8EE313001B4CCC4C4@pdsmsx503.ccr.corp.intel.com>
-In-Reply-To: <1258957264.2993.12.camel@violet>
+Date: Tue, 24 Nov 2009 18:07:50 +0100
+Message-ID: <1259082470.2967.34.camel@violet>
+In-Reply-To: <38D9F46DFF92C54980D2F2C1E8EE313001B4CCC4C4@pdsmsx503.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1033415964999288491==
+--===============0268556158665424646==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Yang,
+
+> >Maybe it is too early in the morning to do code review, but this should
+> >be doing the same, but be a lot simpler to read ;)
+> =
+
+> You're absolutely right. In this way, the code is more readable. Please r=
+eview again. =
 
 
->-----Original Message-----
->From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf Of
->Marcel Holtmann
->Sent: Monday, November 23, 2009 2:21 PM
->To: ofono(a)ofono.org
->Subject: RE: Patch on unsupported AT command
->
->Hi Yang,
->
->looks good so far, but ...
->
->> +static gboolean check_terminator(struct terminator_info *info, char
->> *line)
->> +{
->> +       if ((info->len =3D=3D -1 && !strcmp(line, info->terminator)) ||
->> +               (info->len > 0 && !strncmp(line, info->terminator,
->> info->len)))
->> +               return TRUE;
->> +       else
->> +               return FALSE;
->> +}
->> +
->
->This is first of all violating the coding style with the indentation on
->the second line of the if, but it is also way too complicated.
->
->	if (info->len =3D=3D -1 && !strcmp(line, info->terminator)
->		return TRUE;
->
->	if (info->len > 0 && !strncmp(line, info->terminator, ...))
->		return TRUE;
->
->	return FALSE;
->
->Maybe it is too early in the morning to do code review, but this should
->be doing the same, but be a lot simpler to read ;)
+both patches have been applied. Thanks.
 
-You're absolutely right. In this way, the code is more readable. Please rev=
-iew again. =
+Regards
+
+Marcel
 
 
 
->
->Regards
->
->Marcel
->
->
->_______________________________________________
->ofono mailing list
->ofono(a)ofono.org
->http://lists.ofono.org/listinfo/ofono
-
---===============1033415964999288491==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Framework-to-support-non-standard-terminator.patch"
-
-RnJvbSA3ODMyYmQ4N2JlZWQzZGIxOTBiZWNjNzFjYTE0Nzc2MzI4ZDY3OTEwIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogVHVl
-LCAyNCBOb3YgMjAwOSAyMzo1NTo0NSArMDgwMApTdWJqZWN0OiBbUEFUQ0ggMS8yXSBGcmFtZXdv
-cmsgdG8gc3VwcG9ydCBub24tc3RhbmRhcmQgdGVybWluYXRvcgoKLS0tCiBnYXRjaGF0L2dhdGNo
-YXQuYyB8ICAgNTkgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKyst
-LS0tLS0tLS0KIGdhdGNoYXQvZ2F0Y2hhdC5oIHwgICAgMyArKwogMiBmaWxlcyBjaGFuZ2VkLCA1
-MiBpbnNlcnRpb25zKCspLCAxMCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9nYXRjaGF0L2dh
-dGNoYXQuYyBiL2dhdGNoYXQvZ2F0Y2hhdC5jCmluZGV4IDMyMDE1MGEuLjZlMTU4YjMgMTAwNjQ0
-Ci0tLSBhL2dhdGNoYXQvZ2F0Y2hhdC5jCisrKyBiL2dhdGNoYXQvZ2F0Y2hhdC5jCkBAIC04OCw2
-ICs4OCwxMyBAQCBzdHJ1Y3QgX0dBdENoYXQgewogCUdUaW1lciAqd2FrZXVwX3RpbWVyOwkJCS8q
-IEtlZXAgdHJhY2sgb2YgZWxhcHNlZCB0aW1lICovCiAJR0F0U3ludGF4ICpzeW50YXg7CiAJZ2Jv
-b2xlYW4gZGVzdHJveWVkOwkJCS8qIFJlLWVudHJhbmN5IGd1YXJkICovCisJR1NMaXN0ICp0ZXJt
-aW5hdG9yX2xpc3Q7CQkvKiBOb24tc3RhbmRhcmQgdGVybWluYXRvciAqLworfTsKKworc3RydWN0
-IHRlcm1pbmF0b3JfaW5mbyB7CisJY2hhciAqdGVybWluYXRvcjsKKwlpbnQgbGVuOworCWdib29s
-ZWFuIHN1Y2Nlc3M7CiB9OwogCiBzdGF0aWMgZ2ludCBhdF9ub3RpZnlfbm9kZV9jb21wYXJlX2J5
-X2lkKGdjb25zdHBvaW50ZXIgYSwgZ2NvbnN0cG9pbnRlciBiKQpAQCAtMjA0LDYgKzIxMSwxNCBA
-QCBzdGF0aWMgdm9pZCBhdF9jb21tYW5kX2Rlc3Ryb3koc3RydWN0IGF0X2NvbW1hbmQgKmNtZCkK
-IAlnX2ZyZWUoY21kKTsKIH0KIAorc3RhdGljIHZvaWQgZnJlZV90ZXJtaW5hdG9yKHN0cnVjdCB0
-ZXJtaW5hdG9yX2luZm8gKmluZm8pCit7CisJZ19mcmVlKGluZm8tPnRlcm1pbmF0b3IpOworCWlu
-Zm8tPnRlcm1pbmF0b3IgPSBOVUxMOworCWdfZnJlZShpbmZvKTsKKwlpbmZvID0gTlVMTDsKK30K
-Kwogc3RhdGljIHZvaWQgZ19hdF9jaGF0X2NsZWFudXAoR0F0Q2hhdCAqY2hhdCkKIHsKIAlzdHJ1
-Y3QgYXRfY29tbWFuZCAqYzsKQEAgLTI1MSw2ICsyNjYsMTMgQEAgc3RhdGljIHZvaWQgZ19hdF9j
-aGF0X2NsZWFudXAoR0F0Q2hhdCAqY2hhdCkKIAljaGF0LT5zeW50YXggPSBOVUxMOwogCiAJY2hh
-dC0+Y2hhbm5lbCA9IE5VTEw7CisKKwlpZiAoY2hhdC0+dGVybWluYXRvcl9saXN0KSB7CisJCWdf
-c2xpc3RfZm9yZWFjaChjaGF0LT50ZXJtaW5hdG9yX2xpc3QsCisJCQkJCShHRnVuYylmcmVlX3Rl
-cm1pbmF0b3IsIE5VTEwpOworCQlnX3NsaXN0X2ZyZWUoY2hhdC0+dGVybWluYXRvcl9saXN0KTsK
-KwkJY2hhdC0+dGVybWluYXRvcl9saXN0ID0gTlVMTDsKKwl9CiB9CiAKIHN0YXRpYyB2b2lkIHJl
-YWRfd2F0Y2hlcl9kZXN0cm95X25vdGlmeShHQXRDaGF0ICpjaGF0KQpAQCAtMzU5LDEyICszODEs
-NiBAQCBzdGF0aWMgdm9pZCBnX2F0X2NoYXRfZmluaXNoX2NvbW1hbmQoR0F0Q2hhdCAqcCwgZ2Jv
-b2xlYW4gb2ssCiAJYXRfY29tbWFuZF9kZXN0cm95KGNtZCk7CiB9CiAKLXN0cnVjdCB0ZXJtaW5h
-dG9yX2luZm8gewotCWNvbnN0IGNoYXIgKnRlcm1pbmF0b3I7Ci0JaW50IGxlbjsKLQlnYm9vbGVh
-biBzdWNjZXNzOwotfTsKLQogc3RhdGljIHN0cnVjdCB0ZXJtaW5hdG9yX2luZm8gdGVybWluYXRv
-cl90YWJsZVtdID0gewogCXsgIk9LIiwgLTEsIFRSVUUgfSwKIAl7ICJFUlJPUiIsIC0xLCBGQUxT
-RSB9LApAQCAtMzc4LDYgKzM5NCwyNyBAQCBzdGF0aWMgc3RydWN0IHRlcm1pbmF0b3JfaW5mbyB0
-ZXJtaW5hdG9yX3RhYmxlW10gPSB7CiAJeyAiK0VYVCBFUlJPUjoiLCAxMSwgRkFMU0UgfQogfTsK
-IAordm9pZCBnX2F0X2NoYXRfYWRkX3Rlcm1pbmF0b3IoR0F0Q2hhdCAqY2hhdCwgY2hhciAqdGVy
-bWluYXRvciwKKwkJCQkJaW50IGxlbiwgZ2Jvb2xlYW4gc3VjY2VzcykKK3sKKwlzdHJ1Y3QgdGVy
-bWluYXRvcl9pbmZvICppbmZvID0gZ19uZXcwKHN0cnVjdCB0ZXJtaW5hdG9yX2luZm8sIDEpOwor
-CWluZm8tPnRlcm1pbmF0b3IgPSBnX3N0cmR1cCh0ZXJtaW5hdG9yKTsKKwlpbmZvLT5sZW4gPSBs
-ZW47CisJaW5mby0+c3VjY2VzcyA9IHN1Y2Nlc3M7CisJY2hhdC0+dGVybWluYXRvcl9saXN0ID0g
-Z19zbGlzdF9wcmVwZW5kKGNoYXQtPnRlcm1pbmF0b3JfbGlzdCwgaW5mbyk7Cit9CisKK3N0YXRp
-YyBnYm9vbGVhbiBjaGVja190ZXJtaW5hdG9yKHN0cnVjdCB0ZXJtaW5hdG9yX2luZm8gKmluZm8s
-IGNoYXIgKmxpbmUpCit7CisJaWYgKGluZm8tPmxlbiA9PSAtMSAmJiAhc3RyY21wKGxpbmUsIGlu
-Zm8tPnRlcm1pbmF0b3IpKQorCQlyZXR1cm4gVFJVRTsKKworCWlmIChpbmZvLT5sZW4gPiAwICYm
-ICFzdHJuY21wKGxpbmUsIGluZm8tPnRlcm1pbmF0b3IsIGluZm8tPmxlbikpCisJCXJldHVybiBU
-UlVFOworCisJcmV0dXJuIEZBTFNFOworfQorCiBzdGF0aWMgZ2Jvb2xlYW4gZ19hdF9jaGF0X2hh
-bmRsZV9jb21tYW5kX3Jlc3BvbnNlKEdBdENoYXQgKnAsCiAJCQkJCQkJc3RydWN0IGF0X2NvbW1h
-bmQgKmNtZCwKIAkJCQkJCQljaGFyICpsaW5lKQpAQCAtMzg1LDE3ICs0MjIsMTkgQEAgc3RhdGlj
-IGdib29sZWFuIGdfYXRfY2hhdF9oYW5kbGVfY29tbWFuZF9yZXNwb25zZShHQXRDaGF0ICpwLAog
-CWludCBpOwogCWludCBzaXplID0gc2l6ZW9mKHRlcm1pbmF0b3JfdGFibGUpIC8gc2l6ZW9mKHN0
-cnVjdCB0ZXJtaW5hdG9yX2luZm8pOwogCWludCBoaW50OworCUdTTGlzdCAqbDsKIAogCWZvciAo
-aSA9IDA7IGkgPCBzaXplOyBpKyspIHsKIAkJc3RydWN0IHRlcm1pbmF0b3JfaW5mbyAqaW5mbyA9
-ICZ0ZXJtaW5hdG9yX3RhYmxlW2ldOwotCi0JCWlmIChpbmZvLT5sZW4gPT0gLTEgJiYgIXN0cmNt
-cChsaW5lLCBpbmZvLT50ZXJtaW5hdG9yKSkgeworCQlpZiAoY2hlY2tfdGVybWluYXRvcihpbmZv
-LCBsaW5lKSkgewogCQkJZ19hdF9jaGF0X2ZpbmlzaF9jb21tYW5kKHAsIGluZm8tPnN1Y2Nlc3Ms
-IGxpbmUpOwogCQkJcmV0dXJuIFRSVUU7CiAJCX0KKwl9CiAKLQkJaWYgKGluZm8tPmxlbiA+IDAg
-JiYKLQkJCSFzdHJuY21wKGxpbmUsIGluZm8tPnRlcm1pbmF0b3IsIGluZm8tPmxlbikpIHsKKwlm
-b3IgKGwgPSBwLT50ZXJtaW5hdG9yX2xpc3Q7IGw7IGwgPSBsLT5uZXh0KSB7CisJCXN0cnVjdCB0
-ZXJtaW5hdG9yX2luZm8gKmluZm8gPSBsLT5kYXRhOworCQlpZiAoY2hlY2tfdGVybWluYXRvcihp
-bmZvLCBsaW5lKSkgewogCQkJZ19hdF9jaGF0X2ZpbmlzaF9jb21tYW5kKHAsIGluZm8tPnN1Y2Nl
-c3MsIGxpbmUpOwogCQkJcmV0dXJuIFRSVUU7CiAJCX0KZGlmZiAtLWdpdCBhL2dhdGNoYXQvZ2F0
-Y2hhdC5oIGIvZ2F0Y2hhdC9nYXRjaGF0LmgKaW5kZXggZmU1Yjk3Yi4uMjQ5YzhjZiAxMDA2NDQK
-LS0tIGEvZ2F0Y2hhdC9nYXRjaGF0LmgKKysrIGIvZ2F0Y2hhdC9nYXRjaGF0LmgKQEAgLTEyOCw2
-ICsxMjgsOSBAQCBnYm9vbGVhbiBnX2F0X2NoYXRfdW5yZWdpc3RlcihHQXRDaGF0ICpjaGF0LCBn
-dWludCBpZCk7CiBnYm9vbGVhbiBnX2F0X2NoYXRfc2V0X3dha2V1cF9jb21tYW5kKEdBdENoYXQg
-KmNoYXQsIGNvbnN0IGNoYXIgKmNtZCwKIAkJCQkJZ3VpbnQgdGltZW91dCwgZ3VpbnQgbXNlYyk7
-CiAKK3ZvaWQgZ19hdF9jaGF0X2FkZF90ZXJtaW5hdG9yKEdBdENoYXQgKmNoYXQsIGNoYXIgKnRl
-cm1pbmF0b3IsCisJCQkJaW50IGxlbiwgZ2Jvb2xlYW4gc3VjY2Vzcyk7CisKIAogI2lmZGVmIF9f
-Y3BsdXNwbHVzCiB9Ci0tIAoxLjYuNS4yCgo=
-
---===============1033415964999288491==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-Support-Huawei-specific-terminator.patch"
-
-RnJvbSA4NzgzOTIxNDlkMjRmYzBkMWJkNTk2Y2NjYTUxZjE3M2NmMDczYzAyIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogVHVl
-LCAyNCBOb3YgMjAwOSAyMzo1NjowNSArMDgwMApTdWJqZWN0OiBbUEFUQ0ggMi8yXSBTdXBwb3J0
-IEh1YXdlaSBzcGVjaWZpYyB0ZXJtaW5hdG9yCgotLS0KIHBsdWdpbnMvaHVhd2VpLmMgfCAgICAx
-ICsKIDEgZmlsZXMgY2hhbmdlZCwgMSBpbnNlcnRpb25zKCspLCAwIGRlbGV0aW9ucygtKQoKZGlm
-ZiAtLWdpdCBhL3BsdWdpbnMvaHVhd2VpLmMgYi9wbHVnaW5zL2h1YXdlaS5jCmluZGV4IDA4ZjBl
-MDEuLmU4M2Y5YzEgMTAwNjQ0Ci0tLSBhL3BsdWdpbnMvaHVhd2VpLmMKKysrIGIvcGx1Z2lucy9o
-dWF3ZWkuYwpAQCAtMTA3LDYgKzEwNyw3IEBAIHN0YXRpYyBpbnQgaHVhd2VpX2VuYWJsZShzdHJ1
-Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogCiAJc3ludGF4ID0gZ19hdF9zeW50YXhfbmV3X2dzbXYx
-KCk7CiAJZGF0YS0+Y2hhdCA9IGdfYXRfY2hhdF9uZXcoY2hhbm5lbCwgc3ludGF4KTsKKwlnX2F0
-X2NoYXRfYWRkX3Rlcm1pbmF0b3IoZGF0YS0+Y2hhdCwgIkNPTU1BTkQgTk9UIFNVUFBPUlQiLCAt
-MSwgRkFMU0UpOwogCWdfYXRfc3ludGF4X3VucmVmKHN5bnRheCk7CiAJZ19pb19jaGFubmVsX3Vu
-cmVmKGNoYW5uZWwpOwogCi0tIAoxLjYuNS4yCgo=
-
---===============1033415964999288491==--
+--===============0268556158665424646==--
 
