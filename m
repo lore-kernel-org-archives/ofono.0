@@ -1,33 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============3098102133878968322=="
+Content-Type: multipart/mixed; boundary="===============8367544469068375051=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: oFono running on new Freerunner distribution
-Date: Mon, 23 Nov 2009 19:58:50 -0600
-Message-ID: <200911231958.51455.denkenz@gmail.com>
-In-Reply-To: <200911231505.18505.denkenz@gmail.com>
+From: Li, Zhigang <zhigang.li@intel.com>
+Subject: patch for more segments of sms
+Date: Tue, 24 Nov 2009 11:04:02 +0800
+Message-ID: <B94C62E7C2870743865418621F040C13020944A46F@pdsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3098102133878968322==
+--===============8367544469068375051==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> This seems to be a peculiarity of the Calypso modem.  When using ATD on an
-> uninitialized port the ATD returns immediately.  This means that
-> dialing/alerting calls can be hung up.  However, we use CPI indications a=
-nd
-> for some reason the ATD behavior changes when this is used.  ATD now only
-> returns when a call connects, which means we can't hangup dialing/alerting
-> calls, as you point out.  There are a couple of solutions we can try, stay
-> tuned.
+Hi =
 
-I pushed an experimental fix.  Let me know if you can now hangup alerting =
+Please review this patch which fixed more segments of sms issue.
 
-calls.  It did not make it into release 0.11 though.
+Also you can find the bug detail information at http://bugzilla.moblin.org/=
+show_bug.cgi?id=3D8157
+Also thanks Yang great help =
 
-Regards,
--Denis
 
---===============3098102133878968322==--
+Thanks
+Zhigang
+
+
+--===============8367544469068375051==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="patch_sms.obj"
+
+ZGlmZiAtLWdpdCBhL3NyYy9zbXMuYyBiL3NyYy9zbXMuYwppbmRleCBkZGYxNTIzLi5iMzdmMTYx
+IDEwMDY0NAotLS0gYS9zcmMvc21zLmMKKysrIGIvc3JjL3Ntcy5jCkBAIC0zODgsNyArMzg4LDcg
+QEAgc3RhdGljIHN0cnVjdCB0eF9xdWV1ZV9lbnRyeSAqY3JlYXRlX3R4X3F1ZXVlX2VudHJ5KEdT
+TGlzdCAqbXNnX2xpc3QpCiAgICAgICAgZW50cnktPnBkdXMgPSBnX25ldzAoc3RydWN0IHBlbmRp
+bmdfcGR1LCBlbnRyeS0+bnVtX3BkdXMpOwogCiAgICAgICAgZm9yIChsID0gbXNnX2xpc3Q7IGw7
+IGwgPSBsLT5uZXh0KSB7Ci0gICAgICAgICAgICAgICBzdHJ1Y3QgcGVuZGluZ19wZHUgKnBkdSA9
+ICZlbnRyeS0+cGR1c1tpXTsKKyAgICAgICAgICAgICAgIHN0cnVjdCBwZW5kaW5nX3BkdSAqcGR1
+ID0gJmVudHJ5LT5wZHVzW2krK107CiAgICAgICAgICAgICAgICBzdHJ1Y3Qgc21zICpzID0gbC0+
+ZGF0YTsKIAogICAgICAgICAgICAgICAgc21zX2VuY29kZShzLCAmcGR1LT5wZHVfbGVuLCAmcGR1
+LT50cGR1X2xlbiwgcGR1LT5wZHUpOwoK
+
+--===============8367544469068375051==--
 
