@@ -1,35 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0268556158665424646=="
+Content-Type: multipart/mixed; boundary="===============4715240832055855960=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: Patch on unsupported AT command
-Date: Tue, 24 Nov 2009 18:07:50 +0100
-Message-ID: <1259082470.2967.34.camel@violet>
-In-Reply-To: <38D9F46DFF92C54980D2F2C1E8EE313001B4CCC4C4@pdsmsx503.ccr.corp.intel.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH] Fix: Add check for register_auto method
+Date: Wed, 25 Nov 2009 13:43:27 +0800
+Message-ID: <1259127807-19089-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0268556158665424646==
+--===============4715240832055855960==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Add check for register_auto method to avoid crash. HFP backend
+does not provide implementation for register_auto.
+---
+ src/network.c |    7 +++++--
+ 1 files changed, 5 insertions(+), 2 deletions(-)
 
-> >Maybe it is too early in the morning to do code review, but this should
-> >be doing the same, but be a lot simpler to read ;)
-> =
+diff --git a/src/network.c b/src/network.c
+index 8f99490..24cb911 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -1305,8 +1305,11 @@ static void init_registration_status(const struct of=
+ono_error *error,
+ 	if (netreg->mode =3D=3D NETWORK_REGISTRATION_MODE_AUTO &&
+ 		(status =3D=3D NETWORK_REGISTRATION_STATUS_NOT_REGISTERED ||
+ 			status =3D=3D NETWORK_REGISTRATION_STATUS_DENIED ||
+-			status =3D=3D NETWORK_REGISTRATION_STATUS_UNKNOWN))
+-		netreg->driver->register_auto(netreg, init_register, netreg);
++			status =3D=3D NETWORK_REGISTRATION_STATUS_UNKNOWN)) {
++		if (netreg->driver->register_auto)
++			netreg->driver->register_auto(netreg, init_register,
++					netreg);
++	}
+ }
+ =
 
-> You're absolutely right. In this way, the code is more readable. Please r=
-eview again. =
+ void ofono_netreg_strength_notify(struct ofono_netreg *netreg, int strengt=
+h)
+-- =
+
+1.6.2.5
 
 
-both patches have been applied. Thanks.
-
-Regards
-
-Marcel
-
-
-
---===============0268556158665424646==--
+--===============4715240832055855960==--
 
