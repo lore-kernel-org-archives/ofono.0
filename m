@@ -1,30 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============4977003288115080808=="
+Content-Type: multipart/mixed; boundary="===============0524379598865209073=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] Fix: Change order of CMER and CIND in SLC connection
-Date: Tue, 24 Nov 2009 20:49:27 -0600
-Message-ID: <200911242049.28736.denkenz@gmail.com>
-In-Reply-To: <1259128036-19125-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [PATCH 2/2] Fix: Move CHLD from voicecall driver to plugin
+Date: Tue, 24 Nov 2009 20:49:52 -0600
+Message-ID: <200911242049.52591.denkenz@gmail.com>
+In-Reply-To: <1259128123-19161-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4977003288115080808==
+--===============0524379598865209073==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Zhenhua,
 
-> These two patches fix AT command order issue during service level
-> connection to comply with HFP v1.5 spec.
+> The second patch is to move CHLD=3D? from voicecall.c to plugin.
 >
-> The first patch is to change order from CIND=3D?, CMER, CIND? to
-> CIND=3D?, CIND?, CMER.
+> According HFP v1.5 spec, AT+CHLD=3D? should be a part of SLC
+> connection. So we should not do it after SLC connection is
+> created.
 
 Patch has been applied.  Thanks.
 
 Regards,
 -Denis
 
---===============4977003288115080808==--
+--===============0524379598865209073==--
 
