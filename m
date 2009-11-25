@@ -1,30 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============0524379598865209073=="
+Content-Type: multipart/mixed; boundary="===============8059033818243010332=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] Fix: Move CHLD from voicecall driver to plugin
-Date: Tue, 24 Nov 2009 20:49:52 -0600
-Message-ID: <200911242049.52591.denkenz@gmail.com>
-In-Reply-To: <1259128123-19161-1-git-send-email-zhenhua.zhang@intel.com>
+From: Marko Saukko <marko.saukko@gmail.com>
+Subject: [PATCH] Added udev rules for Option GI0201 and Option GTM382 modems.
+Date: Wed, 25 Nov 2009 09:38:25 +0200
+Message-ID: <4B0CDEF1.3030907@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0524379598865209073==
+--===============8059033818243010332==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+---
+ plugins/ofono.rules |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-> The second patch is to move CHLD=3D? from voicecall.c to plugin.
->
-> According HFP v1.5 spec, AT+CHLD=3D? should be a part of SLC
-> connection. So we should not do it after SLC connection is
-> created.
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index ca00673..3db0cf4 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -11,8 +11,10 @@ ATTRS{idVendor}=3D=3D"12d1", ENV{OFONO_DRIVER}=3D"huawei"
+ ATTRS{idVendor}=3D=3D"1410", ENV{OFONO_DRIVER}=3D"novatel"
 
-Patch has been applied.  Thanks.
+ # Option Globetrotter
++ATTRS{idVendor}=3D=3D"0af0", ATTRS{idProduct}=3D=3D"6911", ENV{OFONO_DRIVE=
+R}=3D"hso"
+ ATTRS{idVendor}=3D=3D"0af0", ATTRS{idProduct}=3D=3D"6971", ENV{OFONO_DRIVE=
+R}=3D"hso"
+ ATTRS{idVendor}=3D=3D"0af0", ATTRS{idProduct}=3D=3D"7401", ENV{OFONO_DRIVE=
+R}=3D"hso"
++ATTRS{idVendor}=3D=3D"0af0", ATTRS{idProduct}=3D=3D"7601", ENV{OFONO_DRIVE=
+R}=3D"hso"
 
-Regards,
--Denis
+ # Ericsson F3507g
+ ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"1900", ENV{OFONO_DRIVE=
+R}=3D"mbm"
+--
+1.6.3.3
 
---===============0524379598865209073==--
+--===============8059033818243010332==--
 
