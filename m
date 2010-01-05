@@ -1,57 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============3206786110787144053=="
+Content-Type: multipart/mixed; boundary="===============1060746626579571681=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: oFono running on new Freerunner distribution
-Date: Thu, 26 Nov 2009 08:16:49 -0600
-Message-ID: <200911260816.49670.denkenz@gmail.com>
-In-Reply-To: <4B0FFF70.1090401@djdas.net>
+From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
+Subject: [PATCH] Fix set default baud rate to 115200
+Date: Tue, 05 Jan 2010 16:39:38 +0800
+Message-ID: <8B81FACE836F9248894A7844CC0BA814176735A7E6@shzsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3206786110787144053==
+--===============1060746626579571681==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dario,
+Hi,
 
-> I recompiled from the git and the situation is the same as before;
-> attached are two archives, each containing two log files, one made by
-> oFono with the options above, the second is the console output of the
-> "dbus-monitor --system" command (in which, at the end of file, I pasted
+I found N900 could not be powered on by atgen driver due to baud rate probl=
+em.
+If I add 'Baud=3D115200' into modem.conf, everything is fine. In gatchat/ga=
+ttty.c,
+the default baud rate is B0 which looks not correct, so I wonder whether we
+should set the default baud rate to some values like minicom does.
 
-Please make sure you restart oFono when setting OFONO_AT_DEBUG.  The =
-
-environment variable is checked only when the modem is created, which is =
-
-usually startup in the case of modem.conf ones.  This will give much more =
-
-output, including every command sent and received from the modem.
-
-Please redo the logs with the environment variable set before ofono is =
-
-started.
-
-> the command lines I used to do the tests);  the first archive
-> (call_answer_hangup*) is a simple test call using one of my provider
-> service numbers, I simply called, they answered and I hangup the call,
-> after this, as you can see, I was not able to do another call (I did my
-> previous tests with my phone application and I didn't notice the error
-> given by oFono, sorry!); the second archive (call_hanguptry_remotedisc*)
-> is a call to another phone (I masked the number with xxxx for privacy
-> purposes), tried to hangup but wasn't able to and asked the other party
-> to hangup.
-
-Ok, you were hitting a bug that Zhenhua just caught.  I pushed out his fix.=
-  =
-
-I'd be interested in first seeing whether dial -> alerting -> hangup now wo=
-rks =
-
-on a freshly booted oFono instance.
+My proposed fix was attached.
 
 Regards,
--Denis
+Zhenhua
+=20
 
---===============3206786110787144053==--
+--===============1060746626579571681==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Fix-set-default-baud-rate-to-115200.patch"
+
+RnJvbSBiMmIyYjI2YTg1ZjkxNjVkZjU4MmRjYzhjMzMyZmMwMTkxYTI5ZDgwIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBaaGVuaHVhIFpoYW5nIDx6aGVuaHVhLnpoYW5nQGludGVsLmNv
+bT4KRGF0ZTogVHVlLCA1IEphbiAyMDEwIDE2OjIzOjA4ICswODAwClN1YmplY3Q6IFtQQVRDSF0g
+Rml4IHNldCBkZWZhdWx0IGJhdWQgcmF0ZSB0byAxMTUyMDAKCi0tLQogZ2F0Y2hhdC9nYXR0dHku
+YyB8ICAgIDIgKysKIDEgZmlsZXMgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspLCAwIGRlbGV0aW9u
+cygtKQoKZGlmZiAtLWdpdCBhL2dhdGNoYXQvZ2F0dHR5LmMgYi9nYXRjaGF0L2dhdHR0eS5jCmlu
+ZGV4IDAyY2EzODkuLjk0ZWMzN2YgMTAwNjQ0Ci0tLSBhL2dhdGNoYXQvZ2F0dHR5LmMKKysrIGIv
+Z2F0Y2hhdC9nYXR0dHkuYwpAQCAtMTk4LDYgKzE5OCw4IEBAIHN0YXRpYyBpbnQgb3Blbl9kZXZp
+Y2UoY29uc3QgY2hhciAqdHR5LCBHSGFzaFRhYmxlICpvcHRpb25zKQogCW1lbXNldCgmdGksIDAs
+IHNpemVvZih0aSkpOwogCWNmbWFrZXJhdygmdGkpOwogCisJc2V0X2JhdWQoIjExNTIwMCIsICZ0
+aSk7CisKIAlpZiAob3B0aW9ucykgewogCQlHSGFzaFRhYmxlSXRlciBpdGVyOwogCQljb25zdCBj
+aGFyICprZXk7Ci0tIAoxLjYuMy4zCgo=
+
+--===============1060746626579571681==--
 
