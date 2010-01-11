@@ -1,367 +1,470 @@
-Content-Type: multipart/mixed; boundary="===============2998938212732369254=="
+Content-Type: multipart/mixed; boundary="===============3394502675016532758=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 3/4] Add AT command parsing support and interface
-Date: Mon, 11 Jan 2010 18:53:49 +0800
-Message-ID: <1263207230-22036-3-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1263207230-22036-2-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 4/4] Add test-server test application for GAtServer
+Date: Mon, 11 Jan 2010 18:53:50 +0800
+Message-ID: <1263207230-22036-4-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1263207230-22036-3-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2998938212732369254==
+--===============3394502675016532758==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add parsing support for server supported AT commands. Also add
-APIs to add/remove notification functions.
+Add test-server application to showcase how to use GAtServer. It
+supports TTY, tcp, unix socket to talk with client application.
 ---
- gatchat/gatserver.c |  225 +++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- gatchat/gatserver.h |   23 +++++
- 2 files changed, 247 insertions(+), 1 deletions(-)
+ Makefile.am           |    6 +-
+ gatchat/test-server.c |  402 +++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 407 insertions(+), 1 deletions(-)
+ create mode 100644 gatchat/test-server.c
 
-diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index e861e25..602e509 100644
---- a/gatchat/gatserver.c
-+++ b/gatchat/gatserver.c
-@@ -67,12 +67,24 @@ struct v250_settings {
- 	unsigned int c108;		/* set by &D<val> */
- };
+diff --git a/Makefile.am b/Makefile.am
+index 50dabca..8ab62ca 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -299,12 +299,16 @@ unit_test_idmap_SOURCES =3D unit/test-idmap.c src/idm=
+ap.c
+ unit_test_idmap_LDADD =3D @GLIB_LIBS@
+ unit_objects +=3D $(unit_test_idmap_OBJECTS)
  =
 
-+/* AT command that server supported */
-+struct at_command {
-+	int id;
-+	char *prefix;
-+	gboolean expect_pdu;
-+	GAtServerNotifyFunc notify;
-+	gpointer user_data;
-+	GDestroyNotify destroy_notify;
+-noinst_PROGRAMS +=3D gatchat/gsmdial
++noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/test-server
+ =
+
+ gatchat_gsmdial_SOURCES =3D gatchat/gsmdial.c $(gatchat_sources)
+ =
+
+ gatchat_gsmdial_LDADD =3D @GLIB_LIBS@
+ =
+
++gatchat_test_server_SOURCES =3D gatchat/test-server.c $(gatchat_sources)
++
++gatchat_test_server_LDADD =3D @GLIB_LIBS@ -lutil
++
+ =
+
+ DISTCHECK_CONFIGURE_FLAGS =3D --disable-datafiles
+ =
+
+diff --git a/gatchat/test-server.c b/gatchat/test-server.c
+new file mode 100644
+index 0000000..68ddfc4
+--- /dev/null
++++ b/gatchat/test-server.c
+@@ -0,0 +1,402 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <unistd.h>
++#include <stdio.h>
++#include <getopt.h>
++#include <stdlib.h>
++#include <string.h>
++#include <errno.h>
++#include <sys/socket.h>
++#include <sys/un.h>
++#include <netinet/in.h>
++#include <arpa/inet.h>
++#include <signal.h>
++#include <sys/signalfd.h>
++
++#include <glib.h>
++#include <pty.h>
++
++#include "gatserver.h"
++#include "ringbuffer.h"
++
++#define DEFAULT_TCP_PORT 12346
++#define DEFAULT_SOCK_PATH "./server_sock"
++
++struct sock_server{
++	int server_sock;
++	const char *modem_path;
 +};
 +
- struct _GAtServer {
- 	gint ref_count;				/* Ref count */
- 	struct v250_settings *v250;		/* V.250 command setting */
- 	GIOChannel *server_io;			/* Server IO */
- 	int server_watch;			/* Watch for server IO */
- 	char *modem_path;			/* Emulated modem path */
-+	GHashTable *command_list;		/* Server supported commands */
-+	gint next_command_id;			/* Id for next command */
- 	GAtDisconnectFunc user_disconnect;	/* User disconnect func */
- 	gpointer user_disconnect_data;		/* User disconnect data */
- 	GAtDebugFunc debugf;			/* Debugging output function */
-@@ -128,6 +140,112 @@ static gsize skip_space(const char *buf, gsize pos)
- 	return i;
- }
- =
-
-+static inline gboolean is_at_command_prefix(const char c)
-+{
-+	if (c =3D=3D '&')
-+		return FALSE;
++static GMainLoop *mainloop;
++static GAtServer *server;
++unsigned int server_watch;
 +
-+	return g_ascii_ispunct(c);
++static gboolean server_cleanup()
++{
++	if (server_watch)
++		g_source_remove(server_watch);
++
++	g_at_server_unref(server);
++	server =3D NULL;
++
++	unlink(DEFAULT_SOCK_PATH);
++
++	g_main_loop_quit(mainloop);
++
++	return FALSE;
 +}
 +
-+static gchar *get_at_command_prefix(gchar *command, GAtServerRequestType *=
-type)
++static void server_debug(const char *str, void *data)
 +{
-+	char c =3D g_ascii_toupper(*command);
-+	gchar *prefix;
-+	gchar *equal;
-+	gchar *question;
++	g_print("%s: %s\n", (char *) data, str);
++}
 +
-+	/* Try to match command in ATA, ATD or ATH */
-+	if (c =3D=3D 'A' || c =3D=3D 'D' || c =3D=3D 'H') {
-+		*type =3D G_AT_SERVER_REQUEST_TYPE_ACTION;
++static void add_handler(GAtServer *server)
++{
++	g_at_server_set_debug(server, server_debug, "Server");
++}
 +
-+		prefix =3D g_strdup(command);
-+	} else if (is_at_command_prefix(c)) {
-+		command++;
++static void server_destroy(gpointer user)
++{
++	struct sock_server *data =3D user;
 +
-+		equal =3D strchr(command, '=3D');
-+		question =3D strchr(command, '?');
++	if (data)
++		g_free(data);
++}
 +
-+		/* Try to match AT+XXX=3D?, AT+XXX=3D, AT+XXX? or AT+XXX */
-+		if (equal) {
-+			if (question)
-+				*type =3D G_AT_SERVER_REQUEST_TYPE_SUPPORT;
-+			else
-+				*type =3D G_AT_SERVER_REQUEST_TYPE_SET;
++static GAtServer *create_tty(const char *modem_path)
++{
++	int master, slave;
++	char pty_name[256];
++	GIOChannel *io;
 +
-+			/* It shouldn't happen but we still check it */
-+			if (question !=3D equal + 1)
-+				return G_AT_SERVER_REQUEST_TYPE_NONE;
++	if (!modem_path)
++		return NULL;
 +
-+			prefix =3D g_strndup(command, equal - command);
-+		} else if (question) {
-+			*type =3D G_AT_SERVER_REQUEST_TYPE_QUERY;
++	if (openpty(&master, &slave, pty_name, NULL, NULL) < 0)
++		return NULL;
 +
-+			prefix =3D g_strndup(command, question - command);
-+		} else {
-+			*type =3D G_AT_SERVER_REQUEST_TYPE_ACTION;
++	io =3D g_io_channel_unix_new(master);
 +
-+			prefix =3D g_strdup(command);
++	g_print("new tty is created@%s\n", pty_name);
++
++	server =3D g_at_server_new(io, modem_path);
++
++	if (!server) {
++		g_io_channel_shutdown(io, FALSE, NULL);
++		g_io_channel_unref(io);
++
++		return NULL;
++	}
++
++	add_handler(server);
++
++	return server;
++}
++
++static gboolean on_socket_connected(GIOChannel *chan, GIOCondition cond,
++							gpointer user)
++{
++	struct sockaddr saddr;
++	unsigned int len =3D sizeof(saddr);
++	int fd;
++	GIOChannel *client_io =3D NULL;
++	struct sock_server *data =3D user;
++
++	if (cond !=3D G_IO_IN)
++		goto error;
++
++	fd =3D accept(data->server_sock, &saddr, &len);
++	if (fd =3D=3D -1)
++		goto error;
++
++	client_io =3D g_io_channel_unix_new(fd);
++
++	server =3D g_at_server_new(client_io, data->modem_path);
++
++	if (!server) {
++		g_io_channel_shutdown(client_io, FALSE, NULL);
++		g_io_channel_unref(client_io);
++
++		goto error;
++	}
++
++	add_handler(server);
++
++	return TRUE;
++
++error:
++	if (data)
++		g_free(data);
++
++	return FALSE;
++}
++
++static struct sock_server *socket_common(int sk, struct sockaddr *addr,
++						const char *modem_path)
++{
++	struct sock_server *sock;
++
++	if (bind(sk, addr, sizeof(struct sockaddr)) < 0) {
++		g_print("Can't bind socket: %s (%d)", strerror(errno), errno);
++
++		close(sk);
++
++		return NULL;
++	}
++
++	if (listen(sk, 1) < 0) {
++		g_print("Can't listen on socket: %s (%d)",
++						strerror(errno), errno);
++
++		close(sk);
++
++		return NULL;
++	}
++
++	sock =3D g_try_new0(struct sock_server, 1);
++	if (!sock)
++		return FALSE;
++
++	sock->server_sock =3D sk;
++	sock->modem_path =3D g_strdup(modem_path);
++
++	return sock;
++}
++
++static gboolean create_tcp(const char *modem_path, int port)
++{
++	struct sockaddr_in addr;
++	int sk;
++	struct sock_server *server;
++	GIOChannel *server_io;
++
++	if (!modem_path)
++		return FALSE;
++
++	sk =3D socket(PF_INET, SOCK_STREAM, 0);
++	if (sk < 0) {
++		g_print("Can't create tcp/ip socket: %s (%d)",
++						strerror(errno), errno);
++		return FALSE;
++	}
++
++	memset(&addr, 0, sizeof(addr));
++
++	addr.sin_family =3D AF_INET;
++	addr.sin_addr.s_addr =3D INADDR_ANY;
++	addr.sin_port =3D htons(port);
++
++	server =3D socket_common(sk, (struct sockaddr *) &addr, modem_path);
++	if (!server)
++		return FALSE;
++
++	g_print("new tcp is created at tcp port %d\n", port);
++
++	server_io =3D g_io_channel_unix_new(sk);
++
++	g_io_channel_set_close_on_unref(server_io, TRUE);
++
++	server_watch =3D g_io_add_watch_full(server_io,
++				G_PRIORITY_DEFAULT,
++				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++				on_socket_connected, server, server_destroy);
++
++	g_io_channel_unref(server_io);
++
++	return TRUE;
++}
++
++static gboolean create_unix(const char *modem_path, const char *sock_path)
++{
++	struct sockaddr_un addr;
++	int sk;
++	struct sock_server *server;
++	GIOChannel *server_io;
++
++	if (!modem_path)
++		return FALSE;
++
++	sk =3D socket(AF_UNIX, SOCK_STREAM, 0);
++	if (sk < 0) {
++		g_print("Can't create unix socket: %s (%d)",
++						strerror(errno), errno);
++
++		return FALSE;
++	}
++
++	memset(&addr, 0, sizeof(addr));
++
++	addr.sun_family =3D AF_UNIX;
++	strncpy(addr.sun_path, sock_path, sizeof(addr.sun_path) - 1);
++
++	/* Unlink any existing socket for this session */
++	unlink(addr.sun_path);
++
++	server =3D socket_common(sk, (struct sockaddr *) &addr, modem_path);
++	if (!server)
++		return FALSE;
++
++	g_print("new unix socket is created at %s\n", sock_path);
++
++	server_io =3D g_io_channel_unix_new(sk);
++
++	g_io_channel_set_close_on_unref(server_io, TRUE);
++
++	server_watch =3D g_io_add_watch_full(server_io,
++				G_PRIORITY_DEFAULT,
++				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++				on_socket_connected, server, server_destroy);
++
++	g_io_channel_unref(server_io);
++
++	return TRUE;
++}
++
++static void test_server(int type)
++{
++	switch (type) {
++	case 0:
++		server =3D create_tty("/phonesim1");
++
++		add_handler(server);
++		break;
++	case 1:
++		if (!create_tcp("/phonesim1", DEFAULT_TCP_PORT))
++			exit(-1);
++		break;
++	case 2:
++		if (!create_unix("/phonesim1", DEFAULT_SOCK_PATH))
++			exit(-1);
++		break;
++	}
++}
++
++static gboolean signal_cb(GIOChannel *channel, GIOCondition cond, gpointer=
+ data)
++{
++	int signal_fd =3D GPOINTER_TO_INT(data);
++	struct signalfd_siginfo si;
++	ssize_t res;
++
++	if (cond & (G_IO_NVAL | G_IO_ERR))
++		return FALSE;
++
++	res =3D read(signal_fd, &si, sizeof(si));
++	if (res !=3D sizeof(si))
++		return FALSE;
++
++	switch (si.ssi_signo) {
++	case SIGINT:
++		server_cleanup();
++		break;
++	case SIGTERM:
++		server_cleanup();
++		break;
++	default:
++		break;
++	}
++
++	return TRUE;
++}
++
++static int create_signal_io()
++{
++	sigset_t mask;
++	GIOChannel *signal_io;
++	int signal_fd, signal_source;
++
++	sigemptyset(&mask);
++	sigaddset(&mask, SIGTERM);
++	sigaddset(&mask, SIGINT);
++
++	if (sigprocmask(SIG_BLOCK, &mask, NULL) < 0) {
++		g_error("Can't set signal mask");
++		return 1;
++	}
++
++	signal_fd =3D signalfd(-1, &mask, 0);
++	if (signal_fd < 0) {
++		g_error("Can't create signal filedescriptor");
++		return 1;
++	}
++
++	signal_io =3D g_io_channel_unix_new(signal_fd);
++
++	g_io_channel_set_close_on_unref(signal_io, TRUE);
++
++	signal_source =3D g_io_add_watch(signal_io,
++			G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++			signal_cb, GINT_TO_POINTER(signal_fd));
++
++	g_io_channel_unref(signal_io);
++
++	return signal_source;
++}
++
++static void usage(void)
++{
++	g_print("test-server - AT Server testing\n"
++		"Usage:\n");
++	g_print("\ttest-server [-t type]\n");
++	g_print("Types:\n"
++		"\t0: Pseudo TTY port (default)\n"
++		"\t1: TCP sock at port 12346)\n"
++		"\t2: Unix sock@./server_sock\n");
++}
++
++int main(int argc, char **argv)
++{
++	int opt, signal_source;
++	int type =3D 0;
++
++	while ((opt =3D getopt(argc, argv, "ht:")) !=3D EOF) {
++		switch (opt) {
++		case 't':
++			type =3D atoi(optarg);
++			break;
++		case 'h':
++			usage();
++			exit(1);
++			break;
++		default:
++			break;
 +		}
 +	}
 +
-+	return prefix;
++	test_server(type);
++
++	signal_source =3D create_signal_io();
++
++	mainloop =3D g_main_loop_new(NULL, FALSE);
++
++	g_main_loop_run(mainloop);
++
++	g_main_loop_unref(mainloop);
++
++	g_source_remove(signal_source);
++
++	return 0;
 +}
-+
-+static int parse_at_command(GAtServer *server, char *buf)
-+{
-+	int res =3D G_AT_SERVER_RESULT_ERROR;
-+	GAtServerRequestType type =3D G_AT_SERVER_REQUEST_TYPE_NONE;
-+	gchar t =3D server->v250->s3;
-+	gsize i =3D 0;
-+	gchar *command =3D NULL;
-+	gchar *prefix =3D NULL;
-+	struct at_command *node;
-+
-+	while (buf[i] !=3D t && buf[i] !=3D ';')
-+		i++;
-+
-+	command =3D g_strndup(buf, i);
-+
-+	prefix =3D get_at_command_prefix(command, &type);
-+
-+	if (G_AT_SERVER_REQUEST_TYPE_NONE =3D=3D type)
-+		goto out;
-+
-+	node =3D g_hash_table_lookup(server->command_list, prefix);
-+
-+	if (node && node->notify) {
-+		if (type =3D=3D G_AT_SERVER_REQUEST_TYPE_SUPPORT)
-+			res =3D G_AT_SERVER_RESULT_OK;
-+		else {
-+			GAtResult *result =3D g_try_new0(GAtResult, 1);
-+
-+			if (!result)
-+				goto out;
-+
-+			result->lines =3D g_slist_prepend(NULL, command);
-+			result->final_or_pdu =3D NULL;
-+
-+			res =3D node->notify(type, result, node->user_data);
-+
-+			g_free(result);
-+		}
-+	}
-+
-+	/* Compound command */
-+	if ((res =3D=3D G_AT_SERVER_RESULT_OK) && (buf[i] =3D=3D ';'))
-+		res =3D at_server_parse(server, buf + i);
-+
-+out:
-+	if (prefix)
-+		g_free(prefix);
-+
-+	if (command)
-+		g_free(command);
-+
-+	return res;
-+}
-+
- static int parse_v250_settings(GAtServer *server, char *buf)
- {
- 	int res =3D G_AT_SERVER_RESULT_ERROR;
-@@ -150,7 +268,9 @@ static int at_server_parse(GAtServer *server, char *buf)
- 	if (c =3D=3D ';')
- 		c =3D buf[++i];
- =
-
--	if (g_ascii_isalpha(c) || c =3D=3D '&')
-+	if (is_at_command_prefix(c) || c =3D=3D 'A' || c =3D=3D 'D' || c =3D=3D '=
-H')
-+		res =3D parse_at_command(server, buf + i);
-+	else if (g_ascii_isalpha(c) || c =3D=3D '&')
- 		res =3D parse_v250_settings(server, buf + i);
- 	else if (c =3D=3D v250->s3)
- 		res =3D G_AT_SERVER_RESULT_OK;
-@@ -305,6 +425,8 @@ GAtServer *g_at_server_new(GIOChannel *io, const char *=
-modem_path)
- 	server->v250 =3D v250_settings_create();
- 	server->server_io =3D io;
- 	server->modem_path =3D g_strdup(modem_path);
-+	server->command_list =3D g_hash_table_new(g_str_hash, g_str_equal);
-+	server->next_command_id =3D 1;
- 	server->user_disconnect =3D NULL;
- 	server->user_disconnect_data =3D NULL;
- 	server->debugf =3D NULL;
-@@ -331,6 +453,9 @@ error:
- 	if (server->buf)
- 		ring_buffer_free(server->buf);
- =
-
-+	if (server->command_list)
-+		g_hash_table_destroy(server->command_list);
-+
- 	if (server->modem_path)
- 		g_free(server->modem_path);
- =
-
-@@ -379,6 +504,10 @@ gboolean g_at_server_shutdown(GAtServer *server)
- 	if (server->v250)
- 		g_free(server->v250);
- =
-
-+	g_at_server_remove_all(server);
-+
-+	g_hash_table_destroy(server->command_list);
-+
- 	ring_buffer_free(server->buf);
- 	server->buf =3D NULL;
- =
-
-@@ -426,3 +555,97 @@ gboolean g_at_server_set_debug(GAtServer *server, GAtD=
-ebugFunc func,
- =
-
- 	return TRUE;
- }
-+
-+guint g_at_server_add_command(GAtServer *server, const char *prefix,
-+						gboolean expect_pdu,
-+						GAtServerNotifyFunc notify,
-+						gpointer user_data,
-+						GDestroyNotify destroy_notify)
-+{
-+	struct at_command *node;
-+
-+	if (server =3D=3D NULL || server->command_list =3D=3D NULL)
-+		return 0;
-+
-+	if (notify =3D=3D NULL)
-+		return 0;
-+
-+	if (prefix =3D=3D NULL || strlen(prefix) =3D=3D 0)
-+		return 0;
-+
-+	node =3D g_hash_table_lookup(server->command_list, prefix);
-+
-+	if (node) {
-+		g_hash_table_remove(server->command_list, prefix);
-+
-+		if (node->destroy_notify)
-+			node->destroy_notify(node->user_data);
-+
-+		g_free(node->prefix);
-+
-+		g_free(node);
-+	}
-+
-+	node =3D g_try_new0(struct at_command, 1);
-+
-+	if (!node)
-+		return 0;
-+
-+	node->id =3D server->next_command_id++;
-+	node->prefix =3D g_strdup(prefix);
-+	node->expect_pdu =3D expect_pdu;
-+	node->notify =3D notify;
-+	node->user_data =3D user_data;
-+	node->destroy_notify =3D destroy_notify;
-+
-+	g_hash_table_insert(server->command_list, node->prefix, node);
-+
-+	return node->id;
-+}
-+
-+static gboolean at_server_remove_command(gpointer key, gpointer value,
-+						gpointer user)
-+{
-+	struct at_command *node =3D value;
-+
-+	if (node->destroy_notify)
-+		node->destroy_notify(node->user_data);
-+
-+	g_free(node->prefix);
-+
-+	g_free(node);
-+
-+	return TRUE;
-+}
-+
-+gboolean g_at_server_remove_command(GAtServer *server, char *prefix)
-+{
-+	struct at_command *node;
-+	gpointer key =3D prefix;
-+
-+	if (!server || !server->command_list)
-+		return FALSE;
-+
-+	node =3D g_hash_table_lookup(server->command_list, key);
-+
-+	if (!node)
-+		return FALSE;
-+
-+	g_hash_table_remove(server->command_list, key);
-+
-+	at_server_remove_command(prefix, node, node);
-+
-+	return TRUE;
-+}
-+
-+gboolean g_at_server_remove_all(GAtServer *server)
-+{
-+	if (!server || !server->command_list)
-+		return FALSE;
-+
-+	g_hash_table_foreach_remove(server->command_list,
-+					at_server_remove_command, server);
-+
-+	return TRUE;
-+}
-+
-diff --git a/gatchat/gatserver.h b/gatchat/gatserver.h
-index 39916ec..7b68d8a 100644
---- a/gatchat/gatserver.h
-+++ b/gatchat/gatserver.h
-@@ -45,6 +45,21 @@ enum _GAtServerResultCodes {
- 	G_AT_SERVER_RESULT_CONNECT_EXT,
- };
- =
-
-+enum _GAtServerRequestType {
-+	G_AT_SERVER_REQUEST_TYPE_NONE =3D 0,
-+	G_AT_SERVER_REQUEST_TYPE_SET,
-+	G_AT_SERVER_REQUEST_TYPE_SUPPORT,
-+	G_AT_SERVER_REQUEST_TYPE_QUERY,
-+	G_AT_SERVER_REQUEST_TYPE_ACTION,
-+};
-+
-+typedef enum _GAtServerRequestType GAtServerRequestType;
-+
-+typedef int (*GAtServerNotifyFunc)(GAtServerRequestType type,
-+					GAtResult *result,
-+					gpointer user_data);
-+
-+
- GAtServer *g_at_server_new(GIOChannel *io, const char *modem_path);
- =
-
- GAtServer *g_at_server_ref(GAtServer *server);
-@@ -58,6 +73,14 @@ gboolean g_at_server_set_debug(GAtServer *server,
- 					GAtDebugFunc func,
- 					gpointer user);
- =
-
-+guint g_at_server_add_command(GAtServer *server, const char *prefix,
-+					gboolean expect_pdu,
-+					GAtServerNotifyFunc notify,
-+					gpointer user_data,
-+					GDestroyNotify destroy);
-+gboolean g_at_server_remove_command(GAtServer *server, char *prefix);
-+gboolean g_at_server_remove_all(GAtServer *server);
-+
- #ifdef __cplusplus
- }
- #endif
 -- =
 
 1.6.3.3
 
 
---===============2998938212732369254==--
+--===============3394502675016532758==--
 
