@@ -1,470 +1,136 @@
-Content-Type: multipart/mixed; boundary="===============3394502675016532758=="
+Content-Type: multipart/mixed; boundary="===============3404876308246464172=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 4/4] Add test-server test application for GAtServer
-Date: Mon, 11 Jan 2010 18:53:50 +0800
-Message-ID: <1263207230-22036-4-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1263207230-22036-3-git-send-email-zhenhua.zhang@intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 4/4] Save CellBroadcast Topics list, handle EF-CBMI,
+ EF-CBMIR.
+Date: Mon, 11 Jan 2010 15:38:05 +0100
+Message-ID: <fb249edb1001110638q1f87d5fbq4fb2a800c8b2c1f8@mail.gmail.com>
+In-Reply-To: <200912161319.44919.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3394502675016532758==
+--===============3404876308246464172==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add test-server application to showcase how to use GAtServer. It
-supports TTY, tcp, unix socket to talk with client application.
----
- Makefile.am           |    6 +-
- gatchat/test-server.c |  402 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 407 insertions(+), 1 deletions(-)
- create mode 100644 gatchat/test-server.c
+Hi Denis,
 
-diff --git a/Makefile.am b/Makefile.am
-index 50dabca..8ab62ca 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -299,12 +299,16 @@ unit_test_idmap_SOURCES =3D unit/test-idmap.c src/idm=
-ap.c
- unit_test_idmap_LDADD =3D @GLIB_LIBS@
- unit_objects +=3D $(unit_test_idmap_OBJECTS)
- =
+2009/12/16 Denis Kenzior <denkenz@gmail.com>:
+> Since you took this approach, can we optimize the flow a little bit? =C2=
+=A0You can
+> count on the sim atom (along with the IMSI) always being there before cbs
+> atom, the present code even does this. =C2=A0So we can check right away w=
+hether the
+> topic ranges are set in our settings store. =C2=A0So lets do something li=
+ke:
 
--noinst_PROGRAMS +=3D gatchat/gsmdial
-+noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/test-server
- =
+You're right, here's a new version which skips reading CBMI / CBMIR
+when not necessary, then reads CBMID (which will normally be in cache)
+and then sets powered updating the topics list with contents of CBMID
+and user topics.
 
- gatchat_gsmdial_SOURCES =3D gatchat/gsmdial.c $(gatchat_sources)
- =
+Regards
 
- gatchat_gsmdial_LDADD =3D @GLIB_LIBS@
- =
+--===============3404876308246464172==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Save-CellBroadcast-Topics-list-handle-EF-CBMI-EF-C.patch"
 
-+gatchat_test_server_SOURCES =3D gatchat/test-server.c $(gatchat_sources)
-+
-+gatchat_test_server_LDADD =3D @GLIB_LIBS@ -lutil
-+
- =
+RnJvbSAwZmVjYTgyMzU2NWM5YTAwY2Q2MGE2NDE0MmJjODhiMWE3ZTFiZjIwIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogTW9uLCAxMSBKYW4gMjAxMCAxNzozMDozNSArMDEwMApTdWJqZWN0
+OiBbUEFUQ0hdIFNhdmUgQ2VsbEJyb2FkY2FzdCBUb3BpY3MgbGlzdCwgaGFuZGxlIEVGLUNCTUks
+IEVGLUNCTUlSLgoKVGhlIHR3byBTSU0gZmlsZXMgYXJlIG9ubHkgdXNlZCB0byBib290c3RyYXAg
+dGhlIHRvcGljcyBsaXN0IHZhbHVlCmlmIHRoZXJlJ3Mgbm8gcHJldmlvdXMgdmFsdWUuCi0tLQog
+c3JjL2Nicy5jIHwgICA5OSArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrLS0tLS0tLS0tLS0tLS0tCiAxIGZpbGVzIGNoYW5nZWQsIDc1IGluc2VydGlvbnMoKyks
+IDI0IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9jYnMuYyBiL3NyYy9jYnMuYwppbmRl
+eCAyNmMzMWE5Li5hNDc4ZTNkIDEwMDY0NAotLS0gYS9zcmMvY2JzLmMKKysrIGIvc3JjL2Nicy5j
+CkBAIC0zNDgsNiArMzQ4LDEyIEBAIHN0YXRpYyB2b2lkIGNic19zZXRfdG9waWNzX2NiKGNvbnN0
+IHN0cnVjdCBvZm9ub19lcnJvciAqZXJyb3IsIHZvaWQgKmRhdGEpCiAJCQkJCQlDQlNfTUFOQUdF
+Ul9JTlRFUkZBQ0UsCiAJCQkJCQkiVG9waWNzIiwKIAkJCQkJCURCVVNfVFlQRV9TVFJJTkcsICZ0
+b3BpY3MpOworCisJaWYgKGNicy0+c2V0dGluZ3MpIHsKKwkJZ19rZXlfZmlsZV9zZXRfc3RyaW5n
+KGNicy0+c2V0dGluZ3MsIFNFVFRJTkdTX0dST1VQLAorCQkJCQkiVG9waWNzIiwgdG9waWNzKTsK
+KwkJc3RvcmFnZV9zeW5jKGNicy0+aW1zaSwgU0VUVElOR1NfU1RPUkUsIGNicy0+c2V0dGluZ3Mp
+OworCX0KIAlnX2ZyZWUodG9waWNzKTsKIH0KIApAQCAtNjY5LDYgKzY3NSw1MSBAQCBzdHJ1Y3Qg
+b2Zvbm9fY2JzICpvZm9ub19jYnNfY3JlYXRlKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0sCiAJ
+cmV0dXJuIGNiczsKIH0KIAorc3RhdGljIHZvaWQgY2JzX2dvdF9maWxlX2NvbnRlbnRzKHN0cnVj
+dCBvZm9ub19jYnMgKmNicykKK3sKKwlnYm9vbGVhbiBwb3dlcmVkOworCUdTTGlzdCAqaW5pdGlh
+bF90b3BpY3MgPSBOVUxMOworCWNoYXIgKnRvcGljc19zdHI7CisJR0Vycm9yICplcnJvciA9IE5V
+TEw7CisKKwlpZiAoY2JzLT50b3BpY3MgPT0gTlVMTCkgeworCQlpZiAoY2JzLT5lZmNibWlfY29u
+dGVudHMgIT0gTlVMTCkKKwkJCWluaXRpYWxfdG9waWNzID0gZ19zbGlzdF9jb25jYXQoaW5pdGlh
+bF90b3BpY3MsCisJCQkJCWdfc2xpc3RfY29weShjYnMtPmVmY2JtaV9jb250ZW50cykpOworCisJ
+CWlmIChjYnMtPmVmY2JtaXJfY29udGVudHMgIT0gTlVMTCkKKwkJCWluaXRpYWxfdG9waWNzID0g
+Z19zbGlzdF9jb25jYXQoaW5pdGlhbF90b3BpY3MsCisJCQkJCWdfc2xpc3RfY29weShjYnMtPmVm
+Y2JtaXJfY29udGVudHMpKTsKKworCQljYnMtPnRvcGljcyA9IGNic19vcHRpbWl6ZV9yYW5nZXMo
+aW5pdGlhbF90b3BpY3MpOworCQlnX3NsaXN0X2ZyZWUoaW5pdGlhbF90b3BpY3MpOworCisJCXRv
+cGljc19zdHIgPSBjYnNfdG9waWNfcmFuZ2VzX3RvX3N0cmluZyhjYnMtPnRvcGljcyk7CisJCWdf
+a2V5X2ZpbGVfc2V0X3N0cmluZyhjYnMtPnNldHRpbmdzLCBTRVRUSU5HU19HUk9VUCwKKwkJCQkJ
+IlRvcGljcyIsIHRvcGljc19zdHIpOworCQlnX2ZyZWUodG9waWNzX3N0cik7CisJCXN0b3JhZ2Vf
+c3luYyhjYnMtPmltc2ksIFNFVFRJTkdTX1NUT1JFLCBjYnMtPnNldHRpbmdzKTsKKwl9CisKKwlp
+ZiAoY2JzLT5lZmNibWlfbGVuZ3RoKSB7CisJCWNicy0+ZWZjYm1pX2xlbmd0aCA9IDA7CisJCWdf
+c2xpc3RfZm9yZWFjaChjYnMtPmVmY2JtaV9jb250ZW50cywgKEdGdW5jKSBnX2ZyZWUsIE5VTEwp
+OworCQlnX3NsaXN0X2ZyZWUoY2JzLT5lZmNibWlfY29udGVudHMpOworCQljYnMtPmVmY2JtaV9j
+b250ZW50cyA9IE5VTEw7CisJfQorCisJaWYgKGNicy0+ZWZjYm1pcl9sZW5ndGgpIHsKKwkJY2Jz
+LT5lZmNibWlyX2xlbmd0aCA9IDA7CisJCWdfc2xpc3RfZm9yZWFjaChjYnMtPmVmY2JtaXJfY29u
+dGVudHMsIChHRnVuYykgZ19mcmVlLCBOVUxMKTsKKwkJZ19zbGlzdF9mcmVlKGNicy0+ZWZjYm1p
+cl9jb250ZW50cyk7CisJCWNicy0+ZWZjYm1pcl9jb250ZW50cyA9IE5VTEw7CisJfQorCisJcG93
+ZXJlZCA9IGdfa2V5X2ZpbGVfZ2V0X2Jvb2xlYW4oY2JzLT5zZXR0aW5ncywgU0VUVElOR1NfR1JP
+VVAsCisJCQkJCQkiUG93ZXJlZCIsICZlcnJvcik7CisJY2JzX3NldF9wb3dlcmVkKGNicywgcG93
+ZXJlZCwgTlVMTCk7Cit9CisKIHN0YXRpYyB2b2lkIHNpbV9jYm1pX3JlYWRfY2IoaW50IG9rLCBp
+bnQgbGVuZ3RoLCBpbnQgcmVjb3JkLAogCQkJCWNvbnN0IHVuc2lnbmVkIGNoYXIgKmRhdGEsCiAJ
+CQkJaW50IHJlY29yZF9sZW5ndGgsIHZvaWQgKnVzZXJkYXRhKQpAQCAtNzA4LDE2ICs3NTksOSBA
+QCBzdGF0aWMgdm9pZCBzaW1fY2JtaV9yZWFkX2NiKGludCBvaywgaW50IGxlbmd0aCwgaW50IHJl
+Y29yZCwKIAlpZiAoY2JzLT5lZmNibWlfY29udGVudHMgPT0gTlVMTCkKIAkJcmV0dXJuOwogCi0J
+Y2JzLT5lZmNibWlfY29udGVudHMgPSBnX3NsaXN0X3JldmVyc2UoY2JzLT5lZmNibWlfY29udGVu
+dHMpOwotCiAJc3RyID0gY2JzX3RvcGljX3Jhbmdlc190b19zdHJpbmcoY2JzLT5lZmNibWlfY29u
+dGVudHMpOwogCW9mb25vX2RlYnVnKCJHb3QgY2JtaTogJXMiLCBzdHIpOwogCWdfZnJlZShzdHIp
+OwotCi0JY2JzLT5lZmNibWlfbGVuZ3RoID0gMDsKLQlnX3NsaXN0X2ZvcmVhY2goY2JzLT5lZmNi
+bWlfY29udGVudHMsIChHRnVuYylnX2ZyZWUsIE5VTEwpOwotCWdfc2xpc3RfZnJlZShjYnMtPmVm
+Y2JtaV9jb250ZW50cyk7Ci0JY2JzLT5lZmNibWlfY29udGVudHMgPSBOVUxMOwogfQogCiBzdGF0
+aWMgdm9pZCBzaW1fY2JtaXJfcmVhZF9jYihpbnQgb2ssIGludCBsZW5ndGgsIGludCByZWNvcmQs
+CkBAIC03NjIsMTYgKzgwNiw5IEBAIHN0YXRpYyB2b2lkIHNpbV9jYm1pcl9yZWFkX2NiKGludCBv
+aywgaW50IGxlbmd0aCwgaW50IHJlY29yZCwKIAlpZiAoY2JzLT5lZmNibWlyX2NvbnRlbnRzID09
+IE5VTEwpCiAJCXJldHVybjsKIAotCWNicy0+ZWZjYm1pcl9jb250ZW50cyA9IGdfc2xpc3RfcmV2
+ZXJzZShjYnMtPmVmY2JtaXJfY29udGVudHMpOwotCiAJc3RyID0gY2JzX3RvcGljX3Jhbmdlc190
+b19zdHJpbmcoY2JzLT5lZmNibWlyX2NvbnRlbnRzKTsKIAlvZm9ub19kZWJ1ZygiR290IGNibWly
+OiAlcyIsIHN0cik7CiAJZ19mcmVlKHN0cik7Ci0KLQljYnMtPmVmY2JtaXJfbGVuZ3RoID0gMDsK
+LQlnX3NsaXN0X2ZvcmVhY2goY2JzLT5lZmNibWlyX2NvbnRlbnRzLCAoR0Z1bmMpZ19mcmVlLCBO
+VUxMKTsKLQlnX3NsaXN0X2ZyZWUoY2JzLT5lZmNibWlyX2NvbnRlbnRzKTsKLQljYnMtPmVmY2Jt
+aXJfY29udGVudHMgPSBOVUxMOwogfQogCiBzdGF0aWMgdm9pZCBzaW1fY2JtaWRfcmVhZF9jYihp
+bnQgb2ssIGludCBsZW5ndGgsIGludCByZWNvcmQsCkBAIC04MTUsMTIgKzg1MiwxNCBAQCBzdGF0
+aWMgdm9pZCBzaW1fY2JtaWRfcmVhZF9jYihpbnQgb2ssIGludCBsZW5ndGgsIGludCByZWNvcmQs
+CiAJc3RyID0gY2JzX3RvcGljX3Jhbmdlc190b19zdHJpbmcoY2JzLT5lZmNibWlkX2NvbnRlbnRz
+KTsKIAlvZm9ub19kZWJ1ZygiR290IGNibWlkOiAlcyIsIHN0cik7CiAJZ19mcmVlKHN0cik7CisK
+KwljYnNfZ290X2ZpbGVfY29udGVudHMoY2JzKTsKIH0KIAogc3RhdGljIHZvaWQgY2JzX2dvdF9p
+bXNpKHN0cnVjdCBvZm9ub19jYnMgKmNicykKIHsKIAljb25zdCBjaGFyICppbXNpID0gb2Zvbm9f
+c2ltX2dldF9pbXNpKGNicy0+c2ltKTsKLQlnYm9vbGVhbiBwb3dlcmVkOworCWNoYXIgKnRvcGlj
+c19zdHI7CiAKIAlvZm9ub19kZWJ1ZygiR290IElNU0k6ICVzIiwgaW1zaSk7CiAKQEAgLTgzMCwx
+NiArODY5LDI4IEBAIHN0YXRpYyB2b2lkIGNic19nb3RfaW1zaShzdHJ1Y3Qgb2Zvbm9fY2JzICpj
+YnMpCiAKIAljYnMtPmltc2kgPSBnX3N0cmR1cChpbXNpKTsKIAotCXBvd2VyZWQgPSBnX2tleV9m
+aWxlX2dldF9ib29sZWFuKGNicy0+c2V0dGluZ3MsIFNFVFRJTkdTX0dST1VQLAotCQkJCQkJIlBv
+d2VyZWQiLCBOVUxMKTsKLQljYnNfc2V0X3Bvd2VyZWQoY2JzLCBwb3dlcmVkLCBOVUxMKTsKKwlj
+YnMtPnRvcGljcyA9IE5VTEw7CisKKwl0b3BpY3Nfc3RyID0gZ19rZXlfZmlsZV9nZXRfc3RyaW5n
+KGNicy0+c2V0dGluZ3MsIFNFVFRJTkdTX0dST1VQLAorCQkJCQkJIlRvcGljcyIsIE5VTEwpOwor
+CWlmICh0b3BpY3Nfc3RyKQorCQljYnMtPnRvcGljcyA9IGNic19leHRyYWN0X3RvcGljX3Jhbmdl
+cyh0b3BpY3Nfc3RyKTsKKworCS8qIElmIHN0b3JlZCB2YWx1ZSBpcyBpbnZhbGlkIG9yIG5vIHN0
+b3JlZCB2YWx1ZSwgYm9vdHN0cmFwCisJICogdG9waWNzIGxpc3QgZnJvbSBTSU0gY29udGVudHMg
+Ki8KKwlpZiAodG9waWNzX3N0ciA9PSBOVUxMIHx8CisJCQkoY2JzLT50b3BpY3MgPT0gTlVMTCAm
+JiB0b3BpY3Nfc3RyWzBdICE9ICdcMCcpKSB7CisJCW9mb25vX3NpbV9yZWFkKGNicy0+c2ltLCBT
+SU1fRUZDQk1JX0ZJTEVJRCwKKwkJCQlPRk9OT19TSU1fRklMRV9TVFJVQ1RVUkVfVFJBTlNQQVJF
+TlQsCisJCQkJc2ltX2NibWlfcmVhZF9jYiwgY2JzKTsKKwkJb2Zvbm9fc2ltX3JlYWQoY2JzLT5z
+aW0sIFNJTV9FRkNCTUlSX0ZJTEVJRCwKKwkJCQlPRk9OT19TSU1fRklMRV9TVFJVQ1RVUkVfVFJB
+TlNQQVJFTlQsCisJCQkJc2ltX2NibWlyX3JlYWRfY2IsIGNicyk7CisJfQorCisJaWYgKHRvcGlj
+c19zdHIpCisJCWdfZnJlZSh0b3BpY3Nfc3RyKTsKIAotCW9mb25vX3NpbV9yZWFkKGNicy0+c2lt
+LCBTSU1fRUZDQk1JX0ZJTEVJRCwKLQkJCU9GT05PX1NJTV9GSUxFX1NUUlVDVFVSRV9UUkFOU1BB
+UkVOVCwKLQkJCXNpbV9jYm1pX3JlYWRfY2IsIGNicyk7Ci0Jb2Zvbm9fc2ltX3JlYWQoY2JzLT5z
+aW0sIFNJTV9FRkNCTUlSX0ZJTEVJRCwKLQkJCU9GT05PX1NJTV9GSUxFX1NUUlVDVFVSRV9UUkFO
+U1BBUkVOVCwKLQkJCXNpbV9jYm1pcl9yZWFkX2NiLCBjYnMpOwogCW9mb25vX3NpbV9yZWFkKGNi
+cy0+c2ltLCBTSU1fRUZDQk1JRF9GSUxFSUQsCiAJCQlPRk9OT19TSU1fRklMRV9TVFJVQ1RVUkVf
+VFJBTlNQQVJFTlQsCiAJCQlzaW1fY2JtaWRfcmVhZF9jYiwgY2JzKTsKLS0gCjEuNi4xCgo=
 
- DISTCHECK_CONFIGURE_FLAGS =3D --disable-datafiles
- =
-
-diff --git a/gatchat/test-server.c b/gatchat/test-server.c
-new file mode 100644
-index 0000000..68ddfc4
---- /dev/null
-+++ b/gatchat/test-server.c
-@@ -0,0 +1,402 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <unistd.h>
-+#include <stdio.h>
-+#include <getopt.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <errno.h>
-+#include <sys/socket.h>
-+#include <sys/un.h>
-+#include <netinet/in.h>
-+#include <arpa/inet.h>
-+#include <signal.h>
-+#include <sys/signalfd.h>
-+
-+#include <glib.h>
-+#include <pty.h>
-+
-+#include "gatserver.h"
-+#include "ringbuffer.h"
-+
-+#define DEFAULT_TCP_PORT 12346
-+#define DEFAULT_SOCK_PATH "./server_sock"
-+
-+struct sock_server{
-+	int server_sock;
-+	const char *modem_path;
-+};
-+
-+static GMainLoop *mainloop;
-+static GAtServer *server;
-+unsigned int server_watch;
-+
-+static gboolean server_cleanup()
-+{
-+	if (server_watch)
-+		g_source_remove(server_watch);
-+
-+	g_at_server_unref(server);
-+	server =3D NULL;
-+
-+	unlink(DEFAULT_SOCK_PATH);
-+
-+	g_main_loop_quit(mainloop);
-+
-+	return FALSE;
-+}
-+
-+static void server_debug(const char *str, void *data)
-+{
-+	g_print("%s: %s\n", (char *) data, str);
-+}
-+
-+static void add_handler(GAtServer *server)
-+{
-+	g_at_server_set_debug(server, server_debug, "Server");
-+}
-+
-+static void server_destroy(gpointer user)
-+{
-+	struct sock_server *data =3D user;
-+
-+	if (data)
-+		g_free(data);
-+}
-+
-+static GAtServer *create_tty(const char *modem_path)
-+{
-+	int master, slave;
-+	char pty_name[256];
-+	GIOChannel *io;
-+
-+	if (!modem_path)
-+		return NULL;
-+
-+	if (openpty(&master, &slave, pty_name, NULL, NULL) < 0)
-+		return NULL;
-+
-+	io =3D g_io_channel_unix_new(master);
-+
-+	g_print("new tty is created@%s\n", pty_name);
-+
-+	server =3D g_at_server_new(io, modem_path);
-+
-+	if (!server) {
-+		g_io_channel_shutdown(io, FALSE, NULL);
-+		g_io_channel_unref(io);
-+
-+		return NULL;
-+	}
-+
-+	add_handler(server);
-+
-+	return server;
-+}
-+
-+static gboolean on_socket_connected(GIOChannel *chan, GIOCondition cond,
-+							gpointer user)
-+{
-+	struct sockaddr saddr;
-+	unsigned int len =3D sizeof(saddr);
-+	int fd;
-+	GIOChannel *client_io =3D NULL;
-+	struct sock_server *data =3D user;
-+
-+	if (cond !=3D G_IO_IN)
-+		goto error;
-+
-+	fd =3D accept(data->server_sock, &saddr, &len);
-+	if (fd =3D=3D -1)
-+		goto error;
-+
-+	client_io =3D g_io_channel_unix_new(fd);
-+
-+	server =3D g_at_server_new(client_io, data->modem_path);
-+
-+	if (!server) {
-+		g_io_channel_shutdown(client_io, FALSE, NULL);
-+		g_io_channel_unref(client_io);
-+
-+		goto error;
-+	}
-+
-+	add_handler(server);
-+
-+	return TRUE;
-+
-+error:
-+	if (data)
-+		g_free(data);
-+
-+	return FALSE;
-+}
-+
-+static struct sock_server *socket_common(int sk, struct sockaddr *addr,
-+						const char *modem_path)
-+{
-+	struct sock_server *sock;
-+
-+	if (bind(sk, addr, sizeof(struct sockaddr)) < 0) {
-+		g_print("Can't bind socket: %s (%d)", strerror(errno), errno);
-+
-+		close(sk);
-+
-+		return NULL;
-+	}
-+
-+	if (listen(sk, 1) < 0) {
-+		g_print("Can't listen on socket: %s (%d)",
-+						strerror(errno), errno);
-+
-+		close(sk);
-+
-+		return NULL;
-+	}
-+
-+	sock =3D g_try_new0(struct sock_server, 1);
-+	if (!sock)
-+		return FALSE;
-+
-+	sock->server_sock =3D sk;
-+	sock->modem_path =3D g_strdup(modem_path);
-+
-+	return sock;
-+}
-+
-+static gboolean create_tcp(const char *modem_path, int port)
-+{
-+	struct sockaddr_in addr;
-+	int sk;
-+	struct sock_server *server;
-+	GIOChannel *server_io;
-+
-+	if (!modem_path)
-+		return FALSE;
-+
-+	sk =3D socket(PF_INET, SOCK_STREAM, 0);
-+	if (sk < 0) {
-+		g_print("Can't create tcp/ip socket: %s (%d)",
-+						strerror(errno), errno);
-+		return FALSE;
-+	}
-+
-+	memset(&addr, 0, sizeof(addr));
-+
-+	addr.sin_family =3D AF_INET;
-+	addr.sin_addr.s_addr =3D INADDR_ANY;
-+	addr.sin_port =3D htons(port);
-+
-+	server =3D socket_common(sk, (struct sockaddr *) &addr, modem_path);
-+	if (!server)
-+		return FALSE;
-+
-+	g_print("new tcp is created at tcp port %d\n", port);
-+
-+	server_io =3D g_io_channel_unix_new(sk);
-+
-+	g_io_channel_set_close_on_unref(server_io, TRUE);
-+
-+	server_watch =3D g_io_add_watch_full(server_io,
-+				G_PRIORITY_DEFAULT,
-+				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-+				on_socket_connected, server, server_destroy);
-+
-+	g_io_channel_unref(server_io);
-+
-+	return TRUE;
-+}
-+
-+static gboolean create_unix(const char *modem_path, const char *sock_path)
-+{
-+	struct sockaddr_un addr;
-+	int sk;
-+	struct sock_server *server;
-+	GIOChannel *server_io;
-+
-+	if (!modem_path)
-+		return FALSE;
-+
-+	sk =3D socket(AF_UNIX, SOCK_STREAM, 0);
-+	if (sk < 0) {
-+		g_print("Can't create unix socket: %s (%d)",
-+						strerror(errno), errno);
-+
-+		return FALSE;
-+	}
-+
-+	memset(&addr, 0, sizeof(addr));
-+
-+	addr.sun_family =3D AF_UNIX;
-+	strncpy(addr.sun_path, sock_path, sizeof(addr.sun_path) - 1);
-+
-+	/* Unlink any existing socket for this session */
-+	unlink(addr.sun_path);
-+
-+	server =3D socket_common(sk, (struct sockaddr *) &addr, modem_path);
-+	if (!server)
-+		return FALSE;
-+
-+	g_print("new unix socket is created at %s\n", sock_path);
-+
-+	server_io =3D g_io_channel_unix_new(sk);
-+
-+	g_io_channel_set_close_on_unref(server_io, TRUE);
-+
-+	server_watch =3D g_io_add_watch_full(server_io,
-+				G_PRIORITY_DEFAULT,
-+				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-+				on_socket_connected, server, server_destroy);
-+
-+	g_io_channel_unref(server_io);
-+
-+	return TRUE;
-+}
-+
-+static void test_server(int type)
-+{
-+	switch (type) {
-+	case 0:
-+		server =3D create_tty("/phonesim1");
-+
-+		add_handler(server);
-+		break;
-+	case 1:
-+		if (!create_tcp("/phonesim1", DEFAULT_TCP_PORT))
-+			exit(-1);
-+		break;
-+	case 2:
-+		if (!create_unix("/phonesim1", DEFAULT_SOCK_PATH))
-+			exit(-1);
-+		break;
-+	}
-+}
-+
-+static gboolean signal_cb(GIOChannel *channel, GIOCondition cond, gpointer=
- data)
-+{
-+	int signal_fd =3D GPOINTER_TO_INT(data);
-+	struct signalfd_siginfo si;
-+	ssize_t res;
-+
-+	if (cond & (G_IO_NVAL | G_IO_ERR))
-+		return FALSE;
-+
-+	res =3D read(signal_fd, &si, sizeof(si));
-+	if (res !=3D sizeof(si))
-+		return FALSE;
-+
-+	switch (si.ssi_signo) {
-+	case SIGINT:
-+		server_cleanup();
-+		break;
-+	case SIGTERM:
-+		server_cleanup();
-+		break;
-+	default:
-+		break;
-+	}
-+
-+	return TRUE;
-+}
-+
-+static int create_signal_io()
-+{
-+	sigset_t mask;
-+	GIOChannel *signal_io;
-+	int signal_fd, signal_source;
-+
-+	sigemptyset(&mask);
-+	sigaddset(&mask, SIGTERM);
-+	sigaddset(&mask, SIGINT);
-+
-+	if (sigprocmask(SIG_BLOCK, &mask, NULL) < 0) {
-+		g_error("Can't set signal mask");
-+		return 1;
-+	}
-+
-+	signal_fd =3D signalfd(-1, &mask, 0);
-+	if (signal_fd < 0) {
-+		g_error("Can't create signal filedescriptor");
-+		return 1;
-+	}
-+
-+	signal_io =3D g_io_channel_unix_new(signal_fd);
-+
-+	g_io_channel_set_close_on_unref(signal_io, TRUE);
-+
-+	signal_source =3D g_io_add_watch(signal_io,
-+			G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-+			signal_cb, GINT_TO_POINTER(signal_fd));
-+
-+	g_io_channel_unref(signal_io);
-+
-+	return signal_source;
-+}
-+
-+static void usage(void)
-+{
-+	g_print("test-server - AT Server testing\n"
-+		"Usage:\n");
-+	g_print("\ttest-server [-t type]\n");
-+	g_print("Types:\n"
-+		"\t0: Pseudo TTY port (default)\n"
-+		"\t1: TCP sock at port 12346)\n"
-+		"\t2: Unix sock@./server_sock\n");
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	int opt, signal_source;
-+	int type =3D 0;
-+
-+	while ((opt =3D getopt(argc, argv, "ht:")) !=3D EOF) {
-+		switch (opt) {
-+		case 't':
-+			type =3D atoi(optarg);
-+			break;
-+		case 'h':
-+			usage();
-+			exit(1);
-+			break;
-+		default:
-+			break;
-+		}
-+	}
-+
-+	test_server(type);
-+
-+	signal_source =3D create_signal_io();
-+
-+	mainloop =3D g_main_loop_new(NULL, FALSE);
-+
-+	g_main_loop_run(mainloop);
-+
-+	g_main_loop_unref(mainloop);
-+
-+	g_source_remove(signal_source);
-+
-+	return 0;
-+}
--- =
-
-1.6.3.3
-
-
---===============3394502675016532758==--
+--===============3404876308246464172==--
 
