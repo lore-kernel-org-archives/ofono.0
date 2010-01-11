@@ -1,248 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============2660962134525096030=="
+Content-Type: multipart/mixed; boundary="===============3747787438277750114=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 1/4] Add gatutil.c to share common APIs with GAtServer
-Date: Mon, 11 Jan 2010 18:53:47 +0800
-Message-ID: <1263207230-22036-1-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <y>
+Subject: [PATCH 2/4] Add GAtServer basic parsing support
+Date: Mon, 11 Jan 2010 18:53:48 +0800
+Message-ID: <1263207230-22036-2-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1263207230-22036-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2660962134525096030==
+--===============3747787438277750114==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add gatutil.c/gatutil.h and move shared typedef and APIs into it.
-So that they can be shared by GAtServer.
+It's the basic skeleton of GAtServer, including new/shutdown, ref/
+unref, received_data/parse_buffer and set_discuss/set_debug.
+
+GAtServer is to emulate the server side of AT conversation. It
+complies with V.250 and 27.007 spec to accept AT command like
+ATV1, ATE0 and extended command like AT+CLCC. Upper layer could
+create customize server to expose TTY, tcp or unix socket to client
+side application.
 ---
- Makefile.am       |    3 +-
- gatchat/gatchat.c |   98 +++-------------------------------------
- gatchat/gatchat.h |    8 +---
- gatchat/gatutil.c |  131 +++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am         |    3 +-
+ gatchat/gatserver.c |  428 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- gatchat/gatutil.h |   46 +++++++++++++++++++
- 5 files changed, 186 insertions(+), 100 deletions(-)
- create mode 100644 gatchat/gatutil.c
- create mode 100644 gatchat/gatutil.h
+ gatchat/gatserver.h |   65 ++++++++
+ 3 files changed, 495 insertions(+), 1 deletions(-)
+ create mode 100644 gatchat/gatserver.c
+ create mode 100644 gatchat/gatserver.h
 
 diff --git a/Makefile.am b/Makefile.am
-index 276b478..67882b9 100644
+index 67882b9..50dabca 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -51,7 +51,8 @@ gatchat_sources =3D gatchat/gatchat.h gatchat/gatchat.c \
- 				gatchat/ringbuffer.h gatchat/ringbuffer.c \
+@@ -52,7 +52,8 @@ gatchat_sources =3D gatchat/gatchat.h gatchat/gatchat.c \
  				gatchat/gatmux.h gatchat/gatmux.c \
  				gatchat/gsm0710.h gatchat/gsm0710.c \
--				gatchat/gattty.h gatchat/gattty.c
-+				gatchat/gattty.h gatchat/gattty.c \
-+				gatchat/gatutil.h gatchat/gatutil.c
+ 				gatchat/gattty.h gatchat/gattty.c \
+-				gatchat/gatutil.h gatchat/gatutil.c
++				gatchat/gatutil.h gatchat/gatutil.c \
++				gatchat/gatserver.h gatchat/gatserver.c
  =
 
  udev_files =3D plugins/ofono.rules
  =
 
-diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
-index 8045c6b..e5cf235 100644
---- a/gatchat/gatchat.c
-+++ b/gatchat/gatchat.c
-@@ -40,7 +40,6 @@
- static const char *none_prefix[] =3D { NULL };
- =
-
- static void g_at_chat_wakeup_writer(GAtChat *chat);
--static void debug_chat(GAtChat *chat, gboolean in, const char *str, gsize =
-len);
- =
-
- struct at_command {
- 	char *cmd;
-@@ -686,81 +685,6 @@ static void new_bytes(GAtChat *p)
- 	g_at_chat_unref(p);
- }
- =
-
--static void debug_chat(GAtChat *chat, gboolean in, const char *str, gsize =
-len)
--{
--	char type =3D in ? '<' : '>';
--	gsize escaped =3D 2; /* Enough for '<', ' ' */
--	char *escaped_str;
--	const char *esc =3D "<ESC>";
--	gsize esc_size =3D strlen(esc);
--	const char *ctrlz =3D "<CtrlZ>";
--	gsize ctrlz_size =3D strlen(ctrlz);
--	gsize i;
--
--	if (!chat->debugf || !len)
--		return;
--
--	for (i =3D 0; i < len; i++) {
--		char c =3D str[i];
--
--		if (isprint(c))
--			escaped +=3D 1;
--		else if (c =3D=3D '\r' || c =3D=3D '\t' || c =3D=3D '\n')
--			escaped +=3D 2;
--		else if (c =3D=3D 26)
--			escaped +=3D ctrlz_size;
--		else if (c =3D=3D 25)
--			escaped +=3D esc_size;
--		else
--			escaped +=3D 4;
--	}
--
--	escaped_str =3D g_malloc(escaped + 1);
--	escaped_str[0] =3D type;
--	escaped_str[1] =3D ' ';
--	escaped_str[2] =3D '\0';
--	escaped_str[escaped] =3D '\0';
--
--	for (escaped =3D 2, i =3D 0; i < len; i++) {
--		char c =3D str[i];
--
--		switch (c) {
--		case '\r':
--			escaped_str[escaped++] =3D '\\';
--			escaped_str[escaped++] =3D 'r';
--			break;
--		case '\t':
--			escaped_str[escaped++] =3D '\\';
--			escaped_str[escaped++] =3D 't';
--			break;
--		case '\n':
--			escaped_str[escaped++] =3D '\\';
--			escaped_str[escaped++] =3D 'n';
--			break;
--		case 26:
--			strncpy(&escaped_str[escaped], ctrlz, ctrlz_size);
--			escaped +=3D ctrlz_size;
--			break;
--		case 25:
--			strncpy(&escaped_str[escaped], esc, esc_size);
--			escaped +=3D esc_size;
--			break;
--		default:
--			if (isprint(c))
--				escaped_str[escaped++] =3D c;
--			else {
--				escaped_str[escaped++] =3D '\\';
--				escaped_str[escaped++] =3D '0' + ((c >> 6) & 07);
--				escaped_str[escaped++] =3D '0' + ((c >> 3) & 07);
--				escaped_str[escaped++] =3D '0' + (c & 07);
--			}
--		}
--	}
--
--	chat->debugf(escaped_str, chat->debug_data);
--	g_free(escaped_str);
--}
--
- static gboolean received_data(GIOChannel *channel, GIOCondition cond,
- 				gpointer data)
- {
-@@ -786,7 +710,8 @@ static gboolean received_data(GIOChannel *channel, GIOC=
-ondition cond,
- 		buf =3D ring_buffer_write_ptr(chat->buf);
- =
-
- 		err =3D g_io_channel_read(channel, (char *) buf, toread, &rbytes);
--		debug_chat(chat, TRUE, (char *)buf, rbytes);
-+		g_at_util_debug_chat(chat->debugf, TRUE, (char *)buf, rbytes,
-+							chat->debug_data);
- =
-
- 		total_read +=3D rbytes;
- =
-
-@@ -932,8 +857,9 @@ static gboolean can_write_data(GIOChannel *channel, GIO=
-Condition cond,
- 		return FALSE;
- 	}
- =
-
--	debug_chat(chat, FALSE, cmd->cmd + chat->cmd_bytes_written,
--			bytes_written);
-+	g_at_util_debug_chat(chat->debugf, FALSE,
-+					cmd->cmd + chat->cmd_bytes_written,
-+					bytes_written, chat->debug_data);
- 	chat->cmd_bytes_written +=3D bytes_written;
- =
-
- 	if (bytes_written < towrite)
-@@ -961,7 +887,6 @@ static void g_at_chat_wakeup_writer(GAtChat *chat)
- GAtChat *g_at_chat_new(GIOChannel *channel, GAtSyntax *syntax)
- {
- 	GAtChat *chat;
--	GIOFlags io_flags;
- =
-
- 	if (!channel)
- 		return NULL;
-@@ -992,20 +917,9 @@ GAtChat *g_at_chat_new(GIOChannel *channel, GAtSyntax =
-*syntax)
- 	chat->notify_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
- 				g_free, (GDestroyNotify)at_notify_destroy);
- =
-
--	if (g_io_channel_set_encoding(channel, NULL, NULL) !=3D
--			G_IO_STATUS_NORMAL)
--		goto error;
--
--	io_flags =3D g_io_channel_get_flags(channel);
--
--	io_flags |=3D G_IO_FLAG_NONBLOCK;
--
--	if (g_io_channel_set_flags(channel, io_flags, NULL) !=3D
--			G_IO_STATUS_NORMAL)
-+	if (!g_at_util_set_io(channel))
- 		goto error;
- =
-
--	g_io_channel_set_close_on_unref(channel, TRUE);
--
- 	chat->channel =3D channel;
- 	chat->read_watch =3D g_io_add_watch_full(channel, G_PRIORITY_DEFAULT,
- 				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-diff --git a/gatchat/gatchat.h b/gatchat/gatchat.h
-index 999b92d..3c3fa5d 100644
---- a/gatchat/gatchat.h
-+++ b/gatchat/gatchat.h
-@@ -26,19 +26,13 @@
- extern "C" {
- #endif
- =
-
--#include "gatresult.h"
- #include "gatsyntax.h"
-+#include "gatutil.h"
- =
-
- struct _GAtChat;
- =
-
- typedef struct _GAtChat GAtChat;
- =
-
--typedef void (*GAtResultFunc)(gboolean success, GAtResult *result,
--				gpointer user_data);
--typedef void (*GAtNotifyFunc)(GAtResult *result, gpointer user_data);
--typedef void (*GAtDisconnectFunc)(gpointer user_data);
--typedef void (*GAtDebugFunc)(const char *str, gpointer user_data);
--
- GAtChat *g_at_chat_new(GIOChannel *channel, GAtSyntax *syntax);
- =
-
- GIOChannel *g_at_chat_get_channel(GAtChat *chat);
-diff --git a/gatchat/gatutil.c b/gatchat/gatutil.c
+diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
 new file mode 100644
-index 0000000..585a590
+index 0000000..e861e25
 --- /dev/null
-+++ b/gatchat/gatutil.c
-@@ -0,0 +1,131 @@
++++ b/gatchat/gatserver.c
+@@ -0,0 +1,428 @@
 +/*
 + *
-+ *  AT chat library with GLib integration
++ *  AT server library with GLib integration
 + *
 + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
 + *
@@ -266,122 +78,419 @@ index 0000000..585a590
 +#include <config.h>
 +#endif
 +
++#include <stdio.h>
++#include <unistd.h>
 +#include <string.h>
-+#include <ctype.h>
 +
 +#include <glib.h>
 +
-+#include "gatutil.h"
++#include "ringbuffer.h"
++#include "gatresult.h"
++#include "gatserver.h"
 +
-+void g_at_util_debug_chat(GAtDebugFunc debugf, gboolean in, const char *st=
-r,
-+						gsize len, gpointer user_data)
++#define DBG(fmt, arg...) g_print("%s:%s() " fmt, __FILE__, __FUNCTION__ , =
+## arg)
++
++struct result_codes {
++	const char *v1;
++	unsigned int v0;
++};
++
++/* V.250 Table 1/V.250 Result codes */
++static struct result_codes at_server_result_codes[] =3D {
++	{ "OK",			0, },
++	{ "CONNECT",		1, },
++	{ "RING",		2, },
++	{ "NO CARRIER",		3, },
++	{ "ERROR",		4, },
++	{ "NO DIALTONE",	5, },
++	{ "BUSY",		6, },
++	{ "NO ANSWER",		7, },
++	{ "CONNECT",		8, },
++	{ NULL },
++};
++
++/* Basic command setting for V.250 */
++struct v250_settings {
++	char s3;			/* set by S3=3D<val> */
++	char s4;			/* set by S4=3D<val> */
++	char s5;			/* set by S5=3D<val> */
++	gboolean echo;			/* set by E<val> */
++	gboolean quiet;			/* set by Q<val> */
++	gboolean is_v1;			/* set by V<val>, v0 or v1 */
++	unsigned int res_format;	/* set by X<val> */
++	unsigned int c109;		/* set by &C<val> */
++	unsigned int c108;		/* set by &D<val> */
++};
++
++struct _GAtServer {
++	gint ref_count;				/* Ref count */
++	struct v250_settings *v250;		/* V.250 command setting */
++	GIOChannel *server_io;			/* Server IO */
++	int server_watch;			/* Watch for server IO */
++	char *modem_path;			/* Emulated modem path */
++	GAtDisconnectFunc user_disconnect;	/* User disconnect func */
++	gpointer user_disconnect_data;		/* User disconnect data */
++	GAtDebugFunc debugf;			/* Debugging output function */
++	gpointer debug_data;			/* Data to pass to debug func */
++	struct ring_buffer *buf;		/* Current read buffer */
++};
++
++static int at_server_parse(GAtServer *server, char *buf);
++
++static void g_at_server_send_result_code(GAtServer *server, int error)
 +{
-+	char type =3D in ? '<' : '>';
-+	gsize escaped =3D 2; /* Enough for '<', ' ' */
-+	char *escaped_str;
-+	const char *esc =3D "<ESC>";
-+	gsize esc_size =3D strlen(esc);
-+	const char *ctrlz =3D "<CtrlZ>";
-+	gsize ctrlz_size =3D strlen(ctrlz);
-+	gsize i;
++	struct v250_settings *v250 =3D server->v250;
++	char buf[1024];
++	char text[1024];
++	char t =3D v250->s3;
++	char r =3D v250->s4;
++	struct result_codes c;
++	gsize wbuf;
 +
-+	if (!debugf || !len)
++	memset(buf, 0, sizeof(buf));
++	memset(text, 0, sizeof(text));
++
++	if (v250->quiet)
 +		return;
 +
-+	for (i =3D 0; i < len; i++) {
-+		char c =3D str[i];
++	c =3D at_server_result_codes[error];
 +
-+		if (isprint(c))
-+			escaped +=3D 1;
-+		else if (c =3D=3D '\r' || c =3D=3D '\t' || c =3D=3D '\n')
-+			escaped +=3D 2;
-+		else if (c =3D=3D 26)
-+			escaped +=3D ctrlz_size;
-+		else if (c =3D=3D 25)
-+			escaped +=3D esc_size;
-+		else
-+			escaped +=3D 4;
-+	}
++	if (v250->is_v1)
++		sprintf(text, "%s", c.v1);
++	else
++		sprintf(text, "%d", c.v0);
 +
-+	escaped_str =3D g_malloc(escaped + 1);
-+	escaped_str[0] =3D type;
-+	escaped_str[1] =3D ' ';
-+	escaped_str[2] =3D '\0';
-+	escaped_str[escaped] =3D '\0';
++	if (v250->is_v1)
++		sprintf(buf, "%c%c%s%c%c", t, r, text, t, r);
++	else
++		sprintf(buf, "%s%c", text, t);
 +
-+	for (escaped =3D 2, i =3D 0; i < len; i++) {
-+		char c =3D str[i];
++	g_at_util_debug_chat(server->debugf, FALSE, buf, strlen(buf),
++							server->debug_data);
 +
-+		switch (c) {
-+		case '\r':
-+			escaped_str[escaped++] =3D '\\';
-+			escaped_str[escaped++] =3D 'r';
-+			break;
-+		case '\t':
-+			escaped_str[escaped++] =3D '\\';
-+			escaped_str[escaped++] =3D 't';
-+			break;
-+		case '\n':
-+			escaped_str[escaped++] =3D '\\';
-+			escaped_str[escaped++] =3D 'n';
-+			break;
-+		case 26:
-+			strncpy(&escaped_str[escaped], ctrlz, ctrlz_size);
-+			escaped +=3D ctrlz_size;
-+			break;
-+		case 25:
-+			strncpy(&escaped_str[escaped], esc, esc_size);
-+			escaped +=3D esc_size;
-+			break;
-+		default:
-+			if (isprint(c))
-+				escaped_str[escaped++] =3D c;
-+			else {
-+				escaped_str[escaped++] =3D '\\';
-+				escaped_str[escaped++] =3D '0' + ((c >> 6) & 07);
-+				escaped_str[escaped++] =3D '0' + ((c >> 3) & 07);
-+				escaped_str[escaped++] =3D '0' + (c & 07);
-+			}
-+		}
-+	}
-+
-+	debugf(escaped_str, user_data);
-+	g_free(escaped_str);
++	g_io_channel_write(server->server_io, (char *) buf, strlen(buf),
++							&wbuf);
 +}
 +
-+gboolean g_at_util_set_io(GIOChannel *io)
++static gsize skip_space(const char *buf, gsize pos)
 +{
-+	GIOFlags io_flags;
++	gsize i =3D pos;
++	char c =3D buf[i];
 +
-+	if (g_io_channel_set_encoding(io, NULL, NULL) !=3D
-+			G_IO_STATUS_NORMAL)
++	while (c =3D=3D ' ')
++		c =3D buf[++i];
++
++	return i;
++}
++
++static int parse_v250_settings(GAtServer *server, char *buf)
++{
++	int res =3D G_AT_SERVER_RESULT_ERROR;
++
++	return res;
++}
++
++static int at_server_parse(GAtServer *server, char *buf)
++{
++	int res =3D G_AT_SERVER_RESULT_ERROR;
++	struct v250_settings *v250 =3D server->v250;
++	gsize i =3D 0;
++	char c;
++
++	/* skip space after "AT" or previous command */
++	i =3D skip_space(buf, i);
++
++	c =3D buf[i];
++	/* skip semicolon */
++	if (c =3D=3D ';')
++		c =3D buf[++i];
++
++	if (g_ascii_isalpha(c) || c =3D=3D '&')
++		res =3D parse_v250_settings(server, buf + i);
++	else if (c =3D=3D v250->s3)
++		res =3D G_AT_SERVER_RESULT_OK;
++
++	return res;
++}
++
++static void parse_buffer(GAtServer *server, unsigned int len)
++{
++	int res =3D G_AT_SERVER_RESULT_ERROR;
++	gsize i =3D 0;
++	char *buf =3D NULL;
++
++	g_at_server_ref(server);
++
++	buf =3D g_try_new0(char, len+1);
++
++	if (!buf)
++		goto out;
++
++	if (-1 =3D=3D ring_buffer_read(server->buf, buf, len))
++		goto out;
++
++	buf[len] =3D '\0';
++
++	DBG("received %s\n", buf);
++
++	/* skip header space */
++	buf +=3D skip_space(buf, i);
++
++	/* Make sure the command line prefix is "AT" or "at" */
++	if (g_str_has_prefix(buf, "AT") ||
++				g_str_has_prefix(buf, "at"))
++		res =3D at_server_parse(server, (char *) buf + 2);
++
++	g_at_server_send_result_code(server, res);
++
++out:
++	/* We're overflowing the buffer, shutdown the socket */
++	if (server->buf && ring_buffer_avail(server->buf) =3D=3D 0)
++		g_at_server_shutdown(server);
++
++	g_at_server_unref(server);
++}
++
++static gboolean received_data(GIOChannel *chan, GIOCondition cond,
++				gpointer data)
++{
++	GAtServer *server =3D data;
++	struct v250_settings *v250 =3D server->v250;
++	GIOError err;
++	gsize rbytes;
++	gsize total_read =3D 0;
++	unsigned char *total_buf =3D ring_buffer_write_ptr(server->buf);
++	static gsize total_len;
++
++	if (cond & G_IO_NVAL)
 +		return FALSE;
 +
-+	io_flags =3D g_io_channel_get_flags(io);
++	if (cond & (G_IO_HUP | G_IO_ERR)) {
++		g_at_server_shutdown(server);
 +
-+	io_flags |=3D G_IO_FLAG_NONBLOCK;
-+	io_flags |=3D G_IO_FLAG_IS_READABLE;
-+	io_flags |=3D G_IO_FLAG_IS_WRITEABLE;
-+
-+	if (g_io_channel_set_flags(io, io_flags, NULL) !=3D
-+			G_IO_STATUS_NORMAL)
 +		return FALSE;
++	}
 +
-+	g_io_channel_set_close_on_unref(io, TRUE);
++	/* Regardless of condition, try to read all the data available */
++	do {
++		unsigned char *buf;
++		gsize toread;
++
++		rbytes =3D 0;
++
++		toread =3D ring_buffer_avail_no_wrap(server->buf);
++
++		if (toread =3D=3D 0)
++			break;
++
++		buf =3D ring_buffer_write_ptr(server->buf);
++
++		err =3D g_io_channel_read(chan, (char *) buf, toread, &rbytes);
++
++		total_read +=3D rbytes;
++
++		if (rbytes > 0)
++			ring_buffer_write_advance(server->buf, rbytes);
++
++	} while (err =3D=3D G_IO_ERROR_NONE && rbytes > 0);
++
++	g_at_util_debug_chat(server->debugf, TRUE, (char *) total_buf,
++						total_read, server->debug_data);
++
++	if (total_read =3D=3D 0) {
++		g_at_server_shutdown(server);
++
++		return FALSE;
++	}
++
++	total_len +=3D total_read;
++
++	/* Add '\0' to perform strchr */
++	total_buf[total_read] =3D '\0';
++
++	/* Parse buffer until we meet the terminator so that
++	 * all preceding characters will be processed
++	 */
++	if (strchr((char *) total_buf, v250->s3)) {
++		parse_buffer(server, total_len);
++
++		total_len =3D 0;
++	}
++
++	if (err !=3D G_IO_ERROR_NONE && err !=3D G_IO_ERROR_AGAIN)
++		return FALSE;
 +
 +	return TRUE;
 +}
 +
-diff --git a/gatchat/gatutil.h b/gatchat/gatutil.h
++static struct v250_settings *v250_settings_create()
++{
++	struct v250_settings *v250;
++
++	v250 =3D g_try_new0(struct v250_settings, 1);
++
++	if (!v250)
++		return NULL;
++
++	v250->s3 =3D '\r';
++	v250->s4 =3D '\n';
++	v250->s5 =3D '\b';
++	v250->echo =3D TRUE;
++	v250->quiet =3D FALSE;
++	v250->is_v1 =3D TRUE;
++	v250->res_format =3D 0;
++	v250->c109 =3D 1;
++	v250->c108 =3D 0;
++
++	return v250;
++}
++
++GAtServer *g_at_server_new(GIOChannel *io, const char *modem_path)
++{
++	GAtServer *server;
++
++	if (!io || !modem_path)
++		return NULL;
++
++	server =3D g_try_new0(GAtServer, 1);
++	if (!server)
++		return NULL;
++
++	server->ref_count =3D 1;
++	server->v250 =3D v250_settings_create();
++	server->server_io =3D io;
++	server->modem_path =3D g_strdup(modem_path);
++	server->user_disconnect =3D NULL;
++	server->user_disconnect_data =3D NULL;
++	server->debugf =3D NULL;
++	server->debug_data =3D NULL;
++	server->buf =3D ring_buffer_new(4096);
++
++	if (!server->v250)
++		goto error;
++
++	if (!server->buf)
++		goto error;
++
++	if (!g_at_util_set_io(server->server_io))
++		goto error;
++
++	server->server_watch =3D g_io_add_watch_full(io,
++				G_PRIORITY_DEFAULT,
++				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++				received_data, server, NULL);
++
++	return server;
++
++error:
++	if (server->buf)
++		ring_buffer_free(server->buf);
++
++	if (server->modem_path)
++		g_free(server->modem_path);
++
++	if (server->v250)
++		g_free(server->v250);
++
++	if (server)
++		g_free(server);
++
++	return NULL;
++}
++
++GAtServer *g_at_server_ref(GAtServer *server)
++{
++	if (server =3D=3D NULL)
++		return NULL;
++
++	g_atomic_int_inc(&server->ref_count);
++
++	return server;
++}
++
++void g_at_server_unref(GAtServer *server)
++{
++	gboolean is_zero;
++
++	if (server =3D=3D NULL)
++		return;
++
++	is_zero =3D g_atomic_int_dec_and_test(&server->ref_count);
++
++	if (is_zero =3D=3D FALSE)
++		return;
++
++	g_at_server_shutdown(server);
++}
++
++gboolean g_at_server_shutdown(GAtServer *server)
++{
++	if (!server)
++		return FALSE;
++
++	if (server->modem_path)
++		g_free(server->modem_path);
++
++	if (server->v250)
++		g_free(server->v250);
++
++	ring_buffer_free(server->buf);
++	server->buf =3D NULL;
++
++	if (server->server_watch) {
++		g_source_remove(server->server_watch);
++		server->server_watch =3D 0;
++	}
++
++	if (server->server_io) {
++		g_io_channel_shutdown(server->server_io, FALSE, NULL);
++		g_io_channel_unref(server->server_io);
++		server->server_io =3D NULL;
++	}
++
++	if (server->user_disconnect)
++		server->user_disconnect(server->user_disconnect_data);
++
++	g_free(server);
++	server =3D NULL;
++
++	return TRUE;
++}
++
++gboolean g_at_server_set_disconnect_function(GAtServer *server,
++						GAtDisconnectFunc disconnect,
++						gpointer user)
++{
++	if (server =3D=3D NULL)
++		return FALSE;
++
++	server->user_disconnect =3D disconnect;
++	server->user_disconnect_data =3D user;
++
++	return TRUE;
++}
++
++gboolean g_at_server_set_debug(GAtServer *server, GAtDebugFunc func,
++						gpointer user)
++{
++	if (server =3D=3D NULL)
++		return FALSE;
++
++	server->debugf =3D func;
++	server->debug_data =3D user;
++
++	return TRUE;
++}
+diff --git a/gatchat/gatserver.h b/gatchat/gatserver.h
 new file mode 100644
-index 0000000..63bbfff
+index 0000000..39916ec
 --- /dev/null
-+++ b/gatchat/gatutil.h
-@@ -0,0 +1,46 @@
++++ b/gatchat/gatserver.h
+@@ -0,0 +1,65 @@
 +/*
 + *
-+ *  AT chat library with GLib integration
++ *  AT Server library with GLib integration
 + *
 + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
 + *
@@ -401,36 +510,54 @@ index 0000000..63bbfff
 + *
 + */
 +
-+#ifndef __GATUTIL_H
-+#define __GATUTIL_H
++#ifndef __GATSERVER_H
++#define __GATSERVER_H
 +
 +#ifdef __cplusplus
 +extern "C" {
 +#endif
 +
-+#include "gatresult.h"
++#include "gatutil.h"
 +
-+typedef void (*GAtResultFunc)(gboolean success, GAtResult *result,
-+				gpointer user_data);
-+typedef void (*GAtNotifyFunc)(GAtResult *result, gpointer user_data);
-+typedef void (*GAtDisconnectFunc)(gpointer user_data);
-+typedef void (*GAtDebugFunc)(const char *str, gpointer user_data);
++struct _GAtServer;
 +
-+void g_at_util_debug_chat(GAtDebugFunc debugf, gboolean in, const char *st=
-r,
-+						gsize len, gpointer user_data);
++typedef struct _GAtServer GAtServer;
 +
-+gboolean g_at_util_set_io(GIOChannel *io);
++/* V.250 Table 1/V.250 Result codes */
++enum _GAtServerResultCodes {
++	G_AT_SERVER_RESULT_OK =3D 0,
++	G_AT_SERVER_RESULT_CONNECT,
++	G_AT_SERVER_RESULT_RING,
++	G_AT_SERVER_RESULT_NO_CARRIER,
++	G_AT_SERVER_RESULT_ERROR,
++	G_AT_SERVER_RESULT_NO_DIALTONE,
++	G_AT_SERVER_RESULT_BUSY,
++	G_AT_SERVER_RESULT_NO_ANSWER,
++	G_AT_SERVER_RESULT_CONNECT_EXT,
++};
++
++GAtServer *g_at_server_new(GIOChannel *io, const char *modem_path);
++
++GAtServer *g_at_server_ref(GAtServer *server);
++void g_at_server_unref(GAtServer *server);
++gboolean g_at_server_shutdown(GAtServer *server);
++
++gboolean g_at_server_set_disconnect_function(GAtServer *server,
++					GAtDisconnectFunc disconnect,
++					gpointer user_data);
++gboolean g_at_server_set_debug(GAtServer *server,
++					GAtDebugFunc func,
++					gpointer user);
 +
 +#ifdef __cplusplus
 +}
 +#endif
 +
-+#endif /* __GATUTIL_H */
++#endif /* __GATSERVER_H */
 -- =
 
 1.6.3.3
 
 
---===============2660962134525096030==--
+--===============3747787438277750114==--
 
