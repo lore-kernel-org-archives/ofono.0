@@ -1,83 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============7907440076568977387=="
+Content-Type: multipart/mixed; boundary="===============1175522868340056946=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC] HFP support into oFono and BlueZ
-Date: Tue, 12 Jan 2010 18:54:59 -0600
-Message-ID: <201001121854.59479.denkenz@gmail.com>
-In-Reply-To: <fbf08281001110908s2c3412m456b3aa980b8ca10@mail.gmail.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: [PATCH 3/3] If EF-MWIS is not available use the CPHS version.
+Date: Wed, 13 Jan 2010 02:24:19 +0100
+Message-ID: <fb249edb1001121724t4ee0f0dm9f831afee4cbdb5@mail.gmail.com>
+In-Reply-To: <201001121823.48282.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7907440076568977387==
+--===============1175522868340056946==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Padovan,
+Hi Denis,
 
-Initial impressions:
+2010/1/13 Denis Kenzior <denkenz@gmail.com>:
+> I applied this patch, but really it was completely broken and I shouldn't
 
-+static DBusConnection *connection;
-+static char *ofono_handsfree_path;
-+
-+
-+static int timeout;
-+
+You're right.  I had passed a NULL in place of user data for
+ofono_sim_write due to a last-minute refactoring, sorry about that.
+No recurrence was possible though because of a check that new and old
+MBDNs were different.
 
-These globals seem to belong in per-modem user data unless you only want 1 =
-HFP =
+> have. =C2=A0I ended up rewriting most of it since the =C2=A0CPHS MWIS for=
+mat is
+> completely different from 3GPP.
 
-device per system?
+The new version works for me.  My patch had the fax indication in the
+wrong byte because as you noticed there's no separate fax or data MWI
+for the second ALS line.
 
-+
-+GIOChannel *g_at_get_channel_from_fd(int fd)
-+{
-+	GIOChannel *channel;
-+	struct termios ti;
-+
-+	/* Switch TTY to raw mode */
-+	memset(&ti, 0, sizeof(ti));
-+	cfmakeraw(&ti);
-+	tcflush(fd, TCIOFLUSH);
-+	tcsetattr(fd, TCSANOW, &ti);
-+
-+	channel =3D g_io_channel_unix_new(fd);
-+
-+	if (channel =3D=3D NULL) {
-+		close(fd);
-+		return NULL;
-+	}
-+
-+	g_io_channel_set_close_on_unref(channel, TRUE);
-+
-+	return channel;
-+}
+Regards
 
-Seriously, what are you trying to do here?  If you want a GIOChannel simply =
-
-use g_io_channel_unix_new(fd) and pass it to gatchat.  See plugins/phonesim=
-.c =
-
-phonesim_enable() for details.  That operates on a TCP socket.
-
-+struct ofono_modem *ofono_modem_get_by_path(const char *path);
-+
-
-You don't need this, see below.
-
-+	g_dbus_register_interface(conn, obj_path, HFP_AGENT_INTERFACE,
-+			agent_methods, NULL, NULL, data, NULL);
-+
-
-You can pass the modem object as userdata for the agent when registering th=
-e =
-
-interface.  The modem will thus be available as 'data' in =
-
-hfp_agent_new_connection, etc.
-
-Regards,
--Denis
-
---===============7907440076568977387==--
+--===============1175522868340056946==--
 
