@@ -1,34 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============1987854880004419372=="
+Content-Type: multipart/mixed; boundary="===============4389628082915029688=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] Use CPHS version of mailbox numbers on SIM if 3GPP
- version not available.
-Date: Tue, 12 Jan 2010 18:14:10 -0600
-Message-ID: <201001121814.10981.denkenz@gmail.com>
-In-Reply-To: <1262864340-32125-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 3/3] If EF-MWIS is not available use the CPHS version.
+Date: Tue, 12 Jan 2010 18:23:48 -0600
+Message-ID: <201001121823.48282.denkenz@gmail.com>
+In-Reply-To: <1262864361-32154-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1987854880004419372==
+--===============4389628082915029688==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andrew,
 
-> Otherwise just try to keep the CPHS version of the files in sync.
+I applied this patch, but really it was completely broken and I shouldn't =
 
-Patch has been applied.  I've had to do some major refactoring and testing.=
-  =
+have.  I ended up rewriting most of it since the  CPHS MWIS format is =
 
-Please test more when you submit.
+completely different from 3GPP.
 
-By the way, I've updated phonesim to support the CPHS versions of the =
-
-elementary files covered here.  Can you review for correctness?
+Please test and make sure my changes are correct.
 
 Regards,
 -Denis
 
---===============1987854880004419372==--
+--===============4389628082915029688==--
 
