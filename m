@@ -1,247 +1,307 @@
-Content-Type: multipart/mixed; boundary="===============6327687846828656447=="
+Content-Type: multipart/mixed; boundary="===============5265267389210539121=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [RFC 3/3] STE-plugin: Adding STE plugin
-Date: Mon, 18 Jan 2010 13:27:02 -0800
-Message-ID: <1263850022.5591.145.camel@localhost.localdomain>
-In-Reply-To: <61D8D34BB13CFE408D154529C120E07991D7BA@eseldmw101.eemea.ericsson.se>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC 3/3] STE-plugin: Adding STE plugin
+Date: Sun, 17 Jan 2010 16:50:53 -0600
+Message-ID: <201001171650.53252.denkenz@gmail.com>
+In-Reply-To: <1263749312-6567-4-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6327687846828656447==
+--===============5265267389210539121==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Sjur,
 
-> Thank you for your feedback. We hope to get new patch-set out tomorrow
-> with most of your comments fixed.
+> diff --git a/drivers/stemodem/network-registration.c
+>  b/drivers/stemodem/network-registration.c new file mode 100644
+> index 0000000..4eeb239
+> --- /dev/null
+> +++ b/drivers/stemodem/network-registration.c
+> +static void ciev_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	struct ofono_netreg *netreg =3D user_data;
+> +	int strength, ind;
+> +	GAtResultIter iter;
+> +
+> +	dump_response("ciev_notify", TRUE, result);
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "+CIEV:"))
+> +		return;
+> +
+> +	if (!g_at_result_iter_next_number(&iter, &ind))
+> +		return;
+> +
+> +	if (ind =3D=3D 2) { /* signal strength indication */
+> +		if (!g_at_result_iter_next_number(&iter, &strength))
+> +			return;
+> +
+> +		strength =3D (strength * 100) / 5;
+> +		ofono_netreg_strength_notify(netreg, strength);
+> +	}
+> +}
+> +
+> +static void cind_cb(gboolean ok, GAtResult *result, gpointer user_data)
+> +{
+> +	struct cb_data *cbd =3D user_data;
+> +	ofono_netreg_strength_cb_t cb =3D cbd->cb;
+> +	int strength;
+> +	GAtResultIter iter;
+> +	struct ofono_error error;
+> +
+> +	dump_response("cind_cb", ok, result);
+> +	decode_at_error(&error, g_at_result_final_response(result));
+> +
+> +	if (!ok) {
+> +		cb(&error, -1, cbd->data);
+> +		return;
+> +	}
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "+CIND:")) {
+> +		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+> +		return;
+> +	}
+> +
+> +	/* Skip battery charge level, which is the first reported  */
+> +	g_at_result_iter_skip_next(&iter);
+> +
+> +	g_at_result_iter_next_number(&iter, &strength);
+> +
+> +	strength =3D (strength * 100) / 5;
+> +
+> +	cb(&error, strength, cbd->data);
+> +}
+> +
+> +static void ste_signal_strength(struct ofono_netreg *netreg,
+> +				ofono_netreg_strength_cb_t cb, void *data)
+> +{
+> +	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+> +	struct cb_data *cbd =3D cb_data_new(cb, data);
+> +
+> +	if (!cbd)
+> +		goto error;
+> +
+> +	if (g_at_chat_send(nd->chat, "AT+CIND?", cind_prefix,
+> +				cind_cb, cbd, g_free) > 0)
+> +		return;
+> +
+> +error:
+> +	if (cbd)
+> +		g_free(cbd);
+> +
+> +	CALLBACK_WITH_FAILURE(cb, -1, data);
+> +}
 
-sounds great.
+I really prefer the above to be integrated into drivers/atmodem/network-
+registration.c and quirked.  There are many modems that will need this (MBM =
 
-> > It might make sense to have a local copy of the required structure
-> > and constants to allow an easier complication. Of course this depends
-> > on having CAIF at least in net-next-2.6 tree.  =
+modems in particular.)
 
-> =
+> +
+> +static void creg_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	struct ofono_netreg *netreg =3D user_data;
+> +	GAtResultIter iter;
+> +	int status;
+> +	int lac =3D -1, ci =3D -1, tech =3D -1;
+> +	const char *str;
+> +
+> +	dump_response("creg_notify", TRUE, result);
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "+CREG:"))
+> +		return;
+> +
+> +	g_at_result_iter_next_number(&iter, &status);
+> +
+> +	if (g_at_result_iter_next_string(&iter, &str) =3D=3D TRUE)
+> +		lac =3D strtol(str, NULL, 16);
+> +	else
+> +		goto out;
+> +
+> +	if (g_at_result_iter_next_string(&iter, &str) =3D=3D TRUE)
+> +		ci =3D strtol(str, NULL, 16);
+> +	else
+> +		goto out;
+> +
+> +	g_at_result_iter_next_number(&iter, &tech);
+> +
+> +out:
+> +	ofono_debug("creg_notify: %d, %d, %d, %d", status, lac, ci, tech);
+> +
+> +	ofono_netreg_status_notify(netreg, status, lac, ci, tech);
+> +}
 
-> OK, agree. I'll supply the CAIF specific patches next time.
-> Should we put the CAIF header files into ofono/include/caif?
+What is different about this function from the regular CREG unsolicited par=
+ser =
 
-Have a look at how we do it for the Phonet/ISI modem. Also we only need
-a few constants (AF_CAIF, proto etc.) and mainly only the socket
-structure for CAIF.
+in drivers/atmodem/atutil.c at_util_parse_reg_unsolicited?
 
-This should be easy to fix actually. More important is that we can
-disable stemodem support via configure so people with an old kernel can
-compile it. We are in a chicken and egg problem with the AF_CAIF
-constant anyway. Until the CAIF subsystem is in net-next-2.6, the
-actually number for it is not assigned.
+> +
+> +	g_at_chat_register(nd->chat, "+CIEV:",
+> +				ciev_notify, FALSE, netreg, NULL);
 
-> >> +/* TODO: should parse_xml function to be moved to e.g. atutil? */
-> > =
+Move this to drivers/atmodem/network-registration.c and quirk it.
 
-> > First question. Why not use the XML parse that comes with GLib.
-> =
+> +static int ste_netreg_probe(struct ofono_netreg *netreg, unsigned int
+>  vendor, +				void *data)
+> +{
+> +	GAtChat *chat =3D data;
+> +	struct netreg_data *nd;
+> +
+> +	nd =3D g_new0(struct netreg_data, 1);
+> +
+> +	nd->chat =3D chat;
+> +	ofono_netreg_set_data(netreg, nd);
+> +
+> +	g_at_chat_send(chat, "AT+CMER=3D3,0,0,1", NULL, NULL, NULL, NULL);
 
-> OK. Is it "Simple XML Subset Parser" you refer to? If you have any pointe=
-r =
+Same as above.
 
-> to sample code using this XML parser we would appreciate it.
+> +
+> +	g_at_chat_send(chat, "AT+CREG=3D2", NULL,
+> +				ste_network_registration_initialized,
+> +				netreg, NULL);
 
-Yes, I am talking about that one. It is similar to expact and the only
-example, I have is in the BlueZ source code. I think Google code search
-will reveal more useful examples.
+Assuming STE modems support AT+CREG=3D?, the atmodem netreg driver should t=
+ake =
 
-> > oFono is never setting the IP address, netmask or any other
-> > configuration option. The only thing that oFono does is bringing the
-> > interface up. Systems like ConnMan do the IP configuration.  =
+care of this properly as well.  With these changes you no longer need a =
 
-> > =
+dedicated stemodem driver for netreg or the ofono_netreg_driver_get part.
 
-> > Please see the comments in the documentation on how we expose IP
-> > interfaces. Check with ConnMan and how we configure them.
-> =
+> +++ b/drivers/stemodem/voicecall.c
+> +static gint call_compare(gconstpointer a, gconstpointer b)
+> +{
+> +	const struct ofono_call *ca =3D a;
+> +	const struct ofono_call *cb =3D b;
+> +
+> +	if (ca->id < cb->id)
+> +		return -1;
+> +
+> +	if (ca->id > cb->id)
+> +		return 1;
+> +
+> +	return 0;
+> +}
 
-> OK, we're returning the relevant parameters from activate_primary so that
-> all PDP Context parameters including interface name,
-> ip-address, netmask, dns,  etc are available in PrimaryDataContext. =
+Please use at_util_call_compare
 
-> And leave the interface created but not configured.
-> Does this sound ok?
+> +
+> +static gint call_compare_by_id(gconstpointer a, gconstpointer b)
+> +{
+> +	const struct ofono_call *call =3D a;
+> +	unsigned int id =3D GPOINTER_TO_UINT(b);
+> +
+> +	if (id < call->id)
+> +		return -1;
+> +
+> +	if (id > call->id)
+> +		return 1;
+> +
+> +	return 0;
+> +}
 
-Yes, sounds good. Please have a look at how we do it for Ericsson MBM
-and Option HSO modems. We just send the D-Bus signal with all the
-details and that is it.
+You might find that you simply don't need this function, but if you do, ple=
+ase =
 
-I forgot to mention the reasoning behind. oFono is incapable of making
-any kind of good decision when it comes to handling IP collision since
-it only knows about its scope. Systems like ConnMan have the full
-insight in whole networking to make proper decisions.
+add it to atutil.c
 
-> > =
+> +static void ste_release_specific(struct ofono_voicecall *vc, int id,
+> +				ofono_voicecall_cb_t cb, void *data)
+> +{
+> +	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+> +	struct release_id_req *req =3D g_try_new0(struct release_id_req, 1);
+> +	char buf[32];
+> +	struct ofono_call *call;
+> +	GSList *l;
+> +	int ac =3D 0;
+> +
+> +	if (!req)
+> +		goto error;
+> +
+> +	req->vc =3D vc;
+> +	req->cb =3D cb;
+> +	req->data =3D data;
+> +	req->id =3D id;
+> +
+> +	/* Count active calls. If there is more than one active call
+> +	 * we cannot use ATH, as it will terminate all calls.
+> +	 * The reason for using ATH and not CHLD is that
+> +	 * emergency calls can not be terminated with AT+CHLD.
+> +	 */
+> +	for (l =3D vd->calls; l; l =3D l->next) {
+> +		call =3D l->data;
+> +
+> +		if (call->status =3D=3D CALL_STATUS_ACTIVE)
+> +			ac++;
+> +	}
+> +
+> +	l =3D g_slist_find_custom(vd->calls, GUINT_TO_POINTER(id),
+> +				call_compare_by_id);
+> +	if (l =3D=3D NULL) {
+> +		ofono_error("Hangup request for unknow call");
+> +		goto error;
+> +	}
+> +	call =3D l->data;
+> +	/* Check the state of the call, as AT+CHLD does not terminate
+> +	 * calls in state Dialing, Alerting and Incoming */
+> +	if (call->status =3D=3D CALL_STATUS_DIALING ||
+> +	    call->status =3D=3D CALL_STATUS_ALERTING ||
+> +	    call->status =3D=3D CALL_STATUS_INCOMING)
+> +		sprintf(buf, "ATH");
+> +
+> +	/* Waiting call can not be terminated by at+chld=3D1x,
+> +	 * have to use at+chld =3D 0, but that will also terminate
+> +	 * other held calls. Bug in STE's AT module.
+> +	 */
+> +	else if (call->status =3D=3D CALL_STATUS_WAITING)
+> +		sprintf(buf, "AT+CHLD=3D0");
+> +
+> +	else {
+> +		/* A held call can not be released by ATH, need to use CHLD */
+> +		if (ac > 1 || call->status =3D=3D CALL_STATUS_HELD)
+> +			sprintf(buf, "AT+CHLD=3D1%d", id);
+> +		else /* This is the last call, ok to use ATH. */
+> +			sprintf(buf, "ATH");
+> +	}
+> +
+> +	if (g_at_chat_send(vd->chat, buf, none_prefix,
+> +				release_id_cb, req, g_free) > 0)
+> +		return;
+> +
+> +error:
+> +	if (req)
+> +		g_free(req);
+> +
+> +	CALLBACK_WITH_FAILURE(cb, data);
+> +}
 
-> >> +	/* Need to change to gsm_permissive syntax in order to
-> >> +	 * parse the response from EPPSD (xml) */
-> >> +	g_at_chat_set_syntax(gcd->chat, g_at_syntax_new_gsm_permissive());
-> > =
+All of this logic needs to go away.  The core already handles all of this, =
 
-> > Is this an issue with your modem firmware or an issue in the v1
-> > parser. =
+including selection of ATH/CHLD, waiting/held.  Please review src/voicecall=
+.c.  =
 
-> > If it is the modem firmware, then just use the permissive parser all
-> > the time and switch to E0. =
+If the core logic is not sufficient or does not properly handle a certain c=
+ase, =
 
-> =
+then lets see if we can fix the core first.  Drivers should not concern =
 
-> Setting permissive mode was done in order to be able to parse =
+themselves with this stuff.
 
-> the XML response from  EPPSD (Propriatery Activate PDP context). =
+With this in mind, you might not need to track any state in this driver at =
 
-> But we can try if we can run with this mode default if you think =
+all.  See drivers/calypsomodem/voicecall.c for details. TI's CPI notificati=
+ons =
 
-> this is better.
+are almost exactly the same as the STE ECAV.
 
-Can you post an example (manually via cu or minicom and with ATE1) on
-how this looks like. My question here is if you are actually following
-the strict v1 syntax. If you don't then that is basically a bug on the
-modem side. I don't even know if v1 has any kind of capabilities to
-handle XML properly in the first place.
-
-The point here is if you can not use v1 parser, then just use permissive
-from the beginning and avoid switching at runtime. The capability of
-switching at runtime mainly only exists for testing purposes. With the
-permissive parser you just have to ensure ATE0 inside the modem plugin.
-See the other users for an example.
-
-> >> +static void cgev_notify(GAtResult *result, gpointer user_data) {
-> >> +	struct ofono_gprs_context *gc =3D user_data;
-> >> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> >> +	GAtResultIter iter; +	const char *event;
-> >> +
-> >> +	dump_response("cgev_notify", TRUE, result);
-> >> +
-> >> +	g_at_result_iter_init(&iter, result);
-> >> +
-> >> +	if (!g_at_result_iter_next(&iter, "+CGEV:"))
-> >> +		return;
-> >> +
-> >> +	if (!g_at_result_iter_next_unquoted_string(&iter, &event))
-> >> +		return; +
-> >> +	if (g_str_has_prefix(event, "NW REACT ") ||
-> >> +			g_str_has_prefix(event, "NW DEACT ") ||
-> >> +			g_str_has_prefix(event, "ME DEACT ")) {
-> >> +		/* Ask what primary contexts are active now */
-> >> +
-> >> +		g_at_chat_send(gcd->chat, "AT+CGACT?", cgact_prefix,
-> >> +				ste_cgact_read_cb, gc, NULL);
-> >> +
-> >> +		return;
-> >> +	}
-> >> +}
-> > =
-
-> > The return statement in the if clause is kinda pointless. Seems like
-> > either your code tried to be more complex or you are missing
-> > something.  =
-
-> =
-
-> Sure we can fix this, but this is actually just copied from gprs_context =
-in "atmodem".
-> BTW, the iter_init seems to be missing in atmodem's implementation, this =
-is probably
-> a bug in "atmodem".
-
-Sounds like a bug in atmodem then. Can you point me to the lines where
-you are seeing this. I will fix it if needed.
-
-And btw. the { for functions belongs on the line after. I will do a
-thorough review of your next patchset and look out for these :)
-
-> >> +static int stemodem_init(void)
-> >> +{
-> >> +	/* Initialize voicecall driver */
-> >> +	struct ofono_voicecall_driver *at_vcdrv;
-> >> +	struct ofono_voicecall_driver *ste_vcdrv;
-> >> +	struct ofono_netreg_driver *at_netdrv;
-> >> +	struct ofono_netreg_driver *ste_netdrv;
-> >> +
-> >> +	ste_voicecall_init();
-> >> +
-> >> +	at_vcdrv =3D ofono_voicecall_driver_get("atmodem");
-> >> +	ste_vcdrv =3D ofono_voicecall_driver_get("stemodem"); +
-> >> +	if (at_vcdrv && ste_vcdrv) {
-> >> +		ste_vcdrv->remove =3D at_vcdrv->remove;
-> >> +		ste_vcdrv->swap_without_accept =3D at_vcdrv->swap_without_accept;
-> >> +		ste_vcdrv->send_tones =3D at_vcdrv->send_tones;
-> >> +	} else {
-> >> +		if (!ste_vcdrv)
-> >> +			ofono_debug("Could not get ofono_voicecall_driver" +					"from
-> >> stemodem"); +		if (!at_vcdrv)
-> >> +			ofono_debug("Could not get ofono_voicecall_driver" +					"from
-> >> atmodem"); +	}
-> >> +
-> >> +	/* Initialize netreg driver */
-> >> +	ste_netreg_init();
-> >> +
-> >> +	at_netdrv =3D ofono_netreg_driver_get("atmodem");
-> >> +	ste_netdrv =3D ofono_netreg_driver_get("stemodem"); +
-> >> +	if (at_netdrv && ste_netdrv) {
-> >> +		ste_netdrv->remove =3D at_netdrv->remove;
-> >> +		ste_netdrv->registration_status =3D
-> >> +			at_netdrv->registration_status;
-> >> +		ste_netdrv->current_operator =3D at_netdrv->current_operator;
-> >> +		ste_netdrv->list_operators =3D at_netdrv->list_operators;
-> >> +		ste_netdrv->register_auto =3D at_netdrv->register_auto;
-> >> +		ste_netdrv->register_manual =3D at_netdrv->register_manual;
-> > =
-
-> > So far this, I really like to see a description on what's the
-> > difference in the network registration and voice call atoms. =
-
-> > =
-
-> > We do need to understand what is actually needed.
-> >
-> For Voice call the main difference is that we're not doing polling with =
-
-> CLCC, but are using our proprietary call events. This impacts most functi=
-ons.
-> The functions reusable from "atmodem" are "remove", "swap_without_accept"=
-, and =
-
-> "send_tones". I guess we could copy the three common functions from "atmo=
-dem" into =
-
-> "stemodem" voicecall.c if you prefer this.
-
-I actually prefer if you copy them. If useful, we can create some common
-helpers in drivers/atmodem/atutil.c. I leave this up to Denis to comment
-on that.
-
-> For Network Registration we have almost identical implementation, the dif=
-ference
-> is that for signal strength reporting we are using "AT+CIND" instead of "=
-CSQ" and "CIEV".
-> "CSQ" is not working for WCDMA in our case. =
-
-> I see that in the initialization function there is a switch on vendor.
-> I guess we could go for this approach if you think this is better.
-
-We do exactly that for OFONO_VENDOR_CALYPSO and OFONO_VENDOR_OPTION_HSO
-and so I think it is best that you guys follow that approach for now.
-
-If this gets massively convoluted at some point, we will be thinking of
-something. Right now I prefer to just follow exactly what we are doing
-for other modems with the same problem.
-
-Regards
-
-Marcel
-
-
-
---===============6327687846828656447==--
+--===============5265267389210539121==--
 
