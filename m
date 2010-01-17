@@ -1,34 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============3027306604175408966=="
+Content-Type: multipart/mixed; boundary="===============7309091551508172317=="
 MIME-Version: 1.0
 From: sjur.brandeland@stericsson.com
-Subject: [RFC 1/3] STE-plugin: Add vendor STE
-Date: Sun, 17 Jan 2010 18:28:30 +0100
-Message-ID: <1263749312-6567-2-git-send-email-sjur.brandeland@stericsson.com>
-In-Reply-To: <1263749312-6567-1-git-send-email-sjur.brandeland@stericsson.com>
+Subject: [RFC 2/3] STE-plugin: Mechanism for inheritance
+Date: Sun, 17 Jan 2010 18:28:31 +0100
+Message-ID: <1263749312-6567-3-git-send-email-sjur.brandeland@stericsson.com>
+In-Reply-To: <1263749312-6567-2-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3027306604175408966==
+--===============7309091551508172317==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Sjur Brandeland <sjur.brandeland@stericsson.com>
 
-This patch add STE as vendor, and a few adjustments needed in "atmodem" =
+This patch adds a mechanism to inherit/specialize from the standard "atmode=
+m".
+This is used in the initialization of voice call driver and the network =
 
-for ST-Ericsson modem.
+registration driver in order to re-use functions from "atmodems" whenever =
+
+possible. We realize this is not the standard way of doing it, so I would
+appreciate your comments on this approach.
+
 
 ---
- drivers/atmodem/gprs.c   |   15 +++++++++++++--
- drivers/atmodem/vendor.h |    5 +++++
- plugins/modemconf.c      |    5 +++++
- 3 files changed, 23 insertions(+), 2 deletions(-)
+ include/netreg.h    |    5 +++++
+ include/voicecall.h |    7 ++++++-
+ src/network.c       |   22 ++++++++++++++++++++++
+ src/voicecall.c     |   22 ++++++++++++++++++++++
+ 4 files changed, 55 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index 76085d9..305f22f 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
+diff --git a/include/netreg.h b/include/netreg.h
+old mode 100644
+new mode 100755
+index 0079477..ee0b201
+--- a/include/netreg.h
++++ b/include/netreg.h
 @@ -17,6 +17,10 @@
   *  along with this program; if not, write to the Free Software
   *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
@@ -41,82 +50,64 @@ index 76085d9..305f22f 100644
   */
  =
 
- #ifdef HAVE_CONFIG_H
-@@ -38,6 +42,7 @@
- #include "gatresult.h"
+ #ifndef __OFONO_NETREG_H
+@@ -96,6 +100,7 @@ void ofono_netreg_status_notify(struct ofono_netreg *net=
+reg, int status,
  =
 
- #include "atmodem.h"
-+#include "vendor.h"
+ int ofono_netreg_driver_register(const struct ofono_netreg_driver *d);
+ void ofono_netreg_driver_unregister(const struct ofono_netreg_driver *d);
++struct ofono_netreg_driver *ofono_netreg_driver_get(const char *driver);
  =
 
- static const char *cgreg_prefix[] =3D { "+CGREG:", NULL };
- static const char *cgdcont_prefix[] =3D { "+CGDCONT:", NULL };
-@@ -45,6 +50,7 @@ static const char *none_prefix[] =3D { NULL };
+ struct ofono_netreg *ofono_netreg_create(struct ofono_modem *modem,
+ 						unsigned int vendor,
+diff --git a/include/voicecall.h b/include/voicecall.h
+index 6ceb3d8..ca43c91 100644
+--- a/include/voicecall.h
++++ b/include/voicecall.h
+@@ -17,6 +17,10 @@
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
+  *
++ *  Copyright (C) 2010 ST-Ericsson AB.
++ *  Author: Marit Henriksen, marit.xx.henriksen(a)stericsson.com.
++ *  STE specific implementation.
++ *
+  */
  =
 
- struct gprs_data {
- 	GAtChat *chat;
-+	unsigned int vendor;
- };
+ #ifndef __OFONO_VOICECALL_H
+@@ -29,7 +33,7 @@ extern "C" {
+ #include <ofono/types.h>
  =
 
- static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -216,7 +222,12 @@ static void at_cgreg_test_cb(gboolean ok, GAtResult *r=
-esult,
- =
-
- 	g_at_chat_send(gd->chat, cmd, none_prefix, NULL, NULL, NULL);
- 	g_at_chat_send(gd->chat, "AT+CGAUTO=3D0", none_prefix, NULL, NULL, NULL);
--	g_at_chat_send(gd->chat, "AT+CGEREP=3D2,1", none_prefix,
-+
-+	if (gd->vendor =3D=3D OFONO_VENDOR_STE)
-+		g_at_chat_send(gd->chat, "AT+CGEREP=3D1,0", none_prefix,
-+			gprs_initialized, gprs, NULL);
-+	else
-+		g_at_chat_send(gd->chat, "AT+CGEREP=3D2,1", none_prefix,
- 			gprs_initialized, gprs, NULL);
- 	return;
- =
-
-@@ -289,7 +300,7 @@ static int at_gprs_probe(struct ofono_gprs *gprs,
- =
-
- 	gd =3D g_new0(struct gprs_data, 1);
- 	gd->chat =3D chat;
+ struct ofono_voicecall;
 -
-+	gd->vendor =3D vendor;
- 	ofono_gprs_set_data(gprs, gd);
++struct ofono_modem;
+ typedef void (*ofono_voicecall_cb_t)(const struct ofono_error *error,
+ 					void *data);
  =
 
- 	g_at_chat_send(chat, "AT+CGDCONT=3D?", cgdcont_prefix,
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index 8d9ed47..d7b5210 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -17,11 +17,16 @@
-  *  along with this program; if not, write to the Free Software
-  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-  *
-+ *  Copyright (C) 2010 ST-Ericsson AB.
-+ *  Author: Marit Henriksen, marit.xx.henriksen(a)stericsson.com.
-+ *  STE specific implementation.
-+ *
-  */
+@@ -102,6 +106,7 @@ void ofono_voicecall_disconnected(struct ofono_voicecal=
+l *vc, int id,
  =
 
- enum ofono_vendor {
- 	OFONO_VENDOR_GENERIC =3D 0,
- 	OFONO_VENDOR_CALYPSO,
-+	OFONO_VENDOR_STE,
- 	OFONO_VENDOR_QUALCOMM_MSM,
- 	OFONO_VENDOR_OPTION_HSO,
- };
-diff --git a/plugins/modemconf.c b/plugins/modemconf.c
-index c8c261f..41c7428 100644
---- a/plugins/modemconf.c
-+++ b/plugins/modemconf.c
+ int ofono_voicecall_driver_register(const struct ofono_voicecall_driver *d=
+);
+ void ofono_voicecall_driver_unregister(const struct ofono_voicecall_driver=
+ *d);
++struct ofono_voicecall_driver *ofono_voicecall_driver_get(const char *driv=
+er);
+ =
+
+ struct ofono_voicecall *ofono_voicecall_create(struct ofono_modem *modem,
+ 					unsigned int vendor,
+diff --git a/src/network.c b/src/network.c
+index 8b4eb09..75ee98b 100644
+--- a/src/network.c
++++ b/src/network.c
 @@ -17,6 +17,10 @@
   *  along with this program; if not, write to the Free Software
   *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
@@ -130,20 +121,82 @@ index c8c261f..41c7428 100644
  =
 
  #ifdef HAVE_CONFIG_H
-@@ -128,6 +132,7 @@ static struct ofono_modem *create_modem(GKeyFile *keyfi=
-le, const char *group)
- 		set_address(modem, keyfile, group);
+@@ -1596,6 +1600,24 @@ void ofono_netreg_driver_unregister(const struct ofo=
+no_netreg_driver *d)
+ 	g_drivers =3D g_slist_remove(g_drivers, (void *)d);
+ }
  =
 
- 	if (!g_strcmp0(driver, "atgen") || !g_strcmp0(driver, "g1") ||
-+						!g_strcmp0(driver, "ste") ||
- 						!g_strcmp0(driver, "calypso") ||
- 						!g_strcmp0(driver, "hfp") ||
- 						!g_strcmp0(driver, "palmpre"))
++struct ofono_netreg_driver *ofono_netreg_driver_get(const char *driver)
++{
++	GSList *l;
++
++	if (driver =3D=3D NULL)
++		return NULL;
++
++	for (l =3D g_drivers; l; l =3D l->next) {
++		struct ofono_netreg_driver *drv =3D l->data;
++
++		if (g_strcmp0(drv->name, driver))
++			continue;
++		else
++			return drv;
++	}
++	return NULL;
++}
++
+ static void netreg_unregister(struct ofono_atom *atom)
+ {
+ 	struct ofono_netreg *netreg =3D __ofono_atom_get_data(atom);
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 73de35f..1cd5bd7 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -17,6 +17,10 @@
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
+  *
++ *  Copyright (C) 2010 ST-Ericsson AB.
++ *  Author: Marit Henriksen, marit.xx.henriksen(a)stericsson.com.
++ *  STE specific implementation.
++ *
+  */
+ =
+
+ #ifdef HAVE_CONFIG_H
+@@ -1751,6 +1755,24 @@ void ofono_voicecall_driver_unregister(const struct =
+ofono_voicecall_driver *d)
+ 	g_drivers =3D g_slist_remove(g_drivers, (void *)d);
+ }
+ =
+
++struct ofono_voicecall_driver *ofono_voicecall_driver_get(const char *driv=
+er)
++{
++	GSList *l;
++
++	if (driver =3D=3D NULL)
++		return NULL;
++
++	for (l =3D g_drivers; l; l =3D l->next) {
++		struct ofono_voicecall_driver *drv =3D l->data;
++
++		if (g_strcmp0(drv->name, driver))
++			continue;
++		else
++			return drv;
++	}
++	return NULL;
++}
++
+ static void voicecall_unregister(struct ofono_atom *atom)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
 -- =
 
 1.6.0.4
 
 
---===============3027306604175408966==--
+--===============7309091551508172317==--
 
