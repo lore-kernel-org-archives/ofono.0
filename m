@@ -1,276 +1,202 @@
-Content-Type: multipart/mixed; boundary="===============9132254328230178062=="
+Content-Type: multipart/mixed; boundary="===============4701657535424971246=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjur.brandeland@stericsson.com>
-Subject: RE: [RFC 3/3] STE-plugin: Adding STE plugin
-Date: Mon, 18 Jan 2010 19:22:03 +0100
-Message-ID: <61D8D34BB13CFE408D154529C120E07991D7BA@eseldmw101.eemea.ericsson.se>
-In-Reply-To: <1263764432.5591.104.camel@localhost.localdomain>
+From: Jussi Kukkonen <jku@linux.intel.com>
+Subject: [PATCH] add quirk for cid and lac handling for Huawei
+Date: Mon, 18 Jan 2010 21:29:53 +0200
+Message-ID: <4B54B6B1.3080306@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9132254328230178062==
+--===============4701657535424971246==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel.
-Thank you for your feedback. We hope to get new patch-set out tomorrow
-with most of your comments fixed.
-
-Marcel Holtmann wrote:
-> Hi Sjur,
-> =
-
-> review. I am thinking of something the like this; one per network
-> registration, one per voice call, one per GPRS.  =
-
-> =
-
-> You are making some core changes and we need to have a close look at
-> them and what the potential impact would be. =
-
-
-Sure, will split up better next time. =
-
-
->> +#include <arpa/inet.h>
->> +#include <linux/caif/caif_socket.h>
->> +#include <linux/caif/if_caif.h>
-> =
-
-> This is dangerous until the CAIF subsystem is actually merged and
-> present everywhere. Please consider adding an option to enable
-> stemodem driver (like we do for atmodem and isimodem).  =
-
-
-OK, we'll put this on our todo-list.
-
-> It might make sense to have a local copy of the required structure
-> and constants to allow an easier complication. Of course this depends
-> on having CAIF at least in net-next-2.6 tree.  =
-
-
-OK, agree. I'll supply the CAIF specific patches next time.
-Should we put the CAIF header files into ofono/include/caif?
-
-> =
-
->> +/* TODO: should parse_xml function to be moved to e.g. atutil? */
-> =
-
-> First question. Why not use the XML parse that comes with GLib.
-
-OK. Is it "Simple XML Subset Parser" you refer to? If you have any pointer =
-
-to sample code using this XML parser we would appreciate it.
-
-
-> oFono is never setting the IP address, netmask or any other
-> configuration option. The only thing that oFono does is bringing the
-> interface up. Systems like ConnMan do the IP configuration.  =
-
-> =
-
-> Please see the comments in the documentation on how we expose IP
-> interfaces. Check with ConnMan and how we configure them.
-
-OK, we're returning the relevant parameters from activate_primary so that
-all PDP Context parameters including interface name,
-ip-address, netmask, dns,  etc are available in PrimaryDataContext. =
-
-And leave the interface created but not configured.
-Does this sound ok?
- =
-
-> =
-
-> Having create and remove in the same function seems hard to read. Why
-> not have one for creating the interface and one for removing it. From
-> what I see so far, it is not much more code. And makes it a lot
-> easier to read and understand for other people.   =
-
-> =
-
-OK, we'll split this up.
-
-> I would prefer if you do the parsing in one function that goes
-> through the XML ones. Just give it pointers to the fields you wanna
-> have it extract or a special combined structure. This looks highly
-> inefficient to me.   =
-
-
-OK, see comments on XML above.
-
-> =
-
->> +	conn->interface =3D g_malloc(10);
->> +	if (!conn->interface)
->> +		goto error;
-> =
-
-> Please double check with the GLib documentation on memory allocation.
-> The g_malloc failure would result in halt of the program. What you
-> want here is g_try_malloc. =
-
-> =
-
-> Also for 10 bytes, please don't bother with an allocation. Just
-> include a char array in the conn structure. =
-
-
-Yes I agree, we will fix this.
-
-> =
-
-> Yeah, I really prefer caif_if_create() and caif_if_remove(). This is
-> not really intuitive at all. =
-
-
-OK, sure.
-
-> =
-
->> +	/* Need to change to gsm_permissive syntax in order to
->> +	 * parse the response from EPPSD (xml) */
->> +	g_at_chat_set_syntax(gcd->chat, g_at_syntax_new_gsm_permissive());
-> =
-
-> Is this an issue with your modem firmware or an issue in the v1
-> parser. =
-
-> If it is the modem firmware, then just use the permissive parser all
-> the time and switch to E0. =
-
-
-Setting permissive mode was done in order to be able to parse =
-
-the XML response from  EPPSD (Propriatery Activate PDP context). =
-
-But we can try if we can run with this mode default if you think =
-
-this is better.
-
-> =
-
->> +static void cgev_notify(GAtResult *result, gpointer user_data) {
->> +	struct ofono_gprs_context *gc =3D user_data;
->> +	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
->> +	GAtResultIter iter; +	const char *event;
->> +
->> +	dump_response("cgev_notify", TRUE, result);
->> +
->> +	g_at_result_iter_init(&iter, result);
->> +
->> +	if (!g_at_result_iter_next(&iter, "+CGEV:"))
->> +		return;
->> +
->> +	if (!g_at_result_iter_next_unquoted_string(&iter, &event))
->> +		return; +
->> +	if (g_str_has_prefix(event, "NW REACT ") ||
->> +			g_str_has_prefix(event, "NW DEACT ") ||
->> +			g_str_has_prefix(event, "ME DEACT ")) {
->> +		/* Ask what primary contexts are active now */
->> +
->> +		g_at_chat_send(gcd->chat, "AT+CGACT?", cgact_prefix,
->> +				ste_cgact_read_cb, gc, NULL);
->> +
->> +		return;
->> +	}
->> +}
-> =
-
-> The return statement in the if clause is kinda pointless. Seems like
-> either your code tried to be more complex or you are missing
-> something.  =
-
-
-Sure we can fix this, but this is actually just copied from gprs_context in=
- "atmodem".
-BTW, the iter_init seems to be missing in atmodem's implementation, this is=
- probably
-a bug in "atmodem".
-
-> =
-
->> +static int stemodem_init(void)
->> +{
->> +	/* Initialize voicecall driver */
->> +	struct ofono_voicecall_driver *at_vcdrv;
->> +	struct ofono_voicecall_driver *ste_vcdrv;
->> +	struct ofono_netreg_driver *at_netdrv;
->> +	struct ofono_netreg_driver *ste_netdrv;
->> +
->> +	ste_voicecall_init();
->> +
->> +	at_vcdrv =3D ofono_voicecall_driver_get("atmodem");
->> +	ste_vcdrv =3D ofono_voicecall_driver_get("stemodem"); +
->> +	if (at_vcdrv && ste_vcdrv) {
->> +		ste_vcdrv->remove =3D at_vcdrv->remove;
->> +		ste_vcdrv->swap_without_accept =3D at_vcdrv->swap_without_accept;
->> +		ste_vcdrv->send_tones =3D at_vcdrv->send_tones;
->> +	} else {
->> +		if (!ste_vcdrv)
->> +			ofono_debug("Could not get ofono_voicecall_driver" +					"from
->> stemodem"); +		if (!at_vcdrv)
->> +			ofono_debug("Could not get ofono_voicecall_driver" +					"from
->> atmodem"); +	}
->> +
->> +	/* Initialize netreg driver */
->> +	ste_netreg_init();
->> +
->> +	at_netdrv =3D ofono_netreg_driver_get("atmodem");
->> +	ste_netdrv =3D ofono_netreg_driver_get("stemodem"); +
->> +	if (at_netdrv && ste_netdrv) {
->> +		ste_netdrv->remove =3D at_netdrv->remove;
->> +		ste_netdrv->registration_status =3D
->> +			at_netdrv->registration_status;
->> +		ste_netdrv->current_operator =3D at_netdrv->current_operator;
->> +		ste_netdrv->list_operators =3D at_netdrv->list_operators;
->> +		ste_netdrv->register_auto =3D at_netdrv->register_auto;
->> +		ste_netdrv->register_manual =3D at_netdrv->register_manual;
-> =
-
-> So far this, I really like to see a description on what's the
-> difference in the network registration and voice call atoms. =
-
-> =
-
-> We do need to understand what is actually needed.
->
-For Voice call the main difference is that we're not doing polling with =
-
-CLCC, but are using our proprietary call events. This impacts most function=
-s.
-The functions reusable from "atmodem" are "remove", "swap_without_accept", =
-and =
-
-"send_tones". I guess we could copy the three common functions from "atmode=
-m" into =
-
-"stemodem" voicecall.c if you prefer this.
-
-For Network Registration we have almost identical implementation, the diffe=
-rence
-is that for signal strength reporting we are using "AT+CIND" instead of "CS=
-Q" and "CIEV".
-"CSQ" is not working for WCDMA in our case. =
-
-I see that in the initialization function there is a switch on vendor.
-I guess we could go for this approach if you think this is better.
-> =
-
->> +	/* Create a CAIF socket for AT Service */
->> +	fd =3D socket(AF_CAIF, SOCK_SEQPACKET, CAIFPROTO_AT); +
->> +	/* Connect to the AT Service at the modem */
->> +	connect(fd, (struct sockaddr *) &addr, sizeof(addr));
->> +	channel =3D g_io_channel_unix_new(fd);
-> =
-
-> You need to check the results of socket() and connect() calls.
-Sure, will fix this.
-
-Regards
-Sjur Br=C3=A6ndeland
-
---===============9132254328230178062==--
+Hello,
+
+My Eee-integrated Huawei E620 reports "local area code" and "cell id" as =
+
+unquoted strings. Denis informed me on IRC that this is non-compliant =
+
+and that I could add a quirk for it.
+
+Attached is my attempt at that. The actual quirk is in =
+
+drivers/atmodem/atutil.c, which means I needed to change the =
+
+at_util_parse_reg*() definitions. Let me know if my approach seems wrong =
+
+-- this was the first time I've even looked at ofono code, and I can't =
+
+claim to understand it fully.
+
+The huawei plugin seems to use OFONO_VENDOR_QUALCOMM_MSM for sms... =
+
+Should that be updated so OFONO_VENDOR_HUAWEI (which I added) hits the =
+
+same quirk(s) or do Huawei and Qualcomm really have something in common?
+
+  - Jussi
+
+
+--===============4701657535424971246==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Add-quirk-for-cid-and-lac-handling-for-Huawei.patch"
+
+PkZyb20gMjE2YjEzNzBlNjA0MTE1ZGVlYjBmYTcxZjcyZWEyNWQ1ODg4Yzc4ZCBNb24gU2VwIDE3
+IDAwOjAwOjAwIDIwMDEKRnJvbTogSnVzc2kgS3Vra29uZW4gPGprdUBsaW51eC5pbnRlbC5jb20+
+CkRhdGU6IE1vbiwgMTggSmFuIDIwMTAgMTY6MzA6MTMgKzAyMDAKU3ViamVjdDogW1BBVENIXSBB
+ZGQgcXVpcmsgZm9yIGNpZCBhbmQgbGFjIGhhbmRsaW5nIGZvciBIdWF3ZWkKCi0tLQogZHJpdmVy
+cy9hdG1vZGVtL2F0dXRpbC5jICAgICAgICAgICAgICAgfCAgIDY5ICsrKysrKysrKysrKysrKysr
+KysrKysrLS0tLS0tLS0KIGRyaXZlcnMvYXRtb2RlbS9hdHV0aWwuaCAgICAgICAgICAgICAgIHwg
+ICAgNiArKy0KIGRyaXZlcnMvYXRtb2RlbS9ncHJzLmMgICAgICAgICAgICAgICAgIHwgICAxMCAr
+KysrLQogZHJpdmVycy9hdG1vZGVtL25ldHdvcmstcmVnaXN0cmF0aW9uLmMgfCAgICA4ICsrKy0K
+IGRyaXZlcnMvYXRtb2RlbS92ZW5kb3IuaCAgICAgICAgICAgICAgIHwgICAgMSArCiBwbHVnaW5z
+L2h1YXdlaS5jICAgICAgICAgICAgICAgICAgICAgICB8ICAgIDMgKy0KIDYgZmlsZXMgY2hhbmdl
+ZCwgNzIgaW5zZXJ0aW9ucygrKSwgMjUgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvZHJpdmVy
+cy9hdG1vZGVtL2F0dXRpbC5jIGIvZHJpdmVycy9hdG1vZGVtL2F0dXRpbC5jCmluZGV4IGI3MmU5
+MTkuLmMyZGZkMjEgMTAwNjQ0Ci0tLSBhL2RyaXZlcnMvYXRtb2RlbS9hdHV0aWwuYworKysgYi9k
+cml2ZXJzL2F0bW9kZW0vYXR1dGlsLmMKQEAgLTMzLDYgKzMzLDcgQEAKICNpbmNsdWRlIDxvZm9u
+by90eXBlcy5oPgogCiAjaW5jbHVkZSAiYXR1dGlsLmgiCisjaW5jbHVkZSAidmVuZG9yLmgiCiAK
+IHZvaWQgZHVtcF9yZXNwb25zZShjb25zdCBjaGFyICpmdW5jLCBnYm9vbGVhbiBvaywgR0F0UmVz
+dWx0ICpyZXN1bHQpCiB7CkBAIC0xNDksNyArMTUwLDggQEAgR1NMaXN0ICphdF91dGlsX3BhcnNl
+X2NsY2MoR0F0UmVzdWx0ICpyZXN1bHQpCiAKIGdib29sZWFuIGF0X3V0aWxfcGFyc2VfcmVnX3Vu
+c29saWNpdGVkKEdBdFJlc3VsdCAqcmVzdWx0LCBjb25zdCBjaGFyICpwcmVmaXgsCiAJCQkJCWlu
+dCAqc3RhdHVzLAotCQkJCQlpbnQgKmxhYywgaW50ICpjaSwgaW50ICp0ZWNoKQorCQkJCQlpbnQg
+KmxhYywgaW50ICpjaSwgaW50ICp0ZWNoLAorCQkJCQl1bnNpZ25lZCBpbnQgdmVuZG9yKQogewog
+CUdBdFJlc3VsdEl0ZXIgaXRlcjsKIAlpbnQgczsKQEAgLTE2NCwxNSArMTY2LDMwIEBAIGdib29s
+ZWFuIGF0X3V0aWxfcGFyc2VfcmVnX3Vuc29saWNpdGVkKEdBdFJlc3VsdCAqcmVzdWx0LCBjb25z
+dCBjaGFyICpwcmVmaXgsCiAJaWYgKGdfYXRfcmVzdWx0X2l0ZXJfbmV4dF9udW1iZXIoJml0ZXIs
+ICZzKSA9PSBGQUxTRSkKIAkJcmV0dXJuIEZBTFNFOwogCi0JaWYgKGdfYXRfcmVzdWx0X2l0ZXJf
+bmV4dF9zdHJpbmcoJml0ZXIsICZzdHIpID09IFRSVUUpCi0JCWwgPSBzdHJ0b2woc3RyLCBOVUxM
+LCAxNik7Ci0JZWxzZQotCQlnb3RvIG91dDsKKwlzd2l0Y2ggKHZlbmRvcikgeworCWNhc2UgT0ZP
+Tk9fVkVORE9SX0hVQVdFSToKKwkJaWYgKGdfYXRfcmVzdWx0X2l0ZXJfbmV4dF91bnF1b3RlZF9z
+dHJpbmcoJml0ZXIsICZzdHIpID09IFRSVUUpCisJCQlsID0gc3RydG9sKHN0ciwgTlVMTCwgMTYp
+OworCQllbHNlCisJCQlnb3RvIG91dDsKKworCQlpZiAoZ19hdF9yZXN1bHRfaXRlcl9uZXh0X3Vu
+cXVvdGVkX3N0cmluZygmaXRlciwgJnN0cikgPT0gVFJVRSkKKwkJCWMgPSBzdHJ0b2woc3RyLCBO
+VUxMLCAxNik7CisJCWVsc2UKKwkJCWdvdG8gb3V0OwogCi0JaWYgKGdfYXRfcmVzdWx0X2l0ZXJf
+bmV4dF9zdHJpbmcoJml0ZXIsICZzdHIpID09IFRSVUUpCi0JCWMgPSBzdHJ0b2woc3RyLCBOVUxM
+LCAxNik7Ci0JZWxzZQotCQlnb3RvIG91dDsKKwkJYnJlYWs7CisJZGVmYXVsdDoKKwkJaWYgKGdf
+YXRfcmVzdWx0X2l0ZXJfbmV4dF9zdHJpbmcoJml0ZXIsICZzdHIpID09IFRSVUUpCisJCQlsID0g
+c3RydG9sKHN0ciwgTlVMTCwgMTYpOworCQllbHNlCisJCQlnb3RvIG91dDsKKworCQlpZiAoZ19h
+dF9yZXN1bHRfaXRlcl9uZXh0X3N0cmluZygmaXRlciwgJnN0cikgPT0gVFJVRSkKKwkJCWMgPSBz
+dHJ0b2woc3RyLCBOVUxMLCAxNik7CisJCWVsc2UKKwkJCWdvdG8gb3V0OworCX0KIAogCWdfYXRf
+cmVzdWx0X2l0ZXJfbmV4dF9udW1iZXIoJml0ZXIsICZ0KTsKIApAQCAtMTk0LDcgKzIxMSw4IEBA
+IG91dDoKIAogZ2Jvb2xlYW4gYXRfdXRpbF9wYXJzZV9yZWcoR0F0UmVzdWx0ICpyZXN1bHQsIGNv
+bnN0IGNoYXIgKnByZWZpeCwKIAkJCQlpbnQgKm1vZGUsIGludCAqc3RhdHVzLAotCQkJCWludCAq
+bGFjLCBpbnQgKmNpLCBpbnQgKnRlY2gpCisJCQkJaW50ICpsYWMsIGludCAqY2ksIGludCAqdGVj
+aCwKKwkJCQl1bnNpZ25lZCBpbnQgdmVuZG9yKQogewogCUdBdFJlc3VsdEl0ZXIgaXRlcjsKIAlp
+bnQgbSwgczsKQEAgLTIxMCwxNSArMjI4LDMwIEBAIGdib29sZWFuIGF0X3V0aWxfcGFyc2VfcmVn
+KEdBdFJlc3VsdCAqcmVzdWx0LCBjb25zdCBjaGFyICpwcmVmaXgsCiAJCWlmIChnX2F0X3Jlc3Vs
+dF9pdGVyX25leHRfbnVtYmVyKCZpdGVyLCAmcykgPT0gRkFMU0UpCiAJCQljb250aW51ZTsKIAot
+CQlpZiAoZ19hdF9yZXN1bHRfaXRlcl9uZXh0X3N0cmluZygmaXRlciwgJnN0cikgPT0gVFJVRSkK
+LQkJCWwgPSBzdHJ0b2woc3RyLCBOVUxMLCAxNik7Ci0JCWVsc2UKLQkJCWdvdG8gb3V0OworCQlz
+d2l0Y2ggKHZlbmRvcikgeworCQljYXNlIE9GT05PX1ZFTkRPUl9IVUFXRUk6CisJCQlpZiAoZ19h
+dF9yZXN1bHRfaXRlcl9uZXh0X3VucXVvdGVkX3N0cmluZygmaXRlciwgJnN0cikgPT0gVFJVRSkK
+KwkJCQlsID0gc3RydG9sKHN0ciwgTlVMTCwgMTYpOworCQkJZWxzZQorCQkJCWdvdG8gb3V0Owog
+Ci0JCWlmIChnX2F0X3Jlc3VsdF9pdGVyX25leHRfc3RyaW5nKCZpdGVyLCAmc3RyKSA9PSBUUlVF
+KQotCQkJYyA9IHN0cnRvbChzdHIsIE5VTEwsIDE2KTsKLQkJZWxzZQotCQkJZ290byBvdXQ7CisJ
+CQlpZiAoZ19hdF9yZXN1bHRfaXRlcl9uZXh0X3VucXVvdGVkX3N0cmluZygmaXRlciwgJnN0cikg
+PT0gVFJVRSkKKwkJCQljID0gc3RydG9sKHN0ciwgTlVMTCwgMTYpOworCQkJZWxzZQorCQkJCWdv
+dG8gb3V0OworCisJCQlicmVhazsKKwkJZGVmYXVsdDoKKwkJCWlmIChnX2F0X3Jlc3VsdF9pdGVy
+X25leHRfc3RyaW5nKCZpdGVyLCAmc3RyKSA9PSBUUlVFKQorCQkJCWwgPSBzdHJ0b2woc3RyLCBO
+VUxMLCAxNik7CisJCQllbHNlCisJCQkJZ290byBvdXQ7CisKKwkJCWlmIChnX2F0X3Jlc3VsdF9p
+dGVyX25leHRfc3RyaW5nKCZpdGVyLCAmc3RyKSA9PSBUUlVFKQorCQkJCWMgPSBzdHJ0b2woc3Ry
+LCBOVUxMLCAxNik7CisJCQllbHNlCisJCQkJZ290byBvdXQ7CisJCX0KIAogCQlnX2F0X3Jlc3Vs
+dF9pdGVyX25leHRfbnVtYmVyKCZpdGVyLCAmdCk7CiAKZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRt
+b2RlbS9hdHV0aWwuaCBiL2RyaXZlcnMvYXRtb2RlbS9hdHV0aWwuaAppbmRleCA0YjYwY2QxLi4w
+YWIyMDdkIDEwMDY0NAotLS0gYS9kcml2ZXJzL2F0bW9kZW0vYXR1dGlsLmgKKysrIGIvZHJpdmVy
+cy9hdG1vZGVtL2F0dXRpbC5oCkBAIC0yNywxMCArMjcsMTIgQEAgZ2ludCBhdF91dGlsX2NhbGxf
+Y29tcGFyZShnY29uc3Rwb2ludGVyIGEsIGdjb25zdHBvaW50ZXIgYik7CiBHU0xpc3QgKmF0X3V0
+aWxfcGFyc2VfY2xjYyhHQXRSZXN1bHQgKnJlc3VsdCk7CiBnYm9vbGVhbiBhdF91dGlsX3BhcnNl
+X3JlZyhHQXRSZXN1bHQgKnJlc3VsdCwgY29uc3QgY2hhciAqcHJlZml4LAogCQkJCWludCAqbW9k
+ZSwgaW50ICpzdGF0dXMsCi0JCQkJaW50ICpsYWMsIGludCAqY2ksIGludCAqdGVjaCk7CisJCQkJ
+aW50ICpsYWMsIGludCAqY2ksIGludCAqdGVjaCwKKwkJCQl1bnNpZ25lZCBpbnQgdmVuZG9yKTsK
+IGdib29sZWFuIGF0X3V0aWxfcGFyc2VfcmVnX3Vuc29saWNpdGVkKEdBdFJlc3VsdCAqcmVzdWx0
+LCBjb25zdCBjaGFyICpwcmVmaXgsCiAJCQkJCWludCAqc3RhdHVzLCBpbnQgKmxhYywKLQkJCQkJ
+aW50ICpjaSwgaW50ICp0ZWNoKTsKKwkJCQkJaW50ICpjaSwgaW50ICp0ZWNoLAorCQkJCQl1bnNp
+Z25lZCBpbnQgdmVuZG9yKTsKIAogc3RydWN0IGNiX2RhdGEgewogCXZvaWQgKmNiOwpkaWZmIC0t
+Z2l0IGEvZHJpdmVycy9hdG1vZGVtL2dwcnMuYyBiL2RyaXZlcnMvYXRtb2RlbS9ncHJzLmMKaW5k
+ZXggNzYwODVkOS4uNjAzNGM0MiAxMDA2NDQKLS0tIGEvZHJpdmVycy9hdG1vZGVtL2dwcnMuYwor
+KysgYi9kcml2ZXJzL2F0bW9kZW0vZ3Bycy5jCkBAIC00NSw2ICs0NSw3IEBAIHN0YXRpYyBjb25z
+dCBjaGFyICpub25lX3ByZWZpeFtdID0geyBOVUxMIH07CiAKIHN0cnVjdCBncHJzX2RhdGEgewog
+CUdBdENoYXQgKmNoYXQ7CisJdW5zaWduZWQgaW50IHZlbmRvcjsKIH07CiAKIHN0YXRpYyB2b2lk
+IGF0X2NnYXR0X2NiKGdib29sZWFuIG9rLCBHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNl
+cl9kYXRhKQpAQCAtODgsNiArODksNyBAQCBzdGF0aWMgdm9pZCBhdF9jZ3JlZ19jYihnYm9vbGVh
+biBvaywgR0F0UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVyIHVzZXJfZGF0YSkKIAlvZm9ub19ncHJz
+X3N0YXR1c19jYl90IGNiID0gY2JkLT5jYjsKIAlzdHJ1Y3Qgb2Zvbm9fZXJyb3IgZXJyb3I7CiAJ
+aW50IHN0YXR1cywgbGFjLCBjaSwgdGVjaDsKKwlzdHJ1Y3QgZ3Byc19kYXRhICpnZCA9IGNiZC0+
+dXNlcjsKIAogCWR1bXBfcmVzcG9uc2UoImF0X2NncmVnX2NiIiwgb2ssIHJlc3VsdCk7CiAJZGVj
+b2RlX2F0X2Vycm9yKCZlcnJvciwgZ19hdF9yZXN1bHRfZmluYWxfcmVzcG9uc2UocmVzdWx0KSk7
+CkBAIC05OCw3ICsxMDAsNyBAQCBzdGF0aWMgdm9pZCBhdF9jZ3JlZ19jYihnYm9vbGVhbiBvaywg
+R0F0UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVyIHVzZXJfZGF0YSkKIAl9CiAKIAlpZiAoYXRfdXRp
+bF9wYXJzZV9yZWcocmVzdWx0LCAiK0NHUkVHOiIsIE5VTEwsICZzdGF0dXMsCi0JCQkJJmxhYywg
+JmNpLCAmdGVjaCkgPT0gRkFMU0UpIHsKKwkJCQkmbGFjLCAmY2ksICZ0ZWNoLCBnZC0+dmVuZG9y
+KSA9PSBGQUxTRSkgewogCQlDQUxMQkFDS19XSVRIX0ZBSUxVUkUoY2IsIC0xLCAtMSwgLTEsIC0x
+LCBjYmQtPmRhdGEpOwogCQlyZXR1cm47CiAJfQpAQCAtMTE2LDYgKzExOCw4IEBAIHN0YXRpYyB2
+b2lkIGF0X2dwcnNfcmVnaXN0cmF0aW9uX3N0YXR1cyhzdHJ1Y3Qgb2Zvbm9fZ3BycyAqZ3BycywK
+IAlpZiAoIWNiZCkKIAkJZ290byBlcnJvcjsKIAorCWNiZC0+dXNlciA9IGdkOworCiAJaWYgKGdf
+YXRfY2hhdF9zZW5kKGdkLT5jaGF0LCAiQVQrQ0dSRUc/IiwgY2dyZWdfcHJlZml4LAogCQkJCWF0
+X2NncmVnX2NiLCBjYmQsIGdfZnJlZSkgPiAwKQogCQlyZXR1cm47CkBAIC0xMzEsMTEgKzEzNSwx
+MiBAQCBzdGF0aWMgdm9pZCBjZ3JlZ19ub3RpZnkoR0F0UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVy
+IHVzZXJfZGF0YSkKIHsKIAlzdHJ1Y3Qgb2Zvbm9fZ3BycyAqZ3BycyA9IHVzZXJfZGF0YTsKIAlp
+bnQgc3RhdHVzLCBsYWMsIGNpLCB0ZWNoOworCXN0cnVjdCBncHJzX2RhdGEgKmdkID0gb2Zvbm9f
+Z3Byc19nZXRfZGF0YShncHJzKTsKIAogCWR1bXBfcmVzcG9uc2UoImNncmVnX25vdGlmeSIsIFRS
+VUUsIHJlc3VsdCk7CiAKIAlpZiAoYXRfdXRpbF9wYXJzZV9yZWdfdW5zb2xpY2l0ZWQocmVzdWx0
+LCAiK0NHUkVHOiIsICZzdGF0dXMsCi0JCQkJJmxhYywgJmNpLCAmdGVjaCkgPT0gRkFMU0UpCisJ
+CQkJJmxhYywgJmNpLCAmdGVjaCwgZ2QtPnZlbmRvcikgPT0gRkFMU0UpCiAJCXJldHVybjsKIAog
+CW9mb25vX2dwcnNfc3RhdHVzX25vdGlmeShncHJzLCBzdGF0dXMsIGxhYywgY2ksIHRlY2gpOwpA
+QCAtMjg5LDYgKzI5NCw3IEBAIHN0YXRpYyBpbnQgYXRfZ3Byc19wcm9iZShzdHJ1Y3Qgb2Zvbm9f
+Z3BycyAqZ3BycywKIAogCWdkID0gZ19uZXcwKHN0cnVjdCBncHJzX2RhdGEsIDEpOwogCWdkLT5j
+aGF0ID0gY2hhdDsKKwlnZC0+dmVuZG9yID0gdmVuZG9yOwogCiAJb2Zvbm9fZ3Byc19zZXRfZGF0
+YShncHJzLCBnZCk7CiAKZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS9uZXR3b3JrLXJlZ2lz
+dHJhdGlvbi5jIGIvZHJpdmVycy9hdG1vZGVtL25ldHdvcmstcmVnaXN0cmF0aW9uLmMKaW5kZXgg
+MjAyMjU2YS4uYzgwYWNjNSAxMDA2NDQKLS0tIGEvZHJpdmVycy9hdG1vZGVtL25ldHdvcmstcmVn
+aXN0cmF0aW9uLmMKKysrIGIvZHJpdmVycy9hdG1vZGVtL25ldHdvcmstcmVnaXN0cmF0aW9uLmMK
+QEAgLTY5LDYgKzY5LDcgQEAgc3RhdGljIHZvaWQgYXRfY3JlZ19jYihnYm9vbGVhbiBvaywgR0F0
+UmVzdWx0ICpyZXN1bHQsIGdwb2ludGVyIHVzZXJfZGF0YSkKIAlvZm9ub19uZXRyZWdfc3RhdHVz
+X2NiX3QgY2IgPSBjYmQtPmNiOwogCWludCBzdGF0dXMsIGxhYywgY2ksIHRlY2g7CiAJc3RydWN0
+IG9mb25vX2Vycm9yIGVycm9yOworCXN0cnVjdCBuZXRyZWdfZGF0YSAqbmQgPSBjYmQtPnVzZXI7
+CiAKIAlkdW1wX3Jlc3BvbnNlKCJhdF9jcmVnX2NiIiwgb2ssIHJlc3VsdCk7CiAJZGVjb2RlX2F0
+X2Vycm9yKCZlcnJvciwgZ19hdF9yZXN1bHRfZmluYWxfcmVzcG9uc2UocmVzdWx0KSk7CkBAIC03
+OSw3ICs4MCw3IEBAIHN0YXRpYyB2b2lkIGF0X2NyZWdfY2IoZ2Jvb2xlYW4gb2ssIEdBdFJlc3Vs
+dCAqcmVzdWx0LCBncG9pbnRlciB1c2VyX2RhdGEpCiAJfQogCiAJaWYgKGF0X3V0aWxfcGFyc2Vf
+cmVnKHJlc3VsdCwgIitDUkVHOiIsIE5VTEwsICZzdGF0dXMsCi0JCQkJJmxhYywgJmNpLCAmdGVj
+aCkgPT0gRkFMU0UpIHsKKwkJCQkmbGFjLCAmY2ksICZ0ZWNoLCBuZC0+dmVuZG9yKSA9PSBGQUxT
+RSkgewogCQlDQUxMQkFDS19XSVRIX0ZBSUxVUkUoY2IsIC0xLCAtMSwgLTEsIC0xLCBjYmQtPmRh
+dGEpOwogCQlyZXR1cm47CiAJfQpAQCAtOTcsNiArOTgsOCBAQCBzdGF0aWMgdm9pZCBhdF9yZWdp
+c3RyYXRpb25fc3RhdHVzKHN0cnVjdCBvZm9ub19uZXRyZWcgKm5ldHJlZywKIAlpZiAoIWNiZCkK
+IAkJZ290byBlcnJvcjsKIAorCWNiZC0+dXNlciA9IG5kOworCiAJaWYgKGdfYXRfY2hhdF9zZW5k
+KG5kLT5jaGF0LCAiQVQrQ1JFRz8iLCBjcmVnX3ByZWZpeCwKIAkJCQlhdF9jcmVnX2NiLCBjYmQs
+IGdfZnJlZSkgPiAwKQogCQlyZXR1cm47CkBAIC02MjYsMTEgKzYyOSwxMiBAQCBzdGF0aWMgdm9p
+ZCBjcmVnX25vdGlmeShHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50ZXIgdXNlcl9kYXRhKQogewog
+CXN0cnVjdCBvZm9ub19uZXRyZWcgKm5ldHJlZyA9IHVzZXJfZGF0YTsKIAlpbnQgc3RhdHVzLCBs
+YWMsIGNpLCB0ZWNoOworCXN0cnVjdCBuZXRyZWdfZGF0YSAqbmQgPSBvZm9ub19uZXRyZWdfZ2V0
+X2RhdGEobmV0cmVnKTsKIAogCWR1bXBfcmVzcG9uc2UoImNyZWdfbm90aWZ5IiwgVFJVRSwgcmVz
+dWx0KTsKIAogCWlmIChhdF91dGlsX3BhcnNlX3JlZ191bnNvbGljaXRlZChyZXN1bHQsICIrQ1JF
+RzoiLCAmc3RhdHVzLAotCQkJCSZsYWMsICZjaSwgJnRlY2gpID09IEZBTFNFKQorCQkJCSZsYWMs
+ICZjaSwgJnRlY2gsIG5kLT52ZW5kb3IpID09IEZBTFNFKQogCQlyZXR1cm47CiAKIAlvZm9ub19u
+ZXRyZWdfc3RhdHVzX25vdGlmeShuZXRyZWcsIHN0YXR1cywgbGFjLCBjaSwgdGVjaCk7CmRpZmYg
+LS1naXQgYS9kcml2ZXJzL2F0bW9kZW0vdmVuZG9yLmggYi9kcml2ZXJzL2F0bW9kZW0vdmVuZG9y
+LmgKaW5kZXggOGQ5ZWQ0Ny4uZDBkZjNhYiAxMDA2NDQKLS0tIGEvZHJpdmVycy9hdG1vZGVtL3Zl
+bmRvci5oCisrKyBiL2RyaXZlcnMvYXRtb2RlbS92ZW5kb3IuaApAQCAtMjQsNCArMjQsNSBAQCBl
+bnVtIG9mb25vX3ZlbmRvciB7CiAJT0ZPTk9fVkVORE9SX0NBTFlQU08sCiAJT0ZPTk9fVkVORE9S
+X1FVQUxDT01NX01TTSwKIAlPRk9OT19WRU5ET1JfT1BUSU9OX0hTTywKKwlPRk9OT19WRU5ET1Jf
+SFVBV0VJLAogfTsKZGlmZiAtLWdpdCBhL3BsdWdpbnMvaHVhd2VpLmMgYi9wbHVnaW5zL2h1YXdl
+aS5jCmluZGV4IDU2MTE5Y2MuLjE0OTI0NDYgMTAwNjQ0Ci0tLSBhL3BsdWdpbnMvaHVhd2VpLmMK
+KysrIGIvcGx1Z2lucy9odWF3ZWkuYwpAQCAtMzgsNiArMzgsNyBAQAogI2luY2x1ZGUgPG9mb25v
+L25ldHJlZy5oPgogI2luY2x1ZGUgPG9mb25vL3NpbS5oPgogI2luY2x1ZGUgPG9mb25vL3Ntcy5o
+PgorI2luY2x1ZGUgPG9mb25vL2dwcnMuaD4KICNpbmNsdWRlIDxvZm9uby92b2ljZWNhbGwuaD4K
+ICNpbmNsdWRlIDxvZm9uby9sb2cuaD4KIApAQCAtMTc2LDcgKzE3Nyw3IEBAIHN0YXRpYyB2b2lk
+IGh1YXdlaV9wb3N0X3NpbShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogCiAJREJHKCIlcCIs
+IG1vZGVtKTsKIAotCW9mb25vX25ldHJlZ19jcmVhdGUobW9kZW0sIDAsICJhdG1vZGVtIiwgZGF0
+YS0+Y2hhdCk7CisJb2Zvbm9fbmV0cmVnX2NyZWF0ZShtb2RlbSwgT0ZPTk9fVkVORE9SX0hVQVdF
+SSwgImF0bW9kZW0iLCBkYXRhLT5jaGF0KTsKIAlvZm9ub19zbXNfY3JlYXRlKG1vZGVtLCBPRk9O
+T19WRU5ET1JfUVVBTENPTU1fTVNNLCAiYXRtb2RlbSIsIGRhdGEtPmNoYXQpOwogfQogCi0tIAox
+LjYuNQoK
+
+--===============4701657535424971246==--
 
