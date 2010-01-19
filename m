@@ -1,37 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============4764933272434321783=="
+Content-Type: multipart/mixed; boundary="===============2400887523841012889=="
 MIME-Version: 1.0
 From: sjur.brandeland@stericsson.com
-Subject: [RFC v2 5/7] STE-plugin: Voice-call driver.
-Date: Tue, 19 Jan 2010 17:11:51 +0100
-Message-ID: <1263917513-6756-6-git-send-email-sjur.brandeland@stericsson.com>
-In-Reply-To: <1263917513-6756-5-git-send-email-sjur.brandeland@stericsson.com>
+Subject: [RFC v2 7/7] STE-plugin: GPRS driver.
+Date: Tue, 19 Jan 2010 17:11:53 +0100
+Message-ID: <1263917513-6756-8-git-send-email-sjur.brandeland@stericsson.com>
+In-Reply-To: <1263917513-6756-7-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4764933272434321783==
+--===============2400887523841012889==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Updates after review:
-Use at_util_call_compare.
+Removed setting of IP-address, netmask etc. when creating the IP interface.
+Split caif_if_create_remove() into , caif_if_create() and caif_if_remove().
+Declared interface as array in conn_info struct, and removed memory allocat=
+ion.
+Removed switching of syntax runtime (from strict to permissive and back aga=
+in).
+Removed return statement from cgev_notify()
 
-So far, we have only done the trivial changes to voice call driver.
-We agree on moving more of the state logic to core,
-but this is complex and we need more time to discuss and look into this,
-particularly regarding call release.
+Remaining issues:
+Use glib xml parser.
 ---
- drivers/stemodem/voicecall.c |  648 ++++++++++++++++++++++++++++++++++++++=
+ drivers/stemodem/gprs-context.c |  579 +++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 648 insertions(+), 0 deletions(-)
- create mode 100644 drivers/stemodem/voicecall.c
+ 1 files changed, 579 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/stemodem/gprs-context.c
 
-diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
+t.c
 new file mode 100644
-index 0000000..36b9c5c
+index 0000000..b2148d8
 --- /dev/null
-+++ b/drivers/stemodem/voicecall.c
-@@ -0,0 +1,648 @@
++++ b/drivers/stemodem/gprs-context.c
+@@ -0,0 +1,579 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -68,625 +73,556 @@ index 0000000..36b9c5c
 +
 +#include <ofono/log.h>
 +#include <ofono/modem.h>
-+#include <ofono/voicecall.h>
++#include <ofono/gprs-context.h>
++#include <ofono/gprs.h>
++
++#include <linux/types.h>
++#include <net/if.h>
++#include <sys/ioctl.h>
++#include <arpa/inet.h>
 +
 +#include "gatchat.h"
 +#include "gatresult.h"
-+#include "common.h"
-+
 +#include "stemodem.h"
 +
-+enum call_status_ste {
-+	STE_CALL_STATUS_IDLE =3D 0,
-+	STE_CALL_STATUS_CALLING =3D 1,
-+	STE_CALL_STATUS_CONNECTING =3D 2,
-+	STE_CALL_STATUS_ACTIVE =3D 3,
-+	STE_CALL_STATUS_HOLD =3D 4,
-+	STE_CALL_STATUS_WAITING =3D 5,
-+	STE_CALL_STATUS_ALERTING =3D 6,
-+	STE_CALL_STATUS_BUSY =3D 7
-+};
++/* Use the local CAIF header files until is included in linux kernel */
++#ifdef PF_CAIF
++#include <linux/caif/caif_socket.h>
++#include <linux/caif/if_caif.h>
++#else
++#include "gcaif/caif_socket.h"
++#include "gcaif/if_caif.h"
++#endif
 +
++#define MAX_CAIF_DEVICES 7
++#define MAX_DNS 5
++#define AUTH_BUF_LENGTH (OFONO_GPRS_MAX_USERNAME_LENGTH + \
++			OFONO_GPRS_MAX_PASSWORD_LENGTH + 128)
++
++static const char *cgact_prefix[] =3D { "+CGACT:", NULL };
 +static const char *none_prefix[] =3D { NULL };
 +
-+struct voicecall_data {
-+	GSList *calls;
-+	unsigned int local_release;
++static GSList *g_caif_devices;
++
++struct gprs_context_data {
 +	GAtChat *chat;
++	unsigned int active_context;
++	char *username;
++	char *password;
 +};
 +
-+struct release_id_req {
-+	struct ofono_voicecall *vc;
-+	ofono_voicecall_cb_t cb;
-+	void *data;
-+	int id;
++struct conn_info {
++	unsigned int cid;
++	unsigned int device;
++	unsigned int channel_id;
++	char interface[10];
 +};
 +
-+struct change_state_req {
-+	struct ofono_voicecall *vc;
-+	ofono_voicecall_cb_t cb;
-+	void *data;
-+	int affected_types;
-+};
-+
-+/* Translate from the ECAV-based STE-status to CLCC based status */
-+static int call_status_ste_to_ofono(int status)
++static gint conn_compare_by_cid(gconstpointer a, gconstpointer b)
 +{
-+	switch (status) {
-+	case STE_CALL_STATUS_IDLE:
-+		return CALL_STATUS_DISCONNECTED;
-+	case STE_CALL_STATUS_CALLING:
-+		return CALL_STATUS_DIALING;
-+	case STE_CALL_STATUS_CONNECTING:
-+		return CALL_STATUS_ALERTING;
-+	case STE_CALL_STATUS_ACTIVE:
-+		return CALL_STATUS_ACTIVE;
-+	case STE_CALL_STATUS_HOLD:
-+		return CALL_STATUS_HELD;
-+	case STE_CALL_STATUS_WAITING:
-+		return CALL_STATUS_WAITING;
-+	case STE_CALL_STATUS_ALERTING:
-+		return CALL_STATUS_INCOMING;
-+	case STE_CALL_STATUS_BUSY:
-+		return CALL_STATUS_DISCONNECTED;
-+	default:
-+		return CALL_STATUS_DISCONNECTED;
-+	}
-+}
-+
-+static struct ofono_call *create_call(struct ofono_voicecall *vc, int type,
-+					int direction, int status,
-+					const char *num, int num_type, int clip)
-+{
-+	struct voicecall_data *d =3D ofono_voicecall_get_data(vc);
-+	struct ofono_call *call;
-+
-+	/* Generate a call structure for the waiting call */
-+	call =3D g_try_new0(struct ofono_call, 1);
-+	if (!call)
-+		return NULL;
-+
-+	call->type =3D type;
-+	call->direction =3D direction;
-+	call->status =3D status;
-+
-+	if (clip !=3D 2) {
-+		strncpy(call->phone_number.number, num,
-+			OFONO_MAX_PHONE_NUMBER_LENGTH);
-+		call->phone_number.type =3D num_type;
-+	}
-+
-+	call->clip_validity =3D clip;
-+
-+	d->calls =3D g_slist_insert_sorted(d->calls, call, at_util_call_compare);
-+
-+	return call;
-+}
-+
-+static void ste_generic_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	struct change_state_req *req =3D user_data;
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(req->vc);
-+	struct ofono_error error;
-+
-+	dump_response("ste_generic_cb", ok, result);
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (ok && req->affected_types) {
-+		GSList *l;
-+		struct ofono_call *call;
-+
-+		for (l =3D vd->calls; l; l =3D l->next) {
-+			call =3D l->data;
-+
-+			if (req->affected_types & (0x1 << call->status))
-+				vd->local_release |=3D (0x1 << call->id);
-+		}
-+	}
-+
-+	/* We have to callback after we schedule a poll if required */
-+	req->cb(&error, req->data);
-+}
-+
-+static void release_id_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct release_id_req *req =3D user_data;
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(req->vc);
-+	struct ofono_error error;
-+
-+	dump_response("release_id_cb", ok, result);
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (ok)
-+		vd->local_release =3D 0x1 << req->id;
-+
-+	/* We have to callback after we schedule a poll if required */
-+	req->cb(&error, req->data);
-+}
-+
-+static void atd_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	struct ofono_error error;
-+	ofono_voicecall_cb_t cb =3D cbd->cb;
-+
-+	dump_response("atd_cb", ok, result);
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (!ok)
-+		goto out;
-+
-+out:
-+	cb(&error, cbd->data);
-+}
-+
-+static void ste_dial(struct ofono_voicecall *vc,
-+			const struct ofono_phone_number *ph,
-+			enum ofono_clir_option clir, enum ofono_cug_option cug,
-+			ofono_voicecall_cb_t cb, void *data)
-+{
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char buf[256];
-+
-+	if (!cbd)
-+		goto error;
-+
-+	cbd->user =3D vc;
-+
-+	if (ph->type =3D=3D 145)
-+		sprintf(buf, "ATD+%s", ph->number);
-+	else
-+		sprintf(buf, "ATD%s", ph->number);
-+
-+	switch (clir) {
-+	case OFONO_CLIR_OPTION_INVOCATION:
-+		strcat(buf, "I");
-+		break;
-+	case OFONO_CLIR_OPTION_SUPPRESSION:
-+		strcat(buf, "i");
-+		break;
-+	default:
-+		break;
-+	}
-+
-+	switch (cug) {
-+	case OFONO_CUG_OPTION_INVOCATION:
-+		strcat(buf, "G");
-+		break;
-+	default:
-+		break;
-+	}
-+
-+	strcat(buf, ";");
-+
-+	if (g_at_chat_send(vd->chat, buf, none_prefix,
-+				atd_cb, cbd, g_free) > 0)
-+		return;
-+
-+error:
-+	if (cbd)
-+		g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void ste_template(const char *cmd, struct ofono_voicecall *vc,
-+			GAtResultFunc result_cb, unsigned int affected_types,
-+			ofono_voicecall_cb_t cb, void *data)
-+{
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	struct change_state_req *req =3D g_try_new0(struct change_state_req, 1);
-+
-+	if (!req)
-+		goto error;
-+
-+	req->vc =3D vc;
-+	req->cb =3D cb;
-+	req->data =3D data;
-+	req->affected_types =3D affected_types;
-+
-+	if (g_at_chat_send(vd->chat, cmd, none_prefix,
-+				result_cb, req, g_free) > 0)
-+		return;
-+
-+error:
-+	if (req)
-+		g_free(req);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void ste_answer(struct ofono_voicecall *vc,
-+			ofono_voicecall_cb_t cb, void *data)
-+{
-+	ste_template("ATA", vc, ste_generic_cb, 0, cb, data);
-+}
-+
-+static void ste_hangup(struct ofono_voicecall *vc,
-+			ofono_voicecall_cb_t cb, void *data)
-+{
-+	/* Hangup all calls */
-+	ste_template("AT+CHUP", vc, ste_generic_cb, 0x3f, cb, data);
-+}
-+
-+static void ste_hold_all_active(struct ofono_voicecall *vc,
-+				ofono_voicecall_cb_t cb, void *data)
-+{
-+	ste_template("AT+CHLD=3D2", vc, ste_generic_cb, 0, cb, data);
-+}
-+
-+static void ste_release_all_held(struct ofono_voicecall *vc,
-+				ofono_voicecall_cb_t cb, void *data)
-+{
-+	unsigned int held_status =3D 0x1 << 1;
-+	ste_template("AT+CHLD=3D0", vc, ste_generic_cb, held_status, cb, data);
-+}
-+
-+static void ste_set_udub(struct ofono_voicecall *vc,
-+			ofono_voicecall_cb_t cb, void *data)
-+{
-+	unsigned int incoming_or_waiting =3D (0x1 << 4) | (0x1 << 5);
-+	ste_template("AT+CHLD=3D0", vc, ste_generic_cb, incoming_or_waiting,
-+			cb, data);
-+}
-+
-+static void ste_release_all_active(struct ofono_voicecall *vc,
-+					ofono_voicecall_cb_t cb, void *data)
-+{
-+	ste_template("AT+CHLD=3D1", vc, ste_generic_cb, 0x1, cb, data);
-+}
-+
-+static void ste_release_specific(struct ofono_voicecall *vc, int id,
-+				ofono_voicecall_cb_t cb, void *data)
-+{
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	struct release_id_req *req =3D g_try_new0(struct release_id_req, 1);
-+	char buf[32];
-+	struct ofono_call *call;
-+	GSList *l;
-+	int ac =3D 0;
-+
-+	if (!req)
-+		goto error;
-+
-+	req->vc =3D vc;
-+	req->cb =3D cb;
-+	req->data =3D data;
-+	req->id =3D id;
-+
-+	/* Count active calls. If there is more than one active call
-+	 * we cannot use ATH, as it will terminate all calls.
-+	 * The reason for using ATH and not CHLD is that
-+	 * emergency calls can not be terminated with AT+CHLD.
-+	 */
-+	for (l =3D vd->calls; l; l =3D l->next) {
-+		call =3D l->data;
-+
-+		if (call->status =3D=3D CALL_STATUS_ACTIVE)
-+			ac++;
-+	}
-+
-+	l =3D g_slist_find_custom(vd->calls, GUINT_TO_POINTER(id),
-+				at_util_call_compare_by_id);
-+	if (l =3D=3D NULL) {
-+		ofono_error("Hangup request for unknow call");
-+		goto error;
-+	}
-+	call =3D l->data;
-+	/* Check the state of the call, as AT+CHLD does not terminate
-+	 * calls in state Dialing, Alerting and Incoming */
-+	if (call->status =3D=3D CALL_STATUS_DIALING ||
-+	    call->status =3D=3D CALL_STATUS_ALERTING ||
-+	    call->status =3D=3D CALL_STATUS_INCOMING)
-+		sprintf(buf, "ATH");
-+
-+	/* Waiting call can not be terminated by at+chld=3D1x,
-+	 * have to use at+chld =3D 0, but that will also terminate
-+	 * other held calls. Bug in STE's AT module.
-+	 */
-+	else if (call->status =3D=3D CALL_STATUS_WAITING)
-+		sprintf(buf, "AT+CHLD=3D0");
-+
-+	else {
-+		/* A held call can not be released by ATH, need to use CHLD */
-+		if (ac > 1 || call->status =3D=3D CALL_STATUS_HELD)
-+			sprintf(buf, "AT+CHLD=3D1%d", id);
-+		else /* This is the last call, ok to use ATH. */
-+			sprintf(buf, "ATH");
-+	}
-+
-+	if (g_at_chat_send(vd->chat, buf, none_prefix,
-+				release_id_cb, req, g_free) > 0)
-+		return;
-+
-+error:
-+	if (req)
-+		g_free(req);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void ste_private_chat(struct ofono_voicecall *vc, int id,
-+				ofono_voicecall_cb_t cb, void *data)
-+{
-+	char buf[32];
-+
-+	sprintf(buf, "AT+CHLD=3D2%d", id);
-+	ste_template(buf, vc, ste_generic_cb, 0, cb, data);
-+}
-+
-+static void ste_create_multiparty(struct ofono_voicecall *vc,
-+					ofono_voicecall_cb_t cb, void *data)
-+{
-+	ste_template("AT+CHLD=3D3", vc, ste_generic_cb, 0, cb, data);
-+}
-+
-+static void ste_transfer(struct ofono_voicecall *vc,
-+			ofono_voicecall_cb_t cb, void *data)
-+{
-+	/* Held & Active */
-+	unsigned int transfer =3D 0x1 | 0x2;
-+
-+	/* Transfer can puts held & active calls together and disconnects
-+	 * from both.  However, some networks support transfering of
-+	 * dialing/ringing calls as well.
-+	 */
-+	transfer |=3D 0x4 | 0x8;
-+
-+	ste_template("AT+CHLD=3D4", vc, ste_generic_cb, transfer, cb, data);
-+}
-+
-+static void ste_deflect(struct ofono_voicecall *vc,
-+			const struct ofono_phone_number *ph,
-+			ofono_voicecall_cb_t cb, void *data)
-+{
-+	char buf[128];
-+	unsigned int incoming_or_waiting =3D (0x1 << 4) | (0x1 << 5);
-+
-+	sprintf(buf, "AT+CTFR=3D\"%s\",%d", ph->number, ph->type);
-+	ste_template(buf, vc, ste_generic_cb, incoming_or_waiting, cb, data);
-+}
-+
-+static void vts_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_voicecall_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+
-+	dump_response("vts_cb", ok, result);
-+	decode_at_error(&error, g_at_result_final_response(result));
-+	cb(&error, cbd->data);
-+}
-+
-+static void ste_send_dtmf(struct ofono_voicecall *vc, const char *dtmf,
-+			ofono_voicecall_cb_t cb, void *data)
-+{
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	int len =3D strlen(dtmf);
-+	int s;
-+	int i;
-+	char *buf;
-+
-+	if (!cbd)
-+		goto error;
-+
-+	/* strlen("+VTS=3D\"T\";") =3D 9 + initial AT + null */
-+	buf =3D g_try_new(char, len * 9 + 3);
-+
-+	if (!buf)
-+		goto error;
-+
-+	s =3D sprintf(buf, "AT+VTS=3D\"%c\"", dtmf[0]);
-+
-+	for (i =3D 1; i < len; i++)
-+		s +=3D sprintf(buf + s, ";+VTS=3D\"%c\"", dtmf[i]);
-+
-+	s =3D g_at_chat_send(vd->chat, buf, none_prefix,
-+				vts_cb, cbd, g_free);
-+
-+	g_free(buf);
-+
-+	if (s > 0)
-+		return;
-+
-+error:
-+	if (cbd)
-+		g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void ecav_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_voicecall *vc =3D user_data;
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
-+	GAtResultIter iter;
-+	const char *num;
-+	int id;
-+	int status;
-+	int call_type;
-+	int num_type;
-+	struct ofono_call *new_call;
-+	struct ofono_call *existing_call =3D NULL;
-+	GSList *l;
-+
-+	/* Parse ECAV */
-+	dump_response("ecav_notify", TRUE, result);
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "*ECAV:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &id))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &status))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &call_type))
-+		return;
-+
-+	/* Skip process id and exit cause */
-+	g_at_result_iter_skip_next(&iter);
-+	g_at_result_iter_skip_next(&iter);
-+
-+	status =3D call_status_ste_to_ofono(status);
-+	if (status =3D=3D CALL_STATUS_DIALING ||
-+	    status =3D=3D CALL_STATUS_WAITING ||
-+	    status =3D=3D CALL_STATUS_INCOMING) {
-+		if (!g_at_result_iter_next_string(&iter, &num))
-+			return;
-+
-+		if (!g_at_result_iter_next_number(&iter, &num_type))
-+			return;
-+	}
-+
-+	/* Handle the call according to the status.
-+	 * If it doesn't exists we make a new one
-+	 */
-+	l =3D g_slist_find_custom(vd->calls, GUINT_TO_POINTER(id),
-+				at_util_call_compare_by_id);
-+	if (l)
-+		existing_call =3D l->data;
-+
-+	if (l =3D=3D NULL && status !=3D CALL_STATUS_DIALING &&
-+					 status !=3D CALL_STATUS_WAITING &&
-+					 status !=3D CALL_STATUS_INCOMING) {
-+		ofono_error("ECAV notification for unknow call. "
-+					"id: %d, status: %d", id, status);
-+		return;
-+	}
-+
-+	switch (status) {
-+	case CALL_STATUS_DISCONNECTED: {
-+		enum ofono_disconnect_reason reason;
-+		existing_call->status =3D status;
-+
-+		if (vd->local_release & (0x1 << existing_call->id))
-+			reason =3D OFONO_DISCONNECT_REASON_LOCAL_HANGUP;
-+		else
-+			reason =3D OFONO_DISCONNECT_REASON_REMOTE_HANGUP;
-+
-+		if (call_type =3D=3D BEARER_CLASS_VOICE)
-+			ofono_voicecall_disconnected(vc,
-+					existing_call->id, reason, NULL);
-+		vd->calls =3D g_slist_remove(vd->calls, l->data);
-+		break;
-+	}
-+	case CALL_STATUS_DIALING:
-+	case CALL_STATUS_WAITING:
-+	case CALL_STATUS_INCOMING: {
-+		int clip_validity;
-+		int direction;
-+
-+		if (status =3D=3D CALL_STATUS_DIALING)
-+			direction =3D CALL_DIRECTION_MOBILE_ORIGINATED;
-+		else
-+			direction =3D CALL_DIRECTION_MOBILE_TERMINATED;
-+
-+		if ((strlen(num)) > 0)
-+			clip_validity =3D CLIP_VALIDITY_VALID;
-+		else
-+			clip_validity =3D CLIP_VALIDITY_NOT_AVAILABLE;
-+
-+		new_call =3D create_call(vc, call_type, direction,
-+							status, num, num_type,
-+							clip_validity);
-+
-+		if (!new_call) {
-+			ofono_error("Unable to malloc."
-+				"Call management is fubar");
-+			return;
-+		}
-+		new_call->id =3D id;
-+
-+		if (call_type =3D=3D BEARER_CLASS_VOICE)
-+			ofono_voicecall_notify(vc, new_call);
-+		break;
-+	}
-+	case CALL_STATUS_ALERTING:
-+	case CALL_STATUS_ACTIVE:
-+	case CALL_STATUS_HELD:
-+		existing_call->status =3D status;
-+
-+		if (call_type =3D=3D BEARER_CLASS_VOICE)
-+			ofono_voicecall_notify(vc, existing_call);
-+		break;
-+	default:
-+		break;
-+	}
-+}
-+
-+static int ste_voicecall_probe(struct ofono_voicecall *vc, unsigned int ve=
-ndor,
-+				void *data)
-+{
-+	GAtChat *chat =3D data;
-+	struct voicecall_data *vd;
-+
-+	vd =3D g_new0(struct voicecall_data, 1);
-+	vd->chat =3D chat;
-+
-+	ofono_voicecall_set_data(vc, vd);
-+
-+	g_at_chat_send(chat, "AT*ECAM=3D1", NULL, NULL, NULL, NULL);
-+	g_at_chat_register(chat, "*ECAV:", ecav_notify, FALSE, vc, NULL);
-+	ofono_voicecall_register(vc);
++	const struct conn_info *conn =3D a;
++	unsigned int used =3D GPOINTER_TO_UINT(b);
++
++	if (used !=3D conn->cid)
++		return 1;
 +
 +	return 0;
 +}
 +
-+static void ste_voicecall_remove(struct ofono_voicecall *vc)
++/* TODO: should parse_xml function to be moved to e.g. atutil? */
++static char *parse_xml(char *xml, char *tag)
 +{
-+	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++    char *begin;
++    char *end;
++    int len;
++    char *res =3D NULL;
++    char *start =3D g_malloc(strlen(tag) + 3);
++    char *stop =3D g_malloc(strlen(tag) + 4);
 +
-+	g_slist_foreach(vd->calls, (GFunc) g_free, NULL);
-+	g_slist_free(vd->calls);
++    sprintf(start, "<%s>", tag);
++    sprintf(stop, "</%s>", tag);
 +
-+	ofono_voicecall_set_data(vc, NULL);
++    begin =3D strstr(xml, start);
++	if (begin =3D=3D NULL)
++		goto error;
 +
-+	g_free(vd);
++	end =3D strstr(begin, stop);
++	if (end =3D=3D NULL)
++		goto error;
++
++	begin +=3D strlen(start);
++	len =3D end - begin;
++	res =3D (char *)g_malloc(len+1);
++	strncpy(res, begin, len);
++	res[len] =3D 0;
++
++error:
++	free(start);
++	free(stop);
++	return res;
 +}
 +
-+static struct ofono_voicecall_driver driver =3D {
++static struct conn_info *conn_info_create(
++							unsigned int device,
++							unsigned int channel_id)
++{
++	struct conn_info *connection =3D g_try_new0(struct conn_info, 1);
++
++	if (!connection)
++		return NULL;
++
++	connection->cid =3D 0;
++	connection->device =3D device;
++	connection->channel_id =3D channel_id;
++
++	return connection;
++}
++
++/* Creates a new IP interface for CAIF.
++ *
++*/
++static gboolean caif_if_create(const char *interface,
++	unsigned int connid)
++{
++	int s;
++	static struct ifcaif_param param;
++	static struct ifreq ifr;
++
++	param.ipv4_connid =3D connid;
++	ifr.ifr_data =3D (void *) &param;
++	strcpy(ifr.ifr_name, interface);
++
++	s =3D socket(AF_CAIF, SOCK_SEQPACKET, CAIFPROTO_AT);
++	if (s < 0) {
++		ofono_debug("Failed to create socket for CAIF interface");
++		goto error;
++	}
++
++	if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
++		ofono_debug("Failed to create IP interface for CAIF");
++		goto error;
++	}
++
++return TRUE;
++
++error:
++	return FALSE;
++}
++
++/* Removes IP interface for CAIF.
++ *
++*/
++static gboolean caif_if_remove(const char *interface,
++	unsigned int connid)
++{
++	int s;
++	static struct ifcaif_param param;
++	static struct ifreq ifr;
++
++	param.ipv4_connid =3D connid;
++	ifr.ifr_data =3D (void *) &param;
++	strcpy(ifr.ifr_name, interface);
++
++	s =3D socket(AF_CAIF, SOCK_SEQPACKET, CAIFPROTO_AT);
++	if (s < 0) {
++		ofono_debug("Failed to create socket for CAIF interface");
++		goto error;
++	}
++
++	if (ioctl(s, SIOCGIFINDEX, &ifr) =3D=3D 0) {
++		if (ioctl(s, SIOCCAIFNETREMOVE, &ifr) < 0) {
++			ofono_debug("Failed to remove IP interface"
++				"for CAIF");
++			goto error;
++		}
++	} else {
++		ofono_debug("Did not find interface (%s) to remove",
++				interface);
++		goto error;
++	}
++
++	return TRUE;
++
++error:
++	return FALSE;
++}
++
++static void ste_eppsd_down_cb(gboolean ok,
++					GAtResult *result, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_gprs_context_cb_t cb =3D cbd->cb;
++	struct ofono_gprs_context *gc =3D cbd->user;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct ofono_error error;
++	struct conn_info *conn;
++	GSList *l;
++
++	dump_response("ste_eppsd_down_cb", ok, result);
++
++	if (!ok)
++		goto error;
++
++	l =3D g_slist_find_custom(g_caif_devices,
++				GUINT_TO_POINTER(gcd->active_context),
++				conn_compare_by_cid);
++
++	if (!l) {
++		ofono_debug("Did not find data (used caif device) for"
++					"connection with cid; %d",
++					gcd->active_context);
++		goto error;
++	}
++	conn =3D l->data;
++	if (!caif_if_remove(conn->interface, conn->channel_id)) {
++		ofono_debug("Failed to remove caif interface %s.",
++			conn->interface);
++	}
++	conn->cid =3D 0;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
++}
++
++static void ste_eppsd_up_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
++	struct ofono_gprs_context *gc =3D cbd->user;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct conn_info *conn =3D NULL;
++	GAtResultIter iter;
++	GSList *l;
++	int i;
++	int numdns =3D 0;
++	char *res_string;
++	const char *ip =3D NULL;
++	const char *netmask =3D NULL;
++	const char *gateway =3D NULL;
++	const char *mtu =3D NULL;
++	const char *dns[MAX_DNS + 1];
++	const char *str;
++
++	dump_response("ste_eppsd_up_cb", ok, result);
++
++	l =3D g_slist_find_custom(g_caif_devices,
++				GUINT_TO_POINTER(gcd->active_context),
++				conn_compare_by_cid);
++
++	if (!l) {
++		ofono_debug("Did not find data (device and channel id)"
++					"for connection with cid; %d",
++					gcd->active_context);
++		goto error;
++	}
++	conn =3D l->data;
++
++	if (!ok)
++		goto error;
++
++	g_at_result_iter_init(&iter, result);
++	for (i =3D 0; i < g_at_result_num_response_lines(result); i++) {
++		g_at_result_iter_next(&iter, NULL);
++		res_string =3D strdup(g_at_result_iter_raw_line(&iter));
++
++		if (strstr(res_string, "ip_address")) {
++			ip =3D g_strdup(parse_xml(res_string,
++						"ip_address"));
++		} else if ((strstr(res_string, "subnet_mask"))) {
++			netmask =3D g_strdup(parse_xml(res_string,
++						"subnet_mask"));
++		} else if ((strstr(res_string, "mtu"))) {
++			mtu =3D g_strdup(parse_xml(res_string,
++						"mtu"));
++		} else if ((strstr(res_string, "default_gateway"))) {
++			gateway =3D g_strdup(parse_xml(res_string,
++						"default_gateway"));
++		} else if ((strstr(res_string, "dns_server"))) {
++			str =3D g_strdup(parse_xml(res_string,
++						"dns_server"));
++
++			if (numdns < MAX_DNS)
++				dns[numdns++] =3D str;
++		}
++	}
++	dns[numdns] =3D NULL;
++
++	sprintf(conn->interface, "caif%u", conn->device);
++
++	if (!caif_if_create(conn->interface, conn->channel_id)) {
++		ofono_error("Failed to create caif interface %s.",
++			conn->interface);
++		CALLBACK_WITH_SUCCESS(cb, NULL, FALSE, ip, netmask,
++			gateway, dns, cbd->data);
++	} else {
++		CALLBACK_WITH_SUCCESS(cb, conn->interface,
++				FALSE, ip, netmask, gateway, dns, cbd->data);
++	}
++	return;
++
++error:
++	ofono_debug("ste_eppsd_up_cb error");
++
++	if (conn)
++		conn->cid =3D 0;
++
++	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
++}
++
++static void ste_cgdcont_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
++	struct ofono_gprs_context *gc =3D cbd->user;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct cb_data *ncbd =3D NULL;
++	struct conn_info *conn;
++	char buf[AUTH_BUF_LENGTH];
++	GSList *l;
++
++	dump_response("cgdcont_cb", ok, result);
++
++	if (!ok) {
++		struct ofono_error error;
++
++		gcd->active_context =3D 0;
++
++		decode_at_error(&error, g_at_result_final_response(result));
++		cb(&error, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
++		return;
++	}
++
++	/* Set username and password */
++	sprintf(buf, "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"", gcd->active_context,
++		gcd->username, gcd->password);
++
++	if (g_at_chat_send(gcd->chat, buf, none_prefix,
++				NULL, NULL, NULL) =3D=3D 0)
++		goto error;
++
++	ncbd =3D g_memdup(cbd, sizeof(struct cb_data));
++
++	l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(0),
++				conn_compare_by_cid);
++
++	if (!l) {
++		ofono_debug("at_cgdcont_cb, no more available devices");
++		goto error;
++	}
++	conn =3D l->data;
++	conn->cid =3D gcd->active_context;
++	sprintf(buf, "AT*EPPSD=3D1,%u,%u", conn->channel_id, conn->cid);
++
++	if (g_at_chat_send(gcd->chat, buf, NULL,
++				ste_eppsd_up_cb, ncbd, g_free) > 0)
++		return;
++error:
++	if (ncbd)
++		g_free(ncbd);
++
++	gcd->active_context =3D 0;
++
++	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL,
++						NULL, NULL, cbd->data);
++}
++
++static void ste_gprs_activate_primary(struct ofono_gprs_context *gc,
++				const struct ofono_gprs_primary_context *ctx,
++				 ofono_gprs_context_up_cb_t cb, void *data)
++{
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[OFONO_GPRS_MAX_APN_LENGTH + 128];
++	int len;
++
++	if (!cbd)
++		goto error;
++
++	gcd->active_context =3D ctx->cid;
++	gcd->username =3D g_strdup(ctx->username);
++	gcd->password =3D g_strdup(ctx->password);
++	cbd->user =3D gc;
++
++	len =3D sprintf(buf, "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
++
++	if (ctx->apn)
++		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
++				ctx->apn);
++
++	if (g_at_chat_send(gcd->chat, buf, none_prefix,
++				ste_cgdcont_cb, cbd, g_free) > 0)
++		return;
++error:
++	if (cbd)
++		g_free(cbd);
++
++	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, data);
++}
++
++static void ste_gprs_deactivate_primary(struct ofono_gprs_context *gc,
++					unsigned int id,
++					ofono_gprs_context_cb_t cb, void *data)
++{
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	struct conn_info *conn;
++	char buf[64];
++	GSList *l;
++
++	if (!cbd)
++		goto error;
++
++	gcd->active_context =3D id;
++	cbd->user =3D gc;
++
++	l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(id),
++				conn_compare_by_cid);
++
++	if (!l) {
++		ofono_debug("at_gprs_deactivate_primary, did not find"
++			"data (channel id) for connection with cid; %d", id);
++		goto error;
++	}
++	conn =3D l->data;
++
++	sprintf(buf, "AT*EPPSD=3D0,%u,%u", conn->channel_id, id);
++
++	if (g_at_chat_send(gcd->chat, buf, none_prefix,
++				ste_eppsd_down_cb, cbd, g_free) > 0)
++		return;
++
++error:
++	if (cbd)
++		g_free(cbd);
++
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
++static void ste_cgact_read_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct ofono_gprs_context *gc =3D user_data;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	gint cid, state;
++	GAtResultIter iter;
++
++	dump_response("cgact_read_cb", ok, result);
++
++	if (!ok)
++		return;
++	g_at_result_iter_init(&iter, result);
++
++	while (g_at_result_iter_next(&iter, "+CGACT:")) {
++
++		if (!g_at_result_iter_next_number(&iter, &cid))
++			continue;
++
++		if ((unsigned int) cid !=3D gcd->active_context)
++			continue;
++
++		if (!g_at_result_iter_next_number(&iter, &state))
++			continue;
++
++		if (state =3D=3D 1)
++			continue;
++
++		ofono_gprs_context_deactivated(gc, gcd->active_context);
++		gcd->active_context =3D 0;
++
++		break;
++	}
++}
++
++static void cgev_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_gprs_context *gc =3D user_data;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	GAtResultIter iter;
++	const char *event;
++
++	dump_response("cgev_notify", TRUE, result);
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CGEV:"))
++		return;
++
++	if (!g_at_result_iter_next_unquoted_string(&iter, &event))
++		return;
++
++	if (g_str_has_prefix(event, "NW REACT ") ||
++			g_str_has_prefix(event, "NW DEACT ") ||
++			g_str_has_prefix(event, "ME DEACT ")) {
++		/* Ask what primary contexts are active now */
++
++		g_at_chat_send(gcd->chat, "AT+CGACT?", cgact_prefix,
++				ste_cgact_read_cb, gc, NULL);
++	}
++}
++
++static int ste_gprs_context_probe(struct ofono_gprs_context *gc,
++					unsigned int vendor, void *data)
++{
++	GAtChat *chat =3D data;
++	struct gprs_context_data *gcd;
++	struct conn_info *ci;
++	int i;
++
++	gcd =3D g_new0(struct gprs_context_data, 1);
++	gcd->chat =3D chat;
++
++	g_at_chat_register(gcd->chat, "+CGEV:", cgev_notify, FALSE, gc, NULL);
++
++	ofono_gprs_context_set_data(gc, gcd);
++
++	for (i =3D 0; i < MAX_CAIF_DEVICES; i++) {
++		ci =3D conn_info_create(i, i+1);
++		if (ci)
++			g_caif_devices =3D g_slist_append(g_caif_devices, ci);
++	}
++
++	return 0;
++}
++
++static void ste_gprs_context_remove(struct ofono_gprs_context *gc)
++{
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++
++	g_slist_foreach(g_caif_devices, (GFunc) g_free, NULL);
++	g_slist_free(g_caif_devices);
++	g_caif_devices =3D NULL;
++
++	ofono_gprs_context_set_data(gc, NULL);
++	g_free(gcd);
++}
++
++static struct ofono_gprs_context_driver driver =3D {
 +	.name			=3D "stemodem",
-+	.probe			=3D ste_voicecall_probe,
-+	.remove			=3D ste_voicecall_remove,
-+	.dial			=3D ste_dial,
-+	.answer			=3D ste_answer,
-+	.hangup			=3D ste_hangup,
-+	.hold_all_active	=3D ste_hold_all_active,
-+	.release_all_held	=3D ste_release_all_held,
-+	.set_udub		    =3D ste_set_udub,
-+	.release_all_active	=3D ste_release_all_active,
-+	.release_specific	=3D ste_release_specific,
-+	.private_chat		=3D ste_private_chat,
-+	.create_multiparty	=3D ste_create_multiparty,
-+	.transfer		    =3D ste_transfer,
-+	.deflect		    =3D ste_deflect,
-+	.swap_without_accept =3D NULL,
-+	.send_tones		    =3D ste_send_dtmf
++	.probe			=3D ste_gprs_context_probe,
++	.remove			=3D ste_gprs_context_remove,
++	.activate_primary	=3D ste_gprs_activate_primary,
++	.deactivate_primary	=3D ste_gprs_deactivate_primary,
 +};
 +
-+void ste_voicecall_init()
++void ste_gprs_context_init()
 +{
-+	ofono_voicecall_driver_register(&driver);
++	ofono_gprs_context_driver_register(&driver);
 +}
 +
-+void ste_voicecall_exit()
++void ste_gprs_context_exit()
 +{
-+	ofono_voicecall_driver_unregister(&driver);
++	ofono_gprs_context_driver_unregister(&driver);
 +}
 -- =
 
 1.6.0.4
 
 
---===============4764933272434321783==--
+--===============2400887523841012889==--
 
