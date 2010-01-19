@@ -1,628 +1,289 @@
-Content-Type: multipart/mixed; boundary="===============2400887523841012889=="
+Content-Type: multipart/mixed; boundary="===============6423276747035624703=="
 MIME-Version: 1.0
 From: sjur.brandeland@stericsson.com
-Subject: [RFC v2 7/7] STE-plugin: GPRS driver.
-Date: Tue, 19 Jan 2010 17:11:53 +0100
-Message-ID: <1263917513-6756-8-git-send-email-sjur.brandeland@stericsson.com>
-In-Reply-To: <1263917513-6756-7-git-send-email-sjur.brandeland@stericsson.com>
+Subject: [RFC v2 6/7] STE-plugin: Add CAIF header files in gcaif.
+Date: Tue, 19 Jan 2010 17:11:52 +0100
+Message-ID: <1263917513-6756-7-git-send-email-sjur.brandeland@stericsson.com>
+In-Reply-To: <1263917513-6756-6-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2400887523841012889==
+--===============6423276747035624703==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Updates after review:
-Removed setting of IP-address, netmask etc. when creating the IP interface.
-Split caif_if_create_remove() into , caif_if_create() and caif_if_remove().
-Declared interface as array in conn_info struct, and removed memory allocat=
-ion.
-Removed switching of syntax runtime (from strict to permissive and back aga=
-in).
-Removed return statement from cgev_notify()
-
-Remaining issues:
-Use glib xml parser.
+Adding CAIF header files. These should be removed when
+CAIF is included Linux kernel.
 ---
- drivers/stemodem/gprs-context.c |  579 +++++++++++++++++++++++++++++++++++=
+ gcaif/caif_socket.h |  171 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 579 insertions(+), 0 deletions(-)
- create mode 100644 drivers/stemodem/gprs-context.c
+ gcaif/if_caif.h     |   70 +++++++++++++++++++++
+ 2 files changed, 241 insertions(+), 0 deletions(-)
+ create mode 100644 gcaif/caif_socket.h
+ create mode 100644 gcaif/if_caif.h
 
-diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
-t.c
+diff --git a/gcaif/caif_socket.h b/gcaif/caif_socket.h
 new file mode 100644
-index 0000000..b2148d8
+index 0000000..7122b41
 --- /dev/null
-+++ b/drivers/stemodem/gprs-context.c
-@@ -0,0 +1,579 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2010 ST-Ericsson AB.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
++++ b/gcaif/caif_socket.h
+@@ -0,0 +1,171 @@
++/* linux/caif_socket.h
++ * CAIF Definitions for CAIF socket and network layer
++ * Copyright (C) ST-Ericsson AB 2009
++ * Author:	 Sjur Brendeland/ sjur.brandeland(a)stericsson.com
++ * License terms: GNU General Public License (GPL) version 2
 + */
 +
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
++#ifndef _LINUX_CAIF_SOCKET_H
++#define _LINUX_CAIF_SOCKET_H
 +
-+#define _GNU_SOURCE
-+#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+
-+#include <glib.h>
-+
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/gprs-context.h>
-+#include <ofono/gprs.h>
-+
++#ifdef __KERNEL__
 +#include <linux/types.h>
-+#include <net/if.h>
-+#include <sys/ioctl.h>
-+#include <arpa/inet.h>
-+
-+#include "gatchat.h"
-+#include "gatresult.h"
-+#include "stemodem.h"
-+
-+/* Use the local CAIF header files until is included in linux kernel */
-+#ifdef PF_CAIF
-+#include <linux/caif/caif_socket.h>
-+#include <linux/caif/if_caif.h>
++#include <linux/socket.h>
 +#else
-+#include "gcaif/caif_socket.h"
-+#include "gcaif/if_caif.h"
++#include <sys/types.h>
++#include <sys/socket.h>
 +#endif
 +
-+#define MAX_CAIF_DEVICES 7
-+#define MAX_DNS 5
-+#define AUTH_BUF_LENGTH (OFONO_GPRS_MAX_USERNAME_LENGTH + \
-+			OFONO_GPRS_MAX_PASSWORD_LENGTH + 128)
++#ifdef __cplusplus
++extern "C" {
++#endif
++#ifndef AF_CAIF
++#define AF_CAIF    28          /* CAIF Socket Address Family */
++#endif
++#ifndef PF_CAIF
++#define PF_CAIF    AF_CAIF      /* CAIF Socket Protocol Family */
++#endif
++#ifndef SOL_CAIF
++#define SOL_CAIF   278		/* CAIF Socket Option Level */
++#endif
 +
-+static const char *cgact_prefix[] =3D { "+CGACT:", NULL };
-+static const char *none_prefix[] =3D { NULL };
-+
-+static GSList *g_caif_devices;
-+
-+struct gprs_context_data {
-+	GAtChat *chat;
-+	unsigned int active_context;
-+	char *username;
-+	char *password;
++/**
++ * enum caif_link_selector -   Physical Link Selection.
++ * @CAIF_LINK_HIGH_BANDW:	Default physical interface for high-bandwidth
++ *				traffic.
++ * @CAIF_LINK_LOW_LATENCY:	Default physical interface for low-latency
++ *				traffic.
++ */
++enum caif_link_selector {
++	CAIF_LINK_HIGH_BANDW,
++	CAIF_LINK_LOW_LATENCY
 +};
 +
-+struct conn_info {
-+	unsigned int cid;
-+	unsigned int device;
-+	unsigned int channel_id;
-+	char interface[10];
++/**
++ * enum caif_protocol_type  -	Types of CAIF protocols in the CAIF Stack.
++ * @CAIFPROTO_AT:		Classic AT channel.
++ * @CAIFPROTO_DATAGRAM:		Datagram channel.
++ * @CAIFPROTO_DATAGRAM_LOOP:	Datagram loopback channel, used for testing.
++ * @CAIFPROTO_UTIL:		Utility (Psock) channel.
++ * @CAIFPROTO_RFM:		Remote File Manager
++ */
++enum caif_protocol_type {
++	CAIFPROTO_AT,
++	CAIFPROTO_DATAGRAM,
++	CAIFPROTO_DATAGRAM_LOOP,
++	CAIFPROTO_UTIL,
++	CAIFPROTO_RFM,
++	_CAIFPROTO_MAX
++};
++#define	CAIFPROTO_MAX _CAIFPROTO_MAX
++
++/**
++ * enum caif_at_type - AT Service Endpoint
++ * @CAIF_ATTYPE_PLAIN:	     Connects to a plain vanilla AT channel.
++ */
++enum caif_at_type {
++	CAIF_ATTYPE_PLAIN
 +};
 +
-+static gint conn_compare_by_cid(gconstpointer a, gconstpointer b)
-+{
-+	const struct conn_info *conn =3D a;
-+	unsigned int used =3D GPOINTER_TO_UINT(b);
++/**
++ * struct sockaddr_caif - the sockaddr structure for CAIF sockets.
++ * @family:		     Address family number, must be AF_CAIF.
++ * @u:			     Union of address data 'switched' by familty.
++ * @at:			     Applies when family =3D CAIFPROTO_AT.
++ * @at.type:		     Type of AT link to set up (enum caif_at_type).
++ * @util:		     Applies when family =3D CAIFPROTO_UTIL
++ * @util.service:	     Service name.
++ * @dgm:		     Applies when family =3D CAIFPROTO_DATAGRAM
++ * @dgm.connection_id:	     Datagram connection id.
++ * @dgm.nsapi:		     NSAPI of the PDP-Context.
++ * @rfm:		     Applies when family =3D CAIFPROTO_RFM
++ * @rfm.connection_id:       Connection ID for RFM.
++ * @rfm.volume:	     	     Volume to mount.
++ */
++struct sockaddr_caif {
++	sa_family_t  family;
++	union {
++		struct {
++			u_int8_t  type;		/* type: enum caif_at_type */
++		} at;				/* CAIFPROTO_AT */
++		struct {
++			char	  service[16];
++		} util;				/* CAIFPROTO_UTIL */
++		union {
++			u_int32_t connection_id;
++			u_int8_t  nsapi;
++		} dgm;				/* CAIFPROTO_DATAGRAM(_LOOP)*/
++		struct {
++			u_int32_t connection_id;
++			char	  volume[16];
++		} rfm;				/* CAIFPROTO_RFM */
++	} u;
++};
 +
-+	if (used !=3D conn->cid)
-+		return 1;
++/**
++ * struct caif_channel_opt - CAIF channel connect options.
++ * @priority:		Priority of the channel (between 0 and 0x1f)
++ * @link_selector:	Selector for the physical link.
++ *			(see enum caif_phy_preference in caif_config.h)
++ * @link_name:		Physical link to use. This is the instance name of the
++ *			CAIF Physical Driver.
++ */
++struct caif_channel_opt {
++	u_int16_t  priority;
++	u_int16_t  link_selector;
++	char	   link_name[16];
++};
 +
-+	return 0;
-+}
++/**
++ * struct caif_param - CAIF parameters.
++ * @size:	Length of data
++ * @data:	Binary Data Blob
++ */
++struct caif_param {
++	u_int16_t  size;
++	u_int8_t   data[256];
++};
 +
-+/* TODO: should parse_xml function to be moved to e.g. atutil? */
-+static char *parse_xml(char *xml, char *tag)
-+{
-+    char *begin;
-+    char *end;
-+    int len;
-+    char *res =3D NULL;
-+    char *start =3D g_malloc(strlen(tag) + 3);
-+    char *stop =3D g_malloc(strlen(tag) + 4);
 +
-+    sprintf(start, "<%s>", tag);
-+    sprintf(stop, "</%s>", tag);
-+
-+    begin =3D strstr(xml, start);
-+	if (begin =3D=3D NULL)
-+		goto error;
-+
-+	end =3D strstr(begin, stop);
-+	if (end =3D=3D NULL)
-+		goto error;
-+
-+	begin +=3D strlen(start);
-+	len =3D end - begin;
-+	res =3D (char *)g_malloc(len+1);
-+	strncpy(res, begin, len);
-+	res[len] =3D 0;
-+
-+error:
-+	free(start);
-+	free(stop);
-+	return res;
-+}
-+
-+static struct conn_info *conn_info_create(
-+							unsigned int device,
-+							unsigned int channel_id)
-+{
-+	struct conn_info *connection =3D g_try_new0(struct conn_info, 1);
-+
-+	if (!connection)
-+		return NULL;
-+
-+	connection->cid =3D 0;
-+	connection->device =3D device;
-+	connection->channel_id =3D channel_id;
-+
-+	return connection;
-+}
-+
-+/* Creates a new IP interface for CAIF.
++/** enum caif_socket_opts - CAIF option values for getsockopt and setsocko=
+pt
++ * @CAIFSO_CHANNEL:		Used to set the connect options on a CAIF
++ *				socket. (struct caif_config_opt). This can only
++ *				be set before connecting.
++ * @CAIFSO_REQ_PARAM:		Used to set the request parameters for a
++ *				utility channel. (struct caif_param). This
++ *				can only be set before connecting.
 + *
-+*/
-+static gboolean caif_if_create(const char *interface,
-+	unsigned int connid)
-+{
-+	int s;
-+	static struct ifcaif_param param;
-+	static struct ifreq ifr;
-+
-+	param.ipv4_connid =3D connid;
-+	ifr.ifr_data =3D (void *) &param;
-+	strcpy(ifr.ifr_name, interface);
-+
-+	s =3D socket(AF_CAIF, SOCK_SEQPACKET, CAIFPROTO_AT);
-+	if (s < 0) {
-+		ofono_debug("Failed to create socket for CAIF interface");
-+		goto error;
-+	}
-+
-+	if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
-+		ofono_debug("Failed to create IP interface for CAIF");
-+		goto error;
-+	}
-+
-+return TRUE;
-+
-+error:
-+	return FALSE;
-+}
-+
-+/* Removes IP interface for CAIF.
++ * @CAIFSO_RSP_PARAM:		Gets the request parameters for a utility
++ *				channel. (struct caif_param). This can only be
++ *				fetched after connecting the socket.
 + *
-+*/
-+static gboolean caif_if_remove(const char *interface,
-+	unsigned int connid)
-+{
-+	int s;
-+	static struct ifcaif_param param;
-+	static struct ifreq ifr;
-+
-+	param.ipv4_connid =3D connid;
-+	ifr.ifr_data =3D (void *) &param;
-+	strcpy(ifr.ifr_name, interface);
-+
-+	s =3D socket(AF_CAIF, SOCK_SEQPACKET, CAIFPROTO_AT);
-+	if (s < 0) {
-+		ofono_debug("Failed to create socket for CAIF interface");
-+		goto error;
-+	}
-+
-+	if (ioctl(s, SIOCGIFINDEX, &ifr) =3D=3D 0) {
-+		if (ioctl(s, SIOCCAIFNETREMOVE, &ifr) < 0) {
-+			ofono_debug("Failed to remove IP interface"
-+				"for CAIF");
-+			goto error;
-+		}
-+	} else {
-+		ofono_debug("Did not find interface (%s) to remove",
-+				interface);
-+		goto error;
-+	}
-+
-+	return TRUE;
-+
-+error:
-+	return FALSE;
-+}
-+
-+static void ste_eppsd_down_cb(gboolean ok,
-+					GAtResult *result, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_gprs_context_cb_t cb =3D cbd->cb;
-+	struct ofono_gprs_context *gc =3D cbd->user;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct ofono_error error;
-+	struct conn_info *conn;
-+	GSList *l;
-+
-+	dump_response("ste_eppsd_down_cb", ok, result);
-+
-+	if (!ok)
-+		goto error;
-+
-+	l =3D g_slist_find_custom(g_caif_devices,
-+				GUINT_TO_POINTER(gcd->active_context),
-+				conn_compare_by_cid);
-+
-+	if (!l) {
-+		ofono_debug("Did not find data (used caif device) for"
-+					"connection with cid; %d",
-+					gcd->active_context);
-+		goto error;
-+	}
-+	conn =3D l->data;
-+	if (!caif_if_remove(conn->interface, conn->channel_id)) {
-+		ofono_debug("Failed to remove caif interface %s.",
-+			conn->interface);
-+	}
-+	conn->cid =3D 0;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+	cb(&error, cbd->data);
-+	return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
-+static void ste_eppsd_up_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
-+	struct ofono_gprs_context *gc =3D cbd->user;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct conn_info *conn =3D NULL;
-+	GAtResultIter iter;
-+	GSList *l;
-+	int i;
-+	int numdns =3D 0;
-+	char *res_string;
-+	const char *ip =3D NULL;
-+	const char *netmask =3D NULL;
-+	const char *gateway =3D NULL;
-+	const char *mtu =3D NULL;
-+	const char *dns[MAX_DNS + 1];
-+	const char *str;
-+
-+	dump_response("ste_eppsd_up_cb", ok, result);
-+
-+	l =3D g_slist_find_custom(g_caif_devices,
-+				GUINT_TO_POINTER(gcd->active_context),
-+				conn_compare_by_cid);
-+
-+	if (!l) {
-+		ofono_debug("Did not find data (device and channel id)"
-+					"for connection with cid; %d",
-+					gcd->active_context);
-+		goto error;
-+	}
-+	conn =3D l->data;
-+
-+	if (!ok)
-+		goto error;
-+
-+	g_at_result_iter_init(&iter, result);
-+	for (i =3D 0; i < g_at_result_num_response_lines(result); i++) {
-+		g_at_result_iter_next(&iter, NULL);
-+		res_string =3D strdup(g_at_result_iter_raw_line(&iter));
-+
-+		if (strstr(res_string, "ip_address")) {
-+			ip =3D g_strdup(parse_xml(res_string,
-+						"ip_address"));
-+		} else if ((strstr(res_string, "subnet_mask"))) {
-+			netmask =3D g_strdup(parse_xml(res_string,
-+						"subnet_mask"));
-+		} else if ((strstr(res_string, "mtu"))) {
-+			mtu =3D g_strdup(parse_xml(res_string,
-+						"mtu"));
-+		} else if ((strstr(res_string, "default_gateway"))) {
-+			gateway =3D g_strdup(parse_xml(res_string,
-+						"default_gateway"));
-+		} else if ((strstr(res_string, "dns_server"))) {
-+			str =3D g_strdup(parse_xml(res_string,
-+						"dns_server"));
-+
-+			if (numdns < MAX_DNS)
-+				dns[numdns++] =3D str;
-+		}
-+	}
-+	dns[numdns] =3D NULL;
-+
-+	sprintf(conn->interface, "caif%u", conn->device);
-+
-+	if (!caif_if_create(conn->interface, conn->channel_id)) {
-+		ofono_error("Failed to create caif interface %s.",
-+			conn->interface);
-+		CALLBACK_WITH_SUCCESS(cb, NULL, FALSE, ip, netmask,
-+			gateway, dns, cbd->data);
-+	} else {
-+		CALLBACK_WITH_SUCCESS(cb, conn->interface,
-+				FALSE, ip, netmask, gateway, dns, cbd->data);
-+	}
-+	return;
-+
-+error:
-+	ofono_debug("ste_eppsd_up_cb error");
-+
-+	if (conn)
-+		conn->cid =3D 0;
-+
-+	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
-+}
-+
-+static void ste_cgdcont_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
-+	struct ofono_gprs_context *gc =3D cbd->user;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct cb_data *ncbd =3D NULL;
-+	struct conn_info *conn;
-+	char buf[AUTH_BUF_LENGTH];
-+	GSList *l;
-+
-+	dump_response("cgdcont_cb", ok, result);
-+
-+	if (!ok) {
-+		struct ofono_error error;
-+
-+		gcd->active_context =3D 0;
-+
-+		decode_at_error(&error, g_at_result_final_response(result));
-+		cb(&error, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
-+		return;
-+	}
-+
-+	/* Set username and password */
-+	sprintf(buf, "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"", gcd->active_context,
-+		gcd->username, gcd->password);
-+
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-+				NULL, NULL, NULL) =3D=3D 0)
-+		goto error;
-+
-+	ncbd =3D g_memdup(cbd, sizeof(struct cb_data));
-+
-+	l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(0),
-+				conn_compare_by_cid);
-+
-+	if (!l) {
-+		ofono_debug("at_cgdcont_cb, no more available devices");
-+		goto error;
-+	}
-+	conn =3D l->data;
-+	conn->cid =3D gcd->active_context;
-+	sprintf(buf, "AT*EPPSD=3D1,%u,%u", conn->channel_id, conn->cid);
-+
-+	if (g_at_chat_send(gcd->chat, buf, NULL,
-+				ste_eppsd_up_cb, ncbd, g_free) > 0)
-+		return;
-+error:
-+	if (ncbd)
-+		g_free(ncbd);
-+
-+	gcd->active_context =3D 0;
-+
-+	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL,
-+						NULL, NULL, cbd->data);
-+}
-+
-+static void ste_gprs_activate_primary(struct ofono_gprs_context *gc,
-+				const struct ofono_gprs_primary_context *ctx,
-+				 ofono_gprs_context_up_cb_t cb, void *data)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char buf[OFONO_GPRS_MAX_APN_LENGTH + 128];
-+	int len;
-+
-+	if (!cbd)
-+		goto error;
-+
-+	gcd->active_context =3D ctx->cid;
-+	gcd->username =3D g_strdup(ctx->username);
-+	gcd->password =3D g_strdup(ctx->password);
-+	cbd->user =3D gc;
-+
-+	len =3D sprintf(buf, "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
-+
-+	if (ctx->apn)
-+		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
-+				ctx->apn);
-+
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-+				ste_cgdcont_cb, cbd, g_free) > 0)
-+		return;
-+error:
-+	if (cbd)
-+		g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, data);
-+}
-+
-+static void ste_gprs_deactivate_primary(struct ofono_gprs_context *gc,
-+					unsigned int id,
-+					ofono_gprs_context_cb_t cb, void *data)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	struct conn_info *conn;
-+	char buf[64];
-+	GSList *l;
-+
-+	if (!cbd)
-+		goto error;
-+
-+	gcd->active_context =3D id;
-+	cbd->user =3D gc;
-+
-+	l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(id),
-+				conn_compare_by_cid);
-+
-+	if (!l) {
-+		ofono_debug("at_gprs_deactivate_primary, did not find"
-+			"data (channel id) for connection with cid; %d", id);
-+		goto error;
-+	}
-+	conn =3D l->data;
-+
-+	sprintf(buf, "AT*EPPSD=3D0,%u,%u", conn->channel_id, id);
-+
-+	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-+				ste_eppsd_down_cb, cbd, g_free) > 0)
-+		return;
-+
-+error:
-+	if (cbd)
-+		g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void ste_cgact_read_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	gint cid, state;
-+	GAtResultIter iter;
-+
-+	dump_response("cgact_read_cb", ok, result);
-+
-+	if (!ok)
-+		return;
-+	g_at_result_iter_init(&iter, result);
-+
-+	while (g_at_result_iter_next(&iter, "+CGACT:")) {
-+
-+		if (!g_at_result_iter_next_number(&iter, &cid))
-+			continue;
-+
-+		if ((unsigned int) cid !=3D gcd->active_context)
-+			continue;
-+
-+		if (!g_at_result_iter_next_number(&iter, &state))
-+			continue;
-+
-+		if (state =3D=3D 1)
-+			continue;
-+
-+		ofono_gprs_context_deactivated(gc, gcd->active_context);
-+		gcd->active_context =3D 0;
-+
-+		break;
-+	}
-+}
-+
-+static void cgev_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs_context *gc =3D user_data;
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	GAtResultIter iter;
-+	const char *event;
-+
-+	dump_response("cgev_notify", TRUE, result);
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CGEV:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_unquoted_string(&iter, &event))
-+		return;
-+
-+	if (g_str_has_prefix(event, "NW REACT ") ||
-+			g_str_has_prefix(event, "NW DEACT ") ||
-+			g_str_has_prefix(event, "ME DEACT ")) {
-+		/* Ask what primary contexts are active now */
-+
-+		g_at_chat_send(gcd->chat, "AT+CGACT?", cgact_prefix,
-+				ste_cgact_read_cb, gc, NULL);
-+	}
-+}
-+
-+static int ste_gprs_context_probe(struct ofono_gprs_context *gc,
-+					unsigned int vendor, void *data)
-+{
-+	GAtChat *chat =3D data;
-+	struct gprs_context_data *gcd;
-+	struct conn_info *ci;
-+	int i;
-+
-+	gcd =3D g_new0(struct gprs_context_data, 1);
-+	gcd->chat =3D chat;
-+
-+	g_at_chat_register(gcd->chat, "+CGEV:", cgev_notify, FALSE, gc, NULL);
-+
-+	ofono_gprs_context_set_data(gc, gcd);
-+
-+	for (i =3D 0; i < MAX_CAIF_DEVICES; i++) {
-+		ci =3D conn_info_create(i, i+1);
-+		if (ci)
-+			g_caif_devices =3D g_slist_append(g_caif_devices, ci);
-+	}
-+
-+	return 0;
-+}
-+
-+static void ste_gprs_context_remove(struct ofono_gprs_context *gc)
-+{
-+	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+
-+	g_slist_foreach(g_caif_devices, (GFunc) g_free, NULL);
-+	g_slist_free(g_caif_devices);
-+	g_caif_devices =3D NULL;
-+
-+	ofono_gprs_context_set_data(gc, NULL);
-+	g_free(gcd);
-+}
-+
-+static struct ofono_gprs_context_driver driver =3D {
-+	.name			=3D "stemodem",
-+	.probe			=3D ste_gprs_context_probe,
-+	.remove			=3D ste_gprs_context_remove,
-+	.activate_primary	=3D ste_gprs_activate_primary,
-+	.deactivate_primary	=3D ste_gprs_deactivate_primary,
++ * @CAIFSO_UTIL_FLOW:		Sets the utility channels flow options.
++ *				This can only be set before connecting.
++ *				(struct caif_util_modem_flow_opt)
++ *
++ * @CAIFSO_CONN_ID:		Gets the channel id on a CAIF Channel.
++ *				This can only be done after connect.
++ *				( u_int32_t)
++ *
++ * @CAIFSO_NEXT_PAKCET_LEN:	Gets the size of next received packet.
++ *				Value is 0 if no packet is available.
++ *				This can only be done after connect.
++ *				( u_int32_t)
++ *
++ * @CAIFSO_MAX_PAKCET_LEN:	Gets the maximum packet size for this
++ *				connection. ( u_int32_t)
++ */
++enum caif_socket_opts {
++	CAIFSO_CHANNEL_CONFIG	=3D 127,
++	CAIFSO_REQ_PARAM	=3D 128,
++	CAIFSO_RSP_PARAM	=3D 129,
++	CAIFSO_UTIL_FLOW	=3D 130,
++	CAIFSO_CONN_ID		=3D 131,
++	CAIFSO_NEXT_PACKET_LEN	=3D 132,
++	CAIFSO_MAX_PACKET_LEN	=3D 133,
 +};
 +
-+void ste_gprs_context_init()
-+{
-+	ofono_gprs_context_driver_register(&driver);
-+}
++#ifdef __cplusplus
++}				/* extern "C" */
++#endif
++#endif /* _LINUX_CAIF_SOCKET_H */
+diff --git a/gcaif/if_caif.h b/gcaif/if_caif.h
+new file mode 100644
+index 0000000..ad3686b
+--- /dev/null
++++ b/gcaif/if_caif.h
+@@ -0,0 +1,70 @@
++/*
++ * Copyright (C) ST-Ericsson AB 2009
++ * Author:	Sjur Brendeland/ sjur.brandeland(a)stericsson.com
++ * License terms: GNU General Public License (GPL) version 2
++ */
 +
-+void ste_gprs_context_exit()
-+{
-+	ofono_gprs_context_driver_unregister(&driver);
-+}
++#ifndef IF_CAIF_H_
++#define IF_CAIF_H_
++#include <linux/sockios.h>
++#include <linux/types.h>
++#include <linux/socket.h>
++/**
++ * enum sioc_caif -	SOCKIO for creating new CAIF Net Devices.
++ * @SIOCCAIFNETNEW:	Used to create a new instance of the CAIF IP Interface.
++ *			struct ifreq containing struct ifcaif_param are used
++ *			as parameters. ifr_name must be filled in.
++ * @SIOCCAIFNETCHANGE:	As above, but changes a disconnected CAIF IP Intefa=
+ce.
++ * @SIOCCAIFNETREMOVE:	Removes a CAIF IP Interface.
++ *
++ * CAIF IP Interface can be created, changed and deleted,
++ * by this enum. In addition standard Socket IO Controls (SIGIOC*)
++ * can be used to manage standard IP Interface parameters.
++ * The struct ifreq are used to carry parameters.
++ */
++enum sioc_caif {
++	SIOCCAIFNETNEW =3D SIOCPROTOPRIVATE,
++	SIOCCAIFNETCHANGE,
++	SIOCCAIFNETREMOVE
++};
++
++
++/**
++ * struct ifcaif_param - Parameters for creating CAIF Network Interface.
++ *
++ * When using SIOCCAIFNETNEW to create a CAIF IP interface, this structure
++ * is used for configuration data.
++ * The attribute ifr_ifru.ifru_data in struct struct ifreq must be set
++ * point at an instance of struct ifcaif_param.
++ *
++ * @ipv4_connid:  Connection ID for IPv4 PDP Context.
++ * @ipv6_connid:  Connection ID for IPv6 PDP Context.
++ * @loop:	  If different from zero, device is doing loopback
++ */
++struct ifcaif_param {
++	__u32			ipv4_connid;
++	__u32			ipv6_connid;
++	__u8			loop;
++};
++
++/**
++ * enum ifla_caif
++ * When using RT Netlink to create, destroy or configure a CAIF IP interfa=
+ce,
++ * enum ifla_caif is used to specify the configuration attributes.
++ *
++ * @IFLA_CAIF_IPV4_CONNID:  Connection ID for IPv4 PDP Context.
++ *			    The type of attribute is NLA_U32.
++ * @IFLA_CAIF_IPV6_CONNID:  Connection ID for IPv6 PDP Context.
++ *			    The type of attribute is NLA_U32.
++ * @IFLA_CAIF_LOOPBACK:	    If different from zero, device is doing loopba=
+ck
++ *			    The type of attribute is NLA_U8.
++ */
++enum ifla_caif {
++	IFLA_CAIF_IPV4_CONNID,
++	IFLA_CAIF_IPV6_CONNID,
++	IFLA_CAIF_LOOPBACK,
++	__IFLA_CAIF_MAX
++};
++#define	IFLA_CAIF_MAX (__IFLA_CAIF_MAX-1)
++
++#endif /*IF_CAIF_H_*/
 -- =
 
 1.6.0.4
 
 
---===============2400887523841012889==--
+--===============6423276747035624703==--
 
