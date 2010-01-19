@@ -1,33 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============8363474733430269378=="
+Content-Type: multipart/mixed; boundary="===============8142383373115674541=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC v2 5/7] STE-plugin: Voice-call driver.
-Date: Tue, 19 Jan 2010 11:52:01 -0800
-Message-ID: <1263930721.5591.194.camel@localhost.localdomain>
-In-Reply-To: <1263917513-6756-6-git-send-email-sjur.brandeland@stericsson.com>
+Subject: Re: [RFC v2 6/7] STE-plugin: Add CAIF header files in gcaif.
+Date: Tue, 19 Jan 2010 11:52:47 -0800
+Message-ID: <1263930767.5591.195.camel@localhost.localdomain>
+In-Reply-To: <1263917513-6756-7-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8363474733430269378==
+--===============8142383373115674541==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Sjur,
 
-> Updates after review:
-> Use at_util_call_compare.
-> =
+> Adding CAIF header files. These should be removed when
+> CAIF is included Linux kernel.
 
-> So far, we have only done the trivial changes to voice call driver.
-> We agree on moving more of the state logic to core,
-> but this is complex and we need more time to discuss and look into this,
-> particularly regarding call release.
-
-so this needs a bit more detailed review from Denis once he is back. I
-propose that you update all the patches except voice call and GPRS and
-make a separate series of patches from them. Then we can merge them and
-discuss voicecall and GPRS after that.
+please put them into drivers/stemodem/ instead as I explained in the
+other email. And make sure they are before its actual usage in the patch
+series.
 
 Regards
 
@@ -35,5 +28,5 @@ Marcel
 
 
 
---===============8363474733430269378==--
+--===============8142383373115674541==--
 
