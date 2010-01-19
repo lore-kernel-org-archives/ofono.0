@@ -1,271 +1,301 @@
-Content-Type: multipart/mixed; boundary="===============1360345356413784065=="
+Content-Type: multipart/mixed; boundary="===============1151981882097637315=="
 MIME-Version: 1.0
 From: sjur.brandeland@stericsson.com
-Subject: [RFC v2 3/7] STE-plugin: Add vendor STE and quirks in atmodem.
-Date: Tue, 19 Jan 2010 17:11:48 +0100
-Message-ID: <1263917513-6756-3-git-send-email-sjur.brandeland@stericsson.com>
-In-Reply-To: <1263917513-6756-2-git-send-email-sjur.brandeland@stericsson.com>
+Subject: [RFC v2 4/7] STE-plugin: Add STE plugin
+Date: Tue, 19 Jan 2010 17:11:50 +0100
+Message-ID: <1263917513-6756-5-git-send-email-sjur.brandeland@stericsson.com>
+In-Reply-To: <1263917513-6756-4-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1360345356413784065==
+--===============1151981882097637315==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Added STE as vendor and quirks needed in "atmodem" for ST-Ericsson modem.
-Added at_util_call_compare_by_id
+Added check on return value of socket() and connect() calls.
+Use gsm_permissive syntax all the time.
+Added ATE0 in initialization.
 ---
- drivers/atmodem/atutil.c               |   14 ++++++
- drivers/atmodem/atutil.h               |    1 +
- drivers/atmodem/gprs.c                 |   13 +++++-
- drivers/atmodem/network-registration.c |   76 ++++++++++++++++++++++++++++=
-+++-
- drivers/atmodem/vendor.h               |    1 +
- 5 files changed, 101 insertions(+), 4 deletions(-)
+ plugins/ste.c |  262 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 262 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/ste.c
 
-diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-index b72e919..128e692 100644
---- a/drivers/atmodem/atutil.c
-+++ b/drivers/atmodem/atutil.c
-@@ -76,6 +76,20 @@ gint at_util_call_compare_by_phone_number(gconstpointer =
-a, gconstpointer b)
- 				sizeof(struct ofono_phone_number));
- }
- =
-
-+gint at_util_call_compare_by_id(gconstpointer a, gconstpointer b)
+diff --git a/plugins/ste.c b/plugins/ste.c
+new file mode 100644
+index 0000000..6127c71
+--- /dev/null
++++ b/plugins/ste.c
+@@ -0,0 +1,262 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2009  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2010 ST-Ericsson AB.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <errno.h>
++#include <stdlib.h>
++
++#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/call-barring.h>
++#include <ofono/call-forwarding.h>
++#include <ofono/call-meter.h>
++#include <ofono/call-settings.h>
++#include <ofono/devinfo.h>
++#include <ofono/message-waiting.h>
++#include <ofono/netreg.h>
++#include <ofono/phonebook.h>
++#include <ofono/sim.h>
++#include <ofono/sms.h>
++#include <ofono/ssn.h>
++#include <ofono/ussd.h>
++#include <ofono/call-volume.h>
++#include <ofono/voicecall.h>
++#include <drivers/atmodem/vendor.h>
++#include <ofono/gprs.h>
++#include <unistd.h>
++#include <ofono/gprs-context.h>
++
++/* Use the local CAIF header files until is included in linux kernel */
++#ifdef PF_CAIF
++#include <linux/caif/caif_socket.h>
++#include <linux/caif/if_caif.h>
++#else
++#include "gcaif/caif_socket.h"
++#include "gcaif/if_caif.h"
++#endif
++
++struct ste_data {
++	GAtChat *chat;
++};
++
++static int ste_probe(struct ofono_modem *modem)
 +{
-+	const struct ofono_call *call =3D a;
-+	unsigned int id =3D GPOINTER_TO_UINT(b);
++	struct ste_data *data;
 +
-+	if (id < call->id)
-+		return -1;
++	DBG("%p", modem);
 +
-+	if (id > call->id)
-+		return 1;
++	data =3D g_try_new0(struct ste_data, 1);
 +
++	if (!data)
++		return -ENOMEM;
++
++	ofono_modem_set_data(modem, data);
 +	return 0;
 +}
 +
- gint at_util_call_compare(gconstpointer a, gconstpointer b)
- {
- 	const struct ofono_call *ca =3D a;
-diff --git a/drivers/atmodem/atutil.h b/drivers/atmodem/atutil.h
-index 4b60cd1..643ff71 100644
---- a/drivers/atmodem/atutil.h
-+++ b/drivers/atmodem/atutil.h
-@@ -23,6 +23,7 @@ void decode_at_error(struct ofono_error *error, const cha=
-r *final);
- void dump_response(const char *func, gboolean ok, GAtResult *result);
- gint at_util_call_compare_by_status(gconstpointer a, gconstpointer b);
- gint at_util_call_compare_by_phone_number(gconstpointer a, gconstpointer b=
-);
-+gint at_util_call_compare_by_id(gconstpointer a, gconstpointer b);
- gint at_util_call_compare(gconstpointer a, gconstpointer b);
- GSList *at_util_parse_clcc(GAtResult *result);
- gboolean at_util_parse_reg(GAtResult *result, const char *prefix,
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index 76085d9..661f063 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -3,6 +3,7 @@
-  *  oFono - Open Source Telephony
-  *
-  *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2010 ST-Ericsson AB.
-  *
-  *  This program is free software; you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License version 2 as
-@@ -38,6 +39,7 @@
- #include "gatresult.h"
- =
-
- #include "atmodem.h"
-+#include "vendor.h"
- =
-
- static const char *cgreg_prefix[] =3D { "+CGREG:", NULL };
- static const char *cgdcont_prefix[] =3D { "+CGDCONT:", NULL };
-@@ -45,6 +47,7 @@ static const char *none_prefix[] =3D { NULL };
- =
-
- struct gprs_data {
- 	GAtChat *chat;
-+	unsigned int vendor;
- };
- =
-
- static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -216,7 +219,13 @@ static void at_cgreg_test_cb(gboolean ok, GAtResult *r=
-esult,
- =
-
- 	g_at_chat_send(gd->chat, cmd, none_prefix, NULL, NULL, NULL);
- 	g_at_chat_send(gd->chat, "AT+CGAUTO=3D0", none_prefix, NULL, NULL, NULL);
--	g_at_chat_send(gd->chat, "AT+CGEREP=3D2,1", none_prefix,
-+
-+	/* ST-E modem does not support AT+CGEREP =3D 2,1 */
-+	if (gd->vendor =3D=3D OFONO_VENDOR_STE)
-+		g_at_chat_send(gd->chat, "AT+CGEREP=3D1,0", none_prefix,
-+			gprs_initialized, gprs, NULL);
-+	else
-+		g_at_chat_send(gd->chat, "AT+CGEREP=3D2,1", none_prefix,
- 			gprs_initialized, gprs, NULL);
- 	return;
- =
-
-@@ -289,7 +298,7 @@ static int at_gprs_probe(struct ofono_gprs *gprs,
- =
-
- 	gd =3D g_new0(struct gprs_data, 1);
- 	gd->chat =3D chat;
--
-+	gd->vendor =3D vendor;
- 	ofono_gprs_set_data(gprs, gd);
- =
-
- 	g_at_chat_send(chat, "AT+CGDCONT=3D?", cgdcont_prefix,
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index 202256a..e368155 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -3,6 +3,7 @@
-  *  oFono - Open Source Telephony
-  *
-  *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2010 ST-Ericsson AB.
-  *
-  *  This program is free software; you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License version 2 as
-@@ -44,6 +45,7 @@ static const char *none_prefix[] =3D { NULL };
- static const char *creg_prefix[] =3D { "+CREG:", NULL };
- static const char *cops_prefix[] =3D { "+COPS:", NULL };
- static const char *csq_prefix[] =3D { "+CSQ:", NULL };
-+static const char *cind_prefix[] =3D { "+CIND:", NULL };
- =
-
- struct netreg_data {
- 	GAtChat *chat;
-@@ -551,6 +553,64 @@ static void option_octi_notify(GAtResult *result, gpoi=
-nter user_data)
- 	ofono_info("OCTI mode: %d", mode);
- }
- =
-
-+static void ste_ciev_notify(GAtResult *result, gpointer user_data)
++static void ste_remove(struct ofono_modem *modem)
 +{
-+	struct ofono_netreg *netreg =3D user_data;
-+	int strength, ind;
-+	GAtResultIter iter;
++	struct ste_data *data =3D ofono_modem_get_data(modem);
 +
-+	dump_response("ciev_notify", TRUE, result);
++	DBG("%p", modem);
 +
-+	g_at_result_iter_init(&iter, result);
++	ofono_modem_set_data(modem, NULL);
 +
-+	if (!g_at_result_iter_next(&iter, "+CIEV:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &ind))
-+		return;
-+
-+	if (ind =3D=3D 2) { /* signal strength indication */
-+		if (!g_at_result_iter_next_number(&iter, &strength))
-+			return;
-+
-+		strength =3D (strength * 100) / 5;
-+		ofono_netreg_strength_notify(netreg, strength);
-+	}
++	g_at_chat_unref(data->chat);
++	g_free(data);
 +}
 +
-+static void ste_cind_cb(gboolean ok, GAtResult *result, gpointer user_data)
++static void ste_debug(const char *str, void *user_data)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_netreg_strength_cb_t cb =3D cbd->cb;
-+	int strength;
-+	GAtResultIter iter;
-+	struct ofono_error error;
-+
-+	dump_response("cind_cb", ok, result);
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (!ok) {
-+		cb(&error, -1, cbd->data);
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CIND:")) {
-+		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+		return;
-+	}
-+
-+	/* Skip battery charge level, which is the first reported  */
-+	g_at_result_iter_skip_next(&iter);
-+
-+	g_at_result_iter_next_number(&iter, &strength);
-+
-+	strength =3D (strength * 100) / 5;
-+
-+	cb(&error, strength, cbd->data);
++	ofono_info("%s", str);
 +}
 +
- static void option_ossysi_notify(GAtResult *result, gpointer user_data)
- {
- 	int mode;
-@@ -611,9 +671,15 @@ static void at_signal_strength(struct ofono_netreg *ne=
-treg,
- 	if (!cbd)
- 		goto error;
- =
-
--	if (g_at_chat_send(nd->chat, "AT+CSQ", csq_prefix,
-+	if (nd->vendor =3D=3D OFONO_VENDOR_STE) {
-+		if (g_at_chat_send(nd->chat, "AT+CIND?", cind_prefix,
-+				ste_cind_cb, cbd, g_free) > 0)
-+			return;
-+	} else {
-+		if (g_at_chat_send(nd->chat, "AT+CSQ", csq_prefix,
- 				csq_cb, cbd, g_free) > 0)
--		return;
-+			return;
++static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++
++	DBG("");
++
++	if (!ok)
++		ofono_modem_set_powered(modem, FALSE);
++
++	ofono_modem_set_powered(modem, TRUE);
++}
++
++static int ste_enable(struct ofono_modem *modem)
++{
++	struct ste_data *data =3D ofono_modem_get_data(modem);
++	GIOChannel *channel;
++	GAtSyntax *syntax;
++	int fd, err;
++	struct sockaddr_caif addr =3D {
++		.family =3D AF_CAIF,
++		.u.at.type =3D CAIF_ATTYPE_PLAIN
++	};
++
++	DBG("%p", modem);
++
++	/* Create a CAIF socket for AT Service */
++	fd =3D socket(AF_CAIF, SOCK_SEQPACKET, CAIFPROTO_AT);
++
++	if (fd < 0) {
++		ofono_debug("Failed to create CAIF socket for AT");
++		return -EIO;
 +	}
- =
-
- error:
- 	if (cbd)
-@@ -700,6 +766,12 @@ static void at_network_registration_initialized(gboole=
-an ok, GAtResult *result,
- 		g_at_chat_send(nd->chat, "AT_ODO=3D0", none_prefix,
- 				NULL, NULL, NULL);
- 		break;
-+	case OFONO_VENDOR_STE:
-+		g_at_chat_send(nd->chat, "AT+CMER=3D3,0,0,1", NULL,
-+				NULL, NULL, NULL);
-+		g_at_chat_register(nd->chat, "+CIEV:",
-+				ste_ciev_notify, FALSE, netreg, NULL);
-+		break;
- 	default:
- 		break;
- 	}
-diff --git a/drivers/atmodem/vendor.h b/drivers/atmodem/vendor.h
-index 8d9ed47..a254ed2 100644
---- a/drivers/atmodem/vendor.h
-+++ b/drivers/atmodem/vendor.h
-@@ -22,6 +22,7 @@
- enum ofono_vendor {
- 	OFONO_VENDOR_GENERIC =3D 0,
- 	OFONO_VENDOR_CALYPSO,
-+	OFONO_VENDOR_STE,
- 	OFONO_VENDOR_QUALCOMM_MSM,
- 	OFONO_VENDOR_OPTION_HSO,
- };
++	/* Connect to the AT Service@the modem */
++	err =3D connect(fd, (struct sockaddr *) &addr, sizeof(addr));
++
++	if (err < 0) {
++		close(fd);
++		return err;
++	}
++	channel =3D g_io_channel_unix_new(fd);
++
++	if (!channel)  {
++		close(fd);
++		return -EIO;
++	}
++	g_io_channel_set_close_on_unref(channel, TRUE);
++
++	syntax =3D g_at_syntax_new_gsm_permissive();
++
++	data->chat =3D g_at_chat_new(channel, syntax);
++	g_at_syntax_unref(syntax);
++	g_io_channel_unref(channel);
++
++	if (!data->chat)
++		return -ENOMEM;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->chat, ste_debug, NULL);
++
++	g_at_chat_send(data->chat, "ATE0 +CMEE=3D1", NULL, NULL, NULL, NULL);
++	g_at_chat_send(data->chat, "AT+CFUN=3D1", NULL, cfun_enable, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
++static void cfun_disable(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct ste_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("");
++
++	g_at_chat_shutdown(data->chat);
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	if (ok)
++		ofono_modem_set_powered(modem, FALSE);
++}
++
++static int ste_disable(struct ofono_modem *modem)
++{
++	struct ste_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	if (!data->chat)
++		return 0;
++
++	g_at_chat_cancel_all(data->chat);
++	g_at_chat_unregister_all(data->chat);
++	g_at_chat_send(data->chat, "AT+CFUN=3D4", NULL,
++					cfun_disable, modem, NULL);
++
++	return -EINPROGRESS;
++}
++
++static void ste_pre_sim(struct ofono_modem *modem)
++{
++	struct ste_data *data =3D ofono_modem_get_data(modem);
++	DBG("%p", modem);
++
++	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
++	ofono_sim_create(modem, 0, "atmodem", data->chat);
++	ofono_voicecall_create(modem, 0, "stemodem", data->chat);
++}
++
++static void ste_post_sim(struct ofono_modem *modem)
++{
++	struct ste_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_message_waiting *mw;
++	struct ofono_gprs *gprs;
++	struct ofono_gprs_context *gc;
++
++	DBG("%p", modem);
++	ofono_ussd_create(modem, 0, "atmodem", data->chat);
++	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
++	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
++	ofono_netreg_create(modem, OFONO_VENDOR_STE, "atmodem", data->chat);
++	ofono_call_meter_create(modem, 0, "atmodem", data->chat);
++	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
++	ofono_ssn_create(modem, 0, "atmodem", data->chat);
++	ofono_sms_create(modem, 0, "atmodem", data->chat);
++	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
++	ofono_call_volume_create(modem, 0, "atmodem", data->chat);
++
++	gprs =3D ofono_gprs_create(modem,
++			OFONO_VENDOR_STE, "atmodem", data->chat);
++	gc =3D ofono_gprs_context_create(modem, 0, "stemodem", data->chat);
++
++	if (gprs && gc)
++		ofono_gprs_add_context(gprs, gc);
++
++	mw =3D ofono_message_waiting_create(modem);
++
++	if (mw)
++		ofono_message_waiting_register(mw);
++}
++
++static struct ofono_modem_driver ste_driver =3D {
++	.name		=3D "ste",
++	.probe		=3D ste_probe,
++	.remove		=3D ste_remove,
++	.enable		=3D ste_enable,
++	.disable	=3D ste_disable,
++	.pre_sim	=3D ste_pre_sim,
++	.post_sim	=3D ste_post_sim,
++};
++
++static int ste_init(void)
++{
++	return ofono_modem_driver_register(&ste_driver);
++}
++
++static void ste_exit(void)
++{
++	ofono_modem_driver_unregister(&ste_driver);
++}
++
++OFONO_PLUGIN_DEFINE(ste, "ST-Ericsson modem driver", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, ste_init, ste_exit)
 -- =
 
 1.6.0.4
 
 
---===============1360345356413784065==--
+--===============1151981882097637315==--
 
