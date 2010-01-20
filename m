@@ -1,46 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============6619401635528517674=="
+Content-Type: multipart/mixed; boundary="===============3575692111975869643=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC v2 7/7] STE-plugin: GPRS driver.
-Date: Tue, 19 Jan 2010 11:55:39 -0800
-Message-ID: <1263930939.5591.197.camel@localhost.localdomain>
-In-Reply-To: <1263917513-6756-8-git-send-email-sjur.brandeland@stericsson.com>
+From: Feifei Hu <gracegreener@gmail.com>
+Subject: message history
+Date: Wed, 20 Jan 2010 16:54:43 +0800
+Message-ID: <9a7f90291001200054r8c0f22ane6c5f34ab0ed085@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6619401635528517674==
+--===============3575692111975869643==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+  I have installed ofono and phonesim , with which I tried sms-send ,but
+   how can I get message history?
+      Are there any python scripts or dbus APIs?
+     Thanks!
+                                         Best Regards,
+   Feifei
 
-> Updates after review:
-> Removed setting of IP-address, netmask etc. when creating the IP interfac=
-e.
-> Split caif_if_create_remove() into , caif_if_create() and caif_if_remove(=
-).
-> Declared interface as array in conn_info struct, and removed memory alloc=
-ation.
-> Removed switching of syntax runtime (from strict to permissive and back a=
-gain).
-> Removed return statement from cgev_notify()
-> =
+--===============3575692111975869643==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> Remaining issues:
-> Use glib xml parser.
+PHNwYW4gY2xhc3M9IkFwcGxlLXN0eWxlLXNwYW4iIHN0eWxlPSJmb250LWZhbWlseTogYXJpYWws
+IHNhbnMtc2VyaWY7IGZvbnQtc2l6ZTogMTNweDsgYm9yZGVyLWNvbGxhcHNlOiBjb2xsYXBzZTsg
+Ij6goEkgaGF2ZSBpbnN0YWxsZWQgb2Zvbm8gYW5kIHBob25lc2ltICwgd2l0aCB3aGljaCBJIHRy
+aWVkIHNtcy1zZW5kICxidXQ8YnI+oCCgaG93IGNhbiBJIGdldCBtZXNzYWdlIGhpc3Rvcnk/PGJy
+PgqgIKAgoCBBcmUgdGhlcmUgYW55IHB5dGhvbiBzY3JpcHRzIG9yIGRidXMgQVBJcz88YnI+oCCg
+IKBUaGFua3MhPGJyPqAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgQmVz
+dCBSZWdhcmRzLDxicj6gIKBGZWlmZWk8L3NwYW4+Cg==
 
-I am not comfortable with merging this until we have a version that uses
-the GLib builtin XML parser.
-
-As mentioned before, lets get the core patches merged and then we work
-on voicecall and GPRS in separate patch reviews. That makes it simpler.
-
-Regards
-
-Marcel
-
-
-
---===============6619401635528517674==--
+--===============3575692111975869643==--
 
