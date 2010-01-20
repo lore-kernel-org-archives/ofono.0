@@ -1,47 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============2375331935133432638=="
+Content-Type: multipart/mixed; boundary="===============6794964683406060606=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] add quirk for cid and lac handling for Huawei
-Date: Wed, 20 Jan 2010 10:26:23 -0600
-Message-ID: <201001201026.23764.denkenz@gmail.com>
-In-Reply-To: <4B54B6B1.3080306@linux.intel.com>
+Subject: Re: [PATCH 1/4] Add gatutil.c to share common APIs with GAtServer
+Date: Wed, 20 Jan 2010 14:23:18 -0600
+Message-ID: <201001201423.19179.denkenz@gmail.com>
+In-Reply-To: <8B81FACE836F9248894A7844CC0BA8141C433BF03A@shzsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2375331935133432638==
+--===============6794964683406060606==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jussi,
+Hi Zhenhua,
 
-> Attached is my attempt at that. The actual quirk is in
-> drivers/atmodem/atutil.c, which means I needed to change the
-> at_util_parse_reg*() definitions. Let me know if my approach seems wrong
-> -- this was the first time I've even looked at ofono code, and I can't
-> claim to understand it fully.
-
-I'm actually fine with this approach.  Patch has been applied.  I did a tri=
-vial =
-
-style fix afterward to keep the line length less than 80 characters.
-
+> Hi Denis,
 > =
 
-> The huawei plugin seems to use OFONO_VENDOR_QUALCOMM_MSM for sms...
-> Should that be updated so OFONO_VENDOR_HUAWEI (which I added) hits the
-> same quirk(s) or do Huawei and Qualcomm really have something in common?
+> Denis Kenzior wrote:
+> > Hi Zhenhua,
+> >
+> >> +gboolean g_at_util_set_io(GIOChannel *io)
+> >
+> > Rename this g_at_util_setup_io
+> >
+> >> +typedef void (*GAtDisconnectFunc)(gpointer user_data); typedef void
+> >> +(*GAtDebugFunc)(const char *str, gpointer user_data);
+> >
+> > These don't belong here, create a new file called gat.h and put them
+> > there.
+> >
+> > Regards,
+> > -Denis
+> =
 
-Huawei uses Qualcomm chips in their devices and thus share the same 'quirks=
-'.  =
+> Thanks for your comments. Updated patch is attached.
+> =
 
-I expect the vendor.h quirks to get refined over time anyway, so for now it=
- is =
 
-fine to leave it the way it is.
+Patch has been applied.  Thanks.
 
-Thanks,
+Regards,
 -Denis
 
---===============2375331935133432638==--
+--===============6794964683406060606==--
 
