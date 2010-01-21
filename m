@@ -1,19 +1,24 @@
-Content-Type: multipart/mixed; boundary="===============4733421484041511428=="
+Content-Type: multipart/mixed; boundary="===============2171837638924132581=="
 MIME-Version: 1.0
 From: Johan Hedberg <johan.hedberg@gmail.com>
 Subject: Re: [RFC] HFP support into oFono and BlueZ
-Date: Thu, 21 Jan 2010 21:22:09 +0200
-Message-ID: <20100121192209.GA30879@jh-x301>
-In-Reply-To: <fbf08281001201158q23d13d9bj930a66271c527b43@mail.gmail.com>
+Date: Thu, 21 Jan 2010 21:27:34 +0200
+Message-ID: <20100121192734.GA31209@jh-x301>
+In-Reply-To: <20100121192209.GA30879@jh-x301>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4733421484041511428==
+--===============2171837638924132581==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Gustavo,
+
+Sorry, not only did I manage not to quote the original patch properly
+but the mime-type in my mail was scrwed up. Here's a second try:
+
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 
 Sorry about the delay in getting more comments from me. Here's the
 result of an initial (and rather quick) review:
@@ -111,61 +116,5 @@ this time) and I'll take a new look. Thanks.
 Johan
 
 
---===============4733421484041511428==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-Implement-HandsfreeGateway-Interface.patch"
-
-SGkgR3VzdGF2bywKClNvcnJ5IGFib3V0IHRoZSBkZWxheSBpbiBnZXR0aW5nIG1vcmUgY29tbWVu
-dHMgZnJvbSBtZS4gSGVyZSdzIHRoZQpyZXN1bHQgb2YgYW4gaW5pdGlhbCAoYW5kIHJhdGhlciBx
-dWljaykgcmV2aWV3OgoKK3N0YXRpYyBjb25zdCBjaGFyICpjb25uZWN0ZWQyc3RyKGludCBpKQor
-eworCXN3aXRjaCAoaSkgeworCQljYXNlIEdBVEVXQVlfU1RBVEVfRElTQ09OTkVDVEVEOgorCQkJ
-cmV0dXJuICJkaXNjb25uZWN0ZWQiOworCQljYXNlIEdBVEVXQVlfU1RBVEVfQ09OTkVDVElORzoK
-KwkJCXJldHVybiAiY29ubmVjdGluZyI7CisJCWNhc2UgR0FURVdBWV9TVEFURV9DT05ORUNURUQ6
-CisJCQlyZXR1cm4gImNvbm5lY3RlZCI7CisJCWNhc2UgR0FURVdBWV9TVEFURV9QTEFZSU5HOgor
-CQkJcmV0dXJuICJwbGF5aW5nIjsKKwkJZGVmYXVsdDoKKwkJCXJldHVybiAiIjsKKwl9Cit9CgpU
-aGlzIHNob3VsZCBiZSBjYWxsZWQgc3RhdGUyc3RyIGFuZCB0aGUgc3RhdGUgaXMgZ2F0ZXdheV9z
-dGF0ZV90IGFuZCBub3QKaW50LiBBbHNvIG5hbWUgdGhlIHZhcmlhYmxlIG1vcmUgYXByb3ByaWF0
-ZWx5IChlLmcuICJzdGF0ZSIpLgoKK3N0YXRpYyB2b2lkIGNoYW5nZV9zdGF0ZShzdHJ1Y3QgYXVk
-aW9fZGV2aWNlICpkZXYsIGludCBuZXdfc3RhdGUpCgpTYW1lIGdvZXMgaGVyZS4gZ2F0ZXdheV9z
-dGF0ZV90IGFuZCBub3QgaW50LgoKKwlndy0+c2NvID0gY2hhbjsKKwlnX2lvX2NoYW5uZWxfcmVm
-KGNoYW4pOwoKVGhlIGNvbnZlbnRpb24gaXMgdG8gZG8gdGhlIHZhcmlhYmxlIGFzc2lnbm1lbnQg
-dGhyb3VnaCB0aGUgcmV0dXJuIHZhbHVlCm9mIHRoZSBfcmVmIGZ1bmN0aW9uLiBQbGVhc2UgZG8g
-dGhhdC4KCi0JLyogd2h5IGlzIHRoaXMgaGVyZT8gKi8KIAlmY250bChnX2lvX2NoYW5uZWxfdW5p
-eF9nZXRfZmQoY2hhbiksIEZfU0VURkwsIDApOwoKV2h5IGFyZSB5b3UgcmVtb3ZpbmcgdGhpcyBj
-b21tZW50PyBFaXRoZXIgcmVtb3ZlIHRoZSBmY250bCBjYWxsCmFsdG9nZXRoZXIsIGZpeCB0aGUg
-Y29tbWVudCB0byBkZXNjcmliZSB3aHkgdGhlIGNhbGwgaXMgbmVlZGVkIG9yIHRoZW4KZG9uJ3Qg
-ZG8gYW55dGhpbmcgaWYgeW91IGRvbid0IGtub3cgd2hhdCBpdCdzIGZvci4KCisJaWYgKCFkYnVz
-X3NldF9lcnJvcl9mcm9tX21lc3NhZ2UoJmRlcnIsIHJlcGx5KSkgeworCQlpbmZvKCJBZ2VudCBy
-ZXBseTogZmlsZSBkZXNjcmlwdG9yIHBhc3NlZCBzdWNjZXNzZnVseSIpOworCQlyZXR1cm47CisJ
-fQoKSSBkb24ndCB0aGluayB0aGlzIGlzIHdvcnRoIGFuIGluZm8oKS4gVXNlIGRlYnVnKCkgaW5z
-dGVhZC4KCisJZ19pZGxlX2FkZChnYXRld2F5X2Nsb3NlLCBndyk7CgpEbyB5b3UgcmVhbGx5IG5l
-ZWQgdG8gY2FsbCBnYXRld2F5X2Nsb3NlIHRocm91Z2ggYW4gaWRsZSBjYWxsYmFjaz8KV2hhdCdz
-IHRoZSBwcm9ibGVtIHdpdGggY2FsbGluZyBpdCBkaXJlY3RseT8KCisJLyogbWFrZSAvZGV2L3Jm
-Y29tbSBzZXJpYWwgcG9ydCBmcm9tIGNoYW4gKi8KKwltZW1zZXQoJnJlcSwgMCwgc2l6ZW9mKHJl
-cSkpOworCXJlcS5kZXZfaWQgPSAtMTsKKwlyZXEuZmxhZ3MgPSAoMSA8PCBSRkNPTU1fUkVVU0Vf
-RExDKTsKKwliYWNweSgmcmVxLnNyYywgJmRldi0+c3JjKTsKKwliYWNweSgmcmVxLmRzdCwgJmRl
-di0+ZHN0KTsKKwlyZXEuY2hhbm5lbCA9IGd3LT5jaGFubmVsOwoKV2hhdCdzIHRoaXM/IEkgdGhv
-dWdodCB5b3UgcmVtb3ZlZCBhbGwgdGhlIFJGQ09NTSBUVFkgY29kZGUuCgorCXJldHVybjsKIH0K
-ClVubmVjZXNzYXJ5IHJldHVybiBhdCB0aGUgZW5kIG9mIGEgdm9pZCBmdW5jdGlvbi4KCisJYWdl
-bnQgPSBnX25ldzAoc3RydWN0IGFnZW50LCAxKTsKKwlpZiAoIWFnZW50KQorCQlyZXR1cm4gZ19k
-YnVzX2NyZWF0ZV9lcnJvcihtc2csCisJCQkJRVJST1JfSU5URVJGQUNFICIuRmFpbGVkIiwKKwkJ
-CQkiRmFpbGVkIHRvIGNyZWF0ZSBhIG5ldyBhZ2VudCIpOwoKZ19uZXcwKCkgd2lsbCBlaXRoZXIg
-YXNzZXJ0IG9yIGFsd2F5cyByZXR1cm4gbm9uLU5VTEwuIFVzZSBnX3RyeV9uZXcwCmlmIHlvdSB3
-YW50IHRvIGNoZWNrIGZvciBmYWlsdXJlLCBidXQgcHJvYmFibHkgeW91IGNhbiBqdXN0IHJlbW92
-ZSB0aGUKY2hlY2sgYW5kIGtlZXAgdXNpbmcgZ19uZXcwLiBCdHcsIHNyYy9hZ2VudC5oIGFscmVh
-ZHkgZGVmaW5lcyBhIHN0cnVjdAphZ2VudCBzbyBpdCdkIGJlIGJldHRlciBpZiB5b3UgdXNlIGFu
-b3RoZXIgbmFtZSwgZS5nLiBoZl9hZ2VudC4KCgorCWFnZW50LT5uYW1lID0gc3RyZHVwKG5hbWUp
-OworCWFnZW50LT5wYXRoID0gc3RyZHVwKHBhdGgpOwoKVXNlIGdfc3RyZHVwLgoKKwlnX2lvX2No
-YW5uZWxfcmVmKGNoYW4pOworCWRldi0+Z2F0ZXdheS0+cmZjb21tID0gY2hhbjsKCkFnYWluLCBw
-bGVhc2UgZG8gdGhlIGFzc2lnbm1lbnQgdGhyb3VnaCB0aGUgcmV0dXJuIHZhbHVlIG9mIF9yZWYo
-KQoKVGhlcmUgYXJlIHByb2JhYmx5IG1vcmUgaXNzdWVzLCBidXQgdGhlc2UgYXJlIHRoZSBvbmVz
-IEkgZm91bmQgYWZ0ZXIgYW4KaW5pdGlhbCBnbGFuY2UtdGhyb3VnaC4gUGxlYXNlIHNlbmQgYW4g
-dXBkYXRlZCBwYXRjaCwgcHJlZmVyYWJseSBpbmxpbmUKKHNpbmNlIGFzIHlvdSBub3RpY2UgSSBk
-aWRuJ3QgbWFuYWdlIHRvIGdldCBteSBtYWlsZXIgdG8gcHJvcGVybHkgcXVvdGUKdGhpcyB0aW1l
-KSBhbmQgSSdsbCB0YWtlIGEgbmV3IGxvb2suIFRoYW5rcy4KCkpvaGFuCgo=
-
---===============4733421484041511428==--
+--===============2171837638924132581==--
 
