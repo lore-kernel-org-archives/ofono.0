@@ -1,44 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5660861929359129924=="
+Content-Type: multipart/mixed; boundary="===============6015512602115589949=="
 MIME-Version: 1.0
-From: Li, Zhigang <zhigang.li@intel.com>
-Subject: patch to enable cell broadcast message in phonesim
-Date: Mon, 25 Jan 2010 10:59:42 +0800
-Message-ID: <AE1A29481078F64FB2A6D4BA2B68C2FE362C7BE8@shzsmsx502.ccr.corp.intel.com>
+From: sjur.brandeland@stericsson.com
+Subject: [PATCH 0/6] STE-plugin
+Date: Mon, 25 Jan 2010 20:25:27 +0100
+Message-ID: <1264447534-2386-1-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5660861929359129924==
+--===============6015512602115589949==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-HI,
-This patch is to enable CBS base on latest CBS modification in phonesim, pl=
-ease review.
+Hello.
 
-Thanks
+This is a new version of the STE-plugin patch set. Since last RFCv2 we have
+stubbed out Voice Call and GPRS Context handling, changed patch order,
+cleanup some unnecessary includes, moved CAIF header files, and fixed =
+
+most other review comments (hopefully).
+
+Sjur Brandeland (6):
+  STE-plugin: Add at_util_call_compare_by_id
+  STE-plugin: Add vendor STE and quirks in atmodem.
+  STE-plugin: STE modem driver definition
+  STE-plugin: Add CAIF header files in drivers/stemodem.
+  STE-plugin: Add STE plugin
+  STE-plugin: Add STE to Makefile
+
+ Makefile.am                            |   10 ++
+ drivers/atmodem/atutil.c               |   14 ++
+ drivers/atmodem/atutil.h               |    1 +
+ drivers/atmodem/gprs.c                 |   10 +-
+ drivers/atmodem/network-registration.c |   78 ++++++++++-
+ drivers/atmodem/vendor.h               |    1 +
+ drivers/stemodem/caif_socket.h         |  171 +++++++++++++++++++++
+ drivers/stemodem/if_caif.h             |   70 +++++++++
+ drivers/stemodem/stemodem.c            |   50 +++++++
+ drivers/stemodem/stemodem.h            |   29 ++++
+ plugins/ste.c                          |  253 ++++++++++++++++++++++++++++=
+++++
+ 11 files changed, 684 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/stemodem/caif_socket.h
+ create mode 100644 drivers/stemodem/if_caif.h
+ create mode 100644 drivers/stemodem/stemodem.c
+ create mode 100644 drivers/stemodem/stemodem.h
+ create mode 100644 plugins/ste.c
 
 
---===============5660861929359129924==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Enable-Cell-broadcast-message-in-phonesim.patch"
-
-RnJvbSAzYjBiYjFhNDBjYjY0MTY5N2YzOGU5NmQwYzgyYmVhOGUzMWY2YjM3IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBaaGlnYW5nIExpIDx6aGlnYW5nLmxpQGludGVsLmNvbT4KRGF0
-ZTogTW9uLCAyNSBKYW4gMjAxMCAxMDoyMDoyMSArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIEVuYWJs
-ZSBDZWxsIGJyb2FkY2FzdCBtZXNzYWdlIGluIHBob25lc2ltCgotLS0KIHNyYy9tb2JsaW4ueG1s
-IHwgICAgNiArKysrKysKIDEgZmlsZXMgY2hhbmdlZCwgNiBpbnNlcnRpb25zKCspLCAwIGRlbGV0
-aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9tb2JsaW4ueG1sIGIvc3JjL21vYmxpbi54bWwKaW5k
-ZXggNzNjNTYyNi4uMWI2YmQ5ZSAxMDA2NDQKLS0tIGEvc3JjL21vYmxpbi54bWwKKysrIGIvc3Jj
-L21vYmxpbi54bWwKQEAgLTI3MTAsNiArMjcxMCwxMiBAQAogPC9jaGF0PgogCiA8Y2hhdD4KKzwh
-LS0gUXVlcnkgQ2VsbCBicm9hZGNhc3Qgc2VydmljZSBwcmVzZW50YXRpb24gbW9kZSAtLT4KKwk8
-Y29tbWFuZD5BVCtDU0NCPT88L2NvbW1hbmQ+CisJPHJlc3BvbnNlPitDU0NCOiAoMC0xKVxuXG5P
-SzwvcmVzcG9uc2U+Cis8L2NoYXQ+CisKIDxjaGF0PgogICAgIDwhLS0gU2V0IGNlbGwgYnJvYWRj
-YXN0IGNoYW5uZWxzIC0tPgogICAgIDxjb21tYW5kPkFUK0NTQ0I9MCwqPC9jb21tYW5kPgogICAg
-IDxyZXNwb25zZT5PSzwvcmVzcG9uc2U+Ci0tIAoxLjYuNS4yCgo=
-
---===============5660861929359129924==--
+--===============6015512602115589949==--
 
