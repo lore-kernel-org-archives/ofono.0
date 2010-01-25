@@ -1,66 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============7216294652734633225=="
+Content-Type: multipart/mixed; boundary="===============3856534309866051851=="
 MIME-Version: 1.0
-From: sjur.brandeland@stericsson.com
-Subject: [PATCH 6/6] STE-plugin: Add STE to Makefile
-Date: Mon, 25 Jan 2010 20:25:33 +0100
-Message-ID: <1264447534-2386-7-git-send-email-sjur.brandeland@stericsson.com>
-In-Reply-To: <1264447534-2386-6-git-send-email-sjur.brandeland@stericsson.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 0/6] STE-plugin
+Date: Mon, 25 Jan 2010 21:07:21 +0100
+Message-ID: <1264450041.11653.18.camel@violet>
+In-Reply-To: <1264447534-2386-1-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7216294652734633225==
+--===============3856534309866051851==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+Hi Sjur,
 
-diff --git a/Makefile.am b/Makefile.am
-index b6776bd..5e5ccfc 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -55,6 +55,7 @@ gatchat_sources =3D gatchat/gatchat.h gatchat/gatchat.c \
- 				gatchat/gatutil.h gatchat/gatutil.c \
- 				gatchat/gat.h
- =
+> This is a new version of the STE-plugin patch set. Since last RFCv2 we ha=
+ve
+> stubbed out Voice Call and GPRS Context handling, changed patch order,
+> cleanup some unnecessary includes, moved CAIF header files, and fixed =
 
-+
- udev_files =3D plugins/ofono.rules
- =
+> most other review comments (hopefully).
 
- if UDEV
-@@ -154,6 +155,11 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- builtin_modules +=3D modemconf
- builtin_sources +=3D plugins/modemconf.c
- =
+I applied all of your 6 patches. However there were some issues with
+your submission.
 
-+builtin_modules +=3D stemodem
-+builtin_sources +=3D drivers/atmodem/atutil.h \
-+                   drivers/stemodem/stemodem.h \
-+                   drivers/stemodem/stemodem.c
-+
- if DATAFILES
- conf_DATA +=3D plugins/modem.conf
- endif
-@@ -187,6 +193,10 @@ builtin_sources +=3D plugins/hfp.c
- =
+First, please make sure you have a proper .gitconfig with your email
+address and author set correct. That way we keep the GIT history clean
+and readable. I had to fix this up on all your patches.
 
- builtin_modules +=3D palmpre
- builtin_sources +=3D plugins/palmpre.c
-+
-+builtin_modules +=3D ste
-+builtin_sources +=3D plugins/ste.c
-+
- endif
- =
+Second, please do proper commit messages. Either one line describes what
+your are doing (will end up as Subject) or one line and then a body
+describing the details. Check the GIT history for examples.
 
- if MAINTAINER_MODE
--- =
+Third, please ensure that "make distcheck" builds properly. I had to fix
+it up for the CAIF header files.
 
-1.6.0.4
+Regards
+
+Marcel
 
 
---===============7216294652734633225==--
+
+--===============3856534309866051851==--
 
