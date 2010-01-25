@@ -1,78 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============3425475928696450857=="
+Content-Type: multipart/mixed; boundary="===============5660861929359129924=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: Re: [PATCH 2/2] Implement HandsfreeGateway Interface
-Date: Thu, 21 Jan 2010 19:25:19 -0200
-Message-ID: <fbf08281001211325g33b2828cve6dcd9201d83f558@mail.gmail.com>
-In-Reply-To: <2a9506371001211320r6dc7958h5b0040cec6f79e4b@mail.gmail.com>
+From: Li, Zhigang <zhigang.li@intel.com>
+Subject: patch to enable cell broadcast message in phonesim
+Date: Mon, 25 Jan 2010 10:59:42 +0800
+Message-ID: <AE1A29481078F64FB2A6D4BA2B68C2FE362C7BE8@shzsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3425475928696450857==
+--===============5660861929359129924==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Jan 21, 2010 at 7:20 PM, Vinicius Gomes
-<vinicius.gomes@openbossa.org> wrote:
-> Hi Gustavo,
->
-> On Thu, Jan 21, 2010 at 5:31 PM, Gustavo F. Padovan
-> <padovan@profusion.mobi> wrote:
->> + =C2=A0 =C2=A0 =C2=A0 gw->sco =3D chan;
->> + =C2=A0 =C2=A0 =C2=A0 g_io_channel_ref(chan);
->> +
->
-> You must have forgotten to change this.
->
->> @@ -307,17 +565,15 @@ struct gateway *gateway_init(struct audio_device *=
-dev)
->> =C2=A0{
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct gateway *gw;
->>
->> + =C2=A0 =C2=A0 =C2=A0 gw =3D g_new0(struct gateway, 1);
->> +
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0if (!g_dbus_register_interface(dev->conn, dev=
-->path,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0AUDIO_=
-GATEWAY_INTERFACE,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0gatewa=
-y_methods, gateway_signals,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0NULL, =
-dev, NULL))
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return NULL;
->>
->
-> Seems like gw is leaking if registration fails. Move it down a little, pe=
-rhaps?
+HI,
+This patch is to enable CBS base on latest CBS modification in phonesim, pl=
+ease review.
 
-Sounds good.  Thanks. :)
-
->
->> - =C2=A0 =C2=A0 =C2=A0 debug("in gateway_init, dev is %p", dev);
->> - =C2=A0 =C2=A0 =C2=A0 gw =3D g_new0(struct gateway, 1);
->> - =C2=A0 =C2=A0 =C2=A0 gw->state =3D GATEWAY_STATE_DISCONNECTED;
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0return gw;
->> -
->> =C2=A0}
->>
->
->
-> Cheers,
-> --
-> Vinicius Gomes
-> INdT - Instituto Nokia de Tecnologia
->
+Thanks
 
 
+--===============5660861929359129924==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Enable-Cell-broadcast-message-in-phonesim.patch"
 
--- =
+RnJvbSAzYjBiYjFhNDBjYjY0MTY5N2YzOGU5NmQwYzgyYmVhOGUzMWY2YjM3IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBaaGlnYW5nIExpIDx6aGlnYW5nLmxpQGludGVsLmNvbT4KRGF0
+ZTogTW9uLCAyNSBKYW4gMjAxMCAxMDoyMDoyMSArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIEVuYWJs
+ZSBDZWxsIGJyb2FkY2FzdCBtZXNzYWdlIGluIHBob25lc2ltCgotLS0KIHNyYy9tb2JsaW4ueG1s
+IHwgICAgNiArKysrKysKIDEgZmlsZXMgY2hhbmdlZCwgNiBpbnNlcnRpb25zKCspLCAwIGRlbGV0
+aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9tb2JsaW4ueG1sIGIvc3JjL21vYmxpbi54bWwKaW5k
+ZXggNzNjNTYyNi4uMWI2YmQ5ZSAxMDA2NDQKLS0tIGEvc3JjL21vYmxpbi54bWwKKysrIGIvc3Jj
+L21vYmxpbi54bWwKQEAgLTI3MTAsNiArMjcxMCwxMiBAQAogPC9jaGF0PgogCiA8Y2hhdD4KKzwh
+LS0gUXVlcnkgQ2VsbCBicm9hZGNhc3Qgc2VydmljZSBwcmVzZW50YXRpb24gbW9kZSAtLT4KKwk8
+Y29tbWFuZD5BVCtDU0NCPT88L2NvbW1hbmQ+CisJPHJlc3BvbnNlPitDU0NCOiAoMC0xKVxuXG5P
+SzwvcmVzcG9uc2U+Cis8L2NoYXQ+CisKIDxjaGF0PgogICAgIDwhLS0gU2V0IGNlbGwgYnJvYWRj
+YXN0IGNoYW5uZWxzIC0tPgogICAgIDxjb21tYW5kPkFUK0NTQ0I9MCwqPC9jb21tYW5kPgogICAg
+IDxyZXNwb25zZT5PSzwvcmVzcG9uc2U+Ci0tIAoxLjYuNS4yCgo=
 
-Gustavo F. Padovan
-ProFUSION embedded systems - http://profusion.mobi
-
---===============3425475928696450857==--
+--===============5660861929359129924==--
 
