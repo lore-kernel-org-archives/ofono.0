@@ -1,46 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============3856534309866051851=="
+Content-Type: multipart/mixed; boundary="===============8913292729316404649=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/6] STE-plugin
-Date: Mon, 25 Jan 2010 21:07:21 +0100
-Message-ID: <1264450041.11653.18.camel@violet>
-In-Reply-To: <1264447534-2386-1-git-send-email-sjur.brandeland@stericsson.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: patch to enable cell broadcast message in phonesim
+Date: Mon, 25 Jan 2010 18:27:03 -0600
+Message-ID: <201001251827.03514.denkenz@gmail.com>
+In-Reply-To: <AE1A29481078F64FB2A6D4BA2B68C2FE362C7BE8@shzsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3856534309866051851==
+--===============8913292729316404649==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Hi,
 
-> This is a new version of the STE-plugin patch set. Since last RFCv2 we ha=
-ve
-> stubbed out Voice Call and GPRS Context handling, changed patch order,
-> cleanup some unnecessary includes, moved CAIF header files, and fixed =
+> HI,
+> This patch is to enable CBS base on latest CBS modification in phonesim,
+>  please review.
 
-> most other review comments (hopefully).
+The patch looks good but for some reason I can't apply it:
+Applying: Enable Cell broadcast message in phonesim
+fatal: corrupt patch at line 23
+Patch failed at 0001 Enable Cell broadcast message in phonesim
+When you have resolved this problem run "git am --resolved".
+If you would prefer to skip this patch, instead run "git am --skip".
+To restore the original branch and stop patching run "git am --abort".
 
-I applied all of your 6 patches. However there were some issues with
-your submission.
+Please resend against the latest tree?
 
-First, please make sure you have a proper .gitconfig with your email
-address and author set correct. That way we keep the GIT history clean
-and readable. I had to fix this up on all your patches.
+Regards,
+-Denis
 
-Second, please do proper commit messages. Either one line describes what
-your are doing (will end up as Subject) or one line and then a body
-describing the details. Check the GIT history for examples.
-
-Third, please ensure that "make distcheck" builds properly. I had to fix
-it up for the CAIF header files.
-
-Regards
-
-Marcel
-
-
-
---===============3856534309866051851==--
+--===============8913292729316404649==--
 
