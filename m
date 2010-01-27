@@ -1,74 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============9089475836438698209=="
+Content-Type: multipart/mixed; boundary="===============3864633998187226426=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Add STE modem support for GPRS PDP Contexts
-Date: Wed, 27 Jan 2010 14:13:27 -0600
-Message-ID: <201001271413.27892.denkenz@gmail.com>
-In-Reply-To: <1264536807-10462-1-git-send-email-sjur.brandeland@stericsson.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] Add HFP support through BlueZ
+Date: Wed, 27 Jan 2010 21:17:15 +0100
+Message-ID: <1264623435.3227.2.camel@violet>
+In-Reply-To: <1264619569-12448-4-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9089475836438698209==
+--===============3864633998187226426==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Hi Gustavo,
 
-> From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+> It uses BlueZ through to get HFP working following the
+> org.bluez.HandsfreeGateway and org.bluez.HandsfreeAgent from the BlueZ
+> D-Bus API.
 > =
 
-> ---
->  Makefile.am                     |    3 +-
->  drivers/stemodem/gprs-context.c |  610
->  +++++++++++++++++++++++++++++++++++++++ drivers/stemodem/stemodem.c     =
-| =
+> You need the HFP suport into BlueZ and the new dbus 1.3 with fd-passing
+> support.
+> =
 
->    3 +
->  drivers/stemodem/stemodem.h     |    4 +
->  plugins/ste.c                   |    2 +-
->  5 files changed, 620 insertions(+), 2 deletions(-)
->  create mode 100644 drivers/stemodem/gprs-context.c
+> Many thanks to Zhenhua Zhang <zhenhua.zhang@intel.com> for its prototype
+> on this code.
 
-I have applied the patch with some major style fixes afterward.  A couple o=
-f =
+this patch has been applied to the oFono tree. Thanks.
 
-comments:
+Regards
 
-I have changed AT*EIAAUW handling to be just like MBM modems.  See my commi=
-t =
+Marcel
 
-message for details, but basically you were leaking memory here.  If my =
 
-changes for some reason have broken something, please send an updated patch=
-.  =
 
-I can't test it here for obvious reasons :)
-
-> +static void ste_eppsd_up_cb(gboolean ok, GAtResult *result, gpointer
->  user_data) +{
-> +	if (!caif_if_create(conn->interface, conn->channel_id)) {
-> +		ofono_error("Failed to create caif interface %s.",
-> +			conn->interface);
-> +		CALLBACK_WITH_SUCCESS(cb, NULL, FALSE, rsp.ip_address,
-> +				rsp.subnet_mask, rsp.default_gateway,
-> +				dns, cbd->data);
-> +	} else {
-> +		CALLBACK_WITH_SUCCESS(cb, conn->interface,
-> +				FALSE, rsp.ip_address, rsp.subnet_mask,
-> +				rsp.default_gateway, dns, cbd->data);
-> +	}
-> +	return;
-
-I really don't like returning SUCCESS with a null interface in case the =
-
-interface creation failed.  Can we return an error here and generate a cont=
-ext =
-
-deactivation command?
-
-Regards,
--Denis
-
---===============9089475836438698209==--
+--===============3864633998187226426==--
 
