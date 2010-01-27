@@ -1,979 +1,724 @@
-Content-Type: multipart/mixed; boundary="===============2348859688696020313=="
+Content-Type: multipart/mixed; boundary="===============6876321596656935641=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 2/2] Implement HandsfreeGateway Interface
-Date: Wed, 27 Jan 2010 17:12:48 -0200
-Message-ID: <1264619569-12448-3-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1264619569-12448-2-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH] Add HFP support through BlueZ
+Date: Wed, 27 Jan 2010 17:12:49 -0200
+Message-ID: <1264619569-12448-4-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1264619569-12448-3-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2348859688696020313==
+--===============6876321596656935641==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Create a interface where a Handsfree agent can register and use BlueZ to
-handle the rfcomm and sco links.
+It uses BlueZ through to get HFP working following the
+org.bluez.HandsfreeGateway and org.bluez.HandsfreeAgent from the BlueZ
+D-Bus API.
 
-Many thanks to Zhenhua Zhang <zhenhua.zhang@intel.com> for his
-prototype on this code.
+You need the HFP suport into BlueZ and the new dbus 1.3 with fd-passing
+support.
+
+Many thanks to Zhenhua Zhang <zhenhua.zhang@intel.com> for its prototype
+on this code.
 ---
- audio/gateway.c |  430 +++++++++++++++++++++++++++++++++++++++++++--------=
-----
- audio/gateway.h |   12 ++-
- audio/manager.c |   23 +--
- audio/unix.c    |    8 +
- doc/hfp-api.txt |   82 +++++++++++
- 5 files changed, 443 insertions(+), 112 deletions(-)
- create mode 100644 doc/hfp-api.txt
+ drivers/hfpmodem/hfpmodem.h |    4 +
+ plugins/hfp.c               |  477 +++++++++++++++++++++++++++++++++++++++=
+++--
+ plugins/modemconf.c         |    1 -
+ 3 files changed, 466 insertions(+), 16 deletions(-)
 
-diff --git a/audio/gateway.c b/audio/gateway.c
-index 3dc09ff..9017074 100644
---- a/audio/gateway.c
-+++ b/audio/gateway.c
-@@ -5,6 +5,8 @@
-  *  Copyright (C) 2006-2010  Nokia Corporation
-  *  Copyright (C) 2004-2010  Marcel Holtmann <marcel@holtmann.org>
-  *  Copyright (C) 2008-2009  Leonid Movshovich <event.riga@gmail.org>
-+ *  Copyright (C) 2009-2009  Zhenhua Zhang <zhenhua.zhang@intel.com>
-+ *  Copyright (C) 2010  Gustavo F. Padovan <padovan@profusion.mobi>
-  *
-  *
-  *  This program is free software; you can redistribute it and/or modify
-@@ -32,12 +34,15 @@
- #include <string.h>
- #include <fcntl.h>
- #include <errno.h>
-+#include <sys/ioctl.h>
-+#include <unistd.h>
+diff --git a/drivers/hfpmodem/hfpmodem.h b/drivers/hfpmodem/hfpmodem.h
+index 509846b..6f0ab1f 100644
+--- a/drivers/hfpmodem/hfpmodem.h
++++ b/drivers/hfpmodem/hfpmodem.h
+@@ -22,6 +22,7 @@
+ #define __BLUETOOTH_H__
  =
 
+ #include <drivers/atmodem/atutil.h>
++#include <ofono/dbus.h>
+ =
+
+ /* AG supported features bitmap. Bluetooth HFP 1.5 spec page 77 */
+ #define AG_FEATURE_3WAY 0x1
+@@ -63,11 +64,14 @@ enum hfp_indicator {
+ =
+
+ struct hfp_data {
+ 	GAtChat *chat;
++	char *handsfree_path;
++	DBusMessage *slc_msg;
+ 	unsigned int ag_features;
+ 	unsigned int ag_mpty_features;
+ 	unsigned int hf_features;
+ 	unsigned char cind_pos[HFP_INDICATOR_LAST];
+ 	unsigned int cind_val[HFP_INDICATOR_LAST];
++	unsigned int at_timeout;
+ };
+ =
+
+ extern void hfp_netreg_init();
+diff --git a/plugins/hfp.c b/plugins/hfp.c
+index 3bbd922..12b7f0a 100644
+--- a/plugins/hfp.c
++++ b/plugins/hfp.c
+@@ -30,6 +30,8 @@
  #include <glib.h>
- #include <dbus/dbus.h>
- #include <gdbus.h>
+ #include <gatchat.h>
+ #include <gattty.h>
++#include <gdbus.h>
++#include <ofono.h>
  =
 
- #include <bluetooth/bluetooth.h>
-+#include <bluetooth/rfcomm.h>
- #include <bluetooth/hci.h>
- #include <bluetooth/hci_lib.h>
- #include <bluetooth/sco.h>
-@@ -52,20 +57,108 @@
- #include "btio.h"
- #include "dbus-common.h"
+ #define OFONO_API_SUBJECT_TO_CHANGE
+ #include <ofono/plugin.h>
+@@ -52,12 +54,31 @@
  =
 
--#define RFCOMM_BUF_SIZE 256
-+#define MAX_OPEN_TRIES 5
-+#define OPEN_WAIT 300
+ #include <drivers/hfpmodem/hfpmodem.h>
+ =
+
++#include <ofono/dbus.h>
++
++#define	BLUEZ_SERVICE "org.bluez"
++#define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
++#define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
++#define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
++#define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
++
++#define HFP_AGENT_INTERFACE "org.bluez.HandsfreeAgent"
++
++#define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
 +
 +#ifndef DBUS_TYPE_UNIX_FD
 +#define DBUS_TYPE_UNIX_FD -1
 +#endif
 +
-+struct hf_agent {
-+	char *name;	/* Bus id */
-+	char *path;	/* D-Bus path */
-+	guint watch;	/* Disconnect watch */
-+};
+ static const char *brsf_prefix[] =3D { "+BRSF:", NULL };
+ static const char *cind_prefix[] =3D { "+CIND:", NULL };
+ static const char *cmer_prefix[] =3D { "+CMER:", NULL };
+ static const char *chld_prefix[] =3D { "+CHLD:", NULL };
  =
 
- struct gateway {
- 	gateway_state_t state;
--	GIOChannel *rfcomm;
--	guint rfcomm_watch_id;
-+	int channel;
-+	GIOChannel *rfcomm;	/* remote AG requested rfcomm connection */
- 	GIOChannel *sco;
- 	gateway_stream_cb_t sco_start_cb;
- 	void *sco_start_cb_data;
--	DBusMessage *connect_message;
-+	struct hf_agent *agent;
++static DBusConnection *connection;
++
+ static int hfp_disable(struct ofono_modem *modem);
++static void hfp_remove(struct ofono_modem *modem);
+ =
+
+ static void hfp_debug(const char *str, void *user_data)
+ {
+@@ -66,11 +87,17 @@ static void hfp_debug(const char *str, void *user_data)
+ =
+
+ static void sevice_level_conn_established(struct ofono_modem *modem)
+ {
 +	DBusMessage *msg;
- };
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
  =
 
- int gateway_close(struct audio_device *device);
+-	ofono_info("Service level connection established");
+ 	ofono_modem_set_powered(modem, TRUE);
  =
 
-+static const char *state2str(gateway_state_t state)
++	msg =3D dbus_message_new_method_return(data->slc_msg);
++	g_dbus_send_message(connection, msg);
++	dbus_message_unref(data->slc_msg);
++
++	ofono_info("Service level connection established");
++
+ 	g_at_chat_send(data->chat, "AT+CMEE=3D1", NULL, NULL, NULL, NULL);
+ }
+ =
+
+@@ -135,6 +162,60 @@ static void cmer_cb(gboolean ok, GAtResult *result, gp=
+ointer user_data)
+ 		sevice_level_conn_established(modem);
+ }
+ =
+
++static int send_method_call(const char *dest, const char *path,
++				const char *interface, const char *method,
++				DBusPendingCallNotifyFunction cb,
++				void *user_data, int type, ...)
 +{
-+	switch (state) {
-+	case GATEWAY_STATE_DISCONNECTED:
-+		return "disconnected";
-+	case GATEWAY_STATE_CONNECTING:
-+		return "connecting";
-+	case GATEWAY_STATE_CONNECTED:
-+		return "connected";
-+	case GATEWAY_STATE_PLAYING:
-+		return "playing";
-+	default:
-+		return "";
++	DBusMessage *msg;
++	DBusPendingCall *call;
++	va_list args;
++
++	msg =3D dbus_message_new_method_call(dest, path, interface, method);
++	if (!msg) {
++		ofono_error("Unable to allocate new D-Bus %s message", method);
++		return -ENOMEM;
++	}
++
++	va_start(args, type);
++
++	if (!dbus_message_append_args_valist(msg, type, args)) {
++		dbus_message_unref(msg);
++		va_end(args);
++		return -EIO;
++	}
++
++	va_end(args);
++
++	if (!cb) {
++		g_dbus_send_message(connection, msg);
++		return 0;
++	}
++
++	if (!dbus_connection_send_with_reply(connection, msg, &call, -1)) {
++		ofono_error("Sending %s failed", method);
++		dbus_message_unref(msg);
++		return -EIO;
++	}
++
++	dbus_pending_call_set_notify(call, cb, user_data, NULL);
++	dbus_pending_call_unref(call);
++	dbus_message_unref(msg);
++
++	return 0;
++}
++
++static gboolean hfp_enable_timeout(gpointer user)
++{
++	struct ofono_modem *modem =3D user;
++
++	if (ofono_modem_get_powered(modem))
++		return FALSE;
++
++	hfp_disable(modem);
++	return FALSE;
++}
++
+ static void cind_status_cb(gboolean ok, GAtResult *result,
+ 				gpointer user_data)
+ {
+@@ -260,8 +341,7 @@ error:
+ }
+ =
+
+ /* either oFono or Phone could request SLC connection */
+-static int service_level_connection(struct ofono_modem *modem,
+-				const char *tty)
++static int service_level_connection(struct ofono_modem *modem, int fd)
+ {
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
+ 	GIOChannel *io;
+@@ -269,7 +349,7 @@ static int service_level_connection(struct ofono_modem =
+*modem,
+ 	GAtChat *chat;
+ 	char buf[64];
+ =
+
+-	io =3D g_at_tty_open(tty, NULL);
++	io =3D g_io_channel_unix_new(fd);
+ 	if (!io) {
+ 		ofono_error("Service level connection failed: %s (%d)",
+ 			strerror(errno), errno);
+@@ -288,7 +368,6 @@ static int service_level_connection(struct ofono_modem =
+*modem,
+ 		g_at_chat_set_debug(chat, hfp_debug, NULL);
+ =
+
+ 	sprintf(buf, "AT+BRSF=3D%d", data->hf_features);
+-
+ 	g_at_chat_send(chat, buf, brsf_prefix,
+ 				brsf_cb, modem, NULL);
+ 	data->chat =3D chat;
+@@ -296,10 +375,52 @@ static int service_level_connection(struct ofono_mode=
+m *modem,
+ 	return -EINPROGRESS;
+ }
+ =
+
+-static int hfp_probe(struct ofono_modem *modem)
++static DBusMessage *hfp_agent_new_connection(DBusConnection *conn, DBusMes=
+sage *msg, void *data)
++{
++	int fd;
++	struct ofono_modem *modem =3D data;
++	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
++
++	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_UNIX_FD, &fd,
++				DBUS_TYPE_INVALID))
++		return __ofono_error_invalid_args(msg);
++
++	service_level_connection(modem, fd);
++
++	hfp_data->slc_msg =3D msg;
++	dbus_message_ref(msg);
++
++	return NULL;
++}
++
++static DBusMessage *hfp_agent_release(DBusConnection *conn, DBusMessage *m=
+sg, void *data)
+ {
++	struct ofono_modem *modem =3D data;
++
++	if (ofono_modem_get_powered(modem))
++		hfp_disable(modem);
++
++	ofono_modem_remove(modem);
++
++	return dbus_message_new_method_return(msg);
++}
++
++static GDBusMethodTable agent_methods[] =3D {
++	{ "NewConnection", "h", "", hfp_agent_new_connection,
++		G_DBUS_METHOD_FLAG_ASYNC },
++	{ "Release", "", "", hfp_agent_release },
++	{NULL, NULL, NULL, NULL}
++};
++
++static int hfp_create_modem(const char *device)
++{
++	struct ofono_modem *modem;
+ 	struct hfp_data *data;
+ =
+
++	ofono_info("Using device: %s", device);
++
++	modem =3D ofono_modem_create(NULL, "hfp");
++
+ 	data =3D g_try_new0(struct hfp_data, 1);
+ 	if (!data)
+ 		return -ENOMEM;
+@@ -310,14 +431,282 @@ static int hfp_probe(struct ofono_modem *modem)
+ 	data->hf_features |=3D HF_FEATURE_ENHANCED_CALL_STATUS;
+ 	data->hf_features |=3D HF_FEATURE_ENHANCED_CALL_CONTROL;
+ =
+
++	data->handsfree_path =3D g_strdup(device);
++
+ 	ofono_modem_set_data(modem, data);
+ =
+
++	ofono_modem_register(modem);
++
++	return 0;
++}
++
++static void parse_uuids(DBusMessageIter *i, const char *device)
++{
++	DBusMessageIter variant, ai;
++	const char *value;
++
++	dbus_message_iter_recurse(i, &variant);
++	dbus_message_iter_recurse(&variant, &ai);
++
++	while (dbus_message_iter_get_arg_type(&ai) !=3D DBUS_TYPE_INVALID) {
++		dbus_message_iter_get_basic(&ai, &value);
++		if (!strcasecmp(value, HFP_AG_UUID))
++			hfp_create_modem(device);
++
++		if (!dbus_message_iter_next(&ai))
++			return;
 +	}
 +}
 +
-+static void agent_free(struct hf_agent *agent)
++static void parse_get_properties(DBusMessage *reply, const char *device)
 +{
-+	if (!agent)
++	DBusMessageIter arg, element, variant;
++	const char *key;
++
++	if (!dbus_message_iter_init(reply, &arg)) {
++		ofono_debug("GetProperties reply has no arguments.");
 +		return;
++	}
 +
-+	g_free(agent->name);
-+	g_free(agent->path);
-+	g_free(agent);
++	if (dbus_message_iter_get_arg_type(&arg) !=3D DBUS_TYPE_ARRAY) {
++		ofono_debug("GetProperties argument is not an array.");
++		return;
++	}
++
++	dbus_message_iter_recurse(&arg, &element);
++	while (dbus_message_iter_get_arg_type(&element) !=3D DBUS_TYPE_INVALID) {
++		if (dbus_message_iter_get_arg_type(&element) =3D=3D
++				DBUS_TYPE_DICT_ENTRY) {
++			DBusMessageIter dict;
++
++			dbus_message_iter_recurse(&element, &dict);
++
++			if (dbus_message_iter_get_arg_type(&dict) !=3D
++					DBUS_TYPE_STRING) {
++				ofono_debug("Property name not a string.");
++				return;
++			}
++
++			dbus_message_iter_get_basic(&dict, &key);
++
++			if (!dbus_message_iter_next(&dict))  {
++				ofono_debug("Property value missing");
++				return;
++			}
++
++			if (dbus_message_iter_get_arg_type(&dict) !=3D
++					DBUS_TYPE_VARIANT) {
++				ofono_debug("Property value not a variant.");
++				return;
++			}
++
++			if (!strcmp(key, "UUIDs"))
++				parse_uuids(&dict, device);
++
++			dbus_message_iter_recurse(&dict, &variant);
++		}
++
++		if (!dbus_message_iter_next(&element))
++			return;
++	}
 +}
 +
-+static void change_state(struct audio_device *dev, gateway_state_t new_sta=
-te)
++static void get_properties_cb(DBusPendingCall *call, gpointer user_data)
 +{
-+	struct gateway *gw =3D dev->gateway;
-+	const char *val =3D state2str(new_state);
++	DBusMessage *reply;
++	const char *device =3D user_data;
 +
-+	gw->state =3D new_state;
++	reply =3D dbus_pending_call_steal_reply(call);
 +
-+	emit_property_changed(dev->conn, dev->path,
-+			AUDIO_GATEWAY_INTERFACE, "State",
-+			DBUS_TYPE_STRING, &val);
++	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
++		ofono_debug("Bluetooth daemon is apparently not available.");
++		goto done;
++	}
++
++	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR) {
++		if (!dbus_message_is_error(reply, DBUS_ERROR_UNKNOWN_METHOD))
++			ofono_info("Error from GetProperties reply: %s",
++					dbus_message_get_error_name(reply));
++
++		goto done;
++	}
++
++	parse_get_properties(reply, device);
++
++done:
++	dbus_message_unref(reply);
 +}
 +
-+static void agent_disconnect(struct audio_device *dev, struct hf_agent *ag=
-ent)
++static void list_devices_cb(DBusPendingCall *call, gpointer user_data)
 +{
-+	DBusMessage *msg;
++	DBusError err;
++	DBusMessage *reply;
++	const char **device =3D NULL;
++	int num, ret, i;
 +
-+	msg =3D dbus_message_new_method_call(agent->name, agent->path,
-+			"org.bluez.HandsfreeAgent", "Release");
++	reply =3D dbus_pending_call_steal_reply(call);
 +
-+	dbus_message_set_no_reply(msg, TRUE);
-+	g_dbus_send_message(dev->conn, msg);
++	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
++		ofono_debug("Bluetooth daemon is apparently not available.");
++		goto done;
++	}
 +
-+	g_dbus_remove_watch(dev->conn, agent->watch);
++	dbus_error_init(&err);
++	if (dbus_message_get_args(reply, &err, DBUS_TYPE_ARRAY,
++				DBUS_TYPE_OBJECT_PATH, &device,
++				&num, DBUS_TYPE_INVALID) =3D=3D FALSE) {
++		if (device =3D=3D NULL) {
++			dbus_error_free(&err);
++			goto done;
++		}
 +
-+	agent_free(agent);
-+	dev->gateway->agent =3D NULL;
++		if (dbus_error_is_set(&err) =3D=3D TRUE) {
++			ofono_error("%s", err.message);
++			dbus_error_free(&err);
++		}
++		goto done;
++	}
++
++	for (i =3D 0 ; i < num ; i++) {
++		ret =3D send_method_call(BLUEZ_SERVICE, device[i],
++				BLUEZ_DEVICE_INTERFACE, "GetProperties",
++				get_properties_cb, (void *)device[i],
++				DBUS_TYPE_INVALID);
++		if (ret < 0)
++			ofono_error("GetProperties failed(%d)", ret);
++	}
++
++done:
++	dbus_message_unref(reply);
 +}
 +
-+static gboolean agent_sendfd(struct hf_agent *agent, int fd,
-+		DBusPendingCallNotifyFunction notify, void *data)
++static gboolean adapter_added(DBusConnection *connection, DBusMessage *mes=
+sage,
++				void *user_data)
 +{
-+	struct audio_device *dev =3D data;
-+	DBusMessage *msg;
-+	DBusPendingCall *call;
++	const char *path;
++	int ret;
 +
-+	msg =3D dbus_message_new_method_call(agent->name, agent->path,
-+			"org.bluez.HandsfreeAgent", "NewConnection");
++	dbus_message_get_args(message, NULL, DBUS_TYPE_OBJECT_PATH, &path,
++				DBUS_TYPE_INVALID);
 +
-+	dbus_message_append_args(msg, DBUS_TYPE_UNIX_FD, &fd,
-+					DBUS_TYPE_INVALID);
++	ret =3D send_method_call(BLUEZ_SERVICE, path,
++			BLUEZ_ADAPTER_INTERFACE, "ListDevices",
++			list_devices_cb, NULL,
++			DBUS_TYPE_INVALID);
 +
-+	if (dbus_connection_send_with_reply(dev->conn, msg, &call, -1) =3D=3D FAL=
-SE)
-+		return FALSE;
-+
-+	dbus_pending_call_set_notify(call, notify, dev, NULL);
-+	dbus_pending_call_unref(call);
++	if (ret < 0)
++		ofono_error("ListDevices failed(%d)", ret);
 +
 +	return TRUE;
 +}
 +
- static gboolean sco_io_cb(GIOChannel *chan, GIOCondition cond,
- 			struct audio_device *dev)
- {
-@@ -79,6 +172,7 @@ static gboolean sco_io_cb(GIOChannel *chan, GIOCondition=
- cond,
- 		g_io_channel_shutdown(gw->sco, TRUE, NULL);
- 		g_io_channel_unref(gw->sco);
- 		gw->sco =3D NULL;
-+		change_state(dev, GATEWAY_STATE_CONNECTED);
- 		return FALSE;
- 	}
- =
-
-@@ -92,63 +186,91 @@ static void sco_connect_cb(GIOChannel *chan, GError *e=
-rr, gpointer user_data)
- =
-
- 	debug("at the begin of sco_connect_cb() in gateway.c");
- =
-
-+	gw->sco =3D g_io_channel_ref(chan);
-+
- 	if (err) {
- 		error("sco_connect_cb(): %s", err->message);
--		/* not sure, but from other point of view,
--		 * what is the reason to have headset which
--		 * cannot play audio? */
--		if (gw->sco_start_cb)
--			gw->sco_start_cb(NULL, gw->sco_start_cb_data);
- 		gateway_close(dev);
- 		return;
- 	}
- =
-
--	gw->sco =3D g_io_channel_ref(chan);
- 	if (gw->sco_start_cb)
- 		gw->sco_start_cb(dev, gw->sco_start_cb_data);
- =
-
--	/* why is this here? */
--	fcntl(g_io_channel_unix_get_fd(chan), F_SETFL, 0);
- 	g_io_add_watch(gw->sco, G_IO_ERR | G_IO_HUP | G_IO_NVAL,
- 				(GIOFunc) sco_io_cb, dev);
- }
- =
-
-+static void newconnection_reply(DBusPendingCall *call, void *data)
++static void list_adapters_cb(DBusPendingCall *call, gpointer user_data)
 +{
-+	struct audio_device *dev =3D data;
-+	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
-+	DBusError derr;
-+
-+	if (!dev->gateway->rfcomm) {
-+		debug("RFCOMM disconnected from server before agent reply");
-+		return;
-+	}
-+
-+	dbus_error_init(&derr);
-+	if (!dbus_set_error_from_message(&derr, reply)) {
-+		debug("Agent reply: file descriptor passed successfuly");
-+		change_state(dev, GATEWAY_STATE_CONNECTED);
-+		return;
-+	}
-+
-+	debug("Agent reply: %s", derr.message);
-+
-+	dbus_error_free(&derr);
-+	gateway_close(dev);
-+}
-+
- static void rfcomm_connect_cb(GIOChannel *chan, GError *err,
- 				gpointer user_data)
- {
- 	struct audio_device *dev =3D user_data;
- 	struct gateway *gw =3D dev->gateway;
--	gchar gw_addr[18];
--	GIOFlags flags;
++	DBusError err;
 +	DBusMessage *reply;
-+	int sk;
-+	char src[18], dst[18];
- =
-
- 	if (err) {
- 		error("connect(): %s", err->message);
- 		if (gw->sco_start_cb)
- 			gw->sco_start_cb(NULL, gw->sco_start_cb_data);
--		return;
-+		goto fail;
- 	}
- =
-
--	ba2str(&dev->dst, gw_addr);
--	/* Blocking mode should be default, but just in case: */
--	flags =3D g_io_channel_get_flags(chan);
--	flags &=3D ~G_IO_FLAG_NONBLOCK;
--	flags &=3D G_IO_FLAG_MASK;
--	g_io_channel_set_flags(chan, flags, NULL);
--	g_io_channel_set_encoding(chan, NULL, NULL);
--	g_io_channel_set_buffered(chan, FALSE);
--	if (!gw->rfcomm)
--		gw->rfcomm =3D g_io_channel_ref(chan);
-+	if (!gw->agent)
-+		error("Handfree Agent not registered");
- =
-
--	if (NULL !=3D gw->sco_start_cb)
--		gw->sco_start_cb(NULL, gw->sco_start_cb_data);
-+	ba2str(&dev->src, src);
-+	ba2str(&dev->dst, dst);
- =
-
--	gateway_close(dev);
-+	sk =3D g_io_channel_unix_get_fd(chan);
++	char **adapter =3D NULL;
++	int num, ret, i;
 +
-+	gw->rfcomm =3D g_io_channel_ref(chan);
++	reply =3D dbus_pending_call_steal_reply(call);
 +
-+	if (!agent_sendfd(gw->agent, sk, newconnection_reply, dev)) {
-+		reply =3D g_dbus_create_error(gw->msg, ERROR_INTERFACE ".Failed",
-+				"Can not pass file descriptor");
-+	} else
-+		reply =3D dbus_message_new_method_return(gw->msg);
-+
-+	return;
-+
-+fail:
-+	if (gw->msg) {
-+		error_common_reply(dev->conn, gw->msg, ERROR_INTERFACE
-+				".Failed", ".Connection attempt failed");
-+	}
-+	change_state(dev, GATEWAY_STATE_DISCONNECTED);
- }
- =
-
- static void get_record_cb(sdp_list_t *recs, int perr, gpointer user_data)
- {
- 	struct audio_device *dev =3D user_data;
--	DBusMessage *msg =3D dev->gateway->connect_message;
-+	struct gateway *gw =3D dev->gateway;
- 	int ch =3D -1;
- 	sdp_list_t *protos, *classes;
- 	uuid_t uuid;
-@@ -182,8 +304,6 @@ static void get_record_cb(sdp_list_t *recs, int perr, g=
-pointer user_data)
- =
-
- 	if (!sdp_uuid128_to_uuid(&uuid) || uuid.type !=3D SDP_UUID16 ||
- 			uuid.value.uuid16 !=3D HANDSFREE_AGW_SVCLASS_ID) {
--		sdp_list_foreach(protos, (sdp_list_func_t) sdp_list_free,
--									NULL);
- 		sdp_list_free(protos, NULL);
- 		error("Invalid service record or not HFP");
- 		goto fail;
-@@ -197,6 +317,8 @@ static void get_record_cb(sdp_list_t *recs, int perr, g=
-pointer user_data)
- 		goto fail;
- 	}
- =
-
-+	gw->channel =3D ch;
-+
- 	io =3D bt_io_connect(BT_IO_RFCOMM, rfcomm_connect_cb, dev, NULL, &err,
- 				BT_IO_OPT_SOURCE_BDADDR, &dev->src,
- 				BT_IO_OPT_DEST_BDADDR, &dev->dst,
-@@ -204,25 +326,24 @@ static void get_record_cb(sdp_list_t *recs, int perr,=
- gpointer user_data)
- 				BT_IO_OPT_INVALID);
- 	if (!io) {
- 		error("Unable to connect: %s", err->message);
--		if (msg) {
--			error_common_reply(dev->conn, msg, ERROR_INTERFACE
--						".ConnectionAttemptFailed",
--						err->message);
--			msg =3D NULL;
--		}
--		g_error_free(err);
-+		if (err)
-+			g_error_free(err);
- 		gateway_close(dev);
-+		goto fail;
- 	}
- =
-
- 	g_io_channel_unref(io);
-+
-+	change_state(dev, GATEWAY_STATE_CONNECTING);
- 	return;
- =
-
- fail:
--	if (msg)
--		error_common_reply(dev->conn, msg, ERROR_INTERFACE
--					".NotSupported", "Not supported");
-+	if (gw->msg) {
-+		error_common_reply(dev->conn, gw->msg, ERROR_INTERFACE
-+				".NotSupported", "Not supported");
-+	}
- =
-
--	dev->gateway->connect_message =3D NULL;
-+	change_state(dev, GATEWAY_STATE_DISCONNECTED);
- =
-
- 	sco_cb =3D dev->gateway->sco_start_cb;
- 	if (sco_cb)
-@@ -243,22 +364,60 @@ static DBusMessage *ag_connect(DBusConnection *conn, =
-DBusMessage *msg,
- {
- 	struct audio_device *au_dev =3D (struct audio_device *) data;
- 	struct gateway *gw =3D au_dev->gateway;
-+	DBusMessage *reply;
- =
-
- 	debug("at the begin of ag_connect()");
--	if (gw->rfcomm)
-+
-+	if (!gw->agent)
- 		return g_dbus_create_error(msg, ERROR_INTERFACE
--					".AlreadyConnected",
--					"Already Connected");
-+				".Failed", "Agent not assined");
- =
-
--	gw->connect_message =3D dbus_message_ref(msg);
- 	if (get_records(au_dev) < 0) {
--		dbus_message_unref(gw->connect_message);
- 		return g_dbus_create_error(msg, ERROR_INTERFACE
- 					".ConnectAttemptFailed",
- 					"Connect Attempt Failed");
- 	}
-+
-+	reply =3D dbus_message_new_method_return(msg);
-+	if (!reply)
-+		return NULL;
-+
- 	debug("at the end of ag_connect()");
--	return NULL;
-+
-+	return reply;
-+}
-+
-+void gateway_exit(struct audio_device *dev)
-+{
-+	agent_disconnect(dev, dev->gateway->agent);
-+}
-+
-+int gateway_close(struct audio_device *device)
-+{
-+	struct gateway *gw =3D device->gateway;
-+	gboolean value =3D FALSE;
-+
-+	if (gw->rfcomm) {
-+		g_io_channel_shutdown(gw->rfcomm, TRUE, NULL);
-+		g_io_channel_unref(gw->rfcomm);
-+		gw->rfcomm =3D NULL;
-+	}
-+
-+	if (gw->sco) {
-+		g_io_channel_shutdown(gw->sco, TRUE, NULL);
-+		g_io_channel_unref(gw->sco);
-+		gw->sco =3D NULL;
-+		gw->sco_start_cb =3D NULL;
-+		gw->sco_start_cb_data =3D NULL;
-+	}
-+
-+	gw->state =3D GATEWAY_STATE_DISCONNECTED;
-+
-+	emit_property_changed(device->conn, device->path,
-+				AUDIO_GATEWAY_INTERFACE,
-+				"Connected", DBUS_TYPE_BOOLEAN, &value);
-+
-+	return 0;
- }
- =
-
- static DBusMessage *ag_disconnect(DBusConnection *conn, DBusMessage *msg,
-@@ -269,6 +428,9 @@ static DBusMessage *ag_disconnect(DBusConnection *conn,=
- DBusMessage *msg,
- 	DBusMessage *reply =3D NULL;
- 	char gw_addr[18];
- =
-
-+	if (!device->conn)
-+		return NULL;
-+
- 	reply =3D dbus_message_new_method_return(msg);
- 	if (!reply)
- 		return NULL;
-@@ -279,22 +441,119 @@ static DBusMessage *ag_disconnect(DBusConnection *co=
-nn, DBusMessage *msg,
- 						"Device not Connected");
- =
-
- 	gateway_close(device);
-+
- 	ba2str(&device->dst, gw_addr);
- 	debug("Disconnected from %s, %s", gw_addr, device->path);
- =
-
- 	return reply;
- }
- =
-
-+static void agent_exited(DBusConnection *conn, void *data)
-+{
-+	struct gateway *gateway =3D data;
-+	struct hf_agent *agent =3D gateway->agent;
-+
-+	debug("Agent %s exited", agent->name);
-+
-+	agent_free(agent);
-+	gateway->agent =3D NULL;
-+}
-+
- static DBusMessage *ag_get_properties(DBusConnection *conn, DBusMessage *m=
-sg,
- 					void *data)
- {
--	return NULL;
-+	struct audio_device *device =3D data;
-+	struct gateway *gw =3D device->gateway;
-+	DBusMessage *reply;
-+	DBusMessageIter iter;
-+	DBusMessageIter dict;
-+	const char *value;
-+
-+
-+	reply =3D dbus_message_new_method_return(msg);
-+	if (!reply)
-+		return NULL;
-+
-+	dbus_message_iter_init_append(reply, &iter);
-+
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+			DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
-+			DBUS_TYPE_STRING_AS_STRING DBUS_TYPE_VARIANT_AS_STRING
-+			DBUS_DICT_ENTRY_END_CHAR_AS_STRING, &dict);
-+
-+	value =3D state2str(gw->state);
-+	dict_append_entry(&dict, "Connected",
-+			DBUS_TYPE_STRING, &value);
-+
-+	dbus_message_iter_close_container(&iter, &dict);
-+
-+	return reply;
-+}
-+
-+static DBusMessage *register_agent(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
-+{
-+	struct audio_device *device =3D data;
-+	struct gateway *gw =3D device->gateway;
-+	struct hf_agent *agent;
-+	const char *path, *name;
-+
-+
-+	if (gw->agent)
-+		return g_dbus_create_error(msg,
-+				ERROR_INTERFACE ".AlreadyExists",
-+				"Agent already exists");
-+
-+	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_OBJECT_PATH, &path,
-+			DBUS_TYPE_INVALID))
-+		return g_dbus_create_error(msg, ERROR_INTERFACE
-+				".InvalidArguments", "Invalid argument");
-+
-+	name =3D dbus_message_get_sender(msg);
-+	agent =3D g_new0(struct hf_agent, 1);
-+
-+	agent->name =3D g_strdup(name);
-+	agent->path =3D g_strdup(path);
-+
-+	agent->watch =3D g_dbus_add_disconnect_watch(conn, name,
-+			agent_exited, gw, NULL);
-+
-+	gw->agent =3D agent;
-+
-+	gw->msg =3D dbus_message_ref(msg);
-+
-+	return dbus_message_new_method_return(msg);
-+}
-+
-+static DBusMessage *unregister_agent(DBusConnection *conn,
-+				DBusMessage *msg, void *data)
-+{
-+	struct audio_device *device =3D data;
-+	struct gateway *gw =3D device->gateway;
-+	struct hf_agent *agent;
-+
-+	if (!gw->agent)
++	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
++		ofono_debug("Bluetooth daemon is apparently not available.");
 +		goto done;
++	}
 +
-+	agent =3D gw->agent;
-+	if (strcmp(agent->name, dbus_message_get_sender(msg)) !=3D 0)
-+		return g_dbus_create_error(msg,
-+				ERROR_INTERFACE ".Failed", "Permission denied");
++	dbus_error_init(&err);
++	if (dbus_message_get_args(reply, &err, DBUS_TYPE_ARRAY,
++				DBUS_TYPE_OBJECT_PATH, &adapter,
++				&num, DBUS_TYPE_INVALID) =3D=3D FALSE) {
++		if (adapter =3D=3D NULL) {
++			dbus_error_free(&err);
++			goto done;
++		}
 +
-+	agent_disconnect(device, gw->agent);
++		if (dbus_error_is_set(&err) =3D=3D TRUE) {
++			ofono_error("%s", err.message);
++			dbus_error_free(&err);
++		}
++		goto done;
++	}
 +
-+	dbus_message_unref(gw->msg);
++	for (i =3D 0 ; i < num ; i++) {
++		ret =3D send_method_call(BLUEZ_SERVICE, adapter[i],
++				BLUEZ_ADAPTER_INTERFACE, "ListDevices",
++				list_devices_cb, NULL,
++				DBUS_TYPE_INVALID);
++
++		if (ret < 0)
++			ofono_error("ListDevices failed(%d)", ret);
++	}
++
++	g_strfreev(adapter);
 +
 +done:
-+	return dbus_message_new_method_return(msg);
- }
- =
-
- static GDBusMethodTable gateway_methods[] =3D {
- 	{ "Connect", "", "", ag_connect, G_DBUS_METHOD_FLAG_ASYNC },
--	{ "Disconnect", "", "", ag_disconnect },
-+	{ "Disconnect", "", "", ag_disconnect, G_DBUS_METHOD_FLAG_ASYNC },
- 	{ "GetProperties", "", "a{sv}", ag_get_properties },
-+	{ "RegisterAgent", "o", "", register_agent },
-+	{ "UnregisterAgent", "o", "", unregister_agent },
- 	{ NULL, NULL, NULL, NULL }
- };
- =
-
-@@ -305,18 +564,13 @@ static GDBusSignalTable gateway_signals[] =3D {
- =
-
- struct gateway *gateway_init(struct audio_device *dev)
- {
--	struct gateway *gw;
--
- 	if (!g_dbus_register_interface(dev->conn, dev->path,
- 					AUDIO_GATEWAY_INTERFACE,
- 					gateway_methods, gateway_signals,
- 					NULL, dev, NULL))
- 		return NULL;
- =
-
--	debug("in gateway_init, dev is %p", dev);
--	gw =3D g_new0(struct gateway, 1);
--	gw->state =3D GATEWAY_STATE_DISCONNECTED;
--	return gw;
-+	return g_new0(struct gateway, 1);
- =
-
- }
- =
-
-@@ -326,17 +580,6 @@ gboolean gateway_is_connected(struct audio_device *dev)
- 			dev->gateway->state =3D=3D GATEWAY_STATE_CONNECTED);
- }
- =
-
--int gateway_connect_rfcomm(struct audio_device *dev, GIOChannel *io)
--{
--	if (!io)
--		return -EINVAL;
--
--	g_io_channel_ref(io);
--	dev->gateway->rfcomm =3D io;
--
--	return 0;
--}
--
- int gateway_connect_sco(struct audio_device *dev, GIOChannel *io)
- {
- 	struct gateway *gw =3D dev->gateway;
-@@ -347,42 +590,38 @@ int gateway_connect_sco(struct audio_device *dev, GIO=
-Channel *io)
- 	gw->sco =3D g_io_channel_ref(io);
- =
-
- 	g_io_add_watch(gw->sco, G_IO_ERR | G_IO_HUP | G_IO_NVAL,
--                                (GIOFunc) sco_io_cb, dev);
-+				 (GIOFunc) sco_io_cb, dev);
++	dbus_message_unref(reply);
++}
 +
-+	change_state(dev, GATEWAY_STATE_PLAYING);
++static int hfp_load_modems()
++{
++	return send_method_call(BLUEZ_SERVICE, "/",
++				BLUEZ_MANAGER_INTERFACE, "ListAdapters",
++				list_adapters_cb, NULL,
++				DBUS_TYPE_INVALID);
++}
++
++static int hfp_register_ofono_handsfree(struct ofono_modem *modem)
++{
++	const char *obj_path =3D ofono_modem_get_path(modem);
++	struct hfp_data *data =3D ofono_modem_get_data(modem);
++
++	ofono_debug("Registering oFono Agent to bluetooth daemon");
++
++	if (!data->handsfree_path)
++		return -EINVAL;
++
++	return send_method_call(BLUEZ_SERVICE, data->handsfree_path,
++				BLUEZ_GATEWAY_INTERFACE, "RegisterAgent",
++				NULL, NULL, DBUS_TYPE_OBJECT_PATH,
++				&obj_path, DBUS_TYPE_INVALID);
++}
++
++static int hfp_unregister_ofono_handsfree(struct ofono_modem *modem)
++{
++	const char *obj_path =3D ofono_modem_get_path(modem);
++	struct hfp_data *data =3D ofono_modem_get_data(modem);
++
++	ofono_debug("Unregistering oFono Agent from bluetooth daemon");
++
++	if (!data->handsfree_path)
++		return -EINVAL;
++
++	return send_method_call(BLUEZ_SERVICE, data->handsfree_path,
++				BLUEZ_GATEWAY_INTERFACE, "UnregisterAgent",
++				NULL, NULL, DBUS_TYPE_OBJECT_PATH,
++				&obj_path, DBUS_TYPE_INVALID);
++}
++
++static int hfp_probe(struct ofono_modem *modem)
++{
++	const char *obj_path =3D ofono_modem_get_path(modem);
++
++	g_dbus_register_interface(connection, obj_path, HFP_AGENT_INTERFACE,
++			agent_methods, NULL, NULL, modem, NULL);
++
++	if (hfp_register_ofono_handsfree(modem) !=3D 0)
++		return -EINVAL;
 +
  	return 0;
  }
  =
 
--void gateway_start_service(struct audio_device *device)
-+int gateway_connect_rfcomm(struct audio_device *dev,
-+		GIOChannel *chan, int ch)
+ static void hfp_remove(struct ofono_modem *modem)
  {
--	rfcomm_connect_cb(device->gateway->rfcomm, NULL, device);
-+	if (!chan)
+-	gpointer data =3D ofono_modem_get_data(modem);
++	struct hfp_data *data =3D ofono_modem_get_data(modem);
++
++	hfp_unregister_ofono_handsfree(modem);
++
++	if (data->handsfree_path)
++		g_free(data->handsfree_path);
+ =
+
+ 	if (data)
+ 		g_free(data);
+@@ -325,21 +714,46 @@ static void hfp_remove(struct ofono_modem *modem)
+ 	ofono_modem_set_data(modem, NULL);
+ }
+ =
+
++static int hfp_connect_ofono_handsfree(struct ofono_modem *modem)
++{
++	struct hfp_data *data =3D ofono_modem_get_data(modem);
++
++	ofono_debug("Connect to bluetooth daemon");
++
++	if (!data->handsfree_path || !connection)
 +		return -EINVAL;
 +
-+	dev->gateway->rfcomm =3D g_io_channel_ref(chan);
-+	dev->gateway->channel =3D ch;
++	return send_method_call(BLUEZ_SERVICE, data->handsfree_path,
++				BLUEZ_GATEWAY_INTERFACE, "Connect",
++				NULL, NULL, DBUS_TYPE_INVALID);
++}
 +
-+	return 0;
- }
- =
-
--int gateway_close(struct audio_device *device)
-+void gateway_start_service(struct audio_device *dev)
+ /* power up hardware */
+ static int hfp_enable(struct ofono_modem *modem)
  {
--	struct gateway *gw =3D device->gateway;
--	GIOChannel *rfcomm =3D gw->rfcomm;
--	GIOChannel *sco =3D gw->sco;
--	gboolean value =3D FALSE;
-+	struct gateway *gw =3D dev->gateway;
-+	GError *err =3D NULL;
- =
-
--	if (rfcomm) {
--		g_io_channel_shutdown(rfcomm, TRUE, NULL);
--		g_io_channel_unref(rfcomm);
--		gw->rfcomm =3D NULL;
--	}
-+	if (gw->rfcomm =3D=3D NULL)
-+		return;
- =
-
--	if (sco) {
--		g_io_channel_shutdown(sco, TRUE, NULL);
--		g_io_channel_unref(sco);
--		gw->sco =3D NULL;
--		gw->sco_start_cb =3D NULL;
--		gw->sco_start_cb_data =3D NULL;
-+	if (!bt_io_accept(gw->rfcomm, rfcomm_connect_cb, dev, NULL,
-+							&err)) {
-+		error("bt_io_accept: %s", err->message);
-+		g_error_free(err);
- 	}
--
--	gw->state =3D GATEWAY_STATE_DISCONNECTED;
--
--	emit_property_changed(device->conn, device->path,
--				AUDIO_GATEWAY_INTERFACE,
--				"Connected", DBUS_TYPE_BOOLEAN, &value);
--	return 0;
- }
- =
-
- /* These are functions to be called from unix.c for audio system
-@@ -399,8 +638,12 @@ gboolean gateway_request_stream(struct audio_device *d=
-ev,
- 		gw->sco_start_cb_data =3D user_data;
- 		get_records(dev);
- 	} else if (!gw->sco) {
-+		char source[128], destination[128];
-+
- 		gw->sco_start_cb =3D cb;
- 		gw->sco_start_cb_data =3D user_data;
-+		ba2str(&dev->src, source);
-+		ba2str(&dev->dst, destination);
- 		io =3D bt_io_connect(BT_IO_SCO, sco_connect_cb, dev, NULL, &err,
- 				BT_IO_OPT_SOURCE_BDADDR, &dev->src,
- 				BT_IO_OPT_DEST_BDADDR, &dev->dst,
-@@ -464,4 +707,3 @@ void gateway_suspend_stream(struct audio_device *dev)
- 	gw->sco_start_cb =3D NULL;
- 	gw->sco_start_cb_data =3D NULL;
- }
--
-diff --git a/audio/gateway.h b/audio/gateway.h
-index 3b0457f..bf17a4f 100644
---- a/audio/gateway.h
-+++ b/audio/gateway.h
-@@ -4,6 +4,7 @@
-  *
-  *  Copyright (C) 2006-2010  Nokia Corporation
-  *  Copyright (C) 2004-2010  Marcel Holtmann <marcel@holtmann.org>
-+ *  Copyright (C) 2009-2009  Zhenhua Zhang <zhenhua.zhang@intel.com>
-  *
-  *
-  *  This program is free software; you can redistribute it and/or modify
-@@ -22,20 +23,25 @@
-  *
-  */
- =
-
--#define AUDIO_GATEWAY_INTERFACE "org.bluez.HeadsetGateway"
-+#define AUDIO_GATEWAY_INTERFACE "org.bluez.HandsfreeGateway"
- =
-
- #define DEFAULT_HSP_HS_CHANNEL 6
- #define DEFAULT_HFP_HS_CHANNEL 7
- =
-
- typedef enum {
- 	GATEWAY_STATE_DISCONNECTED,
--	GATEWAY_STATE_CONNECTED
-+	GATEWAY_STATE_CONNECTED,
-+	GATEWAY_STATE_CONNECTING,
-+	GATEWAY_STATE_PLAYING,
- } gateway_state_t;
- =
-
- typedef void (*gateway_stream_cb_t) (struct audio_device *dev, void *user_=
-data);
-+
- struct gateway *gateway_init(struct audio_device *device);
-+void gateway_exit(struct audio_device *device);
- gboolean gateway_is_connected(struct audio_device *dev);
--int gateway_connect_rfcomm(struct audio_device *dev, GIOChannel *chan);
-+int gateway_connect_rfcomm(struct audio_device *dev,
-+			GIOChannel *chan, int ch);
- int gateway_connect_sco(struct audio_device *dev, GIOChannel *chan);
- void gateway_start_service(struct audio_device *device);
- gboolean gateway_request_stream(struct audio_device *dev,
-diff --git a/audio/manager.c b/audio/manager.c
-index 413c1f3..8c854fc 100644
---- a/audio/manager.c
-+++ b/audio/manager.c
-@@ -198,7 +198,7 @@ static void handle_uuid(const char *uuidstr, struct aud=
-io_device *device)
- 		break;
- 	case HANDSFREE_AGW_SVCLASS_ID:
- 		debug("Found Handsfree AG record");
--		if (device->gateway =3D=3D NULL)
-+		if (enabled.gateway && (device->gateway =3D=3D NULL))
- 			device->gateway =3D gateway_init(device);
- 		break;
- 	case AUDIO_SINK_SVCLASS_ID:
-@@ -567,8 +567,8 @@ static void hf_io_cb(GIOChannel *chan, gpointer data)
- 		return;
- 	}
- =
-
--	server_uuid =3D HFP_HS_UUID;
--	remote_uuid =3D HFP_AG_UUID;
-+	server_uuid =3D HFP_AG_UUID;
-+	remote_uuid =3D HFP_HS_UUID;
- 	svclass =3D HANDSFREE_AGW_SVCLASS_ID;
- =
-
- 	device =3D manager_get_device(&src, &dst, TRUE);
-@@ -586,7 +586,7 @@ static void hf_io_cb(GIOChannel *chan, gpointer data)
- 		goto drop;
- 	}
- =
-
--	if (gateway_connect_rfcomm(device, chan) < 0) {
-+	if (gateway_connect_rfcomm(device, chan, ch) < 0) {
- 		error("Allocating new GIOChannel failed!");
- 		goto drop;
- 	}
-@@ -791,6 +791,9 @@ static void audio_remove(struct btd_device *device)
- 	if (!dev)
- 		return;
- =
-
-+	if (dev->gateway)
-+		gateway_exit(dev);
-+
- 	devices =3D g_slist_remove(devices, dev);
- =
-
- 	audio_device_unregister(dev);
-@@ -905,22 +908,12 @@ static void headset_server_remove(struct btd_adapter =
-*adapter)
- static int gateway_server_probe(struct btd_adapter *adapter)
- {
- 	struct audio_adapter *adp;
--	const gchar *path =3D adapter_get_path(adapter);
+-	const char *tty;
 -	int ret;
--
--	DBG("path %s", path);
++	struct hfp_data *data =3D ofono_modem_get_data(modem);
  =
 
- 	adp =3D audio_adapter_get(adapter);
- 	if (!adp)
+ 	DBG("%p", modem);
+ =
+
+-	tty =3D ofono_modem_get_string(modem, "Device");
+-	if (tty =3D=3D NULL)
++	data->at_timeout =3D
++		g_timeout_add_seconds(10, hfp_enable_timeout, modem);
++
++	if (hfp_connect_ofono_handsfree(modem) < 0)
  		return -EINVAL;
  =
 
--	ret =3D gateway_server_init(adp);
--	if (ret < 0) {
--		audio_adapter_ref(adp);
--		return ret;
--	}
--
--	return 0;
-+	return gateway_server_init(adp);
+-	ret =3D service_level_connection(modem, tty);
++	return -EINPROGRESS;
++}
++
++static int hfp_disconnect_ofono_handsfree(struct ofono_modem *modem)
++{
++	struct hfp_data *data =3D ofono_modem_get_data(modem);
++
++	if (!data->handsfree_path || !connection)
++		return -EINVAL;
+ =
+
+-	return ret;
++	return send_method_call(BLUEZ_SERVICE, data->handsfree_path,
++				BLUEZ_GATEWAY_INTERFACE, "Disconnect",
++				NULL, NULL, DBUS_TYPE_INVALID);
  }
  =
 
- static void gateway_server_remove(struct btd_adapter *adapter)
-diff --git a/audio/unix.c b/audio/unix.c
-index 5cf4f94..bd1a415 100644
---- a/audio/unix.c
-+++ b/audio/unix.c
-@@ -395,6 +395,9 @@ static void gateway_resume_complete(struct audio_device=
- *dev, void *user_data)
- 	struct bt_start_stream_rsp *rsp =3D (void *) buf;
- 	struct bt_new_stream_ind *ind =3D (void *) buf;
+ static int hfp_disable(struct ofono_modem *modem)
+@@ -357,8 +771,11 @@ static int hfp_disable(struct ofono_modem *modem)
+ 	memset(data->cind_val, 0, sizeof(data->cind_val));
+ 	memset(data->cind_pos, 0, sizeof(data->cind_pos));
  =
 
-+	if (!dev)
-+		goto failed;
++	g_source_remove(data->at_timeout);
 +
- 	memset(buf, 0, sizeof(buf));
- 	rsp->h.type =3D BT_RESPONSE;
- 	rsp->h.name =3D BT_START_STREAM;
-@@ -416,6 +419,11 @@ static void gateway_resume_complete(struct audio_devic=
-e *dev, void *user_data)
- 	}
+ 	ofono_modem_set_powered(modem, FALSE);
  =
 
- 	client->req_id =3D 0;
-+	return;
-+
-+failed:
-+	error("gateway_resume_complete: resume failed");
-+	unix_ipc_error(client, BT_START_STREAM, EIO);
++	hfp_disconnect_ofono_handsfree(modem);
+ 	return 0;
  }
  =
 
- static void headset_suspend_complete(struct audio_device *dev, void *user_=
-data)
-diff --git a/doc/hfp-api.txt b/doc/hfp-api.txt
-new file mode 100644
-index 0000000..8180de0
---- /dev/null
-+++ b/doc/hfp-api.txt
-@@ -0,0 +1,82 @@
-+Gateway hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+@@ -388,14 +805,44 @@ static struct ofono_modem_driver hfp_driver =3D {
+ 	.post_sim	=3D hfp_post_sim,
+ };
+ =
+
++static guint added_watch;
 +
-+Service		org.bluez
-+Interface	org.bluez.HandsfreeGateway
-+Object path	[variable prefix]/{hci0,hci1,...}/dev_XX_XX_XX_XX_XX_XX
+ static int hfp_init(void)
+ {
+-	DBG("");
+-	return ofono_modem_driver_register(&hfp_driver);
++	int err;
 +
-+This interface is available for remote devices which can function in the A=
-udio
-+Gateway role of the HFP profiles.  It is intended to be used with external
-+telephony stacks / handlers of the HFP protocol.
++	connection =3D ofono_dbus_get_connection();
 +
-+Methods		void Connect()
++	added_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
++						BLUEZ_MANAGER_INTERFACE,
++						"AdapterAdded",
++						adapter_added, NULL, NULL);
 +
-+			Connect to the AG service on the remote device.
++	if (added_watch =3D=3D 0) {
++		err =3D -EIO;
++		goto remove;
++	}
 +
-+		void Disconnect()
++	err =3D ofono_modem_driver_register(&hfp_driver);
++	if (err < 0)
++		goto remove;
 +
-+			Disconnect from the AG service on the remote device
++	hfp_load_modems();
 +
-+		dict GetProperties()
++	return 0;
 +
-+			Returns all properties for the interface. See the
-+			properties section for available properties.
++remove:
++	g_dbus_remove_watch(connection, added_watch);
 +
-+		void RegisterAgent(object path)
++	dbus_connection_unref(connection);
 +
-+			The object path defines the path the of the agent
-+			that will be called when a new Handsfree connection
-+			is established.
++	return err;
+ }
+ =
+
+ static void hfp_exit(void)
+ {
++	g_dbus_remove_watch(connection, added_watch);
 +
-+			If an application disconnects from the bus all of its
-+			registered agents will be removed.
-+
-+		void UnregisterAgent(object path)
-+
-+			This unregisters the agent that has been previously
-+			registered. The object path parameter must match the
-+			same value that has been used on registration.
-+
-+Signals		PropertyChanged(string name, variant value)
-+
-+			This signal indicates a changed value of the given
-+			property.
-+
-+Properties	string State [readonly]
-+
-+			Indicates the state of the connection.  Possible
-+			values are:
-+				"disconnected"
-+				"connecting"
-+				"connected"
-+				"playing"
-+
-+HandsfreeAgent hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Service         unique name
-+Interface       org.bluez.HandsfreeAgent
-+Object path     freely definable
-+
-+Methods		void NewConnection(filedescriptor fd)
-+
-+			This method gets called whenever a new handsfree
-+			connection has been established.  The objectpath
-+			contains the object path of the remote device.  This
-+			method assumes that DBus daemon with file descriptor
-+			passing capability is being used.
-+
-+			The agent should only return successfully once the
-+			establishment of the service level connection (SLC)
-+			has been completed.  In the case of Handsfree this
-+			means that BRSF exchange has been performed and
-+			necessary initialization has been done.
-+
-+			Possible Errors: org.bluez.Error.InvalidArguments
-+					 org.bluez.Error.Failed
-+
-+		void Release()
-+
-+			This method gets called whenever the service daemon
-+			unregisters the agent or whenever the Adapter where
-+			the HandsfreeAgent registers itself is removed.
+ 	ofono_modem_driver_unregister(&hfp_driver);
+ }
+ =
+
+diff --git a/plugins/modemconf.c b/plugins/modemconf.c
+index c8c261f..932d610 100644
+--- a/plugins/modemconf.c
++++ b/plugins/modemconf.c
+@@ -129,7 +129,6 @@ static struct ofono_modem *create_modem(GKeyFile *keyfi=
+le, const char *group)
+ =
+
+ 	if (!g_strcmp0(driver, "atgen") || !g_strcmp0(driver, "g1") ||
+ 						!g_strcmp0(driver, "calypso") ||
+-						!g_strcmp0(driver, "hfp") ||
+ 						!g_strcmp0(driver, "palmpre"))
+ 		set_device(modem, keyfile, group);
+ =
+
 -- =
 
 1.6.4.4
 
 
---===============2348859688696020313==--
+--===============6876321596656935641==--
 
