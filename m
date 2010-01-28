@@ -1,31 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============3811889474214733520=="
+Content-Type: multipart/mixed; boundary="===============6496956227859979931=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] Remove unneeded code to disable the modem on hfp
-Date: Thu, 28 Jan 2010 10:49:25 -0600
-Message-ID: <201001281049.25430.denkenz@gmail.com>
-In-Reply-To: <1264685563-13042-1-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH 2/2] Handle the error path from service_level_connection
+Date: Thu, 28 Jan 2010 10:50:16 -0600
+Message-ID: <201001281050.16836.denkenz@gmail.com>
+In-Reply-To: <1264685563-13042-2-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3811889474214733520==
+--===============6496956227859979931==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Gustavo,
 
-> ofono_modem_remove() already disables the modem.
 > ---
->  plugins/hfp.c |    3 ---
->  1 files changed, 0 insertions(+), 3 deletions(-)
-> =
+>  plugins/hfp.c |    6 ++++--
+>  1 files changed, 4 insertions(+), 2 deletions(-)
 
-
-Patch has been applied, thanks.
+Patch looks good, but doesn't apply:
+Applying: Handle the error path from service_level_connection
+error: patch failed: plugins/hfp.c:377
+error: plugins/hfp.c: patch does not apply
+Patch failed at 0001 Handle the error path from service_level_connection
+When you have resolved this problem run "git am --resolved".
+If you would prefer to skip this patch, instead run "git am --skip".
+To restore the original branch and stop patching run "git am --abort".
 
 Regards,
 -Denis
 
---===============3811889474214733520==--
+--===============6496956227859979931==--
 
