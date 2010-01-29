@@ -1,71 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============6447622361177370335=="
+Content-Type: multipart/mixed; boundary="===============7400042750434053654=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: RFC: API for Neighbouring Cell Info
-Date: Fri, 29 Jan 2010 10:51:52 -0600
-Message-ID: <201001291051.52879.denkenz@gmail.com>
-In-Reply-To: <1264782563.19283.825.camel@phoenix.elisa-laajakaista.fi>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: RFC: API for Neighbouring Cell Info
+Date: Fri, 29 Jan 2010 13:04:51 -0800
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9BACB21CB@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <1264752250.19283.773.camel@phoenix.elisa-laajakaista.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6447622361177370335==
+--===============7400042750434053654==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
-
-> > Honestly I don't like either approach, the Agent pattern would be a
-> > much better fit here.  This would allow us to specify
-> > the polling/update interval and stop neighbor cell updates when no one
-> > is interested in them.
+> There are two parts to neighbor cell information. The first part
+> provides meta-information on the second part, which is the actual
+> measurement data.
 > =
 
-> In my experience, the positioning guys don't need periodic updates at
-> all. The data needs to be fetched on demand. Like whenever the user
-> starts up a location-aware application.
-
-Fair enough, but we also have to consider the case of multiple applications =
-
-being interested in this information.  We can't assume that it will be poll=
-ed =
-
-on demand by just one...
-
+> Like you propose, the first part is a dict, with keys like cell type and
+> current MCC and MNC.
 > =
 
-> > > > Once there is agreement on the API we can discuss whether it makes
-> > > > sense to add some skeleton support in the oFono core or leave it to
-> > > > each individual modem plugin to implement the DBUS service in its
-> > > > entire.
-> > >
-> > > I think it's reasonable to assume that most modems support this. There
-> > > is a standard to follow, and at least isimodem will have a driver for
-> > > it. So I would make it a proper atom from the beginning.
+> The second part is the measurement data, and that is different for
+> different types of cells. Not all information is mandatory for all
+> modems and all cell types.
+
+The formatting might have been a bit confusing, but I was actually proposin=
+g  a single property ("Info") containing an array (one entry for each cell)=
+ of dicts, with the dicts having measurement and other info on that particu=
+lar cell.
+
+> I think the pattern you use here is wrong. This needs to be a method
+> call; a signal won't work. The measurement data is constantly changing,
+> and you don't want a constant stream of PropertyChanged() signals.
+
+Ok.
+
+> The important property here is that the location system has a single
+> method call that retrieves all relevant information from the modem, so
+> that they can then do their triangulation magic.
+
+Yes, it's important to keep things atomic.
+
+> > 			int8 RSCP [readonly, UMTS only]
 > >
-> > I'd like to see the low level driver API proposal first.  The Nokia
-> > isimodem interface is actually quite sane, AT command modems are usually
-> > not so...  If we make this into a proper atom we have to make this work
-> > for all hardware from the beginning.
+> > 				Received Signal Code Power [3GPP TS 25.133
+> s9.1.1.3] in dBm [-120...-25]
+> >
+> > 			int8 ECNO [readonly, UMTS only]
+> >
+> > 				CPICH Ec/No [3GPP TS 25.133 s9.1.2.3] in dB  [-
+> 24...0]
 > =
 
-> Right, we perhaps need a datapoint from an AT modem to know for sure,
-> but the fact that OMA SUPL standardizes this, and the ISI interface is
-> close to that standard already, makes me think the AT modems can't be
-> that far off.
+> This is already part of the measurement data, which I think should be in
+> the per-cell information (the serving cell measurement data is still
+> measurement data).
 
-I have a few modems that support this capability, so we can definitely chec=
-k.
+Yes, all this is per-cell, sorry if that wasn't clear.
 
-> =
+Cheers,
+Waldo
 
-> I could take a stab at a driver API for this as soon as I clear up some
-> space on my todo list.
-
-Yes, that would be great.
-
-Regards,
--Denis
-
---===============6447622361177370335==--
+--===============7400042750434053654==--
 
