@@ -1,84 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============2839042978682011115=="
+Content-Type: multipart/mixed; boundary="===============3107082996641854702=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Aki Niemi <aki.niemi@nokia.com>
 Subject: Re: RFC: API for Neighbouring Cell Info
-Date: Fri, 29 Jan 2010 09:56:59 -0600
-Message-ID: <201001290957.00346.denkenz@gmail.com>
-In-Reply-To: <1264752250.19283.773.camel@phoenix.elisa-laajakaista.fi>
+Date: Fri, 29 Jan 2010 18:29:23 +0200
+Message-ID: <1264782563.19283.825.camel@phoenix.elisa-laajakaista.fi>
+In-Reply-To: <201001290957.00346.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2839042978682011115==
+--===============3107082996641854702==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+pe, 2010-01-29 kello 16:56 +0100, ext Denis Kenzior kirjoitti:
+> > > Your feedback is highly appreciated, especially from those who plan to
+> > > use this information for location purposes.
+> > =
 
-> > Your feedback is highly appreciated, especially from those who plan to
-> > use this information for location purposes.
+> > I think the pattern you use here is wrong. This needs to be a method
+> > call; a signal won't work. The measurement data is constantly changing,
+> > and you don't want a constant stream of PropertyChanged() signals.
+> > =
+
+> > So I think something like this instead:
+> > =
+
+> > GetNeighborCells() -> a{sv}, aa{sv}
 > =
 
-> I think the pattern you use here is wrong. This needs to be a method
-> call; a signal won't work. The measurement data is constantly changing,
-> and you don't want a constant stream of PropertyChanged() signals.
+> How is this information obtained from the modem? Is the modem polled? Doe=
+s it =
+
+> signal this data as it changes?
+
+It is polled, by design.
+
+> Honestly I don't like either approach, the Agent pattern would be a
+> much better fit here.  This would allow us to specify =
+
+> the polling/update interval and stop neighbor cell updates when no one
+> is interested in them.
+
+In my experience, the positioning guys don't need periodic updates at
+all. The data needs to be fetched on demand. Like whenever the user
+starts up a location-aware application.
+
+> > > Once there is agreement on the API we can discuss whether it makes
+> > > sense to add some skeleton support in the oFono core or leave it to
+> > > each individual modem plugin to implement the DBUS service in its
+> > > entire.
+> > =
+
+> > I think it's reasonable to assume that most modems support this. There
+> > is a standard to follow, and at least isimodem will have a driver for
+> > it. So I would make it a proper atom from the beginning.
 > =
 
-> So I think something like this instead:
-> =
+> I'd like to see the low level driver API proposal first.  The Nokia isimo=
+dem =
 
-> GetNeighborCells() -> a{sv}, aa{sv}
+> interface is actually quite sane, AT command modems are usually not so...=
+  If =
 
-How is this information obtained from the modem? Is the modem polled? Does =
-it =
+> we make this into a proper atom we have to make this work for all hardwar=
+e =
 
-signal this data as it changes?  Honestly I don't like either approach, the =
+> from the beginning.
 
-Agent pattern would be a much better fit here.  This would allow us to spec=
-ify =
+Right, we perhaps need a datapoint from an AT modem to know for sure,
+but the fact that OMA SUPL standardizes this, and the ISI interface is
+close to that standard already, makes me think the AT modems can't be
+that far off.
 
-the polling/update interval and stop neighbor cell updates when no one is =
+I could take a stab at a driver API for this as soon as I clear up some
+space on my todo list.
 
-interested in them.
+Cheers,
+Aki
 
-> > Once there is agreement on the API we can discuss whether it makes
-> > sense to add some skeleton support in the oFono core or leave it to
-> > each individual modem plugin to implement the DBUS service in its
-> > entire.
-> =
 
-> I think it's reasonable to assume that most modems support this. There
-> is a standard to follow, and at least isimodem will have a driver for
-> it. So I would make it a proper atom from the beginning.
-
-I'd like to see the low level driver API proposal first.  The Nokia isimode=
-m =
-
-interface is actually quite sane, AT command modems are usually not so...  =
-If =
-
-we make this into a proper atom we have to make this work for all hardware =
-
-from the beginning.
-
-> Other comments on the interface:
-> > Properties boolean Enabled [readwrite]
-> >
-> > 			Boolean representing whether the interface provides
-> > 			neighbouring cell information.
-> =
-
-> This is useless. If a modem driver doesn't support neighbor cell info,
-> it won't registered a driver and the interface just doesn't show up.
-
-Being able to turn this capability off is useful.  If there are no consumer=
-s, =
-
-then these types of notifications should be turned off to save power / wake=
-ups.
-
-Regards,
--Denis
-
---===============2839042978682011115==--
+--===============3107082996641854702==--
 
