@@ -1,47 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5794909422520766772=="
+Content-Type: multipart/mixed; boundary="===============4764183052615646137=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Jo=C3=A3o?= Paulo Rechi Vita <jprvita@gmail.com>
-Subject: [RFC] [PATCH 0/2] HFP AG integration with PulseAudio
-Date: Fri, 29 Jan 2010 12:44:24 -0200
-Message-ID: <1264776266-7646-1-git-send-email-jprvita@gmail.com>
+Subject: [PATCH 1/2] bluetooth: improve dbus logging a little bit
+Date: Fri, 29 Jan 2010 12:44:25 -0200
+Message-ID: <1264776266-7646-2-git-send-email-jprvita@gmail.com>
+In-Reply-To: <1264776266-7646-1-git-send-email-jprvita@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5794909422520766772==
+--===============4764183052615646137==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+From: Jo=C3=A3o Paulo Rechi Vita <jprvita@profusion.mobi>
 
-I'm trying to add support for the Handsfree Gateway role Gustavo just added
-to BlueZ and oFono. The BlueZ patches can be found on [1] and [2] and the
-oFono part was just merged upstream.
+---
+ src/modules/bluetooth/bluetooth-util.c |    5 +++--
+ 1 files changed, 3 insertions(+), 2 deletions(-)
 
-But when it comes to integrate them with Pulse, I'm getting a POLLHUP when
-trying to write on the fd. Also, it seems different gateways have different
-behaviours regarding when they connect the SCO link. Some phone connect
-them just after the RFCOMM link (some Nokia phones), when there is no call
-going on yet, and others just when a call is started (Android 1.5).
+diff --git a/src/modules/bluetooth/bluetooth-util.c b/src/modules/bluetooth=
+/bluetooth-util.c
+index 47d6200..d3f3bfe 100644
+--- a/src/modules/bluetooth/bluetooth-util.c
++++ b/src/modules/bluetooth/bluetooth-util.c
+@@ -292,9 +292,10 @@ static int parse_audio_property(pa_bluetooth_discovery=
+ *u, int *state, DBusMessa
+             const char *value;
+             dbus_message_iter_get_basic(&variant_i, &value);
+ =
 
-Also, right now the same property (State) is beeing used to refer when the
-RFCOOM link is established (State=3DConnected) and when the SCO link is
-established (State=3DPlaying). Shouldn't this be handled by separate props?
+-            if (pa_streq(key, "State"))
++            if (pa_streq(key, "State")) {
+                 *state =3D pa_bt_audio_state_from_string(value);
+-/*             pa_log_debug("Value %s", value); */
++                pa_log_debug("dbus: property 'State' changed to value '%s'=
+", value);
++            }
+ =
 
-And last but not least, is the new Media API intended to handle the audio
-part of handsfree gateways too? If so, maybe we should use all this work
-as a prototype for latter integration with the new API.
+             break;
+         }
+-- =
 
-Any help on testing and getting this working together or comments on the
-topic would be appreciated.
-
-[1] http://www.spinics.net/lists/linux-bluetooth/msg04250.html
-[2] http://www.spinics.net/lists/linux-bluetooth/msg04251.html
-
---
-Jo=C3=A3o Paulo Rechi Vita
-http://jprvita.wordpress.com/
+1.6.3.3
 
 
---===============5794909422520766772==--
+--===============4764183052615646137==--
 
