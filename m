@@ -1,68 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============3162664201628440279=="
+Content-Type: multipart/mixed; boundary="===============3280924393761387348=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Jussi Kukkonen <jku@linux.intel.com>
 Subject: Re: RFC: API for Neighbouring Cell Info
-Date: Fri, 29 Jan 2010 15:31:19 -0600
-Message-ID: <201001291531.20020.denkenz@gmail.com>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C9BACB21D9@orsmsx508.amr.corp.intel.com>
+Date: Sun, 31 Jan 2010 13:11:01 +0200
+Message-ID: <4B656545.1020509@linux.intel.com>
+In-Reply-To: <1264782563.19283.825.camel@phoenix.elisa-laajakaista.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3162664201628440279==
+--===============3280924393761387348==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
+Hi,
 
-> > Hi Aki,
-> >
-> > > > Honestly I don't like either approach, the Agent pattern would be a
-> > > > much better fit here.  This would allow us to specify
-> > > > the polling/update interval and stop neighbor cell updates when no
-> > > > one is interested in them.
-> > >
-> > > In my experience, the positioning guys don't need periodic updates at
-> > > all. The data needs to be fetched on demand. Like whenever the user
-> > > starts up a location-aware application.
-> >
-> > Fair enough, but we also have to consider the case of multiple
-> > applications
-> > being interested in this information.  We can't assume that it will be
-> > polled on demand by just one...
+First, as a general comment: if this sort of info was available, I'd =
+
+definitely use it (see http://github.com/jku/geoclue/commits/new-stuff =
+
+for a first version using currently available API). Neighbor cell info =
+
+would make non-complete cell location databases so much more useful...
+
+Aki Niemi wrote:
+> pe, 2010-01-29 kello 16:56 +0100, ext Denis Kenzior kirjoitti:
+>> Honestly I don't like either approach, the Agent pattern would be a
+>> much better fit here.  This would allow us to specify =
+
+>> the polling/update interval and stop neighbor cell updates when no one
+>> is interested in them.
 > =
 
-> Ny understanding is that typically there would be a location service that
->  queries this information from oFono and converts it into actual
->  coordinates through voodoo and black magic and that location-aware
->  applications will ask this location service for coordinates. E.g. you
->  would have something like GeoClue providing a single API for providing
->  coordinates to applications and under GeoClue there is the location
->  service, and the location service in turn talks to oFono.
-> =
+> In my experience, the positioning guys don't need periodic updates at
+> all. The data needs to be fetched on demand. Like whenever the user
+> starts up a location-aware application.
+
+I'm willing to bet this is a chicken-egg problem: Why design software =
+
+that uses periodic location updates if they aren't available?
+
+Only exposing plain polling is fine if it makes sense in a powersaving =
+
+(and api simplicity) sense: a version of periodic updating can always be =
+
+implemented at the position service (geoclue) level if it seems useful.
+
+  - Jussi
 
 
-You're absolutely correct.  My point is that if only one entity is ever goi=
-ng =
-
-to be interested in this information (e.g. GeoClue) then a full blown atom =
-/ =
-
-DBus API is not even necessary.  We can do this similarly to the history at=
-om =
-
-and leave it up to the system integrator to decide how and what service to =
-
-use.
-
-DBus API implies that multiple user applications are interested in the =
-
-information provided.  If this is the case, then in my view a procedural, =
-
-application-driven polling API is not the best approach.
-
-Regards,
--Denis
-
---===============3162664201628440279==--
+--===============3280924393761387348==--
 
