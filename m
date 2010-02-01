@@ -1,13 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2351037725548945898=="
+Content-Type: multipart/mixed; boundary="===============0301871258415215040=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
 Subject: [PATCH] hfp: create modem for new devices paired on runtime
-Date: Mon, 01 Feb 2010 16:17:53 -0200
-Message-ID: <1265048273-4188-1-git-send-email-padovan@profusion.mobi>
+Date: Mon, 01 Feb 2010 16:35:32 -0200
+Message-ID: <1265049332-23103-1-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1265048273-4188-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2351037725548945898==
+--===============0301871258415215040==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -15,15 +16,15 @@ Content-Transfer-Encoding: quoted-printable
 It listens the Paired property to create a modem to the recently paired
 devices.
 ---
- plugins/hfp.c |   68 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 67 insertions(+), 1 deletions(-)
+ plugins/hfp.c |   56 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++-
+ 1 files changed, 55 insertions(+), 1 deletions(-)
 
 diff --git a/plugins/hfp.c b/plugins/hfp.c
-index 0e2e359..92b6be4 100644
+index 0e2e359..05d79cb 100644
 --- a/plugins/hfp.c
 +++ b/plugins/hfp.c
-@@ -594,6 +594,63 @@ static gboolean adapter_added(DBusConnection *connecti=
+@@ -594,6 +594,51 @@ static gboolean adapter_added(DBusConnection *connecti=
 on, DBusMessage *message,
  	return TRUE;
  }
@@ -33,28 +34,16 @@ on, DBusMessage *message,
 age,
 +				void *user_data)
 +{
-+	DBusError err;
 +	const char *device, *property;
 +	DBusMessageIter iter, variant;
 +	int ret, value;
-+
-+	dbus_error_init(&err);
-+
-+	if (dbus_message_get_args(message, &err, DBUS_TYPE_STRING,
-+				 &property, DBUS_TYPE_INVALID) =3D=3D FALSE) {
-+		if (dbus_error_is_set(&err) =3D=3D TRUE) {
-+			ofono_error("%s", err.message);
-+			dbus_error_free(&err);
-+		}
-+
-+		return FALSE;
-+	}
 +
 +	dbus_message_iter_init(message, &iter);
 +
 +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
 +		return FALSE;
 +
++	dbus_message_iter_get_basic(&iter, &property);
 +	if (g_str_equal(property, "Paired") =3D=3D FALSE)
 +		return TRUE;
 +
@@ -90,7 +79,7 @@ age,
  static void list_adapters_cb(DBusPendingCall *call, gpointer user_data)
  {
  	DBusError err;
-@@ -802,6 +859,7 @@ static struct ofono_modem_driver hfp_driver =3D {
+@@ -802,6 +847,7 @@ static struct ofono_modem_driver hfp_driver =3D {
  };
  =
 
@@ -100,7 +89,7 @@ age,
 
  static int hfp_init(void)
  {
-@@ -817,7 +875,13 @@ static int hfp_init(void)
+@@ -817,7 +863,13 @@ static int hfp_init(void)
  						"AdapterAdded",
  						adapter_added, NULL, NULL);
  =
@@ -116,7 +105,7 @@ age,
  		err =3D -EIO;
  		goto remove;
  	}
-@@ -832,6 +896,7 @@ static int hfp_init(void)
+@@ -832,6 +884,7 @@ static int hfp_init(void)
  =
 
  remove:
@@ -127,7 +116,7 @@ age,
  	dbus_connection_unref(connection);
  =
 
-@@ -841,6 +906,7 @@ remove:
+@@ -841,6 +894,7 @@ remove:
  static void hfp_exit(void)
  {
  	g_dbus_remove_watch(connection, added_watch);
@@ -141,5 +130,5 @@ age,
 1.6.4.4
 
 
---===============2351037725548945898==--
+--===============0301871258415215040==--
 
