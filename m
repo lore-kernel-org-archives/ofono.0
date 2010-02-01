@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============7195373651295321924=="
+Content-Type: multipart/mixed; boundary="===============6336155615972620909=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/2] Fix: Check if interface exists before creating it.
-Date: Mon, 01 Feb 2010 08:03:47 -0800
-Message-ID: <1265040227.31341.40.camel@localhost.localdomain>
-In-Reply-To: <1265039424-1961-2-git-send-email-sjur.brandeland@stericsson.com>
+Subject: Re: [PATCH 1/2] Fix: Username and Password must be set after context
+ is created.
+Date: Mon, 01 Feb 2010 08:09:26 -0800
+Message-ID: <1265040566.31341.45.camel@localhost.localdomain>
+In-Reply-To: <1265039424-1961-1-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7195373651295321924==
+--===============6336155615972620909==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,47 +18,60 @@ Hi Sjur,
 
 > diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-cont=
 ext.c
-> index c178fb6..79e697b 100644
+> index 6743aba..c178fb6 100644
 > --- a/drivers/stemodem/gprs-context.c
 > +++ b/drivers/stemodem/gprs-context.c
-> @@ -187,9 +187,11 @@ static gboolean caif_if_create(const char *interface=
-, unsigned int connid)
->  		return FALSE;
->  	}
+> @@ -416,7 +416,7 @@ static void ste_gprs_activate_primary(struct ofono_gp=
+rs_context *gc,
+>  {
+>  	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+>  	struct cb_data *cbd =3D cb_data_new(cb, data);
+> -	char buf[AUTH_BUF_LENGTH];
+> +	char buf[2*AUTH_BUF_LENGTH];
+>  	int len;
 >  =
 
-> -	if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
-> -		ofono_debug("Failed to create IP interface for CAIF");
-> -		return FALSE;
-> +	if (ioctl(s, SIOCGIFINDEX, &ifr) !=3D 0) {
-> +		if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
-> +			ofono_debug("Failed to create IP interface for CAIF");
-> +			return FALSE;
-> +		}
->  	}
+>  	if (!cbd)
+> @@ -425,19 +425,17 @@ static void ste_gprs_activate_primary(struct ofono_=
+gprs_context *gc,
+>  	gcd->active_context =3D ctx->cid;
+>  	cbd->user =3D gc;
 >  =
 
->  	return TRUE;
+> -	/* Set username and password */
+> -	sprintf(buf, "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"", ctx->cid,
+> -		ctx->username, ctx->password);
+> -
+> -	if (g_at_chat_send(gcd->chat, buf, none_prefix, NULL, NULL, NULL) =3D=
+=3D 0)
+> -		goto error;
+> -
+>  	len =3D sprintf(buf, "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
+>  =
 
-just doing it like this would be better:
+>  	if (ctx->apn)
+>  		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
+>  				ctx->apn);
+>  =
 
-	/* Check if interface exists */
-	if (ioctl(s, SIOCGIFINDEX, &ifr) =3D=3D 0)
-		return TRUE;
+> +	/* Set username and password. Must be done after context creation */
+> +	len =3D strlen(buf);
+> +	sprintf(buf+len, ";*EIAAUW=3D%d,1,\"%s\",\"%s\"", ctx->cid,
+> +		ctx->username, ctx->password);
+> +
+>  	if (g_at_chat_send(gcd->chat, buf, none_prefix,
+>  				ste_cgdcont_cb, cbd, g_free) > 0)
+>  		return;
 
-	if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
-		...
-		return FALSE;
-	}
+this looks pretty much complicated and I prefer we don't use this crazy
+concat of AT commands. Also it violates the coding style.
 
-	return TRUE;
+There is no problem to just use g_at_chat_send twice since it will queue
+the commands for you properly. However if this really depends on CGDCONT
+succeeding, then we better do it in the callback.
 
-We are not a big fan complicated if clauses if they can be avoid with a
-simple goto or just a return.
-
-Also I think we need to check errno value here. Since potentially the
-ioctl can fail for other reasons. And maybe extending CAIF with a proper
-way of checking for an existing interface might be better.
+And we might wanna check if MBM cards behave similar and ensure that STE
+and MBM cards use a similar code flow.
 
 Regards
 
@@ -65,5 +79,5 @@ Marcel
 
 
 
---===============7195373651295321924==--
+--===============6336155615972620909==--
 
