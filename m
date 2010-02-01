@@ -1,83 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============2839241635260492946=="
+Content-Type: multipart/mixed; boundary="===============5941640272634913376=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: [PATCH 1/3] Add radio access atom and driver API
-Date: Wed, 03 Feb 2010 11:30:57 +0200
-Message-ID: <1265189457.2557.147.camel@phoenix.elisa-laajakaista.fi>
-In-Reply-To: <201002022202.31945.denkenz@gmail.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjur.brandeland@stericsson.com>
+Subject: RE: [PATCH 2/2] Fix: Check if interface exists before creating it.
+Date: Mon, 01 Feb 2010 21:40:36 +0100
+Message-ID: <61D8D34BB13CFE408D154529C120E079032A1F20@eseldmw101.eemea.ericsson.se>
+In-Reply-To: <1265040227.31341.40.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2839241635260492946==
+--===============5941640272634913376==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-ke, 2010-02-03 kello 05:02 +0100, ext Denis Kenzior kirjoitti:
-> People on this list keep forgetting two things:
-> 1. We're not designing a kitchen sink API here.  Most of the 'radio relat=
-ed =
+Hi Marcel.
 
-> settings' will simply never be exposed, nobody really cares what UMTS cha=
-nnel =
+Marcel Holtmann wrote:
+> Hi Sjur,
+> =
 
-> he/she is currently on.
+>> diff --git a/drivers/stemodem/gprs-context.c
+>> b/drivers/stemodem/gprs-context.c index c178fb6..79e697b 100644
+>> --- a/drivers/stemodem/gprs-context.c
+>> +++ b/drivers/stemodem/gprs-context.c
+>> @@ -187,9 +187,11 @@ static gboolean caif_if_create(const char
+>>  	*interface, unsigned int connid)  		return FALSE; }
+>> =
 
-There's the link status I mentioned earlier that needs to be exposed. I
-now regret not writing it there in the first place. ;)
+>> -	if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
+>> -		ofono_debug("Failed to create IP interface for CAIF");
+>> -		return FALSE;
+>> +	if (ioctl(s, SIOCGIFINDEX, &ifr) !=3D 0) {
+>> +		if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
+>> +			ofono_debug("Failed to create IP interface for CAIF");
+>> +			return FALSE; +		}
+>>  	}
+>> =
 
-> 2. We're designing the API to be easy to use for everyone, not just GSM g=
-eeks.
+>>  	return TRUE;
+> =
 
-Currently, we're not doing a very good job at it, though:
+> just doing it like this would be better:
+> =
 
-From 366e4dac44734e20ad44194d8c0ab808eac082d4 Mon Sep 17 00:00:00 2001
-From: Aki Niemi <aki.niemi@nokia.com>
-Date: Wed, 3 Feb 2010 11:25:36 +0200
-Subject: [PATCH] Technology names to use layman's terms
+> 	/* Check if interface exists */
+> 	if (ioctl(s, SIOCGIFINDEX, &ifr) =3D=3D 0)
+> 		return TRUE;
+> =
 
----
- src/common.c |   13 +++++--------
- 1 files changed, 5 insertions(+), 8 deletions(-)
+> 	if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
+> 		...
+> 		return FALSE;
+> 	}
+> =
 
-diff --git a/src/common.c b/src/common.c
-index db3e38b..a445616 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -622,21 +622,18 @@ const char *registration_tech_to_string(int tech)
- {
- 	switch (tech) {
- 	case ACCESS_TECHNOLOGY_GSM:
--		return "GSM";
- 	case ACCESS_TECHNOLOGY_GSM_COMPACT:
--		return "GSMCompact";
-+		return "2G";
- 	case ACCESS_TECHNOLOGY_UTRAN:
--		return "UTRAN";
-+		return "3G";
- 	case ACCESS_TECHNOLOGY_GSM_EGPRS:
--		return "GSM+EGPRS";
-+		return "2.5G";
- 	case ACCESS_TECHNOLOGY_UTRAN_HSDPA:
--		return "UTRAN+HSDPA";
- 	case ACCESS_TECHNOLOGY_UTRAN_HSUPA:
--		return "UTRAN+HSUPA";
- 	case ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA:
--		return "UTRAN+HSDPA+HSUPA";
-+		return "3.5G";
- 	case ACCESS_TECHNOLOGY_EUTRAN:
--		return "EUTRAN";
-+		return "4G";
- 	default:
- 		return "";
- 	}
--- =
+> 	return TRUE;
+> =
 
-1.6.3.3
+> We are not a big fan complicated if clauses if they can be avoid with
+> a simple goto or just a return. =
 
-Cheers,
-Aki
+> =
+
+> Also I think we need to check errno value here. Since potentially the
+> ioctl can fail for other reasons. And maybe extending CAIF with a
+> proper way of checking for an existing interface might be better.  =
 
 
---===============2839241635260492946==--
+Do you have anything particular in mind here? =
+
+Maybe CAIF could simply return EEXIST from SIOCCAIFNETNEW if the interface
+already exists? In this case we could return TRUE anyway.
+
+BR/Sjur
+
+--===============5941640272634913376==--
 
