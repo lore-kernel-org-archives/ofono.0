@@ -1,134 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============0301871258415215040=="
+Content-Type: multipart/mixed; boundary="===============4620833915457943687=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH] hfp: create modem for new devices paired on runtime
-Date: Mon, 01 Feb 2010 16:35:32 -0200
-Message-ID: <1265049332-23103-1-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1265048273-4188-1-git-send-email-padovan@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [PATCH 1/2] Fix: Username and Password must be set after context
+ is created.
+Date: Mon, 01 Feb 2010 11:10:45 -0800
+Message-ID: <1265051445.31341.54.camel@localhost.localdomain>
+In-Reply-To: <61D8D34BB13CFE408D154529C120E079032A1ED6@eseldmw101.eemea.ericsson.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0301871258415215040==
+--===============4620833915457943687==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-It listens the Paired property to create a modem to the recently paired
-devices.
----
- plugins/hfp.c |   56 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++-
- 1 files changed, 55 insertions(+), 1 deletions(-)
+Hi Sjur,
 
-diff --git a/plugins/hfp.c b/plugins/hfp.c
-index 0e2e359..05d79cb 100644
---- a/plugins/hfp.c
-+++ b/plugins/hfp.c
-@@ -594,6 +594,51 @@ static gboolean adapter_added(DBusConnection *connecti=
-on, DBusMessage *message,
- 	return TRUE;
- }
- =
+> >>  	len =3D sprintf(buf, "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
+> >> =
 
-+static gboolean paired_added(DBusConnection *connection, DBusMessage *mess=
-age,
-+				void *user_data)
-+{
-+	const char *device, *property;
-+	DBusMessageIter iter, variant;
-+	int ret, value;
-+
-+	dbus_message_iter_init(message, &iter);
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
-+		return FALSE;
-+
-+	dbus_message_iter_get_basic(&iter, &property);
-+	if (g_str_equal(property, "Paired") =3D=3D FALSE)
-+		return TRUE;
-+
-+	if (!dbus_message_iter_next(&iter))
-+		return FALSE;
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
-+		return FALSE;
-+
-+	dbus_message_iter_recurse(&iter, &variant);
-+
-+	if (dbus_message_iter_get_arg_type(&variant) !=3D DBUS_TYPE_BOOLEAN)
-+		return FALSE;
-+
-+	dbus_message_iter_get_basic(&variant, &value);
-+
-+	if (!value)
-+		return TRUE;
-+
-+	device =3D dbus_message_get_path(message);
-+	ret =3D send_method_call(BLUEZ_SERVICE, device,
-+			BLUEZ_DEVICE_INTERFACE, "GetProperties",
-+			get_properties_cb, (void *)device,
-+			DBUS_TYPE_INVALID);
-+	if (ret < 0) {
-+		ofono_error("GetProperties failed(%d)", ret);
-+		return FALSE;
-+	}
-+
-+	return TRUE;
-+}
-+
- static void list_adapters_cb(DBusPendingCall *call, gpointer user_data)
- {
- 	DBusError err;
-@@ -802,6 +847,7 @@ static struct ofono_modem_driver hfp_driver =3D {
- };
- =
+> >>  	if (ctx->apn)
+> >>  		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"", =
 
- static guint added_watch;
-+static guint paired_watch;
- =
+> >> ctx->apn); =
 
- static int hfp_init(void)
- {
-@@ -817,7 +863,13 @@ static int hfp_init(void)
- 						"AdapterAdded",
- 						adapter_added, NULL, NULL);
- =
+> >> =
 
--	if (added_watch =3D=3D 0) {
-+	paired_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
-+						BLUEZ_DEVICE_INTERFACE,
-+						"PropertyChanged",
-+						paired_added, NULL, NULL);
-+
-+
-+	if (added_watch =3D=3D 0 || paired_watch =3D=3D 0) {
- 		err =3D -EIO;
- 		goto remove;
- 	}
-@@ -832,6 +884,7 @@ static int hfp_init(void)
- =
+> >> +	/* Set username and password. Must be done after context creation */ =
 
- remove:
- 	g_dbus_remove_watch(connection, added_watch);
-+	g_dbus_remove_watch(connection, paired_watch);
- =
+> >> +	len =3D strlen(buf); =
 
- 	dbus_connection_unref(connection);
- =
+> >> +	sprintf(buf+len, ";*EIAAUW=3D%d,1,\"%s\",\"%s\"", ctx->cid, =
 
-@@ -841,6 +894,7 @@ remove:
- static void hfp_exit(void)
- {
- 	g_dbus_remove_watch(connection, added_watch);
-+	g_dbus_remove_watch(connection, paired_watch);
- =
+> >> +		ctx->username, ctx->password); =
 
- 	ofono_modem_driver_unregister(&hfp_driver);
- }
--- =
+> >> +
+> >>  	if (g_at_chat_send(gcd->chat, buf, none_prefix,
+> >>  				ste_cgdcont_cb, cbd, g_free) > 0)
+> >>  		return;
+> > =
 
-1.6.4.4
+> > this looks pretty much complicated and I prefer we don't use this
+> > crazy concat of AT commands. Also it violates the coding style. =
+
+> > =
+
+> > There is no problem to just use g_at_chat_send twice since it will
+> > queue the commands for you properly. However if this really depends
+> > on CGDCONT succeeding, then we better do it in the callback.  =
+
+> =
+
+> We originally did send EIAAUW in the callback, but Denis changed this =
+
+> because MBM did it EIAAUW before CGDCONT.
+
+I know that Denis changed it and it makes sense to keep this in sync. We
+just don't know about these details. And we have to put comments in the
+source code to remind us.
+
+And to be honest, I am not sure if anybody really tested it. I only know
+of one public network that requires username/password for their APN. I
+need to get a SIM card from them once I am back in Germany.
+
+> > And we might wanna check if MBM cards behave similar and ensure that
+> > STE and MBM cards use a similar code flow. =
+
+> =
+
+> When testing this EIAAUW fails if there are no prior PDP context on the m=
+odem.
+> Most likely this is the case with the MBM module as well, but I have not =
+tested this.
+
+Then we have to do that in the callback in an extra step. I don't really
+like it, but seems the way to go. Please send a patch that also changes
+this for MBM devices. We really wanna keep these in sync.
+
+Regards
+
+Marcel
 
 
---===============0301871258415215040==--
+
+--===============4620833915457943687==--
 
