@@ -1,38 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============0831318549028734948=="
+Content-Type: multipart/mixed; boundary="===============0902612150098527759=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: RE: [PATCH 1/3] Add radio access atom and driver API
-Date: Tue, 02 Feb 2010 21:06:41 -0800
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9BAD63F5B@orsmsx508.amr.corp.intel.com>
-In-Reply-To: <201002022202.31945.denkenz@gmail.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjur.brandeland@stericsson.com>
+Subject: RE: [PATCH 1/2] Fix: Username and Password must be set after context
+ is created.
+Date: Mon, 01 Feb 2010 18:23:33 +0100
+Message-ID: <61D8D34BB13CFE408D154529C120E079032A1ED6@eseldmw101.eemea.ericsson.se>
+In-Reply-To: <1265040566.31341.45.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0831318549028734948==
+--===============0902612150098527759==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> People on this list keep forgetting two things:
-> 1. We're not designing a kitchen sink API here.  Most of the 'radio
-> related
-> settings' will simply never be exposed, nobody really cares what UMTS
-> channel
-> he/she is currently on.
-> 2. We're designing the API to be easy to use for everyone, not just GSM
-> geeks.
+Hi Marcel.
+
+Marcel Holtmann wrote:
+>>  	len =3D sprintf(buf, "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
+>> =
+
+>>  	if (ctx->apn)
+>>  		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"", =
+
+>> ctx->apn); =
+
+>> =
+
+>> +	/* Set username and password. Must be done after context creation */ =
+
+>> +	len =3D strlen(buf); =
+
+>> +	sprintf(buf+len, ";*EIAAUW=3D%d,1,\"%s\",\"%s\"", ctx->cid, =
+
+>> +		ctx->username, ctx->password); =
+
+>> +
+>>  	if (g_at_chat_send(gcd->chat, buf, none_prefix,
+>>  				ste_cgdcont_cb, cbd, g_free) > 0)
+>>  		return;
 > =
 
-> In your AM/FM Tuner the 'Band' button switches between AM and FM.  You
-> immediately know what the button does.  The interface name in oFono should
-> ideally give the user an immediate idea of what it is for.  In my view
-> "RadioAccess" does not fit this ideal.  Perhaps "BandSelection" is the
-> wrong name too, lets come up with a better one.
+> this looks pretty much complicated and I prefer we don't use this
+> crazy concat of AT commands. Also it violates the coding style. =
 
-StuffThatCustomerServiceTellsYouToUseWhenThingsDontQuiteWork
+> =
 
-Cheers,
-Waldo
+> There is no problem to just use g_at_chat_send twice since it will
+> queue the commands for you properly. However if this really depends
+> on CGDCONT succeeding, then we better do it in the callback.  =
 
---===============0831318549028734948==--
+
+We originally did send EIAAUW in the callback, but Denis changed this =
+
+because MBM did it EIAAUW before CGDCONT.
+
+> And we might wanna check if MBM cards behave similar and ensure that
+> STE and MBM cards use a similar code flow. =
+
+
+When testing this EIAAUW fails if there are no prior PDP context on the mod=
+em.
+Most likely this is the case with the MBM module as well, but I have not te=
+sted this.
+
+BR/Sjur
+
+--===============0902612150098527759==--
 
