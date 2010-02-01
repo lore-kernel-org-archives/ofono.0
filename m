@@ -1,54 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============5714630639890060697=="
+Content-Type: multipart/mixed; boundary="===============1389584641179760079=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] Fix: Username and Password must be set after context
- is created.
-Date: Mon, 01 Feb 2010 13:20:03 -0600
-Message-ID: <201002011320.04073.denkenz@gmail.com>
-In-Reply-To: <1265051445.31341.54.camel@localhost.localdomain>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [PATCH 2/2] Fix: Check if interface exists before creating it.
+Date: Mon, 01 Feb 2010 13:40:04 -0800
+Message-ID: <1265060404.31341.58.camel@localhost.localdomain>
+In-Reply-To: <61D8D34BB13CFE408D154529C120E079032A1F20@eseldmw101.eemea.ericsson.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5714630639890060697==
+--===============1389584641179760079==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Sjur,
 
-> > > And we might wanna check if MBM cards behave similar and ensure that
-> > > STE and MBM cards use a similar code flow.
-> >
-> > When testing this EIAAUW fails if there are no prior PDP context on the
-> > modem. Most likely this is the case with the MBM module as well, but I
-> > have not tested this.
+> >> diff --git a/drivers/stemodem/gprs-context.c
+> >> b/drivers/stemodem/gprs-context.c index c178fb6..79e697b 100644
+> >> --- a/drivers/stemodem/gprs-context.c
+> >> +++ b/drivers/stemodem/gprs-context.c
+> >> @@ -187,9 +187,11 @@ static gboolean caif_if_create(const char
+> >>  	*interface, unsigned int connid)  		return FALSE; }
+> >> =
+
+> >> -	if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
+> >> -		ofono_debug("Failed to create IP interface for CAIF");
+> >> -		return FALSE;
+> >> +	if (ioctl(s, SIOCGIFINDEX, &ifr) !=3D 0) {
+> >> +		if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
+> >> +			ofono_debug("Failed to create IP interface for CAIF");
+> >> +			return FALSE; +		}
+> >>  	}
+> >> =
+
+> >>  	return TRUE;
+> > =
+
+> > just doing it like this would be better:
+> > =
+
+> > 	/* Check if interface exists */
+> > 	if (ioctl(s, SIOCGIFINDEX, &ifr) =3D=3D 0)
+> > 		return TRUE;
+> > =
+
+> > 	if (ioctl(s, SIOCCAIFNETNEW, &ifr) < 0) {
+> > 		...
+> > 		return FALSE;
+> > 	}
+> > =
+
+> > 	return TRUE;
+> > =
+
+> > We are not a big fan complicated if clauses if they can be avoid with
+> > a simple goto or just a return. =
+
+> > =
+
+> > Also I think we need to check errno value here. Since potentially the
+> > ioctl can fail for other reasons. And maybe extending CAIF with a
+> > proper way of checking for an existing interface might be better.  =
+
 > =
 
-> Then we have to do that in the callback in an extra step. I don't really
-> like it, but seems the way to go. Please send a patch that also changes
-> this for MBM devices. We really wanna keep these in sync.
+> Do you have anything particular in mind here? =
 
-Actually the easiest way to do this is simply queue the EIAAUW after the =
+> Maybe CAIF could simply return EEXIST from SIOCCAIFNETNEW if the interface
+> already exists? In this case we could return TRUE anyway.
 
-CGDCONT in activate_context.  If CGDCONT fails then EIAAUW won't have any =
+if it isn't that doing already, then it should be doing it. And yes,
+just returning TRUE in that case seems fine to me.
 
-effect anyway (but will get executed nevertheless).  This is better than =
+Regards
 
-worrying about strduping username/password and freeing it in all possible c=
-ode =
+Marcel
 
-paths.
 
-Regards,
--Denis
 
-> =
-
-> Regards
-> =
-
-> Marcel
->=20
-
---===============5714630639890060697==--
+--===============1389584641179760079==--
 
