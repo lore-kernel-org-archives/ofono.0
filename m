@@ -1,56 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============6089638829969952977=="
+Content-Type: multipart/mixed; boundary="===============5588187105511258214=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/2] Fix: Username and Password must be set after context
- is created.
-Date: Mon, 01 Feb 2010 13:41:04 -0800
-Message-ID: <1265060464.31341.59.camel@localhost.localdomain>
-In-Reply-To: <201002011320.04073.denkenz@gmail.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: Re: [RFC] [PATCH 0/2] HFP AG integration with PulseAudio
+Date: Tue, 02 Feb 2010 09:38:31 +0800
+Message-ID: <4B678217.6050003@intel.com>
+In-Reply-To: <aa32413d1002010909h1ba06e13n1511d56903406945@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6089638829969952977==
+--===============5588187105511258214==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Jprvita,
 
-> > > > And we might wanna check if MBM cards behave similar and ensure that
-> > > > STE and MBM cards use a similar code flow.
-> > >
-> > > When testing this EIAAUW fails if there are no prior PDP context on t=
+On 02/02/2010 01:09 AM, Jo=C3=A3o Paulo Rechi Vita wrote:
+> 2010/1/29 Jo=C3=A3o Paulo Rechi Vita<jprvita@gmail.com>:
+>    =
+
+>> Hi all,
+>>
+>> I'm trying to add support for the Handsfree Gateway role Gustavo just ad=
+ded
+>> to BlueZ and oFono. The BlueZ patches can be found on [1] and [2] and the
+>> oFono part was just merged upstream.
+>>
+>> But when it comes to integrate them with Pulse, I'm getting a POLLHUP wh=
+en
+>> trying to write on the fd. Also, it seems different gateways have differ=
+ent
+>> behaviours regarding when they connect the SCO link. Some phone connect
+>> them just after the RFCOMM link (some Nokia phones), when there is no ca=
+ll
+>> going on yet, and others just when a call is started (Android 1.5).
+>>
+>> Also, right now the same property (State) is beeing used to refer when t=
 he
-> > > modem. Most likely this is the case with the MBM module as well, but I
-> > > have not tested this.
-> > =
+>> RFCOOM link is established (State=3DConnected) and when the SCO link is
+>> established (State=3DPlaying). Shouldn't this be handled by separate pro=
+ps?
+>>
+>> And last but not least, is the new Media API intended to handle the audio
+>> part of handsfree gateways too? If so, maybe we should use all this work
+>> as a prototype for latter integration with the new API.
+>>
+>> Any help on testing and getting this working together or comments on the
+>> topic would be appreciated.
+>>
+>> [1] http://www.spinics.net/lists/linux-bluetooth/msg04250.html
+>> [2] http://www.spinics.net/lists/linux-bluetooth/msg04251.html
+>>
+>> --
+>> Jo=C3=A3o Paulo Rechi Vita
+>> http://jprvita.wordpress.com/
+>>
+>>
+>>      =
 
-> > Then we have to do that in the callback in an extra step. I don't really
-> > like it, but seems the way to go. Please send a patch that also changes
-> > this for MBM devices. We really wanna keep these in sync.
-> =
-
-> Actually the easiest way to do this is simply queue the EIAAUW after the =
-
-> CGDCONT in activate_context.  If CGDCONT fails then EIAAUW won't have any =
-
-> effect anyway (but will get executed nevertheless).  This is better than =
-
-> worrying about strduping username/password and freeing it in all possible=
- code =
-
-> paths.
-
-sounds good enough to me. Just wanna have STE and MBM in sync here. And
-of course an extra comment that explain why we do it.
-
-Sjur, care to send a patch?
-
-Regards
-
-Marcel
+> Just updating, this patch actually worked when testing with a
+> different adapter (Fujitsu-Siemens CSR-based). The adapter causing
+> problems was a Broadcom 2.1, the internal adapter of a Dell Mini10.
+> Also, suspending the source / sink actually doesn't interfere.
+>
+> I did a small video of the whole stuff: http://www.vimeo.com/907879
+>    =
 
 
+Good work! Looks like it works pretty fine. :-). At the last of video, I =
 
---===============6089638829969952977==--
+saw you load loopback module manually. Zheng Huan made a patch to load =
+
+loopback automatically. I believe Padovan has a copy of that. You may =
+
+also integrate it with upstream.
+
+> There are still some problems when testing against Nokia N900 and
+> 2660. After the "enable-modem" step, the RFCOMM link is connected and
+> the SCO just after that, leading module-bluetooth-discover to load
+> module-bluetooth-device. Sometimes after that the polling on the
+> stream fd get a POLLHUP and the module-bluetooth-device unloads
+> itself. Other times the POLLHUP doesn't happen and the remaining steps
+> go without any problem.
+>
+> Ideas on how to improve this scenario will be very helpful.
+>
+>    =
+
+
+AFAK, the SCO connection request is from AG side and BlueZ will check if =
+
+no SCO stream comes from AG(??), it will shutdown the connection. In my =
+
+memory, I don't get POLLHUP event in my original patch. You can turn on =
+
+debug flag to see more BlueZ output.
+
+
+--===============5588187105511258214==--
 
