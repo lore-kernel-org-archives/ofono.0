@@ -1,119 +1,202 @@
-Content-Type: multipart/mixed; boundary="===============4115176302114322947=="
+Content-Type: multipart/mixed; boundary="===============6179051857354337378=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH 3/3] Add isimodem radio access driver
-Date: Wed, 03 Feb 2010 00:38:06 +0200
-Message-ID: <1265150286-14548-3-git-send-email-aki.niemi@nokia.com>
-In-Reply-To: <1265150286-14548-2-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCH 1/3] Add radio access atom and driver API
+Date: Wed, 03 Feb 2010 00:38:04 +0200
+Message-ID: <1265150286-14548-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4115176302114322947==
+--===============6179051857354337378==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This atom provides access to the modem's radio access properties. It
+currently includes a single rw property, namely the radio access
+selection mode setting.
+
+This allows the user to query and select the used radio access
+technology preference. In dual mode, either 2G or 3G is used depending
+on reception. 2G only mode or 3G only mode force selection of the
+respective access only.
+
+In the future, this atom could be extended, if necessary, to handle
+other radio access related modem features such as CELL_DCH status,
+UTRAN channel, or frequency band.
 ---
- Makefile.am                     |    1 +
- drivers/isimodem/isimodem.c     |    4 +
- drivers/isimodem/isimodem.h     |    3 +
- drivers/isimodem/radio-access.c |  299 +++++++++++++++++++++++++++++++++++=
+ Makefile.am            |    6 +-
+ include/radio-access.h |   72 ++++++++++
+ src/ofono.h            |    2 +
+ src/radio-access.c     |  354 ++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 4 files changed, 307 insertions(+), 0 deletions(-)
- create mode 100644 drivers/isimodem/radio-access.c
+ 4 files changed, 432 insertions(+), 2 deletions(-)
+ create mode 100644 include/radio-access.h
+ create mode 100644 src/radio-access.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 5f67878..235aa86 100644
+index 33339df..a18e4b9 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -103,6 +103,7 @@ builtin_sources +=3D $(gisi_sources) \
- 				drivers/isimodem/call-barring.c \
- 				drivers/isimodem/call-meter.c \
- 				drivers/isimodem/ss.h \
-+				drivers/isimodem/radio-access.c \
- 				drivers/isimodem/gss.h
- endif
+@@ -11,7 +11,8 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
+e/history.h \
+ 			include/sms.h include/sim.h include/message-waiting.h \
+ 			include/netreg.h include/voicecall.h include/devinfo.h \
+ 			include/cbs.h include/call-volume.h \
+-			include/gprs.h include/gprs-context.h
++			include/gprs.h include/gprs-context.h \
++			include/radio-access.h
  =
 
-diff --git a/drivers/isimodem/isimodem.c b/drivers/isimodem/isimodem.c
-index 48f41c3..4b65d21 100644
---- a/drivers/isimodem/isimodem.c
-+++ b/drivers/isimodem/isimodem.c
-@@ -49,6 +49,7 @@
- #include <ofono/call-settings.h>
- #include <ofono/call-barring.h>
- #include <ofono/call-meter.h>
+ nodist_include_HEADERS =3D include/version.h
+ =
+
+@@ -224,7 +225,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
+es) \
+ 			src/phonebook.c src/history.c src/message-waiting.c \
+ 			src/simutil.h src/simutil.c src/storage.h \
+ 			src/storage.c src/cbs.c src/watch.c src/call-volume.c \
+-			src/gprs.c src/idmap.h src/idmap.c
++			src/gprs.c src/idmap.h src/idmap.c \
++			src/radio-access.c
+ =
+
+ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ -ldl
+ =
+
+diff --git a/include/radio-access.h b/include/radio-access.h
+new file mode 100644
+index 0000000..6677573
+--- /dev/null
++++ b/include/radio-access.h
+@@ -0,0 +1,72 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifndef __OFONO_RADIO_ACCESS_H
++#define __OFONO_RADIO_ACCESS_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include <ofono/types.h>
++
++struct ofono_radio_access;
++
++typedef void (*ofono_radio_access_mode_set_cb_t)(const struct ofono_error =
+*error,
++							void *data);
++typedef void (*ofono_radio_access_mode_query_cb_t)(const struct ofono_erro=
+r *error,
++							int mode, void *data);
++
++struct ofono_radio_access_driver {
++	const char *name;
++	int (*probe)(struct ofono_radio_access *radio_access,
++			unsigned int vendor,
++			void *data);
++	void (*remove)(struct ofono_radio_access *radio_access);
++	void (*query_mode)(struct ofono_radio_access *radio_access,
++				ofono_radio_access_mode_query_cb_t cb, void *data);
++	void (*set_mode)(struct ofono_radio_access *radio_access, int mode,
++				ofono_radio_access_mode_set_cb_t cb, void *data);
++};
++
++void ofono_radio_access_mode_notify(struct ofono_radio_access *radio_acces=
+s,
++					int mode);
++
++int ofono_radio_access_driver_register(const struct ofono_radio_access_dri=
+ver *d);
++void ofono_radio_access_driver_unregister(const struct ofono_radio_access_=
+driver *d);
++
++struct ofono_radio_access *ofono_radio_access_create(struct ofono_modem *m=
+odem,
++						unsigned int vendor,
++						const char *driver,
++						void *data);
++
++void ofono_radio_access_register(struct ofono_radio_access *radio_access);
++void ofono_radio_access_remove(struct ofono_radio_access *radio_access);
++
++void ofono_radio_access_set_data(struct ofono_radio_access *radio_access,
++					void *data);
++void *ofono_radio_access_get_data(struct ofono_radio_access *radio_access);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __OFONO_RADIO_ACCESS_H */
+diff --git a/src/ofono.h b/src/ofono.h
+index 379f413..c519eef 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -113,6 +113,7 @@ enum ofono_atom_type {
+ 	OFONO_ATOM_TYPES_CALL_VOLUME =3D 15,
+ 	OFONO_ATOM_TYPE_GPRS =3D 16,
+ 	OFONO_ATOM_TYPE_GPRS_CONTEXT =3D 17,
++	OFONO_ATOM_TYPE_RADIO_ACCESS =3D 18,
+ };
+ =
+
+ enum ofono_atom_watch_condition {
+@@ -168,6 +169,7 @@ void __ofono_atom_free(struct ofono_atom *atom);
+ #include <ofono/voicecall.h>
+ #include <ofono/gprs.h>
+ #include <ofono/gprs-context.h>
 +#include <ofono/radio-access.h>
  =
 
- #include "isimodem.h"
- #include "isiutil.h"
-@@ -310,6 +311,7 @@ static void isi_modem_post_sim(struct ofono_modem *mode=
-m)
- 	ofono_call_settings_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_barring_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_meter_create(isi->modem, 0, "isimodem", isi->idx);
-+	ofono_radio_access_create(isi->modem, 0, "isimodem", isi->idx);
- }
+ #include <ofono/sim.h>
  =
 
- static struct ofono_modem_driver driver =3D {
-@@ -339,6 +341,7 @@ static int isimodem_init(void)
- 	isi_call_settings_init();
- 	isi_call_barring_init();
- 	isi_call_meter_init();
-+	isi_radio_access_init();
- =
-
- 	ofono_modem_driver_register(&driver);
- =
-
-@@ -379,6 +382,7 @@ static void isimodem_exit(void)
- 	isi_call_settings_exit();
- 	isi_call_barring_exit();
- 	isi_call_meter_exit();
-+	isi_radio_access_exit();
- }
- =
-
- OFONO_PLUGIN_DEFINE(isimodem, "PhoNet / ISI modem driver", VERSION,
-diff --git a/drivers/isimodem/isimodem.h b/drivers/isimodem/isimodem.h
-index 3eb2fbe..2b3d756 100644
---- a/drivers/isimodem/isimodem.h
-+++ b/drivers/isimodem/isimodem.h
-@@ -57,3 +57,6 @@ extern void isi_call_barring_exit();
- =
-
- extern void isi_call_meter_init();
- extern void isi_call_meter_exit();
-+
-+extern void isi_radio_access_init();
-+extern void isi_radio_access_exit();
-diff --git a/drivers/isimodem/radio-access.c b/drivers/isimodem/radio-acces=
-s.c
+diff --git a/src/radio-access.c b/src/radio-access.c
 new file mode 100644
-index 0000000..8c9e0b5
+index 0000000..ba34c71
 --- /dev/null
-+++ b/drivers/isimodem/radio-access.c
-@@ -0,0 +1,299 @@
++++ b/src/radio-access.c
+@@ -0,0 +1,354 @@
 +/*
-+ * This file is part of oFono - Open Source Telephony
 + *
-+ * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
++ *  oFono - Open Source Telephony
 + *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU General Public License
-+ * version 2 as published by the Free Software Foundation.
++ *  Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
 + *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * General Public License for more details.
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
 + *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-+ * 02110-1301 USA
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
 + *
 + */
 +
@@ -121,287 +204,346 @@ index 0000000..8c9e0b5
 +#include <config.h>
 +#endif
 +
-+#define _GNU_SOURCE
-+#include <stdio.h>
-+#include <stdlib.h>
 +#include <string.h>
++#include <stdio.h>
 +#include <errno.h>
 +
 +#include <glib.h>
++#include <gdbus.h>
 +
-+#include <gisi/client.h>
-+#include <gisi/iter.h>
++#include "ofono.h"
++#include "common.h"
 +
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/radio-access.h>
++#define RADIO_ACCESS_INTERFACE "org.ofono.RadioAccess"
++#define RADIO_ACCESS_INTERFACE "org.ofono.RadioAccess"
 +
-+#include "isimodem.h"
-+#include "isiutil.h"
-+#include "debug.h"
-+#include "gss.h"
++static GSList *g_drivers =3D NULL;
 +
-+struct access_data {
-+	GIsiClient *client;
++enum radio_access_mode {
++	RADIO_ACCESS_MODE_DUAL =3D 0,
++	RADIO_ACCESS_MODE_2G =3D 1,
++	RADIO_ACCESS_MODE_3G =3D 2
 +};
 +
-+static bool rat_mode_read_resp_cb(GIsiClient *client, const void *restrict=
- data,
-+					size_t len, uint16_t object, void *opaque)
++struct ofono_radio_access {
++	DBusMessage *pending;
++	int mode;
++	int pending_mode;
++	const struct ofono_radio_access_driver *driver;
++	void *driver_data;
++	struct ofono_atom *atom;
++};
++
++static const char *radio_access_mode_to_string(int mode)
 +{
-+	const unsigned char *msg =3D data;
-+	struct isi_cb_data *cbd =3D opaque;
-+	ofono_radio_access_mode_query_cb_t cb =3D cbd->cb;
-+	int mode =3D -1;
++	switch (mode) {
++	case RADIO_ACCESS_MODE_DUAL:
++		return "2g+3g";
 +
-+	if (!msg) {
-+		DBG("ISI client error: %d", g_isi_client_error(client));
-+		goto error;
++	case RADIO_ACCESS_MODE_2G:
++		return "2g";
++
++	case RADIO_ACCESS_MODE_3G:
++		return "3g";
++
++	default:
++		return "unknown";
 +	}
-+
-+	if (len < 3) {
-+		DBG("truncated message");
-+		return false;
-+	}
-+
-+	if (msg[0] =3D=3D GSS_CS_SERVICE_FAIL_RESP)
-+		goto error;
-+
-+	if (msg[0] =3D=3D GSS_CS_SERVICE_RESP) {
-+		GIsiSubBlockIter iter;
-+
-+		for (g_isi_sb_iter_init(&iter, msg, len, 3);
-+			g_isi_sb_iter_is_valid(&iter);
-+			g_isi_sb_iter_next(&iter)) {
-+
-+			switch (g_isi_sb_iter_get_id(&iter)) {
-+
-+			case GSS_RAT_INFO: {
-+
-+				guint8 byte;
-+
-+				if (!g_isi_sb_iter_get_byte(&iter, &byte, 2))
-+					goto error;
-+
-+				mode =3D (int)byte;
-+
-+				break;
-+			}
-+			default:
-+				DBG("Skipping sub-block: %s (%zu bytes)",
-+					gss_subblock_name(g_isi_sb_iter_get_id(&iter)),
-+					g_isi_sb_iter_get_len(&iter));
-+				break;
-+			}
-+		}
-+
-+		CALLBACK_WITH_SUCCESS(cb, mode, cbd->data);
-+		goto out;
-+	}
-+
-+	return false;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+
-+out:
-+	g_free(cbd);
-+	return true;
 +}
 +
-+static void isi_query_mode(struct ofono_radio_access *ra,
-+				ofono_radio_access_mode_query_cb_t cb,
-+				void *data)
++static int string_to_radio_access_mode(const char *mode)
 +{
-+	struct access_data *access =3D ofono_radio_access_get_data(ra);
-+	struct isi_cb_data *cbd =3D isi_cb_data_new(access, cb, data);
++	if (g_strcmp0(mode, "2g+3g") =3D=3D 0)
++		return RADIO_ACCESS_MODE_DUAL;
 +
-+	const unsigned char msg[] =3D {
-+		GSS_CS_SERVICE_REQ,
-+		GSS_SELECTED_RAT_READ,
-+		0x00 /* subblock count */
-+	};
++	if (g_strcmp0(mode, "2g") =3D=3D 0)
++		return RADIO_ACCESS_MODE_2G;
 +
-+	if (!cbd)
-+		goto error;
++	if (g_strcmp0(mode, "3g") =3D=3D 0)
++		return RADIO_ACCESS_MODE_3G;
 +
-+	if (g_isi_request_make(access->client, msg, sizeof(msg),
-+				GSS_TIMEOUT, rat_mode_read_resp_cb, cbd))
-+		return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, -1, data);
-+	g_free(cbd);
++	return -1;
 +}
 +
-+static bool rat_mode_write_resp_cb(GIsiClient *client, const void *restric=
-t data,
-+					size_t len, uint16_t object, void *opaque)
++static void ra_mode_query_callback(const struct ofono_error *error, int mo=
+de,
++					void *data)
 +{
-+	const unsigned char *msg =3D data;
-+	struct isi_cb_data *cbd =3D opaque;
-+	ofono_radio_access_mode_set_cb_t cb =3D cbd->cb;
++	struct ofono_radio_access *ra =3D data;
 +
-+	if (!msg) {
-+		DBG("ISI client error: %d", g_isi_client_error(client));
-+		goto error;
-+	}
-+
-+	if (len < 3) {
-+		DBG("truncated message");
-+		return false;
-+	}
-+
-+	if (msg[0] =3D=3D GSS_CS_SERVICE_FAIL_RESP)
-+		goto error;
-+
-+	if (msg[0] =3D=3D GSS_CS_SERVICE_RESP) {
-+		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+		goto out;
-+	}
-+
-+	return false;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+
-+out:
-+	g_free(cbd);
-+	return true;
-+}
-+
-+static void isi_set_mode(struct ofono_radio_access *ra, int mode,
-+				ofono_radio_access_mode_set_cb_t cb,
-+				void *data)
-+{
-+	struct access_data *access =3D ofono_radio_access_get_data(ra);
-+	struct isi_cb_data *cbd =3D isi_cb_data_new(access, cb, data);
-+
-+	const unsigned char msg[] =3D {
-+		GSS_CS_SERVICE_REQ,
-+		GSS_SELECTED_RAT_WRITE,
-+		0x01, /* subblock count */
-+		GSS_RAT_INFO,
-+		0x04, /* subblock length */
-+		mode,
-+		0x00 /* filler */
-+	};
-+
-+	if (!cbd)
-+		goto error;
-+
-+	if (g_isi_request_make(access->client, msg, sizeof(msg),
-+				GSS_TIMEOUT, rat_mode_write_resp_cb, cbd))
-+		return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, data);
-+	g_free(cbd);
-+}
-+
-+static void rat_mode_ind_cb(GIsiClient *client, const void *restrict data,
-+				size_t len, uint16_t object, void *opaque)
-+{
-+	const unsigned char *msg =3D data;
-+	struct ofono_radio_access *ra =3D opaque;
-+
-+	if (!msg || len < 3 || msg[0] !=3D GSS_SELECTED_RAT_IND)
-+		return;
-+
-+	ofono_radio_access_mode_notify(ra, msg[1]);
-+}
-+
-+static gboolean isi_radio_access_register(gpointer user)
-+{
-+	struct ofono_radio_access *ra =3D user;
-+	struct access_data *access =3D ofono_radio_access_get_data(ra);
-+
-+	const char *debug =3D getenv("OFONO_ISI_DEBUG");
-+
-+	if (debug && (g_strcmp0(debug, "all") =3D=3D 0
-+		|| g_strcmp0(debug, "gss") =3D=3D 0))
-+		g_isi_client_set_debug(access->client, gss_debug, NULL);
-+
-+	g_isi_subscribe(access->client, GSS_SELECTED_RAT_IND,
-+			rat_mode_ind_cb, ra);
-+
-+	ofono_radio_access_register(ra);
-+
-+	return FALSE;
-+}
-+
-+static void reachable_cb(GIsiClient *client, bool alive, uint16_t object,
-+				void *opaque)
-+{
-+	struct ofono_radio_access *ra =3D opaque;
-+
-+	if (!alive) {
-+		DBG("devinfo driver bootstrap failed");
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		ofono_debug("Error during radio access mode query");
 +		return;
 +	}
 +
-+	DBG("%s (v%03d.%03d) reachable",
-+		pn_resource_name(g_isi_client_resource(client)),
-+		g_isi_version_major(client),
-+		g_isi_version_minor(client));
-+
-+	g_idle_add(isi_radio_access_register, ra);
++	ofono_radio_access_mode_notify(ra, mode);
 +}
 +
-+static int isi_radio_access_probe(struct ofono_radio_access *ra, unsigned =
-int vendor,
-+					void *user)
++static void ra_mode_set_callback(const struct ofono_error *error, void *da=
+ta)
 +{
-+	GIsiModem *idx =3D user;
-+	struct access_data *data =3D g_try_new0(struct access_data, 1);
++	struct ofono_radio_access *ra =3D data;
++	DBusMessage *reply;
 +
-+	if (!data)
-+		return -ENOMEM;
-+
-+	data->client =3D g_isi_client_create(idx, PN_GSS);
-+	if (!data->client) {
-+		g_free(data);
-+		return -ENOMEM;
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		ofono_debug("Error setting radio access mode");
++		ra->pending_mode =3D ra->mode;
++		reply =3D __ofono_error_failed(ra->pending);
++		__ofono_dbus_pending_reply(&ra->pending, reply);
++		return;
 +	}
 +
-+	ofono_radio_access_set_data(ra, data);
++	reply =3D dbus_message_new_method_return(ra->pending);
++	__ofono_dbus_pending_reply(&ra->pending, reply);
 +
-+	g_isi_verify(data->client, reachable_cb, ra);
++	ofono_radio_access_mode_notify(ra, ra->pending_mode);
++}
++
++static DBusMessage *ra_get_properties(DBusConnection *conn, DBusMessage *m=
+sg,
++					void *data)
++{
++	struct ofono_radio_access *ra =3D data;
++	DBusMessage *reply;
++	DBusMessageIter iter;
++	DBusMessageIter dict;
++
++	const char *mode =3D radio_access_mode_to_string(ra->mode);
++
++	reply =3D dbus_message_new_method_return(msg);
++	if (!reply)
++		return NULL;
++
++	dbus_message_iter_init_append(reply, &iter);
++
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					OFONO_PROPERTIES_ARRAY_SIGNATURE,
++					&dict);
++
++	ofono_dbus_dict_append(&dict, "Mode", DBUS_TYPE_STRING, &mode);
++
++	dbus_message_iter_close_container(&iter, &dict);
++
++	return reply;
++}
++
++static DBusMessage *ra_set_property(DBusConnection *conn, DBusMessage *msg,
++					void *data)
++{
++	struct ofono_radio_access *ra =3D data;
++	DBusMessageIter iter;
++	DBusMessageIter var;
++	const char *property;
++
++	if (ra->pending)
++		return __ofono_error_busy(msg);
++
++	if (!dbus_message_iter_init(msg, &iter))
++		return __ofono_error_invalid_args(msg);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(&iter, &property);
++	dbus_message_iter_next(&iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_recurse(&iter, &var);
++
++	if (g_strcmp0(property, "Mode") =3D=3D 0) {
++		const char *value;
++		int mode =3D -1;
++
++		if (!ra->driver->set_mode)
++			return __ofono_error_not_implemented(msg);
++
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &value);
++		mode =3D string_to_radio_access_mode(value);
++
++		if (ra->mode =3D=3D mode)
++			return dbus_message_new_method_return(msg);
++
++		ra->pending =3D dbus_message_ref(msg);
++		ra->pending_mode =3D mode;
++
++		ra->driver->set_mode(ra, mode, ra_mode_set_callback, ra);
++
++		return NULL;
++	}
++
++	return __ofono_error_invalid_args(msg);
++}
++
++static GDBusMethodTable ra_methods[] =3D {
++	{ "GetProperties",	"",	"a{sv}",	ra_get_properties,
++							G_DBUS_METHOD_FLAG_ASYNC },
++
++	{ "SetProperty",	"sv",	"",		ra_set_property,
++							G_DBUS_METHOD_FLAG_ASYNC },
++	{ }
++};
++
++static GDBusSignalTable ra_signals[] =3D {
++	{ "PropertyChanged",	"sv" },
++	{ }
++};
++
++void ofono_radio_access_mode_notify(struct ofono_radio_access *ra, int mod=
+e)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++
++	if (ra->mode =3D=3D mode)
++		return;
++
++	ra->mode =3D mode;
++
++	if (mode !=3D -1) {
++		const char *path =3D __ofono_atom_get_path(ra->atom);
++		const char *str_mode =3D radio_access_mode_to_string(mode);
++
++		ofono_dbus_signal_property_changed(conn, path,
++						RADIO_ACCESS_INTERFACE,
++						"Mode", DBUS_TYPE_STRING,
++						&str_mode);
++	}
++}
++
++int ofono_radio_access_driver_register(const struct ofono_radio_access_dri=
+ver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
++
++	if (!d || !d->probe)
++		return -EINVAL;
++
++	g_drivers =3D g_slist_prepend(g_drivers, (void *)d);
 +
 +	return 0;
 +}
 +
-+static void isi_radio_access_remove(struct ofono_radio_access *ra)
++void ofono_radio_access_driver_unregister(const struct ofono_radio_access_=
+driver *d)
 +{
-+	struct access_data *data =3D ofono_radio_access_get_data(ra);
++	DBG("driver: %p, name: %s", d, d->name);
 +
-+	if (data) {
-+		g_isi_client_destroy(data->client);
-+		g_free(data);
++	if (!d)
++		return;
++
++	g_drivers =3D g_slist_remove(g_drivers, (void *)d);
++}
++
++static void radio_access_unregister(struct ofono_atom *atom)
++{
++	struct ofono_radio_access *ra =3D __ofono_atom_get_data(atom);
++	const char *path =3D __ofono_atom_get_path(ra->atom);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(ra->atom);
++
++	ofono_modem_remove_interface(modem, RADIO_ACCESS_INTERFACE);
++	g_dbus_unregister_interface(conn, path, RADIO_ACCESS_INTERFACE);
++}
++
++static void radio_access_remove(struct ofono_atom *atom)
++{
++	struct ofono_radio_access *ra =3D __ofono_atom_get_data(atom);
++
++	DBG("atom: %p", atom);
++
++	if (!ra)
++		return;
++
++	if (ra->driver && ra->driver->remove)
++		ra->driver->remove(ra);
++
++	g_free(ra);
++}
++
++struct ofono_radio_access *ofono_radio_access_create(struct ofono_modem *m=
+odem,
++							unsigned int vendor,
++							const char *driver,
++							void *data)
++{
++	struct ofono_radio_access *ra;
++	GSList *l;
++
++	if (!driver)
++		return NULL;
++
++	ra =3D g_try_new0(struct ofono_radio_access, 1);
++	if (!ra)
++		return NULL;
++
++	ra->mode =3D -1;
++
++	ra->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_RADIO_ACCESS,
++						radio_access_remove, ra);
++
++	for (l =3D g_drivers; l; l =3D l->next) {
++		const struct ofono_radio_access_driver *drv =3D l->data;
++
++		if (g_strcmp0(drv->name, driver) !=3D 0)
++			continue;
++
++		if (drv->probe(ra, vendor, data) < 0)
++			continue;
++
++		ra->driver =3D drv;
++		break;
 +	}
++
++	return ra;
 +}
 +
-+static struct ofono_radio_access_driver driver =3D {
-+	.name			=3D "isimodem",
-+	.probe			=3D isi_radio_access_probe,
-+	.remove			=3D isi_radio_access_remove,
-+	.query_mode		=3D isi_query_mode,
-+	.set_mode		=3D isi_set_mode
-+};
-+
-+void isi_radio_access_init()
++void ofono_radio_access_register(struct ofono_radio_access *ra)
 +{
-+	ofono_radio_access_driver_register(&driver);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(ra->atom);
++	const char *path =3D __ofono_atom_get_path(ra->atom);
++
++	if (!g_dbus_register_interface(conn, path,
++					RADIO_ACCESS_INTERFACE,
++					ra_methods, ra_signals, NULL, ra,
++					NULL)) {
++		ofono_error("Could not create %s interface",
++				RADIO_ACCESS_INTERFACE);
++
++		return;
++	}
++
++	ofono_modem_add_interface(modem, RADIO_ACCESS_INTERFACE);
++
++	if (ra->driver->query_mode)
++		ra->driver->query_mode(ra, ra_mode_query_callback, ra);
++
++	__ofono_atom_register(ra->atom, radio_access_unregister);
 +}
 +
-+void isi_radio_access_exit()
++void ofono_radio_access_remove(struct ofono_radio_access *ra)
 +{
-+	ofono_radio_access_driver_unregister(&driver);
++	__ofono_atom_free(ra->atom);
++}
++
++void ofono_radio_access_set_data(struct ofono_radio_access *ra,
++					void *data)
++{
++	ra->driver_data =3D data;
++}
++
++void *ofono_radio_access_get_data(struct ofono_radio_access *ra)
++{
++	return ra->driver_data;
 +}
 -- =
 
 1.6.3.3
 
 
---===============4115176302114322947==--
+--===============6179051857354337378==--
 
