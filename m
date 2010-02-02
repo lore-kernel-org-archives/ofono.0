@@ -1,126 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============0825227856407306086=="
+Content-Type: multipart/mixed; boundary="===============4115176302114322947=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH 2/3] Add PN_GSS code points and debugging
-Date: Wed, 03 Feb 2010 00:38:05 +0200
-Message-ID: <1265150286-14548-2-git-send-email-aki.niemi@nokia.com>
-In-Reply-To: <1265150286-14548-1-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCH 3/3] Add isimodem radio access driver
+Date: Wed, 03 Feb 2010 00:38:06 +0200
+Message-ID: <1265150286-14548-3-git-send-email-aki.niemi@nokia.com>
+In-Reply-To: <1265150286-14548-2-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0825227856407306086==
+--===============4115176302114322947==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am              |    3 +-
- drivers/isimodem/debug.c |   25 +++++++++++++++++++
- drivers/isimodem/debug.h |    5 ++++
- drivers/isimodem/gss.h   |   58 ++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am                     |    1 +
+ drivers/isimodem/isimodem.c     |    4 +
+ drivers/isimodem/isimodem.h     |    3 +
+ drivers/isimodem/radio-access.c |  299 +++++++++++++++++++++++++++++++++++=
 ++++
- 4 files changed, 90 insertions(+), 1 deletions(-)
- create mode 100644 drivers/isimodem/gss.h
+ 4 files changed, 307 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/isimodem/radio-access.c
 
 diff --git a/Makefile.am b/Makefile.am
-index a18e4b9..5f67878 100644
+index 5f67878..235aa86 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -102,7 +102,8 @@ builtin_sources +=3D $(gisi_sources) \
- 				drivers/isimodem/call-settings.c \
+@@ -103,6 +103,7 @@ builtin_sources +=3D $(gisi_sources) \
  				drivers/isimodem/call-barring.c \
  				drivers/isimodem/call-meter.c \
--				drivers/isimodem/ss.h
-+				drivers/isimodem/ss.h \
-+				drivers/isimodem/gss.h
+ 				drivers/isimodem/ss.h \
++				drivers/isimodem/radio-access.c \
+ 				drivers/isimodem/gss.h
  endif
  =
 
- if ATMODEM
-diff --git a/drivers/isimodem/debug.c b/drivers/isimodem/debug.c
-index 2f8f1f4..401de9d 100644
---- a/drivers/isimodem/debug.c
-+++ b/drivers/isimodem/debug.c
-@@ -746,6 +746,25 @@ const char *net_subblock_name(enum net_subblock value)
- 	return "NET_<UNKNOWN>";
+diff --git a/drivers/isimodem/isimodem.c b/drivers/isimodem/isimodem.c
+index 48f41c3..4b65d21 100644
+--- a/drivers/isimodem/isimodem.c
++++ b/drivers/isimodem/isimodem.c
+@@ -49,6 +49,7 @@
+ #include <ofono/call-settings.h>
+ #include <ofono/call-barring.h>
+ #include <ofono/call-meter.h>
++#include <ofono/radio-access.h>
+ =
+
+ #include "isimodem.h"
+ #include "isiutil.h"
+@@ -310,6 +311,7 @@ static void isi_modem_post_sim(struct ofono_modem *mode=
+m)
+ 	ofono_call_settings_create(isi->modem, 0, "isimodem", isi->idx);
+ 	ofono_call_barring_create(isi->modem, 0, "isimodem", isi->idx);
+ 	ofono_call_meter_create(isi->modem, 0, "isimodem", isi->idx);
++	ofono_radio_access_create(isi->modem, 0, "isimodem", isi->idx);
  }
  =
 
-+const char *gss_message_id_name(enum gss_message_id value)
-+{
-+	switch (value) {
-+		_(GSS_CS_SERVICE_REQ);
-+		_(GSS_CS_SERVICE_RESP);
-+		_(GSS_CS_SERVICE_FAIL_RESP);
-+		_(GSS_SELECTED_RAT_IND);
-+	}
-+	return "GSS_<UNKNOWN>";
-+}
-+
-+const char *gss_subblock_name(enum gss_subblock value)
-+{
-+	switch (value) {
-+		_(GSS_RAT_INFO);
-+	}
-+	return "GSS_<UNKNOWN>";
-+}
-+
- #undef _
+ static struct ofono_modem_driver driver =3D {
+@@ -339,6 +341,7 @@ static int isimodem_init(void)
+ 	isi_call_settings_init();
+ 	isi_call_barring_init();
+ 	isi_call_meter_init();
++	isi_radio_access_init();
  =
 
- static void hex_dump(const char *name, const uint8_t m[], size_t len)
-@@ -816,3 +835,9 @@ void net_debug(const void *restrict buf, size_t len, vo=
-id *data)
- 	const uint8_t *m =3D buf;
- 	hex_dump(net_message_id_name(m[0]), m, len);
+ 	ofono_modem_driver_register(&driver);
+ =
+
+@@ -379,6 +382,7 @@ static void isimodem_exit(void)
+ 	isi_call_settings_exit();
+ 	isi_call_barring_exit();
+ 	isi_call_meter_exit();
++	isi_radio_access_exit();
  }
+ =
+
+ OFONO_PLUGIN_DEFINE(isimodem, "PhoNet / ISI modem driver", VERSION,
+diff --git a/drivers/isimodem/isimodem.h b/drivers/isimodem/isimodem.h
+index 3eb2fbe..2b3d756 100644
+--- a/drivers/isimodem/isimodem.h
++++ b/drivers/isimodem/isimodem.h
+@@ -57,3 +57,6 @@ extern void isi_call_barring_exit();
+ =
+
+ extern void isi_call_meter_init();
+ extern void isi_call_meter_exit();
 +
-+void gss_debug(const void *restrict buf, size_t len, void *data)
-+{
-+	const uint8_t *m =3D buf;
-+	hex_dump(gss_message_id_name(m[0]), m, len);
-+}
-diff --git a/drivers/isimodem/debug.h b/drivers/isimodem/debug.h
-index b9ee39a..fa316ba 100644
---- a/drivers/isimodem/debug.h
-+++ b/drivers/isimodem/debug.h
-@@ -29,6 +29,7 @@
- #include "info.h"
- #include "call.h"
- #include "network.h"
-+#include "gss.h"
- =
-
- const char *ss_message_id_name(enum ss_message_id value);
- const char *ss_subblock_name(enum ss_subblock value);
-@@ -61,6 +62,9 @@ const char *net_status_name(enum net_reg_status value);
- const char *net_message_id_name(enum net_message_id value);
- const char *net_subblock_name(enum net_subblock value);
- =
-
-+const char *gss_message_id_name(enum gss_message_id value);
-+const char *gss_subblock_name(enum gss_subblock value);
-+
- void ss_debug(const void *restrict buf, size_t len, void *data);
- void mtc_debug(const void *restrict buf, size_t len, void *data);
- void sms_debug(const void *restrict buf, size_t len, void *data);
-@@ -68,6 +72,7 @@ void sim_debug(const void *restrict buf, size_t len, void=
- *data);
- void info_debug(const void *restrict buf, size_t len, void *data);
- void call_debug(const void *restrict buf, size_t len, void *data);
- void net_debug(const void *restrict buf, size_t len, void *data);
-+void gss_debug(const void *restrict buf, size_t len, void *data);
- =
-
- const char *pn_resource_name(int value);
- =
-
-diff --git a/drivers/isimodem/gss.h b/drivers/isimodem/gss.h
++extern void isi_radio_access_init();
++extern void isi_radio_access_exit();
+diff --git a/drivers/isimodem/radio-access.c b/drivers/isimodem/radio-acces=
+s.c
 new file mode 100644
-index 0000000..a61c0b0
+index 0000000..8c9e0b5
 --- /dev/null
-+++ b/drivers/isimodem/gss.h
-@@ -0,0 +1,58 @@
++++ b/drivers/isimodem/radio-access.c
+@@ -0,0 +1,299 @@
 +/*
 + * This file is part of oFono - Open Source Telephony
 + *
@@ -142,47 +117,291 @@ index 0000000..a61c0b0
 + *
 + */
 +
-+#ifndef __ISIMODEM_GSS_H
-+#define __ISIMODEM_GSS_H
-+
-+#ifdef __cplusplus
-+extern "C" {
++#ifdef HAVE_CONFIG_H
++#include <config.h>
 +#endif
 +
-+#define PN_GSS			0x32
-+#define GSS_TIMEOUT		5
++#define _GNU_SOURCE
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <errno.h>
 +
-+enum gss_message_id {
-+	GSS_CS_SERVICE_REQ =3D 0x00,
-+	GSS_CS_SERVICE_RESP =3D 0x01,
-+	GSS_CS_SERVICE_FAIL_RESP =3D 0x02,
-+	GSS_SELECTED_RAT_IND =3D 0x14
++#include <glib.h>
++
++#include <gisi/client.h>
++#include <gisi/iter.h>
++
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/radio-access.h>
++
++#include "isimodem.h"
++#include "isiutil.h"
++#include "debug.h"
++#include "gss.h"
++
++struct access_data {
++	GIsiClient *client;
 +};
 +
-+enum gss_subblock {
-+	GSS_RAT_INFO =3D 0x0B
++static bool rat_mode_read_resp_cb(GIsiClient *client, const void *restrict=
+ data,
++					size_t len, uint16_t object, void *opaque)
++{
++	const unsigned char *msg =3D data;
++	struct isi_cb_data *cbd =3D opaque;
++	ofono_radio_access_mode_query_cb_t cb =3D cbd->cb;
++	int mode =3D -1;
++
++	if (!msg) {
++		DBG("ISI client error: %d", g_isi_client_error(client));
++		goto error;
++	}
++
++	if (len < 3) {
++		DBG("truncated message");
++		return false;
++	}
++
++	if (msg[0] =3D=3D GSS_CS_SERVICE_FAIL_RESP)
++		goto error;
++
++	if (msg[0] =3D=3D GSS_CS_SERVICE_RESP) {
++		GIsiSubBlockIter iter;
++
++		for (g_isi_sb_iter_init(&iter, msg, len, 3);
++			g_isi_sb_iter_is_valid(&iter);
++			g_isi_sb_iter_next(&iter)) {
++
++			switch (g_isi_sb_iter_get_id(&iter)) {
++
++			case GSS_RAT_INFO: {
++
++				guint8 byte;
++
++				if (!g_isi_sb_iter_get_byte(&iter, &byte, 2))
++					goto error;
++
++				mode =3D (int)byte;
++
++				break;
++			}
++			default:
++				DBG("Skipping sub-block: %s (%zu bytes)",
++					gss_subblock_name(g_isi_sb_iter_get_id(&iter)),
++					g_isi_sb_iter_get_len(&iter));
++				break;
++			}
++		}
++
++		CALLBACK_WITH_SUCCESS(cb, mode, cbd->data);
++		goto out;
++	}
++
++	return false;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++
++out:
++	g_free(cbd);
++	return true;
++}
++
++static void isi_query_mode(struct ofono_radio_access *ra,
++				ofono_radio_access_mode_query_cb_t cb,
++				void *data)
++{
++	struct access_data *access =3D ofono_radio_access_get_data(ra);
++	struct isi_cb_data *cbd =3D isi_cb_data_new(access, cb, data);
++
++	const unsigned char msg[] =3D {
++		GSS_CS_SERVICE_REQ,
++		GSS_SELECTED_RAT_READ,
++		0x00 /* subblock count */
++	};
++
++	if (!cbd)
++		goto error;
++
++	if (g_isi_request_make(access->client, msg, sizeof(msg),
++				GSS_TIMEOUT, rat_mode_read_resp_cb, cbd))
++		return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, -1, data);
++	g_free(cbd);
++}
++
++static bool rat_mode_write_resp_cb(GIsiClient *client, const void *restric=
+t data,
++					size_t len, uint16_t object, void *opaque)
++{
++	const unsigned char *msg =3D data;
++	struct isi_cb_data *cbd =3D opaque;
++	ofono_radio_access_mode_set_cb_t cb =3D cbd->cb;
++
++	if (!msg) {
++		DBG("ISI client error: %d", g_isi_client_error(client));
++		goto error;
++	}
++
++	if (len < 3) {
++		DBG("truncated message");
++		return false;
++	}
++
++	if (msg[0] =3D=3D GSS_CS_SERVICE_FAIL_RESP)
++		goto error;
++
++	if (msg[0] =3D=3D GSS_CS_SERVICE_RESP) {
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++		goto out;
++	}
++
++	return false;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, cbd->data);
++
++out:
++	g_free(cbd);
++	return true;
++}
++
++static void isi_set_mode(struct ofono_radio_access *ra, int mode,
++				ofono_radio_access_mode_set_cb_t cb,
++				void *data)
++{
++	struct access_data *access =3D ofono_radio_access_get_data(ra);
++	struct isi_cb_data *cbd =3D isi_cb_data_new(access, cb, data);
++
++	const unsigned char msg[] =3D {
++		GSS_CS_SERVICE_REQ,
++		GSS_SELECTED_RAT_WRITE,
++		0x01, /* subblock count */
++		GSS_RAT_INFO,
++		0x04, /* subblock length */
++		mode,
++		0x00 /* filler */
++	};
++
++	if (!cbd)
++		goto error;
++
++	if (g_isi_request_make(access->client, msg, sizeof(msg),
++				GSS_TIMEOUT, rat_mode_write_resp_cb, cbd))
++		return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
++static void rat_mode_ind_cb(GIsiClient *client, const void *restrict data,
++				size_t len, uint16_t object, void *opaque)
++{
++	const unsigned char *msg =3D data;
++	struct ofono_radio_access *ra =3D opaque;
++
++	if (!msg || len < 3 || msg[0] !=3D GSS_SELECTED_RAT_IND)
++		return;
++
++	ofono_radio_access_mode_notify(ra, msg[1]);
++}
++
++static gboolean isi_radio_access_register(gpointer user)
++{
++	struct ofono_radio_access *ra =3D user;
++	struct access_data *access =3D ofono_radio_access_get_data(ra);
++
++	const char *debug =3D getenv("OFONO_ISI_DEBUG");
++
++	if (debug && (g_strcmp0(debug, "all") =3D=3D 0
++		|| g_strcmp0(debug, "gss") =3D=3D 0))
++		g_isi_client_set_debug(access->client, gss_debug, NULL);
++
++	g_isi_subscribe(access->client, GSS_SELECTED_RAT_IND,
++			rat_mode_ind_cb, ra);
++
++	ofono_radio_access_register(ra);
++
++	return FALSE;
++}
++
++static void reachable_cb(GIsiClient *client, bool alive, uint16_t object,
++				void *opaque)
++{
++	struct ofono_radio_access *ra =3D opaque;
++
++	if (!alive) {
++		DBG("devinfo driver bootstrap failed");
++		return;
++	}
++
++	DBG("%s (v%03d.%03d) reachable",
++		pn_resource_name(g_isi_client_resource(client)),
++		g_isi_version_major(client),
++		g_isi_version_minor(client));
++
++	g_idle_add(isi_radio_access_register, ra);
++}
++
++static int isi_radio_access_probe(struct ofono_radio_access *ra, unsigned =
+int vendor,
++					void *user)
++{
++	GIsiModem *idx =3D user;
++	struct access_data *data =3D g_try_new0(struct access_data, 1);
++
++	if (!data)
++		return -ENOMEM;
++
++	data->client =3D g_isi_client_create(idx, PN_GSS);
++	if (!data->client) {
++		g_free(data);
++		return -ENOMEM;
++	}
++
++	ofono_radio_access_set_data(ra, data);
++
++	g_isi_verify(data->client, reachable_cb, ra);
++
++	return 0;
++}
++
++static void isi_radio_access_remove(struct ofono_radio_access *ra)
++{
++	struct access_data *data =3D ofono_radio_access_get_data(ra);
++
++	if (data) {
++		g_isi_client_destroy(data->client);
++		g_free(data);
++	}
++}
++
++static struct ofono_radio_access_driver driver =3D {
++	.name			=3D "isimodem",
++	.probe			=3D isi_radio_access_probe,
++	.remove			=3D isi_radio_access_remove,
++	.query_mode		=3D isi_query_mode,
++	.set_mode		=3D isi_set_mode
 +};
 +
-+enum gss_selection_mode {
-+	GSS_DUAL_RAT =3D 0x00,
-+	GSS_GSM_RAT =3D 0x01,
-+	GSS_UMTS_RAT =3D 0x02
-+};
++void isi_radio_access_init()
++{
++	ofono_radio_access_driver_register(&driver);
++}
 +
-+enum gss_operation {
-+	GSS_SELECTED_RAT_WRITE =3D 0x0E,
-+	GSS_SELECTED_RAT_READ =3D 0x9C
-+};
-+
-+#ifdef __cplusplus
-+};
-+#endif
-+
-+#endif /* !__ISIMODEM_GSS_H */
++void isi_radio_access_exit()
++{
++	ofono_radio_access_driver_unregister(&driver);
++}
 -- =
 
 1.6.3.3
 
 
---===============0825227856407306086==--
+--===============4115176302114322947==--
 
