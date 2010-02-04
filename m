@@ -1,137 +1,196 @@
-Content-Type: multipart/mixed; boundary="===============5278081877852676203=="
+Content-Type: multipart/mixed; boundary="===============4185801948941077304=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] Add radio settings atom and driver API
-Date: Thu, 04 Feb 2010 14:28:41 -0600
-Message-ID: <201002041428.41922.denkenz@gmail.com>
-In-Reply-To: <1265266709-3835-1-git-send-email-aki.niemi@nokia.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH 1/3] hfp: create modem for new devices paired on runtime
+Date: Thu, 04 Feb 2010 19:30:19 -0200
+Message-ID: <1265319021-28299-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5278081877852676203==
+--===============4185801948941077304==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+It listens the Paired property to create a modem to the recently paired
+devices. It also renames added_watch to adapter_watch, a more proper
+name.
+---
+ plugins/hfp.c |   64 ++++++++++++++++++++++++++++++++++++++++++++++++++++-=
+---
+ 1 files changed, 59 insertions(+), 5 deletions(-)
 
-> This interface exposes a rw property for radio access selection mode
-> setting.
-> ---
->  Makefile.am                |    6 +-
->  doc/radio-settings-api.txt |   42 +++++
->  include/radio-settings.h   |   74 +++++++++
->  src/ofono.h                |    2 +
->  src/radio-settings.c       |  372
->  ++++++++++++++++++++++++++++++++++++++++++++ 5 files changed, 494
->  insertions(+), 2 deletions(-)
->  create mode 100644 doc/radio-settings-api.txt
->  create mode 100644 include/radio-settings.h
->  create mode 100644 src/radio-settings.c
+diff --git a/plugins/hfp.c b/plugins/hfp.c
+index 981b05b..cd43af7 100644
+--- a/plugins/hfp.c
++++ b/plugins/hfp.c
+@@ -66,6 +66,7 @@ static const char *cmer_prefix[] =3D { "+CMER:", NULL };
+ static const char *chld_prefix[] =3D { "+CHLD:", NULL };
+ =
 
-<snip>
+ static DBusConnection *connection;
++static GHashTable *uuid_hash =3D NULL;
+ =
 
-> +Properties	string Mode [read-write]
+ static void hfp_debug(const char *str, void *user_data)
+ {
+@@ -410,6 +411,9 @@ static DBusMessage *hfp_agent_release(DBusConnection *c=
+onn,
+ 					DBusMessage *msg, void *data)
+ {
+ 	struct ofono_modem *modem =3D data;
++	const char * path;
++
++	path =3D dbus_message_get_path(msg);
+ =
 
-Per mailing list thread with Marcel, "Technology" or "TechnologySelection" =
-or =
+ 	ofono_modem_remove(modem);
+ =
 
-"TechnologyPreference" will be better here.
+@@ -427,6 +431,10 @@ static int hfp_create_modem(const char *device)
+ {
+ 	struct ofono_modem *modem;
+ 	struct hfp_data *data;
++	const char *path;
++
++	if (g_hash_table_lookup(uuid_hash, device))
++		return -EALREADY;
+ =
 
-> +
-> +			The current radio access selection mode, also known
-> +			as network preference.
-> +
-> +			The possible values are:
-> +				"dual"     Radio access selection is done
-> +					   automatically, using either 2G
-> +					   or 3G, depending on reception.
+ 	ofono_info("Using device: %s", device);
+ =
 
-As discussed in later threads, I do like "auto" or "any" here.
+@@ -451,6 +459,9 @@ static int hfp_create_modem(const char *device)
+ 	ofono_modem_set_data(modem, data);
+ 	ofono_modem_register(modem);
+ =
 
-> +				"2g"       Only GSM used for radio access.
-> +				"3g"       Only UTRAN used for radio access.
-> +				"unknown"  Mode currently unknown.
++	path =3D ofono_modem_get_path(modem);
++	g_hash_table_insert(uuid_hash, g_strdup(device), g_strdup(path));
++
+ 	return 0;
+ =
 
-Lets get rid of the "unknown" part, we always know the setting, even if it =
+ free:
+@@ -624,6 +635,33 @@ static gboolean adapter_added(DBusConnection *connecti=
+on, DBusMessage *message,
+ 	return TRUE;
+ }
+ =
 
-takes a little time to query it.
++static gboolean uuid_emitted(DBusConnection *connection, DBusMessage *mess=
+age,
++				void *user_data)
++{
++	const char *device, *property;
++	DBusMessageIter iter;
++
++	dbus_message_iter_init(message, &iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return FALSE;
++
++	dbus_message_iter_get_basic(&iter, &property);
++	if (g_str_equal(property, "UUIDs") =3D=3D FALSE)
++		return TRUE;
++
++	if (!dbus_message_iter_next(&iter))
++		return FALSE;
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++		return FALSE;
++
++	device =3D dbus_message_get_path(message);
++	parse_uuids(&iter, device);
++
++	return TRUE;
++}
++
+ static void list_adapters_cb(DBusPendingCall *call, gpointer user_data)
+ {
+ 	DBusError err;
+@@ -725,6 +763,8 @@ static void hfp_remove(struct ofono_modem *modem)
+ =
 
-> diff --git a/include/radio-settings.h b/include/radio-settings.h
-> new file mode 100644
-> index 0000000..807d3da
-> +typedef void (*ofono_radio_settings_mode_query_cb_t)(const struct
->  ofono_error *error, +						enum ofono_radio_access_mode mode,
-> +						void *data);
+ 	hfp_unregister_ofono_handsfree(modem);
+ =
 
-I still say this part is not required.
++	g_hash_table_remove(uuid_hash, data->handsfree_path);
++
+ 	g_free(data->handsfree_path);
+ 	g_free(data);
+ =
 
-> +
-> +struct ofono_radio_settings_driver {
-> +	const char *name;
-> +	int (*probe)(struct ofono_radio_settings *rs, unsigned int vendor, void
->  *data); +	void (*remove)(struct ofono_radio_settings *rs);
-> +	void (*query_mode)(struct ofono_radio_settings *rs,
-> +				ofono_radio_settings_mode_query_cb_t cb, void *data);
+@@ -798,7 +838,8 @@ static struct ofono_modem_driver hfp_driver =3D {
+ 	.post_sim	=3D hfp_post_sim,
+ };
+ =
 
-Neither is query_mode.  This is a local modem setting, not a network settin=
-g.  =
+-static guint added_watch;
++static guint adapter_watch;
++static guint uuid_watch;
+ =
 
-There's simply no reason to query it when oFono can store the settings.
+ static int hfp_init(void)
+ {
+@@ -809,12 +850,21 @@ static int hfp_init(void)
+ =
 
-Lets just add ability to read the mode setting from storage and set it at =
+ 	connection =3D ofono_dbus_get_connection();
+ =
 
-interface startup.
+-	added_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
++	adapter_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
+ 						BLUEZ_MANAGER_INTERFACE,
+ 						"AdapterAdded",
+ 						adapter_added, NULL, NULL);
+ =
 
-> +	void (*set_mode)(struct ofono_radio_settings *rs,
-> +				enum ofono_radio_access_mode mode,
-> +				ofono_radio_settings_mode_set_cb_t cb, void *data);
+-	if (added_watch =3D=3D 0) {
++	uuid_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
++						BLUEZ_DEVICE_INTERFACE,
++						"PropertyChanged",
++						uuid_emitted, NULL, NULL);
++
++
++	uuid_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++			g_free, g_free);
++
++	if (adapter_watch =3D=3D 0 || uuid_watch =3D=3D 0) {
+ 		err =3D -EIO;
+ 		goto remove;
+ 	}
+@@ -828,7 +878,9 @@ static int hfp_init(void)
+ 	return 0;
+ =
 
-Should this be called something else? E.g. set_technology or set_rat_mode.
+ remove:
+-	g_dbus_remove_watch(connection, added_watch);
++	g_dbus_remove_watch(connection, adapter_watch);
++	g_dbus_remove_watch(connection, uuid_watch);
++	g_hash_table_destroy(uuid_hash);
+ =
 
-> +};
-> +
-> diff --git a/src/ofono.h b/src/ofono.h
-> index 379f413..ff67728 100644
-> --- a/src/ofono.h
-> +++ b/src/ofono.h
-> @@ -113,6 +113,7 @@ enum ofono_atom_type {
->  	OFONO_ATOM_TYPES_CALL_VOLUME =3D 15,
->  	OFONO_ATOM_TYPE_GPRS =3D 16,
->  	OFONO_ATOM_TYPE_GPRS_CONTEXT =3D 17,
-> +	OFONO_ATOM_TYPE_RADIO_SETTINGS =3D 18,
->  };
-> =
+ 	dbus_connection_unref(connection);
+ =
 
->  enum ofono_atom_watch_condition {
-> @@ -168,6 +169,7 @@ void __ofono_atom_free(struct ofono_atom *atom);
->  #include <ofono/voicecall.h>
->  #include <ofono/gprs.h>
->  #include <ofono/gprs-context.h>
-> +#include <ofono/radio-settings.h>
-> =
+@@ -837,7 +889,9 @@ remove:
+ =
 
->  #include <ofono/sim.h>
-> =
+ static void hfp_exit(void)
+ {
+-	g_dbus_remove_watch(connection, added_watch);
++	g_dbus_remove_watch(connection, adapter_watch);
++	g_dbus_remove_watch(connection, uuid_watch);
++	g_hash_table_destroy(uuid_hash);
+ =
 
-> diff --git a/src/radio-settings.c b/src/radio-settings.c
-> new file mode 100644
-> index 0000000..6e41194
-> --- /dev/null
-> +++ b/src/radio-settings.c
+ 	ofono_modem_driver_unregister(&hfp_driver);
+ }
+-- =
 
-<snip>
+1.6.4.4
 
-> +#define RADIO_SETTINGS_INTERFACE "org.ofono.RadioSettings"
-> +#define RADIO_SETTINGS_INTERFACE "org.ofono.RadioSettings"
-> +
 
-Double define?
-
-Otherwise it looks good to me.
-
-Regards,
--Denis
-
---===============5278081877852676203==--
+--===============4185801948941077304==--
 
