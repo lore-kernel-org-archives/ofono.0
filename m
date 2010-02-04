@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7369401949667722317=="
+Content-Type: multipart/mixed; boundary="===============6242038570187679670=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
 Subject: [PATCH] Implement HandsfreeGateway Interface
-Date: Thu, 04 Feb 2010 15:11:26 -0200
-Message-ID: <1265303486-10865-1-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1265247361-27111-1-git-send-email-padovan@profusion.mobi>
+Date: Thu, 04 Feb 2010 16:18:54 -0200
+Message-ID: <1265307534-1250-1-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1265303486-10865-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7369401949667722317==
+--===============6242038570187679670==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,13 +20,13 @@ Many thanks to Zhenhua Zhang <zhenhua.zhang@intel.com> for his
 prototype on this code.
 ---
  audio/device.c  |    3 +
- audio/gateway.c |  422 +++++++++++++++++++++++++++++++++++++++++----------=
+ audio/gateway.c |  433 ++++++++++++++++++++++++++++++++++++++++++---------=
 ----
  audio/gateway.h |   14 ++-
  audio/manager.c |   19 +--
  audio/unix.c    |   13 ++-
  doc/hfp-api.txt |   82 +++++++++++
- 6 files changed, 427 insertions(+), 126 deletions(-)
+ 6 files changed, 438 insertions(+), 126 deletions(-)
  create mode 100644 doc/hfp-api.txt
 
 diff --git a/audio/device.c b/audio/device.c
@@ -47,7 +47,7 @@ e)
  =
 
 diff --git a/audio/gateway.c b/audio/gateway.c
-index 3dc09ff..2e374d1 100644
+index 3dc09ff..eaac8ab 100644
 --- a/audio/gateway.c
 +++ b/audio/gateway.c
 @@ -5,6 +5,7 @@
@@ -323,8 +323,33 @@ rr, gpointer user_data)
  	GError *err =3D NULL;
  =
 
-@@ -182,8 +298,6 @@ static void get_record_cb(sdp_list_t *recs, int perr, g=
-pointer user_data)
+@@ -164,16 +280,19 @@ static void get_record_cb(sdp_list_t *recs, int perr,=
+ gpointer user_data)
+ =
+
+ 	if (!recs || !recs->data) {
+ 		error("No records found");
++		perr =3D EIO;
+ 		goto fail;
+ 	}
+ =
+
+ 	if (sdp_get_service_classes(recs->data, &classes) < 0) {
+ 		error("Unable to get service classes from record");
++		perr =3D EINVAL;
+ 		goto fail;
+ 	}
+ =
+
+ 	if (sdp_get_access_protos(recs->data, &protos) < 0) {
+ 		error("Unable to get access protocols from record");
++		perr =3D ENODATA;
+ 		goto fail;
+ 	}
+ =
+
+@@ -182,10 +301,9 @@ static void get_record_cb(sdp_list_t *recs, int perr, =
+gpointer user_data)
  =
 
  	if (!sdp_uuid128_to_uuid(&uuid) || uuid.type !=3D SDP_UUID16 ||
@@ -333,8 +358,22 @@ pointer user_data)
 -									NULL);
  		sdp_list_free(protos, NULL);
  		error("Invalid service record or not HFP");
++		perr =3D EIO;
  		goto fail;
-@@ -204,29 +318,25 @@ static void get_record_cb(sdp_list_t *recs, int perr,=
+ 	}
+ =
+
+@@ -194,6 +312,7 @@ static void get_record_cb(sdp_list_t *recs, int perr, g=
+pointer user_data)
+ 	sdp_list_free(protos, NULL);
+ 	if (ch <=3D 0) {
+ 		error("Unable to extract RFCOMM channel from service record");
++		perr =3D EIO;
+ 		goto fail;
+ 	}
+ =
+
+@@ -204,29 +323,31 @@ static void get_record_cb(sdp_list_t *recs, int perr,=
  gpointer user_data)
  				BT_IO_OPT_INVALID);
  	if (!io) {
@@ -374,13 +413,19 @@ pointer user_data)
 -	sco_cb =3D dev->gateway->sco_start_cb;
 -	if (sco_cb)
 -		sco_cb(NULL, dev->gateway->sco_start_cb_data);
++	if (!err)
++		g_set_error(&err, BT_IO_ERROR, BT_IO_ERROR_FAILED,
++				"connect: %s (%d)", strerror(perr), perr);
++
 +	if (gw->sco_start_cb)
 +		gw->sco_start_cb(dev, err, gw->sco_start_cb_data);
++
++	g_error_free(err);
  }
  =
 
  static int get_records(struct audio_device *device)
-@@ -244,23 +354,47 @@ static DBusMessage *ag_connect(DBusConnection *conn, =
+@@ -244,23 +365,47 @@ static DBusMessage *ag_connect(DBusConnection *conn, =
 DBusMessage *msg,
  	struct audio_device *au_dev =3D (struct audio_device *) data;
  	struct gateway *gw =3D au_dev->gateway;
@@ -441,7 +486,7 @@ DBusMessage *msg,
  static DBusMessage *ag_disconnect(DBusConnection *conn, DBusMessage *msg,
  					void *data)
  {
-@@ -269,6 +403,9 @@ static DBusMessage *ag_disconnect(DBusConnection *conn,=
+@@ -269,6 +414,9 @@ static DBusMessage *ag_disconnect(DBusConnection *conn,=
  DBusMessage *msg,
  	DBusMessage *reply =3D NULL;
  	char gw_addr[18];
@@ -453,7 +498,7 @@ DBusMessage *msg,
  	reply =3D dbus_message_new_method_return(msg);
  	if (!reply)
  		return NULL;
-@@ -285,16 +422,109 @@ static DBusMessage *ag_disconnect(DBusConnection *co=
+@@ -285,16 +433,109 @@ static DBusMessage *ag_disconnect(DBusConnection *co=
 nn, DBusMessage *msg,
  	return reply;
  }
@@ -570,7 +615,7 @@ sg,
  };
  =
 
-@@ -303,9 +533,19 @@ static GDBusSignalTable gateway_signals[] =3D {
+@@ -303,9 +544,19 @@ static GDBusSignalTable gateway_signals[] =3D {
  	{ NULL, NULL }
  };
  =
@@ -593,7 +638,7 @@ sg,
 
  	if (!g_dbus_register_interface(dev->conn, dev->path,
  					AUDIO_GATEWAY_INTERFACE,
-@@ -313,10 +553,7 @@ struct gateway *gateway_init(struct audio_device *dev)
+@@ -313,10 +564,7 @@ struct gateway *gateway_init(struct audio_device *dev)
  					NULL, dev, NULL))
  		return NULL;
  =
@@ -608,7 +653,7 @@ sg,
  }
  =
 
-@@ -331,8 +568,7 @@ int gateway_connect_rfcomm(struct audio_device *dev, GI=
+@@ -331,8 +579,7 @@ int gateway_connect_rfcomm(struct audio_device *dev, GI=
 OChannel *io)
  	if (!io)
  		return -EINVAL;
@@ -621,7 +666,7 @@ OChannel *io)
 
  	return 0;
  }
-@@ -347,42 +583,25 @@ int gateway_connect_sco(struct audio_device *dev, GIO=
+@@ -347,42 +594,25 @@ int gateway_connect_sco(struct audio_device *dev, GIO=
 Channel *io)
  	gw->sco =3D g_io_channel_ref(io);
  =
@@ -683,7 +728,7 @@ Channel *io)
  =
 
  /* These are functions to be called from unix.c for audio system
-@@ -410,10 +629,8 @@ gboolean gateway_request_stream(struct audio_device *d=
+@@ -410,10 +640,8 @@ gboolean gateway_request_stream(struct audio_device *d=
 ev,
  			g_error_free(err);
  			return FALSE;
@@ -698,7 +743,7 @@ ev,
 
  	return TRUE;
  }
-@@ -430,7 +647,7 @@ int gateway_config_stream(struct audio_device *dev, gat=
+@@ -430,7 +658,7 @@ int gateway_config_stream(struct audio_device *dev, gat=
 eway_stream_cb_t sco_cb,
  	}
  =
@@ -710,7 +755,7 @@ eway_stream_cb_t sco_cb,
 
  	return 0;
  }
-@@ -464,4 +681,3 @@ void gateway_suspend_stream(struct audio_device *dev)
+@@ -464,4 +692,3 @@ void gateway_suspend_stream(struct audio_device *dev)
  	gw->sco_start_cb =3D NULL;
  	gw->sco_start_cb_data =3D NULL;
  }
@@ -964,5 +1009,5 @@ udio
 1.6.4.4
 
 
---===============7369401949667722317==--
+--===============6242038570187679670==--
 
