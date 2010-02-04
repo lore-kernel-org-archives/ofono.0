@@ -1,196 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============4185801948941077304=="
+Content-Type: multipart/mixed; boundary="===============8910836404057406859=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 1/3] hfp: create modem for new devices paired on runtime
-Date: Thu, 04 Feb 2010 19:30:19 -0200
-Message-ID: <1265319021-28299-1-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 2/3] hfp: Don't call UnregisterAgent if a Release was received
+Date: Thu, 04 Feb 2010 19:30:20 -0200
+Message-ID: <1265319021-28299-2-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1265319021-28299-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4185801948941077304==
+--===============8910836404057406859==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-It listens the Paired property to create a modem to the recently paired
-devices. It also renames added_watch to adapter_watch, a more proper
-name.
+Prevent to call UnregisterAgent on an already unregistered agent.
 ---
- plugins/hfp.c |   64 ++++++++++++++++++++++++++++++++++++++++++++++++++++-=
----
- 1 files changed, 59 insertions(+), 5 deletions(-)
+ plugins/hfp.c |    9 ++++++++-
+ 1 files changed, 8 insertions(+), 1 deletions(-)
 
 diff --git a/plugins/hfp.c b/plugins/hfp.c
-index 981b05b..cd43af7 100644
+index cd43af7..4202ddf 100644
 --- a/plugins/hfp.c
 +++ b/plugins/hfp.c
-@@ -66,6 +66,7 @@ static const char *cmer_prefix[] =3D { "+CMER:", NULL };
- static const char *chld_prefix[] =3D { "+CHLD:", NULL };
- =
-
- static DBusConnection *connection;
-+static GHashTable *uuid_hash =3D NULL;
- =
-
- static void hfp_debug(const char *str, void *user_data)
+@@ -760,8 +760,11 @@ static int hfp_probe(struct ofono_modem *modem)
+ static void hfp_remove(struct ofono_modem *modem)
  {
-@@ -410,6 +411,9 @@ static DBusMessage *hfp_agent_release(DBusConnection *c=
-onn,
- 					DBusMessage *msg, void *data)
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
++	const char *obj_path =3D ofono_modem_get_path(modem);
+ =
+
+-	hfp_unregister_ofono_handsfree(modem);
++	if (g_dbus_unregister_interface(connection, obj_path,
++					HFP_AGENT_INTERFACE))
++		hfp_unregister_ofono_handsfree(modem);
+ =
+
+ 	g_hash_table_remove(uuid_hash, data->handsfree_path);
+ =
+
+@@ -804,10 +807,14 @@ static int hfp_disconnect_ofono_handsfree(struct ofon=
+o_modem *modem)
+ =
+
+ static int hfp_disable(struct ofono_modem *modem)
  {
- 	struct ofono_modem *modem =3D data;
-+	const char * path;
++	const char *obj_path =3D ofono_modem_get_path(modem);
 +
-+	path =3D dbus_message_get_path(msg);
+ 	DBG("%p", modem);
  =
 
- 	ofono_modem_remove(modem);
+ 	clear_data(modem);
  =
 
-@@ -427,6 +431,10 @@ static int hfp_create_modem(const char *device)
- {
- 	struct ofono_modem *modem;
- 	struct hfp_data *data;
-+	const char *path;
++	g_dbus_unregister_interface(connection, obj_path, HFP_AGENT_INTERFACE);
 +
-+	if (g_hash_table_lookup(uuid_hash, device))
-+		return -EALREADY;
- =
-
- 	ofono_info("Using device: %s", device);
- =
-
-@@ -451,6 +459,9 @@ static int hfp_create_modem(const char *device)
- 	ofono_modem_set_data(modem, data);
- 	ofono_modem_register(modem);
- =
-
-+	path =3D ofono_modem_get_path(modem);
-+	g_hash_table_insert(uuid_hash, g_strdup(device), g_strdup(path));
-+
+ 	hfp_disconnect_ofono_handsfree(modem);
  	return 0;
- =
-
- free:
-@@ -624,6 +635,33 @@ static gboolean adapter_added(DBusConnection *connecti=
-on, DBusMessage *message,
- 	return TRUE;
- }
- =
-
-+static gboolean uuid_emitted(DBusConnection *connection, DBusMessage *mess=
-age,
-+				void *user_data)
-+{
-+	const char *device, *property;
-+	DBusMessageIter iter;
-+
-+	dbus_message_iter_init(message, &iter);
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
-+		return FALSE;
-+
-+	dbus_message_iter_get_basic(&iter, &property);
-+	if (g_str_equal(property, "UUIDs") =3D=3D FALSE)
-+		return TRUE;
-+
-+	if (!dbus_message_iter_next(&iter))
-+		return FALSE;
-+
-+	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
-+		return FALSE;
-+
-+	device =3D dbus_message_get_path(message);
-+	parse_uuids(&iter, device);
-+
-+	return TRUE;
-+}
-+
- static void list_adapters_cb(DBusPendingCall *call, gpointer user_data)
- {
- 	DBusError err;
-@@ -725,6 +763,8 @@ static void hfp_remove(struct ofono_modem *modem)
- =
-
- 	hfp_unregister_ofono_handsfree(modem);
- =
-
-+	g_hash_table_remove(uuid_hash, data->handsfree_path);
-+
- 	g_free(data->handsfree_path);
- 	g_free(data);
- =
-
-@@ -798,7 +838,8 @@ static struct ofono_modem_driver hfp_driver =3D {
- 	.post_sim	=3D hfp_post_sim,
- };
- =
-
--static guint added_watch;
-+static guint adapter_watch;
-+static guint uuid_watch;
- =
-
- static int hfp_init(void)
- {
-@@ -809,12 +850,21 @@ static int hfp_init(void)
- =
-
- 	connection =3D ofono_dbus_get_connection();
- =
-
--	added_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
-+	adapter_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
- 						BLUEZ_MANAGER_INTERFACE,
- 						"AdapterAdded",
- 						adapter_added, NULL, NULL);
- =
-
--	if (added_watch =3D=3D 0) {
-+	uuid_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
-+						BLUEZ_DEVICE_INTERFACE,
-+						"PropertyChanged",
-+						uuid_emitted, NULL, NULL);
-+
-+
-+	uuid_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+			g_free, g_free);
-+
-+	if (adapter_watch =3D=3D 0 || uuid_watch =3D=3D 0) {
- 		err =3D -EIO;
- 		goto remove;
- 	}
-@@ -828,7 +878,9 @@ static int hfp_init(void)
- 	return 0;
- =
-
- remove:
--	g_dbus_remove_watch(connection, added_watch);
-+	g_dbus_remove_watch(connection, adapter_watch);
-+	g_dbus_remove_watch(connection, uuid_watch);
-+	g_hash_table_destroy(uuid_hash);
- =
-
- 	dbus_connection_unref(connection);
- =
-
-@@ -837,7 +889,9 @@ remove:
- =
-
- static void hfp_exit(void)
- {
--	g_dbus_remove_watch(connection, added_watch);
-+	g_dbus_remove_watch(connection, adapter_watch);
-+	g_dbus_remove_watch(connection, uuid_watch);
-+	g_hash_table_destroy(uuid_hash);
- =
-
- 	ofono_modem_driver_unregister(&hfp_driver);
  }
 -- =
 
 1.6.4.4
 
 
---===============4185801948941077304==--
+--===============8910836404057406859==--
 
