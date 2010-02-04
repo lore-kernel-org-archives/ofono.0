@@ -1,104 +1,117 @@
-Content-Type: multipart/mixed; boundary="===============8588458081378807000=="
+Content-Type: multipart/mixed; boundary="===============3337754748539689398=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: Re: [RFC] [PATCH 0/2] HFP AG integration with PulseAudio
-Date: Thu, 04 Feb 2010 11:21:09 +0800
-Message-ID: <4B6A3D25.2040508@intel.com>
-In-Reply-To: <aa32413d1002031030s446edef6gea3d234bc440c170@mail.gmail.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH 1/2] Fix power down of hfpmodem
+Date: Thu, 04 Feb 2010 02:37:18 -0200
+Message-ID: <1265258238-30559-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8588458081378807000==
+--===============3337754748539689398==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jprvita,
+I was using hfp_disable directly to shutdown the modem. It's wrong, we
+should call ofono_modem_set_powered(modem, FALSE) for that.
+---
+ plugins/hfp.c |   16 ++++++----------
+ 1 files changed, 6 insertions(+), 10 deletions(-)
 
-On 02/04/2010 02:30 AM, Jo=C3=A3o Paulo Rechi Vita wrote:
->>>
->>> Just updating, this patch actually worked when testing with a
->>> different adapter (Fujitsu-Siemens CSR-based). The adapter causing
->>> problems was a Broadcom 2.1, the internal adapter of a Dell Mini10.
->>> Also, suspending the source / sink actually doesn't interfere.
->>>
->>> I did a small video of the whole stuff: http://www.vimeo.com/9078799
->>>
->>> There are still some problems when testing against Nokia N900 and
->>> 2660. After the "enable-modem" step, the RFCOMM link is connected and
->>> the SCO just after that, leading module-bluetooth-discover to load
->>> module-bluetooth-device. Sometimes after that the polling on the
->>> stream fd get a POLLHUP and the module-bluetooth-device unloads
->>> itself. Other times the POLLHUP doesn't happen and the remaining steps
->>> go without any problem.
->>>
->>> Ideas on how to improve this scenario will be very helpful.
->>>
->>>
->>
->> The output from bluetoothd likes below:
->>
->> bluetoothd[21141]: Accepted AG connection from 00:BD:3A:D4:4E:53 for
->> /org/bluez/21141/hci0/dev_00_BD_3A_D4_4E_53
->> bluetoothd[21141]: Accepted SCO connection from 00:BD:3A:D4:4E:53
->> bluetoothd[21141]: No matching connection found for handle 6
->> bluetoothd[21141]: sco connection is released
->>
->> I think you should not load module-bluetooth-device until a voice call is
->> started, no matter incoming or outgoing. Because PA may play music from
->> other device at the same time. And bluetooth-device and loopback module =
-are
->> loaded together. According to HFP v1.5 4.13, there are two cases for
->> incoming call. And outgoing call is simpler than incoming call.
->>
->> If AG and HF both support in band ring tones, we should send a signal fr=
-om
->> oFono to PA when callsetup=3D1. If not, we should send it when call=3D1.
->>
->> I had a patch originally but I cannot find it now. :-(. The basic idea i=
-s to
->> add a filter in ciev_notify() to emit signal (CallStarted and CallEnded)=
- to
->> PA. And PA loads module once it got that signal. Maybe the signal name w=
-as
->> bad and you could choose better one as you want. ;-)
->>
->
-> I think loading module-bluetooth-device only when there is an active
-> call can be a good solution. But I'm concerned about other audio
-> events, i. e.: ringing, SMS notification etc.: doesn't the AG
-> establishes a SCO channel for the these events? Also, I don't think
-> pulse should listen to ofono signals, it should be agent-agnostic. But
-> a signal could be added to the agent interface in this case.
+diff --git a/plugins/hfp.c b/plugins/hfp.c
+index 0e2e359..122a336 100644
+--- a/plugins/hfp.c
++++ b/plugins/hfp.c
+@@ -66,7 +66,6 @@ static const char *chld_prefix[] =3D { "+CHLD:", NULL };
+ =
 
-Yeah. Maybe you are right. PA should not listen to ofono signal directly =
+ static DBusConnection *connection;
+ =
 
-but through an agent signal to make it more generic. AFAK, SMS =
+-static int hfp_disable(struct ofono_modem *modem);
+ static void hfp_remove(struct ofono_modem *modem);
+ =
 
-notification doesn't require SCO. Upper app could simply watch the =
+ static void hfp_debug(const char *str, void *user_data)
+@@ -140,7 +139,7 @@ static void cmer_cb(gboolean ok, GAtResult *result, gpo=
+inter user_data)
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
+ =
 
-property changes from oFono.
+ 	if (!ok) {
+-		hfp_disable(modem);
++		ofono_modem_set_powered(modem, FALSE);
+ 		return;
+ 	}
+ =
 
-> And I'm not sure if automatically loading module-loopback is a good
-> idea, I think we better expose through the UI how to handle the audio
-> stream. Some users may have a bunch of soundcards or some very weird
-> audio setup, and it's up to them to decide which soundcard to connect
-> the HFP stream.
->
+@@ -198,10 +197,9 @@ static gboolean hfp_enable_timeout(gpointer user)
+ {
+ 	struct ofono_modem *modem =3D user;
+ =
 
-I am not audio expert but AFAK PA has variant policies to control which =
+-	if (ofono_modem_get_powered(modem))
+-		return FALSE;
++	if (!ofono_modem_get_powered(modem))
++		ofono_modem_set_powered(modem, FALSE);
+ =
 
-audio stream should be feeded into the speaker/mic. Loading =
+-	hfp_disable(modem);
+ 	return FALSE;
+ }
+ =
 
-module-bluetooth-device is only the 1st step to create source/sink. I =
+@@ -242,7 +240,7 @@ static void cind_status_cb(gboolean ok, GAtResult *resu=
+lt,
+ 	return;
+ =
 
-think the voicecall have the higher priority than other steam like =
+ error:
+-	hfp_disable(modem);
++	ofono_modem_set_powered(modem, FALSE);
+ }
+ =
 
-music, etc. And yes, loading module-loopback could be decided by PA policy.
+ static void cind_cb(gboolean ok, GAtResult *result, gpointer user_data)
+@@ -302,7 +300,7 @@ static void cind_cb(gboolean ok, GAtResult *result, gpo=
+inter user_data)
+ 	return;
+ =
 
-Thanks.
-Zhenhua.
+ error:
+-	hfp_disable(modem);
++	ofono_modem_set_powered(modem, FALSE);
+ }
+ =
+
+ static void brsf_cb(gboolean ok, GAtResult *result, gpointer user_data)
+@@ -326,7 +324,7 @@ static void brsf_cb(gboolean ok, GAtResult *result, gpo=
+inter user_data)
+ 	return;
+ =
+
+ error:
+-	hfp_disable(modem);
++	ofono_modem_set_powered(modem, FALSE);
+ }
+ =
+
+ /* either oFono or Phone could request SLC connection */
+@@ -769,8 +767,6 @@ static int hfp_disable(struct ofono_modem *modem)
+ =
+
+ 	g_source_remove(data->at_timeout);
+ =
+
+-	ofono_modem_set_powered(modem, FALSE);
+-
+ 	hfp_disconnect_ofono_handsfree(modem);
+ 	return 0;
+ }
+-- =
+
+1.6.4.4
 
 
---===============8588458081378807000==--
+--===============3337754748539689398==--
 
