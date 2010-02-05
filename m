@@ -1,96 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============6866558608166556444=="
+Content-Type: multipart/mixed; boundary="===============5778707154040082757=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] Add radio settings atom and driver API
-Date: Thu, 04 Feb 2010 16:14:15 -0600
-Message-ID: <201002041614.15909.denkenz@gmail.com>
-In-Reply-To: <a32762a21002041401y57ad45abob5e5bc22bc54292@mail.gmail.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH 2/3] hfp: Don't call UnregisterAgent if a Release was received
+Date: Fri, 05 Feb 2010 18:47:05 +0000
+Message-ID: <1326571257-7566-2-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1326571257-7566-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6866558608166556444==
+--===============5778707154040082757==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Prevent to call UnregisterAgent on an already unregistered agent.
+---
+ plugins/hfp.c |    8 +++++++-
+ 1 files changed, 7 insertions(+), 1 deletions(-)
 
-> Hi Denis,
-> =
+diff --git a/plugins/hfp.c b/plugins/hfp.c
+index 3e41342..46217c5 100644
+--- a/plugins/hfp.c
++++ b/plugins/hfp.c
+@@ -411,6 +411,9 @@ static DBusMessage *hfp_agent_release(DBusConnection *c=
+onn,
+ 					DBusMessage *msg, void *data)
+ {
+ 	struct ofono_modem *modem =3D data;
++	const char *obj_path =3D ofono_modem_get_path(modem);
++
++	g_dbus_unregister_interface(connection, obj_path, HFP_AGENT_INTERFACE);
+ =
 
-> 2010/2/4 Denis Kenzior <denkenz@gmail.com>:
-> >> +typedef void (*ofono_radio_settings_mode_query_cb_t)(const struct
-> >>  ofono_error *error, +                                              =
+ 	ofono_modem_remove(modem);
+ =
 
-> >>  enum ofono_radio_access_mode mode, +                                  =
+@@ -757,8 +760,11 @@ static int hfp_probe(struct ofono_modem *modem)
+ static void hfp_remove(struct ofono_modem *modem)
+ {
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
++	const char *obj_path =3D ofono_modem_get_path(modem);
+ =
 
-> >>           void *data);
-> >
-> > I still say this part is not required.
-> >
-> >> +
-> >> +struct ofono_radio_settings_driver {
-> >> +     const char *name;
-> >> +     int (*probe)(struct ofono_radio_settings *rs, unsigned int vendo=
-r,
-> >> void *data); +    void (*remove)(struct ofono_radio_settings *rs);
-> >> +     void (*query_mode)(struct ofono_radio_settings *rs,
-> >> +                             ofono_radio_settings_mode_query_cb_t cb,
-> >> void *data);
-> >
-> > Neither is query_mode.  This is a local modem setting, not a network
-> > setting. There's simply no reason to query it when oFono can store the
-> > settings.
-> =
+-	hfp_unregister_ofono_handsfree(modem);
++	if (g_dbus_unregister_interface(connection, obj_path,
++					HFP_AGENT_INTERFACE))
++		hfp_unregister_ofono_handsfree(modem);
+ =
 
-> Even with storage, it's needed the very first time a new SIM card is
-> inserted, no?
-> =
+ 	g_hash_table_remove(uuid_hash, data->handsfree_path);
+ =
 
+-- =
 
-Not really, we can default to a safe setting (e.g. any) if no previous sett=
-ing =
-
-has been saved.  We do this for GPRS, Cell Broadcasts, etc.
-
-> > Lets just add ability to read the mode setting from storage and set it =
-at
-> > interface startup.
-> =
-
-> I can agreee to storing SIM data, but for other settings that are
-> anyway saved on the modem's non-volatile memory, this seems wrong.
-> oFono is aimed to be usable also on the desktop using tethering, which
-> means most of the time these settings are touched on the phone.
-
-But also remember I want to keep all my settings when I switch SIMs.  On th=
-e =
-
-desktop that is a much likelier scenario (e.g. GPRS data cards), travel =
-
-between countries, etc. The radio access setting is likely to be specific t=
-o a =
-
-network provider (e.g. poor 3G coverage) rather than the device.
-
-I agree tethering is a usecase we haven't considered properly yet, but =
-
-honestly I'm not sure the PC should be messing with radio preference settin=
-gs =
-
-while tethered...
-
-> =
-
-> (As an aside, I have right now two N900s connected to my laptop via
-> USB, and was just making calls between them using oFono and d-feet.)
-> =
+1.6.4.4
 
 
-Nice :)
-
-Regards,
--Denis
-
---===============6866558608166556444==--
+--===============5778707154040082757==--
 
