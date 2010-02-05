@@ -1,66 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============0034533031968982702=="
+Content-Type: multipart/mixed; boundary="===============6407767645742325745=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH] hfp: set timeout to service level connection procedure
-Date: Fri, 05 Feb 2010 18:00:56 -0200
-Message-ID: <1265400056-12904-1-git-send-email-padovan@profusion.mobi>
+From: Vinicius Costa Gomes <vinicius.gomes@openbossa.org>
+Subject: [PATCH] hfp: Fix memory leak when listing bluetooth devices
+Date: Fri, 05 Feb 2010 20:06:47 -0300
+Message-ID: <1265411207-8350-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0034533031968982702==
+--===============6407767645742325745==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If it expires we call org.bluez.HandsfreeGateway.Disconnect()
 ---
- plugins/hfp.c |   20 ++++++++++++++++++++
- 1 files changed, 20 insertions(+), 0 deletions(-)
+ plugins/hfp.c |   10 +++++++---
+ 1 files changed, 7 insertions(+), 3 deletions(-)
 
 diff --git a/plugins/hfp.c b/plugins/hfp.c
-index fe7b78b..02258b9 100644
+index fe7b78b..f235253 100644
 --- a/plugins/hfp.c
 +++ b/plugins/hfp.c
-@@ -785,11 +785,31 @@ static int hfp_connect_ofono_handsfree(struct ofono_m=
-odem *modem)
- 				NULL, NULL, DBUS_TYPE_INVALID);
+@@ -547,7 +547,7 @@ static void parse_get_properties(DBusMessage *reply, co=
+nst char *device)
+ static void get_properties_cb(DBusPendingCall *call, gpointer user_data)
+ {
+ 	DBusMessage *reply;
+-	const char *device =3D user_data;
++	char *device =3D user_data;
+ =
+
+ 	reply =3D dbus_pending_call_steal_reply(call);
+ =
+
+@@ -567,6 +567,7 @@ static void get_properties_cb(DBusPendingCall *call, gp=
+ointer user_data)
+ 	parse_get_properties(reply, device);
+ =
+
+ done:
++	g_free(device);
+ 	dbus_message_unref(reply);
  }
  =
 
-+static gboolean hfp_enable_timeout(gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct hfp_data *data =3D ofono_modem_get_data(modem);
-+	int ret;
-+
-+	if (ofono_modem_get_powered(modem))
-+		return FALSE;
-+
-+	ret =3D send_method_call(BLUEZ_SERVICE, data->handsfree_path,
-+				BLUEZ_GATEWAY_INTERFACE, "Disconnect",
-+				NULL, NULL, DBUS_TYPE_INVALID);
-+	if (ret < 0)
-+		ofono_error("Disconnect failed(%d)", ret);
-+
-+	return FALSE;
-+}
-+
- /* power up hardware */
- static int hfp_enable(struct ofono_modem *modem)
+@@ -574,7 +575,7 @@ static void list_devices_cb(DBusPendingCall *call, gpoi=
+nter user_data)
  {
- 	DBG("%p", modem);
+ 	DBusError err;
+ 	DBusMessage *reply;
+-	const char **device =3D NULL;
++	char **device =3D NULL;
+ 	int num, ret, i;
  =
 
-+	g_timeout_add_seconds(15, hfp_enable_timeout, modem);
-+
- 	if (hfp_connect_ofono_handsfree(modem) < 0)
- 		return -EINVAL;
+ 	reply =3D dbus_pending_call_steal_reply(call);
+@@ -607,11 +608,14 @@ static void list_devices_cb(DBusPendingCall *call, gp=
+ointer user_data)
+ 				BLUEZ_DEVICE_INTERFACE, "GetProperties",
+ 				get_properties_cb, (void *)device[i],
+ 				DBUS_TYPE_INVALID);
+-		if (ret < 0)
++		if (ret < 0) {
++			g_free(device[i]);
+ 			ofono_error("GetProperties failed(%d)", ret);
++		}
+ 	}
+ =
+
+ done:
++	g_free(device);
+ 	dbus_message_unref(reply);
+ }
  =
 
 -- =
 
-1.6.4.4
+1.6.6.1
 
 
---===============0034533031968982702==--
+--===============6407767645742325745==--
 
