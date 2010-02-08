@@ -1,30 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============0754905456717690930=="
+Content-Type: multipart/mixed; boundary="===============2886168952186620710=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] hfp: Fix memory leak when listing bluetooth devices
-Date: Fri, 05 Feb 2010 17:30:41 -0600
-Message-ID: <201002051730.41589.denkenz@gmail.com>
-In-Reply-To: <1265411207-8350-1-git-send-email-vinicius.gomes@openbossa.org>
+From: Dave Joubert <dave.joubert@googlemail.com>
+Subject: State of play ?
+Date: Mon, 08 Feb 2010 18:33:36 +0000
+Message-ID: <c5398c501002081033o5401840dy51e2bef684f4f3bb@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0754905456717690930==
+--===============2886168952186620710==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vinicius,
+It is extremely difficult for an outsider to judge the state or
+capabilities of this project, so please forgive my naive question...
 
-> ---
->  plugins/hfp.c |   10 +++++++---
->  1 files changed, 7 insertions(+), 3 deletions(-)
-> =
+Is it possible to use an external USB dongle that can do voice as well
+as data (I think the Huawei K3565 modem can do this) and the Ofono
+software to 'build' a 'moblie phone' ?
 
+I am looking for something I can plug into my Linux desktop, netbook
+or tablet as required, and make and receive calls. I would be
+perfectly happy with using it from the command-line. All the current
+phones I see seem to feel that they need to be held against one's
+head, and I think it would be beneficial to separate the audio
+subsystem from the screen+keyboard and the actual GSM hardware.
 
-Patch has been applied.  Thanks.
+Dave
 
-Regards,
--Denis
-
---===============0754905456717690930==--
+--===============2886168952186620710==--
 
