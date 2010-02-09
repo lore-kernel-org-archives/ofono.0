@@ -1,253 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============8806217434776496284=="
+Content-Type: multipart/mixed; boundary="===============4366425412427284562=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH] hfp: set timeout to service level connection procedure
-Date: Tue, 09 Feb 2010 16:00:20 -0200
-Message-ID: <1265738420-28524-1-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <20100209175724.GB6797@vigoh>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: [PATCH] Enable USSD_STATE_USER_ACTION
+Date: Tue, 09 Feb 2010 22:20:08 +0200
+Message-ID: <1265746808-26098-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8806217434776496284==
+--===============4366425412427284562==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If it expires we call org.bluez.HandsfreeGateway.Disconnect()
-It also modifies send_method_call and break it down into two functions.
-Now we have send_method_call_with_reply, for DBus messages that needs a
-reply. It sets a reply and a timeout for the message reply.
-The other funcion is called send_method_call without timeout or reply
-parameters.
+If the network requests user action in the response to an MO USSD, we
+cannot immediately return to USSD_STATE_USER_IDLE. Instead,
+USSD_STATE_USER_ACTION is entered.
+
+Note that it is left up to the driver to notify() when the USSD
+transaction is closed by the network due to inactivity. Another way to
+return to USSD_STATE_IDLE is for the user to cancel() the transaction.
 ---
- plugins/hfp.c |  103 +++++++++++++++++++++++++++++++++++++++++++----------=
-----
- 1 files changed, 78 insertions(+), 25 deletions(-)
+ src/ussd.c |   18 +++++++++++++-----
+ 1 files changed, 13 insertions(+), 5 deletions(-)
 
-diff --git a/plugins/hfp.c b/plugins/hfp.c
-index 1c3efc9..1b2795e 100644
---- a/plugins/hfp.c
-+++ b/plugins/hfp.c
-@@ -186,8 +186,35 @@ static void cmer_cb(gboolean ok, GAtResult *result, gp=
-ointer user_data)
+diff --git a/src/ussd.c b/src/ussd.c
+index 464664c..c8937d6 100644
+--- a/src/ussd.c
++++ b/src/ussd.c
+@@ -294,22 +294,26 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int s=
+tatus, const char *str)
  =
 
- static int send_method_call(const char *dest, const char *path,
- 				const char *interface, const char *method,
-+				int type, ...)
-+{
-+	DBusMessage *msg;
-+	va_list args;
+ 	if (status =3D=3D USSD_STATUS_NOT_SUPPORTED) {
+ 		ussd->state =3D USSD_STATE_IDLE;
 +
-+	msg =3D dbus_message_new_method_call(dest, path, interface, method);
-+	if (!msg) {
-+		ofono_error("Unable to allocate new D-Bus %s message", method);
-+		return -ENOMEM;
-+	}
++		if (!ussd->pending)
++			return;
 +
-+	va_start(args, type);
+ 		reply =3D __ofono_error_not_supported(ussd->pending);
+ 		goto out;
+ 	}
+ =
+
+ 	if (status =3D=3D USSD_STATUS_TIMED_OUT) {
+ 		ussd->state =3D USSD_STATE_IDLE;
 +
-+	if (!dbus_message_append_args_valist(msg, type, args)) {
-+		dbus_message_unref(msg);
-+		va_end(args);
-+		return -EIO;
-+	}
++		if (!ussd->pending)
++			return;
 +
-+	va_end(args);
+ 		reply =3D __ofono_error_timed_out(ussd->pending);
+ 		goto out;
+ 	}
+ =
+
+ 	/* TODO: Rework this in the Agent framework */
+ 	if (ussd->state =3D=3D USSD_STATE_ACTIVE) {
+-		if (status =3D=3D USSD_STATUS_ACTION_REQUIRED) {
+-			ofono_error("Unable to handle action required ussd");
+-			return;
+-		}
+ =
+
+ 		reply =3D dbus_message_new_method_return(ussd->pending);
+ =
+
+@@ -329,7 +333,11 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int st=
+atus, const char *str)
+ =
+
+ 		dbus_message_iter_close_container(&iter, &variant);
+ =
+
+-		ussd->state =3D USSD_STATE_IDLE;
++		if (status =3D=3D USSD_STATUS_ACTION_REQUIRED)
++			ussd->state =3D USSD_STATE_USER_ACTION;
++		else
++			ussd->state =3D USSD_STATE_IDLE;
 +
-+	g_dbus_send_message(connection, msg);
-+	return 0;
-+}
-+
-+static int send_method_call_with_reply(const char *dest, const char *path,
-+				const char *interface, const char *method,
- 				DBusPendingCallNotifyFunction cb,
--				void *user_data, int type, ...)
-+				void *user_data, int timeout, int type, ...)
- {
- 	DBusMessage *msg;
- 	DBusPendingCall *call;
-@@ -209,12 +236,10 @@ static int send_method_call(const char *dest, const c=
-har *path,
- =
-
- 	va_end(args);
- =
-
--	if (!cb) {
--		g_dbus_send_message(connection, msg);
--		return 0;
--	}
-+	if (timeout > 0)
-+		timeout *=3D1000;
- =
-
--	if (!dbus_connection_send_with_reply(connection, msg, &call, -1)) {
-+	if (!dbus_connection_send_with_reply(connection, msg, &call, timeout)) {
- 		ofono_error("Sending %s failed", method);
- 		dbus_message_unref(msg);
- 		return -EIO;
-@@ -590,9 +615,9 @@ static void list_devices_cb(DBusPendingCall *call, gpoi=
-nter user_data)
- 		goto done;
- =
-
- 	for (i =3D 0 ; i < num ; i++) {
--		ret =3D send_method_call(BLUEZ_SERVICE, device_list[i],
-+		ret =3D send_method_call_with_reply(BLUEZ_SERVICE, device_list[i],
- 				BLUEZ_DEVICE_INTERFACE, "GetProperties",
--				get_properties_cb, device_list[i],
-+				get_properties_cb, (void *)device_list[i], -1,
- 				DBUS_TYPE_INVALID);
- 		if (ret < 0) {
- 			g_free(device_list[i]);
-@@ -614,10 +639,9 @@ static gboolean adapter_added(DBusConnection *connecti=
-on, DBusMessage *message,
- 	dbus_message_get_args(message, NULL, DBUS_TYPE_OBJECT_PATH, &path,
- 				DBUS_TYPE_INVALID);
- =
-
--	ret =3D send_method_call(BLUEZ_SERVICE, path,
-+	ret =3D send_method_call_with_reply(BLUEZ_SERVICE, path,
- 			BLUEZ_ADAPTER_INTERFACE, "ListDevices",
--			list_devices_cb, NULL,
--			DBUS_TYPE_INVALID);
-+			list_devices_cb, NULL, -1, DBUS_TYPE_INVALID);
- =
-
- 	if (ret < 0)
- 		ofono_error("ListDevices failed(%d)", ret);
-@@ -671,10 +695,9 @@ static void list_adapters_cb(DBusPendingCall *call, gp=
-ointer user_data)
- 		goto done;
- =
-
- 	for (i =3D 0 ; i < num ; i++) {
--		ret =3D send_method_call(BLUEZ_SERVICE, adapter_list[i],
-+		ret =3D send_method_call_with_reply(BLUEZ_SERVICE, adapter_list[i],
- 				BLUEZ_ADAPTER_INTERFACE, "ListDevices",
--				list_devices_cb, NULL,
--				DBUS_TYPE_INVALID);
-+				list_devices_cb, NULL, -1, DBUS_TYPE_INVALID);
- =
-
- 		if (ret < 0)
- 			ofono_error("ListDevices failed(%d)", ret);
-@@ -688,10 +711,9 @@ done:
- =
-
- static int hfp_load_modems()
- {
--	return send_method_call(BLUEZ_SERVICE, "/",
-+	return send_method_call_with_reply(BLUEZ_SERVICE, "/",
- 				BLUEZ_MANAGER_INTERFACE, "ListAdapters",
--				list_adapters_cb, NULL,
--				DBUS_TYPE_INVALID);
-+				list_adapters_cb, NULL, -1, DBUS_TYPE_INVALID);
- }
- =
-
- static int hfp_register_ofono_handsfree(struct ofono_modem *modem)
-@@ -703,8 +725,8 @@ static int hfp_register_ofono_handsfree(struct ofono_mo=
-dem *modem)
- =
-
- 	return send_method_call(BLUEZ_SERVICE, data->handsfree_path,
- 				BLUEZ_GATEWAY_INTERFACE, "RegisterAgent",
--				NULL, NULL, DBUS_TYPE_OBJECT_PATH,
--				&obj_path, DBUS_TYPE_INVALID);
-+				DBUS_TYPE_OBJECT_PATH, &obj_path,
-+				DBUS_TYPE_INVALID);
- }
- =
-
- static int hfp_unregister_ofono_handsfree(struct ofono_modem *modem)
-@@ -716,8 +738,8 @@ static int hfp_unregister_ofono_handsfree(struct ofono_=
-modem *modem)
- =
-
- 	return send_method_call(BLUEZ_SERVICE, data->handsfree_path,
- 				BLUEZ_GATEWAY_INTERFACE, "UnregisterAgent",
--				NULL, NULL, DBUS_TYPE_OBJECT_PATH,
--				&obj_path, DBUS_TYPE_INVALID);
-+				DBUS_TYPE_OBJECT_PATH, &obj_path,
-+				DBUS_TYPE_INVALID);
- }
- =
-
- static int hfp_probe(struct ofono_modem *modem)
-@@ -750,15 +772,46 @@ static void hfp_remove(struct ofono_modem *modem)
- 	ofono_modem_set_data(modem, NULL);
- }
- =
-
-+static void hfp_connect_reply(DBusPendingCall *call, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct hfp_data *data =3D ofono_modem_get_data(modem);
-+	DBusError derr;
-+	DBusMessage *reply;
-+	int ret;
-+
-+	reply =3D dbus_pending_call_steal_reply(call);
-+
-+	if (ofono_modem_get_powered(modem))
-+		goto done;
-+
-+	dbus_error_init(&derr);
-+	if (!dbus_set_error_from_message(&derr, reply) || data->slc_msg)
-+		goto done;
-+
-+	ofono_debug("Connect reply: %s", derr.message);
-+	dbus_error_free(&derr);
-+
-+	ret =3D send_method_call(BLUEZ_SERVICE, data->handsfree_path,
-+				BLUEZ_GATEWAY_INTERFACE, "Disconnect",
-+				DBUS_TYPE_INVALID);
-+	if (ret < 0)
-+		ofono_error("Disconnect failed(%d)", ret);
-+
-+done:
-+	dbus_message_unref(reply);
-+}
-+
- static int hfp_connect_ofono_handsfree(struct ofono_modem *modem)
- {
- 	struct hfp_data *data =3D ofono_modem_get_data(modem);
- =
-
- 	DBG("Connect to bluetooth daemon");
- =
-
--	return send_method_call(BLUEZ_SERVICE, data->handsfree_path,
-+	return send_method_call_with_reply(BLUEZ_SERVICE, data->handsfree_path,
- 				BLUEZ_GATEWAY_INTERFACE, "Connect",
--				NULL, NULL, DBUS_TYPE_INVALID);
-+				hfp_connect_reply, modem, 15,
-+				DBUS_TYPE_INVALID);
- }
- =
-
- /* power up hardware */
-@@ -797,9 +850,9 @@ static int hfp_disconnect_ofono_handsfree(struct ofono_=
-modem *modem)
- {
- 	struct hfp_data *data =3D ofono_modem_get_data(modem);
- =
-
--	return send_method_call(BLUEZ_SERVICE, data->handsfree_path,
-+	return send_method_call_with_reply(BLUEZ_SERVICE, data->handsfree_path,
- 				BLUEZ_GATEWAY_INTERFACE, "Disconnect",
--				hfp_power_down, modem, DBUS_TYPE_INVALID);
-+				hfp_power_down, modem, -1, DBUS_TYPE_INVALID);
- }
- =
-
- static int hfp_disable(struct ofono_modem *modem)
+ 	} else {
+ 		ofono_error("Received an unsolicited USSD, ignoring for now...");
+ 		ofono_debug("USSD is: status: %d, %s", status, str);
 -- =
 
-1.6.4.4
+1.6.3.3
 
 
---===============8806217434776496284==--
+--===============4366425412427284562==--
 
