@@ -1,110 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============8575671956011814615=="
+Content-Type: multipart/mixed; boundary="===============8078710970267703634=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 2/4] Add handle the case when write buffer is full
-Date: Wed, 10 Feb 2010 16:13:41 +0800
-Message-ID: <1265789623-30146-2-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1265789623-30146-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 3/4] Add ring_buffer_read_advance for partial write
+Date: Wed, 10 Feb 2010 16:13:42 +0800
+Message-ID: <1265789623-30146-3-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1265789623-30146-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8575671956011814615==
+--===============8078710970267703634==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If current write_buf is fulled, put it into the full list and fetch
-a new ring buffer from the free list.
----
- gatchat/gatserver.c |   63 +++++++++++++++++++++++++++++++++++++++++++++++=
-+--
- 1 files changed, 60 insertions(+), 3 deletions(-)
+These two patches are for server side partial write.
 
-diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index 6b40084..b5ac91e 100644
---- a/gatchat/gatserver.c
-+++ b/gatchat/gatserver.c
-@@ -130,13 +130,70 @@ static gboolean alloc_free_list(GAtServer *server)
- 	return TRUE;
+When server writes data into non-blocking IO, we first get the
+read pointer of write_buf and write data as much as we can. Then
+we advance the read_ptr according to the real bytes written.
+---
+ gatchat/ringbuffer.c |    8 ++++++++
+ gatchat/ringbuffer.h |    7 +++++++
+ 2 files changed, 15 insertions(+), 0 deletions(-)
+
+diff --git a/gatchat/ringbuffer.c b/gatchat/ringbuffer.c
+index 42d5b68..e17c1fa 100644
+--- a/gatchat/ringbuffer.c
++++ b/gatchat/ringbuffer.c
+@@ -130,6 +130,14 @@ int ring_buffer_read(struct ring_buffer *buf, void *da=
+ta, unsigned int len)
+ 	return len;
  }
  =
 
-+static gboolean replace_write_buf(GAtServer *server)
++int ring_buffer_read_advance(struct ring_buffer *buf, unsigned int len)
 +{
-+	struct ring_buffer *free_buf;
++	len =3D MIN(len, buf->in - buf->out);
++	buf->out +=3D len;
 +
-+	/* Add current buffer into full list and replace current buffer
-+	 * by a new free buffer */
-+	server->full_list =3D g_slist_append(server->full_list,
-+						server->write_buf);
-+
-+	/* All free lists are exhausted. Allocate more free lists */
-+	if (!server->free_list) {
-+		if (!alloc_free_list(server)) {
-+			/* Failed so shutdown the socket */
-+			g_at_server_shutdown(server);
-+
-+			return FALSE;
-+		}
-+	}
-+
-+	free_buf =3D server->free_list->data;
-+
-+	server->free_list =3D g_slist_remove(server->free_list, free_buf);
-+
-+	server->write_buf =3D free_buf;
-+
-+	return TRUE;
++	return len;
 +}
 +
- static void send_common(GAtServer *server, const char *buf)
+ int ring_buffer_drain(struct ring_buffer *buf, unsigned int len)
  {
- 	gsize avail =3D ring_buffer_avail(server->write_buf);
--	gsize len =3D strlen(buf);
-+	gsize towrite =3D strlen(buf);
-+	gsize bytes_written;
-+	gsize offset =3D 0;
-+
-+	if (avail > towrite) {
-+		ring_buffer_write(server->write_buf, buf, towrite);
+ 	len =3D MIN(len, buf->in - buf->out);
+diff --git a/gatchat/ringbuffer.h b/gatchat/ringbuffer.h
+index 826f9aa..aa4f570 100644
+--- a/gatchat/ringbuffer.h
++++ b/gatchat/ringbuffer.h
+@@ -93,6 +93,13 @@ int ring_buffer_read(struct ring_buffer *buf, void *data,
+ 			unsigned int len);
  =
 
--	if (avail >=3D len)
--		ring_buffer_write(server->write_buf, buf, len);
-+		g_at_server_wakeup_writer(server);
+ /*!
++ * Advances the read counter by len, this is meant to be used with
++ * the ring_buffer_read_ptr function.  Returns the number of bytes
++ * actually advanced (the capacity of the buffer)
++ */
++int ring_buffer_read_advance(struct ring_buffer *buf, unsigned int len);
 +
-+		return;
-+	}
-+
-+	/* Write as much as we can */
-+	bytes_written =3D ring_buffer_write(server->write_buf, buf, avail);
-+	towrite -=3D bytes_written;
-+	offset =3D bytes_written;
-+
-+	/* If current write buf is full, replace it with next free buffer */
-+	if (!replace_write_buf(server))
-+		return;
-+
-+	bytes_written =3D ring_buffer_write(server->write_buf, buf + offset,
-+						towrite);
-+	while (bytes_written < towrite) {
-+		/* The next free buf is full, replace with next free one */
-+		if (!replace_write_buf(server))
-+			return;
-+
-+		towrite -=3D bytes_written;
-+		offset +=3D bytes_written;
-+		bytes_written =3D ring_buffer_write(server->write_buf,
-+							buf + offset, towrite);
-+	}
- =
-
- 	g_at_server_wakeup_writer(server);
- }
++/*!
+  * Returns the read pointer with read offset specified by offset.  No boun=
+ds
+  * checking is performed.  Be careful not to read past the end of the buff=
+er.
+  * Use the ring_buffer_len_no_wrap function, and ring_buffer_drain.
 -- =
 
 1.6.6.1
 
 
---===============8575671956011814615==--
+--===============8078710970267703634==--
 
