@@ -1,89 +1,261 @@
-Content-Type: multipart/mixed; boundary="===============4366425412427284562=="
+Content-Type: multipart/mixed; boundary="===============1795017961789370540=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH] Enable USSD_STATE_USER_ACTION
-Date: Tue, 09 Feb 2010 22:20:08 +0200
-Message-ID: <1265746808-26098-1-git-send-email-aki.niemi@nokia.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH 1/4] Add write ring buffer for non-blocking write
+Date: Wed, 10 Feb 2010 16:13:40 +0800
+Message-ID: <1265789623-30146-1-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4366425412427284562==
+--===============1795017961789370540==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If the network requests user action in the response to an MO USSD, we
-cannot immediately return to USSD_STATE_USER_IDLE. Instead,
-USSD_STATE_USER_ACTION is entered.
+Use two layers to cache server side response data to client.
+1. A fixed-length ring buffer.
+2. A list of free ring buffers and a list of empty full ring buffer.
 
-Note that it is left up to the driver to notify() when the USSD
-transaction is closed by the network due to inactivity. Another way to
-return to USSD_STATE_IDLE is for the user to cancel() the transaction.
+If current ring buffer is full, put it into full buffer list and fetch
+a free buffer frome free list.
 ---
- src/ussd.c |   18 +++++++++++++-----
- 1 files changed, 13 insertions(+), 5 deletions(-)
+ gatchat/gatserver.c |  111 +++++++++++++++++++++++++++++++++++++++++++++++=
+---
+ 1 files changed, 104 insertions(+), 7 deletions(-)
 
-diff --git a/src/ussd.c b/src/ussd.c
-index 464664c..c8937d6 100644
---- a/src/ussd.c
-+++ b/src/ussd.c
-@@ -294,22 +294,26 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int s=
-tatus, const char *str)
+diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
+index bf7e847..6b40084 100644
+--- a/gatchat/gatserver.c
++++ b/gatchat/gatserver.c
+@@ -32,6 +32,9 @@
+ #include "ringbuffer.h"
+ #include "gatserver.h"
  =
 
- 	if (status =3D=3D USSD_STATUS_NOT_SUPPORTED) {
- 		ussd->state =3D USSD_STATE_IDLE;
++#define MAX_BUFFER_NUM 5
++/* #define WRITE_SCHEDULER_DEBUG 1 */
 +
-+		if (!ussd->pending)
-+			return;
+ enum ParserState {
+ 	PARSER_STATE_IDLE,
+ 	PARSER_STATE_A,
+@@ -90,17 +93,54 @@ struct _GAtServer {
+ 	struct v250_settings v250;		/* V.250 command setting */
+ 	GIOChannel *channel;			/* Server IO */
+ 	guint read_watch;			/* GSource read id, 0 if none */
++	guint write_watch;			/* GSource write id, 0 if none */
+ 	guint read_so_far;			/* Number of bytes processed */
+ 	GAtDisconnectFunc user_disconnect;	/* User disconnect func */
+ 	gpointer user_disconnect_data;		/* User disconnect data */
+ 	GAtDebugFunc debugf;			/* Debugging output function */
+ 	gpointer debug_data;			/* Data to pass to debug func */
+ 	struct ring_buffer *read_buf;		/* Current read buffer */
++	struct ring_buffer *write_buf;		/* Current write buffer */
++	GSList *full_list;			/* List of full ring buffer */
++	GSList *free_list;			/* List of free ring buffer */
+ 	guint max_read_attempts;		/* Max reads per select */
+ 	enum ParserState parser_state;
+ 	gboolean destroyed;			/* Re-entrancy guard */
+ };
+ =
+
++static void g_at_server_wakeup_writer(GAtServer *server);
 +
- 		reply =3D __ofono_error_not_supported(ussd->pending);
- 		goto out;
- 	}
- =
-
- 	if (status =3D=3D USSD_STATUS_TIMED_OUT) {
- 		ussd->state =3D USSD_STATE_IDLE;
++static gboolean alloc_free_list(GAtServer *server)
++{
++	struct ring_buffer *buf;
++	guint i;
 +
-+		if (!ussd->pending)
-+			return;
++	for (i =3D 0; i < MAX_BUFFER_NUM; i++) {
++#ifdef WRITE_SCHEDULER_DEBUG
++		buf =3D ring_buffer_new(4);
++#else
++		buf =3D ring_buffer_new(4096);
++#endif
++		if (!buf)
++			return FALSE;
 +
- 		reply =3D __ofono_error_timed_out(ussd->pending);
- 		goto out;
- 	}
- =
-
- 	/* TODO: Rework this in the Agent framework */
- 	if (ussd->state =3D=3D USSD_STATE_ACTIVE) {
--		if (status =3D=3D USSD_STATUS_ACTION_REQUIRED) {
--			ofono_error("Unable to handle action required ussd");
--			return;
--		}
- =
-
- 		reply =3D dbus_message_new_method_return(ussd->pending);
- =
-
-@@ -329,7 +333,11 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int st=
-atus, const char *str)
- =
-
- 		dbus_message_iter_close_container(&iter, &variant);
- =
-
--		ussd->state =3D USSD_STATE_IDLE;
-+		if (status =3D=3D USSD_STATUS_ACTION_REQUIRED)
-+			ussd->state =3D USSD_STATE_USER_ACTION;
-+		else
-+			ussd->state =3D USSD_STATE_IDLE;
++		server->free_list =3D g_slist_prepend(server->free_list, buf);
++	}
 +
- 	} else {
- 		ofono_error("Received an unsolicited USSD, ignoring for now...");
- 		ofono_debug("USSD is: status: %d, %s", status, str);
++	return TRUE;
++}
++
++static void send_common(GAtServer *server, const char *buf)
++{
++	gsize avail =3D ring_buffer_avail(server->write_buf);
++	gsize len =3D strlen(buf);
++
++	if (avail >=3D len)
++		ring_buffer_write(server->write_buf, buf, len);
++
++	g_at_server_wakeup_writer(server);
++}
++
+ static void g_at_server_send_result(GAtServer *server, GAtServerResult res=
+ult)
+ {
+ 	struct v250_settings v250 =3D server->v250;
+@@ -108,7 +148,6 @@ static void g_at_server_send_result(GAtServer *server, =
+GAtServerResult result)
+ 	char buf[1024];
+ 	char t =3D v250.s3;
+ 	char r =3D v250.s4;
+-	gsize wbuf;
+ =
+
+ 	if (v250.quiet)
+ 		return;
+@@ -125,8 +164,7 @@ static void g_at_server_send_result(GAtServer *server, =
+GAtServerResult result)
+ 	g_at_util_debug_chat(FALSE, buf, strlen(buf),
+ 				server->debugf, server->debug_data);
+ =
+
+-	g_io_channel_write(server->channel, (char *) buf, strlen(buf),
+-							&wbuf);
++	send_common(server, buf);
+ }
+ =
+
+ static inline gboolean is_at_command_prefix(const char c)
+@@ -432,12 +470,35 @@ static gboolean received_data(GIOChannel *channel, GI=
+OCondition cond,
+ 	return TRUE;
+ }
+ =
+
++static gboolean can_write_data(GIOChannel *channel, GIOCondition cond,
++				gpointer data)
++{
++	return FALSE;
++}
++
++static void free_ring_buffer(struct ring_buffer *buf)
++{
++	ring_buffer_free(buf);
++}
++
+ static void g_at_server_cleanup(GAtServer *server)
+ {
+ 	/* Cleanup all received data */
+ 	ring_buffer_free(server->read_buf);
+ 	server->read_buf =3D NULL;
+ =
+
++	/* Cleanup pending data to write */
++	ring_buffer_free(server->write_buf);
++	server->write_buf =3D NULL;
++
++	if (server->full_list)
++		g_slist_foreach(server->full_list, (GFunc)free_ring_buffer,
++					NULL);
++
++	if (server->free_list)
++		g_slist_foreach(server->free_list, (GFunc)free_ring_buffer,
++					NULL);
++
+ 	server->channel =3D NULL;
+ }
+ =
+
+@@ -446,8 +507,6 @@ static void read_watcher_destroy_notify(GAtServer *serv=
+er)
+ 	g_at_server_cleanup(server);
+ 	server->read_watch =3D 0;
+ =
+
+-	server->channel =3D NULL;
+-
+ 	if (server->user_disconnect)
+ 		server->user_disconnect(server->user_disconnect_data);
+ =
+
+@@ -455,6 +514,23 @@ static void read_watcher_destroy_notify(GAtServer *ser=
+ver)
+ 		g_free(server);
+ }
+ =
+
++static void write_watcher_destroy_notify(GAtServer *server)
++{
++	server->write_watch =3D 0;
++}
++
++static void g_at_server_wakeup_writer(GAtServer *server)
++{
++	if (server->write_watch !=3D 0)
++		return;
++
++	server->write_watch =3D g_io_add_watch_full(server->channel,
++			G_PRIORITY_DEFAULT,
++			G_IO_OUT | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++			can_write_data, server,
++			(GDestroyNotify)write_watcher_destroy_notify);
++}
++
+ static void v250_settings_create(struct v250_settings *v250)
+ {
+ 	v250->s3 =3D '\r';
+@@ -483,11 +559,22 @@ GAtServer *g_at_server_new(GIOChannel *io)
+ 	v250_settings_create(&server->v250);
+ 	server->channel =3D io;
+ 	server->read_buf =3D ring_buffer_new(4096);
+-	server->max_read_attempts =3D 3;
+-
+ 	if (!server->read_buf)
+ 		goto error;
+ =
+
++#ifdef WRITE_SCHEDULER_DEBUG
++	server->write_buf =3D ring_buffer_new(4);
++#else
++	server->write_buf =3D ring_buffer_new(4096);
++#endif
++	if (!server->write_buf)
++		goto error;
++
++	if (!alloc_free_list(server))
++		goto error;
++
++	server->max_read_attempts =3D 3;
++
+ 	if (!g_at_util_setup_io(server->channel, G_IO_FLAG_NONBLOCK))
+ 		goto error;
+ =
+
+@@ -502,6 +589,13 @@ error:
+ 	if (server->read_buf)
+ 		ring_buffer_free(server->read_buf);
+ =
+
++	if (server->write_buf)
++		ring_buffer_free(server->write_buf);
++
++	if (server->free_list)
++		g_slist_foreach(server->free_list, (GFunc)free_ring_buffer,
++					NULL);
++
+ 	if (server)
+ 		g_free(server);
+ =
+
+@@ -552,6 +646,9 @@ gboolean g_at_server_shutdown(GAtServer *server)
+ 	server->user_disconnect =3D NULL;
+ 	server->user_disconnect_data =3D NULL;
+ =
+
++	if (server->write_watch)
++		g_source_remove(server->write_watch);
++
+ 	if (server->read_watch)
+ 		g_source_remove(server->read_watch);
+ =
+
 -- =
 
-1.6.3.3
+1.6.6.1
 
 
---===============4366425412427284562==--
+--===============1795017961789370540==--
 
