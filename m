@@ -1,291 +1,330 @@
-Content-Type: multipart/mixed; boundary="===============1929050501817719263=="
+Content-Type: multipart/mixed; boundary="===============2201436019253527241=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: Re: [PATCH 1/4] Add write ring buffer for non-blocking write
-Date: Wed, 10 Feb 2010 15:23:37 -0200
-Message-ID: <20100210172337.GC6797@vigoh>
-In-Reply-To: <1265789623-30146-1-git-send-email-zhenhua.zhang@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: [PATCH 2/8] Add reply / signal utilities to g_dbus_util
+Date: Wed, 10 Feb 2010 13:16:31 -0600
+Message-ID: <1265829391-13935-1-git-send-email-denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1929050501817719263==
+--===============2201436019253527241==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-* Zhenhua Zhang <zhenhua.zhang@intel.com> [2010-02-10 16:13:40 +0800]:
+Connman/BlueZ/oFono share the same API structure and thus share the same
+basic code to build GetProperties() replies and PropertyChanged signal
+emissions.  These utilities are duplicated across projects.
 
-> Use two layers to cache server side response data to client.
-> 1. A fixed-length ring buffer.
-> 2. A list of free ring buffers and a list of empty full ring buffer.
-> =
+This patch adds the three most commonly used utilities for building the
+GetProperties dictionaries and PropertyChanged signal emissions.
+---
+ Makefile.am   |    3 +-
+ gdbus/gdbus.h |   31 ++++++++
+ gdbus/util.c  |  226 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 3 files changed, 259 insertions(+), 1 deletions(-)
+ create mode 100644 gdbus/util.c
 
-> If current ring buffer is full, put it into full buffer list and fetch
-> a free buffer frome free list.
-> ---
->  gatchat/gatserver.c |  111 +++++++++++++++++++++++++++++++++++++++++++++=
-++---
->  1 files changed, 104 insertions(+), 7 deletions(-)
-> =
+diff --git a/Makefile.am b/Makefile.am
+index 7cd2194..13c7452 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -39,7 +39,8 @@ builtin_sources =3D
+ builtin_libadd =3D
+ builtin_cflags =3D
+ =
 
-> diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-> index bf7e847..6b40084 100644
-> --- a/gatchat/gatserver.c
-> +++ b/gatchat/gatserver.c
-> @@ -32,6 +32,9 @@
->  #include "ringbuffer.h"
->  #include "gatserver.h"
->  =
+-gdbus_sources =3D gdbus/gdbus.h gdbus/mainloop.c gdbus/object.c gdbus/watc=
+h.c
++gdbus_sources =3D gdbus/gdbus.h gdbus/mainloop.c gdbus/object.c gdbus/watc=
+h.c \
++		gdbus/util.c
+ =
 
-> +#define MAX_BUFFER_NUM 5
-> +/* #define WRITE_SCHEDULER_DEBUG 1 */
-> +
->  enum ParserState {
->  	PARSER_STATE_IDLE,
->  	PARSER_STATE_A,
-> @@ -90,17 +93,54 @@ struct _GAtServer {
->  	struct v250_settings v250;		/* V.250 command setting */
->  	GIOChannel *channel;			/* Server IO */
->  	guint read_watch;			/* GSource read id, 0 if none */
-> +	guint write_watch;			/* GSource write id, 0 if none */
->  	guint read_so_far;			/* Number of bytes processed */
->  	GAtDisconnectFunc user_disconnect;	/* User disconnect func */
->  	gpointer user_disconnect_data;		/* User disconnect data */
->  	GAtDebugFunc debugf;			/* Debugging output function */
->  	gpointer debug_data;			/* Data to pass to debug func */
->  	struct ring_buffer *read_buf;		/* Current read buffer */
-> +	struct ring_buffer *write_buf;		/* Current write buffer */
-> +	GSList *full_list;			/* List of full ring buffer */
-> +	GSList *free_list;			/* List of free ring buffer */
->  	guint max_read_attempts;		/* Max reads per select */
->  	enum ParserState parser_state;
->  	gboolean destroyed;			/* Re-entrancy guard */
->  };
->  =
+ gisi_sources =3D gisi/phonet.h gisi/modem.h gisi/netlink.h gisi/netlink.c \
+ 		gisi/socket.h gisi/socket.c gisi/client.h gisi/client.c \
+diff --git a/gdbus/gdbus.h b/gdbus/gdbus.h
+index 77b8aee..941f924 100644
+--- a/gdbus/gdbus.h
++++ b/gdbus/gdbus.h
+@@ -135,6 +135,37 @@ guint g_dbus_add_signal_watch(DBusConnection *connecti=
+on,
+ gboolean g_dbus_remove_watch(DBusConnection *connection, guint tag);
+ void g_dbus_remove_all_watches(DBusConnection *connection);
+ =
 
-> +static void g_at_server_wakeup_writer(GAtServer *server);
-> +
-> +static gboolean alloc_free_list(GAtServer *server)
-> +{
-> +	struct ring_buffer *buf;
-> +	guint i;
-> +
-> +	for (i =3D 0; i < MAX_BUFFER_NUM; i++) {
-> +#ifdef WRITE_SCHEDULER_DEBUG
-> +		buf =3D ring_buffer_new(4);
-> +#else
-> +		buf =3D ring_buffer_new(4096);
-> +#endif
-
-Why not a macro to define buf size? So you don't need to use ifdef
-everytime
-
-#ifdef WRITE_SCHEDULER_DEBUG
-		BUF_SIZE =3D 4
-#else
-		BUF_SIZE =3D 4096	=
-
-#endif
-
-> +		if (!buf)
-> +			return FALSE;
-> +
-> +		server->free_list =3D g_slist_prepend(server->free_list, buf);
-> +	}
-> +
-> +	return TRUE;
-> +}
-> +
-> +static void send_common(GAtServer *server, const char *buf)
-> +{
-> +	gsize avail =3D ring_buffer_avail(server->write_buf);
-> +	gsize len =3D strlen(buf);
-> +
-> +	if (avail >=3D len)
-> +		ring_buffer_write(server->write_buf, buf, len);
-> +
-> +	g_at_server_wakeup_writer(server);
-> +}
-> +
->  static void g_at_server_send_result(GAtServer *server, GAtServerResult r=
-esult)
->  {
->  	struct v250_settings v250 =3D server->v250;
-> @@ -108,7 +148,6 @@ static void g_at_server_send_result(GAtServer *server=
-, GAtServerResult result)
->  	char buf[1024];
->  	char t =3D v250.s3;
->  	char r =3D v250.s4;
-> -	gsize wbuf;
->  =
-
->  	if (v250.quiet)
->  		return;
-> @@ -125,8 +164,7 @@ static void g_at_server_send_result(GAtServer *server=
-, GAtServerResult result)
->  	g_at_util_debug_chat(FALSE, buf, strlen(buf),
->  				server->debugf, server->debug_data);
->  =
-
-> -	g_io_channel_write(server->channel, (char *) buf, strlen(buf),
-> -							&wbuf);
-> +	send_common(server, buf);
->  }
->  =
-
->  static inline gboolean is_at_command_prefix(const char c)
-> @@ -432,12 +470,35 @@ static gboolean received_data(GIOChannel *channel, =
-GIOCondition cond,
->  	return TRUE;
->  }
->  =
-
-> +static gboolean can_write_data(GIOChannel *channel, GIOCondition cond,
-> +				gpointer data)
-> +{
-> +	return FALSE;
-> +}
-> +
-> +static void free_ring_buffer(struct ring_buffer *buf)
-> +{
-> +	ring_buffer_free(buf);
-> +}
-
-This seems pointless to me.
-
-> +
->  static void g_at_server_cleanup(GAtServer *server)
->  {
->  	/* Cleanup all received data */
->  	ring_buffer_free(server->read_buf);
->  	server->read_buf =3D NULL;
->  =
-
-> +	/* Cleanup pending data to write */
-> +	ring_buffer_free(server->write_buf);
-> +	server->write_buf =3D NULL;
-> +
-> +	if (server->full_list)
-> +		g_slist_foreach(server->full_list, (GFunc)free_ring_buffer,
-> +					NULL);
-> +
-> +	if (server->free_list)
-> +		g_slist_foreach(server->free_list, (GFunc)free_ring_buffer,
-> +					NULL);
-> +
->  	server->channel =3D NULL;
->  }
->  =
-
-> @@ -446,8 +507,6 @@ static void read_watcher_destroy_notify(GAtServer *se=
-rver)
->  	g_at_server_cleanup(server);
->  	server->read_watch =3D 0;
->  =
-
-> -	server->channel =3D NULL;
-> -
->  	if (server->user_disconnect)
->  		server->user_disconnect(server->user_disconnect_data);
->  =
-
-> @@ -455,6 +514,23 @@ static void read_watcher_destroy_notify(GAtServer *s=
-erver)
->  		g_free(server);
->  }
->  =
-
-> +static void write_watcher_destroy_notify(GAtServer *server)
-> +{
-> +	server->write_watch =3D 0;
-> +}
-> +
-> +static void g_at_server_wakeup_writer(GAtServer *server)
-> +{
-> +	if (server->write_watch !=3D 0)
-> +		return;
-> +
-> +	server->write_watch =3D g_io_add_watch_full(server->channel,
-> +			G_PRIORITY_DEFAULT,
-> +			G_IO_OUT | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-> +			can_write_data, server,
-> +			(GDestroyNotify)write_watcher_destroy_notify);
-> +}
-> +
->  static void v250_settings_create(struct v250_settings *v250)
->  {
->  	v250->s3 =3D '\r';
-> @@ -483,11 +559,22 @@ GAtServer *g_at_server_new(GIOChannel *io)
->  	v250_settings_create(&server->v250);
->  	server->channel =3D io;
->  	server->read_buf =3D ring_buffer_new(4096);
-> -	server->max_read_attempts =3D 3;
-> -
->  	if (!server->read_buf)
->  		goto error;
->  =
-
-> +#ifdef WRITE_SCHEDULER_DEBUG
-> +	server->write_buf =3D ring_buffer_new(4);
-> +#else
-> +	server->write_buf =3D ring_buffer_new(4096);
-> +#endif
-> +	if (!server->write_buf)
-> +		goto error;
-> +
-> +	if (!alloc_free_list(server))
-> +		goto error;
-> +
-> +	server->max_read_attempts =3D 3;
-> +
->  	if (!g_at_util_setup_io(server->channel, G_IO_FLAG_NONBLOCK))
->  		goto error;
->  =
-
-> @@ -502,6 +589,13 @@ error:
->  	if (server->read_buf)
->  		ring_buffer_free(server->read_buf);
->  =
-
-> +	if (server->write_buf)
-> +		ring_buffer_free(server->write_buf);
-> +
-> +	if (server->free_list)
-> +		g_slist_foreach(server->free_list, (GFunc)free_ring_buffer,
-> +					NULL);
-> +
->  	if (server)
->  		g_free(server);
->  =
-
-> @@ -552,6 +646,9 @@ gboolean g_at_server_shutdown(GAtServer *server)
->  	server->user_disconnect =3D NULL;
->  	server->user_disconnect_data =3D NULL;
->  =
-
-> +	if (server->write_watch)
-> +		g_source_remove(server->write_watch);
-> +
->  	if (server->read_watch)
->  		g_source_remove(server->read_watch);
->  =
-
-> -- =
-
-> 1.6.6.1
-> =
-
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
-
++gboolean g_dbus_properties_dict_append(DBusMessageIter *dict,
++					const char *key,
++					int type, void *value);
++
++gboolean g_dbus_properties_dict_append_string_array(DBusMessageIter *dict,
++				const char *key, int type, char **val);
++
++gboolean g_dbus_properties_dict_append_fixed_array(DBusMessageIter *dict,
++							const char *key,
++							int type, void *val,
++							int len);
++
++gboolean g_dbus_emit_property_changed(DBusConnection *conn,
++					const char *path,
++					const char *interface,
++					const char *name,
++					int type, void *value);
++
++gboolean g_dbus_emit_string_array_property_changed(DBusConnection *conn,
++							const char *path,
++							const char *interface,
++							const char *name,
++							int type,
++							char **values);
++
++gboolean g_dbus_emit_fixed_array_property_changed(DBusConnection *conn,
++							const char *path,
++							const char *interface,
++							const char *name,
++							int type, void *value,
++							int len);
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/gdbus/util.c b/gdbus/util.c
+new file mode 100644
+index 0000000..988af7b
+--- /dev/null
++++ b/gdbus/util.c
+@@ -0,0 +1,226 @@
++/*
++ *
++ *  D-Bus helper library
++ *
++ *  Copyright (C) 2004-2010  Marcel Holtmann <marcel@holtmann.org>
++ *
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License as published by
++ *  the Free Software Foundation; either version 2 of the License, or
++ *  (at your option) any later version.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <glib.h>
++#include <dbus/dbus.h>
++
++#include "gdbus.h"
++
++static void append_variant(DBusMessageIter *iter,
++				int type, void *value)
++{
++	char sig[2];
++	DBusMessageIter valueiter;
++
++	sig[0] =3D type;
++	sig[1] =3D 0;
++
++	dbus_message_iter_open_container(iter, DBUS_TYPE_VARIANT,
++						sig, &valueiter);
++
++	dbus_message_iter_append_basic(&valueiter, type, value);
++
++	dbus_message_iter_close_container(iter, &valueiter);
++}
++
++static void append_string_array_variant(DBusMessageIter *iter,
++					int type, char **val)
++{
++	DBusMessageIter variant, array;
++	char typesig[2];
++	char arraysig[3];
++	int i;
++
++	arraysig[0] =3D DBUS_TYPE_ARRAY;
++	arraysig[1] =3D typesig[0] =3D type;
++	arraysig[2] =3D typesig[1] =3D '\0';
++
++	dbus_message_iter_open_container(iter, DBUS_TYPE_VARIANT,
++						arraysig, &variant);
++
++	dbus_message_iter_open_container(&variant, DBUS_TYPE_ARRAY,
++						typesig, &array);
++
++	for (i =3D 0; val[i]; i++)
++		dbus_message_iter_append_basic(&array, type, &(val[i]));
++
++	dbus_message_iter_close_container(&variant, &array);
++
++	dbus_message_iter_close_container(iter, &variant);
++}
++
++static void append_fixed_array_variant(DBusMessageIter *iter,
++					int type, void *val, int len)
++{
++	DBusMessageIter variant, array;
++	char typesig[2];
++	char arraysig[3];
++
++	arraysig[0] =3D DBUS_TYPE_ARRAY;
++	arraysig[1] =3D typesig[0] =3D type;
++	arraysig[2] =3D typesig[1] =3D '\0';
++
++	dbus_message_iter_open_container(iter, DBUS_TYPE_VARIANT,
++						arraysig, &variant);
++
++	dbus_message_iter_open_container(&variant, DBUS_TYPE_ARRAY,
++						typesig, &array);
++
++	dbus_message_iter_append_fixed_array(&array, type, val, len);
++
++	dbus_message_iter_close_container(&variant, &array);
++
++	dbus_message_iter_close_container(iter, &variant);
++}
++
++gboolean g_dbus_properties_dict_append(DBusMessageIter *dict,
++					const char *key,
++					int type, void *value)
++{
++	DBusMessageIter keyiter;
++
++	if (type =3D=3D DBUS_TYPE_STRING || type =3D=3D DBUS_TYPE_OBJECT_PATH) {
++		const char *str =3D *((const char **) value);
++		if (str =3D=3D NULL)
++			return FALSE;
++	}
++
++	dbus_message_iter_open_container(dict, DBUS_TYPE_DICT_ENTRY,
++							NULL, &keyiter);
++
++	dbus_message_iter_append_basic(&keyiter, DBUS_TYPE_STRING, &key);
++
++	append_variant(&keyiter, type, value);
++
++	dbus_message_iter_close_container(dict, &keyiter);
++
++	return TRUE;
++}
++
++gboolean g_dbus_properties_dict_append_string_array(DBusMessageIter *dict,
++				const char *key, int type, char **val)
++{
++	DBusMessageIter entry;
++
++	if (type !=3D DBUS_TYPE_STRING && type !=3D DBUS_TYPE_OBJECT_PATH)
++		return FALSE;
++
++	dbus_message_iter_open_container(dict, DBUS_TYPE_DICT_ENTRY,
++						NULL, &entry);
++
++	dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &key);
++
++	append_string_array_variant(&entry, type, val);
++
++	dbus_message_iter_close_container(dict, &entry);
++
++	return TRUE;
++}
++
++gboolean g_dbus_properties_dict_append_fixed_array(DBusMessageIter *dict,
++							const char *key,
++							int type, void *val,
++							int len)
++{
++	DBusMessageIter entry;
++
++	dbus_message_iter_open_container(dict, DBUS_TYPE_DICT_ENTRY,
++						NULL, &entry);
++
++	dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &key);
++
++	append_fixed_array_variant(&entry, type, val, len);
++
++	dbus_message_iter_close_container(dict, &entry);
++
++	return TRUE;
++}
++
++gboolean g_dbus_emit_property_changed(DBusConnection *conn,
++					const char *path,
++					const char *interface,
++					const char *name,
++					int type, void *value)
++{
++	DBusMessage *signal;
++	DBusMessageIter iter;
++
++	signal =3D dbus_message_new_signal(path, interface, "PropertyChanged");
++
++	if (signal =3D=3D NULL)
++		return FALSE;
++
++	dbus_message_iter_init_append(signal, &iter);
++	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name);
++	append_variant(&iter, type, value);
++
++	return g_dbus_send_message(conn, signal);
++}
++
++gboolean g_dbus_emit_string_array_property_changed(DBusConnection *conn,
++							const char *path,
++							const char *interface,
++							const char *name,
++							int type, char **values)
++{
++	DBusMessage *signal;
++	DBusMessageIter iter;
++
++	if (type !=3D DBUS_TYPE_STRING && type !=3D DBUS_TYPE_OBJECT_PATH)
++		return FALSE;
++
++	signal =3D dbus_message_new_signal(path, interface, "PropertyChanged");
++	if (signal =3D=3D NULL)
++		return FALSE;
++
++	dbus_message_iter_init_append(signal, &iter);
++	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name);
++	append_string_array_variant(&iter, type, values);
++
++	return g_dbus_send_message(conn, signal);
++}
++
++gboolean g_dbus_emit_fixed_array_property_changed(DBusConnection *conn,
++							const char *path,
++							const char *interface,
++							const char *name,
++							int type, void *value,
++							int len)
++{
++	DBusMessage *signal;
++	DBusMessageIter iter;
++
++	signal =3D dbus_message_new_signal(path, interface, "PropertyChanged");
++	if (signal =3D=3D NULL)
++		return FALSE;
++
++	dbus_message_iter_init_append(signal, &iter);
++	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name);
++	append_fixed_array_variant(&iter, type, value, len);
++
++	return g_dbus_send_message(conn, signal);
++}
 -- =
 
-Gustavo F. Padovan
-http://padovan.org
+1.6.4.4
 
-ProFUSION embedded systems - http://profusion.mobi
 
---===============1929050501817719263==--
+--===============2201436019253527241==--
 
