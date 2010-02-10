@@ -1,54 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============4529985034309072382=="
+Content-Type: multipart/mixed; boundary="===============2152477123686948603=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/4] Add ring_buffer_read_advance for partial write
-Date: Wed, 10 Feb 2010 09:36:39 -0600
-Message-ID: <201002100936.40723.denkenz@gmail.com>
-In-Reply-To: <1265789623-30146-3-git-send-email-zhenhua.zhang@intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH] Add support of Huawei EM770 modem
+Date: Wed, 10 Feb 2010 18:03:55 +0100
+Message-ID: <fb249edb1002100903g24e90ecbn64430da3badc69a@mail.gmail.com>
+In-Reply-To: <1EC975D79B8B1F4BBDC50EA54418A00412219846A9@shzsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4529985034309072382==
+--===============2152477123686948603==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Yang,
 
-> These two patches are for server side partial write.
-> =
+On 10 February 2010 11:17, Gu, Yang <yang.gu@intel.com> wrote:
+> 1. Once connecting this modem to PC via USB, we can get 5 tty ports: ttyU=
+SB0, ttyUSB1, ttyUSB2, ttyUSB3 and ttyUSB4. The correct way to talk to this=
+ modem is using ttyUSB2. I'm not sure if I handled this correctly in file u=
+dev.c.
 
-> When server writes data into non-blocking IO, we first get the
-> read pointer of write_buf and write data as much as we can. Then
-> we advance the read_ptr according to the real bytes written.
-> ---
->  gatchat/ringbuffer.c |    8 ++++++++
->  gatchat/ringbuffer.h |    7 +++++++
->  2 files changed, 15 insertions(+), 0 deletions(-)
-> =
-
-> diff --git a/gatchat/ringbuffer.c b/gatchat/ringbuffer.c
-> index 42d5b68..e17c1fa 100644
-> --- a/gatchat/ringbuffer.c
-> +++ b/gatchat/ringbuffer.c
-> @@ -130,6 +130,14 @@ int ring_buffer_read(struct ring_buffer *buf, void
->  *data, unsigned int len) return len;
->  }
-> =
-
-> +int ring_buffer_read_advance(struct ring_buffer *buf, unsigned int len)
-> +{
-> +	len =3D MIN(len, buf->in - buf->out);
-> +	buf->out +=3D len;
-> +
-> +	return len;
-> +}
-> +
-
-ring_buffer_drain already does this, that is the one you want to use.
+If there are more devices on the system that have a USB serial
+interface the ttyUSBn numbers will be different so it would be more
+reliable to decide based on some other characteristic of ttyUSB2 than
+the name (don't know which, maybe you can retrieve USB
+config/interface number).  If there's nothing better, then maybe take
+n =3D 2 + the lowest number of the five devices.
 
 Regards,
--Denis
 
---===============4529985034309072382==--
+--===============2152477123686948603==--
 
