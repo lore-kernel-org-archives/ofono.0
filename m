@@ -1,143 +1,204 @@
-Content-Type: multipart/mixed; boundary="===============8794060853832940299=="
+Content-Type: multipart/mixed; boundary="===============4418026144291775990=="
 MIME-Version: 1.0
-From: Li, Zhigang <zhigang.li@intel.com>
-Subject: oFonov0.17 light test report
-Date: Wed, 10 Feb 2010 17:20:01 +0800
-Message-ID: <AE1A29481078F64FB2A6D4BA2B68C2FEA9DEBD00@shzsmsx502.ccr.corp.intel.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: [PATCH] Add support of Huawei EM770 modem
+Date: Wed, 10 Feb 2010 18:17:41 +0800
+Message-ID: <1EC975D79B8B1F4BBDC50EA54418A00412219846A9@shzsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8794060853832940299==
+--===============4418026144291775990==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Test Environment
--------------------------------
-General PC (pre-installed FC12)
-- ofono v0.17
-- phonesim package
-- (HFP) Latest BlueZ git tree + Sony Ericsson C905
-- (GPRS) Moblin 2.2 + Unicom WCDMA network + MBM modem
--------------------------------
-Test Scope
--------------------------------
-    - All implemented features in oFonov0.17 are covered, We did light func=
-tional validation in this round testing on these features (voice call, mess=
-age, cell broadcast, phonebook, sim, supplementary service, modem, voice ma=
-il, call volume, call history, message history.) with phonesim simulator as=
- the target STE modem is not ready and basic functional validation on HFP, =
-GPRS with real hardware environment. We will do full test for HFP, GPRS lat=
-er.
--------------------------------
+Hi,
+This patch is to enable Huawei EM770 modem, which is a full feature modem t=
+hat supports voicecall, phonebook, call forwarding, call barring, etc.
 
-Test Summary
--------------------------------
-The test result is positive. Most functionalities work well and more stable,
-we reported 4 new bugs, updated 2 old bugs, verified 1 bugs, and one major =
-bug was quickly fixed by developer, thanks. So far, no blocking, major issu=
-es remain.
-Executed total 202 test cases during this round of testing, and among them: =
-
-Pass:     196
-Fail:       6
--------------------------------
-
-New Bugs
--------------------------------
-9370 nor No phonesim application when enable real modem and phonesim togeth=
-er  =
-
-9371 nor Modem interface information didn't be updated after modem was remo=
-ved  =
-
-9453 enh [Phonesim] To support UCS2 encode in Cell Broadcast Message  =
-
-9374 maj Segment fault with more char CBS [fixed by developer already]
-
-Remaining Old Open bugs
--------------------------------
-8185 nor Segmentation fault in ste modem which may caused by call history
-8898 enh Spend long time on getting fail report of sms
-
-Verified Bugs
--------------------------------
-9089 maj Phonesim modem will quit with the remote disconnect detection patc=
-h   =
-
-
-Details
--------------------------------
-The every checkpoint would be one or more test case to cover and result is =
-for functionality, besides you may find some functional limitation in comme=
+There are two known parts of code that may have problem and need your comme=
 nts.
-
-Features				checkpoints		result		comments
-
-Call history			Missed call		pass
-					Outgoing call		pass
-					Incoming call		pass
-					Duration			pass
-					Date				pass
-SMS					Send/receive		pass			Enhancement bug #8898
-					Different class	pass
-					Character set		pass
-					Set Center add	pass
-					More segments		pass
-Voice call			Dial				pass
-					Accept/reject		pass
-					Hold/Retrieve		pass
-					Release			pass
-					ECT				pass
-Multiparty call		Create			pass
-					Hangup			pass
-					Private chat		pass
-					Hold				pass
-Sim phonebook			Read				pass
-					Character set		pass
-					vCard3.0 			pass
-SS					CF				pass
-					CB				pass
-					CW				pass
-					CLIP/CLIR			pass
-Setting				AOC				pass
-					CF/CW/CB			pass
-GSM string			General strings	pass
-					USSD				pass
-Modem 				Basic information	pass
-					Two modems		pass		Low priority bug #9370
-					Abnormal quit		fail		#9371,#8185
-Networking			Basic information	pass
-					Signal indicator	pass
-Sim file				Read IMSI			pass
-					Read MSISDN		pass
-					Emergence number	pass
-					SDN number		pass
-Cell broadcast		Receive one		pass
-					Character set		pass		Enhancement bug #9453
-					Receive more char	fail		Fixed now, bug #9374
-Call Volume			Get/Set value		pass
-					Mute/Unmute		pass
-Message history		Send				pass
-					Receive			pass
-					Unsend			pass
-					Date				pass
-HPF					Dial a call		pass
-					Hangup			pass
-					DTMF				pass
-					Hold/retrieve		pass
-					Multiparty call	pass
-GPRS					Register 			pass
-					Create context	pass
-					Active context	pass
-					Deactivate context	pass
-					Set/Get APN		pass
+1. Once connecting this modem to PC via USB, we can get 5 tty ports: ttyUSB=
+0, ttyUSB1, ttyUSB2, ttyUSB3 and ttyUSB4. The correct way to talk to this m=
+odem is using ttyUSB2. I'm not sure if I handled this correctly in file ude=
+v.c.
+2. When creating the modem, a global modem id will be appended to the name =
+of it while constructing the path. This modem has name "huawei_em770", thus=
+ the path becomes things like "/huawei_em7700" or "/huawei_em7701". This lo=
+oks strange. Need I change the name of this modem, or can we use some smart=
+er way to append the modem id? =
 
 
------------------------------------------------
-Thanks
-Zhigang
+There is also one known issue for this modem: The return of "CSMS=3D?" from=
+ this modem is not compatible with spec. This is deemed as a modem issue, s=
+o the sms wouldn't work before this hardware issue get solved. =
 
 
---===============8794060853832940299==--
+Comments are welcome!
+
+Regards,
+-Yang
+
+
+--===============4418026144291775990==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Add-support-of-Huawei-EM770-modem.patch"
+
+RnJvbSAzMTlhMDVjMmZkOTNiNjI3Zjk2NWE2ODQ4NTQyODA1ZjQ3MDM3Yzc2IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogV2Vk
+LCAxMCBGZWIgMjAxMCAxNzo1MTowNCArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIEFkZCBzdXBwb3J0
+IG9mIEh1YXdlaSBFTTc3MCBtb2RlbQoKQ29tcGFyaW5nIHdpdGggZ2VuZXJhbCBIdWF3ZWkgbW9k
+ZW0sIEVNNzcwIGlzIGEgZnVsbCBmZWF0dXJlIG1vZGVtIHRoYXQKc3VwcG9ydHMgdm9pY2VjYWxs
+LCBwaG9uZWJvb2ssIGNhbGwgZm9yd2FyZGluZywgY2FsbCBiYXJyaW5nLCBldGMuCi0tLQogTWFr
+ZWZpbGUuYW0gICAgICAgICAgICB8ICAgIDMgKwogcGx1Z2lucy9odWF3ZWktZW03NzAuYyB8ICAy
+MjYgKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrCiBwbHVn
+aW5zL29mb25vLnJ1bGVzICAgIHwgICAgMSArCiBwbHVnaW5zL3VkZXYuYyAgICAgICAgIHwgICAy
+MyArKysrKwogNCBmaWxlcyBjaGFuZ2VkLCAyNTMgaW5zZXJ0aW9ucygrKSwgMCBkZWxldGlvbnMo
+LSkKIGNyZWF0ZSBtb2RlIDEwMDY0NCBwbHVnaW5zL2h1YXdlaS1lbTc3MC5jCgpkaWZmIC0tZ2l0
+IGEvTWFrZWZpbGUuYW0gYi9NYWtlZmlsZS5hbQppbmRleCA1ZTViYjU2Li5kZjUzOWYzIDEwMDY0
+NAotLS0gYS9NYWtlZmlsZS5hbQorKysgYi9NYWtlZmlsZS5hbQpAQCAtMTk1LDYgKzE5NSw5IEBA
+IGJ1aWx0aW5fc291cmNlcyArPSBwbHVnaW5zL2hzby5jCiBidWlsdGluX21vZHVsZXMgKz0gaHVh
+d2VpCiBidWlsdGluX3NvdXJjZXMgKz0gcGx1Z2lucy9odWF3ZWkuYwogCitidWlsdGluX21vZHVs
+ZXMgKz0gaHVhd2VpX2VtNzcwCitidWlsdGluX3NvdXJjZXMgKz0gcGx1Z2lucy9odWF3ZWktZW03
+NzAuYworCiBidWlsdGluX21vZHVsZXMgKz0gbm92YXRlbAogYnVpbHRpbl9zb3VyY2VzICs9IHBs
+dWdpbnMvbm92YXRlbC5jCiAKZGlmZiAtLWdpdCBhL3BsdWdpbnMvaHVhd2VpLWVtNzcwLmMgYi9w
+bHVnaW5zL2h1YXdlaS1lbTc3MC5jCm5ldyBmaWxlIG1vZGUgMTAwNjQ0CmluZGV4IDAwMDAwMDAu
+LjBjZTRhZmYKLS0tIC9kZXYvbnVsbAorKysgYi9wbHVnaW5zL2h1YXdlaS1lbTc3MC5jCkBAIC0w
+LDAgKzEsMjI2IEBACisvKgorICoKKyAqICBvRm9ubyAtIE9wZW4gU291cmNlIFRlbGVwaG9ueQor
+ICoKKyAqICBDb3B5cmlnaHQgKEMpIDIwMDgtMjAxMCAgSW50ZWwgQ29ycG9yYXRpb24uIEFsbCBy
+aWdodHMgcmVzZXJ2ZWQuCisgKgorICogIFRoaXMgcHJvZ3JhbSBpcyBmcmVlIHNvZnR3YXJlOyB5
+b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5CisgKiAgaXQgdW5kZXIgdGhlIHRl
+cm1zIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSB2ZXJzaW9uIDIgYXMKKyAqICBw
+dWJsaXNoZWQgYnkgdGhlIEZyZWUgU29mdHdhcmUgRm91bmRhdGlvbi4KKyAqCisgKiAgVGhpcyBw
+cm9ncmFtIGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRoYXQgaXQgd2lsbCBiZSB1c2VmdWws
+CisgKiAgYnV0IFdJVEhPVVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2ZW4gdGhlIGltcGxpZWQg
+d2FycmFudHkgb2YKKyAqICBNRVJDSEFOVEFCSUxJVFkgb3IgRklUTkVTUyBGT1IgQSBQQVJUSUNV
+TEFSIFBVUlBPU0UuICBTZWUgdGhlCisgKiAgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgZm9y
+IG1vcmUgZGV0YWlscy4KKyAqCisgKiAgWW91IHNob3VsZCBoYXZlIHJlY2VpdmVkIGEgY29weSBv
+ZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UKKyAqICBhbG9uZyB3aXRoIHRoaXMgcHJv
+Z3JhbTsgaWYgbm90LCB3cml0ZSB0byB0aGUgRnJlZSBTb2Z0d2FyZQorICogIEZvdW5kYXRpb24s
+IEluYy4sIDUxIEZyYW5rbGluIFN0LCBGaWZ0aCBGbG9vciwgQm9zdG9uLCBNQSAgMDIxMTAtMTMw
+MSAgVVNBCisgKgorICovCisKKyNpZmRlZiBIQVZFX0NPTkZJR19ICisjaW5jbHVkZSA8Y29uZmln
+Lmg+CisjZW5kaWYKKworI2luY2x1ZGUgPHN0ZGlvLmg+CisjaW5jbHVkZSA8ZXJybm8uaD4KKyNp
+bmNsdWRlIDxzdGRsaWIuaD4KKworI2luY2x1ZGUgPGdsaWIuaD4KKyNpbmNsdWRlIDxnYXRjaGF0
+Lmg+CisjaW5jbHVkZSA8Z2F0dHR5Lmg+CisKKyNkZWZpbmUgT0ZPTk9fQVBJX1NVQkpFQ1RfVE9f
+Q0hBTkdFCisjaW5jbHVkZSA8b2Zvbm8vcGx1Z2luLmg+CisjaW5jbHVkZSA8b2Zvbm8vbG9nLmg+
+CisjaW5jbHVkZSA8b2Zvbm8vbW9kZW0uaD4KKyNpbmNsdWRlIDxvZm9uby9jYWxsLWJhcnJpbmcu
+aD4KKyNpbmNsdWRlIDxvZm9uby9jYWxsLWZvcndhcmRpbmcuaD4KKyNpbmNsdWRlIDxvZm9uby9j
+YWxsLW1ldGVyLmg+CisjaW5jbHVkZSA8b2Zvbm8vY2FsbC1zZXR0aW5ncy5oPgorI2luY2x1ZGUg
+PG9mb25vL2RldmluZm8uaD4KKyNpbmNsdWRlIDxvZm9uby9tZXNzYWdlLXdhaXRpbmcuaD4KKyNp
+bmNsdWRlIDxvZm9uby9uZXRyZWcuaD4KKyNpbmNsdWRlIDxvZm9uby9waG9uZWJvb2suaD4KKyNp
+bmNsdWRlIDxvZm9uby9zaW0uaD4KKyNpbmNsdWRlIDxvZm9uby9zbXMuaD4KKyNpbmNsdWRlIDxv
+Zm9uby9zc24uaD4KKyNpbmNsdWRlIDxvZm9uby91c3NkLmg+CisjaW5jbHVkZSA8b2Zvbm8vZ3By
+cy5oPgorI2luY2x1ZGUgPG9mb25vL3ZvaWNlY2FsbC5oPgorCisjaW5jbHVkZSA8ZHJpdmVycy9h
+dG1vZGVtL3ZlbmRvci5oPgorCitzdHJ1Y3QgZW03NzBfZGF0YSB7CisJR0F0Q2hhdCAqY2hhdDsK
+K307CisKK3N0YXRpYyBpbnQgZW03NzBfcHJvYmUoc3RydWN0IG9mb25vX21vZGVtICptb2RlbSkK
+K3sKKwlzdHJ1Y3QgZW03NzBfZGF0YSAqZGF0YTsKKworCURCRygiJXAiLCBtb2RlbSk7CisKKwlk
+YXRhID0gZ190cnlfbmV3MChzdHJ1Y3QgZW03NzBfZGF0YSwgMSk7CisJaWYgKCFkYXRhKQorCQly
+ZXR1cm4gLUVOT01FTTsKKworCW9mb25vX21vZGVtX3NldF9kYXRhKG1vZGVtLCBkYXRhKTsKKwor
+CXJldHVybiAwOworfQorCitzdGF0aWMgdm9pZCBlbTc3MF9yZW1vdmUoc3RydWN0IG9mb25vX21v
+ZGVtICptb2RlbSkKK3sKKwlzdHJ1Y3QgZW03NzBfZGF0YSAqZGF0YSA9IG9mb25vX21vZGVtX2dl
+dF9kYXRhKG1vZGVtKTsKKworCURCRygiJXAiLCBtb2RlbSk7CisKKwlvZm9ub19tb2RlbV9zZXRf
+ZGF0YShtb2RlbSwgTlVMTCk7CisKKwlnX2F0X2NoYXRfdW5yZWYoZGF0YS0+Y2hhdCk7CisJZ19m
+cmVlKGRhdGEpOworfQorCitzdGF0aWMgdm9pZCBlbTc3MF9kZWJ1Zyhjb25zdCBjaGFyICpzdHIs
+IHZvaWQgKnVzZXJfZGF0YSkKK3sKKwlvZm9ub19pbmZvKCIlcyIsIHN0cik7Cit9CisKK3N0YXRp
+YyB2b2lkIGNmdW5fZW5hYmxlKGdib29sZWFuIG9rLCBHQXRSZXN1bHQgKnJlc3VsdCwgZ3BvaW50
+ZXIgdXNlcl9kYXRhKQoreworCXN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0gPSB1c2VyX2RhdGE7
+CisKKwlEQkcoIiIpOworCisJaWYgKG9rKQorCQlvZm9ub19tb2RlbV9zZXRfcG93ZXJlZChtb2Rl
+bSwgVFJVRSk7Cit9CisKK3N0YXRpYyBpbnQgZW03NzBfZW5hYmxlKHN0cnVjdCBvZm9ub19tb2Rl
+bSAqbW9kZW0pCit7CisJc3RydWN0IGVtNzcwX2RhdGEgKmRhdGEgPSBvZm9ub19tb2RlbV9nZXRf
+ZGF0YShtb2RlbSk7CisJR0F0U3ludGF4ICpzeW50YXg7CisJR0lPQ2hhbm5lbCAqY2hhbm5lbDsK
+Kwljb25zdCBjaGFyICpkZXZpY2U7CisKKwlEQkcoIiVwIiwgbW9kZW0pOworCisJZGV2aWNlID0g
+b2Zvbm9fbW9kZW1fZ2V0X3N0cmluZyhtb2RlbSwgIkRldmljZSIpOworCWlmICghZGV2aWNlKQor
+CQkJcmV0dXJuIC1FSU5WQUw7CisKKwljaGFubmVsID0gZ19hdF90dHlfb3BlbihkZXZpY2UsIE5V
+TEwpOworCWlmICghY2hhbm5lbCkKKwkJcmV0dXJuIC1FSU87CisKKwlzeW50YXggPSBnX2F0X3N5
+bnRheF9uZXdfZ3NtdjEoKTsKKwlkYXRhLT5jaGF0ID0gZ19hdF9jaGF0X25ldyhjaGFubmVsLCBz
+eW50YXgpOworCWdfYXRfc3ludGF4X3VucmVmKHN5bnRheCk7CisJZ19pb19jaGFubmVsX3VucmVm
+KGNoYW5uZWwpOworCisJaWYgKCFkYXRhLT5jaGF0KQorCQlyZXR1cm4gLUVJTzsKKworCWdfYXRf
+Y2hhdF9hZGRfdGVybWluYXRvcihkYXRhLT5jaGF0LCAiQ09NTUFORCBOT1QgU1VQUE9SVCIsIC0x
+LCBGQUxTRSk7CisJZ19hdF9jaGF0X2FkZF90ZXJtaW5hdG9yKGRhdGEtPmNoYXQsICJUT08gTUFO
+WSBQQVJBTUVURVJTIiwgLTEsIEZBTFNFKTsKKworCWlmIChnZXRlbnYoIk9GT05PX0FUX0RFQlVH
+IikpCisJCWdfYXRfY2hhdF9zZXRfZGVidWcoZGF0YS0+Y2hhdCwgZW03NzBfZGVidWcsIE5VTEwp
+OworCisJZ19hdF9jaGF0X3NlbmQoZGF0YS0+Y2hhdCwgIkFURTAiLCBOVUxMLCBOVUxMLCBOVUxM
+LCBOVUxMKTsKKworCWdfYXRfY2hhdF9zZW5kKGRhdGEtPmNoYXQsICJBVCtDRlVOPTEiLCBOVUxM
+LAorCQkJCQljZnVuX2VuYWJsZSwgbW9kZW0sIE5VTEwpOworCisJcmV0dXJuIDA7Cit9CisKK3N0
+YXRpYyB2b2lkIGNmdW5fZGlzYWJsZShnYm9vbGVhbiBvaywgR0F0UmVzdWx0ICpyZXN1bHQsIGdw
+b2ludGVyIHVzZXJfZGF0YSkKK3sKKwlzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtID0gdXNlcl9k
+YXRhOworCXN0cnVjdCBlbTc3MF9kYXRhICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0X2RhdGEobW9k
+ZW0pOworCisJREJHKCIiKTsKKworCWdfYXRfY2hhdF9zaHV0ZG93bihkYXRhLT5jaGF0KTsKKwln
+X2F0X2NoYXRfdW5yZWYoZGF0YS0+Y2hhdCk7CisJZGF0YS0+Y2hhdCA9IE5VTEw7CisKKwlpZiAo
+b2spCisJCW9mb25vX21vZGVtX3NldF9wb3dlcmVkKG1vZGVtLCBGQUxTRSk7Cit9CisKK3N0YXRp
+YyBpbnQgZW03NzBfZGlzYWJsZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQoreworCXN0cnVj
+dCBlbTc3MF9kYXRhICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0X2RhdGEobW9kZW0pOworCisJREJH
+KCIlcCIsIG1vZGVtKTsKKworCWlmICghZGF0YS0+Y2hhdCkKKwkJcmV0dXJuIDA7CisKKwlnX2F0
+X2NoYXRfY2FuY2VsX2FsbChkYXRhLT5jaGF0KTsKKwlnX2F0X2NoYXRfdW5yZWdpc3Rlcl9hbGwo
+ZGF0YS0+Y2hhdCk7CisJZ19hdF9jaGF0X3NlbmQoZGF0YS0+Y2hhdCwgIkFUK0NGVU49MCIsIE5V
+TEwsCisJCQkJCWNmdW5fZGlzYWJsZSwgbW9kZW0sIE5VTEwpOworCisJcmV0dXJuIC1FSU5QUk9H
+UkVTUzsKK30KKworc3RhdGljIHZvaWQgZW03NzBfcHJlX3NpbShzdHJ1Y3Qgb2Zvbm9fbW9kZW0g
+Km1vZGVtKQoreworCXN0cnVjdCBlbTc3MF9kYXRhICpkYXRhID0gb2Zvbm9fbW9kZW1fZ2V0X2Rh
+dGEobW9kZW0pOworCisJREJHKCIlcCIsIG1vZGVtKTsKKworCW9mb25vX2RldmluZm9fY3JlYXRl
+KG1vZGVtLCAwLCAiYXRtb2RlbSIsIGRhdGEtPmNoYXQpOworCW9mb25vX3NpbV9jcmVhdGUobW9k
+ZW0sIDAsICJhdG1vZGVtIiwgZGF0YS0+Y2hhdCk7CisJb2Zvbm9fdm9pY2VjYWxsX2NyZWF0ZSht
+b2RlbSwgMCwgImF0bW9kZW0iLCBkYXRhLT5jaGF0KTsKK30KKworc3RhdGljIHZvaWQgZW03NzBf
+cG9zdF9zaW0oc3RydWN0IG9mb25vX21vZGVtICptb2RlbSkKK3sKKwlzdHJ1Y3QgZW03NzBfZGF0
+YSAqZGF0YSA9IG9mb25vX21vZGVtX2dldF9kYXRhKG1vZGVtKTsKKwlzdHJ1Y3Qgb2Zvbm9fbWVz
+c2FnZV93YWl0aW5nICptdzsKKworCURCRygiJXAiLCBtb2RlbSk7CisKKwlvZm9ub191c3NkX2Ny
+ZWF0ZShtb2RlbSwgMCwgImF0bW9kZW0iLCBkYXRhLT5jaGF0KTsKKwlvZm9ub19jYWxsX2Zvcndh
+cmRpbmdfY3JlYXRlKG1vZGVtLCAwLCAiYXRtb2RlbSIsIGRhdGEtPmNoYXQpOworCW9mb25vX2Nh
+bGxfc2V0dGluZ3NfY3JlYXRlKG1vZGVtLCAwLCAiYXRtb2RlbSIsIGRhdGEtPmNoYXQpOworCW9m
+b25vX25ldHJlZ19jcmVhdGUobW9kZW0sIDAsICJhdG1vZGVtIiwgZGF0YS0+Y2hhdCk7CisJb2Zv
+bm9fY2FsbF9tZXRlcl9jcmVhdGUobW9kZW0sIDAsICJhdG1vZGVtIiwgZGF0YS0+Y2hhdCk7CisJ
+b2Zvbm9fY2FsbF9iYXJyaW5nX2NyZWF0ZShtb2RlbSwgMCwgImF0bW9kZW0iLCBkYXRhLT5jaGF0
+KTsKKwlvZm9ub19zc25fY3JlYXRlKG1vZGVtLCAwLCAiYXRtb2RlbSIsIGRhdGEtPmNoYXQpOwor
+CW9mb25vX3Ntc19jcmVhdGUobW9kZW0sIE9GT05PX1ZFTkRPUl9RVUFMQ09NTV9NU00sICJhdG1v
+ZGVtIiwgZGF0YS0+Y2hhdCk7CisJb2Zvbm9fcGhvbmVib29rX2NyZWF0ZShtb2RlbSwgMCwgImF0
+bW9kZW0iLCBkYXRhLT5jaGF0KTsKKworCW13ID0gb2Zvbm9fbWVzc2FnZV93YWl0aW5nX2NyZWF0
+ZShtb2RlbSk7CisJaWYgKG13KQorCQlvZm9ub19tZXNzYWdlX3dhaXRpbmdfcmVnaXN0ZXIobXcp
+OworfQorCitzdGF0aWMgc3RydWN0IG9mb25vX21vZGVtX2RyaXZlciBlbTc3MF9kcml2ZXIgPSB7
+CisJLm5hbWUJCT0gImh1YXdlaV9lbTc3MCIsCisJLnByb2JlCQk9IGVtNzcwX3Byb2JlLAorCS5y
+ZW1vdmUJCT0gZW03NzBfcmVtb3ZlLAorCS5lbmFibGUJCT0gZW03NzBfZW5hYmxlLAorCS5kaXNh
+YmxlCT0gZW03NzBfZGlzYWJsZSwKKwkucHJlX3NpbQk9IGVtNzcwX3ByZV9zaW0sCisJLnBvc3Rf
+c2ltCT0gZW03NzBfcG9zdF9zaW0sCit9OworCitzdGF0aWMgaW50IGVtNzcwX2luaXQodm9pZCkK
+K3sKKwlyZXR1cm4gb2Zvbm9fbW9kZW1fZHJpdmVyX3JlZ2lzdGVyKCZlbTc3MF9kcml2ZXIpOwor
+fQorCitzdGF0aWMgdm9pZCBlbTc3MF9leGl0KHZvaWQpCit7CisJb2Zvbm9fbW9kZW1fZHJpdmVy
+X3VucmVnaXN0ZXIoJmVtNzcwX2RyaXZlcik7Cit9CisKK09GT05PX1BMVUdJTl9ERUZJTkUoaHVh
+d2VpX2VtNzcwLCAiSFVBV0VJIEVNNzcwIG1vZGVtIGRyaXZlciIsIFZFUlNJT04sCisJCU9GT05P
+X1BMVUdJTl9QUklPUklUWV9ERUZBVUxULCBlbTc3MF9pbml0LCBlbTc3MF9leGl0KQpkaWZmIC0t
+Z2l0IGEvcGx1Z2lucy9vZm9uby5ydWxlcyBiL3BsdWdpbnMvb2Zvbm8ucnVsZXMKaW5kZXggM2Ri
+MGNmNC4uZWVhYTNjNSAxMDA2NDQKLS0tIGEvcGx1Z2lucy9vZm9uby5ydWxlcworKysgYi9wbHVn
+aW5zL29mb25vLnJ1bGVzCkBAIC02LDYgKzYsNyBAQCBFTlZ7REVWVFlQRX0hPSJ1c2JfZGV2aWNl
+IiwgR09UTz0ib2Zvbm9fZW5kIgogCiAjIEhVQVdFSSBUZWNobm9sb2d5CiBBVFRSU3tpZFZlbmRv
+cn09PSIxMmQxIiwgRU5We09GT05PX0RSSVZFUn09Imh1YXdlaSIKK0FUVFJTe2lkVmVuZG9yfT09
+IjEyZDEiLCBBVFRSU3tpZFByb2R1Y3R9PT0iMTQwNCIsIEVOVntPRk9OT19EUklWRVJ9PSJodWF3
+ZWlfZW03NzAiCiAKICMgTm92YXRlbCBXaXJlbGVzcwogQVRUUlN7aWRWZW5kb3J9PT0iMTQxMCIs
+IEVOVntPRk9OT19EUklWRVJ9PSJub3ZhdGVsIgpkaWZmIC0tZ2l0IGEvcGx1Z2lucy91ZGV2LmMg
+Yi9wbHVnaW5zL3VkZXYuYwppbmRleCA0NTViZWYzLi4yOWNmODE4IDEwMDY0NAotLS0gYS9wbHVn
+aW5zL3VkZXYuYworKysgYi9wbHVnaW5zL3VkZXYuYwpAQCAtMjgsNiArMjgsNyBAQAogI2luY2x1
+ZGUgPGxpYnVkZXYuaD4KIAogI2luY2x1ZGUgPGdsaWIuaD4KKyNpbmNsdWRlIDxzdHJpbmcuaD4K
+IAogI2RlZmluZSBPRk9OT19BUElfU1VCSkVDVF9UT19DSEFOR0UKICNpbmNsdWRlIDxvZm9uby9w
+bHVnaW4uaD4KQEAgLTIwOCw2ICsyMDksMjYgQEAgc3RhdGljIHZvaWQgYWRkX2h1YXdlaShzdHJ1
+Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtLAogCW9mb25vX21vZGVtX3JlZ2lzdGVyKG1vZGVtKTsKIH0K
+IAorc3RhdGljIHZvaWQgYWRkX2h1YXdlaV9lbTc3MChzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVt
+LAorCQkJCQlzdHJ1Y3QgdWRldl9kZXZpY2UgKnVkZXZfZGV2aWNlKQoreworCWNvbnN0IGNoYXIg
+KmRldm5vZGUsICpuYW1lOworCWludCByZWdpc3RlcmVkOworCisJcmVnaXN0ZXJlZCA9IG9mb25v
+X21vZGVtX2dldF9pbnRlZ2VyKG1vZGVtLCAiUmVnaXN0ZXJlZCIpOworCWlmIChyZWdpc3RlcmVk
+ICE9IDApCisJCXJldHVybjsKKworCW5hbWUgPSB1ZGV2X2RldmljZV9nZXRfc3lzbmFtZSh1ZGV2
+X2RldmljZSk7CisJaWYgKCFzdHJjbXAobmFtZSwgInR0eVVTQjIiKSkgeworCQlkZXZub2RlID0g
+dWRldl9kZXZpY2VfZ2V0X2Rldm5vZGUodWRldl9kZXZpY2UpOworCQlvZm9ub19tb2RlbV9zZXRf
+c3RyaW5nKG1vZGVtLCAiRGV2aWNlIiwgZGV2bm9kZSk7CisKKwkJb2Zvbm9fbW9kZW1fc2V0X2lu
+dGVnZXIobW9kZW0sICJSZWdpc3RlcmVkIiwgMSk7CisJCW9mb25vX21vZGVtX3JlZ2lzdGVyKG1v
+ZGVtKTsKKwl9Cit9CisKIHN0YXRpYyB2b2lkIGFkZF9ub3ZhdGVsKHN0cnVjdCBvZm9ub19tb2Rl
+bSAqbW9kZW0sCiAJCQkJCXN0cnVjdCB1ZGV2X2RldmljZSAqdWRldl9kZXZpY2UpCiB7CkBAIC0y
+NzEsNiArMjkyLDggQEAgc3RhdGljIHZvaWQgYWRkX21vZGVtKHN0cnVjdCB1ZGV2X2RldmljZSAq
+dWRldl9kZXZpY2UpCiAJCWFkZF9oc28obW9kZW0sIHVkZXZfZGV2aWNlKTsKIAllbHNlIGlmIChn
+X3N0cmNtcDAoZHJpdmVyLCAiaHVhd2VpIikgPT0gMCkKIAkJYWRkX2h1YXdlaShtb2RlbSwgdWRl
+dl9kZXZpY2UpOworCWVsc2UgaWYgKGdfc3RyY21wMChkcml2ZXIsICJodWF3ZWlfZW03NzAiKSA9
+PSAwKQorCQlhZGRfaHVhd2VpX2VtNzcwKG1vZGVtLCB1ZGV2X2RldmljZSk7CiAJZWxzZSBpZiAo
+Z19zdHJjbXAwKGRyaXZlciwgIm5vdmF0ZWwiKSA9PSAwKQogCQlhZGRfbm92YXRlbChtb2RlbSwg
+dWRldl9kZXZpY2UpOwogfQotLSAKMS42LjMuMwoK
+
+--===============4418026144291775990==--
 
