@@ -1,109 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============4324182317533251357=="
+Content-Type: multipart/mixed; boundary="===============8575671956011814615=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 4/4] Add write server response into non blocking IO
-Date: Wed, 10 Feb 2010 16:13:43 +0800
-Message-ID: <1265789623-30146-4-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1265789623-30146-3-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 2/4] Add handle the case when write buffer is full
+Date: Wed, 10 Feb 2010 16:13:41 +0800
+Message-ID: <1265789623-30146-2-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1265789623-30146-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4324182317533251357==
+--===============8575671956011814615==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This and previous patch are for writing server response into
-non-blocking GIOChannel when we have G_IO_OUT signal.
+If current write_buf is fulled, put it into the full list and fetch
+a new ring buffer from the free list.
 ---
- gatchat/gatserver.c |   67 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 67 insertions(+), 0 deletions(-)
+ gatchat/gatserver.c |   63 +++++++++++++++++++++++++++++++++++++++++++++++=
++--
+ 1 files changed, 60 insertions(+), 3 deletions(-)
 
 diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index b5ac91e..1b4ce78 100644
+index 6b40084..b5ac91e 100644
 --- a/gatchat/gatserver.c
 +++ b/gatchat/gatserver.c
-@@ -530,6 +530,73 @@ static gboolean received_data(GIOChannel *channel, GIO=
-Condition cond,
- static gboolean can_write_data(GIOChannel *channel, GIOCondition cond,
- 				gpointer data)
- {
-+	GAtServer *server =3D data;
-+	GIOError err;
-+	gsize bytes_written;
-+	gsize towrite;
-+	struct ring_buffer *write_buf;
-+	unsigned char *buf;
-+	gboolean write_again =3D FALSE;
-+#ifdef WRITE_SCHEDULER_DEBUG
-+	int limiter;
-+#endif
-+
-+	if (cond & (G_IO_NVAL | G_IO_HUP | G_IO_ERR))
-+		return FALSE;
-+
-+	/* If we have full buffer, write them out first */
-+	if (server->full_list)
-+		write_buf =3D server->full_list->data;
-+	else
-+		write_buf =3D server->write_buf;
-+
-+	buf =3D ring_buffer_read_ptr(write_buf, 0);
-+
-+	towrite =3D ring_buffer_len_no_wrap(write_buf);
-+	if (towrite < (gsize)ring_buffer_len(write_buf))
-+		write_again =3D TRUE;
-+
-+#ifdef WRITE_SCHEDULER_DEBUG
-+	limiter =3D towrite;
-+
-+	if (limiter > 5)
-+		limiter =3D 5;
-+#endif
-+
-+	err =3D g_io_channel_write(server->channel,
-+			(char *)buf,
-+#ifdef WRITE_SCHEDULER_DEBUG
-+			limiter,
-+#else
-+			towrite,
-+#endif
-+			&bytes_written);
-+
-+	if (err !=3D G_IO_ERROR_NONE) {
-+		g_source_remove(server->read_watch);
-+		return FALSE;
-+	}
-+
-+	g_at_util_debug_chat(FALSE, (char *)buf, bytes_written, server->debugf,
-+				server->debug_data);
-+
-+	ring_buffer_read_advance(write_buf, bytes_written);
-+
-+	if (server->full_list) {
-+		/* All data in current full list is written, free it */
-+		if (ring_buffer_len(write_buf) =3D=3D 0) {
-+			server->full_list =3D g_slist_remove(server->full_list,
-+								write_buf);
-+
-+			ring_buffer_free(write_buf);
-+		}
-+
-+		return TRUE;
-+	}
-+
-+	if (bytes_written < towrite || write_again =3D=3D TRUE)
-+		return TRUE;
-+
- 	return FALSE;
+@@ -130,13 +130,70 @@ static gboolean alloc_free_list(GAtServer *server)
+ 	return TRUE;
  }
  =
 
++static gboolean replace_write_buf(GAtServer *server)
++{
++	struct ring_buffer *free_buf;
++
++	/* Add current buffer into full list and replace current buffer
++	 * by a new free buffer */
++	server->full_list =3D g_slist_append(server->full_list,
++						server->write_buf);
++
++	/* All free lists are exhausted. Allocate more free lists */
++	if (!server->free_list) {
++		if (!alloc_free_list(server)) {
++			/* Failed so shutdown the socket */
++			g_at_server_shutdown(server);
++
++			return FALSE;
++		}
++	}
++
++	free_buf =3D server->free_list->data;
++
++	server->free_list =3D g_slist_remove(server->free_list, free_buf);
++
++	server->write_buf =3D free_buf;
++
++	return TRUE;
++}
++
+ static void send_common(GAtServer *server, const char *buf)
+ {
+ 	gsize avail =3D ring_buffer_avail(server->write_buf);
+-	gsize len =3D strlen(buf);
++	gsize towrite =3D strlen(buf);
++	gsize bytes_written;
++	gsize offset =3D 0;
++
++	if (avail > towrite) {
++		ring_buffer_write(server->write_buf, buf, towrite);
+ =
+
+-	if (avail >=3D len)
+-		ring_buffer_write(server->write_buf, buf, len);
++		g_at_server_wakeup_writer(server);
++
++		return;
++	}
++
++	/* Write as much as we can */
++	bytes_written =3D ring_buffer_write(server->write_buf, buf, avail);
++	towrite -=3D bytes_written;
++	offset =3D bytes_written;
++
++	/* If current write buf is full, replace it with next free buffer */
++	if (!replace_write_buf(server))
++		return;
++
++	bytes_written =3D ring_buffer_write(server->write_buf, buf + offset,
++						towrite);
++	while (bytes_written < towrite) {
++		/* The next free buf is full, replace with next free one */
++		if (!replace_write_buf(server))
++			return;
++
++		towrite -=3D bytes_written;
++		offset +=3D bytes_written;
++		bytes_written =3D ring_buffer_write(server->write_buf,
++							buf + offset, towrite);
++	}
+ =
+
+ 	g_at_server_wakeup_writer(server);
+ }
 -- =
 
 1.6.6.1
 
 
---===============4324182317533251357==--
+--===============8575671956011814615==--
 
