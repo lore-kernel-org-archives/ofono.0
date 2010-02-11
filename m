@@ -1,43 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============3053295022073607695=="
+Content-Type: multipart/mixed; boundary="===============6995168049251504379=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: RE: RFC: Neighbouring Cell Info, take 2
-Date: Thu, 11 Feb 2010 11:25:49 -0800
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9BD651580@orsmsx508.amr.corp.intel.com>
-In-Reply-To: <1265874729.2210.9.camel@phoenix.elisa-laajakaista.fi>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH 1/3] hfp: fix copyright notice
+Date: Thu, 11 Feb 2010 20:52:40 -0200
+Message-ID: <1265928762-24090-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3053295022073607695==
+--===============6995168049251504379==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> > struct ofono_cell_info_driver {
-> > 	const char *name;
-> > 	int (*probe)(struct ofono_cell_info *ci, unsigned int vendor,
-> > 			void *data);
-> > 	void (*remove)(struct ofono_cell_info *ci);
-> > 	void (*query)(struct ofono_cell_info *ci,
-> > 			ofono_cell_info_query_cb_t cb,
-> > 			void *data);
-> > };
-> >
-> > void ofono_cell_info_query(struct ofono_cell_info *ci,
-> ofono_cell_info_query_cb_t cb, void *data);
-> =
+---
+ plugins/hfp.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-> What's this for?
+diff --git a/plugins/hfp.c b/plugins/hfp.c
+index 1c3efc9..5e29bba 100644
+--- a/plugins/hfp.c
++++ b/plugins/hfp.c
+@@ -2,7 +2,7 @@
+  *  oFono - Open Source Telephony
+  *
+  *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
+- *  Copyright (C) 2010  Gustavo F. Padovan <padovan@profusion.mobi>
++ *  Copyright (C) 2010  ProFUSION embedded systems
+  *
+  *  This program is free software; you can redistribute it and/or modify
+  *  it under the terms of the GNU General Public License version 2 as
+-- =
 
-It's basically ofono_cell_info_driver->query(...) for use by a plugin after=
- it has acquired the atom, something like:
-cell_info_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CELL_INFO=
-);
-cell_info =3D __ofono_atom_get_data(cell_info_atom);
-ofono_cell_info_query(cell_info, plugin_query_cb, plugin_data);
+1.6.4.4
 
-Cheers,
-Waldo
 
---===============3053295022073607695==--
+--===============6995168049251504379==--
 
