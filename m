@@ -1,31 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============8248101846638097169=="
+Content-Type: multipart/mixed; boundary="===============4527985347329635160=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] hfp: set timeout to service level connection procedure
-Date: Fri, 12 Feb 2010 15:46:30 -0600
-Message-ID: <201002121546.30481.denkenz@gmail.com>
-In-Reply-To: <1265928762-24090-3-git-send-email-padovan@profusion.mobi>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH] hfp: don't call HandsfreeGateway.Disconnect() when Release()
+ is called
+Date: Fri, 12 Feb 2010 21:31:40 -0200
+Message-ID: <1266017500-26219-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8248101846638097169==
+--===============4527985347329635160==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+---
+ plugins/hfp.c |   17 +++++++++++------
+ 1 files changed, 11 insertions(+), 6 deletions(-)
 
-> If it expires we call org.bluez.HandsfreeGateway.Disconnect()
-> It also modifies send_method_call and break it down into two functions.
-> Now we have send_method_call_with_reply, for DBus messages that needs a
-> reply. It sets a reply and a timeout for the message reply.
-> The other funcion is called send_method_call without timeout or reply
-> parameters.
+diff --git a/plugins/hfp.c b/plugins/hfp.c
+index 219f268..aa4085a 100644
+--- a/plugins/hfp.c
++++ b/plugins/hfp.c
+@@ -934,19 +934,24 @@ done:
+ static int hfp_disable(struct ofono_modem *modem)
+ {
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
++	const char *obj_path =3D ofono_modem_get_path(modem);
+ 	int status;
+ =
 
-Patch has been applied, thanks.
+ 	DBG("%p", modem);
+ =
 
-Regards,
--Denis
+ 	clear_data(modem);
+ =
 
---===============8248101846638097169==--
+-	status =3D send_method_call_with_reply(BLUEZ_SERVICE,
+-				data->handsfree_path,
+-				BLUEZ_GATEWAY_INTERFACE, "Disconnect",
+-				hfp_power_down, modem, 15, DBUS_TYPE_INVALID);
++	if (g_dbus_unregister_interface(connection, obj_path,
++					HFP_AGENT_INTERFACE)) {
++		status =3D send_method_call_with_reply(BLUEZ_SERVICE,
++					data->handsfree_path,
++					BLUEZ_GATEWAY_INTERFACE, "Disconnect",
++					hfp_power_down, modem, 15,
++					DBUS_TYPE_INVALID);
+ =
+
+-	if (status < 0)
+-		return -EINVAL;
++		if (status < 0)
++			return -EINVAL;
++	}
+ =
+
+ 	return -EINPROGRESS;
+ }
+-- =
+
+1.6.4.4
+
+
+--===============4527985347329635160==--
 
