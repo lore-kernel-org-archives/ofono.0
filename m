@@ -1,66 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============4527985347329635160=="
+Content-Type: multipart/mixed; boundary="===============7833475122036999412=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH] hfp: don't call HandsfreeGateway.Disconnect() when Release()
- is called
-Date: Fri, 12 Feb 2010 21:31:40 -0200
-Message-ID: <1266017500-26219-1-git-send-email-padovan@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Release 0.18, now with Bluetooth HFP Client profile support
+Date: Sat, 13 Feb 2010 00:40:40 -0600
+Message-ID: <201002130040.40927.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4527985347329635160==
+--===============7833475122036999412==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/hfp.c |   17 +++++++++++------
- 1 files changed, 11 insertions(+), 6 deletions(-)
+Hi Everyone,
 
-diff --git a/plugins/hfp.c b/plugins/hfp.c
-index 219f268..aa4085a 100644
---- a/plugins/hfp.c
-+++ b/plugins/hfp.c
-@@ -934,19 +934,24 @@ done:
- static int hfp_disable(struct ofono_modem *modem)
- {
- 	struct hfp_data *data =3D ofono_modem_get_data(modem);
-+	const char *obj_path =3D ofono_modem_get_path(modem);
- 	int status;
- =
+It is Friday the 13th, but there's nothing scary in the announcement, I =
 
- 	DBG("%p", modem);
- =
+promise :)
 
- 	clear_data(modem);
- =
+So oFono has had support for HFP Client profile role since late last year, =
+but =
 
--	status =3D send_method_call_with_reply(BLUEZ_SERVICE,
--				data->handsfree_path,
--				BLUEZ_GATEWAY_INTERFACE, "Disconnect",
--				hfp_power_down, modem, 15, DBUS_TYPE_INVALID);
-+	if (g_dbus_unregister_interface(connection, obj_path,
-+					HFP_AGENT_INTERFACE)) {
-+		status =3D send_method_call_with_reply(BLUEZ_SERVICE,
-+					data->handsfree_path,
-+					BLUEZ_GATEWAY_INTERFACE, "Disconnect",
-+					hfp_power_down, modem, 15,
-+					DBUS_TYPE_INVALID);
- =
+it hasn't been properly integrated with BlueZ until now.  Starting with oFo=
+no =
 
--	if (status < 0)
--		return -EINVAL;
-+		if (status < 0)
-+			return -EINVAL;
-+	}
- =
+release 0.18 oFono fully integrates Bluetooth HFP client with cooperation f=
+rom =
 
- 	return -EINPROGRESS;
- }
--- =
+BlueZ.  Currently implemented features include:
+	- Audio support
+	- Simple incoming and outgoing calls
+	- Three way calls, call waiting and call hold
+	- Multiparty calls
+	- Network status reporting
+	- Speaker / microphone volume control
 
-1.6.4.4
+This support depends on BlueZ release 4.61 or later and DBus 1.3.  The latt=
+er =
 
+is required for file-descriptor passing support.
 
---===============4527985347329635160==--
+We have been testing extensively over the last several months, but I'm sure=
+ we =
+
+haven't found all the issues.  I'd like everyone interested to give it a tr=
+y =
+
+with their mobile phone and let us know what works and what doesn't.
+
+Big thanks to everyone involved in oFono, BlueZ and PulseAudio projects.  I=
+n =
+
+particular kudos to Gustavo Padovan and Jo=C3=A3o Paulo Rechi Vita from Pro=
+FUSION =
+
+who did much of the integration work in BlueZ and oFono.  Kudos also to =
+
+Zhenhua Zhang from Intel for implementing big chunks of the HFP call state =
+
+flows and for his early prototyping work.
+
+If you're interested in learning more, see http://profusion.mobi/node/21.
+
+Regards,
+-Denis
+
+--===============7833475122036999412==--
 
