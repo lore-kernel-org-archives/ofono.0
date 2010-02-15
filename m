@@ -1,118 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============6104978617147207577=="
+Content-Type: multipart/mixed; boundary="===============6798024628233108727=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] hfp: remove modems if bluetoothd shutdowns without
- calling Release
-Date: Mon, 15 Feb 2010 13:41:08 -0600
-Message-ID: <201002151341.08715.denkenz@gmail.com>
-In-Reply-To: <1266261996-15507-3-git-send-email-padovan@profusion.mobi>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] Use g_dbus_emit_signal in call-{barring,meter}.c
+Date: Mon, 15 Feb 2010 08:02:56 +0100
+Message-ID: <1266217376-26692-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6104978617147207577==
+--===============6798024628233108727==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+---
+ src/call-barring.c |   13 ++-----------
+ src/call-meter.c   |   12 ++----------
+ 2 files changed, 4 insertions(+), 21 deletions(-)
 
-> ---
->  plugins/hfp.c |   28 ++++++++++++++++++++++++++--
->  1 files changed, 26 insertions(+), 2 deletions(-)
-> =
+diff --git a/src/call-barring.c b/src/call-barring.c
+index e4c39f3..2a04b25 100644
+--- a/src/call-barring.c
++++ b/src/call-barring.c
+@@ -991,18 +991,9 @@ static void call_barring_incoming_enabled_notify(int i=
+dx, void *userdata)
+ 	struct ofono_call_barring *cb =3D userdata;
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	const char *path =3D __ofono_atom_get_path(cb->atom);
+-	DBusMessage *signal;
+-
+-	signal =3D dbus_message_new_signal(path, OFONO_CALL_BARRING_INTERFACE,
+-						"IncomingBarringInEffect");
+ =
 
-> diff --git a/plugins/hfp.c b/plugins/hfp.c
-> index 3776dc6..c63e332 100644
-> --- a/plugins/hfp.c
-> +++ b/plugins/hfp.c
-> @@ -911,6 +911,23 @@ done:
->  	dbus_message_unref(reply);
->  }
-> =
+-	if (!signal) {
+-		ofono_error("Unable to allocate new %s.IncomingBarringInEffect"
+-				" signal", OFONO_CALL_BARRING_INTERFACE);
+-		return;
+-	}
+-
+-	g_dbus_send_message(conn, signal);
++	g_dbus_emit_signal(conn, path, OFONO_CALL_BARRING_INTERFACE,
++			"IncomingBarringInEffect", DBUS_TYPE_INVALID);
+ }
+ =
 
-> +static gboolean hfp_remove_each_modem(gpointer key, gpointer value,
->  gpointer user_data) +{
-> +	struct ofono_modem *modem =3D value;
-> +
-> +	ofono_modem_remove(modem);
-> +
-> +	return TRUE;
-> +}
-> +
-> +static void bluetooth_disconnect(DBusConnection *connection, void
->  *user_data) +{
-> +	if (uuid_hash =3D=3D NULL)
-> +		return;
-> +
-> +	g_hash_table_foreach_remove(uuid_hash, hfp_remove_each_modem, NULL);
-> +}
-> +
->  static int hfp_register_ofono_handsfree(struct ofono_modem *modem)
->  {
->  	const char *obj_path =3D ofono_modem_get_path(modem);
-> @@ -1098,6 +1115,7 @@ static struct ofono_modem_driver hfp_driver =3D {
->  	.post_sim	=3D hfp_post_sim,
->  };
-> =
+ static void call_barring_outgoing_enabled_notify(int idx, void *userdata)
+diff --git a/src/call-meter.c b/src/call-meter.c
+index 0275778..2b1e6a5 100644
+--- a/src/call-meter.c
++++ b/src/call-meter.c
+@@ -652,18 +652,10 @@ void ofono_call_meter_changed_notify(struct ofono_cal=
+l_meter *cm, int new_value)
+ void ofono_call_meter_maximum_notify(struct ofono_call_meter *cm)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+-	DBusMessage *signal;
+ 	const char *path =3D __ofono_atom_get_path(cm->atom);
+ =
 
-> +static guint watch;
+-	signal =3D dbus_message_new_signal(path, OFONO_CALL_METER_INTERFACE,
+-						"NearMaximumWarning");
+-	if (!signal) {
+-		ofono_error("Unable to allocate new %s.NearMaximumWarning "
+-				"signal", OFONO_CALL_METER_INTERFACE);
+-		return;
+-	}
+-
+-	g_dbus_send_message(conn, signal);
++	g_dbus_emit_signal(conn, path, OFONO_CALL_METER_INTERFACE,
++			"NearMaximumWarning", DBUS_TYPE_INVALID);
+ }
+ =
 
-Rename this into something more sensible, e.g. bluetoothd_exit_watch
+ int ofono_call_meter_driver_register(const struct ofono_call_meter_driver =
+*d)
+-- =
 
->  static guint adapter_added_watch;
->  static guint adapter_removed_watch;
->  static guint uuid_watch;
-> @@ -1111,6 +1129,10 @@ static int hfp_init()
-> =
-
->  	connection =3D ofono_dbus_get_connection();
-> =
-
-> +	watch =3D g_dbus_add_service_watch(connection, BLUEZ_SERVICE,
-> +			NULL, bluetooth_disconnect, NULL, NULL);
-> +
-> +
-
-Why the extra line?
-
->  	adapter_added_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
->  						BLUEZ_MANAGER_INTERFACE,
->  						"AdapterAdded",
-> @@ -1126,8 +1148,8 @@ static int hfp_init()
->  						"PropertyChanged",
->  						property_changed, NULL, NULL);
-> =
-
-> -	if (adapter_added_watch =3D=3D 0 || adapter_removed_watch =3D=3D 0||
-> -			uuid_watch =3D=3D 0) {
-> +	if (watch =3D=3D 0 || adapter_added_watch =3D=3D 0 ||
-> +			adapter_removed_watch =3D=3D 0|| uuid_watch =3D=3D 0) {
->  		err =3D -EIO;
->  		goto remove;
->  	}
-> @@ -1150,6 +1172,7 @@ static int hfp_init()
->  	return 0;
-> =
-
->  remove:
-> +	g_dbus_remove_watch(connection, watch);
->  	g_dbus_remove_watch(connection, adapter_added_watch);
->  	g_dbus_remove_watch(connection, adapter_removed_watch);
->  	g_dbus_remove_watch(connection, uuid_watch);
-> @@ -1165,6 +1188,7 @@ remove:
-> =
-
->  static void hfp_exit()
->  {
-> +	g_dbus_remove_watch(connection, watch);
->  	g_dbus_remove_watch(connection, adapter_added_watch);
->  	g_dbus_remove_watch(connection, adapter_removed_watch);
->  	g_dbus_remove_watch(connection, uuid_watch);
-> =
+1.6.1
 
 
-Regards,
--Denis
-
---===============6104978617147207577==--
+--===============6798024628233108727==--
 
