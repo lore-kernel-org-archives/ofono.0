@@ -1,29 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============8646878944083828846=="
+Content-Type: multipart/mixed; boundary="===============2947416300268523749=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] hfp: remove modems if bluetoothd shutdowns without
- calling Release
-Date: Mon, 15 Feb 2010 15:04:31 -0600
-Message-ID: <201002151504.31664.denkenz@gmail.com>
-In-Reply-To: <1266266426-31844-2-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH] Use g_dbus_emit_signal in call-{barring,meter}.c
+Date: Mon, 15 Feb 2010 15:06:00 -0600
+Message-ID: <201002151506.01147.denkenz@gmail.com>
+In-Reply-To: <1266217376-26692-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8646878944083828846==
+--===============2947416300268523749==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Andrew,
 
 > ---
->  plugins/hfp.c |   27 +++++++++++++++++++++++++--
->  1 files changed, 25 insertions(+), 2 deletions(-)
+>  src/call-barring.c |   13 ++-----------
+>  src/call-meter.c   |   12 ++----------
+>  2 files changed, 4 insertions(+), 21 deletions(-)
 
 Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============8646878944083828846==--
+--===============2947416300268523749==--
 
