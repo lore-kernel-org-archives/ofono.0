@@ -1,152 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============7546342968719765071=="
+Content-Type: multipart/mixed; boundary="===============5723219846053920616=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 1/3] Do not trigger user disconnect at g_at_shutdown
-Date: Mon, 22 Feb 2010 13:48:05 +0800
-Message-ID: <1266817687-28847-1-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <y>
+Subject: [PATCH 3/3] Add write server response into non-blocking IO
+Date: Mon, 22 Feb 2010 13:48:07 +0800
+Message-ID: <1266817687-28847-3-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1266817687-28847-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7546342968719765071==
+--===============5723219846053920616==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Similar to gatchat, introduce read_watcher_destroy_notify and do
-not trigger user disconnect at g_at_shutdown. Delay destroy of
-gatserver until read_watcher is destroyed.
+Write server response into non-blocking GIOChannel when we have
+G_IO_OUT signal.
 ---
- gatchat/gatserver.c |   44 ++++++++++++++++++++++++++++++--------------
- 1 files changed, 30 insertions(+), 14 deletions(-)
+ gatchat/gatserver.c |   68 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 68 insertions(+), 0 deletions(-)
 
 diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index d131b0c..bf7e847 100644
+index 7e11359..a9e0341 100644
 --- a/gatchat/gatserver.c
 +++ b/gatchat/gatserver.c
-@@ -89,7 +89,7 @@ struct _GAtServer {
- 	gint ref_count;				/* Ref count */
- 	struct v250_settings v250;		/* V.250 command setting */
- 	GIOChannel *channel;			/* Server IO */
--	int server_watch;			/* Watch for server IO */
-+	guint read_watch;			/* GSource read id, 0 if none */
- 	guint read_so_far;			/* Number of bytes processed */
- 	GAtDisconnectFunc user_disconnect;	/* User disconnect func */
- 	gpointer user_disconnect_data;		/* User disconnect data */
-@@ -98,6 +98,7 @@ struct _GAtServer {
- 	struct ring_buffer *read_buf;		/* Current read buffer */
- 	guint max_read_attempts;		/* Max reads per select */
- 	enum ParserState parser_state;
-+	gboolean destroyed;			/* Re-entrancy guard */
- };
- =
-
- static void g_at_server_send_result(GAtServer *server, GAtServerResult res=
-ult)
-@@ -380,7 +381,7 @@ static void new_bytes(GAtServer *p)
- =
-
- 	/* We're overflowing the buffer, shutdown the socket */
- 	if (p->read_buf && ring_buffer_avail(p->read_buf) =3D=3D 0)
--		g_source_remove(p->server_watch);
-+		g_source_remove(p->read_watch);
- }
- =
-
- static gboolean received_data(GIOChannel *channel, GIOCondition cond,
-@@ -431,17 +432,27 @@ static gboolean received_data(GIOChannel *channel, GI=
-OCondition cond,
- 	return TRUE;
- }
- =
-
--static void server_watcher_destroy_notify(GAtServer *server)
-+static void g_at_server_cleanup(GAtServer *server)
+@@ -498,6 +498,74 @@ static gboolean received_data(GIOChannel *channel, GIO=
+Condition cond,
+ static gboolean can_write_data(GIOChannel *channel, GIOCondition cond,
+ 				gpointer data)
  {
--	server->server_watch =3D 0;
--
-+	/* Cleanup all received data */
- 	ring_buffer_free(server->read_buf);
- 	server->read_buf =3D NULL;
- =
-
- 	server->channel =3D NULL;
-+}
++	GAtServer *server =3D data;
++	GIOError err;
++	gsize bytes_written;
++	gsize towrite;
++	struct ring_buffer *write_buf;
++	unsigned char *buf;
++	gboolean write_again =3D FALSE;
++#ifdef WRITE_SCHEDULER_DEBUG
++	int limiter;
++#endif
 +
-+static void read_watcher_destroy_notify(GAtServer *server)
-+{
-+	g_at_server_cleanup(server);
-+	server->read_watch =3D 0;
++	if (cond & (G_IO_NVAL | G_IO_HUP | G_IO_ERR))
++		return FALSE;
 +
-+	server->channel =3D NULL;
- =
-
- 	if (server->user_disconnect)
- 		server->user_disconnect(server->user_disconnect_data);
++	if (!server->full_list)
++		return FALSE;
 +
-+	if (server->destroyed)
-+		g_free(server);
- }
- =
-
- static void v250_settings_create(struct v250_settings *v250)
-@@ -480,10 +491,10 @@ GAtServer *g_at_server_new(GIOChannel *io)
- 	if (!g_at_util_setup_io(server->channel, G_IO_FLAG_NONBLOCK))
- 		goto error;
- =
-
--	server->server_watch =3D g_io_add_watch_full(io, G_PRIORITY_DEFAULT,
-+	server->read_watch =3D g_io_add_watch_full(io, G_PRIORITY_DEFAULT,
- 				G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
- 				received_data, server,
--				(GDestroyNotify)server_watcher_destroy_notify);
-+				(GDestroyNotify)read_watcher_destroy_notify);
- =
-
- 	return server;
- =
-
-@@ -520,6 +531,16 @@ void g_at_server_unref(GAtServer *server)
- 		return;
- =
-
- 	g_at_server_shutdown(server);
++	/* Write data out from the head of full buffer */
++	write_buf =3D server->full_list->data;
 +
-+	/* glib delays the destruction of the watcher until it exits, this
-+	 * means we can't free the data just yet, even though we've been
-+	 * destroyed already.  We have to wait until the read_watcher
-+	 * destroy function gets called
-+	 */
-+	if (server->read_watch !=3D 0)
-+		server->destroyed =3D TRUE;
-+	else
-+		g_free(server);
- }
- =
-
- gboolean g_at_server_shutdown(GAtServer *server)
-@@ -531,13 +552,8 @@ gboolean g_at_server_shutdown(GAtServer *server)
- 	server->user_disconnect =3D NULL;
- 	server->user_disconnect_data =3D NULL;
- =
-
--	if (server->server_watch) {
--		g_source_remove(server->server_watch);
--		server->server_watch =3D 0;
--	}
--
--	g_free(server);
--	server =3D NULL;
-+	if (server->read_watch)
++	buf =3D ring_buffer_read_ptr(write_buf, 0);
++
++	towrite =3D ring_buffer_len_no_wrap(write_buf);
++	if (towrite < (gsize)ring_buffer_len(write_buf))
++		write_again =3D TRUE;
++
++#ifdef WRITE_SCHEDULER_DEBUG
++	limiter =3D towrite;
++
++	if (limiter > 5)
++		limiter =3D 5;
++#endif
++
++	err =3D g_io_channel_write(server->channel,
++			(char *)buf,
++#ifdef WRITE_SCHEDULER_DEBUG
++			limiter,
++#else
++			towrite,
++#endif
++			&bytes_written);
++
++	if (err !=3D G_IO_ERROR_NONE) {
 +		g_source_remove(server->read_watch);
++		return FALSE;
++	}
++
++	g_at_util_debug_chat(FALSE, (char *)buf, bytes_written, server->debugf,
++				server->debug_data);
++
++	ring_buffer_drain(write_buf, bytes_written);
++
++	/* All data in current full buffer is written, free it
++	 * unless it's the tail of the list.
++	 */
++	if ((ring_buffer_len(write_buf) =3D=3D 0) &&
++			(g_slist_length(server->full_list) > 1)) {
++		server->full_list =3D g_slist_remove(server->full_list,
++							write_buf);
++
++		ring_buffer_free(write_buf);
++
++		return TRUE;
++	}
++
++	if (bytes_written < towrite || write_again =3D=3D TRUE)
++		return TRUE;
++
+ 	return FALSE;
+ }
  =
 
- 	return TRUE;
- }
 -- =
 
 1.6.6.1
 
 
---===============7546342968719765071==--
+--===============5723219846053920616==--
 
