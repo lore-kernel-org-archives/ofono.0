@@ -1,180 +1,336 @@
-Content-Type: multipart/mixed; boundary="===============8601890789417534221=="
+Content-Type: multipart/mixed; boundary="===============8983292158819520611=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: [PATCH] Make response for list/delete/read SMS when option "-gui" is
- not designated
-Date: Thu, 25 Feb 2010 18:53:53 +0800
-Message-ID: <1EC975D79B8B1F4BBDC50EA54418A00417D0B94FCD@shzsmsx501.ccr.corp.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/3] Add write buffer for non-blocking write
+Date: Thu, 25 Feb 2010 16:02:30 -0600
+Message-ID: <201002251602.31552.denkenz@gmail.com>
+In-Reply-To: <1266817687-28847-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8601890789417534221==
+--===============8983292158819520611==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-	When option "-gui" is not designated, phonesim will make no response when =
-listing/deleting/reading SMS, which will get oFono hung. The first patch in=
-tends to fix this. The other one is to unify the failure result code when l=
-isting/deleting/reading SMS. =
+Hi Zhenhua,
 
-	Please review!
+> Use two layers to cache server side response data to client.
+> 1. A fixed-length ring buffer, that is write_buf.
+> 2. A list of full ring buffer. The head is to write data out to the
+> client and the tail is to cache response data in. At least one buffer
+> is in the list.
+> =
+
+> When the first layer buffer is full, a free buffer is allocated and
+> appended at the tail of the full list. It replaces original write
+> buffer as current write_buf.
+> ---
+>  gatchat/gatserver.c |  130
+>  +++++++++++++++++++++++++++++++++++++++++++++----- 1 files changed, 117
+>  insertions(+), 13 deletions(-)
+> =
+
+> diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
+> index bf7e847..7e11359 100644
+> --- a/gatchat/gatserver.c
+> +++ b/gatchat/gatserver.c
+> @@ -32,6 +32,14 @@
+>  #include "ringbuffer.h"
+>  #include "gatserver.h"
+> =
+
+> +#define READ_BUF_SIZE 4096
+
+Separate patch please
+
+> +/* #define WRITE_SCHEDULER_DEBUG 1 */
+> +#ifdef WRITE_SCHEDULER_DEBUG
+> +#define WRITE_BUF_SIZE 4
+> +#else
+> +#define WRITE_BUF_SIZE 4096
+> +#endif
+> +
+
+Don't do this, you're confusing the intentions of what WRITE_SCHEDULER_DEBU=
+G =
+
+did in atchat vs the way you're using it here.
+
+>  enum ParserState {
+>  	PARSER_STATE_IDLE,
+>  	PARSER_STATE_A,
+> @@ -90,17 +98,75 @@ struct _GAtServer {
+>  	struct v250_settings v250;		/* V.250 command setting */
+>  	GIOChannel *channel;			/* Server IO */
+>  	guint read_watch;			/* GSource read id, 0 if none */
+> +	guint write_watch;			/* GSource write id, 0 if none */
+>  	guint read_so_far;			/* Number of bytes processed */
+>  	GAtDisconnectFunc user_disconnect;	/* User disconnect func */
+>  	gpointer user_disconnect_data;		/* User disconnect data */
+>  	GAtDebugFunc debugf;			/* Debugging output function */
+>  	gpointer debug_data;			/* Data to pass to debug func */
+>  	struct ring_buffer *read_buf;		/* Current read buffer */
+> +	struct ring_buffer *write_buf;		/* Current write buffer */
+> +	GSList *full_list;			/* List of full ring buffer */
+
+Use a GQueue here instead of write_buf and full_list.  The head of the queu=
+e =
+
+is the stuff to be written, the tail of the queue is the free buffer to stu=
+ff =
+
+data into.
+
+>  	guint max_read_attempts;		/* Max reads per select */
+>  	enum ParserState parser_state;
+>  	gboolean destroyed;			/* Re-entrancy guard */
+>  };
+> =
+
+> +static void g_at_server_wakeup_writer(GAtServer *server);
+> +
+> +static gboolean replace_write_buf(GAtServer *server)
+> +{
+> +	struct ring_buffer *free_buf =3D ring_buffer_new(WRITE_BUF_SIZE);
+> +
+> +	/* Append this free buf into full list and replace current write
+> +	 * buffer by this free buffer */
+> +	server->full_list =3D g_slist_append(server->full_list, free_buf);
+> +
+> +	server->write_buf =3D free_buf;
+> +
+> +	return TRUE;
+> +}
+> +
+> +static void send_common(GAtServer *server, const char *buf, unsigned int
+>  len) +{
+> +	gsize avail =3D ring_buffer_avail(server->write_buf);
+> +	gsize towrite =3D len;
+> +	gsize bytes_written;
+> +	gsize offset =3D 0;
+> +
+> +	if (avail > towrite) {
+> +		ring_buffer_write(server->write_buf, buf, towrite);
+> +
+> +		g_at_server_wakeup_writer(server);
+> +
+> +		return;
+> +	}
+
+I suggest using only the while loop version, no need to short-circuit here.
+
+> +
+> +	/* Write as much as we can */
+> +	bytes_written =3D ring_buffer_write(server->write_buf, buf, avail);
+> +	towrite -=3D bytes_written;
+> +	offset =3D bytes_written;
+> +
+> +	/* If current write buf is full, replace it with next free buffer */
+> +	if (!replace_write_buf(server))
+> +		return;
+
+This looks wrong, perhaps we should simply forcefully shutdown here in the =
+
+unlikely event that this happens?
+
+> +
+> +	bytes_written =3D ring_buffer_write(server->write_buf, buf + offset,
+> +						towrite);
+> +	while (bytes_written < towrite) {
+> +		/* The next free buf is full, replace with next free one */
+> +		if (!replace_write_buf(server))
+> +			return;
+> +
+> +		towrite -=3D bytes_written;
+> +		offset +=3D bytes_written;
+> +		bytes_written =3D ring_buffer_write(server->write_buf,
+> +							buf + offset, towrite);
+> +	}
+
+My brain hurts, you're using ring_buffer_write like three times.  Please =
+
+restructure the loop to be more concise.  Something like:
+
+while (bytes_written < towrite) {
+	bytes_written +=3D ring_buffer_write(buffer,
+						MIN(ring_buffer_avail(buffer), towrite-bytes_written);
+
+	if (ring_buffer_avail(buffer) =3D=3D 0)
+		allocate_next();
+}
+
+> +
+> +	g_at_server_wakeup_writer(server);
+> +}
+> +
+>  static void g_at_server_send_result(GAtServer *server, GAtServerResult
+>  result) {
+>  	struct v250_settings v250 =3D server->v250;
+> @@ -108,7 +174,7 @@ static void g_at_server_send_result(GAtServer *server,
+>  GAtServerResult result) char buf[1024];
+>  	char t =3D v250.s3;
+>  	char r =3D v250.s4;
+> -	gsize wbuf;
+> +	unsigned int len;
+> =
+
+>  	if (v250.quiet)
+>  		return;
+> @@ -117,16 +183,13 @@ static void g_at_server_send_result(GAtServer
+>  *server, GAtServerResult result) return;
+> =
+
+>  	if (v250.is_v1)
+> -		snprintf(buf, sizeof(buf), "%c%c%s%c%c", t, r, result_str,
+> +		len =3D snprintf(buf, sizeof(buf), "%c%c%s%c%c", t, r, result_str,
+>  				t, r);
+>  	else
+> -		snprintf(buf, sizeof(buf), "%u%c", (unsigned int) result, t);
+> -
+> -	g_at_util_debug_chat(FALSE, buf, strlen(buf),
+> -				server->debugf, server->debug_data);
+> +		len =3D snprintf(buf, sizeof(buf), "%u%c", (unsigned int) result,
+> +				t);
+> =
+
+> -	g_io_channel_write(server->channel, (char *) buf, strlen(buf),
+> -							&wbuf);
+> +	send_common(server, buf, len);
+
+So strictly speaking this is wrong.  man snprintf for the Return Value.  If =
+
+you insist on using len, at least use MIN(len, sizeof(buf)-1) or something =
+
+like that.
+
+>  }
+> =
+
+>  static inline gboolean is_at_command_prefix(const char c)
+> @@ -432,12 +495,23 @@ static gboolean received_data(GIOChannel *channel,
+>  GIOCondition cond, return TRUE;
+>  }
+> =
+
+> +static gboolean can_write_data(GIOChannel *channel, GIOCondition cond,
+> +				gpointer data)
+> +{
+> +	return FALSE;
+> +}
+> +
+>  static void g_at_server_cleanup(GAtServer *server)
+>  {
+>  	/* Cleanup all received data */
+>  	ring_buffer_free(server->read_buf);
+>  	server->read_buf =3D NULL;
+> =
+
+> +	/* Cleanup pending data to write */
+> +	if (server->full_list)
+
+Is server->full_list ever NULL?
+
+> +		g_slist_foreach(server->full_list, (GFunc)ring_buffer_free,
+> +					NULL);
+> +
+>  	server->channel =3D NULL;
+>  }
+> =
+
+> @@ -446,8 +520,6 @@ static void read_watcher_destroy_notify(GAtServer
+>  *server) g_at_server_cleanup(server);
+>  	server->read_watch =3D 0;
+> =
+
+> -	server->channel =3D NULL;
+> -
+>  	if (server->user_disconnect)
+>  		server->user_disconnect(server->user_disconnect_data);
+> =
+
+> @@ -455,6 +527,23 @@ static void read_watcher_destroy_notify(GAtServer
+>  *server) g_free(server);
+>  }
+> =
+
+> +static void write_watcher_destroy_notify(GAtServer *server)
+> +{
+> +	server->write_watch =3D 0;
+> +}
+> +
+> +static void g_at_server_wakeup_writer(GAtServer *server)
+> +{
+> +	if (server->write_watch !=3D 0)
+> +		return;
+> +
+> +	server->write_watch =3D g_io_add_watch_full(server->channel,
+> +			G_PRIORITY_DEFAULT,
+> +			G_IO_OUT | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
+> +			can_write_data, server,
+> +			(GDestroyNotify)write_watcher_destroy_notify);
+> +}
+> +
+>  static void v250_settings_create(struct v250_settings *v250)
+>  {
+>  	v250->s3 =3D '\r';
+> @@ -482,12 +571,20 @@ GAtServer *g_at_server_new(GIOChannel *io)
+>  	server->ref_count =3D 1;
+>  	v250_settings_create(&server->v250);
+>  	server->channel =3D io;
+> -	server->read_buf =3D ring_buffer_new(4096);
+> -	server->max_read_attempts =3D 3;
+> -
+> +	server->read_buf =3D ring_buffer_new(READ_BUF_SIZE);
+>  	if (!server->read_buf)
+>  		goto error;
+> =
+
+> +	server->write_buf =3D ring_buffer_new(WRITE_BUF_SIZE);
+> +	if (!server->write_buf)
+> +		goto error;
+> +
+> +	/* Current write buf becomes the tail of full list */
+> +	server->full_list =3D g_slist_append(server->full_list,
+> +						server->write_buf);
+> +
+> +	server->max_read_attempts =3D 3;
+> +
+>  	if (!g_at_util_setup_io(server->channel, G_IO_FLAG_NONBLOCK))
+>  		goto error;
+> =
+
+> @@ -502,6 +599,10 @@ error:
+>  	if (server->read_buf)
+>  		ring_buffer_free(server->read_buf);
+> =
+
+> +	if (server->full_list)
+> +		g_slist_foreach(server->full_list, (GFunc)ring_buffer_free,
+> +					NULL);
+> +
+
+Is server->full_list ever NULL?
+
+>  	if (server)
+>  		g_free(server);
+> =
+
+> @@ -552,6 +653,9 @@ gboolean g_at_server_shutdown(GAtServer *server)
+>  	server->user_disconnect =3D NULL;
+>  	server->user_disconnect_data =3D NULL;
+> =
+
+> +	if (server->write_watch)
+> +		g_source_remove(server->write_watch);
+> +
+>  	if (server->read_watch)
+>  		g_source_remove(server->read_watch);
+> =
 
 
 Regards,
--Yang
+-Denis
 
-
-
---===============8601890789417534221==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Make-response-for-list-delete-read-SMS-when-option-g.patch"
-
-RnJvbSA5NThjMWJmZjY3OTdjMzdjZjVjZTVkMTA3YmMzYjFlMDRjNjE5ZDcxIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogVGh1
-LCAyNSBGZWIgMjAxMCAxODoyOTowMyArMDgwMApTdWJqZWN0OiBbUEFUQ0ggMS8yXSBNYWtlIHJl
-c3BvbnNlIGZvciBsaXN0L2RlbGV0ZS9yZWFkIFNNUyB3aGVuIG9wdGlvbiAiLWd1aSIgaXMgbm90
-IGRlc2lnbmF0ZWQKCi0tLQogc3JjL3Bob25lc2ltLmNwcCB8ICAgOTEgKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiAxIGZpbGVzIGNoYW5nZWQs
-IDUyIGluc2VydGlvbnMoKyksIDM5IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9waG9u
-ZXNpbS5jcHAgYi9zcmMvcGhvbmVzaW0uY3BwCmluZGV4IDg4NWZmOWYuLjhiM2VkYjEgMTAwNjQ0
-Ci0tLSBhL3NyYy9waG9uZXNpbS5jcHAKKysrIGIvc3JjL3Bob25lc2ltLmNwcApAQCAtMzY5LDYz
-ICszNjksNzYgQEAgYm9vbCBTaW1DaGF0Ojpjb21tYW5kKCBjb25zdCBRU3RyaW5nJiBjbWQgKQog
-ICAgICAgICAgICAgc3RhdGUoKS0+cnVsZXMoKS0+Zm9yZ2V0Q2FsbAogICAgICAgICAgICAgICAg
-ICggc3RhdGUoKS0+cnVsZXMoKS0+ZXhwYW5kKCBmb3JnZXRDYWxsSWQgKS50b0ludCgpICk7CiAg
-ICAgfQotICAgIGlmICggbGlzdFNNUyAmJiBzdGF0ZSgpLT5ydWxlcygpLT5nZXRNYWNoaW5lKCkg
-KSB7Ci0gICAgICAgIFFTdHJpbmcgbGlzdFNNU1Jlc3BvbnNlOwotICAgICAgICBRU01TTWVzc2Fn
-ZUxpc3QgJlNNU0xpc3QgPSBzdGF0ZSgpLT5ydWxlcygpLT5nZXRNYWNoaW5lKCktPmdldFNNU0xp
-c3QoKTsKLSAgICAgICAgUVN0cmluZyBzdGF0dXM7CiAKLSAgICAgICAgaWYgKCBzdGF0ZSgpLT5y
-dWxlcygpLT52YXJpYWJsZSgiTVNHTUVNIikgPT0gIlNNIiApIHsKLSAgICAgICAgICAgIGZvciAo
-IGludCBpPTA7IGk8U01TTGlzdC5jb3VudCgpOyBpKysgKSB7Ci0gICAgICAgICAgICAgICAgaWYg
-KCBTTVNMaXN0LmdldERlbGV0ZWRGbGFnKGkpID09IHRydWUgKQotICAgICAgICAgICAgICAgICAg
-ICBjb250aW51ZTsKKyAgICBpZiAoIGxpc3RTTVMgKSB7CisgICAgICAgIFFTdHJpbmcgbGlzdFNN
-U1Jlc3BvbnNlOwogCi0gICAgICAgICAgICAgICAgc3RhdHVzID0gUVN0cmluZzo6bnVtYmVyKFNN
-U0xpc3QuZ2V0U3RhdHVzKGkpKTsKLSAgICAgICAgICAgICAgICBsaXN0U01TUmVzcG9uc2UuYXBw
-ZW5kKCIrQ01HTDogIiArIFFTdHJpbmc6Om51bWJlcihpKzEpICsgIiwiICsgc3RhdHVzICsgIiws
-IiArCi0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBRU3RyaW5nOjpudW1i
-ZXIoU01TTGlzdC5nZXRMZW5ndGgoaSkpICsgIlxcbiIgKwotICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgUFNfdG9IZXgoIFNNU0xpc3QucmVhZFNNUyhpKSApICsgIlxcbiIp
-OworICAgICAgICBpZiAoIHN0YXRlKCktPnJ1bGVzKCktPmdldE1hY2hpbmUoKSApIHsKKyAgICAg
-ICAgICAgIFFTTVNNZXNzYWdlTGlzdCAmU01TTGlzdCA9IHN0YXRlKCktPnJ1bGVzKCktPmdldE1h
-Y2hpbmUoKS0+Z2V0U01TTGlzdCgpOworICAgICAgICAgICAgUVN0cmluZyBzdGF0dXM7CisgICAg
-CisgICAgICAgICAgICBpZiAoIHN0YXRlKCktPnJ1bGVzKCktPnZhcmlhYmxlKCJNU0dNRU0iKSA9
-PSAiU00iICkgeworICAgICAgICAgICAgICAgIGZvciAoIGludCBpPTA7IGk8U01TTGlzdC5jb3Vu
-dCgpOyBpKysgKSB7CisgICAgICAgICAgICAgICAgICAgIGlmICggU01TTGlzdC5nZXREZWxldGVk
-RmxhZyhpKSA9PSB0cnVlICkKKyAgICAgICAgICAgICAgICAgICAgICAgIGNvbnRpbnVlOworICAg
-IAorICAgICAgICAgICAgICAgICAgICBzdGF0dXMgPSBRU3RyaW5nOjpudW1iZXIoU01TTGlzdC5n
-ZXRTdGF0dXMoaSkpOworICAgICAgICAgICAgICAgICAgICBsaXN0U01TUmVzcG9uc2UuYXBwZW5k
-KCIrQ01HTDogIiArIFFTdHJpbmc6Om51bWJlcihpKzEpICsgIiwiICsgc3RhdHVzICsgIiwsIiAr
-CisgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgUVN0cmluZzo6bnVt
-YmVyKFNNU0xpc3QuZ2V0TGVuZ3RoKGkpKSArICJcXG4iICsKKyAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICBQU190b0hleCggU01TTGlzdC5yZWFkU01TKGkpICkgKyAi
-XFxuIik7CisgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgfQogICAgICAgICB9CiAKLQlp
-ZiAobGlzdFNNU1Jlc3BvbnNlLmlzRW1wdHkoKSkKLSAgICAgICAgICAgIGxpc3RTTVNSZXNwb25z
-ZS5hcHBlbmQoIitDTVMgRVJST1I6IDMyMSIpOwotCWVsc2UKLSAgICAgICAgICAgIGxpc3RTTVNS
-ZXNwb25zZS5hcHBlbmQoIlxcbk9LIik7CisgICAgCWlmIChsaXN0U01TUmVzcG9uc2UuaXNFbXB0
-eSgpKQorICAgICAgICAgICAgICAgIGxpc3RTTVNSZXNwb25zZS5hcHBlbmQoIitDTVMgRVJST1I6
-IDMyMSIpOworICAgIAllbHNlCisgICAgICAgICAgICAgICAgbGlzdFNNU1Jlc3BvbnNlLmFwcGVu
-ZCgiXFxuT0siKTsKIAotICAgICAgICBzdGF0ZSgpLT5ydWxlcygpLT5yZXNwb25kKGxpc3RTTVNS
-ZXNwb25zZSAsIHJlc3BvbnNlRGVsYXksIGVvbCApOworICAgICAgICBzdGF0ZSgpLT5ydWxlcygp
-LT5yZXNwb25kKCBsaXN0U01TUmVzcG9uc2UsIHJlc3BvbnNlRGVsYXksIGVvbCk7CiAgICAgfQog
-Ci0gICAgaWYgKCBkZWxldGVTTVMgJiYgc3RhdGUoKS0+cnVsZXMoKS0+Z2V0TWFjaGluZSgpICkg
-eworICAgIGlmICggZGVsZXRlU01TICkgewogICAgICAgICBRU3RyaW5nIGRlbGV0ZVNNU1Jlc3Bv
-bnNlOwotICAgICAgICBRU01TTWVzc2FnZUxpc3QgJlNNU0xpc3QgPSBzdGF0ZSgpLT5ydWxlcygp
-LT5nZXRNYWNoaW5lKCktPmdldFNNU0xpc3QoKTsKLSAgICAgICAgaW50IGluZGV4ID0gd2lsZC50
-b0ludCgpOwogCi0gICAgICAgIGlmICggaW5kZXggPiBTTVNMaXN0LmNvdW50KCkgfHwgaW5kZXgg
-PD0gMCB8fCAoU01TTGlzdC5nZXREZWxldGVkRmxhZyhpbmRleC0xKSA9PSB0cnVlKSApIHsKKyAg
-ICAgICAgaWYgKCBzdGF0ZSgpLT5ydWxlcygpLT5nZXRNYWNoaW5lKCkgKSB7CisgICAgICAgICAg
-ICBRU01TTWVzc2FnZUxpc3QgJlNNU0xpc3QgPSBzdGF0ZSgpLT5ydWxlcygpLT5nZXRNYWNoaW5l
-KCktPmdldFNNU0xpc3QoKTsKKyAgICAgICAgICAgIGludCBpbmRleCA9IHdpbGQudG9JbnQoKTsK
-KyAgICAKKyAgICAgICAgICAgIGlmICggaW5kZXggPiBTTVNMaXN0LmNvdW50KCkgfHwgaW5kZXgg
-PD0gMCB8fCAoU01TTGlzdC5nZXREZWxldGVkRmxhZyhpbmRleC0xKSA9PSB0cnVlKSApIHsKKyAg
-ICAgICAgICAgICAgICBkZWxldGVTTVNSZXNwb25zZS5hcHBlbmQoIkVSUk9SIik7CisgICAgICAg
-ICAgICB9IGVsc2UgeworICAgICAgICAgICAgICAgIFNNU0xpc3QuZGVsZXRlU01TKGluZGV4LTEp
-OworICAgICAgICAgICAgICAgIGRlbGV0ZVNNU1Jlc3BvbnNlLmFwcGVuZCgiT0siKTsKKyAgICAg
-ICAgICAgIH0KKyAgICAgICAgfSBlbHNlCiAgICAgICAgICAgICBkZWxldGVTTVNSZXNwb25zZS5h
-cHBlbmQoIkVSUk9SIik7Ci0gICAgICAgIH0gZWxzZSB7Ci0gICAgICAgICAgICBTTVNMaXN0LmRl
-bGV0ZVNNUyhpbmRleC0xKTsKLSAgICAgICAgICAgIGRlbGV0ZVNNU1Jlc3BvbnNlLmFwcGVuZCgi
-T0siKTsKLSAgICAgICAgfQogCi0gICAgICAgIHN0YXRlKCktPnJ1bGVzKCktPnJlc3BvbmQoZGVs
-ZXRlU01TUmVzcG9uc2UgLCByZXNwb25zZURlbGF5LCBlb2wgKTsKKyAgICAgICAgc3RhdGUoKS0+
-cnVsZXMoKS0+cmVzcG9uZCggZGVsZXRlU01TUmVzcG9uc2UgLCByZXNwb25zZURlbGF5LCBlb2wg
-KTsKICAgICB9CiAKLSAgICBpZiAoIHJlYWRTTVMgJiYgc3RhdGUoKS0+cnVsZXMoKS0+Z2V0TWFj
-aGluZSgpICkgeworICAgIGlmICggcmVhZFNNUyApIHsKICAgICAgICAgUVN0cmluZyByZWFkU01T
-UmVzcG9uc2U7Ci0gICAgICAgIFFTTVNNZXNzYWdlTGlzdCAmU01TTGlzdCA9IHN0YXRlKCktPnJ1
-bGVzKCktPmdldE1hY2hpbmUoKS0+Z2V0U01TTGlzdCgpOwotICAgICAgICBpbnQgaW5kZXggPSB3
-aWxkLnRvSW50KCk7CiAKLSAgICAgICAgaWYgKCBpbmRleCA+IFNNU0xpc3QuY291bnQoKSB8fCBp
-bmRleCA8PSAwIHx8IChTTVNMaXN0LmdldERlbGV0ZWRGbGFnKGluZGV4LTEpID09IHRydWUpICkg
-eworICAgICAgICBpZiAoIHN0YXRlKCktPnJ1bGVzKCktPmdldE1hY2hpbmUoKSApIHsKKyAgICAg
-ICAgICAgIFFTTVNNZXNzYWdlTGlzdCAmU01TTGlzdCA9IHN0YXRlKCktPnJ1bGVzKCktPmdldE1h
-Y2hpbmUoKS0+Z2V0U01TTGlzdCgpOworICAgICAgICAgICAgaW50IGluZGV4ID0gd2lsZC50b0lu
-dCgpOworICAgIAorICAgICAgICAgICAgaWYgKCBpbmRleCA+IFNNU0xpc3QuY291bnQoKSB8fCBp
-bmRleCA8PSAwIHx8IChTTVNMaXN0LmdldERlbGV0ZWRGbGFnKGluZGV4LTEpID09IHRydWUpICkg
-eworICAgICAgICAgICAgICAgIHJlYWRTTVNSZXNwb25zZS5hcHBlbmQoIkVSUk9SIik7CisgICAg
-ICAgICAgICB9IGVsc2UgeworICAgICAgICAgICAgICAgIFFTdHJpbmcgc3RhdHVzID0gUVN0cmlu
-Zzo6bnVtYmVyKFNNU0xpc3QuZ2V0U3RhdHVzKGluZGV4LTEpKTsKKyAgICAgICAgICAgICAgICBy
-ZWFkU01TUmVzcG9uc2UuYXBwZW5kKCIrQ01HUjogIiArIHN0YXR1cyArICIsLCIgKworICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFFTdHJpbmc6Om51bWJlcihTTVNM
-aXN0LmdldExlbmd0aChpbmRleC0xKSkgKyAiXFxuIiArCisgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgUFNfdG9IZXgoIFNNU0xpc3QucmVhZFNNUyhpbmRleC0xKSAp
-ICsgIlxcbiIpOworICAgICAgICAgICAgICAgIHJlYWRTTVNSZXNwb25zZSArPSAiXFxuT0siOwor
-ICAgICAgICAgICAgfQorICAgICAgICB9IGVsc2UKICAgICAgICAgICAgIHJlYWRTTVNSZXNwb25z
-ZS5hcHBlbmQoIkVSUk9SIik7Ci0gICAgICAgIH0gZWxzZSB7Ci0gICAgICAgICAgICBRU3RyaW5n
-IHN0YXR1cyA9IFFTdHJpbmc6Om51bWJlcihTTVNMaXN0LmdldFN0YXR1cyhpbmRleC0xKSk7Ci0g
-ICAgICAgICAgICByZWFkU01TUmVzcG9uc2UuYXBwZW5kKCIrQ01HUjogIiArIHN0YXR1cyArICIs
-LCIgKwotICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgUVN0cmluZzo6bnVt
-YmVyKFNNU0xpc3QuZ2V0TGVuZ3RoKGluZGV4LTEpKSArICJcXG4iICsKLSAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgIFBTX3RvSGV4KCBTTVNMaXN0LnJlYWRTTVMoaW5kZXgt
-MSkgKSArICJcXG4iKTsKLSAgICAgICAgfQogCi0JcmVhZFNNU1Jlc3BvbnNlICs9ICJcXG5PSyI7
-Ci0gICAgICAgIHN0YXRlKCktPnJ1bGVzKCktPnJlc3BvbmQocmVhZFNNU1Jlc3BvbnNlICwgcmVz
-cG9uc2VEZWxheSwgZW9sICk7CisgICAgICAgIHN0YXRlKCktPnJ1bGVzKCktPnJlc3BvbmQoIHJl
-YWRTTVNSZXNwb25zZSwgcmVzcG9uc2VEZWxheSwgZW9sICk7CiAgICAgfQorCiAgICAgcmV0dXJu
-IHRydWU7CiB9CiAKLS0gCjEuNi4zLjMKCg==
-
---===============8601890789417534221==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-Unify-the-failure-result-code-for-list-delete-read-S.patch"
-
-RnJvbSA4NWVkZWY4ZTk2MTBlMjZjYjI4Y2Y4NGMyNjRkMjFkZjFlZmQ1ODdiIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogVGh1
-LCAyNSBGZWIgMjAxMCAxODo0MDoxNiArMDgwMApTdWJqZWN0OiBbUEFUQ0ggMi8yXSBVbmlmeSB0
-aGUgZmFpbHVyZSByZXN1bHQgY29kZSBmb3IgbGlzdC9kZWxldGUvcmVhZCBTTVMKCi0tLQogc3Jj
-L3Bob25lc2ltLmNwcCB8ICAgIDggKysrKy0tLS0KIDEgZmlsZXMgY2hhbmdlZCwgNCBpbnNlcnRp
-b25zKCspLCA0IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9waG9uZXNpbS5jcHAgYi9z
-cmMvcGhvbmVzaW0uY3BwCmluZGV4IDhiM2VkYjEuLjAxZTYxZWEgMTAwNjQ0Ci0tLSBhL3NyYy9w
-aG9uZXNpbS5jcHAKKysrIGIvc3JjL3Bob25lc2ltLmNwcApAQCAtNDA2LDEzICs0MDYsMTMgQEAg
-Ym9vbCBTaW1DaGF0Ojpjb21tYW5kKCBjb25zdCBRU3RyaW5nJiBjbWQgKQogICAgICAgICAgICAg
-aW50IGluZGV4ID0gd2lsZC50b0ludCgpOwogICAgIAogICAgICAgICAgICAgaWYgKCBpbmRleCA+
-IFNNU0xpc3QuY291bnQoKSB8fCBpbmRleCA8PSAwIHx8IChTTVNMaXN0LmdldERlbGV0ZWRGbGFn
-KGluZGV4LTEpID09IHRydWUpICkgewotICAgICAgICAgICAgICAgIGRlbGV0ZVNNU1Jlc3BvbnNl
-LmFwcGVuZCgiRVJST1IiKTsKKyAgICAgICAgICAgICAgICBkZWxldGVTTVNSZXNwb25zZS5hcHBl
-bmQoIitDTVMgRVJST1I6IDMyMSIpOwogICAgICAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAg
-ICAgICBTTVNMaXN0LmRlbGV0ZVNNUyhpbmRleC0xKTsKICAgICAgICAgICAgICAgICBkZWxldGVT
-TVNSZXNwb25zZS5hcHBlbmQoIk9LIik7CiAgICAgICAgICAgICB9CiAgICAgICAgIH0gZWxzZQot
-ICAgICAgICAgICAgZGVsZXRlU01TUmVzcG9uc2UuYXBwZW5kKCJFUlJPUiIpOworICAgICAgICAg
-ICAgZGVsZXRlU01TUmVzcG9uc2UuYXBwZW5kKCIrQ01TIEVSUk9SOiAzMjEiKTsKIAogICAgICAg
-ICBzdGF0ZSgpLT5ydWxlcygpLT5yZXNwb25kKCBkZWxldGVTTVNSZXNwb25zZSAsIHJlc3BvbnNl
-RGVsYXksIGVvbCApOwogICAgIH0KQEAgLTQyNSw3ICs0MjUsNyBAQCBib29sIFNpbUNoYXQ6OmNv
-bW1hbmQoIGNvbnN0IFFTdHJpbmcmIGNtZCApCiAgICAgICAgICAgICBpbnQgaW5kZXggPSB3aWxk
-LnRvSW50KCk7CiAgICAgCiAgICAgICAgICAgICBpZiAoIGluZGV4ID4gU01TTGlzdC5jb3VudCgp
-IHx8IGluZGV4IDw9IDAgfHwgKFNNU0xpc3QuZ2V0RGVsZXRlZEZsYWcoaW5kZXgtMSkgPT0gdHJ1
-ZSkgKSB7Ci0gICAgICAgICAgICAgICAgcmVhZFNNU1Jlc3BvbnNlLmFwcGVuZCgiRVJST1IiKTsK
-KyAgICAgICAgICAgICAgICByZWFkU01TUmVzcG9uc2UuYXBwZW5kKCIrQ01TIEVSUk9SOiAzMjEi
-KTsKICAgICAgICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgICAgICAgUVN0cmluZyBzdGF0dXMg
-PSBRU3RyaW5nOjpudW1iZXIoU01TTGlzdC5nZXRTdGF0dXMoaW5kZXgtMSkpOwogICAgICAgICAg
-ICAgICAgIHJlYWRTTVNSZXNwb25zZS5hcHBlbmQoIitDTUdSOiAiICsgc3RhdHVzICsgIiwsIiAr
-CkBAIC00MzQsNyArNDM0LDcgQEAgYm9vbCBTaW1DaGF0Ojpjb21tYW5kKCBjb25zdCBRU3RyaW5n
-JiBjbWQgKQogICAgICAgICAgICAgICAgIHJlYWRTTVNSZXNwb25zZSArPSAiXFxuT0siOwogICAg
-ICAgICAgICAgfQogICAgICAgICB9IGVsc2UKLSAgICAgICAgICAgIHJlYWRTTVNSZXNwb25zZS5h
-cHBlbmQoIkVSUk9SIik7CisgICAgICAgICAgICByZWFkU01TUmVzcG9uc2UuYXBwZW5kKCIrQ01T
-IEVSUk9SOiAzMjEiKTsKIAogICAgICAgICBzdGF0ZSgpLT5ydWxlcygpLT5yZXNwb25kKCByZWFk
-U01TUmVzcG9uc2UsIHJlc3BvbnNlRGVsYXksIGVvbCApOwogICAgIH0KLS0gCjEuNi4zLjMKCg==
-
---===============8601890789417534221==--
+--===============8983292158819520611==--
 
