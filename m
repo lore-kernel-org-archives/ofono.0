@@ -1,32 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============9086832065457162424=="
+Content-Type: multipart/mixed; boundary="===============6008661682447091154=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/4] Fix server only return the final parser result
-Date: Wed, 03 Mar 2010 13:09:44 -0600
-Message-ID: <201003031309.44884.denkenz@gmail.com>
-In-Reply-To: <1267525299-5740-4-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [PATCH 2/4] Fix remove wrong extended prefix
+Date: Wed, 03 Mar 2010 13:17:39 -0600
+Message-ID: <201003031317.40139.denkenz@gmail.com>
+In-Reply-To: <1267525299-5740-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9086832065457162424==
+--===============6008661682447091154==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Zhenhua,
 
-> In case we meet compound commands in single line, AtServer should
-> only return the parser result of last command according to spec.
-> So we return the parser result in the parse iteration.
+> ATA, ATH and ATD are belongs to basic command. So removed them.
 
-So I agree that we need to do this, but I disagree with the approach.  I =
+All of these need to be handled by user callbacks, so effectively they need=
+ to =
 
-suggest we let g_at_server_send_result take care of this.  This will make =
+be treated like extended commands.  Especially with the weird ATD syntax ru=
+les =
 
-extended errors much easier to handle.
+that 27.007 introduces.
 
 Regards,
 -Denis
 
---===============9086832065457162424==--
+--===============6008661682447091154==--
 
