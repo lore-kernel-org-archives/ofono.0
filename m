@@ -1,126 +1,159 @@
-Content-Type: multipart/mixed; boundary="===============6023666739562514157=="
+Content-Type: multipart/mixed; boundary="===============0300746904296736054=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 3/7] Add basic command parsing
-Date: Wed, 03 Mar 2010 22:56:48 +0800
-Message-ID: <1267628212-14079-3-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1267628212-14079-2-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 5/7] Add server at command data structure
+Date: Wed, 03 Mar 2010 22:56:50 +0800
+Message-ID: <1267628212-14079-5-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1267628212-14079-4-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6023666739562514157==
+--===============0300746904296736054==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-According to V.250 5.3.1, the basic command is either a single
-character or the '&' followed by a single character except for 'D'
-and 'S'.
+Implement hashtable to store server supported command list.
 
-The subparameter should be the numbers.
+AT command could be action command or parameter command. Defined
+in V.250 5.2.5.
 ---
- gatchat/gatserver.c |   67 +++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 66 insertions(+), 1 deletions(-)
+ gatchat/gatserver.c |   29 +++++++++++++++++++++++++++++
+ gatchat/gatserver.h |   21 +++++++++++++++++++++
+ 2 files changed, 50 insertions(+), 0 deletions(-)
 
 diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index c54170e..b3c3f5f 100644
+index 4a19b6b..829dc1d 100644
 --- a/gatchat/gatserver.c
 +++ b/gatchat/gatserver.c
-@@ -211,9 +211,68 @@ static char *parse_extended_command(GAtServer *server,=
- char *buf,
- 	return NULL;
+@@ -75,6 +75,16 @@ static const char *server_result_to_string(GAtServerResu=
+lt result)
+ 	}
  }
  =
 
-+static gboolean get_basic_prefix(char *buf, char *prefix)
++/* AT command set that server supported */
++struct at_command {
++	int id;
++	char *prefix;
++	GAtServerCommandType type;
++	GAtServerNotifyFunc notify;
++	gpointer user_data;
++	GDestroyNotify destroy_notify;
++};
++
+ /* Basic command setting for V.250 */
+ struct v250_settings {
+ 	char s3;			/* set by S3=3D<val> */
+@@ -99,6 +109,8 @@ struct _GAtServer {
+ 	gpointer user_disconnect_data;		/* User disconnect data */
+ 	GAtDebugFunc debugf;			/* Debugging output function */
+ 	gpointer debug_data;			/* Data to pass to debug func */
++	GHashTable *command_list;		/* List of supported at command */
++	guint next_command_id;			/* Next command id */
+ 	struct ring_buffer *read_buf;		/* Current read buffer */
+ 	GQueue *write_queue;			/* Write buffer queue */
+ 	guint max_read_attempts;		/* Max reads per select */
+@@ -714,6 +726,14 @@ static gboolean can_write_data(GIOChannel *channel, GI=
+OCondition cond,
+ 	return FALSE;
+ }
+ =
+
++static void at_command_free(gpointer key, gpointer value, gpointer data)
 +{
-+	char c =3D buf[0];
++	struct at_command *node =3D value;
 +
-+	if (g_ascii_isalpha(c)) {
-+		c =3D g_ascii_toupper(c);
-+
-+		if (c =3D=3D 'S') {
-+			int i =3D 0;
-+
-+			prefix[0] =3D 'S';
-+
-+			/* V.250 5.3.2 'S' command follows with
-+			 * a parameter number.
-+			 */
-+			while (g_ascii_isdigit(buf[++i]))
-+				prefix[i] =3D buf[i];
-+
-+			prefix[i] =3D '\0';
-+		} else {
-+			prefix[0] =3D c;
-+			prefix[1] =3D '\0';
-+		}
-+	} else if (c =3D=3D '&') {
-+		prefix[0] =3D '&';
-+		prefix[1] =3D g_ascii_toupper(buf[1]);
-+		prefix[2] =3D '\0';
-+	} else
-+		return FALSE;
-+
-+	return TRUE;
++	g_free(node->prefix);
++	g_free(node);
 +}
 +
- static char *parse_basic_command(GAtServer *server, char *buf, char *prefi=
-x)
+ static void write_queue_free(GQueue *write_queue)
  {
--	return NULL;
-+	int i =3D 0;
-+	char t =3D server->v250.s3;
-+	char c =3D g_ascii_toupper(buf[0]);
+ 	struct ring_buffer *write_buf;
+@@ -733,6 +753,11 @@ static void g_at_server_cleanup(GAtServer *server)
+ 	/* Cleanup pending data to write */
+ 	write_queue_free(server->write_queue);
+ =
+
++	/* Cleanup registered notifications */
++	g_hash_table_foreach(server->command_list, at_command_free, NULL);
++	g_hash_table_destroy(server->command_list);
++	server->command_list =3D NULL;
 +
-+	if (!get_basic_prefix(buf, prefix))
-+		return NULL;
-+
-+	i =3D strlen(prefix);
-+
-+	if (c =3D=3D 'D') {
-+		/* All following characters are the part of the call */
-+		while (buf[i] && buf[i] !=3D t && buf[i] !=3D ';')
-+			i++;
-+	} else {
-+		/* V.250 5.3.2 Skip '=3D' for S-parameters if have */
-+		if (c =3D=3D 'S' && buf[i] =3D=3D '=3D')
-+			i++;
-+
-+		if (buf[i] =3D=3D '?')
-+			i++;
-+
-+		/* V.250 5.3.1 The subparameter are all digits if have */
-+		while (g_ascii_isdigit(buf[i]))
-+			i++;
-+	}
-+
-+	return g_strndup(buf, i);
+ 	server->channel =3D NULL;
  }
  =
 
- static char *server_parse_next_command(GAtServer *server, char *buf,
-@@ -258,6 +317,12 @@ static GAtServerResult server_parse_line(GAtServer *se=
-rver, char *line)
- 		if (res !=3D G_AT_SERVER_RESULT_OK)
- 			break;
+@@ -792,6 +817,7 @@ GAtServer *g_at_server_new(GIOChannel *io)
+ 	server->ref_count =3D 1;
+ 	v250_settings_create(&server->v250);
+ 	server->channel =3D io;
++	server->command_list =3D g_hash_table_new(g_str_hash, g_str_equal);
+ 	server->read_buf =3D ring_buffer_new(BUF_SIZE);
+ 	if (!server->read_buf)
+ 		goto error;
+@@ -816,6 +842,9 @@ GAtServer *g_at_server_new(GIOChannel *io)
+ 	return server;
  =
 
-+		/* Commands like ATA, ATD cause the remainder line
-+		 * to be ignored.
-+		 */
-+		if (!strcmp(prefix, "A") || !strcmp(prefix, "D"))
-+			break;
+ error:
++	if (server->command_list)
++		g_hash_table_destroy(server->command_list);
 +
- 		line +=3D strlen(command);
+ 	if (server->read_buf)
+ 		ring_buffer_free(server->read_buf);
  =
 
- 		g_free(command);
+diff --git a/gatchat/gatserver.h b/gatchat/gatserver.h
+index 698f7e0..5db9321 100644
+--- a/gatchat/gatserver.h
++++ b/gatchat/gatserver.h
+@@ -26,6 +26,7 @@
+ extern "C" {
+ #endif
+ =
+
++#include "gatresult.h"
+ #include "gatutil.h"
+ =
+
+ struct _GAtServer;
+@@ -46,6 +47,26 @@ enum _GAtServerResult {
+ =
+
+ typedef enum _GAtServerResult GAtServerResult;
+ =
+
++enum _GAtServerRequestType {
++	G_AT_SERVER_REQUEST_TYPE_NONE,
++	G_AT_SERVER_REQUEST_TYPE_ACTION,
++	G_AT_SERVER_REQUEST_TYPE_QUERY,
++	G_AT_SERVER_REQUEST_TYPE_SET,
++	G_AT_SERVER_REQUEST_TYPE_SUPPORT,
++};
++
++typedef enum _GAtServerRequestType GAtServerRequestType;
++
++enum _GAtServerCommandType {
++	G_AT_SERVER_COMMAND_TYPE_ACTION,
++	G_AT_SERVER_COMMAND_TYPE_PARAMETER,
++};
++
++typedef enum _GAtServerCommandType GAtServerCommandType;
++
++typedef int (*GAtServerNotifyFunc)(GAtServerRequestType type, GAtResult *r=
+esult,
++					gpointer user_data);
++
+ GAtServer *g_at_server_new(GIOChannel *io);
+ =
+
+ GAtServer *g_at_server_ref(GAtServer *server);
 -- =
 
 1.6.6.1
 
 
---===============6023666739562514157==--
+--===============0300746904296736054==--
 
