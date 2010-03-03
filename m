@@ -1,182 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============5827091935008692571=="
+Content-Type: multipart/mixed; boundary="===============0203293941486986310=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/7] Add server at command data structure
-Date: Wed, 03 Mar 2010 13:23:37 -0600
-Message-ID: <201003031323.38102.denkenz@gmail.com>
-In-Reply-To: <1267628212-14079-5-git-send-email-zhenhua.zhang@intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH] Set session state to RESPONSE_SENT after sending response.
+Date: Wed, 03 Mar 2010 22:41:38 +0100
+Message-ID: <fb249edb1003031341q390b3557rd93a79188eac1206@mail.gmail.com>
+In-Reply-To: <201002271140.07489.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5827091935008692571==
+--===============0203293941486986310==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+On 27 February 2010 18:40, Denis Kenzior <denkenz@gmail.com> wrote:
+>> time. =C2=A0The other option, if I misunderstood the spec, would be to m=
+ake the
+>> Respond method return the string.
+>
+> I'm actually open to the idea, the reason 'Initiate' returns a string is =
+that
+> 95% of the time there is no dialog, just straight request -> response.
 
-> Implement hashtable to store server supported command list.
-> =
+Right, here's a patch to return the string from Respond(), in the case
+of a straight network request -> user response, it'll return an empty
+string.
 
-> AT command could be action command or parameter command. Defined
-> in V.250 5.2.5.
-> ---
->  gatchat/gatserver.c |   29 +++++++++++++++++++++++++++++
->  gatchat/gatserver.h |   21 +++++++++++++++++++++
->  2 files changed, 50 insertions(+), 0 deletions(-)
-> =
+Regards
 
-> diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-> index 4a19b6b..829dc1d 100644
-> --- a/gatchat/gatserver.c
-> +++ b/gatchat/gatserver.c
-> @@ -75,6 +75,16 @@ static const char
->  *server_result_to_string(GAtServerResult result) }
->  }
-> =
+--===============0203293941486986310==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Return-network-s-USSD-reponses-from-the-Respond-meth.patch"
 
-> +/* AT command set that server supported */
-> +struct at_command {
-> +	int id;
-> +	char *prefix;
+RnJvbSAxYTM4ZGYyZTFmMzg1YzkyMTA5MWQ3ODVmNmYwMmFiNjY0MGQ0MzU5IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
+QGludGVsLmNvbT4KRGF0ZTogV2VkLCAzIE1hciAyMDEwIDA5OjM1OjExICswMTAwClN1YmplY3Q6
+IFtQQVRDSF0gUmV0dXJuIG5ldHdvcmsncyBVU1NEIHJlcG9uc2VzIGZyb20gdGhlIFJlc3BvbmQg
+bWV0aG9kIGluc3RlYWQgb2Ygc2lnbmFsbGluZwoKLS0tCiBkb2Mvc3VwcGxlbWVudGFyeXNlcnZp
+Y2VzLWFwaS50eHQgfCAgICAyICstCiBzcmMvdXNzZC5jICAgICAgICAgICAgICAgICAgICAgICAg
+fCAgIDMxICsrKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0KIDIgZmlsZXMgY2hhbmdlZCwg
+MjUgaW5zZXJ0aW9ucygrKSwgOCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9kb2Mvc3VwcGxl
+bWVudGFyeXNlcnZpY2VzLWFwaS50eHQgYi9kb2Mvc3VwcGxlbWVudGFyeXNlcnZpY2VzLWFwaS50
+eHQKaW5kZXggMjM3OTZjMS4uMTE1ZTJmZiAxMDA2NDQKLS0tIGEvZG9jL3N1cHBsZW1lbnRhcnlz
+ZXJ2aWNlcy1hcGkudHh0CisrKyBiL2RvYy9zdXBwbGVtZW50YXJ5c2VydmljZXMtYXBpLnR4dApA
+QCAtMTYsNyArMTYsNyBAQCBNZXRob2RzCQlzdHJpbmcsIHZhcmlhbnQgSW5pdGlhdGUoc3RyaW5n
+IGNvbW1hbmQpCiAJCQluZXcgY29tbWFuZCBjYW4gYmUgaW5pdGlhdGVkIHVudGlsIHRoaXMgb25l
+IGlzCiAJCQljYW5jZWxsZWQgb3IgZW5kZWQuCiAKLQkJdm9pZCBSZXNwb25kKHN0cmluZyByZXBs
+eSkKKwkJc3RyaW5nIFJlc3BvbmQoc3RyaW5nIHJlcGx5KQogCiAJCQlTZW5kIGEgcmVzcG9uc2Ug
+dG8gdGhlIG5ldHdvcmsgZWl0aGVyIHdoZW4KIAkJCWl0IGlzIGF3YWl0aW5nIGZ1cnRoZXIgaW5w
+dXQgYWZ0ZXIgSW5pdGlhdGUoKQpkaWZmIC0tZ2l0IGEvc3JjL3Vzc2QuYyBiL3NyYy91c3NkLmMK
+aW5kZXggYTJhNGY1ZC4uOWVjNzYwMCAxMDA2NDQKLS0tIGEvc3JjL3Vzc2QuYworKysgYi9zcmMv
+dXNzZC5jCkBAIC0zNjAsOCArMzYwLDIwIEBAIHZvaWQgb2Zvbm9fdXNzZF9ub3RpZnkoc3RydWN0
+IG9mb25vX3Vzc2QgKnVzc2QsIGludCBzdGF0dXMsIGNvbnN0IGNoYXIgKnN0cikKIAkJZWxzZQog
+CQkJdXNzZF9jaGFuZ2Vfc3RhdGUodXNzZCwgVVNTRF9TVEFURV9JRExFKTsKIAotCX0gZWxzZSBp
+ZiAodXNzZC0+c3RhdGUgPT0gVVNTRF9TVEFURV9JRExFIHx8Ci0JCQl1c3NkLT5zdGF0ZSA9PSBV
+U1NEX1NUQVRFX1JFU1BPTlNFX1NFTlQpIHsKKwl9IGVsc2UgaWYgKHVzc2QtPnN0YXRlID09IFVT
+U0RfU1RBVEVfUkVTUE9OU0VfU0VOVCkgeworCQlyZXBseSA9IGRidXNfbWVzc2FnZV9uZXdfbWV0
+aG9kX3JldHVybih1c3NkLT5wZW5kaW5nKTsKKworCQlpZiAoIXN0cikKKwkJCXN0ciA9ICIiOwor
+CisJCWRidXNfbWVzc2FnZV9hcHBlbmRfYXJncyhyZXBseSwgREJVU19UWVBFX1NUUklORywgJnN0
+ciwKKwkJCQkJCURCVVNfVFlQRV9JTlZBTElEKTsKKworCQlpZiAoc3RhdHVzID09IE9GT05PX1VT
+U0RfU1RBVFVTX0FDVElPTl9SRVFVSVJFRCkKKwkJCXVzc2RfY2hhbmdlX3N0YXRlKHVzc2QsIFVT
+U0RfU1RBVEVfVVNFUl9BQ1RJT04pOworCQllbHNlCisJCQl1c3NkX2NoYW5nZV9zdGF0ZSh1c3Nk
+LCBVU1NEX1NUQVRFX0lETEUpOworCX0gZWxzZSBpZiAodXNzZC0+c3RhdGUgPT0gVVNTRF9TVEFU
+RV9JRExFKSB7CiAJCWNvbnN0IGNoYXIgKnNpZ25hbF9uYW1lOwogCQljb25zdCBjaGFyICpwYXRo
+ID0gX19vZm9ub19hdG9tX2dldF9wYXRoKHVzc2QtPmF0b20pOwogCQlpbnQgbmV3X3N0YXRlOwpA
+QCAtNDYyLDE0ICs0NzQsMTkgQEAgc3RhdGljIHZvaWQgdXNzZF9yZXNwb25zZV9jYWxsYmFjayhj
+b25zdCBzdHJ1Y3Qgb2Zvbm9fZXJyb3IgKmVycm9yLCB2b2lkICpkYXRhKQogCXN0cnVjdCBvZm9u
+b191c3NkICp1c3NkID0gZGF0YTsKIAlEQnVzTWVzc2FnZSAqcmVwbHk7CiAKKwlpZiAoZXJyb3It
+PnR5cGUgIT0gT0ZPTk9fRVJST1JfVFlQRV9OT19FUlJPUikKKwkJREJHKCJ1c3NkIHJlc3BvbnNl
+IGZhaWxlZCB3aXRoIGVycm9yOiAlcyIsCisJCQkJdGVsZXBob255X2Vycm9yX3RvX3N0cihlcnJv
+cikpOworCiAJaWYgKGVycm9yLT50eXBlID09IE9GT05PX0VSUk9SX1RZUEVfTk9fRVJST1IpIHsK
+IAkJdXNzZF9jaGFuZ2Vfc3RhdGUodXNzZCwgVVNTRF9TVEFURV9SRVNQT05TRV9TRU5UKTsKLQkJ
+cmVwbHkgPSBkYnVzX21lc3NhZ2VfbmV3X21ldGhvZF9yZXR1cm4odXNzZC0+cGVuZGluZyk7Ci0J
+fSBlbHNlIHsKLQkJdXNzZF9jaGFuZ2Vfc3RhdGUodXNzZCwgVVNTRF9TVEFURV9JRExFKTsKLQkJ
+cmVwbHkgPSBfX29mb25vX2Vycm9yX2ZhaWxlZCh1c3NkLT5wZW5kaW5nKTsKKwkJcmV0dXJuOwog
+CX0KIAorCWlmICghdXNzZC0+cGVuZGluZykKKwkJcmV0dXJuOworCisJcmVwbHkgPSBfX29mb25v
+X2Vycm9yX2ZhaWxlZCh1c3NkLT5wZW5kaW5nKTsKIAlfX29mb25vX2RidXNfcGVuZGluZ19yZXBs
+eSgmdXNzZC0+cGVuZGluZywgcmVwbHkpOwogfQogCkBAIC01NzUsNyArNTkyLDcgQEAgc3RhdGlj
+IERCdXNNZXNzYWdlICp1c3NkX2dldF9wcm9wZXJ0aWVzKERCdXNDb25uZWN0aW9uICpjb25uLAog
+c3RhdGljIEdEQnVzTWV0aG9kVGFibGUgdXNzZF9tZXRob2RzW10gPSB7CiAJeyAiSW5pdGlhdGUi
+LAkJInMiLAkic3YiLAkJdXNzZF9pbml0aWF0ZSwKIAkJCQkJR19EQlVTX01FVEhPRF9GTEFHX0FT
+WU5DIH0sCi0JeyAiUmVzcG9uZCIsCQkicyIsCSIiLAkJdXNzZF9yZXNwb25kLAorCXsgIlJlc3Bv
+bmQiLAkJInMiLAkicyIsCQl1c3NkX3Jlc3BvbmQsCiAJCQkJCUdfREJVU19NRVRIT0RfRkxBR19B
+U1lOQyB9LAogCXsgIkNhbmNlbCIsCQkiIiwJIiIsCQl1c3NkX2NhbmNlbCwKIAkJCQkJR19EQlVT
+X01FVEhPRF9GTEFHX0FTWU5DIH0sCi0tIAoxLjYuMQoK
 
-I don't see the point for id or prefix here.  The prefix is already stored =
-as =
-
-the key in the hash table and frankly we should always be using that as it =
-is =
-
-unique for our purposes.
-
-> +	GAtServerCommandType type;
-> +	GAtServerNotifyFunc notify;
-> +	gpointer user_data;
-> +	GDestroyNotify destroy_notify;
-> +};
-> +
->  /* Basic command setting for V.250 */
->  struct v250_settings {
->  	char s3;			/* set by S3=3D<val> */
-> @@ -99,6 +109,8 @@ struct _GAtServer {
->  	gpointer user_disconnect_data;		/* User disconnect data */
->  	GAtDebugFunc debugf;			/* Debugging output function */
->  	gpointer debug_data;			/* Data to pass to debug func */
-> +	GHashTable *command_list;		/* List of supported at command */
-> +	guint next_command_id;			/* Next command id */
-
-Get rid of this part
-
->  	struct ring_buffer *read_buf;		/* Current read buffer */
->  	GQueue *write_queue;			/* Write buffer queue */
->  	guint max_read_attempts;		/* Max reads per select */
-> @@ -714,6 +726,14 @@ static gboolean can_write_data(GIOChannel *channel,
->  GIOCondition cond, return FALSE;
->  }
-> =
-
-> +static void at_command_free(gpointer key, gpointer value, gpointer data)
-> +{
-> +	struct at_command *node =3D value;
-> +
-> +	g_free(node->prefix);
-> +	g_free(node);
-> +}
-> +
->  static void write_queue_free(GQueue *write_queue)
->  {
->  	struct ring_buffer *write_buf;
-> @@ -733,6 +753,11 @@ static void g_at_server_cleanup(GAtServer *server)
->  	/* Cleanup pending data to write */
->  	write_queue_free(server->write_queue);
-> =
-
-> +	/* Cleanup registered notifications */
-> +	g_hash_table_foreach(server->command_list, at_command_free, NULL);
-
-This is unnecessary if you properly initialize the hash table, see below.
-
-> +	g_hash_table_destroy(server->command_list);
-> +	server->command_list =3D NULL;
-> +
->  	server->channel =3D NULL;
->  }
-> =
-
-> @@ -792,6 +817,7 @@ GAtServer *g_at_server_new(GIOChannel *io)
->  	server->ref_count =3D 1;
->  	v250_settings_create(&server->v250);
->  	server->channel =3D io;
-> +	server->command_list =3D g_hash_table_new(g_str_hash, g_str_equal);
-
-Use the _new_full version here and specify the destructor.
-
->  	server->read_buf =3D ring_buffer_new(BUF_SIZE);
->  	if (!server->read_buf)
->  		goto error;
-> @@ -816,6 +842,9 @@ GAtServer *g_at_server_new(GIOChannel *io)
->  	return server;
-> =
-
->  error:
-> +	if (server->command_list)
-> +		g_hash_table_destroy(server->command_list);
-> +
->  	if (server->read_buf)
->  		ring_buffer_free(server->read_buf);
-> =
-
-> diff --git a/gatchat/gatserver.h b/gatchat/gatserver.h
-> index 698f7e0..5db9321 100644
-> --- a/gatchat/gatserver.h
-> +++ b/gatchat/gatserver.h
-> @@ -26,6 +26,7 @@
->  extern "C" {
->  #endif
-> =
-
-> +#include "gatresult.h"
->  #include "gatutil.h"
-> =
-
->  struct _GAtServer;
-> @@ -46,6 +47,26 @@ enum _GAtServerResult {
-> =
-
->  typedef enum _GAtServerResult GAtServerResult;
-> =
-
-> +enum _GAtServerRequestType {
-> +	G_AT_SERVER_REQUEST_TYPE_NONE,
-
-> +	G_AT_SERVER_REQUEST_TYPE_ACTION,
-
-What exactly does this one mean, how is it different from SET or NONE?
-
-> +	G_AT_SERVER_REQUEST_TYPE_QUERY,
-> +	G_AT_SERVER_REQUEST_TYPE_SET,
-> +	G_AT_SERVER_REQUEST_TYPE_SUPPORT,
-> +};
-> +
-> +typedef enum _GAtServerRequestType GAtServerRequestType;
-> +
-> +enum _GAtServerCommandType {
-> +	G_AT_SERVER_COMMAND_TYPE_ACTION,
-> +	G_AT_SERVER_COMMAND_TYPE_PARAMETER,
-
-Again, what do these mean?  Might want to include a simple comment here.
-
-> +};
-> +
-> +typedef enum _GAtServerCommandType GAtServerCommandType;
-> +
-> +typedef int (*GAtServerNotifyFunc)(GAtServerRequestType type, GAtResult
->  *result, +					gpointer user_data);
-> +
->  GAtServer *g_at_server_new(GIOChannel *io);
-> =
-
->  GAtServer *g_at_server_ref(GAtServer *server);
->=20
-
---===============5827091935008692571==--
+--===============0203293941486986310==--
 
