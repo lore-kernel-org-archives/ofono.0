@@ -1,109 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============6716672312798104725=="
+Content-Type: multipart/mixed; boundary="===============5974453247390812196=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 4/7] Add extended command parsing
-Date: Wed, 03 Mar 2010 22:56:49 +0800
-Message-ID: <1267628212-14079-4-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1267628212-14079-3-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 7/7] Add g_at_server_register to register callback
+Date: Wed, 03 Mar 2010 22:56:52 +0800
+Message-ID: <1267628212-14079-7-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1267628212-14079-6-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6716672312798104725==
+--===============5974453247390812196==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-See V.250 5.4 Extended syntax commands for details.
 ---
- gatchat/gatserver.c |   56 +++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 55 insertions(+), 1 deletions(-)
+ gatchat/gatserver.c |   47 +++++++++++++++++++++++++++++++++++++++++++++++
+ gatchat/gatserver.h |    6 ++++++
+ 2 files changed, 53 insertions(+), 0 deletions(-)
 
 diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index b3c3f5f..4a19b6b 100644
+index bea51f5..c49e5f8 100644
 --- a/gatchat/gatserver.c
 +++ b/gatchat/gatserver.c
-@@ -197,6 +197,28 @@ static gboolean is_basic_command_prefix(char *buf)
- 	return FALSE;
- }
+@@ -987,3 +987,50 @@ gboolean g_at_server_set_debug(GAtServer *server, GAtD=
+ebugFunc func,
  =
 
-+static gboolean is_extended_character(const char c)
-+{
-+	if (g_ascii_isalpha(c))
-+		return TRUE;
-+
-+	if (g_ascii_isdigit(c))
-+		return TRUE;
-+
-+	switch (c) {
-+	case '!':
-+	case '%':
-+	case '-':
-+	case '.':
-+	case '/':
-+	case ':':
-+	case '_':
-+		return TRUE;
-+	default:
-+		return FALSE;
-+	}
-+}
-+
- static GAtServerResult at_notify_callback(GAtServer *server, char *command,
- 					char *prefix)
- {
-@@ -205,10 +227,42 @@ static GAtServerResult at_notify_callback(GAtServer *=
-server, char *command,
- 	return res;
+ 	return TRUE;
  }
- =
-
-+static gboolean get_extended_prefix(char *buf, char *prefix, char t)
++
++guint g_at_server_register(GAtServer *server, const char *prefix,
++					GAtServerCommandType type,
++					GAtServerNotifyFunc notify,
++					gpointer user_data,
++					GDestroyNotify destroy_notify)
 +{
-+	char c;
-+	int i =3D 0;
++	struct at_command *node;
 +
-+	/* Skip '+' */
-+	prefix[0] =3D buf[0];
++	if (server =3D=3D NULL || server->command_list =3D=3D NULL)
++		return 0;
 +
-+	while ((c =3D buf[++i])) {
-+		/* V.250 5.4.1 Extended command naming rules */
-+		if (is_extended_character(c))
-+			prefix[i] =3D g_ascii_toupper(c);
-+		else
-+			break;
++	if (notify =3D=3D NULL)
++		return 0;
++
++	if (prefix =3D=3D NULL || strlen(prefix) =3D=3D 0)
++		return 0;
++
++	node =3D g_hash_table_lookup(server->command_list, prefix);
++
++	if (node) {
++		g_hash_table_remove(server->command_list, prefix);
++
++		if (node->destroy_notify)
++			node->destroy_notify(node->user_data);
++
++		g_free(node->prefix);
++
++		g_free(node);
 +	}
 +
-+	prefix[i] =3D '\0';
-+	return TRUE;
++	node =3D g_try_new0(struct at_command, 1);
++
++	if (!node)
++		return 0;
++
++	node->id =3D server->next_command_id++;
++	node->prefix =3D g_strdup(prefix);
++	node->type =3D type;
++	node->notify =3D notify;
++	node->user_data =3D user_data;
++	node->destroy_notify =3D destroy_notify;
++
++	g_hash_table_insert(server->command_list, node->prefix, node);
++
++	return node->id;
 +}
-+
- static char *parse_extended_command(GAtServer *server, char *buf,
- 					char *prefix)
- {
--	return NULL;
-+	char *command =3D NULL;
-+	char t =3D server->v250.s3;
-+	char c =3D buf[0];
-+	int i =3D 0;
-+
-+	while (c && c !=3D t && c !=3D ';')
-+		c =3D buf[++i];
-+
-+	command =3D g_strndup(buf, i);
-+
-+	get_extended_prefix(command, prefix, t);
-+
-+	return command;
- }
+diff --git a/gatchat/gatserver.h b/gatchat/gatserver.h
+index 5db9321..59cdf25 100644
+--- a/gatchat/gatserver.h
++++ b/gatchat/gatserver.h
+@@ -80,6 +80,12 @@ gboolean g_at_server_set_debug(GAtServer *server,
+ 					GAtDebugFunc func,
+ 					gpointer user);
  =
 
- static gboolean get_basic_prefix(char *buf, char *prefix)
++guint g_at_server_register(GAtServer *server, const char *prefix,
++					GAtServerCommandType type,
++					GAtServerNotifyFunc notify,
++					gpointer user_data,
++					GDestroyNotify destroy_notify);
++
+ #ifdef __cplusplus
+ }
+ #endif
 -- =
 
 1.6.6.1
 
 
---===============6716672312798104725==--
+--===============5974453247390812196==--
 
