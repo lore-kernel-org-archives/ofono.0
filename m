@@ -1,92 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============0203293941486986310=="
+Content-Type: multipart/mixed; boundary="===============5886936140638966779=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH] Set session state to RESPONSE_SENT after sending response.
-Date: Wed, 03 Mar 2010 22:41:38 +0100
-Message-ID: <fb249edb1003031341q390b3557rd93a79188eac1206@mail.gmail.com>
-In-Reply-To: <201002271140.07489.denkenz@gmail.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: Re: [PATCH 4/4] Fix server only return the final parser result
+Date: Thu, 04 Mar 2010 09:31:30 +0800
+Message-ID: <4B8F0D72.9050609@intel.com>
+In-Reply-To: <201003031309.44884.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0203293941486986310==
+--===============5886936140638966779==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 27 February 2010 18:40, Denis Kenzior <denkenz@gmail.com> wrote:
->> time. =C2=A0The other option, if I misunderstood the spec, would be to m=
-ake the
->> Respond method return the string.
+Hi Denis,
+
+On 03/04/2010 03:09 AM, Denis Kenzior wrote:
+> Hi Zhenhua,
 >
-> I'm actually open to the idea, the reason 'Initiate' returns a string is =
-that
-> 95% of the time there is no dialog, just straight request -> response.
+>> In case we meet compound commands in single line, AtServer should
+>> only return the parser result of last command according to spec.
+>> So we return the parser result in the parse iteration.
+>
+> So I agree that we need to do this, but I disagree with the approach.  I
+> suggest we let g_at_server_send_result take care of this.  This will make
+> extended errors much easier to handle.
 
-Right, here's a patch to return the string from Respond(), in the case
-of a straight network request -> user response, it'll return an empty
-string.
+OK. I will try your approach and send out code later.
 
-Regards
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
---===============0203293941486986310==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Return-network-s-USSD-reponses-from-the-Respond-meth.patch"
 
-RnJvbSAxYTM4ZGYyZTFmMzg1YzkyMTA5MWQ3ODVmNmYwMmFiNjY0MGQ0MzU5IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogV2VkLCAzIE1hciAyMDEwIDA5OjM1OjExICswMTAwClN1YmplY3Q6
-IFtQQVRDSF0gUmV0dXJuIG5ldHdvcmsncyBVU1NEIHJlcG9uc2VzIGZyb20gdGhlIFJlc3BvbmQg
-bWV0aG9kIGluc3RlYWQgb2Ygc2lnbmFsbGluZwoKLS0tCiBkb2Mvc3VwcGxlbWVudGFyeXNlcnZp
-Y2VzLWFwaS50eHQgfCAgICAyICstCiBzcmMvdXNzZC5jICAgICAgICAgICAgICAgICAgICAgICAg
-fCAgIDMxICsrKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0KIDIgZmlsZXMgY2hhbmdlZCwg
-MjUgaW5zZXJ0aW9ucygrKSwgOCBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9kb2Mvc3VwcGxl
-bWVudGFyeXNlcnZpY2VzLWFwaS50eHQgYi9kb2Mvc3VwcGxlbWVudGFyeXNlcnZpY2VzLWFwaS50
-eHQKaW5kZXggMjM3OTZjMS4uMTE1ZTJmZiAxMDA2NDQKLS0tIGEvZG9jL3N1cHBsZW1lbnRhcnlz
-ZXJ2aWNlcy1hcGkudHh0CisrKyBiL2RvYy9zdXBwbGVtZW50YXJ5c2VydmljZXMtYXBpLnR4dApA
-QCAtMTYsNyArMTYsNyBAQCBNZXRob2RzCQlzdHJpbmcsIHZhcmlhbnQgSW5pdGlhdGUoc3RyaW5n
-IGNvbW1hbmQpCiAJCQluZXcgY29tbWFuZCBjYW4gYmUgaW5pdGlhdGVkIHVudGlsIHRoaXMgb25l
-IGlzCiAJCQljYW5jZWxsZWQgb3IgZW5kZWQuCiAKLQkJdm9pZCBSZXNwb25kKHN0cmluZyByZXBs
-eSkKKwkJc3RyaW5nIFJlc3BvbmQoc3RyaW5nIHJlcGx5KQogCiAJCQlTZW5kIGEgcmVzcG9uc2Ug
-dG8gdGhlIG5ldHdvcmsgZWl0aGVyIHdoZW4KIAkJCWl0IGlzIGF3YWl0aW5nIGZ1cnRoZXIgaW5w
-dXQgYWZ0ZXIgSW5pdGlhdGUoKQpkaWZmIC0tZ2l0IGEvc3JjL3Vzc2QuYyBiL3NyYy91c3NkLmMK
-aW5kZXggYTJhNGY1ZC4uOWVjNzYwMCAxMDA2NDQKLS0tIGEvc3JjL3Vzc2QuYworKysgYi9zcmMv
-dXNzZC5jCkBAIC0zNjAsOCArMzYwLDIwIEBAIHZvaWQgb2Zvbm9fdXNzZF9ub3RpZnkoc3RydWN0
-IG9mb25vX3Vzc2QgKnVzc2QsIGludCBzdGF0dXMsIGNvbnN0IGNoYXIgKnN0cikKIAkJZWxzZQog
-CQkJdXNzZF9jaGFuZ2Vfc3RhdGUodXNzZCwgVVNTRF9TVEFURV9JRExFKTsKIAotCX0gZWxzZSBp
-ZiAodXNzZC0+c3RhdGUgPT0gVVNTRF9TVEFURV9JRExFIHx8Ci0JCQl1c3NkLT5zdGF0ZSA9PSBV
-U1NEX1NUQVRFX1JFU1BPTlNFX1NFTlQpIHsKKwl9IGVsc2UgaWYgKHVzc2QtPnN0YXRlID09IFVT
-U0RfU1RBVEVfUkVTUE9OU0VfU0VOVCkgeworCQlyZXBseSA9IGRidXNfbWVzc2FnZV9uZXdfbWV0
-aG9kX3JldHVybih1c3NkLT5wZW5kaW5nKTsKKworCQlpZiAoIXN0cikKKwkJCXN0ciA9ICIiOwor
-CisJCWRidXNfbWVzc2FnZV9hcHBlbmRfYXJncyhyZXBseSwgREJVU19UWVBFX1NUUklORywgJnN0
-ciwKKwkJCQkJCURCVVNfVFlQRV9JTlZBTElEKTsKKworCQlpZiAoc3RhdHVzID09IE9GT05PX1VT
-U0RfU1RBVFVTX0FDVElPTl9SRVFVSVJFRCkKKwkJCXVzc2RfY2hhbmdlX3N0YXRlKHVzc2QsIFVT
-U0RfU1RBVEVfVVNFUl9BQ1RJT04pOworCQllbHNlCisJCQl1c3NkX2NoYW5nZV9zdGF0ZSh1c3Nk
-LCBVU1NEX1NUQVRFX0lETEUpOworCX0gZWxzZSBpZiAodXNzZC0+c3RhdGUgPT0gVVNTRF9TVEFU
-RV9JRExFKSB7CiAJCWNvbnN0IGNoYXIgKnNpZ25hbF9uYW1lOwogCQljb25zdCBjaGFyICpwYXRo
-ID0gX19vZm9ub19hdG9tX2dldF9wYXRoKHVzc2QtPmF0b20pOwogCQlpbnQgbmV3X3N0YXRlOwpA
-QCAtNDYyLDE0ICs0NzQsMTkgQEAgc3RhdGljIHZvaWQgdXNzZF9yZXNwb25zZV9jYWxsYmFjayhj
-b25zdCBzdHJ1Y3Qgb2Zvbm9fZXJyb3IgKmVycm9yLCB2b2lkICpkYXRhKQogCXN0cnVjdCBvZm9u
-b191c3NkICp1c3NkID0gZGF0YTsKIAlEQnVzTWVzc2FnZSAqcmVwbHk7CiAKKwlpZiAoZXJyb3It
-PnR5cGUgIT0gT0ZPTk9fRVJST1JfVFlQRV9OT19FUlJPUikKKwkJREJHKCJ1c3NkIHJlc3BvbnNl
-IGZhaWxlZCB3aXRoIGVycm9yOiAlcyIsCisJCQkJdGVsZXBob255X2Vycm9yX3RvX3N0cihlcnJv
-cikpOworCiAJaWYgKGVycm9yLT50eXBlID09IE9GT05PX0VSUk9SX1RZUEVfTk9fRVJST1IpIHsK
-IAkJdXNzZF9jaGFuZ2Vfc3RhdGUodXNzZCwgVVNTRF9TVEFURV9SRVNQT05TRV9TRU5UKTsKLQkJ
-cmVwbHkgPSBkYnVzX21lc3NhZ2VfbmV3X21ldGhvZF9yZXR1cm4odXNzZC0+cGVuZGluZyk7Ci0J
-fSBlbHNlIHsKLQkJdXNzZF9jaGFuZ2Vfc3RhdGUodXNzZCwgVVNTRF9TVEFURV9JRExFKTsKLQkJ
-cmVwbHkgPSBfX29mb25vX2Vycm9yX2ZhaWxlZCh1c3NkLT5wZW5kaW5nKTsKKwkJcmV0dXJuOwog
-CX0KIAorCWlmICghdXNzZC0+cGVuZGluZykKKwkJcmV0dXJuOworCisJcmVwbHkgPSBfX29mb25v
-X2Vycm9yX2ZhaWxlZCh1c3NkLT5wZW5kaW5nKTsKIAlfX29mb25vX2RidXNfcGVuZGluZ19yZXBs
-eSgmdXNzZC0+cGVuZGluZywgcmVwbHkpOwogfQogCkBAIC01NzUsNyArNTkyLDcgQEAgc3RhdGlj
-IERCdXNNZXNzYWdlICp1c3NkX2dldF9wcm9wZXJ0aWVzKERCdXNDb25uZWN0aW9uICpjb25uLAog
-c3RhdGljIEdEQnVzTWV0aG9kVGFibGUgdXNzZF9tZXRob2RzW10gPSB7CiAJeyAiSW5pdGlhdGUi
-LAkJInMiLAkic3YiLAkJdXNzZF9pbml0aWF0ZSwKIAkJCQkJR19EQlVTX01FVEhPRF9GTEFHX0FT
-WU5DIH0sCi0JeyAiUmVzcG9uZCIsCQkicyIsCSIiLAkJdXNzZF9yZXNwb25kLAorCXsgIlJlc3Bv
-bmQiLAkJInMiLAkicyIsCQl1c3NkX3Jlc3BvbmQsCiAJCQkJCUdfREJVU19NRVRIT0RfRkxBR19B
-U1lOQyB9LAogCXsgIkNhbmNlbCIsCQkiIiwJIiIsCQl1c3NkX2NhbmNlbCwKIAkJCQkJR19EQlVT
-X01FVEhPRF9GTEFHX0FTWU5DIH0sCi0tIAoxLjYuMQoK
-
---===============0203293941486986310==--
+--===============5886936140638966779==--
 
