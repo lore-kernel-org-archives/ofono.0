@@ -1,53 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============3081163723840575324=="
+Content-Type: multipart/mixed; boundary="===============8780550272339853411=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: Re: [PATCH 7/7] Add g_at_server_register to register callback
-Date: Thu, 04 Mar 2010 09:41:54 +0800
-Message-ID: <4B8F0FE2.2050003@intel.com>
-In-Reply-To: <201003031328.16832.denkenz@gmail.com>
+From: Andres Salomon <dilinger@collabora.co.uk>
+Subject: [PATCH] documentation: fix a typo in the SIM API docs
+Date: Fri, 05 Mar 2010 19:37:49 -0500
+Message-ID: <20100305193749.324e3744@droptest.queued.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3081163723840575324==
+--===============8780550272339853411==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
 
-On 03/04/2010 03:28 AM, Denis Kenzior wrote:
-> Hi Zhenhua,
->
->> ---
->>   gatchat/gatserver.c |   47
-> +++++++++++++++++++++++++++++++++++++++++++++++
->>   gatchat/gatserver.h |    6 ++++++
->>   2 files changed, 53 insertions(+), 0 deletions(-)
->>
->> +guint g_at_server_register(GAtServer *server, const char *prefix,
->> +					GAtServerCommandType type,
->> +					GAtServerNotifyFunc notify,
->> +					gpointer user_data,
->> +					GDestroyNotify destroy_notify);
->
-> Return a gboolean here.  And where's my unregister function?
+ISMI -> IMSI (for the International Mobile Subscriber Identity).
+---
+ doc/sim-api.txt |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-OK. g_at_server_unregister will be added next time. :-)
+diff --git a/doc/sim-api.txt b/doc/sim-api.txt
+index 9fe9a92..3565dd4 100644
+--- a/doc/sim-api.txt
++++ b/doc/sim-api.txt
+@@ -47,7 +47,7 @@ Signals		PropertyChanged(string name, variant value)
+ =
 
->> +
->>   #ifdef __cplusplus
->>   }
->>   #endif
->>
->
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+ Properties	string SubscriberIdentity [readonly, optional]
+ =
+
+-			Contains the ISMI of the SIM, if available
++			Contains the IMSI of the SIM, if available
+ =
+
+ 		uint8 MobileNetworkCodeLength [readonly, optional]
+ =
+
+-- =
+
+1.7.0
 
 
---===============3081163723840575324==--
+--===============8780550272339853411==--
 
