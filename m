@@ -1,44 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8780550272339853411=="
+Content-Type: multipart/mixed; boundary="===============5179194389079625731=="
 MIME-Version: 1.0
-From: Andres Salomon <dilinger@collabora.co.uk>
-Subject: [PATCH] documentation: fix a typo in the SIM API docs
-Date: Fri, 05 Mar 2010 19:37:49 -0500
-Message-ID: <20100305193749.324e3744@droptest.queued.net>
+From: djdas <djdas@djdas.net>
+Subject: [Announce] NEOPhysis,
+ alpha release of the first oFono based distribution
+Date: Sat, 06 Mar 2010 23:48:10 +0100
+Message-ID: <4B92DBAA.5080000@djdas.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8780550272339853411==
+--===============5179194389079625731==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Dear all,
+I'm very proud to announce the alpha release of NEOPhysis, the first =
 
-ISMI -> IMSI (for the International Mobile Subscriber Identity).
----
- doc/sim-api.txt |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+oFono based Linux distribution running currently on the Openmoko Freerunner.
+I wish to thank you very much for your kindly and precious support =
 
-diff --git a/doc/sim-api.txt b/doc/sim-api.txt
-index 9fe9a92..3565dd4 100644
---- a/doc/sim-api.txt
-+++ b/doc/sim-api.txt
-@@ -47,7 +47,7 @@ Signals		PropertyChanged(string name, variant value)
- =
+(especially Denis).
+You can find the official presentation here: =
 
- Properties	string SubscriberIdentity [readonly, optional]
- =
+http://n2.nabble.com/NEW-DISTRIBUTION-Announcing-NEOPhysis-tp4688022p468802=
+2.html
 
--			Contains the ISMI of the SIM, if available
-+			Contains the IMSI of the SIM, if available
- =
+Currently we are able to place and receive calls, getting network =
 
- 		uint8 MobileNetworkCodeLength [readonly, optional]
- =
+registration info and powering up/down the modem (we wrote a middleware =
 
--- =
+which abstracts oFono DBus calls to the applications so we're mapping =
 
-1.7.0
+your APIs to our needs) but we are already testing SMS support.
+Thank you very much, bye.
+Dario
 
 
---===============8780550272339853411==--
+--===============5179194389079625731==--
 
