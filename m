@@ -1,42 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0250730496258609327=="
+Content-Type: multipart/mixed; boundary="===============7944878709550772539=="
 MIME-Version: 1.0
-From: Martin Xu <martin.xu@intel.com>
-Subject: [PATCH 1/1] install data file
-Date: Wed, 10 Mar 2010 11:51:09 +0800
-Message-ID: <1268193069-15830-1-git-send-email-martin.xu@intel.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH] Fix Don't check CLIR CUG option in hfp_dial
+Date: Wed, 10 Mar 2010 13:33:28 +0800
+Message-ID: <1268199208-5318-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0250730496258609327==
+--===============7944878709550772539==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+For HFP call, no need to check CLIR & CUG option. It doesn't affect dial
+out string.
 ---
- Makefile.am |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ drivers/hfpmodem/voicecall.c |    4 ----
+ 1 files changed, 0 insertions(+), 4 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index fcee5e6..007d5b9 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -45,7 +45,7 @@ INCLUDES =3D -I$(top_srcdir)/src -I$(top_builddir)/src
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index 1fa0eec..f83f26a 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -373,10 +373,6 @@ static void hfp_dial(struct ofono_voicecall *vc,
+ 	else
+ 		snprintf(buf, sizeof(buf), "ATD%s", ph->number);
  =
 
- CLEANFILES =3D src/control.moc $(nodist_src_phonesim_SOURCES)
+-	if ((clir !=3D OFONO_CLIR_OPTION_DEFAULT) ||
+-			(cug !=3D OFONO_CUG_OPTION_DEFAULT))
+-		goto error;
+-
+ 	strcat(buf, ";");
  =
 
--EXTRA_DIST =3D src/controlbase.ui src/default.xml src/GSMSpecification.xml
-+dist_pkgdata_DATA =3D src/controlbase.ui src/moblin.xml src/GSMSpecificati=
-on.xml
- =
-
- MAINTAINERCLEANFILES =3D Makefile.in \
- 	aclocal.m4 configure depcomp missing install-sh
+ 	if (g_at_chat_send(vd->chat, buf, none_prefix,
 -- =
 
-1.6.1.3
+1.6.6.1
 
 
---===============0250730496258609327==--
+--===============7944878709550772539==--
 
