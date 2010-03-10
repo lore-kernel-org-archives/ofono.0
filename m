@@ -1,40 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============5179194389079625731=="
+Content-Type: multipart/mixed; boundary="===============0250730496258609327=="
 MIME-Version: 1.0
-From: djdas <djdas@djdas.net>
-Subject: [Announce] NEOPhysis,
- alpha release of the first oFono based distribution
-Date: Sat, 06 Mar 2010 23:48:10 +0100
-Message-ID: <4B92DBAA.5080000@djdas.net>
+From: Martin Xu <martin.xu@intel.com>
+Subject: [PATCH 1/1] install data file
+Date: Wed, 10 Mar 2010 11:51:09 +0800
+Message-ID: <1268193069-15830-1-git-send-email-martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5179194389079625731==
+--===============0250730496258609327==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Dear all,
-I'm very proud to announce the alpha release of NEOPhysis, the first =
+---
+ Makefile.am |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-oFono based Linux distribution running currently on the Openmoko Freerunner.
-I wish to thank you very much for your kindly and precious support =
+diff --git a/Makefile.am b/Makefile.am
+index fcee5e6..007d5b9 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -45,7 +45,7 @@ INCLUDES =3D -I$(top_srcdir)/src -I$(top_builddir)/src
+ =
 
-(especially Denis).
-You can find the official presentation here: =
+ CLEANFILES =3D src/control.moc $(nodist_src_phonesim_SOURCES)
+ =
 
-http://n2.nabble.com/NEW-DISTRIBUTION-Announcing-NEOPhysis-tp4688022p468802=
-2.html
+-EXTRA_DIST =3D src/controlbase.ui src/default.xml src/GSMSpecification.xml
++dist_pkgdata_DATA =3D src/controlbase.ui src/moblin.xml src/GSMSpecificati=
+on.xml
+ =
 
-Currently we are able to place and receive calls, getting network =
+ MAINTAINERCLEANFILES =3D Makefile.in \
+ 	aclocal.m4 configure depcomp missing install-sh
+-- =
 
-registration info and powering up/down the modem (we wrote a middleware =
-
-which abstracts oFono DBus calls to the applications so we're mapping =
-
-your APIs to our needs) but we are already testing SMS support.
-Thank you very much, bye.
-Dario
+1.6.1.3
 
 
---===============5179194389079625731==--
+--===============0250730496258609327==--
 
