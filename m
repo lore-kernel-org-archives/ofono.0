@@ -1,193 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============4200757556804256885=="
+Content-Type: multipart/mixed; boundary="===============6258022193268170840=="
 MIME-Version: 1.0
 From: kristen@linux.intel.com
-Subject: [patch 3/6] LCP support
-Date: Thu, 11 Mar 2010 14:00:38 -0800
-Message-ID: <20100311140038.21b8ac14@kcaccard-MOBL3>
+Subject: [patch 5/6] IP support for PPP
+Date: Thu, 11 Mar 2010 14:00:45 -0800
+Message-ID: <20100311140045.288e0b24@kcaccard-MOBL3>
 In-Reply-To: <20100311214022.838696145@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4200757556804256885==
+--===============6258022193268170840==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Implement LCP support for the PPP protocol
+Implement IPCP support.  Creates a tun interface to pass IP traffic.
 
 Index: ofono/Makefile.am
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- ofono.orig/Makefile.am	2010-03-10 17:00:34.037087986 -0800
-+++ ofono/Makefile.am	2010-03-10 17:01:56.687955124 -0800
-@@ -56,9 +56,9 @@
- 				gatchat/gatutil.h gatchat/gatutil.c \
- 				gatchat/gat.h \
- 				gatchat/gatserver.h gatchat/gatserver.c \
--				gatchat/gatppp.c gatchat/gatppp.h \
--				gatchat/gatppp_internal.h gatchat/gatpppcp.c
--				gatchat/gatpppcp.h
-+				gatchat/gatppp_internal.h gatchat/gatpppcp.c \
-+				gatchat/gatpppcp.h gatchat/gatppp.c \
-+				gatchat/gatppplcp.c gatchat/gatppp.h
+--- ofono.orig/Makefile.am	2010-03-10 17:03:01.695955140 -0800
++++ ofono/Makefile.am	2010-03-10 17:04:30.034088637 -0800
+@@ -59,7 +59,7 @@
+ 				gatchat/gatppp_internal.h gatchat/gatpppcp.c \
+ 				gatchat/gatpppcp.h gatchat/gatppp.c \
+ 				gatchat/gatppplcp.c gatchat/gatpppauth.c \
+-				gatchat/gatppp.h
++				gatchat/gatpppnet.c gatchat/gatppp.h
  =
 
  udev_files =3D plugins/ofono.rules
  =
 
-Index: ofono/gatchat/gatppp.c
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- ofono.orig/gatchat/gatppp.c	2010-03-10 16:58:12.039961039 -0800
-+++ ofono/gatchat/gatppp.c	2010-03-10 17:01:56.687955124 -0800
-@@ -352,22 +352,26 @@
- static void ppp_close(struct ppp_link *link)
- {
- 	/* send a CLOSE event to the lcp layer */
-+	lcp_close(link->lcp);
- }
- =
-
- /* Administrative Open */
- void g_at_ppp_open(struct ppp_link *link)
- {
- 	/* send an OPEN event to the lcp layer */
-+	lcp_open(link->lcp);
- }
- =
-
- static void ppp_link_establishment(struct ppp_link *link)
- {
- 	/* signal UP event to LCP */
-+	lcp_establish(link->lcp);
- }
- =
-
- static void ppp_terminate(struct ppp_link *link)
- {
- 	/* signal DOWN event to LCP */
-+	lcp_terminate(link->lcp);
- }
- =
-
- static void ppp_authenticate(struct ppp_link *link)
-@@ -485,6 +489,9 @@
- 	/* cleanup modem channel */
- 	g_source_remove(link->modem_watch);
- 	g_io_channel_unref(link->modem);
-+
-+	/* remove lcp */
-+	lcp_free(link->lcp);
- }
- =
-
- void g_at_ppp_ref(struct ppp_link *link)
-@@ -503,6 +510,50 @@
- 	}
- }
- =
-
-+void __ppp_set_auth(struct ppp_link *link, guint8* auth_data)
-+{
-+	guint16 proto =3D ntohs(*(guint16 *)auth_data);
-+
-+	switch(proto) {
-+	case CHAP_PROTOCOL:
-+		/* get the algorithm */
-+		break;
-+	default:
-+		g_printerr("unknown authentication proto\n");
-+		break;
-+	}
-+}
-+
-+void __ppp_set_recv_accm(struct ppp_link *link, guint32 accm)
-+{
-+	link->recv_accm =3D accm;
-+}
-+
-+guint32 __ppp_get_xmit_accm(struct ppp_link *link)
-+{
-+	return link->xmit_accm[0];
-+}
-+
-+void __ppp_set_pfc(struct ppp_link *link, gboolean pfc)
-+{
-+	link->pfc =3D pfc;
-+}
-+
-+gboolean __ppp_get_pfc(struct ppp_link *link)
-+{
-+	return link->pfc;
-+}
-+
-+void __ppp_set_acfc(struct ppp_link *link, gboolean acfc)
-+{
-+	link->acfc =3D acfc;
-+}
-+
-+gboolean __ppp_get_acfc(struct ppp_link *link)
-+{
-+	return link->acfc;
-+}
-+
- struct ppp_link * g_at_ppp_new(GIOChannel *modem)
- {
- 	struct ppp_link *link;
-@@ -540,7 +591,7 @@
- 	g_io_channel_set_buffered(modem, FALSE);
- =
-
- 	/* initialize the lcp state */
--
-+	link->lcp =3D lcp_new(link);
- =
-
- 	/* initialize the autentication state */
- =
-
-Index: ofono/gatchat/gatppp.h
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- ofono.orig/gatchat/gatppp.h	2010-03-10 16:58:12.040979395 -0800
-+++ ofono/gatchat/gatppp.h	2010-03-10 17:01:56.688955112 -0800
-@@ -43,6 +43,7 @@
- struct ppp_link {
- 	gint ref_count;
- 	guint phase;
-+	struct pppcp_data *lcp;
- 	guint8 *buffer;
- 	int index;
- 	gint mru;
 Index: ofono/gatchat/gatppp_internal.h
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- ofono.orig/gatchat/gatppp_internal.h	2010-03-10 17:00:34.040101010 -0800
-+++ ofono/gatchat/gatppp_internal.h	2010-03-10 17:01:56.688955112 -0800
-@@ -91,6 +91,12 @@
- gboolean __ppp_get_pfc(struct ppp_link *link);
- void __ppp_set_acfc(struct ppp_link *link, gboolean acfc);
- gboolean __ppp_get_acfc(struct ppp_link *link);
-+struct pppcp_data * lcp_new(struct ppp_link *link);
-+void lcp_free(struct pppcp_data *lcp);
-+void lcp_open(struct pppcp_data *data);
-+void lcp_close(struct pppcp_data *data);
-+void lcp_establish(struct pppcp_data *data);
-+void lcp_terminate(struct pppcp_data *data);
+--- ofono.orig/gatchat/gatppp_internal.h	2010-03-10 17:03:01.697955395 -0800
++++ ofono/gatchat/gatppp_internal.h	2010-03-10 17:04:30.034088637 -0800
+@@ -66,6 +66,13 @@
+ 	gpointer priv;
+ };
+ =
+
++struct net_data {
++	struct ppp_link *link;
++	char *if_name;
++	GIOChannel *channel;
++	struct pppcp_data *ipcp;
++};
++
+ struct auth_data {
+ 	guint16 proto;
+ 	gpointer proto_data;
+@@ -111,6 +118,10 @@
+ void auth_set_proto(struct auth_data *data, guint16 proto, guint8 method);
+ struct auth_data *auth_new(struct ppp_link *link);
+ void auth_free(struct auth_data *auth);
++struct net_data *net_new(struct ppp_link *link);
++void net_open(struct net_data *data);
++void net_free(struct net_data *data);
++void net_close(struct net_data *data);
  #ifdef __cplusplus
  }
  #endif
-Index: ofono/gatchat/gatppplcp.c
+Index: ofono/gatchat/gatpppnet.c
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ofono/gatchat/gatppplcp.c	2010-03-10 17:01:56.688955112 -0800
-@@ -0,0 +1,225 @@
++++ ofono/gatchat/gatpppnet.c	2010-03-10 17:04:30.034088637 -0800
+@@ -0,0 +1,355 @@
 +/*
 + *
 + *  AT chat library with GLib integration
@@ -219,85 +102,257 @@ Index: ofono/gatchat/gatppplcp.c
 +#include <unistd.h>
 +#include <string.h>
 +#include <termios.h>
-+#include <glib.h>
 +#include <arpa/inet.h>
++#include <net/if.h>
++#include <linux/if_tun.h>
++#include <sys/ioctl.h>
++#include <glib.h>
++
 +#include "gatppp.h"
 +#include "gatppp_internal.h"
 +
-+enum {
-+	/* options */
-+	RESERVED 	=3D 0,
-+	MRU		=3D 1,
-+	ACCM		=3D 2,
-+	AUTH_PROTO	=3D 3,
-+	QUAL_PROTO	=3D 4,
-+	MAGIC_NUMBER	=3D 5,
-+	DEPRECATED_QUAL_PROTO	=3D 6,
-+	PFC			=3D 7,
-+	ACFC			=3D 8,
++static void ipcp_free(struct pppcp_data *data);
 +
-+	LCP_SUPPORTED_CODES	=3D (1 << CONFIGURE_REQUEST) |
-+				(1 << CONFIGURE_ACK) |
-+				(1 << CONFIGURE_NAK) |
-+				(1 << CONFIGURE_REJECT) |
-+				(1 << TERMINATE_REQUEST) |
-+				(1 << TERMINATE_ACK) |
-+				(1 << CODE_REJECT) |
-+				(1 << PROTOCOL_REJECT) |
-+				(1 << ECHO_REQUEST) |
-+				(1 << ECHO_REPLY) |
-+				(1 << DISCARD_REQUEST),
++/* XXX should be maximum IP Packet size */
++#define MAX_PACKET 1500
++#define PPP_IP_PROTO	0x0021
++
++struct ipcp_data {
++	guint8 ip_address[4];
++	guint8 primary_dns[4];
++	guint8 secondary_dns[4];
++	struct pppcp_data *pppcp;
 +};
 +
-+/*
-+ * signal the Up event to the NCP
-+ */
-+static void lcp_up(struct pppcp_data *pppcp)
++static struct pppcp_data * ipcp_new(struct ppp_link *link);
++static void ipcp_option_process(gpointer data, gpointer user);
++static guint ipcp_option_scan(struct ppp_option *option, gpointer user);
++
++static void ip_process_packet(gpointer priv, guint8 *packet)
 +{
-+	ppp_generate_event(pppcp->link, PPP_OPENED);
++	struct net_data *data =3D (struct net_data *)priv;
++	GError *error =3D NULL;
++        GIOStatus status;
++        gsize bytes_written;
++	guint16 len;
++
++	/*
++	 * since net_open can fail, we need to make sure
++	 * channel is valid
++	 */
++	if (data->channel =3D=3D NULL)
++		return;
++
++	/* find the length of the packet to transmit */
++	len =3D ntohs(*(guint16 *)&packet[2]);
++	status =3D g_io_channel_write_chars(data->channel, (gchar *) packet,
++                                          len, &bytes_written, &error);
 +}
 +
 +/*
-+ * signal the Down event to the NCP
++ * packets received by the tun interface need to be written to
++ * the modem.  So, just read a packet, write out to the modem
++ *
++ * TBD - how do we know we have a full packet?  Do we care?
 + */
-+static void lcp_down(struct pppcp_data *pppcp)
++static gboolean net_callback(GIOChannel *channel, GIOCondition cond,
++				gpointer userdata)
 +{
-+	ppp_generate_event(pppcp->link, PPP_DOWN);
++	GIOStatus status;
++	gchar buf[MAX_PACKET+2];
++	gsize bytes_read;
++	GError *error =3D NULL;
++	guint16 *proto =3D (guint16 *)buf;
++	struct net_data *data =3D (struct net_data *) userdata;
++
++	if (cond & G_IO_IN) {
++		/* leave space to add PPP protocol field */
++		status =3D g_io_channel_read_chars(channel, buf+2, MAX_PACKET,
++				&bytes_read, &error);
++		if (bytes_read > 0) {
++			/* I assume we are pointing to the protocol? */
++			*proto =3D htons(PPP_IP_PROTO);
++			ppp_transmit(data->link, (guint8 *)buf, bytes_read);
++		}
++		if (status !=3D G_IO_STATUS_NORMAL && status !=3D G_IO_STATUS_AGAIN)
++			return FALSE;
++	}
++	return TRUE;
++}
++
++void net_close(struct net_data *data)
++{
++	/* Not Implemented Yet */
++}
++
++void net_open(struct net_data *data)
++{
++	int fd;
++	struct ifreq ifr;
++	GIOChannel *channel;
++	GIOFlags flags;
++	int signal_source;
++	int err;
++
++	/* open a tun interface */
++	fd =3D open("/dev/net/tun", O_RDWR);
++	if (fd < 0) {
++		g_printerr("error opening tun\n");
++		return;
++	}
++
++	memset(&ifr, 0, sizeof(ifr));
++	ifr.ifr_flags =3D IFF_TUN | IFF_NO_PI;
++	err =3D ioctl(fd, TUNSETIFF, (void *)&ifr);
++	if (err < 0) {
++		g_printerr("error %d setting ifr\n", err);
++		close(fd);
++		return;
++	}
++	data->if_name =3D strdup(ifr.ifr_name);
++
++	/* create a channel for reading and writing to this interface */
++	channel =3D g_io_channel_unix_new(fd);
++	if (!channel) {
++		g_printerr("Error creating I/O Channel to TUN device\n");
++		close(fd);
++		return;
++	}
++	data->channel =3D channel;
++	flags =3D g_io_channel_get_flags(channel) | G_IO_FLAG_NONBLOCK;
++	g_io_channel_set_flags(channel, flags, NULL);
++	g_io_channel_set_encoding(channel, NULL, NULL);
++	g_io_channel_set_buffered(channel, FALSE);
++        signal_source =3D g_io_add_watch(channel,
++                        G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
++                        net_callback, (gpointer) data);
++
++	pppcp_generate_event(data->ipcp, OPEN, NULL, 0);
++
++}
++
++struct ppp_packet_handler ip_packet_handler =3D {
++	.proto =3D PPP_IP_PROTO,
++	.handler =3D ip_process_packet,
++};
++
++void net_free(struct net_data *data)
++{
++	/* TBD unregister packet handler */
++
++	/* cleanup tun interface */
++	net_close(data);
++
++	/* free ipcp data */
++	ipcp_free(data->ipcp);
++
++	/* free self */
++	g_free(data);
++}
++
++struct net_data *net_new(struct ppp_link *link)
++{
++	struct net_data *data;
++
++	data =3D g_malloc0(sizeof(*data));
++	if (data) {
++		data->link =3D link;
++		data->ipcp =3D ipcp_new(link);
++
++		/* register packet handler for IP protocol */
++		ip_packet_handler.priv =3D data;
++		ppp_register_packet_handler(&ip_packet_handler);
++	}
++	return data;
++}
++
++/****** IPCP support ****************/
++enum {
++	/* supported codes */
++	IPCP_SUPPORTED_CODES	=3D (1 << CONFIGURE_REQUEST) |
++				  (1 << CONFIGURE_ACK) |
++				  (1 << CONFIGURE_NAK) |
++				  (1 << CONFIGURE_REJECT) |
++				  (1 << TERMINATE_REQUEST) |
++				  (1 << TERMINATE_ACK) |
++				  (1 << CODE_REJECT),
++
++	IPCP_PROTO		=3D 0x8021,
++
++	/* option types */
++	IP_ADDRESSES		=3D 1,
++	IP_COMPRESSION_PROTO	=3D 2,
++	IP_ADDRESS		=3D 3,
++	PRIMARY_DNS_SERVER	=3D 129,
++	SECONDARY_DNS_SERVER	=3D 131,
++};
++
++static guint32 bytes_to_32(guint8 *bytes)
++{
++	return (bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) |
++			(bytes[3] << 24));
++}
++
++static void ipcp_up(struct pppcp_data *pppcp)
++{
++	struct ipcp_data *data =3D (struct ipcp_data *)pppcp->priv;
++	struct ppp_link *link =3D pppcp->link;
++
++	/* call the connect function */
++	if (link->connect_cb)
++		link->connect_cb(link, PPP_CONNECT_SUCCESS,
++				bytes_to_32(data->ip_address),
++				bytes_to_32(data->primary_dns),
++				bytes_to_32(data->secondary_dns),
++				link->connect_priv);
++}
++
++static void ipcp_down(struct pppcp_data *data)
++{
++	g_print("ipcp down\n");
++
++	/* re-add what default config options we want negotiated */
 +}
 +
 +/*
-+ * Indicate that the lower layer is now needed
-+ * Should trigger Up event
++ * Tell the protocol to start the handshake
 + */
-+static void lcp_started(struct pppcp_data *pppcp)
++static void ipcp_started(struct pppcp_data *data)
 +{
-+	ppp_generate_event(pppcp->link, PPP_UP);
++	pppcp_generate_event(data, UP, NULL, 0);
 +}
 +
-+/*
-+ * Indicate that the lower layer is not needed
-+ * Should trigger Down event
-+ */
-+static void lcp_finished(struct pppcp_data *pppcp)
++static void ipcp_finished(struct pppcp_data *data)
 +{
-+	ppp_generate_event(pppcp->link, PPP_CLOSING);
++	g_print("ipcp finished\n");
 +}
++
++struct pppcp_action ipcp_action =3D {
++	.this_layer_up =3D	ipcp_up,
++	.this_layer_down =3D 	ipcp_down,
++	.this_layer_started =3D 	ipcp_started,
++	.this_layer_finished =3D	ipcp_finished,
++	.option_scan =3D 		ipcp_option_scan,
++	.option_process =3D 	ipcp_option_process,
++};
++
++struct ppp_packet_handler ipcp_packet_handler =3D {
++	.proto =3D IPCP_PROTO,
++	.handler =3D pppcp_process_packet,
++};
 +
 +/*
 + * Scan the option to see if it is acceptable, unacceptable, or rejected
 + */
-+static guint lcp_option_scan(struct ppp_option *option, gpointer user)
++static guint ipcp_option_scan(struct ppp_option *option, gpointer user)
 +{
 +	switch(option->type) {
-+	case ACCM:
-+	case AUTH_PROTO:
-+		/* XXX check to make sure it's a proto we recognize */
-+	case MAGIC_NUMBER:
-+	case PFC:
-+	case ACFC:
++	case IP_ADDRESS:
++	case PRIMARY_DNS_SERVER:
++	case SECONDARY_DNS_SERVER:
 +		return OPTION_ACCEPT;
 +	default:
-+		g_print("Unknown lcp option type %d\n", option->type);
++		g_printerr("Unknown ipcp option type %d\n", option->type);
 +		return OPTION_REJECT;
 +	}
 +}
@@ -305,116 +360,98 @@ Index: ofono/gatchat/gatppplcp.c
 +/*
 + * act on an acceptable option
 + */
-+static void lcp_option_process(gpointer data, gpointer user)
++static void ipcp_option_process(gpointer data, gpointer user)
 +{
 +	struct ppp_option *option =3D (struct ppp_option *)data;
-+	struct pppcp_data *pppcp =3D (struct pppcp_data *)user;
-+	struct ppp_link *link =3D pppcp->link;
-+	guint32 *val32;
-+	guint32 magic;
++	struct ipcp_data *ipcp =3D (struct ipcp_data *)user;
 +
 +	switch(option->type) {
-+	case ACCM:
-+		val32 =3D (guint32 *)option->data;
-+		__ppp_set_recv_accm(link, ntohl(*val32));
++	case IP_ADDRESS:
++		memcpy(ipcp->ip_address, option->data, 4);
 +		break;
-+	case AUTH_PROTO:
-+		__ppp_set_auth(link, option->data);
++	case PRIMARY_DNS_SERVER:
++		memcpy(ipcp->primary_dns, option->data, 4);
 +		break;
-+	case MAGIC_NUMBER:
-+		/* XXX handle loopback */
-+		val32 =3D (guint32 *)option->data;
-+		magic =3D ntohl(*val32);
-+		if (magic !=3D pppcp->magic_number)
-+			pppcp->magic_number =3D magic;
-+		else
-+			g_print("looped back? I should do something\n");
-+		break;
-+	case PFC:
-+		__ppp_set_pfc(link, TRUE);
-+		break;
-+	case ACFC:
-+		__ppp_set_acfc(link, TRUE);
++	case SECONDARY_DNS_SERVER:
++		memcpy(ipcp->secondary_dns, option->data, 4);
 +		break;
 +	default:
-+		g_print("unhandled option %d\n", option->type);
++		g_printerr("Unable to process unknown option %d\n", option->type);
++		break;
 +	}
 +}
 +
-+struct ppp_packet_handler lcp_packet_handler =3D {
-+	.proto =3D LCP_PROTOCOL,
-+	.handler =3D pppcp_process_packet,
-+};
-+
-+struct pppcp_action lcp_action =3D {
-+	.this_layer_up =3D	lcp_up,
-+	.this_layer_down =3D 	lcp_down,
-+	.this_layer_started =3D 	lcp_started,
-+	.this_layer_finished =3D	lcp_finished,
-+	.option_scan =3D 		lcp_option_scan,
-+	.option_process =3D 	lcp_option_process,
-+};
-+
-+void lcp_open(struct pppcp_data *data)
++static void ipcp_free(struct pppcp_data *data)
 +{
-+	/* send an open event to the lcp layer */
-+	pppcp_generate_event(data, OPEN, NULL, 0);
++	struct ipcp_data *ipcp =3D data->priv;
++
++	/* TBD unregister IPCP packet handler */
++
++	/* free ipcp */
++	g_free(ipcp);
++
++	/* free pppcp */
++	pppcp_free(data);
 +}
 +
-+void lcp_close(struct pppcp_data *data)
++static struct pppcp_data * ipcp_new(struct ppp_link *link)
 +{
-+	/* send a CLOSE  event to the lcp layer */
-+	pppcp_generate_event(data, CLOSE, NULL, 0);
-+}
-+
-+void lcp_establish(struct pppcp_data *data)
-+{
-+	/* send an UP event to the lcp layer */
-+	pppcp_generate_event(data, UP, NULL, 0);
-+}
-+
-+void lcp_terminate(struct pppcp_data *data)
-+{
-+	/* send a DOWN event to the lcp layer */
-+	pppcp_generate_event(data, DOWN, NULL, 0);
-+}
-+
-+void lcp_free(struct pppcp_data *lcp)
-+{
-+	/* TBD unregister packet handler */
-+
-+	pppcp_free(lcp);
-+}
-+
-+struct pppcp_data * lcp_new(struct ppp_link *link)
-+{
++	struct ipcp_data *data;
 +	struct pppcp_data *pppcp;
-+	struct ppp_option *option;
-+	guint16 codes =3D LCP_SUPPORTED_CODES;
++	struct ppp_option *ipcp_option;
 +
-+	pppcp =3D pppcp_new(link, LCP_PROTOCOL, NULL);
++	data =3D g_malloc0(sizeof(*data));
++	if (!data)
++		return NULL;
++
++	pppcp =3D pppcp_new(link, IPCP_PROTO, data);
 +	if (!pppcp) {
-+		g_print("Failed to allocate PPPCP struct\n");
++		g_printerr("Failed to allocate PPPCP struct\n");
++		g_free(data);
 +		return NULL;
 +	}
-+	pppcp_set_valid_codes(pppcp, codes);
-+	pppcp->priv =3D pppcp;
++	pppcp_set_valid_codes(pppcp, IPCP_SUPPORTED_CODES);
++	pppcp->priv =3D data;
 +
 +	/* set the actions */
-+	pppcp->action =3D &lcp_action;
++	pppcp->action =3D &ipcp_action;
 +
 +	/* add the default config options */
-+	option =3D g_malloc0(6);
-+	option->type =3D ACCM;
-+	option->length=3D 6;
-+	pppcp_add_config_option(pppcp, option);
++	ipcp_option =3D g_malloc0(6);
++	ipcp_option->type =3D IP_ADDRESS;
++	ipcp_option->length=3D 6;
++	pppcp_add_config_option(pppcp, ipcp_option);
 +
-+	/* register packet handler for LCP protocol */
-+	lcp_packet_handler.priv =3D pppcp;
-+	ppp_register_packet_handler(&lcp_packet_handler);
++	/* register packet handler for IPCP protocol */
++	ipcp_packet_handler.priv =3D pppcp;
++	ppp_register_packet_handler(&ipcp_packet_handler);
 +	return pppcp;
 +}
+Index: ofono/gatchat/gatppp.h
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- ofono.orig/gatchat/gatppp.h	2010-03-10 17:03:01.696955547 -0800
++++ ofono/gatchat/gatppp.h	2010-03-10 17:04:30.035099659 -0800
+@@ -28,6 +28,7 @@
+ =
+
+ struct ppp_link;
+ struct auth_data;
++struct net_data;
+ =
+
+ enum PPP_CONNECT_STATUS {
+ 	PPP_CONNECT_SUCCESS,
+@@ -46,6 +47,7 @@
+ 	guint phase;
+ 	struct pppcp_data *lcp;
+ 	struct auth_data *auth;
++	struct net_data *net;
+ 	guint8 *buffer;
+ 	int index;
+ 	gint mru;
 
 
---===============4200757556804256885==--
+--===============6258022193268170840==--
 
