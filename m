@@ -1,212 +1,172 @@
-Content-Type: multipart/mixed; boundary="===============5978748873825360335=="
+Content-Type: multipart/mixed; boundary="===============8951903593729074287=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [patch 6/6] Allow gsmdial to use gatchat ppp support
-Date: Sun, 14 Mar 2010 13:02:52 -0700
-Message-ID: <1268596972.3897.17.camel@localhost.localdomain>
-In-Reply-To: <20100311140050.41e3e763@kcaccard-MOBL3>
+Subject: Re: [patch 5/6] IP support for PPP
+Date: Sun, 14 Mar 2010 13:22:37 -0700
+Message-ID: <1268598157.3897.34.camel@localhost.localdomain>
+In-Reply-To: <20100311140045.288e0b24@kcaccard-MOBL3>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5978748873825360335==
+--===============8951903593729074287==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Kristen,
 
-> Add option to use PPP to gsmdial.
-> =
+> Implement IPCP support.  Creates a tun interface to pass IP traffic.
 
-> Index: ofono/gatchat/gsmdial.c
+this is not a proper review of the patch, just some general comments I
+found by looking through the whole series.
+
 > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- ofono.orig/gatchat/gsmdial.c	2010-03-10 16:58:09.773080389 -0800
-> +++ ofono/gatchat/gsmdial.c	2010-03-10 17:06:45.071975512 -0800
-> @@ -33,6 +33,9 @@
->  #include <glib.h>
->  #include <gatchat.h>
->  #include <gattty.h>
-> +#include <arpa/inet.h>
-> +#include <net/if.h>
-> +#include <gatppp.h>
-
-please put system includes before glib or internal includes.
- =
-
->  static const char *none_prefix[] =3D { NULL };
->  static const char *cgreg_prefix[] =3D { "+CGREG:", NULL };
-> @@ -45,10 +48,14 @@
->  static gchar *option_apn =3D NULL;
->  static gint option_offmode =3D 0;
->  static gboolean option_legacy =3D FALSE;
-> +static gboolean option_ppp =3D FALSE;
-> +static gchar *option_username =3D NULL;
-> +static gchar *option_passwd =3D NULL;
-
-Just use option_password here. Shortening is not really useful in this
-case.
- =
-
->  static GAtChat *control;
->  static GAtChat *modem;
->  static GMainLoop *event_loop;
-> +static struct ppp_link *ppp;
+> --- ofono.orig/gatchat/gatppp_internal.h	2010-03-10 17:03:01.697955395 -0=
+800
+> +++ ofono/gatchat/gatppp_internal.h	2010-03-10 17:04:30.034088637 -0800
+> @@ -66,6 +66,13 @@
+>  	gpointer priv;
+>  };
 >  =
 
->  enum state {
->  	STATE_NONE =3D 0,
-> @@ -220,6 +227,70 @@
->  	g_at_chat_send(modem, buf, none_prefix, NULL, NULL, NULL);
->  }
->  =
-
-> +static void print_ip_address(guint32 ip_addr)
-> +{
-> +	struct in_addr addr;
-> +	addr.s_addr =3D ip_addr;
-> +	g_print("%s\n", inet_ntoa(addr));
-
-It is just fine to use printf() like everybody else. The g_print
-function is pretty much stupid idea from GLib. Same as gchar should not
-be used either.
-
-The only case where g_print makes sense is in GLib based unit tests.
-
-And personally I would do
-
-static void print_ip_address(const char *label, guint32 addr)
-{
-}
-
-That way you can later on just call one function and don't have to
-manually print the label first.
-
-> +static void ppp_connect(struct ppp_link *link, gint success, guint32 ip_=
-addr,
-> +		 guint32 dns1, guint32 dns2, gpointer user_data)
-> +{
-> +	if (success =3D=3D PPP_CONNECT_SUCCESS) {
-> +		/* print out the negotiated address and dns server */
-> +		g_print("Negotiated IP Address: ");
-> +		print_ip_address(ip_addr);
-> +
-> +		g_print("Primary DNS Server: ");
-> +		print_ip_address(dns1);
-> +
-> +		g_print("Secondary DNS Server: ");
-> +		print_ip_address(dns2);
-> +	} else {
-> +		g_print("Failed to create PPP interface!\n");
-> +	}
-> +}
-
-So personally I prefer the style more like this:
-
-	if (success !=3D PPP_CONNECT_SUCCESS) {
-		printf(... err msg ...);
-		return;
-	}
-
-	printf(... success ...)
-
-It is a lot better to get the error cases out of your way first and then
-just focus on the success case. Instead of handling success and then
-btw. we have to take of the error case.
-
-> +static void connect_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-> +{
+> +struct net_data {
+> +	struct ppp_link *link;
+> +	char *if_name;
 > +	GIOChannel *channel;
+> +	struct pppcp_data *ipcp;
+> +};
 > +
-> +	if (!ok) {
-> +		g_print("Unable to define context\n");
-> +		exit(1);
-> +	}
+>  struct auth_data {
+>  	guint16 proto;
+>  	gpointer proto_data;
+> @@ -111,6 +118,10 @@
+>  void auth_set_proto(struct auth_data *data, guint16 proto, guint8 method=
+);
+>  struct auth_data *auth_new(struct ppp_link *link);
+>  void auth_free(struct auth_data *auth);
+> +struct net_data *net_new(struct ppp_link *link);
+> +void net_open(struct net_data *data);
+> +void net_free(struct net_data *data);
+> +void net_close(struct net_data *data);
+>  #ifdef __cplusplus
+>  }
+>  #endif
+
+If these are not public exported header files, then I don't want the
+cplusplus or or circular inclusion protection ifdefs. I want developers
+fall flat on their face if they try to do something stupid.
+
+So first we will never compiler internal header files with C++ so that
+is just pointless. They are internal and we will compile them with C
+compiler.
+
+For the circular inclusion protection, I want the compiler to complain.
+Quite frankly if you need that for internal header files to make your
+code work. You code is way too complex. I want the compiler to tell us.
+
+> +static void ip_process_packet(gpointer priv, guint8 *packet)
+> +{
+> +	struct net_data *data =3D (struct net_data *)priv;
+
+This assignment should not be needed. It is a void pointer and can be
+assigned without casting.
+
+As a general rule. Avoid casting as much as possible. Especially for
+void pointer and function pointers. I want the compiler to do sanity
+checks for us. Once you cast, all this extra protection is gone.
+
+There is a reason for using -Wall -Wextra and -Werror and being pretty
+much pedantic about it. Developers should use ./bootstrap-configure
+since it enables all of these and more.
+
+> +	GError *error =3D NULL;
+> +        GIOStatus status;
+> +        gsize bytes_written;
+> +	guint16 len;
+
+Please use an editor that can visualize whitespaces vs tabs.
+
+> +struct net_data *net_new(struct ppp_link *link)
+> +{
+> +	struct net_data *data;
 > +
-> +	/* get the data IO channel */
-> +	channel =3D g_at_chat_get_channel(modem);
-> +	channel =3D g_io_channel_ref(channel);
+> +	data =3D g_malloc0(sizeof(*data));
+> +	if (data) {
+> +		data->link =3D link;
+> +		data->ipcp =3D ipcp_new(link);
 
-What is this reference for? The g_at_ppp_new() should take a reference
-on that channel anyway.
+So here is the tricky part with GLib memory allocations. The default
+function will abort when OOM case happens. What you really wanted here
+is actually g_try_malloc0.
 
-> +	/* shutdown gatchat */
-> +	g_at_chat_unref(control);
-> +	g_at_chat_unref(modem);
+And then again, please do it like this:
 
-If you try to protect these, then I prefer that you call
-g_at_chat_shutdown() here first and not directly unref them.
+	data =3D g_try_malloc0(...)
+	if (!data)
+		return NULL;
 
-We should be able to keep the chat object around even if PPP is running
-now.
+	data->link =3D ...
 
-> +	/* open ppp */
-> +	ppp =3D g_at_ppp_new(channel);
-> +	if (ppp) {
-> +		g_print("Setting PPP Credentials to %s, %s\n", option_username,
-> +				option_passwd);
-> +		g_at_ppp_set_credentials(ppp, option_username,
-> +					option_passwd);
+> +/****** IPCP support ****************/
+> +enum {
+> +	/* supported codes */
+> +	IPCP_SUPPORTED_CODES	=3D (1 << CONFIGURE_REQUEST) |
+> +				  (1 << CONFIGURE_ACK) |
+> +				  (1 << CONFIGURE_NAK) |
+> +				  (1 << CONFIGURE_REJECT) |
+> +				  (1 << TERMINATE_REQUEST) |
+> +				  (1 << TERMINATE_ACK) |
+> +				  (1 << CODE_REJECT),
 > +
-> +		/* set connect and disconnect callbacks */
-> +		g_at_ppp_set_connect_function(ppp, ppp_connect, NULL);
-> +		g_at_ppp_set_disconnect_function(ppp, ppp_disconnect, NULL);
+> +	IPCP_PROTO		=3D 0x8021,
 > +
-> +		/* open the ppp connection */
-> +		g_at_ppp_open(ppp);
-> +	}
+> +	/* option types */
+> +	IP_ADDRESSES		=3D 1,
+> +	IP_COMPRESSION_PROTO	=3D 2,
+> +	IP_ADDRESS		=3D 3,
+> +	PRIMARY_DNS_SERVER	=3D 129,
+> +	SECONDARY_DNS_SERVER	=3D 131,
+> +};
+
+I don't think enum is the right way for this. I can see it for the
+option types, but for IPCP_PROTO and IPCP_SUPPORTED_CODES. I would say
+just using simple defines is way better.
+
+Feel free to convince me other way or show me what I have missed here.
+
+> +static guint32 bytes_to_32(guint8 *bytes)
+> +{
+> +	return (bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) |
+> +			(bytes[3] << 24));
 > +}
 
-This should be again done like this:
+Shouldn't this be done by an endian aware function that can also handle
+the unaligned case. I mentioned this before, on a non-x86 platform we
+need to worry about the alignment if you just access the memory location
+directly.
 
-	if (!ppp) {
-		printf(... err msg ..)
-		return;
-	}
+GLib should have proper functions for this. Just install the GLib
+documentation package and devhelp program. That way can easily search
+through it. Even when you are offline.
 
-	g_at_ppp_set_credentials ....
-
->  static void at_cgdcont_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
->  {
->  	char buf[64];
-> @@ -231,8 +302,14 @@
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- ofono.orig/gatchat/gatppp.h	2010-03-10 17:03:01.696955547 -0800
+> +++ ofono/gatchat/gatppp.h	2010-03-10 17:04:30.035099659 -0800
+> @@ -28,6 +28,7 @@
 >  =
 
->  	if (option_legacy =3D=3D TRUE) {
->  			sprintf(buf, "ATD*99***%u#", option_cid);
-> -			g_at_chat_send(modem, buf, none_prefix,
-> -					NULL, NULL, NULL);
-> +			if (option_ppp =3D=3D TRUE) {
-> +				g_print("Option PPP enabled\n");
-> +				g_at_chat_send(modem, buf, none_prefix,
-> +						connect_cb, NULL, NULL);
-> +			}
-> +			else
-> +				g_at_chat_send(modem, buf, none_prefix,
-> +						NULL, NULL, NULL);
+>  struct ppp_link;
+>  struct auth_data;
+> +struct net_data;
 
-I don't like this at all. Lets move the option_ppp check into the
-connect_cb function. Check for option_ppp in the callback and if not
-set, then leave the callback.
+Denis and I mentioned it already, please keep proper namespacing for
+public functions or structures in mind. It is really important.
 
->  	} else {
->  		sprintf(buf, "AT+CGACT=3D1,%u", option_cid);
->  		g_at_chat_send(control, buf, none_prefix,
-> @@ -406,6 +483,12 @@
->  				"Specify CFUN offmode" },
->  	{ "legacy", 'l', 0, G_OPTION_ARG_NONE, &option_legacy,
->  				"Use ATD*99***<cid>#" },
-> +	{ "ppp", 'P', 0, G_OPTION_ARG_NONE, &option_ppp,
-> +				"Connect using PPP" },
-> +	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
-> +				"Specify PPP Username" },
-> +	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_passwd,
-> +				"Specifiy PPP Password" },
-
-Small nitpick. Username and Password should be both lowercase.
+Also here it might be not needed to expose them at all.
 
 Regards
 
@@ -214,5 +174,5 @@ Marcel
 
 
 
---===============5978748873825360335==--
+--===============8951903593729074287==--
 
