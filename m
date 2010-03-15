@@ -1,34 +1,126 @@
-Content-Type: multipart/mixed; boundary="===============7391954065203955344=="
+Content-Type: multipart/mixed; boundary="===============8041142179876056963=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/1] Install default.xml file to /usr/share/phonesim
-Date: Sun, 14 Mar 2010 23:39:15 -0700
-Message-ID: <1268635155.3897.70.camel@localhost.localdomain>
-In-Reply-To: <1268631688-4946-1-git-send-email-martin.xu@intel.com>
+From: Bommaraju, Rajyalakshmi <rajyalakshmi.bommaraju@intel.com>
+Subject: Help needed for starting Phonesim 
+Date: Mon, 15 Mar 2010 17:05:09 +0000
+Message-ID: <E1A1564674E5754FB00AB9AC949D5E3260A6C57A6A@rrsmsx501.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7391954065203955344==
+--===============8041142179876056963==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi,
 
-> ---
->  Makefile.am |    4 +++-
->  1 files changed, 3 insertions(+), 1 deletions(-)
+I am trying to bring up phonesim GUI but not successful to help test ofono =
+plugin, I did the following, and Please let me know if I missed anything.
 
-patch has been applied.
+I compiled and installed latest ofono src code , and ran it as
+"sudo ./src/ofonod -n -d "plugins/*" "
 
-Now we need phonesim to read that default.xml if no other file is
-specified on the command line.
+I have copied  ofono.conf to /etc/dbus-1/system.d and modem.conf to /etc/of=
+ono/ and modified it run [phonesim]
 
-Regards
+Ran phonesim as ./phonesim -p 12345 -gui data/Moblin.xml
 
-Marcel
+And ran enable-modem in ofono/test but it throws erros
 
+"File "./enable-modem", line 14, in <module>
+    path =3D properties["Modems"][0]
+IndexError: list index out of range
+"
 
+I am not sure what mistake I am making. Please help.
 
---===============7391954065203955344==--
+Thanks
+Raji
+
+--===============8041142179876056963==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxucz0iaHR0
+cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPE1FVEEgSFRUUC1FUVVJVj0i
+Q29udGVudC1UeXBlIiBDT05URU5UPSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0
+YSBuYW1lPUdlbmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMSAoZmlsdGVyZWQgbWVk
+aXVtKSI+CjxzdHlsZT4KPCEtLQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFs
+LCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGluOwoJbWFyZ2luLWJvdHRv
+bTouMDAwMXB0OwoJZm9udC1zaXplOjEyLjBwdDsKCWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9t
+YW4iO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29y
+YXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7
+Y29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxTdHls
+ZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OkFyaWFs
+OwoJY29sb3I6d2luZG93dGV4dDt9CkBwYWdlIFNlY3Rpb24xCgl7c2l6ZTo4LjVpbiAxMS4waW47
+CgltYXJnaW46MS4waW4gMS4yNWluIDEuMGluIDEuMjVpbjt9CmRpdi5TZWN0aW9uMQoJe3BhZ2U6
+U2VjdGlvbjE7fQotLT4KPC9zdHlsZT4KCjwvaGVhZD4KCjxib2R5IGxhbmc9RU4tVVMgbGluaz1i
+bHVlIHZsaW5rPXB1cnBsZT4KCjxkaXYgY2xhc3M9U2VjdGlvbjE+Cgo8cCBjbGFzcz1Nc29Ob3Jt
+YWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7
+CmZvbnQtZmFtaWx5OkFyaWFsJz5IaSw8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAg
+Y2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIHN0eWxlPSdmb250
+LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+
+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48
+c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwnPkkgYW0gdHJ5
+aW5nIHRvIGJyaW5nIHVwIHBob25lc2ltIEdVSSBidXQgbm90IHN1Y2Nlc3NmdWwgdG8KaGVscCB0
+ZXN0IG9mb25vIHBsdWdpbiwgSSBkaWQgdGhlIGZvbGxvd2luZywgYW5kIFBsZWFzZSBsZXQgbWUg
+a25vdyBpZiBJIG1pc3NlZAphbnl0aGluZy48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoK
+PHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIHN0eWxlPSdm
+b250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8L286cD48L3Nw
+YW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1Bcmlh
+bD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwnPkkgY29t
+cGlsZWQgYW5kIGluc3RhbGxlZCBsYXRlc3Qgb2Zvbm8gc3JjIGNvZGUgLCBhbmQgcmFuIGl0CmFz
+PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBz
+aXplPTIgZmFjZT1BcmlhbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1p
+bHk6QXJpYWwnPiYjODIyMDtzdWRvIC4vc3JjL29mb25vZCAtbiAtZCAmcXVvdDtwbHVnaW5zLyom
+cXVvdDsgJiM4MjIwOwo8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNv
+Tm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTAu
+MHB0Owpmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250Pjwv
+cD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBzdHls
+ZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwnPkkgaGF2ZSBjb3BpZWQgJm5i
+c3A7b2Zvbm8uY29uZiB0byAvZXRjL2RidXMtMS9zeXN0ZW0uZCBhbmQKbW9kZW0uY29uZiB0byAv
+ZXRjL29mb25vLyBhbmQgbW9kaWZpZWQgaXQgcnVuIFtwaG9uZXNpbV08bzpwPjwvbzpwPjwvc3Bh
+bj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFs
+PjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCc+PG86cD4m
+bmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBz
+aXplPTIgZmFjZT1BcmlhbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1p
+bHk6QXJpYWwnPlJhbiBwaG9uZXNpbSBhcyAuL3Bob25lc2ltICYjODIxMTtwIDEyMzQ1ICYjODIx
+MTtndWkgZGF0YS9Nb2JsaW4ueG1sPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNs
+YXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBzdHlsZT0nZm9udC1z
+aXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwv
+Zm9udD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNw
+YW4gc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsJz5BbmQgcmFuIGVu
+YWJsZS1tb2RlbSBpbiBvZm9uby90ZXN0IGJ1dCBpdCB0aHJvd3MgZXJyb3M8bzpwPjwvbzpwPjwv
+c3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFy
+aWFsPjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCc+PG86
+cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9u
+dCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1m
+YW1pbHk6QXJpYWwnPiYjODIyMDtGaWxlICZxdW90Oy4vZW5hYmxlLW1vZGVtJnF1b3Q7LCBsaW5l
+IDE0LCBpbiAmbHQ7bW9kdWxlJmd0OzxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cgo8cCBj
+bGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gc3R5bGU9J2ZvbnQt
+c2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsJz4mbmJzcDsmbmJzcDsmbmJzcDsgcGF0aCA9
+IHByb3BlcnRpZXNbJnF1b3Q7TW9kZW1zJnF1b3Q7XVswXTxvOnA+PC9vOnA+PC9zcGFuPjwvZm9u
+dD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4g
+c3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsJz5JbmRleEVycm9yOiBs
+aXN0IGluZGV4IG91dCBvZiByYW5nZTxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cgo8cCBj
+bGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gc3R5bGU9J2ZvbnQt
+c2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsJz4mIzgyMjA7PG86cD48L286cD48L3NwYW4+
+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48
+c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJpYWwnPjxvOnA+Jm5i
+c3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6
+ZT0yIGZhY2U9QXJpYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5
+OkFyaWFsJz5JIGFtIG5vdCBzdXJlIHdoYXQgbWlzdGFrZSBJIGFtIG1ha2luZy4gUGxlYXNlIGhl
+bHAuPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9u
+dCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1m
+YW1pbHk6QXJpYWwnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cgo8cCBjbGFz
+cz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6
+ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsJz5UaGFua3M8bzpwPjwvbzpwPjwvc3Bhbj48L2Zv
+bnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFu
+IHN0eWxlPSdmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCc+UmFqaSA8bzpwPjwv
+bzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPC9kaXY+Cgo8L2JvZHk+Cgo8L2h0bWw+Cg==
+
+--===============8041142179876056963==--
 
