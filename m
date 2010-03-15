@@ -1,168 +1,141 @@
-Content-Type: multipart/mixed; boundary="===============9222453228487542200=="
+Content-Type: multipart/mixed; boundary="===============5919520773510780591=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/8][RFC] Set polling interval depending on whether calls are
- active.
-Date: Mon, 15 Mar 2010 22:20:55 +0100
-Message-ID: <1268688055-3732-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 3/8][RFC] Release calls when SIM is removed.
+Date: Mon, 15 Mar 2010 22:21:25 +0100
+Message-ID: <1268688085-3872-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9222453228487542200==
+--===============5919520773510780591==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/voicecall.h |    2 ++
- src/sim.c           |   37 +++++++++++++++++++++++++++++++++++--
- src/voicecall.c     |    5 +++++
- 3 files changed, 42 insertions(+), 2 deletions(-)
+ src/voicecall.c |   63 ++++++++++++++++++++++++++++++++++++++++++++++++---=
+---
+ 1 files changed, 56 insertions(+), 7 deletions(-)
 
-diff --git a/include/voicecall.h b/include/voicecall.h
-index 6ceb3d8..dcce91a 100644
---- a/include/voicecall.h
-+++ b/include/voicecall.h
-@@ -114,6 +114,8 @@ void ofono_voicecall_set_data(struct ofono_voicecall *v=
-c, void *data);
- void *ofono_voicecall_get_data(struct ofono_voicecall *vc);
- int ofono_voicecall_get_next_callid(struct ofono_voicecall *vc);
- =
-
-+const GSList *ofono_voicecall_get_list(struct ofono_voicecall *vc);
-+
- #ifdef __cplusplus
- }
- #endif
-diff --git a/src/sim.c b/src/sim.c
-index 733e876..c710cc2 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -43,6 +43,7 @@
- #include "simutil.h"
- #include "storage.h"
- #include "stkutil.h"
-+#include "voicecall.h"
- =
-
- #define SIM_MANAGER_INTERFACE "org.ofono.SimManager"
- =
-
-@@ -101,6 +102,8 @@ struct ofono_sim {
- 	gint poll_timeout;
- 	gboolean poll_enabled;
- 	gboolean inserted;
-+	unsigned int voicecall_watch;
-+	struct ofono_voicecall *voicecall;
- 	const struct ofono_sim_driver *driver;
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 18b923f..eef924c 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -57,6 +57,8 @@ struct ofono_voicecall {
+ 	gint emit_calls_source;
+ 	gint emit_multi_source;
+ 	unsigned int sim_watch;
++	unsigned int sim_ready_watch;
++	unsigned int sim_removed_watch;
+ 	const struct ofono_voicecall_driver *driver;
  	void *driver_data;
  	struct ofono_atom *atom;
-@@ -1807,10 +1810,11 @@ void ofono_sim_proactive_command_notify(struct ofon=
-o_sim *sim, int length)
- =
-
- static void sim_status_poll_schedule(struct ofono_sim *sim)
+@@ -1788,6 +1790,10 @@ static void voicecall_unregister(struct ofono_atom *=
+atom)
+ static void voicecall_remove(struct ofono_atom *atom)
  {
--	/* TODO: Decide on the interval based on whether any call is active */
- 	/* TODO: On idle, possibly only schedule if proactive commands enabled
- 	 * as indicated by EFphase + EFsst (51.011: 11.6.1) */
--	int interval =3D sim->idle_poll_interval;
-+	int interval =3D
-+		(sim->voicecall && ofono_voicecall_get_list(sim->voicecall)) ?
-+		sim->incall_poll_interval : sim->idle_poll_interval;
- =
-
- 	sim->poll_timeout =3D g_timeout_add_seconds(interval,
- 			sim_status_poll, sim);
-@@ -2026,6 +2030,7 @@ static void sim_unregister(struct ofono_atom *atom)
- static void sim_remove(struct ofono_atom *atom)
- {
- 	struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
+ 	struct ofono_voicecall *vc =3D __ofono_atom_get_data(atom);
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
++	struct ofono_atom *sim_atom =3D
++		__ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
++	struct ofono_sim *sim =3D NULL;
  =
 
  	DBG("atom: %p", atom);
  =
 
-@@ -2085,6 +2090,11 @@ static void sim_remove(struct ofono_atom *atom)
- 		sim->poll_timeout =3D 0;
+@@ -1809,6 +1815,19 @@ static void voicecall_remove(struct ofono_atom *atom)
+ 		vc->new_en_list =3D NULL;
  	}
  =
 
-+	if (sim->voicecall_watch) {
-+		__ofono_modem_remove_atom_watch(modem, sim->voicecall_watch);
-+		sim->voicecall_watch =3D 0;
++	if (sim_atom && __ofono_atom_get_registered(sim_atom))
++		sim =3D __ofono_atom_get_data(sim_atom);
++
++	if (sim && vc->sim_ready_watch) {
++		ofono_sim_remove_ready_watch(sim, vc->sim_ready_watch);
++		vc->sim_ready_watch =3D 0;
 +	}
 +
- 	g_free(sim);
++	if (sim && vc->sim_removed_watch) {
++		ofono_sim_remove_removed_watch(sim, vc->sim_removed_watch);
++		vc->sim_removed_watch =3D 0;
++	}
++
+ 	g_free(vc);
  }
  =
 
-@@ -2124,11 +2134,25 @@ struct ofono_sim *ofono_sim_create(struct ofono_mod=
-em *modem,
- 	return sim;
+@@ -1847,6 +1866,34 @@ struct ofono_voicecall *ofono_voicecall_create(struc=
+t ofono_modem *modem,
+ 	return vc;
  }
  =
 
-+static void voicecall_watch(struct ofono_atom *atom,
-+			enum ofono_atom_watch_condition cond, void *data)
++static void sim_ready_watch(void *user)
 +{
-+	struct ofono_sim *sim =3D data;
++	struct ofono_voicecall *vc =3D user;
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
++	struct ofono_atom *sim_atom =3D
++		__ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
++	struct ofono_sim *sim =3D __ofono_atom_get_data(sim_atom);
 +
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		sim->voicecall =3D NULL;
-+		return;
-+	}
-+
-+	sim->voicecall =3D __ofono_atom_get_data(atom);
++	/* Try both formats, only one or none will work */
++	ofono_sim_read(sim, SIM_EFECC_FILEID,
++			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
++			ecc_g2_read_cb, vc);
++	ofono_sim_read(sim, SIM_EFECC_FILEID,
++			OFONO_SIM_FILE_STRUCTURE_FIXED,
++			ecc_g3_read_cb, vc);
 +}
 +
- void ofono_sim_register(struct ofono_sim *sim)
++static void sim_removed_watch(void *user)
++{
++	struct ofono_voicecall *vc =3D user;
++
++	vc->flags |=3D VOICECALLS_FLAG_MULTI_RELEASE;
++
++	/* TODO: Don't hang up emergency calls */
++	voicecalls_release_queue(vc, vc->call_list);
++	voicecalls_release_next(vc);
++}
++
+ static void sim_watch(struct ofono_atom *atom,
+ 			enum ofono_atom_watch_condition cond, void *data)
  {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(sim->atom);
- 	const char *path =3D __ofono_atom_get_path(sim->atom);
-+	struct ofono_atom *vc_atom;
+@@ -1854,16 +1901,18 @@ static void sim_watch(struct ofono_atom *atom,
+ 	struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
  =
 
- 	if (!g_dbus_register_interface(conn, path,
- 					SIM_MANAGER_INTERFACE,
-@@ -2155,6 +2179,15 @@ void ofono_sim_register(struct ofono_sim *sim)
- 		sim_status_poll(sim);
- 	} else
- 		ofono_sim_inserted(sim);
+ 	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
++		vc->sim_ready_watch =3D 0;
++		vc->sim_removed_watch =3D 0;
+ 		return;
+ 	}
+ =
+
+-	/* Try both formats, only one or none will work */
+-	ofono_sim_read(sim, SIM_EFECC_FILEID,
+-			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+-			ecc_g2_read_cb, vc);
+-	ofono_sim_read(sim, SIM_EFECC_FILEID,
+-			OFONO_SIM_FILE_STRUCTURE_FIXED,
+-			ecc_g3_read_cb, vc);
++	vc->sim_ready_watch =3D ofono_sim_add_ready_watch(sim,
++			sim_ready_watch, vc, NULL);
++	vc->sim_removed_watch =3D ofono_sim_add_removed_watch(sim,
++			sim_removed_watch, vc, NULL);
 +
-+	sim->voicecall_watch =3D __ofono_modem_add_atom_watch(modem,
-+			OFONO_ATOM_TYPE_VOICECALL, voicecall_watch, sim, NULL);
-+
-+	vc_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_VOICECALL);
-+
-+	if (vc_atom && __ofono_atom_get_registered(vc_atom))
-+		voicecall_watch(vc_atom,
-+				OFONO_ATOM_WATCH_CONDITION_REGISTERED, sim);
++	if (ofono_sim_get_ready(sim))
++		sim_ready_watch(vc);
  }
  =
 
- void ofono_sim_remove(struct ofono_sim *sim)
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 25ea353..18b923f 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -1928,3 +1928,8 @@ int ofono_voicecall_get_next_callid(struct ofono_voic=
-ecall *vc)
- =
-
- 	return __ofono_modem_callid_next(modem);
- }
-+
-+const GSList *ofono_voicecall_get_list(struct ofono_voicecall *vc)
-+{
-+	return vc->call_list;
-+}
+ void ofono_voicecall_register(struct ofono_voicecall *vc)
 -- =
 
 1.6.1
 
 
---===============9222453228487542200==--
+--===============5919520773510780591==--
 
