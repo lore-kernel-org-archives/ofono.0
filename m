@@ -1,38 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============2410880616601934530=="
+Content-Type: multipart/mixed; boundary="===============2470748457618075691=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Add support of Huawei EM770 modem
-Date: Tue, 16 Mar 2010 01:34:20 -0700
-Message-ID: <1268728460.2700.16.camel@localhost.localdomain>
-In-Reply-To: <1268725349-22790-1-git-send-email-yang.gu@intel.com>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH 1/4] Fix the structure of stk_subaddress
+Date: Tue, 16 Mar 2010 18:01:37 +0800
+Message-ID: <1268733700-30154-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2410880616601934530==
+--===============2470748457618075691==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+---
+ src/stkutil.h |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-> Comparing with general Huawei modem, EM770 is a full feature modem that
-> supports voicecall, phonebook, call forwarding, call barring, etc.
-> ---
->  Makefile.am         |    3 +
->  plugins/em770.c     |  226 +++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  plugins/ofono.rules |    1 +
->  plugins/udev.c      |   27 ++++++
->  4 files changed, 257 insertions(+), 0 deletions(-)
->  create mode 100644 plugins/em770.c
+diff --git a/src/stkutil.h b/src/stkutil.h
+index b59c9f0..b408f38 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -286,7 +286,7 @@ struct stk_address {
+  */
+ struct stk_subaddress {
+ 	unsigned char len;
+-	unsigned char *subaddr[23];
++	unsigned char subaddr[23];
+ };
+ =
 
-patch has been applied. Thanks.
+ /*
+-- =
 
-Regards
-
-Marcel
-
+1.6.3.3
 
 
---===============2410880616601934530==--
+--===============2470748457618075691==--
 
