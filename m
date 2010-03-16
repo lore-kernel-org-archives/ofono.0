@@ -1,30 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============0891237735357256249=="
+Content-Type: multipart/mixed; boundary="===============1673855888095682784=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] Handle the conversion failure when parsing item
-Date: Tue, 16 Mar 2010 14:29:49 -0600
-Message-ID: <201003161529.49624.denkenz@gmail.com>
-In-Reply-To: <1268733700-30154-2-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 1/4] Fix the structure of stk_subaddress
+Date: Tue, 16 Mar 2010 14:28:32 -0600
+Message-ID: <201003161528.32678.denkenz@gmail.com>
+In-Reply-To: <1268733700-30154-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0891237735357256249==
+--===============1673855888095682784==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Yang,
 
-> -	item->text =3D sim_string_to_utf8(data+1, len-1);
-> +	utf8 =3D sim_string_to_utf8(data+1, len-1);
+> ---
+>  src/stkutil.h |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> =
 
-I applied the patch and fixed up the arithmetic operator style issue.  Plea=
-se =
 
-make sure you follow this convention from now on.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============0891237735357256249==--
+--===============1673855888095682784==--
 
