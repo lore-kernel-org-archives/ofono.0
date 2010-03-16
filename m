@@ -1,85 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============2378527868892944302=="
+Content-Type: multipart/mixed; boundary="===============8402122162060668979=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 3/4] Add parser for file list objects
-Date: Tue, 16 Mar 2010 11:44:24 -0700
-Message-ID: <1268765064.2700.25.camel@localhost.localdomain>
-In-Reply-To: <1268733700-30154-3-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 4/4] Add parser for location information objects
+Date: Tue, 16 Mar 2010 11:46:04 -0700
+Message-ID: <1268765164.2700.27.camel@localhost.localdomain>
+In-Reply-To: <1268733700-30154-4-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2378527868892944302==
+--===============8402122162060668979==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Yang,
 
-> ---
->  src/stkutil.c |   42 ++++++++++++++++++++++++++++++++++++++++++
->  src/stkutil.h |    6 ++++++
->  2 files changed, 48 insertions(+), 0 deletions(-)
+>  src/simutil.c |    2 +-
+>  src/simutil.h |    1 +
+>  src/stkutil.c |   40 +++++++++++++++++++++++++++++++++++++---
+>  src/stkutil.h |    9 +++++++++
+>  4 files changed, 48 insertions(+), 4 deletions(-)
 > =
 
-> diff --git a/src/stkutil.c b/src/stkutil.c
-> index ceba2d5..9f3bc0b 100644
-> --- a/src/stkutil.c
-> +++ b/src/stkutil.c
-> @@ -406,6 +406,46 @@ static gboolean parse_dataobj_tone(struct comprehens=
-ion_tlv_iter *iter,
->  	return TRUE;
+> diff --git a/src/simutil.c b/src/simutil.c
+> index d9383b7..65ffa36 100644
+> --- a/src/simutil.c
+> +++ b/src/simutil.c
+> @@ -538,7 +538,7 @@ static char *sim_network_name_parse(const unsigned ch=
+ar *buffer, int length,
+>  	return ret;
 >  }
 >  =
 
-> +/* Defined in TS 102.223 Section 8.18 */
-> +static gboolean parse_dataobj_file_list(struct comprehension_tlv_iter *i=
-ter,
-> +						void *user)
-> +{
-> +	GSList **fl =3D user;
-> +	const unsigned char *data;
-> +	unsigned int len;
-> +	unsigned int i;
-> +	unsigned int start =3D 1;
-> +	struct stk_file *sf;
-> +
-> +	if (comprehension_tlv_iter_get_tag(iter) !=3D
-> +			STK_DATA_OBJECT_TYPE_FILE_LIST)
-> +		return FALSE;
-> +
-> +	len =3D comprehension_tlv_iter_get_length(iter);
-> +	if (len < 5)
-> +		return FALSE;
-> +
-> +	data =3D comprehension_tlv_iter_get_data(iter);
-> +
-> +	if (data[start] !=3D 0x3f)
-> +		return FALSE;
-> +
-> +	for (i =3D start + 4; i <=3D len; i +=3D 2) {
-> +		if ((data[i] =3D=3D 0x3f) || (i =3D=3D len)) {
-> +			sf =3D g_new0(struct stk_file, 1);
-> +			sf->file =3D g_malloc(i-start);
-> +			memcpy(sf->file, data+start, i-start);
-> +			sf->len =3D i - start;
-> +			*fl =3D g_slist_prepend(*fl, sf);
-> +			start =3D i;
-> +		}
+> -static void parse_mcc_mnc(const guint8 *bcd, char *mcc, char *mnc)
+> +void parse_mcc_mnc(const guint8 *bcd, char *mcc, char *mnc)
+>  {
+>  	static const char digit_lut[] =3D "0123456789*#abd\0";
+>  	guint8 digit;
+> diff --git a/src/simutil.h b/src/simutil.h
+> index 043c21f..09964a8 100644
+> --- a/src/simutil.h
+> +++ b/src/simutil.h
+> @@ -181,6 +181,7 @@ const struct sim_eons_operator_info *sim_eons_lookup(=
+struct sim_eons *eons,
+>  						const char *mnc);
+>  void sim_eons_free(struct sim_eons *eons);
+>  =
 
-doing a simple continue statement is way better.
+> +void parse_mcc_mnc(const guint8 *bcd, char *mcc, char *mnc);
+>  struct sim_spdi *sim_spdi_new(const guint8 *tlv, int length);
+>  gboolean sim_spdi_lookup(struct sim_spdi *spdi,
+>  				const char *mcc, const char *mnc);
+> diff --git a/src/stkutil.c b/src/stkutil.c
+> index 9f3bc0b..9fa7705 100644
+> --- a/src/stkutil.c
+> +++ b/src/stkutil.c
+> @@ -413,7 +413,7 @@ static gboolean parse_dataobj_file_list(struct compre=
+hension_tlv_iter *iter,
+>  	GSList **fl =3D user;
+>  	const unsigned char *data;
+>  	unsigned int len;
+> -	unsigned int i;
+> +	unsigned int i =3D 1;
+>  	unsigned int start =3D 1;
+>  	struct stk_file *sf;
 
-	if (data[i] !=3D 0x3f && i !=3D len)
-		continue;
-
-Also there are not extra braces needed around expression in an if
-statement. And i-start would have to be i - start.
-
-When using g_new0 and g_malloc you result in exit on OOM. We try to
-avoid that whenever possible. So I prefer using g_try_new0 and
-g_try_malloc except there is a reason to just accept exit on OOM.
-
-Personally the whole counting looks pretty complicated. I think it needs
-either some documentation or made simpler.
+this change makes no sense to me. Please only initialize variables when
+really needed. I really want the compiler to warn us when we use
+variables unexpectedly.
 
 Regards
 
@@ -87,5 +75,5 @@ Marcel
 
 
 
---===============2378527868892944302==--
+--===============8402122162060668979==--
 
