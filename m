@@ -1,58 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============8900270609877519267=="
+Content-Type: multipart/mixed; boundary="===============2378527868892944302=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/4] Handle the conversion failure when parsing item
-Date: Tue, 16 Mar 2010 11:36:30 -0700
-Message-ID: <1268764590.2700.20.camel@localhost.localdomain>
-In-Reply-To: <1268733700-30154-2-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 3/4] Add parser for file list objects
+Date: Tue, 16 Mar 2010 11:44:24 -0700
+Message-ID: <1268765064.2700.25.camel@localhost.localdomain>
+In-Reply-To: <1268733700-30154-3-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8900270609877519267==
+--===============2378527868892944302==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Yang,
 
->  src/stkutil.c |    8 +++++++-
->  1 files changed, 7 insertions(+), 1 deletions(-)
+> ---
+>  src/stkutil.c |   42 ++++++++++++++++++++++++++++++++++++++++++
+>  src/stkutil.h |    6 ++++++
+>  2 files changed, 48 insertions(+), 0 deletions(-)
 > =
 
 > diff --git a/src/stkutil.c b/src/stkutil.c
-> index 787f7eb..ceba2d5 100644
+> index ceba2d5..9f3bc0b 100644
 > --- a/src/stkutil.c
 > +++ b/src/stkutil.c
-> @@ -190,6 +190,7 @@ static gboolean parse_dataobj_item(struct comprehensi=
-on_tlv_iter *iter,
->  	struct stk_item *item =3D user;
->  	const unsigned char *data;
->  	unsigned int len;
-> +	char *utf8;
->  =
-
->  	if (comprehension_tlv_iter_get_tag(iter) !=3D
->  			STK_DATA_OBJECT_TYPE_ITEM)
-> @@ -206,7 +207,12 @@ static gboolean parse_dataobj_item(struct comprehens=
+> @@ -406,6 +406,46 @@ static gboolean parse_dataobj_tone(struct comprehens=
 ion_tlv_iter *iter,
->  		return FALSE;
+>  	return TRUE;
+>  }
 >  =
 
->  	item->id =3D data[0];
-> -	item->text =3D sim_string_to_utf8(data+1, len-1);
-> +	utf8 =3D sim_string_to_utf8(data+1, len-1);
-
-please add spaces between operators like +. So data + 1, len - 1.
-
-> +	if (utf8 =3D=3D NULL)
+> +/* Defined in TS 102.223 Section 8.18 */
+> +static gboolean parse_dataobj_file_list(struct comprehension_tlv_iter *i=
+ter,
+> +						void *user)
+> +{
+> +	GSList **fl =3D user;
+> +	const unsigned char *data;
+> +	unsigned int len;
+> +	unsigned int i;
+> +	unsigned int start =3D 1;
+> +	struct stk_file *sf;
+> +
+> +	if (comprehension_tlv_iter_get_tag(iter) !=3D
+> +			STK_DATA_OBJECT_TYPE_FILE_LIST)
 > +		return FALSE;
 > +
-> +	item->text =3D utf8;
+> +	len =3D comprehension_tlv_iter_get_length(iter);
+> +	if (len < 5)
+> +		return FALSE;
+> +
+> +	data =3D comprehension_tlv_iter_get_data(iter);
+> +
+> +	if (data[start] !=3D 0x3f)
+> +		return FALSE;
+> +
+> +	for (i =3D start + 4; i <=3D len; i +=3D 2) {
+> +		if ((data[i] =3D=3D 0x3f) || (i =3D=3D len)) {
+> +			sf =3D g_new0(struct stk_file, 1);
+> +			sf->file =3D g_malloc(i-start);
+> +			memcpy(sf->file, data+start, i-start);
+> +			sf->len =3D i - start;
+> +			*fl =3D g_slist_prepend(*fl, sf);
+> +			start =3D i;
+> +		}
 
-Why bother with utf8 variable? Just do
+doing a simple continue statement is way better.
 
-	if (item->text =3D=3D NULL)
-		return FALSE;
+	if (data[i] !=3D 0x3f && i !=3D len)
+		continue;
+
+Also there are not extra braces needed around expression in an if
+statement. And i-start would have to be i - start.
+
+When using g_new0 and g_malloc you result in exit on OOM. We try to
+avoid that whenever possible. So I prefer using g_try_new0 and
+g_try_malloc except there is a reason to just accept exit on OOM.
+
+Personally the whole counting looks pretty complicated. I think it needs
+either some documentation or made simpler.
 
 Regards
 
@@ -60,5 +87,5 @@ Marcel
 
 
 
---===============8900270609877519267==--
+--===============2378527868892944302==--
 
