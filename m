@@ -1,155 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============2759948523673831029=="
+Content-Type: multipart/mixed; boundary="===============7968583041187110555=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/8][RFC] Release calls when SIM is removed.
-Date: Wed, 17 Mar 2010 16:20:37 -0600
-Message-ID: <201003171720.37269.denkenz@gmail.com>
-In-Reply-To: <1268688085-3872-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 1/8][RFC] Add functions to notify core of SIM
+ insertion/removal or request polling.
+Date: Wed, 17 Mar 2010 17:01:39 -0600
+Message-ID: <201003171801.40175.denkenz@gmail.com>
+In-Reply-To: <1268688044-3568-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2759948523673831029==
+--===============7968583041187110555==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andrew,
 
+> Implement optional polling.  Polling is mandatory according to the
+> specification but on most hardware it will me impractical because
+> there will be vendor specific unsolicited notifications that can be
+> used instead.  Modem plugins need to handle them.
 > ---
->  src/voicecall.c |   63
->  ++++++++++++++++++++++++++++++++++++++++++++++++------ 1 files changed, =
 
-56
->  insertions(+), 7 deletions(-)
+So I've been going back and forth on this one and my opinion is we should n=
+ot =
+
+do the poll in the core.  The modem has to do it anyway, so let the modem d=
+o =
+
+it and tell us when it happens.  Most vendors provide unsolicited notificat=
+ions =
+
+for SIM Toolkit events anyway.  Let us treat it the same way as voicecalls.=
+  =
+
+The standard does not define any unsolicited responses for call state =
+
+notifications, yet in practice all modem vendors provide this.
+
+Keep this code around and let us re-examine this decision if we ever need t=
+o =
+
+implement POLLING ON / POLLING OFF / POLLING INTERVAL commands.  Based on a=
+ll =
+
+the vendor specific docs I have these are intercepted by the modem and we n=
+ever =
+
+see them anyway.
+
+>  include/sim.h |   21 ++++++-
+>  src/sim.c     |  197
+>  ++++++++++++++++++++++++++++++++++++++++++++++++++------- 2 files =
+
+changed,
+>  195 insertions(+), 23 deletions(-)
 > =
 
-> diff --git a/src/voicecall.c b/src/voicecall.c
-> index 18b923f..eef924c 100644
-> --- a/src/voicecall.c
-> +++ b/src/voicecall.c
-> @@ -57,6 +57,8 @@ struct ofono_voicecall {
->  	gint emit_calls_source;
->  	gint emit_multi_source;
->  	unsigned int sim_watch;
-> +	unsigned int sim_ready_watch;
-> +	unsigned int sim_removed_watch;
->  	const struct ofono_voicecall_driver *driver;
->  	void *driver_data;
->  	struct ofono_atom *atom;
-> @@ -1788,6 +1790,10 @@ static void voicecall_unregister(struct ofono_atom
->  *atom) static void voicecall_remove(struct ofono_atom *atom)
->  {
->  	struct ofono_voicecall *vc =3D __ofono_atom_get_data(atom);
-> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-> +	struct ofono_atom *sim_atom =3D
-> +		__ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
-> +	struct ofono_sim *sim =3D NULL;
+> diff --git a/include/sim.h b/include/sim.h
+> index 6ff29f7..fdfe2e8 100644
+> --- a/include/sim.h
+> +++ b/include/sim.h
+> @@ -106,6 +106,8 @@ typedef void (*ofono_sim_lock_unlock_cb_t)(const stru=
+ct
+>  ofono_error *error, typedef void (*ofono_sim_locked_cb_t)(const struct
+>  ofono_error *error, int locked, void *data);
 > =
 
->  	DBG("atom: %p", atom);
-> =
+> +typedef void (*ofono_sim_cb_t)(const struct ofono_error *error, void
+>  *data); +
+>  struct ofono_sim_driver {
+>  	const char *name;
+>  	int (*probe)(struct ofono_sim *sim, unsigned int vendor, void *data);
+> @@ -152,6 +154,12 @@ struct ofono_sim_driver {
+>  	void (*envelope)(struct ofono_sim *sim, int length,
+>  				const guint8 *command,
+>  				ofono_sim_read_cb_t cb, void *data);
+> +	void (*status)(struct ofono_sim *sim, ofono_sim_cb_t cb, void *data);
+> +	void (*fetch)(struct ofono_sim *sim, int length,
+> +			ofono_sim_read_cb_t cb, void *data);
 
-> @@ -1809,6 +1815,19 @@ static void voicecall_remove(struct ofono_atom
->  *atom) vc->new_en_list =3D NULL;
->  	}
-> =
+So three things here: First the STK details should be moved to a separate a=
+tom =
 
-> +	if (sim_atom && __ofono_atom_get_registered(sim_atom))
-> +		sim =3D __ofono_atom_get_data(sim_atom);
-> +
-> +	if (sim && vc->sim_ready_watch) {
-> +		ofono_sim_remove_ready_watch(sim, vc->sim_ready_watch);
-> +		vc->sim_ready_watch =3D 0;
-> +	}
-> +
-> +	if (sim && vc->sim_removed_watch) {
-> +		ofono_sim_remove_removed_watch(sim, vc->sim_removed_watch);
-> +		vc->sim_removed_watch =3D 0;
-> +	}
-> +
->  	g_free(vc);
->  }
-> =
+since they are highly vendor specific.
 
-> @@ -1847,6 +1866,34 @@ struct ofono_voicecall
->  *ofono_voicecall_create(struct ofono_modem *modem, return vc;
->  }
-> =
+Second, why are we bothering with fetch, can't we simply use =
 
-> +static void sim_ready_watch(void *user)
-> +{
-> +	struct ofono_voicecall *vc =3D user;
-> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-> +	struct ofono_atom *sim_atom =3D
-> +		__ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
-> +	struct ofono_sim *sim =3D __ofono_atom_get_data(sim_atom);
-> +
-> +	/* Try both formats, only one or none will work */
-> +	ofono_sim_read(sim, SIM_EFECC_FILEID,
-> +			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
-> +			ecc_g2_read_cb, vc);
-> +	ofono_sim_read(sim, SIM_EFECC_FILEID,
-> +			OFONO_SIM_FILE_STRUCTURE_FIXED,
-> +			ecc_g3_read_cb, vc);
-> +}
+ofono_sim_proactive_command_notify to send us the apdu directly?
 
-So does sim_ready now have a different semantic than it used to? (e.g. PIN =
+And we should get rid of status if we're not doing polling.
 
-entered successfully)  EFecc has to be read when sim is inserted, not when =
-the =
+> +	void (*terminal_response)(struct ofono_sim *sim, int length,
+> +			const unsigned char *value, ofono_sim_write_cb_t cb,
 
-SIM is truly ready.
+to be more consistent, value first, then length.
 
-> +
-> +static void sim_removed_watch(void *user)
-> +{
-> +	struct ofono_voicecall *vc =3D user;
-> +
-> +	vc->flags |=3D VOICECALLS_FLAG_MULTI_RELEASE;
-> +
-> +	/* TODO: Don't hang up emergency calls */
-> +	voicecalls_release_queue(vc, vc->call_list);
-> +	voicecalls_release_next(vc);
+> +			void *data);
+>  };
 
-For now I suggest relying on the modem to tells us which calls have been =
+Regards,
+-Denis
 
-removed.  You must also reset and signal the emergency number list.
-
-> +}
-> +
->  static void sim_watch(struct ofono_atom *atom,
->  			enum ofono_atom_watch_condition cond, void *data)
->  {
-> @@ -1854,16 +1901,18 @@ static void sim_watch(struct ofono_atom *atom,
->  	struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
-> =
-
->  	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-> +		vc->sim_ready_watch =3D 0;
-> +		vc->sim_removed_watch =3D 0;
->  		return;
->  	}
-> =
-
-> -	/* Try both formats, only one or none will work */
-> -	ofono_sim_read(sim, SIM_EFECC_FILEID,
-> -			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
-> -			ecc_g2_read_cb, vc);
-> -	ofono_sim_read(sim, SIM_EFECC_FILEID,
-> -			OFONO_SIM_FILE_STRUCTURE_FIXED,
-> -			ecc_g3_read_cb, vc);
-> +	vc->sim_ready_watch =3D ofono_sim_add_ready_watch(sim,
-> +			sim_ready_watch, vc, NULL);
-> +	vc->sim_removed_watch =3D ofono_sim_add_removed_watch(sim,
-> +			sim_removed_watch, vc, NULL);
-> +
-> +	if (ofono_sim_get_ready(sim))
-> +		sim_ready_watch(vc);
->  }
-> =
-
->  void ofono_voicecall_register(struct ofono_voicecall *vc)
->=20
-
---===============2759948523673831029==--
+--===============7968583041187110555==--
 
