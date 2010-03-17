@@ -1,211 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============1311059658773175172=="
+Content-Type: multipart/mixed; boundary="===============2194296880426212769=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 7/8][RFC] Invalidate SIM manager properties when SIM
- extracted, add Present property.
-Date: Wed, 17 Mar 2010 15:10:51 -0600
-Message-ID: <201003171610.51399.denkenz@gmail.com>
-In-Reply-To: <1268688136-4209-1-git-send-email-andrew.zaborowski@intel.com>
+From: Wu, Johnson Z <johnson.z.wu@intel.com>
+Subject: SIM ToolKit support
+Date: Thu, 18 Mar 2010 06:20:31 +0800
+Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD1DCE17A3@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1311059658773175172==
+--===============2194296880426212769==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi,
 
-> ---
->  src/sim.c |  107
->  ++++++++++++++++++++++++++++++++++++++++++++++++++++++------- 1 files
->  changed, 95 insertions(+), 12 deletions(-)
-> =
-
-> diff --git a/src/sim.c b/src/sim.c
-> index cddb3e4..fe535bb 100644
-> --- a/src/sim.c
-> +++ b/src/sim.c
-> @@ -285,6 +285,7 @@ static DBusMessage *sim_get_properties(DBusConnection
->  *conn, char **service_numbers;
->  	char **locked_pins;
->  	const char *pin_name;
-> +	dbus_bool_t present =3D sim->inserted;
-> =
-
->  	reply =3D dbus_message_new_method_return(msg);
->  	if (!reply)
-> @@ -296,6 +297,8 @@ static DBusMessage *sim_get_properties(DBusConnection
->  *conn, OFONO_PROPERTIES_ARRAY_SIGNATURE,
->  					&dict);
-> =
-
-> +	ofono_dbus_dict_append(&dict, "Present", DBUS_TYPE_BOOLEAN, &present);
-> +
-
-I suggest you simply skip the rest of the properties if Present is false an=
-d =
-
-skip checking each and every one afterwards.
-
-> @@ -992,6 +1001,8 @@ static void sim_imsi_cb(const struct ofono_error
->  *error, const char *imsi, void *data)
->  {
->  	struct ofono_sim *sim =3D data;
-> +	DBusConnection *conn =3D ofono_dbus_get_connection();
-> +	const char *path =3D __ofono_atom_get_path(sim->atom);
-> =
-
->  	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
->  		ofono_error("Unable to read IMSI, emergency calls only");
-> @@ -1000,6 +1011,11 @@ static void sim_imsi_cb(const struct ofono_error
->  *error, const char *imsi,
-> =
-
->  	sim->imsi =3D g_strdup(imsi);
-> =
-
-> +	ofono_dbus_signal_property_changed(conn, path,
-> +					SIM_MANAGER_INTERFACE,
-> +					"SubscriberIdentity",
-> +					DBUS_TYPE_STRING, &sim->imsi);
-> +
->  	/* Read CPHS-support bits, this is still part of the SIM
->  	 * initialisation but no order is specified for it.  */
->  	ofono_sim_read(sim, SIM_EF_CPHS_INFORMATION_FILEID,
-> @@ -1755,9 +1771,21 @@ const unsigned char
->  *ofono_sim_get_cphs_service_table(struct ofono_sim *sim) return
->  sim->cphs_service_table;
->  }
-> =
-
-> +static void sim_inserted_update(struct ofono_sim *sim)
-> +{
-> +	dbus_bool_t present =3D sim->inserted;
-> +	DBusConnection *conn =3D ofono_dbus_get_connection();
-> +	const char *path =3D __ofono_atom_get_path(sim->atom);
-> +
-> +	ofono_dbus_signal_property_changed(conn, path,
-> +			SIM_MANAGER_INTERFACE, "Present",
-> +			DBUS_TYPE_BOOLEAN, &present);
-> +}
-> +
->  void ofono_sim_inserted(struct ofono_sim *sim)
->  {
->  	sim->inserted =3D TRUE;
-> +	sim_inserted_update(sim);
-> =
-
->  	/* Perform SIM initialization according to 3GPP 31.102 Section 5.1.1.2
->  	 * The assumption here is that if sim manager is being initialized,
-> @@ -1781,6 +1809,18 @@ void ofono_sim_inserted(struct ofono_sim *sim)
->  	sim_determine_phase(sim);
->  }
-> =
-
-> +static void sim_file_op_fail(struct sim_file_op *op)
-> +{
-> +	if (op->is_read =3D=3D TRUE)
-> +		((ofono_sim_file_read_cb_t) op->cb)
-> +			(0, 0, 0, 0, 0, op->userdata);
-> +	else
-> +		((ofono_sim_file_write_cb_t) op->cb)
-> +			(0, op->userdata);
-> +
-> +	sim_file_op_free(op);
-> +}
-> +
->  void ofono_sim_removed(struct ofono_sim *sim)
->  {
->  	GSList *l;
-> @@ -1790,18 +1830,61 @@ void ofono_sim_removed(struct ofono_sim *sim)
->  		return;
-> =
-
->  	sim->inserted =3D FALSE;
-> +	sim_inserted_update(sim);
-> =
-
->  	if (sim->ready =3D=3D FALSE)
->  		return;
-> =
-
->  	sim->ready =3D FALSE;
-> =
-
-> +	if (sim->simop_source) {
-> +		g_source_remove(sim->simop_source);
-> +		sim->simop_source =3D 0;
-> +	}
-> +
-> +	if (sim->simop_q) {
-> +		/* NOTE: there's an assumption here that the op's callback
-> +		 * does not queue new ops on failure... */
-> +		g_queue_foreach(sim->simop_q, (GFunc) sim_file_op_fail, NULL);
-> +		g_queue_free(sim->simop_q);
-> +		sim->simop_q =3D NULL;
-> +	}
-> +
-
-You have to be really careful here, it is possible that we have an operatio=
-n =
-
-pending with the driver, so the driver will call back for that one.  Also, =
-
-since you're removing everything anyway I see no need to call the error =
-
-callback.
-
->  	for (l =3D sim->removed_watches->items; l; l =3D l->next) {
->  		struct ofono_watchlist_item *item =3D l->data;
->  		notify =3D item->notify;
-> =
-
->  		notify(item->notify_data);
->  	}
-> +
-> +	if (sim->imsi) {
-> +		g_free(sim->imsi);
-> +		sim->imsi =3D NULL;
-> +	}
-> +
-> +	if (sim->own_numbers) {
-> +		g_slist_foreach(sim->own_numbers, (GFunc)g_free, NULL);
-> +		g_slist_free(sim->own_numbers);
-> +		sim->own_numbers =3D NULL;
-> +	}
-> +
-> +	if (sim->service_numbers) {
-> +		g_slist_foreach(sim->service_numbers,
-> +				(GFunc)service_number_free, NULL);
-> +		g_slist_free(sim->service_numbers);
-> +		sim->service_numbers =3D NULL;
-> +	}
-> +
-> +	if (sim->efli) {
-> +		g_free(sim->efli);
-> +		sim->efli =3D NULL;
-> +		sim->efli_length =3D 0;
-> +	}
-> +
-> +	if (sim->language_prefs) {
-> +		g_strfreev(sim->language_prefs);
-> +		sim->language_prefs =3D NULL;
-> +	}
-
-This needs to be put into a common destructor instead of duplicating =
-
-everything twice.
-
->  }
-> =
-
->  static void sim_command_fetch_cb(const struct ofono_error *error,
-> =
-
+Is there anybody can share me some information about SIM Toolkit support by=
+ ofono? Current status, any schedule to support STK?
 
 Regards,
--Denis
+Johnson
 
---===============1311059658773175172==--
+
+--===============2194296880426212769==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
+b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
+QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
+MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
+Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
+dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
+YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
+ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
+YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
+OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
+Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
+VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
+Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
+cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
+MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
+ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
+cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
+bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
+eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
+dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
+LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
+Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
+cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
+dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
+aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczp3
+Zj0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvd29ya2Zsb3cv
+IiB4bWxuczpkc3NzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS8yMDA2L2Rp
+Z3NpZy1zZXR1cCIgeG1sbnM6ZHNzaT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZp
+Y2UvMjAwNi9kaWdzaWciIHhtbG5zOm1kc3NpPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0
+cy5vcmcvcGFja2FnZS8yMDA2L2RpZ2l0YWwtc2lnbmF0dXJlIiB4bWxuczptdmVyPSJodHRwOi8v
+c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvbWFya3VwLWNvbXBhdGliaWxpdHkvMjAwNiIgeG1s
+bnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4
+bWxuczptcmVscz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAw
+Ni9yZWxhdGlvbnNoaXBzIiB4bWxuczpzcHdwPSJodHRwOi8vbWljcm9zb2Z0LmNvbS9zaGFyZXBv
+aW50L3dlYnBhcnRwYWdlcyIgeG1sbnM6ZXgxMnQ9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5j
+b20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi90eXBlcyIgeG1sbnM6ZXgxMm09Imh0dHA6Ly9zY2hl
+bWFzLm1pY3Jvc29mdC5jb20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi9tZXNzYWdlcyIgeG1sbnM6
+cHB0c2w9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC9zb2FwL1NsaWRl
+TGlicmFyeS8iIHhtbG5zOnNwc2w9Imh0dHA6Ly9taWNyb3NvZnQuY29tL3dlYnNlcnZpY2VzL1No
+YXJlUG9pbnRQb3J0YWxTZXJ2ZXIvUHVibGlzaGVkTGlua3NTZXJ2aWNlIiB4bWxuczpaPSJ1cm46
+c2NoZW1hcy1taWNyb3NvZnQtY29tOiIgeG1sbnM6c3Q9IiYjMTsiIHhtbG5zPSJodHRwOi8vd3d3
+LnczLm9yZy9UUi9SRUMtaHRtbDQwIj4KCjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQt
+VHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBuYW1lPUdl
+bmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+Cjxz
+dHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OlNpbVN1bjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQpAZm9udC1mYWNlCgl7
+Zm9udC1mYW1pbHk6U2ltU3VuOwoJcGFub3NlLTE6MiAxIDYgMCAzIDEgMSAxIDEgMTt9CkBmb250
+LWZhY2UKCXtmb250LWZhbWlseTpDYWxpYnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAy
+IDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6U2ltU3VuOwoJcGFub3NlLTE6MiAxIDYgMCAz
+IDEgMSAxIDEgMTt9CiAvKiBTdHlsZSBEZWZpbml0aW9ucyAqLwogcC5Nc29Ob3JtYWwsIGxpLk1z
+b05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowY207CgltYXJnaW4tYm90dG9tOi4wMDAx
+cHQ7Cgl0ZXh0LWFsaWduOmp1c3RpZnk7Cgl0ZXh0LWp1c3RpZnk6aW50ZXItaWRlb2dyYXBoOwoJ
+Zm9udC1zaXplOjEwLjVwdDsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7fQph
+OmxpbmssIHNwYW4uTXNvSHlwZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6
+Ymx1ZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlw
+ZXJsaW5rRm9sbG93ZWQKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0
+ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUt
+dHlwZTpwZXJzb25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlm
+IjsKCWNvbG9yOndpbmRvd3RleHQ7fQouTXNvQ2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4
+cG9ydC1vbmx5O30KIC8qIFBhZ2UgRGVmaW5pdGlvbnMgKi8KIEBwYWdlIFNlY3Rpb24xCgl7c2l6
+ZTo2MTIuMHB0IDc5Mi4wcHQ7CgltYXJnaW46NzIuMHB0IDkwLjBwdCA3Mi4wcHQgOTAuMHB0O30K
+ZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8IS0tW2lmIGd0ZSBt
+c28gOV0+PHhtbD4KIDxvOnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYi
+IC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgogPG86c2hhcGVs
+YXlvdXQgdjpleHQ9ImVkaXQiPgogIDxvOmlkbWFwIHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgog
+PC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPgo8L2hlYWQ+Cgo8Ym9keSBsYW5nPVpI
+LUNOIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGUgc3R5bGU9J3RleHQtanVzdGlmeS10cmltOnB1bmN0
+dWF0aW9uJz4KCjxkaXYgY2xhc3M9U2VjdGlvbjE+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4g
+bGFuZz1FTi1VUz5IaSw8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+
+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1N
+c29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5JcyB0aGVyZSBhbnlib2R5IGNhbiBzaGFyZSBtZSBz
+b21lCmluZm9ybWF0aW9uIGFib3V0IFNJTSBUb29sa2l0IHN1cHBvcnQgYnkgb2Zvbm8/IEN1cnJl
+bnQgc3RhdHVzLCBhbnkgc2NoZWR1bGUgdG8Kc3VwcG9ydCBTVEs/PG86cD48L286cD48L3NwYW4+
+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286
+cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+UmVnYXJk
+cyw8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1F
+Ti1VUz5Kb2huc29uPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxz
+cGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPC9kaXY+Cgo8L2Jv
+ZHk+Cgo8L2h0bWw+Cg==
+
+--===============2194296880426212769==--
 
