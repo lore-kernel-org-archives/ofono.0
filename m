@@ -1,32 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============6280752047877467113=="
+Content-Type: multipart/mixed; boundary="===============8639470928862402611=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/11] Rename g_at_server_send_result
-Date: Wed, 17 Mar 2010 12:24:58 -0600
-Message-ID: <201003171324.58424.denkenz@gmail.com>
-In-Reply-To: <4BA0E979.1030004@intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: Re: [patch 3/6] LCP support
+Date: Wed, 17 Mar 2010 11:59:30 -0700
+Message-ID: <20100317115930.6643ea73@kcaccard-MOBL3>
+In-Reply-To: <1268809765.2700.104.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6280752047877467113==
+--===============8639470928862402611==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+On Wed, 17 Mar 2010 00:09:25 -0700
+Marcel Holtmann <marcel@holtmann.org> wrote:
 
-> Sorry, I forgot the first patch. Please review the first patch as
-> attached. Otherwise, these patches could not be applied.
+> Hi Kristen,
+> =
 
-Please get rid of this patch and rebase the rest appropriately.  I mentione=
-d =
+> >  Makefile.am               |    6 -
+> >  gatchat/gatppp.c          |   53 +++++++++
+> >  gatchat/gatppp_internal.h |    8 +
+> >  gatchat/gatppplcp.c       |  244 +++++++++++++++++++++++++++++++++++++=
++++++++++
+> =
 
-in the other reply, there's no sense to remove a bunch of code only to add =
+> this should be gatchat/ppp_lcp.c
+> =
 
-nearly the same back in.
+> > +void __ppp_set_auth(GAtPPP *ppp, guint8* auth_data)
+> > +{
+> > +	guint16 proto =3D ntohs(*(guint16 *)auth_data);
+> =
 
-Regards,
--Denis
+> This are again one of these constructs that will break on non-x86
+> hardware.
+> =
 
---===============6280752047877467113==--
+> I think you need to create ppp_get_unaligned and ppp_put_unaligned. If
+> all of them are be16 anyway, you could do ppp_get_unaligned_be16 etc.
+> =
+
+> Regards
+> =
+
+> Marcel
+
+Would it make more sense to pack the structures that are meant to
+represent bytes off the wire?  I personally prefer that to making
+a different function for be vs. le.  But I am not sure if we can
+assume we are using gcc and have __attribute__((packed)) support?
+
+--===============8639470928862402611==--
 
