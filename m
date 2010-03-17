@@ -1,493 +1,136 @@
-Content-Type: multipart/mixed; boundary="===============5148800823234227667=="
+Content-Type: multipart/mixed; boundary="===============0504366383264033815=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 6/6] Add voice call test case for GAtServer
-Date: Wed, 17 Mar 2010 22:44:11 +0800
-Message-ID: <1268837051-5032-7-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1268837051-5032-6-git-send-email-zhenhua.zhang@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 02/11] Add framework of server parser
+Date: Wed, 17 Mar 2010 11:55:59 -0600
+Message-ID: <201003171256.00500.denkenz@gmail.com>
+In-Reply-To: <1268836241-4834-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5148800823234227667==
+--===============0504366383264033815==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-It simulates a simple voice call with client. Client could use ATD
-to dial out a call and Server could use a pseudo command 'AT+INCM'
-to notify an incoming call.
----
- gatchat/test-server.c |  419 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 419 insertions(+), 0 deletions(-)
+Hi Zhenhua,
 
-diff --git a/gatchat/test-server.c b/gatchat/test-server.c
-index fdb7475..0485f39 100644
---- a/gatchat/test-server.c
-+++ b/gatchat/test-server.c
-@@ -46,9 +46,16 @@
- #include "gatserver.h"
- #include "ringbuffer.h"
- =
+> a. The parser fetch and parse one command per loop. The prefix is
+> the command prefix without parameter. For example, the prefix of
+> "AT+CLIP=3D1" is "+CLIP".
+> =
 
-+#include "ofono/types.h"
-+
- #define DEFAULT_TCP_PORT 12346
- #define DEFAULT_SOCK_PATH "./server_sock"
- =
+> b. Search registered notification node in command_list. Invoke the
+> callback if found.
+> =
 
-+#define INCOMING_CALL "1234567890"
-+#define TIMEOUT_INTERVAL 2000
-+#define TIMEOUT_DIAL 10000
-+#define TIMEOUT_INCOMING 10000
-+
- struct sock_server{
- 	int server_sock;
- };
-@@ -57,8 +64,45 @@ static GMainLoop *mainloop;
- static GAtServer *server;
- unsigned int server_watch;
- =
+> c. Termiate the execution if the result is an error. Otherwise,
+> parse next command.
+> ---
+>  gatchat/gatserver.c |   95
+>  +++++++++++++++++++++++++++++++++++++++++++++++++++ 1 files changed, =
 
-+unsigned int outgoing_source;
-+unsigned int outgoing_timeout;
-+unsigned int incoming_source;
-+unsigned int incoming_timeout;
-+unsigned int call_ids;
-+static GSList *call_list;
-+
-+static void release_id(int id)
-+{
-+	call_ids &=3D ~(0x1 << id);
-+}
-+
-+static void voicecall_destroy(gpointer data, gpointer user_data)
-+{
-+	struct ofono_call *call =3D data;
-+
-+	if (call) {
-+		if (call->direction =3D=3D 0 && outgoing_source) {
-+			g_source_remove(outgoing_source);
-+			outgoing_source =3D 0;
-+		} else if (call->direction =3D=3D 1 && incoming_source) {
-+			g_source_remove(incoming_source);
-+			incoming_source =3D 0;
-+		}
-+
-+		release_id(call->id);
-+	}
-+
-+	g_free(call);
-+}
-+
- static gboolean server_cleanup()
- {
-+	if (call_list) {
-+		g_slist_foreach(call_list, voicecall_destroy, NULL);
-+		g_slist_free(call_list);
-+		call_list =3D NULL;
-+	}
-+
- 	if (server_watch)
- 		g_source_remove(server_watch);
- =
+95
+>  insertions(+), 0 deletions(-)
+> =
 
-@@ -77,9 +121,384 @@ static void server_debug(const char *str, void *data)
- 	g_print("%s: %s\n", (char *) data, str);
- }
- =
+> diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
+> index 46fa423..fb82ad4 100644
+> --- a/gatchat/gatserver.c
+> +++ b/gatchat/gatserver.c
+> @@ -173,8 +173,103 @@ static void g_at_server_send_final(GAtServer *serve=
+r,
+>  GAtServerResult result) send_common(server, buf, MIN(len, sizeof(buf)-1)=
+);
+>  }
+> =
 
-+static unsigned int alloc_next_id()
-+{
-+	unsigned int i;
-+
-+	for (i =3D 1; i < sizeof(call_ids) * 8; i++) {
-+		if (call_ids & (0x1 << i))
-+			continue;
-+
-+		return i;
-+	}
-+
-+	return 0;
-+}
-+
-+static struct ofono_call *create_call(int type, int direction, int status,
-+					const char *num, int num_type, int clip)
-+{
-+	struct ofono_call *call;
-+
-+	call =3D g_try_new0(struct ofono_call, 1);
-+	if (!call)
-+		return NULL;
-+
-+	call->id =3D alloc_next_id();
-+	call->type =3D type;
-+	call->direction =3D direction;
-+	call->status =3D status;
-+
-+	if (clip !=3D 2) {
-+		strncpy(call->phone_number.number, num,
-+			OFONO_MAX_PHONE_NUMBER_LENGTH);
-+		call->phone_number.type =3D num_type;
-+	}
-+
-+	call->clip_validity =3D clip;
-+
-+	call_list =3D g_slist_prepend(call_list, call);
-+
-+	return call;
-+}
-+
-+static void list_calls(GAtServer *server)
-+{
-+	GSList *text =3D NULL;
-+	GSList *l;
-+	char buf[512];
-+	gboolean is_mpty =3D FALSE;
-+
-+	/* No calls */
-+	if (!call_list)
-+		return;
-+
-+	if (g_slist_length(call_list) > 1)
-+		is_mpty =3D TRUE;
-+
-+	for (l =3D call_list; l; l =3D l->next) {
-+		struct ofono_call *call =3D l->data;
-+
-+		/* +CLCC: <id>,<dir>,<stat>,<mode>,<mpty>[<number>,<type>] */
-+		sprintf(buf, "+CLCC: %d,%d,%d,%d,%d,%s,%d",
-+						call->id, call->direction,
-+						call->status, call->type,
-+						call->mpty,
-+						call->phone_number.number,
-+						call->phone_number.type);
-+
-+		text =3D g_slist_append(text, g_strdup(buf));
-+	}
-+
-+	g_at_server_send_info_text(server, text);
-+
-+	g_slist_foreach(text, (GFunc) g_free, NULL);
-+	g_slist_free(text);
-+}
-+
-+static GAtServerResult at_clcc_cb(GAtServerRequestType type, GAtResult *re=
-sult,
-+					gpointer user_data)
-+{
-+	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
-+	GAtResultIter iter;
-+	GAtServer *server =3D user_data;
-+
-+	if (type =3D=3D G_AT_SERVER_REQUEST_TYPE_SUPPORT) {
-+		res =3D G_AT_SERVER_RESULT_OK;
-+		goto done;
-+	}
-+
-+	if (type !=3D G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY)
-+		goto done;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CLCC"))
-+		goto done;
-+
-+	list_calls(server);
-+
-+	res =3D G_AT_SERVER_RESULT_OK;
-+
-+done:
-+	return res;
-+}
-+
-+static gboolean hangup_current()
-+{
-+	struct ofono_call *call;
-+
-+	if (!call_list)
-+		return FALSE;
-+
-+	call =3D call_list->data;
-+	call_list =3D g_slist_remove(call_list, call);
-+	voicecall_destroy(call, NULL);
-+
-+	return TRUE;
-+}
-+
-+static gboolean hangup_specific(struct ofono_call *call)
-+{
-+	if (!call_list)
-+		return FALSE;
-+
-+	call_list =3D g_slist_remove(call_list, call);
-+	voicecall_destroy(call, NULL);
-+
-+	return TRUE;
-+}
-+
-+static gboolean dial_timeout(gpointer user_data)
-+{
-+	struct ofono_call *call =3D user_data;
-+
-+	hangup_specific(call);
-+
-+	if (outgoing_source) {
-+		g_source_remove(outgoing_source);
-+		outgoing_source =3D 0;
-+	}
-+
-+	outgoing_timeout =3D 0;
-+
-+	return FALSE;
-+}
-+
-+static GAtServerResult dial_voicecall(const char *dial_str)
-+{
-+	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
-+	char c;
-+	char *number;
-+	int len =3D strlen(dial_str);
-+	struct ofono_call *call;
-+
-+	/* Skip last comma */
-+	len--;
-+
-+	c =3D dial_str[len-1];
-+	/* Skip closed user group flag */
-+	if (c =3D=3D 'G' || c =3D=3D 'g')
-+		len--;
-+
-+	c =3D dial_str[len-1];
-+	/* Skip caller id suppress flag */
-+	if (c =3D=3D 'I' || c =3D=3D 'i')
-+		len--;
-+
-+	number =3D g_strndup(dial_str, len);
-+
-+	call =3D create_call(0, 0, 2, number, 129, 0);
-+	if (!call)
-+		goto done;
-+
-+	outgoing_timeout =3D g_timeout_add(TIMEOUT_DIAL,
-+					(GSourceFunc) dial_timeout,
-+					call);
-+
-+	res =3D G_AT_SERVER_RESULT_OK;
-+
-+done:
-+	if (number)
-+		g_free(number);
-+
-+	return res;
-+}
-+
-+static GAtServerResult dial_call(GAtServer *server, const char *dial_str)
-+{
-+	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
-+	int len =3D strlen(dial_str);
-+
-+	if (dial_str[0] =3D=3D '*' || dial_str[0] =3D=3D '#') {
-+		/* Supplementary service request */
-+		sleep(2);
-+		g_at_server_send_intermediate(server, "CONNECT");
-+		sleep(2);
-+		res =3D G_AT_SERVER_RESULT_OK;
-+		goto done;
-+	}
-+
-+	if (dial_str[len-1] =3D=3D ';') {
-+		/* Voice call */
-+		res =3D dial_voicecall(dial_str);
-+
-+	}
-+
-+done:
-+	return res;
-+}
-+
-+static GAtServerResult dial_cb(GAtServerRequestType type, GAtResult *resul=
-t,
-+					gpointer user_data)
-+{
-+	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
-+	GAtResultIter iter;
-+	const char *dial_str;
-+	GAtServer *server =3D user_data;
-+
-+	if (type !=3D G_AT_SERVER_REQUEST_TYPE_SET)
-+		goto done;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "D"))
-+		goto done;
-+
-+	dial_str =3D g_at_result_iter_raw_line(&iter);
-+	if (!dial_str)
-+		goto done;
-+
-+	if (outgoing_source) {
-+		g_source_remove(outgoing_source);
-+		outgoing_source =3D 0;
-+	}
-+
-+	res =3D dial_call(server, dial_str);
-+
-+done:
-+	return res;
-+}
-+
-+static GAtServerResult at_chup_cb(GAtServerRequestType type, GAtResult *re=
-sult,
-+					gpointer user_data)
-+{
-+	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
-+	GAtResultIter iter;
-+
-+	if (type =3D=3D G_AT_SERVER_REQUEST_TYPE_SUPPORT) {
-+		res =3D G_AT_SERVER_RESULT_OK;
-+		goto done;
-+	}
-+
-+	if (type !=3D G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY)
-+		goto done;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CHUP"))
-+		goto done;
-+
-+	if (!hangup_current())
-+		goto done;
-+
-+	res =3D G_AT_SERVER_RESULT_OK;
-+
-+done:
-+	return res;
-+}
-+
-+static GAtServerResult answer_cb(GAtServerRequestType type, GAtResult *res=
-ult,
-+					gpointer user_data)
-+{
-+	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
-+	GAtResultIter iter;
-+	struct ofono_call *call;
-+
-+	if (type !=3D G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY)
-+		goto done;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "A"))
-+		goto done;
-+
-+	if (incoming_source) {
-+		g_source_remove(incoming_source);
-+		incoming_source =3D 0;
-+	}
-+
-+	if (!call_list)
-+		goto done;
-+
-+	call =3D call_list->data;
-+	call->status =3D 0;
-+
-+	res =3D G_AT_SERVER_RESULT_OK;
-+
-+done:
-+	return res;
-+}
-+
-+static gboolean ring_timeout(gpointer user_data)
-+{
-+	struct ofono_call *call =3D user_data;
-+
-+	hangup_specific(call);
-+
-+	if (incoming_source) {
-+		g_source_remove(incoming_source);
-+		incoming_source =3D 0;
-+	}
-+
-+	incoming_timeout =3D 0;
-+
-+	return FALSE;
-+}
-+
-+static gboolean ring_notify(gpointer user_data)
-+{
-+	GAtServer *server =3D user_data;
-+	char buf[100];
-+
-+	/* Notify a new incoming call to client */
-+	g_at_server_send_unsolicited(server, "RING");
-+
-+	sprintf(buf, "+CLIP: \"%s\",129", INCOMING_CALL);
-+	g_at_server_send_unsolicited(server, buf);
-+
-+	return TRUE;
-+}
-+
-+static GAtServerResult at_incm_cb(GAtServerRequestType type, GAtResult *re=
-sult,
-+					gpointer user_data)
-+{
-+	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
-+	GAtResultIter iter;
-+	GAtServer *server =3D user_data;
-+	struct ofono_call *call;
-+
-+	if (type !=3D G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY)
-+		goto done;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+INCM"))
-+		goto done;
-+
-+	/* Remove existing incoming call if exists */
-+	if (incoming_source) {
-+		g_source_remove(incoming_source);
-+		incoming_source =3D 0;
-+	}
-+
-+	call =3D create_call(0, 1, 4, INCOMING_CALL, 129, 0);
-+	if (!call)
-+		goto done;
-+
-+	incoming_source =3D g_timeout_add(TIMEOUT_INTERVAL,
-+					(GSourceFunc) ring_notify, server);
-+
-+	incoming_timeout =3D g_timeout_add(TIMEOUT_INCOMING,
-+					(GSourceFunc) ring_timeout, call);
-+
-+	res =3D G_AT_SERVER_RESULT_OK;
-+
-+done:
-+	return res;
-+}
-+
- static void add_handler(GAtServer *server)
- {
- 	g_at_server_set_debug(server, server_debug, "Server");
-+
-+	g_at_server_register(server, "D", dial_cb, server, NULL);
-+	g_at_server_register(server, "A", answer_cb, server, NULL);
-+	g_at_server_register(server, "+CLCC", at_clcc_cb, server, NULL);
-+	g_at_server_register(server, "+CHUP", at_chup_cb, server, NULL);
-+
-+	/* Psuedo command to notify an incoming call to the client */
-+	g_at_server_register(server, "+INCM", at_incm_cb, server, NULL);
- }
- =
+> +static inline gboolean is_extended_command_prefix(const char c)
+> +{
+> +	switch (c) {
+> +	case '+':
+> +	case '*':
+> +	case '!':
+> +	case '%':
+> +		return TRUE;
+> +	default:
+> +		return FALSE;
+> +	}
+> +}
 
- static void server_destroy(gpointer user)
--- =
+So I don't see the point of a patch that removes the entire function, then =
 
-1.6.6.1
+puts the same function back in with the same name.  If you want to rename i=
+t, =
 
+send a patch to do so.
 
---===============5148800823234227667==--
+>  static void server_parse_line(GAtServer *server, char *line)
+>  {
+> +	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
+> +	char *buf =3D line;
+> +	char *command =3D NULL;
+> +	char prefix[20];
+> +
+> +	while (buf) {
+
+So this part is wrong, buf will never be NULL.  I suggest you preserve the =
+
+logic of the current implementation here.
+
+> +		char c =3D *buf;
+> +
+> +		/* skip semicolon */
+> +		if (c =3D=3D ';')
+> +			c =3D *(++buf);
+> +
+> +		if (c =3D=3D '\0') {
+> +			res =3D G_AT_SERVER_RESULT_OK;
+> +			break;
+> +		}
+> +
+> +		command =3D parse_next_command(server, buf, prefix);
+> +		if (!command) {
+> +			res =3D G_AT_SERVER_RESULT_ERROR;
+> +			break;
+> +		}
+
+Why is a char * being allocated by parse_next_command?  What is the purpose=
+?  =
+
+I suggest you get rid of this and perform notifications there.  It is too h=
+ard =
+
+to keep track of who should free what and where otherwise.
+
+> +
+> +		res =3D at_command_notify(server, command, prefix);
+
+I've mentioned this before, I don't like returning a result here.  We shoul=
+d =
+
+simply store the last result given to g_at_server_send_final or =
+
+g_at_server_send_ext_final (e.g. do not send it out right away).  If it is =
+not =
+
+OK then quit command processing and send the final result.
+
+> +		if (res !=3D G_AT_SERVER_RESULT_OK) {
+> +			g_free(command);
+> +			break;
+> +		}
+> +
+> +		buf +=3D strlen(command);
+> +
+> +		g_free(command);
+> +	}
+> +
+> +	g_at_server_send_final(server, res);
+> +
+>  	g_free(line);
+>  }
+>=20
+
+--===============0504366383264033815==--
 
