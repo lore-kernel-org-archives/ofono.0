@@ -1,100 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============1251548499936242445=="
+Content-Type: multipart/mixed; boundary="===============7572018117286766078=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 03/11] Add basic command parsing
-Date: Wed, 17 Mar 2010 12:02:17 -0600
-Message-ID: <201003171302.17451.denkenz@gmail.com>
-In-Reply-To: <1268836241-4834-3-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [PATCH 06/11] Add notify at command callback
+Date: Wed, 17 Mar 2010 12:23:28 -0600
+Message-ID: <201003171323.28549.denkenz@gmail.com>
+In-Reply-To: <1268836241-4834-6-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1251548499936242445==
+--===============7572018117286766078==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Zhenhua,
 
-> According to V.250 5.3.1, the basic command is either a single
-> character or the '&' followed by a single character.
 > ---
->  gatchat/gatserver.c |   68
->  ++++++++++++++++++++++++++++++++++++++++++++++++++- 1 files changed, =
-
-67
->  insertions(+), 1 deletions(-)
+>  gatchat/gatserver.c |   38 ++++++++++++++++++++++++++++++++++++++
+>  1 files changed, 38 insertions(+), 0 deletions(-)
 > =
 
 > diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-> index fb82ad4..b68894d 100644
+> index bbaef52..6e3347c 100644
 > --- a/gatchat/gatserver.c
 > +++ b/gatchat/gatserver.c
-> @@ -211,10 +211,67 @@ static char *parse_extended_command(GAtServer
->  *server, const char *buf, return NULL;
+> @@ -227,10 +227,48 @@ static gboolean is_extended_character(const char c)
+>  	}
 >  }
 > =
 
-> +static gboolean get_basic_prefix(const char *buf, char *prefix)
-> +{
-> +	char c =3D *buf;
+>  static GAtServerResult at_command_notify(GAtServer *server, char *comman=
+d,
+>  						char *prefix)
+>  {
+>  	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
+> +	struct at_command *node;
 > +
-> +	if (g_ascii_isalpha(c)) {
-
-if (!g_ascii_isalpha && c !=3D '&')
-	return
-
-No nested ifs if you can avoid them please.
-
-> +		c =3D g_ascii_toupper(c);
-> +		if (c =3D=3D 'S') {
-> +			int i =3D 0;
+> +	node =3D g_hash_table_lookup(server->command_list, prefix);
+> +	if (node && node->notify) {
+> +		GAtServerRequestType type;
+> +		GAtResult result;
 > +
-> +			prefix[0] =3D 'S';
+> +		type =3D get_command_type(command, prefix);
+> +		if (type =3D=3D G_AT_SERVER_REQUEST_TYPE_ERROR)
+> +			return res;
 > +
-> +			/* V.250 5.3.2 'S' command follows with
-> +			 * a parameter number.
-> +			 */
-> +			while (g_ascii_isdigit(buf[++i]))
-> +				prefix[i] =3D buf[i];
+> +		result.lines =3D g_slist_prepend(NULL, command);
+> +		result.final_or_pdu =3D 0;
 > +
-> +			prefix[i] =3D '\0';
-> +		} else {
-> +			prefix[0] =3D c;
-> +			prefix[1] =3D '\0';
-> +		}
-> +	} else if (c =3D=3D '&') {
-> +		prefix[0] =3D '&';
-> +		prefix[1] =3D g_ascii_toupper(buf[1]);
-> +		prefix[2] =3D '\0';
-> +	} else
-> +		return FALSE;
-> +
-> +	return TRUE;
-> +}
-> +
->  static char *parse_next_command(GAtServer *server, const char *buf,
-> @@ -263,6 +320,15 @@ static void server_parse_line(GAtServer *server, char
->  *line) break;
->  		}
-> =
+> +		res =3D node->notify(type, &result, node->user_data);
+> +	}
 
-> +		/* Commands like ATA, ATD, ATZ cause the remainder line
-> +		 * to be ignored.
-> +		 */
-> +		if (!strcmp(prefix, "A") || !strcmp(prefix, "D") ||
-> +				!strcmp(prefix, "Z")) {
-> +			g_free(command);
-> +			break;
-> +		}
-> +
+Are you freeing the slist anywhere?  In general you might want to run valgr=
+ind =
 
-strcmp might be overkill here
+before submitting patches just to make sure there are no visible leaks.
 
->  		buf +=3D strlen(command);
-> =
+Regards,
+-Denis
 
->  		g_free(command);
->=20
-
---===============1251548499936242445==--
+--===============7572018117286766078==--
 
