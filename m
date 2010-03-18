@@ -1,42 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5110395588686895135=="
+Content-Type: multipart/mixed; boundary="===============3381478076253915884=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: SIM ToolKit support
-Date: Wed, 17 Mar 2010 17:06:29 -0600
-Message-ID: <201003171806.29561.denkenz@gmail.com>
-In-Reply-To: <FC2FB65B4D919844ADE4BE3C2BB739AD1DCE17A3@shsmsx501.ccr.corp.intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: Re: [patch 5/6] IP support for PPP
+Date: Wed, 17 Mar 2010 17:12:00 -0700
+Message-ID: <20100317171200.5a7f1719@kcaccard-MOBL3>
+In-Reply-To: <1268807913.2700.80.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5110395588686895135==
+--===============3381478076253915884==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Johnson,
-
-> Hi,
+On Tue, 16 Mar 2010 23:38:33 -0700
+Marcel Holtmann <marcel@holtmann.org> wrote:
+> > +static guint32 bytes_to_32(guint8 *bytes)
+> > +{
+> > +	union addr {
+> > +		guint8 bytes[4];
+> > +		guint32 word;
+> > +	} a;
+> > +
+> > +	memcpy(a.bytes, bytes, 4);
+> > +	return(ntohl(a.word));
+> > +}
 > =
 
-> Is there anybody can share me some information about SIM Toolkit support =
-by
->  ofono? Current status, any schedule to support STK?
+> This works, but is pretty ugly.
+> =
 
-We started implementing the initial BER-TLV / CTLV parser in src/stkutil.c, =
+> Doesn't GLib has functions to ensure retrieve unaligned data? BlueZ has
+> the GCC magic that is required to do this right.
+>
 
-this work has only just begun.  We're also working on figuring out the =
+I have looked everywhere for something nice from glib, but I'm not
+seeing it.  As far as I can tell, most people just do the bit shifting
+manually -- but that's what I had originally and you didn't like it.
+So I'm only seeing 2 options here, this way or the original way.  If
+you know of the glib function to use, please let me know what it is.
 
-interface for proactive commands, terminal responses and envelopes, see rec=
-ent =
-
-patches on the mailing list from  =
-
-Andrzej.
-
-In effect we're nowhere close to supporting SIM toolkit yet.
-
-Regards,
--Denis
-
---===============5110395588686895135==--
+--===============3381478076253915884==--
 
