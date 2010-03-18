@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8464407492873795543=="
+Content-Type: multipart/mixed; boundary="===============3384081218956032211=="
 MIME-Version: 1.0
 From: ppessi@gmail.com
-Subject: [PATCH 3/7] Number of barring services is constant.
-Date: Thu, 18 Mar 2010 16:44:27 +0200
-Message-ID: <1268923471-29059-3-git-send-email-ppessi@gmail.com>
-In-Reply-To: <1268923471-29059-2-git-send-email-ppessi@gmail.com>
+Subject: [PATCH 4/7] Network password has exactly 4 digits.
+Date: Thu, 18 Mar 2010 16:44:28 +0200
+Message-ID: <1268923471-29059-4-git-send-email-ppessi@gmail.com>
+In-Reply-To: <1268923471-29059-3-git-send-email-ppessi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8464407492873795543==
+--===============3384081218956032211==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -18,77 +18,95 @@ From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
 Signed-off-by: Pekka Pessi <Pekka.Pessi@nokia.com>
 ---
- src/call-barring.c |   13 +++----------
- 1 files changed, 3 insertions(+), 10 deletions(-)
+ src/call-barring.c |   18 ++++++++++++------
+ 1 files changed, 12 insertions(+), 6 deletions(-)
 
 diff --git a/src/call-barring.c b/src/call-barring.c
-index 530d64b..eedb41d 100644
+index eedb41d..f3252e1 100644
 --- a/src/call-barring.c
 +++ b/src/call-barring.c
-@@ -37,6 +37,7 @@
- #include "common.h"
- =
-
- #define CALL_BARRING_FLAG_CACHED 0x1
-+#define NUM_OF_BARRINGS 5
- =
-
- static GSList *g_drivers =3D NULL;
- =
-
-@@ -47,8 +48,8 @@ static void set_query_next_lock(struct ofono_call_barring=
- *cb);
- struct ofono_call_barring {
- 	int flags;
- 	DBusMessage *pending;
--	int *cur_locks;
--	int *new_locks;
-+	int cur_locks[NUM_OF_BARRINGS];
-+	int new_locks[NUM_OF_BARRINGS];
- 	int query_start;
- 	int query_end;
- 	int query_next;
-@@ -1070,9 +1071,6 @@ static void call_barring_remove(struct ofono_atom *at=
-om)
- 	if (cb->driver && cb->driver->remove)
- 		cb->driver->remove(cb);
- =
-
--	g_free(cb->cur_locks);
--	g_free(cb->new_locks);
--
- 	g_free(cb);
+@@ -360,6 +360,12 @@ static const char *cb_ss_service_to_fac(const char *sv=
+c)
+ 	return NULL;
  }
  =
 
-@@ -1083,7 +1081,6 @@ struct ofono_call_barring *ofono_call_barring_create(=
-struct ofono_modem *modem,
- {
- 	struct ofono_call_barring *cb;
- 	GSList *l;
--	int lcount;
++/* Network password has exactly 4 digits */
++static inline int is_valid_password(const char *pass)
++{
++	return is_valid_pin(pass) && strlen(pass) =3D=3D 4;
++}
++
+ static gboolean cb_ss_control(int type, const char *sc,
+ 				const char *sia, const char *sib,
+ 				const char *sic, const char *dn,
+@@ -403,7 +409,7 @@ static gboolean cb_ss_control(int type, const char *sc,
+ 	if (strlen(dn) > 0)
+ 		goto bad_format;
  =
 
- 	if (driver =3D=3D NULL)
- 		return NULL;
-@@ -1093,10 +1090,6 @@ struct ofono_call_barring *ofono_call_barring_create=
-(struct ofono_modem *modem,
- 	if (cb =3D=3D NULL)
- 		return NULL;
+-	if (!is_valid_pin(sia))
++	if (!is_valid_password(sia))
+ 		goto bad_format;
  =
 
--	lcount =3D CB_ALL_END - CB_ALL_START + 1;
--
--	cb->cur_locks =3D g_new0(int, lcount);
--	cb->new_locks =3D g_new0(int, lcount);
- 	cb->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_CALL_BARRING,
- 						call_barring_remove, cb);
+ 	switch (type) {
+@@ -524,7 +530,7 @@ static gboolean cb_ss_passwd(const char *sc,
+ 	if (!fac)
+ 		return FALSE;
  =
 
+-	if (!is_valid_pin(old) || !is_valid_pin(new))
++	if (!is_valid_password(old) || !is_valid_password(new))
+ 		goto bad_format;
+ =
+
+ 	cb->pending =3D dbus_message_ref(msg);
+@@ -855,7 +861,7 @@ static DBusMessage *cb_set_property(DBusConnection *con=
+n, DBusMessage *msg,
+ 			return __ofono_error_invalid_args(msg);
+ =
+
+ 		dbus_message_iter_get_basic(&iter, &passwd);
+-		if (!is_valid_pin(passwd))
++		if (!is_valid_password(passwd))
+ 			return __ofono_error_invalid_format(msg);
+ 	}
+ =
+
+@@ -902,7 +908,7 @@ static DBusMessage *cb_disable_all(DBusConnection *conn=
+, DBusMessage *msg,
+ 					DBUS_TYPE_INVALID) =3D=3D FALSE)
+ 		return __ofono_error_invalid_args(msg);
+ =
+
+-	if (!is_valid_pin(passwd))
++	if (!is_valid_password(passwd))
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+ 	cb_set_query_bounds(cb, fac, FALSE);
+@@ -950,10 +956,10 @@ static DBusMessage *cb_set_passwd(DBusConnection *con=
+n, DBusMessage *msg,
+ 					DBUS_TYPE_INVALID) =3D=3D FALSE)
+ 		return __ofono_error_invalid_args(msg);
+ =
+
+-	if (!is_valid_pin(old_passwd))
++	if (!is_valid_password(old_passwd))
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+-	if (!is_valid_pin(new_passwd))
++	if (!is_valid_password(new_passwd))
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+ 	cb->pending =3D dbus_message_ref(msg);
 -- =
 
 1.6.3.3
 
 
---===============8464407492873795543==--
+--===============3384081218956032211==--
 
