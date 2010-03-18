@@ -1,77 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7399625528515468671=="
+Content-Type: multipart/mixed; boundary="===============1325197116381268172=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Pekka Pessi <ppessi@gmail.com>
 Subject: Re: [PATCH 7/7] Fix: isimodem handling of call barring services.
-Date: Thu, 18 Mar 2010 11:51:29 -0500
-Message-ID: <201003181151.29899.denkenz@gmail.com>
-In-Reply-To: <1268923471-29059-7-git-send-email-ppessi@gmail.com>
+Date: Thu, 18 Mar 2010 19:38:56 +0200
+Message-ID: <80fd4e751003181038o4618052bpa92aba34c3afa2d2@mail.gmail.com>
+In-Reply-To: <201003181151.29899.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7399625528515468671==
+--===============1325197116381268172==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Denis,
 
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+2010/3/18 Denis Kenzior <denkenz@gmail.com>:
+>> - =C2=A0 =C2=A0 if (!cbd || !passwd || strlen(passwd) > 4 || cls !=3D 7)
+>> + =C2=A0 =C2=A0 if (!cbd || !lock)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 goto error;
+>> + =C2=A0 =C2=A0 if (!passwd || strlen(passwd) !=3D 4 || strspn(passwd, "=
+0123456789") !=3D 4)
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 goto error;
+>
+> I suggest not doing this checking in the driver code, if the core is send=
+ing
+> you something you don't expect, let us fix the core.
 
-> =
+Do you suggest removing all the current checks, and leaving only the
+checks for possible features the driver does not support?
 
-> Signed-off-by: Pekka Pessi <Pekka.Pessi@nokia.com>
-> ---
->  drivers/isimodem/call-barring.c |   64
->  ++++++++++++++++++++------------------ drivers/isimodem/ss.h           |=
-  =
+--Pekka
 
->  28 +++++++++--------
->  2 files changed, 49 insertions(+), 43 deletions(-)
-> @@ -105,7 +104,9 @@ static void isi_set(struct ofono_call_barring *barr,
->  const char *lock, DBG("lock code %s enable %d class %d password %s\n",
->  		lock, enable, cls, passwd);
-> =
+-- =
 
-> -	if (!cbd || !passwd || strlen(passwd) > 4 || cls !=3D 7)
-> +	if (!cbd || !lock)
-> +		goto error;
-> +	if (!passwd || strlen(passwd) !=3D 4 || strspn(passwd, "0123456789") !=
-=3D 4)
->  		goto error;
+Pekka.Pessi mail at nokia.com
 
-I suggest not doing this checking in the driver code, if the core is sendin=
-g =
-
-you something you don't expect, let us fix the core.
-
-> =
-
->  	if (strcmp(lock, "AO") =3D=3D 0)
-> @@ -120,23 +121,23 @@ static void isi_set(struct ofono_call_barring *barr,
->  const char *lock, ss_code =3D SS_GSM_BARR_ALL_IN_ROAM;
->  	else if (strcmp(lock, "AB") =3D=3D 0)
->  		ss_code =3D SS_GSM_ALL_BARRINGS;
-> +	else if (enable)
-> +		/* Only Deactivate supports AG (333) and AC (353) */
-> +		goto error;
-
-Same here, to my knowledge the core never actually allows this.
-
-> -	if (!cbd || strlen(old_passwd) > 4 || strlen(new_passwd) > 4)
-> +	if (!cbd)
-> +		goto error;
-> +	if (strlen(old_passwd) !=3D 4 || strspn(old_passwd, "0123456789") !=3D =
-4)
-> +		goto error;
-> +	if (strlen(new_passwd) !=3D 4 || strspn(new_passwd, "0123456789") !=3D =
-4)
->  		goto error;
-
-Again, let us fix the core so you guys don't have to do this checking.
-
-Regards,
--Denis
-
---===============7399625528515468671==--
+--===============1325197116381268172==--
 
