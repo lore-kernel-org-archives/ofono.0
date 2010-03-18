@@ -1,50 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============3591191997670981519=="
+Content-Type: multipart/mixed; boundary="===============2969168324527416980=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 7/7] Fix: isimodem handling of call barring services.
-Date: Thu, 18 Mar 2010 12:50:30 -0500
-Message-ID: <201003181250.30513.denkenz@gmail.com>
-In-Reply-To: <80fd4e751003181038o4618052bpa92aba34c3afa2d2@mail.gmail.com>
+From: =?unknown-8bit?q?Jo=C3=A3o?= Paulo Rechi Vita <jprvita@profusion.mobi>
+Subject: [PATCH] huawei: use GSM permissive parser instead of V1.
+Date: Thu, 18 Mar 2010 17:45:31 -0300
+Message-ID: <1268945131-3333-1-git-send-email-jprvita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3591191997670981519==
+--===============2969168324527416980==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+With V1 parser the driver fails to detect when a SMS is successfully
+sent and keeps re-trying until Max retries.
+---
+ plugins/huawei.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-> Hi Denis,
-> =
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index 1492446..41ad636 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -107,7 +107,7 @@ static int huawei_enable(struct ofono_modem *modem)
+ 	if (!channel)
+ 		return -EIO;
+ =
 
-> 2010/3/18 Denis Kenzior <denkenz@gmail.com>:
-> >> -     if (!cbd || !passwd || strlen(passwd) > 4 || cls !=3D 7)
-> >> +     if (!cbd || !lock)
-> >> +             goto error;
-> >> +     if (!passwd || strlen(passwd) !=3D 4 || strspn(passwd, "01234567=
-89")
-> >> !=3D 4) goto error;
-> >
-> > I suggest not doing this checking in the driver code, if the core is
-> > sending you something you don't expect, let us fix the core.
-> =
+-	syntax =3D g_at_syntax_new_gsmv1();
++	syntax =3D g_at_syntax_new_gsm_permissive();
+ 	data->chat =3D g_at_chat_new(channel, syntax);
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+-- =
 
-> Do you suggest removing all the current checks, and leaving only the
-> checks for possible features the driver does not support?
+1.6.3.3
 
-Correct.  The reason is that I want to avoid the situation of each driver =
 
-doing its own checking.  This quickly leads to a bunch of useless code and =
-
-most of it ends up incorrect or with only partial coverage.
-
-If the core is sending things which are not valid, then the core has to be =
-
-fixed.  This automatically fixes all the drivers too.
-
-Regards,
--Denis
-
---===============3591191997670981519==--
+--===============2969168324527416980==--
 
