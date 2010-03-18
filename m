@@ -1,54 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============6833641783266734150=="
+Content-Type: multipart/mixed; boundary="===============6701788087677389668=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [patch 5/6] IP support for PPP
-Date: Thu, 18 Mar 2010 12:26:15 +0100
-Message-ID: <1268911575.2700.134.camel@localhost.localdomain>
-In-Reply-To: <20100317171200.5a7f1719@kcaccard-MOBL3>
+From: ppessi@gmail.com
+Subject: [PATCH 1/7] Barring services can only be activated/deactivated.
+Date: Thu, 18 Mar 2010 16:44:25 +0200
+Message-ID: <1268923471-29059-1-git-send-email-ppessi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6833641783266734150==
+--===============6701788087677389668==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
-
-> > > +static guint32 bytes_to_32(guint8 *bytes)
-> > > +{
-> > > +	union addr {
-> > > +		guint8 bytes[4];
-> > > +		guint32 word;
-> > > +	} a;
-> > > +
-> > > +	memcpy(a.bytes, bytes, 4);
-> > > +	return(ntohl(a.word));
-> > > +}
-> > =
-
-> > This works, but is pretty ugly.
-> > =
-
-> > Doesn't GLib has functions to ensure retrieve unaligned data? BlueZ has
-> > the GCC magic that is required to do this right.
-> >
-> =
-
-> I have looked everywhere for something nice from glib, but I'm not
-> seeing it.  As far as I can tell, most people just do the bit shifting
-> manually -- but that's what I had originally and you didn't like it.
-> So I'm only seeing 2 options here, this way or the original way.  If
-> you know of the glib function to use, please let me know what it is.
-
-I don't see how bit shifting is gonna help you against the unaligned
-access of your buffer.
-
-Regards
-
-Marcel
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
 
+Signed-off-by: Pekka Pessi <Pekka.Pessi@nokia.com>
+---
+ src/call-barring.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
---===============6833641783266734150==--
+diff --git a/src/call-barring.c b/src/call-barring.c
+index 2a04b25..13d625e 100644
+--- a/src/call-barring.c
++++ b/src/call-barring.c
+@@ -457,13 +457,13 @@ static gboolean cb_ss_control(int type, const char *s=
+c,
+ 	switch (type) {
+ 	case SS_CONTROL_TYPE_ACTIVATION:
+ 	case SS_CONTROL_TYPE_REGISTRATION:
+-		cb->ss_req_type =3D SS_CONTROL_TYPE_REGISTRATION;
++		cb->ss_req_type =3D SS_CONTROL_TYPE_ACTIVATION;
+ 		cb->driver->set(cb, fac, 1, sia, cls,
+ 				cb_ss_set_lock_callback, cb);
+ 		break;
+ 	case SS_CONTROL_TYPE_ERASURE:
+ 	case SS_CONTROL_TYPE_DEACTIVATION:
+-		cb->ss_req_type =3D SS_CONTROL_TYPE_ERASURE;
++		cb->ss_req_type =3D SS_CONTROL_TYPE_DEACTIVATION;
+ 		cb->driver->set(cb, fac, 0, sia, cls,
+ 				cb_ss_set_lock_callback, cb);
+ 		break;
+-- =
+
+1.6.3.3
+
+
+--===============6701788087677389668==--
 
