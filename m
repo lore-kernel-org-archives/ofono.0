@@ -1,69 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1723878692199845151=="
+Content-Type: multipart/mixed; boundary="===============8508753425174240761=="
 MIME-Version: 1.0
-From: ppessi@gmail.com
-Subject: [PATCH 2/7] Return newly-queried barring status.
-Date: Thu, 18 Mar 2010 16:44:26 +0200
-Message-ID: <1268923471-29059-2-git-send-email-ppessi@gmail.com>
-In-Reply-To: <1268923471-29059-1-git-send-email-ppessi@gmail.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: Barring API
+Date: Thu, 18 Mar 2010 16:46:28 +0200
+Message-ID: <80fd4e751003180746n2acc1eey3e4bf66f44e3f427@mail.gmail.com>
+In-Reply-To: <201003161310.22835.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1723878692199845151==
+--===============8508753425174240761==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+2010/3/16 Denis Kenzior <denkenz@gmail.com>:
+> The signals and properties are actually different. =C2=A0The signals are =
+reported
+> via IncomingBarringInEffect and OutgoingBarringInEffect are reported by t=
+he
+> classical 27.007 modem through +CSSI/+CSSU. =C2=A0They're just simple not=
+ifications.
+> The PropertyChanged is what reports the changes in properties.
 
+Oh, looks like there was a bug in get_query_lock_callback() that I
+could not figure out. It returned the initial reply based on the old
+state and emitted signals based on the new state. I've sent patches,
+too.
 
-Signed-off-by: Pekka Pessi <Pekka.Pessi@nokia.com>
----
- src/call-barring.c |    5 ++---
- 1 files changed, 2 insertions(+), 3 deletions(-)
+> We query all basic services at once, so in theory there should be no extra
+> time needed for Fax, Data, SMS, etc. =C2=A0The attributes are simply neve=
+r exposed
+> today.
 
-diff --git a/src/call-barring.c b/src/call-barring.c
-index 13d625e..530d64b 100644
---- a/src/call-barring.c
-+++ b/src/call-barring.c
-@@ -148,7 +148,6 @@ static void update_barrings(struct ofono_call_barring *=
-cb, int mask)
- =
+Yes, it seems to me that you are right, I did not read the 27.007
+closely enough.
 
- 	for (i =3D cb->query_start; i <=3D cb->query_end; i++) {
- 		cb->cur_locks[i] =3D cb->new_locks[i];
--		cb->new_locks[i] =3D 0;
- 	}
- }
- =
-
-@@ -164,7 +163,7 @@ static void cb_ss_property_append(struct ofono_call_bar=
-ring *cb,
- 		if (!(mask & i))
- 			continue;
- =
-
--		strvalue =3D (cb->cur_locks[lock] & i) ? "enabled" : "disabled";
-+		strvalue =3D (cb->new_locks[lock] & i) ? "enabled" : "disabled";
- =
-
- 		snprintf(property_name, sizeof(property_name), "%s%s",
- 				bearer_class_to_string(i),
-@@ -590,7 +589,7 @@ static inline void cb_append_property(struct ofono_call=
-_barring *cb,
- 	int i;
- =
-
- 	for (i =3D start; i <=3D end; i++)
--		if (cb->cur_locks[i] & cls)
-+		if (cb->new_locks[i] & cls)
- 			break;
- =
-
- 	if (i <=3D end)
 -- =
 
-1.6.3.3
+Pekka.Pessi mail at nokia.com
 
-
---===============1723878692199845151==--
+--===============8508753425174240761==--
 
