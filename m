@@ -1,42 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============4122525301733843096=="
+Content-Type: multipart/mixed; boundary="===============5644426293176220875=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/7] Barring services can only be activated/deactivated.
-Date: Thu, 18 Mar 2010 10:11:54 -0600
-Message-ID: <201003181111.55246.denkenz@gmail.com>
-In-Reply-To: <1268923471-29059-1-git-send-email-ppessi@gmail.com>
+Subject: Re: [PATCH 2/7] Return newly-queried barring status.
+Date: Thu, 18 Mar 2010 11:39:35 -0500
+Message-ID: <201003181139.35438.denkenz@gmail.com>
+In-Reply-To: <1268923471-29059-2-git-send-email-ppessi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4122525301733843096==
+--===============5644426293176220875==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pekka,
 
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+>  	for (i =3D cb->query_start; i <=3D cb->query_end; i++) {
+>  		cb->cur_locks[i] =3D cb->new_locks[i];
+> -		cb->new_locks[i] =3D 0;
+>  	}
 
-> =
+Can you also ensure that if a loop / if statement no longer requires braces =
 
-> Signed-off-by: Pekka Pessi <Pekka.Pessi@nokia.com>
-
-For future reference please remember that we do not use the Signed-off by i=
-n =
-
-oFono.  Please configure your client not to include that.
-
-> ---
->  src/call-barring.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
-> =
-
+that your patch also takes care of that too?  I fixed it up for you afterwa=
+rd.
 
 Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============4122525301733843096==--
+Regards,
+-Denis
+
+--===============5644426293176220875==--
 
