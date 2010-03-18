@@ -1,61 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============8315861680863824384=="
+Content-Type: multipart/mixed; boundary="===============6833641783266734150=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH] Make VPATH build work
-Date: Thu, 18 Mar 2010 18:40:11 +0800
-Message-ID: <1268908811-15532-1-git-send-email-yang.gu@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [patch 5/6] IP support for PPP
+Date: Thu, 18 Mar 2010 12:26:15 +0100
+Message-ID: <1268911575.2700.134.camel@localhost.localdomain>
+In-Reply-To: <20100317171200.5a7f1719@kcaccard-MOBL3>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8315861680863824384==
+--===============6833641783266734150==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Sometimes, you may need to distinguish the source tree and the build tree, =
-when
-you want to keep the source tree uncluttered, or you need to build the sour=
-ce
-with several different configurations, or even your source tree is read onl=
-y.
-This feature is called VPATH build and the patch is to make this work.
-A typical example is as below (Note that the "build" directory can be any n=
-ame
-and in any place):
-> cd ofono && mkdir build && cd build
-> ../configure XXX
-> make
-Then everything you got from the make will reside in "build" directory.
----
- Makefile.am |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+Hi Kristen,
 
-diff --git a/Makefile.am b/Makefile.am
-index eca8eee..bd74fb7 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -374,11 +374,11 @@ $(src_ofonod_OBJECTS) $(unit_objects): $(local_header=
-s)
- =
+> > > +static guint32 bytes_to_32(guint8 *bytes)
+> > > +{
+> > > +	union addr {
+> > > +		guint8 bytes[4];
+> > > +		guint32 word;
+> > > +	} a;
+> > > +
+> > > +	memcpy(a.bytes, bytes, 4);
+> > > +	return(ntohl(a.word));
+> > > +}
+> > =
 
- include/ofono/version.h: include/version.h
- 	$(AM_V_at)$(MKDIR_P) include/ofono
--	$(AM_V_GEN)$(LN_S) $(abs_top_builddir)/$< $@
-+	$(AM_V_GEN)$(LN_S) $(abs_builddir)/$< $@
- =
+> > This works, but is pretty ugly.
+> > =
 
- include/ofono/%.h: include/%.h
- 	$(AM_V_at)$(MKDIR_P) include/ofono
--	$(AM_V_GEN)$(LN_S) $(abs_top_srcdir)/$< $@
-+	$(AM_V_GEN)$(LN_S) $(abs_builddir)/$< $@
- =
+> > Doesn't GLib has functions to ensure retrieve unaligned data? BlueZ has
+> > the GCC magic that is required to do this right.
+> >
+> =
 
- clean-local: include/ofono
- 	@$(RM) -r $<
--- =
+> I have looked everywhere for something nice from glib, but I'm not
+> seeing it.  As far as I can tell, most people just do the bit shifting
+> manually -- but that's what I had originally and you didn't like it.
+> So I'm only seeing 2 options here, this way or the original way.  If
+> you know of the glib function to use, please let me know what it is.
 
-1.6.3.3
+I don't see how bit shifting is gonna help you against the unaligned
+access of your buffer.
+
+Regards
+
+Marcel
 
 
---===============8315861680863824384==--
+
+--===============6833641783266734150==--
 
