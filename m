@@ -1,87 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============7699325198520655057=="
+Content-Type: multipart/mixed; boundary="===============4535315694984703103=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Checking PIN length based on its type (PIN / PUK / NET).
-Date: Fri, 19 Mar 2010 10:25:32 -0500
-Message-ID: <201003191025.32736.denkenz@gmail.com>
-In-Reply-To: <1269010831-21798-1-git-send-email-ppessi@gmail.com>
+From: Dario <djdas@djdas.net>
+Subject: Re: [Usage] SMS handling
+Date: Fri, 19 Mar 2010 16:33:59 +0100
+Message-ID: <4BA39967.2030403@djdas.net>
+In-Reply-To: <201003190932.03486.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7699325198520655057==
+--===============4535315694984703103==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Denis,
+> The current semantics are that the DBusMessage returns only when the SMS =
+has =
 
-> -gboolean is_valid_pin(const char *pin)
-> +gboolean is_valid_pin(const char *pin, enum pin_type type)
->  {
->  	unsigned int i;
-> =
+> been successfully sent to the network, or oFono determined that it cannot=
+ send =
 
-> @@ -588,14 +588,30 @@ gboolean is_valid_pin(const char *pin)
->  	if (pin =3D=3D NULL || pin[0] =3D=3D '\0')
->  		return FALSE;
-> =
+> it.  So you can assume that SMS is pending as soon as dbus_message_send i=
+s =
 
-> -	for (i =3D 0; i < strlen(pin); i++)
-> -		if (pin[i] < '0' || pin[i] > '9')
-> -			return FALSE;
-> -
-> -	if (i > 8)
-> +	i =3D strlen(pin);
-> +	if (i !=3D strspn(pin, "012345679"))
->  		return FALSE;
-> =
+> performed by your client.  And that SMS has been sent/failed as soon as t=
+he =
 
-> -	return TRUE;
-> +	switch (type)
-> +	{
-> +	case PIN_TYPE_PIN:
-> +		/* 11.11 Section 9.3 ("CHV"): 4..8 IA-5 digits */
-> +		if (4 <=3D i && i <=3D 8)
-> +			return TRUE;
+> message call returns.
+>   =
 
-This looks wrong, 'break' is missing.
+This means I will have to use a synchronous call and wait for the =
 
-> +	case PIN_TYPE_PUK:
-> +		/* 11.11 Section 9.3 ("UNBLOCK CHV"), 8 IA-5 digits */
-> +		if (i =3D=3D 8)
-> +			return TRUE;
+response? I suppose an error response will mean a send failure, is it =
 
-Same here
+correct?
+>   =
 
-> +	case PIN_TYPE_NET:
-> +		/* 22.004 Section 5.2, 4 IA-5 digits */
-> +		if (i =3D=3D 4)
-> +			return TRUE;
+>> 2) handling incoming messages when application is (re)starting/crashed:
+>> is there a way to retrieve a message if it comes in during a phase where
+>> the application is not running or it can't receive the IncomingMessage
+>> signal? Does oFono logs or stores the messages somewhere?
+>>     =
 
-And here
+>
+> This is what the history plugin is for.  History is notified when an SMS =
+comes =
 
-> +	case PIN_TYPE_NONE:
-> +		if (i < 8)
-> +			return TRUE;
-> +	}
+> in and can persist this information however it wishes.  The plugin can ev=
+en =
 
-and here
+> define its own D-Bus interface for notifying external clients if needed.
+>   =
 
-> +
-> +	return FALSE;
->  }
+OK, as per our IRC conversation I'm interested in writing an SQLite =
 
-> =
+history plug-in to store calls and SMSes infos, so I'll try to design a =
 
-> -gboolean is_valid_pin(const char *pin);
-> +
-> +
-> +gboolean is_valid_pin(const char *pin, enum pin_type type);
+simple DB and post it here in a few days.
+Would it be a problem to have libsqlite as dependency of oFono? Is there =
 
-Why the extra lines?
+a way to let it out of the project or however do you consider it a =
 
-Regards,
--Denis
+useful dependency for other (future) purposes?
+Thank you very much in advance, best regards,
+Dario.
 
---===============7699325198520655057==--
+--===============4535315694984703103==--
 
