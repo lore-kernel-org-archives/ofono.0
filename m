@@ -1,108 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============7213628620824102365=="
+Content-Type: multipart/mixed; boundary="===============0111979665325271044=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [PATCH] Checking PIN length based on its type (PIN / PUK / NET).
-Date: Fri, 19 Mar 2010 19:50:35 +0200
-Message-ID: <80fd4e751003191050j42ef6b96ld6912ffb0ae3da7a@mail.gmail.com>
-In-Reply-To: <201003191025.32736.denkenz@gmail.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: Re: [patch 5/6] IP support for PPP
+Date: Fri, 19 Mar 2010 10:58:42 -0700
+Message-ID: <20100319105842.0864fa55@kcaccard-MOBL3>
+In-Reply-To: <1268911575.2700.134.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7213628620824102365==
+--===============0111979665325271044==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Uh-oh. I'll fix those and try to test it without checks in isidriver...
+On Thu, 18 Mar 2010 12:26:15 +0100
+Marcel Holtmann <marcel@holtmann.org> wrote:
 
---Pekka
+> Hi Kristen,
+> =
 
-2010/3/19 Denis Kenzior <denkenz@gmail.com>:
-> Hi Pekka,
->
->> -gboolean is_valid_pin(const char *pin)
->> +gboolean is_valid_pin(const char *pin, enum pin_type type)
->> =C2=A0{
->> =C2=A0 =C2=A0 =C2=A0 unsigned int i;
->>
->> @@ -588,14 +588,30 @@ gboolean is_valid_pin(const char *pin)
->> =C2=A0 =C2=A0 =C2=A0 if (pin =3D=3D NULL || pin[0] =3D=3D '\0')
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return FALSE;
->>
->> - =C2=A0 =C2=A0 for (i =3D 0; i < strlen(pin); i++)
->> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (pin[i] < '0' || pin[i] >=
- '9')
->> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-return FALSE;
->> -
->> - =C2=A0 =C2=A0 if (i > 8)
->> + =C2=A0 =C2=A0 i =3D strlen(pin);
->> + =C2=A0 =C2=A0 if (i !=3D strspn(pin, "012345679"))
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return FALSE;
->>
->> - =C2=A0 =C2=A0 return TRUE;
->> + =C2=A0 =C2=A0 switch (type)
->> + =C2=A0 =C2=A0 {
->> + =C2=A0 =C2=A0 case PIN_TYPE_PIN:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* 11.11 Section 9.3 ("CHV")=
-: 4..8 IA-5 digits */
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (4 <=3D i && i <=3D 8)
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-return TRUE;
->
-> This looks wrong, 'break' is missing.
->
->> + =C2=A0 =C2=A0 case PIN_TYPE_PUK:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* 11.11 Section 9.3 ("UNBLO=
-CK CHV"), 8 IA-5 digits */
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (i =3D=3D 8)
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-return TRUE;
->
-> Same here
->
->> + =C2=A0 =C2=A0 case PIN_TYPE_NET:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* 22.004 Section 5.2, 4 IA-=
-5 digits */
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (i =3D=3D 4)
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-return TRUE;
->
-> And here
->
->> + =C2=A0 =C2=A0 case PIN_TYPE_NONE:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (i < 8)
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-return TRUE;
->> + =C2=A0 =C2=A0 }
->
-> and here
->
->> +
->> + =C2=A0 =C2=A0 return FALSE;
->> =C2=A0}
->
->>
->> -gboolean is_valid_pin(const char *pin);
->> +
->> +
->> +gboolean is_valid_pin(const char *pin, enum pin_type type);
->
-> Why the extra lines?
->
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+> > > > +static guint32 bytes_to_32(guint8 *bytes)
+> > > > +{
+> > > > +	union addr {
+> > > > +		guint8 bytes[4];
+> > > > +		guint32 word;
+> > > > +	} a;
+> > > > +
+> > > > +	memcpy(a.bytes, bytes, 4);
+> > > > +	return(ntohl(a.word));
+> > > > +}
+> > > =
+
+> > > This works, but is pretty ugly.
+> > > =
+
+> > > Doesn't GLib has functions to ensure retrieve unaligned data? BlueZ h=
+as
+> > > the GCC magic that is required to do this right.
+> > >
+> > =
+
+> > I have looked everywhere for something nice from glib, but I'm not
+> > seeing it.  As far as I can tell, most people just do the bit shifting
+> > manually -- but that's what I had originally and you didn't like it.
+> > So I'm only seeing 2 options here, this way or the original way.  If
+> > you know of the glib function to use, please let me know what it is.
+> =
+
+> I don't see how bit shifting is gonna help you against the unaligned
+> access of your buffer.
+> =
+
+> Regards
+> =
+
+> Marcel
+> =
+
+> =
 
 
+I wound up implementing both the packed data structures to represent
+PPP packets (etc) as well as get_unaligned() to handle cases like this.
+It does still seem hard to believe that glib doesn't already have a
+way to access unaligned data, but I got tired of looking for it.
 
--- =
-
-Pekka.Pessi mail at nokia.com
-
---===============7213628620824102365==--
+--===============0111979665325271044==--
 
