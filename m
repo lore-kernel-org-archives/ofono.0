@@ -1,45 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============1820147372611093456=="
+Content-Type: multipart/mixed; boundary="===============0881461342020298136=="
 MIME-Version: 1.0
-From: Dario <djdas@djdas.net>
-Subject: [Usage] SMS handling
-Date: Fri, 19 Mar 2010 14:59:01 +0100
-Message-ID: <4BA38325.80204@djdas.net>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [Usage] SMS handling
+Date: Fri, 19 Mar 2010 09:32:02 -0500
+Message-ID: <201003190932.03486.denkenz@gmail.com>
+In-Reply-To: <4BA38325.80204@djdas.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1820147372611093456==
+--===============0881461342020298136==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
-I have a question: what is the best practice (or the suggested =
+Hi Dario,
 
-behaviour) to handle SMSes in an application using oFono?
-I am thinking about two common cases:
-1) handling outgoing message status: I use the SendMessage DBus API but =
+> Hi all,
+> I have a question: what is the best practice (or the suggested
+> behaviour) to handle SMSes in an application using oFono?
+> I am thinking about two common cases:
+> 1) handling outgoing message status: I use the SendMessage DBus API but
+> AFAIK I'm not aware of the status of the sending operation (pending,
+> blocked, sent...) in the DBus response;
 
-AFAIK I'm not aware of the status of the sending operation (pending, =
+The current semantics are that the DBusMessage returns only when the SMS ha=
+s =
 
-blocked, sent...) in the DBus response;
-2) handling incoming messages when application is (re)starting/crashed: =
+been successfully sent to the network, or oFono determined that it cannot s=
+end =
 
-is there a way to retrieve a message if it comes in during a phase where =
+it.  So you can assume that SMS is pending as soon as dbus_message_send is =
 
-the application is not running or it can't receive the IncomingMessage =
+performed by your client.  And that SMS has been sent/failed as soon as the =
 
-signal? Does oFono logs or stores the messages somewhere?
+message call returns.
 
-I think I found something in the "Example Call History" plugin, does =
+The history plugin is given a bit more information.  It is notified when th=
+e =
 
-this mean I need to create an oFono plugin to manage my application =
+SMS is queued, successfully sent / not.
 
-needs or am I missing some info/API somewhere?
+> 2) handling incoming messages when application is (re)starting/crashed:
+> is there a way to retrieve a message if it comes in during a phase where
+> the application is not running or it can't receive the IncomingMessage
+> signal? Does oFono logs or stores the messages somewhere?
 
-Thank you in advance, best regards,
-Dario.
+This is what the history plugin is for.  History is notified when an SMS co=
+mes =
 
+in and can persist this information however it wishes.  The plugin can even =
 
+define its own D-Bus interface for notifying external clients if needed.
 
---===============1820147372611093456==--
+> =
+
+> I think I found something in the "Example Call History" plugin, does
+> this mean I need to create an oFono plugin to manage my application
+> needs or am I missing some info/API somewhere?
+
+You don't have to use history plugin, but it can make certain tasks really =
+
+easy.
+
+> =
+
+> Thank you in advance, best regards,
+> Dario.
+
+Regards,
+-Denis
+
+--===============0881461342020298136==--
 
