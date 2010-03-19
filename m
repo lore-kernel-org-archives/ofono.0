@@ -1,69 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0111979665325271044=="
+Content-Type: multipart/mixed; boundary="===============6944865670893794710=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: Re: [patch 5/6] IP support for PPP
-Date: Fri, 19 Mar 2010 10:58:42 -0700
-Message-ID: <20100319105842.0864fa55@kcaccard-MOBL3>
-In-Reply-To: <1268911575.2700.134.camel@localhost.localdomain>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Access to SIM card when Modem is not "Powered"
+Date: Fri, 19 Mar 2010 13:18:34 -0500
+Message-ID: <201003191318.35173.denkenz@gmail.com>
+In-Reply-To: <80fd4e751003191024w5aa343f1ke2c92fad680df80d@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0111979665325271044==
+--===============6944865670893794710==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 18 Mar 2010 12:26:15 +0100
-Marcel Holtmann <marcel@holtmann.org> wrote:
+Hi Pekka,
 
-> Hi Kristen,
+> Hi all,
 > =
 
-> > > > +static guint32 bytes_to_32(guint8 *bytes)
-> > > > +{
-> > > > +	union addr {
-> > > > +		guint8 bytes[4];
-> > > > +		guint32 word;
-> > > > +	} a;
-> > > > +
-> > > > +	memcpy(a.bytes, bytes, 4);
-> > > > +	return(ntohl(a.word));
-> > > > +}
-> > > =
-
-> > > This works, but is pretty ugly.
-> > > =
-
-> > > Doesn't GLib has functions to ensure retrieve unaligned data? BlueZ h=
-as
-> > > the GCC magic that is required to do this right.
-> > >
-> > =
-
-> > I have looked everywhere for something nice from glib, but I'm not
-> > seeing it.  As far as I can tell, most people just do the bit shifting
-> > manually -- but that's what I had originally and you didn't like it.
-> > So I'm only seeing 2 options here, this way or the original way.  If
-> > you know of the glib function to use, please let me know what it is.
-> =
-
-> I don't see how bit shifting is gonna help you against the unaligned
-> access of your buffer.
-> =
-
-> Regards
-> =
-
-> Marcel
-> =
-
+> I think the Modem "Powered" property is meant to control the radios
+> (something like at+cfun=3D0 vs. at+cfun=3D1..). Now core automatically
+> removes all the atoms in case modem has "Powered" false. However, the
+> SIM card should be accessible while the radios are off (cfun=3D0) so
+> that PIN code could be entered. If the +CFUN=3D1 is given before PIN
+> code is entered, the modem registers to network in limited service
+> (emergency call only) mode. Perhaps it would be better to let the
+> modem driver itself decide which atoms are active when it is not fully
+> powered?
 > =
 
 
-I wound up implementing both the packed data structures to represent
-PPP packets (etc) as well as get_unaligned() to handle cases like this.
-It does still seem hard to believe that glib doesn't already have a
-way to access unaligned data, but I got tired of looking for it.
+I've been talking about this exact issue with Marcel but so far we have not =
 
---===============0111979665325271044==--
+firmly agreed on any solution.  Our current thinking is to keep Powered =
+
+semantics as they are, but to also add Flight mode property.  This would in =
+
+affect allow interaction with the SIM while the radio is off.  For some mod=
+ems =
+
+it might not even make sense to support flight mode (e.g. HFP)
+
+We're also trying to figure out how this would interact with SIM removal / =
+SIM =
+
+dead events.
+
+If you have strong feelings about a particular approach feel free to discus=
+s =
+
+it here or on IRC.
+
+Regards,
+-Denis
+
+--===============6944865670893794710==--
 
