@@ -1,84 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8805041120851453468=="
+Content-Type: multipart/mixed; boundary="===============7390062284352103330=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 05/10] Add notify at command callback
-Date: Fri, 19 Mar 2010 17:44:43 +0800
-Message-ID: <1268991888-17279-6-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1268991888-17279-5-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 08/10] Fix do not emit error if extended error has emitted
+Date: Fri, 19 Mar 2010 17:44:46 +0800
+Message-ID: <1268991888-17279-9-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1268991888-17279-8-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8805041120851453468==
+--===============7390062284352103330==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatserver.c |   48 ++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 48 insertions(+), 0 deletions(-)
+ gatchat/gatserver.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
 diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index 6173765..3f60f1c 100644
+index 1ffc2c3..9683fa3 100644
 --- a/gatchat/gatserver.c
 +++ b/gatchat/gatserver.c
-@@ -227,9 +227,57 @@ static gboolean is_extended_character(const char c)
- 	}
- }
+@@ -165,6 +165,10 @@ static void g_at_server_send_final(GAtServer *server, =
+GAtServerResult result)
+ 	char r =3D v250.s4;
+ 	unsigned int len;
  =
 
-+static GAtServerRequestType get_command_type(char *buf, char *prefix)
-+{
-+	GAtServerRequestType type =3D G_AT_SERVER_REQUEST_TYPE_ERROR;
++	/* Do not emit error if extended error has already been emitted */
++	if (result =3D=3D G_AT_SERVER_RESULT_EXT_ERROR)
++		return;
 +
-+	buf +=3D strlen(prefix);
-+
-+	if (buf[0] =3D=3D '\0')
-+		/* Action command could have no sub-parameters */
-+		type =3D G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY;
-+	else if (buf[0] =3D=3D '?')
-+		type =3D G_AT_SERVER_REQUEST_TYPE_QUERY;
-+	else if (buf[0] =3D=3D '=3D' && buf[1] =3D=3D '?')
-+		type =3D G_AT_SERVER_REQUEST_TYPE_SUPPORT;
-+	else if (buf[0] =3D=3D '=3D')
-+		type =3D G_AT_SERVER_REQUEST_TYPE_SET;
-+	else if (is_basic_command_prefix(prefix))
-+		/* Basic command could follow digits value, like ATE1 */
-+		type =3D G_AT_SERVER_REQUEST_TYPE_SET;
-+
-+	return type;
-+}
-+
- static gboolean at_command_notify(GAtServer *server, char *command,
- 						char *prefix)
- {
-+	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
-+	struct at_command *node;
-+
-+	node =3D g_hash_table_lookup(server->command_list, prefix);
-+	if (node && node->notify) {
-+		GAtServerRequestType type;
-+		GAtResult result;
-+
-+		type =3D get_command_type(command, prefix);
-+		if (type =3D=3D G_AT_SERVER_REQUEST_TYPE_ERROR)
-+			goto done;
-+
-+		result.lines =3D g_slist_prepend(NULL, command);
-+		result.final_or_pdu =3D 0;
-+
-+		res =3D node->notify(type, &result, node->user_data);
-+
-+		g_slist_free(result.lines);
-+	}
-+
-+done:
-+	g_at_server_send_final(server, res);
-+
-+	if (res =3D=3D G_AT_SERVER_RESULT_OK)
-+		return TRUE;
-+
- 	return FALSE;
- }
+ 	if (v250.quiet)
+ 		return;
  =
 
 -- =
@@ -86,5 +40,5 @@ index 6173765..3f60f1c 100644
 1.6.6.1
 
 
---===============8805041120851453468==--
+--===============7390062284352103330==--
 
