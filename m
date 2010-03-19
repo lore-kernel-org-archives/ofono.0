@@ -1,58 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============3633947876294147134=="
+Content-Type: multipart/mixed; boundary="===============3384709435955339504=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [patch 1/6] Add PPP protocol support with HDLC framing
-Date: Fri, 19 Mar 2010 12:46:07 -0700
-Message-ID: <20100319124607.6655ec44@kcaccard-MOBL3>
+Subject: [patch 2/6] Generic PPP control protocol
+Date: Fri, 19 Mar 2010 12:46:14 -0700
+Message-ID: <20100319124614.25de77e4@kcaccard-MOBL3>
 In-Reply-To: <20100319194705.214150215@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3633947876294147134==
+--===============3384709435955339504==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch implements the basic PPP protocol.  LCP, NCP etc. are handled in=
- a
-different patch.
+Implement a generic control protocol that can be shared by both LCP and NCP
+implementations.
 
 ---
- Makefile.am      |    4 =
+ Makefile.am      |    3 =
 
- gatchat/gatppp.c |  133 ++++++++++++++++
- gatchat/gatppp.h |   59 +++++++
- gatchat/ppp.c    |  455 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+ gatchat/ppp.h    |    2 =
+
+ gatchat/ppp_cp.c | 1503 ++++++++++++++++++++++++++++++++++++++++++++++++++=
 +++++
- gatchat/ppp.h    |  130 +++++++++++++++
- 5 files changed, 780 insertions(+), 1 deletion(-)
+ gatchat/ppp_cp.h |  139 +++++
+ 4 files changed, 1646 insertions(+), 1 deletion(-)
 
 Index: ofono/Makefile.am
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- ofono.orig/Makefile.am	2010-03-19 11:49:00.060469174 -0700
-+++ ofono/Makefile.am	2010-03-19 11:49:02.652468489 -0700
-@@ -55,7 +55,9 @@
- 				gatchat/gattty.h gatchat/gattty.c \
- 				gatchat/gatutil.h gatchat/gatutil.c \
+--- ofono.orig/Makefile.am	2010-03-19 12:10:04.000000000 -0700
++++ ofono/Makefile.am	2010-03-19 12:28:11.820599845 -0700
+@@ -57,7 +57,8 @@
  				gatchat/gat.h \
--				gatchat/gatserver.h gatchat/gatserver.c
-+				gatchat/gatserver.h gatchat/gatserver.c \
-+				gatchat/gatppp.c gatchat/gatppp.h \
-+				gatchat/ppp.c gatchat/ppp.h
+ 				gatchat/gatserver.h gatchat/gatserver.c \
+ 				gatchat/gatppp.c gatchat/gatppp.h \
+-				gatchat/ppp.c gatchat/ppp.h
++				gatchat/ppp.c gatchat/ppp.h gatchat/ppp_cp.h \
++				gatchat/ppp_cp.c
  =
 
  udev_files =3D plugins/ofono.rules
  =
 
-Index: ofono/gatchat/gatppp.c
+Index: ofono/gatchat/ppp_cp.c
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ofono/gatchat/gatppp.c	2010-03-19 11:49:02.652468489 -0700
-@@ -0,0 +1,133 @@
++++ ofono/gatchat/ppp_cp.c	2010-03-19 12:10:09.458490026 -0700
+@@ -0,0 +1,1503 @@
 +/*
 + *
 + *  PPP library with GLib integration
@@ -84,648 +82,1502 @@ Index: ofono/gatchat/gatppp.c
 +#include <unistd.h>
 +#include <string.h>
 +#include <termios.h>
-+#include <arpa/inet.h>
-+
 +#include <glib.h>
-+
-+#include "gatutil.h"
++#include <arpa/inet.h>
 +#include "gatppp.h"
 +#include "ppp.h"
 +
-+/* Administrative Open */
-+void g_at_ppp_open(GAtPPP *ppp)
-+{
-+	/* send an OPEN event to the lcp layer */
-+}
++#ifdef DEBUG
++const char *pppcp_state_strings[] =3D
++	{"INITIAL", "STARTING", "CLOSED", "STOPPED", "CLOSING", "STOPPING",
++	"REQSENT", "ACKRCVD", "ACKSENT", "OPENED" };
 +
-+void g_at_ppp_set_connect_function(GAtPPP *ppp,
-+			       GAtPPPConnectFunc callback, gpointer user_data)
-+{
-+	ppp->connect_cb =3D callback;
-+	ppp->connect_data =3D user_data;
-+}
-+
-+void g_at_ppp_set_disconnect_function(GAtPPP *ppp,
-+				  GAtPPPDisconnectFunc callback,
-+				  gpointer user_data)
-+{
-+	ppp->disconnect_cb =3D callback;
-+	ppp->disconnect_data =3D user_data;
-+}
-+
-+void g_at_ppp_shutdown(GAtPPP *ppp)
-+{
-+	/* close the ppp */
-+	ppp_close(ppp);
-+
-+	/* clean up all the queues */
-+	g_queue_free(ppp->event_queue);
-+	g_queue_free(ppp->recv_queue);
-+
-+	/* cleanup modem channel */
-+	g_source_remove(ppp->modem_watch);
-+	g_io_channel_unref(ppp->modem);
-+}
-+
-+void g_at_ppp_ref(GAtPPP *ppp)
-+{
-+	g_atomic_int_inc(&ppp->ref_count);
-+}
-+
-+void g_at_ppp_unref(GAtPPP *ppp)
-+{
-+	if (g_atomic_int_dec_and_test(&ppp->ref_count)) {
-+		g_at_ppp_shutdown(ppp);
-+		g_free(ppp);
-+	}
-+}
-+
-+GAtPPP *g_at_ppp_new(GIOChannel *modem)
-+{
-+	GAtPPP *ppp;
-+
-+	ppp =3D g_try_malloc0(sizeof(GAtPPP));
-+	if (!ppp)
-+		return NULL;
-+
-+	ppp->modem =3D g_io_channel_ref(modem);
-+	if (!g_at_util_setup_io(ppp->modem, G_IO_FLAG_NONBLOCK)) {
-+		g_io_channel_unref(modem);
-+		g_free(ppp);
-+		return NULL;
-+	}
-+	g_io_channel_set_buffered(modem, FALSE);
-+
-+	ppp->ref_count =3D 1;
-+
-+	/* set options to defaults */
-+	ppp->mru =3D DEFAULT_MRU;
-+	ppp->recv_accm =3D DEFAULT_ACCM;
-+	ppp->xmit_accm[0] =3D DEFAULT_ACCM;
-+	ppp->xmit_accm[3] =3D 0x60000000; /* 0x7d, 0x7e */
-+	ppp->pfc =3D FALSE;
-+	ppp->acfc =3D FALSE;
-+
-+	/* allocate the queues */
-+	ppp->event_queue =3D g_queue_new();
-+	ppp->recv_queue =3D g_queue_new();
-+
-+	ppp->index =3D 0;
-+
-+	/* initialize the lcp state */
-+
-+
-+	/* initialize the autentication state */
-+
-+
-+	/* intialize the network state */
-+
-+	/* start listening for packets from the modem */
-+	ppp->modem_watch =3D g_io_add_watch(modem,
-+			G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-+			ppp_cb, ppp);
-+
-+	return ppp;
-+}
-Index: ofono/gatchat/gatppp.h
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ofono/gatchat/gatppp.h	2010-03-19 11:49:02.652468489 -0700
-@@ -0,0 +1,59 @@
-+/*
-+ *
-+ *  PPP library with GLib integration
-+ *
-+ *  Copyright (C) 2009-2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifndef __G_AT_PPP_H
-+#define __G_AT_PPP_H
-+
-+#ifdef __cplusplus
-+extern "C" {
++#define pppcp_trace(p) \
++	(g_print("%s: current state %d:%s\n", __FUNCTION__, \
++		p->state, pppcp_state_strings[p->state]))
++#else
++#define pppcp_trace(p)
 +#endif
 +
-+struct _GAtPPP;
-+typedef struct _GAtPPP GAtPPP;
++#define pppcp_to_ppp_packet(p) \
++	(p-PPP_HEADROOM)
 +
-+typedef enum _GAtPPPConnectStatus {
-+	G_AT_PPP_CONNECT_SUCCESS,
-+	G_AT_PPP_CONNECT_FAIL
-+} GAtPPPConnectStatus;
-+
-+typedef void (*GAtPPPConnectFunc)(GAtPPP *ppp, GAtPPPConnectStatus success,
-+				 guint32 ip_address,
-+				 guint32 dns1, guint32 dns2,
-+				 gpointer user_data);
-+
-+typedef void (*GAtPPPDisconnectFunc)(GAtPPP *ppp, gpointer user_data);
-+
-+GAtPPP * g_at_ppp_new(GIOChannel *modem);
-+void g_at_ppp_open(GAtPPP *ppp);
-+void g_at_ppp_set_connect_function(GAtPPP *ppp,
-+			       GAtPPPConnectFunc callback, gpointer user_data);
-+void g_at_ppp_set_disconnect_function(GAtPPP *ppp,
-+				  GAtPPPDisconnectFunc callback,
-+				  gpointer user_data);
-+void g_at_ppp_shutdown(GAtPPP *ppp);
-+void g_at_ppp_ref(GAtPPP *ppp);
-+void g_at_ppp_unref(GAtPPP *ppp);
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif /* __G_AT_PPP_H */
-+
-Index: ofono/gatchat/ppp.c
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ofono/gatchat/ppp.c	2010-03-19 11:52:31.011496932 -0700
-@@ -0,0 +1,455 @@
-+/*
-+ *
-+ *  PPP library with GLib integration
-+ *
-+ *  Copyright (C) 2009-2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <stdio.h>
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <string.h>
-+#include <termios.h>
-+#include <arpa/inet.h>
-+
-+#include <glib.h>
-+
-+#include "gatutil.h"
-+#include "gatppp.h"
-+#include "ppp.h"
-+
-+#define PPPINITFCS16    0xffff  /* Initial FCS value */
-+#define PPPGOODFCS16    0xf0b8  /* Good final FCS value */
-+
-+static GList *packet_handlers =3D NULL;
-+
-+void ppp_register_packet_handler(struct ppp_packet_handler *handler)
-+{
-+	packet_handlers =3D g_list_append(packet_handlers, handler);
-+}
-+
-+/*
-+ * FCS lookup table copied from rfc1662.
-+ */
-+static guint16 fcstab[256] =3D {
-+	0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
-+	0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
-+	0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
-+	0x9cc9, 0x8d40, 0xbfdb, 0xae52, 0xdaed, 0xcb64, 0xf9ff, 0xe876,
-+	0x2102, 0x308b, 0x0210, 0x1399, 0x6726, 0x76af, 0x4434, 0x55bd,
-+	0xad4a, 0xbcc3, 0x8e58, 0x9fd1, 0xeb6e, 0xfae7, 0xc87c, 0xd9f5,
-+	0x3183, 0x200a, 0x1291, 0x0318, 0x77a7, 0x662e, 0x54b5, 0x453c,
-+	0xbdcb, 0xac42, 0x9ed9, 0x8f50, 0xfbef, 0xea66, 0xd8fd, 0xc974,
-+	0x4204, 0x538d, 0x6116, 0x709f, 0x0420, 0x15a9, 0x2732, 0x36bb,
-+	0xce4c, 0xdfc5, 0xed5e, 0xfcd7, 0x8868, 0x99e1, 0xab7a, 0xbaf3,
-+	0x5285, 0x430c, 0x7197, 0x601e, 0x14a1, 0x0528, 0x37b3, 0x263a,
-+	0xdecd, 0xcf44, 0xfddf, 0xec56, 0x98e9, 0x8960, 0xbbfb, 0xaa72,
-+	0x6306, 0x728f, 0x4014, 0x519d, 0x2522, 0x34ab, 0x0630, 0x17b9,
-+	0xef4e, 0xfec7, 0xcc5c, 0xddd5, 0xa96a, 0xb8e3, 0x8a78, 0x9bf1,
-+	0x7387, 0x620e, 0x5095, 0x411c, 0x35a3, 0x242a, 0x16b1, 0x0738,
-+	0xffcf, 0xee46, 0xdcdd, 0xcd54, 0xb9eb, 0xa862, 0x9af9, 0x8b70,
-+	0x8408, 0x9581, 0xa71a, 0xb693, 0xc22c, 0xd3a5, 0xe13e, 0xf0b7,
-+	0x0840, 0x19c9, 0x2b52, 0x3adb, 0x4e64, 0x5fed, 0x6d76, 0x7cff,
-+	0x9489, 0x8500, 0xb79b, 0xa612, 0xd2ad, 0xc324, 0xf1bf, 0xe036,
-+	0x18c1, 0x0948, 0x3bd3, 0x2a5a, 0x5ee5, 0x4f6c, 0x7df7, 0x6c7e,
-+	0xa50a, 0xb483, 0x8618, 0x9791, 0xe32e, 0xf2a7, 0xc03c, 0xd1b5,
-+	0x2942, 0x38cb, 0x0a50, 0x1bd9, 0x6f66, 0x7eef, 0x4c74, 0x5dfd,
-+	0xb58b, 0xa402, 0x9699, 0x8710, 0xf3af, 0xe226, 0xd0bd, 0xc134,
-+	0x39c3, 0x284a, 0x1ad1, 0x0b58, 0x7fe7, 0x6e6e, 0x5cf5, 0x4d7c,
-+	0xc60c, 0xd785, 0xe51e, 0xf497, 0x8028, 0x91a1, 0xa33a, 0xb2b3,
-+	0x4a44, 0x5bcd, 0x6956, 0x78df, 0x0c60, 0x1de9, 0x2f72, 0x3efb,
-+	0xd68d, 0xc704, 0xf59f, 0xe416, 0x90a9, 0x8120, 0xb3bb, 0xa232,
-+	0x5ac5, 0x4b4c, 0x79d7, 0x685e, 0x1ce1, 0x0d68, 0x3ff3, 0x2e7a,
-+	0xe70e, 0xf687, 0xc41c, 0xd595, 0xa12a, 0xb0a3, 0x8238, 0x93b1,
-+	0x6b46, 0x7acf, 0x4854, 0x59dd, 0x2d62, 0x3ceb, 0x0e70, 0x1ff9,
-+	0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
-+	0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
++struct pppcp_event {
++	enum pppcp_event_type type;
++	gint len;
++	guint8 data[0];
 +};
 +
-+/*
-+ * Calculate a new fcs given the current fcs and the new data.
-+ * copied from rfc1662
-+ *
-+ *     The FCS field is calculated over all bits of the Address, Control,
-+ *     Protocol, Information and Padding fields, not including any start
-+ *     and stop bits (asynchronous) nor any bits (synchronous) or octets
-+ *     (asynchronous or synchronous) inserted for transparency.  This
-+ *     also does not include the Flag Sequences nor the FCS field itself.
-+ */
-+static guint16 ppp_fcs(guint16 fcs, guint8 c)
-+{
-+	guint16 new_fcs;
++#define INITIAL_RESTART_TIMEOUT	3000
++#define MAX_TERMINATE		2
++#define MAX_CONFIGURE		10
++#define MAX_FAILURE		5
++#define CP_HEADER_SZ		4
 +
-+	new_fcs =3D (fcs >> 8) ^ fcstab[(fcs ^ c) & 0xff];
-+	return new_fcs;
++static struct pppcp_packet *pppcp_packet_new(struct pppcp_data *data,
++						guint type, guint bufferlen)
++{
++	struct pppcp_packet *packet;
++	struct ppp_header *ppp_packet;
++	guint16 packet_length =3D bufferlen + sizeof(*packet);
++
++	ppp_packet =3D g_try_malloc0(packet_length + 2);
++	if (!ppp_packet)
++		return NULL;
++
++	/* add our protocol information */
++	ppp_packet->proto =3D htons(data->proto);
++
++	/* advance past protocol to add CP header information */
++	packet =3D (struct pppcp_packet *) (ppp_packet->info);
++
++	packet->length =3D htons(packet_length);
++	packet->code =3D type;
++	return packet;
 +}
 +
-+/*
-+ * escape any chars less than 0x20, and check the transmit accm table to
-+ * see if this character should be escaped.
-+ */
-+static gboolean ppp_escape(GAtPPP *ppp, guint8 c, gboolean lcp)
++static gboolean pppcp_timeout(gpointer user_data)
 +{
-+	if ((lcp && c < 0x20) || (ppp->xmit_accm[c >> 5] & (1 << (c & 0x1f))))
++	struct pppcp_data *data =3D user_data;
++
++	pppcp_trace(data);
++
++	data->restart_timer =3D 0;
++
++	if (data->restart_counter)
++		pppcp_generate_event(data, TO_PLUS, NULL, 0);
++	else
++		pppcp_generate_event(data, TO_MINUS, NULL, 0);
++	return FALSE;
++}
++
++static void pppcp_start_timer(struct pppcp_data *data)
++{
++	data->restart_timer =3D g_timeout_add(data->restart_interval,
++				pppcp_timeout, data);
++}
++
++static void pppcp_stop_timer(struct pppcp_data *data)
++{
++	if (data->restart_timer) {
++		g_source_remove(data->restart_timer);
++		data->restart_timer =3D 0;
++	}
++}
++
++static gboolean pppcp_timer_is_running(struct pppcp_data *data)
++{
++	/* determine if the restart timer is running */
++	if (data->restart_timer)
 +		return TRUE;
 +	return FALSE;
 +}
 +
-+static void ppp_put(GAtPPP *ppp, guint8 *buf, int *pos,
-+			guint8 c, gboolean lcp)
++static struct pppcp_event *pppcp_event_new(enum pppcp_event_type type,
++					gpointer event_data, guint len)
 +{
-+	int i =3D *pos;
++	struct pppcp_event *event;
++	guint8 *data =3D event_data;
 +
-+	/* escape characters if needed,  copy into buf, increment pos */
-+	if (ppp_escape(ppp, c, lcp)) {
-+		buf[i++] =3D PPP_ESC;
-+		buf[i++] =3D c ^ 0x20;
-+	} else
-+		buf[i++] =3D c;
-+	*pos =3D i;
-+}
-+
-+/* XXX implement PFC and ACFC */
-+static guint8 *ppp_encode(GAtPPP *ppp, guint8 *data, int len,
-+				guint *newlen)
-+{
-+	int pos =3D 0;
-+	int i =3D 0;
-+	guint16 fcs =3D PPPINITFCS16;
-+	guint16 proto =3D get_host_short(data);
-+	gboolean lcp =3D (proto =3D=3D LCP_PROTOCOL);
-+	guint8 *frame =3D g_try_malloc0(BUFFERSZ);
-+	if (!frame)
++	event =3D g_try_malloc0(sizeof(struct pppcp_event) + len);
++	if (!event)
 +		return NULL;
 +
-+	/* copy in the HDLC framing */
-+	frame[pos++] =3D PPP_FLAG_SEQ;
-+
-+	/* from here till end flag, calculate FCS over each character */
-+	fcs =3D ppp_fcs(fcs, PPP_ADDR_FIELD);
-+	ppp_put(ppp, frame, &pos, PPP_ADDR_FIELD, lcp);
-+	fcs =3D ppp_fcs(fcs, PPP_CTRL);
-+	ppp_put(ppp, frame, &pos, PPP_CTRL, lcp);
-+
-+	/*
-+	 * for each byte, first calculate FCS, then do escaping if
-+	 * neccessary
-+	 */
-+	while (len--) {
-+		fcs =3D ppp_fcs(fcs, data[i]);
-+		ppp_put(ppp, frame, &pos, data[i++], lcp);
-+	}
-+
-+	/* add FCS */
-+	fcs ^=3D 0xffff;                 /* complement */
-+	ppp_put(ppp, frame, &pos, (guint8)(fcs & 0x00ff), lcp);
-+	ppp_put(ppp, frame, &pos, (guint8)((fcs >> 8) & 0x00ff), lcp);
-+
-+	/* add flag */
-+	frame[pos++] =3D PPP_FLAG_SEQ;
-+
-+	*newlen =3D pos;
-+	return frame;
++	event->type =3D type;
++	memcpy(event->data, data, len);
++	event->len =3D len;
++	return event;
 +}
 +
-+static gint is_proto_handler(gconstpointer a, gconstpointer b)
++static struct pppcp_event *pppcp_get_event(struct pppcp_data *data)
 +{
-+	const struct ppp_packet_handler *h =3D a;
-+	const guint16 proto =3D (guint16) GPOINTER_TO_UINT(b);
-+
-+	if (h->proto =3D=3D proto)
-+		return 0;
-+	else
-+		return -1;
++	return g_queue_pop_head(data->event_queue);
 +}
 +
-+/* called when we have received a complete ppp frame */
-+static void ppp_recv(GAtPPP *ppp)
++/* actions */
++/* log an illegal event, but otherwise do nothing */
++static void pppcp_illegal_event(guint8 state, guint8 type)
 +{
-+	guint16 protocol;
-+	guint8 *frame, *packet;
-+	GList *list;
-+	struct ppp_packet_handler *h;
-+
-+	/* pop frames off of receive queue */
-+	while ((frame =3D g_queue_pop_head(ppp->recv_queue))) {
-+		protocol =3D ppp_proto(frame);
-+		packet =3D ppp_info(frame);
-+
-+		/*
-+		 * check to see if we have a protocol handler
-+		 * registered for this packet
-+		 */
-+		list =3D g_list_find_custom(packet_handlers,
-+				GUINT_TO_POINTER(protocol),
-+				is_proto_handler);
-+		if (list) {
-+			h =3D list->data;
-+			h->handler(h->priv, packet);
-+		}
-+		g_free(frame);
-+	}
++	g_printerr("Illegal event %d while in state %d\n", type, state);
 +}
 +
-+/* XXX - Implement PFC and ACFC */
-+static guint8 *ppp_decode(GAtPPP *ppp, guint8 *frame)
++static void pppcp_this_layer_up(struct pppcp_data *data)
 +{
-+	guint8 *data;
-+	guint pos =3D 0;
-+	int i =3D 0;
-+	int len;
-+	guint16 fcs;
++	struct pppcp_action *action =3D data->action;
 +
-+	data =3D g_try_malloc0(ppp->mru + 10);
-+	if (!data)
-+		return NULL;
-+
-+	/* skip the first flag char */
-+	pos++;
-+
-+	/* TBD - how to deal with recv_accm */
-+	while (frame[pos] !=3D PPP_FLAG_SEQ) {
-+		/* scan for escape character */
-+		if (frame[pos] =3D=3D PPP_ESC) {
-+			/* skip that char */
-+			pos++;
-+			data[i] =3D frame[pos] ^ 0x20;
-+		} else
-+			data[i] =3D frame[pos];
-+		i++; pos++;
-+	}
-+
-+	len =3D i;
-+
-+	/* see if we have a good FCS */
-+	fcs =3D PPPINITFCS16;
-+	for (i =3D 0; i < len; i++)
-+		fcs =3D ppp_fcs(fcs, data[i]);
-+
-+	if (fcs !=3D PPPGOODFCS16) {
-+		g_free(data);
-+		return NULL;
-+	}
-+	return data;
++	if (action->this_layer_up)
++		action->this_layer_up(data);
 +}
 +
-+static void ppp_feed(GAtPPP *ppp, guint8 *data, gsize len)
++static void pppcp_this_layer_down(struct pppcp_data *data)
 +{
-+	guint pos =3D 0;
-+	guint8 *frame;
++	struct pppcp_action *action =3D data->action;
 +
-+	/* collect bytes until we detect we have received a complete frame */
-+	/* examine the data.  If we are@the beginning of a new frame,
-+	 * allocate memory to buffer the frame.
-+	 */
++	if (action->this_layer_up)
++		action->this_layer_down(data);
++}
 +
-+	for (pos =3D 0; pos < len; pos++) {
-+		if (data[pos] =3D=3D PPP_FLAG_SEQ) {
-+			if (ppp->index !=3D 0) {
-+				/* store last flag character & decode */
-+				ppp->buffer[ppp->index++] =3D data[pos];
-+				frame =3D ppp_decode(ppp, ppp->buffer);
++static void pppcp_this_layer_started(struct pppcp_data *data)
++{
++	struct pppcp_action *action =3D data->action;
 +
-+				/* push decoded frame onto receive queue */
-+				if (frame)
-+					g_queue_push_tail(ppp->recv_queue,
-+								frame);
++	if (action->this_layer_up)
++		action->this_layer_started(data);
++}
 +
-+				/* zero buffer */
-+				memset(ppp->buffer, 0, BUFFERSZ);
-+				ppp->index =3D 0;
-+				continue;
-+			}
-+		}
-+		/* copy byte to buffer */
-+		if (ppp->index < BUFFERSZ)
-+			ppp->buffer[ppp->index++] =3D data[pos];
-+	}
-+	/* process receive queue */
-+	ppp_recv(ppp);
++static void pppcp_this_layer_finished(struct pppcp_data *data)
++{
++	struct pppcp_action *action =3D data->action;
++
++	if (action->this_layer_up)
++		action->this_layer_finished(data);
++}
++
++static void pppcp_free_option(gpointer data, gpointer user_data)
++{
++	struct ppp_option *option =3D data;
++	g_free(option);
++}
++
++static void pppcp_clear_options(struct pppcp_data *data)
++{
++	g_list_foreach(data->acceptable_options, pppcp_free_option, NULL);
++	g_list_foreach(data->unacceptable_options, pppcp_free_option, NULL);
++	g_list_foreach(data->rejected_options, pppcp_free_option, NULL);
++	g_list_free(data->acceptable_options);
++	g_list_free(data->unacceptable_options);
++	g_list_free(data->rejected_options);
++	data->acceptable_options =3D NULL;
++	data->unacceptable_options =3D NULL;
++	data->rejected_options =3D NULL;
 +}
 +
 +/*
-+ * transmit out through the lower layer interface
-+ *
-+ * infolen - length of the information part of the packet
++ * set the restart counter to either max-terminate
++ * or max-configure.  The counter is decremented for
++ * each transmission, including the first.
 + */
-+void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint infolen)
++static void pppcp_initialize_restart_count(struct pppcp_data *data, guint =
+value)
 +{
-+	guint8 *frame;
-+	guint framelen;
-+	GError *error =3D NULL;
-+	GIOStatus status;
-+	gsize bytes_written;
++	pppcp_trace(data);
++	pppcp_clear_options(data);
++	data->restart_counter =3D value;
++}
++
++/*
++ * set restart counter to zero
++ */
++static void pppcp_zero_restart_count(struct pppcp_data *data)
++{
++	data->restart_counter =3D 0;
++}
++
++/*
++ * TBD - generate new identifier for packet
++ */
++static guint8 new_identity(struct pppcp_data *data, guint prev_identifier)
++{
++	return prev_identifier+1;
++}
++
++static void get_option_length(gpointer data, gpointer user_data)
++{
++	struct ppp_option *option =3D data;
++	guint8 *length =3D user_data;
++
++	*length +=3D option->length;
++}
++
++static void copy_option(gpointer data, gpointer user_data)
++{
++	struct ppp_option *option =3D data;
++	guint8 **location =3D user_data;
++	memcpy(*location, (guint8 *) option, option->length);
++	*location +=3D option->length;
++}
++
++void pppcp_add_config_option(struct pppcp_data *data, struct ppp_option *o=
+ption)
++{
++	data->config_options =3D g_list_append(data->config_options, option);
++}
++
++/*
++ * transmit a Configure-Request packet
++ * start the restart timer
++ * decrement the restart counter
++ */
++static void pppcp_send_configure_request(struct pppcp_data *data)
++{
++	struct pppcp_packet *packet;
++	guint8 olength =3D 0;
++	guint8 *odata;
++
++	pppcp_trace(data);
++
++	/* figure out how much space to allocate for options */
++	g_list_foreach(data->config_options, get_option_length, &olength);
++
++	packet =3D pppcp_packet_new(data, CONFIGURE_REQUEST, olength);
++
++	/* copy config options into packet data */
++	odata =3D packet->data;
++	g_list_foreach(data->config_options, copy_option, &odata);
 +
 +	/*
-+	 * do the octet stuffing.  Add 2 bytes to the infolen to
-+	 * include the protocol field.
++	 * if this is the first request, we need a new identifier.
++	 * if this is a retransmission, leave the identifier alone.
 +	 */
-+	frame =3D ppp_encode(ppp, packet, infolen + 2, &framelen);
-+	if (!frame) {
-+		g_printerr("Failed to encode packet to transmit\n");
-+		return;
-+	}
++	if (data->restart_counter =3D=3D data->max_configure)
++		data->config_identifier =3D
++			new_identity(data, data->config_identifier);
++	packet->identifier =3D data->config_identifier;
 +
-+	/* transmit through the lower layer interface */
++	ppp_transmit(data->ppp, pppcp_to_ppp_packet((guint8 *) packet),
++			ntohs(packet->length));
++
++	/* XXX don't retransmit right now */
++#if 0
++	data->restart_counter--;
++	pppcp_start_timer(data);
++#endif
++}
++
++/*
++ * transmit a Configure-Ack packet
++ */
++static void pppcp_send_configure_ack(struct pppcp_data *data,
++					guint8 *request)
++{
++	struct pppcp_packet *packet;
++	struct pppcp_packet *pppcp_header =3D (struct pppcp_packet *) request;
++	guint len;
++	guint8 *odata;
++
++	pppcp_trace(data);
++
++	/* subtract for header. */
++	len =3D ntohs(pppcp_header->length) - sizeof(*packet);
++
++	packet =3D pppcp_packet_new(data, CONFIGURE_ACK, len);
++
++	/* copy the applied options in. */
++	odata =3D packet->data;
++
++	if (g_list_length(data->acceptable_options))
++		g_list_foreach(data->acceptable_options, copy_option, &odata);
++
++	/* match identifier of the request */
++	packet->identifier =3D pppcp_header->identifier;
++
++	ppp_transmit(data->ppp, pppcp_to_ppp_packet((guint8 *) packet),
++			ntohs(packet->length));
++}
++
++/*
++ * transmit a Configure-Nak or Configure-Reject packet
++ */
++static void pppcp_send_configure_nak(struct pppcp_data *data,
++					guint8 *configure_packet)
++{
++	struct pppcp_packet *packet;
++	struct pppcp_packet *pppcp_header =3D
++			(struct pppcp_packet *) configure_packet;
++	guint8 olength =3D 0;
++	guint8 *odata;
++
++	/* if we have any rejected options, send a config-reject */
++	if (g_list_length(data->rejected_options)) {
++		/* figure out how much space to allocate for options */
++		g_list_foreach(data->rejected_options, get_option_length,
++				&olength);
++
++		packet =3D pppcp_packet_new(data, CONFIGURE_REJECT, olength);
++
++		/* copy the rejected options in. */
++		odata =3D packet->data;
++		g_list_foreach(data->rejected_options, copy_option,
++				&odata);
++
++		packet->identifier =3D pppcp_header->identifier;
++		ppp_transmit(data->ppp, pppcp_to_ppp_packet((guint8 *) packet),
++			ntohs(packet->length));
++
++	}
++	/* if we have any unacceptable options, send a config-nak */
++	if (g_list_length(data->unacceptable_options)) {
++		olength =3D 0;
++
++		/* figure out how much space to allocate for options */
++		g_list_foreach(data->unacceptable_options, get_option_length,
++				&olength);
++
++		packet =3D pppcp_packet_new(data, CONFIGURE_NAK, olength);
++
++		/* copy the unacceptable options in. */
++		odata =3D packet->data;
++		g_list_foreach(data->unacceptable_options, copy_option,
++				&odata);
++
++		packet->identifier =3D pppcp_header->identifier;
++		ppp_transmit(data->ppp, pppcp_to_ppp_packet((guint8 *) packet),
++				ntohs(packet->length));
++	}
++}
++
++/*
++ * transmit a Terminate-Request packet.
++ * start the restart timer.
++ * decrement the restart counter
++ */
++static void pppcp_send_terminate_request(struct pppcp_data *data)
++{
++	struct pppcp_packet *packet;
++
 +	/*
-+	 * TBD - should we just put this on a queue and transmit when
-+	 * we won't block, or allow ourselves to block here?
++	 * the data field can be used by the sender (us).
++	 * leave this empty for now.
 +	 */
-+	status =3D g_io_channel_write_chars(ppp->modem, (gchar *) frame,
-+                                          framelen, &bytes_written, &error=
-);
++	packet =3D pppcp_packet_new(data, TERMINATE_REQUEST, 0);
 +
-+	g_free(frame);
++	/*
++	 * Is this a retransmission?  If so, do not change
++	 * the identifier.  If not, we need a fresh identity.
++	 */
++	if (data->restart_counter =3D=3D data->max_terminate)
++		data->terminate_identifier =3D
++			new_identity(data, data->terminate_identifier);
++	packet->identifier =3D data->terminate_identifier;
++	ppp_transmit(data->ppp, pppcp_to_ppp_packet((guint8 *) packet),
++			ntohs(packet->length));
++	data->restart_counter--;
++	pppcp_start_timer(data);
 +}
 +
-+gboolean ppp_cb(GIOChannel *channel, GIOCondition cond, gpointer data)
++/*
++ * transmit a Terminate-Ack packet
++ */
++static void pppcp_send_terminate_ack(struct pppcp_data *data,
++					guint8 *request)
 +{
-+	GAtPPP *ppp =3D data;
-+	GIOStatus status;
-+	gchar buf[256];
-+	gsize bytes_read;
-+	GError *error =3D NULL;
++	struct pppcp_packet *packet;
++	struct pppcp_packet *pppcp_header =3D (struct pppcp_packet *) request;
 +
-+	if (cond & (G_IO_NVAL | G_IO_ERR | G_IO_HUP)) {
-+		g_print("G_IO_NVAL | G_IO_ERR");
-+		return FALSE;
++	packet =3D pppcp_packet_new(data, TERMINATE_ACK, 0);
++
++	/* match identifier of the request */
++	packet->identifier =3D pppcp_header->identifier;
++
++	ppp_transmit(data->ppp, pppcp_to_ppp_packet((guint8 *) packet),
++			ntohs(pppcp_header->length));
++}
++
++/*
++ * transmit a Code-Reject packet
++ *
++ * XXX this seg faults.
++ */
++static void pppcp_send_code_reject(struct pppcp_data *data,
++					guint8 *rejected_packet)
++{
++	struct pppcp_packet *packet;
++
++	packet =3D pppcp_packet_new(data, CODE_REJECT,
++			ntohs(((struct pppcp_packet *) rejected_packet)->length));
++
++	/*
++	 * Identifier must be changed for each Code-Reject sent
++	 */
++	packet->identifier =3D new_identity(data, data->reject_identifier);
++
++	/*
++	 * rejected packet should be copied in, but it should be
++	 * truncated if it needs to be to comply with mtu requirement
++	 */
++	memcpy(packet->data, rejected_packet,
++			ntohs(packet->length - CP_HEADER_SZ));
++
++	ppp_transmit(data->ppp, pppcp_to_ppp_packet((guint8 *) packet),
++			ntohs(packet->length));
++}
++
++/*
++ * transmit an Echo-Reply packet
++ */
++static void pppcp_send_echo_reply(struct pppcp_data *data,
++				guint8 *request)
++{
++	struct pppcp_packet *packet;
++	struct pppcp_packet *header =3D (struct pppcp_packet *) request;
++
++	/*
++	 * 0 bytes for data, 4 bytes for magic number
++	 */
++	packet =3D pppcp_packet_new(data, ECHO_REPLY, 4);
++
++	/*
++	 * match identifier of request
++	 */
++	packet->identifier =3D header->identifier;
++
++	/* magic number? */
++	ppp_transmit(data->ppp, pppcp_to_ppp_packet((guint8 *) packet),
++			ntohs(packet->length));
++
++}
++
++static void pppcp_transition_state(enum pppcp_state new_state,
++					struct pppcp_data *data)
++{
++	/*
++	 * if switching from a state where
++	 * TO events occur, to one where they
++	 * may not, shut off the timer
++	 */
++	switch (new_state) {
++	case INITIAL:
++	case STARTING:
++	case CLOSED:
++	case STOPPED:
++	case OPENED:
++		/* if timer is running, stop it */
++		if (pppcp_timer_is_running(data))
++			pppcp_stop_timer(data);
++		break;
++	case CLOSING:
++	case STOPPING:
++	case REQSENT:
++	case ACKRCVD:
++	case ACKSENT:
++		break;
 +	}
++	data->state =3D new_state;
++}
 +
-+	if (cond & G_IO_IN) {
-+		status =3D g_io_channel_read_chars(channel, buf, 256,
-+				&bytes_read, &error);
-+		if (bytes_read > 0)
-+			ppp_feed(ppp, (guint8 *)buf, bytes_read);
-+        	if (status !=3D G_IO_STATUS_NORMAL && status !=3D G_IO_STATUS_AGA=
-IN)
-+                	return FALSE;
++static void pppcp_up_event(struct pppcp_data *data, guint8 *packet, guint =
+len)
++{
++	pppcp_trace(data);
++	switch (data->state) {
++	case INITIAL:
++		/* switch state to CLOSED */
++		pppcp_transition_state(CLOSED, data);
++		break;
++	case STARTING:
++		/* irc, scr/6 */
++		pppcp_initialize_restart_count(data, data->max_configure);
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case CLOSED:
++	case STOPPED:
++	case OPENED:
++	case CLOSING:
++	case STOPPING:
++	case REQSENT:
++	case ACKRCVD:
++	case ACKSENT:
++		pppcp_illegal_event(data->state, UP);
 +	}
-+
-+	return TRUE;
 +}
 +
-+/* Administrative Close */
-+void ppp_close(GAtPPP *ppp)
++static void pppcp_down_event(struct pppcp_data *data, guint8 *packet, guin=
+t len)
 +{
-+	/* send a CLOSE event to the lcp layer */
-+}
-+
-+static void ppp_link_establishment(GAtPPP *ppp)
-+{
-+	/* signal UP event to LCP */
-+}
-+
-+static void ppp_terminate(GAtPPP *ppp)
-+{
-+	/* signal DOWN event to LCP */
-+}
-+
-+static void ppp_authenticate(GAtPPP *ppp)
-+{
-+	/* we don't do authentication right now, so send NONE */
-+	if (!ppp->auth_proto)
-+		ppp_generate_event(ppp, PPP_NONE);
-+	/* otherwise we need to wait for the peer to send us a challenge */
-+}
-+
-+static void ppp_dead(GAtPPP *ppp)
-+{
-+	/* re-initialize everything */
-+}
-+
-+static void ppp_network(GAtPPP *ppp)
-+{
-+	/* bring network phase up */
-+}
-+
-+static void ppp_transition_phase(GAtPPP *ppp, enum ppp_phase phase)
-+{
-+	/* don't do anything if we're already there */
-+	if (ppp->phase =3D=3D phase)
-+		return;
-+
-+	/* set new phase */
-+	ppp->phase =3D phase;
-+
-+	switch (phase) {
-+	case PPP_ESTABLISHMENT:
-+		ppp_link_establishment(ppp);
++	switch (data->state) {
++	case CLOSED:
++		pppcp_transition_state(INITIAL, data);
 +		break;
-+	case PPP_AUTHENTICATION:
-+		ppp_authenticate(ppp);
++	case STOPPED:
++		/* tls/1 */
++		pppcp_transition_state(STARTING, data);
++		pppcp_this_layer_started(data);
 +		break;
-+	case PPP_TERMINATION:
-+		ppp_terminate(ppp);
++	case CLOSING:
++		pppcp_transition_state(INITIAL, data);
 +		break;
-+	case PPP_DEAD:
-+		ppp_dead(ppp);
++	case STOPPING:
++	case REQSENT:
++	case ACKRCVD:
++	case ACKSENT:
++		pppcp_transition_state(STARTING, data);
 +		break;
-+	case PPP_NETWORK:
-+		ppp_network(ppp);
++	case OPENED:
++		pppcp_transition_state(STARTING, data);
++		pppcp_this_layer_down(data);
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, DOWN);
++		/* illegal */
++	}
++}
++
++static void pppcp_open_event(struct pppcp_data *data, guint8 *packet, guin=
+t len)
++{
++	pppcp_trace(data);
++	switch (data->state) {
++	case INITIAL:
++		/* tls/1 */
++		pppcp_transition_state(STARTING, data);
++		pppcp_this_layer_started(data);
++		break;
++	case STARTING:
++		pppcp_transition_state(STARTING, data);
++		break;
++	case CLOSED:
++		pppcp_initialize_restart_count(data, data->max_configure);
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case STOPPED:
++		/* 3r */
++		pppcp_transition_state(STOPPED, data);
++		break;
++	case CLOSING:
++	case STOPPING:
++		/* 5r */
++		pppcp_transition_state(STOPPING, data);
++		break;
++	case REQSENT:
++	case ACKRCVD:
++	case ACKSENT:
++		pppcp_transition_state(data->state, data);
++		break;
++	case OPENED:
++		/* 9r */
++		pppcp_transition_state(data->state, data);
 +		break;
 +	}
-+
 +}
 +
-+static void ppp_handle_event(GAtPPP *ppp)
++static void pppcp_close_event(struct pppcp_data *data, guint8* packet, gui=
+nt len)
 +{
-+	enum ppp_event event;
++	switch (data->state) {
++	case INITIAL:
++		pppcp_transition_state(INITIAL, data);
++		break;
++	case STARTING:
++		pppcp_this_layer_finished(data);
++		pppcp_transition_state(INITIAL, data);
++		break;
++	case CLOSED:
++	case STOPPED:
++		pppcp_transition_state(CLOSED, data);
++		break;
++	case CLOSING:
++	case STOPPING:
++		pppcp_transition_state(CLOSING, data);
++		break;
++	case OPENED:
++		pppcp_this_layer_down(data);
++	case REQSENT:
++	case ACKRCVD:
++	case ACKSENT:
++		pppcp_initialize_restart_count(data, data->max_terminate);
++		pppcp_send_terminate_request(data);
++		pppcp_transition_state(CLOSING, data);
++		break;
++	}
++}
 +
-+	while ((event =3D GPOINTER_TO_UINT(g_queue_pop_head(ppp->event_queue)))){
-+		switch (event) {
-+		case PPP_UP:
-+			/* causes transition to ppp establishment */
-+			ppp_transition_phase(ppp, PPP_ESTABLISHMENT);
-+			break;
-+		case PPP_OPENED:
-+			ppp_transition_phase(ppp, PPP_AUTHENTICATION);
-+			break;
-+		case PPP_CLOSING:
-+			/* causes transition to termination phase */
-+			ppp_transition_phase(ppp, PPP_TERMINATION);
-+			break;
-+		case PPP_DOWN:
-+			/* cases transition to dead phase */
-+			ppp_transition_phase(ppp, PPP_DEAD);
-+			break;
-+		case PPP_NONE:
-+		case PPP_SUCCESS:
-+			/* causes transition to network phase */
-+			ppp_transition_phase(ppp, PPP_NETWORK);
-+			break;
-+		case PPP_FAIL:
-+			if (ppp->phase =3D=3D PPP_ESTABLISHMENT)
-+				ppp_transition_phase(ppp, PPP_DEAD);
-+			else if (ppp->phase =3D=3D PPP_AUTHENTICATION)
-+				ppp_transition_phase(ppp, PPP_TERMINATION);
-+		}
++static void pppcp_to_plus_event(struct pppcp_data *data, guint8 *packet, g=
+uint len)
++{
++	pppcp_trace(data);
++
++	switch (data->state) {
++	case CLOSING:
++		pppcp_send_terminate_request(data);
++		pppcp_transition_state(CLOSING, data);
++		break;
++	case STOPPING:
++		pppcp_send_terminate_request(data);
++		pppcp_transition_state(STOPPING, data);
++		break;
++	case REQSENT:
++	case ACKRCVD:
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case ACKSENT:
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(ACKSENT, data);
++		break;
++	case INITIAL:
++	case STARTING:
++	case CLOSED:
++	case STOPPED:
++	case OPENED:
++		pppcp_illegal_event(data->state, TO_PLUS);
++	}
++}
++
++static void pppcp_to_minus_event(struct pppcp_data *data, guint8 *packet, =
+guint len)
++{
++	pppcp_trace(data);
++	switch (data->state) {
++	case CLOSING:
++		pppcp_transition_state(CLOSED, data);
++		pppcp_this_layer_finished(data);
++		break;
++	case STOPPING:
++		pppcp_transition_state(STOPPED, data);
++		pppcp_this_layer_finished(data);
++		break;
++	case REQSENT:
++	case ACKRCVD:
++	case ACKSENT:
++		/* tlf/3p */
++		pppcp_transition_state(STOPPED, data);
++		pppcp_this_layer_finished(data);
++		break;
++	case INITIAL:
++	case STARTING:
++	case CLOSED:
++	case STOPPED:
++	case OPENED:
++		pppcp_illegal_event(data->state, TO_MINUS);
++	}
++}
++
++static void pppcp_rcr_plus_event(struct pppcp_data *data,
++				guint8 *packet, guint len)
++{
++	pppcp_trace(data);
++	switch (data->state) {
++	case CLOSED:
++		pppcp_send_terminate_ack(data, packet);
++		pppcp_transition_state(CLOSED, data);
++		break;
++	case STOPPED:
++		pppcp_initialize_restart_count(data, data->max_configure);
++		pppcp_send_configure_request(data);
++		pppcp_send_configure_ack(data, packet);
++		pppcp_transition_state(ACKSENT, data);
++		break;
++	case CLOSING:
++	case STOPPING:
++		pppcp_transition_state(data->state, data);
++		break;
++	case REQSENT:
++		pppcp_send_configure_ack(data, packet);
++		pppcp_transition_state(ACKSENT, data);
++		break;
++	case ACKRCVD:
++		pppcp_send_configure_ack(data, packet);
++		pppcp_this_layer_up(data);
++		pppcp_transition_state(OPENED, data);
++		break;
++	case ACKSENT:
++		pppcp_send_configure_ack(data, packet);
++		pppcp_transition_state(ACKSENT, data);
++		break;
++	case OPENED:
++		pppcp_this_layer_down(data);
++		pppcp_send_configure_request(data);
++		pppcp_send_configure_ack(data, packet);
++		pppcp_transition_state(ACKSENT, data);
++		break;
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, RCR_PLUS);
++	}
++}
++
++static void pppcp_rcr_minus_event(struct pppcp_data *data,
++				guint8 *packet, guint len)
++{
++	pppcp_trace(data);
++
++	switch (data->state) {
++	case CLOSED:
++		pppcp_send_terminate_ack(data, packet);
++		pppcp_transition_state(CLOSED, data);
++		break;
++	case STOPPED:
++		pppcp_initialize_restart_count(data, data->max_configure);
++		pppcp_send_configure_request(data);
++		pppcp_send_configure_nak(data, packet);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case CLOSING:
++	case STOPPING:
++		pppcp_transition_state(data->state, data);
++		break;
++	case REQSENT:
++	case ACKRCVD:
++		pppcp_send_configure_nak(data, packet);
++		pppcp_transition_state(data->state, data);
++		break;
++	case ACKSENT:
++		pppcp_send_configure_nak(data, packet);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case OPENED:
++		pppcp_this_layer_down(data);
++		pppcp_send_configure_request(data);
++		pppcp_send_configure_nak(data, packet);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, RCR_MINUS);
++	}
++}
++
++static void pppcp_rca_event(struct pppcp_data *data, guint8 *packet, guint=
+ len)
++{
++	pppcp_trace(data);
++
++	switch (data->state) {
++	case CLOSED:
++	case STOPPED:
++		pppcp_send_terminate_ack(data, packet);
++	case CLOSING:
++	case STOPPING:
++		pppcp_transition_state(data->state, data);
++		break;
++	case REQSENT:
++		pppcp_initialize_restart_count(data, data->max_configure);
++		pppcp_transition_state(ACKRCVD, data);
++		break;
++	case ACKRCVD:
++		/* scr/6x */
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(REQSENT, data);
++	case ACKSENT:
++		pppcp_initialize_restart_count(data, data->max_configure);
++		pppcp_this_layer_up(data);
++		pppcp_transition_state(OPENED, data);
++		break;
++	case OPENED:
++		pppcp_this_layer_down(data);
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, RCA);
++	}
++}
++
++static void pppcp_rcn_event(struct pppcp_data *data, guint8 *packet, guint=
+ len)
++{
++	pppcp_trace(data);
++
++	switch (data->state) {
++	case CLOSED:
++	case STOPPED:
++		pppcp_send_terminate_ack(data, packet);
++	case CLOSING:
++	case STOPPING:
++		pppcp_transition_state(data->state, data);
++	case REQSENT:
++		pppcp_initialize_restart_count(data, data->max_configure);
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case ACKRCVD:
++		/* scr/6x */
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case ACKSENT:
++		pppcp_initialize_restart_count(data, data->max_configure);
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(ACKSENT, data);
++		break;
++	case OPENED:
++		pppcp_this_layer_down(data);
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, RCN);
++	}
++}
++
++static void pppcp_rtr_event(struct pppcp_data *data, guint8 *packet, guint=
+ len)
++{
++	pppcp_trace(data);
++
++	switch (data->state) {
++	case CLOSED:
++	case STOPPED:
++		pppcp_send_terminate_ack(data, packet);
++	case CLOSING:
++	case STOPPING:
++		break;
++	case REQSENT:
++	case ACKRCVD:
++	case ACKSENT:
++		pppcp_send_terminate_ack(data, packet);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case OPENED:
++		pppcp_this_layer_down(data);
++		pppcp_zero_restart_count(data);
++		pppcp_send_terminate_ack(data, packet);
++		pppcp_transition_state(STOPPING, data);
++		break;
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, RTR);
++	}
++}
++
++static void pppcp_rta_event(struct pppcp_data *data, guint8 *packet, guint=
+ len)
++{
++	pppcp_trace(data);
++
++	switch (data->state) {
++	case CLOSED:
++	case STOPPED:
++		pppcp_transition_state(data->state, data);
++		break;
++	case CLOSING:
++		pppcp_this_layer_finished(data);
++		pppcp_transition_state(CLOSED, data);
++		break;
++	case STOPPING:
++		pppcp_this_layer_finished(data);
++		pppcp_transition_state(STOPPED, data);
++		break;
++	case REQSENT:
++	case ACKRCVD:
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case ACKSENT:
++		pppcp_transition_state(ACKSENT, data);
++		break;
++	case OPENED:
++		pppcp_this_layer_down(data);
++		pppcp_send_configure_request(data);
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, RTA);
++	}
++}
++
++static void pppcp_ruc_event(struct pppcp_data *data, guint8 *packet, guint=
+ len)
++{
++	pppcp_trace(data);
++
++	switch (data->state) {
++	case CLOSED:
++	case STOPPED:
++	case CLOSING:
++	case STOPPING:
++	case REQSENT:
++	case ACKRCVD:
++	case ACKSENT:
++	case OPENED:
++		pppcp_send_code_reject(data, packet);
++		pppcp_transition_state(data->state, data);
++		break;
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, RUC);
++	}
++}
++
++static void pppcp_rxj_plus_event(struct pppcp_data *data, guint8 *packet, =
+guint len)
++{
++	pppcp_trace(data);
++
++	switch (data->state) {
++	case CLOSED:
++	case STOPPED:
++	case CLOSING:
++	case STOPPING:
++		pppcp_transition_state(data->state, data);
++		break;
++	case REQSENT:
++	case ACKRCVD:
++		pppcp_transition_state(REQSENT, data);
++		break;
++	case ACKSENT:
++	case OPENED:
++		pppcp_transition_state(data->state, data);
++		break;
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, RXJ_PLUS);
++	}
++}
++
++static void pppcp_rxj_minus_event(struct pppcp_data *data,
++				guint8 *packet, guint len)
++{
++	pppcp_trace(data);
++
++	switch (data->state) {
++	case CLOSED:
++	case STOPPED:
++		pppcp_this_layer_finished(data);
++		pppcp_transition_state(data->state, data);
++		break;
++	case CLOSING:
++		pppcp_this_layer_finished(data);
++		pppcp_transition_state(CLOSED, data);
++		break;
++	case STOPPING:
++		pppcp_this_layer_finished(data);
++		pppcp_transition_state(STOPPED, data);
++		break;
++	case REQSENT:
++	case ACKRCVD:
++	case ACKSENT:
++		pppcp_this_layer_finished(data);
++		pppcp_transition_state(STOPPED, data);
++		break;
++	case OPENED:
++		pppcp_this_layer_down(data);
++		pppcp_initialize_restart_count(data, data->max_terminate);
++		pppcp_send_terminate_request(data);
++		pppcp_transition_state(STOPPING, data);
++		break;
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, RXJ_MINUS);
++	}
++}
++
++static void pppcp_rxr_event(struct pppcp_data *data, guint8 *packet, guint=
+ len)
++{
++	pppcp_trace(data);
++
++	switch (data->state) {
++	case CLOSED:
++	case STOPPED:
++	case CLOSING:
++	case STOPPING:
++	case REQSENT:
++	case ACKRCVD:
++	case ACKSENT:
++		pppcp_transition_state(data->state, data);
++		break;
++	case OPENED:
++		pppcp_send_echo_reply(data, packet);
++		pppcp_transition_state(OPENED, data);
++		break;
++	case INITIAL:
++	case STARTING:
++		pppcp_illegal_event(data->state, RXR);
++	}
++}
++
++static void pppcp_handle_event(gpointer user_data)
++{
++	struct pppcp_event *event;
++	struct pppcp_data *data =3D user_data;
++
++	while ((event =3D pppcp_get_event(data))) {
++		if (event->type > RXR)
++			pppcp_illegal_event(data->state, event->type);
++		else
++			data->event_ops[event->type](data, event->data,
++							event->len);
++		g_free(event);
 +	}
 +}
 +
 +/*
 + * send the event handler a new event to process
 + */
-+void ppp_generate_event(GAtPPP *ppp, enum ppp_event event)
++void pppcp_generate_event(struct pppcp_data *data,
++				enum pppcp_event_type event_type,
++				gpointer event_data, guint data_len)
 +{
-+	g_queue_push_tail(ppp->event_queue, GUINT_TO_POINTER(event));
-+	ppp_handle_event(ppp);
++	struct pppcp_event *event;
++
++	event =3D pppcp_event_new(event_type, event_data, data_len);
++	if (event)
++		g_queue_push_tail(data->event_queue, event);
++	pppcp_handle_event(data);
 +}
 +
-Index: ofono/gatchat/ppp.h
++static gint is_option(gconstpointer a, gconstpointer b)
++{
++	const struct ppp_option *o =3D a;
++	guint8 otype =3D (guint8) GPOINTER_TO_UINT(b);
++
++	if (o->type =3D=3D otype)
++		return 0;
++	else
++		return -1;
++}
++
++static void verify_config_option(gpointer elem, gpointer user_data)
++{
++	struct ppp_option *config =3D elem;
++	struct pppcp_data *data =3D user_data;
++	GList *list =3D NULL;
++	struct ppp_option *option;
++
++	/*
++	 * determine whether this config option is in the
++	 * acceptable options list
++	 */
++	if (g_list_length(data->acceptable_options))
++		list =3D g_list_find_custom(data->acceptable_options,
++				GUINT_TO_POINTER(config->type),
++				is_option);
++	if (!list) {
++		/*
++		 * if the option did not exist, we need to store a copy
++		 * of the option in the unacceptable_options list so it
++		 * can be nak'ed.
++		 */
++		option =3D g_try_malloc0(config->length);
++		if (option =3D=3D NULL)
++			return;
++		option->type =3D config->type;
++		option->length =3D config->length;
++		data->unacceptable_options =3D
++			g_list_append(data->unacceptable_options, option);
++	}
++
++}
++
++static void remove_config_option(gpointer elem, gpointer user_data)
++{
++	struct ppp_option *config =3D elem;
++	struct pppcp_data *data =3D user_data;
++	GList *list;
++
++	/*
++	 * determine whether this config option is in the
++	 * applied options list
++	 */
++	if (g_list_length(data->config_options)) {
++		list =3D g_list_find_custom(data->config_options,
++				GUINT_TO_POINTER(config->type),
++				is_option);
++		if (list)
++			data->config_options =3D
++				g_list_delete_link(data->config_options, list);
++	}
++}
++
++static guint8 pppcp_process_configure_request(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	gint len;
++	int i =3D 0;
++	struct ppp_option *option;
++	enum option_rval rval =3D OPTION_ERR;
++	struct pppcp_action *action =3D data->action;
++
++	pppcp_trace(data);
++
++	len =3D ntohs(packet->length) - CP_HEADER_SZ;
++
++	/*
++	 * check the options.
++	 */
++	while (i < len) {
++		guint8 otype =3D packet->data[i];
++		guint8 olen =3D packet->data[i+1];
++		option =3D g_try_malloc0(olen);
++		if (option =3D=3D NULL)
++			break;
++		option->type =3D otype;
++		option->length =3D olen;
++		memcpy(option->data, &packet->data[i+2], olen-2);
++		if (action->option_scan)
++			rval =3D action->option_scan(option, data);
++		switch (rval) {
++		case OPTION_ACCEPT:
++			data->acceptable_options =3D
++				g_list_append(data->acceptable_options, option);
++			break;
++		case OPTION_REJECT:
++			data->rejected_options =3D
++				g_list_append(data->rejected_options, option);
++			break;
++		case OPTION_NAK:
++			data->unacceptable_options =3D
++				g_list_append(data->unacceptable_options,
++						option);
++			break;
++		case OPTION_ERR:
++			g_printerr("unhandled option type %d\n", otype);
++		}
++		/* skip ahead to the next option */
++		i +=3D olen;
++	}
++
++	/* make sure all required config options were included */
++	g_list_foreach(data->config_options, verify_config_option, data);
++
++	if (g_list_length(data->unacceptable_options) ||
++			g_list_length(data->rejected_options))
++		return RCR_MINUS;
++
++	/*
++	 * all options were acceptable, so we should apply them before
++	 * sending a configure-ack
++	 *
++	 * Remove all applied options from the config_option list.  The
++	 * protocol will have to re-add them if they want them renegotiated
++	 * when the ppp goes down.
++	 */
++	if (action->option_process) {
++		g_list_foreach(data->acceptable_options,
++				action->option_process, data->priv);
++		g_list_foreach(data->acceptable_options, remove_config_option,
++				data);
++	}
++
++	return RCR_PLUS;
++}
++
++static guint8 pppcp_process_configure_ack(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	guint len;
++	GList *list;
++	struct ppp_option *acked_option;
++	guint i =3D 0;
++	struct pppcp_action *action =3D data->action;
++
++	pppcp_trace(data);
++
++	len =3D ntohs(packet->length) - CP_HEADER_SZ;
++
++	/* if identifiers don't match, we should silently discard */
++	if (packet->identifier !=3D data->config_identifier) {
++		g_printerr("received an ack id %d, but config id is %d\n",
++			packet->identifier, data->config_identifier);
++		return 0;
++	}
++
++	/*
++	 * check each acked option.  If it is what we requested,
++	 * then we can apply these option values.
++	 *
++	 * XXX what if it isn't?  Do this correctly -- for now
++	 * we are just going to assume that all options matched
++	 * and apply them.
++	 */
++	while (i < len) {
++		guint8 otype =3D packet->data[i];
++		guint8 olen =3D packet->data[i + 1];
++		acked_option =3D g_try_malloc0(olen);
++		if (acked_option =3D=3D NULL)
++			break;
++		acked_option->type =3D otype;
++		acked_option->length =3D olen;
++		memcpy(acked_option->data, &packet->data[i + 2], olen - 2);
++		list =3D g_list_find_custom(data->config_options,
++				GUINT_TO_POINTER(acked_option->type),
++				is_option);
++		if (list) {
++			/*
++			 * once we've applied the option, delete it from
++		 	 * the config_options list.
++			 */
++			if (action->option_process)
++				action->option_process(acked_option,
++							data->priv);
++			data->config_options =3D
++				g_list_delete_link(data->config_options, list);
++		} else
++			g_printerr("oops -- found acked option %d we didn't request\n", acked_o=
+ption->type);
++		g_free(acked_option);
++
++		/* skip ahead to the next option */
++		i +=3D olen;
++	}
++	return RCA;
++}
++
++static guint8 pppcp_process_configure_nak(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	guint len;
++	GList *list;
++	struct ppp_option *naked_option;
++	struct ppp_option *config_option;
++	guint i =3D 0;
++	enum option_rval rval =3D OPTION_ERR;
++	struct pppcp_action *action =3D data->action;
++
++	pppcp_trace(data);
++
++	len =3D ntohs(packet->length) - CP_HEADER_SZ;
++
++	/* if identifiers don't match, we should silently discard */
++	if (packet->identifier !=3D data->config_identifier)
++		return 0;
++
++	/*
++	 * check each unacceptable option.  If it is acceptable, then
++	 * we can resend the configure request with this value. we need
++	 * to check the current config options to see if we need to
++	 * modify a value there, or add a new option.
++	 */
++	while (i < len) {
++		guint8 otype =3D packet->data[i];
++		guint8 olen =3D packet->data[i+1];
++		naked_option =3D g_try_malloc0(olen);
++		if (naked_option =3D=3D NULL)
++			break;
++		naked_option->type =3D otype;
++		naked_option->length =3D olen;
++		memcpy(naked_option->data, &packet->data[i + 2], olen - 2);
++		if (action->option_scan)
++			rval =3D action->option_scan(naked_option, data);
++		if (rval =3D=3D OPTION_ACCEPT) {
++			/*
++			 * check the current config options to see if they
++			 * match.
++			 */
++			list =3D g_list_find_custom(data->config_options,
++				GUINT_TO_POINTER(otype),
++				is_option);
++			if (list) {
++				/* modify current option value to match */
++				config_option =3D list->data;
++
++				/*
++				 * option values should match, otherwise
++				 * we need to reallocate
++				 */
++				if ((config_option->length =3D=3D
++					naked_option->length) && (olen - 2)) {
++						memcpy(config_option->data,
++							naked_option->data,
++							olen - 2);
++				} else {
++					/* XXX implement this */
++					g_printerr("uh oh, option value doesn't match\n");
++				}
++				g_free(naked_option);
++			} else {
++				/* add to list of config options */
++				pppcp_add_config_option(data, naked_option);
++			}
++		} else {
++			/* XXX handle this correctly */
++			g_printerr("oops, option wasn't acceptable\n");
++			g_free(naked_option);
++		}
++
++		/* skip ahead to the next option */
++		i +=3D olen;
++	}
++	return RCN;
++}
++
++static guint8 pppcp_process_configure_reject(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	/*
++	 * make sure identifier matches that of last sent configure
++	 * request
++	 */
++	if (packet->identifier =3D=3D data->config_identifier) {
++		/*
++		 * check to see which options were rejected
++		 * Rejected options must be a subset of requested
++		 * options.
++		 *
++		 * when a new configure-request is sent, we may
++		 * not request any of these options be negotiated
++		 */
++		return RCN;
++	}
++	return 0;
++}
++
++static guint8 pppcp_process_terminate_request(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	return RTR;
++}
++
++static guint8 pppcp_process_terminate_ack(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	/*
++	 * if we wind up using the data field for anything, then
++	 * we'd want to check the identifier.
++	 * even if the identifiers don't match, we still handle
++	 * a terminate ack, as it is allowed to be unelicited
++	 */
++	return RTA;
++}
++
++static guint8 pppcp_process_code_reject(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	/*
++	 * determine if the code reject is catastrophic or not.
++	 * return RXJ_PLUS if this reject is acceptable, RXJ_MINUS if
++	 * it is catastrophic.
++	 */
++	return RXJ_MINUS;
++}
++
++static guint8 pppcp_process_protocol_reject(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	/*
++	 * determine if the protocol reject is catastrophic or not.
++	 * return RXJ_PLUS if this reject is acceptable, RXJ_MINUS if
++	 * it is catastrophic.
++	 */
++	return RXJ_MINUS;
++}
++
++static guint8 pppcp_process_echo_request(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	return RXR;
++}
++
++static guint8 pppcp_process_echo_reply(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	return 0;
++}
++
++static guint8 pppcp_process_discard_request(struct pppcp_data *data,
++					struct pppcp_packet *packet)
++{
++	return 0;
++}
++
++/*
++ * parse the packet and determine which event this packet caused
++ */
++void pppcp_process_packet(gpointer priv, guint8 *new_packet)
++{
++	struct pppcp_data *data =3D priv;
++	struct pppcp_packet *packet =3D (struct pppcp_packet *) new_packet;
++	guint8 event_type;
++	gpointer event_data =3D NULL;
++	guint data_len =3D 0;
++
++	if (data =3D=3D NULL)
++		return;
++
++	/* check flags to see if we support this code */
++	if (!(data->valid_codes & (1 << packet->code))) {
++		event_type =3D RUC;
++	} else
++		event_type =3D data->packet_ops[packet->code-1](data, packet);
++	if (event_type) {
++		data_len =3D ntohs(packet->length);
++		event_data =3D packet;
++		pppcp_generate_event(data, event_type, event_data, data_len);
++	}
++}
++
++void pppcp_set_valid_codes(struct pppcp_data *data, guint16 codes)
++{
++	if (data =3D=3D NULL)
++		return;
++
++	data->valid_codes =3D codes;
++}
++
++void pppcp_free(struct pppcp_data *data)
++{
++	if (data =3D=3D NULL)
++		return;
++
++	/* free event queue */
++	if (!g_queue_is_empty(data->event_queue))
++		g_queue_foreach(data->event_queue, (GFunc) g_free, NULL);
++	g_queue_free(data->event_queue);
++
++	/* remove all config options */
++	pppcp_clear_options(data);
++
++	/* free self */
++	g_free(data);
++}
++
++struct pppcp_data *pppcp_new(GAtPPP *ppp, guint16 proto,
++				gpointer priv)
++{
++	struct pppcp_data *data;
++
++	data =3D g_try_malloc0(sizeof(struct pppcp_data));
++	if (!data)
++		return NULL;
++
++	data->state =3D INITIAL;
++	data->restart_interval =3D INITIAL_RESTART_TIMEOUT;
++	data->max_terminate =3D MAX_TERMINATE;
++	data->max_configure =3D MAX_CONFIGURE;
++	data->max_failure =3D MAX_FAILURE;
++	data->event_queue =3D g_queue_new();
++	data->identifier =3D 0;
++	data->ppp =3D ppp;
++	data->proto =3D proto;
++	data->priv =3D priv;
++
++	/* setup func ptrs for processing packet by pppcp code */
++	data->packet_ops[CONFIGURE_REQUEST - 1] =3D
++					pppcp_process_configure_request;
++	data->packet_ops[CONFIGURE_ACK - 1] =3D pppcp_process_configure_ack;
++	data->packet_ops[CONFIGURE_NAK - 1] =3D pppcp_process_configure_nak;
++	data->packet_ops[CONFIGURE_REJECT - 1] =3D pppcp_process_configure_reject;
++	data->packet_ops[TERMINATE_REQUEST - 1] =3D
++					pppcp_process_terminate_request;
++	data->packet_ops[TERMINATE_ACK - 1] =3D pppcp_process_terminate_ack;
++	data->packet_ops[CODE_REJECT - 1] =3D pppcp_process_code_reject;
++	data->packet_ops[PROTOCOL_REJECT - 1] =3D pppcp_process_protocol_reject;
++	data->packet_ops[ECHO_REQUEST - 1] =3D pppcp_process_echo_request;
++	data->packet_ops[ECHO_REPLY - 1] =3D pppcp_process_echo_reply;
++	data->packet_ops[DISCARD_REQUEST - 1] =3D pppcp_process_discard_request;
++
++	/* setup func ptrs for handling events by event type */
++	data->event_ops[UP] =3D pppcp_up_event;
++	data->event_ops[DOWN] =3D pppcp_down_event;
++	data->event_ops[OPEN] =3D pppcp_open_event;
++	data->event_ops[CLOSE] =3D pppcp_close_event;
++	data->event_ops[TO_PLUS] =3D pppcp_to_plus_event;
++	data->event_ops[TO_MINUS] =3D pppcp_to_minus_event;
++	data->event_ops[RCR_PLUS] =3D pppcp_rcr_plus_event;
++	data->event_ops[RCR_MINUS] =3D pppcp_rcr_minus_event;
++	data->event_ops[RCA] =3D pppcp_rca_event;
++	data->event_ops[RCN] =3D pppcp_rcn_event;
++	data->event_ops[RTR] =3D pppcp_rtr_event;
++	data->event_ops[RTA] =3D pppcp_rta_event;
++	data->event_ops[RUC] =3D pppcp_ruc_event;
++	data->event_ops[RXJ_PLUS] =3D pppcp_rxj_plus_event;
++	data->event_ops[RXJ_MINUS] =3D pppcp_rxj_minus_event;
++	data->event_ops[RXR] =3D pppcp_rxr_event;
++
++	return data;
++}
+Index: ofono/gatchat/ppp_cp.h
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ ofono/gatchat/ppp.h	2010-03-19 11:51:37.553076071 -0700
-@@ -0,0 +1,130 @@
++++ ofono/gatchat/ppp_cp.h	2010-03-19 12:10:09.459488338 -0700
+@@ -0,0 +1,139 @@
 +/*
 + *
 + *  PPP library with GLib integration
@@ -747,117 +1599,142 @@ Index: ofono/gatchat/ppp.h
  USA
 + *
 + */
-+#define DEFAULT_MRU	1500
-+#define BUFFERSZ	DEFAULT_MRU*2
-+#define DEFAULT_ACCM	0x00000000
-+#define PPP_ESC		0x7d
-+#define PPP_FLAG_SEQ 	0x7e
-+#define PPP_ADDR_FIELD	0xff
-+#define PPP_CTRL	0x03
-+#define LCP_PROTOCOL	0xc021
-+#define CHAP_PROTOCOL	0xc223
-+#define PPP_HEADROOM	2
-+#define HDLC_HEADROOM	3
-+#define HDLC_TAIL	3
-+#define MD5		5
 +
-+enum ppp_phase {
-+	PPP_DEAD =3D 0,
-+	PPP_ESTABLISHMENT,
-+	PPP_AUTHENTICATION,
-+	PPP_NETWORK,
-+	PPP_TERMINATION,
++struct pppcp_data;
++
++enum pppcp_code {
++	CONFIGURE_REQUEST =3D 1,
++	CONFIGURE_ACK,
++	CONFIGURE_NAK,
++	CONFIGURE_REJECT,
++	TERMINATE_REQUEST,
++	TERMINATE_ACK,
++	CODE_REJECT,
++	PROTOCOL_REJECT,
++	ECHO_REQUEST,
++	ECHO_REPLY,
++	DISCARD_REQUEST
 +};
 +
-+enum ppp_event {
-+	PPP_UP =3D 1,
-+	PPP_OPENED,
-+	PPP_SUCCESS,
-+	PPP_NONE,
-+	PPP_CLOSING,
-+	PPP_FAIL,
-+	PPP_DOWN
++enum pppcp_event_type {
++	UP,
++	DOWN,
++	OPEN,
++	CLOSE,
++	TO_PLUS,
++	TO_MINUS,
++	RCR_PLUS,
++	RCR_MINUS,
++	RCA,
++	RCN,
++	RTR,
++	RTA,
++	RUC,
++	RXJ_PLUS,
++	RXJ_MINUS,
++	RXR,
 +};
 +
-+struct ppp_packet_handler {
-+	guint16 proto;
-+	void (*handler)(gpointer priv, guint8 *packet);
-+	gpointer priv;
++enum pppcp_state {
++	INITIAL,
++	STARTING,
++	CLOSED,
++	STOPPED,
++	CLOSING,
++	STOPPING,
++	REQSENT,
++	ACKRCVD,
++	ACKSENT,
++	OPENED,
 +};
 +
-+struct ppp_header {
-+	guint16 proto;
-+	guint8 info[0];
++/* option format */
++struct ppp_option {
++	guint8 type;
++	guint8 length;
++	guint8 data[0];
++};
++
++enum option_rval {
++	OPTION_ACCEPT,
++	OPTION_REJECT,
++	OPTION_NAK,
++	OPTION_ERR,
++};
++
++struct pppcp_action {
++	void (*this_layer_up)(struct pppcp_data *data);
++	void (*this_layer_down)(struct pppcp_data *data);
++	void (*this_layer_started)(struct pppcp_data *data);
++	void (*this_layer_finished)(struct pppcp_data *data);
++	enum option_rval (*option_scan)(struct ppp_option *option,
++						gpointer user_data);
++	void (*option_process)(gpointer option, gpointer user_data);
++};
++
++struct pppcp_packet {
++	guint8 code;
++	guint8 identifier;
++	guint16 length;
++	guint8 data[0];
 +} __attribute__((packed));
 +
-+struct packed_short {
-+	guint16 s;
-+} __attribute__((packed));
-+
-+struct packed_long {
-+	guint32 l;
-+} __attribute__((packed));
-+
-+static inline guint32 __get_unaligned_long(const gpointer p)
-+{
-+	const struct packed_long *ptr =3D p;
-+	return ptr->l;
-+}
-+
-+static inline guint16 __get_unaligned_short(const gpointer p)
-+{
-+	const struct packed_short *ptr =3D p;
-+	return ptr->s;
-+}
-+
-+#define get_host_long(p) \
-+	(ntohl(__get_unaligned_long(p)))
-+
-+#define get_host_short(p) \
-+	(ntohs(__get_unaligned_short(p)))
-+
-+#define ppp_info(packet) \
-+	(packet + 4)
-+
-+#define ppp_proto(packet) \
-+	(get_host_short(packet + 2))
-+
-+struct _GAtPPP {
-+	gint ref_count;
-+	enum ppp_phase phase;
-+	guint8 buffer[BUFFERSZ];
-+	int index;
-+	gint mru;
-+	guint16 auth_proto;
-+	char user_name[256];
-+	char passwd[256];
-+	gboolean pfc;
-+	gboolean acfc;
-+	guint32 xmit_accm[8];
-+	guint32 recv_accm;
-+	GIOChannel *modem;
++struct pppcp_data {
++	enum pppcp_state state;
++	guint restart_timer;
++	guint restart_counter;
++	guint restart_interval;
++	guint max_terminate;
++	guint max_configure;
++	guint max_failure;
++	guint32 magic_number;
 +	GQueue *event_queue;
-+	GQueue *recv_queue;
-+	GAtPPPConnectFunc connect_cb;
-+	gpointer connect_data;
-+	GAtPPPDisconnectFunc disconnect_cb;
-+	gpointer disconnect_data;
-+	gint modem_watch;
++	GList *config_options;
++	GList *acceptable_options;
++	GList *unacceptable_options;
++	GList *rejected_options;
++	GList *applied_options;
++	GAtPPP *ppp;
++	guint8 identifier;  /* don't think I need this now */
++	guint8 config_identifier;
++	guint8 terminate_identifier;
++	guint8 reject_identifier;
++	struct pppcp_action *action;
++	guint16 valid_codes;
++	guint8 (*packet_ops[11])(struct pppcp_data *data,
++					struct pppcp_packet *packet);
++	void (*event_ops[16])(struct pppcp_data *data, guint8 *packet,
++				guint length);
++	gpointer priv;
++	guint16 proto;
 +};
 +
-+gboolean ppp_cb(GIOChannel *channel, GIOCondition cond, gpointer data);
-+void ppp_close(GAtPPP *ppp);
-+void ppp_generate_event(GAtPPP *ppp, enum ppp_event event);
-+void ppp_register_packet_handler(struct ppp_packet_handler *handler);
-+void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint infolen);
-+void ppp_set_auth(GAtPPP *ppp, guint8 *auth_data);
-+void ppp_set_recv_accm(GAtPPP *ppp, guint32 accm);
-+guint32 ppp_get_xmit_accm(GAtPPP *ppp);
-+void ppp_set_pfc(GAtPPP *ppp, gboolean pfc);
-+gboolean ppp_get_pfc(GAtPPP *ppp);
-+void ppp_set_acfc(GAtPPP *ppp, gboolean acfc);
-+gboolean ppp_get_acfc(GAtPPP *ppp);
++struct pppcp_data *pppcp_new(GAtPPP *ppp, guint16 proto, gpointer priv);
++void pppcp_free(struct pppcp_data *data);
++void pppcp_add_config_option(struct pppcp_data *data,
++				struct ppp_option *option);
++void pppcp_set_valid_codes(struct pppcp_data *data, guint16 codes);
++void pppcp_generate_event(struct pppcp_data *data,
++				enum pppcp_event_type event_type,
++				gpointer event_data, guint data_len);
++void pppcp_process_packet(gpointer priv, guint8 *new_packet);
+Index: ofono/gatchat/ppp.h
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- ofono.orig/gatchat/ppp.h	2010-03-19 12:10:04.000000000 -0700
++++ ofono/gatchat/ppp.h	2010-03-19 12:28:11.820599845 -0700
+@@ -18,6 +18,8 @@
+  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
+  *
+  */
++#include "ppp_cp.h"
++
+ #define DEFAULT_MRU	1500
+ #define BUFFERSZ	DEFAULT_MRU*2
+ #define DEFAULT_ACCM	0x00000000
 
 
---===============3633947876294147134==--
+--===============3384709435955339504==--
 
