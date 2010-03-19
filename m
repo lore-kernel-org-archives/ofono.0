@@ -1,152 +1,152 @@
-Content-Type: multipart/mixed; boundary="===============5732987242549108707=="
+Content-Type: multipart/mixed; boundary="===============2716151927384629357=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH] Add parser for file list objects
-Date: Fri, 19 Mar 2010 15:11:43 +0800
-Message-ID: <1268982703-20085-1-git-send-email-yang.gu@intel.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH 04/10] Add server at command data structure
+Date: Fri, 19 Mar 2010 17:44:42 +0800
+Message-ID: <1268991888-17279-5-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1268991888-17279-4-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5732987242549108707==
+--===============2716151927384629357==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   85 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/stkutil.h |    6 ++++
- 2 files changed, 91 insertions(+), 0 deletions(-)
+ gatchat/gatserver.c |   27 +++++++++++++++++++++++++++
+ gatchat/gatserver.h |   22 ++++++++++++++++++++++
+ 2 files changed, 49 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 940eee2..18f1cdb 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -416,6 +416,89 @@ static gboolean parse_dataobj_tone(struct comprehensio=
-n_tlv_iter *iter,
- 	return TRUE;
- }
- =
-
-+/* Defined in TS 102.223 Section 8.18 */
-+static gboolean parse_dataobj_file_list(struct comprehension_tlv_iter *ite=
-r,
-+						void *user)
-+{
-+	GSList **fl =3D user;
-+	const unsigned char *data;
-+	unsigned int len;
-+	unsigned int i;
-+	unsigned int start;
-+	struct stk_file *sf;
-+	unsigned char last_type =3D 0x2f;
-+
-+	if (comprehension_tlv_iter_get_tag(iter) !=3D
-+			STK_DATA_OBJECT_TYPE_FILE_LIST)
-+		return FALSE;
-+
-+	len =3D comprehension_tlv_iter_get_length(iter);
-+	if (len < 5)
-+		return FALSE;
-+
-+	data =3D comprehension_tlv_iter_get_data(iter);
-+
-+	for (i =3D 1; i < len; i +=3D 2) {
-+		/* Check the validity of file type.
-+		 * According to TS 11.11, each file id contains of two bytes,
-+		 * in which the first byte is the type of file. For GSM is:
-+		 * 0x3f: master file
-+		 * 0x7f: 1st level dedicated file
-+		 * 0x5f: 2nd level dedicated file
-+		 * 0x2f: elementary file under the master file
-+		 * 0x6f: elementary file under 1st level dedicated file
-+		 * 0x4f: elementary file under 2nd level dedicated file
-+		 */
-+		if (data[i] =3D=3D 0x3f) {
-+			if ((last_type !=3D 0x2f) && (last_type !=3D 0x6f) &&
-+							(last_type !=3D 0x4f))
-+				goto error;
-+			start =3D i;
-+		} else if (data[i] =3D=3D 0x2f) {
-+			if (last_type !=3D 0x3f)
-+				goto error;
-+		} else if (data[i] =3D=3D 0x6f) {
-+			if (last_type !=3D 0x7f)
-+				goto error;
-+		} else if (data[i] =3D=3D 0x4f) {
-+			if (last_type !=3D 0x5f)
-+				goto error;
-+		} else if (data[i] =3D=3D 0x7f) {
-+			if (last_type !=3D 0x3f)
-+				goto error;
-+		} else if (data[i] =3D=3D 0x5f) {
-+			if (last_type !=3D 0x7f)
-+				goto error;
-+		} else
-+			goto error;
-+
-+		if ((data[i] =3D=3D 0x2f) || (data[i] =3D=3D 0x6f) ||
-+						(data[i] =3D=3D 0x4f)) {
-+			sf =3D g_try_new0(struct stk_file, 1);
-+			if (sf =3D=3D NULL)
-+				goto error;
-+
-+			sf->len =3D i - start;
-+			memcpy(sf->file, data + start, i - start);
-+			*fl =3D g_slist_prepend(*fl, sf);
-+		}
-+
-+		last_type =3D data[i];
-+	}
-+
-+	if ((data[len - 2] !=3D 0x2f) && (data[len - 2] !=3D 0x6f) &&
-+						(data[len - 2] !=3D 0x4f))
-+		goto error;
-+
-+	*fl =3D g_slist_reverse(*fl);
-+	return TRUE;
-+
-+error:
-+	g_slist_foreach(*fl, (GFunc)g_free, NULL);
-+	g_slist_free(*fl);
-+	return FALSE;
-+}
-+
- /* Defined in TS 102.223 Section 8.31 */
- static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *iter,
- 					void *user)
-@@ -533,6 +616,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
-bject_type type)
- 		return parse_dataobj_text;
- 	case STK_DATA_OBJECT_TYPE_TONE:
- 		return parse_dataobj_tone;
-+	case STK_DATA_OBJECT_TYPE_FILE_LIST:
-+		return parse_dataobj_file_list;
- 	case STK_DATA_OBJECT_TYPE_ICON_ID:
- 		return parse_dataobj_icon_id;
- 	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
-diff --git a/src/stkutil.h b/src/stkutil.h
-index 1d690b5..bafe03c 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -345,6 +345,12 @@ struct stk_result {
- 	unsigned char *additional;
+diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
+index 0658553..6173765 100644
+--- a/gatchat/gatserver.c
++++ b/gatchat/gatserver.c
+@@ -88,6 +88,13 @@ struct v250_settings {
+ 	unsigned int c108;		/* set by &D<val> */
  };
  =
 
-+/* Define the struct of single file in TS102.223 Section 8.18 */
-+struct stk_file {
-+	unsigned char file[8];
-+	unsigned int len;
++/* AT command set that server supported */
++struct at_command {
++	GAtServerNotifyFunc notify;
++	gpointer user_data;
++	GDestroyNotify destroy_notify;
 +};
 +
- /*
-  * According to 102.223 Section 8.72 the length of text attribute CTLV is 1
-  * byte.  This means that the maximum size is 127 according to the rules
+ struct _GAtServer {
+ 	gint ref_count;				/* Ref count */
+ 	struct v250_settings v250;		/* V.250 command setting */
+@@ -99,6 +106,7 @@ struct _GAtServer {
+ 	gpointer user_disconnect_data;		/* User disconnect data */
+ 	GAtDebugFunc debugf;			/* Debugging output function */
+ 	gpointer debug_data;			/* Data to pass to debug func */
++	GHashTable *command_list;		/* List of AT commands */
+ 	struct ring_buffer *read_buf;		/* Current read buffer */
+ 	GQueue *write_queue;			/* Write buffer queue */
+ 	guint max_read_attempts;		/* Max reads per select */
+@@ -740,6 +748,9 @@ static void g_at_server_cleanup(GAtServer *server)
+ 	/* Cleanup pending data to write */
+ 	write_queue_free(server->write_queue);
+ =
+
++	g_hash_table_destroy(server->command_list);
++	server->command_list =3D NULL;
++
+ 	server->channel =3D NULL;
+ }
+ =
+
+@@ -785,6 +796,16 @@ static void v250_settings_create(struct v250_settings =
+*v250)
+ 	v250->c108 =3D 0;
+ }
+ =
+
++static void at_notify_node_destroy(gpointer data)
++{
++	struct at_command *node =3D data;
++
++	if (node->destroy_notify)
++		node->destroy_notify(node->user_data);
++
++	g_free(node);
++}
++
+ GAtServer *g_at_server_new(GIOChannel *io)
+ {
+ 	GAtServer *server;
+@@ -799,6 +820,9 @@ GAtServer *g_at_server_new(GIOChannel *io)
+ 	server->ref_count =3D 1;
+ 	v250_settings_create(&server->v250);
+ 	server->channel =3D io;
++	server->command_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++							g_free,
++							at_notify_node_destroy);
+ 	server->read_buf =3D ring_buffer_new(BUF_SIZE);
+ 	if (!server->read_buf)
+ 		goto error;
+@@ -823,6 +847,9 @@ GAtServer *g_at_server_new(GIOChannel *io)
+ 	return server;
+ =
+
+ error:
++	if (server->command_list)
++		g_hash_table_destroy(server->command_list);
++
+ 	if (server->read_buf)
+ 		ring_buffer_free(server->read_buf);
+ =
+
+diff --git a/gatchat/gatserver.h b/gatchat/gatserver.h
+index 698f7e0..1c12a0d 100644
+--- a/gatchat/gatserver.h
++++ b/gatchat/gatserver.h
+@@ -26,6 +26,7 @@
+ extern "C" {
+ #endif
+ =
+
++#include "gatresult.h"
+ #include "gatutil.h"
+ =
+
+ struct _GAtServer;
+@@ -46,6 +47,27 @@ enum _GAtServerResult {
+ =
+
+ typedef enum _GAtServerResult GAtServerResult;
+ =
+
++/* Types of AT command:
++ * COMMAND_ONLY: command without any sub-parameters, e.g. ATA, AT+CLCC
++ * QUERY: command followed by '?', e.g. AT+CPIN?
++ * SUPPORT: command followed by '=3D?', e.g. AT+CSMS=3D?
++ * SET: command followed by '=3D', e.g. AT+CLIP=3D1
++ * 	or, basic command followed with sub-parameters, e.g. ATD12345;
++ */
++enum _GAtServerRequestType {
++	G_AT_SERVER_REQUEST_TYPE_ERROR,
++	G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY,
++	G_AT_SERVER_REQUEST_TYPE_QUERY,
++	G_AT_SERVER_REQUEST_TYPE_SUPPORT,
++	G_AT_SERVER_REQUEST_TYPE_SET,
++};
++
++typedef enum _GAtServerRequestType GAtServerRequestType;
++
++typedef GAtServerResult (*GAtServerNotifyFunc)(GAtServerRequestType type,
++						GAtResult *result,
++						gpointer user_data);
++
+ GAtServer *g_at_server_new(GIOChannel *io);
+ =
+
+ GAtServer *g_at_server_ref(GAtServer *server);
 -- =
 
-1.6.3.3
+1.6.6.1
 
 
---===============5732987242549108707==--
+--===============2716151927384629357==--
 
