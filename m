@@ -1,29 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============6640889148838389410=="
+Content-Type: multipart/mixed; boundary="===============0748461006117484811=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] Checking PIN length based on its type (PIN / PUK / NET).
-Date: Fri, 19 Mar 2010 17:01:46 +0200
-Message-ID: <80fd4e751003190801h1369413by1ecffe1f3db05bd5@mail.gmail.com>
-In-Reply-To: <1269009312-16345-1-git-send-email-ppessi@gmail.com>
+Date: Fri, 19 Mar 2010 10:03:38 -0500
+Message-ID: <201003191003.38959.denkenz@gmail.com>
+In-Reply-To: <80fd4e751003190801h1369413by1ecffe1f3db05bd5@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6640889148838389410==
+--===============0748461006117484811==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2010/3/19  <ppessi@gmail.com>:
-> - =C2=A0 =C2=A0 =C2=A0 if (!strcmp(new, old))
-> + =C2=A0 =C2=A0 =C2=A0 if (!strcmp(new, old, PIN_TYPE_PIN))
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return dbus_messag=
-e_new_method_return(msg);
+Hi Pekka,
 
-I could have sworn I compiled and run the code, but then probably not.
+> 2010/3/19  <ppessi@gmail.com>:
+> > -       if (!strcmp(new, old))
+> > +       if (!strcmp(new, old, PIN_TYPE_PIN))
+> >                return dbus_message_new_method_return(msg);
+> =
 
--- =
+> I could have sworn I compiled and run the code, but then probably not.
+> =
 
-Pekka.Pessi mail at nokia.com
 
---===============6640889148838389410==--
+Just resend the patch ;)
+
+Regards,
+-Denis
+
+--===============0748461006117484811==--
 
