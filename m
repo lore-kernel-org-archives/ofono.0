@@ -1,50 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============6989507305494447273=="
+Content-Type: multipart/mixed; boundary="===============2909958755536017501=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [patch 6/6] Allow gsmdial to use gatchat ppp support
-Date: Sat, 20 Mar 2010 16:35:42 +0100
-Message-ID: <1269099342.2700.181.camel@localhost.localdomain>
-In-Reply-To: <20100319124630.14d5ddc6@kcaccard-MOBL3>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 03/10] Add extended command parsing
+Date: Mon, 22 Mar 2010 13:01:10 -0500
+Message-ID: <201003221301.11363.denkenz@gmail.com>
+In-Reply-To: <1268991888-17279-4-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6989507305494447273==
+--===============2909958755536017501==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
-
-> Add option to use PPP to gsmdial.
-> =
+Hi Zhenhua,
 
 > ---
->  gatchat/gsmdial.c |   90 +++++++++++++++++++++++++++++++++++++++++++++++=
-+++++--
->  1 file changed, 87 insertions(+), 3 deletions(-)
-> =
+>  gatchat/gatserver.c |   65
+>  +++++++++++++++++++++++++++++++++++++++++++++++++- 1 files changed, 63
+>  insertions(+), 2 deletions(-)
 
-> Index: ofono/gatchat/gsmdial.c
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- ofono.orig/gatchat/gsmdial.c	2010-03-19 12:28:11.725601078 -0700
-> +++ ofono/gatchat/gsmdial.c	2010-03-19 12:43:54.427612839 -0700
-> @@ -29,10 +29,14 @@
->  #include <errno.h>
->  #include <unistd.h>
->  #include <sys/signalfd.h>
-> +#include <arpa/inet.h>
-> +#include <netinet/in.h>
-> +#include <net/if.h>
+I applied this patch but refactored it heavily afterwards.
 
-patches have to be always submitted against the latest tree.
+Regards,
+-Denis
 
-Regards
-
-Marcel
-
-
-
---===============6989507305494447273==--
+--===============2909958755536017501==--
 
