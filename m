@@ -1,29 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============2909958755536017501=="
+Content-Type: multipart/mixed; boundary="===============5605776099605033125=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 03/10] Add extended command parsing
-Date: Mon, 22 Mar 2010 13:01:10 -0500
-Message-ID: <201003221301.11363.denkenz@gmail.com>
-In-Reply-To: <1268991888-17279-4-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [PATCH 02/10] Add basic command parsing
+Date: Mon, 22 Mar 2010 13:19:17 -0500
+Message-ID: <201003221319.18283.denkenz@gmail.com>
+In-Reply-To: <1268991888-17279-3-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2909958755536017501==
+--===============5605776099605033125==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Zhenhua,
 
-> ---
->  gatchat/gatserver.c |   65
->  +++++++++++++++++++++++++++++++++++++++++++++++++- 1 files changed, 63
->  insertions(+), 2 deletions(-)
+> According to V.250 5.3.1, the basic command is either a single
+> character or the '&' followed by a single character.
 
-I applied this patch but refactored it heavily afterwards.
+Can you rebase this patch against upstream and resubmit?
 
-Regards,
+Thanks,
 -Denis
 
---===============2909958755536017501==--
+--===============5605776099605033125==--
 
