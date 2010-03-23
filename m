@@ -1,108 +1,182 @@
-Content-Type: multipart/mixed; boundary="===============7008841948180417437=="
+Content-Type: multipart/mixed; boundary="===============2735991380908424405=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/6] PPP Patches v3
-Date: Mon, 22 Mar 2010 21:51:38 -0700
-Message-ID: <1269319898.11714.25.camel@localhost.localdomain>
-In-Reply-To: <20100322210727.558b4197@kcaccard-MOBL3>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: Re: [PATCH 6/6] Add PPP option to gsmdial
+Date: Tue, 23 Mar 2010 02:30:34 -0300
+Message-ID: <20100323053034.GA17646@vigoh>
+In-Reply-To: <1269302761-20125-7-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7008841948180417437==
+--===============2735991380908424405==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+* Kristen Carlson Accardi <kristen@linux.intel.com> [2010-03-22 17:06:01 =
+-0700]:
 
-> > > > > > Changes since v2 - corrected whitespace. =
+> Implement new options for gsmdial to use PPP and set the user name and
+> password for authentication if needed.
+> ---
+>  gatchat/gsmdial.c |   87 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++--
+>  1 files changed, 84 insertions(+), 3 deletions(-)
+> =
 
-> > > > > =
+> diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+> index 2087e70..aee9eea 100644
+> --- a/gatchat/gsmdial.c
+> +++ b/gatchat/gsmdial.c
+> @@ -36,6 +36,7 @@
+>  #include <glib.h>
+>  #include <gatchat.h>
+>  #include <gattty.h>
+> +#include <gatppp.h>
+>  =
 
-> > > > > all the patches have been applied.
-> > > > > =
+>  static const char *none_prefix[] =3D { NULL };
+>  static const char *cgreg_prefix[] =3D { "+CGREG:", NULL };
+> @@ -48,7 +49,11 @@ static gint option_cid =3D 0;
+>  static gchar *option_apn =3D NULL;
+>  static gint option_offmode =3D 0;
+>  static gboolean option_legacy =3D FALSE;
+> +static gboolean option_ppp =3D FALSE;
+> +static gchar *option_username =3D NULL;
+> +static gchar *option_password =3D NULL;
+>  =
 
-> > > > > So form now on please send smaller patches as soon as you have th=
-em
-> > > > > ready and tested. If you need comments or have questions, you can=
- use
-> > > > > the mailing list as well.
-> > > > =
+> +static GAtPPP *ppp;
+>  static GAtChat *control;
+>  static GAtChat *modem;
+>  static GMainLoop *event_loop;
+> @@ -223,6 +228,76 @@ static void at_cgact_up_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+>  	g_at_chat_send(modem, buf, none_prefix, NULL, NULL, NULL);
+>  }
+>  =
 
-> > > > some additional comments from my side.
-> > > > =
+> +static void print_ip_address(const char *label, guint32 ip_addr)
+> +{
+> +	struct in_addr addr;
+> +	char buf[INET_ADDRSTRLEN];
+> +
+> +	addr.s_addr =3D ip_addr;
+> +
+> +	if (inet_ntop(AF_INET, &addr, buf, INET_ADDRSTRLEN))
+> +		g_print("%s: %s\n", label, buf);
+> +}
+> +
+> +static void ppp_connect(GAtPPP *ppp, GAtPPPConnectStatus success,
+> +			guint32 ip_addr, guint32 dns1, guint32 dns2,
+> +			gpointer user_data)
+> +{
+> +	if (success !=3D G_AT_PPP_CONNECT_SUCCESS) {
+> +		g_print("Failed to create PPP interface!\n");
+> +		return;
+> +	}
+> +
+> +	/* print out the negotiated address and dns server */
+> +	print_ip_address("IP Address", ip_addr);
+> +	print_ip_address("Primary DNS Server", dns1);
+> +	print_ip_address("Secondary DNS Server", dns2);
+> +}
+> +
+> +static void ppp_disconnect(GAtPPP *ppp, gpointer user_data)
+> +{
+> +	g_print("PPP Link down\n");
+> +}
+> +
+> +static void connect_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+> +{
+> +	GIOChannel *channel;
+> +
+> +	if (!ok) {
+> +		g_print("Unable to define context\n");
+> +		exit(1);
 
-> > > > If you have variables that are only valid inside the scope of a
-> > > > statement, then I prefer if you only declare them there. This makes=
- the
-> > > > code a bit simpler to read. Check the patch I just pushed to give y=
-ou an
-> > > > example.
-> > > > =
+I guess we should not call exit here. Just return.
 
-> > > > Also please find access to a 32-bit system if you are running 64-bi=
-t or
-> > > > vice versa. Our build system is strict and will turn turn all casti=
-ng
-> > > > mistakes in an error.
-> > > > =
+> +	}
+> +
+> +	if (option_ppp =3D=3D FALSE)
+> +		return;
+> +
+> +	/* get the data IO channel */
+> +	channel =3D g_at_chat_get_channel(modem);
+> +
+> +	/*
+> +	 * shutdown gatchat or else it tries to take all the input
+> +	 * from the modem and does not let PPP get it.
+> +	 */
+> +	g_at_chat_shutdown(control);
+> +	g_at_chat_shutdown(modem);
+> +
+> +	/* open ppp */
+> +	ppp =3D g_at_ppp_new(channel);
+> +	if (!ppp) {
+> +		g_print("Unable to create PPP object\n");
+> +		return;
+> +	}
+> +	g_at_ppp_set_credentials(ppp, option_username,
+> +				option_password);
+> +
+> +	/* set connect and disconnect callbacks */
+> +	g_at_ppp_set_connect_function(ppp, ppp_connect, NULL);
+> +	g_at_ppp_set_disconnect_function(ppp, ppp_disconnect, NULL);
+> +
+> +	/* open the ppp connection */
+> +	g_at_ppp_open(ppp);
+> +}
+> +
+>  static void at_cgdcont_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+>  {
+>  	char buf[64];
+> @@ -233,9 +308,9 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+>  	}
+>  =
 
-> > > > Please be present on #ofono IRC as much as possible so people can r=
-eport
-> > > > such things. Remember that your code is now part of the tree and it=
- can
-> > > > break the build.
-> > >
-> > > I just started reviewing the changes you made and the first =
+>  	if (option_legacy =3D=3D TRUE) {
+> -			sprintf(buf, "ATD*99***%u#", option_cid);
+> -			g_at_chat_send(modem, buf, none_prefix,
+> -					NULL, NULL, NULL);
+> +		sprintf(buf, "ATD*99***%u#", option_cid);
+> +		g_at_chat_send(modem, buf, none_prefix,
+> +				connect_cb, NULL, NULL);
+>  	} else {
+>  		sprintf(buf, "AT+CGACT=3D1,%u", option_cid);
+>  		g_at_chat_send(control, buf, none_prefix,
+> @@ -452,6 +527,12 @@ static GOptionEntry options[] =3D {
+>  				"Specify CFUN offmode" },
+>  	{ "legacy", 'l', 0, G_OPTION_ARG_NONE, &option_legacy,
+>  				"Use ATD*99***<cid>#" },
+> +	{ "ppp", 'P', 0, G_OPTION_ARG_NONE, &option_ppp,
+> +				"Connect using PPP" },
+> +	{ "username", 'u', 0, G_OPTION_ARG_STRING, &option_username,
+> +				"Specify PPP username" },
+> +	{ "password", 'w', 0, G_OPTION_ARG_STRING, &option_password,
+> +				"Specifiy PPP password" },
+>  	{ NULL },
+>  };
+>  =
 
-> > > patch I hit I discovered that you broke something.  Would you like to
-> > > revert the patches and let me review them first, or should I just sen=
-d =
+> -- =
 
-> > > a patch to the mailing list to fix what you broke?
-> > =
+> 1.6.6.1
+> =
 
-> > send patches to the mailing list to fix them. The PPP code is in
-> > development so it is just fine. I prefer to keep reverts for code that
-> > is suppose to be stable.
-> > =
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
-> > If I did break something, then I am worried that the code gets too
-> > complex. Such little changes should not have broken anything. Except I
-> > made a stupid typo or thinking mistake (which happens of course). If it
-> > fundamentally changes the code flow, then we do have a bigger problem.
->
-> I wanted this code to at least be able to send a packet over the wire,
-> and with your changes we can't do that anymore.  The problem is that
-> your little cosmetic change really did change the flow, simply because
-> you didn't think through what you were doing.  Of course it is up to
-> you if you want to have this code be completely non-functional rather
-> than simply doing the revert.  I'll be glad to submit a patch later
-> which fixes your fix and adds some comments so you know what is =
+-- =
 
-> actually happening.
+Gustavo F. Padovan
+ProFUSION embedded systems - http://profusion.mobi
 
-I am not doing the revert since I do wanna figure out what broke it. And
-actually I wanna have that recorded in the tree.
-
-So Denis and I looked through my changes and he figured out what might
-have broken it. So your attempt at doing code flow optimization with
-g_list_length() throw me on the wrong error path. Please don't do this
-since all the GLib functions will do proper empty list checking.
-
-I fixed this now in the tree and it should restore it to a working code
-base. I prefer if you don't do things like GList *list =3D NULL. These
-initialization of variables lead to some complex code flow. And if you
-do something wrong, the compiler will never warn.
-
-Also in general it is preferred to do list =3D=3D NULL checking instead of
-using g_list_legnth() functions.
-
-Regards
-
-Marcel
-
-
-
---===============7008841948180417437==--
+--===============2735991380908424405==--
 
