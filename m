@@ -1,92 +1,191 @@
-Content-Type: multipart/mixed; boundary="===============6952120159696861240=="
+Content-Type: multipart/mixed; boundary="===============2859158347722471052=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/6] PPP Patches v3
-Date: Tue, 23 Mar 2010 12:07:21 -0700
-Message-ID: <1269371241.11714.99.camel@localhost.localdomain>
-In-Reply-To: <20100323112617.169cded4@kcaccard-MOBL3>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] Add basic command parsing
+Date: Tue, 23 Mar 2010 16:18:57 -0500
+Message-ID: <201003231618.57357.denkenz@gmail.com>
+In-Reply-To: <1269339283-9697-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6952120159696861240==
+--===============2859158347722471052==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+Hi Zhenhua,
 
-> > > > And there was another problem with one variable being
-> > > > guint16, but the is_option casts it back to guint8. We can't really=
- have
-> > > > that. Once you start casting on that scale the compiler will not wa=
-rn
-> > > > you about type mismatches or if the value of argument is too big fo=
-r its
-> > > > type.
-> > > =
+> ---
+>  gatchat/gatserver.c |  110
+>  ++++++++++++++++++++++++++++++++++++++++++++++++++- 1 files changed, =
 
-> > > Can you please let me know which git commit this fix you made was?  I =
+109
+>  insertions(+), 1 deletions(-)
+> =
 
-> > > want to review it because all of the option types should only be a by=
-te
-> > > anyway, so I am trying to figure out if there was a mistake somewhere =
+> diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
+> index 6579b38..c207bd8 100644
+> --- a/gatchat/gatserver.c
+> +++ b/gatchat/gatserver.c
+> @@ -308,9 +308,117 @@ next:
+>  	return i + 1;
+>  }
+> =
 
-> > > where we were using is_option to examine a 16 bit value.  I searched
-> > > through the git log and can't figure out where this change was.  I
-> > > can see where you changed the option type we are comparing to a regul=
-ar
-> > > guint to avoid compiler problems, but not the other issue you mention=
-ed.
-> > =
+> +static gboolean get_basic_prefix(const char *buf, char *prefix)
+> +{
+> +	char c =3D *buf;
+> +
+> +	if (!g_ascii_isalpha(c) && c !=3D '&')
+> +		return FALSE;
+> +
+> +	if (g_ascii_isalpha(c)) {
+> +		c =3D g_ascii_toupper(c);
+> +		if (c =3D=3D 'S') {
+> +			int i =3D 0;
+> +
+> +			prefix[0] =3D 'S';
+> +
+> +			/* V.250 5.3.2 'S' command follows with
+> +			 * a parameter number.
+> +			 */
+> +			while (g_ascii_isdigit(buf[++i]))
+> +				prefix[i] =3D buf[i];
 
-> > I had a second look at these. It is the is_proto_handler actually and
-> > not the is_option. However that thing applies here. A helper function to
-> > find that handle would be better then manually coding g_list_find_custom
-> > in the functions.
->
-> so is_proto_handler was casting a 16 bit value to an 8 bit value?  Or are=
- you
-> just complaining about having g_list_find_custom in the routines.  It wou=
-ld
-> really be easier on me to understand what you are trying to tell me if you
-> you posted your patches to the list next time.
+Is there some limit on the number?  Can we limit it to max int or something?
 
-I expect you to ensure that your patches compile on 32-bit systems. And
-also that they work on 32-bit and 64-bit systems. In addition I expect
-that little endian and big endian works smoothly.
+> +
+> +			prefix[i] =3D '\0';
+> +		} else {
+> +			prefix[0] =3D c;
+> +			prefix[1] =3D '\0';
+> +		}
 
-In general I don't wanna have casting in the source since it is a
-potential trap for errors. Without casting the compiler will warn us if
-we make mistakes, without we run into troubles. Especially with the
-different pointer sizes it is important to not cast.
+Use a return here or an else if clause, no sense checking the if twice.
 
-So in this specific cases, I think the usage of g_list_find_custom is
-not a good idea. Manually walking this in a helper function and ensuring
-that the variable and parameters types are enforced.
+> +	}
+> +
+> +	if (c =3D=3D '&') {
+> +		prefix[0] =3D '&';
+> +		prefix[1] =3D g_ascii_toupper(buf[1]);
+> +		prefix[2] =3D '\0';
+> +	}
+> +
+> +	return TRUE;
+> +}
+> +
+>  static unsigned int parse_basic_command(GAtServer *server, char *buf)
+>  {
+> -	return 0;
+> +	char *command =3D NULL;
 
-In short summary:
+Why do you initialize this?  Doesn't seem to be a point.
 
-1) No casting if not really really needed. Think twice before adding a
-casting to the source code.
+> +	char prefix[3];
+> +	unsigned int i;
+> +	GAtServerRequestType type;
+> +	gboolean seen_equals =3D FALSE;
+> +
+> +	if (!get_basic_prefix(buf, prefix))
+> +		return 0;
+> +
+> +	i =3D strlen(prefix);
+> +
+> +	if (*prefix =3D=3D 'D') {
+> +		type =3D G_AT_SERVER_REQUEST_TYPE_SET;
+> +
+> +		/* All following characters are the part of the call */
+> +		while (buf[i] !=3D '\0')
+> +			i +=3D 1;
 
-2) Think about your optimization and understand what you are trying to
-optimize. Simple code flow is preferred. Only in hot path we should
-attempt to optimize manually and then it needs to be documented in the
-source code itself. Otherwise lets GCC do it for us. Walking the GLib
-list manually is sometimes a lot simpler to read than trying to use
-foreach type functions.
+Quoting V.250:
+All characters appearing on the same command line after the "D" are conside=
+red =
 
-3) No variable initialization on declaration. There are a few exceptions
-when it makes sense. However the general rule is not to do it. We want
-the compiler to warn us about variables that we might use uninitialized.
-In most cases this indicates a mistake in the code flow and that the
-code is too complex.
+part of the call addressing information to be signalled to the network, or =
 
-Regards
+modifiers used to control the signalling process (collectively known as a "=
+dial =
 
-Marcel
+string"), up to a semicolon character (IA5 3/11) or the end of the command =
+
+line.
+
+So this logic seems incorrect.
+
+> +
+> +		goto done;
+> +	}
+> +
+> +	if (buf[i] =3D=3D '\0' || buf[i] =3D=3D ';') {
+> +		type =3D G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY;
+> +		goto done;
+> +	}
+> +
+> +	/* Additional commands may follow a command without any character
+> +	 * required for separation.
+> +	 */
+> +	if (is_basic_command_prefix(&buf[i])) {
+> +		type =3D G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY;
+> +		goto done;
+> +	}
+> +
+> +	/* Match '?', '=3D',  '=3D?' and '=3Dxxx' */
+> +	if (buf[i] =3D=3D '=3D') {
+> +		seen_equals =3D TRUE;
+> +		i +=3D 1;
+> +	}
+> +
+> +	if (buf[i] =3D=3D '?') {
+> +		i +=3D 1;
+> +
+> +		if (seen_equals)
+> +			type =3D G_AT_SERVER_REQUEST_TYPE_SUPPORT;
+> +		else
+> +			type =3D G_AT_SERVER_REQUEST_TYPE_QUERY;
+> +	} else {
+> +		/* V.250 5.3.1 The subparameter (if any) are all digits */
+> +		while (g_ascii_isdigit(buf[i]))
+> +			i++;
+> +
+> +		type =3D G_AT_SERVER_REQUEST_TYPE_SET;
+> +	}
+> +
+> +done:
+> +	command =3D g_strndup(buf, i);
+> +
+> +	at_command_notify(server, command, prefix, type);
+> +
+> +	g_free(command);
+> +
+> +	/* Commands like ATA, ATD, ATZ cause the remainder line
+> +	 * to be ignored.
+> +	 */
+> +	if (*prefix =3D=3D 'A' || *prefix =3D=3D 'D' || *prefix =3D=3D 'Z')
+> +		return 0;
+
+Returning 0 means this command was not properly formatted.  Not something y=
+ou =
+
+want.  Also, as we saw before this is true of ATA and possibly ATZ, but not =
+
+ATD.
+
+> +
+> +	/* Consumed the seperator ';' */
+> +	if (buf[i] =3D=3D ';')
+> +		i +=3D 1;
+> +
+> +	return i;
+>  }
+> =
+
+>  static void server_parse_line(GAtServer *server, char *line)
+> =
 
 
+Regards,
+-Denis
 
---===============6952120159696861240==--
+--===============2859158347722471052==--
 
