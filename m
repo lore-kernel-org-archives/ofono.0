@@ -1,28 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============6612737136033786189=="
+Content-Type: multipart/mixed; boundary="===============7955333402681863062=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: Re: [PATCH 0/6] PPP Patches v3
-Date: Tue, 23 Mar 2010 10:16:50 -0700
-Message-ID: <20100323101650.0761c990@kcaccard-MOBL3>
-In-Reply-To: <1269326714.11714.42.camel@localhost.localdomain>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2] Add parser for file list objects
+Date: Tue, 23 Mar 2010 12:33:14 -0500
+Message-ID: <201003231233.14355.denkenz@gmail.com>
+In-Reply-To: <1269318829-24022-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6612737136033786189==
+--===============7955333402681863062==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, 22 Mar 2010 23:45:14 -0700
-Marcel Holtmann <marcel@holtmann.org> wrote:
+Hi Yang,
 
-> please try to keep the code flow inside the functions as simple as
-> possible. Otherwise things like this happen.
+> ---
+>  src/stkutil.c |   88
+>  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ =
 
-One suggestion I have for the future is to actually send your patches
-to the mailing list for review, even if you've already committed them.
-I can understand just committing things without public review for
-expediency, but having many eyes looking at things can help as well.
+src/stkutil.h | =
 
---===============6612737136033786189==--
+>   11 +++++++
+>  2 files changed, 99 insertions(+), 0 deletions(-)
+
+Your patch was fine as is and I applied it, however I still managed to nitp=
+ick =
+
+some style issues which I fixed up afterwards :)
+
+Regards,
+-Denis
+
+--===============7955333402681863062==--
 
