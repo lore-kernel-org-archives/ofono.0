@@ -1,38 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============6745502682585100418=="
+Content-Type: multipart/mixed; boundary="===============6612737136033786189=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
 Subject: Re: [PATCH 0/6] PPP Patches v3
-Date: Tue, 23 Mar 2010 05:49:15 -0700
-Message-ID: <1269348555.11714.74.camel@localhost.localdomain>
-In-Reply-To: <201003231434.39439.remi@remlab.net>
+Date: Tue, 23 Mar 2010 10:16:50 -0700
+Message-ID: <20100323101650.0761c990@kcaccard-MOBL3>
+In-Reply-To: <1269326714.11714.42.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6745502682585100418==
+--===============6612737136033786189==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+On Mon, 22 Mar 2010 23:45:14 -0700
+Marcel Holtmann <marcel@holtmann.org> wrote:
 
-> > If you have variables that are only valid inside the scope of a
-> > statement, then I prefer if you only declare them there. This makes the
-> > code a bit simpler to read. Check the patch I just pushed to give you an
-> > example.
-> =
+> please try to keep the code flow inside the functions as simple as
+> possible. Otherwise things like this happen.
 
-> If you're serious about that, you should turn on C99 support. Only then y=
-ou =
+One suggestion I have for the future is to actually send your patches
+to the mailing list for review, even if you've already committed them.
+I can understand just committing things without public review for
+expediency, but having many eyes looking at things can help as well.
 
-> can use C++-style for-loops.
-
-I wasn't talking about the iterator variable.
-
-Regards
-
-Marcel
-
-
-
---===============6745502682585100418==--
+--===============6612737136033786189==--
 
