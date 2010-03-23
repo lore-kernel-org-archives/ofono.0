@@ -1,36 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============7955333402681863062=="
+Content-Type: multipart/mixed; boundary="===============1980741093788065335=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] Add parser for file list objects
-Date: Tue, 23 Mar 2010 12:33:14 -0500
-Message-ID: <201003231233.14355.denkenz@gmail.com>
-In-Reply-To: <1269318829-24022-1-git-send-email-yang.gu@intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: Re: [PATCH 0/6] PPP Patches v3
+Date: Tue, 23 Mar 2010 10:34:02 -0700
+Message-ID: <20100323103402.5c81d576@kcaccard-MOBL3>
+In-Reply-To: <1269326714.11714.42.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7955333402681863062==
+--===============1980741093788065335==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+On Mon, 22 Mar 2010 23:45:14 -0700
+Marcel Holtmann <marcel@holtmann.org> wrote:
 
-> ---
->  src/stkutil.c |   88
->  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ =
+> And there was another problem with one variable being
+> guint16, but the is_option casts it back to guint8. We can't really have
+> that. Once you start casting on that scale the compiler will not warn
+> you about type mismatches or if the value of argument is too big for its
+> type.
 
-src/stkutil.h | =
+Can you please let me know which git commit this fix you made was?  I =
 
->   11 +++++++
->  2 files changed, 99 insertions(+), 0 deletions(-)
+want to review it because all of the option types should only be a byte
+anyway, so I am trying to figure out if there was a mistake somewhere =
 
-Your patch was fine as is and I applied it, however I still managed to nitp=
-ick =
+where we were using is_option to examine a 16 bit value.  I searched
+through the git log and can't figure out where this change was.  I
+can see where you changed the option type we are comparing to a regular
+guint to avoid compiler problems, but not the other issue you mentioned.
 
-some style issues which I fixed up afterwards :)
-
-Regards,
--Denis
-
---===============7955333402681863062==--
+--===============1980741093788065335==--
 
