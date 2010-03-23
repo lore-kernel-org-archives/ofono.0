@@ -1,28 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8755697462782332164=="
+Content-Type: multipart/mixed; boundary="===============6841248537050933259=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: Re: [PATCH 0/6] PPP Patches v3
-Date: Mon, 22 Mar 2010 23:14:36 -0700
-Message-ID: <20100322231436.5ccfe248@kcaccard-MOBL3>
-In-Reply-To: <1269319898.11714.25.camel@localhost.localdomain>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 6/6] Add PPP option to gsmdial
+Date: Mon, 22 Mar 2010 23:30:16 -0700
+Message-ID: <1269325816.11714.28.camel@localhost.localdomain>
+In-Reply-To: <20100323053034.GA17646@vigoh>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8755697462782332164==
+--===============6841248537050933259==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, 22 Mar 2010 21:51:38 -0700
-Marcel Holtmann <marcel@holtmann.org> wrote:
+Hi Gustavo,
 
-> So Denis and I looked through my changes and he figured out what might
-> have broken it. So your attempt at doing code flow optimization with
-> g_list_length() throw me on the wrong error path. Please don't do this
-> since all the GLib functions will do proper empty list checking.
+> > +static void connect_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+> > +{
+> > +	GIOChannel *channel;
+> > +
+> > +	if (!ok) {
+> > +		g_print("Unable to define context\n");
+> > +		exit(1);
+> =
 
-I reviewed your patch and it seems that you didn't break it this time :).
-If you ever have questions about the code, feel free to ask me.
+> I guess we should not call exit here. Just return.
 
---===============8755697462782332164==--
+it is a test program. So it doesn't really matter. We will never install
+this program. It is just for the developers ;)
+
+Regards
+
+Marcel
+
+
+
+--===============6841248537050933259==--
 
