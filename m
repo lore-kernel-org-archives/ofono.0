@@ -1,52 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============2595257853386302842=="
+Content-Type: multipart/mixed; boundary="===============6517215312521558801=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/6] PPP Patches v3
-Date: Mon, 22 Mar 2010 23:45:14 -0700
-Message-ID: <1269326714.11714.42.camel@localhost.localdomain>
-In-Reply-To: <20100322231436.5ccfe248@kcaccard-MOBL3>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: Re: [PATCH 08/10] Fix do not emit error if extended error has emitted
+Date: Tue, 23 Mar 2010 17:10:06 +0800
+Message-ID: <4BA8856E.8000706@intel.com>
+In-Reply-To: <201003221327.53092.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2595257853386302842==
+--===============6517215312521558801==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+Hi Denis,
 
-> > So Denis and I looked through my changes and he figured out what might
-> > have broken it. So your attempt at doing code flow optimization with
-> > g_list_length() throw me on the wrong error path. Please don't do this
-> > since all the GLib functions will do proper empty list checking.
-> =
+On 03/23/2010 02:27 AM, Denis Kenzior wrote:
+> Hi Zhenhua,
+>
+>> ---
+>>   gatchat/gatserver.c |    4 ++++
+>>   1 files changed, 4 insertions(+), 0 deletions(-)
+>>
+>> diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
+>> index 1ffc2c3..9683fa3 100644
+>> --- a/gatchat/gatserver.c
+>> +++ b/gatchat/gatserver.c
+>> @@ -165,6 +165,10 @@ static void g_at_server_send_final(GAtServer *serve=
+r,
+>>   GAtServerResult result) char r =3D v250.s4;
+>>   	unsigned int len;
+>>
+>> +	/* Do not emit error if extended error has already been emitted */
+>> +	if (result =3D=3D G_AT_SERVER_RESULT_EXT_ERROR)
+>> +		return;
+>> +
+>
+> I really don't get it, why would anyone call g_at_server_send_final with
+> EXT_ERROR?  Don't we have g_at_server_send_ext_final or something for tha=
+t?
 
-> I reviewed your patch and it seems that you didn't break it this time :).
-> If you ever have questions about the code, feel free to ask me.
+I understand your point. My thinking is that callback should return =
 
-please try to keep the code flow inside the functions as simple as
-possible. Otherwise things like this happen.
+GAtServrResult so that the main logic know whether we should parse the =
 
-Also in this context I would prefer if you create a helper function like
-find_option() instead of manually calling g_list_find_custom() all the
-time. From a pure code understanding point of view it is way simpler to
-see what the code is meant do be doing. The find_custom + is_option is
-not intuitiv.
+next command or abort parsing. But if the function call is =
 
-With a proper helper we didn't need to workaround the casting issue from
-guint16/guint8 to guint at every spot. The compiler will inline the
-helper anyway if useful. So no real drawback here from a runtime code
-point of view. And there was another problem with one variable being
-guint16, but the is_option casts it back to guint8. We can't really have
-that. Once you start casting on that scale the compiler will not warn
-you about type mismatches or if the value of argument is too big for its
-type.
+asynchronized, I don't know, do you want send_final able to abort the =
 
-Regards
+parsing iteration?
 
-Marcel
+>>   	if (v250.quiet)
+>>   		return;
+>>
+>
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
 
-
---===============2595257853386302842==--
+--===============6517215312521558801==--
 
