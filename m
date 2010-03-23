@@ -1,140 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============3389440744017783913=="
+Content-Type: multipart/mixed; boundary="===============6526251428543226741=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: [PATCH] Add parser for file list objects
-Date: Tue, 23 Mar 2010 11:28:05 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731C807E74@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <201003221445.20442.denkenz@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 0/6] PPP Patches v3
+Date: Mon, 22 Mar 2010 20:47:16 -0700
+Message-ID: <1269316036.4851.60.camel@localhost.localdomain>
+In-Reply-To: <20100322202202.252f0bae@kcaccard-MOBL3>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3389440744017783913==
+--===============6526251428543226741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-	Attached is the patch modified according to the comments. Please review!
+Hi Kristen,
 
->> +
->> +		if ((data[i] =3D=3D 0x2f) || (data[i] =3D=3D 0x6f) ||
->> +						(data[i] =3D=3D 0x4f)) {
->> +			sf =3D g_try_new0(struct stk_file, 1);
->> +			if (sf =3D=3D NULL)
->> +				goto error;
->> +
->> +			sf->len =3D i - start;
->> +			memcpy(sf->file, data + start, i - start);
->> +			*fl =3D g_slist_prepend(*fl, sf);
+> > > > Changes since v2 - corrected whitespace. =
+
+> > > =
+
+> > > all the patches have been applied.
+> > > =
+
+> > > So form now on please send smaller patches as soon as you have them
+> > > ready and tested. If you need comments or have questions, you can use
+> > > the mailing list as well.
+> > =
+
+> > some additional comments from my side.
+> > =
+
+> > If you have variables that are only valid inside the scope of a
+> > statement, then I prefer if you only declare them there. This makes the
+> > code a bit simpler to read. Check the patch I just pushed to give you an
+> > example.
+> > =
+
+> > Also please find access to a 32-bit system if you are running 64-bit or
+> > vice versa. Our build system is strict and will turn turn all casting
+> > mistakes in an error.
+> > =
+
+> > Please be present on #ofono IRC as much as possible so people can report
+> > such things. Remember that your code is now part of the tree and it can
+> > break the build.
 >
->This looks wrong, you're not including the EF file type byte / 2nd byte in=
- the
->file contents.
->>
->> +/* Define the struct of single file in TS102.223 Section 8.18 */
->> +struct stk_file {
->> +	unsigned char file[8];
->
->Please put a comment here why it is 8, preferably quoting or referencing t=
-he
->right right section from the specification.
->
->> +	unsigned int len;
->> +};
->> +
->>  /*
->>   * According to 102.223 Section 8.72 the length of text attribute CTLV =
-is
->>  1 * byte.  This means that the maximum size is 127 according to the rul=
-es
->>
->
->Regards,
->-Denis
+> I just started reviewing the changes you made and the first =
+
+> patch I hit I discovered that you broke something.  Would you like to
+> revert the patches and let me review them first, or should I just send =
+
+> a patch to the mailing list to fix what you broke?
+
+send patches to the mailing list to fix them. The PPP code is in
+development so it is just fine. I prefer to keep reverts for code that
+is suppose to be stable.
+
+If I did break something, then I am worried that the code gets too
+complex. Such little changes should not have broken anything. Except I
+made a stupid typo or thinking mistake (which happens of course). If it
+fundamentally changes the code flow, then we do have a bigger problem.
+
+Regards
+
+Marcel
 
 
-Regards,
--Yang
 
---===============3389440744017783913==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Add-parser-for-file-list-objects.patch"
-
-RnJvbSA5NzRhOGQ4OTRkNDc5YTdjNThjZDZkNzlmM2IwNzM4NjJmZjQxOTg0IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBZYW5nIEd1IDx5YW5nLmd1QGludGVsLmNvbT4KRGF0ZTogVHVl
-LCAyMyBNYXIgMjAxMCAxMToxMjozOSArMDgwMApTdWJqZWN0OiBbUEFUQ0hdIEFkZCBwYXJzZXIg
-Zm9yIGZpbGUgbGlzdCBvYmplY3RzCgotLS0KIHNyYy9zdGt1dGlsLmMgfCAgIDg4ICsrKysrKysr
-KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKwogc3JjL3N0
-a3V0aWwuaCB8ICAgMTEgKysrKysrKwogMiBmaWxlcyBjaGFuZ2VkLCA5OSBpbnNlcnRpb25zKCsp
-LCAwIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL3NyYy9zdGt1dGlsLmMgYi9zcmMvc3RrdXRp
-bC5jCmluZGV4IDk0MGVlZTIuLjgzMzA3M2IgMTAwNjQ0Ci0tLSBhL3NyYy9zdGt1dGlsLmMKKysr
-IGIvc3JjL3N0a3V0aWwuYwpAQCAtNDE2LDYgKzQxNiw5MiBAQCBzdGF0aWMgZ2Jvb2xlYW4gcGFy
-c2VfZGF0YW9ial90b25lKHN0cnVjdCBjb21wcmVoZW5zaW9uX3Rsdl9pdGVyICppdGVyLAogCXJl
-dHVybiBUUlVFOwogfQogCisvKiBEZWZpbmVkIGluIFRTIDEwMi4yMjMgU2VjdGlvbiA4LjE4ICov
-CitzdGF0aWMgZ2Jvb2xlYW4gcGFyc2VfZGF0YW9ial9maWxlX2xpc3Qoc3RydWN0IGNvbXByZWhl
-bnNpb25fdGx2X2l0ZXIgKml0ZXIsCisJCQkJCQl2b2lkICp1c2VyKQoreworCUdTTGlzdCAqKmZs
-ID0gdXNlcjsKKwljb25zdCB1bnNpZ25lZCBjaGFyICpkYXRhOworCXVuc2lnbmVkIGludCBsZW47
-CisJdW5zaWduZWQgaW50IGk7CisJdW5zaWduZWQgaW50IHN0YXJ0ID0gMDsKKwlzdHJ1Y3Qgc3Rr
-X2ZpbGUgKnNmOworCXVuc2lnbmVkIGNoYXIgbGFzdF90eXBlID0gMHgyZjsKKworCWlmIChjb21w
-cmVoZW5zaW9uX3Rsdl9pdGVyX2dldF90YWcoaXRlcikgIT0KKwkJCVNUS19EQVRBX09CSkVDVF9U
-WVBFX0ZJTEVfTElTVCkKKwkJcmV0dXJuIEZBTFNFOworCisJbGVuID0gY29tcHJlaGVuc2lvbl90
-bHZfaXRlcl9nZXRfbGVuZ3RoKGl0ZXIpOworCWlmIChsZW4gPCA1KQorCQlyZXR1cm4gRkFMU0U7
-CisKKwlkYXRhID0gY29tcHJlaGVuc2lvbl90bHZfaXRlcl9nZXRfZGF0YShpdGVyKTsKKworCWZv
-ciAoaSA9IDE7IGkgPCBsZW47IGkgKz0gMikgeworCQkvKiBDaGVjayB0aGUgdmFsaWRpdHkgb2Yg
-ZmlsZSB0eXBlLgorCQkgKiBBY2NvcmRpbmcgdG8gVFMgMTEuMTEsIGVhY2ggZmlsZSBpZCBjb250
-YWlucyBvZiB0d28gYnl0ZXMsCisJCSAqIGluIHdoaWNoIHRoZSBmaXJzdCBieXRlIGlzIHRoZSB0
-eXBlIG9mIGZpbGUuIEZvciBHU00gaXM6CisJCSAqIDB4M2Y6IG1hc3RlciBmaWxlCisJCSAqIDB4
-N2Y6IDFzdCBsZXZlbCBkZWRpY2F0ZWQgZmlsZQorCQkgKiAweDVmOiAybmQgbGV2ZWwgZGVkaWNh
-dGVkIGZpbGUKKwkJICogMHgyZjogZWxlbWVudGFyeSBmaWxlIHVuZGVyIHRoZSBtYXN0ZXIgZmls
-ZQorCQkgKiAweDZmOiBlbGVtZW50YXJ5IGZpbGUgdW5kZXIgMXN0IGxldmVsIGRlZGljYXRlZCBm
-aWxlCisJCSAqIDB4NGY6IGVsZW1lbnRhcnkgZmlsZSB1bmRlciAybmQgbGV2ZWwgZGVkaWNhdGVk
-IGZpbGUKKwkJICovCisJCWlmIChkYXRhW2ldID09IDB4M2YpIHsKKwkJCWlmICgobGFzdF90eXBl
-ICE9IDB4MmYpICYmIChsYXN0X3R5cGUgIT0gMHg2ZikgJiYKKwkJCQkJCQkobGFzdF90eXBlICE9
-IDB4NGYpKQorCQkJCWdvdG8gZXJyb3I7CisJCQlzdGFydCA9IGk7CisJCX0gZWxzZSBpZiAoZGF0
-YVtpXSA9PSAweDJmKSB7CisJCQlpZiAobGFzdF90eXBlICE9IDB4M2YpCisJCQkJZ290byBlcnJv
-cjsKKwkJfSBlbHNlIGlmIChkYXRhW2ldID09IDB4NmYpIHsKKwkJCWlmIChsYXN0X3R5cGUgIT0g
-MHg3ZikKKwkJCQlnb3RvIGVycm9yOworCQl9IGVsc2UgaWYgKGRhdGFbaV0gPT0gMHg0Zikgewor
-CQkJaWYgKGxhc3RfdHlwZSAhPSAweDVmKQorCQkJCWdvdG8gZXJyb3I7CisJCX0gZWxzZSBpZiAo
-ZGF0YVtpXSA9PSAweDdmKSB7CisJCQlpZiAobGFzdF90eXBlICE9IDB4M2YpCisJCQkJZ290byBl
-cnJvcjsKKwkJfSBlbHNlIGlmIChkYXRhW2ldID09IDB4NWYpIHsKKwkJCWlmIChsYXN0X3R5cGUg
-IT0gMHg3ZikKKwkJCQlnb3RvIGVycm9yOworCQl9IGVsc2UKKwkJCWdvdG8gZXJyb3I7CisKKwkJ
-aWYgKChkYXRhW2ldID09IDB4MmYpIHx8IChkYXRhW2ldID09IDB4NmYpIHx8CisJCQkJCQkoZGF0
-YVtpXSA9PSAweDRmKSkgeworCQkJaWYgKGkgKyAxID49IGxlbikKKwkJCQlnb3RvIGVycm9yOwor
-CisJCQlzZiA9IGdfdHJ5X25ldzAoc3RydWN0IHN0a19maWxlLCAxKTsKKwkJCWlmIChzZiA9PSBO
-VUxMKQorCQkJCWdvdG8gZXJyb3I7CisKKwkJCXNmLT5sZW4gPSBpIC0gc3RhcnQgKyAyOworCQkJ
-bWVtY3B5KHNmLT5maWxlLCBkYXRhICsgc3RhcnQsIGkgLSBzdGFydCArIDIpOworCQkJKmZsID0g
-Z19zbGlzdF9wcmVwZW5kKCpmbCwgc2YpOworCQl9CisKKwkJbGFzdF90eXBlID0gZGF0YVtpXTsK
-Kwl9CisKKwlpZiAoKGRhdGFbbGVuIC0gMl0gIT0gMHgyZikgJiYgKGRhdGFbbGVuIC0gMl0gIT0g
-MHg2ZikgJiYKKwkJCQkJCShkYXRhW2xlbiAtIDJdICE9IDB4NGYpKQorCQlnb3RvIGVycm9yOwor
-CisJKmZsID0gZ19zbGlzdF9yZXZlcnNlKCpmbCk7CisJcmV0dXJuIFRSVUU7CisKK2Vycm9yOgor
-CWdfc2xpc3RfZm9yZWFjaCgqZmwsIChHRnVuYylnX2ZyZWUsIE5VTEwpOworCWdfc2xpc3RfZnJl
-ZSgqZmwpOworCXJldHVybiBGQUxTRTsKK30KKwogLyogRGVmaW5lZCBpbiBUUyAxMDIuMjIzIFNl
-Y3Rpb24gOC4zMSAqLwogc3RhdGljIGdib29sZWFuIHBhcnNlX2RhdGFvYmpfaWNvbl9pZChzdHJ1
-Y3QgY29tcHJlaGVuc2lvbl90bHZfaXRlciAqaXRlciwKIAkJCQkJdm9pZCAqdXNlcikKQEAgLTUz
-Myw2ICs2MTksOCBAQCBzdGF0aWMgZGF0YW9ial9oYW5kbGVyIGhhbmRsZXJfZm9yX3R5cGUoZW51
-bSBzdGtfZGF0YV9vYmplY3RfdHlwZSB0eXBlKQogCQlyZXR1cm4gcGFyc2VfZGF0YW9ial90ZXh0
-OwogCWNhc2UgU1RLX0RBVEFfT0JKRUNUX1RZUEVfVE9ORToKIAkJcmV0dXJuIHBhcnNlX2RhdGFv
-YmpfdG9uZTsKKwljYXNlIFNUS19EQVRBX09CSkVDVF9UWVBFX0ZJTEVfTElTVDoKKwkJcmV0dXJu
-IHBhcnNlX2RhdGFvYmpfZmlsZV9saXN0OwogCWNhc2UgU1RLX0RBVEFfT0JKRUNUX1RZUEVfSUNP
-Tl9JRDoKIAkJcmV0dXJuIHBhcnNlX2RhdGFvYmpfaWNvbl9pZDsKIAljYXNlIFNUS19EQVRBX09C
-SkVDVF9UWVBFX0lNTUVESUFURV9SRVNQT05TRToKZGlmZiAtLWdpdCBhL3NyYy9zdGt1dGlsLmgg
-Yi9zcmMvc3RrdXRpbC5oCmluZGV4IDFkNjkwYjUuLjkzYWM4NTQgMTAwNjQ0Ci0tLSBhL3NyYy9z
-dGt1dGlsLmgKKysrIGIvc3JjL3N0a3V0aWwuaApAQCAtMzQ1LDYgKzM0NSwxNyBAQCBzdHJ1Y3Qg
-c3RrX3Jlc3VsdCB7CiAJdW5zaWduZWQgY2hhciAqYWRkaXRpb25hbDsKIH07CiAKKy8qIERlZmlu
-ZSB0aGUgc3RydWN0IG9mIHNpbmdsZSBmaWxlIGluIFRTMTAyLjIyMyBTZWN0aW9uIDguMTguCisg
-KiBBY2NvcmRpbmcgdG8gVFMgMTEuMTEgU2VjdGlvbiA2LjIsIGVhY2ggZmlsZSBpZCBoYXMgdHdv
-IGJ5dGVzLCBhbmQgdGhlCisgKiBtYXhpbXVtIERlZGljYXRlZCBGaWxlIGxldmVsIGlzIDIuIFNv
-IHRoZSBtYXhpbXVtIHNpemUgb2YgZmlsZSBpcyA4LCB3aGljaAorICogY29udGFpbnMgdHdvIGJ5
-dGVzIG9mIE1hc3RlciBGaWxlLCAyIGJ5dGVzIG9mIDFzdCBsZXZlbCBEZWRpY2F0ZWQgRmlsZSwK
-KyAqIDIgYnl0ZXMgb2YgMm5kIGxldmVsIERlZGljYXRlZCBGaWxlIGFuZCAyIGJ5dGVzIG9mIEVs
-ZW1lbnRhcnkgRmlsZS4KKyAqLworc3RydWN0IHN0a19maWxlIHsKKwl1bnNpZ25lZCBjaGFyIGZp
-bGVbOF07CisJdW5zaWduZWQgaW50IGxlbjsKK307CisKIC8qCiAgKiBBY2NvcmRpbmcgdG8gMTAy
-LjIyMyBTZWN0aW9uIDguNzIgdGhlIGxlbmd0aCBvZiB0ZXh0IGF0dHJpYnV0ZSBDVExWIGlzIDEK
-ICAqIGJ5dGUuICBUaGlzIG1lYW5zIHRoYXQgdGhlIG1heGltdW0gc2l6ZSBpcyAxMjcgYWNjb3Jk
-aW5nIHRvIHRoZSBydWxlcwotLSAKMS42LjMuMwoK
-
---===============3389440744017783913==--
+--===============6526251428543226741==--
 
