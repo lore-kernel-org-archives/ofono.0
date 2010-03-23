@@ -1,97 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============8832331810597911827=="
+Content-Type: multipart/mixed; boundary="===============3886536924622238200=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: Re: [PATCH 0/6] PPP Patches v3
-Date: Mon, 22 Mar 2010 21:07:27 -0700
-Message-ID: <20100322210727.558b4197@kcaccard-MOBL3>
-In-Reply-To: <1269316036.4851.60.camel@localhost.localdomain>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH] Add parser for file list objects
+Date: Tue, 23 Mar 2010 12:25:39 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731C807F10@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1269316155.4851.62.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8832331810597911827==
+--===============3886536924622238200==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, 22 Mar 2010 20:47:16 -0700
-Marcel Holtmann <marcel@holtmann.org> wrote:
-
-> Hi Kristen,
-> =
-
-> > > > > Changes since v2 - corrected whitespace. =
-
-> > > > =
-
-> > > > all the patches have been applied.
-> > > > =
-
-> > > > So form now on please send smaller patches as soon as you have them
-> > > > ready and tested. If you need comments or have questions, you can u=
-se
-> > > > the mailing list as well.
-> > > =
-
-> > > some additional comments from my side.
-> > > =
-
-> > > If you have variables that are only valid inside the scope of a
-> > > statement, then I prefer if you only declare them there. This makes t=
-he
-> > > code a bit simpler to read. Check the patch I just pushed to give you=
- an
-> > > example.
-> > > =
-
-> > > Also please find access to a 32-bit system if you are running 64-bit =
-or
-> > > vice versa. Our build system is strict and will turn turn all casting
-> > > mistakes in an error.
-> > > =
-
-> > > Please be present on #ofono IRC as much as possible so people can rep=
-ort
-> > > such things. Remember that your code is now part of the tree and it c=
-an
-> > > break the build.
-> >
-> > I just started reviewing the changes you made and the first =
-
-> > patch I hit I discovered that you broke something.  Would you like to
-> > revert the patches and let me review them first, or should I just send =
-
-> > a patch to the mailing list to fix what you broke?
-> =
-
-> send patches to the mailing list to fix them. The PPP code is in
-> development so it is just fine. I prefer to keep reverts for code that
-> is suppose to be stable.
-> =
-
-> If I did break something, then I am worried that the code gets too
-> complex. Such little changes should not have broken anything. Except I
-> made a stupid typo or thinking mistake (which happens of course). If it
-> fundamentally changes the code flow, then we do have a bigger problem.
-> =
-
-> Regards
-> =
-
-> Marcel
-> =
-
-> =
+Hi,
 
 
-I wanted this code to at least be able to send a packet over the wire,
-and with your changes we can't do that anymore.  The problem is that
-your little cosmetic change really did change the flow, simply because
-you didn't think through what you were doing.  Of course it is up to
-you if you want to have this code be completely non-functional rather
-than simply doing the revert.  I'll be glad to submit a patch later
-which fixes your fix and adds some comments so you know what is =
 
-actually happening.
+>-----Original Message-----
+>From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
+lf Of
+>Marcel Holtmann
+>Sent: Tuesday, March 23, 2010 11:49 AM
+>To: ofono(a)ofono.org
+>Subject: RE: [PATCH] Add parser for file list objects
+>
+>Hi Yang,
+>
+>> 	Attached is the patch modified according to the comments. Please review!
+>
+>I theory I don't mind patches as attachments, but if you are asking for
+>review I prefer them inline.
+>
+>So using git send-email (using linux.intel.com works just fine) is a lot
+>better here. Just mark the patch as [PATCH v2] or similar in the subject
+>line and it is easy to track them.
 
---===============8832331810597911827==--
+Sure. I will resend the patch.
+
+>Regards
+>
+>Marcel
+>
+>
+>_______________________________________________
+>ofono mailing list
+>ofono(a)ofono.org
+>http://lists.ofono.org/listinfo/ofono
+
+
+
+Regards,
+-Yang
+
+--===============3886536924622238200==--
 
