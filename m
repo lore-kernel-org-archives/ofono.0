@@ -1,31 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============4338836192398328030=="
+Content-Type: multipart/mixed; boundary="===============6745502682585100418=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: [PATCH 0/6] PPP Patches v3
-Date: Tue, 23 Mar 2010 14:34:39 +0200
-Message-ID: <201003231434.39439.remi@remlab.net>
-In-Reply-To: <1269310920.4851.32.camel@localhost.localdomain>
+Date: Tue, 23 Mar 2010 05:49:15 -0700
+Message-ID: <1269348555.11714.74.camel@localhost.localdomain>
+In-Reply-To: <201003231434.39439.remi@remlab.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4338836192398328030==
+--===============6745502682585100418==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tuesday 23 March 2010 04:22:00 Marcel Holtmann, you wrote:
-> If you have variables that are only valid inside the scope of a
-> statement, then I prefer if you only declare them there. This makes the
-> code a bit simpler to read. Check the patch I just pushed to give you an
-> example.
+Hi Remi,
 
-If you're serious about that, you should turn on C99 support. Only then you =
+> > If you have variables that are only valid inside the scope of a
+> > statement, then I prefer if you only declare them there. This makes the
+> > code a bit simpler to read. Check the patch I just pushed to give you an
+> > example.
+> =
 
-can use C++-style for-loops.
+> If you're serious about that, you should turn on C99 support. Only then y=
+ou =
 
--- =
+> can use C++-style for-loops.
 
-R=C3=A9mi Denis-Courmont
+I wasn't talking about the iterator variable.
 
---===============4338836192398328030==--
+Regards
+
+Marcel
+
+
+
+--===============6745502682585100418==--
 
