@@ -1,186 +1,155 @@
-Content-Type: multipart/mixed; boundary="===============1882768526861299439=="
+Content-Type: multipart/mixed; boundary="===============6567298302798920889=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 3/6] PPP LCP support
-Date: Mon, 22 Mar 2010 17:05:58 -0700
-Message-ID: <1269302761-20125-4-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH 4/6] CHAP with MD5 authentication support
+Date: Mon, 22 Mar 2010 17:05:59 -0700
+Message-ID: <1269302761-20125-5-git-send-email-kristen@linux.intel.com>
 In-Reply-To: <1269302761-20125-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1882768526861299439==
+--===============6567298302798920889==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Implement LCP support for the PPP protocol.
+Authentication support with CHAP and MD5
 ---
- Makefile.am       |    2 +-
- gatchat/gatppp.c  |    6 +-
- gatchat/ppp.c     |   47 ++++++++++
- gatchat/ppp.h     |    7 ++
- gatchat/ppp_lcp.c |  246 +++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am        |    3 +-
+ gatchat/gatppp.c   |   11 +++-
+ gatchat/gatppp.h   |    2 +
+ gatchat/ppp.c      |    1 +
+ gatchat/ppp.h      |   15 ++++
+ gatchat/ppp_auth.c |  229 ++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 5 files changed, 306 insertions(+), 2 deletions(-)
- create mode 100644 gatchat/ppp_lcp.c
+ 6 files changed, 259 insertions(+), 2 deletions(-)
+ create mode 100644 gatchat/ppp_auth.c
 
 diff --git a/Makefile.am b/Makefile.am
-index a58f10e..1a444ca 100644
+index 1a444ca..df89ef5 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -58,7 +58,7 @@ gatchat_sources =3D gatchat/gatchat.h gatchat/gatchat.c \
+@@ -58,7 +58,8 @@ gatchat_sources =3D gatchat/gatchat.h gatchat/gatchat.c \
  				gatchat/gatserver.h gatchat/gatserver.c \
  				gatchat/gatppp.c gatchat/gatppp.h \
  				gatchat/ppp.c gatchat/ppp.h gatchat/ppp_cp.h \
--				gatchat/ppp_cp.c
-+				gatchat/ppp_cp.c gatchat/ppp_lcp.c
+-				gatchat/ppp_cp.c gatchat/ppp_lcp.c
++				gatchat/ppp_cp.c gatchat/ppp_lcp.c \
++				gatchat/ppp_auth.c
  =
 
  udev_files =3D plugins/ofono.rules
  =
 
 diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index 7b68ff3..f083842 100644
+index f083842..2b682f8 100644
 --- a/gatchat/gatppp.c
 +++ b/gatchat/gatppp.c
-@@ -40,6 +40,7 @@
- void g_at_ppp_open(GAtPPP *ppp)
- {
- 	/* send an OPEN event to the lcp layer */
-+	lcp_open(ppp->lcp);
+@@ -43,6 +43,12 @@ void g_at_ppp_open(GAtPPP *ppp)
+ 	lcp_open(ppp->lcp);
  }
  =
 
- void g_at_ppp_set_connect_function(GAtPPP *ppp,
-@@ -69,6 +70,9 @@ void g_at_ppp_shutdown(GAtPPP *ppp)
- 	/* cleanup modem channel */
- 	g_source_remove(ppp->modem_watch);
- 	g_io_channel_unref(ppp->modem);
++void g_at_ppp_set_credentials(GAtPPP *ppp, const char *username,
++				const char *passwd)
++{
++	auth_set_credentials(ppp->auth, username, passwd);
++}
 +
-+	/* remove lcp */
-+	lcp_free(ppp->lcp);
+ void g_at_ppp_set_connect_function(GAtPPP *ppp,
+ 			       GAtPPPConnectFunc callback, gpointer user_data)
+ {
+@@ -73,6 +79,9 @@ void g_at_ppp_shutdown(GAtPPP *ppp)
+ =
+
+ 	/* remove lcp */
+ 	lcp_free(ppp->lcp);
++
++	/* remove auth */
++	auth_free(ppp->auth);
  }
  =
 
  void g_at_ppp_ref(GAtPPP *ppp)
-@@ -117,7 +121,7 @@ GAtPPP *g_at_ppp_new(GIOChannel *modem)
- 	ppp->index =3D 0;
- =
-
- 	/* initialize the lcp state */
--
-+	ppp->lcp =3D lcp_new(ppp);
+@@ -124,7 +133,7 @@ GAtPPP *g_at_ppp_new(GIOChannel *modem)
+ 	ppp->lcp =3D lcp_new(ppp);
  =
 
  	/* initialize the autentication state */
+-
++	ppp->auth =3D auth_new(ppp);
  =
 
+ 	/* intialize the network state */
+ =
+
+diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
+index 0d5d5cc..8db26c9 100644
+--- a/gatchat/gatppp.h
++++ b/gatchat/gatppp.h
+@@ -51,6 +51,8 @@ void g_at_ppp_set_disconnect_function(GAtPPP *ppp,
+ void g_at_ppp_shutdown(GAtPPP *ppp);
+ void g_at_ppp_ref(GAtPPP *ppp);
+ void g_at_ppp_unref(GAtPPP *ppp);
++void g_at_ppp_set_credentials(GAtPPP *ppp, const char *username,
++				const char *passwd);
+ #ifdef __cplusplus
+ }
+ #endif
 diff --git a/gatchat/ppp.c b/gatchat/ppp.c
-index db20d51..2399ed4 100644
+index 2399ed4..0b3221b 100644
 --- a/gatchat/ppp.c
 +++ b/gatchat/ppp.c
-@@ -350,16 +350,19 @@ gboolean ppp_cb(GIOChannel *channel, GIOCondition con=
-d, gpointer data)
- void ppp_close(GAtPPP *ppp)
- {
- 	/* send a CLOSE event to the lcp layer */
-+	lcp_close(ppp->lcp);
- }
- =
-
- static void ppp_link_establishment(GAtPPP *ppp)
- {
- 	/* signal UP event to LCP */
-+	lcp_establish(ppp->lcp);
- }
- =
-
- static void ppp_terminate(GAtPPP *ppp)
- {
- 	/* signal DOWN event to LCP */
-+	lcp_terminate(ppp->lcp);
- }
- =
-
- static void ppp_authenticate(GAtPPP *ppp)
-@@ -452,3 +455,47 @@ void ppp_generate_event(GAtPPP *ppp, enum ppp_event ev=
-ent)
- 	g_queue_push_tail(ppp->event_queue, GUINT_TO_POINTER(event));
- 	ppp_handle_event(ppp);
- }
-+
-+void ppp_set_auth(GAtPPP *ppp, guint8* auth_data)
-+{
-+	guint16 proto =3D get_host_short(auth_data);
-+
-+	switch (proto) {
-+	case CHAP_PROTOCOL:
-+		/* get the algorithm */
-+		break;
-+	default:
-+		g_printerr("unknown authentication proto\n");
-+		break;
-+	}
-+}
-+
-+void ppp_set_recv_accm(GAtPPP *ppp, guint32 accm)
-+{
-+	ppp->recv_accm =3D accm;
-+}
-+
-+guint32 ppp_get_xmit_accm(GAtPPP *ppp)
-+{
-+	return ppp->xmit_accm[0];
-+}
-+
-+void ppp_set_pfc(GAtPPP *ppp, gboolean pfc)
-+{
-+	ppp->pfc =3D pfc;
-+}
-+
-+gboolean ppp_get_pfc(GAtPPP *ppp)
-+{
-+	return ppp->pfc;
-+}
-+
-+void ppp_set_acfc(GAtPPP *ppp, gboolean acfc)
-+{
-+	ppp->acfc =3D acfc;
-+}
-+
-+gboolean ppp_get_acfc(GAtPPP *ppp)
-+{
-+	return ppp->acfc;
-+}
+@@ -463,6 +463,7 @@ void ppp_set_auth(GAtPPP *ppp, guint8* auth_data)
+ 	switch (proto) {
+ 	case CHAP_PROTOCOL:
+ 		/* get the algorithm */
++		auth_set_proto(ppp->auth, proto, auth_data[2]);
+ 		break;
+ 	default:
+ 		g_printerr("unknown authentication proto\n");
 diff --git a/gatchat/ppp.h b/gatchat/ppp.h
-index 0f39440..7753a39 100644
+index 7753a39..53d5274 100644
 --- a/gatchat/ppp.h
 +++ b/gatchat/ppp.h
-@@ -98,6 +98,7 @@ static inline guint16 __get_unaligned_short(const gpointe=
-r p)
+@@ -95,10 +95,20 @@ static inline guint16 __get_unaligned_short(const gpoin=
+ter p)
+ #define ppp_proto(packet) \
+ 	(get_host_short(packet + 2))
+ =
+
++struct auth_data {
++	guint16 proto;
++	gpointer proto_data;
++	void (*process_packet)(struct auth_data *data, guint8 *packet);
++	char *username;
++	char *passwd;
++	GAtPPP *ppp;
++};
++
  struct _GAtPPP {
  	gint ref_count;
  	enum ppp_phase phase;
-+	struct pppcp_data *lcp;
+ 	struct pppcp_data *lcp;
++	struct auth_data *auth;
  	guint8 buffer[BUFFERSZ];
  	int index;
  	gint mru;
-@@ -130,3 +131,9 @@ void ppp_set_pfc(GAtPPP *ppp, gboolean pfc);
- gboolean ppp_get_pfc(GAtPPP *ppp);
- void ppp_set_acfc(GAtPPP *ppp, gboolean acfc);
- gboolean ppp_get_acfc(GAtPPP *ppp);
-+struct pppcp_data * lcp_new(GAtPPP *ppp);
-+void lcp_free(struct pppcp_data *lcp);
-+void lcp_open(struct pppcp_data *data);
-+void lcp_close(struct pppcp_data *data);
-+void lcp_establish(struct pppcp_data *data);
-+void lcp_terminate(struct pppcp_data *data);
-diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+@@ -137,3 +147,8 @@ void lcp_open(struct pppcp_data *data);
+ void lcp_close(struct pppcp_data *data);
+ void lcp_establish(struct pppcp_data *data);
+ void lcp_terminate(struct pppcp_data *data);
++void auth_set_credentials(struct auth_data *data, const char *username,
++				const char *passwd);
++void auth_set_proto(struct auth_data *data, guint16 proto, guint8 method);
++struct auth_data *auth_new(GAtPPP *ppp);
++void auth_free(struct auth_data *auth);
+diff --git a/gatchat/ppp_auth.c b/gatchat/ppp_auth.c
 new file mode 100644
-index 0000000..644842a
+index 0000000..c23d9ad
 --- /dev/null
-+++ b/gatchat/ppp_lcp.c
-@@ -0,0 +1,246 @@
++++ b/gatchat/ppp_auth.c
+@@ -0,0 +1,229 @@
 +/*
 + *
 + *  PPP library with GLib integration
@@ -212,226 +181,209 @@ index 0000000..644842a
 +#include <unistd.h>
 +#include <string.h>
 +#include <termios.h>
-+#include <glib.h>
 +#include <arpa/inet.h>
++
++#include <glib.h>
++
 +#include "gatppp.h"
 +#include "ppp.h"
 +
-+enum lcp_options {
-+	RESERVED 	=3D 0,
-+	MRU		=3D 1,
-+	ACCM		=3D 2,
-+	AUTH_PROTO	=3D 3,
-+	QUAL_PROTO	=3D 4,
-+	MAGIC_NUMBER	=3D 5,
-+	DEPRECATED_QUAL_PROTO	=3D 6,
-+	PFC			=3D 7,
-+	ACFC			=3D 8,
++struct chap_header {
++	guint8 code;
++	guint8 identifier;
++	guint16 length;
++	guint8 data[0];
++} __attribute__((packed));
++
++struct chap_data {
++	guint8 method;
++	struct auth_data *auth;
 +};
 +
-+#define LCP_SUPPORTED_CODES	((1 << CONFIGURE_REQUEST) | \
-+				(1 << CONFIGURE_ACK) | \
-+				(1 << CONFIGURE_NAK) | \
-+				(1 << CONFIGURE_REJECT) | \
-+				(1 << TERMINATE_REQUEST) | \
-+				(1 << TERMINATE_ACK) | \
-+				(1 << CODE_REJECT) | \
-+				(1 << PROTOCOL_REJECT) | \
-+				(1 << ECHO_REQUEST) | \
-+				(1 << ECHO_REPLY) | \
-+				(1 << DISCARD_REQUEST))
++enum chap_code {
++	CHALLENGE=3D1,
++	RESPONSE,
++	SUCCESS,
++	FAILURE
++};
 +
-+/*
-+ * signal the Up event to the NCP
-+ */
-+static void lcp_up(struct pppcp_data *pppcp)
++void auth_set_credentials(struct auth_data *data, const char *username,
++				const char *passwd)
 +{
-+	ppp_generate_event(pppcp->ppp, PPP_OPENED);
++	if (data =3D=3D NULL)
++		return;
++
++	if (data->username)
++		g_free(data->username);
++	if (data->passwd)
++		g_free(data->passwd);
++
++	data->username =3D g_strdup(username);
++	data->passwd =3D g_strdup(passwd);
++}
++
++static void chap_process_challenge(struct auth_data *auth, guint8 *packet)
++{
++	struct chap_header *header =3D (struct chap_header *) packet;
++	struct chap_header *response;
++	struct chap_data *data =3D auth->proto_data;
++	GChecksum *checksum;
++	gchar *secret =3D data->auth->passwd;
++	guint16 response_length;
++	struct ppp_header *ppp_packet;
++	gsize digest_len;
++
++	/* create a checksum over id, secret, and challenge */
++	checksum =3D g_checksum_new(data->method);
++	if (!checksum)
++		return;
++	g_checksum_update(checksum, &header->identifier, 1);
++	g_checksum_update(checksum, (guchar *) secret, strlen(secret));
++	g_checksum_update(checksum, &header->data[1], header->data[0]);
++
++	/* transmit a response packet */
++	/*
++	 * allocate space for the header, the checksum, and the ppp header,
++	 * and the value size byte
++	 */
++	digest_len =3D g_checksum_type_get_length(data->method);
++	response_length =3D digest_len + sizeof(*header) + 1;
++	ppp_packet =3D g_try_malloc0(response_length + 2);
++	if (!ppp_packet)
++		goto challenge_out;
++
++	/* add our protocol information */
++	ppp_packet->proto =3D htons(CHAP_PROTOCOL);
++	response =3D (struct chap_header *) &ppp_packet->info;
++	if (response) {
++		response->code =3D RESPONSE;
++		response->identifier =3D header->identifier;
++		response->length =3D htons(response_length);
++		response->data[0] =3D digest_len;
++		g_checksum_get_digest(checksum, &response->data[1],
++					(gsize *) &response->data[0]);
++		/* leave the name empty? */
++	}
++
++	/* transmit the packet */
++	ppp_transmit(auth->ppp, (guint8 *) ppp_packet, response_length);
++
++challenge_out:
++	g_checksum_free(checksum);
++}
++
++static void chap_process_success(struct auth_data *data, guint8 *packet)
++{
++	ppp_generate_event(data->ppp, PPP_SUCCESS);
++}
++
++static void chap_process_failure(struct auth_data *data, guint8 *packet)
++{
++	struct chap_header *header =3D (struct chap_header *) packet;
++
++	g_print("Failed to authenticate, message %s\n", header->data);
 +}
 +
 +/*
-+ * signal the Down event to the NCP
++ * parse the packet
 + */
-+static void lcp_down(struct pppcp_data *pppcp)
++static void chap_process_packet(gpointer priv, guint8 *new_packet)
 +{
-+	ppp_generate_event(pppcp->ppp, PPP_DOWN);
-+}
++	struct auth_data *data =3D priv;
++	guint8 code =3D new_packet[0];
 +
-+/*
-+ * Indicate that the lower layer is now needed
-+ * Should trigger Up event
-+ */
-+static void lcp_started(struct pppcp_data *pppcp)
-+{
-+	ppp_generate_event(pppcp->ppp, PPP_UP);
-+}
-+
-+/*
-+ * Indicate that the lower layer is not needed
-+ * Should trigger Down event
-+ */
-+static void lcp_finished(struct pppcp_data *pppcp)
-+{
-+	ppp_generate_event(pppcp->ppp, PPP_CLOSING);
-+}
-+
-+/*
-+ * Scan the option to see if it is acceptable, unacceptable, or rejected
-+ *
-+ * We need to use a default case here because this option type value
-+ * could be anything.
-+ */
-+static guint lcp_option_scan(struct ppp_option *option, gpointer user)
-+{
-+	switch (option->type) {
-+	case ACCM:
-+	case AUTH_PROTO:
-+		/* XXX check to make sure it's a proto we recognize */
-+	case MAGIC_NUMBER:
-+	case PFC:
-+	case ACFC:
-+		return OPTION_ACCEPT;
++	switch (code) {
++	case CHALLENGE:
++		chap_process_challenge(data, new_packet);
++		break;
++	case RESPONSE:
++		g_print("Oops, received RESPONSE, but I've not implemented\n");
++		break;
++	case SUCCESS:
++		chap_process_success(data, new_packet);
++		break;
++	case FAILURE:
++		chap_process_failure(data, new_packet);
 +		break;
 +	default:
-+		return OPTION_REJECT;
++		g_print("unknown auth code\n");
++		break;
 +	}
 +}
 +
-+/*
-+ * act on an acceptable option
-+ *
-+ * We need to use a default case here because this option type value
-+ * could be anything.
-+ */
-+static void lcp_option_process(gpointer data, gpointer user)
-+{
-+	struct ppp_option *option =3D data;
-+	struct pppcp_data *pppcp =3D user;
-+	GAtPPP *ppp =3D pppcp->ppp;
-+	guint32 magic;
++struct ppp_packet_handler chap_packet_handler =3D {
++	.proto =3D CHAP_PROTOCOL,
++	.handler =3D chap_process_packet,
++};
 +
-+	switch (option->type) {
-+	case ACCM:
-+		ppp_set_recv_accm(ppp, get_host_long(option->data));
-+		break;
-+	case AUTH_PROTO:
-+		ppp_set_auth(ppp, option->data);
-+		break;
-+	case MAGIC_NUMBER:
-+		/* XXX handle loopback */
-+		magic =3D get_host_long(option->data);
-+		if (magic !=3D pppcp->magic_number)
-+			pppcp->magic_number =3D magic;
-+		else
-+			g_print("looped back? I should do something\n");
-+		break;
-+	case PFC:
-+		ppp_set_pfc(ppp, TRUE);
-+		break;
-+	case ACFC:
-+		ppp_set_acfc(ppp, TRUE);
++static void chap_free(struct auth_data *auth)
++{
++	/* TBD unregister protocol handler */
++
++	g_free(auth->proto_data);
++}
++
++static struct chap_data *chap_new(struct auth_data *auth, guint8 method)
++{
++	struct chap_data *data;
++
++	data =3D g_try_malloc0(sizeof(*data));
++	if (!data)
++		return NULL;
++
++	data->auth =3D auth;
++	switch (method) {
++	case MD5:
++		data->method =3D G_CHECKSUM_MD5;
 +		break;
 +	default:
-+		g_printerr("unhandled option %d\n", option->type);
++		g_print("Unknown method\n");
++	}
++
++	/* register packet handler for CHAP protocol */
++	chap_packet_handler.priv =3D auth;
++	ppp_register_packet_handler(&chap_packet_handler);
++	return data;
++}
++
++void auth_set_proto(struct auth_data *data, guint16 proto, guint8 method)
++{
++	if (data =3D=3D NULL)
++		return;
++
++	switch (proto) {
++	case CHAP_PROTOCOL:
++		data->proto_data =3D (gpointer) chap_new(data, method);
++		break;
++	default:
++		g_print("Unknown auth protocol 0x%x\n", proto);
 +	}
 +}
 +
-+struct ppp_packet_handler lcp_packet_handler =3D {
-+	.proto =3D LCP_PROTOCOL,
-+	.handler =3D pppcp_process_packet,
-+};
-+
-+struct pppcp_action lcp_action =3D {
-+	.this_layer_up =3D	lcp_up,
-+	.this_layer_down =3D 	lcp_down,
-+	.this_layer_started =3D 	lcp_started,
-+	.this_layer_finished =3D	lcp_finished,
-+	.option_scan =3D 		lcp_option_scan,
-+	.option_process =3D 	lcp_option_process,
-+};
-+
-+void lcp_open(struct pppcp_data *data)
++void auth_free(struct auth_data *data)
 +{
 +	if (data =3D=3D NULL)
 +		return;
 +
-+	/* send an open event to the lcp layer */
-+	pppcp_generate_event(data, OPEN, NULL, 0);
++	chap_free(data);
++	g_free(data);
 +}
 +
-+void lcp_close(struct pppcp_data *data)
++struct auth_data *auth_new(GAtPPP *ppp)
 +{
-+	if (data =3D=3D NULL)
-+		return;
++	struct auth_data *data;
 +
-+	/* send a CLOSE  event to the lcp layer */
-+	pppcp_generate_event(data, CLOSE, NULL, 0);
-+}
-+
-+void lcp_establish(struct pppcp_data *data)
-+{
-+	if (data =3D=3D NULL)
-+		return;
-+
-+	/* send an UP event to the lcp layer */
-+	pppcp_generate_event(data, UP, NULL, 0);
-+}
-+
-+void lcp_terminate(struct pppcp_data *data)
-+{
-+	if (data =3D=3D NULL)
-+		return;
-+
-+	/* send a DOWN event to the lcp layer */
-+	pppcp_generate_event(data, DOWN, NULL, 0);
-+}
-+
-+void lcp_free(struct pppcp_data *lcp)
-+{
-+	if (lcp =3D=3D NULL)
-+		return;
-+
-+	/* TBD unregister packet handler */
-+
-+	pppcp_free(lcp);
-+}
-+
-+struct pppcp_data * lcp_new(GAtPPP *ppp)
-+{
-+	struct pppcp_data *pppcp;
-+	struct ppp_option *option;
-+	guint16 codes =3D LCP_SUPPORTED_CODES;
-+
-+	pppcp =3D pppcp_new(ppp, LCP_PROTOCOL, NULL);
-+	if (!pppcp) {
-+		g_print("Failed to allocate PPPCP struct\n");
++	data =3D g_try_malloc0(sizeof(*data));
++	if (!data)
 +		return NULL;
-+	}
-+	pppcp_set_valid_codes(pppcp, codes);
-+	pppcp->priv =3D pppcp;
 +
-+	/* set the actions */
-+	pppcp->action =3D &lcp_action;
-+
-+	/* add the default config options */
-+	option =3D g_try_malloc0(6);
-+	if (option =3D=3D NULL) {
-+		pppcp_free(pppcp);
-+		return NULL;
-+	}
-+	option->type =3D ACCM;
-+	option->length =3D 6;
-+	pppcp_add_config_option(pppcp, option);
-+
-+	/* register packet handler for LCP protocol */
-+	lcp_packet_handler.priv =3D pppcp;
-+	ppp_register_packet_handler(&lcp_packet_handler);
-+	return pppcp;
++	data->ppp =3D ppp;
++	return data;
 +}
 -- =
 
 1.6.6.1
 
 
---===============1882768526861299439==--
+--===============6567298302798920889==--
 
