@@ -1,191 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============2859158347722471052=="
+Content-Type: multipart/mixed; boundary="===============2587935762486481927=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Add basic command parsing
-Date: Tue, 23 Mar 2010 16:18:57 -0500
-Message-ID: <201003231618.57357.denkenz@gmail.com>
-In-Reply-To: <1269339283-9697-2-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [PATCH] Fix: simplify isimodem call-barring driver.
+Date: Tue, 23 Mar 2010 16:53:13 -0500
+Message-ID: <201003231653.14125.denkenz@gmail.com>
+In-Reply-To: <1269366372-19526-1-git-send-email-ppessi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2859158347722471052==
+--===============2587935762486481927==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Pekka,
+
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> =
+
+> Add support for lock codes AG and AC (MMI codes 333 and 353. respectively=
+).
+
+First of all, please keep your commit messages less than 72 characters long =
+
+and headings less than 50 characters long.
+
+Secondly, please keep your patches whitespace clean, there are several case=
+s =
+
+of spaces being used instead of tabs for indentation.
 
 > ---
->  gatchat/gatserver.c |  110
->  ++++++++++++++++++++++++++++++++++++++++++++++++++- 1 files changed, =
+>  drivers/isimodem/call-barring.c |  153
+>  ++++++++++++--------------------------- drivers/isimodem/ss.h           =
+| =
 
-109
->  insertions(+), 1 deletions(-)
+>   28 ++++----
+>  2 files changed, 63 insertions(+), 118 deletions(-)
 > =
 
-> diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-> index 6579b38..c207bd8 100644
-> --- a/gatchat/gatserver.c
-> +++ b/gatchat/gatserver.c
-> @@ -308,9 +308,117 @@ next:
->  	return i + 1;
->  }
+> diff --git a/drivers/isimodem/call-barring.c
+>  b/drivers/isimodem/call-barring.c index 6487ae8..b0246fa 100644
+> --- a/drivers/isimodem/call-barring.c
+> +++ b/drivers/isimodem/call-barring.c
+> @@ -48,6 +48,28 @@ struct barr_data {
+>  	GIsiClient *client;
+>  };
+
 > =
 
-> +static gboolean get_basic_prefix(const char *buf, char *prefix)
-> +{
-> +	char c =3D *buf;
-> +
-> +	if (!g_ascii_isalpha(c) && c !=3D '&')
-> +		return FALSE;
-> +
-> +	if (g_ascii_isalpha(c)) {
-> +		c =3D g_ascii_toupper(c);
-> +		if (c =3D=3D 'S') {
-> +			int i =3D 0;
-> +
-> +			prefix[0] =3D 'S';
-> +
-> +			/* V.250 5.3.2 'S' command follows with
-> +			 * a parameter number.
-> +			 */
-> +			while (g_ascii_isdigit(buf[++i]))
-> +				prefix[i] =3D buf[i];
+> +	DBG("lock code %s (%u) old password %s new password %s\n",
+> +	    lock, ss_code, old_passwd, new_passwd);
 
-Is there some limit on the number?  Can we limit it to max int or something?
+Here is an instance of whitespace error.
 
-> +
-> +			prefix[i] =3D '\0';
-> +		} else {
-> +			prefix[0] =3D c;
-> +			prefix[1] =3D '\0';
-> +		}
+> -	if (g_isi_request_make(bd->client, msg, sizeof(msg), SS_TIMEOUT,
+> +	if (cbd &&
+> +	    g_isi_request_make(bd->client, msg, sizeof(msg), SS_TIMEOUT,
+>  				set_passwd_resp_cb, cbd))
+>  		return;
 
-Use a return here or an else if clause, no sense checking the if twice.
+Here's another one..
 
-> +	}
-> +
-> +	if (c =3D=3D '&') {
-> +		prefix[0] =3D '&';
-> +		prefix[1] =3D g_ascii_toupper(buf[1]);
-> +		prefix[2] =3D '\0';
-> +	}
-> +
-> +	return TRUE;
-> +}
-> +
->  static unsigned int parse_basic_command(GAtServer *server, char *buf)
->  {
-> -	return 0;
-> +	char *command =3D NULL;
+>  enum ss_codes {
+> -	SS_GSM_ALL_FORWARDINGS =3D 0x02,
+> -	SS_GSM_ALL_COND_FORWARDINGS =3D 0x04,
+> -	SS_GSM_FORW_UNCONDITIONAL =3D 0x15,
+> -	SS_GSM_BARR_ALL_OUT =3D 0x21,
+> -	SS_GSM_BARR_ALL_IN =3D 0x23,
+> -	SS_GSM_CALL_WAITING =3D 0x2B,
+> -	SS_GSM_FORW_NO_REPLY =3D 0x3D,
+> -	SS_GSM_FORW_NO_REACH =3D 0x3E,
+> -	SS_GSM_FORW_BUSY =3D 0x43,
+> -	SS_GSM_ALL_BARRINGS =3D 0x014A,
+> -	SS_GSM_BARR_OUT_INTER =3D 0x014B,
+> -	SS_GSM_BARR_OUT_INTER_EXC_HOME =3D 0x014C,
+> -	SS_GSM_BARR_ALL_IN_ROAM =3D 0x015F
+> +	SS_GSM_ALL_FORWARDINGS =3D 002,
+> +	SS_GSM_ALL_COND_FORWARDINGS =3D 004,
 
-Why do you initialize this?  Doesn't seem to be a point.
+Are you sure this isn't octal syntax?  It still works, but you might simply =
 
-> +	char prefix[3];
-> +	unsigned int i;
-> +	GAtServerRequestType type;
-> +	gboolean seen_equals =3D FALSE;
-> +
-> +	if (!get_basic_prefix(buf, prefix))
-> +		return 0;
-> +
-> +	i =3D strlen(prefix);
-> +
-> +	if (*prefix =3D=3D 'D') {
-> +		type =3D G_AT_SERVER_REQUEST_TYPE_SET;
-> +
-> +		/* All following characters are the part of the call */
-> +		while (buf[i] !=3D '\0')
-> +			i +=3D 1;
+use 2 and 4  here.
 
-Quoting V.250:
-All characters appearing on the same command line after the "D" are conside=
-red =
+> +	SS_GSM_FORW_UNCONDITIONAL =3D 21,
+> +	SS_GSM_BARR_ALL_OUT =3D 33,
+> +	SS_GSM_OUTGOING_BARR_SERV =3D 333,
+> +	SS_GSM_INCOMING_BARR_SERV =3D 353,
+> +	SS_GSM_BARR_ALL_IN =3D 35,
+> +	SS_GSM_CALL_WAITING =3D 43,
+> +	SS_GSM_FORW_NO_REPLY =3D 61,
+> +	SS_GSM_FORW_NO_REACH =3D 62,
+> +	SS_GSM_FORW_BUSY =3D 67,
+> +	SS_GSM_ALL_BARRINGS =3D 330,
+> +	SS_GSM_BARR_OUT_INTER =3D 331,
+> +	SS_GSM_BARR_OUT_INTER_EXC_HOME =3D 332,
+> +	SS_GSM_BARR_ALL_IN_ROAM =3D 351,
+>  };
 
-part of the call addressing information to be signalled to the network, or =
+From now on we'll require all enum values to be tab aligned so they're a bi=
+t =
 
-modifiers used to control the signalling process (collectively known as a "=
-dial =
-
-string"), up to a semicolon character (IA5 3/11) or the end of the command =
-
-line.
-
-So this logic seems incorrect.
-
-> +
-> +		goto done;
-> +	}
-> +
-> +	if (buf[i] =3D=3D '\0' || buf[i] =3D=3D ';') {
-> +		type =3D G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY;
-> +		goto done;
-> +	}
-> +
-> +	/* Additional commands may follow a command without any character
-> +	 * required for separation.
-> +	 */
-> +	if (is_basic_command_prefix(&buf[i])) {
-> +		type =3D G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY;
-> +		goto done;
-> +	}
-> +
-> +	/* Match '?', '=3D',  '=3D?' and '=3Dxxx' */
-> +	if (buf[i] =3D=3D '=3D') {
-> +		seen_equals =3D TRUE;
-> +		i +=3D 1;
-> +	}
-> +
-> +	if (buf[i] =3D=3D '?') {
-> +		i +=3D 1;
-> +
-> +		if (seen_equals)
-> +			type =3D G_AT_SERVER_REQUEST_TYPE_SUPPORT;
-> +		else
-> +			type =3D G_AT_SERVER_REQUEST_TYPE_QUERY;
-> +	} else {
-> +		/* V.250 5.3.1 The subparameter (if any) are all digits */
-> +		while (g_ascii_isdigit(buf[i]))
-> +			i++;
-> +
-> +		type =3D G_AT_SERVER_REQUEST_TYPE_SET;
-> +	}
-> +
-> +done:
-> +	command =3D g_strndup(buf, i);
-> +
-> +	at_command_notify(server, command, prefix, type);
-> +
-> +	g_free(command);
-> +
-> +	/* Commands like ATA, ATD, ATZ cause the remainder line
-> +	 * to be ignored.
-> +	 */
-> +	if (*prefix =3D=3D 'A' || *prefix =3D=3D 'D' || *prefix =3D=3D 'Z')
-> +		return 0;
-
-Returning 0 means this command was not properly formatted.  Not something y=
-ou =
-
-want.  Also, as we saw before this is true of ATA and possibly ATZ, but not =
-
-ATD.
-
-> +
-> +	/* Consumed the seperator ';' */
-> +	if (buf[i] =3D=3D ';')
-> +		i +=3D 1;
-> +
-> +	return i;
->  }
-> =
-
->  static void server_parse_line(GAtServer *server, char *line)
-> =
-
+easier to read.  See src/stkutil.h for reference.
 
 Regards,
 -Denis
 
---===============2859158347722471052==--
+--===============2587935762486481927==--
 
