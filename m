@@ -1,110 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============5471873674743233901=="
+Content-Type: multipart/mixed; boundary="===============0003542616740935961=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/6] Unify some macro names of ber-tlv and comprehension
- tlv
-Date: Wed, 24 Mar 2010 12:03:15 -0500
-Message-ID: <201003241203.16769.denkenz@gmail.com>
-In-Reply-To: <1269423347-15508-3-git-send-email-yang.gu@intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH 1/3] fix memory leaks in option handling
+Date: Wed, 24 Mar 2010 10:13:23 -0700
+Message-ID: <1269450805-3661-2-git-send-email-kristen@linux.intel.com>
+In-Reply-To: <1269450805-3661-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5471873674743233901==
+--===============0003542616740935961==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+free the data as well as the link when deleting options lists.
+---
+ gatchat/ppp_cp.c |   15 ++++++++++++++-
+ 1 files changed, 14 insertions(+), 1 deletions(-)
 
-> ---
->  src/stkutil.h |   22 +++++++++++-----------
->  1 files changed, 11 insertions(+), 11 deletions(-)
-> =
+diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
+index e8d6e30..0f04fa1 100644
+--- a/gatchat/ppp_cp.c
++++ b/gatchat/ppp_cp.c
+@@ -201,6 +201,16 @@ static void pppcp_clear_options(struct pppcp_data *dat=
+a)
+ 	data->rejected_options =3D NULL;
+ }
+ =
 
-> diff --git a/src/stkutil.h b/src/stkutil.h
-> index 4b7c382..5724d29 100644
-> --- a/src/stkutil.h
-> +++ b/src/stkutil.h
-> @@ -54,7 +54,7 @@ enum stk_command_type {
->  	STK_COMMAND_TYPE_GET_INPUT =3D			0x23,
->  	STK_COMMAND_TYPE_SELECT_ITEM =3D			0x24,
->  	STK_COMMAND_TYPE_SETUP_MENU =3D			0x25,
-> -	STK_COMMAND_TYPE_PROVIDE_LOCAL_INFORMATION =3D	0x26,
-> +	STK_COMMAND_TYPE_PROVIDE_LOCAL_INFO =3D		0x26,
++static void pppcp_free_options(struct pppcp_data *data)
++{
++	/* remove all config options */
++	pppcp_clear_options(data);
++
++	/* remove default option list */
++	g_list_foreach(data->config_options, pppcp_free_option, NULL);
++	g_list_free(data->config_options);
++}
++
+ /*
+  * set the restart counter to either max-terminate
+  * or max-configure.  The counter is decremented for
+@@ -1103,6 +1113,7 @@ static void remove_config_option(gpointer elem, gpoin=
+ter user_data)
+ 	if (!list)
+ 		return;
+ =
 
-I'm fine with this one
++	g_free(list->data);
+ 	data->config_options =3D g_list_delete_link(data->config_options, list);
+ }
+ =
 
->  	STK_COMMAND_TYPE_TIMER_MANAGEMENT =3D		0x27,
->  	STK_COMMAND_TYPE_SETUP_IDLE_MODE_TEXT =3D		0x28,
->  	STK_COMMAND_TYPE_PERFORM_CARD_APDU =3D		0x30,
-> @@ -69,13 +69,13 @@ enum stk_command_type {
->  	STK_COMMAND_TYPE_SEND_DATA =3D			0x43,
->  	STK_COMMAND_TYPE_GET_CHANNEL_STATUS =3D		0x44,
->  	STK_COMMAND_TYPE_SERVICE_SEARCH =3D		0x45,
-> -	STK_COMMAND_TYPE_GET_SERVICE_INFORMATION =3D	0x46,
-> +	STK_COMMAND_TYPE_GET_SERVICE_INFO =3D		0x46,
+@@ -1226,6 +1237,8 @@ static guint8 pppcp_process_configure_ack(struct pppc=
+p_data *data,
+ 			if (action->option_process)
+ 				action->option_process(acked_option,
+ 							data->priv);
++
++			g_free(list->data);
+ 			data->config_options =3D
+ 				g_list_delete_link(data->config_options, list);
+ 		} else
+@@ -1440,7 +1453,7 @@ void pppcp_free(struct pppcp_data *data)
+ 	g_queue_free(data->event_queue);
+ =
 
-And I'm fine with this one
+ 	/* remove all config options */
+-	pppcp_clear_options(data);
++	pppcp_free_options(data);
+ =
 
->  	STK_COMMAND_TYPE_DECLARE_SERVICE =3D		0x47,
->  	STK_COMMAND_TYPE_SET_FRAMES =3D			0x50,
->  	STK_COMMAND_TYPE_GET_FRAMES_STATUS =3D		0x51,
-> -	STK_COMMAND_TYPE_RETRIEVE_MMS =3D			0x60,
-> -	STK_COMMAND_TYPE_SUBMIT_MMS =3D			0x61,
-> -	STK_COMMAND_TYPE_DISPLAY_MMS =3D			0x62,
-> +	STK_COMMAND_TYPE_RETRIEVE_MM =3D			0x60,
-> +	STK_COMMAND_TYPE_SUBMIT_MM =3D			0x61,
-> +	STK_COMMAND_TYPE_DISPLAY_MM =3D			0x62,
+ 	/* free self */
+ 	g_free(data);
+-- =
 
-This one is silly, MM is multimedia message, MMS is a much clearer name
-
->  	STK_COMMAND_TYPE_ACTIVATE =3D			0x70,
->  	STK_COMMAND_TYPE_END_SESSION =3D			0x81,
->  };
-> @@ -131,7 +131,7 @@ enum stk_data_object_type {
->  	STK_DATA_OBJECT_TYPE_BROWSER_ID =3D			0x30,
->  	STK_DATA_OBJECT_TYPE_URL =3D				0x31,
->  	STK_DATA_OBJECT_TYPE_BEARER =3D				0x32,
-> -	STK_DATA_OBJECT_TYPE_PROVISIONING_REFERENCE_FILE =3D	0x33,
-> +	STK_DATA_OBJECT_TYPE_PROVISIONING_FILE_REFERENCE =3D	0x33,
-
-I'm ok with this one
-
->  	STK_DATA_OBJECT_TYPE_BROWSER_TERMINATION_CAUSE =3D	0x34,
->  	STK_DATA_OBJECT_TYPE_BEARER_DESCRIPTION =3D		0x35,
->  	STK_DATA_OBJECT_TYPE_CHANNEL_DATA =3D			0x36,
-> @@ -162,12 +162,12 @@ enum stk_data_object_type {
->  	STK_DATA_OBJECT_TYPE_FRAME_LAYOUT =3D			0x66,
->  	STK_DATA_OBJECT_TYPE_FRAMES_INFO =3D			0x67,
->  	STK_DATA_OBJECT_TYPE_FRAME_ID =3D				0x68,
-> -	STK_DATA_OBJECT_TYPE_MMS_REFERENCE =3D			0x6A,
-> -	STK_DATA_OBJECT_TYPE_MMS_ID =3D				0x6B,
-> -	STK_DATA_OBJECT_TYPE_MMS_TRANSFER_STATUS =3D		0x6C,
-> +	STK_DATA_OBJECT_TYPE_MM_REFERENCE =3D			0x6A,
-> +	STK_DATA_OBJECT_TYPE_MM_ID =3D				0x6B,
-> +	STK_DATA_OBJECT_TYPE_MM_TRANSFER_STATUS =3D		0x6C,
-
-Keep MMS here
-
->  	STK_DATA_OBJECT_TYPE_MEID =3D				0x6D,
-> -	STK_DATA_OBJECT_TYPE_CONTENT_ID =3D			0x6E,
-> -	STK_DATA_OBJECT_TYPE_MMS_NOTIFICATION =3D			0x6F,
-> +	STK_DATA_OBJECT_TYPE_MM_CONTENT_ID =3D			0x6E,
-
-Rename this MMS_CONTENT_ID
-
-> +	STK_DATA_OBJECT_TYPE_MM_NOTIFICATION =3D			0x6F,
-
-Keep MMS here
-
->  	STK_DATA_OBJECT_TYPE_LAST_ENVELOPE =3D			0x70,
->  	STK_DATA_OBJECT_TYPE_REGISTRY_APPLICATION_DATA =3D	0x71,
->  	STK_DATA_OBJECT_TYPE_ROUTING_AREA_INFO =3D		0x73,
-> =
+1.6.6.1
 
 
-Regards,
--Denis
-
---===============5471873674743233901==--
+--===============0003542616740935961==--
 
