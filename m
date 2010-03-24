@@ -1,84 +1,131 @@
-Content-Type: multipart/mixed; boundary="===============8169483990563259242=="
+Content-Type: multipart/mixed; boundary="===============4204367174564580575=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 3/6] Unify some macro names of ber-tlv and comprehension tlv
-Date: Wed, 24 Mar 2010 17:35:44 +0800
-Message-ID: <1269423347-15508-3-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1269423347-15508-2-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 1/6] Add parser for location information objects
+Date: Wed, 24 Mar 2010 17:35:42 +0800
+Message-ID: <1269423347-15508-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8169483990563259242==
+--===============4204367174564580575==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.h |   22 +++++++++++-----------
- 1 files changed, 11 insertions(+), 11 deletions(-)
+ src/simutil.c |    2 +-
+ src/simutil.h |    1 +
+ src/stkutil.c |   32 ++++++++++++++++++++++++++++++++
+ src/stkutil.h |    9 +++++++++
+ 4 files changed, 43 insertions(+), 1 deletions(-)
 
+diff --git a/src/simutil.c b/src/simutil.c
+index d9383b7..65ffa36 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -538,7 +538,7 @@ static char *sim_network_name_parse(const unsigned char=
+ *buffer, int length,
+ 	return ret;
+ }
+ =
+
+-static void parse_mcc_mnc(const guint8 *bcd, char *mcc, char *mnc)
++void parse_mcc_mnc(const guint8 *bcd, char *mcc, char *mnc)
+ {
+ 	static const char digit_lut[] =3D "0123456789*#abd\0";
+ 	guint8 digit;
+diff --git a/src/simutil.h b/src/simutil.h
+index 043c21f..09964a8 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -181,6 +181,7 @@ const struct sim_eons_operator_info *sim_eons_lookup(st=
+ruct sim_eons *eons,
+ 						const char *mnc);
+ void sim_eons_free(struct sim_eons *eons);
+ =
+
++void parse_mcc_mnc(const guint8 *bcd, char *mcc, char *mnc);
+ struct sim_spdi *sim_spdi_new(const guint8 *tlv, int length);
+ gboolean sim_spdi_lookup(struct sim_spdi *spdi,
+ 				const char *mcc, const char *mnc);
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 9c83f49..a6b0284 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -519,6 +519,36 @@ error:
+ 	return FALSE;
+ }
+ =
+
++/* Defined in TS 102.223 Section 8.19 */
++static gboolean parse_dataobj_location_info(
++		struct comprehension_tlv_iter *iter, void *user)
++{
++	struct stk_location_info *li =3D user;
++	const unsigned char *data;
++	unsigned int len;
++
++	if (comprehension_tlv_iter_get_tag(iter) !=3D
++			STK_DATA_OBJECT_TYPE_LOCATION_INFO)
++		return FALSE;
++
++	len =3D comprehension_tlv_iter_get_length(iter);
++	if ((len !=3D 5) && (len !=3D 7) && (len !=3D 9))
++		return FALSE;
++
++	data =3D comprehension_tlv_iter_get_data(iter);
++
++	parse_mcc_mnc(data, li->mcc, li->mnc);
++	memcpy(li->lac_tac, data + 3, 2);
++
++	if (len >=3D 7)
++		memcpy(li->cell_id, data+5, 2);
++
++	if (len =3D=3D 9)
++		memcpy(li->ext_cell_id, data+7, 2);
++
++	return TRUE;
++}
++
+ /* Defined in TS 102.223 Section 8.31 */
+ static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *iter,
+ 					void *user)
+@@ -638,6 +668,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
+bject_type type)
+ 		return parse_dataobj_tone;
+ 	case STK_DATA_OBJECT_TYPE_FILE_LIST:
+ 		return parse_dataobj_file_list;
++	case STK_DATA_OBJECT_TYPE_LOCATION_INFO:
++		return parse_dataobj_location_info;
+ 	case STK_DATA_OBJECT_TYPE_ICON_ID:
+ 		return parse_dataobj_icon_id;
+ 	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
 diff --git a/src/stkutil.h b/src/stkutil.h
-index 4b7c382..5724d29 100644
+index 93ac854..00c985a 100644
 --- a/src/stkutil.h
 +++ b/src/stkutil.h
-@@ -54,7 +54,7 @@ enum stk_command_type {
- 	STK_COMMAND_TYPE_GET_INPUT =3D			0x23,
- 	STK_COMMAND_TYPE_SELECT_ITEM =3D			0x24,
- 	STK_COMMAND_TYPE_SETUP_MENU =3D			0x25,
--	STK_COMMAND_TYPE_PROVIDE_LOCAL_INFORMATION =3D	0x26,
-+	STK_COMMAND_TYPE_PROVIDE_LOCAL_INFO =3D		0x26,
- 	STK_COMMAND_TYPE_TIMER_MANAGEMENT =3D		0x27,
- 	STK_COMMAND_TYPE_SETUP_IDLE_MODE_TEXT =3D		0x28,
- 	STK_COMMAND_TYPE_PERFORM_CARD_APDU =3D		0x30,
-@@ -69,13 +69,13 @@ enum stk_command_type {
- 	STK_COMMAND_TYPE_SEND_DATA =3D			0x43,
- 	STK_COMMAND_TYPE_GET_CHANNEL_STATUS =3D		0x44,
- 	STK_COMMAND_TYPE_SERVICE_SEARCH =3D		0x45,
--	STK_COMMAND_TYPE_GET_SERVICE_INFORMATION =3D	0x46,
-+	STK_COMMAND_TYPE_GET_SERVICE_INFO =3D		0x46,
- 	STK_COMMAND_TYPE_DECLARE_SERVICE =3D		0x47,
- 	STK_COMMAND_TYPE_SET_FRAMES =3D			0x50,
- 	STK_COMMAND_TYPE_GET_FRAMES_STATUS =3D		0x51,
--	STK_COMMAND_TYPE_RETRIEVE_MMS =3D			0x60,
--	STK_COMMAND_TYPE_SUBMIT_MMS =3D			0x61,
--	STK_COMMAND_TYPE_DISPLAY_MMS =3D			0x62,
-+	STK_COMMAND_TYPE_RETRIEVE_MM =3D			0x60,
-+	STK_COMMAND_TYPE_SUBMIT_MM =3D			0x61,
-+	STK_COMMAND_TYPE_DISPLAY_MM =3D			0x62,
- 	STK_COMMAND_TYPE_ACTIVATE =3D			0x70,
- 	STK_COMMAND_TYPE_END_SESSION =3D			0x81,
+@@ -345,6 +345,15 @@ struct stk_result {
+ 	unsigned char *additional;
  };
-@@ -131,7 +131,7 @@ enum stk_data_object_type {
- 	STK_DATA_OBJECT_TYPE_BROWSER_ID =3D			0x30,
- 	STK_DATA_OBJECT_TYPE_URL =3D				0x31,
- 	STK_DATA_OBJECT_TYPE_BEARER =3D				0x32,
--	STK_DATA_OBJECT_TYPE_PROVISIONING_REFERENCE_FILE =3D	0x33,
-+	STK_DATA_OBJECT_TYPE_PROVISIONING_FILE_REFERENCE =3D	0x33,
- 	STK_DATA_OBJECT_TYPE_BROWSER_TERMINATION_CAUSE =3D	0x34,
- 	STK_DATA_OBJECT_TYPE_BEARER_DESCRIPTION =3D		0x35,
- 	STK_DATA_OBJECT_TYPE_CHANNEL_DATA =3D			0x36,
-@@ -162,12 +162,12 @@ enum stk_data_object_type {
- 	STK_DATA_OBJECT_TYPE_FRAME_LAYOUT =3D			0x66,
- 	STK_DATA_OBJECT_TYPE_FRAMES_INFO =3D			0x67,
- 	STK_DATA_OBJECT_TYPE_FRAME_ID =3D				0x68,
--	STK_DATA_OBJECT_TYPE_MMS_REFERENCE =3D			0x6A,
--	STK_DATA_OBJECT_TYPE_MMS_ID =3D				0x6B,
--	STK_DATA_OBJECT_TYPE_MMS_TRANSFER_STATUS =3D		0x6C,
-+	STK_DATA_OBJECT_TYPE_MM_REFERENCE =3D			0x6A,
-+	STK_DATA_OBJECT_TYPE_MM_ID =3D				0x6B,
-+	STK_DATA_OBJECT_TYPE_MM_TRANSFER_STATUS =3D		0x6C,
- 	STK_DATA_OBJECT_TYPE_MEID =3D				0x6D,
--	STK_DATA_OBJECT_TYPE_CONTENT_ID =3D			0x6E,
--	STK_DATA_OBJECT_TYPE_MMS_NOTIFICATION =3D			0x6F,
-+	STK_DATA_OBJECT_TYPE_MM_CONTENT_ID =3D			0x6E,
-+	STK_DATA_OBJECT_TYPE_MM_NOTIFICATION =3D			0x6F,
- 	STK_DATA_OBJECT_TYPE_LAST_ENVELOPE =3D			0x70,
- 	STK_DATA_OBJECT_TYPE_REGISTRY_APPLICATION_DATA =3D	0x71,
- 	STK_DATA_OBJECT_TYPE_ROUTING_AREA_INFO =3D		0x73,
+ =
+
++/* Defined in TS 102.223 Section 8.19 */
++struct stk_location_info {
++	char mnc[OFONO_MAX_MNC_LENGTH + 1];
++	char mcc[OFONO_MAX_MCC_LENGTH + 1];
++	unsigned char lac_tac[2];
++	unsigned char cell_id[2];
++	unsigned char ext_cell_id[2];
++};
++
+ /* Define the struct of single file in TS102.223 Section 8.18.
+  * According to TS 11.11 Section 6.2, each file id has two bytes, and the
+  * maximum Dedicated File level is 2. So the maximum size of file is 8, wh=
+ich
 -- =
 
 1.6.3.3
 
 
---===============8169483990563259242==--
+--===============4204367174564580575==--
 
