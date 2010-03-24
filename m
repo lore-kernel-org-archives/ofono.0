@@ -1,70 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============5850857891573615174=="
+Content-Type: multipart/mixed; boundary="===============5471873674743233901=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 5/6] Add parser for imei objects
-Date: Wed, 24 Mar 2010 17:35:46 +0800
-Message-ID: <1269423347-15508-5-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1269423347-15508-4-git-send-email-yang.gu@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/6] Unify some macro names of ber-tlv and comprehension
+ tlv
+Date: Wed, 24 Mar 2010 12:03:15 -0500
+Message-ID: <201003241203.16769.denkenz@gmail.com>
+In-Reply-To: <1269423347-15508-3-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5850857891573615174==
+--===============5471873674743233901==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/stkutil.c |   24 ++++++++++++++++++++++++
- 1 files changed, 24 insertions(+), 0 deletions(-)
+Hi Yang,
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index a6b0284..3e423b5 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -549,6 +549,28 @@ static gboolean parse_dataobj_location_info(
- 	return TRUE;
- }
- =
+> ---
+>  src/stkutil.h |   22 +++++++++++-----------
+>  1 files changed, 11 insertions(+), 11 deletions(-)
+> =
 
-+/* Defined in TS 102.223 Section 8.20 */
-+static gboolean parse_dataobj_imei(struct comprehension_tlv_iter *iter,
-+						void *user)
-+{
-+	char **imei =3D user;
-+	const unsigned char *data;
-+	unsigned int len;
-+
-+	if (comprehension_tlv_iter_get_tag(iter) !=3D
-+			STK_DATA_OBJECT_TYPE_IMEI)
-+		return FALSE;
-+
-+	len =3D comprehension_tlv_iter_get_length(iter);
-+	if (len !=3D 8)
-+		return FALSE;
-+
-+	data =3D comprehension_tlv_iter_get_data(iter);
-+	memcpy(*imei, data, len);
-+
-+	return TRUE;
-+}
-+
- /* Defined in TS 102.223 Section 8.31 */
- static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *iter,
- 					void *user)
-@@ -670,6 +692,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
-bject_type type)
- 		return parse_dataobj_file_list;
- 	case STK_DATA_OBJECT_TYPE_LOCATION_INFO:
- 		return parse_dataobj_location_info;
-+	case STK_DATA_OBJECT_TYPE_IMEI:
-+		return parse_dataobj_imei;
- 	case STK_DATA_OBJECT_TYPE_ICON_ID:
- 		return parse_dataobj_icon_id;
- 	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
--- =
+> diff --git a/src/stkutil.h b/src/stkutil.h
+> index 4b7c382..5724d29 100644
+> --- a/src/stkutil.h
+> +++ b/src/stkutil.h
+> @@ -54,7 +54,7 @@ enum stk_command_type {
+>  	STK_COMMAND_TYPE_GET_INPUT =3D			0x23,
+>  	STK_COMMAND_TYPE_SELECT_ITEM =3D			0x24,
+>  	STK_COMMAND_TYPE_SETUP_MENU =3D			0x25,
+> -	STK_COMMAND_TYPE_PROVIDE_LOCAL_INFORMATION =3D	0x26,
+> +	STK_COMMAND_TYPE_PROVIDE_LOCAL_INFO =3D		0x26,
 
-1.6.3.3
+I'm fine with this one
+
+>  	STK_COMMAND_TYPE_TIMER_MANAGEMENT =3D		0x27,
+>  	STK_COMMAND_TYPE_SETUP_IDLE_MODE_TEXT =3D		0x28,
+>  	STK_COMMAND_TYPE_PERFORM_CARD_APDU =3D		0x30,
+> @@ -69,13 +69,13 @@ enum stk_command_type {
+>  	STK_COMMAND_TYPE_SEND_DATA =3D			0x43,
+>  	STK_COMMAND_TYPE_GET_CHANNEL_STATUS =3D		0x44,
+>  	STK_COMMAND_TYPE_SERVICE_SEARCH =3D		0x45,
+> -	STK_COMMAND_TYPE_GET_SERVICE_INFORMATION =3D	0x46,
+> +	STK_COMMAND_TYPE_GET_SERVICE_INFO =3D		0x46,
+
+And I'm fine with this one
+
+>  	STK_COMMAND_TYPE_DECLARE_SERVICE =3D		0x47,
+>  	STK_COMMAND_TYPE_SET_FRAMES =3D			0x50,
+>  	STK_COMMAND_TYPE_GET_FRAMES_STATUS =3D		0x51,
+> -	STK_COMMAND_TYPE_RETRIEVE_MMS =3D			0x60,
+> -	STK_COMMAND_TYPE_SUBMIT_MMS =3D			0x61,
+> -	STK_COMMAND_TYPE_DISPLAY_MMS =3D			0x62,
+> +	STK_COMMAND_TYPE_RETRIEVE_MM =3D			0x60,
+> +	STK_COMMAND_TYPE_SUBMIT_MM =3D			0x61,
+> +	STK_COMMAND_TYPE_DISPLAY_MM =3D			0x62,
+
+This one is silly, MM is multimedia message, MMS is a much clearer name
+
+>  	STK_COMMAND_TYPE_ACTIVATE =3D			0x70,
+>  	STK_COMMAND_TYPE_END_SESSION =3D			0x81,
+>  };
+> @@ -131,7 +131,7 @@ enum stk_data_object_type {
+>  	STK_DATA_OBJECT_TYPE_BROWSER_ID =3D			0x30,
+>  	STK_DATA_OBJECT_TYPE_URL =3D				0x31,
+>  	STK_DATA_OBJECT_TYPE_BEARER =3D				0x32,
+> -	STK_DATA_OBJECT_TYPE_PROVISIONING_REFERENCE_FILE =3D	0x33,
+> +	STK_DATA_OBJECT_TYPE_PROVISIONING_FILE_REFERENCE =3D	0x33,
+
+I'm ok with this one
+
+>  	STK_DATA_OBJECT_TYPE_BROWSER_TERMINATION_CAUSE =3D	0x34,
+>  	STK_DATA_OBJECT_TYPE_BEARER_DESCRIPTION =3D		0x35,
+>  	STK_DATA_OBJECT_TYPE_CHANNEL_DATA =3D			0x36,
+> @@ -162,12 +162,12 @@ enum stk_data_object_type {
+>  	STK_DATA_OBJECT_TYPE_FRAME_LAYOUT =3D			0x66,
+>  	STK_DATA_OBJECT_TYPE_FRAMES_INFO =3D			0x67,
+>  	STK_DATA_OBJECT_TYPE_FRAME_ID =3D				0x68,
+> -	STK_DATA_OBJECT_TYPE_MMS_REFERENCE =3D			0x6A,
+> -	STK_DATA_OBJECT_TYPE_MMS_ID =3D				0x6B,
+> -	STK_DATA_OBJECT_TYPE_MMS_TRANSFER_STATUS =3D		0x6C,
+> +	STK_DATA_OBJECT_TYPE_MM_REFERENCE =3D			0x6A,
+> +	STK_DATA_OBJECT_TYPE_MM_ID =3D				0x6B,
+> +	STK_DATA_OBJECT_TYPE_MM_TRANSFER_STATUS =3D		0x6C,
+
+Keep MMS here
+
+>  	STK_DATA_OBJECT_TYPE_MEID =3D				0x6D,
+> -	STK_DATA_OBJECT_TYPE_CONTENT_ID =3D			0x6E,
+> -	STK_DATA_OBJECT_TYPE_MMS_NOTIFICATION =3D			0x6F,
+> +	STK_DATA_OBJECT_TYPE_MM_CONTENT_ID =3D			0x6E,
+
+Rename this MMS_CONTENT_ID
+
+> +	STK_DATA_OBJECT_TYPE_MM_NOTIFICATION =3D			0x6F,
+
+Keep MMS here
+
+>  	STK_DATA_OBJECT_TYPE_LAST_ENVELOPE =3D			0x70,
+>  	STK_DATA_OBJECT_TYPE_REGISTRY_APPLICATION_DATA =3D	0x71,
+>  	STK_DATA_OBJECT_TYPE_ROUTING_AREA_INFO =3D		0x73,
+> =
 
 
---===============5850857891573615174==--
+Regards,
+-Denis
+
+--===============5471873674743233901==--
 
