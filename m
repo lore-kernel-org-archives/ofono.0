@@ -1,53 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============4623284867853836104=="
+Content-Type: multipart/mixed; boundary="===============7576022370945878422=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 4/4] gsmdial: shutdown ppp link if we have one.
-Date: Wed, 24 Mar 2010 21:41:55 -0700
-Message-ID: <1269492115-15412-5-git-send-email-kristen@linux.intel.com>
-In-Reply-To: <1269492115-15412-1-git-send-email-kristen@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Quick report from PPP testing
+Date: Thu, 25 Mar 2010 05:50:23 -0700
+Message-ID: <1269521423.11714.166.camel@localhost.localdomain>
+In-Reply-To: <20100324203109.36710e62@kcaccard-MOBL3>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4623284867853836104==
+--===============7576022370945878422==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If we have created a ppp link, shut it down when the signal handler
-is called.
----
- gatchat/gsmdial.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
+Hi Kristen,
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index aee9eea..a18f486 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -101,6 +101,8 @@ static gboolean signal_cb(GIOChannel *channel, GIOCondi=
-tion cond, gpointer data)
- 	case SIGTERM:
- 		if (terminated =3D=3D 0) {
- 			char buf[64];
-+			if (ppp)
-+				g_at_ppp_shutdown(ppp);
- =
+> > so I just downloaded the Linux kernel via the PPP connection with my
+> > Rogers' Novatel UMTS stick.
+> > =
 
- 			g_timeout_add_seconds(10, quit_eventloop, NULL);
- 			sprintf(buf, "AT+CFUN=3D%u", option_offmode);
-@@ -285,7 +287,7 @@ static void connect_cb(gboolean ok, GAtResult *result, =
-gpointer user_data)
- 	ppp =3D g_at_ppp_new(channel);
- 	if (!ppp) {
- 		g_print("Unable to create PPP object\n");
--		return;
-+		exit(1);
- 	}
- 	g_at_ppp_set_credentials(ppp, option_username,
- 				option_password);
--- =
+> > : < \r\n+CGREG: 2,1,FE38,EBA6\r\n\r\nOK\r\n
+> > Registered to GPRS network, roaming=3DFalse
+> > : > ATD*99***1#\r
+> > : < \r\nCONNECT HSDPA 7.2\r\n
+> > oops -- found acked option 2 we didn't request
+> > Unknown ipcp option type 130
+> > oops, option wasn't acceptable
+> > Unknown ipcp option type 132
+> > oops, option wasn't acceptable
+> > Unknown ipcp option type 130
+> > oops, option wasn't acceptable
+> > Unknown ipcp option type 132
+> > oops, option wasn't acceptable
+> > Unknown ipcp option type 130
+> > oops, option wasn't acceptable
+> > Unknown ipcp option type 132
+> > oops, option wasn't acceptable
+> > IP Address: 172.28.89.39
+> > Primary DNS Server: 64.71.255.198
+> > Secondary DNS Server: 64.71.255.253
+> =
 
-1.6.6.1
+> option type 130 and 132 are not supported by us right now, which is
+> why you see the error.  It is the modem sending us these options.
+> type 130 is Primary NBNS server, and 132 is secondary NBNS server.
+
+to speed up the setup process I would propose to just accept these
+options and store them internally for reference.
+
+We have the same issue with VPN where it insist on sending us NBNS
+servers. On Linux we don't need them but it would be good to not confuse
+the modem too much with rejecting these. Just accept and store them.
+
+Regards
+
+Marcel
 
 
---===============4623284867853836104==--
+
+--===============7576022370945878422==--
 
