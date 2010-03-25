@@ -1,62 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============7576022370945878422=="
+Content-Type: multipart/mixed; boundary="===============0736066249571378018=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Quick report from PPP testing
-Date: Thu, 25 Mar 2010 05:50:23 -0700
-Message-ID: <1269521423.11714.166.camel@localhost.localdomain>
-In-Reply-To: <20100324203109.36710e62@kcaccard-MOBL3>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH 0/5] Prototype to handle asynchronized callback
+Date: Thu, 25 Mar 2010 21:48:16 +0800
+Message-ID: <1269524901-1745-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7576022370945878422==
+--===============0736066249571378018==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+Hi,
 
-> > so I just downloaded the Linux kernel via the PPP connection with my
-> > Rogers' Novatel UMTS stick.
-> > =
+These patches are the prototype to handle the asynchronized callback
+for AtServer.
 
-> > : < \r\n+CGREG: 2,1,FE38,EBA6\r\n\r\nOK\r\n
-> > Registered to GPRS network, roaming=3DFalse
-> > : > ATD*99***1#\r
-> > : < \r\nCONNECT HSDPA 7.2\r\n
-> > oops -- found acked option 2 we didn't request
-> > Unknown ipcp option type 130
-> > oops, option wasn't acceptable
-> > Unknown ipcp option type 132
-> > oops, option wasn't acceptable
-> > Unknown ipcp option type 130
-> > oops, option wasn't acceptable
-> > Unknown ipcp option type 132
-> > oops, option wasn't acceptable
-> > Unknown ipcp option type 130
-> > oops, option wasn't acceptable
-> > Unknown ipcp option type 132
-> > oops, option wasn't acceptable
-> > IP Address: 172.28.89.39
-> > Primary DNS Server: 64.71.255.198
-> > Secondary DNS Server: 64.71.255.253
-> =
+During the callback function execution period, GAtServer waits for its
+result and then process next command. At the same time, the server is
+capable to accept new data comes from the client side and cache them in
+the read buffer.
 
-> option type 130 and 132 are not supported by us right now, which is
-> why you see the error.  It is the modem sending us these options.
-> type 130 is Primary NBNS server, and 132 is secondary NBNS server.
+Please review them. Any comments are welcome!
 
-to speed up the setup process I would propose to just accept these
-options and store them internally for reference.
-
-We have the same issue with VPN where it insist on sending us NBNS
-servers. On Linux we don't need them but it would be good to not confuse
-the modem too much with rejecting these. Just accept and store them.
-
-Regards
-
-Marcel
+In-Reply-To: =
 
 
 
---===============7576022370945878422==--
+--===============0736066249571378018==--
 
