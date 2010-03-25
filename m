@@ -1,65 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============4227173285471310070=="
+Content-Type: multipart/mixed; boundary="===============8998022139580432472=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 1/7] Unify some macro names of ber-tlv and comprehension tlv
-Date: Fri, 26 Mar 2010 00:07:30 +0800
-Message-ID: <1269533256-29095-1-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 2/7] Make the function to parse mcc and mnc public
+Date: Fri, 26 Mar 2010 00:07:31 +0800
+Message-ID: <1269533256-29095-2-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1269533256-29095-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4227173285471310070==
+--===============8998022139580432472==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.h |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+ src/simutil.c |    6 +++---
+ src/simutil.h |    1 +
+ 2 files changed, 4 insertions(+), 3 deletions(-)
 
-diff --git a/src/stkutil.h b/src/stkutil.h
-index e66b4c0..23c6a3f 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -54,7 +54,7 @@ enum stk_command_type {
- 	STK_COMMAND_TYPE_GET_INPUT =3D			0x23,
- 	STK_COMMAND_TYPE_SELECT_ITEM =3D			0x24,
- 	STK_COMMAND_TYPE_SETUP_MENU =3D			0x25,
--	STK_COMMAND_TYPE_PROVIDE_LOCAL_INFORMATION =3D	0x26,
-+	STK_COMMAND_TYPE_PROVIDE_LOCAL_INFO =3D		0x26,
- 	STK_COMMAND_TYPE_TIMER_MANAGEMENT =3D		0x27,
- 	STK_COMMAND_TYPE_SETUP_IDLE_MODE_TEXT =3D		0x28,
- 	STK_COMMAND_TYPE_PERFORM_CARD_APDU =3D		0x30,
-@@ -69,7 +69,7 @@ enum stk_command_type {
- 	STK_COMMAND_TYPE_SEND_DATA =3D			0x43,
- 	STK_COMMAND_TYPE_GET_CHANNEL_STATUS =3D		0x44,
- 	STK_COMMAND_TYPE_SERVICE_SEARCH =3D		0x45,
--	STK_COMMAND_TYPE_GET_SERVICE_INFORMATION =3D	0x46,
-+	STK_COMMAND_TYPE_GET_SERVICE_INFO =3D		0x46,
- 	STK_COMMAND_TYPE_DECLARE_SERVICE =3D		0x47,
- 	STK_COMMAND_TYPE_SET_FRAMES =3D			0x50,
- 	STK_COMMAND_TYPE_GET_FRAMES_STATUS =3D		0x51,
-@@ -131,7 +131,7 @@ enum stk_data_object_type {
- 	STK_DATA_OBJECT_TYPE_BROWSER_ID =3D			0x30,
- 	STK_DATA_OBJECT_TYPE_URL =3D				0x31,
- 	STK_DATA_OBJECT_TYPE_BEARER =3D				0x32,
--	STK_DATA_OBJECT_TYPE_PROVISIONING_REFERENCE_FILE =3D	0x33,
-+	STK_DATA_OBJECT_TYPE_PROVISIONING_FILE_REFERENCE =3D	0x33,
- 	STK_DATA_OBJECT_TYPE_BROWSER_TERMINATION_CAUSE =3D	0x34,
- 	STK_DATA_OBJECT_TYPE_BEARER_DESCRIPTION =3D		0x35,
- 	STK_DATA_OBJECT_TYPE_CHANNEL_DATA =3D			0x36,
-@@ -167,7 +167,7 @@ enum stk_data_object_type {
- 	STK_DATA_OBJECT_TYPE_MMS_ID =3D				0x6B,
- 	STK_DATA_OBJECT_TYPE_MMS_TRANSFER_STATUS =3D		0x6C,
- 	STK_DATA_OBJECT_TYPE_MEID =3D				0x6D,
--	STK_DATA_OBJECT_TYPE_CONTENT_ID =3D			0x6E,
-+	STK_DATA_OBJECT_TYPE_MMS_CONTENT_ID =3D			0x6E,
- 	STK_DATA_OBJECT_TYPE_MMS_NOTIFICATION =3D			0x6F,
- 	STK_DATA_OBJECT_TYPE_LAST_ENVELOPE =3D			0x70,
- 	STK_DATA_OBJECT_TYPE_REGISTRY_APPLICATION_DATA =3D	0x71,
+diff --git a/src/simutil.c b/src/simutil.c
+index d9383b7..9fb111f 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -538,7 +538,7 @@ static char *sim_network_name_parse(const unsigned char=
+ *buffer, int length,
+ 	return ret;
+ }
+ =
+
+-static void parse_mcc_mnc(const guint8 *bcd, char *mcc, char *mnc)
++void sim_parse_mcc_mnc(const guint8 *bcd, char *mcc, char *mnc)
+ {
+ 	static const char digit_lut[] =3D "0123456789*#abd\0";
+ 	guint8 digit;
+@@ -609,7 +609,7 @@ struct sim_spdi *sim_spdi_new(const guint8 *tlv, int le=
+ngth)
+ =
+
+ 		oper =3D g_new0(struct spdi_operator, 1);
+ =
+
+-		parse_mcc_mnc(plmn_list, oper->mcc, oper->mnc);
++		sim_parse_mcc_mnc(plmn_list, oper->mcc, oper->mnc);
+ 		spdi->operators =3D g_slist_insert_sorted(spdi->operators, oper,
+ 						spdi_operator_compare);
+ 	}
+@@ -694,7 +694,7 @@ static struct opl_operator *opl_operator_alloc(const gu=
+int8 *record)
+ {
+ 	struct opl_operator *oper =3D g_new0(struct opl_operator, 1);
+ =
+
+-	parse_mcc_mnc(record, oper->mcc, oper->mnc);
++	sim_parse_mcc_mnc(record, oper->mcc, oper->mnc);
+ 	record +=3D 3;
+ =
+
+ 	oper->lac_tac_low =3D (record[0] << 8) | record[1];
+diff --git a/src/simutil.h b/src/simutil.h
+index 043c21f..7590cca 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -181,6 +181,7 @@ const struct sim_eons_operator_info *sim_eons_lookup(st=
+ruct sim_eons *eons,
+ 						const char *mnc);
+ void sim_eons_free(struct sim_eons *eons);
+ =
+
++void sim_parse_mcc_mnc(const guint8 *bcd, char *mcc, char *mnc);
+ struct sim_spdi *sim_spdi_new(const guint8 *tlv, int length);
+ gboolean sim_spdi_lookup(struct sim_spdi *spdi,
+ 				const char *mcc, const char *mnc);
 -- =
 
 1.6.3.3
 
 
---===============4227173285471310070==--
+--===============8998022139580432472==--
 
