@@ -1,418 +1,247 @@
-Content-Type: multipart/mixed; boundary="===============2725381226991898390=="
+Content-Type: multipart/mixed; boundary="===============2352511348318972617=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 1/5] Refactor the command parsing framework
-Date: Thu, 25 Mar 2010 21:48:17 +0800
-Message-ID: <1269524901-1745-2-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1269524901-1745-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 2/5] Add server send final result code
+Date: Thu, 25 Mar 2010 21:48:18 +0800
+Message-ID: <1269524901-1745-3-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1269524901-1745-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2725381226991898390==
+--===============2352511348318972617==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gatserver.c |  182 +++++++++++++++++++++++++++++++++++------------=
+ gatchat/gatserver.c |   93 ++++++++++++++++++++++++++++++++++++++++++++++-=
 ---
- gatchat/gatserver.h |    7 ++-
- 2 files changed, 133 insertions(+), 56 deletions(-)
+ gatchat/gatserver.h |   20 +++++++++++
+ 2 files changed, 105 insertions(+), 8 deletions(-)
 
 diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index c75fbf5..74c765d 100644
+index 74c765d..fdc4180 100644
 --- a/gatchat/gatserver.c
 +++ b/gatchat/gatserver.c
-@@ -112,9 +112,51 @@ struct _GAtServer {
- 	guint max_read_attempts;		/* Max reads per select */
- 	enum ParserState parser_state;
- 	gboolean destroyed;			/* Re-entrancy guard */
-+	char *read_line;			/* Current read line */
-+	unsigned int read_pos;			/* Current read offset */
-+	int notify_source;			/* Source of notify callback */
-+	GAtServerResult last_result;		/* Result of last command */
-+};
-+
-+struct at_notify_node {
-+	GAtServer *server;
-+	char *command;
-+	char *prefix;
-+	GAtServerRequestType type;
- };
+@@ -33,6 +33,8 @@
+ #include "gatserver.h"
  =
 
- static void g_at_server_wakeup_writer(GAtServer *server);
-+static void server_parse_line(gpointer user_data);
-+
-+static struct at_notify_node *at_node_new(GAtServer *server,
-+						char *buf, char *prefix,
-+						GAtServerRequestType type)
-+{
-+	struct at_notify_node *ret;
-+
-+	ret =3D g_try_new0(struct at_notify_node, 1);
-+
-+	if (!ret)
-+		return ret;
-+
-+	ret->server =3D server;
-+	ret->command =3D g_strdup(buf);
-+	ret->prefix =3D g_strdup(prefix);
-+	ret->type =3D type;
-+
-+	return ret;
-+}
-+
-+static void at_notify_destroy(gpointer user_data)
-+{
-+	struct at_notify_node *notify =3D user_data;
-+
-+	notify->server->notify_source =3D 0;
-+
-+	g_free(notify->command);
-+	g_free(notify->prefix);
-+	g_free(notify);
-+}
+ #define BUF_SIZE 4096
++/* <cr><lf> + the max length of information text + <cr><lf> */
++#define MAX_TEXT_SIZE 2052
+ /* #define WRITE_SCHEDULER_DEBUG 1 */
  =
 
- static struct ring_buffer *allocate_next(GAtServer *server)
- {
-@@ -194,28 +236,32 @@ static inline gboolean is_extended_command_prefix(con=
-st char c)
- 	}
+ enum ParserState {
+@@ -198,11 +200,10 @@ static void send_common(GAtServer *server, const char=
+ *buf, unsigned int len)
+ 	g_at_server_wakeup_writer(server);
  }
  =
 
--static void at_command_notify(GAtServer *server, char *command,
--				char *prefix, GAtServerRequestType type)
-+static gboolean at_command_notify(gpointer user_data)
+-static void g_at_server_send_final(GAtServer *server, GAtServerResult resu=
+lt)
++static void send_result_common(GAtServer *server, const char *result)
  {
-+	struct at_notify_node *notify =3D user_data;
-+	GAtServer *server =3D notify->server;
- 	struct at_command *node;
- 	GAtResult result;
+ 	struct v250_settings v250 =3D server->v250;
+-	const char *result_str =3D server_result_to_string(result);
+-	char buf[1024];
++	char buf[MAX_TEXT_SIZE];
+ 	char t =3D v250.s3;
+ 	char r =3D v250.s4;
+ 	unsigned int len;
+@@ -210,19 +211,86 @@ static void g_at_server_send_final(GAtServer *server,=
+ GAtServerResult result)
+ 	if (v250.quiet)
+ 		return;
  =
 
--	node =3D g_hash_table_lookup(server->command_list, prefix);
-+	node =3D g_hash_table_lookup(server->command_list, notify->prefix);
+-	if (result_str =3D=3D NULL)
++	if (result =3D=3D NULL)
+ 		return;
+ =
+
+ 	if (v250.is_v1)
+-		len =3D snprintf(buf, sizeof(buf), "%c%c%s%c%c", t, r, result_str,
++		len =3D snprintf(buf, sizeof(buf), "%c%c%s%c%c", t, r, result,
+ 				t, r);
+ 	else
+-		len =3D snprintf(buf, sizeof(buf), "%u%c", (unsigned int) result,
++		len =3D snprintf(buf, sizeof(buf), "%s%c", result,
+ 				t);
+ =
+
+ 	send_common(server, buf, MIN(len, sizeof(buf)-1));
+ }
+ =
+
++static void g_at_server_send_flush(GAtServer *server)
++{
++	GAtServerResult result =3D server->last_result;
++	char buf[1024];
++
++	/* Do not emit error if extended error has already been emitted */
++	if (result =3D=3D G_AT_SERVER_RESULT_EXT_ERROR)
++		return;
++
++	if (server->v250.is_v1)
++		sprintf(buf, "%s", server_result_to_string(result));
++	else
++		sprintf(buf, "%u", (unsigned int)result);
++
++	send_result_common(server, buf);
++}
++
++inline void g_at_server_send_final(GAtServer *server, GAtServerResult resu=
+lt)
++{
++	/* Cache the result until the whole command line is parsed */
++	server->last_result =3D result;
++}
++
++void g_at_server_send_ext_final(GAtServer *server, const char *result)
++{
++	send_result_common(server, result);
++
++	server->last_result =3D G_AT_SERVER_RESULT_EXT_ERROR;
++}
++
++void g_at_server_send_intermediate(GAtServer *server, const char *result)
++{
++	send_result_common(server, result);
++}
++
++void g_at_server_send_unsolicited(GAtServer *server, const char *result)
++{
++	send_result_common(server, result);
++}
++
++void g_at_server_send_info_text(GAtServer *server, GSList *text)
++{
++	char buf[MAX_TEXT_SIZE];
++	char t =3D server->v250.s3;
++	char r =3D server->v250.s4;
++	unsigned int len;
++	GSList *l =3D text;
++	char *line;
++
++	if (!text)
++		return;
++
++	while (l) {
++		line =3D l->data;
++		if (!line)
++			return;
++
++		len =3D snprintf(buf, sizeof(buf), "%c%c%s", t, r, line);
++		send_common(server, buf, MIN(len, sizeof(buf)-1));
++
++		l =3D l->next;
++	}
++
++	len =3D snprintf(buf, sizeof(buf), "%c%c", t, r);
++	send_common(server, buf, len);
++}
++
+ static inline gboolean is_extended_command_prefix(const char c)
+ {
+ 	switch (c) {
+@@ -247,6 +315,7 @@ static gboolean at_command_notify(gpointer user_data)
  =
 
  	if (node =3D=3D NULL) {
  		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
--		return;
-+		return FALSE;
++		g_at_server_send_flush(server);
+ 		return FALSE;
  	}
  =
 
--	result.lines =3D g_slist_prepend(NULL, command);
-+	result.lines =3D g_slist_prepend(NULL, notify->command);
- 	result.final_or_pdu =3D 0;
- =
-
--	node->notify(type, &result, node->user_data);
-+	node->notify(notify->type, &result, node->user_data,
-+			server_parse_line, server);
- =
-
- 	g_slist_free(result.lines);
-+
-+	return FALSE;
- }
- =
-
--static unsigned int parse_extended_command(GAtServer *server, char *buf)
-+static void parse_extended_command(GAtServer *server, char *buf)
- {
- 	const char *valid_extended_chars =3D "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
- 						"0123456789!%-./:_";
-@@ -226,11 +272,12 @@ static unsigned int parse_extended_command(GAtServer =
-*server, char *buf)
- 	gboolean seen_equals =3D FALSE;
- 	char prefix[18]; /* According to V250, 5.4.1 */
- 	GAtServerRequestType type;
-+	struct at_notify_node *notify =3D NULL;
- =
-
- 	prefix_len =3D strcspn(buf, separators);
- =
-
- 	if (prefix_len > 17 || prefix_len < 2)
--		return 0;
-+		goto error;
- =
-
- 	/* Convert to upper case, we will always use upper case naming */
- 	for (i =3D 0; i < prefix_len; i++)
-@@ -239,17 +286,17 @@ static unsigned int parse_extended_command(GAtServer =
-*server, char *buf)
- 	prefix[prefix_len] =3D '\0';
- =
-
- 	if (strspn(prefix + 1, valid_extended_chars) !=3D (prefix_len - 1))
--		return 0;
-+		goto error;
- =
-
- 	/*
- 	 * V.250 Section 5.4.1: "The first character following "+" shall be
- 	 * an alphabetic character in the range "A" through "Z".
- 	 */
- 	if (prefix[1] <=3D 'A' || prefix[1] >=3D 'Z')
--		return 0;
-+		goto error;
- =
-
- 	if (buf[i] !=3D '\0' && buf[i] !=3D ';' && buf[i] !=3D '?' && buf[i] !=3D=
- '=3D')
--		return 0;
-+		goto error;
- =
-
- 	type =3D G_AT_SERVER_REQUEST_TYPE_COMMAND_ONLY;
- =
-
-@@ -265,16 +312,16 @@ static unsigned int parse_extended_command(GAtServer =
-*server, char *buf)
- =
-
- 		if (buf[i] =3D=3D '?') {
- 			if (seen_question || seen_equals)
--				return 0;
-+				goto error;
- =
-
- 			if (buf[i + 1] !=3D '\0' && buf[i + 1] !=3D ';')
--				return 0;
-+				goto error;
- =
-
- 			seen_question =3D TRUE;
- 			type =3D G_AT_SERVER_REQUEST_TYPE_QUERY;
- 		} else if (buf[i] =3D=3D '=3D') {
- 			if (seen_equals || seen_question)
--				return 0;
-+				goto error;
- =
-
- 			seen_equals =3D TRUE;
- =
-
-@@ -291,10 +338,22 @@ next:
- 	/* We can scratch in this buffer, so mark ';' as null */
- 	buf[i] =3D '\0';
- =
-
--	at_command_notify(server, buf, prefix, type);
-+	notify =3D at_node_new(server, buf, prefix, type);
-+	if (!notify)
-+		goto error;
- =
-
- 	/* Also consume the terminating null */
--	return i + 1;
-+	server->read_pos +=3D i + 1;
-+	server->notify_source =3D g_idle_add_full(G_PRIORITY_DEFAULT,
-+						at_command_notify,
-+						notify, g_free);
-+
-+	return;
-+
-+error:
-+	g_free(notify);
-+
-+	g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
- }
- =
-
- static int get_basic_prefix_size(const char *buf)
-@@ -336,16 +395,17 @@ static int get_basic_prefix_size(const char *buf)
- 	return 0;
- }
- =
-
--static unsigned int parse_basic_command(GAtServer *server, char *buf)
-+static void parse_basic_command(GAtServer *server, char *buf)
- {
- 	gboolean seen_equals =3D FALSE;
- 	char prefix[4], tmp;
- 	unsigned int i, prefix_size;
- 	GAtServerRequestType type;
-+	struct at_notify_node *notify =3D NULL;
- =
-
- 	prefix_size =3D get_basic_prefix_size(buf);
- 	if (prefix_size =3D=3D 0)
--		return 0;
-+		goto error;
- =
-
- 	i =3D prefix_size;
- 	prefix[0] =3D g_ascii_toupper(buf[0]);
-@@ -390,56 +450,59 @@ static unsigned int parse_basic_command(GAtServer *se=
-rver, char *buf)
- 	}
- =
-
- done:
--	if (prefix_size <=3D 3) {
--		memcpy(prefix + 1, buf + 1, prefix_size - 1);
--		prefix[prefix_size] =3D '\0';
--
--		tmp =3D buf[i];
--		buf[i] =3D '\0';
--		at_command_notify(server, buf, prefix, type);
--		buf[i] =3D tmp;
--	} else /* Handle S-parameter with 100+ */
--		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
-+	if (prefix_size > 3)
-+		goto error;
- =
-
- 	/* Commands like ATA, ATZ cause the remainder line
- 	 * to be ignored.
- 	 */
- 	if (prefix[0] =3D=3D 'A' || prefix[0] =3D=3D 'Z')
--		return strlen(buf);
-+		i =3D strlen(buf);
- =
-
- 	/* Consume the seperator ';' */
- 	if (buf[i] =3D=3D ';')
- 		i +=3D 1;
- =
-
--	return i;
-+	memcpy(prefix + 1, buf + 1, prefix_size - 1);
-+	prefix[prefix_size] =3D '\0';
-+
-+	tmp =3D buf[i];
-+	buf[i] =3D '\0';
-+
-+	notify =3D at_node_new(server, buf, prefix, type);
-+	if (!notify)
-+		goto error;
-+
-+	buf[i] =3D tmp;
-+
-+	server->read_pos +=3D i;
-+	server->notify_source =3D g_idle_add_full(G_PRIORITY_DEFAULT,
-+						at_command_notify,
-+						notify, at_notify_destroy);
-+
-+	return;
-+
-+error:
-+	g_free(notify);
-+
-+	g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
- }
- =
-
--static void server_parse_line(GAtServer *server, char *line)
-+static void server_parse_line(gpointer user_data)
- {
--	unsigned int pos =3D 0;
-+	GAtServer *server =3D user_data;
-+	char *line =3D server->read_line;
-+	unsigned int pos =3D server->read_pos;
+@@ -496,8 +565,10 @@ static void server_parse_line(gpointer user_data)
  	unsigned int len =3D strlen(line);
  =
 
--	if (len =3D=3D 0) {
--		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+	/* If we have a non-OK result or no further commands, then stop now */
-+	if (server->last_result !=3D G_AT_SERVER_RESULT_OK || pos >=3D len)
+ 	/* If we have a non-OK result or no further commands, then stop now */
+-	if (server->last_result !=3D G_AT_SERVER_RESULT_OK || pos >=3D len)
++	if (server->last_result !=3D G_AT_SERVER_RESULT_OK || pos >=3D len) {
++		g_at_server_send_flush(server);
  		return;
--	}
--
--	while (pos < len) {
--		unsigned int consumed;
++	}
  =
 
--		if (is_extended_command_prefix(line[pos]))
--			consumed =3D parse_extended_command(server, line + pos);
--		else
--			consumed =3D parse_basic_command(server, line + pos);
--
--		if (consumed =3D=3D 0) {
--			g_at_server_send_final(server,
--						G_AT_SERVER_RESULT_ERROR);
--			break;
--		}
--
--		pos +=3D consumed;
--	}
-+	if (is_extended_command_prefix(line[pos]))
-+		parse_extended_command(server, line + pos);
-+	else
-+		parse_basic_command(server, line + pos);
- }
+ 	if (is_extended_command_prefix(line[pos]))
+ 		parse_extended_command(server, line + pos);
+@@ -679,6 +750,7 @@ static void new_bytes(GAtServer *p)
+ 			 * Empty commands must be OK by the DCE
+ 			 */
+ 			g_at_server_send_final(p, G_AT_SERVER_RESULT_OK);
++			g_at_server_send_flush(p);
+ 			ring_buffer_drain(p->read_buf, p->read_so_far);
+ 			break;
  =
 
- static enum ParserResult server_feed(GAtServer *server,
-@@ -621,11 +684,15 @@ static void new_bytes(GAtServer *p)
+@@ -693,15 +765,20 @@ static void new_bytes(GAtServer *p)
+ 				p->last_result =3D G_AT_SERVER_RESULT_OK;
  =
 
- 		case PARSER_RESULT_COMMAND:
- 		{
--			char *line =3D extract_line(p);
-+			g_free(p->read_line);
- =
-
--			if (line) {
--				server_parse_line(p, line);
--				g_free(line);
-+			/* Save current line as last line */
-+			p->read_line =3D extract_line(p);
-+			if (p->read_line) {
-+				p->read_pos =3D 0;
-+				p->last_result =3D G_AT_SERVER_RESULT_OK;
-+
-+				server_parse_line(p);
- 			} else
+ 				server_parse_line(p);
+-			} else
++			} else {
  				g_at_server_send_final(p,
  						G_AT_SERVER_RESULT_ERROR);
-@@ -795,6 +862,11 @@ static void g_at_server_cleanup(GAtServer *server)
- 	g_hash_table_destroy(server->command_list);
- 	server->command_list =3D NULL;
++
++				g_at_server_send_flush(p);
++			}
++
+ 			break;
+ 		}
  =
 
-+	g_free(server->read_line);
-+
-+	if (server->notify_source)
-+		g_source_remove(server->notify_source);
-+
- 	server->channel =3D NULL;
- }
+ 		case PARSER_RESULT_REPEAT_LAST:
+ 			/* TODO */
+ 			g_at_server_send_final(p, G_AT_SERVER_RESULT_OK);
++			g_at_server_send_flush(p);
+ 			ring_buffer_drain(p->read_buf, p->read_so_far);
+ 			break;
  =
 
 diff --git a/gatchat/gatserver.h b/gatchat/gatserver.h
-index 2ae19ca..4383a58 100644
+index 4383a58..7112e90 100644
 --- a/gatchat/gatserver.h
 +++ b/gatchat/gatserver.h
-@@ -64,8 +64,13 @@ enum _GAtServerRequestType {
+@@ -92,6 +92,26 @@ gboolean g_at_server_register(GAtServer *server, char *p=
+refix,
+ 					GDestroyNotify destroy_notify);
+ gboolean g_at_server_unregister(GAtServer *server, const char *prefix);
  =
 
- typedef enum _GAtServerRequestType GAtServerRequestType;
- =
-
-+typedef void (*GAtServerNotifyCallback)(gpointer user_data);
++/* Send a final result code. E.g. NO DIALTONE */
++void g_at_server_send_final(GAtServer *server, GAtServerResult result);
 +
- typedef void (*GAtServerNotifyFunc)(GAtServerRequestType type,
--					GAtResult *result, gpointer user_data);
-+					GAtResult *result,
-+					gpointer user_data,
-+					GAtServerNotifyCallback cb,
-+					gpointer cb_data);
- =
-
- GAtServer *g_at_server_new(GIOChannel *io);
- =
-
++/* Send an extended final result code. E.g. +CME ERROR: SIM failure.
++ * In this case, callback should return G_AT_SERVER_RESULT_EXT_ERROR as
++ * result so that server will not send final result code again.
++ */
++void g_at_server_send_ext_final(GAtServer *server, const char *result);
++
++/* Send an intermediate result code to report the progress. E.g. CONNECT */
++void g_at_server_send_intermediate(GAtServer *server, const char *result);
++
++/* Send an unsolicited result code. E.g. RING */
++void g_at_server_send_unsolicited(GAtServer *server, const char *result);
++
++/* Send an information text. The text could contain multiple lines. Each
++ * line, including line terminators, should not exceed 2048 characters.
++ */
++void g_at_server_send_info_text(GAtServer *server, GSList *text);
++
+ #ifdef __cplusplus
+ }
+ #endif
 -- =
 
 1.6.6.1
 
 
---===============2725381226991898390==--
+--===============2352511348318972617==--
 
