@@ -1,45 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============5001108653542952727=="
+Content-Type: multipart/mixed; boundary="===============4227173285471310070=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/4] add PPP_DEAD and PPP_TERMINATE support
-Date: Thu, 25 Mar 2010 06:51:35 -0700
-Message-ID: <1269525095.11714.167.camel@localhost.localdomain>
-In-Reply-To: <1269492115-15412-1-git-send-email-kristen@linux.intel.com>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH 1/7] Unify some macro names of ber-tlv and comprehension tlv
+Date: Fri, 26 Mar 2010 00:07:30 +0800
+Message-ID: <1269533256-29095-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5001108653542952727==
+--===============4227173285471310070==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+---
+ src/stkutil.h |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
-> These patches complete implementation of the PPP_DEAD and PPP_TERMINATE =
+diff --git a/src/stkutil.h b/src/stkutil.h
+index e66b4c0..23c6a3f 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -54,7 +54,7 @@ enum stk_command_type {
+ 	STK_COMMAND_TYPE_GET_INPUT =3D			0x23,
+ 	STK_COMMAND_TYPE_SELECT_ITEM =3D			0x24,
+ 	STK_COMMAND_TYPE_SETUP_MENU =3D			0x25,
+-	STK_COMMAND_TYPE_PROVIDE_LOCAL_INFORMATION =3D	0x26,
++	STK_COMMAND_TYPE_PROVIDE_LOCAL_INFO =3D		0x26,
+ 	STK_COMMAND_TYPE_TIMER_MANAGEMENT =3D		0x27,
+ 	STK_COMMAND_TYPE_SETUP_IDLE_MODE_TEXT =3D		0x28,
+ 	STK_COMMAND_TYPE_PERFORM_CARD_APDU =3D		0x30,
+@@ -69,7 +69,7 @@ enum stk_command_type {
+ 	STK_COMMAND_TYPE_SEND_DATA =3D			0x43,
+ 	STK_COMMAND_TYPE_GET_CHANNEL_STATUS =3D		0x44,
+ 	STK_COMMAND_TYPE_SERVICE_SEARCH =3D		0x45,
+-	STK_COMMAND_TYPE_GET_SERVICE_INFORMATION =3D	0x46,
++	STK_COMMAND_TYPE_GET_SERVICE_INFO =3D		0x46,
+ 	STK_COMMAND_TYPE_DECLARE_SERVICE =3D		0x47,
+ 	STK_COMMAND_TYPE_SET_FRAMES =3D			0x50,
+ 	STK_COMMAND_TYPE_GET_FRAMES_STATUS =3D		0x51,
+@@ -131,7 +131,7 @@ enum stk_data_object_type {
+ 	STK_DATA_OBJECT_TYPE_BROWSER_ID =3D			0x30,
+ 	STK_DATA_OBJECT_TYPE_URL =3D				0x31,
+ 	STK_DATA_OBJECT_TYPE_BEARER =3D				0x32,
+-	STK_DATA_OBJECT_TYPE_PROVISIONING_REFERENCE_FILE =3D	0x33,
++	STK_DATA_OBJECT_TYPE_PROVISIONING_FILE_REFERENCE =3D	0x33,
+ 	STK_DATA_OBJECT_TYPE_BROWSER_TERMINATION_CAUSE =3D	0x34,
+ 	STK_DATA_OBJECT_TYPE_BEARER_DESCRIPTION =3D		0x35,
+ 	STK_DATA_OBJECT_TYPE_CHANNEL_DATA =3D			0x36,
+@@ -167,7 +167,7 @@ enum stk_data_object_type {
+ 	STK_DATA_OBJECT_TYPE_MMS_ID =3D				0x6B,
+ 	STK_DATA_OBJECT_TYPE_MMS_TRANSFER_STATUS =3D		0x6C,
+ 	STK_DATA_OBJECT_TYPE_MEID =3D				0x6D,
+-	STK_DATA_OBJECT_TYPE_CONTENT_ID =3D			0x6E,
++	STK_DATA_OBJECT_TYPE_MMS_CONTENT_ID =3D			0x6E,
+ 	STK_DATA_OBJECT_TYPE_MMS_NOTIFICATION =3D			0x6F,
+ 	STK_DATA_OBJECT_TYPE_LAST_ENVELOPE =3D			0x70,
+ 	STK_DATA_OBJECT_TYPE_REGISTRY_APPLICATION_DATA =3D	0x71,
+-- =
 
-> phases, as well as allow this to be tested via gsmdial.
-> =
-
-> Kristen Carlson Accardi (4):
->   remove unneeded debug statement
->   add tracing for PPP terminate path
->   separate memory cleanup from PPP shutdown
->   gsmdial: shutdown ppp link if we have one.
-> =
-
->  gatchat/gatppp.c  |   25 +++++++------------------
->  gatchat/gsmdial.c |    4 +++-
->  gatchat/ppp.c     |   27 +++++++++++++++++++++++----
->  gatchat/ppp_cp.c  |   10 ++++++++++
->  4 files changed, 43 insertions(+), 23 deletions(-)
-
-all four patches have been applied. Thanks.
-
-Regards
-
-Marcel
+1.6.3.3
 
 
-
---===============5001108653542952727==--
+--===============4227173285471310070==--
 
