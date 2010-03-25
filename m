@@ -1,29 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============3952903218783155150=="
+Content-Type: multipart/mixed; boundary="===============2827938689803540010=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 0/2] ppp authentication bug fixes 
-Date: Thu, 25 Mar 2010 13:04:34 -0700
-Message-ID: <1269547476-23161-1-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH 1/2] ppp: allow empty secret for chap challenge
+Date: Thu, 25 Mar 2010 13:04:35 -0700
+Message-ID: <1269547476-23161-2-git-send-email-kristen@linux.intel.com>
+In-Reply-To: <1269547476-23161-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3952903218783155150==
+--===============2827938689803540010==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Here are a couple bug fixes for the PPP authentication.  First patch
-fixes the seg fault when the secret is empty, as reported by marcel.
-Second, if we do fail to authenticate, we need to change ppp phases
-to terminate the link.
+Just do a checksum over the identifier if we have an empty password
+for our chap secret.
+---
+ gatchat/ppp_auth.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-Kristen Carlson Accardi (2):
-  ppp: allow empty secret for chap challenge
-  ppp: send PPP_FAIL when authentication fails
+diff --git a/gatchat/ppp_auth.c b/gatchat/ppp_auth.c
+index 6c3913e..95b2f96 100644
+--- a/gatchat/ppp_auth.c
++++ b/gatchat/ppp_auth.c
+@@ -83,7 +83,8 @@ static void chap_process_challenge(struct auth_data *auth=
+, guint8 *packet)
+ 	if (!checksum)
+ 		return;
+ 	g_checksum_update(checksum, &header->identifier, 1);
+-	g_checksum_update(checksum, (guchar *) secret, strlen(secret));
++	if (secret)
++		g_checksum_update(checksum, (guchar *) secret, strlen(secret));
+ 	g_checksum_update(checksum, &header->data[1], header->data[0]);
+ =
 
- gatchat/ppp_auth.c |    6 ++++--
- 1 files changed, 4 insertions(+), 2 deletions(-)
+ 	/* transmit a response packet */
+-- =
+
+1.6.6.1
 
 
---===============3952903218783155150==--
+--===============2827938689803540010==--
 
