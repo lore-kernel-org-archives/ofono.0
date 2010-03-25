@@ -1,56 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============0511134872185448412=="
+Content-Type: multipart/mixed; boundary="===============9139091626152063231=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Quick report from PPP testing
-Date: Wed, 24 Mar 2010 17:20:54 -0700
-Message-ID: <1269476454.11714.155.camel@localhost.localdomain>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH 0/2] fix PPP timer issues 
+Date: Wed, 24 Mar 2010 20:26:26 -0700
+Message-ID: <1269487588-14046-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0511134872185448412==
+--===============9139091626152063231==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+These patches fix a few problems with the way timeouts are handled in
+PPP.
 
-so I just downloaded the Linux kernel via the PPP connection with my
-Rogers' Novatel UMTS stick.
+Kristen Carlson Accardi (2):
+  switch to g_timeout_add_seconds()
+  use separate timers for PPP config and terminate
 
-: < \r\n+CGREG: 2,1,FE38,EBA6\r\n\r\nOK\r\n
-Registered to GPRS network, roaming=3DFalse
-: > ATD*99***1#\r
-: < \r\nCONNECT HSDPA 7.2\r\n
-oops -- found acked option 2 we didn't request
-Unknown ipcp option type 130
-oops, option wasn't acceptable
-Unknown ipcp option type 132
-oops, option wasn't acceptable
-Unknown ipcp option type 130
-oops, option wasn't acceptable
-Unknown ipcp option type 132
-oops, option wasn't acceptable
-Unknown ipcp option type 130
-oops, option wasn't acceptable
-Unknown ipcp option type 132
-oops, option wasn't acceptable
-IP Address: 172.28.89.39
-Primary DNS Server: 64.71.255.198
-Secondary DNS Server: 64.71.255.253
-
-The IPCP negotiation looks a bit funky. Can we get some more debug code
-in there. I like to know which side tried this requests. Also speeding
-this up would be helpful.
-
-Denis, I had to add custom terminators for this card since it reports
-the network speed after CONNECT string. Don't we wanna just accept every
-CONNECT * strings here?
-
-Regards
-
-Marcel
+ gatchat/ppp_cp.c |  103 ++++++++++++++++++++++++++++----------------------=
+---
+ gatchat/ppp_cp.h |   15 +++++---
+ 2 files changed, 64 insertions(+), 54 deletions(-)
 
 
-
---===============0511134872185448412==--
+--===============9139091626152063231==--
 
