@@ -1,42 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============4142422893507435276=="
+Content-Type: multipart/mixed; boundary="===============4719703107741493963=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/2] fix PPP timer issues
-Date: Wed, 24 Mar 2010 23:05:31 -0500
-Message-ID: <201003242305.31702.denkenz@gmail.com>
-In-Reply-To: <1269487588-14046-1-git-send-email-kristen@linux.intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH 1/4] remove unneeded debug statement
+Date: Wed, 24 Mar 2010 21:41:52 -0700
+Message-ID: <1269492115-15412-2-git-send-email-kristen@linux.intel.com>
+In-Reply-To: <1269492115-15412-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4142422893507435276==
+--===============4719703107741493963==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+cleanup old debug print statement
+---
+ gatchat/ppp.c |    4 +---
+ 1 files changed, 1 insertions(+), 3 deletions(-)
 
-> These patches fix a few problems with the way timeouts are handled in
-> PPP.
-> =
+diff --git a/gatchat/ppp.c b/gatchat/ppp.c
+index 4612976..f3bfba7 100644
+--- a/gatchat/ppp.c
++++ b/gatchat/ppp.c
+@@ -328,10 +328,8 @@ gboolean ppp_cb(GIOChannel *channel, GIOCondition cond=
+, gpointer data)
+ 	gsize bytes_read;
+ 	GError *error =3D NULL;
+ =
 
-> Kristen Carlson Accardi (2):
->   switch to g_timeout_add_seconds()
->   use separate timers for PPP config and terminate
-> =
+-	if (cond & (G_IO_NVAL | G_IO_ERR | G_IO_HUP)) {
+-		g_print("G_IO_NVAL | G_IO_ERR");
++	if (cond & (G_IO_NVAL | G_IO_ERR | G_IO_HUP))
+ 		return FALSE;
+-	}
+ =
 
->  gatchat/ppp_cp.c |  103
->  ++++++++++++++++++++++++++++------------------------- gatchat/ppp_cp.h |=
-  =
+ 	if (cond & G_IO_IN) {
+ 		status =3D g_io_channel_read_chars(channel, buf, 256,
+-- =
 
->  15 +++++---
->  2 files changed, 64 insertions(+), 54 deletions(-)
-> =
+1.6.6.1
 
 
-Both patches have been applied, thanks.
-
-Regards,
--Denis
-
---===============4142422893507435276==--
+--===============4719703107741493963==--
 
