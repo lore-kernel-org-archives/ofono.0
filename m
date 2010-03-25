@@ -1,52 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============5920724440347443651=="
+Content-Type: multipart/mixed; boundary="===============4142422893507435276=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: Re: Quick report from PPP testing
-Date: Wed, 24 Mar 2010 20:31:09 -0700
-Message-ID: <20100324203109.36710e62@kcaccard-MOBL3>
-In-Reply-To: <1269476454.11714.155.camel@localhost.localdomain>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 0/2] fix PPP timer issues
+Date: Wed, 24 Mar 2010 23:05:31 -0500
+Message-ID: <201003242305.31702.denkenz@gmail.com>
+In-Reply-To: <1269487588-14046-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5920724440347443651==
+--===============4142422893507435276==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, 24 Mar 2010 17:20:54 -0700
-Marcel Holtmann <marcel@holtmann.org> wrote:
+Hi Kristen,
 
-> Hi Kristen,
+> These patches fix a few problems with the way timeouts are handled in
+> PPP.
 > =
 
-> so I just downloaded the Linux kernel via the PPP connection with my
-> Rogers' Novatel UMTS stick.
+> Kristen Carlson Accardi (2):
+>   switch to g_timeout_add_seconds()
+>   use separate timers for PPP config and terminate
 > =
 
-> : < \r\n+CGREG: 2,1,FE38,EBA6\r\n\r\nOK\r\n
-> Registered to GPRS network, roaming=3DFalse
-> : > ATD*99***1#\r
-> : < \r\nCONNECT HSDPA 7.2\r\n
-> oops -- found acked option 2 we didn't request
-> Unknown ipcp option type 130
-> oops, option wasn't acceptable
-> Unknown ipcp option type 132
-> oops, option wasn't acceptable
-> Unknown ipcp option type 130
-> oops, option wasn't acceptable
-> Unknown ipcp option type 132
-> oops, option wasn't acceptable
-> Unknown ipcp option type 130
-> oops, option wasn't acceptable
-> Unknown ipcp option type 132
-> oops, option wasn't acceptable
-> IP Address: 172.28.89.39
-> Primary DNS Server: 64.71.255.198
-> Secondary DNS Server: 64.71.255.253
+>  gatchat/ppp_cp.c |  103
+>  ++++++++++++++++++++++++++++------------------------- gatchat/ppp_cp.h |=
+  =
 
-option type 130 and 132 are not supported by us right now, which is
-why you see the error.  It is the modem sending us these options.
-type 130 is Primary NBNS server, and 132 is secondary NBNS server.
+>  15 +++++---
+>  2 files changed, 64 insertions(+), 54 deletions(-)
+> =
 
---===============5920724440347443651==--
+
+Both patches have been applied, thanks.
+
+Regards,
+-Denis
+
+--===============4142422893507435276==--
 
