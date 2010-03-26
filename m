@@ -1,50 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============7771873095597272887=="
+Content-Type: multipart/mixed; boundary="===============6550268267550441992=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/5] Refactor the command parsing framework
-Date: Thu, 25 Mar 2010 20:10:28 -0500
-Message-ID: <201003252010.28985.denkenz@gmail.com>
-In-Reply-To: <33AB447FBD802F4E932063B962385B351D67BF96@shsmsx501.ccr.corp.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 0/2] ppp authentication bug fixes
+Date: Fri, 26 Mar 2010 10:20:49 -0700
+Message-ID: <1269624049.11714.182.camel@localhost.localdomain>
+In-Reply-To: <1269547476-23161-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7771873095597272887==
+--===============6550268267550441992==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua
+Hi Kristen,
 
-> > Err, OK stop right there.  This is really way too complicated.
-> > How about we simply set a flag before calling
-> > at_command_notify.  If after executing it send_final or
-> > send_ext_final response has been sent, then we continue
-> > processing, otherwise we restart when send_ext_final or
-> > send_final will be called again.  You really don't need to touch this
-> > function at all.
+> Here are a couple bug fixes for the PPP authentication.  First patch
+> fixes the seg fault when the secret is empty, as reported by marcel.
+> Second, if we do fail to authenticate, we need to change ppp phases
+> to terminate the link.
 > =
 
-> OK. So the problem is if the at_command_notify is blocked by user callbac=
-k,
->  the mainloop won't have chance to read data in from non-blocking I/O I
->  guess. That's the reason I added this. If we don't need to handle such
->  case, then the logic could be much simplier. We could discuss it on IRC.
+> Kristen Carlson Accardi (2):
+>   ppp: allow empty secret for chap challenge
+>   ppp: send PPP_FAIL when authentication fails
+> =
 
-So what you want to assume here is that for long running operations the =
+>  gatchat/ppp_auth.c |    6 ++++--
+>  1 files changed, 4 insertions(+), 2 deletions(-)
 
-callback with schedule its own g_sources and will eventually call send_fina=
-l.  =
+I am still not seeing patch 1/2. Can you re-sent both patches.
 
-This works because the server can only have one outstanding command at a ti=
-me. =
+Regards
 
-You don't need to worry about blocking semantics here (they just work) and =
-we =
+Marcel
 
-won't consider re-entrant event loops for now.
 
-Regards,
--Denis
 
---===============7771873095597272887==--
+--===============6550268267550441992==--
 
