@@ -1,41 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============6550268267550441992=="
+Content-Type: multipart/mixed; boundary="===============4820657270124588656=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/2] ppp authentication bug fixes
-Date: Fri, 26 Mar 2010 10:20:49 -0700
-Message-ID: <1269624049.11714.182.camel@localhost.localdomain>
-In-Reply-To: <1269547476-23161-1-git-send-email-kristen@linux.intel.com>
+From: Dario <djdas@djdas.net>
+Subject: Openmoko Freerunner Toolchain
+Date: Fri, 26 Mar 2010 22:23:36 +0100
+Message-ID: <4BAD25D8.3080801@djdas.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6550268267550441992==
+--===============4820657270124588656==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+Hi all,
+as per an IRC conversation with Denis, I post here a link [1] to the =
 
-> Here are a couple bug fixes for the PPP authentication.  First patch
-> fixes the seg fault when the secret is empty, as reported by marcel.
-> Second, if we do fail to authenticate, we need to change ppp phases
-> to terminate the link.
-> =
+toolchain me and the Neophysis team use to compile test applications and =
 
-> Kristen Carlson Accardi (2):
->   ppp: allow empty secret for chap challenge
->   ppp: send PPP_FAIL when authentication fails
-> =
+libraries without the need to use our build server.
+The toolchain is provided as a .tar.bz2 archive, you can unpack it in =
 
->  gatchat/ppp_auth.c |    6 ++++--
->  1 files changed, 4 insertions(+), 2 deletions(-)
+/usr/local dir to rebuild the correct path ( /usr/local/neophysis ) or =
 
-I am still not seeing patch 1/2. Can you re-sent both patches.
+optionally unpack it everywhere you like and create a soft link in =
 
-Regards
+/usr/local/neophysis pointing at the unpacked dir.
+The toolchain is built from the OpenEmbedded build server we use to =
 
-Marcel
+build packages and rootfs images and periodically we upgrade it to stay =
+
+up to date with the libraries versions.
+It is able to build even Qt4 programs so I post it here because I think =
+
+it could be useful for someone.
+In the source dir you can find some (a bit outdated but just issue a =
+
+"git pull" to upgrade them) samples: oFono and Phonesim, which you can =
+
+compile with the following instructions:
+
+1) initialize the toolchain by issuing the following command in a =
+
+shell/terminal:
+. /usr/local/neophysis/qt4-env
+2) cd into the source dir of the project you want to build;
+3) use the toolchain customized "./configure" command by issuing:
+oe_runconf
+4) build the project by issuing:
+make
+5) [optional] install the programs/libraries by issuing:
+make install DESTDIR=3D$(pwd)/pkg
+
+As you can see the build procedure is similar to the common sequence =
+
+"./configure && make && make install", but the oe_runconf command lets =
+
+you configure the cross compiling environment (its an alias to a more =
+
+complex command sequence), while in point 5) you install (obviously the =
+
+Makefile should provide installation using the variable DESTDIR as per =
+
+the autotools standard) all in the pkg dir created inside the sources dir.
+Finally you can tar the pkg dir and copy it to the Freerunner untarring =
+
+the archive in its / directory to install the program.
+For further information please feel free to see our wiki (sorry in =
+
+Italian but you can google-translate) here [2] or contact me by email.
+Thank you very much, best regards,
+Dario.
+
+[1] =
+
+http://sourceforge.net/projects/neophysis/files/toolchains/neophysis_toolch=
+ain_20100122.tar.bz2/download
+[2] http://neophysis.sourceforge.net
 
 
-
---===============6550268267550441992==--
+--===============4820657270124588656==--
 
