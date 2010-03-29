@@ -1,42 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============5239629076664605871=="
+Content-Type: multipart/mixed; boundary="===============7667681647430295975=="
 MIME-Version: 1.0
-From: ppessi@gmail.com
-Subject: [PATCH] Fix: use of g_checksum_get_digest() inout argument
-Date: Mon, 29 Mar 2010 16:38:34 +0300
-Message-ID: <1269869914-4662-1-git-send-email-ppessi@gmail.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH 0/3] Updated patches to handle the asynchronized callback
+Date: Mon, 29 Mar 2010 21:50:01 +0800
+Message-ID: <1269870604-28896-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5239629076664605871==
+--===============7667681647430295975==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi,
 
----
- gatchat/ppp_auth.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+I updated the patches according to the comments and did following changes:
 
-diff --git a/gatchat/ppp_auth.c b/gatchat/ppp_auth.c
-index fe3c501..1e0c82b 100644
---- a/gatchat/ppp_auth.c
-+++ b/gatchat/ppp_auth.c
-@@ -107,7 +107,7 @@ static void chap_process_challenge(struct auth_data *au=
-th, guint8 *packet)
- 		response->length =3D htons(response_length);
- 		response->data[0] =3D digest_len;
- 		g_checksum_get_digest(checksum, &response->data[1],
--					(gsize *) &response->data[0]);
-+					&digest_len);
- 		/* leave the name empty? */
- 	}
- =
+1. removed last_result since it seems no use at all.
+2. rename g_at_server_send_flush to g_at_server_send_result. It makes code =
+easier to read.
+3. add parse_ready flag to parse one command line at one time.
 
--- =
-
-1.6.3.3
+Please review them. Thanks!
 
 
---===============5239629076664605871==--
+--===============7667681647430295975==--
 
