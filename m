@@ -1,30 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============3813126409349707284=="
+Content-Type: multipart/mixed; boundary="===============1753481074855679801=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 8/9] Add the macro for icon qualifier
-Date: Mon, 29 Mar 2010 17:20:03 -0500
-Message-ID: <201003291720.04065.denkenz@gmail.com>
-In-Reply-To: <1269879884-12741-8-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 9/9] Add parser for item icon identifier list objects
+Date: Mon, 29 Mar 2010 17:21:09 -0500
+Message-ID: <201003291721.09804.denkenz@gmail.com>
+In-Reply-To: <1269879884-12741-9-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3813126409349707284==
+--===============1753481074855679801==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Yang,
 
-> ---
->  src/stkutil.h |    5 +++++
->  1 files changed, 5 insertions(+), 0 deletions(-)
 > =
 
+> +/* Defined in TS 102.223 Section 8.32 */
+> +struct stk_item_icon_id_list {
+> +	unsigned char qualifier;
+> +	unsigned char len;
+> +	unsigned char *array;
+> +};
+> +
 
-Please call them enums, not macros :)
+And again here, the maximum size of the array is 126, so let us avoid =
+
+g_mallocs.
 
 Regards,
 -Denis
 
---===============3813126409349707284==--
+--===============1753481074855679801==--
 
