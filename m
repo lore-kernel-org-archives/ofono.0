@@ -1,56 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============6225652138130237971=="
+Content-Type: multipart/mixed; boundary="===============0298363965140667866=="
 MIME-Version: 1.0
 From: Yang Gu <gyagp0@gmail.com>
-Subject: [PATCH 7/9] Add parser for call control requested action objects
-Date: Mon, 29 Mar 2010 16:05:15 +0000
-Message-ID: <1269878605-12223-7-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1269878605-12223-6-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 8/9] Add the macro for icon qualifier
+Date: Mon, 29 Mar 2010 16:05:26 +0000
+Message-ID: <1269878605-12223-8-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1269878605-12223-7-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6225652138130237971==
+--===============0298363965140667866==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+ src/stkutil.h |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index d573430..6619bc3 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -756,6 +756,14 @@ static gboolean parse_dataobj_transaction_id(
- 				STK_DATA_OBJECT_TYPE_TRANSACTION_ID);
- }
+diff --git a/src/stkutil.h b/src/stkutil.h
+index b85592c..08a5355 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -296,6 +296,11 @@ enum stk_service_state {
+ 	STK_NO_SERVICE =3D 	0x02
+ };
  =
 
-+/* Defined in TS 102.223 Section 8.30 */
-+static gboolean parse_dataobj_call_control_requested_action(
-+		struct comprehension_tlv_iter *iter, void *user)
-+{
-+	return parse_dataobj_common_byte_array(iter, user,
-+			STK_DATA_OBJECT_TYPE_CALL_CONTROL_REQUESTED_ACTION);
-+}
++enum stk_icon_qualifier {
++	STK_ICON_QUALIFIER_TYPE_SELF_EXPLANATORY =3D 	0x00,
++	STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY =3D	0x01
++};
 +
- /* Defined in TS 102.223 Section 8.31 */
- static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *iter,
- 					void *user)
-@@ -883,6 +891,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
-bject_type type)
- 		return parse_dataobj_location_status;
- 	case STK_DATA_OBJECT_TYPE_TRANSACTION_ID:
- 		return parse_dataobj_transaction_id;
-+	case STK_DATA_OBJECT_TYPE_CALL_CONTROL_REQUESTED_ACTION:
-+		return parse_dataobj_call_control_requested_action;
- 	case STK_DATA_OBJECT_TYPE_ICON_ID:
- 		return parse_dataobj_icon_id;
- 	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
+ struct stk_common_byte_array {
+ 	unsigned int len;
+ 	unsigned char *array;
 -- =
 
 1.6.3.3
 
 
---===============6225652138130237971==--
+--===============0298363965140667866==--
 
