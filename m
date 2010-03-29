@@ -1,81 +1,104 @@
-Content-Type: multipart/mixed; boundary="===============2498186201686401902=="
+Content-Type: multipart/mixed; boundary="===============3362429251846832292=="
 MIME-Version: 1.0
 From: Yang Gu <gyagp0@gmail.com>
-Subject: [PATCH 4/9] Add parser for cause objects
-Date: Tue, 30 Mar 2010 00:24:39 +0800
-Message-ID: <1269879884-12741-4-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1269879884-12741-3-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 5/9] Add parser for location status objects
+Date: Tue, 30 Mar 2010 00:24:40 +0800
+Message-ID: <1269879884-12741-5-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1269879884-12741-4-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2498186201686401902==
+--===============3362429251846832292==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   35 +++++++++++++++++++++++++++++++++++
- 1 files changed, 35 insertions(+), 0 deletions(-)
+ src/stkutil.c |   30 ++++++++++++++++++++++++++++++
+ src/stkutil.h |    6 ++++++
+ 2 files changed, 36 insertions(+), 0 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index ecd5639..8f4ff39 100644
+index 8f4ff39..3aae6bf 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -687,6 +687,39 @@ static gboolean parse_dataobj_event_list(
- 				STK_DATA_OBJECT_TYPE_EVENT_LIST);
+@@ -67,6 +67,26 @@ static gboolean parse_dataobj_common_bool(struct compreh=
+ension_tlv_iter *iter,
+ 	return TRUE;
  }
  =
 
-+/* Defined in TS 102.223 Section 8.26 */
-+static gboolean parse_dataobj_cause(
-+		struct comprehension_tlv_iter *iter, void *user)
++/* For data object that only has one byte */
++static gboolean parse_dataobj_common_byte(
++		struct comprehension_tlv_iter *iter, void *user,
++		enum stk_data_object_type type)
 +{
-+	struct stk_common_byte_array *array =3D user;
++	char *byte =3D user;
 +	const unsigned char *data;
-+	unsigned int len;
 +
-+	if (comprehension_tlv_iter_get_tag(iter) !=3D STK_DATA_OBJECT_TYPE_CAUSE)
++	if (comprehension_tlv_iter_get_tag(iter) !=3D type)
 +		return FALSE;
 +
-+	len =3D comprehension_tlv_iter_get_length(iter);
-+	if ((len =3D=3D 1) || (len > 30))
++	if (comprehension_tlv_iter_get_length(iter) !=3D 1)
 +		return FALSE;
-+
-+	if (len =3D=3D 0) {
-+		array->len =3D 0;
-+		array->array =3D NULL;
-+		return TRUE;
-+	}
 +
 +	data =3D comprehension_tlv_iter_get_data(iter);
-+	array->len =3D len;
-+
-+	array->array =3D g_try_malloc(len);
-+	if (array->array =3D=3D NULL)
-+		return FALSE;
-+
-+	memcpy(array->array, data, len);
++	*byte =3D data[0];
 +
 +	return TRUE;
++}
++
+ /* For data object that only has a byte array with variable length */
+ static gboolean parse_dataobj_common_byte_array(
+ 		struct comprehension_tlv_iter *iter, void *user,
+@@ -720,6 +740,14 @@ static gboolean parse_dataobj_cause(
+ 	return TRUE;
+ }
+ =
+
++/* Defined in TS 102.223 Section 8.27 */
++static gboolean parse_dataobj_location_status(
++		struct comprehension_tlv_iter *iter, void *user)
++{
++	return parse_dataobj_common_byte(iter, user,
++					STK_DATA_OBJECT_TYPE_LOCATION_STATUS);
 +}
 +
  /* Defined in TS 102.223 Section 8.31 */
  static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *iter,
  					void *user)
-@@ -808,6 +841,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
+@@ -843,6 +871,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
 bject_type type)
- 		return parse_dataobj_items_next_action_indicator;
- 	case STK_DATA_OBJECT_TYPE_EVENT_LIST:
  		return parse_dataobj_event_list;
-+	case STK_DATA_OBJECT_TYPE_CAUSE:
-+		return parse_dataobj_cause;
+ 	case STK_DATA_OBJECT_TYPE_CAUSE:
+ 		return parse_dataobj_cause;
++	case STK_DATA_OBJECT_TYPE_LOCATION_STATUS:
++		return parse_dataobj_location_status;
  	case STK_DATA_OBJECT_TYPE_ICON_ID:
  		return parse_dataobj_icon_id;
  	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
+diff --git a/src/stkutil.h b/src/stkutil.h
+index 108529c..b85592c 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -290,6 +290,12 @@ enum stk_event_type {
+ 	STK_EVENT_TYPE_MULTIPLE_ACCESS_TECHNOLOGIES_CHANGE =3D	0x14
+ };
+ =
+
++enum stk_service_state {
++	STK_NORMAL_SERVICE =3D 	0x00,
++	STK_LIMITED_SERVICE =3D 	0x01,
++	STK_NO_SERVICE =3D 	0x02
++};
++
+ struct stk_common_byte_array {
+ 	unsigned int len;
+ 	unsigned char *array;
 -- =
 
 1.6.3.3
 
 
---===============2498186201686401902==--
+--===============3362429251846832292==--
 
