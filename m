@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4608149543608008203=="
+Content-Type: multipart/mixed; boundary="===============3813126409349707284=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 6/9] Add parser for transaction identifier objects
-Date: Mon, 29 Mar 2010 17:19:05 -0500
-Message-ID: <201003291719.05509.denkenz@gmail.com>
-In-Reply-To: <1269879884-12741-6-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 8/9] Add the macro for icon qualifier
+Date: Mon, 29 Mar 2010 17:20:03 -0500
+Message-ID: <201003291720.04065.denkenz@gmail.com>
+In-Reply-To: <1269879884-12741-8-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4608149543608008203==
+--===============3813126409349707284==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,48 +16,15 @@ Content-Transfer-Encoding: quoted-printable
 Hi Yang,
 
 > ---
->  src/stkutil.c |   10 ++++++++++
->  1 files changed, 10 insertions(+), 0 deletions(-)
+>  src/stkutil.h |    5 +++++
+>  1 files changed, 5 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/src/stkutil.c b/src/stkutil.c
-> index 3aae6bf..d573430 100644
-> --- a/src/stkutil.c
-> +++ b/src/stkutil.c
-> @@ -748,6 +748,14 @@ static gboolean parse_dataobj_location_status(
->  					STK_DATA_OBJECT_TYPE_LOCATION_STATUS);
->  }
-> =
 
-> +/* Defined in TS 102.223 Section 8.28 */
-> +static gboolean parse_dataobj_transaction_id(
-> +		struct comprehension_tlv_iter *iter, void *user)
-> +{
-> +	return parse_dataobj_common_byte_array(iter, user,
-> +				STK_DATA_OBJECT_TYPE_TRANSACTION_ID);
-> +}
-> +
-
-Again, the maximum size is 127, so lets avoid a g_malloc here.
-
->  /* Defined in TS 102.223 Section 8.31 */
->  static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *ite=
-r,
->  					void *user)
-> @@ -873,6 +881,8 @@ static dataobj_handler handler_for_type(enum
->  stk_data_object_type type) return parse_dataobj_cause;
->  	case STK_DATA_OBJECT_TYPE_LOCATION_STATUS:
->  		return parse_dataobj_location_status;
-> +	case STK_DATA_OBJECT_TYPE_TRANSACTION_ID:
-> +		return parse_dataobj_transaction_id;
->  	case STK_DATA_OBJECT_TYPE_ICON_ID:
->  		return parse_dataobj_icon_id;
->  	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
-> =
-
+Please call them enums, not macros :)
 
 Regards,
 -Denis
 
---===============4608149543608008203==--
+--===============3813126409349707284==--
 
