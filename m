@@ -1,30 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2590107967844013825=="
+Content-Type: multipart/mixed; boundary="===============7086038598022680664=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: RE: Access to SIM card when Modem is not "Powered"
-Date: Mon, 29 Mar 2010 11:40:49 -0700
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9C12B87DB@orsmsx508.amr.corp.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Access to SIM card when Modem is not "Powered"
+Date: Mon, 29 Mar 2010 13:53:42 -0500
+Message-ID: <201003291353.43404.denkenz@gmail.com>
 In-Reply-To: <80fd4e751003291129n5baa0b5bhf16e404e95491d1c@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2590107967844013825==
+--===============7086038598022680664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Pekka Pessi wrote:
-> I've been porting the N900 modem control code to oFono. The semantics
-> of Powered is fine with respect of the atoms, in other words, if the
-> modem crashes and boots itself, all the atoms are flushed nicely.
-> When powering up, the Powered can be set to true when the modem is
-> really up and running.
+Hi Pekka,
 
-Do you have an overview of the different modes and transitions that the N90=
-0 modem control is using today?
+> However, then powering modem down, there are problems. The N900 modem
+> control needs to make difference between the state where the modem is
+> no more useful and the safe-to-exit state when the power off request
+> has been completed, modem has flushed its state to flash and given
+> some time to safely turn off the SIM card.
 
-Cheers,
-Waldo
+So if I understand correctly, you are saying that once the powered=3Doff re=
+quest =
 
---===============2590107967844013825==--
+has been sent down to the modem, no other requests are valid.  In other wor=
+ds, =
+
+oFono's current implementation does not remove the atoms until powered=3Dof=
+f =
+
+request succeeds (which might result in those atoms attempting operations), =
+
+which is wrong.
+
+Right?
+
+> =
+
+> Also, if an another SetProperty("Powered") call is made while the
+> driver is powering the modem on or off, the change is ignored. It
+> seems to me that we need more fine grained power control than just the
+> current boolean in the core, too.
+
+We reply with the busy error, you're correct.  However, I don't really see =
+
+anything better we can do here, do you have any suggestions?
+
+Regards,
+-Denis
+
+--===============7086038598022680664==--
 
