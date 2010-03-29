@@ -1,21 +1,21 @@
-Content-Type: multipart/mixed; boundary="===============4352216035081167205=="
+Content-Type: multipart/mixed; boundary="===============2112080266747393055=="
 MIME-Version: 1.0
 From: ppessi@gmail.com
 Subject: [PATCH] Fix: simplify isimodem call-barring driver.
-Date: Mon, 29 Mar 2010 21:15:49 +0300
-Message-ID: <1269886549-18172-1-git-send-email-ppessi@gmail.com>
+Date: Mon, 29 Mar 2010 21:17:51 +0300
+Message-ID: <1269886671-18397-1-git-send-email-ppessi@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4352216035081167205==
+--===============2112080266747393055==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Add support for lock codes AG and AC (MMI codes 333 and 353. respectively).
-Use decimal MMI codes in <ss.h>.
+Add support for lock codes AG and AC (MMI codes 333 and 353,
+respectively). Use decimal MMI codes in <ss.h>.
 ---
  drivers/isimodem/call-barring.c |  153 ++++++++++++-----------------------=
 ----
@@ -461,5 +461,5 @@ index 7c20bcc..93554db 100644
 1.6.3.3
 
 
---===============4352216035081167205==--
+--===============2112080266747393055==--
 
