@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0228324236675747465=="
+Content-Type: multipart/mixed; boundary="===============4608149543608008203=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/9] Add parser for cause objects
-Date: Mon, 29 Mar 2010 17:14:36 -0500
-Message-ID: <201003291714.36718.denkenz@gmail.com>
-In-Reply-To: <1269879884-12741-4-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 6/9] Add parser for transaction identifier objects
+Date: Mon, 29 Mar 2010 17:19:05 -0500
+Message-ID: <201003291719.05509.denkenz@gmail.com>
+In-Reply-To: <1269879884-12741-6-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0228324236675747465==
+--===============4608149543608008203==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,53 +16,48 @@ Content-Transfer-Encoding: quoted-printable
 Hi Yang,
 
 > ---
->  src/stkutil.c |   35 +++++++++++++++++++++++++++++++++++
->  1 files changed, 35 insertions(+), 0 deletions(-)
+>  src/stkutil.c |   10 ++++++++++
+>  1 files changed, 10 insertions(+), 0 deletions(-)
 > =
 
 > diff --git a/src/stkutil.c b/src/stkutil.c
-> index ecd5639..8f4ff39 100644
+> index 3aae6bf..d573430 100644
 > --- a/src/stkutil.c
 > +++ b/src/stkutil.c
-> @@ -687,6 +687,39 @@ static gboolean parse_dataobj_event_list(
->  				STK_DATA_OBJECT_TYPE_EVENT_LIST);
+> @@ -748,6 +748,14 @@ static gboolean parse_dataobj_location_status(
+>  					STK_DATA_OBJECT_TYPE_LOCATION_STATUS);
 >  }
 > =
 
-> +/* Defined in TS 102.223 Section 8.26 */
-> +static gboolean parse_dataobj_cause(
+> +/* Defined in TS 102.223 Section 8.28 */
+> +static gboolean parse_dataobj_transaction_id(
 > +		struct comprehension_tlv_iter *iter, void *user)
 > +{
-> +	struct stk_common_byte_array *array =3D user;
-> +	const unsigned char *data;
-> +	unsigned int len;
+> +	return parse_dataobj_common_byte_array(iter, user,
+> +				STK_DATA_OBJECT_TYPE_TRANSACTION_ID);
+> +}
 > +
-> +	if (comprehension_tlv_iter_get_tag(iter) !=3D STK_DATA_OBJECT_TYPE_CAUS=
-E)
-> +		return FALSE;
-> +
-> +	len =3D comprehension_tlv_iter_get_length(iter);
-> +	if ((len =3D=3D 1) || (len > 30))
-> +		return FALSE;
 
-So if we know the max length is 30 why do we bother g_mallocing here?
+Again, the maximum size is 127, so lets avoid a g_malloc here.
 
-> +
-> +	if (len =3D=3D 0) {
-> +		array->len =3D 0;
-> +		array->array =3D NULL;
-> +		return TRUE;
-> +	}
+>  /* Defined in TS 102.223 Section 8.31 */
+>  static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *ite=
+r,
+>  					void *user)
+> @@ -873,6 +881,8 @@ static dataobj_handler handler_for_type(enum
+>  stk_data_object_type type) return parse_dataobj_cause;
+>  	case STK_DATA_OBJECT_TYPE_LOCATION_STATUS:
+>  		return parse_dataobj_location_status;
+> +	case STK_DATA_OBJECT_TYPE_TRANSACTION_ID:
+> +		return parse_dataobj_transaction_id;
+>  	case STK_DATA_OBJECT_TYPE_ICON_ID:
+>  		return parse_dataobj_icon_id;
+>  	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
+> =
 
-This won't work unfortunately.  Cause is an optional element and cause with =
-
-length 0 has special meaning.  We will have to include a boolean variable f=
-or =
-
-presence information somehow.
 
 Regards,
 -Denis
 
---===============0228324236675747465==--
+--===============4608149543608008203==--
 
