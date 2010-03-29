@@ -1,56 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4189280748679368011=="
+Content-Type: multipart/mixed; boundary="===============6642924380777196853=="
 MIME-Version: 1.0
 From: Yang Gu <gyagp0@gmail.com>
-Subject: [PATCH 6/9] Add parser for transaction identifier objects
-Date: Tue, 30 Mar 2010 00:24:41 +0800
-Message-ID: <1269879884-12741-6-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1269879884-12741-5-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 8/9] Add the macro for icon qualifier
+Date: Tue, 30 Mar 2010 00:24:43 +0800
+Message-ID: <1269879884-12741-8-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1269879884-12741-7-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4189280748679368011==
+--===============6642924380777196853==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+ src/stkutil.h |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 3aae6bf..d573430 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -748,6 +748,14 @@ static gboolean parse_dataobj_location_status(
- 					STK_DATA_OBJECT_TYPE_LOCATION_STATUS);
- }
+diff --git a/src/stkutil.h b/src/stkutil.h
+index b85592c..08a5355 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -296,6 +296,11 @@ enum stk_service_state {
+ 	STK_NO_SERVICE =3D 	0x02
+ };
  =
 
-+/* Defined in TS 102.223 Section 8.28 */
-+static gboolean parse_dataobj_transaction_id(
-+		struct comprehension_tlv_iter *iter, void *user)
-+{
-+	return parse_dataobj_common_byte_array(iter, user,
-+				STK_DATA_OBJECT_TYPE_TRANSACTION_ID);
-+}
++enum stk_icon_qualifier {
++	STK_ICON_QUALIFIER_TYPE_SELF_EXPLANATORY =3D 	0x00,
++	STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY =3D	0x01
++};
 +
- /* Defined in TS 102.223 Section 8.31 */
- static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *iter,
- 					void *user)
-@@ -873,6 +881,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
-bject_type type)
- 		return parse_dataobj_cause;
- 	case STK_DATA_OBJECT_TYPE_LOCATION_STATUS:
- 		return parse_dataobj_location_status;
-+	case STK_DATA_OBJECT_TYPE_TRANSACTION_ID:
-+		return parse_dataobj_transaction_id;
- 	case STK_DATA_OBJECT_TYPE_ICON_ID:
- 		return parse_dataobj_icon_id;
- 	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
+ struct stk_common_byte_array {
+ 	unsigned int len;
+ 	unsigned char *array;
 -- =
 
 1.6.3.3
 
 
---===============4189280748679368011==--
+--===============6642924380777196853==--
 
