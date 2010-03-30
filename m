@@ -1,30 +1,21 @@
-Content-Type: multipart/mixed; boundary="===============7885755421335745555=="
+Content-Type: multipart/mixed; boundary="===============3318204195278683072=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: Access to SIM card when Modem is not "Powered"
-Date: Tue, 30 Mar 2010 14:57:29 +0300
-Message-ID: <1269950249.2432.3.camel@phoenix.elisa-laajakaista.fi>
-In-Reply-To: <80fd4e751003300436i46cb721fv4b9c6e56113241a3@mail.gmail.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: Updated v2 patches to handle the asynchronized callback
+Date: Tue, 30 Mar 2010 21:38:55 +0800
+Message-ID: <1269956337-26575-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7885755421335745555==
+--===============3318204195278683072==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-ti, 2010-03-30 kello 13:36 +0200, ext Pekka Pessi kirjoitti:
-> Another solution is to use sscd-like daemon also with ofono (the oFono
-> Powered property would then just follow the power state of the modem).
+Hi,
 
-My preference would be to have these things handled as oFono plugins.
-That being the recommended way of course doesn't preclude some other
-modem needing a slave plugin that monitors the accomplishments of a
-separate daemon.
-
-Cheers,
-Aki
+Please review updated patches. Thanks!
 
 
---===============7885755421335745555==--
+--===============3318204195278683072==--
 
