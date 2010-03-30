@@ -1,104 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============2197600234384306242=="
+Content-Type: multipart/mixed; boundary="===============2378986514033595787=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH v2 05/10] Add parser for location status objects
-Date: Tue, 30 Mar 2010 15:57:32 +0800
-Message-ID: <1269935857-4234-5-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1269935857-4234-4-git-send-email-yang.gu@intel.com>
+Subject: [PATCH v2 07/10] Add parser for call control requested action objects
+Date: Tue, 30 Mar 2010 15:57:34 +0800
+Message-ID: <1269935857-4234-7-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1269935857-4234-6-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2197600234384306242==
+--===============2378986514033595787==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   30 ++++++++++++++++++++++++++++++
+ src/stkutil.c |   20 ++++++++++++++++++++
  src/stkutil.h |    6 ++++++
- 2 files changed, 36 insertions(+), 0 deletions(-)
+ 2 files changed, 26 insertions(+), 0 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index 14d3999..37cb81e 100644
+index 189d831..c901213 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -67,6 +67,26 @@ static gboolean parse_dataobj_common_bool(struct compreh=
-ension_tlv_iter *iter,
- 	return TRUE;
+@@ -753,6 +753,24 @@ static gboolean parse_dataobj_transaction_id(
+ 		STK_DATA_OBJECT_TYPE_TRANSACTION_ID, ti->list, &ti->len);
  }
  =
 
-+/* For data object that only has one byte */
-+static gboolean parse_dataobj_common_byte(
-+		struct comprehension_tlv_iter *iter, void *user,
-+		enum stk_data_object_type type)
-+{
-+	char *byte =3D user;
-+	const unsigned char *data;
-+
-+	if (comprehension_tlv_iter_get_tag(iter) !=3D type)
-+		return FALSE;
-+
-+	if (comprehension_tlv_iter_get_length(iter) !=3D 1)
-+		return FALSE;
-+
-+	data =3D comprehension_tlv_iter_get_data(iter);
-+	*byte =3D data[0];
-+
-+	return TRUE;
-+}
-+
- /* For data object that only has a byte array with variable length */
- static gboolean parse_dataobj_common_byte_array(
- 			struct comprehension_tlv_iter *iter,
-@@ -715,6 +735,14 @@ static gboolean parse_dataobj_cause(
- 	return TRUE;
- }
- =
-
-+/* Defined in TS 102.223 Section 8.27 */
-+static gboolean parse_dataobj_location_status(
++/* Defined in TS 102.223 Section 8.30 */
++static gboolean parse_dataobj_call_control_requested_action(
 +		struct comprehension_tlv_iter *iter, void *user)
 +{
-+	return parse_dataobj_common_byte(iter, user,
-+					STK_DATA_OBJECT_TYPE_LOCATION_STATUS);
++	struct stk_call_control_requested_action *action =3D user;
++	unsigned int len;
++
++	len =3D comprehension_tlv_iter_get_length(iter);
++
++	action->action =3D g_try_malloc(len);
++	if (action->action =3D=3D NULL)
++		return FALSE;
++
++	return parse_dataobj_common_byte_array(iter,
++			STK_DATA_OBJECT_TYPE_CALL_CONTROL_REQUESTED_ACTION,
++			action->action, &action->len);
 +}
 +
  /* Defined in TS 102.223 Section 8.31 */
  static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *iter,
  					void *user)
-@@ -838,6 +866,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
+@@ -880,6 +898,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
 bject_type type)
- 		return parse_dataobj_event_list;
- 	case STK_DATA_OBJECT_TYPE_CAUSE:
- 		return parse_dataobj_cause;
-+	case STK_DATA_OBJECT_TYPE_LOCATION_STATUS:
-+		return parse_dataobj_location_status;
+ 		return parse_dataobj_location_status;
+ 	case STK_DATA_OBJECT_TYPE_TRANSACTION_ID:
+ 		return parse_dataobj_transaction_id;
++	case STK_DATA_OBJECT_TYPE_CALL_CONTROL_REQUESTED_ACTION:
++		return parse_dataobj_call_control_requested_action;
  	case STK_DATA_OBJECT_TYPE_ICON_ID:
  		return parse_dataobj_icon_id;
  	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
 diff --git a/src/stkutil.h b/src/stkutil.h
-index e719403..00e351b 100644
+index 4c2f195..1eae1cd 100644
 --- a/src/stkutil.h
 +++ b/src/stkutil.h
-@@ -290,6 +290,12 @@ enum stk_event_type {
- 	STK_EVENT_TYPE_MULTIPLE_ACCESS_TECHNOLOGIES_CHANGE =3D	0x14
+@@ -435,6 +435,12 @@ struct stk_transaction_id {
+ 	unsigned int len;
  };
  =
 
-+enum stk_service_state {
-+	STK_NORMAL_SERVICE =3D 	0x00,
-+	STK_LIMITED_SERVICE =3D 	0x01,
-+	STK_NO_SERVICE =3D 	0x02
++/* Defined in TS 102.223 Section 8.30 */
++struct stk_call_control_requested_action {
++	unsigned char *action;
++	unsigned int len;
 +};
 +
- /* Defined in TS 102.223 Section 8.1 */
- struct stk_address {
- 	unsigned char ton_npi;
+ /*
+  * According to 102.223 Section 8.72 the length of text attribute CTLV is 1
+  * byte.  This means that the maximum size is 127 according to the rules
 -- =
 
 1.6.3.3
 
 
---===============2197600234384306242==--
+--===============2378986514033595787==--
 
