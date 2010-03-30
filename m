@@ -1,101 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============4480285243013024591=="
+Content-Type: multipart/mixed; boundary="===============5528853878724004945=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH v2 10/10] Add parser for item icon identifier list objects
-Date: Tue, 30 Mar 2010 15:57:37 +0800
-Message-ID: <1269935857-4234-10-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1269935857-4234-9-git-send-email-yang.gu@intel.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: Access to SIM card when Modem is not "Powered"
+Date: Tue, 30 Mar 2010 14:36:00 +0300
+Message-ID: <80fd4e751003300436i46cb721fv4b9c6e56113241a3@mail.gmail.com>
+In-Reply-To: <201003291353.43404.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4480285243013024591==
+--===============5528853878724004945==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/stkutil.c |   26 ++++++++++++++++++++++++++
- src/stkutil.h |   12 ++++++++++++
- 2 files changed, 38 insertions(+), 0 deletions(-)
+2010/3/29 Denis Kenzior <denkenz@gmail.com>:
+>> However, then powering modem down, there are problems. The N900 modem
+>> control needs to make difference between the state where the modem is
+>> no more useful and the safe-to-exit state when the power off request
+>> has been completed, modem has flushed its state to flash and given
+>> some time to safely turn off the SIM card.
+>
+> So if I understand correctly, you are saying that once the powered=3Doff =
+request
+> has been sent down to the modem, no other requests are valid. =C2=A0In ot=
+her words,
+> oFono's current implementation does not remove the atoms until powered=3D=
+off
+> request succeeds (which might result in those atoms attempting operations=
+),
+> which is wrong.
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index c901213..5b95cba 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -793,6 +793,30 @@ static gboolean parse_dataobj_icon_id(struct comprehen=
-sion_tlv_iter *iter,
- 	return TRUE;
- }
- =
+That is also a problem. The other problem is that the party
+controlling the modem power state is supposed to keep GPIO lines in
+known position for a while after the modem has indicated it has been
+powered down. In an N900 running maemo, a daemon called sscd does
+that. sscd exits only after modem has been safely powered down during
+reboot and shutdown. If ofonod does the controlling, it should hang
+around after power off for a while, too.
 
-+/* Defined in TS 102.223 Section 8.32 */
-+static gboolean parse_dataobj_item_icon_id_list(
-+		struct comprehension_tlv_iter *iter, void *user)
-+{
-+	struct stk_item_icon_id_list *iiil =3D user;
-+	const unsigned char *data;
-+	unsigned int len;
-+
-+	if (comprehension_tlv_iter_get_tag(iter) !=3D
-+			STK_DATA_OBJECT_TYPE_ITEM_ICON_ID_LIST)
-+		return FALSE;
-+
-+	len =3D comprehension_tlv_iter_get_length(iter);
-+	if (len < 2)
-+		return FALSE;
-+
-+	data =3D comprehension_tlv_iter_get_data(iter);
-+	iiil->qualifier =3D data[0];
-+	iiil->len =3D len - 1;
-+	memcpy(iiil->list, data + 1, iiil->len);
-+
-+	return TRUE;
-+}
-+
- /* Defined in 102.223 Section 8.43 */
- static gboolean parse_dataobj_imm_resp(struct comprehension_tlv_iter *iter,
- 					void *user)
-@@ -902,6 +926,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
-bject_type type)
- 		return parse_dataobj_call_control_requested_action;
- 	case STK_DATA_OBJECT_TYPE_ICON_ID:
- 		return parse_dataobj_icon_id;
-+	case STK_DATA_OBJECT_TYPE_ITEM_ICON_ID_LIST:
-+		return parse_dataobj_item_icon_id_list;
- 	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
- 		return parse_dataobj_imm_resp;
- 	case STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE:
-diff --git a/src/stkutil.h b/src/stkutil.h
-index a3674e4..5cb50f1 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -447,6 +447,18 @@ struct stk_icon_identifier {
- 	unsigned char id;
- };
- =
+Another solution is to use sscd-like daemon also with ofono (the oFono
+Powered property would then just follow the power state of the modem).
 
-+/*
-+ * According to 102.223 Section 8.32 the length of CTLV is 1 byte. This me=
-ans
-+ * that the maximum size is 127 according to the rules of CTLVs. This size=
- also
-+ * includes icon list qualifier for 1 byte, so the maxmimum size of icon
-+ * identifier list is 126.
-+ */
-+struct stk_item_icon_id_list {
-+	unsigned char qualifier;
-+	unsigned char list[126];
-+	unsigned int len;
-+};
-+
- /* =
+>> Also, if an another SetProperty("Powered") call is made while the
+>> driver is powering the modem on or off, the change is ignored. It
+>> seems to me that we need more fine grained power control than just the
+>> current boolean in the core, too.
+>
+> We reply with the busy error, you're correct. =C2=A0However, I don't real=
+ly see
+> anything better we can do here, do you have any suggestions?
 
-  * According to 102.223 Section 8.72 the length of text attribute CTLV is 1
-  * byte.  This means that the maximum size is 127 according to the rules
+Keep the target state around somewhere, or call enable/disable
+regardless of the current state of the Powered property?
+
 -- =
 
-1.6.3.3
+Pekka.Pessi mail at nokia.com
 
-
---===============4480285243013024591==--
+--===============5528853878724004945==--
 
