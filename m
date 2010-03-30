@@ -1,41 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============7944862493035560327=="
+Content-Type: multipart/mixed; boundary="===============3925832026710738228=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Testing asset for oFono
-Date: Tue, 30 Mar 2010 17:22:19 +0300
-Message-ID: <1269958939.2432.44.camel@phoenix.elisa-laajakaista.fi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 09/10] Adjust the sequence of icon identifier structure
+Date: Tue, 30 Mar 2010 10:04:48 -0500
+Message-ID: <201003301004.48442.denkenz@gmail.com>
+In-Reply-To: <1269935857-4234-9-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7944862493035560327==
+--===============3925832026710738228==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Yang,
 
-There are currently a bunch of helper scripts under /test for the D-Bus
-API in addition to unit tests, and I'm wondering if there are any plans
-to automate especially the former into a suite that could be run
-semi-regularly, or even at 'make distcheck'?
+> ---
+>  src/stkutil.h |   19 ++++++++++---------
+>  1 files changed, 10 insertions(+), 9 deletions(-)
 
-I think it would be useful to have something like the current scripts,
-but modified to be actual test cases as well as more easily
-parametrized.
+Please sanity check your patches, while applying I got this:
 
-The tests could then be driven with a set of parameters (which cases to
-run, what numbers to call, etc.) and a default test profile to work
-with, for example, the default phonesim configuration.
+Applying: Add parser for items next action indicator objects
+Applying: Adjust the sequence of comprehension tlv structures
+Applying: Add parser for event list objects
+Applying: Add parser for cause objects
+Applying: Add parser for location status objects
+Applying: Add parser for transaction identifier objects
+Applying: Add parser for call control requested action objects
+Applying: Add enum for icon qualifier
+Applying: Adjust the sequence of icon identifier structure
+/home/denkenz/ofono-master/.git/rebase-apply/patch:38: trailing whitespace.
+/* =
 
-Other profiles could then be made for other test environments, such as a
-live modem and a test network or network simulator.
+fatal: 1 line adds whitespace errors.
+Patch failed at 0009 Adjust the sequence of icon identifier structure
+When you have resolved this problem run "git am --resolved".
+If you would prefer to skip this patch, instead run "git am --skip".
+To restore the original branch and stop patching run "git am --abort".
 
-Any thoughts on this? =
+Use
+[apply]
+        whitespace =3D error
 
+in your git config and apply locally to make sure they do so cleanly.
 
-Cheers,
-Aki
+Regards,
+-Denis
 
-
---===============7944862493035560327==--
+--===============3925832026710738228==--
 
