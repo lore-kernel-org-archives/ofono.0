@@ -1,48 +1,114 @@
-Content-Type: multipart/mixed; boundary="===============1913412107426127060=="
+Content-Type: multipart/mixed; boundary="===============1314637776866156559=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Fix: use of g_checksum_get_digest() inout argument
-Date: Mon, 29 Mar 2010 18:14:22 -0700
-Message-ID: <1269911662.11714.217.camel@localhost.localdomain>
-In-Reply-To: <1269869914-4662-1-git-send-email-ppessi@gmail.com>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH v2 01/10] Add parser for items next action indicator objects
+Date: Tue, 30 Mar 2010 15:57:28 +0800
+Message-ID: <1269935857-4234-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1913412107426127060==
+--===============1314637776866156559==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+---
+ src/stkutil.c |   36 ++++++++++++++++++++++++++++++++++++
+ src/stkutil.h |    9 +++++++++
+ 2 files changed, 45 insertions(+), 0 deletions(-)
 
->  gatchat/ppp_auth.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
+diff --git a/src/stkutil.c b/src/stkutil.c
+index c5e0369..3f7183f 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -67,6 +67,29 @@ static gboolean parse_dataobj_common_bool(struct compreh=
+ension_tlv_iter *iter,
+ 	return TRUE;
+ }
+ =
 
-> diff --git a/gatchat/ppp_auth.c b/gatchat/ppp_auth.c
-> index fe3c501..1e0c82b 100644
-> --- a/gatchat/ppp_auth.c
-> +++ b/gatchat/ppp_auth.c
-> @@ -107,7 +107,7 @@ static void chap_process_challenge(struct auth_data *=
-auth, guint8 *packet)
->  		response->length =3D htons(response_length);
->  		response->data[0] =3D digest_len;
->  		g_checksum_get_digest(checksum, &response->data[1],
-> -					(gsize *) &response->data[0]);
-> +					&digest_len);
->  		/* leave the name empty? */
->  	}
++/* For data object that only has a byte array with variable length */
++static gboolean parse_dataobj_common_byte_array(
++			struct comprehension_tlv_iter *iter,
++			enum stk_data_object_type type,
++			unsigned char *array, unsigned int *array_len)
++{
++	const unsigned char *data;
++	unsigned int len;
++
++	if (comprehension_tlv_iter_get_tag(iter) !=3D type)
++		return FALSE;
++
++	len =3D comprehension_tlv_iter_get_length(iter);
++	if (len < 1)
++		return FALSE;
++
++	data =3D comprehension_tlv_iter_get_data(iter);
++	*array_len =3D len;
++	memcpy(array, data, len);
++
++	return TRUE;
++}
++
+ /* Defined in TS 102.223 Section 8.1 */
+ static gboolean parse_dataobj_address(struct comprehension_tlv_iter *iter,
+ 					void *user)
+@@ -643,6 +666,17 @@ static gboolean parse_dataobj_network_measurement_resu=
+lts(
+ 	return TRUE;
+ }
+ =
 
-thanks for the patch. I changed it a bit by moving the data[0]
-assignment after the get_digest call to ensure we use the right length
-value on the wire. Not that it matters in this case since it is a fixed
-length anyway, but just in case.
++/* Defined in TS 102.223 Section 8.24 */
++static gboolean parse_dataobj_items_next_action_indicator(
++		struct comprehension_tlv_iter *iter, void *user)
++{
++	struct stk_items_next_action_indicator *inai =3D user;
++
++	return parse_dataobj_common_byte_array(iter,
++			STK_DATA_OBJECT_TYPE_ITEMS_NEXT_ACTION_INDICATOR,
++			inai->list, &inai->len);
++}
++
+ /* Defined in TS 102.223 Section 8.31 */
+ static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *iter,
+ 					void *user)
+@@ -760,6 +794,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
+bject_type type)
+ 		return parse_dataobj_help_request;
+ 	case STK_DATA_OBJECT_TYPE_NETWORK_MEASUREMENT_RESULTS:
+ 		return parse_dataobj_network_measurement_results;
++	case STK_DATA_OBJECT_TYPE_ITEMS_NEXT_ACTION_INDICATOR:
++		return parse_dataobj_items_next_action_indicator;
+ 	case STK_DATA_OBJECT_TYPE_ICON_ID:
+ 		return parse_dataobj_icon_id;
+ 	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
+diff --git a/src/stkutil.h b/src/stkutil.h
+index a9495de..c4b8970 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -370,6 +370,15 @@ struct stk_file {
+ };
+ =
 
-Regards
+ /*
++ * According to 102.223 Section 8.24 the length of CTLV is 1 byte. This me=
+ans
++ * that the maximum size is 127 according to the rules of CTLVs.
++ */
++struct stk_items_next_action_indicator {
++	unsigned char list[127];
++	unsigned int len;
++};
++
++/*
+  * According to 102.223 Section 8.72 the length of text attribute CTLV is 1
+  * byte.  This means that the maximum size is 127 according to the rules
+  * of CTLVs.  Empty attribute options will have len of 0.
+-- =
 
-Marcel
+1.6.3.3
 
 
-
---===============1913412107426127060==--
+--===============1314637776866156559==--
 
