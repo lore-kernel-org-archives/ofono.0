@@ -1,103 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============1314637776866156559=="
+Content-Type: multipart/mixed; boundary="===============3274831822448331147=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH v2 01/10] Add parser for items next action indicator objects
-Date: Tue, 30 Mar 2010 15:57:28 +0800
-Message-ID: <1269935857-4234-1-git-send-email-yang.gu@intel.com>
+Subject: [PATCH v2 03/10] Add parser for event list objects
+Date: Tue, 30 Mar 2010 15:57:30 +0800
+Message-ID: <1269935857-4234-3-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1269935857-4234-2-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1314637776866156559==
+--===============3274831822448331147==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   36 ++++++++++++++++++++++++++++++++++++
- src/stkutil.h |    9 +++++++++
+ src/stkutil.c |   12 ++++++++++++
+ src/stkutil.h |   33 +++++++++++++++++++++++++++++++++
  2 files changed, 45 insertions(+), 0 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index c5e0369..3f7183f 100644
+index 3f7183f..aa57543 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -67,6 +67,29 @@ static gboolean parse_dataobj_common_bool(struct compreh=
-ension_tlv_iter *iter,
- 	return TRUE;
+@@ -677,6 +677,16 @@ static gboolean parse_dataobj_items_next_action_indica=
+tor(
+ 			inai->list, &inai->len);
  }
  =
 
-+/* For data object that only has a byte array with variable length */
-+static gboolean parse_dataobj_common_byte_array(
-+			struct comprehension_tlv_iter *iter,
-+			enum stk_data_object_type type,
-+			unsigned char *array, unsigned int *array_len)
-+{
-+	const unsigned char *data;
-+	unsigned int len;
-+
-+	if (comprehension_tlv_iter_get_tag(iter) !=3D type)
-+		return FALSE;
-+
-+	len =3D comprehension_tlv_iter_get_length(iter);
-+	if (len < 1)
-+		return FALSE;
-+
-+	data =3D comprehension_tlv_iter_get_data(iter);
-+	*array_len =3D len;
-+	memcpy(array, data, len);
-+
-+	return TRUE;
-+}
-+
- /* Defined in TS 102.223 Section 8.1 */
- static gboolean parse_dataobj_address(struct comprehension_tlv_iter *iter,
- 					void *user)
-@@ -643,6 +666,17 @@ static gboolean parse_dataobj_network_measurement_resu=
-lts(
- 	return TRUE;
- }
- =
-
-+/* Defined in TS 102.223 Section 8.24 */
-+static gboolean parse_dataobj_items_next_action_indicator(
++/* Defined in TS 102.223 Section 8.25 */
++static gboolean parse_dataobj_event_list(
 +		struct comprehension_tlv_iter *iter, void *user)
 +{
-+	struct stk_items_next_action_indicator *inai =3D user;
++	struct stk_event_list *el =3D user;
 +
 +	return parse_dataobj_common_byte_array(iter,
-+			STK_DATA_OBJECT_TYPE_ITEMS_NEXT_ACTION_INDICATOR,
-+			inai->list, &inai->len);
++			STK_DATA_OBJECT_TYPE_EVENT_LIST, el->list, &el->len);
 +}
 +
  /* Defined in TS 102.223 Section 8.31 */
  static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *iter,
  					void *user)
-@@ -760,6 +794,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
+@@ -796,6 +806,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
 bject_type type)
- 		return parse_dataobj_help_request;
- 	case STK_DATA_OBJECT_TYPE_NETWORK_MEASUREMENT_RESULTS:
  		return parse_dataobj_network_measurement_results;
-+	case STK_DATA_OBJECT_TYPE_ITEMS_NEXT_ACTION_INDICATOR:
-+		return parse_dataobj_items_next_action_indicator;
+ 	case STK_DATA_OBJECT_TYPE_ITEMS_NEXT_ACTION_INDICATOR:
+ 		return parse_dataobj_items_next_action_indicator;
++	case STK_DATA_OBJECT_TYPE_EVENT_LIST:
++		return parse_dataobj_event_list;
  	case STK_DATA_OBJECT_TYPE_ICON_ID:
  		return parse_dataobj_icon_id;
  	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
 diff --git a/src/stkutil.h b/src/stkutil.h
-index a9495de..c4b8970 100644
+index 0a9c145..12428ca 100644
 --- a/src/stkutil.h
 +++ b/src/stkutil.h
-@@ -370,6 +370,15 @@ struct stk_file {
+@@ -266,6 +266,30 @@ enum stk_tone_type {
+ 	STK_TONE_TYPE_MELODY_8 =3D	0x47
+ };
+ =
+
++enum stk_event_type {
++	STK_EVENT_TYPE_MT_CALL =3D				0x00,
++	STK_EVENT_TYPE_CALL_CONNECTED =3D				0x01,
++	STK_EVENT_TYPE_CALL_DISCONNECTED =3D			0x02,
++	STK_EVENT_TYPE_LOCATION_STATUS =3D			0x03,
++	STK_EVENT_TYPE_USER_ACTIVITY =3D				0x04,
++	STK_EVENT_TYPE_IDLE_SCREEN_AVAILABLE =3D			0x05,
++	STK_EVENT_TYPE_CARD_READER_STATUS =3D			0x06,
++	STK_EVENT_TYPE_LANGUAGE_SELECTION =3D			0x07,
++	STK_EVENT_TYPE_BROWSER_TERMINATION =3D			0x08,
++	STK_EVENT_TYPE_DATA_AVAILABLE =3D				0x09,
++	STK_EVENT_TYPE_CHANNEL_STATUS =3D				0x0A,
++	STK_EVENT_TYPE_SINGLE_ACCESS_TECHNOLOGY_CHANGE =3D	0x0B,
++	STK_EVENT_TYPE_DISPLAY_PARAMETERS_CHANGED =3D		0x0C,
++	STK_EVENT_TYPE_LOCAL_CONNECTION =3D			0x0D,
++	STK_EVENT_TYPE_NETWORK_SEARCH_MODE_CHANGE =3D		0x0E,
++	STK_EVENT_TYPE_BROWSING_STATUS =3D			0x0F,
++	STK_EVENT_TYPE_FRAMES_INFORMATION_CHANGE =3D		0x10,
++	STK_EVENT_TYPE_I_WLAN_ACCESS_STATUS =3D			0x11,
++	STK_EVENT_TYPE_NETWORK_REJECTION =3D			0x12,
++	STK_EVENT_TYPE_HCI_CONNECTIVITY_EVENT =3D			0x13,
++	STK_EVENT_TYPE_MULTIPLE_ACCESS_TECHNOLOGIES_CHANGE =3D	0x14
++};
++
+ /* Defined in TS 102.223 Section 8.1 */
+ struct stk_address {
+ 	unsigned char ton_npi;
+@@ -379,6 +403,15 @@ struct stk_items_next_action_indicator {
  };
  =
 
  /*
-+ * According to 102.223 Section 8.24 the length of CTLV is 1 byte. This me=
-ans
-+ * that the maximum size is 127 according to the rules of CTLVs.
++ * According to 102.223 Section 8.25, there are 21 kinds of event type and=
+ no
++ * one should appear more than once.
 + */
-+struct stk_items_next_action_indicator {
-+	unsigned char list[127];
++struct stk_event_list {
++	unsigned char list[21];
 +	unsigned int len;
 +};
 +
@@ -110,5 +110,5 @@ ans
 1.6.3.3
 
 
---===============1314637776866156559==--
+--===============3274831822448331147==--
 
