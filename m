@@ -1,72 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============4618101496746215045=="
+Content-Type: multipart/mixed; boundary="===============9062516741849393671=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 7/7] Add test implementation for CPBS
-Date: Wed, 31 Mar 2010 17:50:40 +0800
-Message-ID: <1270029040-21077-7-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1270029040-21077-6-git-send-email-zhenhua.zhang@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 5/7] Fix echo command back even if don't process it
+Date: Wed, 31 Mar 2010 08:40:58 -0500
+Message-ID: <201003310840.59071.denkenz@gmail.com>
+In-Reply-To: <1270029040-21077-5-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4618101496746215045==
+--===============9062516741849393671==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gatchat/test-server.c |   24 ++++++++++++++++++++++++
- 1 files changed, 24 insertions(+), 0 deletions(-)
+Hi Zhenhua,
 
-diff --git a/gatchat/test-server.c b/gatchat/test-server.c
-index 916198b..f170d88 100644
---- a/gatchat/test-server.c
-+++ b/gatchat/test-server.c
-@@ -361,6 +361,29 @@ static void cmgl_cb(GAtServerRequestType type, GAtResu=
-lt *cmd, gpointer user)
- 	}
- }
- =
-
-+static void cpbs_cb(GAtServerRequestType type, GAtResult *cmd, gpointer us=
-er)
-+{
-+	GAtServer *server =3D user;
-+	char buf[2048];
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_SET:
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		sprintf(buf, "+CPBS: (\"FD\",\"SM\",\"SN\")");
-+		g_at_server_send_info(server, buf, TRUE);
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_OK);
-+		break;
-+	default:
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
-+		break;
-+	}
-+}
-+
- static void add_handler(GAtServer *server)
- {
- 	g_at_server_set_debug(server, server_debug, "Server");
-@@ -377,6 +400,7 @@ static void add_handler(GAtServer *server)
- 	g_at_server_register(server, "+CNMI", cnmi_cb, server, NULL);
- 	g_at_server_register(server, "+CSCS", cscs_cb, server, NULL);
- 	g_at_server_register(server, "+CMGL", cmgl_cb, server, NULL);
-+	g_at_server_register(server, "+CPBS", cpbs_cb, server, NULL);
- }
- =
-
- static void server_destroy(gpointer user)
--- =
-
-1.6.6.1
+> ---
+>  gatchat/gatserver.c |   16 ++++++++--------
+>  1 files changed, 8 insertions(+), 8 deletions(-)
+> =
 
 
---===============4618101496746215045==--
+Patches 2-5 have been applied with some simplifications afterwards.
+
+Regards,
+-Denis
+
+--===============9062516741849393671==--
 
