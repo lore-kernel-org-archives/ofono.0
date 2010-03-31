@@ -1,107 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============5290208542922213141=="
+Content-Type: multipart/mixed; boundary="===============2827097608957195670=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 07/11] Add parser for call control requested action objects
-Date: Wed, 31 Mar 2010 17:16:59 +0800
-Message-ID: <1270027023-21468-7-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1270027023-21468-6-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 10/11] Rename stk_icon_identifier to stk_icon_id
+Date: Wed, 31 Mar 2010 17:17:02 +0800
+Message-ID: <1270027023-21468-10-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1270027023-21468-9-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5290208542922213141==
+--===============2827097608957195670==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   34 ++++++++++++++++++++++++++++++++++
- src/stkutil.h |    6 ++++++
- 2 files changed, 40 insertions(+), 0 deletions(-)
+ src/stkutil.c |    2 +-
+ src/stkutil.h |    8 ++++----
+ 2 files changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index 73dae2c..b60aa65 100644
+index 4c9cb6a..b830291 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -112,6 +112,29 @@ static gboolean parse_dataobj_common_byte(
- 	return TRUE;
- }
- =
-
-+/* For data object that only has a byte array with undetermined length */
-+static gboolean parse_dataobj_common_byte_array(
-+			struct comprehension_tlv_iter *iter,
-+			struct stk_common_byte_array *array)
-+{
-+	const unsigned char *data;
-+	unsigned int len =3D comprehension_tlv_iter_get_length(iter);
-+
-+	if (len < 1)
-+		return FALSE;
-+
-+	data =3D comprehension_tlv_iter_get_data(iter);
-+	array->len =3D len;
-+
-+	array->array =3D g_try_malloc(len);
-+	if (array->array =3D=3D NULL)
-+		return FALSE;
-+
-+	memcpy(array->array, data, len);
-+
-+	return TRUE;
-+}
-+
- /* Defined in TS 102.223 Section 8.1 */
- static gboolean parse_dataobj_address(struct comprehension_tlv_iter *iter,
- 					void *user)
-@@ -693,6 +716,15 @@ static gboolean parse_dataobj_transaction_id(
- 	return TRUE;
- }
- =
-
-+/* Defined in TS 102.223 Section 8.30 */
-+static gboolean parse_dataobj_call_control_requested_action(
-+		struct comprehension_tlv_iter *iter, void *user)
-+{
-+	struct stk_common_byte_array *array =3D user;
-+
-+	return parse_dataobj_common_byte_array(iter, array);
-+}
-+
- /* Defined in TS 102.223 Section 8.31 */
+@@ -729,7 +729,7 @@ static gboolean parse_dataobj_call_control_requested_ac=
+tion(
  static gboolean parse_dataobj_icon_id(struct comprehension_tlv_iter *iter,
  					void *user)
-@@ -809,6 +841,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
-bject_type type)
- 		return parse_dataobj_location_status;
- 	case STK_DATA_OBJECT_TYPE_TRANSACTION_ID:
- 		return parse_dataobj_transaction_id;
-+	case STK_DATA_OBJECT_TYPE_CALL_CONTROL_REQUESTED_ACTION:
-+		return parse_dataobj_call_control_requested_action;
- 	case STK_DATA_OBJECT_TYPE_ICON_ID:
- 		return parse_dataobj_icon_id;
- 	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
-diff --git a/src/stkutil.h b/src/stkutil.h
-index 419cda7..9ba8138 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -296,6 +296,12 @@ enum stk_service_state {
- 	STK_NO_SERVICE =3D 	0x02
- };
+ {
+-	struct stk_icon_identifier *id =3D user;
++	struct stk_icon_id *id =3D user;
+ 	const unsigned char *data;
  =
 
-+/* For data object that only has a byte array with undetermined length */
-+struct stk_common_byte_array {
-+	unsigned char *array;
-+	unsigned int len;
-+};
-+
- /* Defined in TS 102.223 Section 8.1 */
- struct stk_address {
- 	unsigned char ton_npi;
+ 	if (comprehension_tlv_iter_get_length(iter) !=3D 2)
+diff --git a/src/stkutil.h b/src/stkutil.h
+index 3f2802e..4ff8c4b 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -442,7 +442,7 @@ struct stk_transaction_id {
+  * Icon ID denotes a file on the SIM filesystem.  Since EF cannot have rec=
+ord
+  * ids of 0, we use icon_id with 0 to denote empty icon_identifier objects
+  */
+-struct stk_icon_identifier {
++struct stk_icon_id {
+ 	unsigned char qualifier;
+ 	unsigned char id;
+ };
+@@ -471,7 +471,7 @@ struct stk_text_attribute {
+ =
+
+ struct stk_command_display_text {
+ 	char *text;
+-	struct stk_icon_identifier icon_id;
++	struct stk_icon_id icon_id;
+ 	ofono_bool_t immediate_response;
+ 	struct stk_duration duration;
+ 	struct stk_text_attribute text_attribute;
+@@ -482,7 +482,7 @@ struct stk_command_get_input {
+ 	char *text;
+ 	struct stk_response_length response_length;
+ 	char *default_text;
+-	struct stk_icon_identifier icon_id;
++	struct stk_icon_id icon_id;
+ 	struct stk_text_attribute text_attribute;
+ 	unsigned char frame_id; /* Values 0x10 to 0xFF reserved */
+ };
+@@ -491,7 +491,7 @@ struct stk_command_send_sms {
+ 	char *alpha_id;
+ 	struct stk_address address;
+ 	struct sms gsm_sms;
+-	struct stk_icon_identifier icon_id;
++	struct stk_icon_id icon_id;
+ 	struct stk_text_attribute text_attribute;
+ 	unsigned char frame_id; /* Values 0x10 to 0xFF reserved */
+ };
 -- =
 
 1.6.3.3
 
 
---===============5290208542922213141==--
+--===============2827097608957195670==--
 
