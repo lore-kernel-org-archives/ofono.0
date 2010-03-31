@@ -1,47 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============4482232729741928481=="
+Content-Type: multipart/mixed; boundary="===============3206358394639757305=="
 MIME-Version: 1.0
-From: Li, Zhigang <zhigang.li@intel.com>
-Subject: RE: roaming status of SIM card
-Date: Wed, 31 Mar 2010 16:22:51 +0800
-Message-ID: <AE1A29481078F64FB2A6D4BA2B68C2FEAA5593E7@shzsmsx502.ccr.corp.intel.com>
-In-Reply-To: <73BDC2BA3DA0BD47BAAEE12383D407EFF943DEC3@shzsmsx502.ccr.corp.intel.com>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH 01/11] Adjust the sequence of comprehension tlv structures
+Date: Wed, 31 Mar 2010 17:16:53 +0800
+Message-ID: <1270027023-21468-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4482232729741928481==
+--===============3206358394639757305==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi
+---
+ src/stkutil.h |   35 ++++++++++++++++++-----------------
+ 1 files changed, 18 insertions(+), 17 deletions(-)
 
-Depend on you modem, ofono get this value from modem.
+diff --git a/src/stkutil.h b/src/stkutil.h
+index a9495de..b0b09df 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -308,15 +308,6 @@ struct stk_ccp {
+ };
+ =
 
-B,R
+ /*
+- * Icon ID denotes a file on the SIM filesystem.  Since EF cannot have rec=
+ord
+- * ids of 0, we use icon_id with 0 to denote empty icon_identifier objects
+- */
+-struct stk_icon_identifier {
+-	unsigned char qualifier;
+-	unsigned char id;
+-};
+-
+-/*
+  * According to 102.223 Section 8.8 interval values of 0x00 are reserved.
+  * We use this to denote empty duration objects.
+  */
+@@ -347,6 +338,17 @@ struct stk_result {
+ 	unsigned char *additional;
+ };
+ =
 
-Zhigang
-________________________________________
-From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
-f Of Sun, Yijin
-Sent: 2010=E5=B9=B43=E6=9C=8831=E6=97=A5 15:18
-To: ofono(a)ofono.org
-Subject: roaming status of SIM card
++/* Define the struct of single file in TS102.223 Section 8.18.
++ * According to TS 11.11 Section 6.2, each file id has two bytes, and the
++ * maximum Dedicated File level is 2. So the maximum size of file is 8, wh=
+ich
++ * contains two bytes of Master File, 2 bytes of 1st level Dedicated File,
++ * 2 bytes of 2nd level Dedicated File and 2 bytes of Elementary File.
++ */
++struct stk_file {
++	unsigned char file[8];
++	unsigned int len;
++};
++
+ /* Defined in TS 102.223 Section 8.19 */
+ struct stk_location_info {
+ 	char mnc[OFONO_MAX_MNC_LENGTH + 1];
+@@ -358,15 +360,14 @@ struct stk_location_info {
+ 	unsigned short ext_ci;
+ };
+ =
 
-Hi,
-When I use ofono to get the current registration status of the modem, the p=
-roperty is always =E2=80=9Croaming=E2=80=9D even the sim card is in the loc=
-al area.
+-/* Define the struct of single file in TS102.223 Section 8.18.
+- * According to TS 11.11 Section 6.2, each file id has two bytes, and the
+- * maximum Dedicated File level is 2. So the maximum size of file is 8, wh=
+ich
+- * contains two bytes of Master File, 2 bytes of 1st level Dedicated File,
+- * 2 bytes of 2nd level Dedicated File and 2 bytes of Elementary File.
++/*
++ * Defined in TS 102.223 Section 8.31
++ * Icon ID denotes a file on the SIM filesystem.  Since EF cannot have rec=
+ord
++ * ids of 0, we use icon_id with 0 to denote empty icon_identifier objects
+  */
+-struct stk_file {
+-	unsigned char file[8];
+-	unsigned int len;
++struct stk_icon_identifier {
++	unsigned char qualifier;
++	unsigned char id;
+ };
+ =
 
-Depend on you modem, ofono get this value from modem.
+ /*
+-- =
+
+1.6.3.3
 
 
-
-The function is GetProperties() in org.ofono.NetworkRegistration.
-
-Thanks for your help.
-
-Regards
-Yijin
-
---===============4482232729741928481==--
+--===============3206358394639757305==--
 
