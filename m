@@ -1,28 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============1805182733997689275=="
+Content-Type: multipart/mixed; boundary="===============3846910349533594319=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/11] Adjust the sequence of comprehension tlv structures
-Date: Wed, 31 Mar 2010 12:25:19 -0500
-Message-ID: <201003311225.19670.denkenz@gmail.com>
-In-Reply-To: <1270027023-21468-1-git-send-email-yang.gu@intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] Update property name in test-ussd
+Date: Wed, 31 Mar 2010 06:56:45 +0200
+Message-ID: <1270011405-6686-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1805182733997689275==
+--===============3846910349533594319==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+---
+ test/test-ussd |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-> ---
->  src/stkutil.h |   35 ++++++++++++++++++-----------------
->  1 files changed, 18 insertions(+), 17 deletions(-)
+diff --git a/test/test-ussd b/test/test-ussd
+index 656c73e..79dd596 100755
+--- a/test/test-ussd
++++ b/test/test-ussd
+@@ -14,7 +14,7 @@ def ussd_request_received(content):
+ 	ss.Cancel()
+ =
 
-All 11 patches have now been applied.
+ def ussd_property_changed(name, value):
+-	if name !=3D "USSDState":
++	if name !=3D "State":
+ 		return
+ 	print("USSD session state is " + value)
+ =
 
-Thanks,
--Denis
+-- =
 
---===============1805182733997689275==--
+1.6.1
+
+
+--===============3846910349533594319==--
 
