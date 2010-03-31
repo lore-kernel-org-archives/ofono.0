@@ -1,50 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============1280399298977684412=="
+Content-Type: multipart/mixed; boundary="===============3703870812572444565=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 5/5] Implement STATUS polling in atmodem driver,
- enable it for phonesim & atgen.
-Date: Wed, 31 Mar 2010 11:42:23 -0700
-Message-ID: <1270060943.22331.4.camel@localhost.localdomain>
-In-Reply-To: <1270011519-6947-1-git-send-email-andrew.zaborowski@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] Return network's USSD reponses from the Respond method
+ instead of signalling
+Date: Wed, 31 Mar 2010 13:59:34 -0500
+Message-ID: <201003311359.35024.denkenz@gmail.com>
+In-Reply-To: <1270011427-6744-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1280399298977684412==
+--===============3703870812572444565==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrzej,
+Hi Andrew,
 
-> +
-> +	if (!g_at_result_iter_next_hexstring(&iter, &response, &len))
-> +		return;
-> +
-> +	if (rlen !=3D len * 2 || len < 2 || (response[len - 2] !=3D 0x90 &&
-> +				response[len - 2] !=3D 0x91) ||
-> +			(response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0))
-> +		return;
-> +
-
-let me re-write this into something readable ;)
-
-	if (len < 2 || rlen !=3D len * 2)
-		return;
-
-	if (response[len - 2] !=3D 0x90 || response[len - 2] !=3D 0x91)
-		return;
-
-	if (response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0)
-		return;
-
-And please add comments on top of the if statements to explain what they
-are checking for.
-
-Regards
-
-Marcel
+> ---
+>  doc/supplementaryservices-api.txt |    2 +-
+>  src/ussd.c                        |   31 ++++++++++++++++++++++++-------
+>  2 files changed, 25 insertions(+), 8 deletions(-)
+> =
 
 
+Patch has been applied, but please keep your commit message header to 50 =
 
---===============1280399298977684412==--
+characters or less and the commit description to 72 characters / line.
+
+Regards,
+-Denis
+
+--===============3703870812572444565==--
 
