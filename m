@@ -1,33 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3137270940292225976=="
+Content-Type: multipart/mixed; boundary="===============1280399298977684412=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Fix ampersand commands check
-Date: Wed, 31 Mar 2010 13:17:02 -0500
-Message-ID: <201003311317.02261.denkenz@gmail.com>
-In-Reply-To: <1270011453-6802-1-git-send-email-andrew.zaborowski@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 5/5] Implement STATUS polling in atmodem driver,
+ enable it for phonesim & atgen.
+Date: Wed, 31 Mar 2010 11:42:23 -0700
+Message-ID: <1270060943.22331.4.camel@localhost.localdomain>
+In-Reply-To: <1270011519-6947-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3137270940292225976==
+--===============1280399298977684412==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Andrzej,
 
-> Also remove a trailing tab.
-> =
+> +
+> +	if (!g_at_result_iter_next_hexstring(&iter, &response, &len))
+> +		return;
+> +
+> +	if (rlen !=3D len * 2 || len < 2 || (response[len - 2] !=3D 0x90 &&
+> +				response[len - 2] !=3D 0x91) ||
+> +			(response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0))
+> +		return;
+> +
 
-> ---
->  gatchat/gatserver.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
-> =
+let me re-write this into something readable ;)
+
+	if (len < 2 || rlen !=3D len * 2)
+		return;
+
+	if (response[len - 2] !=3D 0x90 || response[len - 2] !=3D 0x91)
+		return;
+
+	if (response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0)
+		return;
+
+And please add comments on top of the if statements to explain what they
+are checking for.
+
+Regards
+
+Marcel
 
 
-Patch has been applied, thanks.
 
-Regards,
--Denis
-
---===============3137270940292225976==--
+--===============1280399298977684412==--
 
