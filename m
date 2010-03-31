@@ -1,28 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============0279592019099318860=="
+Content-Type: multipart/mixed; boundary="===============1805182733997689275=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 7/7] Add test implementation for CPBS
-Date: Wed, 31 Mar 2010 08:42:27 -0500
-Message-ID: <201003310842.27312.denkenz@gmail.com>
-In-Reply-To: <1270029040-21077-7-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [PATCH 01/11] Adjust the sequence of comprehension tlv structures
+Date: Wed, 31 Mar 2010 12:25:19 -0500
+Message-ID: <201003311225.19670.denkenz@gmail.com>
+In-Reply-To: <1270027023-21468-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0279592019099318860==
+--===============1805182733997689275==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Yang,
 
 > ---
->  gatchat/test-server.c |   24 ++++++++++++++++++++++++
->  1 files changed, 24 insertions(+), 0 deletions(-)
+>  src/stkutil.h |   35 ++++++++++++++++++-----------------
+>  1 files changed, 18 insertions(+), 17 deletions(-)
 
-Patch looks good and has been applied.
+All 11 patches have now been applied.
 
 Thanks,
 -Denis
 
---===============0279592019099318860==--
+--===============1805182733997689275==--
 
