@@ -1,141 +1,144 @@
-Content-Type: multipart/mixed; boundary="===============8823642624081060683=="
+Content-Type: multipart/mixed; boundary="===============1137986187501826383=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/5][RfC] Release calls when SIM is removed.
-Date: Wed, 31 Mar 2010 06:57:51 +0200
-Message-ID: <1270011471-6860-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 3/5][RfC] Remove post-sim atoms after SIM is extracted.
+Date: Wed, 31 Mar 2010 06:58:00 +0200
+Message-ID: <1270011480-6889-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8823642624081060683==
+--===============1137986187501826383==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/voicecall.c |   63 ++++++++++++++++++++++++++++++++++++++++++++++++---=
----
- 1 files changed, 56 insertions(+), 7 deletions(-)
+ src/modem.c |   48 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 48 insertions(+), 0 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 8bf6379..b0aa5cd 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -54,6 +54,8 @@ struct ofono_voicecall {
- 	gint emit_calls_source;
- 	gint emit_multi_source;
- 	unsigned int sim_watch;
-+	unsigned int sim_ready_watch;
-+	unsigned int sim_removed_watch;
- 	const struct ofono_voicecall_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-@@ -1784,6 +1786,10 @@ static void voicecall_unregister(struct ofono_atom *=
-atom)
- static void voicecall_remove(struct ofono_atom *atom)
- {
- 	struct ofono_voicecall *vc =3D __ofono_atom_get_data(atom);
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-+	struct ofono_atom *sim_atom =3D
-+		__ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
-+	struct ofono_sim *sim =3D NULL;
+diff --git a/src/modem.c b/src/modem.c
+index b935328..6dfa73a 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -52,6 +52,7 @@ enum ofono_property_type {
+ struct ofono_modem {
+ 	char			*path;
+ 	GSList			*atoms;
++	GSList			*pre_sim_atoms;
+ 	struct ofono_watchlist	*atom_watches;
+ 	GSList         		*interface_list;
+ 	unsigned int		call_ids;
+@@ -64,6 +65,7 @@ struct ofono_modem {
+ 	struct ofono_sim	*sim;
+ 	unsigned int		sim_watch;
+ 	unsigned int		sim_ready_watch;
++	unsigned int		sim_removed_watch;
+ 	const struct ofono_modem_driver *driver;
+ 	void			*driver_data;
+ 	char			*driver_type;
+@@ -300,6 +302,7 @@ void __ofono_atom_free(struct ofono_atom *atom)
+ 	struct ofono_modem *modem =3D atom->modem;
  =
 
- 	DBG("atom: %p", atom);
+ 	modem->atoms =3D g_slist_remove(modem->atoms, atom);
++	modem->pre_sim_atoms =3D g_slist_remove(modem->pre_sim_atoms, atom);
  =
 
-@@ -1805,6 +1811,19 @@ static void voicecall_remove(struct ofono_atom *atom)
- 		vc->new_en_list =3D NULL;
+ 	__ofono_atom_unregister(atom);
+ =
+
+@@ -329,7 +332,35 @@ static void remove_all_atoms(struct ofono_modem *modem)
  	}
  =
 
-+	if (sim_atom && __ofono_atom_get_registered(sim_atom))
-+		sim =3D __ofono_atom_get_data(sim_atom);
-+
-+	if (sim && vc->sim_ready_watch) {
-+		ofono_sim_remove_ready_watch(sim, vc->sim_ready_watch);
-+		vc->sim_ready_watch =3D 0;
-+	}
-+
-+	if (sim && vc->sim_removed_watch) {
-+		ofono_sim_remove_removed_watch(sim, vc->sim_removed_watch);
-+		vc->sim_removed_watch =3D 0;
-+	}
-+
- 	g_free(vc);
- }
- =
-
-@@ -1843,6 +1862,34 @@ struct ofono_voicecall *ofono_voicecall_create(struc=
-t ofono_modem *modem,
- 	return vc;
- }
- =
-
-+static void sim_ready_watch(void *user)
-+{
-+	struct ofono_voicecall *vc =3D user;
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-+	struct ofono_atom *sim_atom =3D
-+		__ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
-+	struct ofono_sim *sim =3D __ofono_atom_get_data(sim_atom);
-+
-+	/* Try both formats, only one or none will work */
-+	ofono_sim_read(sim, SIM_EFECC_FILEID,
-+			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
-+			ecc_g2_read_cb, vc);
-+	ofono_sim_read(sim, SIM_EFECC_FILEID,
-+			OFONO_SIM_FILE_STRUCTURE_FIXED,
-+			ecc_g3_read_cb, vc);
+ 	g_slist_free(modem->atoms);
++	g_slist_free(modem->pre_sim_atoms);
+ 	modem->atoms =3D NULL;
++	modem->pre_sim_atoms =3D NULL;
 +}
 +
-+static void sim_removed_watch(void *user)
++static void remove_post_sim_atoms(struct ofono_modem *modem)
 +{
-+	struct ofono_voicecall *vc =3D user;
++	GSList *l;
++	struct ofono_atom *atom;
 +
-+	vc->flags |=3D VOICECALLS_FLAG_MULTI_RELEASE;
++	if (modem =3D=3D NULL)
++		return;
 +
-+	/* TODO: Don't hang up emergency calls */
-+	voicecalls_release_queue(vc, vc->call_list);
-+	voicecalls_release_next(vc);
++	for (l =3D modem->atoms; l; l =3D l->next) {
++		atom =3D l->data;
++
++		if (g_slist_find(modem->pre_sim_atoms, atom))
++			continue;
++
++		__ofono_atom_unregister(atom);
++
++		if (atom->destruct)
++			atom->destruct(atom);
++
++		g_free(atom);
++	}
++
++	g_slist_free(modem->atoms);
++	modem->atoms =3D g_slist_copy(modem->pre_sim_atoms);
+ }
+ =
+
+ static DBusMessage *modem_get_properties(DBusConnection *conn,
+@@ -1121,12 +1152,25 @@ static void modem_sim_ready(void *user)
+ {
+ 	struct ofono_modem *modem =3D user;
+ =
+
++	if (modem->pre_sim_atoms =3D=3D NULL)
++		modem->pre_sim_atoms =3D g_slist_copy(modem->atoms);
++
+ 	if (modem->driver->post_sim)
+ 		modem->driver->post_sim(modem);
+ =
+
+ 	__ofono_history_probe_drivers(modem);
+ }
+ =
+
++static void modem_sim_removed(void *user)
++{
++	struct ofono_modem *modem =3D user;
++
++	if (modem->pre_sim_atoms =3D=3D NULL)
++		return;
++
++	remove_post_sim_atoms(modem);
 +}
 +
  static void sim_watch(struct ofono_atom *atom,
  			enum ofono_atom_watch_condition cond, void *data)
  {
-@@ -1850,16 +1897,18 @@ static void sim_watch(struct ofono_atom *atom,
- 	struct ofono_sim *sim =3D __ofono_atom_get_data(atom);
+@@ -1134,6 +1178,7 @@ static void sim_watch(struct ofono_atom *atom,
  =
 
  	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		vc->sim_ready_watch =3D 0;
-+		vc->sim_removed_watch =3D 0;
+ 		modem->sim_ready_watch =3D 0;
++		modem->sim_removed_watch =3D 0;
  		return;
  	}
  =
 
--	/* Try both formats, only one or none will work */
--	ofono_sim_read(sim, SIM_EFECC_FILEID,
--			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
--			ecc_g2_read_cb, vc);
--	ofono_sim_read(sim, SIM_EFECC_FILEID,
--			OFONO_SIM_FILE_STRUCTURE_FIXED,
--			ecc_g3_read_cb, vc);
-+	vc->sim_ready_watch =3D ofono_sim_add_ready_watch(sim,
-+			sim_ready_watch, vc, NULL);
-+	vc->sim_removed_watch =3D ofono_sim_add_removed_watch(sim,
-+			sim_removed_watch, vc, NULL);
-+
-+	if (ofono_sim_get_ready(sim))
-+		sim_ready_watch(vc);
- }
+@@ -1141,6 +1186,9 @@ static void sim_watch(struct ofono_atom *atom,
+ 	modem->sim_ready_watch =3D ofono_sim_add_ready_watch(modem->sim,
+ 							modem_sim_ready,
+ 							modem, NULL);
++	modem->sim_removed_watch =3D ofono_sim_add_removed_watch(modem->sim,
++							modem_sim_removed,
++							modem, NULL);
  =
 
- void ofono_voicecall_register(struct ofono_voicecall *vc)
+ 	if (ofono_sim_get_ready(modem->sim))
+ 		modem_sim_ready(modem);
 -- =
 
 1.6.1
 
 
---===============8823642624081060683==--
+--===============1137986187501826383==--
 
