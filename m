@@ -1,20 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============5903353777454226804=="
+Content-Type: multipart/mixed; boundary="===============4482232729741928481=="
 MIME-Version: 1.0
-From: Sun, Yijin <yijin.sun@intel.com>
-Subject: roaming status of SIM card
-Date: Wed, 31 Mar 2010 15:17:58 +0800
-Message-ID: <73BDC2BA3DA0BD47BAAEE12383D407EFF943DEC3@shzsmsx502.ccr.corp.intel.com>
+From: Li, Zhigang <zhigang.li@intel.com>
+Subject: RE: roaming status of SIM card
+Date: Wed, 31 Mar 2010 16:22:51 +0800
+Message-ID: <AE1A29481078F64FB2A6D4BA2B68C2FEAA5593E7@shzsmsx502.ccr.corp.intel.com>
+In-Reply-To: <73BDC2BA3DA0BD47BAAEE12383D407EFF943DEC3@shzsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5903353777454226804==
+--===============4482232729741928481==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi
+
+Depend on you modem, ofono get this value from modem.
+
+B,R
+
+Zhigang
+________________________________________
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of Sun, Yijin
+Sent: 2010=E5=B9=B43=E6=9C=8831=E6=97=A5 15:18
+To: ofono(a)ofono.org
+Subject: roaming status of SIM card
+
 Hi,
 When I use ofono to get the current registration status of the modem, the p=
-roperty is always "roaming" even the sim card is in the local area.
+roperty is always =E2=80=9Croaming=E2=80=9D even the sim card is in the loc=
+al area.
+
+Depend on you modem, ofono get this value from modem.
+
+
 
 The function is GetProperties() in org.ofono.NetworkRegistration.
 
@@ -23,58 +43,5 @@ Thanks for your help.
 Regards
 Yijin
 
---===============5903353777454226804==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
-dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEgbmFtZT1HZW5lcmF0b3Ig
-Y29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTIgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+Cjwh
-LS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseTpTaW1T
-dW47CglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
-aWx5OlNpbVN1bjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQpAZm9udC1mYWNlCgl7
-Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KQGZv
-bnQtZmFjZQoJe2ZvbnQtZmFtaWx5OlNpbVN1bjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAx
-IDE7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWws
-IGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJdGV4
-dC1hbGlnbjpqdXN0aWZ5OwoJdGV4dC1qdXN0aWZ5OmludGVyLWlkZW9ncmFwaDsKCWZvbnQtc2l6
-ZToxMC41cHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBz
-cGFuLk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0
-ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0Zv
-bGxvd2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNv
-cmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVy
-c29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xv
-cjp3aW5kb3d0ZXh0O30KLk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25s
-eTt9CiAvKiBQYWdlIERlZmluaXRpb25zICovCiBAcGFnZSBTZWN0aW9uMQoJe3NpemU6NjEyLjBw
-dCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA5MC4wcHQgNzIuMHB0IDkwLjBwdDt9CmRpdi5TZWN0
-aW9uMQoJe3BhZ2U6U2VjdGlvbjE7fQotLT4KPC9zdHlsZT4KPCEtLVtpZiBndGUgbXNvIDldPjx4
-bWw+CiA8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3ht
-bD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlbGF5b3V0IHY6
-ZXh0PSJlZGl0Ij4KICA8bzppZG1hcCB2OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KIDwvbzpzaGFw
-ZWxheW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgoKPGJvZHkgbGFuZz1aSC1DTiBsaW5r
-PWJsdWUgdmxpbms9cHVycGxlIHN0eWxlPSd0ZXh0LWp1c3RpZnktdHJpbTpwdW5jdHVhdGlvbic+
-Cgo8ZGl2IGNsYXNzPVNlY3Rpb24xPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4t
-VVM+SGksPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
-bmc9RU4tVVM+V2hlbiBJIHVzZSBvZm9ubyB0byBnZXQgdGhlIGN1cnJlbnQKcmVnaXN0cmF0aW9u
-IHN0YXR1cyBvZiB0aGUgbW9kZW0sIHRoZSBwcm9wZXJ0eSBpcyBhbHdheXMgJiM4MjIwO3JvYW1p
-bmcmIzgyMjE7CmV2ZW4gdGhlIHNpbSBjYXJkIGlzIGluIHRoZSBsb2NhbCBhcmVhLjxvOnA+PC9v
-OnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+
-Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVO
-LVVTPlRoZSBmdW5jdGlvbiBpcyBHZXRQcm9wZXJ0aWVzKCkgaW4gb3JnLm9mb25vLk5ldHdvcmtS
-ZWdpc3RyYXRpb24uPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxz
-cGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNv
-Tm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+VGhhbmtzIGZvciB5b3VyIGhlbHAuPG86cD48L286cD48
-L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJz
-cDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+
-UmVnYXJkczxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBs
-YW5nPUVOLVVTPllpamluPG86cD48L286cD48L3NwYW4+PC9wPgoKPC9kaXY+Cgo8L2JvZHk+Cgo8
-L2h0bWw+Cg==
-
---===============5903353777454226804==--
+--===============4482232729741928481==--
 
