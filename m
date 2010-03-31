@@ -1,44 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============4426594075589347468=="
+Content-Type: multipart/mixed; boundary="===============0381912529928856020=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: doc: Explain VoicemailMessageCount value zero.
-Date: Wed, 31 Mar 2010 06:57:21 +0200
-Message-ID: <1270011441-6773-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH] Fix ampersand commands check
+Date: Wed, 31 Mar 2010 06:57:33 +0200
+Message-ID: <1270011453-6802-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4426594075589347468==
+--===============0381912529928856020==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Also remove a trailing tab.
+
 ---
- doc/message-waiting-api.txt |    5 ++++-
- 1 files changed, 4 insertions(+), 1 deletions(-)
+ gatchat/gatserver.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/doc/message-waiting-api.txt b/doc/message-waiting-api.txt
-index 77ec27a..6c4b354 100644
---- a/doc/message-waiting-api.txt
-+++ b/doc/message-waiting-api.txt
-@@ -35,7 +35,10 @@ Properties	boolean VoicemailWaiting [readonly]
- 		byte VoicemailMessageCount [readonly]
+diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
+index 031e542..839ebe4 100644
+--- a/gatchat/gatserver.c
++++ b/gatchat/gatserver.c
+@@ -570,9 +570,9 @@ static int get_basic_prefix_size(const char *buf)
+ 		/* All other cases it is a simple 1 character prefix */
+ 		return 1;
+ 	}
+-	=
+
++
+ 	if (buf[0] =3D=3D '&') {
+-		if (g_ascii_isalpha(buf[0] =3D=3D FALSE))
++		if (g_ascii_isalpha(buf[1]) =3D=3D FALSE)
+ 			return 0;
  =
 
- 			The total number of voicemail messages waiting.
--			Values of 255 indicate 255 messages or more.
-+			Values of 255 indicate 255 messages or more.  Value
-+			0 when VoicemailWaiting is true indicates that the
-+			mailbox is not empty and the message count is not
-+			known.
- =
-
- 		string VoicemailMailboxNumber [readwrite]
- =
-
+ 		return 2;
 -- =
 
 1.6.1
 
 
---===============4426594075589347468==--
+--===============0381912529928856020==--
 
