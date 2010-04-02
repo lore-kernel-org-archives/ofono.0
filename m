@@ -1,37 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8619886578786325717=="
+Content-Type: multipart/mixed; boundary="===============6496100961029301377=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 10/15] Add parser for at command objects
-Date: Fri, 02 Apr 2010 14:20:35 +0800
-Message-ID: <1270189240-11650-10-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1270189240-11650-9-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 13/15] Add parser for dtmf string objects
+Date: Fri, 02 Apr 2010 14:20:38 +0800
+Message-ID: <1270189240-11650-13-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1270189240-11650-12-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8619886578786325717==
+--===============6496100961029301377==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   32 ++++++++++++++++++++++++++++++++
- 1 files changed, 32 insertions(+), 0 deletions(-)
+ src/stkutil.c |   24 ++++++++++++++++++++++++
+ 1 files changed, 24 insertions(+), 0 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index 1846092..c7154c1 100644
+index f205ce6..4951df3 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -112,6 +112,28 @@ static gboolean parse_dataobj_common_byte(struct compr=
-ehension_tlv_iter *iter,
- 	return TRUE;
+@@ -953,6 +953,28 @@ static gboolean parse_dataobj_imm_resp(struct comprehe=
+nsion_tlv_iter *iter,
+ 	return parse_dataobj_common_bool(iter, ret);
  }
  =
 
-+/* For data object that only has text terminated by '\0' */
-+static gboolean parse_dataobj_common_text(struct comprehension_tlv_iter *i=
++/* Defined in 102.223 Section 8.44 */
++static gboolean parse_dataobj_dtmf_string(struct comprehension_tlv_iter *i=
 ter,
-+					unsigned char **text)
++					void *user)
 +{
++	char **dtmf =3D user;
 +	const unsigned char *data;
 +	unsigned int len =3D comprehension_tlv_iter_get_length(iter);
 +
@@ -40,49 +41,33 @@ ter,
 +
 +	data =3D comprehension_tlv_iter_get_data(iter);
 +
-+	*text =3D g_try_malloc(len + 1);
-+	if (*text =3D=3D NULL)
++	*dtmf =3D g_try_malloc(len * 2 + 1);
++	if (*dtmf =3D=3D NULL)
 +		return FALSE;
 +
-+	memcpy(*text, data, len);
-+	(*text)[len] =3D '\0';
++	extract_bcd_number(data, len, *dtmf);
 +
 +	return TRUE;
 +}
 +
- /* For data object that only has a byte array with undetermined length */
- static gboolean parse_dataobj_common_byte_array(
- 			struct comprehension_tlv_iter *iter,
-@@ -899,6 +921,14 @@ static gboolean parse_dataobj_datetime_timezone(
- 	return TRUE;
- }
- =
-
-+/* Defined in TS 102.223 Section 8.40 */
-+static gboolean parse_dataobj_at_command(
-+		struct comprehension_tlv_iter *iter, void *user)
-+{
-+	unsigned char **command =3D user;
-+	return parse_dataobj_common_text(iter, command);
-+}
-+
- /* Defined in 102.223 Section 8.43 */
- static gboolean parse_dataobj_imm_resp(struct comprehension_tlv_iter *iter,
+ /* Defined in TS 102.223 Section 8.72 */
+ static gboolean parse_dataobj_text_attr(struct comprehension_tlv_iter *ite=
+r,
  					void *user)
-@@ -1017,6 +1047,8 @@ static dataobj_handler handler_for_type(enum stk_data=
+@@ -1071,6 +1093,8 @@ static dataobj_handler handler_for_type(enum stk_data=
 _object_type type)
- 		return parse_dataobj_timer_value;
- 	case STK_DATA_OBJECT_TYPE_DATETIME_TIMEZONE:
- 		return parse_dataobj_datetime_timezone;
-+	case STK_DATA_OBJECT_TYPE_AT_COMMAND:
-+		return parse_dataobj_at_command;
+ 		return parse_dataobj_bc_repeat_indicator;
  	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
  		return parse_dataobj_imm_resp;
++	case STK_DATA_OBJECT_TYPE_DTMF_STRING:
++		return parse_dataobj_dtmf_string;
  	case STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE:
+ 		return parse_dataobj_text_attr;
+ 	case STK_DATA_OBJECT_TYPE_FRAME_ID:
 -- =
 
 1.6.3.3
 
 
---===============8619886578786325717==--
+--===============6496100961029301377==--
 
