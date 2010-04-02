@@ -1,50 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============3682237472655606089=="
+Content-Type: multipart/mixed; boundary="===============8423819205897285036=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 05/15] Add parser for timer identifier objects
-Date: Fri, 02 Apr 2010 14:20:30 +0800
-Message-ID: <1270189240-11650-5-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1270189240-11650-4-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 09/15] Add parser for date-time and time zone objects
+Date: Fri, 02 Apr 2010 14:20:34 +0800
+Message-ID: <1270189240-11650-9-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1270189240-11650-8-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3682237472655606089==
+--===============8423819205897285036==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   11 +++++++++++
- 1 files changed, 11 insertions(+), 0 deletions(-)
+ src/stkutil.c |   19 +++++++++++++++++++
+ 1 files changed, 19 insertions(+), 0 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index 2efa5a4..d999846 100644
+index 5fea3a5..1846092 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -855,6 +855,15 @@ static gboolean parse_dataobj_r_apdu(
+@@ -882,6 +882,23 @@ static gboolean parse_dataobj_timer_value(
  	return TRUE;
  }
  =
 
-+/* Defined in TS 102.223 Section 8.37 */
-+static gboolean parse_dataobj_timer_id(
++/* Defined in TS 102.223 Section 8.39 */
++static gboolean parse_dataobj_datetime_timezone(
 +		struct comprehension_tlv_iter *iter, void *user)
 +{
-+	unsigned char *byte =3D user;
++	struct sms_scts *scts =3D user;
++	const unsigned char *data;
++	int offset =3D 0;
 +
-+	return parse_dataobj_common_byte(iter, byte);
++	if (comprehension_tlv_iter_get_length(iter) !=3D 7)
++		return FALSE;
++
++	data =3D comprehension_tlv_iter_get_data(iter);
++	sms_decode_scts(data, 7, &offset, scts);
++
++	return TRUE;
 +}
 +
  /* Defined in 102.223 Section 8.43 */
  static gboolean parse_dataobj_imm_resp(struct comprehension_tlv_iter *iter,
  					void *user)
-@@ -967,6 +976,8 @@ static dataobj_handler handler_for_type(enum stk_data_o=
-bject_type type)
- 		return parse_dataobj_c_apdu;
- 	case STK_DATA_OBJECT_TYPE_R_APDU:
- 		return parse_dataobj_r_apdu;
-+	case STK_DATA_OBJECT_TYPE_TIMER_ID:
-+		return parse_dataobj_timer_id;
+@@ -998,6 +1015,8 @@ static dataobj_handler handler_for_type(enum stk_data_=
+object_type type)
+ 		return parse_dataobj_timer_id;
+ 	case STK_DATA_OBJECT_TYPE_TIMER_VALUE:
+ 		return parse_dataobj_timer_value;
++	case STK_DATA_OBJECT_TYPE_DATETIME_TIMEZONE:
++		return parse_dataobj_datetime_timezone;
  	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
  		return parse_dataobj_imm_resp;
  	case STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE:
@@ -53,5 +61,5 @@ bject_type type)
 1.6.3.3
 
 
---===============3682237472655606089==--
+--===============8423819205897285036==--
 
