@@ -1,113 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============5044585150763935781=="
+Content-Type: multipart/mixed; boundary="===============5445619186527174322=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 08/15] Make function decode_scts public
-Date: Fri, 02 Apr 2010 14:20:33 +0800
-Message-ID: <1270189240-11650-8-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1270189240-11650-7-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 11/15] Add parser for at response objects
+Date: Fri, 02 Apr 2010 14:20:36 +0800
+Message-ID: <1270189240-11650-11-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1270189240-11650-10-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5044585150763935781==
+--===============5445619186527174322==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/smsutil.c |   12 ++++++------
- src/smsutil.h |    3 +++
- 2 files changed, 9 insertions(+), 6 deletions(-)
+ src/stkutil.c |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 64cd6fb..17e0e0e 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -377,7 +377,7 @@ guint8 sms_decode_semi_octet(guint8 in)
- 	return (in & 0x0f) * 10 + (in >> 4);
+diff --git a/src/stkutil.c b/src/stkutil.c
+index c7154c1..f6da42b 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -929,6 +929,14 @@ static gboolean parse_dataobj_at_command(
+ 	return parse_dataobj_common_text(iter, command);
  }
  =
 
--static gboolean decode_scts(const unsigned char *pdu, int len,
-+gboolean sms_decode_scts(const unsigned char *pdu, int len,
- 				int *offset, struct sms_scts *out)
- {
- 	unsigned char oct =3D 0;
-@@ -433,7 +433,7 @@ static gboolean decode_validity_period(const unsigned c=
-har *pdu, int len,
- =
-
- 		return TRUE;
- 	case SMS_VALIDITY_PERIOD_FORMAT_ABSOLUTE:
--		if (!decode_scts(pdu, len, offset, &vp->absolute))
-+		if (!sms_decode_scts(pdu, len, offset, &vp->absolute))
- 			return FALSE;
- =
-
- 		return TRUE;
-@@ -718,7 +718,7 @@ static gboolean decode_deliver(const unsigned char *pdu=
-, int len,
- 	if (!next_octet(pdu, len, &offset, &out->deliver.dcs))
- 		return FALSE;
- =
-
--	if (!decode_scts(pdu, len, &offset, &out->deliver.scts))
-+	if (!sms_decode_scts(pdu, len, &offset, &out->deliver.scts))
- 		return FALSE;
- =
-
- 	if (!next_octet(pdu, len, &offset, &out->deliver.udl))
-@@ -849,7 +849,7 @@ static gboolean decode_submit_report(const unsigned cha=
-r *pdu, int len,
- =
-
- 	pi =3D octet & 0x07;
- =
-
--	if (!decode_scts(pdu, len, &offset, scts))
-+	if (!sms_decode_scts(pdu, len, &offset, scts))
- 		return FALSE;
- =
-
- 	if (pi & 0x01) {
-@@ -976,10 +976,10 @@ static gboolean decode_status_report(const unsigned c=
-har *pdu, int len,
- 					&out->status_report.raddr))
- 		return FALSE;
- =
-
--	if (!decode_scts(pdu, len, &offset, &out->status_report.scts))
-+	if (!sms_decode_scts(pdu, len, &offset, &out->status_report.scts))
- 		return FALSE;
- =
-
--	if (!decode_scts(pdu, len, &offset, &out->status_report.dt))
-+	if (!sms_decode_scts(pdu, len, &offset, &out->status_report.dt))
- 		return FALSE;
- =
-
- 	if (!next_octet(pdu, len, &offset, &octet))
-diff --git a/src/smsutil.h b/src/smsutil.h
-index fd80c8f..469a49e 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -424,6 +424,9 @@ gboolean sms_encode_address_field(const struct sms_addr=
-ess *in, gboolean sc,
- =
-
- guint8 sms_decode_semi_octet(guint8 in);
- =
-
-+gboolean sms_decode_scts(const unsigned char *pdu, int len,
-+				int *offset, struct sms_scts *out);
++/* Defined in TS 102.223 Section 8.41 */
++static gboolean parse_dataobj_at_response(
++		struct comprehension_tlv_iter *iter, void *user)
++{
++	unsigned char **response =3D user;
++	return parse_dataobj_common_text(iter, response);
++}
 +
- int sms_udl_in_bytes(guint8 ud_len, guint8 dcs);
- =
-
- time_t sms_scts_to_time(const struct sms_scts *scts, struct tm *remote);
+ /* Defined in 102.223 Section 8.43 */
+ static gboolean parse_dataobj_imm_resp(struct comprehension_tlv_iter *iter,
+ 					void *user)
+@@ -1049,6 +1057,8 @@ static dataobj_handler handler_for_type(enum stk_data=
+_object_type type)
+ 		return parse_dataobj_datetime_timezone;
+ 	case STK_DATA_OBJECT_TYPE_AT_COMMAND:
+ 		return parse_dataobj_at_command;
++	case STK_DATA_OBJECT_TYPE_AT_RESPONSE:
++		return parse_dataobj_at_response;
+ 	case STK_DATA_OBJECT_TYPE_IMMEDIATE_RESPONSE:
+ 		return parse_dataobj_imm_resp;
+ 	case STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE:
 -- =
 
 1.6.3.3
 
 
---===============5044585150763935781==--
+--===============5445619186527174322==--
 
