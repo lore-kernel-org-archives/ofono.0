@@ -1,82 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============0972855187915254711=="
+Content-Type: multipart/mixed; boundary="===============2390398868328654978=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: Re: PPP LCP configuration issue
-Date: Fri, 02 Apr 2010 16:17:14 -0700
-Message-ID: <20100402161714.7847690a@kcaccard-MOBL3>
-In-Reply-To: <1270242118.22331.101.camel@localhost.localdomain>
+Subject: [PATCH] ppp: implement net close
+Date: Fri, 02 Apr 2010 16:45:24 -0700
+Message-ID: <1270251924-5078-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0972855187915254711==
+--===============2390398868328654978==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 02 Apr 2010 14:01:58 -0700
-Marcel Holtmann <marcel@holtmann.org> wrote:
+---
+ gatchat/ppp.h     |    1 +
+ gatchat/ppp_net.c |   11 ++++++-----
+ 2 files changed, 7 insertions(+), 5 deletions(-)
 
-> Hi Kristen,
-> =
+diff --git a/gatchat/ppp.h b/gatchat/ppp.h
+index fa3749c..7b09fa9 100644
+--- a/gatchat/ppp.h
++++ b/gatchat/ppp.h
+@@ -105,6 +105,7 @@ struct ppp_net_data {
+ 	GAtPPP *ppp;
+ 	char *if_name;
+ 	GIOChannel *channel;
++	gint watch;
+ };
+ =
 
-> > > so I added some debug code to actually print the options during the
-> > > configuration stage. And something seems to be wrong here.
-> > > =
+ struct _GAtPPP {
+diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
+index 908da84..d07a988 100644
+--- a/gatchat/ppp_net.c
++++ b/gatchat/ppp_net.c
+@@ -64,8 +64,6 @@ void ppp_net_process_packet(struct ppp_net_data *data, gu=
+int8 *packet)
+ /*
+  * packets received by the tun interface need to be written to
+  * the modem.  So, just read a packet, write out to the modem
+- *
+- * TBD - how do we know we have a full packet?  Do we care?
+  */
+ static gboolean ppp_net_callback(GIOChannel *channel, GIOCondition cond,
+ 				gpointer userdata)
+@@ -77,6 +75,9 @@ static gboolean ppp_net_callback(GIOChannel *channel, GIO=
+Condition cond,
+ 	struct ppp_header *ppp =3D (struct ppp_header *) buf;
+ 	struct ppp_net_data *data =3D (struct ppp_net_data *) userdata;
+ =
 
-> > > lcp: pppcp_open_event: current state 0:INITIAL
-> > > lcp: pppcp_up_event: current state 1:STARTING
-> > > lcp: pppcp_initialize_restart_count: current state 1:STARTING
-> > > lcp: pppcp_send_configure_request: current state 1:STARTING
-> > > lcp: option 2 len 6 (Async-Control-Character-Map) 00 00 00 00
-> > > lcp: pppcp_process_configure_request: current state 6:REQSENT
-> > > lcp: option 2 len 6 (Async-Control-Character-Map) 00 00 00 00
-> > > lcp: option 3 len 5 (Authentication-Protocol) c2 23 05
-> > > lcp: option 5 len 6 (Magic-Number) 01 ff ef e0
-> > > lcp: option 7 len 2 (Protocol-Field-Compression)
-> > > lcp: option 8 len 2 (Address-and-Control-Field-Compression)
-> > > lcp: pppcp_rcr_plus_event: current state 6:REQSENT
-> > > lcp: pppcp_send_configure_ack: current state 6:REQSENT
-> > > lcp: option 2 len 6 (Async-Control-Character-Map) 00 00 00 00
-> > > lcp: option 3 len 5 (Authentication-Protocol) c2 23 05
-> > > lcp: option 5 len 6 (Magic-Number) 01 ff ef e0
-> > > lcp: option 7 len 2 (Protocol-Field-Compression)
-> > > lcp: option 8 len 2 (Address-and-Control-Field-Compression)
-> > > lcp: pppcp_process_configure_ack: current state 8:ACKSENT
-> > > lcp: option 2 len 6 (Async-Control-Character-Map) 00 00 00 00
-> > > oops -- found acked option 2 we didn't request
-> > > lcp: pppcp_rca_event: current state 8:ACKSENT
-> > > lcp: pppcp_initialize_restart_count: current state 8:ACKSENT
-> > > =
++	if (cond & (G_IO_NVAL | G_IO_ERR | G_IO_HUP))
++		return FALSE;
++
+ 	if (cond & G_IO_IN) {
+ 		/* leave space to add PPP protocol field */
+ 		status =3D g_io_channel_read_chars(channel, buf + 2, MAX_PACKET,
+@@ -93,7 +94,8 @@ static gboolean ppp_net_callback(GIOChannel *channel, GIO=
+Condition cond,
+ =
 
-> > > I see the oops comment here, but we clearly requested the async contr=
-ol
-> > > character map. So why does it get recognized as not requested? This is
-> > > clearly a bug and needs to be fixed.
-> > =
+ void ppp_net_close(struct ppp_net_data *data)
+ {
+-	/* Not Implemented Yet */
++	g_source_remove(data->watch);
++	g_io_channel_unref(data->channel);
+ }
+ =
 
-> > what is happening is that we are first send a Config-Request with =
+ void ppp_net_open(struct ppp_net_data *data)
+@@ -101,7 +103,6 @@ void ppp_net_open(struct ppp_net_data *data)
+ 	int fd;
+ 	struct ifreq ifr;
+ 	GIOChannel *channel;
+-	int signal_source;
+ 	int err;
+ =
 
-> > the accm option as our only option.  We then receive a Config-Request
-> > from the modem, with accm along with several other options requested.
-> > We ack the modem's Config-Request and apply the options, and then delete
-> > them from the list of options that we need to have.  Then the modem
-> > response to our original Config-Request with an ack to our accm option.
-> > Because we already applied this option and removed it from the list of
-> > things we care about, it shows up as an option we didn't request.
-> > I think I could just delete the error message, and silently ignore =
+ 	if (data =3D=3D NULL)
+@@ -138,7 +139,7 @@ void ppp_net_open(struct ppp_net_data *data)
+ 	}
+ 	data->channel =3D channel;
+ 	g_io_channel_set_buffered(channel, FALSE);
+-	signal_source =3D g_io_add_watch(channel,
++	data->watch =3D g_io_add_watch(channel,
+ 			G_IO_IN | G_IO_HUP | G_IO_ERR | G_IO_NVAL,
+ 			ppp_net_callback, (gpointer) data);
+ }
+-- =
 
-> > this condition. =
+1.6.6.1
 
-> =
 
-> are these options really negotiated for both sides in common. Or is the
-> negotiation process for each side individual?
-
-I think you are right for accm - they are separate.  I did have a note to =
-
-myself to figure out how to do separate transmit accm and receive accm.  I'=
-ll
-move that item up the priority list.
-
---===============0972855187915254711==--
+--===============2390398868328654978==--
 
