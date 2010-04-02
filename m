@@ -1,91 +1,104 @@
-Content-Type: multipart/mixed; boundary="===============6627366400039116709=="
+Content-Type: multipart/mixed; boundary="===============5044585150763935781=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 06/15] Refactor function decode_scts to use semi octet decoder
-Date: Fri, 02 Apr 2010 14:20:31 +0800
-Message-ID: <1270189240-11650-6-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1270189240-11650-5-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 08/15] Make function decode_scts public
+Date: Fri, 02 Apr 2010 14:20:33 +0800
+Message-ID: <1270189240-11650-8-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1270189240-11650-7-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6627366400039116709==
+--===============5044585150763935781==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/smsutil.c |   17 +++++++++++------
- src/smsutil.h |    2 ++
- 2 files changed, 13 insertions(+), 6 deletions(-)
+ src/smsutil.c |   12 ++++++------
+ src/smsutil.h |    3 +++
+ 2 files changed, 9 insertions(+), 6 deletions(-)
 
 diff --git a/src/smsutil.c b/src/smsutil.c
-index baa7ebe..64cd6fb 100644
+index 64cd6fb..17e0e0e 100644
 --- a/src/smsutil.c
 +++ b/src/smsutil.c
-@@ -372,6 +372,11 @@ static gboolean encode_scts(const struct sms_scts *in,=
- unsigned char *pdu,
- 	return TRUE;
+@@ -377,7 +377,7 @@ guint8 sms_decode_semi_octet(guint8 in)
+ 	return (in & 0x0f) * 10 + (in >> 4);
  }
  =
 
-+guint8 sms_decode_semi_octet(guint8 in)
-+{
-+	return (in & 0x0f) * 10 + (in >> 4);
-+}
-+
- static gboolean decode_scts(const unsigned char *pdu, int len,
+-static gboolean decode_scts(const unsigned char *pdu, int len,
++gboolean sms_decode_scts(const unsigned char *pdu, int len,
  				int *offset, struct sms_scts *out)
  {
-@@ -381,22 +386,22 @@ static gboolean decode_scts(const unsigned char *pdu,=
- int len,
+ 	unsigned char oct =3D 0;
+@@ -433,7 +433,7 @@ static gboolean decode_validity_period(const unsigned c=
+har *pdu, int len,
+ =
+
+ 		return TRUE;
+ 	case SMS_VALIDITY_PERIOD_FORMAT_ABSOLUTE:
+-		if (!decode_scts(pdu, len, offset, &vp->absolute))
++		if (!sms_decode_scts(pdu, len, offset, &vp->absolute))
+ 			return FALSE;
+ =
+
+ 		return TRUE;
+@@ -718,7 +718,7 @@ static gboolean decode_deliver(const unsigned char *pdu=
+, int len,
+ 	if (!next_octet(pdu, len, &offset, &out->deliver.dcs))
  		return FALSE;
  =
 
- 	next_octet(pdu, len, offset, &oct);
--	out->year =3D (oct & 0x0f) * 10 + ((oct & 0xf0) >> 4);
-+	out->year =3D sms_decode_semi_octet(oct);
+-	if (!decode_scts(pdu, len, &offset, &out->deliver.scts))
++	if (!sms_decode_scts(pdu, len, &offset, &out->deliver.scts))
+ 		return FALSE;
  =
 
- 	next_octet(pdu, len, offset, &oct);
--	out->month =3D (oct & 0x0f) * 10 + ((oct & 0xf0) >> 4);
-+	out->month =3D sms_decode_semi_octet(oct);
+ 	if (!next_octet(pdu, len, &offset, &out->deliver.udl))
+@@ -849,7 +849,7 @@ static gboolean decode_submit_report(const unsigned cha=
+r *pdu, int len,
  =
 
- 	next_octet(pdu, len, offset, &oct);
--	out->day =3D (oct & 0x0f) * 10 + ((oct & 0xf0) >> 4);
-+	out->day =3D sms_decode_semi_octet(oct);
+ 	pi =3D octet & 0x07;
  =
 
- 	next_octet(pdu, len, offset, &oct);
--	out->hour =3D (oct & 0x0f) * 10 + ((oct & 0xf0) >> 4);
-+	out->hour =3D sms_decode_semi_octet(oct);
+-	if (!decode_scts(pdu, len, &offset, scts))
++	if (!sms_decode_scts(pdu, len, &offset, scts))
+ 		return FALSE;
  =
 
- 	next_octet(pdu, len, offset, &oct);
--	out->minute =3D (oct & 0x0f) * 10 + ((oct & 0xf0) >> 4);
-+	out->minute =3D sms_decode_semi_octet(oct);
+ 	if (pi & 0x01) {
+@@ -976,10 +976,10 @@ static gboolean decode_status_report(const unsigned c=
+har *pdu, int len,
+ 					&out->status_report.raddr))
+ 		return FALSE;
  =
 
- 	next_octet(pdu, len, offset, &oct);
--	out->second =3D (oct & 0x0f) * 10 + ((oct & 0xf0) >> 4);
-+	out->second =3D sms_decode_semi_octet(oct);
+-	if (!decode_scts(pdu, len, &offset, &out->status_report.scts))
++	if (!sms_decode_scts(pdu, len, &offset, &out->status_report.scts))
+ 		return FALSE;
  =
 
- 	next_octet(pdu, len, offset, &oct);
+-	if (!decode_scts(pdu, len, &offset, &out->status_report.dt))
++	if (!sms_decode_scts(pdu, len, &offset, &out->status_report.dt))
+ 		return FALSE;
  =
 
+ 	if (!next_octet(pdu, len, &offset, &octet))
 diff --git a/src/smsutil.h b/src/smsutil.h
-index c28a6da..fd80c8f 100644
+index fd80c8f..469a49e 100644
 --- a/src/smsutil.h
 +++ b/src/smsutil.h
-@@ -422,6 +422,8 @@ gboolean sms_decode_address_field(const unsigned char *=
-pdu, int len,
- gboolean sms_encode_address_field(const struct sms_address *in, gboolean s=
-c,
- 					unsigned char *pdu, int *offset);
+@@ -424,6 +424,9 @@ gboolean sms_encode_address_field(const struct sms_addr=
+ess *in, gboolean sc,
  =
 
-+guint8 sms_decode_semi_octet(guint8 in);
+ guint8 sms_decode_semi_octet(guint8 in);
+ =
+
++gboolean sms_decode_scts(const unsigned char *pdu, int len,
++				int *offset, struct sms_scts *out);
 +
  int sms_udl_in_bytes(guint8 ud_len, guint8 dcs);
  =
@@ -96,5 +109,5 @@ c,
 1.6.3.3
 
 
---===============6627366400039116709==--
+--===============5044585150763935781==--
 
