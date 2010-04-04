@@ -1,79 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============2101432382280978005=="
+Content-Type: multipart/mixed; boundary="===============2157931904042834270=="
 MIME-Version: 1.0
 From: Dario <djdas@djdas.net>
-Subject: SQLite History plugin DB Schema
-Date: Sun, 04 Apr 2010 17:54:38 +0200
-Message-ID: <4BB8B63E.80406@djdas.net>
+Subject: [PATCH 1/2] Added rules to disable SQLite history plugin
+Date: Sun, 04 Apr 2010 23:50:30 +0200
+Message-ID: <4BB909A6.7030201@djdas.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2101432382280978005==
+--===============2157931904042834270==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi all,
-as promised last week (sorry for the delay) following is the DB schema =
-
-for the SQLite history plug-in, there are 3 tables: one for the infos =
-
-about calls, one for incoming SMSes and one for outgoing ones. I wrote =
-
-some comments in the scripts to clarify fields informations, please feel =
-
-free to comment/correct if you think something could be wrong or better =
-
-handled.
-I'm also finishing a first plug-in version, I'll send the patches to the =
-
-current git revision as soon as possible.
-Thank you in advance, happy Easter :)
+as promised here are the 2 patches to add the SQLite history plugin.
+Thanks for your kind support,
+best regards,
 Dario
 
-------------- cut here ------------- cut here ------------- cut here =
+---
+ Makefile.am  |   10 ++++++++++
+ configure.ac |    9 +++++++++
+ 2 files changed, 19 insertions(+), 0 deletions(-)
 
-------------- cut here -------------
+diff --git a/Makefile.am b/Makefile.am
+index ee10095..adff96f 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -222,6 +222,16 @@ builtin_modules +=3D example_history
+ builtin_sources +=3D plugins/example_history.c
+ endif
+ =
 
-CREATE TABLE "ofono_history_calls" (
-    "ohc_modem_path" TEXT, -- Modem path string i.e. "/modem0"
-    "ohc_type" INTEGER, -- Call type ( 0 =3D Call ended, 1 =3D Call missed )
-    "ohc_direction" INTEGER, -- Call direction ( 0 =3D Mobile Originated, =
++if SQLITEHISTORY
++builtin_modules +=3D sqlite_history
++builtin_sources +=3D plugins/sqlite_history.c
++builtin_cflags +=3D @SQLITE3_CFLAGS@
++builtin_libadd +=3D @SQLITE3_LIBS@
++
++sqlitescriptsdir =3D $(localstatedir)/lib/ofono
++sqlitescripts_DATA =3D plugins/*.sql
++endif
++
+ sbin_PROGRAMS =3D src/ofonod
+ =
 
-1 =3D Mobile Terminated )
-    "ohc_phone_number" TEXT, -- Other party phone number
-    "ohc_start_time" TEXT, -- Starting date/time
-    "ohc_end_time" TEXT -- Ending date/time
-);
-CREATE TABLE "ofono_history_incoming_messages" (
-    "ohim_modem_path" TEXT, -- Modem path string i.e. "/modem0"
-    "ohim_msg_id" INTEGER, -- oFono unique message id number
-    "ohim_sender" TEXT, -- Sender phone number
-    "ohim_text" TEXT, -- Message text
-    "ohim_local_date" TEXT, -- Local sent date/time
-    "ohim_remote_date" TEXT -- Remote sent date/time
-);
-CREATE TABLE "ofono_history_outgoing_messages" (
-    "ohom_modem_path" TEXT, -- Modem path string i.e. "/modem0"
-    "ohom_msg_id" INTEGER, -- oFono unique message id number
-    "ohom_recipient" TEXT, -- Recipient phone number
-    "ohom_text" TEXT, -- Message text
-    "ohom_creation_date" TEXT, -- Message creation date/time
-    "ohom_send_status" INTEGER, -- Sending status ( 0 =3D Pending, 1 =3D =
+ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sources) \
+diff --git a/configure.ac b/configure.ac
+index d2f921f..997ee9f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -151,6 +151,15 @@ AC_ARG_ENABLE(datafiles, =
 
-Submitted, 2 =3D Failed )
-    "ohom_status_update_date" TEXT -- Last row update date/time
-);
-CREATE UNIQUE INDEX "ohim_idx_msg_id" on ofono_history_incoming_messages =
+AC_HELP_STRING([--disable-datafiles],
+ =
 
-(ohim_msg_id ASC);
-CREATE UNIQUE INDEX "ohom_idx_msg_id" on ofono_history_outgoing_messages =
+ AM_CONDITIONAL(DATAFILES, test "${enable_datafiles}" !=3D "no")
+ =
 
-(ohom_msg_id ASC);
++AC_ARG_ENABLE(sqlitehistory, AC_HELP_STRING([--disable-sqlitehistory],
++            [don't install sqlite history plugin]),
++                    [enable_sqlitehistory=3D${enableval}])
++
++AM_CONDITIONAL(SQLITEHISTORY, test "${enable_sqlitehistory}" !=3D "no")
++if (test "${enable_sqlitehistory}" !=3D "no"); then
++    PKG_CHECK_MODULES(SQLITE3, sqlite3)
++fi
++
+ if (test "${prefix}" =3D "NONE"); then
+     dnl no prefix and no localstatedir, so default to /var
+     if (test "$localstatedir" =3D '${prefix}/var'); then
+-- =
 
-------------- cut here ------------- cut here ------------- cut here =
-
-------------- cut here -------------
+1.6.3.3
 
 
---===============2101432382280978005==--
+--===============2157931904042834270==--
 
