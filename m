@@ -1,28 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============2368187664017788555=="
+Content-Type: multipart/mixed; boundary="===============2101432382280978005=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: Re: [PATCH] ppp: implement Max-Failure counter
-Date: Fri, 02 Apr 2010 22:35:32 -0700
-Message-ID: <20100402223532.4dbbf350@kcaccard-MOBL3>
-In-Reply-To: <1270272420-4468-1-git-send-email-kristen@linux.intel.com>
+From: Dario <djdas@djdas.net>
+Subject: SQLite History plugin DB Schema
+Date: Sun, 04 Apr 2010 17:54:38 +0200
+Message-ID: <4BB8B63E.80406@djdas.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2368187664017788555==
+--===============2101432382280978005==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri,  2 Apr 2010 22:27:00 -0700
-Kristen Carlson Accardi <kristen@linux.intel.com> wrote:
+Hi all,
+as promised last week (sorry for the delay) following is the DB schema =
 
-> put a cap on the number of Configure-Nak packets we send.
+for the SQLite history plug-in, there are 3 tables: one for the infos =
 
-Denis - did you have a modem that just went off into a flurry of
-sending Configure-Naks?  If so, would you mind testing this patch
-on it to see if this helps it accept defeat more gracefully?
+about calls, one for incoming SMSes and one for outgoing ones. I wrote =
 
-Thanks.
+some comments in the scripts to clarify fields informations, please feel =
 
---===============2368187664017788555==--
+free to comment/correct if you think something could be wrong or better =
+
+handled.
+I'm also finishing a first plug-in version, I'll send the patches to the =
+
+current git revision as soon as possible.
+Thank you in advance, happy Easter :)
+Dario
+
+------------- cut here ------------- cut here ------------- cut here =
+
+------------- cut here -------------
+
+CREATE TABLE "ofono_history_calls" (
+    "ohc_modem_path" TEXT, -- Modem path string i.e. "/modem0"
+    "ohc_type" INTEGER, -- Call type ( 0 =3D Call ended, 1 =3D Call missed )
+    "ohc_direction" INTEGER, -- Call direction ( 0 =3D Mobile Originated, =
+
+1 =3D Mobile Terminated )
+    "ohc_phone_number" TEXT, -- Other party phone number
+    "ohc_start_time" TEXT, -- Starting date/time
+    "ohc_end_time" TEXT -- Ending date/time
+);
+CREATE TABLE "ofono_history_incoming_messages" (
+    "ohim_modem_path" TEXT, -- Modem path string i.e. "/modem0"
+    "ohim_msg_id" INTEGER, -- oFono unique message id number
+    "ohim_sender" TEXT, -- Sender phone number
+    "ohim_text" TEXT, -- Message text
+    "ohim_local_date" TEXT, -- Local sent date/time
+    "ohim_remote_date" TEXT -- Remote sent date/time
+);
+CREATE TABLE "ofono_history_outgoing_messages" (
+    "ohom_modem_path" TEXT, -- Modem path string i.e. "/modem0"
+    "ohom_msg_id" INTEGER, -- oFono unique message id number
+    "ohom_recipient" TEXT, -- Recipient phone number
+    "ohom_text" TEXT, -- Message text
+    "ohom_creation_date" TEXT, -- Message creation date/time
+    "ohom_send_status" INTEGER, -- Sending status ( 0 =3D Pending, 1 =3D =
+
+Submitted, 2 =3D Failed )
+    "ohom_status_update_date" TEXT -- Last row update date/time
+);
+CREATE UNIQUE INDEX "ohim_idx_msg_id" on ofono_history_incoming_messages =
+
+(ohim_msg_id ASC);
+CREATE UNIQUE INDEX "ohom_idx_msg_id" on ofono_history_outgoing_messages =
+
+(ohom_msg_id ASC);
+
+------------- cut here ------------- cut here ------------- cut here =
+
+------------- cut here -------------
+
+
+--===============2101432382280978005==--
 
