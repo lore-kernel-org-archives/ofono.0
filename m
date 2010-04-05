@@ -1,45 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============0972847007194889746=="
+Content-Type: multipart/mixed; boundary="===============8289443384035422460=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: RE: [PATCH 2/2] Added SQLite history plugin
-Date: Sun, 04 Apr 2010 19:54:12 -0700
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9C138D0D0@orsmsx508.amr.corp.intel.com>
-In-Reply-To: <4BB909D7.9020403@djdas.net>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] ppp: implement Max-Failure counter
+Date: Mon, 05 Apr 2010 09:46:21 -0500
+Message-ID: <201004050946.21559.denkenz@gmail.com>
+In-Reply-To: <1270272420-4468-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0972847007194889746==
+--===============8289443384035422460==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> +    tmpparams =3D g_strdup_printf("\"%s\",%d,\"%s\",\"%s\",\"%s\",",
-> +                    ofono_modem_get_path(context->modem),
-> +                    msg_id, from, text, buf);
-> +
-> +    strftime(buf, 127, "\"%Y-%m-%dT%H:%M:%S%z\"", remote);
-> +    buf[127] =3D '\0';
-> +    params =3D g_strconcat(tmpparams, buf, NULL);
-> +
-> +    query =3D g_strdup_printf(INSERT_IN_MSGS, params);
-[Snip]
-> +    tmpparams =3D g_strdup_printf("\"%s\",%d,\"%s\",\"%s\",\"%s\",%d,",
-> +                    ofono_modem_get_path(context->modem),
-> +                    msg_id, to, text, buf,
-> +                    OFONO_HISTORY_SMS_STATUS_PENDING);
-> +
-> +    currtime =3D time(NULL);
-> +    strftime(buf, 127, "\"%Y-%m-%dT%H:%M:%S%z\"", localtime(&currtime));
-> +    buf[127] =3D '\0';
-> +    params =3D g_strconcat(tmpparams, buf, NULL);
-> +
-> +    query =3D g_strdup_printf(INSERT_OUT_MSGS, params);
+Hi Kristen,
 
-The message handling in this patch seems to be vulnerable to SQL injection =
-attacks. See http://en.wikipedia.org/wiki/SQL_injection
+> put a cap on the number of Configure-Nak packets we send.
+> ---
+>  gatchat/ppp_cp.c |   22 ++++++++++++++++++++++
+>  gatchat/ppp_cp.h |    1 +
+>  2 files changed, 23 insertions(+), 0 deletions(-)
 
-Cheers,
-Waldo
+This patch has been applied, thanks.
 
---===============0972847007194889746==--
+Regards,
+-Denis
+
+--===============8289443384035422460==--
 
