@@ -1,60 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============7559312843484525601=="
+Content-Type: multipart/mixed; boundary="===============7054393137185468932=="
 MIME-Version: 1.0
-From: Nicola Mfb <nicola.mfb@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 2/2] Added SQLite history plugin
-Date: Wed, 07 Apr 2010 21:20:11 +0200
-Message-ID: <o2y359c5481004071220j1420a157k7f959b9068d4f79@mail.gmail.com>
-In-Reply-To: <201004071305.35438.denkenz@gmail.com>
+Date: Wed, 07 Apr 2010 14:28:22 -0500
+Message-ID: <201004071428.22605.denkenz@gmail.com>
+In-Reply-To: <x2j359c5481004070447q282f7d6elc7931e64b2fb9120@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7559312843484525601==
+--===============7054393137185468932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Apr 7, 2010 at 8:05 PM, Denis Kenzior <denkenz@gmail.com> wrote:
-[...]
->> We prefer to have the id to easily sync with the history plugin, as
->> said in previous mail, if you prefer to not expose the id on
->> IncomingMessage, we may emit an HistoryIncomingMessage signal with the
->> id.
->
-> Your plugin is free to do anything it wants. =C2=A0The real question is w=
-hether you
-> truly need this id or you can simply update the application state based o=
-n the
-> IncomingMessage signal only.
+Hi Niko,
 
-An use case may explain that better.
+> Infact if a complete dbus api is going to be defined, it would be nice
+> to share it for all history plugins, adding for example an
+> "org.ofono.HistoryManager" interface to the modem, while if the
+> history plugin has to be used in a different manner, or ofono does not
+> care of that by design, we have to implement the dbus interface in the
+> sqlite plugin directly, forcing our apps to not be generally oFono
+> compliants (at least when not using the sqlite plugin).
 
-I have an app that listen for incoming messages and forwards them by mail.
+So today I would consider this to be out-of-scope for the oFono project.  W=
+e =
 
-After sending X messages the app goes down for some reason, when comes
-up again there are Y messages in the history plugin becouse Y-X new
-messages arrived.
+really want to concentrate on being the telephony stack and leave the =
 
-Well, I want my app to be able to recover from the downtime using the
-history plugin, and want to avoid to resend the first X messages.
+peripheral aspects to integrators.  However, I do realize this is still =
 
-A simple way to achieve that is adding the id in the IncomingMessage
-signal, so the app is able to store it somewhere every time it
-receives a new message.
+largely uncharted territory, so any suggestions you have on how oFono core =
+can =
 
-When the app start, it simply query the history plugin and start
-processing only messages where id > lastsavedid.
+make your life easier in this space are definitely welcome.
 
-Of course this is only an easy way to achieve that, I may use the
-timestamps, but really I do not trust them, it may be I'm missing
-somethingh here, is there an easy/elegant alternative?
+In the end some decision has to be made regarding the storage backend.  =
 
-A real case may be to powerup the modem at device startup to get
-already a network registration while the gui comes later, or the user
-volontary restarts the gui, etc.
+Whether it is MySQL, SQLite, Tracker, EDS, portable black holes, etc.  I =
 
-Regards
+prefer to leave this to each distribution / platform instead of mandating a =
 
-       Niko
+solution.  In the end we're telephony experts, none of us is an expert with =
 
---===============7559312843484525601==--
+contacts or databases.
+
+Regards,
+-Denis
+
+--===============7054393137185468932==--
 
