@@ -1,142 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============0139023480363389592=="
+Content-Type: multipart/mixed; boundary="===============9015498837615803137=="
 MIME-Version: 1.0
-From: Dario <djdas@djdas.net>
+From: Nicola Mfb <nicola.mfb@gmail.com>
 Subject: Re: [PATCH 2/2] Added SQLite history plugin
-Date: Wed, 07 Apr 2010 10:50:27 +0200
-Message-ID: <4BBC4753.6050105@djdas.net>
+Date: Wed, 07 Apr 2010 13:47:13 +0200
+Message-ID: <x2j359c5481004070447q282f7d6elc7931e64b2fb9120@mail.gmail.com>
 In-Reply-To: <201004061256.46026.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0139023480363389592==
+--===============9015498837615803137==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+On Tue, Apr 6, 2010 at 7:56 PM, Denis Kenzior <denkenz@gmail.com> wrote:
+
+[...]
+
 Hi Denis,
-> Hi Dario,
->
->   =
 
->> +#define SQL_HISTORY_DB_PATH STORAGEDIR "/ofono_history.sqlite"
->> +#define SQL_HISTORY_DB_SQL STORAGEDIR "/oFono_History_DB.sql"
->>     =
+Actually our apps listen for the IncomingMessage signal, and store the
+SMS in an internal database.
+At some point by design, a restart, a crash or other reasons, it may
+happen that apps are down while ofono and the modem are up, in that
+case we lose incoming messages.
 
->
-> So I have my concerns about storing this in /.  This should be in a prope=
-r =
+To solve this we tought to use the history, so, for example, clients
+at startup query the plugin, processes "lost" messages and further
+continue listening for the IncomingMessage signal.
 
-> directory, like /var/lib/ofono or something like that.
->
->   =
+We have a problem here, as the IncomingMessage lacks for the sms id
+property, we generate an internal id that is out of sync respect of
+ther history id, so at the next app restart we cannot determine what
+messages were "lost".
 
-STORAGEDIR is a macro expanded by Autoconf to ${storagedir} (please see =
+The second problem is that we may use several clients at the same
+time, thinks for a phone app, and a desktop widget showing the number
+of incoming/unread etc. messages.
+The two clients needs to access the same informations in a consistent way.
 
-rows 172-178 of configure.ac) which is normally /var/lib/ofono so the DB =
+For that reason, and due the necessity to abstract the db access with
+a dbus api, we thought the natural way is to use the history plugin as
+a "permanent storage" plugin too, improving the dbus interface to have
+clients cooperating in a consistent manner, and avoiding duplicate
+sms/calls data in different places.
 
-and the scripts are already stored inside that dir.
-> So remember that the history plugin is instantiated for each and every mo=
-dem, =
+The phone app may request to delete a "message", and a
+"HistoryMessageDeleted" signal should be emitted, and so on.
 
-> so you will be sqlite_open/sqlite_closing the db in each instance.  Not r=
-eally =
+Here we may have an HistoryIncomingMessage signal that provides the id
+field too and fix the first issue (if you do not prefer to add the id
+field in the IncomingMessage signal directly).
 
-> sure if this is what you want, or whether you want a reference-counted =
+The plugin may be used to store further metadata providing signals to
+inform of their changes, that my be useful in all clients (if a
+message was read in the phone app, the desktop widget should take care
+of that and decrease the showed number of new messages).
 
-> database connection here.
->   =
+Finally apps may decide with the right dbus calls if sms listing has
+to be filtered by sim or not, or when and how expire the history.
 
-Database connection is handled by sqlite3_* API in a transparent manner =
+But thats impacts a lot on the general perspective of the history
+plugin usage and further developing.
 
-so you could have different open connections at the same time without =
+Infact if a complete dbus api is going to be defined, it would be nice
+to share it for all history plugins, adding for example an
+"org.ofono.HistoryManager" interface to the modem, while if the
+history plugin has to be used in a different manner, or ofono does not
+care of that by design, we have to implement the dbus interface in the
+sqlite plugin directly, forcing our apps to not be generally oFono
+compliants (at least when not using the sqlite plugin).
 
-any problem, each SQL statement is transactional so the DB is every time =
+So we are asking to you what's are your plans and how may we proceed.
 
-consistent, but if you prefer I can rethink of it (maybe a DB for every =
+Thanks for your support!
 
-modem could be a possibility but this would overload the plugin because =
+    Niko
 
-we have to open and close the DB in every callback given that we have to =
-
-filter the files access by modem).
-> Another thing to consider is that you might want to store the IMSI of the =
-
-> modem along with the history information for every call / sms event.  Tha=
-t way =
-
-> when a SIM card is changed, the user can be shown a different set of call=
- / sms  =
-
-> history.
->
->   =
-
-Thank you for this suggestion, didn't think about this :) I have one =
-
-question: what's the best way to get that info?
-I see only one function to get the imsi information: const char =
-
-*ofono_sim_get_imsi(struct ofono_sim *sim) which needs a struct =
-
-ofono_sim pointer, but I don't have it in history as it's a member of =
-
-the struct ofono_modem which is blind for me. Can you please point me at =
-
-the function to achieve this?
-> Finally, you might want to set limits on the number of entries in the =
-
-> database, and expire them as the limit is reached.   Otherwise you'd need=
- to =
-
-> expire them periodically from e.g. cron, but would need to release contro=
-l of =
-
-> the database during that time.
->
->   =
-
-Well this is a more complex topic because needs to point at the purpose =
-
-of the history plugins (in general); I thought at the plugin as a simple =
-
-"event logger" in which an "event" could be a call or a SMS; the =
-
-question is: must the plugin handle all the logic and possibly interface =
-
-with the applications (for example using DBus methods/signals) or is it =
-
-only a mere storage daemon letting applications handle the informations?
-Talking about this with one of my team members (Nicola.mfb, which should =
-
-explain better than me applications point of view in a next email) we =
-
-arrived at the conclusion that the history plugin should be able to talk =
-
-directly to the applications (tipically sending DBus signals and =
-
-exporting methods) to mask the storage type of the history data.
-Also in this case there could be some possible issues to handle: who is =
-
-aware of the msg_id? Only the plugin or even the application? In the =
-
-former case must the application provide to the plugin its own msg_id to =
-
-recover SMS data?
-Another question is: what if we had different history plugins at the =
-
-same time, like an EDS one, a plain text one, a Berkley DB one and an =
-
-SQLite one? There should be only one plugin active per ofonod instance =
-
-or per modem? In case different plugins are active at the same time, the =
-
-"history DBus interface" is global for all the plugins (i.e. a method to =
-
-delete an incoming sms from modem /modem0 with msg_id =3D 123 must delete =
-
-it on all backends?) or each plugin has its own?
-Thank you very much in advance, best regards,
-Dario
-
---===============0139023480363389592==--
+--===============9015498837615803137==--
 
