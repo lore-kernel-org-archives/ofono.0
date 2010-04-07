@@ -1,54 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============5938259357454238048=="
+Content-Type: multipart/mixed; boundary="===============3665763738652173918=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] Added SQLite history plugin
-Date: Wed, 07 Apr 2010 12:55:36 -0500
-Message-ID: <201004071255.36407.denkenz@gmail.com>
-In-Reply-To: <p2p359c5481004071043id03de442n419b3ff6c39e6c88@mail.gmail.com>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: [PATCH 2/2] Added SQLite history plugin
+Date: Wed, 07 Apr 2010 11:03:32 -0700
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9C141100E@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <201004071233.50561.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5938259357454238048==
+--===============3665763738652173918==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Niko,
-
-> On Wed, Apr 7, 2010 at 7:33 PM, Denis Kenzior <denkenz@gmail.com> wrote:
-> [...]
+> Hi Waldo,
 > =
 
-> >> A similar lack of robustness exists at the modem API side as well, if
-> >> oFono crashes/runs out of battery after receiving the message from the
-> >> modem driver the message is lost. There is no provision in the SMS mod=
-em
-> >> API to signal back to the modem driver that the message has been
-> >> successfully stored on the APE.
+> > > Hi Denis,
+> > >
+> > > Actually our apps listen for the IncomingMessage signal, and store the
+> > > SMS in an internal database.
+> > > At some point by design, a restart, a crash or other reasons, it may
+> > > happen that apps are down while ofono and the modem are up, in that
+> > > case we lose incoming messages.
 > >
-> > If oFono crashes/runs out of battery here the driver is gone along with
-> > oFono. Notifying it of anything is not going to help ;)
+> > A similar lack of robustness exists at the modem API side as well, if
+> oFono
+> >  crashes/runs out of battery after receiving the message from the modem
+> >  driver the message is lost. There is no provision in the SMS modem API
+> to
+> >  signal back to the modem driver that the message has been successfully
+> >  stored on the APE.
 > =
 
-> Yes, anyway I'm thinking about the case when the storage system is
-> full, or an other error occours while trying to store the message.
-> In this case the driver should notify the network with a NACK, while a
-> signal should notify the user that the storage is full or there is
-> another problem.
+> If oFono crashes/runs out of battery here the driver is gone along with
+> oFono.
+> Notifying it of anything is not going to help ;)
 
-If your storage is full then you have other problems.  Adding nack/ack =
+Currently the modem driver acknowledges the PDU right away. If there was a =
+notification back to the modem driver, the PDU acknowledgement could be del=
+ayed till that point in time. If something bad happens in between, either t=
+he modem or the network can hold on to the PDU and redeliver once oFono is =
+up and running again.
 
-capability would increate the complexity of the driver/core about 10 fold, =
-so =
+Looking at at_cmt_notify() the current implementation might have that affec=
+t already, as AT+CNMA is only send after calling ofono_sms_deliver_notify()=
+. So as long as ofono_sms_deliver_notify() is handled synchronously and ens=
+ures that the PDU is stored one way or another before returning, it will wo=
+rk in case of a crash. (Would like to see assumptions like that called out =
+in the code) That said, if your storage has issues (disk full?) there is cu=
+rrently no way to let the modem driver know that delivery was unsuccessful.
 
-this is not something we're willing to consider right now.  If this is an =
+Cheers,
+Waldo
 
-issue, then the user should be notified well in advance to rectify the =
-
-situation or face possible data loss.
-
-Regards,
--Denis
-
---===============5938259357454238048==--
+--===============3665763738652173918==--
 
