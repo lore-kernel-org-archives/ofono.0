@@ -1,110 +1,233 @@
-Content-Type: multipart/mixed; boundary="===============1726440305513890176=="
+Content-Type: multipart/mixed; boundary="===============8403573275497003058=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 5/8] Remove post-sim atoms after SIM is extracted.
-Date: Fri, 09 Apr 2010 08:49:39 +0200
-Message-ID: <1270795779-7215-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 6/8] Add SIM "Present" property.
+Date: Fri, 09 Apr 2010 08:49:49 +0200
+Message-ID: <1270795789-7244-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1726440305513890176==
+--===============8403573275497003058==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/modem.c |   40 ++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 40 insertions(+), 0 deletions(-)
+ src/sim.c |  117 ++++++++++++++++++++++++++++++++++++++++-----------------=
+----
+ 1 files changed, 77 insertions(+), 40 deletions(-)
 
-diff --git a/src/modem.c b/src/modem.c
-index 7cdd9c4..45c2bc4 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -53,6 +53,7 @@ enum ofono_property_type {
- struct ofono_modem {
- 	char			*path;
- 	GSList			*atoms;
-+	GSList			*pre_sim_atoms;
- 	struct ofono_watchlist	*atom_watches;
- 	GSList         		*interface_list;
- 	unsigned int		call_ids;
-@@ -301,6 +302,7 @@ void __ofono_atom_free(struct ofono_atom *atom)
- 	struct ofono_modem *modem =3D atom->modem;
+diff --git a/src/sim.c b/src/sim.c
+index 41ddd13..6bd846f 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -271,6 +271,7 @@ static DBusMessage *sim_get_properties(DBusConnection *=
+conn,
+ 	char **service_numbers;
+ 	char **locked_pins;
+ 	const char *pin_name;
++	dbus_bool_t present =3D sim->state !=3D OFONO_SIM_STATE_NOT_PRESENT;
  =
 
- 	modem->atoms =3D g_slist_remove(modem->atoms, atom);
-+	modem->pre_sim_atoms =3D g_slist_remove(modem->pre_sim_atoms, atom);
+ 	reply =3D dbus_message_new_method_return(msg);
+ 	if (!reply)
+@@ -282,6 +283,11 @@ static DBusMessage *sim_get_properties(DBusConnection =
+*conn,
+ 					OFONO_PROPERTIES_ARRAY_SIGNATURE,
+ 					&dict);
  =
 
- 	__ofono_atom_unregister(atom);
++	ofono_dbus_dict_append(&dict, "Present", DBUS_TYPE_BOOLEAN, &present);
++
++	if (!present)
++		goto done;
++
+ 	if (sim->imsi)
+ 		ofono_dbus_dict_append(&dict, "SubscriberIdentity",
+ 					DBUS_TYPE_STRING, &sim->imsi);
+@@ -335,6 +341,7 @@ static DBusMessage *sim_get_properties(DBusConnection *=
+conn,
+ 				DBUS_TYPE_STRING,
+ 				(void *) &pin_name);
  =
 
-@@ -330,7 +332,35 @@ static void remove_all_atoms(struct ofono_modem *modem)
- 	}
++done:
+ 	dbus_message_iter_close_container(&iter, &dict);
  =
 
- 	g_slist_free(modem->atoms);
-+	g_slist_free(modem->pre_sim_atoms);
- 	modem->atoms =3D NULL;
-+	modem->pre_sim_atoms =3D NULL;
-+}
+ 	return reply;
+@@ -1010,6 +1017,8 @@ static void sim_imsi_cb(const struct ofono_error *err=
+or, const char *imsi,
+ 		void *data)
+ {
+ 	struct ofono_sim *sim =3D data;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(sim->atom);
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+ 		ofono_error("Unable to read IMSI, emergency calls only");
+@@ -1018,6 +1027,11 @@ static void sim_imsi_cb(const struct ofono_error *er=
+ror, const char *imsi,
+ =
+
+ 	sim->imsi =3D g_strdup(imsi);
+ =
+
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_SIM_MANAGER_INTERFACE,
++					"SubscriberIdentity",
++					DBUS_TYPE_STRING, &sim->imsi);
 +
-+static void remove_post_sim_atoms(struct ofono_modem *modem)
-+{
-+	GSList *l;
-+	struct ofono_atom *atom;
-+
-+	if (modem =3D=3D NULL)
-+		return;
-+
-+	for (l =3D modem->atoms; l; l =3D l->next) {
-+		atom =3D l->data;
-+
-+		if (g_slist_find(modem->pre_sim_atoms, atom))
-+			continue;
-+
-+		__ofono_atom_unregister(atom);
-+
-+		if (atom->destruct)
-+			atom->destruct(atom);
-+
-+		g_free(atom);
-+	}
-+
-+	g_slist_free(modem->atoms);
-+	modem->atoms =3D g_slist_copy(modem->pre_sim_atoms);
+ 	/* Read CPHS-support bits, this is still part of the SIM
+ 	 * initialisation but no order is specified for it.  */
+ 	ofono_sim_read(sim, SIM_EF_CPHS_INFORMATION_FILEID,
+@@ -1778,6 +1792,62 @@ const unsigned char *ofono_sim_get_cphs_service_tabl=
+e(struct ofono_sim *sim)
+ 	return sim->cphs_service_table;
  }
  =
 
- static DBusMessage *modem_get_properties(DBusConnection *conn,
-@@ -1122,9 +1152,19 @@ static void modem_sim_ready(void *user, enum ofono_s=
-im_state new_state)
- {
- 	struct ofono_modem *modem =3D user;
- =
-
-+	if (new_state =3D=3D OFONO_SIM_STATE_NOT_PRESENT) {
-+		if (modem->pre_sim_atoms)
-+			remove_post_sim_atoms(modem);
++static void sim_inserted_update(struct ofono_sim *sim)
++{
++	dbus_bool_t present =3D sim->state !=3D OFONO_SIM_STATE_NOT_PRESENT;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(sim->atom);
 +
-+		return;
++	ofono_dbus_signal_property_changed(conn, path,
++			OFONO_SIM_MANAGER_INTERFACE, "Present",
++			DBUS_TYPE_BOOLEAN, &present);
++}
++
++static void sim_free_state(struct ofono_sim *sim)
++{
++	if (sim->simop_source) {
++		g_source_remove(sim->simop_source);
++		sim->simop_source =3D 0;
 +	}
 +
- 	if (new_state !=3D OFONO_SIM_STATE_READY)
++	if (sim->simop_q) {
++		/* Note: users of ofono_sim_read/write must not assume that
++		 * the callback happens for operations still in progress.  */
++		g_queue_foreach(sim->simop_q, (GFunc)sim_file_op_free, NULL);
++		g_queue_free(sim->simop_q);
++		sim->simop_q =3D NULL;
++	}
++
++	if (sim->imsi) {
++		g_free(sim->imsi);
++		sim->imsi =3D NULL;
++	}
++
++	if (sim->own_numbers) {
++		g_slist_foreach(sim->own_numbers, (GFunc)g_free, NULL);
++		g_slist_free(sim->own_numbers);
++		sim->own_numbers =3D NULL;
++	}
++
++	if (sim->service_numbers) {
++		g_slist_foreach(sim->service_numbers,
++				(GFunc)service_number_free, NULL);
++		g_slist_free(sim->service_numbers);
++		sim->service_numbers =3D NULL;
++	}
++
++	if (sim->efli) {
++		g_free(sim->efli);
++		sim->efli =3D NULL;
++		sim->efli_length =3D 0;
++	}
++
++	if (sim->language_prefs) {
++		g_strfreev(sim->language_prefs);
++		sim->language_prefs =3D NULL;
++	}
++}
++
+ void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inserte=
+d)
+ {
+ 	ofono_sim_state_event_notify_cb_t notify;
+@@ -1793,6 +1863,8 @@ void ofono_sim_inserted_notify(struct ofono_sim *sim,=
+ ofono_bool_t inserted)
+ 	if (!__ofono_atom_get_registered(sim->atom))
  		return;
  =
 
-+	if (modem->pre_sim_atoms =3D=3D NULL)
-+		modem->pre_sim_atoms =3D g_slist_copy(modem->atoms);
++	sim_inserted_update(sim);
 +
- 	if (modem->driver->post_sim)
- 		modem->driver->post_sim(modem);
+ 	for (l =3D sim->state_watches->items; l; l =3D l->next) {
+ 		struct ofono_watchlist_item *item =3D l->data;
+ 		notify =3D item->notify;
+@@ -1800,8 +1872,11 @@ void ofono_sim_inserted_notify(struct ofono_sim *sim=
+, ofono_bool_t inserted)
+ 		notify(item->notify_data, sim->state);
+ 	}
  =
 
+-	if (!inserted)
++	if (!inserted) {
++		sim_free_state(sim);
++
+ 		return;
++	}
+ =
+
+ 	/* Perform SIM initialization according to 3GPP 31.102 Section 5.1.1.2
+ 	 * The assumption here is that if sim manager is being initialized,
+@@ -1927,45 +2002,7 @@ static void sim_remove(struct ofono_atom *atom)
+ 	if (sim->driver && sim->driver->remove)
+ 		sim->driver->remove(sim);
+ =
+
+-	if (sim->imsi) {
+-		g_free(sim->imsi);
+-		sim->imsi =3D NULL;
+-	}
+-
+-	if (sim->own_numbers) {
+-		g_slist_foreach(sim->own_numbers, (GFunc)g_free, NULL);
+-		g_slist_free(sim->own_numbers);
+-		sim->own_numbers =3D NULL;
+-	}
+-
+-	if (sim->service_numbers) {
+-		g_slist_foreach(sim->service_numbers,
+-				(GFunc)service_number_free, NULL);
+-		g_slist_free(sim->service_numbers);
+-		sim->service_numbers =3D NULL;
+-	}
+-
+-	if (sim->efli) {
+-		g_free(sim->efli);
+-		sim->efli =3D NULL;
+-		sim->efli_length =3D 0;
+-	}
+-
+-	if (sim->language_prefs) {
+-		g_strfreev(sim->language_prefs);
+-		sim->language_prefs =3D NULL;
+-	}
+-
+-	if (sim->simop_source) {
+-		g_source_remove(sim->simop_source);
+-		sim->simop_source =3D 0;
+-	}
+-
+-	if (sim->simop_q) {
+-		g_queue_foreach(sim->simop_q, (GFunc)sim_file_op_free, NULL);
+-		g_queue_free(sim->simop_q);
+-		sim->simop_q =3D NULL;
+-	}
++	sim_free_state(sim);
+ =
+
+ 	g_free(sim);
+ }
 -- =
 
 1.6.1
 
 
---===============1726440305513890176==--
+--===============8403573275497003058==--
 
