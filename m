@@ -1,83 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============7601667380520187513=="
+Content-Type: multipart/mixed; boundary="===============6932553106871034440=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 7/8] Add AT driver for STK atom.
-Date: Fri, 09 Apr 2010 08:50:00 +0200
-Message-ID: <1270795800-7273-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 8/8] Implement STATUS polling in atmodem driver.
+Date: Fri, 09 Apr 2010 08:50:52 +0200
+Message-ID: <1270795852-7302-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7601667380520187513==
+--===============6932553106871034440==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am               |    1 +
- drivers/atmodem/atmodem.c |    2 +
- drivers/atmodem/atmodem.h |    3 +
- drivers/atmodem/stk.c     |  258 +++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am                |    2 +
+ drivers/atmodem/sim-poll.c |  319 ++++++++++++++++++++++++++++++++++++++++=
 ++++
- plugins/atgen.c           |    2 +
- plugins/phonesim.c        |    3 +
- 6 files changed, 269 insertions(+), 0 deletions(-)
- create mode 100644 drivers/atmodem/stk.c
+ drivers/atmodem/sim-poll.h |   22 +++
+ plugins/atgen.c            |    8 +-
+ plugins/phonesim.c         |    5 +-
+ 5 files changed, 350 insertions(+), 5 deletions(-)
+ create mode 100644 drivers/atmodem/sim-poll.c
+ create mode 100644 drivers/atmodem/sim-poll.h
 
 diff --git a/Makefile.am b/Makefile.am
-index 7a18c41..a506dba 100644
+index a506dba..1279b0a 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -124,6 +124,7 @@ builtin_sources +=3D $(gatchat_sources) \
- 				drivers/atmodem/call-meter.c \
+@@ -125,6 +125,8 @@ builtin_sources +=3D $(gatchat_sources) \
  				drivers/atmodem/network-registration.c \
  				drivers/atmodem/sim.c \
-+				drivers/atmodem/stk.c \
+ 				drivers/atmodem/stk.c \
++				drivers/atmodem/sim-poll.c \
++				drivers/atmodem/sim-poll.h \
  				drivers/atmodem/ussd.c \
  				drivers/atmodem/voicecall.c \
  				drivers/atmodem/call-barring.c \
-diff --git a/drivers/atmodem/atmodem.c b/drivers/atmodem/atmodem.c
-index 0ac8182..c88f6b2 100644
---- a/drivers/atmodem/atmodem.c
-+++ b/drivers/atmodem/atmodem.c
-@@ -45,6 +45,7 @@ static int atmodem_init(void)
- 	at_ussd_init();
- 	at_sms_init();
- 	at_sim_init();
-+	at_stk_init();
- 	at_netreg_init();
- 	at_cbs_init();
- 	at_call_volume_init();
-@@ -56,6 +57,7 @@ static int atmodem_init(void)
- =
-
- static void atmodem_exit(void)
- {
-+	at_stk_exit();
- 	at_sim_exit();
- 	at_sms_exit();
- 	at_ussd_exit();
-diff --git a/drivers/atmodem/atmodem.h b/drivers/atmodem/atmodem.h
-index 1fb4bfa..2ee47f5 100644
---- a/drivers/atmodem/atmodem.h
-+++ b/drivers/atmodem/atmodem.h
-@@ -45,6 +45,9 @@ extern void at_call_barring_exit();
- extern void at_sim_init();
- extern void at_sim_exit();
- =
-
-+extern void at_stk_init();
-+extern void at_stk_exit();
-+
- extern void at_sms_init();
- extern void at_sms_exit();
- =
-
-diff --git a/drivers/atmodem/stk.c b/drivers/atmodem/stk.c
+diff --git a/drivers/atmodem/sim-poll.c b/drivers/atmodem/sim-poll.c
 new file mode 100644
-index 0000000..05c1138
+index 0000000..0fca4e7
 --- /dev/null
-+++ b/drivers/atmodem/stk.c
-@@ -0,0 +1,258 @@
++++ b/drivers/atmodem/sim-poll.c
+@@ -0,0 +1,319 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -105,285 +69,398 @@ index 0000000..05c1138
 +#endif
 +
 +#define _GNU_SOURCE
-+#include <string.h>
-+#include <stdlib.h>
 +#include <stdio.h>
 +
 +#include <glib.h>
 +
 +#include <ofono/log.h>
 +#include <ofono/modem.h>
++#include <ofono/sim.h>
 +#include <ofono/stk.h>
 +
 +#include "gatchat.h"
 +#include "gatresult.h"
++#include "ofono.h"
 +
 +#include "atmodem.h"
++#include "sim-poll.h"
 +
-+struct stk_data {
++struct sim_poll_data {
 +	GAtChat *chat;
++	struct ofono_modem *modem;
++	struct ofono_sim *sim;
++	struct ofono_stk *stk;
++	unsigned int sim_watch;
++	unsigned int stk_watch;
++	unsigned int sim_state_watch;
++	gboolean inserted;
++	int idle_poll_interval;
++	gint status_timeout;
++	gint poll_timeout;
++	guint status_cmd;
 +};
 +
 +static const char *csim_prefix[] =3D { "+CSIM:", NULL };
 +
-+static void at_csim_envelope_cb(gboolean ok, GAtResult *result,
++static gboolean sim_status_poll(gpointer user_data);
++static void sim_fetch_command(struct sim_poll_data *spd, int length);
++
++static void at_csim_fetch_cb(gboolean ok, GAtResult *result,
 +		gpointer user_data)
 +{
-+	struct cb_data *cbd =3D user_data;
++	struct sim_poll_data *spd =3D user_data;
 +	GAtResultIter iter;
-+	ofono_stk_envelope_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
 +	const guint8 *response;
 +	gint rlen, len;
 +
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
 +	if (!ok)
-+		goto error;
++		return;
 +
 +	g_at_result_iter_init(&iter, result);
 +
 +	if (!g_at_result_iter_next(&iter, "+CSIM:"))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_number(&iter, &rlen))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_hexstring(&iter, &response, &len))
-+		goto error;
-+
-+	if (rlen !=3D len * 2 || len < 2)
-+		goto error;
-+
-+	if (response[len - 2] !=3D 0x90 && response[len - 2] !=3D 0x91)
-+		goto error;
-+
-+	if (response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0)
-+		goto error;
-+
-+	DBG("csim_envelope_cb: %i", len);
-+
-+	cb(&error, response, len - 2, cbd->data);
-+	return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, NULL, 0, cbd->data);
-+}
-+
-+static void at_stk_envelope(struct ofono_stk *stk, int length,
-+				const guint8 *command,
-+				ofono_stk_envelope_cb_t cb, void *data)
-+{
-+	struct stk_data *sd =3D ofono_stk_get_data(stk);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char *buf =3D g_try_new(char, 64 + length * 2);
-+	int len, ret;
-+
-+	if (!cbd || !buf)
-+		goto error;
-+
-+	len =3D sprintf(buf, "AT+CSIM=3D%i,A0C20000%02hhX",
-+			12 + length * 2, length);
-+
-+	for (; length; length--)
-+		len +=3D sprintf(buf + len, "%02hhX", *command++);
-+
-+	len +=3D sprintf(buf + len, "FF");
-+
-+	ret =3D g_at_chat_send(sd->chat, buf, csim_prefix,
-+				at_csim_envelope_cb, cbd, g_free);
-+
-+	g_free(buf);
-+	buf =3D NULL;
-+
-+	if (ret > 0)
 +		return;
 +
-+error:
-+	if (buf)
-+		g_free(buf);
-+
-+	if (cbd)
-+		g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, NULL, 0, data);
-+}
-+
-+static void at_csim_terminal_response_cb(gboolean ok, GAtResult *result,
-+		gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	GAtResultIter iter;
-+	ofono_stk_generic_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+	const guint8 *response;
-+	gint rlen, len;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (!ok)
-+		goto error;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CSIM:"))
-+		goto error;
-+
 +	if (!g_at_result_iter_next_number(&iter, &rlen))
-+		goto error;
-+
-+	if (!g_at_result_iter_next_hexstring(&iter, &response, &len))
-+		goto error;
-+
-+	if (rlen !=3D len * 2 || len < 2)
-+		goto error;
-+
-+	if (response[len - 2] !=3D 0x90 && response[len - 2] !=3D 0x91)
-+		goto error;
-+
-+	if (response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0)
-+		goto error;
-+
-+	DBG("csim_terminal_response_cb: %i", len);
-+
-+	cb(&error, cbd->data);
-+	return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
-+static void at_stk_terminal_response(struct ofono_stk *stk, int length,
-+		const unsigned char *value, ofono_stk_generic_cb_t cb,
-+		void *data)
-+{
-+	struct stk_data *sd =3D ofono_stk_get_data(stk);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char *buf =3D g_try_new(char, 64 + length * 2);
-+	int len, ret;
-+
-+	if (!cbd || !buf)
-+		goto error;
-+
-+	len =3D sprintf(buf, "AT+CSIM=3D%i,A0140000%02hhX",
-+			10 + length * 2, length);
-+
-+	for (; length; length--)
-+		len +=3D sprintf(buf + len, "%02hhX", *value++);
-+
-+	ret =3D g_at_chat_send(sd->chat, buf, csim_prefix,
-+				at_csim_terminal_response_cb, cbd, g_free);
-+
-+	g_free(buf);
-+	buf =3D NULL;
-+
-+	if (ret > 0)
 +		return;
 +
-+error:
-+	if (cbd)
-+		g_free(cbd);
++	if (!g_at_result_iter_next_hexstring(&iter, &response, &len))
++		return;
 +
-+	CALLBACK_WITH_FAILURE(cb, data);
++	if (rlen !=3D len * 2 || len < 2)
++		return;
++
++	/* Check that SW1 indicates success */
++	if (response[len - 2] !=3D 0x90 && response[len - 2] !=3D 0x91)
++		return;
++
++	if (response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0)
++		return;
++
++	DBG("csim_fetch_cb: %i", len);
++
++	ofono_stk_proactive_command_notify(spd->stk, len - 2, response);
++
++	/* Can this happen? */
++	if (response[len - 2] =3D=3D 0x91)
++		sim_fetch_command(spd, response[len - 1]);
 +}
 +
-+static gboolean at_stk_register(gpointer user)
++static void sim_fetch_command(struct sim_poll_data *spd, int length)
 +{
-+	struct ofono_stk *stk =3D user;
++	char buf[64];
 +
-+	ofono_stk_register(stk);
++	snprintf(buf, sizeof(buf), "AT+CSIM=3D10,A0120000%02hhX", length);
++
++	g_at_chat_send(spd->chat, buf, csim_prefix,
++			at_csim_fetch_cb, spd, NULL);
++}
++
++static void sim_status_poll_schedule(struct sim_poll_data *spd)
++{
++	/* TODO: Decide on the interval based on whether any call is active */
++	/* TODO: On idle, possibly only schedule if proactive commands enabled
++	 * as indicated by EFphase + EFsst (51.011: 11.6.1) */
++	int interval =3D spd->idle_poll_interval;
++
++	/* When a SIM is inserted, the SIM might have requested a different
++	 * interval.  */
++	if (spd->inserted)
++		interval =3D ofono_modem_get_integer(spd->modem,
++				"status-poll-interval");
++
++	spd->poll_timeout =3D g_timeout_add_seconds(interval,
++			sim_status_poll, spd);
++}
++
++static gboolean sim_status_timeout(gpointer user_data)
++{
++	struct sim_poll_data *spd =3D user_data;
++
++	spd->status_timeout =3D 0;
++
++	g_at_chat_cancel(spd->chat, spd->status_cmd);
++	spd->status_cmd =3D 0;
++
++	if (spd->inserted =3D=3D TRUE) {
++		spd->inserted =3D FALSE;
++		ofono_sim_inserted_notify(spd->sim, FALSE);
++	}
++
++	sim_status_poll_schedule(spd);
 +
 +	return FALSE;
 +}
 +
-+static int at_stk_probe(struct ofono_stk *stk, unsigned int vendor,
-+		void *data)
++static void at_csim_status_cb(gboolean ok, GAtResult *result,
++		gpointer user_data)
 +{
-+	GAtChat *chat =3D data;
-+	struct stk_data *sd;
++	struct sim_poll_data *spd =3D user_data;
++	GAtResultIter iter;
++	const guint8 *response;
++	gint rlen, len;
 +
-+	sd =3D g_new0(struct stk_data, 1);
-+	sd->chat =3D chat;
++	spd->status_cmd =3D 0;
 +
-+	ofono_stk_set_data(stk, sd);
-+	g_idle_add(at_stk_register, stk);
++	if (!spd->status_timeout)
++		/* The STATUS already timed out */
++		return;
 +
-+	return 0;
++	/* Card responded on time */
++
++	g_source_remove(spd->status_timeout);
++	spd->status_timeout =3D 0;
++
++	if (spd->inserted !=3D TRUE) {
++		spd->inserted =3D TRUE;
++		ofono_sim_inserted_notify(spd->sim, TRUE);
++	}
++
++	sim_status_poll_schedule(spd);
++
++	/* Check if we have a proactive command */
++
++	if (!ok)
++		return;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CSIM:"))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &rlen))
++		return;
++
++	if (!g_at_result_iter_next_hexstring(&iter, &response, &len))
++		return;
++
++	if (rlen !=3D len * 2 || len < 2)
++		return;
++
++	if (response[len - 2] !=3D 0x91)
++		return;
++
++	/* We have a proactive command pending, FETCH it */
++	sim_fetch_command(spd, response[len - 1]);
 +}
 +
-+static void at_stk_remove(struct ofono_stk *stk)
++static gboolean sim_status_poll(gpointer user_data)
 +{
-+	struct stk_data *sd =3D ofono_stk_get_data(stk);
++	struct sim_poll_data *spd =3D user_data;
 +
-+	ofono_stk_set_data(stk, NULL);
++	spd->poll_timeout =3D 0;
 +
-+	g_free(sd);
++	/* The SIM must respond in a given time frame which is of at
++	 * least 5 seconds in TS 11.11.  */
++	spd->status_timeout =3D g_timeout_add_seconds(5,
++			sim_status_timeout, spd);
++
++	/* Send STATUS */
++	spd->status_cmd =3D g_at_chat_send(spd->chat, "AT+CSIM=3D8,A0F200C0",
++			csim_prefix, at_csim_status_cb, spd, NULL);
++	if (spd->status_cmd =3D=3D 0)
++		at_csim_status_cb(FALSE, NULL, spd);
++
++	return FALSE;
 +}
 +
-+static struct ofono_stk_driver driver =3D {
-+	.name			=3D "atmodem",
-+	.probe			=3D at_stk_probe,
-+	.remove			=3D at_stk_remove,
-+	.envelope		=3D at_stk_envelope,
-+	.terminal_response	=3D at_stk_terminal_response,
-+};
-+
-+void at_stk_init()
++static void sim_state_watch(void *user, enum ofono_sim_state new_state)
 +{
-+	ofono_stk_driver_register(&driver);
++	struct sim_poll_data *spd =3D user;
++
++	spd->inserted =3D new_state !=3D OFONO_SIM_STATE_NOT_PRESENT;
++
++	if (!spd->inserted)
++		ofono_modem_set_integer(spd->modem,
++				"status-poll-interval", 30);
 +}
 +
-+void at_stk_exit()
++static void sim_watch(struct ofono_atom *atom,
++		enum ofono_atom_watch_condition cond, void *data)
 +{
-+	ofono_stk_driver_unregister(&driver);
++	struct sim_poll_data *spd =3D data;
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED) {
++		spd->sim =3D __ofono_atom_get_data(atom);
++
++		spd->sim_state_watch =3D ofono_sim_add_state_watch(spd->sim,
++				sim_state_watch, spd, NULL);
++		sim_state_watch(spd, ofono_sim_get_state(spd->sim));
++
++		sim_status_poll(spd);
++
++		return;
++	}
++
++	if (cond !=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED)
++		return;
++
++	spd->inserted =3D FALSE;
++
++	spd->sim_state_watch =3D 0;
++
++	if (spd->sim_watch) {
++		__ofono_modem_remove_atom_watch(spd->modem, spd->sim_watch);
++		spd->sim_watch =3D 0;
++	}
++
++	if (spd->stk_watch) {
++		__ofono_modem_remove_atom_watch(spd->modem, spd->stk_watch);
++		spd->stk_watch =3D 0;
++	}
++
++	if (spd->status_timeout) {
++		g_source_remove(spd->status_timeout);
++		spd->status_timeout =3D 0;
++	}
++
++	if (spd->poll_timeout) {
++		g_source_remove(spd->poll_timeout);
++		spd->poll_timeout =3D 0;
++	}
++
++	g_free(spd);
 +}
++
++static void stk_watch(struct ofono_atom *atom,
++		enum ofono_atom_watch_condition cond, void *data)
++{
++	struct sim_poll_data *spd =3D data;
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_REGISTERED)
++		spd->stk =3D __ofono_atom_get_data(atom);
++	else if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED)
++		spd->stk =3D NULL;
++}
++
++void ofono_atmodem_poll_enable(struct ofono_modem *modem, GAtChat *chat)
++{
++	struct ofono_atom *sim_atom;
++	struct ofono_atom *stk_atom;
++	struct sim_poll_data *spd;
++
++	sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
++	stk_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_STK);
++
++	if (!sim_atom)
++		return;
++
++	spd =3D g_new0(struct sim_poll_data, 1);
++	spd->chat =3D chat;
++	spd->modem =3D modem;
++	spd->idle_poll_interval =3D 30;
++
++	spd->stk_watch =3D __ofono_modem_add_atom_watch(spd->modem,
++			OFONO_ATOM_TYPE_STK, stk_watch, spd, NULL);
++	if (stk_atom && __ofono_atom_get_registered(stk_atom))
++		stk_watch(stk_atom,
++				OFONO_ATOM_WATCH_CONDITION_REGISTERED, spd);
++
++	spd->sim_watch =3D __ofono_modem_add_atom_watch(spd->modem,
++			OFONO_ATOM_TYPE_SIM, sim_watch, spd, NULL);
++	if (__ofono_atom_get_registered(sim_atom))
++		sim_watch(sim_atom,
++				OFONO_ATOM_WATCH_CONDITION_REGISTERED, spd);
++}
+diff --git a/drivers/atmodem/sim-poll.h b/drivers/atmodem/sim-poll.h
+new file mode 100644
+index 0000000..595c2f5
+--- /dev/null
++++ b/drivers/atmodem/sim-poll.h
+@@ -0,0 +1,22 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++void ofono_atmodem_poll_enable(struct ofono_modem *modem, GAtChat *chat);
 diff --git a/plugins/atgen.c b/plugins/atgen.c
-index ed963c2..262d32f 100644
+index 262d32f..4a0e315 100644
 --- a/plugins/atgen.c
 +++ b/plugins/atgen.c
-@@ -43,6 +43,7 @@
- #include <ofono/netreg.h>
- #include <ofono/phonebook.h>
- #include <ofono/sim.h>
-+#include <ofono/stk.h>
- #include <ofono/sms.h>
- #include <ofono/ssn.h>
+@@ -49,6 +49,8 @@
  #include <ofono/ussd.h>
-@@ -163,6 +164,7 @@ static void atgen_pre_sim(struct ofono_modem *modem)
- 	ofono_devinfo_create(modem, 0, "atmodem", chat);
- 	sim =3D ofono_sim_create(modem, 0, "atmodem", chat);
- 	ofono_voicecall_create(modem, 0, "atmodem", chat);
-+	ofono_stk_create(modem, 0, "atmodem", chat);
+ #include <ofono/voicecall.h>
  =
 
- 	if (sim)
- 		ofono_sim_inserted_notify(sim, TRUE);
++#include <drivers/atmodem/sim-poll.h>
++
+ static const char *tty_opts[] =3D {
+ 	"Baud",
+ 	"Read",
+@@ -157,17 +159,15 @@ static int atgen_disable(struct ofono_modem *modem)
+ static void atgen_pre_sim(struct ofono_modem *modem)
+ {
+ 	GAtChat *chat =3D ofono_modem_get_data(modem);
+-	struct ofono_sim *sim;
+ =
+
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_devinfo_create(modem, 0, "atmodem", chat);
+-	sim =3D ofono_sim_create(modem, 0, "atmodem", chat);
++	ofono_sim_create(modem, 0, "atmodem", chat);
+ 	ofono_voicecall_create(modem, 0, "atmodem", chat);
+ 	ofono_stk_create(modem, 0, "atmodem", chat);
+ =
+
+-	if (sim)
+-		ofono_sim_inserted_notify(sim, TRUE);
++	ofono_atmodem_poll_enable(modem, chat);
+ }
+ =
+
+ static void atgen_post_sim(struct ofono_modem *modem)
 diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index 4c3b3ce..9153e1b 100644
+index 9153e1b..5685820 100644
 --- a/plugins/phonesim.c
 +++ b/plugins/phonesim.c
-@@ -50,6 +50,7 @@
- #include <ofono/netreg.h>
- #include <ofono/phonebook.h>
- #include <ofono/sim.h>
-+#include <ofono/stk.h>
- #include <ofono/sms.h>
- #include <ofono/ssn.h>
- #include <ofono/ussd.h>
-@@ -289,6 +290,8 @@ static void phonesim_pre_sim(struct ofono_modem *modem)
- 	else
- 		ofono_voicecall_create(modem, 0, "atmodem", data->chat);
+@@ -59,6 +59,7 @@
+ #include <ofono/gprs-context.h>
  =
 
-+	ofono_stk_create(modem, 0, "atmodem", data->chat);
-+
- 	if (sim)
+ #include <drivers/atmodem/vendor.h>
++#include <drivers/atmodem/sim-poll.h>
+ =
+
+ struct phonesim_data {
+ 	GAtMux *mux;
+@@ -292,7 +293,9 @@ static void phonesim_pre_sim(struct ofono_modem *modem)
+ =
+
+ 	ofono_stk_create(modem, 0, "atmodem", data->chat);
+ =
+
+-	if (sim)
++	if (!data->calypso)
++		ofono_atmodem_poll_enable(modem, data->chat);
++	else if (sim)
  		ofono_sim_inserted_notify(sim, TRUE);
  }
+ =
+
 -- =
 
 1.6.1
 
 
---===============7601667380520187513==--
+--===============6932553106871034440==--
 
