@@ -1,459 +1,615 @@
-Content-Type: multipart/mixed; boundary="===============6904998222893414306=="
+Content-Type: multipart/mixed; boundary="===============8631434666696973110=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/8] Functions to notify core of SIM insertion/removal.
-Date: Fri, 09 Apr 2010 08:48:50 +0200
-Message-ID: <1270795730-7127-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 3/8] Add an atom for STK, move envelope command to stk driver.
+Date: Fri, 09 Apr 2010 08:49:01 +0200
+Message-ID: <1270795741-7156-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6904998222893414306==
+--===============8631434666696973110==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Make every plugin generate a sim inserted event on start.  For devices
-with removable card, the event should be emitted after the
-plugin detects such event.
 ---
- include/sim.h      |    3 +-
- plugins/atgen.c    |    6 +++-
- plugins/calypso.c  |    6 +++-
- plugins/em770.c    |    6 +++-
- plugins/g1.c       |    6 +++-
- plugins/hso.c      |    6 +++-
- plugins/huawei.c   |    6 +++-
- plugins/mbm.c      |    6 +++-
- plugins/palmpre.c  |    6 +++-
- plugins/phonesim.c |    6 +++-
- plugins/ste.c      |    6 +++-
- src/sim.c          |   78 ++++++++++++++++++++++++++++++++++++------------=
----
- 12 files changed, 107 insertions(+), 34 deletions(-)
+ Makefile.am           |    4 +-
+ drivers/atmodem/sim.c |   77 -------------------
+ include/sim.h         |    3 -
+ include/stk.h         |   71 +++++++++++++++++
+ src/cbs.c             |   10 ++-
+ src/modem.c           |    1 +
+ src/ofono.h           |    4 +-
+ src/sim.c             |   37 ---------
+ src/stk.c             |  201 +++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 9 files changed, 287 insertions(+), 121 deletions(-)
+ create mode 100644 include/stk.h
+ create mode 100644 src/stk.c
 
+diff --git a/Makefile.am b/Makefile.am
+index ee10095..7a18c41 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -12,7 +12,7 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
+e/history.h \
+ 			include/netreg.h include/voicecall.h include/devinfo.h \
+ 			include/cbs.h include/call-volume.h \
+ 			include/gprs.h include/gprs-context.h \
+-			include/radio-settings.h
++			include/radio-settings.h include/stk.h
+ =
+
+ nodist_include_HEADERS =3D include/version.h
+ =
+
+@@ -231,7 +231,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
+es) \
+ 			src/network.c src/voicecall.c src/ussd.c src/sms.c \
+ 			src/call-settings.c src/call-forwarding.c \
+ 			src/call-meter.c src/smsutil.h src/smsutil.c \
+-			src/ssn.c src/call-barring.c src/sim.c \
++			src/ssn.c src/call-barring.c src/sim.c src/stk.c \
+ 			src/phonebook.c src/history.c src/message-waiting.c \
+ 			src/simutil.h src/simutil.c src/storage.h \
+ 			src/storage.c src/cbs.c src/watch.c src/call-volume.c \
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 89ddcc6..13e7459 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -709,82 +709,6 @@ error:
+ 	CALLBACK_WITH_FAILURE(cb, -1, data);
+ }
+ =
+
+-static void at_csim_envelope_cb(gboolean ok, GAtResult *result,
+-		gpointer user_data)
+-{
+-	struct cb_data *cbd =3D user_data;
+-	GAtResultIter iter;
+-	ofono_sim_read_cb_t cb =3D cbd->cb;
+-	struct ofono_error error;
+-	const guint8 *response;
+-	gint rlen, len;
+-
+-	decode_at_error(&error, g_at_result_final_response(result));
+-
+-	if (!ok)
+-		goto error;
+-
+-	g_at_result_iter_init(&iter, result);
+-
+-	if (!g_at_result_iter_next(&iter, "+CSIM:"))
+-		goto error;
+-
+-	if (!g_at_result_iter_next_number(&iter, &rlen))
+-		goto error;
+-
+-	if (!g_at_result_iter_next_hexstring(&iter, &response, &len))
+-		goto error;
+-
+-	if (rlen !=3D len * 2 || len < 2 ||
+-			response[len - 2] !=3D 0x90 || response[len - 1] !=3D 0)
+-		goto error;
+-
+-	DBG("csim_envelope_cb: %i", len);
+-
+-	cb(&error, response, len - 2, cbd->data);
+-	return;
+-
+-error:
+-	CALLBACK_WITH_FAILURE(cb, NULL, 0, cbd->data);
+-}
+-
+-static void at_sim_envelope(struct ofono_sim *sim, int length,
+-				const guint8 *command,
+-				ofono_sim_read_cb_t cb, void *data)
+-{
+-	struct sim_data *sd =3D ofono_sim_get_data(sim);
+-	struct cb_data *cbd =3D cb_data_new(cb, data);
+-	char *buf =3D g_try_new(char, 64 + length * 2);
+-	int len, ret;
+-
+-	if (!cbd || !buf)
+-		goto error;
+-
+-	len =3D sprintf(buf, "AT+CSIM=3D%i,A0C20000%02hhX",
+-			10 + length * 2, length);
+-
+-	for (; length; length--)
+-		len +=3D sprintf(buf + len, "%02hhX", *command++);
+-
+-	ret =3D g_at_chat_send(sd->chat, buf, crsm_prefix,
+-				at_csim_envelope_cb, cbd, g_free);
+-
+-	g_free(buf);
+-	buf =3D NULL;
+-
+-	if (ret > 0)
+-		return;
+-
+-error:
+-	if (buf)
+-		g_free(buf);
+-
+-	if (cbd)
+-		g_free(cbd);
+-
+-	CALLBACK_WITH_FAILURE(cb, NULL, 0, data);
+-}
+-
+ static gboolean at_sim_register(gpointer user)
+ {
+ 	struct ofono_sim *sim =3D user;
+@@ -840,7 +764,6 @@ static struct ofono_sim_driver driver =3D {
+ 	.lock			=3D at_pin_enable,
+ 	.change_passwd		=3D at_change_passwd,
+ 	.query_locked		=3D at_pin_query_enabled,
+-	.envelope		=3D at_sim_envelope,
+ };
+ =
+
+ void at_sim_init()
 diff --git a/include/sim.h b/include/sim.h
-index 23b1905..2218564 100644
+index 2218564..36a99b9 100644
 --- a/include/sim.h
 +++ b/include/sim.h
-@@ -187,7 +187,8 @@ unsigned int ofono_sim_add_state_watch(struct ofono_sim=
- *sim,
- void ofono_sim_remove_state_watch(struct ofono_sim *sim, unsigned int id);
+@@ -156,9 +156,6 @@ struct ofono_sim_driver {
+ 	void (*query_locked)(struct ofono_sim *sim,
+ 			enum ofono_sim_password_type type,
+ 			ofono_sim_locked_cb_t cb, void *data);
+-	void (*envelope)(struct ofono_sim *sim, int length,
+-				const guint8 *command,
+-				ofono_sim_read_cb_t cb, void *data);
+ };
  =
 
- enum ofono_sim_state ofono_sim_get_state(struct ofono_sim *sim);
--void ofono_sim_set_ready(struct ofono_sim *sim);
+ int ofono_sim_driver_register(const struct ofono_sim_driver *d);
+diff --git a/include/stk.h b/include/stk.h
+new file mode 100644
+index 0000000..dfae261
+--- /dev/null
++++ b/include/stk.h
+@@ -0,0 +1,71 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inserte=
-d);
- =
-
- /* This will queue an operation to read all available records with id from=
- the
-  * SIM.  Callback cb will be called every time a record has been read, or =
-once
-diff --git a/plugins/atgen.c b/plugins/atgen.c
-index 7e760bc..ed963c2 100644
---- a/plugins/atgen.c
-+++ b/plugins/atgen.c
-@@ -156,12 +156,16 @@ static int atgen_disable(struct ofono_modem *modem)
- static void atgen_pre_sim(struct ofono_modem *modem)
- {
- 	GAtChat *chat =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", chat);
--	ofono_sim_create(modem, 0, "atmodem", chat);
-+	sim =3D ofono_sim_create(modem, 0, "atmodem", chat);
- 	ofono_voicecall_create(modem, 0, "atmodem", chat);
++#ifndef __OFONO_STK_H
++#define __OFONO_STK_H
 +
-+	if (sim)
-+		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
- static void atgen_post_sim(struct ofono_modem *modem)
-diff --git a/plugins/calypso.c b/plugins/calypso.c
-index 5b28176..9d6280c 100644
---- a/plugins/calypso.c
-+++ b/plugins/calypso.c
-@@ -431,12 +431,16 @@ static int calypso_disable(struct ofono_modem *modem)
- static void calypso_pre_sim(struct ofono_modem *modem)
- {
- 	struct calypso_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("");
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
--	ofono_sim_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
-+	sim =3D ofono_sim_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
- 	ofono_voicecall_create(modem, 0, "calypsomodem", data->dlcs[VOICE_DLC]);
++#ifdef __cplusplus
++extern "C" {
++#endif
 +
-+	if (sim)
-+		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
- static void calypso_post_sim(struct ofono_modem *modem)
-diff --git a/plugins/em770.c b/plugins/em770.c
-index a5d87f7..138c67a 100644
---- a/plugins/em770.c
-+++ b/plugins/em770.c
-@@ -172,12 +172,16 @@ static int em770_disable(struct ofono_modem *modem)
- static void em770_pre_sim(struct ofono_modem *modem)
- {
- 	struct em770_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
--	ofono_sim_create(modem, 0, "atmodem", data->chat);
-+	sim =3D ofono_sim_create(modem, 0, "atmodem", data->chat);
- 	ofono_voicecall_create(modem, 0, "atmodem", data->chat);
++#include <ofono/types.h>
 +
-+	if (sim)
-+		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
- static void em770_post_sim(struct ofono_modem *modem)
-diff --git a/plugins/g1.c b/plugins/g1.c
-index 81edfab..fa96eb1 100644
---- a/plugins/g1.c
-+++ b/plugins/g1.c
-@@ -156,12 +156,16 @@ static int g1_disable(struct ofono_modem *modem)
- static void g1_pre_sim(struct ofono_modem *modem)
- {
- 	GAtChat *chat =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("");
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", chat);
--	ofono_sim_create(modem, 0, "atmodem", chat);
-+	sim =3D ofono_sim_create(modem, 0, "atmodem", chat);
- 	ofono_voicecall_create(modem, 0, "atmodem", chat);
++struct ofono_stk;
 +
-+	if (sim)
-+		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
- static void g1_post_sim(struct ofono_modem *modem)
-diff --git a/plugins/hso.c b/plugins/hso.c
-index e682064..27b69dc 100644
---- a/plugins/hso.c
-+++ b/plugins/hso.c
-@@ -198,11 +198,15 @@ static int hso_disable(struct ofono_modem *modem)
- static void hso_pre_sim(struct ofono_modem *modem)
- {
- 	struct hso_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->control);
--	ofono_sim_create(modem, 0, "atmodem", data->control);
-+	sim =3D ofono_sim_create(modem, 0, "atmodem", data->control);
++typedef void (*ofono_stk_envelope_cb_t)(const struct ofono_error *error,
++		const unsigned char *rdata, int length, void *data);
 +
-+	if (sim)
-+		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
- static void hso_post_sim(struct ofono_modem *modem)
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 41ad636..90fdcf0 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -163,12 +163,16 @@ static int huawei_disable(struct ofono_modem *modem)
- static void huawei_pre_sim(struct ofono_modem *modem)
- {
- 	struct huawei_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
--	ofono_sim_create(modem, 0, "atmodem", data->chat);
-+	sim =3D ofono_sim_create(modem, 0, "atmodem", data->chat);
- 	ofono_voicecall_create(modem, 0, "atmodem", data->chat);
++typedef void (*ofono_stk_generic_cb_t)(const struct ofono_error *error,
++		void *data);
 +
-+	if (sim)
-+		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
- static void huawei_post_sim(struct ofono_modem *modem)
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 439d3b9..79d180b 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -285,12 +285,16 @@ static int mbm_disable(struct ofono_modem *modem)
- static void mbm_pre_sim(struct ofono_modem *modem)
- {
- 	struct mbm_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->modem_port);
--	ofono_sim_create(modem, 0, "atmodem", data->modem_port);
-+	sim =3D ofono_sim_create(modem, 0, "atmodem", data->modem_port);
- 	ofono_voicecall_create(modem, 0, "atmodem", data->modem_port);
++struct ofono_stk_driver {
++	const char *name;
++	int (*probe)(struct ofono_stk *stk, unsigned int vendor, void *data);
++	void (*remove)(struct ofono_stk *stk);
++	void (*envelope)(struct ofono_stk *stk, int length,
++			const guint8 *command, ofono_stk_envelope_cb_t cb,
++			void *data);
++	void (*terminal_response)(struct ofono_stk *stk, int length,
++			const unsigned char *value, ofono_stk_generic_cb_t cb,
++			void *data);
++};
 +
-+	if (sim)
-+		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
- static void mbm_post_sim(struct ofono_modem *modem)
-diff --git a/plugins/palmpre.c b/plugins/palmpre.c
-index 049b9bd..7d2aeb4 100644
---- a/plugins/palmpre.c
-+++ b/plugins/palmpre.c
-@@ -170,13 +170,17 @@ static int palmpre_disable(struct ofono_modem *modem)
- static void palmpre_pre_sim(struct ofono_modem *modem)
- {
- 	struct palmpre_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
--	ofono_sim_create(modem, OFONO_VENDOR_QUALCOMM_MSM, "atmodem",
-+	sim =3D ofono_sim_create(modem, OFONO_VENDOR_QUALCOMM_MSM, "atmodem",
- 				data->chat);
- 	ofono_voicecall_create(modem, 0, "atmodem", data->chat);
++int ofono_stk_driver_register(const struct ofono_stk_driver *d);
++void ofono_stk_driver_unregister(const struct ofono_stk_driver *d);
 +
-+	if (sim)
-+		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
- static void palmpre_post_sim(struct ofono_modem *modem)
-diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index ca12cf2..4c3b3ce 100644
---- a/plugins/phonesim.c
-+++ b/plugins/phonesim.c
-@@ -277,16 +277,20 @@ static int phonesim_disable(struct ofono_modem *modem)
- static void phonesim_pre_sim(struct ofono_modem *modem)
- {
- 	struct phonesim_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
--	ofono_sim_create(modem, 0, "atmodem", data->chat);
-+	sim =3D ofono_sim_create(modem, 0, "atmodem", data->chat);
- =
-
- 	if (data->calypso)
- 		ofono_voicecall_create(modem, 0, "calypsomodem", data->chat);
- 	else
- 		ofono_voicecall_create(modem, 0, "atmodem", data->chat);
++struct ofono_stk *ofono_stk_create(struct ofono_modem *modem,
++					unsigned int vendor,
++					const char *driver, void *data);
 +
-+	if (sim)
-+		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
- static void phonesim_post_sim(struct ofono_modem *modem)
-diff --git a/plugins/ste.c b/plugins/ste.c
-index 66065c1..7e2df96 100644
---- a/plugins/ste.c
-+++ b/plugins/ste.c
-@@ -208,12 +208,16 @@ static int ste_disable(struct ofono_modem *modem)
- static void ste_pre_sim(struct ofono_modem *modem)
- {
- 	struct ste_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_sim *sim;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
--	ofono_sim_create(modem, 0, "atmodem", data->chat);
-+	sim =3D ofono_sim_create(modem, 0, "atmodem", data->chat);
- 	ofono_voicecall_create(modem, 0, "stemodem", data->chat);
++void ofono_stk_register(struct ofono_stk *stk);
++void ofono_stk_remove(struct ofono_stk *stk);
 +
-+	if (sim)
-+		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
- static void ste_post_sim(struct ofono_modem *modem)
-diff --git a/src/sim.c b/src/sim.c
-index 58de191..5559be4 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -55,6 +55,7 @@ static gboolean sim_op_next(gpointer user_data);
- static gboolean sim_op_retrieve_next(gpointer user);
- static void sim_own_numbers_update(struct ofono_sim *sim);
- static void sim_pin_check(struct ofono_sim *sim);
-+static void sim_set_ready(struct ofono_sim *sim);
- =
-
- struct sim_file_op {
- 	int id;
-@@ -1003,7 +1004,7 @@ static void sim_cphs_information_read_cb(int ok, int =
-length, int record,
- 	memcpy(sim->cphs_service_table, data + 1, 2);
- =
-
- ready:
--	ofono_sim_set_ready(sim);
-+	sim_set_ready(sim);
- }
- =
-
- static void sim_imsi_cb(const struct ofono_error *error, const char *imsi,
-@@ -1778,6 +1779,53 @@ const unsigned char *ofono_sim_get_cphs_service_tabl=
-e(struct ofono_sim *sim)
- 	return sim->cphs_service_table;
- }
- =
-
-+void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inserte=
-d)
-+{
-+	ofono_sim_state_event_notify_cb_t notify;
-+	GSList *l;
++void ofono_stk_set_data(struct ofono_stk *stk, void *data);
++void *ofono_stk_get_data(struct ofono_stk *stk);
 +
-+	if (inserted && sim->state =3D=3D OFONO_SIM_STATE_NOT_PRESENT)
-+		sim->state =3D OFONO_SIM_STATE_INSERTED;
-+	else if (!inserted && sim->state !=3D OFONO_SIM_STATE_NOT_PRESENT)
-+		sim->state =3D OFONO_SIM_STATE_NOT_PRESENT;
-+	else
-+		return;
++void ofono_stk_proactive_command_notify(struct ofono_stk *stk,
++		int length, const guint8 *pdu);
 +
-+	if (!__ofono_atom_get_registered(sim->atom))
-+		return;
-+
-+	for (l =3D sim->state_watches->items; l; l =3D l->next) {
-+		struct ofono_watchlist_item *item =3D l->data;
-+		notify =3D item->notify;
-+
-+		notify(item->notify_data, sim->state);
-+	}
-+
-+	if (!inserted)
-+		return;
-+
-+	/* Perform SIM initialization according to 3GPP 31.102 Section 5.1.1.2
-+	 * The assumption here is that if sim manager is being initialized,
-+	 * then sim commands are implemented, and the sim manager is then
-+	 * responsible for checking the PIN, reading the IMSI and signaling
-+	 * SIM ready condition.
-+	 *
-+	 * The procedure according to 31.102 is roughly:
-+	 * Read EFecc
-+	 * Read EFli and EFpl
-+	 * SIM Pin check
-+	 * Request SIM phase (only in 51.011)
-+	 * Read EFust
-+	 * Read EFest
-+	 * Read IMSI
-+	 *
-+	 * At this point we signal the SIM ready condition and allow
-+	 * arbitrary files to be written or read, assuming their presence
-+	 * in the EFust
-+	 */
-+	sim_determine_phase(sim);
++#ifdef __cplusplus
 +}
++#endif
 +
- unsigned int ofono_sim_add_state_watch(struct ofono_sim *sim,
- 				ofono_sim_state_event_notify_cb_t notify,
- 				void *data, ofono_destroy_func destroy)
-@@ -1814,7 +1862,7 @@ enum ofono_sim_state ofono_sim_get_state(struct ofono=
-_sim *sim)
- 	return sim->state;
- }
++#endif /* __OFONO_STK_H */
+diff --git a/src/cbs.c b/src/cbs.c
+index 2fa33c1..ff343e3 100644
+--- a/src/cbs.c
++++ b/src/cbs.c
+@@ -57,6 +57,7 @@ struct ofono_cbs {
+ 	GSList *topics;
+ 	GSList *new_topics;
+ 	struct ofono_sim *sim;
++	struct ofono_stk *stk;
+ 	struct ofono_netreg *netreg;
+ 	unsigned int netreg_watch;
+ 	unsigned int location_watch;
+@@ -195,7 +196,7 @@ void ofono_cbs_notify(struct ofono_cbs *cbs, const unsi=
+gned char *pdu,
+ 	}
  =
 
--void ofono_sim_set_ready(struct ofono_sim *sim)
-+static void sim_set_ready(struct ofono_sim *sim)
- {
- 	GSList *l;
- 	ofono_sim_state_event_notify_cb_t notify;
-@@ -2000,6 +2048,7 @@ void ofono_sim_register(struct ofono_sim *sim)
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(sim->atom);
- 	const char *path =3D __ofono_atom_get_path(sim->atom);
-+	ofono_bool_t inserted;
+ 	if (cbs_topic_in_range(c.message_identifier, cbs->efcbmid_contents)) {
+-		__ofono_cbs_sim_download(cbs->sim, pdu, pdu_len);
++		__ofono_cbs_sim_download(cbs->stk, pdu, pdu_len);
+ 		return;
+ 	}
+ =
+
+@@ -590,6 +591,7 @@ static void cbs_unregister(struct ofono_atom *atom)
+ 	}
+ =
+
+ 	cbs->sim =3D NULL;
++	cbs->stk =3D NULL;
+ =
+
+ 	if (cbs->reset_source) {
+ 		g_source_remove(cbs->reset_source);
+@@ -1027,6 +1029,7 @@ void ofono_cbs_register(struct ofono_cbs *cbs)
+ 	struct ofono_modem *modem =3D __ofono_atom_get_modem(cbs->atom);
+ 	const char *path =3D __ofono_atom_get_path(cbs->atom);
+ 	struct ofono_atom *sim_atom;
++	struct ofono_atom *stk_atom;
+ 	struct ofono_atom *netreg_atom;
  =
 
  	if (!g_dbus_register_interface(conn, path,
- 					OFONO_SIM_MANAGER_INTERFACE,
-@@ -2013,32 +2062,15 @@ void ofono_sim_register(struct ofono_sim *sim)
+@@ -1050,6 +1053,11 @@ void ofono_cbs_register(struct ofono_cbs *cbs)
+ 			cbs_got_imsi(cbs);
+ 	}
  =
 
- 	ofono_modem_add_interface(modem, OFONO_SIM_MANAGER_INTERFACE);
- 	sim->state_watches =3D __ofono_watchlist_new(g_free);
--	sim->state =3D OFONO_SIM_STATE_INSERTED;
- =
-
- 	__ofono_atom_register(sim->atom, sim_unregister);
- =
-
- 	ofono_sim_add_state_watch(sim, sim_ready, sim, NULL);
- =
-
--	/* Perform SIM initialization according to 3GPP 31.102 Section 5.1.1.2
--	 * The assumption here is that if sim manager is being initialized,
--	 * then sim commands are implemented, and the sim manager is then
--	 * responsible for checking the PIN, reading the IMSI and signaling
--	 * SIM ready condition.
--	 *
--	 * The procedure according to 31.102 is roughly:
--	 * Read EFecc
--	 * Read EFli and EFpl
--	 * SIM Pin check
--	 * Request SIM phase (only in 51.011)
--	 * Read EFust
--	 * Read EFest
--	 * Read IMSI
--	 *
--	 * At this point we signal the SIM ready condition and allow
--	 * arbitrary files to be written or read, assuming their presence
--	 * in the EFust
--	 */
--	sim_determine_phase(sim);
-+	inserted =3D sim->state !=3D OFONO_SIM_STATE_NOT_PRESENT;
-+	sim->state =3D OFONO_SIM_STATE_NOT_PRESENT;
++	stk_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
 +
-+	ofono_sim_inserted_notify(sim, inserted);
++	if (stk_atom)
++		cbs->stk =3D __ofono_atom_get_data(stk_atom);
++
+ 	cbs->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
+ 					OFONO_ATOM_TYPE_NETREG,
+ 					netreg_watch, cbs, NULL);
+diff --git a/src/modem.c b/src/modem.c
+index df74be3..7cdd9c4 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -31,6 +31,7 @@
+ #include <gdbus.h>
+ =
+
+ #include "ofono.h"
++#include "sim.h"
+ =
+
+ #include "common.h"
+ =
+
+diff --git a/src/ofono.h b/src/ofono.h
+index ff67728..7b13cce 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -114,6 +114,7 @@ enum ofono_atom_type {
+ 	OFONO_ATOM_TYPE_GPRS =3D 16,
+ 	OFONO_ATOM_TYPE_GPRS_CONTEXT =3D 17,
+ 	OFONO_ATOM_TYPE_RADIO_SETTINGS =3D 18,
++	OFONO_ATOM_TYPE_STK =3D 19,
+ };
+ =
+
+ enum ofono_atom_watch_condition {
+@@ -172,8 +173,9 @@ void __ofono_atom_free(struct ofono_atom *atom);
+ #include <ofono/radio-settings.h>
+ =
+
+ #include <ofono/sim.h>
++#include <ofono/stk.h>
+ =
+
+-void __ofono_cbs_sim_download(struct ofono_sim *sim,
++void __ofono_cbs_sim_download(struct ofono_stk *stk,
+ 				const guint8 *pdu, int pdu_len);
+ =
+
+ #include <ofono/ssn.h>
+diff --git a/src/sim.c b/src/sim.c
+index 5559be4..41ddd13 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -42,7 +42,6 @@
+ #include "smsutil.h"
+ #include "simutil.h"
+ #include "storage.h"
+-#include "stkutil.h"
+ =
+
+ #define SIM_CACHE_MODE 0600
+ #define SIM_CACHE_PATH STORAGEDIR "/%s-%i/%04x"
+@@ -1883,42 +1882,6 @@ static void sim_set_ready(struct ofono_sim *sim)
+ 	}
  }
  =
 
- void ofono_sim_remove(struct ofono_sim *sim)
+-static void sim_cb_download_cb(const struct ofono_error *error,
+-				const unsigned char *data, int len, void *user)
+-{
+-	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		ofono_error("CellBroadcast download to UICC failed");
+-		return;
+-	}
+-
+-	DBG("CellBroadcast download to UICC reported no error");
+-}
+-
+-void __ofono_cbs_sim_download(struct ofono_sim *sim,
+-				const guint8 *pdu, int pdu_len)
+-{
+-	guint8 tlv[pdu_len + 8];
+-
+-	if (sim->state !=3D OFONO_SIM_STATE_READY)
+-		return;
+-
+-	if (sim->driver->envelope =3D=3D NULL)
+-		return;
+-
+-	tlv[0] =3D STK_ENVELOPE_TYPE_CBS_PP_DOWNLOAD;
+-	tlv[1] =3D 6 + pdu_len;
+-	tlv[2] =3D 0x80 | STK_DATA_OBJECT_TYPE_DEVICE_IDENTITIES;
+-	tlv[3] =3D 0x02; /* Device Identities length */
+-	tlv[4] =3D STK_DEVICE_IDENTITY_TYPE_NETWORK;
+-	tlv[5] =3D STK_DEVICE_IDENTITY_TYPE_UICC;
+-	tlv[6] =3D 0x80 | STK_DATA_OBJECT_TYPE_CBS_PAGE;
+-	tlv[7] =3D pdu_len;
+-
+-	memcpy(tlv + 8, pdu, pdu_len);
+-
+-	sim->driver->envelope(sim, pdu_len + 8, tlv, sim_cb_download_cb, sim);
+-}
+-
+ int ofono_sim_driver_register(const struct ofono_sim_driver *d)
+ {
+ 	DBG("driver: %p, name: %s", d, d->name);
+diff --git a/src/stk.c b/src/stk.c
+new file mode 100644
+index 0000000..5f76a86
+--- /dev/null
++++ b/src/stk.c
+@@ -0,0 +1,201 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <string.h>
++#include <stdio.h>
++
++#include <glib.h>
++#include <gdbus.h>
++#include <errno.h>
++
++#include "ofono.h"
++
++#include "smsutil.h"
++#include "stkutil.h"
++
++static GSList *g_drivers =3D NULL;
++
++struct ofono_stk {
++	const struct ofono_stk_driver *driver;
++	void *driver_data;
++	struct ofono_atom *atom;
++};
++
++static void stk_cb_download_cb(const struct ofono_error *error,
++				const unsigned char *data, int len, void *user)
++{
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		ofono_error("CellBroadcast download to UICC failed");
++		return;
++	}
++
++	DBG("CellBroadcast download to UICC reported no error");
++}
++
++void __ofono_cbs_sim_download(struct ofono_stk *stk,
++				const guint8 *pdu, int pdu_len)
++{
++	guint8 tlv[pdu_len + 8];
++
++	if (stk =3D=3D NULL)
++		return;
++
++	if (stk->driver->envelope =3D=3D NULL)
++		return;
++
++	tlv[0] =3D STK_ENVELOPE_TYPE_CBS_PP_DOWNLOAD;
++	tlv[1] =3D 6 + pdu_len;
++	tlv[2] =3D 0x80 | STK_DATA_OBJECT_TYPE_DEVICE_IDENTITIES;
++	tlv[3] =3D 0x02; /* Device Identities length */
++	tlv[4] =3D STK_DEVICE_IDENTITY_TYPE_NETWORK;
++	tlv[5] =3D STK_DEVICE_IDENTITY_TYPE_UICC;
++	tlv[6] =3D 0x80 | STK_DATA_OBJECT_TYPE_CBS_PAGE;
++	tlv[7] =3D pdu_len;
++
++	memcpy(tlv + 8, pdu, pdu_len);
++
++	stk->driver->envelope(stk, pdu_len + 8, tlv, stk_cb_download_cb, stk);
++}
++
++void ofono_stk_proactive_command_notify(struct ofono_stk *stk,
++		int length, const guint8 *pdu)
++{
++	struct stk_command *cmd;
++	char *buf;
++	int i;
++
++	buf =3D g_try_new(char, length * 2 + 1);
++	for (i =3D 0; i < length; i ++)
++		sprintf(buf + i * 2, "%02hhx", pdu[i]);
++	DBG("Proactive command PDU: %s", buf);
++
++	cmd =3D stk_command_new_from_pdu(pdu, length);
++	if (!cmd) {
++		ofono_error("Can't parse proactive command: %s", buf);
++		g_free(buf);
++
++		/* TODO: return TERMINAL RESPONSE with permanent error */
++		return;
++	}
++
++	/* TODO: execute */
++
++	g_free(buf);
++	stk_command_free(cmd);
++}
++
++int ofono_stk_driver_register(const struct ofono_stk_driver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
++
++	if (d->probe =3D=3D NULL)
++		return -EINVAL;
++
++	g_drivers =3D g_slist_prepend(g_drivers, (void *)d);
++
++	return 0;
++}
++
++void ofono_stk_driver_unregister(const struct ofono_stk_driver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
++
++	g_drivers =3D g_slist_remove(g_drivers, (void *)d);
++}
++
++static void stk_unregister(struct ofono_atom *atom)
++{
++}
++
++static void stk_remove(struct ofono_atom *atom)
++{
++	struct ofono_stk *stk =3D __ofono_atom_get_data(atom);
++
++	DBG("atom: %p", atom);
++
++	if (stk =3D=3D NULL)
++		return;
++
++	if (stk->driver && stk->driver->remove)
++		stk->driver->remove(stk);
++
++	g_free(stk);
++}
++
++struct ofono_stk *ofono_stk_create(struct ofono_modem *modem,
++					unsigned int vendor,
++					const char *driver,
++					void *data)
++{
++	struct ofono_stk *stk;
++	GSList *l;
++
++	if (driver =3D=3D NULL)
++		return NULL;
++
++	stk =3D g_try_new0(struct ofono_stk, 1);
++
++	if (stk =3D=3D NULL)
++		return NULL;
++
++	stk->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_STK,
++						stk_remove, stk);
++
++	for (l =3D g_drivers; l; l =3D l->next) {
++		const struct ofono_stk_driver *drv =3D l->data;
++
++		if (g_strcmp0(drv->name, driver))
++			continue;
++
++		if (drv->probe(stk, vendor, data) < 0)
++			continue;
++
++		stk->driver =3D drv;
++		break;
++	}
++
++	return stk;
++}
++
++void ofono_stk_register(struct ofono_stk *stk)
++{
++	__ofono_atom_register(stk->atom, stk_unregister);
++}
++
++void ofono_stk_remove(struct ofono_stk *stk)
++{
++	__ofono_atom_free(stk->atom);
++}
++
++void ofono_stk_set_data(struct ofono_stk *stk, void *data)
++{
++	stk->driver_data =3D data;
++}
++
++void *ofono_stk_get_data(struct ofono_stk *stk)
++{
++	return stk->driver_data;
++}
 -- =
 
 1.6.1
 
 
---===============6904998222893414306==--
+--===============8631434666696973110==--
 
