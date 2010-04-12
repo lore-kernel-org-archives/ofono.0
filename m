@@ -1,136 +1,123 @@
-Content-Type: multipart/mixed; boundary="===============4211319246187927983=="
+Content-Type: multipart/mixed; boundary="===============2711404853398810534=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 2/3] ppp: remove pfc and acfc
-Date: Mon, 12 Apr 2010 07:38:52 -0700
-Message-ID: <1271083133-13760-3-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH 3/3] ppp: nak unknown auth protocol
+Date: Mon, 12 Apr 2010 07:38:53 -0700
+Message-ID: <1271083133-13760-4-git-send-email-kristen@linux.intel.com>
 In-Reply-To: <1271083133-13760-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4211319246187927983==
+--===============2711404853398810534==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-We will not support pfc or acfc
+If we are sent a Config-Request with anything other than CHAP/MD5,
+send a NAK.
 ---
- gatchat/gatppp.c  |   26 --------------------------
- gatchat/ppp.h     |    4 ----
- gatchat/ppp_lcp.c |    6 +-----
- 3 files changed, 1 insertions(+), 35 deletions(-)
-
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index b98ab14..d9506c6 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -69,8 +69,6 @@ struct _GAtPPP {
- 	gint mru;
- 	char user_name[256];
- 	char passwd[256];
--	gboolean pfc;
--	gboolean acfc;
- 	guint32 xmit_accm[8];
- 	guint32 recv_accm;
- 	GIOChannel *modem;
-@@ -137,7 +135,6 @@ static void ppp_put(GAtPPP *ppp, guint8 *buf, int *pos,
- 	*pos =3D i;
- }
- =
-
--/* XXX implement PFC and ACFC */
- static struct frame_buffer *ppp_encode(GAtPPP *ppp, guint8 *data, int len)
- {
- 	int pos =3D 0;
-@@ -212,7 +209,6 @@ static void ppp_recv(GAtPPP *ppp, struct frame_buffer *=
-frame)
- 	};
- }
- =
-
--/* XXX - Implement PFC and ACFC */
- static struct frame_buffer *ppp_decode(GAtPPP *ppp, guint8 *frame)
- {
- 	guint8 *data;
-@@ -469,26 +465,6 @@ void ppp_set_xmit_accm(GAtPPP *ppp, guint32 accm)
- 	ppp->xmit_accm[0] =3D accm;
- }
- =
-
--void ppp_set_pfc(GAtPPP *ppp, gboolean pfc)
--{
--	ppp->pfc =3D pfc;
--}
--
--gboolean ppp_get_pfc(GAtPPP *ppp)
--{
--	return ppp->pfc;
--}
--
--void ppp_set_acfc(GAtPPP *ppp, gboolean acfc)
--{
--	ppp->acfc =3D acfc;
--}
--
--gboolean ppp_get_acfc(GAtPPP *ppp)
--{
--	return ppp->acfc;
--}
--
- /* Administrative Open */
- void g_at_ppp_open(GAtPPP *ppp)
- {
-@@ -593,8 +569,6 @@ GAtPPP *g_at_ppp_new(GIOChannel *modem)
- 	ppp->recv_accm =3D ~0U;
- 	ppp->xmit_accm[0] =3D ~0U;
- 	ppp->xmit_accm[3] =3D 0x60000000; /* 0x7d, 0x7e */
--	ppp->pfc =3D FALSE;
--	ppp->acfc =3D FALSE;
- =
-
- 	ppp->index =3D 0;
- =
+ gatchat/ppp.h      |   10 ++++++++++
+ gatchat/ppp_auth.c |    2 --
+ gatchat/ppp_lcp.c  |   25 +++++++++++++++++++++++--
+ 3 files changed, 33 insertions(+), 4 deletions(-)
 
 diff --git a/gatchat/ppp.h b/gatchat/ppp.h
-index 0354050..87541c9 100644
+index 87541c9..3eaf808 100644
 --- a/gatchat/ppp.h
 +++ b/gatchat/ppp.h
-@@ -95,10 +95,6 @@ void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint inf=
-olen);
- void ppp_set_auth(GAtPPP *ppp, const guint8 *auth_data);
- void ppp_set_recv_accm(GAtPPP *ppp, guint32 accm);
- void ppp_set_xmit_accm(GAtPPP *ppp, guint32 accm);
--void ppp_set_pfc(GAtPPP *ppp, gboolean pfc);
--gboolean ppp_get_pfc(GAtPPP *ppp);
--void ppp_set_acfc(GAtPPP *ppp, gboolean acfc);
--gboolean ppp_get_acfc(GAtPPP *ppp);
- struct pppcp_data * lcp_new(GAtPPP *ppp);
- void lcp_free(struct pppcp_data *lcp);
- void lcp_open(struct pppcp_data *data);
+@@ -25,6 +25,7 @@
+ #define CHAP_PROTOCOL	0xc223
+ #define IPCP_PROTO	0x8021
+ #define PPP_IP_PROTO	0x0021
++#define MD5		5
+ =
+
+ enum ppp_event {
+ 	PPP_UP =3D 1,
+@@ -61,12 +62,21 @@ static inline guint16 __get_unaligned_short(const void =
+*p)
+ 	return ptr->s;
+ }
+ =
+
++static inline void __put_unaligned_short(void *p, guint16 val)
++{
++	struct packed_short *ptr =3D p;
++	ptr->s =3D val;
++}
++
+ #define get_host_long(p) \
+ 	(ntohl(__get_unaligned_long(p)))
+ =
+
+ #define get_host_short(p) \
+ 	(ntohs(__get_unaligned_short(p)))
+ =
+
++#define put_network_short(p, val) \
++	(__put_unaligned_short(p, htons(val)))
++
+ #define ppp_info(packet) \
+ 	(packet + 4)
+ =
+
+diff --git a/gatchat/ppp_auth.c b/gatchat/ppp_auth.c
+index 3f69fa3..e04f708 100644
+--- a/gatchat/ppp_auth.c
++++ b/gatchat/ppp_auth.c
+@@ -35,8 +35,6 @@
+ #include "gatppp.h"
+ #include "ppp.h"
+ =
+
+-#define MD5	5
+-
+ struct chap_header {
+ 	guint8 code;
+ 	guint8 identifier;
 diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-index 5dfe4aa..429fa49 100644
+index 429fa49..ab83d9e 100644
 --- a/gatchat/ppp_lcp.c
 +++ b/gatchat/ppp_lcp.c
-@@ -198,13 +198,9 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppc=
+@@ -163,9 +163,30 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppc=
 p,
- 			ppp_set_auth(ppp, ppp_option_iter_get_data(&iter));
- 			break;
- 		case MAGIC_NUMBER:
--			/* don't care */
--			break;
+ =
+
+ 	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
+ 		switch (ppp_option_iter_get_type(&iter)) {
+-		case ACCM:
+-		/* TODO check to make sure it's a proto we recognize */
+ 		case AUTH_PROTO:
++		{
++			const guint8 *option_data =3D
++				ppp_option_iter_get_data(&iter);
++			guint16 proto =3D get_host_short(option_data);
++			guint8 method =3D option_data[2];
++
++			if ((proto !=3D CHAP_PROTOCOL) || (method !=3D MD5)) {
++				guint8 *option =3D g_try_malloc0(5);
++				if (!option)
++					return RCR_REJECT;
++
++				option[0] =3D AUTH_PROTO;
++				option[1] =3D 5;
++				put_network_short(&option[2], CHAP_PROTOCOL);
++				option[4] =3D MD5;
++				*new_options =3D option;
++				*new_len =3D 5;
++				return RCR_NAK;
++			}
++			break;
++		}
++
++		case ACCM:
  		case PFC:
--			ppp_set_pfc(ppp, TRUE);
--			break;
  		case ACFC:
--			ppp_set_acfc(ppp, TRUE);
-+			/* don't care */
  			break;
- 		}
- 	}
 -- =
 
 1.6.6.1
 
 
---===============4211319246187927983==--
+--===============2711404853398810534==--
 
