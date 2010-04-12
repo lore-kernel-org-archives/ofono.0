@@ -1,101 +1,117 @@
-Content-Type: multipart/mixed; boundary="===============8548099051493842774=="
+Content-Type: multipart/mixed; boundary="===============0157957338970956746=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH] ppp: don't bother with magic number
-Date: Fri, 09 Apr 2010 07:54:09 -0700
-Message-ID: <1270824849-6799-1-git-send-email-kristen@linux.intel.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: Access to SIM card when Modem is not "Powered"
+Date: Mon, 12 Apr 2010 17:08:11 +0300
+Message-ID: <y2m80fd4e751004120708t38e61cd5r29ee0bc48c8fe593@mail.gmail.com>
+In-Reply-To: <201004011007.52611.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8548099051493842774==
+--===============0157957338970956746==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Commit to not supporting loop back detection.  Because we never negotiate
-a magic number locally, we can't reliably detect it.  Just accept peer's
-magic number option, but don't bother storing it.
----
- gatchat/ppp_cp.c  |    8 +++++++-
- gatchat/ppp_lcp.c |    6 +-----
- 2 files changed, 8 insertions(+), 6 deletions(-)
+Hi Denis,
 
-diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
-index 5ac0196..af6445f 100644
---- a/gatchat/ppp_cp.c
-+++ b/gatchat/ppp_cp.c
-@@ -574,7 +574,7 @@ static void pppcp_send_echo_reply(struct pppcp_data *da=
-ta,
- 	 */
- 	packet->identifier =3D header->identifier;
- =
+2010/4/1 Denis Kenzior <denkenz@gmail.com>:
+>> What we miss from the core is a way to do asynchronous cleanup
+>> (separate from Powered). A shutdown() method in modem driver and
+>> corresponding callback, like ofono_modem_shutdown_ready(). This way we
+>> can do what ever N900 requires us to do and there is no need to touch
+>> other drivers.
+>
+> Send a patch with your proposal.
 
--	/* magic number? */
-+	/* magic number will always be zero */
- 	ppp_transmit(data->ppp, pppcp_to_ppp_packet(packet),
- 			ntohs(packet->length));
- =
+Attached.
 
-@@ -855,6 +855,12 @@ static guint8 pppcp_process_protocol_reject(struct ppp=
-cp_data *data,
- 	return RXJ_MINUS;
- }
- =
+> =C2=A0So far I like the idea of disable having a
+> hint on whether a shutdown is in progress more than an explicit shutdown
+> method.
 
-+/*
-+ * For Echo-Request, Echo-Reply, and Discard-Request, we will not
-+ * bother checking the magic number of the packet, because we will
-+ * never send an echo or discard request.  We can't reliably detect
-+ * loop back anyway since we don't negotiate a magic number.
-+ */
- static guint8 pppcp_process_echo_request(struct pppcp_data *data,
- 					struct pppcp_packet *packet)
- {
-diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-index a384a0d..5dfe4aa 100644
---- a/gatchat/ppp_lcp.c
-+++ b/gatchat/ppp_lcp.c
-@@ -64,7 +64,6 @@ enum lcp_options {
- #define REQ_OPTION_ACCM 0x1
- =
+That is also possible, but then we need also more power states
+(besides off and on).
 
- struct lcp_data {
--	guint32 magic_number;
- 	guint8 options[MAX_CONFIG_OPTION_SIZE];
- 	guint16 options_len;
- 	guint8 req_options;
-@@ -157,7 +156,6 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
- 					const struct pppcp_packet *packet,
- 					guint8 **new_options, guint16 *new_len)
- {
--	struct lcp_data *lcp =3D pppcp_get_data(pppcp);
- 	GAtPPP *ppp =3D pppcp_get_ppp(pppcp);
- 	struct ppp_option_iter iter;
- =
-
-@@ -180,7 +178,6 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
- 			if (magic =3D=3D 0)
- 				return RCR_REJECT;
- =
-
--			/* TODO: Handle loopback */
- 			break;
- 		}
- 		default:
-@@ -201,8 +198,7 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
- 			ppp_set_auth(ppp, ppp_option_iter_get_data(&iter));
- 			break;
- 		case MAGIC_NUMBER:
--			lcp->magic_number =3D
--				get_host_long(ppp_option_iter_get_data(&iter));
-+			/* don't care */
- 			break;
- 		case PFC:
- 			ppp_set_pfc(ppp, TRUE);
 -- =
 
-1.6.6.1
+Pekka.Pessi mail at nokia.com
 
+--===============0157957338970956746==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Added-ofono_modem_set_ready_to_shutdown-shutdown-met.patch"
 
---===============8548099051493842774==--
+RnJvbSAyMDNjOThlOGY5OTMyYmNlM2E5MTRiMDI1NWYyYWQ1YzkyYzdiZmZlIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBQZWtrYSBQZXNzaSA8UGVra2EuUGVzc2lAbm9raWEuY29tPgpE
+YXRlOiBNb24sIDEyIEFwciAyMDEwIDE3OjAwOjM1ICswMzAwClN1YmplY3Q6IFtQQVRDSF0gQWRk
+ZWQgb2Zvbm9fbW9kZW1fc2V0X3JlYWR5X3RvX3NodXRkb3duKCksIHNodXRkb3duIG1ldGhvZCB0
+byBkcml2ZXIuCgpFbnN1cmUgYWxsIG1vZGVtcyBhcmUgcmVhZHkgdG8gc2h1dGRvd24gYmVmb3Jl
+IHRlcm1pbmF0aW5nIGRhZW1vbi4KLS0tCiBpbmNsdWRlL21vZGVtLmggfCAgICA1ICsrKysrCiBz
+cmMvbW9kZW0uYyAgICAgfCAgIDUxICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
+KysrKysrKy0tLS0tLS0tLQogMiBmaWxlcyBjaGFuZ2VkLCA0NyBpbnNlcnRpb25zKCspLCA5IGRl
+bGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2luY2x1ZGUvbW9kZW0uaCBiL2luY2x1ZGUvbW9kZW0u
+aAppbmRleCBkNTAyNjQwLi5jZDZiZjllIDEwMDY0NAotLS0gYS9pbmNsdWRlL21vZGVtLmgKKysr
+IGIvaW5jbHVkZS9tb2RlbS5oCkBAIC01MCw2ICs1MCw4IEBAIHZvaWQgb2Zvbm9fbW9kZW1fcmVt
+b3ZlKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pOwogdm9pZCBvZm9ub19tb2RlbV9zZXRfcG93
+ZXJlZChzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtLCBvZm9ub19ib29sX3QgcG93ZXJlZCk7CiBv
+Zm9ub19ib29sX3Qgb2Zvbm9fbW9kZW1fZ2V0X3Bvd2VyZWQoc3RydWN0IG9mb25vX21vZGVtICpt
+b2RlbSk7CiAKK3ZvaWQgb2Zvbm9fbW9kZW1fc2V0X3JlYWR5X3RvX3NodXRkb3duKHN0cnVjdCBv
+Zm9ub19tb2RlbSAqbW9kZW0pOworCiB2b2lkIG9mb25vX21vZGVtX3NldF9uYW1lKHN0cnVjdCBv
+Zm9ub19tb2RlbSAqbW9kZW0sIGNvbnN0IGNoYXIgKm5hbWUpOwogCiBpbnQgb2Zvbm9fbW9kZW1f
+c2V0X3N0cmluZyhzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtLApAQCAtODUsNiArODcsOSBAQCBz
+dHJ1Y3Qgb2Zvbm9fbW9kZW1fZHJpdmVyIHsKIAogCS8qIFBvcHVsYXRlIHRoZSBhdG9tcyB0aGF0
+IGFyZSBhdmFpbGFibGUgd2l0aCBTSU0gLyBVbmxvY2tlZCBTSU0qLwogCXZvaWQgKCpwb3N0X3Np
+bSkoc3RydWN0IG9mb25vX21vZGVtICptb2RlbSk7CisKKwkvKiBQcmVwYXJlIGRldmljZSBmb3Ig
+cmVtb3ZlICovCisJaW50ICgqc2h1dGRvd24pKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pOwog
+fTsKIAogaW50IG9mb25vX21vZGVtX2RyaXZlcl9yZWdpc3Rlcihjb25zdCBzdHJ1Y3Qgb2Zvbm9f
+bW9kZW1fZHJpdmVyICopOwpkaWZmIC0tZ2l0IGEvc3JjL21vZGVtLmMgYi9zcmMvbW9kZW0uYwpp
+bmRleCBiOTM1MzI4Li5jYjk5MzAzIDEwMDY0NAotLS0gYS9zcmMvbW9kZW0uYworKysgYi9zcmMv
+bW9kZW0uYwpAQCAtNDAsNyArNDAsNiBAQCBzdGF0aWMgR1NMaXN0ICpnX21vZGVtX2xpc3QgPSBO
+VUxMOwogCiBzdGF0aWMgaW50IG5leHRfbW9kZW1faWQgPSAwOwogc3RhdGljIGdib29sZWFuIHBv
+d2VyaW5nX2Rvd24gPSBGQUxTRTsKLXN0YXRpYyBpbnQgbW9kZW1zX3JlbWFpbmluZyA9IDA7CiAK
+IGVudW0gb2Zvbm9fcHJvcGVydHlfdHlwZSB7CiAJT0ZPTk9fUFJPUEVSVFlfVFlQRV9JTlZBTElE
+ID0gMCwKQEAgLTU5LDYgKzU4LDcgQEAgc3RydWN0IG9mb25vX21vZGVtIHsKIAlndWludAkJCWlu
+dGVyZmFjZV91cGRhdGU7CiAJb2Zvbm9fYm9vbF90CQlwb3dlcmVkOwogCW9mb25vX2Jvb2xfdAkJ
+cG93ZXJlZF9wZW5kaW5nOworCW9mb25vX2Jvb2xfdCAgICAgICAgICAgIHJlYWR5X3RvX3NodXRk
+b3duOwogCWd1aW50CQkJdGltZW91dDsKIAlHSGFzaFRhYmxlCQkqcHJvcGVydGllczsKIAlzdHJ1
+Y3Qgb2Zvbm9fc2ltCSpzaW07CkBAIC01OTcsMTIgKzU5Nyw4IEBAIHZvaWQgb2Zvbm9fbW9kZW1f
+c2V0X3Bvd2VyZWQoc3RydWN0IG9mb25vX21vZGVtICptb2RlbSwgb2Zvbm9fYm9vbF90IHBvd2Vy
+ZWQpCiAJCX0KIAl9CiAKLQlpZiAocG93ZXJpbmdfZG93biAmJiBwb3dlcmVkID09IEZBTFNFKSB7
+Ci0JCW1vZGVtc19yZW1haW5pbmcgLT0gMTsKLQotCQlpZiAobW9kZW1zX3JlbWFpbmluZyA9PSAw
+KQotCQkJX19vZm9ub19leGl0KCk7Ci0JfQorCWlmIChwb3dlcmluZ19kb3duICYmIHBvd2VyZWQg
+PT0gRkFMU0UpCisJCV9fb2Zvbm9fbW9kZW1fc2h1dGRvd24oKTsKIH0KIAogb2Zvbm9fYm9vbF90
+IG9mb25vX21vZGVtX2dldF9wb3dlcmVkKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pCkBAIC02
+MTMsNiArNjA5LDE0IEBAIG9mb25vX2Jvb2xfdCBvZm9ub19tb2RlbV9nZXRfcG93ZXJlZChzdHJ1
+Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtKQogCXJldHVybiBtb2RlbS0+cG93ZXJlZDsKIH0KIAordm9p
+ZCBvZm9ub19tb2RlbV9zZXRfcmVhZHlfdG9fc2h1dGRvd24oc3RydWN0IG9mb25vX21vZGVtICpt
+b2RlbSkKK3sKKwltb2RlbS0+cmVhZHlfdG9fc2h1dGRvd24gPSBUUlVFOworCisJaWYgKHBvd2Vy
+aW5nX2Rvd24pCisJCV9fb2Zvbm9fbW9kZW1fc2h1dGRvd24oKTsKK30KKwogc3RhdGljIGdib29s
+ZWFuIHRyaWdnZXJfaW50ZXJmYWNlX3VwZGF0ZSh2b2lkICpkYXRhKQogewogCXN0cnVjdCBvZm9u
+b19tb2RlbSAqbW9kZW0gPSBkYXRhOwpAQCAtMTI5OCwxMCArMTMwMiwyNCBAQCB2b2lkIG9mb25v
+X21vZGVtX2RyaXZlcl91bnJlZ2lzdGVyKGNvbnN0IHN0cnVjdCBvZm9ub19tb2RlbV9kcml2ZXIg
+KmQpCiAJfQogfQogCitzdGF0aWMgaW50IG1vZGVtX3NodXRkb3duKHN0cnVjdCBvZm9ub19tb2Rl
+bSAqbW9kZW0pCit7CisJY29uc3Qgc3RydWN0IG9mb25vX21vZGVtX2RyaXZlciAqZHJpdmVyID0g
+bW9kZW0tPmRyaXZlcjsKKworCWlmIChkcml2ZXIgJiYgZHJpdmVyLT5zaHV0ZG93bikKKwkJcmV0
+dXJuIGRyaXZlci0+c2h1dGRvd24obW9kZW0pOworCisJbW9kZW0tPnJlYWR5X3RvX3NodXRkb3du
+ID0gVFJVRTsKKwlyZXR1cm4gMDsKK30KKwogdm9pZCBfX29mb25vX21vZGVtX3NodXRkb3duKCkK
+IHsKIAlzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVtOwogCUdTTGlzdCAqbDsKKwlnYm9vbGVhbiBh
+bHJlYWR5ID0gcG93ZXJpbmdfZG93bjsKKwlpbnQgbW9kZW1zX3JlbWFpbmluZyA9IDA7CisJaW50
+IGVycm9yOwogCiAJcG93ZXJpbmdfZG93biA9IFRSVUU7CiAKQEAgLTEzMTEsMTEgKzEzMjksMjYg
+QEAgdm9pZCBfX29mb25vX21vZGVtX3NodXRkb3duKCkKIAkJaWYgKG1vZGVtLT5kcml2ZXIgPT0g
+TlVMTCkKIAkJCWNvbnRpbnVlOwogCisJCWlmIChhbHJlYWR5KSB7CisJCQlpZiAoIW1vZGVtLT5y
+ZWFkeV90b19zaHV0ZG93bikKKwkJCQlyZXR1cm47CisJCQlpZiAobW9kZW0tPnBvd2VyZWQpCisJ
+CQkJcmV0dXJuOworCQkJY29udGludWU7CisJCX0KKworCQllcnJvciA9IG1vZGVtX3NodXRkb3du
+KG1vZGVtKTsKKwkJaWYgKGVycm9yID09IC1FSU5QUk9HUkVTUykgeworCQkJbW9kZW1zX3JlbWFp
+bmluZysrOworCQkJY29udGludWU7CisJCX0KKwogCQlpZiAobW9kZW0tPnBvd2VyZWQgPT0gRkFM
+U0UgJiYgbW9kZW0tPnBvd2VyZWRfcGVuZGluZyA9PSBGQUxTRSkKIAkJCWNvbnRpbnVlOwogCi0J
+CWlmIChzZXRfcG93ZXJlZChtb2RlbSwgRkFMU0UpID09IC1FSU5QUk9HUkVTUykKLQkJCW1vZGVt
+c19yZW1haW5pbmcgKz0gMTsKKwkJZXJyb3IgPSBzZXRfcG93ZXJlZChtb2RlbSwgRkFMU0UpOwor
+CQlpZiAoZXJyb3IgPT0gLUVJTlBST0dSRVNTIHx8IGVycm9yID09IC1FQUxSRUFEWSkKKwkJCW1v
+ZGVtc19yZW1haW5pbmcrKzsKIAl9CiAKIAlpZiAobW9kZW1zX3JlbWFpbmluZyA9PSAwKQotLSAK
+MS42LjMuMwoK
+
+--===============0157957338970956746==--
 
