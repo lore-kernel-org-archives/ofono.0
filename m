@@ -1,219 +1,351 @@
-Content-Type: multipart/mixed; boundary="===============0822866558682519718=="
+Content-Type: multipart/mixed; boundary="===============8365534731298232169=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 6/8] Add prototype to watch voicecall
-Date: Tue, 13 Apr 2010 22:18:17 +0800
-Message-ID: <1271168299-4862-7-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1271168299-4862-6-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 7/8] Add atemulator plugin
+Date: Tue, 13 Apr 2010 22:18:18 +0800
+Message-ID: <1271168299-4862-8-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1271168299-4862-7-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0822866558682519718==
+--===============8365534731298232169==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/emulator.c  |   77 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am          |    3 +
+ plugins/atemulator.c |  299 ++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/ofono.h     |    4 +++
- src/voicecall.c |   33 +++++++++++++++++++++++
- 3 files changed, 114 insertions(+), 0 deletions(-)
+ 2 files changed, 302 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/atemulator.c
 
-diff --git a/src/emulator.c b/src/emulator.c
-index e21d826..4b4591f 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -42,8 +42,24 @@ struct ofono_emulator {
- 	void *driver_data;
- 	struct ofono_atom *atom;
- 	struct ofono_atom *voicecall;		/* emulated voicecall atom */
-+	GSList *calls;
-+	int call_watch;
- };
+diff --git a/Makefile.am b/Makefile.am
+index eda7ad6..3abd577 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -217,6 +217,9 @@ builtin_sources +=3D plugins/palmpre.c
+ builtin_modules +=3D ste
+ builtin_sources +=3D plugins/ste.c
  =
 
-+static gint call_compare(gconstpointer a, gconstpointer b)
++builtin_modules +=3D atemulator
++builtin_sources +=3D plugins/atemulator.c
++
+ endif
+ =
+
+ if MAINTAINER_MODE
+diff --git a/plugins/atemulator.c b/plugins/atemulator.c
+new file mode 100644
+index 0000000..8a8c79c
+--- /dev/null
++++ b/plugins/atemulator.c
+@@ -0,0 +1,299 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <errno.h>
++#include <unistd.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
++#include <arpa/inet.h>
++
++#include <glib.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/emulator.h>
++
++#include <utmp.h>
++#include <pty.h>
++
++#include "gatserver.h"
++
++struct at_emulator_data {
++	GAtServer *server;
++	GIOChannel *client_io;
++};
++
++static GAtServerResult dial_voicecall(struct ofono_emulator *emulator,
++					const char *dial_str)
 +{
-+	const struct ofono_call *ca =3D a;
-+	const struct ofono_call *cb =3D b;
++	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
++	char c;
++	char *number;
++	int len =3D strlen(dial_str);
 +
-+	if (ca->id < cb->id)
-+		return -1;
++	/* Skip last comma */
++	len--;
 +
-+	if (ca->id > cb->id)
-+		return 1;
++	c =3D dial_str[len-1];
++	/* Skip closed user group flag */
++	if (c =3D=3D 'G' || c =3D=3D 'g')
++		len--;
++
++	c =3D dial_str[len-1];
++	/* Skip caller id suppress flag */
++	if (c =3D=3D 'I' || c =3D=3D 'i')
++		len--;
++
++	number =3D g_strndup(dial_str, len);
++
++	if (!ofono_emulator_dial(emulator, number))
++		goto done;
++
++	res =3D G_AT_SERVER_RESULT_OK;
++
++done:
++	if (number)
++		g_free(number);
++
++	return res;
++}
++
++static GAtServerResult dial_call(struct ofono_emulator *emulator,
++					const char *dial_str)
++{
++	struct at_emulator_data *data =3D ofono_emulator_get_data(emulator);
++	GAtServer *server =3D data->server;
++	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
++
++	if (dial_str[0] =3D=3D '*' || dial_str[0] =3D=3D '#') {
++		/* Supplementary service request */
++		sleep(2);
++		g_at_server_send_intermediate(server, "CONNECT");
++		sleep(2);
++
++		/* Perform PPP connection */
++		res =3D G_AT_SERVER_RESULT_OK;
++	} else
++		/* Voice call */
++		res =3D dial_voicecall(emulator, dial_str);
++
++	return res;
++}
++
++static void dial_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *emulator =3D user_data;
++	struct at_emulator_data *data =3D ofono_emulator_get_data(emulator);
++	GAtServer *server =3D data->server;
++	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
++	GAtResultIter iter;
++	const char *dial_str;
++
++	if (type !=3D G_AT_SERVER_REQUEST_TYPE_SET)
++		goto done;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "D"))
++		goto done;
++
++	dial_str =3D g_at_result_iter_raw_line(&iter);
++	if (!dial_str)
++		goto done;
++
++	res =3D dial_call(emulator, dial_str);
++
++done:
++	g_at_server_send_final(server, res);
++}
++
++static void at_notify_call(struct ofono_emulator *emulator,
++				struct ofono_call *nc)
++{
++	DBG("notify new call %s\n", nc->phone_number.number);
++}
++
++static void voicecall_enable(struct ofono_emulator *emulator)
++{
++	struct at_emulator_data *data =3D ofono_emulator_get_data(emulator);
++	GAtServer *server =3D data->server;
++
++	g_at_server_register(server, "D", dial_cb, emulator, NULL);
++}
++
++static int at_emulator_probe(struct ofono_emulator *emulator)
++{
++	struct at_emulator_data *data;
++
++	DBG("%p", emulator);
++
++	data =3D g_try_new0(struct at_emulator_data, 1);
++	if (!data)
++		return -ENOMEM;
++
++	ofono_emulator_set_data(emulator, data);
++
++	ofono_emulator_register(emulator);
 +
 +	return 0;
 +}
 +
- /* steal from plugins/hfp.c */
- static int send_method_call_with_reply(const char *dest, const char *path,
- 				const char *interface, const char *method,
-@@ -141,6 +157,62 @@ gboolean ofono_emulator_dial(struct ofono_emulator *em=
-ulator,
- 	return TRUE;
- }
- =
-
-+static GSList *parse_call_list(GSList *calls)
++static void at_emulator_remove(struct ofono_emulator *emulator)
 +{
-+	GSList *new_calls =3D NULL;
-+	GSList *l =3D NULL;
-+	struct ofono_call *c;
-+	struct ofono_call *nc;
++	struct at_emulator_data *data =3D ofono_emulator_get_data(emulator);
 +
-+	for (l =3D calls; l; l =3D l->next) {
-+		c =3D l->data;
++	DBG("%p", emulator);
 +
-+		nc =3D g_try_new0(struct ofono_call, 1);
-+		if (!nc)
-+			break;
-+
-+		memcpy(nc, c, sizeof(struct ofono_call));
-+
-+		new_calls =3D g_slist_insert_sorted(new_calls, nc, call_compare);
-+	}
-+
-+	return new_calls;
++	g_free(data);
++	ofono_emulator_set_data(emulator, NULL);
 +}
 +
-+static void voicecall_call_watch(GSList *calls, void *user_data)
++static void at_emulator_debug(const char *str, void *user_data)
 +{
-+	struct ofono_emulator *emulator =3D user_data;
-+	GSList *new_calls, *n, *o;
-+	struct ofono_call *nc, *oc;
-+
-+	new_calls =3D parse_call_list(calls);
-+	n =3D new_calls;
-+	o =3D emulator->calls;
-+
-+	while (n || o) {
-+		nc =3D n ? n->data : NULL;
-+		oc =3D o ? o->data : NULL;
-+
-+		if (oc && (!nc || (nc->id > oc->id))) {
-+			/* a call is released */
-+			o =3D o->next;
-+		} else if (nc && (!oc || (nc->id < oc->id))) {
-+			if (emulator->driver->notify_call)
-+				emulator->driver->notify_call(emulator, nc);
-+
-+			n =3D n->next;
-+		} else {
-+			n =3D n->next;
-+			o =3D o->next;
-+		}
-+	}
-+
-+	g_slist_foreach(emulator->calls, (GFunc) g_free, NULL);
-+	g_slist_free(emulator->calls);
-+
-+	emulator->calls =3D new_calls;
++	ofono_info("%s", str);
 +}
 +
- static void ofono_emulator_watch_voicecall(struct ofono_emulator *emulator)
- {
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(emulator->atom);
-@@ -149,6 +221,11 @@ static void ofono_emulator_watch_voicecall(struct ofon=
-o_emulator *emulator)
- 	voicecall =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_VOICECALL);
- =
-
- 	emulator->voicecall =3D voicecall;
-+	emulator->call_watch =3D __ofono_atom_add_signal_watch(voicecall,
-+					OFONO_SIGNAL_TYPE_VOICECALL_STATUS,
-+					(ofono_signal_watch_func)
-+						voicecall_call_watch,
-+					emulator, NULL);
- }
- =
-
- static DBusMessage *emulator_get_properties(DBusConnection *conn,
-diff --git a/src/ofono.h b/src/ofono.h
-index 118406d..54c0a7b 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -125,6 +125,7 @@ enum ofono_atom_watch_condition {
- enum ofono_signal_type {
- 	OFONO_SIGNAL_TYPE_NETREG_STATUS =3D 0,
- 	OFONO_SIGNAL_TYPE_SIM_READY =3D 1,
-+	OFONO_SIGNAL_TYPE_VOICECALL_STATUS =3D 2,
- };
- =
-
- typedef void (*ofono_atom_watch_func)(struct ofono_atom *atom,
-@@ -189,6 +190,9 @@ void __ofono_atom_free(struct ofono_atom *atom);
- #include <ofono/phonebook.h>
- #include <ofono/sms.h>
- #include <ofono/voicecall.h>
-+
-+typedef void (*ofono_voicecall_status_notify_cb_t)(GSList *calls, void *da=
-ta);
-+
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
- #include <ofono/radio-settings.h>
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 8bf6379..a80678a 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -682,6 +682,37 @@ static gboolean voicecalls_have_incoming(struct ofono_=
-voicecall *vc)
- 	return voicecalls_have_with_status(vc, CALL_STATUS_INCOMING);
- }
- =
-
-+static void notify_call_watches(struct ofono_voicecall *vc)
++static void set_raw_mode(int fd)
 +{
-+	struct ofono_watchlist_item *item;
-+	GSList *calls =3D NULL;
-+	GSList *call_watches;
-+	GSList *l;
-+	struct voicecall *v;
-+	ofono_voicecall_status_notify_cb_t notify;
++	struct termios options;
 +
-+	for (l =3D vc->call_list; l; l =3D l->next) {
-+		v =3D l->data;
++	tcgetattr(fd, &options);
 +
-+		calls =3D g_slist_prepend(calls, v->call);
-+	}
++	/* Set TTY as raw mode to disable echo back of input characters
++	 * when they are received from Modem to avoid feedback loop */
++	options.c_lflag &=3D ~(ICANON | ECHO | ECHOE | ISIG);
 +
-+	if (calls)
-+		calls =3D g_slist_reverse(calls);
-+
-+	call_watches =3D __ofono_atom_get_signal_watches(vc->atom,
-+					OFONO_SIGNAL_TYPE_VOICECALL_STATUS);
-+
-+	for (l =3D call_watches; l; l =3D l->next) {
-+		item =3D l->data;
-+		notify =3D item->notify;
-+
-+		notify(calls, item->notify_data);
-+	}
-+
-+	g_slist_free(calls);
++	tcsetattr(fd, TCSANOW, &options);
 +}
 +
- static gboolean real_emit_call_list_changed(void *data)
- {
- 	struct ofono_voicecall *vc =3D data;
-@@ -700,6 +731,8 @@ static gboolean real_emit_call_list_changed(void *data)
- =
-
- 	vc->emit_calls_source =3D 0;
- =
-
-+	notify_call_watches(vc);
++static int create_tty(GIOChannel *client_io)
++{
++	int master, slave;
++	char pty_name[256];
 +
- 	return FALSE;
- }
- =
-
++	if (openpty(&master, &slave, pty_name, NULL, NULL) < 0)
++		return 0;
++
++	set_raw_mode(slave);
++
++	client_io =3D g_io_channel_unix_new(slave);
++	g_io_channel_set_close_on_unref(client_io, TRUE);
++
++	DBG("new pty is created@%s\n", pty_name);
++
++	return master;
++}
++
++static int at_emulator_enable(struct ofono_emulator *emulator)
++{
++	GAtServer *server;
++	GIOChannel *server_io;
++	GIOChannel *client_io =3D NULL;
++	int master;
++	int ret =3D 0;
++	struct at_emulator_data *data =3D ofono_emulator_get_data(emulator);
++
++	DBG("%p", emulator);
++
++	master =3D create_tty(client_io);
++	if (!master) {
++		ret =3D -EIO;
++		goto error;
++	}
++
++	server_io =3D g_io_channel_unix_new(master);
++	if (!server_io) {
++		g_io_channel_shutdown(server_io, FALSE, NULL);
++		g_io_channel_unref(server_io);
++
++		ret =3D -EIO;
++		goto error;
++	}
++
++	server =3D g_at_server_new(server_io);
++	if (!server) {
++		g_io_channel_shutdown(server_io, FALSE, NULL);
++		g_io_channel_unref(server_io);
++
++		return FALSE;
++	}
++
++	data->server =3D server;
++	data->client_io =3D client_io;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_server_set_debug(server, at_emulator_debug, NULL);
++
++	voicecall_enable(emulator);
++
++	return 0;
++
++error:
++	g_free(data);
++
++	return ret;
++}
++
++static int at_emulator_disable(struct ofono_emulator *emulator)
++{
++	struct at_emulator_data *data =3D ofono_emulator_get_data(emulator);
++
++	DBG("%p", emulator);
++
++	g_io_channel_unref(data->client_io);
++	g_at_server_unref(data->server);
++	g_at_server_shutdown(data->server);
++	data->server =3D NULL;
++
++	return 0;
++}
++
++static struct ofono_emulator_driver at_emulator_driver =3D {
++	.name		=3D "atemulator",
++	.probe		=3D at_emulator_probe,
++	.remove		=3D at_emulator_remove,
++	.enable		=3D at_emulator_enable,
++	.disable	=3D at_emulator_disable,
++	.notify_call	=3D at_notify_call,
++};
++
++static int at_emulator_init(void)
++{
++	return ofono_emulator_driver_register(&at_emulator_driver);
++}
++
++static void at_emulator_exit(void)
++{
++	ofono_emulator_driver_unregister(&at_emulator_driver);
++}
++
++OFONO_PLUGIN_DEFINE(atemulator, "AT server emulator", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, at_emulator_init,
++		at_emulator_exit)
 -- =
 
 1.6.6.1
 
 
---===============0822866558682519718==--
+--===============8365534731298232169==--
 
