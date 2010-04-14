@@ -1,41 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============3678591388282749215=="
+Content-Type: multipart/mixed; boundary="===============7821086638169921617=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Add support for Option iCON 451
-Date: Wed, 14 Apr 2010 03:37:33 -0700
-Message-ID: <1271241453.22838.12.camel@localhost.localdomain>
-In-Reply-To: <20100414060005.GB19352@gumpy.localdomain>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: calypso does not power up from 0.17
+Date: Wed, 14 Apr 2010 05:43:05 -0500
+Message-ID: <201004140543.06250.denkenz@gmail.com>
+In-Reply-To: <t2g359c5481004140152gdc106afcpfaaf00df4c75e9a@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3678591388282749215==
+--===============7821086638169921617==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+Hi Niko,
 
-> > * Daniel Wagner <daniel.wagner@bmw-carit.de> [2010-04-14 07:45:11 +02=
-00]:
-> > =
-
-> > > Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-> > =
-
-> > We do not use the signed-off line in oFono.
+> Hi!
 > =
 
-> Ah, sorry about that . Didn't know that. Do you want me to resend the
-> patch without signoff?
+> 0.16 is the last release that works (well) on the openmoko freerunner
+> while from 0.17 to 0.20 I have:
+> =
 
-I just fixed that up for you manually. Just keep it in mind next time.
-Patch has been applied. Thanks.
+> root(a)om-gta02 ~ $ dbus-send --system --dest=3Dorg.ofono --print-reply
+> /freerunner org.ofono.Modem.SetProperty string:Powered
+> variant:boolean:true
+> Error org.ofono.Error.Timedout: Operation failure due to timeout
+> =
 
-Regards
+> I'm sorry I do not have much time in this period to dig deeply, anyway
+> I found the commit that introduced the problem with git bisect.
 
-Marcel
+I have a hunch that the GAtMux code might need some love.  Can you try the =
 
+following patch?
 
+diff --git a/gatchat/gatmux.c b/gatchat/gatmux.c
+index b70f6a0..139edd2 100644
+--- a/gatchat/gatmux.c
++++ b/gatchat/gatmux.c
+@@ -433,6 +433,9 @@ static GIOStatus channel_read(GIOChannel *channel, gcha=
+r =
 
---===============3678591388282749215==--
+*buf, gsize count,
+ =
+
+        *bytes_read =3D ring_buffer_read(mux_channel->buffer, buf, avail);
+ =
+
++       if (*bytes_read =3D=3D 0)
++               return G_IO_STATUS_AGAIN;
++
+        return G_IO_STATUS_NORMAL;
+ }
+ =
+
+Regards,
+-Denis
+
+--===============7821086638169921617==--
 
