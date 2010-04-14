@@ -1,45 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============7675455303677529435=="
+Content-Type: multipart/mixed; boundary="===============3635213901206422599=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: calypso does not power up from 0.17
-Date: Wed, 14 Apr 2010 10:41:49 -0500
-Message-ID: <201004141041.49738.denkenz@gmail.com>
-In-Reply-To: <w2s359c5481004140445w927cd1b6vd6467dc3e1fe60ab@mail.gmail.com>
+Subject: Re: [PATCH 01/13] Fix the logic when parsing c-apdu objects
+Date: Wed, 14 Apr 2010 13:13:34 -0500
+Message-ID: <201004141313.35173.denkenz@gmail.com>
+In-Reply-To: <1270548407-12042-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7675455303677529435==
+--===============3635213901206422599==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Niko,
+Hi Yang,
 
-> On Wed, Apr 14, 2010 at 12:43 PM, Denis Kenzior <denkenz@gmail.com> wro=
-te:
-> [...]
+> ---
+>  src/stkutil.c |    1 -
+>  1 files changed, 0 insertions(+), 1 deletions(-)
 > =
 
-> > I have a hunch that the GAtMux code might need some love.  Can you try
-> > the following patch?
-> =
 
-> [...]
-> =
-
-> It works :)
-> =
-
-> Just need a couple of days to verify how the version bump affects our
-> freerunners.
-
-Good to know, thanks for doing the hard work that made the problem much mor=
-e =
-
-obvious.  Patch has now been pushed upstream.
+All 13 patches have now been applied upstream with minor fixed in-between.
 
 Regards,
 -Denis
 
---===============7675455303677529435==--
+--===============3635213901206422599==--
 
