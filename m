@@ -1,30 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============3635213901206422599=="
+Content-Type: multipart/mixed; boundary="===============1011532805445535509=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/13] Fix the logic when parsing c-apdu objects
-Date: Wed, 14 Apr 2010 13:13:34 -0500
-Message-ID: <201004141313.35173.denkenz@gmail.com>
-In-Reply-To: <1270548407-12042-1-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH] ppp: nak unknown auth protocol
+Date: Wed, 14 Apr 2010 17:17:32 -0500
+Message-ID: <201004141717.33047.denkenz@gmail.com>
+In-Reply-To: <1271171837-16303-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3635213901206422599==
+--===============1011532805445535509==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Kristen,
 
-> ---
->  src/stkutil.c |    1 -
->  1 files changed, 0 insertions(+), 1 deletions(-)
-> =
+> If we are sent a Config-Request for an auth proto other than
+> CHAP with MD5, send a NAK.
 
-
-All 13 patches have now been applied upstream with minor fixed in-between.
+This patch has been applied, thanks.
 
 Regards,
 -Denis
+=20
 
---===============3635213901206422599==--
+--===============1011532805445535509==--
 
