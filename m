@@ -1,540 +1,355 @@
-Content-Type: multipart/mixed; boundary="===============6773627106883855656=="
+Content-Type: multipart/mixed; boundary="===============0354497168016230415=="
 MIME-Version: 1.0
-From: Nicola Mfb <nicola.mfb@gmail.com>
-Subject: Re: calypso does not power up from 0.17
-Date: Wed, 14 Apr 2010 13:45:44 +0200
-Message-ID: <w2s359c5481004140445w927cd1b6vd6467dc3e1fe60ab@mail.gmail.com>
-In-Reply-To: <201004140543.06250.denkenz@gmail.com>
+From: Berthier, Emmanuel <emmanuel.berthier@intel.com>
+Subject: oFono build configuration: delta between Git repo and Meego source
+ RPM.
+Date: Wed, 14 Apr 2010 14:19:39 +0100
+Message-ID: <2A84145621092446B6659B8A0F28E26F4617FEE83E@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6773627106883855656==
+--===============0354497168016230415==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Apr 14, 2010 at 12:43 PM, Denis Kenzior <denkenz@gmail.com> wrote:
-[...]
-> I have a hunch that the GAtMux code might need some love. =C2=A0Can you t=
-ry the
-> following patch?
->
-[...]
+Hi,
 
-It works :)
+I work with oFono 0.18 and Meego Handset build 03-23-2010.
 
-Just need a couple of days to verify how the version bump affects our
-freerunners.
+To build ofonod manually from Git repo, I use:
+> ./bootstrap-configure
+> make
+I can use and debug this daemon without problem.
 
-Thanks!
+To build ofonod from source RPM provided by Meego, I use:
+> build --clean --target i586 --arch i586:i686 --root $BUILD_ROOT --rpms $B=
+UILD_RPMS ofono.spec
+When I launch this binary manually in non-daemon mode, I obtain many errors:
 
-    Niko
+>  ./ofonod -nd "*"
+ofonod[736]: oFono version 0.18
+ofonod[736]: src/plugin.c:__ofono_plugin_init()
+(ofonod:736): GConf-WARNING **: Client failed to connect to the D-BUS daemo=
+n:
+Failed to connect to socket /tmp/dbus-kq3vrFoKcH: Connection refused
+GConf Error: No D-BUS daemon running
+(ofonod:736): GConf-WARNING **: Client failed to connect to the D-BUS daemo=
+n:
+Failed to connect to socket /tmp/dbus-kq3vrFoKcH: Connection refused
+GConf Error: No D-BUS daemon running
+(ofonod:736): GConf-WARNING **: Client failed to connect to the D-BUS daemo=
+n:
+Failed to connect to socket /tmp/dbus-kq3vrFoKcH: Connection refused
+GConf Error: No D-BUS daemon running
+(ofonod:736): libecal-WARNING **: Cannot activate ECal: Failed to connect t=
+o socket /tmp/dbus-kq3vrFoKcH: Connection refused
+(ofonod:736): libecal-CRITICAL **: e_cal_get_uri: assertion `ecal !=3D NULL=
+' failed
+(ofonod:736): GConf-WARNING **: Client failed to connect to the D-BUS daemo=
+n:
+Failed to connect to socket /tmp/dbus-kq3vrFoKcH: Connection refused
+GConf Error: No D-BUS daemon running
+(ofonod:736): GConf-WARNING **: Client failed to connect to the D-BUS daemo=
+n:
+Failed to connect to socket /tmp/dbus-kq3vrFoKcH: Connection refused
+GConf Error: No D-BUS daemon running
+(ofonod:736): libecal-WARNING **: Cannot activate ECal: Failed to connect t=
+o socket /tmp/dbus-kq3vrFoKcH: Connection refused
+(ofonod:736): GConf-WARNING **: Client failed to connect to the D-BUS daemo=
+n:
+Failed to connect to socket /tmp/dbus-kq3vrFoKcH: Connection refused
+GConf Error: No D-BUS daemon running
+(ofonod:736): GConf-WARNING **: Client failed to connect to the D-BUS daemo=
+n:
+Failed to connect to socket /tmp/dbus-kq3vrFoKcH: Connection refused
+GConf Error: No D-BUS daemon running
+(ofonod:736): libecal-WARNING **: Cannot activate ECal: Failed to connect t=
+o socket /tmp/dbus-kq3vrFoKcH: Connection refused
 
-log following:
+I realized that these errors are generated during the callHistory plugin in=
+itialization.
 
-ofonod[856]: plugins/calypso.c:write_file()
-/sys/bus/platform/devices/neo1973-pm-gsm.0/power_on, 0
-ofonod[856]: plugins/calypso.c:write_file()
-/sys/bus/platform/devices/neo1973-pm-gsm.0/reset, 0
-ofonod[856]: plugins/calypso.c:write_file()
-/sys/bus/platform/devices/neo1973-pm-gsm.0/power_on, 1
-ofonod[856]: plugins/calypso.c:write_file()
-/sys/bus/platform/devices/neo1973-pm-gsm.0/reset, 1
-ofonod[856]: plugins/calypso.c:write_file()
-/sys/bus/platform/devices/neo1973-pm-gsm.0/reset, 0
-ofonod[856]: plugins/calypso.c:modem_initialize()
-ofonod[856]: src/modem.c:get_modem_property() modem 0x86928 property Device
-ofonod[856]: Setup: > AT\r
-ofonod[856]: Setup: < AT-Command Interpreter ready\r\n
-ofonod[856]: Setup: Wakeup got no response
-ofonod[856]: Setup: > AT\r
-ofonod[856]: Setup: < AT\r\r\nOK\r\n
-ofonod[856]: Setup: Finally woke up the modem
-ofonod[856]: Setup: > ATE0\r
-ofonod[856]: Setup: < ATE0\r
-ofonod[856]: Setup: < \r\nOK\r\n
-ofonod[856]: Setup: > AT+CMUX=3D?\r
-ofonod[856]: Setup: < \r\n+CMUX: (1),(0),(1-5),(10-100),(1-255),(0-100),(2-=
-255),
-ofonod[856]: Setup: < (1-255),(1-7)\r\n\r\nOK\r\n
-ofonod[856]: Setup: > AT+CMUX=3D1,0,5,64\r
-ofonod[856]: Setup: < \r\nOK\r\n
-ofonod[856]: plugins/calypso.c:mux_setup() 0x87e80
-ofonod[856]: DLC3: > AT\r
-denis patch
-ofonod[856]: DLC0: < AT-Command Interpreter ready\r\n
-denis patch
-denis patch
-ofonod[856]: DLC1: < AT-Command Interpreter ready\r\n
-denis patch
-denis patch
-ofonod[856]: DLC2: < AT-Command Interpreter ready\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < AT-Command Interpreter ready\r\n
-denis patch
-ofonod[856]: DLC3: Wakeup got no response
-ofonod[856]: DLC3: > AT\r
-denis patch
-ofonod[856]: DLC3: < AT\r
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: Finally woke up the modem
-ofonod[856]: DLC3: > AT+CFUN=3D1\r
-denis patch
-ofonod[856]: DLC3: < AT+CFUN=3D1\r
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: plugins/calypso.c:cfun_set_on_cb()
-ofonod[856]: plugins/calypso.c:calypso_pre_sim()
-ofonod[856]: DLC0: > AT\r
-ofonod[856]: DLC1: > AT\r
-ofonod[856]: DLC2: > AT\r
-ofonod[856]: DLC3: > AT\r
-ofonod[856]: src/sim.c:ofono_sim_add_ready_watch() 0x86f20
-ofonod[856]: src/sim.c:ofono_sim_add_ready_watch() 0x86f20
-denis patch
-ofonod[856]: DLC0: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC0: Finally woke up the modem
-ofonod[856]: DLC0: > ATE0\r
-denis patch
-ofonod[856]: DLC1: < AT\r\r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: Finally woke up the modem
-denis patch
-ofonod[856]: DLC2: < AT\r\r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: Finally woke up the modem
-denis patch
-ofonod[856]: DLC3: < AT\r\r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: Finally woke up the modem
-denis patch
-ofonod[856]: DLC0: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC0: > AT%CUNS=3D0\r
-ofonod[856]: DLC1: > ATE0\r
-ofonod[856]: DLC2: > ATE0\r
-ofonod[856]: DLC3: > ATE0\r
-denis patch
-ofonod[856]: DLC0: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC0: > AT%CPI=3D3\r
-denis patch
-ofonod[856]: DLC1: < ATE0\r
-denis patch
-denis patch
-ofonod[856]: DLC2: < ATE0\r
-denis patch
-denis patch
-ofonod[856]: DLC3: < ATE0\r
-denis patch
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: > AT%CUNS=3D0\r
-denis patch
-ofonod[856]: DLC0: < \r\nOK\r\n
-denis patch
-ofonod[856]: drivers/calypsomodem/voicecall.c:calypso_voicecall_initialized=
-()
-voicecall_init: registering to notifications
-denis patch
-ofonod[856]: DLC2: < \r\nOK\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: > AT%CUNS=3D0\r
-ofonod[856]: DLC3: > AT%CUNS=3D0\r
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-denis patch
-ofonod[856]: DLC2: < \r\nOK\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT%CSTAT=3D1\r
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT(a)ST=3D"-26"\r
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT%SLEEP=3D2\r
-denis patch
-ofonod[856]: DLC3: < \r\nEXT: I\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CGMI\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CGMI: FIC/OpenMoko\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CRSM=3D176,28590,0,0,1\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM: 144,0,03\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: drivers/atmodem/sim.c:at_crsm_read_cb() crsm_read_cb: 90, 00, 1
-ofonod[856]: DLC3: > AT+CRSM=3D192,28599\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM:
-148,4,00000E187F20020000000000099300190C00838A838A\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: src/voicecall.c:ecc_g2_read_cb() 0
-ofonod[856]: DLC3: > AT+CGMM\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CGMM: "Neo1973 GTA01/GTA02 Embedded GSM
-Modem"\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CPIN?\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CPIN: READY\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: drivers/atmodem/sim.c:at_cpin_cb() crsm_pin_cb: READY
-ofonod[856]: DLC3: > AT+CRSM=3D192,28599\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM:
-148,4,00000E187F20020000000000099300190C00838A838A\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: src/voicecall.c:ecc_g3_read_cb() 0
-ofonod[856]: DLC3: > AT+CGMR\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CGMR: "GSM:
-gsm_ac_gp_fd_pu_em_cph_ds_vc_cal35_ri_36_amd8_ts0
-denis patch
-denis patch
-ofonod[856]: DLC3: < -Moko11"\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CIMI\r
-denis patch
-ofonod[856]: DLC3: < \r\n222108201031578\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: drivers/atmodem/sim.c:at_cimi_cb() cimi_cb: 222108201031578
-ofonod[856]: DLC3: > AT+CRSM=3D192,28421\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM: 111,0\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CGSN\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CGSN: 354651011629286\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CRSM=3D192,12037\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM:
-148,4,00000E183F00010000000000099302160C00838A838A\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CRSM=3D192,28438\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM:
-148,4,00000E187F20020000000000099300190C00838A838A\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: plugins/calypso.c:calypso_post_sim()
-ofonod[856]: drivers/atmodem/call-volume.c:at_call_volume_probe() 0x876d8
-ofonod[856]: DLC1: > AT+CREG=3D?\r
-ofonod[856]: DLC3: > AT+CUSD=3D1\r
-denis patch
-ofonod[856]: DLC1: < \r\n+CREG: (0-2)\r\n
-denis patch
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: > AT+CREG=3D2\r
-ofonod[856]: DLC3: > AT+CAOC=3D2\r
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: > AT%CSQ=3D1\r
-ofonod[856]: DLC3: > AT+CCWE=3D1\r
-denis patch
-ofonod[856]: DLC1: < \r\n%CSQ: 1 \r\n
-denis patch
-ofonod[856]: drivers/atmodem/network-registration.c:report_signal_strength()
-csq_notify: 1
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: > AT+CREG?\r
-ofonod[856]: DLC3: > AT+CSSN=3D1,1\r
-denis patch
-ofonod[856]: DLC1: < \r\n+CREG: 2,0\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: src/ssn.c:__ofono_ssn_mo_watch_add() 0x87658, 6
-ofonod[856]: src/ssn.c:__ofono_ssn_mo_watch_add() 0x87658, 5
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-ofonod[856]: src/network.c:current_operator_callback() 0x87270, (nil)
-ofonod[856]: DLC1: > AT+COPS=3D0\r
-ofonod[856]: DLC3: > AT+CMUT?\r
-denis patch
-ofonod[856]: DLC1: < \r\n+CREG: 2\r\n
-denis patch
-ofonod[856]: src/network.c:current_operator_callback() 0x87270, (nil)
-denis patch
-ofonod[856]: DLC3: < \r\n+CMUT: 0\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CLVL=3D?\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CLVL: (0-255)\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CLVL?\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CLVL: 175\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CRSM=3D192,28480\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM: 111,0\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CRSM=3D192,28589\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM: 111,0\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CRSM=3D192,28489\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM: 111,0\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CRSM=3D192,28618\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM:
-148,4,00000E187F20020000000000099300190C00838A838A\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: Unable to read waiting messages numbers from SIM
-ofonod[856]: DLC3: > AT+CRSM=3D192,28617\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM:
-148,4,00000E187F20020000000000099300190C00838A838A\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: Unable to read mailbox identifies from SIM
-ofonod[856]: DLC3: > AT+CRSM=3D192,28433\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM:
-148,4,00000E187F20020000000000099300190C00838A838A\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: src/message-waiting.c:mw_cphs_mwis_read_cb() No CPHS MWIS on S=
-IM
-ofonod[856]: DLC3: > AT+CRSM=3D192,28613\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM:
-148,4,00000E187F20020000000000099300190C00838A838A\r\n
-denis patch
-denis patch
-ofonod[856]: DLC3: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC3: > AT+CRSM=3D192,28486\r
-denis patch
-ofonod[856]: DLC3: < \r\n+CRSM: 111,0\r\n\r\nOK\r\n
-denis patch
-denis patch
-ofonod[856]: DLC1: < \r\n+CREG: 1,"9C50","596D"\r\n
-denis patch
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n\r\n%CSQ:  8, 99, 0\r\n
-denis patch
-ofonod[856]: drivers/atmodem/network-registration.c:report_signal_strength()
-csq_notify: 8
-ofonod[856]: DLC1: > AT\r
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: Finally woke up the modem
-ofonod[856]: DLC1: > AT+COPS=3D3,2\r
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: > AT+COPS?\r
-denis patch
-ofonod[856]: DLC1: < \r\n+COPS: 0,2,"22210"\r\n
-denis patch
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-ofonod[856]: drivers/atmodem/network-registration.c:cops_numeric_cb()
-Cops numeric got mcc: 222, mnc: 10
-ofonod[856]: DLC1: > AT+COPS=3D3,0\r
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: > AT+COPS?\r
-denis patch
-ofonod[856]: DLC1: < \r\n+COPS: 0,0,"vodafone IT"\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: drivers/atmodem/network-registration.c:cops_cb() cops_cb:
-vodafone IT, 222 10 0
-ofonod[856]: src/network.c:current_operator_callback() 0x87270, (nil)
-ofonod[856]: DLC1: > AT+CREG?\r
-denis patch
-ofonod[856]: DLC1: < \r\n+CREG: 2,1,"9C50","596D"\r\n
-denis patch
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: > AT+COPS=3D3,2\r
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: > AT+COPS?\r
-denis patch
-ofonod[856]: DLC1: < \r\n+COPS: 0,2,"22210"\r\n
-denis patch
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-ofonod[856]: drivers/atmodem/network-registration.c:cops_numeric_cb()
-Cops numeric got mcc: 222, mnc: 10
-ofonod[856]: DLC1: > AT+COPS=3D3,0\r
-denis patch
-ofonod[856]: DLC1: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC1: > AT+COPS?\r
-denis patch
-ofonod[856]: DLC1: < \r\n+COPS: 0,0,"vodafone IT"\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: drivers/atmodem/network-registration.c:cops_cb() cops_cb:
-vodafone IT, 222 10 0
-ofonod[856]: src/network.c:current_operator_callback() 0x87270, 0x87780
-denis patch
-ofonod[856]: DLC3: < %CSTAT: EONS, 0\r\n
-denis patch
-ofonod[856]: plugins/calypso.c:cstat_notify() phonebook: 0, sms: 0
-ofonod[856]: plugins/calypso.c:cstat_notify() stat: EONS, enabled: 0
-denis patch
-ofonod[856]: DLC3: < %CSTAT: PHB, 0\r\n
-denis patch
-ofonod[856]: plugins/calypso.c:cstat_notify() phonebook: 0, sms: 0
-ofonod[856]: plugins/calypso.c:cstat_notify() stat: PHB, enabled: 0
-denis patch
-ofonod[856]: DLC3: < %CSTAT: SMS, 1\r\n
-denis patch
-ofonod[856]: plugins/calypso.c:cstat_notify() phonebook: 0, sms: 0
-ofonod[856]: plugins/calypso.c:cstat_notify() stat: SMS, enabled: 1
-ofonod[856]: DLC2: > AT\r
-denis patch
-ofonod[856]: DLC2: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: Finally woke up the modem
-ofonod[856]: DLC2: > AT+CSMS=3D?\r
-denis patch
-ofonod[856]: DLC2: < \r\n+CSMS: (0,1)\r\n
-denis patch
-denis patch
-ofonod[856]: DLC2: < \r\nOK\r\n
-denis patch
-ofonod[856]: drivers/atmodem/sms.c:at_csms_query_cb() CSMS query
-parsed successfully
-ofonod[856]: DLC2: > AT+CSMS=3D1\r
-denis patch
-ofonod[856]: DLC2: < \r\n+CSMS: 1,1,1\r\n
-denis patch
-denis patch
-ofonod[856]: DLC2: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: > AT+CSMS?\r
-denis patch
-ofonod[856]: DLC2: < \r\n+CSMS: 1,1,1,1\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: > AT+CMGF=3D?\r
-denis patch
-ofonod[856]: DLC2: < \r\n+CMGF: (0,1)\r\n
-denis patch
-denis patch
-ofonod[856]: DLC2: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: > AT+CPMS=3D?\r
-denis patch
-ofonod[856]: DLC2: < \r\n+CPMS: ("ME","SM"),("ME","SM"),("ME","SM")\r\n
-denis patch
-denis patch
-ofonod[856]: DLC2: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: > AT+CMGF=3D0\r
-denis patch
-ofonod[856]: DLC2: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: > AT+CPMS=3D"ME","ME","ME"\r
-denis patch
-ofonod[856]: DLC2: < \r\n+CPMS: 0,0,0,0,0,0\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: > AT+CNMI=3D?\r
-denis patch
-ofonod[856]: DLC2: < \r\n+CNMI: (0-2),(0-3),(0,2),(0,1),(0,1)\r\n\r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: > AT+CNMI=3D2,2,2,1,0\r
-denis patch
-ofonod[856]: DLC2: < \r\nOK\r\n
-denis patch
-ofonod[856]: DLC2: > AT+CMGL=3D4\r
-denis patch
-ofonod[856]: DLC2: < \r\nERROR\r\n
-denis patch
-ofonod[856]: drivers/atmodem/sms.c:at_cmgl_cb() Initial listing SMS
-storage failed!
+The difference comes from the "--enable_maintainer_mode" option which is us=
+ed in Git env (in bootstrap-configure) but not in RPM env (in ofono.spec).
+This options configures the PLUGINDIR path:
 
---===============6773627106883855656==--
+-          In Git env: PLUGINDIR is set to  <ofono>/plugins/.libs which is =
+empty
+
+-          In RPM env: PLUGINDIR is set to /usr/lib/ofono/plugins which con=
+tains the callHistory.so (0.1.5) plugins.
+
+So:
+
+-          Is CallHistory.so plugins supported by ofono0.18?
+
+-          What is the reference build script and options (Git/bootstrap-co=
+nfigure or Source RPM / ofono.spec)?
+
+Thanks.
+
+Emmanuel.
+
+
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============0354497168016230415==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
+b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
+QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
+MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
+Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
+dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
+YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
+ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
+YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
+OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
+Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
+VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
+Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
+cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
+MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
+ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
+cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
+bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
+eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
+dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
+LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
+Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
+cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
+dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
+aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczp3
+Zj0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvd29ya2Zsb3cv
+IiB4bWxuczpkc3NzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS8yMDA2L2Rp
+Z3NpZy1zZXR1cCIgeG1sbnM6ZHNzaT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZp
+Y2UvMjAwNi9kaWdzaWciIHhtbG5zOm1kc3NpPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0
+cy5vcmcvcGFja2FnZS8yMDA2L2RpZ2l0YWwtc2lnbmF0dXJlIiB4bWxuczptdmVyPSJodHRwOi8v
+c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvbWFya3VwLWNvbXBhdGliaWxpdHkvMjAwNiIgeG1s
+bnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4
+bWxuczptcmVscz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAw
+Ni9yZWxhdGlvbnNoaXBzIiB4bWxuczpzcHdwPSJodHRwOi8vbWljcm9zb2Z0LmNvbS9zaGFyZXBv
+aW50L3dlYnBhcnRwYWdlcyIgeG1sbnM6ZXgxMnQ9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5j
+b20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi90eXBlcyIgeG1sbnM6ZXgxMm09Imh0dHA6Ly9zY2hl
+bWFzLm1pY3Jvc29mdC5jb20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi9tZXNzYWdlcyIgeG1sbnM6
+cHB0c2w9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC9zb2FwL1NsaWRl
+TGlicmFyeS8iIHhtbG5zOnNwc2w9Imh0dHA6Ly9taWNyb3NvZnQuY29tL3dlYnNlcnZpY2VzL1No
+YXJlUG9pbnRQb3J0YWxTZXJ2ZXIvUHVibGlzaGVkTGlua3NTZXJ2aWNlIiB4bWxuczpaPSJ1cm46
+c2NoZW1hcy1taWNyb3NvZnQtY29tOiIgeG1sbnM6c3Q9IiYjMTsiIHhtbG5zPSJodHRwOi8vd3d3
+LnczLm9yZy9UUi9SRUMtaHRtbDQwIj4KCjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQt
+VHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBuYW1lPUdl
+bmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+Cjxz
+dHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OldpbmdkaW5nczsKCXBhbm9zZS0xOjUgMCAwIDAgMCAwIDAgMCAwIDA7fQpAZm9udC1mYWNl
+Cgl7Zm9udC1mYW1pbHk6V2luZ2RpbmdzOwoJcGFub3NlLTE6NSAwIDAgMCAwIDAgMCAwIDAgMDt9
+CkBmb250LWZhY2UKCXtmb250LWZhbWlseTpDYWxpYnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAy
+IDQgMyAyIDQ7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBsaS5Nc29O
+b3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0
+OwoJZm9udC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7
+fQphOmxpbmssIHNwYW4uTXNvSHlwZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29s
+b3I6Ymx1ZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNv
+SHlwZXJsaW5rRm9sbG93ZWQKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7
+Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30KcC5Nc29MaXN0UGFyYWdyYXBoLCBsaS5Nc29M
+aXN0UGFyYWdyYXBoLCBkaXYuTXNvTGlzdFBhcmFncmFwaAoJe21zby1zdHlsZS1wcmlvcml0eToz
+NDsKCW1hcmdpbi10b3A6MGNtOwoJbWFyZ2luLXJpZ2h0OjBjbTsKCW1hcmdpbi1ib3R0b206MGNt
+OwoJbWFyZ2luLWxlZnQ6MzYuMHB0OwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9udC1zaXpl
+OjExLjBwdDsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7fQpzcGFuLkVtYWls
+U3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7Cglmb250LWZhbWlseToi
+Q2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4dDt9Ci5Nc29DaHBEZWZhdWx0
+Cgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7fQpAcGFnZSBTZWN0aW9uMQoJe3NpemU6NjEy
+LjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcwLjg1cHQgNzAuODVwdCA3MC44NXB0IDcwLjg1cHQ7fQpk
+aXYuU2VjdGlvbjEKCXtwYWdlOlNlY3Rpb24xO30KIC8qIExpc3QgRGVmaW5pdGlvbnMgKi8KIEBs
+aXN0IGwwCgl7bXNvLWxpc3QtaWQ6NjAxODAzMTA7Cgltc28tbGlzdC10eXBlOmh5YnJpZDsKCW1z
+by1saXN0LXRlbXBsYXRlLWlkczo2MTEzNDQyNTYgLTE1NzM2NDEwOTggNjc2OTg2OTEgNjc2OTg2
+OTMgNjc2OTg2ODkgNjc2OTg2OTEgNjc2OTg2OTMgNjc2OTg2ODkgNjc2OTg2OTEgNjc2OTg2OTM7
+fQpAbGlzdCBsMDpsZXZlbDEKCXttc28tbGV2ZWwtc3RhcnQtYXQ6NDsKCW1zby1sZXZlbC1udW1i
+ZXItZm9ybWF0OmJ1bGxldDsKCW1zby1sZXZlbC10ZXh0OlxGMEQ4OwoJbXNvLWxldmVsLXRhYi1z
+dG9wOm5vbmU7Cgltc28tbGV2ZWwtbnVtYmVyLXBvc2l0aW9uOmxlZnQ7Cgl0ZXh0LWluZGVudDot
+MTguMHB0OwoJZm9udC1mYW1pbHk6V2luZ2RpbmdzOwoJbXNvLWZhcmVhc3QtZm9udC1mYW1pbHk6
+Q2FsaWJyaTsKCW1zby1iaWRpLWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4iO30KQGxpc3Qg
+bDEKCXttc28tbGlzdC1pZDo2NDU3NDI5NTQ7Cgltc28tbGlzdC10eXBlOmh5YnJpZDsKCW1zby1s
+aXN0LXRlbXBsYXRlLWlkczotMTk5NTYzOTg2NCAtMjYxODM1MDc4IDY3Njk4NjkxIDY3Njk4Njkz
+IDY3Njk4Njg5IDY3Njk4NjkxIDY3Njk4NjkzIDY3Njk4Njg5IDY3Njk4NjkxIDY3Njk4NjkzO30K
+QGxpc3QgbDE6bGV2ZWwxCgl7bXNvLWxldmVsLXN0YXJ0LWF0OjQ7Cgltc28tbGV2ZWwtbnVtYmVy
+LWZvcm1hdDpidWxsZXQ7Cgltc28tbGV2ZWwtdGV4dDpcRjBEODsKCW1zby1sZXZlbC10YWItc3Rv
+cDpub25lOwoJbXNvLWxldmVsLW51bWJlci1wb3NpdGlvbjpsZWZ0OwoJbWFyZ2luLWxlZnQ6NTQu
+MHB0OwoJdGV4dC1pbmRlbnQ6LTE4LjBwdDsKCWZvbnQtZmFtaWx5OldpbmdkaW5nczsKCW1zby1m
+YXJlYXN0LWZvbnQtZmFtaWx5OkNhbGlicmk7Cgltc28tYmlkaS1mb250LWZhbWlseToiVGltZXMg
+TmV3IFJvbWFuIjt9CkBsaXN0IGwyCgl7bXNvLWxpc3QtaWQ6ODg2MDY2NTQ3OwoJbXNvLWxpc3Qt
+dHlwZTpoeWJyaWQ7Cgltc28tbGlzdC10ZW1wbGF0ZS1pZHM6MjY5MjgxMTY0IC0xNzI0ODg0NDk0
+IDY3Njk4NjkxIDY3Njk4NjkzIDY3Njk4Njg5IDY3Njk4NjkxIDY3Njk4NjkzIDY3Njk4Njg5IDY3
+Njk4NjkxIDY3Njk4NjkzO30KQGxpc3QgbDI6bGV2ZWwxCgl7bXNvLWxldmVsLXN0YXJ0LWF0OjQ7
+Cgltc28tbGV2ZWwtbnVtYmVyLWZvcm1hdDpidWxsZXQ7Cgltc28tbGV2ZWwtdGV4dDotOwoJbXNv
+LWxldmVsLXRhYi1zdG9wOm5vbmU7Cgltc28tbGV2ZWwtbnVtYmVyLXBvc2l0aW9uOmxlZnQ7Cglt
+YXJnaW4tbGVmdDo1NC4wcHQ7Cgl0ZXh0LWluZGVudDotMTguMHB0OwoJZm9udC1mYW1pbHk6IkNh
+bGlicmkiLCJzYW5zLXNlcmlmIjsKCW1zby1mYXJlYXN0LWZvbnQtZmFtaWx5OkNhbGlicmk7Cglt
+c28tYmlkaS1mb250LWZhbWlseToiVGltZXMgTmV3IFJvbWFuIjt9CkBsaXN0IGwzCgl7bXNvLWxp
+c3QtaWQ6MTQxNDQ2Nzc1MTsKCW1zby1saXN0LXR5cGU6aHlicmlkOwoJbXNvLWxpc3QtdGVtcGxh
+dGUtaWRzOi03MjY2NTM4NjAgLTE0NzQ2NjU1MzIgNjc2OTg2OTEgNjc2OTg2OTMgNjc2OTg2ODkg
+Njc2OTg2OTEgNjc2OTg2OTMgNjc2OTg2ODkgNjc2OTg2OTEgNjc2OTg2OTM7fQpAbGlzdCBsMzps
+ZXZlbDEKCXttc28tbGV2ZWwtc3RhcnQtYXQ6NDsKCW1zby1sZXZlbC1udW1iZXItZm9ybWF0OmJ1
+bGxldDsKCW1zby1sZXZlbC10ZXh0OlxGMEQ4OwoJbXNvLWxldmVsLXRhYi1zdG9wOm5vbmU7Cglt
+c28tbGV2ZWwtbnVtYmVyLXBvc2l0aW9uOmxlZnQ7Cgl0ZXh0LWluZGVudDotMTguMHB0OwoJZm9u
+dC1mYW1pbHk6V2luZ2RpbmdzOwoJbXNvLWZhcmVhc3QtZm9udC1mYW1pbHk6Q2FsaWJyaTsKCW1z
+by1iaWRpLWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4iO30KQGxpc3QgbDQKCXttc28tbGlz
+dC1pZDoxOTQxOTg0NjU1OwoJbXNvLWxpc3QtdHlwZTpoeWJyaWQ7Cgltc28tbGlzdC10ZW1wbGF0
+ZS1pZHM6LTE0MzgzNDcyMjQgLTE3MTU0MjA2NDggNjc2OTg2OTEgNjc2OTg2OTMgNjc2OTg2ODkg
+Njc2OTg2OTEgNjc2OTg2OTMgNjc2OTg2ODkgNjc2OTg2OTEgNjc2OTg2OTM7fQpAbGlzdCBsNDps
+ZXZlbDEKCXttc28tbGV2ZWwtc3RhcnQtYXQ6NDsKCW1zby1sZXZlbC1udW1iZXItZm9ybWF0OmJ1
+bGxldDsKCW1zby1sZXZlbC10ZXh0Oi07Cgltc28tbGV2ZWwtdGFiLXN0b3A6bm9uZTsKCW1zby1s
+ZXZlbC1udW1iZXItcG9zaXRpb246bGVmdDsKCXRleHQtaW5kZW50Oi0xOC4wcHQ7Cglmb250LWZh
+bWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJbXNvLWZhcmVhc3QtZm9udC1mYW1pbHk6Q2Fs
+aWJyaTsKCW1zby1iaWRpLWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4iO30Kb2wKCXttYXJn
+aW4tYm90dG9tOjBjbTt9CnVsCgl7bWFyZ2luLWJvdHRvbTowY207fQotLT4KPC9zdHlsZT4KPCEt
+LVtpZiBndGUgbXNvIDldPjx4bWw+CiA8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0PSJlZGl0IiBzcGlk
+bWF4PSIxMDI2IiAvPgo8L3htbD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4K
+IDxvOnNoYXBlbGF5b3V0IHY6ZXh0PSJlZGl0Ij4KICA8bzppZG1hcCB2OmV4dD0iZWRpdCIgZGF0
+YT0iMSIgLz4KIDwvbzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgoKPGJv
+ZHkgbGFuZz1FTi1VUyBsaW5rPWJsdWUgdmxpbms9cHVycGxlPgoKPGRpdiBjbGFzcz1TZWN0aW9u
+MT4KCjxwIGNsYXNzPU1zb05vcm1hbD5IaSw8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05v
+cm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD5JIHdvcmsgd2l0
+aCBvRm9ubyAwLjE4IGFuZCBNZWVnbyBIYW5kc2V0IGJ1aWxkIDAzLTIzLTIwMTAuPG86cD48L286
+cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48L3A+Cgo8cCBjbGFz
+cz1Nc29Ob3JtYWw+VG8gYnVpbGQgb2Zvbm9kIG1hbnVhbGx5IGZyb20gR2l0IHJlcG8sIEkgdXNl
+OjxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsIHN0eWxlPSd0ZXh0LWluZGVudDoz
+Ni4wcHQnPiZndDsgLi9ib290c3RyYXAtY29uZmlndXJlPG86cD48L286cD48L3A+Cgo8cCBjbGFz
+cz1Nc29Ob3JtYWwgc3R5bGU9J3RleHQtaW5kZW50OjM2LjBwdCc+Jmd0OyBtYWtlPG86cD48L286
+cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+SSBjYW4gdXNlIGFuZCBkZWJ1ZyB0aGlzIGRhZW1v
+biB3aXRob3V0IHByb2JsZW0uPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PG86
+cD4mbmJzcDs8L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+VG8gYnVpbGQgb2Zvbm9kIGZy
+b20gc291cmNlIFJQTSBwcm92aWRlZCBieSBNZWVnbywgSSB1c2U6PG86cD48L286cD48L3A+Cgo8
+cCBjbGFzcz1Nc29Ob3JtYWwgc3R5bGU9J3RleHQtaW5kZW50OjM2LjBwdCc+Jmd0OyBidWlsZCAt
+LWNsZWFuIC0tdGFyZ2V0IGk1ODYKLS1hcmNoIGk1ODY6aTY4NiAtLXJvb3QgJEJVSUxEX1JPT1Qg
+LS1ycG1zICRCVUlMRF9SUE1TIG9mb25vLnNwZWMgPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1N
+c29Ob3JtYWw+V2hlbiBJIGxhdW5jaCB0aGlzIGJpbmFyeSBtYW51YWxseSBpbiBub24tZGFlbW9u
+IG1vZGUsIEkKb2J0YWluIG1hbnkgZXJyb3JzOjxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNv
+Tm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPiZndDsgJm5i
+c3A7Li9vZm9ub2QgLW5kICZxdW90OyomcXVvdDs8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1z
+b05vcm1hbD5vZm9ub2RbNzM2XTogb0Zvbm8gdmVyc2lvbiAwLjE4PG86cD48L286cD48L3A+Cgo8
+cCBjbGFzcz1Nc29Ob3JtYWw+b2Zvbm9kWzczNl06IHNyYy9wbHVnaW4uYzpfX29mb25vX3BsdWdp
+bl9pbml0KCkgPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+KG9mb25vZDo3MzYp
+OiBHQ29uZi1XQVJOSU5HICoqOiBDbGllbnQgZmFpbGVkIHRvIGNvbm5lY3QgdG8KdGhlIEQtQlVT
+IGRhZW1vbjo8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD5GYWlsZWQgdG8gY29u
+bmVjdCB0byBzb2NrZXQgL3RtcC9kYnVzLWtxM3ZyRm9LY0g6IENvbm5lY3Rpb24KcmVmdXNlZDxv
+OnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPkdDb25mIEVycm9yOiBObyBELUJVUyBk
+YWVtb24gcnVubmluZzxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPihvZm9ub2Q6
+NzM2KTogR0NvbmYtV0FSTklORyAqKjogQ2xpZW50IGZhaWxlZCB0byBjb25uZWN0IHRvCnRoZSBE
+LUJVUyBkYWVtb246PG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+RmFpbGVkIHRv
+IGNvbm5lY3QgdG8gc29ja2V0IC90bXAvZGJ1cy1rcTN2ckZvS2NIOiBDb25uZWN0aW9uCnJlZnVz
+ZWQ8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD5HQ29uZiBFcnJvcjogTm8gRC1C
+VVMgZGFlbW9uIHJ1bm5pbmc8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD4ob2Zv
+bm9kOjczNik6IEdDb25mLVdBUk5JTkcgKio6IENsaWVudCBmYWlsZWQgdG8gY29ubmVjdCB0bwp0
+aGUgRC1CVVMgZGFlbW9uOjxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPkZhaWxl
+ZCB0byBjb25uZWN0IHRvIHNvY2tldCAvdG1wL2RidXMta3EzdnJGb0tjSDogQ29ubmVjdGlvbgpy
+ZWZ1c2VkPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+R0NvbmYgRXJyb3I6IE5v
+IEQtQlVTIGRhZW1vbiBydW5uaW5nPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+
+KG9mb25vZDo3MzYpOiBsaWJlY2FsLVdBUk5JTkcgKio6IENhbm5vdCBhY3RpdmF0ZSBFQ2FsOiBG
+YWlsZWQKdG8gY29ubmVjdCB0byBzb2NrZXQgL3RtcC9kYnVzLWtxM3ZyRm9LY0g6IENvbm5lY3Rp
+b24gcmVmdXNlZDxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPihvZm9ub2Q6NzM2
+KTogbGliZWNhbC1DUklUSUNBTCAqKjogZV9jYWxfZ2V0X3VyaTogYXNzZXJ0aW9uCmBlY2FsICE9
+IE5VTEwnIGZhaWxlZDxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPihvZm9ub2Q6
+NzM2KTogR0NvbmYtV0FSTklORyAqKjogQ2xpZW50IGZhaWxlZCB0byBjb25uZWN0IHRvCnRoZSBE
+LUJVUyBkYWVtb246PG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+RmFpbGVkIHRv
+IGNvbm5lY3QgdG8gc29ja2V0IC90bXAvZGJ1cy1rcTN2ckZvS2NIOiBDb25uZWN0aW9uCnJlZnVz
+ZWQ8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD5HQ29uZiBFcnJvcjogTm8gRC1C
+VVMgZGFlbW9uIHJ1bm5pbmc8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD4ob2Zv
+bm9kOjczNik6IEdDb25mLVdBUk5JTkcgKio6IENsaWVudCBmYWlsZWQgdG8gY29ubmVjdCB0bwp0
+aGUgRC1CVVMgZGFlbW9uOjxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPkZhaWxl
+ZCB0byBjb25uZWN0IHRvIHNvY2tldCAvdG1wL2RidXMta3EzdnJGb0tjSDogQ29ubmVjdGlvbgpy
+ZWZ1c2VkPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+R0NvbmYgRXJyb3I6IE5v
+IEQtQlVTIGRhZW1vbiBydW5uaW5nPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+
+KG9mb25vZDo3MzYpOiBsaWJlY2FsLVdBUk5JTkcgKio6IENhbm5vdCBhY3RpdmF0ZSBFQ2FsOgpG
+YWlsZWQgdG8gY29ubmVjdCB0byBzb2NrZXQgL3RtcC9kYnVzLWtxM3ZyRm9LY0g6IENvbm5lY3Rp
+b24gcmVmdXNlZDxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPihvZm9ub2Q6NzM2
+KTogR0NvbmYtV0FSTklORyAqKjogQ2xpZW50IGZhaWxlZCB0byBjb25uZWN0IHRvCnRoZSBELUJV
+UyBkYWVtb246PG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+RmFpbGVkIHRvIGNv
+bm5lY3QgdG8gc29ja2V0IC90bXAvZGJ1cy1rcTN2ckZvS2NIOiBDb25uZWN0aW9uCnJlZnVzZWQ8
+bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD5HQ29uZiBFcnJvcjogTm8gRC1CVVMg
+ZGFlbW9uIHJ1bm5pbmc8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD4ob2Zvbm9k
+OjczNik6IEdDb25mLVdBUk5JTkcgKio6IENsaWVudCBmYWlsZWQgdG8gY29ubmVjdCB0bwp0aGUg
+RC1CVVMgZGFlbW9uOjxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPkZhaWxlZCB0
+byBjb25uZWN0IHRvIHNvY2tldCAvdG1wL2RidXMta3EzdnJGb0tjSDogQ29ubmVjdGlvbgpyZWZ1
+c2VkPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+R0NvbmYgRXJyb3I6IE5vIEQt
+QlVTIGRhZW1vbiBydW5uaW5nPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+KG9m
+b25vZDo3MzYpOiBsaWJlY2FsLVdBUk5JTkcgKio6IENhbm5vdCBhY3RpdmF0ZSBFQ2FsOgpGYWls
+ZWQgdG8gY29ubmVjdCB0byBzb2NrZXQgL3RtcC9kYnVzLWtxM3ZyRm9LY0g6IENvbm5lY3Rpb24g
+cmVmdXNlZDxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9v
+OnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPkkgcmVhbGl6ZWQgdGhhdCB0aGVzZSBlcnJvcnMg
+YXJlIGdlbmVyYXRlZCBkdXJpbmcgdGhlCmNhbGxIaXN0b3J5IHBsdWdpbiBpbml0aWFsaXphdGlv
+bi48bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwv
+cD4KCjxwIGNsYXNzPU1zb05vcm1hbD5UaGUgZGlmZmVyZW5jZSBjb21lcyBmcm9tIHRoZSAmIzgy
+MjA7LS1lbmFibGVfbWFpbnRhaW5lcl9tb2RlJiM4MjIxOwpvcHRpb24gd2hpY2ggaXMgdXNlZCBp
+biBHaXQgZW52IChpbiBib290c3RyYXAtY29uZmlndXJlKSBidXQgbm90IGluIFJQTSBlbnYgKGlu
+Cm9mb25vLnNwZWMpLjxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPlRoaXMgb3B0
+aW9ucyBjb25maWd1cmVzIHRoZSBQTFVHSU5ESVIgcGF0aDo8bzpwPjwvbzpwPjwvcD4KCjxwIGNs
+YXNzPU1zb0xpc3RQYXJhZ3JhcGggc3R5bGU9J21hcmdpbi1sZWZ0OjU0LjBwdDt0ZXh0LWluZGVu
+dDotMTguMHB0Owptc28tbGlzdDpsMiBsZXZlbDEgbGZvNSc+PCFbaWYgIXN1cHBvcnRMaXN0c10+
+PHNwYW4gc3R5bGU9J21zby1saXN0Oklnbm9yZSc+LTxzcGFuCnN0eWxlPSdmb250OjcuMHB0ICJU
+aW1lcyBOZXcgUm9tYW4iJz4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsKPC9zcGFuPjwvc3Bhbj48IVtlbmRpZl0+SW4gR2l0IGVudjogUExVR0lO
+RElSIGlzIHNldCB0byAmbmJzcDsmbHQ7b2Zvbm8mZ3Q7L3BsdWdpbnMvLmxpYnMKd2hpY2ggaXMg
+ZW1wdHk8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb0xpc3RQYXJhZ3JhcGggc3R5bGU9J21h
+cmdpbi1sZWZ0OjU0LjBwdDt0ZXh0LWluZGVudDotMTguMHB0Owptc28tbGlzdDpsMiBsZXZlbDEg
+bGZvNSc+PCFbaWYgIXN1cHBvcnRMaXN0c10+PHNwYW4gc3R5bGU9J21zby1saXN0Oklnbm9yZSc+
+LTxzcGFuCnN0eWxlPSdmb250OjcuMHB0ICJUaW1lcyBOZXcgUm9tYW4iJz4mbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsKPC9zcGFuPjwvc3Bhbj48
+IVtlbmRpZl0+SW4gUlBNIGVudjogUExVR0lORElSIGlzIHNldCB0byAvdXNyL2xpYi9vZm9uby9w
+bHVnaW5zCndoaWNoIGNvbnRhaW5zIHRoZSBjYWxsSGlzdG9yeS5zbyAoMC4xLjUpIHBsdWdpbnMu
+PG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48L3A+
+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+U286IDxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTGlz
+dFBhcmFncmFwaCBzdHlsZT0ndGV4dC1pbmRlbnQ6LTE4LjBwdDttc28tbGlzdDpsNCBsZXZlbDEg
+bGZvNCc+PCFbaWYgIXN1cHBvcnRMaXN0c10+PHNwYW4Kc3R5bGU9J21zby1saXN0Oklnbm9yZSc+
+LTxzcGFuIHN0eWxlPSdmb250OjcuMHB0ICJUaW1lcyBOZXcgUm9tYW4iJz4mbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsKPC9zcGFuPjwvc3Bhbj48
+IVtlbmRpZl0+SXMgQ2FsbEhpc3Rvcnkuc28gcGx1Z2lucyBzdXBwb3J0ZWQgYnkgb2Zvbm8wLjE4
+PzxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTGlzdFBhcmFncmFwaCBzdHlsZT0ndGV4dC1p
+bmRlbnQ6LTE4LjBwdDttc28tbGlzdDpsNCBsZXZlbDEgbGZvNCc+PCFbaWYgIXN1cHBvcnRMaXN0
+c10+PHNwYW4Kc3R5bGU9J21zby1saXN0Oklnbm9yZSc+LTxzcGFuIHN0eWxlPSdmb250OjcuMHB0
+ICJUaW1lcyBOZXcgUm9tYW4iJz4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsKPC9zcGFuPjwvc3Bhbj48IVtlbmRpZl0+V2hhdCBpcyB0aGUgcmVm
+ZXJlbmNlIGJ1aWxkIHNjcmlwdCBhbmQgb3B0aW9ucyAoR2l0L2Jvb3RzdHJhcC1jb25maWd1cmUK
+b3IgU291cmNlIFJQTSAvIG9mb25vLnNwZWMpPzxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNv
+Tm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPlRoYW5rcy48
+bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4K
+CjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBzdHlsZT0nY29sb3I6YmxhY2snPkVtbWFudWVsLjwv
+c3Bhbj48c3BhbgpzdHlsZT0nY29sb3I6IzFGNDk3RCc+PG86cD48L286cD48L3NwYW4+PC9wPgoK
+PHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9y
+bWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPC9kaXY+Cgo8cHJlPi0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpJbnRl
+bCBDb3Jwb3JhdGlvbiBTQVMgKEZyZW5jaCBzaW1wbGlmaWVkIGpvaW50IHN0b2NrIGNvbXBhbnkp
+ClJlZ2lzdGVyZWQgaGVhZHF1YXJ0ZXJzOiAiTGVzIE1vbnRhbGV0cyItIDIsIHJ1ZSBkZSBQYXJp
+cywgCjkyMTk2IE1ldWRvbiBDZWRleCwgRnJhbmNlClJlZ2lzdHJhdGlvbiBOdW1iZXI6ICAzMDIg
+NDU2IDE5OSBSLkMuUy4gTkFOVEVSUkUKQ2FwaXRhbDogNCw1NzIsMDAwIEV1cm9zCgpUaGlzIGUt
+bWFpbCBhbmQgYW55IGF0dGFjaG1lbnRzIG1heSBjb250YWluIGNvbmZpZGVudGlhbCBtYXRlcmlh
+bCBmb3IKdGhlIHNvbGUgdXNlIG9mIHRoZSBpbnRlbmRlZCByZWNpcGllbnQocykuIEFueSByZXZp
+ZXcgb3IgZGlzdHJpYnV0aW9uCmJ5IG90aGVycyBpcyBzdHJpY3RseSBwcm9oaWJpdGVkLiBJZiB5
+b3UgYXJlIG5vdCB0aGUgaW50ZW5kZWQKcmVjaXBpZW50LCBwbGVhc2UgY29udGFjdCB0aGUgc2Vu
+ZGVyIGFuZCBkZWxldGUgYWxsIGNvcGllcy4KPC9wcmU+PC9ib2R5PgoKPC9odG1sPgo=
+
+--===============0354497168016230415==--
 
