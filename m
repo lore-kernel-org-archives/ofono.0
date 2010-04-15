@@ -1,30 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============4200773739509899974=="
+Content-Type: multipart/mixed; boundary="===============6984234346657426471=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/8] Functions to notify core of SIM insertion/removal.
-Date: Thu, 15 Apr 2010 16:18:20 -0500
-Message-ID: <201004151618.20756.denkenz@gmail.com>
-In-Reply-To: <1270795730-7127-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 3/8] Add an atom for STK,
+ move envelope command to stk driver.
+Date: Thu, 15 Apr 2010 16:18:55 -0500
+Message-ID: <201004151618.56103.denkenz@gmail.com>
+In-Reply-To: <1270795741-7156-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4200773739509899974==
+--===============6984234346657426471==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andrew,
 
-> Make every plugin generate a sim inserted event on start.  For devices
-> with removable card, the event should be emitted after the
-> plugin detects such event.
+> ---
+>  Makefile.am           |    4 +-
+>  drivers/atmodem/sim.c |   77 -------------------
+>  include/sim.h         |    3 -
+>  include/stk.h         |   71 +++++++++++++++++
+>  src/cbs.c             |   10 ++-
+>  src/modem.c           |    1 +
+>  src/ofono.h           |    4 +-
+>  src/sim.c             |   37 ---------
+>  src/stk.c             |  201
+>  +++++++++++++++++++++++++++++++++++++++++++++++++ 9 files changed, 287
+>  insertions(+), 121 deletions(-)
+>  create mode 100644 include/stk.h
+>  create mode 100644 src/stk.c
 > =
 
 
-This patch has now been applied, thanks.
+This patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============4200773739509899974==--
+--===============6984234346657426471==--
 
