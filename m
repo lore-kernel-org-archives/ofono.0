@@ -1,31 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============1685511564254602590=="
+Content-Type: multipart/mixed; boundary="===============4200773739509899974=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/8] Extend sim-ready watch with card insert/eject events.
-Date: Thu, 15 Apr 2010 16:17:36 -0500
-Message-ID: <201004151617.37191.denkenz@gmail.com>
-In-Reply-To: <1270795714-7098-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 2/8] Functions to notify core of SIM insertion/removal.
+Date: Thu, 15 Apr 2010 16:18:20 -0500
+Message-ID: <201004151618.20756.denkenz@gmail.com>
+In-Reply-To: <1270795730-7127-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1685511564254602590==
+--===============4200773739509899974==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andrew,
 
-> ---
->  include/sim.h |   17 ++++++++++++-----
->  src/cbs.c     |    2 +-
->  src/modem.c   |   11 ++++++-----
->  src/sim.c     |   49 +++++++++++++++++++++++++------------------------
->  4 files changed, 44 insertions(+), 35 deletions(-)
+> Make every plugin generate a sim inserted event on start.  For devices
+> with removable card, the event should be emitted after the
+> plugin detects such event.
+> =
 
-This patch has been applied, with a small fix afterward.
+
+This patch has now been applied, thanks.
 
 Regards,
 -Denis
 
---===============1685511564254602590==--
+--===============4200773739509899974==--
 
