@@ -1,40 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============4470405853543909925=="
+Content-Type: multipart/mixed; boundary="===============5392898957541503897=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] phonesim: Add a simple USSD UI.
-Date: Fri, 16 Apr 2010 15:06:23 -0500
-Message-ID: <201004161506.24483.denkenz@gmail.com>
-In-Reply-To: <1270795430-7037-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 2/2] phonesim: Refactor SimApplication api, add a UI.
+Date: Fri, 16 Apr 2010 15:06:53 -0500
+Message-ID: <201004161506.54015.denkenz@gmail.com>
+In-Reply-To: <1270795455-7067-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4470405853543909925==
+--===============5392898957541503897==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andrew,
 
-> This is not the best UI in the world...
+> Try to move all the AT parsing / generating out of applications, just send
+> ready envelopes, terminal responses, commands between the application
+> and the SimRules class.
 > ---
->  src/control.cpp             |   40 +++++++++++++++++++++++-
->  src/control.h               |    6 ++--
->  src/controlbase.ui          |   70
->  +++++++++++++++++++++++++++++++++++++++++++ src/hardwaremanipulator.cpp =
-
+>  src/control.cpp             |   35 +++++++++++
+>  src/control.h               |    1 +
+>  src/controlbase.ui          |   71 ++++++++++++++++++++++
+>  src/hardwaremanipulator.cpp |   42 +++++++++++++
+>  src/hardwaremanipulator.h   |    7 ++
+>  src/phonesim.cpp            |  138
+>  +++++++++++++++++++++++++++++++++++++++---- src/phonesim.h              =
 | =
 
->   19 ++++++++++-
->  src/hardwaremanipulator.h   |    9 ++++--
->  src/phonesim.cpp            |    2 +-
->  6 files changed, 135 insertions(+), 11 deletions(-)
-> =
+>    6 ++
+>  src/simapplication.cpp      |  137
+>  ++++++++++++++---------------------------- src/simapplication.h        |=
+  =
 
+>  27 +++++----
+>  9 files changed, 349 insertions(+), 115 deletions(-)
 
-This patch has been applied, thanks.
+This patch has now been applied, thanks.
 
 Regards,
 -Denis
 
---===============4470405853543909925==--
+--===============5392898957541503897==--
 
