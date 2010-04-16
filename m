@@ -1,45 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============5392898957541503897=="
+Content-Type: multipart/mixed; boundary="===============6071899773027410832=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] phonesim: Refactor SimApplication api, add a UI.
-Date: Fri, 16 Apr 2010 15:06:53 -0500
-Message-ID: <201004161506.54015.denkenz@gmail.com>
-In-Reply-To: <1270795455-7067-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 4/8] Add skeleton of src/emulator.c
+Date: Fri, 16 Apr 2010 15:17:17 -0500
+Message-ID: <201004161517.17861.denkenz@gmail.com>
+In-Reply-To: <1271168299-4862-5-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5392898957541503897==
+--===============6071899773027410832==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Zhenhua,
 
-> Try to move all the AT parsing / generating out of applications, just send
-> ready envelopes, terminal responses, commands between the application
-> and the SimRules class.
 > ---
->  src/control.cpp             |   35 +++++++++++
->  src/control.h               |    1 +
->  src/controlbase.ui          |   71 ++++++++++++++++++++++
->  src/hardwaremanipulator.cpp |   42 +++++++++++++
->  src/hardwaremanipulator.h   |    7 ++
->  src/phonesim.cpp            |  138
->  +++++++++++++++++++++++++++++++++++++++---- src/phonesim.h              =
+>  Makefile.am        |    7 +-
+>  include/dbus.h     |    1 +
+>  include/emulator.h |   75 +++++++++++++++++++
+>  src/emulator.c     |  203
+>  ++++++++++++++++++++++++++++++++++++++++++++++++++++ src/ofono.h        =
+
 | =
 
->    6 ++
->  src/simapplication.cpp      |  137
->  ++++++++++++++---------------------------- src/simapplication.h        |=
-  =
+>    4 +
+>  5 files changed, 287 insertions(+), 3 deletions(-)
+>  create mode 100644 include/emulator.h
+>  create mode 100644 src/emulator.c
+> =
 
->  27 +++++----
->  9 files changed, 349 insertions(+), 115 deletions(-)
 
-This patch has now been applied, thanks.
+I suggest we handle this one a bit differently.  Let us create an Emulator =
+atom =
+
+that has no driver (similar to how MessageWaiting atom works).  Then have e=
+ach =
+
+interested atom declare an atom watch on the Emulator atom.  When one is =
+
+created, let the atom get notified and register any AT command handlers it =
+
+wishes.  If the atom itself goes away, it needs to de-register at commands =
+
+from all relevant emulators.
+
+Potentially there might be several emulators at once in the system (e.g. on=
+e =
+
+for DUN, one for HFP, one for SPP, etc)
 
 Regards,
 -Denis
 
---===============5392898957541503897==--
+--===============6071899773027410832==--
 
