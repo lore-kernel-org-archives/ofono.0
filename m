@@ -1,81 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============4513358932094224215=="
+Content-Type: multipart/mixed; boundary="===============1054975473340755931=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Unreliable next_msg_id (was Re: [PATCH 2/2] Added SQLite history
- plugin)
-Date: Thu, 15 Apr 2010 17:24:49 -0500
-Message-ID: <201004151724.49943.denkenz@gmail.com>
-In-Reply-To: <x2j359c5481004151457u9ab1f05cn81d7c598803ab415@mail.gmail.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH] Fix Let data device be optional for mbm driver
+Date: Fri, 16 Apr 2010 13:33:55 +0800
+Message-ID: <1271396035-15836-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4513358932094224215==
+--===============1054975473340755931==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Niko,
+Dell 5530 modem has no data device port. So data device should be
+optional in mbm drvier.
+---
+ plugins/mbm.c |   18 +++++++++++++-----
+ 1 files changed, 13 insertions(+), 5 deletions(-)
 
-> > The proper fix is to generate a SHA1 or MD5 hash over the contents, loc=
-al
-> > reception/send time, remote reception / send time, destination /
-> > originator of the message.
-> =
+diff --git a/plugins/mbm.c b/plugins/mbm.c
+index 439d3b9..aeea81d 100644
+--- a/plugins/mbm.c
++++ b/plugins/mbm.c
+@@ -84,7 +84,9 @@ static void mbm_remove(struct ofono_modem *modem)
+ =
 
-> Dario suggested that to me too, the only problem I see is that an hash
-> signature does not provide ">" operator that may help in some sync
-> scenarios, but this may be fixed in several ways (for example using an
-> additional autoincrement serial column that may expose to applications
-> an unique, ordered and reliable id without exposing the ofono internal
-> one).
+ 	ofono_modem_set_data(modem, NULL);
+ =
 
-I suggest using a sync timestamp or some other way to accomplish this.
+-	g_at_chat_unref(data->data_port);
++	if (data->data_port)
++		g_at_chat_unref(data->data_port);
++
+ 	g_at_chat_unref(data->modem_port);
+ 	g_free(data);
+ }
+@@ -212,7 +214,7 @@ static int mbm_enable(struct ofono_modem *modem)
+ =
 
-> =
+ 	DBG("%s, %s", modem_dev, data_dev);
+ =
 
-> Will check if all history callbacks lets us rehash the messages properly.
-> =
+-	if (modem_dev =3D=3D NULL || data_dev =3D=3D NULL)
++	if (modem_dev =3D=3D NULL)
+ 		return -EINVAL;
+ =
 
-> A shot in the dark: what's about delegating the id generation to the
-> history plugin (if present and capable)?
-> That should fix the above problems, avoid hash generation and provide
-> a possible base to reuse the id while resubmitting failed/pending
-> messages providing the right id to ofono, avoiding the introduction of
-> race conditions or complex implementations.
+ 	data->modem_port =3D create_port(modem_dev);
+@@ -223,6 +225,9 @@ static int mbm_enable(struct ofono_modem *modem)
+ 	if (getenv("OFONO_AT_DEBUG"))
+ 		g_at_chat_set_debug(data->modem_port, mbm_debug, "Modem:");
+ =
 
-oFono will keep pending messages around across reboots, that is an enhancem=
-ent =
++	if (!data_dev)
++		goto done;
++
+ 	data->data_port =3D create_port(data_dev);
+ =
 
-we're already working on.  Resubmitting of failed messages should result in=
- a =
+ 	if (data->data_port =3D=3D NULL) {
+@@ -235,6 +240,7 @@ static int mbm_enable(struct ofono_modem *modem)
+ 	if (getenv("OFONO_AT_DEBUG"))
+ 		g_at_chat_set_debug(data->data_port, mbm_debug, "Data:");
+ =
 
-new ID anyway.
++done:
+ 	g_at_chat_register(data->modem_port, "*EMRDY:", emrdy_notifier,
+ 					FALSE, modem, NULL);
+ =
 
-And I honestly don't think N implementations of hashing SMS messages in eac=
-h =
+@@ -257,9 +263,11 @@ static void cfun_disable(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ 	g_at_chat_unref(data->modem_port);
+ 	data->modem_port =3D NULL;
+ =
 
-history plugin is a good idea.  Let oFono do it so we get it right for =
+-	g_at_chat_shutdown(data->data_port);
+-	g_at_chat_unref(data->data_port);
+-	data->data_port =3D NULL;
++	if (data->data_port) {
++		g_at_chat_shutdown(data->data_port);
++		g_at_chat_unref(data->data_port);
++		data->data_port =3D NULL;
++	}
+ =
 
-everyone.
+ 	if (ok)
+ 		ofono_modem_set_powered(modem, FALSE);
+-- =
 
-> >> Finally, we'd like to use some "panic" function in ofono, that should
-> >> power down all modems and warn clients when critical conditions
-> >> happen.
-> >>
-> >> Is that possible?
-> >
-> > Send HUP to the daemon?  Or do you want oFono to keep running?
-> =
+1.6.6.1
 
-> I mean the best way to shutdown modems and ofono inside the code (in
-> the history for example if an sql statement fails, or if it cannot
-> save id to the permanent storage, big dbus troubles or other similiar
-> cases).
 
-Yikes.  The answer is "Please don't even think about it" :)
-
-Regards,
--Denis
-
---===============4513358932094224215==--
+--===============1054975473340755931==--
 
