@@ -1,34 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============1620166021322986901=="
+Content-Type: multipart/mixed; boundary="===============1465987888782954251=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: Re: [PATCH 0/2] hdlc fixes
-Date: Sat, 17 Apr 2010 11:13:18 -0700
-Message-ID: <20100417111318.32514538@kcaccard-MOBL3>
-In-Reply-To: <1271471463-7956-1-git-send-email-kristen@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/3] hdlc: allow for scanning and escaping
+Date: Sat, 17 Apr 2010 15:34:14 -0700
+Message-ID: <1271543654.22838.28.camel@localhost.localdomain>
+In-Reply-To: <1271528135-12337-2-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1620166021322986901==
+--===============1465987888782954251==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 16 Apr 2010 19:31:01 -0700
-Kristen Carlson Accardi <kristen@linux.intel.com> wrote:
+Hi Kristen,
 
-> Kristen Carlson Accardi (2):
->   hdlc: allow for scanning and escaping
->   hdlc: handle wrapped buffers
-> =
+> PPP needs to inspect the packet protocol to see if a character
+> should be escaped.  Additionally, it needs to be able to compare
+> against recv and xmit accm.
 
->  gatchat/gathdlc.c |  121 ++++++++++++++++++++++++++++++++++++++---------=
------
->  gatchat/gathdlc.h |   12 +++++
->  2 files changed, 100 insertions(+), 33 deletions(-)
-> =
+can we just set the ACCM values instead of having an extra function
+call. I think that calling an extra function for every single byte is a
+really bad idea and the compiler can not optimize it at all.
+
+Regards
+
+Marcel
 
 
-Please disregard this series, I will resend with an additional patch.
 
---===============1620166021322986901==--
+--===============1465987888782954251==--
 
