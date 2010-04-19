@@ -1,243 +1,282 @@
-Content-Type: multipart/mixed; boundary="===============3909436908233930051=="
+Content-Type: multipart/mixed; boundary="===============1993169694071301767=="
 MIME-Version: 1.0
-From: Vdovichev Alexander <alexander.vdovichev@ixonos.com>
-Subject: Re: Re: [PATCH] Fix Let data device be optional for mbm driver
-Date: Mon, 19 Apr 2010 10:11:29 +0300
-Message-ID: <F42171F37C767B488EC689B3CBBDB3A80514B06A80@jklmail01.ixonos.local>
-In-Reply-To: <1271429576.22838.26.camel@localhost.localdomain>
+From: Matthias <matgnt@gmail.com>
+Subject: [PATCH] Added Wavecom modem plugin.
+Date: Mon, 19 Apr 2010 21:34:28 +0200
+Message-ID: <1271705668-23970-1-git-send-email-matgnt@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3909436908233930051==
+--===============1993169694071301767==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+The Wavecom WMP100 assumes CPIN to be the final response, therefore some sp=
+ecial handling is
+neccessary (see 6d28f82dc1ccb3de3a028a88eafb96fb001c7e61). Now the vendor i=
+d OFONO_VENDOR_WAVECOM
+is passed with all "*create" functions.
+---
+ Makefile.am         |    3 +
+ plugins/modemconf.c |    1 +
+ plugins/wavecom.c   |  212 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 3 files changed, 216 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/wavecom.c
 
-On 04/16/2010 10:52 PM, Marcel Holtmann wrote:
-> Hi Zhenhua,
->
->> Dell 5530 modem has no data device port. So data device should be
->> optional in mbm drvier.
->
-> can you please include the content of /proc/bus/usb/devices for this
-> device and the sysfs descriptions for each TTY port.
+diff --git a/Makefile.am b/Makefile.am
+index 0eaadda..9b4b31c 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -187,6 +187,9 @@ builtin_sources +=3D plugins/atgen.c
+ builtin_modules +=3D g1
+ builtin_sources +=3D plugins/g1.c
+ =
 
-I realize my previous fix is not proper to 5530. I can see three ports =
++builtin_modules +=3D wavecom
++builtin_sources +=3D plugins/wavecom.c
++
+ builtin_modules +=3D calypso
+ builtin_sources +=3D plugins/calypso.c
+ =
 
-(ttyACM0~ttyACM2) for Dell 5530 modem. The sysfs descriptions are posted =
+diff --git a/plugins/modemconf.c b/plugins/modemconf.c
+index cf0ee8b..f38ca98 100644
+--- a/plugins/modemconf.c
++++ b/plugins/modemconf.c
+@@ -121,6 +121,7 @@ static struct {
+ 	{ "phonesim",	set_address	},
+ 	{ "atgen",	set_device	},
+ 	{ "g1",		set_device	},
++	{ "wavecom",	set_device	},
+ 	{ "ste",	set_device	},
+ 	{ "calypso",	set_device	},
+ 	{ "palmpre",	set_device	},
+diff --git a/plugins/wavecom.c b/plugins/wavecom.c
+new file mode 100644
+index 0000000..7beeb5b
+--- /dev/null
++++ b/plugins/wavecom.c
+@@ -0,0 +1,212 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <errno.h>
++#include <stdlib.h>
++
++#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/call-barring.h>
++#include <ofono/call-forwarding.h>
++#include <ofono/call-meter.h>
++#include <ofono/call-settings.h>
++#include <ofono/devinfo.h>
++#include <ofono/message-waiting.h>
++#include <ofono/netreg.h>
++#include <ofono/phonebook.h>
++#include <ofono/sim.h>
++#include <ofono/sms.h>
++#include <ofono/ssn.h>
++#include <ofono/ussd.h>
++#include <ofono/voicecall.h>
++
++#include <drivers/atmodem/vendor.h>
++
++static const char *tty_opts[] =3D {
++	"Baud",
++	"Read",
++	"Local",
++	"StopBits",
++	"DataBits",
++	"Parity",
++	"XonXoff",
++	"RtsCts",
++	NULL,
++};
++
++static int wavecom_probe(struct ofono_modem *modem)
++{
++	return 0;
++}
++
++static void wavecom_remove(struct ofono_modem *modem)
++{
++}
++
++static void wavecom_debug(const char *str, void *user_data)
++{
++	ofono_info("%s", str);
++}
++
++static int wavecom_enable(struct ofono_modem *modem)
++{
++	GAtChat *chat;
++	GIOChannel *channel;
++	GAtSyntax *syntax;
++	const char *device;
++	const char *value;
++	GHashTable *options;
++	int i;
++
++	DBG("%p", modem);
++
++	device =3D ofono_modem_get_string(modem, "Device");
++	if (!device)
++		return -EINVAL;
++
++	options =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++					g_free, g_free);
++	if (!options)
++		return -ENOMEM;
++
++	for (i =3D 0; tty_opts[i]; i++) {
++		value =3D ofono_modem_get_string(modem, tty_opts[i]);
++
++		if (value =3D=3D NULL)
++			continue;
++
++		g_hash_table_insert(options, g_strdup(tty_opts[i]),
++					g_strdup(value));
++	}
++
++	channel =3D g_at_tty_open(device, options);
++
++	g_hash_table_destroy(options);
++
++	if (!channel) {
++		return -EIO;
++	}
++
++	value =3D ofono_modem_get_string(modem, "GsmSyntax");
++	if (value) {
++		if (g_str_equal(value, "V1"))
++			syntax =3D g_at_syntax_new_gsmv1();
++		else if (g_str_equal(value, "Permissive"))
++			syntax =3D g_at_syntax_new_gsm_permissive();
++		else
++			return -EINVAL;
++	} else {
++		syntax =3D g_at_syntax_new_gsmv1();
++	}
++
++	chat =3D g_at_chat_new(channel, syntax);
++	g_at_syntax_unref(syntax);
++	g_io_channel_unref(channel);
++
++	if (!chat)
++		return -ENOMEM;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(chat, wavecom_debug, NULL);
++
++	ofono_modem_set_data(modem, chat);
++
++	return 0;
++}
++
++static int wavecom_disable(struct ofono_modem *modem)
++{
++	GAtChat *chat =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ofono_modem_set_data(modem, NULL);
++
++	g_at_chat_unref(chat);
++
++	return 0;
++}
++
++static void wavecom_pre_sim(struct ofono_modem *modem)
++{
++	GAtChat *chat =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	ofono_devinfo_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++	ofono_sim_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++	ofono_voicecall_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++}
++
++static void wavecom_post_sim(struct ofono_modem *modem)
++{
++	GAtChat *chat =3D ofono_modem_get_data(modem);
++	struct ofono_message_waiting *mw;
++
++	DBG("%p", modem);
++
++	ofono_ussd_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++	ofono_call_forwarding_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat=
+);
++	ofono_call_settings_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++	ofono_netreg_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++	ofono_call_meter_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++	ofono_call_barring_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++	ofono_ssn_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++	ofono_sms_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++	ofono_phonebook_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
++
++	mw =3D ofono_message_waiting_create(modem);
++	if (mw)
++		ofono_message_waiting_register(mw);
++}
++
++static struct ofono_modem_driver wavecom_driver =3D {
++	.name		=3D "wavecom",
++	.probe		=3D wavecom_probe,
++	.remove		=3D wavecom_remove,
++	.enable		=3D wavecom_enable,
++	.disable	=3D wavecom_disable,
++	.pre_sim	=3D wavecom_pre_sim,
++	.post_sim	=3D wavecom_post_sim,
++};
++
++static int wavecom_init(void)
++{
++	return ofono_modem_driver_register(&wavecom_driver);
++}
++
++static void wavecom_exit(void)
++{
++	ofono_modem_driver_unregister(&wavecom_driver);
++}
++
++OFONO_PLUGIN_DEFINE(wavecom, "Wavecom driver", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, wavecom_init, wavecom_exit)
+-- =
 
-at below URLs:
-
-ttyACM0	http://pastebin.com/aW4PyHBw
-ttyACM1	http://pastebin.com/igZxccVe
-ttyACM2	http://pastebin.com/T7DFmXTv
-
-ttyACM0 is described as 'Dell Wireless 5530 HSPA Mobile Broadband =
-
-Minicard Modem'.
-
-ttyACM1 is described as 'Dell Wireless 5530 HSPA Mobile Broadband =
-
-Minicard Modem 2'.
-
-I cann't tell which one is modem device or data device. But obviously, =
-
-we should add 'Minicard Modem 2' as suffix candidate. So my updated =
-
-patch is attached. Now we can probe 5530 correctly again. the output is:
-
-ofonod[3737]: src/modem.c:ofono_modem_create() name: 3558620217367190, =
-
-type: mbm
-ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property Path
-ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property =
-
-Registered
-ofonod[3737]: plugins/udev.c:add_mbm() desc: Dell Wireless 5530 HSPA =
-
-Mobile Broadband Minicard Modem
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-Registered
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-ModemDevice
-ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property =
-
-ModemDevice
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-ModemDevice
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-NetworkInterface
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property Path
-ofonod[3737]: plugins/udev.c:add_mbm() desc: Dell Wireless 5530 HSPA =
-
-Mobile Broadband Minicard Modem 2
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-Registered
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-ModemDevice
-ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property =
-
-DataDevice
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-ModemDevice
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-NetworkInterface
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property Path
-ofonod[3737]: plugins/udev.c:add_mbm() desc: Dell Wireless 5530 HSPA =
-
-Mobile Broadband Minicard NetworkAdapter
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-Registered
-ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property =
-
-NetworkInterface
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-ModemDevice
-ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
-
-NetworkInterface
-ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property =
-
-Registered
-ofonod[3737]: src/modem.c:unregister_property() property 0x8a57ee0
-
-> Regards
->
-> Marcel
->
->
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+1.6.3.3
 
 
---===============3909436908233930051==
-Content-Type: application/ms-tnef
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="winmail.dat"
-
-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
-AB8AQgABAAAAKAAAAFYAZABvAHYAaQBjAGgAZQB2ACAAQQBsAGUAeABhAG4AZABlAHIAAAAfAGUA
-AQAAAD4AAABhAGwAZQB4AGEAbgBkAGUAcgAuAHYAZABvAHYAaQBjAGgAZQB2AEAAaQB4AG8AbgBv
-AHMALgBjAG8AbQAAAAAAHwBkAAEAAAAKAAAAUwBNAFQAUAAAAAAAAgFBAAEAAACIAAAAAAAAAIEr
-H6S+oxAZnW4A3QEPVAIAAACAVgBkAG8AdgBpAGMAaABlAHYAIABBAGwAZQB4AGEAbgBkAGUAcgAA
-AFMATQBUAFAAAABhAGwAZQB4AGEAbgBkAGUAcgAuAHYAZABvAHYAaQBjAGgAZQB2AEAAaQB4AG8A
-bgBvAHMALgBjAG8AbQAAAB8AGgwBAAAAKAAAAFYAZABvAHYAaQBjAGgAZQB2ACAAQQBsAGUAeABh
-AG4AZABlAHIAAAAfAB8MAQAAAD4AAABhAGwAZQB4AGEAbgBkAGUAcgAuAHYAZABvAHYAaQBjAGgA
-ZQB2AEAAaQB4AG8AbgBvAHMALgBjAG8AbQAAAAAAHwAeDAEAAAAKAAAAUwBNAFQAUAAAAAAAAgEZ
-DAEAAACIAAAAAAAAAIErH6S+oxAZnW4A3QEPVAIAAACAVgBkAG8AdgBpAGMAaABlAHYAIABBAGwA
-ZQB4AGEAbgBkAGUAcgAAAFMATQBUAFAAAABhAGwAZQB4AGEAbgBkAGUAcgAuAHYAZABvAHYAaQBj
-AGgAZQB2AEAAaQB4AG8AbgBvAHMALgBjAG8AbQAAAAsAQDoBAAAAHwAaAAEAAAASAAAASQBQAE0A
-LgBOAG8AdABlAAAAAAADAPE/CQQAAAsAQDoBAAAAAwD9P+QEAAACAQswAQAAABAAAAAtdc8b6C+C
-Q5E5tKVugR6NAwAXAAEAAABAADkAgOYWiI/fygFAAAgwC02fiI/fygEDADYAAAAAAB8AcAABAAAA
-dgAAAFIAZQA6ACAAWwBQAEEAVABDAEgAXQAgAEYAaQB4ACAATABlAHQAIABkAGEAdABhACAAZABl
-AHYAaQBjAGUAIABiAGUAIABvAHAAdABpAG8AbgBhAGwAIABmAG8AcgAgAG0AYgBtACAAZAByAGkA
-dgBlAHIAAAAAAAIBcQABAAAAFgAAAAHK34+InzRXScevIEi3j44IaMvRH78AAB8ANRABAAAAiAAA
-ADwARgA0ADIAMQA3ADEARgAzADcAQwA3ADYANwBCADQAOAA4AEUAQwA2ADgAOQBCADMAQwBCAEIA
-RABCADMAQQA4ADAANQAxADQAQgAwADYAQQA4ADAAQABqAGsAbABtAGEAaQBsADAAMQAuAGkAeABv
-AG4AbwBzAC4AbABvAGMAYQBsAD4AAAAfADkQAQAAANwAAAA8ADEAMgA3ADEAMwA5ADYAMAAzADUA
-LQAxADUAOAAzADYALQAxAC0AZwBpAHQALQBzAGUAbgBkAC0AZQBtAGEAaQBsAC0AegBoAGUAbgBo
-AHUAYQAuAHoAaABhAG4AZwBAAGkAbgB0AGUAbAAuAGMAbwBtAD4AIAA8ADEAMgA3ADEANAAyADkA
-NQA3ADYALgAyADIAOAAzADgALgAyADYALgBjAGEAbQBlAGwAQABsAG8AYwBhAGwAaABvAHMAdAAu
-AGwAbwBjAGEAbABkAG8AbQBhAGkAbgA+AAAAHwBCEAEAAABkAAAAPAAxADIANwAxADQAMgA5ADUA
-NwA2AC4AMgAyADgAMwA4AC4AMgA2AC4AYwBhAG0AZQBsAEAAbABvAGMAYQBsAGgAbwBzAHQALgBs
-AG8AYwBhAGwAZABvAG0AYQBpAG4APgAAAAsA8hABAAAAHwDzEAEAAACOAAAAUgBlACUAMwBBACAA
-UgBlACUAMwBBACAAWwBQAEEAVABDAEgAXQAgAEYAaQB4ACAATABlAHQAIABkAGEAdABhACAAZABl
-AHYAaQBjAGUAIABiAGUAIABvAHAAdABpAG8AbgBhAGwAIABmAG8AcgAgAG0AYgBtACAAZAByAGkA
-dgBlAHIALgBFAE0ATAAAAAAACwD0EAAAAAALAPUQAAAAAAsA9hAAAAAAQAAHMOs2eYiP38oBHwD4
-PwEAAAAoAAAAVgBkAG8AdgBpAGMAaABlAHYAIABBAGwAZQB4AGEAbgBkAGUAcgAAAAIB+T8BAAAA
-cgAAAAAAAADcp0DIwEIQGrS5CAArL+GCAQAAAAAAAAAvTz1JWE9OT1MvT1U9RVhDSEFOR0UgQURN
-SU5JU1RSQVRJVkUgR1JPVVAgKEZZRElCT0hGMjNTUERMVCkvQ049UkVDSVBJRU5UUy9DTj1WRE9W
-SUFMAAAAHwD6PwEAAAAoAAAAVgBkAG8AdgBpAGMAaABlAHYAIABBAGwAZQB4AGEAbgBkAGUAcgAA
-AAIB+z8BAAAAcgAAAAAAAADcp0DIwEIQGrS5CAArL+GCAQAAAAAAAAAvTz1JWE9OT1MvT1U9RVhD
-SEFOR0UgQURNSU5JU1RSQVRJVkUgR1JPVVAgKEZZRElCT0hGMjNTUERMVCkvQ049UkVDSVBJRU5U
-Uy9DTj1WRE9WSUFMAAAAAwAZQAAAAAADABpAAAAAAAMADTT5PwAAAgEUNAEAAAAQAAAAVJShwCl/
-EBulhwgAKyolFx8APQABAAAACgAAAFIAZQA6ACAAAAAAAB8ANwABAAAAfgAAAFIAZQA6ACAAUgBl
-ADoAIABbAFAAQQBUAEMASABdACAARgBpAHgAIABMAGUAdAAgAGQAYQB0AGEAIABkAGUAdgBpAGMA
-ZQAgAGIAZQAgAG8AcAB0AGkAbwBuAGEAbAAgAGYAbwByACAAbQBiAG0AIABkAHIAaQB2AGUAcgAA
-AAAAHwAAgIYDAgAAAAAAwAAAAAAAAEYBAAAAHgAAAGEAYwBjAGUAcAB0AGwAYQBuAGcAdQBhAGcA
-ZQAAAAAAAQAAABoAAABlAG4ALQBVAFMALAAgAGYAaQAtAEYASQAAAAAAHwAAgIYDAgAAAAAAwAAA
-AAAAAEYBAAAAIAAAAHgALQBtAHMALQBoAGEAcwAtAGEAdAB0AGEAYwBoAAAAAQAAAAgAAAB5AGUA
-cwAAAAMA3j+fTgAAE9kCApAGAA4AAAABAP////8gACAAAAAAAD0EAhCAAQA+AAAAMDAwMS1GaXgt
-QWRkLURlbGw1NTMwLW1vZGVtLXBvcnQtc3VmZml4LWZvci1kYXRhLWRldmljZS5wYXRjaADPFAIS
-gAMADgAAANoHBAATAAcACwAdAAEAKAECE4ADAA4AAADaBwQAEwAHAAsAHQABACgBAg+ABgD/AgAA
-PkZyb20gNDRjOGFiYTYyNjFjOTUyNThjM2I4OTE4YmJjMzIxYjFhMzUxMmQ1ZiBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDEKRnJvbTogWmhlbmh1YSBaaGFuZyA8emhlbmh1YS56aGFuZ0BpbnRlbC5j
-b20+CkRhdGU6IE1vbiwgMTkgQXByIDIwMTAgMDk6Mzk6NDkgKzA4MDAKU3ViamVjdDogW1BBVENI
-XSBGaXggQWRkIERlbGw1NTMwIG1vZGVtIHBvcnQgc3VmZml4IGZvciBkYXRhIGRldmljZQoKLS0t
-CiBwbHVnaW5zL3VkZXYuYyB8ICAgIDEgKwogMSBmaWxlcyBjaGFuZ2VkLCAxIGluc2VydGlvbnMo
-KyksIDAgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvcGx1Z2lucy91ZGV2LmMgYi9wbHVnaW5z
-L3VkZXYuYwppbmRleCBhODliOWQ5Li45NjRhYzY1IDEwMDY0NAotLS0gYS9wbHVnaW5zL3VkZXYu
-YworKysgYi9wbHVnaW5zL3VkZXYuYwpAQCAtMTEyLDYgKzExMiw3IEBAIHN0YXRpYyB2b2lkIGFk
-ZF9tYm0oc3RydWN0IG9mb25vX21vZGVtICptb2RlbSwKIAkJcmV0dXJuOwogCiAJaWYgKGdfc3Ry
-X2hhc19zdWZmaXgoZGVzYywgIk1pbmljYXJkIE1vZGVtIikgfHwKKwkJCWdfc3RyX2hhc19zdWZm
-aXgoZGVzYywgIk1pbmljYXJkIE1vZGVtIDIiKSB8fAogCQkJZ19zdHJfaGFzX3N1ZmZpeChkZXNj
-LCAiTWluaS1DYXJkIE1vZGVtIikgfHwKIAkJCWdfc3RyX2hhc19zdWZmaXgoZGVzYywgIkJyb2Fk
-YmFuZCBNb2RlbSIpIHx8CiAJCQlnX3N0cl9oYXNfc3VmZml4KGRlc2MsICJCcm9hZGJhbmQgVVNC
-IE1vZGVtIikpIHsKLS0gCjEuNi42LjEKCgDO6gIFkAYA8AEAAAkAAAADAAU3AQAAAB8AAzcBAAAA
-DgAAAC4AcABhAHQAYwBoAAAAAAAfAAQ3AQAAABoAAAAwADAAMAAxAC0ARgB+ADEALgBwAGEAdAAA
-AAAAHwAHNwEAAAB8AAAAMAAwADAAMQAtAEYAaQB4AC0AQQBkAGQALQBEAGUAbABsADUANQAzADAA
-LQBtAG8AZABlAG0ALQBwAG8AcgB0AC0AcwB1AGYAZgBpAHgALQBmAG8AcgAtAGQAYQB0AGEALQBk
-AGUAdgBpAGMAZQAuAHAAYQB0AGMAaAAAAEAABzBNmHuIj9/KAR8AATABAAAAfAAAADAAMAAwADEA
-LQBGAGkAeAAtAEEAZABkAC0ARABlAGwAbAA1ADUAMwAwAC0AbQBvAGQAZQBtAC0AcABvAHIAdAAt
-AHMAdQBmAGYAaQB4AC0AZgBvAHIALQBkAGEAdABhAC0AZABlAHYAaQBjAGUALgBwAGEAdABjAGgA
-AABAAAgwTZh7iI/fygEfABI3AQAAAGIAAAAxADIANwAxADYANgAwADgAMAA3AC4AMgA2ADcAOAAw
-AC4AMAAuAGMAYQBtAGUAbABAAGMAegBjADcAMgAwADQAMgBzADYALgBpAHgAbwBuAG8AcwAuAGwA
-bwBjAGEAbAAAAAAAAwALN/////80TgICkAYADgAAAAEA/////yAAIAAAAAAAPQQCEIABAA4AAABB
-VFQwMDAwMS4udHh0AJYDAhKAAwAOAAAA2gcEABMABwALAB0AAQAoAQITgAMADgAAANoHBAATAAcA
-CwAdAAEAKAECD4AGAHoAAABfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fXwpvZm9ubyBtYWlsaW5nIGxpc3QKb2Zvbm9Ab2Zvbm8ub3JnCmh0dHA6Ly9saXN0cy5v
-Zm9uby5vcmcvbGlzdGluZm8vb2Zvbm8KAMIsAgWQBgAsAQAACQAAAAMABTcBAAAAHwADNwEAAAAK
-AAAALgB0AHgAdAAAAAAAHwAENwEAAAAaAAAAQQBUAFQAMAAwADAAfgAxAC4AdAB4AHQAAAAAAB8A
-BzcBAAAAHAAAAEEAVABUADAAMAAwADAAMQAuAC4AdAB4AHQAAABAAAcwN3+HiI/fygEfAAEwAQAA
-ABwAAABBAFQAVAAwADAAMAAwADEALgAuAHQAeAB0AAAAQAAIMDd/h4iP38oBHwASNwEAAABiAAAA
-MQAyADcAMQA2ADYAMAA4ADAANwAuADIANgA3ADgAMAAuADEALgBjAGEAbQBlAGwAQABjAHoAYwA3
-ADIAMAA0ADIAcwA2AC4AaQB4AG8AbgBvAHMALgBsAG8AYwBhAGwAAAAAAAMACzf/////aSo=
---===============3909436908233930051==--
+--===============1993169694071301767==--
 
