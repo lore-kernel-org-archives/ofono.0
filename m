@@ -1,61 +1,151 @@
-Content-Type: multipart/mixed; boundary="===============5980916258581018795=="
+Content-Type: multipart/mixed; boundary="===============4539407058215550849=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/3] hdlc: handle wrapped buffers
-Date: Sat, 17 Apr 2010 15:39:58 -0700
-Message-ID: <1271543998.22838.34.camel@localhost.localdomain>
-In-Reply-To: <1271528135-12337-3-git-send-email-kristen@linux.intel.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: Re: [PATCH] Fix Let data device be optional for mbm driver
+Date: Mon, 19 Apr 2010 09:53:24 +0800
+Message-ID: <4BCBB794.6050508@intel.com>
+In-Reply-To: <1271429576.22838.26.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5980916258581018795==
+--===============4539407058215550849==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+Hi Marcel,
 
-> ---
->  gatchat/gathdlc.c |   75 ++++++++++++++++++++++++++++-------------------=
------
->  1 files changed, 40 insertions(+), 35 deletions(-)
-> =
+On 04/16/2010 10:52 PM, Marcel Holtmann wrote:
+> Hi Zhenhua,
+>
+>> Dell 5530 modem has no data device port. So data device should be
+>> optional in mbm drvier.
+>
+> can you please include the content of /proc/bus/usb/devices for this
+> device and the sysfs descriptions for each TTY port.
 
-> diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
-> index c5c02cf..13e15a1 100644
-> --- a/gatchat/gathdlc.c
-> +++ b/gatchat/gathdlc.c
-> @@ -59,11 +59,12 @@ static void new_bytes(GAtHDLC *hdlc)
->  {
->  	unsigned int len =3D ring_buffer_len(hdlc->read_buffer);
->  	unsigned char *buf =3D ring_buffer_read_ptr(hdlc->read_buffer, 0);
-> +	unsigned int wrap =3D ring_buffer_len_no_wrap(hdlc->read_buffer);
->  	unsigned char val;
->  	unsigned int pos =3D 0;
->  =
+I realize my previous fix is not proper to 5530. I can see three ports =
 
->  	while (pos < len) {
-> -		if (buf[pos] =3D=3D 0x7e) {
-> +		if (*buf =3D=3D 0x7e) {
->  			if (hdlc->receive_func && hdlc->decode_offset > 2 &&
->  						hdlc->decode_fcs =3D=3D 0xf0b8) {
->  				hdlc->receive_func(hdlc->decode_buffer,
+(ttyACM0~ttyACM2) for Dell 5530 modem. The sysfs descriptions are posted =
 
-please do this patch fist and send it separately. Intermixing it with
-the ACCM support makes it hard to review.
+at below URLs:
 
-So I like to see the patch series this way:
+ttyACM0	http://pastebin.com/aW4PyHBw
+ttyACM1	http://pastebin.com/igZxccVe
+ttyACM2	http://pastebin.com/T7DFmXTv
 
-1) Handle ringbuffer wrapping in HDLC
-2) Add recording support for HDLC
-3) Add ACCM support to HDLC
-4) Port PPP to use HDLC
+ttyACM0 is described as 'Dell Wireless 5530 HSPA Mobile Broadband =
 
-Regards
+Minicard Modem'.
 
-Marcel
+ttyACM1 is described as 'Dell Wireless 5530 HSPA Mobile Broadband =
+
+Minicard Modem 2'.
+
+I cann't tell which one is modem device or data device. But obviously, =
+
+we should add 'Minicard Modem 2' as suffix candidate. So my updated =
+
+patch is attached. Now we can probe 5530 correctly again. the output is:
+
+ofonod[3737]: src/modem.c:ofono_modem_create() name: 3558620217367190, =
+
+type: mbm
+ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property Path
+ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property =
+
+Registered
+ofonod[3737]: plugins/udev.c:add_mbm() desc: Dell Wireless 5530 HSPA =
+
+Mobile Broadband Minicard Modem
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+Registered
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+ModemDevice
+ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property =
+
+ModemDevice
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+ModemDevice
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+NetworkInterface
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property Path
+ofonod[3737]: plugins/udev.c:add_mbm() desc: Dell Wireless 5530 HSPA =
+
+Mobile Broadband Minicard Modem 2
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+Registered
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+ModemDevice
+ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property =
+
+DataDevice
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+ModemDevice
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+NetworkInterface
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property Path
+ofonod[3737]: plugins/udev.c:add_mbm() desc: Dell Wireless 5530 HSPA =
+
+Mobile Broadband Minicard NetworkAdapter
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+Registered
+ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property =
+
+NetworkInterface
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+ModemDevice
+ofonod[3737]: src/modem.c:get_modem_property() modem 0x8a576c0 property =
+
+NetworkInterface
+ofonod[3737]: src/modem.c:set_modem_property() modem 0x8a576c0 property =
+
+Registered
+ofonod[3737]: src/modem.c:unregister_property() property 0x8a57ee0
+
+> Regards
+>
+> Marcel
+>
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
 
+--===============4539407058215550849==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Fix-Add-Dell5530-modem-port-suffix-for-data-device.patch"
 
---===============5980916258581018795==--
+PkZyb20gNDRjOGFiYTYyNjFjOTUyNThjM2I4OTE4YmJjMzIxYjFhMzUxMmQ1ZiBNb24gU2VwIDE3
+IDAwOjAwOjAwIDIwMDEKRnJvbTogWmhlbmh1YSBaaGFuZyA8emhlbmh1YS56aGFuZ0BpbnRlbC5j
+b20+CkRhdGU6IE1vbiwgMTkgQXByIDIwMTAgMDk6Mzk6NDkgKzA4MDAKU3ViamVjdDogW1BBVENI
+XSBGaXggQWRkIERlbGw1NTMwIG1vZGVtIHBvcnQgc3VmZml4IGZvciBkYXRhIGRldmljZQoKLS0t
+CiBwbHVnaW5zL3VkZXYuYyB8ICAgIDEgKwogMSBmaWxlcyBjaGFuZ2VkLCAxIGluc2VydGlvbnMo
+KyksIDAgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvcGx1Z2lucy91ZGV2LmMgYi9wbHVnaW5z
+L3VkZXYuYwppbmRleCBhODliOWQ5Li45NjRhYzY1IDEwMDY0NAotLS0gYS9wbHVnaW5zL3VkZXYu
+YworKysgYi9wbHVnaW5zL3VkZXYuYwpAQCAtMTEyLDYgKzExMiw3IEBAIHN0YXRpYyB2b2lkIGFk
+ZF9tYm0oc3RydWN0IG9mb25vX21vZGVtICptb2RlbSwKIAkJcmV0dXJuOwogCiAJaWYgKGdfc3Ry
+X2hhc19zdWZmaXgoZGVzYywgIk1pbmljYXJkIE1vZGVtIikgfHwKKwkJCWdfc3RyX2hhc19zdWZm
+aXgoZGVzYywgIk1pbmljYXJkIE1vZGVtIDIiKSB8fAogCQkJZ19zdHJfaGFzX3N1ZmZpeChkZXNj
+LCAiTWluaS1DYXJkIE1vZGVtIikgfHwKIAkJCWdfc3RyX2hhc19zdWZmaXgoZGVzYywgIkJyb2Fk
+YmFuZCBNb2RlbSIpIHx8CiAJCQlnX3N0cl9oYXNfc3VmZml4KGRlc2MsICJCcm9hZGJhbmQgVVNC
+IE1vZGVtIikpIHsKLS0gCjEuNi42LjEKCg==
+
+--===============4539407058215550849==--
 
