@@ -1,60 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============6207632531632885893=="
+Content-Type: multipart/mixed; boundary="===============2998003390451710011=="
 MIME-Version: 1.0
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [PATCH] Add script for entering pin
-Date: Tue, 20 Apr 2010 14:06:32 +0200
-Message-ID: <20100420120632.GA26491@aao-dell.bmw-carit.intra>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] Add send_method_call to g_dbus
+Date: Tue, 20 Apr 2010 11:20:12 -0500
+Message-ID: <201004201120.13233.denkenz@gmail.com>
+In-Reply-To: <87y6giqxjz.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6207632531632885893==
+--===============2998003390451710011==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- I found this script helpful during debugging. Feel free to add.
+Hi Kalle,
 
- test/enter-pin |   26 ++++++++++++++++++++++++++
- 1 files changed, 26 insertions(+), 0 deletions(-)
- create mode 100755 test/enter-pin
+> "Gustavo F. Padovan" <gustavo@padovan.org> writes:
+> > Puting send_method_call and send_method_call_with_reply on g_dbus will
+> > avoid some code duplication and will make things easier mainly for the
+> > Bluetooth plugins (HFP, DUN, SAP) inside oFono.
+> =
 
-diff --git a/test/enter-pin b/test/enter-pin
-new file mode 100755
-index 0000000..792b6b2
---- /dev/null
-+++ b/test/enter-pin
-@@ -0,0 +1,26 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 4:
-+	path =3D sys.argv[1]
-+	pin_type =3D sys.argv[2]
-+	pin =3D sys.argv[3]
-+elif len(sys.argv) =3D=3D 3:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+				 'org.ofono.Manager')
-+	properties =3D manager.GetProperties()
-+	path =3D properties["Modems"][0]
-+	pin_type =3D sys.argv[1]
-+	pin =3D sys.argv[2]
-+else:
-+	print "%s [PATH] pin_type pin" % (sys.argv[0])
-+
-+print "Enter Pin for modem %s..." % path
-+simmanager =3D dbus.Interface(bus.get_object('org.ofono', path),
-+			    'org.ofono.SimManager')
-+
-+simmanager.EnterPin(pin_type, pin)
--- =
-
-1.6.6.1
+> Sorry, totally unrelated to this patch, but is there a BT DUN plugin for
+> ofono available somewhere? I would love to test it.
+> =
 
 
---===============6207632531632885893==--
+There is none yet, but it is something we're planning to implement.  But ju=
+st =
+
+to make sure we're all talking about the same thing, what DUN profile role =
+
+(client or server?) are you actually interested in?  The oFono plugin will =
+be =
+
+for the server role, the client role will probably be a plugin in BlueZ.
+
+Regards,
+-Denis
+
+--===============2998003390451710011==--
 
