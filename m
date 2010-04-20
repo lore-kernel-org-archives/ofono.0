@@ -1,30 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============7022900366683202923=="
+Content-Type: multipart/mixed; boundary="===============1946135870458792412=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
 Subject: Re: [PATCH] Add send_method_call to g_dbus
-Date: Tue, 20 Apr 2010 12:32:16 +0300
-Message-ID: <87y6giqxjz.fsf@potku.valot.fi>
-In-Reply-To: <1271746281-26784-1-git-send-email-gustavo@padovan.org>
+Date: Tue, 20 Apr 2010 17:41:08 +0800
+Message-ID: <4BCD76B4.7040101@intel.com>
+In-Reply-To: <87y6giqxjz.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7022900366683202923==
+--===============1946135870458792412==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-"Gustavo F. Padovan" <gustavo@padovan.org> writes:
+Hi Valo,
 
-> Puting send_method_call and send_method_call_with_reply on g_dbus will
-> avoid some code duplication and will make things easier mainly for the
-> Bluetooth plugins (HFP, DUN, SAP) inside oFono.
+On 04/20/2010 05:32 PM, Kalle Valo wrote:
+> "Gustavo F. Padovan"<gustavo@padovan.org>  writes:
+>
+>> Puting send_method_call and send_method_call_with_reply on g_dbus will
+>> avoid some code duplication and will make things easier mainly for the
+>> Bluetooth plugins (HFP, DUN, SAP) inside oFono.
+>
+> Sorry, totally unrelated to this patch, but is there a BT DUN plugin for
+> ofono available somewhere? I would love to test it.
+>
 
-Sorry, totally unrelated to this patch, but is there a BT DUN plugin for
-ofono available somewhere? I would love to test it.
+Not yet. We are working on BT DUN plugin right now. And it requires some =
 
--- =
+intergration efforts with Connman, PPP stack, etc.
 
-Kalle Valo
+Thanks.
+Zhenhua
 
---===============7022900366683202923==--
+--===============1946135870458792412==--
 
