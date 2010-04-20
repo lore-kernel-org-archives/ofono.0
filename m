@@ -1,102 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============7421125569915416626=="
+Content-Type: multipart/mixed; boundary="===============5998282324730600213=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 10/17] Add parser for remote entity address objects
-Date: Tue, 20 Apr 2010 14:15:05 +0800
-Message-ID: <1271744112-32285-10-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 17/17] Add parser for battery state objects
+Date: Tue, 20 Apr 2010 14:15:12 +0800
+Message-ID: <1271744112-32285-17-git-send-email-yang.gu@intel.com>
 In-Reply-To: <1271744112-32285-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7421125569915416626==
+--===============5998282324730600213==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   31 +++++++++++++++++++++++++++++++
- src/stkutil.h |   10 ++++++++++
- 2 files changed, 41 insertions(+), 0 deletions(-)
+ src/stkutil.c |   10 ++++++++++
+ src/stkutil.h |    8 ++++++++
+ 2 files changed, 18 insertions(+), 0 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index 7209842..4863989 100644
+index a3c5f47..832d2f8 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -1385,6 +1385,35 @@ static gboolean parse_dataobj_service_availability(
- 	return parse_dataobj_common_byte_array(iter, array);
+@@ -1550,6 +1550,14 @@ static gboolean parse_dataobj_network_search_mode(
+ 	return parse_dataobj_common_byte(iter, byte);
  }
  =
 
-+/* Defined in TS 102.223 Section 8.68 */
-+static gboolean parse_dataobj_remote_entity_address(
-+		struct comprehension_tlv_iter *iter, void *user)
++/* Defined in TS 102.223 Section 8.76 */
++static gboolean parse_dataobj_battery_state(struct comprehension_tlv_iter =
+*iter,
++						void *user)
 +{
-+	struct stk_remote_entity_address *rea =3D user;
-+	const unsigned char *data;
-+	unsigned int len =3D comprehension_tlv_iter_get_length(iter);
-+
-+	data =3D comprehension_tlv_iter_get_data(iter);
-+
-+	rea->coding_type =3D data[0];
-+	switch (rea->coding_type) {
-+	case 0x00:
-+		if (len !=3D 7)
-+			return FALSE;
-+		break;
-+	case 0x01:
-+		if (len !=3D 5)
-+			return FALSE;
-+		break;
-+	default:
-+		return FALSE;
-+	}
-+
-+	memcpy(rea->addr, data + 1, len - 1);
-+
-+	return TRUE;
++	unsigned char *byte =3D user;
++	return parse_dataobj_common_byte(iter, byte);
 +}
 +
- /* Defined in TS 102.223 Section 8.72 */
- static gboolean parse_dataobj_text_attr(struct comprehension_tlv_iter *ite=
-r,
+ /* Defined in TS 102.223 Section 8.80 */
+ static gboolean parse_dataobj_frame_id(struct comprehension_tlv_iter *iter,
  					void *user)
-@@ -1549,6 +1578,8 @@ static dataobj_handler handler_for_type(enum stk_data=
+@@ -1709,6 +1717,8 @@ static dataobj_handler handler_for_type(enum stk_data=
 _object_type type)
- 		return parse_dataobj_attribute_info;
- 	case STK_DATA_OBJECT_TYPE_SERVICE_AVAILABILITY:
- 		return parse_dataobj_service_availability;
-+	case STK_DATA_OBJECT_TYPE_REMOTE_ENTITY_ADDRESS:
-+		return parse_dataobj_remote_entity_address;
- 	case STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE:
- 		return parse_dataobj_text_attr;
+ 		return parse_dataobj_imeisv;
+ 	case STK_DATA_OBJECT_TYPE_NETWORK_SEARCH_MODE:
+ 		return parse_dataobj_network_search_mode;
++	case STK_DATA_OBJECT_TYPE_BATTERY_STATE:
++		return parse_dataobj_battery_state;
  	case STK_DATA_OBJECT_TYPE_FRAME_ID:
+ 		return parse_dataobj_frame_id;
+ 	default:
 diff --git a/src/stkutil.h b/src/stkutil.h
-index 8c5e6f5..184c098 100644
+index f9cf34b..6e822f8 100644
 --- a/src/stkutil.h
 +++ b/src/stkutil.h
-@@ -653,6 +653,16 @@ struct stk_attribute_info {
+@@ -357,6 +357,14 @@ enum stk_technology_id {
+ 	STK_TECHNOLOGY_USB =3D 		0x04
  };
  =
 
- /*
-+ * According to TS 102.223 Section 8.68, remote entity address can be eith=
-er
-+ * 6-bytes IEEE-802 address, or 4-bytes IrDA device address. So the maximum
-+ * size of address is 6 bytes.
-+ */
-+struct stk_remote_entity_address {
-+	unsigned char coding_type;
-+	unsigned char addr[6];
++enum stk_battery_state {
++	STK_BATTERY_VERY_LOW =3D 	0x00,
++	STK_BATTERY_LOW =3D 	0x01,
++	STK_BATTERY_AVERAGE =3D 	0x02,
++	STK_BATTERY_GOOD =3D 	0x03,
++	STK_BATTERY_FULL =3D 	0x04
 +};
 +
-+/*
-  * According to 102.223 Section 8.72 the length of text attribute CTLV is 1
-  * byte.  This means that the maximum size is 127 according to the rules
-  * of CTLVs.  Empty attribute options will have len of 0.
+ /* For data object that only has a byte array with undetermined length */
+ struct stk_common_byte_array {
+ 	unsigned char *array;
 -- =
 
 1.7.0.4
 
 
---===============7421125569915416626==--
+--===============5998282324730600213==--
 
