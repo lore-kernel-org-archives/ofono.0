@@ -1,28 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5742290912312973344=="
+Content-Type: multipart/mixed; boundary="===============2816369276107409861=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 06/17] Add parser for device filter objects
-Date: Tue, 20 Apr 2010 16:56:44 -0500
-Message-ID: <201004201656.45147.denkenz@gmail.com>
-In-Reply-To: <1271744112-32285-6-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 10/17] Add parser for remote entity address objects
+Date: Tue, 20 Apr 2010 16:58:27 -0500
+Message-ID: <201004201658.27461.denkenz@gmail.com>
+In-Reply-To: <1271744112-32285-10-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5742290912312973344==
+--===============2816369276107409861==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Yang,
 
-> +	df->dev_filter =3D g_try_malloc(df->len);
-> +	if (df->dev_filter =3D=3D NULL)
-> +		return FALSE;
+>  /*
+> + * According to TS 102.223 Section 8.68, remote entity address can be
+>  either + * 6-bytes IEEE-802 address, or 4-bytes IrDA device address. So
+>  the maximum + * size of address is 6 bytes.
+> + */
+> +struct stk_remote_entity_address {
+> +	unsigned char coding_type;
+> +	unsigned char addr[6];
+> +};
+> +
 
-Again, you might want to handle 0 byte objects here or error out.
+I suggest you use a union here, see stk_other_address for an idea.
 
 Regards,
 -Denis
 
---===============5742290912312973344==--
+--===============2816369276107409861==--
 
