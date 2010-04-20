@@ -1,60 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============4717715732721203735=="
+Content-Type: multipart/mixed; boundary="===============4053016698736353898=="
 MIME-Version: 1.0
-From: andrzej zaborowski <balrogg@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 7/8] Add AT driver for STK atom.
-Date: Tue, 20 Apr 2010 23:03:12 +0200
-Message-ID: <i2kfb249edb1004201403saee6351eqc3df2260e1bff89e@mail.gmail.com>
-In-Reply-To: <201004201555.33596.denkenz@gmail.com>
+Date: Tue, 20 Apr 2010 16:32:15 -0500
+Message-ID: <201004201632.16205.denkenz@gmail.com>
+In-Reply-To: <i2kfb249edb1004201403saee6351eqc3df2260e1bff89e@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4717715732721203735==
+--===============4053016698736353898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 20 April 2010 22:55, Denis Kenzior <denkenz@gmail.com> wrote:
->> > So I re-read that part of the spec, and I can see why we might want it.
->> > However, this quote seemed rather interesting: "Le set to '00' indicat=
-es
->> > that the terminal expects to receive at most the maximum number of byt=
-es,
->> > i.e. 256, in the response ADPU. The UICC may return any number of bytes
->> > in the range 1 to 256."
->> >
->> > Shouldn't that 'FF' be changed to '00'? =C2=A0Also, you might want to =
-include
->> > the relevant passage or Spec/Section reference in this code so we don't
->> > wonder where it came from in the future.
->>
->> Attached patch adds a comment and changes the FF to 00. =C2=A0I guess it=
- is
->> largely theoretical right now. =C2=A0The issue again with "any number of
->> bytes in the range 1 to 256" is that this prohibits an empty response,
->> which we want to allow too :) =C2=A0 Maybe this should be a parameter of
->> driver->envelope()
->
-> "The maximum number of bytes expected in the data part of the response AP=
-DU is
-> presented in the parameter Le, which is optional. This means that if the
-> terminal does not expect any data in the response APDU Le is absent from =
-the
-> command"
+Hi Andrew,
 
-Well, this is an "if" without "only then" so it doesn't tell us the
-meaning of Le being absent.  Additionally the whole passage is later
-invalidated in 11.2.2.2, so the SIM implementer really has all the
-possible options.
+> Well, this is an "if" without "only then" so it doesn't tell us the
+> meaning of Le being absent.  Additionally the whole passage is later
+> invalidated in 11.2.2.2, so the SIM implementer really has all the
+> possible options.
 
->
-> The question really becomes, do we actually want a response and know what=
- to
-> do with it?
+Hmm, I don't interpret it this way.  Le being absent means no response =
 
-We only use envelope in CBS data download right now which expects no
-response, we could indicate that in a parameter.
+expected.  The '00' vs 'FF' is unclear, I agree there.
 
-Best regards
+> =
 
---===============4717715732721203735==--
+> > The question really becomes, do we actually want a response and know wh=
+at
+> > to do with it?
+> =
+
+> We only use envelope in CBS data download right now which expects no
+> response, we could indicate that in a parameter.
+
+I suggest that we mention the Le confusion in the comment block and take ou=
+t =
+
+Le altogether since we can't do anything useful with the response data yet.=
+  =
+
+Once we're ready to implement this properly, then we can add Le and figure =
+out =
+
+wheter 'FF' or '00' or something else is required.
+
+For a hint of what the response can be used for, see 3GPP 31.124.  It seems =
+
+the response from the SIM has to be set into an RP-ERROR message and given =
+
+back to the network...
+
+Regards,
+-Denis
+
+--===============4053016698736353898==--
 
