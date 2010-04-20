@@ -1,32 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============6869703872033226061=="
+Content-Type: multipart/mixed; boundary="===============1292340535657534729=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Add script for entering pin
-Date: Tue, 20 Apr 2010 12:18:58 -0500
-Message-ID: <201004201218.58820.denkenz@gmail.com>
-In-Reply-To: <20100420120632.GA26491@aao-dell.bmw-carit.intra>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] phonesim: Free some resources after client disconnects.
+Date: Tue, 20 Apr 2010 06:44:08 +0200
+Message-ID: <1271738648-21745-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6869703872033226061==
+--===============1292340535657534729==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+Also zero SimRules::toolkitApp to avoid segfaults before the field
+is initialised.
 
-> ---
->  I found this script helpful during debugging. Feel free to add.
-> =
+Note there may be more places leaking resources.
+---
+ src/phonesim.cpp |   22 ++++++++++++++++++++++
+ 1 files changed, 22 insertions(+), 0 deletions(-)
 
->  test/enter-pin |   26 ++++++++++++++++++++++++++
->  1 files changed, 26 insertions(+), 0 deletions(-)
->  create mode 100755 test/enter-pin
+diff --git a/src/phonesim.cpp b/src/phonesim.cpp
+index d363c29..d5d7d87 100644
+--- a/src/phonesim.cpp
++++ b/src/phonesim.cpp
+@@ -501,6 +501,7 @@ SimRules::SimRules( int fd, QObject *p,  const QString&=
+ filename, HardwareManipu
+ {
+     setSocketDescriptor(fd);
+     machine =3D 0;
++    toolkitApp =3D 0;
+ =
 
-This patch has been applied, thanks.
+     if (hmf)
+         machine =3D hmf->create(this, 0);
+@@ -554,6 +555,7 @@ SimRules::SimRules( int fd, QObject *p,  const QString&=
+ filename, HardwareManipu
+     SimXmlHandler *handler =3D new SimXmlHandler();
+     if ( !readXmlFile( handler, filename ) ) {
+         qWarning() << filename << ": could not parse simulator rule file";
++        delete handler;
+         return;
+     }
+ =
 
-Regards,
--Denis
+@@ -837,6 +839,26 @@ void SimRules::tryReadCommand()
+ =
 
---===============6869703872033226061==--
+ void SimRules::destruct()
+ {
++    if ( toolkitApp !=3D defaultToolkitApp )
++        delete toolkitApp;
++    delete defaultToolkitApp;
++    toolkitApp =3D NULL;
++
++    if ( getMachine() )
++        getMachine()->handleNewApp();
++
++    if ( defState )
++        delete defState;
++    defState =3D NULL;
++
++    if ( _callManager )
++        delete _callManager;
++    _callManager =3D NULL;
++
++    if ( fileSystem )
++        delete fileSystem;
++    fileSystem =3D NULL;
++
+     if (machine) machine->deleteLater();
+     deleteLater();
+ }
+-- =
+
+1.6.1
+
+
+--===============1292340535657534729==--
 
