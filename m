@@ -1,87 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============2694270675701254539=="
+Content-Type: multipart/mixed; boundary="===============5841419836266351109=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 04/17] Add parser for display parameters objects
-Date: Tue, 20 Apr 2010 14:14:59 +0800
-Message-ID: <1271744112-32285-4-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 09/17] Add parser for service availability objects
+Date: Tue, 20 Apr 2010 14:15:04 +0800
+Message-ID: <1271744112-32285-9-git-send-email-yang.gu@intel.com>
 In-Reply-To: <1271744112-32285-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2694270675701254539==
+--===============5841419836266351109==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   20 ++++++++++++++++++++
- src/stkutil.h |    7 +++++++
- 2 files changed, 27 insertions(+), 0 deletions(-)
+ src/stkutil.c |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index d690f51..1d5d1b4 100644
+index e320086..7209842 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -1261,6 +1261,24 @@ static gboolean parse_dataobj_access_technology(
+@@ -1377,6 +1377,14 @@ static gboolean parse_dataobj_attribute_info(
  	return TRUE;
  }
  =
 
-+/* Defined in TS 102.223 Section 8.62 */
-+static gboolean parse_dataobj_display_parameters(
++/* Defined in TS 102.223 Section 8.67 */
++static gboolean parse_dataobj_service_availability(
 +		struct comprehension_tlv_iter *iter, void *user)
 +{
-+	struct stk_display_parameters *dp =3D user;
-+	const unsigned char *data;
-+
-+	if (comprehension_tlv_iter_get_length(iter) !=3D 3)
-+		return FALSE;
-+
-+	data =3D comprehension_tlv_iter_get_data(iter);
-+	dp->height =3D data[0];
-+	dp->width =3D data[1];
-+	dp->effects =3D data[2];
-+
-+	return TRUE;
++	struct stk_common_byte_array *array =3D user;
++	return parse_dataobj_common_byte_array(iter, array);
 +}
 +
  /* Defined in TS 102.223 Section 8.72 */
  static gboolean parse_dataobj_text_attr(struct comprehension_tlv_iter *ite=
 r,
  					void *user)
-@@ -1413,6 +1431,8 @@ static dataobj_handler handler_for_type(enum stk_data=
+@@ -1539,6 +1547,8 @@ static dataobj_handler handler_for_type(enum stk_data=
 _object_type type)
- 		return parse_dataobj_aid;
- 	case STK_DATA_OBJECT_TYPE_ACCESS_TECHNOLOGY:
- 		return parse_dataobj_access_technology;
-+	case STK_DATA_OBJECT_TYPE_DISPLAY_PARAMETERS:
-+		return parse_dataobj_display_parameters;
+ 		return parse_dataobj_service_search;
+ 	case STK_DATA_OBJECT_TYPE_ATTRIBUTE_INFO:
+ 		return parse_dataobj_attribute_info;
++	case STK_DATA_OBJECT_TYPE_SERVICE_AVAILABILITY:
++		return parse_dataobj_service_availability;
  	case STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE:
  		return parse_dataobj_text_attr;
  	case STK_DATA_OBJECT_TYPE_FRAME_ID:
-diff --git a/src/stkutil.h b/src/stkutil.h
-index 1e75533..2cfbc83 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -608,6 +608,13 @@ struct stk_access_technology {
- 	unsigned char len;
- };
- =
-
-+/* Defined in TS 102.223 Section 8.62 */
-+struct stk_display_parameters {
-+	unsigned char height;
-+	unsigned char width;
-+	unsigned char effects;
-+};
-+
- /*
-  * According to 102.223 Section 8.72 the length of text attribute CTLV is 1
-  * byte.  This means that the maximum size is 127 according to the rules
 -- =
 
 1.7.0.4
 
 
---===============2694270675701254539==--
+--===============5841419836266351109==--
 
