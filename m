@@ -1,43 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============2998003390451710011=="
+Content-Type: multipart/mixed; boundary="===============8425582414516776816=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Add send_method_call to g_dbus
-Date: Tue, 20 Apr 2010 11:20:12 -0500
-Message-ID: <201004201120.13233.denkenz@gmail.com>
-In-Reply-To: <87y6giqxjz.fsf@potku.valot.fi>
+Subject: Re: [PATCH] Added Wavecom modem plugin.
+Date: Tue, 20 Apr 2010 12:03:10 -0500
+Message-ID: <201004201203.11179.denkenz@gmail.com>
+In-Reply-To: <1271722185-1321-1-git-send-email-matgnt@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2998003390451710011==
+--===============8425582414516776816==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+Hi Matthias,
 
-> "Gustavo F. Padovan" <gustavo@padovan.org> writes:
-> > Puting send_method_call and send_method_call_with_reply on g_dbus will
-> > avoid some code duplication and will make things easier mainly for the
-> > Bluetooth plugins (HFP, DUN, SAP) inside oFono.
-> =
+> The Wavecom WMP100 assumes CPIN to be the final response, therefore some
+>  special handling is neccessary (see
+>  6d28f82dc1ccb3de3a028a88eafb96fb001c7e61). Now the vendor id
+>  OFONO_VENDOR_WAVECOM is passed with all "*create" functions.
 
-> Sorry, totally unrelated to this patch, but is there a BT DUN plugin for
-> ofono available somewhere? I would love to test it.
-> =
+I massaged the commit message and pushed the patch.  I did make two small =
 
+changes afterward:
 
-There is none yet, but it is something we're planning to implement.  But ju=
-st =
+> +	if (!channel) {
+> +		return -EIO;
+> +	}
 
-to make sure we're all talking about the same thing, what DUN profile role =
+Coding style requires this to be without braces (all single statement block=
+s =
 
-(client or server?) are you actually interested in?  The oFono plugin will =
-be =
+if/while/for should not have braces)
 
-for the server role, the client role will probably be a plugin in BlueZ.
+> +
+> +	/* Could not figure out whether it is fully compliant or not */
+> +	syntax =3D g_at_syntax_new_gsm_permissive();
+> +	//syntax =3D g_at_syntax_new_gsmv1();
+
+Commented out code is not a good idea, if you're not sure about something =
+
+reflect it in the comment.
 
 Regards,
 -Denis
 
---===============2998003390451710011==--
+--===============8425582414516776816==--
 
