@@ -1,256 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============0492535218422603126=="
+Content-Type: multipart/mixed; boundary="===============1993641611307134473=="
 MIME-Version: 1.0
-From: Matthias =?unknown-8bit?q?G=C3=BCnther?= <matgnt@gmail.com>
-Subject: [PATCH] Added Wavecom modem plugin.
-Date: Tue, 20 Apr 2010 02:09:45 +0200
-Message-ID: <1271722185-1321-1-git-send-email-matgnt@gmail.com>
-In-Reply-To: <201004191629.37572.denkenz@gmail.com>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH 01/17] Add parser for item text attribute list objects
+Date: Tue, 20 Apr 2010 14:14:56 +0800
+Message-ID: <1271744112-32285-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0492535218422603126==
+--===============1993641611307134473==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The Wavecom WMP100 assumes CPIN to be the final response, therefore some sp=
-ecial handling is
-neccessary (see 6d28f82dc1ccb3de3a028a88eafb96fb001c7e61). Now the vendor i=
-d OFONO_VENDOR_WAVECOM
-is passed with all "*create" functions.
 ---
- Makefile.am         |    3 +
- plugins/modemconf.c |    1 +
- plugins/wavecom.c   |  186 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 190 insertions(+), 0 deletions(-)
- create mode 100644 plugins/wavecom.c
+ src/stkutil.c |   20 ++++++++++++++++++++
+ src/stkutil.h |    6 ++++++
+ 2 files changed, 26 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 4acc69b..3d078d8 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -193,6 +193,9 @@ builtin_sources +=3D plugins/atgen.c
- builtin_modules +=3D g1
- builtin_sources +=3D plugins/g1.c
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 43c06cd..5b97aeb 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -1207,6 +1207,24 @@ static gboolean parse_dataobj_other_address(
+ 	return TRUE;
+ }
  =
 
-+builtin_modules +=3D wavecom
-+builtin_sources +=3D plugins/wavecom.c
++/* Defined in TS 102.223 Section 8.59 */
++static gboolean parse_dataobj_uicc_te_interface(
++		struct comprehension_tlv_iter *iter, void *user)
++{
++	struct stk_uicc_te_interface *uti =3D user;
++	const unsigned char *data;
++	unsigned char len =3D comprehension_tlv_iter_get_length(iter);
 +
- builtin_modules +=3D calypso
- builtin_sources +=3D plugins/calypso.c
++	if (len !=3D 3)
++		return FALSE;
++
++	data =3D comprehension_tlv_iter_get_data(iter);
++	uti->protocol =3D data[0];
++	uti->port =3D (data[1] << 8) + data[2];
++
++	return TRUE;
++}
++
+ /* Defined in TS 102.223 Section 8.72 */
+ static gboolean parse_dataobj_text_attr(struct comprehension_tlv_iter *ite=
+r,
+ 					void *user)
+@@ -1353,6 +1371,8 @@ static dataobj_handler handler_for_type(enum stk_data=
+_object_type type)
+ 		return parse_dataobj_card_reader_id;
+ 	case STK_DATA_OBJECT_TYPE_OTHER_ADDRESS:
+ 		return parse_dataobj_other_address;
++	case STK_DATA_OBJECT_TYPE_UICC_TE_INTERFACE:
++		return parse_dataobj_uicc_te_interface;
+ 	case STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE:
+ 		return parse_dataobj_text_attr;
+ 	case STK_DATA_OBJECT_TYPE_FRAME_ID:
+diff --git a/src/stkutil.h b/src/stkutil.h
+index 1c05440..1c7c970 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -570,6 +570,12 @@ struct stk_other_address {
+ 	unsigned char type;
+ };
  =
 
-diff --git a/plugins/modemconf.c b/plugins/modemconf.c
-index 281a762..3e6203a 100644
---- a/plugins/modemconf.c
-+++ b/plugins/modemconf.c
-@@ -121,6 +121,7 @@ static struct {
- 	{ "phonesim",	set_address	},
- 	{ "atgen",	set_device	},
- 	{ "g1",		set_device	},
-+	{ "wavecom",	set_device	},
- 	{ "ste",	set_device	},
- 	{ "calypso",	set_device	},
- 	{ "palmpre",	set_device	},
-diff --git a/plugins/wavecom.c b/plugins/wavecom.c
-new file mode 100644
-index 0000000..eab3abd
---- /dev/null
-+++ b/plugins/wavecom.c
-@@ -0,0 +1,186 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <errno.h>
-+#include <stdlib.h>
-+
-+#include <glib.h>
-+#include <gatchat.h>
-+#include <gattty.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/call-barring.h>
-+#include <ofono/call-forwarding.h>
-+#include <ofono/call-meter.h>
-+#include <ofono/call-settings.h>
-+#include <ofono/devinfo.h>
-+#include <ofono/message-waiting.h>
-+#include <ofono/netreg.h>
-+#include <ofono/phonebook.h>
-+#include <ofono/sim.h>
-+#include <ofono/sms.h>
-+#include <ofono/ssn.h>
-+#include <ofono/ussd.h>
-+#include <ofono/voicecall.h>
-+
-+#include <drivers/atmodem/vendor.h>
-+
-+
-+static int wavecom_probe(struct ofono_modem *modem)
-+{
-+	return 0;
-+}
-+
-+static void wavecom_remove(struct ofono_modem *modem)
-+{
-+}
-+
-+static void wavecom_debug(const char *str, void *user_data)
-+{
-+	ofono_info("%s", str);
-+}
-+
-+static int wavecom_enable(struct ofono_modem *modem)
-+{
-+	GAtChat *chat;
-+	GIOChannel *channel;
-+	GAtSyntax *syntax;
-+	const char *device;
-+	GHashTable *options;
-+
-+	DBG("%p", modem);
-+
-+	device =3D ofono_modem_get_string(modem, "Device");
-+	if (!device)
-+		return -EINVAL;
-+
-+	options =3D g_hash_table_new(g_str_hash, g_str_equal);
-+
-+	if (!options)
-+		return -ENOMEM;
-+
-+	g_hash_table_insert(options, "Baud", "115200");
-+	g_hash_table_insert(options, "Parity", "none");
-+	g_hash_table_insert(options, "StopBits", "1");
-+	g_hash_table_insert(options, "DataBits", "8");
-+
-+	channel =3D g_at_tty_open(device, options);
-+
-+	g_hash_table_destroy(options);
-+
-+	if (!channel) {
-+		return -EIO;
-+	}
-+
-+	/* Could not figure out whether it is fully compliant or not */
-+	syntax =3D g_at_syntax_new_gsm_permissive();
-+	//syntax =3D g_at_syntax_new_gsmv1();
-+
-+	chat =3D g_at_chat_new(channel, syntax);
-+	g_at_syntax_unref(syntax);
-+	g_io_channel_unref(channel);
-+
-+	if (!chat)
-+		return -ENOMEM;
-+
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(chat, wavecom_debug, NULL);
-+
-+	ofono_modem_set_data(modem, chat);
-+
-+	return 0;
-+}
-+
-+static int wavecom_disable(struct ofono_modem *modem)
-+{
-+	GAtChat *chat =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	ofono_modem_set_data(modem, NULL);
-+
-+	g_at_chat_unref(chat);
-+
-+	return 0;
-+}
-+
-+static void wavecom_pre_sim(struct ofono_modem *modem)
-+{
-+	GAtChat *chat =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	ofono_devinfo_create(modem, 0, "atmodem", chat);
-+	ofono_sim_create(modem, OFONO_VENDOR_WAVECOM, "atmodem", chat);
-+	ofono_voicecall_create(modem, 0, "atmodem", chat);
-+}
-+
-+static void wavecom_post_sim(struct ofono_modem *modem)
-+{
-+	GAtChat *chat =3D ofono_modem_get_data(modem);
-+	struct ofono_message_waiting *mw;
-+
-+	DBG("%p", modem);
-+
-+	ofono_ussd_create(modem, 0, "atmodem", chat);
-+	ofono_call_forwarding_create(modem, 0, "atmodem", chat);
-+	ofono_call_settings_create(modem, 0, "atmodem", chat);
-+	ofono_netreg_create(modem, 0, "atmodem", chat);
-+	ofono_call_meter_create(modem, 0, "atmodem", chat);
-+	ofono_call_barring_create(modem, 0, "atmodem", chat);
-+	ofono_ssn_create(modem, 0, "atmodem", chat);
-+	ofono_sms_create(modem, 0, "atmodem", chat);
-+	ofono_phonebook_create(modem, 0, "atmodem", chat);
-+
-+	mw =3D ofono_message_waiting_create(modem);
-+	if (mw)
-+		ofono_message_waiting_register(mw);
-+}
-+
-+static struct ofono_modem_driver wavecom_driver =3D {
-+	.name		=3D "wavecom",
-+	.probe		=3D wavecom_probe,
-+	.remove		=3D wavecom_remove,
-+	.enable		=3D wavecom_enable,
-+	.disable	=3D wavecom_disable,
-+	.pre_sim	=3D wavecom_pre_sim,
-+	.post_sim	=3D wavecom_post_sim,
++/* Defined in TS 102.223 Section 8.59 */
++struct stk_uicc_te_interface {
++	unsigned char protocol;
++	unsigned short port;
 +};
 +
-+static int wavecom_init(void)
-+{
-+	return ofono_modem_driver_register(&wavecom_driver);
-+}
-+
-+static void wavecom_exit(void)
-+{
-+	ofono_modem_driver_unregister(&wavecom_driver);
-+}
-+
-+OFONO_PLUGIN_DEFINE(wavecom, "Wavecom driver", VERSION,
-+		OFONO_PLUGIN_PRIORITY_DEFAULT, wavecom_init, wavecom_exit)
+ /*
+  * According to 102.223 Section 8.72 the length of text attribute CTLV is 1
+  * byte.  This means that the maximum size is 127 according to the rules
 -- =
 
-1.6.3.3
+1.7.0.4
 
 
---===============0492535218422603126==--
+--===============1993641611307134473==--
 
