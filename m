@@ -1,194 +1,191 @@
-Content-Type: multipart/mixed; boundary="===============5433527736542660249=="
+Content-Type: multipart/mixed; boundary="===============5427567026427259081=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] hdlc: handle wrapped buffers
-Date: Wed, 21 Apr 2010 19:58:56 +0200
-Message-ID: <1271872737.22838.49.camel@localhost.localdomain>
-In-Reply-To: <1271713767-3725-1-git-send-email-kristen@linux.intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH] ppp: implement MRU option
+Date: Wed, 21 Apr 2010 15:26:30 -0700
+Message-ID: <1271888790-5046-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5433527736542660249==
+--===============5427567026427259081==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+If the peer requests a MRU option, set the mtu for the network
+phase.  When we are in link establishment phase, we should
+continue to behave as if no option has been set and the peer
+should use the default MRU.
 
->  gatchat/gathdlc.c |   68 +++++++++++++++++++++++++++--------------------=
------
->  1 files changed, 35 insertions(+), 33 deletions(-)
-> =
+This option is required for the Huawei E160G modem.
+---
+ gatchat/gatppp.c  |   16 ++++++++++++++++
+ gatchat/ppp.h     |    2 ++
+ gatchat/ppp_lcp.c |    4 ++++
+ gatchat/ppp_net.c |   13 +++++++++++--
+ 4 files changed, 33 insertions(+), 2 deletions(-)
 
-> diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
-> index 19df9c6..7832350 100644
-> --- a/gatchat/gathdlc.c
-> +++ b/gatchat/gathdlc.c
-> @@ -53,11 +53,12 @@ static void new_bytes(GAtHDLC *hdlc)
->  {
->  	unsigned int len =3D ring_buffer_len(hdlc->read_buffer);
->  	unsigned char *buf =3D ring_buffer_read_ptr(hdlc->read_buffer, 0);
-> +	unsigned int wrap =3D ring_buffer_len_no_wrap(hdlc->read_buffer);
-
-to keep the design in sync with how gatchat.c does the variable order,
-please put wrap before *buf.
-
->  	unsigned char val;
->  	unsigned int pos =3D 0;
->  =
-
->  	while (pos < len) {
-> -		if (buf[pos] =3D=3D 0x7e) {
-> +		if (*buf =3D=3D 0x7e) {
->  			if (hdlc->receive_func && hdlc->decode_offset > 2 &&
->  						hdlc->decode_fcs =3D=3D 0xf0b8) {
->  				hdlc->receive_func(hdlc->decode_buffer,
-> @@ -68,22 +69,33 @@ static void new_bytes(GAtHDLC *hdlc)
->  			hdlc->decode_fcs =3D 0xffff;
->  			hdlc->decode_offset =3D 0;
->  			pos++;
-> +			buf++;
-> +			if (pos =3D=3D wrap)
-> +				buf =3D ring_buffer_read_ptr(hdlc->read_buffer,
-> +								pos);
->  			continue;
->  		}
->  =
-
-> -		if (buf[pos] =3D=3D 0x7d) {
-> +		if (*buf =3D=3D 0x7d) {
->  			if (pos + 2 > len)
->  				break;
->  			pos++;
-> -			val =3D buf[pos] ^ 0x20;
-> +			buf++;
-> +			if (pos =3D=3D wrap)
-> +				buf =3D ring_buffer_read_ptr(hdlc->read_buffer,
-> +								pos);
-> +			val =3D *buf ^ 0x20;
->  		} else
-> -			val =3D buf[pos];
-> +			val =3D *buf;
->  =
-
->  		hdlc->decode_buffer[hdlc->decode_offset] =3D val;
->  		hdlc->decode_fcs =3D crc_ccitt_byte(hdlc->decode_fcs, val);
->  =
-
->  		hdlc->decode_offset++;
->  		pos++;
-> +		buf++;
-> +		if (pos =3D=3D wrap)
-> +			buf =3D ring_buffer_read_ptr(hdlc->read_buffer, pos);
->  	}
->  =
-
->  	ring_buffer_drain(hdlc->read_buffer, pos);
-
-This part looks fine. However we repeat the following code here three
-times:
-
-	pos++;
-	buf++;
-
-	if (pos =3D=3D wrap)
-		buf =3D ring_buffer_read_ptr(hdlc->read_buffer, pos);
-
-We might need to think about a bit of restructure or using a define.
-
-> @@ -302,47 +314,37 @@ static void wakeup_write(GAtHDLC *hdlc)
->  				can_write_data, hdlc, write_watch_destroy);
->  }
->  =
-
-> -static inline void hdlc_put(GAtHDLC *hdlc, guint8 *buf, gsize *pos, guin=
-t8 c)
-> +static inline void hdlc_buffer_put_char(struct ring_buffer *buffer,
-> +					const char val)
->  {
-> -	gsize i =3D *pos;
-> +	ring_buffer_write(buffer, &val, 1);
-> +}
-
-Please don't do this. It has a massive performance impact. Please check
-the ring_buffer_write() function and see what it is doing. Just writing
-a char is bad. Really bad.
-
-If you want to write a char then adding ring_buffer_write_char()
-function is the way to go here.
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index e1e49e6..b7834e3 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -40,6 +40,7 @@
+ #include "ppp.h"
  =
 
-> +static inline void hdlc_put(GAtHDLC *hdlc, guint8 c)
-> +{
->  	if (c =3D=3D 0x7e || c =3D=3D 0x7d) {
-> -		buf[i++] =3D 0x7d;
-> -		buf[i++] =3D c ^ 0x20;
-> +		hdlc_buffer_put_char(hdlc->write_buffer, 0x7d);
-> +		hdlc_buffer_put_char(hdlc->write_buffer, c ^ 0x20);
->  	} else
-> -		buf[i++] =3D c;
-> -
-> -	*pos =3D i;
-> +		hdlc_buffer_put_char(hdlc->write_buffer, c);
->  }
->  =
+ #define DEFAULT_MRU	1500
++#define DEFAULT_MTU	1500
+ =
 
->  gboolean g_at_hdlc_send(GAtHDLC *hdlc, const unsigned char *data, gsize =
-size)
->  {
-> -	unsigned char *buf;
-> -	unsigned int space, i =3D 0;
-> +	unsigned int i =3D 0;
->  	guint16 fcs =3D 0xffff;
-> -	gsize pos;
->  =
+ #define BUFFERSZ	(DEFAULT_MRU * 2)
+ =
 
-> -	do {
-> -		space =3D ring_buffer_avail_no_wrap(hdlc->write_buffer);
-> -		if (space =3D=3D 0)
-> -			break;
-> +	hdlc_buffer_put_char(hdlc->write_buffer, 0x7e);
->  =
+@@ -58,6 +59,7 @@ struct _GAtPPP {
+ 	guint8 buffer[BUFFERSZ];
+ 	int index;
+ 	gint mru;
++	gint mtu;
+ 	char username[256];
+ 	char password[256];
+ 	guint32 xmit_accm[8];
+@@ -407,6 +409,8 @@ void ppp_net_up_notify(GAtPPP *ppp, const char *ip,
+ {
+ 	ppp->net =3D ppp_net_new(ppp);
+ =
 
-> -		buf =3D ring_buffer_write_ptr(hdlc->write_buffer);
-> -		pos =3D 0;
-> -
-> -		while (size--) {
-> -			fcs =3D crc_ccitt_byte(fcs, data[i]);
-> -			hdlc_put(hdlc, buf, &pos, data[i++]);
-> -		}
-> -
-> -		fcs ^=3D 0xffff;
-> -		hdlc_put(hdlc, buf, &pos, fcs & 0xff);
-> -		hdlc_put(hdlc, buf, &pos, fcs >> 8);
-> -
-> -		buf[pos++] =3D 0x7e;
-> +	while (size--) {
-> +		fcs =3D crc_ccitt_byte(fcs, data[i]);
-> +		hdlc_put(hdlc, data[i++]);
-> +	}
->  =
++	ppp_net_set_mtu(ppp->net, ppp->mtu);
++
+ 	if (ppp->connect_cb =3D=3D NULL)
+ 		return;
+ =
 
-> -		ring_buffer_write_advance(hdlc->write_buffer, pos);
-> -	} while (0);
-> +	fcs ^=3D 0xffff;
-> +	hdlc_put(hdlc, fcs & 0xff);
-> +	hdlc_put(hdlc, fcs >> 8);
-> +	hdlc_buffer_put_char(hdlc->write_buffer, 0x7e);
->  =
+@@ -435,6 +439,17 @@ void ppp_set_xmit_accm(GAtPPP *ppp, guint32 accm)
+ 	ppp->xmit_accm[0] =3D accm;
+ }
+ =
 
->  	wakeup_write(hdlc);
++/*
++ * The only time we use other than default MTU is when we are in
++ * the network phase.
++ */
++void ppp_set_mtu(GAtPPP *ppp, const guint8 *data)
++{
++	guint16 mtu =3D get_host_short(data);
++
++	ppp->mtu =3D mtu;
++}
++
+ /* Administrative Open */
+ void g_at_ppp_open(GAtPPP *ppp)
+ {
+@@ -576,6 +591,7 @@ GAtPPP *g_at_ppp_new(GIOChannel *modem)
+ =
 
-The only problem area with my original code is that when we are close
-before the wrapping and have to write an encoded character that has one
-byte before and one byte after the wrapping. Every other case should
-have just worked fine.
+ 	/* set options to defaults */
+ 	ppp->mru =3D DEFAULT_MRU;
++	ppp->mtu =3D DEFAULT_MTU;
+ 	ppp->recv_accm =3D ~0U;
+ 	ppp->xmit_accm[0] =3D ~0U;
+ 	ppp->xmit_accm[3] =3D 0x60000000; /* 0x7d, 0x7e */
+diff --git a/gatchat/ppp.h b/gatchat/ppp.h
+index a8a0486..07483a9 100644
+--- a/gatchat/ppp.h
++++ b/gatchat/ppp.h
+@@ -103,6 +103,7 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp);
+ const char *ppp_net_get_interface(struct ppp_net *net);
+ void ppp_net_process_packet(struct ppp_net *net, guint8 *packet);
+ void ppp_net_free(struct ppp_net *net);
++void ppp_net_set_mtu(struct ppp_net *net, guint16 mtu);
+ =
 
-Regards
+ /* PPP functions related to main GAtPPP object */
+ void ppp_debug(GAtPPP *ppp, const char *str);
+@@ -115,3 +116,4 @@ void ppp_net_up_notify(GAtPPP *ppp, const char *ip,
+ void ppp_net_down_notify(GAtPPP *ppp);
+ void ppp_set_recv_accm(GAtPPP *ppp, guint32 accm);
+ void ppp_set_xmit_accm(GAtPPP *ppp, guint32 accm);
++void ppp_set_mtu(GAtPPP *ppp, const guint8 *data);
+diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+index 5cf5656..8639c6c 100644
+--- a/gatchat/ppp_lcp.c
++++ b/gatchat/ppp_lcp.c
+@@ -197,6 +197,7 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
+ 		case ACCM:
+ 		case PFC:
+ 		case ACFC:
++		case MRU:
+ 			break;
+ =
 
-Marcel
+ 		case MAGIC_NUMBER:
+@@ -226,6 +227,9 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
+ 		case AUTH_PROTO:
+ 			ppp_set_auth(ppp, ppp_option_iter_get_data(&iter));
+ 			break;
++		case MRU:
++			ppp_set_mtu(ppp, ppp_option_iter_get_data(&iter));
++			break;
+ 		case MAGIC_NUMBER:
+ 		case PFC:
+ 		case ACFC:
+diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
+index 325e859..c1f2eb4 100644
+--- a/gatchat/ppp_net.c
++++ b/gatchat/ppp_net.c
+@@ -38,7 +38,6 @@
+ #include "gatppp.h"
+ #include "ppp.h"
+ =
+
+-/* XXX should be maximum IP Packet size */
+ #define MAX_PACKET 1500
+ =
+
+ struct ppp_net {
+@@ -46,8 +45,17 @@ struct ppp_net {
+ 	char *if_name;
+ 	GIOChannel *channel;
+ 	gint watch;
++	gint mtu;
+ };
+ =
+
++void ppp_net_set_mtu(struct ppp_net *net, guint16 mtu)
++{
++	if (net =3D=3D NULL)
++		return;
++
++	net->mtu =3D mtu;
++}
++
+ void ppp_net_process_packet(struct ppp_net *net, guint8 *packet)
+ {
+ 	GError *error =3D NULL;
+@@ -80,7 +88,7 @@ static gboolean ppp_net_callback(GIOChannel *channel, GIO=
+Condition cond,
+ =
+
+ 	if (cond & G_IO_IN) {
+ 		/* leave space to add PPP protocol field */
+-		status =3D g_io_channel_read_chars(channel, buf + 2, MAX_PACKET,
++		status =3D g_io_channel_read_chars(channel, buf + 2, net->mtu,
+ 				&bytes_read, &error);
+ 		if (bytes_read > 0) {
+ 			ppp->proto =3D htons(PPP_IP_PROTO);
+@@ -140,6 +148,7 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp)
+ 			ppp_net_callback, net);
+ 	net->ppp =3D ppp;
+ =
+
++	net->mtu =3D MAX_PACKET;
+ 	return net;
+ =
+
+ error:
+-- =
+
+1.6.6.1
 
 
-
---===============5433527736542660249==--
+--===============5427567026427259081==--
 
