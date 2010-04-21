@@ -1,95 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============0232353614292764004=="
+Content-Type: multipart/mixed; boundary="===============6306699693156890067=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 12/15] Add parser for item text attribute list objects
-Date: Wed, 21 Apr 2010 12:55:56 +0800
-Message-ID: <1271825759-8898-12-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 14/15] Add parser for network search mode objects
+Date: Wed, 21 Apr 2010 12:55:58 +0800
+Message-ID: <1271825759-8898-14-git-send-email-yang.gu@intel.com>
 In-Reply-To: <1271825759-8898-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0232353614292764004==
+--===============6306699693156890067==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   21 +++++++++++++++++++++
- src/stkutil.h |   11 +++++++++++
- 2 files changed, 32 insertions(+), 0 deletions(-)
+ src/stkutil.c |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index b1ba4d4..4d6722d 100644
+index 8582b9f..fcc396b 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -1483,6 +1483,25 @@ static gboolean parse_dataobj_text_attr(struct compr=
-ehension_tlv_iter *iter,
+@@ -1545,6 +1545,14 @@ static gboolean parse_dataobj_imeisv(struct comprehe=
+nsion_tlv_iter *iter,
  	return TRUE;
  }
  =
 
-+/* Defined in TS 102.223 Section 8.73 */
-+static gboolean parse_dataobj_item_text_attribute_list(
++/* Defined in TS 102.223 Section 8.75 */
++static gboolean parse_dataobj_network_search_mode(
 +		struct comprehension_tlv_iter *iter, void *user)
 +{
-+	struct stk_item_text_attribute_list *ital =3D user;
-+	const unsigned char *data;
-+	unsigned int len =3D comprehension_tlv_iter_get_length(iter);
-+
-+	if ((len > sizeof(ital->list)) || (len % 4 !=3D 0))
-+		return FALSE;
-+
-+	data =3D comprehension_tlv_iter_get_data(iter);
-+
-+	memcpy(ital->list, data, len);
-+	ital->len =3D len;
-+
-+	return TRUE;
++	unsigned char *byte =3D user;
++	return parse_dataobj_common_byte(iter, byte);
 +}
 +
  /* Defined in TS 102.223 Section 8.80 */
  static gboolean parse_dataobj_frame_id(struct comprehension_tlv_iter *iter,
  					void *user)
-@@ -1636,6 +1655,8 @@ static dataobj_handler handler_for_type(enum stk_data=
+@@ -1702,6 +1710,8 @@ static dataobj_handler handler_for_type(enum stk_data=
 _object_type type)
- 		return parse_dataobj_cdma_sms_tpdu;
- 	case STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE:
- 		return parse_dataobj_text_attr;
-+	case STK_DATA_OBJECT_TYPE_ITEM_TEXT_ATTRIBUTE_LIST:
-+		return parse_dataobj_item_text_attribute_list;
+ 		return parse_dataobj_item_text_attribute_list;
+ 	case STK_DATA_OBJECT_TYPE_IMEISV:
+ 		return parse_dataobj_imeisv;
++	case STK_DATA_OBJECT_TYPE_NETWORK_SEARCH_MODE:
++		return parse_dataobj_network_search_mode;
  	case STK_DATA_OBJECT_TYPE_FRAME_ID:
  		return parse_dataobj_frame_id;
  	default:
-diff --git a/src/stkutil.h b/src/stkutil.h
-index 9e3cbf5..d973251 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -674,6 +674,17 @@ struct stk_text_attribute {
- 	unsigned char len;
- };
- =
-
-+/*
-+ * According to 102.223 Section 8.73 the length of CTLV is 1 byte. This me=
-ans
-+ * that the maximum size is 127 according to the rules of CTLVs. In additi=
-on,
-+ * the length should be also the number multiplied by 4, so the maximum nu=
-mber
-+ * is 124.
-+ */
-+struct stk_item_text_attribute_list {
-+	unsigned char list[124];
-+	unsigned char len;
-+};
-+
- struct stk_command_display_text {
- 	char *text;
- 	struct stk_icon_id icon_id;
 -- =
 
 1.7.0.4
 
 
---===============0232353614292764004==--
+--===============6306699693156890067==--
 
