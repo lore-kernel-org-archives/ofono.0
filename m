@@ -1,51 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============1550887150381105007=="
+Content-Type: multipart/mixed; boundary="===============2908691847498591084=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: [PATCH 05/17] Add parser for service record objects
-Date: Wed, 21 Apr 2010 13:06:01 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731CCC0487@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <201004201655.53317.denkenz@gmail.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: [PATCH] Add send_method_call to g_dbus
+Date: Wed, 21 Apr 2010 09:51:58 +0300
+Message-ID: <87633lti0h.fsf@potku.valot.fi>
+In-Reply-To: <201004201120.13233.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1550887150381105007==
+--===============2908691847498591084==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Denis Kenzior <denkenz@gmail.com> writes:
+
+> Hi Kalle,
+
 Hi Denis,
 
+>> "Gustavo F. Padovan" <gustavo@padovan.org> writes:
+>> > Puting send_method_call and send_method_call_with_reply on g_dbus will
+>> > avoid some code duplication and will make things easier mainly for the
+>> > Bluetooth plugins (HFP, DUN, SAP) inside oFono.
+>> =
 
-
->-----Original Message-----
->From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf Of
->Denis Kenzior
->Sent: Wednesday, April 21, 2010 5:56 AM
->To: ofono(a)ofono.org
->Subject: Re: [PATCH 05/17] Add parser for service record objects
->
->Hi Yang,
->
->> +	sr->serv_rec =3D g_try_malloc(sr->len);
->> +	if (sr->serv_rec =3D=3D NULL)
->> +		return FALSE;
->
->I suggest not trying to allocate 0 bytes.
-
-The service record field is either meaningful value or "00", so it will nev=
-er allocate 0 byte. Other patches are modified following this comment.
+>> Sorry, totally unrelated to this patch, but is there a BT DUN plugin for
+>> ofono available somewhere? I would love to test it.
+>> =
 
 >
->Regards,
->-Denis
->_______________________________________________
->ofono mailing list
->ofono(a)ofono.org
->http://lists.ofono.org/listinfo/ofono
+> There is none yet, but it is something we're planning to implement.  But =
+just =
 
-Regards,
--Yang
+> to make sure we're all talking about the same thing, what DUN profile rol=
+e =
 
---===============1550887150381105007==--
+> (client or server?) are you actually interested in?
+
+Good point, I should be more clear here. I'm talking about the client
+mode.
+
+I would like to connect my laptop to Internet through my N900 using no
+cables and I think BT DUN client mode is the easiest choise here. At
+least I have BT DUN already working in N900.
+
+> The oFono plugin will be for the server role, the client role will
+> probably be a plugin in BlueZ.
+
+But who, and how, will issue the necessary AT commands and run the PPP
+stack in the BT DUN client mode? Wouldn't it be easiest if ofono would
+do that? (Just asking.)
+
+A kind request to the list maintainers: please disable the reply-to
+header, it just makes things difficult. I prefer to have CCs so that I
+get replies to my inbox and answer quickly. This is how all kernel
+mailing lists work I know of work.
+
+
+-- =
+
+Kalle Valo
+
+--===============2908691847498591084==--
 
