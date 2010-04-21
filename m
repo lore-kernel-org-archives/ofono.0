@@ -1,30 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============0025120055824633893=="
+Content-Type: multipart/mixed; boundary="===============4131860693157958753=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/15] Add parser for access technology objects
-Date: Wed, 21 Apr 2010 10:34:12 -0500
-Message-ID: <201004211034.12834.denkenz@gmail.com>
-In-Reply-To: <1271825759-8898-1-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH] Fix Let data device be optional for mbm driver
+Date: Wed, 21 Apr 2010 12:49:36 -0500
+Message-ID: <201004211249.37063.denkenz@gmail.com>
+In-Reply-To: <4BCBB794.6050508@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0025120055824633893==
+--===============4131860693157958753==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Zhenhua,
 
-> ---
->  src/stkutil.c |   14 ++++++++++++++
->  1 files changed, 14 insertions(+), 0 deletions(-)
+> ttyACM0 is described as 'Dell Wireless 5530 HSPA Mobile Broadband
+> Minicard Modem'.
 > =
 
+> ttyACM1 is described as 'Dell Wireless 5530 HSPA Mobile Broadband
+> Minicard Modem 2'.
 
-All 15 patches have been applied with some trivial fixes in between.
+Patch has been applied.  Thanks.
 
 Regards,
 -Denis
 
---===============0025120055824633893==--
+--===============4131860693157958753==--
 
