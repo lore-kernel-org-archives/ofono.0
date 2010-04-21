@@ -1,56 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5274774822661004899=="
+Content-Type: multipart/mixed; boundary="===============7577960698510456932=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 04/15] Add parser for device filter objects
-Date: Wed, 21 Apr 2010 12:55:48 +0800
-Message-ID: <1271825759-8898-4-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 02/15] Add parser for display parameters objects
+Date: Wed, 21 Apr 2010 12:55:46 +0800
+Message-ID: <1271825759-8898-2-git-send-email-yang.gu@intel.com>
 In-Reply-To: <1271825759-8898-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5274774822661004899==
+--===============7577960698510456932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   29 +++++++++++++++++++++++++++++
+ src/stkutil.c |   20 ++++++++++++++++++++
  src/stkutil.h |    7 +++++++
- 2 files changed, 36 insertions(+), 0 deletions(-)
+ 2 files changed, 27 insertions(+), 0 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index 0e0135f..d6c7235 100644
+index 69d5a4a..d569f16 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -1299,6 +1299,33 @@ static gboolean parse_dataobj_service_record(
- 	return TRUE;
+@@ -1255,6 +1255,24 @@ static gboolean parse_dataobj_access_technology(
+ 	return parse_dataobj_common_byte(iter, byte);
  }
  =
 
-+/* Defined in TS 102.223 Section 8.64 */
-+static gboolean parse_dataobj_device_filter(struct comprehension_tlv_iter =
-*iter,
-+						void *user)
++/* Defined in TS 102.223 Section 8.62 */
++static gboolean parse_dataobj_display_parameters(
++		struct comprehension_tlv_iter *iter, void *user)
 +{
-+	struct stk_device_filter *df =3D user;
++	struct stk_display_parameters *dp =3D user;
 +	const unsigned char *data;
-+	unsigned int len =3D comprehension_tlv_iter_get_length(iter);
 +
-+	if (len < 1)
++	if (comprehension_tlv_iter_get_length(iter) !=3D 3)
 +		return FALSE;
-+
-+	if (len =3D=3D 1)
-+		return TRUE;
 +
 +	data =3D comprehension_tlv_iter_get_data(iter);
-+	df->tech_id =3D data[0];
-+	df->len =3D len - 1;
-+
-+	df->dev_filter =3D g_try_malloc(df->len);
-+	if (df->dev_filter =3D=3D NULL)
-+		return FALSE;
-+
-+	memcpy(df->dev_filter, data + 1, df->len);
++	dp->height =3D data[0];
++	dp->width =3D data[1];
++	dp->effects =3D data[2];
 +
 +	return TRUE;
 +}
@@ -59,30 +49,30 @@ index 0e0135f..d6c7235 100644
  static gboolean parse_dataobj_text_attr(struct comprehension_tlv_iter *ite=
 r,
  					void *user)
-@@ -1455,6 +1482,8 @@ static dataobj_handler handler_for_type(enum stk_data=
+@@ -1407,6 +1425,8 @@ static dataobj_handler handler_for_type(enum stk_data=
 _object_type type)
- 		return parse_dataobj_display_parameters;
- 	case STK_DATA_OBJECT_TYPE_SERVICE_RECORD:
- 		return parse_dataobj_service_record;
-+	case STK_DATA_OBJECT_TYPE_DEVICE_FILTER:
-+		return parse_dataobj_device_filter;
+ 		return parse_dataobj_aid;
+ 	case STK_DATA_OBJECT_TYPE_ACCESS_TECHNOLOGY:
+ 		return parse_dataobj_access_technology;
++	case STK_DATA_OBJECT_TYPE_DISPLAY_PARAMETERS:
++		return parse_dataobj_display_parameters;
  	case STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE:
  		return parse_dataobj_text_attr;
  	case STK_DATA_OBJECT_TYPE_FRAME_ID:
 diff --git a/src/stkutil.h b/src/stkutil.h
-index 581d947..cc2915d 100644
+index 67e7ef7..3cf9caa 100644
 --- a/src/stkutil.h
 +++ b/src/stkutil.h
-@@ -622,6 +622,13 @@ struct stk_service_record {
+@@ -599,6 +599,13 @@ struct stk_aid {
  	unsigned int len;
  };
  =
 
-+/* Defined in TS 102.223 Section 8.64 */
-+struct stk_device_filter {
-+	unsigned char tech_id;
-+	unsigned char *dev_filter;
-+	unsigned int len;
++/* Defined in TS 102.223 Section 8.62 */
++struct stk_display_parameters {
++	unsigned char height;
++	unsigned char width;
++	unsigned char effects;
 +};
 +
  /*
@@ -93,5 +83,5 @@ index 581d947..cc2915d 100644
 1.7.0.4
 
 
---===============5274774822661004899==--
+--===============7577960698510456932==--
 
