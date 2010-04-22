@@ -1,54 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============2161966461701560920=="
+Content-Type: multipart/mixed; boundary="===============7790398870599137193=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] usbpnmodem: configure usbpn interfaces automatically
-Date: Thu, 22 Apr 2010 17:51:24 -0500
-Message-ID: <201004221751.25146.denkenz@gmail.com>
-In-Reply-To: <1271935632-8567-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH] ppp: change MTU on TUN device when MRU option received
+Date: Thu, 22 Apr 2010 18:00:52 -0500
+Message-ID: <201004221800.52667.denkenz@gmail.com>
+In-Reply-To: <1271976555-10393-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2161966461701560920==
+--===============7790398870599137193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Kristen,
 
 > ---
->  drivers/isimodem/isimodem.c |    2 +-
->  gisi/netlink.c              |  242
->  ++++++++++++++++++++++++++++++++++++++++--- gisi/netlink.h              =
-| =
+>  gatchat/gatppp.c  |    3 ++-
+>  gatchat/ppp.h     |    2 +-
+>  gatchat/ppp_net.c |   23 ++++++++++++++++++++---
+>  3 files changed, 23 insertions(+), 5 deletions(-)
 
->   11 ++-
->  plugins/usbpnmodem.c        |   10 ++-
->  4 files changed, 244 insertions(+), 21 deletions(-)
-> =
-
-> =
-
-
-We're quite serious about coding style here:
-
-WARNING: line over 80 characters
-#156: FILE: gisi/netlink.c:239:
-+				g_critical("Netlink error: %s", strerror(-err->error));
-
-ERROR: code indent should use tabs where possible
-#204: FILE: gisi/netlink.c:367:
-+        for (; NLMSG_OK(nlh, (size_t)ret); nlh =3D NLMSG_NEXT(nlh, ret)) {$
-
-WARNING: line over 80 characters
-#210: FILE: gisi/netlink.c:373:
-+			struct nlmsgerr *err =3D (struct nlmsgerr *)NLMSG_DATA(nlh);
-
-ERROR: need consistent spacing around '|' (ctx:VxW)
-#306: FILE: gisi/netlink.c:469:
-+					| NLM_F_CREATE| NLM_F_APPEND,
+Patch has been applied.  Thanks.
 
 Regards,
 -Denis
 
---===============2161966461701560920==--
+--===============7790398870599137193==--
 
