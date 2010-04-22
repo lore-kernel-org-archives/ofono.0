@@ -1,69 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============5453719261317640273=="
+Content-Type: multipart/mixed; boundary="===============8204688965548322634=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: Re: [PATCH] ppp: implement MRU option
-Date: Thu, 22 Apr 2010 13:51:17 -0700
-Message-ID: <20100422135117.6f1f6090@kcaccard-MOBL3>
-In-Reply-To: <201004221551.26311.denkenz@gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 1/3] Fix CTLV three-byte tag parsing.
+Date: Thu, 22 Apr 2010 10:11:16 +0200
+Message-ID: <1271923876-3320-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5453719261317640273==
+--===============8204688965548322634==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 22 Apr 2010 15:51:26 -0500
-Denis Kenzior <denkenz@gmail.com> wrote:
+---
+ src/simutil.c |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
 
-> Hi Kristen,
-> =
+diff --git a/src/simutil.c b/src/simutil.c
+index 9fb111f..822938c 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -210,7 +210,7 @@ void comprehension_tlv_iter_init(struct comprehension_t=
+lv_iter *iter,
+ 	iter->data =3D 0;
+ }
+ =
 
-> > On Thu, 22 Apr 2010 15:16:58 -0500
-> > =
+-/* Comprehension TLVs defined in Section 7 of ETSI TS 102.220 */
++/* Comprehension TLVs defined in Section 7 of ETSI TS 101.220 */
+ gboolean comprehension_tlv_iter_next(struct comprehension_tlv_iter *iter)
+ {
+ 	const unsigned char *pdu =3D iter->pdu + iter->pos;
+@@ -230,18 +230,18 @@ gboolean comprehension_tlv_iter_next(struct comprehen=
+sion_tlv_iter *iter)
+ 		return FALSE;
+ =
 
-> > Denis Kenzior <denkenz@gmail.com> wrote:
-> > > Hi Kristen,
-> > >
-> > > > @@ -80,7 +88,7 @@ static gboolean ppp_net_callback(GIOChannel *chan=
-nel,
-> > > >  GIOCondition cond,
-> > > >
-> > > >  	if (cond & G_IO_IN) {
-> > > >  		/* leave space to add PPP protocol field */
-> > > > -		status =3D g_io_channel_read_chars(channel, buf + 2, MAX_PACKET,
-> > > > +		status =3D g_io_channel_read_chars(channel, buf + 2, net->mtu,
-> > > >  				&bytes_read, &error);
-> > > >  		if (bytes_read > 0) {
-> > > >  			ppp->proto =3D htons(PPP_IP_PROTO);
-> > >
-> > > So I actually have a concern here.  Quoting RFC 1332 Section 2.1:
-> > > "Exactly one IP packet is encapsulated in the Information field of PPP
-> > >    Data Link Layer frames where the Protocol field indicates type hex
-> > >    0021 (Internet Protocol)."
-> > >
-> > > However, you're not changing the physical MTU of the TUN/TAP interfac=
-e,
-> > > so in effect you are mangling the packets that are larger than net->m=
-tu. =
+ 	/*
+-	 * ETSI TS 102.220, Section 7.1.1.2
++	 * ETSI TS 101.220, Section 7.1.1.2
+ 	 * =
 
-> > > These packets will most likely simply be discarded leading to lots of
-> > > fun.
-> > =
+ 	 * If byte 1 of the tag is equal to 0x7F, then the tag is encoded
+-	 * on the following two bytes, with bit 8 of the 2nd byte of the tag
+-	 * being the CR flag.
++	 * on the following two bytes, with bit 8 of the 1st byte of the tag
++	 * as the most significant bit.
+ 	 */
+-	if (tag =3D=3D 0x7F) {
++	if (tag =3D=3D 0x7F && !cr) {
+ 		if ((pdu + 2) > end)
+ 			return FALSE;
+ =
 
-> > We can add an ioctl to change the MTU during ppp_net_set_mtu(), which
-> > should hopefully resolve this.
-> > =
+ 		cr =3D bit_field(pdu[0], 7, 1);
+-		tag =3D ((pdu[0] & 0x7f) << 7) | pdu[1];
++		tag =3D ((pdu[0] & 0x7f) << 8) | pdu[1];
+ =
 
-> =
+ 		if (tag < 0x0001 || tag > 0x7fff)
+ 			return FALSE;
+-- =
 
-> Yep, my thinking as well.  Can you send a patch?
-> =
+1.6.1
 
-> Thanks,
-> -Denis
 
-yes, will do.
-
---===============5453719261317640273==--
+--===============8204688965548322634==--
 
