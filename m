@@ -1,77 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============8838184476306540347=="
+Content-Type: multipart/mixed; boundary="===============6535185108663020552=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] ppp: change MTU on TUN device when MRU option received
-Date: Thu, 22 Apr 2010 17:10:11 -0500
-Message-ID: <201004221710.11515.denkenz@gmail.com>
-In-Reply-To: <1271970911-9645-1-git-send-email-kristen@linux.intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] Fix CTLV three-byte tag parsing.
+Date: Thu, 22 Apr 2010 11:13:04 +0200
+Message-ID: <1271927584-4216-1-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <201004221658.20759.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8838184476306540347==
+--===============6535185108663020552==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+---
+ src/simutil.c |   12 ++++++------
+ 1 files changed, 6 insertions(+), 6 deletions(-)
 
-> ---
->  gatchat/ppp_net.c |   16 ++++++++++++++++
->  1 files changed, 16 insertions(+), 0 deletions(-)
-> =
+diff --git a/src/simutil.c b/src/simutil.c
+index 31b21c7..f994455 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -210,7 +210,7 @@ void comprehension_tlv_iter_init(struct comprehension_t=
+lv_iter *iter,
+ 	iter->data =3D 0;
+ }
+ =
 
-> diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
-> index c1f2eb4..fc1f9fb 100644
-> --- a/gatchat/ppp_net.c
-> +++ b/gatchat/ppp_net.c
-> @@ -50,10 +50,26 @@ struct ppp_net {
-> =
+-/* Comprehension TLVs defined in Section 7 of ETSI TS 102.220 */
++/* Comprehension TLVs defined in Section 7 of ETSI TS 101.220 */
+ gboolean comprehension_tlv_iter_next(struct comprehension_tlv_iter *iter)
+ {
+ 	const unsigned char *pdu =3D iter->pdu + iter->pos;
+@@ -222,15 +222,15 @@ gboolean comprehension_tlv_iter_next(struct comprehen=
+sion_tlv_iter *iter)
+ 	if (pdu =3D=3D end)
+ 		return FALSE;
+ =
 
->  void ppp_net_set_mtu(struct ppp_net *net, guint16 mtu)
->  {
-> +	struct ifreq ifr;
-> +	int sock;
-> +
->  	if (net =3D=3D NULL)
->  		return;
-> =
++	if (*pdu =3D=3D 0x00 || *pdu =3D=3D 0xFF || *pdu =3D=3D 0x80)
++		return FALSE;
++
+ 	cr =3D bit_field(*pdu, 7, 1);
+ 	tag =3D bit_field(*pdu, 0, 7);
+ 	pdu++;
+ =
 
->  	net->mtu =3D mtu;
-> +
-> +	sock =3D socket(AF_INET, SOCK_DGRAM, 0);
-> +	if (sock < 0)
-> +		return;
-> +
+-	if (tag =3D=3D 0x00 || tag =3D=3D 0xFF || tag =3D=3D 0x80)
+-		return FALSE;
+-
+ 	/*
+-	 * ETSI TS 102.220, Section 7.1.1.2
++	 * ETSI TS 101.220, Section 7.1.1.2
+ 	 * =
 
-I think it would be a good idea to make this function return a gboolean =
+ 	 * If byte 1 of the tag is equal to 0x7F, then the tag is encoded
+ 	 * on the following two bytes, with bit 8 of the 2nd byte of the tag
+@@ -241,7 +241,7 @@ gboolean comprehension_tlv_iter_next(struct comprehensi=
+on_tlv_iter *iter)
+ 			return FALSE;
+ =
 
-indicating success or failure instead of silently returning.
+ 		cr =3D bit_field(pdu[0], 7, 1);
+-		tag =3D ((pdu[0] & 0x7f) << 7) | pdu[1];
++		tag =3D ((pdu[0] & 0x7f) << 8) | pdu[1];
+ =
 
-> +	memset(&ifr, 0, sizeof(ifr));
-> +
-> +	strncpy(ifr.ifr_name, net->if_name, sizeof(ifr.ifr_name));
-> +	ifr.ifr_mtu =3D mtu;
-> +	if (ioctl(sock, SIOCSIFMTU, (caddr_t) &ifr) < 0)
-> +		g_printerr("Unable to change MTU\n");
+ 		if (tag < 0x0001 || tag > 0x7fff)
+ 			return FALSE;
+-- =
 
-Generally the preferred style is to not have a space after memset but do ha=
-ve =
-
-space before the if.
-
-> +
-> +	close(sock);
->  }
-> =
-
->  void ppp_net_process_packet(struct ppp_net *net, guint8 *packet)
-> =
+1.6.1
 
 
-Otherwise patch looks good.
-
-Regards,
--Denis
-
---===============8838184476306540347==--
+--===============6535185108663020552==--
 
