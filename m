@@ -1,191 +1,275 @@
-Content-Type: multipart/mixed; boundary="===============5427567026427259081=="
+Content-Type: multipart/mixed; boundary="===============1962094923265882756=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH] ppp: implement MRU option
-Date: Wed, 21 Apr 2010 15:26:30 -0700
-Message-ID: <1271888790-5046-1-git-send-email-kristen@linux.intel.com>
+From: Xu, Martin <martin.xu@intel.com>
+Subject: RE: How to handle pins?
+Date: Thu, 22 Apr 2010 08:54:38 +0800
+Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD1E3BC9EE@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <20100421061402.GA10199@gumpy.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5427567026427259081==
+--===============1962094923265882756==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If the peer requests a MRU option, set the mtu for the network
-phase.  When we are in link establishment phase, we should
-continue to behave as if no option has been set and the peer
-should use the default MRU.
+> -----Original Message-----
+> From: connman-bounces(a)connman.net
+> [mailto:connman-bounces(a)connman.net] On Behalf Of Daniel Wagner
+> Sent: Wednesday, April 21, 2010 2:14 PM
+> To: connman(a)connman.net
+> Subject: How to handle pins?
+> =
 
-This option is required for the Huawei E160G modem.
----
- gatchat/gatppp.c  |   16 ++++++++++++++++
- gatchat/ppp.h     |    2 ++
- gatchat/ppp_lcp.c |    4 ++++
- gatchat/ppp_net.c |   13 +++++++++++--
- 4 files changed, 33 insertions(+), 2 deletions(-)
+> Hi,
+> =
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index e1e49e6..b7834e3 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -40,6 +40,7 @@
- #include "ppp.h"
- =
+> I was able to get connman with ofono working with my Option
+> modem. Though one of the problem I had to workaround was the pin
+> entering. When the device is attached to the computer, ofono
+> identifies it as:
+> =
 
- #define DEFAULT_MRU	1500
-+#define DEFAULT_MTU	1500
- =
+> $ ./list-modems
+> [ /hso0 ]
+>     Powered =3D 1
+>     Interfaces =3D org.ofono.SimManager
+>     Model =3D GlobeTrotter HSUPA Modem
+>     Manufacturer =3D Option N.V.
+>     Serial =3D 351721030157214,PK29997020
+>     Revision =3D 2.12.0.0Hd (Date: Oct 29 2009, Time: 09:56:48)
+>     [ org.ofono.SimManager ]
+>         SubscriberNumbers =3D
+>         LockedPins =3D pin
+>         PinRequired =3D pin
+>         Present =3D 1
+> =
 
- #define BUFFERSZ	(DEFAULT_MRU * 2)
- =
+> =
 
-@@ -58,6 +59,7 @@ struct _GAtPPP {
- 	guint8 buffer[BUFFERSZ];
- 	int index;
- 	gint mru;
-+	gint mtu;
- 	char username[256];
- 	char password[256];
- 	guint32 xmit_accm[8];
-@@ -407,6 +409,8 @@ void ppp_net_up_notify(GAtPPP *ppp, const char *ip,
- {
- 	ppp->net =3D ppp_net_new(ppp);
- =
-
-+	ppp_net_set_mtu(ppp->net, ppp->mtu);
-+
- 	if (ppp->connect_cb =3D=3D NULL)
- 		return;
- =
-
-@@ -435,6 +439,17 @@ void ppp_set_xmit_accm(GAtPPP *ppp, guint32 accm)
- 	ppp->xmit_accm[0] =3D accm;
- }
- =
-
-+/*
-+ * The only time we use other than default MTU is when we are in
-+ * the network phase.
-+ */
-+void ppp_set_mtu(GAtPPP *ppp, const guint8 *data)
-+{
-+	guint16 mtu =3D get_host_short(data);
-+
-+	ppp->mtu =3D mtu;
-+}
-+
- /* Administrative Open */
- void g_at_ppp_open(GAtPPP *ppp)
- {
-@@ -576,6 +591,7 @@ GAtPPP *g_at_ppp_new(GIOChannel *modem)
- =
-
- 	/* set options to defaults */
- 	ppp->mru =3D DEFAULT_MRU;
-+	ppp->mtu =3D DEFAULT_MTU;
- 	ppp->recv_accm =3D ~0U;
- 	ppp->xmit_accm[0] =3D ~0U;
- 	ppp->xmit_accm[3] =3D 0x60000000; /* 0x7d, 0x7e */
-diff --git a/gatchat/ppp.h b/gatchat/ppp.h
-index a8a0486..07483a9 100644
---- a/gatchat/ppp.h
-+++ b/gatchat/ppp.h
-@@ -103,6 +103,7 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp);
- const char *ppp_net_get_interface(struct ppp_net *net);
- void ppp_net_process_packet(struct ppp_net *net, guint8 *packet);
- void ppp_net_free(struct ppp_net *net);
-+void ppp_net_set_mtu(struct ppp_net *net, guint16 mtu);
- =
-
- /* PPP functions related to main GAtPPP object */
- void ppp_debug(GAtPPP *ppp, const char *str);
-@@ -115,3 +116,4 @@ void ppp_net_up_notify(GAtPPP *ppp, const char *ip,
- void ppp_net_down_notify(GAtPPP *ppp);
- void ppp_set_recv_accm(GAtPPP *ppp, guint32 accm);
- void ppp_set_xmit_accm(GAtPPP *ppp, guint32 accm);
-+void ppp_set_mtu(GAtPPP *ppp, const guint8 *data);
-diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-index 5cf5656..8639c6c 100644
---- a/gatchat/ppp_lcp.c
-+++ b/gatchat/ppp_lcp.c
-@@ -197,6 +197,7 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
- 		case ACCM:
- 		case PFC:
- 		case ACFC:
-+		case MRU:
- 			break;
- =
-
- 		case MAGIC_NUMBER:
-@@ -226,6 +227,9 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
- 		case AUTH_PROTO:
- 			ppp_set_auth(ppp, ppp_option_iter_get_data(&iter));
- 			break;
-+		case MRU:
-+			ppp_set_mtu(ppp, ppp_option_iter_get_data(&iter));
-+			break;
- 		case MAGIC_NUMBER:
- 		case PFC:
- 		case ACFC:
-diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
-index 325e859..c1f2eb4 100644
---- a/gatchat/ppp_net.c
-+++ b/gatchat/ppp_net.c
-@@ -38,7 +38,6 @@
- #include "gatppp.h"
- #include "ppp.h"
- =
-
--/* XXX should be maximum IP Packet size */
- #define MAX_PACKET 1500
- =
-
- struct ppp_net {
-@@ -46,8 +45,17 @@ struct ppp_net {
- 	char *if_name;
- 	GIOChannel *channel;
- 	gint watch;
-+	gint mtu;
- };
- =
-
-+void ppp_net_set_mtu(struct ppp_net *net, guint16 mtu)
-+{
-+	if (net =3D=3D NULL)
-+		return;
-+
-+	net->mtu =3D mtu;
-+}
-+
- void ppp_net_process_packet(struct ppp_net *net, guint8 *packet)
- {
- 	GError *error =3D NULL;
-@@ -80,7 +88,7 @@ static gboolean ppp_net_callback(GIOChannel *channel, GIO=
-Condition cond,
- =
-
- 	if (cond & G_IO_IN) {
- 		/* leave space to add PPP protocol field */
--		status =3D g_io_channel_read_chars(channel, buf + 2, MAX_PACKET,
-+		status =3D g_io_channel_read_chars(channel, buf + 2, net->mtu,
- 				&bytes_read, &error);
- 		if (bytes_read > 0) {
- 			ppp->proto =3D htons(PPP_IP_PROTO);
-@@ -140,6 +148,7 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp)
- 			ppp_net_callback, net);
- 	net->ppp =3D ppp;
- =
-
-+	net->mtu =3D MAX_PACKET;
- 	return net;
- =
-
- error:
--- =
-
-1.6.6.1
+> connman ignores this device until the GPRS interface shows up. This
+> wont happend until the pin is entered. In my ignorance I have tried
+I think maybe pin can be handled at ofono side. =
 
 
---===============5427567026427259081==--
+> modify connmand that way, that it shows the modem as device (with a
+> new property "PinRequired") even when the GPRS interface is not yet
+> available. Though I had to hackaround with the IMSI (which is used as
+> unique identifier for the dbus paths) is only available after the pin
+> has been entered. Maybe the serial number could be used instead of the
+> IMSI instead?
+I am afraid that IMSI is the best identifier, and serial number is implemen=
+ted by manufacturer, and sometime not unique.
+Anyway it is the issue we need to resolve. So I also copy it to oFono maill=
+ist for comments. ;-)
+
+> =
+
+> I'm not sure if I'm going the right road. What is the great master
+> plan to handle this?
+> =
+
+> cheers,
+> daniel
+> =
+
+> ps: btw here is the current hack:
+> =
+
+> diff --git a/plugins/ofono.c b/plugins/ofono.c
+> index d0f358e..bd443f1 100644
+> --- a/plugins/ofono.c
+> +++ b/plugins/ofono.c
+> @@ -843,7 +843,7 @@ done:
+>  }
+> =
+
+>  static void add_device(const char *path, const char *imsi,
+> -					unsigned char mnc_length)
+> +			       unsigned char mnc_length, const char *pin_required)
+>  {
+>  	struct modem_data *modem;
+>  	struct connman_device *device;
+> @@ -877,6 +877,8 @@ static void add_device(const char *path, const char
+> *imsi,
+>  		g_free(mcc_mnc);
+>  	}
+> =
+
+> +	connman_device_set_string(device, "PinRequired", pin_required);
+> +
+>  	if (connman_device_register(device) < 0) {
+>  		connman_device_unref(device);
+>  		return;
+> @@ -890,7 +892,8 @@ static void add_device(const char *path, const char
+> *imsi,
+>  static void sim_properties_reply(DBusPendingCall *call, void *user_data)
+>  {
+>  	const char *path =3D user_data;
+> -	const char *imsi;
+> +	char *imsi =3D "foo";
+> +	char *pin_required =3D "";
+>  	/* If MobileNetworkCodeLength is not provided, mnc_length is 0 */
+>  	unsigned char mnc_length =3D 0;
+>  	DBusMessage *reply;
+> @@ -923,11 +926,13 @@ static void sim_properties_reply(DBusPendingCall
+> *call, void *user_data)
+>  		else if (g_str_equal(key, "MobileNetworkCodeLength") =3D=3D TRUE)
+>  			dbus_message_iter_get_basic(&value,
+>  						(void *) &mnc_length);
+> +		else if (g_str_equal(key, "PinRequired") =3D=3D TRUE)
+> +			dbus_message_iter_get_basic(&value, &pin_required);
+> =
+
+>  		dbus_message_iter_next(&dict);
+>  	}
+> =
+
+> -	add_device(path, imsi, mnc_length);
+> +	add_device(path, imsi, mnc_length, pin_required);
+> =
+
+>  done:
+>  	dbus_message_unref(reply);
+> @@ -935,7 +940,7 @@ done:
+>  	dbus_pending_call_unref(call);
+>  }
+> =
+
+> -static void get_imsi(const char *path)
+> +static void get_sim_properties(const char *path)
+>  {
+>  	DBusMessage *message;
+>  	DBusPendingCall *call;
+> @@ -1036,6 +1041,7 @@ static struct modem_data *add_modem(const char
+> *path)
+>  	return modem;
+>  }
+> =
+
+> +/*
+>  static gboolean modem_has_gprs(DBusMessageIter *array)
+>  {
+>  	DBusMessageIter entry;
+> @@ -1055,6 +1061,7 @@ static gboolean modem_has_gprs(DBusMessageIter
+> *array)
+> =
+
+>  	return FALSE;
+>  }
+> +*/
+> =
+
+>  static void modem_properties_reply(DBusPendingCall *call, void *user_dat=
+a)
+>  {
+> @@ -1093,8 +1100,7 @@ static void
+> modem_properties_reply(DBusPendingCall *call, void *user_data)
+>  				break;
+>  			}
+>  		} else if (g_str_equal(key, "Interfaces") =3D=3D TRUE) {
+> -			if (modem_has_gprs(&value) =3D=3D TRUE)
+> -				get_imsi(path);
+> +			get_sim_properties(path);
+>  		}
+> =
+
+>  		dbus_message_iter_next(&dict);
+> @@ -1333,10 +1339,9 @@ static gboolean modem_changed(DBusConnection
+> *connection, DBusMessage *message,
+> =
+
+>  		modem_remove_device(modem);
+>  	} else if (g_str_equal(key, "Interfaces") =3D=3D TRUE) {
+> -		if (modem_has_gprs(&value) =3D=3D TRUE) {
+> -			if (modem->device =3D=3D NULL)
+> -				get_imsi(modem->path);
+> -		} else if (modem->device !=3D NULL)
+> +		if (modem->device =3D=3D NULL)
+> +			get_sim_properties(modem->path);
+> +		else if (modem->device !=3D NULL)
+>  			modem_remove_device(modem);
+>  	}
+> =
+
+> diff --git a/src/device.c b/src/device.c
+> index 619fe5e..146ed40 100644
+> --- a/src/device.c
+> +++ b/src/device.c
+> @@ -66,6 +66,8 @@ struct connman_device {
+> =
+
+>  	DBusMessage *pending;
+>  	guint timeout;
+> +
+> +	char *pin_required;
+>  };
+> =
+
+>  static gboolean device_scan_trigger(gpointer user_data)
+> @@ -324,6 +326,20 @@ static DBusMessage *get_properties(DBusConnection
+> *conn,
+>  		break;
+>  	}
+> =
+
+> +	switch (device->type) {
+> +	case CONNMAN_DEVICE_TYPE_UNKNOWN:
+> +	case CONNMAN_DEVICE_TYPE_VENDOR:
+> +	case CONNMAN_DEVICE_TYPE_ETHERNET:
+> +	case CONNMAN_DEVICE_TYPE_WIFI:
+> +	case CONNMAN_DEVICE_TYPE_WIMAX:
+> +	case CONNMAN_DEVICE_TYPE_BLUETOOTH:
+> +	case CONNMAN_DEVICE_TYPE_GPS:
+> +		break;
+> +	case CONNMAN_DEVICE_TYPE_CELLULAR:
+> +		connman_dbus_dict_append_basic(&dict, "PinRequired",
+> +					       DBUS_TYPE_STRING,
+> &device->pin_required);
+> +	}
+> +
+>  	connman_dbus_dict_close(&array, &dict);
+> =
+
+>  	return reply;
+> @@ -682,6 +698,7 @@ static void device_destruct(struct connman_element
+> *element)
+>  	g_free(device->address);
+>  	g_free(device->control);
+>  	g_free(device->interface);
+> +	g_free(device->pin_required);
+> =
+
+>  	g_free(device->last_network);
+> =
+
+> @@ -1292,6 +1309,9 @@ int connman_device_set_string(struct
+> connman_device *device,
+>  	} else if (g_str_equal(key, "Node") =3D=3D TRUE) {
+>  		g_free(device->node);
+>  		device->node =3D g_strdup(value);
+> +	} else if (g_str_equal(key, "PinRequired") =3D=3D TRUE) {
+> +		g_free(device->pin_required);
+> +		device->pin_required =3D g_strdup(value);
+>  	}
+> =
+
+>  	return connman_element_set_string(&device->element, key, value);
+> @@ -1315,6 +1335,8 @@ const char *connman_device_get_string(struct
+> connman_device *device,
+>  		return device->name;
+>  	else if (g_str_equal(key, "Node") =3D=3D TRUE)
+>  		return device->node;
+> +	else if (g_str_equal(key, "PinRequired") =3D=3D TRUE)
+> +		return device->pin_required;
+> =
+
+>  	return connman_element_get_string(&device->element, key);
+>  }
+> _______________________________________________
+> connman mailing list
+> connman(a)connman.net
+> http://lists.connman.net/listinfo/connman
+
+--===============1962094923265882756==--
 
