@@ -1,39 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============3097116846404815474=="
+Content-Type: multipart/mixed; boundary="===============1912528766746832302=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH] Fix a typo in telephony_error_to_str
-Date: Fri, 23 Apr 2010 10:01:40 +0800
-Message-ID: <1271988100-3730-1-git-send-email-zhenhua.zhang@intel.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [PATCH] Fix: transaction id usage in gisi/server.c
+Date: Fri, 23 Apr 2010 16:07:11 +0300
+Message-ID: <h2g80fd4e751004230607t327144f8ze035f37c184c1cdf@mail.gmail.com>
+In-Reply-To: <201004221627.21946.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3097116846404815474==
+--===============1912528766746832302==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/common.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+2010/4/23 Denis Kenzior <denkenz@gmail.com>:
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0(void *)&spn, (sizeof spn)) !=3D (sizeof req)) {
+>
+> Casting to or from void is not necessary.
 
-diff --git a/src/common.c b/src/common.c
-index 72eaf1e..4eaff5e 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -273,7 +273,7 @@ const char *telephony_error_to_str(const struct ofono_e=
-rror *error)
- 		break;
- 	case OFONO_ERROR_TYPE_CMS:
- 		e =3D cms_errors;
--		maxentries =3D sizeof(cme_errors) / sizeof(struct error_entry);
-+		maxentries =3D sizeof(cms_errors) / sizeof(struct error_entry);
- 		break;
- 	case OFONO_ERROR_TYPE_CEER:
- 		e =3D ceer_errors;
+Oh, it is. If a struct sockaddr_pn structure is casted directly to
+struct sockaddr, gcc will issue alignment warning on ARM.
+
 -- =
 
-1.6.3.3
+Pekka.Pessi mail at nokia.com
 
-
---===============3097116846404815474==--
+--===============1912528766746832302==--
 
