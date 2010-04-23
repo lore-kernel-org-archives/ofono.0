@@ -1,47 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============8464996412849761654=="
+Content-Type: multipart/mixed; boundary="===============4764550908980240643=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Fix: clean-local target
-Date: Fri, 23 Apr 2010 18:25:18 +0200
-Message-ID: <1272039918.22838.89.camel@localhost.localdomain>
-In-Reply-To: <1271935576-8472-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 01/13] Add parser for browsing status objects
+Date: Fri, 23 Apr 2010 11:54:09 -0500
+Message-ID: <201004231154.10195.denkenz@gmail.com>
+In-Reply-To: <1271949150-9085-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8464996412849761654==
+--===============4764550908980240643==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Yang,
 
->  Makefile.am |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
-> =
+> ---
+>  src/stkutil.c |   10 ++++++++++
+>  1 files changed, 10 insertions(+), 0 deletions(-)
 
-> diff --git a/Makefile.am b/Makefile.am
-> index 86ccf1b..db7e33e 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -426,5 +426,5 @@ include/ofono/%.h: include/%.h
->  	$(AM_V_at)$(MKDIR_P) include/ofono
->  	$(AM_V_GEN)$(LN_S) $(abs_top_srcdir)/$< $@
->  =
+All 13 patches have been applied, thanks.
 
-> -clean-local: include/ofono
-> -	@$(RM) -r $<
-> +clean-local:
-> +	$(RM) -rf include/ofono
+Regards,
+-Denis
 
-what is this trying to fix?
-
-And you removed the @ in front of the command.
-
-Regards
-
-Marcel
-
-
-
---===============8464996412849761654==--
+--===============4764550908980240643==--
 
