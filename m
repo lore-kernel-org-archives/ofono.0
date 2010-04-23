@@ -1,39 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============1411776782778826055=="
+Content-Type: multipart/mixed; boundary="===============1394647206120790990=="
 MIME-Version: 1.0
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: Re: How to handle pins?
-Date: Fri, 23 Apr 2010 17:25:34 +0200
-Message-ID: <20100423152534.GA11782@gumpy.localdomain>
-In-Reply-To: <u2l80fd4e751004230729l8745e56fqc9ab68911ffdbb77@mail.gmail.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+Subject: Re: [PATCH] Fix: transaction id usage in gisi/server.c
+Date: Fri, 23 Apr 2010 17:27:51 +0200
+Message-ID: <7974cbff72c4740d8527ba84523bf59a@chewa.net>
+In-Reply-To: <1272035836-27549-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1411776782778826055==
+--===============1394647206120790990==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, Apr 23, 2010 at 04:29:23PM +0200, Pekka Pessi wrote:
-> 2010/4/23 Daniel Wagner <daniel.wagner@bmw-carit.de>:
-> >> Anyway it is the issue we need to resolve. So I also copy it to oFono =
-maillist for comments. ;-)
-> >
-> > Okay. Is there a proper way to identify a SIM when it is still locked?
-> > I guess this can only be done by some guessworking.
+
+On Fri, 23 Apr 2010 18:17:16 +0300, Pekka Pessi <Pekka.Pessi@nokia.com>
+wrote:
+> @@ -174,9 +172,11 @@ g_isi_server_add_name(GIsiServer *self)
+>  			0, 0,
+>  		};
 > =
 
-> The EF_ICCID should be always available. It is either an E.118 number
-> or 10 bytes of opaque data.
+> -		if (sendto(self->fd, req, sizeof(req), 0, (void *)&spn,
+> -				sizeof(spn)) !=3D sizeof(spn))
+> -			return;
+> +		if (sendto(self->fd, req, sizeof(req), 0,
+> +				(void *)&spn, sizeof(spn)) !=3D sizeof(req)) {
+> +			g_warning("%s: %s", "sendto(PN_NAMESERVICE)",
+> +				  strerror(errno));
+> +		}
+>  	}
 
-I have scanned through the ofono code and didn't find any references
-to ICCID. So there is no code reading that information out of the
-sim. Is that right? =
+sendto() does not set errno if it returns less than sizeof(req) but more
+than -1. I don't know if we care though.
+
+-- =
+
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net
+http://fi.linkedin.com/in/remidenis
 
 
-Sorry for my complete ignorance on this topic. I was even unable to
-download the right document from 3gpp.org which describes this part.
-
-daniel
-
---===============1411776782778826055==--
+--===============1394647206120790990==--
 
