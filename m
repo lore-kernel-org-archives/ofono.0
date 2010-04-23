@@ -1,95 +1,230 @@
-Content-Type: multipart/mixed; boundary="===============6567100311253958751=="
+Content-Type: multipart/mixed; boundary="===============0240823289782315312=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC][PATCH] Add: online method to isimodem
-Date: Fri, 23 Apr 2010 10:18:36 -0500
-Message-ID: <201004231018.36913.denkenz@gmail.com>
-In-Reply-To: <l2g80fd4e751004230646xbc33ebaaxe9f7e8242f03662f@mail.gmail.com>
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Subject: [PATCH] Fix: transaction id usage in gisi/server.c
+Date: Fri, 23 Apr 2010 18:17:16 +0300
+Message-ID: <1272035836-27549-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6567100311253958751==
+--===============0240823289782315312==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+---
+ gisi/server.c |  111 +++++++++++++++++++++++++++--------------------------=
+---
+ 1 files changed, 54 insertions(+), 57 deletions(-)
 
-> >> +void ofono_modem_set_online(struct ofono_modem *modem, ofono_bool_t
-> >
-> > This is assuming the driver can set online states outside of oFono
-> > control. Tell me a use case where this makes sense please.  If this is
-> > meant to be used only by ofono core, then this function should not be
-> > declared here.
-> =
+diff --git a/gisi/server.c b/gisi/server.c
+index ef2d5dd..26386c1 100644
+--- a/gisi/server.c
++++ b/gisi/server.c
+@@ -44,7 +44,7 @@
+ struct _GIsiIncoming
+ {
+ 	struct sockaddr_pn spn;
+-	uint8_t id;
++	uint8_t trans_id;
+ };
+ =
 
-> I'm not assuming only core being able to drive the online state. If
-> you are using a PC with an external handset as modem, it will have its
-> own flight mode settings.
+ struct _GIsiServer {
+@@ -61,8 +61,6 @@ struct _GIsiServer {
+ 	GIsiRequestFunc func[256];
+ 	void *data[256];
+ =
 
-We've had this argument many times before, the bottom line is oFono is not =
+-	GIsiIncoming irq[1];
+-
+ 	/* Debugging */
+ 	GIsiDebugFunc debug_func;
+ 	void *debug_data;
+@@ -87,7 +85,7 @@ GIsiServer *g_isi_server_create(GIsiModem *modem, uint8_t=
+ resource,
+ 		abort();
+ =
 
-setup to share the modem with another stack.  oFono caches results of just =
+ 	self =3D ptr;
+-	memset (self, 0, sizeof *self);
++	memset (self, 0, sizeof(*self));
+ 	self->resource =3D resource;
+ 	self->version.major =3D major;
+ 	self->version.minor =3D minor;
+@@ -174,9 +172,11 @@ g_isi_server_add_name(GIsiServer *self)
+ 			0, 0,
+ 		};
+ =
 
-about every setting on the modem, including call settings, call barring, ca=
-ll =
+-		if (sendto(self->fd, req, sizeof(req), 0, (void *)&spn,
+-				sizeof(spn)) !=3D sizeof(spn))
+-			return;
++		if (sendto(self->fd, req, sizeof(req), 0,
++				(void *)&spn, sizeof(spn)) !=3D sizeof(req)) {
++			g_warning("%s: %s", "sendto(PN_NAMESERVICE)",
++				  strerror(errno));
++		}
+ 	}
+ }
+ =
 
-forwarding, sms, cell broadcast, etc, etc, etc.  Just because you can make =
-it =
+@@ -236,7 +236,7 @@ int g_isi_vrespond(GIsiServer *self, const struct iovec=
+ *iov, size_t iovlen,
+ 		return -1;
+ 	}
+ =
 
-work for the online state doesn't mean you will ever get this right in the =
+-	_iov[0].iov_base =3D &irq->id;
++	_iov[0].iov_base =3D &irq->trans_id;
+ 	_iov[0].iov_len =3D 1;
+ 	for (i =3D 0, len =3D 1; i < iovlen; i++) {
+ 		_iov[1 + i] =3D iov[i];
+@@ -245,8 +245,7 @@ int g_isi_vrespond(GIsiServer *self, const struct iovec=
+ *iov, size_t iovlen,
+ =
 
-general case.
+ 	ret =3D sendmsg(self->fd, &msg, MSG_NOSIGNAL);
+ =
 
-This usecase is the realm of Gammu or Gnokii, not oFono.
+-	if (irq !=3D self->irq)
+-		g_free(irq);
++	g_free(irq);
+ =
 
-> >> +     ofono_dbus_dict_append(&dict, "Online", DBUS_TYPE_BOOLEAN,
-> >> +                             &modem->online);
-> >
-> > I think FlightMode will be more recognizable for the UI guys.
-> =
+ 	return ret;
+ }
+@@ -285,65 +284,63 @@ void g_isi_server_unhandle(GIsiServer *self, uint8_t =
+type)
+ 		self->func[type] =3D NULL;
+ }
+ =
 
-> It depends. Our UI people want to use "Offline" and "Online" in UI
-> (while the values used in D-Bus are "flight" and "normal"). It is
-> probably because they have plenty of use cases for "Offline" outside
-> aeroplanes.
-> =
+-/* Data callback */
+-static gboolean g_isi_server_callback(GIOChannel *channel, GIOCondition co=
+nd,
+-					gpointer opaque)
+-{
+-	GIsiServer *self =3D opaque;
+-	int len;
+-	GIsiIncoming *irq =3D self->irq;
+-	struct sockaddr_pn *addr =3D &irq->spn;
+-	socklen_t addrlen =3D sizeof(irq->spn);
+ =
 
-> ...
+-	if (cond & (G_IO_NVAL|G_IO_HUP)) {
+-		g_warning("Unexpected event on Phonet channel %p", channel);
+-		return FALSE;
+-	}
++static void generic_error_response(GIsiServer *self,
++			uint8_t trans_id, uint8_t error, uint8_t message_id,
++			void *addr, socklen_t addrlen)
++{
++	uint8_t common[] =3D { trans_id, 0xF0, error, message_id };
+ =
 
-I'm fine with either actually, maybe others have a stronger preference they=
-'d =
+-	len =3D phonet_peek_length(channel);
+-	{
+-		uint32_t buf[(len + 3) / 4];
+-		uint8_t *msg;
+-		uint8_t id;
+-		uint8_t failure;
+-		len =3D recvfrom(self->fd, buf, len, MSG_DONTWAIT,
+-				(void *)addr, &addrlen);
++	sendto(self->fd, common, sizeof(common), MSG_NOSIGNAL, addr, addrlen);
++}
+ =
 
-like to argue for or against...
+-		if (len < 2 || irq->spn.spn_resource !=3D self->resource)
+-			return TRUE;
++static void process_message(GIsiServer *self, int len)
++{
++	uint8_t msg[len + 1];
++	struct sockaddr_pn addr;
++	socklen_t addrlen =3D sizeof(addr);
++	uint8_t message_id;
++	GIsiRequestFunc func;
++	void *data;
+ =
 
-> > There's also the question of who stores the FlightMode user setting, and
-> > whether we store it by device ID or IMSI.
-> =
+-		msg =3D (uint8_t *)buf;
++	len =3D recvfrom(self->fd, msg, sizeof(msg), MSG_DONTWAIT,
++			(void *)&addr, &addrlen);
+ =
 
-> Unless we provide multiple settings, it is best left to some
-> application. Using my favourite phone as an example, the N900
-> application controlling the modem keeps track of Call UI state and two
-> UI settings, system mode (Online/offline, or if you prefer,
-> normal/flight) and cellular enable/disable. Only if Call UI is ready,
-> system mode is online and cellular radio is enabled, it will let modem
-> out of flight mode.
+-		if (self->debug_func)
+-			self->debug_func(msg + 1, len - 1, self->debug_data);
++	if (len < 2 || addr.spn_resource !=3D self->resource)
++		return;
+ =
 
-I'm fine with an external entity controlling this, as we do the same for th=
-e =
+-		irq->id =3D id =3D msg[1];
++	if (self->debug_func)
++		self->debug_func(msg + 1, len - 1, self->debug_data);
+ =
 
-Powered setting.  However this means that by default oFono (and assuming =
+-		if (self->func[id]) {
+-			irq =3D g_new0(GIsiIncoming, 1);
++	message_id =3D msg[1];
++	func =3D self->func[message_id];
++	data =3D self->data[message_id];
+ =
 
-offline/online is supported) should only get as far as offline state.  Onli=
-ne =
+-			if (irq) {
+-				*irq =3D *self->irq;
+-				self->func[id](self, msg + 1, len - 1,
+-						irq, self->data[id]);
+-				return TRUE;
+-			}
+-			g_free(irq);
+-			failure =3D 0x14;
++	if (func) {
++		GIsiIncoming *irq =3D g_new0(GIsiIncoming, 1);
+ =
 
-state has to be enabled by someone else.
+-		} else {
++		if (irq) {
++			irq->spn =3D addr;
++			irq->trans_id =3D msg[0];
++			func(self, msg + 1, len - 1, irq, data);
++			return;
++		}
++	}
+ =
 
-Lets make sure there are no other concerns here, particularly from our =
+-			failure =3D 0x17;
++	/* Respond with COMMON MESSAGE COMM_SERVICE_NOT_AUTHENTICATED_RESP */
++	generic_error_response(self, msg[0], 0x17, msg[1], &addr, addrlen);
++}
+ =
 
-connection management guys.
+-			{
+-				uint8_t common[] =3D {
+-					0xF0, failure, msg[1]
+-				};
+-				g_isi_respond(self, common, sizeof(common),
+-						irq);
+-			}
+-		}
++/* Data callback */
++static gboolean g_isi_server_callback(GIOChannel *channel, GIOCondition co=
+nd,
++					gpointer opaque)
++{
++	if (cond & (G_IO_NVAL|G_IO_HUP)) {
++		g_warning("Unexpected event on Phonet channel %p", channel);
++		return FALSE;
+ 	}
+ =
 
-Regards,
--Denis
++	process_message(opaque, phonet_peek_length(channel));
++
+ 	return TRUE;
+ }
+-- =
 
---===============6567100311253958751==--
+1.6.3.3
+
+
+--===============0240823289782315312==--
 
