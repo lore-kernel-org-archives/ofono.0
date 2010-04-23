@@ -1,125 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============9167955182408660140=="
+Content-Type: multipart/mixed; boundary="===============6941489102158807032=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [RFC][PATCH] Add: online method to isimodem
-Date: Fri, 23 Apr 2010 16:46:04 +0300
-Message-ID: <l2g80fd4e751004230646xbc33ebaaxe9f7e8242f03662f@mail.gmail.com>
-In-Reply-To: <201004222025.34820.denkenz@gmail.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+Subject: Re: [PATCH] Fix: transaction id usage in gisi/server.c
+Date: Fri, 23 Apr 2010 15:46:28 +0200
+Message-ID: <0f719e09b0048c8e277f38b1937eeb11@chewa.net>
+In-Reply-To: <h2g80fd4e751004230607t327144f8ze035f37c184c1cdf@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9167955182408660140==
+--===============6941489102158807032==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2010/4/23 Denis Kenzior <denkenz@gmail.com>:
->> =C2=A0gatchat/gatppp.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=A0=
- 16 ++++
->> =C2=A0gatchat/ppp.h =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 | =
-=C2=A0 =C2=A02 +
->> =C2=A0gatchat/ppp_lcp.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 | =C2=A0 =C2=
-=A04 +
->> =C2=A0gatchat/ppp_net.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 | =C2=A0 13 +=
-++-
 
-> And why exactly are you including ppp patches along with isimodem? =C2=A0=
-I'm
-> confused.
-
-I'm as confused as you. It seems to me I squished somebody else's
-patch here during rebase. ;-o
-
->> diff --git a/include/modem.h b/include/modem.h
->> index d502640..34cac7b 100644
->> --- a/include/modem.h
->> +++ b/include/modem.h
->> @@ -50,6 +50,9 @@ void ofono_modem_remove(struct ofono_modem *modem);
->> =C2=A0void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool=
-_t
->> =C2=A0powered); ofono_bool_t ofono_modem_get_powered(struct ofono_modem =
-*modem);
+On Fri, 23 Apr 2010 16:07:11 +0300, Pekka Pessi <ppessi@gmail.com> wrote:
+> 2010/4/23 Denis Kenzior <denkenz@gmail.com>:
+>>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+ =C2=A0 =C2=A0(void *)&spn, (sizeof spn)) !=3D
+> (sizeof req)) {
 >>
->> +void ofono_modem_set_online(struct ofono_modem *modem, ofono_bool_t
->
-> This is assuming the driver can set online states outside of oFono contro=
-l.
-> Tell me a use case where this makes sense please. =C2=A0If this is meant =
-to be used
-> only by ofono core, then this function should not be declared here.
+>> Casting to or from void is not necessary.
+> =
 
-I'm not assuming only core being able to drive the online state. If
-you are using a PC with an external handset as modem, it will have its
-own flight mode settings.
+> Oh, it is. If a struct sockaddr_pn structure is casted directly to
+> struct sockaddr, gcc will issue alignment warning on ARM.
 
+The cast-align warning is a can of false positives. First that warning
+should probably not be enabled. It does nothing on x86, and it's a waste of
+time with ARM and other pointer-picky platforms.
 
->> =C2=A0int ofono_modem_driver_register(const struct ofono_modem_driver *);
->> diff --git a/src/modem.c b/src/modem.c
->> index 8319702..05b1fed 100644
->> --- a/src/modem.c
->> +++ b/src/modem.c
->> @@ -61,6 +61,11 @@ struct ofono_modem {
->> =C2=A0 =C2=A0 =C2=A0 ofono_bool_t =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0powered;
->> =C2=A0 =C2=A0 =C2=A0 ofono_bool_t =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0powered_pending;
->> =C2=A0 =C2=A0 =C2=A0 guint =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 timeout;
->> + =C2=A0 =C2=A0 DBusMessage =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 *p=
-ending_online;
->
-> We allow only one outstanding call / interface, so there's really no need=
- for
-> this member.
+Most importantly, using -Werror _by_default_ is a _damn_idiotic_ idea. Been
+there, done that. One cannot know what weird warning any given compiler or
+version thereof will ever return. And then I don't need to mention "bugs"
+in header files from underlying components. Even changing GCC optimization
+levels can yield different conflicting warnings. That's known to happen for
+uninitialized values detection, which relies on optimization-dependent code
+analysis as an example.
 
-It depends on how the flight mode is driven. If ofono will follow user
-changing online/offline directly on external handset, the
-ofono_modem_set_online needs to know which SetProperty call is
-pending.
-
->> + =C2=A0 =C2=A0 ofono_bool_t =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0on=
-line_timeout;
->
-> Is this supposed to be a guint?
-
-Sure.
-
->> + =C2=A0 =C2=A0 ofono_dbus_dict_append(&dict, "Online", DBUS_TYPE_BOOLEA=
-N,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 &modem->online);
-
-> I think FlightMode will be more recognizable for the UI guys.
-
-It depends. Our UI people want to use "Offline" and "Online" in UI
-(while the values used in D-Bus are "flight" and "normal"). It is
-probably because they have plenty of use cases for "Offline" outside
-aeroplanes.
-
-...
-> My overall feeling here is that there's no need to make FlightMode state =
-so
-> complicated. =C2=A0Can we assume that powering down the modem from 'onlin=
-e' state
-> will take care of bringing the hardware down cleanly and avoid explicitly
-> calling the driver to bring it 'offline' first?
-
-You are probably right, I did not think the underlying mechanism through.
-
-> There's also the question of who stores the FlightMode user setting, and
-> whether we store it by device ID or IMSI.
-
-Unless we provide multiple settings, it is best left to some
-application. Using my favourite phone as an example, the N900
-application controlling the modem keeps track of Call UI state and two
-UI settings, system mode (Online/offline, or if you prefer,
-normal/flight) and cellular enable/disable. Only if Call UI is ready,
-system mode is online and cellular radio is enabled, it will let modem
-out of flight mode.
+Note that recent GCC versions allow turning only some warnings as errors
+with -Werror... and -Wno-error.... That's much saner; for instance calling
+a function without prototype is clearly a bug and it is quite reasonable to
+make it an error.
 
 -- =
 
-Pekka.Pessi mail at nokia.com
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net
+http://fi.linkedin.com/in/remidenis
 
---===============9167955182408660140==--
+
+--===============6941489102158807032==--
 
