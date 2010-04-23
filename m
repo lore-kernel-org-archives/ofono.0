@@ -1,230 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0240823289782315312=="
+Content-Type: multipart/mixed; boundary="===============1411776782778826055=="
 MIME-Version: 1.0
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
-Subject: [PATCH] Fix: transaction id usage in gisi/server.c
-Date: Fri, 23 Apr 2010 18:17:16 +0300
-Message-ID: <1272035836-27549-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: Re: How to handle pins?
+Date: Fri, 23 Apr 2010 17:25:34 +0200
+Message-ID: <20100423152534.GA11782@gumpy.localdomain>
+In-Reply-To: <u2l80fd4e751004230729l8745e56fqc9ab68911ffdbb77@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0240823289782315312==
+--===============1411776782778826055==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gisi/server.c |  111 +++++++++++++++++++++++++++--------------------------=
----
- 1 files changed, 54 insertions(+), 57 deletions(-)
+On Fri, Apr 23, 2010 at 04:29:23PM +0200, Pekka Pessi wrote:
+> 2010/4/23 Daniel Wagner <daniel.wagner@bmw-carit.de>:
+> >> Anyway it is the issue we need to resolve. So I also copy it to oFono =
+maillist for comments. ;-)
+> >
+> > Okay. Is there a proper way to identify a SIM when it is still locked?
+> > I guess this can only be done by some guessworking.
+> =
 
-diff --git a/gisi/server.c b/gisi/server.c
-index ef2d5dd..26386c1 100644
---- a/gisi/server.c
-+++ b/gisi/server.c
-@@ -44,7 +44,7 @@
- struct _GIsiIncoming
- {
- 	struct sockaddr_pn spn;
--	uint8_t id;
-+	uint8_t trans_id;
- };
- =
+> The EF_ICCID should be always available. It is either an E.118 number
+> or 10 bytes of opaque data.
 
- struct _GIsiServer {
-@@ -61,8 +61,6 @@ struct _GIsiServer {
- 	GIsiRequestFunc func[256];
- 	void *data[256];
- =
-
--	GIsiIncoming irq[1];
--
- 	/* Debugging */
- 	GIsiDebugFunc debug_func;
- 	void *debug_data;
-@@ -87,7 +85,7 @@ GIsiServer *g_isi_server_create(GIsiModem *modem, uint8_t=
- resource,
- 		abort();
- =
-
- 	self =3D ptr;
--	memset (self, 0, sizeof *self);
-+	memset (self, 0, sizeof(*self));
- 	self->resource =3D resource;
- 	self->version.major =3D major;
- 	self->version.minor =3D minor;
-@@ -174,9 +172,11 @@ g_isi_server_add_name(GIsiServer *self)
- 			0, 0,
- 		};
- =
-
--		if (sendto(self->fd, req, sizeof(req), 0, (void *)&spn,
--				sizeof(spn)) !=3D sizeof(spn))
--			return;
-+		if (sendto(self->fd, req, sizeof(req), 0,
-+				(void *)&spn, sizeof(spn)) !=3D sizeof(req)) {
-+			g_warning("%s: %s", "sendto(PN_NAMESERVICE)",
-+				  strerror(errno));
-+		}
- 	}
- }
- =
-
-@@ -236,7 +236,7 @@ int g_isi_vrespond(GIsiServer *self, const struct iovec=
- *iov, size_t iovlen,
- 		return -1;
- 	}
- =
-
--	_iov[0].iov_base =3D &irq->id;
-+	_iov[0].iov_base =3D &irq->trans_id;
- 	_iov[0].iov_len =3D 1;
- 	for (i =3D 0, len =3D 1; i < iovlen; i++) {
- 		_iov[1 + i] =3D iov[i];
-@@ -245,8 +245,7 @@ int g_isi_vrespond(GIsiServer *self, const struct iovec=
- *iov, size_t iovlen,
- =
-
- 	ret =3D sendmsg(self->fd, &msg, MSG_NOSIGNAL);
- =
-
--	if (irq !=3D self->irq)
--		g_free(irq);
-+	g_free(irq);
- =
-
- 	return ret;
- }
-@@ -285,65 +284,63 @@ void g_isi_server_unhandle(GIsiServer *self, uint8_t =
-type)
- 		self->func[type] =3D NULL;
- }
- =
-
--/* Data callback */
--static gboolean g_isi_server_callback(GIOChannel *channel, GIOCondition co=
-nd,
--					gpointer opaque)
--{
--	GIsiServer *self =3D opaque;
--	int len;
--	GIsiIncoming *irq =3D self->irq;
--	struct sockaddr_pn *addr =3D &irq->spn;
--	socklen_t addrlen =3D sizeof(irq->spn);
- =
-
--	if (cond & (G_IO_NVAL|G_IO_HUP)) {
--		g_warning("Unexpected event on Phonet channel %p", channel);
--		return FALSE;
--	}
-+static void generic_error_response(GIsiServer *self,
-+			uint8_t trans_id, uint8_t error, uint8_t message_id,
-+			void *addr, socklen_t addrlen)
-+{
-+	uint8_t common[] =3D { trans_id, 0xF0, error, message_id };
- =
-
--	len =3D phonet_peek_length(channel);
--	{
--		uint32_t buf[(len + 3) / 4];
--		uint8_t *msg;
--		uint8_t id;
--		uint8_t failure;
--		len =3D recvfrom(self->fd, buf, len, MSG_DONTWAIT,
--				(void *)addr, &addrlen);
-+	sendto(self->fd, common, sizeof(common), MSG_NOSIGNAL, addr, addrlen);
-+}
- =
-
--		if (len < 2 || irq->spn.spn_resource !=3D self->resource)
--			return TRUE;
-+static void process_message(GIsiServer *self, int len)
-+{
-+	uint8_t msg[len + 1];
-+	struct sockaddr_pn addr;
-+	socklen_t addrlen =3D sizeof(addr);
-+	uint8_t message_id;
-+	GIsiRequestFunc func;
-+	void *data;
- =
-
--		msg =3D (uint8_t *)buf;
-+	len =3D recvfrom(self->fd, msg, sizeof(msg), MSG_DONTWAIT,
-+			(void *)&addr, &addrlen);
- =
-
--		if (self->debug_func)
--			self->debug_func(msg + 1, len - 1, self->debug_data);
-+	if (len < 2 || addr.spn_resource !=3D self->resource)
-+		return;
- =
-
--		irq->id =3D id =3D msg[1];
-+	if (self->debug_func)
-+		self->debug_func(msg + 1, len - 1, self->debug_data);
- =
-
--		if (self->func[id]) {
--			irq =3D g_new0(GIsiIncoming, 1);
-+	message_id =3D msg[1];
-+	func =3D self->func[message_id];
-+	data =3D self->data[message_id];
- =
-
--			if (irq) {
--				*irq =3D *self->irq;
--				self->func[id](self, msg + 1, len - 1,
--						irq, self->data[id]);
--				return TRUE;
--			}
--			g_free(irq);
--			failure =3D 0x14;
-+	if (func) {
-+		GIsiIncoming *irq =3D g_new0(GIsiIncoming, 1);
- =
-
--		} else {
-+		if (irq) {
-+			irq->spn =3D addr;
-+			irq->trans_id =3D msg[0];
-+			func(self, msg + 1, len - 1, irq, data);
-+			return;
-+		}
-+	}
- =
-
--			failure =3D 0x17;
-+	/* Respond with COMMON MESSAGE COMM_SERVICE_NOT_AUTHENTICATED_RESP */
-+	generic_error_response(self, msg[0], 0x17, msg[1], &addr, addrlen);
-+}
- =
-
--			{
--				uint8_t common[] =3D {
--					0xF0, failure, msg[1]
--				};
--				g_isi_respond(self, common, sizeof(common),
--						irq);
--			}
--		}
-+/* Data callback */
-+static gboolean g_isi_server_callback(GIOChannel *channel, GIOCondition co=
-nd,
-+					gpointer opaque)
-+{
-+	if (cond & (G_IO_NVAL|G_IO_HUP)) {
-+		g_warning("Unexpected event on Phonet channel %p", channel);
-+		return FALSE;
- 	}
- =
-
-+	process_message(opaque, phonet_peek_length(channel));
-+
- 	return TRUE;
- }
--- =
-
-1.6.3.3
+I have scanned through the ofono code and didn't find any references
+to ICCID. So there is no code reading that information out of the
+sim. Is that right? =
 
 
---===============0240823289782315312==--
+Sorry for my complete ignorance on this topic. I was even unable to
+download the right document from 3gpp.org which describes this part.
+
+daniel
+
+--===============1411776782778826055==--
 
