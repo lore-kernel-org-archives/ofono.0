@@ -1,50 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1649807643717647218=="
+Content-Type: multipart/mixed; boundary="===============0736804234843432222=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: How to handle pins?
-Date: Fri, 23 Apr 2010 10:32:58 -0500
-Message-ID: <201004231032.58875.denkenz@gmail.com>
-In-Reply-To: <20100423152534.GA11782@gumpy.localdomain>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: [PATCH 1/3] atmodem: add signal strength support for huawei
+Date: Fri, 23 Apr 2010 18:40:51 +0300
+Message-ID: <87pr1qrxbw.fsf@potku.valot.fi>
+In-Reply-To: <1272032579.22838.70.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1649807643717647218==
+--===============0736804234843432222==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+Marcel Holtmann <marcel@holtmann.org> writes:
 
-> On Fri, Apr 23, 2010 at 04:29:23PM +0200, Pekka Pessi wrote:
-> > 2010/4/23 Daniel Wagner <daniel.wagner@bmw-carit.de>:
-> > >> Anyway it is the issue we need to resolve. So I also copy it to oFono
-> > >> maillist for comments. ;-)
-> > >
-> > > Okay. Is there a proper way to identify a SIM when it is still locked?
-> > > I guess this can only be done by some guessworking.
-> >
-> > The EF_ICCID should be always available. It is either an E.118 number
-> > or 10 bytes of opaque data.
-> =
+> Hi Kalle,
 
-> I have scanned through the ofono code and didn't find any references
-> to ICCID. So there is no code reading that information out of the
-> sim. Is that right?
+Hi Marcel,
 
-oFono does not read the ICCID, it only reads the IMSI which is available af=
-ter =
+>> Huawei doesn't support CIND indications, so use CSQ instead. But natural=
+ly
+>> the response from modem is not according to standard:
+>
+> is this true for all Huawei modems?
 
-PIN has been unlocked.
+I only have one modem, so I can't tell. I'll do some research and get
+back on this.
 
-> =
+>> ofonod[6401]: < \r\n^BOOT:38645652,0,0,0,87\r\n
+>> ofonod[6401]: < \r\n^RSSI:23\r\n
+>> =
 
-> Sorry for my complete ignorance on this topic. I was even unable to
-> download the right document from 3gpp.org which describes this part.
+>> Support for this format is not yet implemented.
+>
+> You see these on the same TTY? Normally they happen on the second TTY.
 
-3GPP 11.11 or ETSI TS 102.221
+Actually I didn't check that. I'll investigate more.
 
-Regards,
--Denis
+-- =
 
---===============1649807643717647218==--
+Kalle Valo
+
+--===============0736804234843432222==--
 
