@@ -1,82 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============2145336672034173688=="
+Content-Type: multipart/mixed; boundary="===============6567100311253958751=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
-Subject: Re: [PATCH] Fix: transaction id usage in gisi/server.c
-Date: Fri, 23 Apr 2010 17:15:21 +0200
-Message-ID: <566553110d5cd5487d0791c06ad3f0e5@chewa.net>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC][PATCH] Add: online method to isimodem
+Date: Fri, 23 Apr 2010 10:18:36 -0500
+Message-ID: <201004231018.36913.denkenz@gmail.com>
+In-Reply-To: <l2g80fd4e751004230646xbc33ebaaxe9f7e8242f03662f@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2145336672034173688==
+--===============6567100311253958751==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Pekka,
 
-On Fri, 23 Apr 2010 16:34:44 +0200, Marcel Holtmann <marcel@holtmann.org>
-wrote:
->> The cast-align warning is a can of false positives. First that warning
->> should probably not be enabled. It does nothing on x86, and it's a waste
->> of time with ARM and other pointer-picky platforms.
->
-> I don't have an ARM platform easy available to test this, but this can
-> be fixed by just memcpy the data structures.
+> >> +void ofono_modem_set_online(struct ofono_modem *modem, ofono_bool_t
+> >
+> > This is assuming the driver can set online states outside of oFono
+> > control. Tell me a use case where this makes sense please.  If this is
+> > meant to be used only by ofono core, then this function should not be
+> > declared here.
+> =
 
-No, that wouldn't make sense.
+> I'm not assuming only core being able to drive the online state. If
+> you are using a PC with an external handset as modem, it will have its
+> own flight mode settings.
 
-Memory copying would make sense if we had an unaligned (or possibly
-unaligned) byte range that we want to access. In this case, we have a
-properly aligned structure but GCC does not know. GCC thinks we are passing
-a struct sockaddr_pn (alignment: one byte) as a struct sockaddr (alignment:
-two byte).
+We've had this argument many times before, the bottom line is oFono is not =
 
-In this case however, the pointer will be passed to kernel. And the kernel
-definitely does not care about alignment. It would be a trivial local DoS
-if it did.
+setup to share the modem with another stack.  oFono caches results of just =
 
-In this particular case, removing the packing of sockaddr_pn might just
-work. But there are other cases that simply cannot be solved. For instance
-casting a sockaddr_storage to a sockaddr_in or sockaddr_in6 exhibits the
-same problem. Yet it has to be valid, by design of sockaddr_storage.
+about every setting on the modem, including call settings, call barring, ca=
+ll =
 
->> Most importantly, using -Werror _by_default_ is a _damn_idiotic_ idea.
->> Been there, done that. One cannot know what weird warning any given
->> compiler or version thereof will ever return. And then I don't need
->> to mention "bugs" in header files from underlying components. Even
-changing GCC
-> optimization
->> levels can yield different conflicting warnings. That's known to happen
-> for
->> uninitialized values detection, which relies on optimization-dependent
-> code
->> analysis as an example.
->
-> The rant about -Werror doesn't help. We are using it to catch nasty
-> constructs that might fail on any given platform. We have used -Werror
-> inside BlueZ and ConnMan for a long time now. Yes, sometimes new GCC
-> warnings come up and we fix that, but it was always good to have these.
+forwarding, sms, cell broadcast, etc, etc, etc.  Just because you can make =
+it =
 
-No it is not. I gave the counter examples multiple times. I don't need to
-quote them again.
+work for the online state doesn't mean you will ever get this right in the =
 
-> And yes, it is true that you need to use -O2 to enable a bunch of these
-> warnings.
+general case.
 
-Yet another proof that it is a bad idea. You are self-contradictory.
+This usecase is the realm of Gammu or Gnokii, not oFono.
 
-> So in conclusion, the -Werror stays and we need to fix the code to
-> compile cleanly on any given platform. It is possible, so lets get this
-> done. Feel free to post the warnings on the mailing list and I am more
-> than happy to look into it.
+> >> +     ofono_dbus_dict_append(&dict, "Online", DBUS_TYPE_BOOLEAN,
+> >> +                             &modem->online);
+> >
+> > I think FlightMode will be more recognizable for the UI guys.
+> =
 
-Your problem. If you don't want oFono to compile, I mean.
+> It depends. Our UI people want to use "Offline" and "Online" in UI
+> (while the values used in D-Bus are "flight" and "normal"). It is
+> probably because they have plenty of use cases for "Offline" outside
+> aeroplanes.
+> =
 
--- =
+> ...
 
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net
-http://fi.linkedin.com/in/remidenis
+I'm fine with either actually, maybe others have a stronger preference they=
+'d =
 
+like to argue for or against...
 
---===============2145336672034173688==--
+> > There's also the question of who stores the FlightMode user setting, and
+> > whether we store it by device ID or IMSI.
+> =
+
+> Unless we provide multiple settings, it is best left to some
+> application. Using my favourite phone as an example, the N900
+> application controlling the modem keeps track of Call UI state and two
+> UI settings, system mode (Online/offline, or if you prefer,
+> normal/flight) and cellular enable/disable. Only if Call UI is ready,
+> system mode is online and cellular radio is enabled, it will let modem
+> out of flight mode.
+
+I'm fine with an external entity controlling this, as we do the same for th=
+e =
+
+Powered setting.  However this means that by default oFono (and assuming =
+
+offline/online is supported) should only get as far as offline state.  Onli=
+ne =
+
+state has to be enabled by someone else.
+
+Lets make sure there are no other concerns here, particularly from our =
+
+connection management guys.
+
+Regards,
+-Denis
+
+--===============6567100311253958751==--
 
