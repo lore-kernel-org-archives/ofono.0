@@ -1,51 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============6059735253300394025=="
+Content-Type: multipart/mixed; boundary="===============3741584284668150352=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] atmodem: add a huawei hack to check attachment status
-Date: Fri, 23 Apr 2010 10:50:33 -0500
-Message-ID: <201004231050.34095.denkenz@gmail.com>
-In-Reply-To: <87ljcerx6y.fsf@potku.valot.fi>
+Subject: Re: [PATCH 1/3] atmodem: add signal strength support for huawei
+Date: Fri, 23 Apr 2010 10:53:28 -0500
+Message-ID: <201004231053.28533.denkenz@gmail.com>
+In-Reply-To: <87pr1qrxbw.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6059735253300394025==
+--===============3741584284668150352==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Kalle,
 
-> Marcel Holtmann <marcel@holtmann.org> writes:
-> > Hi Kalle,
-> =
-
-> Hi Marcel,
-> =
-
-> >> Huawei doesn't seem to send CGREG notifications (or I wasn't able to
-> >> properly configure the modem to do it), so add an ugly to hack poll the
-> >> state with CGATT.
+> >> Huawei doesn't support CIND indications, so use CSQ instead. But
+> >> naturally the response from modem is not according to standard:
 > >
-> > shouldn't be polling AT+CGREG? the better way to do this?
-> =
-
-> Most probably, I'll try with that command and test how it goes.
-> =
-
-> But is polling acceptable way to do this? And is there anything else I
-> could do except poll? I'm open to all suggestions.
+> > is this true for all Huawei modems?
 > =
 
 
-These devices are sometimes quite weird, especially if they have multiple =
+CSQ is not unsolicited, so you'd need to poll it.  Not a good idea.
 
-ports.  Sometimes unsolicited notifications are not sent to a particular po=
-rt, =
+> >> ofonod[6401]: < \r\n^BOOT:38645652,0,0,0,87\r\n
+> >> ofonod[6401]: < \r\n^RSSI:23\r\n
 
-and that port is for control only.  This could be the case here...
+I suggest you simply support this ^RSSI notification, it looks like it has =
+the =
+
+same 0-31 range as CSQ.  Also, sometimes values from vendor-specific comman=
+ds =
+
+differ from CSQ, so if a query of ^RSSI is supported, use that.
+
+> Actually I didn't check that. I'll investigate more.
+> =
+
+
+ModemManager has done more work integrating ppp devices, poking around ther=
+e =
+
+can get you some hints.
 
 Regards,
 -Denis
 
---===============6059735253300394025==--
+--===============3741584284668150352==--
 
