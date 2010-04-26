@@ -1,137 +1,150 @@
-Content-Type: multipart/mixed; boundary="===============0824270703664326962=="
+Content-Type: multipart/mixed; boundary="===============2469804271318431333=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3][RfC] Add utilities for encoding BTLVs and CTLVs.
-Date: Mon, 26 Apr 2010 10:28:10 -0500
-Message-ID: <201004261028.11557.denkenz@gmail.com>
-In-Reply-To: <n2sfb249edb1004260722v33fdbfbag51dcea9ec44c27b5@mail.gmail.com>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: [PATCH v0] Read EF_ICCID property of SIM
+Date: Mon, 26 Apr 2010 17:38:24 +0200
+Message-ID: <20100426153824.GA19346@aao-dell>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0824270703664326962==
+--===============2469804271318431333==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Read out Intergrated Cicruit Card Identifier from SIM.
+---
+ v0: initial version
 
-> Hi,
-> =
+ doc/sim-api.txt |    5 +++++
+ include/types.h |    2 ++
+ src/sim.c       |   29 +++++++++++++++++++++++++++++
+ src/simutil.h   |    1 +
+ 4 files changed, 37 insertions(+), 0 deletions(-)
 
-> On 23 April 2010 22:09, Denis Kenzior <denkenz@gmail.com> wrote:
-> > So I think for the case of the encoder we should bite the bullet and use
-> > something like a g_byte_array.  It will be really hard for us to guess
-> > the correct buffer size.
-> =
+diff --git a/doc/sim-api.txt b/doc/sim-api.txt
+index fd02396..d608205 100644
+--- a/doc/sim-api.txt
++++ b/doc/sim-api.txt
+@@ -115,3 +115,8 @@ Properties	string SubscriberIdentity [readonly, optiona=
+l]
+ =
 
-> Ok with me, although most of the time we have a limit of 256 bytes per
-> PDU or some other limit.  We could also use a growing static buffer to
-> avoid having to free the array.
+ 			The list contains elements of the same format as the
+ 			PinRequired property.
++
++		string IntegratedCircuitCardIdentifier [readonly]
++
++			Contains the Intergrated Circuit Card Identifer (ICCID)
++			and is read directly from the SIM.
+diff --git a/include/types.h b/include/types.h
+index 7b08b8c..7b903bb 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -36,6 +36,8 @@ extern "C" {
+ =
 
-The biggest issue is the text string, you really can't predict the buffer f=
-or =
+ typedef int		ofono_bool_t;
+ =
 
-that one.  And I don't want to see 16K+ buffers pre-allocated for this stuf=
-f :)
++#define OFONO_MAX_ICCID_LENGTH 20
++
+ /* MCC is always three digits. MNC is either two or three digits */
+ #define OFONO_MAX_MCC_LENGTH 3
+ #define OFONO_MAX_MNC_LENGTH 3
+diff --git a/src/sim.c b/src/sim.c
+index bf28f1e..1ce5751 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -70,6 +70,7 @@ struct sim_file_op {
+ };
+ =
 
-The static buffer of 256 bytes is an optimization we can certainly make for=
- the =
+ struct ofono_sim {
++	char *iccid;
+ 	char *imsi;
+ 	enum ofono_sim_phase phase;
+ 	unsigned char mnc_length;
+@@ -288,6 +289,10 @@ static DBusMessage *sim_get_properties(DBusConnection =
+*conn,
+ 	if (!present)
+ 		goto done;
+ =
 
-90% case.
++	if (sim->iccid)
++		ofono_dbus_dict_append(&dict, "IntegratedCircuitCardIdentifier",
++					DBUS_TYPE_STRING, &sim->iccid);
++		=
 
-> =
+ 	if (sim->imsi)
+ 		ofono_dbus_dict_append(&dict, "SubscriberIdentity",
+ 					DBUS_TYPE_STRING, &sim->imsi);
+@@ -1292,6 +1297,22 @@ static void sim_retrieve_efli_and_efpl(struct ofono_=
+sim *sim)
+ 			sim_efpl_read_cb, sim);
+ }
+ =
 
-> > Let me propose something, tell me if this can be made to work potential=
-ly
-> > more efficiently:
-> >
-> > - When we init a ber_tlv, reserve a header at the beginning of the buff=
-er
-> > to the max size of the tag + length.  The data with CTLVs will be writt=
-en
-> > after that header.
-> > - When we allocate a CTLV, we can set a hint whether this is a
-> > potentially 'relocatable' CTLV, or this CTLV will always be of size less
-> > than 127 bytes. - When we're done adding CTLVs, we can group our
-> > 'memmoves' of those CTLVs which are not relocatable.  For relocatable
-> > CTLVs we can set an initial flag on the tag from the set of reserved
-> > tags, e.g. 00, FF, etc.
-> > - In case the CTLV reaches maximum size, it becomes non-relocatable.
-> > - The relocation of BER-TLV is not necessary as we can fill the tag and
-> > length information at an offset from the beginning such that the data
-> > will follow immediately afterwards.  We simply return the data starting
-> > at this offset. - This should hopefully result in not having to use
-> > memmove in the most common case.
-> =
++static void sim_iccid_read_cb(const struct ofono_error *error,
++				const unsigned char *data, int len, void *user)
++{
++	struct ofono_sim *sim =3D user;
++	char number[OFONO_MAX_ICCID_LENGTH+ 1];
++
++	if (!error || error->type !=3D OFONO_ERROR_TYPE_NO_ERROR || len !=3D 10)
++		return;
++
++	extract_bcd_number(data, len, number);
++	number[OFONO_MAX_ICCID_LENGTH] =3D '\0';
++	sim->iccid =3D g_strdup(number);
++
++	DBG("ICCID %s", sim->iccid);
++}
++
+ static void sim_efphase_read_cb(const struct ofono_error *error,
+ 				const unsigned char *data, int len, void *user)
+ {
+@@ -1320,6 +1341,9 @@ static void sim_determine_phase(struct ofono_sim *sim)
+ =
 
-> I don't think the memmove is much of a problem.  In the most common
-> case there's no move needed, e.g. in none of the TERMINAL RESPONSEs
-> there will any.  There's one in the mms pdu test I sent.  There will
-> never be more than one per BER TLV, and it can be of only 127 bytes
-> worst case, so probably faster than all the memory allocs glib does if
-> we use GByteArray.
+ static void sim_initialize(struct ofono_sim *sim)
+ {
++	sim->driver->read_file_transparent(sim, SIM_EF_ICCID_FILEID, 0, 10,
++					   sim_iccid_read_cb, sim);
++
+ 	/* Perform SIM initialization according to 3GPP 31.102 Section 5.1.1.2
+ 	 * The assumption here is that if sim manager is being initialized,
+ 	 * then sim commands are implemented, and the sim manager is then
+@@ -1843,6 +1867,11 @@ static void sim_free_state(struct ofono_sim *sim)
+ 		sim->simop_q =3D NULL;
+ 	}
+ =
 
-Do you mean C-TLV?  And why 127 bytes?  Wouldn't you have to memmove a =
++	if (sim->iccid) {
++		g_free(sim->iccid);
++		sim->iccid =3D NULL;
++	}
++
+ 	if (sim->imsi) {
+ 		g_free(sim->imsi);
+ 		sim->imsi =3D NULL;
+diff --git a/src/simutil.h b/src/simutil.h
+index 7590cca..d6c52fc 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -21,6 +21,7 @@
+ =
 
-potentially large array in case a large display text is added?
+ enum sim_fileid {
+ 	SIM_EFPL_FILEID =3D 0x2f05,
++	SIM_EF_ICCID_FILEID =3D 0x2fe2,
+ 	SIM_EFLI_FILEID =3D 0x6f05,
+ 	SIM_EF_CPHS_MWIS_FILEID =3D 0x6f11,
+ 	SIM_EF_CPHS_INFORMATION_FILEID =3D 0x6f16,
+-- =
 
-> =
+1.6.6.1
 
-> > I think we should not try to make generic ber/ctlv encoding utilities,
-> > lets concentrate on doing the sim toolkit ones only.  This will allow us
-> > to make several simplifications (e.g. not worry about multi-byte ber-tlv
-> > tags, etc)
-> >
-> > Something like:
-> >
-> > stk_ber_tlv_builder_init(iter, tag);
-> > stk_ber_tlv_builder_open_container(iter, container, tag);
-> > stk_ber_tlv_builder_close_container(iter, container);
-> > stk_ber_tlv_builder_optimize(iter);
-> >
-> > stk_ctlv_append_byte(iter, byte);
-> > stk_ctlv_append_short(iter, short);
-> > stk_ctlv_append_data(iter, data, len);
-> > stk_ctlv_append_text(iter, text) -> If we can make this work, converts =
-to
-> > dcs, data format pair
-> =
 
-> Sounds ok, but in the end it's a slight complication because you have
-> to call "close_container" and "optimize" :).
-
-You can always do the magic to close the container automatically on an =
-
-'open_container' and 'optimize' or re-optimize on each close_container simi=
-lar =
-
-to how you're doing it now.  In the end I mostly care about making this eas=
-y =
-
-on the encoding code by not having to pre-allocate the buffers or composing=
- the =
-
-pdus before adding them to the TLV.
-
-> =
-
-> Would stk_ber_tlv_builder_open_container always start a CTLV?
-> Do you prefer these calls use the generic calls, or do the encoding
-> entirely in stkutil.c?
-
-For the purposes of STK work, yes.  You can always come up with a better na=
-me =
-
-:)  Right now I don't think we need to solve the generic ber-tlv / simple-t=
-lv =
-
-/ comprehension tlv composition problem, so doing it entirely in stkutil.c =
-is =
-
-fine.  Do you foresee a need to make these generic?
-
-Regards,
--Denis
-
---===============0824270703664326962==--
+--===============2469804271318431333==--
 
