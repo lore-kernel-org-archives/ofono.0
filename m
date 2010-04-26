@@ -1,39 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============6926073017644732966=="
+Content-Type: multipart/mixed; boundary="===============0514884320069591185=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [PATCH] Fix: clean-local target
-Date: Sat, 24 Apr 2010 16:56:14 +0300
-Message-ID: <k2n80fd4e751004240656l5c19dd46p7f46f898664b4fa6@mail.gmail.com>
-In-Reply-To: <1272039918.22838.89.camel@localhost.localdomain>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: Option GTM 382
+Date: Mon, 26 Apr 2010 10:39:00 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731CD27E86@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <201004230954.06488.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6926073017644732966==
+--===============0514884320069591185==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2010/4/23 Marcel Holtmann <marcel@holtmann.org>:
->> @@ -426,5 +426,5 @@ include/ofono/%.h: include/%.h
->> -clean-local: include/ofono
->> - =C2=A0 =C2=A0 @$(RM) -r $<
->> +clean-local:
->> + =C2=A0 =C2=A0 $(RM) -rf include/ofono
+Hi,
+
+>-----Original Message-----
+>From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
+lf Of
+>Denis Kenzior
+>Sent: Friday, April 23, 2010 10:54 PM
+>To: ofono(a)ofono.org
+>Subject: Re: Option GTM 382
 >
-> what is this trying to fix?
+>Hi Teemu,
+>
+>> Is Option GTM 382 supported? The module works with Ubuntu's own
+>> connection manager, but list-modems script doesn't return anything.
+>
+>This modem is in the HSO family, so should be supported by oFono.  Can you
+>edit plugins/ofono.rules (see the Option Globetrotter rules) to add the
+>product ID of this modem and see if it is detected?
 
-An error happening if you do make clean twice, or distclean followed
-by clean. I have no idea what the original construct is trying to
-achieve.
+The product id for this modem is already in ofono.rules:
+ATTRS{idVendor}=3D=3D"0af0", ATTRS{idProduct}=3D=3D"7601", ENV{OFONO_DRIVER=
+}=3D"hso"
+Below is the output at my side:
+./list-modems
+[ /hso0 ]
+    Interfaces =3D =
 
-> And you removed the @ in front of the command.
+    Powered =3D 0
 
-I removed @ so it is consistent with Automake's clean rules. Other rm
-commands are shown when you say make clean.
+Then you may need to run enable-modem (script in test directory) to enable =
+this modem.
 
--- =
 
-Pekka.Pessi mail at nokia.com
+>Regards,
+>-Denis
+>_______________________________________________
+>ofono mailing list
+>ofono(a)ofono.org
+>http://lists.ofono.org/listinfo/ofono
 
---===============6926073017644732966==--
+
+Regards,
+-Yang
+
+--===============0514884320069591185==--
 
