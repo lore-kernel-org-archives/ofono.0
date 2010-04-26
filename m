@@ -1,51 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8343667076826624051=="
+Content-Type: multipart/mixed; boundary="===============4999562795701160064=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: Option GTM 382
-Date: Mon, 26 Apr 2010 18:10:55 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731CD28413@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <m2o35f991da1004260251l980f256az81d81754644a3218@mail.gmail.com>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH 1/6] stkutil: Fix the assignment to minimum set
+Date: Mon, 26 Apr 2010 18:29:21 +0800
+Message-ID: <1272277766-25432-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8343667076826624051==
+--===============4999562795701160064==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ src/stkutil.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
->> The product id for this modem is already in ofono.rules:
->> ATTRS{idVendor}=3D=3D"0af0", ATTRS{idProduct}=3D=3D"7601",
->ENV{OFONO_DRIVER}=3D"hso"
->> Below is the output at my side:
->> ./list-modems
->> [ /hso0 ]
->> =C2=A0 =C2=A0Interfaces =3D
->> =C2=A0 =C2=A0Powered =3D 0
->>
->> Then you may need to run enable-modem (script in test directory) to enab=
-le this
->modem.
->
->I have the modem also in the ofono.rules file, but enable-modem returns:
->
->Traceback (most recent call last):
->  File "./enable-modem", line 14, in <module>
->    path =3D properties["Modems"][0]
->IndexError: list index out of range
->
->lsusb shows the device in the list:
->Bus 001 Device 004: ID 0af0:7601 Option
+diff --git a/src/stkutil.c b/src/stkutil.c
+index a457e36..b4279c1 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -2053,7 +2053,7 @@ static gboolean parse_dataobj(struct comprehension_tl=
+v_iter *iter,
+ =
 
-Yes, it seems we have the same modem.
->
->Any ideas, what I should check next?
+ 		if ((entry->flags & DATAOBJ_FLAG_MINIMUM) &&
+ 				entry->parsed =3D=3D FALSE)
+-			minimum_set =3D TRUE;
++			minimum_set =3D FALSE;
+ 	}
+ =
 
-Have you put the ofono.rules into /etc/udev/rules.d?
+ 	g_slist_foreach(entries, (GFunc)g_free, NULL);
+-- =
 
-Regards,
--Yang
+1.7.0.4
 
---===============8343667076826624051==--
+
+--===============4999562795701160064==--
 
