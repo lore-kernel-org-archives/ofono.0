@@ -1,97 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============2472456453259008792=="
+Content-Type: multipart/mixed; boundary="===============1550321599901930124=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: [PATCH 2/3] atmodem: add a huawei hack to check attachment status
-Date: Mon, 26 Apr 2010 13:44:00 +0300
-Message-ID: <87hbmysdcf.fsf@potku.valot.fi>
-In-Reply-To: <201004231050.34095.denkenz@gmail.com>
+Subject: Re: [PATCH 1/3] atmodem: add signal strength support for huawei
+Date: Mon, 26 Apr 2010 13:45:54 +0300
+Message-ID: <87d3xmsd99.fsf@potku.valot.fi>
+In-Reply-To: <201004231053.28533.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2472456453259008792==
+--===============1550321599901930124==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Denis Kenzior <denkenz@gmail.com> writes:
 
->> > shouldn't be polling AT+CGREG? the better way to do this?
->> =
+> Hi Kalle,
 
->> Most probably, I'll try with that command and test how it goes.
->> =
+Hi Denis,
 
->> But is polling acceptable way to do this? And is there anything else I
->> could do except poll? I'm open to all suggestions.
+>> >> Huawei doesn't support CIND indications, so use CSQ instead. But
+>> >> naturally the response from modem is not according to standard:
+>> >
+>> > is this true for all Huawei modems?
 >> =
 
 >
-> These devices are sometimes quite weird, especially if they have multiple =
+> CSQ is not unsolicited, so you'd need to poll it.  Not a good idea.
 
-> ports.  Sometimes unsolicited notifications are not sent to a particular =
-port, =
+Agreed.
 
-> and that port is for control only.  This could be the case here...
+>> >> ofonod[6401]: < \r\n^BOOT:38645652,0,0,0,87\r\n
+>> >> ofonod[6401]: < \r\n^RSSI:23\r\n
+>
+> I suggest you simply support this ^RSSI notification, it looks like it
+> has the same 0-31 range as CSQ. Also, sometimes values from
+> vendor-specific commands differ from CSQ, so if a query of ^RSSI is
+> supported, use that.
 
-Bingo! I did some testing with cgatt and saw this on the third serial
-interface:
+I'll do that.
 
-^BOOT:38645652,0,0,0,87                                                    =
-     =
-
-                                                                           =
-     =
-
-^RSSI:18                                                                   =
-     =
-
-                                                                           =
-     =
-
-+CGREG: 0,00,0                                                             =
-     =
-
-                                                                           =
-     =
-
-^RSSI:18                                                                   =
-     =
-
-                                                                           =
-     =
-
-^RSSI:18                                                                   =
-     =
-
-                                                                           =
-     =
-
-^RSSI:18                                                                   =
-     =
-
-                                                                           =
-     =
-
-^RSSI:15                                                                   =
-     =
-
-                                                                           =
-     =
-
-+CGREG: 1,5AA,5578                                                         =
-     =
-
-                                                                           =
-     =
-
-^RSSI:18                                         =
-
-
-I'll cook up something to use this.
+Thank you for the help.
 
 -- =
 
 Kalle Valo
 
---===============2472456453259008792==--
+--===============1550321599901930124==--
 
