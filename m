@@ -1,46 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============5553340489244334056=="
+Content-Type: multipart/mixed; boundary="===============9124688864793868028=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH] ppp: discard non-LCP packets when in Establishment phase
-Date: Mon, 26 Apr 2010 10:28:41 -0700
-Message-ID: <1272302921-21344-1-git-send-email-kristen@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] ppp: discard non-LCP packets when in Establishment phase
+Date: Mon, 26 Apr 2010 12:39:51 -0500
+Message-ID: <201004261239.51276.denkenz@gmail.com>
+In-Reply-To: <1272302921-21344-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5553340489244334056==
+--===============9124688864793868028==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gatchat/gatppp.c |    7 +++++++
- 1 files changed, 7 insertions(+), 0 deletions(-)
+Hi Kristen,
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index fc6769c..1547a75 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -169,6 +169,13 @@ static void ppp_recv(GAtPPP *ppp, struct frame_buffer =
-*frame)
- 	guint16 protocol =3D ppp_proto(frame->bytes);
- 	guint8 *packet =3D ppp_info(frame->bytes);
- =
+> ---
+>  gatchat/gatppp.c |    7 +++++++
+>  1 files changed, 7 insertions(+), 0 deletions(-)
 
-+	/*
-+	 * Any non-LCP packets received during Link Establishment
-+	 * phase must be silently discarded.
-+	 */
-+	if (ppp->phase =3D=3D PPP_PHASE_ESTABLISHMENT && protocol !=3D LCP_PROTOC=
-OL)
-+		return;
-+
- 	switch (protocol) {
- 	case PPP_IP_PROTO:
- 		/* If network is up & open, process the packet, if not, drop */
--- =
+This one has been applied, thanks.
 
-1.6.6.1
+Regards,
+-Denis
 
-
---===============5553340489244334056==--
+--===============9124688864793868028==--
 
