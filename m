@@ -1,69 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============2304475458166189550=="
+Content-Type: multipart/mixed; boundary="===============8762178244892400276=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 1/7] stkutil: Move advance of ctlv to parse_dataobj
-Date: Tue, 27 Apr 2010 17:47:06 +0800
-Message-ID: <1272361632-21352-1-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 5/7] test-stkutil: Add unit test for more time parser
+Date: Tue, 27 Apr 2010 17:47:10 +0800
+Message-ID: <1272361632-21352-5-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1272361632-21352-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2304475458166189550==
+--===============8762178244892400276==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Not all the proactive commands have comprehension tlv other than command
-details and device identities. So the appropriate code should be moved to
-parse_dataobj() from stk_command_new_from_pdu().
 ---
- src/stkutil.c |    8 +++++---
- 1 files changed, 5 insertions(+), 3 deletions(-)
+ unit/test-stkutil.c |   38 ++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 38 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index b4279c1..3323550 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -2030,6 +2030,10 @@ static gboolean parse_dataobj(struct comprehension_t=
-lv_iter *iter,
- 		entries =3D g_slist_prepend(entries, entry);
- 	}
+diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
+index 0961368..427d7a2 100644
+--- a/unit/test-stkutil.c
++++ b/unit/test-stkutil.c
+@@ -405,6 +405,41 @@ static void test_get_input(gconstpointer data)
+ 	stk_command_free(command);
+ }
  =
 
++struct more_time_test {
++	const unsigned char *pdu;
++	unsigned int pdu_len;
++	unsigned char qualifier;
++};
 +
-+	if (comprehension_tlv_iter_next(iter) !=3D TRUE)
-+		goto out;
++static unsigned char more_time_111[] =3D { 0xD0, 0x09, 0x81, 0x03, 0x01, 0=
+x02,
++						0x00, 0x82, 0x02, 0x81, 0x82 };
 +
- 	entries =3D g_slist_reverse(entries);
++static struct more_time_test more_time_data_111 =3D {
++	.pdu =3D more_time_111,
++	.pdu_len =3D sizeof(more_time_111),
++	.qualifier =3D 0x00,
++};
++
++/* Defined in TS 102.384 Section 27.22.4.4 */
++static void test_more_time(gconstpointer data)
++{
++	const struct get_input_test *test =3D data;
++	struct stk_command *command;
++
++	command =3D stk_command_new_from_pdu(test->pdu, test->pdu_len);
++
++	g_assert(command);
++
++	g_assert(command->number =3D=3D 1);
++	g_assert(command->type =3D=3D STK_COMMAND_TYPE_MORE_TIME);
++	g_assert(command->qualifier =3D=3D test->qualifier);
++
++	g_assert(command->src =3D=3D STK_DEVICE_IDENTITY_TYPE_UICC);
++	g_assert(command->dst =3D=3D STK_DEVICE_IDENTITY_TYPE_TERMINAL);
++
++	stk_command_free(command);
++}
++
+ struct send_sms_test {
+ 	const unsigned char *pdu;
+ 	unsigned int pdu_len;
+@@ -516,6 +551,9 @@ int main(int argc, char **argv)
+ 	g_test_add_data_func("/teststk/Get Input 1.1.1",
+ 				&get_input_data_111, test_get_input);
  =
 
- 	for (l =3D entries; l; l =3D l->next) {
-@@ -2048,6 +2052,7 @@ static gboolean parse_dataobj(struct comprehension_tl=
-v_iter *iter,
- 		}
- 	}
++	g_test_add_data_func("/teststk/More Time 1.1.1",
++				&more_time_data_111, test_more_time);
++
+ 	g_test_add_data_func("/teststk/Send SMS 1.1",
+ 				&send_sms_data_11, test_send_sms);
  =
 
-+out:
- 	for (l =3D entries; l; l =3D l->next) {
- 		struct dataobj_handler_entry *entry =3D l->data;
- =
-
-@@ -2295,9 +2300,6 @@ struct stk_command *stk_command_new_from_pdu(const un=
-signed char *pdu,
- 	command->src =3D data[0];
- 	command->dst =3D data[1];
- =
-
--	if (comprehension_tlv_iter_next(&iter) !=3D TRUE)
--		return FALSE;
--
- 	switch (command->type) {
- 	case STK_COMMAND_TYPE_DISPLAY_TEXT:
- 		ok =3D parse_display_text(command, &iter);
 -- =
 
 1.7.0.4
 
 
---===============2304475458166189550==--
+--===============8762178244892400276==--
 
