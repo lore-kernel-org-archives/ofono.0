@@ -1,66 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============1664154362028885121=="
+Content-Type: multipart/mixed; boundary="===============8364126267098032378=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: Option GTM 382
-Date: Tue, 27 Apr 2010 09:16:24 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731CD28565@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <p2w35f991da1004260633q80d32ae4r5831ddd64e1b98bc@mail.gmail.com>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: DUN client for oFono and BlueZ
+Date: Mon, 26 Apr 2010 22:20:59 -0300
+Message-ID: <20100427012059.GG12813@vigoh>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1664154362028885121==
+--===============8364126267098032378==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Teemu,
+Hi all,
+
+I'm starting the DUN Client implementation for the Linux Stack. DUN is
+the Bluetooth dial-up network profile. It makes possible share internet
+connection between two Bluetooth devices. That is my Google Summer of Code
+project for this year.
+
+Here follows a simple, and possible not complete, roadmap:
+
+1. Put send_method_call() and send_method_call_with_reply() on gdbus: those
+functions are very useful for DBus operations. You can send a DBus message
+just calling them with the right parameters. Patch for that work already =
+
+on the mailing list.
+
+2. Create a bluetooth.c file with the bluetooth helpers. oFono plugins for =
+HFP,
+DUN and SAP will be able to share the same bluetooth code to access BlueZ
+stuff. This is a ongoing work.
+
+3. plugin/dun.c prototype. A simple prototype for the DUN client.
+
+4. Agent server on BlueZ. This one is very similar to the HFP Agent server.=
+ At
+the end of the DUN agent project I plan to merge the both agent servers. SAP
+will take advantage of that merge too.
+
+5. oFono DUN agent. Implement the agent handling for DUN.
+
+6. AT command parser and PPP stack integration with DUN. The biggest task,
+where the core of the project is.
+
+7. ConnMan integration. Setup of the NAT and Internet Connections.
 
 
->-----Original Message-----
->From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf Of
->Teemu Piiroinen
->Sent: Monday, April 26, 2010 9:33 PM
->To: ofono(a)ofono.org
->Subject: Re: Option GTM 382
->
->No luck yet..
->
->Did I setup the sw correcty?
->- I run configure, make and make install
->- Added ofono.rules to /etc/udev/rules.d and /lib/udev/rules.d/
->- Started ofono by running ofonod from shell
->
->Is there something else I need to do?
+Comments are welcome. :)
 
-If you just copied ofono.rules to /etc/udev/rules.d, the rule might not tak=
-e effect directly. Here are the steps:
-1. Copy ofono.rules to /etc/udev/rules.d (I'm using Ubuntu 10.04, and it se=
-ems rule can still work in this directory)
-2. Run " udevadm control --reload-rules" to make rule work (Or you may rest=
-art your computer to make it work)
-3. In ofono directory, run "./bootstrap-configure" and "make" (There is no =
-need to install)
-4. Copy plugins/modem.conf to /etc/ofono (Sometimes oFono may rely on this =
-file. But for this Option modem, it's recognized using udev, so this file h=
-as no use)
-5. Run oFono by using "src/ofonod -nd '*'", and use "test/list-modems" to s=
-ee if the modem is recognized.
-6. Hope you get luck this time
+-- =
 
+Gustavo F. Padovan
+http://padovan.org
 
->
->I also removed network manager from Ubuntu, but that didn't help either.
-
-There is no need to remove this :)
-
->
->Br,
->Teemu
-
-
-Regards,
--Yang
-
---===============1664154362028885121==--
+--===============8364126267098032378==--
 
