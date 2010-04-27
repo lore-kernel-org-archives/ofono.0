@@ -1,52 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============3597226671035032692=="
+Content-Type: multipart/mixed; boundary="===============9172204555249430283=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: Modem emulator and DUN server side for oFono and BlueZ
-Date: Tue, 27 Apr 2010 15:53:54 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B351D9FE1FA@shsmsx501.ccr.corp.intel.com>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: Re: [PATCH v0] Read EF_ICCID property of SIM
+Date: Tue, 27 Apr 2010 10:09:12 +0200
+Message-ID: <20100427080912.GB14818@gumpy.localdomain>
+In-Reply-To: <20100427063631.GA14818@gumpy.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3597226671035032692==
+--===============9172204555249430283==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+On Tue, Apr 27, 2010 at 08:36:31AM +0200, Daniel Wagner wrote:
+> > Please use the sim file queue like EFpl does, no need to invent your ow=
+n =
 
-I am now working on modem emulator and one usage is for DUN server role. Si=
-nce Padovan is working on client role, it's good to share my rough thinking=
- for server side implementation. Here are the simple steps I have:
+> > solution.  =
 
-1. Create an oFono emulator atom in oFono. It's the emulator manager that c=
-ould create DUN, HFP AG or SPP type emulators. It exposes dbus methods like=
- CreateEmulator, DestroyEmulator, GetProperty, etc.
+> =
 
-2. DUN agent server in BlueZ watch oFono and call CreateEmulator and pass t=
-he file descriptor to oFono. This server could further implement HFP AG and=
- SPP connection.
+> I used the ofono_sim_read function but that didn't work. On the
+> terminal I saw only:
+> =
 
-3. Once an emulator is created, other atom like voicecall, grps, sms regist=
-er their interested AT command handlers to it. The goal is that we could ha=
-ndle all mandatory AT commands defined in DUN profile spec.
+> CRSM=3D192,12258 =
 
-4. Once a DUN emulator received ATD*99#, DUN client performs ppp connection=
- so we forward ppp command to ppp stack. It is done by ppp server side exte=
-nsion. It should be the simple command forwarding.
+> =
 
-5. Once the PPP link over DUN is established, DUN client performs ConnMan i=
-ntegration and setup IP address, DNS server, etc.
+> With read_file_transparent it is:
+> =
 
-6. Once the Bluetooth link is disconnected, we destroy the PPP and DUN emul=
-ator. If emulator atom itself is destroyed, we destroy the PPP and the Blue=
-tooth connection. If the PPP link is disconnected but Bluetooth link is ali=
-ve, we destroy the PPP and stay emulator alive.
+> ofonod[2048]: Control:> AT+CRSM=3D176,12258,0,0,10\r
+> ofonod[2048]: Control:< \r\r\n+CRSM: 144,0,"989422024754212460F6"\r\n\r\n=
+OK\r\n
 
-Comments are welcome. :)
+I looked into this. It comes down to:
 
-Regards,
-Zhenhua
-=20
+ofono_sim_read -> sim_op_next -> read_file_info
+ =
 
---===============3597226671035032692==--
+and since sim_op_next does not check what structure type it is, it
+always calles read_file_info (CRSM=3D192). =
+
+
+I'm not sure how to resolve this here. The problem is the callback
+given to sim_op_next has of course a different signature than
+read_file_transparent wants (ofono_sim_read_file_cb_t vs
+ofono_sim_read_cb_t)
+
+Should I add something like:
+
+int ofono_sim_read_transparent(struct ofono_sim *sim, int id,
+    				      	enum ofono_sim_file_structure expected_type,
+					ofono_sim_read_cb_t cb, void *data)
+
+thanks,
+daniel
+
+--===============9172204555249430283==--
 
