@@ -1,36 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============8729873670738110627=="
+Content-Type: multipart/mixed; boundary="===============0463996836834678887=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/3] hdlc: handle wrapped buffers
-Date: Tue, 27 Apr 2010 05:02:10 +0200
-Message-ID: <1272337330.22838.128.camel@localhost.localdomain>
-In-Reply-To: <1271543998.22838.34.camel@localhost.localdomain>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: DUN client for oFono and BlueZ
+Date: Tue, 27 Apr 2010 09:03:05 +0300
+Message-ID: <8739yhsa92.fsf@potku.valot.fi>
+In-Reply-To: <20100427012059.GG12813@vigoh>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8729873670738110627==
+--===============0463996836834678887==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+"Gustavo F. Padovan" <gustavo@padovan.org> writes:
 
-> So I like to see the patch series this way:
-> =
+> Hi all,
 
-> 1) Handle ringbuffer wrapping in HDLC
-> 2) Add recording support for HDLC
-> 3) Add ACCM support to HDLC
-> 4) Port PPP to use HDLC
+Hello Gustavo,
 
-so I have done 1) now in a way that it is efficient and doesn't become
-the bottle-neck for PPP. What is the status of the other 3 tasks?
+> I'm starting the DUN Client implementation for the Linux Stack. DUN is
+> the Bluetooth dial-up network profile. It makes possible share internet
+> connection between two Bluetooth devices. That is my Google Summer of Code
+> project for this year.
 
-Regards
+Excellent, I'm eagerly waiting for this. I hate cables =3D)
 
-Marcel
+As soon as you have something working, please do send patches so that
+people can test it.
 
+> 4. Agent server on BlueZ. This one is very similar to the HFP Agent serve=
+r. At
+> the end of the DUN agent project I plan to merge the both agent servers. =
+SAP
+> will take advantage of that merge too.
+>
+> 5. oFono DUN agent. Implement the agent handling for DUN.
 
+Sorry, I'm not familiar with HFP Agent, but what will this agent
+actually do on a DUN connection?
 
---===============8729873670738110627==--
+> 6. AT command parser and PPP stack integration with DUN. The biggest task,
+> where the core of the project is.
+>
+> 7. ConnMan integration. Setup of the NAT and Internet Connections.
+
+Why NAT is needed? I guess only for connection sharing.
+
+-- =
+
+Kalle Valo
+
+--===============0463996836834678887==--
 
