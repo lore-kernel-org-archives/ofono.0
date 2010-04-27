@@ -1,33 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============2885106554707310038=="
+Content-Type: multipart/mixed; boundary="===============2667037005200951354=="
 MIME-Version: 1.0
-From: Bastien Nocera <hadess@hadess.net>
-Subject: Re: DUN client for oFono and BlueZ
-Date: Tue, 27 Apr 2010 08:15:33 +0000
-Message-ID: <1272356128.17421.6781.camel@localhost.localdomain>
-In-Reply-To: <20100427012059.GG12813@vigoh>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH 2/6] stkutil: Move advance of ctlv to decicated
+ proactive	commands parser
+Date: Tue, 27 Apr 2010 17:42:14 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731CDB6B13@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <201004261039.20895.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2885106554707310038==
+--===============2667037005200951354==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, 2010-04-26 at 22:20 -0300, Gustavo F. Padovan wrote:
-> Hi all,
-> =
-
-> I'm starting the DUN Client implementation for the Linux Stack. DUN is
-> the Bluetooth dial-up network profile. It makes possible share internet
-> connection between two Bluetooth devices. That is my Google Summer of Code
-> project for this year.
-
-Does this project include anything that will be reusable by non-oFono
-based projects? Native BT PPP line discipline would have been nice.
-
-Cheers
+Hi Andrew and Denis,
 
 
+>-----Original Message-----
+>From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
+lf Of
+>Denis Kenzior
+>Sent: Monday, April 26, 2010 11:39 PM
+>To: ofono(a)ofono.org
+>Subject: Re: [PATCH 2/6] stkutil: Move advance of ctlv to decicated proact=
+ive commands
+>parser
+>
+>Hi Andrew,
+>
+>> Hi Yang,
+>>
+>> On 26 April 2010 12:29, Yang Gu <yang.gu@intel.com> wrote:
+>> > Not all the proactive commands have comprehension tlv other than comma=
+nd
+>> > details and device identities. So the appropriate code should be moved=
+ to
+>> > decicated parser if needed.
+>>
+>> Maybe parse_dataobj() would be a better place?
+>
+>Agreed, lets not repeat this in every single command parser.
 
---===============2885106554707310038==--
+Really good advice:) I will modify the patches.
+
+>
+>Regards,
+>-Denis
+>_______________________________________________
+>ofono mailing list
+>ofono(a)ofono.org
+>http://lists.ofono.org/listinfo/ofono
+
+Regards,
+-Yang
+
+--===============2667037005200951354==--
 
