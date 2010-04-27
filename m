@@ -1,36 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============5766300463281830406=="
+Content-Type: multipart/mixed; boundary="===============6055489454722817829=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/7] stkutil: Move advance of ctlv to parse_dataobj
-Date: Tue, 27 Apr 2010 09:36:21 -0500
-Message-ID: <201004270936.22558.denkenz@gmail.com>
-In-Reply-To: <1272361632-21352-1-git-send-email-yang.gu@intel.com>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: Re: DUN client for oFono and BlueZ
+Date: Tue, 27 Apr 2010 12:30:43 -0300
+Message-ID: <20100427153043.GA3374@vigoh>
+In-Reply-To: <1272356128.17421.6781.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5766300463281830406==
+--===============6055489454722817829==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Bastien,
 
-> Not all the proactive commands have comprehension tlv other than command
-> details and device identities. So the appropriate code should be moved to
-> parse_dataobj() from stk_command_new_from_pdu().
-> ---
->  src/stkutil.c |    8 +++++---
->  1 files changed, 5 insertions(+), 3 deletions(-)
 
-All 7 patches have been applied, thanks.  Can you make sure your commit =
+* Bastien Nocera <hadess@hadess.net> [2010-04-27 09:15:28 +0100]:
 
-headers are less than 50 characters long and your commit description is les=
-s =
+> On Mon, 2010-04-26 at 22:20 -0300, Gustavo F. Padovan wrote:
+> > Hi all,
+> > =
 
-than 72 characters long?
+> > I'm starting the DUN Client implementation for the Linux Stack. DUN is
+> > the Bluetooth dial-up network profile. It makes possible share internet
+> > connection between two Bluetooth devices. That is my Google Summer of C=
+ode
+> > project for this year.
+> =
 
-Regards,
--Denis
+> Does this project include anything that will be reusable by non-oFono
+> based projects? Native BT PPP line discipline would have been nice.
+> =
 
---===============5766300463281830406==--
+
+Yes, oFono will be only the Agent, you can implement a new one if you
+want. Also oFono already does the PPP line discipline, so we don't need
+to duplicate such feature in BlueZ.
+
+-- =
+
+Gustavo F. Padovan
+http://padovan.org
+
+--===============6055489454722817829==--
 
