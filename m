@@ -1,81 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============6231027247376298698=="
+Content-Type: multipart/mixed; boundary="===============6474559914800329658=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: Re: DUN client for oFono and BlueZ
-Date: Tue, 27 Apr 2010 03:35:33 -0300
-Message-ID: <20100427063533.GA30819@vigoh>
-In-Reply-To: <8739yhsa92.fsf@potku.valot.fi>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: Re: [PATCH v0] Read EF_ICCID property of SIM
+Date: Tue, 27 Apr 2010 08:36:31 +0200
+Message-ID: <20100427063631.GA14818@gumpy.localdomain>
+In-Reply-To: <201004261211.54532.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6231027247376298698==
+--===============6474559914800329658==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+Hi Denis,
 
-* Kalle Valo <kalle.valo@canonical.com> [2010-04-27 09:03:05 +0300]:
-
-> "Gustavo F. Padovan" <gustavo@padovan.org> writes:
+> > +
+> > +	extract_bcd_number(data, len, number);
+> > +	number[OFONO_MAX_ICCID_LENGTH] =3D '\0';
+> > +	sim->iccid =3D g_strdup(number);
+> > +
+> > +	DBG("ICCID %s", sim->iccid);
+> > +}
+> > +
 > =
 
-> > Hi all,
+> You might want to emit the property changed signal with the new ICCID val=
+ue =
+
+> here.
+
+I had already the property update code there but there was some
+problem with dbus. I figured that it wasn't setup correctly yet. I'll
+look into that.
+
+> >  static void sim_efphase_read_cb(const struct ofono_error *error,
+> >  				const unsigned char *data, int len, void *user)
+> >  {
+> > @@ -1320,6 +1341,9 @@ static void sim_determine_phase(struct ofono_sim
+> >  *sim)
+> > =
+
+> >  static void sim_initialize(struct ofono_sim *sim)
+> >  {
+> > +	sim->driver->read_file_transparent(sim, SIM_EF_ICCID_FILEID, 0, 10,
+> > +					   sim_iccid_read_cb, sim);
+> > +
 > =
 
-> Hello Gustavo,
-> =
+> Please use the sim file queue like EFpl does, no need to invent your own =
 
-> > I'm starting the DUN Client implementation for the Linux Stack. DUN is
-> > the Bluetooth dial-up network profile. It makes possible share internet
-> > connection between two Bluetooth devices. That is my Google Summer of C=
-ode
-> > project for this year.
-> =
-
-> Excellent, I'm eagerly waiting for this. I hate cables =3D)
-> =
-
-> As soon as you have something working, please do send patches so that
-> people can test it.
-> =
-
-> > 4. Agent server on BlueZ. This one is very similar to the HFP Agent ser=
-ver. At
-> > the end of the DUN agent project I plan to merge the both agent servers=
-. SAP
-> > will take advantage of that merge too.
-> >
-> > 5. oFono DUN agent. Implement the agent handling for DUN.
-> =
-
-> Sorry, I'm not familiar with HFP Agent, but what will this agent
-> actually do on a DUN connection
-
-The agent can request a RFCOMM connection and receive the RFCOMM channel
-via DBus fd-passing. The the DUN plugin can do the handshake.
-
-> =
-
-> > 6. AT command parser and PPP stack integration with DUN. The biggest ta=
-sk,
-> > where the core of the project is.
-> >
-> > 7. ConnMan integration. Setup of the NAT and Internet Connections.
-> =
-
-> Why NAT is needed? I guess only for connection sharing.
-
-No idea yet, I guess Denis told me about the NAT, but that will be the last=
- part
-of the project, so I'm not caring about it now. I have to check on my
-irc logs.
+> solution.  =
 
 
--- =
+I used the ofono_sim_read function but that didn't work. On the
+terminal I saw only:
 
-Gustavo F. Padovan
-http://padovan.org
+CRSM=3D192,12258 =
 
---===============6231027247376298698==--
+
+With read_file_transparent it is:
+
+ofonod[2048]: Control:> AT+CRSM=3D176,12258,0,0,10\r
+ofonod[2048]: Control:< \r\r\n+CRSM: 144,0,"989422024754212460F6"\r\n\r\nOK=
+\r\n
+
+> The phase check is a very specific case because we cache SIM files by =
+
+> phase of the SIM, so it needs to be known / guessed before the rest of si=
+m file =
+
+> queue runs.
+
+Thanks for the info. I'll update the patch.
+
+daniel
+
+--===============6474559914800329658==--
 
