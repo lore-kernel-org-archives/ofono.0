@@ -1,81 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============9193915724490410943=="
+Content-Type: multipart/mixed; boundary="===============1273753716168201918=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v0] Read EF_ICCID property of SIM
-Date: Tue, 27 Apr 2010 11:19:28 -0500
-Message-ID: <201004271119.28849.denkenz@gmail.com>
-In-Reply-To: <20100427160650.GC18877@pc0043.bmw-carit.intra>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH] ppp: silently discard packets if needed
+Date: Tue, 27 Apr 2010 13:26:49 -0700
+Message-ID: <1272400009-29082-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9193915724490410943==
+--===============1273753716168201918==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+When receiving a packet, check the protocol and the phase to see
+if the packet should be dropped.
+---
+ gatchat/gatppp.c |   31 ++++++++++++++++++++++++++-----
+ 1 files changed, 26 insertions(+), 5 deletions(-)
 
-> Hi Denis,
-> =
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index c7bf089..933cbec 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -173,17 +173,38 @@ static struct frame_buffer *ppp_encode(GAtPPP *ppp, g=
+uint8 *data, int len)
+ 	return fb;
+ }
+ =
 
-> > > > It's a Option iCON 451. I didn't check what "\r\r\n+CRSM:
-> > > > 144,0,"03"\r\n\r\nOK\r\n" exaclty means. I guess I have to check the
-> > > > standard.
-> > >
-> > > (of course I did copy the wrong line)
-> > >
-> > > ofonod[18879]: Control:< \r\r\n+CRSM: 111,0\r\n\r\nOK\r\n
-> >
-> > Yes the Option Modems always return +CRSM: 111 -> Unspecified Error
-> > whenever we use 'GET RESPONSE'.  It seems that this function is simply
-> > not implemented in their firmware, even though reading files directly
-> > from the SIM (in the case of EFphase or EFiccid) seems to work.
-> =
++/*
++ * Silently discard packets which are received when they shouldn't be
++ */
++static inline gboolean drop_packet(GAtPPP *ppp, guint16 protocol)
++{
++	switch (ppp->phase) {
++	case PPP_PHASE_ESTABLISHMENT:
++	case PPP_PHASE_TERMINATION:
++		if (protocol !=3D LCP_PROTOCOL)
++			return TRUE;
++		break;
++	case PPP_PHASE_AUTHENTICATION:
++		if (protocol !=3D LCP_PROTOCOL && protocol !=3D CHAP_PROTOCOL)
++			return TRUE;
++		break;
++	case PPP_PHASE_DEAD:
++		return TRUE;
++		break;
++	case PPP_PHASE_NETWORK:
++		break;
++	}
++
++	return FALSE;
++}
++
+ /* called when we have received a complete ppp frame */
+ static void ppp_recv(GAtPPP *ppp, struct frame_buffer *frame)
+ {
+ 	guint16 protocol =3D ppp_proto(frame->bytes);
+ 	guint8 *packet =3D ppp_info(frame->bytes);
+ =
 
-> Aside from the Option modem I have a Huawei E160 around for testing:
-> =
+-	/*
+-	 * Any non-LCP packets received during Link Establishment
+-	 * phase must be silently discarded.
+-	 */
+-	if (ppp->phase =3D=3D PPP_PHASE_ESTABLISHMENT && protocol !=3D LCP_PROTOC=
+OL)
++	if (drop_packet(ppp, protocol))
+ 		return;
+ =
 
-> ofonod[19115]: > AT+CRSM=3D192,12258\r
-> ofonod[19115]: < AT+CRSM=3D192,12258\r
-> ofonod[19115]: < \r\n+CME ERROR: SIM PIN required\r\n
-> =
+ 	switch (protocol) {
+-- =
 
-> Looks like it doesn't like the 'GET RESPONSE' either.
-> =
-
-> =
+1.6.6.1
 
 
-There are two possibilities here:
-	- The SIM is not per spec and actually requires PIN to be entered before =
-
-reading the EFiccid
-	- The Huawei firmware is not per spec and blocks the reading of EFiccid be=
-fore =
-
-the SIM PIN has been entered
-
-Since you managed to read the EFiccid on the Option hardware, I assume that =
-
-this is a Huawei firmware bug...
-
-Not really oFono's fault, welcome to the wonderful world of GSM hardware.  =
-Get =
-
-yourself an MBM F3507/F3607, their firmware usually gets this right...
-
-> > This needs to be fixed for the Option driver.  Perhaps someone here kno=
-ws
-> > a way...
-> =
-
-> Well, if some one tells me what to do I work on it. But I'm a bit lost
-> without help.
-
-Me too ;)
-
-Regards,
--Denis
-
---===============9193915724490410943==--
+--===============1273753716168201918==--
 
