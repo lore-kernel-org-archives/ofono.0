@@ -1,79 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============7036427928218831685=="
+Content-Type: multipart/mixed; boundary="===============2121113750310644688=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH] ppp: silently discard packets if needed
-Date: Tue, 27 Apr 2010 14:53:38 -0700
-Message-ID: <1272405218-30006-1-git-send-email-kristen@linux.intel.com>
+From: krishna k <id_kishore@live.in>
+Subject: RE: ofono Digest, Vol 12, Issue 53
+Date: Wed, 28 Apr 2010 13:31:37 +0530
+Message-ID: <COL106-W201E996AF2FC227950C478F6020@phx.gbl>
+In-Reply-To: <mailman.1.1272394802.13041.ofono@ofono.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7036427928218831685==
+--===============2121113750310644688==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When receiving a packet, check the protocol and the phase to see
-if the packet should be dropped.
----
- gatchat/gatppp.c |   30 +++++++++++++++++++++++++-----
- 1 files changed, 25 insertions(+), 5 deletions(-)
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index c7bf089..e51c281 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -173,17 +173,37 @@ static struct frame_buffer *ppp_encode(GAtPPP *ppp, g=
-uint8 *data, int len)
- 	return fb;
- }
- =
+Hi,
 
-+/*
-+ * Silently discard packets which are received when they shouldn't be
-+ */
-+static inline gboolean drop_packet(GAtPPP *ppp, guint16 protocol)
-+{
-+	switch (ppp->phase) {
-+	case PPP_PHASE_ESTABLISHMENT:
-+	case PPP_PHASE_TERMINATION:
-+		if (protocol !=3D LCP_PROTOCOL)
-+			return TRUE;
-+		break;
-+	case PPP_PHASE_AUTHENTICATION:
-+		if (protocol !=3D LCP_PROTOCOL && protocol !=3D CHAP_PROTOCOL)
-+			return TRUE;
-+		break;
-+	case PPP_PHASE_DEAD:
-+		return TRUE;
-+	case PPP_PHASE_NETWORK:
-+		break;
-+	}
-+
-+	return FALSE;
-+}
-+
- /* called when we have received a complete ppp frame */
- static void ppp_recv(GAtPPP *ppp, struct frame_buffer *frame)
- {
- 	guint16 protocol =3D ppp_proto(frame->bytes);
- 	guint8 *packet =3D ppp_info(frame->bytes);
- =
+I downloaded ofono from git (git clone git://git.kernel.org/pub/scm/network=
+/ofono/ofono.git) after that i am trying to build the ofono using
 
--	/*
--	 * Any non-LCP packets received during Link Establishment
--	 * phase must be silently discarded.
--	 */
--	if (ppp->phase =3D=3D PPP_PHASE_ESTABLISHMENT && protocol !=3D LCP_PROTOC=
-OL)
-+	if (drop_packet(ppp, protocol))
- 		return;
- =
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+(Reference from "http://wiki.maemo.org/User:Jebba/Ofono#Using_oFono_in_Pass=
+_thru_mode")
+git clone git://git.kernel.org/pub/scm/network/ofono/ofono.git
 
- 	switch (protocol) {
--- =
+cd ofono
 
-1.6.6.1
+./bootstrap-configure
+
+make
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+
+While running "./bootstrap-configure" i am getting an error saying that... =
+(pasted only last 3 lines,if required i will send fulldump)
+
+"checking for UDEV... no
+checking for CAPNG... no
+configure: error: Capabilities library is required"
 
 
---===============7036427928218831685==--
+Can anybody please suggest how to proceed forward in order to make installa=
+tion success
+
+Thanks in advance.
+
+Regards,
+Krishna K K
+
+
+
+
+ 		 	   		  =
+
+_________________________________________________________________
+South Cinema This Decade
+http://entertainment.in.msn.com/southcinemathisdecade/
+
+--===============2121113750310644688==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWw+CjxoZWFkPgo8c3R5bGU+PCEtLQouaG1tZXNzYWdlIFAKewptYXJnaW46MHB4OwpwYWRk
+aW5nOjBweAp9CmJvZHkuaG1tZXNzYWdlCnsKZm9udC1zaXplOiAxMHB0Owpmb250LWZhbWlseTpW
+ZXJkYW5hCn0KLS0+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBjbGFzcz0naG1tZXNzYWdlJz4KSGks
+PGJyPjxicj5JIGRvd25sb2FkZWQgb2Zvbm8gZnJvbSBnaXQgKGdpdCBjbG9uZSBnaXQ6Ly9naXQu
+a2VybmVsLm9yZy9wdWIvc2NtL25ldHdvcmsvb2Zvbm8vb2Zvbm8uZ2l0KSBhZnRlciB0aGF0IGkg
+YW0gdHJ5aW5nIHRvIGJ1aWxkIHRoZSBvZm9ubyB1c2luZzxicj48YnI+PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PTxicj4oUmVmZXJlbmNlIGZyb20gImh0
+dHA6Ly93aWtpLm1hZW1vLm9yZy9Vc2VyOkplYmJhL09mb25vI1VzaW5nX29Gb25vX2luX1Bhc3Nf
+dGhydV9tb2RlIik8YnI+PHByZT5naXQgY2xvbmUgZ2l0Oi8vZ2l0Lmtlcm5lbC5vcmcvcHViL3Nj
+bS9uZXR3b3JrL29mb25vL29mb25vLmdpdDxicj48YnI+Y2Qgb2Zvbm88YnI+PGJyPi4vYm9vdHN0
+cmFwLWNvbmZpZ3VyZTxicj48YnI+bWFrZTxicj49PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PTxicj48YnI+V2hpbGUgcnVu
+bmluZyAiLi9ib290c3RyYXAtY29uZmlndXJlIiBpIGFtIGdldHRpbmcgYW4gZXJyb3Igc2F5aW5n
+IHRoYXQuLi4gKHBhc3RlZCBvbmx5IGxhc3QgMyBsaW5lcyxpZiByZXF1aXJlZCBpIHdpbGwgc2Vu
+ZCBmdWxsZHVtcCk8YnI+PGJyPiJjaGVja2luZyBmb3IgVURFVi4uLiBubzxicj5jaGVja2luZyBm
+b3IgQ0FQTkcuLi4gbm88YnI+Y29uZmlndXJlOiBlcnJvcjogQ2FwYWJpbGl0aWVzIGxpYnJhcnkg
+aXMgcmVxdWlyZWQiPGJyPjxicj48YnI+Q2FuIGFueWJvZHkgcGxlYXNlIHN1Z2dlc3QgaG93IHRv
+IHByb2NlZWQgZm9yd2FyZCBpbiBvcmRlciB0byBtYWtlIGluc3RhbGxhdGlvbiBzdWNjZXNzPGJy
+Pjxicj5UaGFua3MgaW4gYWR2YW5jZS48YnI+PGJyPlJlZ2FyZHMsPGJyPktyaXNobmEgSyBLPGJy
+Pjxicj48YnI+PGJyPjwvcHJlPjxicj4gCQkgCSAgIAkJICA8YnIgLz48aHIgLz5UaGUgbGF0ZXN0
+IGF1dG8gbGF1bmNoZXMgYW5kIHRlc3QgZHJpdmVzIDxhIGhyZWY9J2h0dHA6Ly9hdXRvcy5pbi5t
+c24uY29tLycgdGFyZ2V0PSdfbmV3Jz5EcmFnIG4nIGRyb3A8L2E+PC9ib2R5Pgo8L2h0bWw+
+--===============2121113750310644688==--
 
