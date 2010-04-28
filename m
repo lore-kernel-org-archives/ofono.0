@@ -1,29 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============5995752039957795705=="
+Content-Type: multipart/mixed; boundary="===============1006348343845068038=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
 Subject: Re: [PATCH] usbpnmodem: configure usbpn interfaces automatically
-Date: Wed, 28 Apr 2010 16:03:59 +0300
-Message-ID: <p2j80fd4e751004280603gea6dc8fdy642032645ec5a88c@mail.gmail.com>
-In-Reply-To: <201004231300.22037.denkenz@gmail.com>
+Date: Wed, 28 Apr 2010 15:10:55 +0200
+Message-ID: <5ea667bc6124f7498f850d50ffc04fa1@chewa.net>
+In-Reply-To: <1272035118-26998-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5995752039957795705==
+--===============1006348343845068038==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2010/4/23 Denis Kenzior <denkenz@gmail.com>:
->> + =C2=A0 =C2=A0 *(uint32_t *)(void *)RTA_DATA(rta) =3D ifa_index;
 
-> I'm running away scared from this one...
+On Fri, 23 Apr 2010 18:05:18 +0300, Pekka Pessi <Pekka.Pessi@nokia.com>
+wrote:
+> ---
+>  drivers/isimodem/isimodem.c |    2 +-
+>  gisi/netlink.c              |  246
+> +++++++++++++++++++++++++++++++++++++++---
+>  gisi/netlink.h              |   11 ++-
+>  plugins/usbpnmodem.c        |   10 ++-
+>  4 files changed, 246 insertions(+), 23 deletions(-)
 
-This is the GCC -Wcast-align problem. It does not grok the alignment
-logic in RTA_DATA() macro from Linux kernel.
+I fail to see why we need this. usbpn is already autoconfigured by the
+kernel. It only needs to be brought administratively up.
 
 -- =
 
-Pekka.Pessi mail at nokia.com
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net
+http://fi.linkedin.com/in/remidenis
 
---===============5995752039957795705==--
+
+--===============1006348343845068038==--
 
