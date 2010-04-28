@@ -1,38 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============1006348343845068038=="
+Content-Type: multipart/mixed; boundary="===============0747625588823450920=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+From: Pekka Pessi <ppessi@gmail.com>
 Subject: Re: [PATCH] usbpnmodem: configure usbpn interfaces automatically
-Date: Wed, 28 Apr 2010 15:10:55 +0200
-Message-ID: <5ea667bc6124f7498f850d50ffc04fa1@chewa.net>
-In-Reply-To: <1272035118-26998-1-git-send-email-Pekka.Pessi@nokia.com>
+Date: Wed, 28 Apr 2010 17:15:54 +0300
+Message-ID: <m2q80fd4e751004280715l548126e8w46a2886ff2a92219@mail.gmail.com>
+In-Reply-To: <5ea667bc6124f7498f850d50ffc04fa1@chewa.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1006348343845068038==
+--===============0747625588823450920==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+2010/4/28 R=C3=A9mi Denis-Courmont <remi@remlab.net>:
+> I fail to see why we need this. usbpn is already autoconfigured by the
+> kernel. It only needs to be brought administratively up.
 
-On Fri, 23 Apr 2010 18:05:18 +0300, Pekka Pessi <Pekka.Pessi@nokia.com>
-wrote:
-> ---
->  drivers/isimodem/isimodem.c |    2 +-
->  gisi/netlink.c              |  246
-> +++++++++++++++++++++++++++++++++++++++---
->  gisi/netlink.h              |   11 ++-
->  plugins/usbpnmodem.c        |   10 ++-
->  4 files changed, 246 insertions(+), 23 deletions(-)
-
-I fail to see why we need this. usbpn is already autoconfigured by the
-kernel. It only needs to be brought administratively up.
+This is not the case with 2.6.31. Does it hurt with later kernels?
 
 -- =
 
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net
-http://fi.linkedin.com/in/remidenis
+Pekka.Pessi mail at nokia.com
 
-
---===============1006348343845068038==--
+--===============0747625588823450920==--
 
