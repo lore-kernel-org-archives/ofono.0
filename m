@@ -1,77 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============4687128106563350010=="
+Content-Type: multipart/mixed; boundary="===============4708513896247843500=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: ppp: transition to dead when read io destroyed
-Date: Thu, 29 Apr 2010 11:03:09 -0700
-Message-ID: <20100429110309.31165a8f@kcaccard-MOBL3>
+Subject: [PATCH] ppp: silently drop invalid packets
+Date: Thu, 29 Apr 2010 12:18:29 -0700
+Message-ID: <1272568709-6812-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4687128106563350010==
+--===============4708513896247843500==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-remove call to signal_close for lcp object, it is redundent.  If
-our io is destroyed we are dead, so transition the ppp phase to
-DEAD so our disconnect callback can be called.
 ---
- gatchat/gatppp.c |    2 +-
- gatchat/ppp_cp.c |    2 ++
- 2 files changed, 3 insertions(+), 1 deletions(-)
+ gatchat/gatppp.c |   36 ++++++++++++++++++++++++++++--------
+ 1 files changed, 28 insertions(+), 8 deletions(-)
 
 diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index dfdaf40..3450ce3 100644
+index dfdaf40..6a2c30e 100644
 --- a/gatchat/gatppp.c
 +++ b/gatchat/gatppp.c
-@@ -180,7 +180,6 @@ void ppp_enter_phase(GAtPPP *ppp, enum ppp_phase phase)
- 	case PPP_PHASE_TERMINATION:
- 		pppcp_signal_down(ppp->ipcp);
- 		pppcp_signal_close(ppp->ipcp);
--		pppcp_signal_close(ppp->lcp);
- 		break;
- 	case PPP_PHASE_DEAD:
- 		ppp_dead(ppp);
-@@ -269,6 +268,7 @@ static void io_disconnect(gpointer user_data)
- 	GAtPPP *ppp =3D user_data;
- =
-
- 	pppcp_signal_down(ppp->lcp);
-+	ppp_enter_phase(ppp, PPP_PHASE_DEAD);
+@@ -71,24 +71,44 @@ void ppp_debug(GAtPPP *ppp, const char *str)
+ 	ppp->debugf(str, ppp->debug_data);
  }
  =
 
- /* Administrative Open */
-diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
-index 9db96d6..00acb73 100644
---- a/gatchat/ppp_cp.c
-+++ b/gatchat/ppp_cp.c
-@@ -523,6 +523,7 @@ static void pppcp_send_terminate_ack(struct pppcp_data =
-*data,
++/*
++ * Silently discard packets which are received when they shouldn't be
++ */
++static inline gboolean ppp_drop_packet(GAtPPP *ppp, guint16 protocol)
++{
++	switch (ppp->phase) {
++	case PPP_PHASE_ESTABLISHMENT:
++	case PPP_PHASE_TERMINATION:
++		if (protocol !=3D LCP_PROTOCOL)
++			return TRUE;
++		break;
++	case PPP_PHASE_AUTHENTICATION:
++		if (protocol !=3D LCP_PROTOCOL && protocol !=3D CHAP_PROTOCOL)
++			return TRUE;
++		break;
++	case PPP_PHASE_DEAD:
++		return TRUE;
++	case PPP_PHASE_NETWORK:
++		if (ppp->net =3D=3D NULL)
++			return TRUE;
++		break;
++	}
++
++	return FALSE;
++}
++
+ static void ppp_receive(const unsigned char *buf, gsize len, void *data)
  {
- 	struct pppcp_packet *packet;
- 	struct pppcp_packet *pppcp_header =3D (struct pppcp_packet *) request;
-+	struct pppcp_timer_data *timer_data =3D &data->terminate_timer_data;
+ 	GAtPPP *ppp =3D data;
+ 	guint16 protocol =3D ppp_proto(buf);
+ 	const guint8 *packet =3D ppp_info(buf);
  =
 
- 	pppcp_trace(data);
+-	/*
+-	 * Any non-LCP packets received during Link Establishment
+-	 * phase must be silently discarded.
+-	 */
+-	if (ppp->phase =3D=3D PPP_PHASE_ESTABLISHMENT && protocol !=3D LCP_PROTOC=
+OL)
++	if (ppp_drop_packet(ppp, protocol))
+ 		return;
  =
 
-@@ -535,6 +536,7 @@ static void pppcp_send_terminate_ack(struct pppcp_data =
-*data,
- 			ntohs(pppcp_header->length));
- =
-
- 	pppcp_packet_free(packet);
-+	pppcp_start_timer(timer_data);
- }
- =
-
- /*
+ 	switch (protocol) {
+ 	case PPP_IP_PROTO:
+-		/* If network is up & open, process the packet, if not, drop */
+-		if (ppp->net)
+-			ppp_net_process_packet(ppp->net, packet);
++		ppp_net_process_packet(ppp->net, packet);
+ 		break;
+ 	case LCP_PROTOCOL:
+ 		pppcp_process_packet(ppp->lcp, packet);
 -- =
 
 1.6.6.1
 
 
---===============4687128106563350010==--
+--===============4708513896247843500==--
 
