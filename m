@@ -1,28 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8763926971560630845=="
+Content-Type: multipart/mixed; boundary="===============8360535214103474313=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] ppp: fix return of drop_packet for NETWORK phase
-Date: Thu, 29 Apr 2010 18:52:58 -0500
-Message-ID: <201004291852.58613.denkenz@gmail.com>
-In-Reply-To: <1272583550-5791-1-git-send-email-kristen@linux.intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 1/4] Don't remove atoms when state goes from INSERTED to NOT
+ PRESENT.
+Date: Thu, 29 Apr 2010 13:31:44 +0200
+Message-ID: <1272540704-18933-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8763926971560630845==
+--===============8360535214103474313==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+---
+ src/modem.c |    9 ++++++---
+ 1 files changed, 6 insertions(+), 3 deletions(-)
 
-> ---
->  gatchat/gatppp.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
+diff --git a/src/modem.c b/src/modem.c
+index 8319702..0d0cb2a 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -1132,13 +1132,16 @@ static void modem_sim_ready(void *user, enum ofono_=
+sim_state new_state)
+ =
 
-Patch applied, thanks.
+ 	switch (new_state) {
+ 	case OFONO_SIM_STATE_NOT_PRESENT:
+-		remove_all_atoms(&modem->atoms);
++		if (modem->pre_sim_atoms !=3D NULL)
++			remove_all_atoms(&modem->atoms);
+ 		break;
+ 	case OFONO_SIM_STATE_INSERTED:
+ 		break;
+ 	case OFONO_SIM_STATE_READY:
+-		modem->pre_sim_atoms =3D modem->atoms;
+-		modem->atoms =3D NULL;
++		if (modem->pre_sim_atoms =3D=3D NULL) {
++			modem->pre_sim_atoms =3D modem->atoms;
++			modem->atoms =3D NULL;
++		}
+ =
 
-Regards,
--Denis
+ 		if (modem->driver->post_sim)
+ 			modem->driver->post_sim(modem);
+-- =
 
---===============8763926971560630845==--
+1.6.1
+
+
+--===============8360535214103474313==--
 
