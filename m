@@ -1,30 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============3888470655746029888=="
+Content-Type: multipart/mixed; boundary="===============1670163706651245274=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] ppp: silently drop invalid packets
-Date: Thu, 29 Apr 2010 14:41:24 -0500
-Message-ID: <201004291441.24490.denkenz@gmail.com>
-In-Reply-To: <1272568709-6812-1-git-send-email-kristen@linux.intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH] ppp: fix return of drop_packet for NETWORK phase
+Date: Thu, 29 Apr 2010 16:25:50 -0700
+Message-ID: <1272583550-5791-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3888470655746029888==
+--===============1670163706651245274==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+---
+ gatchat/gatppp.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-> ---
->  gatchat/gatppp.c |   36 ++++++++++++++++++++++++++++--------
->  1 files changed, 28 insertions(+), 8 deletions(-)
-> =
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index f200ae7..2446d4e 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -89,7 +89,7 @@ static inline gboolean ppp_drop_packet(GAtPPP *ppp, guint=
+16 protocol)
+ 	case PPP_PHASE_DEAD:
+ 		return TRUE;
+ 	case PPP_PHASE_NETWORK:
+-		if (ppp->net =3D=3D NULL)
++		if (ppp->net =3D=3D NULL && protocol =3D=3D PPP_IP_PROTO)
+ 			return TRUE;
+ 		break;
+ 	}
+-- =
+
+1.6.6.1
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============3888470655746029888==--
+--===============1670163706651245274==--
 
