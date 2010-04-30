@@ -1,33 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============8823698203908304905=="
+Content-Type: multipart/mixed; boundary="===============2205156689727942826=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] add vid/pid for Dell 5541 and 5542
-Date: Fri, 30 Apr 2010 15:29:25 +0200
-Message-ID: <1272634165.22838.189.camel@localhost.localdomain>
-In-Reply-To: <201004301514.06053.torgny.johansson@ericsson.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/4] gatchat: Emit notification when command is sent to
+ modem.
+Date: Fri, 30 Apr 2010 08:31:47 -0500
+Message-ID: <201004300831.47649.denkenz@gmail.com>
+In-Reply-To: <1272606483.22838.180.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8823698203908304905==
+--===============2205156689727942826==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Torgny,
+Hi Marcel,
 
-> The following patch adds two new devices in the ofono.rules file:
+> Hi Denis,
+> =
 
-please use git format-patch and git send-email. Otherwise I get this:
+> > > +/*!
+> > > + * Same as g_at_chat_send but with an ability to return a notificati=
+on
+> > > the + * moment the command finally leaves the queue and is submitted =
+to
+> > > lower + * layer.
+> > > + *
+> > > + * This is useful for cases where the modem's response time needs to
+> > > be + * measured, assuming that the lower layers processing time is
+> > > shorter + * than the minimum accuracy needed.
+> > > + */
+> > > +guint g_at_chat_send_with_callback(GAtChat *chat, const char *cmd,
+> > > +					const char **valid_resp,
+> > > +					GAtSubmitNotifyFunc sent,
+> > > +					GAtResultFunc func,
+> > > +					gpointer user_data,
+> > > +					GDestroyNotify notify);
+> > > +
+> >
+> > So I'm fine with the implementation but the name needs work.  Can we use
+> > g_at_chat_send_with_submit_notify? Or maybe g_at_chat_send_full, similar
+> > to how GLib does it.
+> >
+> > Perhaps enabling submit_notification for a given command after it has
+> > been submitted with g_at_chat_send?
+> >
+> > e.g. g_at_chat_set_submit_notify(GAtChat *chat, guint command,
+> > GAtSubmitNotifyFunc sent, gpointer user_data, GDestroyNotify notify);
+> =
 
-Applying: add vid/pid for Dell 5541 and 5542
-fatal: corrupt patch at line 6
-Patch failed at 0001 add vid/pid for Dell 5541 and 5542
+> I am not a huge fan of the _full() stuff, but it is actually pretty nice
+> for the cases where 99% of users don't care. And this seems to be one of
+> them. The send_with_submit_notify() is way too long.
 
-Regards
+I'm not a fan of _full either, however it is a precedent, so might as well =
+be =
 
-Marcel
+a candidate.
 
+> =
 
+> Maybe g_at_chat_send_and_notify() is an acceptable simple version for
+> this or just g_at_chat_submit() and g_at_chat_send() to keep these
+> versions apart.
 
---===============8823698203908304905==--
+In my opinion send_and_notify does not convey enough information about what =
+
+the function is trying to do.  _submit is even less clear.  API should be v=
+ery =
+
+clear on its intent just from the function name without needing to consult =
+
+documentation.
+
+Out of all these so far my vote is on send_full just because it is familiar=
+ to =
+
+folks using GLib...  We might have to cut down some of the parameters to _s=
+end =
+
+as well (like GDestroyNotify argument) if we introduce send_full.
+
+Regards,
+-Denis
+
+--===============2205156689727942826==--
 
