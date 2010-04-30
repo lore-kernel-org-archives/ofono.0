@@ -1,133 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============9012729529326192593=="
+Content-Type: multipart/mixed; boundary="===============3311890817763645015=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] phonesim: Time out +CSIM when no SIM present.
-Date: Thu, 29 Apr 2010 13:38:56 +0200
-Message-ID: <1272541136-19892-1-git-send-email-andrew.zaborowski@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/4][RFC] gatchat: Allow cancelling a running command.
+Date: Thu, 29 Apr 2010 21:53:49 -0500
+Message-ID: <201004292153.49983.denkenz@gmail.com>
+In-Reply-To: <1272540754-19028-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9012729529326192593==
+--===============3311890817763645015==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Send an ERROR after some time from receiving a AT+CSIM when card
-is not inserted.  Implement cancelling pending commands.
----
- src/phonesim.cpp |   25 ++++++++++++++++++++++++-
- src/phonesim.h   |   10 ++++++++++
- 2 files changed, 34 insertions(+), 1 deletions(-)
+Hi Andrew,
 
-diff --git a/src/phonesim.cpp b/src/phonesim.cpp
-index d5d7d87..65f7ac7 100644
---- a/src/phonesim.cpp
-+++ b/src/phonesim.cpp
-@@ -545,6 +545,7 @@ SimRules::SimRules( int fd, QObject *p,  const QString&=
- filename, HardwareManipu
-     currentChannel =3D 1;
-     incomingUsed =3D 0;
-     lineUsed =3D 0;
-+    pending =3D NULL;
-     defaultToolkitApp =3D toolkitApp =3D new DemoSimApplication( this, thi=
-s );
-     connect( _callManager, SIGNAL(controlEvent(QSimControlEvent)),
-              toolkitApp, SLOT(controlEvent(QSimControlEvent)) );
-@@ -839,6 +840,9 @@ void SimRules::tryReadCommand()
- =
+> Users need to be extra careful using the cancel functions because
+> there's a potential race condition where an OK or ERROR for the command
+> being cancelled arrives just the same moment the next command in the
+> queue is being submitted, and is treated as a response to that command.
 
- void SimRules::destruct()
- {
-+    if ( pending )
-+        delete pending;
-+
-     if ( toolkitApp !=3D defaultToolkitApp )
-         delete toolkitApp;
-     delete defaultToolkitApp;
-@@ -915,6 +919,19 @@ SimState *SimRules::state( const QString& name ) const
-     return 0;
- }
- =
+This is why this is just a really bad idea.  The only one I think we should =
 
-+class TimeoutCommand : public SimRules::PendingCommand, protected QObject {
-+    QString response;
-+    virtual void timerEvent(QTimerEvent *evt) {
-+        rules.respond( response );
-+        delete this;
-+    }
-+public:
-+    TimeoutCommand( SimRules &r, QString rsp, int secs =3D 20 ) :
-+            SimRules::PendingCommand(r), QObject(), response(rsp) {
-+        startTimer( secs * 1000 );
-+    }
-+};
-+
- bool SimRules::simCsimOk( const QByteArray& payload )
- {
-     unsigned char sw1 =3D 0x90;
-@@ -955,8 +972,11 @@ bool SimRules::simCommand( const QString& cmd )
-     if ( !cmd.startsWith( "AT+CSIM=3D" ) )
-         return false;
- =
+cancel (and most vendors support reliably) is an ATD...
 
--    if ( getMachine() && !getMachine()->getSimPresent() )
-+    /* If no card inserted, just time out */
-+    if ( getMachine() && !getMachine()->getSimPresent() ) {
-+        new TimeoutCommand( *this, "ERROR" );
-         return true;
-+    }
- =
+Are you sure your CSIM STATUS poll would actually time out or would the mod=
+em =
 
-     // Extract the binary payload of the AT+CSIM command.
-     int comma =3D cmd.indexOf( QChar(',') );
-@@ -1067,6 +1087,9 @@ bool SimRules::simCommand( const QString& cmd )
- =
+return a +CME/+CMS error?  In the end the modem does this polling itself...
 
- void SimRules::command( const QString& cmd )
- {
-+    if ( pending )
-+        delete pending;
-+
-     if(getMachine())
-         getMachine()->handleToData(cmd);
- =
+> @@ -1040,18 +1041,20 @@ gboolean g_at_chat_cancel(GAtChat *chat, guint id)
+>  	if (!l)
+>  		return FALSE;
+> =
 
-diff --git a/src/phonesim.h b/src/phonesim.h
-index cb7a5e1..6e35147 100644
---- a/src/phonesim.h
-+++ b/src/phonesim.h
-@@ -284,6 +284,14 @@ public:
-     SimApplication *simApplication() const { return toolkitApp; }
-     void setSimApplication( SimApplication *app );
- =
+> -	if (l =3D=3D g_queue_peek_head(chat->command_queue) &&
+> -			chat->cmd_bytes_written > 0) {
+> -		struct at_command *c =3D l->data;
+> +	head =3D l->data =3D=3D g_queue_peek_head(chat->command_queue);
+> =
 
-+    class PendingCommand {
-+    public:
-+        PendingCommand( SimRules &r ) : rules(r) { r.pending =3D this; }
-+        virtual ~PendingCommand() { rules.pending =3D NULL; }
-+    protected:
-+        SimRules &rules;
-+    };
-+
- signals:
-     void returnQueryVariable( const QString&, const QString & );
-     void returnQueryState( const QString& );
-@@ -358,6 +366,8 @@ private:
-     CallManager *_callManager;
- =
+> -		/* We can't actually remove it since it is most likely
+> -		 * already in progress, just null out the callback
+> -		 * so it won't be called
+> -		 */
+> -		c->callback =3D NULL;
+> -	} else {
+> -		at_command_destroy(l->data);
+> -		g_queue_remove(chat->command_queue, l->data);
+> +	at_command_destroy(l->data);
+> +	g_queue_remove(chat->command_queue, l->data);
+> +
+> +	if (head) {
+> +		chat->cmd_bytes_written =3D 0;
+> +
+> +		g_slist_foreach(chat->response_lines, (GFunc)g_free, NULL);
+> +		g_slist_free(chat->response_lines);
+> +		chat->response_lines =3D NULL;
+> +
+> +		if (g_queue_get_length(chat->command_queue) > 0)
+> +			chat_wakeup_writer(chat);
 
-     bool simCsimOk( const QByteArray& payload );
-+
-+    PendingCommand *pending;
- };
- =
+Quoting V.250 5.6.1:
+"Some action commands that require time to execute may be aborted while in =
 
- =
+progress; these are explicitly noted in the description of the command. =
 
--- =
+Aborting of commands is accomplished by the transmission from the DTE to th=
+e =
 
-1.6.1
+DCE of any character. A single character shall be sufficient to abort the =
 
+command in progress; however, characters transmitted during the first 125 =
 
---===============9012729529326192593==--
+milliseconds after transmission of the termination character shall be ignor=
+ed =
+
+(to allow for the DTE to append additional control characters such as line =
+
+feed after the command line termination character)."
+
+Sounds like your device's AT parser is 'not quite' compliant ;)
+
+Regards,
+-Denis
+
+--===============3311890817763645015==--
 
