@@ -1,100 +1,117 @@
-Content-Type: multipart/mixed; boundary="===============4102658704150994504=="
+Content-Type: multipart/mixed; boundary="===============8641166637022553296=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 3/4] gatchat: Emit notification when command is sent to
- modem.
-Date: Fri, 30 Apr 2010 15:41:16 +0200
-Message-ID: <1272634876.22838.197.camel@localhost.localdomain>
-In-Reply-To: <201004300831.47649.denkenz@gmail.com>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: Re: [PATCH] Add send_method_call to g_dbus
+Date: Fri, 30 Apr 2010 20:40:11 -0300
+Message-ID: <20100430234011.GB11712@vigoh>
+In-Reply-To: <1272335616.22838.121.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4102658704150994504==
+--===============8641166637022553296==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+* Marcel Holtmann <marcel@holtmann.org> [2010-04-27 04:33:36 +0200]:
 
-> > > > +/*!
-> > > > + * Same as g_at_chat_send but with an ability to return a notifica=
-tion
-> > > > the + * moment the command finally leaves the queue and is submitte=
-d to
-> > > > lower + * layer.
-> > > > + *
-> > > > + * This is useful for cases where the modem's response time needs =
-to
-> > > > be + * measured, assuming that the lower layers processing time is
-> > > > shorter + * than the minimum accuracy needed.
-> > > > + */
-> > > > +guint g_at_chat_send_with_callback(GAtChat *chat, const char *cmd,
-> > > > +					const char **valid_resp,
-> > > > +					GAtSubmitNotifyFunc sent,
-> > > > +					GAtResultFunc func,
-> > > > +					gpointer user_data,
-> > > > +					GDestroyNotify notify);
-> > > > +
-> > >
-> > > So I'm fine with the implementation but the name needs work.  Can we =
-use
-> > > g_at_chat_send_with_submit_notify? Or maybe g_at_chat_send_full, simi=
-lar
-> > > to how GLib does it.
-> > >
-> > > Perhaps enabling submit_notification for a given command after it has
-> > > been submitted with g_at_chat_send?
-> > >
-> > > e.g. g_at_chat_set_submit_notify(GAtChat *chat, guint command,
-> > > GAtSubmitNotifyFunc sent, gpointer user_data, GDestroyNotify notify);
-> > =
-
-> > I am not a huge fan of the _full() stuff, but it is actually pretty nice
-> > for the cases where 99% of users don't care. And this seems to be one of
-> > them. The send_with_submit_notify() is way too long.
+> Hi Gustavo,
 > =
 
-> I'm not a fan of _full either, however it is a precedent, so might as wel=
-l be =
-
-> a candidate.
+> > Puting send_method_call and send_method_call_with_reply on g_dbus will
+> > avoid some code duplication and will make things easier mainly for the
+> > Bluetooth plugins (HFP, DUN, SAP) inside oFono.
+> > ---
+> >  gdbus/gdbus.h  |   12 ++++
+> >  gdbus/object.c |   81 +++++++++++++++++++++++++++++
+> >  plugins/hfp.c  |  154 +++++++++++++-----------------------------------=
+-------
+> >  3 files changed, 130 insertions(+), 117 deletions(-)
 > =
 
-> > =
-
-> > Maybe g_at_chat_send_and_notify() is an acceptable simple version for
-> > this or just g_at_chat_submit() and g_at_chat_send() to keep these
-> > versions apart.
+> first of all, we don't intermix gdbus patches with other changes.
+> Remember that these commits have to be applied to BlueZ and ConnMan as
+> well.
 > =
 
-> In my opinion send_and_notify does not convey enough information about wh=
-at =
+> > diff --git a/gdbus/gdbus.h b/gdbus/gdbus.h
+> > index 47e18cf..ac488c5 100644
+> > --- a/gdbus/gdbus.h
+> > +++ b/gdbus/gdbus.h
+> > @@ -106,12 +106,24 @@ DBusMessage *g_dbus_create_error_valist(DBusMessa=
+ge *message, const char *name,
+> >  DBusMessage *g_dbus_create_reply(DBusMessage *message, int type, ...);
+> >  DBusMessage *g_dbus_create_reply_valist(DBusMessage *message,
+> >  						int type, va_list args);
+> > +DBusMessage *g_dbus_create_method_call(const char *dest, const char *p=
+ath,
+> > +				const char *interface, const char *method,
+> > +				int type, va_list args);
+> >  =
 
-> the function is trying to do.  _submit is even less clear.  API should be=
- very =
-
-> clear on its intent just from the function name without needing to consul=
-t =
-
-> documentation.
+> >  gboolean g_dbus_send_message(DBusConnection *connection, DBusMessage *=
+message);
+> >  gboolean g_dbus_send_reply(DBusConnection *connection,
+> >  				DBusMessage *message, int type, ...);
+> >  gboolean g_dbus_send_reply_valist(DBusConnection *connection,
+> >  				DBusMessage *message, int type, va_list args);
+> > +gboolean g_dbus_send_method_call(DBusConnection *connection, const cha=
+r *dest,
+> > +				const char *path, const char *interface,
+> > +				const char *method, int type, ...);
+> > +gboolean g_dbus_send_method_call_with_reply(DBusConnection *connection,
+> > +				const char *dest, const char *path,
+> > +				const char *interface, const char *method,
+> > +				DBusPendingCallNotifyFunction cb,
+> > +				void *user_data, DBusFreeFunction free_func,
+> > +				int timeout, int type, ...);
 > =
 
-> Out of all these so far my vote is on send_full just because it is famili=
-ar to =
+> Is there any real reason to export send_method_call and
+> create_method_call? What are these good for and what are your expected
+> users of these?
 
-> folks using GLib...  We might have to cut down some of the parameters to =
-_send =
+I'm trying to avoid call 3 functions every time I want call a dbus
+method. Today we have to do:
 
-> as well (like GDestroyNotify argument) if we introduce send_full.
+ dbus_message_new_method_call()
+ dbus_message_append_args()
+ g_dbus_send_message()
 
-then lets do send_full() and move the destroy function parameter to the
-full version.
+With the call I'm proposing we just call g_dbus_send_method_call() to
+call a dbus method. HFP plugin (and soon the DUN plugin) will make use
+of that function a lot. The same goes for
+g_dbus_send_method_call_with_reply().
 
-Regards
+My idea could be wrong since I'm not a DBus expertise. ;)
 
-Marcel
+> =
 
+> I think that a g_dbus_method_call which is always async and take a
+> pending call notifier is just enough.
+> =
 
+> All the other helpers are more for callbacks that have to respond to
+> messages than for client usage.
+> =
 
---===============4102658704150994504==--
+> Regards
+> =
+
+> Marcel
+> =
+
+> =
+
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+
+-- =
+
+Gustavo F. Padovan
+http://padovan.org
+
+--===============8641166637022553296==--
 
