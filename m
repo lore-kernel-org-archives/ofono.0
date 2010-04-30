@@ -1,72 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0985110935630043850=="
+Content-Type: multipart/mixed; boundary="===============4178648906424268219=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 3/4] gatchat: Emit notification when command is sent to
- modem.
-Date: Fri, 30 Apr 2010 07:48:03 +0200
-Message-ID: <1272606483.22838.180.camel@localhost.localdomain>
-In-Reply-To: <201004292200.27678.denkenz@gmail.com>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: Re: Modem emulator and DUN server side for oFono and BlueZ
+Date: Fri, 30 Apr 2010 05:03:19 -0300
+Message-ID: <20100430080319.GA11712@vigoh>
+In-Reply-To: <33AB447FBD802F4E932063B962385B351D9FE1FA@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0985110935630043850==
+--===============4178648906424268219==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Zhenhua,
 
-> > +/*!
-> > + * Same as g_at_chat_send but with an ability to return a notification=
- the
-> > + * moment the command finally leaves the queue and is submitted to low=
-er
-> > + * layer.
-> > + *
-> > + * This is useful for cases where the modem's response time needs to be
-> > + * measured, assuming that the lower layers processing time is shorter
-> > + * than the minimum accuracy needed.
-> > + */
-> > +guint g_at_chat_send_with_callback(GAtChat *chat, const char *cmd,
-> > +					const char **valid_resp,
-> > +					GAtSubmitNotifyFunc sent,
-> > +					GAtResultFunc func,
-> > +					gpointer user_data,
-> > +					GDestroyNotify notify);
-> > +
+* Zhang, Zhenhua <zhenhua.zhang@intel.com> [2010-04-27 15:53:54 +0800]:
+
+> Hi,
 > =
 
-> So I'm fine with the implementation but the name needs work.  Can we use =
-
-> g_at_chat_send_with_submit_notify? Or maybe g_at_chat_send_full, similar =
-to =
-
-> how GLib does it.
+> I am now working on modem emulator and one usage is for DUN server role. =
+Since Padovan is working on client role, it's good to share my rough thinki=
+ng for server side implementation. Here are the simple steps I have:
 > =
 
-> Perhaps enabling submit_notification for a given command after it has bee=
-n =
-
-> submitted with g_at_chat_send?
+> 1. Create an oFono emulator atom in oFono. It's the emulator manager that=
+ could create DUN, HFP AG or SPP type emulators. It exposes dbus methods li=
+ke CreateEmulator, DestroyEmulator, GetProperty, etc.
 > =
 
-> e.g. g_at_chat_set_submit_notify(GAtChat *chat, guint command, =
-
-> GAtSubmitNotifyFunc sent, gpointer user_data, GDestroyNotify notify);
-
-I am not a huge fan of the _full() stuff, but it is actually pretty nice
-for the cases where 99% of users don't care. And this seems to be one of
-them. The send_with_submit_notify() is way too long.
-
-Maybe g_at_chat_send_and_notify() is an acceptable simple version for
-this or just g_at_chat_submit() and g_at_chat_send() to keep these
-versions apart.
-
-Regards
-
-Marcel
+> 2. DUN agent server in BlueZ watch oFono and call CreateEmulator and pass=
+ the file descriptor to oFono. This server could further implement HFP AG a=
+nd SPP connection.
 
 
+Shouldn't the emulator register itself on the BlueZ agent server?
 
---===============0985110935630043850==--
+
+-- =
+
+Gustavo F. Padovan
+http://padovan.org
+
+--===============4178648906424268219==--
 
