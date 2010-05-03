@@ -1,43 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3277695667234699595=="
+Content-Type: multipart/mixed; boundary="===============0064878527199063729=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: [PATCH v2 5/6] atmodem: add signal strength support for huawei
-Date: Mon, 03 May 2010 09:43:24 +0300
-Message-ID: <87eihta3jn.fsf@potku.valot.fi>
-In-Reply-To: <1272634736.22838.196.camel@localhost.localdomain>
+From: Torgny Johansson <torgny.johansson@ericsson.com>
+Subject: Re: [PATCH] add vid/pid for Dell 5541 and 5542
+Date: Mon, 03 May 2010 09:01:47 +0200
+Message-ID: <201005030901.48160.torgny.johansson@ericsson.com>
+In-Reply-To: <1272634165.22838.189.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3277695667234699595==
+--===============0064878527199063729==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Marcel Holtmann <marcel@holtmann.org> writes:
+fredagen den 30 april 2010 15.29.25 skrev  Marcel Holtmann:
+> Hi Torgny,
+> =
 
-> Hi Kalle,
->
->> Huawei doesn't support CIND indications, instead it uses some non-standa=
-rd
->> RSSI messages:
->> =
+> > The following patch adds two new devices in the ofono.rules file:
+> please use git format-patch and git send-email. Otherwise I get this:
+> =
 
->> ofonod[6401]: < \r\n^RSSI:23\r\n
->> =
+> Applying: add vid/pid for Dell 5541 and 5542
+> fatal: corrupt patch at line 6
+> Patch failed at 0001 add vid/pid for Dell 5541 and 5542
+> =
 
->> Add support for this to atmodem.
->
-> please use ofono_netreg_strength_notify for this.
->
-> The Huawei specific details with this stupid extra channel need to be
-> handled inside the Huawei plugin. Cluttering the core with it is not a
-> good idea.
 
-I fully agree. I'll do this.
+Urgh I thought I had ironed out those issues... I'm blaming exchange :)
 
--- =
+I'll give it a shot with git send-email in a while.
 
-Kalle Valo
+Thanks!
 
---===============3277695667234699595==--
+Regards
+Torgny
+
+--===============0064878527199063729==--
 
