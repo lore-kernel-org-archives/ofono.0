@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2147565929424766337=="
+Content-Type: multipart/mixed; boundary="===============3277695667234699595=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: [PATCH v2 1/6] atmodem: create struct atmodem_gprs
-Date: Mon, 03 May 2010 09:39:46 +0300
-Message-ID: <87iq75a3pp.fsf@potku.valot.fi>
-In-Reply-To: <1272634482.22838.193.camel@localhost.localdomain>
+Subject: Re: [PATCH v2 5/6] atmodem: add signal strength support for huawei
+Date: Mon, 03 May 2010 09:43:24 +0300
+Message-ID: <87eihta3jn.fsf@potku.valot.fi>
+In-Reply-To: <1272634736.22838.196.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2147565929424766337==
+--===============3277695667234699595==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,28 +16,28 @@ Content-Transfer-Encoding: quoted-printable
 Marcel Holtmann <marcel@holtmann.org> writes:
 
 > Hi Kalle,
-
-Hi Marcel,
-
-> I don't really like this. You only need to catch the CGREG anyway so we
-> might just wanna add some indication method. Similar to what we have for
-> network registration with ofono_netreg_status_notify.
 >
-> Then the messed up CGREG from Huawei modem doesn't dictate the whole
-> simple one GAtChat approach. It is really their fault with no sending
-> these on the proper AT command channel. No need to make other drivers
-> suffer.
+>> Huawei doesn't support CIND indications, instead it uses some non-standa=
+rd
+>> RSSI messages:
+>> =
 
-Sounds very good to me. I didn't even think about this because I was
-under (false) impression that all AT commands must be handled in atmodem
-driver.
+>> ofonod[6401]: < \r\n^RSSI:23\r\n
+>> =
 
-I'm travelling the next two weeks, so it might take a while before I
-have v3 ready.
+>> Add support for this to atmodem.
+>
+> please use ofono_netreg_strength_notify for this.
+>
+> The Huawei specific details with this stupid extra channel need to be
+> handled inside the Huawei plugin. Cluttering the core with it is not a
+> good idea.
+
+I fully agree. I'll do this.
 
 -- =
 
 Kalle Valo
 
---===============2147565929424766337==--
+--===============3277695667234699595==--
 
