@@ -1,40 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============0064878527199063729=="
+Content-Type: multipart/mixed; boundary="===============0275083365366083072=="
 MIME-Version: 1.0
-From: Torgny Johansson <torgny.johansson@ericsson.com>
-Subject: Re: [PATCH] add vid/pid for Dell 5541 and 5542
-Date: Mon, 03 May 2010 09:01:47 +0200
-Message-ID: <201005030901.48160.torgny.johansson@ericsson.com>
-In-Reply-To: <1272634165.22838.189.camel@localhost.localdomain>
+From: torgny.johansson@ericsson.com
+Subject: [PATCH] add vid/pid for Dell 5541 and 5542
+Date: Mon, 03 May 2010 09:04:45 +0200
+Message-ID: <1272870285-5371-1-git-send-email-torgny.johansson@ericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0064878527199063729==
+--===============0275083365366083072==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-fredagen den 30 april 2010 15.29.25 skrev  Marcel Holtmann:
-> Hi Torgny,
-> =
+From: Torgny Johansson <torgny.johansson@ericsson.com>
 
-> > The following patch adds two new devices in the ofono.rules file:
-> please use git format-patch and git send-email. Otherwise I get this:
-> =
+---
+ plugins/ofono.rules |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-> Applying: add vid/pid for Dell 5541 and 5542
-> fatal: corrupt patch at line 6
-> Patch failed at 0001 add vid/pid for Dell 5541 and 5542
-> =
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index e6da49d..0575362 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -42,6 +42,10 @@ ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"8147=
+", ENV{OFONO_DRIVER}=3D"mbm"
+ ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"8183", ENV{OFONO_DRIVE=
+R}=3D"mbm"
+ ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"8184", ENV{OFONO_DRIVE=
+R}=3D"mbm"
+ =
+
++# Dell F3307
++ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"818b", ENV{OFONO_DRIVE=
+R}=3D"mbm"
++ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"818c", ENV{OFONO_DRIVE=
+R}=3D"mbm"
++
+ # Toshiba
+ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"130b", ENV{OFONO_DRIVE=
+R}=3D"mbm"
+ =
+
+-- =
+
+1.7.0.4
 
 
-Urgh I thought I had ironed out those issues... I'm blaming exchange :)
-
-I'll give it a shot with git send-email in a while.
-
-Thanks!
-
-Regards
-Torgny
-
---===============0064878527199063729==--
+--===============0275083365366083072==--
 
