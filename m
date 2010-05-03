@@ -1,144 +1,472 @@
-Content-Type: multipart/mixed; boundary="===============1806743727163232675=="
+Content-Type: multipart/mixed; boundary="===============8905622960216386093=="
 MIME-Version: 1.0
-From: andrzej zaborowski <balrogg@gmail.com>
-Subject: Re: [PATCH 3/4] gatchat: Emit notification when command is sent to
- modem.
-Date: Mon, 03 May 2010 20:22:18 +0200
-Message-ID: <i2ofb249edb1005031122hdc31004fo4a6b7738bbb1e2c8@mail.gmail.com>
-In-Reply-To: <1272606483.22838.180.camel@localhost.localdomain>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] Add a Calypso STK driver.
+Date: Mon, 03 May 2010 09:30:52 +0200
+Message-ID: <1272871852-22475-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1806743727163232675==
+--===============8905622960216386093==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ Makefile.am                         |    3 +-
+ drivers/calypsomodem/calypsomodem.c |    2 +
+ drivers/calypsomodem/calypsomodem.h |    3 +
+ drivers/calypsomodem/stk.c          |  274 +++++++++++++++++++++++++++++++=
+++++
+ plugins/phonesim.c                  |   46 +++++-
+ 5 files changed, 318 insertions(+), 10 deletions(-)
+ create mode 100644 drivers/calypsomodem/stk.c
 
-On 30 April 2010 07:48, Marcel Holtmann <marcel@holtmann.org> wrote:
->> So I'm fine with the implementation but the name needs work. =C2=A0Can w=
-e use
->> g_at_chat_send_with_submit_notify? Or maybe g_at_chat_send_full, similar=
- to
->> how GLib does it.
->>
->> Perhaps enabling submit_notification for a given command after it has be=
-en
->> submitted with g_at_chat_send?
->>
->> e.g. g_at_chat_set_submit_notify(GAtChat *chat, guint command,
->> GAtSubmitNotifyFunc sent, gpointer user_data, GDestroyNotify notify);
->
-> I am not a huge fan of the _full() stuff, but it is actually pretty nice
-> for the cases where 99% of users don't care. And this seems to be one of
-> them. The send_with_submit_notify() is way too long.
->
-> Maybe g_at_chat_send_and_notify() is an acceptable simple version for
-> this or just g_at_chat_submit() and g_at_chat_send() to keep these
-> versions apart.
+diff --git a/Makefile.am b/Makefile.am
+index 463e52e..58d2dc0 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -161,7 +161,8 @@ builtin_modules +=3D calypsomodem
+ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/calypsomodem/calypsomodem.h \
+ 			drivers/calypsomodem/calypsomodem.c \
+-			drivers/calypsomodem/voicecall.c
++			drivers/calypsomodem/voicecall.c \
++			drivers/calypsomodem/stk.c
+ =
 
-Here's a patch to add a g_at_chat_set_submit_notify function that
-modifies an already submitted command.  Removing the destroy callback
-from g_at_chat_send would require changing all the many uses of it.
+ builtin_modules +=3D hfpmodem
+ builtin_sources +=3D drivers/atmodem/atutil.h \
+diff --git a/drivers/calypsomodem/calypsomodem.c b/drivers/calypsomodem/cal=
+ypsomodem.c
+index 8cd213e..2ae436a 100644
+--- a/drivers/calypsomodem/calypsomodem.c
++++ b/drivers/calypsomodem/calypsomodem.c
+@@ -35,12 +35,14 @@
+ static int calypsomodem_init(void)
+ {
+ 	calypso_voicecall_init();
++	calypso_stk_init();
+ =
 
-Regards,
-Andrew
+ 	return 0;
+ }
+ =
 
---===============1806743727163232675==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-gatchat-Emit-notification-when-command-is-sent-to-m.patch"
+ static void calypsomodem_exit(void)
+ {
++	calypso_stk_exit();
+ 	calypso_voicecall_exit();
+ }
+ =
 
-RnJvbSA0ZjAwYzI5MDdjMjJmMDdkMzlkNmMyODIzZDkxMzdiZWU0YzZmZWE2IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogTW9uLCAzIE1heSAyMDEwIDA3OjA5OjQ1ICswMjAwClN1YmplY3Q6
-IFtQQVRDSCAxLzJdIGdhdGNoYXQ6IEVtaXQgbm90aWZpY2F0aW9uIHdoZW4gY29tbWFuZCBpcyBz
-ZW50IHRvIG1vZGVtLgoKLS0tCiBnYXRjaGF0L2dhdGNoYXQuYyB8ICAgMjQgKysrKysrKysrKysr
-KysrKysrKysrKysrCiBnYXRjaGF0L2dhdGNoYXQuaCB8ICAgMTIgKysrKysrKysrKysrCiAyIGZp
-bGVzIGNoYW5nZWQsIDM2IGluc2VydGlvbnMoKyksIDAgZGVsZXRpb25zKC0pCgpkaWZmIC0tZ2l0
-IGEvZ2F0Y2hhdC9nYXRjaGF0LmMgYi9nYXRjaGF0L2dhdGNoYXQuYwppbmRleCA0NTUyNzY3Li5k
-YjVhMmQ5IDEwMDY0NAotLS0gYS9nYXRjaGF0L2dhdGNoYXQuYworKysgYi9nYXRjaGF0L2dhdGNo
-YXQuYwpAQCAtNDksNiArNDksNyBAQCBzdHJ1Y3QgYXRfY29tbWFuZCB7CiAJZ3VpbnQgaWQ7CiAJ
-R0F0UmVzdWx0RnVuYyBjYWxsYmFjazsKIAlHQXROb3RpZnlGdW5jIGxpc3Rpbmc7CisJR0F0U3Vi
-bWl0Tm90aWZ5RnVuYyBzdWJtaXRfY2FsbGJhY2s7CiAJZ3BvaW50ZXIgdXNlcl9kYXRhOwogCUdE
-ZXN0cm95Tm90aWZ5IG5vdGlmeTsKIH07CkBAIC03ODksNiArNzkwLDkgQEAgc3RhdGljIGdib29s
-ZWFuIGNhbl93cml0ZV9kYXRhKGdwb2ludGVyIGRhdGEpCiAJaWYgKGJ5dGVzX3dyaXR0ZW4gPCB0
-b3dyaXRlKQogCQlyZXR1cm4gVFJVRTsKIAorCWlmIChjbWQtPnN1Ym1pdF9jYWxsYmFjaykKKwkJ
-Y21kLT5zdWJtaXRfY2FsbGJhY2soY21kLT5pZCwgY21kLT51c2VyX2RhdGEpOworCiAJLyogRnVs
-bCBjb21tYW5kIHN1Ym1pdHRlZCwgdXBkYXRlIHRpbWVyICovCiAJaWYgKGNoYXQtPndha2V1cF90
-aW1lcikKIAkJZ190aW1lcl9zdGFydChjaGF0LT53YWtldXBfdGltZXIpOwpAQCAtMTA4Miw2ICsx
-MDg2LDI2IEBAIGdib29sZWFuIGdfYXRfY2hhdF9jYW5jZWxfYWxsKEdBdENoYXQgKmNoYXQpCiAJ
-cmV0dXJuIFRSVUU7CiB9CiAKK2dib29sZWFuIGdfYXRfY2hhdF9zZXRfc3VibWl0X25vdGlmeShH
-QXRDaGF0ICpjaGF0LCBndWludCBpZCwKKwkJCQkJR0F0U3VibWl0Tm90aWZ5RnVuYyBjYikKK3sK
-KwlHTGlzdCAqbDsKKwlzdHJ1Y3QgYXRfY29tbWFuZCAqY21kOworCisJaWYgKGNoYXQgPT0gTlVM
-TCB8fCBjaGF0LT5jb21tYW5kX3F1ZXVlID09IE5VTEwpCisJCXJldHVybiBGQUxTRTsKKworCWwg
-PSBnX3F1ZXVlX2ZpbmRfY3VzdG9tKGNoYXQtPmNvbW1hbmRfcXVldWUsIEdVSU5UX1RPX1BPSU5U
-RVIoaWQpLAorCQkJCWF0X2NvbW1hbmRfY29tcGFyZV9ieV9pZCk7CisJaWYgKGwgPT0gTlVMTCkK
-KwkJcmV0dXJuIEZBTFNFOworCisJY21kID0gbC0+ZGF0YTsKKwljbWQtPnN1Ym1pdF9jYWxsYmFj
-ayA9IGNiOworCisJcmV0dXJuIFRSVUU7Cit9CisKIHN0YXRpYyBzdHJ1Y3QgYXRfbm90aWZ5ICph
-dF9ub3RpZnlfY3JlYXRlKEdBdENoYXQgKmNoYXQsIGNvbnN0IGNoYXIgKnByZWZpeCwKIAkJCQkJ
-CWdib29sZWFuIHBkdSkKIHsKZGlmZiAtLWdpdCBhL2dhdGNoYXQvZ2F0Y2hhdC5oIGIvZ2F0Y2hh
-dC9nYXRjaGF0LmgKaW5kZXggZWE2NjI2ZS4uNTRkZmJmOCAxMDA2NDQKLS0tIGEvZ2F0Y2hhdC9n
-YXRjaGF0LmgKKysrIGIvZ2F0Y2hhdC9nYXRjaGF0LmgKQEAgLTM3LDYgKzM3LDcgQEAgdHlwZWRl
-ZiBzdHJ1Y3QgX0dBdENoYXQgR0F0Q2hhdDsKIHR5cGVkZWYgdm9pZCAoKkdBdFJlc3VsdEZ1bmMp
-KGdib29sZWFuIHN1Y2Nlc3MsIEdBdFJlc3VsdCAqcmVzdWx0LAogCQkJCWdwb2ludGVyIHVzZXJf
-ZGF0YSk7CiB0eXBlZGVmIHZvaWQgKCpHQXROb3RpZnlGdW5jKShHQXRSZXN1bHQgKnJlc3VsdCwg
-Z3BvaW50ZXIgdXNlcl9kYXRhKTsKK3R5cGVkZWYgdm9pZCAoKkdBdFN1Ym1pdE5vdGlmeUZ1bmMp
-KGd1aW50IGlkLCBncG9pbnRlciB1c2VyX2RhdGEpOwogCiBHQXRDaGF0ICpnX2F0X2NoYXRfbmV3
-KEdJT0NoYW5uZWwgKmNoYW5uZWwsIEdBdFN5bnRheCAqc3ludGF4KTsKIEdBdENoYXQgKmdfYXRf
-Y2hhdF9uZXdfYmxvY2tpbmcoR0lPQ2hhbm5lbCAqY2hhbm5lbCwgR0F0U3ludGF4ICpzeW50YXgp
-OwpAQCAtMTIwLDYgKzEyMSwxNyBAQCBndWludCBnX2F0X2NoYXRfc2VuZF9wZHVfbGlzdGluZyhH
-QXRDaGF0ICpjaGF0LCBjb25zdCBjaGFyICpjbWQsCiBnYm9vbGVhbiBnX2F0X2NoYXRfY2FuY2Vs
-KEdBdENoYXQgKmNoYXQsIGd1aW50IGlkKTsKIGdib29sZWFuIGdfYXRfY2hhdF9jYW5jZWxfYWxs
-KEdBdENoYXQgKmNoYXQpOwogCisvKiEKKyAqIFNldCBhIGZ1bmN0aW9uIHRvIGJlIGNhbGxlZCBh
-dCB0aGUgbW9tZW50IHRoZSBjb21tYW5kIGZpbmFsbHkgbGVhdmVzCisgKiB0aGUgcXVldWUgYW5k
-IGlzIHN1Ym1pdHRlZCB0byBsb3dlciBsYXllci4KKyAqCisgKiBUaGlzIGlzIHVzZWZ1bCBmb3Ig
-Y2FzZXMgd2hlcmUgdGhlIG1vZGVtJ3MgcmVzcG9uc2UgdGltZSBuZWVkcyB0byBiZQorICogbWVh
-c3VyZWQsIGFzc3VtaW5nIHRoYXQgdGhlIGxvd2VyIGxheWVycyBwcm9jZXNzaW5nIHRpbWUgaXMg
-c2hvcnRlcgorICogdGhhbiB0aGUgbWluaW11bSBhY2N1cmFjeSBuZWVkZWQuCisgKi8KK2dib29s
-ZWFuIGdfYXRfY2hhdF9zZXRfc3VibWl0X25vdGlmeShHQXRDaGF0ICpjaGF0LCBndWludCBpZCwK
-KwkJCQkJR0F0U3VibWl0Tm90aWZ5RnVuYyBjYik7CisKIGd1aW50IGdfYXRfY2hhdF9yZWdpc3Rl
-cihHQXRDaGF0ICpjaGF0LCBjb25zdCBjaGFyICpwcmVmaXgsCiAJCQkJR0F0Tm90aWZ5RnVuYyBm
-dW5jLCBnYm9vbGVhbiBleHBlY3RfcGR1LAogCQkJCWdwb2ludGVyIHVzZXJfZGF0YSwgR0Rlc3Ry
-b3lOb3RpZnkgbm90aWZ5KTsKLS0gCjEuNi4xCgo=
+diff --git a/drivers/calypsomodem/calypsomodem.h b/drivers/calypsomodem/cal=
+ypsomodem.h
+index 80af134..caf7a3d 100644
+--- a/drivers/calypsomodem/calypsomodem.h
++++ b/drivers/calypsomodem/calypsomodem.h
+@@ -23,3 +23,6 @@
+ =
 
---===============1806743727163232675==
-Content-Type: text/x-patch
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0002-sim-poll-Count-timeout-from-the-moment-STATUS-is-se.patch"
+ extern void calypso_voicecall_init();
+ extern void calypso_voicecall_exit();
++
++extern void calypso_stk_init();
++extern void calypso_stk_exit();
+diff --git a/drivers/calypsomodem/stk.c b/drivers/calypsomodem/stk.c
+new file mode 100644
+index 0000000..7143009
+--- /dev/null
++++ b/drivers/calypsomodem/stk.c
+@@ -0,0 +1,274 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++
++#include <glib.h>
++
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/stk.h>
++
++#include "gatchat.h"
++#include "gatresult.h"
++
++#include "calypsomodem.h"
++
++struct stk_data {
++	GAtChat *chat;
++	guint8 *set_up_menu_pdu;
++	guint set_up_menu_pdu_len;
++};
++
++static void calypso_sate_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_stk_envelope_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok)
++		goto error;
++
++	cb(&error, (const guint8 *) "", 0, cbd->data);
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, NULL, 0, cbd->data);
++}
++
++static void calypso_stk_envelope(struct ofono_stk *stk, int length,
++				const unsigned char *command,
++				ofono_stk_envelope_cb_t cb, void *data)
++{
++	struct stk_data *sd =3D ofono_stk_get_data(stk);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char *buf =3D g_try_new(char, 64 + length * 2);
++	int len, ret;
++
++	if (!cbd || !buf)
++		goto error;
++
++	len =3D sprintf(buf, "AT%%SATE=3D\"");
++	for (; length; length--)
++		len +=3D sprintf(buf + len, "%02hhX", *command++);
++	len +=3D sprintf(buf + len, "\"");
++
++	ret =3D g_at_chat_send(sd->chat, buf, NULL,
++				calypso_sate_cb, cbd, g_free);
++
++	g_free(buf);
++	buf =3D NULL;
++
++	if (ret > 0)
++		return;
++
++error:
++	if (buf)
++		g_free(buf);
++
++	if (cbd)
++		g_free(cbd);
++
++	CALLBACK_WITH_FAILURE(cb, NULL, 0, data);
++}
++
++static void calypso_satr_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_stk_generic_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (ok)
++		cb(&error, cbd->data);
++	else
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++}
++
++static void calypso_stk_terminal_response(struct ofono_stk *stk, int lengt=
+h,
++				const unsigned char *command,
++				ofono_stk_generic_cb_t cb, void *data)
++{
++	struct stk_data *sd =3D ofono_stk_get_data(stk);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char *buf =3D g_try_new(char, 64 + length * 2);
++	int len, ret;
++
++	if (!cbd || !buf)
++		goto error;
++
++	len =3D sprintf(buf, "AT%%SATR=3D\"");
++	for (; length; length--)
++		len +=3D sprintf(buf + len, "%02hhX", *command++);
++	len +=3D sprintf(buf + len, "\"");
++
++	ret =3D g_at_chat_send(sd->chat, buf, NULL,
++				calypso_satr_cb, cbd, g_free);
++
++	g_free(buf);
++	buf =3D NULL;
++
++	if (ret > 0)
++		return;
++
++error:
++	if (buf)
++		g_free(buf);
++
++	if (cbd)
++		g_free(cbd);
++
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
++static void sati_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_stk *stk =3D user_data;
++	struct stk_data *sd =3D ofono_stk_get_data(stk);
++	GAtResultIter iter;
++	const guint8 *pdu;
++	gint len, length_bytes;
++	gboolean ret;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "%SATI:"))
++		return;
++
++	ret =3D g_at_result_iter_next_hexstring(&iter, &pdu, &len);
++	if (!ret || len =3D=3D 0) {
++		/* An empty notification is a request to go back to main
++		 * menu, effectively like resending the previous Set Up
++		 * Menu proactive command.  */
++		if (sd->set_up_menu_pdu)
++			ofono_stk_proactive_command_notify(stk,
++					sd->set_up_menu_pdu_len,
++					sd->set_up_menu_pdu);
++
++		return;
++	}
++
++	ofono_stk_proactive_command_notify(stk, len, pdu);
++
++	/* Check if this is a Set Up Menu command, if so, cache the PDU
++	 * because Calypso sends it only once.  */
++
++	while (len > 0 && (*pdu =3D=3D 0x00 || *pdu =3D=3D 0xff))
++		pdu++, len--;
++	if (len < 7)
++		return;
++	if (pdu[0] !=3D 0xd0) /* Command BER-TLV tag */
++		return;
++	if (pdu[1] < 0x80)
++		length_bytes =3D 1;
++	else
++		length_bytes =3D pdu[1] - 0x7f;
++	if (len < length_bytes + 6)
++		return;
++	if (pdu[1 + length_bytes] !=3D 0x01) /* Command Details CTLV tag */
++		return;
++	if (pdu[2 + length_bytes] !=3D 0x03) /* Command Details CTLV length */
++		return;
++	if (pdu[4 + length_bytes] !=3D 0x25) /* Set Up Menu command type */
++		return;
++
++	if (sd->set_up_menu_pdu)
++		g_free(sd->set_up_menu_pdu);
++
++	sd->set_up_menu_pdu =3D g_memdup(pdu, len);
++	sd->set_up_menu_pdu_len =3D len;
++}
++
++static void satn_notify(GAtResult *result, gpointer user_data)
++{
++	/* TODO */
++}
++
++static gboolean calypso_stk_register(gpointer user)
++{
++	struct ofono_stk *stk =3D user;
++	struct stk_data *sd =3D ofono_stk_get_data(stk);
++
++	g_at_chat_register(sd->chat, "%SATI:", sati_notify, FALSE, stk, NULL);
++	g_at_chat_register(sd->chat, "%SATA:", sati_notify, FALSE, stk, NULL);
++	g_at_chat_register(sd->chat, "%SATN:", satn_notify, FALSE, stk, NULL);
++
++	ofono_stk_register(stk);
++
++	return FALSE;
++}
++
++static int calypso_stk_probe(struct ofono_stk *stk,
++		unsigned int vendor, void *data)
++{
++	GAtChat *chat =3D data;
++	struct stk_data *sd;
++
++	sd =3D g_new0(struct stk_data, 1);
++	sd->chat =3D chat;
++
++	ofono_stk_set_data(stk, sd);
++	g_idle_add(calypso_stk_register, stk);
++
++	return 0;
++}
++
++static void calypso_stk_remove(struct ofono_stk *stk)
++{
++	struct stk_data *sd =3D ofono_stk_get_data(stk);
++
++	ofono_stk_set_data(stk, NULL);
++
++	if (sd->set_up_menu_pdu)
++		g_free(sd->set_up_menu_pdu);
++
++	g_free(sd);
++}
++
++static struct ofono_stk_driver driver =3D {
++	.name			=3D "calypsomodem",
++	.probe			=3D calypso_stk_probe,
++	.remove			=3D calypso_stk_remove,
++	.envelope		=3D calypso_stk_envelope,
++	.terminal_response	=3D calypso_stk_terminal_response,
++};
++
++void calypso_stk_init()
++{
++	ofono_stk_driver_register(&driver);
++}
++
++void calypso_stk_exit()
++{
++	ofono_stk_driver_unregister(&driver);
++}
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index d0cd7f3..2712a15 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -66,6 +66,7 @@ struct phonesim_data {
+ 	GAtChat *chat;
+ 	gboolean calypso;
+ 	gboolean use_mux;
++	gboolean have_sim;
+ };
+ =
 
-RnJvbSBlMGNkZTU5NjQzNDE4ZjRhOTUxOWRiMGVjNzM1ZjE2ZDllMWVlYzdiIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBBbmRyemVqIFphYm9yb3dza2kgPGFuZHJldy56YWJvcm93c2tp
-QGludGVsLmNvbT4KRGF0ZTogTW9uLCAzIE1heSAyMDEwIDA3OjE1OjMyICswMjAwClN1YmplY3Q6
-IFtQQVRDSCAyLzJdIHNpbS1wb2xsOiBDb3VudCB0aW1lb3V0IGZyb20gdGhlIG1vbWVudCBTVEFU
-VVMgaXMgc2VudCB0byBtb2RlbS4KCi0tLQogZHJpdmVycy9hdG1vZGVtL3NpbS1wb2xsLmMgfCAg
-IDE1ICsrKysrKysrKysrKy0tLQogMSBmaWxlcyBjaGFuZ2VkLCAxMiBpbnNlcnRpb25zKCspLCAz
-IGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL2RyaXZlcnMvYXRtb2RlbS9zaW0tcG9sbC5jIGIv
-ZHJpdmVycy9hdG1vZGVtL3NpbS1wb2xsLmMKaW5kZXggZjFhODNlMy4uMzAzNzgzMyAxMDA2NDQK
-LS0tIGEvZHJpdmVycy9hdG1vZGVtL3NpbS1wb2xsLmMKKysrIGIvZHJpdmVycy9hdG1vZGVtL3Np
-bS1wb2xsLmMKQEAgLTE5OSwyMiArMTk5LDMxIEBAIHN0YXRpYyB2b2lkIGF0X2NzaW1fc3RhdHVz
-X2NiKGdib29sZWFuIG9rLCBHQXRSZXN1bHQgKnJlc3VsdCwKIAlzaW1fZmV0Y2hfY29tbWFuZChz
-cGQsIHJlc3BvbnNlW2xlbiAtIDFdKTsKIH0KIAotc3RhdGljIGdib29sZWFuIHNpbV9zdGF0dXNf
-cG9sbChncG9pbnRlciB1c2VyX2RhdGEpCitzdGF0aWMgdm9pZCBhdF9jc2ltX3N0YXR1c19zZW50
-X2NiKGd1aW50IGNvbW1hbmRfaWQsIGdwb2ludGVyIHVzZXJfZGF0YSkKIHsKIAlzdHJ1Y3Qgc2lt
-X3BvbGxfZGF0YSAqc3BkID0gdXNlcl9kYXRhOwogCi0Jc3BkLT5wb2xsX3RpbWVvdXQgPSAwOwot
-CiAJLyogVGhlIFNJTSBtdXN0IHJlc3BvbmQgaW4gYSBnaXZlbiB0aW1lIGZyYW1lIHdoaWNoIGlz
-IG9mIGF0CiAJICogbGVhc3QgNSBzZWNvbmRzIGluIFRTIDExLjExLiAgKi8KIAlzcGQtPnN0YXR1
-c190aW1lb3V0ID0gZ190aW1lb3V0X2FkZF9zZWNvbmRzKDUsCiAJCQlzaW1fc3RhdHVzX3RpbWVv
-dXQsIHNwZCk7Cit9CisKK3N0YXRpYyBnYm9vbGVhbiBzaW1fc3RhdHVzX3BvbGwoZ3BvaW50ZXIg
-dXNlcl9kYXRhKQoreworCXN0cnVjdCBzaW1fcG9sbF9kYXRhICpzcGQgPSB1c2VyX2RhdGE7CisK
-KwlzcGQtPnBvbGxfdGltZW91dCA9IDA7CisJc3BkLT5zdGF0dXNfdGltZW91dCA9IC0xOwogCiAJ
-LyogU2VuZCBTVEFUVVMgKi8KIAlzcGQtPnN0YXR1c19jbWQgPSBnX2F0X2NoYXRfc2VuZChzcGQt
-PmNoYXQsICJBVCtDU0lNPTgsQTBGMjAwQzAiLAogCQkJY3NpbV9wcmVmaXgsIGF0X2NzaW1fc3Rh
-dHVzX2NiLCBzcGQsIE5VTEwpOwogCWlmIChzcGQtPnN0YXR1c19jbWQgPT0gMCkKIAkJYXRfY3Np
-bV9zdGF0dXNfY2IoRkFMU0UsIE5VTEwsIHNwZCk7CisJZWxzZQorCQlnX2F0X2NoYXRfc2V0X3N1
-Ym1pdF9ub3RpZnkoc3BkLT5jaGF0LAorCQkJCXNwZC0+c3RhdHVzX2NtZCwgYXRfY3NpbV9zdGF0
-dXNfc2VudF9jYik7CiAKIAlyZXR1cm4gRkFMU0U7CiB9Ci0tIAoxLjYuMQoK
+ static int phonesim_probe(struct ofono_modem *modem)
+@@ -98,15 +99,29 @@ static void phonesim_debug(const char *str, void *user_=
+data)
+ 	ofono_info("%s", str);
+ }
+ =
 
---===============1806743727163232675==--
+-static void cfun_set_on_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++static void cpin_check_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
+ {
+ 	struct ofono_modem *modem =3D user_data;
++	struct phonesim_data *data =3D ofono_modem_get_data(modem);
+ =
+
+ 	DBG("");
+ =
+
++	data->have_sim =3D ok;
++
+ 	ofono_modem_set_powered(modem, ok);
+ }
+ =
+
++static void cfun_set_on_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct phonesim_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("");
++
++	g_at_chat_send(data->chat, "AT+CPIN?", NULL,
++			cpin_check_cb, modem, NULL);
++}
++
+ static void phonesim_disconnected(gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+@@ -241,6 +256,23 @@ static int phonesim_enable(struct ofono_modem *modem)
+ =
+
+ 		g_at_chat_send(data->chat, "AT%CUNS=3D0",
+ 				NULL, NULL, NULL, NULL);
++
++		/* It looks like the PROFILE DOWNLOAD is done by the modem
++		 * as part of +CFUN=3D1.  By default the profile indicates that
++		 * TE supports no Proactive UICC.  We need to enable the
++		 * %SATA and other notifications here for STK support and
++		 * give the modem our profile bits (first N bytes) according
++		 * to ETSI TS 102 223 section 5.2.  The modem seems to AND
++		 * the given value with its own capabilities and OR with some
++		 * minimum value.  The bits are reset to the minimal values
++		 * on +CFUN=3D0.
++		 *
++		 * Default value is 450F80021F0000A4020000000000000000000000.
++		 * The mask is 4DFF973F7F0200FC0303FF00009FFFE700000000.
++		 */
++		g_at_chat_send(data->chat,
++				"AT%SATC=3D1,\"19E1FFFF0000FF7FFF03FE\"",
++				NULL, NULL, NULL, NULL);
+ 	}
+ =
+
+ 	if (data->use_mux) {
+@@ -278,20 +310,16 @@ static void phonesim_pre_sim(struct ofono_modem *mode=
+m)
+ {
+ 	struct phonesim_data *data =3D ofono_modem_get_data(modem);
+ 	struct ofono_sim *sim;
++	const char *drivername =3D data->calypso ? "calypsomodem" : "atmodem";
+ =
+
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
+ 	sim =3D ofono_sim_create(modem, 0, "atmodem", data->chat);
++	ofono_voicecall_create(modem, 0, drivername, data->chat);
++	ofono_stk_create(modem, 0, drivername, data->chat);
+ =
+
+-	if (data->calypso)
+-		ofono_voicecall_create(modem, 0, "calypsomodem", data->chat);
+-	else
+-		ofono_voicecall_create(modem, 0, "atmodem", data->chat);
+-
+-	ofono_stk_create(modem, 0, "atmodem", data->chat);
+-
+-	if (sim)
++	if (data->have_sim && sim)
+ 		ofono_sim_inserted_notify(sim, TRUE);
+ }
+ =
+
+-- =
+
+1.6.1
+
+
+--===============8905622960216386093==--
 
