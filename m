@@ -1,81 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============9149068190766077312=="
+Content-Type: multipart/mixed; boundary="===============5130532816081530152=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH] gatio: do not read if no read_handler
-Date: Mon, 03 May 2010 15:45:45 -0700
-Message-ID: <1272926745-4595-1-git-send-email-kristen@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 3/4] gatchat: Emit notification when command is sent to
+ modem.
+Date: Tue, 04 May 2010 11:07:48 +0200
+Message-ID: <1272964068.22838.226.camel@localhost.localdomain>
+In-Reply-To: <i2ofb249edb1005031122hdc31004fo4a6b7738bbb1e2c8@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9149068190766077312==
+--===============5130532816081530152==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If no read_handler specified, leave data alone in case someone
-else wants to read it.
----
- gatchat/gatio.c   |    4 ++++
- gatchat/gsmdial.c |   12 ++++--------
- 2 files changed, 8 insertions(+), 8 deletions(-)
+Hi Andrew,
 
-diff --git a/gatchat/gatio.c b/gatchat/gatio.c
-index 61b0260..b4a3806 100644
---- a/gatchat/gatio.c
-+++ b/gatchat/gatio.c
-@@ -91,6 +91,10 @@ static gboolean received_data(GIOChannel *channel, GIOCo=
-ndition cond,
- 	if (cond & G_IO_NVAL)
- 		return FALSE;
- =
+> >> So I'm fine with the implementation but the name needs work.  Can we u=
+se
+> >> g_at_chat_send_with_submit_notify? Or maybe g_at_chat_send_full, simil=
+ar to
+> >> how GLib does it.
+> >>
+> >> Perhaps enabling submit_notification for a given command after it has =
+been
+> >> submitted with g_at_chat_send?
+> >>
+> >> e.g. g_at_chat_set_submit_notify(GAtChat *chat, guint command,
+> >> GAtSubmitNotifyFunc sent, gpointer user_data, GDestroyNotify notify);
+> >
+> > I am not a huge fan of the _full() stuff, but it is actually pretty nice
+> > for the cases where 99% of users don't care. And this seems to be one of
+> > them. The send_with_submit_notify() is way too long.
+> >
+> > Maybe g_at_chat_send_and_notify() is an acceptable simple version for
+> > this or just g_at_chat_submit() and g_at_chat_send() to keep these
+> > versions apart.
+> =
 
-+	/* if nobody wants this data, leave it alone */
-+	if (io->read_handler =3D=3D NULL)
-+		return TRUE;
-+
- 	/* Regardless of condition, try to read all the data available */
- 	do {
- 		toread =3D ring_buffer_avail_no_wrap(io->buf);
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index a531aa3..5fb406d 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -235,6 +235,8 @@ static void ppp_connect(const char *iface, const char *=
-ip,
- static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
-ta)
- {
- 	g_print("PPP Link down: %d\n", reason);
-+	g_at_chat_resume(control);
-+	g_at_chat_resume(modem);
- }
- =
+> Here's a patch to add a g_at_chat_set_submit_notify function that
+> modifies an already submitted command.  Removing the destroy callback
+> from g_at_chat_send would require changing all the many uses of it.
 
- static void connect_cb(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -249,14 +251,8 @@ static void connect_cb(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 	/* get the data IO channel */
- 	channel =3D g_at_chat_get_channel(modem);
- =
+the conclusion was to have g_at_chat_send_full with submit and destroy
+notifier. And g_at_chat_send without the destroy notifier.
 
--	/*
--	 * shutdown gatchat or else it tries to take all the input
--	 * from the modem and does not let PPP get it.
--	 */
--	g_at_chat_unref(control);
--	control =3D NULL;
--	g_at_chat_unref(modem);
--	modem =3D NULL;
-+	g_at_chat_suspend(control);
-+	g_at_chat_suspend(modem);
- =
+Yes, we might have to touch a lot of code, but that is fine. That is one
+of the reasons why GAtChat is not a separate (yet).
 
- 	/* open ppp */
- 	ppp =3D g_at_ppp_new(channel);
--- =
+Regards
 
-1.6.6.1
+Marcel
 
 
---===============9149068190766077312==--
+
+--===============5130532816081530152==--
 
