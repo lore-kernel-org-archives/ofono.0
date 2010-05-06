@@ -1,56 +1,254 @@
-Content-Type: multipart/mixed; boundary="===============3805952070524222738=="
+Content-Type: multipart/mixed; boundary="===============1365693428501274961=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 2/2] Fix check data device before register the modem
-Date: Thu, 06 May 2010 14:28:13 +0800
-Message-ID: <1273127293-4671-2-git-send-email-zhenhua.zhang@intel.com>
+From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
+Subject: RE: [PATCH 1/2] Fix Use hashtable to record udev path
+Date: Thu, 06 May 2010 14:30:09 +0800
+Message-ID: <33AB447FBD802F4E932063B962385B351E658133@shsmsx501.ccr.corp.intel.com>
 In-Reply-To: <1273127293-4671-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3805952070524222738==
+--===============1365693428501274961==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-To avoid the race condition that modem is registered before we retrieve
-the data device property.
----
- plugins/udev.c |    5 +++--
- 1 files changed, 3 insertions(+), 2 deletions(-)
+Hi,
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 6850bf9..83468ce 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -98,7 +98,7 @@ static void add_mbm(struct ofono_modem *modem,
- 					struct udev_device *udev_device)
- {
- 	const char *desc, *devnode;
--	const char *device, *network;
-+	const char *device, *data, *network;
- 	int registered;
- =
+Zhang, Zhenhua wrote:
+> Sometimes, Udev device 'remove' event could not report correct
+> parent node of current udev_device. Current code replies on
+> the devpath attached on the parent node to find modem and then
+> remove it.
+> =
 
- 	desc =3D udev_device_get_sysattr_value(udev_device, "device/interface");
-@@ -144,9 +144,10 @@ static void add_mbm(struct ofono_modem *modem,
- 	}
- =
+> This fix is to change the way to store the devpath info into a
+> hashtable. So that we search hashtable to get devpath and
+> remove the modem.
+> ---
 
- 	device  =3D ofono_modem_get_string(modem, MODEM_DEVICE);
-+	data =3D ofono_modem_get_string(modem, DATA_DEVICE);
- 	network =3D ofono_modem_get_string(modem, NETWORK_INTERFACE);
- =
+It's a proposed patch to fix Meego bug #395 [1].
 
--	if (device !=3D NULL && network !=3D NULL) {
-+	if (device !=3D NULL && data !=3D NULL && network !=3D NULL) {
- 		ofono_modem_set_integer(modem, "Registered", 1);
- 		ofono_modem_register(modem);
- 	}
--- =
+oFono relies on udev to report device remove event. The devpath info of the=
+ modem is stored in the parent node of tty port. In below case, we try to f=
+ind this parent node of /dev/ttyACM0. The expected path of node is ".../usb=
+1/1-4", which is modem device itself. On Netbook, however, it returns ".../=
+usb1" sometimes. In such case, we could not find the correct devpath and mo=
+dem so that modem was never removed.
 
-1.6.3.3
+My idea is to use a hashtable to store the mapping between tty path and mod=
+em path. So that we could find the modem path without depending on udev_dev=
+ice_get_parent() in remove_modem.
+
+Wrong log is listed below. The expected path is '/devices/pci0000:00/0000:0=
+0:1d.7/usb1/1-4/', but it returns '.../0000:00:1d.7/usb1', which is Linux U=
+SB host controller.
+
+Wrong log 1:
+	remove_modem() device 0x9223820
+	path #0 /devices/pci0000:00/0000:00:1d.7/usb1/1-4/1-4:1.1/tty/ttyACM0
+	path #1 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #2 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #3 /devices/pci0000:00/0000:00:1d.7
+	path #4 /devices/pci0000:00
+	remove_modem() device 0x9222628
+	path #0 /devices/pci0000:00/0000:00:1d.7/usb1/1-4/1-4:1.3/tty/ttyACM1
+	path #1 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #2 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #3 /devices/pci0000:00/0000:00:1d.7
+	path #4 /devices/pci0000:00
+	remove_modem() device 0x92233a8
+	path #0 /devices/pci0000:00/0000:00:1d.7/usb1/1-4/1-4:1.7/net/wwan0
+	path #1 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #2 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #3 /devices/pci0000:00/0000:00:1d.7
+	path #4 /devices/pci0000:00
+	remove_modem() device 0x9224520
+	path #0 /devices/pci0000:00/0000:00:1d.7/usb1/1-4/1-4:1.9/tty/ttyACM2
+	path #1 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #2 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #3 /devices/pci0000:00/0000:00:1d.7
+	path #4 /devices/pci0000:00
+
+Wrong log 2:
+	remove_modem() device 0x9226398
+	path #0 /1-4:1.1/tty/ttyACM0
+	remove_modem() device 0x9226398
+	path #0 /1-4:1.3/tty/ttyACM1
+	remove_modem() device 0x9226398
+	path #0 /devices/pci0000:00/0000:00:1d.7/usb1/1-4/1-4:1.9/tty/ttyACM2
+	path #1 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #2 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #3 /devices/pci0000:00/0000:00:1d.7
+	path #4 /devices/pci0000:00
+	remove_modem() device 0x9224880
+	path #0 /devices/pci0000:00/0000:00:1d.7/usb1/1-4/1-4:1.7/net/wwan0
+	path #1 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #2 /devices/pci0000:00/0000:00:1d.7/usb1
+	path #3 /devices/pci0000:00/0000:00:1d.7
+	path #4 /devices/pci0000:00
+
+[1] http://bugs.meego.com/show_bug.cgi?id=3D395
+
+Regards,
+Zhenhua
 
 
---===============3805952070524222738==--
+--===============1365693428501274961==
+Content-Type: text/plain
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="udev_ofono.txt"
+
+LS0tLS0gUGx1ZyBhIFVTQiBkYW5nbGUgaW50byBuZXRib29rIC0tLS0Kb2Zvbm9kWzE4MjldOiBw
+bHVnaW5zL3VkZXYuYzphZGRfbW9kZW0oKSBkZXZpY2UgMHg5MjIyZTc4IC0+IHVkZXYgMHg5MjIw
+ZWM4Cm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6YWRkX21vZGVtKCkgYWRkIHBhdGggL2Rl
+dmljZXMvcGNpMDAwMDowMC8wMDAwOjAwOjFkLjcvdXNiMS8xLTQKb2Zvbm9kWzE4MjldOiBzcmMv
+bW9kZW0uYzpvZm9ub19tb2RlbV9jcmVhdGUoKSBuYW1lOiAzNTU4NjIwMjE3MzY3MTkwLCB0eXBl
+OiBtYm0Kb2Zvbm9kWzE4MjldOiBzcmMvbW9kZW0uYzpzZXRfbW9kZW1fcHJvcGVydHkoKSBtb2Rl
+bSAweDkyMjM2YjggcHJvcGVydHkgUGF0aApvZm9ub2RbMTgyOV06IHNyYy9tb2RlbS5jOnNldF9t
+b2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTIyMzZiOCBwcm9wZXJ0eSBSZWdpc3RlcmVkCm9mb25v
+ZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6YWRkX21ibSgpIGRlc2M6IERlbGwgV2lyZWxlc3MgNTUz
+MCBIU1BBIE1vYmlsZSBCcm9hZGJhbmQgTWluaWNhcmQgTW9kZW0Kb2Zvbm9kWzE4MjldOiBzcmMv
+bW9kZW0uYzpnZXRfbW9kZW1fcHJvcGVydHkoKSBtb2RlbSAweDkyMjM2YjggcHJvcGVydHkgUmVn
+aXN0ZXJlZApvZm9ub2RbMTgyOV06IHNyYy9tb2RlbS5jOmdldF9tb2RlbV9wcm9wZXJ0eSgpIG1v
+ZGVtIDB4OTIyMzZiOCBwcm9wZXJ0eSBNb2RlbURldmljZQpvZm9ub2RbMTgyOV06IHNyYy9tb2Rl
+bS5jOnNldF9tb2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTIyMzZiOCBwcm9wZXJ0eSBNb2RlbURl
+dmljZQpvZm9ub2RbMTgyOV06IHNyYy9tb2RlbS5jOmdldF9tb2RlbV9wcm9wZXJ0eSgpIG1vZGVt
+IDB4OTIyMzZiOCBwcm9wZXJ0eSBNb2RlbURldmljZQpvZm9ub2RbMTgyOV06IHNyYy9tb2RlbS5j
+OmdldF9tb2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTIyMzZiOCBwcm9wZXJ0eSBOZXR3b3JrSW50
+ZXJmYWNlCm9mb25vZFsxODI5XTogc3JjL21vZGVtLmM6Z2V0X21vZGVtX3Byb3BlcnR5KCkgbW9k
+ZW0gMHg5MjIzNmI4IHByb3BlcnR5IFBhdGgKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzph
+ZGRfbWJtKCkgZGVzYzogRGVsbCBXaXJlbGVzcyA1NTMwIEhTUEEgTW9iaWxlIEJyb2FkYmFuZCBN
+aW5pY2FyZCBOZXR3b3JrQWRhcHRlcgpvZm9ub2RbMTgyOV06IHNyYy9tb2RlbS5jOmdldF9tb2Rl
+bV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTIyMzZiOCBwcm9wZXJ0eSBSZWdpc3RlcmVkCm9mb25vZFsx
+ODI5XTogc3JjL21vZGVtLmM6c2V0X21vZGVtX3Byb3BlcnR5KCkgbW9kZW0gMHg5MjIzNmI4IHBy
+b3BlcnR5IE5ldHdvcmtJbnRlcmZhY2UKb2Zvbm9kWzE4MjldOiBzcmMvbW9kZW0uYzpnZXRfbW9k
+ZW1fcHJvcGVydHkoKSBtb2RlbSAweDkyMjM2YjggcHJvcGVydHkgTW9kZW1EZXZpY2UKb2Zvbm9k
+WzE4MjldOiBzcmMvbW9kZW0uYzpnZXRfbW9kZW1fcHJvcGVydHkoKSBtb2RlbSAweDkyMjM2Yjgg
+cHJvcGVydHkgTmV0d29ya0ludGVyZmFjZQpvZm9ub2RbMTgyOV06IHNyYy9tb2RlbS5jOnNldF9t
+b2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTIyMzZiOCBwcm9wZXJ0eSBSZWdpc3RlcmVkCm9mb25v
+ZFsxODI5XTogc3JjL21vZGVtLmM6dW5yZWdpc3Rlcl9wcm9wZXJ0eSgpIHByb3BlcnR5IDB4OTIy
+M2QxMApvZm9ub2RbMTgyOV06IHBsdWdpbnMvbWJtLmM6bWJtX3Byb2JlKCkgMHg5MjIzNmI4Cm9m
+b25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6YWRkX21ibSgpIDB4OTIyMmU3OCAvZGV2aWNlcy9w
+Y2kwMDAwOjAwLzAwMDA6MDA6MWQuNy91c2IxLzEtNC8xLTQ6MS43L25ldC93d2FuMApvZm9ub2Rb
+MTgyOV06IHBsdWdpbnMvdWRldi5jOmFkZF9tYm0oKSBwYXJlbnQgcGF0aCAvZGV2aWNlcy9wY2kw
+MDAwOjAwLzAwMDA6MDA6MWQuNy91c2IxLzEtNC8xLTQ6MS43Cm9mb25vZFsxODI5XTogc3JjL21v
+ZGVtLmM6Z2V0X21vZGVtX3Byb3BlcnR5KCkgbW9kZW0gMHg5MjIzNmI4IHByb3BlcnR5IFBhdGgK
+b2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzphZGRfbWJtKCkgZGVzYzogRGVsbCBXaXJlbGVz
+cyA1NTMwIEhTUEEgTW9iaWxlIEJyb2FkYmFuZCBNaW5pY2FyZCBHUFMgUG9ydApvZm9ub2RbMTgy
+OV06IHNyYy9tb2RlbS5jOmdldF9tb2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTIyMzZiOCBwcm9w
+ZXJ0eSBSZWdpc3RlcmVkCm9mb25vZFsxODI5XTogc3JjL21vZGVtLmM6Z2V0X21vZGVtX3Byb3Bl
+cnR5KCkgbW9kZW0gMHg5MjIzNmI4IHByb3BlcnR5IFBhdGgKb2Zvbm9kWzE4MjldOiBwbHVnaW5z
+L3VkZXYuYzphZGRfbWJtKCkgZGVzYzogRGVsbCBXaXJlbGVzcyA1NTMwIEhTUEEgTW9iaWxlIEJy
+b2FkYmFuZCBNaW5pY2FyZCBNb2RlbSAyCm9mb25vZFsxODI5XTogc3JjL21vZGVtLmM6Z2V0X21v
+ZGVtX3Byb3BlcnR5KCkgbW9kZW0gMHg5MjIzNmI4IHByb3BlcnR5IFJlZ2lzdGVyZWQKb2Zvbm9k
+WzE4MjldOiBwbHVnaW5zL21ibS5jOm1ibV9lbmFibGUoKSAweDkyMjM2YjgKb2Zvbm9kWzE4Mjld
+OiBzcmMvbW9kZW0uYzpnZXRfbW9kZW1fcHJvcGVydHkoKSBtb2RlbSAweDkyMjM2YjggcHJvcGVy
+dHkgTW9kZW1EZXZpY2UKb2Zvbm9kWzE4MjldOiBzcmMvbW9kZW0uYzpnZXRfbW9kZW1fcHJvcGVy
+dHkoKSBtb2RlbSAweDkyMjM2YjggcHJvcGVydHkgRGF0YURldmljZQpvZm9ub2RbMTgyOV06IHBs
+dWdpbnMvbWJtLmM6bWJtX2VuYWJsZSgpIC9kZXYvdHR5QUNNMCwgKG51bGwpCgotLS0tLSBVbnBs
+dWcgdGhlIFVTQiBkYW5nbGUgb3V0LCAjMSBpcyB4eHgvdXNiMSwgZXhwZWN0ZWQgcGF0aCBpcyB4
+eHgvdXNiMS8xLTQgLS0tLQoKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpyZW1vdmVfbW9k
+ZW0oKSBkZXZpY2UgMHg5MjIzODIwIC0+IHVkZXYgMHg5MjIwZWM4Cm9mb25vZFsxODI5XTogcGx1
+Z2lucy91ZGV2LmM6cHJpbnRfcGF0aCgpICMwIC9kZXZpY2VzL3BjaTAwMDA6MDAvMDAwMDowMDox
+ZC43L3VzYjEvMS00LzEtNDoxLjEvdHR5L3R0eUFDTTAKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3Vk
+ZXYuYzpwcmludF9wYXRoKCkgIzEgL2RldmljZXMvcGNpMDAwMDowMC8wMDAwOjAwOjFkLjcvdXNi
+MQpvZm9ub2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMiAvZGV2aWNlcy9w
+Y2kwMDAwOjAwLzAwMDA6MDA6MWQuNy91c2IxCm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6
+cHJpbnRfcGF0aCgpICMzIC9kZXZpY2VzL3BjaTAwMDA6MDAvMDAwMDowMDoxZC43Cm9mb25vZFsx
+ODI5XTogcGx1Z2lucy91ZGV2LmM6cHJpbnRfcGF0aCgpICM0IC9kZXZpY2VzL3BjaTAwMDA6MDAK
+b2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpyZW1vdmVfbW9kZW0oKSBkZXZpY2UgMHg5MjIy
+NjI4IC0+IHVkZXYgMHg5MjIwZWM4Cm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cHJpbnRf
+cGF0aCgpICMwIC9kZXZpY2VzL3BjaTAwMDA6MDAvMDAwMDowMDoxZC43L3VzYjEvMS00LzEtNDox
+LjMvdHR5L3R0eUFDTTEKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpwcmludF9wYXRoKCkg
+IzEgL2RldmljZXMvcGNpMDAwMDowMC8wMDAwOjAwOjFkLjcvdXNiMQpvZm9ub2RbMTgyOV06IHBs
+dWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMiAvZGV2aWNlcy9wY2kwMDAwOjAwLzAwMDA6MDA6
+MWQuNy91c2IxCm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cHJpbnRfcGF0aCgpICMzIC9k
+ZXZpY2VzL3BjaTAwMDA6MDAvMDAwMDowMDoxZC43Cm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2
+LmM6cHJpbnRfcGF0aCgpICM0IC9kZXZpY2VzL3BjaTAwMDA6MDAKb2Zvbm9kWzE4MjldOiBwbHVn
+aW5zL3VkZXYuYzpyZW1vdmVfbW9kZW0oKSBkZXZpY2UgMHg5MjIzM2E4IC0+IHVkZXYgMHg5MjIw
+ZWM4Cm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cHJpbnRfcGF0aCgpICMwIC9kZXZpY2Vz
+L3BjaTAwMDA6MDAvMDAwMDowMDoxZC43L3VzYjEvMS00LzEtNDoxLjcvbmV0L3d3YW4wCm9mb25v
+ZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cHJpbnRfcGF0aCgpICMxIC9kZXZpY2VzL3BjaTAwMDA6
+MDAvMDAwMDowMDoxZC43L3VzYjEKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpwcmludF9w
+YXRoKCkgIzIgL2RldmljZXMvcGNpMDAwMDowMC8wMDAwOjAwOjFkLjcvdXNiMQpvZm9ub2RbMTgy
+OV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMyAvZGV2aWNlcy9wY2kwMDAwOjAwLzAw
+MDA6MDA6MWQuNwpvZm9ub2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjNCAv
+ZGV2aWNlcy9wY2kwMDAwOjAwCm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cmVtb3ZlX21v
+ZGVtKCkgZGV2aWNlIDB4OTIyNDUyMCAtPiB1ZGV2IDB4OTIyMGVjOApvZm9ub2RbMTgyOV06IHBs
+dWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMCAvZGV2aWNlcy9wY2kwMDAwOjAwLzAwMDA6MDA6
+MWQuNy91c2IxLzEtNC8xLTQ6MS45L3R0eS90dHlBQ00yCm9mb25vZFsxODI5XTogcGx1Z2lucy91
+ZGV2LmM6cHJpbnRfcGF0aCgpICMxIC9kZXZpY2VzL3BjaTAwMDA6MDAvMDAwMDowMDoxZC43L3Vz
+YjEKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpwcmludF9wYXRoKCkgIzIgL2RldmljZXMv
+cGNpMDAwMDowMC8wMDAwOjAwOjFkLjcvdXNiMQpvZm9ub2RbMTgyOV06IHBsdWdpbnMvdWRldi5j
+OnByaW50X3BhdGgoKSAjMyAvZGV2aWNlcy9wY2kwMDAwOjAwLzAwMDA6MDA6MWQuNwpvZm9ub2Rb
+MTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjNCAvZGV2aWNlcy9wY2kwMDAwOjAw
+CgotLS0tLSBVbnBsdWcgdGhlIFVTQiBkYW5nbGUgb3V0LCBzb21ldGltZSB0aGUgcGF0aCBtaXNz
+ZWQgdXNiIHBhdGggcHJlZml4IC0tLS0KCm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cmVt
+b3ZlX21vZGVtKCkgZGV2aWNlIDB4OTIyNjM5OCAtPiB1ZGV2IDB4OTIyMGVjOApvZm9ub2RbMTgy
+OV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMCAvMS00OjEuMS90dHkvdHR5QUNNMApv
+Zm9ub2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnJlbW92ZV9tb2RlbSgpIGRldmljZSAweDkyMjYz
+OTggLT4gdWRldiAweDkyMjBlYzgKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpwcmludF9w
+YXRoKCkgIzAgLzEtNDoxLjMvdHR5L3R0eUFDTTEKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYu
+YzpyZW1vdmVfbW9kZW0oKSBkZXZpY2UgMHg5MjI2Mzk4IC0+IHVkZXYgMHg5MjIwZWM4Cm9mb25v
+ZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cHJpbnRfcGF0aCgpICMwIC9kZXZpY2VzL3BjaTAwMDA6
+MDAvMDAwMDowMDoxZC43L3VzYjEvMS00LzEtNDoxLjkvdHR5L3R0eUFDTTIKb2Zvbm9kWzE4Mjld
+OiBwbHVnaW5zL3VkZXYuYzpwcmludF9wYXRoKCkgIzEgL2RldmljZXMvcGNpMDAwMDowMC8wMDAw
+OjAwOjFkLjcvdXNiMQpvZm9ub2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAj
+MiAvZGV2aWNlcy9wY2kwMDAwOjAwLzAwMDA6MDA6MWQuNy91c2IxCm9mb25vZFsxODI5XTogcGx1
+Z2lucy91ZGV2LmM6cHJpbnRfcGF0aCgpICMzIC9kZXZpY2VzL3BjaTAwMDA6MDAvMDAwMDowMDox
+ZC43Cm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cHJpbnRfcGF0aCgpICM0IC9kZXZpY2Vz
+L3BjaTAwMDA6MDAKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpyZW1vdmVfbW9kZW0oKSBk
+ZXZpY2UgMHg5MjI0ODgwIC0+IHVkZXYgMHg5MjIwZWM4Cm9mb25vZFsxODI5XTogcGx1Z2lucy91
+ZGV2LmM6cHJpbnRfcGF0aCgpICMwIC9kZXZpY2VzL3BjaTAwMDA6MDAvMDAwMDowMDoxZC43L3Vz
+YjEvMS00LzEtNDoxLjcvbmV0L3d3YW4wCm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cHJp
+bnRfcGF0aCgpICMxIC9kZXZpY2VzL3BjaTAwMDA6MDAvMDAwMDowMDoxZC43L3VzYjEKb2Zvbm9k
+WzE4MjldOiBwbHVnaW5zL3VkZXYuYzpwcmludF9wYXRoKCkgIzIgL2RldmljZXMvcGNpMDAwMDow
+MC8wMDAwOjAwOjFkLjcvdXNiMQpvZm9ub2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3Bh
+dGgoKSAjMyAvZGV2aWNlcy9wY2kwMDAwOjAwLzAwMDA6MDA6MWQuNwpvZm9ub2RbMTgyOV06IHBs
+dWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjNCAvZGV2aWNlcy9wY2kwMDAwOjAwCgoKCi0tLS0t
+IFVucGx1ZyB0aGUgVVNCIGRhbmdsZSBvdXQsIGV4cGVjdGVkIHJlc3VsdCAtLS0tCgpvZm9ub2Rb
+MTgyOV06IHBsdWdpbnMvdWRldi5jOnJlbW92ZV9tb2RlbSgpIGRldmljZSAweDkyMjM3ZTAgLT4g
+dWRldiAweDkyMjBlYzgKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpwcmludF9wYXRoKCkg
+IzAgL2RldmljZXMvcGNpMDAwMDowMC8wMDAwOjAwOjFkLjcvdXNiMS8xLTQvMS00OjEuMS90dHkv
+dHR5QUNNMApvZm9ub2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMSAvZGV2
+aWNlcy9wY2kwMDAwOjAwLzAwMDA6MDA6MWQuNy91c2IxLzEtNApvZm9ub2RbMTgyOV06IHNyYy9t
+b2RlbS5jOmdldF9tb2RlbV9wcm9wZXJ0eSgpIG1vZGVtIDB4OTIyMzZiOCBwcm9wZXJ0eSBQYXRo
+Cm9mb25vZFsxODI5XTogc3JjL21vZGVtLmM6b2Zvbm9fbW9kZW1fcmVtb3ZlKCkgMHg5MjIzNmI4
+Cm9mb25vZFsxODI5XTogcGx1Z2lucy9tYm0uYzptYm1fcmVtb3ZlKCkgMHg5MjIzNmI4Cm9mb25v
+ZFsxODI5XTogc3JjL21vZGVtLmM6dW5yZWdpc3Rlcl9wcm9wZXJ0eSgpIHByb3BlcnR5IDB4OTIy
+M2RiOApvZm9ub2RbMTgyOV06IHNyYy9tb2RlbS5jOnVucmVnaXN0ZXJfcHJvcGVydHkoKSBwcm9w
+ZXJ0eSAweDkyMjM2NDAKb2Zvbm9kWzE4MjldOiBzcmMvbW9kZW0uYzp1bnJlZ2lzdGVyX3Byb3Bl
+cnR5KCkgcHJvcGVydHkgMHg5MjIzNjc4Cm9mb25vZFsxODI5XTogc3JjL21vZGVtLmM6dW5yZWdp
+c3Rlcl9wcm9wZXJ0eSgpIHByb3BlcnR5IDB4OTIyMzc5OApvZm9ub2RbMTgyOV06IHBsdWdpbnMv
+dWRldi5jOnJlbW92ZV9tb2RlbSgpIGRldmljZSAweDkyMjM1NzggLT4gdWRldiAweDkyMjBlYzgK
+b2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpwcmludF9wYXRoKCkgIzAgL2RldmljZXMvcGNp
+MDAwMDowMC8wMDAwOjAwOjFkLjcvdXNiMS8xLTQvMS00OjEuMy90dHkvdHR5QUNNMQpvZm9ub2Rb
+MTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMSAvZGV2aWNlcy9wY2kwMDAwOjAw
+LzAwMDA6MDA6MWQuNy91c2IxLzEtNApvZm9ub2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50
+X3BhdGgoKSAjMiAvZGV2aWNlcy9wY2kwMDAwOjAwLzAwMDA6MDA6MWQuNy91c2IxLzEtNApvZm9u
+b2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMyAvZGV2aWNlcy9wY2kwMDAw
+OjAwLzAwMDA6MDA6MWQuNy91c2IxCm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cHJpbnRf
+cGF0aCgpICM0IC9kZXZpY2VzL3BjaTAwMDA6MDAvMDAwMDowMDoxZC43Cm9mb25vZFsxODI5XTog
+cGx1Z2lucy91ZGV2LmM6cmVtb3ZlX21vZGVtKCkgZGV2aWNlIDB4OTIyMzZiOCAtPiB1ZGV2IDB4
+OTIyMGVjOApvZm9ub2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMCAvZGV2
+aWNlcy9wY2kwMDAwOjAwLzAwMDA6MDA6MWQuNy91c2IxLzEtNC8xLTQ6MS45L3R0eS90dHlBQ00y
+Cm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cHJpbnRfcGF0aCgpICMxIC9kZXZpY2VzL3Bj
+aTAwMDA6MDAvMDAwMDowMDoxZC43L3VzYjEKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpw
+cmludF9wYXRoKCkgIzIgL2RldmljZXMvcGNpMDAwMDowMC8wMDAwOjAwOjFkLjcvdXNiMQpvZm9u
+b2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMyAvZGV2aWNlcy9wY2kwMDAw
+OjAwLzAwMDA6MDA6MWQuNwpvZm9ub2RbMTgyOV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgo
+KSAjNCAvZGV2aWNlcy9wY2kwMDAwOjAwCm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cmVt
+b3ZlX21vZGVtKCkgZGV2aWNlIDB4OTIyMzFjOCAtPiB1ZGV2IDB4OTIyMGVjOApvZm9ub2RbMTgy
+OV06IHBsdWdpbnMvdWRldi5jOnByaW50X3BhdGgoKSAjMCAvZGV2aWNlcy9wY2kwMDAwOjAwLzAw
+MDA6MDA6MWQuNy91c2IxLzEtNC8xLTQ6MS43L25ldC93d2FuMApvZm9ub2RbMTgyOV06IHBsdWdp
+bnMvdWRldi5jOnByaW50X3BhdGgoKSAjMSAvZGV2aWNlcy9wY2kwMDAwOjAwLzAwMDA6MDA6MWQu
+Ny91c2IxCm9mb25vZFsxODI5XTogcGx1Z2lucy91ZGV2LmM6cHJpbnRfcGF0aCgpICMyIC9kZXZp
+Y2VzL3BjaTAwMDA6MDAvMDAwMDowMDoxZC43L3VzYjEKb2Zvbm9kWzE4MjldOiBwbHVnaW5zL3Vk
+ZXYuYzpwcmludF9wYXRoKCkgIzMgL2RldmljZXMvcGNpMDAwMDowMC8wMDAwOjAwOjFkLjcKb2Zv
+bm9kWzE4MjldOiBwbHVnaW5zL3VkZXYuYzpwcmludF9wYXRoKCkgIzQgL2RldmljZXMvcGNpMDAw
+MDowMAoKCg==
+
+--===============1365693428501274961==--
 
