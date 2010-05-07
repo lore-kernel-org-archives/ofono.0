@@ -1,64 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============6310077001680862097=="
+Content-Type: multipart/mixed; boundary="===============8625412526479587842=="
 MIME-Version: 1.0
-From: Mats BERGSTROM <mats.m.bergstrom@stericsson.com>
-Subject: RE: oFono status?
-Date: Thu, 06 May 2010 20:32:28 +0200
-Message-ID: <60A0044626BD4F4B98AFAA96AB19D35E3B5FB444B0@EXDCVYMBSTM006.EQ1STM.local>
-In-Reply-To: <1273051015.31935.24.camel@tucson.research.nokia.com>
+From: krishna k <id_kishore@live.in>
+Subject: How to start ofono-phonesim in ubuntu-10.04 -reg
+Date: Fri, 07 May 2010 15:52:24 +0530
+Message-ID: <COL106-W38605426EE0293974195DCF6F60@phx.gbl>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6310077001680862097==
+--===============8625412526479587842==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-	Thanks for the answers.
 
-But is there any kind of roadmap for oFono?
+Hi All,
 
-Sincerely
-	/Mats
+Any body who is working ofono-phonesim suggest how to start ofono-phonesim =
+simulator?
 
+I installed ofono-phonesim from synaptic package manager in ubuntu lucid (1=
+0.04) and i am trying start the simulator with the following ...
 
------Original Message-----
-From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
-f Of Aki Niemi
-Sent: den 5 maj 2010 11:17
-To: ofono(a)ofono.org
-Subject: Re: oFono status?
+1. I modified modem.conf file with following content...
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D
+[phonesim]
+Driver=3Dphonesim
+Address=3D127.0.0.1
+Port=3D12345
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D
 
-On Tue, 2010-05-04 at 13:41 +0200, ext Mats BERGSTROM wrote:
-> What is the plans for the oFono in conjunction with the MeeGo project?
+2. phonesim -p 12345  -gui ~/data/moblin.xml (i created data file in user h=
+ome directory and placed moblin.xml file inside data)
 
-It's clear that oFono is the host telephony stack on MeeGo. Details are
-still open, though. For instance, which version of oFono will ship with
-which version of MeeGo has not been decided yet.
+But it is not displaying anything on the screen. But if i check with "ps ax=
+ | grep phonesim" I am getting below o/p.
 
-> Being one of the basic components of the MeeGo, what is the current
-> status today and are there any components lacking for it to be
-> production level?  If so, what do the plans look like for bringing it
-> to that?
+ 5822 pts/1    S+     0:00 phonesim -p 12345 -gui /home/kandukis/data/mobli=
+n.xml
+ 5842 pts/2    S+     0:00 grep --color=3Dauto phonesim
 
-This depends a bit on the modem. In general AT modem support is in a
-better shape than the ISI modem support at the moment. Some AT modems
-are better supported than others.
+What is the problem and why simulator is not visible?
 
-As to "production level", I think there may be minor bits and pieces
-missing, but overall a lot of the standard features are present. Apart
-from the code itself, there's quite a bit of testing and validation,
-including official certification that one would need to do in order to
-use oFono in products.
+Please correct me if i am doing wrong...
 
-Cheers,
-Aki
+Thanks and Regards,
+Krishna.
 
+ 		 	   		  =
 
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-http://lists.ofono.org/listinfo/ofono
+_________________________________________________________________
+South Cinema This Decade
+http://entertainment.in.msn.com/southcinemathisdecade/
 
---===============6310077001680862097==--
+--===============8625412526479587842==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWw+CjxoZWFkPgo8c3R5bGU+PCEtLQouaG1tZXNzYWdlIFAKewptYXJnaW46MHB4OwpwYWRk
+aW5nOjBweAp9CmJvZHkuaG1tZXNzYWdlCnsKZm9udC1zaXplOiAxMHB0Owpmb250LWZhbWlseTpW
+ZXJkYW5hCn0KLS0+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBjbGFzcz0naG1tZXNzYWdlJz4KSGkg
+QWxsLDxicj48YnI+QW55IGJvZHkgd2hvIGlzIHdvcmtpbmcgb2Zvbm8tcGhvbmVzaW0gc3VnZ2Vz
+dCBob3cgdG8gc3RhcnQgb2Zvbm8tcGhvbmVzaW0gc2ltdWxhdG9yPzxicj48YnI+SSBpbnN0YWxs
+ZWQgb2Zvbm8tcGhvbmVzaW0gZnJvbSBzeW5hcHRpYyBwYWNrYWdlIG1hbmFnZXIgaW48Yj4gdWJ1
+bnR1IGx1Y2lkPC9iPiAoMTAuMDQpIGFuZCBpIGFtIHRyeWluZyBzdGFydCB0aGUgc2ltdWxhdG9y
+IHdpdGggdGhlIGZvbGxvd2luZyAuLi48YnI+PGJyPjxmb250IHN0eWxlPSIiIGNvbG9yPSIjNGY4
+MWJkIj48Yj4xLjwvYj48L2ZvbnQ+IEkgbW9kaWZpZWQgbW9kZW0uY29uZiBmaWxlIHdpdGggZm9s
+bG93aW5nIGNvbnRlbnQuLi48YnI+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PTxi
+cj48cHJlPjxpPltwaG9uZXNpbV08YnI+PC9pPjxpPkRyaXZlcj1waG9uZXNpbTxicj48L2k+PGk+
+QWRkcmVzcz0xMjcuMC4wLjE8YnI+PC9pPjxpPlBvcnQ9MTIzNDU8YnI+PC9pPjwvcHJlPj09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT08YnI+PGJyPjxmb250IHN0eWxlPSIiIGNvbG9y
+PSIjMWY0OTdkIj48Yj4yLjwvYj48L2ZvbnQ+IHBob25lc2ltIC1wIDEyMzQ1Jm5ic3A7IC1ndWkg
+fi9kYXRhL21vYmxpbi54bWwgKGkgY3JlYXRlZCBkYXRhIGZpbGUgaW4gdXNlciBob21lIGRpcmVj
+dG9yeSBhbmQgcGxhY2VkIG1vYmxpbi54bWwgZmlsZSBpbnNpZGUgZGF0YSk8YnI+PGJyPkJ1dCBp
+dCBpcyBub3QgZGlzcGxheWluZyBhbnl0aGluZyBvbiB0aGUgc2NyZWVuLiBCdXQgaWYgaSBjaGVj
+ayB3aXRoICI8Yj5wcyBheCB8IGdyZXAgcGhvbmVzaW08L2I+IiBJIGFtIGdldHRpbmcgYmVsb3cg
+by9wLjxicj48YnI+Jm5ic3A7NTgyMiBwdHMvMSZuYnNwOyZuYnNwOyZuYnNwOyBTKyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyAwOjAwIHBob25lc2ltIC1wIDEyMzQ1IC1ndWkgL2hvbWUva2FuZHVr
+aXMvZGF0YS9tb2JsaW4ueG1sPGJyPiZuYnNwOzU4NDIgcHRzLzImbmJzcDsmbmJzcDsmbmJzcDsg
+UysmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgMDowMCBncmVwIC0tY29sb3I9YXV0byBwaG9uZXNp
+bTxicj48YnI+V2hhdCBpcyB0aGUgcHJvYmxlbSBhbmQgd2h5IHNpbXVsYXRvciBpcyBub3Qgdmlz
+aWJsZT88YnI+PGJyPlBsZWFzZSBjb3JyZWN0IG1lIGlmIGkgYW0gZG9pbmcgd3JvbmcuLi48YnI+
+PGJyPlRoYW5rcyBhbmQgUmVnYXJkcyw8YnI+S3Jpc2huYS48YnI+PGJyPiAJCSAJICAgCQkgIDxi
+ciAvPjxociAvPlRoZSBsYXRlc3QgYXV0byBsYXVuY2hlcyBhbmQgdGVzdCBkcml2ZXMgPGEgaHJl
+Zj0naHR0cDovL2F1dG9zLmluLm1zbi5jb20vJyB0YXJnZXQ9J19uZXcnPkRyYWcgbicgZHJvcDwv
+YT48L2JvZHk+CjwvaHRtbD4=
+--===============8625412526479587842==--
 
