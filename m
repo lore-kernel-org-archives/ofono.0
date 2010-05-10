@@ -1,124 +1,191 @@
-Content-Type: multipart/mixed; boundary="===============5592904272757515597=="
+Content-Type: multipart/mixed; boundary="===============3886614598596807037=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/8] Add a BER-TLV encoding test.
-Date: Mon, 10 May 2010 11:33:50 +0200
-Message-ID: <1273484030-32160-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 3/8] Add STK-specific CTLV encoding utilities.
+Date: Mon, 10 May 2010 11:33:58 +0200
+Message-ID: <1273484038-32189-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5592904272757515597==
+--===============3886614598596807037==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-simutil.c |   59 +++++++++++++++++++++++++++++++++++++++++++++++=
-+--
- 1 files changed, 56 insertions(+), 3 deletions(-)
+ src/stkutil.c |  155 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 155 insertions(+), 0 deletions(-)
 
-diff --git a/unit/test-simutil.c b/unit/test-simutil.c
-index 2c8cb30..49a40cd 100644
---- a/unit/test-simutil.c
-+++ b/unit/test-simutil.c
-@@ -48,16 +48,15 @@ const unsigned char valid_mms_params[] =3D {
- 	0x6D, 0x65, 0x00, 0x1B, 0x64, 0x75, 0x6D, 0x6D, 0x79, 0x5F, 0x70, 0x61,
- 	0x73, 0x73, 0x77, 0x6F, 0x72, 0x64, 0x00 };
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 50fa4c1..e51090c 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -2343,3 +2343,158 @@ void stk_command_free(struct stk_command *command)
  =
 
--static void test_ber_tlv_iter()
-+static void test_buffer(const unsigned char *buf, size_t size)
- {
- 	struct ber_tlv_iter iter;
- 	struct ber_tlv_iter cont;
- =
-
--	ber_tlv_iter_init(&iter, valid_mms_params, sizeof(valid_mms_params));
-+	ber_tlv_iter_init(&iter, buf, size);
- =
-
- 	g_assert(ber_tlv_iter_next(&iter) =3D=3D TRUE);
- 	g_assert(ber_tlv_iter_get_short_tag(&iter) =3D=3D 0xAB);
--	g_assert(ber_tlv_iter_get_length(&iter) =3D=3D 136);
- =
-
- 	ber_tlv_iter_recurse(&iter, &cont);
- =
-
-@@ -81,6 +80,59 @@ static void test_ber_tlv_iter()
- 	g_assert(ber_tlv_iter_next(&iter) =3D=3D FALSE);
+ 	g_free(command);
  }
- =
-
-+static void test_ber_tlv_iter()
++
++struct stk_tlv_builder {
++	struct comprehension_tlv_builder ctlv;
++	unsigned char *value;
++	int len;
++};
++
++static inline void stk_tlv_builder_init(struct stk_tlv_builder *iter,
++					unsigned char *pdu, unsigned int size)
 +{
-+	test_buffer(valid_mms_params, sizeof(valid_mms_params));
++	comprehension_tlv_builder_init(&iter->ctlv, pdu, size);
++	iter->value =3D NULL;
 +}
 +
-+static void test_ber_tlv_builder()
++static inline gboolean stk_tlv_open_container(struct stk_tlv_builder *iter,
++						gboolean cr,
++						unsigned char shorttag,
++						gboolean relocatable)
 +{
-+	struct ber_tlv_iter iter[2];
-+	struct ber_tlv_builder builder[2];
-+	unsigned char buf[512], *pdu;
-+	unsigned int pdulen, i[2];
++	comprehension_tlv_builder_set_tag(&iter->ctlv, cr, shorttag);
++	comprehension_tlv_builder_set_length(&iter->ctlv,
++						relocatable ? 0xff : 0x7f);
++	iter->len =3D 0;
++	iter->value =3D comprehension_tlv_builder_get_data(&iter->ctlv);
 +
-+	ber_tlv_iter_init(&iter[0], valid_mms_params, sizeof(valid_mms_params));
-+	g_assert(ber_tlv_builder_init(&builder[0], buf, sizeof(buf)));
++	return TRUE;
++}
 +
-+	i[0] =3D 0;
-+	while (ber_tlv_iter_next(&iter[0]) =3D=3D TRUE) {
-+		if (i[0]++)
-+			g_assert(ber_tlv_builder_next(&builder[1]));
++static inline gboolean stk_tlv_close_container(struct stk_tlv_builder *ite=
+r)
++{
++	return comprehension_tlv_builder_set_length(&iter->ctlv, iter->len) &&
++		comprehension_tlv_builder_next(&iter->ctlv);
++}
 +
-+		g_assert(ber_tlv_builder_set_tag(&builder[0],
-+					ber_tlv_iter_get_class(&iter[0]),
-+					ber_tlv_iter_get_encoding(&iter[0]),
-+					ber_tlv_iter_get_tag(&iter[0])));
++static inline unsigned int stk_tlv_get_length(struct stk_tlv_builder *iter)
++{
++	return iter->ctlv.pos;
++}
 +
-+		ber_tlv_iter_recurse(&iter[0], &iter[1]);
-+		g_assert(ber_tlv_builder_recurse(&builder[0], &builder[1]));
++static inline void stk_tlv_append_byte(struct stk_tlv_builder *iter,
++					unsigned char num)
++{
++	iter->value[iter->len++] =3D num;
++}
 +
-+		i[1] =3D 0;
-+		while (ber_tlv_iter_next(&iter[1]) =3D=3D TRUE) {
-+			if (i[1]++)
-+				g_assert(ber_tlv_builder_next(&builder[1]));
++static inline void stk_tlv_append_short(struct stk_tlv_builder *iter,
++					unsigned short num)
++{
++	iter->value[iter->len++] =3D num >> 8;
++	iter->value[iter->len++] =3D num & 0xff;
++}
 +
-+			g_assert(ber_tlv_builder_set_tag(&builder[1],
-+					ber_tlv_iter_get_class(&iter[1]),
-+					ber_tlv_iter_get_encoding(&iter[1]),
-+					ber_tlv_iter_get_tag(&iter[1])));
-+			g_assert(ber_tlv_builder_set_length(&builder[1],
-+					ber_tlv_iter_get_length(&iter[1])));
++static inline gboolean stk_tlv_append_text(struct stk_tlv_builder *iter,
++						int dcs, const char *text)
++{
++	unsigned int len;
++	unsigned char *gsm, *ucs2;
++	long written =3D 0;
++	gsize gwritten;
 +
-+			memcpy(ber_tlv_builder_get_data(&builder[1]),
-+					ber_tlv_iter_get_data(&iter[1]),
-+					ber_tlv_iter_get_length(&iter[1]));
++	if (text =3D=3D NULL)
++		return TRUE;
++
++	len =3D strlen(text);
++
++	switch (dcs) {
++	case 0x00:
++		gsm =3D convert_utf8_to_gsm(text, len, NULL, NULL, 0);
++		if (gsm =3D=3D NULL && len > 0)
++			return FALSE;
++
++		iter->value[iter->len++] =3D 0x00;
++
++		pack_7bit_own_buf(gsm, len, 0, FALSE, &written, 0,
++					iter->value + iter->len);
++		g_free(gsm);
++		if (written < 1 && len > 0)
++			return FALSE;
++		iter->len +=3D written;
++
++		return TRUE;
++	case 0x04:
++		gsm =3D convert_utf8_to_gsm(text, len, NULL, &written, 0);
++		if (gsm =3D=3D NULL && len > 0)
++			return FALSE;
++
++		iter->value[iter->len++] =3D 0x04;
++
++		memcpy(iter->value + iter->len, gsm, written);
++		iter->len +=3D written;
++
++		g_free(gsm);
++
++		return TRUE;
++	case 0x08:
++		ucs2 =3D (unsigned char *) g_convert((const gchar *) text, len,
++					"UCS-2BE", "UTF-8//TRANSLIT",
++					NULL, &gwritten, NULL);
++		if (ucs2 =3D=3D NULL)
++			return FALSE;
++
++		iter->value[iter->len++] =3D 0x08;
++
++		memcpy(iter->value + iter->len, ucs2, gwritten);
++		iter->len +=3D gwritten;
++
++		g_free(ucs2);
++
++		return TRUE;
++	case -1:
++		/* Fake DCS to mean unpacked GSM alphabet if possible
++		 * to encode the string and UCS2 if not.  */
++		gsm =3D convert_utf8_to_gsm(text, len, NULL, &written, 0);
++
++		if (gsm =3D=3D NULL && len > 0) {
++			/* Use UCS2. */
++			ucs2 =3D (unsigned char *) g_convert(
++					(const gchar *) text, len,
++					"UCS-2BE", "UTF-8//TRANSLIT",
++					NULL, &gwritten, NULL);
++			if (ucs2 =3D=3D NULL)
++				return FALSE;
++
++			iter->value[iter->len++] =3D 0x08;
++
++			memcpy(iter->value + iter->len, ucs2, gwritten);
++			iter->len +=3D gwritten;
++
++			g_free(ucs2);
++
++			return TRUE;
 +		}
 +
-+		ber_tlv_builder_optimize(&builder[1], NULL, NULL);
++		iter->value[iter->len++] =3D 0x04;
++
++		memcpy(iter->value + iter->len, gsm, written);
++		iter->len +=3D written;
++
++		g_free(gsm);
++
++		return TRUE;
 +	}
 +
-+	ber_tlv_builder_optimize(&builder[0], &pdu, &pdulen);
-+
-+	test_buffer(pdu, pdulen);
++	return FALSE;
 +}
 +
- const unsigned char valid_efopl[] =3D {
- 	0x42, 0xf6, 0x1d, 0x00, 0x00, 0xff, 0xfe, 0x01,
- };
-@@ -190,6 +242,7 @@ int main(int argc, char **argv)
- 	g_test_init(&argc, &argv, NULL);
- =
-
- 	g_test_add_func("/testsimutil/ber tlv iter", test_ber_tlv_iter);
-+	g_test_add_func("/testsimutil/ber tlv builder", test_ber_tlv_builder);
- 	g_test_add_func("/testsimutil/EONS Handling", test_eons);
- 	g_test_add_func("/testsimutil/Elementary File DB", test_ef_db);
- 	g_test_add_func("/testsimutil/3G Status response", test_3g_status_data);
++static inline gboolean stk_tlv_append_bytes(struct stk_tlv_builder *iter,
++						const unsigned char *data,
++						unsigned int length)
++{
++	memcpy(iter->value + iter->len, data, length);
++	iter->len +=3D length;
++
++	return TRUE;
++}
 -- =
 
 1.6.1
 
 
---===============5592904272757515597==--
+--===============3886614598596807037==--
 
