@@ -1,79 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============7267714844757180194=="
+Content-Type: multipart/mixed; boundary="===============2891453666170114528=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gatio: do not read if no read_handler
-Date: Mon, 10 May 2010 12:48:29 -0500
-Message-ID: <201005101248.29679.denkenz@gmail.com>
-In-Reply-To: <20100510102217.68f925dc@kcaccard-MOBL3>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH 1/3] gsmdial: use g_at_chat_suspend
+Date: Mon, 10 May 2010 11:39:41 -0700
+Message-ID: <1273516783-5132-2-git-send-email-kristen@linux.intel.com>
+In-Reply-To: <1273516783-5132-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7267714844757180194==
+--===============2891453666170114528==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+---
+ gatchat/gsmdial.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
-> On Mon, 10 May 2010 12:23:04 -0500
-> =
+diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+index a531aa3..fd9b73b 100644
+--- a/gatchat/gsmdial.c
++++ b/gatchat/gsmdial.c
+@@ -235,6 +235,8 @@ static void ppp_connect(const char *iface, const char *=
+ip,
+ static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
+ta)
+ {
+ 	g_print("PPP Link down: %d\n", reason);
++	g_at_chat_resume(control);
++	g_at_chat_resume(modem);
+ }
+ =
 
-> Denis Kenzior <denkenz@gmail.com> wrote:
-> > Hi Kristen,
-> >
-> > > On Mon, 10 May 2010 09:11:52 -0500
-> > >
-> > > Denis Kenzior <denkenz@gmail.com> wrote:
-> > > > Hi Kristen,
-> > > >
-> > > > > If no read_handler specified, leave data alone in case someone
-> > > > > else wants to read it.
-> > > > > ---
-> > > > >  gatchat/gatio.c   |    4 ++++
-> > > > >  gatchat/gsmdial.c |   12 ++++--------
-> > > > >  2 files changed, 8 insertions(+), 8 deletions(-)
-> > > > >
-> > > > > diff --git a/gatchat/gatio.c b/gatchat/gatio.c
-> > > > > index 61b0260..b4a3806 100644
-> > > > > --- a/gatchat/gatio.c
-> > > > > +++ b/gatchat/gatio.c
-> > > > > @@ -91,6 +91,10 @@ static gboolean received_data(GIOChannel
-> > > > > *channel, GIOCondition cond, if (cond & G_IO_NVAL)
-> > > > >  		return FALSE;
-> > > > >
-> > > > > +	/* if nobody wants this data, leave it alone */
-> > > > > +	if (io->read_handler =3D=3D NULL)
-> > > > > +		return TRUE;
-> > > > > +
-> > > >
-> > > > This is a really bad idea, we should never have cases where the read
-> > > > handler is unset, and if we do we should end up closing the socket
-> > > > when the buffer is full.
-> > >
-> > > In your implementation of g_at_chat_suspend, you set the read handler
-> > > to NULL.
-> >
-> > Correct, with the intent that someone else sets the read handler (e.g.
-> > g_at_ppp)
-> =
+ static void connect_cb(gboolean ok, GAtResult *result, gpointer user_data)
+@@ -253,10 +255,8 @@ static void connect_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 	 * shutdown gatchat or else it tries to take all the input
+ 	 * from the modem and does not let PPP get it.
+ 	 */
+-	g_at_chat_unref(control);
+-	control =3D NULL;
+-	g_at_chat_unref(modem);
+-	modem =3D NULL;
++	g_at_chat_suspend(control);
++	g_at_chat_suspend(modem);
+ =
 
-> What if you receive data after the read handler is set to NULL, but before
-> someone else sets the read handler?  shouldn't we safe guard against that?
-> =
+ 	/* open ppp */
+ 	ppp =3D g_at_ppp_new(channel);
+-- =
+
+1.6.6.1
 
 
-We do safe guard, once the buffer runs out of space we close the GAtIO.  =
-
-However, letting GAtIO enter the event-loop (since only then the io watch w=
-ill =
-
-fire) without a read handler is a user error.  Having an active GAtIO witho=
-ut a =
-
-read handler is useless...
-
-Regards,
--Denis
-
---===============7267714844757180194==--
+--===============2891453666170114528==--
 
