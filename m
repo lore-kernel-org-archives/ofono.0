@@ -1,23 +1,20 @@
-Content-Type: multipart/mixed; boundary="===============8319780078438828902=="
+Content-Type: multipart/mixed; boundary="===============1588173971214312865=="
 MIME-Version: 1.0
-From: Yoon, Youngsik <youngsik.yoon@intel.com>
-Subject: RE: How to start ofono-phonesim in ubuntu-10.04 -reg
-Date: Mon, 10 May 2010 09:37:54 +0800
-Message-ID: <E63C5DDBF9FA424AB501A4C5647901434C1CBD3974@pgsmsx506.gar.corp.intel.com>
-In-Reply-To: <COL106-W45938FF91C5687A044DD75F6F60@phx.gbl>
+From: krishna k <id_kishore@live.in>
+Date: Mon, 10 May 2010 10:52:08 +0530
+Message-ID: <COL106-W364D8C11A4928E5B0ADA04F6F90@phx.gbl>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8319780078438828902==
+--===============1588173971214312865==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Krishna,
 
-As you might know, phonesim is emulator. it acts like modem.
-(you don't need real modem to use phonesim)
-So you need to power up the modem(phonesim) to use it.
+Hi Yoon,
+
+Thank very much for your guidance. I followed the same procedure ...
 
 You already did following procedure.
 1. ofono-phonesim -p 12345 -gui ~/data/moblin.xml
@@ -27,43 +24,64 @@ You already did following procedure.
 And then, you need to type following command to power up modem(phonesim).
 3. dbus-send --system --print-reply --dest=3Dorg.ofono / phonesim0 org.ofon=
 o.Modem.SetProperty string:Powered variant:boolean:true
+I got below response....
 
-Thanks,
-Yoon
+Must use org.mydomain.Interface.Method notation, no dot in "phonesim0"
 
-From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
-f Of krishna k
-Sent: Friday, May 07, 2010 10:07 PM
-To: ofono(a)ofono.org
-Subject: FW: How to start ofono-phonesim in ubuntu-10.04 -reg
+Please see the ps ax | grep ofono*
+---------------------------------------------------------------------------=
+----------------------------------------------
+ 1609 pts/0    S+     0:00 ofono-phonesim -p 12345 -gui /home/kandukis/data=
+/moblin.xml
+ 1654 pts/2    S+     0:00 ofonod -nd
+---------------------------------------------------------------------------=
+---------------------------------------------
 
-Hi Andrew,
+Can you please suggest  how to get-rid from this problem.
 
-Thank you very much. I am not using real modem. I am using E71. If i want t=
-o use =
-
-Phonesim emulator with gui (With out connecting E71). Can you please suggest
-how to proceed? Am I need to connect with Real Modem? If it is the case can
-you please suggest what are the modem types supported by ofono-phonesim emu=
-lator.
+regards,
+Krishna K Kandula
 
 
-Thanks and Regards,
-Krishna K Kandula.
+ 		 	   		  =
 
-You're talking about two things here: using a real modem, and using
-phonesim.  Phonesim emulates a modem, so you don't need the E71.  Or
-you can use the E71 (like you did) and then you don't need phonesim
-and no gui.
- =
+_________________________________________________________________
+South Cinema This Decade
+http://entertainment.in.msn.com/southcinemathisdecade/
 
-Best regards,
-Andrew
- =
+--===============1588173971214312865==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-
-________________________________________
-Catch the changing security environment Get it now.
-
---===============8319780078438828902==--
+PGh0bWw+CjxoZWFkPgo8c3R5bGU+PCEtLQouaG1tZXNzYWdlIFAKewptYXJnaW46MHB4OwpwYWRk
+aW5nOjBweAp9CmJvZHkuaG1tZXNzYWdlCnsKZm9udC1zaXplOiAxMHB0Owpmb250LWZhbWlseTpW
+ZXJkYW5hCn0KLS0+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBjbGFzcz0naG1tZXNzYWdlJz4KSGkg
+WW9vbiw8YnI+PGJyPlRoYW5rIHZlcnkgbXVjaCBmb3IgeW91ciBndWlkYW5jZS4gSSBmb2xsb3dl
+ZCB0aGUgc2FtZSBwcm9jZWR1cmUgLi4uPGJyPjxicj48cHJlPllvdSBhbHJlYWR5IGRpZCBmb2xs
+b3dpbmcgcHJvY2VkdXJlLjxicj4xLiBvZm9uby1waG9uZXNpbSAtcCAxMjM0NSAtZ3VpIH4vZGF0
+YS9tb2JsaW4ueG1sPGJyPjIuIHN1ZG8gb2Zvbm9kIC1uZCA8YnI+PGJyPkFuZCB0aGVuLCB5b3Ug
+bmVlZCB0byB0eXBlIGZvbGxvd2luZyBjb21tYW5kIHRvIHBvd2VyIHVwIG1vZGVtKHBob25lc2lt
+KS48YnI+My4gZGJ1cy1zZW5kIC0tc3lzdGVtIC0tcHJpbnQtcmVwbHkgLS1kZXN0PW9yZy5vZm9u
+byAvIHBob25lc2ltMCBvcmcub2Zvbm8uTW9kZW0uU2V0UHJvcGVydHkgc3RyaW5nOlBvd2VyZWQg
+dmFyaWFudDpib29sZWFuOnRydWU8YnI+PC9wcmU+SSBnb3QgYmVsb3cgcmVzcG9uc2UuLi4uPGJy
+Pjxicj48Zm9udCBzdHlsZT0iIiBjb2xvcj0iI2MwMDAwMCI+PGI+TXVzdCB1c2Ugb3JnLm15ZG9t
+YWluLkludGVyZmFjZS5NZXRob2Qgbm90YXRpb24sIG5vIGRvdCBpbiAicGhvbmVzaW0wIjwvYj48
+L2ZvbnQ+PGJyPjxicj5QbGVhc2Ugc2VlIHRoZSBwcyBheCB8IGdyZXAgb2Zvbm8qPGJyPjxiPi0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS08L2I+PGJyPiZuYnNwOzE2MDkgcHRzLzAmbmJzcDsmbmJzcDsmbmJzcDsgUysmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsgMDowMCA8Yj5vZm9uby1waG9uZXNpbTwvYj4gLXAgMTIzNDUgLWd1
+aSAvaG9tZS9rYW5kdWtpcy9kYXRhL21vYmxpbi54bWw8YnI+Jm5ic3A7MTY1NCBwdHMvMiZuYnNw
+OyZuYnNwOyZuYnNwOyBTKyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyAwOjAwIDxiPm9mb25vZDwv
+Yj4gLW5kPGJyPjxiPi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLTwvYj48YnI+PGJyPkNhbiB5b3UgcGxlYXNlIHN1Z2dlc3QmbmJz
+cDsgaG93IHRvIGdldC1yaWQgZnJvbSB0aGlzIHByb2JsZW0uPGJyPjxicj5yZWdhcmRzLDxicj5L
+cmlzaG5hIEsgS2FuZHVsYTxicj48YnI+PGJyPiAJCSAJICAgCQkgIDxiciAvPjxociAvPlRoZSBs
+YXRlc3QgYXV0byBsYXVuY2hlcyBhbmQgdGVzdCBkcml2ZXMgPGEgaHJlZj0naHR0cDovL2F1dG9z
+LmluLm1zbi5jb20vJyB0YXJnZXQ9J19uZXcnPkRyYWcgbicgZHJvcDwvYT48L2JvZHk+CjwvaHRt
+bD4=
+--===============1588173971214312865==--
 
