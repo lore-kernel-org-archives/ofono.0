@@ -1,163 +1,145 @@
-Content-Type: multipart/mixed; boundary="===============4981188655284520101=="
+Content-Type: multipart/mixed; boundary="===============3872689426547438821=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/6] Add mbmmodem STK driver.
-Date: Mon, 10 May 2010 15:00:15 -0500
-Message-ID: <201005101500.15529.denkenz@gmail.com>
-In-Reply-To: <1273192047-11247-1-git-send-email-andrew.zaborowski@intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH] ppp: set address and control field
+Date: Mon, 10 May 2010 13:06:37 -0700
+Message-ID: <1273521997-7356-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4981188655284520101==
+--===============3872689426547438821==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Before sending to hdlc, set the address and control field.
+Fix hardcode of ppp header size.
+---
+ gatchat/gatppp.c   |    9 +++++++--
+ gatchat/ppp.h      |    4 ++++
+ gatchat/ppp_auth.c |    2 +-
+ gatchat/ppp_cp.c   |    6 ++----
+ gatchat/ppp_net.c  |    3 ++-
+ 5 files changed, 16 insertions(+), 8 deletions(-)
 
-> Tested with a F3607gw data card.
-> ---
->  Makefile.am                 |    3 +-
->  drivers/mbmmodem/mbmmodem.c |    2 +
->  drivers/mbmmodem/mbmmodem.h |    3 +
->  drivers/mbmmodem/stk.c      |  254
->  +++++++++++++++++++++++++++++++++++++++++++ plugins/mbm.c               =
-| =
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index 70669b0..c4f59f2 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -148,7 +148,8 @@ static void ppp_receive(const unsigned char *buf, gsize=
+ len, void *data)
+  */
+ void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint infolen)
+ {
+-	guint16 proto =3D get_host_short(packet);
++	struct ppp_header *header =3D (struct ppp_header *) packet;
++	guint16 proto =3D ppp_proto(packet);
+ 	guint8 code;
+ 	gboolean lcp =3D (proto =3D=3D LCP_PROTOCOL);
+ 	guint32 xmit_accm =3D 0;
+@@ -167,7 +168,11 @@ void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint i=
+nfolen)
+ 		g_at_hdlc_set_xmit_accm(ppp->hdlc, ~0U);
+ 	}
+ =
 
->   45 +++++++-
->  5 files changed, 302 insertions(+), 5 deletions(-)
->  create mode 100644 drivers/mbmmodem/stk.c
-> =
+-	if (g_at_hdlc_send(ppp->hdlc, packet, infolen + 2) =3D=3D FALSE)
++	header->address =3D PPP_ADDR_FIELD;
++	header->control =3D PPP_CTRL;
++
++	if (g_at_hdlc_send(ppp->hdlc, packet,
++			infolen + sizeof(*header)) =3D=3D FALSE)
+ 		g_print("Failed to send a frame\n");
+ =
 
-> diff --git a/plugins/mbm.c b/plugins/mbm.c
-> index 53bd7ae..199aa17 100644
-> --- a/plugins/mbm.c
-> +++ b/plugins/mbm.c
-> @@ -37,6 +37,7 @@
->  #include <ofono/devinfo.h>
->  #include <ofono/netreg.h>
->  #include <ofono/sim.h>
-> +#include <ofono/stk.h>
->  #include <ofono/sms.h>
->  #include <ofono/cbs.h>
->  #include <ofono/ssn.h>
-> @@ -54,11 +55,13 @@
->  #include <drivers/atmodem/vendor.h>
-> =
+ 	if (lcp)
+diff --git a/gatchat/ppp.h b/gatchat/ppp.h
+index 41cf50a..e872496 100644
+--- a/gatchat/ppp.h
++++ b/gatchat/ppp.h
+@@ -26,11 +26,15 @@
+ #define IPCP_PROTO	0x8021
+ #define PPP_IP_PROTO	0x0021
+ #define MD5		5
++#define PPP_ADDR_FIELD	0xff
++#define PPP_CTRL	0x03
+ =
 
->  static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
-> +static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
->  static const char *none_prefix[] =3D { NULL };
-> =
+ struct ppp_chap;
+ struct ppp_net;
+ =
 
->  struct mbm_data {
->  	GAtChat *modem_port;
->  	GAtChat *data_port;
-> +	gboolean have_sim;
->  };
-> =
+ struct ppp_header {
++	guint8 address;
++	guint8 control;
+ 	guint16 proto;
+ 	guint8 info[0];
+ } __attribute__((packed));
+diff --git a/gatchat/ppp_auth.c b/gatchat/ppp_auth.c
+index 6e55297..eae5d17 100644
+--- a/gatchat/ppp_auth.c
++++ b/gatchat/ppp_auth.c
+@@ -83,7 +83,7 @@ static void chap_process_challenge(struct ppp_chap *chap,=
+ const guint8 *packet)
+ 	 */
+ 	digest_len =3D g_checksum_type_get_length(chap->method);
+ 	response_length =3D digest_len + sizeof(*header) + 1;
+-	ppp_packet =3D g_try_malloc0(response_length + 2);
++	ppp_packet =3D g_try_malloc0(response_length + sizeof(struct ppp_header));
+ 	if (!ppp_packet)
+ 		goto challenge_out;
+ =
 
->  static int mbm_probe(struct ofono_modem *modem)
-> @@ -96,18 +99,51 @@ static void mbm_debug(const char *str, void *user_dat=
-a)
->  	ofono_info("%s %s", prefix, str);
->  }
-> =
+diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
+index 00acb73..e152f6e 100644
+--- a/gatchat/ppp_cp.c
++++ b/gatchat/ppp_cp.c
+@@ -61,10 +61,8 @@ static const char *pppcp_event_strings[] =3D {
+ 	g_free(str); \
+ } while (0);
+ =
 
-> -static void cfun_enable(gboolean ok, GAtResult *result, gpointer
->  user_data) +static void status_check(gboolean ok, GAtResult *result,
->  gpointer user_data) {
->  	struct ofono_modem *modem =3D user_data;
-> +	struct mbm_data *data =3D ofono_modem_get_data(modem);
-> +	GAtResultIter iter;
-> +	gint sw[2];
-> =
+-#define PPP_HEADROOM	2
+-
+ #define pppcp_to_ppp_packet(p) \
+-	(((guint8 *) p) - PPP_HEADROOM)
++	(((guint8 *) p) - sizeof(struct ppp_header))
+ =
 
->  	DBG("");
-> =
+ #define INITIAL_RESTART_TIMEOUT	3	/* restart interval in seconds */
+ #define MAX_TERMINATE		2
+@@ -206,7 +204,7 @@ static struct pppcp_packet *pppcp_packet_new(struct ppp=
+cp_data *data,
+ 	struct ppp_header *ppp_packet;
+ 	guint16 packet_length =3D bufferlen + sizeof(*packet);
+ =
 
->  	if (!ok)
-> -		ofono_modem_set_powered(modem, FALSE);
-> +		goto poweron;
-> +
-> +	/* Modem fakes a 94 04 response from card (File Id not found /
-> +	 * Pattern not found) when there's no card in the slot.
-> +	 */
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	if (!g_at_result_iter_next(&iter, "+CRSM:"))
-> +		goto poweron;
-> +
-> +	g_at_result_iter_next_number(&iter, &sw[0]);
-> +	g_at_result_iter_next_number(&iter, &sw[1]);
-> =
+-	ppp_packet =3D g_try_malloc0(packet_length + 2);
++	ppp_packet =3D g_try_malloc0(packet_length + sizeof(*ppp_packet));
+ 	if (!ppp_packet)
+ 		return NULL;
+ =
 
-> +	data->have_sim =3D sw[0] !=3D 0x94 || sw[1] !=3D 0x04;
-> +
-> +poweron:
->  	ofono_modem_set_powered(modem, TRUE);
->  }
-> =
+diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
+index afebf58..4e45ef1 100644
+--- a/gatchat/ppp_net.c
++++ b/gatchat/ppp_net.c
+@@ -105,7 +105,8 @@ static gboolean ppp_net_callback(GIOChannel *channel, G=
+IOCondition cond,
+ =
 
+ 	if (cond & G_IO_IN) {
+ 		/* leave space to add PPP protocol field */
+-		status =3D g_io_channel_read_chars(channel, buf + 2, net->mtu,
++		status =3D g_io_channel_read_chars(channel,
++				buf + sizeof(struct ppp_header), net->mtu,
+ 				&bytes_read, &error);
+ 		if (bytes_read > 0) {
+ 			ppp->proto =3D htons(PPP_IP_PROTO);
+-- =
 
-This has to do with SIM inserted / removed detection.  Can you send this as=
- a =
-
-separate patch from the STK driver?
-
-> +static void cfun_enable(gboolean ok, GAtResult *result, gpointer
->  user_data) +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct mbm_data *data =3D ofono_modem_get_data(modem);
-> +
-> +	DBG("");
-> +
-> +	if (!ok) {
-> +		ofono_modem_set_powered(modem, FALSE);
-> +		return;
-> +	}
-> +
-> +	g_at_chat_send(data->modem_port, "AT+CRSM=3D242", crsm_prefix,
-> +			status_check, modem);
-> +}
-> +
->  static void cfun_query(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
->  {
->  	struct ofono_modem *modem =3D user_data;
-> @@ -133,7 +169,7 @@ static void cfun_query(gboolean ok, GAtResult *result,
->  gpointer user_data) return;
->  	}
-> =
-
-> -	ofono_modem_set_powered(modem, TRUE);
-> +	cfun_enable(TRUE, NULL, modem);
->  }
-> =
-
->  static void emrdy_notifier(GAtResult *result, gpointer user_data)
-> @@ -290,8 +326,9 @@ static void mbm_pre_sim(struct ofono_modem *modem)
->  	ofono_devinfo_create(modem, 0, "atmodem", data->modem_port);
->  	sim =3D ofono_sim_create(modem, 0, "atmodem", data->modem_port);
->  	ofono_voicecall_create(modem, 0, "atmodem", data->modem_port);
-> +	ofono_stk_create(modem, 0, "mbmmodem", data->modem_port);
-
-This part is actually related to STK support in this driver.  Please break =
-it =
-
-out into a separate patch as well.
-
-> =
-
-> -	if (sim)
-> +	if (data->have_sim && sim)
->  		ofono_sim_inserted_notify(sim, TRUE);
->  }
-> =
+1.6.6.1
 
 
-Regards,
--Denis
-
---===============4981188655284520101==--
+--===============3872689426547438821==--
 
