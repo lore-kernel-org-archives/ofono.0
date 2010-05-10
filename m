@@ -1,92 +1,163 @@
-Content-Type: multipart/mixed; boundary="===============8728943281112398789=="
+Content-Type: multipart/mixed; boundary="===============4981188655284520101=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 2/6] gatchat: Add g_at_chat_send_full.
-Date: Mon, 10 May 2010 14:13:09 -0500
-Message-ID: <201005101413.09271.denkenz@gmail.com>
-In-Reply-To: <1273192031-11189-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 5/6] Add mbmmodem STK driver.
+Date: Mon, 10 May 2010 15:00:15 -0500
+Message-ID: <201005101500.15529.denkenz@gmail.com>
+In-Reply-To: <1273192047-11247-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8728943281112398789==
+--===============4981188655284520101==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andrew,
 
-> g_at_chat_send_full takes two additional parameters compared to
-> g_at_chat_send.  The destroy notification is removed from
-> g_at_chat_send and users updated.
+> Tested with a F3607gw data card.
 > ---
+>  Makefile.am                 |    3 +-
+>  drivers/mbmmodem/mbmmodem.c |    2 +
+>  drivers/mbmmodem/mbmmodem.h |    3 +
+>  drivers/mbmmodem/stk.c      |  254
+>  +++++++++++++++++++++++++++++++++++++++++++ plugins/mbm.c               =
+| =
 
-You stated earlier that the modem will return an error and not time out.  I=
-f =
+>   45 +++++++-
+>  5 files changed, 302 insertions(+), 5 deletions(-)
+>  create mode 100644 drivers/mbmmodem/stk.c
+> =
 
-this is the case then I'm really failing to see the point of needing the =
+> diff --git a/plugins/mbm.c b/plugins/mbm.c
+> index 53bd7ae..199aa17 100644
+> --- a/plugins/mbm.c
+> +++ b/plugins/mbm.c
+> @@ -37,6 +37,7 @@
+>  #include <ofono/devinfo.h>
+>  #include <ofono/netreg.h>
+>  #include <ofono/sim.h>
+> +#include <ofono/stk.h>
+>  #include <ofono/sms.h>
+>  #include <ofono/cbs.h>
+>  #include <ofono/ssn.h>
+> @@ -54,11 +55,13 @@
+>  #include <drivers/atmodem/vendor.h>
+> =
 
-submit callback.  Perhaps we should simply drop this for now and assume tha=
-t =
+>  static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
+> +static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
+>  static const char *none_prefix[] =3D { NULL };
+> =
 
-all modems will return an error and not time out.
+>  struct mbm_data {
+>  	GAtChat *modem_port;
+>  	GAtChat *data_port;
+> +	gboolean have_sim;
+>  };
+> =
 
->  drivers/atmodem/call-barring.c          |    6 +-
->  drivers/atmodem/call-forwarding.c       |    4 +-
->  drivers/atmodem/call-meter.c            |   19 ++++----
->  drivers/atmodem/call-settings.c         |   12 +++---
->  drivers/atmodem/call-volume.c           |   13 ++----
->  drivers/atmodem/cbs.c                   |    8 ++--
->  drivers/atmodem/devinfo.c               |    8 ++--
->  drivers/atmodem/gprs-context.c          |    6 +-
->  drivers/atmodem/gprs.c                  |   16 ++++----
->  drivers/atmodem/network-registration.c  |   70
->  +++++++++++++----------------- drivers/atmodem/phonebook.c             |=
-  =
+>  static int mbm_probe(struct ofono_modem *modem)
+> @@ -96,18 +99,51 @@ static void mbm_debug(const char *str, void *user_dat=
+a)
+>  	ofono_info("%s %s", prefix, str);
+>  }
+> =
 
->  16 ++++----
->  drivers/atmodem/sim-poll.c              |    5 +-
->  drivers/atmodem/sim.c                   |   26 ++++++------
->  drivers/atmodem/sms.c                   |   52 ++++++++++-------------
->  drivers/atmodem/ssn.c                   |    2 +-
->  drivers/atmodem/stk.c                   |    9 ++--
->  drivers/atmodem/ussd.c                  |    6 +-
->  drivers/atmodem/voicecall.c             |   35 +++++++---------
->  drivers/calypsomodem/voicecall.c        |    7 +--
->  drivers/hfpmodem/call-volume.c          |    4 +-
->  drivers/hfpmodem/network-registration.c |   13 +++---
->  drivers/hfpmodem/voicecall.c            |   27 ++++++------
->  drivers/hsomodem/gprs-context.c         |   11 ++---
->  drivers/mbmmodem/gprs-context.c         |   20 ++++----
->  drivers/stemodem/gprs-context.c         |   10 ++--
->  drivers/stemodem/voicecall.c            |   10 ++--
->  gatchat/gatchat.c                       |   45 ++++++++++++++------
->  gatchat/gatchat.h                       |   23 +++++++++-
->  gatchat/gatmux.c                        |    4 +-
->  gatchat/gsmdial.c                       |   31 ++++++--------
->  plugins/calypso.c                       |   17 +++----
->  plugins/em770.c                         |    8 +--
->  plugins/g1.c                            |    6 +-
->  plugins/hfp.c                           |   14 +++----
->  plugins/hso.c                           |    8 ++--
->  plugins/huawei.c                        |    8 +--
->  plugins/mbm.c                           |   12 +++---
->  plugins/novatel.c                       |    6 +--
->  plugins/palmpre.c                       |    8 +--
->  plugins/phonesim.c                      |   10 ++---
->  plugins/ste.c                           |    7 +--
->  unit/test-caif.c                        |    2 +-
->  unit/test-mux.c                         |   18 ++++----
->  43 files changed, 313 insertions(+), 329 deletions(-)
+> -static void cfun_enable(gboolean ok, GAtResult *result, gpointer
+>  user_data) +static void status_check(gboolean ok, GAtResult *result,
+>  gpointer user_data) {
+>  	struct ofono_modem *modem =3D user_data;
+> +	struct mbm_data *data =3D ofono_modem_get_data(modem);
+> +	GAtResultIter iter;
+> +	gint sw[2];
+> =
 
-Please separate these patches into:
-- core GAtChat changes
-- GAtChat utilities changes
-- plugins changes
-- drivers changes
-- unit test changes
+>  	DBG("");
+> =
+
+>  	if (!ok)
+> -		ofono_modem_set_powered(modem, FALSE);
+> +		goto poweron;
+> +
+> +	/* Modem fakes a 94 04 response from card (File Id not found /
+> +	 * Pattern not found) when there's no card in the slot.
+> +	 */
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (!g_at_result_iter_next(&iter, "+CRSM:"))
+> +		goto poweron;
+> +
+> +	g_at_result_iter_next_number(&iter, &sw[0]);
+> +	g_at_result_iter_next_number(&iter, &sw[1]);
+> =
+
+> +	data->have_sim =3D sw[0] !=3D 0x94 || sw[1] !=3D 0x04;
+> +
+> +poweron:
+>  	ofono_modem_set_powered(modem, TRUE);
+>  }
+> =
+
+
+This has to do with SIM inserted / removed detection.  Can you send this as=
+ a =
+
+separate patch from the STK driver?
+
+> +static void cfun_enable(gboolean ok, GAtResult *result, gpointer
+>  user_data) +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct mbm_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("");
+> +
+> +	if (!ok) {
+> +		ofono_modem_set_powered(modem, FALSE);
+> +		return;
+> +	}
+> +
+> +	g_at_chat_send(data->modem_port, "AT+CRSM=3D242", crsm_prefix,
+> +			status_check, modem);
+> +}
+> +
+>  static void cfun_query(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+>  {
+>  	struct ofono_modem *modem =3D user_data;
+> @@ -133,7 +169,7 @@ static void cfun_query(gboolean ok, GAtResult *result,
+>  gpointer user_data) return;
+>  	}
+> =
+
+> -	ofono_modem_set_powered(modem, TRUE);
+> +	cfun_enable(TRUE, NULL, modem);
+>  }
+> =
+
+>  static void emrdy_notifier(GAtResult *result, gpointer user_data)
+> @@ -290,8 +326,9 @@ static void mbm_pre_sim(struct ofono_modem *modem)
+>  	ofono_devinfo_create(modem, 0, "atmodem", data->modem_port);
+>  	sim =3D ofono_sim_create(modem, 0, "atmodem", data->modem_port);
+>  	ofono_voicecall_create(modem, 0, "atmodem", data->modem_port);
+> +	ofono_stk_create(modem, 0, "mbmmodem", data->modem_port);
+
+This part is actually related to STK support in this driver.  Please break =
+it =
+
+out into a separate patch as well.
+
+> =
+
+> -	if (sim)
+> +	if (data->have_sim && sim)
+>  		ofono_sim_inserted_notify(sim, TRUE);
+>  }
+> =
+
 
 Regards,
 -Denis
 
---===============8728943281112398789==--
+--===============4981188655284520101==--
 
