@@ -1,65 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============6387924810206085620=="
+Content-Type: multipart/mixed; boundary="===============9212934454840169746=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 3/3] gsmdial: use g_at_ppp_new_from_io()
-Date: Mon, 10 May 2010 11:39:43 -0700
-Message-ID: <1273516783-5132-4-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH 2/3] gatchat: implement g_at_chat_get_io()
+Date: Mon, 10 May 2010 11:39:42 -0700
+Message-ID: <1273516783-5132-3-git-send-email-kristen@linux.intel.com>
 In-Reply-To: <1273516783-5132-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6387924810206085620==
+--===============9212934454840169746==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gsmdial.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+ gatchat/gatchat.c |    8 ++++++++
+ gatchat/gatchat.h |    2 ++
+ 2 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index fd9b73b..cfdec87 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -241,7 +241,7 @@ static void ppp_disconnect(GAtPPPDisconnectReason reaso=
-n, gpointer user_data)
+diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
+index f94605f..3f238a2 100644
+--- a/gatchat/gatchat.c
++++ b/gatchat/gatchat.c
+@@ -876,6 +876,14 @@ GIOChannel *g_at_chat_get_channel(GAtChat *chat)
+ 	return g_at_io_get_channel(chat->io);
+ }
  =
 
- static void connect_cb(gboolean ok, GAtResult *result, gpointer user_data)
++GAtIO *g_at_chat_get_io(GAtChat *chat)
++{
++	if (chat =3D=3D NULL)
++		return NULL;
++
++	return chat->io;
++}
++
+ GAtChat *g_at_chat_ref(GAtChat *chat)
  {
--	GIOChannel *channel;
-+	GAtIO *io;
+ 	if (chat =3D=3D NULL)
+diff --git a/gatchat/gatchat.h b/gatchat/gatchat.h
+index ea6626e..9fd7ced 100644
+--- a/gatchat/gatchat.h
++++ b/gatchat/gatchat.h
+@@ -29,6 +29,7 @@ extern "C" {
+ #include "gatresult.h"
+ #include "gatsyntax.h"
+ #include "gatutil.h"
++#include "gatio.h"
  =
 
- 	if (!ok) {
- 		g_print("Unable to define context\n");
-@@ -249,7 +249,7 @@ static void connect_cb(gboolean ok, GAtResult *result, =
-gpointer user_data)
- 	}
+ struct _GAtChat;
  =
 
- 	/* get the data IO channel */
--	channel =3D g_at_chat_get_channel(modem);
-+	io =3D g_at_chat_get_io(modem);
+@@ -42,6 +43,7 @@ GAtChat *g_at_chat_new(GIOChannel *channel, GAtSyntax *sy=
+ntax);
+ GAtChat *g_at_chat_new_blocking(GIOChannel *channel, GAtSyntax *syntax);
  =
 
- 	/*
- 	 * shutdown gatchat or else it tries to take all the input
-@@ -259,7 +259,7 @@ static void connect_cb(gboolean ok, GAtResult *result, =
-gpointer user_data)
- 	g_at_chat_suspend(modem);
+ GIOChannel *g_at_chat_get_channel(GAtChat *chat);
++GAtIO *g_at_chat_get_io(GAtChat *chat);
  =
 
- 	/* open ppp */
--	ppp =3D g_at_ppp_new(channel);
-+	ppp =3D g_at_ppp_new_from_io(io);
- 	if (!ppp) {
- 		g_print("Unable to create PPP object\n");
- 		exit(1);
+ GAtChat *g_at_chat_ref(GAtChat *chat);
+ void g_at_chat_unref(GAtChat *chat);
 -- =
 
 1.6.6.1
 
 
---===============6387924810206085620==--
+--===============9212934454840169746==--
 
