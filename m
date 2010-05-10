@@ -1,53 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============6142062854641129774=="
+Content-Type: multipart/mixed; boundary="===============8728943281112398789=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH] ppp: transition to dead when lcp finished
-Date: Mon, 10 May 2010 12:12:45 -0700
-Message-ID: <1273518765-6177-1-git-send-email-kristen@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 2/6] gatchat: Add g_at_chat_send_full.
+Date: Mon, 10 May 2010 14:13:09 -0500
+Message-ID: <201005101413.09271.denkenz@gmail.com>
+In-Reply-To: <1273192031-11189-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6142062854641129774==
+--===============8728943281112398789==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Transition to DEAD when lcp is finished and ignore any io
-disconnects if we are already dead.
----
- gatchat/gatppp.c |    5 ++++-
- 1 files changed, 4 insertions(+), 1 deletions(-)
+Hi Andrew,
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index 70669b0..cb2fef9 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -290,7 +290,7 @@ void ppp_lcp_down_notify(GAtPPP *ppp)
- =
+> g_at_chat_send_full takes two additional parameters compared to
+> g_at_chat_send.  The destroy notification is removed from
+> g_at_chat_send and users updated.
+> ---
 
- void ppp_lcp_finished_notify(GAtPPP *ppp)
- {
--	ppp_dead(ppp);
-+	ppp_enter_phase(ppp, PPP_PHASE_DEAD);
- }
- =
+You stated earlier that the modem will return an error and not time out.  I=
+f =
 
- void ppp_set_recv_accm(GAtPPP *ppp, guint32 accm)
-@@ -318,6 +318,9 @@ static void io_disconnect(gpointer user_data)
- {
- 	GAtPPP *ppp =3D user_data;
- =
+this is the case then I'm really failing to see the point of needing the =
 
-+	if (ppp->phase =3D=3D PPP_PHASE_DEAD)
-+		return;
-+
- 	ppp->disconnect_reason =3D G_AT_PPP_REASON_LINK_DEAD;
- 	pppcp_signal_down(ppp->lcp);
- 	pppcp_signal_close(ppp->lcp);
--- =
+submit callback.  Perhaps we should simply drop this for now and assume tha=
+t =
 
-1.6.6.1
+all modems will return an error and not time out.
 
+>  drivers/atmodem/call-barring.c          |    6 +-
+>  drivers/atmodem/call-forwarding.c       |    4 +-
+>  drivers/atmodem/call-meter.c            |   19 ++++----
+>  drivers/atmodem/call-settings.c         |   12 +++---
+>  drivers/atmodem/call-volume.c           |   13 ++----
+>  drivers/atmodem/cbs.c                   |    8 ++--
+>  drivers/atmodem/devinfo.c               |    8 ++--
+>  drivers/atmodem/gprs-context.c          |    6 +-
+>  drivers/atmodem/gprs.c                  |   16 ++++----
+>  drivers/atmodem/network-registration.c  |   70
+>  +++++++++++++----------------- drivers/atmodem/phonebook.c             |=
+  =
 
---===============6142062854641129774==--
+>  16 ++++----
+>  drivers/atmodem/sim-poll.c              |    5 +-
+>  drivers/atmodem/sim.c                   |   26 ++++++------
+>  drivers/atmodem/sms.c                   |   52 ++++++++++-------------
+>  drivers/atmodem/ssn.c                   |    2 +-
+>  drivers/atmodem/stk.c                   |    9 ++--
+>  drivers/atmodem/ussd.c                  |    6 +-
+>  drivers/atmodem/voicecall.c             |   35 +++++++---------
+>  drivers/calypsomodem/voicecall.c        |    7 +--
+>  drivers/hfpmodem/call-volume.c          |    4 +-
+>  drivers/hfpmodem/network-registration.c |   13 +++---
+>  drivers/hfpmodem/voicecall.c            |   27 ++++++------
+>  drivers/hsomodem/gprs-context.c         |   11 ++---
+>  drivers/mbmmodem/gprs-context.c         |   20 ++++----
+>  drivers/stemodem/gprs-context.c         |   10 ++--
+>  drivers/stemodem/voicecall.c            |   10 ++--
+>  gatchat/gatchat.c                       |   45 ++++++++++++++------
+>  gatchat/gatchat.h                       |   23 +++++++++-
+>  gatchat/gatmux.c                        |    4 +-
+>  gatchat/gsmdial.c                       |   31 ++++++--------
+>  plugins/calypso.c                       |   17 +++----
+>  plugins/em770.c                         |    8 +--
+>  plugins/g1.c                            |    6 +-
+>  plugins/hfp.c                           |   14 +++----
+>  plugins/hso.c                           |    8 ++--
+>  plugins/huawei.c                        |    8 +--
+>  plugins/mbm.c                           |   12 +++---
+>  plugins/novatel.c                       |    6 +--
+>  plugins/palmpre.c                       |    8 +--
+>  plugins/phonesim.c                      |   10 ++---
+>  plugins/ste.c                           |    7 +--
+>  unit/test-caif.c                        |    2 +-
+>  unit/test-mux.c                         |   18 ++++----
+>  43 files changed, 313 insertions(+), 329 deletions(-)
+
+Please separate these patches into:
+- core GAtChat changes
+- GAtChat utilities changes
+- plugins changes
+- drivers changes
+- unit test changes
+
+Regards,
+-Denis
+
+--===============8728943281112398789==--
 
