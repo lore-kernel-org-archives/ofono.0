@@ -1,88 +1,104 @@
-Content-Type: multipart/mixed; boundary="===============6152402571576977806=="
+Content-Type: multipart/mixed; boundary="===============5243448561039203704=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 09/19] stkutil: Add poll interval proactive command parser
-Date: Mon, 10 May 2010 18:38:52 +0800
-Message-ID: <1273487942-27213-9-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 06/19] Replace check_text with check_common_text
+Date: Mon, 10 May 2010 18:38:49 +0800
+Message-ID: <1273487942-27213-6-git-send-email-yang.gu@intel.com>
 In-Reply-To: <1273487942-27213-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6152402571576977806==
+--===============5243448561039203704==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   27 +++++++++++++++++++++++++++
- src/stkutil.h |    1 +
- 2 files changed, 28 insertions(+), 0 deletions(-)
+ unit/test-stkutil.c |   31 +++++++++++++++----------------
+ 1 files changed, 15 insertions(+), 16 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 44cef10..2074d19 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -2230,6 +2230,30 @@ static gboolean parse_play_tone(struct stk_command *=
+diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
+index e1f6a3e..11b088b 100644
+--- a/unit/test-stkutil.c
++++ b/unit/test-stkutil.c
+@@ -52,6 +52,17 @@ static inline void check_common_bool(const ofono_bool_t =
 command,
- 	return TRUE;
+ 	g_assert(command =3D=3D test);
  }
  =
 
-+static gboolean parse_poll_interval(struct stk_command *command,
-+					struct comprehension_tlv_iter *iter)
++static inline void check_common_text(const char *command, const char *test)
 +{
-+	gboolean ret;
++	if (test =3D=3D NULL) {
++		g_assert(command =3D=3D NULL);
++		return;
++	}
 +
-+	if (command->src !=3D STK_DEVICE_IDENTITY_TYPE_UICC)
-+		return FALSE;
-+
-+	if (command->dst !=3D STK_DEVICE_IDENTITY_TYPE_TERMINAL)
-+		return FALSE;
-+
-+	ret =3D parse_dataobj(iter, STK_DATA_OBJECT_TYPE_DURATION,
-+				DATAOBJ_FLAG_MANDATORY | DATAOBJ_FLAG_MINIMUM,
-+				&command->duration,
-+				STK_DATA_OBJECT_TYPE_INVALID);
-+
-+	if (ret =3D=3D FALSE)
-+		return FALSE;
-+
-+	command->destructor =3D NULL;
-+
-+	return TRUE;
++	g_assert(command !=3D NULL);
++	g_assert(g_str_equal(command, test));
 +}
 +
- static void destroy_send_sms(struct stk_command *command)
- {
- 	g_free(command->send_sms.alpha_id);
-@@ -2350,6 +2374,9 @@ struct stk_command *stk_command_new_from_pdu(const un=
-signed char *pdu,
- 	case STK_COMMAND_TYPE_PLAY_TONE:
- 		ok =3D parse_play_tone(command, &iter);
- 		break;
-+	case STK_COMMAND_TYPE_POLL_INTERVAL:
-+		ok =3D parse_poll_interval(command, &iter);
-+		break;
- 	case STK_COMMAND_TYPE_SEND_SMS:
- 		ok =3D parse_send_sms(command, &iter);
- 		break;
-diff --git a/src/stkutil.h b/src/stkutil.h
-index 00c001b..dc25f99 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -841,6 +841,7 @@ struct stk_command {
- 	enum stk_device_identity_type dst;
+ /* Defined in TS 102.223 Section 8.8 */
+ static void check_duration(const struct stk_duration *command,
+ 					const struct stk_duration *test)
+@@ -68,18 +79,6 @@ static void check_response_length(const struct stk_respo=
+nse_length *command,
+ 	g_assert(command->max =3D=3D test->max);
+ }
  =
 
- 	union {
-+		struct stk_duration duration;
- 		struct stk_command_display_text display_text;
- 		struct stk_command_get_inkey get_inkey;
- 		struct stk_command_get_input get_input;
+-/* Defined in TS 102.223 Section 8.15 */
+-static inline void check_text(const char *command, const char *test)
+-{
+-	if (test =3D=3D NULL) {
+-		g_assert(command =3D=3D NULL);
+-		return;
+-	}
+-
+-	g_assert(command !=3D NULL);
+-	g_assert(g_str_equal(command, test));
+-}
+-
+ /* Defined in TS 102.223 Section 8.31 */
+ static void check_icon_id(const struct stk_icon_id *command,
+ 					const struct stk_icon_id *test)
+@@ -347,7 +346,7 @@ static void test_display_text(gconstpointer data)
+ 	g_assert(command->dst =3D=3D STK_DEVICE_IDENTITY_TYPE_DISPLAY);
+ =
+
+ 	g_assert(command->display_text.text);
+-	check_text(command->display_text.text, test->text);
++	check_common_text(command->display_text.text, test->text);
+ 	check_icon_id(&command->display_text.icon_id, &test->icon_id);
+ 	check_common_bool(command->display_text.immediate_response,
+ 						test->immediate_response);
+@@ -1284,7 +1283,7 @@ static void test_get_inkey(gconstpointer data)
+ 	g_assert(command->dst =3D=3D STK_DEVICE_IDENTITY_TYPE_TERMINAL);
+ =
+
+ 	g_assert(command->get_inkey.text);
+-	check_text(command->get_inkey.text, test->text);
++	check_common_text(command->get_inkey.text, test->text);
+ 	check_icon_id(&command->get_inkey.icon_id, &test->icon_id);
+ 	check_duration(&command->get_inkey.duration, &test->duration);
+ 	check_text_attr(&command->get_inkey.text_attr,
+@@ -2590,9 +2589,9 @@ static void test_get_input(gconstpointer data)
+ =
+
+ 	if (test->text)
+ 		g_assert(command->get_input.text);
+-	check_text(command->get_input.text, test->text);
++	check_common_text(command->get_input.text, test->text);
+ 	check_response_length(&command->get_input.resp_len, &test->resp_len);
+-	check_text(command->get_input.default_text, test->default_text);
++	check_common_text(command->get_input.default_text, test->default_text);
+ 	check_icon_id(&command->get_input.icon_id, &test->icon_id);
+ 	check_text_attr(&command->get_input.text_attr,
+ 						&test->text_attr);
 -- =
 
 1.7.0.4
 
 
---===============6152402571576977806==--
+--===============5243448561039203704==--
 
