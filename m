@@ -1,1498 +1,387 @@
-Content-Type: multipart/mixed; boundary="===============5633401998060384271=="
+Content-Type: multipart/mixed; boundary="===============6942389650941786315=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 19/19] test-stkutil: Add unit test for setup call parser
-Date: Mon, 10 May 2010 18:39:02 +0800
-Message-ID: <1273487942-27213-19-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1273487942-27213-1-git-send-email-yang.gu@intel.com>
+From: krishna k <id_kishore@live.in>
+Subject: How to start ofono-phonesim in ubuntu-10.04 -reg
+Date: Mon, 10 May 2010 18:39:59 +0530
+Message-ID: <COL106-W404338438AC87F55761AA5F6F90@phx.gbl>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5633401998060384271==
+--===============6942389650941786315==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- unit/test-stkutil.c | 1395 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 1395 insertions(+), 0 deletions(-)
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index ffe0a3f..428ffd4 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -97,6 +97,32 @@ static inline void check_alpha_id(const char *command, c=
-onst char *test)
- 	check_common_text(command, test);
- }
- =
+Hi,
 
-+/* Defined in TS 102.223 Section 8.3 */
-+static void check_subaddress(const struct stk_subaddress *command,
-+					const struct stk_subaddress *test)
-+{
-+	if (test->len =3D=3D 0) {
-+		g_assert(command->len =3D=3D 0);
-+		return;
-+	}
-+
-+	g_assert(command->len !=3D 0);
-+	g_assert(g_mem_equal(command->subaddr, test->subaddr, test->len));
-+}
-+
-+/* Defined in TS 102.223 Section 8.4 */
-+static void check_ccp(const struct stk_ccp *command,
-+					const struct stk_ccp *test)
-+{
-+	if (test->len =3D=3D 0) {
-+		g_assert(command->len =3D=3D 0);
-+		return;
-+	}
-+
-+	g_assert(command->len !=3D 0);
-+	g_assert(g_mem_equal(command->ccp, test->ccp, test->len));
-+}
-+
- /* Defined in TS 102.223 Section 8.8 */
- static void check_duration(const struct stk_duration *command,
- 					const struct stk_duration *test)
-@@ -7552,6 +7578,1284 @@ static void test_send_sms(gconstpointer data)
- 	stk_command_free(command);
- }
- =
+I installed phonesim1.1 source. I compiled and installed.
 
-+struct setup_call_test {
-+	const unsigned char *pdu;
-+	unsigned int pdu_len;
-+	unsigned char qualifier;
-+	char *alpha_id_usr_cfm;
-+	struct stk_address addr;
-+	struct stk_ccp ccp;
-+	struct stk_subaddress subaddr;
-+	struct stk_duration duration;
-+	struct stk_icon_id icon_id_usr_cfm;
-+	char *alpha_id_call_setup;
-+	struct stk_icon_id icon_id_call_setup;
-+	struct stk_text_attribute text_attr_usr_cfm;
-+	struct stk_text_attribute text_attr_call_setup;
-+	struct stk_frame_id frame_id;
-+};
-+
-+static unsigned char setup_call_111[] =3D { 0xD0, 0x1E, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x08, 0x4E, 0x6F, 0x74,
-+						0x20, 0x62, 0x75, 0x73, 0x79,
-+						0x86, 0x09, 0x91, 0x10, 0x32,
-+						0x04, 0x21, 0x43, 0x65, 0x1C,
-+						0x2C };
-+
-+static unsigned char setup_call_141[] =3D { 0xD0, 0x1D, 0x81, 0x03, 0x01, =
-0x10,
-+						0x02, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x07, 0x4F, 0x6E, 0x20,
-+						0x68, 0x6F, 0x6C, 0x64, 0x86,
-+						0x09, 0x91, 0x10, 0x32, 0x04,
-+						0x21, 0x43, 0x65, 0x1C, 0x2C };
-+
-+static unsigned char setup_call_151[] =3D { 0xD0, 0x20, 0x81, 0x03, 0x01, =
-0x10,
-+						0x04, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0A, 0x44, 0x69, 0x73,
-+						0x63, 0x6F, 0x6E, 0x6E, 0x65,
-+						0x63, 0x74, 0x86, 0x09, 0x91,
-+						0x10, 0x32, 0x04, 0x21, 0x43,
-+						0x65, 0x1C, 0x2C };
-+
-+static unsigned char setup_call_181[] =3D { 0xD0, 0x2B, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x11, 0x43, 0x61, 0x70,
-+						0x61, 0x62, 0x69, 0x6C, 0x69,
-+						0x74, 0x79, 0x20, 0x63, 0x6F,
-+						0x6E, 0x66, 0x69, 0x67, 0x86,
-+						0x09, 0x91, 0x10, 0x32, 0x04,
-+						0x21, 0x43, 0x65, 0x1C, 0x2C,
-+						0x87, 0x02, 0x01, 0xA0 };
-+
-+static unsigned char setup_call_191[] =3D { 0xD0, 0x1C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x01, 0x82, 0x02, 0x81, 0x83,
-+						0x86, 0x11, 0x91, 0x10, 0x32,
-+						0x54, 0x76, 0x98, 0x10, 0x32,
-+						0x54, 0x76, 0x98, 0x10, 0x32,
-+						0x54, 0x76, 0x98, 0x10 };
-+
-+static unsigned char setup_call_1101[] =3D { 0xD0, 0x81, 0xFD, 0x81, 0x03,=
- 0x01,
-+						0x10, 0x01, 0x82, 0x02, 0x81,
-+						0x83, 0x85, 0x81, 0xED, 0x54,
-+						0x68, 0x72, 0x65, 0x65, 0x20,
-+						0x74, 0x79, 0x70, 0x65, 0x73,
-+						0x20, 0x61, 0x72, 0x65, 0x20,
-+						0x64, 0x65, 0x66, 0x69, 0x6E,
-+						0x65, 0x64, 0x3A, 0x20, 0x2D,
-+						0x20, 0x73, 0x65, 0x74, 0x20,
-+						0x75, 0x70, 0x20, 0x61, 0x20,
-+						0x63, 0x61, 0x6C, 0x6C, 0x2C,
-+						0x20, 0x62, 0x75, 0x74, 0x20,
-+						0x6F, 0x6E, 0x6C, 0x79, 0x20,
-+						0x69, 0x66, 0x20, 0x6E, 0x6F,
-+						0x74, 0x20, 0x63, 0x75, 0x72,
-+						0x72, 0x65, 0x6E, 0x74, 0x6C,
-+						0x79, 0x20, 0x62, 0x75, 0x73,
-+						0x79, 0x20, 0x6F, 0x6E, 0x20,
-+						0x61, 0x6E, 0x6F, 0x74, 0x68,
-+						0x65, 0x72, 0x20, 0x63, 0x61,
-+						0x6C, 0x6C, 0x3B, 0x20, 0x2D,
-+						0x20, 0x73, 0x65, 0x74, 0x20,
-+						0x75, 0x70, 0x20, 0x61, 0x20,
-+						0x63, 0x61, 0x6C, 0x6C, 0x2C,
-+						0x20, 0x70, 0x75, 0x74, 0x74,
-+						0x69, 0x6E, 0x67, 0x20, 0x61,
-+						0x6C, 0x6C, 0x20, 0x6F, 0x74,
-+						0x68, 0x65, 0x72, 0x20, 0x63,
-+						0x61, 0x6C, 0x6C, 0x73, 0x20,
-+						0x28, 0x69, 0x66, 0x20, 0x61,
-+						0x6E, 0x79, 0x29, 0x20, 0x6F,
-+						0x6E, 0x20, 0x68, 0x6F, 0x6C,
-+						0x64, 0x3B, 0x20, 0x2D, 0x20,
-+						0x73, 0x65, 0x74, 0x20, 0x75,
-+						0x70, 0x20, 0x61, 0x20, 0x63,
-+						0x61, 0x6C, 0x6C, 0x2C, 0x20,
-+						0x64, 0x69, 0x73, 0x63, 0x6F,
-+						0x6E, 0x6E, 0x65, 0x63, 0x74,
-+						0x69, 0x6E, 0x67, 0x20, 0x61,
-+						0x6C, 0x6C, 0x20, 0x6F, 0x74,
-+						0x68, 0x65, 0x72, 0x20, 0x63,
-+						0x61, 0x6C, 0x6C, 0x73, 0x20,
-+						0x28, 0x69, 0x66, 0x20, 0x61,
-+						0x6E, 0x79, 0x29, 0x20, 0x66,
-+						0x69, 0x72, 0x73, 0x74, 0x2E,
-+						0x20, 0x46, 0x6F, 0x72, 0x20,
-+						0x65, 0x61, 0x63, 0x68, 0x20,
-+						0x6F, 0x66, 0x20, 0x74, 0x68,
-+						0x65, 0x73, 0x65, 0x20, 0x74,
-+						0x79, 0x70, 0x65, 0x73, 0x2C,
-+						0x20, 0x86, 0x02, 0x91, 0x10 };
-+
-+static unsigned char setup_call_1111[] =3D { 0xD0, 0x2B, 0x81, 0x03, 0x01,=
- 0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0C, 0x43, 0x61, 0x6C,
-+						0x6C, 0x65, 0x64, 0x20, 0x70,
-+						0x61, 0x72, 0x74, 0x79, 0x86,
-+						0x09, 0x91, 0x10, 0x32, 0x04,
-+						0x21, 0x43, 0x65, 0x1C, 0x2C,
-+						0x88, 0x07, 0x80, 0x50, 0x95,
-+						0x95, 0x95, 0x95, 0x95 };
-+
-+static unsigned char setup_call_1121[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01,=
- 0x10,
-+						0x01, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x08, 0x44, 0x75, 0x72,
-+						0x61, 0x74, 0x69, 0x6F, 0x6E,
-+						0x86, 0x09, 0x91, 0x10, 0x32,
-+						0x04, 0x21, 0x43, 0x65, 0x1C,
-+						0x2C, 0x84, 0x02, 0x01, 0x0A };
-+
-+static unsigned char setup_call_211[] =3D { 0xD0, 0x28, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0C, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x86,
-+						0x09, 0x91, 0x10, 0x32, 0x04,
-+						0x21, 0x43, 0x65, 0x1C, 0x2C,
-+						0x85, 0x04, 0x43, 0x41, 0x4C,
-+						0x4C };
-+
-+static unsigned char setup_call_311[] =3D { 0xD0, 0x30, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x16, 0x53, 0x65, 0x74,
-+						0x20, 0x75, 0x70, 0x20, 0x63,
-+						0x61, 0x6C, 0x6C, 0x20, 0x49,
-+						0x63, 0x6F, 0x6E, 0x20, 0x33,
-+						0x2E, 0x31, 0x2E, 0x31, 0x86,
-+						0x09, 0x91, 0x10, 0x32, 0x04,
-+						0x21, 0x43, 0x65, 0x1C, 0x2C,
-+						0x9E, 0x02, 0x01, 0x01 };
-+
-+static unsigned char setup_call_321[] =3D { 0xD0, 0x30, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x16, 0x53, 0x65, 0x74,
-+						0x20, 0x75, 0x70, 0x20, 0x63,
-+						0x61, 0x6C, 0x6C, 0x20, 0x49,
-+						0x63, 0x6F, 0x6E, 0x20, 0x33,
-+						0x2E, 0x32, 0x2E, 0x31, 0x86,
-+						0x09, 0x91, 0x10, 0x32, 0x04,
-+						0x21, 0x43, 0x65, 0x1C, 0x2C,
-+						0x9E, 0x02, 0x00, 0x01 };
-+
-+static unsigned char setup_call_331[] =3D { 0xD0, 0x30, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x16, 0x53, 0x65, 0x74,
-+						0x20, 0x75, 0x70, 0x20, 0x63,
-+						0x61, 0x6C, 0x6C, 0x20, 0x49,
-+						0x63, 0x6F, 0x6E, 0x20, 0x33,
-+						0x2E, 0x33, 0x2E, 0x31, 0x86,
-+						0x09, 0x91, 0x10, 0x32, 0x04,
-+						0x21, 0x43, 0x65, 0x1C, 0x2C,
-+						0x9E, 0x02, 0x01, 0x02 };
-+
-+static unsigned char setup_call_341[] =3D { 0xD0, 0x4C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x16, 0x53, 0x65, 0x74,
-+						0x20, 0x75, 0x70, 0x20, 0x63,
-+						0x61, 0x6C, 0x6C, 0x20, 0x49,
-+						0x63, 0x6F, 0x6E, 0x20, 0x33,
-+						0x2E, 0x34, 0x2E, 0x31, 0x86,
-+						0x09, 0x91, 0x10, 0x32, 0x04,
-+						0x21, 0x43, 0x65, 0x1C, 0x2C,
-+						0x9E, 0x02, 0x00, 0x01, 0x85,
-+						0x16, 0x53, 0x65, 0x74, 0x20,
-+						0x75, 0x70, 0x20, 0x63, 0x61,
-+						0x6C, 0x6C, 0x20, 0x49, 0x63,
-+						0x6F, 0x6E, 0x20, 0x33, 0x2E,
-+						0x34, 0x2E, 0x32, 0x9E, 0x02,
-+						0x00, 0x01 };
-+
-+static unsigned char setup_call_411[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x31, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x31,
-+						0xD0, 0x04, 0x00, 0x0E, 0x00,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x00, 0xB4 };
-+
-+static unsigned char setup_call_412[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x32, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x32 };
-+
-+static unsigned char setup_call_421[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x31, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x31,
-+						0xD0, 0x04, 0x00, 0x0E, 0x01,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x01, 0xB4 };
-+
-+static unsigned char setup_call_422[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x32, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x32 };
-+
-+static unsigned char setup_call_431[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x31, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x31,
-+						0xD0, 0x04, 0x00, 0x0E, 0x02,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x02, 0xB4 };
-+
-+static unsigned char setup_call_432[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x32, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x32 };
-+
-+static unsigned char setup_call_441[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x31, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x31,
-+						0xD0, 0x04, 0x00, 0x0E, 0x04,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x04, 0xB4 };
-+
-+static unsigned char setup_call_442[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x32, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x32,
-+						0xD0, 0x04, 0x00, 0x0E, 0x00,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x00, 0xB4 };
-+
-+static unsigned char setup_call_443[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x33, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x33 };
-+
-+static unsigned char setup_call_451[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x31, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x31,
-+						0xD0, 0x04, 0x00, 0x0E, 0x08,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x08, 0xB4 };
-+
-+static unsigned char setup_call_452[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x32, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x32,
-+						0xD0, 0x04, 0x00, 0x0E, 0x00,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x00, 0xB4 };
-+
-+static unsigned char setup_call_453[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x33, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x33 };
-+
-+static unsigned char setup_call_461[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x31, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x31,
-+						0xD0, 0x04, 0x00, 0x0E, 0x10,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x10, 0xB4 };
-+
-+static unsigned char setup_call_462[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x32, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x32,
-+						0xD0, 0x04, 0x00, 0x0E, 0x00,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x00, 0xB4 };
-+
-+static unsigned char setup_call_463[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x33, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x33 };
-+
-+static unsigned char setup_call_471[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x31, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x31,
-+						0xD0, 0x04, 0x00, 0x0E, 0x20,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x20, 0xB4 };
-+
-+static unsigned char setup_call_472[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x32, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x32,
-+						0xD0, 0x04, 0x00, 0x0E, 0x00,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x00, 0xB4 };
-+
-+static unsigned char setup_call_473[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x33, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x33 };
-+
-+static unsigned char setup_call_481[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x31, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x31,
-+						0xD0, 0x04, 0x00, 0x0E, 0x40,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x40, 0xB4 };
-+
-+static unsigned char setup_call_482[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x32, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x32,
-+						0xD0, 0x04, 0x00, 0x0E, 0x00,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x00, 0xB4 };
-+
-+static unsigned char setup_call_483[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x33, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x33 };
-+
-+static unsigned char setup_call_491[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x31, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x31,
-+						0xD0, 0x04, 0x00, 0x0E, 0x80,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x80, 0xB4 };
-+
-+static unsigned char setup_call_492[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x32, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x32,
-+						0xD0, 0x04, 0x00, 0x0E, 0x00,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x00, 0xB4 };
-+
-+static unsigned char setup_call_493[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x33, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x33 };
-+
-+static unsigned char setup_call_4101[] =3D { 0xD0, 0x38, 0x81, 0x03, 0x01,=
- 0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x31, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x31,
-+						0xD0, 0x04, 0x00, 0x0E, 0x00,
-+						0xB4, 0xD0, 0x04, 0x00, 0x06,
-+						0x00, 0x4B };
-+
-+static unsigned char setup_call_4102[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01,=
- 0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0E, 0x43, 0x4F, 0x4E,
-+						0x46, 0x49, 0x52, 0x4D, 0x41,
-+						0x54, 0x49, 0x4F, 0x4E, 0x20,
-+						0x32, 0x86, 0x09, 0x91, 0x10,
-+						0x32, 0x04, 0x21, 0x43, 0x65,
-+						0x1C, 0x2C, 0x85, 0x06, 0x43,
-+						0x41, 0x4C, 0x4C, 0x20, 0x32 };
-+
-+static unsigned char setup_call_511[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x19, 0x80, 0x04, 0x17,
-+						0x04, 0x14, 0x04, 0x20, 0x04,
-+						0x10, 0x04, 0x12, 0x04, 0x21,
-+						0x04, 0x22, 0x04, 0x12, 0x04,
-+						0x23, 0x04, 0x19, 0x04, 0x22,
-+						0x04, 0x15, 0x86, 0x07, 0x91,
-+						0x10, 0x32, 0x04, 0x21, 0x43,
-+						0x65 };
-+
-+static unsigned char setup_call_521[] =3D { 0xD0, 0x4C, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x1B, 0x80, 0x04, 0x17,
-+						0x04, 0x14, 0x04, 0x20, 0x04,
-+						0x10, 0x04, 0x12, 0x04, 0x21,
-+						0x04, 0x22, 0x04, 0x12, 0x04,
-+						0x23, 0x04, 0x19, 0x04, 0x22,
-+						0x04, 0x15, 0x00, 0x31, 0x86,
-+						0x07, 0x91, 0x10, 0x32, 0x04,
-+						0x21, 0x43, 0x65, 0x85, 0x1B,
-+						0x80, 0x04, 0x17, 0x04, 0x14,
-+						0x04, 0x20, 0x04, 0x10, 0x04,
-+						0x12, 0x04, 0x21, 0x04, 0x22,
-+						0x04, 0x12, 0x04, 0x23, 0x04,
-+						0x19, 0x04, 0x22, 0x04, 0x15,
-+						0x00, 0x32 };
-+
-+static unsigned char setup_call_611[] =3D { 0xD0, 0x19, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x05, 0x80, 0x4E, 0x0D,
-+						0x5F, 0xD9, 0x86, 0x07, 0x91,
-+						0x10, 0x32, 0x04, 0x21, 0x43,
-+						0x65 };
-+
-+static unsigned char setup_call_621[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x05, 0x80, 0x78, 0x6E,
-+						0x5B, 0x9A, 0x86, 0x07, 0x91,
-+						0x10, 0x32, 0x04, 0x21, 0x43,
-+						0x65, 0x85, 0x07, 0x80, 0x62,
-+						0x53, 0x75, 0x35, 0x8B, 0xDD };
-+
-+static unsigned char setup_call_711[] =3D { 0xD0, 0x17, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x03, 0x80, 0x30, 0xEB,
-+						0x86, 0x07, 0x91, 0x10, 0x32,
-+						0x04, 0x21, 0x43, 0x65 };
-+
-+static unsigned char setup_call_721[] =3D { 0xD0, 0x20, 0x81, 0x03, 0x01, =
-0x10,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x05, 0x80, 0x30, 0xEB,
-+						0x00, 0x31, 0x86, 0x07, 0x91,
-+						0x10, 0x32, 0x04, 0x21, 0x43,
-+						0x65, 0x85, 0x05, 0x80, 0x30,
-+						0xEB, 0x00, 0x32 };
-+
-+static struct setup_call_test setup_call_data_111 =3D {
-+	.pdu =3D setup_call_111,
-+	.pdu_len =3D sizeof(setup_call_111),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "Not busy",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_141 =3D {
-+	.pdu =3D setup_call_141,
-+	.pdu_len =3D sizeof(setup_call_141),
-+	.qualifier =3D 0x02,
-+	.alpha_id_usr_cfm =3D "On hold",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_151 =3D {
-+	.pdu =3D setup_call_151,
-+	.pdu_len =3D sizeof(setup_call_151),
-+	.qualifier =3D 0x04,
-+	.alpha_id_usr_cfm =3D "Disconnect",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_181 =3D {
-+	.pdu =3D setup_call_181,
-+	.pdu_len =3D sizeof(setup_call_181),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "Capability config",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.ccp =3D {
-+		.len =3D 0x02,
-+		.ccp =3D { 0x01, 0xA0 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_191 =3D {
-+	.pdu =3D setup_call_191,
-+	.pdu_len =3D sizeof(setup_call_191),
-+	.qualifier =3D 0x01,
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "01234567890123456789012345678901"
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_1101 =3D {
-+	.pdu =3D setup_call_1101,
-+	.pdu_len =3D sizeof(setup_call_1101),
-+	.qualifier =3D 0x01,
-+	.alpha_id_usr_cfm =3D "Three types are defined: - set up a call, but "
-+			"only if not currently busy on another call; - set "
-+			"up a call, putting all other calls (if any) on hold; "
-+			"- set up a call, disconnecting all other calls (if "
-+			"any) first. For each of these types, ",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "01"
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_1111 =3D {
-+	.pdu =3D setup_call_1111,
-+	.pdu_len =3D sizeof(setup_call_1111),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "Called party",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.subaddr =3D {
-+		.len =3D 0x07,
-+		.subaddr =3D { 0x80, 0x50, 0x95, 0x95, 0x95, 0x95, 0x95 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_1121 =3D {
-+	.pdu =3D setup_call_1121,
-+	.pdu_len =3D sizeof(setup_call_1121),
-+	.qualifier =3D 0x01,
-+	.alpha_id_usr_cfm =3D "Duration",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.duration =3D {
-+		.unit =3D STK_DURATION_TYPE_SECONDS,
-+		.interval =3D 10,
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_211 =3D {
-+	.pdu =3D setup_call_211,
-+	.pdu_len =3D sizeof(setup_call_211),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL"
-+};
-+
-+static struct setup_call_test setup_call_data_311 =3D {
-+	.pdu =3D setup_call_311,
-+	.pdu_len =3D sizeof(setup_call_311),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "Set up call Icon 3.1.1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.icon_id_usr_cfm =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
-+		.id =3D 0x01
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_321 =3D {
-+	.pdu =3D setup_call_321,
-+	.pdu_len =3D sizeof(setup_call_321),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "Set up call Icon 3.2.1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.icon_id_usr_cfm =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_SELF_EXPLANATORY,
-+		.id =3D 0x01
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_331 =3D {
-+	.pdu =3D setup_call_331,
-+	.pdu_len =3D sizeof(setup_call_331),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "Set up call Icon 3.3.1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.icon_id_usr_cfm =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
-+		.id =3D 0x02
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_341 =3D {
-+	.pdu =3D setup_call_341,
-+	.pdu_len =3D sizeof(setup_call_341),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "Set up call Icon 3.4.1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.icon_id_usr_cfm =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_SELF_EXPLANATORY,
-+		.id =3D 0x01
-+	},
-+	.alpha_id_call_setup =3D "Set up call Icon 3.4.2",
-+	.icon_id_call_setup =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_SELF_EXPLANATORY,
-+		.id =3D 0x01
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_411 =3D {
-+	.pdu =3D setup_call_411,
-+	.pdu_len =3D sizeof(setup_call_411),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 1",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x00, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_412 =3D {
-+	.pdu =3D setup_call_412,
-+	.pdu_len =3D sizeof(setup_call_412),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 2",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 2"
-+};
-+
-+static struct setup_call_test setup_call_data_421 =3D {
-+	.pdu =3D setup_call_421,
-+	.pdu_len =3D sizeof(setup_call_421),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 1",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x01, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x01, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_422 =3D {
-+	.pdu =3D setup_call_422,
-+	.pdu_len =3D sizeof(setup_call_422),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 2",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 2"
-+};
-+
-+static struct setup_call_test setup_call_data_431 =3D {
-+	.pdu =3D setup_call_431,
-+	.pdu_len =3D sizeof(setup_call_431),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 1",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x02, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x02, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_432 =3D {
-+	.pdu =3D setup_call_432,
-+	.pdu_len =3D sizeof(setup_call_432),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 2",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 2"
-+};
-+
-+static struct setup_call_test setup_call_data_441 =3D {
-+	.pdu =3D setup_call_441,
-+	.pdu_len =3D sizeof(setup_call_441),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 1",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x04, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x04, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_442 =3D {
-+	.pdu =3D setup_call_442,
-+	.pdu_len =3D sizeof(setup_call_442),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 2",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 2",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x00, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_443 =3D {
-+	.pdu =3D setup_call_443,
-+	.pdu_len =3D sizeof(setup_call_443),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 3",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 3"
-+};
-+
-+static struct setup_call_test setup_call_data_451 =3D {
-+	.pdu =3D setup_call_451,
-+	.pdu_len =3D sizeof(setup_call_451),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 1",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x08, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x08, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_452 =3D {
-+	.pdu =3D setup_call_452,
-+	.pdu_len =3D sizeof(setup_call_452),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 2",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 2",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x00, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_453 =3D {
-+	.pdu =3D setup_call_453,
-+	.pdu_len =3D sizeof(setup_call_453),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 3",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 3"
-+};
-+
-+static struct setup_call_test setup_call_data_461 =3D {
-+	.pdu =3D setup_call_461,
-+	.pdu_len =3D sizeof(setup_call_461),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 1",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x10, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x10, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_462 =3D {
-+	.pdu =3D setup_call_462,
-+	.pdu_len =3D sizeof(setup_call_462),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 2",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 2",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x00, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_463 =3D {
-+	.pdu =3D setup_call_463,
-+	.pdu_len =3D sizeof(setup_call_463),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 3",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 3"
-+};
-+
-+static struct setup_call_test setup_call_data_471 =3D {
-+	.pdu =3D setup_call_471,
-+	.pdu_len =3D sizeof(setup_call_471),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 1",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x20, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x20, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_472 =3D {
-+	.pdu =3D setup_call_472,
-+	.pdu_len =3D sizeof(setup_call_472),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 2",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 2",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x00, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_473 =3D {
-+	.pdu =3D setup_call_473,
-+	.pdu_len =3D sizeof(setup_call_473),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 3",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 3"
-+};
-+
-+static struct setup_call_test setup_call_data_481 =3D {
-+	.pdu =3D setup_call_481,
-+	.pdu_len =3D sizeof(setup_call_481),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 1",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x40, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x40, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_482 =3D {
-+	.pdu =3D setup_call_482,
-+	.pdu_len =3D sizeof(setup_call_482),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 2",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 2",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x00, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_483 =3D {
-+	.pdu =3D setup_call_483,
-+	.pdu_len =3D sizeof(setup_call_483),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 3",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 3"
-+};
-+
-+static struct setup_call_test setup_call_data_491 =3D {
-+	.pdu =3D setup_call_491,
-+	.pdu_len =3D sizeof(setup_call_491),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 1",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x80, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x80, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_492 =3D {
-+	.pdu =3D setup_call_492,
-+	.pdu_len =3D sizeof(setup_call_492),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 2",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 2",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x00, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_493 =3D {
-+	.pdu =3D setup_call_493,
-+	.pdu_len =3D sizeof(setup_call_493),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 3",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 3"
-+};
-+
-+static struct setup_call_test setup_call_data_4101 =3D {
-+	.pdu =3D setup_call_4101,
-+	.pdu_len =3D sizeof(setup_call_4101),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 1",
-+	.text_attr_usr_cfm =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x0E, 0x00, 0xB4 }
-+	},
-+	.text_attr_call_setup =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x06, 0x00, 0x4B }
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_4102 =3D {
-+	.pdu =3D setup_call_4102,
-+	.pdu_len =3D sizeof(setup_call_4102),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "CONFIRMATION 2",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456a1a2"
-+	},
-+	.alpha_id_call_setup =3D "CALL 2"
-+};
-+
-+static struct setup_call_test setup_call_data_511 =3D {
-+	.pdu =3D setup_call_511,
-+	.pdu_len =3D sizeof(setup_call_511),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "=D0=97=D0=94=D0=A0=D0=90=D0=92=D0=A1=D0=A2=D0=92=
-=D0=A3=D0=99=D0=A2=D0=95",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456"
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_521 =3D {
-+	.pdu =3D setup_call_521,
-+	.pdu_len =3D sizeof(setup_call_521),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "=D0=97=D0=94=D0=A0=D0=90=D0=92=D0=A1=D0=A2=D0=92=
-=D0=A3=D0=99=D0=A2=D0=951",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456"
-+	},
-+	.alpha_id_call_setup =3D "=D0=97=D0=94=D0=A0=D0=90=D0=92=D0=A1=D0=A2=D0=
-=92=D0=A3=D0=99=D0=A2=D0=952"
-+};
-+
-+static struct setup_call_test setup_call_data_611 =3D {
-+	.pdu =3D setup_call_611,
-+	.pdu_len =3D sizeof(setup_call_611),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "=E4=B8=8D=E5=BF=99",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456"
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_621 =3D {
-+	.pdu =3D setup_call_621,
-+	.pdu_len =3D sizeof(setup_call_621),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "=E7=A1=AE=E5=AE=9A",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456"
-+	},
-+	.alpha_id_call_setup =3D "=E6=89=93=E7=94=B5=E8=AF=9D"
-+};
-+
-+static struct setup_call_test setup_call_data_711 =3D {
-+	.pdu =3D setup_call_711,
-+	.pdu_len =3D sizeof(setup_call_711),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "=E3=83=AB",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456"
-+	}
-+};
-+
-+static struct setup_call_test setup_call_data_721 =3D {
-+	.pdu =3D setup_call_721,
-+	.pdu_len =3D sizeof(setup_call_721),
-+	.qualifier =3D 0x00,
-+	.alpha_id_usr_cfm =3D "=E3=83=AB1",
-+	.addr =3D {
-+		.ton_npi =3D 0x91,
-+		.number =3D "012340123456"
-+	},
-+	.alpha_id_call_setup =3D "=E3=83=AB2"
-+};
-+
-+static void test_setup_call(gconstpointer data)
-+{
-+	const struct setup_call_test *test =3D data;
-+	struct stk_command *command;
-+
-+	command =3D stk_command_new_from_pdu(test->pdu, test->pdu_len);
-+
-+	g_assert(command);
-+
-+	g_assert(command->number =3D=3D 1);
-+	g_assert(command->type =3D=3D STK_COMMAND_TYPE_SETUP_CALL);
-+	g_assert(command->qualifier =3D=3D test->qualifier);
-+
-+	g_assert(command->src =3D=3D STK_DEVICE_IDENTITY_TYPE_UICC);
-+	g_assert(command->dst =3D=3D STK_DEVICE_IDENTITY_TYPE_NETWORK);
-+
-+	check_alpha_id(command->setup_call.alpha_id_usr_cfm,
-+					test->alpha_id_usr_cfm);
-+	check_address(&command->setup_call.addr, &test->addr);
-+	check_ccp(&command->setup_call.ccp, &test->ccp);
-+	check_subaddress(&command->setup_call.subaddr, &test->subaddr);
-+	check_duration(&command->setup_call.duration, &test->duration);
-+	check_icon_id(&command->setup_call.icon_id_usr_cfm,
-+					&test->icon_id_usr_cfm);
-+	check_alpha_id(command->setup_call.alpha_id_call_setup,
-+					test->alpha_id_call_setup);
-+	check_icon_id(&command->setup_call.icon_id_call_setup,
-+					&test->icon_id_call_setup);
-+	check_text_attr(&command->setup_call.text_attr_usr_cfm,
-+					&test->text_attr_usr_cfm);
-+	check_text_attr(&command->setup_call.text_attr_call_setup,
-+					&test->text_attr_call_setup);
-+	check_frame_id(&command->setup_call.frame_id, &test->frame_id);
-+
-+	stk_command_free(command);
-+}
-+
- int main(int argc, char **argv)
- {
- 	g_test_init(&argc, &argv, NULL);
-@@ -8087,5 +9391,96 @@ int main(int argc, char **argv)
- 	g_test_add_data_func("/teststk/Send SMS 1.1.1",
- 				&send_sms_data_111, test_send_sms);
- =
+I =
 
-+	g_test_add_data_func("/teststk/Setup Call 1.1.1",
-+				&setup_call_data_111, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 1.4.1",
-+				&setup_call_data_141, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 1.5.1",
-+				&setup_call_data_151, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 1.8.1",
-+				&setup_call_data_181, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 1.9.1",
-+				&setup_call_data_191, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 1.10.1",
-+				&setup_call_data_1101, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 1.11.1",
-+				&setup_call_data_1111, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 1.12.1",
-+				&setup_call_data_1121, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 2.1.1",
-+				&setup_call_data_211, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 3.1.1",
-+				&setup_call_data_311, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 3.2.1",
-+				&setup_call_data_321, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 3.3.1",
-+				&setup_call_data_331, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 3.4.1",
-+				&setup_call_data_341, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.1.1",
-+				&setup_call_data_411, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.1.2",
-+				&setup_call_data_412, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.2.1",
-+				&setup_call_data_421, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.2.2",
-+				&setup_call_data_422, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.3.1",
-+				&setup_call_data_431, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.3.2",
-+				&setup_call_data_432, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.4.1",
-+				&setup_call_data_441, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.4.2",
-+				&setup_call_data_442, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.4.3",
-+				&setup_call_data_443, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.5.1",
-+				&setup_call_data_451, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.5.2",
-+				&setup_call_data_452, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.5.3",
-+				&setup_call_data_453, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.6.1",
-+				&setup_call_data_461, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.6.2",
-+				&setup_call_data_462, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.6.3",
-+				&setup_call_data_463, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.7.1",
-+				&setup_call_data_471, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.7.2",
-+				&setup_call_data_472, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.7.3",
-+				&setup_call_data_473, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.8.1",
-+				&setup_call_data_481, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.8.2",
-+				&setup_call_data_482, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.8.3",
-+				&setup_call_data_483, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.9.1",
-+				&setup_call_data_491, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.9.2",
-+				&setup_call_data_492, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.9.3",
-+				&setup_call_data_493, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.10.1",
-+				&setup_call_data_4101, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 4.10.2",
-+				&setup_call_data_4102, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 5.1.1",
-+				&setup_call_data_511, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 5.2.1",
-+				&setup_call_data_521, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 6.1.1",
-+				&setup_call_data_611, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 6.2.1",
-+				&setup_call_data_621, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 7.1.1",
-+				&setup_call_data_711, test_setup_call);
-+	g_test_add_data_func("/teststk/Setup Call 7.2.1",
-+				&setup_call_data_721, test_setup_call);
-+
- 	return g_test_run();
- }
--- =
+started phonesim as you suggested "./phonesim -p gui default.xml"
+ (now i got default.xml file in /phonesim/src)
+I started ofono using "ofonod
+ -n -d"
+I executed "./list-modems".  It is not displaying =
 
-1.7.0.4
+any thing. I am just getting prompt. For your reference i am posting =
 
+ofonod -n -d o/p at the end of the mail.
 
---===============5633401998060384271==--
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+Please note this is additional information..
+
+I found one file named =
+
+blacklist-modem.conf in /etc/modprobe.d path. Please find the =
+
+content of that file.
+
+# Uncomment these entries in order to =
+
+blacklist unwanted modem drivers
+# blacklist snd-atiixp-modem
+# =
+
+blacklist snd-intel8x0m
+# blacklist snd-via82xx-modem
+
+Is it =
+
+creating any trouble for me to start the phonesim? Any idea on this?
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+
+modem.conf
+ file is presented in 2 locations.
+
+1. /etc/ofono
+2. =
+
+/usr/share/alsa/pcm
+
+After changing the modem.conf am I need to =
+
+restart the system?
+
+Thanks in advance.
+
+Note:- oFono version is 0.9 and phonesim version is 1.1
+
+sudo ofono -n -d =
+
+(output)
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D
+ofonod[5458]:
+ oFono version 0.9
+ofonod[5458]: src/plugin.c:__ofono_plugin_init() =
+
+ofonod[5458]:
+ plugins/hfp.c:hfp_init() =
+
+ofonod[5458]: =
+
+src/modem.c:ofono_modem_driver_register() driver: 0x66de80, name: hfp
+ofonod[5458]:
+ src/modem.c:ofono_modem_driver_register() driver: 0x66de00, name: =
+
+novatel
+ofonod[5458]: src/modem.c:ofono_modem_driver_register() =
+
+driver: 0x66dd80, name: huawei
+ofonod[5458]: =
+
+src/modem.c:ofono_modem_driver_register() driver: 0x66dd00, name: hso
+ofonod[5458]:
+ src/modem.c:ofono_modem_driver_register() driver: 0x66dc60, name: mbm
+ofonod[5458]:
+ src/modem.c:ofono_modem_driver_register() driver: 0x66dbe0, name: =
+
+calypso
+ofonod[5458]: src/modem.c:ofono_modem_driver_register() =
+
+driver: 0x66db60, name: g1
+ofonod[5458]: =
+
+src/modem.c:ofono_modem_driver_register() driver: 0x66dae0, name: atgen
+ofonod[5458]:
+ src/modem.c:ofono_modem_driver_register() driver: 0x66da60, name: =
+
+phonesim
+ofonod[5458]: Reading of /etc/ofono/modem.conf failed: Key =
+
+file contains line 'pcm.!phoneline {' which is not a key-value pair, =
+
+group, or comment
+ofonod[5458]: =
+
+src/gprs.c:ofono_gprs_context_driver_register() driver: 0x66d9a0, name: =
+
+mbm
+ofonod[5458]: src/voicecall.c:ofono_voicecall_driver_register() =
+
+driver: 0x66d8c0, name: hfpmodem
+ofonod[5458]: =
+
+src/voicecall.c:ofono_voicecall_driver_register() driver: 0x66d7e0, =
+
+name: calypsomodem
+ofonod[5458]: =
+
+src/voicecall.c:ofono_voicecall_driver_register() driver: 0x66d4e0, =
+
+name: atmodem
+ofonod[5458]: =
+
+src/modem.c:ofono_devinfo_driver_register() driver: 0x66d660, name: =
+
+atmodem
+ofonod[5458]: =
+
+src/call-barring.c:ofono_call_barring_driver_register() driver: =
+
+0x66d5a0, name: atmodem
+ofonod[5458]: =
+
+src/call-forwarding.c:ofono_call_forwarding_driver_register() driver: =
+
+0x66d280, name: atmodem
+ofonod[5458]: =
+
+src/call-meter.c:ofono_call_meter_driver_register() driver: 0x66d2e0, =
+
+name: atmodem
+ofonod[5458]: =
+
+src/call-settings.c:ofono_call_settings_driver_register() driver: =
+
+0x66d100, name: atmodem
+ofonod[5458]: =
+
+src/phonebook.c:ofono_phonebook_driver_register() driver: 0x66d5e0, =
+
+name: atmodem
+ofonod[5458]: src/ssn.c:ofono_ssn_driver_register() =
+
+driver: 0x66d630, name: atmodem
+ofonod[5458]: =
+
+src/ussd.c:ofono_ussd_driver_register() driver: 0x66d4a0, name: atmodem
+ofonod[5458]:
+ src/sms.c:ofono_sms_driver_register() driver: 0x66d1a0, name: atmodem
+ofonod[5458]:
+ src/sim.c:ofono_sim_driver_register() driver: 0x66d400, name: atmodem
+ofonod[5458]:
+ src/network.c:ofono_netreg_driver_register() driver: 0x66d380, name: =
+
+atmodem
+ofonod[5458]: src/cbs.c:ofono_cbs_driver_register() driver: =
+
+0x66d240, name: atmodem
+ofonod[5458]: =
+
+src/call-volume.c:ofono_call_volume_driver_register() driver: 0x66d6a0, =
+
+name: atmodem
+ofonod[5458]: src/gprs.c:ofono_gprs_driver_register() =
+
+driver: 0x66d700, name: atmodem
+ofonod[5458]: =
+
+src/gprs.c:ofono_gprs_context_driver_register() driver: 0x66d760, name: =
+
+atmodem
+ofonod[5458]: src/modem.c:ofono_devinfo_driver_register() =
+
+driver: 0x66cb00, name: isimodem
+ofonod[5458]: =
+
+src/phonebook.c:ofono_phonebook_driver_register() driver: 0x66cae0, =
+
+name: isimodem
+ofonod[5458]: =
+
+src/network.c:ofono_netreg_driver_register() driver: 0x66cb40, name: =
+
+isimodem
+ofonod[5458]: =
+
+src/voicecall.c:ofono_voicecall_driver_register() driver: 0x66cba0, =
+
+name: isimodem
+ofonod[5458]: src/sms.c:ofono_sms_driver_register() =
+
+driver: 0x66cc40, name: isimodem
+ofonod[5458]: =
+
+src/cbs.c:ofono_cbs_driver_register() driver: 0x66cc80, name: isimodem
+ofonod[5458]:
+ src/sim.c:ofono_sim_driver_register() driver: 0x66ccc0, name: isimodem
+ofonod[5458]:
+ src/ssn.c:ofono_ssn_driver_register() driver: 0x66cd50, name: isimodem
+ofonod[5458]:
+ src/ussd.c:ofono_ussd_driver_register() driver: 0x66cd80, name: =
+
+isimodem
+ofonod[5458]: =
+
+src/call-forwarding.c:ofono_call_forwarding_driver_register() driver: =
+
+0x66cdc0, name: isimodem
+ofonod[5458]: =
+
+src/call-settings.c:ofono_call_settings_driver_register() driver: =
+
+0x66ce00, name: isimodem
+ofonod[5458]: =
+
+src/call-barring.c:ofono_call_barring_driver_register() driver: =
+
+0x66ce60, name: isimodem
+ofonod[5458]: =
+
+src/call-meter.c:ofono_call_meter_driver_register() driver: 0x66cea0, =
+
+name: isimodem
+ofonod[5458]: =
+
+src/modem.c:ofono_modem_driver_register() driver: 0x66caa0, name: =
+
+isimodem
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D
+Regards,
+Krishna
+ K Kandula.
+ 		 	   		  =
+
+_________________________________________________________________
+South Cinema This Decade
+http://entertainment.in.msn.com/southcinemathisdecade/
+
+--===============6942389650941786315==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWw+CjxoZWFkPgo8c3R5bGU+PCEtLQouaG1tZXNzYWdlIFAKewptYXJnaW46MHB4OwpwYWRk
+aW5nOjBweAp9CmJvZHkuaG1tZXNzYWdlCnsKZm9udC1zaXplOiAxMHB0Owpmb250LWZhbWlseTpW
+ZXJkYW5hCn0KLS0+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBjbGFzcz0naG1tZXNzYWdlJz4KSGks
+PGJyPjxicj5JIGluc3RhbGxlZCBwaG9uZXNpbTEuMSBzb3VyY2UuIEkgY29tcGlsZWQgYW5kIGlu
+c3RhbGxlZC48YnI+PGJyPkkgCnN0YXJ0ZWQgcGhvbmVzaW0gYXMgeW91IHN1Z2dlc3RlZCAiPGI+
+Li9waG9uZXNpbSAtcCBndWkgZGVmYXVsdC54bWw8L2I+IgogKG5vdyBpIGdvdCBkZWZhdWx0Lnht
+bCBmaWxlIGluIC9waG9uZXNpbS9zcmMpPGJyPkkgc3RhcnRlZCBvZm9ubyB1c2luZyAiPGI+b2Zv
+bm9kCiAtbiAtZDwvYj4iPGJyPkkgZXhlY3V0ZWQgIjxiPi4vbGlzdC1tb2RlbXM8L2I+Ii4mbmJz
+cDsgSXQgaXMgbm90IGRpc3BsYXlpbmcgCmFueSB0aGluZy4gSSBhbSBqdXN0IGdldHRpbmcgcHJv
+bXB0LiBGb3IgeW91ciByZWZlcmVuY2UgaSBhbSBwb3N0aW5nIApvZm9ub2QgLW4gLWQgby9wIGF0
+IHRoZSBlbmQgb2YgdGhlIG1haWwuPGJyPjxicj49PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PGJyPlBsZWFzZSBub3Rl
+IHRoaXMgaXMgYWRkaXRpb25hbCBpbmZvcm1hdGlvbi4uPGJyPjxicj5JIGZvdW5kIG9uZSBmaWxl
+IG5hbWVkIApibGFja2xpc3QtbW9kZW0uY29uZiBpbiA8Yj4vZXRjL21vZHByb2JlLmQ8L2I+IHBh
+dGguIFBsZWFzZSBmaW5kIHRoZSAKY29udGVudCBvZiB0aGF0IGZpbGUuPGJyPjxicj4jIFVuY29t
+bWVudCB0aGVzZSBlbnRyaWVzIGluIG9yZGVyIHRvIApibGFja2xpc3QgdW53YW50ZWQgbW9kZW0g
+ZHJpdmVyczxicj4jIGJsYWNrbGlzdCBzbmQtYXRpaXhwLW1vZGVtPGJyPiMgCmJsYWNrbGlzdCBz
+bmQtaW50ZWw4eDBtPGJyPiMgYmxhY2tsaXN0IHNuZC12aWE4Mnh4LW1vZGVtPGJyPjxicj5JcyBp
+dCAKY3JlYXRpbmcgYW55IHRyb3VibGUgZm9yIG1lIHRvIHN0YXJ0IHRoZSBwaG9uZXNpbT8gQW55
+IGlkZWEgb24gdGhpcz88YnI+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PGJyPjxicj5tb2RlbS5jb25mCiBmaWxl
+IGlzIHByZXNlbnRlZCBpbiAyIGxvY2F0aW9ucy48YnI+PGJyPjEuIC9ldGMvb2Zvbm88YnI+Mi4g
+Ci91c3Ivc2hhcmUvYWxzYS9wY208YnI+PGJyPkFmdGVyIGNoYW5naW5nIHRoZSBtb2RlbS5jb25m
+IGFtIEkgbmVlZCB0byAKcmVzdGFydCB0aGUgc3lzdGVtPzxicj48YnI+VGhhbmtzIGluIGFkdmFu
+Y2UuPGJyPjxiPjxicj5Ob3RlOi0gb0Zvbm8gdmVyc2lvbiBpcyAwLjkgYW5kIHBob25lc2ltIHZl
+cnNpb24gaXMgMS4xPC9iPjxicj48YnI+c3VkbyBvZm9ubyAtbiAtZCAKKG91dHB1dCk8YnI+PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PTxicj5vZm9ub2RbNTQ1OF06CiBvRm9ubyB2ZXJzaW9uIDAu
+OTxicj5vZm9ub2RbNTQ1OF06IHNyYy9wbHVnaW4uYzpfX29mb25vX3BsdWdpbl9pbml0KCkgPGJy
+Pm9mb25vZFs1NDU4XToKIHBsdWdpbnMvaGZwLmM6aGZwX2luaXQoKSA8YnI+b2Zvbm9kWzU0NThd
+OiAKc3JjL21vZGVtLmM6b2Zvbm9fbW9kZW1fZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDY2
+ZGU4MCwgbmFtZTogaGZwPGJyPm9mb25vZFs1NDU4XToKIHNyYy9tb2RlbS5jOm9mb25vX21vZGVt
+X2RyaXZlcl9yZWdpc3RlcigpIGRyaXZlcjogMHg2NmRlMDAsIG5hbWU6IApub3ZhdGVsPGJyPm9m
+b25vZFs1NDU4XTogc3JjL21vZGVtLmM6b2Zvbm9fbW9kZW1fZHJpdmVyX3JlZ2lzdGVyKCkgCmRy
+aXZlcjogMHg2NmRkODAsIG5hbWU6IGh1YXdlaTxicj5vZm9ub2RbNTQ1OF06IApzcmMvbW9kZW0u
+YzpvZm9ub19tb2RlbV9kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IDB4NjZkZDAwLCBuYW1lOiBo
+c288YnI+b2Zvbm9kWzU0NThdOgogc3JjL21vZGVtLmM6b2Zvbm9fbW9kZW1fZHJpdmVyX3JlZ2lz
+dGVyKCkgZHJpdmVyOiAweDY2ZGM2MCwgbmFtZTogbWJtPGJyPm9mb25vZFs1NDU4XToKIHNyYy9t
+b2RlbS5jOm9mb25vX21vZGVtX2RyaXZlcl9yZWdpc3RlcigpIGRyaXZlcjogMHg2NmRiZTAsIG5h
+bWU6IApjYWx5cHNvPGJyPm9mb25vZFs1NDU4XTogc3JjL21vZGVtLmM6b2Zvbm9fbW9kZW1fZHJp
+dmVyX3JlZ2lzdGVyKCkgCmRyaXZlcjogMHg2NmRiNjAsIG5hbWU6IGcxPGJyPm9mb25vZFs1NDU4
+XTogCnNyYy9tb2RlbS5jOm9mb25vX21vZGVtX2RyaXZlcl9yZWdpc3RlcigpIGRyaXZlcjogMHg2
+NmRhZTAsIG5hbWU6IGF0Z2VuPGJyPm9mb25vZFs1NDU4XToKIHNyYy9tb2RlbS5jOm9mb25vX21v
+ZGVtX2RyaXZlcl9yZWdpc3RlcigpIGRyaXZlcjogMHg2NmRhNjAsIG5hbWU6IApwaG9uZXNpbTxi
+cj5vZm9ub2RbNTQ1OF06IFJlYWRpbmcgb2YgL2V0Yy9vZm9uby9tb2RlbS5jb25mIGZhaWxlZDog
+S2V5IApmaWxlIGNvbnRhaW5zIGxpbmUgJ3BjbS4hcGhvbmVsaW5lIHsnIHdoaWNoIGlzIG5vdCBh
+IGtleS12YWx1ZSBwYWlyLCAKZ3JvdXAsIG9yIGNvbW1lbnQ8YnI+b2Zvbm9kWzU0NThdOiAKc3Jj
+L2dwcnMuYzpvZm9ub19ncHJzX2NvbnRleHRfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDY2
+ZDlhMCwgbmFtZTogCm1ibTxicj5vZm9ub2RbNTQ1OF06IHNyYy92b2ljZWNhbGwuYzpvZm9ub192
+b2ljZWNhbGxfZHJpdmVyX3JlZ2lzdGVyKCkgCmRyaXZlcjogMHg2NmQ4YzAsIG5hbWU6IGhmcG1v
+ZGVtPGJyPm9mb25vZFs1NDU4XTogCnNyYy92b2ljZWNhbGwuYzpvZm9ub192b2ljZWNhbGxfZHJp
+dmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDY2ZDdlMCwgCm5hbWU6IGNhbHlwc29tb2RlbTxicj5v
+Zm9ub2RbNTQ1OF06IApzcmMvdm9pY2VjYWxsLmM6b2Zvbm9fdm9pY2VjYWxsX2RyaXZlcl9yZWdp
+c3RlcigpIGRyaXZlcjogMHg2NmQ0ZTAsIApuYW1lOiBhdG1vZGVtPGJyPm9mb25vZFs1NDU4XTog
+CnNyYy9tb2RlbS5jOm9mb25vX2RldmluZm9fZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDY2
+ZDY2MCwgbmFtZTogCmF0bW9kZW08YnI+b2Zvbm9kWzU0NThdOiAKc3JjL2NhbGwtYmFycmluZy5j
+Om9mb25vX2NhbGxfYmFycmluZ19kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IAoweDY2ZDVhMCwg
+bmFtZTogYXRtb2RlbTxicj5vZm9ub2RbNTQ1OF06IApzcmMvY2FsbC1mb3J3YXJkaW5nLmM6b2Zv
+bm9fY2FsbF9mb3J3YXJkaW5nX2RyaXZlcl9yZWdpc3RlcigpIGRyaXZlcjogCjB4NjZkMjgwLCBu
+YW1lOiBhdG1vZGVtPGJyPm9mb25vZFs1NDU4XTogCnNyYy9jYWxsLW1ldGVyLmM6b2Zvbm9fY2Fs
+bF9tZXRlcl9kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IDB4NjZkMmUwLCAKbmFtZTogYXRtb2Rl
+bTxicj5vZm9ub2RbNTQ1OF06IApzcmMvY2FsbC1zZXR0aW5ncy5jOm9mb25vX2NhbGxfc2V0dGlu
+Z3NfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAKMHg2NmQxMDAsIG5hbWU6IGF0bW9kZW08YnI+
+b2Zvbm9kWzU0NThdOiAKc3JjL3Bob25lYm9vay5jOm9mb25vX3Bob25lYm9va19kcml2ZXJfcmVn
+aXN0ZXIoKSBkcml2ZXI6IDB4NjZkNWUwLCAKbmFtZTogYXRtb2RlbTxicj5vZm9ub2RbNTQ1OF06
+IHNyYy9zc24uYzpvZm9ub19zc25fZHJpdmVyX3JlZ2lzdGVyKCkgCmRyaXZlcjogMHg2NmQ2MzAs
+IG5hbWU6IGF0bW9kZW08YnI+b2Zvbm9kWzU0NThdOiAKc3JjL3Vzc2QuYzpvZm9ub191c3NkX2Ry
+aXZlcl9yZWdpc3RlcigpIGRyaXZlcjogMHg2NmQ0YTAsIG5hbWU6IGF0bW9kZW08YnI+b2Zvbm9k
+WzU0NThdOgogc3JjL3Ntcy5jOm9mb25vX3Ntc19kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IDB4
+NjZkMWEwLCBuYW1lOiBhdG1vZGVtPGJyPm9mb25vZFs1NDU4XToKIHNyYy9zaW0uYzpvZm9ub19z
+aW1fZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDY2ZDQwMCwgbmFtZTogYXRtb2RlbTxicj5v
+Zm9ub2RbNTQ1OF06CiBzcmMvbmV0d29yay5jOm9mb25vX25ldHJlZ19kcml2ZXJfcmVnaXN0ZXIo
+KSBkcml2ZXI6IDB4NjZkMzgwLCBuYW1lOiAKYXRtb2RlbTxicj5vZm9ub2RbNTQ1OF06IHNyYy9j
+YnMuYzpvZm9ub19jYnNfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAKMHg2NmQyNDAsIG5hbWU6
+IGF0bW9kZW08YnI+b2Zvbm9kWzU0NThdOiAKc3JjL2NhbGwtdm9sdW1lLmM6b2Zvbm9fY2FsbF92
+b2x1bWVfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDY2ZDZhMCwgCm5hbWU6IGF0bW9kZW08
+YnI+b2Zvbm9kWzU0NThdOiBzcmMvZ3Bycy5jOm9mb25vX2dwcnNfZHJpdmVyX3JlZ2lzdGVyKCkg
+CmRyaXZlcjogMHg2NmQ3MDAsIG5hbWU6IGF0bW9kZW08YnI+b2Zvbm9kWzU0NThdOiAKc3JjL2dw
+cnMuYzpvZm9ub19ncHJzX2NvbnRleHRfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDY2ZDc2
+MCwgbmFtZTogCmF0bW9kZW08YnI+b2Zvbm9kWzU0NThdOiBzcmMvbW9kZW0uYzpvZm9ub19kZXZp
+bmZvX2RyaXZlcl9yZWdpc3RlcigpIApkcml2ZXI6IDB4NjZjYjAwLCBuYW1lOiBpc2ltb2RlbTxi
+cj5vZm9ub2RbNTQ1OF06IApzcmMvcGhvbmVib29rLmM6b2Zvbm9fcGhvbmVib29rX2RyaXZlcl9y
+ZWdpc3RlcigpIGRyaXZlcjogMHg2NmNhZTAsIApuYW1lOiBpc2ltb2RlbTxicj5vZm9ub2RbNTQ1
+OF06IApzcmMvbmV0d29yay5jOm9mb25vX25ldHJlZ19kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6
+IDB4NjZjYjQwLCBuYW1lOiAKaXNpbW9kZW08YnI+b2Zvbm9kWzU0NThdOiAKc3JjL3ZvaWNlY2Fs
+bC5jOm9mb25vX3ZvaWNlY2FsbF9kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IDB4NjZjYmEwLCAK
+bmFtZTogaXNpbW9kZW08YnI+b2Zvbm9kWzU0NThdOiBzcmMvc21zLmM6b2Zvbm9fc21zX2RyaXZl
+cl9yZWdpc3RlcigpIApkcml2ZXI6IDB4NjZjYzQwLCBuYW1lOiBpc2ltb2RlbTxicj5vZm9ub2Rb
+NTQ1OF06IApzcmMvY2JzLmM6b2Zvbm9fY2JzX2RyaXZlcl9yZWdpc3RlcigpIGRyaXZlcjogMHg2
+NmNjODAsIG5hbWU6IGlzaW1vZGVtPGJyPm9mb25vZFs1NDU4XToKIHNyYy9zaW0uYzpvZm9ub19z
+aW1fZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDY2Y2NjMCwgbmFtZTogaXNpbW9kZW08YnI+
+b2Zvbm9kWzU0NThdOgogc3JjL3Nzbi5jOm9mb25vX3Nzbl9kcml2ZXJfcmVnaXN0ZXIoKSBkcml2
+ZXI6IDB4NjZjZDUwLCBuYW1lOiBpc2ltb2RlbTxicj5vZm9ub2RbNTQ1OF06CiBzcmMvdXNzZC5j
+Om9mb25vX3Vzc2RfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAweDY2Y2Q4MCwgbmFtZTogCmlz
+aW1vZGVtPGJyPm9mb25vZFs1NDU4XTogCnNyYy9jYWxsLWZvcndhcmRpbmcuYzpvZm9ub19jYWxs
+X2ZvcndhcmRpbmdfZHJpdmVyX3JlZ2lzdGVyKCkgZHJpdmVyOiAKMHg2NmNkYzAsIG5hbWU6IGlz
+aW1vZGVtPGJyPm9mb25vZFs1NDU4XTogCnNyYy9jYWxsLXNldHRpbmdzLmM6b2Zvbm9fY2FsbF9z
+ZXR0aW5nc19kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IAoweDY2Y2UwMCwgbmFtZTogaXNpbW9k
+ZW08YnI+b2Zvbm9kWzU0NThdOiAKc3JjL2NhbGwtYmFycmluZy5jOm9mb25vX2NhbGxfYmFycmlu
+Z19kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IAoweDY2Y2U2MCwgbmFtZTogaXNpbW9kZW08YnI+
+b2Zvbm9kWzU0NThdOiAKc3JjL2NhbGwtbWV0ZXIuYzpvZm9ub19jYWxsX21ldGVyX2RyaXZlcl9y
+ZWdpc3RlcigpIGRyaXZlcjogMHg2NmNlYTAsIApuYW1lOiBpc2ltb2RlbTxicj5vZm9ub2RbNTQ1
+OF06IApzcmMvbW9kZW0uYzpvZm9ub19tb2RlbV9kcml2ZXJfcmVnaXN0ZXIoKSBkcml2ZXI6IDB4
+NjZjYWEwLCBuYW1lOiAKaXNpbW9kZW08YnI+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PTxicj5S
+ZWdhcmRzLDxicj5LcmlzaG5hCiBLIEthbmR1bGEuPGJyPiAJCSAJICAgCQkgIDxiciAvPjxociAv
+PlRoZSBsYXRlc3QgYXV0byBsYXVuY2hlcyBhbmQgdGVzdCBkcml2ZXMgPGEgaHJlZj0naHR0cDov
+L2F1dG9zLmluLm1zbi5jb20vJyB0YXJnZXQ9J19uZXcnPkRyYWcgbicgZHJvcDwvYT48L2JvZHk+
+CjwvaHRtbD4=
+--===============6942389650941786315==--
 
