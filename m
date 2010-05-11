@@ -1,28 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============4334084496597789353=="
+Content-Type: multipart/mixed; boundary="===============0420314504982875282=="
 MIME-Version: 1.0
-From: Li, Zhigang <zhigang.li@intel.com>
-Subject: RE: How to play with ofono-phonesim -reg
-Date: Tue, 11 May 2010 16:55:54 +0800
-Message-ID: <B32E3D5F1713054290B4FF257B89C51A08F1E2BE17@shsmsx502.ccr.corp.intel.com>
-In-Reply-To: <COL106-W4CE50AD36629A063EC07EF6FA0@phx.gbl>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] Fix Use hashtable to record udev path
+Date: Tue, 11 May 2010 09:21:10 -0500
+Message-ID: <201005110921.10985.denkenz@gmail.com>
+In-Reply-To: <1273539869-23803-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4334084496597789353==
+--===============0420314504982875282==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Zhenhua,
 
->>Can we really make calls or send sms messages using ofono-phonesim simula=
-tor using phonesim modem driver?
+> Sometimes, Udev device 'remove' event could not report correct parent
+> node of current udev_device. Current code replies on the devpath
+> attached on the parent node to find modem and then remove it.
+> =
 
-Sure, Launch phonesim application you will find the call and sms applicatio=
-n window. You can setup call or send message by the application
+> This fix is to change the way to store the devpath info into a
+> hashtable. So that we search hashtable to get devpath and remove the
+> modem.
 
+Patch has been applied, thanks.
 
-B,R
-Zhigang
+Regards,
+-Denis
 
---===============4334084496597789353==--
+--===============0420314504982875282==--
 
