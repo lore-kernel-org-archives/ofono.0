@@ -1,541 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============4120560337587834615=="
+Content-Type: multipart/mixed; boundary="===============3658723970564876758=="
 MIME-Version: 1.0
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
-Subject: [RFC] [PATCH 1/3] Add: Online property to modem
-Date: Wed, 12 May 2010 17:31:10 +0300
-Message-ID: <1273674672-32241-2-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1273674672-32241-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 11/19] stkutil: Add setup menu proactive command parser
+Date: Wed, 12 May 2010 09:43:41 -0500
+Message-ID: <201005120943.41761.denkenz@gmail.com>
+In-Reply-To: <CE761E84DADF2947A4AF22FB8D97A4731DE14AD3@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4120560337587834615==
+--===============3658723970564876758==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The online/offline state is changed with the new online() modem driver
-method.
+Hi Yang,
 
-In order to track atoms, there is modem states as follows:
-- OFONO_MODEM_STATE_POWER_OFF
-- OFONO_MODEM_STATE_PRE_SIM
-- OFONO_MODEM_STATE_OFFLINE
-- OFONO_MODEM_STATE_ONLINE
+> >There is no mention that the Alpha identifier can be present and empty, =
+so
+> >returning TRUE on a len 0 is not actually correct.  The only exception so
+> > far seems to be text string which explicitly allows NULL strings.
+> =
 
-The state changes are reported directly with the new modem driver method
-change_state(), with intention to replace pre_sim() and post_sim()
-methods once drivers has been updated.
+> Thus alpha_id seems to be another exception. For ber-tlv setup menu, alpha
+>  identifier is mandatory, so sometimes we have to create an empty alpha id
+>  object with len equals 0. See the case "set up menu 1.1.3" in 102.384
+>  (page 333) for an example.
 
-The modem state can be followed with watches, too.
----
- include/modem.h |   21 +++++
- src/modem.c     |  241 ++++++++++++++++++++++++++++++++++++++++++++++-----=
-----
- src/ofono.h     |   12 +++
- 3 files changed, 237 insertions(+), 37 deletions(-)
-
-diff --git a/include/modem.h b/include/modem.h
-index d502640..8115785 100644
---- a/include/modem.h
-+++ b/include/modem.h
-@@ -50,6 +50,8 @@ void ofono_modem_remove(struct ofono_modem *modem);
- void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool_t power=
-ed);
- ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem);
- =
-
-+ofono_bool_t ofono_modem_get_online(struct ofono_modem *modem);
-+
- void ofono_modem_set_name(struct ofono_modem *modem, const char *name);
- =
-
- int ofono_modem_set_string(struct ofono_modem *modem,
-@@ -64,6 +66,16 @@ int ofono_modem_set_boolean(struct ofono_modem *modem,
- 				const char *key, bool value);
- bool ofono_modem_get_boolean(struct ofono_modem *modem, const char *key);
- =
-
-+typedef void (*ofono_modem_online_cb)(const struct ofono_error *error,
-+				void *data);
-+
-+enum ofono_modem_state {
-+	OFONO_MODEM_STATE_POWER_OFF,
-+	OFONO_MODEM_STATE_PRE_SIM,
-+	OFONO_MODEM_STATE_OFFLINE,
-+	OFONO_MODEM_STATE_ONLINE,
-+};
-+
- struct ofono_modem_driver {
- 	const char *name;
- =
-
-@@ -80,6 +92,15 @@ struct ofono_modem_driver {
- 	/* Power down device */
- 	int (*disable)(struct ofono_modem *modem);
- =
-
-+	/* Enable or disable cellular radio */
-+	void (*online)(struct ofono_modem *modem, ofono_bool_t online,
-+		ofono_modem_online_cb callback, void *data);
-+
-+	/* Populate the atoms available in the state */
-+	void (*change_state)(struct ofono_modem *modem,
-+			enum ofono_modem_state new_state,
-+			enum ofono_modem_state old_state);
-+
- 	/* Populate the atoms available without SIM / Locked SIM */
- 	void (*pre_sim)(struct ofono_modem *modem);
- =
-
-diff --git a/src/modem.c b/src/modem.c
-index 0d0cb2a..b4682d2 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -51,8 +51,9 @@ enum ofono_property_type {
- =
-
- struct ofono_modem {
- 	char			*path;
-+	enum ofono_modem_state   modem_state;
-+	struct ofono_watchlist	*state_watches;
- 	GSList			*atoms;
--	GSList			*pre_sim_atoms;
- 	struct ofono_watchlist	*atom_watches;
- 	GSList         		*interface_list;
- 	unsigned int		call_ids;
-@@ -61,6 +62,8 @@ struct ofono_modem {
- 	ofono_bool_t		powered;
- 	ofono_bool_t		powered_pending;
- 	guint			timeout;
-+	ofono_bool_t		online;
-+	ofono_bool_t            online_pending;
- 	GHashTable		*properties;
- 	struct ofono_sim	*sim;
- 	unsigned int		sim_watch;
-@@ -83,6 +86,7 @@ struct ofono_devinfo {
- =
-
- struct ofono_atom {
- 	enum ofono_atom_type type;
-+	enum ofono_modem_state modem_state;
- 	void (*destruct)(struct ofono_atom *atom);
- 	void (*unregister)(struct ofono_atom *atom);
- 	void *data;
-@@ -160,6 +164,7 @@ struct ofono_atom *__ofono_modem_add_atom(struct ofono_=
-modem *modem,
- 	atom =3D g_new0(struct ofono_atom, 1);
- =
-
- 	atom->type =3D type;
-+	atom->modem_state =3D modem->modem_state;
- 	atom->destruct =3D destruct;
- 	atom->data =3D data;
- 	atom->modem =3D modem;
-@@ -275,7 +280,6 @@ struct ofono_atom *__ofono_modem_find_atom(struct ofono=
-_modem *modem,
- 		return NULL;
- =
-
- 	FIND_ATOM_IN_LIST(modem->atoms)
--	FIND_ATOM_IN_LIST(modem->pre_sim_atoms);
- =
-
- 	return NULL;
- }
-@@ -301,7 +305,6 @@ void __ofono_modem_foreach_atom(struct ofono_modem *mod=
-em,
- 		return;
- =
-
- 	FOREACH_ATOM_IN_LIST(modem->atoms)
--	FOREACH_ATOM_IN_LIST(modem->pre_sim_atoms)
- }
- =
-
- void __ofono_atom_free(struct ofono_atom *atom)
-@@ -309,7 +312,6 @@ void __ofono_atom_free(struct ofono_atom *atom)
- 	struct ofono_modem *modem =3D atom->modem;
- =
-
- 	modem->atoms =3D g_slist_remove(modem->atoms, atom);
--	modem->pre_sim_atoms =3D g_slist_remove(modem->pre_sim_atoms, atom);
- =
-
- 	__ofono_atom_unregister(atom);
- =
-
-@@ -319,13 +321,23 @@ void __ofono_atom_free(struct ofono_atom *atom)
- 	g_free(atom);
- }
- =
-
--static void remove_all_atoms(GSList **atoms)
-+static void flush_atoms(struct ofono_modem *modem,
-+			enum ofono_modem_state new_state)
- {
- 	GSList *l;
- 	struct ofono_atom *atom;
- =
-
--	for (l =3D *atoms; l; l =3D l->next) {
--		atom =3D l->data;
-+	for (;;) {
-+		for (l =3D modem->atoms; l; l =3D l->next) {
-+			atom =3D l->data;
-+			if (atom->modem_state > new_state)
-+				break;
-+		}
-+
-+		if (!l)
-+			return;
-+
-+		modem->atoms =3D g_slist_delete_link(modem->atoms, l);
- =
-
- 		__ofono_atom_unregister(atom);
- =
-
-@@ -334,9 +346,172 @@ static void remove_all_atoms(GSList **atoms)
- =
-
- 		g_free(atom);
- 	}
-+}
- =
-
--	g_slist_free(*atoms);
--	*atoms =3D NULL;
-+static void modem_notify_change(struct ofono_modem *modem,
-+				enum ofono_modem_state new_state,
-+				enum ofono_modem_state old_state)
-+{
-+	const struct ofono_modem_driver *driver =3D modem->driver;
-+	GSList *l, *next;
-+	struct ofono_watchlist_item *watch;
-+	ofono_state_watch_func notify;
-+
-+	if (old_state > new_state)
-+		flush_atoms(modem, new_state);
-+
-+	if (new_state =3D=3D OFONO_MODEM_STATE_PRE_SIM && driver->pre_sim)
-+		driver->pre_sim(modem);
-+	else if (new_state =3D=3D OFONO_MODEM_STATE_OFFLINE && driver->post_sim)
-+		driver->post_sim(modem);
-+
-+	if (driver->change_state)
-+		driver->change_state(modem, new_state, old_state);
-+
-+	for (l =3D modem->state_watches->items; l; l =3D next) {
-+		watch =3D l->data;
-+		next =3D l->next;
-+		notify =3D watch->notify;
-+		notify(modem, new_state, old_state, watch->notify_data);
-+	}
-+
-+	if (new_state =3D=3D OFONO_MODEM_STATE_OFFLINE)
-+		__ofono_history_probe_drivers(modem);
-+}
-+
-+static void modem_change_state(struct ofono_modem *modem,
-+			enum ofono_modem_state new_state)
-+{
-+	enum ofono_modem_state old_state =3D modem->modem_state;
-+	ofono_bool_t online_changed =3D 0;
-+
-+	if (old_state =3D=3D new_state)
-+		return;
-+
-+	modem->modem_state =3D new_state;
-+
-+	switch (new_state) {
-+	case OFONO_MODEM_STATE_POWER_OFF:
-+		modem->call_ids =3D 0;
-+		if (modem->online)
-+			modem->online =3D 0, online_changed =3D 1;
-+		break;
-+
-+	case OFONO_MODEM_STATE_PRE_SIM:
-+		if (modem->online)
-+			modem->online =3D 0, online_changed =3D 1;
-+		break;
-+
-+	case OFONO_MODEM_STATE_OFFLINE:
-+		if (modem->online)
-+			modem->online =3D 0, online_changed =3D 1;
-+		break;
-+
-+	case OFONO_MODEM_STATE_ONLINE:
-+		if (!modem->online)
-+			modem->online =3D 1, online_changed =3D 1;
-+		break;
-+	}
-+
-+	if (online_changed) {
-+		DBusConnection *conn =3D ofono_dbus_get_connection();
-+		ofono_dbus_signal_property_changed(conn, modem->path,
-+					OFONO_MODEM_INTERFACE, "Online",
-+					DBUS_TYPE_BOOLEAN, &modem->online);
-+	}
-+
-+	modem_notify_change(modem, new_state, old_state);
-+}
-+
-+static void set_online_callback(const struct ofono_error *error,
-+				void *data)
-+{
-+	struct ofono_modem *modem =3D data;
-+	DBusMessage *reply;
-+	ofono_bool_t online =3D modem->online_pending;
-+
-+	if (error && error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		reply =3D __ofono_error_failed(modem->pending);
-+		online =3D modem->online;
-+	} else if (online && modem->modem_state < OFONO_MODEM_STATE_OFFLINE) {
-+		reply =3D __ofono_error_failed(modem->pending);
-+		online =3D FALSE;
-+	} else
-+		reply =3D dbus_message_new_method_return(modem->pending);
-+
-+	__ofono_dbus_pending_reply(&modem->pending, reply);
-+
-+	modem->online_pending =3D online;
-+
-+	if (modem->online =3D=3D online)
-+		return;
-+
-+	if (online)
-+		modem_change_state(modem, OFONO_MODEM_STATE_ONLINE);
-+	else
-+		modem_change_state(modem, OFONO_MODEM_STATE_OFFLINE);
-+}
-+
-+static DBusMessage *set_property_online(struct ofono_modem *modem,
-+					DBusMessage *msg,
-+					DBusMessageIter *var)
-+{
-+	ofono_bool_t online;
-+	const struct ofono_modem_driver *driver =3D modem->driver;
-+
-+	if (dbus_message_iter_get_arg_type(var) !=3D DBUS_TYPE_BOOLEAN)
-+		return __ofono_error_invalid_args(msg);
-+
-+	dbus_message_iter_get_basic(var, &online);
-+
-+	if (modem->online =3D=3D online)
-+		return dbus_message_new_method_return(msg);
-+
-+	if (!driver || !driver->online)
-+		return __ofono_error_failed(msg);
-+
-+	if (modem->pending !=3D NULL)
-+		return __ofono_error_busy(msg);
-+
-+	modem->pending =3D dbus_message_ref(msg);
-+	modem->online_pending =3D online;
-+
-+	driver->online(modem, online, set_online_callback, modem);
-+
-+	return NULL;
-+}
-+
-+unsigned int __ofono_modem_add_state_watch(struct ofono_modem *modem,
-+					ofono_state_watch_func notify,
-+					void *data, ofono_destroy_func destroy)
-+{
-+	struct ofono_watchlist_item *watch;
-+
-+	if (notify =3D=3D NULL)
-+		return 0;
-+
-+	watch =3D g_new0(struct ofono_watchlist_item, 1);
-+
-+	watch->notify =3D notify;
-+	watch->destroy =3D destroy;
-+	watch->notify_data =3D data;
-+
-+	return __ofono_watchlist_add_item(modem->state_watches, watch);
-+}
-+
-+gboolean __ofono_modem_remove_state_watch(struct ofono_modem *modem,
-+						unsigned int id)
-+{
-+	return __ofono_watchlist_remove_item(modem->state_watches, id);
-+}
-+
-+
-+ofono_bool_t ofono_modem_get_online(struct ofono_modem *modem)
-+{
-+	if (modem =3D=3D NULL)
-+		return FALSE;
-+
-+	return modem->online;
- }
- =
-
- static DBusMessage *modem_get_properties(DBusConnection *conn,
-@@ -361,6 +536,9 @@ static DBusMessage *modem_get_properties(DBusConnection=
- *conn,
- 					OFONO_PROPERTIES_ARRAY_SIGNATURE,
- 					&dict);
- =
-
-+	ofono_dbus_dict_append(&dict, "Online", DBUS_TYPE_BOOLEAN,
-+				&modem->online);
-+
- 	ofono_dbus_dict_append(&dict, "Powered", DBUS_TYPE_BOOLEAN,
- 				&modem->powered);
- =
-
-@@ -420,11 +598,8 @@ static int set_powered(struct ofono_modem *modem, ofon=
-o_bool_t powered)
- 		return -EALREADY;
- =
-
- 	/* Remove the atoms even if the driver is no longer available */
--	if (powered =3D=3D FALSE) {
--		remove_all_atoms(&modem->atoms);
--		remove_all_atoms(&modem->pre_sim_atoms);
--		modem->call_ids =3D 0;
--	}
-+	if (powered =3D=3D FALSE)
-+		modem_change_state(modem, OFONO_MODEM_STATE_POWER_OFF);
- =
-
- 	modem->powered_pending =3D powered;
- =
-
-@@ -502,6 +677,9 @@ static DBusMessage *modem_set_property(DBusConnection *=
-conn,
- =
-
- 	dbus_message_iter_recurse(&iter, &var);
- =
-
-+	if (g_str_equal(name, "Online"))
-+		return set_property_online(modem, msg, &var);
-+
- 	if (g_str_equal(name, "Powered") =3D=3D TRUE) {
- 		ofono_bool_t powered;
- 		int err;
-@@ -535,10 +713,8 @@ static DBusMessage *modem_set_property(DBusConnection =
-*conn,
- 						"Powered", DBUS_TYPE_BOOLEAN,
- 						&powered);
- =
-
--		if (powered) {
--			if (modem->driver->pre_sim)
--				modem->driver->pre_sim(modem);
--		}
-+		if (powered)
-+			modem_change_state(modem, OFONO_MODEM_STATE_PRE_SIM);
- =
-
- 		return NULL;
- 	}
-@@ -596,14 +772,10 @@ void ofono_modem_set_powered(struct ofono_modem *mode=
-m, ofono_bool_t powered)
- 						"Powered", DBUS_TYPE_BOOLEAN,
- 						&dbus_powered);
- =
-
--		if (powered) {
--			if (modem->driver->pre_sim)
--				modem->driver->pre_sim(modem);
--		} else {
--			remove_all_atoms(&modem->atoms);
--			remove_all_atoms(&modem->pre_sim_atoms);
--			modem->call_ids =3D 0;
--		}
-+		if (powered)
-+			modem_change_state(modem, OFONO_MODEM_STATE_PRE_SIM);
-+		else
-+			modem_change_state(modem, OFONO_MODEM_STATE_POWER_OFF);
- 	}
- =
-
- 	if (powering_down && powered =3D=3D FALSE) {
-@@ -1132,21 +1304,12 @@ static void modem_sim_ready(void *user, enum ofono_=
-sim_state new_state)
- =
-
- 	switch (new_state) {
- 	case OFONO_SIM_STATE_NOT_PRESENT:
--		if (modem->pre_sim_atoms !=3D NULL)
--			remove_all_atoms(&modem->atoms);
-+		modem_change_state(modem, OFONO_MODEM_STATE_PRE_SIM);
- 		break;
- 	case OFONO_SIM_STATE_INSERTED:
- 		break;
- 	case OFONO_SIM_STATE_READY:
--		if (modem->pre_sim_atoms =3D=3D NULL) {
--			modem->pre_sim_atoms =3D modem->atoms;
--			modem->atoms =3D NULL;
--		}
--
--		if (modem->driver->post_sim)
--			modem->driver->post_sim(modem);
--
--		__ofono_history_probe_drivers(modem);
-+		modem_change_state(modem, OFONO_MODEM_STATE_OFFLINE);
- 	}
- }
- =
-
-@@ -1213,6 +1376,7 @@ int ofono_modem_register(struct ofono_modem *modem)
- 	modem->driver_type =3D NULL;
- =
-
- 	modem->atom_watches =3D __ofono_watchlist_new(g_free);
-+	modem->state_watches =3D __ofono_watchlist_new(g_free);
- =
-
- 	emit_modems();
- =
-
-@@ -1233,6 +1397,9 @@ static void modem_unregister(struct ofono_modem *mode=
-m)
- 	__ofono_watchlist_free(modem->atom_watches);
- 	modem->atom_watches =3D NULL;
- =
-
-+	__ofono_watchlist_free(modem->state_watches);
-+	modem->state_watches =3D NULL;
-+
- 	modem->sim_watch =3D 0;
- 	modem->sim_ready_watch =3D 0;
- =
-
-diff --git a/src/ofono.h b/src/ofono.h
-index 7b13cce..71261b4 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -159,6 +159,18 @@ gboolean __ofono_modem_remove_atom_watch(struct ofono_=
-modem *modem,
- =
-
- void __ofono_atom_free(struct ofono_atom *atom);
- =
-
-+typedef void (*ofono_state_watch_func)(struct ofono_modem *modem,
-+					enum ofono_modem_state new_state,
-+					enum ofono_modem_state old_state,
-+					void *data);
-+
-+unsigned int __ofono_modem_add_state_watch(struct ofono_modem *modem,
-+					ofono_state_watch_func notify,
-+					void *data, ofono_destroy_func destroy);
-+
-+gboolean __ofono_modem_remove_state_watch(struct ofono_modem *modem,
-+						unsigned int id);
-+
- #include <ofono/call-barring.h>
- #include <ofono/call-forwarding.h>
- #include <ofono/call-meter.h>
--- =
-
-1.6.3.3
+Ok fair enough. =
 
 
---===============4120560337587834615==--
+> This one is another exception. See the same case as above. I plan to check
+>  all the mandatory dataobj and let len might equal to 0, how do you think
+>  of?
+
+My feeling right now is that if the test spec doesn't agree with the main s=
+pec =
+
+then let us accommodate the test spec in those circumstances only.
+
+> >/* Parse only until item list */
+> >parse_dataobj(iter, STK_DATA_OBJECT_TYPE_ALPHA_ID,
+> >			DATAOBJ_FLAG_MANDATORY | DATAOBJ_FLAG_MINIMUM,
+> >			&obj->alpha_id,
+> >			STK_DATA_OBJECT_TYPE_ITEM,
+> >			STK_DATA_OBJECT_TYPE_INVALID);
+> >
+> >/* Manually parse item list */
+> >...
+> >
+> >/* Parse rest */
+> >...
+> =
+
+> The second approach is hard to be implemented: We have moved
+>  comprehension_tlv_iter_next() to parse_dataobj(), when manually parsing
+>  item list, I have to get the next one to see if it's an item object. Then
+>  we have to rollback one if the next is not an item dataobj. I like the
+>  first approach (Actually it's similar to my solution ;)) and will send
+>  patch based on this.
+> =
+
+
+You can always introduce comprehension_tlv_iter_save / restore type =
+
+functionality if it makes things easier.  This is only applicable to two =
+
+structures, so the first approach might be overkill.
+
+Regards,
+-Denis
+
+--===============3658723970564876758==--
 
