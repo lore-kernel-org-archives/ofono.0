@@ -1,74 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============3658723970564876758=="
+Content-Type: multipart/mixed; boundary="===============3303509554605570313=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 11/19] stkutil: Add setup menu proactive command parser
-Date: Wed, 12 May 2010 09:43:41 -0500
-Message-ID: <201005120943.41761.denkenz@gmail.com>
-In-Reply-To: <CE761E84DADF2947A4AF22FB8D97A4731DE14AD3@shsmsx501.ccr.corp.intel.com>
+Subject: Re: [PATCH 1/4] atmodem/sim.c: Pass allowed response prefixes to
+ gatchat.
+Date: Wed, 12 May 2010 12:23:35 -0500
+Message-ID: <201005121223.35421.denkenz@gmail.com>
+In-Reply-To: <1273627253-7316-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3658723970564876758==
+--===============3303509554605570313==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Andrew,
 
-> >There is no mention that the Alpha identifier can be present and empty, =
-so
-> >returning TRUE on a len 0 is not actually correct.  The only exception so
-> > far seems to be text string which explicitly allows NULL strings.
+> Not doing this creates a race condition where any notification
+> comming in in the middle of a sequence of commands may be counted
+> as a response to one of the commands and get lost.
 > =
 
-> Thus alpha_id seems to be another exception. For ber-tlv setup menu, alpha
->  identifier is mandatory, so sometimes we have to create an empty alpha id
->  object with len equals 0. See the case "set up menu 1.1.3" in 102.384
->  (page 333) for an example.
+> Instead gatchat could be changed to give priority to registered
+> unsolicited responses if a line matches one of the registered
+> prefixes, especially since some non-compliant modems regularly
+> send unsolicited responses in the middle of a command response.
 
-Ok fair enough. =
+This is why I invented prefixes in GAtChat.  Giving higher priority to =
 
+unsolicited notifications didn't really work in the case of CGREG/CREG or o=
+ther =
 
-> This one is another exception. See the same case as above. I plan to check
->  all the mandatory dataobj and let len might equal to 0, how do you think
->  of?
+commands which share the same prefix on a response and unsolicited notifica=
+tion.  =
 
-My feeling right now is that if the test spec doesn't agree with the main s=
-pec =
+Calypso is 'fun' in that respect, as you're finding out now ;)
 
-then let us accommodate the test spec in those circumstances only.
-
-> >/* Parse only until item list */
-> >parse_dataobj(iter, STK_DATA_OBJECT_TYPE_ALPHA_ID,
-> >			DATAOBJ_FLAG_MANDATORY | DATAOBJ_FLAG_MINIMUM,
-> >			&obj->alpha_id,
-> >			STK_DATA_OBJECT_TYPE_ITEM,
-> >			STK_DATA_OBJECT_TYPE_INVALID);
-> >
-> >/* Manually parse item list */
-> >...
-> >
-> >/* Parse rest */
-> >...
-> =
-
-> The second approach is hard to be implemented: We have moved
->  comprehension_tlv_iter_next() to parse_dataobj(), when manually parsing
->  item list, I have to get the next one to see if it's an item object. Then
->  we have to rollback one if the next is not an item dataobj. I like the
->  first approach (Actually it's similar to my solution ;)) and will send
->  patch based on this.
+> ---
+>  drivers/atmodem/sim.c |   15 +++++++++------
+>  1 files changed, 9 insertions(+), 6 deletions(-)
 > =
 
 
-You can always introduce comprehension_tlv_iter_save / restore type =
-
-functionality if it makes things easier.  This is only applicable to two =
-
-structures, so the first approach might be overkill.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============3658723970564876758==--
+--===============3303509554605570313==--
 
