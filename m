@@ -1,102 +1,228 @@
-Content-Type: multipart/mixed; boundary="===============8088998365614042462=="
+Content-Type: multipart/mixed; boundary="===============5387902418615332968=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 04/16] emulator: Add ofono_emulator get_properties method
-Date: Thu, 13 May 2010 18:02:27 +0800
-Message-ID: <1273744959-3711-5-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1273744959-3711-4-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 03/16] emulator: Add status_watches and notify status
+Date: Thu, 13 May 2010 18:02:26 +0800
+Message-ID: <1273744959-3711-4-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1273744959-3711-3-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8088998365614042462==
+--===============5387902418615332968==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-To list the object path of all available emulators.
+Add watchlist for ofono_emulator to notify the status change when an
+emulator create, destroy or other status.
 ---
- src/emulator.c |   52 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 52 insertions(+), 0 deletions(-)
+ src/emulator.c |   73 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/ofono.h    |   21 ++++++++++++++++
+ 2 files changed, 94 insertions(+), 0 deletions(-)
 
 diff --git a/src/emulator.c b/src/emulator.c
-index f9f7108..e6ffb78 100644
+index ef8fe70..f9f7108 100644
 --- a/src/emulator.c
 +++ b/src/emulator.c
-@@ -257,6 +257,25 @@ static gboolean emulator_dbus_register(struct ofono_em=
-ulator *oe,
- 	return TRUE;
- }
- =
-
-+static int emulators_path_list(struct ofono_emulator *oe, char ***objlist)
-+{
-+	GSList *emulator_list =3D oe->emulator_list;
-+	GSList *l;
-+	struct emulator *e;
-+	int i;
-+
-+	*objlist =3D g_new0(char *, g_slist_length(emulator_list) + 1);
-+	if (*objlist =3D=3D NULL)
-+		return -1;
-+
-+	for (i =3D 0, l =3D emulator_list; l; l =3D l->next, i++) {
-+		e =3D l->data;
-+		(*objlist)[i] =3D g_strdup(emulator_build_path(oe, e));
-+	}
-+
-+	return 0;
-+}
-+
- static DBusMessage *manager_create(DBusConnection *conn, DBusMessage *msg,
- 					void *data)
- {
-@@ -299,7 +318,40 @@ static DBusMessage *manager_create(DBusConnection *con=
-n, DBusMessage *msg,
- 	return reply;
- }
- =
-
-+
-+static DBusMessage *manager_get_properties(DBusConnection *conn,
-+						DBusMessage *msg, void *data)
-+{
-+	struct ofono_emulator *oe =3D data;
-+	DBusMessage *reply;
-+	DBusMessageIter iter;
-+	DBusMessageIter dict;
-+	char **objpath_list;
-+
-+	reply =3D dbus_message_new_method_return(msg);
-+	if (!reply)
-+		return NULL;
-+
-+	dbus_message_iter_init_append(reply, &iter);
-+
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dict);
-+
-+	emulators_path_list(oe, &objpath_list);
-+
-+	ofono_dbus_dict_append_array(&dict, "Emulators", DBUS_TYPE_OBJECT_PATH,
-+					&objpath_list);
-+
-+	g_strfreev(objpath_list);
-+
-+	dbus_message_iter_close_container(&iter, &dict);
-+
-+	return reply;
-+}
-+
- static GDBusMethodTable emulator_manager_methods[] =3D {
-+	{ "GetProperties",	"",	"a{sv}", manager_get_properties },
- 	{ "Create",		"sh",	"",	manager_create },
- 	{ }
+@@ -40,6 +40,7 @@
+ struct ofono_emulator {
+ 	unsigned int emulator_ids;
+ 	GSList *emulator_list;
++	struct ofono_watchlist *status_watches;
+ 	struct ofono_atom *atom;
  };
+ =
+
+@@ -47,10 +48,12 @@ struct emulator {
+ 	struct ofono_emulator *oe;
+ 	unsigned int id;
+ 	enum ofono_emulator_type type;
++	enum ofono_emulator_status status;
+ 	GAtServer *server;
+ 	unsigned int timeout_source;
+ };
+ =
+
++static void notify_status_watches(struct emulator *e, void *data);
+ static void emulator_dbus_unregister(void *data, void *user_data);
+ =
+
+ static unsigned int emulator_next_id(struct ofono_emulator *oe)
+@@ -86,6 +89,20 @@ static enum ofono_emulator_type emulator_str_to_type(con=
+st char *type)
+ 	return OFONO_EMULATOR_TYPE_NONE;
+ }
+ =
+
++static const char *emulator_type_to_str(enum ofono_emulator_type type)
++{
++	switch (type) {
++	case OFONO_EMULATOR_TYPE_DUN:
++		return "DUN";
++	case OFONO_EMULATOR_TYPE_HFPAG:
++		return "HFP AG";
++	case OFONO_EMULATOR_TYPE_SPP:
++		return "SPP";
++	default:
++		return "";
++	}
++}
++
+ static const char *emulator_build_path(const struct ofono_emulator *oe,
+ 					const struct emulator *e)
+ {
+@@ -103,6 +120,10 @@ static void emulator_remove(void *data)
+ 	struct ofono_emulator *oe =3D e->oe;
+ 	GAtServer *server =3D e->server;
+ =
+
++	e->status =3D OFONO_EMULATOR_STATUS_DESTROY;
++
++	notify_status_watches(e, NULL);
++
+ 	oe->emulator_list =3D g_slist_remove(oe->emulator_list, e);
+ 	emulator_release_id(oe, e->id);
+ =
+
+@@ -139,9 +160,12 @@ static struct emulator *emulator_create(struct ofono_e=
+mulator *oe,
+ 	e->id =3D emulator_next_id(oe);
+ 	e->type =3D type;
+ 	e->server =3D server;
++	e->status =3D OFONO_EMULATOR_STATUS_CREATE;
+ =
+
+ 	oe->emulator_list =3D g_slist_prepend(oe->emulator_list, e);
+ =
+
++	notify_status_watches(e, NULL);
++
+ 	g_io_channel_unref(channel);
+ =
+
+ 	return e;
+@@ -284,6 +308,52 @@ static GDBusSignalTable emulator_manager_signals[] =3D=
+ {
+ 	{ "PropertyChanged",	"sv" },
+ };
+ =
+
++unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *oe,
++				ofono_emulator_status_notify_cb_t notify,
++				void *data, ofono_destroy_func destroy)
++{
++	struct ofono_watchlist_item *item;
++
++	DBG("%p", oe);
++
++	if (oe =3D=3D NULL)
++		return 0;
++
++	if (notify =3D=3D NULL)
++		return 0;
++
++	item =3D g_new0(struct ofono_watchlist_item, 1);
++
++	item->notify =3D notify;
++	item->destroy =3D destroy;
++	item->notify_data =3D data;
++
++	return __ofono_watchlist_add_item(oe->status_watches, item);
++}
++
++gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *oe,
++						unsigned int id)
++{
++	DBG("%p", oe);
++
++	return __ofono_watchlist_remove_item(oe->status_watches, id);
++}
++
++static void notify_status_watches(struct emulator *e, void *data)
++{
++	struct ofono_watchlist_item *item;
++	ofono_emulator_status_notify_cb_t notify;
++	struct ofono_emulator *oe =3D e->oe;
++	GSList *l;
++
++	for (l =3D oe->status_watches->items; l; l =3D l->next) {
++		item =3D l->data;
++		notify =3D item->notify;
++
++		notify(e, e->status, data, item->notify_data);
++	}
++}
++
+ static void emulator_remove_all(struct ofono_atom *atom)
+ {
+ 	struct ofono_emulator *oe =3D __ofono_atom_get_data(atom);
+@@ -299,6 +369,8 @@ static void emulator_remove_all(struct ofono_atom *atom)
+ 		g_slist_free(oe->emulator_list);
+ 	}
+ =
+
++	__ofono_watchlist_free(oe->status_watches);
++
+ 	g_free(oe);
+ }
+ =
+
+@@ -343,6 +415,7 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
+no_modem *modem)
+ 	if (oe =3D=3D NULL)
+ 		return NULL;
+ =
+
++	oe->status_watches =3D __ofono_watchlist_new(g_free);
+ 	oe->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_EMULATOR,
+ 						emulator_remove_all, oe);
+ =
+
+diff --git a/src/ofono.h b/src/ofono.h
+index 4995830..120238c 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -269,9 +269,30 @@ void __ofono_message_waiting_mwi(struct ofono_message_=
+waiting *mw,
+ =
+
+ #include <ofono/emulator.h>
+ =
+
++struct emulator;
++
++enum ofono_emulator_status {
++	OFONO_EMULATOR_STATUS_CREATE =3D 0,
++	OFONO_EMULATOR_STATUS_IDLE,
++	OFONO_EMULATOR_STATUS_DIAL_VOICECALL,
++	OFONO_EMULATOR_STATUS_GPRS_CONNECT,
++	OFONO_EMULATOR_STATUS_DESTROY,
++};
++
+ enum ofono_emulator_type {
+ 	OFONO_EMULATOR_TYPE_NONE =3D 0,
+ 	OFONO_EMULATOR_TYPE_DUN,
+ 	OFONO_EMULATOR_TYPE_HFPAG,
+ 	OFONO_EMULATOR_TYPE_SPP,
+ };
++
++typedef void (*ofono_emulator_status_notify_cb_t)(struct emulator *e,
++					enum ofono_emulator_status status,
++					void *data, void *user_data);
++
++unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *emul=
+ator,
++				ofono_emulator_status_notify_cb_t notify,
++				void *data, ofono_destroy_func destroy);
++
++gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *emula=
+tor,
++						unsigned int id);
 -- =
 
 1.6.3.3
 
 
---===============8088998365614042462==--
+--===============5387902418615332968==--
 
