@@ -1,44 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============6540957598912936132=="
+Content-Type: multipart/mixed; boundary="===============3944054874725890466=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 09/27] stk: Adjust the sequence of dataobj
-Date: Thu, 13 May 2010 18:48:26 +0800
-Message-ID: <1273747724-28019-9-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 14/27] stkutil: Add polling off proactive command parser
+Date: Thu, 13 May 2010 18:48:31 +0800
+Message-ID: <1273747724-28019-14-git-send-email-yang.gu@intel.com>
 In-Reply-To: <1273747724-28019-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6540957598912936132==
+--===============3944054874725890466==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.h |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ src/stkutil.c |   15 +++++++++++++++
+ 1 files changed, 15 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.h b/src/stkutil.h
-index d017dc9..0c9fd50 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -872,10 +872,10 @@ struct stk_command {
- 		struct stk_command_get_inkey get_inkey;
- 		struct stk_command_get_input get_input;
- 		struct stk_command_play_tone play_tone;
--		struct stk_command_select_item select_item;
--		struct stk_command_send_sms send_sms;
- 		struct stk_command_poll_interval poll_interval;
- 		struct stk_command_setup_menu setup_menu;
-+		struct stk_command_select_item select_item;
-+		struct stk_command_send_sms send_sms;
- 	};
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 2227d31..3aaab37 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -2594,6 +2594,18 @@ static gboolean parse_refresh(struct stk_command *co=
+mmand,
+ 	return TRUE;
+ }
  =
 
- 	void (*destructor)(struct stk_command *command);
++static gboolean parse_polling_off(struct stk_command *command,
++					struct comprehension_tlv_iter *iter)
++{
++	if (command->src !=3D STK_DEVICE_IDENTITY_TYPE_UICC)
++		return FALSE;
++
++	if (command->dst !=3D STK_DEVICE_IDENTITY_TYPE_TERMINAL)
++		return FALSE;
++
++	return TRUE;
++}
++
+ struct stk_command *stk_command_new_from_pdu(const unsigned char *pdu,
+ 						unsigned int len)
+ {
+@@ -2685,6 +2697,9 @@ struct stk_command *stk_command_new_from_pdu(const un=
+signed char *pdu,
+ 	case STK_COMMAND_TYPE_REFRESH:
+ 		ok =3D parse_refresh(command, &iter);
+ 		break;
++	case STK_COMMAND_TYPE_POLLING_OFF:
++		ok =3D parse_polling_off(command, &iter);
++		break;
+ 	default:
+ 		ok =3D FALSE;
+ 		break;
 -- =
 
 1.7.0.4
 
 
---===============6540957598912936132==--
+--===============3944054874725890466==--
 
