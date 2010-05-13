@@ -1,140 +1,188 @@
-Content-Type: multipart/mixed; boundary="===============5467590480015278421=="
+Content-Type: multipart/mixed; boundary="===============1638319752769777502=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua2000@gmail.com>
-Subject: [PATCH v3 1/1] Add telephony_str_to_error to decode error code
-Date: Thu, 13 May 2010 13:02:04 +0000
-Message-ID: <1273755711-12358-1-git-send-email-zhenhua.zhang@intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH] ppp: implement ppp_packet_new
+Date: Thu, 13 May 2010 10:31:32 -0700
+Message-ID: <1273771892-6050-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5467590480015278421==
+--===============1638319752769777502==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Use to decode a final error string to error code.
 ---
- drivers/atmodem/atutil.c |    7 ++---
- src/common.c             |   48 ++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/common.h             |    1 +
- 3 files changed, 52 insertions(+), 4 deletions(-)
+ gatchat/gatppp.c   |   15 +++++++++++++++
+ gatchat/ppp.h      |    1 +
+ gatchat/ppp_auth.c |    4 +---
+ gatchat/ppp_cp.c   |    5 +----
+ gatchat/ppp_net.c  |   26 +++++++++++++++++---------
+ 5 files changed, 35 insertions(+), 16 deletions(-)
 
-diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-index 5a409b8..5b0f3fd 100644
---- a/drivers/atmodem/atutil.c
-+++ b/drivers/atmodem/atutil.c
-@@ -34,16 +34,15 @@
- =
-
- #include "atutil.h"
- #include "vendor.h"
-+#include "common.h"
- =
-
- void decode_at_error(struct ofono_error *error, const char *final)
- {
- 	if (!strcmp(final, "OK")) {
- 		error->type =3D OFONO_ERROR_TYPE_NO_ERROR;
- 		error->error =3D 0;
--	} else {
--		error->type =3D OFONO_ERROR_TYPE_FAILURE;
--		error->error =3D 0;
--	}
-+	} else
-+		telephony_str_to_error(final, error);
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index 82d1eca..8d62b07 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -84,6 +84,21 @@ void ppp_debug(GAtPPP *ppp, const char *str)
+ 	ppp->debugf(str, ppp->debug_data);
  }
  =
 
- gint at_util_call_compare_by_status(gconstpointer a, gconstpointer b)
-diff --git a/src/common.c b/src/common.c
-index 4eaff5e..f140223 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -26,6 +26,7 @@
- #define _GNU_SOURCE
- #include <string.h>
- #include <errno.h>
-+#include <stdlib.h>
- =
-
- #include <glib.h>
- =
-
-@@ -290,6 +291,53 @@ const char *telephony_error_to_str(const struct ofono_=
-error *error)
- 	return "Unknown error";
- }
- =
-
-+static int telephony_error_code(const char *str, struct error_entry *e,
-+						int maxentries)
++struct ppp_header *ppp_packet_new(gsize infolen, guint16 protocol)
 +{
-+	int error_code, i;
++	struct ppp_header *ppp_packet;
 +
-+	/* To match error like '+CMS ERROR: 500' */
-+	error_code =3D atoi(str);
-+	if (error_code)
-+		return error_code;
++	ppp_packet =3D g_try_malloc0(infolen + sizeof(*ppp_packet));
++	if (ppp_packet =3D=3D NULL)
++		return NULL;
 +
-+	for (i =3D 0; i < maxentries; i++) {
-+		if (!strcasecmp(e[i].str, str))
-+			return e[i].error;
-+	}
++	ppp_packet->proto =3D htons(protocol);
++	ppp_packet->address =3D PPP_ADDR_FIELD;
++	ppp_packet->control =3D PPP_CTRL;
 +
-+	return 0;
++	return ppp_packet;
 +}
 +
-+void telephony_str_to_error(const char *str, struct ofono_error *error)
-+{
-+	int maxentries;
-+	struct error_entry *e;
-+
-+	if (g_str_has_prefix(str, "+CME ERROR: ")) {
-+		error->type =3D OFONO_ERROR_TYPE_CME;
-+		str =3D str + strlen("+CME ERROR: ");
-+		maxentries =3D sizeof(cme_errors) / sizeof(struct error_entry);
-+		e =3D cme_errors;
-+	} else if (g_str_has_prefix(str, "+CMS ERROR: ")) {
-+		error->type =3D OFONO_ERROR_TYPE_CMS;
-+		str =3D str + strlen("+CMS ERROR: ");
-+		maxentries =3D sizeof(cms_errors) / sizeof(struct error_entry);
-+		e =3D cms_errors;
-+	} else if (g_str_has_prefix(str, "+CEER: ERROR ")) {
-+		error->type =3D OFONO_ERROR_TYPE_CEER;
-+		str =3D str + strlen("+CEER: ERROR ");
-+		maxentries =3D sizeof(ceer_errors) / sizeof(struct error_entry);
-+		e =3D ceer_errors;
-+	} else {
-+		error->type =3D OFONO_ERROR_TYPE_FAILURE;
-+		error->error =3D 0;
-+		return;
-+	}
-+
-+	error->error =3D telephony_error_code(str, e, maxentries);
-+}
-+
- int mmi_service_code_to_bearer_class(int code)
- {
- 	int cls =3D 0;
-diff --git a/src/common.h b/src/common.h
-index c43e46d..ec917d1 100644
---- a/src/common.h
-+++ b/src/common.h
-@@ -123,6 +123,7 @@ enum pin_type {
+ /*
+  * Silently discard packets which are received when they shouldn't be
+  */
+diff --git a/gatchat/ppp.h b/gatchat/ppp.h
+index 7f6c950..b6c5f4a 100644
+--- a/gatchat/ppp.h
++++ b/gatchat/ppp.h
+@@ -114,3 +114,4 @@ void ppp_lcp_finished_notify(GAtPPP *ppp);
+ void ppp_set_recv_accm(GAtPPP *ppp, guint32 accm);
+ void ppp_set_xmit_accm(GAtPPP *ppp, guint32 accm);
+ void ppp_set_mtu(GAtPPP *ppp, const guint8 *data);
++struct ppp_header *ppp_packet_new(gsize infolen, guint16 protocol);
+diff --git a/gatchat/ppp_auth.c b/gatchat/ppp_auth.c
+index eae5d17..d26b764 100644
+--- a/gatchat/ppp_auth.c
++++ b/gatchat/ppp_auth.c
+@@ -83,12 +83,10 @@ static void chap_process_challenge(struct ppp_chap *cha=
+p, const guint8 *packet)
+ 	 */
+ 	digest_len =3D g_checksum_type_get_length(chap->method);
+ 	response_length =3D digest_len + sizeof(*header) + 1;
+-	ppp_packet =3D g_try_malloc0(response_length + sizeof(struct ppp_header));
++	ppp_packet =3D ppp_packet_new(response_length, CHAP_PROTOCOL);
+ 	if (!ppp_packet)
+ 		goto challenge_out;
+ =
+
+-	/* add our protocol information */
+-	ppp_packet->proto =3D htons(CHAP_PROTOCOL);
+ 	response =3D (struct chap_header *) &ppp_packet->info;
+ 	if (response) {
+ 		response->code =3D RESPONSE;
+diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
+index e152f6e..bade6bb 100644
+--- a/gatchat/ppp_cp.c
++++ b/gatchat/ppp_cp.c
+@@ -204,13 +204,10 @@ static struct pppcp_packet *pppcp_packet_new(struct p=
+ppcp_data *data,
+ 	struct ppp_header *ppp_packet;
+ 	guint16 packet_length =3D bufferlen + sizeof(*packet);
+ =
+
+-	ppp_packet =3D g_try_malloc0(packet_length + sizeof(*ppp_packet));
++	ppp_packet =3D ppp_packet_new(packet_length, data->driver->proto);
+ 	if (!ppp_packet)
+ 		return NULL;
+ =
+
+-	/* add our protocol information */
+-	ppp_packet->proto =3D htons(data->driver->proto);
+-
+ 	/* advance past protocol to add CP header information */
+ 	packet =3D (struct pppcp_packet *) (ppp_packet->info);
+ =
+
+diff --git a/gatchat/ppp_net.c b/gatchat/ppp_net.c
+index bd1a60e..a74c06c 100644
+--- a/gatchat/ppp_net.c
++++ b/gatchat/ppp_net.c
+@@ -46,6 +46,7 @@ struct ppp_net {
+ 	GIOChannel *channel;
+ 	gint watch;
+ 	gint mtu;
++	struct ppp_header *ppp_packet;
  };
  =
 
- const char *telephony_error_to_str(const struct ofono_error *error);
-+void telephony_str_to_error(const char *str, struct ofono_error *error);
+ gboolean ppp_net_set_mtu(struct ppp_net *net, guint16 mtu)
+@@ -95,23 +96,21 @@ static gboolean ppp_net_callback(GIOChannel *channel, G=
+IOCondition cond,
+ {
+ 	struct ppp_net *net =3D (struct ppp_net *) userdata;
+ 	GIOStatus status;
+-	gchar buf[MAX_PACKET + sizeof(struct ppp_header)];
+ 	gsize bytes_read;
+ 	GError *error =3D NULL;
+-	struct ppp_header *ppp =3D (struct ppp_header *) buf;
++	gchar *buf =3D (gchar *) net->ppp_packet->info;
  =
 
- gboolean valid_phone_number_format(const char *number);
- const char *phone_number_to_string(const struct ofono_phone_number *ph);
+ 	if (cond & (G_IO_NVAL | G_IO_ERR | G_IO_HUP))
+ 		return FALSE;
+ =
+
+ 	if (cond & G_IO_IN) {
+ 		/* leave space to add PPP protocol field */
+-		status =3D g_io_channel_read_chars(channel,
+-				buf + sizeof(struct ppp_header), net->mtu,
+-				&bytes_read, &error);
+-		if (bytes_read > 0) {
+-			ppp->proto =3D htons(PPP_IP_PROTO);
+-			ppp_transmit(net->ppp, (guint8 *) buf, bytes_read);
+-		}
++		status =3D g_io_channel_read_chars(channel, buf, net->mtu,
++						 &bytes_read, &error);
++		if (bytes_read > 0)
++			ppp_transmit(net->ppp, (guint8 *) net->ppp_packet,
++					bytes_read);
++
+ 		if (status !=3D G_IO_STATUS_NORMAL && status !=3D G_IO_STATUS_AGAIN)
+ 			return FALSE;
+ 	}
+@@ -135,6 +134,12 @@ struct ppp_net *ppp_net_new(GAtPPP *ppp)
+ 	if (net =3D=3D NULL)
+ 		return NULL;
+ =
+
++	net->ppp_packet =3D ppp_packet_new(MAX_PACKET, PPP_IP_PROTO);
++	if (net->ppp_packet =3D=3D NULL) {
++		g_free(net);
++		return NULL;
++	}
++
+ 	/* open a tun interface */
+ 	fd =3D open("/dev/net/tun", O_RDWR);
+ 	if (fd < 0)
+@@ -176,6 +181,8 @@ error:
+ 	if (fd >=3D 0)
+ 		close(fd);
+ =
+
++	g_free(net->if_name);
++	g_free(net->ppp_packet);
+ 	g_free(net);
+ 	return NULL;
+ }
+@@ -185,6 +192,7 @@ void ppp_net_free(struct ppp_net *net)
+ 	g_source_remove(net->watch);
+ 	g_io_channel_unref(net->channel);
+ =
+
++	g_free(net->ppp_packet);
+ 	g_free(net->if_name);
+ 	g_free(net);
+ }
 -- =
 
-1.6.3.3
+1.6.6.1
 
 
---===============5467590480015278421==--
+--===============1638319752769777502==--
 
