@@ -1,399 +1,436 @@
-Content-Type: multipart/mixed; boundary="===============6693215432232838706=="
+Content-Type: multipart/mixed; boundary="===============1366030531033771834=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: [PATCH 6/6] Bluetooth DUN modem prototype
-Date: Sun, 16 May 2010 23:11:39 -0300
-Message-ID: <1274062299-4938-6-git-send-email-gustavo@padovan.org>
-In-Reply-To: <1274062299-4938-5-git-send-email-gustavo@padovan.org>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 01/27] Add utilities for encoding BTLVs and CTLVs.
+Date: Sun, 16 May 2010 16:01:28 +0200
+Message-ID: <1274018488-6289-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6693215432232838706==
+--===============1366030531033771834==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add a still dummy DUN code, now it can only creates and removes modems.
-The DUN plugin follows the HFP one a lot, the is basics a copy of some
-HFP plugin's parts.
+This version merges ber_tlv_builder_next and _set_tag into one function,
+same for comprehension tlvs.  The ber_tlv_iter and ber_tlv_builder
+structs are not merged because the pointers in _iter need to be const
+else ugly casting is needed.
 ---
- Makefile.am                 |    6 +
- drivers/dunmodem/dunmodem.c |   51 ++++++++++
- drivers/dunmodem/dunmodem.h |   29 ++++++
- plugins/bluetooth.c         |    5 +
- plugins/dun.c               |  214 +++++++++++++++++++++++++++++++++++++++=
+ src/simutil.c |  310 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 5 files changed, 305 insertions(+), 0 deletions(-)
- create mode 100644 drivers/dunmodem/dunmodem.c
- create mode 100644 drivers/dunmodem/dunmodem.h
- create mode 100644 plugins/dun.c
+ src/simutil.h |   47 +++++++++
+ 2 files changed, 357 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 8bb934a..fca3407 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -171,6 +171,9 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/hfpmodem/network-registration.c \
- 			drivers/hfpmodem/call-volume.c
- =
-
-+builtin_modules +=3D dunmodem
-+builtin_sources +=3D drivers/dunmodem/dunmodem.h drivers/dunmodem/dunmodem=
-.c
-+
- builtin_modules +=3D mbmmodem
- builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/mbmmodem/mbmmodem.h \
-@@ -236,6 +239,9 @@ builtin_sources +=3D plugins/bluetooth.c
- builtin_modules +=3D hfp
- builtin_sources +=3D plugins/hfp.c
- =
-
-+builtin_modules +=3D dun
-+builtin_sources +=3D plugins/dun.c
-+
- builtin_modules +=3D palmpre
- builtin_sources +=3D plugins/palmpre.c
- =
-
-diff --git a/drivers/dunmodem/dunmodem.c b/drivers/dunmodem/dunmodem.c
-new file mode 100644
-index 0000000..8658bee
---- /dev/null
-+++ b/drivers/dunmodem/dunmodem.c
-@@ -0,0 +1,51 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#define _GNU_SOURCE
-+#include <stdio.h>
-+#include <string.h>
-+#include <errno.h>
-+#include <glib.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+
-+#include "dunmodem.h"
-+
-+static int dunmodem_init(void)
-+{
-+	return 0;
-+}
-+
-+static void dunmodem_exit(void)
-+{
-+}
-+
-+OFONO_PLUGIN_DEFINE(dunmodem, "Dial-up Networking Driver", VERSION,
-+		OFONO_PLUGIN_PRIORITY_DEFAULT, dunmodem_init, dunmodem_exit)
-+
-diff --git a/drivers/dunmodem/dunmodem.h b/drivers/dunmodem/dunmodem.h
-new file mode 100644
-index 0000000..6bbf7b9
---- /dev/null
-+++ b/drivers/dunmodem/dunmodem.h
-@@ -0,0 +1,29 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+#ifndef __DUN_MODEM_H__
-+#define __DUN_MODEM_H__
-+
-+struct dun_data {
-+	char *dun_path;
-+};
-+
-+#endif
-+
-diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index 49d1b5e..6f42ac7 100644
---- a/plugins/bluetooth.c
-+++ b/plugins/bluetooth.c
-@@ -275,6 +275,11 @@ static void device_properties_cb(DBusPendingCall *call=
-, gpointer user_data)
- 		profile->create(path, device_addr, adapter_addr, alias);
- 	}
- =
-
-+	if ((have_uuid & DUN_GW) && device_addr && adapter_addr) {
-+		profile =3D g_hash_table_lookup(uuid_hash, DUN_GW_UUID);
-+		profile->create(path, device_addr, adapter_addr, alias);
-+	}
-+
- done:
- 	dbus_message_unref(reply);
+diff --git a/src/simutil.c b/src/simutil.c
+index b98c011..a0e824a 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -498,6 +498,316 @@ static const guint8 *ber_tlv_find_by_tag(const guint8=
+ *pdu, guint8 in_tag,
+ 	return NULL;
  }
-diff --git a/plugins/dun.c b/plugins/dun.c
-new file mode 100644
-index 0000000..9c8d9ce
---- /dev/null
-+++ b/plugins/dun.c
-@@ -0,0 +1,214 @@
-+/*
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
+ =
+
++#define MAX_BER_TLV_HEADER 8
 +
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+#include <stdio.h>
-+#include <string.h>
-+#include <errno.h>
-+#include <glib.h>
-+#include <ofono.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+
-+#include <drivers/dunmodem/dunmodem.h>
-+
-+#include <ofono/dbus.h>
-+
-+#include "bluetooth.h"
-+
-+#ifndef DBUS_TYPE_UNIX_FD
-+#define DBUS_TYPE_UNIX_FD -1
-+#endif
-+
-+static DBusConnection *connection;
-+static GHashTable *modem_hash =3D NULL;
-+
-+static int dun_create_modem(const char *device, const char *dev_addr,
-+				const char *adapter_addr, const char *alias)
++gboolean ber_tlv_builder_init(struct ber_tlv_builder *builder,
++				unsigned char *pdu, unsigned int size)
 +{
-+	struct ofono_modem *modem;
-+	struct dun_data *data;
-+	char buf[256];
++	if (size < MAX_BER_TLV_HEADER)
++		return FALSE;
 +
-+	/* We already have this device in our hash, ignore */
-+	if (g_hash_table_lookup(modem_hash, device) !=3D NULL)
-+		return -EALREADY;
-+
-+	ofono_info("Using device: %s, devaddr: %s, adapter: %s",
-+			device, dev_addr, adapter_addr);
-+
-+	strcpy(buf, "dun/");
-+	bluetooth_create_path(dev_addr, adapter_addr, buf + 4, sizeof(buf) - 4);
-+
-+	modem =3D ofono_modem_create(buf, "dun");
-+	if (modem =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	data =3D g_try_new0(struct dun_data, 1);
-+	if (!data)
-+		goto free;
-+
-+	data->dun_path =3D g_strdup(device);
-+	if (data->dun_path =3D=3D NULL)
-+		goto free;
-+
-+	ofono_modem_set_data(modem, data);
-+	ofono_modem_set_name(modem, alias);
-+	ofono_modem_register(modem);
-+
-+	g_hash_table_insert(modem_hash, g_strdup(device), modem);
-+	return 0;
-+
-+free:
-+	g_free(data);
-+	ofono_modem_remove(modem);
-+
-+	return -ENOMEM;
-+}
-+
-+static gboolean dun_remove_each_modem(gpointer key, gpointer value, gpoint=
-er user_data)
-+{
-+	struct ofono_modem *modem =3D value;
-+
-+	ofono_modem_remove(modem);
++	builder->pdu =3D pdu;
++	builder->pos =3D 0;
++	builder->max =3D size;
++	builder->parent =3D NULL;
++	builder->tag =3D 0xff;
++	builder->len =3D 0;
 +
 +	return TRUE;
 +}
 +
-+static void dun_remove_all_modem()
++static void ber_tlv_builder_write_header(struct ber_tlv_builder *builder)
 +{
-+	if (modem_hash =3D=3D NULL)
-+		return;
++	int header_len =3D 0;
++	int start =3D builder->pos + MAX_BER_TLV_HEADER;
 +
-+	g_hash_table_foreach_remove(modem_hash, dun_remove_each_modem, NULL);
-+}
-+
-+static void dun_set_alias(const char *device, const char *alias)
-+{
-+	struct ofono_modem *modem;
-+
-+	if (!device || !alias)
-+		return;
-+
-+	modem =3D	g_hash_table_lookup(modem_hash, device);
-+	if (!modem)
-+		return;
-+
-+	ofono_modem_set_name(modem, alias);
-+}
-+
-+static int dun_probe(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+	return 0;
-+}
-+
-+static void dun_remove(struct ofono_modem *modem)
-+{
-+	struct dun_data *data =3D ofono_modem_get_data(modem);
-+
-+	g_hash_table_remove(modem_hash, data->dun_path);
-+
-+	g_free(data->dun_path);
-+	g_free(data);
-+
-+	ofono_modem_set_data(modem, NULL);
-+}
-+
-+static int dun_enable(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+	return 0;
-+}
-+
-+static int dun_disable(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+	return 0;
-+}
-+
-+static void dun_pre_sim(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+}
-+
-+static void dun_post_sim(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+}
-+
-+static struct ofono_modem_driver dun_driver =3D {
-+	.name		=3D "dun",
-+	.probe		=3D dun_probe,
-+	.remove		=3D dun_remove,
-+	.enable		=3D dun_enable,
-+	.disable	=3D dun_disable,
-+	.pre_sim	=3D dun_pre_sim,
-+	.post_sim	=3D dun_post_sim,
-+};
-+
-+static struct bluetooth_profile dun_profile =3D {
-+	.name		=3D "dun",
-+	.create		=3D dun_create_modem,
-+	.remove_all	=3D dun_remove_all_modem,
-+	.set_alias	=3D dun_set_alias,
-+};
-+
-+static int dun_init()
-+{
-+	int err;
-+
-+	if (DBUS_TYPE_UNIX_FD < 0)
-+		return -EBADF;
-+
-+	connection =3D ofono_dbus_get_connection();
-+
-+	err =3D ofono_modem_driver_register(&dun_driver);
-+	if (err < 0)
-+		return err;
-+
-+	err =3D bluetooth_register_uuid(DUN_GW_UUID, &dun_profile);
-+	if (err < 0) {
-+		ofono_modem_driver_unregister(&dun_driver);
-+		return err;
++	/* Write length at end of the header space */
++	if (builder->len <=3D 0x7f)
++		builder->pdu[start - ++header_len] =3D builder->len;
++	else {
++		while (builder->len >> (header_len * 8)) {
++			builder->pdu[start - 1 - header_len] =3D
++				builder->len >> (header_len * 8);
++			header_len++;
++		}
++		builder->pdu[start - 1 - header_len] =3D 0x80 + header_len;
++		header_len++;
 +	}
 +
-+	modem_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						g_free, NULL);
++	/* Write the tag before length */
++	if (builder->tag < 0x1f)
++		builder->pdu[start - ++header_len] =3D
++			(builder->class << 6) |
++			(builder->encoding << 5) |
++			builder->tag;
++	else {
++		int i =3D 0;
 +
-+	return 0;
++		while (builder->tag >> (i * 7)) {
++			builder->pdu[start - ++header_len] =3D
++				i ? 0x80 | (builder->tag >> (i * 7)) :
++				(builder->tag & 0x7f);
++			i++;
++		}
++
++		builder->pdu[start - ++header_len] =3D
++			(builder->class << 6) | (builder->encoding << 5) | 0x1f;
++	}
++
++	/* Pad with stuff bytes */
++	if (header_len < MAX_BER_TLV_HEADER)
++		memset(builder->pdu + builder->pos, 0xff,
++				MAX_BER_TLV_HEADER - header_len);
 +}
 +
-+static void dun_exit()
++gboolean ber_tlv_builder_next(struct ber_tlv_builder *builder,
++				enum ber_tlv_data_type class,
++				enum ber_tlv_data_encoding_type encoding,
++				unsigned int new_tag)
 +{
-+	bluetooth_unregister_uuid(DUN_GW_UUID);
-+	ofono_modem_driver_unregister(&dun_driver);
++	if (builder->tag !=3D 0xff) {
++		ber_tlv_builder_write_header(builder);
 +
-+	g_hash_table_destroy(modem_hash);
++		builder->pos +=3D MAX_BER_TLV_HEADER + builder->len;
++	}
++
++	if (builder->pos + MAX_BER_TLV_HEADER > builder->max)
++		return FALSE;
++
++	if (builder->parent)
++		if (ber_tlv_builder_set_length(builder->parent, builder->pos +
++					MAX_BER_TLV_HEADER) =3D=3D FALSE)
++			return FALSE;
++
++	builder->class =3D class;
++	builder->encoding =3D encoding;
++	builder->tag =3D new_tag;
++	builder->len =3D 0;
++
++	return TRUE;
 +}
 +
-+OFONO_PLUGIN_DEFINE(dun, "Dial-up Networking Profile Plugins", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_init, dun_exit)
++/* Resize the TLV because the content of Value field needs more space.  If
++ * this TLV is part of another TLV, resize that one too.  */
++gboolean ber_tlv_builder_set_length(struct ber_tlv_builder *builder,
++					unsigned int new_len)
++{
++	if (builder->pos + MAX_BER_TLV_HEADER + new_len > builder->max)
++		return FALSE;
++
++	if (builder->parent)
++		if (ber_tlv_builder_set_length(builder->parent,
++					builder->pos + MAX_BER_TLV_HEADER +
++					new_len) =3D=3D FALSE)
++			return FALSE;
++
++	builder->len =3D new_len;
++
++	return TRUE;
++}
++
++unsigned char *ber_tlv_builder_get_data(struct ber_tlv_builder *builder)
++{
++	return builder->pdu + builder->pos + MAX_BER_TLV_HEADER;
++}
++
++gboolean ber_tlv_builder_recurse(struct ber_tlv_builder *builder,
++					struct ber_tlv_builder *recurse)
++{
++	unsigned char *end =3D builder->pdu + builder->max;
++	unsigned char *data =3D ber_tlv_builder_get_data(builder);
++
++	if (ber_tlv_builder_init(recurse, data, end - data) =3D=3D FALSE)
++		return FALSE;
++
++	recurse->parent =3D builder;
++
++	return TRUE;
++}
++
++gboolean ber_tlv_builder_recurse_comprehension(struct ber_tlv_builder *bui=
+lder,
++				struct comprehension_tlv_builder *recurse)
++{
++	unsigned char *end =3D builder->pdu + builder->max;
++	unsigned char *data =3D ber_tlv_builder_get_data(builder);
++
++	if (comprehension_tlv_builder_init(recurse, data, end - data) =3D=3D FALS=
+E)
++		return FALSE;
++
++	recurse->parent =3D builder;
++
++	return TRUE;
++}
++
++void ber_tlv_builder_optimize(struct ber_tlv_builder *builder,
++				unsigned char **pdu, unsigned int *len)
++{
++	ber_tlv_builder_write_header(builder);
++
++	if (pdu =3D=3D NULL)
++		return;
++
++	*len =3D builder->pos + MAX_BER_TLV_HEADER + builder->len;
++	*pdu =3D builder->pdu;
++
++	while (**pdu =3D=3D 0xff) {
++		(*len)--;
++		(*pdu)++;
++	}
++}
++
++gboolean comprehension_tlv_builder_init(
++				struct comprehension_tlv_builder *builder,
++				unsigned char *pdu, unsigned int size)
++{
++	if (size < 2)
++		return FALSE;
++
++	builder->pdu =3D pdu;
++	builder->pos =3D 0;
++	builder->max =3D size;
++	builder->parent =3D NULL;
++
++	builder->pdu[0] =3D 0;
++	builder->pdu[1] =3D 0;
++
++	return TRUE;
++}
++
++static inline unsigned int comprehension_tlv_get_tag_len(unsigned char *st=
+art)
++{
++	return bit_field(*start, 0, 7) =3D=3D 0x7f ? 3 : 1;
++}
++
++static inline unsigned int comprehension_tlv_get_len_len(unsigned char *st=
+art)
++{
++	return *start >=3D 0x80 ? *start - 0x7f : 1;
++}
++
++gboolean comprehension_tlv_builder_next(
++				struct comprehension_tlv_builder *builder,
++				gboolean cr, unsigned short tag)
++{
++	unsigned int taglen =3D 0;
++	unsigned int lenlen =3D 0;
++	unsigned int len =3D 0;
++
++	if (builder->pdu[builder->pos] !=3D 0) {
++		taglen =3D comprehension_tlv_get_tag_len(builder->pdu +
++							builder->pos);
++		lenlen =3D 1;
++		len =3D builder->pdu[builder->pos + taglen];
++
++		if (len >=3D 0x80) {
++			unsigned int extended_bytes =3D len - 0x80;
++			unsigned int i;
++
++			for (len =3D 0, i =3D 1; i <=3D extended_bytes; i++)
++				len =3D (len << 8) |
++					builder->pdu[builder->pos + taglen + i];
++
++			lenlen +=3D extended_bytes;
++		}
++	}
++
++	if (builder->pos + taglen + lenlen + len + (tag < 0x7f ? 1 : 3) + 1 >
++			builder->max)
++		return FALSE;
++
++	builder->pos +=3D taglen + lenlen + len;
++	if (tag < 0x7f) {
++		builder->pdu[builder->pos + 0] =3D (cr ? 0x80 : 0x00) | tag;
++		builder->pdu[builder->pos + 1] =3D 0; /* Length */
++	} else {
++		if (builder->pos + 4 > builder->max)
++			return FALSE;
++
++		builder->pdu[builder->pos + 0] =3D 0x7f;
++		builder->pdu[builder->pos + 1] =3D (cr ? 0x80 : 0) | (tag >> 8);
++		builder->pdu[builder->pos + 2] =3D tag & 0xff;
++		builder->pdu[builder->pos + 3] =3D 0; /* Length */
++	}
++
++	return TRUE;
++}
++
++/* Resize the TLV because the content of Value field needs more space.  If
++ * this TLV is part of another TLV, resize that one too.  */
++gboolean comprehension_tlv_builder_set_length(
++				struct comprehension_tlv_builder *builder,
++				unsigned int new_len)
++{
++	unsigned char *tlv =3D builder->pdu + builder->pos;
++	unsigned int taglen =3D comprehension_tlv_get_tag_len(tlv);
++	unsigned int lenlen =3D 1, new_lenlen =3D 1;
++	unsigned int len =3D tlv[taglen];
++	unsigned int ctlv_len, new_ctlv_len;
++
++	/* How much space do we occupy now */
++	if (len >=3D 0x80) {
++		unsigned int extended_bytes =3D len - 0x80;
++		unsigned int i;
++
++		for (len =3D 0, i =3D 1; i <=3D extended_bytes; i++)
++			len =3D (len << 8) | tlv[taglen + i];
++
++		lenlen +=3D extended_bytes;
++	}
++
++	ctlv_len =3D taglen + lenlen + len;
++
++	/* How much do we need */
++	if (new_len >=3D 0x80) {
++		unsigned int extended_bytes =3D 0;
++		while (new_len >> (extended_bytes * 8))
++			extended_bytes +=3D 1;
++		new_lenlen +=3D extended_bytes;
++	}
++
++	new_ctlv_len =3D taglen + new_lenlen + new_len;
++
++	/* Check there is enough space */
++	if (builder->pos + new_ctlv_len > builder->max)
++		return FALSE;
++
++	if (builder->parent)
++		if (ber_tlv_builder_set_length(builder->parent, builder->pos +
++					new_ctlv_len) =3D=3D FALSE)
++			return FALSE;
++
++	len =3D MIN(len, new_len);
++	if (len > 0 && new_lenlen !=3D lenlen)
++		memmove(tlv + taglen + new_lenlen, tlv + taglen + lenlen, len);
++
++	/* Write new length */
++	if (new_len < 0x80)
++		tlv[taglen] =3D new_len;
++	else {
++		unsigned int extended_bytes =3D 0;
++		unsigned int i;
++		while (new_len >> (extended_bytes * 8))
++			extended_bytes +=3D 1;
++
++		for (i =3D 1; i <=3D extended_bytes; i++)
++			tlv[taglen + i] =3D
++				(new_len >> ((extended_bytes - i) * 8)) & 0xff;
++
++		tlv[taglen] =3D 0x80 + extended_bytes;
++	}
++
++	return TRUE;
++}
++
++unsigned char *comprehension_tlv_builder_get_data(
++				struct comprehension_tlv_builder *builder)
++{
++	unsigned char *tlv =3D builder->pdu + builder->pos;
++	unsigned int taglen =3D comprehension_tlv_get_tag_len(tlv);
++	unsigned int lenlen =3D comprehension_tlv_get_len_len(tlv + taglen);
++
++	return tlv + taglen + lenlen;
++}
++
+ static char *sim_network_name_parse(const unsigned char *buffer, int lengt=
+h,
+ 					gboolean *add_ci)
+ {
+diff --git a/src/simutil.h b/src/simutil.h
+index 45b6847..53e7743 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -114,6 +114,25 @@ struct ber_tlv_iter {
+ 	const unsigned char *data;
+ };
+ =
+
++struct ber_tlv_builder {
++	unsigned int max;
++	unsigned int pos;
++	unsigned char *pdu;
++	struct ber_tlv_builder *parent;
++
++	unsigned int tag;
++	enum ber_tlv_data_type class;
++	enum ber_tlv_data_encoding_type encoding;
++	unsigned int len;
++};
++
++struct comprehension_tlv_builder {
++	unsigned int max;
++	unsigned int pos;
++	unsigned char *pdu;
++	struct ber_tlv_builder *parent;
++};
++
+ void simple_tlv_iter_init(struct simple_tlv_iter *iter,
+ 				const unsigned char *pdu, unsigned int len);
+ gboolean simple_tlv_iter_next(struct simple_tlv_iter *iter);
+@@ -135,6 +154,18 @@ const unsigned char *comprehension_tlv_iter_get_data(
+ void comprehension_tlv_iter_copy(struct comprehension_tlv_iter *from,
+ 					struct comprehension_tlv_iter *to);
+ =
+
++gboolean comprehension_tlv_builder_init(
++				struct comprehension_tlv_builder *builder,
++				unsigned char *pdu, unsigned int size);
++gboolean comprehension_tlv_builder_next(
++				struct comprehension_tlv_builder *builder,
++				gboolean cr, unsigned short tag);
++gboolean comprehension_tlv_builder_set_length(
++				struct comprehension_tlv_builder *builder,
++				unsigned int len);
++unsigned char *comprehension_tlv_builder_get_data(
++				struct comprehension_tlv_builder *builder);
++
+ void ber_tlv_iter_init(struct ber_tlv_iter *iter, const unsigned char *pdu,
+ 			unsigned int len);
+ /*
+@@ -167,6 +198,22 @@ void ber_tlv_iter_recurse_simple(struct ber_tlv_iter *=
+iter,
+ void ber_tlv_iter_recurse_comprehension(struct ber_tlv_iter *iter,
+ 					struct comprehension_tlv_iter *recurse);
+ =
+
++gboolean ber_tlv_builder_init(struct ber_tlv_builder *builder,
++				unsigned char *pdu, unsigned int size);
++gboolean ber_tlv_builder_next(struct ber_tlv_builder *builder,
++				enum ber_tlv_data_type class,
++				enum ber_tlv_data_encoding_type encoding,
++				unsigned int new_tag);
++gboolean ber_tlv_builder_set_length(struct ber_tlv_builder *builder,
++					unsigned int len);
++unsigned char *ber_tlv_builder_get_data(struct ber_tlv_builder *builder);
++gboolean ber_tlv_builder_recurse(struct ber_tlv_builder *builder,
++					struct ber_tlv_builder *recurse);
++gboolean ber_tlv_builder_recurse_comprehension(struct ber_tlv_builder *bui=
+lder,
++				struct comprehension_tlv_builder *recurse);
++void ber_tlv_builder_optimize(struct ber_tlv_builder *builder,
++				unsigned char **pdu, unsigned int *len);
++
+ struct sim_eons *sim_eons_new(int pnn_records);
+ void sim_eons_add_pnn_record(struct sim_eons *eons, int record,
+ 				const guint8 *tlv, int length);
 -- =
 
-1.7.1
+1.7.1.86.g0e460.dirty
 
 
---===============6693215432232838706==--
+--===============1366030531033771834==--
 
