@@ -1,436 +1,336 @@
-Content-Type: multipart/mixed; boundary="===============1366030531033771834=="
+Content-Type: multipart/mixed; boundary="===============7513954498494143980=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 01/27] Add utilities for encoding BTLVs and CTLVs.
-Date: Sun, 16 May 2010 16:01:28 +0200
-Message-ID: <1274018488-6289-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 02/27] Add a BER-TLV encoding tests.
+Date: Sun, 16 May 2010 16:04:28 +0200
+Message-ID: <1274018668-6328-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1366030531033771834==
+--===============7513954498494143980==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This version merges ber_tlv_builder_next and _set_tag into one function,
-same for comprehension tlvs.  The ber_tlv_iter and ber_tlv_builder
-structs are not merged because the pointers in _iter need to be const
-else ugly casting is needed.
 ---
- src/simutil.c |  310 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/simutil.h |   47 +++++++++
- 2 files changed, 357 insertions(+), 0 deletions(-)
+ unit/test-simutil.c |  271 +++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 268 insertions(+), 3 deletions(-)
 
-diff --git a/src/simutil.c b/src/simutil.c
-index b98c011..a0e824a 100644
---- a/src/simutil.c
-+++ b/src/simutil.c
-@@ -498,6 +498,316 @@ static const guint8 *ber_tlv_find_by_tag(const guint8=
- *pdu, guint8 in_tag,
- 	return NULL;
+diff --git a/unit/test-simutil.c b/unit/test-simutil.c
+index 2c8cb30..7aa09b4 100644
+--- a/unit/test-simutil.c
++++ b/unit/test-simutil.c
+@@ -48,16 +48,15 @@ const unsigned char valid_mms_params[] =3D {
+ 	0x6D, 0x65, 0x00, 0x1B, 0x64, 0x75, 0x6D, 0x6D, 0x79, 0x5F, 0x70, 0x61,
+ 	0x73, 0x73, 0x77, 0x6F, 0x72, 0x64, 0x00 };
+ =
+
+-static void test_ber_tlv_iter()
++static void test_buffer(const unsigned char *buf, size_t size)
+ {
+ 	struct ber_tlv_iter iter;
+ 	struct ber_tlv_iter cont;
+ =
+
+-	ber_tlv_iter_init(&iter, valid_mms_params, sizeof(valid_mms_params));
++	ber_tlv_iter_init(&iter, buf, size);
+ =
+
+ 	g_assert(ber_tlv_iter_next(&iter) =3D=3D TRUE);
+ 	g_assert(ber_tlv_iter_get_short_tag(&iter) =3D=3D 0xAB);
+-	g_assert(ber_tlv_iter_get_length(&iter) =3D=3D 136);
+ =
+
+ 	ber_tlv_iter_recurse(&iter, &cont);
+ =
+
+@@ -81,6 +80,266 @@ static void test_ber_tlv_iter()
+ 	g_assert(ber_tlv_iter_next(&iter) =3D=3D FALSE);
  }
  =
 
-+#define MAX_BER_TLV_HEADER 8
-+
-+gboolean ber_tlv_builder_init(struct ber_tlv_builder *builder,
-+				unsigned char *pdu, unsigned int size)
++static void test_ber_tlv_iter()
 +{
-+	if (size < MAX_BER_TLV_HEADER)
-+		return FALSE;
-+
-+	builder->pdu =3D pdu;
-+	builder->pos =3D 0;
-+	builder->max =3D size;
-+	builder->parent =3D NULL;
-+	builder->tag =3D 0xff;
-+	builder->len =3D 0;
-+
-+	return TRUE;
++	test_buffer(valid_mms_params, sizeof(valid_mms_params));
 +}
 +
-+static void ber_tlv_builder_write_header(struct ber_tlv_builder *builder)
++static void test_ber_tlv_builder_mms()
 +{
-+	int header_len =3D 0;
-+	int start =3D builder->pos + MAX_BER_TLV_HEADER;
++	struct ber_tlv_iter top_iter, nested_iter;
++	struct ber_tlv_builder top_builder, nested_builder;
++	unsigned char buf[512], *pdu;
++	unsigned int pdulen;
 +
-+	/* Write length at end of the header space */
-+	if (builder->len <=3D 0x7f)
-+		builder->pdu[start - ++header_len] =3D builder->len;
-+	else {
-+		while (builder->len >> (header_len * 8)) {
-+			builder->pdu[start - 1 - header_len] =3D
-+				builder->len >> (header_len * 8);
-+			header_len++;
-+		}
-+		builder->pdu[start - 1 - header_len] =3D 0x80 + header_len;
-+		header_len++;
-+	}
++	ber_tlv_iter_init(&top_iter, valid_mms_params,
++				sizeof(valid_mms_params));
++	g_assert(ber_tlv_builder_init(&top_builder, buf, sizeof(buf)));
 +
-+	/* Write the tag before length */
-+	if (builder->tag < 0x1f)
-+		builder->pdu[start - ++header_len] =3D
-+			(builder->class << 6) |
-+			(builder->encoding << 5) |
-+			builder->tag;
-+	else {
-+		int i =3D 0;
++	/* Copy the structure */
++	while (ber_tlv_iter_next(&top_iter) =3D=3D TRUE) {
++		g_assert(ber_tlv_builder_next(&top_builder,
++					ber_tlv_iter_get_class(&top_iter),
++					ber_tlv_iter_get_encoding(&top_iter),
++					ber_tlv_iter_get_tag(&top_iter)));
 +
-+		while (builder->tag >> (i * 7)) {
-+			builder->pdu[start - ++header_len] =3D
-+				i ? 0x80 | (builder->tag >> (i * 7)) :
-+				(builder->tag & 0x7f);
-+			i++;
++		ber_tlv_iter_recurse(&top_iter, &nested_iter);
++		g_assert(ber_tlv_builder_recurse(&top_builder,
++							&nested_builder));
++
++		while (ber_tlv_iter_next(&nested_iter) =3D=3D TRUE) {
++			g_assert(ber_tlv_builder_next(&nested_builder,
++					ber_tlv_iter_get_class(&nested_iter),
++					ber_tlv_iter_get_encoding(&nested_iter),
++					ber_tlv_iter_get_tag(&nested_iter)));
++
++			g_assert(ber_tlv_builder_set_length(&nested_builder,
++					ber_tlv_iter_get_length(&nested_iter)));
++			memcpy(ber_tlv_builder_get_data(&nested_builder),
++					ber_tlv_iter_get_data(&nested_iter),
++					ber_tlv_iter_get_length(&nested_iter));
 +		}
 +
-+		builder->pdu[start - ++header_len] =3D
-+			(builder->class << 6) | (builder->encoding << 5) | 0x1f;
++		ber_tlv_builder_optimize(&nested_builder, NULL, NULL);
 +	}
 +
-+	/* Pad with stuff bytes */
-+	if (header_len < MAX_BER_TLV_HEADER)
-+		memset(builder->pdu + builder->pos, 0xff,
-+				MAX_BER_TLV_HEADER - header_len);
++	ber_tlv_builder_optimize(&top_builder, &pdu, &pdulen);
++
++	test_buffer(pdu, pdulen);
 +}
 +
-+gboolean ber_tlv_builder_next(struct ber_tlv_builder *builder,
-+				enum ber_tlv_data_type class,
-+				enum ber_tlv_data_encoding_type encoding,
-+				unsigned int new_tag)
++static void test_ber_tlv_builder_efpnn()
 +{
-+	if (builder->tag !=3D 0xff) {
-+		ber_tlv_builder_write_header(builder);
++	struct sim_eons *eons_info;
++	unsigned char efpnn0[64], efpnn1[64];
++	struct ber_tlv_builder builder;
 +
-+		builder->pos +=3D MAX_BER_TLV_HEADER + builder->len;
-+	}
++	g_assert(ber_tlv_builder_init(&builder, efpnn0, sizeof(efpnn0)));
++	g_assert(ber_tlv_builder_next(&builder,
++					BER_TLV_DATA_TYPE_APPLICATION,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x03));
++	g_assert(ber_tlv_builder_set_length(&builder, 10));
++	ber_tlv_builder_get_data(&builder)[0] =3D 0x00;
++	ber_tlv_builder_get_data(&builder)[1] =3D 0x54;
++	ber_tlv_builder_get_data(&builder)[2] =3D 0x75;
++	ber_tlv_builder_get_data(&builder)[3] =3D 0x78;
++	ber_tlv_builder_get_data(&builder)[4] =3D 0x20;
++	ber_tlv_builder_get_data(&builder)[5] =3D 0x43;
++	ber_tlv_builder_get_data(&builder)[6] =3D 0x6f;
++	ber_tlv_builder_get_data(&builder)[7] =3D 0x6d;
++	ber_tlv_builder_get_data(&builder)[8] =3D 0x6d;
++	ber_tlv_builder_get_data(&builder)[9] =3D 0xff;
++	ber_tlv_builder_get_data(&builder)[10] =3D 0xff;
++	ber_tlv_builder_optimize(&builder, NULL, NULL);
 +
-+	if (builder->pos + MAX_BER_TLV_HEADER > builder->max)
-+		return FALSE;
++	g_assert(ber_tlv_builder_init(&builder, efpnn1, sizeof(efpnn1)));
++	g_assert(ber_tlv_builder_next(&builder,
++					BER_TLV_DATA_TYPE_APPLICATION,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x03));
++	g_assert(ber_tlv_builder_set_length(&builder, 3));
++	ber_tlv_builder_get_data(&builder)[0] =3D 0x00;
++	ber_tlv_builder_get_data(&builder)[1] =3D 0x4c;
++	ber_tlv_builder_get_data(&builder)[2] =3D 0x6f;
++	ber_tlv_builder_get_data(&builder)[3] =3D 0x6e;
++	ber_tlv_builder_get_data(&builder)[4] =3D 0x67;
++	g_assert(ber_tlv_builder_next(&builder,
++					BER_TLV_DATA_TYPE_APPLICATION,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x05));
++	g_assert(ber_tlv_builder_set_length(&builder, 6));
++	ber_tlv_builder_get_data(&builder)[0] =3D 0x00;
++	ber_tlv_builder_get_data(&builder)[1] =3D 0x53;
++	ber_tlv_builder_get_data(&builder)[2] =3D 0x68;
++	ber_tlv_builder_get_data(&builder)[3] =3D 0x6f;
++	ber_tlv_builder_get_data(&builder)[4] =3D 0x72;
++	ber_tlv_builder_get_data(&builder)[5] =3D 0x74;
++	ber_tlv_builder_optimize(&builder, NULL, NULL);
 +
-+	if (builder->parent)
-+		if (ber_tlv_builder_set_length(builder->parent, builder->pos +
-+					MAX_BER_TLV_HEADER) =3D=3D FALSE)
-+			return FALSE;
++	eons_info =3D sim_eons_new(1);
++	sim_eons_add_pnn_record(eons_info, 1, efpnn0, sizeof(efpnn0));
++	g_assert(!sim_eons_pnn_is_empty(eons_info));
++	sim_eons_free(eons_info);
 +
-+	builder->class =3D class;
-+	builder->encoding =3D encoding;
-+	builder->tag =3D new_tag;
-+	builder->len =3D 0;
-+
-+	return TRUE;
++	eons_info =3D sim_eons_new(1);
++	sim_eons_add_pnn_record(eons_info, 1, efpnn1, sizeof(efpnn1));
++	g_assert(!sim_eons_pnn_is_empty(eons_info));
++	sim_eons_free(eons_info);
 +}
 +
-+/* Resize the TLV because the content of Value field needs more space.  If
-+ * this TLV is part of another TLV, resize that one too.  */
-+gboolean ber_tlv_builder_set_length(struct ber_tlv_builder *builder,
-+					unsigned int new_len)
++static void test_ber_tlv_builder_3g_status()
 +{
-+	if (builder->pos + MAX_BER_TLV_HEADER + new_len > builder->max)
-+		return FALSE;
-+
-+	if (builder->parent)
-+		if (ber_tlv_builder_set_length(builder->parent,
-+					builder->pos + MAX_BER_TLV_HEADER +
-+					new_len) =3D=3D FALSE)
-+			return FALSE;
-+
-+	builder->len =3D new_len;
-+
-+	return TRUE;
-+}
-+
-+unsigned char *ber_tlv_builder_get_data(struct ber_tlv_builder *builder)
-+{
-+	return builder->pdu + builder->pos + MAX_BER_TLV_HEADER;
-+}
-+
-+gboolean ber_tlv_builder_recurse(struct ber_tlv_builder *builder,
-+					struct ber_tlv_builder *recurse)
-+{
-+	unsigned char *end =3D builder->pdu + builder->max;
-+	unsigned char *data =3D ber_tlv_builder_get_data(builder);
-+
-+	if (ber_tlv_builder_init(recurse, data, end - data) =3D=3D FALSE)
-+		return FALSE;
-+
-+	recurse->parent =3D builder;
-+
-+	return TRUE;
-+}
-+
-+gboolean ber_tlv_builder_recurse_comprehension(struct ber_tlv_builder *bui=
-lder,
-+				struct comprehension_tlv_builder *recurse)
-+{
-+	unsigned char *end =3D builder->pdu + builder->max;
-+	unsigned char *data =3D ber_tlv_builder_get_data(builder);
-+
-+	if (comprehension_tlv_builder_init(recurse, data, end - data) =3D=3D FALS=
-E)
-+		return FALSE;
-+
-+	recurse->parent =3D builder;
-+
-+	return TRUE;
-+}
-+
-+void ber_tlv_builder_optimize(struct ber_tlv_builder *builder,
-+				unsigned char **pdu, unsigned int *len)
-+{
-+	ber_tlv_builder_write_header(builder);
-+
-+	if (pdu =3D=3D NULL)
-+		return;
-+
-+	*len =3D builder->pos + MAX_BER_TLV_HEADER + builder->len;
-+	*pdu =3D builder->pdu;
-+
-+	while (**pdu =3D=3D 0xff) {
-+		(*len)--;
-+		(*pdu)++;
-+	}
-+}
-+
-+gboolean comprehension_tlv_builder_init(
-+				struct comprehension_tlv_builder *builder,
-+				unsigned char *pdu, unsigned int size)
-+{
-+	if (size < 2)
-+		return FALSE;
-+
-+	builder->pdu =3D pdu;
-+	builder->pos =3D 0;
-+	builder->max =3D size;
-+	builder->parent =3D NULL;
-+
-+	builder->pdu[0] =3D 0;
-+	builder->pdu[1] =3D 0;
-+
-+	return TRUE;
-+}
-+
-+static inline unsigned int comprehension_tlv_get_tag_len(unsigned char *st=
-art)
-+{
-+	return bit_field(*start, 0, 7) =3D=3D 0x7f ? 3 : 1;
-+}
-+
-+static inline unsigned int comprehension_tlv_get_len_len(unsigned char *st=
-art)
-+{
-+	return *start >=3D 0x80 ? *start - 0x7f : 1;
-+}
-+
-+gboolean comprehension_tlv_builder_next(
-+				struct comprehension_tlv_builder *builder,
-+				gboolean cr, unsigned short tag)
-+{
-+	unsigned int taglen =3D 0;
-+	unsigned int lenlen =3D 0;
-+	unsigned int len =3D 0;
-+
-+	if (builder->pdu[builder->pos] !=3D 0) {
-+		taglen =3D comprehension_tlv_get_tag_len(builder->pdu +
-+							builder->pos);
-+		lenlen =3D 1;
-+		len =3D builder->pdu[builder->pos + taglen];
-+
-+		if (len >=3D 0x80) {
-+			unsigned int extended_bytes =3D len - 0x80;
-+			unsigned int i;
-+
-+			for (len =3D 0, i =3D 1; i <=3D extended_bytes; i++)
-+				len =3D (len << 8) |
-+					builder->pdu[builder->pos + taglen + i];
-+
-+			lenlen +=3D extended_bytes;
-+		}
-+	}
-+
-+	if (builder->pos + taglen + lenlen + len + (tag < 0x7f ? 1 : 3) + 1 >
-+			builder->max)
-+		return FALSE;
-+
-+	builder->pos +=3D taglen + lenlen + len;
-+	if (tag < 0x7f) {
-+		builder->pdu[builder->pos + 0] =3D (cr ? 0x80 : 0x00) | tag;
-+		builder->pdu[builder->pos + 1] =3D 0; /* Length */
-+	} else {
-+		if (builder->pos + 4 > builder->max)
-+			return FALSE;
-+
-+		builder->pdu[builder->pos + 0] =3D 0x7f;
-+		builder->pdu[builder->pos + 1] =3D (cr ? 0x80 : 0) | (tag >> 8);
-+		builder->pdu[builder->pos + 2] =3D tag & 0xff;
-+		builder->pdu[builder->pos + 3] =3D 0; /* Length */
-+	}
-+
-+	return TRUE;
-+}
-+
-+/* Resize the TLV because the content of Value field needs more space.  If
-+ * this TLV is part of another TLV, resize that one too.  */
-+gboolean comprehension_tlv_builder_set_length(
-+				struct comprehension_tlv_builder *builder,
-+				unsigned int new_len)
-+{
-+	unsigned char *tlv =3D builder->pdu + builder->pos;
-+	unsigned int taglen =3D comprehension_tlv_get_tag_len(tlv);
-+	unsigned int lenlen =3D 1, new_lenlen =3D 1;
-+	unsigned int len =3D tlv[taglen];
-+	unsigned int ctlv_len, new_ctlv_len;
-+
-+	/* How much space do we occupy now */
-+	if (len >=3D 0x80) {
-+		unsigned int extended_bytes =3D len - 0x80;
-+		unsigned int i;
-+
-+		for (len =3D 0, i =3D 1; i <=3D extended_bytes; i++)
-+			len =3D (len << 8) | tlv[taglen + i];
-+
-+		lenlen +=3D extended_bytes;
-+	}
-+
-+	ctlv_len =3D taglen + lenlen + len;
-+
-+	/* How much do we need */
-+	if (new_len >=3D 0x80) {
-+		unsigned int extended_bytes =3D 0;
-+		while (new_len >> (extended_bytes * 8))
-+			extended_bytes +=3D 1;
-+		new_lenlen +=3D extended_bytes;
-+	}
-+
-+	new_ctlv_len =3D taglen + new_lenlen + new_len;
-+
-+	/* Check there is enough space */
-+	if (builder->pos + new_ctlv_len > builder->max)
-+		return FALSE;
-+
-+	if (builder->parent)
-+		if (ber_tlv_builder_set_length(builder->parent, builder->pos +
-+					new_ctlv_len) =3D=3D FALSE)
-+			return FALSE;
-+
-+	len =3D MIN(len, new_len);
-+	if (len > 0 && new_lenlen !=3D lenlen)
-+		memmove(tlv + taglen + new_lenlen, tlv + taglen + lenlen, len);
-+
-+	/* Write new length */
-+	if (new_len < 0x80)
-+		tlv[taglen] =3D new_len;
-+	else {
-+		unsigned int extended_bytes =3D 0;
-+		unsigned int i;
-+		while (new_len >> (extended_bytes * 8))
-+			extended_bytes +=3D 1;
-+
-+		for (i =3D 1; i <=3D extended_bytes; i++)
-+			tlv[taglen + i] =3D
-+				(new_len >> ((extended_bytes - i) * 8)) & 0xff;
-+
-+		tlv[taglen] =3D 0x80 + extended_bytes;
-+	}
-+
-+	return TRUE;
-+}
-+
-+unsigned char *comprehension_tlv_builder_get_data(
-+				struct comprehension_tlv_builder *builder)
-+{
-+	unsigned char *tlv =3D builder->pdu + builder->pos;
-+	unsigned int taglen =3D comprehension_tlv_get_tag_len(tlv);
-+	unsigned int lenlen =3D comprehension_tlv_get_len_len(tlv + taglen);
-+
-+	return tlv + taglen + lenlen;
-+}
-+
- static char *sim_network_name_parse(const unsigned char *buffer, int lengt=
-h,
- 					gboolean *add_ci)
- {
-diff --git a/src/simutil.h b/src/simutil.h
-index 45b6847..53e7743 100644
---- a/src/simutil.h
-+++ b/src/simutil.h
-@@ -114,6 +114,25 @@ struct ber_tlv_iter {
- 	const unsigned char *data;
- };
- =
-
-+struct ber_tlv_builder {
-+	unsigned int max;
-+	unsigned int pos;
-+	unsigned char *pdu;
-+	struct ber_tlv_builder *parent;
-+
-+	unsigned int tag;
-+	enum ber_tlv_data_type class;
-+	enum ber_tlv_data_encoding_type encoding;
++	unsigned char buf[512];
++	struct ber_tlv_builder top_builder, nested_builder;
++	unsigned char *response;
 +	unsigned int len;
-+};
++	int flen, rlen, str;
++	unsigned char access[3];
++	unsigned short efid;
 +
-+struct comprehension_tlv_builder {
-+	unsigned int max;
-+	unsigned int pos;
-+	unsigned char *pdu;
-+	struct ber_tlv_builder *parent;
-+};
++	/* Build a binary EF status response */
++	g_assert(ber_tlv_builder_init(&top_builder, buf, sizeof(buf)));
 +
- void simple_tlv_iter_init(struct simple_tlv_iter *iter,
- 				const unsigned char *pdu, unsigned int len);
- gboolean simple_tlv_iter_next(struct simple_tlv_iter *iter);
-@@ -135,6 +154,18 @@ const unsigned char *comprehension_tlv_iter_get_data(
- void comprehension_tlv_iter_copy(struct comprehension_tlv_iter *from,
- 					struct comprehension_tlv_iter *to);
++	g_assert(ber_tlv_builder_next(&top_builder,
++					BER_TLV_DATA_TYPE_APPLICATION,
++					BER_TLV_DATA_ENCODING_TYPE_CONSTRUCTED,
++					0x02));
++	g_assert(ber_tlv_builder_recurse(&top_builder, &nested_builder));
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x02));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 2));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x41;
++	ber_tlv_builder_get_data(&nested_builder)[1] =3D 0x21;
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x03));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 2));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x2f;
++	ber_tlv_builder_get_data(&nested_builder)[1] =3D 0x05;
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x0a));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 1));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x05;
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x0b));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 3));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x2f;
++	ber_tlv_builder_get_data(&nested_builder)[1] =3D 0x06;
++	ber_tlv_builder_get_data(&nested_builder)[2] =3D 0x0f;
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x00));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 2));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x00;
++	ber_tlv_builder_get_data(&nested_builder)[1] =3D 0x0a;
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x08));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 1));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x28;
++
++	ber_tlv_builder_optimize(&nested_builder, NULL, NULL);
++	ber_tlv_builder_optimize(&top_builder, &response, &len);
++
++	sim_parse_3g_get_response(response, len, &flen, &rlen, &str,
++					access, &efid);
++
++	g_assert(flen =3D=3D 10);
++	g_assert(rlen =3D=3D 0);
++	g_assert(str =3D=3D 0);
++	g_assert(access[0] =3D=3D 0x01);
++	g_assert(access[1] =3D=3D 0xff);
++	g_assert(access[2] =3D=3D 0x44);
++	g_assert(efid =3D=3D 0x2F05);
++
++	/* Build a record-based EF status response */
++	g_assert(ber_tlv_builder_init(&top_builder, buf, sizeof(buf)));
++
++	g_assert(ber_tlv_builder_next(&top_builder,
++					BER_TLV_DATA_TYPE_APPLICATION,
++					BER_TLV_DATA_ENCODING_TYPE_CONSTRUCTED,
++					0x02));
++	g_assert(ber_tlv_builder_recurse(&top_builder, &nested_builder));
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x02));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 5));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x42;
++	ber_tlv_builder_get_data(&nested_builder)[1] =3D 0x21;
++	ber_tlv_builder_get_data(&nested_builder)[2] =3D 0x00;
++	ber_tlv_builder_get_data(&nested_builder)[3] =3D 0x20;
++	ber_tlv_builder_get_data(&nested_builder)[4] =3D 0x04;
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x03));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 2));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x6f;
++	ber_tlv_builder_get_data(&nested_builder)[1] =3D 0x40;
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x0a));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 1));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x05;
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x0b));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 3));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x2f;
++	ber_tlv_builder_get_data(&nested_builder)[1] =3D 0x06;
++	ber_tlv_builder_get_data(&nested_builder)[2] =3D 0x07;
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x00));
++	g_assert(ber_tlv_builder_set_length(&nested_builder, 2));
++	ber_tlv_builder_get_data(&nested_builder)[0] =3D 0x00;
++	ber_tlv_builder_get_data(&nested_builder)[1] =3D 0x80;
++
++	g_assert(ber_tlv_builder_next(&nested_builder,
++					BER_TLV_DATA_TYPE_CONTEXT_SPECIFIC,
++					BER_TLV_DATA_ENCODING_TYPE_PRIMITIVE,
++					0x08));
++
++	ber_tlv_builder_optimize(&nested_builder, NULL, NULL);
++	ber_tlv_builder_optimize(&top_builder, &response, &len);
++
++	sim_parse_3g_get_response(response, len, &flen, &rlen, &str,
++					access, &efid);
++
++	g_assert(flen =3D=3D 0x80);
++	g_assert(rlen =3D=3D 0x20);
++	g_assert(str =3D=3D 1);
++	g_assert(access[0] =3D=3D 0x11);
++	g_assert(access[1] =3D=3D 0xff);
++	g_assert(access[2] =3D=3D 0x44);
++	g_assert(efid =3D=3D 0x6F40);
++}
++
+ const unsigned char valid_efopl[] =3D {
+ 	0x42, 0xf6, 0x1d, 0x00, 0x00, 0xff, 0xfe, 0x01,
+ };
+@@ -190,6 +449,12 @@ int main(int argc, char **argv)
+ 	g_test_init(&argc, &argv, NULL);
  =
 
-+gboolean comprehension_tlv_builder_init(
-+				struct comprehension_tlv_builder *builder,
-+				unsigned char *pdu, unsigned int size);
-+gboolean comprehension_tlv_builder_next(
-+				struct comprehension_tlv_builder *builder,
-+				gboolean cr, unsigned short tag);
-+gboolean comprehension_tlv_builder_set_length(
-+				struct comprehension_tlv_builder *builder,
-+				unsigned int len);
-+unsigned char *comprehension_tlv_builder_get_data(
-+				struct comprehension_tlv_builder *builder);
-+
- void ber_tlv_iter_init(struct ber_tlv_iter *iter, const unsigned char *pdu,
- 			unsigned int len);
- /*
-@@ -167,6 +198,22 @@ void ber_tlv_iter_recurse_simple(struct ber_tlv_iter *=
-iter,
- void ber_tlv_iter_recurse_comprehension(struct ber_tlv_iter *iter,
- 					struct comprehension_tlv_iter *recurse);
- =
-
-+gboolean ber_tlv_builder_init(struct ber_tlv_builder *builder,
-+				unsigned char *pdu, unsigned int size);
-+gboolean ber_tlv_builder_next(struct ber_tlv_builder *builder,
-+				enum ber_tlv_data_type class,
-+				enum ber_tlv_data_encoding_type encoding,
-+				unsigned int new_tag);
-+gboolean ber_tlv_builder_set_length(struct ber_tlv_builder *builder,
-+					unsigned int len);
-+unsigned char *ber_tlv_builder_get_data(struct ber_tlv_builder *builder);
-+gboolean ber_tlv_builder_recurse(struct ber_tlv_builder *builder,
-+					struct ber_tlv_builder *recurse);
-+gboolean ber_tlv_builder_recurse_comprehension(struct ber_tlv_builder *bui=
-lder,
-+				struct comprehension_tlv_builder *recurse);
-+void ber_tlv_builder_optimize(struct ber_tlv_builder *builder,
-+				unsigned char **pdu, unsigned int *len);
-+
- struct sim_eons *sim_eons_new(int pnn_records);
- void sim_eons_add_pnn_record(struct sim_eons *eons, int record,
- 				const guint8 *tlv, int length);
+ 	g_test_add_func("/testsimutil/ber tlv iter", test_ber_tlv_iter);
++	g_test_add_func("/testsimutil/ber tlv encode MMS",
++			test_ber_tlv_builder_mms);
++	g_test_add_func("/testsimutil/ber tlv encode EFpnn",
++			test_ber_tlv_builder_efpnn);
++	g_test_add_func("/testsimutil/ber tlv encode 3G Status response",
++			test_ber_tlv_builder_3g_status);
+ 	g_test_add_func("/testsimutil/EONS Handling", test_eons);
+ 	g_test_add_func("/testsimutil/Elementary File DB", test_ef_db);
+ 	g_test_add_func("/testsimutil/3G Status response", test_3g_status_data);
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============1366030531033771834==--
+--===============7513954498494143980==--
 
