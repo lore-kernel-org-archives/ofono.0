@@ -1,283 +1,190 @@
-Content-Type: multipart/mixed; boundary="===============8969742659047654444=="
+Content-Type: multipart/mixed; boundary="===============0753259440297030792=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 05/27] test-stkutil: Add Display Text response tests.
-Date: Sun, 16 May 2010 16:04:54 +0200
-Message-ID: <1274018694-6424-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 06/27] stkutil: Add Get Inkey response builder.
+Date: Sun, 16 May 2010 16:05:04 +0200
+Message-ID: <1274018704-6456-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8969742659047654444==
+--===============0753259440297030792==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-stkutil.c |  228 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 228 insertions(+), 0 deletions(-)
+ src/stkutil.c |   88 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ src/stkutil.h |   16 ++++++++++
+ 2 files changed, 103 insertions(+), 1 deletions(-)
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index e16ac22..6f0981f 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -9999,6 +9999,206 @@ static void test_timer_mgmt(gconstpointer data)
- 	stk_command_free(command);
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 6f5dc7b..29a1760 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -36,7 +36,8 @@
+ =
+
+ enum stk_data_object_flag {
+ 	DATAOBJ_FLAG_MANDATORY =3D 1,
+-	DATAOBJ_FLAG_MINIMUM =3D 2
++	DATAOBJ_FLAG_MINIMUM =3D 2,
++	DATAOBJ_FLAG_CR =3D 4
+ };
+ =
+
+ struct stk_file_iter {
+@@ -3046,6 +3047,23 @@ static inline gboolean stk_tlv_append_bytes(struct s=
+tk_tlv_builder *iter,
+ 	return TRUE;
  }
  =
 
-+struct terminal_response_test {
-+	const unsigned char *pdu;
-+	unsigned int pdu_len;
-+	struct stk_response response;
-+};
-+
-+static void test_terminal_response_encoding(gconstpointer data)
++/* Described in TS 102.223 Section 8.8 */
++static gboolean build_dataobj_duration(struct stk_tlv_builder *tlv,
++					const void *data, gboolean cr)
 +{
-+	const struct terminal_response_test *test =3D data;
-+	unsigned char buf[512];
-+	unsigned int len;
++	const struct stk_duration *duration =3D data;
 +
-+	len =3D stk_pdu_from_response(&test->response, buf, sizeof(buf));
++	if (duration->interval =3D=3D 0x00)
++		return TRUE;
 +
-+	g_assert(len =3D=3D test->pdu_len);
-+	g_assert(memcmp(buf, test->pdu, len) =3D=3D 0);
++	return stk_tlv_open_container(tlv, cr,
++				STK_DATA_OBJECT_TYPE_DURATION, FALSE) &&
++		stk_tlv_append_byte(tlv, duration->unit) &&
++		stk_tlv_append_byte(tlv, duration->interval) &&
++		stk_tlv_close_container(tlv);
 +}
 +
-+static const unsigned char display_text_response_111[] =3D {
-+	0x81, 0x03, 0x01, 0x21, 0x80, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x00,
-+};
-+
-+static const struct terminal_response_test display_text_response_data_111 =
-=3D {
-+	.pdu =3D display_text_response_111,
-+	.pdu_len =3D sizeof(display_text_response_111),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_DISPLAY_TEXT,
-+		.qualifier =3D 0x80, /* Wait for user to clear */
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_SUCCESS,
-+		},
-+	},
-+};
-+
-+static const unsigned char display_text_response_121[] =3D {
-+	0x81, 0x03, 0x01, 0x21, 0x80, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x02, 0x20, 0x01,
-+};
-+
-+static const struct terminal_response_test display_text_response_data_121 =
-=3D {
-+	.pdu =3D display_text_response_121,
-+	.pdu_len =3D sizeof(display_text_response_121),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_DISPLAY_TEXT,
-+		.qualifier =3D 0x80, /* Wait for user to clear */
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_TERMINAL_BUSY,
-+			.additional_len =3D 1, /* Screen is busy */
-+			.additional =3D (unsigned char *) "\1",
-+		},
-+	},
-+};
-+
-+static const unsigned char display_text_response_131[] =3D {
-+	0x81, 0x03, 0x01, 0x21, 0x81, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x00,
-+};
-+
-+static const struct terminal_response_test display_text_response_data_131 =
-=3D {
-+	.pdu =3D display_text_response_131,
-+	.pdu_len =3D sizeof(display_text_response_131),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_DISPLAY_TEXT,
-+		.qualifier =3D 0x81, /* Wait for user to clear, High priority */
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_SUCCESS,
-+		},
-+	},
-+};
-+
-+static const unsigned char display_text_response_151[] =3D {
-+	0x81, 0x03, 0x01, 0x21, 0x00, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x00,
-+};
-+
-+static const struct terminal_response_test display_text_response_data_151 =
-=3D {
-+	.pdu =3D display_text_response_151,
-+	.pdu_len =3D sizeof(display_text_response_151),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_DISPLAY_TEXT,
-+		.qualifier =3D 0x00,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_SUCCESS,
-+		},
-+	},
-+};
-+
-+static const unsigned char display_text_response_171[] =3D {
-+	0x81, 0x03, 0x01, 0x21, 0x80, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x11,
-+};
-+
-+static const struct terminal_response_test display_text_response_data_171 =
-=3D {
-+	.pdu =3D display_text_response_171,
-+	.pdu_len =3D sizeof(display_text_response_171),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_DISPLAY_TEXT,
-+		.qualifier =3D 0x80, /* Wait for user to clear */
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_GO_BACK,
-+		},
-+	},
-+};
-+
-+static const unsigned char display_text_response_181[] =3D {
-+	0x81, 0x03, 0x01, 0x21, 0x80, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x10,
-+};
-+
-+static const struct terminal_response_test display_text_response_data_181 =
-=3D {
-+	.pdu =3D display_text_response_181,
-+	.pdu_len =3D sizeof(display_text_response_181),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_DISPLAY_TEXT,
-+		.qualifier =3D 0x80, /* Wait for user to clear */
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_USER_TERMINATED,
-+		},
-+	},
-+};
-+
-+static const unsigned char display_text_response_191[] =3D {
-+	0x81, 0x03, 0x01, 0x21, 0x80, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x32,
-+};
-+
-+static const struct terminal_response_test display_text_response_data_191 =
-=3D {
-+	.pdu =3D display_text_response_191,
-+	.pdu_len =3D sizeof(display_text_response_191),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_DISPLAY_TEXT,
-+		.qualifier =3D 0x80, /* Wait for user to clear */
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD,
-+		},
-+	},
-+};
-+
-+static const unsigned char display_text_response_211[] =3D {
-+	0x81, 0x03, 0x01, 0x21, 0x80, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x12,
-+};
-+
-+static const struct terminal_response_test display_text_response_data_211 =
-=3D {
-+	.pdu =3D display_text_response_211,
-+	.pdu_len =3D sizeof(display_text_response_211),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_DISPLAY_TEXT,
-+		.qualifier =3D 0x80, /* Wait for user to clear */
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_NO_RESPONSE,
-+		},
-+	},
-+};
-+
-+static const unsigned char display_text_response_511b[] =3D {
-+	0x81, 0x03, 0x01, 0x21, 0x80, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x04,
-+};
-+
-+static const struct terminal_response_test display_text_response_data_511b=
- =3D {
-+	.pdu =3D display_text_response_511b,
-+	.pdu_len =3D sizeof(display_text_response_511b),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_DISPLAY_TEXT,
-+		.qualifier =3D 0x80, /* Wait for user to clear */
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_NO_ICON,
-+		},
-+	},
-+};
-+
- int main(int argc, char **argv)
++/* Described in TS 102.223 Section 8.12 */
+ static gboolean build_dataobj_result(struct stk_tlv_builder *tlv,
+ 					const void *data, gboolean cr)
  {
- 	g_test_init(&argc, &argv, NULL);
-@@ -10030,6 +10230,34 @@ int main(int argc, char **argv)
- 	g_test_add_data_func("/teststk/Display Text 10.1.1",
- 				&display_text_data_1011, test_display_text);
+@@ -3060,6 +3078,65 @@ static gboolean build_dataobj_result(struct stk_tlv_=
+builder *tlv,
+ 		stk_tlv_close_container(tlv);
+ }
  =
 
-+	g_test_add_data_func("/teststk/Display Text response 1.1.1",
-+				&display_text_response_data_111,
-+				test_terminal_response_encoding);
-+	g_test_add_data_func("/teststk/Display Text response 1.2.1",
-+				&display_text_response_data_121,
-+				test_terminal_response_encoding);
-+	g_test_add_data_func("/teststk/Display Text response 1.3.1",
-+				&display_text_response_data_131,
-+				test_terminal_response_encoding);
-+	g_test_add_data_func("/teststk/Display Text response 1.5.1",
-+				&display_text_response_data_151,
-+				test_terminal_response_encoding);
-+	g_test_add_data_func("/teststk/Display Text response 1.7.1",
-+				&display_text_response_data_171,
-+				test_terminal_response_encoding);
-+	g_test_add_data_func("/teststk/Display Text response 1.8.1",
-+				&display_text_response_data_181,
-+				test_terminal_response_encoding);
-+	g_test_add_data_func("/teststk/Display Text response 1.9.1",
-+				&display_text_response_data_191,
-+				test_terminal_response_encoding);
-+	g_test_add_data_func("/teststk/Display Text response 2.1.1",
-+				&display_text_response_data_211,
-+				test_terminal_response_encoding);
-+	g_test_add_data_func("/teststk/Display Text response 5.1.1B",
-+				&display_text_response_data_511b,
-+				test_terminal_response_encoding);
++/* Defined in TS 102.223 Section 8.15 */
++static gboolean build_dataobj_text(struct stk_tlv_builder *tlv,
++					const void *data, gboolean cr)
++{
++	const struct stk_answer_text *text =3D data;
 +
- 	g_test_add_data_func("/teststk/Get Inkey 1.1.1",
- 				&get_inkey_data_111, test_get_inkey);
- 	g_test_add_data_func("/teststk/Get Inkey 1.2.1",
++	if (!text->text && !text->yesno)
++		return TRUE;
++
++	if (stk_tlv_open_container(tlv, cr, STK_DATA_OBJECT_TYPE_TEXT,
++					TRUE) !=3D TRUE)
++		return FALSE;
++
++	if (text->yesno =3D=3D TRUE) {
++		/* Section 6.8.5:
++		 * When the terminal issues [...] command qualifier set
++		 * to "Yes/No", it shall supply the value "01" when the
++		 * answer is "positive" and the value '00' when the
++		 * answer is "negative" in the text string data object.
++		 */
++		if (stk_tlv_append_byte(tlv, 0x04) !=3D TRUE)
++			return FALSE;
++		if (stk_tlv_append_byte(tlv, text->text ? 0x01 : 0x00) !=3D TRUE)
++			return FALSE;
++	} else if (text->packed) {
++		if (stk_tlv_append_text(tlv, 0x00, text->text) !=3D TRUE)
++			return FALSE;
++	} else {
++		if (stk_tlv_append_text(tlv, -1, text->text) !=3D TRUE)
++			return FALSE;
++	}
++
++	return stk_tlv_close_container(tlv);
++}
++
++static gboolean build_dataobj(struct stk_tlv_builder *tlv, gboolean
++				(*builder_func)(struct stk_tlv_builder *,
++						const void *, gboolean), ...)
++{
++	va_list args;
++
++	va_start(args, builder_func);
++
++	while (builder_func) {
++		unsigned int flags =3D va_arg(args, enum stk_data_object_flag);
++		const void *data =3D va_arg(args, const void *);
++		gboolean cr =3D (flags & DATAOBJ_FLAG_CR) ? TRUE : FALSE;
++
++		if (builder_func(tlv, data, cr) !=3D TRUE)
++			return FALSE;
++
++		builder_func =3D va_arg(args, gboolean (*)(
++						struct stk_tlv_builder *,
++						const void *, gboolean));
++	}
++
++	return TRUE;
++}
++
+ unsigned int stk_pdu_from_response(const struct stk_response *response,
+ 					unsigned char *pdu, unsigned int size)
+ {
+@@ -3106,6 +3184,14 @@ unsigned int stk_pdu_from_response(const struct stk_=
+response *response,
+ 	switch (response->type) {
+ 	case STK_COMMAND_TYPE_DISPLAY_TEXT:
+ 		break;
++	case STK_COMMAND_TYPE_GET_INKEY:
++		ok =3D build_dataobj(&builder,
++					build_dataobj_text, DATAOBJ_FLAG_CR,
++					&response->get_inkey.text,
++					build_dataobj_duration, 0,
++					&response->get_inkey.duration,
++					NULL);
++		break;
+ 	default:
+ 		return 0;
+ 	};
+diff --git a/src/stkutil.h b/src/stkutil.h
+index 382ef0c..9603dd7 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -995,6 +995,21 @@ struct stk_command {
+ struct stk_response_generic {
+ };
+ =
+
++struct stk_answer_text {
++	char *text;
++	ofono_bool_t packed;
++	ofono_bool_t yesno;
++	/* If a "Yes/No" answer was requested in a GET INKEY command,
++	 * .yesno must be TRUE and text should be non-NULL to indicate
++	 * a Yes response or NULL to indicate a No response.
++	 */
++};
++
++struct stk_response_get_inkey {
++	struct stk_answer_text text;
++	struct stk_duration duration;
++};
++
+ struct stk_response {
+ 	unsigned char number;
+ 	unsigned char type;
+@@ -1005,6 +1020,7 @@ struct stk_response {
+ =
+
+ 	union {
+ 		struct stk_response_generic display_text;
++		struct stk_response_get_inkey get_inkey;
+ 	};
+ =
+
+ 	void (*destructor)(struct stk_response *response);
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============8969742659047654444==--
+--===============0753259440297030792==--
 
