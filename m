@@ -1,120 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============5446646656977863844=="
+Content-Type: multipart/mixed; boundary="===============7904827335852868969=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 19/27] test-stkutil: Add Set Up Menu response tests.
-Date: Sun, 16 May 2010 16:07:00 +0200
-Message-ID: <1274018820-6872-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 20/27] stkutil: Add Select Item response builder.
+Date: Sun, 16 May 2010 16:07:22 +0200
+Message-ID: <1274018842-6904-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5446646656977863844==
+--===============7904827335852868969==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-stkutil.c |   70 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 70 insertions(+), 0 deletions(-)
+ src/stkutil.c |   21 +++++++++++++++++++++
+ src/stkutil.h |    5 +++++
+ 2 files changed, 26 insertions(+), 0 deletions(-)
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index 953cb03..ed18bbf 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -11716,6 +11716,66 @@ static const struct terminal_response_test refresh=
-_response_data_312 =3D {
- 	},
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 798e2a9..cf22361 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -3047,6 +3047,21 @@ static inline gboolean stk_tlv_append_bytes(struct s=
+tk_tlv_builder *iter,
+ 	return TRUE;
+ }
+ =
+
++/* Described in TS 102.223 Section 8.6 */
++static gboolean build_dataobj_item_id(struct stk_tlv_builder *tlv,
++					const void *data, gboolean cr)
++{
++	const unsigned char *item_id =3D data;
++
++	if (*item_id =3D=3D 0)
++		return TRUE;
++
++	return stk_tlv_open_container(tlv, cr,
++				STK_DATA_OBJECT_TYPE_ITEM_ID, FALSE) &&
++		stk_tlv_append_byte(tlv, *item_id) &&
++		stk_tlv_close_container(tlv);
++}
++
+ /* Described in TS 102.223 Section 8.8 */
+ static gboolean build_dataobj_duration(struct stk_tlv_builder *tlv,
+ 					const void *data, gboolean cr)
+@@ -3210,6 +3225,12 @@ unsigned int stk_pdu_from_response(const struct stk_=
+response *response,
+ 	case STK_COMMAND_TYPE_REFRESH:
+ 	case STK_COMMAND_TYPE_SETUP_MENU:
+ 		break;
++	case STK_COMMAND_TYPE_SELECT_ITEM:
++		ok =3D build_dataobj(&builder,
++					build_dataobj_item_id, DATAOBJ_FLAG_CR,
++					&response->select_item.item_id,
++					NULL);
++		break;
+ 	default:
+ 		return 0;
+ 	};
+diff --git a/src/stkutil.h b/src/stkutil.h
+index 96919f3..1810b8e 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -1018,6 +1018,10 @@ struct stk_response_poll_interval {
+ 	struct stk_duration max_interval;
  };
  =
 
-+static const unsigned char set_up_menu_response_111[] =3D {
-+	0x81, 0x03, 0x01, 0x25, 0x00, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x00,
++struct stk_response_select_item {
++	unsigned char item_id;
 +};
 +
-+static const struct terminal_response_test set_up_menu_response_data_111 =
-=3D {
-+	.pdu =3D set_up_menu_response_111,
-+	.pdu_len =3D sizeof(set_up_menu_response_111),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_SETUP_MENU,
-+		.qualifier =3D 0x00,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_SUCCESS,
-+		},
-+	},
-+};
-+
-+static const unsigned char set_up_menu_response_411b[] =3D {
-+	0x81, 0x03, 0x01, 0x25, 0x00, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x04,
-+};
-+
-+static const struct terminal_response_test set_up_menu_response_data_411b =
-=3D {
-+	.pdu =3D set_up_menu_response_411b,
-+	.pdu_len =3D sizeof(set_up_menu_response_411b),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_SETUP_MENU,
-+		.qualifier =3D 0x00,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_NO_ICON,
-+		},
-+	},
-+};
-+
-+static const unsigned char set_up_menu_response_511[] =3D {
-+	0x81, 0x03, 0x01, 0x25, 0x01, 0x82, 0x02, 0x82,
-+	0x81, 0x83, 0x01, 0x00,
-+};
-+
-+static const struct terminal_response_test set_up_menu_response_data_511 =
-=3D {
-+	.pdu =3D set_up_menu_response_511,
-+	.pdu_len =3D sizeof(set_up_menu_response_511),
-+	.response =3D {
-+		.number =3D 1,
-+		.type =3D STK_COMMAND_TYPE_SETUP_MENU,
-+		.qualifier =3D 0x01, /* Soft key selection preferred */
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		.result =3D {
-+			.type =3D STK_RESULT_TYPE_SUCCESS,
-+		},
-+	},
-+};
-+
- int main(int argc, char **argv)
- {
- 	g_test_init(&argc, &argv, NULL);
-@@ -12318,6 +12378,16 @@ int main(int argc, char **argv)
- 	g_test_add_data_func("/teststk/Setup Menu 9.1.3",
- 				&setup_menu_data_913, test_setup_menu);
+ struct stk_response {
+ 	unsigned char number;
+ 	unsigned char type;
+@@ -1034,6 +1038,7 @@ struct stk_response {
+ 		struct stk_response_poll_interval poll_interval;
+ 		struct stk_response_generic refresh;
+ 		struct stk_response_generic set_up_menu;
++		struct stk_response_select_item select_item;
+ 		struct stk_response_generic send_sms;
+ 	};
  =
 
-+	g_test_add_data_func("/teststk/Set Up Menu response 1.1.1",
-+				&set_up_menu_response_data_111,
-+				test_terminal_response_encoding);
-+	g_test_add_data_func("/teststk/Set Up Menu response 4.1.1B",
-+				&set_up_menu_response_data_411b,
-+				test_terminal_response_encoding);
-+	g_test_add_data_func("/teststk/Set Up Menu response 5.1.1",
-+				&set_up_menu_response_data_511,
-+				test_terminal_response_encoding);
-+
- 	g_test_add_data_func("/teststk/Select Item 1.1.1",
- 				&select_item_data_111, test_select_item);
- 	g_test_add_data_func("/teststk/Select Item 1.2.1",
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============5446646656977863844==--
+--===============7904827335852868969==--
 
