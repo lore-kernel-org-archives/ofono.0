@@ -1,190 +1,527 @@
-Content-Type: multipart/mixed; boundary="===============0753259440297030792=="
+Content-Type: multipart/mixed; boundary="===============5686805670193603741=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 06/27] stkutil: Add Get Inkey response builder.
-Date: Sun, 16 May 2010 16:05:04 +0200
-Message-ID: <1274018704-6456-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 07/27] test-stkutil: Add Get Inkey response tests.
+Date: Sun, 16 May 2010 16:05:12 +0200
+Message-ID: <1274018712-6488-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0753259440297030792==
+--===============5686805670193603741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   88 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- src/stkutil.h |   16 ++++++++++
- 2 files changed, 103 insertions(+), 1 deletions(-)
+ unit/test-stkutil.c |  463 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 463 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 6f5dc7b..29a1760 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -36,7 +36,8 @@
- =
-
- enum stk_data_object_flag {
- 	DATAOBJ_FLAG_MANDATORY =3D 1,
--	DATAOBJ_FLAG_MINIMUM =3D 2
-+	DATAOBJ_FLAG_MINIMUM =3D 2,
-+	DATAOBJ_FLAG_CR =3D 4
+diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
+index 6f0981f..b042f62 100644
+--- a/unit/test-stkutil.c
++++ b/unit/test-stkutil.c
+@@ -10199,6 +10199,417 @@ static const struct terminal_response_test displa=
+y_text_response_data_511b =3D {
+ 	},
  };
  =
 
- struct stk_file_iter {
-@@ -3046,6 +3047,23 @@ static inline gboolean stk_tlv_append_bytes(struct s=
-tk_tlv_builder *iter,
- 	return TRUE;
- }
- =
-
-+/* Described in TS 102.223 Section 8.8 */
-+static gboolean build_dataobj_duration(struct stk_tlv_builder *tlv,
-+					const void *data, gboolean cr)
-+{
-+	const struct stk_duration *duration =3D data;
-+
-+	if (duration->interval =3D=3D 0x00)
-+		return TRUE;
-+
-+	return stk_tlv_open_container(tlv, cr,
-+				STK_DATA_OBJECT_TYPE_DURATION, FALSE) &&
-+		stk_tlv_append_byte(tlv, duration->unit) &&
-+		stk_tlv_append_byte(tlv, duration->interval) &&
-+		stk_tlv_close_container(tlv);
-+}
-+
-+/* Described in TS 102.223 Section 8.12 */
- static gboolean build_dataobj_result(struct stk_tlv_builder *tlv,
- 					const void *data, gboolean cr)
- {
-@@ -3060,6 +3078,65 @@ static gboolean build_dataobj_result(struct stk_tlv_=
-builder *tlv,
- 		stk_tlv_close_container(tlv);
- }
- =
-
-+/* Defined in TS 102.223 Section 8.15 */
-+static gboolean build_dataobj_text(struct stk_tlv_builder *tlv,
-+					const void *data, gboolean cr)
-+{
-+	const struct stk_answer_text *text =3D data;
-+
-+	if (!text->text && !text->yesno)
-+		return TRUE;
-+
-+	if (stk_tlv_open_container(tlv, cr, STK_DATA_OBJECT_TYPE_TEXT,
-+					TRUE) !=3D TRUE)
-+		return FALSE;
-+
-+	if (text->yesno =3D=3D TRUE) {
-+		/* Section 6.8.5:
-+		 * When the terminal issues [...] command qualifier set
-+		 * to "Yes/No", it shall supply the value "01" when the
-+		 * answer is "positive" and the value '00' when the
-+		 * answer is "negative" in the text string data object.
-+		 */
-+		if (stk_tlv_append_byte(tlv, 0x04) !=3D TRUE)
-+			return FALSE;
-+		if (stk_tlv_append_byte(tlv, text->text ? 0x01 : 0x00) !=3D TRUE)
-+			return FALSE;
-+	} else if (text->packed) {
-+		if (stk_tlv_append_text(tlv, 0x00, text->text) !=3D TRUE)
-+			return FALSE;
-+	} else {
-+		if (stk_tlv_append_text(tlv, -1, text->text) !=3D TRUE)
-+			return FALSE;
-+	}
-+
-+	return stk_tlv_close_container(tlv);
-+}
-+
-+static gboolean build_dataobj(struct stk_tlv_builder *tlv, gboolean
-+				(*builder_func)(struct stk_tlv_builder *,
-+						const void *, gboolean), ...)
-+{
-+	va_list args;
-+
-+	va_start(args, builder_func);
-+
-+	while (builder_func) {
-+		unsigned int flags =3D va_arg(args, enum stk_data_object_flag);
-+		const void *data =3D va_arg(args, const void *);
-+		gboolean cr =3D (flags & DATAOBJ_FLAG_CR) ? TRUE : FALSE;
-+
-+		if (builder_func(tlv, data, cr) !=3D TRUE)
-+			return FALSE;
-+
-+		builder_func =3D va_arg(args, gboolean (*)(
-+						struct stk_tlv_builder *,
-+						const void *, gboolean));
-+	}
-+
-+	return TRUE;
-+}
-+
- unsigned int stk_pdu_from_response(const struct stk_response *response,
- 					unsigned char *pdu, unsigned int size)
- {
-@@ -3106,6 +3184,14 @@ unsigned int stk_pdu_from_response(const struct stk_=
-response *response,
- 	switch (response->type) {
- 	case STK_COMMAND_TYPE_DISPLAY_TEXT:
- 		break;
-+	case STK_COMMAND_TYPE_GET_INKEY:
-+		ok =3D build_dataobj(&builder,
-+					build_dataobj_text, DATAOBJ_FLAG_CR,
-+					&response->get_inkey.text,
-+					build_dataobj_duration, 0,
-+					&response->get_inkey.duration,
-+					NULL);
-+		break;
- 	default:
- 		return 0;
- 	};
-diff --git a/src/stkutil.h b/src/stkutil.h
-index 382ef0c..9603dd7 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -995,6 +995,21 @@ struct stk_command {
- struct stk_response_generic {
- };
- =
-
-+struct stk_answer_text {
-+	char *text;
-+	ofono_bool_t packed;
-+	ofono_bool_t yesno;
-+	/* If a "Yes/No" answer was requested in a GET INKEY command,
-+	 * .yesno must be TRUE and text should be non-NULL to indicate
-+	 * a Yes response or NULL to indicate a No response.
-+	 */
++static const unsigned char get_inkey_response_111[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x00, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x02, 0x04, 0x2b,
 +};
 +
-+struct stk_response_get_inkey {
-+	struct stk_answer_text text;
-+	struct stk_duration duration;
++static const struct terminal_response_test get_inkey_response_data_111 =3D=
+ {
++	.pdu =3D get_inkey_response_111,
++	.pdu_len =3D sizeof(get_inkey_response_111),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x00,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "+",
++			},
++		}},
++	},
 +};
 +
- struct stk_response {
- 	unsigned char number;
- 	unsigned char type;
-@@ -1005,6 +1020,7 @@ struct stk_response {
++static const unsigned char get_inkey_response_121[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x00, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x02, 0x04, 0x30,
++};
++
++static const struct terminal_response_test get_inkey_response_data_121 =3D=
+ {
++	.pdu =3D get_inkey_response_121,
++	.pdu_len =3D sizeof(get_inkey_response_121),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x00,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "0",
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_131[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x00, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x11,
++};
++
++static const struct terminal_response_test get_inkey_response_data_131 =3D=
+ {
++	.pdu =3D get_inkey_response_131,
++	.pdu_len =3D sizeof(get_inkey_response_131),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x00,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_GO_BACK,
++		},
++	},
++};
++
++static const unsigned char get_inkey_response_141[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x00, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x10,
++};
++
++static const struct terminal_response_test get_inkey_response_data_141 =3D=
+ {
++	.pdu =3D get_inkey_response_141,
++	.pdu_len =3D sizeof(get_inkey_response_141),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x00,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_USER_TERMINATED,
++		},
++	},
++};
++
++static const unsigned char get_inkey_response_151[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x01, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x02, 0x04, 0x71,
++};
++
++static const struct terminal_response_test get_inkey_response_data_151 =3D=
+ {
++	.pdu =3D get_inkey_response_151,
++	.pdu_len =3D sizeof(get_inkey_response_151),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x01, /* SMS alphabet */
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "q",
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_161[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x01, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x02, 0x04, 0x78,
++};
++
++static const struct terminal_response_test get_inkey_response_data_161 =3D=
+ {
++	.pdu =3D get_inkey_response_161,
++	.pdu_len =3D sizeof(get_inkey_response_161),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x01, /* SMS alphabet */
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "x",
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_211[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x00, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x12,
++};
++
++static const struct terminal_response_test get_inkey_response_data_211 =3D=
+ {
++	.pdu =3D get_inkey_response_211,
++	.pdu_len =3D sizeof(get_inkey_response_211),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x00,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_NO_RESPONSE,
++		},
++	},
++};
++
++static const unsigned char get_inkey_response_411[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x03, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x03, 0x08, 0x04,
++	0x14,
++};
++
++static const struct terminal_response_test get_inkey_response_data_411 =3D=
+ {
++	.pdu =3D get_inkey_response_411,
++	.pdu_len =3D sizeof(get_inkey_response_411),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x03, /* UCS2 alphabet */
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "=D0=94",
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_511[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x04, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x02, 0x04, 0x01,
++};
++
++static const struct terminal_response_test get_inkey_response_data_511 =3D=
+ {
++	.pdu =3D get_inkey_response_511,
++	.pdu_len =3D sizeof(get_inkey_response_511),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x04, /* Yes/No response */
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "Yes",
++				.yesno =3D TRUE,
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_512[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x04, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x02, 0x04, 0x00,
++};
++
++static const struct terminal_response_test get_inkey_response_data_512 =3D=
+ {
++	.pdu =3D get_inkey_response_512,
++	.pdu_len =3D sizeof(get_inkey_response_512),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x04, /* Yes/No response */
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D NULL,
++				.yesno =3D TRUE,
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_611b[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x00, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x04, 0x8d, 0x02, 0x04, 0x2b,
++};
++
++static const struct terminal_response_test get_inkey_response_data_611b =
+=3D {
++	.pdu =3D get_inkey_response_611b,
++	.pdu_len =3D sizeof(get_inkey_response_611b),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x00,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_NO_ICON,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "+",
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_711[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x80, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x13,
++};
++
++static const struct terminal_response_test get_inkey_response_data_711 =3D=
+ {
++	.pdu =3D get_inkey_response_711,
++	.pdu_len =3D sizeof(get_inkey_response_711),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x80, /* Help information available */
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_HELP_REQUESTED,
++		},
++	},
++};
++
++static const unsigned char get_inkey_response_712[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x80, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x02, 0x04, 0x2b,
++};
++
++static const struct terminal_response_test get_inkey_response_data_712 =3D=
+ {
++	.pdu =3D get_inkey_response_712,
++	.pdu_len =3D sizeof(get_inkey_response_712),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x80, /* Help information available */
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "+",
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_811[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x00, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x12, 0x04, 0x02, 0x01, 0x11,
++};
++
++static const struct terminal_response_test get_inkey_response_data_811 =3D=
+ {
++	.pdu =3D get_inkey_response_811,
++	.pdu_len =3D sizeof(get_inkey_response_811),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x00,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_NO_RESPONSE,
++		},
++		{ .get_inkey =3D {
++			.duration =3D {
++				.unit =3D STK_DURATION_TYPE_SECONDS,
++				.interval =3D 17,
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_912[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x00, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x02, 0x04, 0x23,
++};
++
++static const struct terminal_response_test get_inkey_response_data_912 =3D=
+ {
++	.pdu =3D get_inkey_response_912,
++	.pdu_len =3D sizeof(get_inkey_response_912),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x00,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "#",
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_1111[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x03, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x03, 0x08, 0x59,
++	0x7d,
++};
++
++static const struct terminal_response_test get_inkey_response_data_1111 =
+=3D {
++	.pdu =3D get_inkey_response_1111,
++	.pdu_len =3D sizeof(get_inkey_response_1111),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x03, /* UCS2 alphabet */
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "=E5=A5=BD",
++			},
++		}},
++	},
++};
++
++static const unsigned char get_inkey_response_1311[] =3D {
++	0x81, 0x03, 0x01, 0x22, 0x03, 0x82, 0x02, 0x82,
++	0x81, 0x83, 0x01, 0x00, 0x8d, 0x03, 0x08, 0x30,
++	0xeb,
++};
++
++static const struct terminal_response_test get_inkey_response_data_1311 =
+=3D {
++	.pdu =3D get_inkey_response_1311,
++	.pdu_len =3D sizeof(get_inkey_response_1311),
++	.response =3D {
++		.number =3D 1,
++		.type =3D STK_COMMAND_TYPE_GET_INKEY,
++		.qualifier =3D 0x03, /* UCS2 alphabet */
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		.result =3D {
++			.type =3D STK_RESULT_TYPE_SUCCESS,
++		},
++		{ .get_inkey =3D {
++			.text =3D {
++				.text =3D "=E3=83=AB",
++			},
++		}},
++	},
++};
++
+ int main(int argc, char **argv)
+ {
+ 	g_test_init(&argc, &argv, NULL);
+@@ -10363,6 +10774,58 @@ int main(int argc, char **argv)
+ 	g_test_add_data_func("/teststk/Get Inkey 13.1.1",
+ 				&get_inkey_data_1311, test_get_inkey);
  =
 
- 	union {
- 		struct stk_response_generic display_text;
-+		struct stk_response_get_inkey get_inkey;
- 	};
- =
-
- 	void (*destructor)(struct stk_response *response);
++	g_test_add_data_func("/teststk/Get Inkey response 1.1.1",
++				&get_inkey_response_data_111,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 1.2.1",
++				&get_inkey_response_data_121,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 1.3.1",
++				&get_inkey_response_data_131,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 1.4.1",
++				&get_inkey_response_data_141,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 1.5.1",
++				&get_inkey_response_data_151,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 1.6.1",
++				&get_inkey_response_data_161,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 2.1.1",
++				&get_inkey_response_data_211,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 4.1.1",
++				&get_inkey_response_data_411,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 5.1.1",
++				&get_inkey_response_data_511,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 5.1.2",
++				&get_inkey_response_data_512,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 6.1.1B",
++				&get_inkey_response_data_611b,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 7.1.1",
++				&get_inkey_response_data_711,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 7.1.2",
++				&get_inkey_response_data_712,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 8.1.1",
++				&get_inkey_response_data_811,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 9.1.2",
++				&get_inkey_response_data_912,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 11.1.1",
++				&get_inkey_response_data_1111,
++				test_terminal_response_encoding);
++	g_test_add_data_func("/teststk/Get Inkey response 13.1.1",
++				&get_inkey_response_data_1311,
++				test_terminal_response_encoding);
++
+ 	g_test_add_data_func("/teststk/Get Input 1.1.1",
+ 				&get_input_data_111, test_get_input);
+ 	g_test_add_data_func("/teststk/Get Input 1.2.1",
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============0753259440297030792==--
+--===============5686805670193603741==--
 
