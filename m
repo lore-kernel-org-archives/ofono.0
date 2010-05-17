@@ -1,176 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============0636848163133066188=="
+Content-Type: multipart/mixed; boundary="===============5879085979442395820=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: [RFC] AGPS support
-Date: Fri, 14 May 2010 16:56:19 -0700
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9C545E72A@orsmsx508.amr.corp.intel.com>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: [PATCH 1/6] Add bluetooth plugin skeleton.
+Date: Sun, 16 May 2010 23:11:34 -0300
+Message-ID: <1274062299-4938-1-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0636848163133066188==
+--===============5879085979442395820==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Please find attached a proposal for both a DBUS and Modem API for AGPS supp=
-ort. This proposal introduces two AGPS features:
-
-1) Fine time injection - the cellular modem has access to accurate timing i=
-nformation that can help a GPS device to get a quicker fix. If the modem an=
-d GPS device are separate components a handshake mechanism is required to f=
-orward the timing information from the modem to the GPS. A typical approach=
- is to have a hardware signal between the modem and GPS device that can car=
-ry a timing pulse. In addition signalling through software is required to r=
-equest such timing pulse and to associate the correct Universal Time with t=
-he generated pulse.
-
-2) Control Plane Assistance Data and Position Requests - The Mobile Network=
- is able to provide assistance data for GPS devices through the control pla=
-ne. This assistance data can help a GPS device to get a quicker fix. In add=
-ition the control plane can be used by the Mobile Network to request a GPS =
-enabled  Mobile Device for its location. This latter functionality is neede=
-d to meet E911 requirements [1]. A typical sequence looks as follow:
-
-	Mobile Network		Mobile Device
-
-		--- Assistance Data --->
-		=
-
-		--- Position Request -->
-
-		<-- Position Response --
-
-
-[1] http://en.wikipedia.org/wiki/Enhanced_911
-
-Cheers,
-Waldo
-
+The bluetooth plugin has bluetooth_resgister_uuid() and
+bluetooth_unresgister_uuid() where bluetooth profiles plugins such as HFP
+and DUN can register themselves to get know about BlueZ stuff ( new
+devices, bluetoothd shutdown, etc..)
 ---
- doc/agps-api.txt |   98 +++++++++++++++++++++++++++++++++++++++
- include/agps.h   |  135 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am         |    3 ++
+ plugins/bluetooth.c |   75 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 233 insertions(+), 0 deletions(-)
- create mode 100644 doc/agps-api.txt
- create mode 100644 include/agps.h
+ plugins/bluetooth.h |   47 ++++++++++++++++++++++++++++++++
+ plugins/hfp.c       |    8 +----
+ 4 files changed, 127 insertions(+), 6 deletions(-)
+ create mode 100644 plugins/bluetooth.c
+ create mode 100644 plugins/bluetooth.h
 
-diff --git a/doc/agps-api.txt b/doc/agps-api.txt
+diff --git a/Makefile.am b/Makefile.am
+index 7fd862f..8bb934a 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -230,6 +230,9 @@ builtin_sources +=3D plugins/em770.c
+ builtin_modules +=3D novatel
+ builtin_sources +=3D plugins/novatel.c
+ =
+
++builtin_modules +=3D bluetooth
++builtin_sources +=3D plugins/bluetooth.c
++
+ builtin_modules +=3D hfp
+ builtin_sources +=3D plugins/hfp.c
+ =
+
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
 new file mode 100644
-index 0000000..7245eac
+index 0000000..b4fe676
 --- /dev/null
-+++ b/doc/agps-api.txt
-@@ -0,0 +1,98 @@
-+AgpsManager hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Service		org.ofono
-+Interface	org.ofono.AgpsManager
-+Object path	[variable prefix]/{modem0,modem1,...}
-+
-+Methods		dict GetProperties()
-+
-+			Returns properties for the modem object. See
-+			the properties section for available properties.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+
-+		void SetProperty(string name, variant value)
-+
-+			Changes the value of the specified property. Only
-+			properties that are listed as read-write are
-+			changeable. On success a PropertyChanged signal
-+			will be emitted.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.DoesNotExist
-+
-+		void SendLCSFrame(string framedata)
-+
-+			Send a LCS position protocol frame to the Mobile
-+			Network. The LCS frame typically represents a
-+			Position Response.
-+			The raw frame data is formatted as the concatenated
-+			sequence of the two digit hexadecimal representation
-+			of each of its octets. Example: "00FC2345"
-+
-+		void RequestFineTimeInjection(uint16 pulselength)
-+
-+			Request modem to generate a fine time injection
-+			pulse. pulselength is the duration of the pulse
-+			expressed in radio frames.
-+
-+
-+Signals		PropertyChanged(string name, variant value)
-+
-+			This signal indicates a changed value of the given
-+			property.
-+
-+		IncomingLCSFrame(string framedata)
-+
-+			LCS positioning protocol frame received from the
-+			Mobile Network. The LCS frame typically represents
-+			Assistance Data, a Position Request or a combination
-+			of both.
-+			The raw frame data is formatted as the concatenated
-+			sequence of the two digit hexadecimal representation
-+			of each of its octets. Example: "00FC2345"
-+
-+		FineTimeInjectionNotification(dict radioframenumber)
-+
-+			Notification about fine time injection pulse
-+			generated by modem. The radioframenumber dict
-+			is defined as follow:
-+
-+			string AccessTechnology
-+				"gsm" or "umts"
-+			=
-
-+			uint32 TdmaFrameNumber (gsm only)
-+				range 0 - 2715647 (2048*26*51)
-+
-+			uint16 TdmaTimeslot (gsm only)
-+				range 0 - 7
-+
-+			uint16 TimeslotBit (gsm only)
-+				range 0 - 156
-+
-+			uint16 TimingAdvance (gsm only)
-+				range 0 - 63
-+
-+			uint16 BcchArfcn (gsm only)
-+				range 0 - 1023
-+
-+			uint16 Bsic (gsm only)
-+				range 0 - 64
-+
-+			uint16 Sfn (umts only)
-+				range 0 - 4095
-+
-+			string RrcState (umts only)
-+				"cell_dch", "cell_fach", "cell_pch" or
-+				"ura_pch"
-+			=
-
-+			uint16 RoundTripTime (umts only)
-+				range 0 - 32766
-+
-+
-+Properties	boolean LcsEnabled [readwrite]
-+
-+			If LcsEnabled is False, then no LCS positioning
-+			protocol frames are received.
-+
-diff --git a/include/agps.h b/include/agps.h
-new file mode 100644
-index 0000000..07a0fb2
---- /dev/null
-+++ b/include/agps.h
-@@ -0,0 +1,135 @@
++++ b/plugins/bluetooth.c
+@@ -0,0 +1,75 @@
 +/*
-+ *
 + *  oFono - Open Source Telephony
 + *
 + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2010  ProFUSION embedded systems
++ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
 + *
 + *  This program is free software; you can redistribute it and/or modify
 + *  it under the terms of the GNU General Public License version 2 as
@@ -188,277 +71,148 @@ index 0000000..07a0fb2
 + *
 + */
 +
-+#ifndef __OFONO_AGPS_H
-+#define __OFONO_AGPS_H
-+
-+#ifdef __cplusplus
-+extern "C" {
++#ifdef HAVE_CONFIG_H
++#include <config.h>
 +#endif
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <errno.h>
++#include <unistd.h>
++#include <glib.h>
++#include <gdbus.h>
++#include <ofono.h>
 +
-+#include <ofono/types.h>
++#include <ofono/dbus.h>
 +
-+struct ofono_agps;
++#include "bluetooth.h"
 +
-+enum ofono_rrc_state {
-+	RRC_CELL_PCH =3D 0,
-+	RRC_CELL_FACH =3D 1,
-+	RRC_CELL_DCH =3D 2,
-+	RRC_URA_PCH =3D 3,
-+};
++static DBusConnection *connection;
++static GHashTable *uuid_hash =3D NULL;
++static GHashTable *adapter_address_hash =3D NULL;
 +
-+struct ofono_lcs_frame {
-+	enum ofono_lcs_frame_type lcs_frame_type;
-+	int frame_length;	/* size of raw_frame in bytes */
-+	unsigned char* raw_frame;
-+};
++int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
+ofile)
++{
++	if (uuid_hash)
++		goto done;
 +
-+struct ofono_lcs_gsm_fn {
-+	int TDMA_frame_number;	/* range 0 - 2715647 (2048*26*51) */
-+	int TDMA_timeslot;	/* range 0 - 7 */
-+	int timeslot_bit;	/* range 0 - 156 */
-+	int timing_advance;	/* range 0 - 63 */
-+	int bcch_arfcn;		/* range 0 - 1023 */
-+	int bsic;		/* range 0 - 64 */
-+};
++	connection =3D ofono_dbus_get_connection();
 +
-+struct ofono_lcs_utran_fn {
-+	int sfn;		/* range 0 - 4095 */
-+	int rrc_state;		/* enum ofono_rrc_state */
-+	int round_trip_time;	/* range 0 - 32766 */
-+};
++	uuid_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++						g_free, NULL);
 +
-+struct ofono_lcs_radio_fn {
-+	int radio_access_technology; /* enum access_technology */
-+	union {
-+		ofono_lcs_gsm_fn	gsm_frame_number;
-+		ofono_lcs_utran_fn	utran_frame_number;
-+	}
-+};	=
-
++	adapter_address_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++						g_free, g_free);
 +
-+typedef void (*ofono_agps_send_lcs_frame_cb_t)(const struct ofono_error *e=
-rror,
-+				void *data);
++done:
++	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
 +
-+typedef void (*ofono_agps_inject_time_cb_t)(const struct ofono_error *erro=
-r,
-+				struct ofono_lcs_radio_fn *radio_frame_number,
-+				void *data);
-+
-+/* AGPS related functions, including LCS frame forwarding and fine time in=
-jection
-+ */
-+struct ofono_agps_driver {
-+	const char *name;
-+	int (*probe)(struct ofono_agps *agps, unsigned int vendor,
-+			void *data);
-+	void (*remove)(struct ofono_agps *agps);
-+
-+	void (*receive_lcs_frames)(struct ofono_agps *agps, int enabled);
-+
-+	/* Assistance Data and Position Requests from the Mobile Network are
-+	 * signalled via the ofono_agps_lcs_frame_notify function and the
-+	 * oFono core to an external GPS manager. This GPS manager can reply
-+	 * to Position Requests with one or more Position Responses which
-+	 * are then send back to the modem via the send_lcs_frame function.
-+	 */
-+	void (*send_lcs_frame)(struct ofono_agps *agps,
-+			int frame_length, /* size of frame_data in bytes */
-+			unsigned char* frame_data /* raw frame data */,
-+			ofono_agps_send_lcs_frame_cb_t cb, void *data);
-+			=
-
-+	/* The GPS manager can ask the modem to generate a HW pulse (time
-+	 * stamp) with a defined length and the modem replies indicates when
-+	 * it generates the pulse. But as the modem has no precise idae of
-+	 * Universal Time, it indicates at which radio frame number it
-+	 * generated the pulse. The GPS manager which knows the link between
-+	 * Universal Time and the Radio Frame number knows very precisely at
-+	 * what time the pulse was generated and its duration.
-+	 *
-+	 * Timing accuracy is typically a few microseconds.
-+	 */ =
-
-+	void (*inject_time)(struct ofono_agps *agps,
-+			int radio_access_technology, /* enum access_technology */
-+			int pulse_length, /* duration of pulse in radio slots */
-+			ofono_agps_inject_time_cb_t cb, void *data);
-+};
-+
-+void ofono_agps_lcs_frame_notify(struct ofono_agps *agps,
-+			int frame_length, /* size of frame_data in bytes */
-+			unsigned char* frame_data /* raw frame data */);
-+
-+int ofono_agps_driver_register(const struct ofono_agps_driver *d);
-+void ofono_agps_driver_unregister(const struct ofono_agps_driver *d);
-+
-+struct ofono_agps *ofono_agps_create(struct ofono_modem *modem,
-+						unsigned int vendor,
-+						const char *driver,
-+						void *data);
-+
-+void ofono_agps_register(struct ofono_agps *agps);
-+void ofono_agps_remove(struct ofono_agps *agps);
-+
-+void ofono_agps_set_data(struct ofono_agps *agps, void *data);
-+void *ofono_agps_get_data(struct ofono_agps *agps);
-+
-+#ifdef __cplusplus
++	return 0;
 +}
-+#endif
 +
-+#endif /* __OFONO_AGPS_H */
++void bluetooth_unregister_uuid(const char *uuid)
++{
++	g_hash_table_remove(uuid_hash, uuid);
++
++	if (g_hash_table_size(uuid_hash))
++		return;
++
++	g_hash_table_destroy(uuid_hash);
++	g_hash_table_destroy(adapter_address_hash);
++	uuid_hash =3D NULL;
++}
++
++OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+new file mode 100644
+index 0000000..99bd617
+--- /dev/null
++++ b/plugins/bluetooth.h
+@@ -0,0 +1,47 @@
++/*
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifndef __BLUETOOTH_H
++#define __BLUETOOTH_H
++
++#define	BLUEZ_SERVICE "org.bluez"
++#define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
++#define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
++#define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
++
++#define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
++#define DUN_GW_UUID	"00001103-0000-1000-8000-00805F9B34FB"
++
++/* Profiles bitfield */
++#define HFP_AG 0x01
++#define DUN_GW 0x02
++
++struct bluetooth_profile {
++	const char *name;
++	int (*create)(const char *device, const char *dev_addr, const char *adapt=
+er_addr, const char *alias);
++	void (*remove_all)();
++	void (*set_alias)(const char *device, const char *);
++};
++
++int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
+ofile);
++void bluetooth_unregister_uuid(const char *uuid);
++
++
++#endif /* __BLUETOOTH_H */
+diff --git a/plugins/hfp.c b/plugins/hfp.c
+index e37c9fc..a49e4af 100644
+--- a/plugins/hfp.c
++++ b/plugins/hfp.c
+@@ -45,17 +45,13 @@
+ =
+
+ #include <ofono/dbus.h>
+ =
+
+-#define	BLUEZ_SERVICE "org.bluez"
+-#define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
+-#define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
+-#define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
++#include "bluetooth.h"
++
+ #define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
+ =
+
+ #define HFP_AGENT_INTERFACE "org.bluez.HandsfreeAgent"
+ #define HFP_AGENT_ERROR_INTERFACE "org.bluez.Error"
+ =
+
+-#define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
+-
+ #ifndef DBUS_TYPE_UNIX_FD
+ #define DBUS_TYPE_UNIX_FD -1
+ #endif
 -- =
 
-1.5.4.3
+1.7.1
 
 
---===============0636848163133066188==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Add-DBUS-and-Modem-API-for-AGPS-support.patch"
-
-RnJvbSBiNzQ4NmM4MzYwY2RhMjEyYjdkOTM0MjE1NmU0NTFmMGVhNDdiNjFhIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBXYWxkbyBCYXN0aWFuIDx3YWxkby5iYXN0aWFuQGludGVsLmNv
-bT4KRGF0ZTogRnJpLCAxNCBNYXkgMjAxMCAxNzoyNjo0NCAtMDcwMApTdWJqZWN0OiBbUEFUQ0hd
-IEFkZCBEQlVTIGFuZCBNb2RlbSBBUEkgZm9yIEFHUFMgc3VwcG9ydC4KCi0tLQogZG9jL2FncHMt
-YXBpLnR4dCB8ICAgOTggKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrCiBp
-bmNsdWRlL2FncHMuaCAgIHwgIDEzNSArKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysr
-KysrKysrKysrKysrKysrKysrKysKIDIgZmlsZXMgY2hhbmdlZCwgMjMzIGluc2VydGlvbnMoKyks
-IDAgZGVsZXRpb25zKC0pCiBjcmVhdGUgbW9kZSAxMDA2NDQgZG9jL2FncHMtYXBpLnR4dAogY3Jl
-YXRlIG1vZGUgMTAwNjQ0IGluY2x1ZGUvYWdwcy5oCgpkaWZmIC0tZ2l0IGEvZG9jL2FncHMtYXBp
-LnR4dCBiL2RvYy9hZ3BzLWFwaS50eHQKbmV3IGZpbGUgbW9kZSAxMDA2NDQKaW5kZXggMDAwMDAw
-MC4uNzI0NWVhYwotLS0gL2Rldi9udWxsCisrKyBiL2RvYy9hZ3BzLWFwaS50eHQKQEAgLTAsMCAr
-MSw5OCBAQAorQWdwc01hbmFnZXIgaGllcmFyY2h5Cis9PT09PT09PT09PT09PT0KKworU2Vydmlj
-ZQkJb3JnLm9mb25vCitJbnRlcmZhY2UJb3JnLm9mb25vLkFncHNNYW5hZ2VyCitPYmplY3QgcGF0
-aAlbdmFyaWFibGUgcHJlZml4XS97bW9kZW0wLG1vZGVtMSwuLi59CisKK01ldGhvZHMJCWRpY3Qg
-R2V0UHJvcGVydGllcygpCisKKwkJCVJldHVybnMgcHJvcGVydGllcyBmb3IgdGhlIG1vZGVtIG9i
-amVjdC4gU2VlCisJCQl0aGUgcHJvcGVydGllcyBzZWN0aW9uIGZvciBhdmFpbGFibGUgcHJvcGVy
-dGllcy4KKworCQkJUG9zc2libGUgRXJyb3JzOiBbc2VydmljZV0uRXJyb3IuSW52YWxpZEFyZ3Vt
-ZW50cworCisJCXZvaWQgU2V0UHJvcGVydHkoc3RyaW5nIG5hbWUsIHZhcmlhbnQgdmFsdWUpCisK
-KwkJCUNoYW5nZXMgdGhlIHZhbHVlIG9mIHRoZSBzcGVjaWZpZWQgcHJvcGVydHkuIE9ubHkKKwkJ
-CXByb3BlcnRpZXMgdGhhdCBhcmUgbGlzdGVkIGFzIHJlYWQtd3JpdGUgYXJlCisJCQljaGFuZ2Vh
-YmxlLiBPbiBzdWNjZXNzIGEgUHJvcGVydHlDaGFuZ2VkIHNpZ25hbAorCQkJd2lsbCBiZSBlbWl0
-dGVkLgorCisJCQlQb3NzaWJsZSBFcnJvcnM6IFtzZXJ2aWNlXS5FcnJvci5JbnZhbGlkQXJndW1l
-bnRzCisJCQkJCSBbc2VydmljZV0uRXJyb3IuRG9lc05vdEV4aXN0CisKKwkJdm9pZCBTZW5kTENT
-RnJhbWUoc3RyaW5nIGZyYW1lZGF0YSkKKworCQkJU2VuZCBhIExDUyBwb3NpdGlvbiBwcm90b2Nv
-bCBmcmFtZSB0byB0aGUgTW9iaWxlCisJCQlOZXR3b3JrLiBUaGUgTENTIGZyYW1lIHR5cGljYWxs
-eSByZXByZXNlbnRzIGEKKwkJCVBvc2l0aW9uIFJlc3BvbnNlLgorCQkJVGhlIHJhdyBmcmFtZSBk
-YXRhIGlzIGZvcm1hdHRlZCBhcyB0aGUgY29uY2F0ZW5hdGVkCisJCQlzZXF1ZW5jZSBvZiB0aGUg
-dHdvIGRpZ2l0IGhleGFkZWNpbWFsIHJlcHJlc2VudGF0aW9uCisJCQlvZiBlYWNoIG9mIGl0cyBv
-Y3RldHMuIEV4YW1wbGU6ICIwMEZDMjM0NSIKKworCQl2b2lkIFJlcXVlc3RGaW5lVGltZUluamVj
-dGlvbih1aW50MTYgcHVsc2VsZW5ndGgpCisKKwkJCVJlcXVlc3QgbW9kZW0gdG8gZ2VuZXJhdGUg
-YSBmaW5lIHRpbWUgaW5qZWN0aW9uCisJCQlwdWxzZS4gcHVsc2VsZW5ndGggaXMgdGhlIGR1cmF0
-aW9uIG9mIHRoZSBwdWxzZQorCQkJZXhwcmVzc2VkIGluIHJhZGlvIGZyYW1lcy4KKworCitTaWdu
-YWxzCQlQcm9wZXJ0eUNoYW5nZWQoc3RyaW5nIG5hbWUsIHZhcmlhbnQgdmFsdWUpCisKKwkJCVRo
-aXMgc2lnbmFsIGluZGljYXRlcyBhIGNoYW5nZWQgdmFsdWUgb2YgdGhlIGdpdmVuCisJCQlwcm9w
-ZXJ0eS4KKworCQlJbmNvbWluZ0xDU0ZyYW1lKHN0cmluZyBmcmFtZWRhdGEpCisKKwkJCUxDUyBw
-b3NpdGlvbmluZyBwcm90b2NvbCBmcmFtZSByZWNlaXZlZCBmcm9tIHRoZQorCQkJTW9iaWxlIE5l
-dHdvcmsuIFRoZSBMQ1MgZnJhbWUgdHlwaWNhbGx5IHJlcHJlc2VudHMKKwkJCUFzc2lzdGFuY2Ug
-RGF0YSwgYSBQb3NpdGlvbiBSZXF1ZXN0IG9yIGEgY29tYmluYXRpb24KKwkJCW9mIGJvdGguCisJ
-CQlUaGUgcmF3IGZyYW1lIGRhdGEgaXMgZm9ybWF0dGVkIGFzIHRoZSBjb25jYXRlbmF0ZWQKKwkJ
-CXNlcXVlbmNlIG9mIHRoZSB0d28gZGlnaXQgaGV4YWRlY2ltYWwgcmVwcmVzZW50YXRpb24KKwkJ
-CW9mIGVhY2ggb2YgaXRzIG9jdGV0cy4gRXhhbXBsZTogIjAwRkMyMzQ1IgorCisJCUZpbmVUaW1l
-SW5qZWN0aW9uTm90aWZpY2F0aW9uKGRpY3QgcmFkaW9mcmFtZW51bWJlcikKKworCQkJTm90aWZp
-Y2F0aW9uIGFib3V0IGZpbmUgdGltZSBpbmplY3Rpb24gcHVsc2UKKwkJCWdlbmVyYXRlZCBieSBt
-b2RlbS4gVGhlIHJhZGlvZnJhbWVudW1iZXIgZGljdAorCQkJaXMgZGVmaW5lZCBhcyBmb2xsb3c6
-CisKKwkJCXN0cmluZyBBY2Nlc3NUZWNobm9sb2d5CisJCQkJImdzbSIgb3IgInVtdHMiCisJCQkK
-KwkJCXVpbnQzMiBUZG1hRnJhbWVOdW1iZXIgKGdzbSBvbmx5KQorCQkJCXJhbmdlIDAgLSAyNzE1
-NjQ3ICgyMDQ4KjI2KjUxKQorCisJCQl1aW50MTYgVGRtYVRpbWVzbG90IChnc20gb25seSkKKwkJ
-CQlyYW5nZSAwIC0gNworCisJCQl1aW50MTYgVGltZXNsb3RCaXQgKGdzbSBvbmx5KQorCQkJCXJh
-bmdlIDAgLSAxNTYKKworCQkJdWludDE2IFRpbWluZ0FkdmFuY2UgKGdzbSBvbmx5KQorCQkJCXJh
-bmdlIDAgLSA2MworCisJCQl1aW50MTYgQmNjaEFyZmNuIChnc20gb25seSkKKwkJCQlyYW5nZSAw
-IC0gMTAyMworCisJCQl1aW50MTYgQnNpYyAoZ3NtIG9ubHkpCisJCQkJcmFuZ2UgMCAtIDY0CisK
-KwkJCXVpbnQxNiBTZm4gKHVtdHMgb25seSkKKwkJCQlyYW5nZSAwIC0gNDA5NQorCisJCQlzdHJp
-bmcgUnJjU3RhdGUgKHVtdHMgb25seSkKKwkJCQkiY2VsbF9kY2giLCAiY2VsbF9mYWNoIiwgImNl
-bGxfcGNoIiBvcgorCQkJCSJ1cmFfcGNoIgorCQkJCisJCQl1aW50MTYgUm91bmRUcmlwVGltZSAo
-dW10cyBvbmx5KQorCQkJCXJhbmdlIDAgLSAzMjc2NgorCisKK1Byb3BlcnRpZXMJYm9vbGVhbiBM
-Y3NFbmFibGVkIFtyZWFkd3JpdGVdCisKKwkJCUlmIExjc0VuYWJsZWQgaXMgRmFsc2UsIHRoZW4g
-bm8gTENTIHBvc2l0aW9uaW5nCisJCQlwcm90b2NvbCBmcmFtZXMgYXJlIHJlY2VpdmVkLgorCmRp
-ZmYgLS1naXQgYS9pbmNsdWRlL2FncHMuaCBiL2luY2x1ZGUvYWdwcy5oCm5ldyBmaWxlIG1vZGUg
-MTAwNjQ0CmluZGV4IDAwMDAwMDAuLjA3YTBmYjIKLS0tIC9kZXYvbnVsbAorKysgYi9pbmNsdWRl
-L2FncHMuaApAQCAtMCwwICsxLDEzNSBAQAorLyoKKyAqCisgKiAgb0Zvbm8gLSBPcGVuIFNvdXJj
-ZSBUZWxlcGhvbnkKKyAqCisgKiAgQ29weXJpZ2h0IChDKSAyMDA4LTIwMTAgIEludGVsIENvcnBv
-cmF0aW9uLiBBbGwgcmlnaHRzIHJlc2VydmVkLgorICoKKyAqICBUaGlzIHByb2dyYW0gaXMgZnJl
-ZSBzb2Z0d2FyZTsgeW91IGNhbiByZWRpc3RyaWJ1dGUgaXQgYW5kL29yIG1vZGlmeQorICogIGl0
-IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgdmVyc2lv
-biAyIGFzCisgKiAgcHVibGlzaGVkIGJ5IHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb24uCisg
-KgorICogIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdp
-bGwgYmUgdXNlZnVsLAorICogIGJ1dCBXSVRIT1VUIEFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVu
-IHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mCisgKiAgTUVSQ0hBTlRBQklMSVRZIG9yIEZJVE5FU1Mg
-Rk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZQorICogIEdOVSBHZW5lcmFsIFB1Ymxp
-YyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuCisgKgorICogIFlvdSBzaG91bGQgaGF2ZSByZWNl
-aXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlCisgKiAgYWxvbmcg
-d2l0aCB0aGlzIHByb2dyYW07IGlmIG5vdCwgd3JpdGUgdG8gdGhlIEZyZWUgU29mdHdhcmUKKyAq
-ICBGb3VuZGF0aW9uLCBJbmMuLCA1MSBGcmFua2xpbiBTdCwgRmlmdGggRmxvb3IsIEJvc3Rvbiwg
-TUEgIDAyMTEwLTEzMDEgIFVTQQorICoKKyAqLworCisjaWZuZGVmIF9fT0ZPTk9fQUdQU19ICisj
-ZGVmaW5lIF9fT0ZPTk9fQUdQU19ICisKKyNpZmRlZiBfX2NwbHVzcGx1cworZXh0ZXJuICJDIiB7
-CisjZW5kaWYKKworI2luY2x1ZGUgPG9mb25vL3R5cGVzLmg+CisKK3N0cnVjdCBvZm9ub19hZ3Bz
-OworCitlbnVtIG9mb25vX3JyY19zdGF0ZSB7CisJUlJDX0NFTExfUENIID0gMCwKKwlSUkNfQ0VM
-TF9GQUNIID0gMSwKKwlSUkNfQ0VMTF9EQ0ggPSAyLAorCVJSQ19VUkFfUENIID0gMywKK307CisK
-K3N0cnVjdCBvZm9ub19sY3NfZnJhbWUgeworCWVudW0gb2Zvbm9fbGNzX2ZyYW1lX3R5cGUgbGNz
-X2ZyYW1lX3R5cGU7CisJaW50IGZyYW1lX2xlbmd0aDsJLyogc2l6ZSBvZiByYXdfZnJhbWUgaW4g
-Ynl0ZXMgKi8KKwl1bnNpZ25lZCBjaGFyKiByYXdfZnJhbWU7Cit9OworCitzdHJ1Y3Qgb2Zvbm9f
-bGNzX2dzbV9mbiB7CisJaW50IFRETUFfZnJhbWVfbnVtYmVyOwkvKiByYW5nZSAwIC0gMjcxNTY0
-NyAoMjA0OCoyNio1MSkgKi8KKwlpbnQgVERNQV90aW1lc2xvdDsJLyogcmFuZ2UgMCAtIDcgKi8K
-KwlpbnQgdGltZXNsb3RfYml0OwkvKiByYW5nZSAwIC0gMTU2ICovCisJaW50IHRpbWluZ19hZHZh
-bmNlOwkvKiByYW5nZSAwIC0gNjMgKi8KKwlpbnQgYmNjaF9hcmZjbjsJCS8qIHJhbmdlIDAgLSAx
-MDIzICovCisJaW50IGJzaWM7CQkvKiByYW5nZSAwIC0gNjQgKi8KK307CisKK3N0cnVjdCBvZm9u
-b19sY3NfdXRyYW5fZm4geworCWludCBzZm47CQkvKiByYW5nZSAwIC0gNDA5NSAqLworCWludCBy
-cmNfc3RhdGU7CQkvKiBlbnVtIG9mb25vX3JyY19zdGF0ZSAqLworCWludCByb3VuZF90cmlwX3Rp
-bWU7CS8qIHJhbmdlIDAgLSAzMjc2NiAqLworfTsKKworc3RydWN0IG9mb25vX2xjc19yYWRpb19m
-biB7CisJaW50IHJhZGlvX2FjY2Vzc190ZWNobm9sb2d5OyAvKiBlbnVtIGFjY2Vzc190ZWNobm9s
-b2d5ICovCisJdW5pb24geworCQlvZm9ub19sY3NfZ3NtX2ZuCWdzbV9mcmFtZV9udW1iZXI7CisJ
-CW9mb25vX2xjc191dHJhbl9mbgl1dHJhbl9mcmFtZV9udW1iZXI7CisJfQorfTsJCisKK3R5cGVk
-ZWYgdm9pZCAoKm9mb25vX2FncHNfc2VuZF9sY3NfZnJhbWVfY2JfdCkoY29uc3Qgc3RydWN0IG9m
-b25vX2Vycm9yICplcnJvciwKKwkJCQl2b2lkICpkYXRhKTsKKwordHlwZWRlZiB2b2lkICgqb2Zv
-bm9fYWdwc19pbmplY3RfdGltZV9jYl90KShjb25zdCBzdHJ1Y3Qgb2Zvbm9fZXJyb3IgKmVycm9y
-LAorCQkJCXN0cnVjdCBvZm9ub19sY3NfcmFkaW9fZm4gKnJhZGlvX2ZyYW1lX251bWJlciwKKwkJ
-CQl2b2lkICpkYXRhKTsKKworLyogQUdQUyByZWxhdGVkIGZ1bmN0aW9ucywgaW5jbHVkaW5nIExD
-UyBmcmFtZSBmb3J3YXJkaW5nIGFuZCBmaW5lIHRpbWUgaW5qZWN0aW9uCisgKi8KK3N0cnVjdCBv
-Zm9ub19hZ3BzX2RyaXZlciB7CisJY29uc3QgY2hhciAqbmFtZTsKKwlpbnQgKCpwcm9iZSkoc3Ry
-dWN0IG9mb25vX2FncHMgKmFncHMsIHVuc2lnbmVkIGludCB2ZW5kb3IsCisJCQl2b2lkICpkYXRh
-KTsKKwl2b2lkICgqcmVtb3ZlKShzdHJ1Y3Qgb2Zvbm9fYWdwcyAqYWdwcyk7CisKKwl2b2lkICgq
-cmVjZWl2ZV9sY3NfZnJhbWVzKShzdHJ1Y3Qgb2Zvbm9fYWdwcyAqYWdwcywgaW50IGVuYWJsZWQp
-OworCisJLyogQXNzaXN0YW5jZSBEYXRhIGFuZCBQb3NpdGlvbiBSZXF1ZXN0cyBmcm9tIHRoZSBN
-b2JpbGUgTmV0d29yayBhcmUKKwkgKiBzaWduYWxsZWQgdmlhIHRoZSBvZm9ub19hZ3BzX2xjc19m
-cmFtZV9ub3RpZnkgZnVuY3Rpb24gYW5kIHRoZQorCSAqIG9Gb25vIGNvcmUgdG8gYW4gZXh0ZXJu
-YWwgR1BTIG1hbmFnZXIuIFRoaXMgR1BTIG1hbmFnZXIgY2FuIHJlcGx5CisJICogdG8gUG9zaXRp
-b24gUmVxdWVzdHMgd2l0aCBvbmUgb3IgbW9yZSBQb3NpdGlvbiBSZXNwb25zZXMgd2hpY2gKKwkg
-KiBhcmUgdGhlbiBzZW5kIGJhY2sgdG8gdGhlIG1vZGVtIHZpYSB0aGUgc2VuZF9sY3NfZnJhbWUg
-ZnVuY3Rpb24uCisJICovCisJdm9pZCAoKnNlbmRfbGNzX2ZyYW1lKShzdHJ1Y3Qgb2Zvbm9fYWdw
-cyAqYWdwcywKKwkJCWludCBmcmFtZV9sZW5ndGgsIC8qIHNpemUgb2YgZnJhbWVfZGF0YSBpbiBi
-eXRlcyAqLworCQkJdW5zaWduZWQgY2hhciogZnJhbWVfZGF0YSAvKiByYXcgZnJhbWUgZGF0YSAq
-LywKKwkJCW9mb25vX2FncHNfc2VuZF9sY3NfZnJhbWVfY2JfdCBjYiwgdm9pZCAqZGF0YSk7CisJ
-CQkKKwkvKiBUaGUgR1BTIG1hbmFnZXIgY2FuIGFzayB0aGUgbW9kZW0gdG8gZ2VuZXJhdGUgYSBI
-VyBwdWxzZSAodGltZQorCSAqIHN0YW1wKSB3aXRoIGEgZGVmaW5lZCBsZW5ndGggYW5kIHRoZSBt
-b2RlbSByZXBsaWVzIGluZGljYXRlcyB3aGVuCisJICogaXQgZ2VuZXJhdGVzIHRoZSBwdWxzZS4g
-QnV0IGFzIHRoZSBtb2RlbSBoYXMgbm8gcHJlY2lzZSBpZGFlIG9mCisJICogVW5pdmVyc2FsIFRp
-bWUsIGl0IGluZGljYXRlcyBhdCB3aGljaCByYWRpbyBmcmFtZSBudW1iZXIgaXQKKwkgKiBnZW5l
-cmF0ZWQgdGhlIHB1bHNlLiBUaGUgR1BTIG1hbmFnZXIgd2hpY2gga25vd3MgdGhlIGxpbmsgYmV0
-d2VlbgorCSAqIFVuaXZlcnNhbCBUaW1lIGFuZCB0aGUgUmFkaW8gRnJhbWUgbnVtYmVyIGtub3dz
-IHZlcnkgcHJlY2lzZWx5IGF0CisJICogd2hhdCB0aW1lIHRoZSBwdWxzZSB3YXMgZ2VuZXJhdGVk
-IGFuZCBpdHMgZHVyYXRpb24uCisJICoKKwkgKiBUaW1pbmcgYWNjdXJhY3kgaXMgdHlwaWNhbGx5
-IGEgZmV3IG1pY3Jvc2Vjb25kcy4KKwkgKi8gCisJdm9pZCAoKmluamVjdF90aW1lKShzdHJ1Y3Qg
-b2Zvbm9fYWdwcyAqYWdwcywKKwkJCWludCByYWRpb19hY2Nlc3NfdGVjaG5vbG9neSwgLyogZW51
-bSBhY2Nlc3NfdGVjaG5vbG9neSAqLworCQkJaW50IHB1bHNlX2xlbmd0aCwgLyogZHVyYXRpb24g
-b2YgcHVsc2UgaW4gcmFkaW8gc2xvdHMgKi8KKwkJCW9mb25vX2FncHNfaW5qZWN0X3RpbWVfY2Jf
-dCBjYiwgdm9pZCAqZGF0YSk7Cit9OworCit2b2lkIG9mb25vX2FncHNfbGNzX2ZyYW1lX25vdGlm
-eShzdHJ1Y3Qgb2Zvbm9fYWdwcyAqYWdwcywKKwkJCWludCBmcmFtZV9sZW5ndGgsIC8qIHNpemUg
-b2YgZnJhbWVfZGF0YSBpbiBieXRlcyAqLworCQkJdW5zaWduZWQgY2hhciogZnJhbWVfZGF0YSAv
-KiByYXcgZnJhbWUgZGF0YSAqLyk7CisKK2ludCBvZm9ub19hZ3BzX2RyaXZlcl9yZWdpc3Rlcihj
-b25zdCBzdHJ1Y3Qgb2Zvbm9fYWdwc19kcml2ZXIgKmQpOwordm9pZCBvZm9ub19hZ3BzX2RyaXZl
-cl91bnJlZ2lzdGVyKGNvbnN0IHN0cnVjdCBvZm9ub19hZ3BzX2RyaXZlciAqZCk7CisKK3N0cnVj
-dCBvZm9ub19hZ3BzICpvZm9ub19hZ3BzX2NyZWF0ZShzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKm1vZGVt
-LAorCQkJCQkJdW5zaWduZWQgaW50IHZlbmRvciwKKwkJCQkJCWNvbnN0IGNoYXIgKmRyaXZlciwK
-KwkJCQkJCXZvaWQgKmRhdGEpOworCit2b2lkIG9mb25vX2FncHNfcmVnaXN0ZXIoc3RydWN0IG9m
-b25vX2FncHMgKmFncHMpOwordm9pZCBvZm9ub19hZ3BzX3JlbW92ZShzdHJ1Y3Qgb2Zvbm9fYWdw
-cyAqYWdwcyk7CisKK3ZvaWQgb2Zvbm9fYWdwc19zZXRfZGF0YShzdHJ1Y3Qgb2Zvbm9fYWdwcyAq
-YWdwcywgdm9pZCAqZGF0YSk7Cit2b2lkICpvZm9ub19hZ3BzX2dldF9kYXRhKHN0cnVjdCBvZm9u
-b19hZ3BzICphZ3BzKTsKKworI2lmZGVmIF9fY3BsdXNwbHVzCit9CisjZW5kaWYKKworI2VuZGlm
-IC8qIF9fT0ZPTk9fQUdQU19IICovCi0tIAoxLjUuNC4zCgo=
-
---===============0636848163133066188==--
+--===============5879085979442395820==--
 
