@@ -1,472 +1,321 @@
-Content-Type: multipart/mixed; boundary="===============3863049818852391496=="
+Content-Type: multipart/mixed; boundary="===============9143464698279044150=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH 1/2] Add network time support
-Date: Tue, 18 May 2010 19:36:31 +0300
-Message-ID: <1274200592-9464-2-git-send-email-aki.niemi@nokia.com>
-In-Reply-To: <1274200592-9464-1-git-send-email-aki.niemi@nokia.com>
+From: rajyalakshmi bommaraju <rajyalakshmi.bommaraju@intel.com>
+Subject: Patch for voice call history plugin merge
+Date: Tue, 18 May 2010 09:51:25 -0700
+Message-ID: <4BF2C58D.6090901@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3863049818852391496==
+--===============9143464698279044150==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Adding a new notify function in the netreg atom for notifying a
-received Network Identification and Timezone (NITZ) indication. This
-data is consumed via a nettime plugin, of which there is also an
-example.
----
- Makefile.am               |   10 ++--
- include/netreg.h          |    2 +
- include/nettime.h         |   52 +++++++++++++++++++
- include/types.h           |   11 ++++
- plugins/example_nettime.c |   84 +++++++++++++++++++++++++++++++
- src/modem.c               |    1 +
- src/nettime.c             |  121 +++++++++++++++++++++++++++++++++++++++++=
-++++
- src/network.c             |   11 ++++
- src/ofono.h               |    8 +++
- 9 files changed, 296 insertions(+), 4 deletions(-)
- create mode 100644 include/nettime.h
- create mode 100644 plugins/example_nettime.c
- create mode 100644 src/nettime.c
+Hi,
 
-diff --git a/Makefile.am b/Makefile.am
-index 7fd862f..ed13346 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -12,7 +12,8 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
-e/history.h \
- 			include/netreg.h include/voicecall.h include/devinfo.h \
- 			include/cbs.h include/call-volume.h \
- 			include/gprs.h include/gprs-context.h \
--			include/radio-settings.h include/stk.h
-+			include/radio-settings.h include/stk.h \
-+			include/nettime.h
- =
+I have implemented voice call history plugin using memory mapped file , =
 
- nodist_include_HEADERS =3D include/version.h
- =
+this implementation tested on meego images right now as an external =
 
-@@ -242,8 +243,8 @@ builtin_sources +=3D plugins/ste.c
- endif
- =
+plugin to ofono. I am submitting the code here so that it  can be merged an=
+d will be used as builtin plugin  of ofono  in future.  Please review the p=
+atch and let =
 
- if MAINTAINER_MODE
--builtin_modules +=3D example_history
--builtin_sources +=3D plugins/example_history.c
-+builtin_modules +=3D example_history example_nettime
-+builtin_sources +=3D plugins/example_history.c plugins/example_nettime.c
- endif
- =
+me know your decision and any changes that needs to be done for accepting i=
+t.
 
- sbin_PROGRAMS =3D src/ofonod
-@@ -260,7 +261,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
-es) \
- 			src/simutil.h src/simutil.c src/storage.h \
- 			src/storage.c src/cbs.c src/watch.c src/call-volume.c \
- 			src/gprs.c src/idmap.h src/idmap.c \
--			src/radio-settings.c src/stkutil.h src/stkutil.c
-+			src/radio-settings.c src/stkutil.h src/stkutil.c \
-+			src/nettime.c
- =
-
- src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
-@ -ldl
- =
-
-diff --git a/include/netreg.h b/include/netreg.h
-index 0079477..8860960 100644
---- a/include/netreg.h
-+++ b/include/netreg.h
-@@ -93,6 +93,8 @@ struct ofono_netreg_driver {
- void ofono_netreg_strength_notify(struct ofono_netreg *netreg, int strengt=
-h);
- void ofono_netreg_status_notify(struct ofono_netreg *netreg, int status,
- 					int lac, int ci, int tech);
-+void ofono_netreg_time_notify(struct ofono_netreg *netreg,
-+				struct ofono_network_time *info);
- =
-
- int ofono_netreg_driver_register(const struct ofono_netreg_driver *d);
- void ofono_netreg_driver_unregister(const struct ofono_netreg_driver *d);
-diff --git a/include/nettime.h b/include/nettime.h
-new file mode 100644
-index 0000000..0f23cc7
---- /dev/null
-+++ b/include/nettime.h
-@@ -0,0 +1,52 @@
-+/*
-+ *
-+ *  oFono - Open Telephony stack for Linux
-+ *
-+ *  Copyright (C) 2010  Nokia Corporation and/or its subsidiary(-ies).
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifndef __OFONO_NETTIME_H
-+#define __OFONO_NETTIME_H
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+struct ofono_network_time;
-+
-+struct ofono_nettime_context {
-+	struct ofono_nettime_driver *driver;
-+	struct ofono_modem *modem;
-+	void *data;
-+};
-+
-+struct ofono_nettime_driver {
-+	const char *name;
-+	int (*probe)(struct ofono_nettime_context *context);
-+	void (*remove)(struct ofono_nettime_context *context);
-+	void (*info_received)(struct ofono_nettime_context *context,
-+				struct ofono_network_time *info);
-+};
-+
-+int ofono_nettime_driver_register(const struct ofono_nettime_driver *drive=
-r);
-+void ofono_nettime_driver_unregister(const struct ofono_nettime_driver *dr=
-iver);
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif /* __OFONO_NETTIME_H */
-diff --git a/include/types.h b/include/types.h
-index 7b08b8c..2b154f0 100644
---- a/include/types.h
-+++ b/include/types.h
-@@ -92,6 +92,17 @@ struct ofono_call {
- 	int clip_validity;
- };
- =
-
-+struct ofono_network_time {
-+	int sec;	/* Seconds [0..59], -1 if unavailable */
-+	int min;	/* Minutes [0..59], -1 if unavailable */
-+	int hour;	/* Hours [0..23], -1 if unavailable */
-+	int mday;	/* Day of month [1..31], -1 if unavailable */
-+	int mon;	/* Month [1..12], -1 if unavailable */
-+	int year;	/* Current year, -1 if unavailable */
-+	int dst;	/* Current adjustment, in seconds */
-+	int utcoff;	/* Offset from UTC in seconds */
-+};
-+
- #ifdef __cplusplus
- }
- #endif
-diff --git a/plugins/example_nettime.c b/plugins/example_nettime.c
-new file mode 100644
-index 0000000..60045be
---- /dev/null
-+++ b/plugins/example_nettime.c
-@@ -0,0 +1,84 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Nokia Corporation and/or its subsidiary(-ies).
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <string.h>
-+#include <glib.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/nettime.h>
-+#include <ofono/types.h>
-+
-+#include "common.h"
-+
-+static int example_nettime_probe(struct ofono_nettime_context *context)
-+{
-+	ofono_debug("Example Network Time Probe for modem: %p",
-+			context->modem);
-+	return 0;
-+}
-+
-+static void example_nettime_remove(struct ofono_nettime_context *context)
-+{
-+	ofono_debug("Example Network Time Remove for modem: %p",
-+			context->modem);
-+}
-+
-+static void example_nettime_info_received(struct ofono_nettime_context *co=
-ntext,
-+						struct ofono_network_time *info)
-+{
-+	if (!info)
-+		return;
-+
-+	ofono_debug("Received a network time notification on modem: %p",
-+			context->modem);
-+	ofono_debug("Time: %04d-%02d-%02d %02d:%02d:%02d%c%02d:%02d (DST=3D%d)",
-+			info->year, info->mon, info->mday, info->hour,
-+			info->min, info->sec, info->utcoff > 0 ? '+' : '-',
-+			info->utcoff / 3600, (info->utcoff % 3600) / 60,
-+			info->dst / 3600);
-+}
-+
-+static struct ofono_nettime_driver example_driver =3D {
-+	.name		=3D "Example Network Time",
-+	.probe		=3D example_nettime_probe,
-+	.remove		=3D example_nettime_remove,
-+	.info_received	=3D example_nettime_info_received,
-+};
-+
-+static int example_nettime_init(void)
-+{
-+	return ofono_nettime_driver_register(&example_driver);
-+}
-+
-+static void example_nettime_exit(void)
-+{
-+	ofono_nettime_driver_unregister(&example_driver);
-+}
-+
-+OFONO_PLUGIN_DEFINE(example_nettime, "Example Network Time Plugin",
-+			VERSION, OFONO_PLUGIN_PRIORITY_DEFAULT,
-+			example_nettime_init, example_nettime_exit)
-diff --git a/src/modem.c b/src/modem.c
-index 0d0cb2a..bf77eb9 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -1147,6 +1147,7 @@ static void modem_sim_ready(void *user, enum ofono_si=
-m_state new_state)
- 			modem->driver->post_sim(modem);
- =
-
- 		__ofono_history_probe_drivers(modem);
-+		__ofono_nettime_probe_drivers(modem);
- 	}
- }
- =
-
-diff --git a/src/nettime.c b/src/nettime.c
-new file mode 100644
-index 0000000..b17e375
---- /dev/null
-+++ b/src/nettime.c
-@@ -0,0 +1,121 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010  Nokia Corporation and/or its subsidiary(-ies).
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <string.h>
-+#include <stdio.h>
-+
-+#include <glib.h>
-+
-+#include "ofono.h"
-+
-+static GSList *nettime_drivers =3D NULL;
-+
-+static struct ofono_nettime_context *nettime_context_create(
-+					struct ofono_modem *modem,
-+					struct ofono_nettime_driver *driver)
-+{
-+	struct ofono_nettime_context *context;
-+
-+	if (driver->probe =3D=3D NULL)
-+		return NULL;
-+
-+	context =3D g_try_new0(struct ofono_nettime_context, 1);
-+
-+	if (context =3D=3D NULL)
-+		return NULL;
-+
-+	context->driver =3D driver;
-+	context->modem =3D modem;
-+
-+	if (driver->probe(context) < 0) {
-+		g_free(context);
-+		return NULL;
-+	}
-+
-+	return context;
-+}
-+
-+static void context_remove(struct ofono_atom *atom)
-+{
-+	struct ofono_nettime_context *context =3D __ofono_atom_get_data(atom);
-+
-+	if (context->driver->remove)
-+		context->driver->remove(context);
-+
-+	g_free(context);
-+}
-+
-+void __ofono_nettime_probe_drivers(struct ofono_modem *modem)
-+{
-+	struct ofono_nettime_driver *driver;
-+	struct ofono_nettime_context *context;
-+	GSList *l;
-+
-+	for (l =3D nettime_drivers; l; l =3D l->next) {
-+		driver =3D l->data;
-+
-+		context =3D nettime_context_create(modem, driver);
-+
-+		if (!context)
-+			continue;
-+
-+		__ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_NETTIME,
-+						context_remove, context);
-+	}
-+}
-+
-+static void nettime_info_received(struct ofono_atom *atom, void *data)
-+{
-+	struct ofono_nettime_context *context =3D __ofono_atom_get_data(atom);
-+	struct ofono_network_time *info =3D data;
-+
-+	if (context->driver->info_received =3D=3D NULL)
-+		return;
-+
-+	context->driver->info_received(context, info);
-+}
-+
-+void __ofono_nettime_info_received(struct ofono_modem *modem,
-+					struct ofono_network_time *info)
-+{
-+	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_NETTIME,
-+					nettime_info_received, info);
-+}
-+
-+int ofono_nettime_driver_register(const struct ofono_nettime_driver *drive=
-r)
-+{
-+	DBG("driver: %p name: %s", driver, driver->name);
-+
-+	nettime_drivers =3D g_slist_prepend(nettime_drivers, (void *)driver);
-+
-+	return 0;
-+}
-+
-+void ofono_nettime_driver_unregister(const struct ofono_nettime_driver *dr=
-iver)
-+{
-+	DBG("driver: %p name: %s", driver, driver->name);
-+
-+	nettime_drivers =3D g_slist_remove(nettime_drivers, driver);
-+}
-diff --git a/src/network.c b/src/network.c
-index b2e5821..87a73e3 100644
---- a/src/network.c
-+++ b/src/network.c
-@@ -1065,6 +1065,17 @@ void ofono_netreg_status_notify(struct ofono_netreg =
-*netreg, int status,
- 	notify_status_watches(netreg);
- }
- =
-
-+void ofono_netreg_time_notify(struct ofono_netreg *netreg,
-+				struct ofono_network_time *info)
-+{
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(netreg->atom);
-+
-+	if (!info)
-+		return;
-+
-+	__ofono_nettime_info_received(modem, info);
-+}
-+
- static GSList *compress_operator_list(const struct ofono_network_operator =
-*list,
- 					int total)
- {
-diff --git a/src/ofono.h b/src/ofono.h
-index 7b13cce..84b5c23 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -115,6 +115,7 @@ enum ofono_atom_type {
- 	OFONO_ATOM_TYPE_GPRS_CONTEXT =3D 17,
- 	OFONO_ATOM_TYPE_RADIO_SETTINGS =3D 18,
- 	OFONO_ATOM_TYPE_STK =3D 19,
-+	OFONO_ATOM_TYPE_NETTIME =3D 20,
- };
- =
-
- enum ofono_atom_watch_condition {
-@@ -264,3 +265,10 @@ struct sms;
- =
-
- void __ofono_message_waiting_mwi(struct ofono_message_waiting *mw,
- 				struct sms *sms, gboolean *out_discard);
-+
-+#include <ofono/nettime.h>
-+
-+void __ofono_nettime_probe_drivers(struct ofono_modem *modem);
-+
-+void __ofono_nettime_info_received(struct ofono_modem * modem,
-+					struct ofono_network_time *info);
--- =
-
-1.7.0.4
+Thanks
+Raji Bommaraju
 
 
---===============3863049818852391496==--
+--===============9143464698279044150==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Merging-voice-call-history-plugin-implementation.patch"
+
+PkZyb20gNmY5YWM1ZGM4YjZmZTliZDkyMjZjZDYzODAzYmZjYWJkOTk3ODIxOSBNb24gU2VwIDE3
+IDAwOjAwOjAwIDIwMDEKRnJvbTogUmFqaSBCb21tYXJhanUgPFJhanlhbGFrc2htaSBCb21tYXJh
+anU+CkRhdGU6IFR1ZSwgMTggTWF5IDIwMTAgMDk6NTM6MDkgLTA3MDAKU3ViamVjdDogW1BBVENI
+XSBNZXJnaW5nIHZvaWNlIGNhbGwgaGlzdG9yeSBwbHVnaW4gaW1wbGVtZW50YXRpb24KCi0tLQog
+TWFrZWZpbGUuYW0gICAgICAgICAgIHwgICAgMiArCiBwbHVnaW5zL2NhbGxoaXN0b3J5LmMgfCAg
+NTc5ICsrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysKIDIg
+ZmlsZXMgY2hhbmdlZCwgNTgxIGluc2VydGlvbnMoKyksIDAgZGVsZXRpb25zKC0pCiBjcmVhdGUg
+bW9kZSAxMDA2NDQgcGx1Z2lucy9jYWxsaGlzdG9yeS5jCgpkaWZmIC0tZ2l0IGEvTWFrZWZpbGUu
+YW0gYi9NYWtlZmlsZS5hbQppbmRleCA3ZmQ4NjJmLi5kMmYxYWExIDEwMDY0NAotLS0gYS9NYWtl
+ZmlsZS5hbQorKysgYi9NYWtlZmlsZS5hbQpAQCAtMjM5LDYgKzIzOSw4IEBAIGJ1aWx0aW5fc291
+cmNlcyArPSBwbHVnaW5zL3BhbG1wcmUuYwogYnVpbHRpbl9tb2R1bGVzICs9IHN0ZQogYnVpbHRp
+bl9zb3VyY2VzICs9IHBsdWdpbnMvc3RlLmMKIAorYnVpbHRpbl9tb2R1bGVzICs9IGNhbGxoaXN0
+b3J5IAorYnVpbHRpbl9zb3VyY2VzICs9IHBsdWdpbnMvY2FsbGhpc3RvcnkuYwogZW5kaWYKIAog
+aWYgTUFJTlRBSU5FUl9NT0RFCmRpZmYgLS1naXQgYS9wbHVnaW5zL2NhbGxoaXN0b3J5LmMgYi9w
+bHVnaW5zL2NhbGxoaXN0b3J5LmMKbmV3IGZpbGUgbW9kZSAxMDA2NDQKaW5kZXggMDAwMDAwMC4u
+M2RjZTNjMgotLS0gL2Rldi9udWxsCisrKyBiL3BsdWdpbnMvY2FsbGhpc3RvcnkuYwpAQCAtMCww
+ICsxLDU3OSBAQAorLyoKKyAqCisgKiBvRm9ubyAtIE9wZW4gU291cmNlIFRlbGVwaG9ueQorICoK
+KyAqIENvcHlyaWdodCAoQykgMjAwOC0yMDEwICBJbnRlbCBDb3Jwb3JhdGlvbi4gQWxsIHJpZ2h0
+cyByZXNlcnZlZC4KKyAqCisgKiBUaGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTsgeW91IGNh
+biByZWRpc3RyaWJ1dGUgaXQgYW5kL29yIG1vZGlmeQorICogaXQgdW5kZXIgdGhlIHRlcm1zIG9m
+IHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSB2ZXJzaW9uIDIgYXMKKyAqIHB1Ymxpc2hl
+ZCBieSB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0aW9uLgorICoKKyAqICBUaGlzIHByb2dyYW0g
+aXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhvcGUgdGhhdCBpdCB3aWxsIGJlIHVzZWZ1bCwKKyAqICBi
+dXQgV0lUSE9VVCBBTlkgV0FSUkFOVFk7IHdpdGhvdXQgZXZlbiB0aGUgaW1wbGllZCB3YXJyYW50
+eSBvZgorICogIE1FUkNIQU5UQUJJTElUWSBvciBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVS
+UE9TRS4gIFNlZSB0aGUKKyAqICBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBmb3IgbW9yZSBk
+ZXRhaWxzLgorICoKKyAqICBZb3Ugc2hvdWxkIGhhdmUgcmVjZWl2ZWQgYSBjb3B5IG9mIHRoZSBH
+TlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZQorICogIGFsb25nIHdpdGggdGhpcyBwcm9ncmFtOyBp
+ZiBub3QsIHdyaXRlIHRvIHRoZSBGcmVlIFNvZnR3YXJlCisgKiAgRm91bmRhdGlvbiwgSW5jLiwg
+NTEgRnJhbmtsaW4gU3QsIEZpZnRoIEZsb29yLCBCb3N0b24sIE1BICAwMjExMC0xMzAxICBVU0EK
+KyAqCisgKi8KKworCisjaWZkZWYgSEFWRV9DT05GSUdfSAorI2luY2x1ZGUgPGNvbmZpZy5oPgor
+I2VuZGlmCisKKyNkZWZpbmUgT0ZPTk9fQVBJX1NVQkpFQ1RfVE9fQ0hBTkdFCisjaW5jbHVkZSA8
+c3RyaW5nLmg+CisjaW5jbHVkZSA8c3RkaW8uaD4KKyNpbmNsdWRlIDxzdGRpbnQuaD4KKyNpbmNs
+dWRlIDxzdGRsaWIuaD4KKyNpbmNsdWRlIDxlcnJuby5oPgorI2luY2x1ZGUgPGdsaWIuaD4KKyNp
+bmNsdWRlIDx0aW1lLmg+CisjaW5jbHVkZSA8dW5pc3RkLmg+CisjaW5jbHVkZSA8c3lzL3R5cGVz
+Lmg+CisjaW5jbHVkZSA8c3lzL3N0YXQuaD4KKyNpbmNsdWRlIDxzeXMvZGlyLmg+CisjaW5jbHVk
+ZSA8c3lzL21tYW4uaD4KKyNpbmNsdWRlIDxzZW1hcGhvcmUuaD4KKyNpbmNsdWRlIDxmY250bC5o
+PgorI2luY2x1ZGUgPG9mb25vL2RidXMuaD4KKyNpbmNsdWRlIDxkYnVzL2RidXMtZ2xpYi5oPgor
+I2luY2x1ZGUgPG9mb25vL3R5cGVzLmg+CisjaW5jbHVkZSA8b2Zvbm8vcGx1Z2luLmg+CisjaW5j
+bHVkZSA8b2Zvbm8vbG9nLmg+CisjaW5jbHVkZSA8b2Zvbm8vaGlzdG9yeS5oPgorI2luY2x1ZGUg
+ImdkYnVzLmgiCisjaW5jbHVkZSAiY29tbW9uLmgiCisKKyNkZWZpbmUgSElTVE9SWV9GSUxFX1BB
+VEggIi92YXIvY2FjaGUvY2FsbGhpc3RvcnkvIgorI2RlZmluZSBISVNUT1JZX0ZJTEUgSElTVE9S
+WV9GSUxFX1BBVEgidm9pY2VjYWxsaGlzdG9yeWRhdGEiCisjZGVmaW5lIE9GT05PX01BTkFHRVJf
+UEFUSCAiLyIKKyNkZWZpbmUgUEhPTkVfTlVNQkVSX1NJWkUgNjQKKyNkZWZpbmUgUkVDT1JEX1NJ
+WkUgODAKKyNkZWZpbmUgSEVBREVSX1NJWkUgMTYgCisKKyNpZmRlZiBOVU1fVkNBTExfSElTVE9S
+WV9FTlRSSUVTCisjZGVmaW5lIE1BWF9JVEVNUyBOVU1fVkNBTExfSElTVE9SWV9FTlRSSUVTCisj
+ZWxzZQorI2RlZmluZSBNQVhfSVRFTVMgNTAKKyNlbmRpZgorCisjZGVmaW5lIFRPVEFMX1NJWkUg
+KE1BWF9JVEVNUyAqIFJFQ09SRF9TSVpFICsgSEVBREVSX1NJWkUpCisKK2VudW0gVk9JQ0VfQ0FM
+TF9UWVBFIHsKKwlPVVRHT0lORyA9IDAsCisJSU5DT01JTkcsCisJTUlTU0VECit9OworCit0eXBl
+ZGVmIHN0cnVjdCBfRklMRUhFQURFUiB7CisJaW50IGhlYWQ7CisJaW50IHRhaWw7CisJaW50IHVu
+cmVhZDsKKwl1bnNpZ25lZCBpbnQgbGFzdGlkOyAKK30gSGlzdG9yeUZpbGVIZWFkZXI7CisKK3R5
+cGVkZWYgc3RydWN0IF9WT0lDRUhJU1RPUlkgeworCWludCBpZDsKKwljaGFyIGxpbmVpZFtQSE9O
+RV9OVU1CRVJfU0laRV07CisJc2hvcnQgaW50IGNhbGx0eXBlOworCXRpbWVfdCBzdGFydHRpbWU7
+CisJdGltZV90IGVuZHRpbWU7Cit9IFZvaWNlSGlzdG9yeTsKKworLy8gR2xvYmFsIFNoYXJlZCBk
+YXRhCit0eXBlZGVmIHN0cnVjdCBfU0hBUkVECit7CisJSGlzdG9yeUZpbGVIZWFkZXIgaGVhZGVy
+OworCXZvaWQgKmRhdGFNYXA7CisJc2VtX3QgbXV0ZXg7CisJaW50IHRlbXBfdW5yZWFkOworCWlu
+dCB0ZW1wX3RhaWw7Cit9IFNoYXJlZERhdGE7CisKK3N0YXRpYyBTaGFyZWREYXRhICpzaGFyZWRf
+ZGF0YSA9IE5VTEw7CisKKworc3RhdGljIHZvaWQgY2FsbGhpc3RvcnlfZW1pdF92b2ljZV9oaXN0
+b3J5X2NoYW5nZWQoaW50ICk7CisKK3N0YXRpYyBpbnQgY2FsbF9oaXN0b3J5X3Byb2JlKHN0cnVj
+dCBvZm9ub19oaXN0b3J5X2NvbnRleHQgKmNvbnRleHQpCit7CisJREJHKCJIaXN0b3J5IFByb2Jl
+IGZvciBtb2RlbTogJXAiLCBjb250ZXh0LT5tb2RlbSk7CisJcmV0dXJuIDA7Cit9CisKK3N0YXRp
+YyB2b2lkIGNhbGxfaGlzdG9yeV9yZW1vdmUoc3RydWN0IG9mb25vX2hpc3RvcnlfY29udGV4dCAq
+Y29udGV4dCkKK3sKKwlEQkcoIkV4YW1wbGUgSGlzdG9yeSBSZW1vdmUgZm9yIG1vZGVtOiAlcCIs
+IGNvbnRleHQtPm1vZGVtKTsKK30KKworc3RhdGljIHZvaWQgY2xlYW5fdXAoKQoreworCWdfcmV0
+dXJuX2lmX2ZhaWwoc2hhcmVkX2RhdGEhPSBOVUxMKTsKKworCXNlbV93YWl0KCYoc2hhcmVkX2Rh
+dGEtPm11dGV4KSk7CisJLy8gdW5tYXAKKwltdW5tYXAoc2hhcmVkX2RhdGEtPmRhdGFNYXAsVE9U
+QUxfU0laRSk7CisJc2VtX3Bvc3QoJihzaGFyZWRfZGF0YS0+bXV0ZXgpKTsKKworCS8vIHJlbW92
+ZSBzZW1hcGhvcmUKKwlpZiAoc2VtX2Rlc3Ryb3koJihzaGFyZWRfZGF0YS0+bXV0ZXgpKSA8IDAp
+CisJCXBlcnJvcigic2VtX2Rlc3Ryb3kgZmFpbGVkIik7CisKKwlnX2ZyZWUoc2hhcmVkX2RhdGEp
+OworfQorCisKK3N0YXRpYyBpbnQgaW5pdF9zZW0oKQoreworCXVuc2lnbmVkIGludCB2YWx1ZSA9
+IDE7CisJZ19yZXR1cm5fdmFsX2lmX2ZhaWwoc2hhcmVkX2RhdGEhPSBOVUxMLC0xKTsKKworCWlm
+IChzZW1faW5pdCgmKHNoYXJlZF9kYXRhLT5tdXRleCksIFRSVUUsIHZhbHVlKSA8IDApeworCQlw
+ZXJyb3IoInNlbV9pbml0IGZhaWxlZCIpOworCQlyZXR1cm4gLTE7CisJfQorCXJldHVybiAwOwor
+fQorCitzdGF0aWMgaW50IGluaXRfaGVhZGVyKHZvaWQgKmRhdGFQdHIpCit7CisJaW50IHVucmVh
+ZCA9IDA7CisKKwlnX3JldHVybl92YWxfaWZfZmFpbCgoc2hhcmVkX2RhdGEhPU5VTEwpLCAtMSk7
+CisJZ19yZXR1cm5fdmFsX2lmX2ZhaWwoKGRhdGFQdHIhPU5VTEwpLCAtMSk7CisJdW5yZWFkID0g
+KHNoYXJlZF9kYXRhLT5oZWFkZXIpLnVucmVhZDsKKworCXNlbV93YWl0KCYoc2hhcmVkX2RhdGEt
+Pm11dGV4KSk7CisJbWVtY3B5KCYoc2hhcmVkX2RhdGEtPmhlYWRlciksIChIaXN0b3J5RmlsZUhl
+YWRlciAqKShkYXRhUHRyKSwKKwkJCQkJCQlIRUFERVJfU0laRSk7CisKKwlvZm9ub19kZWJ1Zygi
+VW5yZWFkOiAlZCwgSGVhZGVyOiAlZCwgVGFpbDogJWQsIHNlcmlhbG5vOiAlZFxuIiwKKwkJCQkJ
+dW5yZWFkLAorCQkJCQkoc2hhcmVkX2RhdGEtPmhlYWRlcikuaGVhZCwKKwkJCQkJKHNoYXJlZF9k
+YXRhLT5oZWFkZXIpLnRhaWwsCisJCQkJCShzaGFyZWRfZGF0YS0+aGVhZGVyKS5sYXN0aWQpOwor
+CXNlbV9wb3N0KCYoc2hhcmVkX2RhdGEtPm11dGV4KSk7CisJaWYgKHVucmVhZCA+IDApeworCQlj
+YWxsaGlzdG9yeV9lbWl0X3ZvaWNlX2hpc3RvcnlfY2hhbmdlZCh1bnJlYWQpOworCX0KKwlyZXR1
+cm4gMDsKK30KKworLyoqCisgKiBDcmVhdGVzIGZpbGUgICJjYWxsaGlzdG9yeSIKKyAqLworc3Rh
+dGljIGdib29sZWFuIGluaXRfZmlsZSgpCit7CisJaW50IGhpc3RvcnlGaWxlOworCXN0cnVjdCBz
+dGF0IHN0YXRidWY7CisJRElSICpkaXJwdHI7CisJY2hhciAqZmlsbCA9IE5VTEw7CisKKwlnX3Jl
+dHVybl92YWxfaWZfZmFpbCgoc2hhcmVkX2RhdGEhPU5VTEwpLCBGQUxTRSk7CisKKwlpZiAoIShk
+aXJwdHIgPSBvcGVuZGlyKEhJU1RPUllfRklMRV9QQVRIKSkgKXsKKwkJb2Zvbm9fZGVidWcoIiVz
+OiBkb2VzbnQgZXhpc3QiLEhJU1RPUllfRklMRV9QQVRIKTsKKwkJaWYgKG1rZGlyKEhJU1RPUllf
+RklMRV9QQVRILAorCQkJCVNfSVJXWFV8U19JUkdSUHxTX0lYR1JQfFNfSVJPVEh8U19JWE9USCkg
+PCAwKXsKKwkJCXBlcnJvcigiRXJyb3IgY3JlYXRpbmcgY2FsbGhpc3RvcnkgZGlyIik7CisJCQly
+ZXR1cm4gRkFMU0U7CisJCX0KKwl9CisKKwlpZiAoKGhpc3RvcnlGaWxlID0gb3BlbiggSElTVE9S
+WV9GSUxFLAorCQkJCU9fUkRXUnxPX0NSRUFUfE9fQVBQRU5ELAorCQkJCVNfSVJXWFUpKQorCQkJ
+CTwgMCl7CisJCXBlcnJvcigiT3BlbiBmaWxlIGZhaWxlZCIpOworCQlyZXR1cm4gRkFMU0U7CisJ
+fQorCisJaWYgKHN0YXQoIEhJU1RPUllfRklMRSwmc3RhdGJ1ZikgPCAtMSl7CisJCXBlcnJvcigi
+c3RhdCBmYWlsZWQiKTsKKwkJcmV0dXJuIEZBTFNFOworCX0KKwlvZm9ub19kZWJ1Zygic3RhdCBm
+aWxlOiAlZCIsKGludCkgKHN0YXRidWYuc3Rfc2l6ZSkpOworCisJaWYgKHN0YXRidWYuc3Rfc2l6
+ZSA9PSAwKXsKKwkJaW50IGJ5dGVzd3JpdHRlbiA9IDA7CisJCS8vd3JpdGUgaGVhZGVyIHRvIHRo
+ZSBmaWxlCisJCShzaGFyZWRfZGF0YS0+aGVhZGVyKS5oZWFkPUhFQURFUl9TSVpFOworCQkoc2hh
+cmVkX2RhdGEtPmhlYWRlcikudGFpbD0oc2hhcmVkX2RhdGEtPmhlYWRlcikuaGVhZDsKKwkJKHNo
+YXJlZF9kYXRhLT5oZWFkZXIpLnVucmVhZD0wOworCQlvZm9ub19kZWJ1Zygic2V0dGluZyBoZWFk
+OiAlZCx0YWlsOiAlZCx1bnJlYWQ6ICVkIiwKKwkJCQkJCShzaGFyZWRfZGF0YS0+aGVhZGVyKS5o
+ZWFkLAorCQkJCQkJKHNoYXJlZF9kYXRhLT5oZWFkZXIpLnRhaWwsCisJCQkJCQkoc2hhcmVkX2Rh
+dGEtPmhlYWRlcikudW5yZWFkKTsKKworCQkvLyAgZmlsbCB0aGUgZmlsZSB3aXRoIHplcm9zCisJ
+CW9mb25vX2RlYnVnKCJUcnlpbmcgdG8gYWxsb2NhdGUgJWQgc2l6ZSIsVE9UQUxfU0laRSk7CisJ
+CWZpbGwgPSAoY2hhciAqKSBnX3RyeV9tYWxsb2MwKFRPVEFMX1NJWkUpOworICAgICAgICAgCWlm
+ICghZmlsbCApeworICAgICAgICAgICAgIAkJb2Zvbm9fZGVidWcoIkVycm9yIGFsbG9jYXRpbmcg
+aW5pdCBtZW1vcnkiKTsKKyAgICAgICAgICAgICAJCXJldHVybiBGQUxTRTsKKwkJfQorICAgICAg
+ICAKKwkJLy8gUHJlZGVmaW5lIGZpbGUgc2l6ZSBhbmQgZmlsbCB3aXRoIHNvbWUgZGF0YQorCQli
+emVybyhmaWxsLFRPVEFMX1NJWkUpOworCQltZW1jcHkoZmlsbCwmKHNoYXJlZF9kYXRhLT5oZWFk
+ZXIpLCBIRUFERVJfU0laRSk7CisKKwkJaWYgKChieXRlc3dyaXR0ZW4gPSB3cml0ZSAoaGlzdG9y
+eUZpbGUsZmlsbCwgVE9UQUxfU0laRSkpIDwwKXsKKwkJCW9mb25vX2RlYnVnKCJFcnJvciB3cml0
+aW5nIHRvIGZpbGUiKTsKKwkJCXJldHVybiBGQUxTRTsKKwkJfQorCQlnX2ZyZWUoZmlsbCk7CisK
+KwkJc3RhdGJ1Zi5zdF9zaXplID0gVE9UQUxfU0laRTsKKwkJb2Zvbm9fZGVidWcoIkhpc3Rvcnkg
+ZmlsZSAlZCBzaXplIGNyZWF0ZWQgXG4iLGJ5dGVzd3JpdHRlbik7CisJfQorCS8vIGNyZWF0ZSBz
+ZW1hcGhvcmUKKwlpZiAoaW5pdF9zZW0oKSA8IDApCisJCXJldHVybiBGQUxTRTsgCisKKwlzZW1f
+d2FpdCgmKHNoYXJlZF9kYXRhLT5tdXRleCkpOworCXNoYXJlZF9kYXRhLT5kYXRhTWFwID0gbW1h
+cCgoIGNhZGRyX3QpTlVMTCwKKwkJCQlzdGF0YnVmLnN0X3NpemUsCisJCQkJUFJPVF9SRUFEfFBS
+T1RfV1JJVEV8UFJPVF9FWEVDLAorCQkJCU1BUF9TSEFSRUQsCisJCQkJaGlzdG9yeUZpbGUsCisJ
+CQkJMCk7CisJc2VtX3Bvc3QoJihzaGFyZWRfZGF0YS0+bXV0ZXgpKTsKKwlpZiAoc2hhcmVkX2Rh
+dGEtPmRhdGFNYXAgPT0gKHZvaWQgKikoLTEpKXsKKwkJcGVycm9yKCJtbWFwIGZhbGllZCIpOwor
+CQlyZXR1cm4gRkFMU0U7CisJfQorCisJY2xvc2UoaGlzdG9yeUZpbGUpOworCisJaW5pdF9oZWFk
+ZXIoc2hhcmVkX2RhdGEtPmRhdGFNYXApOworCisJcmV0dXJuIFRSVUU7Cit9CisKK3N0YXRpYyB2
+b2lkIHN5bmNfbWVtX2ZpbGUoVm9pY2VIaXN0b3J5ICp2Y2FsbCl7CisJdm9pZCAqd3JpdGVNYXAg
+PSBOVUxMOworCWludCB1bnJlYWQgPSAwOworCisJZ19yZXR1cm5faWZfZmFpbCh2Y2FsbCAhPSBO
+VUxMKTsKKwlnX3JldHVybl9pZl9mYWlsKHNoYXJlZF9kYXRhICE9IE5VTEwpOworCWdfcmV0dXJu
+X2lmX2ZhaWwoc2hhcmVkX2RhdGEtPmRhdGFNYXAgIT0gTlVMTCk7CisKKwlzZW1fd2FpdCgmKHNo
+YXJlZF9kYXRhLT5tdXRleCkpOworCisJd3JpdGVNYXAgPSBzaGFyZWRfZGF0YS0+ZGF0YU1hcDsK
+Kwl3cml0ZU1hcCA9IHdyaXRlTWFwICsgKHNoYXJlZF9kYXRhLT5oZWFkZXIpLmhlYWQ7IAorCXZj
+YWxsLT5pZCA9IChzaGFyZWRfZGF0YS0+aGVhZGVyKS5sYXN0aWQ7CisJKHNoYXJlZF9kYXRhLT5o
+ZWFkZXIpLmxhc3RpZCsrOworCW1lbWNweSh3cml0ZU1hcCwgdmNhbGwsIFJFQ09SRF9TSVpFKTsK
+KworCS8vIHVwZGF0ZSBoZWFkZXIKKwkoKHNoYXJlZF9kYXRhLT5oZWFkZXIpLnVucmVhZCkrKzsK
+Kwkoc2hhcmVkX2RhdGEtPmhlYWRlcikuaGVhZCArPSBSRUNPUkRfU0laRTsKKwlpZiAoKHNoYXJl
+ZF9kYXRhLT5oZWFkZXIpLmxhc3RpZCA+PSBVSU5UX01BWCkKKwkJKHNoYXJlZF9kYXRhLT5oZWFk
+ZXIpLmxhc3RpZCA9IDA7CisKKwl1bnJlYWQgPSAoc2hhcmVkX2RhdGEtPmhlYWRlcikudW5yZWFk
+OworCQorCS8vaGVhZGVyIHJlYWNoZXMgZW5kIG9mIGZpbGUKKwlpZiAoKHNoYXJlZF9kYXRhLT5o
+ZWFkZXIpLmhlYWQgPj0gVE9UQUxfU0laRSl7CisJCS8vcmVzZXQgaGVhZCBiYWNrIHRvIGZyb250
+CisJCShzaGFyZWRfZGF0YS0+aGVhZGVyKS5oZWFkID0gSEVBREVSX1NJWkU7CisKKyAgICAgICAg
+CW9mb25vX2RlYnVnKCJIZWFkZXIgPSAlZCwgVGFpbD0lZCIsCisJCQkJKHNoYXJlZF9kYXRhLT5o
+ZWFkZXIpLmhlYWQsCisJCQkJKHNoYXJlZF9kYXRhLT5oZWFkZXIpLnRhaWwpOworCisgICAgICAg
+IAlpZiAodW5yZWFkID49IE1BWF9JVEVNUykKKyAgICAgICAgICAgCQlvZm9ub19lcnJvcigiTm8g
+b25lIHJlYWRpbmcgaGlzdG9yeSBkYXRhIik7CisgICAgCX0KKworCW1lbWNweShzaGFyZWRfZGF0
+YS0+ZGF0YU1hcCwmKHNoYXJlZF9kYXRhLT5oZWFkZXIpLEhFQURFUl9TSVpFKTsKKwltc3luYyhz
+aGFyZWRfZGF0YS0+ZGF0YU1hcCwgVE9UQUxfU0laRSwgTVNfQVNZTkMpOworCisJc2VtX3Bvc3Qo
+JihzaGFyZWRfZGF0YS0+bXV0ZXgpKTsKKworCWlmICh1bnJlYWQgPiAwKQorCQljYWxsaGlzdG9y
+eV9lbWl0X3ZvaWNlX2hpc3RvcnlfY2hhbmdlZCh1bnJlYWQpOworICAgIAkKK30KKworLyoqCisg
+KiBjYWxsX2hpc3RvcnlfY2FsbF9lbmRlZDoKKyAqIG9mb25vIGNhbGxzIHRoaXMgbWV0aG9kIHdp
+dGggdGhlIGNhbGwgaW5mb3JtYXRpb24KKyAqLworIAorc3RhdGljIHZvaWQgY2FsbF9oaXN0b3J5
+X2NhbGxfZW5kZWQoc3RydWN0IG9mb25vX2hpc3RvcnlfY29udGV4dCAqY29udGV4dCwKKwkJCQlj
+b25zdCBzdHJ1Y3Qgb2Zvbm9fY2FsbCAqY2FsbCwKKwkJCQl0aW1lX3Qgc3RhcnQsCisgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgIHRpbWVfdCBlbmQpCit7CisJY29uc3QgY2hhciAqZnJv
+bSA9ICJVbmtub3duIjsKKwlzdHJ1Y3QgdG0gdG1zdGFydCwgdG1lbmQ7CisJY2hhciBzdHRpbWVb
+MTI4XSwgZW5kdGltZVsxMjhdOworCWludCBmcm9tbGVuID0gMDsKKwlWb2ljZUhpc3RvcnkgdmNh
+bGw7CisKKwlvZm9ub19kZWJ1ZygiQ2FsbCBFbmRlZCBvbiBtb2RlbTogJXAiLCBjb250ZXh0LT5t
+b2RlbSk7CisKKwlpZiAoY2FsbC0+dHlwZSAhPSAwKQorCQlyZXR1cm47CisJb2Zvbm9fZGVidWco
+IlZvaWNlIENhbGwsICVzIiwKKwkJY2FsbC0+ZGlyZWN0aW9uID8gIkluY29taW5nIiA6ICJPdXRn
+b2luZyIpOworCisJaWYgKGNhbGwtPmRpcmVjdGlvbikKKwkJdmNhbGwuY2FsbHR5cGUgPSBJTkNP
+TUlORzsKKwllbHNlCisJCXZjYWxsLmNhbGx0eXBlID0gT1VUR09JTkc7CisKKwlpZiAoY2FsbC0+
+Y2xpcF92YWxpZGl0eSA9PSAwKQorCQlmcm9tID0gcGhvbmVfbnVtYmVyX3RvX3N0cmluZygmY2Fs
+bC0+cGhvbmVfbnVtYmVyKTsKKwlmcm9tbGVuID0gc3RybGVuKGZyb20pOworCXN0cmNweSh2Y2Fs
+bC5saW5laWQsIGZyb20pOworCXZjYWxsLmxpbmVpZFtmcm9tbGVuXSA9ICdcMCc7CisKKwl2Y2Fs
+bC5zdGFydHRpbWUgPSBzdGFydDsKKwlnbXRpbWVfcigmc3RhcnQsICZ0bXN0YXJ0KTsKKwlzdHJm
+dGltZShzdHRpbWUsIDEyNywgIiVhLCAlZCAlYiAlWSAlSDolTTolUyAleiIsICZ0bXN0YXJ0KTsK
+KwlzdHRpbWVbMTI3XSA9ICdcMCc7CisKKwlvZm9ub19kZWJ1ZygiU3RhcnRUaW1lOiAlcyIsc3R0
+aW1lKTsKKworCXZjYWxsLmVuZHRpbWUgPSBlbmQ7CisJZ210aW1lX3IoJmVuZCwgJnRtZW5kKTsK
+KwlzdHJmdGltZShlbmR0aW1lLCAxMjcsICIlYSwgJWQgJWIgJVkgJUg6JU06JVMgJXoiLCAmdG1l
+bmQpOworCWVuZHRpbWVbMTI3XSA9ICdcMCc7CisJb2Zvbm9fZGVidWcoIkVuZFRpbWU6ICVzIixl
+bmR0aW1lKTsKKworCXN5bmNfbWVtX2ZpbGUoJnZjYWxsKTsKK30KKworLyoqCisgKiBjYWxsX2hp
+c3RvcnlfY2FsbF9taXNzZWQ6CisgKiBvZm9ubyBjYWxscyB0aGlzIG1ldGhvZCB3aXRoIHRoZSBj
+YWxsIGluZm9ybWF0aW9uCisgKi8KK3N0YXRpYyB2b2lkIGNhbGxfaGlzdG9yeV9jYWxsX21pc3Nl
+ZChzdHJ1Y3Qgb2Zvbm9faGlzdG9yeV9jb250ZXh0ICpjb250ZXh0LAorCQkJCQljb25zdCBzdHJ1
+Y3Qgb2Zvbm9fY2FsbCAqY2FsbCwKKwkJCQkJdGltZV90IHdoZW4pCit7CisJY29uc3QgY2hhciAq
+ZnJvbSA9ICJVbmtub3duIjsKKwlzdHJ1Y3QgdG0gbXRpbWU7CisJY2hhciBzdHRpbWVbMTI4XTsK
+KwlWb2ljZUhpc3RvcnkgdmNhbGw7CisJaW50IGZyb21sZW4gPSAwOworCisJb2Zvbm9fZGVidWco
+IkNhbGwgTWlzc2VkIG9uIG1vZGVtOiAlcCIsIGNvbnRleHQtPm1vZGVtKTsKKworCWlmIChjYWxs
+LT50eXBlICE9IDApCisJCXJldHVybjsKKworCW9mb25vX2RlYnVnKCJWb2ljZSBDYWxsLCBNaXNz
+ZWQiKTsKKwlvZm9ub19kZWJ1ZygiVm9pY2UgQ2FsbCwgJXMiLAorCQljYWxsLT5kaXJlY3Rpb24g
+PyAiSW5jb21pbmciIDogIk91dGdvaW5nIik7CisKKwl2Y2FsbC5jYWxsdHlwZSA9IE1JU1NFRDsK
+KworCWlmIChjYWxsLT5jbGlwX3ZhbGlkaXR5ID09IDApCisJCWZyb20gPSBwaG9uZV9udW1iZXJf
+dG9fc3RyaW5nKCZjYWxsLT5waG9uZV9udW1iZXIpOworCisJZnJvbWxlbiA9IHN0cmxlbihmcm9t
+KTsKKwlzdHJuY3B5KHZjYWxsLmxpbmVpZCwgZnJvbSAsZnJvbWxlbik7CisJdmNhbGwubGluZWlk
+W2Zyb21sZW5dID0gJ1wwJzsKKworCXZjYWxsLnN0YXJ0dGltZSA9IHdoZW47CisKKwlnbXRpbWVf
+cigmd2hlbiwgJm10aW1lKTsKKwlvZm9ub19kZWJ1ZygiRnJvbTogJXMiLCB2Y2FsbC5saW5laWQp
+OworCXN0cmZ0aW1lKHN0dGltZSwgMTI3LCAiJWEsICVkICViICVZICVIOiVNOiVTICV6IiwgJm10
+aW1lKTsKKwlzdHRpbWVbMTI3XSA9ICdcMCc7CisJb2Zvbm9fZGVidWcoIk1pc3NlZCBUaW1lOiAl
+cyIsIHN0dGltZSk7CisgICAgICAgIAorCXZjYWxsLmVuZHRpbWUgPSB3aGVuOworCisJc3luY19t
+ZW1fZmlsZSgmdmNhbGwpOworfQorCisKKy8qIFN0YXJ0IG9mIERCdXMgc3R1ZmYgKi8KKy8qICoq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioKKyAqIEV4cG9zZSBhbiBpbnRlcmZhY2UsIHByb3BlcnRpZXMgYW5kIHNp
+Z25hbHMgZm9yIHF1ZXJ5aW5nIHN0b3JhZ2UgYmFja2VuZAorICogKioqKioqKioqKioqKioqKioq
+KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKi8K
+KyNkZWZpbmUgT0ZPTk9fQ0FMTF9ISVNUT1JZX0lOVEVSRkFDRSBPRk9OT19TRVJWSUNFIi5DYWxs
+SGlzdG9yeSIKKworc3RhdGljIHZvaWQgY2FsbGhpc3RvcnlfZW1pdF92b2ljZV9oaXN0b3J5X2No
+YW5nZWQoaW50IHVzZXJkYXRhKQoreworCWludCAqdmFsaW50ID0gJnVzZXJkYXRhOworCURCdXND
+b25uZWN0aW9uICpjb25uID0gb2Zvbm9fZGJ1c19nZXRfY29ubmVjdGlvbigpOworCWdfZGJ1c19l
+bWl0X3NpZ25hbChjb25uLAorCQlPRk9OT19NQU5BR0VSX1BBVEgsCisJCU9GT05PX0NBTExfSElT
+VE9SWV9JTlRFUkZBQ0UsCisJCSJWb2ljZUhpc3RvcnlDaGFuZ2VkIiwKKwkJREJVU19UWVBFX1VJ
+TlQzMiwKKwkJdmFsaW50LAorCQlEQlVTX1RZUEVfSU5WQUxJRCk7Cit9CisKK3N0YXRpYyBEQnVz
+TWVzc2FnZSAqY2FsbF9oaXN0b3J5X3NldF92b2ljZV9oaXN0b3J5X3JlYWQoREJ1c0Nvbm5lY3Rp
+b24gKmNvbm4sCisJCQkJCQkJREJ1c01lc3NhZ2UgKm1zZywKKwkJCQkJCQl2b2lkICp1c2VyZGF0
+YSkKK3sKKwlEQnVzTWVzc2FnZSAqcmVwbHk7CisJREJ1c01lc3NhZ2VJdGVyIGl0ZXI7CisJZ19y
+ZXR1cm5fdmFsX2lmX2ZhaWwoKHNoYXJlZF9kYXRhIT1OVUxMKSwgTlVMTCk7CisKKwlvZm9ub19k
+ZWJ1ZygiUmVhZCBhY2sgcmVjZWl2ZWQiKTsKKworCXJlcGx5ID0gZGJ1c19tZXNzYWdlX25ld19t
+ZXRob2RfcmV0dXJuKG1zZyk7CisJaWYgKCFyZXBseSkKKwkJcmV0dXJuIE5VTEw7CisKKwlkYnVz
+X21lc3NhZ2VfaXRlcl9pbml0X2FwcGVuZChyZXBseSwgJml0ZXIpOworCXNlbV93YWl0KCYoc2hh
+cmVkX2RhdGEtPm11dGV4KSk7CisJc2hhcmVkX2RhdGEtPmhlYWRlci51bnJlYWQgPSAoc2hhcmVk
+X2RhdGEtPmhlYWRlcikudW5yZWFkIC0KKwkJCQkJc2hhcmVkX2RhdGEtPnRlbXBfdW5yZWFkOwor
+CXNoYXJlZF9kYXRhLT5oZWFkZXIudGFpbCA9IHNoYXJlZF9kYXRhLT50ZW1wX3RhaWw7CisgCisJ
+Ly8gd3JpdGUgdG8gZmlsZQorCW1lbWNweShzaGFyZWRfZGF0YS0+ZGF0YU1hcCwmKHNoYXJlZF9k
+YXRhLT5oZWFkZXIpLEhFQURFUl9TSVpFKTsKKwlzZW1fcG9zdCgmKHNoYXJlZF9kYXRhLT5tdXRl
+eCkpOworCW1zeW5jKHNoYXJlZF9kYXRhLT5kYXRhTWFwLFRPVEFMX1NJWkUsIE1TX0FTWU5DKTsK
+KwlyZXR1cm4gcmVwbHk7Cit9CisKK3N0YXRpYyB2b2lkIHJlYWRfZGF0YShWb2ljZUhpc3Rvcnkg
+KmRhdGEsaW50IHRlbXApCit7CisJdm9pZCAqcmVhZE1hcCA9IE5VTEw7CisJZ19yZXR1cm5faWZf
+ZmFpbChzaGFyZWRfZGF0YSAhPSBOVUxMKTsKKwlnX3JldHVybl9pZl9mYWlsKHNoYXJlZF9kYXRh
+LT5kYXRhTWFwICE9IE5VTEwpOworCisJLy8gbG9jayAKKwlzZW1fd2FpdCgmKHNoYXJlZF9kYXRh
+LT5tdXRleCkpOworCXJlYWRNYXAgPSBzaGFyZWRfZGF0YS0+ZGF0YU1hcCt0ZW1wOworCS8vIHJl
+YWQgYSBjaHVuayBpbnRvICpkYXRhCisJbWVtY3B5KGRhdGEsIHJlYWRNYXAsUkVDT1JEX1NJWkUp
+OworCXNoYXJlZF9kYXRhLT50ZW1wX3VucmVhZCsrOworCXNlbV9wb3N0KCYoc2hhcmVkX2RhdGEt
+Pm11dGV4KSk7Cit9CisKK3N0YXRpYyBEQnVzTWVzc2FnZSAqY2FsbF9oaXN0b3J5X2dldF92b2lj
+ZV9oaXN0b3J5KERCdXNDb25uZWN0aW9uICpjb25uLAorCQkJCQkJREJ1c01lc3NhZ2UgKm1zZywK
+KwkJCQkJCXZvaWQgKnVzZXJkYXRhKQoreworCURCdXNNZXNzYWdlICAgICAqcmVwbHk7CisJREJ1
+c01lc3NhZ2VJdGVyICBpdGVyOworCURCdXNNZXNzYWdlSXRlciAgYXJyYXksc3RydWN0X3M7CisJ
+aW50IGk7CisJY2hhciAqbGluZWlkOworCVZvaWNlSGlzdG9yeSBkYXRhOworCWludCB1bnJlYWQg
+PSAwOworCisJcmVwbHkgPSBkYnVzX21lc3NhZ2VfbmV3X21ldGhvZF9yZXR1cm4obXNnKTsKKwor
+CWlmICghcmVwbHkpCisJCXJldHVybiBOVUxMOworCWdfcmV0dXJuX3ZhbF9pZl9mYWlsKHNoYXJl
+ZF9kYXRhIT1OVUxMLE5VTEwpOworCisJZGJ1c19tZXNzYWdlX2l0ZXJfaW5pdF9hcHBlbmQocmVw
+bHksICZpdGVyKTsKKworCWRidXNfbWVzc2FnZV9pdGVyX29wZW5fY29udGFpbmVyKCZpdGVyLERC
+VVNfVFlQRV9BUlJBWSwKKwkJCQkJREJVU19TVFJVQ1RfQkVHSU5fQ0hBUl9BU19TVFJJTkcKKwkJ
+CQkJREJVU19UWVBFX1VJTlQzMl9BU19TVFJJTkcKKwkJCQkJREJVU19UWVBFX1NUUklOR19BU19T
+VFJJTkcKKwkJCQkJREJVU19UWVBFX1VJTlQxNl9BU19TVFJJTkcKKwkJCQkJREJVU19UWVBFX0lO
+VDMyX0FTX1NUUklORworCQkJCQlEQlVTX1RZUEVfSU5UMzJfQVNfU1RSSU5HCisJCQkJCURCVVNf
+U1RSVUNUX0VORF9DSEFSX0FTX1NUUklORworCQkJCQksJmFycmF5KTsKKworCXNlbV93YWl0KCYo
+c2hhcmVkX2RhdGEtPm11dGV4KSk7CisJc2hhcmVkX2RhdGEtPnRlbXBfdW5yZWFkPTA7CisJc2hh
+cmVkX2RhdGEtPnRlbXBfdGFpbCA9IChzaGFyZWRfZGF0YS0+aGVhZGVyKS50YWlsOworCXVucmVh
+ZCA9IChzaGFyZWRfZGF0YS0+aGVhZGVyKS51bnJlYWQ7CisJc2VtX3Bvc3QoJihzaGFyZWRfZGF0
+YS0+bXV0ZXgpKTsKKworCWZvciAoaT0wOyBpIDwgdW5yZWFkOyBpKyspeworCQlyZWFkX2RhdGEo
+JmRhdGEsIHNoYXJlZF9kYXRhLT50ZW1wX3RhaWwpOworCQlsaW5laWQgPSBkYXRhLmxpbmVpZDsK
+KwkJZGJ1c19tZXNzYWdlX2l0ZXJfb3Blbl9jb250YWluZXIoJmFycmF5LCBEQlVTX1RZUEVfU1RS
+VUNULE5VTEwsCisJCQkJCQkmc3RydWN0X3MpOworCQlkYnVzX21lc3NhZ2VfaXRlcl9hcHBlbmRf
+YmFzaWMoJnN0cnVjdF9zLCBEQlVTX1RZUEVfVUlOVDMyLAorCQkJCQkJJihkYXRhLmlkKSk7CisJ
+CWRidXNfbWVzc2FnZV9pdGVyX2FwcGVuZF9iYXNpYygmc3RydWN0X3MsIERCVVNfVFlQRV9TVFJJ
+TkcsCisJCQkJCQkmKGxpbmVpZCkpOworCQlkYnVzX21lc3NhZ2VfaXRlcl9hcHBlbmRfYmFzaWMo
+JnN0cnVjdF9zLCBEQlVTX1RZUEVfVUlOVDE2LAorCQkJCQkJJihkYXRhLmNhbGx0eXBlKSk7CisJ
+CWRidXNfbWVzc2FnZV9pdGVyX2FwcGVuZF9iYXNpYygmc3RydWN0X3MsIERCVVNfVFlQRV9JTlQz
+MiwKKwkJCQkJCSYoZGF0YS5zdGFydHRpbWUpKTsKKwkJZGJ1c19tZXNzYWdlX2l0ZXJfYXBwZW5k
+X2Jhc2ljKCZzdHJ1Y3RfcywgREJVU19UWVBFX0lOVDMyLAorCQkJCQkJJihkYXRhLmVuZHRpbWUp
+KTsKKwkJZGJ1c19tZXNzYWdlX2l0ZXJfY2xvc2VfY29udGFpbmVyKCZhcnJheSwgJnN0cnVjdF9z
+KTsKKworCQlzaGFyZWRfZGF0YS0+dGVtcF90YWlsID0gc2hhcmVkX2RhdGEtPnRlbXBfdGFpbCAr
+IFJFQ09SRF9TSVpFOworCisJCWlmIChzaGFyZWRfZGF0YS0+dGVtcF90YWlsID09IFRPVEFMX1NJ
+WkUpeworCQkJb2Zvbm9fZGVidWcgKCJFbmQgb2YgUXVldWU6ICVkIixzaGFyZWRfZGF0YS0+dGVt
+cF90YWlsKTsJCS8vIHJlc2V0IGJhY2sgdG8gZnJvbnQKKwkJc2hhcmVkX2RhdGEtPnRlbXBfdGFp
+bCA9IEhFQURFUl9TSVpFOworCQl9CisJfQorCWRidXNfbWVzc2FnZV9pdGVyX2Nsb3NlX2NvbnRh
+aW5lcigmaXRlciwmYXJyYXkpOworCisJcmV0dXJuIHJlcGx5OworfQorCitzdGF0aWMgR0RCdXNN
+ZXRob2RUYWJsZSBjYWxsX2hpc3RvcnlfbWV0aG9kc1tdID0geworCXsgIkdldFZvaWNlSGlzdG9y
+eSIsICIiLCAiYSh1c3FpaSkiLCBjYWxsX2hpc3RvcnlfZ2V0X3ZvaWNlX2hpc3RvcnkgfSwKKwl7
+ICJTZXRWb2ljZUhpc3RvcnlSZWFkIiwgIiIsICIiLCBjYWxsX2hpc3Rvcnlfc2V0X3ZvaWNlX2hp
+c3RvcnlfcmVhZCB9LAorCXsgfQorfTsKKworc3RhdGljIEdEQnVzU2lnbmFsVGFibGUgY2FsbF9o
+aXN0b3J5X3NpZ25hbHNbXSA9IHsKKwl7ICJWb2ljZUhpc3RvcnlDaGFuZ2VkIiwidSIgfSwKKwl7
+fQorfTsKKworLyogRW5kIG9mIERCdXMgc3R1ZmYgKi8KK3N0YXRpYyBzdHJ1Y3Qgb2Zvbm9faGlz
+dG9yeV9kcml2ZXIgY2FsbF9oaXN0b3J5X2RyaXZlciA9IHsKKwkubmFtZSA9ICJjYWxsaGlzdG9y
+eSIsCisJLnByb2JlID0gY2FsbF9oaXN0b3J5X3Byb2JlLAorCS5yZW1vdmUgPSBjYWxsX2hpc3Rv
+cnlfcmVtb3ZlLAorCS5jYWxsX2VuZGVkID0gY2FsbF9oaXN0b3J5X2NhbGxfZW5kZWQsCisJLmNh
+bGxfbWlzc2VkID0gY2FsbF9oaXN0b3J5X2NhbGxfbWlzc2VkLAorfTsKKworc3RhdGljIGludCBj
+YWxsX2hpc3RvcnlfaW5pdCh2b2lkKQoreworCURCdXNDb25uZWN0aW9uICpjb25uID0gb2Zvbm9f
+ZGJ1c19nZXRfY29ubmVjdGlvbigpOworCisJaWYgKCFzaGFyZWRfZGF0YSkKKwkJaWYgKCEoc2hh
+cmVkX2RhdGEgPSBnX3RyeV9uZXcwKFNoYXJlZERhdGEsIDEpKSkKKwkJCXJldHVybiAtRU5PTUVN
+OworCisKKwlpZiAoIWdfZGJ1c19yZWdpc3Rlcl9pbnRlcmZhY2UoY29ubiwKKwkJCQkJT0ZPTk9f
+TUFOQUdFUl9QQVRILAorCQkJCQlPRk9OT19DQUxMX0hJU1RPUllfSU5URVJGQUNFLAorCQkJCQlj
+YWxsX2hpc3RvcnlfbWV0aG9kcywKKwkJCQkJY2FsbF9oaXN0b3J5X3NpZ25hbHMsCisJCQkJCU5V
+TEwsICAgIC8qIFByb3BlcnRpZXMgKi8KKwkJCQkJc2hhcmVkX2RhdGEsICAgIC8qIFVzZXJkYXRh
+ICAgKi8KKwkJCQkJTlVMTCkpICAgIC8qIERlc3Ryb3kgZnVuYyAqLworICAgICAgICByZXR1cm4g
+LUVJTzsKKworICAgIAlpZiAoIWluaXRfZmlsZSgpKQorICAgICAgIAkJcmV0dXJuIC1FTk9FTlQ7
+CisKKwlyZXR1cm4gb2Zvbm9faGlzdG9yeV9kcml2ZXJfcmVnaXN0ZXIoJmNhbGxfaGlzdG9yeV9k
+cml2ZXIpOworfQorCitzdGF0aWMgdm9pZCBjYWxsX2hpc3RvcnlfZXhpdCh2b2lkKQoreworCWNs
+ZWFuX3VwKCk7CisJb2Zvbm9faGlzdG9yeV9kcml2ZXJfdW5yZWdpc3RlcigmY2FsbF9oaXN0b3J5
+X2RyaXZlcik7Cit9CisKK09GT05PX1BMVUdJTl9ERUZJTkUoY2FsbGhpc3RvcnksICJDYWxsIEhp
+c3RvcnkgUGx1Z2luIiwKKwkJCU9GT05PX1ZFUlNJT04sIE9GT05PX1BMVUdJTl9QUklPUklUWV9E
+RUZBVUxULAorCQkJY2FsbF9oaXN0b3J5X2luaXQsIGNhbGxfaGlzdG9yeV9leGl0KQotLSAKMS42
+LjYuMQoK
+
+--===============9143464698279044150==--
 
