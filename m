@@ -1,63 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============8439900511961441028=="
+Content-Type: multipart/mixed; boundary="===============8210253519280315452=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: New TODO process
-Date: Wed, 19 May 2010 23:17:14 +0200
-Message-ID: <1274303834.27220.0.camel@localhost.localdomain>
-In-Reply-To: <87mxvw6jqg.fsf@potku.valot.fi>
+Subject: RE: [RFC] AGPS support
+Date: Wed, 19 May 2010 23:18:33 +0200
+Message-ID: <1274303913.27220.1.camel@localhost.localdomain>
+In-Reply-To: <129600E5E5FB004392DDC3FB599660D7D455F607@irsmsx504.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8439900511961441028==
+--===============8210253519280315452==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+Hi Fred,
 
-> > oFono project has been getting frequent requests for project status and =
-
-> > roadmap details recently.  In an effort to add some visibility to these=
- aspects =
-
-> > we decided to implement a new process.
-> >
-> > The idea is quite simple: identify the gaps in oFono features and try t=
-o =
-
-> > estimate the relative complexity and priority of implementing these fea=
-tures.  =
-
-> > The list can be used to quickly understand the relative status of oFono=
- (what =
-
-> > works, what doesn't work.)  In addition, people interested in contribut=
-ing to =
-
-> > the oFono project can use this list for an idea which tasks/features th=
-ey can =
-
-> > contribute.
+> I would suggest to add the Radio Access Technology (RAT) indication in th=
+e RequestFineTimeInjection .
 > =
 
-> I'm sure all managers are excited about this :)
-> =
+> It is possible that after the reception of the Assistance Data message fr=
+om the network but before the request for time injection from the GPS "mana=
+ger" that the radio conditions have forced the modem to change of RAT. =
 
-> I also think it's a good idea. Just keeping the document up-to-date is
-> the challenging part.
-> =
+> So if the RAT is indicated, OFONO implementation will not have to care ab=
+out an eventual change of RAT for the time injection. This will be only han=
+dled by the modem.
 
-> What about hardware/modem support, any plans to document that part?
-> That's my main concern right now. =
-
-> =
-
-> Is there a list containing various types of modems and models available
-> somewhere? Naturally it is bound to be incomplete, but at least that
-> would be a good start.
-
-just send patches against this file. Potentially I can contain whatever
-we want.
+gently reminder to not use top posting on a public open source mailing
+list. We expect proper inline quoting.
 
 Regards
 
@@ -65,5 +36,5 @@ Marcel
 
 
 
---===============8439900511961441028==--
+--===============8210253519280315452==--
 
