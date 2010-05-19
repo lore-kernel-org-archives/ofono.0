@@ -1,356 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============1829257437726763105=="
+Content-Type: multipart/mixed; boundary="===============7464490510261153203=="
 MIME-Version: 1.0
-From: Joly, Frederic <frederic.joly@intel.com>
-Subject: RE: [RFC] AGPS support
-Date: Wed, 19 May 2010 17:32:01 +0100
-Message-ID: <129600E5E5FB004392DDC3FB599660D7D455F607@irsmsx504.ger.corp.intel.com>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C9C545E72A@orsmsx508.amr.corp.intel.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: atmodem: gprs context deactivate crashes ofonod
+Date: Wed, 19 May 2010 19:40:34 +0300
+Message-ID: <87eih77sl9.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1829257437726763105==
+--===============7464490510261153203==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Thanks, Waldo.
+Hello again,
 
-I would suggest to add the Radio Access Technology (RAT) indication in the =
-RequestFineTimeInjection .
+I have been testing ofono with my Huawei E1552 usb stick, which is using
+atmodem and PPP. I noticed that whenever I call test/deactivate-context
+ofono either crashes or busyloops here in at_gprs_deactivate_primary():
 
-It is possible that after the reception of the Assistance Data message from=
- the network but before the request for time injection from the GPS "manage=
-r" that the radio conditions have forced the modem to change of RAT. =
+	if (g_at_chat_send(gcd->chat, buf, none_prefix,
+				at_cgact_down_cb, cbd, g_free) > 0)
+		return;
 
-So if the RAT is indicated, OFONO implementation will not have to care abou=
-t an eventual change of RAT for the time injection. This will be only handl=
-ed by the modem.
+Further investigation revealed that gcd->chat is already unreferenced in
+setup_ppp():
 
-BR,
+	g_at_chat_unref(gcd->chat);
 
-Fred
+So there's a conflict here. How to handle this properly? Calling
+g_at_ppp_shutdown() is most likely not enough, because nobody is not
+creating gcd->chat again which is needed during subsequent activate
+call.
 
------Original Message-----
-From: Bastian, Waldo =
+Comments?
 
-Sent: Saturday, May 15, 2010 1:56 AM
-To: ofono(a)ofono.org
-Cc: Joly, Frederic
-Subject: [RFC] AGPS support
+-- =
 
-Please find attached a proposal for both a DBUS and Modem API for AGPS supp=
-ort. This proposal introduces two AGPS features:
+Kalle Valo
 
-1) Fine time injection - the cellular modem has access to accurate timing i=
-nformation that can help a GPS device to get a quicker fix. If the modem an=
-d GPS device are separate components a handshake mechanism is required to f=
-orward the timing information from the modem to the GPS. A typical approach=
- is to have a hardware signal between the modem and GPS device that can car=
-ry a timing pulse. In addition signalling through software is required to r=
-equest such timing pulse and to associate the correct Universal Time with t=
-he generated pulse.
-
-2) Control Plane Assistance Data and Position Requests - The Mobile Network=
- is able to provide assistance data for GPS devices through the control pla=
-ne. This assistance data can help a GPS device to get a quicker fix. In add=
-ition the control plane can be used by the Mobile Network to request a GPS =
-enabled  Mobile Device for its location. This latter functionality is neede=
-d to meet E911 requirements [1]. A typical sequence looks as follow:
-
-	Mobile Network		Mobile Device
-
-		--- Assistance Data --->
-		=
-
-		--- Position Request -->
-
-		<-- Position Response --
-
-
-[1] http://en.wikipedia.org/wiki/Enhanced_911
-
-Cheers,
-Waldo
-
----
- doc/agps-api.txt |   98 +++++++++++++++++++++++++++++++++++++++
- include/agps.h   |  135 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 233 insertions(+), 0 deletions(-)  create mode 100644 doc=
-/agps-api.txt  create mode 100644 include/agps.h
-
-diff --git a/doc/agps-api.txt b/doc/agps-api.txt new file mode 100644 index=
- 0000000..7245eac
---- /dev/null
-+++ b/doc/agps-api.txt
-@@ -0,0 +1,98 @@
-+AgpsManager hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Service		org.ofono
-+Interface	org.ofono.AgpsManager
-+Object path	[variable prefix]/{modem0,modem1,...}
-+
-+Methods		dict GetProperties()
-+
-+			Returns properties for the modem object. See
-+			the properties section for available properties.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+
-+		void SetProperty(string name, variant value)
-+
-+			Changes the value of the specified property. Only
-+			properties that are listed as read-write are
-+			changeable. On success a PropertyChanged signal
-+			will be emitted.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.DoesNotExist
-+
-+		void SendLCSFrame(string framedata)
-+
-+			Send a LCS position protocol frame to the Mobile
-+			Network. The LCS frame typically represents a
-+			Position Response.
-+			The raw frame data is formatted as the concatenated
-+			sequence of the two digit hexadecimal representation
-+			of each of its octets. Example: "00FC2345"
-+
-+		void RequestFineTimeInjection(uint16 pulselength)
-+
-+			Request modem to generate a fine time injection
-+			pulse. pulselength is the duration of the pulse
-+			expressed in radio frames.
-+
-+
-+Signals		PropertyChanged(string name, variant value)
-+
-+			This signal indicates a changed value of the given
-+			property.
-+
-+		IncomingLCSFrame(string framedata)
-+
-+			LCS positioning protocol frame received from the
-+			Mobile Network. The LCS frame typically represents
-+			Assistance Data, a Position Request or a combination
-+			of both.
-+			The raw frame data is formatted as the concatenated
-+			sequence of the two digit hexadecimal representation
-+			of each of its octets. Example: "00FC2345"
-+
-+		FineTimeInjectionNotification(dict radioframenumber)
-+
-+			Notification about fine time injection pulse
-+			generated by modem. The radioframenumber dict
-+			is defined as follow:
-+
-+			string AccessTechnology
-+				"gsm" or "umts"
-+			=
-
-+			uint32 TdmaFrameNumber (gsm only)
-+				range 0 - 2715647 (2048*26*51)
-+
-+			uint16 TdmaTimeslot (gsm only)
-+				range 0 - 7
-+
-+			uint16 TimeslotBit (gsm only)
-+				range 0 - 156
-+
-+			uint16 TimingAdvance (gsm only)
-+				range 0 - 63
-+
-+			uint16 BcchArfcn (gsm only)
-+				range 0 - 1023
-+
-+			uint16 Bsic (gsm only)
-+				range 0 - 64
-+
-+			uint16 Sfn (umts only)
-+				range 0 - 4095
-+
-+			string RrcState (umts only)
-+				"cell_dch", "cell_fach", "cell_pch" or
-+				"ura_pch"
-+			=
-
-+			uint16 RoundTripTime (umts only)
-+				range 0 - 32766
-+
-+
-+Properties	boolean LcsEnabled [readwrite]
-+
-+			If LcsEnabled is False, then no LCS positioning
-+			protocol frames are received.
-+
-diff --git a/include/agps.h b/include/agps.h new file mode 100644 index 000=
-0000..07a0fb2
---- /dev/null
-+++ b/include/agps.h
-@@ -0,0 +1,135 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or =
-
-+modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  =
-
-+02110-1301  USA
-+ *
-+ */
-+
-+#ifndef __OFONO_AGPS_H
-+#define __OFONO_AGPS_H
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+#include <ofono/types.h>
-+
-+struct ofono_agps;
-+
-+enum ofono_rrc_state {
-+	RRC_CELL_PCH =3D 0,
-+	RRC_CELL_FACH =3D 1,
-+	RRC_CELL_DCH =3D 2,
-+	RRC_URA_PCH =3D 3,
-+};
-+
-+struct ofono_lcs_frame {
-+	enum ofono_lcs_frame_type lcs_frame_type;
-+	int frame_length;	/* size of raw_frame in bytes */
-+	unsigned char* raw_frame;
-+};
-+
-+struct ofono_lcs_gsm_fn {
-+	int TDMA_frame_number;	/* range 0 - 2715647 (2048*26*51) */
-+	int TDMA_timeslot;	/* range 0 - 7 */
-+	int timeslot_bit;	/* range 0 - 156 */
-+	int timing_advance;	/* range 0 - 63 */
-+	int bcch_arfcn;		/* range 0 - 1023 */
-+	int bsic;		/* range 0 - 64 */
-+};
-+
-+struct ofono_lcs_utran_fn {
-+	int sfn;		/* range 0 - 4095 */
-+	int rrc_state;		/* enum ofono_rrc_state */
-+	int round_trip_time;	/* range 0 - 32766 */
-+};
-+
-+struct ofono_lcs_radio_fn {
-+	int radio_access_technology; /* enum access_technology */
-+	union {
-+		ofono_lcs_gsm_fn	gsm_frame_number;
-+		ofono_lcs_utran_fn	utran_frame_number;
-+	}
-+};	=
-
-+
-+typedef void (*ofono_agps_send_lcs_frame_cb_t)(const struct ofono_error *e=
-rror,
-+				void *data);
-+
-+typedef void (*ofono_agps_inject_time_cb_t)(const struct ofono_error *erro=
-r,
-+				struct ofono_lcs_radio_fn *radio_frame_number,
-+				void *data);
-+
-+/* AGPS related functions, including LCS frame forwarding and fine time =
-
-+injection  */ struct ofono_agps_driver {
-+	const char *name;
-+	int (*probe)(struct ofono_agps *agps, unsigned int vendor,
-+			void *data);
-+	void (*remove)(struct ofono_agps *agps);
-+
-+	void (*receive_lcs_frames)(struct ofono_agps *agps, int enabled);
-+
-+	/* Assistance Data and Position Requests from the Mobile Network are
-+	 * signalled via the ofono_agps_lcs_frame_notify function and the
-+	 * oFono core to an external GPS manager. This GPS manager can reply
-+	 * to Position Requests with one or more Position Responses which
-+	 * are then send back to the modem via the send_lcs_frame function.
-+	 */
-+	void (*send_lcs_frame)(struct ofono_agps *agps,
-+			int frame_length, /* size of frame_data in bytes */
-+			unsigned char* frame_data /* raw frame data */,
-+			ofono_agps_send_lcs_frame_cb_t cb, void *data);
-+			=
-
-+	/* The GPS manager can ask the modem to generate a HW pulse (time
-+	 * stamp) with a defined length and the modem replies indicates when
-+	 * it generates the pulse. But as the modem has no precise idae of
-+	 * Universal Time, it indicates at which radio frame number it
-+	 * generated the pulse. The GPS manager which knows the link between
-+	 * Universal Time and the Radio Frame number knows very precisely at
-+	 * what time the pulse was generated and its duration.
-+	 *
-+	 * Timing accuracy is typically a few microseconds.
-+	 */ =
-
-+	void (*inject_time)(struct ofono_agps *agps,
-+			int radio_access_technology, /* enum access_technology */
-+			int pulse_length, /* duration of pulse in radio slots */
-+			ofono_agps_inject_time_cb_t cb, void *data); };
-+
-+void ofono_agps_lcs_frame_notify(struct ofono_agps *agps,
-+			int frame_length, /* size of frame_data in bytes */
-+			unsigned char* frame_data /* raw frame data */);
-+
-+int ofono_agps_driver_register(const struct ofono_agps_driver *d); void =
-
-+ofono_agps_driver_unregister(const struct ofono_agps_driver *d);
-+
-+struct ofono_agps *ofono_agps_create(struct ofono_modem *modem,
-+						unsigned int vendor,
-+						const char *driver,
-+						void *data);
-+
-+void ofono_agps_register(struct ofono_agps *agps); void =
-
-+ofono_agps_remove(struct ofono_agps *agps);
-+
-+void ofono_agps_set_data(struct ofono_agps *agps, void *data); void =
-
-+*ofono_agps_get_data(struct ofono_agps *agps);
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif /* __OFONO_AGPS_H */
---
-1.5.4.3
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============1829257437726763105==--
+--===============7464490510261153203==--
 
