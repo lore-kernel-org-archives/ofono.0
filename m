@@ -1,63 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============8478177562357796567=="
+Content-Type: multipart/mixed; boundary="===============5870002148943199155=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: New TODO process
-Date: Wed, 19 May 2010 17:37:11 +0300
-Message-ID: <87mxvw6jqg.fsf@potku.valot.fi>
-In-Reply-To: <201005190729.57230.denkenz@gmail.com>
+Subject: Re: commit "Fix Use hashtable to record udev path" breaks huawei
+Date: Wed, 19 May 2010 18:23:36 +0300
+Message-ID: <87iq6j7w5j.fsf@potku.valot.fi>
+In-Reply-To: <87tyq46nb7.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8478177562357796567==
+--===============5870002148943199155==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Denis Kenzior <denkenz@gmail.com> writes:
+Kalle Valo <kalle.valo@canonical.com> writes:
 
-> Hi Everyone,
-
-Hi Denis,
-
-> oFono project has been getting frequent requests for project status and =
-
-> roadmap details recently.  In an effort to add some visibility to these a=
-spects =
-
-> we decided to implement a new process.
+> while working on third version of my huawei gprs patches I noticed that
+> this commit breaks huawei:
 >
-> The idea is quite simple: identify the gaps in oFono features and try to =
+> commit af976f7e524746b1b55645967e11ab8250f593a8
+> Author: Zhenhua Zhang <zhenhua.zhang@intel.com>
+> Date:   Tue May 11 09:04:28 2010 +0800
+>
+>     Fix Use hashtable to record udev path
+>     =
 
-> estimate the relative complexity and priority of implementing these featu=
-res.  =
+>     Sometimes, Udev device 'remove' event could not report correct parent
+>     node of current udev_device. Current code replies on the devpath
+>     attached on the parent node to find modem and then remove it.
+>     =
 
-> The list can be used to quickly understand the relative status of oFono (=
-what =
+>     This fix is to change the way to store the devpath info into a
+>     hashtable. So that we search hashtable to get devpath and remove the
+>     modem.
+>
+> I reverted the commit and huawei works again for me. More details later
+> today.
 
-> works, what doesn't work.)  In addition, people interested in contributin=
-g to =
+Sorry, I was too hasty. The patch is fine, I was just testing
+inproperly. After a bit more testing I found out that problem always
+happens when I plugin the usb modem:
 
-> the oFono project can use this list for an idea which tasks/features they=
- can =
+May 19 17:20:09 tukki connmand[30925]: plugins/ofono.c:modem_changed() path=
+ /huawei1
+May 19 17:20:10 tukki ofonod[672]: < ATE0\r\r\nOK\r\n
+May 19 17:20:10 tukki ofonod[672]: > AT+CFUN=3D1\r
+May 19 17:20:10 tukki ofonod[672]: < \r\nOK\r\n
+May 19 17:20:10 tukki ofonod[672]: plugins/huawei.c:cfun_enable() =
 
-> contribute.
+May 19 17:20:10 tukki ofonod[672]: > AT+CRC=3D1\r
+May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+May 19 17:20:10 tukki ofonod[672]: > AT+CLIP=3D1\r
+May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+May 19 17:20:10 tukki ofonod[672]: > AT+COLP=3D1\r
+May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+May 19 17:20:10 tukki ofonod[672]: > AT+CCWA=3D1\r
+May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+May 19 17:20:10 tukki ofonod[672]: drivers/atmodem/voicecall.c:at_voicecall=
+_initialized() voicecall_init: registering to notifications
+May 19 17:20:10 tukki ofonod[672]: src/sim.c:ofono_sim_add_state_watch() 0x=
+132bcd0
+May 19 17:20:10 tukki ofonod[672]: * < \r\n^STIN:0,0,0\r\n
+May 19 17:20:10 tukki ofonod[672]: > AT+CGMI\r
+May 19 17:20:10 tukki connmand[30925]: plugins/ofono.c:modem_changed() path=
+ /huawei1
+May 19 17:20:10 tukki ofonod[672]: < \r\nhuawei\r\n\r\nOK\r\n
+May 19 17:20:10 tukki ofonod[672]: > AT+CRSM=3D176,28590,0,0,1\r
+May 19 17:20:10 tukki connmand[30925]: plugins/ofono.c:modem_changed() path=
+ /huawei1
+May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+May 19 17:20:10 tukki ofonod[672]: > AT+CLCC\r
+May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+May 19 17:20:10 tukki ofonod[672]: > AT+CRSM=3D192,28599\r
+May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+May 19 17:20:10 tukki ofonod[672]: src/voicecall.c:ecc_g2_read_cb() 0
+May 19 17:20:10 tukki ofonod[672]: > AT+CGMM\r
+May 19 17:20:10 tukki ofonod[672]: < \r\nE1552\r\n\r\nOK\r\n
 
-I'm sure all managers are excited about this :)
-
-I also think it's a good idea. Just keeping the document up-to-date is
-the challenging part.
-
-What about hardware/modem support, any plans to document that part?
-That's my main concern right now. =
-
-
-Is there a list containing various types of modems and models available
-somewhere? Naturally it is bound to be incomplete, but at least that
-would be a good start.
+But if I start ofono while the usb modem is plugged in it works fine.
+Also modem disable and then enable workarounds it. Oh well.
 
 -- =
 
 Kalle Valo
 
---===============8478177562357796567==--
+--===============5870002148943199155==--
 
