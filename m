@@ -1,42 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============7464490510261153203=="
+Content-Type: multipart/mixed; boundary="===============0518330742832721844=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: atmodem: gprs context deactivate crashes ofonod
-Date: Wed, 19 May 2010 19:40:34 +0300
-Message-ID: <87eih77sl9.fsf@potku.valot.fi>
+From: =?unknown-8bit?q?Jo=C3=A3o?= Paulo Rechi Vita <jprvita@gmail.com>
+Subject: Re: New TODO process
+Date: Wed, 19 May 2010 16:13:17 -0300
+Message-ID: <AANLkTinA_NsfhWMKgYhlVW_QB0A-AUvken7C4K2ExuuM@mail.gmail.com>
+In-Reply-To: <201005190729.57230.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7464490510261153203==
+--===============0518330742832721844==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello again,
+On Wed, May 19, 2010 at 09:29, Denis Kenzior <denkenz@gmail.com> wrote:
+> Hi Everyone,
+>
+> oFono project has been getting frequent requests for project status and
+> roadmap details recently. =C2=A0In an effort to add some visibility to th=
+ese aspects
+> we decided to implement a new process.
+>
+> The idea is quite simple: identify the gaps in oFono features and try to
+> estimate the relative complexity and priority of implementing these featu=
+res.
+> The list can be used to quickly understand the relative status of oFono (=
+what
+> works, what doesn't work.) =C2=A0In addition, people interested in contri=
+buting to
+> the oFono project can use this list for an idea which tasks/features they=
+ can
+> contribute.
+>
+> We have started this in the TODO file in ofono git repository. =C2=A0It i=
+s by no
+> means complete; we expect that this list will be refined and expanded over
+> time.
+>
+> If you identify any oFono feature gaps, please submit a patch to this mai=
+ling
+> list describing the feature. =C2=A0If you have completed a particular fea=
+ture,
+> please submit a patch to remove the task from the TODO list and update
+> doc/overview.txt to mention that this feature is now available.
+>
+> Let us know what you think!
+>
 
-I have been testing ofono with my Huawei E1552 usb stick, which is using
-atmodem and PPP. I noticed that whenever I call test/deactivate-context
-ofono either crashes or busyloops here in at_gprs_deactivate_primary():
+This is a good solution imo and may also attract new contributors!
 
-	if (g_at_chat_send(gcd->chat, buf, none_prefix,
-				at_cgact_down_cb, cbd, g_free) > 0)
-		return;
-
-Further investigation revealed that gcd->chat is already unreferenced in
-setup_ppp():
-
-	g_at_chat_unref(gcd->chat);
-
-So there's a conflict here. How to handle this properly? Calling
-g_at_ppp_shutdown() is most likely not enough, because nobody is not
-creating gcd->chat again which is needed during subsequent activate
-call.
-
-Comments?
 
 -- =
 
-Kalle Valo
+Jo=C3=A3o Paulo Rechi Vita
+http://jprvita.wordpress.com/
 
---===============7464490510261153203==--
+--===============0518330742832721844==--
 
