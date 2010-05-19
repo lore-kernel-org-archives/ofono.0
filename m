@@ -1,151 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============2251186259931829919=="
+Content-Type: multipart/mixed; boundary="===============8478177562357796567=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: [PATCH v3 2/2] huawei: add gprs context
-Date: Wed, 19 May 2010 17:06:59 +0300
-Message-ID: <20100519140659.3163.1433.stgit@potku.valot.fi>
-In-Reply-To: <20100519140208.3163.29523.stgit@potku.valot.fi>
+Subject: Re: New TODO process
+Date: Wed, 19 May 2010 17:37:11 +0300
+Message-ID: <87mxvw6jqg.fsf@potku.valot.fi>
+In-Reply-To: <201005190729.57230.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2251186259931829919==
+--===============8478177562357796567==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Tested with Huawei E1552 HSDPA USB stick using a finnish Saunalahti prepaid
-SIM.
----
+Denis Kenzior <denkenz@gmail.com> writes:
 
- drivers/atmodem/network-registration.c |    4 ++
- plugins/huawei.c                       |   73 ++++++++++++++++++++++++++++=
-++++
- 2 files changed, 76 insertions(+), 1 deletions(-)
+> Hi Everyone,
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index f7aafbe..f528339 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -916,6 +916,10 @@ static void at_creg_set_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- 				cind_support_cb, netreg, NULL);
- =
+Hi Denis,
 
- 		break;
-+	case OFONO_VENDOR_HUAWEI:
-+		/* huawei doesn't support CIND */
-+		ofono_netreg_register(netreg);
-+		break;
- 	default:
- 		g_at_chat_send(nd->chat, "AT+CIND=3D?", cind_prefix,
- 				cind_support_cb, netreg, NULL);
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 83a46e3..0d3373f 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -41,7 +41,10 @@
- #include <ofono/gprs.h>
- #include <ofono/voicecall.h>
- #include <ofono/log.h>
-+#include <ofono/gprs.h>
-+#include <ofono/gprs-context.h>
- =
+> oFono project has been getting frequent requests for project status and =
 
-+#include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
- =
+> roadmap details recently.  In an effort to add some visibility to these a=
+spects =
 
- struct huawei_data {
-@@ -211,14 +214,82 @@ static void huawei_pre_sim(struct ofono_modem *modem)
- 		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
+> we decided to implement a new process.
+>
+> The idea is quite simple: identify the gaps in oFono features and try to =
 
-+static void huawei_cgreg_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	gboolean ret;
-+	int status;
-+
-+	DBG("");
-+
-+	ret =3D at_util_parse_reg_unsolicited(result, "+CGREG:", &status,
-+					    NULL, NULL, NULL,
-+					    OFONO_VENDOR_HUAWEI);
-+
-+	if (ret =3D=3D FALSE)
-+		return;
-+
-+	ofono_gprs_status_notify(gprs, status);
-+}
-+
-+static inline void report_signal_strength(struct ofono_netreg *netreg,
-+					  int strength)
-+{
-+	DBG("%d", strength);
-+
-+	if (strength =3D=3D 99)
-+		strength =3D -1;
-+	else
-+		strength =3D (strength * 100) / 31;
-+
-+	ofono_netreg_strength_notify(netreg, strength);
-+}
-+
-+static void huawei_rssi_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_netreg *netreg =3D user_data;
-+	GAtResultIter iter;
-+	int strength;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "^RSSI:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &strength))
-+		return;
-+
-+	report_signal_strength(netreg, strength);
-+}
-+
- static void huawei_post_sim(struct ofono_modem *modem)
- {
- 	struct huawei_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_gprs_context *gc;
-+	struct ofono_netreg *netreg;
-+	struct ofono_gprs *gprs;
- =
+> estimate the relative complexity and priority of implementing these featu=
+res.  =
 
- 	DBG("%p", modem);
- =
+> The list can be used to quickly understand the relative status of oFono (=
+what =
 
--	ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem", data->chat);
-+	netreg =3D ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
-+				     data->chat);
- 	ofono_sms_create(modem, OFONO_VENDOR_QUALCOMM_MSM, "atmodem", data->chat);
-+
-+	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
-+				 data->chat);
-+	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
-+
-+	if (gprs && gc) {
-+		ofono_gprs_add_context(gprs, gc);
-+
-+		/* huawei has a separate channel for CGREG notifications */
-+		g_at_chat_register(data->event, "+CGREG:",
-+				   huawei_cgreg_notify, FALSE, gprs, NULL);
-+
-+		/* huawei uses non-standard "^RSSI:18" strings */
-+		g_at_chat_register(data->event, "^RSSI:",
-+				   huawei_rssi_notify, FALSE, netreg, NULL);
-+	}
- }
- =
+> works, what doesn't work.)  In addition, people interested in contributin=
+g to =
 
- static struct ofono_modem_driver huawei_driver =3D {
+> the oFono project can use this list for an idea which tasks/features they=
+ can =
+
+> contribute.
+
+I'm sure all managers are excited about this :)
+
+I also think it's a good idea. Just keeping the document up-to-date is
+the challenging part.
+
+What about hardware/modem support, any plans to document that part?
+That's my main concern right now. =
 
 
---===============2251186259931829919==--
+Is there a list containing various types of modems and models available
+somewhere? Naturally it is bound to be incomplete, but at least that
+would be a good start.
+
+-- =
+
+Kalle Valo
+
+--===============8478177562357796567==--
 
