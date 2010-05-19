@@ -1,928 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============1071555831375681294=="
+Content-Type: multipart/mixed; boundary="===============2053784195547691410=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 4/8] test-stk: Add test for run at command parser
-Date: Wed, 19 May 2010 18:24:42 +0800
-Message-ID: <1274264686-9706-4-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 5/8] stk: Add parser for send dtmf commands
+Date: Wed, 19 May 2010 18:24:43 +0800
+Message-ID: <1274264686-9706-5-git-send-email-yang.gu@intel.com>
 In-Reply-To: <1274264686-9706-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1071555831375681294==
+--===============2053784195547691410==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-stkutil.c |  834 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 834 insertions(+), 0 deletions(-)
+ src/stkutil.c |   42 ++++++++++++++++++++++++++++++++++++++++++
+ src/stkutil.h |    9 +++++++++
+ 2 files changed, 51 insertions(+), 0 deletions(-)
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index 7b75e1a..1195d6d 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -286,6 +286,12 @@ static inline void check_timer_value(const struct stk_=
-timer_value *command,
- 	g_assert(command->second =3D=3D test->second);
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 9b08e8a..c0242cd 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -2786,6 +2786,45 @@ static gboolean parse_run_at_command(struct stk_comm=
+and *command,
+ 	return TRUE;
  }
  =
 
-+/* Defined in TS 102.223 Section 8.40 */
-+static inline void check_at_command(const char *command, const char *test)
++static void destroy_send_dtmf(struct stk_command *command)
 +{
-+	check_common_text(command, test);
++	g_free(command->send_dtmf.alpha_id);
++	g_free(command->send_dtmf.dtmf);
 +}
 +
- /* Defined in TS 102.223 Section 8.43 */
- static inline void check_imm_resp(const unsigned char command,
- 					const unsigned char test)
-@@ -10717,6 +10723,759 @@ static void test_setup_idle_mode_text(gconstpoint=
-er data)
- 	stk_command_free(command);
- }
++static gboolean parse_send_dtmf(struct stk_command *command,
++					struct comprehension_tlv_iter *iter)
++{
++	struct stk_command_send_dtmf *obj =3D &command->send_dtmf;
++	gboolean ret;
++
++	if (command->src !=3D STK_DEVICE_IDENTITY_TYPE_UICC)
++		return FALSE;
++
++	if (command->dst !=3D STK_DEVICE_IDENTITY_TYPE_NETWORK)
++		return FALSE;
++
++	ret =3D parse_dataobj(iter, STK_DATA_OBJECT_TYPE_ALPHA_ID, 0,
++				&obj->alpha_id,
++				STK_DATA_OBJECT_TYPE_DTMF_STRING,
++				DATAOBJ_FLAG_MANDATORY | DATAOBJ_FLAG_MINIMUM,
++				&obj->dtmf,
++				STK_DATA_OBJECT_TYPE_ICON_ID, 0,
++				&obj->icon_id,
++				STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE, 0,
++				&obj->text_attr,
++				STK_DATA_OBJECT_TYPE_FRAME_ID, 0,
++				&obj->frame_id,
++				STK_DATA_OBJECT_TYPE_INVALID);
++
++	if (ret =3D=3D FALSE)
++		return FALSE;
++
++	command->destructor =3D destroy_send_dtmf;
++
++	return TRUE;
++}
++
+ struct stk_command *stk_command_new_from_pdu(const unsigned char *pdu,
+ 						unsigned int len)
+ {
+@@ -2907,6 +2946,9 @@ struct stk_command *stk_command_new_from_pdu(const un=
+signed char *pdu,
+ 	case STK_COMMAND_TYPE_RUN_AT_COMMAND:
+ 		ok =3D parse_run_at_command(command, &iter);
+ 		break;
++	case STK_COMMAND_TYPE_SEND_DTMF:
++		ok =3D parse_send_dtmf(command, &iter);
++		break;
+ 	default:
+ 		ok =3D FALSE;
+ 		break;
+diff --git a/src/stkutil.h b/src/stkutil.h
+index cd7a1f5..dcae839 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -980,6 +980,14 @@ struct stk_command_run_at_command {
+ 	struct stk_frame_id frame_id;
+ };
  =
 
-+struct run_at_command_test {
-+	const unsigned char *pdu;
-+	unsigned int pdu_len;
-+	unsigned char qualifier;
++struct stk_command_send_dtmf {
 +	char *alpha_id;
-+	char *at_command;
++	char *dtmf;
 +	struct stk_icon_id icon_id;
 +	struct stk_text_attribute text_attr;
 +	struct stk_frame_id frame_id;
 +};
 +
-+static unsigned char run_at_command_111[] =3D { 0xD0, 0x12, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0xA8, 0x07, 0x41, 0x54,
-+						0x2B, 0x43, 0x47, 0x4D, 0x49 };
-+
-+static unsigned char run_at_command_121[] =3D { 0xD0, 0x14, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x00, 0xA8, 0x07,
-+						0x41, 0x54, 0x2B, 0x43, 0x47,
-+						0x4D, 0x49 };
-+
-+static unsigned char run_at_command_131[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x0E, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0xA8, 0x07, 0x41,
-+						0x54, 0x2B, 0x43, 0x47, 0x4D,
-+						0x49 };
-+
-+static unsigned char run_at_command_211[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x0A, 0x42, 0x61,
-+						0x73, 0x69, 0x63, 0x20, 0x49,
-+						0x63, 0x6F, 0x6E, 0xA8, 0x07,
-+						0x41, 0x54, 0x2B, 0x43, 0x47,
-+						0x4D, 0x49, 0x9E, 0x02, 0x00,
-+						0x01 };
-+
-+/* The 12th byte should be 0x85, instead of 0xA8 */
-+static unsigned char run_at_command_221[] =3D { 0xD0, 0x23, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x0B, 0x43, 0x6F,
-+						0x6C, 0x6F, 0x75, 0x72, 0x20,
-+						0x49, 0x63, 0x6F, 0x6E, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0x9E, 0x02,
-+						0x00, 0x02 };
-+
-+static unsigned char run_at_command_231[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x0A, 0x42, 0x61,
-+						0x73, 0x69, 0x63, 0x20, 0x49,
-+						0x63, 0x6F, 0x6E, 0xA8, 0x07,
-+						0x41, 0x54, 0x2B, 0x43, 0x47,
-+						0x4D, 0x49, 0x9E, 0x02, 0x01,
-+						0x01 };
-+
-+static unsigned char run_at_command_241[] =3D { 0xD0, 0x23, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x0B, 0x43, 0x6F,
-+						0x6C, 0x6F, 0x75, 0x72, 0x20,
-+						0x49, 0x63, 0x6F, 0x6E, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0x9E, 0x02,
-+						0x01, 0x02 };
-+
-+static unsigned char run_at_command_251[] =3D { 0xD0, 0x16, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0xA8, 0x07, 0x41, 0x54,
-+						0x2B, 0x43, 0x47, 0x4D, 0x49,
-+						0x9E, 0x02, 0x01, 0x01 };
-+
-+static unsigned char run_at_command_311[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x31, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x00, 0xB4 };
-+
-+static unsigned char run_at_command_312[] =3D { 0xD0, 0x24, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x32, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49 };
-+
-+static unsigned char run_at_command_321[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x31, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x01, 0xB4 };
-+
-+static unsigned char run_at_command_322[] =3D { 0xD0, 0x24, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x32, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49 };
-+
-+static unsigned char run_at_command_331[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x31, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x02, 0xB4 };
-+
-+static unsigned char run_at_command_332[] =3D { 0xD0, 0x24, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x32, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49 };
-+
-+static unsigned char run_at_command_341[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x31, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x04, 0xB4 };
-+
-+static unsigned char run_at_command_342[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x32, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x00, 0xB4 };
-+
-+static unsigned char run_at_command_343[] =3D { 0xD0, 0x24, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x33, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49 };
-+
-+static unsigned char run_at_command_351[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x31, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x08, 0xB4 };
-+
-+static unsigned char run_at_command_352[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x32, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x00, 0xB4 };
-+
-+static unsigned char run_at_command_353[] =3D { 0xD0, 0x24, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x33, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49 };
-+
-+static unsigned char run_at_command_361[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x31, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x10, 0xB4 };
-+
-+static unsigned char run_at_command_362[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x32, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x00, 0xB4 };
-+
-+static unsigned char run_at_command_363[] =3D { 0xD0, 0x24, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x33, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49 };
-+
-+static unsigned char run_at_command_371[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x31, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x20, 0xB4 };
-+
-+static unsigned char run_at_command_372[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x32, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x00, 0xB4 };
-+
-+static unsigned char run_at_command_373[] =3D { 0xD0, 0x24, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x33, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49 };
-+
-+static unsigned char run_at_command_381[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x31, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x40, 0xB4 };
-+
-+static unsigned char run_at_command_382[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x32, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x00, 0xB4 };
-+
-+static unsigned char run_at_command_383[] =3D { 0xD0, 0x24, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x33, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49 };
-+
-+static unsigned char run_at_command_391[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x31, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x80, 0xB4 };
-+
-+static unsigned char run_at_command_392[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x32, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x00, 0xB4 };
-+
-+static unsigned char run_at_command_393[] =3D { 0xD0, 0x24, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x33, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49 };
-+
-+static unsigned char run_at_command_3101[] =3D { 0xD0, 0x2A, 0x81, 0x03, 0=
-x01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x31, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49, 0xD0, 0x04,
-+						0x00, 0x10, 0x00, 0xB4 };
-+
-+static unsigned char run_at_command_3102[] =3D { 0xD0, 0x24, 0x81, 0x03, 0=
-x01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x10, 0x52, 0x75,
-+						0x6E, 0x20, 0x41, 0x54, 0x20,
-+						0x43, 0x6F, 0x6D, 0x6D, 0x61,
-+						0x6E, 0x64, 0x20, 0x32, 0xA8,
-+						0x07, 0x41, 0x54, 0x2B, 0x43,
-+						0x47, 0x4D, 0x49 };
-+
-+/* The 2nd byte (total size) should be 0x2D, instead of 0x21 */
-+static unsigned char run_at_command_411[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x19, 0x80, 0x04,
-+						0x17, 0x04, 0x14, 0x04, 0x20,
-+						0x04, 0x10, 0x04, 0x12, 0x04,
-+						0x21, 0x04, 0x22, 0x04, 0x12,
-+						0x04, 0x23, 0x04, 0x19, 0x04,
-+						0x22, 0x04, 0x15, 0xA8, 0x07,
-+						0x41, 0x54, 0x2B, 0x43, 0x47,
-+						0x4D, 0x49 };
-+
-+static unsigned char run_at_command_511[] =3D { 0xD0, 0x19, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x05, 0x80, 0x4F,
-+						0x60, 0x59, 0x7D, 0xA8, 0x07,
-+						0x41, 0x54, 0x2B, 0x43, 0x47,
-+						0x4D, 0x49 };
-+
-+static unsigned char run_at_command_611[] =3D { 0xD0, 0x1B, 0x81, 0x03, 0x=
-01,
-+						0x34, 0x00, 0x82, 0x02, 0x81,
-+						0x82, 0x85, 0x07, 0x80, 0x00,
-+						0x38, 0x00, 0x30, 0x30, 0xEB,
-+						0xA8, 0x07, 0x41, 0x54, 0x2B,
-+						0x43, 0x47, 0x4D, 0x49 };
-+
-+static struct run_at_command_test run_at_command_data_111 =3D {
-+	.pdu =3D run_at_command_111,
-+	.pdu_len =3D sizeof(run_at_command_111),
-+	.qualifier =3D 0x00,
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_121 =3D {
-+	.pdu =3D run_at_command_121,
-+	.pdu_len =3D sizeof(run_at_command_121),
-+	.qualifier =3D 0x00,
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_131 =3D {
-+	.pdu =3D run_at_command_131,
-+	.pdu_len =3D sizeof(run_at_command_131),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_211 =3D {
-+	.pdu =3D run_at_command_211,
-+	.pdu_len =3D sizeof(run_at_command_211),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Basic Icon",
-+	.at_command =3D "AT+CGMI",
-+	.icon_id =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_SELF_EXPLANATORY,
-+		.id =3D 0x01
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_221 =3D {
-+	.pdu =3D run_at_command_221,
-+	.pdu_len =3D sizeof(run_at_command_221),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Colour Icon",
-+	.at_command =3D "AT+CGMI",
-+	.icon_id =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_SELF_EXPLANATORY,
-+		.id =3D 0x02
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_231 =3D {
-+	.pdu =3D run_at_command_231,
-+	.pdu_len =3D sizeof(run_at_command_231),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Basic Icon",
-+	.at_command =3D "AT+CGMI",
-+	.icon_id =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
-+		.id =3D 0x01
-+	}
-+};
-+
-+/* The qualifier of icon_id should be non self-explanatory */
-+static struct run_at_command_test run_at_command_data_241 =3D {
-+	.pdu =3D run_at_command_241,
-+	.pdu_len =3D sizeof(run_at_command_241),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Colour Icon",
-+	.at_command =3D "AT+CGMI",
-+	.icon_id =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
-+		.id =3D 0x02
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_251 =3D {
-+	.pdu =3D run_at_command_251,
-+	.pdu_len =3D sizeof(run_at_command_251),
-+	.qualifier =3D 0x00,
-+	.at_command =3D "AT+CGMI",
-+	.icon_id =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
-+		.id =3D 0x01
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_311 =3D {
-+	.pdu =3D run_at_command_311,
-+	.pdu_len =3D sizeof(run_at_command_311),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 1",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_312 =3D {
-+	.pdu =3D run_at_command_312,
-+	.pdu_len =3D sizeof(run_at_command_312),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 2",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_321 =3D {
-+	.pdu =3D run_at_command_321,
-+	.pdu_len =3D sizeof(run_at_command_321),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 1",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x01, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_322 =3D {
-+	.pdu =3D run_at_command_322,
-+	.pdu_len =3D sizeof(run_at_command_322),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 2",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_331 =3D {
-+	.pdu =3D run_at_command_331,
-+	.pdu_len =3D sizeof(run_at_command_331),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 1",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x02, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_332 =3D {
-+	.pdu =3D run_at_command_332,
-+	.pdu_len =3D sizeof(run_at_command_332),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 2",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_341 =3D {
-+	.pdu =3D run_at_command_341,
-+	.pdu_len =3D sizeof(run_at_command_341),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 1",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x04, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_342 =3D {
-+	.pdu =3D run_at_command_342,
-+	.pdu_len =3D sizeof(run_at_command_342),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 2",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_343 =3D {
-+	.pdu =3D run_at_command_343,
-+	.pdu_len =3D sizeof(run_at_command_343),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 3",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_351 =3D {
-+	.pdu =3D run_at_command_351,
-+	.pdu_len =3D sizeof(run_at_command_351),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 1",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x08, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_352 =3D {
-+	.pdu =3D run_at_command_352,
-+	.pdu_len =3D sizeof(run_at_command_352),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 2",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_353 =3D {
-+	.pdu =3D run_at_command_353,
-+	.pdu_len =3D sizeof(run_at_command_353),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 3",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_361 =3D {
-+	.pdu =3D run_at_command_361,
-+	.pdu_len =3D sizeof(run_at_command_361),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 1",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x10, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_362 =3D {
-+	.pdu =3D run_at_command_362,
-+	.pdu_len =3D sizeof(run_at_command_362),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 2",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_363 =3D {
-+	.pdu =3D run_at_command_363,
-+	.pdu_len =3D sizeof(run_at_command_363),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 3",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_371 =3D {
-+	.pdu =3D run_at_command_371,
-+	.pdu_len =3D sizeof(run_at_command_371),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 1",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x20, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_372 =3D {
-+	.pdu =3D run_at_command_372,
-+	.pdu_len =3D sizeof(run_at_command_372),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 2",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_373 =3D {
-+	.pdu =3D run_at_command_373,
-+	.pdu_len =3D sizeof(run_at_command_373),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 3",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_381 =3D {
-+	.pdu =3D run_at_command_381,
-+	.pdu_len =3D sizeof(run_at_command_381),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 1",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x40, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_382 =3D {
-+	.pdu =3D run_at_command_382,
-+	.pdu_len =3D sizeof(run_at_command_382),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 2",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_383 =3D {
-+	.pdu =3D run_at_command_383,
-+	.pdu_len =3D sizeof(run_at_command_383),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 3",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_391 =3D {
-+	.pdu =3D run_at_command_391,
-+	.pdu_len =3D sizeof(run_at_command_391),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 1",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x80, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_392 =3D {
-+	.pdu =3D run_at_command_392,
-+	.pdu_len =3D sizeof(run_at_command_392),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 2",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_393 =3D {
-+	.pdu =3D run_at_command_393,
-+	.pdu_len =3D sizeof(run_at_command_393),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 3",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_3101 =3D {
-+	.pdu =3D run_at_command_3101,
-+	.pdu_len =3D sizeof(run_at_command_3101),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 1",
-+	.at_command =3D "AT+CGMI",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct run_at_command_test run_at_command_data_3102 =3D {
-+	.pdu =3D run_at_command_3102,
-+	.pdu_len =3D sizeof(run_at_command_3102),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Run AT Command 2",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_411 =3D {
-+	.pdu =3D run_at_command_411,
-+	.pdu_len =3D sizeof(run_at_command_411),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "=D0=97=D0=94=D0=A0=D0=90=D0=92=D0=A1=D0=A2=D0=92=D0=A3=D0=
-=99=D0=A2=D0=95",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_511 =3D {
-+	.pdu =3D run_at_command_511,
-+	.pdu_len =3D sizeof(run_at_command_511),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "=E4=BD=A0=E5=A5=BD",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static struct run_at_command_test run_at_command_data_611 =3D {
-+	.pdu =3D run_at_command_611,
-+	.pdu_len =3D sizeof(run_at_command_611),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "80=E3=83=AB",
-+	.at_command =3D "AT+CGMI"
-+};
-+
-+static void test_run_at_command(gconstpointer data)
-+{
-+	const struct run_at_command_test *test =3D data;
-+	struct stk_command *command;
-+
-+	command =3D stk_command_new_from_pdu(test->pdu, test->pdu_len);
-+
-+	g_assert(command);
-+
-+	g_assert(command->number =3D=3D 1);
-+	g_assert(command->type =3D=3D STK_COMMAND_TYPE_RUN_AT_COMMAND);
-+	g_assert(command->qualifier =3D=3D test->qualifier);
-+
-+	g_assert(command->src =3D=3D STK_DEVICE_IDENTITY_TYPE_UICC);
-+	g_assert(command->dst =3D=3D STK_DEVICE_IDENTITY_TYPE_TERMINAL);
-+
-+	check_alpha_id(command->run_at_command.alpha_id, test->alpha_id);
-+	check_at_command(command->run_at_command.at_command, test->at_command);
-+	check_icon_id(&command->run_at_command.icon_id, &test->icon_id);
-+	check_text_attr(&command->run_at_command.text_attr, &test->text_attr);
-+	check_frame_id(&command->run_at_command.frame_id, &test->frame_id);
-+
-+	stk_command_free(command);
-+}
-+
- int main(int argc, char **argv)
- {
- 	g_test_init(&argc, &argv, NULL);
-@@ -11551,5 +12310,80 @@ int main(int argc, char **argv)
- 	g_test_add_data_func("/teststk/Setup Idle Mode Text 6.1.1",
- 		&setup_idle_mode_text_data_611, test_setup_idle_mode_text);
+ struct stk_command {
+ 	unsigned char number;
+ 	unsigned char type;
+@@ -1003,6 +1011,7 @@ struct stk_command {
+ 		struct stk_command_timer_mgmt timer_mgmt;
+ 		struct stk_command_setup_idle_mode_text setup_idle_mode_text;
+ 		struct stk_command_run_at_command run_at_command;
++		struct stk_command_send_dtmf send_dtmf;
+ 	};
  =
 
-+	g_test_add_data_func("/teststk/Run At Command 1.1.1",
-+			&run_at_command_data_111, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 1.2.1",
-+			&run_at_command_data_121, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 1.3.1",
-+			&run_at_command_data_131, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 2.1.1",
-+			&run_at_command_data_211, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 2.2.1",
-+			&run_at_command_data_221, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 2.3.1",
-+			&run_at_command_data_231, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 2.4.1",
-+			&run_at_command_data_241, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 2.5.1",
-+			&run_at_command_data_251, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.1.1",
-+			&run_at_command_data_311, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.1.2",
-+			&run_at_command_data_312, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.2.1",
-+			&run_at_command_data_321, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.2.2",
-+			&run_at_command_data_322, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.3.1",
-+			&run_at_command_data_331, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.3.2",
-+			&run_at_command_data_332, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.4.1",
-+			&run_at_command_data_341, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.4.2",
-+			&run_at_command_data_342, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.4.3",
-+			&run_at_command_data_343, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.5.1",
-+			&run_at_command_data_351, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.5.2",
-+			&run_at_command_data_352, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.5.3",
-+			&run_at_command_data_353, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.6.1",
-+			&run_at_command_data_361, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.6.2",
-+			&run_at_command_data_362, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.6.3",
-+			&run_at_command_data_363, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.7.1",
-+			&run_at_command_data_371, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.7.2",
-+			&run_at_command_data_372, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.7.3",
-+			&run_at_command_data_373, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.8.1",
-+			&run_at_command_data_381, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.8.2",
-+			&run_at_command_data_382, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.8.3",
-+			&run_at_command_data_383, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.9.1",
-+			&run_at_command_data_391, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.9.2",
-+			&run_at_command_data_392, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.9.3",
-+			&run_at_command_data_393, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.10.1",
-+			&run_at_command_data_3101, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 3.10.2",
-+			&run_at_command_data_3102, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 4.1.1",
-+			&run_at_command_data_411, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 5.1.1",
-+			&run_at_command_data_511, test_run_at_command);
-+	g_test_add_data_func("/teststk/Run At Command 6.1.1",
-+			&run_at_command_data_611, test_run_at_command);
-+
- 	return g_test_run();
- }
+ 	void (*destructor)(struct stk_command *command);
 -- =
 
 1.7.0.4
 
 
---===============1071555831375681294==--
+--===============2053784195547691410==--
 
