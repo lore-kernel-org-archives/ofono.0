@@ -1,40 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============8210253519280315452=="
+Content-Type: multipart/mixed; boundary="===============6760574712348953755=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [RFC] AGPS support
-Date: Wed, 19 May 2010 23:18:33 +0200
-Message-ID: <1274303913.27220.1.camel@localhost.localdomain>
-In-Reply-To: <129600E5E5FB004392DDC3FB599660D7D455F607@irsmsx504.ger.corp.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v3 1/2] huawei: detect SecondaryDevice which is used for
+ events
+Date: Wed, 19 May 2010 08:40:59 -0500
+Message-ID: <201005190840.59307.denkenz@gmail.com>
+In-Reply-To: <20100519140652.3163.18467.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8210253519280315452==
+--===============6760574712348953755==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fred,
+Hi Kalle,
 
-> I would suggest to add the Radio Access Technology (RAT) indication in th=
-e RequestFineTimeInjection .
-> =
+Please keep the commit header to less than 50 lines.
 
-> It is possible that after the reception of the Assistance Data message fr=
-om the network but before the request for time injection from the GPS "mana=
-ger" that the radio conditions have forced the modem to change of RAT. =
+> +	device =3D ofono_modem_get_string(modem, "SecondaryDevice");
+> +	if (!device)
+> +		return -EINVAL;
 
-> So if the RAT is indicated, OFONO implementation will not have to care ab=
-out an eventual change of RAT for the time injection. This will be only han=
-dled by the modem.
+Two tabs is enough here.
 
-gently reminder to not use top posting on a public open source mailing
-list. We expect proper inline quoting.
+> +
+> +	channel =3D g_at_tty_open(device, NULL);
+> +	if (!channel)
+> +		return -EIO;
+> +
+> +	syntax =3D g_at_syntax_new_gsm_permissive();
+> +	data->event =3D g_at_chat_new(channel, syntax);
+> +	g_at_syntax_unref(syntax);
+> +	g_io_channel_unref(channel);
+> +
+> +	if (!data->event)
+> +		return -EIO;
+> +
+> +	g_at_chat_add_terminator(data->event, "COMMAND NOT SUPPORT", -1,
+> +				 FALSE);
 
-Regards
+Don't mix spaces and tabs for indentation
 
-Marcel
+> +
+> +	if (getenv("OFONO_AT_DEBUG"))
+> +		g_at_chat_set_debug(data->event, huawei_event_debug, NULL);
+> +
+> +
 
+Why the extra space?
 
+Also, this entire sequence leaks the data->chat in case the 2nd port could =
+not =
 
---===============8210253519280315452==--
+be opened.  See plugins/mbm.c for an example on how to do this better.
+
+Regards,
+-Denis
+
+--===============6760574712348953755==--
 
