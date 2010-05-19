@@ -1,214 +1,151 @@
-Content-Type: multipart/mixed; boundary="===============0329260926749087026=="
+Content-Type: multipart/mixed; boundary="===============2251186259931829919=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: [PATCH v3 1/2] huawei: detect SecondaryDevice which is used for events
-Date: Wed, 19 May 2010 17:06:52 +0300
-Message-ID: <20100519140652.3163.18467.stgit@potku.valot.fi>
+Subject: [PATCH v3 2/2] huawei: add gprs context
+Date: Wed, 19 May 2010 17:06:59 +0300
+Message-ID: <20100519140659.3163.1433.stgit@potku.valot.fi>
 In-Reply-To: <20100519140208.3163.29523.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0329260926749087026==
+--===============2251186259931829919==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-
+Tested with Huawei E1552 HSDPA USB stick using a finnish Saunalahti prepaid
+SIM.
 ---
 
- plugins/huawei.c |   39 ++++++++++++++++++++++++++++++++++-
- plugins/udev.c   |   61 +++++++++++++++++++++++++++++++++++++++++++++++---=
-----
- 2 files changed, 91 insertions(+), 9 deletions(-)
+ drivers/atmodem/network-registration.c |    4 ++
+ plugins/huawei.c                       |   73 ++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 76 insertions(+), 1 deletions(-)
 
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index f7aafbe..f528339 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -916,6 +916,10 @@ static void at_creg_set_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 				cind_support_cb, netreg, NULL);
+ =
+
+ 		break;
++	case OFONO_VENDOR_HUAWEI:
++		/* huawei doesn't support CIND */
++		ofono_netreg_register(netreg);
++		break;
+ 	default:
+ 		g_at_chat_send(nd->chat, "AT+CIND=3D?", cind_prefix,
+ 				cind_support_cb, netreg, NULL);
 diff --git a/plugins/huawei.c b/plugins/huawei.c
-index df4d177..83a46e3 100644
+index 83a46e3..0d3373f 100644
 --- a/plugins/huawei.c
 +++ b/plugins/huawei.c
-@@ -45,7 +45,7 @@
+@@ -41,7 +41,10 @@
+ #include <ofono/gprs.h>
+ #include <ofono/voicecall.h>
+ #include <ofono/log.h>
++#include <ofono/gprs.h>
++#include <ofono/gprs-context.h>
+ =
+
++#include <drivers/atmodem/atutil.h>
  #include <drivers/atmodem/vendor.h>
  =
 
  struct huawei_data {
--	GAtChat *chat;
-+	GAtChat *chat, *event;
- };
- =
-
- static int huawei_probe(struct ofono_modem *modem)
-@@ -72,6 +72,7 @@ static void huawei_remove(struct ofono_modem *modem)
- 	ofono_modem_set_data(modem, NULL);
- =
-
- 	g_at_chat_unref(data->chat);
-+	g_at_chat_unref(data->event);
- 	g_free(data);
+@@ -211,14 +214,82 @@ static void huawei_pre_sim(struct ofono_modem *modem)
+ 		ofono_sim_inserted_notify(sim, TRUE);
  }
  =
 
-@@ -80,6 +81,11 @@ static void huawei_debug(const char *str, void *user_dat=
-a)
- 	ofono_info("%s", str);
- }
- =
-
-+static void huawei_event_debug(const char *str, void *user_data)
++static void huawei_cgreg_notify(GAtResult *result, gpointer user_data)
 +{
-+	ofono_info("* %s", str);
++	struct ofono_gprs *gprs =3D user_data;
++	gboolean ret;
++	int status;
++
++	DBG("");
++
++	ret =3D at_util_parse_reg_unsolicited(result, "+CGREG:", &status,
++					    NULL, NULL, NULL,
++					    OFONO_VENDOR_HUAWEI);
++
++	if (ret =3D=3D FALSE)
++		return;
++
++	ofono_gprs_status_notify(gprs, status);
 +}
 +
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
++static inline void report_signal_strength(struct ofono_netreg *netreg,
++					  int strength)
++{
++	DBG("%d", strength);
++
++	if (strength =3D=3D 99)
++		strength =3D -1;
++	else
++		strength =3D (strength * 100) / 31;
++
++	ofono_netreg_strength_notify(netreg, strength);
++}
++
++static void huawei_rssi_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_netreg *netreg =3D user_data;
++	GAtResultIter iter;
++	int strength;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "^RSSI:"))
++		return;
++
++	if (!g_at_result_iter_next_number(&iter, &strength))
++		return;
++
++	report_signal_strength(netreg, strength);
++}
++
+ static void huawei_post_sim(struct ofono_modem *modem)
  {
- 	struct ofono_modem *modem =3D user_data;
-@@ -120,6 +126,29 @@ static int huawei_enable(struct ofono_modem *modem)
- 	if (getenv("OFONO_AT_DEBUG"))
- 		g_at_chat_set_debug(data->chat, huawei_debug, NULL);
- =
-
-+	device =3D ofono_modem_get_string(modem, "SecondaryDevice");
-+	if (!device)
-+		return -EINVAL;
-+
-+	channel =3D g_at_tty_open(device, NULL);
-+	if (!channel)
-+		return -EIO;
-+
-+	syntax =3D g_at_syntax_new_gsm_permissive();
-+	data->event =3D g_at_chat_new(channel, syntax);
-+	g_at_syntax_unref(syntax);
-+	g_io_channel_unref(channel);
-+
-+	if (!data->event)
-+		return -EIO;
-+
-+	g_at_chat_add_terminator(data->event, "COMMAND NOT SUPPORT", -1,
-+				 FALSE);
-+
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(data->event, huawei_event_debug, NULL);
-+
-+
- 	g_at_chat_send(data->chat, "ATE0", NULL, NULL, NULL, NULL);
- =
-
- 	g_at_chat_send(data->chat, "AT+CFUN=3D1", NULL,
-@@ -138,6 +167,9 @@ static void cfun_disable(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	g_at_chat_unref(data->chat);
- 	data->chat =3D NULL;
- =
-
-+	g_at_chat_unref(data->event);
-+	data->event =3D NULL;
-+
- 	if (ok)
- 		ofono_modem_set_powered(modem, FALSE);
- }
-@@ -148,6 +180,11 @@ static int huawei_disable(struct ofono_modem *modem)
+ 	struct huawei_data *data =3D ofono_modem_get_data(modem);
++	struct ofono_gprs_context *gc;
++	struct ofono_netreg *netreg;
++	struct ofono_gprs *gprs;
  =
 
  	DBG("%p", modem);
  =
 
-+	if (data->event) {
-+		g_at_chat_cancel_all(data->event);
-+		g_at_chat_unregister_all(data->event);
-+	}
+-	ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem", data->chat);
++	netreg =3D ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
++				     data->chat);
+ 	ofono_sms_create(modem, OFONO_VENDOR_QUALCOMM_MSM, "atmodem", data->chat);
 +
- 	if (!data->chat)
- 		return 0;
- =
-
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 3a6ea28..bdac4fd 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -89,6 +89,24 @@ static const char *get_serial(struct udev_device *udev_d=
-evice)
- 	return serial;
++	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
++				 data->chat);
++	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
++
++	if (gprs && gc) {
++		ofono_gprs_add_context(gprs, gc);
++
++		/* huawei has a separate channel for CGREG notifications */
++		g_at_chat_register(data->event, "+CGREG:",
++				   huawei_cgreg_notify, FALSE, gprs, NULL);
++
++		/* huawei uses non-standard "^RSSI:18" strings */
++		g_at_chat_register(data->event, "^RSSI:",
++				   huawei_rssi_notify, FALSE, netreg, NULL);
++	}
  }
  =
 
-+static const char *get_usb_num(struct udev_device *udev_device)
-+{
-+	struct udev_list_entry *entry;
-+	const char *num =3D NULL;
-+
-+	entry =3D udev_device_get_properties_list_entry(udev_device);
-+	while (entry) {
-+		const char *name =3D udev_list_entry_get_name(entry);
-+
-+		if (g_strcmp0(name, "ID_USB_INTERFACE_NUM") =3D=3D 0)
-+			num =3D udev_list_entry_get_value(entry);
-+
-+		entry =3D udev_list_entry_get_next(entry);
-+	}
-+
-+	return num;
-+}
-+
- #define MODEM_DEVICE		"ModemDevice"
- #define DATA_DEVICE		"DataDevice"
- #define GPS_DEVICE		"GPSDevice"
-@@ -201,18 +219,45 @@ static void add_hso(struct ofono_modem *modem,
- static void add_huawei(struct ofono_modem *modem,
- 					struct udev_device *udev_device)
- {
--	const char *devnode;
--	int registered;
-+	const char *devnode, *num;
-+	int primary, secondary;
- =
-
--	registered =3D ofono_modem_get_integer(modem, "Registered");
--	if (registered !=3D 0)
-+	primary =3D ofono_modem_get_integer(modem, "PrimaryRegistered");
-+	secondary =3D ofono_modem_get_integer(modem, "SecondaryRegistered");
-+
-+	if (primary && secondary)
- 		return;
- =
-
--	devnode =3D udev_device_get_devnode(udev_device);
--	ofono_modem_set_string(modem, "Device", devnode);
-+	num =3D get_usb_num(udev_device);
- =
-
--	ofono_modem_set_integer(modem, "Registered", 1);
--	ofono_modem_register(modem);
-+	/*
-+	 * Here is is assumed that that usb port number 0 is the control
-+	 * port and port 2 is the event port. This assumption will surely
-+	 * be false with some devices and better heuristics is needed.
-+	 */
-+	if (g_strcmp0(num, "00") =3D=3D 0) {
-+		if (primary !=3D 0)
-+			return;
-+
-+		devnode =3D udev_device_get_devnode(udev_device);
-+		ofono_modem_set_string(modem, "Device", devnode);
-+
-+		primary =3D 1;
-+		ofono_modem_set_integer(modem, "PrimaryRegistered", primary);
-+	} else if (g_strcmp0(num, "02") =3D=3D 0) {
-+		if (secondary !=3D 0)
-+			return;
-+
-+		devnode =3D udev_device_get_devnode(udev_device);
-+		ofono_modem_set_string(modem, "SecondaryDevice", devnode);
-+
-+		secondary =3D 1;
-+		ofono_modem_set_integer(modem, "SecondaryRegistered",
-+					secondary);
-+	}
-+
-+	if (primary && secondary)
-+		ofono_modem_register(modem);
- }
- =
-
- static void add_em770(struct ofono_modem *modem,
+ static struct ofono_modem_driver huawei_driver =3D {
 
 
---===============0329260926749087026==--
+--===============2251186259931829919==--
 
