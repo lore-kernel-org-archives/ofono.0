@@ -1,120 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============5500799561584588029=="
+Content-Type: multipart/mixed; boundary="===============7043802986650695595=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 2/2] huawei: add gprs context
-Date: Wed, 19 May 2010 08:44:38 -0500
-Message-ID: <201005190844.38234.denkenz@gmail.com>
-In-Reply-To: <20100519140659.3163.1433.stgit@potku.valot.fi>
+Subject: Re: commit "Fix Use hashtable to record udev path" breaks huawei
+Date: Wed, 19 May 2010 08:55:13 -0500
+Message-ID: <201005190855.13792.denkenz@gmail.com>
+In-Reply-To: <87iq6j7w5j.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5500799561584588029==
+--===============7043802986650695595==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Kalle,
 
-> +	ret =3D at_util_parse_reg_unsolicited(result, "+CGREG:", &status,
-> +					    NULL, NULL, NULL,
-> +					    OFONO_VENDOR_HUAWEI);
-
-No mixing of tabs & spaces for indentation
-
-> +
-> +	if (ret =3D=3D FALSE)
-> +		return;
-> +
-> +	ofono_gprs_status_notify(gprs, status);
-> +}
-> +
-> +static inline void report_signal_strength(struct ofono_netreg *netreg,
-> +					  int strength)
-
-And here
-
-> +{
-> +	DBG("%d", strength);
-> +
-> +	if (strength =3D=3D 99)
-> +		strength =3D -1;
-> +	else
-> +		strength =3D (strength * 100) / 31;
-> +
-> +	ofono_netreg_strength_notify(netreg, strength);
-> +}
-
-You might really want to make this into an atutil function instead of copy-
-pasting it around.
-
-> +
-> +static void huawei_rssi_notify(GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_netreg *netreg =3D user_data;
-> +	GAtResultIter iter;
-> +	int strength;
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	if (!g_at_result_iter_next(&iter, "^RSSI:"))
-> +		return;
-> +
-> +	if (!g_at_result_iter_next_number(&iter, &strength))
-> +		return;
-> +
-> +	report_signal_strength(netreg, strength);
-> +}
-> +
->  static void huawei_post_sim(struct ofono_modem *modem)
->  {
->  	struct huawei_data *data =3D ofono_modem_get_data(modem);
-> +	struct ofono_gprs_context *gc;
-> +	struct ofono_netreg *netreg;
-> +	struct ofono_gprs *gprs;
+> Sorry, I was too hasty. The patch is fine, I was just testing
+> inproperly. After a bit more testing I found out that problem always
+> happens when I plugin the usb modem:
 > =
 
->  	DBG("%p", modem);
+> May 19 17:20:09 tukki connmand[30925]: plugins/ofono.c:modem_changed() pa=
+th
+>  /huawei1 May 19 17:20:10 tukki ofonod[672]: < ATE0\r\r\nOK\r\n
+> May 19 17:20:10 tukki ofonod[672]: > AT+CFUN=3D1\r
+> May 19 17:20:10 tukki ofonod[672]: < \r\nOK\r\n
+> May 19 17:20:10 tukki ofonod[672]: plugins/huawei.c:cfun_enable()
+> May 19 17:20:10 tukki ofonod[672]: > AT+CRC=3D1\r
+> May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+> May 19 17:20:10 tukki ofonod[672]: > AT+CLIP=3D1\r
+> May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+> May 19 17:20:10 tukki ofonod[672]: > AT+COLP=3D1\r
+> May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+> May 19 17:20:10 tukki ofonod[672]: > AT+CCWA=3D1\r
+> May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+> May 19 17:20:10 tukki ofonod[672]:
+>  drivers/atmodem/voicecall.c:at_voicecall_initialized() voicecall_init:
+>  registering to notifications May 19 17:20:10 tukki ofonod[672]:
+>  src/sim.c:ofono_sim_add_state_watch() 0x132bcd0 May 19 17:20:10 tukki
+>  ofonod[672]: * < \r\n^STIN:0,0,0\r\n
+> May 19 17:20:10 tukki ofonod[672]: > AT+CGMI\r
+> May 19 17:20:10 tukki connmand[30925]: plugins/ofono.c:modem_changed() pa=
+th
+>  /huawei1 May 19 17:20:10 tukki ofonod[672]: < \r\nhuawei\r\n\r\nOK\r\n
+> May 19 17:20:10 tukki ofonod[672]: > AT+CRSM=3D176,28590,0,0,1\r
+> May 19 17:20:10 tukki connmand[30925]: plugins/ofono.c:modem_changed() pa=
+th
+>  /huawei1 May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r=
+\n
+> May 19 17:20:10 tukki ofonod[672]: > AT+CLCC\r
+> May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+> May 19 17:20:10 tukki ofonod[672]: > AT+CRSM=3D192,28599\r
+> May 19 17:20:10 tukki ofonod[672]: < \r\n+CME ERROR: SIM busy\r\n
+> May 19 17:20:10 tukki ofonod[672]: src/voicecall.c:ecc_g2_read_cb() 0
+> May 19 17:20:10 tukki ofonod[672]: > AT+CGMM\r
+> May 19 17:20:10 tukki ofonod[672]: < \r\nE1552\r\n\r\nOK\r\n
 > =
 
-> -	ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem", data->chat);
-> +	netreg =3D ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
-> +				     data->chat);
-
-Again with mixed indentation
-
->  	ofono_sms_create(modem, OFONO_VENDOR_QUALCOMM_MSM, "atmodem",
->  data->chat); +
-> +	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
-> +				 data->chat);
-
-And here
-
-> +	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
-> +
-> +	if (gprs && gc) {
-> +		ofono_gprs_add_context(gprs, gc);
-> +
-> +		/* huawei has a separate channel for CGREG notifications */
-> +		g_at_chat_register(data->event, "+CGREG:",
-> +				   huawei_cgreg_notify, FALSE, gprs, NULL);
-
-And here
-
-> +
-> +		/* huawei uses non-standard "^RSSI:18" strings */
-> +		g_at_chat_register(data->event, "^RSSI:",
-> +				   huawei_rssi_notify, FALSE, netreg, NULL);
-
-And here
-
-> +	}
->  }
+> But if I start ofono while the usb modem is plugged in it works fine.
+> Also modem disable and then enable workarounds it. Oh well.
 > =
 
->  static struct ofono_modem_driver huawei_driver =3D {
+
+Sounds like the SIM needs some time to be initialized.  Perhaps a Huawei =
+
+specific command might be required to figure out when the SIM is actually r=
+eady.  =
+
+Try listening to ^SIMST or simply re-trying a particular command until you =
+
+don't get SIM busy error.
 
 Regards,
 -Denis
 
---===============5500799561584588029==--
+--===============7043802986650695595==--
 
