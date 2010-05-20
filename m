@@ -1,28 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============4248205924603435059=="
+Content-Type: multipart/mixed; boundary="===============1663594214825881054=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Add EFiccid entry
-Date: Wed, 19 May 2010 23:26:57 -0500
-Message-ID: <201005192326.57230.denkenz@gmail.com>
-In-Reply-To: <20100520100041.GA17999@gumpy.localdomain>
+Subject: Re: [PATCH v1] Read EF_ICCID property of SIM
+Date: Wed, 19 May 2010 23:52:36 -0500
+Message-ID: <201005192352.36288.denkenz@gmail.com>
+In-Reply-To: <20100520100148.GA18006@gumpy.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4248205924603435059==
+--===============1663594214825881054==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Daniel,
 
-> ---
->  src/default.xml |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
+> Tested with phonesim.
+> =
 
-Patch has been applied, thanks.
+> +#define OFONO_MAX_ICCID_LENGTH 20
+> +
 
-Regards,
+For future reference, if a define is not used or planned to be used by plug=
+ins, =
+
+there's no need to declare it in the public API.  I fixed it for you :)
+
+Patch has been applied.
+
+Thanks,
 -Denis
 
---===============4248205924603435059==--
+--===============1663594214825881054==--
 
