@@ -1,35 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============1663594214825881054=="
+Content-Type: multipart/mixed; boundary="===============8587532299452077235=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 Subject: Re: [PATCH v1] Read EF_ICCID property of SIM
-Date: Wed, 19 May 2010 23:52:36 -0500
-Message-ID: <201005192352.36288.denkenz@gmail.com>
-In-Reply-To: <20100520100148.GA18006@gumpy.localdomain>
+Date: Thu, 20 May 2010 15:57:13 +0200
+Message-ID: <20100520135713.GA18541@gumpy.localdomain>
+In-Reply-To: <201005192352.36288.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1663594214825881054==
+--===============8587532299452077235==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+Hi Denis,
 
-> Tested with phonesim.
+On Thu, May 20, 2010 at 06:52:36AM +0200, Denis Kenzior wrote:
+> Hi Daniel,
 > =
 
-> +#define OFONO_MAX_ICCID_LENGTH 20
-> +
+> > Tested with phonesim.
+> > =
 
-For future reference, if a define is not used or planned to be used by plug=
-ins, =
+> > +#define OFONO_MAX_ICCID_LENGTH 20
+> > +
+> =
 
-there's no need to declare it in the public API.  I fixed it for you :)
+> For future reference, if a define is not used or planned to be used by pl=
+ugins, =
 
-Patch has been applied.
+> there's no need to declare it in the public API.  I fixed it for you :)
 
-Thanks,
--Denis
+Okay, good to know. Thanks!
 
---===============1663594214825881054==--
+cheers,
+daniel
+
+--===============8587532299452077235==--
 
