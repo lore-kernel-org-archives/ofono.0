@@ -1,139 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============7052858232649257826=="
+Content-Type: multipart/mixed; boundary="===============6950172157891624671=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: [PATCH v5 3/3] huawei: add gprs context
-Date: Thu, 20 May 2010 13:53:28 +0300
-Message-ID: <20100520105328.20968.50803.stgit@potku.valot.fi>
-In-Reply-To: <20100520105215.20968.59029.stgit@potku.valot.fi>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: Re: Need your help - Few queries on ofono
+Date: Thu, 20 May 2010 14:11:05 +0200
+Message-ID: <20100520121105.GA18374@gumpy.localdomain>
+In-Reply-To: <AANLkTiniwJUyo7UlOdYlPx-CX-D2B0Et_iXjw7N2qMzk@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7052858232649257826==
+--===============6950172157891624671==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Tested with Huawei E1552 HSDPA USB stick using a finnish Saunalahti prepaid
-SIM.
----
+Hi Sankar,
 
- drivers/atmodem/network-registration.c |    4 ++
- plugins/huawei.c                       |   61 ++++++++++++++++++++++++++++=
-+++-
- 2 files changed, 64 insertions(+), 1 deletions(-)
+On Thu, May 20, 2010 at 12:07:00PM +0200, Sankar wrote:
+> Hi Daniel,
+> =
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index f137d94..d3d8d71 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -906,6 +906,10 @@ static void at_creg_set_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- 				cind_support_cb, netreg, NULL);
- =
+> I have a few queries on ofono telephony stack. Can you please help me.
+> Thanks for your time.
+> =
 
- 		break;
-+	case OFONO_VENDOR_HUAWEI:
-+		/* huawei doesn't support CIND */
-+		ofono_netreg_register(netreg);
-+		break;
- 	default:
- 		g_at_chat_send(nd->chat, "AT+CIND=3D?", cind_prefix,
- 				cind_support_cb, netreg, NULL);
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 489f3e2..e1408bd 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -41,7 +41,10 @@
- #include <ofono/gprs.h>
- #include <ofono/voicecall.h>
- #include <ofono/log.h>
-+#include <ofono/gprs.h>
-+#include <ofono/gprs-context.h>
- =
+> My question is:
+> =
 
-+#include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
- =
-
- struct huawei_data {
-@@ -213,14 +216,70 @@ static void huawei_pre_sim(struct ofono_modem *modem)
- 		ofono_sim_inserted_notify(sim, TRUE);
- }
- =
-
-+static void huawei_cgreg_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	gboolean ret;
-+	int status;
-+
-+	DBG("");
-+
-+	ret =3D at_util_parse_reg_unsolicited(result, "+CGREG:", &status,
-+						NULL, NULL, NULL,
-+						OFONO_VENDOR_HUAWEI);
-+
-+	if (ret =3D=3D FALSE)
-+		return;
-+
-+	ofono_gprs_status_notify(gprs, status);
-+}
-+
-+static void huawei_rssi_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_netreg *netreg =3D user_data;
-+	GAtResultIter iter;
-+	int strength;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "^RSSI:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &strength))
-+		return;
-+
-+	ofono_netreg_strength_notify(netreg,
-+				at_util_convert_signal_strength(strength));
-+}
-+
- static void huawei_post_sim(struct ofono_modem *modem)
- {
- 	struct huawei_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_gprs_context *gc;
-+	struct ofono_netreg *netreg;
-+	struct ofono_gprs *gprs;
- =
-
- 	DBG("%p", modem);
- =
-
--	ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem", data->chat);
-+	netreg =3D ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
-+					data->chat);
- 	ofono_sms_create(modem, OFONO_VENDOR_QUALCOMM_MSM, "atmodem", data->chat);
-+
-+	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
-+					data->chat);
-+	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
-+
-+	if (gprs && gc) {
-+		ofono_gprs_add_context(gprs, gc);
-+
-+		/* huawei has a separate channel for CGREG notifications */
-+		g_at_chat_register(data->event, "+CGREG:",
-+				huawei_cgreg_notify, FALSE, gprs, NULL);
-+
-+		/* huawei uses non-standard "^RSSI:18" strings */
-+		g_at_chat_register(data->event, "^RSSI:",
-+				huawei_rssi_notify, FALSE, netreg, NULL);
-+	}
- }
- =
-
- static struct ofono_modem_driver huawei_driver =3D {
+> 1. I downloaded the ofono source code from the web, Tried compiling it, a=
+nd building it.
+> 2. The code got successfully compiled and ofonod was generated. But looks=
+ like no specific .so s got built for the drivers/plugins.
 
 
---===============7052858232649257826==--
+My usual steps are:
+
+$ ./bootstrap-configure
+
+(read the output of configure and check if there are missing
+libraries. if yes install the missing dependencies)
+
+$ make
+$ sudo make install
+
+> I tried launching the ofono deamon, but could not launch it. Can you plea=
+se provide some inputs.
+
+You have make sure to install the ofono.conf (dbus daemon
+configuration) into /etc/dbus.1/system.d/ and then trigger dbus daemon
+to reread the configuration (e.g. killall -HUP dbus-daemon)
+
+Enable phonesim in /etc/ofono/modem.conf
+
+And then you should be able to start ofono
+
+$ sudo src/ofonod -n
+
+with '-n' the daemon doesn't spawn into background
+
+> Also, can you please provide some inputs on how to use phonesim with this.
+
+$ ./boostrap-configure
+$ make
+$ sudo make install
+
+$ phonesim -gui default.xml
+
+and then you have to enable the modem with
+
+$ ofono/test/enable-modem
+
+cheers,
+daniel
+
+--===============6950172157891624671==--
 
