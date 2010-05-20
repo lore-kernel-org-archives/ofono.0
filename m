@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============2665003690552862131=="
+Content-Type: multipart/mixed; boundary="===============7388039904950797409=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: atmodem: gprs context deactivate crashes ofonod
-Date: Thu, 20 May 2010 09:49:27 +0300
-Message-ID: <87632j6pag.fsf@potku.valot.fi>
-In-Reply-To: <201005190902.44297.denkenz@gmail.com>
+Subject: Re: [PATCH v3 1/2] huawei: detect SecondaryDevice which is used for
+ events
+Date: Thu, 20 May 2010 10:15:51 +0300
+Message-ID: <87sk5nnivs.fsf@potku.valot.fi>
+In-Reply-To: <201005190840.59307.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2665003690552862131==
+--===============7388039904950797409==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,50 +20,60 @@ Denis Kenzior <denkenz@gmail.com> writes:
 
 Hi Denis,
 
->> I have been testing ofono with my Huawei E1552 usb stick, which is using
->> atmodem and PPP. I noticed that whenever I call test/deactivate-context
->> ofono either crashes or busyloops here in at_gprs_deactivate_primary():
->> =
+> Please keep the commit header to less than 50 lines.
 
->> 	if (g_at_chat_send(gcd->chat, buf, none_prefix,
->> 				at_cgact_down_cb, cbd, g_free) > 0)
->> 		return;
->> =
+Fixed.
 
->> Further investigation revealed that gcd->chat is already unreferenced in
->> setup_ppp():
->> =
-
->> 	g_at_chat_unref(gcd->chat);
->> =
-
->> So there's a conflict here. How to handle this properly? Calling
->> g_at_ppp_shutdown() is most likely not enough, because nobody is not
->> creating gcd->chat again which is needed during subsequent activate
->> call.
->> =
-
->> Comments?
->> =
-
+>> +	device =3D ofono_modem_get_string(modem, "SecondaryDevice");
+>> +	if (!device)
+>> +		return -EINVAL;
 >
-> Deactivation of the context was never made to work properly. For a
-> hint, please have a look at gatchat/gsmdial.c. When PPP is established
-> we should be using g_at_chat_suspend. During a context deactivation we
-> should use g_at_ppp_shutdown and then reactivate the gatchat using
-> g_at_chat_resume
+> Two tabs is enough here.
 
-Ok, thank you for the tips. I'll take a look at this later, I have to
-fix some other issues first.
+Sorry, but I see only two tabs here. What am I missing? Ah, now I
+understand. I think you are commenting the line earlier in
+huawei_enable() which is indented wrong. I'll fix that.
 
-> (assuming the Huawei does not HUP the tty when disconnecting the ppp
-> link.)
+>> +	channel =3D g_at_tty_open(device, NULL);
+>> +	if (!channel)
+>> +		return -EIO;
+>> +
+>> +	syntax =3D g_at_syntax_new_gsm_permissive();
+>> +	data->event =3D g_at_chat_new(channel, syntax);
+>> +	g_at_syntax_unref(syntax);
+>> +	g_io_channel_unref(channel);
+>> +
+>> +	if (!data->event)
+>> +		return -EIO;
+>> +
+>> +	g_at_chat_add_terminator(data->event, "COMMAND NOT SUPPORT", -1,
+>> +				 FALSE);
+>
+> Don't mix spaces and tabs for indentation
 
-Let's hope not.
+Fixed.
+
+>> +
+>> +	if (getenv("OFONO_AT_DEBUG"))
+>> +		g_at_chat_set_debug(data->event, huawei_event_debug, NULL);
+>> +
+>> +
+>
+> Why the extra space?
+
+You mean the newline, right? That's by accident, I removed it now.
+
+> Also, this entire sequence leaks the data->chat in case the 2nd port
+> could not be opened. See plugins/mbm.c for an example on how to do
+> this better.
+
+Damn, so it does. I changed it now to follow the style from mbm.c.
+
+Thanks a lot for the comments.
 
 -- =
 
 Kalle Valo
 
---===============2665003690552862131==--
+--===============7388039904950797409==--
 
