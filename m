@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7388039904950797409=="
+Content-Type: multipart/mixed; boundary="===============3524803230364477224=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: [PATCH v3 1/2] huawei: detect SecondaryDevice which is used for
- events
-Date: Thu, 20 May 2010 10:15:51 +0300
-Message-ID: <87sk5nnivs.fsf@potku.valot.fi>
-In-Reply-To: <201005190840.59307.denkenz@gmail.com>
+Subject: Re: [PATCH v3 2/2] huawei: add gprs context
+Date: Thu, 20 May 2010 10:35:13 +0300
+Message-ID: <87mxvvnhzi.fsf@potku.valot.fi>
+In-Reply-To: <201005190844.38234.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7388039904950797409==
+--===============3524803230364477224==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -18,62 +17,104 @@ Denis Kenzior <denkenz@gmail.com> writes:
 
 > Hi Kalle,
 
-Hi Denis,
+Hi again Denis,
 
-> Please keep the commit header to less than 50 lines.
+>> +	ret =3D at_util_parse_reg_unsolicited(result, "+CGREG:", &status,
+>> +					    NULL, NULL, NULL,
+>> +					    OFONO_VENDOR_HUAWEI);
+>
+> No mixing of tabs & spaces for indentation
 
 Fixed.
 
->> +	device =3D ofono_modem_get_string(modem, "SecondaryDevice");
->> +	if (!device)
->> +		return -EINVAL;
->
-> Two tabs is enough here.
+Oh man, I have to fix my emacs settings :/
 
-Sorry, but I see only two tabs here. What am I missing? Ah, now I
-understand. I think you are commenting the line earlier in
-huawei_enable() which is indented wrong. I'll fix that.
-
->> +	channel =3D g_at_tty_open(device, NULL);
->> +	if (!channel)
->> +		return -EIO;
 >> +
->> +	syntax =3D g_at_syntax_new_gsm_permissive();
->> +	data->event =3D g_at_chat_new(channel, syntax);
->> +	g_at_syntax_unref(syntax);
->> +	g_io_channel_unref(channel);
+>> +	if (ret =3D=3D FALSE)
+>> +		return;
 >> +
->> +	if (!data->event)
->> +		return -EIO;
+>> +	ofono_gprs_status_notify(gprs, status);
+>> +}
 >> +
->> +	g_at_chat_add_terminator(data->event, "COMMAND NOT SUPPORT", -1,
->> +				 FALSE);
+>> +static inline void report_signal_strength(struct ofono_netreg *netreg,
+>> +					  int strength)
 >
-> Don't mix spaces and tabs for indentation
+> And here
+
+This function is gone now.
+
+>> +	DBG("%d", strength);
+>> +
+>> +	if (strength =3D=3D 99)
+>> +		strength =3D -1;
+>> +	else
+>> +		strength =3D (strength * 100) / 31;
+>> +
+>> +	ofono_netreg_strength_notify(netreg, strength);
+>> +}
+>
+> You might really want to make this into an atutil function instead of cop=
+y-
+> pasting it around.
+
+I created this:
+
+static inline int at_util_convert_signal_strength(int strength)
+{
+	int result;
+
+	if (strength =3D=3D 99)
+		result =3D -1;
+	else
+		result =3D (strength * 100) / 31;
+
+	return result;
+}
+
+>> -	ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem", data->chat);
+>> +	netreg =3D ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
+>> +				     data->chat);
+>
+> Again with mixed indentation
+
+Fixed.
+
+>>  	ofono_sms_create(modem, OFONO_VENDOR_QUALCOMM_MSM, "atmodem",
+>>  data->chat); +
+>> +	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
+>> +				 data->chat);
+>
+> And here
+
+Fixed.
+
+>> +	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
+>> +
+>> +	if (gprs && gc) {
+>> +		ofono_gprs_add_context(gprs, gc);
+>> +
+>> +		/* huawei has a separate channel for CGREG notifications */
+>> +		g_at_chat_register(data->event, "+CGREG:",
+>> +				   huawei_cgreg_notify, FALSE, gprs, NULL);
+>
+> And here
 
 Fixed.
 
 >> +
->> +	if (getenv("OFONO_AT_DEBUG"))
->> +		g_at_chat_set_debug(data->event, huawei_event_debug, NULL);
->> +
->> +
+>> +		/* huawei uses non-standard "^RSSI:18" strings */
+>> +		g_at_chat_register(data->event, "^RSSI:",
+>> +				   huawei_rssi_notify, FALSE, netreg, NULL);
 >
-> Why the extra space?
+> And here
 
-You mean the newline, right? That's by accident, I removed it now.
+Fixed.
 
-> Also, this entire sequence leaks the data->chat in case the 2nd port
-> could not be opened. See plugins/mbm.c for an example on how to do
-> this better.
-
-Damn, so it does. I changed it now to follow the style from mbm.c.
-
-Thanks a lot for the comments.
+Thank you for the comments. I'll run some tests first and send v4 soon.
 
 -- =
 
 Kalle Valo
 
---===============7388039904950797409==--
+--===============3524803230364477224==--
 
