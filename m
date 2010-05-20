@@ -1,58 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============2536727717366826414=="
+Content-Type: multipart/mixed; boundary="===============2665003690552862131=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: commit "Fix Use hashtable to record udev path" breaks huawei
-Date: Thu, 20 May 2010 08:13:55 +0300
-Message-ID: <87aarv6tpo.fsf@potku.valot.fi>
-In-Reply-To: <33AB447FBD802F4E932063B962385B351E8DD24D@shsmsx501.ccr.corp.intel.com>
+Subject: Re: atmodem: gprs context deactivate crashes ofonod
+Date: Thu, 20 May 2010 09:49:27 +0300
+Message-ID: <87632j6pag.fsf@potku.valot.fi>
+In-Reply-To: <201005190902.44297.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2536727717366826414==
+--===============2665003690552862131==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-"Zhang, Zhenhua" <zhenhua.zhang@intel.com> writes:
+Denis Kenzior <denkenz@gmail.com> writes:
 
 > Hi Kalle,
 
-Hi Zhenhua,
+Hi Denis,
 
-> Kalle Valo wrote:
->> Kalle Valo <kalle.valo@canonical.com> writes:
+>> I have been testing ofono with my Huawei E1552 usb stick, which is using
+>> atmodem and PPP. I noticed that whenever I call test/deactivate-context
+>> ofono either crashes or busyloops here in at_gprs_deactivate_primary():
 >> =
 
->>> while working on third version of my huawei gprs patches I noticed
->>> that this commit breaks huawei:
->>> =
-
->>> commit af976f7e524746b1b55645967e11ab8250f593a8
->>> Author: Zhenhua Zhang <zhenhua.zhang@intel.com>
->>> Date:   Tue May 11 09:04:28 2010 +0800
-
-[...]
-
->> Sorry, I was too hasty. The patch is fine, I was just testing
->> inproperly. After a bit more testing I found out that problem
->> always happens when I plugin the usb modem:
+>> 	if (g_at_chat_send(gcd->chat, buf, none_prefix,
+>> 				at_cgact_down_cb, cbd, g_free) > 0)
+>> 		return;
 >> =
 
+>> Further investigation revealed that gcd->chat is already unreferenced in
+>> setup_ppp():
+>> =
 
-[...]
+>> 	g_at_chat_unref(gcd->chat);
+>> =
 
-> My commit af976f7e524 should not impact modem detection and power up
-> stage. If you found huawei modem still exists in oFono after you
-> unplug the dungle, I guess something maybe wrong in my patch. :-)
+>> So there's a conflict here. How to handle this properly? Calling
+>> g_at_ppp_shutdown() is most likely not enough, because nobody is not
+>> creating gcd->chat again which is needed during subsequent activate
+>> call.
+>> =
 
-Your patch is fine, I was just testing inproperly. I didn't use the
-exactly the same test steps when I did the revert/unrevert cycle of your
-patch, and that's why I falsely assumed that your patch broke it. Sorry
-about that.
+>> Comments?
+>> =
+
+>
+> Deactivation of the context was never made to work properly. For a
+> hint, please have a look at gatchat/gsmdial.c. When PPP is established
+> we should be using g_at_chat_suspend. During a context deactivation we
+> should use g_at_ppp_shutdown and then reactivate the gatchat using
+> g_at_chat_resume
+
+Ok, thank you for the tips. I'll take a look at this later, I have to
+fix some other issues first.
+
+> (assuming the Huawei does not HUP the tty when disconnecting the ppp
+> link.)
+
+Let's hope not.
 
 -- =
 
 Kalle Valo
 
---===============2536727717366826414==--
+--===============2665003690552862131==--
 
