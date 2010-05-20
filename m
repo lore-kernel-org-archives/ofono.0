@@ -1,31 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============4337058684828415881=="
+Content-Type: multipart/mixed; boundary="===============5756078413373302190=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v5 0/3] Huawei GPRS support
-Date: Wed, 19 May 2010 23:15:23 -0500
-Message-ID: <201005192315.23714.denkenz@gmail.com>
-In-Reply-To: <20100520105215.20968.59029.stgit@potku.valot.fi>
+Subject: Re: Need your help - Few queries on ofono
+Date: Wed, 19 May 2010 23:19:41 -0500
+Message-ID: <201005192319.41948.denkenz@gmail.com>
+In-Reply-To: <20100520121105.GA18374@gumpy.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4337058684828415881==
+--===============5756078413373302190==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+Hi Sankar,
 
-> v5 of my Huawei GPRS support. Hopefully ready now :)
-> =
+> > 1. I downloaded the ofono source code from the web, Tried compiling it,
+> > and building it. 2. The code got successfully compiled and ofonod was
+> > generated. But looks like no specific .so s got built for the
+> > drivers/plugins.
 
-> Please take a look and comment.
-> =
+In the future please post such questions to the oFono mailing list.  And to =
 
+answer this specific topic:
 
-All three have now been applied.
+All oFono drivers / plugins found in drivers/ and plugins/ are built as =
 
-Thanks,
+builtins.  This means that they're _statically_ linked and no .so files are =
+
+generated.  However, oFono can load external .so plugins as well.
+
+Regards,
 -Denis
 
---===============4337058684828415881==--
+--===============5756078413373302190==--
 
