@@ -1,81 +1,453 @@
-Content-Type: multipart/mixed; boundary="===============1148388816070978895=="
+Content-Type: multipart/mixed; boundary="===============6657077370234026499=="
 MIME-Version: 1.0
-From: Arun Ravindran <arunlee@gmail.com>
-Subject: Re: Ofono 0.20 compilation failed.
-Date: Fri, 21 May 2010 17:17:03 +0300
-Message-ID: <AANLkTinA9RHLODI1b7fKwYdPg0cLXj85eQsER0aDAVVJ@mail.gmail.com>
-In-Reply-To: <AANLkTimeGlGqUBT_-_Qd-rWmSx5KkdIrq1yN2BFUS1fg@mail.gmail.com>
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Subject: [PATCH 1/3] Add: Online property to modem
+Date: Fri, 21 May 2010 17:25:39 +0300
+Message-ID: <1274451941-10573-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1148388816070978895==
+--===============6657077370234026499==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dave,
+The online/offline state is changed with the new online() modem driver
+method.
 
-Yeh,  libdbus-1-dev was not  installed. Now ofono  is compiling.
+In order to track atoms, there are modem states as follows:
+- OFONO_MODEM_STATE_POWER_OFF
+- OFONO_MODEM_STATE_PRE_SIM
+- OFONO_MODEM_STATE_OFFLINE
+- OFONO_MODEM_STATE_ONLINE
 
-Thanks for the help.
+Atoms are removed by modem core according to the state. Atoms are added with
+driver methods pre_sim(), post_sim() and post_online().
+---
+ include/modem.h |   12 +++
+ src/modem.c     |  205 ++++++++++++++++++++++++++++++++++++++++++++-------=
+---
+ 2 files changed, 179 insertions(+), 38 deletions(-)
 
-Regards
-Arun
+diff --git a/include/modem.h b/include/modem.h
+index d502640..2e9bd87 100644
+--- a/include/modem.h
++++ b/include/modem.h
+@@ -50,6 +50,8 @@ void ofono_modem_remove(struct ofono_modem *modem);
+ void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool_t power=
+ed);
+ ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem);
+ =
+
++ofono_bool_t ofono_modem_get_online(struct ofono_modem *modem);
++
+ void ofono_modem_set_name(struct ofono_modem *modem, const char *name);
+ =
+
+ int ofono_modem_set_string(struct ofono_modem *modem,
+@@ -64,6 +66,9 @@ int ofono_modem_set_boolean(struct ofono_modem *modem,
+ 				const char *key, bool value);
+ bool ofono_modem_get_boolean(struct ofono_modem *modem, const char *key);
+ =
+
++typedef void (*ofono_modem_online_cb)(const struct ofono_error *error,
++				void *data);
++
+ struct ofono_modem_driver {
+ 	const char *name;
+ =
+
+@@ -80,11 +85,18 @@ struct ofono_modem_driver {
+ 	/* Power down device */
+ 	int (*disable)(struct ofono_modem *modem);
+ =
+
++	/* Enable or disable cellular radio */
++	void (*online)(struct ofono_modem *modem, ofono_bool_t online,
++		ofono_modem_online_cb callback, void *data);
++
+ 	/* Populate the atoms available without SIM / Locked SIM */
+ 	void (*pre_sim)(struct ofono_modem *modem);
+ =
+
+ 	/* Populate the atoms that are available with SIM / Unlocked SIM*/
+ 	void (*post_sim)(struct ofono_modem *modem);
++
++	/* Populate the atoms available online */
++	void (*post_online)(struct ofono_modem *modem);
+ };
+ =
+
+ int ofono_modem_driver_register(const struct ofono_modem_driver *);
+diff --git a/src/modem.c b/src/modem.c
+index 04fba15..bf78183 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -49,10 +49,17 @@ enum ofono_property_type {
+ 	OFONO_PROPERTY_TYPE_BOOLEAN,
+ };
+ =
+
++enum ofono_modem_state {
++	OFONO_MODEM_STATE_POWER_OFF,
++	OFONO_MODEM_STATE_PRE_SIM,
++	OFONO_MODEM_STATE_OFFLINE,
++	OFONO_MODEM_STATE_ONLINE,
++};
++
+ struct ofono_modem {
+ 	char			*path;
++	enum ofono_modem_state   modem_state;
+ 	GSList			*atoms;
+-	GSList			*pre_sim_atoms;
+ 	struct ofono_watchlist	*atom_watches;
+ 	GSList			*interface_list;
+ 	unsigned int		call_ids;
+@@ -61,6 +68,8 @@ struct ofono_modem {
+ 	ofono_bool_t		powered;
+ 	ofono_bool_t		powered_pending;
+ 	guint			timeout;
++	ofono_bool_t		online;
++	ofono_bool_t            online_pending;
+ 	GHashTable		*properties;
+ 	struct ofono_sim	*sim;
+ 	unsigned int		sim_watch;
+@@ -83,6 +92,7 @@ struct ofono_devinfo {
+ =
+
+ struct ofono_atom {
+ 	enum ofono_atom_type type;
++	enum ofono_modem_state modem_state;
+ 	void (*destruct)(struct ofono_atom *atom);
+ 	void (*unregister)(struct ofono_atom *atom);
+ 	void *data;
+@@ -160,6 +170,7 @@ struct ofono_atom *__ofono_modem_add_atom(struct ofono_=
+modem *modem,
+ 	atom =3D g_new0(struct ofono_atom, 1);
+ =
+
+ 	atom->type =3D type;
++	atom->modem_state =3D modem->modem_state;
+ 	atom->destruct =3D destruct;
+ 	atom->data =3D data;
+ 	atom->modem =3D modem;
+@@ -275,7 +286,6 @@ struct ofono_atom *__ofono_modem_find_atom(struct ofono=
+_modem *modem,
+ 		return NULL;
+ =
+
+ 	FIND_ATOM_IN_LIST(modem->atoms)
+-	FIND_ATOM_IN_LIST(modem->pre_sim_atoms);
+ =
+
+ 	return NULL;
+ }
+@@ -301,7 +311,6 @@ void __ofono_modem_foreach_atom(struct ofono_modem *mod=
+em,
+ 		return;
+ =
+
+ 	FOREACH_ATOM_IN_LIST(modem->atoms)
+-	FOREACH_ATOM_IN_LIST(modem->pre_sim_atoms)
+ }
+ =
+
+ void __ofono_atom_free(struct ofono_atom *atom)
+@@ -309,7 +318,6 @@ void __ofono_atom_free(struct ofono_atom *atom)
+ 	struct ofono_modem *modem =3D atom->modem;
+ =
+
+ 	modem->atoms =3D g_slist_remove(modem->atoms, atom);
+-	modem->pre_sim_atoms =3D g_slist_remove(modem->pre_sim_atoms, atom);
+ =
+
+ 	__ofono_atom_unregister(atom);
+ =
+
+@@ -319,13 +327,23 @@ void __ofono_atom_free(struct ofono_atom *atom)
+ 	g_free(atom);
+ }
+ =
+
+-static void remove_all_atoms(GSList **atoms)
++static void flush_atoms(struct ofono_modem *modem,
++			enum ofono_modem_state new_state)
+ {
+ 	GSList *l;
+ 	struct ofono_atom *atom;
+ =
+
+-	for (l =3D *atoms; l; l =3D l->next) {
+-		atom =3D l->data;
++	for (;;) {
++		for (l =3D modem->atoms; l; l =3D l->next) {
++			atom =3D l->data;
++			if (atom->modem_state > new_state)
++				break;
++		}
++
++		if (!l)
++			return;
++
++		modem->atoms =3D g_slist_delete_link(modem->atoms, l);
+ =
+
+ 		__ofono_atom_unregister(atom);
+ =
+
+@@ -334,9 +352,133 @@ static void remove_all_atoms(GSList **atoms)
+ =
+
+ 		g_free(atom);
+ 	}
++}
++
++static void modem_change_state(struct ofono_modem *modem,
++			enum ofono_modem_state new_state)
++{
++	struct ofono_modem_driver const *driver =3D modem->driver;
++	enum ofono_modem_state old_state =3D modem->modem_state;
++	ofono_bool_t online_changed =3D 0;
++
++	if (old_state =3D=3D new_state)
++		return;
++
++	modem->modem_state =3D new_state;
++
++	if (old_state > new_state)
++		flush_atoms(modem, new_state);
++
++	switch (new_state) {
++	case OFONO_MODEM_STATE_POWER_OFF:
++		modem->call_ids =3D 0;
++		if (modem->online)
++			modem->online =3D 0, online_changed =3D 1;
++		break;
++
++	case OFONO_MODEM_STATE_PRE_SIM:
++		if (modem->online)
++			modem->online =3D 0, online_changed =3D 1;
++		if (new_state > old_state) {
++			if (driver->pre_sim)
++				driver->pre_sim(modem);
++		} else if (online_changed) {
++			if (driver->online)
++				driver->online(modem, 0, NULL, NULL);
++		}
++		break;
++
++	case OFONO_MODEM_STATE_OFFLINE:
++		if (modem->online)
++			modem->online =3D 0, online_changed =3D 1;
++		if (new_state > old_state) {
++			if (driver->post_sim)
++				driver->post_sim(modem);
++			__ofono_history_probe_drivers(modem);
++			__ofono_nettime_probe_drivers(modem);
++		}
++		break;
++
++	case OFONO_MODEM_STATE_ONLINE:
++		if (!modem->online)
++			modem->online =3D 1, online_changed =3D 1;
++		if (driver->post_online)
++			driver->post_online(modem);
++		break;
++	}
+ =
+
+-	g_slist_free(*atoms);
+-	*atoms =3D NULL;
++	if (online_changed) {
++		DBusConnection *conn =3D ofono_dbus_get_connection();
++		ofono_dbus_signal_property_changed(conn, modem->path,
++					OFONO_MODEM_INTERFACE, "Online",
++					DBUS_TYPE_BOOLEAN, &modem->online);
++	}
++}
++
++static void set_online_callback(const struct ofono_error *error,
++				void *data)
++{
++	struct ofono_modem *modem =3D data;
++	DBusMessage *reply =3D NULL;
++	ofono_bool_t online =3D modem->online_pending;
++
++	if (error && error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		reply =3D __ofono_error_failed(modem->pending);
++		online =3D modem->online;
++	} else if (online && modem->modem_state < OFONO_MODEM_STATE_OFFLINE) {
++		reply =3D __ofono_error_failed(modem->pending);
++		online =3D FALSE;
++	} else
++		reply =3D dbus_message_new_method_return(modem->pending);
++
++	__ofono_dbus_pending_reply(&modem->pending, reply);
++
++	modem->online_pending =3D online;
++
++	if (modem->online =3D=3D online)
++		return;
++
++	if (online)
++		modem_change_state(modem, OFONO_MODEM_STATE_ONLINE);
++	else
++		modem_change_state(modem, OFONO_MODEM_STATE_OFFLINE);
++}
++
++static DBusMessage *set_property_online(struct ofono_modem *modem,
++					DBusMessage *msg,
++					DBusMessageIter *var)
++{
++	ofono_bool_t online;
++	const struct ofono_modem_driver *driver =3D modem->driver;
++
++	if (dbus_message_iter_get_arg_type(var) !=3D DBUS_TYPE_BOOLEAN)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_get_basic(var, &online);
++
++	if (modem->online =3D=3D online)
++		return dbus_message_new_method_return(msg);
++
++	if (!driver || !driver->online)
++		return __ofono_error_failed(msg);
++
++	if (modem->pending !=3D NULL)
++		return __ofono_error_busy(msg);
++
++	modem->pending =3D dbus_message_ref(msg);
++	modem->online_pending =3D online;
++
++	driver->online(modem, online, set_online_callback, modem);
++
++	return NULL;
++}
++
++ofono_bool_t ofono_modem_get_online(struct ofono_modem *modem)
++{
++	if (modem =3D=3D NULL)
++		return FALSE;
++
++	return modem->online;
+ }
+ =
+
+ static DBusMessage *modem_get_properties(DBusConnection *conn,
+@@ -361,6 +503,9 @@ static DBusMessage *modem_get_properties(DBusConnection=
+ *conn,
+ 					OFONO_PROPERTIES_ARRAY_SIGNATURE,
+ 					&dict);
+ =
+
++	ofono_dbus_dict_append(&dict, "Online", DBUS_TYPE_BOOLEAN,
++				&modem->online);
++
+ 	ofono_dbus_dict_append(&dict, "Powered", DBUS_TYPE_BOOLEAN,
+ 				&modem->powered);
+ =
+
+@@ -420,11 +565,8 @@ static int set_powered(struct ofono_modem *modem, ofon=
+o_bool_t powered)
+ 		return -EALREADY;
+ =
+
+ 	/* Remove the atoms even if the driver is no longer available */
+-	if (powered =3D=3D FALSE) {
+-		remove_all_atoms(&modem->atoms);
+-		remove_all_atoms(&modem->pre_sim_atoms);
+-		modem->call_ids =3D 0;
+-	}
++	if (powered =3D=3D FALSE)
++		modem_change_state(modem, OFONO_MODEM_STATE_POWER_OFF);
+ =
+
+ 	modem->powered_pending =3D powered;
+ =
+
+@@ -502,6 +644,9 @@ static DBusMessage *modem_set_property(DBusConnection *=
+conn,
+ =
+
+ 	dbus_message_iter_recurse(&iter, &var);
+ =
+
++	if (g_str_equal(name, "Online"))
++		return set_property_online(modem, msg, &var);
++
+ 	if (g_str_equal(name, "Powered") =3D=3D TRUE) {
+ 		ofono_bool_t powered;
+ 		int err;
+@@ -535,10 +680,8 @@ static DBusMessage *modem_set_property(DBusConnection =
+*conn,
+ 						"Powered", DBUS_TYPE_BOOLEAN,
+ 						&powered);
+ =
+
+-		if (powered) {
+-			if (modem->driver->pre_sim)
+-				modem->driver->pre_sim(modem);
+-		}
++		if (powered)
++			modem_change_state(modem, OFONO_MODEM_STATE_PRE_SIM);
+ =
+
+ 		return NULL;
+ 	}
+@@ -596,14 +739,10 @@ void ofono_modem_set_powered(struct ofono_modem *mode=
+m, ofono_bool_t powered)
+ 						"Powered", DBUS_TYPE_BOOLEAN,
+ 						&dbus_powered);
+ =
+
+-		if (powered) {
+-			if (modem->driver->pre_sim)
+-				modem->driver->pre_sim(modem);
+-		} else {
+-			remove_all_atoms(&modem->atoms);
+-			remove_all_atoms(&modem->pre_sim_atoms);
+-			modem->call_ids =3D 0;
+-		}
++		if (powered)
++			modem_change_state(modem, OFONO_MODEM_STATE_PRE_SIM);
++		else
++			modem_change_state(modem, OFONO_MODEM_STATE_POWER_OFF);
+ 	}
+ =
+
+ 	if (powering_down && powered =3D=3D FALSE) {
+@@ -1132,22 +1271,12 @@ static void modem_sim_ready(void *user, enum ofono_=
+sim_state new_state)
+ =
+
+ 	switch (new_state) {
+ 	case OFONO_SIM_STATE_NOT_PRESENT:
+-		if (modem->pre_sim_atoms !=3D NULL)
+-			remove_all_atoms(&modem->atoms);
++		modem_change_state(modem, OFONO_MODEM_STATE_PRE_SIM);
+ 		break;
+ 	case OFONO_SIM_STATE_INSERTED:
+ 		break;
+ 	case OFONO_SIM_STATE_READY:
+-		if (modem->pre_sim_atoms =3D=3D NULL) {
+-			modem->pre_sim_atoms =3D modem->atoms;
+-			modem->atoms =3D NULL;
+-		}
+-
+-		if (modem->driver->post_sim)
+-			modem->driver->post_sim(modem);
+-
+-		__ofono_history_probe_drivers(modem);
+-		__ofono_nettime_probe_drivers(modem);
++		modem_change_state(modem, OFONO_MODEM_STATE_OFFLINE);
+ 	}
+ }
+ =
+
+-- =
+
+1.6.3.3
 
 
-On Fri, May 21, 201.0 at 5:12 PM, Dave Joubert
-<dave.joubert@googlemail.com>wrote:
-
-> On 21 May 2010 15:04, Arun Ravindran <arunlee@gmail.com> wrote:
-> ......
-> > checking for GLIB... yes
-> > checking for DBUS... no
-> > configure: error: D-Bus >=3D 1.0 is required
-> >
-> -------------------------------------------------------------------------=
-----------------------------------
-> >
-> > i checked the dbus version
->
-> Have you checked (say using dpkg) that you have the development
-> libraries ? example libdbus-1-dev
->
-> Dave
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
-
---===============1148388816070978895==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-SGkgRGF2ZSw8YnI+PGJyPlllaCygIGxpYmRidXMtMS1kZXYgd2FzIG5vdKAgaW5zdGFsbGVkLiBO
-b3cgb2Zvbm+gIGlzIGNvbXBpbGluZy48YnI+PGJyPlRoYW5rcyBmb3IgdGhlIGhlbHAuPGJyPjxi
-cj5SZWdhcmRzPGJyPkFydW48YnI+PGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+T24g
-RnJpLCBNYXkgMjEsIDIwMS4wIGF0IDU6MTIgUE0sIERhdmUgSm91YmVydCA8c3BhbiBkaXI9Imx0
-ciI+Jmx0OzxhIGhyZWY9Im1haWx0bzpkYXZlLmpvdWJlcnRAZ29vZ2xlbWFpbC5jb20iPmRhdmUu
-am91YmVydEBnb29nbGVtYWlsLmNvbTwvYT4mZ3Q7PC9zcGFuPiB3cm90ZTo8YnI+CjxibG9ja3F1
-b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9ImJvcmRlci1sZWZ0OiAxcHggc29saWQgcmdi
-KDIwNCwgMjA0LCAyMDQpOyBtYXJnaW46IDBwdCAwcHQgMHB0IDAuOGV4OyBwYWRkaW5nLWxlZnQ6
-IDFleDsiPk9uIDIxIE1heSAyMDEwIDE1OjA0LCBBcnVuIFJhdmluZHJhbiAmbHQ7PGEgaHJlZj0i
-bWFpbHRvOmFydW5sZWVAZ21haWwuY29tIj5hcnVubGVlQGdtYWlsLmNvbTwvYT4mZ3Q7IHdyb3Rl
-Ojxicj4KCi4uLi4uLjxicj4KPGRpdiBjbGFzcz0iaW0iPiZndDsgY2hlY2tpbmcgZm9yIEdMSUIu
-Li4geWVzPGJyPgomZ3Q7IGNoZWNraW5nIGZvciBEQlVTLi4uIG5vPGJyPgomZ3Q7IGNvbmZpZ3Vy
-ZTogZXJyb3I6IEQtQnVzICZndDs9IDEuMCBpcyByZXF1aXJlZDxicj4KJmd0OyAtLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLTxicj4KJmd0Ozxicj4KJmd0
-OyBpIGNoZWNrZWQgdGhlIGRidXMgdmVyc2lvbjxicj4KPGJyPgo8L2Rpdj5IYXZlIHlvdSBjaGVj
-a2VkIChzYXkgdXNpbmcgZHBrZykgdGhhdCB5b3UgaGF2ZSB0aGUgZGV2ZWxvcG1lbnQ8YnI+Cmxp
-YnJhcmllcyA/IGV4YW1wbGUgbGliZGJ1cy0xLWRldjxicj4KPGJyPgpEYXZlPGJyPgpfX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXzxicj4Kb2Zvbm8gbWFpbGlu
-ZyBsaXN0PGJyPgo8YSBocmVmPSJtYWlsdG86b2Zvbm9Ab2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5v
-cmc8L2E+PGJyPgo8YSBocmVmPSJodHRwOi8vbGlzdHMub2Zvbm8ub3JnL2xpc3RpbmZvL29mb25v
-IiB0YXJnZXQ9Il9ibGFuayI+aHR0cDovL2xpc3RzLm9mb25vLm9yZy9saXN0aW5mby9vZm9ubzwv
-YT48YnI+CjwvYmxvY2txdW90ZT48L2Rpdj48YnI+Cg==
-
---===============1148388816070978895==--
+--===============6657077370234026499==--
 
