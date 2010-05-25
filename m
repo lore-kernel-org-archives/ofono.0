@@ -1,59 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============9211155891440864681=="
+Content-Type: multipart/mixed; boundary="===============2277478764487023640=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v2] huawei: follow sim state change notifications
-Date: Tue, 25 May 2010 11:15:42 +0200
-Message-ID: <1274778942.27220.125.camel@localhost.localdomain>
-In-Reply-To: <20100525084857.1105.91785.stgit@potku.valot.fi>
+From: Daniele Palmas <Daniele.Palmas@telit.com>
+Subject: Examples in C for Ofono
+Date: Tue, 25 May 2010 11:30:19 +0200
+Message-ID: <24A9345B397CD24AA76A4E82E237956531ECEA190B@XCHTS.tmt.telital.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9211155891440864681==
+--===============2277478764487023640==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+Hello,
 
-> With Huawei E1552 I got sim busy errors when I plugged in the modem
-> and ofono was already running:
-> =
+I've written some simple examples for using Ofono in C, similar to those in=
+ Python inside the test directory. Do you think these can be useful for the=
+ project?
 
-> May 24 17:02:04 tukki ofonod[7619]: > AT+CRC=3D1\r
-> May 24 17:02:04 tukki ofonod[7619]: < \r\n+CME ERROR: SIM busy\r\n
-> May 24 17:02:04 tukki ofonod[7619]: > AT+CLIP=3D1\r
-> May 24 17:02:04 tukki ofonod[7619]: < \r\n+CME ERROR: SIM busy\r\n
-> =
+Regards,
+Daniele
 
-> Fix this by following sim state changes with ^SIMST notification and
-> only enable modem after SIM is ready. In case SIM is already ready
-> and we miss the notification for some reason, also use AT^SYSINFO
-> to check the state during enable phase.
-> =
+--===============2277478764487023640==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> Also change huawei_enable() to return -EINPROGRESS to make sure that
-> ofono modem is not powered too early. I believe this was a bug.
-> ---
-> =
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxucz0iaHR0
+cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPE1FVEEgSFRUUC1FUVVJVj0i
+Q29udGVudC1UeXBlIiBDT05URU5UPSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0
+YSBuYW1lPUdlbmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMSAoZmlsdGVyZWQgbWVk
+aXVtKSI+CjxzdHlsZT4KPCEtLQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFs
+LCBsaS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRv
+bTouMDAwMXB0OwoJZm9udC1zaXplOjEyLjBwdDsKCWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9t
+YW4iO30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29y
+YXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7
+Y29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnNwYW4uRW1haWxTdHls
+ZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OkFyaWFs
+OwoJY29sb3I6d2luZG93dGV4dDt9CkBwYWdlIFNlY3Rpb24xCgl7c2l6ZTo2MTIuMHB0IDc5Mi4w
+cHQ7CgltYXJnaW46NzIuMHB0IDkwLjBwdCA3Mi4wcHQgOTAuMHB0O30KZGl2LlNlY3Rpb24xCgl7
+cGFnZTpTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgoKPC9oZWFkPgoKPGJvZHkgbGFuZz1FTi1VUyBs
+aW5rPWJsdWUgdmxpbms9cHVycGxlPgoKPGRpdiBjbGFzcz1TZWN0aW9uMT4KCjxwIGNsYXNzPU1z
+b05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjEw
+LjBwdDsKZm9udC1mYW1pbHk6QXJpYWwnPkhlbGxvLDxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48
+L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gc3R5
+bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsJz48bzpwPiZuYnNwOzwvbzpw
+Pjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNl
+PUFyaWFsPjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlhbCc+
+SSYjODIxNzt2ZSB3cml0dGVuIHNvbWUgc2ltcGxlIGV4YW1wbGVzIGZvciB1c2luZyBPZm9ubyBp
+bgpDLCBzaW1pbGFyIHRvIHRob3NlIGluIFB5dGhvbiBpbnNpZGUgdGhlIHRlc3QgZGlyZWN0b3J5
+LiBEbyB5b3UgdGhpbmsgdGhlc2UgY2FuCmJlIHVzZWZ1bCBmb3IgdGhlIHByb2plY3Q/PG86cD48
+L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIg
+ZmFjZT1BcmlhbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6QXJp
+YWwnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3Jt
+YWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7
+CmZvbnQtZmFtaWx5OkFyaWFsJz5SZWdhcmRzLDxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+
+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gc3R5bGU9
+J2ZvbnQtc2l6ZToxMC4wcHQ7CmZvbnQtZmFtaWx5OkFyaWFsJz5EYW5pZWxlPG86cD48L286cD48
+L3NwYW4+PC9mb250PjwvcD4KCjwvZGl2PgoKPC9ib2R5PgoKPC9odG1sPgo=
 
->  plugins/huawei.c |   76 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++--
->  1 files changed, 73 insertions(+), 3 deletions(-)
-
-patch has been applied. Thanks.
-
-> +static void huawei_simst_notify(GAtResult *result, gpointer user_data)
-> +{
-
-I did some minor cleanups since huawei_ prefix should only be used for
-functions referenced in driver callbacks. Not the ones used for GAtChat
-callbacks. However that is so not obvious that I fixed it by myself ;)
-
-Regards
-
-Marcel
-
-
-
---===============9211155891440864681==--
+--===============2277478764487023640==--
 
