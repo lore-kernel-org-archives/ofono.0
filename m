@@ -1,40 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============4615774404699999525=="
+Content-Type: multipart/mixed; boundary="===============9211155891440864681=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Bring back -d option without need for argument
-Date: Tue, 25 May 2010 11:09:46 +0200
-Message-ID: <1274778586.27220.123.camel@localhost.localdomain>
-In-Reply-To: <1274774961-11297-1-git-send-email-gustavo@padovan.org>
+Subject: Re: [PATCH v2] huawei: follow sim state change notifications
+Date: Tue, 25 May 2010 11:15:42 +0200
+Message-ID: <1274778942.27220.125.camel@localhost.localdomain>
+In-Reply-To: <20100525084857.1105.91785.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4615774404699999525==
+--===============9211155891440864681==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Kalle,
 
-> ---
->  src/main.c |   13 ++++++++++++-
->  1 files changed, 12 insertions(+), 1 deletions(-)
+> With Huawei E1552 I got sim busy errors when I plugged in the modem
+> and ofono was already running:
 > =
 
-> diff --git a/src/main.c b/src/main.c
-> index 8e686ac..8f4092c 100644
-> --- a/src/main.c
-> +++ b/src/main.c
-> @@ -96,8 +96,19 @@ static gchar *option_debug =3D NULL;
->  static gboolean option_detach =3D TRUE;
->  static gboolean option_version =3D FALSE;
->  =
+> May 24 17:02:04 tukki ofonod[7619]: > AT+CRC=3D1\r
+> May 24 17:02:04 tukki ofonod[7619]: < \r\n+CME ERROR: SIM busy\r\n
+> May 24 17:02:04 tukki ofonod[7619]: > AT+CLIP=3D1\r
+> May 24 17:02:04 tukki ofonod[7619]: < \r\n+CME ERROR: SIM busy\r\n
+> =
 
-> +static gboolean parse_debug(const char *key, const char *value, gpointer=
- user_data, GError **error)
+> Fix this by following sim state changes with ^SIMST notification and
+> only enable modem after SIM is ready. In case SIM is already ready
+> and we miss the notification for some reason, also use AT^SYSINFO
+> to check the state during enable phase.
+> =
+
+> Also change huawei_enable() to return -EINPROGRESS to make sure that
+> ofono modem is not powered too early. I believe this was a bug.
+> ---
+> =
+
+>  plugins/huawei.c |   76 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++--
+>  1 files changed, 73 insertions(+), 3 deletions(-)
+
+patch has been applied. Thanks.
+
+> +static void huawei_simst_notify(GAtResult *result, gpointer user_data)
 > +{
 
-patch has been applied, but same as with ConnMan, this declaration is
-too long.
+I did some minor cleanups since huawei_ prefix should only be used for
+functions referenced in driver callbacks. Not the ones used for GAtChat
+callbacks. However that is so not obvious that I fixed it by myself ;)
 
 Regards
 
@@ -42,5 +55,5 @@ Marcel
 
 
 
---===============4615774404699999525==--
+--===============9211155891440864681==--
 
