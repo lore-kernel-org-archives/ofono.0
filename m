@@ -1,125 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============8313017624752136274=="
+Content-Type: multipart/mixed; boundary="===============4364008955080185668=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: [PATCH 7/9] Move create_path() to bluetooth plugin
-Date: Tue, 25 May 2010 04:18:06 -0300
-Message-ID: <1274771888-2565-8-git-send-email-gustavo@padovan.org>
-In-Reply-To: <1274771888-2565-7-git-send-email-gustavo@padovan.org>
+Subject: Re: [PATCH 2/9] Remove hack around hfp agent interface
+Date: Tue, 25 May 2010 04:49:53 -0300
+Message-ID: <20100525074952.GA2710@vigoh>
+In-Reply-To: <1274771888-2565-3-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8313017624752136274==
+--===============4364008955080185668==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/bluetooth.c |   22 ++++++++++++++++++++++
- plugins/bluetooth.h |    1 +
- plugins/hfp.c       |   25 +------------------------
- 3 files changed, 24 insertions(+), 24 deletions(-)
+* Gustavo F. Padovan <gustavo@padovan.org> [2010-05-25 04:18:01 -0300]:
 
-diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index fc89579..49d1b5e 100644
---- a/plugins/bluetooth.c
-+++ b/plugins/bluetooth.c
-@@ -40,6 +40,28 @@ static DBusConnection *connection;
- static GHashTable *uuid_hash =3D NULL;
- static GHashTable *adapter_address_hash =3D NULL;
- =
+> In the past we did this dirty hack to quickly fix HFP for the release, now
+> fixing it in a proper way.
+> ---
+>  drivers/hfpmodem/hfpmodem.h |    1 -
+>  plugins/hfp.c               |   12 +++---------
+>  2 files changed, 3 insertions(+), 10 deletions(-)
+> =
 
-+void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,=
- char *buf, int size)
-+{
-+	int i, j;
-+
-+	for (i =3D 0, j =3D 0; adapter_addr[j] && i < size - 1; j++)
-+		if (adapter_addr[j] >=3D '0' && adapter_addr[j] <=3D '9')
-+			buf[i++] =3D adapter_addr[j];
-+		else if (adapter_addr[j] >=3D 'A' && adapter_addr[j] <=3D 'F')
-+			buf[i++] =3D adapter_addr[j];
-+
-+	if (i < size - 1)
-+		buf[i++] =3D '_';
-+
-+	for (j =3D 0; dev_addr[j] && i < size - 1; j++)
-+		if (dev_addr[j] >=3D '0' && dev_addr[j] <=3D '9')
-+			buf[i++] =3D dev_addr[j];
-+		else if (dev_addr[j] >=3D 'A' && dev_addr[j] <=3D 'F')
-+			buf[i++] =3D dev_addr[j];
-+
-+	buf[i] =3D '\0';
-+}
-+
- static int send_method_call_with_reply(const char *dest, const char *path,
- 				const char *interface, const char *method,
- 				DBusPendingCallNotifyFunction cb,
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index 99bd617..4019daa 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -43,5 +43,6 @@ struct bluetooth_profile {
- int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
-ofile);
- void bluetooth_unregister_uuid(const char *uuid);
- =
 
-+void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,=
- char *buf, int size);
- =
 
- #endif /* __BLUETOOTH_H */
-diff --git a/plugins/hfp.c b/plugins/hfp.c
-index ea34f4c..13439d9 100644
---- a/plugins/hfp.c
-+++ b/plugins/hfp.c
-@@ -446,29 +446,6 @@ static GDBusMethodTable agent_methods[] =3D {
- 	{ NULL, NULL, NULL, NULL }
- };
- =
+The first two were refused. The following patches still apply cleanly from
+here.
 
--static void create_path(const char *dev_addr, const char *adapter_addr,
--			char *buf, int size)
--{
--	int i, j;
--
--	for (i =3D 0, j =3D 0; adapter_addr[j] && i < size - 1; j++)
--		if (adapter_addr[j] >=3D '0' && adapter_addr[j] <=3D '9')
--			buf[i++] =3D adapter_addr[j];
--		else if (adapter_addr[j] >=3D 'A' && adapter_addr[j] <=3D 'F')
--			buf[i++] =3D adapter_addr[j];
--
--	if (i < size - 1)
--		buf[i++] =3D '_';
--
--	for (j =3D 0; dev_addr[j] && i < size - 1; j++)
--		if (dev_addr[j] >=3D '0' && dev_addr[j] <=3D '9')
--			buf[i++] =3D dev_addr[j];
--		else if (dev_addr[j] >=3D 'A' && dev_addr[j] <=3D 'F')
--			buf[i++] =3D dev_addr[j];
--
--	buf[i] =3D '\0';
--}
--
- static int hfp_create_modem(const char *device, const char *dev_addr,
- 				const char *adapter_addr, const char *alias)
- {
-@@ -484,7 +461,7 @@ static int hfp_create_modem(const char *device, const c=
-har *dev_addr,
- 			device, dev_addr, adapter_addr);
- =
-
- 	strcpy(buf, "hfp/");
--	create_path(dev_addr, adapter_addr, buf + 4, sizeof(buf) - 4);
-+	bluetooth_create_path(dev_addr, adapter_addr, buf + 4, sizeof(buf) - 4);
- =
-
- 	modem =3D ofono_modem_create(buf, "hfp");
- 	if (modem =3D=3D NULL)
 -- =
 
-1.7.1
+Gustavo F. Padovan
+http://padovan.org
 
-
---===============8313017624752136274==--
+--===============4364008955080185668==--
 
