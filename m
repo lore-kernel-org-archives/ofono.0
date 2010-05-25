@@ -1,149 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============0088522300015679821=="
+Content-Type: multipart/mixed; boundary="===============6194897135770830787=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: [PATCH 1/2] atmodem: fix crash during context deactivation
-Date: Tue, 25 May 2010 14:39:01 +0300
-Message-ID: <20100525113901.6786.73777.stgit@potku.valot.fi>
+Subject: [PATCH 2/2] atmodem: timeout for gprs context deactivation
+Date: Tue, 25 May 2010 14:39:08 +0300
+Message-ID: <20100525113908.6786.72506.stgit@potku.valot.fi>
+In-Reply-To: <20100525113901.6786.73777.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0088522300015679821==
+--===============6194897135770830787==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Ofono either crashed or busy looped with my Huawei E1552 3G modem when I
-tried to deactivate GPRS context. The reason was that gcd->chat was
-unreferenced already in setup_ppp() but the chat was still accessed
-later in at_gprs_deactivate_primary().
+Huawei modems have an annoying feature to hangup the chat line
+after ppp shutdown. Basically what happens is this:
 
-To fix the problem, change the logic instead to suspend chat session
-for PPP and resume when PPP has disconnected. Now it doesn't crash
-anymore.
+14:15:08 ofonod[11768]: > AT+CGACT=3D0,1\r
+14:15:09 ofonod[11768]: EventChannel: < \r\n^BOOT:38645652,0,0,0,87\r\n
+14:15:10 ofonod[11768]: EventChannel: < \r\n^RSSI:22\r\n
 
-Deactivation still doesn't work properly with Huawei E1552, and most
-probably with other Huawei modems, because the modem hangs up the chat
-line after PPP deactivation. This needs to be fixed separately.
+ofono sends AT+CGACT to the modem but does not get any reply and will
+wait forever.
+
+Workaround the issue by adding a five second timeout for the CGACT command.
+This makes it possible to properly use huawei modems with connman. Without
+this patch you can connect only once from connman and then you have to
+restart connman.
 ---
 
- drivers/atmodem/gprs-context.c |   64 ++++++++++++++++++++++++++----------=
-----
- 1 files changed, 42 insertions(+), 22 deletions(-)
+ drivers/atmodem/gprs-context.c |   35 +++++++++++++++++++++++++++++++++++
+ 1 files changed, 35 insertions(+), 0 deletions(-)
 
 diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index ba5f0c0..4412a07 100644
+index 4412a07..82e923e 100644
 --- a/drivers/atmodem/gprs-context.c
 +++ b/drivers/atmodem/gprs-context.c
-@@ -103,14 +103,44 @@ static void ppp_disconnect(GAtPPPDisconnectReason rea=
-son, gpointer user_data)
- {
- 	struct ofono_gprs_context *gc =3D user_data;
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-+	struct cb_data *cbd;
-+	char buf[64];
-+	guint ret;
+@@ -63,8 +63,31 @@ struct gprs_context_data {
+ 		ofono_gprs_context_up_cb_t up_cb;       /* Up callback */
+ 	};
+ 	void *cb_data;                                  /* Callback data */
++	gint cgact_timeout;
+ };
+ =
+
++static gboolean cgact_timeout(gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_gprs_context_cb_t cb =3D cbd->cb;
++	struct ofono_gprs_context *gc =3D cbd->user;
++	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	struct ofono_error error;
 +
 +	DBG("");
 +
-+	g_at_chat_resume(gcd->chat);
++	gcd->cgact_timeout =3D 0;
++
++	error.type =3D OFONO_ERROR_TYPE_NO_ERROR;
++	error.error =3D 0;
++
++	cb(&error, cbd->data);
++
++	g_free(cbd);
++
++	return FALSE;
++}
++
+ static void at_cgact_down_cb(gboolean ok, GAtResult *result, gpointer user=
+_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+@@ -73,6 +96,13 @@ static void at_cgact_down_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+ 	struct ofono_error error;
  =
 
- 	if (gcd->state =3D=3D STATE_ENABLING) {
- 		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, FALSE, NULL,
- 					NULL, NULL, NULL, gcd->cb_data);
--		return;
-+	} else if (gcd->state =3D=3D STATE_DISABLING) {
-+		cbd =3D cb_data_new(gcd->down_cb, gcd->cb_data);
++	if (gcd->cgact_timeout =3D=3D 0)
++		/* already timed out */
++		return;
 +
-+		if (cbd =3D=3D NULL) {
-+			CALLBACK_WITH_FAILURE(gcd->down_cb, gcd->cb_data);
-+			goto out;
-+		}
++	g_source_remove(gcd->cgact_timeout);
++	gcd->cgact_timeout =3D 0;
 +
-+		cbd->user =3D gc;
+ 	if (ok)
+ 		gcd->active_context =3D 0;
+ =
+
+@@ -136,6 +166,11 @@ static void ppp_disconnect(GAtPPPDisconnectReason reas=
+on, gpointer user_data)
+ 			g_free(cbd);
+ 			goto out;
+ 		}
 +
-+		snprintf(buf, sizeof(buf), "AT+CGACT=3D0,%u",
-+				gcd->active_context);
++		/* workaround for huawei hangup problem */
++		gcd->cgact_timeout =3D g_timeout_add_seconds(5, cgact_timeout,
++							cbd);
 +
-+		ret =3D g_at_chat_send(gcd->chat, buf, none_prefix,
-+					at_cgact_down_cb, cbd, g_free);
-+
-+		if (ret =3D=3D 0) {
-+			ofono_info("Unable to send AT+CGACT=3D0");
-+			CALLBACK_WITH_FAILURE(gcd->down_cb, gcd->cb_data);
-+			g_free(cbd);
-+			goto out;
-+		}
-+	} else {
-+		ofono_gprs_context_deactivated(gc, gcd->active_context);
+ 	} else {
+ 		ofono_gprs_context_deactivated(gc, gcd->active_context);
  	}
- =
-
--	ofono_gprs_context_deactivated(gc, gcd->active_context);
-+out:
- 	gcd->active_context =3D 0;
- 	gcd->state =3D STATE_IDLE;
- }
-@@ -118,13 +148,14 @@ static void ppp_disconnect(GAtPPPDisconnectReason rea=
-son, gpointer user_data)
- static gboolean setup_ppp(struct ofono_gprs_context *gc)
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
--	GIOChannel *channel;
-+	GAtIO *io;
-+
-+	io =3D g_at_chat_get_io(gcd->chat);
- =
-
--	channel =3D g_at_chat_get_channel(gcd->chat);
--	g_at_chat_unref(gcd->chat);
-+	g_at_chat_suspend(gcd->chat);
- =
-
- 	/* open ppp */
--	gcd->ppp =3D g_at_ppp_new(channel);
-+	gcd->ppp =3D g_at_ppp_new_from_io(io);
- =
-
- 	if (gcd->ppp =3D=3D NULL)
- 		return FALSE;
-@@ -227,25 +258,14 @@ static void at_gprs_deactivate_primary(struct ofono_g=
-prs_context *gc,
- 					ofono_gprs_context_cb_t cb, void *data)
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
--	struct cb_data *cbd =3D cb_data_new(cb, data);
--	char buf[64];
- =
-
--	if (!cbd)
--		goto error;
-+	DBG("");
- =
-
--	cbd->user =3D gc;
--
--	snprintf(buf, sizeof(buf), "AT+CGACT=3D0,%u", id);
--
--	if (g_at_chat_send(gcd->chat, buf, none_prefix,
--				at_cgact_down_cb, cbd, g_free) > 0)
--		return;
--
--error:
--	if (cbd)
--		g_free(cbd);
-+	gcd->state =3D STATE_DISABLING;
-+	gcd->down_cb =3D cb;
-+	gcd->cb_data =3D data;
- =
-
--	CALLBACK_WITH_FAILURE(cb, data);
-+	g_at_ppp_shutdown(gcd->ppp);
- }
- =
-
- static int at_gprs_context_probe(struct ofono_gprs_context *gc,
 
 
---===============0088522300015679821==--
+--===============6194897135770830787==--
 
