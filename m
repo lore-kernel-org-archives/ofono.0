@@ -1,103 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============5958517290154243816=="
+Content-Type: multipart/mixed; boundary="===============4029353831603203622=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: [PATCH 2/9] Remove hack around hfp agent interface
-Date: Tue, 25 May 2010 04:18:01 -0300
-Message-ID: <1274771888-2565-3-git-send-email-gustavo@padovan.org>
-In-Reply-To: <1274771888-2565-2-git-send-email-gustavo@padovan.org>
+Subject: [PATCH 3/9] Bring back -d option without need for argument
+Date: Tue, 25 May 2010 04:18:02 -0300
+Message-ID: <1274771888-2565-4-git-send-email-gustavo@padovan.org>
+In-Reply-To: <1274771888-2565-3-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5958517290154243816==
+--===============4029353831603203622==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-In the past we did this dirty hack to quickly fix HFP for the release, now
-fixing it in a proper way.
 ---
- drivers/hfpmodem/hfpmodem.h |    1 -
- plugins/hfp.c               |   12 +++---------
- 2 files changed, 3 insertions(+), 10 deletions(-)
+ src/main.c |   13 ++++++++++++-
+ 1 files changed, 12 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/hfpmodem/hfpmodem.h b/drivers/hfpmodem/hfpmodem.h
-index c95ea3f..6ec8a7c 100644
---- a/drivers/hfpmodem/hfpmodem.h
-+++ b/drivers/hfpmodem/hfpmodem.h
-@@ -71,7 +71,6 @@ struct hfp_data {
- 	unsigned int hf_features;
- 	unsigned char cind_pos[HFP_INDICATOR_LAST];
- 	unsigned int cind_val[HFP_INDICATOR_LAST];
--	gboolean agent_registered;
- };
+diff --git a/src/main.c b/src/main.c
+index 8e686ac..8f4092c 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -96,8 +96,19 @@ static gchar *option_debug =3D NULL;
+ static gboolean option_detach =3D TRUE;
+ static gboolean option_version =3D FALSE;
  =
 
- extern void hfp_netreg_init();
-diff --git a/plugins/hfp.c b/plugins/hfp.c
-index e37c9fc..b253781 100644
---- a/plugins/hfp.c
-+++ b/plugins/hfp.c
-@@ -552,11 +552,9 @@ static DBusMessage *hfp_agent_release(DBusConnection *=
-conn,
- 					DBusMessage *msg, void *data)
- {
- 	struct ofono_modem *modem =3D data;
--	struct hfp_data *hfp_data =3D ofono_modem_get_data(modem);
- 	const char *obj_path =3D ofono_modem_get_path(modem);
- =
-
- 	g_dbus_unregister_interface(connection, obj_path, HFP_AGENT_INTERFACE);
--	hfp_data->agent_registered =3D FALSE;
- =
-
- 	ofono_modem_remove(modem);
- =
-
-@@ -950,16 +948,10 @@ static int hfp_unregister_ofono_handsfree(struct ofon=
-o_modem *modem)
- static int hfp_probe(struct ofono_modem *modem)
- {
- 	const char *obj_path =3D ofono_modem_get_path(modem);
--	struct hfp_data *data =3D ofono_modem_get_data(modem);
--
--	if (!data)
--		return -EINVAL;
- =
-
- 	g_dbus_register_interface(connection, obj_path, HFP_AGENT_INTERFACE,
- 			agent_methods, NULL, NULL, modem, NULL);
- =
-
--	data->agent_registered =3D TRUE;
--
- 	if (hfp_register_ofono_handsfree(modem) !=3D 0)
- 		return -EINVAL;
- =
-
-@@ -1062,13 +1054,15 @@ done:
- static int hfp_disable(struct ofono_modem *modem)
- {
- 	struct hfp_data *data =3D ofono_modem_get_data(modem);
-+	const char *obj_path =3D ofono_modem_get_path(modem);
- 	int status;
- =
-
- 	DBG("%p", modem);
- =
-
- 	clear_data(modem);
- =
-
--	if (data->agent_registered) {
-+	if (g_dbus_interface_is_registered(connection, obj_path,
-+						HFP_AGENT_INTERFACE)) {
- 		status =3D send_method_call_with_reply(BLUEZ_SERVICE,
- 					data->handsfree_path,
- 					BLUEZ_GATEWAY_INTERFACE, "Disconnect",
++static gboolean parse_debug(const char *key, const char *value, gpointer u=
+ser_data, GError **error)
++{
++	if (value)
++		option_debug =3D g_strdup(value);
++	else
++		option_debug =3D g_strdup("*");
++
++	return TRUE;
++}
++
+ static GOptionEntry options[] =3D {
+-	{ "debug", 'd', 0, G_OPTION_ARG_STRING, &option_debug,
++	{ "debug", 'd', G_OPTION_FLAG_OPTIONAL_ARG,
++				G_OPTION_ARG_CALLBACK, parse_debug,
+ 				"Specify debug options to enable", "DEBUG" },
+ 	{ "nodetach", 'n', G_OPTION_FLAG_REVERSE,
+ 				G_OPTION_ARG_NONE, &option_detach,
 -- =
 
 1.7.1
 
 
---===============5958517290154243816==--
+--===============4029353831603203622==--
 
