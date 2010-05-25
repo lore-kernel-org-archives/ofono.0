@@ -1,40 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4557956383158442408=="
+Content-Type: multipart/mixed; boundary="===============3613622321219540875=="
 MIME-Version: 1.0
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
-Subject: [PATCH 3/4] isimodem: fix memory leak
-Date: Tue, 25 May 2010 23:37:06 +0300
-Message-ID: <1274819827-27993-3-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1274819827-27993-2-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [PATCH 4/4] isimodem: fix confusing log message
+Date: Tue, 25 May 2010 23:37:07 +0300
+Message-ID: <1274819827-27993-4-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1274819827-27993-3-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4557956383158442408==
+--===============3613622321219540875==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/isimodem/isimodem.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ drivers/isimodem/sms.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/isimodem/isimodem.c b/drivers/isimodem/isimodem.c
-index 4085a55..9a5e87e 100644
---- a/drivers/isimodem/isimodem.c
-+++ b/drivers/isimodem/isimodem.c
-@@ -289,6 +289,7 @@ static void isi_modem_remove(struct ofono_modem *modem)
- =
-
- 	ofono_modem_set_data(modem, NULL);
- 	g_isi_client_destroy(isi->client);
-+	g_pn_netlink_stop(isi->link);
- 	g_free(isi);
- }
- =
-
+diff --git a/drivers/isimodem/sms.c b/drivers/isimodem/sms.c
+index b605160..768d38b 100644
+--- a/drivers/isimodem/sms.c
++++ b/drivers/isimodem/sms.c
+@@ -472,7 +472,7 @@ static bool routing_resp_cb(GIsiClient *client, const v=
+oid *restrict data,
+ 				"already\n  registered as the SMS "
+ 				"routing endpoint.\n  As a consequence, "
+ 				"receiving SMSs is NOT going to work.\n  "
+-				"Receiving on the other hand might work.\n\n",
++				"On the other hand, sending might work.\n\n",
+ 				msg[1], sms_isi_cause_name(msg[1]));
+ 			ofono_sms_register(sms);
+ 		}
 -- =
 
 1.6.3.3
 
 
---===============4557956383158442408==--
+--===============3613622321219540875==--
 
