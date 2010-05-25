@@ -1,46 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============1418821557848064903=="
+Content-Type: multipart/mixed; boundary="===============2942473120696030528=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
-Subject: Re: [PATCH 3/3] Add: online and post_online methods to isimodem driver
-Date: Wed, 26 May 2010 00:01:16 +0300
-Message-ID: <201005260001.17101.remi@remlab.net>
-In-Reply-To: <1274820669.3755.448.camel@tucson.research.nokia.com>
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Subject: [PATCH 2/4] Add: test scripts online-modem and offline-modem
+Date: Wed, 26 May 2010 00:14:39 +0300
+Message-ID: <1274822081-930-2-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1274822081-930-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1418821557848064903==
+--===============2942473120696030528==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Le mardi 25 mai 2010 23:51:09 Aki Niemi, vous avez =C3=A9crit :
-> > i.e. if ISI online status equals to MTC state normal, then no error,
-> > otherwise, error. C does not provide a *logical* XOR operator that would
-> > simplify this.
-> =
+---
+ test/offline-modem |   17 +++++++++++++++++
+ test/online-modem  |   17 +++++++++++++++++
+ 2 files changed, 34 insertions(+), 0 deletions(-)
+ create mode 100755 test/offline-modem
+ create mode 100755 test/online-modem
 
-> It just isn't very readable.
-> =
-
-> Write that open, and I am able to parse it, so I think something like
-> this would be better:
-> =
-
-> bool not_online =3D isi->online !=3D TRUE;
-> bool not_normal =3D mtc_state !=3D MTC_NORMAL;
-> =
-
-> struct ofono_error error =3D {
-> 	not_normal && not_online ? NO_ERROR : FAILURE;
-> };
-
-Err no. You've put a logical AND where Pekka had a logical NOT XOR.
-
+diff --git a/test/offline-modem b/test/offline-modem
+new file mode 100755
+index 0000000..16325ad
+--- /dev/null
++++ b/test/offline-modem
+@@ -0,0 +1,17 @@
++#!/usr/bin/python
++
++import dbus, sys
++
++bus =3D dbus.SystemBus()
++
++if len(sys.argv) =3D=3D 2:
++	path =3D sys.argv[1]
++else:
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++			'org.ofono.Manager')
++	properties =3D manager.GetProperties()
++	path =3D properties["Modems"][0]
++
++print "Setting modem %s offline..." % path
++modem =3D dbus.Interface(bus.get_object('org.ofono', path), 'org.ofono.Mod=
+em')
++modem.SetProperty("Online", dbus.Boolean(0))
+diff --git a/test/online-modem b/test/online-modem
+new file mode 100755
+index 0000000..db0b9f5
+--- /dev/null
++++ b/test/online-modem
+@@ -0,0 +1,17 @@
++#!/usr/bin/python
++
++import dbus, sys
++
++bus =3D dbus.SystemBus()
++
++if len(sys.argv) =3D=3D 2:
++	path =3D sys.argv[1]
++else:
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++			'org.ofono.Manager')
++	properties =3D manager.GetProperties()
++	path =3D properties["Modems"][0]
++
++print "Setting modem %s online..." % path
++modem =3D dbus.Interface(bus.get_object('org.ofono', path), 'org.ofono.Mod=
+em')
++modem.SetProperty("Online", dbus.Boolean(1))
 -- =
 
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net/
-http://fi.linkedin.com/in/remidenis
+1.6.3.3
 
---===============1418821557848064903==--
+
+--===============2942473120696030528==--
 
