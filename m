@@ -1,35 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============6006928629797257411=="
+Content-Type: multipart/mixed; boundary="===============7826203350759812993=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/16] stkutil: Add the Provide Local Info response
- builder.
-Date: Tue, 25 May 2010 17:07:33 -0500
-Message-ID: <201005251707.33748.denkenz@gmail.com>
-In-Reply-To: <1274609667-6274-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 1/8] stk: Add parser for setup idle mode text commands
+Date: Tue, 25 May 2010 17:56:47 -0500
+Message-ID: <201005251756.47410.denkenz@gmail.com>
+In-Reply-To: <1274264686-9706-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6006928629797257411==
+--===============7826203350759812993==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Yang,
 
 > ---
->  src/stkutil.c |  436
->  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ =
+>  src/stkutil.c |   40 ++++++++++++++++++++++++++++++++++++++++
+>  src/stkutil.h |    8 ++++++++
+>  2 files changed, 48 insertions(+), 0 deletions(-)
 
-src/stkutil.h | =
-
->   53 +++++++
->  2 files changed, 489 insertions(+), 0 deletions(-)
-
-Can you fix these up according to the latest stk_tlv_builder API and resubm=
-it?
+All 8 patches in this series have been applied.
 
 Thanks,
 -Denis
 
---===============6006928629797257411==--
+--===============7826203350759812993==--
 
