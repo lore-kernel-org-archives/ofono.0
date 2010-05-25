@@ -1,63 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============7486697441600637879=="
+Content-Type: multipart/mixed; boundary="===============2755777657828861480=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH] Fix more-messages-to-send indicator
-Date: Tue, 25 May 2010 10:56:54 +0300
-Message-ID: <1274774214-27909-1-git-send-email-aki.niemi@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] huawei: follow sim state change notifications
+Date: Tue, 25 May 2010 10:01:58 +0200
+Message-ID: <1274774518.27220.121.camel@localhost.localdomain>
+In-Reply-To: <20100525075637.32623.43301.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7486697441600637879==
+--===============2755777657828861480==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Set the mms indicator based on remaining segment count and not on the
-message transmit queue status.
----
- src/sms.c |    8 ++------
- 1 files changed, 2 insertions(+), 6 deletions(-)
+Hi Kalle,
 
-diff --git a/src/sms.c b/src/sms.c
-index 3a1cff0..9a03b0a 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -58,7 +58,6 @@ struct ofono_sms {
- 	unsigned int next_msg_id;
- 	guint ref;
- 	GQueue *txq;
--	time_t last_mms;
- 	gint tx_source;
- 	struct ofono_message_waiting *mw;
- 	unsigned int mw_watch;
-@@ -331,7 +330,6 @@ static void tx_finished(const struct ofono_error *error=
-, int mr, void *data)
- static gboolean tx_next(gpointer user_data)
- {
- 	struct ofono_sms *sms =3D user_data;
--	time_t ts;
- 	int send_mms =3D 0;
- 	struct tx_queue_entry *entry =3D g_queue_peek_head(sms->txq);
- 	struct pending_pdu *pdu =3D &entry->pdus[entry->cur_pdu];
-@@ -346,10 +344,8 @@ static gboolean tx_next(gpointer user_data)
- 	if (!entry)
- 		return FALSE;
- =
+> With Huawei E1552 I got sim busy errors when I plugged in the modem
+> and ofono was already running:
+> =
 
--	ts =3D time(NULL);
--
--	if ((g_queue_get_length(sms->txq) > 1) &&
--			((ts - sms->last_mms) > 60))
-+	/* Set mms unless this is the last segment */
-+	if (1 + entry->cur_pdu < entry->num_pdus)
- 		send_mms =3D 1;
- =
+> May 24 17:02:04 tukki ofonod[7619]: > AT+CRC=3D1\r
+> May 24 17:02:04 tukki ofonod[7619]: < \r\n+CME ERROR: SIM busy\r\n
+> May 24 17:02:04 tukki ofonod[7619]: > AT+CLIP=3D1\r
+> May 24 17:02:04 tukki ofonod[7619]: < \r\n+CME ERROR: SIM busy\r\n
+> =
 
- 	sms->driver->submit(sms, pdu->pdu, pdu->pdu_len, pdu->tpdu_len, send_mms,
--- =
+> Fix this by following sim state changes with ^SIMST notification and
+> only enable modem after SIM is ready. In case SIM is already ready
+> and we miss the notification for some reason, also use AT^SYSINFO
+> to check the state during enable phase.
+> =
 
-1.7.0.4
+> Also change huawei_enable() to return -EINPROGRESS to make sure that
+> ofono modem is not powered too early. I believe this was a bug.
+> ---
+> =
+
+>  plugins/huawei.c |   99 ++++++++++++++++++++++++++++++++++++++++++++++++=
++++---
+>  1 files changed, 93 insertions(+), 6 deletions(-)
+> =
+
+> diff --git a/plugins/huawei.c b/plugins/huawei.c
+> index e1408bd..7d59a26 100644
+> --- a/plugins/huawei.c
+> +++ b/plugins/huawei.c
+> @@ -47,9 +47,18 @@
+>  #include <drivers/atmodem/atutil.h>
+>  #include <drivers/atmodem/vendor.h>
+>  =
+
+> +enum huawei_state {
+> +	HUAWEI_DISABLED,
+> +	HUAWEI_DISABLE,
+> +	HUAWEI_ENABLE,
+> +	HUAWEI_ENABLED,
+> +};
+> +
+
+is this really needed? I don't see why you want it. Where is the race
+condition that you are trying to fix with it.
+
+>  struct huawei_data {
+>  	GAtChat *chat;
+>  	GAtChat *event;
+> +	gint sim_state;
+> +	enum huawei_state state;
+>  };
+
+I think the sim_state should be just enough.
+
+Regards
+
+Marcel
 
 
---===============7486697441600637879==--
+
+--===============2755777657828861480==--
 
