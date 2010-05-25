@@ -1,33 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============7947648381363621034=="
+Content-Type: multipart/mixed; boundary="===============3540192709942805161=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: How To Run the PhoneSIM and OFono
-Date: Mon, 24 May 2010 16:01:55 +0200
-Message-ID: <4BFA86D3.1040709@monom.org>
-In-Reply-To: <AANLkTimvJPUX5FJh-IqTIfZhIhDufPMiNOhM0tKCLCCT@mail.gmail.com>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: patches for DUN, HFP and gdbus
+Date: Tue, 25 May 2010 04:17:59 -0300
+Message-ID: <1274771888-2565-1-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7947648381363621034==
+--===============3540192709942805161==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+Hi all,
 
-> I had checked all the available archives for ofono to find how to run
-> the phone simulator. It looks like the information is either wrong or
-> outdated.
+Patch 1/9 adds a new function to gdbus to fix a hack in HFP code (patch 2/9=
+).
+3/9 add optional argument to the -d oFono option
 
-Aparently your google-foo isn't good enough :) Sankar had the same =
+Patches from 4 to 9 are the same I sent last week, and they apply cleanly
+without the first 3.
 
-question a few days ago:
+Regards,
 
-http://article.gmane.org/gmane.comp.handhelds.ofono/2337/match=3Dre+need+he=
-lp+few+queries+ofono
 
-cheers,
-daniel
 
---===============7947648381363621034==--
+--===============3540192709942805161==--
 
