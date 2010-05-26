@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============6590482358311559877=="
+Content-Type: multipart/mixed; boundary="===============2214091832871832232=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [RFC patches 04/13] sms_assembly_add_fragment_backup: clarify how
- insertion spot is found
-Date: Wed, 26 May 2010 12:49:18 -0700
-Message-ID: <8068e20eb9e130e16487497fe6098c2f44f273e0.1274903142.git.inaky.perez-gonzalez@intel.com>
+Subject: [RFC patches 08/13] storage: add __attribute__((format)) to {write,
+ read}_file() for printf-like variable arg verification
+Date: Wed, 26 May 2010 12:49:22 -0700
+Message-ID: <dd78ba7c6214fd27cf945f4a5a3979107adbbeb0.1274903142.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6590482358311559877==
+--===============2214091832871832232==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,31 +17,35 @@ Content-Transfer-Encoding: quoted-printable
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
 ---
- src/smsutil.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ src/storage.h |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 17e0e0e..c57fe8b 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -2480,6 +2480,11 @@ static GSList *sms_assembly_add_fragment_backup(stru=
-ct sms_assembly *assembly,
- 		if (node->bitmap[offset] & bit)
- 			return NULL;
+diff --git a/src/storage.h b/src/storage.h
+index d74de35..74cbba5 100644
+--- a/src/storage.h
++++ b/src/storage.h
+@@ -30,10 +30,12 @@
+ int create_dirs(const char *filename, const mode_t mode);
  =
 
-+		/* Iterate over the bitmap to find in which position
-+		 * should the fragment be inserted -- basically we
-+		 * walk each bit in the bitmap until the bit we care
-+		 * about (offset:bit) and count which are stored --
-+		 * that gives us in which position we have to insert. */
- 		position =3D 0;
- 		for (i =3D 0; i < offset; i++)
- 			for (j =3D 0; j < 32; j++)
+ ssize_t read_file(unsigned char *buffer, size_t len,
+-			const char *path_fmt, ...);
++			const char *path_fmt, ...)
++	__attribute__((format(printf, 3, 4)));
+ =
+
+ ssize_t write_file(const unsigned char *buffer, size_t len, mode_t mode,
+-			const char *path_fmt, ...);
++			const char *path_fmt, ...)
++	__attribute__((format(printf, 4, 5)));
+ =
+
+ GKeyFile *storage_open(const char *imsi, const char *store);
+ void storage_sync(const char *imsi, const char *store, GKeyFile *keyfile);
 -- =
 
 1.6.6.1
 
 
---===============6590482358311559877==--
+--===============2214091832871832232==--
 
