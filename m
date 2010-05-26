@@ -1,63 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============7454873391283630812=="
+Content-Type: multipart/mixed; boundary="===============4807133298204456142=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH] Fix more-messages-to-send indicator
-Date: Wed, 26 May 2010 18:43:45 +0300
-Message-ID: <1274888625-21255-1-git-send-email-aki.niemi@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH v4 1/2] atmodem: remove CGACT command
+Date: Wed, 26 May 2010 18:12:31 +0200
+Message-ID: <1274890351.27220.168.camel@localhost.localdomain>
+In-Reply-To: <20100526153615.2563.15365.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7454873391283630812==
+--===============4807133298204456142==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Set the mms indicator based on remaining segment count and not on the
-message transmit queue status alone.
----
- src/sms.c |    8 ++------
- 1 files changed, 2 insertions(+), 6 deletions(-)
+Hi Kalle,
 
-diff --git a/src/sms.c b/src/sms.c
-index 3a1cff0..7d4a099 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -58,7 +58,6 @@ struct ofono_sms {
- 	unsigned int next_msg_id;
- 	guint ref;
- 	GQueue *txq;
--	time_t last_mms;
- 	gint tx_source;
- 	struct ofono_message_waiting *mw;
- 	unsigned int mw_watch;
-@@ -331,7 +330,6 @@ static void tx_finished(const struct ofono_error *error=
-, int mr, void *data)
- static gboolean tx_next(gpointer user_data)
- {
- 	struct ofono_sms *sms =3D user_data;
--	time_t ts;
- 	int send_mms =3D 0;
- 	struct tx_queue_entry *entry =3D g_queue_peek_head(sms->txq);
- 	struct pending_pdu *pdu =3D &entry->pdus[entry->cur_pdu];
-@@ -346,10 +344,8 @@ static gboolean tx_next(gpointer user_data)
- 	if (!entry)
- 		return FALSE;
- =
+> It's enough that we shutdown PPP, no need to send CGACT after that.
+> Recommended by Denis.
+> ---
+> =
 
--	ts =3D time(NULL);
--
--	if ((g_queue_get_length(sms->txq) > 1) &&
--			((ts - sms->last_mms) > 60))
-+	if (g_queue_get_length(sms->txq) > 1
-+		|| entry->cur_pdu < entry->num_pdus - 1)
- 		send_mms =3D 1;
- =
+>  drivers/atmodem/gprs-context.c |   51 +++++++++++++---------------------=
+------
+>  1 files changed, 16 insertions(+), 35 deletions(-)
+> =
 
- 	sms->driver->submit(sms, pdu->pdu, pdu->pdu_len, pdu->tpdu_len, send_mms,
--- =
+> diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-contex=
+t.c
+> index ba5f0c0..9b32d59 100644
+> --- a/drivers/atmodem/gprs-context.c
+> +++ b/drivers/atmodem/gprs-context.c
+> @@ -65,22 +65,6 @@ struct gprs_context_data {
+>  	void *cb_data;                                  /* Callback data */
+>  };
+>  =
 
-1.7.0.4
+> -static void at_cgact_down_cb(gboolean ok, GAtResult *result, gpointer us=
+er_data)
+> -{
+> -	struct cb_data *cbd =3D user_data;
+> -	ofono_gprs_context_cb_t cb =3D cbd->cb;
+> -	struct ofono_gprs_context *gc =3D cbd->user;
+> -	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+> -	struct ofono_error error;
+> -
+> -	if (ok)
+> -		gcd->active_context =3D 0;
+> -
+> -	decode_at_error(&error, g_at_result_final_response(result));
+> -
+> -	cb(&error, cbd->data);
+> -}
+> -
+>  static void ppp_connect(const char *interface, const char *ip,
+>  			const char *dns1, const char *dns2,
+>  			gpointer user_data)
+> @@ -104,13 +88,21 @@ static void ppp_disconnect(GAtPPPDisconnectReason re=
+ason, gpointer user_data)
+>  	struct ofono_gprs_context *gc =3D user_data;
+>  	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+>  =
+
+> -	if (gcd->state =3D=3D STATE_ENABLING) {
+> +	DBG("");
+> +
+> +	switch (gcd->state) {
+> +	case STATE_ENABLING:
+>  		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, FALSE, NULL,
+>  					NULL, NULL, NULL, gcd->cb_data);
+> -		return;
+> +		break;
+
+just double-checking that you really wanna have break; and not return;
+here. So that gcd->state gets reset to STATE_IDLE.
+
+> +	case STATE_DISABLING:
+> +		CALLBACK_WITH_SUCCESS(gcd->down_cb, gcd->cb_data);
+> +		break;
+> +	default:
+> +		ofono_gprs_context_deactivated(gc, gcd->active_context);
+> +		break;
+>  	}
+>  =
+
+> -	ofono_gprs_context_deactivated(gc, gcd->active_context);
+>  	gcd->active_context =3D 0;
+>  	gcd->state =3D STATE_IDLE;
+>  }
+
+Regards
+
+Marcel
 
 
---===============7454873391283630812==--
+
+--===============4807133298204456142==--
 
