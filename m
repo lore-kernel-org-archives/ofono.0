@@ -1,85 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============0943179131206849057=="
+Content-Type: multipart/mixed; boundary="===============7454873391283630812=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: [PATCH v4 2/2] atmodem: fix crash during context deactivation
-Date: Wed, 26 May 2010 18:36:21 +0300
-Message-ID: <20100526153621.2563.89213.stgit@potku.valot.fi>
-In-Reply-To: <20100526153615.2563.15365.stgit@potku.valot.fi>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: [PATCH] Fix more-messages-to-send indicator
+Date: Wed, 26 May 2010 18:43:45 +0300
+Message-ID: <1274888625-21255-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0943179131206849057==
+--===============7454873391283630812==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Ofono either crashed or busy looped with my Huawei E1552 3G modem when I
-tried to deactivate GPRS context. The reason was that gcd->chat was
-unreferenced already in setup_ppp() but the chat was still accessed
-later in at_gprs_deactivate_primary().
-
-To fix the problem, change the logic instead to suspend chat session
-for PPP and resume when PPP has disconnected. Now it doesn't crash
-anymore.
-
-Deactivation still doesn't work properly with Huawei E1552, and most
-probably with other Huawei modems, because the modem hangs up the chat
-line after PPP deactivation. This needs to be fixed separately. The
-workaround is to reboot the modem, for example physically unplug and plug
-it in again.
+Set the mms indicator based on remaining segment count and not on the
+message transmit queue status alone.
 ---
+ src/sms.c |    8 ++------
+ 1 files changed, 2 insertions(+), 6 deletions(-)
 
- drivers/atmodem/gprs-context.c |   15 ++++++++++-----
- 1 files changed, 10 insertions(+), 5 deletions(-)
-
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index 9b32d59..24d1c58 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -90,6 +90,8 @@ static void ppp_disconnect(GAtPPPDisconnectReason reason,=
- gpointer user_data)
- =
-
- 	DBG("");
- =
-
-+	g_at_chat_resume(gcd->chat);
-+
- 	switch (gcd->state) {
- 	case STATE_ENABLING:
- 		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, FALSE, NULL,
-@@ -110,16 +112,19 @@ static void ppp_disconnect(GAtPPPDisconnectReason rea=
-son, gpointer user_data)
- static gboolean setup_ppp(struct ofono_gprs_context *gc)
+diff --git a/src/sms.c b/src/sms.c
+index 3a1cff0..7d4a099 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -58,7 +58,6 @@ struct ofono_sms {
+ 	unsigned int next_msg_id;
+ 	guint ref;
+ 	GQueue *txq;
+-	time_t last_mms;
+ 	gint tx_source;
+ 	struct ofono_message_waiting *mw;
+ 	unsigned int mw_watch;
+@@ -331,7 +330,6 @@ static void tx_finished(const struct ofono_error *error=
+, int mr, void *data)
+ static gboolean tx_next(gpointer user_data)
  {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
--	GIOChannel *channel;
-+	GAtIO *io;
-+
-+	io =3D g_at_chat_get_io(gcd->chat);
- =
-
--	channel =3D g_at_chat_get_channel(gcd->chat);
--	g_at_chat_unref(gcd->chat);
-+	g_at_chat_suspend(gcd->chat);
- =
-
- 	/* open ppp */
--	gcd->ppp =3D g_at_ppp_new(channel);
-+	gcd->ppp =3D g_at_ppp_new_from_io(io);
- =
-
--	if (gcd->ppp =3D=3D NULL)
-+	if (gcd->ppp =3D=3D NULL) {
-+		g_at_chat_resume(gcd->chat);
+ 	struct ofono_sms *sms =3D user_data;
+-	time_t ts;
+ 	int send_mms =3D 0;
+ 	struct tx_queue_entry *entry =3D g_queue_peek_head(sms->txq);
+ 	struct pending_pdu *pdu =3D &entry->pdus[entry->cur_pdu];
+@@ -346,10 +344,8 @@ static gboolean tx_next(gpointer user_data)
+ 	if (!entry)
  		return FALSE;
-+	}
  =
 
- 	g_at_ppp_set_credentials(gcd->ppp, gcd->username, gcd->password);
+-	ts =3D time(NULL);
+-
+-	if ((g_queue_get_length(sms->txq) > 1) &&
+-			((ts - sms->last_mms) > 60))
++	if (g_queue_get_length(sms->txq) > 1
++		|| entry->cur_pdu < entry->num_pdus - 1)
+ 		send_mms =3D 1;
  =
 
+ 	sms->driver->submit(sms, pdu->pdu, pdu->pdu_len, pdu->tpdu_len, send_mms,
+-- =
+
+1.7.0.4
 
 
---===============0943179131206849057==--
+--===============7454873391283630812==--
 
