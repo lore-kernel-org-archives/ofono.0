@@ -1,218 +1,164 @@
-Content-Type: multipart/mixed; boundary="===============3969243795532544190=="
+Content-Type: multipart/mixed; boundary="===============7487009972065495721=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: [PATCH 1/6] Add bluetooth plugin skeleton.
-Date: Wed, 26 May 2010 01:51:38 -0300
-Message-ID: <1274849503-18388-1-git-send-email-gustavo@padovan.org>
+Subject: [PATCH 3/6] Remove send_method_call from hfp.c
+Date: Wed, 26 May 2010 01:51:40 -0300
+Message-ID: <1274849503-18388-3-git-send-email-gustavo@padovan.org>
+In-Reply-To: <1274849503-18388-2-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3969243795532544190==
+--===============7487009972065495721==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The bluetooth plugin has bluetooth_resgister_uuid() and
-bluetooth_unresgister_uuid() where bluetooth profiles plugins such as HFP
-and DUN can register themselves to get know about BlueZ stuff ( new
-devices, bluetoothd shutdown, etc..)
+That function should be only in the bluetooth plugin, then we can avoid
+code duplication. There is a plan to remove send_method_call_with_reply
+too once the Bluetooth agent moves to the bluetooth plugin.
 ---
- Makefile.am         |    3 ++
- plugins/bluetooth.c |   75 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- plugins/bluetooth.h |   47 ++++++++++++++++++++++++++++++++
- plugins/hfp.c       |    8 +----
- 4 files changed, 127 insertions(+), 6 deletions(-)
- create mode 100644 plugins/bluetooth.c
- create mode 100644 plugins/bluetooth.h
+ plugins/hfp.c |   73 +++++++++++++++++++++++++----------------------------=
+---
+ 1 files changed, 33 insertions(+), 40 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index ed13346..e0083ef 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -231,6 +231,9 @@ builtin_sources +=3D plugins/em770.c
- builtin_modules +=3D novatel
- builtin_sources +=3D plugins/novatel.c
- =
-
-+builtin_modules +=3D bluetooth
-+builtin_sources +=3D plugins/bluetooth.c
-+
- builtin_modules +=3D hfp
- builtin_sources +=3D plugins/hfp.c
- =
-
-diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-new file mode 100644
-index 0000000..b4fe676
---- /dev/null
-+++ b/plugins/bluetooth.c
-@@ -0,0 +1,75 @@
-+/*
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2010  ProFUSION embedded systems
-+ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <errno.h>
-+#include <unistd.h>
-+#include <glib.h>
-+#include <gdbus.h>
-+#include <ofono.h>
-+
-+#include <ofono/dbus.h>
-+
-+#include "bluetooth.h"
-+
-+static DBusConnection *connection;
-+static GHashTable *uuid_hash =3D NULL;
-+static GHashTable *adapter_address_hash =3D NULL;
-+
-+int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
-ofile)
-+{
-+	if (uuid_hash)
-+		goto done;
-+
-+	connection =3D ofono_dbus_get_connection();
-+
-+	uuid_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						g_free, NULL);
-+
-+	adapter_address_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						g_free, g_free);
-+
-+done:
-+	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
-+
-+	return 0;
-+}
-+
-+void bluetooth_unregister_uuid(const char *uuid)
-+{
-+	g_hash_table_remove(uuid_hash, uuid);
-+
-+	if (g_hash_table_size(uuid_hash))
-+		return;
-+
-+	g_hash_table_destroy(uuid_hash);
-+	g_hash_table_destroy(adapter_address_hash);
-+	uuid_hash =3D NULL;
-+}
-+
-+OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-new file mode 100644
-index 0000000..99bd617
---- /dev/null
-+++ b/plugins/bluetooth.h
-@@ -0,0 +1,47 @@
-+/*
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifndef __BLUETOOTH_H
-+#define __BLUETOOTH_H
-+
-+#define	BLUEZ_SERVICE "org.bluez"
-+#define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
-+#define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
-+#define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-+
-+#define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
-+#define DUN_GW_UUID	"00001103-0000-1000-8000-00805F9B34FB"
-+
-+/* Profiles bitfield */
-+#define HFP_AG 0x01
-+#define DUN_GW 0x02
-+
-+struct bluetooth_profile {
-+	const char *name;
-+	int (*create)(const char *device, const char *dev_addr, const char *adapt=
-er_addr, const char *alias);
-+	void (*remove_all)();
-+	void (*set_alias)(const char *device, const char *);
-+};
-+
-+int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
-ofile);
-+void bluetooth_unregister_uuid(const char *uuid);
-+
-+
-+#endif /* __BLUETOOTH_H */
 diff --git a/plugins/hfp.c b/plugins/hfp.c
-index e37c9fc..a49e4af 100644
+index 01d56fa..6fd3464 100644
 --- a/plugins/hfp.c
 +++ b/plugins/hfp.c
-@@ -45,17 +45,13 @@
+@@ -178,33 +178,11 @@ static void cmer_cb(gboolean ok, GAtResult *result, g=
+pointer user_data)
+ 		sevice_level_conn_established(modem);
+ }
  =
 
- #include <ofono/dbus.h>
- =
-
--#define	BLUEZ_SERVICE "org.bluez"
--#define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
--#define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
--#define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-+#include "bluetooth.h"
-+
- #define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
- =
-
- #define HFP_AGENT_INTERFACE "org.bluez.HandsfreeAgent"
- #define HFP_AGENT_ERROR_INTERFACE "org.bluez.Error"
- =
-
--#define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
+-static int send_method_call(const char *dest, const char *path,
+-				const char *interface, const char *method,
+-				int type, ...)
+-{
+-	DBusMessage *msg;
+-	va_list args;
 -
- #ifndef DBUS_TYPE_UNIX_FD
- #define DBUS_TYPE_UNIX_FD -1
- #endif
+-	msg =3D dbus_message_new_method_call(dest, path, interface, method);
+-	if (!msg) {
+-		ofono_error("Unable to allocate new D-Bus %s message", method);
+-		return -ENOMEM;
+-	}
+-
+-	va_start(args, type);
+-
+-	if (!dbus_message_append_args_valist(msg, type, args)) {
+-		dbus_message_unref(msg);
+-		va_end(args);
+-		return -EIO;
+-	}
+-
+-	va_end(args);
+-
+-	g_dbus_send_message(connection, msg);
+-	return 0;
+-}
+-
++/*
++ * FIXME: Group all agent stuff DBus calls in bluetooth.c
++ * then we can reuse common agent code for all Bluetooth plugins.
++ * That will remove this function from hfp.c
++ */
+ static int send_method_call_with_reply(const char *dest, const char *path,
+ 				const char *interface, const char *method,
+ 				DBusPendingCallNotifyFunction cb,
+@@ -578,26 +556,40 @@ static int hfp_register_ofono_handsfree(struct ofono_=
+modem *modem)
+ {
+ 	const char *obj_path =3D ofono_modem_get_path(modem);
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
++	DBusMessage *msg;
+ =
+
+ 	DBG("Registering oFono Agent to bluetooth daemon");
+ =
+
+-	return send_method_call(BLUEZ_SERVICE, data->handsfree_path,
+-				BLUEZ_GATEWAY_INTERFACE, "RegisterAgent",
+-				DBUS_TYPE_OBJECT_PATH, &obj_path,
++	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, data->handsfree_path,
++				BLUEZ_GATEWAY_INTERFACE, "RegisterAgent");
++	if (!msg)
++		return -ENOMEM;
++
++	dbus_message_append_args(msg, DBUS_TYPE_OBJECT_PATH, &obj_path,
+ 				DBUS_TYPE_INVALID);
++
++	g_dbus_send_message(connection, msg);
++	return 0;
+ }
+ =
+
+ static int hfp_unregister_ofono_handsfree(struct ofono_modem *modem)
+ {
+ 	const char *obj_path =3D ofono_modem_get_path(modem);
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
++	DBusMessage *msg;
+ =
+
+ 	DBG("Unregistering oFono Agent from bluetooth daemon");
+ =
+
+-	return send_method_call(BLUEZ_SERVICE, data->handsfree_path,
+-				BLUEZ_GATEWAY_INTERFACE, "UnregisterAgent",
+-				DBUS_TYPE_OBJECT_PATH, &obj_path,
++	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, data->handsfree_path,
++				BLUEZ_GATEWAY_INTERFACE, "UnregisterAgent");
++	if (!msg)
++		return -ENOMEM;
++
++	dbus_message_append_args(msg, DBUS_TYPE_OBJECT_PATH, &obj_path,
+ 				DBUS_TYPE_INVALID);
++
++	g_dbus_send_message(connection, msg);
++	return 0;
+ }
+ =
+
+ static int hfp_probe(struct ofono_modem *modem)
+@@ -641,8 +633,7 @@ static void hfp_connect_reply(DBusPendingCall *call, gp=
+ointer user_data)
+ 	struct ofono_modem *modem =3D user_data;
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
+ 	DBusError derr;
+-	DBusMessage *reply;
+-	int ret;
++	DBusMessage *reply, *msg;
+ =
+
+ 	reply =3D dbus_pending_call_steal_reply(call);
+ =
+
+@@ -656,11 +647,13 @@ static void hfp_connect_reply(DBusPendingCall *call, =
+gpointer user_data)
+ 	DBG("Connect reply: %s", derr.message);
+ =
+
+ 	if (dbus_error_has_name(&derr, DBUS_ERROR_NO_REPLY)) {
+-		ret =3D send_method_call(BLUEZ_SERVICE, data->handsfree_path,
+-					BLUEZ_GATEWAY_INTERFACE, "Disconnect",
+-					DBUS_TYPE_INVALID);
+-		if (ret < 0)
+-			ofono_error("Disconnect failed(%d)", ret);
++		msg =3D dbus_message_new_method_call(BLUEZ_SERVICE,
++				data->handsfree_path,
++				BLUEZ_GATEWAY_INTERFACE, "Disconnect");
++		if (!msg)
++			ofono_error("Disconnect failed");
++		else
++			g_dbus_send_message(connection, msg);
+ 	}
+ =
+
+ 	ofono_modem_set_powered(modem, FALSE);
 -- =
 
 1.7.1
 
 
---===============3969243795532544190==--
+--===============7487009972065495721==--
 
