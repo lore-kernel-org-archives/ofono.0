@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============7882545771146273400=="
+Content-Type: multipart/mixed; boundary="===============0876307373243957926=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [RFC patches 03/13] documentation: add note about referencing
- standards
-Date: Wed, 26 May 2010 12:49:17 -0700
-Message-ID: <ab1ab1a7e74cf47232c220d9a5a488e31d771a6c.1274903142.git.inaky.perez-gonzalez@intel.com>
+Subject: [RFC patches 01/13] Update .gitignore to ignore cscope databases and
+ backup files
+Date: Wed, 26 May 2010 12:49:15 -0700
+Message-ID: <c46927ad93ad4b85ce6ace5c44af1bdc13414b68.1274903142.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7882545771146273400==
+--===============0876307373243957926==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,29 +17,31 @@ Content-Transfer-Encoding: quoted-printable
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
 ---
- doc/standards.txt |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
- create mode 100644 doc/standards.txt
+ .gitignore |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/doc/standards.txt b/doc/standards.txt
-new file mode 100644
-index 0000000..c4b68eb
---- /dev/null
-+++ b/doc/standards.txt
-@@ -0,0 +1,8 @@
-+Referencing standards in the source
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+When referencing standard documents use raw numbers xx.xxx for 3GPP
-+documents or xxx.xxx for ETSI document (eg: 23.040). If needing to
-+point to an specific section/subsection, explicitly say "Section foo"
-+
-+3GPP specs can be found in http://3gpp.org/ftp/Specs.
+diff --git a/.gitignore b/.gitignore
+index 1ce7067..d7e9254 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,4 @@
++*~
+ *.o
+ *.lo
+ *.la
+@@ -16,6 +17,8 @@ config.sub
+ configure
+ depcomp
+ compile
++cscope.files
++cscope.out
+ install-sh
+ libtool
+ ltmain.sh
 -- =
 
 1.6.6.1
 
 
---===============7882545771146273400==--
+--===============0876307373243957926==--
 
