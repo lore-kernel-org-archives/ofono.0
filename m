@@ -1,42 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============3940560491652131453=="
+Content-Type: multipart/mixed; boundary="===============7882545771146273400=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v4 2/2] atmodem: fix crash during context deactivation
-Date: Wed, 26 May 2010 12:37:51 -0500
-Message-ID: <201005261237.51310.denkenz@gmail.com>
-In-Reply-To: <20100526153621.2563.89213.stgit@potku.valot.fi>
+From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
+Subject: [RFC patches 03/13] documentation: add note about referencing
+ standards
+Date: Wed, 26 May 2010 12:49:17 -0700
+Message-ID: <ab1ab1a7e74cf47232c220d9a5a488e31d771a6c.1274903142.git.inaky.perez-gonzalez@intel.com>
+In-Reply-To: <cover.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3940560491652131453==
+--===============7882545771146273400==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-> Ofono either crashed or busy looped with my Huawei E1552 3G modem when I
-> tried to deactivate GPRS context. The reason was that gcd->chat was
-> unreferenced already in setup_ppp() but the chat was still accessed
-> later in at_gprs_deactivate_primary().
-> =
+---
+ doc/standards.txt |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
+ create mode 100644 doc/standards.txt
 
-> To fix the problem, change the logic instead to suspend chat session
-> for PPP and resume when PPP has disconnected. Now it doesn't crash
-> anymore.
-> =
+diff --git a/doc/standards.txt b/doc/standards.txt
+new file mode 100644
+index 0000000..c4b68eb
+--- /dev/null
++++ b/doc/standards.txt
+@@ -0,0 +1,8 @@
++Referencing standards in the source
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++When referencing standard documents use raw numbers xx.xxx for 3GPP
++documents or xxx.xxx for ETSI document (eg: 23.040). If needing to
++point to an specific section/subsection, explicitly say "Section foo"
++
++3GPP specs can be found in http://3gpp.org/ftp/Specs.
+-- =
 
-> Deactivation still doesn't work properly with Huawei E1552, and most
-> probably with other Huawei modems, because the modem hangs up the chat
-> line after PPP deactivation. This needs to be fixed separately. The
-> workaround is to reboot the modem, for example physically unplug and plug
-> it in again.
-> ---
+1.6.6.1
 
-Patch has been applied, thanks.
 
-Regards,
--Denis
-
---===============3940560491652131453==--
+--===============7882545771146273400==--
 
