@@ -1,121 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============2703909538759574279=="
+Content-Type: multipart/mixed; boundary="===============8197697726313674882=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [RFC patches 07/13] write_file: make transaction-safe
-Date: Wed, 26 May 2010 12:49:21 -0700
-Message-ID: <14a5ede292e3e4d82f9b25c50be3c942b02de90e.1274903142.git.inaky.perez-gonzalez@intel.com>
+Subject: [RFC patches 06/13] smutil.h: add missing header file dependencies
+Date: Wed, 26 May 2010 12:49:20 -0700
+Message-ID: <4304def8734a39650175fd6765317d1c70b0beba.1274903142.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2703909538759574279==
+--===============8197697726313674882==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-write_file(), as written wasn't transaction-safe; a crash bewtween a
-file being open and the buffer being written before a safe close would
-leave the file with a set of undetermined contents.
-
-Modified to the file is written to a temporary file name; once
-completed, it is renamed to the final name. This way, a crash in the
-middle doesn't leave half-baked files.
 ---
- src/storage.c |   42 +++++++++++++++++++++++++++++++-----------
- 1 files changed, 31 insertions(+), 11 deletions(-)
+ src/smsutil.h |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/src/storage.c b/src/storage.c
-index 618c111..157329f 100644
---- a/src/storage.c
-+++ b/src/storage.c
-@@ -98,11 +98,21 @@ ssize_t read_file(unsigned char *buffer, size_t len,
- 	return r;
- }
+diff --git a/src/smsutil.h b/src/smsutil.h
+index 469a49e..356ec5d 100644
+--- a/src/smsutil.h
++++ b/src/smsutil.h
+@@ -18,6 +18,14 @@
+  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
+  *
+  */
++#ifndef __smsutil_h__
++#define __smsutil_h__
++
++#include <time.h>
++#include <glib/gtypes.h>
++#include <glib/gslist.h>
++#include <glib/gmessages.h>
++#include <glib/gchecksum.h>
  =
 
-+/* =
-
-+ * Write a buffer to a file in a transactionally safe form
-+ *
-+ * Given a buffer, write it to a file named after
-+ * @path_fmt+args. However, to make sure the file contents are
-+ * consistent (ie: a crash right after opening or during write()
-+ * doesn't leave a file half baked), the contents are written to a
-+ * file with a temporary name and when closed, it is renamed to the
-+ * specified name (@path_fmt+args).
-+ */ =
-
- ssize_t write_file(const unsigned char *buffer, size_t len, mode_t mode,
- 			const char *path_fmt, ...)
- {
- 	va_list ap;
--	char *path;
-+	char *tmp_path, *path;
- 	ssize_t r;
- 	int fd;
+ #define CBS_MAX_GSM_CHARS 93
  =
 
-@@ -110,26 +120,36 @@ ssize_t write_file(const unsigned char *buffer, size_=
-t len, mode_t mode,
- 	path =3D g_strdup_vprintf(path_fmt, ap);
- 	va_end(ap);
- =
-
--	if (create_dirs(path, mode | S_IXUSR) !=3D 0) {
--		g_free(path);
--		return -1;
--	}
-+	tmp_path =3D g_strdup_printf("%s.XXXXXX.tmp", path);
- =
-
--	fd =3D TFR(open(path, O_WRONLY | O_CREAT | O_TRUNC, mode));
--	if (fd =3D=3D -1) {
--		g_free(path);
--		return -1;
--	}
-+	r =3D -1;
-+	if (create_dirs(path, mode | S_IXUSR) !=3D 0)
-+		goto error_create_dirs;
-+	fd =3D TFR(g_mkstemp_full(tmp_path, O_WRONLY | O_CREAT | O_TRUNC, mode));
-+	if (fd =3D=3D -1)
-+		goto error_mkstemp_full;
- =
-
- 	r =3D TFR(write(fd, buffer, len));
- =
-
- 	TFR(close(fd));
- =
-
- 	if (r !=3D (ssize_t) len) {
--		unlink(path);
- 		r =3D -1;
-+		goto error_write;
- 	}
- =
-
-+	/* Now that the file contents are written, rename to the real
-+	 * file name; this way we are uniquely sure that the whole
-+	 * thing is there. */
-+	unlink(path);
-+	/* conserve @r's value from 'write' */
-+	if (link(tmp_path, path) =3D=3D -1)
-+		r =3D -1;
-+error_write:
-+	unlink(tmp_path);
-+error_mkstemp_full:
-+error_create_dirs:
-+	g_free(tmp_path);		=
-
- 	g_free(path);
- 	return r;
- }
+@@ -501,3 +509,5 @@ char *cbs_topic_ranges_to_string(GSList *ranges);
+ GSList *cbs_extract_topic_ranges(const char *ranges);
+ GSList *cbs_optimize_ranges(GSList *ranges);
+ gboolean cbs_topic_in_range(unsigned int topic, GSList *ranges);
++
++#endif /* #ifndef __smsutil_h__ */
 -- =
 
 1.6.6.1
 
 
---===============2703909538759574279==--
+--===============8197697726313674882==--
 
