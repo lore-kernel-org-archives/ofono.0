@@ -1,83 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============8215833038730123737=="
+Content-Type: multipart/mixed; boundary="===============2594961270007089843=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [RFC patches 00/13] misc cleanups and SMS ID API
-Date: Wed, 26 May 2010 12:49:14 -0700
-Message-ID: <cover.1274903142.git.inaky.perez-gonzalez@intel.com>
+Subject: [RFC patches 10/13] doc: explain debugging options to -d,
+ add a pointer in -h to manpage
+Date: Wed, 26 May 2010 12:49:24 -0700
+Message-ID: <62d8f8ad8f10827a444e36fbefa1d52a34481e62.1274903142.git.inaky.perez-gonzalez@intel.com>
+In-Reply-To: <cover.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8215833038730123737==
+--===============2594961270007089843==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-Hi All
+Modified HACKING and man page to have more formation on what are the
+debugging options and how to enable them.
+---
+ HACKING      |   10 ++++++++++
+ doc/ofonod.8 |    5 ++++-
+ src/main.c   |    4 +++-
+ 3 files changed, 17 insertions(+), 2 deletions(-)
 
-This set of patches introduce:
+diff --git a/HACKING b/HACKING
+index ae420aa..e825185 100644
+--- a/HACKING
++++ b/HACKING
+@@ -81,3 +81,13 @@ automatically includes this option.
+ =
 
- - a few cleanups, code documentations nippets, .gitignore additions,
-   header file dependency fixes in smutil.h =
+ For production installations or distribution packaging it is important that
+ the "--enable-maintainer-mode" option is NOT used.
++
++Note multiple arguments to -d can be specified, colon, comma or space
++separated. The arguments are relative source code filenames for which
++debugging output should be enabled; output shell-style globs are
++accepted (e.g.: 'plugins/*:src/main.c').
++
++Other debugging settings that can be toggled:
++
++ - Environment variable OFONO_AT_DEBUG (set to 1): enable AT commands
++   debugging
+diff --git a/doc/ofonod.8 b/doc/ofonod.8
+index 474d7fb..7bb908c 100644
+--- a/doc/ofonod.8
++++ b/doc/ofonod.8
+@@ -18,7 +18,10 @@ is used to manage \fID-Bus\fP permissions for oFono.
+ .SH OPTIONS
+ .TP
+ .B --debug, -d
+-Enable debug information output.
++Enable debug information output. Note multiple arguments to -d can be
++specified, colon, comma or space separated. The arguments are relative
++source code filenames for which debugging output should be enabled;
++output shell-style globs are accepted (e.g.: "plugins/*:src/main.c").
+ .TP
+ .B --nodetach, -n
+ Don't run as daemon in background.
+diff --git a/src/main.c b/src/main.c
+index 8e686ac..c5791be 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -98,7 +98,9 @@ static gboolean option_version =3D FALSE;
+ =
+
+ static GOptionEntry options[] =3D {
+ 	{ "debug", 'd', 0, G_OPTION_ARG_STRING, &option_debug,
+-				"Specify debug options to enable", "DEBUG" },
++			   "Specify debug options to enable (see the "
++			   "man page for ofonod(8) for more information).",
++			   "DEBUG" },
+ 	{ "nodetach", 'n', G_OPTION_FLAG_REVERSE,
+ 				G_OPTION_ARG_NONE, &option_detach,
+ 				"Don't run as daemon in background" },
+-- =
+
+1.6.6.1
 
 
- - adds BUILD_BUG_ON() [linux kernel style], printf-like attribute
-   checking for {write,read}_file()
-
- - make write_file() transaction-safe
-
- - Introduce the SMS ID API (rfc, still incomplete).
-
-feedback?
-
-Thanks!
-
-
-The following changes since commit 6b0f2328c5e190053f6a28ed119d01581e2119b3:
-  Denis Kenzior (1):
-        Update TODO
-
-are available in the git repository at:
-
-  git://gitorious.org/~inakypg/ofono/ofono-inakypg.git master
-
-Patches follow for reviewing convenience.
-
-Inaky Perez-Gonzalez (13):
-      Update .gitignore to ignore cscope databases and backup files
-      sms_send_message: add a short roadmap
-      documentation: add note about referencing standards
-      sms_assembly_add_fragment_backup: clarify how insertion spot is found
-      util.h: Add BUILD_BUG_ON() and friends for compile-time assert checki=
-ng
-      smutil.h: add missing header file dependencies
-      write_file: make transaction-safe
-      storage: add __attribute__((format)) to {write,read}_file() for print=
-f-like variable arg verification
-      Add function doc headers to ofono_sms_{create,register}
-      doc: explain debugging options to -d, add a pointer in -h to manpage
-      automake: fix installation of udev rules in VPATH builds
-      SMS: introduce message ID API
-      SMS: implement SHA256-based message IDs [incomplete]
-
- .gitignore             |    3 +
- HACKING                |   10 +++
- Makefile.am            |    7 +-
- doc/ofonod.8           |    5 +-
- doc/standards.txt      |    8 ++
- src/main.c             |    4 +-
- src/sms.c              |   69 +++++++++++++---
- src/smsutil.c          |  197 ++++++++++++++++++++++++++++++++++++++++++++
- src/smsutil.h          |   92 +++++++++++++++++++++
- src/storage.c          |   42 +++++++---
- src/storage.h          |    6 +-
- src/util.h             |   29 +++++++
- unit/test-sms-msg-id.c |  212 ++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 13 files changed, 657 insertions(+), 27 deletions(-)
- create mode 100644 doc/standards.txt
- create mode 100644 unit/test-sms-msg-id.c
-
---===============8215833038730123737==--
+--===============2594961270007089843==--
 
