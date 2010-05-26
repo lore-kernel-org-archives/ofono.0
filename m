@@ -1,48 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============8671103325868105877=="
+Content-Type: multipart/mixed; boundary="===============3811547561916163160=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [RFC patches 11/13] automake: fix installation of udev rules in VPATH
- builds
-Date: Wed, 26 May 2010 12:49:25 -0700
-Message-ID: <a759b96fc09af236d1c322199cf42cc0d423fcc4.1274903142.git.inaky.perez-gonzalez@intel.com>
+Subject: [RFC patches 09/13] Add function doc headers to ofono_sms_{create,
+ register}
+Date: Wed, 26 May 2010 12:49:23 -0700
+Message-ID: <e25f5c84bb2a1e67a9aa2253b568ee5c500c2e12.1274903142.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8671103325868105877==
+--===============3811547561916163160==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-When the build directory is different than the source directory, we
-need to specify the source prefix to the original file we are
-copying.
+Signed-off-by: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 ---
- Makefile.am |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ src/sms.c |   19 +++++++++++++++++++
+ 1 files changed, 19 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index ed13346..31c157c 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -418,7 +418,7 @@ src/ofono.ver: src/ofono.exp
- 	$(AM_V_at)echo "local: *; };" >> $@
+diff --git a/src/sms.c b/src/sms.c
+index 594481e..26b1653 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -910,6 +910,17 @@ static void sms_remove(struct ofono_atom *atom)
+ 	g_free(sms);
+ }
  =
 
- plugins/%.rules:
--	$(AM_V_GEN)cp $(subst 97-,,$@) $@
-+	$(AM_V_GEN)cp $(srcdir)/$(subst 97-,,$@) $@
++
++/*
++ * Create a SMS driver
++ *
++ * This creates a SMS driver that is hung off a @modem
++ * object. However, for the driver to be used by the system, it has to
++ * be registered with the oFono core using ofono_sms_register().
++ *
++ * This is done once the modem driver determines that SMS is properly
++ * supported by the hardware.
++ */
+ struct ofono_sms *ofono_sms_create(struct ofono_modem *modem,
+ 					unsigned int vendor,
+ 					const char *driver,
+@@ -980,6 +991,14 @@ static void sms_load_settings(struct ofono_sms *sms, c=
+onst char *imsi)
  =
 
- $(src_ofonod_OBJECTS) $(unit_objects): $(local_headers)
+ }
  =
 
++
++/*
++ * Indicate oFono that a SMS driver is ready for operation
++ *
++ * This is called after ofono_sms_create() was done and the modem
++ * driver determined that a modem supports SMS correctly. Once this
++ * call succeeds, the D-BUS interface for SMS goes live.
++ */
+ void ofono_sms_register(struct ofono_sms *sms)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
 -- =
 
 1.6.6.1
 
 
---===============8671103325868105877==--
+--===============3811547561916163160==--
 
