@@ -1,83 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============8994890873702356483=="
+Content-Type: multipart/mixed; boundary="===============5534363533571483610=="
 MIME-Version: 1.0
-From: Naresh Mehta <nareshtechs@gmail.com>
-Subject: Re: Ofono - Quering PIN authentication state failed
-Date: Wed, 26 May 2010 12:05:32 +0200
-Message-ID: <AANLkTilrDCmb5s735_01prvlHfsT-qS5GNZ2Q6_QexiY@mail.gmail.com>
-In-Reply-To: <201005250936.45180.denkenz@gmail.com>
+From: Yang Gu <gyagp0@gmail.com>
+Subject: [PATCH 1/8] stk: Make parse_dataobj not consume extra data
+Date: Wed, 26 May 2010 22:39:07 +0800
+Message-ID: <1274884754-12977-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8994890873702356483==
+--===============5534363533571483610==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ src/stkutil.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
-> It might help to tell us what modem you're using.
->
-I am trying to use an ST-Ericsson modem. I think I might have a
-wrong/non-functional (for this purpose) build flashled. I will try
-again with a supposedly correct one.
-> >
-> > Below is the sequence of prints that I get on the daemon terminal after=
- I
-> > execute enable-modem in another terminal:
-> >
-> > sudo ./src/ofonod -n -d 'plugins/*'
-> > ofonod[8592]: oFono version 0.20
-> > ofonod[8592]: plugins/atgen.c:atgen_enable() 0x93e9418
-> > ofonod[8592]: plugins/atgen.c:atgen_pre_sim() 0x93e9418
-> > ofonod[8592]: Querying PIN authentication state failed
-> > ofonod[8592]: Querying PIN authentication state failed
->
-> Also, please setenv / export OFONO_AT_DEBUG=3D1 so that we can see the AT=
- chat
-> log.
->
-I have exported that variable. There are no AT Chat logs printed since
-the modem does not initialize (my guess). In the meantime, I tried
-with ofono-phonesim and things have started working (atleast in
-simulated environment). I had some problems initially to get the
-phonesim working, mainly had to guess the argument list. But now that
-things are rolling I am a bit more confident going ahead with my
-experiments. I am thinking of writing a README for phonesim. Do you
-think it will help somehow?
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 016bde9..fd5b7c6 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -2023,6 +2023,7 @@ static gboolean parse_dataobj(struct comprehension_tl=
+v_iter *iter,
+ 	GSList *l;
+ 	va_list args;
+ 	gboolean minimum_set =3D TRUE;
++	struct comprehension_tlv_iter iter_old;
+ =
 
-BTW, all the test scripts by default activate the modem[0] config so
-it is not possible to have 2 modems connected and tested through those
-scripts.
+ 	va_start(args, type);
+ =
 
-Do you think it might be an addition to modify the scripts to act
-interactively for modem selection?
+@@ -2056,11 +2057,14 @@ static gboolean parse_dataobj(struct comprehension_=
+tlv_iter *iter,
+ 			if (handler(iter, entry->data))
+ 				entry->parsed =3D TRUE;
+ =
 
-> > The problem that I have is that I can't see any more interfaces in eith=
-er
-> > the /generic or / path. The only interfaces it shows on / is
-> > org.ofon.Manager. And on /generic it shows org.ofono.Modem and
-> > org.ofono.SimManager. I saw the SimManager methods and since there is no
-> > =C2=A0PIN set, I should be able to see further interfaces like VoiceCal=
-lManager
-> > =C2=A0and SmsManager. But I am not able to see that.
->
-> It might be that voicecall atom fails its initialization as well, the AT =
-chat
-> log should help.
->
++			comprehension_tlv_iter_copy(iter, &iter_old);
++
+ 			if (comprehension_tlv_iter_next(iter) =3D=3D FALSE)
+ 				break;
+ 		}
+ 	}
+ =
+
++	comprehension_tlv_iter_copy(&iter_old, iter);
+ out:
+ 	for (l =3D entries; l; l =3D l->next) {
+ 		struct dataobj_handler_entry *entry =3D l->data;
+@@ -2293,6 +2297,9 @@ static GSList *parse_item_list(struct comprehension_t=
+lv_iter *iter)
+ 	struct stk_item item;
+ 	GSList *list =3D NULL;
+ =
+
++	if (comprehension_tlv_iter_next(iter) !=3D TRUE)
++		return NULL;
++
+ 	if (comprehension_tlv_iter_get_tag(iter) !=3D tag)
+ 		return NULL;
+ =
+
+-- =
+
+1.7.0.4
 
 
-> Regards,
-> -Denis
-
-Thanks for your help once again. And I might bug again :).
-
---
-
-BR; Naresh
-
-visit me at:
-http://www.naresh.se/
-
---===============8994890873702356483==--
+--===============5534363533571483610==--
 
