@@ -1,72 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============5879113227760597533=="
+Content-Type: multipart/mixed; boundary="===============2750509852300002614=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [RFC patches 05/13] util.h: Add BUILD_BUG_ON() and friends for
- compile-time assert checking
-Date: Wed, 26 May 2010 12:49:19 -0700
-Message-ID: <0aea8fdf557ffb7c1c8e2079cdcf86d1d1ad98c2.1274903142.git.inaky.perez-gonzalez@intel.com>
+Subject: [RFC patches 02/13] sms_send_message: add a short roadmap
+Date: Wed, 26 May 2010 12:49:16 -0700
+Message-ID: <992d70300e42d2d7d98ff0e4e9fd2c8d3c415932.1274903142.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5879113227760597533==
+--===============2750509852300002614==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-These have been stolen from the Linux kernel source; come pretty handy
-to make build-time consistency checks and thus avoid run-time
-surprises.
 ---
- src/util.h |   29 +++++++++++++++++++++++++++++
- 1 files changed, 29 insertions(+), 0 deletions(-)
+ src/sms.c |   13 +++++++++++++
+ 1 files changed, 13 insertions(+), 0 deletions(-)
 
-diff --git a/src/util.h b/src/util.h
-index 2835b76..cf34b67 100644
---- a/src/util.h
-+++ b/src/util.h
-@@ -77,3 +77,32 @@ unsigned char *pack_7bit(const unsigned char *in, long l=
-en, int byte_offset,
- 				long *items_written, unsigned char terminator);
+diff --git a/src/sms.c b/src/sms.c
+index 3a1cff0..594481e 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -398,6 +398,19 @@ static struct tx_queue_entry *create_tx_queue_entry(GS=
+List *msg_list)
+ 	return entry;
+ }
  =
 
- char *sim_string_to_utf8(const unsigned char *buffer, int length);
-+
 +/*
-+ * Build time consistency checks
++ * Pre-process a SMS text message and deliver it [D-BUS' SendMessage()]
 + *
-+ * Stolen from the Linux kernel 2.6.35-rc; as most taken from the
-+ * Linux kernel, this is licensed GPL v2 or newer.
++ * @conn: D-BUS connection
++ * @msg: message data (telephone number and text)
++ * @data: SMS object to use for transmision
++ *
++ * An alphabet is chosen for the text and it (might be) segmented in
++ * fragments by sms_text_prepare() into @msg_list. A queue list @entry
++ * is created by create_tx_queue_entry() and g_queue_push_tail()
++ * appends that entry to the SMS transmit queue. Then the tx_next()
++ * function is scheduled to run to process the queue.
 + */
-+
-+/* Force a compilation error if condition is true */
-+#define BUILD_BUG_ON(condition) ((void)BUILD_BUG_ON_ZERO(condition))
-+
-+/* Force a compilation error if condition is constant and true */
-+#define MAYBE_BUILD_BUG_ON(cond) ((void)sizeof(char[1 - 2 * !!(cond)]))
-+
-+/* Force a compilation error if a constant expression is not a power of 2 =
-*/
-+#define BUILD_BUG_ON_NOT_POWER_OF_2(n)			\
-+	BUILD_BUG_ON((n) =3D=3D 0 || (((n) & ((n) - 1)) !=3D 0))
-+
-+/* Force a compilation error if condition is true, but also produce a
-+   result (of value 0 and type size_t), so the expression can be used
-+   e.g. in a structure initializer (or where-ever else comma expressions
-+   aren't permitted). */
-+#define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
-+#define BUILD_BUG_ON_NULL(e) ((void *)sizeof(struct { int:-!!(e); }))
-+
-+/*
-+ * End of code stolen from the Linux kernel 2.6.35-rc. From now, code
-+ * is GPL v2 only.
-+ */
+ static DBusMessage *sms_send_message(DBusConnection *conn, DBusMessage *ms=
+g,
+ 					void *data)
+ {
 -- =
 
 1.6.6.1
 
 
---===============5879113227760597533==--
+--===============2750509852300002614==--
 
