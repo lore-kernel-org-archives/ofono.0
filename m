@@ -1,51 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============2214091832871832232=="
+Content-Type: multipart/mixed; boundary="===============8671103325868105877=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [RFC patches 08/13] storage: add __attribute__((format)) to {write,
- read}_file() for printf-like variable arg verification
-Date: Wed, 26 May 2010 12:49:22 -0700
-Message-ID: <dd78ba7c6214fd27cf945f4a5a3979107adbbeb0.1274903142.git.inaky.perez-gonzalez@intel.com>
+Subject: [RFC patches 11/13] automake: fix installation of udev rules in VPATH
+ builds
+Date: Wed, 26 May 2010 12:49:25 -0700
+Message-ID: <a759b96fc09af236d1c322199cf42cc0d423fcc4.1274903142.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2214091832871832232==
+--===============8671103325868105877==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
+When the build directory is different than the source directory, we
+need to specify the source prefix to the original file we are
+copying.
 ---
- src/storage.h |    6 ++++--
- 1 files changed, 4 insertions(+), 2 deletions(-)
+ Makefile.am |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/src/storage.h b/src/storage.h
-index d74de35..74cbba5 100644
---- a/src/storage.h
-+++ b/src/storage.h
-@@ -30,10 +30,12 @@
- int create_dirs(const char *filename, const mode_t mode);
+diff --git a/Makefile.am b/Makefile.am
+index ed13346..31c157c 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -418,7 +418,7 @@ src/ofono.ver: src/ofono.exp
+ 	$(AM_V_at)echo "local: *; };" >> $@
  =
 
- ssize_t read_file(unsigned char *buffer, size_t len,
--			const char *path_fmt, ...);
-+			const char *path_fmt, ...)
-+	__attribute__((format(printf, 3, 4)));
+ plugins/%.rules:
+-	$(AM_V_GEN)cp $(subst 97-,,$@) $@
++	$(AM_V_GEN)cp $(srcdir)/$(subst 97-,,$@) $@
  =
 
- ssize_t write_file(const unsigned char *buffer, size_t len, mode_t mode,
--			const char *path_fmt, ...);
-+			const char *path_fmt, ...)
-+	__attribute__((format(printf, 4, 5)));
+ $(src_ofonod_OBJECTS) $(unit_objects): $(local_headers)
  =
 
- GKeyFile *storage_open(const char *imsi, const char *store);
- void storage_sync(const char *imsi, const char *store, GKeyFile *keyfile);
 -- =
 
 1.6.6.1
 
 
---===============2214091832871832232==--
+--===============8671103325868105877==--
 
