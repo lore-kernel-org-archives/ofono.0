@@ -1,39 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============6463174120897809720=="
+Content-Type: multipart/mixed; boundary="===============6378474611057518396=="
 MIME-Version: 1.0
-From: Miettinen Pasi <pasi.miettinen@ixonos.com>
-Subject: SMS delivery report
-Date: Thu, 27 May 2010 13:06:56 +0300
-Message-ID: <EA8B5A37FEEFC048AF3F8170D2819913B8C1280A36@jklmail01.ixonos.local>
+From: pasi.miettinen@ixonos.com
+Subject: [PATCH 01/11] In drivers/atmodem/sms.c:at_cmgl_cpms_cb() there is a
+ temporary fix for Siemens TC65. If AT+CMGL=4 is sent to TC65,
+ the AT command queue jams.
+Date: Thu, 27 May 2010 13:54:40 +0300
+Message-ID: <1274957690-4893-1-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6463174120897809720==
+--===============6378474611057518396==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+From: Pasi Miettinen <pasi.miettinen@ixonos.com>
 
-My name is Pasi Miettinen. I have been working with SMS delivery report item
-based on the TODO list. The work covers requesting of SMS report in the =
+---
+ drivers/atmodem/sms.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-DBus interface via SendMessage method by adding third parameter. If =
+diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
+index 8049df6..27de77b 100644
+--- a/drivers/atmodem/sms.c
++++ b/drivers/atmodem/sms.c
+@@ -544,6 +544,10 @@ static void at_cmgl_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ =
 
-parameter is TRUE status report is asked. Incoming status report is reported
-also via DBus by sending signla called IncomingStatusreport. Status reports
-of the concatenated messages are also supported. Internal oFono SMS
-history is updated according status report results. This patch utilizes old=
- style
-msg_id (not hash). Concatenated messages have one internal msg_id that
-relates to multiple TP-MR. If one MR-number is resulted to "delivery-failed=
-",
-the whole concatenated message is considered as failed and history is
-updated using internal msg_id.
+ static void at_cmgl_cpms_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+ {
++
++	DBG("PASS AT+CMGL=3D4!!!");
++	return;
++
+ 	struct cpms_request *req =3D user_data;
+ 	struct ofono_sms *sms =3D req->sms;
+ 	struct sms_data *data =3D ofono_sms_get_data(sms);
+-- =
 
-An initial set of patches follow for review.
+1.6.0.4
 
-Best regards,
-Pasi Miettinen=20
 
---===============6463174120897809720==--
+--===============6378474611057518396==--
 
