@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6242939690819964451=="
+Content-Type: multipart/mixed; boundary="===============2409415277702234945=="
 MIME-Version: 1.0
 From: pasi.miettinen@ixonos.com
-Subject: [PATCH 02/11] Made needed changes to at_cds_notify() for status
- report and corrected at_cmgl_cpms_cb() to meet the ISO standard.
-Date: Thu, 27 May 2010 13:54:41 +0300
-Message-ID: <1274957690-4893-2-git-send-email-pasi.miettinen@ixonos.com>
-In-Reply-To: <1274957690-4893-1-git-send-email-pasi.miettinen@ixonos.com>
+Subject: [PATCH 04/11] Changes for SMS statur report.
+Date: Thu, 27 May 2010 13:54:43 +0300
+Message-ID: <1274957690-4893-4-git-send-email-pasi.miettinen@ixonos.com>
+In-Reply-To: <1274957690-4893-3-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6242939690819964451==
+--===============2409415277702234945==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,75 +16,229 @@ Content-Transfer-Encoding: quoted-printable
 From: Pasi Miettinen <pasi.miettinen@ixonos.com>
 
 ---
- drivers/atmodem/sms.c |   26 +++++++++++++++++++-------
- 1 files changed, 19 insertions(+), 7 deletions(-)
+ include/sms.h |    2 +-
+ src/sms.c     |  124 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
++---
+ 2 files changed, 119 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
-index 27de77b..a1c885b 100644
---- a/drivers/atmodem/sms.c
-+++ b/drivers/atmodem/sms.c
-@@ -283,16 +283,28 @@ static void at_cds_notify(GAtResult *result, gpointer=
- user_data)
- {
- 	struct ofono_sms *sms =3D user_data;
- 	struct sms_data *data =3D ofono_sms_get_data(sms);
--	int pdulen;
--	const char *pdu;
-+	long pdu_len;
-+	int tpdu_len;
-+	const char *hexpdu;
-+	unsigned char pdu[176];
- 	char buf[256];
+diff --git a/include/sms.h b/include/sms.h
+index daaec37..c007675 100644
+--- a/include/sms.h
++++ b/include/sms.h
+@@ -54,7 +54,7 @@ struct ofono_sms_driver {
  =
 
--	if (!at_parse_pdu_common(result, "+CDS:", &pdu, &pdulen)) {
-+	if (!at_parse_pdu_common(result, "+CDS:", &hexpdu, &tpdu_len)) {
- 		ofono_error("Unable to parse CDS notification");
- 		return;
+ void ofono_sms_deliver_notify(struct ofono_sms *sms, unsigned char *pdu,
+ 				int len, int tpdu_len);
+-void ofono_sms_status_notify(struct ofono_sms *sms, unsigned char *pdu,
++void ofono_sms_status_report_notify(struct ofono_sms *sms, unsigned char *=
+pdu,
+ 				int len, int tpdu_len);
+ =
+
+ int ofono_sms_driver_register(const struct ofono_sms_driver *d);
+diff --git a/src/sms.c b/src/sms.c
+index 855bef8..63e0190 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -459,9 +459,10 @@ static GDBusMethodTable sms_manager_methods[] =3D {
+ };
+ =
+
+ static GDBusSignalTable sms_manager_signals[] =3D {
+-	{ "PropertyChanged",	"sv"		},
+-	{ "IncomingMessage",	"sa{sv}"	},
+-	{ "ImmediateMessage",	"sa{sv}"	},
++	{ "PropertyChanged",		"sv"		},
++	{ "IncomingMessage",		"sa{sv}"	},
++	{ "ImmediateMessage",		"sa{sv}"	},
++	{ "IncomingStatusReport",	"{sv}"		},
+ 	{ }
+ };
+ =
+
+@@ -471,6 +472,7 @@ static void dispatch_app_datagram(struct ofono_sms *sms=
+, int dst, int src,
+ 	DBG("Got app datagram for dst port: %d, src port: %d",
+ 			dst, src);
+ 	DBG("Contents-Len: %ld", len);
++	//DBG("buf: %s", buf);
+ }
+ =
+
+ static void dispatch_text_message(struct ofono_sms *sms,
+@@ -539,6 +541,74 @@ static void dispatch_text_message(struct ofono_sms *sm=
+s,
  	}
+ }
  =
 
--	DBG("Got new Status-Report PDU via CDS: %s, %d", pdu, pdulen);
-+	/*Is this necessary?*/
-+	if (strlen(hexpdu) > sizeof(pdu) * 2) {
-+		ofono_error("Bad PDU length in CMT notification");
++static void dispatch_sms_delivery_report(struct ofono_sms *sms,
++					const enum sms_st *st,
++					const struct sms_address *raddr,
++					const struct sms_scts *scts)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(sms->atom);
++	DBusMessage *signal;
++	DBusMessageIter iter;
++	DBusMessageIter dict;
++	char buf[128];
++	const char *signal_name;
++	time_t ts;
++	struct tm remote;
++	struct tm local;
++	const char *str =3D buf;
++
++	if (!st){
++		DBG("status unavailable");
 +		return;
 +	}
 +
-+	DBG("Got new Status-Report PDU via CDS: %s, %d", hexpdu, tpdu_len);
++	signal_name =3D "IncomingStatusReport";
 +
-+	/*Decode pdu and notify about new SMS status report*/
-+	decode_hex_own_buf(hexpdu, -1, &pdu_len, 0, pdu);
-+	ofono_sms_status_report_notify(sms, pdu, pdu_len, tpdu_len);
- =
-
- 	/* We must acknowledge the PDU using CNMA */
- 	if (data->cnma_ack_pdu)
-@@ -545,13 +557,13 @@ static void at_cmgl_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- static void at_cmgl_cpms_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
++	signal =3D dbus_message_new_signal(path, OFONO_SMS_MANAGER_INTERFACE,
++						signal_name);
++
++	if (!signal)
++		return;
++
++
++	/*Start assembling dbus-message*/
++	dbus_message_iter_init_append(signal, &iter);
++
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					OFONO_PROPERTIES_ARRAY_SIGNATURE,
++						&dict);
++
++	/*This is the time when sender sent the message,
++	  should be delivery time?*/
++	ts =3D sms_scts_to_time(scts, &remote);
++	localtime_r(&ts, &local);
++
++	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", &local);
++	buf[127] =3D '\0';
++	ofono_dbus_dict_append(&dict, "LocalSentTime", DBUS_TYPE_STRING, &str);
++
++	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", &remote);
++	buf[127] =3D '\0';
++	ofono_dbus_dict_append(&dict, "SentTime", DBUS_TYPE_STRING, &str);
++
++	/*Status*/
++	if(*st=3D=3D0x00){
++		str =3D sms_address_to_string(raddr);
++		ofono_dbus_dict_append(&dict, "Message was delivered to", DBUS_TYPE_STRI=
+NG, &str);
++	}
++	else{
++		str =3D sms_address_to_string(raddr);
++		ofono_dbus_dict_append(&dict, "Message was not delivered to", DBUS_TYPE_=
+STRING, &str);
++	}
++
++	/*dbus-message assembled*/
++	dbus_message_iter_close_container(&iter, &dict);
++
++	g_dbus_send_message(conn, signal);
++
++}
++
+ static void sms_dispatch(struct ofono_sms *sms, GSList *sms_list)
  {
+ 	GSList *l;
+@@ -646,6 +716,18 @@ static void sms_dispatch(struct ofono_sms *sms, GSList=
+ *sms_list)
+ 	}
+ }
  =
 
--	DBG("PASS AT+CMGL=3D4!!!");
--	return;
--
- 	struct cpms_request *req =3D user_data;
- 	struct ofono_sms *sms =3D req->sms;
- 	struct sms_data *data =3D ofono_sms_get_data(sms);
- =
-
-+	DBG("PASS AT+CMGL=3D4!!!");
-+	return;
++static void sms_status_report_dispatch(struct ofono_sms *sms, GSList *sms_=
+list)
++{
++	const struct sms *s;
++	enum sms_charset uninitialized_var(old_charset);
 +
- 	if (!ok) {
- 		ofono_error("Initial CPMS request failed");
- 		at_cmgl_done(sms);
++	s =3D sms_list->data;
++	dispatch_sms_delivery_report(sms, &s->status_report.st,
++					&s->status_report.raddr,
++					&s->status_report.scts);
++
++}
++
+ static void handle_deliver(struct ofono_sms *sms, const struct sms *incomi=
+ng)
+ {
+ 	GSList *l;
+@@ -679,6 +761,19 @@ static void handle_deliver(struct ofono_sms *sms, cons=
+t struct sms *incoming)
+ 	g_slist_free(l);
+ }
+ =
+
++static void handle_sms_status_report(struct ofono_sms *sms, const struct s=
+ms *incoming)
++{
++	GSList *l;
++
++	/*TODO:
++	fragmented SMS delivery report? check handle_deliver()
++	*/
++
++	l =3D g_slist_append(NULL, (void *)incoming);
++	sms_status_report_dispatch(sms, l);
++	g_slist_free(l);
++}
++
+ static inline gboolean handle_mwi(struct ofono_sms *sms, struct sms *s)
+ {
+ 	gboolean discard;
+@@ -696,7 +791,7 @@ void ofono_sms_deliver_notify(struct ofono_sms *sms, un=
+signed char *pdu,
+ {
+ 	struct sms s;
+ 	enum sms_class cls;
+-
++	DBG("ofono_sms_deliver_notify");
+ 	if (!sms_decode(pdu, len, FALSE, tpdu_len, &s)) {
+ 		ofono_error("Unable to decode PDU");
+ 		return;
+@@ -807,10 +902,27 @@ out:
+ 	handle_deliver(sms, &s);
+ }
+ =
+
+-void ofono_sms_status_notify(struct ofono_sms *sms, unsigned char *pdu,
++void ofono_sms_status_report_notify(struct ofono_sms *sms, unsigned char *=
+pdu,
+ 				int len, int tpdu_len)
+ {
+-	ofono_error("SMS Status-Report not yet handled");
++	struct sms s;
++	enum sms_class cls;
++
++	if (!sms_decode(pdu, len, FALSE, tpdu_len, &s)) {
++		ofono_error("Unable to decode PDU");
++		return;
++	}
++
++	if (s.type !=3D SMS_TYPE_STATUS_REPORT) {
++		ofono_error("Expecting a STATUS REPORT pdu");
++	}
++
++	if (!sms_dcs_decode(s.deliver.dcs, &cls, NULL, NULL, NULL)) {
++		ofono_error("Unknown / Reserved DCS.  Ignoring");
++		return;
++	}
++
++	handle_sms_status_report(sms, &s);
+ }
+ =
+
+ int ofono_sms_driver_register(const struct ofono_sms_driver *d)
 -- =
 
 1.6.0.4
 
 
---===============6242939690819964451==--
+--===============2409415277702234945==--
 
