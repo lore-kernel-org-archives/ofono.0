@@ -1,34 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============7499984638836748325=="
+Content-Type: multipart/mixed; boundary="===============1342782539380325606=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/6] Use ofono_bool_t instead of bool in modem API.
-Date: Thu, 27 May 2010 13:01:27 -0500
-Message-ID: <201005271301.28486.denkenz@gmail.com>
-In-Reply-To: <1274976768-1555-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH 2/6] Use ofono_bool_t with D-Bus API.
+Date: Thu, 27 May 2010 13:02:53 -0500
+Message-ID: <201005271302.53682.denkenz@gmail.com>
+In-Reply-To: <1274976768-1555-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7499984638836748325==
+--===============1342782539380325606==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pekka,
 
->  int ofono_modem_set_boolean(struct ofono_modem *modem,
-> -				const char *key, bool value);
-> -bool ofono_modem_get_boolean(struct ofono_modem *modem, const char *key);
-> +				const char *key, gboolean value);
-> +gboolean ofono_modem_get_boolean(struct ofono_modem *modem, const char
->  *key);
+>  	if (modem->powered_pending =3D=3D FALSE) {
+>  		DBusConnection *conn =3D ofono_dbus_get_connection();
+> -		dbus_bool_t powered =3D FALSE;
+> -
+>  		modem->powered =3D FALSE;
+>  		ofono_dbus_signal_property_changed(conn, modem->path,
+>  						OFONO_MODEM_INTERFACE,
+>  						"Powered", DBUS_TYPE_BOOLEAN,
+> -						&powered);
+> +						&modem->powered);
 
-Err, please pay attention.  This should be ofono_bool_t.  I fixed it for yo=
-u =
+Actually this is the preferred approach and is more type safe.  If you noti=
+ce =
 
-(again).
+cases where we don't do this, then please send a patch.
 
 Regards,
 -Denis
 
---===============7499984638836748325==--
+--===============1342782539380325606==--
 
