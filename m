@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3195541097468390996=="
+Content-Type: multipart/mixed; boundary="===============7327816240836417841=="
 MIME-Version: 1.0
 From: pasi.miettinen@ixonos.com
-Subject: [PATCH 05/11] Added message delivery time to dbus message.
-Date: Thu, 27 May 2010 13:54:44 +0300
-Message-ID: <1274957690-4893-5-git-send-email-pasi.miettinen@ixonos.com>
-In-Reply-To: <1274957690-4893-4-git-send-email-pasi.miettinen@ixonos.com>
+Subject: [PATCH 08/11] Some style corrections.
+Date: Thu, 27 May 2010 13:54:47 +0300
+Message-ID: <1274957690-4893-8-git-send-email-pasi.miettinen@ixonos.com>
+In-Reply-To: <1274957690-4893-7-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3195541097468390996==
+--===============7327816240836417841==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,47 +16,81 @@ Content-Transfer-Encoding: quoted-printable
 From: Pasi Miettinen <pasi.miettinen@ixonos.com>
 
 ---
- src/sms.c |   11 +++++++++--
- 1 files changed, 9 insertions(+), 2 deletions(-)
+ src/sms.c |   16 +++++++---------
+ 1 files changed, 7 insertions(+), 9 deletions(-)
 
 diff --git a/src/sms.c b/src/sms.c
-index 63e0190..b4a5364 100644
+index d079ece..2d9088b 100644
 --- a/src/sms.c
 +++ b/src/sms.c
-@@ -579,8 +579,7 @@ static void dispatch_sms_delivery_report(struct ofono_s=
-ms *sms,
- 					OFONO_PROPERTIES_ARRAY_SIGNATURE,
- 						&dict);
+@@ -542,7 +542,7 @@ static void dispatch_text_message(struct ofono_sms *sms,
+ 	}
+ }
  =
 
--	/*This is the time when sender sent the message,
--	  should be delivery time?*/
-+	/*This is the time when sender sent the message*/
- 	ts =3D sms_scts_to_time(scts, &remote);
- 	localtime_r(&ts, &local);
- =
-
-@@ -592,6 +591,14 @@ static void dispatch_sms_delivery_report(struct ofono_=
-sms *sms,
- 	buf[127] =3D '\0';
- 	ofono_dbus_dict_append(&dict, "SentTime", DBUS_TYPE_STRING, &str);
- =
-
-+	/*This is the time when the message was delivered to the recipient*/
-+	ts =3D sms_scts_to_time(dt, &remote);
-+	localtime_r(&ts, &local);
-+
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", &local);
-+	buf[127] =3D '\0';
-+	ofono_dbus_dict_append(&dict, "LocalDeliverTime", DBUS_TYPE_STRING, &str);
-+
+-static void dispatch_sms_delivery_report(struct ofono_sms *sms,
++static void dispatch_sms_status_report(struct ofono_sms *sms,
+ 					const enum sms_st *st,
+ 					const struct sms_address *raddr,
+ 					const struct sms_scts *scts,
+@@ -604,11 +604,13 @@ static void dispatch_sms_delivery_report(struct ofono=
+_sms *sms,
  	/*Status*/
  	if(*st=3D=3D0x00){
  		str =3D sms_address_to_string(raddr);
+-		ofono_dbus_dict_append(&dict, "Message was delivered to", DBUS_TYPE_STRI=
+NG, &str);
++		ofono_dbus_dict_append(&dict, "Message was delivered to",
++							DBUS_TYPE_STRING, &str);
+ 	}
+ 	else{
+ 		str =3D sms_address_to_string(raddr);
+-		ofono_dbus_dict_append(&dict, "Message was not delivered to", DBUS_TYPE_=
+STRING, &str);
++		ofono_dbus_dict_append(&dict, "Message was not delivered to",
++							DBUS_TYPE_STRING, &str);
+ 	}
+ =
+
+ 	/*dbus-message assembled*/
+@@ -731,7 +733,7 @@ static void sms_status_report_dispatch(struct ofono_sms=
+ *sms, GSList *sms_list)
+ 	enum sms_charset uninitialized_var(old_charset);
+ =
+
+ 	s =3D sms_list->data;
+-	dispatch_sms_delivery_report(sms, &s->status_report.st,
++	dispatch_sms_status_report(sms, &s->status_report.st,
+ 					&s->status_report.raddr,
+ 					&s->status_report.scts,
+ 					&s->status_report.dt);
+@@ -775,10 +777,6 @@ static void handle_sms_status_report(struct ofono_sms =
+*sms, const struct sms *in
+ {
+ 	GSList *l;
+ =
+
+-	/*TODO:
+-	fragmented SMS delivery report? check handle_deliver()
+-	*/
+-
+ 	l =3D g_slist_append(NULL, (void *)incoming);
+ 	sms_status_report_dispatch(sms, l);
+ 	g_slist_free(l);
+@@ -801,7 +799,7 @@ void ofono_sms_deliver_notify(struct ofono_sms *sms, un=
+signed char *pdu,
+ {
+ 	struct sms s;
+ 	enum sms_class cls;
+-	DBG("ofono_sms_deliver_notify");
++
+ 	if (!sms_decode(pdu, len, FALSE, tpdu_len, &s)) {
+ 		ofono_error("Unable to decode PDU");
+ 		return;
 -- =
 
 1.6.0.4
 
 
---===============3195541097468390996==--
+--===============7327816240836417841==--
 
