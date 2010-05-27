@@ -1,56 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8197697726313674882=="
+Content-Type: multipart/mixed; boundary="===============8246543567461457897=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [RFC patches 06/13] smutil.h: add missing header file dependencies
-Date: Wed, 26 May 2010 12:49:20 -0700
-Message-ID: <4304def8734a39650175fd6765317d1c70b0beba.1274903142.git.inaky.perez-gonzalez@intel.com>
-In-Reply-To: <cover.1274903142.git.inaky.perez-gonzalez@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/4] Add: Online property to modem
+Date: Wed, 26 May 2010 21:05:11 -0500
+Message-ID: <201005262105.11721.denkenz@gmail.com>
+In-Reply-To: <1274885889-11479-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8197697726313674882==
+--===============8246543567461457897==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+Hi Pekka,
 
----
- src/smsutil.h |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+> The online/offline state is changed with the new set_online() modem driver
+> method.
+> =
 
-diff --git a/src/smsutil.h b/src/smsutil.h
-index 469a49e..356ec5d 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -18,6 +18,14 @@
-  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-  *
-  */
-+#ifndef __smsutil_h__
-+#define __smsutil_h__
-+
-+#include <time.h>
-+#include <glib/gtypes.h>
-+#include <glib/gslist.h>
-+#include <glib/gmessages.h>
-+#include <glib/gchecksum.h>
- =
+> In order to track atoms, there are modem states as follows:
+> - OFONO_MODEM_STATE_POWER_OFF
+> - OFONO_MODEM_STATE_PRE_SIM
+> - OFONO_MODEM_STATE_OFFLINE
+> - OFONO_MODEM_STATE_ONLINE
+> =
 
- #define CBS_MAX_GSM_CHARS 93
- =
+> Atoms are added with driver methods pre_sim(), post_sim() and
+>  post_online(). Atoms are removed by modem core when the state changes.
 
-@@ -501,3 +509,5 @@ char *cbs_topic_ranges_to_string(GSList *ranges);
- GSList *cbs_extract_topic_ranges(const char *ranges);
- GSList *cbs_optimize_ranges(GSList *ranges);
- gboolean cbs_topic_in_range(unsigned int topic, GSList *ranges);
-+
-+#endif /* #ifndef __smsutil_h__ */
--- =
+Patch has been applied, however I did some refactoring afterward.  Please t=
+est =
 
-1.6.6.1
+that I didn't break something.
 
+Regards,
+-Denis
 
---===============8197697726313674882==--
+--===============8246543567461457897==--
 
