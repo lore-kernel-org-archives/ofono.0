@@ -1,39 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============6410770109430860804=="
+Content-Type: multipart/mixed; boundary="===============9106994219032576438=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: [PATCH 3/4] Add: set_online and post_online methods to isimodem
- driver
-Date: Thu, 27 May 2010 09:48:47 +0300
-Message-ID: <1274942927.3755.481.camel@tucson.research.nokia.com>
-In-Reply-To: <201005262108.37085.denkenz@gmail.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH] test-stkutil: Use gcc4.3 compatible initialisers.
+Date: Thu, 27 May 2010 14:50:08 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731E095AE2@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1274846380-4370-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6410770109430860804==
+--===============9106994219032576438==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2010-05-27 at 04:08 +0200, ext Denis Kenzior wrote:
-> Hi Pekka,
-> =
+Hi Andrew,
 
-> > +static bool mtc_state_cb(GIsiClient *client, const void *restrict data,
-> > +				size_t len, uint16_t object, void *opaque)
-> =
 
-> We don't use bools in oFono, please fix this to use gboolean or an int.
+>-----Original Message-----
+>From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
+lf Of
+>Andrzej Zaborowski
+>Sent: Wednesday, May 26, 2010 12:00 PM
+>To: ofono(a)ofono.org
+>Subject: [PATCH] test-stkutil: Use gcc4.3 compatible initialisers.
+>
+>Reformat according to ideas on IRC.
 
-Well, stdbool.h is what gisi uses currently. I've been meaning to
-replace all occurrences with gboolean, but haven't gotten around to it
-yet.
-
-So I think this can be pushed, and the issue fixed aftrewards.
-
-Cheers,
-Aki
+Sorry to bother your gcc with this;) Your change is more standard-compliant=
+ with C89, thanks! =
 
 
 
---===============6410770109430860804==--
+Regards,
+-Yang
+
+--===============9106994219032576438==--
 
