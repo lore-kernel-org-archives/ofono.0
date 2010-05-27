@@ -1,261 +1,225 @@
-Content-Type: multipart/mixed; boundary="===============0029059124914217333=="
+Content-Type: multipart/mixed; boundary="===============4956651750558675907=="
 MIME-Version: 1.0
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
-Subject: [PATCH 5/6] Fixed style issues in isimodem voicecall.
-Date: Thu, 27 May 2010 19:12:47 +0300
-Message-ID: <1274976768-1555-5-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1274976768-1555-4-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [PATCH 6/6] Add: set_online and post_online methods to isimodem driver
+Date: Thu, 27 May 2010 19:12:48 +0300
+Message-ID: <1274976768-1555-6-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1274976768-1555-5-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0029059124914217333==
+--===============4956651750558675907==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/isimodem/voicecall.c |   69 +++++++++++++++++++-------------------=
+ drivers/isimodem/isimodem.c |  107 +++++++++++++++++++++++++++++++++++++++=
 ----
- 1 files changed, 31 insertions(+), 38 deletions(-)
+ 1 files changed, 98 insertions(+), 9 deletions(-)
 
-diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index 44ffe96..5c6cc40 100644
---- a/drivers/isimodem/voicecall.c
-+++ b/drivers/isimodem/voicecall.c
-@@ -71,7 +71,7 @@ static struct ofono_call isi_call_as_ofono_call(struct is=
-i_call const *);
- static int isi_call_status_to_clcc(struct isi_call const *call);
- static struct isi_call *isi_call_set_idle(struct isi_call *call);
+diff --git a/drivers/isimodem/isimodem.c b/drivers/isimodem/isimodem.c
+index 05ebfe2..8df6fd6 100644
+--- a/drivers/isimodem/isimodem.c
++++ b/drivers/isimodem/isimodem.c
+@@ -67,7 +67,8 @@ struct isi_data {
+ 	GPhonetLinkState linkstate;
+ 	unsigned interval;
+ 	int reported;
+-	int mtc_state;
++	ofono_bool_t online;
++	struct isi_cb_data *online_cbd;
+ };
  =
 
--typedef void GIsiIndication (GIsiClient *client,
-+typedef void GIsiIndication(GIsiClient *client,
- 		const void *restrict data, size_t len,
- 		uint16_t object, void *opaque);
+ static void report_powered(struct isi_data *isi, ofono_bool_t powered)
+@@ -76,9 +77,27 @@ static void report_powered(struct isi_data *isi, ofono_b=
+ool_t powered)
+ 		ofono_modem_set_powered(isi->modem, isi->reported =3D powered);
+ }
  =
 
-@@ -106,7 +106,7 @@ struct isi_call_req_context {
- =
-
- static struct isi_call_req_context *
- isi_call_req(struct ofono_voicecall *ovc,
--	     void const * restrict req,
-+	     void const *restrict req,
- 	     size_t len,
- 	     GIsiResponse *handler,
- 	     ofono_voicecall_cb_t cb,
-@@ -143,10 +143,12 @@ static void isi_ctx_queue(struct isi_call_req_context=
- *irc,
- 	if (irc->prev =3D=3D NULL) {
- 		struct isi_voicecall *ivc =3D ofono_voicecall_get_data(irc->ovc);
- =
-
--		irc->prev =3D &ivc->queue;
--		if ((irc->next =3D *irc->prev))
-+		if (ivc->queue) {
-+			irc->next =3D ivc->queue;
- 			irc->next->prev =3D &irc->next;
--		*irc->prev =3D irc;
-+		}
-+		irc->prev =3D &ivc->queue;
-+		ivc->queue =3D irc;
- 	}
- =
-
- 	irc->step =3D next;
-@@ -155,7 +157,9 @@ static void isi_ctx_queue(struct isi_call_req_context *=
-irc,
- static void isi_ctx_remove(struct isi_call_req_context *irc)
+-static void set_power_by_mtc_state(struct isi_data *isi, int state)
++static void report_online(struct isi_data *isi, ofono_bool_t online)
  {
- 	if (irc->prev) {
--		if ((*irc->prev =3D irc->next)) {
-+		*irc->prev =3D irc->next;
+-	switch (isi->mtc_state =3D state) {
++	struct isi_cb_data *cbd =3D isi->online_cbd;
++	ofono_modem_online_cb cb =3D cbd->cb;
 +
-+		if (irc->next) {
- 			irc->next->prev =3D irc->prev;
- 			irc->next =3D NULL;
- 		}
-@@ -285,7 +289,6 @@ static void isi_call_status_sb_proc(struct isi_voicecal=
-l *ivc,
++	isi->online_cbd =3D NULL;
++
++	if (isi->online =3D=3D online)
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	else
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++
++	g_free(cbd);
++}
++
++static void set_power_by_mtc_state(struct isi_data *isi, int mtc_state)
++{
++	if (isi->online_cbd)
++		report_online(isi, mtc_state =3D=3D MTC_NORMAL);
++
++	switch (mtc_state) {
+ 	case MTC_STATE_NONE:
+ 	case MTC_POWER_OFF:
+ 	case MTC_CHARGING:
+@@ -88,9 +107,6 @@ static void set_power_by_mtc_state(struct isi_data *isi,=
+ int state)
  =
 
- static struct isi_call *
- isi_call_status_info_sb_proc(struct isi_voicecall *ivc,
--			     struct isi_call calls[8],
- 			     GIsiSubBlockIter const *sb)
- {
- 	struct isi_call *call =3D NULL;
-@@ -304,7 +307,7 @@ isi_call_status_info_sb_proc(struct isi_voicecall *ivc,
- 	i =3D call_id & 7;
- =
-
- 	if (1 <=3D i && i <=3D 7) {
--		call =3D &calls[i];
-+		call =3D &ivc->calls[i];
- 		call->call_id =3D call_id;
- 		call->status =3D status;
- 		call->mode =3D mode;
-@@ -316,7 +319,6 @@ isi_call_status_info_sb_proc(struct isi_voicecall *ivc,
- =
-
- static struct isi_call *
- isi_call_addr_and_status_info_sb_proc(struct isi_voicecall *ivc,
--				      struct isi_call calls[8],
- 				      GIsiSubBlockIter const *sb)
- {
- 	struct isi_call *call =3D NULL;
-@@ -343,7 +345,7 @@ isi_call_addr_and_status_info_sb_proc(struct isi_voicec=
-all *ivc,
- 	i =3D call_id & 7;
- =
-
- 	if (1 <=3D i && i <=3D 7) {
--		call =3D &calls[i];
-+		call =3D &ivc->calls[i];
- 		call->call_id =3D call_id;
- 		call->status =3D status;
- 		call->mode =3D mode;
-@@ -433,7 +435,7 @@ static gboolean isi_call_create_resp(GIsiClient *client,
- }
- =
-
- static void isi_call_status_ind_cb(GIsiClient *client,
--				   void const * restrict data,
-+				   void const *restrict data,
- 				   size_t len,
- 				   uint16_t object,
- 				   void *_ovc)
-@@ -641,11 +643,11 @@ static gboolean isi_call_status_resp(GIsiClient *clie=
-nt,
- 		switch (g_isi_sb_iter_get_id(sb)) {
- =
-
- 		case CALL_STATUS_INFO:
--			call =3D isi_call_status_info_sb_proc(ivc, ivc->calls, sb);
-+			call =3D isi_call_status_info_sb_proc(ivc, sb);
- 			break;
- =
-
- 		case CALL_ADDR_AND_STATUS_INFO:
--			call =3D isi_call_addr_and_status_info_sb_proc(ivc, ivc->calls, sb);
-+			call =3D isi_call_addr_and_status_info_sb_proc(ivc, sb);
- 			if (call)
- 				isi_call_notify(ovc, call);
- 			break;
-@@ -965,7 +967,7 @@ static struct isi_call *isi_call_set_idle(struct isi_ca=
-ll *call)
- /* ---------------------------------------------------------------------- =
-*/
- =
-
- static void isi_dial(struct ofono_voicecall *ovc,
--		     const struct ofono_phone_number * restrict number,
-+		     const struct ofono_phone_number *restrict number,
- 		     enum ofono_clir_option clir,
- 		     enum ofono_cug_option cug,
- 		     ofono_voicecall_cb_t cb,
-@@ -973,8 +975,7 @@ static void isi_dial(struct ofono_voicecall *ovc,
- {
- 	unsigned char presentation =3D CALL_GSM_PRESENTATION_DEFAULT;
- =
-
--	switch (clir)
--	{
-+	switch (clir) {
- 	case OFONO_CLIR_OPTION_DEFAULT:
- 		presentation =3D CALL_GSM_PRESENTATION_DEFAULT;
- 		break;
-@@ -986,8 +987,7 @@ static void isi_dial(struct ofono_voicecall *ovc,
- 		break;
+ 	case MTC_RF_INACTIVE:
+ 	case MTC_NORMAL:
+-		report_powered(isi, 1);
+-		break;
+-
+ 	default:
+ 		report_powered(isi, 1);
  	}
+@@ -157,7 +173,8 @@ static gboolean mtc_poll_query_cb(GIsiClient *client,
+ 	DBG("target modem state: %s (0x%02X)",
+ 		mtc_modem_state_name(msg[2]), msg[2]);
  =
 
--	switch (cug)
--	{
-+	switch (cug) {
- 	case OFONO_CUG_OPTION_DEFAULT:
- 		break;
- 	case OFONO_CUG_OPTION_INVOCATION:
-@@ -1092,8 +1092,7 @@ static void isi_release_all_active(struct ofono_voice=
-call *ovc,
- 			isi_ctx_queue(irc, isi_wait_and_answer);
- 		else if (hold)
- 			isi_ctx_queue(irc, isi_wait_and_retrieve);
--	}
--	else
-+	} else
- 		CALLBACK_WITH_FAILURE(cb, data);
+-	set_power_by_mtc_state(isi, msg[1]);
++	if (msg[1] =3D=3D msg[2])
++		set_power_by_mtc_state(isi, msg[1]);
+ =
+
+ 	return TRUE;
+ }
+@@ -182,7 +199,8 @@ static gboolean mtc_query_cb(GIsiClient *client,
+ 	DBG("target modem state: %s (0x%02X)",
+ 		mtc_modem_state_name(msg[2]), msg[2]);
+ =
+
+-	set_power_by_mtc_state(isi, msg[1]);
++	if (msg[1] =3D=3D msg[2])
++		set_power_by_mtc_state(isi, msg[1]);
+ =
+
+ 	return TRUE;
+ }
+@@ -279,6 +297,7 @@ static int isi_modem_probe(struct ofono_modem *modem)
+ 	isi->ifname =3D ifname;
+ 	isi->link =3D link;
+ 	isi->client =3D g_isi_client_create(isi->idx, PN_MTC);
++	isi->reported =3D -1;
+ =
+
+ 	return 0;
+ }
+@@ -296,6 +315,66 @@ static void isi_modem_remove(struct ofono_modem *modem)
+ 	g_free(isi);
  }
  =
 
-@@ -1139,21 +1138,19 @@ static void isi_hold_all_active(struct ofono_voicec=
-all *ovc,
++static gboolean mtc_state_cb(GIsiClient *client,
++				const void *restrict data, size_t len,
++				uint16_t object, void *opaque)
++{
++	struct isi_cb_data *cbd =3D opaque;
++	struct ofono_modem *modem =3D cbd->user;
++	ofono_modem_online_cb cb =3D cbd->cb;
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++	const unsigned char *msg =3D data;
++
++	if (!msg) {
++		DBG("ISI client error: %d", g_isi_client_error(client));
++		goto err;
++	}
++
++	if (len < 3 || msg[0] !=3D MTC_STATE_RESP)
++		return FALSE;
++
++	DBG("cause: %s (0x%02X)", mtc_isi_cause_name(msg[1]), msg[1]);
++
++	if (msg[1] =3D=3D MTC_OK) {
++		isi->online_cbd =3D cbd;
++		return TRUE;
++	}
++
++err:
++	if (msg && msg[1] =3D=3D MTC_ALREADY_ACTIVE)
++		CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	else
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++
++	g_free(cbd);
++	return TRUE;
++}
++
++static void isi_modem_online(struct ofono_modem *modem, ofono_bool_t onlin=
+e,
++				ofono_modem_online_cb cb, void *data)
++{
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
++	const unsigned char req[] =3D {
++		MTC_STATE_REQ, online ? MTC_NORMAL : MTC_RF_INACTIVE, 0x00
++	};
++	struct isi_cb_data *cbd =3D isi_cb_data_new(modem, cb, data);
++
++	DBG("(%p) with %s", modem, isi->ifname);
++
++	if (!cbd)
++		goto error;
++
++	isi->online =3D online;
++
++	if (g_isi_request_make(isi->client, req, sizeof(req), MTC_TIMEOUT,
++				mtc_state_cb, cbd))
++		return;
++
++error:
++	g_free(cbd);
++	CALLBACK_WITH_FAILURE(cb, data);
++}
++
+ static void isi_modem_pre_sim(struct ofono_modem *modem)
+ {
+ 	struct isi_data *isi =3D ofono_modem_get_data(modem);
+@@ -310,12 +389,20 @@ static void isi_modem_pre_sim(struct ofono_modem *mod=
+em)
+ static void isi_modem_post_sim(struct ofono_modem *modem)
+ {
+ 	struct isi_data *isi =3D ofono_modem_get_data(modem);
++
++	DBG("(%p) with %s", modem, isi->ifname);
++
++	ofono_phonebook_create(isi->modem, 0, "isimodem", isi->idx);
++}
++
++static void isi_modem_post_online(struct ofono_modem *modem)
++{
++	struct isi_data *isi =3D ofono_modem_get_data(modem);
+ 	struct ofono_gprs *gprs;
+ 	struct ofono_gprs_context *gc;
  =
 
- 	if (waiting) {
- 		isi_call_answer_req(ovc, CALL_ID_WAITING, cb, data);
--	}
--	else if (hold) {
-+	} else if (hold) {
- 		if (active) {
--			id =3D CALL_ID_ACTIVE, op =3D CALL_OP_SWAP;
--		}
--		else {
--			id =3D CALL_ID_HOLD, op =3D CALL_OP_RETRIEVE;
-+			op =3D CALL_OP_SWAP;
-+			id =3D CALL_ID_ACTIVE;
-+		} else {
-+			op =3D CALL_OP_RETRIEVE;
-+			id =3D CALL_ID_HOLD;
- 		}
- 		isi_call_control_req(ovc, id, op, 0, cb, data);
--	}
--	else if (active) {
-+	} else if (active) {
- 		id =3D CALL_ID_ACTIVE, op =3D CALL_OP_HOLD;
- 		isi_call_control_req(ovc, id, op, 0, cb, data);
--	}
--	else {
-+	} else {
- 		CALLBACK_WITH_FAILURE(cb, data);
- 	}
- }
-@@ -1182,8 +1179,7 @@ static void isi_release_specific(struct ofono_voiceca=
-ll *ovc, int id,
- 		isi_call_release_req(ovc, id,
- 				     CALL_CAUSE_TYPE_CLIENT, cause,
- 				     cb, data);
--	}
--	else
-+	} else
- 		CALLBACK_WITH_FAILURE(cb, data);
- }
+ 	DBG("(%p) with %s", modem, isi->ifname);
  =
 
-@@ -1252,14 +1248,11 @@ static void isi_swap_without_accept(struct ofono_vo=
-icecall *ovc,
+-	ofono_phonebook_create(isi->modem, 0, "isimodem", isi->idx);
+ 	ofono_netreg_create(isi->modem, 0, "isimodem", isi->idx);
+ 	ofono_sms_create(isi->modem, 0, "isimodem", isi->idx);
+ 	ofono_cbs_create(isi->modem, 0, "isimodem", isi->idx);
+@@ -339,8 +426,10 @@ static struct ofono_modem_driver driver =3D {
+ 	.name =3D "isimodem",
+ 	.probe =3D isi_modem_probe,
+ 	.remove =3D isi_modem_remove,
++	.set_online =3D isi_modem_online,
+ 	.pre_sim =3D isi_modem_pre_sim,
+ 	.post_sim =3D isi_modem_post_sim,
++	.post_online =3D isi_modem_post_online,
+ };
  =
 
- 	if (hold && active) {
- 		id =3D CALL_ID_ACTIVE, op =3D CALL_OP_SWAP;
--	}
--	else if (active) {
-+	} else if (active) {
- 		id =3D CALL_ID_ACTIVE, op =3D CALL_OP_HOLD;
--	}
--	else if (hold) {
-+	} else if (hold) {
- 		id =3D CALL_ID_HOLD, op =3D CALL_OP_RETRIEVE;
--	}
--	else {
-+	} else {
- 		CALLBACK_WITH_FAILURE(cb, data);
- 		return;
- 	}
+ static int isimodem_init(void)
 -- =
 
 1.6.3.3
 
 
---===============0029059124914217333==--
+--===============4956651750558675907==--
 
