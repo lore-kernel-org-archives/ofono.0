@@ -1,117 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============1727483185131795050=="
+Content-Type: multipart/mixed; boundary="===============4927433524259402484=="
 MIME-Version: 1.0
-From: pasi.miettinen@ixonos.com
-Subject: [PATCH 11/11] Style corrections.
-Date: Thu, 27 May 2010 13:54:50 +0300
-Message-ID: <1274957690-4893-11-git-send-email-pasi.miettinen@ixonos.com>
-In-Reply-To: <1274957690-4893-10-git-send-email-pasi.miettinen@ixonos.com>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: Re: [PATCH 06/11] Made it possible to ask for status report via
+ SendMessage method parameters. True=status report on, false=off.
+Date: Thu, 27 May 2010 14:32:45 +0300
+Message-ID: <1274959965.3755.492.camel@tucson.research.nokia.com>
+In-Reply-To: <1274957690-4893-6-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1727483185131795050==
+--===============4927433524259402484==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pasi Miettinen <pasi.miettinen@ixonos.com>
-
----
- src/sms.c |   25 ++++++++++++++-----------
- 1 files changed, 14 insertions(+), 11 deletions(-)
-
-diff --git a/src/sms.c b/src/sms.c
-index de2d367..6bca8cd 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -472,7 +472,8 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
- 	if (valid_phone_number_format(to) =3D=3D FALSE)
- 		return __ofono_error_invalid_format(msg);
- =
-
--	msg_list =3D sms_text_prepare(text, 0, TRUE, &ref_offset, ask_status_repo=
-rt);
-+	msg_list =3D sms_text_prepare(text, 0, TRUE, &ref_offset,
-+						ask_status_report);
- =
-
- 	if (!msg_list)
- 		return __ofono_error_invalid_format(msg);
-@@ -509,12 +510,12 @@ static DBusMessage *sms_send_message(DBusConnection *=
+On Thu, 2010-05-27 at 12:54 +0200, ext pasi.miettinen(a)ixonos.com wrote:
+> diff --git a/src/sms.c b/src/sms.c
+> index b4a5364..d079ece 100644
+> --- a/src/sms.c
+> +++ b/src/sms.c
+> @@ -400,6 +400,7 @@ static DBusMessage *sms_send_message(DBusConnection *=
 conn, DBusMessage *msg,
- }
- =
+>  	struct ofono_sms *sms =3D data;
+>  	const char *to;
+>  	const char *text;
+> +	gboolean ask_status_report;
+>  	GSList *msg_list;
+>  	int ref_offset;
+>  	struct tx_queue_entry *entry;
+> @@ -407,13 +408,14 @@ static DBusMessage *sms_send_message(DBusConnection=
+ *conn, DBusMessage *msg,
+>  =
 
- static GDBusMethodTable sms_manager_methods[] =3D {
--	{ "GetProperties",	"",	"a{sv}",	sms_get_properties,
--							G_DBUS_METHOD_FLAG_ASYNC },
--	{ "SetProperty",	"sv",	"",		sms_set_property,
--							G_DBUS_METHOD_FLAG_ASYNC },
--	{ "SendMessage",	"ssb",	"",		sms_send_message,
--							G_DBUS_METHOD_FLAG_ASYNC },
-+	{ "GetProperties",	"",	"a{sv}", sms_get_properties,
-+						 G_DBUS_METHOD_FLAG_ASYNC },
-+	{ "SetProperty",	"sv",	"",	 sms_set_property,
-+						 G_DBUS_METHOD_FLAG_ASYNC },
-+	{ "SendMessage",	"ssb",	"",	 sms_send_message,
-+						 G_DBUS_METHOD_FLAG_ASYNC },
- 	{ }
- };
- =
+>  	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &to,
+>  					DBUS_TYPE_STRING, &text,
+> +					DBUS_TYPE_BOOLEAN, &ask_status_report,
+>  					DBUS_TYPE_INVALID))
+>  		return __ofono_error_invalid_args(msg);
+>  =
 
-@@ -636,7 +637,7 @@ static void update_pending_status_report_mr_number(stru=
-ct ofono_sms *sms,
- 			  whole message is declared undelivered*/
- 			if(current_mr->mr =3D=3D mr &&
- 				status_report_state =3D=3D
--					SMS_STATUS_REPORT_MESSAGE_NOT_DELIVERED) {
-+				SMS_STATUS_REPORT_MESSAGE_NOT_DELIVERED) {
- =
+>  	if (valid_phone_number_format(to) =3D=3D FALSE)
+>  		return __ofono_error_invalid_format(msg);
+>  =
 
- 				DBG("SMS-STATUS-REPORT: message %d not "\
- 				"delivered", status_report_mr_numbers-> \
-@@ -748,7 +749,8 @@ static void dispatch_sms_status_report(struct ofono_sms=
- *sms,
- =
+> -	msg_list =3D sms_text_prepare(text, 0, TRUE, &ref_offset);
+> +	msg_list =3D sms_text_prepare(text, 0, TRUE, &ref_offset, ask_status_re=
+port);
+>  =
 
- 	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", &local);
- 	buf[127] =3D '\0';
--	ofono_dbus_dict_append(&dict, "LocalDeliverTime", DBUS_TYPE_STRING, &str);
-+	ofono_dbus_dict_append(&dict, "LocalDeliverTime",
-+					DBUS_TYPE_STRING, &str);
- =
+>  	if (!msg_list)
+>  		return __ofono_error_invalid_format(msg);
+> @@ -453,7 +455,7 @@ static GDBusMethodTable sms_manager_methods[] =3D {
+>  							G_DBUS_METHOD_FLAG_ASYNC },
+>  	{ "SetProperty",	"sv",	"",		sms_set_property,
+>  							G_DBUS_METHOD_FLAG_ASYNC },
+> -	{ "SendMessage",	"ss",	"",		sms_send_message,
+> +	{ "SendMessage",	"ssb",	"",		sms_send_message,
+>  							G_DBUS_METHOD_FLAG_ASYNC },
+>  	{ }
+>  };
 
- 	/*Status*/
- 	if(*st=3D=3D0x00){
-@@ -763,7 +765,7 @@ static void dispatch_sms_status_report(struct ofono_sms=
- *sms,
- 		ofono_dbus_dict_append(&dict, "Message was not delivered to",
- 							DBUS_TYPE_STRING, &str);
- 		update_pending_status_report_mr_number(sms, mr,
--					SMS_STATUS_REPORT_MESSAGE_NOT_DELIVERED);
-+				SMS_STATUS_REPORT_MESSAGE_NOT_DELIVERED);
- 	}
- =
+I don't like this being an argument to SendMessage(). I think it needs
+to be exposed, but as a property instead. Is there a use case for
+setting this per message? I think majority of current phones either
+provide a global setting for this, or set it on by default.
 
- 	/*dbus-message assembled*/
-@@ -927,7 +929,8 @@ static void handle_deliver(struct ofono_sms *sms, const=
- struct sms *incoming)
- 	g_slist_free(l);
- }
- =
-
--static void handle_sms_status_report(struct ofono_sms *sms, const struct s=
-ms *incoming)
-+static void handle_sms_status_report(struct ofono_sms *sms,
-+					const struct sms *incoming)
- {
- 	GSList *l;
- =
-
--- =
-
-1.6.0.4
+Cheers,
+Aki
 
 
---===============1727483185131795050==--
+--===============4927433524259402484==--
 
