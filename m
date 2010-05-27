@@ -1,48 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============2079438449665972052=="
+Content-Type: multipart/mixed; boundary="===============4385666778983649250=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: SMS delivery report
-Date: Thu, 27 May 2010 14:35:18 -0500
-Message-ID: <201005271435.18310.denkenz@gmail.com>
-In-Reply-To: <EA8B5A37FEEFC048AF3F8170D2819913B8C1280A36@jklmail01.ixonos.local>
+Subject: Re: [PATCH 3/6] Eliminated bool, true and false from gisi.
+Date: Thu, 27 May 2010 14:36:23 -0500
+Message-ID: <201005271436.24079.denkenz@gmail.com>
+In-Reply-To: <1274976768-1555-3-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2079438449665972052==
+--===============4385666778983649250==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pasi,
+Hi Pekka,
 
-> Hi all,
+> ---
+>  gisi/client.c  |   10 +------
+>  gisi/client.h  |   17 ++++++-------
+>  gisi/iter.c    |   73
+>  +++++++++++++++++++++++++++---------------------------- gisi/iter.h    |=
+  =
+
+>  23 ++++++++---------
+>  gisi/netlink.c |    1 -
+>  gisi/netlink.h |    1 -
+>  gisi/pipe.c    |   45 +++++++++++++++++-----------------
+>  gisi/server.h  |    7 ++---
+>  gisi/verify.c  |   13 ++++-----
+>  9 files changed, 88 insertions(+), 102 deletions(-)
 > =
 
-> My name is Pasi Miettinen. I have been working with SMS delivery report
->  item based on the TODO list. The work covers requesting of SMS report in
->  the DBus interface via SendMessage method by adding third parameter. If
->  parameter is TRUE status report is asked. Incoming status report is
->  reported also via DBus by sending signla called IncomingStatusreport.
->  Status reports of the concatenated messages are also supported. Internal
->  oFono SMS history is updated according status report results. This patch
->  utilizes old style msg_id (not hash). Concatenated messages have one
->  internal msg_id that relates to multiple TP-MR. If one MR-number is
->  resulted to "delivery-failed", the whole concatenated message is
->  considered as failed and history is updated using internal msg_id.
-> =
 
-> An initial set of patches follow for review.
-
-First of all, welcome aboard :)
-
-Since you're making good progress on the Status Report tasks, can you submi=
-t a =
-
-patch against the TODO file indicating that you're the Owner of this task?
-Simple  'Owner: Author' (same as commit info) annotation will suffice.
+All other patches in this series have been applied.
 
 Thanks,
 -Denis
 
---===============2079438449665972052==--
+--===============4385666778983649250==--
 
