@@ -1,44 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============4842385561833018338=="
+Content-Type: multipart/mixed; boundary="===============9110965495020216567=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: [PATCH 04/11] Changes for SMS statur report.
-Date: Thu, 27 May 2010 14:41:23 +0300
-Message-ID: <1274960483.3755.501.camel@tucson.research.nokia.com>
-In-Reply-To: <1274957690-4893-4-git-send-email-pasi.miettinen@ixonos.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/4] Add: set_online and post_online methods to isimodem
+ driver
+Date: Thu, 27 May 2010 06:44:01 -0500
+Message-ID: <201005270644.01624.denkenz@gmail.com>
+In-Reply-To: <1274942927.3755.481.camel@tucson.research.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4842385561833018338==
+--===============9110965495020216567==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2010-05-27 at 12:54 +0200, ext pasi.miettinen(a)ixonos.com wrote:
-> diff --git a/include/sms.h b/include/sms.h
-> index daaec37..c007675 100644
-> --- a/include/sms.h
-> +++ b/include/sms.h
-> @@ -54,7 +54,7 @@ struct ofono_sms_driver {
->  =
+Hi Aki,
 
->  void ofono_sms_deliver_notify(struct ofono_sms *sms, unsigned char *pdu,
->  				int len, int tpdu_len);
-> -void ofono_sms_status_notify(struct ofono_sms *sms, unsigned char *pdu,
-> +void ofono_sms_status_report_notify(struct ofono_sms *sms, unsigned char=
- *pdu,
->  				int len, int tpdu_len);
+> On Thu, 2010-05-27 at 04:08 +0200, ext Denis Kenzior wrote:
+> > Hi Pekka,
+> >
+> > > +static bool mtc_state_cb(GIsiClient *client, const void *restrict
+> > > data, +				size_t len, uint16_t object, void *opaque)
+> >
+> > We don't use bools in oFono, please fix this to use gboolean or an int.
+> =
 
-Actually, I think we should have a single ofono_sms_pdu_notify(), and
-let the core handle demuxing the different message types after parsing
-the PDU.
+> Well, stdbool.h is what gisi uses currently. I've been meaning to
+> replace all occurrences with gboolean, but haven't gotten around to it
+> yet.
+> =
 
-ISI modems don't have different messages for deliver and status report;
-the modem just sends a TPDU.
+> So I think this can be pushed, and the issue fixed aftrewards.
 
-Cheers,
-Aki
+This is new code, so might as well be done properly.  If the rest of the pa=
+tch =
 
+is looking good to you, then just --amend it to get rid of the bool.
 
+Regards,
+-Denis
 
---===============4842385561833018338==--
+--===============9110965495020216567==--
 
