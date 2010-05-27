@@ -1,31 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============8191589356362544139=="
+Content-Type: multipart/mixed; boundary="===============9016072198830140886=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/4] Add: test scripts online-modem and offline-modem
-Date: Wed, 26 May 2010 21:05:58 -0500
-Message-ID: <201005262105.59170.denkenz@gmail.com>
-In-Reply-To: <1274822081-930-2-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH 3/4] Add: set_online and post_online methods to isimodem
+ driver
+Date: Wed, 26 May 2010 21:08:36 -0500
+Message-ID: <201005262108.37085.denkenz@gmail.com>
+In-Reply-To: <1274885889-11479-3-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8191589356362544139==
+--===============9016072198830140886==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pekka,
 
-> ---
->  test/offline-modem |   17 +++++++++++++++++
->  test/online-modem  |   17 +++++++++++++++++
->  2 files changed, 34 insertions(+), 0 deletions(-)
->  create mode 100755 test/offline-modem
->  create mode 100755 test/online-modem
+> +static bool mtc_state_cb(GIsiClient *client, const void *restrict data,
+> +				size_t len, uint16_t object, void *opaque)
 
-Patch has been applied, thanks.
+We don't use bools in oFono, please fix this to use gboolean or an int.
 
 Regards,
 -Denis
 
---===============8191589356362544139==--
+--===============9016072198830140886==--
 
