@@ -1,45 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3055912128667850668=="
+Content-Type: multipart/mixed; boundary="===============6886258615393601300=="
 MIME-Version: 1.0
-From: Jussi Kukkonen <jku@linux.intel.com>
-Subject: Re: Getting Modem properties using qt dbus programming -reg
-Date: Thu, 27 May 2010 16:07:37 +0300
-Message-ID: <4BFE6E99.1080606@linux.intel.com>
-In-Reply-To: <COL106-W39D2FB4FE36047A6B0D0FFF6EA0@phx.gbl>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 06/11] Made it possible to ask for status report via
+ SendMessage method parameters. True=status report on, false=off.
+Date: Thu, 27 May 2010 15:19:11 +0200
+Message-ID: <1274966351.4706.25.camel@aeonflux.t-mobile.de>
+In-Reply-To: <201005270651.56052.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3055912128667850668==
+--===============6886258615393601300==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 05/27/2010 03:35 PM, krishna k wrote:
->
-> Hi,
->
-> I am trying to implement application using qt dbus module, Which will cal=
-l SetProperty with parameters QString, QVariant.
-...
-> I am trying the same thing using qt program...
->
->      QDBusConnection bus =3D QDBusConnection::systemBus();
->
->      QDBusInterface dbus_iface("org.ofono", "/phonesim0/operator/23402",
->                                    "org.ofono.Modem", bus);
->       bool value =3D true;
->       dbus_iface.call("SetProperty", QString("Powered"), QVariant(QVarian=
-t::Bool,&value));
+Hi Denis,
 
-I believe "v" maps to QDBusVariant, not QVariant. Maybe something like =
+> > > -	{ "SendMessage",	"ss",	"",		sms_send_message,
+> > > +	{ "SendMessage",	"ssb",	"",		sms_send_message,
+> > >  							G_DBUS_METHOD_FLAG_ASYNC },
+> > >  	{ }
+> > >  };
+> > =
 
-this works:
+> > I don't like this being an argument to SendMessage(). I think it needs
+> > to be exposed, but as a property instead. Is there a use case for
+> > setting this per message? I think majority of current phones either
+> > provide a global setting for this, or set it on by default.
+> > =
 
-bool value =3D true;
-var =3D QDBusVariant (QVariant(QVariant::Bool,&value));
-dbus_iface.call("SetProperty", QString("Powered"), var);
+> =
+
+> I agree, we should expose this as the 'UseDeliveryReports' property on =
+
+> SmsManager or alternatively use a global oFono setting read at startup.
+
+I think just a global setting in /etc/ofono/main.conf would be better. I
+don't really see the point in making this an option for the user. My
+personal opinion here is to always request delivery reports by default
+and handle them internally to acknowledge SMS messages.
+
+Regards
+
+Marcel
 
 
-Jussi
 
---===============3055912128667850668==--
+--===============6886258615393601300==--
 
