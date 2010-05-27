@@ -1,28 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============9016072198830140886=="
+Content-Type: multipart/mixed; boundary="===============6410770109430860804=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Aki Niemi <aki.niemi@nokia.com>
 Subject: Re: [PATCH 3/4] Add: set_online and post_online methods to isimodem
  driver
-Date: Wed, 26 May 2010 21:08:36 -0500
-Message-ID: <201005262108.37085.denkenz@gmail.com>
-In-Reply-To: <1274885889-11479-3-git-send-email-Pekka.Pessi@nokia.com>
+Date: Thu, 27 May 2010 09:48:47 +0300
+Message-ID: <1274942927.3755.481.camel@tucson.research.nokia.com>
+In-Reply-To: <201005262108.37085.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9016072198830140886==
+--===============6410770109430860804==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+On Thu, 2010-05-27 at 04:08 +0200, ext Denis Kenzior wrote:
+> Hi Pekka,
+> =
 
-> +static bool mtc_state_cb(GIsiClient *client, const void *restrict data,
-> +				size_t len, uint16_t object, void *opaque)
+> > +static bool mtc_state_cb(GIsiClient *client, const void *restrict data,
+> > +				size_t len, uint16_t object, void *opaque)
+> =
 
-We don't use bools in oFono, please fix this to use gboolean or an int.
+> We don't use bools in oFono, please fix this to use gboolean or an int.
 
-Regards,
--Denis
+Well, stdbool.h is what gisi uses currently. I've been meaning to
+replace all occurrences with gboolean, but haven't gotten around to it
+yet.
 
---===============9016072198830140886==--
+So I think this can be pushed, and the issue fixed aftrewards.
+
+Cheers,
+Aki
+
+
+
+--===============6410770109430860804==--
 
