@@ -1,244 +1,217 @@
-Content-Type: multipart/mixed; boundary="===============2409415277702234945=="
+Content-Type: multipart/mixed; boundary="===============9170701582846499629=="
 MIME-Version: 1.0
 From: pasi.miettinen@ixonos.com
-Subject: [PATCH 04/11] Changes for SMS statur report.
-Date: Thu, 27 May 2010 13:54:43 +0300
-Message-ID: <1274957690-4893-4-git-send-email-pasi.miettinen@ixonos.com>
-In-Reply-To: <1274957690-4893-3-git-send-email-pasi.miettinen@ixonos.com>
+Subject: [PATCH 06/11] Made it possible to ask for status report via
+ SendMessage method parameters. True=status report on, false=off.
+Date: Thu, 27 May 2010 13:54:45 +0300
+Message-ID: <1274957690-4893-6-git-send-email-pasi.miettinen@ixonos.com>
+In-Reply-To: <1274957690-4893-5-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2409415277702234945==
+--===============9170701582846499629==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pasi Miettinen <pasi.miettinen@ixonos.com>
 
+Also made some repairs for dispatch_sms_delivery_report() and
+sms_status_report_dispatch() to survive the make :)
 ---
- include/sms.h |    2 +-
- src/sms.c     |  124 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+---
- 2 files changed, 119 insertions(+), 7 deletions(-)
+ src/sms.c       |   13 ++++++++-----
+ src/smsutil.c   |    5 +++--
+ src/smsutil.h   |    3 ++-
+ unit/test-sms.c |   10 +++++-----
+ 4 files changed, 18 insertions(+), 13 deletions(-)
 
-diff --git a/include/sms.h b/include/sms.h
-index daaec37..c007675 100644
---- a/include/sms.h
-+++ b/include/sms.h
-@@ -54,7 +54,7 @@ struct ofono_sms_driver {
- =
-
- void ofono_sms_deliver_notify(struct ofono_sms *sms, unsigned char *pdu,
- 				int len, int tpdu_len);
--void ofono_sms_status_notify(struct ofono_sms *sms, unsigned char *pdu,
-+void ofono_sms_status_report_notify(struct ofono_sms *sms, unsigned char *=
-pdu,
- 				int len, int tpdu_len);
- =
-
- int ofono_sms_driver_register(const struct ofono_sms_driver *d);
 diff --git a/src/sms.c b/src/sms.c
-index 855bef8..63e0190 100644
+index b4a5364..d079ece 100644
 --- a/src/sms.c
 +++ b/src/sms.c
-@@ -459,9 +459,10 @@ static GDBusMethodTable sms_manager_methods[] =3D {
- };
+@@ -400,6 +400,7 @@ static DBusMessage *sms_send_message(DBusConnection *co=
+nn, DBusMessage *msg,
+ 	struct ofono_sms *sms =3D data;
+ 	const char *to;
+ 	const char *text;
++	gboolean ask_status_report;
+ 	GSList *msg_list;
+ 	int ref_offset;
+ 	struct tx_queue_entry *entry;
+@@ -407,13 +408,14 @@ static DBusMessage *sms_send_message(DBusConnection *=
+conn, DBusMessage *msg,
  =
 
- static GDBusSignalTable sms_manager_signals[] =3D {
--	{ "PropertyChanged",	"sv"		},
--	{ "IncomingMessage",	"sa{sv}"	},
--	{ "ImmediateMessage",	"sa{sv}"	},
-+	{ "PropertyChanged",		"sv"		},
-+	{ "IncomingMessage",		"sa{sv}"	},
-+	{ "ImmediateMessage",		"sa{sv}"	},
-+	{ "IncomingStatusReport",	"{sv}"		},
+ 	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &to,
+ 					DBUS_TYPE_STRING, &text,
++					DBUS_TYPE_BOOLEAN, &ask_status_report,
+ 					DBUS_TYPE_INVALID))
+ 		return __ofono_error_invalid_args(msg);
+ =
+
+ 	if (valid_phone_number_format(to) =3D=3D FALSE)
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+-	msg_list =3D sms_text_prepare(text, 0, TRUE, &ref_offset);
++	msg_list =3D sms_text_prepare(text, 0, TRUE, &ref_offset, ask_status_repo=
+rt);
+ =
+
+ 	if (!msg_list)
+ 		return __ofono_error_invalid_format(msg);
+@@ -453,7 +455,7 @@ static GDBusMethodTable sms_manager_methods[] =3D {
+ 							G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ "SetProperty",	"sv",	"",		sms_set_property,
+ 							G_DBUS_METHOD_FLAG_ASYNC },
+-	{ "SendMessage",	"ss",	"",		sms_send_message,
++	{ "SendMessage",	"ssb",	"",		sms_send_message,
+ 							G_DBUS_METHOD_FLAG_ASYNC },
  	{ }
  };
- =
-
-@@ -471,6 +472,7 @@ static void dispatch_app_datagram(struct ofono_sms *sms=
+@@ -472,7 +474,6 @@ static void dispatch_app_datagram(struct ofono_sms *sms=
 , int dst, int src,
  	DBG("Got app datagram for dst port: %d, src port: %d",
  			dst, src);
  	DBG("Contents-Len: %ld", len);
-+	//DBG("buf: %s", buf);
+-	//DBG("buf: %s", buf);
  }
  =
 
  static void dispatch_text_message(struct ofono_sms *sms,
-@@ -539,6 +541,74 @@ static void dispatch_text_message(struct ofono_sms *sm=
-s,
- 	}
+@@ -544,7 +545,8 @@ static void dispatch_text_message(struct ofono_sms *sms,
+ static void dispatch_sms_delivery_report(struct ofono_sms *sms,
+ 					const enum sms_st *st,
+ 					const struct sms_address *raddr,
+-					const struct sms_scts *scts)
++					const struct sms_scts *scts,
++					const struct sms_scts *dt)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	const char *path =3D __ofono_atom_get_path(sms->atom);
+@@ -731,7 +733,8 @@ static void sms_status_report_dispatch(struct ofono_sms=
+ *sms, GSList *sms_list)
+ 	s =3D sms_list->data;
+ 	dispatch_sms_delivery_report(sms, &s->status_report.st,
+ 					&s->status_report.raddr,
+-					&s->status_report.scts);
++					&s->status_report.scts,
++					&s->status_report.dt);
+ =
+
  }
  =
 
-+static void dispatch_sms_delivery_report(struct ofono_sms *sms,
-+					const enum sms_st *st,
-+					const struct sms_address *raddr,
-+					const struct sms_scts *scts)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(sms->atom);
-+	DBusMessage *signal;
-+	DBusMessageIter iter;
-+	DBusMessageIter dict;
-+	char buf[128];
-+	const char *signal_name;
-+	time_t ts;
-+	struct tm remote;
-+	struct tm local;
-+	const char *str =3D buf;
-+
-+	if (!st){
-+		DBG("status unavailable");
-+		return;
-+	}
-+
-+	signal_name =3D "IncomingStatusReport";
-+
-+	signal =3D dbus_message_new_signal(path, OFONO_SMS_MANAGER_INTERFACE,
-+						signal_name);
-+
-+	if (!signal)
-+		return;
-+
-+
-+	/*Start assembling dbus-message*/
-+	dbus_message_iter_init_append(signal, &iter);
-+
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+						&dict);
-+
-+	/*This is the time when sender sent the message,
-+	  should be delivery time?*/
-+	ts =3D sms_scts_to_time(scts, &remote);
-+	localtime_r(&ts, &local);
-+
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", &local);
-+	buf[127] =3D '\0';
-+	ofono_dbus_dict_append(&dict, "LocalSentTime", DBUS_TYPE_STRING, &str);
-+
-+	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", &remote);
-+	buf[127] =3D '\0';
-+	ofono_dbus_dict_append(&dict, "SentTime", DBUS_TYPE_STRING, &str);
-+
-+	/*Status*/
-+	if(*st=3D=3D0x00){
-+		str =3D sms_address_to_string(raddr);
-+		ofono_dbus_dict_append(&dict, "Message was delivered to", DBUS_TYPE_STRI=
-NG, &str);
-+	}
-+	else{
-+		str =3D sms_address_to_string(raddr);
-+		ofono_dbus_dict_append(&dict, "Message was not delivered to", DBUS_TYPE_=
-STRING, &str);
-+	}
-+
-+	/*dbus-message assembled*/
-+	dbus_message_iter_close_container(&iter, &dict);
-+
-+	g_dbus_send_message(conn, signal);
-+
-+}
-+
- static void sms_dispatch(struct ofono_sms *sms, GSList *sms_list)
+diff --git a/src/smsutil.c b/src/smsutil.c
+index 2679cc2..b627458 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -2580,7 +2580,8 @@ static inline GSList *sms_list_append(GSList *l, cons=
+t struct sms *in)
+  * if no concatenation took place.
+  */
+ GSList *sms_text_prepare(const char *utf8, guint16 ref,
+-				gboolean use_16bit, int *ref_offset)
++				gboolean use_16bit, int *ref_offset,
++				const gboolean ask_status_report)
  {
- 	GSList *l;
-@@ -646,6 +716,18 @@ static void sms_dispatch(struct ofono_sms *sms, GSList=
- *sms_list)
- 	}
- }
+ 	struct sms template;
+ 	int offset =3D 0;
+@@ -2596,7 +2597,7 @@ GSList *sms_text_prepare(const char *utf8, guint16 re=
+f,
+ 	template.submit.rd =3D FALSE;
+ 	template.submit.vpf =3D SMS_VALIDITY_PERIOD_FORMAT_RELATIVE;
+ 	template.submit.rp =3D FALSE;
+-	template.submit.srr =3D TRUE;
++	template.submit.srr =3D ask_status_report;
+ 	template.submit.mr =3D 0;
+ 	template.submit.vp.relative =3D 0xA7; /* 24 Hours */
  =
 
-+static void sms_status_report_dispatch(struct ofono_sms *sms, GSList *sms_=
-list)
-+{
-+	const struct sms *s;
-+	enum sms_charset uninitialized_var(old_charset);
-+
-+	s =3D sms_list->data;
-+	dispatch_sms_delivery_report(sms, &s->status_report.st,
-+					&s->status_report.raddr,
-+					&s->status_report.scts);
-+
-+}
-+
- static void handle_deliver(struct ofono_sms *sms, const struct sms *incomi=
-ng)
- {
- 	GSList *l;
-@@ -679,6 +761,19 @@ static void handle_deliver(struct ofono_sms *sms, cons=
-t struct sms *incoming)
- 	g_slist_free(l);
- }
+diff --git a/src/smsutil.h b/src/smsutil.h
+index a060c1b..d55b83a 100644
+--- a/src/smsutil.h
++++ b/src/smsutil.h
+@@ -479,7 +479,8 @@ GSList *sms_assembly_add_fragment(struct sms_assembly *=
+assembly,
+ void sms_assembly_expire(struct sms_assembly *assembly, time_t before);
  =
 
-+static void handle_sms_status_report(struct ofono_sms *sms, const struct s=
-ms *incoming)
-+{
-+	GSList *l;
-+
-+	/*TODO:
-+	fragmented SMS delivery report? check handle_deliver()
-+	*/
-+
-+	l =3D g_slist_append(NULL, (void *)incoming);
-+	sms_status_report_dispatch(sms, l);
-+	g_slist_free(l);
-+}
-+
- static inline gboolean handle_mwi(struct ofono_sms *sms, struct sms *s)
- {
- 	gboolean discard;
-@@ -696,7 +791,7 @@ void ofono_sms_deliver_notify(struct ofono_sms *sms, un=
-signed char *pdu,
- {
- 	struct sms s;
- 	enum sms_class cls;
--
-+	DBG("ofono_sms_deliver_notify");
- 	if (!sms_decode(pdu, len, FALSE, tpdu_len, &s)) {
- 		ofono_error("Unable to decode PDU");
- 		return;
-@@ -807,10 +902,27 @@ out:
- 	handle_deliver(sms, &s);
- }
+ GSList *sms_text_prepare(const char *utf8, guint16 ref,
+-				gboolean use_16bit, int *ref_offset);
++				gboolean use_16bit, int *ref_offset,
++				const gboolean ask_status_report);
  =
 
--void ofono_sms_status_notify(struct ofono_sms *sms, unsigned char *pdu,
-+void ofono_sms_status_report_notify(struct ofono_sms *sms, unsigned char *=
-pdu,
- 				int len, int tpdu_len)
- {
--	ofono_error("SMS Status-Report not yet handled");
-+	struct sms s;
-+	enum sms_class cls;
-+
-+	if (!sms_decode(pdu, len, FALSE, tpdu_len, &s)) {
-+		ofono_error("Unable to decode PDU");
-+		return;
-+	}
-+
-+	if (s.type !=3D SMS_TYPE_STATUS_REPORT) {
-+		ofono_error("Expecting a STATUS REPORT pdu");
-+	}
-+
-+	if (!sms_dcs_decode(s.deliver.dcs, &cls, NULL, NULL, NULL)) {
-+		ofono_error("Unknown / Reserved DCS.  Ignoring");
-+		return;
-+	}
-+
-+	handle_sms_status_report(sms, &s);
- }
+ gboolean cbs_dcs_decode(guint8 dcs, gboolean *udhi, enum sms_class *cls,
+ 			enum sms_charset *charset, gboolean *compressed,
+diff --git a/unit/test-sms.c b/unit/test-sms.c
+index b242913..5a1daa1 100644
+--- a/unit/test-sms.c
++++ b/unit/test-sms.c
+@@ -685,7 +685,7 @@ static void test_assembly()
+ 	if (g_test_verbose())
+ 		g_printf("Text:\n%s\n", utf8);
  =
 
- int ofono_sms_driver_register(const struct ofono_sms_driver *d)
+-	l =3D sms_text_prepare(utf8, ref, TRUE, NULL);
++	l =3D sms_text_prepare(utf8, ref, TRUE, NULL, FALSE);
+ 	g_assert(l);
+ 	g_assert(g_slist_length(l) =3D=3D 3);
+ =
+
+@@ -715,7 +715,7 @@ static void test_prepare_7bit()
+ 	int encoded_tpdu_len;
+ 	char *encoded_pdu;
+ =
+
+-	r =3D sms_text_prepare(test_no_fragmentation_7bit, 0, FALSE, NULL);
++	r =3D sms_text_prepare(test_no_fragmentation_7bit, 0, FALSE, NULL, FALSE);
+ =
+
+ 	g_assert(r !=3D NULL);
+ =
+
+@@ -788,7 +788,7 @@ static void test_prepare_concat()
+ 	if (g_test_verbose())
+ 		g_print("strlen: %zd\n", strlen(pad1));
+ =
+
+-	r =3D sms_text_prepare(pad1, 0, TRUE, NULL);
++	r =3D sms_text_prepare(pad1, 0, TRUE, NULL, FALSE);
+ =
+
+ 	g_assert(r);
+ 	g_assert(g_slist_length(r) =3D=3D 2);
+@@ -865,7 +865,7 @@ static void test_limit(gunichar uni, int target_size, g=
+boolean use_16bit)
+ =
+
+ 	utf8[i] =3D '\0';
+ =
+
+-	l =3D sms_text_prepare(utf8, 0, use_16bit, NULL);
++	l =3D sms_text_prepare(utf8, 0, use_16bit, NULL, FALSE);
+ =
+
+ 	g_assert(l);
+ 	g_assert(g_slist_length(l) =3D=3D 255);
+@@ -878,7 +878,7 @@ static void test_limit(gunichar uni, int target_size, g=
+boolean use_16bit)
+ 	memcpy(utf8 + i, utf8_char, stride);
+ 	utf8[i+stride] =3D '\0';
+ =
+
+-	l =3D sms_text_prepare(utf8, 0, use_16bit, NULL);
++	l =3D sms_text_prepare(utf8, 0, use_16bit, NULL, FALSE);
+ =
+
+ 	g_assert(l =3D=3D NULL);
+ 	g_free(utf8);
 -- =
 
 1.6.0.4
 
 
---===============2409415277702234945==--
+--===============9170701582846499629==--
 
