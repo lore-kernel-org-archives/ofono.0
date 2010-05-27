@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4385666778983649250=="
+Content-Type: multipart/mixed; boundary="===============0053774372016477518=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/6] Eliminated bool, true and false from gisi.
-Date: Thu, 27 May 2010 14:36:23 -0500
-Message-ID: <201005271436.24079.denkenz@gmail.com>
-In-Reply-To: <1274976768-1555-3-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH] Accept opaque data in EF_ICCID.
+Date: Thu, 27 May 2010 15:39:14 -0500
+Message-ID: <201005271539.14240.denkenz@gmail.com>
+In-Reply-To: <1274457395-14574-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4385666778983649250==
+--===============0053774372016477518==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,26 +16,25 @@ Content-Transfer-Encoding: quoted-printable
 Hi Pekka,
 
 > ---
->  gisi/client.c  |   10 +------
->  gisi/client.h  |   17 ++++++-------
->  gisi/iter.c    |   73
->  +++++++++++++++++++++++++++---------------------------- gisi/iter.h    |=
-  =
+>  src/sim.c |   14 +++++++++++---
+>  1 files changed, 11 insertions(+), 3 deletions(-)
 
->  23 ++++++++---------
->  gisi/netlink.c |    1 -
->  gisi/netlink.h |    1 -
->  gisi/pipe.c    |   45 +++++++++++++++++-----------------
->  gisi/server.h  |    7 ++---
->  gisi/verify.c  |   13 ++++-----
->  9 files changed, 88 insertions(+), 102 deletions(-)
-> =
+So I looked at the behavior of a few smartphones and they use ICCID as a BC=
+D =
 
+format, not opaque.  This is specified in the 2G and 3G version of the =
 
-All other patches in this series have been applied.
+standards going back to 11.11.
 
-Thanks,
+I'm now leaning towards keeping the present behavior unless there are some =
+
+good arguments for why we want this to be opaque.  Either way we don't sati=
+sfy =
+
+someone and I'd rather be standards compliant.
+
+Regards,
 -Denis
 
---===============4385666778983649250==--
+--===============0053774372016477518==--
 
