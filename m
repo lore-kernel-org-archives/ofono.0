@@ -1,50 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============6886258615393601300=="
+Content-Type: multipart/mixed; boundary="===============0591992222160003060=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 06/11] Made it possible to ask for status report via
- SendMessage method parameters. True=status report on, false=off.
-Date: Thu, 27 May 2010 15:19:11 +0200
-Message-ID: <1274966351.4706.25.camel@aeonflux.t-mobile.de>
-In-Reply-To: <201005270651.56052.denkenz@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/4] Add: Online property to modem
+Date: Thu, 27 May 2010 09:45:53 -0500
+Message-ID: <201005270945.53526.denkenz@gmail.com>
+In-Reply-To: <AANLkTikQJ6AooO-z3IUNthX_d9IlXffpaZKI1XXT18xZ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6886258615393601300==
+--===============0591992222160003060==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Pekka,
 
-> > > -	{ "SendMessage",	"ss",	"",		sms_send_message,
-> > > +	{ "SendMessage",	"ssb",	"",		sms_send_message,
-> > >  							G_DBUS_METHOD_FLAG_ASYNC },
-> > >  	{ }
-> > >  };
-> > =
+> 2010/5/27 Denis Kenzior <denkenz@gmail.com>:
+> > Patch has been applied, however I did some refactoring afterward.  Plea=
+se
+> > test that I didn't break something.
+> =
 
-> > I don't like this being an argument to SendMessage(). I think it needs
-> > to be exposed, but as a property instead. Is there a use case for
-> > setting this per message? I think majority of current phones either
-> > provide a global setting for this, or set it on by default.
-> > =
+> There is now a race condition in online/offline and sim hotswap. With
+> imperfect hw a missing sim gets detected only when modem attempts to
+> register to network and actually tries to read something from sim
+> card. I have no idea if the missing sim can be reported before +cops
+> command response is returned.
+
+Sorry, but how does such a modem even get to the sim ready state?  oFono re=
+ads =
+
+the IMSI before it even tries to send post_sim, and you certainly can't rea=
+d =
+
+the IMSI without a sim card.
+
+Or are you talking about an emergency call case here?
 
 > =
 
-> I agree, we should expose this as the 'UseDeliveryReports' property on =
-
-> SmsManager or alternatively use a global oFono setting read at startup.
-
-I think just a global setting in /etc/ofono/main.conf would be better. I
-don't really see the point in making this an option for the user. My
-personal opinion here is to always request delivery reports by default
-and handle them internally to acknowledge SMS messages.
-
-Regards
-
-Marcel
+> However, at least isimodem needs explicitly told to go offline when
+> sim gets removed.
+> =
 
 
+My thinking is that the modem drivers can take care of this.  The core need=
+s =
 
---===============6886258615393601300==--
+to be kept simple here and assume an 'ideal' implementation.
+
+I'm still having trouble understanding how we'll support emergency calls wi=
+th =
+
+no SIM with this framework though.
+
+Regards,
+-Denis
+
+--===============0591992222160003060==--
 
