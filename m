@@ -1,71 +1,123 @@
-Content-Type: multipart/mixed; boundary="===============7978537419548401406=="
+Content-Type: multipart/mixed; boundary="===============7386410315582234151=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH]enable-modem.c
-Date: Thu, 27 May 2010 19:53:13 +0200
-Message-ID: <1274982793.4706.55.camel@aeonflux.t-mobile.de>
-In-Reply-To: <24A9345B397CD24AA76A4E82E237956531ECF3AD4F@XCHTS.tmt.telital.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 01/20] stkutil: Add Set Up Call response builder
+Date: Thu, 27 May 2010 06:59:40 +0200
+Message-ID: <1274936399-20710-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7978537419548401406==
+--===============7386410315582234151==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniele,
+---
+ src/stkutil.c |   37 +++++++++++++++++++++++++++++++++++++
+ src/stkutil.h |    9 +++++++++
+ 2 files changed, 46 insertions(+), 0 deletions(-)
 
-> here is the first simple example in c for enabling modem. This is my firs=
-t time using glib, dbus and git so I hope not to have done too many mistake=
-s... If you find it useful I can continue submitting the others I have,
->
-> test/enable-modem.c |  116 ++++++++++++++++++++++++++++++++++++++++++++++=
-+++++
-> 1 files changed, 116 insertions(+), 0 deletions(-)
-> =
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 2ca5c6a..c9b9511 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -3383,6 +3383,20 @@ static gboolean build_dataobj_text(struct stk_tlv_bu=
+ilder *tlv,
+ 	return stk_tlv_builder_close_container(tlv);
+ }
+ =
 
-> diff --git a/test/enable-modem.c b/test/enable-modem.c
-> new file mode 100644
-> index 0000000..610b933
-> --- /dev/null
-> +++ b/test/enable-modem.c
-> @@ -0,0 +1,116 @@
-> +/*
-> + * enable-modem.c
-> + *
-> + *  Created on: 25/mag/2010
-> + *  Author: Daniele Palmas <daniele.palmas@telit.com>
-> + *
-> + *  This program is free software; you can redistribute it and/or modify
-> + *  it under the terms of the GNU General Public License version 2 as
-> + *  published by the Free Software Foundation.
-> + *
-> + *  This program is distributed in the hope that it will be useful,
-> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + *  GNU General Public License for more details.
-> + *
-> + *  You should have received a copy of the GNU General Public License
-> + *  along with this program; if not, write to the Free Software
-> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
-1  USA
-> + */
-> +
-> +#include <stdlib.h>
-> +#include <string.h>
-> +#include "dbus/dbus-glib.h"
++/* Described in TS 102.223 Section 8.30 */
++static gboolean build_dataobj_cc_requested_action(struct stk_tlv_builder *=
+tlv,
++						const void *data, gboolean cr)
++{
++	const struct stk_common_byte_array *action =3D data;
++	unsigned char tag =3D STK_DATA_OBJECT_TYPE_CALL_CONTROL_REQUESTED_ACTION;
++
++	return action->array =3D=3D NULL ||
++		(stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
++		 stk_tlv_builder_append_bytes(tlv,
++						action->array, action->len) &&
++		 stk_tlv_builder_close_container(tlv));
++}
++
+ static gboolean build_dataobj(struct stk_tlv_builder *tlv,
+ 				dataobj_writer builder_func, ...)
+ {
+@@ -3404,6 +3418,26 @@ static gboolean build_dataobj(struct stk_tlv_builder=
+ *tlv,
+ 	return TRUE;
+ }
+ =
 
-so we have a strict no gobject and no dbus-glib policy within the oFono
-source code. I would prefer if you re-write it just using the low-level
-libdbus. I know that dictionary parsing can be tricky, but it is not
-that complicated. Check the connman/client/main.c for some simple
-example on just to use libdbus.
++static gboolean build_set_up_call(struct stk_tlv_builder *builder,
++					const struct stk_response *response)
++{
++	if (response->set_up_call.modified_result.cc_modified)
++		return build_dataobj(builder,
++				build_dataobj_cc_requested_action,
++				DATAOBJ_FLAG_CR,
++				&response->set_up_call.cc_requested_action,
++				build_dataobj_result,
++				DATAOBJ_FLAG_CR,
++				&response->set_up_call.modified_result.result,
++				NULL);
++	else
++		return build_dataobj(builder,
++				build_dataobj_cc_requested_action,
++				DATAOBJ_FLAG_CR,
++				&response->set_up_call.cc_requested_action,
++				NULL);
++}
++
+ unsigned int stk_pdu_from_response(const struct stk_response *response,
+ 					unsigned char *pdu, unsigned int size)
+ {
+@@ -3495,6 +3529,9 @@ unsigned int stk_pdu_from_response(const struct stk_r=
+esponse *response,
+ 					&response->select_item.item_id,
+ 					NULL);
+ 		break;
++	case STK_COMMAND_TYPE_SETUP_CALL:
++		ok =3D build_set_up_call(&builder, response);
++		break;
+ 	default:
+ 		return 0;
+ 	};
+diff --git a/src/stkutil.h b/src/stkutil.h
+index b04078f..3245a90 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -1069,6 +1069,14 @@ struct stk_response_select_item {
+ 	unsigned char item_id;
+ };
+ =
 
-Regards
++struct stk_response_set_up_call {
++	struct stk_common_byte_array cc_requested_action;
++	struct {
++		ofono_bool_t cc_modified;
++		struct stk_result result;
++	} modified_result;
++};
++
+ struct stk_response {
+ 	unsigned char number;
+ 	unsigned char type;
+@@ -1087,6 +1095,7 @@ struct stk_response {
+ 		struct stk_response_generic set_up_menu;
+ 		struct stk_response_select_item select_item;
+ 		struct stk_response_generic send_sms;
++		struct stk_response_set_up_call set_up_call;
+ 	};
+ =
 
-Marcel
+ 	void (*destructor)(struct stk_response *response);
+-- =
+
+1.7.1.86.g0e460.dirty
 
 
-
---===============7978537419548401406==--
+--===============7386410315582234151==--
 
