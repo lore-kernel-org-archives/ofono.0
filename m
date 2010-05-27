@@ -1,35 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============7050156184199641262=="
+Content-Type: multipart/mixed; boundary="===============2954073506247986490=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Keep modem state consistent if sim is removed while
- online is being changed.
-Date: Thu, 27 May 2010 12:47:00 -0500
-Message-ID: <201005271247.00400.denkenz@gmail.com>
-In-Reply-To: <1274977791-2038-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH 1/8] stk: Make parse_dataobj not consume extra data
+Date: Thu, 27 May 2010 12:48:03 -0500
+Message-ID: <201005271248.03411.denkenz@gmail.com>
+In-Reply-To: <1274884754-12977-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7050156184199641262==
+--===============2954073506247986490==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Yang,
 
 > ---
->  src/modem.c |    9 ++++++---
->  1 files changed, 6 insertions(+), 3 deletions(-)
-> =
+>  src/stkutil.c |    7 +++++++
+>  1 files changed, 7 insertions(+), 0 deletions(-)
 
-> diff --git a/src/modem.c b/src/modem.c
-> index 2cb3e50..0fa8a67 100644
+I applied patches 2..8 in this series (with some refactoring).  For this pa=
+tch =
 
-Patch has been applied, but remember to keep the commit header to 50 =
+I decided to fix it differently.  Let me know if I screwed something up.
 
-characters.  I fixed it for you this time ;)
-
-Regards,
+Thanks,
 -Denis
 
---===============7050156184199641262==--
+--===============2954073506247986490==--
 
