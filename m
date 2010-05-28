@@ -1,16 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============8586512330154153218=="
+Content-Type: multipart/mixed; boundary="===============3730896603372532637=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/11] In drivers/atmodem/sms.c:at_cmgl_cpms_cb() there is
- a temporary fix for Siemens TC65. If AT+CMGL=4 is sent to TC65,
- the AT command queue jams.
-Date: Fri, 28 May 2010 11:48:28 -0500
-Message-ID: <201005281148.28869.denkenz@gmail.com>
-In-Reply-To: <1274957690-4893-1-git-send-email-pasi.miettinen@ixonos.com>
+Subject: Re: [PATCH 02/11] Made needed changes to at_cds_notify() for status
+ report and corrected at_cmgl_cpms_cb() to meet the ISO standard.
+Date: Fri, 28 May 2010 11:55:07 -0500
+Message-ID: <201005281155.07242.denkenz@gmail.com>
+In-Reply-To: <1274957690-4893-2-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8586512330154153218==
+--===============3730896603372532637==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -21,41 +20,78 @@ Hi Pasi,
 > =
 
 > ---
->  drivers/atmodem/sms.c |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
+>  drivers/atmodem/sms.c |   26 +++++++++++++++++++-------
+>  1 files changed, 19 insertions(+), 7 deletions(-)
 > =
-
-
-Please keep the header to less than 50 characters.  Include the meat of the =
-
-description in the commit description itself or the comment in the code.
 
 > diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
-> index 8049df6..27de77b 100644
+> index 27de77b..a1c885b 100644
 > --- a/drivers/atmodem/sms.c
 > +++ b/drivers/atmodem/sms.c
-> @@ -544,6 +544,10 @@ static void at_cmgl_cb(gboolean ok, GAtResult *resul=
-t,
->  gpointer user_data)
+> @@ -283,16 +283,28 @@ static void at_cds_notify(GAtResult *result, gpoint=
+er
+>  user_data) {
+>  	struct ofono_sms *sms =3D user_data;
+>  	struct sms_data *data =3D ofono_sms_get_data(sms);
+> -	int pdulen;
+> -	const char *pdu;
+> +	long pdu_len;
+> +	int tpdu_len;
+> +	const char *hexpdu;
+> +	unsigned char pdu[176];
+>  	char buf[256];
 > =
 
->  static void at_cmgl_cpms_cb(gboolean ok, GAtResult *result, gpointer
->  user_data) {
+> -	if (!at_parse_pdu_common(result, "+CDS:", &pdu, &pdulen)) {
+> +	if (!at_parse_pdu_common(result, "+CDS:", &hexpdu, &tpdu_len)) {
+>  		ofono_error("Unable to parse CDS notification");
+>  		return;
+>  	}
+> =
+
+> -	DBG("Got new Status-Report PDU via CDS: %s, %d", pdu, pdulen);
+> +	/*Is this necessary?*/
+
+This is necessary to keep from overflowing the buffer.  Better safe than so=
+rry, =
+
+so I'm fine leaving this check in.  Remove the comment though.
+
+> +	if (strlen(hexpdu) > sizeof(pdu) * 2) {
+> +		ofono_error("Bad PDU length in CMT notification");
+> +		return;
+> +	}
 > +
+> +	DBG("Got new Status-Report PDU via CDS: %s, %d", hexpdu, tpdu_len);
+> +
+> +	/*Decode pdu and notify about new SMS status report*/
+> +	decode_hex_own_buf(hexpdu, -1, &pdu_len, 0, pdu);
+> +	ofono_sms_status_report_notify(sms, pdu, pdu_len, tpdu_len);
+> =
+
+>  	/* We must acknowledge the PDU using CNMA */
+>  	if (data->cnma_ack_pdu)
+> @@ -545,13 +557,13 @@ static void at_cmgl_cb(gboolean ok, GAtResult
+>  *result, gpointer user_data) static void at_cmgl_cpms_cb(gboolean ok,
+>  GAtResult *result, gpointer user_data) {
+> =
+
+> -	DBG("PASS AT+CMGL=3D4!!!");
+> -	return;
+> -
+>  	struct cpms_request *req =3D user_data;
+>  	struct ofono_sms *sms =3D req->sms;
+>  	struct sms_data *data =3D ofono_sms_get_data(sms);
+> =
+
 > +	DBG("PASS AT+CMGL=3D4!!!");
 > +	return;
 > +
 
-Please use the vendor quirks facility.  See drivers/atmodem/vendor.h and th=
-e =
-
-various uses of it in plugins/ and drivers/atmodem.  You might have to crea=
-te =
-
-a proper modem driver for the TC65.
+This belongs in a separate patch, please break up the patches appropriately.
 
 Regards,
 -Denis
 
---===============8586512330154153218==--
+--===============3730896603372532637==--
 
