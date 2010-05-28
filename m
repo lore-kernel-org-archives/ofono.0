@@ -1,30 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============0852883686471413368=="
+Content-Type: multipart/mixed; boundary="===============7854505845436526004=="
 MIME-Version: 1.0
 From: Naresh Mehta <nareshtechs@gmail.com>
 Subject: Re: [Patch]: Reducing clutter in the src directory + Introduction of
  HACKING file
-Date: Fri, 28 May 2010 10:40:17 +0200
-Message-ID: <AANLkTimtJ6TG7gQNiEzAxR9ivNtP1lixgfM87Xpjf3uO@mail.gmail.com>
-In-Reply-To: <87d3wgikde.fsf@potku.valot.fi>
+Date: Fri, 28 May 2010 10:59:24 +0200
+Message-ID: <AANLkTimH1toWxblwfhPh4b0_1N80bT13XAmCT7-y1Z3x@mail.gmail.com>
+In-Reply-To: <1275014768.4706.57.camel@aeonflux.t-mobile.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0852883686471413368==
+--===============7854505845436526004==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, May 28, 2010 at 8:57 AM, Kalle Valo <kalle.valo@canonical.com> wr=
+On Fri, May 28, 2010 at 4:46 AM, Marcel Holtmann <marcel@holtmann.org> wr=
 ote:
-> A git tip of the day:
+> Hi Naresh,
 >
-> git format-patch has switch -M which enables rename detection. It should
-> make patches like this a lot smaller.
 >
-> --
-> Kalle Valo
+> actually all the includes are local to phonesim and that is why they are
+> inside the src/ directory.
+>
+> I also don't see the clutter you are talking about. The *.h are named
+> the same as their *.cpp files and are side by side. I actually call that
+> pretty clean.
+>
 
-Thanks for the tip Kalle. I will keep that in mind.
+Hi Marcel,
+
+I generally prefer to keep the header files separate then the actual
+source files. I had also
+moved the xml files into an xml folder. But I have now reverted those chang=
+es.
+
+>> I have also added a HACKING file for people to quickly understand and
+>> grasp the concept and execution of phonesim.
+>
+> Please send that as a separate patch.
+
+Patch file for HACKING attached.
 -- =
 
 
@@ -33,5 +48,95 @@ BR; Naresh
 visit me at:
 http://www.naresh.se/
 
---===============0852883686471413368==--
+--===============7854505845436526004==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Added-a-HACKING-file-for-people-to-quickly-understan.patch"
+
+RnJvbSAwZjA3NzE3ZTU4ODVkZmIzOTY4YjZiYjcxMTVmOTc3ZjU2MzU0MGQ5IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBOYXJlc2ggTWVodGEgPG5hcmVzaHRlY2hzQGdtYWlsLmNvbT4K
+RGF0ZTogRnJpLCAyOCBNYXkgMjAxMCAwMjo0MjozOCArMDIwMApTdWJqZWN0OiBbUEFUQ0hdIEFk
+ZGVkIGEgSEFDS0lORyBmaWxlIGZvciBwZW9wbGUgdG8gcXVpY2tseSB1bmRlcnN0YW5kIGFuZCBn
+cmFzcCB0aGUKIGNvbmNlcHQgYW5kIGV4ZWN1dGlvbiBvZiBwaG9uZXNpbS4gQWxzbyBhbGxvd3Mg
+dG8gdW5kZXJzdGFuZCBob3cgdG8KIHVzZSBpbiBjb25qdW5jdGlvbiB3aXRoIE9mb25vLgoKCW5l
+dyBmaWxlOiAgIEhBQ0tJTkcKLS0tCiBIQUNLSU5HIHwgIDEwMiArKysrKysrKysrKysrKysrKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysKIDEgZmlsZXMgY2hh
+bmdlZCwgMTAyIGluc2VydGlvbnMoKyksIDAgZGVsZXRpb25zKC0pCiBjcmVhdGUgbW9kZSAxMDA2
+NDQgSEFDS0lORwoKZGlmZiAtLWdpdCBhL0hBQ0tJTkcgYi9IQUNLSU5HCm5ldyBmaWxlIG1vZGUg
+MTAwNjQ0CmluZGV4IDAwMDAwMDAuLjc2ZGM2NmYKLS0tIC9kZXYvbnVsbAorKysgYi9IQUNLSU5H
+CkBAIC0wLDAgKzEsMTAyIEBACitIYWNraW5nIG9uIHBob25lc2ltCisqKioqKioqKioqKioqKioq
+KioqCisKK3Bob25lc2ltIGlzIGEgc29mdCBtb2RlbSB0aGF0IGVsaW1pbmF0ZXMgdGhlIG5lZWQg
+dG8gaGF2ZSBhbiBhY3R1YWwgQVQKK21vZGVtIGNvbm5lY3RlZCB0byB0aGUgc3lzdGVtIGZvciB0
+ZXN0aW5nIGFuZCBkZXZlbG9waW5nIE9mb25vLgorCitCdWlsZCB0b29scyByZXF1aXJlbWVudHMK
+Kz09PT09PT09PT09PT09PT09PT09PT09PQorCitXaGVuIGJ1aWxkaW5nIGFuZCB0ZXN0aW5nIGRp
+cmVjdGx5IGZyb20gdGhlIHJlcG9zaXRvcnkgaXQgaXMgaW1wb3J0YW50IHRvCitoYXZlIGF0IGxl
+YXN0IGF1dG9tYWtlIHZlcnNpb24gMS4xMCBvciBsYXRlciBpbnN0YWxsZWQuIEFsbCBtb2Rlcm4K
+K2Rpc3RyaWJ1dGlvbnMgc2hvdWxkIGRlZmF1bHQgdG8gdGhlIGxhdGVzdCB2ZXJzaW9uLCBidXQg
+aXQgc2VlbXMgdGhhdAorRGViaWFuJ3MgZGVmYXVsdCBpcyBzdGlsbCBhbiBlYXJsaWVyIHZlcnNp
+b246CisKKyAgQ2hlY2sgdmVyc2lvbgorICAgICMgZHBrZyAtbCAnKmF1dG9tYWtlKicKKworICBJ
+bnN0YWxsIG5ldyB2ZXJzaW9uCisgICAgIyBhcHQtZ2V0IGluc3RhbGwgYXV0b21ha2UxLjEwCisg
+ICAgIyB1cGRhdGUtYWx0ZXJuYXRpdmVzIC0tY29uZmlnIGF1dG9tYWtlCisKK1FUIGRldmVsb3Bt
+ZW50IGxpYnJhcmllcyAobGlicXQ0LWRldikgYXJlIGFsc28gcmVxdWlyZWQgZm9yIGJ1aWxkaW5n
+IAorcGhvbmVzaW0uIEl0IGlzIHJlY29tbWVuZGVkIHRvIGluc3RhbGwgdGhlIFFUIDQgZGV2ZWxv
+cG1lbnQgdG9vbHMgcGFja2FnZSAKKyhxdDQtZGV2LXRvb2xzKSBhcyBhbiBhbHRlcm5hdGl2ZSBp
+ZiBhdmFpbGFibGUgd2l0aCB5b3VyIGRpc3RyaWJ1dGlvbi4KKworV29ya2luZyB3aXRoIHRoZSBz
+b3VyY2UgY29kZSByZXBvc2l0b3J5Cis9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT0KKworVGhlIHJlcG9zaXRvcnkgY29udGFpbnMgdHdvIGV4dHJhIHNjcmlwdHMgdGhhdCBh
+Y2NvbXBsaXNoIHRoZSBib290c3RyYXAKK3Byb2Nlc3MuIE9uZSBpcyBjYWxsZWQgImJvb3RzdHJh
+cCIgd2hpY2ggaXMgdGhlIGJhc2ljIHNjcmlwdHMgdGhhdCB1c2VzIHRoZQorYXV0b3Rvb2xzIHNj
+cmlwdHMgdG8gY3JlYXRlIHRoZSBuZWVkZWQgZmlsZXMgZm9yIGJ1aWxkaW5nIGFuZCBpbnN0YWxs
+aW5nLgorSXQgbWFrZXMgc3VyZSB0byBjYWxsIHRoZSByaWdodCBwcm9ncmFtcyBkZXBlbmRpbmcg
+b24gdGhlIHVzYWdlIG9mIHNoYXJlZCBvcgorc3RhdGljIGxpYnJhcmllcyBvciB0cmFuc2xhdGlv
+bnMgZXRjLgorCitUaGUgc2Vjb25kIHByb2dyYW0gaXMgY2FsbGVkICJib290c3RyYXAtY29uZmln
+dXJlIi4gVGhpcyBwcm9ncmFtIHdpbGwgbWFrZQorc3VyZSB0byBwcm9wZXJseSBjbGVhbiB0aGUg
+cmVwb3NpdG9yeSwgY2FsbCB0aGUgImJvb3RzdHJhcCIgc2NyaXB0IGFuZCB0aGVuCitjYWxsIGNv
+bmZpZ3VyZSB3aXRoIHByb3BlciBzZXR0aW5ncyBmb3IgZGV2ZWxvcG1lbnQuIEl0IHdpbGwgdXNl
+IHRoZSBiZXN0CitvcHRpb25zIGFuZCBwYXNzIHRoZW0gb3ZlciB0byBjb25maWd1cmUuIFRoZXNl
+IG9wdGlvbnMgbm9ybWFsbHkgaW5jbHVkZQordGhlIGVuYWJsaW5nIHRoZSBtYWludGFpbmVyIG1v
+ZGUgYW5kIHRoZSBkZWJ1Z2dpbmcgZmVhdHVyZXMuCisKK1NvIHdoaWxlIGluIGEgbm9ybWFsIHNv
+dXJjZSBwcm9qZWN0IHRoZSBjYWxsICIuL2NvbmZpZ3VyZSAuLi4iIGlzIHVzZWQgdG8KK2NvbmZp
+Z3VyZSB0aGUgcHJvamVjdCB3aXRoIGl0cyBzZXR0aW5ncyBsaWtlIHByZWZpeCBhbmQgZXh0cmEg
+b3B0aW9ucy4gSW4KK2Nhc2Ugb2YgYmFyZSByZXBvc2l0b3JpZXMgY2FsbCAiLi9ib290c3RyYXAt
+Y29uZmlndXJlIiBhbmQgaXQgd2lsbCBib290c3RyYXAKK3RoZSByZXBvc2l0b3J5IGFuZCBjYWxs
+cyBjb25maWd1cmUgd2l0aCBhbGwgdGhlIGNvcnJlY3Qgb3B0aW9ucyB0byBtYWtlCitkZXZlbG9w
+bWVudCBlYXNpZXIuCisKK0luIGNhc2Ugb2YgcHJlcGFyaW5nIGZvciBhIHJlbGVhc2Ugd2l0aCAi
+bWFrZSBkaXN0Y2hlY2siLCBkb24ndCB1c2UKK2Jvb3RzdHJhcC1jb25maWd1cmUgc2luY2UgaXQg
+Y291bGQgZXhwb3J0IGRldmVsb3BtZW50IHNwZWNpZmljIHNldHRpbmdzLgorCitTbyB0aGUgbm9y
+bWFsIHN0ZXBzIHRvIGNoZWNrb3V0LCBidWlsZCBhbmQgaW5zdGFsbCBzdWNoIGEgcmVwb3NpdG9y
+eSBpcworbGlrZSB0aGlzOgorCisgIENoZWNrb3V0IHJlcG9zaXRvcnkKKyAgICAjIGdpdCBjbG9u
+ZSBnaXQ6Ly9naXQua2VybmVsLm9yZy9wdWIvc2NtL25ldHdvcmsvb2Zvbm8vcGhvbmVzaW0uZ2l0
+CisgICAgIyBjZCBwaG9uZXNpbQorCisgIENvbmZpZ3VyZSBhbmQgYnVpbGQKKyAgICAjIC4vYm9v
+dHN0cmFwLWNvbmZpZ3VyZQorICAgICMgbWFrZQorCisgIENoZWNrIGluc3RhbGxhdGlvbgorICAg
+ICMgbWFrZSBpbnN0YWxsIERFU1RESVI9JFBXRC94CisgICAgIyBmaW5kIHgKKyAgICAjIHJtIC1y
+ZiB4CisKKyAgQ2hlY2sgZGlzdHJpYnV0aW9uCisgICAgIyBtYWtlIGRpc3RjaGVjaworCisgIEZp
+bmFsIGluc3RhbGxhdGlvbgorICAgICMgc3VkbyBtYWtlIGluc3RhbGwKKworICBSZW1vdmUgYXV0
+b2dlbmVyYXRlZCBmaWxlcworICAgICMgbWFrZSBtYWludGFpbmVyLWNsZWFuCisKKworUnVubmlu
+ZyBmcm9tIHdpdGhpbiB0aGUgc291cmNlIGNvZGUgcmVwb3NpdG9yeQorPT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQorCitXaGVuIHVzaW5nICIuL2NvbmZpZ3Vy
+ZSAtLWVuYWJsZS1tYWludGFpbmVyLW1vZGUiIHRoZSBhdXRvbWFrZSBzY3JpcHRzIHdpbGwKK3Vz
+ZSB0aGUgcGx1Z2lucyBkaXJlY3RseSBmcm9tIHdpdGhpbiB0aGUgcmVwb3NpdG9yeS4gVGhpcyBy
+ZW1vdmVzIHRoZSBuZWVkCit0byB1c2UgIm1ha2UgaW5zdGFsbCIgd2hlbiB0ZXN0aW5nICJwaG9u
+ZXNpbSIuIFRoZSAiYm9vdHN0cmFwLWNvbmZpZ3VyZSIKK2F1dG9tYXRpY2FsbHkgaW5jbHVkZXMg
+dGhpcyBvcHRpb24uCisKKyAgUnVuIHBob25lc2ltIGluIGZvcmVncm91bmQgdXNpbmcgdGhlIGZv
+bGxvd2luZyBvcHRpb25zCisgICAgIyAuL3NyYy9waG9uZXNpbSAtcCAxMjM0NSAtZ3VpIHNyYy9k
+ZWZhdWx0LnhtbAorCitDaGVjayB5b3VyIG1vZGVtLmNvbmYgZmlsZSBhbmQgZW5hYmxlIHRoZSBw
+aG9uZXNpbSBjb25maWd1cmF0aW9uIGJlZm9yZQorZXhlY3V0aW5nIHRoZSBhYm92ZSBjb21tYW5k
+LiBBcmd1bWVudCAtcCBzaG91bGQgYmUgZm9sbG93ZWQgYnkgdGhlIHByb3BlcgorcG9ydCBudW1i
+ZXIsIGluIGNhc2UgeW91IGhhdmUgY2hhbmdlZCB0aGUgZGVmYXVsdCAiMTIzNDUiLiBBcmd1bWVu
+dCAtZ3VpCit3aWxsIGxhdW5jaCB0aGUgZ3VpIG9uY2UgdGhlIG1vZGVtIGlzIGVuYWJsZWQuIAor
+CitUbyBlbmFibGUgdGhlIG1vZGVtLCBtYWtlIHN1cmUgdGhlIG9mb25vIGRhZW1vbiBpcyBydW5u
+aW5nIGFuZCBleGVjdXRlIHRoZSAKK2VuYWJsZS1tb2RlbSBzY3JpcHQgd2l0aCAvcGhvbmVzaW0g
+YXJndW1lbnQgKGRlZmF1bHQgZGVmaW5lZCBpbiBtb2RlbS5jb25mLAorY2hhbmdlIGlmIGNoYW5n
+ZXMgdG8gdGhhdCBzZWN0aW9uIGhhcyBiZWVuIG1hZGUpLiBUaGUgQVQgY2hhdCBjYW4gdGhlbgor
+YmUgc2VlbiBpbiB0aGUgR1VJIHdpbmRvdy4gUnVubmluZyB0aGUgc2NyaXB0IGRpc2FibGUtbW9k
+ZW0gd2l0aCAvcGhvbmVzaW0KK2FyZ3VtZW50IHdpbGwgdHVybiBvZmYgdGhlIHNvZnQgbW9kZW0u
+CisKK1RoZSBkZWZhdWx0LnhtbCBjYW4gYmUgdHdlYWtlZCBmdXJ0aGVyIHRvIGluY2x1ZGUgYWRk
+aXRpb25hbCBBVC1Db21tYW5kcyBhbmQKK3N1cHBvc2VkIHJlc3BvbnNlcyBmcm9tIHRoZSBzb2Z0
+IG1vZGVtLgorCitGb3IgcHJvZHVjdGlvbiBpbnN0YWxsYXRpb25zIG9yIGRpc3RyaWJ1dGlvbiBw
+YWNrYWdpbmcgaXQgaXMgaW1wb3J0YW50IHRoYXQKK3RoZSAiLS1lbmFibGUtbWFpbnRhaW5lci1t
+b2RlIiBvcHRpb24gaXMgTk9UIHVzZWQuCi0tIAoxLjcuMC40Cgo=
+
+--===============7854505845436526004==--
 
