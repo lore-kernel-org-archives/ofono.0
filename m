@@ -1,29 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============0686705907671257568=="
+Content-Type: multipart/mixed; boundary="===============1934695124219327156=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC patches 06/13] smutil.h: add missing header file dependencies
-Date: Fri, 28 May 2010 09:31:42 -0500
-Message-ID: <201005280931.42298.denkenz@gmail.com>
-In-Reply-To: <4304def8734a39650175fd6765317d1c70b0beba.1274903142.git.inaky.perez-gonzalez@intel.com>
+Subject: Re: [RFC patches 02/13] sms_send_message: add a short roadmap
+Date: Fri, 28 May 2010 09:34:36 -0500
+Message-ID: <201005280934.36704.denkenz@gmail.com>
+In-Reply-To: <992d70300e42d2d7d98ff0e4e9fd2c8d3c415932.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0686705907671257568==
+--===============1934695124219327156==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Inaky,
 
-> +#include <glib/gtypes.h>
-> +#include <glib/gslist.h>
-> +#include <glib/gmessages.h>
-> +#include <glib/gchecksum.h>
+> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+> =
 
-Isn't it sufficient to just add glib/glib.h here?
+> ---
+>  src/sms.c |   13 +++++++++++++
+>  1 files changed, 13 insertions(+), 0 deletions(-)
+> =
+
+
+Applied with s/D-BUS/D-Bus
 
 Regards,
--Denis
+-Denis=20
 
---===============0686705907671257568==--
+--===============1934695124219327156==--
 
