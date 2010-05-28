@@ -1,58 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============5939444395893843183=="
+Content-Type: multipart/mixed; boundary="===============1160464953895246579=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Jo=C3=A3o?= Paulo Rechi Vita <jprvita@gmail.com>
-Subject: Re: [RFC patches 01/13] Update .gitignore to ignore cscope databases
- and backup files
-Date: Fri, 28 May 2010 11:17:11 -0300
-Message-ID: <AANLkTinQ4TyOpS2HxmqEQeFTmV4It_Sx1T2AK_C6TgCW@mail.gmail.com>
-In-Reply-To: <1275055691.4706.70.camel@aeonflux.t-mobile.de>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [RFC patches 05/13] util.h: Add BUILD_BUG_ON() and friends for
+ compile-time assert checking
+Date: Fri, 28 May 2010 16:17:44 +0200
+Message-ID: <1275056264.4706.77.camel@aeonflux.t-mobile.de>
+In-Reply-To: <0aea8fdf557ffb7c1c8e2079cdcf86d1d1ad98c2.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5939444395893843183==
+--===============1160464953895246579==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, May 28, 2010 at 11:08, Marcel Holtmann <marcel@holtmann.org> wrot=
-e:
-> Hi Inaky,
->
->> diff --git a/.gitignore b/.gitignore
->> index 1ce7067..d7e9254 100644
->> --- a/.gitignore
->> +++ b/.gitignore
->> @@ -1,3 +1,4 @@
->> +*~
->
-> believe it or not, I always left that out on purpose. I like having git
-> status show me all the stupid backup files my editor creates.
->
->> =C2=A0*.o
->> =C2=A0*.lo
->> =C2=A0*.la
->> @@ -16,6 +17,8 @@ config.sub
->> =C2=A0configure
->> =C2=A0depcomp
->> =C2=A0compile
->> +cscope.files
->> +cscope.out
->> =C2=A0install-sh
->> =C2=A0libtool
->> =C2=A0ltmain.sh
->
-> Please put the cscope stuff behind autom4te.cache since it is not part
-> of autoconf/automake.
->
+Hi Inaky,
 
-Does this makes sense since this files are not related to the project
-itself but to specific tools? I usually put those on my personal
-gitignore file.
+> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+> =
 
--- =
+> These have been stolen from the Linux kernel source; come pretty handy
+> to make build-time consistency checks and thus avoid run-time
+> surprises.
+> ---
+>  src/util.h |   29 +++++++++++++++++++++++++++++
+>  1 files changed, 29 insertions(+), 0 deletions(-)
+> =
 
-Jo=C3=A3o Paulo Rechi Vita
-http://jprvita.wordpress.com/
+> diff --git a/src/util.h b/src/util.h
+> index 2835b76..cf34b67 100644
+> --- a/src/util.h
+> +++ b/src/util.h
+> @@ -77,3 +77,32 @@ unsigned char *pack_7bit(const unsigned char *in, long=
+ len, int byte_offset,
+>  				long *items_written, unsigned char terminator);
+>  =
 
---===============5939444395893843183==--
+>  char *sim_string_to_utf8(const unsigned char *buffer, int length);
+> +
+> +/*
+> + * Build time consistency checks
+> + *
+> + * Stolen from the Linux kernel 2.6.35-rc; as most taken from the
+> + * Linux kernel, this is licensed GPL v2 or newer.
+> + */
+> +
+> +/* Force a compilation error if condition is true */
+> +#define BUILD_BUG_ON(condition) ((void)BUILD_BUG_ON_ZERO(condition))
+> +
+> +/* Force a compilation error if condition is constant and true */
+> +#define MAYBE_BUILD_BUG_ON(cond) ((void)sizeof(char[1 - 2 * !!(cond)]))
+> +
+> +/* Force a compilation error if a constant expression is not a power of =
+2 */
+> +#define BUILD_BUG_ON_NOT_POWER_OF_2(n)			\
+> +	BUILD_BUG_ON((n) =3D=3D 0 || (((n) & ((n) - 1)) !=3D 0))
+> +
+> +/* Force a compilation error if condition is true, but also produce a
+> +   result (of value 0 and type size_t), so the expression can be used
+> +   e.g. in a structure initializer (or where-ever else comma expressions
+> +   aren't permitted). */
+> +#define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
+> +#define BUILD_BUG_ON_NULL(e) ((void *)sizeof(struct { int:-!!(e); }))
+> +
+> +/*
+> + * End of code stolen from the Linux kernel 2.6.35-rc. From now, code
+> + * is GPL v2 only.
+> + */
+
+sounds like a nice addition, but src/util.h is the wrong file. I prefer
+we make this compatible so that it can be applied to ConnMan and BlueZ
+as well.
+
+I think something like include/bug.h is better.
+
+Regards
+
+Marcel
+
+
+
+--===============1160464953895246579==--
 
