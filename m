@@ -1,41 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============4307799230935429317=="
+Content-Type: multipart/mixed; boundary="===============0852883686471413368=="
 MIME-Version: 1.0
-From: Pasi Miettinen <pasi.miettinen@ixonos.com>
-Subject: [PATCH] Took ownership of the Status report task
-Date: Fri, 28 May 2010 10:17:40 +0300
-Message-ID: <1275031060-7984-1-git-send-email-pasi.miettinen@ixonos.com>
+From: Naresh Mehta <nareshtechs@gmail.com>
+Subject: Re: [Patch]: Reducing clutter in the src directory + Introduction of
+ HACKING file
+Date: Fri, 28 May 2010 10:40:17 +0200
+Message-ID: <AANLkTimtJ6TG7gQNiEzAxR9ivNtP1lixgfM87Xpjf3uO@mail.gmail.com>
+In-Reply-To: <87d3wgikde.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4307799230935429317==
+--===============0852883686471413368==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+On Fri, May 28, 2010 at 8:57 AM, Kalle Valo <kalle.valo@canonical.com> wr=
+ote:
+> A git tip of the day:
+>
+> git format-patch has switch -M which enables rename detection. It should
+> make patches like this a lot smaller.
+>
+> --
+> Kalle Valo
 
-diff --git a/TODO b/TODO
-index 758778b..c20678e 100644
---- a/TODO
-+++ b/TODO
-@@ -108,6 +108,7 @@ SMS
- =
-
-   Priority: Medium
-   Complexity: C4
-+  Owner: Pasi Miettinen <pasi.miettinen@ixonos.com>
- =
-
- =
-
- SIM / SIM File system
+Thanks for the tip Kalle. I will keep that in mind.
 -- =
 
-1.6.0.4
 
+BR; Naresh
 
+visit me at:
+http://www.naresh.se/
 
---===============4307799230935429317==--
+--===============0852883686471413368==--
 
