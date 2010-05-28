@@ -1,32 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============6584515929871368521=="
+Content-Type: multipart/mixed; boundary="===============0931743166113824113=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC patches 11/13] automake: fix installation of udev rules in
- VPATH builds
-Date: Fri, 28 May 2010 09:50:32 -0500
-Message-ID: <201005280950.32522.denkenz@gmail.com>
-In-Reply-To: <a759b96fc09af236d1c322199cf42cc0d423fcc4.1274903142.git.inaky.perez-gonzalez@intel.com>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: [PATCH] Volunteering for a task
+Date: Fri, 28 May 2010 18:16:41 +0300
+Message-ID: <1275059801-19597-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6584515929871368521==
+--===============0931743166113824113==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Inaky,
+---
+ TODO |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-> =
+diff --git a/TODO b/TODO
+index d949210..25b6688 100644
+--- a/TODO
++++ b/TODO
+@@ -51,6 +51,7 @@ SMS
+ =
 
-> When the build directory is different than the source directory, we
-> need to specify the source prefix to the original file we are
-> copying.
+   Priority: High
+   Complexity: C2
++  Owner: Aki Niemi <aki.niemi@nokia.com>
+ =
 
-Patch has been applied with a modified commit message.
+ - Smart Messaging Service.  This is a separate standard from Nokia and uses
+   the 3GPP 23.040 source / destination addressing scheme.  The main aim of
+-- =
 
-Thanks,
--Denis
+1.7.0.4
 
---===============6584515929871368521==--
+
+--===============0931743166113824113==--
 
