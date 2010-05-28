@@ -1,43 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3731669238367661079=="
+Content-Type: multipart/mixed; boundary="===============8592824347819474659=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 6/6] Bluetooth DUN modem prototype
-Date: Fri, 28 May 2010 09:19:42 -0500
-Message-ID: <201005280919.42676.denkenz@gmail.com>
-In-Reply-To: <1274849503-18388-6-git-send-email-gustavo@padovan.org>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [RFC patches 06/13] smutil.h: add missing header file dependencies
+Date: Fri, 28 May 2010 16:19:16 +0200
+Message-ID: <1275056356.4706.78.camel@aeonflux.t-mobile.de>
+In-Reply-To: <4304def8734a39650175fd6765317d1c70b0beba.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3731669238367661079==
+--===============8592824347819474659==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Inaky,
 
-> Add a still dummy DUN code, now it can only creates and removes modems.
-> The DUN plugin follows the HFP one a lot, the is basics a copy of some
-> HFP plugin's parts.
-> =
+> diff --git a/src/smsutil.h b/src/smsutil.h
+> index 469a49e..356ec5d 100644
+> --- a/src/smsutil.h
+> +++ b/src/smsutil.h
+> @@ -18,6 +18,14 @@
+>   *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+>   *
+>   */
+> +#ifndef __smsutil_h__
+> +#define __smsutil_h__
+
+please leave the circular dependency protection out here. I really want
+it to fail if we go so crazy and would require it.
+
+Regards
+
+Marcel
 
 
-Me and Marcel talked about this a few weeks ago, and we decided that we'd =
 
-prefer the DUN client to be a separate daemon shipped within oFono source, =
-
-with its own D-Bus interface.
-
-The reason is that DUN client needs to accept a custom dial string for most =
-
-modems out there, and there's no way to do this in oFono today.  However, y=
-ou =
-
-can re-use most of oFono's plumbing for this work, including gatchat & =
-
-bluetooth.c
-
-Regards,
--Denis
-
---===============3731669238367661079==--
+--===============8592824347819474659==--
 
