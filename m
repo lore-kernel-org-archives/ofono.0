@@ -1,84 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1160464953895246579=="
+Content-Type: multipart/mixed; boundary="===============3731669238367661079=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC patches 05/13] util.h: Add BUILD_BUG_ON() and friends for
- compile-time assert checking
-Date: Fri, 28 May 2010 16:17:44 +0200
-Message-ID: <1275056264.4706.77.camel@aeonflux.t-mobile.de>
-In-Reply-To: <0aea8fdf557ffb7c1c8e2079cdcf86d1d1ad98c2.1274903142.git.inaky.perez-gonzalez@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 6/6] Bluetooth DUN modem prototype
+Date: Fri, 28 May 2010 09:19:42 -0500
+Message-ID: <201005280919.42676.denkenz@gmail.com>
+In-Reply-To: <1274849503-18388-6-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1160464953895246579==
+--===============3731669238367661079==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Inaky,
+Hi Gustavo,
 
-> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+> Add a still dummy DUN code, now it can only creates and removes modems.
+> The DUN plugin follows the HFP one a lot, the is basics a copy of some
+> HFP plugin's parts.
 > =
 
-> These have been stolen from the Linux kernel source; come pretty handy
-> to make build-time consistency checks and thus avoid run-time
-> surprises.
-> ---
->  src/util.h |   29 +++++++++++++++++++++++++++++
->  1 files changed, 29 insertions(+), 0 deletions(-)
-> =
 
-> diff --git a/src/util.h b/src/util.h
-> index 2835b76..cf34b67 100644
-> --- a/src/util.h
-> +++ b/src/util.h
-> @@ -77,3 +77,32 @@ unsigned char *pack_7bit(const unsigned char *in, long=
- len, int byte_offset,
->  				long *items_written, unsigned char terminator);
->  =
+Me and Marcel talked about this a few weeks ago, and we decided that we'd =
 
->  char *sim_string_to_utf8(const unsigned char *buffer, int length);
-> +
-> +/*
-> + * Build time consistency checks
-> + *
-> + * Stolen from the Linux kernel 2.6.35-rc; as most taken from the
-> + * Linux kernel, this is licensed GPL v2 or newer.
-> + */
-> +
-> +/* Force a compilation error if condition is true */
-> +#define BUILD_BUG_ON(condition) ((void)BUILD_BUG_ON_ZERO(condition))
-> +
-> +/* Force a compilation error if condition is constant and true */
-> +#define MAYBE_BUILD_BUG_ON(cond) ((void)sizeof(char[1 - 2 * !!(cond)]))
-> +
-> +/* Force a compilation error if a constant expression is not a power of =
-2 */
-> +#define BUILD_BUG_ON_NOT_POWER_OF_2(n)			\
-> +	BUILD_BUG_ON((n) =3D=3D 0 || (((n) & ((n) - 1)) !=3D 0))
-> +
-> +/* Force a compilation error if condition is true, but also produce a
-> +   result (of value 0 and type size_t), so the expression can be used
-> +   e.g. in a structure initializer (or where-ever else comma expressions
-> +   aren't permitted). */
-> +#define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
-> +#define BUILD_BUG_ON_NULL(e) ((void *)sizeof(struct { int:-!!(e); }))
-> +
-> +/*
-> + * End of code stolen from the Linux kernel 2.6.35-rc. From now, code
-> + * is GPL v2 only.
-> + */
+prefer the DUN client to be a separate daemon shipped within oFono source, =
 
-sounds like a nice addition, but src/util.h is the wrong file. I prefer
-we make this compatible so that it can be applied to ConnMan and BlueZ
-as well.
+with its own D-Bus interface.
 
-I think something like include/bug.h is better.
+The reason is that DUN client needs to accept a custom dial string for most =
 
-Regards
+modems out there, and there's no way to do this in oFono today.  However, y=
+ou =
 
-Marcel
+can re-use most of oFono's plumbing for this work, including gatchat & =
 
+bluetooth.c
 
+Regards,
+-Denis
 
---===============1160464953895246579==--
+--===============3731669238367661079==--
 
