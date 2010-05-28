@@ -1,54 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============7776540567804684127=="
+Content-Type: multipart/mixed; boundary="===============7662858289137590881=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC patches 11/13] automake: fix installation of udev rules in
- VPATH builds
-Date: Fri, 28 May 2010 16:25:57 +0200
-Message-ID: <1275056757.4706.80.camel@aeonflux.t-mobile.de>
-In-Reply-To: <a759b96fc09af236d1c322199cf42cc0d423fcc4.1274903142.git.inaky.perez-gonzalez@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC patches 04/13] sms_assembly_add_fragment_backup: clarify how
+ insertion spot is found
+Date: Fri, 28 May 2010 09:27:20 -0500
+Message-ID: <201005280927.20936.denkenz@gmail.com>
+In-Reply-To: <8068e20eb9e130e16487497fe6098c2f44f273e0.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7776540567804684127==
+--===============7662858289137590881==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Inaky,
 
-> When the build directory is different than the source directory, we
-> need to specify the source prefix to the original file we are
-> copying.
-> ---
->  Makefile.am |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
+> +		/* Iterate over the bitmap to find in which position
+> +		 * should the fragment be inserted -- basically we
+> +		 * walk each bit in the bitmap until the bit we care
+> +		 * about (offset:bit) and count which are stored --
+> +		 * that gives us in which position we have to insert. */
 
-> diff --git a/Makefile.am b/Makefile.am
-> index ed13346..31c157c 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -418,7 +418,7 @@ src/ofono.ver: src/ofono.exp
->  	$(AM_V_at)echo "local: *; };" >> $@
->  =
+Patch has been applied.  However please keep your commit header to 50 =
 
->  plugins/%.rules:
-> -	$(AM_V_GEN)cp $(subst 97-,,$@) $@
-> +	$(AM_V_GEN)cp $(srcdir)/$(subst 97-,,$@) $@
->  =
+characters or less.  Also, the preferred style for multi-line comments is:
+/* <empty line>
+ * ... comment
+ */
 
->  $(src_ofonod_OBJECTS) $(unit_objects): $(local_headers)
+Regards,
+-Denis
 
-I tested it within my release build system and it looks fine to me. At
-least nothing breaks. I leave it up to Denis to apply the patch, but
-please also submit similar patches for BlueZ and ConnMan since I am
-pretty sure I missed it there as well.
-
-Regards
-
-Marcel
-
-
-
---===============7776540567804684127==--
+--===============7662858289137590881==--
 
