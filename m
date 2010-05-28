@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============2744452676085814925=="
+Content-Type: multipart/mixed; boundary="===============6060107896549087368=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 11/11] Style corrections.
-Date: Fri, 28 May 2010 12:20:07 -0500
-Message-ID: <201005281220.07678.denkenz@gmail.com>
-In-Reply-To: <1274957690-4893-11-git-send-email-pasi.miettinen@ixonos.com>
+Subject: Re: [PATCH 09/11] Support for concatenated SMS status report. And
+ ofono_history_sms is now updated according to received status reports.
+Date: Fri, 28 May 2010 12:26:41 -0500
+Message-ID: <201005281226.41699.denkenz@gmail.com>
+In-Reply-To: <1274957690-4893-9-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2744452676085814925==
+--===============6060107896549087368==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,22 +20,36 @@ Hi Pasi,
 > =
 
 > ---
->  src/sms.c |   25 ++++++++++++++-----------
->  1 files changed, 14 insertions(+), 11 deletions(-)
+>  include/history.h |    2 +
+>  src/sms.c         |  157
+>  ++++++++++++++++++++++++++++++++++++++++++++++++++++- src/smsutil.h     =
+
+| =
+
+>    6 ++
+>  3 files changed, 163 insertions(+), 2 deletions(-)
 > =
 
 
-Style correction patches for code introduced in the same series should simp=
-ly =
+Some general comments:
 
-be squished into the previous changes.  This makes it much easier for us to =
+I'd like to see a status_report assembly similar to how the sms_assembly is =
 
-review.  e.g. this patch should not exist and any corrections made to the =
+done.  This should exist in smsutil.c/.h so that we can easily unit test th=
+is =
 
-patches that originally introduced the code.
+functionality (which I would also like to see.)
+
+Another desirable feature for the status report assembly is to save off the =
+
+status report fragments on disk, so that status reports (for multi-fragment =
+
+SMSes) received across oFono / system reboots and crashes are handled =
+
+appropriately.
 
 Regards,
 -Denis
 
---===============2744452676085814925==--
+--===============6060107896549087368==--
 
