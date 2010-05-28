@@ -1,92 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============9131582954683280855=="
+Content-Type: multipart/mixed; boundary="===============3723205898050670906=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/6] Add bluetooth plugin skeleton.
-Date: Fri, 28 May 2010 09:11:44 -0500
-Message-ID: <201005280911.44961.denkenz@gmail.com>
-In-Reply-To: <1274849503-18388-1-git-send-email-gustavo@padovan.org>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [RFC patches 02/13] sms_send_message: add a short roadmap
+Date: Fri, 28 May 2010 16:11:51 +0200
+Message-ID: <1275055911.4706.72.camel@aeonflux.t-mobile.de>
+In-Reply-To: <992d70300e42d2d7d98ff0e4e9fd2c8d3c415932.1274903142.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9131582954683280855==
+--===============3723205898050670906==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Inaky,
 
-> +#ifndef __BLUETOOTH_H
-> +#define __BLUETOOTH_H
-
-No ifdef guards please.
-
-> +
-> +#define	BLUEZ_SERVICE "org.bluez"
-> +#define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
-> +#define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
-> +#define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-> +
-> +#define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
-> +#define DUN_GW_UUID	"00001103-0000-1000-8000-00805F9B34FB"
-
-Lets start with just the HFP UUID until we add DUN.
-
-> +
-> +/* Profiles bitfield */
-> +#define HFP_AG 0x01
-> +#define DUN_GW 0x02
-
-Same here.
-
-> +
-> +struct bluetooth_profile {
-> +	const char *name;
-> +	int (*create)(const char *device, const char *dev_addr, const char
->  *adapter_addr, const char *alias); +	void (*remove_all)();
-
-This line has more than 80 characters
-
-> +	void (*set_alias)(const char *device, const char *);
-> +};
-> +
-> +int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile
->  *profile); +void bluetooth_unregister_uuid(const char *uuid);
-> +
-> +
-> +#endif /* __BLUETOOTH_H */
-> diff --git a/plugins/hfp.c b/plugins/hfp.c
-> index e37c9fc..a49e4af 100644
-> --- a/plugins/hfp.c
-> +++ b/plugins/hfp.c
-> @@ -45,17 +45,13 @@
+> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 > =
 
->  #include <ofono/dbus.h>
+> ---
+>  src/sms.c |   13 +++++++++++++
+>  1 files changed, 13 insertions(+), 0 deletions(-)
 > =
 
-> -#define	BLUEZ_SERVICE "org.bluez"
-> -#define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
-> -#define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
-> -#define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-> +#include "bluetooth.h"
-> +
->  #define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
-> =
+> diff --git a/src/sms.c b/src/sms.c
+> index 3a1cff0..594481e 100644
+> --- a/src/sms.c
+> +++ b/src/sms.c
+> @@ -398,6 +398,19 @@ static struct tx_queue_entry *create_tx_queue_entry(=
+GSList *msg_list)
+>  	return entry;
+>  }
+>  =
 
->  #define HFP_AGENT_INTERFACE "org.bluez.HandsfreeAgent"
->  #define HFP_AGENT_ERROR_INTERFACE "org.bluez.Error"
-> =
+> +/*
+> + * Pre-process a SMS text message and deliver it [D-BUS' SendMessage()]
+> + *
+> + * @conn: D-BUS connection
+> + * @msg: message data (telephone number and text)
+> + * @data: SMS object to use for transmision
+> + *
+> + * An alphabet is chosen for the text and it (might be) segmented in
+> + * fragments by sms_text_prepare() into @msg_list. A queue list @entry
+> + * is created by create_tx_queue_entry() and g_queue_push_tail()
+> + * appends that entry to the SMS transmit queue. Then the tx_next()
+> + * function is scheduled to run to process the queue.
+> + */
+>  static DBusMessage *sms_send_message(DBusConnection *conn, DBusMessage *=
+msg,
+>  					void *data)
+>  {
 
-> -#define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
-> -
->  #ifndef DBUS_TYPE_UNIX_FD
->  #define DBUS_TYPE_UNIX_FD -1
->  #endif
-> =
+small comments here. So it is D-Bus. That is the official naming in
+documentation we settled on some time ago. Half of the documentation
+might be still using it wrongly, but we might wanna set a good example
+here.
+
+I don't know how picky gtk-doc is about not having the : for title and
+the empty line after the title. However this is nicely readable inside
+the source code, so I am fine with it.
+
+Regards
+
+Marcel
 
 
-Regards,
--Denis
 
---===============9131582954683280855==--
+--===============3723205898050670906==--
 
