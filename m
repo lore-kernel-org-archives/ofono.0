@@ -1,57 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============9124671640128644036=="
+Content-Type: multipart/mixed; boundary="===============6402018019533639016=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
-Subject: Re: RTNL sync or async when creating GPRS Context for STE modem.
-Date: Sun, 30 May 2010 22:46:22 +0300
-Message-ID: <201005302246.22317.remi@remlab.net>
-In-Reply-To: <81C3A93C17462B4BBD7E272753C10579169C37B38A@EXDCVYMBSTM005.EQ1STM.local>
+From: Sjur BRENDELAND <sjur.brandeland@stericsson.com>
+Subject: RE: RTNL sync or async when creating GPRS Context for STE modem.
+Date: Mon, 31 May 2010 09:58:55 +0200
+Message-ID: <81C3A93C17462B4BBD7E272753C10579169C3C1BDE@EXDCVYMBSTM005.EQ1STM.local>
+In-Reply-To: <201005302246.22317.remi@remlab.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9124671640128644036==
+--===============6402018019533639016==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Le dimanche 30 mai 2010 17:45:04 Sjur BRENDELAND, vous avez =C3=A9crit :
-> I have started out by doing the RTNL handling async,
-> i.e. registering the RTNL socket with g_io_add_watch etc.
-> But I'm not really happy with the code as it feels
-> unnecessary complex, introduces new states in gprs-context.c. etc.
+R=C3=A9mi Denis-Courmont wrote:
+> > I have started out by doing the RTNL handling async,
+> > i.e. registering the RTNL socket with g_io_add_watch etc.
+> > But I'm not really happy with the code as it feels
+> > unnecessary complex, introduces new states in gprs-context.c. etc.
+> =
 
-Using an event loop makes sense if, and only if, the process blocks as far =
-as =
+> Using an event loop makes sense if, and only if, the process blocks as
+> far as poll() is concerned. If your ioctl() calls or Netlink requests =
 
-poll() is concerned. If your ioctl() calls or Netlink requests do not enter =
+> do not enter the kernel scheduler at any point, then the glib main
+> loop will just slows things down - more code, more context switches.
 
-the kernel scheduler at any point, then the glib main loop will just slows =
+Thanks Denis,
+I think a synchronous implementation should be find then.
 
-things down - more code, more context switches.
+If I understand RT-Netlink correctly, creating a CAIF Network Interface sho=
+uld
+not enter the poll() or wait in recvmsg. When sending RTNL newlink message,
+the whole newlink operation should execute in the senders thread, and =
 
-As an counter example, some people believe so blindly in event loops that t=
-hey =
+response messages be ready in the rtnl sockets receive queue when the send
+operation completes. Hence read/poll should not block the thread.
 
-use them to read *regular* files, and then recommend it to their friends. =
+Regards
+/Sjur
 
-Nevermind that POSIX states that regular files are always marked ready for =
 
-POLLIN and POLLOUT events, i.e. poll()'ing a regular file will always retur=
-n =
 
-immediately. Thus the event loop is defeated, and just constitutes useless =
 
-code complexity and wasted CPU time. (Of course, if the same code path can =
-
-cope with non-regular files, then using poll() might make sense, don't make=
- me =
-
-say what I did not.)
-
--- =
-
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net/
-http://fi.linkedin.com/in/remidenis
-
---===============9124671640128644036==--
+--===============6402018019533639016==--
 
