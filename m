@@ -1,45 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7660797922025984695=="
+Content-Type: multipart/mixed; boundary="===============7889276920351259616=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: E63 as generic At Modem?
-Date: Mon, 31 May 2010 16:54:02 +0300
-Message-ID: <AANLkTilIKHwLy6hCo9l1-szjaageHlMD_MJ-lSxbLEiD@mail.gmail.com>
-In-Reply-To: <AANLkTil3WFmjih1wB_Oqbfl-8v1Ndw2LX6xaFCB8U3ap@mail.gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/6] Add bluetooth plugin skeleton.
+Date: Mon, 31 May 2010 08:51:21 -0700
+Message-ID: <1275321081.2658.8.camel@localhost.localdomain>
+In-Reply-To: <87pr0c2sel.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7660797922025984695==
+--===============7889276920351259616==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+Hi Kalle,
 
-2010/5/31 Arun Ravindran <arunlee@gmail.com>:
-> Hello All,
->
-> I am running the latest ofono in my ubuntu 9.10, under virtual box.
->
-> I have connected my E63 through USB and I can see that the isimodem up and
-> working.
+> >> +#ifndef __BLUETOOTH_H
+> >> +#define __BLUETOOTH_H
+> >
+> > No ifdef guards please.
+> =
 
-Good, are you able to make calls with it?
+> I'm curious, why not?
 
-> I tried to use E63 as a generic modem by adding the following to the
-> modem.conf
+the ifdef guards are only needed for public exposed include files to
+protect against circular inclusion.
 
-Don't do that. The AT command interface on most Nokia modems is not
-very good. Just use the isimodem driver. We don't expect everything to
-work flawlessly over USB, but if you experience problems, just 'export
-OFONO_ISI_DEBUG=3Dall' and post the debug logs, and we can see if the
-problem can be fixed.
+For local headers I do want it fail if anybody attempts a circular
+inclusion. If they are needed, then it is a good sign that something is
+way too complex.
 
-However, we are currently using N900 as a reference phone; via USB
-while developing and on-device obviously for MeeGo purposes. Other
-models may or may not work.
+Regards
 
-Cheers,
-Aki
+Marcel
 
---===============7660797922025984695==--
+
+
+--===============7889276920351259616==--
 
