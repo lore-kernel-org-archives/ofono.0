@@ -1,90 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============0532208046629806346=="
+Content-Type: multipart/mixed; boundary="===============1179089276184384008=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 06/11] stkutil: Add the Menu Selection envelope builder
-Date: Mon, 31 May 2010 14:47:19 +0200
-Message-ID: <1275310044-27469-6-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 08/11] Add a buffer size parameter to convert_utf8_to_gsm
+Date: Mon, 31 May 2010 14:47:21 +0200
+Message-ID: <1275310044-27469-8-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1275310044-27469-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0532208046629806346==
+--===============1179089276184384008==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+This is needed when encoding a string into gsm that needs to fit a
+in a given number of bytes.  Just taking the first N bytes of the
+resulting string may leave you with byte 1 of a two-byte character at
+the end of the buffer.  As far as I can tell there's no easier way to
+avoid that.
 ---
- src/stkutil.c |   22 ++++++++++++++++++++++
- src/stkutil.h |    6 ++++++
- 2 files changed, 28 insertions(+), 0 deletions(-)
+ src/util.c       |    6 +++++-
+ src/util.h       |    1 +
+ unit/test-util.c |    3 ++-
+ 3 files changed, 8 insertions(+), 2 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 755fefd..e5ea65a 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -3528,6 +3528,20 @@ static gboolean build_dataobj_imei(struct stk_tlv_bu=
-ilder *tlv,
- 		stk_tlv_builder_close_container(tlv);
+diff --git a/src/util.c b/src/util.c
+index e5ce7b3..7c27301 100644
+--- a/src/util.c
++++ b/src/util.c
+@@ -645,6 +645,7 @@ char *convert_gsm_to_utf8(const unsigned char *text, lo=
+ng len,
+ unsigned char *convert_utf8_to_gsm_with_lang(const char *text, long len,
+ 					long *items_read, long *items_written,
+ 					unsigned char terminator,
++					long max_size,
+ 					enum gsm_dialect locking_lang,
+ 					enum gsm_dialect single_lang)
+ {
+@@ -688,6 +689,9 @@ unsigned char *convert_utf8_to_gsm_with_lang(const char=
+ *text, long len,
+ 		else
+ 			res_len +=3D 1;
+ =
+
++		if (max_size !=3D -1 && res_len > max_size)
++			break;
++
+ 		in =3D g_utf8_next_char(in);
+ 		nchars +=3D 1;
+ 	}
+@@ -739,7 +743,7 @@ unsigned char *convert_utf8_to_gsm(const char *text, lo=
+ng len,
+ {
+ 	return convert_utf8_to_gsm_with_lang(text, len, items_read,
+ 						items_written,
+-						terminator,
++						terminator, -1,
+ 						GSM_DIALECT_DEFAULT,
+ 						GSM_DIALECT_DEFAULT);
  }
+diff --git a/src/util.h b/src/util.h
+index 2835b76..d1b6b18 100644
+--- a/src/util.h
++++ b/src/util.h
+@@ -40,6 +40,7 @@ unsigned char *convert_utf8_to_gsm(const char *text, long=
+ len, long *items_read,
  =
 
-+/* Described in TS 102.223 Section 8.21 */
-+static gboolean build_dataobj_help_request(struct stk_tlv_builder *tlv,
-+						const void *data, gboolean cr)
-+{
-+	const gboolean *help =3D data;
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_HELP_REQUEST;
-+
-+	if (*help !=3D TRUE)
-+		return TRUE;
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
- /* Described in TS 102.223 Section 8.22 */
- static gboolean build_dataobj_network_measurement_results(
- 						struct stk_tlv_builder *tlv,
-@@ -4200,6 +4214,14 @@ ofono_bool_t stk_pdu_from_envelope(const struct stk_=
-envelope *envelope,
- 					envelope->cbs_pp_download.page,
- 					NULL);
- 		break;
-+	case STK_ENVELOPE_TYPE_MENU_SELECTION:
-+		ok =3D build_dataobj(&builder,
-+					build_dataobj_item_id, DATAOBJ_FLAG_CR,
-+					&envelope->menu_selection.item_id,
-+					build_dataobj_help_request, 0,
-+					&envelope->menu_selection.help_request,
-+					NULL);
-+		break;
- 	default:
- 		return FALSE;
- 	};
-diff --git a/src/stkutil.h b/src/stkutil.h
-index 8eb6c54..0e00b7e 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -1182,6 +1182,11 @@ struct stk_envelope_cbs_pp_download {
- 	unsigned char page[88];
- };
+ unsigned char *convert_utf8_to_gsm_with_lang(const char *text, long len, l=
+ong *items_read,
+ 				long *items_written, unsigned char terminator,
++				long max_size,
+ 				enum gsm_dialect locking_shift_lang,
+ 				enum gsm_dialect single_shift_lang);
  =
 
-+struct stk_envelope_menu_selection {
-+	unsigned char item_id;
-+	gboolean help_request;
-+};
-+
- struct stk_envelope {
- 	enum stk_envelope_type type;
- 	enum stk_device_identity_type src;
-@@ -1189,6 +1194,7 @@ struct stk_envelope {
- 	union {
- 		struct stk_envelope_sms_pp_download sms_pp_download;
- 		struct stk_envelope_cbs_pp_download cbs_pp_download;
-+		struct stk_envelope_menu_selection menu_selection;
- 	};
- };
+diff --git a/unit/test-util.c b/unit/test-util.c
+index de62848..30f4157 100644
+--- a/unit/test-util.c
++++ b/unit/test-util.c
+@@ -468,7 +468,8 @@ static void test_valid_turkish()
+ =
+
+ 		g_assert(nwritten =3D=3D UTF8_LENGTH(verify[0]));
+ =
+
+-		back =3D convert_utf8_to_gsm_with_lang(res, -1, &nread, &nwritten, 0, 1,=
+ 1);
++		back =3D convert_utf8_to_gsm_with_lang(res, -1, &nread,
++							&nwritten, 0, -1, 1, 1);
+ =
+
+ 		g_assert(back);
  =
 
 -- =
@@ -92,5 +99,5 @@ index 8eb6c54..0e00b7e 100644
 1.7.1.86.g0e460.dirty
 
 
---===============0532208046629806346==--
+--===============1179089276184384008==--
 
