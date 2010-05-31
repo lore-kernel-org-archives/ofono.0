@@ -1,34 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============7889276920351259616=="
+Content-Type: multipart/mixed; boundary="===============1443683128927416972=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/6] Add bluetooth plugin skeleton.
-Date: Mon, 31 May 2010 08:51:21 -0700
-Message-ID: <1275321081.2658.8.camel@localhost.localdomain>
-In-Reply-To: <87pr0c2sel.fsf@potku.valot.fi>
+Subject: Re: [PATCH 1/1] Huawei E176: Mark primary and secondary device at
+ ofono.rules TODO: Fix sim_add detection, add E1552 idProduct to ofono.rules
+Date: Mon, 31 May 2010 08:52:04 -0700
+Message-ID: <1275321124.2658.9.camel@localhost.localdomain>
+In-Reply-To: <87hblo2r0o.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7889276920351259616==
+--===============1443683128927416972==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Kalle,
 
-> >> +#ifndef __BLUETOOTH_H
-> >> +#define __BLUETOOTH_H
-> >
-> > No ifdef guards please.
-> =
+> I personally would prefer a solution which would dynamically probe the
+> ports and choose them based on results. I believe modemmanager does
+> something like this, but I haven't looked in detail.
 
-> I'm curious, why not?
-
-the ifdef guards are only needed for public exposed include files to
-protect against circular inclusion.
-
-For local headers I do want it fail if anybody attempts a circular
-inclusion. If they are needed, then it is a good sign that something is
-way too complex.
+we should do something like auto-detect at some point, but there are
+limits in it.
 
 Regards
 
@@ -36,5 +29,5 @@ Marcel
 
 
 
---===============7889276920351259616==--
+--===============1443683128927416972==--
 
