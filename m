@@ -1,103 +1,210 @@
-Content-Type: multipart/mixed; boundary="===============1179089276184384008=="
+Content-Type: multipart/mixed; boundary="===============0067285483578750376=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 08/11] Add a buffer size parameter to convert_utf8_to_gsm
-Date: Mon, 31 May 2010 14:47:21 +0200
-Message-ID: <1275310044-27469-8-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 07/11] test-stkutil: Tests for the Menu Selection envelope
+ builder
+Date: Mon, 31 May 2010 14:47:20 +0200
+Message-ID: <1275310044-27469-7-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1275310044-27469-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1179089276184384008==
+--===============0067285483578750376==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is needed when encoding a string into gsm that needs to fit a
-in a given number of bytes.  Just taking the first N bytes of the
-resulting string may leave you with byte 1 of a two-byte character at
-the end of the buffer.  As far as I can tell there's no easier way to
-avoid that.
 ---
- src/util.c       |    6 +++++-
- src/util.h       |    1 +
- unit/test-util.c |    3 ++-
- 3 files changed, 8 insertions(+), 2 deletions(-)
+ unit/test-stkutil.c |  162 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 162 insertions(+), 0 deletions(-)
 
-diff --git a/src/util.c b/src/util.c
-index e5ce7b3..7c27301 100644
---- a/src/util.c
-+++ b/src/util.c
-@@ -645,6 +645,7 @@ char *convert_gsm_to_utf8(const unsigned char *text, lo=
-ng len,
- unsigned char *convert_utf8_to_gsm_with_lang(const char *text, long len,
- 					long *items_read, long *items_written,
- 					unsigned char terminator,
-+					long max_size,
- 					enum gsm_dialect locking_lang,
- 					enum gsm_dialect single_lang)
- {
-@@ -688,6 +689,9 @@ unsigned char *convert_utf8_to_gsm_with_lang(const char=
- *text, long len,
- 		else
- 			res_len +=3D 1;
+diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
+index 5410334..4a822ef 100644
+--- a/unit/test-stkutil.c
++++ b/unit/test-stkutil.c
+@@ -18066,6 +18066,151 @@ static const struct envelope_test cbs_pp_data_dow=
+nload_data_17 =3D {
+ 	},
+ };
  =
 
-+		if (max_size !=3D -1 && res_len > max_size)
-+			break;
++static const unsigned char menu_selection_111[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x02,
++};
 +
- 		in =3D g_utf8_next_char(in);
- 		nchars +=3D 1;
- 	}
-@@ -739,7 +743,7 @@ unsigned char *convert_utf8_to_gsm(const char *text, lo=
-ng len,
++static const struct envelope_test menu_selection_data_111 =3D {
++	.pdu =3D menu_selection_111,
++	.pdu_len =3D sizeof(menu_selection_111),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x2,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_112[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x12,
++};
++
++static const struct envelope_test menu_selection_data_112 =3D {
++	.pdu =3D menu_selection_112,
++	.pdu_len =3D sizeof(menu_selection_112),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x12,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_121[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x3d,
++};
++
++static const struct envelope_test menu_selection_data_121 =3D {
++	.pdu =3D menu_selection_121,
++	.pdu_len =3D sizeof(menu_selection_121),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x3d,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_122[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0xfb,
++};
++
++static const struct envelope_test menu_selection_data_122 =3D {
++	.pdu =3D menu_selection_122,
++	.pdu_len =3D sizeof(menu_selection_122),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0xfb,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_123[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x01,
++};
++
++static const struct envelope_test menu_selection_data_123 =3D {
++	.pdu =3D menu_selection_123,
++	.pdu_len =3D sizeof(menu_selection_123),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x1,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_211[] =3D {
++	0xd3, 0x09, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x02, 0x15, 0x00,
++};
++
++static const struct envelope_test menu_selection_data_211 =3D {
++	.pdu =3D menu_selection_211,
++	.pdu_len =3D sizeof(menu_selection_211),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x2,
++			.help_request =3D TRUE,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_612[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x05,
++};
++
++static const struct envelope_test menu_selection_data_612 =3D {
++	.pdu =3D menu_selection_612,
++	.pdu_len =3D sizeof(menu_selection_612),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x5,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_641[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x08,
++};
++
++static const struct envelope_test menu_selection_data_641 =3D {
++	.pdu =3D menu_selection_641,
++	.pdu_len =3D sizeof(menu_selection_641),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x8,
++		}},
++	},
++};
++
+ int main(int argc, char **argv)
  {
- 	return convert_utf8_to_gsm_with_lang(text, len, items_read,
- 						items_written,
--						terminator,
-+						terminator, -1,
- 						GSM_DIALECT_DEFAULT,
- 						GSM_DIALECT_DEFAULT);
+ 	g_test_init(&argc, &argv, NULL);
+@@ -19742,5 +19887,22 @@ int main(int argc, char **argv)
+ 	g_test_add_data_func("/teststk/CBS-PP data download 1.7",
+ 			&cbs_pp_data_download_data_17, test_envelope_encoding);
+ =
+
++	g_test_add_data_func("/teststk/Menu Selection 1.1.1",
++			&menu_selection_data_111, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 1.1.2",
++			&menu_selection_data_112, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 1.2.1",
++			&menu_selection_data_121, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 1.2.2",
++			&menu_selection_data_122, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 1.2.3",
++			&menu_selection_data_123, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 2.1.1",
++			&menu_selection_data_211, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 6.1.2",
++			&menu_selection_data_612, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 6.4.1",
++			&menu_selection_data_641, test_envelope_encoding);
++
+ 	return g_test_run();
  }
-diff --git a/src/util.h b/src/util.h
-index 2835b76..d1b6b18 100644
---- a/src/util.h
-+++ b/src/util.h
-@@ -40,6 +40,7 @@ unsigned char *convert_utf8_to_gsm(const char *text, long=
- len, long *items_read,
- =
-
- unsigned char *convert_utf8_to_gsm_with_lang(const char *text, long len, l=
-ong *items_read,
- 				long *items_written, unsigned char terminator,
-+				long max_size,
- 				enum gsm_dialect locking_shift_lang,
- 				enum gsm_dialect single_shift_lang);
- =
-
-diff --git a/unit/test-util.c b/unit/test-util.c
-index de62848..30f4157 100644
---- a/unit/test-util.c
-+++ b/unit/test-util.c
-@@ -468,7 +468,8 @@ static void test_valid_turkish()
- =
-
- 		g_assert(nwritten =3D=3D UTF8_LENGTH(verify[0]));
- =
-
--		back =3D convert_utf8_to_gsm_with_lang(res, -1, &nread, &nwritten, 0, 1,=
- 1);
-+		back =3D convert_utf8_to_gsm_with_lang(res, -1, &nread,
-+							&nwritten, 0, -1, 1, 1);
- =
-
- 		g_assert(back);
- =
-
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============1179089276184384008==--
+--===============0067285483578750376==--
 
