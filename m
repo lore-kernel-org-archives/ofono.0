@@ -1,38 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============0283047082247715864=="
+Content-Type: multipart/mixed; boundary="===============0751285834873146678=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Reg. New features like EMS and MMS
-Date: Tue, 01 Jun 2010 10:15:00 -0500
-Message-ID: <201006011015.00436.denkenz@gmail.com>
-In-Reply-To: <AANLkTimIlRdP6p-qTguTO4bYAw3e85gpzhNSRlQdbVxC@mail.gmail.com>
+Subject: Re: [PATCH] Introduction of HACKING file in phonesim
+Date: Tue, 01 Jun 2010 11:56:47 -0500
+Message-ID: <201006011156.48995.denkenz@gmail.com>
+In-Reply-To: <1275384985-1653-1-git-send-email-nareshtechs@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0283047082247715864==
+--===============0751285834873146678==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Satya,
+Hi Naresh,
 
-> Hi,
-> =
+> Signed-off-by: Naresh Mehta <nareshtechs@gmail.com>
 
-> I am interested to know about the features like EMS (Enhanced Messaging
-> Service) and  MMS (upload/download) are going to support by oFono or not ?
+We don't use Signed-off-by in ofono / phonesim.  Fixed it for you, but plea=
+se =
 
-EMS feature is something we'd like to have but it is near the bottom of the =
+keep that in mind next time.
 
-list priority wise.  See the TODO in git.
+> ---
+>  HACKING |  102
+>  =
 
-MMS features will not be supported by oFono, these belong in a separate =
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ =
 
-daemon.  oFono will most likely provide some sort of WAP PUSH over SMS  =
+1 files
+>  changed, 102 insertions(+), 0 deletions(-)
+>  create mode 100644 HACKING
 
-integration however.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============0283047082247715864==--
+--===============0751285834873146678==--
 
