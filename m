@@ -1,38 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============7736381091406908858=="
+Content-Type: multipart/mixed; boundary="===============0283047082247715864=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Issue in concatenated message
-Date: Tue, 01 Jun 2010 10:12:44 -0500
-Message-ID: <201006011012.44695.denkenz@gmail.com>
-In-Reply-To: <AANLkTimIbC2W3fPoLy0sfJEnv46cwBSGBNUwLGB1UFiD@mail.gmail.com>
+Subject: Re: Reg. New features like EMS and MMS
+Date: Tue, 01 Jun 2010 10:15:00 -0500
+Message-ID: <201006011015.00436.denkenz@gmail.com>
+In-Reply-To: <AANLkTimIlRdP6p-qTguTO4bYAw3e85gpzhNSRlQdbVxC@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7736381091406908858==
+--===============0283047082247715864==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Satya,
 
-> Hi all,
+> Hi,
 > =
 
-> While receiving concatenated message more than 30 segments, then 31st
-> segment  is concatenated at the beginning of the message. After that (i.e.
-> 32nd segment) remaining segments are concatenated after 30th segment. It =
-is
-> observed in ofono-0.21 version of oFono source. It is identified while
-> sending message with 5000 characters using phonesim-1.2 (source code).
+> I am interested to know about the features like EMS (Enhanced Messaging
+> Service) and  MMS (upload/download) are going to support by oFono or not ?
 
-Thanks for reporting this.  The issue was related to signed int usage when =
+EMS feature is something we'd like to have but it is near the bottom of the =
 
-finding the insertion position for the fragment.  This has now been fixed =
+list priority wise.  See the TODO in git.
 
-upstream.
+MMS features will not be supported by oFono, these belong in a separate =
+
+daemon.  oFono will most likely provide some sort of WAP PUSH over SMS  =
+
+integration however.
 
 Regards,
 -Denis
 
---===============7736381091406908858==--
+--===============0283047082247715864==--
 
