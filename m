@@ -1,31 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============4135723187768557677=="
+Content-Type: multipart/mixed; boundary="===============9163947524270260078=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH 10/11] stkutil: Add the Call Control envelope builder
-Date: Wed, 02 Jun 2010 00:28:31 +0200
-Message-ID: <AANLkTimvbVPfY48hohR-XLGWhuc1JzPC3Q5mi3XLGk4k@mail.gmail.com>
-In-Reply-To: <1275310044-27469-10-git-send-email-andrew.zaborowski@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 08/11] Add a buffer size parameter to convert_utf8_to_gsm
+Date: Tue, 01 Jun 2010 18:50:09 -0500
+Message-ID: <201006011850.10018.denkenz@gmail.com>
+In-Reply-To: <1275310044-27469-8-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4135723187768557677==
+--===============9163947524270260078==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 31 May 2010 14:47, Andrzej Zaborowski <andrew.zaborowski@intel.com> wr=
-ote:
-> ---
-> =C2=A0src/stkutil.c | =C2=A0175 +++++++++++++++++++++++++++++++++++++++++=
-+++++++++++++++-
-> =C2=A0src/stkutil.h | =C2=A0 31 ++++++++++
-> =C2=A02 files changed, 204 insertions(+), 2 deletions(-)
+Hi Andrew,
 
-Please ignore this patch and the following one, I will resend with
-some corrections later.
+> This is needed when encoding a string into gsm that needs to fit a
+> in a given number of bytes.  Just taking the first N bytes of the
+> resulting string may leave you with byte 1 of a two-byte character at
+> the end of the buffer.  As far as I can tell there's no easier way to
+> avoid that.
 
-Thanks,
-Andrew
+In gsm it is actually pretty easy, the escape character for two-byte sequen=
+ce =
 
---===============4135723187768557677==--
+is always 0x1b, so chopping a string up could be done quite easily.
+
+>  unsigned char *convert_utf8_to_gsm_with_lang(const char *text, long len,
+>  long *items_read, long *items_written, unsigned char terminator,
+> +				long max_size,
+>  				enum gsm_dialect locking_shift_lang,
+>  				enum gsm_dialect single_shift_lang);
+
+If there's still need for this, I'd prefer we reuse long *items_written as =
+an =
+
+in/out argument for the max size or add another function entirely, adding y=
+et =
+
+another int argument is getting a bit ridiculous.
+
+Regards,
+-Denis
+
+--===============9163947524270260078==--
 
