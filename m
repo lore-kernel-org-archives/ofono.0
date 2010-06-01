@@ -1,41 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============0751285834873146678=="
+Content-Type: multipart/mixed; boundary="===============3759767735245733651=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Introduction of HACKING file in phonesim
-Date: Tue, 01 Jun 2010 11:56:47 -0500
-Message-ID: <201006011156.48995.denkenz@gmail.com>
-In-Reply-To: <1275384985-1653-1-git-send-email-nareshtechs@gmail.com>
+Subject: Re: [PATCH 1/1] Huawei E176: Mark primary and secondary device at
+ ofono.rules TODO: Fix sim_add detection, add E1552 idProduct to ofono.rules
+Date: Tue, 01 Jun 2010 14:09:10 -0500
+Message-ID: <201006011409.11869.denkenz@gmail.com>
+In-Reply-To: <87d3wc2etx.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0751285834873146678==
+--===============3759767735245733651==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Naresh,
+Hi Kalle,
 
-> Signed-off-by: Naresh Mehta <nareshtechs@gmail.com>
+> Marcel Holtmann <marcel@holtmann.org> writes:
+> > Hi Kalle,
+> =
 
-We don't use Signed-off-by in ofono / phonesim.  Fixed it for you, but plea=
-se =
+> Hallo Marcel,
+> =
 
-keep that in mind next time.
+> >> I personally would prefer a solution which would dynamically probe the
+> >> ports and choose them based on results. I believe modemmanager does
+> >> something like this, but I haven't looked in detail.
+> >
+> > we should do something like auto-detect at some point, but there are
+> > limits in it.
+> =
 
-> ---
->  HACKING |  102
->  =
+> So what's the best option to go forward?
+> =
 
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ =
+> And related to this, can we rely on the port numbering order provided by
+> udev? For example, on my Huawei E1552 port 0 is the main chat port and
+> port 2 is the "event" port. Is it certain that port numbering will be
+> the same across all distributions and kernels?
+> =
 
-1 files
->  changed, 102 insertions(+), 0 deletions(-)
->  create mode 100644 HACKING
 
-Patch has been applied, thanks.
+I'm not the kernel expert, but the answer is probably 'no'.  However, doing =
+
+any sort of port auto-detection inside plugins/udev.c is a bit nasty.  Best=
+ we =
+
+can do is set all of the 2/3/4 ttys and let the plugin probe them.  I =
+
+certainly have doubts we can do this reliably.  If we can't, then we should =
+
+consider Florian's approach as a backup.
 
 Regards,
 -Denis
 
---===============0751285834873146678==--
+--===============3759767735245733651==--
 
