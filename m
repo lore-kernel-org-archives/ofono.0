@@ -1,35 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============9183177767432520566=="
+Content-Type: multipart/mixed; boundary="===============2709595104170581008=="
 MIME-Version: 1.0
-From: =?unknown-8bit?b?4LC44LCk4LGN4LCvIOCwleCwv+Cwt+Cxi+CwsOCxjQ==?= <satyakishore.kalva@gmail.com>
-Subject: Reg. New features like EMS and MMS
-Date: Tue, 01 Jun 2010 15:33:12 +0530
-Message-ID: <AANLkTimIlRdP6p-qTguTO4bYAw3e85gpzhNSRlQdbVxC@mail.gmail.com>
+From: Nicola Mfb <nicola.mfb@gmail.com>
+Subject: Running ofono on n900 natively
+Date: Tue, 01 Jun 2010 13:49:59 +0200
+Message-ID: <AANLkTimOMrft_pm55xVLQ5ZUbVls0fNWXmH9phLlI6iF@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9183177767432520566==
+--===============2709595104170581008==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi!
 
-I am interested to know about the features like EMS (Enhanced Messaging
-Service) and  MMS (upload/download) are going to support by oFono or not ?
+I'm trying to run ofono on n900 natively, with debian sid installed on
+an external SD card (not using meego just to have an easy build
+environment directly on the device, kernel, modules and firmware
+copied from maemo pr 1.2).
 
-Thanks,
-Satya.
+I activated the phonet0 with the command:
 
---===============9183177767432520566==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+/mnt/initfs/sbin/phonet -a 0x6C -i phonet0
 
-SGksPGJyPjxicj5JIGFtIGludGVyZXN0ZWQgdG8ga25vdyBhYm91dCB0aGUgZmVhdHVyZXMgbGlr
-ZSBFTVMgKEVuaGFuY2VkIE1lc3NhZ2luZyBTZXJ2aWNlKSBhbmSgIE1NUyAodXBsb2FkL2Rvd25s
-b2FkKSBhcmUgZ29pbmcgdG8gc3VwcG9ydCBieSBvRm9ubyBvciBub3QgPzxicj48YnI+VGhhbmtz
-LCA8YnI+U2F0eWEuPGJyPqA8YnI+PHByZT48YnI+PC9wcmU+PGJyPgo=
+With version 0.21 phonet is detected as down:
 
---===============9183177767432520566==--
+[...]
+ofonod[19109]: src/radio-settings.c:ofono_radio_settings_driver_register()
+driver: 0x8c908, name: isimodem
+ofonod[19109]: src/gprs.c:ofono_gprs_driver_register() driver:
+0x8c91c, name: isimodem
+ofonod[19109]: src/gprs.c:ofono_gprs_context_driver_register() driver:
+0x8c930, name: isimodem
+ofonod[19109]: src/modem.c:ofono_modem_driver_register() driver:
+0x8c724, name: isimodem
+ofonod[19109]: plugins/usbpnmodem.c:usbpn_status_cb() Phonet link
+phonet0 (4) is down
+ofonod[19109]: plugins/usbpnmodem.c:usbpn_status_cb() Phonet link
+upnlink0 (5) is down
+
+With version 0.20 phonet is detected up but fails on the mtc driver:
+
+[...]
+ofonod[22857]: src/modem.c:ofono_modem_driver_register() driver:
+0x7e820, name: isimodem
+ofonod[22857]: drivers/isimodem/isimodem.c:netlink_status_cb() PhoNet
+is up, addr=3D0x6c, idx=3D0x4
+ofonod[22857]: src/modem.c:ofono_modem_create() name: (null), type: isimodem
+ofonod[22857]: drivers/isimodem/isimodem.c:netlink_status_cb() Done
+regging modem
+ofonod[22857]: drivers/isimodem/isimodem.c:reachable_cb() Unable to
+bootstrap mtc driver
+
+In can see the /isimodem0 dbus object, and when trying to start it I get:
+ofonod[22857]: drivers/isimodem/isimodem.c:mtc_power_on_cb() ISI
+client error: -110
+
+Anyway booting maemo and running the same 0.20 executable in chroot
+works, so I think my debian deploy misses something userspace.
+
+Any hints?
+
+Another question, will ofono be able to start phonet without closed
+userspace tools?
+
+Regards
+
+    Niko
+
+--===============2709595104170581008==--
 
