@@ -1,59 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1906888501020690464=="
+Content-Type: multipart/mixed; boundary="===============3482142812199395397=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/11] stkutil: Add SMS-PP Data Download envelope builder
-Date: Tue, 01 Jun 2010 18:50:19 -0500
-Message-ID: <201006011850.19709.denkenz@gmail.com>
-In-Reply-To: <1275310044-27469-1-git-send-email-andrew.zaborowski@intel.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH] Introduction of HACKING file in phonesim
+Date: Wed, 02 Jun 2010 10:14:19 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731E11FF73@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1275384985-1653-1-git-send-email-nareshtechs@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1906888501020690464==
+--===============3482142812199395397==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Naresh,
 
-> Note that the sms_tpdu member could be of type struct sms_deliver, but the
-> users may more often have access to the raw tpdu so there's no point
-> decoding and reencoding it.
+>-----Original Message-----
+>From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
+lf Of
+>Naresh Mehta
+>Sent: Tuesday, June 01, 2010 5:36 PM
+>To: ofono(a)ofono.org
+>Subject: [PATCH] Introduction of HACKING file in phonesim
+>
+>+
+>+When using "./configure --enable-maintainer-mode" the automake scripts wi=
+ll
+>+use the plugins directly from within the repository. This removes the need
+>+to use "make install" when testing "phonesim". The "bootstrap-configure"
+>+automatically includes this option.
+>+
+>+  Run phonesim in foreground using the following options
+>+    # ./src/phonesim -p 12345 -gui xml/default.xml
 
-Overall patch looks fine, but using a raw pdu is not preferable.  Couple of =
+The "xml" directory has been removed. So here should be "src/default.xml".
 
-reasons:
-
-- When SMS is delivered, it is delivered in tpdu form, e.g. sc_address + =
-
-deliver pdu.  To obtain the sc_address, we need to decode the deliver tpdu =
-
-anyway.
-- Before we know this is an SMS-PP download, we must check the dcs / pid.  =
-In =
-
-order to check those, we must again decode the tpdu.
-- SMS sc_address can actually be non-numeric.  In that case the SMS-PP =
-
-download should simply be dropped.
-- Consistency with Send SMS proactive command.
-
-> +
-> +/* Returns TRUE on success */
-> +ofono_bool_t stk_pdu_from_envelope(const struct stk_envelope *envelope,
-> +					unsigned char *pdu, unsigned int size,
-> +					unsigned char **out_pdu,
-> +					unsigned int *out_size);
-> =
-
-
-This part just looks ugly.  Can't we hide the details of char buf[512] =
-
-somewhere inside stk_pdu_from_envelope?  Or perhaps make **out_pdu and =
-
-*out_size in/out arguments instead of just out.
 
 Regards,
--Denis
+-Yang
 
---===============1906888501020690464==--
+--===============3482142812199395397==--
 
