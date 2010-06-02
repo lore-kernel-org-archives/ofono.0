@@ -1,62 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============4491017885703680103=="
+Content-Type: multipart/mixed; boundary="===============1789700073392246961=="
 MIME-Version: 1.0
-From: Naresh Mehta <nareshtechs@gmail.com>
-Subject: Re: [PATCH] Introduction of HACKING file in phonesim
-Date: Wed, 02 Jun 2010 08:25:30 +0200
-Message-ID: <AANLkTikAmLw-Egjot6fDe4NlpsVKTApAN6xPnXjvFs6T@mail.gmail.com>
-In-Reply-To: <1275446423.2182.9.camel@localhost.localdomain>
+From: Lassi Syrjala <lassi.syrjala@nokia.com>
+Subject: ANNOUNCE: introducing telepathy-ring
+Date: Wed, 02 Jun 2010 13:42:18 +0300
+Message-ID: <4C06358A.5060600@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4491017885703680103==
+--===============1789700073392246961==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Thanks All. Will keep the different things in mind in my next patches.
+Telepathy-ring is a Telepathy Connection Manager for GSM telephony. It =
 
-BR; Naresh
+was originally written by Pekka Pessi and is currently used on the Nokia =
 
-On Wed, Jun 2, 2010 at 4:40 AM, Marcel Holtmann <marcel@holtmann.org> wro=
-te:
-> Hi Yang,
->
->> >+When using "./configure --enable-maintainer-mode" the automake scripts=
- will
->> >+use the plugins directly from within the repository. This removes the =
-need
->> >+to use "make install" when testing "phonesim". The "bootstrap-configur=
-e"
->> >+automatically includes this option.
->> >+
->> >+ =C2=A0Run phonesim in foreground using the following options
->> >+ =C2=A0 =C2=A0# ./src/phonesim -p 12345 -gui xml/default.xml
->>
->> The "xml" directory has been removed. So here should be "src/default.xml=
-".
->
-> good catch. I fixed that up. Thanks.
->
-> Regards
->
-> Marcel
->
->
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+N900.
 
+Telepathy-ring has now been ported to Ofono, and the source code for the =
 
+2.x.x series is available under the LGPL.
 
--- =
+The project is hosted at:
+http://meego.gitorious.org/meego-cellular/telepathy-ring
 
+Regards,
+Lassi
 
-BR; Naresh
-
-visit me at:
-http://www.naresh.se/
-
---===============4491017885703680103==--
+--===============1789700073392246961==--
 
