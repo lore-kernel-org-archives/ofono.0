@@ -1,43 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3482142812199395397=="
+Content-Type: multipart/mixed; boundary="===============7665664550305207004=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: RE: [PATCH] Introduction of HACKING file in phonesim
-Date: Wed, 02 Jun 2010 10:14:19 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731E11FF73@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <1275384985-1653-1-git-send-email-nareshtechs@gmail.com>
+Date: Tue, 01 Jun 2010 19:40:23 -0700
+Message-ID: <1275446423.2182.9.camel@localhost.localdomain>
+In-Reply-To: <CE761E84DADF2947A4AF22FB8D97A4731E11FF73@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3482142812199395397==
+--===============7665664550305207004==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Naresh,
+Hi Yang,
 
->-----Original Message-----
->From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf Of
->Naresh Mehta
->Sent: Tuesday, June 01, 2010 5:36 PM
->To: ofono(a)ofono.org
->Subject: [PATCH] Introduction of HACKING file in phonesim
->
->+
->+When using "./configure --enable-maintainer-mode" the automake scripts wi=
-ll
->+use the plugins directly from within the repository. This removes the need
->+to use "make install" when testing "phonesim". The "bootstrap-configure"
->+automatically includes this option.
->+
->+  Run phonesim in foreground using the following options
->+    # ./src/phonesim -p 12345 -gui xml/default.xml
+> >+When using "./configure --enable-maintainer-mode" the automake scripts =
+will
+> >+use the plugins directly from within the repository. This removes the n=
+eed
+> >+to use "make install" when testing "phonesim". The "bootstrap-configure"
+> >+automatically includes this option.
+> >+
+> >+  Run phonesim in foreground using the following options
+> >+    # ./src/phonesim -p 12345 -gui xml/default.xml
+> =
 
-The "xml" directory has been removed. So here should be "src/default.xml".
+> The "xml" directory has been removed. So here should be "src/default.xml".
+
+good catch. I fixed that up. Thanks.
+
+Regards
+
+Marcel
 
 
-Regards,
--Yang
 
---===============3482142812199395397==--
+--===============7665664550305207004==--
 
