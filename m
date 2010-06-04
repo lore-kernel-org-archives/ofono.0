@@ -1,67 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============6446284612405229062=="
+Content-Type: multipart/mixed; boundary="===============0730336784750785984=="
 MIME-Version: 1.0
 From: Pasi Miettinen <pasi.miettinen@ixonos.com>
-Subject: [RFC PATCH 1/6] Change in at_cds_notify for status report.
-Date: Fri, 04 Jun 2010 14:17:32 +0300
-Message-ID: <1275650257-30593-2-git-send-email-pasi.miettinen@ixonos.com>
-In-Reply-To: <1275650257-30593-1-git-send-email-pasi.miettinen@ixonos.com>
+Subject: Next series of delivery report patches
+Date: Fri, 04 Jun 2010 14:17:31 +0300
+Message-ID: <1275650257-30593-1-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6446284612405229062==
+--===============0730336784750785984==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/sms.c |   19 +++++++++++++++----
- 1 files changed, 15 insertions(+), 4 deletions(-)
+Patches include:
+1. Notify about new status report to sms-core.
+2. Add new signal to DBus-interface for status report.
+3. Support for basic status report (non-concatenated).
+   -function structure is similar to deliver-notify,
+    some functions could be combined
+4. Implement setting "UseDeliveryReports" property via DBus.
+5. Support for concatenated status reports.
+   -add_pending_status_report() relates new MR-number to
+    existing ofono_msg_id or creates a new ofono_msg_id
+    and relates MR to it. Also receiver information is saved.
+   -update_pending_status_report_mr_number() searches the
+    msg_id to which the received MR is related and updates
+    the status of the msg_id and MR accordingly. If message
+    is determined as undelivered, related information is
+    freed.
+6. Saving pending SMS status reports to disk.
+   -same basic idea as in SMS assembly storaging
+   -function structure is similar to SMS assembly part.
+    Status report part only has one more loop compared to it
+    because of the deeper directory structure in which the
+    pending status report information is saved.
+   -storaging and storage freeing are called by
+    add_pending_status_report() and
+    update_pending_status_report_mr_number()
 
-diff --git a/drivers/atmodem/sms.c b/drivers/atmodem/sms.c
-index 439beea..3dafbc9 100644
---- a/drivers/atmodem/sms.c
-+++ b/drivers/atmodem/sms.c
-@@ -283,16 +283,27 @@ static void at_cds_notify(GAtResult *result, gpointer=
- user_data)
- {
- 	struct ofono_sms *sms =3D user_data;
- 	struct sms_data *data =3D ofono_sms_get_data(sms);
--	int pdulen;
--	const char *pdu;
-+	long pdu_len;
-+	int tpdu_len;
-+	const char *hexpdu;
-+	unsigned char pdu[176];
- 	char buf[256];
- =
+Next tasks:
+1. Combine ofono_sms_deliver_notify() and ofono_sms_status_notify()
+   as Aki Niemi requested. Still a valid task?
+2. Implement received comments about these patches.
 
--	if (!at_parse_pdu_common(result, "+CDS:", &pdu, &pdulen)) {
-+	if (!at_parse_pdu_common(result, "+CDS:", &hexpdu, &tpdu_len)) {
- 		ofono_error("Unable to parse CDS notification");
- 		return;
- 	}
- =
-
--	DBG("Got new Status-Report PDU via CDS: %s, %d", pdu, pdulen);
-+	if (strlen(hexpdu) > sizeof(pdu) * 2) {
-+		ofono_error("Bad PDU length in CMT notification");
-+		return;
-+	}
-+
-+	DBG("Got new Status-Report PDU via CDS: %s, %d", hexpdu, tpdu_len);
-+
-+	/*Decode pdu and notify about new SMS status report*/
-+	decode_hex_own_buf(hexpdu, -1, &pdu_len, 0, pdu);
-+	ofono_sms_status_notify(sms, pdu, pdu_len, tpdu_len);
- =
-
- 	/* We must acknowledge the PDU using CNMA */
- 	if (data->cnma_ack_pdu)
--- =
-
-1.6.0.4
+Br,
+Pasi Miettinen
 
 
 
---===============6446284612405229062==--
+--===============0730336784750785984==--
 
