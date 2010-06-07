@@ -1,46 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============7615492135622326255=="
+Content-Type: multipart/mixed; boundary="===============8082251111581605130=="
 MIME-Version: 1.0
-From: Miettinen Pasi <pasi.miettinen@ixonos.com>
-Subject: VS: [RFC PATCH 1/4] SetProperty for UseDeliveryReports. smsutil.c/h.
-Date: Mon, 07 Jun 2010 13:14:39 +0300
-Message-ID: <EA8B5A37FEEFC048AF3F8170D2819913B8C1280A50@jklmail01.ixonos.local>
-In-Reply-To: <1275904409-19829-2-git-send-email-pasi.miettinen@ixonos.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: [PATCH] huawei: show used tty devices in the debug log
+Date: Mon, 07 Jun 2010 14:26:29 +0300
+Message-ID: <20100607112629.10045.27642.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7615492135622326255==
+--===============8082251111581605130==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> ---
->  src/smsutil.c |    5 +++--
->  src/smsutil.h |    3 ++-
->  2 files changed, 5 insertions(+), 3 deletions(-)
-> |
-> diff --git a/src/smsutil.h b/src/smsutil.h
-> index a36a9d3..cfb2765 100644
-> --- a/src/smsutil.h
-> +++ b/src/smsutil.h
-> @@ -482,7 +482,8 @@ GSList *sms_assembly_add_fragment(struct sms_assembly=
- *assembly,
->  void sms_assembly_expire(struct sms_assembly *assembly, time_t before);
->
->  GSList *sms_text_prepare(const char *utf8, guint16 ref,
-> -                               gboolean use_16bit, int *ref_offset);
-> +                               gboolean use_16bit, int *ref_offset,
-> +                               const gboolean use_delivery_reports);
->
-> gboolean cbs_dcs_decode(guint8 dcs, gboolean *udhi, enum sms_class *cls,
->                         enum sms_charset *charset, gboolean *compressed,
+Handy when debugging udev problems.
+---
+ plugins/huawei.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-Ah, no need for const before gboolean, as Denis said. Do I need to send ano=
-ther patch, or can you
-remove it?
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index 9e50288..63dd06a 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -201,11 +201,11 @@ static int huawei_enable(struct ofono_modem *modem)
+ 	struct huawei_data *data =3D ofono_modem_get_data(modem);
+ 	const char *modem_device, *event_device;
+ =
 
-Br,
-Pasi
+-	DBG("%p", modem);
+-
+ 	modem_device =3D ofono_modem_get_string(modem, "Device");
+ 	event_device =3D ofono_modem_get_string(modem, "SecondaryDevice");
+ =
+
++	DBG("%p modem %s event %s", modem, modem_device, event_device);
++
+ 	if (modem_device =3D=3D NULL || event_device =3D=3D NULL)
+ 		return -EINVAL;
+ =
 
 
---===============7615492135622326255==--
+
+--===============8082251111581605130==--
 
