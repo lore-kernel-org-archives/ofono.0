@@ -1,188 +1,213 @@
-Content-Type: multipart/mixed; boundary="===============6445518961864800561=="
+Content-Type: multipart/mixed; boundary="===============2698852735136705018=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 01/20] Make stk_pdu_from_response use static buffers
-Date: Mon, 07 Jun 2010 12:08:23 +0200
-Message-ID: <1275905322-14768-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 02/20] stkutil: Add SMS-PP Data Download envelope builder
+Date: Mon, 07 Jun 2010 12:08:24 +0200
+Message-ID: <1275905322-14768-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1275905322-14768-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6445518961864800561==
+--===============2698852735136705018==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c       |   36 ++++++++++++++++++++----------------
- src/stkutil.h       |    5 ++---
- unit/test-stkutil.c |   15 ++++++++++-----
- 3 files changed, 32 insertions(+), 24 deletions(-)
+ src/stkutil.c |  110 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/stkutil.h |   17 +++++++++
+ 2 files changed, 127 insertions(+), 0 deletions(-)
 
 diff --git a/src/stkutil.c b/src/stkutil.c
-index 82d4e84..14958a8 100644
+index 14958a8..661cfc6 100644
 --- a/src/stkutil.c
 +++ b/src/stkutil.c
-@@ -3980,14 +3980,15 @@ static gboolean build_local_info(struct stk_tlv_bui=
-lder *builder,
- 	return FALSE;
+@@ -3142,6 +3142,20 @@ static gboolean stk_tlv_builder_init(struct stk_tlv_=
+builder *iter,
+ 	return comprehension_tlv_builder_init(&iter->ctlv, pdu, size);
  }
  =
 
--unsigned int stk_pdu_from_response(const struct stk_response *response,
--					unsigned char *pdu, unsigned int size)
-+const unsigned char *stk_pdu_from_response(const struct stk_response *resp=
-onse,
++static gboolean stk_tlv_builder_recurse(struct stk_tlv_builder *iter,
++					struct ber_tlv_builder *btlv,
++					unsigned char tag)
++{
++	iter->value =3D NULL;
++	iter->len =3D 0;
++
++	if (ber_tlv_builder_next(btlv, tag >> 6, (tag >> 5) & 1,
++					tag & 0x1f) !=3D TRUE)
++		return FALSE;
++
++	return ber_tlv_builder_recurse_comprehension(btlv, &iter->ctlv);
++}
++
+ static gboolean stk_tlv_builder_open_container(struct stk_tlv_builder *ite=
+r,
+ 						gboolean cr,
+ 						unsigned char shorttag,
+@@ -3322,6 +3336,27 @@ static inline gboolean stk_tlv_builder_append_bytes(=
+struct stk_tlv_builder *iter
+ 	return TRUE;
+ }
+ =
+
++/* Described in TS 102.223 Section 8.1 */
++static gboolean build_dataobj_address(struct stk_tlv_builder *tlv,
++					const void *data, gboolean cr)
++{
++	const struct stk_address *addr =3D data;
++	unsigned char tag =3D STK_DATA_OBJECT_TYPE_ADDRESS;
++	unsigned int len;
++	unsigned char number[128];
++
++	if (addr->number =3D=3D NULL)
++		return TRUE;
++
++	len =3D (strlen(addr->number) + 1) / 2;
++	sim_encode_bcd_number(addr->number, number);
++
++	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
++		stk_tlv_builder_append_byte(tlv, addr->ton_npi) &&
++		stk_tlv_builder_append_bytes(tlv, number, len) &&
++		stk_tlv_builder_close_container(tlv);
++}
++
+ /* Described in TS 102.223 Section 8.6 */
+ static gboolean build_dataobj_item_id(struct stk_tlv_builder *tlv,
+ 					const void *data, gboolean cr)
+@@ -3374,6 +3409,28 @@ static gboolean build_dataobj_result(struct stk_tlv_=
+builder *tlv,
+ 	return stk_tlv_builder_close_container(tlv);
+ }
+ =
+
++/* Described in TS 131.111 Section 8.13 */
++static gboolean build_dataobj_gsm_sms_tpdu(struct stk_tlv_builder *tlv,
++						const void *data, gboolean cr)
++{
++	const struct sms_deliver *msg =3D data;
++	struct sms sms;
++	unsigned char tag =3D STK_DATA_OBJECT_TYPE_GSM_SMS_TPDU;
++	unsigned char tpdu[165];
++	int tpdu_len;
++
++	sms.type =3D SMS_TYPE_DELIVER;
++	memset(&sms.sc_addr, 0, sizeof(sms.sc_addr));
++	memcpy(&sms.deliver, msg, sizeof(sms.deliver));
++
++	if (sms_encode(&sms, NULL, &tpdu_len, tpdu) =3D=3D FALSE)
++		return FALSE;
++
++	return stk_tlv_builder_open_container(tlv, cr, tag, TRUE) &&
++		stk_tlv_builder_append_bytes(tlv, tpdu + 1, tpdu_len) &&
++		stk_tlv_builder_close_container(tlv);
++}
++
+ /* Defined in TS 102.223 Section 8.15 */
+ static gboolean build_dataobj_text(struct stk_tlv_builder *tlv,
+ 					const void *data, gboolean cr)
+@@ -4117,3 +4174,56 @@ const unsigned char *stk_pdu_from_response(const str=
+uct stk_response *response,
+ =
+
+ 	return pdu;
+ }
++
++/* Described in TS 102.223 Section 8.7 */
++static gboolean build_envelope_dataobj_device_ids(struct stk_tlv_builder *=
+tlv,
++						const void *data, gboolean cr)
++{
++	const struct stk_envelope *envelope =3D data;
++	unsigned char tag =3D STK_DATA_OBJECT_TYPE_DEVICE_IDENTITIES;
++
++	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
++		stk_tlv_builder_append_byte(tlv, envelope->src) &&
++		stk_tlv_builder_append_byte(tlv, envelope->dst) &&
++		stk_tlv_builder_close_container(tlv);
++}
++
++const unsigned char *stk_pdu_from_envelope(const struct stk_envelope *enve=
+lope,
 +						unsigned int *out_length)
- {
- 	struct stk_tlv_builder builder;
- 	gboolean ok =3D TRUE;
- 	unsigned char tag;
-+	static unsigned char pdu[512];
- =
-
--	stk_tlv_builder_init(&builder, pdu, size);
-+	stk_tlv_builder_init(&builder, pdu, sizeof(pdu));
- =
-
- 	/*
- 	 * Encode command details, they come in order with
-@@ -3996,19 +3997,19 @@ unsigned int stk_pdu_from_response(const struct stk=
-_response *response,
- 	 */
- 	tag =3D STK_DATA_OBJECT_TYPE_COMMAND_DETAILS;
- 	if (stk_tlv_builder_open_container(&builder, TRUE, tag, FALSE) =3D=3D FAL=
-SE)
--		return 0;
-+		return NULL;
- =
-
- 	if (stk_tlv_builder_append_byte(&builder, response->number) =3D=3D FALSE)
--		return 0;
-+		return NULL;
- =
-
- 	if (stk_tlv_builder_append_byte(&builder, response->type) =3D=3D FALSE)
--		return 0;
-+		return NULL;
- =
-
- 	if (stk_tlv_builder_append_byte(&builder, response->qualifier) =3D=3D FAL=
-SE)
--		return 0;
-+		return NULL;
- =
-
- 	if (stk_tlv_builder_close_container(&builder) =3D=3D FALSE)
--		return 0;
-+		return NULL;
- =
-
- 	/* TS 102 223 section 6.8 states:
- 	 * "For all COMPREHENSION-TLV objects with Min =3D N, the terminal
-@@ -4022,19 +4023,19 @@ unsigned int stk_pdu_from_response(const struct stk=
-_response *response,
- 	 */
- 	tag =3D STK_DATA_OBJECT_TYPE_DEVICE_IDENTITIES;
- 	if (stk_tlv_builder_open_container(&builder, TRUE, tag, FALSE) =3D=3D FAL=
-SE)
--		return 0;
-+		return NULL;
- =
-
- 	if (stk_tlv_builder_append_byte(&builder, response->src) =3D=3D FALSE)
--		return 0;
-+		return NULL;
- =
-
- 	if (stk_tlv_builder_append_byte(&builder, response->dst) =3D=3D FALSE)
--		return 0;
-+		return NULL;
- =
-
- 	if (stk_tlv_builder_close_container(&builder) =3D=3D FALSE)
--		return 0;
-+		return NULL;
- =
-
- 	if (build_dataobj_result(&builder, &response->result, TRUE) !=3D TRUE)
--		return 0;
-+		return NULL;
- =
-
- 	switch (response->type) {
- 	case STK_COMMAND_TYPE_DISPLAY_TEXT:
-@@ -4105,11 +4106,14 @@ unsigned int stk_pdu_from_response(const struct stk=
-_response *response,
- 	case STK_COMMAND_TYPE_LAUNCH_BROWSER:
- 		break;
- 	default:
--		return 0;
-+		return NULL;
- 	};
- =
-
- 	if (ok !=3D TRUE)
--		return 0;
++{
++	struct ber_tlv_builder btlv;
++	struct stk_tlv_builder builder;
++	gboolean ok =3D TRUE;
++	static unsigned char buffer[512];
++	unsigned char *pdu;
++
++	if (ber_tlv_builder_init(&btlv, buffer, sizeof(buffer)) !=3D TRUE)
 +		return NULL;
 +
-+	if (out_length)
-+		*out_length =3D stk_tlv_builder_get_length(&builder);
- =
-
--	return stk_tlv_builder_get_length(&builder);
++	if (stk_tlv_builder_recurse(&builder, &btlv, envelope->type) !=3D TRUE)
++		return NULL;
++
++	switch (envelope->type) {
++	case STK_ENVELOPE_TYPE_SMS_PP_DOWNLOAD:
++		ok =3D build_dataobj(&builder,
++					build_envelope_dataobj_device_ids,
++					DATAOBJ_FLAG_CR,
++					envelope,
++					build_dataobj_address, 0,
++					&envelope->sms_pp_download.address,
++					build_dataobj_gsm_sms_tpdu,
++					DATAOBJ_FLAG_CR,
++					&envelope->sms_pp_download.message,
++					NULL);
++		break;
++	default:
++		return NULL;
++	};
++
++	if (ok !=3D TRUE)
++		return NULL;
++
++	ber_tlv_builder_optimize(&btlv, &pdu, out_length);
++
 +	return pdu;
- }
++}
 diff --git a/src/stkutil.h b/src/stkutil.h
-index cc5801c..7dd0d6c 100644
+index 7dd0d6c..cc293ca 100644
 --- a/src/stkutil.h
 +++ b/src/stkutil.h
-@@ -1176,6 +1176,5 @@ struct stk_command *stk_command_new_from_pdu(const un=
-signed char *pdu,
+@@ -1172,9 +1172,26 @@ struct stk_response {
+ 	void (*destructor)(struct stk_response *response);
+ };
+ =
+
++/* ENVELOPEs defined in TS 102.223 Section 7 */
++struct stk_envelope_sms_pp_download {
++	struct stk_address address;
++	struct sms_deliver message;
++};
++
++struct stk_envelope {
++	enum stk_envelope_type type;
++	enum stk_device_identity_type src;
++	enum stk_device_identity_type dst;
++	union {
++		struct stk_envelope_sms_pp_download sms_pp_download;
++	};
++};
++
+ struct stk_command *stk_command_new_from_pdu(const unsigned char *pdu,
  						unsigned int len);
  void stk_command_free(struct stk_command *command);
  =
 
--/* Returns # of bytes written or zero on error */
--unsigned int stk_pdu_from_response(const struct stk_response *response,
--					unsigned char *pdu, unsigned int size);
-+const unsigned char *stk_pdu_from_response(const struct stk_response *resp=
+ const unsigned char *stk_pdu_from_response(const struct stk_response *resp=
 onse,
+ 						unsigned int *out_length);
++const unsigned char *stk_pdu_from_envelope(const struct stk_envelope *enve=
+lope,
 +						unsigned int *out_length);
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index fb354bd..eb50d17 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -13949,13 +13949,18 @@ struct terminal_response_test {
- static void test_terminal_response_encoding(gconstpointer data)
- {
- 	const struct terminal_response_test *test =3D data;
--	unsigned char buf[512];
--	unsigned int len;
-+	const unsigned char *pdu;
-+	unsigned int pdu_len;
- =
-
--	len =3D stk_pdu_from_response(&test->response, buf, sizeof(buf));
-+	pdu =3D stk_pdu_from_response(&test->response, &pdu_len);
-+
-+	if (test->pdu)
-+		g_assert(pdu);
-+	else
-+		g_assert(pdu =3D=3D NULL);
- =
-
--	g_assert(len =3D=3D test->pdu_len);
--	g_assert(memcmp(buf, test->pdu, len) =3D=3D 0);
-+	g_assert(pdu_len =3D=3D test->pdu_len);
-+	g_assert(memcmp(pdu, test->pdu, pdu_len) =3D=3D 0);
- }
- =
-
- static const unsigned char display_text_response_111[] =3D {
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============6445518961864800561==--
+--===============2698852735136705018==--
 
