@@ -1,98 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============6041378831924720553=="
+Content-Type: multipart/mixed; boundary="===============2520431614526491972=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 04/20] stkutil: Add CBS-PP Data Download envelope builder
-Date: Mon, 07 Jun 2010 12:08:26 +0200
-Message-ID: <1275905322-14768-4-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 06/20] Fix: download CBS to SIM even when "Powered" is 0
+Date: Mon, 07 Jun 2010 12:08:28 +0200
+Message-ID: <1275905322-14768-6-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1275905322-14768-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6041378831924720553==
+--===============2520431614526491972==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |   26 ++++++++++++++++++++++++++
- src/stkutil.h |    5 +++++
- 2 files changed, 31 insertions(+), 0 deletions(-)
+ src/cbs.c |   10 +++++-----
+ 1 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 661cfc6..acdf34f 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -3357,6 +3357,22 @@ static gboolean build_dataobj_address(struct stk_tlv=
-_builder *tlv,
- 		stk_tlv_builder_close_container(tlv);
- }
+diff --git a/src/cbs.c b/src/cbs.c
+index 27185ba..316573b 100644
+--- a/src/cbs.c
++++ b/src/cbs.c
+@@ -185,11 +185,6 @@ void ofono_cbs_notify(struct ofono_cbs *cbs, const uns=
+igned char *pdu,
+ 	if (cbs->assembly =3D=3D NULL)
+ 		return;
  =
 
-+/* Described in TS 131.111 Section 8.5 */
-+static gboolean build_dataobj_cbs_page(struct stk_tlv_builder *tlv,
-+					const void *data, gboolean cr)
-+{
-+	const struct cbs *page =3D data;
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_CBS_PAGE;
-+	unsigned char pdu[88];
-+
-+	if (cbs_encode(page, NULL, pdu) =3D=3D FALSE)
-+		return FALSE;
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, TRUE) &&
-+		stk_tlv_builder_append_bytes(tlv, pdu, 88) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
- /* Described in TS 102.223 Section 8.6 */
- static gboolean build_dataobj_item_id(struct stk_tlv_builder *tlv,
- 					const void *data, gboolean cr)
-@@ -4216,6 +4232,16 @@ const unsigned char *stk_pdu_from_envelope(const str=
-uct stk_envelope *envelope,
- 					&envelope->sms_pp_download.message,
- 					NULL);
- 		break;
-+	case STK_ENVELOPE_TYPE_CBS_PP_DOWNLOAD:
-+		ok =3D build_dataobj(&builder,
-+					build_envelope_dataobj_device_ids,
-+					DATAOBJ_FLAG_CR,
-+					envelope,
-+					build_dataobj_cbs_page,
-+					DATAOBJ_FLAG_CR,
-+					&envelope->cbs_pp_download.page,
-+					NULL);
-+		break;
- 	default:
- 		return NULL;
- 	};
-diff --git a/src/stkutil.h b/src/stkutil.h
-index cc293ca..65ccfd3 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -1178,12 +1178,17 @@ struct stk_envelope_sms_pp_download {
- 	struct sms_deliver message;
- };
+-	if (!cbs->powered) {
+-		ofono_error("Ignoring CBS because powered is off");
+-		return;
+-	}
+-
+ 	if (!cbs_decode(pdu, pdu_len, &c)) {
+ 		ofono_error("Unable to decode CBS PDU");
+ 		return;
+@@ -201,6 +196,11 @@ void ofono_cbs_notify(struct ofono_cbs *cbs, const uns=
+igned char *pdu,
+ 		return;
+ 	}
  =
 
-+struct stk_envelope_cbs_pp_download {
-+	struct cbs page;
-+};
++	if (!cbs->powered) {
++		ofono_error("Ignoring CBS because powered is off");
++		return;
++	}
 +
- struct stk_envelope {
- 	enum stk_envelope_type type;
- 	enum stk_device_identity_type src;
- 	enum stk_device_identity_type dst;
- 	union {
- 		struct stk_envelope_sms_pp_download sms_pp_download;
-+		struct stk_envelope_cbs_pp_download cbs_pp_download;
- 	};
- };
- =
-
+ 	if (!cbs_dcs_decode(c.dcs, &udhi, &cls, &charset, &comp, NULL, NULL)) {
+ 		ofono_error("Unknown / Reserved DCS.  Ignoring");
+ 		return;
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============6041378831924720553==--
+--===============2520431614526491972==--
 
