@@ -1,44 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============8082251111581605130=="
+Content-Type: multipart/mixed; boundary="===============8877193717404530168=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: [PATCH] huawei: show used tty devices in the debug log
-Date: Mon, 07 Jun 2010 14:26:29 +0300
-Message-ID: <20100607112629.10045.27642.stgit@potku.valot.fi>
+From: Miettinen Pasi <pasi.miettinen@ixonos.com>
+Subject: VS: [RFC PATCH 5/6] Support for concatenated SMS status report.
+Date: Mon, 07 Jun 2010 15:22:23 +0300
+Message-ID: <EA8B5A37FEEFC048AF3F8170D2819913B8C1280A51@jklmail01.ixonos.local>
+In-Reply-To: <201006041704.34509.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8082251111581605130==
+--===============8877193717404530168==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Handy when debugging udev problems.
----
- plugins/huawei.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+Hi Denis,
+> Hi Pasi,
+>
+> > ---
+> >  include/history.h |    2 +
+> >  src/sms.c         |   67 ++++++++++++++++++++----
+> >  src/smsutil.c     |  152
+> >  +++++++++++++++++++++++++++++++++++++++++++++++++++++ src/smsutil.h
+> |
+> >   32 +++++++++++
+|
+> I suggest thinking about the data structure use some more.  In particular,
+> using a list of struct mr_numbers is very inefficient.  Using a pair of b=
+itmaps
+> for mr numbers (which can only be 0..255) would be way more efficient and
+> probably would make the code much easier to write.
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 9e50288..63dd06a 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -201,11 +201,11 @@ static int huawei_enable(struct ofono_modem *modem)
- 	struct huawei_data *data =3D ofono_modem_get_data(modem);
- 	const char *modem_device, *event_device;
- =
+I am not sure if I am quite getting what do you mean. Do you mean something
+like:
+struct mr_numbers {
+        unsigned int mr1 : 8,
+        unsigned int mr2 : 8,
+        unsigned int mr3 : 8,
+        unsigned int mr4 : 8
+};
+So there wouldn't be so much padding bits or what's your angle here?
+If that is it, how to indicate the status of the mr (enum sms_status_report=
+_result)?
 
--	DBG("%p", modem);
--
- 	modem_device =3D ofono_modem_get_string(modem, "Device");
- 	event_device =3D ofono_modem_get_string(modem, "SecondaryDevice");
- =
+Br,
+Pasi
 
-+	DBG("%p modem %s event %s", modem, modem_device, event_device);
-+
- 	if (modem_device =3D=3D NULL || event_device =3D=3D NULL)
- 		return -EINVAL;
- =
-
-
-
---===============8082251111581605130==--
+--===============8877193717404530168==--
 
