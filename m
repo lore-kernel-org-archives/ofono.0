@@ -1,360 +1,201 @@
-Content-Type: multipart/mixed; boundary="===============6282450656045975031=="
+Content-Type: multipart/mixed; boundary="===============8906508080007572417=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 12/20] stkutil: Add the Call Control envelope builder
-Date: Mon, 07 Jun 2010 12:08:34 +0200
-Message-ID: <1275905322-14768-12-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 13/20] test-stkutil: Tests for Call Control envelope builder
+Date: Mon, 07 Jun 2010 12:08:35 +0200
+Message-ID: <1275905322-14768-13-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1275905322-14768-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6282450656045975031==
+--===============8906508080007572417==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |  178 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- src/stkutil.h |   31 ++++++++++
- 2 files changed, 207 insertions(+), 2 deletions(-)
+ unit/test-stkutil.c |  154 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 154 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 83ff5c7..b9a152a 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -319,8 +319,6 @@ static gboolean parse_dataobj_subaddress(struct compreh=
-ension_tlv_iter *iter,
- 	unsigned int len;
- =
-
- 	len =3D comprehension_tlv_iter_get_length(iter);
--	if (len < 1)
--		return FALSE;
- =
-
- 	if (len > sizeof(subaddr->subaddr))
- 		return FALSE;
-@@ -329,6 +327,8 @@ static gboolean parse_dataobj_subaddress(struct compreh=
-ension_tlv_iter *iter,
- 	subaddr->len =3D len;
- 	memcpy(subaddr->subaddr, data, len);
- =
-
-+	subaddr->has_subaddr =3D TRUE;
-+
- 	return TRUE;
- }
- =
-
-@@ -3357,6 +3357,61 @@ static gboolean build_dataobj_address(struct stk_tlv=
-_builder *tlv,
- 		stk_tlv_builder_close_container(tlv);
- }
- =
-
-+/* Described in TS 102.223 Section 8.2 */
-+static gboolean build_dataobj_alpha_id(struct stk_tlv_builder *tlv,
-+					const void *data, gboolean cr)
-+{
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_ALPHA_ID;
-+	int len;
-+	unsigned char *string;
-+
-+	if (data =3D=3D NULL)
-+		return TRUE;
-+
-+	if (strlen(data) =3D=3D 0)
-+		return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-+			stk_tlv_builder_close_container(tlv);
-+
-+	string =3D utf8_to_sim_string(data, -1, &len);
-+	if (string =3D=3D NULL)
-+		return FALSE;
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, TRUE) &&
-+		stk_tlv_builder_append_bytes(tlv, string, len) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
-+/* Described in TS 102.223 Section 8.3 */
-+static gboolean build_dataobj_subaddress(struct stk_tlv_builder *tlv,
-+						const void *data, gboolean cr)
-+{
-+	const struct stk_subaddress *sa =3D data;
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_SUBADDRESS;
-+
-+	if (sa->has_subaddr =3D=3D FALSE)
-+		return TRUE;
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-+		stk_tlv_builder_append_bytes(tlv, sa->subaddr, sa->len) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
-+/* Described in TS 131.111 Section 8.4 */
-+static gboolean build_dataobj_ccp(struct stk_tlv_builder *tlv,
-+					const void *data, gboolean cr)
-+{
-+	const struct stk_ccp *ccp =3D data;
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_CCP;
-+
-+	if (ccp->len =3D=3D 0)
-+		return TRUE;
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-+		stk_tlv_builder_append_byte(tlv, ccp->len) &&
-+		stk_tlv_builder_append_bytes(tlv, ccp->ccp, ccp->len) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
- /* Described in TS 131.111 Section 8.5 */
- static gboolean build_dataobj_cbs_page(struct stk_tlv_builder *tlv,
- 					const void *data, gboolean cr)
-@@ -3447,6 +3502,27 @@ static gboolean build_dataobj_gsm_sms_tpdu(struct st=
-k_tlv_builder *tlv,
- 		stk_tlv_builder_close_container(tlv);
- }
- =
-
-+/* Described in TS 131.111 Section 8.14 */
-+static gboolean build_dataobj_ss_string(struct stk_tlv_builder *tlv,
-+					const void *data, gboolean cr)
-+{
-+	const struct stk_address *addr =3D data;
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_SS_STRING;
-+	unsigned int len;
-+	unsigned char number[128];
-+
-+	if (addr->number =3D=3D NULL)
-+		return TRUE;
-+
-+	len =3D (strlen(addr->number) + 1) / 2;
-+	sim_encode_bcd_number(addr->number, number);
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-+		stk_tlv_builder_append_byte(tlv, addr->ton_npi) &&
-+		stk_tlv_builder_append_bytes(tlv, number, len) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
- /* Defined in TS 102.223 Section 8.15 */
- static gboolean build_dataobj_text(struct stk_tlv_builder *tlv,
- 					const void *data, gboolean cr)
-@@ -3484,6 +3560,22 @@ static gboolean build_dataobj_text(struct stk_tlv_bu=
-ilder *tlv,
- 	return stk_tlv_builder_close_container(tlv);
- }
- =
-
-+/* Described in TS 131.111 Section 8.17 */
-+static gboolean build_dataobj_ussd_string(struct stk_tlv_builder *tlv,
-+					const void *data, gboolean cr)
-+{
-+	const struct stk_ussd_string *ussd =3D data;
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_USSD_STRING;
-+
-+	if (ussd->string =3D=3D NULL)
-+		return TRUE;
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-+		stk_tlv_builder_append_byte(tlv, ussd->dcs) &&
-+		stk_tlv_builder_append_bytes(tlv, ussd->string, ussd->len) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
- /* Described in TS 102.223 Section 8.19 */
- static gboolean build_dataobj_location_info(struct stk_tlv_builder *tlv,
- 						const void *data, gboolean cr)
-@@ -3731,6 +3823,21 @@ static gboolean build_dataobj_at_response(struct stk=
-_tlv_builder *tlv,
- 		stk_tlv_builder_close_container(tlv);
- }
- =
-
-+/* Described in TS 131.111 Section 8.42 */
-+static gboolean build_dataobj_bc_repeat(struct stk_tlv_builder *tlv,
-+						const void *data, gboolean cr)
-+{
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_BC_REPEAT_INDICATOR;
-+	const struct stk_bc_repeat *bcr =3D data;
-+
-+	if (bcr->has_bc_repeat =3D=3D FALSE)
-+		return TRUE;
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, TRUE) &&
-+		stk_tlv_builder_append_byte(tlv, bcr->value) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
- /* Described in TS 102.223 Section 8.45 */
- static gboolean build_dataobj_language(struct stk_tlv_builder *tlv,
- 					const void *data, gboolean cr)
-@@ -3806,6 +3913,23 @@ static gboolean build_dataobj_esn(struct stk_tlv_bui=
-lder *tlv,
- 		stk_tlv_builder_close_container(tlv);
- }
- =
-
-+/* Described in TS 131.111 Section 8.72, 3GPP 24.008 Section 9.5.7 */
-+static gboolean build_dataobj_pdp_context_params(struct stk_tlv_builder *t=
-lv,
-+						const void *data, gboolean cr)
-+{
-+	const struct stk_common_byte_array *params =3D data;
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_PDP_ACTIVATION_PARAMETER;
-+
-+	if (params->len < 1)
-+		return TRUE;
-+	if (params->len > 0x7f)
-+		return FALSE;
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-+		stk_tlv_builder_append_bytes(tlv, params->array, params->len) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
- /* Described in TS 102.223 Section 8.74
-  *
-  * See format note in parse_dataobj_imeisv.
-@@ -3894,6 +4018,23 @@ static gboolean build_dataobj_broadcast_network_info=
-rmation(
- 		stk_tlv_builder_close_container(tlv);
- }
- =
-
-+/* Described in TS 131.111 Section 8.98, 3GPP 24.301 Section 6.5.1 */
-+static gboolean build_dataobj_eps_pdn_conn_params(struct stk_tlv_builder *=
-tlv,
-+						const void *data, gboolean cr)
-+{
-+	const struct stk_common_byte_array *params =3D data;
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_EPS_PDN_CONN_ACTIVATION_REQ;
-+
-+	if (params->len < 1)
-+		return TRUE;
-+	if (params->len > 0x7f)
-+		return FALSE;
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-+		stk_tlv_builder_append_bytes(tlv, params->array, params->len) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
- static gboolean build_dataobj(struct stk_tlv_builder *tlv,
- 				dataobj_writer builder_func, ...)
- {
-@@ -4267,6 +4408,39 @@ const unsigned char *stk_pdu_from_envelope(const str=
-uct stk_envelope *envelope,
- 					&envelope->menu_selection.help_request,
- 					NULL);
- 		break;
-+	case STK_ENVELOPE_TYPE_CALL_CONTROL:
-+		ok =3D build_dataobj(&builder,
-+					build_envelope_dataobj_device_ids,
-+					DATAOBJ_FLAG_CR,
-+					envelope,
-+					build_dataobj_address, DATAOBJ_FLAG_CR,
-+					&envelope->call_control.address,
-+					build_dataobj_ss_string,
-+					DATAOBJ_FLAG_CR,
-+					&envelope->call_control.ss_string,
-+					build_dataobj_ussd_string,
-+					DATAOBJ_FLAG_CR,
-+					&envelope->call_control.ussd_string,
-+					build_dataobj_pdp_context_params,
-+					DATAOBJ_FLAG_CR,
-+					&envelope->call_control.pdp_ctx_params,
-+					build_dataobj_eps_pdn_conn_params,
-+					DATAOBJ_FLAG_CR,
-+					&envelope->call_control.eps_pdn_params,
-+					build_dataobj_ccp, 0,
-+					&envelope->call_control.ccp1,
-+					build_dataobj_subaddress, 0,
-+					&envelope->call_control.subaddress,
-+					build_dataobj_location_info, 0,
-+					&envelope->call_control.location,
-+					build_dataobj_ccp, 0,
-+					&envelope->call_control.ccp2,
-+					build_dataobj_alpha_id, 0,
-+					envelope->call_control.alpha_id,
-+					build_dataobj_bc_repeat, 0,
-+					&envelope->call_control.bc_repeat,
-+					NULL);
-+		break;
- 	default:
- 		return NULL;
- 	};
-diff --git a/src/stkutil.h b/src/stkutil.h
-index d4b5b23..33a0f91 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -178,6 +178,7 @@ enum stk_data_object_type {
- 	STK_DATA_OBJECT_TYPE_PLMN_LIST =3D			0x79,
- 	STK_DATA_OBJECT_TYPE_BROADCAST_NETWORK_INFO =3D		0x7A,
- 	STK_DATA_OBJECT_TYPE_ACTIVATE_DESCRIPTOR =3D		0x7B,
-+	STK_DATA_OBJECT_TYPE_EPS_PDN_CONN_ACTIVATION_REQ =3D	0x7C,
+diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
+index 2a33c30..d8f6cf2 100644
+--- a/unit/test-stkutil.c
++++ b/unit/test-stkutil.c
+@@ -18303,6 +18303,151 @@ static const struct envelope_test menu_selection_=
+data_641 =3D {
+ 	},
  };
  =
 
- enum stk_device_identity_type {
-@@ -474,6 +475,7 @@ struct stk_address {
-  * bytes."
-  */
- struct stk_subaddress {
-+	ofono_bool_t has_subaddr;
- 	unsigned char len;
- 	unsigned char subaddr[23];
- };
-@@ -1187,6 +1189,34 @@ struct stk_envelope_menu_selection {
- 	ofono_bool_t help_request;
- };
- =
-
-+/* Used both in the ENVELOPE message to UICC and response from UICC */
-+struct stk_envelope_call_control {
-+	/* Exactly one of the following 5 fields must be present */
-+	struct stk_address address;
-+	struct stk_address ss_string;
-+	struct stk_ussd_string {
-+		unsigned char dcs;
-+		const unsigned char *string;
-+		int len;
-+	} ussd_string;
-+	struct stk_common_byte_array pdp_ctx_params;
-+	struct stk_common_byte_array eps_pdn_params;
-+	/* At least one of the following two fields must be present in a
-+	 * response indicating modification of the call.
-+	 * In an EVELOPE message, only allowed for a call setup. */
-+	struct stk_ccp ccp1;
-+	struct stk_subaddress subaddress;
-+	struct stk_location_info location;
-+	/* Only allowed when ccp1 is present */
-+	struct stk_ccp ccp2;
-+	char *alpha_id;
-+	/* Only allowed when both ccp1 and ccp2 are present */
-+	struct stk_bc_repeat {
-+		ofono_bool_t has_bc_repeat;
-+		unsigned char value;
-+	} bc_repeat;
++static const unsigned char call_control_111a[] =3D {
++	0xd4, 0x25, 0x82, 0x02, 0x82, 0x81, 0x86, 0x0b,
++	0x91, 0x10, 0x32, 0x54, 0x76, 0x98, 0x10, 0x32,
++	0x54, 0x76, 0x98, 0x07, 0x07, 0x06, 0x60, 0x04,
++	0x02, 0x00, 0x05, 0x81, 0x13, 0x09, 0x00, 0xf1,
++	0x10, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01,
 +};
 +
- struct stk_envelope {
- 	enum stk_envelope_type type;
- 	enum stk_device_identity_type src;
-@@ -1195,6 +1225,7 @@ struct stk_envelope {
- 		struct stk_envelope_sms_pp_download sms_pp_download;
- 		struct stk_envelope_cbs_pp_download cbs_pp_download;
- 		struct stk_envelope_menu_selection menu_selection;
-+		struct stk_envelope_call_control call_control;
- 	};
- };
++static const struct envelope_test call_control_data_111a =3D {
++	.pdu =3D call_control_111a,
++	.pdu_len =3D sizeof(call_control_111a),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_CALL_CONTROL,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .call_control =3D {
++			.address =3D {
++				.ton_npi =3D 0x91, /* Intl, ISDN */
++				.number =3D "01234567890123456789",
++			},
++			.ccp1 =3D {
++				.ccp =3D {
++					0x60, 0x04, 0x02, 0x00, 0x05, 0x81,
++				},
++				.len =3D 6,
++			},
++			.location =3D {
++				.mcc =3D "001",
++				.mnc =3D "01",
++				.lac_tac =3D 0x0001,
++				.has_ci =3D TRUE,
++				.ci =3D 0x0001,
++				.has_ext_ci =3D TRUE,
++				.ext_ci =3D 0x0001,
++			},
++		}},
++	},
++};
++
++static const unsigned char call_control_111b[] =3D {
++	0xd4, 0x23, 0x82, 0x02, 0x82, 0x81, 0x86, 0x0b,
++	0x91, 0x10, 0x32, 0x54, 0x76, 0x98, 0x10, 0x32,
++	0x54, 0x76, 0x98, 0x07, 0x07, 0x06, 0x60, 0x04,
++	0x02, 0x00, 0x05, 0x81, 0x13, 0x07, 0x00, 0x11,
++	0x10, 0x00, 0x01, 0x00, 0x01,
++};
++
++static const struct envelope_test call_control_data_111b =3D {
++	.pdu =3D call_control_111b,
++	.pdu_len =3D sizeof(call_control_111b),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_CALL_CONTROL,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .call_control =3D {
++			.address =3D {
++				.ton_npi =3D 0x91, /* Intl, ISDN */
++				.number =3D "01234567890123456789",
++			},
++			.ccp1 =3D {
++				.ccp =3D {
++					0x60, 0x04, 0x02, 0x00, 0x05, 0x81,
++				},
++				.len =3D 6,
++			},
++			.location =3D {
++				.mcc =3D "001",
++				.mnc =3D "011",
++				.lac_tac =3D 0x0001,
++				.has_ci =3D TRUE,
++				.ci =3D 0x0001,
++			},
++		}},
++	},
++};
++
++static const unsigned char call_control_131a[] =3D {
++	0xd4, 0x18, 0x82, 0x02, 0x82, 0x81, 0x86, 0x07,
++	0x91, 0x10, 0x32, 0x04, 0x21, 0x43, 0x65, 0x13,
++	0x09, 0x00, 0xf1, 0x10, 0x00, 0x01, 0x00, 0x01,
++	0x00, 0x01,
++	/*
++	 * Byte 3 changed to 0x82 and byte 7 changed to 0x86 (Comprehension
++	 * Required should be set according to TS 102 223 7.3.1.6)
++	 */
++};
++
++static const struct envelope_test call_control_data_131a =3D {
++	.pdu =3D call_control_131a,
++	.pdu_len =3D sizeof(call_control_131a),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_CALL_CONTROL,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .call_control =3D {
++			.address =3D {
++				.ton_npi =3D 0x91, /* Intl, ISDN */
++				.number =3D "012340123456",
++			},
++			.location =3D {
++				.mcc =3D "001",
++				.mnc =3D "01",
++				.lac_tac =3D 0x0001,
++				.has_ci =3D TRUE,
++				.ci =3D 0x0001,
++				.has_ext_ci =3D TRUE,
++				.ext_ci =3D 0x0001,
++			},
++		}},
++	},
++};
++
++static const unsigned char call_control_131b[] =3D {
++	0xd4, 0x16, 0x82, 0x02, 0x82, 0x81, 0x86, 0x07,
++	0x91, 0x10, 0x32, 0x04, 0x21, 0x43, 0x65, 0x13,
++	0x07, 0x00, 0x11, 0x10, 0x00, 0x01, 0x00, 0x01,
++	/*
++	 * Byte 3 changed to 0x82 and byte 7 changed to 0x86 (Comprehension
++	 * Required should be set according to TS 102 223 7.3.1.6)
++	 */
++};
++
++static const struct envelope_test call_control_data_131b =3D {
++	.pdu =3D call_control_131b,
++	.pdu_len =3D sizeof(call_control_131b),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_CALL_CONTROL,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .call_control =3D {
++			.address =3D {
++				.ton_npi =3D 0x91, /* Intl, ISDN */
++				.number =3D "012340123456",
++			},
++			.location =3D {
++				.mcc =3D "001",
++				.mnc =3D "011",
++				.lac_tac =3D 0x0001,
++				.has_ci =3D TRUE,
++				.ci =3D 0x0001,
++			},
++		}},
++	},
++};
++
+ int main(int argc, char **argv)
+ {
+ 	g_test_init(&argc, &argv, NULL);
+@@ -20005,5 +20150,14 @@ int main(int argc, char **argv)
+ 	g_test_add_data_func("/teststk/Menu Selection 6.4.1",
+ 			&menu_selection_data_641, test_envelope_encoding);
  =
 
++	g_test_add_data_func("/teststk/Call Control 1.1.1A",
++			&call_control_data_111a, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Call Control 1.1.1B",
++			&call_control_data_111b, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Call Control 1.3.1A",
++			&call_control_data_131a, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Call Control 1.3.1B",
++			&call_control_data_131b, test_envelope_encoding);
++
+ 	return g_test_run();
+ }
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============6282450656045975031==--
+--===============8906508080007572417==--
 
