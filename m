@@ -1,145 +1,210 @@
-Content-Type: multipart/mixed; boundary="===============4092719449966949047=="
+Content-Type: multipart/mixed; boundary="===============2632013722054609906=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 10/20] Add a "sim string" encoding utility.
-Date: Mon, 07 Jun 2010 12:08:32 +0200
-Message-ID: <1275905322-14768-10-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 09/20] test-stkutil: Tests for the Menu Selection envelope
+ builder
+Date: Mon, 07 Jun 2010 12:08:31 +0200
+Message-ID: <1275905322-14768-9-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1275905322-14768-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4092719449966949047==
+--===============2632013722054609906==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/simutil.c |   25 ++++++++++---------------
- src/util.c    |   46 ++++++++++++++++++++++++++++++++++++++++++++++
- src/util.h    |    3 +++
- 3 files changed, 59 insertions(+), 15 deletions(-)
+ unit/test-stkutil.c |  162 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 162 insertions(+), 0 deletions(-)
 
-diff --git a/src/simutil.c b/src/simutil.c
-index f980bf6..7291729 100644
---- a/src/simutil.c
-+++ b/src/simutil.c
-@@ -1232,29 +1232,24 @@ void sim_adn_build(unsigned char *data, int length,
- 			const char *identifier)
+diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
+index ac6db51..2a33c30 100644
+--- a/unit/test-stkutil.c
++++ b/unit/test-stkutil.c
+@@ -18158,6 +18158,151 @@ static const struct envelope_test cbs_pp_data_dow=
+nload_data_17 =3D {
+ 	},
+ };
+ =
+
++static const unsigned char menu_selection_111[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x02,
++};
++
++static const struct envelope_test menu_selection_data_111 =3D {
++	.pdu =3D menu_selection_111,
++	.pdu_len =3D sizeof(menu_selection_111),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x2,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_112[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x12,
++};
++
++static const struct envelope_test menu_selection_data_112 =3D {
++	.pdu =3D menu_selection_112,
++	.pdu_len =3D sizeof(menu_selection_112),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x12,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_121[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x3d,
++};
++
++static const struct envelope_test menu_selection_data_121 =3D {
++	.pdu =3D menu_selection_121,
++	.pdu_len =3D sizeof(menu_selection_121),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x3d,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_122[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0xfb,
++};
++
++static const struct envelope_test menu_selection_data_122 =3D {
++	.pdu =3D menu_selection_122,
++	.pdu_len =3D sizeof(menu_selection_122),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0xfb,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_123[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x01,
++};
++
++static const struct envelope_test menu_selection_data_123 =3D {
++	.pdu =3D menu_selection_123,
++	.pdu_len =3D sizeof(menu_selection_123),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x1,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_211[] =3D {
++	0xd3, 0x09, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x02, 0x15, 0x00,
++};
++
++static const struct envelope_test menu_selection_data_211 =3D {
++	.pdu =3D menu_selection_211,
++	.pdu_len =3D sizeof(menu_selection_211),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x2,
++			.help_request =3D TRUE,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_612[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x05,
++};
++
++static const struct envelope_test menu_selection_data_612 =3D {
++	.pdu =3D menu_selection_612,
++	.pdu_len =3D sizeof(menu_selection_612),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x5,
++		}},
++	},
++};
++
++static const unsigned char menu_selection_641[] =3D {
++	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
++	0x08,
++};
++
++static const struct envelope_test menu_selection_data_641 =3D {
++	.pdu =3D menu_selection_641,
++	.pdu_len =3D sizeof(menu_selection_641),
++	.envelope =3D {
++		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
++		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
++		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
++		{ .menu_selection =3D {
++			.item_id =3D 0x8,
++		}},
++	},
++};
++
+ int main(int argc, char **argv)
  {
- 	int number_len =3D strlen(ph->number);
--	unsigned char *gsm_identifier =3D NULL;
--	long gsm_bytes;
--	long alpha_length;
-+	unsigned char *alpha =3D NULL;
-+	int alpha_written =3D 0;
-+	int alpha_length;
+ 	g_test_init(&argc, &argv, NULL);
+@@ -19843,5 +19988,22 @@ int main(int argc, char **argv)
+ 	g_test_add_data_func("/teststk/CBS-PP data download 1.7",
+ 			&cbs_pp_data_download_data_17, test_envelope_encoding);
  =
 
- 	alpha_length =3D length - 14;
- =
-
- 	/* Alpha-Identifier field */
- 	if (alpha_length > 0) {
--		memset(data, 0xff, alpha_length);
--
- 		if (identifier)
--			gsm_identifier =3D convert_utf8_to_gsm(identifier,
--					-1, NULL, &gsm_bytes, 0);
--
--		if (gsm_identifier) {
--			memcpy(data, gsm_identifier,
--				MIN(gsm_bytes, alpha_length));
--			g_free(gsm_identifier);
-+			alpha =3D utf8_to_sim_string(identifier, alpha_length,
-+							&alpha_written);
-+		if (alpha) {
-+			memcpy(data, alpha, alpha_written);
-+			g_free(alpha);
- 		}
- =
-
--		/* TODO: figure out when the identifier needs to
--		 * be encoded in UCS2 and do this.
--		 */
-+		memset(data + alpha_written, 0xff,
-+				alpha_length - alpha_written);
- 		data +=3D alpha_length;
- 	}
- =
-
-diff --git a/src/util.c b/src/util.c
-index e5ce7b3..fd8b305 100644
---- a/src/util.c
-+++ b/src/util.c
-@@ -1215,3 +1215,49 @@ char *sim_string_to_utf8(const unsigned char *buffer=
-, int length)
- =
-
- 	return utf8;
++	g_test_add_data_func("/teststk/Menu Selection 1.1.1",
++			&menu_selection_data_111, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 1.1.2",
++			&menu_selection_data_112, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 1.2.1",
++			&menu_selection_data_121, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 1.2.2",
++			&menu_selection_data_122, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 1.2.3",
++			&menu_selection_data_123, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 2.1.1",
++			&menu_selection_data_211, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 6.1.2",
++			&menu_selection_data_612, test_envelope_encoding);
++	g_test_add_data_func("/teststk/Menu Selection 6.4.1",
++			&menu_selection_data_641, test_envelope_encoding);
++
+ 	return g_test_run();
  }
-+
-+unsigned char *utf8_to_sim_string(const char *utf,
-+					int max_length, int *out_length)
-+{
-+	unsigned char *result;
-+	unsigned char *ucs2;
-+	long gsm_bytes;
-+	gsize converted;
-+
-+	result =3D convert_utf8_to_gsm(utf, -1, NULL, &gsm_bytes, 0);
-+	if (result) {
-+		if (gsm_bytes > max_length) {
-+			gsm_bytes =3D max_length;
-+			while (gsm_bytes && result[gsm_bytes - 1] =3D=3D 0x1b)
-+				gsm_bytes -=3D 1;
-+		}
-+
-+		*out_length =3D gsm_bytes;
-+		return result;
-+	}
-+
-+	/* NOTE: UCS2 formats with an offset are never used */
-+
-+	ucs2 =3D (guint8 *) g_convert(utf, -1, "UCS-2BE//TRANSLIT", "UTF-8",
-+					NULL, &converted, NULL);
-+
-+	if (!ucs2)
-+		return NULL;
-+
-+	if (max_length !=3D -1 && (int) converted + 1 > max_length)
-+		converted =3D (max_length - 1) & ~1;
-+
-+	result =3D g_try_malloc(converted + 1);
-+	if (!result) {
-+		g_free(ucs2);
-+		return NULL;
-+	}
-+
-+	*out_length =3D converted + 1;
-+
-+	result[0] =3D 0x80;
-+	memcpy(&result[1], ucs2, converted);
-+	g_free(ucs2);
-+
-+	return result;
-+}
-diff --git a/src/util.h b/src/util.h
-index 2835b76..9da81aa 100644
---- a/src/util.h
-+++ b/src/util.h
-@@ -77,3 +77,6 @@ unsigned char *pack_7bit(const unsigned char *in, long le=
-n, int byte_offset,
- 				long *items_written, unsigned char terminator);
- =
-
- char *sim_string_to_utf8(const unsigned char *buffer, int length);
-+
-+unsigned char *utf8_to_sim_string(const char *utf,
-+					int max_length, int *out_length);
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============4092719449966949047==--
+--===============2632013722054609906==--
 
