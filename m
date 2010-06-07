@@ -1,210 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============2632013722054609906=="
+Content-Type: multipart/mixed; boundary="===============4286542948426258317=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 09/20] test-stkutil: Tests for the Menu Selection envelope
- builder
-Date: Mon, 07 Jun 2010 12:08:31 +0200
-Message-ID: <1275905322-14768-9-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 11/20] simutil: Fix MMC MNC encoding for 2-digit MNCs.
+Date: Mon, 07 Jun 2010 12:08:33 +0200
+Message-ID: <1275905322-14768-11-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1275905322-14768-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2632013722054609906==
+--===============4286542948426258317==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-stkutil.c |  162 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 162 insertions(+), 0 deletions(-)
+ src/simutil.c |   19 ++++++++-----------
+ 1 files changed, 8 insertions(+), 11 deletions(-)
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index ac6db51..2a33c30 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -18158,6 +18158,151 @@ static const struct envelope_test cbs_pp_data_dow=
-nload_data_17 =3D {
- 	},
+diff --git a/src/simutil.c b/src/simutil.c
+index 7291729..3315299 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -117,6 +117,8 @@ static struct sim_ef_info ef_db[] =3D {
+ {	0x6FE3, 0x0000, BINARY, 18,	PIN,	PIN	},
  };
  =
 
-+static const unsigned char menu_selection_111[] =3D {
-+	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
-+	0x02,
-+};
++static inline int to_semi_oct(char in);
 +
-+static const struct envelope_test menu_selection_data_111 =3D {
-+	.pdu =3D menu_selection_111,
-+	.pdu_len =3D sizeof(menu_selection_111),
-+	.envelope =3D {
-+		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		{ .menu_selection =3D {
-+			.item_id =3D 0x2,
-+		}},
-+	},
-+};
-+
-+static const unsigned char menu_selection_112[] =3D {
-+	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
-+	0x12,
-+};
-+
-+static const struct envelope_test menu_selection_data_112 =3D {
-+	.pdu =3D menu_selection_112,
-+	.pdu_len =3D sizeof(menu_selection_112),
-+	.envelope =3D {
-+		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		{ .menu_selection =3D {
-+			.item_id =3D 0x12,
-+		}},
-+	},
-+};
-+
-+static const unsigned char menu_selection_121[] =3D {
-+	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
-+	0x3d,
-+};
-+
-+static const struct envelope_test menu_selection_data_121 =3D {
-+	.pdu =3D menu_selection_121,
-+	.pdu_len =3D sizeof(menu_selection_121),
-+	.envelope =3D {
-+		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		{ .menu_selection =3D {
-+			.item_id =3D 0x3d,
-+		}},
-+	},
-+};
-+
-+static const unsigned char menu_selection_122[] =3D {
-+	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
-+	0xfb,
-+};
-+
-+static const struct envelope_test menu_selection_data_122 =3D {
-+	.pdu =3D menu_selection_122,
-+	.pdu_len =3D sizeof(menu_selection_122),
-+	.envelope =3D {
-+		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		{ .menu_selection =3D {
-+			.item_id =3D 0xfb,
-+		}},
-+	},
-+};
-+
-+static const unsigned char menu_selection_123[] =3D {
-+	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
-+	0x01,
-+};
-+
-+static const struct envelope_test menu_selection_data_123 =3D {
-+	.pdu =3D menu_selection_123,
-+	.pdu_len =3D sizeof(menu_selection_123),
-+	.envelope =3D {
-+		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		{ .menu_selection =3D {
-+			.item_id =3D 0x1,
-+		}},
-+	},
-+};
-+
-+static const unsigned char menu_selection_211[] =3D {
-+	0xd3, 0x09, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
-+	0x02, 0x15, 0x00,
-+};
-+
-+static const struct envelope_test menu_selection_data_211 =3D {
-+	.pdu =3D menu_selection_211,
-+	.pdu_len =3D sizeof(menu_selection_211),
-+	.envelope =3D {
-+		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		{ .menu_selection =3D {
-+			.item_id =3D 0x2,
-+			.help_request =3D TRUE,
-+		}},
-+	},
-+};
-+
-+static const unsigned char menu_selection_612[] =3D {
-+	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
-+	0x05,
-+};
-+
-+static const struct envelope_test menu_selection_data_612 =3D {
-+	.pdu =3D menu_selection_612,
-+	.pdu_len =3D sizeof(menu_selection_612),
-+	.envelope =3D {
-+		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		{ .menu_selection =3D {
-+			.item_id =3D 0x5,
-+		}},
-+	},
-+};
-+
-+static const unsigned char menu_selection_641[] =3D {
-+	0xd3, 0x07, 0x82, 0x02, 0x01, 0x81, 0x90, 0x01,
-+	0x08,
-+};
-+
-+static const struct envelope_test menu_selection_data_641 =3D {
-+	.pdu =3D menu_selection_641,
-+	.pdu_len =3D sizeof(menu_selection_641),
-+	.envelope =3D {
-+		.type =3D STK_ENVELOPE_TYPE_MENU_SELECTION,
-+		.src =3D STK_DEVICE_IDENTITY_TYPE_KEYPAD,
-+		.dst =3D STK_DEVICE_IDENTITY_TYPE_UICC,
-+		{ .menu_selection =3D {
-+			.item_id =3D 0x8,
-+		}},
-+	},
-+};
-+
- int main(int argc, char **argv)
+ void simple_tlv_iter_init(struct simple_tlv_iter *iter,
+ 				const unsigned char *pdu, unsigned int len)
  {
- 	g_test_init(&argc, &argv, NULL);
-@@ -19843,5 +19988,22 @@ int main(int argc, char **argv)
- 	g_test_add_data_func("/teststk/CBS-PP data download 1.7",
- 			&cbs_pp_data_download_data_17, test_envelope_encoding);
+@@ -844,19 +846,14 @@ void sim_parse_mcc_mnc(const guint8 *bcd, char *mcc, =
+char *mnc)
  =
 
-+	g_test_add_data_func("/teststk/Menu Selection 1.1.1",
-+			&menu_selection_data_111, test_envelope_encoding);
-+	g_test_add_data_func("/teststk/Menu Selection 1.1.2",
-+			&menu_selection_data_112, test_envelope_encoding);
-+	g_test_add_data_func("/teststk/Menu Selection 1.2.1",
-+			&menu_selection_data_121, test_envelope_encoding);
-+	g_test_add_data_func("/teststk/Menu Selection 1.2.2",
-+			&menu_selection_data_122, test_envelope_encoding);
-+	g_test_add_data_func("/teststk/Menu Selection 1.2.3",
-+			&menu_selection_data_123, test_envelope_encoding);
-+	g_test_add_data_func("/teststk/Menu Selection 2.1.1",
-+			&menu_selection_data_211, test_envelope_encoding);
-+	g_test_add_data_func("/teststk/Menu Selection 6.1.2",
-+			&menu_selection_data_612, test_envelope_encoding);
-+	g_test_add_data_func("/teststk/Menu Selection 6.4.1",
-+			&menu_selection_data_641, test_envelope_encoding);
-+
- 	return g_test_run();
+ void sim_encode_mcc_mnc(guint8 *out, const char *mcc, const char *mnc)
+ {
+-	char str[7] =3D "ffffff";
+-
+-	str[0] =3D mcc[0];
+-	str[1] =3D mcc[1];
+-	if (mcc[2])
+-		str[2] =3D mcc[2];
++	out[0] =3D to_semi_oct(mcc[0]);
++	out[0] |=3D to_semi_oct(mcc[1]) << 4;
+ =
+
+-	str[4] =3D mnc[0];
+-	str[5] =3D mnc[1];
+-	if (mnc[2])
+-		str[3] =3D mnc[2];
++	out[1] =3D mcc[2] ? to_semi_oct(mcc[2]) : 0xf;
++	out[1] |=3D (mnc[2] ? to_semi_oct(mnc[2]) : 0xf) << 4;
+ =
+
+-	encode_bcd_number(str, out);
++	out[2] =3D to_semi_oct(mnc[0]);
++	out[2] |=3D to_semi_oct(mnc[1]) << 4;
  }
+ =
+
+ static gint spdi_operator_compare(gconstpointer a, gconstpointer b)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============2632013722054609906==--
+--===============4286542948426258317==--
 
