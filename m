@@ -1,73 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============3202658053964873814=="
+Content-Type: multipart/mixed; boundary="===============0961841423934688116=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Huawei E1552 broken
-Date: Tue, 08 Jun 2010 13:34:56 -0700
-Message-ID: <1276029296.2182.51.camel@localhost.localdomain>
-In-Reply-To: <87mxv5zte0.fsf@potku.valot.fi>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: [PATCH] TODO: CBS CMAS
+Date: Tue, 08 Jun 2010 15:05:52 -0700
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9C58BCDAD@orsmsx508.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3202658053964873814==
+--===============0961841423934688116==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+Add CBS CMAS to TODO list.
 
-> >> I mentioned this briefly on irc, but I'll inform it here as well. This
-> >> patch broke ofono support for my Huawei E1552:
-> >> =
+---
+ TODO |   14 ++++++++++++++
+ 1 files changed, 14 insertions(+), 0 deletions(-)
 
-> >> commit 6ab0b6f29acc8f6b2a5f3b94c02c405ee7318244
-> >> Author: Marcel Holtmann <marcel@holtmann.org>
-> >> Date:   Sun Jun 6 15:51:36 2010 -0700
-> >> =
+diff --git a/TODO b/TODO
+index 4a12b6f..ef0bcde 100644
+--- a/TODO
++++ b/TODO
+@@ -112,6 +112,20 @@ SMS
+   Owner: Pasi Miettinen <pasi.miettinen@ixonos.com>
+ =
 
-> >>    Fix detection of Huawei E220 and E270 modems
-> >> =
+ =
 
-> >> Huawei plugin uses /dev/ttyUSB1 for the event channel but for my modem
-> >> it should be /dev/ttyUSB2. We need to solve this problem somehow, even
-> >> if we need to add usb ids to ofono.rules.
-> >
-> > Denis has already updated udev.c by commit 71ea72adf and now it
-> > detects interface number by ofono.rules.
-> =
++Cell Broadcast System
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++- Support for Commercial Mobile Alert System (CMAS) according to 3GPP
++  23.041, 3GPP 22.268 and ATIS/TIA J-STD-100 in addition to Earthquake
++  and Tsunami Warning Service (ETWS). oFono already reports ETWS messages
++  with CBS message identifiers 4352-4356 as EmergencyBroadcast DBUS signal=
+s.
++  oFono should be extended with support for CMAS messages which have CBS
++  message identifiers in the range of 4370-4382.
++
++  Priority: Medium
++  Complexity: C1
++
++
+ SIM / SIM File system
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ =
 
-> Oh damn, I forgot to do git update this morning and missed this
-> altogether. Thank you for pointing out this.
-> =
+-- =
 
-> > So I think you should add one more E1552 specific item in ofono.rules
-> > with your product id and interface number, etc.
-> =
+1.5.4.3
 
-> Actually Denis already added them. Excellent, thank you Denis! My modem
-> works again :)
-> =
+--===============0961841423934688116==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="0001-Add-CBS-CMAS-work-item.patch"
 
-> But now connman doesn't show the operator name "Saunalahti" anymore, the
-> name property in connman Service is just empty:
-> =
+RnJvbSBjN2ZjZjZkZWNhNjRjNDNhMWIzODU4YWMyODExYTVjNWUyY2NmOGI2IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBXYWxkbyBCYXN0aWFuIDx3YWxkby5iYXN0aWFuQGludGVsLmNv
+bT4KRGF0ZTogVHVlLCA4IEp1biAyMDEwIDE1OjI5OjM3IC0wNzAwClN1YmplY3Q6IFtQQVRDSF0g
+QWRkIENCUyBDTUFTIHdvcmsgaXRlbQoKLS0tCiBUT0RPIHwgICAxNCArKysrKysrKysrKysrKwog
+MSBmaWxlcyBjaGFuZ2VkLCAxNCBpbnNlcnRpb25zKCspLCAwIGRlbGV0aW9ucygtKQoKZGlmZiAt
+LWdpdCBhL1RPRE8gYi9UT0RPCmluZGV4IDRhMTJiNmYuLmVmMGJjZGUgMTAwNjQ0Ci0tLSBhL1RP
+RE8KKysrIGIvVE9ETwpAQCAtMTEyLDYgKzExMiwyMCBAQCBTTVMKICAgT3duZXI6IFBhc2kgTWll
+dHRpbmVuIDxwYXNpLm1pZXR0aW5lbkBpeG9ub3MuY29tPgogCiAKK0NlbGwgQnJvYWRjYXN0IFN5
+c3RlbQorPT09PT09PT09PT09PT09PT09PT09CisKKy0gU3VwcG9ydCBmb3IgQ29tbWVyY2lhbCBN
+b2JpbGUgQWxlcnQgU3lzdGVtIChDTUFTKSBhY2NvcmRpbmcgdG8gM0dQUAorICAyMy4wNDEsIDNH
+UFAgMjIuMjY4IGFuZCBBVElTL1RJQSBKLVNURC0xMDAgaW4gYWRkaXRpb24gdG8gRWFydGhxdWFr
+ZQorICBhbmQgVHN1bmFtaSBXYXJuaW5nIFNlcnZpY2UgKEVUV1MpLiBvRm9ubyBhbHJlYWR5IHJl
+cG9ydHMgRVRXUyBtZXNzYWdlcworICB3aXRoIENCUyBtZXNzYWdlIGlkZW50aWZpZXJzIDQzNTIt
+NDM1NiBhcyBFbWVyZ2VuY3lCcm9hZGNhc3QgREJVUyBzaWduYWxzLgorICBvRm9ubyBzaG91bGQg
+YmUgZXh0ZW5kZWQgd2l0aCBzdXBwb3J0IGZvciBDTUFTIG1lc3NhZ2VzIHdoaWNoIGhhdmUgQ0JT
+CisgIG1lc3NhZ2UgaWRlbnRpZmllcnMgaW4gdGhlIHJhbmdlIG9mIDQzNzAtNDM4Mi4KKworICBQ
+cmlvcml0eTogTWVkaXVtCisgIENvbXBsZXhpdHk6IEMxCisKKwogU0lNIC8gU0lNIEZpbGUgc3lz
+dGVtCiA9PT09PT09PT09PT09PT09PT09PT0KIAotLSAKMS41LjQuMwoK
 
-> ./cmcc show cellular_244053111242822_huawei0_primarycontext1
-> AutoConnect: true
-> Name: =
-
-> Nameservers: { 193.229.0.40 193.229.0.42 }
-> Proxy: { Method=3Ddirect }
-
-this might be a bug in the oFono plugin in ConnMan. I have encountered
-this as well. I think ConnMan forgets to listen to name changes and to
-update the name. Some times you get the name other times you don't.
-
-Regards
-
-Marcel
-
-
-
-
---===============3202658053964873814==--
+--===============0961841423934688116==--
 
