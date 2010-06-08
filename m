@@ -1,20 +1,20 @@
-Content-Type: multipart/mixed; boundary="===============2371872464003860519=="
+Content-Type: multipart/mixed; boundary="===============6371685111851325952=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-Subject: Re: [RFC patches 08/13] storage: add __attribute__((format)) to
- {write, read}_file() for printf-like variable arg verification
-Date: Tue, 08 Jun 2010 22:43:16 +0000
-Message-ID: <1276037261.2478.65.camel@localhost.localdomain>
-In-Reply-To: <201005280945.26909.denkenz@gmail.com>
+Subject: Re: [RFC patches 09/13] Add function doc headers to ofono_sms_{create,
+ register}
+Date: Tue, 08 Jun 2010 22:58:33 +0000
+Message-ID: <1276038179.2478.66.camel@localhost.localdomain>
+In-Reply-To: <201005280947.21043.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2371872464003860519==
+--===============6371685111851325952==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2010-05-28 at 07:45 -0700, Denis Kenzior wrote: =
+On Fri, 2010-05-28 at 07:47 -0700, Denis Kenzior wrote: =
 
 > Hi Inaky,
 > =
@@ -22,22 +22,22 @@ On Fri, 2010-05-28 at 07:45 -0700, Denis Kenzior wrote: =
 > > From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 > > =
 
-> > ---
-> >  src/storage.h |    6 ++++--
-> >  1 files changed, 4 insertions(+), 2 deletions(-)
-> > =
-
+> > Signed-off-by: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 > =
+
+> We don't use signed off lines here, please don't include them in the futu=
+re.
+
+Grr, sorry, my autopilot from the kernel keeps adding -s to 'git
+commit'. I added a tripcheck for it.
 
 > Patch has been applied with a modified commit message.
 
-Thanks.
-
-Recording the same complain as before wrt to modifying commits
-contributed by others. Please mention which changes you want, let me do
-them and resubmit.
+Same complaint as before wrt to committing modified patches.
 
 
 
---===============2371872464003860519==--
+
+
+--===============6371685111851325952==--
 
