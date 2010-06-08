@@ -1,88 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============7703576800089182970=="
+Content-Type: multipart/mixed; boundary="===============1377910617206562527=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-Subject: Re: [RFC patches 05/13] util.h: Add BUILD_BUG_ON() and friends for
- compile-time assert checking
-Date: Tue, 08 Jun 2010 22:03:24 +0000
-Message-ID: <1276034868.2478.43.camel@localhost.localdomain>
-In-Reply-To: <1275056264.4706.77.camel@aeonflux.t-mobile.de>
+Subject: Re: [RFC patches 06/13] smutil.h: add missing header file dependencies
+Date: Tue, 08 Jun 2010 22:04:40 +0000
+Message-ID: <1276034947.2478.44.camel@localhost.localdomain>
+In-Reply-To: <1275056356.4706.78.camel@aeonflux.t-mobile.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7703576800089182970==
+--===============1377910617206562527==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2010-05-28 at 07:17 -0700, Marcel Holtmann wrote: =
+On Fri, 2010-05-28 at 07:19 -0700, Marcel Holtmann wrote: =
 
 > Hi Inaky,
 > =
 
-> > From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-> > =
-
-> > These have been stolen from the Linux kernel source; come pretty handy
-> > to make build-time consistency checks and thus avoid run-time
-> > surprises.
-> > ---
-> >  src/util.h |   29 +++++++++++++++++++++++++++++
-> >  1 files changed, 29 insertions(+), 0 deletions(-)
-> > =
-
-> > diff --git a/src/util.h b/src/util.h
-> > index 2835b76..cf34b67 100644
-> > --- a/src/util.h
-> > +++ b/src/util.h
-> > @@ -77,3 +77,32 @@ unsigned char *pack_7bit(const unsigned char *in, lo=
-ng len, int byte_offset,
-> >  				long *items_written, unsigned char terminator);
-> >  =
-
-> >  char *sim_string_to_utf8(const unsigned char *buffer, int length);
-> > +
-> > +/*
-> > + * Build time consistency checks
-> > + *
-> > + * Stolen from the Linux kernel 2.6.35-rc; as most taken from the
-> > + * Linux kernel, this is licensed GPL v2 or newer.
-> > + */
-> > +
-> > +/* Force a compilation error if condition is true */
-> > +#define BUILD_BUG_ON(condition) ((void)BUILD_BUG_ON_ZERO(condition))
-> > +
-> > +/* Force a compilation error if condition is constant and true */
-> > +#define MAYBE_BUILD_BUG_ON(cond) ((void)sizeof(char[1 - 2 * !!(cond)]))
-> > +
-> > +/* Force a compilation error if a constant expression is not a power o=
-f 2 */
-> > +#define BUILD_BUG_ON_NOT_POWER_OF_2(n)			\
-> > +	BUILD_BUG_ON((n) =3D=3D 0 || (((n) & ((n) - 1)) !=3D 0))
-> > +
-> > +/* Force a compilation error if condition is true, but also produce a
-> > +   result (of value 0 and type size_t), so the expression can be used
-> > +   e.g. in a structure initializer (or where-ever else comma expressio=
-ns
-> > +   aren't permitted). */
-> > +#define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
-> > +#define BUILD_BUG_ON_NULL(e) ((void *)sizeof(struct { int:-!!(e); }))
-> > +
-> > +/*
-> > + * End of code stolen from the Linux kernel 2.6.35-rc. From now, code
-> > + * is GPL v2 only.
-> > + */
+> > diff --git a/src/smsutil.h b/src/smsutil.h
+> > index 469a49e..356ec5d 100644
+> > --- a/src/smsutil.h
+> > +++ b/src/smsutil.h
+> > @@ -18,6 +18,14 @@
+> >   *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1=
+301  USA
+> >   *
+> >   */
+> > +#ifndef __smsutil_h__
+> > +#define __smsutil_h__
 > =
 
-> sounds like a nice addition, but src/util.h is the wrong file. I prefer
-> we make this compatible so that it can be applied to ConnMan and BlueZ
-> as well.
-> =
+> please leave the circular dependency protection out here. I really want
+> it to fail if we go so crazy and would require it.
 
-> I think something like include/bug.h is better.
-
-Sounds ok to me. Denis?
+I personally NAK here, but if you guys don't like it, I'll just drop
+this guy from the series. Not that critical.
 
 
 
---===============7703576800089182970==--
+--===============1377910617206562527==--
 
