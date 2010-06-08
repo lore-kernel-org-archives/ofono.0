@@ -1,53 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============7536079469908014552=="
+Content-Type: multipart/mixed; boundary="===============6064189125512935186=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-Subject: Re: [RFC patches 12/13] SMS: introduce message ID API
-Date: Tue, 08 Jun 2010 22:12:59 +0000
-Message-ID: <1276035445.2478.53.camel@localhost.localdomain>
-In-Reply-To: <1275056848.4706.81.camel@aeonflux.t-mobile.de>
+Subject: Re: [RFC patches 01/13] Update .gitignore to ignore cscope databases
+ and backup files
+Date: Tue, 08 Jun 2010 22:13:16 +0000
+Message-ID: <1276035463.2478.54.camel@localhost.localdomain>
+In-Reply-To: <1275056949.4706.82.camel@aeonflux.t-mobile.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7536079469908014552==
+--===============6064189125512935186==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2010-05-28 at 07:27 -0700, Marcel Holtmann wrote: =
+On Fri, 2010-05-28 at 07:29 -0700, Marcel Holtmann wrote: =
 
-> Hi Inaky,
+> Hi Joao,
 > =
 
-> > +/**
-> > + * Create a random UUID
-> > + *
-> > + * \param msg_id Descriptor
-> > + *
-> > + * \internal
-> > + *
-> > + * Crams the msg_id ID buffer with random 32-bit numbers; because we
-> > + * use a byte based buffer, we play the cast to guint32 trick (as that
-> > + * is what g_random_int() returns).
-> > + */
+> > >> diff --git a/.gitignore b/.gitignore
+> > >> index 1ce7067..d7e9254 100644
+> > >> --- a/.gitignore
+> > >> +++ b/.gitignore
+> > >> @@ -1,3 +1,4 @@
+> > >> +*~
+> > >
+> > > believe it or not, I always left that out on purpose. I like having g=
+it
+> > > status show me all the stupid backup files my editor creates.
+> > >
+> > >>  *.o
+> > >>  *.lo
+> > >>  *.la
+> > >> @@ -16,6 +17,8 @@ config.sub
+> > >>  configure
+> > >>  depcomp
+> > >>  compile
+> > >> +cscope.files
+> > >> +cscope.out
+> > >>  install-sh
+> > >>  libtool
+> > >>  ltmain.sh
+> > >
+> > > Please put the cscope stuff behind autom4te.cache since it is not part
+> > > of autoconf/automake.
+> > >
+> > =
+
+> > Does this makes sense since this files are not related to the project
+> > itself but to specific tools? I usually put those on my personal
+> > gitignore file.
 > =
 
-> can we just stick with gtk-doc like you had in your previous patches. I
-> think intermixing it with doxygen is a bad idea.
+> actually I have to agree. They really don't belong in the project and
+> the personal gitignore configuration is a suitable place for them.
 
-Yep, my bad, sorry.
-
-In any case, picking this up from earlier:
-
-I have my doubts on gtk-doc vs doxygen. I remember there was a thread
-somewhere (email? irc? voice?) on which system to settle on which never
-got finalized. I am not too satisfied with gtk-doc's limitations, I'd
-rather do doxygen. Does anyone have any preference on once vs the other?
-
-In any case, when we settle on one, I'll have to go and cleanup all
-these to conform to it. I'll also write a quick summary with examples on
-how to use it in doc/.
+ACK, I'll drop this one then
 
 
-
---===============7536079469908014552==--
+--===============6064189125512935186==--
 
