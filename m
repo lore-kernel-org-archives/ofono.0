@@ -1,63 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============6064189125512935186=="
+Content-Type: multipart/mixed; boundary="===============1989582275140736131=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-Subject: Re: [RFC patches 01/13] Update .gitignore to ignore cscope databases
- and backup files
-Date: Tue, 08 Jun 2010 22:13:16 +0000
-Message-ID: <1276035463.2478.54.camel@localhost.localdomain>
-In-Reply-To: <1275056949.4706.82.camel@aeonflux.t-mobile.de>
+Subject: Re: [RFC patches 06/13] smutil.h: add missing header file dependencies
+Date: Tue, 08 Jun 2010 22:30:59 +0000
+Message-ID: <1276036526.2478.55.camel@localhost.localdomain>
+In-Reply-To: <201005280931.42298.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6064189125512935186==
+--===============1989582275140736131==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2010-05-28 at 07:29 -0700, Marcel Holtmann wrote: =
+On Fri, 2010-05-28 at 07:31 -0700, Denis Kenzior wrote: =
 
-> Hi Joao,
+> Hi Inaky,
 > =
 
-> > >> diff --git a/.gitignore b/.gitignore
-> > >> index 1ce7067..d7e9254 100644
-> > >> --- a/.gitignore
-> > >> +++ b/.gitignore
-> > >> @@ -1,3 +1,4 @@
-> > >> +*~
-> > >
-> > > believe it or not, I always left that out on purpose. I like having g=
-it
-> > > status show me all the stupid backup files my editor creates.
-> > >
-> > >>  *.o
-> > >>  *.lo
-> > >>  *.la
-> > >> @@ -16,6 +17,8 @@ config.sub
-> > >>  configure
-> > >>  depcomp
-> > >>  compile
-> > >> +cscope.files
-> > >> +cscope.out
-> > >>  install-sh
-> > >>  libtool
-> > >>  ltmain.sh
-> > >
-> > > Please put the cscope stuff behind autom4te.cache since it is not part
-> > > of autoconf/automake.
-> > >
-> > =
-
-> > Does this makes sense since this files are not related to the project
-> > itself but to specific tools? I usually put those on my personal
-> > gitignore file.
+> > +#include <glib/gtypes.h>
+> > +#include <glib/gslist.h>
+> > +#include <glib/gmessages.h>
+> > +#include <glib/gchecksum.h>
 > =
 
-> actually I have to agree. They really don't belong in the project and
-> the personal gitignore configuration is a suitable place for them.
+> Isn't it sufficient to just add glib/glib.h here?
 
-ACK, I'll drop this one then
+You can definitely do that, but it also increases the compilation
+time...not that you or I would notice anyway.
 
 
---===============6064189125512935186==--
+
+--===============1989582275140736131==--
 
