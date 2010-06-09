@@ -1,63 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============4668309311954820347=="
+Content-Type: multipart/mixed; boundary="===============5373843148374200671=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: Re: [PATCH 06/11] Made it possible to ask for status report via
- SendMessage method parameters. True=status report on, false=off.
-Date: Wed, 09 Jun 2010 16:29:52 -0700
-Message-ID: <1276126192.2509.28.camel@localhost.localdomain>
-In-Reply-To: <201006091747.13739.denkenz@gmail.com>
+Subject: Re: SMS status report
+Date: Wed, 09 Jun 2010 16:50:34 -0700
+Message-ID: <1276127434.2509.38.camel@localhost.localdomain>
+In-Reply-To: <1276092115-22684-1-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4668309311954820347==
+--===============5373843148374200671==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, 2010-06-09 at 17:47 -0500, Denis Kenzior wrote: =
+Hi Pasi
 
-> Hi Inaky,
+On Wed, 2010-06-09 at 17:01 +0300, Pasi Miettinen wrote: =
+
+> Hello again,
+> this is the new version of SMS status report. It is implemented
+> according to the latest comments which you gave about my previous
+> patches. These patches include concatenated status report
+> assembling and status report result printing via history plugin.
 > =
 
-> > On Thu, 2010-05-27 at 14:56 +0300, Aki Niemi wrote:
-> > > On Thu, 2010-05-27 at 13:39 +0200, ext Marcel Holtmann wrote:
-> > > > > I don't like this being an argument to SendMessage(). I think it
-> > > > > needs to be exposed, but as a property instead. Is there a use ca=
-se
-> > > > > for setting this per message? I think majority of current phones
-> > > > > either provide a global setting for this, or set it on by default.
-> > > >
-> > > > our idea is actually that every new SMS has its own object path for=
- its
-> > > > lifetime. So we can have then properties easily on them.
-> > >
-> > > Sure, but there should still be a property in SmsManager to control
-> > > whether srr is to be set on outgoing messages.
-> > >
-> > > Another property in the actual SmsMessage (residing on its own object
-> > > path) could then indicate whether srr *was* set for that particular
-> > > message when it was sent.
-> > =
+> Next I am going to take a new look at the saving of the pending
+> status reports to imsi file.
 
-> > I tend to disagree with that; by making it an SmsManager property, you
-> > are creating an API that is not reentrant. If more than one application
-> > is sending SMS's at the same time and they have different requirements
-> > wrt to status-reports, they would be trumping each other:
-> =
+I found out right before going offline for last week that you were
+working on status reports -- good to know I am not alone.
 
-> While you're 100% correct about a possible race condition, the reality is=
- that =
+I'd like to coordinate with your work. I had started tackling the issue
+from the infrastructure of the whole SMS code and had recently started
+work on the actual status-report part. Once your code started showing
+up, I've ditched part of my code and rebased on top of what you had.
 
-> nobody actually uses it this way.  It is just a setting buried somewhere =
-in =
+Could you please take a look at the smsdbus branch in my repo and tell
+me if there is anything there that will conflict with the way you are
+implementing things?
 
-> the Settings UI that the user maybe changes once in his lifetime.
+git://gitorious.org/~inakypg/ofono/ofono-inakypg.git
 
-If you are confident this will never be a problem then *shrug*; I am
-just not comfortable with generic unconstrained APIs that operate like
-that.
+there is a set of patches there which lay out changes in the SMS code
+infrastructure to do the following:
+
+- export of SMS messages to D-Bus
+
+  - each message is an object in the bus
+
+  - messages can be canceled, properties queried, etc
+
+- in transit SMS messages get an state machine describing at which phase
+they are. D-Bus signals are sent in transitions
+
+- messages waiting for an status report are queued in a separate queue
+
+- a unique ID is generated based on message contents and destination
+nunmber to reduce the chances of collision -- need still to apply it to
+received messages so it's easier to gather status reports from different
+fragments
+
+- provide an internal C API for managing messages (D-Bus's maps on top
+of this)
+
+
+FIXMEs/TODOs/RFCs:
+
+  still need to cleanup some more to adapt to your code
+
+  plenty of whatifs/FIXMEs litered around the code still
+
+  remove the 'request-status-report' from D-Bus::SendMessage
+
+  message id needs more uniquedness fed into it
+
+Note the branch depends on some more commits that are still not in
+mainline; those are in my master branch and pending a resubmit to
+upstream.
+
+Thanks!
 
 
 
---===============4668309311954820347==--
+--===============5373843148374200671==--
 
