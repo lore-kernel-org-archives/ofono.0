@@ -1,191 +1,263 @@
-Content-Type: multipart/mixed; boundary="===============5160081122489312289=="
+Content-Type: multipart/mixed; boundary="===============3460723329353970242=="
 MIME-Version: 1.0
-From: Pasi Miettinen <pasi.miettinen@ixonos.com>
-Subject: [RFC PATCH 3/3] sms: status report notify
-Date: Wed, 09 Jun 2010 17:01:55 +0300
-Message-ID: <1276092115-22684-4-git-send-email-pasi.miettinen@ixonos.com>
-In-Reply-To: <1276092115-22684-3-git-send-email-pasi.miettinen@ixonos.com>
+From: Li, Zhigang <zhigang.li@intel.com>
+Subject: oFono v0.22 test report
+Date: Wed, 09 Jun 2010 22:46:59 +0800
+Message-ID: <B32E3D5F1713054290B4FF257B89C51A10A0098251@shsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5160081122489312289==
+--===============3460723329353970242==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/history.h |    3 ++
- src/sms.c         |   59 +++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 2 files changed, 61 insertions(+), 1 deletions(-)
+Test Objective
+--------------------------------------
+This is QA regular release testing cycle for oFono released. Our testing fo=
+cus would be new features exploration and regression testing, to ensure maj=
+or issues for new features are exposed in timely fashion.
 
-diff --git a/include/history.h b/include/history.h
-index 300a4fb..61a0dea 100644
---- a/include/history.h
-+++ b/include/history.h
-@@ -33,6 +33,9 @@ enum ofono_history_sms_status {
- 	OFONO_HISTORY_SMS_STATUS_PENDING,
- 	OFONO_HISTORY_SMS_STATUS_SUBMITTED,
- 	OFONO_HISTORY_SMS_STATUS_SUBMIT_FAILED,
-+	OFONO_HISTORY_SMS_STATUS_DELIVERED,
-+	OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED,
-+	OFONO_HISTORY_SMS_STATUS_ERROR,
- };
- =
+Test Environment
+-------------------------------
+General Features:
+General PC (pre-installed FC12)
+       - ofono v0.22
+       - phonesim 1.2
+HFP:
+Netbook EeePC901
+      - MeeGo20100424 image
+      - Sony Ericsson C905, Nokia N95
+      - ofono v0.22
+      - Bluez v4.63 =
 
- struct ofono_history_context {
-diff --git a/src/sms.c b/src/sms.c
-index c0e9fc4..1e78b9e 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -67,6 +67,8 @@ struct ofono_sms {
- 	const struct ofono_sms_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	ofono_bool_t use_delivery_reports;
-+	struct status_report_assembly *sr_assembly;
- };
- =
+GPRS:
+      - MBM modem
+      - ofono v0.22
+      - UNICOM 3G WCDMA network
 
- struct pending_pdu {
-@@ -82,6 +84,8 @@ struct tx_queue_entry {
- 	unsigned int msg_id;
- 	unsigned int retry;
- 	DBusMessage *msg;
-+	gboolean status_report;
-+	struct sms_address receiver;
- };
- =
+Modem Emulator:
+	 - test-server tool in ofono
 
- static void set_sca(struct ofono_sms *sms,
-@@ -306,6 +310,12 @@ static void tx_finished(const struct ofono_error *erro=
-r, int mr, void *data)
- 	entry->cur_pdu +=3D 1;
- 	entry->retry =3D 0;
- =
+-------------------------------
+Test Scope
+-------------------------------
+The test will do full light functional validation, mainly focus on checking=
+ implemented functionality of ofono v0.22 (voice call, message, cell broadc=
+ast, phonebook, sim, supplementary service, modem management, voice mail, c=
+all volume, call history, message history, GPRS, HFP, USSD) base on phonesi=
+m simulator and some hardware devices.
+As the dependence of modem, we will do PPP test with gsmdial later.
 
-+	if (entry->status_report)
-+		status_report_assembly_add_fragment(sms->sr_assembly,
-+							&entry->msg_id,
-+							&entry->receiver,
-+							mr, time(NULL));
-+
- 	if (entry->cur_pdu < entry->num_pdus) {
- 		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
- 		return;
-@@ -436,6 +446,8 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
- 	set_ref_and_to(msg_list, sms->ref, ref_offset, to);
- 	entry =3D create_tx_queue_entry(msg_list);
- =
+Test Summary
+-------------------------------
+During the v0.21 testing, we found the v0.22 release, so switch to v0.22 im=
+mediately.
+The test result is positive. Most functionalities work well and more stable,
+we reported 1 major Bluetooth bug during HFP test, verified 4 bugs, so far,=
+ no blocking, critical issues remain.
 
-+	sms_address_from_string(&entry->receiver, to);
-+
- 	g_slist_foreach(msg_list, (GFunc)g_free, NULL);
- 	g_slist_free(msg_list);
- =
+Executed total 276 test cases during this round of testing, and among them: =
 
-@@ -448,6 +460,7 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
- =
-
- 	entry->msg =3D dbus_message_ref(msg);
- 	entry->msg_id =3D sms->next_msg_id++;
-+	entry->status_report =3D sms->use_delivery_reports;
- =
-
- 	g_queue_push_tail(sms->txq, entry);
- =
-
-@@ -692,6 +705,24 @@ static void handle_deliver(struct ofono_sms *sms, cons=
-t struct sms *incoming)
- 	g_slist_free(l);
- }
- =
-
-+static void handle_sms_status_report(struct ofono_sms *sms,
-+						const struct sms *incoming)
-+{
-+	unsigned int msg_id;
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(sms->atom);
-+
-+	if (incoming->status_report.st =3D=3D SMS_ST_COMPLETED_RECEIVED) {
-+
-+		if (status_report_assembly_report(sms->sr_assembly,
-+		incoming, &msg_id) =3D=3D OFONO_HISTORY_SMS_STATUS_DELIVERED)
-+			__ofono_history_sms_send_status(modem, msg_id,
-+				time(NULL), OFONO_HISTORY_SMS_STATUS_DELIVERED);
-+	} else
-+		__ofono_history_sms_send_status(modem, msg_id, time(NULL),
-+				OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED);
-+}
-+
-+
- static inline gboolean handle_mwi(struct ofono_sms *sms, struct sms *s)
- {
- 	gboolean discard;
-@@ -823,7 +854,25 @@ out:
- void ofono_sms_status_notify(struct ofono_sms *sms, unsigned char *pdu,
- 				int len, int tpdu_len)
- {
--	ofono_error("SMS Status-Report not yet handled");
-+	struct sms s;
-+	enum sms_class cls;
-+
-+	if (!sms_decode(pdu, len, FALSE, tpdu_len, &s)) {
-+		ofono_error("Unable to decode PDU");
-+		return;
-+	}
-+
-+	if (s.type !=3D SMS_TYPE_STATUS_REPORT) {
-+		ofono_error("Expecting a STATUS REPORT pdu");
-+		return;
-+	}
-+
-+	if (!sms_dcs_decode(s.deliver.dcs, &cls, NULL, NULL, NULL)) {
-+		ofono_error("Unknown / Reserved DCS.  Ignoring");
-+		return;
-+	}
-+
-+	handle_sms_status_report(sms, &s);
- }
- =
-
- int ofono_sms_driver_register(const struct ofono_sms_driver *d)
-@@ -903,6 +952,11 @@ static void sms_remove(struct ofono_atom *atom)
- 		sms->settings =3D NULL;
- 	}
- =
-
-+	if (sms->sr_assembly) {
-+		status_report_assembly_free(sms->sr_assembly);
-+		sms->sr_assembly =3D NULL;
-+	}
-+
- 	g_free(sms);
- }
- =
-
-@@ -1038,9 +1092,12 @@ void ofono_sms_register(struct ofono_sms *sms)
- 		imsi =3D ofono_sim_get_imsi(sms->sim);
- 		sms->assembly =3D sms_assembly_new(imsi);
- =
-
-+		sms->sr_assembly =3D status_report_assembly_new(imsi);
-+
- 		sms_load_settings(sms, imsi);
- 	} else {
- 		sms->assembly =3D sms_assembly_new(NULL);
-+		sms->sr_assembly =3D status_report_assembly_new(NULL);
- 	}
- =
-
- 	__ofono_atom_register(sms->atom, sms_unregister);
--- =
-
-1.6.0.4
+Pass:     266
+Fail:     10
 
 
+New Bugs
+-------------------------------
+Bug 2782 Bluetooth lost connection after unload loopback module in PA.
 
---===============5160081122489312289==--
+
+Open bugs
+-------------------------------
+2515 nor S5 command not really work in modem emulator
+2517 nor Non at command did not handle properly in modem emulator
+2519 nor S3 command can not work normally without default value
+8898 enh Spend long time on getting fail report of sms
+10061 GSM Compliance issue in sim phonebook
+9453 enh [Phonesim] To support UCS2 encode in Cell Broadcast Message
+9371 nor Modem interface information didn't be updated after modem was remo=
+ved
+868 nor ussd notification display is incorrect with UCS2 character set
+872 maj Can not deactivate all contexts
+
+
+Fixed bugs
+-------------------------------
+8185 nor Segmentation fault in ste modem which may caused by call history
+
+Verified Bugs
+------------------------------
+870 can't cancel/response ussd notification
+434  Can't input pin code
+435 Can't reset the pin code as the same old number
+443 can't change the password by gsm string
+
+
+Details
+The every checkpoint would be one or more test case to cover and result is =
+for functionality, besides you may find some functional limitation in comme=
+nts
+
+------------------------------
+Features       checkpoints               test results       comments
+Call history	Missed call				pass				=
+
+			Outgoing call				pass				=
+
+			Incoming call				pass				=
+
+			Duration					pass				=
+
+			Date						pass				=
+
+SMS			Send/receive				pass               =
+
+			Class0, 1					pass				=
+
+			Set service center address	pass				=
+
+			More segments				pass				=
+
+			Different character set		pass				=
+
+
+Voice call	Dial						pass				=
+
+			Accept					pass				=
+
+			Reject					pass				=
+
+			Hold						pass				=
+
+			Retrieve					pass				=
+
+			Release					pass				=
+
+			ECT						pass				=
+
+Multiparty call	Create				pass				=
+
+				Hang up				pass				=
+
+				Private chat			pass				=
+
+				Hold					pass				=
+
+Sim Phonebook	Read						pass				=
+
+			Different character set		pass				=
+
+			Vcard3.0					pass				=
+
+SS			CF						pass				=
+
+			CB						pass 			=
+
+			CW						pass				=
+
+			CLIR/CLIP					pass				=
+
+Setting		AOC						pass				=
+
+			CF/CB					pass				=
+
+GSM string	General strings			pass				=
+
+			USSD						pass				=
+
+USSD			Send						pass				=
+
+			Cancel request			pass				=
+
+			Respond					pass				=
+
+			Different character set		fail				#868
+Modem		Basic function			pass				=
+
+			Two modems				pass				=
+
+			Abnormal quit				fail				#9371
+Voice mail	Get/Set number			pass				=
+
+			Message Count				pass				=
+
+			Notification				pass				=
+
+			CPHS information			pass				=
+
+Networking	Basic network information	pass				=
+
+			Signal indicator			pass				=
+
+			Scan						pass				=
+
+			Register					pass				=
+
+SIM file		Read IMSI					pass				=
+
+			Read/set MSISDN			pass				=
+
+			Read Emergency number		pass				=
+
+			Read SDN number			pass				=
+
+			PIN code					pass				=
+
+			PUK						pass				=
+
+Cell broadcast	Receive a CB message	pass				=
+
+			Receive several CB messages	pass				=
+
+			Receive more pages CB message pass          	=
+
+			Different language 		pass				=
+
+Call volume	Set/get volume			pass				=
+
+			Mute/unmute				pass				=
+
+Message history	Send history			pass				=
+
+				Receive history		pass				=
+
+				Date					pass				=
+
+HFP			Voice call				pass				=
+
+			Multiparty call			pass				=
+
+			Networking				pass				=
+
+			Call volume				pass				=
+
+			Audio control				pass				=
+
+GPRS			Active context			pass				=
+
+			Edit profiles				pass				=
+
+			Deactivate context			pass				=
+
+			Deactivate all context		fail				#872
+			Detach					pass				=
+
+			Attach					pass				=
+
+			Create context			pass				=
+
+			Remove context			pass				=
+
+Modem Emualtor	Basic AT command		pass				=
+
+				Negative				fail			#2515,#2517,#2519
+
+-------------------------------
+
+Thanks
+Zhigang
+
+
+--===============3460723329353970242==--
 
