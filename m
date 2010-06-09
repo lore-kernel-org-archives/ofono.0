@@ -1,98 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============1658658405129224963=="
+Content-Type: multipart/mixed; boundary="===============4668309311954820347=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 12/20] stkutil: Add the Call Control envelope builder
-Date: Wed, 09 Jun 2010 17:57:48 -0500
-Message-ID: <201006091757.48688.denkenz@gmail.com>
-In-Reply-To: <1275905322-14768-12-git-send-email-andrew.zaborowski@intel.com>
+From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
+Subject: Re: [PATCH 06/11] Made it possible to ask for status report via
+ SendMessage method parameters. True=status report on, false=off.
+Date: Wed, 09 Jun 2010 16:29:52 -0700
+Message-ID: <1276126192.2509.28.camel@localhost.localdomain>
+In-Reply-To: <201006091747.13739.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1658658405129224963==
+--===============4668309311954820347==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+On Wed, 2010-06-09 at 17:47 -0500, Denis Kenzior wrote: =
 
-> ---
->  src/stkutil.c |  178
->  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++- =
-
-src/stkutil.h | =
-
->   31 ++++++++++
->  2 files changed, 207 insertions(+), 2 deletions(-)
+> Hi Inaky,
 > =
 
-> diff --git a/src/stkutil.c b/src/stkutil.c
-> index 83ff5c7..b9a152a 100644
-> --- a/src/stkutil.c
-> +++ b/src/stkutil.c
-> @@ -319,8 +319,6 @@ static gboolean parse_dataobj_subaddress(struct
->  comprehension_tlv_iter *iter, unsigned int len;
+> > On Thu, 2010-05-27 at 14:56 +0300, Aki Niemi wrote:
+> > > On Thu, 2010-05-27 at 13:39 +0200, ext Marcel Holtmann wrote:
+> > > > > I don't like this being an argument to SendMessage(). I think it
+> > > > > needs to be exposed, but as a property instead. Is there a use ca=
+se
+> > > > > for setting this per message? I think majority of current phones
+> > > > > either provide a global setting for this, or set it on by default.
+> > > >
+> > > > our idea is actually that every new SMS has its own object path for=
+ its
+> > > > lifetime. So we can have then properties easily on them.
+> > >
+> > > Sure, but there should still be a property in SmsManager to control
+> > > whether srr is to be set on outgoing messages.
+> > >
+> > > Another property in the actual SmsMessage (residing on its own object
+> > > path) could then indicate whether srr *was* set for that particular
+> > > message when it was sent.
+> > =
+
+> > I tend to disagree with that; by making it an SmsManager property, you
+> > are creating an API that is not reentrant. If more than one application
+> > is sending SMS's at the same time and they have different requirements
+> > wrt to status-reports, they would be trumping each other:
 > =
 
->  	len =3D comprehension_tlv_iter_get_length(iter);
-> -	if (len < 1)
-> -		return FALSE;
+> While you're 100% correct about a possible race condition, the reality is=
+ that =
 
-This seems wrong.  Can you point me to the test that uses empty subaddresse=
-s?
+> nobody actually uses it this way.  It is just a setting buried somewhere =
+in =
 
-> +/* Used both in the ENVELOPE message to UICC and response from UICC */
-> +struct stk_envelope_call_control {
-> +	/* Exactly one of the following 5 fields must be present */
+> the Settings UI that the user maybe changes once in his lifetime.
 
-Why are we not using a union then?
+If you are confident this will never be a problem then *shrug*; I am
+just not comfortable with generic unconstrained APIs that operate like
+that.
 
-> +	struct stk_address address;
-> +	struct stk_address ss_string;
-> +	struct stk_ussd_string {
-> +		unsigned char dcs;
-> +		const unsigned char *string;
 
-Please don't do that.  These objects will be passed around like candy and I =
 
-don't want to deal with dangling pointers.
-
-> +		int len;
-> +	} ussd_string;
-
-The ussd string is limited to 160 bytes according to 23.038.  So breaking t=
-his =
-
-out into a proper stk datatype like:
-struct stk_ussd_string {
-	unsigned char dcs;
-	unsigned char ussd[160];
-	int len;
-};
-would be better
-
-> +	struct stk_common_byte_array pdp_ctx_params;
-> +	struct stk_common_byte_array eps_pdn_params;
-> +	/* At least one of the following two fields must be present in a
-> +	 * response indicating modification of the call.
-> +	 * In an EVELOPE message, only allowed for a call setup. */
-> +	struct stk_ccp ccp1;
-> +	struct stk_subaddress subaddress;
-> +	struct stk_location_info location;
-> +	/* Only allowed when ccp1 is present */
-> +	struct stk_ccp ccp2;
-> +	char *alpha_id;
-> +	/* Only allowed when both ccp1 and ccp2 are present */
-> +	struct stk_bc_repeat {
-> +		ofono_bool_t has_bc_repeat;
-> +		unsigned char value;
-> +	} bc_repeat;
-
-Can we break this out into a proper datatype as well, not nested in this =
-
-struct.
-
-Regards,
--Denis
-
---===============1658658405129224963==--
+--===============4668309311954820347==--
 
