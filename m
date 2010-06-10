@@ -1,193 +1,240 @@
-Content-Type: multipart/mixed; boundary="===============0128632260688035985=="
+Content-Type: multipart/mixed; boundary="===============2504313500455185739=="
 MIME-Version: 1.0
 From: Pasi Miettinen <pasi.miettinen@ixonos.com>
-Subject: [RFC PATCH 2/2] sms: status report notify
-Date: Thu, 10 Jun 2010 10:05:45 +0300
-Message-ID: <1276153545-22260-3-git-send-email-pasi.miettinen@ixonos.com>
-In-Reply-To: <1276153545-22260-2-git-send-email-pasi.miettinen@ixonos.com>
+Subject: [RFC PATCH 1/2] smsutil: Status Report assembly
+Date: Thu, 10 Jun 2010 10:05:44 +0300
+Message-ID: <1276153545-22260-2-git-send-email-pasi.miettinen@ixonos.com>
+In-Reply-To: <1276153545-22260-1-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0128632260688035985==
+--===============2504313500455185739==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/history.h |    3 ++
- src/sms.c         |   61 +++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 2 files changed, 63 insertions(+), 1 deletions(-)
+ src/smsutil.c |  138 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/smsutil.h |   28 ++++++++++++
+ 2 files changed, 166 insertions(+), 0 deletions(-)
 
-diff --git a/include/history.h b/include/history.h
-index 300a4fb..61a0dea 100644
---- a/include/history.h
-+++ b/include/history.h
-@@ -33,6 +33,9 @@ enum ofono_history_sms_status {
- 	OFONO_HISTORY_SMS_STATUS_PENDING,
- 	OFONO_HISTORY_SMS_STATUS_SUBMITTED,
- 	OFONO_HISTORY_SMS_STATUS_SUBMIT_FAILED,
-+	OFONO_HISTORY_SMS_STATUS_DELIVERED,
-+	OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED,
-+	OFONO_HISTORY_SMS_STATUS_ERROR,
- };
- =
-
- struct ofono_history_context {
-diff --git a/src/sms.c b/src/sms.c
-index c0e9fc4..4cd4084 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -67,6 +67,7 @@ struct ofono_sms {
- 	const struct ofono_sms_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	struct status_report_assembly *sr_assembly;
- };
- =
-
- struct pending_pdu {
-@@ -82,6 +83,8 @@ struct tx_queue_entry {
- 	unsigned int msg_id;
- 	unsigned int retry;
- 	DBusMessage *msg;
-+	gboolean status_report;
-+	struct sms_address receiver;
- };
- =
-
- static void set_sca(struct ofono_sms *sms,
-@@ -306,6 +309,12 @@ static void tx_finished(const struct ofono_error *erro=
-r, int mr, void *data)
- 	entry->cur_pdu +=3D 1;
- 	entry->retry =3D 0;
- =
-
-+	if (entry->status_report)
-+		status_report_assembly_add_fragment(sms->sr_assembly,
-+							&entry->msg_id,
-+							&entry->receiver,
-+							mr, time(NULL));
-+
- 	if (entry->cur_pdu < entry->num_pdus) {
- 		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
- 		return;
-@@ -436,6 +445,8 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
- 	set_ref_and_to(msg_list, sms->ref, ref_offset, to);
- 	entry =3D create_tx_queue_entry(msg_list);
- =
-
-+	sms_address_from_string(&entry->receiver, to);
-+
- 	g_slist_foreach(msg_list, (GFunc)g_free, NULL);
- 	g_slist_free(msg_list);
- =
-
-@@ -448,6 +459,7 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
- =
-
- 	entry->msg =3D dbus_message_ref(msg);
- 	entry->msg_id =3D sms->next_msg_id++;
-+	entry->status_report =3D sms->use_delivery_reports;
- =
-
- 	g_queue_push_tail(sms->txq, entry);
- =
-
-@@ -692,6 +704,27 @@ static void handle_deliver(struct ofono_sms *sms, cons=
-t struct sms *incoming)
- 	g_slist_free(l);
+diff --git a/src/smsutil.c b/src/smsutil.c
+index 278d335..5c816f8 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -2625,6 +2625,144 @@ void sms_assembly_expire(struct sms_assembly *assem=
+bly, time_t before)
+ 	}
  }
  =
 
-+static void handle_sms_status_report(struct ofono_sms *sms,
-+						const struct sms *incoming)
++struct status_report_assembly *status_report_assembly_new(const char *imsi)
 +{
-+	unsigned int msg_id;
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(sms->atom);
++	struct status_report_assembly *ret =3D
++				g_new0(struct status_report_assembly, 1);
 +
-+	if (incoming->status_report.st =3D=3D SMS_ST_COMPLETED_RECEIVED) {
++	ret->assembly_table =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++				g_free, (GDestroyNotify)g_hash_table_destroy);
 +
-+		if (status_report_assembly_report(sms->sr_assembly,
-+		incoming, &msg_id) =3D=3D OFONO_HISTORY_SMS_STATUS_DELIVERED)
-+			__ofono_history_sms_send_status(modem, msg_id,
-+				time(NULL), OFONO_HISTORY_SMS_STATUS_DELIVERED);
++	if (imsi)
++		ret->imsi =3D imsi;
++
++	return ret;
++}
++
++void status_report_assembly_free(struct status_report_assembly *assembly)
++{
++	g_hash_table_destroy(assembly->assembly_table);
++}
++
++enum ofono_history_sms_status status_report_assembly_report(
++					struct status_report_assembly *assembly,
++					const struct sms *status_report,
++					unsigned int *msg_id)
++{
++	unsigned int offset =3D status_report->status_report.mr / 32;
++	unsigned int bit =3D 1 << (status_report->status_report.mr % 32);
++	GHashTable *id_table;
++	struct id_table_node *node =3D NULL;
++	gpointer key;
++	gpointer value;
++	GHashTableIter iter;
++	int i;
++
++	id_table =3D g_hash_table_lookup(assembly->assembly_table,
++				status_report->status_report.raddr.address);
++
++	/* ERROR, key (receiver address) does not exist in assembly*/
++	if (!id_table)
++		return OFONO_HISTORY_SMS_STATUS_ERROR;
++
++	g_hash_table_iter_init(&iter, id_table);
++	while (g_hash_table_iter_next(&iter, &key, &value)) {
++		node =3D value;
++
++		if (!(node->mrs[offset] & bit))
++			continue;
++
++		if (status_report->status_report.st =3D=3D
++						SMS_ST_COMPLETED_RECEIVED) {
++			/* mr belongs to this node */
++			node->mrs[offset] ^=3D bit;
++			*msg_id =3D node->ofono_msg_id;
++
++			for (i =3D 0; i < 8; i++) {
++				/* There are still pending mr(s). */
++				if (node->mrs[i] !=3D 0)
++					return OFONO_HISTORY_SMS_STATUS_PENDING;
++			}
++		}
++		/* No more pending mrs for this node. Remove node from id_table
++		 * and free it.
++		 */
++		g_hash_table_iter_remove(&iter);
++		/* id_list empty, remove key and value from assembly_table */
++		if (g_hash_table_size(id_table) =3D=3D 0)
++			g_hash_table_remove(assembly->assembly_table,
++				status_report->status_report.raddr.address);
++
++		return OFONO_HISTORY_SMS_STATUS_DELIVERED;
++	}
++	/* mr not found. */
++	return OFONO_HISTORY_SMS_STATUS_ERROR;
++}
++
++void status_report_assembly_add_fragment(struct status_report_assembly
++					*assembly, unsigned int *msg_id,
++					struct sms_address *to,
++					unsigned char mr, time_t expiration)
++{
++	unsigned int offset =3D mr / 32;
++	unsigned int bit =3D 1 << (mr % 32);
++	GHashTable *id_table;
++	struct id_table_node *node;
++	char *assembly_table_key;
++	unsigned int *id_table_key;
++
++	id_table =3D g_hash_table_lookup(assembly->assembly_table, to->address);
++
++	if (id_table) {
++		node =3D g_hash_table_lookup(id_table, msg_id);
++
++		if (node) {
++			node->mrs[offset] |=3D bit;
++			node->expiration =3D expiration;
++		} else {
++			id_table_key =3D g_new0(unsigned int, 1);
++			node =3D g_new0(struct id_table_node, 1);
++			node->to =3D *to;
++			node->ofono_msg_id =3D *msg_id;
++			node->mrs[offset] |=3D bit;
++			node->expiration =3D expiration;
++
++			*id_table_key =3D *msg_id;
++			g_hash_table_insert(id_table, id_table_key, node);
++		}
 +	} else {
-+		status_report_assembly_report(sms->sr_assembly,
-+						incoming, &msg_id);
-+		__ofono_history_sms_send_status(modem, msg_id, time(NULL),
-+				OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED);
++		id_table =3D g_hash_table_new_full(g_int_hash, g_int_equal,
++								g_free, g_free);
++		id_table_key =3D g_new0(unsigned int, 1);
++
++		node =3D g_new0(struct id_table_node, 1);
++		node->to =3D *to;
++		node->ofono_msg_id =3D *msg_id;
++		node->mrs[offset] |=3D bit;
++		node->expiration =3D expiration;
++
++		*id_table_key =3D *msg_id;
++		g_hash_table_insert(id_table, id_table_key, node);
++
++		assembly_table_key =3D g_try_malloc(sizeof(to->address));
++
++		if (assembly_table_key =3D=3D NULL)
++			return;
++
++		g_strlcpy(assembly_table_key, to->address, sizeof(to->address));
++
++		g_hash_table_insert(assembly->assembly_table,
++					assembly_table_key, id_table);
 +	}
 +}
 +
++void status_report_assembly_expire(struct status_report_assembly *assembly,
++					time_t before, GFunc foreach_func,
++					gpointer data)
++{
++	/*TODO*/
++}
 +
- static inline gboolean handle_mwi(struct ofono_sms *sms, struct sms *s)
+ static inline GSList *sms_list_append(GSList *l, const struct sms *in)
  {
- 	gboolean discard;
-@@ -823,7 +856,25 @@ out:
- void ofono_sms_status_notify(struct ofono_sms *sms, unsigned char *pdu,
- 				int len, int tpdu_len)
- {
--	ofono_error("SMS Status-Report not yet handled");
-+	struct sms s;
-+	enum sms_class cls;
-+
-+	if (!sms_decode(pdu, len, FALSE, tpdu_len, &s)) {
-+		ofono_error("Unable to decode PDU");
-+		return;
-+	}
-+
-+	if (s.type !=3D SMS_TYPE_STATUS_REPORT) {
-+		ofono_error("Expecting a STATUS REPORT pdu");
-+		return;
-+	}
-+
-+	if (!sms_dcs_decode(s.deliver.dcs, &cls, NULL, NULL, NULL)) {
-+		ofono_error("Unknown / Reserved DCS.  Ignoring");
-+		return;
-+	}
-+
-+	handle_sms_status_report(sms, &s);
- }
+ 	struct sms *sms;
+diff --git a/src/smsutil.h b/src/smsutil.h
+index a36a9d3..14a01dc 100644
+--- a/src/smsutil.h
++++ b/src/smsutil.h
+@@ -19,6 +19,8 @@
+  *
+  */
  =
 
- int ofono_sms_driver_register(const struct ofono_sms_driver *d)
-@@ -903,6 +954,11 @@ static void sms_remove(struct ofono_atom *atom)
- 		sms->settings =3D NULL;
- 	}
- =
-
-+	if (sms->sr_assembly) {
-+		status_report_assembly_free(sms->sr_assembly);
-+		sms->sr_assembly =3D NULL;
-+	}
++#include "history.h"
 +
- 	g_free(sms);
- }
+ #define CBS_MAX_GSM_CHARS 93
  =
 
-@@ -1038,9 +1094,12 @@ void ofono_sms_register(struct ofono_sms *sms)
- 		imsi =3D ofono_sim_get_imsi(sms->sim);
- 		sms->assembly =3D sms_assembly_new(imsi);
+ enum sms_type {
+@@ -364,6 +366,18 @@ struct sms_assembly {
+ 	GSList *assembly_list;
+ };
  =
 
-+		sms->sr_assembly =3D status_report_assembly_new(imsi);
++struct id_table_node {
++	struct sms_address to;
++	unsigned int ofono_msg_id;
++	unsigned int mrs[8];
++	time_t expiration;
++};
 +
- 		sms_load_settings(sms, imsi);
- 	} else {
- 		sms->assembly =3D sms_assembly_new(NULL);
-+		sms->sr_assembly =3D status_report_assembly_new(NULL);
- 	}
++struct status_report_assembly {
++	const char *imsi;
++	GHashTable *assembly_table;
++};
++
+ struct cbs {
+ 	enum cbs_geo_scope gs;			/* 2 bits */
+ 	guint16 message_code;			/* 10 bits */
+@@ -481,6 +495,20 @@ GSList *sms_assembly_add_fragment(struct sms_assembly =
+*assembly,
+ 					guint16 ref, guint8 max, guint8 seq);
+ void sms_assembly_expire(struct sms_assembly *assembly, time_t before);
  =
 
- 	__ofono_atom_register(sms->atom, sms_unregister);
++struct status_report_assembly *status_report_assembly_new(const char *imsi=
+);
++void status_report_assembly_free(struct status_report_assembly *assembly);
++enum ofono_history_sms_status status_report_assembly_report(
++					struct status_report_assembly *assembly,
++					const struct sms *status_report,
++					unsigned int *msg_id);
++void status_report_assembly_add_fragment(struct status_report_assembly
++					*assembly, unsigned int *msg_id,
++					struct sms_address *to,
++					unsigned char mr, time_t expiration);
++void status_report_assembly_expire(struct status_report_assembly *assembly,
++					time_t before, GFunc foreach_func,
++					gpointer data);
++
+ GSList *sms_text_prepare(const char *utf8, guint16 ref,
+ 				gboolean use_16bit, int *ref_offset);
+ =
+
 -- =
 
 1.6.0.4
 
 
 
---===============0128632260688035985==--
+--===============2504313500455185739==--
 
