@@ -1,35 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============2085496709914666779=="
+Content-Type: multipart/mixed; boundary="===============3892191498235055872=="
 MIME-Version: 1.0
-From: Pasi Miettinen <pasi.miettinen@ixonos.com>
-Subject: SMS status report
-Date: Thu, 10 Jun 2010 10:05:43 +0300
-Message-ID: <1276153545-22260-1-git-send-email-pasi.miettinen@ixonos.com>
+From: Sjur BRENDELAND <sjur.brandeland@stericsson.com>
+Subject: RE: oFono v0.22 test report
+Date: Thu, 10 Jun 2010 10:28:11 +0200
+Message-ID: <81C3A93C17462B4BBD7E272753C10579169C4DA6CB@EXDCVYMBSTM005.EQ1STM.local>
+In-Reply-To: <B32E3D5F1713054290B4FF257B89C51A10A0098251@shsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2085496709914666779==
+--===============3892191498235055872==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Li,
 
-I noticed that mr-numbers and msg_ids were not updated to the data
-structure if the status was something else than "delivered". In
-these two patches it is fixed.
+Li, Zhigang wrote:
+> The test will do full light functional validation, mainly focus on
+> checking implemented functionality of ofono v0.22 =
 
-So if one mr is concidered undeliverable, the whole id is removed
-from the data structure and the mr numbers that still may arrive
-as "delivered" are not taken into account anymore.
+...
+>Executed total 276 test cases during this round of testing, and among them=
+: =
 
-Do we already have a plan for how accurately we are going to check
-these status report status codes?
+>Pass:     266
+>Fail:     10
 
-Br,
-Pasi
+Are these all manual tests or are you using any automated test suite?
+
+Regards
+Sjur Br=C3=A6ndeland
 
 
 
-
---===============2085496709914666779==--
+--===============3892191498235055872==--
 
