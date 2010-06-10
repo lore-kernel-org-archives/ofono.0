@@ -1,30 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7726489106939009969=="
+Content-Type: multipart/mixed; boundary="===============6319862108099742226=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 5/5] Remove hfpmodem's header guard
-Date: Thu, 10 Jun 2010 16:19:33 -0500
-Message-ID: <201006101619.33469.denkenz@gmail.com>
-In-Reply-To: <1275983040-26944-5-git-send-email-gustavo@padovan.org>
+Subject: Re: [PATCH v0] Report cell technology capability for Option HSO modems
+Date: Thu, 10 Jun 2010 16:51:49 -0500
+Message-ID: <201006101651.50176.denkenz@gmail.com>
+In-Reply-To: <20100610131957.GA29387@pc0043.bmw-carit.intra>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7726489106939009969==
+--===============6319862108099742226==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Daniel,
 
-> ---
->  drivers/hfpmodem/hfpmodem.h |    4 ----
->  1 files changed, 0 insertions(+), 4 deletions(-)
-> =
+> +	/*
+> +	 * OSSYSI can appear after a CREG and netreg isn't updated
+> +	 * until the next CREG which can take an undefined long time.
+> +	 */
+> +	ofono_netreg_status_notify(netreg, nd->status, nd->lac,
+> +				nd->ci, nd->tech);
 
+If this is indeed the case, then we might as well give up on using unsolici=
+ted =
 
-This one has been applied, thanks.
+notifications.  There's no point, simply ask the modem for the current =
+
+technology on every CREG change.
+
+Even using a compound at command is fine, e.g AT_OCTI?;_OUWCTI?
+
+It would be nice if someone from Option actually told us how to use this =
+
+properly.
 
 Regards,
 -Denis
 
---===============7726489106939009969==--
+--===============6319862108099742226==--
 
