@@ -1,305 +1,141 @@
-Content-Type: multipart/mixed; boundary="===============2031427833661223814=="
+Content-Type: multipart/mixed; boundary="===============3129352595424057664=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v0] Report cell technology capability for Option HSO modems
-Date: Thu, 10 Jun 2010 15:19:57 +0200
-Message-ID: <20100610131957.GA29387@pc0043.bmw-carit.intra>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Connman operator name empty with Huawei E1552
+Date: Thu, 10 Jun 2010 07:27:16 -0700
+Message-ID: <1276180036.2182.79.camel@localhost.localdomain>
+In-Reply-To: <8739wvzaxz.fsf_-_@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2031427833661223814==
+--===============3129352595424057664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Option modem use OCTI and OSSYSI commands
-for reporting the cell capability.
----
-The log to this patch: http://pastebin.com/xrbrUGeL
+Hi Kalle,
 
-Unfortunalty, I couldn't get away without OSSYSI updating the netreg
-info. =
+> >>> But now connman doesn't show the operator name "Saunalahti" anymore, =
+the
+> >>> name property in connman Service is just empty:
+> >>> =
 
+> >>> ./cmcc show cellular_244053111242822_huawei0_primarycontext1
+> >>> AutoConnect: true
+> >>> Name: =
 
-v0: based on "[RFC v3] Readout technology form Option HSO modems"
+> >>> Nameservers: { 193.229.0.40 193.229.0.42 }
+> >>> Proxy: { Method=3Ddirect }
+> >>
+> >> this might be a bug in the oFono plugin in ConnMan. I have encountered
+> >> this as well. I think ConnMan forgets to listen to name changes and to
+> >> update the name. Some times you get the name other times you don't.
+> >
+> > Thanks, that's good to know. I have been testing connman and ofono for
+> > some time now, but I saw this problem first time only yesterday. But I
+> > might have been just lucky earlier.
+> =
 
- drivers/atmodem/network-registration.c |  121 +++++++++++++++++++++-------=
-----
- 1 files changed, 81 insertions(+), 40 deletions(-)
+> I did more testing now. I see this a lot now, at least 90% of the time
+> operator name in connman is empty. Seems to be a race condition of some
+> sort:
+> =
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index f5ccbb1..d7617b1 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -54,7 +54,12 @@ struct netreg_data {
- 	int signal_index; /* If strength is reported via CIND */
- 	int signal_min; /* min strength reported via CIND */
- 	int signal_max; /* max strength reported via CIND */
-+	int status;
-+	int lac;
-+	int ci;
- 	int tech;
-+	int ossysi; /* option hso 2G/3G info */
-+	int octi; /* option hso 2G info */
- 	unsigned int vendor;
- };
- =
+> (I added extra debug messages)
+> =
 
-@@ -73,7 +78,7 @@ static void at_creg_cb(gboolean ok, GAtResult *result, gp=
-ointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
- 	ofono_netreg_status_cb_t cb =3D cbd->cb;
--	int status, lac, ci, tech;
-+	int tech;
- 	struct ofono_error error;
- 	struct netreg_data *nd =3D cbd->user;
- =
+> Jun 10 08:43:44 tukki connmand[23976]: plugins/ofono.c:set_network_name()=
+ path /huawei0
+> Jun 10 08:43:44 tukki connmand[23976]: plugins/ofono.c:set_network_name_r=
+eply() network 0x87d2b0
+> Jun 10 08:43:44 tukki connmand[23976]: plugins/ofono.c:set_network_name_r=
+eply() key Status
+> Jun 10 08:43:44 tukki connmand[23976]: plugins/ofono.c:set_network_name_r=
+eply() key Mode
+> Jun 10 08:43:44 tukki connmand[23976]: plugins/ofono.c:set_network_name_r=
+eply() key LocationAreaCode
+> Jun 10 08:43:44 tukki connmand[23976]: plugins/ofono.c:set_network_name_r=
+eply() key CellId
+> Jun 10 08:43:44 tukki connmand[23976]: plugins/ofono.c:set_network_name_r=
+eply() key Name
+> Jun 10 08:43:44 tukki connmand[23976]: src/network.c:connman_network_set_=
+name() network 0x87d2b0 name =
 
-@@ -84,16 +89,16 @@ static void at_creg_cb(gboolean ok, GAtResult *result, =
-gpointer user_data)
- 		return;
- 	}
- =
+> Jun 10 08:43:44 tukki connmand[23976]: src/element.c:set_static_property(=
+) element 0x87d2b0 name huawei0_primarycontext1
+> Jun 10 08:43:44 tukki connmand[23976]: src/element.c:set_static_property(=
+) name Name type 115 value 0x7fffc931f1e8
+> Jun 10 08:43:44 tukki connmand[23976]: plugins/ofono.c:set_network_name_r=
+eply() name ''
+> =
 
--	if (at_util_parse_reg(result, "+CREG:", NULL, &status,
--				&lac, &ci, &tech, nd->vendor) =3D=3D FALSE) {
-+	if (at_util_parse_reg(result, "+CREG:", NULL, &nd->status,
-+			&nd->lac, &nd->ci, &tech, nd->vendor) =3D=3D FALSE) {
- 		CALLBACK_WITH_FAILURE(cb, -1, -1, -1, -1, cbd->data);
- 		return;
- 	}
- =
+> The last debug line is printed here:
+> =
 
--	if ((status =3D=3D 1 || status =3D=3D 5) && (tech =3D=3D -1))
-+	if ((nd->status =3D=3D 1 || nd->status =3D=3D 5) && (tech =3D=3D -1))
- 		tech =3D nd->tech;
- =
+> 		if (g_str_equal(key, "Operator") =3D=3D TRUE ||
+> 				g_str_equal(key, "Name") =3D=3D TRUE) {
+> 			const char *name;
+> =
 
--	cb(&error, status, lac, ci, tech, cbd->data);
-+	cb(&error, nd->status, nd->lac, nd->ci, tech, cbd->data);
- }
- =
+> 			dbus_message_iter_get_basic(&value, &name);
+> 			connman_network_set_name(network, name);
+> 			DBG("name '%s'", name);
+> 			create_service(network);
+> 		}
+> =
 
- static void at_registration_status(struct ofono_netreg *netreg,
-@@ -533,36 +538,88 @@ static void option_osigq_notify(GAtResult *result, gp=
-ointer user_data)
- 				at_util_convert_signal_strength(strength));
- }
- =
+> And then a bit later in the log:
+> =
 
--static void option_ouwcti_notify(GAtResult *result, gpointer user_data)
-+static void option_ossysi_octi_to_tech(struct netreg_data *nd)
- {
--	int mode;
-+	int tech =3D -1;
-+	switch (nd->ossysi) {
-+	case 0: /* 2G */
-+		switch (nd->octi) {
-+		case 1:	/* GSM */
-+			tech =3D 0;
-+			break;
-+		case 2: /* GPRS */
-+			tech =3D 1;
-+			break;
-+		case 3:	/* EDGE */
-+			tech =3D 3;
-+		}
-+		break;
-+	case 2: /* 3G */
-+		/* UMTS */
-+		tech =3D 2;
-+		break;
-+	case 3: /* Unknown */
-+		/* reset all ossysi and octi */
-+		nd->octi =3D -1;
-+		nd->ossysi =3D -1;
-+		break;
-+	}
-+
-+	nd->tech =3D tech;
-+
-+	DBG("ossysi %d octi %d tech %d",
-+		nd->ossysi, nd->octi, nd->tech);
-+}
-+
-+static void option_ossysi_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_netreg *netreg =3D user_data;
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
- 	GAtResultIter iter;
- =
+> =
 
- 	g_at_result_iter_init(&iter, result);
- =
+> Jun 10 08:43:44 tukki ofonod[23999]: Pcui:< \r\n+CRSM: 144,0,""\r\n\r\nOK=
+\r\n
+> Jun 10 08:43:44 tukki ofonod[23999]: drivers/atmodem/sim.c:at_crsm_info_c=
+b() crsm_info_cb: 90, 00, 0
+> Jun 10 08:43:44 tukki ofonod[23999]: Pcui:> AT+COPS=3D3,0\r
+> Jun 10 08:43:44 tukki ofonod[23999]: Pcui:< \r\nOK\r\n
+> Jun 10 08:43:44 tukki ofonod[23999]: Pcui:> AT+COPS?\r
+> Jun 10 08:43:44 tukki ofonod[23999]: Pcui:< \r\n+COPS: 0,0,"Saunalahti",2=
+\r\n\r\nOK\r\n
+> Jun 10 08:43:44 tukki ofonod[23999]: drivers/atmodem/network-registration=
+.c:cops_cb() cops_cb: Saunalahti, 244 05 2
+> Jun 10 08:43:44 tukki ofonod[23999]: src/network.c:current_operator_callb=
+ack() 0xaa5a50, (nil)
+> Jun 10 08:43:44 tukki ofonod[23999]: src/gprs.c:netreg_status_changed() 1
+> Jun 10 08:43:44 tukki ofonod[23999]: src/cbs.c:cbs_location_changed() 1, =
+1450, 21880, -1, 24405
+> Jun 10 08:43:44 tukki ofonod[23999]: src/cbs.c:cbs_location_changed() 1, =
+0, 0
+> =
 
--	if (!g_at_result_iter_next(&iter, "_OUWCTI:"))
-+	if (!g_at_result_iter_next(&iter, "_OSSYSI:"))
- 		return;
- =
+> Then I run test/list-modems after initialisation, I did see the operator
+> name correctly:
+> =
 
--	if (!g_at_result_iter_next_number(&iter, &mode))
-+	if (!g_at_result_iter_next_number(&iter, &nd->ossysi))
- 		return;
- =
+>     [ org.ofono.NetworkRegistration ]
+>         Status =3D registered
+>         Strength =3D 67
+>         Name =3D Saunalahti
+> =
 
--	ofono_info("OWCTI mode: %d", mode);
-+	option_ossysi_octi_to_tech(nd);
-+
-+	/*
-+	 * OSSYSI can appear after a CREG and netreg isn't updated
-+	 * until the next CREG which can take an undefined long time.
-+	 */
-+	ofono_netreg_status_notify(netreg, nd->status, nd->lac,
-+				nd->ci, nd->tech);
- }
- =
+> So connman uses the Name property from org.ofono.NetworkRegistration
+> even before ofono has set it and doesn't follow name changes.
+> =
 
- static void option_octi_notify(GAtResult *result, gpointer user_data)
- {
--	int mode;
-+	struct ofono_netreg *netreg =3D user_data;
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
- 	GAtResultIter iter;
-+	int mode;
- =
+> Also CCed the connman list because I don't yet know which one is buggy,
+> connman or ofono. I vote for connman's ofono plugin. Thoughts?
 
- 	g_at_result_iter_init(&iter, result);
- =
+it is the ConnMan plugin. It needs to follow name changes. Especially
+since the name can change at any time anyway. Most common case would
+actually be roaming, but also operator names can be updates over the air
+at any time (even if that happens rarely).
 
- 	if (!g_at_result_iter_next(&iter, "_OCTI:"))
- 		return;
- =
+Regards
 
--	if (!g_at_result_iter_next_number(&iter, &mode))
-+	if (!g_at_result_iter_next_number(&iter, &nd->octi))
- 		return;
- =
-
--	ofono_info("OCTI mode: %d", mode);
-+	/* Handle query responses too */
-+	if (!g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
-+		nd->octi =3D mode;
-+
-+	option_ossysi_octi_to_tech(nd);
-+
-+	/*
-+	 * OCTI seem to appear always before a CREG or
-+	 * is followed by a OSSYSI which will update netreg.
-+	 */
- }
- =
-
- static void ciev_notify(GAtResult *result, gpointer user_data)
-@@ -624,22 +681,6 @@ static void cind_cb(gboolean ok, GAtResult *result, gp=
-ointer user_data)
- 	cb(&error, strength, cbd->data);
- }
- =
-
--static void option_ossysi_notify(GAtResult *result, gpointer user_data)
--{
--	int mode;
--	GAtResultIter iter;
--
--	g_at_result_iter_init(&iter, result);
--
--	if (!g_at_result_iter_next(&iter, "_OSSYSI:"))
--		return;
--
--	if (!g_at_result_iter_next_number(&iter, &mode))
--		return;
--
--	ofono_info("OSSYSI mode: %d", mode);
--}
--
- static void huawei_rssi_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_netreg *netreg =3D user_data;
-@@ -806,17 +847,17 @@ static void nw_cnti_notify(GAtResult *result, gpointe=
-r user_data)
- static void creg_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_netreg *netreg =3D user_data;
--	int status, lac, ci, tech;
-+	int tech;
- 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
- =
-
--	if (at_util_parse_reg_unsolicited(result, "+CREG:", &status,
--				&lac, &ci, &tech, nd->vendor) =3D=3D FALSE)
-+	if (at_util_parse_reg_unsolicited(result, "+CREG:", &nd->status,
-+				&nd->lac, &nd->ci, &tech, nd->vendor) =3D=3D FALSE)
- 		return;
- =
-
--	if ((status =3D=3D 1 || status =3D=3D 5) && tech =3D=3D -1)
-+	if ((nd->status =3D=3D 1 || nd->status =3D=3D 5) && tech =3D=3D -1)
- 		tech =3D nd->tech;
- =
-
--	ofono_netreg_status_notify(netreg, status, lac, ci, tech);
-+	ofono_netreg_status_notify(netreg, nd->status, nd->lac, nd->ci, tech);
- }
- =
-
- static void cind_support_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-@@ -909,16 +950,12 @@ static void at_creg_set_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	case OFONO_VENDOR_OPTION_HSO:
- 		g_at_chat_send(nd->chat, "AT_OSSYS=3D1", none_prefix,
- 				NULL, NULL, NULL);
--		g_at_chat_send(nd->chat, "AT_OUWCTI=3D1", none_prefix,
--				NULL, NULL, NULL);
- 		g_at_chat_send(nd->chat, "AT_OCTI=3D1", none_prefix,
- 				NULL, NULL, NULL);
- 		g_at_chat_send(nd->chat, "AT_OSQI=3D1", none_prefix,
- 				NULL, NULL, NULL);
- 		g_at_chat_register(nd->chat, "_OSIGQ:", option_osigq_notify,
- 					FALSE, netreg, NULL);
--		g_at_chat_register(nd->chat, "_OUWCTI:", option_ouwcti_notify,
--					FALSE, netreg, NULL);
- 		g_at_chat_register(nd->chat, "_OCTI:", option_octi_notify,
- 					FALSE, netreg, NULL);
- 		g_at_chat_register(nd->chat, "_OSSYSI:", option_ossysi_notify,
-@@ -926,12 +963,11 @@ static void at_creg_set_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- =
-
- 		g_at_chat_send(nd->chat, "AT_OSSYS?", none_prefix,
- 				NULL, NULL, NULL);
--		g_at_chat_send(nd->chat, "AT_OWCTI?", none_prefix,
--				NULL, NULL, NULL);
- 		g_at_chat_send(nd->chat, "AT_OCTI?", none_prefix,
- 				NULL, NULL, NULL);
- 		g_at_chat_send(nd->chat, "AT_OSQI?", none_prefix,
- 				NULL, NULL, NULL);
-+
- 		break;
- 	case OFONO_VENDOR_MBM:
- 		g_at_chat_send(nd->chat, "AT*ERINFO=3D1", none_prefix,
-@@ -1021,7 +1057,12 @@ static int at_netreg_probe(struct ofono_netreg *netr=
-eg, unsigned int vendor,
- =
-
- 	nd->chat =3D chat;
- 	nd->vendor =3D vendor;
-+	nd->status =3D -1;
-+	nd->lac =3D -1;
-+	nd->ci =3D -1;
- 	nd->tech =3D -1;
-+	nd->ossysi =3D -1;
-+	nd->octi =3D -1;
- 	ofono_netreg_set_data(netreg, nd);
- =
-
- 	g_at_chat_send(chat, "AT+CREG=3D?", creg_prefix,
--- =
-
-1.6.6.1
+Marcel
 
 
---===============2031427833661223814==--
+
+--===============3129352595424057664==--
 
