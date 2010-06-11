@@ -1,43 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4372035274163982186=="
+Content-Type: multipart/mixed; boundary="===============8201126734980292849=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 17/20] stkutil: Add the Event Download envelope builder
-Date: Fri, 11 Jun 2010 14:31:39 -0500
-Message-ID: <201006111431.40078.denkenz@gmail.com>
-In-Reply-To: <AANLkTimppyAsTK346PXxtdlRG0JF2DwvU-yMuKPLXxti@mail.gmail.com>
+Subject: Re: [PATCH 12/20] stkutil: Add the Call Control envelope builder
+Date: Fri, 11 Jun 2010 14:34:35 -0500
+Message-ID: <201006111434.35867.denkenz@gmail.com>
+In-Reply-To: <AANLkTincE0TeBlPw8gnaNmOoRMK46USpW3XBHZ0aNWU6@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4372035274163982186==
+--===============8201126734980292849==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andrew,
 
-> Hi,
+
+> >> +/* Used both in the ENVELOPE message to UICC and response from UICC */
+> >> +struct stk_envelope_call_control {
+> >> +     /* Exactly one of the following 5 fields must be present */
+> >
+> > Why are we not using a union then?
 > =
 
-> On 10 June 2010 03:06, Denis Kenzior <denkenz@gmail.com> wrote:
-> > Hi Andrew,
-> >
-> >>               /* Network Byte Order */
-> >> -             unsigned int ipv4;
-> >> +             guint32 ipv4;
-> >
-> > Why?
-> =
+> We don't know which one of 5 is valid if it's a union.  We could add a
+> field to indicate that but I guess it's simpler the way it is.
 
-> int has no guranteed size except at the ABI level.  So the SysV r4
-> ABIs for x86, ARM and amd64 make it 32-bit but you don't know what
-> happens elsewhere.  I'll remove this change as it's unlikely int will
-> be < 32-bit and if it's wider we don't care.  (I, too, prefer stdint
-> types like uint32_t).
+It seems like a type + union might be better for the consumers of this =
 
-Lets go with uint32_t, I think everyone agrees it the better approach.
+structure though.  Otherwise they have to check up to 5 structs for emptine=
+ss =
+
+before figuring out what the type actually is.  Your call.
 
 Regards,
 -Denis
 
---===============4372035274163982186==--
+--===============8201126734980292849==--
 
