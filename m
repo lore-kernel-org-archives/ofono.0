@@ -1,223 +1,157 @@
-Content-Type: multipart/mixed; boundary="===============0583466372577159975=="
+Content-Type: multipart/mixed; boundary="===============5116954708668381355=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 15/15] stkutil: Add the Geographical Location Reporting
- envelope builder
-Date: Fri, 11 Jun 2010 12:40:00 +0200
-Message-ID: <1276252800-27515-15-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1276252800-27515-1-git-send-email-andrew.zaborowski@intel.com>
+From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
+Subject: Re: VS: SMS status report
+Date: Fri, 11 Jun 2010 16:45:05 -0700
+Message-ID: <1276299905.21431.38.camel@localhost.localdomain>
+In-Reply-To: <EA8B5A37FEEFC048AF3F8170D2819913B8C1280A55@jklmail01.ixonos.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0583466372577159975==
+--===============5116954708668381355==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am         |    4 +-
- src/stk.c           |    1 +
- src/stkutil.c       |   66 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/stkutil.h       |   15 +++++++++++
- unit/test-stkutil.c |    1 +
- 5 files changed, 85 insertions(+), 2 deletions(-)
+On Thu, 2010-06-10 at 11:30 +0300, Miettinen Pasi wrote: =
 
-diff --git a/Makefile.am b/Makefile.am
-index 6476ec1..e0be875 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -385,8 +385,8 @@ unit_objects +=3D $(unit_test_simutil_OBJECTS)
- =
+> Hello Inaky
+> > Hi Pasi
+> |
+> >
+> > there is a set of patches there which lay out changes in the SMS code
+> > infrastructure to do the following:
+> > =
 
- unit_test_stkutil_SOURCES =3D unit/test-stkutil.c src/util.c \
- 				src/storage.c src/smsutil.c \
--				src/simutil.c src/stkutil.c
--unit_test_stkutil_LDADD =3D @GLIB_LIBS@
-+				src/simutil.c src/common.c src/stkutil.c
-+unit_test_stkutil_LDADD =3D @GLIB_LIBS@ -lm
- unit_objects +=3D $(unit_test_stkutil_OBJECTS)
- =
+> > - export of SMS messages to D-Bus
+> > =
 
- unit_test_mux_SOURCES =3D unit/test-mux.c $(gatchat_sources)
-diff --git a/src/stk.c b/src/stk.c
-index e307a4e..f472a63 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -34,6 +34,7 @@
- =
+> >   - each message is an object in the bus
+> > =
 
- #include "ofono.h"
- =
+> >   - messages can be canceled, properties queried, etc
+> =
 
-+#include "common.h"
- #include "smsutil.h"
- #include "stkutil.h"
- =
+> If a message that waits for a status report is canceled, status_report_as=
+sembly
+> data structure must be updated (msg_id and mr-number removed).
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 9d25143..4e11179 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -30,6 +30,7 @@
- #include <glib.h>
- =
+so I guess here we'd have to unify whichever infrastructure is there to
+keep track of pending guys. The way I had it laid out was an extra queue
+in the smsmanager object (sms->tx_wfaq) where those were kept, and then
+the msg_id/ref was contained in there. That's going to be kind of like
+the same like what you have, I have no personal preference on which one
+to use.
 
- #include <ofono/types.h>
-+#include "common.h"
- #include "smsutil.h"
- #include "stkutil.h"
- #include "simutil.h"
-@@ -4518,6 +4519,60 @@ static gboolean build_dataobj_rejection_cause_code(s=
-truct stk_tlv_builder *tlv,
- 		stk_tlv_builder_close_container(tlv);
- }
- =
+> > =
 
-+/* Described in TS 131.111 Section 8.95 */
-+static gboolean build_dataobj_gad_shape(struct stk_tlv_builder *tlv,
-+					const void *data, gboolean cr)
-+{
-+	const struct stk_gad_shapes *shapes =3D data;
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_GAD_SHAPE;
-+	unsigned char shape_buf[128];
-+	unsigned char velocity_buf[8];
-+	int shape_len =3D sizeof(shape_buf);
-+	int velocity_len =3D sizeof(velocity_buf);
-+
-+	if (shapes->has_shape !=3D TRUE)
-+		return TRUE;
-+
-+	if (gad_shape_encode(&shapes->shape, shape_buf, &shape_len) !=3D TRUE)
-+		return FALSE;
-+
-+	if (shapes->has_velocity =3D=3D TRUE) {
-+		if (gad_velocity_encode(&shapes->velocity,
-+					velocity_buf, &velocity_len) !=3D TRUE)
-+			return FALSE;
-+	} else
-+		velocity_len =3D 0;
-+
-+	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-+		stk_tlv_builder_append_byte(tlv, shape_len) &&
-+		stk_tlv_builder_append_bytes(tlv, shape_buf, shape_len) &&
-+		stk_tlv_builder_append_byte(tlv, velocity_len) &&
-+		stk_tlv_builder_append_bytes(tlv, velocity_buf, velocity_len) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
-+/* Described in TS 131.111 Section 8.96 */
-+static gboolean build_dataobj_nmea_sentence(struct stk_tlv_builder *tlv,
-+					const void *data, gboolean cr)
-+{
-+	const char *nmea =3D data;
-+	unsigned char tag =3D STK_DATA_OBJECT_TYPE_NMEA_SENTENCE;
-+	int len;
-+
-+	if (nmea =3D=3D NULL)
-+		return TRUE;
-+
-+	len =3D strlen(nmea);
-+	if (len > 0x7e)
-+		return FALSE;
-+
-+	/* No need to convert because NMEA only uses basic ASCII, UTF8 subset */
-+	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-+		stk_tlv_builder_append_byte(tlv, len) &&
-+		stk_tlv_builder_append_bytes(tlv, (void *) nmea, len) &&
-+		stk_tlv_builder_close_container(tlv);
-+}
-+
- /* Described in TS 131.111 Section 8.98, 3GPP 24.301 Section 6.5.1 */
- static gboolean build_dataobj_eps_pdn_conn_params(struct stk_tlv_builder *=
-tlv,
- 						const void *data, gboolean cr)
-@@ -5244,6 +5299,17 @@ const unsigned char *stk_pdu_from_envelope(const str=
-uct stk_envelope *envelope,
- 	case STK_ENVELOPE_TYPE_TERMINAL_APP:
- 		ok =3D build_envelope_terminal_apps(&builder, envelope);
- 		break;
-+	case STK_ENVELOPE_TYPE_GEOLOCATION_REPORT:
-+		ok =3D build_dataobj(&builder,
-+					build_envelope_dataobj_device_ids,
-+					DATAOBJ_FLAG_CR,
-+					envelope,
-+					build_dataobj_gad_shape, 0,
-+					&envelope->geolocation_report.shape,
-+					build_dataobj_nmea_sentence, 0,
-+					&envelope->geolocation_report.nmea,
-+					NULL);
-+		break;
- 	default:
- 		return NULL;
- 	};
-diff --git a/src/stkutil.h b/src/stkutil.h
-index eb59fed..f6a578a 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -181,6 +181,7 @@ enum stk_data_object_type {
- 	STK_DATA_OBJECT_TYPE_ROUTING_AREA_INFO =3D		0x73,
- 	STK_DATA_OBJECT_TYPE_UPDATE_ATTACH_TYPE =3D		0x74,
- 	STK_DATA_OBJECT_TYPE_REJECTION_CAUSE_CODE =3D		0x75,
-+	STK_DATA_OBJECT_TYPE_GAD_SHAPE =3D			0x77,
- 	STK_DATA_OBJECT_TYPE_NMEA_SENTENCE =3D			0x78,
- 	STK_DATA_OBJECT_TYPE_PLMN_LIST =3D			0x79,
- 	STK_DATA_OBJECT_TYPE_BROADCAST_NETWORK_INFO =3D		0x7A,
-@@ -1001,6 +1002,14 @@ struct stk_routing_area_info {
- 	unsigned char rac;
- };
- =
+> > - in transit SMS messages get an state machine describing at which phase
+> > they are. D-Bus signals are sent in transitions
+> =
 
-+/* Defined in TS 131.111 Section 8.95 */
-+struct stk_gad_shapes {
-+	struct gad_shape shape;
-+	struct gad_velocity velocity;
-+	ofono_bool_t has_shape; /* Whether the struct is valid */
-+	ofono_bool_t has_velocity; /* Whether velocity is known */
-+};
-+
- /* Defined in TS 131.111 Section 8.99 */
- struct stk_tracking_area_id {
- 	char mnc[OFONO_MAX_MNC_LENGTH + 1];
-@@ -1458,6 +1467,11 @@ struct stk_envelope_terminal_apps {
- 	ofono_bool_t last;
- };
- =
-
-+struct stk_envelope_geolocation_report {
-+	struct stk_gad_shapes shape;
-+	const char *nmea;
-+};
-+
- struct stk_envelope {
- 	enum stk_envelope_type type;
- 	enum stk_device_identity_type src;
-@@ -1474,6 +1488,7 @@ struct stk_envelope {
- 		struct stk_envelope_mms_transfer_status mms_status;
- 		struct stk_envelope_mms_notification_download mms_notification;
- 		struct stk_envelope_terminal_apps terminal_apps;
-+		struct stk_envelope_geolocation_report geolocation_report;
- 	};
- };
- =
-
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index c049471..a3d7bde 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -33,6 +33,7 @@
- #include <glib/gprintf.h>
- =
-
- #include <ofono/types.h>
-+#include "common.h"
- #include "smsutil.h"
- #include "stkutil.h"
- #include "util.h"
--- =
-
-1.7.1.86.g0e460.dirty
+> This could become topical when we decide how to react to different status
+> report results. Currently it is just "delivered"/"undelivered". =
 
 
---===============0583466372577159975==--
+This one Denis and me discussed long and hard, as we wanted to move the
+hole SMS interface to be fully asynchronous (you send the message, get
+an object name back and then track it by signals reporting status
+changes). That whole code is also implemented in the commit set; I am
+decently satisfied with how it was working, I think it fits the bill. I
+am just thinking of adding a last state (destroyed) so listeners can
+tell when a message disappears from oFono's knowledge (it gets delivered
+or fails completely or whatever). =
+
+> > =
+
+> > - messages waiting for an status report are queued in a separate queue
+> =
+
+> I need to know the the lifespan of these messages that are waiting for st=
+atus
+> reports. When a message that requests for status report is created, it mu=
+st
+> be added to the status_report_assembly data structure. And when the
+> status report arrives, the data structure must be updated accordingly. I
+> have implemented functions for these actions and they are going to be
+> in smsutil file.
+
+Ok.
+
+> > =
+
+> > - a unique ID is generated based on message contents and destination
+> > nunmber to reduce the chances of collision -- need still to apply it to
+> > received messages so it's easier to gather status reports from different
+> > fragments
+> =
+
+> I think this is one place where we need to keep track of what we are doin=
+g,
+> because at least for now I am using this msg_id as a key in a hashmap
+> which I use to keep track of pending status reports.
+
+Yep, so I built some infrastructure for it to build a hash just piping
+data to it -- those commits are kind of independent. I need to clean up
+further my commits to fully isolate how it gets inserted into the actual
+code, but at the end the idea is that the 16-bit message id gets
+generated from this hash instead of having a monotonic increasing one. =
+
+
+This is for the TX side; for the RX side I still hadn't started thinking
+about it and probably you went further than me.
+
+> > - provide an internal C API for managing messages (D-Bus's maps on top
+> > of this)
+> > =
+
+> > =
+
+> > FIXMEs/TODOs/RFCs:
+> > =
+
+> >   still need to cleanup some more to adapt to your code
+> =
+
+> You can also suggest to me if you would like me to change something in my
+> code. Mainly I have been going under Denis's guidance to get up to speed
+> here in my start for the project.
+
+Likewise -- in any case, most of your stuff in the SRR side seems way
+more advanced than were I was. Most of my progress was in reorganizing
+the SMS & D-BUS code, the status machine and propagation. I had to
+wiggle to force things into the changes you had done but that is mostly
+done already.
+
+So I guess the only collision part is now how to keep track of the
+messages that are pending acknowledgement. Take your pick, after all
+your code in that are is more advanced. Just please take a look at the
+commits:
+
+SMS-introduce-wait-for-ack-state-and-infrastructure
+
+this is what creates the queue I was planning on using. Other commits do
+the msg_id thingie, but I still need to cleanup the commits more so it
+looks cleaner -- right now it is spread around a few commits.
+
+[I just repushed a rebase of my smsdbus branch with more cleanups, so
+you might want to force pull if you want to look at the commits]
+
+> > =
+
+> >   plenty of whatifs/FIXMEs litered around the code still
+> > =
+
+> >   remove the 'request-status-report' from D-Bus::SendMessage
+> =
+
+> This is currently done via SetProperty. ofono_sms has use_delivery_reports
+> boolean variable.
+
+Yes, this is something I still need to clean up, so feel free to ignore
+it.
+
+
+
+--===============5116954708668381355==--
 
