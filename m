@@ -1,327 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============6573242129475551902=="
+Content-Type: multipart/mixed; boundary="===============6466488052788845820=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v5] Report cell technology capability for Option HSO
-Date: Fri, 11 Jun 2010 21:12:38 +0200
-Message-ID: <20100611191238.GA5504@cesium.localdomain>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 12/20] stkutil: Add the Call Control envelope builder
+Date: Fri, 11 Jun 2010 21:18:27 +0200
+Message-ID: <AANLkTincE0TeBlPw8gnaNmOoRMK46USpW3XBHZ0aNWU6@mail.gmail.com>
+In-Reply-To: <201006091757.48688.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6573242129475551902==
+--===============6466488052788845820==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Option modem use OCTI and OUWCTI commands
-for reporting the cell capability.
----
+Hi,
 
-not run or testest because of missing modem.
+On 10 June 2010 00:57, Denis Kenzior <denkenz@gmail.com> wrote:
+>> ---
+>> =C2=A0src/stkutil.c | =C2=A0178
+>> =C2=A0++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+> src/stkutil.h |
+>> =C2=A0 31 ++++++++++
+>> =C2=A02 files changed, 207 insertions(+), 2 deletions(-)
+>>
+>> diff --git a/src/stkutil.c b/src/stkutil.c
+>> index 83ff5c7..b9a152a 100644
+>> --- a/src/stkutil.c
+>> +++ b/src/stkutil.c
+>> @@ -319,8 +319,6 @@ static gboolean parse_dataobj_subaddress(struct
+>> =C2=A0comprehension_tlv_iter *iter, unsigned int len;
+>>
+>> =C2=A0 =C2=A0 =C2=A0 len =3D comprehension_tlv_iter_get_length(iter);
+>> - =C2=A0 =C2=A0 if (len < 1)
+>> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return FALSE;
+>
+> This seems wrong. =C2=A0Can you point me to the test that uses empty suba=
+ddresses?
 
-v5: don't send AT+CREG? twice
-v4: clean up :)
-v3: simplify even more.
-v2: simplify v1 and use two callbacks instead of one
-v1: do not depend on unsoliced message. use only octi & ouwcti, no ossysi
-v0: based on "[RFC v3] Readout technology form Option HSO modems"
+I removed this from the new version of the patch.  Empty subaddress
+("null object") is only used in the response to the Call Control
+ENVELOPE (second half of section 7.3.1.6).
 
- drivers/atmodem/network-registration.c |  187 +++++++++++++++++++++-------=
-----
- 1 files changed, 124 insertions(+), 63 deletions(-)
+>
+>> +/* Used both in the ENVELOPE message to UICC and response from UICC */
+>> +struct stk_envelope_call_control {
+>> + =C2=A0 =C2=A0 /* Exactly one of the following 5 fields must be present=
+ */
+>
+> Why are we not using a union then?
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index f5ccbb1..f55b9b4 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -46,6 +46,7 @@ static const char *creg_prefix[] =3D { "+CREG:", NULL };
- static const char *cops_prefix[] =3D { "+COPS:", NULL };
- static const char *csq_prefix[] =3D { "+CSQ:", NULL };
- static const char *cind_prefix[] =3D { "+CIND:", NULL };
-+static const char *option_tech_prefix[] =3D { "_OCTI:", "_OUWCTI:", NULL };
- =
+We don't know which one of 5 is valid if it's a union.  We could add a
+field to indicate that but I guess it's simpler the way it is.
 
- struct netreg_data {
- 	GAtChat *chat;
-@@ -58,6 +59,13 @@ struct netreg_data {
- 	unsigned int vendor;
- };
- =
+>
+>> + =C2=A0 =C2=A0 struct stk_address address;
+>> + =C2=A0 =C2=A0 struct stk_address ss_string;
+>> + =C2=A0 =C2=A0 struct stk_ussd_string {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned char dcs;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 const unsigned char *string;
+>
+> Please don't do that. =C2=A0These objects will be passed around like cand=
+y and I
+> don't want to deal with dangling pointers.
+>
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 int len;
+>> + =C2=A0 =C2=A0 } ussd_string;
+>
+> The ussd string is limited to 160 bytes according to 23.038. =C2=A0So bre=
+aking this
+> out into a proper stk datatype like:
+> struct stk_ussd_string {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0unsigned char dcs;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0unsigned char ussd[160];
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0int len;
+> };
+> would be better
 
-+struct tech_query {
-+	int status;
-+	int lac;
-+	int ci;
-+	struct ofono_netreg *netreg;
-+};
-+
- static void extract_mcc_mnc(const char *str, char *mcc, char *mnc)
- {
- 	/* Three digit country code */
-@@ -69,6 +77,64 @@ static void extract_mcc_mnc(const char *str, char *mcc, =
-char *mnc)
- 	mnc[OFONO_MAX_MNC_LENGTH] =3D '\0';
- }
- =
+Ok.  I'll resend these four patches and add the remaining ENVELOPEs.
 
-+static int option_parse_tech(GAtResult *result)
-+{
-+	GAtResultIter iter;
-+	int s, octi, ouwcti;
-+	int tech =3D -1;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "_OCTI:"))
-+		return -1;
-+
-+	if (!g_at_result_iter_next_number(&iter, &s))
-+		return -1;
-+
-+	if (!g_at_result_iter_next_number(&iter, &octi))
-+		return -1;
-+
-+	if (!g_at_result_iter_next(&iter, "_OUWCTI:"))
-+		return -1;
-+
-+	if (!g_at_result_iter_next_number(&iter, &s))
-+		return -1;
-+
-+	if (!g_at_result_iter_next_number(&iter, &ouwcti))
-+		return -1;
-+
-+	switch (octi) {
-+	case 1: /* GSM */
-+		tech =3D 0;
-+		break;
-+	case 2: /* GPRS */
-+		tech =3D 1;
-+		break;
-+	case 3: /* EDGE */
-+		tech =3D 3;
-+		break;
-+	}
-+
-+	switch (ouwcti) {
-+	case 1: /* UMTS */
-+		tech =3D 2;
-+		break;
-+	case 2: /* HSDPA */
-+		tech =3D 4;
-+		break;
-+	case 3: /* HSUPA */
-+		tech =3D 5;
-+		break;
-+	case 4: /* HSPA */
-+		tech =3D 6;
-+		break;
-+	}
-+
-+	DBG("octi %d ouwcti %d tech %d", octi, ouwcti, tech);
-+
-+	return tech;
-+}
-+
- static void at_creg_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
-@@ -96,6 +162,25 @@ static void at_creg_cb(gboolean ok, GAtResult *result, =
-gpointer user_data)
- 	cb(&error, status, lac, ci, tech, cbd->data);
- }
- =
+Regards
 
-+static void option_tech_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	struct ofono_netreg *netreg =3D cbd->data;
-+	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+
-+	if (ok)
-+		nd->tech =3D option_parse_tech(result);
-+	else
-+		nd->tech =3D -1;
-+
-+	if (g_at_chat_send(nd->chat, "AT+CREG?", creg_prefix,
-+				at_creg_cb, cbd, g_free) > 0)
-+		return;
-+
-+	if (cbd)
-+		g_free(cbd);
-+}
-+
- static void at_registration_status(struct ofono_netreg *netreg,
- 					ofono_netreg_status_cb_t cb,
- 					void *data)
-@@ -125,6 +210,14 @@ static void at_registration_status(struct ofono_netreg=
- *netreg,
- 		g_at_chat_send(nd->chat, "AT$CNTI=3D0", none_prefix,
- 				NULL, NULL, NULL);
- 		break;
-+	case OFONO_VENDOR_OPTION_HSO:
-+		/*
-+		 * Send AT_OCTI?;_OUWCTI? to find out the current tech,
-+		 * option_tech_cb will call fire CREG? to do the rest.
-+		 */
-+		if (g_at_chat_send(nd->chat, "AT_OCTI?;_OUWCTI?",
-+			option_tech_prefix, option_tech_cb, cbd, NULL) <=3D 0)
-+			nd->tech =3D -1;
- 	}
- =
-
- 	if (g_at_chat_send(nd->chat, "AT+CREG?", creg_prefix,
-@@ -533,38 +626,6 @@ static void option_osigq_notify(GAtResult *result, gpo=
-inter user_data)
- 				at_util_convert_signal_strength(strength));
- }
- =
-
--static void option_ouwcti_notify(GAtResult *result, gpointer user_data)
--{
--	int mode;
--	GAtResultIter iter;
--
--	g_at_result_iter_init(&iter, result);
--
--	if (!g_at_result_iter_next(&iter, "_OUWCTI:"))
--		return;
--
--	if (!g_at_result_iter_next_number(&iter, &mode))
--		return;
--
--	ofono_info("OWCTI mode: %d", mode);
--}
--
--static void option_octi_notify(GAtResult *result, gpointer user_data)
--{
--	int mode;
--	GAtResultIter iter;
--
--	g_at_result_iter_init(&iter, result);
--
--	if (!g_at_result_iter_next(&iter, "_OCTI:"))
--		return;
--
--	if (!g_at_result_iter_next_number(&iter, &mode))
--		return;
--
--	ofono_info("OCTI mode: %d", mode);
--}
--
- static void ciev_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_netreg *netreg =3D user_data;
-@@ -624,22 +685,6 @@ static void cind_cb(gboolean ok, GAtResult *result, gp=
-ointer user_data)
- 	cb(&error, strength, cbd->data);
- }
- =
-
--static void option_ossysi_notify(GAtResult *result, gpointer user_data)
--{
--	int mode;
--	GAtResultIter iter;
--
--	g_at_result_iter_init(&iter, result);
--
--	if (!g_at_result_iter_next(&iter, "_OSSYSI:"))
--		return;
--
--	if (!g_at_result_iter_next_number(&iter, &mode))
--		return;
--
--	ofono_info("OSSYSI mode: %d", mode);
--}
--
- static void huawei_rssi_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_netreg *netreg =3D user_data;
-@@ -803,15 +848,45 @@ static void nw_cnti_notify(GAtResult *result, gpointe=
-r user_data)
- 	ofono_info("CNTI: %s", tech);
- }
- =
-
-+static void option_query_tech_cb(gboolean ok,
-+			GAtResult *result, gpointer user_data)
-+{
-+	struct tech_query *tq =3D user_data;
-+	int tech =3D -1;
-+
-+	if (ok)
-+		tech =3D option_parse_tech(result);
-+
-+	ofono_netreg_status_notify(tq->netreg,
-+			tq->status, tq->lac, tq->ci, tech);
-+}
-+
- static void creg_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_netreg *netreg =3D user_data;
- 	int status, lac, ci, tech;
- 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
-+	struct tech_query *tq;
- =
-
- 	if (at_util_parse_reg_unsolicited(result, "+CREG:", &status,
--				&lac, &ci, &tech, nd->vendor) =3D=3D FALSE)
-+			&lac, &ci, &tech, nd->vendor) =3D=3D FALSE)
-+		return;
-+
-+	switch (nd->vendor) {
-+	case OFONO_VENDOR_OPTION_HSO:
-+		tq =3D g_new0(struct tech_query, 1);
-+		if (!tq)
-+			break;
-+
-+		tq->status =3D status;
-+		tq->lac =3D lac;
-+		tq->ci =3D ci;
-+		tq->netreg =3D netreg;
-+
-+		g_at_chat_send(nd->chat, "AT_OCTI?;_OUWCTI?",
-+			option_tech_prefix, option_query_tech_cb, tq, g_free);
- 		return;
-+	}
- =
-
- 	if ((status =3D=3D 1 || status =3D=3D 5) && tech =3D=3D -1)
- 		tech =3D nd->tech;
-@@ -909,27 +984,13 @@ static void at_creg_set_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	case OFONO_VENDOR_OPTION_HSO:
- 		g_at_chat_send(nd->chat, "AT_OSSYS=3D1", none_prefix,
- 				NULL, NULL, NULL);
--		g_at_chat_send(nd->chat, "AT_OUWCTI=3D1", none_prefix,
--				NULL, NULL, NULL);
--		g_at_chat_send(nd->chat, "AT_OCTI=3D1", none_prefix,
--				NULL, NULL, NULL);
- 		g_at_chat_send(nd->chat, "AT_OSQI=3D1", none_prefix,
- 				NULL, NULL, NULL);
- 		g_at_chat_register(nd->chat, "_OSIGQ:", option_osigq_notify,
- 					FALSE, netreg, NULL);
--		g_at_chat_register(nd->chat, "_OUWCTI:", option_ouwcti_notify,
--					FALSE, netreg, NULL);
--		g_at_chat_register(nd->chat, "_OCTI:", option_octi_notify,
--					FALSE, netreg, NULL);
--		g_at_chat_register(nd->chat, "_OSSYSI:", option_ossysi_notify,
--					FALSE, netreg, NULL);
- =
-
- 		g_at_chat_send(nd->chat, "AT_OSSYS?", none_prefix,
- 				NULL, NULL, NULL);
--		g_at_chat_send(nd->chat, "AT_OWCTI?", none_prefix,
--				NULL, NULL, NULL);
--		g_at_chat_send(nd->chat, "AT_OCTI?", none_prefix,
--				NULL, NULL, NULL);
- 		g_at_chat_send(nd->chat, "AT_OSQI?", none_prefix,
- 				NULL, NULL, NULL);
- 		break;
--- =
-
-1.6.6.1
-
-
---===============6573242129475551902==--
+--===============6466488052788845820==--
 
