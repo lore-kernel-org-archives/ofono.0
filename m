@@ -1,40 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8201126734980292849=="
+Content-Type: multipart/mixed; boundary="===============4809251550869778386=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
 Subject: Re: [PATCH 12/20] stkutil: Add the Call Control envelope builder
-Date: Fri, 11 Jun 2010 14:34:35 -0500
-Message-ID: <201006111434.35867.denkenz@gmail.com>
-In-Reply-To: <AANLkTincE0TeBlPw8gnaNmOoRMK46USpW3XBHZ0aNWU6@mail.gmail.com>
+Date: Fri, 11 Jun 2010 22:04:21 +0200
+Message-ID: <AANLkTimOSKfYuaotVLDAAak7TLaKV9zBJtxYS1wrSooc@mail.gmail.com>
+In-Reply-To: <201006111434.35867.denkenz@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8201126734980292849==
+--===============4809251550869778386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+On 11 June 2010 21:34, Denis Kenzior <denkenz@gmail.com> wrote:
+> Hi Andrew,
+>
+>
+>> >> +/* Used both in the ENVELOPE message to UICC and response from UICC =
+*/
+>> >> +struct stk_envelope_call_control {
+>> >> + =C2=A0 =C2=A0 /* Exactly one of the following 5 fields must be pres=
+ent */
+>> >
+>> > Why are we not using a union then?
+>>
+>> We don't know which one of 5 is valid if it's a union. =C2=A0We could ad=
+d a
+>> field to indicate that but I guess it's simpler the way it is.
+>
+> It seems like a type + union might be better for the consumers of this
+> structure though.
 
+Okay, currenlty the UICC will be the only consumer but we may need to
+be a consumer too, later.
 
-> >> +/* Used both in the ENVELOPE message to UICC and response from UICC */
-> >> +struct stk_envelope_call_control {
-> >> +     /* Exactly one of the following 5 fields must be present */
-> >
-> > Why are we not using a union then?
-> =
+Regards
 
-> We don't know which one of 5 is valid if it's a union.  We could add a
-> field to indicate that but I guess it's simpler the way it is.
-
-It seems like a type + union might be better for the consumers of this =
-
-structure though.  Otherwise they have to check up to 5 structs for emptine=
-ss =
-
-before figuring out what the type actually is.  Your call.
-
-Regards,
--Denis
-
---===============8201126734980292849==--
+--===============4809251550869778386==--
 
