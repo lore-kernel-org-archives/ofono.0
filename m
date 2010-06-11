@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============6267492014998591351=="
+Content-Type: multipart/mixed; boundary="===============6573242129475551902=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v4] Report cell technology capability for Option HSO
-Date: Fri, 11 Jun 2010 21:06:54 +0200
-Message-ID: <20100611190654.GA5321@cesium.localdomain>
+Subject: [PATCH v5] Report cell technology capability for Option HSO
+Date: Fri, 11 Jun 2010 21:12:38 +0200
+Message-ID: <20100611191238.GA5504@cesium.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6267492014998591351==
+--===============6573242129475551902==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -18,6 +18,7 @@ for reporting the cell capability.
 
 not run or testest because of missing modem.
 
+v5: don't send AT+CREG? twice
 v4: clean up :)
 v3: simplify even more.
 v2: simplify v1 and use two callbacks instead of one
@@ -30,7 +31,7 @@ v0: based on "[RFC v3] Readout technology form Option HSO modems"
 
 diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
 rk-registration.c
-index f5ccbb1..e8b7863 100644
+index f5ccbb1..f55b9b4 100644
 --- a/drivers/atmodem/network-registration.c
 +++ b/drivers/atmodem/network-registration.c
 @@ -46,6 +46,7 @@ static const char *creg_prefix[] =3D { "+CREG:", NULL };
@@ -164,8 +165,7 @@ ata)
 +		 * option_tech_cb will call fire CREG? to do the rest.
 +		 */
 +		if (g_at_chat_send(nd->chat, "AT_OCTI?;_OUWCTI?",
-+			option_tech_prefix, option_tech_cb, cbd, NULL) <=3D 0) =
-
++			option_tech_prefix, option_tech_cb, cbd, NULL) <=3D 0)
 +			nd->tech =3D -1;
  	}
  =
@@ -323,5 +323,5 @@ sult, gpointer user_data)
 1.6.6.1
 
 
---===============6267492014998591351==--
+--===============6573242129475551902==--
 
