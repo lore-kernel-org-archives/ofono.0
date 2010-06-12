@@ -1,88 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============7258180108015932575=="
+Content-Type: multipart/mixed; boundary="===============2140824924913384216=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 08/11] gsmdial: Configure network interface for PPP
-Date: Sat, 12 Jun 2010 13:50:47 +0800
-Message-ID: <1276321850-13307-9-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1276321850-13307-8-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 11/11] gsmdial: Delay ppp_unref after IO processing
+Date: Sat, 12 Jun 2010 13:50:50 +0800
+Message-ID: <1276321850-13307-12-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1276321850-13307-11-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7258180108015932575==
+--===============2140824924913384216==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gatchat/gsmdial.c |   29 +++++++++++++++++++++++++++++
- 1 files changed, 29 insertions(+), 0 deletions(-)
+ gatchat/gsmdial.c |   17 +++++++++++++++--
+ 1 files changed, 15 insertions(+), 2 deletions(-)
 
 diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index 35267e1..29e1d22 100644
+index 59f1a5c..d6cacc5 100644
 --- a/gatchat/gsmdial.c
 +++ b/gatchat/gsmdial.c
-@@ -38,6 +38,8 @@
- #include <gattty.h>
- #include <gatppp.h>
+@@ -71,6 +71,7 @@ enum state {
  =
 
-+#define IFCONFIG_PATH "/sbin/ifconfig"
-+
- static const char *none_prefix[] =3D { NULL };
- static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
- static const char *creg_prefix[] =3D { "+CREG:", NULL };
-@@ -221,16 +223,43 @@ out:
- 	return FALSE;
+ static int state =3D 0;
+ static int oldmode =3D 0;
++static int resume_source =3D 0;
+ =
+
+ static void gsmdial_debug(const char *str, void *data)
+ {
+@@ -262,11 +263,11 @@ static void ppp_connect(const char *iface, const char=
+ *local, const char *peer,
+ 	execute(buf);
  }
  =
 
-+static gboolean execute(const char *cmd)
-+{
-+	int status;
+-static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
+ta)
++static gboolean resume_modem(gpointer user_data)
+ {
+ 	char buf[64];
+ =
+
+-	g_print("PPP Link down: %d\n", reason);
++	resume_source =3D 0;
+ =
+
+ 	g_at_ppp_unref(ppp);
+ 	ppp =3D NULL;
+@@ -275,6 +276,15 @@ static void ppp_disconnect(GAtPPPDisconnectReason reas=
+on, gpointer user_data)
+ =
+
+ 	sprintf(buf, "AT+CFUN=3D%u", option_offmode);
+ 	g_at_chat_send(control, buf, none_prefix, power_down, NULL, NULL);
 +
-+	status =3D system(cmd);
-+	if (status < 0) {
-+		g_print("Failed to execute command: %s\n", strerror(errno));
-+		return FALSE;
-+	}
-+
-+	return TRUE;
++	return FALSE;
 +}
 +
- static void ppp_connect(const char *iface, const char *local, const char *=
-peer,
- 			const char *dns1, const char *dns2,
- 			gpointer user_data)
- {
-+	char buf[512];
++static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
+ta)
++{
++	g_print("PPP Link down: %d\n", reason);
 +
- 	/* print out the negotiated address and dns server */
- 	g_print("Network Device: %s\n", iface);
- 	g_print("IP Address: %s\n", local);
- 	g_print("Peer IP Address: %s\n", peer);
- 	g_print("Primary DNS Server: %s\n", dns1);
- 	g_print("Secondary DNS Server: %s\n", dns2);
-+
-+	if (getuid() !=3D 0) {
-+		g_print("Need root priviledge to config PPP interface\n");
-+		return;
-+	}
-+
-+	snprintf(buf, sizeof(buf), "%s %s up", IFCONFIG_PATH, iface);
-+	execute(buf);
-+
-+	snprintf(buf, sizeof(buf), "%s %s %s pointopoint %s", IFCONFIG_PATH,
-+				iface, local, peer);
-+	execute(buf);
++	resume_source =3D g_idle_add(resume_modem, NULL);
  }
  =
 
- static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
-ta)
+ static void connect_cb(gboolean ok, GAtResult *result, gpointer user_data)
+@@ -703,6 +713,9 @@ int main(int argc, char **argv)
+ 	g_main_loop_unref(event_loop);
+ =
+
+ out:
++	if (resume_source)
++		g_source_remove(resume_source);
++
+ 	if (ppp =3D=3D NULL) {
+ 		g_at_chat_unref(control);
+ 		g_at_chat_unref(modem);
 -- =
 
 1.6.3.3
 
 
---===============7258180108015932575==--
+--===============2140824924913384216==--
 
