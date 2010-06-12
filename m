@@ -1,101 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============6993562647901124797=="
+Content-Type: multipart/mixed; boundary="===============6789641743940240879=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 07/11] test-server: Configure network interface
-Date: Sat, 12 Jun 2010 13:50:46 +0800
-Message-ID: <1276321850-13307-8-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1276321850-13307-7-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 10/11] test-server: Delay ppp_unref after IO processing
+Date: Sat, 12 Jun 2010 13:50:49 +0800
+Message-ID: <1276321850-13307-11-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1276321850-13307-10-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6993562647901124797==
+--===============6789641743940240879==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Require ROOT priviledge to:
-1. Run external command to configure and bring up network interface.
-2. Enable kernel IP forwarding.
+The ppp_disconnect is invoked during ppp receives LCP packet and enter
+PPP dead phase. It's not good to stop the IO processing in disconnect
+function.  Delay the ppp_unref after packet is processed.
 ---
- gatchat/test-server.c |   31 +++++++++++++++++++++++++++++++
- 1 files changed, 31 insertions(+), 0 deletions(-)
+ gatchat/test-server.c |   19 +++++++++++++++++--
+ 1 files changed, 17 insertions(+), 2 deletions(-)
 
 diff --git a/gatchat/test-server.c b/gatchat/test-server.c
-index 68371c2..df0bab8 100644
+index df0bab8..dac7234 100644
 --- a/gatchat/test-server.c
 +++ b/gatchat/test-server.c
-@@ -50,6 +50,7 @@
+@@ -57,6 +57,7 @@ static int modem_creg =3D 0;
+ static int modem_cgreg =3D 0;
+ static int network_status =3D 4;
+ static int network_attach =3D 0;
++static int resume_source =3D 0;
  =
 
- #define DEFAULT_TCP_PORT 12346
- #define DEFAULT_SOCK_PATH "./server_sock"
-+#define IFCONFIG_PATH "/sbin/ifconfig"
+ struct sock_server{
+ 	int server_sock;
+@@ -72,6 +73,9 @@ static gboolean server_cleanup()
+ 	if (server_watch)
+ 		g_source_remove(server_watch);
  =
 
- static int modem_mode =3D 0;
- static int modem_creg =3D 0;
-@@ -91,15 +92,40 @@ static void server_debug(const char *str, void *data)
- 	g_print("%s: %s\n", (char *) data, str);
++	if (resume_source)
++		g_source_remove(resume_source);
++
+ 	if (ppp) {
+ 		g_at_ppp_unref(ppp);
+ 		ppp =3D NULL;
+@@ -128,17 +132,28 @@ static void ppp_connect(const char *iface, const char=
+ *local, const char *peer,
+ 	execute(buf);
  }
  =
 
-+static gboolean execute(const char *cmd)
-+{
-+	int status;
+-static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user)
++static gboolean resume_server(gpointer user)
+ {
+ 	GAtServer *server =3D user;
+ =
+
+-	g_print("PPP Link down: %d\n", reason);
++	resume_source =3D 0;
+ =
+
+ 	g_at_ppp_unref(ppp);
+ 	ppp =3D NULL;
+ =
+
+ 	g_at_server_resume(server);
+ 	g_at_server_set_debug(server, server_debug, "Server");
 +
-+	status =3D system(cmd);
-+	if (status < 0) {
-+		g_print("Failed to execute command: %s\n", strerror(errno));
-+		return FALSE;
-+	}
++	modem_mode =3D 0;
 +
-+	return TRUE;
++	return FALSE;
 +}
 +
- static void ppp_connect(const char *iface, const char *local, const char *=
-peer,
- 			const char *dns1, const char *dns2,
- 			gpointer user)
- {
-+	char buf[512];
++static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user)
++{
++	g_print("PPP Link down: %d\n", reason);
 +
- 	g_print("Network Device: %s\n", iface);
- 	g_print("IP Address: %s\n", local);
- 	g_print("Peer IP Address: %s\n", peer);
- 	g_print("Primary DNS Server: %s\n", dns1);
- 	g_print("Secondary DNS Server: %s\n", dns2);
-+
-+	snprintf(buf, sizeof(buf), "%s %s up", IFCONFIG_PATH, iface);
-+	execute(buf);
-+
-+	snprintf(buf, sizeof(buf), "%s %s %s pointopoint %s", IFCONFIG_PATH,
-+				iface, local, peer);
-+	execute(buf);
-+
-+	snprintf(buf, sizeof(buf), "echo 1 > /proc/sys/net/ipv4/ip_forward");
-+	execute(buf);
++	resume_source =3D g_idle_add(resume_server, user);
  }
  =
 
- static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user)
-@@ -139,6 +165,11 @@ static gboolean setup_ppp(gpointer user)
- 	GAtServer *server =3D user;
- 	GAtIO *io;
- =
-
-+	if (getuid() !=3D 0) {
-+		g_print("Need root priviledge for PPP connection\n");
-+		return FALSE;
-+	}
-+
- 	io =3D g_at_server_get_io(server);
- =
-
- 	g_at_server_suspend(server);
+ static gboolean update_ppp(gpointer user)
 -- =
 
 1.6.3.3
 
 
---===============6993562647901124797==--
+--===============6789641743940240879==--
 
