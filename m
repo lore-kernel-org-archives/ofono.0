@@ -1,1147 +1,322 @@
-Content-Type: multipart/mixed; boundary="===============1423489888738343191=="
+Content-Type: multipart/mixed; boundary="===============7481121797378959763=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 02/12] teststk: Add test for send ss parser
-Date: Sun, 13 Jun 2010 17:43:12 +0800
-Message-ID: <1276422202-16240-2-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 03/12] stk: Add parser for send ussd commands
+Date: Sun, 13 Jun 2010 17:43:13 +0800
+Message-ID: <1276422202-16240-3-git-send-email-yang.gu@intel.com>
 In-Reply-To: <1276422202-16240-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1423489888738343191==
+--===============7481121797378959763==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-stkutil.c | 1054 +++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am    |    5 ++-
+ src/stkutil.c  |   66 ++++++++++++++++++++++++++++++++++++++++++++
+ src/stkutil.h  |    9 ++++++
+ src/ussdutil.c |   83 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 1054 insertions(+), 0 deletions(-)
+ src/ussdutil.h |   22 +++++++++++++++
+ 5 files changed, 183 insertions(+), 2 deletions(-)
+ create mode 100644 src/ussdutil.c
+ create mode 100644 src/ussdutil.h
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index 404f092..3f6a31a 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -272,6 +272,14 @@ static void check_gsm_sms(const struct sms *command,
- 	}
+diff --git a/Makefile.am b/Makefile.am
+index 2ca0703..1cf91fa 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -269,7 +269,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
+es) \
+ 			src/storage.c src/cbs.c src/watch.c src/call-volume.c \
+ 			src/gprs.c src/idmap.h src/idmap.c \
+ 			src/radio-settings.c src/stkutil.h src/stkutil.c \
+-			src/nettime.c
++			src/nettime.c src/ussdutil.h src/ussdutil.c
+ =
+
+ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
+@ -ldl
+ =
+
+@@ -384,7 +384,8 @@ unit_objects +=3D $(unit_test_simutil_OBJECTS)
+ =
+
+ unit_test_stkutil_SOURCES =3D unit/test-stkutil.c src/util.c \
+ 				src/storage.c src/smsutil.c \
+-				src/simutil.c src/stkutil.c
++				src/simutil.c src/stkutil.c \
++				src/ussdutil.c
+ unit_test_stkutil_LDADD =3D @GLIB_LIBS@
+ unit_objects +=3D $(unit_test_stkutil_OBJECTS)
+ =
+
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 642e141..d2c8522 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -29,6 +29,7 @@
+ #include <glib.h>
+ =
+
+ #include <ofono/types.h>
++#include "ussdutil.h"
+ #include "smsutil.h"
+ #include "stkutil.h"
+ #include "simutil.h"
+@@ -560,6 +561,27 @@ static gboolean parse_dataobj_tone(struct comprehensio=
+n_tlv_iter *iter,
+ 	return parse_dataobj_common_byte(iter, byte);
  }
  =
 
-+/* Defined in TS 102.223 Section 8.14 */
-+static inline void check_ss(const struct stk_ss *command,
-+					const struct stk_ss *test)
++/* Defined in TS 102.223 Section 8.17 */
++static gboolean parse_dataobj_ussd(struct comprehension_tlv_iter *iter,
++					void *user)
 +{
-+	g_assert(command->ton_npi =3D=3D test->ton_npi);
-+	check_common_text(command->ss, test->ss);
++	char **ussd =3D user;
++	char *utf8;
++	unsigned int len =3D comprehension_tlv_iter_get_length(iter);
++	const unsigned char *data =3D comprehension_tlv_iter_get_data(iter);
++
++	if (len <=3D 1)
++		return FALSE;
++
++	utf8 =3D ussd_decode(data[0], len - 1, data + 1);
++
++	if (utf8 =3D=3D NULL)
++		return FALSE;
++
++	*ussd =3D utf8;
++	return TRUE;
 +}
 +
- /* Defined in TS 102.223 Section 8.15 */
- static inline void check_text(const char *command, const char *test)
- {
-@@ -8732,6 +8740,977 @@ static void test_send_sms(gconstpointer data)
- 	stk_command_free(command);
+ /* Defined in TS 102.223 Section 8.18 */
+ static gboolean parse_dataobj_file_list(struct comprehension_tlv_iter *ite=
+r,
+ 					void *user)
+@@ -1896,6 +1918,8 @@ static dataobj_handler handler_for_type(enum stk_data=
+_object_type type)
+ 		return parse_dataobj_text;
+ 	case STK_DATA_OBJECT_TYPE_TONE:
+ 		return parse_dataobj_tone;
++	case STK_DATA_OBJECT_TYPE_USSD_STRING:
++		return parse_dataobj_ussd;
+ 	case STK_DATA_OBJECT_TYPE_FILE_LIST:
+ 		return parse_dataobj_file_list;
+ 	case STK_DATA_OBJECT_TYPE_LOCATION_INFO:
+@@ -2604,6 +2628,45 @@ static gboolean parse_send_ss(struct stk_command *co=
+mmand,
+ 	return TRUE;
  }
  =
 
-+struct send_ss_test {
-+	const unsigned char *pdu;
-+	unsigned int pdu_len;
-+	unsigned char qualifier;
++static void destroy_send_ussd(struct stk_command *command)
++{
++	g_free(command->send_ussd.alpha_id);
++	g_free(command->send_ussd.ussd);
++}
++
++static gboolean parse_send_ussd(struct stk_command *command,
++					struct comprehension_tlv_iter *iter)
++{
++	struct stk_command_send_ussd *obj =3D &command->send_ussd;
++	gboolean ret;
++
++	if (command->src !=3D STK_DEVICE_IDENTITY_TYPE_UICC)
++		return FALSE;
++
++	if (command->dst !=3D STK_DEVICE_IDENTITY_TYPE_NETWORK)
++		return FALSE;
++
++	ret =3D parse_dataobj(iter, STK_DATA_OBJECT_TYPE_ALPHA_ID, 0,
++				&obj->alpha_id,
++				STK_DATA_OBJECT_TYPE_USSD_STRING,
++				DATAOBJ_FLAG_MANDATORY | DATAOBJ_FLAG_MINIMUM,
++				&obj->ussd,
++				STK_DATA_OBJECT_TYPE_ICON_ID, 0,
++				&obj->icon_id,
++				STK_DATA_OBJECT_TYPE_TEXT_ATTRIBUTE, 0,
++				&obj->text_attr,
++				STK_DATA_OBJECT_TYPE_FRAME_ID, 0,
++				&obj->frame_id,
++				STK_DATA_OBJECT_TYPE_INVALID);
++
++	command->destructor =3D destroy_send_ussd;
++
++	if (ret =3D=3D FALSE)
++		return FALSE;
++
++	return TRUE;
++}
++
+ static void destroy_setup_call(struct stk_command *command)
+ {
+ 	g_free(command->setup_call.alpha_id_usr_cfm);
+@@ -3132,6 +3195,9 @@ struct stk_command *stk_command_new_from_pdu(const un=
+signed char *pdu,
+ 	case STK_COMMAND_TYPE_SEND_SS:
+ 		ok =3D parse_send_ss(command, &iter);
+ 		break;
++	case STK_COMMAND_TYPE_SEND_USSD:
++		ok =3D parse_send_ussd(command, &iter);
++		break;
+ 	case STK_COMMAND_TYPE_SETUP_CALL:
+ 		ok =3D parse_setup_call(command, &iter);
+ 		break;
+diff --git a/src/stkutil.h b/src/stkutil.h
+index d73d5e1..b6fb85b 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -947,6 +947,14 @@ struct stk_command_send_ss {
+ 	struct stk_frame_id frame_id;
+ };
+ =
+
++struct stk_command_send_ussd {
 +	char *alpha_id;
-+	struct stk_ss ss;
++	char *ussd;
 +	struct stk_icon_id icon_id;
 +	struct stk_text_attribute text_attr;
 +	struct stk_frame_id frame_id;
 +};
 +
-+static unsigned char send_ss_111[] =3D { 0xD0, 0x29, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0C, 0x43, 0x61, 0x6C,
-+						0x6C, 0x20, 0x46, 0x6F, 0x72,
-+						0x77, 0x61, 0x72, 0x64, 0x89,
-+						0x10, 0x91, 0xAA, 0x12, 0x0A,
-+						0x21, 0x43, 0x65, 0x87, 0x09,
-+						0x21, 0x43, 0x65, 0x87, 0xA9,
-+						0x01, 0xFB };
-+
-+static unsigned char send_ss_141[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0C, 0x43, 0x61, 0x6C,
-+						0x6C, 0x20, 0x46, 0x6F, 0x72,
-+						0x77, 0x61, 0x72, 0x64, 0x89,
-+						0x14, 0x91, 0xAA, 0x12, 0x0A,
-+						0x21, 0x43, 0x65, 0x87, 0x09,
-+						0x21, 0x43, 0x65, 0x87, 0x09,
-+						0x21, 0x43, 0x65, 0xA7, 0x11,
-+						0xFB };
-+
-+static unsigned char send_ss_151[] =3D { 0xD0, 0x81, 0xFD, 0x81, 0x03, 0x0=
-1,
-+						0x11, 0x00, 0x82, 0x02, 0x81,
-+						0x83, 0x85, 0x81, 0xEB, 0x45,
-+						0x76, 0x65, 0x6E, 0x20, 0x69,
-+						0x66, 0x20, 0x74, 0x68, 0x65,
-+						0x20, 0x46, 0x69, 0x78, 0x65,
-+						0x64, 0x20, 0x44, 0x69, 0x61,
-+						0x6C, 0x6C, 0x69, 0x6E, 0x67,
-+						0x20, 0x4E, 0x75, 0x6D, 0x62,
-+						0x65, 0x72, 0x20, 0x73, 0x65,
-+						0x72, 0x76, 0x69, 0x63, 0x65,
-+						0x20, 0x69, 0x73, 0x20, 0x65,
-+						0x6E, 0x61, 0x62, 0x6C, 0x65,
-+						0x64, 0x2C, 0x20, 0x74, 0x68,
-+						0x65, 0x20, 0x73, 0x75, 0x70,
-+						0x70, 0x6C, 0x65, 0x6D, 0x65,
-+						0x6E, 0x74, 0x61, 0x72, 0x79,
-+						0x20, 0x73, 0x65, 0x72, 0x76,
-+						0x69, 0x63, 0x65, 0x20, 0x63,
-+						0x6F, 0x6E, 0x74, 0x72, 0x6F,
-+						0x6C, 0x20, 0x73, 0x74, 0x72,
-+						0x69, 0x6E, 0x67, 0x20, 0x69,
-+						0x6E, 0x63, 0x6C, 0x75, 0x64,
-+						0x65, 0x64, 0x20, 0x69, 0x6E,
-+						0x20, 0x74, 0x68, 0x65, 0x20,
-+						0x53, 0x45, 0x4E, 0x44, 0x20,
-+						0x53, 0x53, 0x20, 0x70, 0x72,
-+						0x6F, 0x61, 0x63, 0x74, 0x69,
-+						0x76, 0x65, 0x20, 0x63, 0x6F,
-+						0x6D, 0x6D, 0x61, 0x6E, 0x64,
-+						0x20, 0x73, 0x68, 0x61, 0x6C,
-+						0x6C, 0x20, 0x6E, 0x6F, 0x74,
-+						0x20, 0x62, 0x65, 0x20, 0x63,
-+						0x68, 0x65, 0x63, 0x6B, 0x65,
-+						0x64, 0x20, 0x61, 0x67, 0x61,
-+						0x69, 0x6E, 0x73, 0x74, 0x20,
-+						0x74, 0x68, 0x6F, 0x73, 0x65,
-+						0x20, 0x6F, 0x66, 0x20, 0x74,
-+						0x68, 0x65, 0x20, 0x46, 0x44,
-+						0x4E, 0x20, 0x6C, 0x69, 0x73,
-+						0x74, 0x2E, 0x20, 0x55, 0x70,
-+						0x6F, 0x6E, 0x20, 0x72, 0x65,
-+						0x63, 0x65, 0x69, 0x76, 0x69,
-+						0x6E, 0x67, 0x20, 0x74, 0x68,
-+						0x69, 0x73, 0x20, 0x63, 0x6F,
-+						0x6D, 0x6D, 0x61, 0x6E, 0x64,
-+						0x2C, 0x20, 0x74, 0x68, 0x65,
-+						0x20, 0x4D, 0x45, 0x20, 0x73,
-+						0x68, 0x61, 0x6C, 0x6C, 0x20,
-+						0x64, 0x65, 0x63, 0x69, 0x89,
-+						0x04, 0xFF, 0xBA, 0x13, 0xFB };
-+
-+static unsigned char send_ss_161[] =3D { 0xD0, 0x1D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x00, 0x89, 0x10, 0x91,
-+						0xAA, 0x12, 0x0A, 0x21, 0x43,
-+						0x65, 0x87, 0x09, 0x21, 0x43,
-+						0x65, 0x87, 0xA9, 0x01, 0xFB };
-+
-+static unsigned char send_ss_211[] =3D { 0xD0, 0x2B, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0A, 0x42, 0x61, 0x73,
-+						0x69, 0x63, 0x20, 0x49, 0x63,
-+						0x6F, 0x6E, 0x89, 0x10, 0x91,
-+						0xAA, 0x12, 0x0A, 0x21, 0x43,
-+						0x65, 0x87, 0x09, 0x21, 0x43,
-+						0x65, 0x87, 0xA9, 0x01, 0xFB,
-+						0x9E, 0x02, 0x00, 0x01 };
-+
-+static unsigned char send_ss_221[] =3D { 0xD0, 0x2C, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0B, 0x43, 0x6F, 0x6C,
-+						0x6F, 0x75, 0x72, 0x20, 0x49,
-+						0x63, 0x6F, 0x6E, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0x9E, 0x02, 0x00, 0x02 };
-+
-+static unsigned char send_ss_231[] =3D { 0xD0, 0x2B, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x0A, 0x42, 0x61, 0x73,
-+						0x69, 0x63, 0x20, 0x49, 0x63,
-+						0x6F, 0x6E, 0x89, 0x10, 0x91,
-+						0xAA, 0x12, 0x0A, 0x21, 0x43,
-+						0x65, 0x87, 0x09, 0x21, 0x43,
-+						0x65, 0x87, 0xA9, 0x01, 0xFB,
-+						0x9E, 0x02, 0x01, 0x01 };
-+
-+static unsigned char send_ss_241[] =3D { 0xD0, 0x1D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x89, 0x0E, 0x91, 0xAA, 0x12,
-+						0x0A, 0x21, 0x43, 0x65, 0x87,
-+						0x09, 0x21, 0x43, 0x65, 0x87,
-+						0xB9, 0x9E, 0x02, 0x01, 0x01 };
-+
-+static unsigned char send_ss_311[] =3D { 0xD0, 0x36, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x19, 0x80, 0x04, 0x17,
-+						0x04, 0x14, 0x04, 0x20, 0x04,
-+						0x10, 0x04, 0x12, 0x04, 0x21,
-+						0x04, 0x22, 0x04, 0x12, 0x04,
-+						0x23, 0x04, 0x19, 0x04, 0x22,
-+						0x04, 0x15, 0x89, 0x10, 0x91,
-+						0xAA, 0x12, 0x0A, 0x21, 0x43,
-+						0x65, 0x87, 0x09, 0x21, 0x43,
-+						0x65, 0x87, 0xA9, 0x01, 0xFB };
-+
-+static unsigned char send_ss_411[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x31, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x00, 0xB4 };
-+
-+static unsigned char send_ss_412[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x32, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB };
-+
-+static unsigned char send_ss_421[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x31, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x01, 0xB4 };
-+
-+static unsigned char send_ss_422[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x32, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB };
-+
-+static unsigned char send_ss_431[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x31, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x02, 0xB4 };
-+
-+static unsigned char send_ss_432[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x32, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB };
-+
-+static unsigned char send_ss_441[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x31, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x04, 0xB4 };
-+
-+static unsigned char send_ss_442[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x32, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x00, 0xB4 };
-+
-+static unsigned char send_ss_443[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x33, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB };
-+
-+static unsigned char send_ss_451[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x31, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x08, 0xB4 };
-+
-+static unsigned char send_ss_452[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x32, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x00, 0xB4 };
-+
-+static unsigned char send_ss_453[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x33, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB };
-+
-+static unsigned char send_ss_461[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x31, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x10, 0xB4 };
-+
-+static unsigned char send_ss_462[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x32, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x00, 0xB4 };
-+
-+static unsigned char send_ss_463[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x33, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB };
-+
-+static unsigned char send_ss_471[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x31, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x20, 0xB4 };
-+
-+static unsigned char send_ss_472[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x32, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x00, 0xB4 };
-+
-+static unsigned char send_ss_473[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x33, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB };
-+
-+static unsigned char send_ss_481[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x31, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x40, 0xB4 };
-+
-+static unsigned char send_ss_482[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x32, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x00, 0xB4 };
-+
-+static unsigned char send_ss_483[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x33, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB };
-+
-+static unsigned char send_ss_491[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x31, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x80, 0xB4 };
-+
-+static unsigned char send_ss_492[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x32, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x00, 0xB4 };
-+
-+static unsigned char send_ss_493[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x33, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB };
-+
-+static unsigned char send_ss_4101[] =3D { 0xD0, 0x33, 0x81, 0x03, 0x01, 0x=
-11,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x31, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB, 0xD0, 0x04, 0x00, 0x10,
-+						0x00, 0xB4 };
-+
-+static unsigned char send_ss_4102[] =3D { 0xD0, 0x2D, 0x81, 0x03, 0x01, 0x=
-11,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x10, 0x54, 0x65, 0x78,
-+						0x74, 0x20, 0x41, 0x74, 0x74,
-+						0x72, 0x69, 0x62, 0x75, 0x74,
-+						0x65, 0x20, 0x32, 0x89, 0x10,
-+						0x91, 0xAA, 0x12, 0x0A, 0x21,
-+						0x43, 0x65, 0x87, 0x09, 0x21,
-+						0x43, 0x65, 0x87, 0xA9, 0x01,
-+						0xFB };
-+
-+static unsigned char send_ss_511[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x05, 0x80, 0x4F, 0x60,
-+						0x59, 0x7D, 0x89, 0x10, 0x91,
-+						0xAA, 0x12, 0x0A, 0x21, 0x43,
-+						0x65, 0x87, 0x09, 0x21, 0x43,
-+						0x65, 0x87, 0xA9, 0x01, 0xFB };
-+
-+static unsigned char send_ss_611[] =3D { 0xD0, 0x20, 0x81, 0x03, 0x01, 0x1=
-1,
-+						0x00, 0x82, 0x02, 0x81, 0x83,
-+						0x85, 0x03, 0x80, 0x30, 0xEB,
-+						0x89, 0x10, 0x91, 0xAA, 0x12,
-+						0x0A, 0x21, 0x43, 0x65, 0x87,
-+						0x09, 0x21, 0x43, 0x65, 0x87,
-+						0xA9, 0x01, 0xFB };
-+
-+static struct send_ss_test send_ss_data_111 =3D {
-+	.pdu =3D send_ss_111,
-+	.pdu_len =3D sizeof(send_ss_111),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Call Forward",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_141 =3D {
-+	.pdu =3D send_ss_141,
-+	.pdu_len =3D sizeof(send_ss_141),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Call Forward",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*0123456789012345678901234567*11#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_151 =3D {
-+	.pdu =3D send_ss_151,
-+	.pdu_len =3D sizeof(send_ss_151),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Even if the Fixed Dialling Number service is enabled, the "
-+		"supplementary service control string included in the SEND SS "
-+		"proactive command shall not be checked against those of the "
-+		"FDN list. Upon receiving this command, the ME shall deci",
-+	.ss =3D {
-+		.ton_npi =3D 0xFF,
-+		.ss =3D "*#31#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_161 =3D {
-+	.pdu =3D send_ss_161,
-+	.pdu_len =3D sizeof(send_ss_161),
-+	.qualifier =3D 0x00,
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_211 =3D {
-+	.pdu =3D send_ss_211,
-+	.pdu_len =3D sizeof(send_ss_211),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Basic Icon",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.icon_id =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_SELF_EXPLANATORY,
-+		.id =3D 0x01
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_221 =3D {
-+	.pdu =3D send_ss_221,
-+	.pdu_len =3D sizeof(send_ss_221),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Colour Icon",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.icon_id =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_SELF_EXPLANATORY,
-+		.id =3D 0x02
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_231 =3D {
-+	.pdu =3D send_ss_231,
-+	.pdu_len =3D sizeof(send_ss_231),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Basic Icon",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.icon_id =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
-+		.id =3D 0x01
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_241 =3D {
-+	.pdu =3D send_ss_241,
-+	.pdu_len =3D sizeof(send_ss_241),
-+	.qualifier =3D 0x00,
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789#"
-+	},
-+	.icon_id =3D {
-+		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
-+		.id =3D 0x01
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_311 =3D {
-+	.pdu =3D send_ss_311,
-+	.pdu_len =3D sizeof(send_ss_311),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "=D0=97=D0=94=D0=A0=D0=90=D0=92=D0=A1=D0=A2=D0=92=D0=A3=D0=
-=99=D0=A2=D0=95",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_411 =3D {
-+	.pdu =3D send_ss_411,
-+	.pdu_len =3D sizeof(send_ss_411),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 1",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_412 =3D {
-+	.pdu =3D send_ss_412,
-+	.pdu_len =3D sizeof(send_ss_412),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 2",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_421 =3D {
-+	.pdu =3D send_ss_421,
-+	.pdu_len =3D sizeof(send_ss_421),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 1",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x01, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_422 =3D {
-+	.pdu =3D send_ss_422,
-+	.pdu_len =3D sizeof(send_ss_422),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 2",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_431 =3D {
-+	.pdu =3D send_ss_431,
-+	.pdu_len =3D sizeof(send_ss_431),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 1",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x02, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_432 =3D {
-+	.pdu =3D send_ss_432,
-+	.pdu_len =3D sizeof(send_ss_432),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 2",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_441 =3D {
-+	.pdu =3D send_ss_441,
-+	.pdu_len =3D sizeof(send_ss_441),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 1",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x04, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_442 =3D {
-+	.pdu =3D send_ss_442,
-+	.pdu_len =3D sizeof(send_ss_442),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 2",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_443 =3D {
-+	.pdu =3D send_ss_443,
-+	.pdu_len =3D sizeof(send_ss_443),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 3",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_451 =3D {
-+	.pdu =3D send_ss_451,
-+	.pdu_len =3D sizeof(send_ss_451),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 1",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x08, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_452 =3D {
-+	.pdu =3D send_ss_452,
-+	.pdu_len =3D sizeof(send_ss_452),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 2",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_453 =3D {
-+	.pdu =3D send_ss_453,
-+	.pdu_len =3D sizeof(send_ss_453),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 3",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_461 =3D {
-+	.pdu =3D send_ss_461,
-+	.pdu_len =3D sizeof(send_ss_461),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 1",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x10, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_462 =3D {
-+	.pdu =3D send_ss_462,
-+	.pdu_len =3D sizeof(send_ss_462),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 2",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_463 =3D {
-+	.pdu =3D send_ss_463,
-+	.pdu_len =3D sizeof(send_ss_463),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 3",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_471 =3D {
-+	.pdu =3D send_ss_471,
-+	.pdu_len =3D sizeof(send_ss_471),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 1",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x20, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_472 =3D {
-+	.pdu =3D send_ss_472,
-+	.pdu_len =3D sizeof(send_ss_472),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 2",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_473 =3D {
-+	.pdu =3D send_ss_473,
-+	.pdu_len =3D sizeof(send_ss_473),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 3",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_481 =3D {
-+	.pdu =3D send_ss_481,
-+	.pdu_len =3D sizeof(send_ss_481),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 1",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x40, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_482 =3D {
-+	.pdu =3D send_ss_482,
-+	.pdu_len =3D sizeof(send_ss_482),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 2",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_483 =3D {
-+	.pdu =3D send_ss_483,
-+	.pdu_len =3D sizeof(send_ss_483),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 3",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_491 =3D {
-+	.pdu =3D send_ss_491,
-+	.pdu_len =3D sizeof(send_ss_491),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 1",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x80, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_492 =3D {
-+	.pdu =3D send_ss_492,
-+	.pdu_len =3D sizeof(send_ss_492),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 2",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_493 =3D {
-+	.pdu =3D send_ss_493,
-+	.pdu_len =3D sizeof(send_ss_493),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 3",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_4101 =3D {
-+	.pdu =3D send_ss_4101,
-+	.pdu_len =3D sizeof(send_ss_4101),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 1",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	},
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_4102 =3D {
-+	.pdu =3D send_ss_4102,
-+	.pdu_len =3D sizeof(send_ss_4102),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "Text Attribute 2",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_511 =3D {
-+	.pdu =3D send_ss_511,
-+	.pdu_len =3D sizeof(send_ss_511),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "=E4=BD=A0=E5=A5=BD",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static struct send_ss_test send_ss_data_611 =3D {
-+	.pdu =3D send_ss_611,
-+	.pdu_len =3D sizeof(send_ss_611),
-+	.qualifier =3D 0x00,
-+	.alpha_id =3D "=E3=83=AB",
-+	.ss =3D {
-+		.ton_npi =3D 0x91,
-+		.ss =3D "**21*01234567890123456789*10#"
-+	}
-+};
-+
-+static void test_send_ss(gconstpointer data)
+ struct stk_command_setup_call {
+ 	char *alpha_id_usr_cfm;
+ 	struct stk_address addr;
+@@ -1043,6 +1051,7 @@ struct stk_command {
+ 		struct stk_command_select_item select_item;
+ 		struct stk_command_send_sms send_sms;
+ 		struct stk_command_send_ss send_ss;
++		struct stk_command_send_ussd send_ussd;
+ 		struct stk_command_setup_call setup_call;
+ 		struct stk_command_setup_event_list setup_event_list;
+ 		struct stk_command_perform_card_apdu perform_card_apdu;
+diff --git a/src/ussdutil.c b/src/ussdutil.c
+new file mode 100644
+index 0000000..b2f3d49
+--- /dev/null
++++ b/src/ussdutil.c
+@@ -0,0 +1,83 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <dirent.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <unistd.h>
++
++#include <glib.h>
++
++#include "smsutil.h"
++#include "ussdutil.h"
++#include "util.h"
++
++char *ussd_decode(int dcs, int len, const unsigned char *data)
 +{
-+	const struct send_ss_test *test =3D data;
-+	struct stk_command *command;
++	gboolean udhi;
++	enum sms_charset charset;
++	gboolean compressed;
++	gboolean iso639;
++	char *utf8;
 +
-+	command =3D stk_command_new_from_pdu(test->pdu, test->pdu_len);
++	if (!cbs_dcs_decode(dcs, &udhi, NULL, &charset,
++				&compressed, NULL, &iso639))
++		return NULL;
 +
-+	g_assert(command);
++	if (udhi || compressed || iso639)
++		return NULL;
 +
-+	g_assert(command->number =3D=3D 1);
-+	g_assert(command->type =3D=3D STK_COMMAND_TYPE_SEND_SS);
-+	g_assert(command->qualifier =3D=3D test->qualifier);
++	switch (charset) {
++	case SMS_CHARSET_7BIT:
++	{
++		long written;
++		unsigned char *unpacked =3D unpack_7bit(data, len, 0, TRUE, 0,
++							&written, 0);
++		if (unpacked =3D=3D NULL)
++			return NULL;
 +
-+	g_assert(command->src =3D=3D STK_DEVICE_IDENTITY_TYPE_UICC);
-+	g_assert(command->dst =3D=3D STK_DEVICE_IDENTITY_TYPE_NETWORK);
++		utf8 =3D convert_gsm_to_utf8(unpacked, written, NULL, NULL, 0);
++		g_free(unpacked);
 +
-+	check_alpha_id(command->send_ss.alpha_id, test->alpha_id);
-+	check_ss(&command->send_ss.ss, &test->ss);
-+	check_icon_id(&command->send_ss.icon_id, &test->icon_id);
-+	check_text_attr(&command->send_ss.text_attr, &test->text_attr);
-+	check_frame_id(&command->send_ss.frame_id, &test->frame_id);
++		break;
++	}
++	case SMS_CHARSET_8BIT:
++		utf8 =3D convert_gsm_to_utf8(data, len, NULL, NULL, 0);
++		break;
++	case SMS_CHARSET_UCS2:
++		utf8 =3D g_convert((const gchar *) data, len,
++					"UTF-8//TRANSLIT", "UCS-2BE",
++					NULL, NULL, NULL);
++		break;
++	default:
++		utf8 =3D NULL;
++	}
 +
-+	stk_command_free(command);
++	return utf8;
 +}
+diff --git a/src/ussdutil.h b/src/ussdutil.h
+new file mode 100644
+index 0000000..17bb79c
+--- /dev/null
++++ b/src/ussdutil.h
+@@ -0,0 +1,22 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
- struct setup_call_test {
- 	const unsigned char *pdu;
- 	unsigned int pdu_len;
-@@ -19224,6 +20203,81 @@ int main(int argc, char **argv)
- 	g_test_add_data_func("/teststk/Send SMS 6.1.3",
- 				&send_sms_data_613, test_send_sms);
- =
-
-+	g_test_add_data_func("/teststk/Send SS 1.1.1",
-+				&send_ss_data_111, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 1.4.1",
-+				&send_ss_data_141, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 1.5.1",
-+				&send_ss_data_151, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 1.6.1",
-+				&send_ss_data_161, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 2.1.1",
-+				&send_ss_data_211, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 2.2.1",
-+				&send_ss_data_221, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 2.3.1",
-+				&send_ss_data_231, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 2.4.1",
-+				&send_ss_data_241, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 3.1.1",
-+				&send_ss_data_311, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.1.1",
-+				&send_ss_data_411, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.1.2",
-+				&send_ss_data_412, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.2.1",
-+				&send_ss_data_421, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.2.2",
-+				&send_ss_data_422, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.3.1",
-+				&send_ss_data_431, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.3.2",
-+				&send_ss_data_432, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.4.1",
-+				&send_ss_data_441, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.4.2",
-+				&send_ss_data_442, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.4.3",
-+				&send_ss_data_443, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.5.1",
-+				&send_ss_data_451, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.5.2",
-+				&send_ss_data_452, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.5.3",
-+				&send_ss_data_453, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.6.1",
-+				&send_ss_data_461, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.6.2",
-+				&send_ss_data_462, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.6.3",
-+				&send_ss_data_463, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.7.1",
-+				&send_ss_data_471, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.7.2",
-+				&send_ss_data_472, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.7.3",
-+				&send_ss_data_473, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.8.1",
-+				&send_ss_data_481, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.8.2",
-+				&send_ss_data_482, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.8.3",
-+				&send_ss_data_483, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.9.1",
-+				&send_ss_data_491, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.9.2",
-+				&send_ss_data_492, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.9.3",
-+				&send_ss_data_493, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.10.1",
-+				&send_ss_data_4101, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 4.10.2",
-+				&send_ss_data_4102, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 5.1.1",
-+				&send_ss_data_511, test_send_ss);
-+	g_test_add_data_func("/teststk/Send SS 6.1.1",
-+				&send_ss_data_611, test_send_ss);
-+
- 	g_test_add_data_func("/teststk/Send SMS response 1.1.1",
- 				&send_sms_response_data_111,
- 				test_terminal_response_encoding);
++char *ussd_decode(int dcs, int len, const unsigned char *data);
 -- =
 
 1.7.0.4
 
 
---===============1423489888738343191==--
+--===============7481121797378959763==--
 
