@@ -1,97 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============0538522533732077980=="
+Content-Type: multipart/mixed; boundary="===============5889677634112883913=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 06/12] Refactor ussd parser
-Date: Sun, 13 Jun 2010 17:43:16 +0800
-Message-ID: <1276422202-16240-6-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 08/12] stk: Add parser for cell broadcast page objects
+Date: Sun, 13 Jun 2010 17:43:18 +0800
+Message-ID: <1276422202-16240-8-git-send-email-yang.gu@intel.com>
 In-Reply-To: <1276422202-16240-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0538522533732077980==
+--===============5889677634112883913==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/isimodem/ussd.c |   36 +++++++-----------------------------
- 1 files changed, 7 insertions(+), 29 deletions(-)
+ src/stkutil.c |   24 ++++++++++++++++++++++++
+ src/stkutil.h |    6 ++++++
+ 2 files changed, 30 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/isimodem/ussd.c b/drivers/isimodem/ussd.c
-index 8be20b6..10bee0f 100644
---- a/drivers/isimodem/ussd.c
-+++ b/drivers/isimodem/ussd.c
-@@ -47,6 +47,7 @@
- #include "isiutil.h"
- #include "ss.h"
- #include "debug.h"
-+#include "ussdutil.h"
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 268d686..3ca808f 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -355,6 +355,28 @@ static gboolean parse_dataobj_ccp(struct comprehension=
+_tlv_iter *iter,
+ 	return TRUE;
+ }
  =
 
- struct ussd_data {
- 	GIsiClient *client;
-@@ -73,44 +74,21 @@ static void ussd_parse(struct ofono_ussd *ussd, const v=
-oid *restrict data,
- 			size_t len)
- {
- 	const unsigned char *msg =3D data;
--	unsigned char buf[256];
--	unsigned char *unpacked;
--	long written;
--	int status;
-+	int status =3D OFONO_USSD_STATUS_NOT_SUPPORTED;
- 	char *converted =3D NULL;
--	gboolean udhi;
--	enum sms_charset charset;
--	gboolean compressed;
--	gboolean iso639;
++/* Defined in TS 31.111 Section 8.5 */
++static gboolean parse_dataobj_cbs_page(struct comprehension_tlv_iter *iter,
++					void *user)
++{
++	struct stk_cbs_page *cp =3D user;
++	const unsigned char *data;
++	unsigned int len;
++
++	len =3D comprehension_tlv_iter_get_length(iter);
++	if (len < 1)
++		return FALSE;
++
++	if (len > sizeof(cp->page))
++		return FALSE;
++
++	data =3D comprehension_tlv_iter_get_data(iter);
++	cp->len =3D len;
++	memcpy(cp->page, data, len);
++
++	return TRUE;
++}
++
+ /* Described in TS 102.223 Section 8.8 */
+ static gboolean parse_dataobj_duration(struct comprehension_tlv_iter *iter,
+ 					void *user)
+@@ -1900,6 +1922,8 @@ static dataobj_handler handler_for_type(enum stk_data=
+_object_type type)
+ 		return parse_dataobj_subaddress;
+ 	case STK_DATA_OBJECT_TYPE_CCP:
+ 		return parse_dataobj_ccp;
++	case STK_DATA_OBJECT_TYPE_CBS_PAGE:
++		return parse_dataobj_cbs_page;
+ 	case STK_DATA_OBJECT_TYPE_DURATION:
+ 		return parse_dataobj_duration;
+ 	case STK_DATA_OBJECT_TYPE_ITEM:
+diff --git a/src/stkutil.h b/src/stkutil.h
+index 6ab5ed1..b0dcd5f 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -494,6 +494,12 @@ struct stk_ccp {
+ 	unsigned char ccp[16];
+ };
  =
 
- 	if (!msg || len < 4)
--		goto error;
-+		goto out;
- =
-
- 	status =3D isi_type_to_status(msg[2]);
- =
-
- 	if (msg[3] =3D=3D 0 || (size_t)(msg[3] + 4) > len)
--		goto error;
--
--	if (!cbs_dcs_decode(msg[1], &udhi, NULL, &charset,
--				&compressed, NULL, &iso639))
--		goto error;
--
--	if (udhi || compressed || iso639)
--		goto error;
--
--	if (charset !=3D SMS_CHARSET_7BIT)
--		goto error;
--
--	unpacked =3D unpack_7bit_own_buf(msg + 4, msg[3], 0, TRUE,
--					SS_MAX_USSD_LENGTH, &written, 0, buf);
-+		goto out;
- =
-
--	converted =3D convert_gsm_to_utf8((const guint8 *)unpacked, written,
--					NULL, NULL, 0);
-+	converted =3D ussd_decode(msg[1], msg[3], msg + 4);
- =
-
--	goto out;
--
--error:
--	status =3D OFONO_USSD_STATUS_NOT_SUPPORTED;
-+	if (converted)
-+		status =3D OFONO_USSD_STATUS_NOTIFY;
- =
-
- out:
- 	ofono_ussd_notify(ussd, status, converted);
++/* Defined in TS 31.111 Section 8.5 */
++struct stk_cbs_page {
++	unsigned char len;
++	unsigned char page[88];
++};
++
+ /*
+  * According to 102.223 Section 8.8 interval values of 0x00 are reserved.
+  * We use this to denote empty duration objects.
 -- =
 
 1.7.0.4
 
 
---===============0538522533732077980==--
+--===============5889677634112883913==--
 
