@@ -1,328 +1,327 @@
-Content-Type: multipart/mixed; boundary="===============6488411688303689641=="
+Content-Type: multipart/mixed; boundary="===============1381114682350849913=="
 MIME-Version: 1.0
-From: Huang, Ye <ye.huang@intel.com>
-Subject: The error when run the /test/list-modems script
-Date: Mon, 14 Jun 2010 10:23:50 +0800
-Message-ID: <B32E3D5F1713054290B4FF257B89C51A1539520AE9@shsmsx502.ccr.corp.intel.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: [PATCH v6] Report cell technology capability for Option HSO modems
+Date: Mon, 14 Jun 2010 10:35:18 +0200
+Message-ID: <20100614083518.GA9327@pc0043.bmw-carit.intra>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6488411688303689641==
+--===============1381114682350849913==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-
-
-
-we meet the following problem when run ofonod
-
-
-
-[test environment]
-
- OS: meego 0.90
-
- ofonod ver: 0.18
-
- modem : IFX6160
-
- test board : Intel CDK QS
-
- SIM card : 2g SIM card
-
-
-
-[operation step]
-
-1. power on test board(MRST CDK)
-
-2. check ofonod has been startuped by ps command
-
-3. run /usr/lib/ofono/test/list-modems test script
-
-4. find below error.
-
-
-
-could you help us analyze the possible reason of this problem?
-
-i
-
-
-
-=EF=BC=9D=EF=BC=9D=EF=BC=9D=EF=BC=9D=EF=BC=9D=EF=BC=9D=EF=BC=9D=EF=BC=9D=EF=
-=BC=9D=EF=BC=9D
-
-[root(a)localhost test]# ./list-modems
-
-[ /ifx_at ]
-
-    Powered =3D 1
-
-    Interfaces =3D org.ofono.DataConnectionManager org.ofono.Phonebook
-
-org.ofono.NetworkRegistration org.ofono.CallMeter org.o
-
-    Model =3D  XMM2130
-
-    Manufacturer =3D  Ehs2agrRel6
-
-    Serial =3D *359559020000412
-
-    Revision =3D  Undefined
-
-    [ org.ofono.DataConnectionManager ]
-
-        Status =3D registered
-
-        Powered =3D 1
-
-        Attached =3D 1
-
-        PrimaryContexts =3D /ifx_at/primarycontext1
-
-        RoamingAllowed =3D 1
-
-    [ org.ofono.Phonebook ]
-
-    [ org.ofono.NetworkRegistration ]
-
-        Status =3D registered
-
-        Strength =3D 87
-
-        LocationAreaCode =3D 4473
-
-        Mode =3D auto
-
-        Operator =3D CMCC
-
-        AvailableOperators =3D /ifx_at/operator/46000
-
-        Technology =3D GSM+EGPRS
-
-        CellId =3D 33258
-
-    [ org.ofono.CallMeter ]
-
-Traceback (most recent call last):
-
-  File "./list-modems", line 30, in <module>
-
-    object =3D dbus.Interface(bus.get_object('org.ofono', path),
-
-  File "/usr/lib/python2.6/site-packages/dbus/bus.py", line 244, in
-
-get_object
-
-    follow_name_owner_changes=3Dfollow_name_owner_changes)
-
-  File "/usr/lib/python2.6/site-packages/dbus/proxies.py", line 241, in
-
-__init__
-
-    self._named_service =3D conn.activate_name_owner(bus_name)
-
-  File "/usr/lib/python2.6/site-packages/dbus/bus.py", line 183, in
-
-activate_name_owner
-
-    self.start_service_by_name(bus_name)
-
-  File "/usr/lib/python2.6/site-packages/dbus/bus.py", line 281, in
-
-start_service_by_name
-
-    'su', (bus_name, flags)))
-
-  File "/usr/lib/python2.6/site-packages/dbus/connection.py", line 630, in
-
-call_blocking
-
-    message, timeout)
-
-
-Best regards,
-Ye
-
---===============6488411688303689641==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
-dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PWdiMjMxMiI+CjxtZXRhIG5hbWU9R2VuZXJhdG9yIGNv
-bnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDEyIChmaWx0ZXJlZCBtZWRpdW0pIj4KPHN0eWxlPgo8IS0t
-CiAvKiBGb250IERlZmluaXRpb25zICovCiBAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6y87M5TsK
-CXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6
-y87M5TsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQpAZm9udC1mYWNlCgl7Zm9udC1m
-YW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KQGZvbnQtZmFj
-ZQoJe2ZvbnQtZmFtaWx5OkNhbmRhcmE7CglwYW5vc2UtMToyIDE0IDUgMiAzIDMgMyAyIDIgNDt9
-CkBmb250LWZhY2UKCXtmb250LWZhbWlseToiXEDLzszlIjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAx
-IDEgMSAxIDE7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBsaS5Nc29O
-b3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0
-OwoJdGV4dC1hbGlnbjpqdXN0aWZ5OwoJdGV4dC1qdXN0aWZ5OmludGVyLWlkZW9ncmFwaDsKCWZv
-bnQtc2l6ZToxMC41cHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTps
-aW5rLCBzcGFuLk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJs
-dWU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVy
-bGlua0ZvbGxvd2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4
-dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnAuTXNvUGxhaW5UZXh0LCBsaS5Nc29QbGFpblRleHQs
-IGRpdi5Nc29QbGFpblRleHQKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgltc28tc3R5bGUtbGlu
-azoiUGxhaW4gVGV4dCBDaGFyIjsKCW1hcmdpbjowY207CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7
-Cglmb250LXNpemU6MTAuMHB0OwoJZm9udC1mYW1pbHk6IkFyaWFsIiwic2Fucy1zZXJpZiI7fQpz
-cGFuLkVtYWlsU3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7Cglmb250
-LWZhbWlseToiQ2FuZGFyYSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4dDsKCWZvbnQt
-d2VpZ2h0Om5vcm1hbDsKCWZvbnQtc3R5bGU6bm9ybWFsOwoJdGV4dC1kZWNvcmF0aW9uOm5vbmUg
-bm9uZTt9CnNwYW4uUGxhaW5UZXh0Q2hhcgoJe21zby1zdHlsZS1uYW1lOiJQbGFpbiBUZXh0IENo
-YXIiOwoJbXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJbXNvLXN0eWxlLWxpbms6IlBsYWluIFRleHQi
-OwoJZm9udC1mYW1pbHk6IkFyaWFsIiwic2Fucy1zZXJpZiI7fQouTXNvQ2hwRGVmYXVsdAoJe21z
-by1zdHlsZS10eXBlOmV4cG9ydC1vbmx5O30KIC8qIFBhZ2UgRGVmaW5pdGlvbnMgKi8KIEBwYWdl
-IFNlY3Rpb24xCgl7c2l6ZTo2MTIuMHB0IDc5Mi4wcHQ7CgltYXJnaW46NzIuMHB0IDkwLjBwdCA3
-Mi4wcHQgOTAuMHB0O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0tPgo8L3N0eWxl
-Pgo8IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVkaXQi
-IHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48
-eG1sPgogPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgogIDxvOmlkbWFwIHY6ZXh0PSJlZGl0
-IiBkYXRhPSIxIiAvPgogPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPgo8L2hlYWQ+
-Cgo8Ym9keSBsYW5nPVpILUNOIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGUgc3R5bGU9J3RleHQtanVz
-dGlmeS10cmltOnB1bmN0dWF0aW9uJz4KCjxkaXYgY2xhc3M9U2VjdGlvbjE+Cgo8cCBjbGFzcz1N
-c29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz5IaSw8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8
-cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwv
-c3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz53ZSBtZWV0
-IHRoZSBmb2xsb3dpbmcgcHJvYmxlbSB3aGVuIHJ1bgpvZm9ub2Q8bzpwPjwvbzpwPjwvc3Bhbj48
-L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwv
-bzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz5b
-dGVzdCBlbnZpcm9ubWVudF08bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFp
-blRleHQ+PHNwYW4gbGFuZz1FTi1VUz4mbmJzcDtPUzogbWVlZ28gMC45MDxvOnA+PC9vOnA+PC9z
-cGFuPjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPiZuYnNwO29m
-b25vZCB2ZXI6IDAuMTg8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRl
-eHQ+PHNwYW4gbGFuZz1FTi1VUz4mbmJzcDttb2RlbSA6IElGWDYxNjA8bzpwPjwvbzpwPjwvc3Bh
-bj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz4mbmJzcDt0ZXN0
-IGJvYXJkIDogSW50ZWwgQ0RLIFFTPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNv
-UGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7U0lNIGNhcmQgOiAyZyBTSU0gY2FyZDxv
-OnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD48c3BhbiBsYW5nPUVO
-LVVTPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD48
-c3BhbiBsYW5nPUVOLVVTPltvcGVyYXRpb24gc3RlcF08bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8
-cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz4xLiBwb3dlciBvbiB0ZXN0IGJv
-YXJkKE1SU1QgQ0RLKTxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4
-dD48c3BhbiBsYW5nPUVOLVVTPjIuIGNoZWNrIG9mb25vZCBoYXMgYmVlbiBzdGFydHVwZWQgYnkg
-cHMKY29tbWFuZDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD48
-c3BhbiBsYW5nPUVOLVVTPjMuIHJ1biAvdXNyL2xpYi9vZm9uby90ZXN0L2xpc3QtbW9kZW1zCnRl
-c3Qgc2NyaXB0PG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0Pjxz
-cGFuIGxhbmc9RU4tVVM+NC4gZmluZCBiZWxvdyBlcnJvci48bzpwPjwvbzpwPjwvc3Bhbj48L3A+
-Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpw
-Pjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PGI+PHNwYW4gbGFuZz1FTi1VUz5j
-b3VsZCB5b3UgaGVscCB1cyBhbmFseXplIHRoZQpwb3NzaWJsZSByZWFzb24gb2YgdGhpcyBwcm9i
-bGVtPzxvOnA+PC9vOnA+PC9zcGFuPjwvYj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNw
-YW4gbGFuZz1FTi1VUz5pPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5U
-ZXh0PjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xh
-c3M9TXNvUGxhaW5UZXh0PjxzcGFuIHN0eWxlPSdmb250LWZhbWlseTrLzszlJz6jvaO9o72jvaO9
-o72jvaO9o72jvTwvc3Bhbj48c3BhbgpsYW5nPUVOLVVTPjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4K
-CjxwIGNsYXNzPU1zb1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPltyb290QGxvY2FsaG9zdCB0
-ZXN0XSMgLi9saXN0LW1vZGVtczxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb1Bs
-YWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPlsgL2lmeF9hdCBdPG86cD48L286cD48L3NwYW4+PC9w
-PgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5i
-c3A7IFBvd2VyZWQgPSAxPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5U
-ZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7IEludGVyZmFjZXMgPQpvcmcu
-b2Zvbm8uRGF0YUNvbm5lY3Rpb25NYW5hZ2VyIG9yZy5vZm9uby5QaG9uZWJvb2s8bzpwPjwvbzpw
-Pjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz5vcmcu
-b2Zvbm8uTmV0d29ya1JlZ2lzdHJhdGlvbgpvcmcub2Zvbm8uQ2FsbE1ldGVyIG9yZy5vPG86cD48
-L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+
-Jm5ic3A7ICZuYnNwOyZuYnNwO01vZGVsID0mbmJzcDsgWE1NMjEzMDxvOnA+PC9vOnA+PC9zcGFu
-PjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPiZuYnNwOyZuYnNw
-OyZuYnNwOyBNYW51ZmFjdHVyZXIgPSZuYnNwOwpFaHMyYWdyUmVsNjxvOnA+PC9vOnA+PC9zcGFu
-PjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPiZuYnNwOyZuYnNw
-OyZuYnNwOyBTZXJpYWwgPQoqMzU5NTU5MDIwMDAwNDEyPG86cD48L286cD48L3NwYW4+PC9wPgoK
-PHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7
-IFJldmlzaW9uID0mbmJzcDsKVW5kZWZpbmVkPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xh
-c3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7IFsKb3Jn
-Lm9mb25vLkRhdGFDb25uZWN0aW9uTWFuYWdlciBdPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAg
-Y2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7ClN0YXR1cyA9IHJlZ2lzdGVyZWQ8bzpwPjwvbzpwPjwvc3Bh
-bj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz4mbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsKUG93ZXJlZCA9IDE8bzpwPjwvbzpwPjwv
-c3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz4mbmJzcDsm
-bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsKQXR0YWNoZWQgPSAxPG86cD48L286
-cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7ClByaW1hcnlDb250ZXh0cyA9
-IC9pZnhfYXQvcHJpbWFyeWNvbnRleHQxPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9
-TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7ClJvYW1pbmdBbGxvd2VkID0gMTxvOnA+PC9vOnA+PC9zcGFuPjwvcD4K
-CjxwIGNsYXNzPU1zb1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPiZuYnNwOyZuYnNwOyZuYnNw
-OyBbIG9yZy5vZm9uby5QaG9uZWJvb2sKXTxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNz
-PU1zb1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPiZuYnNwOyZuYnNwOyZuYnNwOyBbCm9yZy5v
-Zm9uby5OZXR3b3JrUmVnaXN0cmF0aW9uIF08bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFz
-cz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
-bmJzcDsmbmJzcDsmbmJzcDsKU3RhdHVzID0gcmVnaXN0ZXJlZDxvOnA+PC9vOnA+PC9zcGFuPjwv
-cD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPiZuYnNwOyZuYnNwOyZu
-YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOwpTdHJlbmd0aCA9IDg3PG86cD48L286cD48L3Nw
-YW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7CkxvY2F0aW9uQXJlYUNvZGUgPSA0NDcz
-PG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9
-RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Ck1vZGUgPSBh
-dXRvPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxh
-bmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Ck9wZXJh
-dG9yID0gQ01DQzxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD48
-c3BhbiBsYW5nPUVOLVVTPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
-OwpBdmFpbGFibGVPcGVyYXRvcnMgPSAvaWZ4X2F0L29wZXJhdG9yLzQ2MDAwPG86cD48L286cD48
-L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7ClRlY2hub2xvZ3kgPSBHU00rRUdQ
-UlM8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFu
-Zz1FTi1VUz4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsKQ2VsbElk
-ID0gMzMyNTg8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNw
-YW4gbGFuZz1FTi1VUz4mbmJzcDsmbmJzcDsmbmJzcDsgWyBvcmcub2Zvbm8uQ2FsbE1ldGVyCl08
-bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1F
-Ti1VUz5UcmFjZWJhY2sgKG1vc3QgcmVjZW50IGNhbGwgbGFzdCk6PG86cD48L286cD48L3NwYW4+
-PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7IEZpbGUg
-JnF1b3Q7Li9saXN0LW1vZGVtcyZxdW90OywKbGluZSAzMCwgaW4gJmx0O21vZHVsZSZndDs8bzpw
-PjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1V
-Uz4mbmJzcDsmbmJzcDsmbmJzcDsgb2JqZWN0ID0KZGJ1cy5JbnRlcmZhY2UoYnVzLmdldF9vYmpl
-Y3QoJ29yZy5vZm9ubycsIHBhdGgpLDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1z
-b1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPiZuYnNwOyBGaWxlCiZxdW90Oy91c3IvbGliL3B5
-dGhvbjIuNi9zaXRlLXBhY2thZ2VzL2RidXMvYnVzLnB5JnF1b3Q7LCBsaW5lIDI0NCwgaW48bzpw
-PjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1V
-Uz5nZXRfb2JqZWN0PG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0
-PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7CmZvbGxvd19uYW1lX293bmVyX2No
-YW5nZXM9Zm9sbG93X25hbWVfb3duZXJfY2hhbmdlcyk8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8
-cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz4mbmJzcDsgRmlsZQomcXVvdDsv
-dXNyL2xpYi9weXRob24yLjYvc2l0ZS1wYWNrYWdlcy9kYnVzL3Byb3hpZXMucHkmcXVvdDssIGxp
-bmUgMjQxLCBpbjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD48
-c3BhbiBsYW5nPUVOLVVTPl9faW5pdF9fPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9
-TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7IHNlbGYuX25h
-bWVkX3NlcnZpY2UgPQpjb25uLmFjdGl2YXRlX25hbWVfb3duZXIoYnVzX25hbWUpPG86cD48L286
-cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5i
-c3A7IEZpbGUKJnF1b3Q7L3Vzci9saWIvcHl0aG9uMi42L3NpdGUtcGFja2FnZXMvZGJ1cy9idXMu
-cHkmcXVvdDssIGxpbmUgMTgzLCBpbjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1z
-b1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPmFjdGl2YXRlX25hbWVfb3duZXI8bzpwPjwvbzpw
-Pjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz4mbmJz
-cDsmbmJzcDsmbmJzcDsKc2VsZi5zdGFydF9zZXJ2aWNlX2J5X25hbWUoYnVzX25hbWUpPG86cD48
-L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+
-Jm5ic3A7IEZpbGUKJnF1b3Q7L3Vzci9saWIvcHl0aG9uMi42L3NpdGUtcGFja2FnZXMvZGJ1cy9i
-dXMucHkmcXVvdDssIGxpbmUgMjgxLCBpbjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNz
-PU1zb1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVTPnN0YXJ0X3NlcnZpY2VfYnlfbmFtZTxvOnA+
-PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD48c3BhbiBsYW5nPUVOLVVT
-PiZuYnNwOyZuYnNwOyZuYnNwOyAnc3UnLCAoYnVzX25hbWUsCmZsYWdzKSkpPG86cD48L286cD48
-L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7
-IEZpbGUKJnF1b3Q7L3Vzci9saWIvcHl0aG9uMi42L3NpdGUtcGFja2FnZXMvZGJ1cy9jb25uZWN0
-aW9uLnB5JnF1b3Q7LCBsaW5lIDYzMCwgaW48bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFz
-cz1Nc29QbGFpblRleHQ+PHNwYW4gbGFuZz1FTi1VUz5jYWxsX2Jsb2NraW5nPG86cD48L286cD48
-L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PjxzcGFuIGxhbmc9RU4tVVM+Jm5ic3A7
-Jm5ic3A7Jm5ic3A7IG1lc3NhZ2UsIHRpbWVvdXQpPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAg
-Y2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQ7
-Zm9udC1mYW1pbHk6IkNhbmRhcmEiLCJzYW5zLXNlcmlmIic+PG86cD4mbmJzcDs8L286cD48L3Nw
-YW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQt
-c2l6ZToxMS4wcHQ7Zm9udC1mYW1pbHk6IkNhbmRhcmEiLCJzYW5zLXNlcmlmIic+PG86cD4mbmJz
-cDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMg
-c3R5bGU9J2ZvbnQtc2l6ZToxMi4wcHQ7Zm9udC1mYW1pbHk6IkNhbmRhcmEiLCJzYW5zLXNlcmlm
-Iic+QmVzdApyZWdhcmRzLDxicj4KWWU8L3NwYW4+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9u
-dC1zaXplOjEwLjBwdDtmb250LWZhbWlseTrLzszlJz4gPC9zcGFuPjxzcGFuCmxhbmc9RU4tVVM+
-PG86cD48L286cD48L3NwYW4+PC9wPgoKPC9kaXY+Cgo8L2JvZHk+Cgo8L2h0bWw+Cg==
-
---===============6488411688303689641==--
+Option modem use OCTI and OUWCTI commands
+for reporting the cell capability.
+---
+Now this version is tested and works as expected. =
+
+Before at_creg_cb (creg_query) OCTI/OUWCTI is fired
+and after creg_notify. =
+
+
+Now I'll takle the DCM patch for the techs.
+
+v6: fix double free
+v5: don't send AT+CREG? twice
+v4: clean up :)
+v3: simplify even more.
+v2: simplify v1 and use two callbacks instead of one
+v1: do not depend on unsoliced message. use only octi & ouwcti, no ossysi
+v0: based on "[RFC v3] Readout technology form Option HSO modems"
+
+ drivers/atmodem/network-registration.c |  178 +++++++++++++++++++++-------=
+----
+ 1 files changed, 116 insertions(+), 62 deletions(-)
+
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index f5ccbb1..1890378 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -46,6 +46,7 @@ static const char *creg_prefix[] =3D { "+CREG:", NULL };
+ static const char *cops_prefix[] =3D { "+COPS:", NULL };
+ static const char *csq_prefix[] =3D { "+CSQ:", NULL };
+ static const char *cind_prefix[] =3D { "+CIND:", NULL };
++static const char *option_tech_prefix[] =3D { "_OCTI:", "_OUWCTI:", NULL };
+ =
+
+ struct netreg_data {
+ 	GAtChat *chat;
+@@ -58,6 +59,13 @@ struct netreg_data {
+ 	unsigned int vendor;
+ };
+ =
+
++struct tech_query {
++	int status;
++	int lac;
++	int ci;
++	struct ofono_netreg *netreg;
++};
++
+ static void extract_mcc_mnc(const char *str, char *mcc, char *mnc)
+ {
+ 	/* Three digit country code */
+@@ -69,6 +77,64 @@ static void extract_mcc_mnc(const char *str, char *mcc, =
+char *mnc)
+ 	mnc[OFONO_MAX_MNC_LENGTH] =3D '\0';
+ }
+ =
+
++static int option_parse_tech(GAtResult *result)
++{
++	GAtResultIter iter;
++	int s, octi, ouwcti;
++	int tech =3D -1;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "_OCTI:"))
++		return -1;
++
++	if (!g_at_result_iter_next_number(&iter, &s))
++		return -1;
++
++	if (!g_at_result_iter_next_number(&iter, &octi))
++		return -1;
++
++	if (!g_at_result_iter_next(&iter, "_OUWCTI:"))
++		return -1;
++
++	if (!g_at_result_iter_next_number(&iter, &s))
++		return -1;
++
++	if (!g_at_result_iter_next_number(&iter, &ouwcti))
++		return -1;
++
++	switch (octi) {
++	case 1: /* GSM */
++		tech =3D 0;
++		break;
++	case 2: /* GPRS */
++		tech =3D 1;
++		break;
++	case 3: /* EDGE */
++		tech =3D 3;
++		break;
++	}
++
++	switch (ouwcti) {
++	case 1: /* UMTS */
++		tech =3D 2;
++		break;
++	case 2: /* HSDPA */
++		tech =3D 4;
++		break;
++	case 3: /* HSUPA */
++		tech =3D 5;
++		break;
++	case 4: /* HSPA */
++		tech =3D 6;
++		break;
++	}
++
++	DBG("octi %d ouwcti %d tech %d", octi, ouwcti, tech);
++
++	return tech;
++}
++
+ static void at_creg_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+@@ -96,6 +162,18 @@ static void at_creg_cb(gboolean ok, GAtResult *result, =
+gpointer user_data)
+ 	cb(&error, status, lac, ci, tech, cbd->data);
+ }
+ =
+
++static void option_tech_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct cb_data *cbd =3D user_data;
++	struct ofono_netreg *netreg =3D cbd->data;
++	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
++
++	if (ok)
++		nd->tech =3D option_parse_tech(result);
++	else
++		nd->tech =3D -1;
++}
++
+ static void at_registration_status(struct ofono_netreg *netreg,
+ 					ofono_netreg_status_cb_t cb,
+ 					void *data)
+@@ -125,6 +203,14 @@ static void at_registration_status(struct ofono_netreg=
+ *netreg,
+ 		g_at_chat_send(nd->chat, "AT$CNTI=3D0", none_prefix,
+ 				NULL, NULL, NULL);
+ 		break;
++	case OFONO_VENDOR_OPTION_HSO:
++		/*
++		 * Send AT_OCTI?;_OUWCTI? to find out the current tech,
++		 * option_tech_cb will call fire CREG? to do the rest.
++		 */
++		if (g_at_chat_send(nd->chat, "AT_OCTI?;_OUWCTI?",
++			option_tech_prefix, option_tech_cb, cbd, NULL) <=3D 0)
++			nd->tech =3D -1;
+ 	}
+ =
+
+ 	if (g_at_chat_send(nd->chat, "AT+CREG?", creg_prefix,
+@@ -533,38 +619,6 @@ static void option_osigq_notify(GAtResult *result, gpo=
+inter user_data)
+ 				at_util_convert_signal_strength(strength));
+ }
+ =
+
+-static void option_ouwcti_notify(GAtResult *result, gpointer user_data)
+-{
+-	int mode;
+-	GAtResultIter iter;
+-
+-	g_at_result_iter_init(&iter, result);
+-
+-	if (!g_at_result_iter_next(&iter, "_OUWCTI:"))
+-		return;
+-
+-	if (!g_at_result_iter_next_number(&iter, &mode))
+-		return;
+-
+-	ofono_info("OWCTI mode: %d", mode);
+-}
+-
+-static void option_octi_notify(GAtResult *result, gpointer user_data)
+-{
+-	int mode;
+-	GAtResultIter iter;
+-
+-	g_at_result_iter_init(&iter, result);
+-
+-	if (!g_at_result_iter_next(&iter, "_OCTI:"))
+-		return;
+-
+-	if (!g_at_result_iter_next_number(&iter, &mode))
+-		return;
+-
+-	ofono_info("OCTI mode: %d", mode);
+-}
+-
+ static void ciev_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_netreg *netreg =3D user_data;
+@@ -624,22 +678,6 @@ static void cind_cb(gboolean ok, GAtResult *result, gp=
+ointer user_data)
+ 	cb(&error, strength, cbd->data);
+ }
+ =
+
+-static void option_ossysi_notify(GAtResult *result, gpointer user_data)
+-{
+-	int mode;
+-	GAtResultIter iter;
+-
+-	g_at_result_iter_init(&iter, result);
+-
+-	if (!g_at_result_iter_next(&iter, "_OSSYSI:"))
+-		return;
+-
+-	if (!g_at_result_iter_next_number(&iter, &mode))
+-		return;
+-
+-	ofono_info("OSSYSI mode: %d", mode);
+-}
+-
+ static void huawei_rssi_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_netreg *netreg =3D user_data;
+@@ -803,16 +841,46 @@ static void nw_cnti_notify(GAtResult *result, gpointe=
+r user_data)
+ 	ofono_info("CNTI: %s", tech);
+ }
+ =
+
++static void option_query_tech_cb(gboolean ok,
++			GAtResult *result, gpointer user_data)
++{
++	struct tech_query *tq =3D user_data;
++	int tech =3D -1;
++
++	if (ok)
++		tech =3D option_parse_tech(result);
++
++	ofono_netreg_status_notify(tq->netreg,
++			tq->status, tq->lac, tq->ci, tech);
++}
++
+ static void creg_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_netreg *netreg =3D user_data;
+ 	int status, lac, ci, tech;
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
++	struct tech_query *tq;
+ =
+
+ 	if (at_util_parse_reg_unsolicited(result, "+CREG:", &status,
+ 				&lac, &ci, &tech, nd->vendor) =3D=3D FALSE)
+ 		return;
+ =
+
++	switch (nd->vendor) {
++	case OFONO_VENDOR_OPTION_HSO:
++		tq =3D g_new0(struct tech_query, 1);
++		if (!tq)
++			break;
++
++		tq->status =3D status;
++		tq->lac =3D lac;
++		tq->ci =3D ci;
++		tq->netreg =3D netreg;
++
++		g_at_chat_send(nd->chat, "AT_OCTI?;_OUWCTI?",
++			option_tech_prefix, option_query_tech_cb, tq, g_free);
++		return;
++	}
++
+ 	if ((status =3D=3D 1 || status =3D=3D 5) && tech =3D=3D -1)
+ 		tech =3D nd->tech;
+ =
+
+@@ -909,27 +977,13 @@ static void at_creg_set_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 	case OFONO_VENDOR_OPTION_HSO:
+ 		g_at_chat_send(nd->chat, "AT_OSSYS=3D1", none_prefix,
+ 				NULL, NULL, NULL);
+-		g_at_chat_send(nd->chat, "AT_OUWCTI=3D1", none_prefix,
+-				NULL, NULL, NULL);
+-		g_at_chat_send(nd->chat, "AT_OCTI=3D1", none_prefix,
+-				NULL, NULL, NULL);
+ 		g_at_chat_send(nd->chat, "AT_OSQI=3D1", none_prefix,
+ 				NULL, NULL, NULL);
+ 		g_at_chat_register(nd->chat, "_OSIGQ:", option_osigq_notify,
+ 					FALSE, netreg, NULL);
+-		g_at_chat_register(nd->chat, "_OUWCTI:", option_ouwcti_notify,
+-					FALSE, netreg, NULL);
+-		g_at_chat_register(nd->chat, "_OCTI:", option_octi_notify,
+-					FALSE, netreg, NULL);
+-		g_at_chat_register(nd->chat, "_OSSYSI:", option_ossysi_notify,
+-					FALSE, netreg, NULL);
+ =
+
+ 		g_at_chat_send(nd->chat, "AT_OSSYS?", none_prefix,
+ 				NULL, NULL, NULL);
+-		g_at_chat_send(nd->chat, "AT_OWCTI?", none_prefix,
+-				NULL, NULL, NULL);
+-		g_at_chat_send(nd->chat, "AT_OCTI?", none_prefix,
+-				NULL, NULL, NULL);
+ 		g_at_chat_send(nd->chat, "AT_OSQI?", none_prefix,
+ 				NULL, NULL, NULL);
+ 		break;
+-- =
+
+1.6.6.1
+
+
+--===============1381114682350849913==--
 
