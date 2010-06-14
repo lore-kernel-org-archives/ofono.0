@@ -1,67 +1,109 @@
-Content-Type: multipart/mixed; boundary="===============4100625308144813372=="
+Content-Type: multipart/mixed; boundary="===============6346520942620615795=="
 MIME-Version: 1.0
 From: Daniel Wagner <wagi@monom.org>
-Subject: [RFC v0 3/3] Monitor current technology used for Option modems
-Date: Mon, 14 Jun 2010 13:14:20 +0200
-Message-ID: <1276514060-16226-4-git-send-email-wagi@monom.org>
-In-Reply-To: <1276514060-16226-1-git-send-email-wagi@monom.org>
+Subject: [PATCH v7] Report cell technology capability for Option HSO modems
+Date: Mon, 14 Jun 2010 19:37:03 +0200
+Message-ID: <20100614173703.GA26373@cesium.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4100625308144813372==
+--===============6346520942620615795==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-
+Option modem use OCTI and OUWCTI commands
+for reporting the cell capability.
 ---
- drivers/atmodem/gprs.c |  156 ++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 156 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index bf82d06..0ed97f3 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -48,6 +48,9 @@ static const char *none_prefix[] =3D { NULL };
- struct gprs_data {
+v7: free tq when something fails. =
+
+v6: fix double free
+v5: don't send AT+CREG? twice
+v4: clean up :)
+v3: simplify even more.
+v2: simplify v1 and use two callbacks instead of one
+v1: do not depend on unsoliced message. use only octi & ouwcti, no ossysi
+v0: based on "[RFC v3] Readout technology form Option HSO modems"
+
+ drivers/atmodem/network-registration.c |  184 +++++++++++++++++++++-------=
+----
+ 1 files changed, 122 insertions(+), 62 deletions(-)
+
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index f5ccbb1..4366e1e 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -46,6 +46,7 @@ static const char *creg_prefix[] =3D { "+CREG:", NULL };
+ static const char *cops_prefix[] =3D { "+COPS:", NULL };
+ static const char *csq_prefix[] =3D { "+CSQ:", NULL };
+ static const char *cind_prefix[] =3D { "+CIND:", NULL };
++static const char *option_tech_prefix[] =3D { "_OCTI:", "_OUWCTI:", NULL };
+ =
+
+ struct netreg_data {
  	GAtChat *chat;
+@@ -58,6 +59,13 @@ struct netreg_data {
  	unsigned int vendor;
-+	int ossysi; /* option hso 2G/3G info */
-+	int octi; /* option hso 2G info details */
-+	int ouwcti; /* otpion hso 3G info details */
  };
  =
 
- static void at_cgatt_cb(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -142,6 +145,140 @@ error:
- 	CALLBACK_WITH_FAILURE(cb, -1, data);
++struct tech_query {
++	int status;
++	int lac;
++	int ci;
++	struct ofono_netreg *netreg;
++};
++
+ static void extract_mcc_mnc(const char *str, char *mcc, char *mnc)
+ {
+ 	/* Three digit country code */
+@@ -69,6 +77,64 @@ static void extract_mcc_mnc(const char *str, char *mcc, =
+char *mnc)
+ 	mnc[OFONO_MAX_MNC_LENGTH] =3D '\0';
  }
  =
 
-+static int option_octi_to_tech(struct gprs_data *gd)
++static int option_parse_tech(GAtResult *result)
 +{
++	GAtResultIter iter;
++	int s, octi, ouwcti;
 +	int tech =3D -1;
-+	switch (gd->octi) {
-+	case 1:	/* GSM */
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "_OCTI:"))
++		return -1;
++
++	if (!g_at_result_iter_next_number(&iter, &s))
++		return -1;
++
++	if (!g_at_result_iter_next_number(&iter, &octi))
++		return -1;
++
++	if (!g_at_result_iter_next(&iter, "_OUWCTI:"))
++		return -1;
++
++	if (!g_at_result_iter_next_number(&iter, &s))
++		return -1;
++
++	if (!g_at_result_iter_next_number(&iter, &ouwcti))
++		return -1;
++
++	switch (octi) {
++	case 1: /* GSM */
 +		tech =3D 0;
 +		break;
 +	case 2: /* GPRS */
 +		tech =3D 1;
 +		break;
-+	case 3:	/* EDGE */
++	case 3: /* EDGE */
 +		tech =3D 3;
++		break;
 +	}
 +
-+	return tech;
-+}
-+
-+static int option_ouwcti_to_tech(struct gprs_data *gd)
-+{
-+	int tech =3D -1;
-+
-+	switch (gd->ouwcti) {
++	switch (ouwcti) {
 +	case 1: /* UMTS */
 +		tech =3D 2;
 +		break;
@@ -73,142 +115,214 @@ index bf82d06..0ed97f3 100644
 +		break;
 +	case 4: /* HSPA */
 +		tech =3D 6;
++		break;
 +	}
++
++	DBG("octi %d ouwcti %d tech %d", octi, ouwcti, tech);
 +
 +	return tech;
 +}
 +
-+static int option_get_tech(struct gprs_data *gd)
-+{
-+	int tech =3D -1;
-+	int tech_2g, tech_3g;
-+
-+	switch (gd->ossysi) {
-+	case -1:
-+		tech_2g =3D option_octi_to_tech(gd);
-+		tech_3g =3D option_ouwcti_to_tech(gd);
-+
-+		/* 3G tech takes precedence over 2G tech */
-+		if (tech_3g =3D=3D -1)
-+			tech =3D tech_2g;
-+		else
-+			tech =3D tech_3g;
-+		break;
-+	case 0: /* 2G */
-+		tech =3D option_octi_to_tech(gd);
-+		break;
-+	case 2: /* 3G */
-+		tech =3D option_ouwcti_to_tech(gd);
-+		break;
-+	case 3: /* Unknown */
-+		/* reset all ossysi and octi */
-+		gd->octi =3D -1;
-+		gd->ossysi =3D -1;
-+		break;
-+	}
-+
-+	DBG("ossysi %d octi %d ouwcti %d tech %d",
-+		gd->ossysi, gd->octi, gd->ouwcti, tech);
-+
-+	return tech;
-+}
-+
-+static void option_ossysi_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-+	GAtResultIter iter;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "_OSSYSI:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &gd->ossysi))
-+		return;
-+
-+	ofono_gprs_technology_notify(gprs, option_get_tech(gd));
-+}
-+
-+static void option_octi_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-+	GAtResultIter iter;
-+	int mode;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "_OCTI:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &gd->octi))
-+		return;
-+
-+	/* Handle query responses too */
-+	if (!g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
-+		gd->octi =3D mode;
-+
-+	ofono_gprs_technology_notify(gprs, option_get_tech(gd));
-+}
-+
-+static void option_ouwcti_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-+	GAtResultIter iter;
-+	int mode;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "_OUWCTI:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &gd->ouwcti))
-+		return;
-+
-+	/* Handle query responses too */
-+	if (!g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
-+		gd->ouwcti =3D mode;
-+
-+	ofono_gprs_technology_notify(gprs, option_get_tech(gd));
-+}
-+
- static void cgreg_notify(GAtResult *result, gpointer user_data)
+ static void at_creg_cb(gboolean ok, GAtResult *result, gpointer user_data)
  {
- 	struct ofono_gprs *gprs =3D user_data;
-@@ -181,6 +318,25 @@ static void gprs_initialized(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 	struct ofono_gprs *gprs =3D user_data;
- 	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
+ 	struct cb_data *cbd =3D user_data;
+@@ -96,6 +162,18 @@ static void at_creg_cb(gboolean ok, GAtResult *result, =
+gpointer user_data)
+ 	cb(&error, status, lac, ci, tech, cbd->data);
+ }
  =
 
-+	switch (gd->vendor) {
++static void option_tech_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct cb_data *cbd =3D user_data;
++	struct ofono_netreg *netreg =3D cbd->data;
++	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
++
++	if (ok)
++		nd->tech =3D option_parse_tech(result);
++	else
++		nd->tech =3D -1;
++}
++
+ static void at_registration_status(struct ofono_netreg *netreg,
+ 					ofono_netreg_status_cb_t cb,
+ 					void *data)
+@@ -125,6 +203,16 @@ static void at_registration_status(struct ofono_netreg=
+ *netreg,
+ 		g_at_chat_send(nd->chat, "AT$CNTI=3D0", none_prefix,
+ 				NULL, NULL, NULL);
+ 		break;
 +	case OFONO_VENDOR_OPTION_HSO:
-+		g_at_chat_register(gd->chat, "_OSSYSI:", option_ossysi_notify,
-+					FALSE, gprs, NULL);
-+		g_at_chat_register(gd->chat, "_OCTI:", option_octi_notify,
-+					FALSE, gprs, NULL);
-+		g_at_chat_register(gd->chat, "_OUWCTI:", option_ouwcti_notify,
-+					FALSE, gprs, NULL);
-+		g_at_chat_send(gd->chat, "AT_OCTI=3D1", none_prefix,
-+				NULL, NULL, NULL);
-+		g_at_chat_send(gd->chat, "AT_OUWCTI=3D1", none_prefix,
-+				NULL, NULL, NULL);
-+		g_at_chat_send(gd->chat, "AT_OCTI?", none_prefix,
-+				NULL, NULL, NULL);
-+		g_at_chat_send(gd->chat, "AT_OUWCTI?", none_prefix,
-+				NULL, NULL, NULL);
++		/*
++		 * Send AT_OCTI?;_OUWCTI? to find out the current tech,
++		 * option_tech_cb will call fire CREG? to do the rest.
++		 */
++		if (g_at_chat_send(nd->chat, "AT_OCTI?;_OUWCTI?",
++				option_tech_prefix,
++				option_tech_cb, cbd, NULL) =3D=3D 0)
++			nd->tech =3D -1;
++		break;
+ 	}
+ =
+
+ 	if (g_at_chat_send(nd->chat, "AT+CREG?", creg_prefix,
+@@ -533,38 +621,6 @@ static void option_osigq_notify(GAtResult *result, gpo=
+inter user_data)
+ 				at_util_convert_signal_strength(strength));
+ }
+ =
+
+-static void option_ouwcti_notify(GAtResult *result, gpointer user_data)
+-{
+-	int mode;
+-	GAtResultIter iter;
+-
+-	g_at_result_iter_init(&iter, result);
+-
+-	if (!g_at_result_iter_next(&iter, "_OUWCTI:"))
+-		return;
+-
+-	if (!g_at_result_iter_next_number(&iter, &mode))
+-		return;
+-
+-	ofono_info("OWCTI mode: %d", mode);
+-}
+-
+-static void option_octi_notify(GAtResult *result, gpointer user_data)
+-{
+-	int mode;
+-	GAtResultIter iter;
+-
+-	g_at_result_iter_init(&iter, result);
+-
+-	if (!g_at_result_iter_next(&iter, "_OCTI:"))
+-		return;
+-
+-	if (!g_at_result_iter_next_number(&iter, &mode))
+-		return;
+-
+-	ofono_info("OCTI mode: %d", mode);
+-}
+-
+ static void ciev_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_netreg *netreg =3D user_data;
+@@ -624,22 +680,6 @@ static void cind_cb(gboolean ok, GAtResult *result, gp=
+ointer user_data)
+ 	cb(&error, strength, cbd->data);
+ }
+ =
+
+-static void option_ossysi_notify(GAtResult *result, gpointer user_data)
+-{
+-	int mode;
+-	GAtResultIter iter;
+-
+-	g_at_result_iter_init(&iter, result);
+-
+-	if (!g_at_result_iter_next(&iter, "_OSSYSI:"))
+-		return;
+-
+-	if (!g_at_result_iter_next_number(&iter, &mode))
+-		return;
+-
+-	ofono_info("OSSYSI mode: %d", mode);
+-}
+-
+ static void huawei_rssi_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_netreg *netreg =3D user_data;
+@@ -803,16 +843,50 @@ static void nw_cnti_notify(GAtResult *result, gpointe=
+r user_data)
+ 	ofono_info("CNTI: %s", tech);
+ }
+ =
+
++static void option_query_tech_cb(gboolean ok,
++			GAtResult *result, gpointer user_data)
++{
++	struct tech_query *tq =3D user_data;
++	int tech =3D -1;
++
++	if (ok)
++		tech =3D option_parse_tech(result);
++
++	ofono_netreg_status_notify(tq->netreg,
++			tq->status, tq->lac, tq->ci, tech);
++}
++
+ static void creg_notify(GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_netreg *netreg =3D user_data;
+ 	int status, lac, ci, tech;
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
++	struct tech_query *tq;
+ =
+
+ 	if (at_util_parse_reg_unsolicited(result, "+CREG:", &status,
+ 				&lac, &ci, &tech, nd->vendor) =3D=3D FALSE)
+ 		return;
+ =
+
++	switch (nd->vendor) {
++	case OFONO_VENDOR_OPTION_HSO:
++		tq =3D g_new0(struct tech_query, 1);
++		if (!tq)
++			break;
++
++		tq->status =3D status;
++		tq->lac =3D lac;
++		tq->ci =3D ci;
++		tq->netreg =3D netreg;
++
++		if (g_at_chat_send(nd->chat, "AT_OCTI?;_OUWCTI?",
++			option_tech_prefix, option_query_tech_cb,
++					tq, g_free) > 0)
++			return;
++
++		g_free(tq);
 +		break;
 +	}
 +
- 	g_at_chat_register(gd->chat, "+CGEV:", cgev_notify, FALSE, gprs, NULL);
- 	g_at_chat_register(gd->chat, "+CGREG:", cgreg_notify,
- 				FALSE, gprs, NULL);
+ 	if ((status =3D=3D 1 || status =3D=3D 5) && tech =3D=3D -1)
+ 		tech =3D nd->tech;
+ =
+
+@@ -909,27 +983,13 @@ static void at_creg_set_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 	case OFONO_VENDOR_OPTION_HSO:
+ 		g_at_chat_send(nd->chat, "AT_OSSYS=3D1", none_prefix,
+ 				NULL, NULL, NULL);
+-		g_at_chat_send(nd->chat, "AT_OUWCTI=3D1", none_prefix,
+-				NULL, NULL, NULL);
+-		g_at_chat_send(nd->chat, "AT_OCTI=3D1", none_prefix,
+-				NULL, NULL, NULL);
+ 		g_at_chat_send(nd->chat, "AT_OSQI=3D1", none_prefix,
+ 				NULL, NULL, NULL);
+ 		g_at_chat_register(nd->chat, "_OSIGQ:", option_osigq_notify,
+ 					FALSE, netreg, NULL);
+-		g_at_chat_register(nd->chat, "_OUWCTI:", option_ouwcti_notify,
+-					FALSE, netreg, NULL);
+-		g_at_chat_register(nd->chat, "_OCTI:", option_octi_notify,
+-					FALSE, netreg, NULL);
+-		g_at_chat_register(nd->chat, "_OSSYSI:", option_ossysi_notify,
+-					FALSE, netreg, NULL);
+ =
+
+ 		g_at_chat_send(nd->chat, "AT_OSSYS?", none_prefix,
+ 				NULL, NULL, NULL);
+-		g_at_chat_send(nd->chat, "AT_OWCTI?", none_prefix,
+-				NULL, NULL, NULL);
+-		g_at_chat_send(nd->chat, "AT_OCTI?", none_prefix,
+-				NULL, NULL, NULL);
+ 		g_at_chat_send(nd->chat, "AT_OSQI?", none_prefix,
+ 				NULL, NULL, NULL);
+ 		break;
 -- =
 
 1.6.6.1
 
 
---===============4100625308144813372==--
+--===============6346520942620615795==--
 
