@@ -1,214 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============7512606433571728256=="
+Content-Type: multipart/mixed; boundary="===============7102768071408097193=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: [PATCH 1/7] Add bluetooth plugin skeleton.
-Date: Mon, 14 Jun 2010 15:04:22 -0300
-Message-ID: <1276538668-12755-1-git-send-email-gustavo@padovan.org>
+Subject: [PATCH 2/7] Add send_method_call_with_reply to bluetooth.c
+Date: Mon, 14 Jun 2010 15:04:23 -0300
+Message-ID: <1276538668-12755-2-git-send-email-gustavo@padovan.org>
+In-Reply-To: <1276538668-12755-1-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7512606433571728256==
+--===============7102768071408097193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The bluetooth plugin has bluetooth_resgister_uuid() and
-bluetooth_unresgister_uuid() where bluetooth profiles plugins such as HFP
-and DUN can register themselves to get know about BlueZ stuff ( new
-devices, bluetoothd shutdown, etc..)
 ---
- Makefile.am         |    5 +++-
- plugins/bluetooth.c |   75 +++++++++++++++++++++++++++++++++++++++++++++++=
+ plugins/bluetooth.c |   53 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- plugins/bluetooth.h |   42 ++++++++++++++++++++++++++++
- plugins/hfp.c       |    8 +----
- 4 files changed, 123 insertions(+), 7 deletions(-)
- create mode 100644 plugins/bluetooth.c
- create mode 100644 plugins/bluetooth.h
+ 1 files changed, 53 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 2ca0703..b6e4c35 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -238,8 +238,11 @@ builtin_sources +=3D plugins/em770.c
- builtin_modules +=3D novatel
- builtin_sources +=3D plugins/novatel.c
- =
-
-+builtin_modules +=3D bluetooth
-+builtin_sources +=3D plugins/bluetooth.c plugins/bluetooth.h
-+
- builtin_modules +=3D hfp
--builtin_sources +=3D plugins/hfp.c
-+builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
- =
-
- builtin_modules +=3D palmpre
- builtin_sources +=3D plugins/palmpre.c
 diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-new file mode 100644
-index 0000000..b4fe676
---- /dev/null
+index b4fe676..46eb304 100644
+--- a/plugins/bluetooth.c
 +++ b/plugins/bluetooth.c
-@@ -0,0 +1,75 @@
-+/*
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2010  ProFUSION embedded systems
-+ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <errno.h>
-+#include <unistd.h>
-+#include <glib.h>
-+#include <gdbus.h>
-+#include <ofono.h>
-+
-+#include <ofono/dbus.h>
-+
-+#include "bluetooth.h"
-+
-+static DBusConnection *connection;
-+static GHashTable *uuid_hash =3D NULL;
-+static GHashTable *adapter_address_hash =3D NULL;
-+
-+int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
-ofile)
+@@ -40,6 +40,59 @@ static DBusConnection *connection;
+ static GHashTable *uuid_hash =3D NULL;
+ static GHashTable *adapter_address_hash =3D NULL;
+ =
+
++static int send_method_call_with_reply(const char *dest, const char *path,
++				const char *interface, const char *method,
++				DBusPendingCallNotifyFunction cb,
++				void *user_data, DBusFreeFunction free_func,
++				int timeout, int type, ...)
 +{
-+	if (uuid_hash)
-+		goto done;
++	DBusMessage *msg;
++	DBusPendingCall *call;
++	va_list args;
++	int err;
 +
-+	connection =3D ofono_dbus_get_connection();
++	msg =3D dbus_message_new_method_call(dest, path, interface, method);
++	if (!msg) {
++		ofono_error("Unable to allocate new D-Bus %s message", method);
++		err =3D -ENOMEM;
++		goto fail;
++	}
 +
-+	uuid_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						g_free, NULL);
++	va_start(args, type);
 +
-+	adapter_address_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						g_free, g_free);
++	if (!dbus_message_append_args_valist(msg, type, args)) {
++		va_end(args);
++		err =3D -EIO;
++		goto fail;
++	}
 +
-+done:
-+	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
++	va_end(args);
++
++	if (timeout > 0)
++		timeout *=3D 1000;
++
++	if (!dbus_connection_send_with_reply(connection, msg, &call, timeout)) {
++		ofono_error("Sending %s failed", method);
++		err =3D -EIO;
++		goto fail;
++	}
++
++	dbus_pending_call_set_notify(call, cb, user_data, free_func);
++	dbus_pending_call_unref(call);
++	dbus_message_unref(msg);
 +
 +	return 0;
++
++fail:
++	if (free_func && user_data)
++		free_func(user_data);
++
++	if (msg)
++		dbus_message_unref(msg);
++
++	return err;
 +}
 +
-+void bluetooth_unregister_uuid(const char *uuid)
-+{
-+	g_hash_table_remove(uuid_hash, uuid);
-+
-+	if (g_hash_table_size(uuid_hash))
-+		return;
-+
-+	g_hash_table_destroy(uuid_hash);
-+	g_hash_table_destroy(adapter_address_hash);
-+	uuid_hash =3D NULL;
-+}
-+
-+OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-new file mode 100644
-index 0000000..94ebaf6
---- /dev/null
-+++ b/plugins/bluetooth.h
-@@ -0,0 +1,42 @@
-+/*
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#define	BLUEZ_SERVICE "org.bluez"
-+#define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
-+#define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
-+#define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-+
-+#define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
-+
-+/* Profiles bitfield */
-+#define HFP_AG 0x01
-+
-+struct bluetooth_profile {
-+	const char *name;
-+	int (*create)(const char *device, const char *dev_addr,
-+			const char *adapter_addr, const char *alias);
-+	void (*remove_all)();
-+	void (*set_alias)(const char *device, const char *);
-+};
-+
-+int bluetooth_register_uuid(const char *uuid,
-+				struct bluetooth_profile *profile);
-+void bluetooth_unregister_uuid(const char *uuid);
-+
-diff --git a/plugins/hfp.c b/plugins/hfp.c
-index e37c9fc..a49e4af 100644
---- a/plugins/hfp.c
-+++ b/plugins/hfp.c
-@@ -45,17 +45,13 @@
- =
-
- #include <ofono/dbus.h>
- =
-
--#define	BLUEZ_SERVICE "org.bluez"
--#define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
--#define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
--#define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-+#include "bluetooth.h"
-+
- #define	BLUEZ_GATEWAY_INTERFACE		BLUEZ_SERVICE ".HandsfreeGateway"
- =
-
- #define HFP_AGENT_INTERFACE "org.bluez.HandsfreeAgent"
- #define HFP_AGENT_ERROR_INTERFACE "org.bluez.Error"
- =
-
--#define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
--
- #ifndef DBUS_TYPE_UNIX_FD
- #define DBUS_TYPE_UNIX_FD -1
- #endif
+ int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
+ofile)
+ {
+ 	if (uuid_hash)
 -- =
 
 1.7.1
 
 
---===============7512606433571728256==--
+--===============7102768071408097193==--
 
