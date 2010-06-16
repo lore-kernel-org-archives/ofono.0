@@ -1,36 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============7350252702950165707=="
+Content-Type: multipart/mixed; boundary="===============9147547815351612592=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/1] Import Huawei rules from 10-Huawei-Datacard.rules
- (Linux Driver 4.08.01.108.tar.gz)
-Date: Fri, 18 Jun 2010 13:00:03 -0500
-Message-ID: <201006181300.03848.denkenz@gmail.com>
-In-Reply-To: <20100613111835.GA19183@h02.hostsharing.net>
+From: Pasi Miettinen <pasi.miettinen@ixonos.com>
+Subject: SMS status report
+Date: Wed, 16 Jun 2010 17:08:21 +0300
+Message-ID: <1276697306-1587-1-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7350252702950165707==
+--===============9147547815351612592==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Florian,
 
-> ---
->  plugins/ofono.rules |  299
->  ++++++++++++++++++++++++++++++++++++++++++++++++++- 1 files changed, =
+Hi,
+These are the latest modifications for the SMS status report. Pathc
+includes:
 
-298
->  insertions(+), 1 deletions(-)
+1. SMS status report assembly in smsutil.
+2. Status report result printing in history plugin.
+3. API change in history plugin.
+4. SMS notify for status report.
+5. Saving the pending status report info to imsi file.
 
-This patch has been applied, but I had to re-edit the description.  Could y=
-ou =
+The most common use cases were tested in practice. For example
+a concatenated message was sent to phone that was turned off and
+Ofono was rebooted. Then the phone was turned on and message was
+received and  Ofono received the status report and was able to
+work with the data which was loaded from the imsi file. Ofono was
+run under valgrind supervision and no memory leaks were
+detected.
 
-make sure to limit your commit header to 50 characters in the future?  Than=
-ks.
+Br,
+Pasi Miettinen
 
-Regards,
--Denis
 
---===============7350252702950165707==--
+
+
+--===============9147547815351612592==--
 
