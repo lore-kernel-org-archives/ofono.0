@@ -1,35 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============8339046876440324248=="
+Content-Type: multipart/mixed; boundary="===============8702163339667173908=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/12] stk: Add parser for send ss commands
-Date: Wed, 16 Jun 2010 17:42:52 -0500
-Message-ID: <201006161742.53196.denkenz@gmail.com>
-In-Reply-To: <1276422202-16240-1-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 03/12] stk: Add parser for send ussd commands
+Date: Wed, 16 Jun 2010 17:44:56 -0500
+Message-ID: <201006161744.56868.denkenz@gmail.com>
+In-Reply-To: <1276422202-16240-3-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8339046876440324248==
+--===============8702163339667173908==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Yang,
 
-> ---
->  src/stkutil.c |   70
->  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ =
+> +char *ussd_decode(int dcs, int len, const unsigned char *data);
+> =
 
-src/stkutil.h | =
 
->   15 ++++++++++++
->  2 files changed, 85 insertions(+), 0 deletions(-)
+Please put this function in smsutil.c/h, no need to start a brand new file =
+for =
 
-Patches 1-2, 7-9 and 11-12 in this series have been applied.  For others, =
-
-please see individual comments and rebase/resubmit.
+this.  It is highly related to sms / cbs anyway.
 
 Regards,
 -Denis
 
---===============8339046876440324248==--
+--===============8702163339667173908==--
 
