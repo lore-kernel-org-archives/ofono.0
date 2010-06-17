@@ -1,78 +1,187 @@
-Content-Type: multipart/mixed; boundary="===============5823779406808308501=="
+Content-Type: multipart/mixed; boundary="===============7733941380958403819=="
 MIME-Version: 1.0
-From: Arun Ravindran <arunlee@gmail.com>
-Subject: Re: smtp server problem
-Date: Thu, 17 Jun 2010 16:03:49 +0300
-Message-ID: <AANLkTilqE2bx3kv0Cda-yEqqzPXnzSJE0q09_kc1F8TG@mail.gmail.com>
-In-Reply-To: <EA8B5A37FEEFC048AF3F8170D2819913B8C1280A64@jklmail01.ixonos.local>
+From: Pasi Miettinen <pasi.miettinen@ixonos.com>
+Subject: [RFC PATCH 4/5] sms: Status report notify
+Date: Thu, 17 Jun 2010 16:14:57 +0300
+Message-ID: <1276780498-7573-5-git-send-email-pasi.miettinen@ixonos.com>
+In-Reply-To: <1276780498-7573-4-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5823779406808308501==
+--===============7733941380958403819==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ src/sms.c |   71 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 70 insertions(+), 1 deletions(-)
 
-I also faced a similar issue 2 days back and the mails were bouncing.
-It got corrected after few hours...
+diff --git a/src/sms.c b/src/sms.c
+index bf6d261..e6a2dca 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -68,6 +68,8 @@ struct ofono_sms {
+ 	void *driver_data;
+ 	struct ofono_atom *atom;
+ 	ofono_bool_t use_delivery_reports;
++	struct status_report_assembly *sr_assembly;
++
+ };
+ =
+
+ struct pending_pdu {
+@@ -83,6 +85,8 @@ struct tx_queue_entry {
+ 	unsigned int msg_id;
+ 	unsigned int retry;
+ 	DBusMessage *msg;
++	gboolean status_report;
++	struct sms_address receiver;
+ };
+ =
+
+ static void set_sca(struct ofono_sms *sms,
+@@ -331,6 +335,13 @@ static void tx_finished(const struct ofono_error *erro=
+r, int mr, void *data)
+ 	entry->cur_pdu +=3D 1;
+ 	entry->retry =3D 0;
+ =
+
++	if (entry->status_report)
++		status_report_assembly_add_fragment(sms->sr_assembly,
++							entry->msg_id,
++							&entry->receiver,
++							mr, time(NULL),
++							entry->num_pdus);
++
+ 	if (entry->cur_pdu < entry->num_pdus) {
+ 		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
+ 		return;
+@@ -462,6 +473,8 @@ static DBusMessage *sms_send_message(DBusConnection *co=
+nn, DBusMessage *msg,
+ 	set_ref_and_to(msg_list, sms->ref, ref_offset, to);
+ 	entry =3D create_tx_queue_entry(msg_list);
+ =
+
++	sms_address_from_string(&entry->receiver, to);
++
+ 	g_slist_foreach(msg_list, (GFunc)g_free, NULL);
+ 	g_slist_free(msg_list);
+ =
+
+@@ -474,6 +487,7 @@ static DBusMessage *sms_send_message(DBusConnection *co=
+nn, DBusMessage *msg,
+ =
+
+ 	entry->msg =3D dbus_message_ref(msg);
+ 	entry->msg_id =3D sms->next_msg_id++;
++	entry->status_report =3D sms->use_delivery_reports;
+ =
+
+ 	g_queue_push_tail(sms->txq, entry);
+ =
+
+@@ -718,6 +732,30 @@ static void handle_deliver(struct ofono_sms *sms, cons=
+t struct sms *incoming)
+ 	g_slist_free(l);
+ }
+ =
+
++static void handle_sms_status_report(struct ofono_sms *sms,
++						const struct sms *incoming)
++{
++	gboolean delivered;
++	unsigned int msg_id;
++	gboolean update_history;
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(sms->atom);
++
++	update_history =3D status_report_assembly_report(sms->sr_assembly,
++						incoming, &msg_id, &delivered);
++
++	if (update_history) {
++
++		if (delivered)
++			__ofono_history_sms_send_status(modem, msg_id,
++				time(NULL), OFONO_HISTORY_SMS_STATUS_DELIVERED);
++		else
++			__ofono_history_sms_send_status(modem, msg_id,
++				time(NULL),
++				OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED);
++	}
++}
++
++
+ static inline gboolean handle_mwi(struct ofono_sms *sms, struct sms *s)
+ {
+ 	gboolean discard;
+@@ -849,7 +887,30 @@ out:
+ void ofono_sms_status_notify(struct ofono_sms *sms, unsigned char *pdu,
+ 				int len, int tpdu_len)
+ {
+-	ofono_error("SMS Status-Report not yet handled");
++	struct sms s;
++	enum sms_class cls;
++
++	if (!sms_decode(pdu, len, FALSE, tpdu_len, &s)) {
++		ofono_error("Unable to decode PDU");
++		return;
++	}
++
++	if (s.type !=3D SMS_TYPE_STATUS_REPORT) {
++		ofono_error("Expecting a STATUS REPORT pdu");
++		return;
++	}
++
++	if (s.status_report.srq) {
++		ofono_error("Waiting an answer to SMS-SUBMIT, not SMS-COMMAND");
++		return;
++	}
++
++	if (!sms_dcs_decode(s.deliver.dcs, &cls, NULL, NULL, NULL)) {
++		ofono_error("Unknown / Reserved DCS.  Ignoring");
++		return;
++	}
++
++	handle_sms_status_report(sms, &s);
+ }
+ =
+
+ int ofono_sms_driver_register(const struct ofono_sms_driver *d)
+@@ -932,6 +993,11 @@ static void sms_remove(struct ofono_atom *atom)
+ 		sms->settings =3D NULL;
+ 	}
+ =
+
++	if (sms->sr_assembly) {
++		status_report_assembly_free(sms->sr_assembly);
++		sms->sr_assembly =3D NULL;
++	}
++
+ 	g_free(sms);
+ }
+ =
+
+@@ -1069,9 +1135,12 @@ void ofono_sms_register(struct ofono_sms *sms)
+ 		imsi =3D ofono_sim_get_imsi(sms->sim);
+ 		sms->assembly =3D sms_assembly_new(imsi);
+ =
+
++		sms->sr_assembly =3D status_report_assembly_new(imsi);
++
+ 		sms_load_settings(sms, imsi);
+ 	} else {
+ 		sms->assembly =3D sms_assembly_new(NULL);
++		sms->sr_assembly =3D status_report_assembly_new(NULL);
+ 	}
+ =
+
+ 	__ofono_atom_register(sms->atom, sms_unregister);
+-- =
+
+1.6.0.4
 
 
-regards
 
-
-On Thu, Jun 17, 2010 at 3:55 PM, Miettinen Pasi
-<pasi.miettinen@ixonos.com>wrote:
-
-> Hi,
->
-> I am wondering why ofono mailing list server is not
-> receiving the emails I try to send from our
-> smtp.ixonos.com server. Our IT support tried to
-> solve the problem and they said that the ofono
-> server responds:
-> "In Deferral: 450 4.5.0 No recipient succeeded"
->
-> Does anyone have a clue what could be the
-> problem?
->
-> Br,
-> Pasi Miettinen
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
-
---===============5823779406808308501==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGJyPkhpLDxicj48YnI+SSBhbHNvIGZhY2VkIGEgc2ltaWxhciBpc3N1ZSAyIGRheXMgYmFjayBh
-bmQgdGhlIG1haWxzIHdlcmUgYm91bmNpbmcuPGJyPgpJdCBnb3QgY29ycmVjdGVkIGFmdGVyIGZl
-dyBob3Vycy4uLjxicj4KPGJyPjxicj5yZWdhcmRzPGJyPjxicj48YnI+PGRpdiBjbGFzcz0iZ21h
-aWxfcXVvdGUiPk9uIFRodSwgSnVuIDE3LCAyMDEwIGF0IDM6NTUgUE0sIE1pZXR0aW5lbiBQYXNp
-IDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOnBhc2kubWlldHRpbmVuQGl4b25v
-cy5jb20iPnBhc2kubWlldHRpbmVuQGl4b25vcy5jb208L2E+Jmd0Ozwvc3Bhbj4gd3JvdGU6PGJy
-PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9ImJvcmRlci1sZWZ0OiAxcHgg
-c29saWQgcmdiKDIwNCwgMjA0LCAyMDQpOyBtYXJnaW46IDBwdCAwcHQgMHB0IDAuOGV4OyBwYWRk
-aW5nLWxlZnQ6IDFleDsiPgpIaSw8YnI+Cjxicj4KSSBhbSB3b25kZXJpbmcgd2h5IG9mb25vIG1h
-aWxpbmcgbGlzdCBzZXJ2ZXIgaXMgbm90PGJyPgpyZWNlaXZpbmcgdGhlIGVtYWlscyBJIHRyeSB0
-byBzZW5kIGZyb20gb3VyPGJyPgo8YSBocmVmPSJodHRwOi8vc210cC5peG9ub3MuY29tIiB0YXJn
-ZXQ9Il9ibGFuayI+c210cC5peG9ub3MuY29tPC9hPiBzZXJ2ZXIuIE91ciBJVCBzdXBwb3J0IHRy
-aWVkIHRvPGJyPgpzb2x2ZSB0aGUgcHJvYmxlbSBhbmQgdGhleSBzYWlkIHRoYXQgdGhlIG9mb25v
-PGJyPgpzZXJ2ZXIgcmVzcG9uZHM6PGJyPgomcXVvdDtJbiBEZWZlcnJhbDogNDUwIDQuNS4wIE5v
-IHJlY2lwaWVudCBzdWNjZWVkZWQmcXVvdDs8YnI+Cjxicj4KRG9lcyBhbnlvbmUgaGF2ZSBhIGNs
-dWUgd2hhdCBjb3VsZCBiZSB0aGU8YnI+CnByb2JsZW0/PGJyPgo8YnI+CkJyLDxicj4KPGZvbnQg
-Y29sb3I9IiM4ODg4ODgiPlBhc2kgTWlldHRpbmVuPGJyPgpfX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fXzxicj4Kb2Zvbm8gbWFpbGluZyBsaXN0PGJyPgo8YSBo
-cmVmPSJtYWlsdG86b2Zvbm9Ab2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5vcmc8L2E+PGJyPgo8YSBo
-cmVmPSJodHRwOi8vbGlzdHMub2Zvbm8ub3JnL2xpc3RpbmZvL29mb25vIiB0YXJnZXQ9Il9ibGFu
-ayI+aHR0cDovL2xpc3RzLm9mb25vLm9yZy9saXN0aW5mby9vZm9ubzwvYT48YnI+CjwvZm9udD48
-L2Jsb2NrcXVvdGU+PC9kaXY+PGJyPgo=
-
---===============5823779406808308501==--
+--===============7733941380958403819==--
 
