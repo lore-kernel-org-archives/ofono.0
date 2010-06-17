@@ -1,100 +1,222 @@
-Content-Type: multipart/mixed; boundary="===============0299698109075464238=="
+Content-Type: multipart/mixed; boundary="===============7676592073052564479=="
 MIME-Version: 1.0
-From: Arun Ravindran <arunlee@gmail.com>
-Subject: [PATCH] Enabling PDP Context support in atmodem.
-Date: Thu, 17 Jun 2010 23:17:23 +0300
-Message-ID: <AANLkTinDk9-gwLP0pC_8Wqud8MXotrAkVxYHBPP7rmys@mail.gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 2/5] GAD shape tests
+Date: Thu, 17 Jun 2010 15:42:07 +0200
+Message-ID: <1276782135-26871-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1276782135-26871-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0299698109075464238==
+--===============7676592073052564479==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From d30d8658767de97b0ffb45697616604fb1576741 Mon Sep 17 00:00:00 2001
-From: arun <arunlee@gmail.com>
-Date: Thu, 17 Jun 2010 21:42:00 +0300
-Subject: [PATCH] Enabling PDP Context support in atmodem.
-
 ---
- plugins/atgen.c |    9 +++++++++
- 1 files changed, 9 insertions(+), 0 deletions(-)
+ Makefile.am         |    6 ++-
+ unit/test-lcsutil.c |  158 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 163 insertions(+), 1 deletions(-)
+ create mode 100644 unit/test-lcsutil.c
 
-diff --git a/plugins/atgen.c b/plugins/atgen.c
-index 4e9c5e7..f3757fb 100644
---- a/plugins/atgen.c
-+++ b/plugins/atgen.c
-@@ -50,6 +50,8 @@
- #include <ofono/voicecall.h>
+diff --git a/Makefile.am b/Makefile.am
+index 2b59f01..a661200 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -360,7 +360,7 @@ unit_objects =3D
+ noinst_PROGRAMS =3D unit/test-common unit/test-util unit/test-idmap \
+ 					unit/test-sms unit/test-simutil \
+ 					unit/test-mux unit/test-caif \
+-					unit/test-stkutil
++					unit/test-stkutil unit/test-lcsutil
+ =
 
- #include <drivers/atmodem/sim-poll.h>
-+#include <ofono/gprs.h>
-+#include <ofono/gprs-context.h>
+ unit_test_common_SOURCES =3D unit/test-common.c src/common.c
+ unit_test_common_LDADD =3D @GLIB_LIBS@
+@@ -399,6 +399,10 @@ unit_test_caif_SOURCES =3D unit/test-caif.c $(gatchat_=
+sources) \
+ unit_test_caif_LDADD =3D @GLIB_LIBS@
+ unit_objects +=3D $(unit_test_caif_OBJECTS)
+ =
 
- static const char *tty_opts[] =3D {
-     "Baud",
-@@ -175,6 +177,8 @@ static void atgen_post_sim(struct ofono_modem *modem)
- {
-     GAtChat *chat =3D ofono_modem_get_data(modem);
-     struct ofono_message_waiting *mw;
-+    struct ofono_gprs *gprs;
-+    struct ofono_gprs_context *gc;
-
-     DBG("%p", modem);
-
-@@ -187,6 +191,11 @@ static void atgen_post_sim(struct ofono_modem *modem)
-     ofono_ssn_create(modem, 0, "atmodem", chat);
-     ofono_sms_create(modem, 0, "atmodem", chat);
-     ofono_phonebook_create(modem, 0, "atmodem", chat);
-+    gprs =3D ofono_gprs_create(modem,0, "atmodem", chat);
-+    gc =3D ofono_gprs_context_create(modem, 0, "atmodem", chat);
++unit_test_lcsutil_SOURCES =3D unit/test-lcsutil.c src/lcsutil.c
++unit_test_lcsutil_LDADD =3D @GLIB_LIBS@ -lm
++unit_objects +=3D $(unit_test_lcsutil_OBJECTS)
 +
-+    if (gprs && gc)
-+        ofono_gprs_add_context(gprs, gc);
+ noinst_PROGRAMS +=3D gatchat/gsmdial gatchat/test-server gatchat/test-qcdm
+ =
 
-     mw =3D ofono_message_waiting_create(modem);
-     if (mw)
+ gatchat_gsmdial_SOURCES =3D gatchat/gsmdial.c $(gatchat_sources)
+diff --git a/unit/test-lcsutil.c b/unit/test-lcsutil.c
+new file mode 100644
+index 0000000..ca494d6
+--- /dev/null
++++ b/unit/test-lcsutil.c
+@@ -0,0 +1,158 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <string.h>
++#include <stdint.h>
++#include <glib.h>
++
++#include <ofono/types.h>
++
++#include "lcsutil.h"
++
++struct gad_shape_test {
++	uint8_t coding[128];
++	int len;
++	struct gad_shape shape;
++};
++
++static const struct gad_shape_test gad_shape_valid[] =3D {
++	{
++		.coding =3D { 0x00, 0x49, 0xf4, 0x9f, 0x0e, 0xee, 0xee, },
++		.len =3D 7,
++		.shape =3D {
++			.type =3D GAD_TYPE_ELLIPSOID_POINT,
++			{ .ellipsoid_point =3D { .lat =3D 52, .lon =3D 21 } },
++		},
++	}, {
++		.coding =3D {
++			0x90, 0x49, 0xf4, 0x9f, 0x0e, 0xee, 0xee,
++			0x80, 0x64, 0x3c, 0x02, 0x02, 0x3c, 0x5d,
++		},
++		.len =3D 14,
++		.shape =3D {
++			.type =3D GAD_TYPE_ELLIPSOID_WITH_ALTITUDE,
++			{ .ellipsoid_with_altitude =3D {
++				.origin =3D { .lat =3D 52, .lon =3D 21 }, /* deg */
++				.r1 =3D 3000.0, /* m */
++				.r2 =3D 2.1, /* m */
++				.r3 =3D 153.0, /* m */
++				.a =3D 5.0, /* deg */
++				.altitude =3D -100.0, /* m undeground */
++				.confidence =3D 93, /* % */
++			}},
++		},
++	}, {
++		.coding =3D {
++			0x55, 0x4a, 0x3d, 0x70, 0x0e, 0xee, 0xee,
++			0x49, 0x3e, 0x93, 0x00, 0x15, 0xd8, 0x40,
++			0xb6, 0x0b, 0xa8, 0xbf, 0x26, 0x91, 0x11,
++			0x11, 0xc9, 0x3e, 0x94, 0xa5, 0x43, 0x20,
++			0x13, 0xe9, 0x3e,
++		},
++		.len =3D 31,
++		.shape =3D {
++			.type =3D GAD_TYPE_POLYGON,
++			{ .polygon =3D {
++				.count =3D 5,
++				.point =3D {
++					{ .lat =3D 52.2, .lon =3D 21.0 },
++					{ .lat =3D 51.5, .lon =3D 0.12 },
++					{ .lat =3D 45.5, .lon =3D -122.7 },
++					{ .lat =3D -12.0, .lon =3D -77.0 },
++					{ .lat =3D -26.2, .lon =3D 28.0 },
++				},
++			}},
++		},
++	},
++
++	{},
++};
++
++static void test_gad_shape(void) {
++	const struct gad_shape_test *test;
++	uint8_t buf[128];
++	int len;
++
++	for (test =3D gad_shape_valid; test->len; test++) {
++		len =3D sizeof(buf);
++		g_assert(gad_shape_encode(&test->shape, buf, &len));
++		g_assert(len =3D=3D test->len);
++		g_assert(memcmp(buf, test->coding, len) =3D=3D 0);
++	}
++}
++
++struct gad_velocity_test {
++	uint8_t coding[128];
++	int len;
++	struct gad_velocity velocity;
++};
++
++static const struct gad_velocity_test gad_velocity_valid[] =3D {
++	{
++		.coding =3D { 0x33, 0x0e, 0x00, 0x1e, 0x05, 0x01, 0x01, },
++		.len =3D 7,
++		.velocity =3D {
++			.horizontal =3D 30.0, /* kmh */
++			.bearing =3D 270.0, /* deg */
++			.has_vertical =3D TRUE,
++			.vertical =3D -5, /* kmh */
++			.has_uncertainty =3D TRUE,
++			.horizontal_uncertainty =3D 1, /* kmh */
++			.vertical_uncertainty =3D 1, /* kmh */
++		},
++	}, {
++		.coding =3D { 0x00, 0x05, 0x00, 0x1e, },
++		.len =3D 4,
++		.velocity =3D {
++			.horizontal =3D 30.0, /* kmh */
++			.bearing =3D 5.0, /* deg */
++		},
++	},
++
++	{},
++};
++
++static void test_gad_velocity(void) {
++	const struct gad_velocity_test *test;
++	uint8_t buf[128];
++	int len;
++
++	for (test =3D gad_velocity_valid; test->len; test++) {
++		len =3D sizeof(buf);
++		g_assert(gad_velocity_encode(&test->velocity, buf, &len));
++		g_assert(len =3D=3D test->len);
++		g_assert(memcmp(buf, test->coding, len) =3D=3D 0);
++	}
++}
++
++int main(int argc, char **argv)
++{
++	g_test_init(&argc, &argv, NULL);
++
++	g_test_add_func("/testutil/GAD Shape", test_gad_shape);
++	g_test_add_func("/testutil/GAD Velocity", test_gad_velocity);
++
++	return g_test_run();
++}
 -- =
 
-1.6.3.3
+1.7.1.86.g0e460.dirty
 
---===============0299698109075464238==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
 
-PGJyPkZyb20gZDMwZDg2NTg3NjdkZTk3YjBmZmI0NTY5NzYxNjYwNGZiMTU3Njc0MSBNb24gU2Vw
-IDE3IDAwOjAwOjAwIDIwMDE8YnI+RnJvbTogYXJ1biAmbHQ7PGEgaHJlZj0ibWFpbHRvOmFydW5s
-ZWVAZ21haWwuY29tIj5hcnVubGVlQGdtYWlsLmNvbTwvYT4mZ3Q7PGJyPkRhdGU6IFRodSwgMTcg
-SnVuIDIwMTAgMjE6NDI6MDAgKzAzMDA8YnI+U3ViamVjdDogW1BBVENIXSBFbmFibGluZyBQRFAg
-Q29udGV4dCBzdXBwb3J0IGluIGF0bW9kZW0uPGJyPgoKPGJyPi0tLTxicj6gcGx1Z2lucy9hdGdl
-bi5jIHygoKAgOSArKysrKysrKys8YnI+oDEgZmlsZXMgY2hhbmdlZCwgOSBpbnNlcnRpb25zKCsp
-LCAwIGRlbGV0aW9ucygtKTxicj48YnI+ZGlmZiAtLWdpdCBhL3BsdWdpbnMvYXRnZW4uYyBiL3Bs
-dWdpbnMvYXRnZW4uYzxicj5pbmRleCA0ZTljNWU3Li5mMzc1N2ZiIDEwMDY0NDxicj4tLS0gYS9w
-bHVnaW5zL2F0Z2VuLmM8YnI+KysrIGIvcGx1Z2lucy9hdGdlbi5jPGJyPgoKQEAgLTUwLDYgKzUw
-LDggQEA8YnI+oCNpbmNsdWRlICZsdDtvZm9uby92b2ljZWNhbGwuaCZndDs8YnI+oDxicj6gI2lu
-Y2x1ZGUgJmx0O2RyaXZlcnMvYXRtb2RlbS9zaW0tcG9sbC5oJmd0Ozxicj4rI2luY2x1ZGUgJmx0
-O29mb25vL2dwcnMuaCZndDs8YnI+KyNpbmNsdWRlICZsdDtvZm9uby9ncHJzLWNvbnRleHQuaCZn
-dDs8YnI+oDxicj6gc3RhdGljIGNvbnN0IGNoYXIgKnR0eV9vcHRzW10gPSB7PGJyPgoKoKCgoCAm
-cXVvdDtCYXVkJnF1b3Q7LDxicj5AQCAtMTc1LDYgKzE3Nyw4IEBAIHN0YXRpYyB2b2lkIGF0Z2Vu
-X3Bvc3Rfc2ltKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pPGJyPqB7PGJyPqCgoKAgR0F0Q2hh
-dCAqY2hhdCA9IG9mb25vX21vZGVtX2dldF9kYXRhKG1vZGVtKTs8YnI+oKCgoCBzdHJ1Y3Qgb2Zv
-bm9fbWVzc2FnZV93YWl0aW5nICptdzs8YnI+K6CgoCBzdHJ1Y3Qgb2Zvbm9fZ3BycyAqZ3Byczs8
-YnI+CgoroKCgIHN0cnVjdCBvZm9ub19ncHJzX2NvbnRleHQgKmdjOzxicj6gPGJyPqCgoKAgREJH
-KCZxdW90OyVwJnF1b3Q7LCBtb2RlbSk7PGJyPqA8YnI+QEAgLTE4Nyw2ICsxOTEsMTEgQEAgc3Rh
-dGljIHZvaWQgYXRnZW5fcG9zdF9zaW0oc3RydWN0IG9mb25vX21vZGVtICptb2RlbSk8YnI+oKCg
-oCBvZm9ub19zc25fY3JlYXRlKG1vZGVtLCAwLCAmcXVvdDthdG1vZGVtJnF1b3Q7LCBjaGF0KTs8
-YnI+CgqgoKCgIG9mb25vX3Ntc19jcmVhdGUobW9kZW0sIDAsICZxdW90O2F0bW9kZW0mcXVvdDss
-IGNoYXQpOzxicj6goKCgIG9mb25vX3Bob25lYm9va19jcmVhdGUobW9kZW0sIDAsICZxdW90O2F0
-bW9kZW0mcXVvdDssIGNoYXQpOzxicj4roKCgIGdwcnMgPSBvZm9ub19ncHJzX2NyZWF0ZShtb2Rl
-bSwwLCAmcXVvdDthdG1vZGVtJnF1b3Q7LCBjaGF0KTs8YnI+K6CgoCBnYyA9IG9mb25vX2dwcnNf
-Y29udGV4dF9jcmVhdGUobW9kZW0sIDAsICZxdW90O2F0bW9kZW0mcXVvdDssIGNoYXQpOzxicj4K
-Cis8YnI+K6CgoCBpZiAoZ3BycyAmYW1wOyZhbXA7IGdjKTxicj4roKCgIKCgoCBvZm9ub19ncHJz
-X2FkZF9jb250ZXh0KGdwcnMsIGdjKTs8YnI+oDxicj6goKCgIG13ID0gb2Zvbm9fbWVzc2FnZV93
-YWl0aW5nX2NyZWF0ZShtb2RlbSk7PGJyPqCgoKAgaWYgKG13KTxicj4tLSA8YnI+MS42LjMuMzxi
-cj48YnI+Cg==
-
---===============0299698109075464238==--
+--===============7676592073052564479==--
 
