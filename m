@@ -1,187 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============2141859678790935804=="
+Content-Type: multipart/mixed; boundary="===============2183385317845196863=="
 MIME-Version: 1.0
-From: Pasi Miettinen <pasi.miettinen@ixonos.com>
-Subject: [RFC PATCH 4/5] sms: Status report notify
-Date: Wed, 16 Jun 2010 17:08:25 +0300
-Message-ID: <1276697306-1587-5-git-send-email-pasi.miettinen@ixonos.com>
-In-Reply-To: <1276697306-1587-4-git-send-email-pasi.miettinen@ixonos.com>
+From: Miettinen Pasi <pasi.miettinen@ixonos.com>
+Subject: VS: smtp server problem
+Date: Thu, 17 Jun 2010 16:26:40 +0300
+Message-ID: <EA8B5A37FEEFC048AF3F8170D2819913B8C1280A66@jklmail01.ixonos.local>
+In-Reply-To: <AANLkTilqE2bx3kv0Cda-yEqqzPXnzSJE0q09_kc1F8TG@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2141859678790935804==
+--===============2183385317845196863==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/sms.c |   71 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 70 insertions(+), 1 deletions(-)
+> Hi,
+>
+> I also faced a similar issue 2 days back and the mails were bouncing.
+> It got corrected after few hours...
+>
+>
+> regards
 
-diff --git a/src/sms.c b/src/sms.c
-index bf6d261..e6a2dca 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -68,6 +68,8 @@ struct ofono_sms {
- 	void *driver_data;
- 	struct ofono_atom *atom;
- 	ofono_bool_t use_delivery_reports;
-+	struct status_report_assembly *sr_assembly;
-+
- };
- =
+OK, now it almost worked. 4 out of 6 got through. I do not want to flood
+the mailing list with multiple cloned emails. If the "jam" gets fixed..
 
- struct pending_pdu {
-@@ -83,6 +85,8 @@ struct tx_queue_entry {
- 	unsigned int msg_id;
- 	unsigned int retry;
- 	DBusMessage *msg;
-+	gboolean status_report;
-+	struct sms_address receiver;
- };
- =
+The missing pieces were my compose-message and patch 2/5.
+I paste the compose message here:
 
- static void set_sca(struct ofono_sms *sms,
-@@ -331,6 +335,13 @@ static void tx_finished(const struct ofono_error *erro=
-r, int mr, void *data)
- 	entry->cur_pdu +=3D 1;
- 	entry->retry =3D 0;
- =
+"Hi,
 
-+	if (entry->status_report)
-+		status_report_assembly_add_fragment(sms->sr_assembly,
-+							entry->msg_id,
-+							&entry->receiver,
-+							mr, time(NULL),
-+							entry->num_pdus);
-+
- 	if (entry->cur_pdu < entry->num_pdus) {
- 		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
- 		return;
-@@ -462,6 +473,8 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
- 	set_ref_and_to(msg_list, sms->ref, ref_offset, to);
- 	entry =3D create_tx_queue_entry(msg_list);
- =
+Here are the latest modifications for the status report.
 
-+	sms_address_from_string(&entry->receiver, to);
-+
- 	g_slist_foreach(msg_list, (GFunc)g_free, NULL);
- 	g_slist_free(msg_list);
- =
+Most common use cases are tested in practise. For example:
+-Send concatenated message from ofono to phone that is
+ powered off.
+-Reboot ofono and ofono reads the persistent data from imsi file.
+-Power on the phone.
+-Ofono receives the status reports and handles them correctly.
 
-@@ -474,6 +487,7 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
- =
+Ofono was run under the supervision of valgrind during these tests
+and no memory leaks were detected.
 
- 	entry->msg =3D dbus_message_ref(msg);
- 	entry->msg_id =3D sms->next_msg_id++;
-+	entry->status_report =3D sms->use_delivery_reports;
- =
+And then another thing. For some reason the ofono mailing list
+server is not accepting emails from our smtp.ixonos.com server.
+So I have to use gmail instead for now.
 
- 	g_queue_push_tail(sms->txq, entry);
- =
+Br,
+Pasi"
 
-@@ -718,6 +732,30 @@ static void handle_deliver(struct ofono_sms *sms, cons=
-t struct sms *incoming)
- 	g_slist_free(l);
- }
- =
+And the patch 2/5 is actually same as here:
+http://lists.ofono.org/pipermail/ofono/2010-June/002768.html
 
-+static void handle_sms_status_report(struct ofono_sms *sms,
-+						const struct sms *incoming)
-+{
-+	gboolean delivered;
-+	unsigned int msg_id;
-+	gboolean update_history;
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(sms->atom);
-+
-+	update_history =3D status_report_assembly_report(sms->sr_assembly,
-+						incoming, &msg_id, &delivered);
-+
-+	if (update_history) {
-+
-+		if (delivered)
-+			__ofono_history_sms_send_status(modem, msg_id,
-+				time(NULL), OFONO_HISTORY_SMS_STATUS_DELIVERED);
-+		else
-+			__ofono_history_sms_send_status(modem, msg_id,
-+				time(NULL),
-+				OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED);
-+	}
-+}
-+
-+
- static inline gboolean handle_mwi(struct ofono_sms *sms, struct sms *s)
- {
- 	gboolean discard;
-@@ -849,7 +887,30 @@ out:
- void ofono_sms_status_notify(struct ofono_sms *sms, unsigned char *pdu,
- 				int len, int tpdu_len)
- {
--	ofono_error("SMS Status-Report not yet handled");
-+	struct sms s;
-+	enum sms_class cls;
-+
-+	if (!sms_decode(pdu, len, FALSE, tpdu_len, &s)) {
-+		ofono_error("Unable to decode PDU");
-+		return;
-+	}
-+
-+	if (s.type !=3D SMS_TYPE_STATUS_REPORT) {
-+		ofono_error("Expecting a STATUS REPORT pdu");
-+		return;
-+	}
-+
-+	if (s.status_report.srq) {
-+		ofono_error("Waiting an answer to SMS-SUBMIT, not SMS-COMMAND");
-+		return;
-+	}
-+
-+	if (!sms_dcs_decode(s.deliver.dcs, &cls, NULL, NULL, NULL)) {
-+		ofono_error("Unknown / Reserved DCS.  Ignoring");
-+		return;
-+	}
-+
-+	handle_sms_status_report(sms, &s);
- }
- =
+Hopefully Denis is not going to hang me for operating like this,
+but I am going to plead on malfunctioning technology.. :)
 
- int ofono_sms_driver_register(const struct ofono_sms_driver *d)
-@@ -932,6 +993,11 @@ static void sms_remove(struct ofono_atom *atom)
- 		sms->settings =3D NULL;
- 	}
- =
-
-+	if (sms->sr_assembly) {
-+		status_report_assembly_free(sms->sr_assembly);
-+		sms->sr_assembly =3D NULL;
-+	}
-+
- 	g_free(sms);
- }
- =
-
-@@ -1069,9 +1135,12 @@ void ofono_sms_register(struct ofono_sms *sms)
- 		imsi =3D ofono_sim_get_imsi(sms->sim);
- 		sms->assembly =3D sms_assembly_new(imsi);
- =
-
-+		sms->sr_assembly =3D status_report_assembly_new(imsi);
-+
- 		sms_load_settings(sms, imsi);
- 	} else {
- 		sms->assembly =3D sms_assembly_new(NULL);
-+		sms->sr_assembly =3D status_report_assembly_new(NULL);
- 	}
- =
-
- 	__ofono_atom_register(sms->atom, sms_unregister);
--- =
-
-1.6.0.4
+Regards,
+Pasi
 
 
-
---===============2141859678790935804==--
+--===============2183385317845196863==--
 
