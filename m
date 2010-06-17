@@ -1,39 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============1517855414988468962=="
+Content-Type: multipart/mixed; boundary="===============4144791101226688527=="
 MIME-Version: 1.0
 From: Pasi Miettinen <pasi.miettinen@ixonos.com>
-Subject: SMS status report
-Date: Thu, 17 Jun 2010 16:14:53 +0300
-Message-ID: <1276780498-7573-1-git-send-email-pasi.miettinen@ixonos.com>
+Subject: [RFC PATCH 2/5] history: print SMS status
+Date: Thu, 17 Jun 2010 16:14:55 +0300
+Message-ID: <1276780498-7573-3-git-send-email-pasi.miettinen@ixonos.com>
+In-Reply-To: <1276780498-7573-2-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1517855414988468962==
+--===============4144791101226688527==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+---
+ src/history.c |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
 
-Hi,
+diff --git a/src/history.c b/src/history.c
+index f868ca2..0eef130 100644
+--- a/src/history.c
++++ b/src/history.c
+@@ -238,6 +238,8 @@ void __ofono_history_sms_send_status(struct ofono_modem=
+ *modem,
+ 					enum ofono_history_sms_status status)
+ {
+ 	struct history_sms_foreach_data hfd;
++	struct tm  *ts;
++	char buf[80];
+ =
 
-Here are the latest modifications for the status report.
+ 	hfd.msg_id =3D msg_id;
+ 	hfd.address =3D NULL;
+@@ -245,6 +247,15 @@ void __ofono_history_sms_send_status(struct ofono_mode=
+m *modem,
+ 	hfd.when =3D when;
+ 	hfd.status =3D status;
+ =
 
-Most common use cases are tested in practise. For example:
--Send concatenated message from ofono to phone that is
- powered off.
--Reboot ofono and ofono reads the persistent data from imsi file.
--Power on the phone.
--Ofono receives the status reports and handles them correctly.
++	/* Format time, "ddd yyyy-mm-dd hh:mm:ss zzz" */
++	ts =3D localtime(&when);
++	strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", ts);
++
++	if (status =3D=3D OFONO_HISTORY_SMS_STATUS_DELIVERED)
++		DBG("SMS delivered, msg_id: %i, time: %s", msg_id, buf);
++	else if (status =3D=3D OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED)
++		DBG("SMS undeliverable, msg_id: %i, time: %s", msg_id, buf);
++
+ 	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_HISTORY,
+ 					history_sms_send_status, &hfd);
+ }
+-- =
 
-Ofono was run under the supervision of valgrind during these tests
-and no memory leaks were detected.
-
-Br,
-Pasi
+1.6.0.4
 
 
 
-
-
-
---===============1517855414988468962==--
+--===============4144791101226688527==--
 
