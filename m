@@ -1,58 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============6271518401720061501=="
+Content-Type: multipart/mixed; boundary="===============5155185390361546437=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 11/11] gsmdial: Delay ppp_unref after IO processing
-Date: Fri, 18 Jun 2010 12:51:45 -0500
-Message-ID: <201006181251.45666.denkenz@gmail.com>
-In-Reply-To: <33AB447FBD802F4E932063B962385B351F309A0F@shsmsx501.ccr.corp.intel.com>
+Subject: Re: [PATCH] Enabling PDP Context support in atmodem.
+Date: Fri, 18 Jun 2010 12:57:58 -0500
+Message-ID: <201006181257.58444.denkenz@gmail.com>
+In-Reply-To: <AANLkTinDk9-gwLP0pC_8Wqud8MXotrAkVxYHBPP7rmys@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6271518401720061501==
+--===============5155185390361546437==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Arun,
 
-> I think we should delay the ppp shutdown stage until the LCP packet was
->  well processed. I got valgrind result as below before I have patches 10/=
-11
->  and 11/11.
+> From d30d8658767de97b0ffb45697616604fb1576741 Mon Sep 17 00:00:00 2001
+> From: arun <arunlee@gmail.com>
+> Date: Thu, 17 Jun 2010 21:42:00 +0300
+> Subject: [PATCH] Enabling PDP Context support in atmodem.
 > =
 
-> Entering new phase: 0
-> PPP Link down: 6
-> =3D=3D5332=3D=3D Invalid write of size 2
-> =3D=3D5332=3D=3D    at 0x805520D: new_bytes (gathdlc.c:154)
-> =3D=3D5332=3D=3D    by 0x804F2E6: received_data (gatio.c:119)
-> =3D=3D5332=3D=3D    by 0x40AFDAA: g_io_unix_dispatch (giounix.c:162)
-> =3D=3D5332=3D=3D    by 0x4078E87: g_main_context_dispatch (gmain.c:1960)
-> =3D=3D5332=3D=3D    by 0x407C72F: g_main_context_iterate (gmain.c:2591)
-> =3D=3D5332=3D=3D    by 0x407CB9E: g_main_loop_run (gmain.c:2799)
-> =3D=3D5332=3D=3D    by 0x804BE5D: main (gsmdial.c:702)
-> =3D=3D5332=3D=3D  Address 0x4382130 is 24 bytes inside a block of size 88=
- free'd
-> =3D=3D5332=3D=3D    at 0x4024886: free (vg_replace_malloc.c:325)
-> =3D=3D5332=3D=3D    by 0x4081195: g_free (gmem.c:190)
-> =3D=3D5332=3D=3D    by 0x805557D: g_at_hdlc_unref (gathdlc.c:270)
-> =3D=3D5332=3D=3D    by 0x8056316: g_at_ppp_unref (gatppp.c:463)
-> =3D=3D5332=3D=3D    by 0x804AF20: ppp_disconnect (gsmdial.c:272)
-> =3D=3D5332=3D=3D    by 0x8055CE9: ppp_dead (gatppp.c:204)
-> =3D=3D5332=3D=3D    by 0x8055D1E: ppp_enter_phase (gatppp.c:214)
-> =3D=3D5332=3D=3D    by 0x8055FE0: ppp_lcp_finished_notify (gatppp.c:317)
-> =3D=3D5332=3D=3D    by 0x8057E27: lcp_finished (ppp_lcp.c:140)
-> =3D=3D5332=3D=3D    by 0x80568DF: pppcp_this_layer_finished (ppp_cp.c:340)
-> =3D=3D5332=3D=3D    by 0x8057446: pppcp_generate_event (ppp_cp.c:688)
-> =3D=3D5332=3D=3D    by 0x8057B5B: pppcp_process_packet (ppp_cp.c:965)
+> ---
+>  plugins/atgen.c |    9 +++++++++
+>  1 files changed, 9 insertions(+), 0 deletions(-)
+> =
 
-Good catch, however I fixed it slightly differently in GAtHDLC itself.  Can=
- you =
 
-test and make sure my fix works?
+Your patch looks good, however it seems there's some extra junk appended at =
+
+the end of the patch.  Git is getting confused and cannot apply it.  Please =
+
+rebase and resubmit:
+
+denkenz(a)localhost ~/ofono-master $ git am ~/merge/\[PATCH\]\ Enabling\ PD=
+P\ =
+
+Context\ support\ in\ atmodem..mbox =
+
+Applying: Enabling PDP Context support in atmodem.
+fatal: patch fragment without header at line 46: @@ -50,6 +50,8 =
+
+@@<br>=EF=BF=BD#include &lt;ofono/voicecall.h&gt;<br>=EF=BF=BD<br>=EF=BF=BD=
+#include =
+
+&lt;drivers/atmodem/sim-poll.h&gt;<br>+#include =
+
+&lt;ofono/gprs.h&gt;<br>+#include &lt;ofono/gprs-context.h&gt;<br>=EF=BF=BD=
+<br>=EF=BF=BDstatic =
+
+const char *tty_opts[] =3D {<br>
+Patch failed at 0001 Enabling PDP Context support in atmodem.
+When you have resolved this problem run "git am --resolved".
+If you would prefer to skip this patch, instead run "git am --skip".
+To restore the original branch and stop patching run "git am --abort".
 
 Thanks,
 -Denis
 
---===============6271518401720061501==--
+--===============5155185390361546437==--
 
