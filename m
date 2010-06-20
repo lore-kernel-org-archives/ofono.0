@@ -1,101 +1,176 @@
-Content-Type: multipart/mixed; boundary="===============3570052009325254148=="
+Content-Type: multipart/mixed; boundary="===============8162032087205710887=="
 MIME-Version: 1.0
-From: Arun Ravindran <arunlee@gmail.com>
-Subject: Re: [PATCH] Enabling PDP Context support in atmodem.
-Date: Sat, 19 Jun 2010 17:53:54 +0300
-Message-ID: <AANLkTilwEB1HCRX74FewYplcBa4Pj7roHJDIOxJIpN5M@mail.gmail.com>
-In-Reply-To: <201006181257.58444.denkenz@gmail.com>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: [PATCH 1/6] bluetooth: Move functions from hfp.c to bluetooth.c
+Date: Sun, 20 Jun 2010 05:51:19 -0300
+Message-ID: <1277023884-27143-1-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3570052009325254148==
+--===============8162032087205710887==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From b3ad9e14d7cfbe3bd7375cfb56bca3d4f3549585 Mon Sep 17 00:00:00 2001
-From: Arun Ravindran <arunlee@gmail.com>
-Date: Fri, 18 Jun 2010 23:12:12 +0300
-Subject: [PATCH] Enabling PDP Context support in atmodem.
-
+The part that call device_properties_cb is commented to permit this patch
+compile.
+device_properties_cb() will be changed, so it will have separated patch.
 ---
- plugins/atgen.c |    9 +++++++++
- 1 files changed, 9 insertions(+), 0 deletions(-)
+ plugins/bluetooth.c |  122 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 122 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/atgen.c b/plugins/atgen.c
-index 4e9c5e7..a6eee60 100644
---- a/plugins/atgen.c
-+++ b/plugins/atgen.c
-@@ -51,6 +51,9 @@
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index 0b1b560..e27982b 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -199,6 +199,124 @@ done:
+ 	g_slist_free(prop_handlers);
+ }
+ =
 
- #include <drivers/atmodem/sim-poll.h>
-
-+#include <ofono/gprs.h>
-+#include <ofono/gprs-context.h>
++static void parse_string(DBusMessageIter *iter, gpointer user_data)
++{
++	char **str =3D user_data;
++	int arg_type =3D dbus_message_iter_get_arg_type(iter);
 +
- static const char *tty_opts[] =3D {
-     "Baud",
-     "Read",
-@@ -175,6 +178,8 @@ static void atgen_post_sim(struct ofono_modem *modem)
++	if (arg_type !=3D DBUS_TYPE_OBJECT_PATH && arg_type !=3D DBUS_TYPE_STRING)
++		return;
++
++	dbus_message_iter_get_basic(iter, str);
++}
++
++static void parse_devices(DBusMessageIter *array, gpointer user_data)
++{
++	DBusMessageIter value;
++	GSList **device_list =3D user_data;
++
++	DBG("");
++
++	if (dbus_message_iter_get_arg_type(array) !=3D DBUS_TYPE_ARRAY)
++		return;
++
++	dbus_message_iter_recurse(array, &value);
++
++	while (dbus_message_iter_get_arg_type(&value)
++			=3D=3D DBUS_TYPE_OBJECT_PATH) {
++		const char *path;
++
++		dbus_message_iter_get_basic(&value, &path);
++
++		*device_list =3D g_slist_prepend(*device_list, (gpointer) path);
++
++		dbus_message_iter_next(&value);
++	}
++}
++
++static void adapter_properties_cb(DBusPendingCall *call, gpointer user_dat=
+a)
++{
++	const char *path =3D user_data;
++	DBusMessage *reply;
++	GSList *device_list =3D NULL;
++	GSList *l;
++	const char *addr;
++
++	reply =3D dbus_pending_call_steal_reply(call);
++
++	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
++		DBG("Bluetooth daemon is apparently not available.");
++		goto done;
++	}
++
++	bluetooth_parse_properties(reply, "Devices", parse_devices, &device_list,
++				"Address", parse_string, &addr, NULL);
++
++	DBG("Adapter Address: %s, Path: %s", addr, path);
++	g_hash_table_insert(adapter_address_hash,
++				g_strdup(path), g_strdup(addr));
++
++	for (l =3D device_list; l; l =3D l->next) {
++		/*
++		const char *device =3D l->data;
++
++		bluetooth_send_with_reply(device, BLUEZ_DEVICE_INTERFACE,
++				"GetProperties", device_properties_cb,
++				g_strdup(device), g_free, -1, DBUS_TYPE_INVALID);
++		*/
++	}
++
++done:
++	g_slist_free(device_list);
++	dbus_message_unref(reply);
++}
++
++static void parse_adapters(DBusMessageIter *array, gpointer user_data)
++{
++	DBusMessageIter value;
++
++	DBG("");
++
++	if (dbus_message_iter_get_arg_type(array) !=3D DBUS_TYPE_ARRAY)
++		return;
++
++	dbus_message_iter_recurse(array, &value);
++
++	while (dbus_message_iter_get_arg_type(&value)
++			=3D=3D DBUS_TYPE_OBJECT_PATH) {
++		const char *path;
++
++		dbus_message_iter_get_basic(&value, &path);
++
++		DBG("Calling GetProperties on %s", path);
++
++		bluetooth_send_with_reply(path, BLUEZ_ADAPTER_INTERFACE,
++				"GetProperties", adapter_properties_cb,
++				g_strdup(path), g_free, -1, DBUS_TYPE_INVALID);
++
++		dbus_message_iter_next(&value);
++	}
++}
++
++static void manager_properties_cb(DBusPendingCall *call, gpointer user_dat=
+a)
++{
++	DBusMessage *reply;
++
++	reply =3D dbus_pending_call_steal_reply(call);
++
++	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
++		DBG("Bluetooth daemon is apparently not available.");
++		goto done;
++	}
++
++	DBG("");
++
++	bluetooth_parse_properties(reply, "Adapters", parse_adapters, NULL, NULL);
++
++done:
++	dbus_message_unref(reply);
++}
++
+ int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
+ofile)
  {
-     GAtChat *chat =3D ofono_modem_get_data(modem);
-     struct ofono_message_waiting *mw;
-+    struct ofono_gprs *gprs;
-+    struct ofono_gprs_context *gc;
+ 	if (uuid_hash)
+@@ -215,6 +333,10 @@ int bluetooth_register_uuid(const char *uuid, struct b=
+luetooth_profile *profile)
+ done:
+ 	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
+ =
 
-     DBG("%p", modem);
++	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
++				manager_properties_cb, NULL, NULL, -1,
++				DBUS_TYPE_INVALID);
++
+ 	return 0;
+ }
+ =
 
-@@ -187,6 +192,10 @@ static void atgen_post_sim(struct ofono_modem *modem)
-     ofono_ssn_create(modem, 0, "atmodem", chat);
-     ofono_sms_create(modem, 0, "atmodem", chat);
-     ofono_phonebook_create(modem, 0, "atmodem", chat);
-+    gprs =3D ofono_gprs_create(modem,0, "atmodem", chat);
-+    gc =3D ofono_gprs_context_create(modem, 0, "atmodem", chat);
-+    if (gprs && gc)
-+        ofono_gprs_add_context(gprs, gc);
-
-     mw =3D ofono_message_waiting_create(modem);
-     if (mw)
 -- =
 
-1.6.3.3
+1.7.1
 
---===============3570052009325254148==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
 
-PkZyb20gYjNhZDllMTRkN2NmYmUzYmQ3Mzc1Y2ZiNTZiY2EzZDRmMzU0OTU4NSBNb24gU2VwIDE3
-IDAwOjAwOjAwIDIwMDE8YnI+RnJvbTogQXJ1biBSYXZpbmRyYW4gJmx0OzxhIGhyZWY9Im1haWx0
-bzphcnVubGVlQGdtYWlsLmNvbSIgdGFyZ2V0PSJfYmxhbmsiPmFydW5sZWVAZ21haWwuY29tPC9h
-PiZndDs8YnI+RGF0ZTogRnJpLCAxOCBKdW4gMjAxMCAyMzoxMjoxMiArMDMwMDxicj5TdWJqZWN0
-OiBbUEFUQ0hdIEVuYWJsaW5nIFBEUCBDb250ZXh0IHN1cHBvcnQgaW4gYXRtb2RlbS48YnI+Cgo8
-YnI+LS0tPGJyPqBwbHVnaW5zL2F0Z2VuLmMgfKCgoCA5ICsrKysrKysrKzxicj6gMSBmaWxlcyBj
-aGFuZ2VkLCA5IGluc2VydGlvbnMoKyksIDAgZGVsZXRpb25zKC0pPGJyPjxicj5kaWZmIC0tZ2l0
-IGEvcGx1Z2lucy9hdGdlbi5jIGIvcGx1Z2lucy9hdGdlbi5jPGJyPmluZGV4IDRlOWM1ZTcuLmE2
-ZWVlNjAgMTAwNjQ0PGJyPi0tLSBhL3BsdWdpbnMvYXRnZW4uYzxicj4rKysgYi9wbHVnaW5zL2F0
-Z2VuLmM8YnI+CgpAQCAtNTEsNiArNTEsOSBAQDxicj6gPGJyPqAjaW5jbHVkZSAmbHQ7ZHJpdmVy
-cy9hdG1vZGVtL3NpbS1wb2xsLmgmZ3Q7PGJyPqA8YnI+KyNpbmNsdWRlICZsdDtvZm9uby9ncHJz
-LmgmZ3Q7PGJyPisjaW5jbHVkZSAmbHQ7b2Zvbm8vZ3Bycy1jb250ZXh0LmgmZ3Q7PGJyPis8YnI+
-oHN0YXRpYyBjb25zdCBjaGFyICp0dHlfb3B0c1tdID0gezxicj6goKCgICZxdW90O0JhdWQmcXVv
-dDssPGJyPgoKoKCgoCAmcXVvdDtSZWFkJnF1b3Q7LDxicj5AQCAtMTc1LDYgKzE3OCw4IEBAIHN0
-YXRpYyB2b2lkIGF0Z2VuX3Bvc3Rfc2ltKHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0pPGJyPqB7
-PGJyPqCgoKAgR0F0Q2hhdCAqY2hhdCA9IG9mb25vX21vZGVtX2dldF9kYXRhKG1vZGVtKTs8YnI+
-oKCgoCBzdHJ1Y3Qgb2Zvbm9fbWVzc2FnZV93YWl0aW5nICptdzs8YnI+K6CgoCBzdHJ1Y3Qgb2Zv
-bm9fZ3BycyAqZ3Byczs8YnI+CgoroKCgIHN0cnVjdCBvZm9ub19ncHJzX2NvbnRleHQgKmdjOzxi
-cj6gPGJyPqCgoKAgREJHKCZxdW90OyVwJnF1b3Q7LCBtb2RlbSk7PGJyPqA8YnI+QEAgLTE4Nyw2
-ICsxOTIsMTAgQEAgc3RhdGljIHZvaWQgYXRnZW5fcG9zdF9zaW0oc3RydWN0IG9mb25vX21vZGVt
-ICptb2RlbSk8YnI+oKCgoCBvZm9ub19zc25fY3JlYXRlKG1vZGVtLCAwLCAmcXVvdDthdG1vZGVt
-JnF1b3Q7LCBjaGF0KTs8YnI+CgqgoKCgIG9mb25vX3Ntc19jcmVhdGUobW9kZW0sIDAsICZxdW90
-O2F0bW9kZW0mcXVvdDssIGNoYXQpOzxicj6goKCgIG9mb25vX3Bob25lYm9va19jcmVhdGUobW9k
-ZW0sIDAsICZxdW90O2F0bW9kZW0mcXVvdDssIGNoYXQpOzxicj4roKCgIGdwcnMgPSBvZm9ub19n
-cHJzX2NyZWF0ZShtb2RlbSwwLCAmcXVvdDthdG1vZGVtJnF1b3Q7LCBjaGF0KTs8YnI+K6CgoCBn
-YyA9IG9mb25vX2dwcnNfY29udGV4dF9jcmVhdGUobW9kZW0sIDAsICZxdW90O2F0bW9kZW0mcXVv
-dDssIGNoYXQpOzxicj4KCiugoKAgaWYgKGdwcnMgJmFtcDsmYW1wOyBnYyk8YnI+K6CgoCCgoKAg
-b2Zvbm9fZ3Byc19hZGRfY29udGV4dChncHJzLCBnYyk7PGJyPqA8YnI+oKCgoCBtdyA9IG9mb25v
-X21lc3NhZ2Vfd2FpdGluZ19jcmVhdGUobW9kZW0pOzxicj6goKCgIGlmIChtdyk8YnI+LS0gPGJy
-PjEuNi4zLjM8YnI+Cg==
-
---===============3570052009325254148==--
+--===============8162032087205710887==--
 
