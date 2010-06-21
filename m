@@ -1,67 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============5416422910247176032=="
+Content-Type: multipart/mixed; boundary="===============0607849144238604503=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] test-stkutil: add html formatted text tests
-Date: Mon, 21 Jun 2010 18:25:57 -0500
-Message-ID: <201006211825.58072.denkenz@gmail.com>
-In-Reply-To: <1277125602-3996-3-git-send-email-kristen@linux.intel.com>
+Subject: Re: [RFC PATCH 2/5] history: print SMS status
+Date: Mon, 21 Jun 2010 18:35:30 -0500
+Message-ID: <201006211835.31214.denkenz@gmail.com>
+In-Reply-To: <1276780498-7573-3-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5416422910247176032==
+--===============0607849144238604503==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+Hi Pasi,
 
-> +static void do_html_test(char *text, int text_len, const unsigned char
->  *attrs, +				int attrs_len, const char *filename)
-> +{
-> +	int fd;
-> +	char html_header[] =3D "<html><body>";
-> +	char html_close[] =3D "</body></html>";
-> +	char *html;
-> +	ssize_t bytes_written;
+> ---
+>  src/history.c |   11 +++++++++++
+>  1 files changed, 11 insertions(+), 0 deletions(-)
+> =
+
+> diff --git a/src/history.c b/src/history.c
+> index f868ca2..0eef130 100644
+> --- a/src/history.c
+> +++ b/src/history.c
+> @@ -238,6 +238,8 @@ void __ofono_history_sms_send_status(struct ofono_mod=
+em
+>  *modem, enum ofono_history_sms_status status)
+>  {
+>  	struct history_sms_foreach_data hfd;
+> +	struct tm  *ts;
+> +	char buf[80];
+> =
+
+>  	hfd.msg_id =3D msg_id;
+>  	hfd.address =3D NULL;
+> @@ -245,6 +247,15 @@ void __ofono_history_sms_send_status(struct
+>  ofono_modem *modem, hfd.when =3D when;
+>  	hfd.status =3D status;
+> =
+
+> +	/* Format time, "ddd yyyy-mm-dd hh:mm:ss zzz" */
+> +	ts =3D localtime(&when);
+> +	strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", ts);
 > +
-> +	if (filename =3D=3D NULL)
-> +		return;
-> +
-> +	/* open output file */
-> +	fd =3D open(filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR |
-> +				S_IRGRP | S_IROTH);
-> +	if (fd < 0) {
-> +		g_print("unable to open %s\n", filename);
-> +		return;
-> +	}
-> +
-> +	bytes_written =3D write(fd, html_header, strlen(html_header));
-> +	html =3D stk_text_to_html(text, text_len, attrs, attrs_len);
-> +	bytes_written =3D write(fd, html, strlen(html));
-> +	bytes_written =3D write(fd, html_close, strlen(html_close));
-> +	close(fd);
-> +	g_free(html);
-> +}
+> +	if (status =3D=3D OFONO_HISTORY_SMS_STATUS_DELIVERED)
+> +		DBG("SMS delivered, msg_id: %i, time: %s", msg_id, buf);
+> +	else if (status =3D=3D OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED)
+> +		DBG("SMS undeliverable, msg_id: %i, time: %s", msg_id, buf);
 > +
 
-Please note that unit tests should not require any manual intervention for =
-the =
+I didn't take this patch because these debugs really don't belong here.  =
 
-user to detect whether the code being tested is working or not.  E.g. if yo=
-u =
-
-don't g_assert at least once, it is not a unit test.
-
-For most of these cases it is quite easy to know the output.  So my suggest=
-ion =
-
-here is to set the expected html output as a string in the test structure a=
-nd =
-
-do a strcmp / g_assert at the end of the test.
+Instead I put them in plugins/example_history.c.
 
 Regards,
 -Denis
 
---===============5416422910247176032==--
+--===============0607849144238604503==--
 
