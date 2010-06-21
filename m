@@ -1,41 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============1049513515096002636=="
+Content-Type: multipart/mixed; boundary="===============7238837276628041195=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 1/5] smsutil: Status report assembly
-Date: Mon, 21 Jun 2010 16:09:21 -0500
-Message-ID: <201006211609.21953.denkenz@gmail.com>
-In-Reply-To: <1276780498-7573-2-git-send-email-pasi.miettinen@ixonos.com>
+Subject: Re:
+Date: Mon, 21 Jun 2010 16:10:37 -0500
+Message-ID: <201006211610.37274.denkenz@gmail.com>
+In-Reply-To: <EA8B5A37FEEFC048AF3F8170D2819913B8C1280A68@jklmail01.ixonos.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1049513515096002636==
+--===============7238837276628041195==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pasi,
 
-> ---
->  src/smsutil.c |  183
->  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++ =
-
-src/smsutil.h | =
-
->   31 ++++++++++
->  2 files changed, 214 insertions(+), 0 deletions(-)
+> Hi all,
 > =
 
+> Starting on Monday, I am taking another assignment and I am unable
+> to contribute further. From our side, Petteri Tikander continues to work
+> on the SMS delivery report task.
 
-I pushed patches 1, 3 and 4 in this series upstream and refactored them.  =
+Sorry to hear that, good luck with the next assignment.  Could you have =
 
-Mostly just the code-flow was tweaked and made easier to follow.
+Petteri officially take ownership of this task?
 
-I'm happy to report status reports are now working for me on T-Mobile USA & =
+Thanks,
+-Denis
 
-mbm.
-
-Regards,
--Denis=20
-
---===============1049513515096002636==--
+--===============7238837276628041195==--
 
