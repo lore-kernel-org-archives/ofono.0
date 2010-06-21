@@ -1,46 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============3066546640180660033=="
+Content-Type: multipart/mixed; boundary="===============3606837816191473273=="
 MIME-Version: 1.0
-From: =?unknown-8bit?b?4LC44LCk4LGN4LCvIOCwleCwv+Cwt+Cxi+CwsOCxjQ==?= <satyakishore.kalva@gmail.com>
-Subject: Reg. How client receives SMS PUD
-Date: Mon, 21 Jun 2010 11:19:18 +0530
-Message-ID: <AANLkTikiCGSyn775gEHTejkdJNtcfTNZBe6N68ebm57n@mail.gmail.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH] ppp: Fix leak in pppcp_send_protocol_reject
+Date: Mon, 21 Jun 2010 17:25:39 +0800
+Message-ID: <1277112339-15009-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3066546640180660033==
+--===============3606837816191473273==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+Free the reject pppcp packet after ppp_transmit.
+---
+ gatchat/ppp_cp.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-oFono stack decodes the incoming PDU. Is there any option that client can
-receive the direct PDU from oFono with out processing (i.e. decoding).
+diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
+index bade6bb..b0a18aa 100644
+--- a/gatchat/ppp_cp.c
++++ b/gatchat/ppp_cp.c
+@@ -938,6 +938,8 @@ void pppcp_send_protocol_reject(struct pppcp_data *data,
+ =
 
-If such option available, how can I achieve this.
+ 	ppp_transmit(data->ppp, pppcp_to_ppp_packet(packet),
+ 			ntohs(packet->length));
++
++	pppcp_packet_free(packet);
+ }
+ =
 
-Similarly in case sending message oFono will form (encode) the PDU based on
-the data passed to it. Instead is there any possibility that client can form
-the PDU and send it to oFono stack ?
+ /*
+-- =
+
+1.6.3.3
 
 
-Thanks,
-Satya.
-
---===============3066546640180660033==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-SGkgYWxsLCA8YnI+PGJyPm9Gb25vIHN0YWNrIGRlY29kZXMgdGhlIGluY29taW5nIFBEVS4gSXMg
-dGhlcmUgYW55IG9wdGlvbiB0aGF0IGNsaWVudCBjYW4gcmVjZWl2ZSB0aGUgZGlyZWN0IFBEVSBm
-cm9tIG9Gb25vIHdpdGggb3V0IHByb2Nlc3NpbmcgKGkuZS4gZGVjb2RpbmcpLjxicj48YnI+SWYg
-c3VjaCBvcHRpb24gYXZhaWxhYmxlLCBob3cgY2FuIEkgYWNoaWV2ZSB0aGlzLjxicj48YnI+CgpT
-aW1pbGFybHkgaW4gY2FzZSBzZW5kaW5nIG1lc3NhZ2Ugb0Zvbm8gd2lsbCBmb3JtIChlbmNvZGUp
-IHRoZSBQRFUgYmFzZWQgb24gdGhlIGRhdGEgcGFzc2VkIHRvIGl0LiBJbnN0ZWFkIGlzIHRoZXJl
-IGFueSBwb3NzaWJpbGl0eSB0aGF0IGNsaWVudCBjYW4gZm9ybSB0aGUgUERVIGFuZCBzZW5kIGl0
-IHRvIG9Gb25vIHN0YWNrID88YnI+PGJyPjxicj5UaGFua3MsIDxicj5TYXR5YS4gPGJyPgoK
-
---===============3066546640180660033==--
+--===============3606837816191473273==--
 
