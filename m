@@ -1,40 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============1438469455441710794=="
+Content-Type: multipart/mixed; boundary="===============0165308806457882017=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: [PATCH 06/12] Refactor ussd parser
-Date: Mon, 21 Jun 2010 17:09:36 +0300
-Message-ID: <1277129376.9316.879.camel@tucson.research.nokia.com>
-In-Reply-To: <201006161749.37762.denkenz@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 4/5] Refactor ussd parser
+Date: Mon, 21 Jun 2010 09:18:39 -0500
+Message-ID: <201006210918.40151.denkenz@gmail.com>
+In-Reply-To: <1276770911-8817-4-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1438469455441710794==
+--===============0165308806457882017==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2010-06-17 at 00:49 +0200, ext Denis Kenzior wrote:
-> Aki,
-> =
+Hi Yang,
 
-> > ---
-> >  drivers/isimodem/ussd.c |   36 +++++++-----------------------------
-> >  1 files changed, 7 insertions(+), 29 deletions(-)
-> > =
+> ---
+>  drivers/isimodem/ussd.c |   35 ++++++-----------------------------
+>  1 files changed, 6 insertions(+), 29 deletions(-)
 
-> =
+Patch has been applied, thanks.
 
-> Please review this patch and comment on whether ISI modems can indeed sup=
-port =
+Regards,
+-Denis
 
-> UCS2 / 8Bit data along with 7 bit packed GSM.
-
-ISI modems do support both GSM 7bit and UCS-2 in USSD, as the DCS field
-is sent along with the USSD string.
-
-Cheers,
-Aki
-
-
---===============1438469455441710794==--
+--===============0165308806457882017==--
 
