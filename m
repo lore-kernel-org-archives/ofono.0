@@ -1,339 +1,517 @@
-Content-Type: multipart/mixed; boundary="===============8760270327043001739=="
+Content-Type: multipart/mixed; boundary="===============4836363657567119752=="
 MIME-Version: 1.0
-From: andrzej zaborowski <balrogg@gmail.com>
-Subject: Re: [PATCH 1/2] stkutil: convert text attributes to html
-Date: Tue, 22 Jun 2010 00:45:39 +0200
-Message-ID: <AANLkTinZvOfO4tH1KWkCwob2aL4SLeIz_6N42BQlETpW@mail.gmail.com>
-In-Reply-To: <1277125602-3996-2-git-send-email-kristen@linux.intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 2/2] test-stkutil: add html formatted text tests
+Date: Tue, 22 Jun 2010 00:59:30 +0200
+Message-ID: <AANLkTikq2ZJCU6uwcVsfBhoFmjde-WxJtYqpUN8HiM4d@mail.gmail.com>
+In-Reply-To: <1277125602-3996-3-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8760270327043001739==
+--===============4836363657567119752==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-
 On 21 June 2010 15:06, Kristen Carlson Accardi <kristen@linux.intel.com> =
 wrote:
-> ---
-> =C2=A0src/stkutil.c | =C2=A0165 +++++++++++++++++++++++++++++++++++++++++=
-++++++++++++++++
-> =C2=A0src/stkutil.h | =C2=A0 22 ++++++++
-> =C2=A02 files changed, 187 insertions(+), 0 deletions(-)
->
-> diff --git a/src/stkutil.c b/src/stkutil.c
-> index 642081e..1c8bac9 100644
-> --- a/src/stkutil.c
-> +++ b/src/stkutil.c
-> @@ -26,6 +26,7 @@
-> =C2=A0#include <string.h>
+> diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
+> index c586a7b..21fd02d 100644
+> --- a/unit/test-stkutil.c
+> +++ b/unit/test-stkutil.c
+> @@ -28,6 +28,9 @@
 > =C2=A0#include <stdlib.h>
+> =C2=A0#include <string.h>
 > =C2=A0#include <stdint.h>
-> +#include <stdio.h>
+> +#include <fcntl.h>
+> +
+> +#include <sys/stat.h>
 >
 > =C2=A0#include <glib.h>
+> =C2=A0#include <glib/gprintf.h>
+> @@ -508,6 +511,7 @@ struct display_text_test {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_duration duration;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_text_attribute text_attr;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_frame_id frame_id;
+> + =C2=A0 =C2=A0 =C2=A0 const char *test_name;
+> =C2=A0};
 >
-> @@ -5978,3 +5979,167 @@ const unsigned char *stk_pdu_from_envelope(const =
-struct stk_envelope *envelope,
+> =C2=A0unsigned char display_text_111[] =3D { 0xD0, 0x1A, 0x81, 0x03, 0x01=
+, 0x21, 0x80,
+> @@ -603,6 +607,69 @@ unsigned char display_text_711[] =3D { 0xD0, 0x19, 0=
+x81, 0x03, 0x01, 0x21, 0x80,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x63, 0x6=
+F, 0x6E, 0x64, 0x84, 0x02,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x01, 0x0=
+A };
 >
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0return pdu;
-> =C2=A0}
+> +unsigned char display_text_811[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x2=
+1, 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x82, 0x02, =
+0x81, 0x02, 0x8D, 0x11,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x54, =
+0x65, 0x78, 0x74, 0x20,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x41, 0x74, =
+0x74, 0x72, 0x69, 0x62,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x75, 0x74, =
+0x65, 0x20, 0x31, 0xD0,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x00, =
+0x10, 0x00, 0xB4 };
 > +
-> +static const char *html_colors[] =3D {
-> + =C2=A0 =C2=A0 =C2=A0 "#000000", /* Black */
-> + =C2=A0 =C2=A0 =C2=A0 "#808080", /* Dark Grey */
-> + =C2=A0 =C2=A0 =C2=A0 "#C11B17", /* Dark Red */
-> + =C2=A0 =C2=A0 =C2=A0 "#FBB117", /* Dark Yellow */
-> + =C2=A0 =C2=A0 =C2=A0 "#347235", /* Dark Green */
-> + =C2=A0 =C2=A0 =C2=A0 "#307D7E", /* Dark Cyan */
-> + =C2=A0 =C2=A0 =C2=A0 "#0000A0", /* Dark Blue */
-> + =C2=A0 =C2=A0 =C2=A0 "#C031C7", /* Dark Magenta */
-> + =C2=A0 =C2=A0 =C2=A0 "#C0C0C0", /* Grey */
-> + =C2=A0 =C2=A0 =C2=A0 "#FFFFFF", /* White */
-> + =C2=A0 =C2=A0 =C2=A0 "#FF0000", /* Bright Red */
-> + =C2=A0 =C2=A0 =C2=A0 "#FFFF00", /* Bright Yellow */
-> + =C2=A0 =C2=A0 =C2=A0 "#00FF00", /* Bright Green */
-> + =C2=A0 =C2=A0 =C2=A0 "#00FFFF", /* Bright Cyan */
-> + =C2=A0 =C2=A0 =C2=A0 "#0000FF", /* Bright Blue */
-> + =C2=A0 =C2=A0 =C2=A0 "#FF00FF", /* Bright Magenta */
+> +unsigned char display_text_821[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x2=
+1, 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x82, 0x02, =
+0x81, 0x02, 0x8D, 0x11,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x54, =
+0x65, 0x78, 0x74, 0x20,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x41, 0x74, =
+0x74, 0x72, 0x69, 0x62,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x75, 0x74, =
+0x65, 0x20, 0x31, 0xD0,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x00, =
+0x10, 0x01, 0xB4 };
+> +
+> +unsigned char display_text_831[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x2=
+1, 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x82, 0x02, =
+0x81, 0x02, 0x8D, 0x11,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x54, =
+0x65, 0x78, 0x74, 0x20,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x41, 0x74, =
+0x74, 0x72, 0x69, 0x62,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x75, 0x74, =
+0x65, 0x20, 0x31, 0xD0,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x00, =
+0x10, 0x02, 0xB4 };
+> +
+> +unsigned char display_text_841[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x2=
+1, 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x82, 0x02, =
+0x81, 0x02, 0x8D, 0x11,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x54, =
+0x65, 0x78, 0x74, 0x20,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x41, 0x74, =
+0x74, 0x72, 0x69, 0x62,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x75, 0x74, =
+0x65, 0x20, 0x31, 0xD0,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x00, =
+0x10, 0x04, 0xB4 };
+> +
+> +unsigned char display_text_851[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x2=
+1, 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x82, 0x02, =
+0x81, 0x02, 0x8D, 0x11,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x54, =
+0x65, 0x78, 0x74, 0x20,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x41, 0x74, =
+0x74, 0x72, 0x69, 0x62,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x75, 0x74, =
+0x65, 0x20, 0x31, 0xD0,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x00, =
+0x10, 0x08, 0xB4 };
+> +
+> +unsigned char display_text_861[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x2=
+1, 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x82, 0x02, =
+0x81, 0x02, 0x8D, 0x11,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x54, =
+0x65, 0x78, 0x74, 0x20,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x41, 0x74, =
+0x74, 0x72, 0x69, 0x62,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x75, 0x74, =
+0x65, 0x20, 0x31, 0xD0,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x00, =
+0x10, 0x10, 0xB4 };
+> +
+> +unsigned char display_text_871[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x2=
+1, 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x82, 0x02, =
+0x81, 0x02, 0x8D, 0x11,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x54, =
+0x65, 0x78, 0x74, 0x20,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x41, 0x74, =
+0x74, 0x72, 0x69, 0x62,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x75, 0x74, =
+0x65, 0x20, 0x31, 0xD0,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x00, =
+0x10, 0x20, 0xB4 };
+> +
+> +unsigned char display_text_881[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x2=
+1, 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x82, 0x02, =
+0x81, 0x02, 0x8D, 0x11,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x54, =
+0x65, 0x78, 0x74, 0x20,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x41, 0x74, =
+0x74, 0x72, 0x69, 0x62,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x75, 0x74, =
+0x65, 0x20, 0x31, 0xD0,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x00, =
+0x10, 0x40, 0xB4 };
+> +
+> +unsigned char display_text_891[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x2=
+1, 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x82, 0x02, =
+0x81, 0x02, 0x8D, 0x11,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x54, =
+0x65, 0x78, 0x74, 0x20,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x41, 0x74, =
+0x74, 0x72, 0x69, 0x62,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x75, 0x74, =
+0x65, 0x20, 0x31, 0xD0,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x04, 0x00, =
+0x10, 0x80, 0xB4 };
+> +
+> =C2=A0unsigned char display_text_911[] =3D { 0xD0, 0x10, 0x81, 0x03, 0x01=
+, 0x21, 0x80,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x82, 0x0=
+2, 0x81, 0x02, 0x8D, 0x05,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x08, 0x4=
+F, 0x60, 0x59, 0x7D };
+> @@ -708,6 +775,114 @@ static struct display_text_test display_text_data_7=
+11 =3D {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0}
+> =C2=A0};
+>
+> +static struct display_text_test display_text_data_811 =3D {
+> + =C2=A0 =C2=A0 =C2=A0 .pdu =3D display_text_811,
+> + =C2=A0 =C2=A0 =C2=A0 .pdu_len =3D sizeof(display_text_811),
+> + =C2=A0 =C2=A0 =C2=A0 .qualifier =3D 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 .text =3D "Text Attribute 1",
+> + =C2=A0 =C2=A0 =C2=A0 .text_attr =3D {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .len =3D 4,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .attributes =3D { 0x00=
+, 0x10, 0x00, 0xB4 },
+> + =C2=A0 =C2=A0 =C2=A0 },
+> + =C2=A0 =C2=A0 =C2=A0 .test_name =3D "811.html",
 > +};
 > +
-> +static void end_format(GString *string, guint8 code)
+> +static struct display_text_test display_text_data_821 =3D {
+> + =C2=A0 =C2=A0 =C2=A0 .pdu =3D display_text_821,
+> + =C2=A0 =C2=A0 =C2=A0 .pdu_len =3D sizeof(display_text_821),
+> + =C2=A0 =C2=A0 =C2=A0 .qualifier =3D 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 .text =3D "Text Attribute 1",
+> + =C2=A0 =C2=A0 =C2=A0 .text_attr =3D {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .len =3D 4,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .attributes =3D { 0x00=
+, 0x10, 0x01, 0xB4 },
+> + =C2=A0 =C2=A0 =C2=A0 },
+> + =C2=A0 =C2=A0 =C2=A0 .test_name =3D "821.html",
+> +};
+> +
+> +static struct display_text_test display_text_data_831 =3D {
+> + =C2=A0 =C2=A0 =C2=A0 .pdu =3D display_text_831,
+> + =C2=A0 =C2=A0 =C2=A0 .pdu_len =3D sizeof(display_text_831),
+> + =C2=A0 =C2=A0 =C2=A0 .qualifier =3D 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 .text =3D "Text Attribute 1",
+> + =C2=A0 =C2=A0 =C2=A0 .text_attr =3D {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .len =3D 4,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .attributes =3D { 0x00=
+, 0x10, 0x02, 0xB4 },
+> + =C2=A0 =C2=A0 =C2=A0 },
+> + =C2=A0 =C2=A0 =C2=A0 .test_name =3D "831.html",
+> +};
+> +
+> +static struct display_text_test display_text_data_841 =3D {
+> + =C2=A0 =C2=A0 =C2=A0 .pdu =3D display_text_841,
+> + =C2=A0 =C2=A0 =C2=A0 .pdu_len =3D sizeof(display_text_841),
+> + =C2=A0 =C2=A0 =C2=A0 .qualifier =3D 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 .text =3D "Text Attribute 1",
+> + =C2=A0 =C2=A0 =C2=A0 .text_attr =3D {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .len =3D 4,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .attributes =3D { 0x00=
+, 0x10, 0x04, 0xB4 },
+> + =C2=A0 =C2=A0 =C2=A0 },
+> + =C2=A0 =C2=A0 =C2=A0 .test_name =3D "841.html",
+> +};
+> +
+> +static struct display_text_test display_text_data_851 =3D {
+> + =C2=A0 =C2=A0 =C2=A0 .pdu =3D display_text_851,
+> + =C2=A0 =C2=A0 =C2=A0 .pdu_len =3D sizeof(display_text_851),
+> + =C2=A0 =C2=A0 =C2=A0 .qualifier =3D 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 .text =3D "Text Attribute 1",
+> + =C2=A0 =C2=A0 =C2=A0 .text_attr =3D {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .len =3D 4,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .attributes =3D { 0x00=
+, 0x10, 0x08, 0xB4 },
+> + =C2=A0 =C2=A0 =C2=A0 },
+> + =C2=A0 =C2=A0 =C2=A0 .test_name =3D "851.html",
+> +};
+> +
+> +static struct display_text_test display_text_data_861 =3D {
+> + =C2=A0 =C2=A0 =C2=A0 .pdu =3D display_text_861,
+> + =C2=A0 =C2=A0 =C2=A0 .pdu_len =3D sizeof(display_text_861),
+> + =C2=A0 =C2=A0 =C2=A0 .qualifier =3D 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 .text =3D "Text Attribute 1",
+> + =C2=A0 =C2=A0 =C2=A0 .text_attr =3D {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .len =3D 4,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .attributes =3D { 0x00=
+, 0x10, 0x10, 0xB4 },
+> + =C2=A0 =C2=A0 =C2=A0 },
+> + =C2=A0 =C2=A0 =C2=A0 .test_name =3D "861.html",
+> +};
+> +
+> +static struct display_text_test display_text_data_871 =3D {
+> + =C2=A0 =C2=A0 =C2=A0 .pdu =3D display_text_871,
+> + =C2=A0 =C2=A0 =C2=A0 .pdu_len =3D sizeof(display_text_871),
+> + =C2=A0 =C2=A0 =C2=A0 .qualifier =3D 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 .text =3D "Text Attribute 1",
+> + =C2=A0 =C2=A0 =C2=A0 .text_attr =3D {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .len =3D 4,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .attributes =3D { 0x00=
+, 0x10, 0x20, 0xB4 },
+> + =C2=A0 =C2=A0 =C2=A0 },
+> + =C2=A0 =C2=A0 =C2=A0 .test_name =3D "871.html",
+> +};
+> +
+> +static struct display_text_test display_text_data_881 =3D {
+> + =C2=A0 =C2=A0 =C2=A0 .pdu =3D display_text_881,
+> + =C2=A0 =C2=A0 =C2=A0 .pdu_len =3D sizeof(display_text_881),
+> + =C2=A0 =C2=A0 =C2=A0 .qualifier =3D 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 .text =3D "Text Attribute 1",
+> + =C2=A0 =C2=A0 =C2=A0 .text_attr =3D {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .len =3D 4,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .attributes =3D { 0x00=
+, 0x10, 0x40, 0xB4 },
+> + =C2=A0 =C2=A0 =C2=A0 },
+> + =C2=A0 =C2=A0 =C2=A0 .test_name =3D "881.html",
+> +};
+> +
+> +static struct display_text_test display_text_data_891 =3D {
+> + =C2=A0 =C2=A0 =C2=A0 .pdu =3D display_text_891,
+> + =C2=A0 =C2=A0 =C2=A0 .pdu_len =3D sizeof(display_text_891),
+> + =C2=A0 =C2=A0 =C2=A0 .qualifier =3D 0x80,
+> + =C2=A0 =C2=A0 =C2=A0 .text =3D "Text Attribute 1",
+> + =C2=A0 =C2=A0 =C2=A0 .text_attr =3D {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .len =3D 4,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 .attributes =3D { 0x00=
+, 0x10, 0x80, 0xB4 },
+> + =C2=A0 =C2=A0 =C2=A0 },
+> + =C2=A0 =C2=A0 =C2=A0 .test_name =3D "891.html",
+> +};
+> +
+> =C2=A0static struct display_text_test display_text_data_911 =3D {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0.pdu =3D display_text_911,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0.pdu_len =3D sizeof(display_text_911),
+> @@ -722,6 +897,58 @@ static struct display_text_test display_text_data_10=
+11 =3D {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0.text =3D "80=E3=83=AB"
+> =C2=A0};
+>
+> +static void do_html_test(char *text, int text_len, const unsigned char *=
+attrs,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 int attrs_len, const char *filename)
 > +{
-> + =C2=A0 =C2=A0 =C2=A0 g_string_append(string, "</span>");
+> + =C2=A0 =C2=A0 =C2=A0 int fd;
+> + =C2=A0 =C2=A0 =C2=A0 char html_header[] =3D "<html><body>";
+> + =C2=A0 =C2=A0 =C2=A0 char html_close[] =3D "</body></html>";
+> + =C2=A0 =C2=A0 =C2=A0 char *html;
+> + =C2=A0 =C2=A0 =C2=A0 ssize_t bytes_written;
 > +
-> + =C2=A0 =C2=A0 =C2=A0 if ((code & STK_TEXT_FORMAT_ALIGN_MASK) !=3D STK_T=
-EXT_FORMAT_NO_ALIGN)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "</div>");
-> +}
+> + =C2=A0 =C2=A0 =C2=A0 if (filename =3D=3D NULL)
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
 > +
-> +static void start_format(GString *string, guint8 code, guint8 color)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 guint8 align =3D code & STK_TEXT_FORMAT_ALIGN_MASK;
-> + =C2=A0 =C2=A0 =C2=A0 guint8 font =3D code & STK_TEXT_FORMAT_FONT_MASK;
-> + =C2=A0 =C2=A0 =C2=A0 guint8 style =3D code & STK_TEXT_FORMAT_STYLE_MASK;
-> + =C2=A0 =C2=A0 =C2=A0 int fg =3D color & 0x0f;
-> + =C2=A0 =C2=A0 =C2=A0 int bg =3D (color >> 4) & 0x0f;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 /* align formatting applies to a block of test */
-> + =C2=A0 =C2=A0 =C2=A0 if (align !=3D STK_TEXT_FORMAT_NO_ALIGN)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "<div style=3D\"");
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (align =3D=3D STK_TEXT_FORMAT_RIGHT_ALIGN)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "text-align: right;\">");
-> + =C2=A0 =C2=A0 =C2=A0 else if (align =3D=3D STK_TEXT_FORMAT_CENTER_ALIGN)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "text-align: center;\">");
-> + =C2=A0 =C2=A0 =C2=A0 else if (align =3D=3D STK_TEXT_FORMAT_LEFT_ALIGN)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "text-align: left;\">");
-> +
-> + =C2=A0 =C2=A0 =C2=A0 /* font, style, and color are inline */
-> + =C2=A0 =C2=A0 =C2=A0 g_string_append(string, "<span style=3D\"");
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (font =3D=3D STK_TEXT_FORMAT_FONT_SIZE_LARGE)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "font-size: big;");
-> + =C2=A0 =C2=A0 =C2=A0 else if (font =3D=3D STK_TEXT_FORMAT_FONT_SIZE_SMA=
-LL)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "font-size: small;");
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (style =3D=3D STK_TEXT_FORMAT_STYLE_BOLD)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "font-weight: bold;");
-> + =C2=A0 =C2=A0 =C2=A0 else if (style =3D=3D STK_TEXT_FORMAT_STYLE_ITALIC)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "font-style: italic;");
-> + =C2=A0 =C2=A0 =C2=A0 else if (style =3D=3D STK_TEXT_FORMAT_STYLE_UNDERL=
-INED)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "text-decoration: underline;");
-> + =C2=A0 =C2=A0 =C2=A0 else if (style =3D=3D STK_TEXT_FORMAT_STYLE_STRIKE=
-THROUGH)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append(string=
-, "text-decoration: line-through;");
-> +
-> + =C2=A0 =C2=A0 =C2=A0 /* add any color */
-> + =C2=A0 =C2=A0 =C2=A0 if (fg)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append_printf=
-(string, "color: %s;", html_colors[fg]);
-> + =C2=A0 =C2=A0 =C2=A0 if (bg)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_string_append_printf=
-(string, "background-color: %s;",
+> + =C2=A0 =C2=A0 =C2=A0 /* open output file */
+> + =C2=A0 =C2=A0 =C2=A0 fd =3D open(filename, O_WRONLY | O_CREAT, S_IRUSR =
+| S_IWUSR |
 > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 html_colors[bg]);
-> + =C2=A0 =C2=A0 =C2=A0 g_string_append(string, "\">");
-> +}
-> +
-> +char *stk_text_to_html(char *text, int text_len,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 const unsigned char *attrs, int attrs_le=
-n)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 GString *string =3D g_string_sized_new(text_len + =
-1);
-> + =C2=A0 =C2=A0 =C2=A0 GQueue formats[241]; =C2=A0/* maximum number of ch=
-ars in text + 1 */
-> + =C2=A0 =C2=A0 =C2=A0 int pos =3D 0, attr, i;
-> + =C2=A0 =C2=A0 =C2=A0 guint8 start, end, code, color, len;
-> + =C2=A0 =C2=A0 =C2=A0 guint8 align =3D STK_DEFAULT_TEXT_ALIGNMENT; /* ha=
-rdcoded to left */
-> +
-> + =C2=A0 =C2=A0 =C2=A0 /* we may need formatting at the position beyond t=
-he last char */
-> + =C2=A0 =C2=A0 =C2=A0 for (i =3D 0; i <=3D text_len; i++)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_queue_init(&formats[=
-i]);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 i =3D 0;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 /*
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0* each position in the text may have multipl=
-e attributes.
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0* store each attribute in a queue for that p=
-osition in the
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0* order in which it was sent. =C2=A0This wil=
-l cause the last
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0* attribute sent for that position to take p=
-riority.
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0*/
-> + =C2=A0 =C2=A0 =C2=A0 while (i < attrs_len) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* TBD - check for bad=
- values */
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 start =3D attrs[i++];
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 len =3D attrs[i++];
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 code =3D attrs[i++];
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /*
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* if the alignme=
-nt is the same as either the default
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* or the last al=
-ignment used, don't set any alignment
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* value.
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if ((code & STK_TEXT_F=
-ORMAT_ALIGN_MASK) =3D=3D align)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 code |=3D 0x3;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 align =3D code & STK_TEXT_FORMAT_ALIGN_MASK;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (i < attrs_len)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 color =3D attrs[i++];
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 color =3D 0;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (len =3D=3D 0)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 end =3D text_len;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 end =3D start + len;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 attr =3D start | (code=
- << 16) | (color << 24);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_queue_push_tail(&for=
-mats[start], GINT_TO_POINTER(attr));
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_queue_push_tail(&for=
-mats[end], GINT_TO_POINTER(attr));
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 S_IRGRP | S_IROTH);
+> + =C2=A0 =C2=A0 =C2=A0 if (fd < 0) {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_print("unable to ope=
+n %s\n", filename);
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
 > + =C2=A0 =C2=A0 =C2=A0 }
 > +
-> + =C2=A0 =C2=A0 =C2=A0 while (pos <=3D text_len) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 GQueue *q =3D &formats=
-[pos];
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* there may be multip=
-le formats per position */
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 while ((attr =3D GPOIN=
-TER_TO_INT(g_queue_pop_head(q)))) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 start =3D attr & 0xff;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 code =3D attr >> 16 & 0xff;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 color =3D attr >> 24 & 0xff;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 if (pos =3D=3D start)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 start_format(string, code, color);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 else
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 end_format(string, code);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
-
-Can we always end_format() and start_format() when the formatting
-changes, and just once instead of in a loop?  Here's a test case that
-I'm worried about:
-
-text is "abc"
-attribute 1 (red text) starts at 0, len 2
-attribute 2 (blue text) starts at 1, len 2
-
-the generated html, by my reading will look like this:
-<span style=3D"color: red;">a<span style=3D"color: blue;">b</span>c</span>
-
-The end result is that c is red, while it should be blue.  But the
-real problem is if one of them was a div, then you would have badly
-balanced xml and it wouldn't parse. (I mentioned this on IRC)
-
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (pos =3D=3D text_le=
-n)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 break;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (text[pos] =3D=3D '=
-\n')
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 g_string_append(string, "<br/>");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else if (text[pos] =3D=
-=3D '\r') {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 g_string_append(string, "<br/>");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 if ((pos + 1 < text_len) && (text[pos + 1] =3D=3D '\n'))
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pos++;
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 } else if (text[pos] =
-=3D=3D '<')
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 g_string_append(string, "&lt;");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else if (text[pos] =3D=
-=3D '>')
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 g_string_append(string, "&gt;");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else if (text[pos] =3D=
-=3D '&')
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 g_string_append(string, "&amp;");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 g_string_append_c(string, text[pos]);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 pos++;
-> + =C2=A0 =C2=A0 =C2=A0 }
-> +
-> + =C2=A0 =C2=A0 =C2=A0 /* return characters from string. Caller must free=
- char data */
-> + =C2=A0 =C2=A0 =C2=A0 return g_string_free(string, FALSE);
+> + =C2=A0 =C2=A0 =C2=A0 bytes_written =3D write(fd, html_header, strlen(ht=
+ml_header));
+> + =C2=A0 =C2=A0 =C2=A0 html =3D stk_text_to_html(text, text_len, attrs, a=
+ttrs_len);
+> + =C2=A0 =C2=A0 =C2=A0 bytes_written =3D write(fd, html, strlen(html));
+> + =C2=A0 =C2=A0 =C2=A0 bytes_written =3D write(fd, html_close, strlen(htm=
+l_close));
+> + =C2=A0 =C2=A0 =C2=A0 close(fd);
+> + =C2=A0 =C2=A0 =C2=A0 g_free(html);
 > +}
+> +
+> +static void test_html1(gconstpointer data)
+> +{
+> + =C2=A0 =C2=A0 =C2=A0 char html_test[] =3D "EMS messages can contain ita=
+lic, bold,"
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 " large, small and colored text";
+> + =C2=A0 =C2=A0 =C2=A0 const unsigned char attrs[] =3D { 0x19, 0x06, 0x20=
+, 0x00,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x21, 0x04, =
+0x10, 0x00,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x27, 0x05, =
+0x04, 0x00,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x2E, 0x05, =
+0x08, 0x00,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x38, 0x07, =
+0x00, 0x2B };
+> + =C2=A0 =C2=A0 =C2=A0 const char filename[] =3D "html1.html";
+> +
+> + =C2=A0 =C2=A0 =C2=A0 do_html_test(html_test, strlen(html_test), attrs, =
+20, filename);
+> +}
+> +
+> +static void test_html2(gconstpointer data)
+> +{
+> + =C2=A0 =C2=A0 =C2=A0 char html_test[] =3D "Blue green green green";
+> + =C2=A0 =C2=A0 =C2=A0 const unsigned char attrs[] =3D { 0x00, 0x00, 0x00=
+, 0x94,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x00, 0x04, =
+0x00, 0x96 };
+> + =C2=A0 =C2=A0 =C2=A0 const char filename[] =3D "html2.html";
+> +
+> + =C2=A0 =C2=A0 =C2=A0 do_html_test(html_test, strlen(html_test), attrs, =
+8, filename);
+> +}
+> +
+> =C2=A0/* Defined in TS 102.384 Section 27.22.4.1 */
+> =C2=A0static void test_display_text(gconstpointer data)
+> =C2=A0{
+> @@ -747,6 +974,14 @@ static void test_display_text(gconstpointer data)
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0check_duration(&command->display_text.duration=
+, &test->duration);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0check_text_attr(&command->display_text.text_at=
+tr,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0&test->text_attr);
+> +
+> + =C2=A0 =C2=A0 =C2=A0 if (command->display_text.text_attr.len > 0)
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 do_html_test(command->=
+display_text.text,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 strlen(command->display_text.text),
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 command->display_text.text_attr.attribut=
+es,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 command->display_text.text_attr.len,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 test->test_name);
+> +
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0check_frame_id(&command->display_text.frame_id=
+, &test->frame_id);
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0stk_command_free(command);
+> @@ -21913,6 +22148,28 @@ int main(int argc, char **argv)
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0&display_text_data_611, test_display_=
+text);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0g_test_add_data_func("/teststk/Display Text 7.=
+1.1",
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0&display_text_data_711, test_display_=
+text);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/HTML test 1",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 NULL, test_html1);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/HTML test 2",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 NULL, test_html2);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/Display Text 8.1.1",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &display_text_data_811, test_display_tex=
+t);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/Display Text 8.2.1",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &display_text_data_821, test_display_tex=
+t);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/Display Text 8.3.1",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &display_text_data_831, test_display_tex=
+t);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/Display Text 8.4.1",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &display_text_data_841, test_display_tex=
+t);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/Display Text 8.5.1",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &display_text_data_851, test_display_tex=
+t);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/Display Text 8.6.1",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &display_text_data_861, test_display_tex=
+t);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/Display Text 8.7.1",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &display_text_data_871, test_display_tex=
+t);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/Display Text 8.8.1",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &display_text_data_881, test_display_tex=
+t);
+> + =C2=A0 =C2=A0 =C2=A0 g_test_add_data_func("/teststk/Display Text 8.9.1",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &display_text_data_891, test_display_tex=
+t);
 
-This approach with having so many queues seems a little heavy.  On irc
-I proposed that probably we don't need to implement this behaviour
-fully and maybe could make some assumptions to simplify it.  But if
-you want a full implementation here's what I'd do:
-
-Make a list of all starts and ends of attributes, and sort it by
-position in the text, for example for the abc case above, that list
-would contain:
-position 0, pointer to attribute 1
-position 1, pointer to attribute 2
-position 2, pointer to attribute 1
-position 3, pointer to attribute 2
-
-Each attribute has a .start, a .end (.start + .len) and a rank which
-is just its position in the original array.
-
-Then I'd loop through the text like this:
-
-while (pos <=3D text_len) {
-    if anything to do on current position {
-        close previous <span>;
-
-        foreach (attributes that start here) {
-            if attribute->start >=3D attribute.end
-                continue
-            if attribute->rank > current_attribute->rank {
-                current_attribute->start =3D attribute->end;
-                current_attribute =3D attribute;
-            } else
-                attribute->start =3D current_attribute->end;
-        }
-
-        open new span(current_attribute);
-    }
-
-    append chunk of text up to next interesting position;
-}
-
-I'm not sure if this is enough (would have to try it) but it seems to
-work, provided the list is maintained sorted.  That way whenever one
-attibute ends, another is going to start at the same position, so
-maybe it's unnecessary to keep the end positions in that list.
+The unit tests can probably do whatever they want, but in my opinion
+they should fail if anything is wrong with the tested function, while
+this code never calls g_assert.  You should probably include the
+expected html with each test and do strcmp (I agree this is not ideal
+because there are many valid results, but it'll at least force someone
+who sends a patch to run and update the tests).
 
 Regards
 
---===============8760270327043001739==--
+--===============4836363657567119752==--
 
