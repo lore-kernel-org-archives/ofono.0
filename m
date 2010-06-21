@@ -1,44 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============0386156092625296728=="
+Content-Type: multipart/mixed; boundary="===============8368214827054588743=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] test-common: Avoid accessing an unitialised variable.
-Date: Mon, 21 Jun 2010 10:41:10 +0200
-Message-ID: <1277109671-7452-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH] stkutil: Remove obsolete comment.
+Date: Mon, 21 Jun 2010 10:41:11 +0200
+Message-ID: <1277109671-7452-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1277109671-7452-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0386156092625296728==
+--===============8368214827054588743==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Fixes a segfault, reported by valrgind as:
-[...]
-=3D=3D6300=3D=3D Use of uninitialised value of size 4
-=3D=3D6300=3D=3D    at 0x8048B4D: test_invalid (test-common.c:81)
 ---
- unit/test-common.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ src/stkutil.c |    3 ---
+ 1 files changed, 0 insertions(+), 3 deletions(-)
 
-diff --git a/unit/test-common.c b/unit/test-common.c
-index f33f117..baed178 100644
---- a/unit/test-common.c
-+++ b/unit/test-common.c
-@@ -78,7 +78,7 @@ static void test_invalid()
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 642081e..6520c8a 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -4541,9 +4541,6 @@ static gboolean build_dataobj_bcch_channel_list(struc=
+t stk_tlv_builder *tlv,
+ 	unsigned int i, bytes, pos, shift;
+ 	unsigned char value;
  =
 
- 		ret =3D parse_ss_control_string(str, &type, &sc,
- 						&sia, &sib, &sic, &sid, &dn);
--		if (strlen(sid))
-+		if (ret =3D=3D TRUE && strlen(sid))
- 			ret =3D FALSE;
+-	/* To distinguish between no BCCH Channel List data object and
+-	 * an empty object in a sequence of empty and non-empty objects,
+-	 * .channels must be non-NULL in objects in sequences.  */
+ 	if (list->has_list =3D=3D FALSE)
+ 		return TRUE;
  =
 
- 		g_assert(ret =3D=3D FALSE);
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============0386156092625296728==--
+--===============8368214827054588743==--
 
