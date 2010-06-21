@@ -1,358 +1,391 @@
-Content-Type: multipart/mixed; boundary="===============2467193194659418393=="
+Content-Type: multipart/mixed; boundary="===============2224868051031564385=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 2/2] test-stkutil: add html formatted text tests
-Date: Mon, 21 Jun 2010 06:06:42 -0700
-Message-ID: <1277125602-3996-3-git-send-email-kristen@linux.intel.com>
-In-Reply-To: <1277125602-3996-1-git-send-email-kristen@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 5/5] smsutil: save pending status reports to imsi file
+Date: Mon, 21 Jun 2010 16:07:45 -0500
+Message-ID: <201006211607.45655.denkenz@gmail.com>
+In-Reply-To: <1276780498-7573-6-git-send-email-pasi.miettinen@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2467193194659418393==
+--===============2224868051031564385==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- unit/test-stkutil.c |  257 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 257 insertions(+), 0 deletions(-)
+Hi Pasi,
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index c586a7b..21fd02d 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -28,6 +28,9 @@
- #include <stdlib.h>
- #include <string.h>
- #include <stdint.h>
-+#include <fcntl.h>
-+
-+#include <sys/stat.h>
- =
+> ---
+>  src/smsutil.c |  205
+>  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++- 1 files =
 
- #include <glib.h>
- #include <glib/gprintf.h>
-@@ -508,6 +511,7 @@ struct display_text_test {
- 	struct stk_duration duration;
- 	struct stk_text_attribute text_attr;
- 	struct stk_frame_id frame_id;
-+	const char *test_name;
- };
- =
+changed,
+>  204 insertions(+), 1 deletions(-)
+> =
 
- unsigned char display_text_111[] =3D { 0xD0, 0x1A, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-@@ -603,6 +607,69 @@ unsigned char display_text_711[] =3D { 0xD0, 0x19, 0x8=
-1, 0x03, 0x01, 0x21, 0x80,
- 					0x63, 0x6F, 0x6E, 0x64, 0x84, 0x02,
- 					0x01, 0x0A };
- =
+> diff --git a/src/smsutil.c b/src/smsutil.c
+> index 3db3d28..a30a281 100644
+> --- a/src/smsutil.c
+> +++ b/src/smsutil.c
+> @@ -45,6 +45,10 @@
+>  #define SMS_BACKUP_PATH_DIR SMS_BACKUP_PATH "/%s-%i-%i"
+>  #define SMS_BACKUP_PATH_FILE SMS_BACKUP_PATH_DIR "/%03i"
+> =
 
-+unsigned char display_text_811[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x00, 0xB4 };
-+
-+unsigned char display_text_821[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x01, 0xB4 };
-+
-+unsigned char display_text_831[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x02, 0xB4 };
-+
-+unsigned char display_text_841[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x04, 0xB4 };
-+
-+unsigned char display_text_851[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x08, 0xB4 };
-+
-+unsigned char display_text_861[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x10, 0xB4 };
-+
-+unsigned char display_text_871[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x20, 0xB4 };
-+
-+unsigned char display_text_881[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x40, 0xB4 };
-+
-+unsigned char display_text_891[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x80, 0xB4 };
-+
- unsigned char display_text_911[] =3D { 0xD0, 0x10, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
- 					0x82, 0x02, 0x81, 0x02, 0x8D, 0x05,
- 					0x08, 0x4F, 0x60, 0x59, 0x7D };
-@@ -708,6 +775,114 @@ static struct display_text_test display_text_data_711=
- =3D {
- 	}
- };
- =
+> +#define SMS_SR_BACKUP_PATH STORAGEDIR "/%s/sms_sr"
+> +#define SMS_SR_BACKUP_PATH_DIR SMS_SR_BACKUP_PATH "/%s-%i-%i"
+> +#define SMS_SR_BACKUP_PATH_FILE SMS_SR_BACKUP_PATH_DIR "/%i"
+> +
+>  #define SMS_ADDR_FMT "%24[0-9A-F]"
+> =
 
-+static struct display_text_test display_text_data_811 =3D {
-+	.pdu =3D display_text_811,
-+	.pdu_len =3D sizeof(display_text_811),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 },
-+	},
-+	.test_name =3D "811.html",
-+};
-+
-+static struct display_text_test display_text_data_821 =3D {
-+	.pdu =3D display_text_821,
-+	.pdu_len =3D sizeof(display_text_821),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x01, 0xB4 },
-+	},
-+	.test_name =3D "821.html",
-+};
-+
-+static struct display_text_test display_text_data_831 =3D {
-+	.pdu =3D display_text_831,
-+	.pdu_len =3D sizeof(display_text_831),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x02, 0xB4 },
-+	},
-+	.test_name =3D "831.html",
-+};
-+
-+static struct display_text_test display_text_data_841 =3D {
-+	.pdu =3D display_text_841,
-+	.pdu_len =3D sizeof(display_text_841),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x04, 0xB4 },
-+	},
-+	.test_name =3D "841.html",
-+};
-+
-+static struct display_text_test display_text_data_851 =3D {
-+	.pdu =3D display_text_851,
-+	.pdu_len =3D sizeof(display_text_851),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x08, 0xB4 },
-+	},
-+	.test_name =3D "851.html",
-+};
-+
-+static struct display_text_test display_text_data_861 =3D {
-+	.pdu =3D display_text_861,
-+	.pdu_len =3D sizeof(display_text_861),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x10, 0xB4 },
-+	},
-+	.test_name =3D "861.html",
-+};
-+
-+static struct display_text_test display_text_data_871 =3D {
-+	.pdu =3D display_text_871,
-+	.pdu_len =3D sizeof(display_text_871),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x20, 0xB4 },
-+	},
-+	.test_name =3D "871.html",
-+};
-+
-+static struct display_text_test display_text_data_881 =3D {
-+	.pdu =3D display_text_881,
-+	.pdu_len =3D sizeof(display_text_881),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x40, 0xB4 },
-+	},
-+	.test_name =3D "881.html",
-+};
-+
-+static struct display_text_test display_text_data_891 =3D {
-+	.pdu =3D display_text_891,
-+	.pdu_len =3D sizeof(display_text_891),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x80, 0xB4 },
-+	},
-+	.test_name =3D "891.html",
-+};
-+
- static struct display_text_test display_text_data_911 =3D {
- 	.pdu =3D display_text_911,
- 	.pdu_len =3D sizeof(display_text_911),
-@@ -722,6 +897,58 @@ static struct display_text_test display_text_data_1011=
- =3D {
- 	.text =3D "80=E3=83=AB"
- };
- =
+>  static GSList *sms_assembly_add_fragment_backup(struct sms_assembly
+>  *assembly, @@ -2625,20 +2629,209 @@ void sms_assembly_expire(struct
+>  sms_assembly *assembly, time_t before) }
+>  }
+> =
 
-+static void do_html_test(char *text, int text_len, const unsigned char *at=
-trs,
-+				int attrs_len, const char *filename)
-+{
-+	int fd;
-+	char html_header[] =3D "<html><body>";
-+	char html_close[] =3D "</body></html>";
-+	char *html;
-+	ssize_t bytes_written;
-+
-+	if (filename =3D=3D NULL)
-+		return;
-+
-+	/* open output file */
-+	fd =3D open(filename, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR |
-+				S_IRGRP | S_IROTH);
-+	if (fd < 0) {
-+		g_print("unable to open %s\n", filename);
-+		return;
-+	}
-+
-+	bytes_written =3D write(fd, html_header, strlen(html_header));
-+	html =3D stk_text_to_html(text, text_len, attrs, attrs_len);
-+	bytes_written =3D write(fd, html, strlen(html));
-+	bytes_written =3D write(fd, html_close, strlen(html_close));
-+	close(fd);
-+	g_free(html);
-+}
-+
-+static void test_html1(gconstpointer data)
-+{
-+	char html_test[] =3D "EMS messages can contain italic, bold,"
-+				" large, small and colored text";
-+	const unsigned char attrs[] =3D {	0x19, 0x06, 0x20, 0x00,
-+					0x21, 0x04, 0x10, 0x00,
-+					0x27, 0x05, 0x04, 0x00,
-+					0x2E, 0x05, 0x08, 0x00,
-+					0x38, 0x07, 0x00, 0x2B };
-+	const char filename[] =3D "html1.html";
-+
-+	do_html_test(html_test, strlen(html_test), attrs, 20, filename);
-+}
-+
-+static void test_html2(gconstpointer data)
-+{
-+	char html_test[] =3D "Blue green green green";
-+	const unsigned char attrs[] =3D {	0x00, 0x00, 0x00, 0x94,
-+					0x00, 0x04, 0x00, 0x96 };
-+	const char filename[] =3D "html2.html";
-+
-+	do_html_test(html_test, strlen(html_test), attrs, 8, filename);
-+}
-+
- /* Defined in TS 102.384 Section 27.22.4.1 */
- static void test_display_text(gconstpointer data)
- {
-@@ -747,6 +974,14 @@ static void test_display_text(gconstpointer data)
- 	check_duration(&command->display_text.duration, &test->duration);
- 	check_text_attr(&command->display_text.text_attr,
- 						&test->text_attr);
-+
-+	if (command->display_text.text_attr.len > 0)
-+		do_html_test(command->display_text.text,
-+				strlen(command->display_text.text),
-+				command->display_text.text_attr.attributes,
-+				command->display_text.text_attr.len,
-+				test->test_name);
-+
- 	check_frame_id(&command->display_text.frame_id, &test->frame_id);
- =
+> +static void sr_assembly_load_backup(GHashTable *assembly_table,
+> +					const char *imsi,
+> +					const struct dirent *addr_dir)
+> +{
+> +	char *path;
+> +	struct dirent **ids;
+> +	struct sms_address *addr;
+> +	struct id_table_node *node;
+> +	GHashTable *id_table;
+> +	int len;
+> +	int r;
+> +	unsigned char buf[sizeof(node->mrs) + sizeof(node->total_mrs) +
+> +			sizeof(node->sent_mrs) + sizeof(node->deliverable)];
+> +	char *assembly_table_key;
+> +	unsigned int *id_table_key;
+> +	struct stat segment_stat;
+> +
+> +	if (addr_dir->d_type !=3D DT_DIR)
+> +		return;
+> +
+> +	addr =3D g_new0(struct sms_address, 1);
 
- 	stk_command_free(command);
-@@ -21913,6 +22148,28 @@ int main(int argc, char **argv)
- 				&display_text_data_611, test_display_text);
- 	g_test_add_data_func("/teststk/Display Text 7.1.1",
- 				&display_text_data_711, test_display_text);
-+	g_test_add_data_func("/teststk/HTML test 1",
-+				NULL, test_html1);
-+	g_test_add_data_func("/teststk/HTML test 2",
-+				NULL, test_html2);
-+	g_test_add_data_func("/teststk/Display Text 8.1.1",
-+				&display_text_data_811, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.2.1",
-+				&display_text_data_821, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.3.1",
-+				&display_text_data_831, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.4.1",
-+				&display_text_data_841, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.5.1",
-+				&display_text_data_851, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.6.1",
-+				&display_text_data_861, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.7.1",
-+				&display_text_data_871, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.8.1",
-+				&display_text_data_881, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.9.1",
-+				&display_text_data_891, test_display_text);
- 	g_test_add_data_func("/teststk/Display Text 9.1.1",
- 				&display_text_data_911, test_display_text);
- 	g_test_add_data_func("/teststk/Display Text 10.1.1",
--- =
+Why are you mallocing addr here? Seems that this only makes the code more =
 
-1.6.6.1
+complicated.
+
+> +
+> +	if (sscanf(addr_dir->d_name, "%[0-9]-%i-%i",
+> +			addr->address, (int *) &addr->number_type,
+> +			(int *) &addr->numbering_plan) < 3) {
+
+Lets make this consistent with sms assembly, please use SMS_ADDR_FMT.  You'=
+re =
+
+also free to use sms_assembly utility functions if that helps you.
+
+> +		g_free(addr);
+> +		return;
+> +	}
+> +
+> +	/* Go through different msg_ids. */
+> +	path =3D g_strdup_printf(SMS_SR_BACKUP_PATH "/%s", imsi,
+> +							addr_dir->d_name);
+> +	len =3D scandir(path, &ids, NULL, versionsort);
+> +
+> +	g_free(path);
+> +
+> +	if (len < 0) {
+> +		g_free(addr);
+> +		return;
+> +	}
+> +
+> +	id_table =3D g_hash_table_new_full(g_int_hash, g_int_equal,
+> +							g_free, g_free);
+> +
+> +	assembly_table_key =3D g_try_malloc(sizeof(addr->address));
+> +
+> +	if (assembly_table_key =3D=3D NULL) {
+> +		g_free(addr);
+> +		return;
+> +	}
+> +
+> +	g_strlcpy(assembly_table_key, addr->address, sizeof(addr->address));
+> +	g_hash_table_insert(assembly_table, assembly_table_key, id_table);
+> +
+> +	while (len--) {
+> +		path =3D g_strdup_printf(SMS_SR_BACKUP_PATH "/%s/%s",
+> +				imsi, addr_dir->d_name, ids[len]->d_name);
+> +		r =3D read_file(buf, sizeof(buf), SMS_SR_BACKUP_PATH "/%s/%s",
+> +				imsi, addr_dir->d_name, ids[len]->d_name);
+> +
+> +		if (r < 0) {
+> +			g_free(path);
+> +			g_free(ids[len]);
+> +			continue;
+> +		}
+> +
+> +		r =3D stat(path, &segment_stat);
+> +
+> +		if (r !=3D 0) {
+> +			g_free(path);
+> +			g_free(ids[len]);
+> +			continue;
+> +		}
+> +		/* Gather the data for id_table node */
+> +		node =3D g_new0(struct id_table_node, 1);
+> +		node->to =3D *addr;
+
+Please use memcpy for copying structures.
+
+> +		node->expiration =3D segment_stat.st_mtime;
+> +		memcpy(node->mrs, buf, sizeof(node->mrs));
+> +		memcpy(&node->total_mrs, buf + sizeof(node->mrs),
+> +						sizeof(node->total_mrs));
+> +		memcpy(&node->sent_mrs,
+> +			buf + sizeof(node->mrs) + sizeof(node->total_mrs),
+> +			sizeof(node->sent_mrs));
+> +
+> +		memcpy(&node->deliverable, buf + sizeof(node->mrs) +
+> +			sizeof(node->total_mrs) + sizeof(node->sent_mrs),
+> +			sizeof(node->deliverable));
+> +		/* Node ready, create key and add them to the table */
+> +		id_table_key =3D g_new0(unsigned int, 1);
+> +		*id_table_key =3D atoi(ids[len]->d_name);
+> +
+> +		g_hash_table_insert(id_table, id_table_key, node);
+> +
+> +		g_free(path);
+> +		g_free(ids[len]);
+> +	}
+> +	g_free(addr);
+> +	g_free(ids);
+> +}
+> +
+
+General comment here is that you're duplicating much of the code that inser=
+ts =
+
+the information into the data structure.  You can play the same trick as =
+
+sms_assembly which uses a single function to do the heavy lifting, but take=
+s =
+
+an argument whether to store this info on disk.  Obviously during load you =
+
+don't want to re-save this information on disk.  Then your load function =
+
+becomes much smaller and easier to understand.
+
+>  struct status_report_assembly *status_report_assembly_new(const char
+>  *imsi) {
+> +	char *path;
+> +	int len;
+> +	struct dirent **addresses;
+>  	struct status_report_assembly *ret =3D
+>  				g_new0(struct status_report_assembly, 1);
+> =
+
+>  	ret->assembly_table =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+>  				g_free, (GDestroyNotify)g_hash_table_destroy);
+> =
+
+> -	if (imsi)
+> +	if (imsi) {
+>  		ret->imsi =3D imsi;
+> =
+
+> +		/* Restore state from backup */
+> +		path =3D g_strdup_printf(SMS_SR_BACKUP_PATH, imsi);
+> +		len =3D scandir(path, &addresses, NULL, alphasort);
+> +
+> +		g_free(path);
+> +
+> +		if (len < 0)
+> +			return ret;
+
+There should be an empty line here
+
+> +		/* Go through different addresses. Each address can relate to
+> +		 * 1-n msg_ids. Do not try to load . and .. directories.
+> +		 */
+> +		g_free(addresses[0]);
+> +		g_free(addresses[1]);
+
+This really isn't necessary, the '.' and '..' directories will not pass the =
+
+sscanf test above.
+
+> +
+> +		while (2 < len--) {
+> +			sr_assembly_load_backup(ret->assembly_table, imsi,
+> +								addresses[len]);
+> +			g_free(addresses[len]);
+> +		}
+
+Empty line here please
+
+> +		g_free(addresses);
+> +	}
+
+And another empty line here.  Please put an empty line after each block unl=
+ess =
+
+it is at the end of the function.
+>  	return ret;
+>  }
+> =
+
+> +static gboolean sr_assembly_add_fragment_backup(const char *imsi,
+> +					const struct id_table_node *node,
+> +					unsigned int msg_id)
+
+Lets be consistent with how sms assembly works.  E.g. take the main assembl=
+y =
+
+object and return void.  Just helps to read the code when it is consistent.
+
+> +{
+> +	int len =3D sizeof(node->mrs) + sizeof(node->total_mrs) +
+> +			sizeof(node->sent_mrs) + sizeof(node->deliverable);
+> +	unsigned char buf[len];
+> +
+> +	if (!imsi)
+> +		return FALSE;
+> +
+> +	memcpy(buf, node->mrs, sizeof(node->mrs));
+> +
+> +	memcpy(buf + sizeof(node->mrs), &node->total_mrs,
+> +					sizeof(node->total_mrs));
+> +
+> +	memcpy(buf + sizeof(node->mrs) + sizeof(node->total_mrs),
+> +				&node->sent_mrs, sizeof(node->sent_mrs));
+> +
+> +	memcpy(buf + sizeof(node->mrs) + sizeof(node->total_mrs) +
+> +	sizeof(node->sent_mrs),	&node->deliverable, sizeof(node->deliverable));
+> +
+> +	/* storagedir/%s/sms_sr/%s-%i-%i/%i */
+> +	if (write_file(buf, len, SMS_BACKUP_MODE, SMS_SR_BACKUP_PATH_FILE, imsi,
+> +			node->to.address, node->to.number_type,
+> +			node->to.numbering_plan, msg_id) !=3D len)
+> +		return FALSE;
+> +
+> +	return TRUE;
+> +}
+> +
+> +static gboolean sr_assembly_remove_fragment_backup(const char *imsi,
+> +					const struct id_table_node *node,
+> +					unsigned int msg_id)
+
+Same consistency comment here.  Take main assembly object and return void.
+
+> +{
+> +	char *path;
+> +
+> +	if (!imsi)
+> +		return FALSE;
+> +
+> +	path =3D g_strdup_printf(SMS_SR_BACKUP_PATH_FILE, imsi, node->to.addres=
+s,
+> +				node->to.number_type, node->to.numbering_plan,
+> +				msg_id);
+> +
+> +	unlink(path);
+> +	g_free(path);
+> +
+> +	path =3D g_strdup_printf(SMS_SR_BACKUP_PATH_DIR, imsi, node->to.address,
+> +				node->to.number_type, node->to.numbering_plan);
+> +
+> +	/* If the address does not have relating msg_ids anymore, remove it */
+> +	rmdir(path);
+> +	g_free(path);
+> +
+> +	return TRUE;
+> +}
+> +
+> +static gboolean sr_assembly_update_fragment_backup(const char *imsi,
+> +					const struct id_table_node *node,
+> +					unsigned int msg_id)
+> +{
+> +	return sr_assembly_remove_fragment_backup(imsi, node, msg_id) &&
+> +			sr_assembly_add_fragment_backup(imsi, node, msg_id);
+> +}
+> +
+
+Is this function really necessary? write_file overwrites the file, so simpl=
+y =
+
+using add_fragment_backup seems sufficient.
+
+>  void status_report_assembly_free(struct status_report_assembly *assembly)
+>  {
+>  	g_hash_table_destroy(assembly->assembly_table);
+> @@ -2707,10 +2900,14 @@ gboolean status_report_assembly_report(struct
+>  status_report_assembly *assembly, * not delete the node yet.
+>  		 */
+>  		if (pending) {
+> +			sr_assembly_update_fragment_backup(assembly->imsi, node,
+> +								*msg_id);
+
+It seems to me fragment is the wrong name here.  What about =
+
+'store_node_backup'?
+
+>  			*msg_delivered =3D FALSE;
+>  			return update_history;
+>  		} else {
+>  			*msg_delivered =3D node->deliverable;
+> +			sr_assembly_remove_fragment_backup(assembly->imsi, node,
+> +								*msg_id);
+
+maybe 'remove_node_backup'
+
+> =
+
+>  			g_hash_table_iter_remove(&iter);
+> =
+
+> @@ -2747,6 +2944,7 @@ void status_report_assembly_add_fragment(
+>  	unsigned int *id_table_key;
+> =
+
+>  	id_table =3D g_hash_table_lookup(assembly->assembly_table, to->address);
+> +
+>  	/* Create id_table and node */
+>  	if (id_table =3D=3D NULL) {
+>  		id_table =3D g_hash_table_new_full(g_int_hash, g_int_equal,
+> @@ -2775,6 +2973,9 @@ void status_report_assembly_add_fragment(
+> =
+
+>  		g_hash_table_insert(assembly->assembly_table,
+>  					assembly_table_key, id_table);
+> +
+> +		sr_assembly_add_fragment_backup(assembly->imsi, node, msg_id);
+> +
+>  		return;
+>  	}
+> =
+
+> @@ -2793,12 +2994,14 @@ void status_report_assembly_add_fragment(
+>  		*id_table_key =3D msg_id;
+>  		g_hash_table_insert(id_table, id_table_key, node);
+> =
+
+> +		sr_assembly_add_fragment_backup(assembly->imsi, node, msg_id);
+>  		return;
+>  	}
+>  	/* id_table and node both exists */
+>  	node->mrs[offset] |=3D bit;
+>  	node->expiration =3D expiration;
+>  	node->sent_mrs++;
+> +	sr_assembly_update_fragment_backup(assembly->imsi, node, msg_id);
+>  }
+> =
+
+>  void status_report_assembly_expire(struct status_report_assembly
+>  *assembly,
+> =
 
 
---===============2467193194659418393==--
+Regards,
+-Denis
+
+--===============2224868051031564385==--
 
