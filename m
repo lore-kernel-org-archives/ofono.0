@@ -1,61 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============0607849144238604503=="
+Content-Type: multipart/mixed; boundary="===============7396647378705204493=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 2/5] history: print SMS status
-Date: Mon, 21 Jun 2010 18:35:30 -0500
-Message-ID: <201006211835.31214.denkenz@gmail.com>
-In-Reply-To: <1276780498-7573-3-git-send-email-pasi.miettinen@ixonos.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: Re: [PATCH 1/2] stkutil: convert text attributes to html
+Date: Mon, 21 Jun 2010 19:44:02 -0700
+Message-ID: <20100621194402.706a7409@kcaccard-MOBL3>
+In-Reply-To: <AANLkTinZvOfO4tH1KWkCwob2aL4SLeIz_6N42BQlETpW@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0607849144238604503==
+--===============7396647378705204493==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pasi,
+On Tue, 22 Jun 2010 00:45:39 +0200
+andrzej zaborowski <balrogg@gmail.com> wrote:
 
-> ---
->  src/history.c |   11 +++++++++++
->  1 files changed, 11 insertions(+), 0 deletions(-)
-> =
+> This approach with having so many queues seems a little heavy.  On irc
+> I proposed that probably we don't need to implement this behaviour
+> fully and maybe could make some assumptions to simplify it.  =
 
-> diff --git a/src/history.c b/src/history.c
-> index f868ca2..0eef130 100644
-> --- a/src/history.c
-> +++ b/src/history.c
-> @@ -238,6 +238,8 @@ void __ofono_history_sms_send_status(struct ofono_mod=
-em
->  *modem, enum ofono_history_sms_status status)
->  {
->  	struct history_sms_foreach_data hfd;
-> +	struct tm  *ts;
-> +	char buf[80];
-> =
 
->  	hfd.msg_id =3D msg_id;
->  	hfd.address =3D NULL;
-> @@ -245,6 +247,15 @@ void __ofono_history_sms_send_status(struct
->  ofono_modem *modem, hfd.when =3D when;
->  	hfd.status =3D status;
-> =
+I'm not sure what you mean when you say "heavy".  Are you saying
+that you feel it has too much overhead?  I wonder if that is really
+an issue for this functionality.  To me this code seems to be
+easier to read than what you propose.
 
-> +	/* Format time, "ddd yyyy-mm-dd hh:mm:ss zzz" */
-> +	ts =3D localtime(&when);
-> +	strftime(buf, sizeof(buf), "%a %Y-%m-%d %H:%M:%S %Z", ts);
-> +
-> +	if (status =3D=3D OFONO_HISTORY_SMS_STATUS_DELIVERED)
-> +		DBG("SMS delivered, msg_id: %i, time: %s", msg_id, buf);
-> +	else if (status =3D=3D OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED)
-> +		DBG("SMS undeliverable, msg_id: %i, time: %s", msg_id, buf);
-> +
-
-I didn't take this patch because these debugs really don't belong here.  =
-
-Instead I put them in plugins/example_history.c.
-
-Regards,
--Denis
-
---===============0607849144238604503==--
+--===============7396647378705204493==--
 
