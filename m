@@ -1,32 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============5205208858242368753=="
+Content-Type: multipart/mixed; boundary="===============6027926541928860483=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/6] bluetooth: Move functions from hfp.c to bluetooth.c
-Date: Mon, 21 Jun 2010 22:56:35 -0500
-Message-ID: <201006212256.35961.denkenz@gmail.com>
-In-Reply-To: <1277023884-27143-1-git-send-email-gustavo@padovan.org>
+Subject: Re: [PATCH 6/6] bluetooth: make bluetooth.c not a plugin
+Date: Mon, 21 Jun 2010 22:59:04 -0500
+Message-ID: <201006212259.04384.denkenz@gmail.com>
+In-Reply-To: <1277023884-27143-6-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5205208858242368753==
+--===============6027926541928860483==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Gustavo,
 
-> The part that call device_properties_cb is commented to permit this patch
-> compile.
-> device_properties_cb() will be changed, so it will have separated patch.
+> ---
+>  Makefile.am         |    7 ++++---
+>  plugins/bluetooth.c |    2 --
+>  2 files changed, 4 insertions(+), 5 deletions(-)
+> =
 
-I pushed the first 5 patches in this series.  Just some minor nagging, but =
+> diff --git a/Makefile.am b/Makefile.am
+> index 96116a5..d51d6db 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -71,6 +71,9 @@ gatchat_sources =3D gatchat/gatchat.h gatchat/gatchat.c=
+ \
+>  				gatchat/ppp_auth.c gatchat/ppp_net.c \
+>  				gatchat/ppp_ipcp.c
+> =
 
-please follow the 80 character per code line limit and the 50 character git =
+> +bluetooth_sources =3D plugins/bluetooth.c plugins/bluetooth.h
+> +
+> +
+>  udev_files =3D plugins/ofono.rules
+> =
 
-commit header limit.
+>  if UDEV
+> @@ -133,6 +136,7 @@ endif
+>  if ATMODEM
+>  builtin_modules +=3D atmodem
+>  builtin_sources +=3D $(gatchat_sources) \
+> +				$(bluetooth_sources) \
+
+This seems really wrong, ATMODEM has nothing to do with bluetooth.
+
+Is it possible to break bluetooth.c library out completely, similar to =
+
+GAtChat?  Do you feel there'll be enough shared between dun/hfp/sap to do s=
+o?
 
 Regards,
 -Denis
 
---===============5205208858242368753==--
+--===============6027926541928860483==--
 
