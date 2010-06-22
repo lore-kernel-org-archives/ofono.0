@@ -1,107 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============4522050917683776427=="
+Content-Type: multipart/mixed; boundary="===============7609509339802290382=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 03/11] gatppp: Add PPP server extension
-Date: Mon, 21 Jun 2010 23:26:34 -0500
-Message-ID: <201006212326.35035.denkenz@gmail.com>
-In-Reply-To: <33AB447FBD802F4E932063B962385B351F543DFF@shsmsx501.ccr.corp.intel.com>
+Subject: Re: [PATCH 1/5] gatppp: Add PPP server extension
+Date: Mon, 21 Jun 2010 23:36:52 -0500
+Message-ID: <201006212336.52715.denkenz@gmail.com>
+In-Reply-To: <1277113682-17510-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4522050917683776427==
+--===============7609509339802290382==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Zhenhua,
 
-> >> +void ipcp_set_server_info(struct pppcp_data *pppcp, guint32
-> >> local_addr, +				guint32 peer_addr, +				guint32 dns1, guint32 dns2,
-> >> +				guint32 nbns1, guint32 nbns2)
-> >> +{
-> >> +	struct ipcp_data *ipcp =3D pppcp_get_data(pppcp);
-> >> +
-> >> +	ipcp->req_options =3D REQ_OPTION_IPADDR | REQ_OPTION_DNS1 |
-> >> +				REQ_OPTION_DNS2 | REQ_OPTION_NBNS1 |
-> >> +				REQ_OPTION_NBNS2;
-> >> +
-> >> +	ipcp->local_addr =3D local_addr;
-> >> +	ipcp->peer_addr =3D peer_addr;
-> >> +	ipcp->dns1 =3D dns1;
-> >> +	ipcp->dns2 =3D dns2;
-> >> +	ipcp->nbns1 =3D nbns1;
-> >> +	ipcp->nbns2 =3D nbns2;
-> >> +
-> >> +	ipcp_generate_config_options(ipcp);
-> >
-> > Please note that this function is currently having no effect,
-> > you're missing a
-> > call to pppcp_set_local_options.  However, in the case of a server, we
-> > actually do not want to request DNS or NBNS, and we should
-> > only send our local
-> > address to the peer if it is non-zero.  Please note that all
-> > PPP modems we
-> > have encountered so far, do not send their local IP address in
-> > a Configure-
-> > Request.  Thus calling ipcp_set_server_info should end up
-> > generating an empty
-> > Configure-Request or with only the local IP address present.
+>  static enum rcr_result ipcp_rcr(struct pppcp_data *pppcp,
+>  					const struct pppcp_packet *packet,
+>  					guint8 **new_options, guint16 *new_len)
+>  {
+>  	struct ppp_option_iter iter;
+> +	struct ipcp_data *ipcp =3D pppcp_get_data(pppcp);
+> +	guint32 peer_addr =3D 0;
+> +	guint32 dns1 =3D 0;
+> +	guint32 dns2 =3D 0;
+> +	guint32 nbns1 =3D 0;
+> +	guint32 nbns2 =3D 0;
 > =
 
-> It's confused me a little. Please correct me if I am wrong. I think PPP
->  modem should send their local IP address to peer in a Configure-Request.
->  So client could accept the peer address in ipcp_rcr.
-
-This is correct if the PPP server wants to do so, it is perfectly OK for th=
-e =
-
-server not to send its IP address (e.g. if it doesn't have one.)  This is w=
-hat =
-
-we observe on most PPP modems.
-
+>  	ppp_option_iter_init(&iter, packet);
 > =
 
-> In the case of a server, ipcp_set_server_info() should set local, peer, D=
-NS
->  and NBNS info and call pppcp_set_local_options(). And server only send o=
-ur
->  local address to peer in a Configure-Request.
+> -	if (ppp_option_iter_next(&iter) =3D=3D FALSE)
+> -		return RCR_ACCEPT;
+> +	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
+> +		const guint8 *data =3D ppp_option_iter_get_data(&iter);
+> +
+> +		switch (ppp_option_iter_get_type(&iter)) {
+> +		case IP_ADDRESS:
+> +			memcpy(&peer_addr, data, 4);
+> +			break;
+> +		case PRIMARY_DNS_SERVER:
+> +			memcpy(&dns1, data, 4);
+> +			break;
+> +		case SECONDARY_DNS_SERVER:
+> +			memcpy(&dns2, data, 4);
+> +			break;
+> +		case PRIMARY_NBNS_SERVER:
+> +			memcpy(&nbns1, data, 4);
+> +			break;
+> +		case SECONDARY_NBNS_SERVER:
+> +			memcpy(&nbns2, data, 4);
+> +			break;
+> +		default:
+> +			break;
+> +		}
+> +	}
+> +
+> +	if (peer_addr) {
+> +		if (ipcp->peer_addr =3D=3D 0) {
+> +			/* RFC 1332 section 3.3
+> +			 * As client, accept the server IP as peer's address
+> +			 */
+> +			ipcp->peer_addr =3D peer_addr;
+> +
+> +			return RCR_ACCEPT;
 
-I'd modify this slightly.  If ipcp_set_server_info is called with server's =
+I'm still confused about this part.  As client we should accept server's IP =
 
-local address as 0, then don't even send IP-Address in a configure Request.=
-  =
+address as long as its non-zero.  Otherwise Conf-Rej the option.
 
-This wouldn't make sense, in effect the server is asking the client to prov=
-ide =
+> +		} else if (ipcp->peer_addr =3D=3D peer_addr && ipcp->dns1 =3D=3D dns1
+> +				&& ipcp->nbns1 =3D=3D nbns1 && ipcp->nbns2 =3D=3D nbns2)
+> +			/* As server, verify the client's info and then send
+> +			 * acknowledgement back
+> +			 */
+> +			return RCR_ACCEPT;
+> +	} else {
+> +		/* Client requests server to send IP/DNS/NBNS information in the
+> +		 * config options
+> +		 */
+> +		if (ipcp->peer_addr) {
+> +			guint8 *options;
+> +			guint16 len;
+> +
+> +			options =3D ipcp_generate_peer_config_options(ipcp, &len);
+> +			if (!options)
+> +				goto reject;
+> +
+> +			*new_len =3D len;
+> +			*new_options =3D options;
+> +			return RCR_NAK;
+> +		}
 
-its IP address. Otherwise, go ahead and send it (as the client will simply =
+Here we want to ensure that we nak the client's options for as long as the =
 
-ack).
+options don't match.  Even ipcp->peer_addr is 0 (e.g. we're allocating =
 
-> =
+client's address via DHCP or something)
 
-> >> +}
-> >> +
-> >>  static void ipcp_reset_config_options(struct ipcp_data *ipcp)  {
-> >>  	ipcp->req_options =3D REQ_OPTION_IPADDR | REQ_OPTION_DNS1 |
-> >>  				REQ_OPTION_DNS2 | REQ_OPTION_NBNS1 |
-> >>  				REQ_OPTION_NBNS2;
-> >> -	ipcp->ipaddr =3D 0;
-> >> +	ipcp->local_addr =3D 0;
-> >
-> > In the case of a server, the local_address should not be reset.
-> =
+Overall I think this code path is a little too complicated.  Can you see =
 
-> It seems we need to add a flag in ipcp_data to indicate whether it's serv=
-er
->  or not. Does it make sense?
-
-Might be a good idea.
+whether you can clean it up a bit?
 
 Regards,
 -Denis
 
---===============4522050917683776427==--
+--===============7609509339802290382==--
 
