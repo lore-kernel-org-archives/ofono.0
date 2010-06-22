@@ -1,33 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============4459474070079839899=="
+Content-Type: multipart/mixed; boundary="===============7453419444301836630=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: commit a7690918 "huawei: Import huawei rules" broke Huawei E1552
-Date: Tue, 22 Jun 2010 11:23:12 +0300
-Message-ID: <87iq5btr0v.fsf@potku.valot.fi>
+From: Benoit Monin <benoit.monin@laposte.net>
+Subject: Option (hso) modem and PAP
+Date: Tue, 22 Jun 2010 09:14:41 +0000
+Message-ID: <25118539.98442.1277198076995.JavaMail.www@wwinf8402>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4459474070079839899==
+--===============7453419444301836630==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+
 Hi,
 
-after commit a7690918 "huawei: Import huawei rules" my Huawei E1552
-modem doesn't work anymore. The commit has this change:
+I have been trying an Option modem with ofono recently.
+It took me a while to establish a connection because the APN
+we're using needs a username and password. Apparently Option
+swapped the username and password of the AT command AT$QCPDPP.
 
--SUBSYSTEMS=3D=3D"usb", ATTRS{bInterfaceNumber}=3D=3D"?*", ENV{OFONO_IFACE_=
-NUM}=3D"$attr{bInterfaceNumber}"
-+SUBSYSTEMS=3D=3D"usb", ATTRS{bInterfaceNumber}=3D=3D"ff", ENV{OFONO_IFACE_=
-NUM}=3D"$attr{bInterfaceNumber}"
+Also, it seems that some other Option modem uses AT_OPDPP
+instead of AT$QCPDPP, see http://www.pharscape.org/Quicksilver.html
 
-After I change "ff" back to "?*" my modem works again. What's the reason
-behind this change? Can we revert it back?
+I'll send two patches in reply to this message. The first one
+adds username and password optional parameters to
+test/create-context. And the second one swaps username and
+password for hso modem in PAP mode.
 
--- =
+Beno=C3=AEt.
 
-Kalle Valo
+--
 
---===============4459474070079839899==--
+
+
+
+
+Une messagerie gratuite, garantie =C3=A0 vie et des services en plus, =C3=
+=A7a vous tente ?
+Je cr=C3=A9e ma bo=C3=AEte mail www.laposte.net
+
+
+--===============7453419444301836630==--
 
