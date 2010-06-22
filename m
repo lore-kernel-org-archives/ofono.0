@@ -1,110 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============7609509339802290382=="
+Content-Type: multipart/mixed; boundary="===============5388385619582322505=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/5] gatppp: Add PPP server extension
-Date: Mon, 21 Jun 2010 23:36:52 -0500
-Message-ID: <201006212336.52715.denkenz@gmail.com>
-In-Reply-To: <1277113682-17510-1-git-send-email-zhenhua.zhang@intel.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH 1/2] stkutil: convert text attributes to html
+Date: Tue, 22 Jun 2010 14:00:44 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731ED8F332@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <20100621201716.05a204fc@kcaccard-MOBL3>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7609509339802290382==
+--===============5388385619582322505==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi, =
 
->  static enum rcr_result ipcp_rcr(struct pppcp_data *pppcp,
->  					const struct pppcp_packet *packet,
->  					guint8 **new_options, guint16 *new_len)
->  {
->  	struct ppp_option_iter iter;
-> +	struct ipcp_data *ipcp =3D pppcp_get_data(pppcp);
-> +	guint32 peer_addr =3D 0;
-> +	guint32 dns1 =3D 0;
-> +	guint32 dns2 =3D 0;
-> +	guint32 nbns1 =3D 0;
-> +	guint32 nbns2 =3D 0;
-> =
 
->  	ppp_option_iter_init(&iter, packet);
-> =
 
-> -	if (ppp_option_iter_next(&iter) =3D=3D FALSE)
-> -		return RCR_ACCEPT;
-> +	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
-> +		const guint8 *data =3D ppp_option_iter_get_data(&iter);
-> +
-> +		switch (ppp_option_iter_get_type(&iter)) {
-> +		case IP_ADDRESS:
-> +			memcpy(&peer_addr, data, 4);
-> +			break;
-> +		case PRIMARY_DNS_SERVER:
-> +			memcpy(&dns1, data, 4);
-> +			break;
-> +		case SECONDARY_DNS_SERVER:
-> +			memcpy(&dns2, data, 4);
-> +			break;
-> +		case PRIMARY_NBNS_SERVER:
-> +			memcpy(&nbns1, data, 4);
-> +			break;
-> +		case SECONDARY_NBNS_SERVER:
-> +			memcpy(&nbns2, data, 4);
-> +			break;
-> +		default:
-> +			break;
-> +		}
-> +	}
-> +
-> +	if (peer_addr) {
-> +		if (ipcp->peer_addr =3D=3D 0) {
-> +			/* RFC 1332 section 3.3
-> +			 * As client, accept the server IP as peer's address
-> +			 */
-> +			ipcp->peer_addr =3D peer_addr;
-> +
-> +			return RCR_ACCEPT;
 
-I'm still confused about this part.  As client we should accept server's IP =
+>-----Original Message-----
+>From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
+lf Of
+>Kristen Carlson Accardi
+>Sent: Tuesday, June 22, 2010 11:17 AM
+>To: ofono(a)ofono.org
+>Subject: Re: [PATCH 1/2] stkutil: convert text attributes to html
+>
+>On Mon, 21 Jun 2010 19:51:06 -0700
+>Kristen Carlson Accardi <kristen@linux.intel.com> wrote:
+>
+>> On Tue, 22 Jun 2010 00:45:39 +0200
+>> andrzej zaborowski <balrogg@gmail.com> wrote:
+>>
+>> > Can we always end_format() and start_format() when the formatting
+>> > changes, and just once instead of in a loop?  Here's a test case that
+>> > I'm worried about:
+>> >
+>> > text is "abc"
+>> > attribute 1 (red text) starts at 0, len 2
+>> > attribute 2 (blue text) starts at 1, len 2
+>> >
+>> > the generated html, by my reading will look like this:
+>> > <span style=3D"color: red;">a<span style=3D"color: blue;">b</span>c</s=
+pan>
+>>
+>> I ran this test just to make sure, the generated html is not as
+>> you fear and is correct (I used different colors though)
+>>
+>> <html><body><span style=3D"color: #347235;background-color:
+>#FFFFFF;">a<span style=3D"color: #0000A0;background-color:
+>#FFFFFF;">b</span></span>c</body></html>
+>
+>Hum, ok, this is not correct.... I see your concern and will fix.
 
-address as long as its non-zero.  Otherwise Conf-Rej the option.
+When you fix your current algorithm, can we think about these optimizations=
+ at the same time?
+1. The attribute overlapping may split the text into undesirable pieces. Th=
+at is, we may find opportunities to merge the adjacent ones together at las=
+t. =
 
-> +		} else if (ipcp->peer_addr =3D=3D peer_addr && ipcp->dns1 =3D=3D dns1
-> +				&& ipcp->nbns1 =3D=3D nbns1 && ipcp->nbns2 =3D=3D nbns2)
-> +			/* As server, verify the client's info and then send
-> +			 * acknowledgement back
-> +			 */
-> +			return RCR_ACCEPT;
-> +	} else {
-> +		/* Client requests server to send IP/DNS/NBNS information in the
-> +		 * config options
-> +		 */
-> +		if (ipcp->peer_addr) {
-> +			guint8 *options;
-> +			guint16 len;
-> +
-> +			options =3D ipcp_generate_peer_config_options(ipcp, &len);
-> +			if (!options)
-> +				goto reject;
-> +
-> +			*new_len =3D len;
-> +			*new_options =3D options;
-> +			return RCR_NAK;
-> +		}
+2. Some embedded attributes may be omitted. Taking your above case as examp=
+le, the second "background-color:#FFFFFF" can be omitted.
+3. Part of attributes, not the whole, can be merged together. For example: =
+<red bold>a</red bold><red italic>b</red italic> "may" (not always bring be=
+nefit) be optimized as <red><bold>a</bold><italic>b</italic></red>. =
 
-Here we want to ensure that we nak the client's options for as long as the =
 
-options don't match.  Even ipcp->peer_addr is 0 (e.g. we're allocating =
+The target of these optimizations is to make to generated html file as smal=
+l as possible. I guess this is a NP-complete problem, and not easy to handl=
+e :) =
 
-client's address via DHCP or something)
 
-Overall I think this code path is a little too complicated.  Can you see =
-
-whether you can clean it up a bit?
 
 Regards,
--Denis
+-Yang
 
---===============7609509339802290382==--
+--===============5388385619582322505==--
 
