@@ -1,38 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============8586873965648923305=="
+Content-Type: multipart/mixed; boundary="===============1734368649556869034=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 6/6] gsmdial: Configure network interface for PPP
-Date: Wed, 23 Jun 2010 17:46:42 +0800
-Message-ID: <1277286402-22312-7-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1277286402-22312-6-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 5/6] test-server: Configure network interface
+Date: Wed, 23 Jun 2010 17:46:41 +0800
+Message-ID: <1277286402-22312-6-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1277286402-22312-5-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8586873965648923305==
+--===============1734368649556869034==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Require ROOT priviledge to:
+1. Run external command to configure and bring up network interface.
+2. Enable kernel IP forwarding.
 ---
- gatchat/gsmdial.c |   29 +++++++++++++++++++++++++++++
- 1 files changed, 29 insertions(+), 0 deletions(-)
+ gatchat/test-server.c |   31 +++++++++++++++++++++++++++++++
+ 1 files changed, 31 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index a69a610..59f1a5c 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -38,6 +38,8 @@
- #include <gattty.h>
- #include <gatppp.h>
+diff --git a/gatchat/test-server.c b/gatchat/test-server.c
+index 68371c2..df0bab8 100644
+--- a/gatchat/test-server.c
++++ b/gatchat/test-server.c
+@@ -50,6 +50,7 @@
  =
 
+ #define DEFAULT_TCP_PORT 12346
+ #define DEFAULT_SOCK_PATH "./server_sock"
 +#define IFCONFIG_PATH "/sbin/ifconfig"
-+
- static const char *none_prefix[] =3D { NULL };
- static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
- static const char *creg_prefix[] =3D { "+CREG:", NULL };
-@@ -221,16 +223,43 @@ out:
- 	return FALSE;
+ =
+
+ static int modem_mode =3D 0;
+ static int modem_creg =3D 0;
+@@ -91,15 +92,40 @@ static void server_debug(const char *str, void *data)
+ 	g_print("%s: %s\n", (char *) data, str);
  }
  =
 
@@ -52,21 +55,15 @@ index a69a610..59f1a5c 100644
  static void ppp_connect(const char *iface, const char *local, const char *=
 peer,
  			const char *dns1, const char *dns2,
- 			gpointer user_data)
+ 			gpointer user)
  {
 +	char buf[512];
 +
- 	/* print out the negotiated address and dns server */
  	g_print("Network Device: %s\n", iface);
  	g_print("IP Address: %s\n", local);
  	g_print("Peer IP Address: %s\n", peer);
  	g_print("Primary DNS Server: %s\n", dns1);
  	g_print("Secondary DNS Server: %s\n", dns2);
-+
-+	if (getuid() !=3D 0) {
-+		g_print("Need root priviledge to config PPP interface\n");
-+		return;
-+	}
 +
 +	snprintf(buf, sizeof(buf), "%s %s up", IFCONFIG_PATH, iface);
 +	execute(buf);
@@ -74,15 +71,31 @@ peer,
 +	snprintf(buf, sizeof(buf), "%s %s %s pointopoint %s", IFCONFIG_PATH,
 +				iface, local, peer);
 +	execute(buf);
++
++	snprintf(buf, sizeof(buf), "echo 1 > /proc/sys/net/ipv4/ip_forward");
++	execute(buf);
  }
  =
 
- static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
-ta)
+ static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user)
+@@ -139,6 +165,11 @@ static gboolean setup_ppp(gpointer user)
+ 	GAtServer *server =3D user;
+ 	GAtIO *io;
+ =
+
++	if (getuid() !=3D 0) {
++		g_print("Need root priviledge for PPP connection\n");
++		return FALSE;
++	}
++
+ 	io =3D g_at_server_get_io(server);
+ =
+
+ 	g_at_server_suspend(server);
 -- =
 
 1.6.3.3
 
 
---===============8586873965648923305==--
+--===============1734368649556869034==--
 
