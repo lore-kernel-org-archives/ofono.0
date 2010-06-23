@@ -1,246 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============0336644007713035606=="
+Content-Type: multipart/mixed; boundary="===============8586873965648923305=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 4/6] test-server: Add PPP server support
-Date: Wed, 23 Jun 2010 17:46:40 +0800
-Message-ID: <1277286402-22312-5-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1277286402-22312-4-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 6/6] gsmdial: Configure network interface for PPP
+Date: Wed, 23 Jun 2010 17:46:42 +0800
+Message-ID: <1277286402-22312-7-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1277286402-22312-6-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0336644007713035606==
+--===============8586873965648923305==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-So that gsmdial and wvdial could talk to test-server and establish PPP
-connection.
 ---
- gatchat/test-server.c |  131 +++++++++++++++++++++++++++++++++++++++++++++=
-+---
- 1 files changed, 123 insertions(+), 8 deletions(-)
+ gatchat/gsmdial.c |   29 +++++++++++++++++++++++++++++
+ 1 files changed, 29 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/test-server.c b/gatchat/test-server.c
-index 5c1cfa4..68371c2 100644
---- a/gatchat/test-server.c
-+++ b/gatchat/test-server.c
-@@ -35,6 +35,7 @@
- #include <arpa/inet.h>
- #include <signal.h>
- #include <sys/signalfd.h>
-+#include <errno.h>
+diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+index a69a610..59f1a5c 100644
+--- a/gatchat/gsmdial.c
++++ b/gatchat/gsmdial.c
+@@ -38,6 +38,8 @@
+ #include <gattty.h>
+ #include <gatppp.h>
  =
 
- #include <glib.h>
- #include <utmp.h>
-@@ -44,6 +45,7 @@
- #include <sys/stat.h>
- =
-
- #include "gatserver.h"
-+#include "gatppp.h"
- #include "ringbuffer.h"
- =
-
- #define DEFAULT_TCP_PORT 12346
-@@ -61,6 +63,7 @@ struct sock_server{
- =
-
- static GMainLoop *mainloop;
- static GAtServer *server;
-+static GAtPPP *ppp;
- unsigned int server_watch;
- =
-
- static gboolean server_cleanup()
-@@ -68,6 +71,11 @@ static gboolean server_cleanup()
- 	if (server_watch)
- 		g_source_remove(server_watch);
- =
-
-+	if (ppp) {
-+		g_at_ppp_unref(ppp);
-+		ppp =3D NULL;
-+	}
++#define IFCONFIG_PATH "/sbin/ifconfig"
 +
- 	g_at_server_unref(server);
- 	server =3D NULL;
- =
-
-@@ -83,6 +91,81 @@ static void server_debug(const char *str, void *data)
- 	g_print("%s: %s\n", (char *) data, str);
+ static const char *none_prefix[] =3D { NULL };
+ static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
+ static const char *creg_prefix[] =3D { "+CREG:", NULL };
+@@ -221,16 +223,43 @@ out:
+ 	return FALSE;
  }
  =
 
-+static void ppp_connect(const char *iface, const char *local, const char *=
-peer,
-+			const char *dns1, const char *dns2,
-+			gpointer user)
++static gboolean execute(const char *cmd)
 +{
-+	g_print("Network Device: %s\n", iface);
-+	g_print("IP Address: %s\n", local);
-+	g_print("Peer IP Address: %s\n", peer);
-+	g_print("Primary DNS Server: %s\n", dns1);
-+	g_print("Secondary DNS Server: %s\n", dns2);
-+}
++	int status;
 +
-+static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user)
-+{
-+	GAtServer *server =3D user;
-+
-+	g_print("PPP Link down: %d\n", reason);
-+
-+	g_at_ppp_unref(ppp);
-+	ppp =3D NULL;
-+
-+	g_at_server_resume(server);
-+	g_at_server_set_debug(server, server_debug, "Server");
-+}
-+
-+static gboolean update_ppp(gpointer user)
-+{
-+	GAtPPP *ppp =3D user;
-+	char local_ip[INET_ADDRSTRLEN] =3D "192.168.1.1";
-+	char remote_ip[INET_ADDRSTRLEN] =3D "192.168.1.2";
-+	char dns1[INET_ADDRSTRLEN] =3D "10.10.10.0";
-+	char dns2[INET_ADDRSTRLEN] =3D "127.0.0.1";
-+	guint32 l, r, d1, d2;
-+
-+	inet_pton(AF_INET, local_ip, &l);
-+	inet_pton(AF_INET, remote_ip, &r);
-+	inet_pton(AF_INET, dns1, &d1);
-+	inet_pton(AF_INET, dns2, &d2);
-+
-+	g_at_ppp_set_server_info(ppp, l, r, d1, d2, 0, 0);
-+
-+	return FALSE;
-+}
-+
-+static gboolean setup_ppp(gpointer user)
-+{
-+	GAtServer *server =3D user;
-+	GAtIO *io;
-+
-+	io =3D g_at_server_get_io(server);
-+
-+	g_at_server_suspend(server);
-+
-+	/* open ppp */
-+	ppp =3D g_at_ppp_new_from_io(io);
-+	if (ppp =3D=3D NULL) {
-+		g_at_server_resume(server);
++	status =3D system(cmd);
++	if (status < 0) {
++		g_print("Failed to execute command: %s\n", strerror(errno));
 +		return FALSE;
 +	}
 +
-+	g_at_ppp_set_debug(ppp, server_debug, "PPP");
-+
-+	g_at_ppp_set_credentials(ppp, "", "");
-+
-+	/* set connect and disconnect callbacks */
-+	g_at_ppp_set_connect_function(ppp, ppp_connect, server);
-+	g_at_ppp_set_disconnect_function(ppp, ppp_disconnect, server);
-+
-+	/* open the ppp connection */
-+	g_at_ppp_open(ppp);
-+
-+	g_idle_add(update_ppp, ppp);
-+
-+	return FALSE;
++	return TRUE;
 +}
 +
- static void cgmi_cb(GAtServerRequestType type, GAtResult *cmd, gpointer us=
-er)
+ static void ppp_connect(const char *iface, const char *local, const char *=
+peer,
+ 			const char *dns1, const char *dns2,
+ 			gpointer user_data)
  {
- 	GAtServer *server =3D user;
-@@ -468,6 +551,7 @@ static void cgdata_cb(GAtServerRequestType type, GAtRes=
-ult *cmd, gpointer user)
- 		break;
- 	case G_AT_SERVER_REQUEST_TYPE_SET:
- 		g_at_server_send_final(server, G_AT_SERVER_RESULT_CONNECT);
-+		g_idle_add(setup_ppp, server);
- 		break;
- 	default:
- 		g_at_server_send_final(server, G_AT_SERVER_RESULT_ERROR);
-@@ -671,6 +755,40 @@ static void cpbs_cb(GAtServerRequestType type, GAtResu=
-lt *cmd, gpointer user)
- 	}
- }
- =
-
-+static void dial_cb(GAtServerRequestType type, GAtResult *cmd, gpointer us=
-er)
-+{
-+	GAtServer *server =3D user;
-+	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
-+	GAtResultIter iter;
-+	const char *dial_str;
-+	char c;
++	char buf[512];
 +
-+	if (type !=3D G_AT_SERVER_REQUEST_TYPE_SET)
-+		goto error;
+ 	/* print out the negotiated address and dns server */
+ 	g_print("Network Device: %s\n", iface);
+ 	g_print("IP Address: %s\n", local);
+ 	g_print("Peer IP Address: %s\n", peer);
+ 	g_print("Primary DNS Server: %s\n", dns1);
+ 	g_print("Secondary DNS Server: %s\n", dns2);
 +
-+	g_at_result_iter_init(&iter, cmd);
-+
-+	if (!g_at_result_iter_next(&iter, "D"))
-+		goto error;
-+
-+	dial_str =3D g_at_result_iter_raw_line(&iter);
-+	if (!dial_str)
-+		goto error;
-+
-+	g_print("dial call %s\n", dial_str);
-+
-+	c =3D *dial_str;
-+	if (c =3D=3D '*' || c =3D=3D '#' || c =3D=3D 'T' || c =3D=3D 't') {
-+		g_at_server_send_final(server, G_AT_SERVER_RESULT_CONNECT);
-+		g_idle_add(setup_ppp, server);
++	if (getuid() !=3D 0) {
++		g_print("Need root priviledge to config PPP interface\n");
++		return;
 +	}
 +
-+	return;
++	snprintf(buf, sizeof(buf), "%s %s up", IFCONFIG_PATH, iface);
++	execute(buf);
 +
-+error:
-+	g_at_server_send_final(server, res);
-+}
-+
- static void add_handler(GAtServer *server)
- {
- 	g_at_server_set_debug(server, server_debug, "Server");
-@@ -695,6 +813,7 @@ static void add_handler(GAtServer *server)
- 	g_at_server_register(server, "+CSCS",    cscs_cb,    server, NULL);
- 	g_at_server_register(server, "+CMGL",    cmgl_cb,    server, NULL);
- 	g_at_server_register(server, "+CPBS",    cpbs_cb,    server, NULL);
-+	g_at_server_register(server, "D",        dial_cb,    server, NULL);
++	snprintf(buf, sizeof(buf), "%s %s %s pointopoint %s", IFCONFIG_PATH,
++				iface, local, peer);
++	execute(buf);
  }
  =
 
- static void server_destroy(gpointer user)
-@@ -706,15 +825,11 @@ static void server_destroy(gpointer user)
- =
-
- static void set_raw_mode(int fd)
- {
--	struct termios options;
--
--	tcgetattr(fd, &options);
--
--	/* Set TTY as raw mode to disable echo back of input characters
--	 * when they are received from Modem to avoid feedback loop */
--	options.c_lflag &=3D ~(ICANON | ECHO | ECHOE | ISIG);
-+	struct termios ti;
- =
-
--	tcsetattr(fd, TCSANOW, &options);
-+	tcflush(fd, TCIOFLUSH);
-+	cfmakeraw(&ti);
-+	tcsetattr(fd, TCSANOW, &ti);
- }
- =
-
- static gboolean create_tty(const char *modem_path)
+ static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
+ta)
 -- =
 
 1.6.3.3
 
 
---===============0336644007713035606==--
+--===============8586873965648923305==--
 
