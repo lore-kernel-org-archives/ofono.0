@@ -1,79 +1,264 @@
-Content-Type: multipart/mixed; boundary="===============6852866908063798618=="
+Content-Type: multipart/mixed; boundary="===============0632428820713539600=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: SimApplicationAgent api
-Date: Thu, 24 Jun 2010 20:39:44 +0200
-Message-ID: <AANLkTikLieHEMc_aNHVBq5eG1W1WGr1U4DVYvTvIL6tH@mail.gmail.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH 1/2] stkutil: display text attributes as html
+Date: Thu, 24 Jun 2010 07:00:31 -0700
+Message-ID: <1277388032-13901-2-git-send-email-kristen@linux.intel.com>
+In-Reply-To: <1277388032-13901-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6852866908063798618==
+--===============0632428820713539600==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ src/stkutil.c |  167 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/stkutil.h |   32 +++++++++++
+ 2 files changed, 199 insertions(+), 0 deletions(-)
 
-Here are two ways the dbus interface for stk may look, specifically
-the part that requires a UI.  Comments welcome.
+diff --git a/src/stkutil.c b/src/stkutil.c
+index 6f072e7..73449e2 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -26,6 +26,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <stdint.h>
++#include <stdio.h>
+ =
 
-org.ofono.SimApplicationAgent
-Methods
-  (int item, bool help) or GoBack/Terminate Menu(string title,
-                array{string} items, bool has_help, bool
-                soft_key_preferred, bool is_main_menu)
-     Handles both Set Up Menu type of menu and Select Item
-     since they're identical.
+ #include <glib.h>
+ =
 
-  Ok/GoBack/Terminate DisplayText(string text,
-                bool urgent, bool confirmation)
-     The UI should show the message, optionally asking the
-     user for confirmation.  If no confirmation is asked, the text
-     can'te be Ok'ed and should stay until Cancel()ed.  There
-     are things like frames and the text can be sent to specific
-     frame but let's skip them at this point.
+@@ -5819,3 +5820,169 @@ const unsigned char *stk_pdu_from_envelope(const st=
+ruct stk_envelope *envelope,
+ =
 
-  string GetInput(...)
-  string GetInKey(...)
-  void Cancel(void)
+ 	return pdu;
+ }
++
++static const char *html_colors[] =3D {
++	"#000000", /* Black */
++	"#808080", /* Dark Grey */
++	"#C11B17", /* Dark Red */
++	"#FBB117", /* Dark Yellow */
++	"#347235", /* Dark Green */
++	"#307D7E", /* Dark Cyan */
++	"#0000A0", /* Dark Blue */
++	"#C031C7", /* Dark Magenta */
++	"#C0C0C0", /* Grey */
++	"#FFFFFF", /* White */
++	"#FF0000", /* Bright Red */
++	"#FFFF00", /* Bright Yellow */
++	"#00FF00", /* Bright Green */
++	"#00FFFF", /* Bright Cyan */
++	"#0000FF", /* Bright Blue */
++	"#FF00FF", /* Bright Magenta */
++};
++
++static void end_format(GString *string, guint8 code)
++{
++	g_string_append(string, "</span>");
++
++	if ((code & STK_TEXT_FORMAT_ALIGN_MASK) !=3D STK_TEXT_FORMAT_NO_ALIGN)
++		g_string_append(string, "</div>");
++}
++
++static void start_format(GString *string, guint8 code, guint8 color)
++{
++	guint8 align =3D code & STK_TEXT_FORMAT_ALIGN_MASK;
++	guint8 font =3D code & STK_TEXT_FORMAT_FONT_MASK;
++	guint8 style =3D code & STK_TEXT_FORMAT_STYLE_MASK;
++	int fg =3D color & 0x0f;
++	int bg =3D (color >> 4) & 0x0f;
++
++	/* align formatting applies to a block of test */
++	if (align !=3D STK_TEXT_FORMAT_NO_ALIGN)
++		g_string_append(string, "<div style=3D\"");
++
++	if (align =3D=3D STK_TEXT_FORMAT_RIGHT_ALIGN)
++		g_string_append(string, "text-align: right;\">");
++	else if (align =3D=3D STK_TEXT_FORMAT_CENTER_ALIGN)
++		g_string_append(string, "text-align: center;\">");
++	else if (align =3D=3D STK_TEXT_FORMAT_LEFT_ALIGN)
++		g_string_append(string, "text-align: left;\">");
++
++	/* font, style, and color are inline */
++	g_string_append(string, "<span style=3D\"");
++
++	if (font =3D=3D STK_TEXT_FORMAT_FONT_SIZE_LARGE)
++		g_string_append(string, "font-size: big;");
++	else if (font =3D=3D STK_TEXT_FORMAT_FONT_SIZE_SMALL)
++		g_string_append(string, "font-size: small;");
++
++	if (style =3D=3D STK_TEXT_FORMAT_STYLE_BOLD)
++		g_string_append(string, "font-weight: bold;");
++	else if (style =3D=3D STK_TEXT_FORMAT_STYLE_ITALIC)
++		g_string_append(string, "font-style: italic;");
++	else if (style =3D=3D STK_TEXT_FORMAT_STYLE_UNDERLINED)
++		g_string_append(string, "text-decoration: underline;");
++	else if (style =3D=3D STK_TEXT_FORMAT_STYLE_STRIKETHROUGH)
++		g_string_append(string, "text-decoration: line-through;");
++
++	/* add any color */
++	if (fg)
++		g_string_append_printf(string, "color: %s;", html_colors[fg]);
++	if (bg)
++		g_string_append_printf(string, "background-color: %s;",
++						html_colors[bg]);
++	g_string_append(string, "\">");
++}
++
++char *stk_text_to_html(char *text, int text_len,
++				const unsigned char *attrs, int attrs_len)
++{
++	GString *string =3D g_string_sized_new(text_len + 1);
++	gint formats[257];  /* maximum number of chars in text + 1 */
++	int pos =3D 0, attr, i, j, prev_attr;
++	guint8 start, end, code, color, len, align;
++
++	/* we will need formatting at the position beyond the last char */
++	for (i =3D 0; i <=3D text_len; i++)
++		formats[i] =3D STK_TEXT_FORMAT_INIT;
++
++	i =3D 0;
++
++	while (i < attrs_len) {
++		start =3D attrs[i++];
++		len =3D attrs[i++];
++		code =3D attrs[i++];
++
++		if (i < attrs_len)
++			color =3D attrs[i++];
++		else
++			color =3D 0;
++
++		if (len =3D=3D 0)
++			end =3D text_len;
++		else
++			end =3D start + len;
++
++		/* sanity check values */
++		if (start > end || end > text_len)
++			continue;
++
++		/*
++		 * if the alignment is the same as either the default
++		 * or the last alignment used, don't set any alignment
++		 * value.
++		 */
++		if (start =3D=3D 0)
++			align =3D STK_DEFAULT_TEXT_ALIGNMENT;
++		else {
++			align =3D get_align(formats[start - 1]);
++			if (align =3D=3D STK_TEXT_FORMAT_NO_ALIGN)
++				align =3D STK_DEFAULT_TEXT_ALIGNMENT;
++		}
++
++		if ((code & STK_TEXT_FORMAT_ALIGN_MASK) =3D=3D align)
++			code |=3D STK_TEXT_FORMAT_NO_ALIGN;
++
++		attr =3D make_attr(start, code, color);
++
++		for (j =3D start; j < end; j++)
++			formats[j] =3D attr;
++	}
++
++	prev_attr =3D STK_TEXT_FORMAT_INIT;
++
++	while (pos <=3D text_len) {
++		attr =3D formats[pos];
++		if (attr !=3D prev_attr) {
++			if (prev_attr !=3D STK_TEXT_FORMAT_INIT)
++				end_format(string, get_code(attr));
++
++			if (attr !=3D STK_TEXT_FORMAT_INIT)
++				start_format(string, get_code(attr),
++						get_color(attr));
++
++			prev_attr =3D attr;
++		}
++
++		if (pos =3D=3D text_len)
++			break;
++
++		if (text[pos] =3D=3D '\n')
++			g_string_append(string, "<br/>");
++		else if (text[pos] =3D=3D '\r') {
++			g_string_append(string, "<br/>");
++			if ((pos + 1 < text_len) && (text[pos + 1] =3D=3D '\n'))
++				pos++;
++		} else if (text[pos] =3D=3D '<')
++			g_string_append(string, "&lt;");
++		else if (text[pos] =3D=3D '>')
++			g_string_append(string, "&gt;");
++		else if (text[pos] =3D=3D '&')
++			g_string_append(string, "&amp;");
++		else
++			g_string_append_c(string, text[pos]);
++		pos++;
++	}
++
++	/* return characters from string. Caller must free char data */
++	return g_string_free(string, FALSE);
++}
+diff --git a/src/stkutil.h b/src/stkutil.h
+index ca4817e..fbdbc21 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -1635,6 +1635,36 @@ struct stk_envelope {
+ 	};
+ };
+ =
 
-org.ofono.SimToolkit
-Methods
-  void RegisterAgent(object)
-  void UnregisterAgent(object)
-Properties
-  string IdleText
-  int CommandTimeout
++#define STK_TEXT_FORMAT_ALIGN_MASK 0x03
++#define STK_TEXT_FORMAT_FONT_MASK 0x0C
++#define STK_TEXT_FORMAT_STYLE_MASK 0xF0
++#define STK_DEFAULT_TEXT_ALIGNMENT 0x00
++#define STK_TEXT_FORMAT_INIT -1
++
++#define get_code(attr) \
++	((attr >> 16) & 0xFF)
++#define get_align(attr) \
++	((attr >> 16) & STK_TEXT_FORMAT_ALIGN_MASK)
++#define get_color(attr) \
++	((attr >> 24) & 0xFF)
++#define make_attr(start, code, color) \
++	(start | (code << 16) | (color << 24))
++
++/* Defined in ETSI 123 40 9.2.3.24.10.1.1 */
++enum stk_text_format_code {
++	STK_TEXT_FORMAT_LEFT_ALIGN =3D 0x00,
++	STK_TEXT_FORMAT_CENTER_ALIGN =3D 0x01,
++	STK_TEXT_FORMAT_RIGHT_ALIGN =3D 0x02,
++	STK_TEXT_FORMAT_NO_ALIGN =3D 0x03,
++	STK_TEXT_FORMAT_FONT_SIZE_LARGE =3D 0x04,
++	STK_TEXT_FORMAT_FONT_SIZE_SMALL =3D 0x08,
++	STK_TEXT_FORMAT_FONT_SIZE_RESERVED =3D 0x0c,
++	STK_TEXT_FORMAT_STYLE_BOLD =3D 0x10,
++	STK_TEXT_FORMAT_STYLE_ITALIC =3D 0x20,
++	STK_TEXT_FORMAT_STYLE_UNDERLINED =3D 0x40,
++	STK_TEXT_FORMAT_STYLE_STRIKETHROUGH =3D 0x80,
++};
++
+ struct stk_command *stk_command_new_from_pdu(const unsigned char *pdu,
+ 						unsigned int len);
+ void stk_command_free(struct stk_command *command);
+@@ -1643,3 +1673,5 @@ const unsigned char *stk_pdu_from_response(const stru=
+ct stk_response *response,
+ 						unsigned int *out_length);
+ const unsigned char *stk_pdu_from_envelope(const struct stk_envelope *enve=
+lope,
+ 						unsigned int *out_length);
++char *stk_text_to_html(char *text, int text_len,
++				const unsigned char *attrs, int attrs_len);
+-- =
 
-When an agent registers, it gets sent whatever command is currently
-executing, or the main menu.  Note that we could just respond with
-UserEndedSession to any command that arrives when no agent is
-registered, or when agent unregisters, but the D-Bus specs say the
-client should be able to disconnect and reconnect without affecting
-state of the application.
+1.6.6.1
 
-Second possibility is for main menu to be on the SimToolkit interface
 
-org.ofono.SimToolkit
-Methods
-  void Select(int)
-  void RequestHelp(int)
-
-Properties
-  string IdleText
-  int CommandTimeout
-  string MenuTitle
-  array{string} MenuItems
-  bool MenuSoftKeyPreferred
-  bool MenuHelpAvailable
-    These would describe main menu, but they would be emptied
-    whenever a command is waiting for agent's response, because
-    menu is not available then.  Select Item would remain on the
-    Agent interface.
-
-It's also possible to not use the agent.
-
-Regards
-
---===============6852866908063798618==--
+--===============0632428820713539600==--
 
