@@ -1,31 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8801518216781686759=="
+Content-Type: multipart/mixed; boundary="===============8807082809061729994=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [SMS D-Bus 02/23] util.h: Add BUILD_BUG_ON() and friends for
- compile-time assert checking
-Date: Sat, 26 Jun 2010 01:46:44 +0200
-Message-ID: <1277509604.2330.144.camel@localhost.localdomain>
-In-Reply-To: <bae960413a408d22e3f6818ae710d051a99a1425.1277507431.git.inaky.perez-gonzalez@intel.com>
+Subject: Re: [SMS D-Bus 03/23] smutil.h: add missing header file dependencies
+Date: Sat, 26 Jun 2010 01:48:29 +0200
+Message-ID: <1277509709.2330.146.camel@localhost.localdomain>
+In-Reply-To: <7356379c8adb4d93335cae5e9ab75d0684b93321.1277507431.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8801518216781686759==
+--===============8807082809061729994==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Inaky,
 
-> These have been stolen from the Linux kernel source; come pretty handy
-> to make build-time consistency checks and thus avoid run-time
-> surprises.
-> ---
->  src/util.h |   28 ++++++++++++++++++++++++++++
->  1 files changed, 28 insertions(+), 0 deletions(-)
+>  src/smsutil.h |    9 +++++++++
+>  1 files changed, 9 insertions(+), 0 deletions(-)
+> =
 
-I still think that using include/bug.h is way better. And that way we
-could more easily sync this with ConnMan. Since this might come in handy
-for ConnMan as well.
+> diff --git a/src/smsutil.h b/src/smsutil.h
+> index 66ef6f8..baa3eca 100644
+> --- a/src/smsutil.h
+> +++ b/src/smsutil.h
+> @@ -18,6 +18,14 @@
+>   *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+>   *
+>   */
+> +#ifndef __smsutil_h__
+> +#define __smsutil_h__
+
+for internal headers I don't want the circular inclusion protection. It
+buys us nothing. And leaving it out will warn us when we do circular
+inclusion. That is a clear indication that something is a bit too
+complicated if it is needed.
 
 Regards
 
@@ -33,5 +42,5 @@ Marcel
 
 
 
---===============8801518216781686759==--
+--===============8807082809061729994==--
 
