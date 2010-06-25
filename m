@@ -1,88 +1,502 @@
-Content-Type: multipart/mixed; boundary="===============0276337682233262432=="
+Content-Type: multipart/mixed; boundary="===============5960610135220354784=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 5/5] gsmdial: Configure network interface for PPP
-Date: Fri, 25 Jun 2010 11:19:09 +0800
-Message-ID: <1277435949-5976-6-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1277435949-5976-5-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 1/5] gatppp: Add PPP server extension
+Date: Fri, 25 Jun 2010 11:19:05 +0800
+Message-ID: <1277435949-5976-2-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1277435949-5976-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0276337682233262432==
+--===============5960610135220354784==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+1. Add interface to set PPP server info by g_at_ppp_set_server_info.
+2. Pass local and peer address through IPCP handshaking.
 ---
- gatchat/gsmdial.c |   29 +++++++++++++++++++++++++++++
- 1 files changed, 29 insertions(+), 0 deletions(-)
+ gatchat/gatppp.c   |   11 ++-
+ gatchat/gatppp.h   |    6 +-
+ gatchat/ppp.h      |    5 +-
+ gatchat/ppp_ipcp.c |  239 +++++++++++++++++++++++++++++++++++++++++++++---=
+----
+ 4 files changed, 225 insertions(+), 36 deletions(-)
 
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index a69a610..59f1a5c 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -38,6 +38,8 @@
- #include <gattty.h>
- #include <gatppp.h>
- =
-
-+#define IFCONFIG_PATH "/sbin/ifconfig"
-+
- static const char *none_prefix[] =3D { NULL };
- static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
- static const char *creg_prefix[] =3D { "+CREG:", NULL };
-@@ -221,16 +223,43 @@ out:
- 	return FALSE;
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index e92fe5d..b65733e 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -246,7 +246,7 @@ void ppp_auth_notify(GAtPPP *ppp, gboolean success)
+ 	pppcp_signal_up(ppp->ipcp);
  }
  =
 
-+static gboolean execute(const char *cmd)
+-void ppp_ipcp_up_notify(GAtPPP *ppp, const char *ip,
++void ppp_ipcp_up_notify(GAtPPP *ppp, const char *local, const char *peer,
+ 					const char *dns1, const char *dns2)
+ {
+ 	ppp->net =3D ppp_net_new(ppp);
+@@ -264,7 +264,8 @@ void ppp_ipcp_up_notify(GAtPPP *ppp, const char *ip,
+ =
+
+ 	if (ppp->connect_cb)
+ 		ppp->connect_cb(ppp_net_get_interface(ppp->net),
+-					ip, dns1, dns2, ppp->connect_data);
++					local, peer, dns1, dns2,
++					ppp->connect_data);
+ }
+ =
+
+ void ppp_ipcp_down_notify(GAtPPP *ppp)
+@@ -464,6 +465,12 @@ void g_at_ppp_unref(GAtPPP *ppp)
+ 	g_free(ppp);
+ }
+ =
+
++void g_at_ppp_set_server_info(GAtPPP *ppp, guint32 local, guint32 peer,
++				guint32 dns1, guint32 dns2)
 +{
-+	int status;
-+
-+	status =3D system(cmd);
-+	if (status < 0) {
-+		g_print("Failed to execute command: %s\n", strerror(errno));
-+		return FALSE;
-+	}
-+
-+	return TRUE;
++	ipcp_set_server_info(ppp->ipcp, local, peer, dns1, dns2);
 +}
 +
- static void ppp_connect(const char *iface, const char *local, const char *=
-peer,
- 			const char *dns1, const char *dns2,
- 			gpointer user_data)
+ static GAtPPP *ppp_init_common(GAtHDLC *hdlc)
  {
-+	char buf[512];
+ 	GAtPPP *ppp;
+diff --git a/gatchat/gatppp.h b/gatchat/gatppp.h
+index 438b952..aea4ec0 100644
+--- a/gatchat/gatppp.h
++++ b/gatchat/gatppp.h
+@@ -43,7 +43,8 @@ typedef enum _GAtPPPDisconnectReason {
+ 	G_AT_PPP_REASON_LOCAL_CLOSE,	/* Normal user close */
+ } GAtPPPDisconnectReason;
+ =
+
+-typedef void (*GAtPPPConnectFunc)(const char *iface, const char *ip,
++typedef void (*GAtPPPConnectFunc)(const char *iface, const char *local,
++					const char *peer,
+ 					const char *dns1, const char *dns2,
+ 					gpointer user_data);
+ typedef void (*GAtPPPDisconnectFunc)(GAtPPPDisconnectReason reason,
+@@ -68,6 +69,9 @@ const char *g_at_ppp_get_password(GAtPPP *ppp);
+ =
+
+ void g_at_ppp_set_recording(GAtPPP *ppp, const char *filename);
+ =
+
++void g_at_ppp_set_server_info(GAtPPP *ppp, guint32 local, guint32 peer,
++				guint32 dns1, guint32 dns2);
 +
- 	/* print out the negotiated address and dns server */
- 	g_print("Network Device: %s\n", iface);
- 	g_print("IP Address: %s\n", local);
- 	g_print("Peer IP Address: %s\n", peer);
- 	g_print("Primary DNS Server: %s\n", dns1);
- 	g_print("Secondary DNS Server: %s\n", dns2);
-+
-+	if (getuid() !=3D 0) {
-+		g_print("Need root priviledge to config PPP interface\n");
-+		return;
-+	}
-+
-+	snprintf(buf, sizeof(buf), "%s %s up", IFCONFIG_PATH, iface);
-+	execute(buf);
-+
-+	snprintf(buf, sizeof(buf), "%s %s %s pointopoint %s", IFCONFIG_PATH,
-+				iface, local, peer);
-+	execute(buf);
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/gatchat/ppp.h b/gatchat/ppp.h
+index b6c5f4a..c41cd7f 100644
+--- a/gatchat/ppp.h
++++ b/gatchat/ppp.h
+@@ -86,6 +86,9 @@ void lcp_protocol_reject(struct pppcp_data *lcp, guint8 *=
+packet, gsize len);
+ /* IPCP related functions */
+ struct pppcp_data *ipcp_new(GAtPPP *ppp);
+ void ipcp_free(struct pppcp_data *data);
++void ipcp_set_server_info(struct pppcp_data *ipcp, guint32 local_addr,
++				guint32 peer_addr,
++				guint32 dns1, guint32 dns2);
+ =
+
+ /* CHAP related functions */
+ struct ppp_chap *ppp_chap_new(GAtPPP *ppp, guint8 method);
+@@ -104,7 +107,7 @@ void ppp_debug(GAtPPP *ppp, const char *str);
+ void ppp_transmit(GAtPPP *ppp, guint8 *packet, guint infolen);
+ void ppp_set_auth(GAtPPP *ppp, const guint8 *auth_data);
+ void ppp_auth_notify(GAtPPP *ppp, gboolean success);
+-void ppp_ipcp_up_notify(GAtPPP *ppp, const char *ip,
++void ppp_ipcp_up_notify(GAtPPP *ppp, const char *local, const char *peer,
+ 					const char *dns1, const char *dns2);
+ void ppp_ipcp_down_notify(GAtPPP *ppp);
+ void ppp_ipcp_finished_notify(GAtPPP *ppp);
+diff --git a/gatchat/ppp_ipcp.c b/gatchat/ppp_ipcp.c
+index 0b3c381..a0acf1b 100644
+--- a/gatchat/ppp_ipcp.c
++++ b/gatchat/ppp_ipcp.c
+@@ -67,46 +67,50 @@ struct ipcp_data {
+ 	guint8 options[MAX_CONFIG_OPTION_SIZE];
+ 	guint16 options_len;
+ 	guint8 req_options;
+-	guint32 ipaddr;
++	guint32 local_addr;
++	guint32 peer_addr;
+ 	guint32 dns1;
+ 	guint32 dns2;
+ 	guint32 nbns1;
+ 	guint32 nbns2;
++	gboolean is_server;
+ };
+ =
+
+-#define FILL_IP(req, type, var) 				\
+-	if (req) {						\
+-		ipcp->options[len] =3D type;			\
+-		ipcp->options[len + 1] =3D 6;			\
+-		memcpy(ipcp->options + len + 2, var, 4);	\
+-								\
+-		len +=3D 6;					\
+-	}							\
++#define FILL_IP(options, req, type, var) 		\
++	if (req) {					\
++		options[len] =3D type;			\
++		options[len + 1] =3D 6;			\
++		memcpy(options + len + 2, var, 4);	\
++							\
++		len +=3D 6;				\
++	}						\
+ =
+
+ static void ipcp_generate_config_options(struct ipcp_data *ipcp)
+ {
+ 	guint16 len =3D 0;
+ =
+
+-	FILL_IP(ipcp->req_options & REQ_OPTION_IPADDR,
+-					IP_ADDRESS, &ipcp->ipaddr);
+-	FILL_IP(ipcp->req_options & REQ_OPTION_DNS1,
++	FILL_IP(ipcp->options, ipcp->req_options & REQ_OPTION_IPADDR,
++					IP_ADDRESS, &ipcp->local_addr);
++	FILL_IP(ipcp->options, ipcp->req_options & REQ_OPTION_DNS1,
+ 					PRIMARY_DNS_SERVER, &ipcp->dns1);
+-	FILL_IP(ipcp->req_options & REQ_OPTION_DNS2,
++	FILL_IP(ipcp->options, ipcp->req_options & REQ_OPTION_DNS2,
+ 					SECONDARY_DNS_SERVER, &ipcp->dns2);
+-	FILL_IP(ipcp->req_options & REQ_OPTION_NBNS1,
++	FILL_IP(ipcp->options, ipcp->req_options & REQ_OPTION_NBNS1,
+ 					PRIMARY_NBNS_SERVER, &ipcp->nbns1);
+-	FILL_IP(ipcp->req_options & REQ_OPTION_NBNS2,
++	FILL_IP(ipcp->options, ipcp->req_options & REQ_OPTION_NBNS2,
+ 					SECONDARY_NBNS_SERVER, &ipcp->nbns2);
+ =
+
+ 	ipcp->options_len =3D len;
  }
  =
 
- static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
-ta)
+-static void ipcp_reset_config_options(struct ipcp_data *ipcp)
++static void ipcp_reset_client_config_options(struct ipcp_data *ipcp)
+ {
+ 	ipcp->req_options =3D REQ_OPTION_IPADDR | REQ_OPTION_DNS1 |
+ 				REQ_OPTION_DNS2 | REQ_OPTION_NBNS1 |
+ 				REQ_OPTION_NBNS2;
+-	ipcp->ipaddr =3D 0;
++
++	ipcp->local_addr =3D 0;
++	ipcp->peer_addr =3D 0;
+ 	ipcp->dns1 =3D 0;
+ 	ipcp->dns2 =3D 0;
+ 	ipcp->nbns1 =3D 0;
+@@ -115,17 +119,53 @@ static void ipcp_reset_config_options(struct ipcp_dat=
+a *ipcp)
+ 	ipcp_generate_config_options(ipcp);
+ }
+ =
+
++static void ipcp_reset_server_config_options(struct ipcp_data *ipcp)
++{
++	if (ipcp->local_addr !=3D 0)
++		ipcp->req_options =3D REQ_OPTION_IPADDR;
++	else
++		ipcp->req_options =3D 0;
++
++	ipcp_generate_config_options(ipcp);
++}
++
++void ipcp_set_server_info(struct pppcp_data *pppcp, guint32 local_addr,
++				guint32 peer_addr,
++				guint32 dns1, guint32 dns2)
++{
++	struct ipcp_data *ipcp =3D pppcp_get_data(pppcp);
++
++	if (local_addr !=3D 0)
++		ipcp->req_options =3D REQ_OPTION_IPADDR;
++	else
++		ipcp->req_options =3D 0;
++
++	ipcp->local_addr =3D local_addr;
++	ipcp->peer_addr =3D peer_addr;
++	ipcp->dns1 =3D dns1;
++	ipcp->dns2 =3D dns2;
++	ipcp->is_server =3D TRUE;
++
++	ipcp_generate_config_options(ipcp);
++	pppcp_set_local_options(pppcp, ipcp->options, ipcp->options_len);
++}
++
+ static void ipcp_up(struct pppcp_data *pppcp)
+ {
+ 	struct ipcp_data *ipcp =3D pppcp_get_data(pppcp);
+-	char ip[INET_ADDRSTRLEN];
++	char local[INET_ADDRSTRLEN];
++	char peer[INET_ADDRSTRLEN];
+ 	char dns1[INET_ADDRSTRLEN];
+ 	char dns2[INET_ADDRSTRLEN];
+ 	struct in_addr addr;
+ =
+
+-	memset(ip, 0, sizeof(ip));
+-	addr.s_addr =3D ipcp->ipaddr;
+-	inet_ntop(AF_INET, &addr, ip, INET_ADDRSTRLEN);
++	memset(local, 0, sizeof(local));
++	addr.s_addr =3D ipcp->local_addr;
++	inet_ntop(AF_INET, &addr, local, INET_ADDRSTRLEN);
++
++	memset(peer, 0, sizeof(peer));
++	addr.s_addr =3D ipcp->peer_addr;
++	inet_ntop(AF_INET, &addr, peer, INET_ADDRSTRLEN);
+ =
+
+ 	memset(dns1, 0, sizeof(dns1));
+ 	addr.s_addr =3D ipcp->dns1;
+@@ -135,7 +175,8 @@ static void ipcp_up(struct pppcp_data *pppcp)
+ 	addr.s_addr =3D ipcp->dns2;
+ 	inet_ntop(AF_INET, &addr, dns2, INET_ADDRSTRLEN);
+ =
+
+-	ppp_ipcp_up_notify(pppcp_get_ppp(pppcp), ip[0] ? ip : NULL,
++	ppp_ipcp_up_notify(pppcp_get_ppp(pppcp), local[0] ? local : NULL,
++					peer[0] ? peer : NULL,
+ 					dns1[0] ? dns1 : NULL,
+ 					dns2[0] ? dns2 : NULL);
+ }
+@@ -144,7 +185,11 @@ static void ipcp_down(struct pppcp_data *pppcp)
+ {
+ 	struct ipcp_data *ipcp =3D pppcp_get_data(pppcp);
+ =
+
+-	ipcp_reset_config_options(ipcp);
++	if (ipcp->is_server)
++		ipcp_reset_server_config_options(ipcp);
++	else
++		ipcp_reset_client_config_options(ipcp);
++
+ 	pppcp_set_local_options(pppcp, ipcp->options, ipcp->options_len);
+ 	ppp_ipcp_down_notify(pppcp_get_ppp(pppcp));
+ }
+@@ -160,6 +205,9 @@ static void ipcp_rca(struct pppcp_data *pppcp,
+ 	struct ipcp_data *ipcp =3D pppcp_get_data(pppcp);
+ 	struct ppp_option_iter iter;
+ =
+
++	if (ipcp->is_server)
++		return;
++
+ 	ppp_option_iter_init(&iter, packet);
+ =
+
+ 	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
+@@ -167,7 +215,7 @@ static void ipcp_rca(struct pppcp_data *pppcp,
+ =
+
+ 		switch (ppp_option_iter_get_type(&iter)) {
+ 		case IP_ADDRESS:
+-			memcpy(&ipcp->ipaddr, data, 4);
++			memcpy(&ipcp->local_addr, data, 4);
+ 			break;
+ 		case PRIMARY_DNS_SERVER:
+ 			memcpy(&ipcp->dns1, data, 4);
+@@ -193,6 +241,9 @@ static void ipcp_rcn_nak(struct pppcp_data *pppcp,
+ 	struct ipcp_data *ipcp =3D pppcp_get_data(pppcp);
+ 	struct ppp_option_iter iter;
+ =
+
++	if (ipcp->is_server)
++		return;
++
+ 	g_print("Received IPCP NAK\n");
+ =
+
+ 	ppp_option_iter_init(&iter, packet);
+@@ -204,7 +255,7 @@ static void ipcp_rcn_nak(struct pppcp_data *pppcp,
+ 		case IP_ADDRESS:
+ 			g_print("Setting suggested ip addr\n");
+ 			ipcp->req_options |=3D REQ_OPTION_IPADDR;
+-			memcpy(&ipcp->ipaddr, data, 4);
++			memcpy(&ipcp->local_addr, data, 4);
+ 			break;
+ 		case PRIMARY_DNS_SERVER:
+ 			g_print("Setting suggested dns1\n");
+@@ -269,22 +320,146 @@ static void ipcp_rcn_rej(struct pppcp_data *pppcp,
+ 	pppcp_set_local_options(pppcp, ipcp->options, ipcp->options_len);
+ }
+ =
+
+-static enum rcr_result ipcp_rcr(struct pppcp_data *pppcp,
++static void ipcp_generate_peer_config_options(struct ipcp_data *ipcp,
++							guint8 *options,
++							guint16 *new_len)
++{
++	guint16 len =3D 0;
++
++	FILL_IP(options, TRUE, IP_ADDRESS, &ipcp->peer_addr);
++	FILL_IP(options, TRUE, PRIMARY_DNS_SERVER, &ipcp->dns1);
++	FILL_IP(options, TRUE, SECONDARY_DNS_SERVER, &ipcp->dns2);
++
++	*new_len =3D len;
++}
++
++static enum rcr_result ipcp_server_rcr(struct ipcp_data *ipcp,
++					const struct pppcp_packet *packet,
++					guint8 **new_options, guint16 *new_len)
++{
++	struct ppp_option_iter iter;
++	guint8 options[MAX_CONFIG_OPTION_SIZE];
++	guint16 len =3D 0;
++	guint32 peer_addr =3D 0;
++	guint32 dns1 =3D 0;
++	guint32 dns2 =3D 0;
++
++	ppp_option_iter_init(&iter, packet);
++
++	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
++		const guint8 *data =3D ppp_option_iter_get_data(&iter);
++		guint8 type =3D ppp_option_iter_get_type(&iter);
++
++		switch (type) {
++		case IP_ADDRESS:
++			memcpy(&peer_addr, data, 4);
++			break;
++		case PRIMARY_DNS_SERVER:
++			memcpy(&dns1, data, 4);
++			break;
++		case SECONDARY_DNS_SERVER:
++			memcpy(&dns2, data, 4);
++			break;
++		case PRIMARY_NBNS_SERVER:
++		case SECONDARY_NBNS_SERVER:
++		default:
++			/* Reject */
++			FILL_IP(options, TRUE, type, data);
++			break;
++		}
++	}
++
++	if (len > 0) {
++		*new_len =3D len;
++		*new_options =3D g_memdup(options, len);
++
++		return RCR_REJECT;
++	}
++
++	/* Return Conf-Nak if we have not assign client address yet */
++	if (ipcp->peer_addr =3D=3D 0 && ipcp->dns1 =3D=3D 0 && ipcp->dns2 =3D=3D =
+0)
++		return RCR_NAK;
++
++	/* Acknowledge client options if it matches with server options */
++	if (ipcp->peer_addr =3D=3D peer_addr && ipcp->dns1 =3D=3D dns1 &&
++			ipcp->dns2 =3D=3D dns2)
++		return RCR_ACCEPT;
++
++	/* Send client IP/DNS/NBNS information in the config options */
++	ipcp_generate_peer_config_options(ipcp, options, &len);
++
++	*new_len =3D len;
++	*new_options =3D g_memdup(options, len);
++
++	return RCR_NAK;
++}
++
++static enum rcr_result ipcp_client_rcr(struct ipcp_data *ipcp,
+ 					const struct pppcp_packet *packet,
+ 					guint8 **new_options, guint16 *new_len)
+ {
+ 	struct ppp_option_iter iter;
++	guint8 options[6];
++	guint16 len =3D 0;
++	guint32 peer_addr =3D 0;
++
++	/* Return Conf-Ack if we have received client info */
++	if (ipcp->local_addr && ipcp->dns1 && ipcp->dns2)
++		return RCR_ACCEPT;
+ =
+
+ 	ppp_option_iter_init(&iter, packet);
+ =
+
+-	if (ppp_option_iter_next(&iter) =3D=3D FALSE)
++	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
++		const guint8 *data =3D ppp_option_iter_get_data(&iter);
++		guint8 type =3D ppp_option_iter_get_type(&iter);
++
++		switch (type) {
++		case IP_ADDRESS:
++			memcpy(&peer_addr, data, 4);
++			break;
++		case PRIMARY_DNS_SERVER:
++		case SECONDARY_DNS_SERVER:
++		case PRIMARY_NBNS_SERVER:
++		case SECONDARY_NBNS_SERVER:
++			break;
++		default:
++			FILL_IP(options, TRUE, type, data);
++			break;
++		}
++	}
++
++	if (len > 0) {
++		*new_len =3D len;
++		*new_options =3D g_memdup(options, len);
++
++		return RCR_REJECT;
++	}
++
++	 /* Accept server IP address as peer's address */
++	if (peer_addr) {
++		ipcp->peer_addr =3D peer_addr;
+ 		return RCR_ACCEPT;
++	}
++
++	/* Request server IP address */
++	FILL_IP(options, TRUE, IP_ADDRESS, &ipcp->peer_addr);
++
++	*new_len =3D len;
++	*new_options =3D g_memdup(options, len);
++
++	return RCR_NAK;
++}
+ =
+
+-	/* Reject all options */
+-	*new_len =3D ntohs(packet->length) - sizeof(*packet);
+-	*new_options =3D g_memdup(packet->data, *new_len);
++static enum rcr_result ipcp_rcr(struct pppcp_data *pppcp,
++					const struct pppcp_packet *packet,
++					guint8 **new_options, guint16 *new_len)
++{
++	struct ipcp_data *ipcp =3D pppcp_get_data(pppcp);
+ =
+
+-	return RCR_REJECT;
++	if (ipcp->is_server)
++		return ipcp_server_rcr(ipcp, packet, new_options, new_len);
++	else
++		return ipcp_client_rcr(ipcp, packet, new_options, new_len);
+ }
+ =
+
+ struct pppcp_proto ipcp_proto =3D {
+@@ -317,7 +492,7 @@ struct pppcp_data *ipcp_new(GAtPPP *ppp)
+ 	}
+ =
+
+ 	pppcp_set_data(pppcp, ipcp);
+-	ipcp_reset_config_options(ipcp);
++	ipcp_reset_client_config_options(ipcp);
+ 	pppcp_set_local_options(pppcp, ipcp->options, ipcp->options_len);
+ =
+
+ 	return pppcp;
 -- =
 
 1.6.3.3
 
 
---===============0276337682233262432==--
+--===============5960610135220354784==--
 
