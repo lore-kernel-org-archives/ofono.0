@@ -1,217 +1,182 @@
-Content-Type: multipart/mixed; boundary="===============3817460906860119999=="
+Content-Type: multipart/mixed; boundary="===============2124311120672017242=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus 15/23] SMS: split sms_send_message() into a D-Bus front
- end and an internal API
-Date: Fri, 25 Jun 2010 16:15:37 -0700
-Message-ID: <10cb10940067c61519b1d73c113a67c91fe21f5e.1277507431.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus 16/23] SMS: introduce wait-for-ack state and infrastructure
+Date: Fri, 25 Jun 2010 16:15:38 -0700
+Message-ID: <6bdef8322417d1c7bc18848b118ec3ff29c1643c.1277507431.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1277507431.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3817460906860119999==
+--===============2124311120672017242==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-sms_send_message() is unfolded into:
+This introduces basic infrastructure to support wait-for-ack in SMS
+messages. It consists of a state definition in the state transtition
+machine, a wait-for-ack queue (ofono_sms->wfaq) and a flag setting in
+which a message is tagged as 'requests wait for ack'.
 
-- sms_msg_send(), a full C interface for SMS sending
-
-- dbus_SendMessage(), which adapts sms_msg_send() to be a D-Bus call
-
-This is done to allow plugins to use the same infrastructure as D-Bus
-clients to send SMS messages.
+This does not implement the network bits, just the basic
+infrastructure bits.
 ---
- src/sms.c     |   66 +++++++++++++++++++++++++++++++++++++++++------------=
----
- src/smsutil.h |    6 +++++
- 2 files changed, 54 insertions(+), 18 deletions(-)
+ src/sms.c |   61 ++++++++++++++++++++++++++++++++++++++++++++++++---------=
+----
+ 1 files changed, 48 insertions(+), 13 deletions(-)
 
 diff --git a/src/sms.c b/src/sms.c
-index 49b9c4c..0182ac8 100644
+index 0182ac8..97c7429 100644
 --- a/src/sms.c
 +++ b/src/sms.c
-@@ -466,6 +466,10 @@ static void tx_queue_entry_destroy(struct tx_queue_ent=
-ry *entry)
- 	g_free(entry->pdus);
- 	g_free(entry->name);
- 	entry->state =3D __OFONO_SMS_TX_ST_INVALID;
-+	if (entry->msg) {
-+		dbus_message_unref(entry->msg);
-+		entry->msg =3D NULL;
-+	}
- }
- =
-
- static void tx_queue_entry_destroy_free(gpointer _entry, gpointer unused)
-@@ -615,8 +619,9 @@ static struct tx_queue_entry *create_tx_queue_entry(GSL=
-ist *msg_list)
- 	return entry;
- }
+@@ -62,19 +62,21 @@ static GSList *g_drivers =3D NULL;
+  *
+  * Allowed transition table (Allowed, Not-allowed) from left to right:
+  *
+- *          UNINITIALIZED     CANCELING  FAILED
+- *               | QUEUED DONE   | CANCELLED  EXPIRED
+- * UNINITIALIZED -    A     N    N    N    N    N
+- * QUEUED        N    -     A    A    N    A    N
+- * DONE          A    N     -    N    N    N    N
+- * CANCELING     N    N     N    -    A    A    A
+- * CANCELLED     A    N     N    N    -    N    N
+- * FAILED        A    N     N    N    N    -    N
+- * EXPIRED       A    N     N    N    N    N    -
++ *          UNINITIALIZED         CANCELING  FAILED
++ *               | QUEUED WFA DONE   | CANCELLED  EXPIRED
++ * UNINITIALIZED -    A    N    N    N    N    N    N
++ * QUEUED        N    -    A    A    A    N    A    N
++ * WFA           N    N    -    A    A    N    A    A
++ * DONE          A    N    N    -    N    N    N    N
++ * CANCELING     N    N    N    N    -    A    A    A
++ * CANCELLED     A    N    N    N    N    -    N    N
++ * FAILED        A    N    N    N    N    N    -    N
++ * EXPIRED       A    N    N    N    N    N    N    -
+  */
+ enum ofono_sms_tx_state {
+ 	OFONO_SMS_TX_ST_UNINITIALIZED,
+ 	OFONO_SMS_TX_ST_QUEUED,
++	OFONO_SMS_TX_ST_WFA,
+ 	OFONO_SMS_TX_ST_DONE,
+ 	OFONO_SMS_TX_ST_CANCELING,
+ 	OFONO_SMS_TX_ST_CANCELLED,
+@@ -83,6 +85,12 @@ enum ofono_sms_tx_state {
+ 	__OFONO_SMS_TX_ST_INVALID,
+ };
  =
 
 +
++/**
++ * @wfaq: Waiting-For-Acknoledgement queue; messages in this queue
++ *     have been delivered but are waiting to be acknoledged by the
++ *     network.
++ */
+ struct ofono_sms {
+ 	int flags;
+ 	DBusMessage *pending;
+@@ -90,6 +98,7 @@ struct ofono_sms {
+ 	struct sms_assembly *assembly;
+ 	guint ref;
+ 	GQueue *txq;
++	GQueue *tx_wfaq;
+ 	gint tx_source;
+ 	struct ofono_message_waiting *mw;
+ 	unsigned int mw_watch;
+@@ -113,9 +122,13 @@ struct pending_pdu {
  /*
-- * Pre-process a SMS text message and deliver it [D-Bus SendMessage()]
-+ * Pre-process a SMS text message and deliver it
-  *
-  * @conn: D-Bus connection
-  * @msg: message data (telephone number and text)
-@@ -631,12 +636,10 @@ static struct tx_queue_entry *create_tx_queue_entry(G=
-SList *msg_list)
-  * @sms is the main SMS driver struct, @entry and @msg_list represent
-  * the current message being processed.
+  * @name: Name for the SMS message object (used by D-Bus)
+  * @dbus_path: D-Bus path for this object
++ * @sms_mgr: SMS manager / driver object
+  * @state: Current state of the (in-transit) SMS
++ * @status_report: message reception/delivery should be acknoledged by
++ *     the network.
   */
--static DBusMessage *sms_send_message(DBusConnection *conn, DBusMessage *ms=
-g,
--					void *data)
-+struct tx_queue_entry *sms_msg_send(
-+	struct ofono_sms *sms, const char *to, const char *text,
-+	enum sms_msg_send_flags flags)
- {
--	struct ofono_sms *sms =3D data;
--	const char *to;
--	const char *text;
- 	GSList *msg_list;
- 	int ref_offset, ref;
- 	struct tx_queue_entry *entry;
-@@ -647,13 +650,8 @@ static DBusMessage *sms_send_message(DBusConnection *c=
-onn, DBusMessage *msg,
- 	DECLARE_SMS_ADDR_STR(receiver_str);
- 	const char *sms_path =3D __ofono_atom_get_path(sms->atom);
+ struct tx_queue_entry {
++	struct ofono_sms *sms_mgr;
+ 	struct pending_pdu *pdus;
+ 	unsigned char num_pdus;
+ 	unsigned char cur_pdu;
+@@ -375,9 +388,17 @@ static void __ofono_sms_tx_state_set(struct tx_queue_e=
+ntry *entry,
+ 	case OFONO_SMS_TX_ST_QUEUED:
+ 		ofono_sms_tx_state_check(
+ 			file, line, entry, state_old, state_new,
++			1 << OFONO_SMS_TX_ST_WFA
++			| 1 << OFONO_SMS_TX_ST_DONE
++			| 1 << OFONO_SMS_TX_ST_CANCELING);
++		break;
++	case OFONO_SMS_TX_ST_WFA:
++		ofono_sms_tx_state_check(
++			file, line, entry, state_old, state_new,
+ 			1 << OFONO_SMS_TX_ST_DONE
+ 			| 1 << OFONO_SMS_TX_ST_CANCELING
+-			| 1 << OFONO_SMS_TX_ST_FAILED);
++			| 1 << OFONO_SMS_TX_ST_FAILED
++			| 1 << OFONO_SMS_TX_ST_EXPIRED);
+ 		break;
+ 	case OFONO_SMS_TX_ST_CANCELING:
+ 		ofono_sms_tx_state_check(
+@@ -543,9 +564,14 @@ static void tx_finished(const struct ofono_error *erro=
+r, int mr, void *data)
+ 					time(NULL),
+ 					OFONO_HISTORY_SMS_STATUS_SUBMITTED);
  =
 
--	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &to,
--					DBUS_TYPE_STRING, &text,
--					DBUS_TYPE_INVALID))
--		return __ofono_error_invalid_args(msg);
--
- 	if (valid_phone_number_format(to) =3D=3D FALSE)
--		return __ofono_error_invalid_format(msg);
-+		return NULL;
+-	ofono_sms_tx_state_set(entry, OFONO_SMS_TX_ST_DONE);
+-	tx_queue_entry_destroy(entry);
+-	g_free(entry);
++	if (entry->status_report) {
++		ofono_sms_tx_state_set(entry, OFONO_SMS_TX_ST_WFA);
++		g_queue_push_tail(sms->tx_wfaq, entry);
++	} else {
++		ofono_sms_tx_state_set(entry, OFONO_SMS_TX_ST_DONE);
++		tx_queue_entry_destroy(entry);
++		g_free(entry);
++	}
  =
 
- 	/*
- 	 * Instead of using the telephone number/address we got from
-@@ -664,13 +662,13 @@ static DBusMessage *sms_send_message(DBusConnection *=
-conn, DBusMessage *msg,
- 	sms_address_from_string(&receiver, to);
- 	if (sms_assembly_encode_address(&receiver, receiver_str)
- 	    =3D=3D FALSE)
--		return __ofono_error_failed(msg);
-+		return NULL;
- =
-
- 	msg_list =3D sms_text_prepare(text, 0, TRUE, &ref_offset,
- 					sms->use_delivery_reports);
- =
-
- 	if (!msg_list)
--		return __ofono_error_invalid_format(msg);
-+		return NULL;
- =
-
- 	sms_msg_id_init(&sms_msg_id);
- 	sms_msg_id_hash(&sms_msg_id, text, strlen(text));
-@@ -688,7 +686,6 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
+ 	if (g_queue_peek_head(sms->txq)) {
+ 		DBG("Scheduling next");
+@@ -683,6 +709,7 @@ struct tx_queue_entry *sms_msg_send(
+ 		    entry, ref, ref_offset, msg_id_str);
+ 	entry->msg_id =3D ref;
+ 	entry->receiver =3D receiver;
++	entry->sms_mgr =3D sms;
  =
 
  	g_slist_foreach(msg_list, (GFunc)g_free, NULL);
  	g_slist_free(msg_list);
--	entry->msg =3D dbus_message_ref(msg);
- 	entry->status_report =3D sms->use_delivery_reports;
- 	entry->name =3D g_strdup_printf(SMS_MSG_NAME_FMT, sms_path,
- 				      msg_id_str, entry->num_pdus);
-@@ -699,21 +696,54 @@ static DBusMessage *sms_send_message(DBusConnection *=
-conn, DBusMessage *msg,
- 	ofono_sms_tx_state_set(entry, OFONO_SMS_TX_ST_QUEUED);
+@@ -1217,6 +1244,13 @@ static void sms_remove(struct ofono_atom *atom)
+ 		sms->txq =3D NULL;
+ 	}
  =
 
- 	modem =3D __ofono_atom_get_modem(sms->atom);
--	__ofono_history_sms_send_pending(modem, entry->msg_id, to,
--						time(NULL), text);
-+	if (flags & SMS_MSG_SEND_HISTORY)
-+		__ofono_history_sms_send_pending(modem, entry->msg_id, to,
-+						 time(NULL), text);
++	if (sms->tx_wfaq) {
++		g_queue_foreach(sms->tx_wfaq,
++				tx_queue_entry_destroy_free, NULL);
++		g_queue_free(sms->tx_wfaq);
++		sms->tx_wfaq =3D NULL;
++	}
++
+ 	if (sms->settings) {
+ 		g_key_file_set_integer(sms->settings, SETTINGS_GROUP,
+ 					"NextReference", sms->ref);
+@@ -1269,6 +1303,7 @@ struct ofono_sms *ofono_sms_create(struct ofono_modem=
+ *modem,
+ 	sms->sca.type =3D 129;
+ 	sms->ref =3D 1;
+ 	sms->txq =3D g_queue_new();
++	sms->tx_wfaq =3D g_queue_new();
+ 	sms->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_SMS,
+ 						sms_remove, sms);
  =
 
- 	if (g_queue_get_length(sms->txq) =3D=3D 1)
- 		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
- =
-
-+	return entry;
-+}
-+
-+
-+/*
-+ * D-Bus: Send a SMS text message
-+ *
-+ * @conn: D-Bus connection
-+ * @msg: message data (telephone number and text)
-+ * @data: SMS object to use for transmision
-+ *
-+ * Unwraps the arguments and sends the request to sms_msg_send()
-+ */
-+static DBusMessage *dbus_SendMessage(DBusConnection *conn, DBusMessage *ms=
-g,
-+				     void *data)
-+{
-+	struct ofono_sms *sms =3D data;
-+	const char *to;
-+	const char *text;
-+	struct tx_queue_entry *sms_msg;
-+
-+	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &to,
-+					DBUS_TYPE_STRING, &text,
-+					DBUS_TYPE_INVALID))
-+		return __ofono_error_invalid_args(msg);
-+
-+	sms_msg =3D sms_msg_send(sms, to, text, SMS_MSG_SEND_HISTORY);
-+	if (sms_msg =3D=3D NULL)
-+		return __ofono_error_invalid_format(msg);
-+	/* Unreferenced upon tx_queue_entry_destroy() */
-+	sms_msg->msg =3D dbus_message_ref(msg);
- 	return NULL;
- }
- =
-
-+
- static GDBusMethodTable sms_manager_methods[] =3D {
- 	{ "GetProperties",	"",	"a{sv}",	sms_get_properties,
- 							G_DBUS_METHOD_FLAG_ASYNC },
- 	{ "SetProperty",	"sv",	"",		sms_set_property,
- 							G_DBUS_METHOD_FLAG_ASYNC },
--	{ "SendMessage",	"ss",	"",		sms_send_message,
-+	{ "SendMessage",	"ss",	"",		dbus_SendMessage,
- 							G_DBUS_METHOD_FLAG_ASYNC },
- 	{ }
- };
-diff --git a/src/smsutil.h b/src/smsutil.h
-index b87dffb..40df71f 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -217,6 +217,12 @@ enum cbs_geo_scope {
- 	CBS_GEO_SCOPE_CELL_NORMAL
- };
- =
-
-+/* Flags to sms_msg_send() */
-+enum sms_msg_send_flags {
-+	/* Record/dont this message to the history database */
-+	SMS_MSG_SEND_HISTORY =3D 0x01,
-+};
-+
- struct sms_address {
- 	enum sms_number_type number_type;
- 	enum sms_numbering_plan numbering_plan;
 -- =
 
 1.6.6.1
 
 
---===============3817460906860119999==--
+--===============2124311120672017242==--
 
