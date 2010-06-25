@@ -1,151 +1,116 @@
-Content-Type: multipart/mixed; boundary="===============4308266934130910899=="
+Content-Type: multipart/mixed; boundary="===============5616478747326423027=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus 20/23] SMS: send D-Bus SMS-MSG::ProperyChanged signals
- when message changes status
-Date: Fri, 25 Jun 2010 16:15:42 -0700
-Message-ID: <83b794b43f4840b09be9d4019fbbba4ad07ef94e.1277507431.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus 21/23] SMS: make D-Bus SendMessage and Cancel fully
+ synchronous
+Date: Fri, 25 Jun 2010 16:15:43 -0700
+Message-ID: <e817d8f9d7b4cf0fe6eafdd7f324b7ee27ef9038.1277507431.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1277507431.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4308266934130910899==
+--===============5616478747326423027==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-This hooks __sms_msg_state_change_dbus_signal() into
-__ofono_sms_tx_state_set(), so that a D-Bus signal will be emitted
-whenever an SMS Message transitions state. This allows a client to
-track, if desired, what is going on with the SMS Message it cares about.
+Up until now, SMSManager::SendMessage() and SMSMessage::Cancel() where
+D-Bus asynchronous. They would perform the D-Bus method return reply
+inside the callbacks, as they needed to wait for the operation to
+complete.
 
-With this, we can remove, in tx_finished() the asynchornous
-finalization of the call (via sms_msg->dbus_msg) and make the call
-synchronous (follow up commit).
+Relying on previous commits that make the SMS message object send
+D-Bus updates when changing state, this makes Sendmessage and Cancel
+return inmediately. SendMessage() will return an string with the
+SMS Message object name and Cancel() will just return.
 
-The rest of the sites that were calling __ofono_sms_tx_state_set() get
-(by definition) to send the signal.
+This renders all the D-Bus message bookeeping in 'struct
+tx_queue_entry' uneeded.
 ---
- src/sms.c                      |   33 +++++++++++++++++++++++++++------
- test/test-sms-msg-state-change |   24 ++++++++++++++++++++++++
- 2 files changed, 51 insertions(+), 6 deletions(-)
- create mode 100755 test/test-sms-msg-state-change
+ src/sms.c |   25 +++++++++++--------------
+ 1 files changed, 11 insertions(+), 14 deletions(-)
 
 diff --git a/src/sms.c b/src/sms.c
-index 77904ad..11d1f33 100644
+index 11d1f33..96315b2 100644
 --- a/src/sms.c
 +++ b/src/sms.c
-@@ -380,6 +380,32 @@ static void ofono_sms_tx_state_check(const char *file,=
- unsigned line,
- =
-
- =
-
- /*
-+ * Send a PropertyChange signal when the state changes
-+ *
-+ * D-Bus typing is "ss" for variable/value.
-+ */
-+static
-+void __sms_msg_state_change_dbus_signal(struct tx_queue_entry *sms_msg)
-+{
-+	DBusConnection *dbus_conn =3D ofono_dbus_get_connection();
-+	DBusMessage *dbus_signal;
-+	DBusMessageIter iter;
-+	const char *property =3D "TXState";
-+	const char *new_state_str;
-+
-+	dbus_signal =3D dbus_message_new_signal(
-+		sms_msg->dbus_path, SMS_MSG_INTERFACE, "PropertyChanged");
-+	if (!dbus_signal)
-+		return;
-+	dbus_message_iter_init_append(dbus_signal, &iter);
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &property);
-+	new_state_str =3D ofono_sms_tx_state_to_string(sms_msg->state);
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &new_state_str);
-+	g_dbus_send_message(dbus_conn, dbus_signal);
-+}
-+
-+
-+/*
-  * Set a pending SMS's state
-  *
-  * This is just syntatic sugar that validates that the transition is
-@@ -441,6 +467,7 @@ static void __ofono_sms_tx_state_set(struct tx_queue_en=
-try *entry,
- 	ofono_debug("%s:%d: SMS state change: %p %u -> %u\n",
- 		    file, line, entry, state_old, state_new);
- 	entry->state =3D state_new;
-+	__sms_msg_state_change_dbus_signal(entry);
+@@ -504,11 +504,7 @@ static DBusMessage *dbus_sms_msg_cancel(
+ 		return __ofono_error_invalid_args(msg);
+ 	sms_msg_cancel(sms_msg,
+ 		       do_network_cancel ? SMS_MSG_CANCEL_IN_NETWORK : 0);
+-	sms_msg->dbus_msg =3D dbus_message_ref(msg);
+-	__ofono_dbus_pending_reply(
+-		&sms_msg->dbus_msg,
+-		dbus_message_new_method_return(sms_msg->dbus_msg));
+-	return NULL;
++	return dbus_message_new_method_return(msg);
  }
  =
 
  =
 
-@@ -584,10 +611,7 @@ static void tx_finished(const struct ofono_error *erro=
-r, int mr, void *data)
+@@ -522,9 +518,9 @@ static DBusMessage *dbus_sms_msg_cancel(
+ static
+ GDBusMethodTable sms_msg_methods[] =3D {
+ 	{ "GetProperties",	"",	"a{sv}",
+-	  dbus_sms_msg_get_properties, G_DBUS_METHOD_FLAG_ASYNC },
++	  dbus_sms_msg_get_properties, 0 },
+ 	{ "Cancel",		DBUS_TYPE_BOOLEAN_AS_STRING,	"",
+-	  dbus_sms_msg_cancel, G_DBUS_METHOD_FLAG_ASYNC },
++	  dbus_sms_msg_cancel, 0 },
+ 	{ }
+ };
  =
 
- 		DBG("Max retries reached, giving up");
+@@ -577,10 +573,6 @@ static void tx_queue_entry_destroy(struct tx_queue_ent=
+ry *entry)
+ 	g_free(entry->pdus);
+ 	g_free(entry->name);
+ 	entry->state =3D __OFONO_SMS_TX_ST_INVALID;
+-	if (entry->dbus_msg) {
+-		dbus_message_unref(entry->dbus_msg);
+-		entry->dbus_msg =3D NULL;
+-	}
+ }
  =
 
--		ofono_sms_tx_state_set(entry, OFONO_SMS_TX_ST_CANCELING);
- 		entry =3D g_queue_pop_head(sms->txq);
--		__ofono_dbus_pending_reply(&entry->dbus_msg,
--					__ofono_error_failed(entry->dbus_msg));
+ static void tx_queue_entry_destroy_free(gpointer _entry, gpointer unused)
+@@ -872,6 +864,7 @@ static DBusMessage *dbus_SendMessage(DBusConnection *co=
+nn, DBusMessage *msg,
+ 	const char *to;
+ 	const char *text;
+ 	struct tx_queue_entry *sms_msg;
++	DBusMessage *reply;
  =
 
- 		__ofono_history_sms_send_status(modem, entry->msg_id,
- 					time(NULL),
-@@ -621,9 +645,6 @@ static void tx_finished(const struct ofono_error *error=
-, int mr, void *data)
- 	}
+ 	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &to,
+ 					DBUS_TYPE_STRING, &text,
+@@ -881,9 +874,13 @@ static DBusMessage *dbus_SendMessage(DBusConnection *c=
+onn, DBusMessage *msg,
+ 	sms_msg =3D sms_msg_send(sms, to, text, SMS_MSG_SEND_HISTORY);
+ 	if (sms_msg =3D=3D NULL)
+ 		return __ofono_error_invalid_format(msg);
+-	/* Unreferenced upon tx_queue_entry_destroy() */
+-	sms_msg->dbus_msg =3D dbus_message_ref(msg);
+-	return NULL;
++	reply =3D dbus_message_new_method_return(msg);
++	if (!reply)
++		return NULL;
++	dbus_message_append_args(reply,
++				 DBUS_TYPE_STRING, &sms_msg->dbus_path,
++				 DBUS_TYPE_INVALID);
++	return reply;
+ }
  =
 
- 	entry =3D g_queue_pop_head(sms->txq);
--	__ofono_dbus_pending_reply(
--		&entry->dbus_msg,
--		dbus_message_new_method_return(entry->dbus_msg));
- 	__ofono_history_sms_send_status(modem, entry->msg_id,
- 					time(NULL),
- 					OFONO_HISTORY_SMS_STATUS_SUBMITTED);
-diff --git a/test/test-sms-msg-state-change b/test/test-sms-msg-state-change
-new file mode 100755
-index 0000000..18486bf
---- /dev/null
-+++ b/test/test-sms-msg-state-change
-@@ -0,0 +1,24 @@
-+#!/usr/bin/python
-+
-+import gobject
-+
-+import dbus
-+import dbus.mainloop.glib
-+
-+def property_changed(name, value, path, interface):
-+        if interface =3D=3D "org.ofono.SMSMessage":
-+                print "%s: name %s value %s interface %s" \
-+                    % (path, name, value, interface)
-+
-+if __name__ =3D=3D '__main__':
-+        print "FIXME: this should test the whole state change transition m=
-achine"
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+
-+	bus =3D dbus.SystemBus()
-+
-+	bus.add_signal_receiver(
-+                property_changed, bus_name=3D"org.ofono",
-+                signal_name =3D "PropertyChanged", path_keyword=3D"path",
-+                interface_keyword=3D"interface")
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
+ =
+
 -- =
 
 1.6.6.1
 
 
---===============4308266934130910899==--
+--===============5616478747326423027==--
 
