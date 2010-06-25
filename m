@@ -1,76 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============1805497944095144509=="
+Content-Type: multipart/mixed; boundary="===============3950008495296157598=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 2/5] atmodem: Fix GAtPPPConnectFunc interface change
-Date: Fri, 25 Jun 2010 11:19:06 +0800
-Message-ID: <1277435949-5976-3-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1277435949-5976-2-git-send-email-zhenhua.zhang@intel.com>
+From: =?unknown-8bit?b?4LC44LCk4LGN4LCvIOCwleCwv+Cwt+Cxi+CwsOCxjQ==?= <satyakishore.kalva@gmail.com>
+Subject: Required suggestion to use third part code in oFono
+Date: Fri, 25 Jun 2010 12:32:17 +0530
+Message-ID: <AANLkTil26x_-06uAVjO1lj2Nws0ko3IMhwxWDcvXl3MV@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1805497944095144509==
+--===============3950008495296157598==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/gprs-context.c |    5 +++--
- gatchat/gsmdial.c              |    5 +++--
- 2 files changed, 6 insertions(+), 4 deletions(-)
+Hi all,
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index 4ddf88e..fea80b0 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -65,7 +65,8 @@ struct gprs_context_data {
- 	void *cb_data;                                  /* Callback data */
- };
- =
-
--static void ppp_connect(const char *interface, const char *ip,
-+static void ppp_connect(const char *interface, const char *local,
-+			const char *remote,
- 			const char *dns1, const char *dns2,
- 			gpointer user_data)
- {
-@@ -78,7 +79,7 @@ static void ppp_connect(const char *interface, const char=
- *ip,
- 	dns[2] =3D 0;
- =
-
- 	gcd->state =3D STATE_ACTIVE;
--	CALLBACK_WITH_SUCCESS(gcd->up_cb, interface, TRUE, ip,
-+	CALLBACK_WITH_SUCCESS(gcd->up_cb, interface, TRUE, local,
- 					STATIC_IP_NETMASK, NULL,
- 					dns, gcd->cb_data);
- }
-diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
-index 62c3b3d..a69a610 100644
---- a/gatchat/gsmdial.c
-+++ b/gatchat/gsmdial.c
-@@ -221,13 +221,14 @@ out:
- 	return FALSE;
- }
- =
-
--static void ppp_connect(const char *iface, const char *ip,
-+static void ppp_connect(const char *iface, const char *local, const char *=
-peer,
- 			const char *dns1, const char *dns2,
- 			gpointer user_data)
- {
- 	/* print out the negotiated address and dns server */
- 	g_print("Network Device: %s\n", iface);
--	g_print("IP Address: %s\n", ip);
-+	g_print("IP Address: %s\n", local);
-+	g_print("Peer IP Address: %s\n", peer);
- 	g_print("Primary DNS Server: %s\n", dns1);
- 	g_print("Secondary DNS Server: %s\n", dns2);
- }
--- =
-
-1.6.3.3
+I have a third part OEM layer.
+According to the oFono architecture and standards can any one *suggest* the
+good *approach* to use the third part OEM layer @ oFono.
 
 
---===============1805497944095144509==--
+Regards,
+Satya.
+
+--===============3950008495296157598==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+SGkgYWxsLCA8YnI+PGJyPkkgaGF2ZSBhIHRoaXJkIHBhcnQgT0VNIGxheWVyLiA8YnI+QWNjb3Jk
+aW5nIHRvIHRoZSBvRm9ubyBhcmNoaXRlY3R1cmUgYW5kIHN0YW5kYXJkcyBjYW4gYW55IG9uZSA8
+Yj5zdWdnZXN0PC9iPiB0aGUgZ29vZCA8Yj5hcHByb2FjaDwvYj4gdG8gdXNlIHRoZSB0aGlyZCBw
+YXJ0IE9FTSBsYXllciBAIG9Gb25vLjxicj48YnI+PGJyPlJlZ2FyZHMsIDxicj5TYXR5YS48YnI+
+Cgo=
+
+--===============3950008495296157598==--
 
