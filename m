@@ -1,100 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============5456721999778921589=="
+Content-Type: multipart/mixed; boundary="===============8641235217860985768=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus 00/23] Exports SMS over D-Bus and mis cleanups
-Date: Fri, 25 Jun 2010 16:15:22 -0700
-Message-ID: <cover.1277507431.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus 02/23] util.h: Add BUILD_BUG_ON() and friends for
+ compile-time assert checking
+Date: Fri, 25 Jun 2010 16:15:24 -0700
+Message-ID: <bae960413a408d22e3f6818ae710d051a99a1425.1277507431.git.inaky.perez-gonzalez@intel.com>
+In-Reply-To: <cover.1277507431.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5456721999778921589==
+--===============8641235217860985768==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-Hi All
+These have been stolen from the Linux kernel source; come pretty handy
+to make build-time consistency checks and thus avoid run-time
+surprises.
+---
+ src/util.h |   28 ++++++++++++++++++++++++++++
+ 1 files changed, 28 insertions(+), 0 deletions(-)
 
-This patchset is the current state of my tree that changes the D-Bus
-interface for SMS:
+diff --git a/src/util.h b/src/util.h
+index 9da81aa..b972120 100644
+--- a/src/util.h
++++ b/src/util.h
+@@ -80,3 +80,31 @@ char *sim_string_to_utf8(const unsigned char *buffer, in=
+t length);
+ =
 
- - adds object based management of SMS messages
+ unsigned char *utf8_to_sim_string(const char *utf,
+ 					int max_length, int *out_length);
++/*
++ * Build time consistency checks
++ *
++ * Stolen from the Linux kernel 2.6.35-rc; as most taken from the
++ * Linux kernel, this is licensed GPL v2 or newer.
++ */
++
++/* Force a compilation error if condition is true */
++#define BUILD_BUG_ON(condition) ((void)BUILD_BUG_ON_ZERO(condition))
++
++/* Force a compilation error if condition is constant and true */
++#define MAYBE_BUILD_BUG_ON(cond) ((void)sizeof(char[1 - 2 * !!(cond)]))
++
++/* Force a compilation error if a constant expression is not a power of 2 =
+*/
++#define BUILD_BUG_ON_NOT_POWER_OF_2(n)			\
++	BUILD_BUG_ON((n) =3D=3D 0 || (((n) & ((n) - 1)) !=3D 0))
++
++/* Force a compilation error if condition is true, but also produce a
++   result (of value 0 and type size_t), so the expression can be used
++   e.g. in a structure initializer (or where-ever else comma expressions
++   aren't permitted). */
++#define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
++#define BUILD_BUG_ON_NULL(e) ((void *)sizeof(struct { int:-!!(e); }))
++
++/*
++ * End of code stolen from the Linux kernel 2.6.35-rc. From now, code
++ * is GPL v2 only.
++ */
+-- =
 
- - adds a cancelation operation for in-transit / pending messages
-
- - holds messages waiting for acknoledgement (delivery report) -- this
-   is still not fully integrated with the code that was commited last
-   days (thus once the delivery arrives the message is not
-   automatically cleaned up as "confirmed").
-
- - generates truly unique SMS message IDs using hashing of contents
-   and receiver address
-
- - miscelaeous small cleanups / additions, carryover from a previous
-   submit that got neither not acked or no resolution was agreed upon
-
-Please review and suggest what else needs to be done / changed.
-
-Thx,
+1.6.6.1
 
 
-The following changes since commit 1fedd096a0ba2ce8625a9e4d1c2ce25bb8f6dfe4:
-  Marcel Holtmann (1):
-        Check sanity the MNC length value from the SIM card
-
-are available in the git repository at:
-
-  git://gitorious.org/~inakypg/ofono/ofono-inakypg.git master
-
-Patches follow for reviewing convenience.
-
-Inaky Perez-Gonzalez (23):
-      documentation: add note about referencing standards
-      util.h: Add BUILD_BUG_ON() and friends for compile-time assert checki=
-ng
-      smutil.h: add missing header file dependencies
-      write_file: make transaction-safe
-      doc: explain debugging options to -d, add a pointer in -h to manpage
-      SMS: introduce message ID API
-      introduce DECLARE_SMS_ADDR_STR()
-      export sms_assembly_encode_address
-      SMS: implement SHA256-based message IDs [incomplete]
-      sms: add doc about the extensions D-Bus API (not yet implemented)
-      struct tx_queue_entry: add fields and destructor
-      SMS: produce a unique, persistent name for in-transit messages
-      SMS: introduce bare state machine and transitions
-      SMS: export outgoing messages over D-Bus (skeleton)
-      SMS: split sms_send_message() into a D-Bus front end and an internal =
-API
-      SMS: introduce wait-for-ack state and infrastructure
-      SMS: introduce sms_msg_cancel and its D-Bus wrapper
-      SMS: rename tx_queue_entry->msg to ->dbus_msg for clarity
-      SMS: Implement D-Bus SMS-MSG::GetProperties
-      SMS: send D-Bus SMS-MSG::ProperyChanged signals when message changes =
-status
-      SMS: make D-Bus SendMessage and Cancel fully synchronous
-      SMS: set the SRR bit in outgoing PDUs if WFA is requested
-      sms_text_prepare: document @use_delivery_reports
-
- HACKING                        |   10 +
- Makefile.am                    |    5 +-
- doc/ofonod.8                   |    5 +-
- doc/sms-api.txt                |   94 ++++++++
- doc/standards.txt              |    8 +
- src/main.c                     |    4 +-
- src/sms.c                      |  512 +++++++++++++++++++++++++++++++++++-=
-----
- src/smsutil.c                  |  202 ++++++++++++++++-
- src/smsutil.h                  |  125 ++++++++++
- src/storage.c                  |   42 +++-
- src/util.h                     |   28 +++
- test/test-sms-msg-state-change |   24 ++
- unit/test-sms-msg-id.c         |  212 +++++++++++++++++
- 13 files changed, 1199 insertions(+), 72 deletions(-)
- create mode 100644 doc/standards.txt
- create mode 100755 test/test-sms-msg-state-change
- create mode 100644 unit/test-sms-msg-id.c
-
---===============5456721999778921589==--
+--===============8641235217860985768==--
 
