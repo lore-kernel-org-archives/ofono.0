@@ -1,105 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============2869298843008941694=="
+Content-Type: multipart/mixed; boundary="===============2511669279842705462=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: Re: [SMS D-Bus 14/23] SMS: export outgoing messages over D-Bus
- (skeleton)
-Date: Mon, 28 Jun 2010 16:28:32 -0700
-Message-ID: <1277767712.3006.28.camel@localhost.localdomain>
-In-Reply-To: <35d2fe59c28a8e703a5204cbfcc1e981cf5479d0.1277507431.git.inaky.perez-gonzalez@intel.com>
+Subject: Re: [SMS D-Bus 22/23] SMS: set the SRR bit in outgoing PDUs if WFA is
+ requested
+Date: Mon, 28 Jun 2010 16:30:35 -0700
+Message-ID: <1277767835.3006.30.camel@localhost.localdomain>
+In-Reply-To: <573bb219ad28699c9c68e1eab80b7ef1659ab1ea.1277507431.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2869298843008941694==
+--===============2511669279842705462==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2010-06-25 at 16:15 -0700, Inaky Perez-Gonzalez wrote: =
+The final patch in this series for integrating the status report into
+D-Bus message state machine is added here -- don't want to resubmit the
+whole thing as this is still an RFC.
 
-> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-> =
+From 2a22f2cb4328c54fb5cb544056541de63667588c Mon Sep 17 00:00:00 2001
+From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+Date: Mon, 28 Jun 2010 16:18:27 -0700
+Subject: [PATCH] SMS: hookup status reports to message status machine
 
-> This creates two frunctions, sms_msg_[un]register() which will
-> add/remove a D-Bus object for each SMS message when in transit.
-> =
-
-> Future changes make sms_msg_register() need information that is not
-> available at the time create_tx_queue_entry() is called, thus why
-> registration happens later.
-
-Found a few rough corners here when integrating the final parts of
-status reports into the SMS state-machine. A re-submit will have this
-incremental patch merged:
+When a message is waiting for a delivery report, it gets added to an
+special queue and it will show in D-Bus. Make it so that when the
+message's delivery is acknowledged, the message's status machine is
+updated, and thus, D-Bus signals for it are delivered.
+---
+ src/sms.c |   18 ++++++++++++++++++
+ 1 files changed, 18 insertions(+), 0 deletions(-)
 
 diff --git a/src/sms.c b/src/sms.c
-index 1b35fa9..27a3d64 100644
+index 27a3d64..bc0f80f 100644
 --- a/src/sms.c
 +++ b/src/sms.c
-@@ -532,8 +532,15 @@ GDBusSignalTable sms_msg_signals[] =3D {
- };
- =
-
-
-+/**
-+ *
-+ * @returns 0 if ok, 0 on error
-+ *
-+ * On success, sms_msg->dbus_path is non-NULL; this is needed as the
-+ * cleanup path on error are not easy to break up.
-+ */
- static
--void sms_msg_register(struct tx_queue_entry *sms_msg)
-+int sms_msg_register(struct tx_queue_entry *sms_msg)
- {
- 	g_assert(sms_msg->name !=3D NULL);
- 	sms_msg->dbus_path =3D g_strdup(sms_msg->name);
-@@ -544,20 +551,26 @@ void sms_msg_register(struct tx_queue_entry *sms_msg)
- 		ofono_error("%s: Could not create %s interface",
- 			    sms_msg->dbus_path, SMS_MSG_INTERFACE);
- 		g_free(sms_msg->dbus_path);
-+		sms_msg->dbus_path =3D NULL;
-+		return 1;
-+	} else {
-+		ofono_debug("%s: %d: sms %p @ %s: MSG registered",
-+			    __FILE__, __LINE__, sms_msg, sms_msg->dbus_path);
-+		return 0;
- 	}
--	ofono_debug("%s: %d: sms %p: MSG registered @ %s",
--		    __FILE__, __LINE__, sms_msg, sms_msg->dbus_path);
+@@ -1148,6 +1148,21 @@ static void handle_deliver(struct ofono_sms *sms, co=
+nst struct sms *incoming)
+ 	g_slist_free(l);
  }
  =
 
-
- static
- void sms_msg_unregister(struct tx_queue_entry *sms_msg)
- {
-+	if (sms_msg->dbus_path =3D=3D NULL)
++
++static void  __sms_find_destroy_by_msg_id(gpointer _sms_msg, gpointer _msg=
+_id)
++{
++	unsigned msg_id =3D (unsigned) _msg_id;
++	struct tx_queue_entry *sms_msg =3D _sms_msg;
++
++	if (sms_msg->msg_id !=3D msg_id)
 +		return;
-+	ofono_debug("%s: %d: sms %p @ %s: MSG unregistered",
-+		    __FILE__, __LINE__, sms_msg, sms_msg->dbus_path);
- 	g_dbus_unregister_interface(ofono_dbus_get_connection(),
- 				    sms_msg->dbus_path, SMS_MSG_INTERFACE);
- 	g_free(sms_msg->dbus_path);
--	ofono_debug("%s: %d: sms %p: MSG unregistered",
--		    __FILE__, __LINE__, sms_msg);
- }
++	ofono_debug("SMS: ACKED %p msg_id match %x", sms_msg, msg_id);
++	g_queue_remove(sms_msg->sms_mgr->tx_wfaq, sms_msg);
++	ofono_sms_tx_state_set(sms_msg, OFONO_SMS_TX_ST_DONE);
++	tx_queue_entry_destroy_free(sms_msg, NULL);
++}
++
++
+ static void handle_sms_status_report(struct ofono_sms *sms,
+ 						const struct sms *incoming)
+ {
+@@ -1159,6 +1174,9 @@ static void handle_sms_status_report(struct ofono_sms=
+ *sms,
+ 						&delivered) =3D=3D FALSE)
+ 		return;
  =
 
-
-@@ -801,7 +814,10 @@ struct tx_queue_entry *sms_msg_send(
- 	entry->name =3D g_strdup_printf(SMS_MSG_NAME_FMT, sms_path,
- 				      msg_id_str, entry->num_pdus);
- 	ofono_debug("sms/entry %p name %s\n", entry, entry->name);
--	sms_msg_register(entry);
-+	if (sms_msg_register(entry)) {
-+		tx_queue_entry_destroy_free(entry, NULL);
-+		return NULL;
-+	}
- =
-
- 	g_queue_push_tail(sms->txq, entry);
- 	ofono_sms_tx_state_set(entry, OFONO_SMS_TX_ST_QUEUED);
++	g_queue_foreach(sms->tx_wfaq, __sms_find_destroy_by_msg_id,
++			(void *) msg_id);
++
+ 	__ofono_history_sms_send_status(modem, msg_id, time(NULL),
+ 			delivered ? OFONO_HISTORY_SMS_STATUS_DELIVERED :
+ 			OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED);
 
 
---===============2869298843008941694==--
+
+--===============2511669279842705462==--
 
