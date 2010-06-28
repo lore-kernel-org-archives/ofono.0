@@ -1,40 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============2101532452490698565=="
+Content-Type: multipart/mixed; boundary="===============4858793146779212693=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Monitor current technology
-Date: Mon, 28 Jun 2010 11:41:06 -0500
-Message-ID: <201006281141.06919.denkenz@gmail.com>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C90105B85084@orsmsx508.amr.corp.intel.com>
+From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+Subject: Re: [SMS D-Bus 02/23] util.h: Add BUILD_BUG_ON() and friends for
+ compile-time assert checking
+Date: Mon, 28 Jun 2010 09:49:52 -0700
+Message-ID: <1277743792.3006.1.camel@localhost.localdomain>
+In-Reply-To: <1277509604.2330.144.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2101532452490698565==
+--===============4858793146779212693==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
+Hey Marcel
 
-> > So my current thinking is to drop any Tech reporting in gprs atom for
-> > now.  > At least until we actually find a usecase for EPSB/CPSB style
-> > reporting.
+On Fri, 2010-06-25 at 16:46 -0700, Marcel Holtmann wrote: =
+
+> Hi Inaky,
 > =
 
-> What about the CGREG style tech reporting?
+> > These have been stolen from the Linux kernel source; come pretty handy
+> > to make build-time consistency checks and thus avoid run-time
+> > surprises.
+> > ---
+> >  src/util.h |   28 ++++++++++++++++++++++++++++
+> >  1 files changed, 28 insertions(+), 0 deletions(-)
+> =
 
-It turns out that either nobody actually does it this way (Huawei, Option, =
+> I still think that using include/bug.h is way better. And that way we
+> could more easily sync this with ConnMan. Since this might come in handy
+> for ConnMan as well.
 
-Novatel, Telit, Nokia ISI) or they provide alternative commands for obtaini=
-ng =
+I don't have a problem with it, but I am still waiting for Denis' take
+on it.
 
-this information (MBM).
 
-The Nokia guys were also fundamentally opposed to doing it this way.  See =
-
-threads from Remi late last year.
-
-Regards,
--Denis
-
---===============2101532452490698565==--
+--===============4858793146779212693==--
 
