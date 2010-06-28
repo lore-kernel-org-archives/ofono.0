@@ -1,84 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============3334220534597139791=="
+Content-Type: multipart/mixed; boundary="===============6318413783102248984=="
 MIME-Version: 1.0
 From: y@future.research.nokia.com
-Subject: [PATCH 2/2] mbm: use cpin? to check if SIM is missing
-Date: Mon, 28 Jun 2010 21:17:08 +0300
-Message-ID: <1277749028-3443-2-git-send-email-y>
-In-Reply-To: <1277749028-3443-1-git-send-email-y>
+Subject: [PATCH 1/2] Documented Present property in sim-api.txt.
+Date: Mon, 28 Jun 2010 21:17:07 +0300
+Message-ID: <1277749028-3443-1-git-send-email-y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3334220534597139791==
+--===============6318413783102248984==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Use AT+CPIN? in case AT+CRSM=3D242 is not supported.
 ---
- plugins/mbm.c |   21 +++++++++++++++++++--
- 1 files changed, 19 insertions(+), 2 deletions(-)
+ doc/sim-api.txt |   15 ++++++++++-----
+ 1 files changed, 10 insertions(+), 5 deletions(-)
 
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 9193539..bef8783 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -49,6 +49,7 @@
+diff --git a/doc/sim-api.txt b/doc/sim-api.txt
+index 74da31f..72e9ad9 100644
+--- a/doc/sim-api.txt
++++ b/doc/sim-api.txt
+@@ -7,7 +7,7 @@ Object path	[variable prefix]/{modem0,modem1,...}
  =
 
- static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
- static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
-+static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
- static const char *none_prefix[] =3D { NULL };
+ Methods		dict GetProperties()
  =
 
- struct mbm_data {
-@@ -92,6 +93,18 @@ static void mbm_debug(const char *str, void *user_data)
- 	ofono_info("%s %s", prefix, str);
- }
+-			Returns properties for the modem object. See
++			Returns SIM properties for the modem object.  See
+ 			the properties section for available properties.
  =
 
-+static void simpin_check(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct mbm_data *data =3D ofono_modem_get_data(modem);
+ 			Possible Errors: [service].Error.InvalidArguments
+@@ -32,7 +32,7 @@ Methods		dict GetProperties()
+ 			Activates the lock for the particular pin type.  The
+ 			device will ask for a PIN automatically next time the
+ 			device is turned on or the SIM is removed and
+-			re-inserter.  The current PIN is required for the
++			re-inserted.  The current PIN is required for the
+ 			operation to succeed.
+ =
+
+ 		void UnlockPin(string type, string pin)
+@@ -45,9 +45,14 @@ Signals		PropertyChanged(string name, variant value)
+ 			This signal indicates a changed value of the given
+ 			property.
+ =
+
+-Properties	string SubscriberIdentity [readonly, optional]
++Properties	boolean Present [readonly]
+ =
+
+-			Contains the ISMI of the SIM, if available
++			True if a SIM card is detected.  There are
++			no other proprerties if false.
 +
-+	DBG("");
++		string SubscriberIdentity [readonly, optional]
 +
-+	data->have_sim =3D ok;
-+
-+	ofono_modem_set_powered(modem, TRUE);
-+}
-+
- static void status_check(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -101,8 +114,12 @@ static void status_check(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
++			Contains the IMSI of the SIM, if available.
  =
 
- 	DBG("");
+ 		string MobileCountryCode [readonly, optional]
  =
 
--	if (!ok)
--		goto poweron;
-+	if (!ok) {
-+		/* If mbm does not support at+crsm=3D242, try at+cpin? */
-+		g_at_chat_send(data->modem_port, "AT+CPIN?", cpin_prefix,
-+			simpin_check, modem, NULL);
-+		return;
-+	}
+@@ -119,4 +124,4 @@ Properties	string SubscriberIdentity [readonly, optiona=
+l]
+ 		string CardIdentifier [readonly]
  =
 
- 	/* Modem fakes a 94 04 response from card (File Id not found /
- 	 * Pattern not found) when there's no card in the slot.
+ 			Contains the Intergrated Circuit Card Identifer (ICCID)
+-			and is read directly from the SIM.
++			which is read directly from the SIM.
 -- =
 
 1.6.3.3
 
 
---===============3334220534597139791==--
+--===============6318413783102248984==--
 
