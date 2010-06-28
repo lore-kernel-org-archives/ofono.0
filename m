@@ -1,46 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============8807082809061729994=="
+Content-Type: multipart/mixed; boundary="===============4470515030640731783=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [SMS D-Bus 03/23] smutil.h: add missing header file dependencies
-Date: Sat, 26 Jun 2010 01:48:29 +0200
-Message-ID: <1277509709.2330.146.camel@localhost.localdomain>
-In-Reply-To: <7356379c8adb4d93335cae5e9ab75d0684b93321.1277507431.git.inaky.perez-gonzalez@intel.com>
+From: =?unknown-8bit?b?4LC44LCk4LGN4LCvIOCwleCwv+Cwt+Cxi+CwsOCxjQ==?= <satyakishore.kalva@gmail.com>
+Subject: Re: Required suggestion to use third part code in oFono
+Date: Mon, 28 Jun 2010 12:11:34 +0530
+Message-ID: <AANLkTikWKHV0Nt2SaTNWs4JFgFxLFBfNMiXyb2MpHngs@mail.gmail.com>
+In-Reply-To: <AANLkTil26x_-06uAVjO1lj2Nws0ko3IMhwxWDcvXl3MV@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8807082809061729994==
+--===============4470515030640731783==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Inaky,
+Hi Marcel,
 
->  src/smsutil.h |    9 +++++++++
->  1 files changed, 9 insertions(+), 0 deletions(-)
-> =
+In this case is it required to make the third part OEM layer as OPEN-SOURCE.
 
-> diff --git a/src/smsutil.h b/src/smsutil.h
-> index 66ef6f8..baa3eca 100644
-> --- a/src/smsutil.h
-> +++ b/src/smsutil.h
-> @@ -18,6 +18,14 @@
->   *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
-1  USA
->   *
->   */
-> +#ifndef __smsutil_h__
-> +#define __smsutil_h__
+Thanks,
+-- Satya.
 
-for internal headers I don't want the circular inclusion protection. It
-buys us nothing. And leaving it out will warn us when we do circular
-inclusion. That is a clear indication that something is a bit too
-complicated if it is needed.
+Hi Satya,
+
+> I have a third part OEM layer.
+> According to the oFono architecture and standards can any one suggest
+> the good approach to use the third part OEM layer @ oFono.
+
+oFono is licensed under GPL v2 and as long as your OEM layer is
+compatible with GPL v2 you can use it.
 
 Regards
 
 Marcel
 
+2010/6/25 =E0=B0=B8=E0=B0=A4=E0=B1=8D=E0=B0=AF =E0=B0=95=E0=B0=BF=E0=B0=B7=
+=E0=B1=8B=E0=B0=B0=E0=B1=8D <satyakishore.kalva@gmail.com>
+>
+> Hi all,
+>
+> I have a third part OEM layer.
+> According to the oFono architecture and standards can any one suggest the=
+ good approach to use the third part OEM layer @ oFono.
+>
+>
+> Regards,
+> Satya.
 
-
---===============8807082809061729994==--
+--===============4470515030640731783==--
 
