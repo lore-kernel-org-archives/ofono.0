@@ -1,48 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0717008828990708450=="
+Content-Type: multipart/mixed; boundary="===============7165749060517544436=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: Re: [SMS D-Bus 03/23] smutil.h: add missing header file dependencies
-Date: Mon, 28 Jun 2010 09:52:24 -0700
-Message-ID: <1277743944.3006.2.camel@localhost.localdomain>
-In-Reply-To: <1277509709.2330.146.camel@localhost.localdomain>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [SMS D-Bus 02/23] util.h: Add BUILD_BUG_ON() and friends for
+ compile-time assert checking
+Date: Mon, 28 Jun 2010 12:01:43 -0500
+Message-ID: <201006281201.43560.denkenz@gmail.com>
+In-Reply-To: <bae960413a408d22e3f6818ae710d051a99a1425.1277507431.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0717008828990708450==
+--===============7165749060517544436==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Sat, 2010-06-26 at 01:48 +0200, Marcel Holtmann wrote: =
+Hi Inaky,
 
-> Hi Inaky,
+> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 > =
 
-> >  src/smsutil.h |    9 +++++++++
-> >  1 files changed, 9 insertions(+), 0 deletions(-)
-> > =
-
-> > diff --git a/src/smsutil.h b/src/smsutil.h
-> > index 66ef6f8..baa3eca 100644
-> > --- a/src/smsutil.h
-> > +++ b/src/smsutil.h
-> > @@ -18,6 +18,14 @@
-> >   *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1=
-301  USA
-> >   *
-> >   */
-> > +#ifndef __smsutil_h__
-> > +#define __smsutil_h__
+> These have been stolen from the Linux kernel source; come pretty handy
+> to make build-time consistency checks and thus avoid run-time
+> surprises.
+> ---
+>  src/util.h |   28 ++++++++++++++++++++++++++++
+>  1 files changed, 28 insertions(+), 0 deletions(-)
 > =
 
-> for internal headers I don't want the circular inclusion protection. It
-> buys us nothing. And leaving it out will warn us when we do circular
-> inclusion. That is a clear indication that something is a bit too
-> complicated if it is needed.
 
-Yeah, I just forgot to drop it.
+This stuff really doesn't belong in util.h.  That file is ancient and if I =
+were =
 
+to do it again, I'd rename it into textutil.h or gsmutil.h.  I only really =
 
+want to keep text conversions there.
 
---===============0717008828990708450==--
+I suggest putting this stuff into include/bug.h per Marcel's earlier email.
+
+Regards,
+-Denis
+
+--===============7165749060517544436==--
 
