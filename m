@@ -1,23 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============5836767854753862875=="
+Content-Type: multipart/mixed; boundary="===============2851159794872335734=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [PATCH 1/2] Documented Present property in sim-api.txt.
-Date: Mon, 28 Jun 2010 21:21:22 +0300
-Message-ID: <AANLkTilr0BqyOyGN7W9FkmTAiecKUjalDAoCEg0VrSK3@mail.gmail.com>
-In-Reply-To: <-6283240161481769156@unknownmsgid>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 2/2] mbm: use cpin? to check if SIM is missing
+Date: Mon, 28 Jun 2010 22:39:02 +0200
+Message-ID: <AANLkTilYOIv-J2SzZd531IdEAFbUuL1vDltcFm47bkUk@mail.gmail.com>
+In-Reply-To: <1277749213-3499-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5836767854753862875==
+--===============2851159794872335734==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Oh my yes. ;)
+On 28 June 2010 20:20, Pekka Pessi <Pekka.Pessi@nokia.com> wrote:
+> Use AT+CPIN? in case AT+CRSM=3D242 is not supported.
 
--- =
+On the model where AT+CRSM works, AT+CPIN also works, so I propose to
+use it always.  The firmware may cache information but when card is
+extracted it notices.
 
-Pekka.Pessi mail at nokia.com
+Regards,
+Andrew
 
---===============5836767854753862875==--
+--===============2851159794872335734==--
 
