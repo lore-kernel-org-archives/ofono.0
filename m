@@ -1,28 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============2982200614328317642=="
+Content-Type: multipart/mixed; boundary="===============8591589387249561241=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem: Don't unregister *EPEV in *EPEV handler.
-Date: Tue, 29 Jun 2010 14:03:43 -0500
-Message-ID: <201006291403.43657.denkenz@gmail.com>
-In-Reply-To: <1277780427-8241-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 1/2] huawei: reopen the GPRS context when the modem closes
+ it after PPP
+Date: Tue, 29 Jun 2010 14:04:23 -0500
+Message-ID: <201006291404.23766.denkenz@gmail.com>
+In-Reply-To: <20100629075931.18717.84414.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2982200614328317642==
+--===============8591589387249561241==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Kalle,
 
-> Handlers are called when looping over the unsolicited responses hash,
-> registering or unregistering modifies that hash and confuses glib.
-> ---
+> Huawei always closes the tty port after PPP disconnect. Handle this in
+> huawei plugin, similarly as done with novatel. Now there's no need
+> to unplug the modem after disconnection.
+> =
 
-Good catch.  Applied, thanks.
+> Tested with Huawei E1552.
+> =
+
+> Based on a patch by Marcel Holtmann:
+> =
+
+> commit 0329a6ceaf8f69857cb5f8437b9db86ca327ef1d
+> Author: Marcel Holtmann <marcel@holtmann.org>
+> Date:   Mon Jun 7 02:36:12 2010 -0700
+> =
+
+>     Reopen the GPRS context channel when the modem closes it after PPP
+
+Both have been applied, thanks.
 
 Regards,
 -Denis
 
---===============2982200614328317642==--
+--===============8591589387249561241==--
 
