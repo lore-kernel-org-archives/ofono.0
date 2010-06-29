@@ -1,43 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============8591589387249561241=="
+Content-Type: multipart/mixed; boundary="===============5594229151647332896=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] huawei: reopen the GPRS context when the modem closes
- it after PPP
-Date: Tue, 29 Jun 2010 14:04:23 -0500
-Message-ID: <201006291404.23766.denkenz@gmail.com>
-In-Reply-To: <20100629075931.18717.84414.stgit@potku.valot.fi>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 2/9] mbmmodem: Cancel running command on *STKEND.
+Date: Tue, 29 Jun 2010 12:14:01 +0200
+Message-ID: <1277806448-5322-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1277806448-5322-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8591589387249561241==
+--===============5594229151647332896==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+---
+ drivers/mbmmodem/stk.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-> Huawei always closes the tty port after PPP disconnect. Handle this in
-> huawei plugin, similarly as done with novatel. Now there's no need
-> to unplug the modem after disconnection.
-> =
+diff --git a/drivers/mbmmodem/stk.c b/drivers/mbmmodem/stk.c
+index 77bd7b5..53b5adf 100644
+--- a/drivers/mbmmodem/stk.c
++++ b/drivers/mbmmodem/stk.c
+@@ -179,6 +179,14 @@ static void stkn_notify(GAtResult *result, gpointer us=
+er_data)
+ =
 
-> Tested with Huawei E1552.
-> =
+ static void stkend_notify(GAtResult *result, gpointer user_data)
+ {
++	struct ofono_stk *stk =3D user_data;
++
++	/* Seems to be used by the modem and/or cards to indicate
++	 * that we have taken too long to respond to a command, but
++	 * does not invalidate current application state, such as
++	 * main menu (?)
++	 */
++	ofono_stk_proactive_command_cancel(stk);
+ }
+ =
 
-> Based on a patch by Marcel Holtmann:
-> =
+ static void mbm_stkc_cb(gboolean ok, GAtResult *result, gpointer user_data)
+-- =
 
-> commit 0329a6ceaf8f69857cb5f8437b9db86ca327ef1d
-> Author: Marcel Holtmann <marcel@holtmann.org>
-> Date:   Mon Jun 7 02:36:12 2010 -0700
-> =
+1.7.1.86.g0e460.dirty
 
->     Reopen the GPRS context channel when the modem closes it after PPP
 
-Both have been applied, thanks.
-
-Regards,
--Denis
-
---===============8591589387249561241==--
+--===============5594229151647332896==--
 
