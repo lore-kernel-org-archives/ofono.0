@@ -1,29 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============8944276666932123196=="
+Content-Type: multipart/mixed; boundary="===============2624992996555431546=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] mbm: use CPIN? to check if SIM is missing
-Date: Tue, 29 Jun 2010 12:25:39 -0500
-Message-ID: <201006291225.39810.denkenz@gmail.com>
-In-Reply-To: <1277809601-9390-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH 0/3] html text attribute patches 
+Date: Tue, 29 Jun 2010 04:22:11 -0700
+Message-ID: <1277810534-25450-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8944276666932123196==
+--===============2624992996555431546==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Modified stkutil per last review.  Added unit tests for Display Text
+tests.  I will add the rest of the unit tests after this patch series
+is reviewed.
 
-> AT+CRSM=3D242 is not supported by all mbm models.
-> ---
->  plugins/mbm.c |   28 ++++++----------------------
->  1 files changed, 6 insertions(+), 22 deletions(-)
+Kristen Carlson Accardi (3):
+  stkutil: display text attributes as html
+  test-stkutil: add unit test for html text attributes
+  test-stkutil: add html attribute test for Display Text tests
 
-Patch has been applied, thanks.
+ src/stkutil.c       |  190 ++++++++++++++++++++++++++++++++++
+ src/stkutil.h       |   23 ++++
+ unit/test-stkutil.c |  280 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 3 files changed, 493 insertions(+), 0 deletions(-)
 
-Regards,
--Denis
 
---===============8944276666932123196==--
+--===============2624992996555431546==--
 
