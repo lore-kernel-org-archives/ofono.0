@@ -1,70 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============2311978229321628415=="
+Content-Type: multipart/mixed; boundary="===============3779530922142594945=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] Voicecall gaps.
-Date: Wed, 30 Jun 2010 16:01:01 +0300
-Message-ID: <1277902861-6494-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] test-stkutil: Fix always true condition.
+Date: Wed, 30 Jun 2010 14:31:45 +0200
+Message-ID: <1277901105-2161-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2311978229321628415==
+--===============3779530922142594945==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
-
-Missing voicecall functionality pieces from tp-ring point-of-view.
 ---
- TODO |   27 +++++++++++++++++++++++++++
- 1 files changed, 27 insertions(+), 0 deletions(-)
+ unit/test-stkutil.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/TODO b/TODO
-index 470d4a6..e6ef20d 100644
---- a/TODO
-+++ b/TODO
-@@ -265,6 +265,33 @@ Supplementary Services
-   Complexity: C8
+diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
+index 8b7e254..ba4d227 100644
+--- a/unit/test-stkutil.c
++++ b/unit/test-stkutil.c
+@@ -220,8 +220,8 @@ static void check_gsm_sms(const struct sms *command,
+ 		g_assert(cs->srr =3D=3D ts->srr);
+ 		g_assert(cs->mr =3D=3D ts->mr);
  =
 
+-		g_assert(cs->daddr.number_type =3D=3D cs->daddr.number_type);
+-		g_assert(cs->daddr.numbering_plan =3D=3D cs->daddr.numbering_plan);
++		g_assert(cs->daddr.number_type =3D=3D ts->daddr.number_type);
++		g_assert(cs->daddr.numbering_plan =3D=3D ts->daddr.numbering_plan);
+ 		g_assert(g_str_equal(cs->daddr.address, ts->daddr.address));
  =
 
-+Voicecall
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+- Supplementary service notifications for remote party putting call on hold
-+  or retrieving the call or joining call to a multiparty conference.
-+
-+  Priority: Medium
-+  Complexity: C1
-+  Owner: Pekka Pessi <pekka.pessi@nokia.com>
-+
-+- Dial strings. Include CLIR prefixes and 2nd stage dial strings in call h=
-istory.
-+
-+  Priority: Medium
-+  Complexity: C2
-+
-+- Start DTMF, Stop DTMF, feedback of sent DTMF tones.
-+
-+  Priority: Medium
-+  Complexity: C2
-+
-+- Add atom for assisting in local supervisory tone generation when modem
-+  does include tones in media streams.
-+
-+  Priority: Medium
-+  Complexity: C2
-+
-+
- Miscellaneous
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
-
+ 		g_assert(cs->pid =3D=3D ts->pid);
 -- =
 
-1.7.0.4
+1.7.1.86.g0e460.dirty
 
 
---===============2311978229321628415==--
+--===============3779530922142594945==--
 
