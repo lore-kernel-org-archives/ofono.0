@@ -1,83 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============7086254989223521681=="
+Content-Type: multipart/mixed; boundary="===============2311978229321628415=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: [PATCH 3/5] test-server: Add PPP server support
-Date: Wed, 30 Jun 2010 17:43:21 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B351F681664@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <1277435949-5976-4-git-send-email-zhenhua.zhang@intel.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] Voicecall gaps.
+Date: Wed, 30 Jun 2010 16:01:01 +0300
+Message-ID: <1277902861-6494-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7086254989223521681==
+--===============2311978229321628415==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Zhenhua Zhang wrote:
-> So that gsmdial and wvdial could talk to test-server and establish
-> PPP connection. ---
-> gatchat/test-server.c |  131
-> ++++++++++++++++++++++++++++++++++++++++++++++---
-> 1 files changed, 123 insertions(+), 8 deletions(-)
-> =
+Missing voicecall functionality pieces from tp-ring point-of-view.
+---
+ TODO |   27 +++++++++++++++++++++++++++
+ 1 files changed, 27 insertions(+), 0 deletions(-)
 
-> diff --git a/gatchat/test-server.c b/gatchat/test-server.c
-> index 5c1cfa4..96faab4 100644
-> --- a/gatchat/test-server.c
-> +++ b/gatchat/test-server.c
->
-<--snip-->
+diff --git a/TODO b/TODO
+index 470d4a6..e6ef20d 100644
+--- a/TODO
++++ b/TODO
+@@ -265,6 +265,33 @@ Supplementary Services
+   Complexity: C8
+ =
 
-> static void server_destroy(gpointer user)
-> @@ -706,15 +825,11 @@ static void server_destroy(gpointer user)
-> =
+ =
 
-> static void set_raw_mode(int fd)
-> {
-> -	struct termios options;
-> -
-> -	tcgetattr(fd, &options);
-> -
-> -	/* Set TTY as raw mode to disable echo back of input characters
-> -	 * when they are received from Modem to avoid feedback loop */
-> -	options.c_lflag &=3D ~(ICANON | ECHO | ECHOE | ISIG); +	struct
-> termios ti; =
++Voicecall
++=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++- Supplementary service notifications for remote party putting call on hold
++  or retrieving the call or joining call to a multiparty conference.
++
++  Priority: Medium
++  Complexity: C1
++  Owner: Pekka Pessi <pekka.pessi@nokia.com>
++
++- Dial strings. Include CLIR prefixes and 2nd stage dial strings in call h=
+istory.
++
++  Priority: Medium
++  Complexity: C2
++
++- Start DTMF, Stop DTMF, feedback of sent DTMF tones.
++
++  Priority: Medium
++  Complexity: C2
++
++- Add atom for assisting in local supervisory tone generation when modem
++  does include tones in media streams.
++
++  Priority: Medium
++  Complexity: C2
++
++
+ Miscellaneous
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ =
 
-> =
+-- =
 
-> -	tcsetattr(fd, TCSANOW, &options);
-> +	tcflush(fd, TCIOFLUSH);
-> +	cfmakeraw(&ti);
-> +	tcsetattr(fd, TCSANOW, &ti);
-> }
->
-> static gboolean create_tty(const char *modem_path)
-
-I found above changes does not contain latest git tree. The part of change =
-is necessary when I tried to use bluetooth serial proxy between two machine=
-s. Without cfmakeraw, the server responses:
-	'\r\nOK\r\n'
-would change to:
-	'\n\nOK\n\n'
-
-And this issue doesn't exist if both server and client on the same machine.
-
-> --
-> 1.6.3.3
-> =
-
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+1.7.0.4
 
 
-
-Regards,
-Zhenhua
-
-
---===============7086254989223521681==--
+--===============2311978229321628415==--
 
