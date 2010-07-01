@@ -1,45 +1,95 @@
-Content-Type: multipart/mixed; boundary="===============4288825741914851899=="
+Content-Type: multipart/mixed; boundary="===============4287055073421104829=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
 Subject: Re: [PATCH 1/3] stkutil: display text attributes as html
-Date: Thu, 01 Jul 2010 17:50:30 -0500
-Message-ID: <4C2D1BB6.60700@gmail.com>
-In-Reply-To: <AANLkTinrzAGtJW4Xg4U6rFdG6L6bbykaNDN0DZrGLG6y@mail.gmail.com>
+Date: Thu, 01 Jul 2010 15:56:56 -0700
+Message-ID: <20100701155656.6cbabca3@kcaccard-MOBL3>
+In-Reply-To: <4C2D0577.5070708@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4288825741914851899==
+--===============4287055073421104829==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+On Thu, 01 Jul 2010 16:15:35 -0500
+Denis Kenzior <denkenz@gmail.com> wrote:
 
->>> It would have a different signature because as far as I understand a
->>> separate array of attributes is sent in each segment (the start/len
->>> fields can't address more than 256 characters anyway).  So that
->>> function can be a wrapper around this function.
->>>
->>
->> It depends actually.  I'd like to avoid writing a separate EMS
->> concatenator, and re-use sms_decode_text.  This means that if possible,
->> I'd like this function to work on arbitrary length strings.  The text
->> attributes can be massaged pretty easily without knowing what's inside
->> the SMS message.
+> On 07/01/2010 03:54 PM, Kristen Carlson Accardi wrote:
+> > On Thu, 01 Jul 2010 13:54:16 -0500
+> > Denis Kenzior <denkenz@gmail.com> wrote:
+> > =
+
+> >> Hi Kristen,
+> >>
+> >> On 07/01/2010 01:29 PM, Kristen Carlson Accardi wrote:
+> >>> On Thu, 01 Jul 2010 11:30:07 -0500
+> >>> Denis Kenzior <denkenz@gmail.com> wrote:
+> >>>
+> >>>>
+> >>>>> +		start =3D attrs[i++];
+> >>>>> +		len =3D attrs[i++];
+> >>>>> +		code =3D attrs[i++];
+> >>>>
+> >>>> You might want to be extra paranoid here that attrs_len is a multipl=
+e of 4.
+> >>>
+> >>> attrs_len does not have to be a multiple of 4.  I will add a sanity
+> >>> check to attrs_len to make sure it is at least >=3D i + 3.
+> >>>
+> >>
+> >> Then this code is incorrect, as it handles len 3 attrs only at the end
+> >> of the array.  Also please note that SIM Toolkit Text Attributes are
+> >> always coded on 4 bytes (see 102.223 Section 8.72 for details).  You
+> >> might want to assume 4 byte alignment or invent a data structure for
+> >> these attributes.
+> > =
+
+> > I should have said that attrs_len does not always have to be a multiple
+> > of 4 -- it is allowed to only have 3 byte attrs as the last attribute,
+> > so the code is correct.  However, since not all attributes are
+> > required to be of len 4, we can't just assume attrs_len is a multiple
+> > of 4.
+> > =
+
 > =
 
-> My point is that it won't work on a message longer than 256 bytes
-> anyway, because you would need to either change how the attribute
-> start byte is coded, or supplement each attribute with information
-> about which segment it relates to.
+> How do you figure this?  From 23.040 Section 9.2.3.24.10.1.1	Text Formatt=
+ing
+> =
 
-I know, see my comment above about 'text attributes can be massaged..'
+> "Octet 4
+> =
 
-My thinking is that doing it inside this function is faster / easier in
-the common case than writing a custom EMS message decoder.
+> This Octet may be omitted by setting the IED length accordingly."
 
-Regards,
--Denis
+This isn't the clearest language, so my interpretation of this is
+you may omit one byte if you set the length properly.  Clearly
+the spec tell you that the byte is optional, so I think it would
+be wrong to assume that all are 4 bytes.  Also, since obviously
+we can't support mixed 3 and 4 byte fields since we'd have no
+way to know if the next byte was the start of the next attribute,
+it's got to be at the end of the array.
 
---===============4288825741914851899==--
+> =
+
+> From 102.223 Section 8.72:
+> =
+
+> "The Text Formatting is a sequence of one or several Text Formatting
+> items, each coded on 4 bytes.
+> The Text Formatting scheme used is the same as the Text Formatting
+> defined in TS 123 040 [27]."
+> =
+
+> So you either have to support a mixed 3 & 4 byte fields or you assume
+> all fields are 4 bytes.
+> =
+
+> Regards,
+> -Denis
+
+
+--===============4287055073421104829==--
 
