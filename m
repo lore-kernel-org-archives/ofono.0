@@ -1,60 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============2153628345631008852=="
+Content-Type: multipart/mixed; boundary="===============7560351998352682275=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 10/10] test-stkutil: add html_attr_test for special chars
-Date: Thu, 01 Jul 2010 08:31:25 -0700
-Message-ID: <1277998285-30207-11-git-send-email-kristen@linux.intel.com>
-In-Reply-To: <1277998285-30207-1-git-send-email-kristen@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/3] stkutil: display text attributes as html
+Date: Thu, 01 Jul 2010 17:35:09 -0500
+Message-ID: <4C2D181D.2060609@gmail.com>
+In-Reply-To: <AANLkTinbEd4WdRbbEYB-zSCdMmh0k6oZ-1mXonMwy_3e@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2153628345631008852==
+--===============7560351998352682275==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- unit/test-stkutil.c |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
+Hi Andrew,
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index 74e2ec2..c2e1327 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -22383,6 +22383,16 @@ static struct html_attr_test html_attr_data_3 =3D {
- 		"#FFFFFF;\">bc</span>",
- };
- =
+On 07/01/2010 05:10 PM, Andrzej Zaborowski wrote:
+> Hi
+> =
 
-+static struct html_attr_test html_attr_data_4 =3D {
-+	.text =3D "1 < 2, 2 > 1, 1 & 0 =3D=3D 0\nSpecial Chars are Fun\r\nTo Writ=
-e",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x00, 0x00 },
-+	},
-+	.html =3D "1 &lt; 2, 2 &gt; 1, 1 &amp; 0 =3D=3D 0<br/>Special Chars are F=
-un"
-+		"<br/>To Write",
-+};
-+
- static void test_html_attr(gconstpointer data)
- {
- 	const struct html_attr_test *test =3D data;
-@@ -24420,6 +24430,8 @@ int main(int argc, char **argv)
- 				&html_attr_data_2, test_html_attr);
- 	g_test_add_data_func("/teststk/HTML Attribute Test 3",
- 				&html_attr_data_3, test_html_attr);
-+	g_test_add_data_func("/teststk/HTML Attribute Test 4",
-+				&html_attr_data_4, test_html_attr);
- =
+> On 1 July 2010 18:30, Denis Kenzior <denkenz@gmail.com> wrote:
+>>> +char *stk_text_to_html(char *text, int text_len,
+>>> +                             const unsigned char *attrs, int attrs_len)
+>>> +{
+>>> +     GString *string =3D g_string_sized_new(text_len + 1);
+>>> +     int formats[257];  /* maximum number of chars in text + 1 */
+>>> +     int pos =3D 0, i, j, attr, prev_attr;
+>>> +     guint8 start, end, code, color, len, align;
+>>> +
+>>> +     /* we will need formatting at the position beyond the last char */
+>>> +     for (i =3D 0; i <=3D text_len; i++)
+>>> +             formats[i] =3D STK_TEXT_FORMAT_INIT;
+>>> +
+>>
+>> Please note that the same formatting can be used for EMS messages
+>> (23.040).  These messages have a fairly large max-len (255 segments *
+>> ~153 characters)  I'd like to have this function useable for EMS
+>> messages as well.
+> =
 
- 	return g_test_run();
- }
--- =
-
-1.6.6.1
+> It would have a different signature because as far as I understand a
+> separate array of attributes is sent in each segment (the start/len
+> fields can't address more than 256 characters anyway).  So that
+> function can be a wrapper around this function.
+> =
 
 
---===============2153628345631008852==--
+It depends actually.  I'd like to avoid writing a separate EMS
+concatenator, and re-use sms_decode_text.  This means that if possible,
+I'd like this function to work on arbitrary length strings.  The text
+attributes can be massaged pretty easily without knowing what's inside
+the SMS message.
+
+Regards,
+-Denis
+
+--===============7560351998352682275==--
 
