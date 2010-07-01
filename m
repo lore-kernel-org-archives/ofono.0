@@ -1,83 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============1728497015917678078=="
+Content-Type: multipart/mixed; boundary="===============8672832379761667377=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 01/10] stkutil: display text attributes as html
-Date: Thu, 01 Jul 2010 18:12:11 -0500
-Message-ID: <4C2D20CB.4000405@gmail.com>
-In-Reply-To: <1277998285-30207-2-git-send-email-kristen@linux.intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: Re: [PATCH 1/3] stkutil: display text attributes as html
+Date: Thu, 01 Jul 2010 16:05:43 -0700
+Message-ID: <20100701160543.255f66cf@kcaccard-MOBL3>
+In-Reply-To: <4C2D1FFF.8050308@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1728497015917678078==
+--===============8672832379761667377==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+On Thu, 01 Jul 2010 18:08:47 -0500
+Denis Kenzior <denkenz@gmail.com> wrote:
 
-> +#define STK_TEXT_FORMAT_INIT -1
+> Hi Kristen,
+> =
 
-I'd really prefer 0xffff here
+> >>>> Then this code is incorrect, as it handles len 3 attrs only at the e=
+nd
+> >>>> of the array.  Also please note that SIM Toolkit Text Attributes are
+> >>>> always coded on 4 bytes (see 102.223 Section 8.72 for details).  You
+> >>>> might want to assume 4 byte alignment or invent a data structure for
+> >>>> these attributes.
+> >>>
+> >>> I should have said that attrs_len does not always have to be a multip=
+le
+> >>> of 4 -- it is allowed to only have 3 byte attrs as the last attribute,
+> >>> so the code is correct.  However, since not all attributes are
+> >>> required to be of len 4, we can't just assume attrs_len is a multiple
+> >>> of 4.
+> >>>
+> >>
+> >> How do you figure this?  From 23.040 Section 9.2.3.24.10.1.1	Text Form=
+atting
+> >>
+> >> "Octet 4
+> >>
+> >> This Octet may be omitted by setting the IED length accordingly."
+> > =
 
-> +char *stk_text_to_html(const char *text, int text_len,
-> +				const unsigned char *attrs, int attrs_len)
-> +{
+> > This isn't the clearest language, so my interpretation of this is
+> > you may omit one byte if you set the length properly.  Clearly
+> > the spec tell you that the byte is optional, so I think it would
+> > be wrong to assume that all are 4 bytes.  Also, since obviously
+> > we can't support mixed 3 and 4 byte fields since we'd have no
+> > way to know if the next byte was the start of the next attribute,
+> > it's got to be at the end of the array.
+> =
 
-I think that text_len is not required, this function can figure it out
-itself by using strlen or friends.
+> Actually it is not.  Each Text attribute is put into an SMS header, with
+> the header having an IEI (Information Element Identifier), Length and
+> Data.  See SMS_IEI_TEXT_FORMAT in smsutil.h
+> =
 
-> +	GString *string =3D g_string_sized_new(text_len + 1);
-> +	int *formats;
-> +	int pos, i, j, attr, prev_attr;
-> +	guint8 start, end, code, color, len, align;
-> +
-> +	formats =3D g_try_malloc0(sizeof(int) * (text_len + 1));
+> Hence, when an EMS PDU is parsed, you know whether this is a 3 byte or a
+> 4 byte element.
+> =
 
-Why are you allocating ints instead of shorts?
+> Regards,
+> -Denis
 
-Also, you have to be really careful here.  Text inside oFono is
-understood to be UTF8 always.  The formats array should be allocated
-according to how many UTF8 characters there are, not how many bytes
-there are.  GSM characters can be represented by up to 3 byte UTF8
-chars.  UCS2 characters can be represented by up to 4 byte UTF8 chars.
+The way this function is - we have no knowledge of the pdu.
+Are you wanting to change the arguments to this function to include
+an sms header?  or a pdu? Or are you saying the caller is responsible =
 
-Also please realize that is is not required unless you modify the
-signature of attrs to be something other than unsigned char (limited to
-max=3D255)
+for padding out the text attribute into a 4 byte attribute?
 
-> +	if (formats =3D=3D NULL)
-> +		return NULL;
-> +
-> +	/* we will need formatting at the position beyond the last char */
-> +	for (i =3D 0; i <=3D text_len; i++)
-> +		formats[i] =3D STK_TEXT_FORMAT_INIT;
-> +
-> +	for (i =3D 0; i+3 < attrs_len; i +=3D 4) {
-> +		start =3D attrs[i];
-> +		len =3D attrs[i + 1];
-> +		code =3D attrs[i + 2];
-> +
-> +		if (i + 3 < attrs_len)
-> +			color =3D attrs[i + 3];
-> +		else
-> +			color =3D 0;
-
-My suggestion is to generalize this function to support both EMS
-messages and STK strings.  We can treat attrs as:
-
-unsigned short *attrs, unsigned short len where len =3D number of
-quadruples.  See the earlier thread for details.
-
-The reason for using shorts is to support larger EMS message sizes.
-
-> +
-> +	for (pos =3D 0; pos <=3D text_len; pos++) {
-
-And again here you have to be careful and use UTF8 character lengths,
-not simple ASCII lengths.
-
-Regards,
--Denis
-
---===============1728497015917678078==--
+--===============8672832379761667377==--
 
