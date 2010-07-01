@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============3283467112714777865=="
+Content-Type: multipart/mixed; boundary="===============2940117724111121571=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 04/10] test-stkutil: add html attribute tests for
- get_inkey_test
-Date: Thu, 01 Jul 2010 08:31:19 -0700
-Message-ID: <1277998285-30207-5-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH 06/10] test-stkutil: add html attribute tests for
+ play_tone_test
+Date: Thu, 01 Jul 2010 08:31:21 -0700
+Message-ID: <1277998285-30207-7-git-send-email-kristen@linux.intel.com>
 In-Reply-To: <1277998285-30207-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3283467112714777865==
+--===============2940117724111121571==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,220 +20,220 @@ Content-Transfer-Encoding: quoted-printable
  1 files changed, 53 insertions(+), 16 deletions(-)
 
 diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index bc0e018..3b19227 100644
+index 4d22d94..3ab3528 100644
 --- a/unit/test-stkutil.c
 +++ b/unit/test-stkutil.c
-@@ -964,6 +964,7 @@ struct get_inkey_test {
- 	struct stk_duration duration;
+@@ -3319,6 +3319,7 @@ struct play_tone_test {
+ 	struct stk_icon_id icon_id;
  	struct stk_text_attribute text_attr;
  	struct stk_frame_id frame_id;
 +	char *html;
  };
  =
 
- static unsigned char get_inkey_111[] =3D { 0xD0, 0x15, 0x81, 0x03, 0x01, 0=
-x22,
-@@ -1569,7 +1570,9 @@ static struct get_inkey_test get_inkey_data_911 =3D {
+ static unsigned char play_tone_111[] =3D { 0xD0, 0x1B, 0x81, 0x03, 0x01, 0=
+x20,
+@@ -4089,7 +4090,9 @@ static struct play_tone_test play_tone_data_411 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Enter \"+\"</span>",
++		"Text Attribute 1</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_912 =3D {
-@@ -1587,7 +1590,10 @@ static struct get_inkey_test get_inkey_data_921 =3D {
+ static struct play_tone_test play_tone_data_412 =3D {
+@@ -4117,7 +4120,10 @@ static struct play_tone_test play_tone_data_421 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x01, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x01, 0xB4 }
 -	}
 +	},
 +	.html =3D "<div style=3D\"text-align: center;\"><span style=3D\"color: "
-+		"#347235;background-color: #FFFF00;\">Enter \"+\"</span>"
++		"#347235;background-color: #FFFF00;\">Text Attribute 1</span>"
 +		"</div>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_922 =3D {
-@@ -1605,7 +1611,10 @@ static struct get_inkey_test get_inkey_data_931 =3D {
+ static struct play_tone_test play_tone_data_422 =3D {
+@@ -4145,7 +4151,10 @@ static struct play_tone_test play_tone_data_431 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x02, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x02, 0xB4 }
 -	}
 +	},
 +	.html =3D "<div style=3D\"text-align: right;\"><span style=3D\"color: "
-+		"#347235;background-color: #FFFF00;\">Enter \"+\"</span>"
++		"#347235;background-color: #FFFF00;\">Text Attribute 1</span>"
 +		"</div>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_932 =3D {
-@@ -1623,7 +1632,9 @@ static struct get_inkey_test get_inkey_data_941 =3D {
+ static struct play_tone_test play_tone_data_432 =3D {
+@@ -4173,7 +4182,9 @@ static struct play_tone_test play_tone_data_441 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x04, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x04, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"font-size: big;color: #347235;"
-+		"background-color: #FFFF00;\">Enter \"+\"</span>",
++		"background-color: #FFFF00;\">Text Attribute 1</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_942 =3D {
-@@ -1634,7 +1645,9 @@ static struct get_inkey_test get_inkey_data_942 =3D {
+ static struct play_tone_test play_tone_data_442 =3D {
+@@ -4189,7 +4200,9 @@ static struct play_tone_test play_tone_data_442 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Enter \"#\"</span>",
++		"Text Attribute 2</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_943 =3D {
-@@ -1652,7 +1665,9 @@ static struct get_inkey_test get_inkey_data_951 =3D {
+ static struct play_tone_test play_tone_data_443 =3D {
+@@ -4217,7 +4230,9 @@ static struct play_tone_test play_tone_data_451 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x08, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x08, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"font-size: small;color: #347235;"
-+		"background-color: #FFFF00;\">Enter \"+\"</span>",
++		"background-color: #FFFF00;\">Text Attribute 1</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_952 =3D {
-@@ -1663,7 +1678,9 @@ static struct get_inkey_test get_inkey_data_952 =3D {
+ static struct play_tone_test play_tone_data_452 =3D {
+@@ -4233,7 +4248,9 @@ static struct play_tone_test play_tone_data_452 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Enter \"#\"</span>",
++		"Text Attribute 2</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_953 =3D {
-@@ -1681,7 +1698,9 @@ static struct get_inkey_test get_inkey_data_961 =3D {
+ static struct play_tone_test play_tone_data_453 =3D {
+@@ -4261,7 +4278,9 @@ static struct play_tone_test play_tone_data_461 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x10, 0xB4 }
+ 		.attributes =3D { 0x00, 0x0E, 0x10, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"font-weight: bold;color: #347235;"
-+		"background-color: #FFFF00;\">Enter \"+\"</span>",
++		"background-color: #FFFF00;\">Text Attribute</span> 1"
  };
  =
 
- static struct get_inkey_test get_inkey_data_962 =3D {
-@@ -1692,7 +1711,9 @@ static struct get_inkey_test get_inkey_data_962 =3D {
+ static struct play_tone_test play_tone_data_462 =3D {
+@@ -4277,7 +4296,9 @@ static struct play_tone_test play_tone_data_462 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Enter \"#\"</span>",
++		"Text Attribute 2</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_963 =3D {
-@@ -1710,7 +1731,9 @@ static struct get_inkey_test get_inkey_data_971 =3D {
+ static struct play_tone_test play_tone_data_463 =3D {
+@@ -4305,7 +4326,9 @@ static struct play_tone_test play_tone_data_471 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x20, 0xB4 }
+ 		.attributes =3D { 0x00, 0x0E, 0x20, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"font-style: italic;color: #347235;"
-+		"background-color: #FFFF00;\">Enter \"+\"</span>",
++		"background-color: #FFFF00;\">Text Attribute</span> 1",
  };
  =
 
- static struct get_inkey_test get_inkey_data_972 =3D {
-@@ -1721,7 +1744,9 @@ static struct get_inkey_test get_inkey_data_972 =3D {
+ static struct play_tone_test play_tone_data_472 =3D {
+@@ -4321,7 +4344,9 @@ static struct play_tone_test play_tone_data_472 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Enter \"#\"</span>",
++		"Text Attribute 2</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_973 =3D {
-@@ -1739,7 +1764,9 @@ static struct get_inkey_test get_inkey_data_981 =3D {
+ static struct play_tone_test play_tone_data_473 =3D {
+@@ -4349,7 +4374,9 @@ static struct play_tone_test play_tone_data_481 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x40, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x40, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"text-decoration: underline;color: #347235;"
-+		"background-color: #FFFF00;\">Enter \"+\"</span>",
++		"background-color: #FFFF00;\">Text Attribute 1</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_982 =3D {
-@@ -1750,7 +1777,9 @@ static struct get_inkey_test get_inkey_data_982 =3D {
+ static struct play_tone_test play_tone_data_482 =3D {
+@@ -4365,7 +4392,9 @@ static struct play_tone_test play_tone_data_482 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Enter \"#\"</span>",
++		"Text Attribute 2</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_983 =3D {
-@@ -1768,7 +1797,9 @@ static struct get_inkey_test get_inkey_data_991 =3D {
+ static struct play_tone_test play_tone_data_483 =3D {
+@@ -4393,7 +4422,9 @@ static struct play_tone_test play_tone_data_491 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x80, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x80, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"text-decoration: line-through;color: #347235;"
-+		"background-color: #FFFF00;\">Enter \"+\"</span>",
++		"background-color: #FFFF00;\">Text Attribute 1</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_992a =3D {
-@@ -1779,7 +1810,9 @@ static struct get_inkey_test get_inkey_data_992a =3D {
+ static struct play_tone_test play_tone_data_492 =3D {
+@@ -4409,7 +4440,9 @@ static struct play_tone_test play_tone_data_492 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Enter \"#\"</span>",
++		"Text Attribute 2</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_992b =3D {
-@@ -1804,7 +1837,9 @@ static struct get_inkey_test get_inkey_data_9101 =3D {
+ static struct play_tone_test play_tone_data_493 =3D {
+@@ -4437,7 +4470,9 @@ static struct play_tone_test play_tone_data_4101 =3D {
  	.text_attr =3D {
  		.len =3D 4,
- 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+ 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Enter \"+\"</span>",
++		"Text Attribute 1</span>",
  };
  =
 
- static struct get_inkey_test get_inkey_data_9102 =3D {
-@@ -1886,6 +1921,8 @@ static void test_get_inkey(gconstpointer data)
- 	check_duration(&command->get_inkey.duration, &test->duration);
- 	check_text_attr(&command->get_inkey.text_attr,
- 						&test->text_attr);
-+	check_text_attr_html(&command->get_inkey.text_attr,
-+				command->get_inkey.text, test->html);
- 	check_frame_id(&command->get_inkey.frame_id, &test->frame_id);
+ static struct play_tone_test play_tone_data_4102 =3D {
+@@ -4547,6 +4582,8 @@ static void test_play_tone(gconstpointer data)
+ 	check_duration(&command->play_tone.duration, &test->duration);
+ 	check_icon_id(&command->play_tone.icon_id, &test->icon_id);
+ 	check_text_attr(&command->play_tone.text_attr, &test->text_attr);
++	check_text_attr_html(&command->play_tone.text_attr,
++				command->play_tone.alpha_id, test->html);
+ 	check_frame_id(&command->play_tone.frame_id, &test->frame_id);
  =
 
  	stk_command_free(command);
@@ -242,5 +242,5 @@ x22,
 1.6.6.1
 
 
---===============3283467112714777865==--
+--===============2940117724111121571==--
 
