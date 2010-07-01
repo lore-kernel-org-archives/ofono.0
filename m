@@ -1,74 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3571656770437808195=="
+Content-Type: multipart/mixed; boundary="===============7217669427939547898=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
 Subject: Re: [PATCH 1/3] stkutil: display text attributes as html
-Date: Thu, 01 Jul 2010 16:15:35 -0500
-Message-ID: <4C2D0577.5070708@gmail.com>
-In-Reply-To: <20100701135459.40411dad@kcaccard-MOBL3>
+Date: Fri, 02 Jul 2010 00:10:54 +0200
+Message-ID: <AANLkTinbEd4WdRbbEYB-zSCdMmh0k6oZ-1mXonMwy_3e@mail.gmail.com>
+In-Reply-To: <4C2CC28F.2000707@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3571656770437808195==
+--===============7217669427939547898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 07/01/2010 03:54 PM, Kristen Carlson Accardi wrote:
-> On Thu, 01 Jul 2010 13:54:16 -0500
-> Denis Kenzior <denkenz@gmail.com> wrote:
-> =
+Hi
 
->> Hi Kristen,
->>
->> On 07/01/2010 01:29 PM, Kristen Carlson Accardi wrote:
->>> On Thu, 01 Jul 2010 11:30:07 -0500
->>> Denis Kenzior <denkenz@gmail.com> wrote:
->>>
->>>>
->>>>> +		start =3D attrs[i++];
->>>>> +		len =3D attrs[i++];
->>>>> +		code =3D attrs[i++];
->>>>
->>>> You might want to be extra paranoid here that attrs_len is a multiple =
-of 4.
->>>
->>> attrs_len does not have to be a multiple of 4.  I will add a sanity
->>> check to attrs_len to make sure it is at least >=3D i + 3.
->>>
->>
->> Then this code is incorrect, as it handles len 3 attrs only at the end
->> of the array.  Also please note that SIM Toolkit Text Attributes are
->> always coded on 4 bytes (see 102.223 Section 8.72 for details).  You
->> might want to assume 4 byte alignment or invent a data structure for
->> these attributes.
-> =
+On 1 July 2010 18:30, Denis Kenzior <denkenz@gmail.com> wrote:
+>> +char *stk_text_to_html(char *text, int text_len,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 const unsigned char *attrs, int attrs_len)
+>> +{
+>> + =C2=A0 =C2=A0 GString *string =3D g_string_sized_new(text_len + 1);
+>> + =C2=A0 =C2=A0 int formats[257]; =C2=A0/* maximum number of chars in te=
+xt + 1 */
+>> + =C2=A0 =C2=A0 int pos =3D 0, i, j, attr, prev_attr;
+>> + =C2=A0 =C2=A0 guint8 start, end, code, color, len, align;
+>> +
+>> + =C2=A0 =C2=A0 /* we will need formatting at the position beyond the la=
+st char */
+>> + =C2=A0 =C2=A0 for (i =3D 0; i <=3D text_len; i++)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 formats[i] =3D STK_TEXT_FORM=
+AT_INIT;
+>> +
+>
+> Please note that the same formatting can be used for EMS messages
+> (23.040). =C2=A0These messages have a fairly large max-len (255 segments *
+> ~153 characters) =C2=A0I'd like to have this function useable for EMS
+> messages as well.
 
-> I should have said that attrs_len does not always have to be a multiple
-> of 4 -- it is allowed to only have 3 byte attrs as the last attribute,
-> so the code is correct.  However, since not all attributes are
-> required to be of len 4, we can't just assume attrs_len is a multiple
-> of 4.
-> =
-
-
-How do you figure this?  From 23.040 Section 9.2.3.24.10.1.1	Text Formatting
-
-"Octet 4
-
-This Octet may be omitted by setting the IED length accordingly."
-
-From 102.223 Section 8.72:
-
-"The Text Formatting is a sequence of one or several Text Formatting
-items, each coded on 4 bytes.
-The Text Formatting scheme used is the same as the Text Formatting
-defined in TS 123 040 [27]."
-
-So you either have to support a mixed 3 & 4 byte fields or you assume
-all fields are 4 bytes.
+It would have a different signature because as far as I understand a
+separate array of attributes is sent in each segment (the start/len
+fields can't address more than 256 characters anyway).  So that
+function can be a wrapper around this function.
 
 Regards,
--Denis
+Andrew
 
---===============3571656770437808195==--
+--===============7217669427939547898==--
 
