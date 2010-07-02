@@ -1,34 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============4011485893762921832=="
+Content-Type: multipart/mixed; boundary="===============6211099427690519424=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] huawei: Remove existing Huawei EM770 plugin
-Date: Fri, 02 Jul 2010 10:44:06 -0500
-Message-ID: <4C2E0946.6020204@gmail.com>
-In-Reply-To: <1278039874-9163-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: Help regarding understanding of ofono atoms
+Date: Fri, 02 Jul 2010 10:57:49 -0500
+Message-ID: <4C2E0C7D.2070404@gmail.com>
+In-Reply-To: <AANLkTiliFlAwaTg-ErkCOa9kt2fcpDJWNntOBNRHcKQp@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4011485893762921832==
+--===============6211099427690519424==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi ssk,
 
-On 07/01/2010 10:04 PM, Zhenhua Zhang wrote:
-> ---
->  Makefile.am         |    3 -
->  plugins/em770.c     |  229 ---------------------------------------------=
-------
->  plugins/ofono.rules |    2 -
->  plugins/udev.c      |   26 ------
->  4 files changed, 0 insertions(+), 260 deletions(-)
->  delete mode 100644 plugins/em770.c
+On 07/02/2010 12:16 AM, sai koushik wrote:
+> Hi all,
+> 	i am trying to understand the ofono source code and structure .
+> but i am not able find the exact usage of ofono atoms and logical
+> definition of ofono atoms , can somebody please help by giving some
+> info about ofono atoms.
 
-Both patches have been applied.  Thanks.
+Atoms are simply logical collections of functionality related to a
+particular area, e.g. sms, gprs, calls, etc.  See doc/ofono-paper.txt
+for a slightly better overview or the presentations posted at ofono.org.
 
 Regards,
 -Denis
 
---===============4011485893762921832==--
+--===============6211099427690519424==--
 
