@@ -1,43 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============7702112060752819061=="
+Content-Type: multipart/mixed; boundary="===============4914621128607027630=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [SMS D-Bus 05/23] doc: explain debugging options to -d,
- add a pointer in -h to manpage
-Date: Fri, 02 Jul 2010 15:43:26 -0500
-Message-ID: <4C2E4F6E.3@gmail.com>
-In-Reply-To: <7e92d75b6ac64b851bb397ce36caf7bf7cc2911f.1277507431.git.inaky.perez-gonzalez@intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH 0/9] html text attribute patches 
+Date: Fri, 02 Jul 2010 06:45:59 -0700
+Message-ID: <1278078368-32565-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7702112060752819061==
+--===============4914621128607027630==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Inaky,
+Changes since last version:
 
-Please remember not to go over 50 characters on your git commit
-description header and more than 72 characters on your git commit
-description body.
+* made utf8 safe
+* changed signature to use 16 bit arrays for attributes
+* changed signature to use number of attributes rather than length of attri=
+bute
+* assume attributes are always 4 bytes
+* incorporated other feedback from last review
+* added unit test for utf8 text
 
-> @@ -110,7 +110,9 @@ static gboolean parse_debug(const char *key, const ch=
-ar *value,
->  static GOptionEntry options[] =3D {
->  	{ "debug", 'd', G_OPTION_FLAG_OPTIONAL_ARG,
->  				G_OPTION_ARG_CALLBACK, parse_debug,
-> -				"Specify debug options to enable", "DEBUG" },
-> +			   "Specify debug options to enable (see the "
-> +			   "man page for ofonod(8) for more information).",
+Kristen Carlson Accardi (9):
+  stkutil: display text attributes as html
+  test-stkutil: add unit test for html text attributes
+  test-stkutil: add html attribute test for Display Text tests
+  test-stkutil: add html attribute tests for get_inkey_test
+  test-stkutil: add html attribute tests for get_input_test
+  test-stkutil: add html attribute tests for play_tone_test
+  test-stkutil: add html attribute test for setup_menu_test
+  test-stkutil: add html attribute test for select_item_test
+  test-stkutil: add html attribute tests for setup idle mode tests
 
-I still think mentioning the man page is a bit redundant.
+ src/stkutil.c       |  229 ++++++++++++++++
+ src/stkutil.h       |    2 +
+ unit/test-stkutil.c |  714 ++++++++++++++++++++++++++++++++++++++++++++---=
+----
+ 3 files changed, 853 insertions(+), 92 deletions(-)
 
-> +			   "DEBUG" },
->  	{ "nodetach", 'n', G_OPTION_FLAG_REVERSE,
->  				G_OPTION_ARG_NONE, &option_detach,
->  				"Don't run as daemon in background" },
 
-Regards,
--Denis
-
---===============7702112060752819061==--
+--===============4914621128607027630==--
 
