@@ -1,63 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============5573303607009999298=="
+Content-Type: multipart/mixed; boundary="===============1827254937631761579=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH 5/9] stk: Handle ENVELOPEs in a queue, retry on sim busy.
-Date: Fri, 02 Jul 2010 21:15:24 +0200
-Message-ID: <AANLkTik3HelFZuepUeO1ZLM3DjE8thjCurS5xIL_pb1V@mail.gmail.com>
-In-Reply-To: <4C2D4EDD.1000701@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/6][RfC] stkutil: Move scaddr field to gsm_sms in
+ stk_command_send_sms
+Date: Fri, 02 Jul 2010 14:52:07 -0500
+Message-ID: <4C2E4367.4000607@gmail.com>
+In-Reply-To: <1277911458-4984-3-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5573303607009999298==
+--===============1827254937631761579==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+On 06/30/2010 10:24 AM, Andrzej Zaborowski wrote:
+> ---
+>  src/stkutil.c       |   58 +++++++++++----
+>  src/stkutil.h       |    1 -
+>  unit/test-stkutil.c |  205 ++++++++++++++++++++++++++++-----------------=
+------
+>  3 files changed, 156 insertions(+), 108 deletions(-)
+> =
 
-On 2 July 2010 04:28, Denis Kenzior <denkenz@gmail.com> wrote:
->>>> + =C2=A0 =C2=A0 GQueue *envelope_q;
->>>> +};
->>>> +
->>>> +struct envelope_op {
->>>> + =C2=A0 =C2=A0 struct stk_envelope e;
->>>> + =C2=A0 =C2=A0 int retries;
->>>> + =C2=A0 =C2=A0 void (*cb)(struct ofono_stk *stk, gboolean ok,
->>>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 const unsigned char *data, int length);
->>>
->>> Is the callback really needed? =C2=A0What can we intelligently do besid=
-es
->>> printing an error to the log?
->>
->> In the generic case we should inform whoever asked us to submit the
->> information to the UICC. =C2=A0We don't currently have any such case (in
->> case of Cell Broadcast there's no one to inform. =C2=A0 In case of the
->> SimAppAgent our d-bus api doesn't let us do it. =C2=A0In case of SMS-PP
->> download it's a technical difficulty). =C2=A0But, for example the Timer
->> Expiration event is more complicated because it needs to be retried
->> until it succeeds, and every time we retry sending the envelope it
->> will be different because it contains current time. =C2=A0So the Timer
->> Expiration retrying has to be imlemented separately.
->>
->
-> So I suggest keeping it simple for now and not having the callback. =C2=
-=A0We
-> can always add it if really needed.
 
-I tried to remove it (I use the success callback in the menu patch..
-but I planned to get rid of that usage anyway), but now I think it
-would be conceptually wrong.  The ENVELOPEs send information both
-ways, it's a request and a response.  For example the Call Control
-envelopes return a response and we will definitely need to know what
-the response was.  So I think it's easier to do correctly from the
-beginning, instead of remove it and then in a couple of weeks come
-back to it and look for what needs to be changed and what other code
-may be affected.
+Patch looks good to me.  Applied thanks.
 
-It's just about two lines of code anyway.
+Regards,
+-Denis
 
-Best regards
-
---===============5573303607009999298==--
+--===============1827254937631761579==--
 
