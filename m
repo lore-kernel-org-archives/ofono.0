@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============6190736409048002347=="
+Content-Type: multipart/mixed; boundary="===============4644139096307850359=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 Subject: Re: [SMS D-Bus 05/23] doc: explain debugging options to -d,
  add a pointer in -h to manpage
-Date: Fri, 02 Jul 2010 14:18:02 -0700
-Message-ID: <1278105482.2327.32.camel@localhost.localdomain>
+Date: Fri, 02 Jul 2010 14:19:11 -0700
+Message-ID: <1278105551.2327.34.camel@localhost.localdomain>
 In-Reply-To: <4C2E4F6E.3@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6190736409048002347==
+--===============4644139096307850359==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -46,8 +46,10 @@ char *value,
 > Regards,
 > -Denis
 
-Let's just drop this one then.
+Bah, hit enter too soon, sorry -- meant drop the .c code adding that,
+but keep the additions to the man page. I'll redo that one.
 
 
---===============6190736409048002347==--
+
+--===============4644139096307850359==--
 
