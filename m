@@ -1,33 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============1827254937631761579=="
+Content-Type: multipart/mixed; boundary="===============1969292925150363906=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/6][RfC] stkutil: Move scaddr field to gsm_sms in
- stk_command_send_sms
-Date: Fri, 02 Jul 2010 14:52:07 -0500
-Message-ID: <4C2E4367.4000607@gmail.com>
-In-Reply-To: <1277911458-4984-3-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 4/6] test-stkutil: Fix always true condition.
+Date: Fri, 02 Jul 2010 14:52:46 -0500
+Message-ID: <4C2E438E.1090502@gmail.com>
+In-Reply-To: <1277911458-4984-4-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1827254937631761579==
+--===============1969292925150363906==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 06/30/2010 10:24 AM, Andrzej Zaborowski wrote:
-> ---
->  src/stkutil.c       |   58 +++++++++++----
->  src/stkutil.h       |    1 -
->  unit/test-stkutil.c |  205 ++++++++++++++++++++++++++++-----------------=
-------
->  3 files changed, 156 insertions(+), 108 deletions(-)
-> =
+Hi Andrew,
 
+> -		g_assert(cs->daddr.number_type =3D=3D cs->daddr.number_type);
+> -		g_assert(cs->daddr.numbering_plan =3D=3D cs->daddr.numbering_plan);
+> +		g_assert(cs->daddr.number_type =3D=3D ts->daddr.number_type);
+> +		g_assert(cs->daddr.numbering_plan =3D=3D ts->daddr.numbering_plan);
 
-Patch looks good to me.  Applied thanks.
+Very nice catch.  Applied thanks.
 
 Regards,
 -Denis
 
---===============1827254937631761579==--
+--===============1969292925150363906==--
 
