@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6186134773087447103=="
+Content-Type: multipart/mixed; boundary="===============3617908958390943607=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 9/9] test-stkutil: add html attribute tests for setup idle
- mode tests
-Date: Fri, 02 Jul 2010 06:46:08 -0700
-Message-ID: <1278078368-32565-10-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH 8/9] test-stkutil: add html attribute test for select_item_test
+Date: Fri, 02 Jul 2010 06:46:07 -0700
+Message-ID: <1278078368-32565-9-git-send-email-kristen@linux.intel.com>
 In-Reply-To: <1278078368-32565-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6186134773087447103==
+--===============3617908958390943607==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,245 +19,243 @@ Content-Transfer-Encoding: quoted-printable
  1 files changed, 53 insertions(+), 16 deletions(-)
 
 diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index 7993813..348c991 100644
+index cf06333..7993813 100644
 --- a/unit/test-stkutil.c
 +++ b/unit/test-stkutil.c
-@@ -13932,6 +13932,7 @@ struct setup_idle_mode_text_test {
- 	struct stk_icon_id icon_id;
+@@ -5944,6 +5944,7 @@ struct select_item_test {
  	struct stk_text_attribute text_attr;
+ 	struct stk_item_text_attribute_list item_text_attr_list;
  	struct stk_frame_id frame_id;
 +	char *html;
  };
  =
 
- static unsigned char setup_idle_mode_text_111[] =3D { 0xD0, 0x1A, 0x81, 0x=
-03,
-@@ -14364,7 +14365,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_411 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
+ static unsigned char select_item_111[] =3D { 0xD0, 0x3D, 0x81, 0x03, 0x01,=
+ 0x24,
+@@ -6990,7 +6991,9 @@ static struct select_item_test select_item_data_911 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x00, 0xB4, 0x00, 0x06, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Idle Mode Text 1</span>",
++		"Toolkit Select 1</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_412 =3D {
-@@ -14382,7 +14385,10 @@ static struct setup_idle_mode_text_test setup_idle=
-_mode_text_data_421 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x01, 0xB4 }
+ static struct select_item_test select_item_data_912 =3D {
+@@ -7020,7 +7023,10 @@ static struct select_item_test select_item_data_921 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x01, 0xB4, 0x00, 0x06, 0x01, 0xB4 }
 -	}
 +	},
 +	.html =3D "<div style=3D\"text-align: center;\"><span style=3D\"color: "
-+		"#347235;background-color: #FFFF00;\">Idle Mode Text 1</span>"
++		"#347235;background-color: #FFFF00;\">Toolkit Select 1</span>"
 +		"</div>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_422 =3D {
-@@ -14400,7 +14406,10 @@ static struct setup_idle_mode_text_test setup_idle=
-_mode_text_data_431 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x02, 0xB4 }
+ static struct select_item_test select_item_data_922 =3D {
+@@ -7050,7 +7056,10 @@ static struct select_item_test select_item_data_931 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x02, 0xB4, 0x00, 0x06, 0x02, 0xB4 }
 -	}
 +	},
 +	.html =3D "<div style=3D\"text-align: right;\"><span style=3D\"color: "
-+		"#347235;background-color: #FFFF00;\">Idle Mode Text 1</span>"
-+		"</div>",
++		"#347235;background-color: #FFFF00;\">Toolkit Select 1</span>"
++		"</div>"
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_432 =3D {
-@@ -14418,7 +14427,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_441 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x04, 0xB4 }
+ static struct select_item_test select_item_data_932 =3D {
+@@ -7080,7 +7089,9 @@ static struct select_item_test select_item_data_941 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x04, 0xB4, 0x00, 0x06, 0x04, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"font-size: big;color: #347235;"
-+		"background-color: #FFFF00;\">Idle Mode Text 1</span>",
++		"background-color: #FFFF00;\">Toolkit Select 1</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_442 =3D {
-@@ -14429,7 +14440,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_442 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
+ static struct select_item_test select_item_data_942 =3D {
+@@ -7099,7 +7110,9 @@ static struct select_item_test select_item_data_942 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x00, 0xB4, 0x00, 0x06, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Idle Mode Text 2</span>",
++		"Toolkit Select 2</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_443 =3D {
-@@ -14447,7 +14460,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_451 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x08, 0xB4 }
+ static struct select_item_test select_item_data_943 =3D {
+@@ -7129,7 +7142,9 @@ static struct select_item_test select_item_data_951 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x08, 0xB4, 0x00, 0x06, 0x08, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"font-size: small;color: #347235;"
-+		"background-color: #FFFF00;\">Idle Mode Text 1</span>",
++		"background-color: #FFFF00;\">Toolkit Select 1</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_452 =3D {
-@@ -14458,7 +14473,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_452 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
+ static struct select_item_test select_item_data_952 =3D {
+@@ -7148,7 +7163,9 @@ static struct select_item_test select_item_data_952 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x00, 0xB4, 0x00, 0x06, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Idle Mode Text 2</span>",
++		"Toolkit Select 2</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_453 =3D {
-@@ -14476,7 +14493,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_461 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x10, 0xB4 }
+ static struct select_item_test select_item_data_953 =3D {
+@@ -7178,7 +7195,9 @@ static struct select_item_test select_item_data_961 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x10, 0xB4, 0x00, 0x06, 0x10, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"font-weight: bold;color: #347235;"
-+		"background-color: #FFFF00;\">Idle Mode Text 1</span>",
++		"background-color: #FFFF00;\">Toolkit Select 1</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_462 =3D {
-@@ -14487,7 +14506,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_462 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
+ static struct select_item_test select_item_data_962 =3D {
+@@ -7197,7 +7216,9 @@ static struct select_item_test select_item_data_962 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x00, 0xB4, 0x00, 0x06, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Idle Mode Text 2</span>",
++		"Toolkit Select 2</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_463 =3D {
-@@ -14505,7 +14526,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_471 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x20, 0xB4 }
+ static struct select_item_test select_item_data_963 =3D {
+@@ -7227,7 +7248,9 @@ static struct select_item_test select_item_data_971 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x20, 0xB4, 0x00, 0x06, 0x20, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"font-style: italic;color: #347235;"
-+		"background-color: #FFFF00;\">Idle Mode Text 1</span>",
++		"background-color: #FFFF00;\">Toolkit Select 1</span>"
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_472 =3D {
-@@ -14516,7 +14539,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_472 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
+ static struct select_item_test select_item_data_972 =3D {
+@@ -7246,7 +7269,9 @@ static struct select_item_test select_item_data_972 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x00, 0xB4, 0x00, 0x06, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Idle Mode Text 2</span>",
++		"Toolkit Select 2</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_473 =3D {
-@@ -14534,7 +14559,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_481 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x40, 0xB4 }
+ static struct select_item_test select_item_data_973 =3D {
+@@ -7276,7 +7301,9 @@ static struct select_item_test select_item_data_981 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x40, 0xB4, 0x00, 0x06, 0x40, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"text-decoration: underline;color: #347235;"
-+		"background-color: #FFFF00;\">Idle Mode Text 1</span>",
++		"background-color: #FFFF00;\">Toolkit Select 1</span>"
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_482 =3D {
-@@ -14545,7 +14572,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_482 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
+ static struct select_item_test select_item_data_982 =3D {
+@@ -7295,7 +7322,9 @@ static struct select_item_test select_item_data_982 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x00, 0xB4, 0x00, 0x06, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Idle Mode Text 2</span>",
++		"Toolkit Select 2</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_483 =3D {
-@@ -14563,7 +14592,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_491 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x80, 0xB4 }
+ static struct select_item_test select_item_data_983 =3D {
+@@ -7325,7 +7354,9 @@ static struct select_item_test select_item_data_991 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x80, 0xB4, 0x00, 0x06, 0x80, 0xB4 }
 -	}
 +	},
-+	.html =3D "<span style=3D\"text-decoration: line-through;color: "
-+		"#347235;background-color: #FFFF00;\">Idle Mode Text 1</span>",
++	.html =3D "<span style=3D\"text-decoration: line-through;color: #347235;"
++		"background-color: #FFFF00;\">Toolkit Select 1</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_492 =3D {
-@@ -14574,7 +14605,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_492 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
--	}
-+	},
-+	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Idle Mode Text 2</span>",
- };
- =
-
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_493 =3D {
-@@ -14592,7 +14625,9 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_4101 =3D {
- 	.text_attr =3D {
- 		.len =3D 4,
- 		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 }
+ static struct select_item_test select_item_data_992 =3D {
+@@ -7344,7 +7375,9 @@ static struct select_item_test select_item_data_992 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x00, 0xB4, 0x00, 0x06, 0x00, 0xB4 }
 -	}
 +	},
 +	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
-+		"Idle Mode Text 1</span>",
++		"Toolkit Select 2</span>",
  };
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_4102 =3D=
- {
-@@ -14637,6 +14672,8 @@ static void test_setup_idle_mode_text(gconstpointer=
- data)
- 	check_icon_id(&command->setup_idle_mode_text.icon_id, &test->icon_id);
- 	check_text_attr(&command->setup_idle_mode_text.text_attr,
- 							&test->text_attr);
-+	check_text_attr_html(&command->setup_idle_mode_text.text_attr,
-+				command->setup_idle_mode_text.text, test->html);
- 	check_frame_id(&command->setup_idle_mode_text.frame_id,
- 							&test->frame_id);
+ static struct select_item_test select_item_data_993 =3D {
+@@ -7374,7 +7407,9 @@ static struct select_item_test select_item_data_9101 =
+=3D {
+ 	.item_text_attr_list =3D {
+ 		.len =3D 8,
+ 		.list =3D { 0x00, 0x06, 0x00, 0xB4, 0x00, 0x06, 0x00, 0xB4 }
+-	}
++	},
++	.html =3D "<span style=3D\"color: #347235;background-color: #FFFF00;\">"
++		"Toolkit Select 1</span>",
+ };
  =
 
+ static struct select_item_test select_item_data_9102 =3D {
+@@ -7502,6 +7537,8 @@ static void test_select_item(gconstpointer data)
+ 	check_item_text_attribute_list(
+ 				&command->select_item.item_text_attr_list,
+ 				&test->item_text_attr_list);
++	check_text_attr_html(&command->select_item.text_attr,
++				command->select_item.alpha_id, test->html);
+ 	check_frame_id(&command->select_item.frame_id, &test->frame_id);
+ =
+
+ 	stk_command_free(command);
 -- =
 
 1.6.6.1
 
 
---===============6186134773087447103==--
+--===============3617908958390943607==--
 
