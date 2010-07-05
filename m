@@ -1,470 +1,289 @@
-Content-Type: multipart/mixed; boundary="===============1556187275929076673=="
+Content-Type: multipart/mixed; boundary="===============4400970881348769121=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 1/6] emulator: Add ofono_emulator framework
-Date: Mon, 05 Jul 2010 13:45:04 +0800
-Message-ID: <1278308709-13908-2-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1278308709-13908-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 2/6] bluetooth: Add register service for bluetooth
+Date: Mon, 05 Jul 2010 13:45:05 +0800
+Message-ID: <1278308709-13908-3-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1278308709-13908-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1556187275929076673==
+--===============4400970881348769121==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Each type of emulator can be register through emulator drivers
-statically. When modem powers up, oFono probes emulator driver to create
-emulator for each modem.
+Add bluetooth_register_service() and bluetooth_unregister_service()
+where bluetooth profiles plugins like DUN GW can register themselves per
+adapter. It shares existing bluetooth framework to listen bluetooth
+events (new adapters, bluetoothd shutdown, etc..)
 ---
- Makefile.am        |    4 +-
- include/dbus.h     |    1 +
- include/emulator.h |   63 ++++++++++++
- src/emulator.c     |  271 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/modem.c        |    1 +
- src/ofono.h        |    6 +
- 6 files changed, 344 insertions(+), 2 deletions(-)
- create mode 100644 include/emulator.h
- create mode 100644 src/emulator.c
+ plugins/bluetooth.c |  125 ++++++++++++++++++++++++++++++++++++++++++-----=
+----
+ plugins/bluetooth.h |    8 +++
+ 2 files changed, 112 insertions(+), 21 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 96116a5..8ecb2d9 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -13,7 +13,7 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
-e/history.h \
- 			include/cbs.h include/call-volume.h \
- 			include/gprs.h include/gprs-context.h \
- 			include/radio-settings.h include/stk.h \
--			include/nettime.h
-+			include/nettime.h include/emulator.h
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index 5a85eaa..3a3b5e6 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -38,8 +38,19 @@
  =
 
- nodist_include_HEADERS =3D include/version.h
+ static DBusConnection *connection;
+ static GHashTable *uuid_hash =3D NULL;
++static GHashTable *service_hash =3D NULL;
+ static GHashTable *adapter_address_hash =3D NULL;
  =
 
-@@ -272,7 +272,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
-es) \
- 			src/storage.c src/cbs.c src/watch.c src/call-volume.c \
- 			src/gprs.c src/idmap.h src/idmap.c \
- 			src/radio-settings.c src/stkutil.h src/stkutil.c \
--			src/nettime.c
-+			src/nettime.c src/emulator.c
- =
-
- src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
-@ -ldl
- =
-
-diff --git a/include/dbus.h b/include/dbus.h
-index d988760..281be80 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -49,6 +49,7 @@ extern "C" {
- #define OFONO_VOICECALL_MANAGER_INTERFACE "org.ofono.VoiceCallManager"
- #define OFONO_DATA_CONNECTION_MANAGER_INTERFACE "org.ofono.DataConnectionM=
-anager"
- #define OFONO_DATA_CONTEXT_INTERFACE "org.ofono.PrimaryDataContext"
-+#define OFONO_EMULATOR_INTERFACE "org.ofono.Emulator"
- =
-
- /* Essentially a{sv} */
- #define OFONO_PROPERTIES_ARRAY_SIGNATURE DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STR=
-ING \
-diff --git a/include/emulator.h b/include/emulator.h
-new file mode 100644
-index 0000000..0c87b13
---- /dev/null
-+++ b/include/emulator.h
-@@ -0,0 +1,63 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifndef __OFONO_EMULATOR_H
-+#define __OFONO_EMULATOR_H
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+#include <ofono/types.h>
-+
-+struct ofono_emulator;
-+
-+enum ofono_emulator_type {
-+	OFONO_EMULATOR_TYPE_NONE,
-+	OFONO_EMULATOR_TYPE_DUN,
-+};
-+
-+struct ofono_emulator_driver {
-+	const char *name;
-+	enum ofono_emulator_type type;
-+	int (*probe)(struct ofono_emulator *e);
-+	void (*remove)(struct ofono_emulator *e);
-+	int (*enable)(struct ofono_emulator *e, int fd);
-+	int (*disable)(struct ofono_emulator *e);
-+};
-+
-+const char *ofono_emulator_get_path(struct ofono_emulator *e);
-+void ofono_emulator_set_data(struct ofono_emulator *e, void *user_data);
-+void *ofono_emulator_get_data(struct ofono_emulator *e);
-+
-+struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
-+					struct ofono_emulator_driver *driver);
-+void ofono_emulator_remove(struct ofono_emulator *e);
-+
-+int ofono_emulator_driver_register(const struct ofono_emulator_driver *dri=
-ver);
-+void ofono_emulator_driver_unregister(
-+				const struct ofono_emulator_driver *driver);
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif /* __OFONO_EMULATOR_H */
-diff --git a/src/emulator.c b/src/emulator.c
-new file mode 100644
-index 0000000..6b63398
---- /dev/null
-+++ b/src/emulator.c
-@@ -0,0 +1,271 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <stdio.h>
-+#include <string.h>
-+#include <errno.h>
-+#include <glib.h>
-+#include <gdbus.h>
-+
-+#include "ofono.h"
-+#include "common.h"
-+
-+struct ofono_emulator {
-+	struct ofono_emulator_driver *driver;
-+	struct ofono_modem *modem;
-+	struct ofono_atom *atom;
-+	unsigned int id;
-+	void *user_data;
-+};
-+
-+static GSList *emulator_list;
-+static GSList *ofono_emulator_drivers;
-+static unsigned int ofono_emulator_ids;
-+
-+static unsigned int ofono_emulator_next_id()
-+{
-+	unsigned int i;
-+
-+	for (i =3D 1; i < sizeof(ofono_emulator_ids) * 8; i++) {
-+		if (ofono_emulator_ids & (0x1 << i))
-+			continue;
-+
-+		ofono_emulator_ids |=3D (0x1 << i);
-+
-+		return i;
-+	}
-+
-+	return 0;
-+}
-+
-+static void ofono_emulator_release_id(int id)
-+{
-+	ofono_emulator_ids &=3D ~(0x1 << id);
-+}
-+
-+static enum ofono_atom_type ofono_emulator_atom_type(
-+					enum ofono_emulator_type type)
-+{
-+	switch (type) {
-+	case OFONO_EMULATOR_TYPE_DUN:
-+		return OFONO_ATOM_TYPE_EMULATOR_DUN;
-+	default:
-+		return 0;
-+	}
-+}
-+
-+static const char *ofono_emulator_type_to_str(enum ofono_emulator_type typ=
++static char *bluetooth_service_type_to_str(enum bluetooth_service_type typ=
 e)
 +{
 +	switch (type) {
-+	case OFONO_EMULATOR_TYPE_DUN:
-+		return "dun";
++	case DUN_GATEWAY:
++		return "DUN";
 +	default:
 +		return "";
 +	}
 +}
 +
-+const char *ofono_emulator_get_path(struct ofono_emulator *e)
-+{
-+	static char path[256];
-+
-+	snprintf(path, sizeof(path), "%s/%s_emulator",
-+			ofono_modem_get_path(e->modem),
-+			ofono_emulator_type_to_str(e->driver->type));
-+
-+	return path;
-+}
-+
-+void ofono_emulator_set_data(struct ofono_emulator *e, void *user_data)
-+{
-+	if (!e)
-+		return;
-+
-+	e->user_data =3D user_data;
-+}
-+
-+void *ofono_emulator_get_data(struct ofono_emulator *e)
-+{
-+	if (!e)
-+		return NULL;
-+
-+	return e->user_data;
-+}
-+
-+static void emulator_remove(struct ofono_atom *atom)
-+{
-+	struct ofono_emulator *e =3D  __ofono_atom_get_data(atom);
-+
-+	DBG("");
-+
-+	emulator_list =3D g_slist_remove(emulator_list, e);
-+
-+	if (e->driver->remove)
-+		e->driver->remove(e);
-+
-+	ofono_emulator_release_id(e->id);
-+	g_free(e);
-+	e =3D NULL;
-+}
-+
-+static struct ofono_emulator *create_emulator(struct ofono_modem *modem,
-+					struct ofono_emulator_driver *driver)
-+{
-+	struct ofono_emulator *e;
-+
-+	DBG("");
-+
-+	e =3D g_try_new0(struct ofono_emulator, 1);
-+	if (!e)
-+		goto error;
-+
-+	e->modem =3D modem;
-+	e->driver =3D driver;
-+	e->id =3D ofono_emulator_next_id();
-+
-+	return e;
-+error:
-+	g_free(e);
-+	return NULL;
-+}
-+
-+static DBusMessage *emulator_get_properties(DBusConnection *conn,
-+						DBusMessage *msg, void *data)
-+{
-+	return dbus_message_new_method_return(msg);
-+}
-+
-+static GDBusMethodTable ofono_emulator_methods[] =3D {
-+	{ "GetProperties",	"",	"a{sv}", emulator_get_properties },
-+	{ }
-+};
-+
-+static GDBusSignalTable ofono_emulator_signals[] =3D {
-+	{ "PropertyChanged",	"sv" },
-+};
-+
-+static void ofono_emulator_dbus_unregister(struct ofono_atom *atom)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct ofono_emulator *e =3D  __ofono_atom_get_data(atom);
-+	const char *path;
-+
-+	path =3D ofono_emulator_get_path(e);
-+
-+	g_dbus_unregister_interface(conn, path, OFONO_EMULATOR_INTERFACE);
-+
-+	return;
-+}
-+
-+static gboolean ofono_emulator_dbus_register(struct ofono_modem *modem,
-+						struct ofono_emulator *e)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D ofono_emulator_get_path(e);
-+
-+	if (!g_dbus_register_interface(conn, path, OFONO_EMULATOR_INTERFACE,
-+				ofono_emulator_methods, ofono_emulator_signals,
-+				NULL, e, NULL)) {
-+		ofono_error("Could not create ofono_emulator %s", path);
-+		ofono_emulator_remove(e);
-+
-+		return FALSE;
+ void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
+ 				char *buf, int size)
+ {
+@@ -376,6 +387,9 @@ static void adapter_properties_cb(DBusPendingCall *call=
+, gpointer user_data)
+ 	GSList *device_list =3D NULL;
+ 	GSList *l;
+ 	const char *addr;
++	GHashTableIter hash_iter;
++	gpointer key, value;
++	struct bluetooth_profile *profile;
+ =
+
+ 	reply =3D dbus_pending_call_steal_reply(call);
+ =
+
+@@ -393,6 +407,12 @@ static void adapter_properties_cb(DBusPendingCall *cal=
+l, gpointer user_data)
+ 	g_hash_table_insert(adapter_address_hash,
+ 				g_strdup(path), g_strdup(addr));
+ =
+
++	g_hash_table_iter_init(&hash_iter, service_hash);
++	while (g_hash_table_iter_next(&hash_iter, &key, &value)) {
++		profile =3D value;
++		profile->create(path, NULL, addr, NULL);
 +	}
 +
-+	return TRUE;
+ 	for (l =3D device_list; l; l =3D l->next) {
+ 		const char *device =3D l->data;
+ =
+
+@@ -492,10 +512,13 @@ static void bluetooth_remove_all_modem(gpointer key, =
+gpointer value,
+ =
+
+ static void bluetooth_disconnect(DBusConnection *connection, void *user_da=
+ta)
+ {
+-	if (!uuid_hash)
+-		return;
++	if (uuid_hash)
++		g_hash_table_foreach(uuid_hash, bluetooth_remove_all_modem,
++					NULL);
+ =
+
+-	g_hash_table_foreach(uuid_hash, bluetooth_remove_all_modem, NULL);
++	if (service_hash)
++		g_hash_table_foreach(service_hash, bluetooth_remove_all_modem,
++					NULL);
+ }
+ =
+
+ static guint bluetooth_watch;
+@@ -503,12 +526,12 @@ static guint adapter_added_watch;
+ static guint adapter_removed_watch;
+ static guint property_watch;
+ =
+
+-int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
+ofile)
++static int bluetooth_init()
+ {
+ 	int err;
+ =
+
+-	if (uuid_hash)
+-		goto done;
++	if (adapter_address_hash)
++		return 0;
+ =
+
+ 	connection =3D ofono_dbus_get_connection();
+ =
+
+@@ -536,19 +559,9 @@ int bluetooth_register_uuid(const char *uuid, struct b=
+luetooth_profile *profile)
+ 		goto remove;
+ 	}
+ =
+
+-	uuid_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+-						g_free, NULL);
+-
+ 	adapter_address_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+ 						g_free, g_free);
+ =
+
+-done:
+-	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
+-
+-	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
+-				manager_properties_cb, NULL, NULL, -1,
+-				DBUS_TYPE_INVALID);
+-
+ 	return 0;
+ =
+
+ remove:
+@@ -556,14 +569,13 @@ remove:
+ 	g_dbus_remove_watch(connection, adapter_added_watch);
+ 	g_dbus_remove_watch(connection, adapter_removed_watch);
+ 	g_dbus_remove_watch(connection, property_watch);
++
+ 	return err;
+ }
+ =
+
+-void bluetooth_unregister_uuid(const char *uuid)
++static void bluetooth_exit()
+ {
+-	g_hash_table_remove(uuid_hash, uuid);
+-
+-	if (g_hash_table_size(uuid_hash))
++	if (uuid_hash !=3D NULL || service_hash !=3D NULL)
+ 		return;
+ =
+
+ 	g_dbus_remove_watch(connection, bluetooth_watch);
+@@ -571,9 +583,80 @@ void bluetooth_unregister_uuid(const char *uuid)
+ 	g_dbus_remove_watch(connection, adapter_removed_watch);
+ 	g_dbus_remove_watch(connection, property_watch);
+ =
+
+-	g_hash_table_destroy(uuid_hash);
+ 	g_hash_table_destroy(adapter_address_hash);
 +}
 +
-+struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
-+					struct ofono_emulator_driver *driver)
++
++int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
+ofile)
 +{
-+	struct ofono_emulator *e;
-+	enum ofono_atom_type type;
++	int err;
 +
-+	DBG("");
++	err =3D bluetooth_init();
++	if (err)
++		return err;
 +
-+	e =3D create_emulator(modem, driver);
-+	if (!e)
-+		return NULL;
++	if (!uuid_hash)
++		uuid_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++							g_free, NULL);
 +
-+	type =3D ofono_emulator_atom_type(driver->type);
-+	e->atom =3D __ofono_modem_add_atom(modem, type, emulator_remove, e);
++	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
 +
-+	if (!ofono_emulator_dbus_register(modem, e)) {
-+		ofono_emulator_remove(e);
-+		return NULL;
-+	}
-+
-+	__ofono_atom_register(e->atom, ofono_emulator_dbus_unregister);
-+
-+	if (driver->probe(e) < 0) {
-+		ofono_emulator_remove(e);
-+		return NULL;
-+	}
-+
-+	return e;
-+}
-+
-+void __ofono_emulator_probe_drivers(struct ofono_modem *modem)
-+{
-+	GSList *l;
-+	struct ofono_emulator *e;
-+
-+	for (l =3D ofono_emulator_drivers; l; l =3D l->next) {
-+		struct ofono_emulator_driver *driver =3D l->data;
-+
-+		e =3D ofono_emulator_create(modem, driver);
-+		if (!e)
-+			continue;
-+
-+		emulator_list =3D g_slist_prepend(emulator_list, e);
-+	}
-+}
-+
-+void ofono_emulator_remove(struct ofono_emulator *e)
-+{
-+	DBG("");
-+
-+	if (!e)
-+		return;
-+
-+	__ofono_atom_free(e->atom);
-+}
-+
-+int ofono_emulator_driver_register(const struct ofono_emulator_driver *dri=
-ver)
-+{
-+	DBG("driver: %p name: %s", driver, driver->name);
-+
-+	ofono_emulator_drivers =3D g_slist_prepend(ofono_emulator_drivers,
-+							(void *)driver);
++	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
++				manager_properties_cb, NULL, NULL, -1,
++				DBUS_TYPE_INVALID);
 +
 +	return 0;
 +}
 +
-+void ofono_emulator_driver_unregister(
-+				const struct ofono_emulator_driver *driver)
++void bluetooth_unregister_uuid(const char *uuid)
 +{
-+	DBG("driver: %p name: %s", driver, driver->name);
++	g_hash_table_remove(uuid_hash, uuid);
 +
-+	ofono_emulator_drivers =3D g_slist_remove(ofono_emulator_drivers, driver);
++	if (g_hash_table_size(uuid_hash) > 0)
++		return;
++
++	g_hash_table_destroy(uuid_hash);
+ 	uuid_hash =3D NULL;
++	bluetooth_exit();
 +}
-diff --git a/src/modem.c b/src/modem.c
-index 43e4a6d..8137f97 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -396,6 +396,7 @@ static void modem_change_state(struct ofono_modem *mode=
-m,
- 				driver->post_sim(modem);
- 			__ofono_history_probe_drivers(modem);
- 			__ofono_nettime_probe_drivers(modem);
-+			__ofono_emulator_probe_drivers(modem);
- 		}
- 		break;
++
++int bluetooth_register_service(enum bluetooth_service_type type,
++					struct bluetooth_profile *profile)
++{
++	int err;
++	char *type_str;
++
++	err =3D bluetooth_init();
++	if (err)
++		return err;
++
++	type_str =3D bluetooth_service_type_to_str(type);
++
++	if (!service_hash)
++		service_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++							g_free, NULL);
++
++	g_hash_table_insert(service_hash, g_strdup(type_str), profile);
++
++	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
++				manager_properties_cb, NULL, NULL, -1,
++				DBUS_TYPE_INVALID);
++
++	return 0;
++}
++
++void bluetooth_unregister_service(enum bluetooth_service_type type)
++{
++	char *type_str =3D bluetooth_service_type_to_str(type);
++
++	g_hash_table_remove(service_hash, type_str);
++
++	if (g_hash_table_size(service_hash) > 0)
++		return;
++
++	g_hash_table_destroy(service_hash);
++	service_hash =3D NULL;
++	bluetooth_exit();
+ }
  =
 
-diff --git a/src/ofono.h b/src/ofono.h
-index e2271e6..ac2a5b0 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -117,6 +117,7 @@ enum ofono_atom_type {
- 	OFONO_ATOM_TYPE_RADIO_SETTINGS =3D 18,
- 	OFONO_ATOM_TYPE_STK =3D 19,
- 	OFONO_ATOM_TYPE_NETTIME =3D 20,
-+	OFONO_ATOM_TYPE_EMULATOR_DUN =3D 21,
- };
+ OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index fb0d841..84707a9 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -28,6 +28,10 @@
+ /* Profiles bitfield */
+ #define HFP_AG 0x01
  =
 
- enum ofono_atom_watch_condition {
-@@ -273,3 +274,8 @@ void __ofono_nettime_probe_drivers(struct ofono_modem *=
-modem);
++enum bluetooth_service_type {
++	DUN_GATEWAY,
++};
++
+ struct bluetooth_profile {
+ 	const char *name;
+ 	int (*create)(const char *device, const char *dev_addr,
+@@ -40,6 +44,10 @@ int bluetooth_register_uuid(const char *uuid,
+ 				struct bluetooth_profile *profile);
+ void bluetooth_unregister_uuid(const char *uuid);
  =
 
- void __ofono_nettime_info_received(struct ofono_modem *modem,
- 					struct ofono_network_time *info);
++int bluetooth_register_service(enum bluetooth_service_type type,
++					struct bluetooth_profile *profile);
++void bluetooth_unregister_service(enum bluetooth_service_type type);
 +
-+#include <ofono/emulator.h>
-+
-+void __ofono_emulator_probe_drivers(struct ofono_modem *modem);
-+
+ void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
+ 							char *buf, int size);
+ =
+
 -- =
 
 1.6.3.3
 
 
---===============1556187275929076673==--
+--===============4400970881348769121==--
 
