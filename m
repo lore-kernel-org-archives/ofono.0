@@ -1,104 +1,381 @@
-Content-Type: multipart/mixed; boundary="===============8025723413233547005=="
+Content-Type: multipart/mixed; boundary="===============1402780790034211391=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: [PATCH 2/2] gathdlc: Unset disconnect function in unref
-Date: Tue, 06 Jul 2010 18:03:15 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B351F6F2277@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <1278410258-3077-2-git-send-email-zhenhua.zhang@intel.com>
+From: Arun.Ravindran@elektrobit.com
+Subject: Atmodem PPP Link establishment issues
+Date: Mon, 05 Jul 2010 10:06:03 +0300
+Message-ID: <B668883EB5DD7144ADFC248A72176EA8028EDBA3@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8025723413233547005==
+--===============1402780790034211391==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
 
-Zhenhua Zhang wrote:
-> If we destroy PPP instance from g_at_ppp_unref, we should not invoke
-> io disconnect function. ---
-> gatchat/gathdlc.c |    1 +
-> 1 files changed, 1 insertions(+), 0 deletions(-)
+> Hi,
 > =
 
-> diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
-> index 08a1939..0186e46 100644
-> --- a/gatchat/gathdlc.c
-> +++ b/gatchat/gathdlc.c
-> @@ -278,6 +278,7 @@ void g_at_hdlc_unref(GAtHDLC *hdlc)
-> 	hdlc->record_fd =3D -1; }
+> We are using atmodem plugin and are trying to get the PPP up and
+> running.  I am able to create and activate context, but the PPP link
+> establishment seems to have issues.
 > =
 
-> +	g_at_io_set_disconnect_function(hdlc->io, NULL, NULL);
-> 	g_at_io_unref(hdlc->io); hdlc->io =3D NULL;
-
-Here the problem is that disconnect function could be invoked if remote IO =
-is disconnected after our ppp instance is freed. So we should avoid to invo=
-ke io_disconnect() in below case.
-
-Entering new phase: 5
-PPP: lcp: pppcp_timeout: current state 5:STOPPING
-PPP: lcp: pppcp_generate_event: current state 5:STOPPING
-PPP: event: 5 (TO-), action: 803, new_state: 3 (STOPPED)
-PPP: lcp: pppcp_this_layer_finished: current state 3:STOPPED
-Entering new phase: 0
-ofonod[3114]: src/emulator.c:ppp_disconnect() =
-
-Server: > \r\nNO CARRIER\r\n
-ofonod[3114]: Pcui:< \r\n^BOOT:20291346,0,0,0,20\r\n
-Server: < AT+CFUN=3D0\r
-ofonod[3114]: src/emulator.c:cfun_cb() set CFUN to 0
-Server: > \r\nOK\r\n
-
-
-(gdb) bt
-#0  0x0806faf6 in pppcp_generate_event (data=3D0x95bfde0, event_type=3DDOWN=
-, packet=3D0x0, len=3D0)
-    at gatchat/ppp_cp.c:638
-#1  0x0806e9cd in io_disconnect (user_data=3D0x95bfde8) at gatchat/gatppp.c=
-:349
-#2  0x001ea504 in g_source_callback_unref (cb_data=3D0x95a8678)
-    at /build/buildd/glib2.0-2.22.3/glib/gmain.c:1077
-#3  0x001eaace in g_source_destroy_internal (source=3D0x95a86b0, context=3D=
-<value optimized out>, have_lock=3D1)
-    at /build/buildd/glib2.0-2.22.3/glib/gmain.c:856
-#4  0x001eaedb in g_main_dispatch (context=3D0x95a5f80) at /build/buildd/gl=
-ib2.0-2.22.3/glib/gmain.c:1985
-#5  IA__g_main_context_dispatch (context=3D0x95a5f80) at /build/buildd/glib=
-2.0-2.22.3/glib/gmain.c:2513
-#6  0x001ee730 in g_main_context_iterate (context=3D0x95a5f80, block=3D<val=
-ue optimized out>, dispatch=3D1, =
-
-    self=3D0x95a6c58) at /build/buildd/glib2.0-2.22.3/glib/gmain.c:2591
-#7  0x001eeb9f in IA__g_main_loop_run (loop=3D0x95a5ef0) at /build/buildd/g=
-lib2.0-2.22.3/glib/gmain.c:2799
-#8  0x08094548 in main (argc=3D1, argv=3D0xbffb8ba4) at src/main.c:227
-(gdb) frame 1
-#1  0x0806e9cd in io_disconnect (user_data=3D0x95bfde8) at gatchat/gatppp.c=
-:349
-349		pppcp_signal_down(ppp->lcp);
-(gdb) p ppp
-$6 =3D <value optimized out>
-(gdb) info local
-No locals.
-(gdb) =
-
-
-> --
-> 1.6.3.3
+> The list-context script returns:
 > =
 
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+> [ /generic ]
+>     [ /generic/primarycontext3 ]
+>         Username =3D =
+
+>         Name =3D Internet access
+>         Settings =3D { Interface=3Dppp0 Netmask=3D255.255.255.255
+> Method=3Dstatic DomainNameServers=3D192.89.123.231,192.89.123.230,
+> Address=3D109.240.91.14 }
+>         Active =3D 1
+>         AccessPointName =3D internet
+>         Password =3D =
+
+>         Type =3D internet
+> =
+
+> But for a PPP link, there needs to be two ip addresses, one local and
+> one of the peer. Here in the settings you see only one IP address.
+> =
+
+> I collected the logs during the PPP link establishment, (frames and a
+> brief detail about it)
+> =
+
+> Sent from  Ofono:
+> Frame: 0x7e 0xff   0x7d 0x23 0xc0 0x21 0x7d 0x21 0x7d 0x21 0x7d 0x20
+> 0x7d 0x2a 0x7d 0x22 0x7d 0x26 0x7d 0x20 0x7d 0x20 0x7d 0x20 0x7d 0x20
+> 0x58 0x7b 0x7e =
+
+> 03 c021 1 (conf req) 1 (id) 0x000a (length) 2 (accm) 6 (length) 0000
+> fcs
+> =
+
+> Recv from Modem:
+> Frame: 0x7e 0xff 0x7d 0x23 0xc0 0x21 0x7d 0x21 0x7d 0x21 0x7d 0x20
+> 0x7d 0x34 0x7d 0x22 0x7d 0x26 0x7d 0x20 0x7d 0x20 0x7d 0x20 0x7d 0x20
+> 0x7d 0x25 0x7d 0x26 0xd2 0x8a 0xde 0xd2 0x7d 0x27 0x7d 0x22 0x7d 0x28
+> 0x7d 0x22 0xbf 0x7d 0x35 0x7e
+> 3 c021 1 (conf req) 1 (id) 0x0034 2 6 0 0 0 0 5(magic num) 6 d2 8a de
+> d2 7(protocol compression) 2 (id) 8 (addr, control compres) 2 fcs
+> =
+
+> =
+
+> Frame: 0x7e 0xff 0x7d 0x23 0xc0 0x21 0x7d 0x22 0x7d 0x21 0x7d 0x20
+> 0x7d 0x2a 0x7d 0x22 0x7d 0x26 0x7d 0x20 0x7d 0x20 0x7d 0x20 0x7d 0x20
+> 0x31 0x7d 0x2f 0x7e
+> 3 c021 2 (conf ack) 1 (id) 0x000a 2 6 0 0 0 0 fcs
+> =
+
+> Sent from  ofono:
+> Frame: 0x7e 0xff 0x7d 0x23 0xc0 0x21 0x7d 0x22 0x7d 0x21 0x7d 0x20
+> 0x7d 0x34 0x7d 0x22 0x7d 0x26 0x7d 0x20 0x7d 0x20 0x7d 0x20 0x7d 0x20
+> 0x7d 0x25 0x7d 0x26 0xd2 0x8a 0xde 0xd2 0x7d 0x27 0x7d 0x22 0x7d 0x28
+> 0x7d 0x22 0x54 0x7c 0x7e
+> 3 c021 2 (conf ack) 1 0x0034 2 6 0000 5 6 d2 8a de d2 7 2 8 2 fcs
+> =
+
+> =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x1 0x1 0x0 0x22 0x3 0x6 0x0 0x0 0x0
+> 0x0 0x81 0x6 0x0 0x0 0x0 0x0 0x83 0x6 0x0 0x0 0x0 0x0 0x82 0x6 0x0 0x0
+> 0x0 0x0 0x84 0x6 0x0 0x0 0x0 0x0 0x80 0x52 0x7e
+> 3 8021 1 (conf req) 1 (id) 0x0022 (length)  3 (ip) 6 0000 81(dns1) 6
+> 0000 83(nbns1) 6 0000 82(dns2) 6 0000 84 (nbns2) 6 0000 fcs
+> =
+
+> Recv from Modem:
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x3 0x1 0x0 0x10 0x81 0x6 0xa 0xb 0xc
+> 0xd 0x83 0x6 0xa 0xb 0xc 0xe 0x4d 0x4d 0x7e
+> 3 8021 3(conf nak) 1 (id) 0x010 81 (dns1) 6 abcd 83 (dns2) 6 abce fcs
+> =
+
+> Sent from ofono:
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x1 0x2 0x0 0x22 0x3 0x6 0x0 0x0 0x0
+> 0x0 0x81 0x6 0xa 0xb 0xc 0xd 0x83 0x6 0xa 0xb 0xc 0xe 0x82 0x6 0x0 0x0
+> 0x0 0x0 0x84 0x6 0x0 0x0 0x0 0x0 0xad 0x7a 0x7e
+> 3 8021 1 (conf ack) 2 (id) 0x0022 3 6 0000 81 6 abcd 83 6 abce 82 6
+> 0000 84 6 0000 fcs
+> =
+
+> Recv from Modem:
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x3 0x2 0x0 0x10 0x81 0x6 0xa 0xb 0xc
+> 0xd 0x83 0x6 0xa 0xb 0xc 0xe 0x33 0x95 0x7e
+> 3 8021 3(conf nak) 2 (id) 0x010 81 (dns1) 6 abcd 83 (dns2) 6 abce fcs
+> =
+
+> Sent from ofono:
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x1 0x3 0x0 0x22 0x3 0x6 0x0 0x0 0x0
+> 0x0 0x81 0x6 0xa 0xb 0xc 0xd 0x83 0x6 0xa 0xb 0xc 0xe 0x82 0x6 0x0 0x0
+> 0x0 0x0 0x84 0x6 0x0 0x0 0x0 0x0 0xce 0x3a 0x7e
+> 3 8021 1 (conf req) 3 (id) 0x0022 3 6 0000 81 6 abcd 83 6 abce 82 6
+> 0000 84 6 0000 fcs
+> =
+
+> Recv from Modem:
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x1 0x1 0x0 0x4 0x0 0xb7 0x7e =
+
+> 3 8021 1 (conf req) 1 (id) 0 4  0 fcs
+> =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x4 0x3 0x0 0x10 0x82 0x6 0x0 0x0 0x0
+> 0x0 0x84 0x6 0x0 0x0 0x0 0x0 0x34 0xcc 0x7e
+> 3 8021 4 (conf reject) 3(id) 0x0010 82 6 0000 84 6 0000 fcs
+> =
+
+> Sent from ofono:
+> Frame: 0xff 0x3 0x80 0x21 0x2 0x1 0x0 0x4 0xcd 0x92 0x7e
+> 3 8021 2 (conf ack) 1 (id) 0 4 =
+
+> =
+
+> Frame: 0xff 0x3 0x80 0x21 0x1 0x4 0x0 0x16 0x3 0x6 0x0 0x0 0x0 0x0
+> 0x81 0x6 0xa 0xb 0xc 0xd 0x83 0x6 0xa 0xb 0xc 0xe 0xe3 0x9 0x7e =
+
+> 3 8021 1 (conf req)  4 (id) 0x0016 3 6  0000 81 6 abcd 83 6 abce fcs
+> =
+
+> Recv from modem:
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x3 0x4 0x0 0x16 0x3 0x6 0x6d 0xf0 0x40
+> 0xbe 0x81 0x6 0xc0 0x59 0x7b 0xe7 0x83 0x6 0xc0 0x59 0x7b 0xe6 0xc5
+> 0xf1 0x7e
+> 3 8021 3 (conf nak) 4 (id) 0x0016 3 (ip) 6 6d f0 40 be 81 (dns1) 6 c0
+> 59 7b e7 83 (dns2) 6 c0 59 7b e6 fcs
+> =
+
+> Sent from ofono:
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x1 0x5 0x0 0x16 0x3 0x6 0x6d 0xf0 0x40
+> 0xbe 0x81 0x6 0xc0 0x59 0x7b 0xe7 0x83 0x6 0xc0 0x59 0x7b 0xe6 0x2
+> 0x9c 0x7e
+> 3 8021 1 (conf req) 5 (id) 0x0016 3 6 6d f0 40 be 81 6 c0 59 7b e7 83
+> 6 c0 59 7b e6 fcs
+> =
+
+> Recv from Modem:
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x2 0x5 0x0 0x16 0x3 0x6 0x6d 0xf0 0x40
+> 0xbe 0x81 0x6 0xc0 0x59 0x7b 0xe7 0x83 0x6 0xc0 0x59 0x7b 0xe6 0xf4
+> 0x6f 0x7e
+> 3 8021 2 (conf ack) 5 (id) 0x0016 3 6 6d f0 40 be 81 6 c0 59 7b e7 83
+> 6 c0 59 7b e6 fcs
+> =
+
+> I could not find any issues in the state transition w.r.t the RFC, but
+> I get only one IP address, what is going wrong? Could any one help?
+> =
+
+> =
+
+> ----------------------------------------------------------------------
+> -----------------------
+> =
+
+> Regards
+> Arun Ravindran
+> Specialist, Elektrobit OYJ
+> Keilasatama 5, Espoo
+> M: +358403445507
+> =
 
 
 
-Regards,
-Zhenhua
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
 
 
---===============8025723413233547005==--
+--===============1402780790034211391==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDMuMi8vRU4iPgo8SFRNTD4K
+PEhFQUQ+CjxNRVRBIEhUVFAtRVFVSVY9IkNvbnRlbnQtVHlwZSIgQ09OVEVOVD0idGV4dC9odG1s
+OyBjaGFyc2V0PXVzLWFzY2lpIj4KPE1FVEEgTkFNRT0iR2VuZXJhdG9yIiBDT05URU5UPSJNUyBF
+eGNoYW5nZSBTZXJ2ZXIgdmVyc2lvbiA2LjUuNzY1NC4xMiI+CjxUSVRMRT5BdG1vZGVtIFBQUCBM
+aW5rIGVzdGFibGlzaG1lbnQgaXNzdWVzPC9USVRMRT4KPC9IRUFEPgo8Qk9EWT4KPCEtLSBDb252
+ZXJ0ZWQgZnJvbSB0ZXh0L3J0ZiBmb3JtYXQgLS0+CjxCUj4KCjxQPjxTUEFOIExBTkc9ImZpIj48
+Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPkhpLDwvRk9OVD48L1NQQU4+CjwvUD4KCjxQPjxTUEFO
+IExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPldlIGFyZSB1c2luZyBhdG1vZGVt
+IHBsdWdpbiBhbmQgYXJlIHRyeWluZyB0byBnZXQgdGhlIFBQUCB1cCBhbmQgcnVubmluZy4mbmJz
+cDsgSSBhbSBhYmxlIHRvIGNyZWF0ZSBhbmQgYWN0aXZhdGUgY29udGV4dCwgYnV0IHRoZSBQUFAg
+bGluayBlc3RhYmxpc2htZW50IHNlZW1zIHRvIGhhdmUgaXNzdWVzLjwvRk9OVD48L1NQQU4+PC9Q
+PgoKPFA+PFNQQU4gTEFORz0iZmkiPjxGT05UIFNJWkU9MiBGQUNFPSJBcmlhbCI+VGhlIGxpc3Qt
+Y29udGV4dCBzY3JpcHQgcmV0dXJuczo8L0ZPTlQ+PC9TUEFOPgo8L1A+Cgo8UD48U1BBTiBMQU5H
+PSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj5bIC9nZW5lcmljIF08L0ZPTlQ+PC9TUEFO
+PgoKPEJSPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPiZuYnNwOyZu
+YnNwOyZuYnNwOyBbIC9nZW5lcmljL3ByaW1hcnljb250ZXh0MyBdPC9GT05UPjwvU1BBTj4KCjxC
+Uj48U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj4mbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgVXNlcm5hbWUgPSA8L0ZPTlQ+PC9TUEFOPgoK
+PEJSPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPiZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBOYW1lID0gSW50ZXJuZXQgYWNjZXNzPC9G
+T05UPjwvU1BBTj4KCjxCUj48U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFs
+Ij4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgU2V0dGluZ3MgPSB7
+IEludGVyZmFjZT1wcHAwIE5ldG1hc2s9MjU1LjI1NS4yNTUuMjU1IE1ldGhvZD1zdGF0aWMgRG9t
+YWluTmFtZVNlcnZlcnM9MTkyLjg5LjEyMy4yMzEsMTkyLjg5LjEyMy4yMzAsIEFkZHJlc3M9MTA5
+LjI0MC45MS4xNCB9PC9GT05UPjwvU1BBTj48L1A+Cgo8UD48U1BBTiBMQU5HPSJmaSI+PEZPTlQg
+U0laRT0yIEZBQ0U9IkFyaWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsgQWN0aXZlID0gMTwvRk9OVD48L1NQQU4+Cgo8QlI+PFNQQU4gTEFORz0iZmkiPjxGT05U
+IFNJWkU9MiBGQUNFPSJBcmlhbCI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7IEFjY2Vzc1BvaW50TmFtZSA9IGludGVybmV0PC9GT05UPjwvU1BBTj4KCjxCUj48U1BB
+TiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj4mbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgUGFzc3dvcmQgPSA8L0ZPTlQ+PC9TUEFOPgoKPEJSPjxT
+UEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPiZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBUeXBlID0gaW50ZXJuZXQ8L0ZPTlQ+PC9TUEFOPgo8
+L1A+Cgo8UD48U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj5CdXQgZm9y
+IGEgUFBQIGxpbmssIHRoZXJlIG5lZWRzIHRvIGJlIHR3byBpcCBhZGRyZXNzZXMsIG9uZSBsb2Nh
+bCBhbmQgb25lIG9mIHRoZSBwZWVyLiBIZXJlIGluIHRoZSBzZXR0aW5ncyB5b3Ugc2VlIG9ubHkg
+b25lIElQIGFkZHJlc3MuPC9GT05UPjwvU1BBTj48L1A+Cgo8UD48U1BBTiBMQU5HPSJmaSI+PEZP
+TlQgU0laRT0yIEZBQ0U9IkFyaWFsIj5JIGNvbGxlY3RlZCB0aGUgbG9ncyBkdXJpbmcgdGhlIFBQ
+UCBsaW5rIGVzdGFibGlzaG1lbnQsIChmcmFtZXMgYW5kIGEgYnJpZWYgZGV0YWlsIGFib3V0IGl0
+KTwvRk9OVD48L1NQQU4+CjwvUD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFD
+RT0iQXJpYWwiPlNlbnQgZnJvbSZuYnNwOyBPZm9ubzo8L0ZPTlQ+PC9TUEFOPgoKPEJSPjxTUEFO
+IExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPkZyYW1lOiAweDdlIDB4ZmYmbmJz
+cDsmbmJzcDsgMHg3ZCAweDIzIDB4YzAgMHgyMSAweDdkIDB4MjEgMHg3ZCAweDIxIDB4N2QgMHgy
+MCAweDdkIDB4MmEgMHg3ZCAweDIyIDB4N2QgMHgyNiAweDdkIDB4MjAgMHg3ZCAweDIwIDB4N2Qg
+MHgyMCAweDdkIDB4MjAgMHg1OCAweDdiIDB4N2UgPC9GT05UPjwvU1BBTj48L1A+Cgo8UD48U1BB
+TiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj4wMyBjMDIxIDEgKGNvbmYgcmVx
+KSAxIChpZCkgMHgwMDBhIChsZW5ndGgpIDIgKGFjY20pIDYgKGxlbmd0aCkgMDAwMCBmY3M8L0ZP
+TlQ+PC9TUEFOPgo8L1A+Cgo8UD48U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFy
+aWFsIj5SZWN2IGZyb20gTW9kZW06PC9GT05UPjwvU1BBTj4KCjxCUj48U1BBTiBMQU5HPSJmaSI+
+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj5GcmFtZTogMHg3ZSAweGZmIDB4N2QgMHgyMyAweGMw
+IDB4MjEgMHg3ZCAweDIxIDB4N2QgMHgyMSAweDdkIDB4MjAgMHg3ZCAweDM0IDB4N2QgMHgyMiAw
+eDdkIDB4MjYgMHg3ZCAweDIwIDB4N2QgMHgyMCAweDdkIDB4MjAgMHg3ZCAweDIwIDB4N2QgMHgy
+NSAweDdkIDB4MjYgMHhkMiAweDhhIDB4ZGUgMHhkMiAweDdkIDB4MjcgMHg3ZCAweDIyIDB4N2Qg
+MHgyOCAweDdkIDB4MjIgMHhiZiAweDdkIDB4MzUgMHg3ZTwvRk9OVD48L1NQQU4+PC9QPgoKPFA+
+PFNQQU4gTEFORz0iZmkiPjxGT05UIFNJWkU9MiBGQUNFPSJBcmlhbCI+MyBjMDIxIDEgKGNvbmYg
+cmVxKSAxIChpZCkgMHgwMDM0IDIgNiAwIDAgMCAwIDUobWFnaWMgbnVtKSA2IGQyIDhhIGRlIGQy
+IDcocHJvdG9jb2wgY29tcHJlc3Npb24pIDIgKGlkKSA4IChhZGRyLCBjb250cm9sIGNvbXByZXMp
+IDIgZmNzPC9GT05UPjwvU1BBTj48L1A+CjxCUj4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBT
+SVpFPTIgRkFDRT0iQXJpYWwiPkZyYW1lOiAweDdlIDB4ZmYgMHg3ZCAweDIzIDB4YzAgMHgyMSAw
+eDdkIDB4MjIgMHg3ZCAweDIxIDB4N2QgMHgyMCAweDdkIDB4MmEgMHg3ZCAweDIyIDB4N2QgMHgy
+NiAweDdkIDB4MjAgMHg3ZCAweDIwIDB4N2QgMHgyMCAweDdkIDB4MjAgMHgzMSAweDdkIDB4MmYg
+MHg3ZTwvRk9OVD48L1NQQU4+PC9QPgoKPFA+PFNQQU4gTEFORz0iZmkiPjxGT05UIFNJWkU9MiBG
+QUNFPSJBcmlhbCI+MyBjMDIxIDIgKGNvbmYgYWNrKSAxIChpZCkgMHgwMDBhIDIgNiAwIDAgMCAw
+IGZjczwvRk9OVD48L1NQQU4+CjwvUD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIg
+RkFDRT0iQXJpYWwiPlNlbnQgZnJvbSZuYnNwOyBvZm9ubzo8L0ZPTlQ+PC9TUEFOPgoKPEJSPjxT
+UEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPkZyYW1lOiAweDdlIDB4ZmYg
+MHg3ZCAweDIzIDB4YzAgMHgyMSAweDdkIDB4MjIgMHg3ZCAweDIxIDB4N2QgMHgyMCAweDdkIDB4
+MzQgMHg3ZCAweDIyIDB4N2QgMHgyNiAweDdkIDB4MjAgMHg3ZCAweDIwIDB4N2QgMHgyMCAweDdk
+IDB4MjAgMHg3ZCAweDI1IDB4N2QgMHgyNiAweGQyIDB4OGEgMHhkZSAweGQyIDB4N2QgMHgyNyAw
+eDdkIDB4MjIgMHg3ZCAweDI4IDB4N2QgMHgyMiAweDU0IDB4N2MgMHg3ZTwvRk9OVD48L1NQQU4+
+PC9QPgoKPFA+PFNQQU4gTEFORz0iZmkiPjxGT05UIFNJWkU9MiBGQUNFPSJBcmlhbCI+MyBjMDIx
+IDIgKGNvbmYgYWNrKSAxIDB4MDAzNCAyIDYgMDAwMCA1IDYgZDIgOGEgZGUgZDIgNyAyIDggMiBm
+Y3M8L0ZPTlQ+PC9TUEFOPgo8L1A+CjxCUj4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpF
+PTIgRkFDRT0iQXJpYWwiPkZyYW1lOiAweDdlIDB4ZmYgMHgzIDB4ODAgMHgyMSAweDEgMHgxIDB4
+MCAweDIyIDB4MyAweDYgMHgwIDB4MCAweDAgMHgwIDB4ODEgMHg2IDB4MCAweDAgMHgwIDB4MCAw
+eDgzIDB4NiAweDAgMHgwIDB4MCAweDAgMHg4MiAweDYgMHgwIDB4MCAweDAgMHgwIDB4ODQgMHg2
+IDB4MCAweDAgMHgwIDB4MCAweDgwIDB4NTIgMHg3ZTwvRk9OVD48L1NQQU4+PC9QPgoKPFA+PFNQ
+QU4gTEFORz0iZmkiPjxGT05UIFNJWkU9MiBGQUNFPSJBcmlhbCI+MyA4MDIxIDEgKGNvbmYgcmVx
+KSAxIChpZCkgMHgwMDIyIChsZW5ndGgpJm5ic3A7IDMgKGlwKSA2IDAwMDAgODEoZG5zMSkgNiAw
+MDAwIDgzKG5ibnMxKSA2IDAwMDAgODIoZG5zMikgNiAwMDAwIDg0IChuYm5zMikgNiAwMDAwIGZj
+czwvRk9OVD48L1NQQU4+PC9QPgoKPFA+PFNQQU4gTEFORz0iZmkiPjxGT05UIFNJWkU9MiBGQUNF
+PSJBcmlhbCI+UmVjdiBmcm9tIE1vZGVtOjwvRk9OVD48L1NQQU4+Cgo8QlI+PFNQQU4gTEFORz0i
+ZmkiPjxGT05UIFNJWkU9MiBGQUNFPSJBcmlhbCI+RnJhbWU6IDB4N2UgMHhmZiAweDMgMHg4MCAw
+eDIxIDB4MyAweDEgMHgwIDB4MTAgMHg4MSAweDYgMHhhIDB4YiAweGMgMHhkIDB4ODMgMHg2IDB4
+YSAweGIgMHhjIDB4ZSAweDRkIDB4NGQgMHg3ZTwvRk9OVD48L1NQQU4+Cgo8QlI+PFNQQU4gTEFO
+Rz0iZmkiPjxGT05UIFNJWkU9MiBGQUNFPSJBcmlhbCI+MyA4MDIxIDMoY29uZiBuYWspIDEgKGlk
+KSAweDAxMCA4MSAoZG5zMSkgNiBhYmNkIDgzIChkbnMyKSA2IGFiY2UgZmNzPC9GT05UPjwvU1BB
+Tj4KPC9QPgoKPFA+PFNQQU4gTEFORz0iZmkiPjxGT05UIFNJWkU9MiBGQUNFPSJBcmlhbCI+U2Vu
+dCBmcm9tIG9mb25vOjwvRk9OVD48L1NQQU4+Cgo8QlI+PFNQQU4gTEFORz0iZmkiPjxGT05UIFNJ
+WkU9MiBGQUNFPSJBcmlhbCI+RnJhbWU6IDB4N2UgMHhmZiAweDMgMHg4MCAweDIxIDB4MSAweDIg
+MHgwIDB4MjIgMHgzIDB4NiAweDAgMHgwIDB4MCAweDAgMHg4MSAweDYgMHhhIDB4YiAweGMgMHhk
+IDB4ODMgMHg2IDB4YSAweGIgMHhjIDB4ZSAweDgyIDB4NiAweDAgMHgwIDB4MCAweDAgMHg4NCAw
+eDYgMHgwIDB4MCAweDAgMHgwIDB4YWQgMHg3YSAweDdlPC9GT05UPjwvU1BBTj48L1A+Cgo8UD48
+U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj4zIDgwMjEgMSAoY29uZiBh
+Y2spIDIgKGlkKSAweDAwMjIgMyA2IDAwMDAgODEgNiBhYmNkIDgzIDYgYWJjZSA4MiA2IDAwMDAg
+ODQgNiAwMDAwIGZjczwvRk9OVD48L1NQQU4+CjwvUD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9O
+VCBTSVpFPTIgRkFDRT0iQXJpYWwiPlJlY3YgZnJvbSBNb2RlbTo8L0ZPTlQ+PC9TUEFOPgoKPEJS
+PjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPkZyYW1lOiAweDdlIDB4
+ZmYgMHgzIDB4ODAgMHgyMSAweDMgMHgyIDB4MCAweDEwIDB4ODEgMHg2IDB4YSAweGIgMHhjIDB4
+ZCAweDgzIDB4NiAweGEgMHhiIDB4YyAweGUgMHgzMyAweDk1IDB4N2U8L0ZPTlQ+PC9TUEFOPgoK
+PEJSPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPjMgODAyMSAzKGNv
+bmYgbmFrKSAyIChpZCkgMHgwMTAgODEgKGRuczEpIDYgYWJjZCA4MyAoZG5zMikgNiBhYmNlIGZj
+czwvRk9OVD48L1NQQU4+CjwvUD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFD
+RT0iQXJpYWwiPlNlbnQgZnJvbSBvZm9ubzo8L0ZPTlQ+PC9TUEFOPgoKPEJSPjxTUEFOIExBTkc9
+ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPkZyYW1lOiAweDdlIDB4ZmYgMHgzIDB4ODAg
+MHgyMSAweDEgMHgzIDB4MCAweDIyIDB4MyAweDYgMHgwIDB4MCAweDAgMHgwIDB4ODEgMHg2IDB4
+YSAweGIgMHhjIDB4ZCAweDgzIDB4NiAweGEgMHhiIDB4YyAweGUgMHg4MiAweDYgMHgwIDB4MCAw
+eDAgMHgwIDB4ODQgMHg2IDB4MCAweDAgMHgwIDB4MCAweGNlIDB4M2EgMHg3ZTwvRk9OVD48L1NQ
+QU4+PC9QPgoKPFA+PFNQQU4gTEFORz0iZmkiPjxGT05UIFNJWkU9MiBGQUNFPSJBcmlhbCI+MyA4
+MDIxIDEgKGNvbmYgcmVxKSAzIChpZCkgMHgwMDIyIDMgNiAwMDAwIDgxIDYgYWJjZCA4MyA2IGFi
+Y2UgODIgNiAwMDAwIDg0IDYgMDAwMCBmY3M8L0ZPTlQ+PC9TUEFOPgo8L1A+Cgo8UD48U1BBTiBM
+QU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj5SZWN2IGZyb20gTW9kZW06PC9GT05U
+PjwvU1BBTj4KCjxCUj48U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj5G
+cmFtZTogMHg3ZSAweGZmIDB4MyAweDgwIDB4MjEgMHgxIDB4MSAweDAgMHg0IDB4MCAweGI3IDB4
+N2UgPC9GT05UPjwvU1BBTj4KCjxCUj48U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9
+IkFyaWFsIj4zIDgwMjEgMSAoY29uZiByZXEpIDEgKGlkKSAwIDQmbmJzcDsgMCBmY3M8L0ZPTlQ+
+PC9TUEFOPgo8L1A+Cgo8UD48U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFs
+Ij5GcmFtZTogMHg3ZSAweGZmIDB4MyAweDgwIDB4MjEgMHg0IDB4MyAweDAgMHgxMCAweDgyIDB4
+NiAweDAgMHgwIDB4MCAweDAgMHg4NCAweDYgMHgwIDB4MCAweDAgMHgwIDB4MzQgMHhjYyAweDdl
+PC9GT05UPjwvU1BBTj4KCjxCUj48U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFy
+aWFsIj4zIDgwMjEgNCAoY29uZiByZWplY3QpIDMoaWQpIDB4MDAxMCA4MiA2IDAwMDAgODQgNiAw
+MDAwIGZjczwvRk9OVD48L1NQQU4+CjwvUD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpF
+PTIgRkFDRT0iQXJpYWwiPlNlbnQgZnJvbSBvZm9ubzo8L0ZPTlQ+PC9TUEFOPgoKPEJSPjxTUEFO
+IExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPkZyYW1lOiAweGZmIDB4MyAweDgw
+IDB4MjEgMHgyIDB4MSAweDAgMHg0IDB4Y2QgMHg5MiAweDdlPC9GT05UPjwvU1BBTj4KCjxCUj48
+U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj4zIDgwMjEgMiAoY29uZiBh
+Y2spIDEgKGlkKSAwIDQgPC9GT05UPjwvU1BBTj4KPC9QPgoKPFA+PFNQQU4gTEFORz0iZmkiPjxG
+T05UIFNJWkU9MiBGQUNFPSJBcmlhbCI+RnJhbWU6IDB4ZmYgMHgzIDB4ODAgMHgyMSAweDEgMHg0
+IDB4MCAweDE2IDB4MyAweDYgMHgwIDB4MCAweDAgMHgwIDB4ODEgMHg2IDB4YSAweGIgMHhjIDB4
+ZCAweDgzIDB4NiAweGEgMHhiIDB4YyAweGUgMHhlMyAweDkgMHg3ZSA8L0ZPTlQ+PC9TUEFOPjwv
+UD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPjMgODAyMSAx
+IChjb25mIHJlcSkmbmJzcDsgNCAoaWQpIDB4MDAxNiAzIDYmbmJzcDsgMDAwMCA4MSA2IGFiY2Qg
+ODMgNiBhYmNlIGZjczwvRk9OVD48L1NQQU4+CjwvUD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9O
+VCBTSVpFPTIgRkFDRT0iQXJpYWwiPlJlY3YgZnJvbSBtb2RlbTo8L0ZPTlQ+PC9TUEFOPgoKPEJS
+PjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPkZyYW1lOiAweDdlIDB4
+ZmYgMHgzIDB4ODAgMHgyMSAweDMgMHg0IDB4MCAweDE2IDB4MyAweDYgMHg2ZCAweGYwIDB4NDAg
+MHhiZSAweDgxIDB4NiAweGMwIDB4NTkgMHg3YiAweGU3IDB4ODMgMHg2IDB4YzAgMHg1OSAweDdi
+IDB4ZTYgMHhjNSAweGYxIDB4N2U8L0ZPTlQ+PC9TUEFOPjwvUD4KCjxQPjxTUEFOIExBTkc9ImZp
+Ij48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPjMgODAyMSAzIChjb25mIG5haykgNCAoaWQpIDB4
+MDAxNiAzIChpcCkgNiA2ZCBmMCA0MCBiZSA4MSAoZG5zMSkgNiBjMCA1OSA3YiBlNyA4MyAoZG5z
+MikgNiBjMCA1OSA3YiBlNiBmY3M8L0ZPTlQ+PC9TUEFOPgo8L1A+Cgo8UD48U1BBTiBMQU5HPSJm
+aSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj5TZW50IGZyb20gb2Zvbm86PC9GT05UPjwvU1BB
+Tj4KCjxCUj48U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj5GcmFtZTog
+MHg3ZSAweGZmIDB4MyAweDgwIDB4MjEgMHgxIDB4NSAweDAgMHgxNiAweDMgMHg2IDB4NmQgMHhm
+MCAweDQwIDB4YmUgMHg4MSAweDYgMHhjMCAweDU5IDB4N2IgMHhlNyAweDgzIDB4NiAweGMwIDB4
+NTkgMHg3YiAweGU2IDB4MiAweDljIDB4N2U8L0ZPTlQ+PC9TUEFOPjwvUD4KCjxQPjxTUEFOIExB
+Tkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPjMgODAyMSAxIChjb25mIHJlcSkgNSAo
+aWQpIDB4MDAxNiAzIDYgNmQgZjAgNDAgYmUgODEgNiBjMCA1OSA3YiBlNyA4MyA2IGMwIDU5IDdi
+IGU2IGZjczwvRk9OVD48L1NQQU4+CjwvUD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpF
+PTIgRkFDRT0iQXJpYWwiPlJlY3YgZnJvbSBNb2RlbTo8L0ZPTlQ+PC9TUEFOPgoKPEJSPjxTUEFO
+IExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPkZyYW1lOiAweDdlIDB4ZmYgMHgz
+IDB4ODAgMHgyMSAweDIgMHg1IDB4MCAweDE2IDB4MyAweDYgMHg2ZCAweGYwIDB4NDAgMHhiZSAw
+eDgxIDB4NiAweGMwIDB4NTkgMHg3YiAweGU3IDB4ODMgMHg2IDB4YzAgMHg1OSAweDdiIDB4ZTYg
+MHhmNCAweDZmIDB4N2U8L0ZPTlQ+PC9TUEFOPjwvUD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9O
+VCBTSVpFPTIgRkFDRT0iQXJpYWwiPjMgODAyMSAyIChjb25mIGFjaykgNSAoaWQpIDB4MDAxNiAz
+IDYgNmQgZjAgNDAgYmUgODEgNiBjMCA1OSA3YiBlNyA4MyA2IGMwIDU5IDdiIGU2IGZjczwvRk9O
+VD48L1NQQU4+CjwvUD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJp
+YWwiPkkgY291bGQgbm90IGZpbmQgYW55IGlzc3VlcyBpbiB0aGUgc3RhdGUgdHJhbnNpdGlvbiB3
+LnIudCB0aGUgUkZDLCBidXQgSSBnZXQgb25seSBvbmUgSVAgYWRkcmVzcywgd2hhdCBpcyBnb2lu
+ZyB3cm9uZz8gQ291bGQgYW55IG9uZSBoZWxwPzwvRk9OVD48L1NQQU4+PC9QPgo8QlI+Cgo8UD48
+U1BBTiBMQU5HPSJmaSI+PEI+PEk+PEZPTlQgQ09MT1I9IiMwMDAwRkYiIEZBQ0U9IkFyaWFsIj4t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS08L0ZPTlQ+PC9JPjwvQj48L1NQQU4+
+CjwvUD4KCjxQPjxTUEFOIExBTkc9ImZpIj48Qj48ST48Rk9OVCBDT0xPUj0iIzAwMDBGRiIgRkFD
+RT0iQXJpYWwiPlJlZ2FyZHM8L0ZPTlQ+PC9JPjwvQj48L1NQQU4+Cgo8QlI+PFNQQU4gTEFORz0i
+ZmkiPjxCPjxJPjxGT05UIENPTE9SPSIjMDAwMEZGIiBGQUNFPSJBcmlhbCI+QXJ1biBSYXZpbmRy
+YW48L0ZPTlQ+PC9JPjwvQj48L1NQQU4+Cgo8QlI+PFNQQU4gTEFORz0iZmkiPjxCPjxJPjxGT05U
+IENPTE9SPSIjMDAwMEZGIiBGQUNFPSJBcmlhbCI+U3BlY2lhbGlzdCwgRWxla3Ryb2JpdCBPWUo8
+L0ZPTlQ+PC9JPjwvQj48L1NQQU4+Cgo8QlI+PFNQQU4gTEFORz0iZmkiPjxCPjxJPjxGT05UIENP
+TE9SPSIjMDAwMEZGIiBGQUNFPSJBcmlhbCI+S2VpbGFzYXRhbWEgNSwgRXNwb288L0ZPTlQ+PC9J
+PjwvQj48L1NQQU4+Cgo8QlI+PFNQQU4gTEFORz0iZmkiPjxCPjxJPjxGT05UIENPTE9SPSIjMDAw
+MEZGIiBGQUNFPSJBcmlhbCI+TTogKzM1ODQwMzQ0NTUwNzwvRk9OVD48L0k+PC9CPjxJPjwvST48
+L1NQQU4+PFNQQU4gTEFORz0iZW4tdXMiPjwvU1BBTj4KPC9QPgoKPHByZT4KLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpQbGVh
+c2Ugbm90ZTogVGhpcyBlLW1haWwgbWF5IGNvbnRhaW4gY29uZmlkZW50aWFsIGluZm9ybWF0aW9u
+CmludGVuZGVkIHNvbGVseSBmb3IgdGhlIGFkZHJlc3NlZS4gSWYgeW91IGhhdmUgcmVjZWl2ZWQg
+dGhpcwplLW1haWwgaW4gZXJyb3IsIHBsZWFzZSBkbyBub3QgZGlzY2xvc2UgaXQgdG8gYW55b25l
+LCBub3RpZnkKdGhlIHNlbmRlciBwcm9tcHRseSwgYW5kIGRlbGV0ZSB0aGUgbWVzc2FnZSBmcm9t
+IHlvdXIgc3lzdGVtLgpUaGFuayB5b3UuCjwvcHJlPgoKPC9CT0RZPgo8L0hUTUw+
+--===============1402780790034211391==--
 
