@@ -1,330 +1,293 @@
-Content-Type: multipart/mixed; boundary="===============8997700568554263955=="
+Content-Type: multipart/mixed; boundary="===============2298741909155258126=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 3/6] dun_gw: Add DUN emulator plugin
-Date: Mon, 05 Jul 2010 13:45:06 +0800
-Message-ID: <1278308709-13908-4-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1278308709-13908-3-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 4/6] emulator: Add Enable/Disable for oFono emulator
+Date: Mon, 05 Jul 2010 13:45:07 +0800
+Message-ID: <1278308709-13908-5-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1278308709-13908-4-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8997700568554263955==
+--===============2298741909155258126==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-It implements DUN server role and register itself as agent to BlueZ
-interface.
+Use tty descriptor passed from BlueZ agent to enable emulator. It uses
+gatserver to handle incoming AT commands.
+
+In disable or remove emulator stage, we shutdown the gatserver.
 ---
- Makefile.am      |    3 +
- plugins/dun_gw.c |  274 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+ include/emulator.h |    3 +
+ plugins/dun_gw.c   |   15 ++++++
+ src/emulator.c     |  127 ++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 277 insertions(+), 0 deletions(-)
- create mode 100644 plugins/dun_gw.c
+ 3 files changed, 145 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 8ecb2d9..908e945 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -244,6 +244,9 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blueto=
-oth.h
- builtin_modules +=3D hfp
- builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
+diff --git a/include/emulator.h b/include/emulator.h
+index 0c87b13..9d96d67 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -52,6 +52,9 @@ struct ofono_emulator *ofono_emulator_create(struct ofono=
+_modem *modem,
+ 					struct ofono_emulator_driver *driver);
+ void ofono_emulator_remove(struct ofono_emulator *e);
  =
 
-+builtin_modules +=3D dun_gw
-+builtin_sources +=3D plugins/dun_gw.c
++ofono_bool_t ofono_emulator_enable(struct ofono_emulator *e, int fd);
++void ofono_emulator_disable(struct ofono_emulator *e);
 +
- builtin_modules +=3D palmpre
- builtin_sources +=3D plugins/palmpre.c
- =
-
+ int ofono_emulator_driver_register(const struct ofono_emulator_driver *dri=
+ver);
+ void ofono_emulator_driver_unregister(
+ 				const struct ofono_emulator_driver *driver);
 diff --git a/plugins/dun_gw.c b/plugins/dun_gw.c
-new file mode 100644
-index 0000000..95b176c
---- /dev/null
+index 95b176c..43a0b0a 100644
+--- a/plugins/dun_gw.c
 +++ b/plugins/dun_gw.c
-@@ -0,0 +1,274 @@
-+/*
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+#include <stdio.h>
-+#include <string.h>
-+#include <errno.h>
-+#include <glib.h>
-+#include <ofono.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+
-+#include <ofono/dbus.h>
-+
-+#include "gdbus.h"
-+#include "bluetooth.h"
-+
-+#ifndef DBUS_TYPE_UNIX_FD
-+#define DBUS_TYPE_UNIX_FD -1
-+#endif
-+
-+#define	BLUEZ_DUN_INTERFACE	BLUEZ_SERVICE ".SerialDUN"
-+#define DUN_AGENT_INTERFACE	"org.bluez.DUNAgent"
-+
-+static DBusConnection *connection;
-+static GHashTable *adapter_hash;
-+
-+struct dun_data {
-+	char *adapter;
-+	char *path;
-+	gboolean agent_registered;
-+	struct ofono_emulator *e;
-+};
-+
-+static struct ofono_emulator_driver dun_gw_driver;
-+
-+static int dun_gw_create_adapter(const char *path, const char *dev_addr,
-+				const char *adapter, const char *alias)
-+{
-+	GSList *l;
-+	struct dun_data *data;
-+
-+	/* Ignore if we already have this adapter */
-+	l =3D g_hash_table_lookup(adapter_hash, (char *)adapter);
-+	if (l !=3D NULL)
-+		return -EALREADY;
-+
-+	DBG("Adding adapter: %s", adapter);
-+
-+	data =3D g_try_new0(struct dun_data, 1);
-+	if (!data)
-+		return -ENOMEM;
-+
-+	data->adapter =3D g_strdup(adapter);
-+	data->path =3D g_strdup(path);
-+	data->agent_registered =3D FALSE;
-+
-+	g_hash_table_insert(adapter_hash, g_strdup(adapter), data);
-+
-+	return 0;
-+}
-+
-+static gboolean remove_adapter(gpointer key, gpointer value, gpointer user=
-_data)
-+{
-+	struct dun_data *data =3D value;
-+
-+	if (data) {
-+		g_free(data->adapter);
-+		g_free(data->path);
-+		g_free(data);
-+		data =3D NULL;
-+	}
-+
-+	return TRUE;
-+}
-+
-+static void dun_gw_remove_all_adapter()
-+{
-+	if (adapter_hash =3D=3D NULL)
-+		return;
-+
-+	DBG("");
-+
-+	g_hash_table_foreach_remove(adapter_hash, remove_adapter, NULL);
-+}
-+
-+static DBusMessage *dun_agent_new_connection(DBusConnection *conn,
-+						DBusMessage *msg,
-+						void *user_data)
-+{
-+	DBusMessage *reply;
-+	int fd;
-+
-+	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_UNIX_FD, &fd,
-+				DBUS_TYPE_INVALID)) {
+@@ -111,6 +111,8 @@ static DBusMessage *dun_agent_new_connection(DBusConnec=
+tion *conn,
+ 						DBusMessage *msg,
+ 						void *user_data)
+ {
++	struct dun_data *data =3D user_data;
++	struct ofono_emulator *e =3D data->e;
+ 	DBusMessage *reply;
+ 	int fd;
+ =
+
+@@ -121,6 +123,14 @@ static DBusMessage *dun_agent_new_connection(DBusConne=
+ction *conn,
+ 		goto error;
+ 	}
+ =
+
++	if (!ofono_emulator_enable(e, fd)) {
 +		reply =3D g_dbus_create_error(msg, DUN_AGENT_INTERFACE, ".Failed",
-+						"Invalid File Descriptor");
++						"Failed to enable DUN Server");
 +		goto error;
 +	}
 +
-+	return dbus_message_new_method_return(msg);
++	DBG("Accept new DUN connection");
++
+ 	return dbus_message_new_method_return(msg);
+ =
+
+ error:
+@@ -211,6 +221,9 @@ static int dun_gw_enable(struct ofono_emulator *e, int =
+fd)
+ {
+ 	DBG("%p", e);
+ =
+
++	if (!ofono_emulator_enable(e, fd))
++		return -EINVAL;
++
+ 	return 0;
+ }
+ =
+
+@@ -218,6 +231,8 @@ static int dun_gw_disable(struct ofono_emulator *e)
+ {
+ 	DBG("%p", e);
+ =
+
++	ofono_emulator_disable(e);
++
+ 	return 0;
+ }
+ =
+
+diff --git a/src/emulator.c b/src/emulator.c
+index 6b63398..1155769 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -30,6 +30,7 @@
+ #include <gdbus.h>
+ =
+
+ #include "ofono.h"
++#include "gatserver.h"
+ #include "common.h"
+ =
+
+ struct ofono_emulator {
+@@ -38,12 +39,19 @@ struct ofono_emulator {
+ 	struct ofono_atom *atom;
+ 	unsigned int id;
+ 	void *user_data;
++	GAtServer *server;
++	ofono_bool_t powered;
+ };
+ =
+
+ static GSList *emulator_list;
+ static GSList *ofono_emulator_drivers;
+ static unsigned int ofono_emulator_ids;
+ =
+
++static void ofono_emulator_debug(const char *str, void *data)
++{
++	g_print("%s: %s\n", (char *)data, str);
++}
++
+ static unsigned int ofono_emulator_next_id()
+ {
+ 	unsigned int i;
+@@ -121,6 +129,9 @@ static void emulator_remove(struct ofono_atom *atom)
+ =
+
+ 	emulator_list =3D g_slist_remove(emulator_list, e);
+ =
+
++	if (e->powered)
++		e->driver->disable(e);
++
+ 	if (e->driver->remove)
+ 		e->driver->remove(e);
+ =
+
+@@ -129,6 +140,78 @@ static void emulator_remove(struct ofono_atom *atom)
+ 	e =3D NULL;
+ }
+ =
+
++void ofono_emulator_disable(struct ofono_emulator *e)
++{
++	if (e->server =3D=3D NULL)
++		return;
++
++	g_at_server_shutdown(e->server);
++	g_at_server_unref(e->server);
++	e->server =3D NULL;
++
++	e->powered =3D FALSE;
++}
++
++static int set_powered(struct ofono_emulator *e, ofono_bool_t powered, int=
+ fd)
++{
++	int val;
++
++	if (powered =3D=3D TRUE && e->driver->enable)
++		val =3D e->driver->enable(e, fd);
++	else if (powered =3D=3D FALSE && e->driver->disable)
++		val =3D e->driver->disable(e);
++	else
++		return -EINVAL;
++
++	e->powered =3D powered;
++
++	return val;
++}
++
++static void emulator_disconnect(gpointer data)
++{
++	struct ofono_emulator *e =3D data;
++
++	set_powered(e, FALSE, 0);
++}
++
++ofono_bool_t ofono_emulator_enable(struct ofono_emulator *e, int fd)
++{
++	GAtServer *server;
++	GIOChannel *channel;
++
++	if (fd <=3D 0 || e->server !=3D NULL)
++		return FALSE;
++
++	channel =3D g_io_channel_unix_new(fd);
++	server =3D g_at_server_new(channel);
++	if (!server)
++		goto error;
++
++	e->server =3D server;
++	g_at_server_set_debug(e->server, ofono_emulator_debug, "Server");
++	g_at_server_set_disconnect_function(e->server, emulator_disconnect, e);
++
++	g_io_channel_unref(channel);
++
++	e->powered =3D TRUE;
++
++	return TRUE;
 +
 +error:
++	if (channel) {
++		g_io_channel_shutdown(channel, FALSE, NULL);
++		g_io_channel_unref(channel);
++	}
++
++	if (server) {
++		g_at_server_shutdown(server);
++		g_at_server_unref(server);
++	}
++
++	return FALSE;
++}
++
+ static struct ofono_emulator *create_emulator(struct ofono_modem *modem,
+ 					struct ofono_emulator_driver *driver)
+ {
+@@ -156,8 +239,52 @@ static DBusMessage *emulator_get_properties(DBusConnec=
+tion *conn,
+ 	return dbus_message_new_method_return(msg);
+ }
+ =
+
++static DBusMessage *emulator_enable(DBusConnection *conn,
++						DBusMessage *msg, void *data)
++{
++	DBusMessage *reply;
++	struct ofono_emulator *e =3D data;
++	const char *path;
++	int fd;
++	ofono_bool_t powered =3D TRUE;
++
++	if (!e)
++		return FALSE;
++
++	if (dbus_message_get_args(msg, NULL, DBUS_TYPE_UNIX_FD, &fd,
++					DBUS_TYPE_INVALID) =3D=3D FALSE)
++		return __ofono_error_invalid_args(msg);
++
++	if (set_powered(e, TRUE, fd) < 0)
++		return __ofono_error_failed(msg);
++
++	reply =3D dbus_message_new_method_return(msg);
++	path =3D ofono_emulator_get_path(e);
++	dbus_message_append_args(reply, DBUS_TYPE_OBJECT_PATH, &path,
++					DBUS_TYPE_INVALID);
++
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_EMULATOR_INTERFACE,
++					"Powered", DBUS_TYPE_BOOLEAN,
++					&powered);
 +	return reply;
 +}
 +
-+static DBusMessage *dun_agent_release(DBusConnection *conn,
-+					DBusMessage *msg, void *user_data)
++static DBusMessage *emulator_disable(DBusConnection *conn,
++						DBusMessage *msg, void *data)
 +{
-+	struct dun_data *data =3D user_data;
-+	struct ofono_emulator *e =3D data->e;
-+	const char *obj_path =3D ofono_emulator_get_path(e);
++	struct ofono_emulator *e =3D data;
 +
-+	g_dbus_unregister_interface(connection, obj_path, DUN_AGENT_INTERFACE);
-+	data->agent_registered =3D FALSE;
-+
-+	ofono_emulator_remove(e);
++	set_powered(e, FALSE, 0);
 +
 +	return dbus_message_new_method_return(msg);
 +}
 +
-+static GDBusMethodTable agent_methods[] =3D {
-+	{ "NewConnection", "h", "", dun_agent_new_connection,
-+					G_DBUS_METHOD_FLAG_ASYNC },
-+	{ "Release", "", "", dun_agent_release },
-+	{ NULL, NULL, NULL, NULL }
-+};
-+
-+static int dun_gw_probe(struct ofono_emulator *e)
-+{
-+	char *adapter =3D NULL;
-+	struct dun_data *data =3D NULL;
-+	const char *obj_path =3D ofono_emulator_get_path(e);
-+	GHashTableIter hash_iter;
-+	gpointer key, value;
-+
-+	DBG("%p", e);
-+
-+	if (g_hash_table_size(adapter_hash) =3D=3D 0) {
-+		DBG("No Bluetooth adapater found in system");
-+		return -EINVAL;
-+	}
-+
-+	g_hash_table_iter_init(&hash_iter, adapter_hash);
-+	while (g_hash_table_iter_next(&hash_iter, &key, &value)) {
-+		adapter =3D key;
-+		data =3D value;
-+
-+		/* Find the adapter that has no DUN GW register yet */
-+		if (data->agent_registered =3D=3D FALSE)
-+			break;
-+	}
-+
-+	if (!adapter || !data)
-+		return -EINVAL;
-+
-+	/* Register dbus interface */
-+	g_dbus_register_interface(connection, obj_path, DUN_AGENT_INTERFACE,
-+			agent_methods, NULL, NULL, data, NULL);
-+
-+	data->e =3D e;
-+	ofono_emulator_set_data(e, data);
-+
-+	return 0;
-+}
-+
-+static void dun_gw_remove(struct ofono_emulator *e)
-+{
-+	struct dun_data *data =3D ofono_emulator_get_data(e);
-+	const char *obj_path =3D ofono_emulator_get_path(e);
-+
-+	DBG("%p", e);
-+
-+	if (!data)
-+		return;
-+
-+	g_dbus_unregister_interface(connection, obj_path, DUN_AGENT_INTERFACE);
-+
-+	g_hash_table_remove(adapter_hash, data->adapter);
-+	remove_adapter(data->adapter, data, NULL);
-+
-+	ofono_emulator_set_data(e, NULL);
-+
-+	return;
-+}
-+
-+static int dun_gw_enable(struct ofono_emulator *e, int fd)
-+{
-+	DBG("%p", e);
-+
-+	return 0;
-+}
-+
-+static int dun_gw_disable(struct ofono_emulator *e)
-+{
-+	DBG("%p", e);
-+
-+	return 0;
-+}
-+
-+static struct ofono_emulator_driver dun_gw_driver =3D {
-+	.name		=3D "dun_gw",
-+	.type		=3D OFONO_EMULATOR_TYPE_DUN,
-+	.probe		=3D dun_gw_probe,
-+	.remove		=3D dun_gw_remove,
-+	.enable		=3D dun_gw_enable,
-+	.disable	=3D dun_gw_disable,
-+};
-+
-+static struct bluetooth_profile dun_gw_profile =3D {
-+	.name		=3D "dun_gw",
-+	.create		=3D dun_gw_create_adapter,
-+	.remove_all	=3D dun_gw_remove_all_adapter,
-+	.set_alias	=3D NULL,
-+};
-+
-+static int dun_gw_init()
-+{
-+	int err;
-+
-+	if (DBUS_TYPE_UNIX_FD < 0)
-+		return -EBADF;
-+
-+	connection =3D ofono_dbus_get_connection();
-+
-+	err =3D ofono_emulator_driver_register(&dun_gw_driver);
-+	if (err < 0)
-+		return err;
-+
-+	err =3D bluetooth_register_service(DUN_GATEWAY, &dun_gw_profile);
-+	if (err < 0) {
-+		ofono_emulator_driver_unregister(&dun_gw_driver);
-+		return err;
-+	}
-+
-+	adapter_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						g_free, NULL);
-+
-+	return 0;
-+}
-+
-+static void dun_gw_exit()
-+{
-+	bluetooth_unregister_service(DUN_GATEWAY);
-+	ofono_emulator_driver_unregister(&dun_gw_driver);
-+	dun_gw_remove_all_adapter();
-+	g_hash_table_destroy(adapter_hash);
-+}
-+
-+OFONO_PLUGIN_DEFINE(dun_gw, "Dial-up Networking Profile Plugins", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_gw_init, dun_gw_exit)
+ static GDBusMethodTable ofono_emulator_methods[] =3D {
+ 	{ "GetProperties",	"",	"a{sv}", emulator_get_properties },
++	{ "Enable", 	"h", 	"", 		emulator_enable,
++						G_DBUS_METHOD_FLAG_ASYNC },
++	{ "Disable", 	"", 	"", 		emulator_disable },
+ 	{ }
+ };
+ =
+
 -- =
 
 1.6.3.3
 
 
---===============8997700568554263955==--
+--===============2298741909155258126==--
 
