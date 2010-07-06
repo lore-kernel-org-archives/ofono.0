@@ -1,94 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============2453736380528551946=="
+Content-Type: multipart/mixed; boundary="===============7807908966152610364=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] Voicecall gaps.
-Date: Mon, 05 Jul 2010 16:40:47 +0300
-Message-ID: <1278337247-4391-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
+Subject: Question about set modem power state to off
+Date: Tue, 06 Jul 2010 04:51:57 +0200
+Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE805101805@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2453736380528551946==
+--===============7807908966152610364==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi all,
+ =
 
-Missing voicecall functionality pieces from tp-ring point-of-view.
----
- TODO                         |   27 +++++++++++++++++++++++++++
- doc/voicecallmanager-api.txt |    8 ++++----
- 2 files changed, 31 insertions(+), 4 deletions(-)
+When set modem power state to off, all atoms and interfaces except
+'org.ofono.Modem'  are =
 
-diff --git a/TODO b/TODO
-index 470d4a6..fc539a7 100644
---- a/TODO
-+++ b/TODO
-@@ -265,6 +265,33 @@ Supplementary Services
-   Complexity: C8
+ =
+
+removed and unregistered. So all APIs execpt 'org.ofono.Modem'  can not
+be used after that.
+ =
+
+But,  when modem power state is off (AT+CFUN=3D0), some feature should
+still be available. such
+ =
+
+as access SIM card(import contact from SIM) and STK.  I think maybe
+ofono should at least keep 'phonebook'
+ =
+
+and 'stk' atom after set power state to off.
  =
 
  =
 
-+Voicecall
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+- Supplementary service notifications on remote party actions:
-+  - call has been put on hold (+CSSU: 2)
-+  - call has been retrieved (+CSSU: 3), and
-+  - joining call to a multiparty conference (+CSSU: 4)
-+
-+  Priority: Medium
-+  Complexity: C1
-+  Owner: Pekka Pessi <pekka.pessi@nokia.com>
-+
-+- Dial strings. Include CLIR prefixes and 2nd stage dial strings in the
-+  DialString call property. Add dialstring accessor method to C API.
-+
-+  Priority: Medium
-+
-+- Provide feedback of sent DTMF tones. Emit SendingTones signal if modem c=
-an
-+  provide approximate starting and stopping times for DTMF tones. Signal
-+  argument contains a string of DTMF tones to be sent, or empty string when
-+  all tones has been sent.
-+
-+  Priority: Medium
-+  Complexity: C2
-+  Owner: Pekka Pessi <pekka.pessi@nokia.com>
-+
-+
- Miscellaneous
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+best regards,
  =
 
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 7877ac5..bc79fc3 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -108,10 +108,10 @@ Methods		dict GetProperties()
- =
+Caiwen
+=20
 
- 		void SendTones(string tones)
- =
+--===============7807908966152610364==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
--			Sends the DTMF tones to the network.  Under GSM the
--			tones have a fixed duration.  Tones can be one of:
--			'0' - '9', '*', '#', 'A', 'B', 'C', 'D'. The last four
--			are typically not used in normal circumstances.
-+			Sends the DTMF tones to the network.  The tones have
-+			a fixed duration.  Tones can be one of: '0' - '9',
-+			'*', '#', 'A', 'B', 'C', 'D'.  The last four are
-+			typically not used in normal circumstances.
- =
+PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMCBUcmFuc2l0aW9uYWwv
+L0VOIj4KPEhUTUw+PEhFQUQ+CjxNRVRBIGh0dHAtZXF1aXY9Q29udGVudC1UeXBlIGNvbnRlbnQ9
+InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxNRVRBIGNvbnRlbnQ9Ik1TSFRNTCA2LjAw
+LjI5MDAuNTk0NSIgbmFtZT1HRU5FUkFUT1I+PC9IRUFEPgo8Qk9EWT4KPERJVj48Rk9OVCBmYWNl
+PUNhbGlicmk+PFNQQU4gY2xhc3M9MjgzNTkzNjAyLTA2MDcyMDEwPkhpIAphbGwsPC9TUEFOPjwv
+Rk9OVD48L0RJVj4KPERJVj48Rk9OVCBmYWNlPUNhbGlicmk+PFNQQU4gCmNsYXNzPTI4MzU5MzYw
+Mi0wNjA3MjAxMD48L1NQQU4+PC9GT05UPiZuYnNwOzwvRElWPgo8RElWPjxGT05UIGZhY2U9Q2Fs
+aWJyaT48U1BBTiBjbGFzcz0yODM1OTM2MDItMDYwNzIwMTA+V2hlbiBzZXQgbW9kZW0gcG93ZXIg
+CnN0YXRlIHRvIG9mZiwgYWxsIGF0b21zIGFuZCZuYnNwO2ludGVyZmFjZXMgZXhjZXB0ICdvcmcu
+b2Zvbm8uTW9kZW0nJm5ic3A7IGFyZSAKPC9TUEFOPjwvRk9OVD48L0RJVj4KPERJVj48Rk9OVCBm
+YWNlPUNhbGlicmk+PFNQQU4gCmNsYXNzPTI4MzU5MzYwMi0wNjA3MjAxMD48L1NQQU4+PC9GT05U
+PiZuYnNwOzwvRElWPgo8RElWPjxGT05UIGZhY2U9Q2FsaWJyaT48U1BBTiBjbGFzcz0yODM1OTM2
+MDItMDYwNzIwMTA+cmVtb3ZlZCBhbmQgdW5yZWdpc3RlcmVkLiAKU28gYWxsIEFQSXMgZXhlY3B0
+ICdvcmcub2Zvbm8uTW9kZW0nJm5ic3A7IGNhbiBub3QgYmUgdXNlZCBhZnRlciAKdGhhdC48L1NQ
+QU4+PC9GT05UPjwvRElWPgo8RElWPjxGT05UIGZhY2U9Q2FsaWJyaT48U1BBTiAKY2xhc3M9Mjgz
+NTkzNjAyLTA2MDcyMDEwPjwvU1BBTj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVY+PEZPTlQgZmFj
+ZT1DYWxpYnJpPjxTUEFOIGNsYXNzPTI4MzU5MzYwMi0wNjA3MjAxMD5CdXQsJm5ic3A7IHdoZW4g
+bW9kZW0gCnBvd2VyIHN0YXRlIGlzIG9mZiAoQVQrQ0ZVTj0wKSwgc29tZSBmZWF0dXJlIHNob3Vs
+ZCBzdGlsbCZuYnNwO2JlIGF2YWlsYWJsZS4gCnN1Y2g8L1NQQU4+PC9GT05UPjwvRElWPgo8RElW
+PjxGT05UIGZhY2U9Q2FsaWJyaT48U1BBTiAKY2xhc3M9MjgzNTkzNjAyLTA2MDcyMDEwPjwvU1BB
+Tj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1DYWxpYnJpPjxTUEFOIGNsYXNz
+PTI4MzU5MzYwMi0wNjA3MjAxMD5hcyBhY2Nlc3MgU0lNIGNhcmQoaW1wb3J0IApjb250YWN0IGZy
+b20gU0lNKSBhbmQgU1RLLiZuYnNwOyBJIHRoaW5rIG1heWJlIG9mb25vIHNob3VsZCBhdCBsZWFz
+dCBrZWVwIAoncGhvbmVib29rJzwvU1BBTj48L0ZPTlQ+PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1D
+YWxpYnJpPjxTUEFOIApjbGFzcz0yODM1OTM2MDItMDYwNzIwMTA+PC9TUEFOPjwvRk9OVD4mbmJz
+cDs8L0RJVj4KPERJVj48Rk9OVCBmYWNlPUNhbGlicmk+PFNQQU4gY2xhc3M9MjgzNTkzNjAyLTA2
+MDcyMDEwPmFuZCAnc3RrJyBhdG9tJm5ic3A7YWZ0ZXIgCnNldCBwb3dlciBzdGF0ZSB0byBvZmYu
+PC9TUEFOPjwvRk9OVD48L0RJVj4KPERJVj48Rk9OVCBmYWNlPUNhbGlicmk+PFNQQU4gCmNsYXNz
+PTI4MzU5MzYwMi0wNjA3MjAxMD48L1NQQU4+PC9GT05UPiZuYnNwOzwvRElWPgo8RElWPjxGT05U
+IGZhY2U9Q2FsaWJyaT48U1BBTiAKY2xhc3M9MjgzNTkzNjAyLTA2MDcyMDEwPjwvU1BBTj48L0ZP
+TlQ+Jm5ic3A7PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1DYWxpYnJpPjxTUEFOIGNsYXNzPTI4MzU5
+MzYwMi0wNjA3MjAxMD5iZXN0IApyZWdhcmRzLDwvU1BBTj48L0ZPTlQ+PC9ESVY+CjxESVY+PEZP
+TlQgZmFjZT1DYWxpYnJpPjxTUEFOIApjbGFzcz0yODM1OTM2MDItMDYwNzIwMTA+PC9TUEFOPjwv
+Rk9OVD4mbmJzcDs8L0RJVj4KPERJVj48Rk9OVCBmYWNlPUNhbGlicmk+PFNQQU4gCmNsYXNzPTI4
+MzU5MzYwMi0wNjA3MjAxMD5DYWl3ZW48L1NQQU4+PC9GT05UPjwvRElWPgo8RElWPjxGT05UIGZh
+Y2U9Q2FsaWJyaT48U1BBTiAKY2xhc3M9MjgzNTkzNjAyLTA2MDcyMDEwPjwvU1BBTj48L0ZPTlQ+
+Jm5ic3A7PC9ESVY+PC9CT0RZPjwvSFRNTD4K
 
- Signals		PropertyChanged(string property, variant value)
- =
-
--- =
-
-1.7.0.4
-
-
---===============2453736380528551946==--
+--===============7807908966152610364==--
 
