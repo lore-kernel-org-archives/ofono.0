@@ -1,35 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============2363668531329650222=="
+Content-Type: multipart/mixed; boundary="===============6218219443944412158=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Voicecall gaps.
-Date: Tue, 06 Jul 2010 11:22:55 -0500
-Message-ID: <4C33585F.3010800@gmail.com>
-In-Reply-To: <1278337247-4391-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH 2/2] gathdlc: Unset disconnect function in unref
+Date: Tue, 06 Jul 2010 11:28:26 -0500
+Message-ID: <4C3359AA.3000500@gmail.com>
+In-Reply-To: <1278410258-3077-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2363668531329650222==
+--===============6218219443944412158==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Zhenhua,
 
-On 07/05/2010 08:40 AM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+> @@ -278,6 +278,7 @@ void g_at_hdlc_unref(GAtHDLC *hdlc)
+>  		hdlc->record_fd =3D -1;
+>  	}
+>  =
 
-> Missing voicecall functionality pieces from tp-ring point-of-view.
-> ---
->  TODO                         |   27 +++++++++++++++++++++++++++
->  doc/voicecallmanager-api.txt |    8 ++++----
->  2 files changed, 31 insertions(+), 4 deletions(-)
+> +	g_at_io_set_disconnect_function(hdlc->io, NULL, NULL);
 
-Please don't lump TODO and documentation changes into a single patch.
-Separate into two patches.
+Since GAtHDLC does not set the disconnect function, this really belongs
+in GAtPPP.
+
+>  	g_at_io_unref(hdlc->io);
+>  	hdlc->io =3D NULL;
+>  =
+
+
+However, I really question why this patch is necessary.  The only way
+the disconnect function is not reset today is if the GAtIO is refed and
+g_at_chat_resume is not called.
+
+We do call g_at_io_set_disconnect function in g_at_chat_resume.
 
 Regards,
 -Denis
 
---===============2363668531329650222==--
+--===============6218219443944412158==--
 
