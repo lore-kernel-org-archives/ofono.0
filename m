@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============6133794103238646538=="
+Content-Type: multipart/mixed; boundary="===============5523601760883442689=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
 Subject: [PATCH 1/2] Voicecall gaps.
-Date: Tue, 06 Jul 2010 20:17:02 +0300
-Message-ID: <1278436623-13979-1-git-send-email-Pekka.Pessi@nokia.com>
+Date: Tue, 06 Jul 2010 20:17:51 +0300
+Message-ID: <1278436672-14019-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6133794103238646538==
+--===============5523601760883442689==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -66,5 +66,5 @@ an
 1.7.0.4
 
 
---===============6133794103238646538==--
+--===============5523601760883442689==--
 
