@@ -1,60 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============8674539979809006069=="
+Content-Type: multipart/mixed; boundary="===============5267892555384377798=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] test-server: Use cfmakeraw to set TTY raw mode
-Date: Tue, 06 Jul 2010 09:51:50 -0300
-Message-ID: <1278420710.2789.38.camel@localhost.localdomain>
-In-Reply-To: <1278397386-29822-1-git-send-email-zhenhua.zhang@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Question about set modem power state to off
+Date: Tue, 06 Jul 2010 08:58:52 -0500
+Message-ID: <4C33369C.2070101@gmail.com>
+In-Reply-To: <D87B22B1FE8C0F479CA9BEAD6C25AAE805101805@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8674539979809006069==
+--===============5267892555384377798==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Caiwen,
 
-> Use cfmakeraw to disable echoing and special characters processing. If
-> we don't turn off ICRNL, TTY layer translates \r\n to \n\n.
-> ---
->  gatchat/test-server.c |    8 +++-----
->  1 files changed, 3 insertions(+), 5 deletions(-)
-> =
-
-> diff --git a/gatchat/test-server.c b/gatchat/test-server.c
-> index 25a1192..2911978 100644
-> --- a/gatchat/test-server.c
-> +++ b/gatchat/test-server.c
-> @@ -848,12 +848,10 @@ static void set_raw_mode(int fd)
->  {
->  	struct termios options;
+On 07/05/2010 09:51 PM, Zhang, Caiwen wrote:
+> Hi all,
 >  =
 
-> +	memset(&options, 0, sizeof(struct termios));
->  	tcgetattr(fd, &options);
-> -
-> -	/* Set TTY as raw mode to disable echo back of input characters
-> -	 * when they are received from Modem to avoid feedback loop */
-> -	options.c_lflag &=3D ~(ICANON | ECHO | ECHOE | ISIG);
-> -
-> +	tcflush(fd, TCIOFLUSH);
-> +	cfmakeraw(&options);
->  	tcsetattr(fd, TCSANOW, &options);
->  }
+> When set modem power state to off, all atoms and interfaces except
+> 'org.ofono.Modem'  are
+>  =
 
-I am fine with using cfmakeraw. So patch has been applied.
+> removed and unregistered. So all APIs execpt 'org.ofono.Modem'  can not
+> be used after that.
+>  =
 
-Minor comment here that sizeof(options) would be better then referencing
-the struct itself. And in general we have used ti as variable name for
-termios options. Don't ask me really why. Just have done that in the
-patch. So feel free to send an cleanup patch.
+> But,  when modem power state is off (AT+CFUN=3D0), some feature should
+> still be available. such
+>  =
 
-Regards
+> as access SIM card(import contact from SIM) and STK.  I think maybe
+> ofono should at least keep 'phonebook'
+>  =
 
-Marcel
+> and 'stk' atom after set power state to off.
+>  =
 
 
+What you're thinking of here is the 'Online' property of the Modem which
+controls the RX/TX circuit status.  When Online is False and Powered is
+True the modem can still access the SIM.  Once the modem is powered off,
+it is truly off.
 
---===============8674539979809006069==--
+This feature is still in development and thus no driver is currently
+taking advantage of this functionality.
+
+Regards,
+-Denis
+
+--===============5267892555384377798==--
 
