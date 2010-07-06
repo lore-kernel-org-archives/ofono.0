@@ -1,45 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============4954515316206932384=="
+Content-Type: multipart/mixed; boundary="===============0404507330367002482=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 2/2] gatppp: Unset disconnect function when unref PPP
-Date: Wed, 07 Jul 2010 09:46:32 +0800
-Message-ID: <1278467192-12207-2-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1278467192-12207-1-git-send-email-zhenhua.zhang@intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 00/14][RESEND] STK patches without agent
+Date: Wed, 07 Jul 2010 00:38:55 +0200
+Message-ID: <1278455949-2823-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4954515316206932384==
+--===============0404507330367002482==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Unset IO disconnect function when we try to destroy GAtPPP instance.
-After freeing the instance, the IO disconnect function should not be
-invoked.
----
- gatchat/gatppp.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+These are some patches I sent before reordered and refactored to
+skip stuff related to the Agent API, i.e. related to the UI.
 
-diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-index d9b1627..63508b5 100644
---- a/gatchat/gatppp.c
-+++ b/gatchat/gatppp.c
-@@ -454,6 +454,9 @@ void g_at_ppp_unref(GAtPPP *ppp)
- 	if (is_zero =3D=3D FALSE)
- 		return;
- =
+Andrzej Zaborowski (14):
+  stk: Utilities for proactive command/envelope handling.
+  mbmmodem: End session on *STKEND.
+  stk: Handle the More Time proactive command as a nop.
+  Add OFONO_ERROR_TYPE_SIM for negative SIM statuses.
+  atmodem: Make sim operations return sim error codes.
+  stk: Handle ENVELOPEs in a queue, retry on sim busy.
+  Add __ofono_sms_submit for other atoms to submit SMs.
+  stk: Handle the Send SMS proactive command.
+  Add Dbus interface names for STK.
+  stk: Handle the Set Up Idle Text proactive command.
+  sktutil: Use the Mandatory flag in parse_dataobj.
+  stkutil: Timer Value is conditional, not optional.
+  stk: Handle the Timer Management proactive command.
+  stk: Handle the Poll Interval proactive command.
 
-+	g_at_io_set_disconnect_function(g_at_hdlc_get_io(ppp->hdlc),
-+						NULL, NULL);
-+
- 	if (ppp->net)
- 		ppp_net_free(ppp->net);
- =
+ drivers/atmodem/sim.c  |   32 ++-
+ drivers/atmodem/stk.c  |   20 +-
+ drivers/mbmmodem/stk.c |    3 +
+ include/dbus.h         |    2 +
+ include/stk.h          |    2 +
+ include/types.h        |    1 +
+ src/ofono.h            |    7 +-
+ src/sms.c              |   39 +++
+ src/stk.c              |  667 ++++++++++++++++++++++++++++++++++++++++++++=
+++--
+ src/stkutil.c          |   12 +-
+ 10 files changed, 744 insertions(+), 41 deletions(-)
 
--- =
 
-1.6.3.3
-
-
---===============4954515316206932384==--
+--===============0404507330367002482==--
 
