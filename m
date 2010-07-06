@@ -1,61 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============6656928307987300875=="
+Content-Type: multipart/mixed; boundary="===============5567955838828813133=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 03/14] stk: Handle the More Time proactive command as a nop.
-Date: Wed, 07 Jul 2010 00:38:58 +0200
-Message-ID: <1278455949-2823-4-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 04/14] Add OFONO_ERROR_TYPE_SIM for negative SIM statuses.
+Date: Wed, 07 Jul 2010 00:38:59 +0200
+Message-ID: <1278455949-2823-5-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1278455949-2823-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6656928307987300875==
+--===============5567955838828813133==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Expected value of the .error field is status word 1 and status word 2
+in bits 8:15 and 0:7 of the field.
 ---
- src/stk.c |   13 +++++++++++++
- 1 files changed, 13 insertions(+), 0 deletions(-)
+ include/types.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index 66b0a6b..ba66fe2 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -143,6 +143,15 @@ static void stk_command_cb(const struct ofono_error *e=
-rror, void *data)
- 	DBG("TERMINAL RESPONSE to a command reported no errors");
- }
+diff --git a/include/types.h b/include/types.h
+index 2b154f0..6098cba 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -60,6 +60,7 @@ enum ofono_error_type {
+ 	OFONO_ERROR_TYPE_CME,
+ 	OFONO_ERROR_TYPE_CMS,
+ 	OFONO_ERROR_TYPE_CEER,
++	OFONO_ERROR_TYPE_SIM,
+ 	OFONO_ERROR_TYPE_FAILURE
+ };
  =
 
-+static gboolean handle_command_more_time(const struct stk_command *cmd,
-+						struct stk_response *rsp,
-+						struct ofono_stk *stk)
-+{
-+	/* Do nothing */
-+
-+	return TRUE;
-+}
-+
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
- {
- 	if (!stk->pending_cmd)
-@@ -213,6 +222,10 @@ void ofono_stk_proactive_command_notify(struct ofono_s=
-tk *stk,
- 			rsp.result.type =3D
- 				STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
- 			break;
-+		case STK_COMMAND_TYPE_MORE_TIME:
-+			respond =3D handle_command_more_time(stk->pending_cmd,
-+								&rsp, stk);
-+			break;
- 		}
- =
-
- 		if (respond)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============6656928307987300875==--
+--===============5567955838828813133==--
 
