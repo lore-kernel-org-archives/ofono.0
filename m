@@ -1,38 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============7467137593656420756=="
+Content-Type: multipart/mixed; boundary="===============2363668531329650222=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gatserver: Don't free twice after user disconnect
-Date: Tue, 06 Jul 2010 11:11:57 -0500
-Message-ID: <4C3355CD.30600@gmail.com>
-In-Reply-To: <1278298752-10232-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [PATCH] Voicecall gaps.
+Date: Tue, 06 Jul 2010 11:22:55 -0500
+Message-ID: <4C33585F.3010800@gmail.com>
+In-Reply-To: <1278337247-4391-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7467137593656420756==
+--===============2363668531329650222==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Pekka,
 
-> @@ -1019,9 +1019,6 @@ static void io_disconnect(gpointer user_data)
->  =
+On 07/05/2010 08:40 AM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> =
 
->  	if (server->user_disconnect)
->  		server->user_disconnect(server->user_disconnect_data);
-> -
-> -	if (server->destroyed)
-> -		g_free(server);
->  }
->  =
+> Missing voicecall functionality pieces from tp-ring point-of-view.
+> ---
+>  TODO                         |   27 +++++++++++++++++++++++++++
+>  doc/voicecallmanager-api.txt |    8 ++++----
+>  2 files changed, 31 insertions(+), 4 deletions(-)
 
->  static void server_wakeup_writer(GAtServer *server)
-
-Good catch.  Patch has been applied, thanks.
+Please don't lump TODO and documentation changes into a single patch.
+Separate into two patches.
 
 Regards,
 -Denis
 
-
---===============7467137593656420756==--
+--===============2363668531329650222==--
 
