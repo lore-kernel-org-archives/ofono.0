@@ -1,91 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============7807908966152610364=="
+Content-Type: multipart/mixed; boundary="===============2995676767168338107=="
 MIME-Version: 1.0
-From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
-Subject: Question about set modem power state to off
-Date: Tue, 06 Jul 2010 04:51:57 +0200
-Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE805101805@ism-mail03.corp.ad.wrs.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH] test-server: Use cfmakeraw to set TTY raw mode
+Date: Tue, 06 Jul 2010 14:23:06 +0800
+Message-ID: <1278397386-29822-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7807908966152610364==
+--===============2995676767168338107==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+Use cfmakeraw to disable echoing and special characters processing. If
+we don't turn off ICRNL, TTY layer translates \r\n to \n\n.
+---
+ gatchat/test-server.c |    8 +++-----
+ 1 files changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/gatchat/test-server.c b/gatchat/test-server.c
+index 25a1192..2911978 100644
+--- a/gatchat/test-server.c
++++ b/gatchat/test-server.c
+@@ -848,12 +848,10 @@ static void set_raw_mode(int fd)
+ {
+ 	struct termios options;
  =
 
-When set modem power state to off, all atoms and interfaces except
-'org.ofono.Modem'  are =
-
++	memset(&options, 0, sizeof(struct termios));
+ 	tcgetattr(fd, &options);
+-
+-	/* Set TTY as raw mode to disable echo back of input characters
+-	 * when they are received from Modem to avoid feedback loop */
+-	options.c_lflag &=3D ~(ICANON | ECHO | ECHOE | ISIG);
+-
++	tcflush(fd, TCIOFLUSH);
++	cfmakeraw(&options);
+ 	tcsetattr(fd, TCSANOW, &options);
+ }
  =
 
-removed and unregistered. So all APIs execpt 'org.ofono.Modem'  can not
-be used after that.
- =
+-- =
 
-But,  when modem power state is off (AT+CFUN=3D0), some feature should
-still be available. such
- =
+1.6.3.3
 
-as access SIM card(import contact from SIM) and STK.  I think maybe
-ofono should at least keep 'phonebook'
- =
 
-and 'stk' atom after set power state to off.
- =
-
- =
-
-best regards,
- =
-
-Caiwen
-=20
-
---===============7807908966152610364==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMCBUcmFuc2l0aW9uYWwv
-L0VOIj4KPEhUTUw+PEhFQUQ+CjxNRVRBIGh0dHAtZXF1aXY9Q29udGVudC1UeXBlIGNvbnRlbnQ9
-InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxNRVRBIGNvbnRlbnQ9Ik1TSFRNTCA2LjAw
-LjI5MDAuNTk0NSIgbmFtZT1HRU5FUkFUT1I+PC9IRUFEPgo8Qk9EWT4KPERJVj48Rk9OVCBmYWNl
-PUNhbGlicmk+PFNQQU4gY2xhc3M9MjgzNTkzNjAyLTA2MDcyMDEwPkhpIAphbGwsPC9TUEFOPjwv
-Rk9OVD48L0RJVj4KPERJVj48Rk9OVCBmYWNlPUNhbGlicmk+PFNQQU4gCmNsYXNzPTI4MzU5MzYw
-Mi0wNjA3MjAxMD48L1NQQU4+PC9GT05UPiZuYnNwOzwvRElWPgo8RElWPjxGT05UIGZhY2U9Q2Fs
-aWJyaT48U1BBTiBjbGFzcz0yODM1OTM2MDItMDYwNzIwMTA+V2hlbiBzZXQgbW9kZW0gcG93ZXIg
-CnN0YXRlIHRvIG9mZiwgYWxsIGF0b21zIGFuZCZuYnNwO2ludGVyZmFjZXMgZXhjZXB0ICdvcmcu
-b2Zvbm8uTW9kZW0nJm5ic3A7IGFyZSAKPC9TUEFOPjwvRk9OVD48L0RJVj4KPERJVj48Rk9OVCBm
-YWNlPUNhbGlicmk+PFNQQU4gCmNsYXNzPTI4MzU5MzYwMi0wNjA3MjAxMD48L1NQQU4+PC9GT05U
-PiZuYnNwOzwvRElWPgo8RElWPjxGT05UIGZhY2U9Q2FsaWJyaT48U1BBTiBjbGFzcz0yODM1OTM2
-MDItMDYwNzIwMTA+cmVtb3ZlZCBhbmQgdW5yZWdpc3RlcmVkLiAKU28gYWxsIEFQSXMgZXhlY3B0
-ICdvcmcub2Zvbm8uTW9kZW0nJm5ic3A7IGNhbiBub3QgYmUgdXNlZCBhZnRlciAKdGhhdC48L1NQ
-QU4+PC9GT05UPjwvRElWPgo8RElWPjxGT05UIGZhY2U9Q2FsaWJyaT48U1BBTiAKY2xhc3M9Mjgz
-NTkzNjAyLTA2MDcyMDEwPjwvU1BBTj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVY+PEZPTlQgZmFj
-ZT1DYWxpYnJpPjxTUEFOIGNsYXNzPTI4MzU5MzYwMi0wNjA3MjAxMD5CdXQsJm5ic3A7IHdoZW4g
-bW9kZW0gCnBvd2VyIHN0YXRlIGlzIG9mZiAoQVQrQ0ZVTj0wKSwgc29tZSBmZWF0dXJlIHNob3Vs
-ZCBzdGlsbCZuYnNwO2JlIGF2YWlsYWJsZS4gCnN1Y2g8L1NQQU4+PC9GT05UPjwvRElWPgo8RElW
-PjxGT05UIGZhY2U9Q2FsaWJyaT48U1BBTiAKY2xhc3M9MjgzNTkzNjAyLTA2MDcyMDEwPjwvU1BB
-Tj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1DYWxpYnJpPjxTUEFOIGNsYXNz
-PTI4MzU5MzYwMi0wNjA3MjAxMD5hcyBhY2Nlc3MgU0lNIGNhcmQoaW1wb3J0IApjb250YWN0IGZy
-b20gU0lNKSBhbmQgU1RLLiZuYnNwOyBJIHRoaW5rIG1heWJlIG9mb25vIHNob3VsZCBhdCBsZWFz
-dCBrZWVwIAoncGhvbmVib29rJzwvU1BBTj48L0ZPTlQ+PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1D
-YWxpYnJpPjxTUEFOIApjbGFzcz0yODM1OTM2MDItMDYwNzIwMTA+PC9TUEFOPjwvRk9OVD4mbmJz
-cDs8L0RJVj4KPERJVj48Rk9OVCBmYWNlPUNhbGlicmk+PFNQQU4gY2xhc3M9MjgzNTkzNjAyLTA2
-MDcyMDEwPmFuZCAnc3RrJyBhdG9tJm5ic3A7YWZ0ZXIgCnNldCBwb3dlciBzdGF0ZSB0byBvZmYu
-PC9TUEFOPjwvRk9OVD48L0RJVj4KPERJVj48Rk9OVCBmYWNlPUNhbGlicmk+PFNQQU4gCmNsYXNz
-PTI4MzU5MzYwMi0wNjA3MjAxMD48L1NQQU4+PC9GT05UPiZuYnNwOzwvRElWPgo8RElWPjxGT05U
-IGZhY2U9Q2FsaWJyaT48U1BBTiAKY2xhc3M9MjgzNTkzNjAyLTA2MDcyMDEwPjwvU1BBTj48L0ZP
-TlQ+Jm5ic3A7PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1DYWxpYnJpPjxTUEFOIGNsYXNzPTI4MzU5
-MzYwMi0wNjA3MjAxMD5iZXN0IApyZWdhcmRzLDwvU1BBTj48L0ZPTlQ+PC9ESVY+CjxESVY+PEZP
-TlQgZmFjZT1DYWxpYnJpPjxTUEFOIApjbGFzcz0yODM1OTM2MDItMDYwNzIwMTA+PC9TUEFOPjwv
-Rk9OVD4mbmJzcDs8L0RJVj4KPERJVj48Rk9OVCBmYWNlPUNhbGlicmk+PFNQQU4gCmNsYXNzPTI4
-MzU5MzYwMi0wNjA3MjAxMD5DYWl3ZW48L1NQQU4+PC9GT05UPjwvRElWPgo8RElWPjxGT05UIGZh
-Y2U9Q2FsaWJyaT48U1BBTiAKY2xhc3M9MjgzNTkzNjAyLTA2MDcyMDEwPjwvU1BBTj48L0ZPTlQ+
-Jm5ic3A7PC9ESVY+PC9CT0RZPjwvSFRNTD4K
-
---===============7807908966152610364==--
+--===============2995676767168338107==--
 
