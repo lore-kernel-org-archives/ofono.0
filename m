@@ -1,135 +1,189 @@
-Content-Type: multipart/mixed; boundary="===============6974007127776926799=="
+Content-Type: multipart/mixed; boundary="===============3245403897215097731=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 07/14] Add __ofono_sms_submit for other atoms to submit SMs.
-Date: Wed, 07 Jul 2010 00:39:02 +0200
-Message-ID: <1278455949-2823-8-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 08/14] stk: Handle the Send SMS proactive command.
+Date: Wed, 07 Jul 2010 00:39:03 +0200
+Message-ID: <1278455949-2823-9-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1278455949-2823-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6974007127776926799==
+--===============3245403897215097731==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/ofono.h |    7 ++++++-
- src/sms.c   |   39 +++++++++++++++++++++++++++++++++++++++
- 2 files changed, 45 insertions(+), 1 deletions(-)
+ src/stk.c |  104 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 104 insertions(+), 0 deletions(-)
 
-diff --git a/src/ofono.h b/src/ofono.h
-index e2271e6..94e2715 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -168,12 +168,17 @@ void __ofono_atom_free(struct ofono_atom *atom);
- #include <ofono/cbs.h>
- #include <ofono/devinfo.h>
- #include <ofono/phonebook.h>
--#include <ofono/sms.h>
- #include <ofono/voicecall.h>
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
- #include <ofono/radio-settings.h>
+diff --git a/src/stk.c b/src/stk.c
+index b4b65c1..a57342a 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -34,6 +34,7 @@
  =
 
-+#include <ofono/sms.h>
-+
-+struct sms;
-+void __ofono_sms_submit(struct ofono_sms *sms, const struct sms *msg,
-+			ofono_sms_submit_cb_t cb, void *data);
-+
- #include <ofono/sim.h>
- #include <ofono/stk.h>
+ #include "ofono.h"
  =
 
-diff --git a/src/sms.c b/src/sms.c
-index c848007..54c46a5 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -87,6 +87,8 @@ struct tx_queue_entry {
- 	DBusMessage *msg;
- 	gboolean status_report;
- 	struct sms_address receiver;
-+	ofono_sms_submit_cb_t cb;
-+	void *data;
++#include "common.h"
+ #include "smsutil.h"
+ #include "stkutil.h"
+ =
+
+@@ -47,6 +48,8 @@ struct ofono_stk {
+ 	void (*cancel_cmd)(struct ofono_stk *stk);
+ 	gboolean cancelled;
+ 	GQueue *envelope_q;
++
++	struct sms_submit_req *sms_submit_req;
  };
  =
 
- static const char *sms_bearer_to_string(int bearer)
-@@ -413,6 +415,9 @@ static void tx_finished(const struct ofono_error *error=
-, int mr, void *data)
- 	DBG("tx_finished");
+ struct envelope_op {
+@@ -57,6 +60,11 @@ struct envelope_op {
+ 			const unsigned char *data, int length);
+ };
  =
 
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		if (entry->cb)
-+			goto callback;
++struct sms_submit_req {
++	struct ofono_stk *stk;
++	gboolean cancelled;
++};
 +
- 		entry->retry +=3D 1;
+ #define ENVELOPE_RETRIES_DEFAULT 5
  =
 
- 		if (entry->retry !=3D TXQ_MAX_RETRIES) {
-@@ -459,6 +464,9 @@ static void tx_finished(const struct ofono_error *error=
-, int mr, void *data)
- 		return;
- 	}
- =
-
-+	if (entry->cb)
-+		goto callback;
-+
- 	entry =3D g_queue_pop_head(sms->txq);
- 	__ofono_dbus_pending_reply(&entry->msg,
- 				dbus_message_new_method_return(entry->msg));
-@@ -473,6 +481,19 @@ static void tx_finished(const struct ofono_error *erro=
-r, int mr, void *data)
- 		DBG("Scheduling next");
- 		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
- 	}
-+
-+	return;
-+
-+callback:
-+	entry =3D g_queue_pop_head(sms->txq);
-+
-+	entry->cb(error, mr, entry->data);
-+
-+	g_free(entry->pdus);
-+	g_free(entry);
-+
-+	if (g_queue_peek_head(sms->txq))
-+		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
+ static void envelope_queue_run(struct ofono_stk *stk);
+@@ -201,6 +209,16 @@ static void stk_command_cb(const struct ofono_error *e=
+rror, void *data)
+ 	DBG("TERMINAL RESPONSE to a command reported no errors");
  }
  =
 
- static gboolean tx_next(gpointer user_data)
-@@ -1285,3 +1306,21 @@ void *ofono_sms_get_data(struct ofono_sms *sms)
- {
- 	return sms->driver_data;
- }
-+
-+void __ofono_sms_submit(struct ofono_sms *sms, const struct sms *msg,
-+			ofono_sms_submit_cb_t cb, void *data)
++static void stk_alpha_id_set(struct ofono_stk *stk, const char *text)
 +{
-+	GSList msg_list =3D {
-+		.data =3D (void *) msg,
-+		.next =3D NULL,
-+	};
-+	struct tx_queue_entry *entry =3D create_tx_queue_entry(&msg_list);
-+
-+	entry->cb =3D cb;
-+	entry->data =3D data;
-+
-+	g_queue_push_tail(sms->txq, entry);
-+
-+	if (g_queue_get_length(sms->txq) =3D=3D 1)
-+		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
++	/* TODO */
 +}
++
++static void stk_alpha_id_unset(struct ofono_stk *stk)
++{
++	/* TODO */
++}
++
+ static gboolean handle_command_more_time(const struct stk_command *cmd,
+ 						struct stk_response *rsp,
+ 						struct ofono_stk *stk)
+@@ -210,6 +228,88 @@ static gboolean handle_command_more_time(const struct =
+stk_command *cmd,
+ 	return TRUE;
+ }
+ =
+
++static void send_sms_cancel(struct ofono_stk *stk)
++{
++	stk->sms_submit_req->cancelled =3D TRUE;
++
++	if (!stk->pending_cmd->send_sms.alpha_id ||
++			!stk->pending_cmd->send_sms.alpha_id[0])
++		return;
++
++	stk_alpha_id_unset(stk);
++}
++
++static void send_sms_submit_cb(const struct ofono_error *error, int mr,
++				void *data)
++{
++	struct stk_response rsp;
++	struct sms_submit_req *req =3D data;
++	struct ofono_stk *stk =3D req->stk;
++	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
++		ofono_debug("SMS submission returned errors: %s",
++				telephony_error_to_str(error));
++	else
++		ofono_debug("SMS submission successful");
++
++	if (req->cancelled) {
++		ofono_debug("Received an SMS submitted callback after the "
++				"proactive command was cancelled");
++		goto out;
++	}
++
++	memset(&rsp, 0, sizeof(rsp));
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
++		rsp.result.type =3D STK_RESULT_TYPE_NETWORK_UNAVAILABLE;
++
++	if (stk_respond(stk, &rsp, stk_command_cb))
++		stk_command_cb(&failure, stk);
++
++	if (!stk->pending_cmd->send_sms.alpha_id ||
++			!stk->pending_cmd->send_sms.alpha_id[0])
++		goto out;
++
++	stk_alpha_id_unset(stk);
++
++out:
++	g_free(req);
++}
++
++static gboolean handle_command_send_sms(const struct stk_command *cmd,
++					struct stk_response *rsp,
++					struct ofono_stk *stk)
++{
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
++	struct ofono_atom *sms_atom;
++	struct ofono_sms *sms;
++
++	sms_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SMS);
++
++	if (!sms_atom || !__ofono_atom_get_registered(sms_atom)) {
++		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
++		return TRUE;
++	}
++
++	sms =3D __ofono_atom_get_data(sms_atom);
++
++	stk->sms_submit_req =3D g_new0(struct sms_submit_req, 1);
++	stk->sms_submit_req->stk =3D stk;
++
++	__ofono_sms_submit(sms, &cmd->send_sms.gsm_sms,
++				send_sms_submit_cb, stk->sms_submit_req);
++
++	stk->cancel_cmd =3D send_sms_cancel;
++
++	if (!cmd->send_sms.alpha_id || !cmd->send_sms.alpha_id[0])
++		return FALSE;
++
++	stk_alpha_id_set(stk, cmd->send_sms.alpha_id);
++
++	return FALSE;
++}
++
+ static void stk_proactive_command_cancel(struct ofono_stk *stk)
+ {
+ 	if (!stk->pending_cmd)
+@@ -284,6 +384,10 @@ void ofono_stk_proactive_command_notify(struct ofono_s=
+tk *stk,
+ 			respond =3D handle_command_more_time(stk->pending_cmd,
+ 								&rsp, stk);
+ 			break;
++		case STK_COMMAND_TYPE_SEND_SMS:
++			respond =3D handle_command_send_sms(stk->pending_cmd,
++								&rsp, stk);
++			break;
+ 		}
+ =
+
+ 		if (respond)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============6974007127776926799==--
+--===============3245403897215097731==--
 
