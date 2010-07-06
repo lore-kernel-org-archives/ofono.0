@@ -1,43 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============5753332843073962510=="
+Content-Type: multipart/mixed; boundary="===============7467137593656420756=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Reg. SMS sent status
-Date: Tue, 06 Jul 2010 08:56:34 -0500
-Message-ID: <4C333612.9030100@gmail.com>
-In-Reply-To: <AANLkTikShPhAsSf73CSkHuRD1GWmZyuEM8GQhnEIMKzl@mail.gmail.com>
+Subject: Re: [PATCH] gatserver: Don't free twice after user disconnect
+Date: Tue, 06 Jul 2010 11:11:57 -0500
+Message-ID: <4C3355CD.30600@gmail.com>
+In-Reply-To: <1278298752-10232-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5753332843073962510==
+--===============7467137593656420756==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Satya,
+Hi Zhenhua,
 
-> How an application notified that SMS is sent status (i.e success or failu=
-re) ?
+> @@ -1019,9 +1019,6 @@ static void io_disconnect(gpointer user_data)
+>  =
 
-You should really be using the history plugin for this.  You will get
-much more information about the message this way.
+>  	if (server->user_disconnect)
+>  		server->user_disconnect(server->user_disconnect_data);
+> -
+> -	if (server->destroyed)
+> -		g_free(server);
+>  }
+>  =
 
-> =
+>  static void server_wakeup_writer(GAtServer *server)
 
-> Because storage of SMS in some database is application responsibility.
-> Once SMS sent status is received according to that application shall
-> take an action(status change) on the stored message (i.e. moving SMS
-> from OUTBOX to SENTBOX).
-
-Today, oFono returns from the SendMessage call only when the message has
-been successfully submitted to the network or the message submission has
-failed.
-
-Please note that there is a proposal on the mailing list to change how
-the SmsManager interface works.  The interface is likely to change in
-the next month or two.
+Good catch.  Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============5753332843073962510==--
+
+--===============7467137593656420756==--
 
