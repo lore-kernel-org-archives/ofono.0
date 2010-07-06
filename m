@@ -1,54 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============5267892555384377798=="
+Content-Type: multipart/mixed; boundary="===============5753332843073962510=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Question about set modem power state to off
-Date: Tue, 06 Jul 2010 08:58:52 -0500
-Message-ID: <4C33369C.2070101@gmail.com>
-In-Reply-To: <D87B22B1FE8C0F479CA9BEAD6C25AAE805101805@ism-mail03.corp.ad.wrs.com>
+Subject: Re: Reg. SMS sent status
+Date: Tue, 06 Jul 2010 08:56:34 -0500
+Message-ID: <4C333612.9030100@gmail.com>
+In-Reply-To: <AANLkTikShPhAsSf73CSkHuRD1GWmZyuEM8GQhnEIMKzl@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5267892555384377798==
+--===============5753332843073962510==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Caiwen,
+Hi Satya,
 
-On 07/05/2010 09:51 PM, Zhang, Caiwen wrote:
-> Hi all,
->  =
+> How an application notified that SMS is sent status (i.e success or failu=
+re) ?
 
-> When set modem power state to off, all atoms and interfaces except
-> 'org.ofono.Modem'  are
->  =
+You should really be using the history plugin for this.  You will get
+much more information about the message this way.
 
-> removed and unregistered. So all APIs execpt 'org.ofono.Modem'  can not
-> be used after that.
->  =
+> =
 
-> But,  when modem power state is off (AT+CFUN=3D0), some feature should
-> still be available. such
->  =
+> Because storage of SMS in some database is application responsibility.
+> Once SMS sent status is received according to that application shall
+> take an action(status change) on the stored message (i.e. moving SMS
+> from OUTBOX to SENTBOX).
 
-> as access SIM card(import contact from SIM) and STK.  I think maybe
-> ofono should at least keep 'phonebook'
->  =
+Today, oFono returns from the SendMessage call only when the message has
+been successfully submitted to the network or the message submission has
+failed.
 
-> and 'stk' atom after set power state to off.
->  =
-
-
-What you're thinking of here is the 'Online' property of the Modem which
-controls the RX/TX circuit status.  When Online is False and Powered is
-True the modem can still access the SIM.  Once the modem is powered off,
-it is truly off.
-
-This feature is still in development and thus no driver is currently
-taking advantage of this functionality.
+Please note that there is a proposal on the mailing list to change how
+the SmsManager interface works.  The interface is likely to change in
+the next month or two.
 
 Regards,
 -Denis
 
---===============5267892555384377798==--
+--===============5753332843073962510==--
 
