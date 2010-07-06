@@ -1,126 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============3248013697723079033=="
+Content-Type: multipart/mixed; boundary="===============0978265276700054050=="
 MIME-Version: 1.0
-From: suraj <suraj@atheros.com>
-Subject: RE: Modem emulator and DUN server side for oFono and BlueZ
-Date: Tue, 06 Jul 2010 09:38:02 +0000
-Message-ID: <1278409057.4538.10.camel@atheros013-desktop>
-In-Reply-To: <33AB447FBD802F4E932063B962385B351F6F2256@shsmsx501.ccr.corp.intel.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH 2/2] gathdlc: Unset disconnect function in unref
+Date: Tue, 06 Jul 2010 17:57:38 +0800
+Message-ID: <1278410258-3077-2-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1278410258-3077-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3248013697723079033==
+--===============0978265276700054050==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+If we destroy PPP instance from g_at_ppp_unref, we should not invoke
+io disconnect function.
+---
+ gatchat/gathdlc.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-On Tue, 2010-07-06 at 15:00 +0530, Zhang, Zhenhua wrote:
-> Hi Suraj,
-> =
+diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
+index 08a1939..0186e46 100644
+--- a/gatchat/gathdlc.c
++++ b/gatchat/gathdlc.c
+@@ -278,6 +278,7 @@ void g_at_hdlc_unref(GAtHDLC *hdlc)
+ 		hdlc->record_fd =3D -1;
+ 	}
+ =
 
-> suraj wrote:
-> > Hi Zhenhua,
-> > =
++	g_at_io_set_disconnect_function(hdlc->io, NULL, NULL);
+ 	g_at_io_unref(hdlc->io);
+ 	hdlc->io =3D NULL;
+ =
 
-> > =
+-- =
 
-> > On Wed, 2010-05-05 at 06:27 +0530, Zhang, Zhenhua wrote:
-> >> Hi Padovan,
-> >> =
-
-> >> Gustavo F. Padovan wrote:
-> >>> Hi Zhenhua,
-> >>> =
-
-> >>> * Zhang, Zhenhua <zhenhua.zhang@intel.com> [2010-04-27 15:53:54
-> >>> +0800]: =
-
-> >>> =
-
-> >>>> Hi,
-> >>>> =
-
-> >>>> I am now working on modem emulator and one usage is for DUN
-> >>> server role. Since Padovan is working on client role, it's
-> >>> good to share my rough thinking for server side
-> >>> implementation. Here are the simple steps I have:
-> >>>> =
-
-> >>>> 1. Create an oFono emulator atom in oFono. It's the emulator
-> >>> manager that could create DUN, HFP AG or SPP type emulators.
-> >>> It exposes dbus methods like CreateEmulator, DestroyEmulator,
-> >>> GetProperty, etc.
-> >>>> =
-
-> >>>> 2. DUN agent server in BlueZ watch oFono and call
-> >>> CreateEmulator and pass the file descriptor to oFono. This
-> >>> server could further implement HFP AG and SPP connection.
-> >>> =
-
-> >>> =
-
-> >>> Shouldn't the emulator register itself on the BlueZ agent server?
-> >> =
-
-> >> It's fine to register the emulator like HFP client. In this
-> > way, we might able to share the agent with DUN server as well. Thanks.
-> >> =
-
-> >>> =
-
-> >>> --
-> >>> Gustavo F. Padovan
-> >>> http://padovan.org
-> >>> _______________________________________________
-> >>> ofono mailing list
-> >>> ofono(a)ofono.org
-> >>> http://lists.ofono.org/listinfo/ofono
-> >> =
-
-> >> =
-
-> >> =
-
-> >> Regards,
-> >> Zhenhua
-> >> =
-
-> >> --
-> >> To unsubscribe from this list: send the line "unsubscribe
-> >> linux-bluetooth" in the body of a message to
-> >> majordomo(a)vger.kernel.org =
-
-> >> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> > =
-
-> > Do you have DUNP server emulator implemented?
-> > I was thinking about implementing the same. But would like to use your
-> > implementation if you have already done it.
-> > =
-
-> > Regards
-> > Suraj
-> =
-
-> Yes, I am working DUN server part now. (I assume 'DUNP' you mentioned is =
-'DUN', dialing up networking). I am trying to submit patches to upstream no=
-w. Hope it could be ready asap so you can try it if interested. Thanks.
-> =
-
-> Regards,
-> Zhenhua
-> =
+1.6.3.3
 
 
-Thank you. You are right, I meant DUN server.
-I will use your patches when it is ready.
-
-Regards
-Suraj
-
-
-
-
---===============3248013697723079033==--
+--===============0978265276700054050==--
 
