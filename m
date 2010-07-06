@@ -1,43 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============2531261000353770332=="
+Content-Type: multipart/mixed; boundary="===============6656928307987300875=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 02/14] mbmmodem: End session on *STKEND.
-Date: Wed, 07 Jul 2010 00:38:57 +0200
-Message-ID: <1278455949-2823-3-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 03/14] stk: Handle the More Time proactive command as a nop.
+Date: Wed, 07 Jul 2010 00:38:58 +0200
+Message-ID: <1278455949-2823-4-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1278455949-2823-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2531261000353770332==
+--===============6656928307987300875==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/mbmmodem/stk.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ src/stk.c |   13 +++++++++++++
+ 1 files changed, 13 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/mbmmodem/stk.c b/drivers/mbmmodem/stk.c
-index 77bd7b5..613b257 100644
---- a/drivers/mbmmodem/stk.c
-+++ b/drivers/mbmmodem/stk.c
-@@ -179,6 +179,9 @@ static void stkn_notify(GAtResult *result, gpointer use=
-r_data)
- =
-
- static void stkend_notify(GAtResult *result, gpointer user_data)
- {
-+	struct ofono_stk *stk =3D user_data;
-+
-+	ofono_stk_proactive_session_end_notify(stk);
+diff --git a/src/stk.c b/src/stk.c
+index 66b0a6b..ba66fe2 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -143,6 +143,15 @@ static void stk_command_cb(const struct ofono_error *e=
+rror, void *data)
+ 	DBG("TERMINAL RESPONSE to a command reported no errors");
  }
  =
 
- static void mbm_stkc_cb(gboolean ok, GAtResult *result, gpointer user_data)
++static gboolean handle_command_more_time(const struct stk_command *cmd,
++						struct stk_response *rsp,
++						struct ofono_stk *stk)
++{
++	/* Do nothing */
++
++	return TRUE;
++}
++
+ static void stk_proactive_command_cancel(struct ofono_stk *stk)
+ {
+ 	if (!stk->pending_cmd)
+@@ -213,6 +222,10 @@ void ofono_stk_proactive_command_notify(struct ofono_s=
+tk *stk,
+ 			rsp.result.type =3D
+ 				STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
+ 			break;
++		case STK_COMMAND_TYPE_MORE_TIME:
++			respond =3D handle_command_more_time(stk->pending_cmd,
++								&rsp, stk);
++			break;
+ 		}
+ =
+
+ 		if (respond)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============2531261000353770332==--
+--===============6656928307987300875==--
 
