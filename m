@@ -1,42 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============2699054646675832848=="
+Content-Type: multipart/mixed; boundary="===============7859680186356440770=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 09/14] Add Dbus interface names for STK.
-Date: Wed, 07 Jul 2010 00:39:04 +0200
-Message-ID: <1278455949-2823-10-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 11/14] sktutil: Use the Mandatory flag in parse_dataobj.
+Date: Wed, 07 Jul 2010 00:39:06 +0200
+Message-ID: <1278455949-2823-12-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1278455949-2823-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2699054646675832848==
+--===============7859680186356440770==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+We need to look at the Mandatory flag and not at the Minimum flag
+when parsing CTLVs.  The Minimum flag is important when encoding CTLVs
+because CR bit is set according to it.
 ---
- include/dbus.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ src/stkutil.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/include/dbus.h b/include/dbus.h
-index d988760..d959754 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -49,6 +49,8 @@ extern "C" {
- #define OFONO_VOICECALL_MANAGER_INTERFACE "org.ofono.VoiceCallManager"
- #define OFONO_DATA_CONNECTION_MANAGER_INTERFACE "org.ofono.DataConnectionM=
-anager"
- #define OFONO_DATA_CONTEXT_INTERFACE "org.ofono.PrimaryDataContext"
-+#define OFONO_STK_INTERFACE OFONO_SERVICE ".SimToolkit"
-+#define OFONO_SIM_APP_INTERFACE OFONO_SERVICE ".SimApplicationAgent"
+diff --git a/src/stkutil.c b/src/stkutil.c
+index e92add3..d2cd126 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -2324,8 +2324,8 @@ static enum stk_command_parse_result parse_dataobj(
+ 			if (comprehension_tlv_iter_get_tag(iter) =3D=3D entry->type)
+ 				break;
  =
 
- /* Essentially a{sv} */
- #define OFONO_PROPERTIES_ARRAY_SIGNATURE DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STR=
-ING \
+-			/* Can't skip over Minimum objects */
+-			if (entry->flags & DATAOBJ_FLAG_MINIMUM) {
++			/* Can't skip over mandatory objects */
++			if (entry->flags & DATAOBJ_FLAG_MANDATORY) {
+ 				l2 =3D NULL;
+ 				break;
+ 			}
+@@ -2352,7 +2352,7 @@ static enum stk_command_parse_result parse_dataobj(
+ 	for (; l; l =3D l->next) {
+ 		struct dataobj_handler_entry *entry =3D l->data;
+ =
+
+-		if (entry->flags & DATAOBJ_FLAG_MINIMUM)
++		if (entry->flags & DATAOBJ_FLAG_MANDATORY)
+ 			minimum_set =3D FALSE;
+ 	}
+ =
+
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============2699054646675832848==--
+--===============7859680186356440770==--
 
