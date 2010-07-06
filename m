@@ -1,143 +1,207 @@
-Content-Type: multipart/mixed; boundary="===============8617643797352833993=="
+Content-Type: multipart/mixed; boundary="===============1420051110258512786=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 05/14] atmodem: Make sim operations return sim error codes.
-Date: Wed, 07 Jul 2010 00:39:00 +0200
-Message-ID: <1278455949-2823-6-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 06/14] stk: Handle ENVELOPEs in a queue, retry on sim busy.
+Date: Wed, 07 Jul 2010 00:39:01 +0200
+Message-ID: <1278455949-2823-7-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1278455949-2823-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8617643797352833993==
+--===============1420051110258512786==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Some envelope types need to be retried when sim reports busy status.
+Then envelopes such as Event Download need to be returned in the
+order of the event occurences, so need to be handled in a queue.
 ---
- drivers/atmodem/sim.c |   32 +++++++++++++++++++++++++-------
- drivers/atmodem/stk.c |   20 ++++++++++++--------
- 2 files changed, 37 insertions(+), 15 deletions(-)
+ src/stk.c |   91 +++++++++++++++++++++++++++++++++++++++++++++++++++------=
+---
+ 1 files changed, 77 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 2b4a8c6..d5d5ff9 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -82,8 +82,15 @@ static void at_crsm_info_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
+diff --git a/src/stk.c b/src/stk.c
+index ba66fe2..b4b65c1 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -46,8 +46,21 @@ struct ofono_stk {
+ 	struct stk_command *pending_cmd;
+ 	void (*cancel_cmd)(struct ofono_stk *stk);
+ 	gboolean cancelled;
++	GQueue *envelope_q;
+ };
  =
 
- 	if (!g_at_result_iter_next_hexstring(&iter, &response, &len) ||
- 			(sw1 !=3D 0x90 && sw1 !=3D 0x91 && sw1 !=3D 0x92) ||
--			(sw1 =3D=3D 0x90 && sw2 !=3D 0x00))
--		goto error;
-+			(sw1 =3D=3D 0x90 && sw2 !=3D 0x00)) {
-+		memset(&error, 0, sizeof(error));
++struct envelope_op {
++	uint8_t tlv[256];
++	unsigned int tlv_len;
++	int retries;
++	void (*cb)(struct ofono_stk *stk, gboolean ok,
++			const unsigned char *data, int length);
++};
 +
-+		error.type =3D OFONO_ERROR_TYPE_SIM;
-+		error.error =3D (sw1 << 8) | sw2;
++#define ENVELOPE_RETRIES_DEFAULT 5
 +
-+		cb(&error, -1, -1, -1, NULL, cbd->data);
-+		return;
++static void envelope_queue_run(struct ofono_stk *stk);
++
+ static int stk_respond(struct ofono_stk *stk, struct stk_response *rsp,
+ 			ofono_stk_generic_cb_t cb)
+ {
+@@ -75,35 +88,80 @@ static int stk_respond(struct ofono_stk *stk, struct st=
+k_response *rsp,
+ 	return 0;
+ }
+ =
+
++static void envelope_cb(const struct ofono_error *error, const uint8_t *da=
+ta,
++			int length, void *user_data)
++{
++	struct ofono_stk *stk =3D user_data;
++	struct envelope_op *op =3D g_queue_peek_head(stk->envelope_q);
++	gboolean result =3D TRUE;
++
++	if (op->retries > 0 && error->type =3D=3D OFONO_ERROR_TYPE_SIM &&
++			error->error =3D=3D 0x9300) {
++		op->retries--;
++		goto out;
 +	}
- =
-
- 	DBG("crsm_info_cb: %02x, %02x, %i", sw1, sw2, len);
- =
-
-@@ -165,9 +172,18 @@ static void at_crsm_read_cb(gboolean ok, GAtResult *re=
-sult,
- 	g_at_result_iter_next_number(&iter, &sw1);
- 	g_at_result_iter_next_number(&iter, &sw2);
- =
-
--	if (!g_at_result_iter_next_hexstring(&iter, &response, &len) ||
--		(sw1 !=3D 0x90 && sw1 !=3D 0x91 && sw1 !=3D 0x92 && sw1 !=3D 0x9f) ||
--		(sw1 =3D=3D 0x90 && sw2 !=3D 0x00)) {
-+	if ((sw1 !=3D 0x90 && sw1 !=3D 0x91 && sw1 !=3D 0x92 && sw1 !=3D 0x9f) ||
-+			(sw1 =3D=3D 0x90 && sw2 !=3D 0x00)) {
-+		memset(&error, 0, sizeof(error));
 +
-+		error.type =3D OFONO_ERROR_TYPE_SIM;
-+		error.error =3D (sw1 << 8) | sw2;
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
++		result =3D FALSE;
 +
-+		cb(&error, NULL, 0, cbd->data);
-+		return;
++	g_queue_pop_head(stk->envelope_q);
++
++	if (op->cb)
++		op->cb(stk, result, data, length);
++
++	g_free(op);
++
++out:
++	envelope_queue_run(stk);
++}
++
++static void envelope_queue_run(struct ofono_stk *stk)
++{
++	while (g_queue_get_length(stk->envelope_q) > 0) {
++		struct envelope_op *op =3D g_queue_peek_head(stk->envelope_q);
++
++		stk->driver->envelope(stk, op->tlv_len, op->tlv,
++				envelope_cb, stk);
 +	}
++}
 +
-+	if (!g_at_result_iter_next_hexstring(&iter, &response, &len)) {
- 		CALLBACK_WITH_FAILURE(cb, NULL, 0, cbd->data);
+ static int stk_send_envelope(struct ofono_stk *stk, struct stk_envelope *e,
+-				ofono_stk_envelope_cb_t cb)
++				void (*cb)(struct ofono_stk *stk, gboolean ok,
++						const uint8_t *data,
++						int length), int retries)
+ {
+-	const guint8 *tlv;
++	const uint8_t *tlv;
+ 	unsigned int tlv_len;
++	struct envelope_op *op;
+ =
+
+ 	if (stk->driver->envelope =3D=3D NULL)
+ 		return -ENOSYS;
+ =
+
+ 	e->dst =3D STK_DEVICE_IDENTITY_TYPE_UICC;
+-
+ 	tlv =3D stk_pdu_from_envelope(e, &tlv_len);
+ 	if (!tlv)
+ 		return -EINVAL;
+ =
+
+-	stk->driver->envelope(stk, tlv_len, tlv, cb, stk);
++	op =3D g_new0(struct envelope_op, 1);
++
++	op->cb =3D cb;
++	op->retries =3D retries;
++	memcpy(op->tlv, tlv, tlv_len);
++	op->tlv_len =3D tlv_len;
++
++	g_queue_push_tail(stk->envelope_q, op);
++
++	if (g_queue_get_length(stk->envelope_q) =3D=3D 1)
++		envelope_queue_run(stk);
+ =
+
+ 	return 0;
+ }
+ =
+
+-static void stk_cbs_download_cb(const struct ofono_error *error,
+-				const unsigned char *data, int len, void *user)
++static void stk_cbs_download_cb(struct ofono_stk *stk, gboolean ok,
++				const unsigned char *data, int len)
+ {
+-	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++	if (!ok) {
+ 		ofono_error("CellBroadcast download to UICC failed");
+-		/*
+-		 * "The ME may retry to deliver the same Cell Broadcast
+-		 * page."
+-		 */
  		return;
  	}
-@@ -255,8 +271,10 @@ static void at_crsm_update_cb(gboolean ok, GAtResult *=
-result,
  =
 
- 	if ((sw1 !=3D 0x90 && sw1 !=3D 0x91 && sw1 !=3D 0x92 && sw1 !=3D 0x9f) ||
- 			(sw1 =3D=3D 0x90 && sw2 !=3D 0x00)) {
--		CALLBACK_WITH_FAILURE(cb, cbd->data);
--		return;
-+		memset(&error, 0, sizeof(error));
-+
-+		error.type =3D OFONO_ERROR_TYPE_SIM;
-+		error.error =3D (sw1 << 8) | sw2;
+@@ -116,7 +174,6 @@ static void stk_cbs_download_cb(const struct ofono_erro=
+r *error,
+ =
+
+ void __ofono_cbs_sim_download(struct ofono_stk *stk, const struct cbs *msg)
+ {
+-	struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
+ 	struct stk_envelope e;
+ 	int err;
+ =
+
+@@ -126,9 +183,10 @@ void __ofono_cbs_sim_download(struct ofono_stk *stk, c=
+onst struct cbs *msg)
+ 	e.src =3D STK_DEVICE_IDENTITY_TYPE_NETWORK;
+ 	memcpy(&e.cbs_pp_download.page, msg, sizeof(msg));
+ =
+
+-	err =3D stk_send_envelope(stk, &e, stk_cbs_download_cb);
++	err =3D stk_send_envelope(stk, &e, stk_cbs_download_cb,
++				ENVELOPE_RETRIES_DEFAULT);
+ 	if (err)
+-		stk_cbs_download_cb(&error, NULL, -1, stk);
++		stk_cbs_download_cb(stk, FALSE, NULL, -1);
+ }
+ =
+
+ static void stk_command_cb(const struct ofono_error *error, void *data)
+@@ -281,6 +339,9 @@ static void stk_unregister(struct ofono_atom *atom)
+ 		stk_command_free(stk->pending_cmd);
+ 		stk->pending_cmd =3D NULL;
  	}
++
++	g_queue_foreach(stk->envelope_q, (GFunc) g_free, NULL);
++	g_queue_free(stk->envelope_q);
+ }
  =
 
- 	DBG("crsm_update_cb: %02x, %02x", sw1, sw2);
-diff --git a/drivers/atmodem/stk.c b/drivers/atmodem/stk.c
-index 8cff4a2..aede668 100644
---- a/drivers/atmodem/stk.c
-+++ b/drivers/atmodem/stk.c
-@@ -74,11 +74,13 @@ static void at_csim_envelope_cb(gboolean ok, GAtResult =
-*result,
- 	if (rlen !=3D len * 2 || len < 2)
- 		goto error;
+ static void stk_remove(struct ofono_atom *atom)
+@@ -336,6 +397,8 @@ struct ofono_stk *ofono_stk_create(struct ofono_modem *=
+modem,
+ void ofono_stk_register(struct ofono_stk *stk)
+ {
+ 	__ofono_atom_register(stk->atom, stk_unregister);
++
++	stk->envelope_q =3D g_queue_new();
+ }
  =
 
--	if (response[len - 2] !=3D 0x90 && response[len - 2] !=3D 0x91)
--		goto error;
-+	if ((response[len - 2] !=3D 0x90 && response[len - 2] !=3D 0x91) ||
-+			(response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0)) {
-+		memset(&error, 0, sizeof(error));
- =
-
--	if (response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0)
--		goto error;
-+		error.type =3D OFONO_ERROR_TYPE_SIM;
-+		error.error =3D (response[len - 2] << 8) | response[len - 1];
-+	}
- =
-
- 	DBG("csim_envelope_cb: %i", len);
- =
-
-@@ -157,11 +159,13 @@ static void at_csim_terminal_response_cb(gboolean ok,=
- GAtResult *result,
- 	if (rlen !=3D len * 2 || len < 2)
- 		goto error;
- =
-
--	if (response[len - 2] !=3D 0x90 && response[len - 2] !=3D 0x91)
--		goto error;
-+	if ((response[len - 2] !=3D 0x90 && response[len - 2] !=3D 0x91) ||
-+			(response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0)) {
-+		memset(&error, 0, sizeof(error));
- =
-
--	if (response[len - 2] =3D=3D 0x90 && response[len - 1] !=3D 0)
--		goto error;
-+		error.type =3D OFONO_ERROR_TYPE_SIM;
-+		error.error =3D (response[len - 2] << 8) | response[len - 1];
-+	}
- =
-
- 	DBG("csim_terminal_response_cb: %i", len);
- =
-
+ void ofono_stk_remove(struct ofono_stk *stk)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============8617643797352833993==--
+--===============1420051110258512786==--
 
