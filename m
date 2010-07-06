@@ -1,116 +1,220 @@
-Content-Type: multipart/mixed; boundary="===============4508915612731440635=="
+Content-Type: multipart/mixed; boundary="===============4133221611937726453=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 10/14] stk: Handle the Set Up Idle Text proactive command.
-Date: Wed, 07 Jul 2010 00:39:05 +0200
-Message-ID: <1278455949-2823-11-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 13/14] stk: Handle the Timer Management proactive command.
+Date: Wed, 07 Jul 2010 00:39:08 +0200
+Message-ID: <1278455949-2823-14-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1278455949-2823-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4508915612731440635==
+--===============4133221611937726453==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This adds a SimToolkit dbus interface with just one property
-(IdleModeText).
 ---
- src/stk.c |   98 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ src/stk.c |  165 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 98 insertions(+), 0 deletions(-)
+ 1 files changed, 165 insertions(+), 0 deletions(-)
 
 diff --git a/src/stk.c b/src/stk.c
-index a57342a..940c65d 100644
+index 940c65d..6edce2c 100644
 --- a/src/stk.c
 +++ b/src/stk.c
-@@ -50,6 +50,7 @@ struct ofono_stk {
+@@ -31,6 +31,7 @@
+ #include <glib.h>
+ #include <gdbus.h>
+ #include <errno.h>
++#include <time.h>
+ =
+
+ #include "ofono.h"
+ =
+
+@@ -40,6 +41,11 @@
+ =
+
+ static GSList *g_drivers =3D NULL;
+ =
+
++struct stk_timer {
++	time_t expiry;
++	time_t start;
++};
++
+ struct ofono_stk {
+ 	const struct ofono_stk_driver *driver;
+ 	void *driver_data;
+@@ -49,6 +55,9 @@ struct ofono_stk {
+ 	gboolean cancelled;
  	GQueue *envelope_q;
  =
 
++	struct stk_timer timers[8];
++	guint timers_source;
++
  	struct sms_submit_req *sms_submit_req;
-+	char *idle_mode_text;
+ 	char *idle_mode_text;
  };
+@@ -69,6 +78,7 @@ struct sms_submit_req {
+ #define ENVELOPE_RETRIES_DEFAULT 5
  =
 
- struct envelope_op {
-@@ -219,6 +220,45 @@ static void stk_alpha_id_unset(struct ofono_stk *stk)
- 	/* TODO */
+ static void envelope_queue_run(struct ofono_stk *stk);
++static void timers_update(struct ofono_stk *stk);
+ =
+
+ static int stk_respond(struct ofono_stk *stk, struct stk_response *rsp,
+ 			ofono_stk_generic_cb_t cb)
+@@ -378,6 +388,152 @@ out:
+ 	return TRUE;
  }
  =
 
-+static DBusMessage *stk_get_properties(DBusConnection *conn,
-+					DBusMessage *msg, void *data)
++static void timer_expiration_cb(struct ofono_stk *stk, gboolean ok,
++				const unsigned char *data, int len)
 +{
-+	struct ofono_stk *stk =3D data;
-+	DBusMessage *reply;
-+	DBusMessageIter iter;
-+	DBusMessageIter dict;
-+	const char *idle_mode_text =3D stk->idle_mode_text ?: "";
++	if (!ok) {
++		ofono_error("Timer Expiration reporting failed");
++		return;
++	}
 +
-+	reply =3D dbus_message_new_method_return(msg);
-+	if (!reply)
-+		return NULL;
++	if (len)
++		ofono_error("Timer Expiration returned %i bytes of data",
++				len);
 +
-+	dbus_message_iter_init_append(reply, &iter);
-+
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dict);
-+
-+	ofono_dbus_dict_append(&dict, "IdleModeText",
-+				DBUS_TYPE_STRING, &idle_mode_text);
-+
-+	dbus_message_iter_close_container(&iter, &dict);
-+
-+	return reply;
++	DBG("Timer Expiration reporting to UICC reported no error");
 +}
 +
-+static GDBusMethodTable stk_methods[] =3D {
-+	{ "GetProperties",		"",	"a{sv}",stk_get_properties },
++static gboolean timers_cb(gpointer user_data)
++{
++	struct ofono_stk *stk =3D user_data;
 +
-+	{ }
-+};
++	stk->timers_source =3D 0;
 +
-+static GDBusSignalTable stk_signals[] =3D {
-+	{ "PropertyChanged",	"sv" },
++	timers_update(stk);
 +
-+	{ }
-+};
++	return FALSE;
++}
 +
- static gboolean handle_command_more_time(const struct stk_command *cmd,
- 						struct stk_response *rsp,
- 						struct ofono_stk *stk)
-@@ -310,6 +350,34 @@ static gboolean handle_command_send_sms(const struct s=
-tk_command *cmd,
- 	return FALSE;
- }
- =
-
-+static gboolean handle_command_set_idle_text(const struct stk_command *cmd,
++static void timer_value_from_seconds(struct stk_timer_value *val, int seco=
+nds)
++{
++	val->has_value =3D TRUE;
++	val->hour =3D seconds / 3600;
++	seconds -=3D val->hour * 3600;
++	val->minute =3D seconds / 60;
++	seconds -=3D val->minute * 60;
++	val->second =3D seconds;
++}
++
++static void timers_update(struct ofono_stk *stk)
++{
++	time_t min =3D 0, now =3D time(NULL);
++	int i;
++
++	if (stk->timers_source) {
++		g_source_remove(stk->timers_source);
++		stk->timers_source =3D 0;
++	}
++
++	for (i =3D 0; i < 8; i++) {
++		if (!stk->timers[i].expiry)
++			continue;
++
++		if (stk->timers[i].expiry <=3D now) {
++			struct stk_envelope e;
++			int seconds =3D now - stk->timers[i].start;
++
++			stk->timers[i].expiry =3D 0;
++
++			memset(&e, 0, sizeof(e));
++
++			e.type =3D STK_ENVELOPE_TYPE_TIMER_EXPIRATION;
++			e.src =3D STK_DEVICE_IDENTITY_TYPE_TERMINAL,
++			e.timer_expiration.id =3D i + 1;
++			timer_value_from_seconds(&e.timer_expiration.value,
++							seconds);
++
++			/*
++			 * TODO: resubmit until success, providing current
++			 * time difference every time we re-send.
++			 */
++			if (stk_send_envelope(stk, &e, timer_expiration_cb, 0))
++				timer_expiration_cb(stk, FALSE, NULL, -1);
++
++			continue;
++		}
++
++		if (stk->timers[i].expiry < now + min || min =3D=3D 0)
++			min =3D stk->timers[i].expiry - now;
++	}
++
++	if (min)
++		stk->timers_source =3D g_timeout_add_seconds(min, timers_cb, stk);
++}
++
++static gboolean handle_command_timer_mgmt(const struct stk_command *cmd,
 +						struct stk_response *rsp,
 +						struct ofono_stk *stk)
 +{
-+	const char *idle_mode_text;
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(stk->atom);
++	int op =3D cmd->qualifier & 3;
++	time_t seconds, now =3D time(NULL);
++	struct stk_timer *tmr;
 +
-+	if (stk->idle_mode_text) {
-+		g_free(stk->idle_mode_text);
-+		stk->idle_mode_text =3D NULL;
++	if (cmd->timer_mgmt.timer_id < 1 || cmd->timer_mgmt.timer_id > 8) {
++		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
++		return TRUE;
 +	}
 +
-+	if (!cmd->setup_idle_mode_text.text)
-+		goto out;
++	tmr =3D &stk->timers[cmd->timer_mgmt.timer_id - 1];
 +
-+	stk->idle_mode_text =3D g_strdup(cmd->setup_idle_mode_text.text);
++	switch (op) {
++	case 0: /* Start */
++		seconds =3D cmd->timer_mgmt.timer_value.second +
++			cmd->timer_mgmt.timer_value.minute * 60 +
++			cmd->timer_mgmt.timer_value.hour * 3600;
 +
-+out:
-+	idle_mode_text =3D stk->idle_mode_text ?: "";
-+	ofono_dbus_signal_property_changed(conn, path, OFONO_STK_INTERFACE,
-+						"IdleModeText",
-+						DBUS_TYPE_STRING,
-+						&idle_mode_text);
++		tmr->expiry =3D now + seconds;
++		tmr->start =3D now;
++
++		timers_update(stk);
++		break;
++
++	case 1: /* Deactivate */
++		if (!tmr->expiry) {
++			rsp->result.type =3D STK_RESULT_TYPE_TIMER_CONFLICT;
++
++			return TRUE;
++		}
++
++		seconds =3D MAX(0, tmr->expiry - now);
++		tmr->expiry =3D 0;
++
++		timers_update(stk);
++
++		timer_value_from_seconds(&rsp->timer_mgmt.value, seconds);
++		break;
++
++	case 2: /* Get current value */
++		if (!tmr->expiry) {
++			rsp->result.type =3D STK_RESULT_TYPE_TIMER_CONFLICT;
++
++			return TRUE;
++		}
++
++		seconds =3D MAX(0, tmr->expiry - now);
++		timer_value_from_seconds(&rsp->timer_mgmt.value, seconds);
++		break;
++
++	default:
++		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
++
++		return TRUE;
++	}
++
++	rsp->timer_mgmt.id =3D cmd->timer_mgmt.timer_id;
 +
 +	return TRUE;
 +}
@@ -118,78 +222,37 @@ tk_command *cmd,
  static void stk_proactive_command_cancel(struct ofono_stk *stk)
  {
  	if (!stk->pending_cmd)
-@@ -388,6 +456,10 @@ void ofono_stk_proactive_command_notify(struct ofono_s=
+@@ -460,6 +616,10 @@ void ofono_stk_proactive_command_notify(struct ofono_s=
 tk *stk,
- 			respond =3D handle_command_send_sms(stk->pending_cmd,
+ 			respond =3D handle_command_set_idle_text(stk->pending_cmd,
  								&rsp, stk);
  			break;
-+		case STK_COMMAND_TYPE_SETUP_IDLE_MODE_TEXT:
-+			respond =3D handle_command_set_idle_text(stk->pending_cmd,
++		case STK_COMMAND_TYPE_TIMER_MANAGEMENT:
++			respond =3D handle_command_timer_mgmt(stk->pending_cmd,
 +								&rsp, stk);
 +			break;
  		}
  =
 
  		if (respond)
-@@ -438,14 +510,25 @@ void ofono_stk_driver_unregister(const struct ofono_s=
-tk_driver *d)
- static void stk_unregister(struct ofono_atom *atom)
- {
- 	struct ofono_stk *stk =3D __ofono_atom_get_data(atom);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
-+	const char *path =3D __ofono_atom_get_path(atom);
- =
-
- 	if (stk->pending_cmd) {
- 		stk_command_free(stk->pending_cmd);
- 		stk->pending_cmd =3D NULL;
+@@ -524,6 +684,11 @@ static void stk_unregister(struct ofono_atom *atom)
+ 		stk->idle_mode_text =3D NULL;
  	}
  =
 
-+	if (stk->idle_mode_text) {
-+		g_free(stk->idle_mode_text);
-+		stk->idle_mode_text =3D NULL;
++	if (stk->timers_source) {
++		g_source_remove(stk->timers_source);
++		stk->timers_source =3D 0;
 +	}
 +
  	g_queue_foreach(stk->envelope_q, (GFunc) g_free, NULL);
  	g_queue_free(stk->envelope_q);
-+
-+	ofono_modem_remove_interface(modem, OFONO_STK_INTERFACE);
-+	g_dbus_unregister_interface(conn, path, OFONO_STK_INTERFACE);
- }
  =
 
- static void stk_remove(struct ofono_atom *atom)
-@@ -500,6 +583,21 @@ struct ofono_stk *ofono_stk_create(struct ofono_modem =
-*modem,
- =
-
- void ofono_stk_register(struct ofono_stk *stk)
- {
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
-+	const char *path =3D __ofono_atom_get_path(stk->atom);
-+
-+	if (!g_dbus_register_interface(conn, path, OFONO_STK_INTERFACE,
-+					stk_methods, stk_signals, NULL,
-+					stk, NULL)) {
-+		ofono_error("Could not create %s interface",
-+				OFONO_STK_INTERFACE);
-+
-+		return;
-+	}
-+
-+	ofono_modem_add_interface(modem, OFONO_STK_INTERFACE);
-+
- 	__ofono_atom_register(stk->atom, stk_unregister);
- =
-
- 	stk->envelope_q =3D g_queue_new();
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============4508915612731440635==--
+--===============4133221611937726453==--
 
