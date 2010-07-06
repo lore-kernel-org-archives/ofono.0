@@ -1,47 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============7595916291296739820=="
+Content-Type: multipart/mixed; boundary="===============8674539979809006069=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/2] gatppp: Check ppp instance before unref it
-Date: Tue, 06 Jul 2010 09:48:53 -0300
-Message-ID: <1278420533.2789.36.camel@localhost.localdomain>
-In-Reply-To: <1278410258-3077-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [PATCH] test-server: Use cfmakeraw to set TTY raw mode
+Date: Tue, 06 Jul 2010 09:51:50 -0300
+Message-ID: <1278420710.2789.38.camel@localhost.localdomain>
+In-Reply-To: <1278397386-29822-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7595916291296739820==
+--===============8674539979809006069==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Zhenhua,
 
+> Use cfmakeraw to disable echoing and special characters processing. If
+> we don't turn off ICRNL, TTY layer translates \r\n to \n\n.
 > ---
->  gatchat/gatppp.c |    3 +++
->  1 files changed, 3 insertions(+), 0 deletions(-)
+>  gatchat/test-server.c |    8 +++-----
+>  1 files changed, 3 insertions(+), 5 deletions(-)
 > =
 
-> diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
-> index 1d41ded..d9b1627 100644
-> --- a/gatchat/gatppp.c
-> +++ b/gatchat/gatppp.c
-> @@ -446,6 +446,9 @@ void g_at_ppp_unref(GAtPPP *ppp)
+> diff --git a/gatchat/test-server.c b/gatchat/test-server.c
+> index 25a1192..2911978 100644
+> --- a/gatchat/test-server.c
+> +++ b/gatchat/test-server.c
+> @@ -848,12 +848,10 @@ static void set_raw_mode(int fd)
 >  {
->  	gboolean is_zero;
+>  	struct termios options;
 >  =
 
-> +	if (ppp =3D=3D NULL)
-> +		return;
-> +
->  	is_zero =3D g_atomic_int_dec_and_test(&ppp->ref_count);
->  =
+> +	memset(&options, 0, sizeof(struct termios));
+>  	tcgetattr(fd, &options);
+> -
+> -	/* Set TTY as raw mode to disable echo back of input characters
+> -	 * when they are received from Modem to avoid feedback loop */
+> -	options.c_lflag &=3D ~(ICANON | ECHO | ECHOE | ISIG);
+> -
+> +	tcflush(fd, TCIOFLUSH);
+> +	cfmakeraw(&options);
+>  	tcsetattr(fd, TCSANOW, &options);
+>  }
 
->  	if (is_zero =3D=3D FALSE)
+I am fine with using cfmakeraw. So patch has been applied.
 
-since we have been safe-guarding this in other unref functions as well,
-I also applied this patch.
-
-In general the calling code is doing something wrong here if it tries to
-unref a NULL pointer.
+Minor comment here that sizeof(options) would be better then referencing
+the struct itself. And in general we have used ti as variable name for
+termios options. Don't ask me really why. Just have done that in the
+patch. So feel free to send an cleanup patch.
 
 Regards
 
@@ -49,5 +56,5 @@ Marcel
 
 
 
---===============7595916291296739820==--
+--===============8674539979809006069==--
 
