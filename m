@@ -1,51 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============2466654475357918268=="
+Content-Type: multipart/mixed; boundary="===============1393189382514529877=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH 2/2] Clarified VoiceCallManager.SendTones documentation.
-Date: Tue, 06 Jul 2010 20:17:52 +0300
-Message-ID: <1278436672-14019-2-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1278436672-14019-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH] test-server: Refactor set_raw_mode
+Date: Wed, 07 Jul 2010 08:42:23 +0800
+Message-ID: <1278463343-7822-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2466654475357918268==
+--===============1393189382514529877==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
-
+Rename variable 'options' to 'ti' and use sizeof(ti).
 ---
- doc/voicecallmanager-api.txt |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+ gatchat/test-server.c |   10 +++++-----
+ 1 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 7877ac5..bc79fc3 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -108,10 +108,10 @@ Methods		dict GetProperties()
+diff --git a/gatchat/test-server.c b/gatchat/test-server.c
+index 2911978..49012dc 100644
+--- a/gatchat/test-server.c
++++ b/gatchat/test-server.c
+@@ -846,13 +846,13 @@ static void server_destroy(gpointer user)
  =
 
- 		void SendTones(string tones)
+ static void set_raw_mode(int fd)
+ {
+-	struct termios options;
++	struct termios ti;
  =
 
--			Sends the DTMF tones to the network.  Under GSM the
--			tones have a fixed duration.  Tones can be one of:
--			'0' - '9', '*', '#', 'A', 'B', 'C', 'D'. The last four
--			are typically not used in normal circumstances.
-+			Sends the DTMF tones to the network.  The tones have
-+			a fixed duration.  Tones can be one of: '0' - '9',
-+			'*', '#', 'A', 'B', 'C', 'D'.  The last four are
-+			typically not used in normal circumstances.
+-	memset(&options, 0, sizeof(struct termios));
+-	tcgetattr(fd, &options);
++	memset(&ti, 0, sizeof(ti));
++	tcgetattr(fd, &ti);
+ 	tcflush(fd, TCIOFLUSH);
+-	cfmakeraw(&options);
+-	tcsetattr(fd, TCSANOW, &options);
++	cfmakeraw(&ti);
++	tcsetattr(fd, TCSANOW, &ti);
+ }
  =
 
- Signals		PropertyChanged(string property, variant value)
- =
-
+ static gboolean create_tty(const char *modem_path)
 -- =
 
-1.7.0.4
+1.6.3.3
 
 
---===============2466654475357918268==--
+--===============1393189382514529877==--
 
