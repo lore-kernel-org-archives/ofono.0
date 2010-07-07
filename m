@@ -1,32 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============8789760912742395841=="
+Content-Type: multipart/mixed; boundary="===============9204084801382857784=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] gatserver: Restore GAtServer disconnect handling
-Date: Wed, 07 Jul 2010 11:27:23 -0500
-Message-ID: <4C34AAEB.5020905@gmail.com>
-In-Reply-To: <1278467192-12207-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [PATCH 2/2] Clarified VoiceCallManager.SendTones documentation.
+Date: Wed, 07 Jul 2010 11:34:17 -0500
+Message-ID: <4C34AC89.8010308@gmail.com>
+In-Reply-To: <1278436672-14019-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8789760912742395841==
+--===============9204084801382857784==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Pekka,
 
-On 07/06/2010 08:46 PM, Zhenhua Zhang wrote:
-> Restore GAtServer disconnect handling when resuming a server session
+On 07/06/2010 12:17 PM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> =
+
 > ---
->  gatchat/gatserver.c |    2 ++
->  1 files changed, 2 insertions(+), 0 deletions(-)
+>  doc/voicecallmanager-api.txt |    8 ++++----
+>  1 files changed, 4 insertions(+), 4 deletions(-)
 > =
 
 
-Both patches have been applied, thanks.
+I applied this patch with a slightly reworded commit header.
 
 Regards,
 -Denis
 
---===============8789760912742395841==--
+--===============9204084801382857784==--
 
