@@ -1,49 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============1816599003488151237=="
+Content-Type: multipart/mixed; boundary="===============7319361701926693088=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [SMS D-Bus 08/23] export sms_assembly_encode_address
-Date: Wed, 07 Jul 2010 18:36:26 -0500
-Message-ID: <4C350F7A.2030205@gmail.com>
-In-Reply-To: <1278545338.2327.134.camel@localhost.localdomain>
+Subject: Re: [SMS D-Bus 11/23] struct tx_queue_entry: add fields and destructor
+Date: Wed, 07 Jul 2010 18:39:50 -0500
+Message-ID: <4C351046.6070104@gmail.com>
+In-Reply-To: <1278545512.2327.136.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1816599003488151237==
+--===============7319361701926693088==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Inaky,
 
-On 07/07/2010 06:28 PM, Inaky Perez-Gonzalez wrote:
-> On Wed, 2010-07-07 at 15:57 -0700, Denis Kenzior wrote: =
+On 07/07/2010 06:31 PM, Inaky Perez-Gonzalez wrote:
+> On Wed, 2010-07-07 at 16:32 -0700, Denis Kenzior wrote: =
 
 >> Hi Inaky,
 >>
->>>  void sms_assembly_expire(struct sms_assembly *assembly, time_t before);
->>> +gboolean sms_assembly_encode_address(const struct sms_address *in,
->>> +				     char *straddr);
->>>  =
-
->>>  struct status_report_assembly *status_report_assembly_new(const char *=
-imsi);
->>>  void status_report_assembly_free(struct status_report_assembly *assemb=
-ly);
+>> ....
+>>> settles that last one. Will do the _create() rename too.
+>>>
+>>>
 >>
->> Can we rename this into sms_address_to_hex_string?  That seems to
->> reflect the intent a bit better.
+>> Good, can you resubmit this one separately soonish?  I'm touching this
+>> area of the code because of Andrew's changes for STK Send SMS command
+>> handling.
 > =
 
-> Ok -- this will then touch a few more other sites in the code.
+> I'll resubmit the whole series of stuff you haven't merged yet with all
+> the feedback incorporated. Should be done tomorrow the latest.
 > =
 
-> =
 
-
-That is fine.
+The reason I'm asking is that I was about to do almost the exact same
+set of changes.  Tomorrow is fine though.
 
 Regards,
 -Denis
 
---===============1816599003488151237==--
+--===============7319361701926693088==--
 
