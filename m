@@ -1,76 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============9179424202694235547=="
+Content-Type: multipart/mixed; boundary="===============4548462418347862285=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: FYI: Emergency calls with MBM modem
-Date: Wed, 07 Jul 2010 10:47:45 -0500
-Message-ID: <4C34A1A1.50006@gmail.com>
-In-Reply-To: <AANLkTiklQhayPAhums1pWVC43_u_GUYiyDJzEQifik7H@mail.gmail.com>
+Date: Wed, 07 Jul 2010 10:52:26 -0500
+Message-ID: <4C34A2BA.70308@gmail.com>
+In-Reply-To: <AANLkTimjzak-lL4wbASpV4bAfuPzk2C4mltcSJ7kXw8G@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9179424202694235547==
+--===============4548462418347862285==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pekka,
 
-On 07/07/2010 08:19 AM, Pekka Pessi wrote:
-> Hi all,
-> =
+> However, 27.007 implies (see, for instance, commentary on +CPIN) that
+> things the atmodem voicecall driver takes as granted (+CLCC, +CHLD) do
+> not necessary work when there is no SIM or SIM is missing PIN code.
+> +CIND polling is only thing promised by spec (however, it did not work
+> on my MBM).
 
-> I just did some emergency calls in our lab with the Ericsson MBM modem
-> (3507g). The modem firmware has the voice calls enabled, even while
-> there is no audio input/output from the modem (as far as I know).
-> =
+I'm not following, why would we ever need +CHLD if the SIM is missing?
+Would we ever be able to establish multiple emergency calls to actually
+call this?
 
-> Main results are:
-> - emergency calls are not possible in offline mode (CFUN=3D4), ATD112;
-> returns NO DIALTONE
-
-That was expected, do we have a solution in mind on how to do emergency
-dialing in Offline mode?  Is it a UI problem?
-
-> - emergency calls can be made without SIM card (but they require AT+CFUN=
-=3D1)
-
-That was again expected...
-
-> - most MBM modem functionality (AT+COPS, AT+CLCC does not work without SI=
-M card)
-
-The only one that can be triggered without a SIM card is AT+CLCC.
-However, please note that MBM should not be using CLCC, but instead its
-own vendor-specific voicecall extensions.
-
-> - emergency calls cannot be handled with usual AT+CHLD commands (e.g.,
-> AT+CHLD=3D11 does not hang up emergency calls)
-
-That is a bit nasty, is there an assumption that every other call is
-hung up when an emergency number is dialed?
-
->   (ofono cannot hangup emergency call and it does not notice when it ends)
-> - emergency call gets number "112" and type 128 (unknown type of
-> number and numbering plan)
-
-Again, most likely because MBM uses its own voicecall extensions.
-Driving it with CLCC is wrong...
++CHLD not working when PIN is ready and an emergency 3-way call
+situation is another matter though...
 
 > =
 
-> Please find attached log. I first made call to 99999 (an ordinary
-> service number within our lab network) then 118 (non-existing service
-> number) then 112 (emergency call).
+> Another thing is the radio handling: making an emergency calls
+> requires that radio is explicitly turned on (with AT+CFUN=3D1). If there
+> is no SIM or SIM is missing PIN and radio is on, modem registers with
+> its IMEI code (it gets so called limited service). Keeping radio on in
+> limited service state just wastes battery (unless you want to make an
+> emergency call).
 > =
 
-> The emergency call was terminated by callee around 02:58:52 (as you
-> can see, modem indicates it with +CIEV=3D8,0).
 
-These are Bluetooth Handsfree indicators btw, not typically used for
-driving a real modem...
+What do you propose here?
 
 Regards,
 -Denis
 
---===============9179424202694235547==--
+--===============4548462418347862285==--
 
