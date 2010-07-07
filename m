@@ -1,148 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============5150201029970493551=="
+Content-Type: multipart/mixed; boundary="===============9212742281780818650=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 06/15] emulator: Add emulator status watches in gprs atom
-Date: Wed, 07 Jul 2010 18:01:43 +0800
-Message-ID: <1278496912-13777-7-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1278496912-13777-6-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 04/15] emulator: Add get properities for emulator
+Date: Wed, 07 Jul 2010 18:01:41 +0800
+Message-ID: <1278496912-13777-5-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1278496912-13777-4-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5150201029970493551==
+--===============9212742281780818650==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add dun_watch to watch emulator status update in gprs atom. So that gprs
-atom could get notified when we get request to create new PPP connection
-from DUN client;
+oFono properties:
+"Powered": Whether the emulator is powered on.
+"Type": Type could be one of supported emulator type, default is DUN.
 ---
- src/gprs.c |   63 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 63 insertions(+), 0 deletions(-)
+ src/emulator.c |   28 +++++++++++++++++++++++++++-
+ 1 files changed, 27 insertions(+), 1 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 829a22c..dd58c51 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -77,6 +77,10 @@ struct ofono_gprs {
- 	char *imsi;
- 	DBusMessage *pending;
- 	struct ofono_gprs_context *context_driver;
-+	struct ofono_watchlist *status_watches;
-+	struct ofono_emulator *dun;
-+	unsigned int dun_watch;
-+	unsigned int dun_status_watch;
- 	const struct ofono_gprs_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-@@ -1386,6 +1390,39 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
-s_context *gc,
- 	}
- }
- =
-
-+static void dun_status_watch(struct ofono_emulator *e,
-+					enum ofono_emulator_status status,
-+					void *data, void *user_data)
-+{
-+	if (e =3D=3D NULL)
-+		return;
-+
-+	switch (status) {
-+	default:
-+		break;
-+	}
-+}
-+
-+static void dun_watch(struct ofono_atom *atom,
-+					enum ofono_atom_watch_condition cond,
-+					void *data)
-+{
-+	struct ofono_gprs *gprs =3D data;
-+	struct ofono_emulator *e =3D __ofono_atom_get_data(atom);
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		gprs->dun_status_watch =3D 0;
-+		gprs->dun =3D NULL;
-+		return;
-+	}
-+
-+	DBG("");
-+
-+	gprs->dun =3D e;
-+	gprs->dun_status_watch =3D __ofono_emulator_add_status_watch(e,
-+						dun_status_watch, gprs, NULL);
-+}
-+
- int ofono_gprs_context_driver_register(const struct ofono_gprs_context_dri=
-ver *d)
+diff --git a/src/emulator.c b/src/emulator.c
+index 7551eb6..86a2eee 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -288,7 +288,33 @@ error:
+ static DBusMessage *emulator_get_properties(DBusConnection *conn,
+ 						DBusMessage *msg, void *data)
  {
- 	DBG("driver: %p, name: %s", d, d->name);
-@@ -1535,6 +1572,18 @@ static void gprs_unregister(struct ofono_atom *atom)
- 		gprs->netreg =3D NULL;
- 	}
- =
-
-+	if (gprs->dun_watch) {
-+		if (gprs->dun_status_watch) {
-+			__ofono_emulator_remove_status_watch(gprs->dun,
-+							gprs->dun_status_watch);
-+			gprs->dun_status_watch =3D 0;
-+		}
+-	return dbus_message_new_method_return(msg);
++	struct ofono_emulator *e =3D data;
++	DBusMessage *reply;
++	DBusMessageIter iter;
++	DBusMessageIter dict;
++	const char *type_str;
++	int type;
 +
-+		__ofono_modem_remove_atom_watch(modem, gprs->dun_watch);
-+		gprs->dun_watch =3D 0;
-+		gprs->dun =3D NULL;
-+	}
++	reply =3D dbus_message_new_method_return(msg);
++	if (!reply)
++		return NULL;
 +
- 	ofono_modem_remove_interface(modem,
- 					OFONO_DATA_CONNECTION_MANAGER_INTERFACE);
- 	g_dbus_unregister_interface(conn, path,
-@@ -1778,6 +1827,7 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
- 	const char *path =3D __ofono_atom_get_path(gprs->atom);
- 	struct ofono_atom *netreg_atom;
- 	struct ofono_atom *sim_atom;
-+	struct ofono_atom *dun_atom;
- =
-
- 	if (!g_dbus_register_interface(conn, path,
- 					OFONO_DATA_CONNECTION_MANAGER_INTERFACE,
-@@ -1792,6 +1842,8 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
- 	ofono_modem_add_interface(modem,
- 				OFONO_DATA_CONNECTION_MANAGER_INTERFACE);
- =
-
-+	gprs->status_watches =3D __ofono_watchlist_new(g_free);
++	dbus_message_iter_init_append(reply, &iter);
 +
- 	sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
- =
-
- 	if (sim_atom) {
-@@ -1811,6 +1863,17 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
- 		netreg_watch(netreg_atom,
- 				OFONO_ATOM_WATCH_CONDITION_REGISTERED, gprs);
- =
-
-+	gprs->dun_watch =3D __ofono_modem_add_atom_watch(modem,
-+						OFONO_ATOM_TYPE_EMULATOR_DUN,
-+						dun_watch, gprs, NULL);
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					OFONO_PROPERTIES_ARRAY_SIGNATURE,
++					&dict);
 +
-+	dun_atom =3D __ofono_modem_find_atom(modem,
-+						OFONO_ATOM_TYPE_EMULATOR_DUN);
++	ofono_dbus_dict_append(&dict, "Powered", DBUS_TYPE_BOOLEAN,
++					&e->powered);
 +
-+	if (dun_atom && __ofono_atom_get_registered(dun_atom))
-+		dun_watch(dun_atom,
-+				OFONO_ATOM_WATCH_CONDITION_REGISTERED, gprs);
++	type =3D e->driver->type;
++	type_str =3D ofono_emulator_type_to_str(type);
++	ofono_dbus_dict_append(&dict, "Type", DBUS_TYPE_STRING, &type_str);
 +
- 	__ofono_atom_register(gprs->atom, gprs_unregister);
++	dbus_message_iter_close_container(&iter, &dict);
++
++	return reply;
  }
  =
 
+ static DBusMessage *emulator_enable(DBusConnection *conn,
 -- =
 
 1.6.3.3
 
 
---===============5150201029970493551==--
+--===============9212742281780818650==--
 
