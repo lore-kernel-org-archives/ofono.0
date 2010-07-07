@@ -1,137 +1,134 @@
-Content-Type: multipart/mixed; boundary="===============5721994281616054178=="
+Content-Type: multipart/mixed; boundary="===============4136294669494352147=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 02/15] watch: Simplify ofono_watchlist remove item
-Date: Wed, 07 Jul 2010 18:01:39 +0800
-Message-ID: <1278496912-13777-3-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1278496912-13777-2-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 07/15] emulator: Add emulator status watches in netreg
+Date: Wed, 07 Jul 2010 18:01:44 +0800
+Message-ID: <1278496912-13777-8-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1278496912-13777-7-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5721994281616054178==
+--===============4136294669494352147==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Use g_slist function to remove items from ofono watchlist.
+Add dun_watch to watch emulator status update for netreg atom.
 ---
- src/watch.c |   69 ++++++++++++++++++++++++++++---------------------------=
----
- 1 files changed, 33 insertions(+), 36 deletions(-)
+ src/network.c |   58 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 58 insertions(+), 0 deletions(-)
 
-diff --git a/src/watch.c b/src/watch.c
-index f93b68c..cd3d908 100644
---- a/src/watch.c
-+++ b/src/watch.c
-@@ -46,58 +46,55 @@ unsigned int __ofono_watchlist_add_item(struct ofono_wa=
-tchlist *watchlist,
- 	return item->id;
+diff --git a/src/network.c b/src/network.c
+index c6410a8..b9f0a08 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -80,6 +80,9 @@ struct ofono_netreg {
+ 	GKeyFile *settings;
+ 	char *imsi;
+ 	struct ofono_watchlist *status_watches;
++	struct ofono_emulator *dun;
++	unsigned int dun_watch;
++	unsigned int dun_status_watch;
+ 	const struct ofono_netreg_driver *driver;
+ 	void *driver_data;
+ 	struct ofono_atom *atom;
+@@ -1613,6 +1616,37 @@ const char *ofono_netreg_get_mnc(struct ofono_netreg=
+ *netreg)
+ 	return netreg->current_operator->mnc;
  }
  =
 
--gboolean __ofono_watchlist_remove_item(struct ofono_watchlist *watchlist,
--					unsigned int id)
-+static gint watchlist_item_compare_by_id(gconstpointer a, gconstpointer b)
- {
--	struct ofono_watchlist_item *item;
--	GSList *p;
--	GSList *c;
--
--	p =3D NULL;
--	c =3D watchlist->items;
-+	const struct ofono_watchlist_item *item =3D a;
-+	unsigned int id =3D GPOINTER_TO_UINT(b);
- =
-
--	while (c) {
--		item =3D c->data;
-+	if (item->id < id)
-+		return -1;
- =
-
--		if (item->id !=3D id) {
--			p =3D c;
--			c =3D c->next;
--			continue;
--		}
-+	if (item->id > id)
-+		return 1;
- =
-
--		if (p)
--			p->next =3D c->next;
--		else
--			watchlist->items =3D c->next;
--
--		if (item->destroy)
--			item->destroy(item->notify_data);
-+	return 0;
-+}
- =
-
--		if (watchlist->destroy)
--			watchlist->destroy(item);
--		g_slist_free_1(c);
-+static void watchlist_remove_item(void *data, void *user_data)
++static void dun_status_watch(struct ofono_emulator *e,
++					enum ofono_emulator_status status,
++					void *data, void *user_data)
 +{
-+	struct ofono_watchlist_item *item =3D data;
-+	struct ofono_watchlist *watchlist =3D user_data;
++	if (e =3D=3D NULL)
++		return;
++
++	switch (status) {
++	default:
++		break;
++	}
++}
++
++static void dun_watch(struct ofono_atom *atom,
++					enum ofono_atom_watch_condition cond,
++					void *data)
++{
++	struct ofono_netreg *netreg =3D data;
++	struct ofono_emulator *e =3D __ofono_atom_get_data(atom);
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
++		netreg->dun_status_watch =3D 0;
++		netreg->dun =3D NULL;
++		return;
++	}
++
++	netreg->dun =3D e;
++	netreg->dun_status_watch =3D __ofono_emulator_add_status_watch(e,
++						dun_status_watch, netreg, NULL);
++}
++
+ int ofono_netreg_driver_register(const struct ofono_netreg_driver *d)
+ {
+ 	DBG("driver: %p, name: %s", d, d->name);
+@@ -1669,6 +1703,19 @@ static void netreg_unregister(struct ofono_atom *ato=
+m)
+ 		netreg->settings =3D NULL;
+ 	}
  =
 
--		return TRUE;
--	}
-+	if (item->destroy)
-+		item->destroy(item->notify_data);
++	if (netreg->dun_watch) {
++		if (netreg->dun_status_watch) {
++			__ofono_emulator_remove_status_watch(netreg->dun,
++						netreg->dun_status_watch);
++			netreg->dun_status_watch =3D 0;
++			netreg->dun =3D NULL;
++		}
++
++		__ofono_modem_remove_atom_watch(modem, netreg->dun_watch);
++		netreg->dun_watch =3D 0;
++		netreg->dun =3D NULL;
++	}
++
+ 	g_dbus_unregister_interface(conn, path,
+ 					OFONO_NETWORK_REGISTRATION_INTERFACE);
+ 	ofono_modem_remove_interface(modem,
+@@ -1773,6 +1820,7 @@ void ofono_netreg_register(struct ofono_netreg *netre=
+g)
+ 	struct ofono_modem *modem =3D __ofono_atom_get_modem(netreg->atom);
+ 	const char *path =3D __ofono_atom_get_path(netreg->atom);
+ 	struct ofono_atom *sim_atom;
++	struct ofono_atom *dun_atom;
  =
 
--	return FALSE;
-+	if (watchlist->destroy)
-+		watchlist->destroy(item);
+ 	if (!g_dbus_register_interface(conn, path,
+ 					OFONO_NETWORK_REGISTRATION_INTERFACE,
+@@ -1809,6 +1857,16 @@ void ofono_netreg_register(struct ofono_netreg *netr=
+eg)
+ 				sim_spn_read_cb, netreg);
+ 	}
+ =
+
++	netreg->dun_watch =3D __ofono_modem_add_atom_watch(modem,
++						OFONO_ATOM_TYPE_EMULATOR_DUN,
++						dun_watch, netreg, NULL);
++
++	dun_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_EMULATOR_DUN);
++
++	if (dun_atom && __ofono_atom_get_registered(dun_atom))
++		dun_watch(dun_atom, OFONO_ATOM_WATCH_CONDITION_REGISTERED,
++						netreg);
++
+ 	__ofono_atom_register(netreg->atom, netreg_unregister);
  }
  =
 
--void __ofono_watchlist_free(struct ofono_watchlist *watchlist)
-+gboolean __ofono_watchlist_remove_item(struct ofono_watchlist *watchlist,
-+					unsigned int id)
- {
- 	struct ofono_watchlist_item *item;
- 	GSList *l;
- =
-
--	for (l =3D watchlist->items; l; l =3D l->next) {
--		item =3D l->data;
-+	l =3D g_slist_find_custom(watchlist->items, GUINT_TO_POINTER(id),
-+						watchlist_item_compare_by_id);
-+	if (l =3D=3D NULL)
-+		return FALSE;
- =
-
--		if (item->destroy)
--			item->destroy(item->notify_data);
-+	item =3D l->data;
- =
-
--		if (watchlist->destroy)
--			watchlist->destroy(item);
--	}
-+	watchlist->items =3D g_slist_remove(watchlist->items, item);
- =
-
-+	watchlist_remove_item(item, watchlist);
-+
-+	return TRUE;
-+}
-+
-+void __ofono_watchlist_free(struct ofono_watchlist *watchlist)
-+{
-+	g_slist_foreach(watchlist->items, watchlist_remove_item, watchlist);
- 	g_slist_free(watchlist->items);
- 	watchlist->items =3D NULL;
- 	g_free(watchlist);
 -- =
 
 1.6.3.3
 
 
---===============5721994281616054178==--
+--===============4136294669494352147==--
 
