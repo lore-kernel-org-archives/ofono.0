@@ -1,35 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============5302400482905893963=="
+Content-Type: multipart/mixed; boundary="===============4954515316206932384=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 1/2] gatserver: Restore GAtServer disconnect handling
-Date: Wed, 07 Jul 2010 09:46:31 +0800
-Message-ID: <1278467192-12207-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 2/2] gatppp: Unset disconnect function when unref PPP
+Date: Wed, 07 Jul 2010 09:46:32 +0800
+Message-ID: <1278467192-12207-2-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1278467192-12207-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5302400482905893963==
+--===============4954515316206932384==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Restore GAtServer disconnect handling when resuming a server session
+Unset IO disconnect function when we try to destroy GAtPPP instance.
+After freeing the instance, the IO disconnect function should not be
+invoked.
 ---
- gatchat/gatserver.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ gatchat/gatppp.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index c63f04b..49e0de4 100644
---- a/gatchat/gatserver.c
-+++ b/gatchat/gatserver.c
-@@ -1166,6 +1166,8 @@ void g_at_server_resume(GAtServer *server)
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index d9b1627..63508b5 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -454,6 +454,9 @@ void g_at_ppp_unref(GAtPPP *ppp)
+ 	if (is_zero =3D=3D FALSE)
  		return;
- 	}
  =
 
-+	g_at_io_set_disconnect_function(server->io, io_disconnect, server);
++	g_at_io_set_disconnect_function(g_at_hdlc_get_io(ppp->hdlc),
++						NULL, NULL);
 +
- 	g_at_io_set_debug(server->io, server->debugf, server->debug_data);
- 	g_at_io_set_read_handler(server->io, new_bytes, server);
+ 	if (ppp->net)
+ 		ppp_net_free(ppp->net);
  =
 
 -- =
@@ -37,5 +41,5 @@ index c63f04b..49e0de4 100644
 1.6.3.3
 
 
---===============5302400482905893963==--
+--===============4954515316206932384==--
 
