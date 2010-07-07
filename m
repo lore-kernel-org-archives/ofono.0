@@ -1,134 +1,108 @@
-Content-Type: multipart/mixed; boundary="===============4136294669494352147=="
+Content-Type: multipart/mixed; boundary="===============2567586480843615647=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 07/15] emulator: Add emulator status watches in netreg
-Date: Wed, 07 Jul 2010 18:01:44 +0800
-Message-ID: <1278496912-13777-8-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1278496912-13777-7-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 08/15] emulator: Add APIs to send GAtServer result
+Date: Wed, 07 Jul 2010 18:01:45 +0800
+Message-ID: <1278496912-13777-9-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1278496912-13777-8-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4136294669494352147==
+--===============2567586480843615647==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add dun_watch to watch emulator status update for netreg atom.
+Defines APIs to send final/intermediate/unsolicited result to DUN
+client.
 ---
- src/network.c |   58 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 58 insertions(+), 0 deletions(-)
+ include/emulator.h |    2 ++
+ src/emulator.c     |   28 ++++++++++++++++++++++++++++
+ src/ofono.h        |   10 ++++++++++
+ 3 files changed, 40 insertions(+), 0 deletions(-)
 
-diff --git a/src/network.c b/src/network.c
-index c6410a8..b9f0a08 100644
---- a/src/network.c
-+++ b/src/network.c
-@@ -80,6 +80,9 @@ struct ofono_netreg {
- 	GKeyFile *settings;
- 	char *imsi;
- 	struct ofono_watchlist *status_watches;
-+	struct ofono_emulator *dun;
-+	unsigned int dun_watch;
-+	unsigned int dun_status_watch;
- 	const struct ofono_netreg_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-@@ -1613,6 +1616,37 @@ const char *ofono_netreg_get_mnc(struct ofono_netreg=
- *netreg)
- 	return netreg->current_operator->mnc;
+diff --git a/include/emulator.h b/include/emulator.h
+index c76dbc7..8b10f8c 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -50,6 +50,8 @@ struct ofono_emulator_driver {
+ 	int (*disable)(struct ofono_emulator *e);
+ };
+ =
+
++enum _GAtServerResult;
++
+ const char *ofono_emulator_get_path(struct ofono_emulator *e);
+ =
+
+ struct ofono_emulator *ofono_emulator_find(struct ofono_modem *modem,
+diff --git a/src/emulator.c b/src/emulator.c
+index 86a2eee..aa203f1 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -401,6 +401,34 @@ static gboolean ofono_emulator_dbus_register(struct of=
+ono_modem *modem,
+ 	return TRUE;
  }
  =
 
-+static void dun_status_watch(struct ofono_emulator *e,
-+					enum ofono_emulator_status status,
-+					void *data, void *user_data)
++void ofono_emulator_send_final(struct ofono_emulator *e, GAtServerResult r=
+esult)
 +{
-+	if (e =3D=3D NULL)
-+		return;
-+
-+	switch (status) {
-+	default:
-+		break;
-+	}
++	g_at_server_send_final(e->server, result);
 +}
 +
-+static void dun_watch(struct ofono_atom *atom,
-+					enum ofono_atom_watch_condition cond,
-+					void *data)
++void ofono_emulator_send_ext_final(struct ofono_emulator *e, const char *r=
+esult)
 +{
-+	struct ofono_netreg *netreg =3D data;
-+	struct ofono_emulator *e =3D __ofono_atom_get_data(atom);
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		netreg->dun_status_watch =3D 0;
-+		netreg->dun =3D NULL;
-+		return;
-+	}
-+
-+	netreg->dun =3D e;
-+	netreg->dun_status_watch =3D __ofono_emulator_add_status_watch(e,
-+						dun_status_watch, netreg, NULL);
++	g_at_server_send_ext_final(e->server, result);
 +}
 +
- int ofono_netreg_driver_register(const struct ofono_netreg_driver *d)
- {
- 	DBG("driver: %p, name: %s", d, d->name);
-@@ -1669,6 +1703,19 @@ static void netreg_unregister(struct ofono_atom *ato=
-m)
- 		netreg->settings =3D NULL;
- 	}
++void ofono_emulator_send_intermediate(struct ofono_emulator *e,
++						const char *result)
++{
++	g_at_server_send_intermediate(e->server, result);
++}
++
++void ofono_emulator_send_unsolicited(struct ofono_emulator *e,
++						const char *result)
++{
++	g_at_server_send_unsolicited(e->server, result);
++}
++
++void ofono_emulator_send_info(struct ofono_emulator *e, const char *line,
++						gboolean last)
++{
++	g_at_server_send_info(e->server, line, last);
++}
++
+ unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *e,
+ 				ofono_emulator_status_notify_cb_t notify,
+ 				void *data, ofono_destroy_func destroy)
+diff --git a/src/ofono.h b/src/ofono.h
+index dc560df..2a63386 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -296,3 +296,13 @@ unsigned int __ofono_emulator_add_status_watch(struct =
+ofono_emulator *e,
+ gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
+ 						unsigned int id);
  =
 
-+	if (netreg->dun_watch) {
-+		if (netreg->dun_status_watch) {
-+			__ofono_emulator_remove_status_watch(netreg->dun,
-+						netreg->dun_status_watch);
-+			netreg->dun_status_watch =3D 0;
-+			netreg->dun =3D NULL;
-+		}
-+
-+		__ofono_modem_remove_atom_watch(modem, netreg->dun_watch);
-+		netreg->dun_watch =3D 0;
-+		netreg->dun =3D NULL;
-+	}
-+
- 	g_dbus_unregister_interface(conn, path,
- 					OFONO_NETWORK_REGISTRATION_INTERFACE);
- 	ofono_modem_remove_interface(modem,
-@@ -1773,6 +1820,7 @@ void ofono_netreg_register(struct ofono_netreg *netre=
-g)
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(netreg->atom);
- 	const char *path =3D __ofono_atom_get_path(netreg->atom);
- 	struct ofono_atom *sim_atom;
-+	struct ofono_atom *dun_atom;
- =
-
- 	if (!g_dbus_register_interface(conn, path,
- 					OFONO_NETWORK_REGISTRATION_INTERFACE,
-@@ -1809,6 +1857,16 @@ void ofono_netreg_register(struct ofono_netreg *netr=
-eg)
- 				sim_spn_read_cb, netreg);
- 	}
- =
-
-+	netreg->dun_watch =3D __ofono_modem_add_atom_watch(modem,
-+						OFONO_ATOM_TYPE_EMULATOR_DUN,
-+						dun_watch, netreg, NULL);
-+
-+	dun_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_EMULATOR_DUN);
-+
-+	if (dun_atom && __ofono_atom_get_registered(dun_atom))
-+		dun_watch(dun_atom, OFONO_ATOM_WATCH_CONDITION_REGISTERED,
-+						netreg);
-+
- 	__ofono_atom_register(netreg->atom, netreg_unregister);
- }
- =
-
++void ofono_emulator_send_final(struct ofono_emulator *e,
++					enum _GAtServerResult result);
++void ofono_emulator_send_ext_final(struct ofono_emulator *e,
++					const char *result);
++void ofono_emulator_send_intermediate(struct ofono_emulator *e,
++					const char *result);
++void ofono_emulator_send_unsolicited(struct ofono_emulator *e,
++					const char *result);
++void ofono_emulator_send_info(struct ofono_emulator *e, const char *line,
++					gboolean last);
 -- =
 
 1.6.3.3
 
 
---===============4136294669494352147==--
+--===============2567586480843615647==--
 
