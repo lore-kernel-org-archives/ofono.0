@@ -1,594 +1,460 @@
-Content-Type: multipart/mixed; boundary="===============3740295420548367153=="
+Content-Type: multipart/mixed; boundary="===============8883310285695261724=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 10/15] emulator: Add emulator dial up support in GPRS
-Date: Wed, 07 Jul 2010 18:01:47 +0800
-Message-ID: <1278496912-13777-11-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1278496912-13777-10-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 11/15] emulator: Register mandatory AT command handlers
+Date: Wed, 07 Jul 2010 18:01:48 +0800
+Message-ID: <1278496912-13777-12-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1278496912-13777-11-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3740295420548367153==
+--===============8883310285695261724==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Implement dial up support in GPRS atom.
+Register serveral AT command handlers for DUN server.
 ---
- src/gprs.c |  439 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 437 insertions(+), 2 deletions(-)
+ include/emulator.h |    2 +
+ src/emulator.c     |  377 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 379 insertions(+), 0 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index dd58c51..cb83e23 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -39,6 +39,7 @@
- #include "common.h"
- #include "storage.h"
- #include "idmap.h"
-+#include "gatserver.h"
- =
-
- #define GPRS_FLAG_ATTACHING 0x1
- #define GPRS_FLAG_RECHECK 0x2
-@@ -48,6 +49,10 @@
- #define MAX_CONTEXT_NAME_LENGTH 127
- #define MAX_CONTEXTS 256
- =
-
-+#define DUN_LOCAL "192.168.1.1"
-+#define DUN_PEER "192.168.1.2"
-+#define EMULATOR_GPRS_TIMEOUT 20
-+
- static GSList *g_drivers =3D NULL;
- static GSList *g_context_drivers =3D NULL;
- =
-
-@@ -55,6 +60,7 @@ enum gprs_context_type {
- 	GPRS_CONTEXT_TYPE_INTERNET =3D 0,
- 	GPRS_CONTEXT_TYPE_MMS,
- 	GPRS_CONTEXT_TYPE_WAP,
-+	GPRS_CONTEXT_TYPE_DUN,
- 	GPRS_CONTEXT_TYPE_INVALID,
+diff --git a/include/emulator.h b/include/emulator.h
+index b8fb0d5..487f347 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -38,6 +38,8 @@ enum ofono_emulator_status {
+ 	OFONO_EMULATOR_STATUS_DUN_CONNECTING,
+ 	OFONO_EMULATOR_STATUS_DUN_CONNECTED,
+ 	OFONO_EMULATOR_STATUS_DUN_DISCONNECTED,
++	OFONO_EMULATOR_STATUS_SET_CGATT,
++	OFONO_EMULATOR_STATUS_SET_CGDCONT,
  };
  =
 
-@@ -81,6 +87,9 @@ struct ofono_gprs {
- 	struct ofono_emulator *dun;
- 	unsigned int dun_watch;
- 	unsigned int dun_status_watch;
-+	int attach_source;
-+	int context_source;
-+	int timeout_source;
- 	const struct ofono_gprs_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-@@ -115,6 +124,13 @@ struct pri_context {
- 	struct ofono_gprs *gprs;
+ enum ofono_emulator_type {
+diff --git a/src/emulator.c b/src/emulator.c
+index dda74a1..546a48b 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -57,6 +57,17 @@ struct ofono_emulator {
+ 	enum ofono_emulator_status status;
+ 	struct ofono_watchlist *status_watches;
+ 	struct context_info *info;
++
++	int modem_mode;
++	int modem_creg;
++	int modem_cgreg;
++	int modem_cops;
++	int modem_attached;
++	int modem_context;
++	int netreg_status;
++	int netreg_lac;
++	int netreg_ci;
++	int gprs_status;
  };
  =
 
-+struct gprs_dun_data {
-+	struct ofono_gprs *gprs;
-+	ofono_emulator_gprs_connect_cb cb;
-+	void *cb_data;
-+	struct pri_context *context;
-+};
-+
- static void gprs_netreg_update(struct ofono_gprs *gprs);
- =
-
- static const char *gprs_context_type_to_string(int type)
-@@ -168,6 +184,21 @@ static struct pri_context *gprs_context_by_path(struct=
- ofono_gprs *gprs,
- 	return NULL;
- }
- =
-
-+static struct pri_context *gprs_context_by_type(struct ofono_gprs *gprs,
-+						enum gprs_context_type type)
-+{
-+	GSList *l;
-+
-+	for (l =3D gprs->contexts; l; l =3D l->next) {
-+		struct pri_context *ctx =3D l->data;
-+
-+		if (type =3D=3D ctx->type)
-+			return ctx;
-+	}
-+
-+	return NULL;
-+}
-+
- static void context_settings_free(struct context_settings *settings)
- {
- 	g_free(settings->interface);
-@@ -401,6 +432,53 @@ static DBusMessage *pri_get_properties(DBusConnection =
-*conn,
- 	return reply;
- }
- =
-
-+static void dun_activate(const char *interface, const char *local,
-+						const char *peer,
-+						const char **dns,
-+						void *data)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct pri_context *ctx =3D data;
-+	const char *netmask =3D "255.255.255.255";
-+	dbus_bool_t value;
-+
-+	DBG("%p %s", ctx, interface);
-+
-+	ctx->active =3D TRUE;
-+
-+	/* If we don't have the interface, don't bother emitting any settings,
-+	 * as nobody can make use of them
-+	 */
-+	if (interface !=3D NULL)
-+		pri_update_context_settings(ctx, interface, TRUE,
-+						local, netmask, peer, dns);
-+
-+	value =3D ctx->active;
-+	ofono_dbus_signal_property_changed(conn, ctx->path,
-+						OFONO_DATA_CONTEXT_INTERFACE,
-+						"Active", DBUS_TYPE_BOOLEAN,
-+						&value);
-+}
-+
-+static void dun_deactivate(struct pri_context *ctx)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	dbus_bool_t value;
-+
-+	gprs_cid_release(ctx->gprs, ctx->context.cid);
-+	ctx->context.cid =3D 0;
-+
-+	ctx->active =3D FALSE;
-+
-+	pri_reset_context_settings(ctx);
-+
-+	value =3D ctx->active;
-+	ofono_dbus_signal_property_changed(conn, ctx->path,
-+						OFONO_DATA_CONTEXT_INTERFACE,
-+						"Active", DBUS_TYPE_BOOLEAN,
-+						&value);
-+}
-+
- static void pri_activate_callback(const struct ofono_error *error,
- 					const char *interface, ofono_bool_t static_ip,
- 					const char *ip, const char *netmask,
-@@ -417,7 +495,8 @@ static void pri_activate_callback(const struct ofono_er=
-ror *error,
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
- 		DBG("Activating context failed with error: %s",
- 				telephony_error_to_str(error));
--		__ofono_dbus_pending_reply(&gc->pending,
-+		if (gc && gc->pending)
-+			__ofono_dbus_pending_reply(&gc->pending,
- 					__ofono_error_failed(gc->pending));
- =
-
- 		gprs_cid_release(ctx->gprs, ctx->context.cid);
-@@ -427,7 +506,9 @@ static void pri_activate_callback(const struct ofono_er=
-ror *error,
- 	}
- =
-
- 	ctx->active =3D TRUE;
--	__ofono_dbus_pending_reply(&gc->pending,
-+
-+	if (gc && gc->pending)
-+		__ofono_dbus_pending_reply(&gc->pending,
- 				dbus_message_new_method_return(gc->pending));
- =
-
- 	/* If we don't have the interface, don't bother emitting any settings,
-@@ -693,6 +774,12 @@ static DBusMessage *pri_set_property(DBusConnection *c=
-onn,
- =
-
- 		gc->pending =3D dbus_message_ref(msg);
- =
-
-+		if (ctx->type =3D=3D GPRS_CONTEXT_TYPE_DUN) {
-+			/* Not support yet */
-+			ofono_error("Active DUN context are not yet supported");
-+			return __ofono_error_failed(msg);
-+		}
-+
- 		if (value)
- 			gc->driver->activate_primary(gc, &ctx->context,
- 						pri_activate_callback, ctx);
-@@ -1095,6 +1182,82 @@ static DBusMessage *gprs_set_property(DBusConnection=
- *conn,
- 	return dbus_message_new_method_return(msg);
- }
- =
-
-+static struct pri_context *ofono_gprs_create_context(
-+					struct ofono_gprs *gprs,
-+					const char *name, const char *typestr)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	struct pri_context *context;
-+	const char *path;
-+	enum gprs_context_type type;
-+	char **objpath_list;
-+	unsigned int id;
-+
-+	if (strlen(name) =3D=3D 0 || strlen(name) > MAX_CONTEXT_NAME_LENGTH)
-+		return NULL;
-+
-+	type =3D gprs_context_string_to_type(typestr);
-+
-+	if (type =3D=3D GPRS_CONTEXT_TYPE_INVALID)
-+		return NULL;
-+
-+	if (gprs->last_context_id)
-+		id =3D idmap_alloc_next(gprs->pid_map, gprs->last_context_id);
-+	else
-+		id =3D idmap_alloc(gprs->pid_map);
-+
-+	if (id > idmap_get_max(gprs->pid_map))
-+		return NULL;
-+
-+	context =3D pri_context_create(gprs, name, type);
-+	context->id =3D id;
-+
-+	if (!context) {
-+		ofono_error("Unable to allocate context struct");
-+		return NULL;
-+	}
-+
-+	DBG("Registering new context");
-+
-+	if (!context_dbus_register(context)) {
-+		ofono_error("Unable to register primary context");
-+		return NULL;
-+	}
-+
-+	gprs->last_context_id =3D id;
-+
-+	if (gprs->settings) {
-+		g_key_file_set_string(gprs->settings, context->key,
-+					"Name", context->name);
-+		g_key_file_set_string(gprs->settings, context->key,
-+					"AccessPointName",
-+					context->context.apn);
-+		g_key_file_set_string(gprs->settings, context->key,
-+					"Username", context->context.username);
-+		g_key_file_set_string(gprs->settings, context->key,
-+					"Password", context->context.password);
-+		g_key_file_set_string(gprs->settings, context->key, "Type",
-+				gprs_context_type_to_string(context->type));
-+		storage_sync(gprs->imsi, SETTINGS_STORE, gprs->settings);
-+	}
-+
-+	gprs->contexts =3D g_slist_append(gprs->contexts, context);
-+
-+	objpath_list =3D gprs_contexts_path_list(gprs->contexts);
-+
-+	if (objpath_list) {
-+		path =3D __ofono_atom_get_path(gprs->atom);
-+		ofono_dbus_signal_array_property_changed(conn, path,
-+					OFONO_DATA_CONNECTION_MANAGER_INTERFACE,
-+					"PrimaryContexts",
-+					DBUS_TYPE_OBJECT_PATH, &objpath_list);
-+
-+		g_strfreev(objpath_list);
-+	}
-+
-+	return context;
-+}
-+
- static DBusMessage *gprs_create_context(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
-@@ -1390,14 +1553,284 @@ void ofono_gprs_context_deactivated(struct ofono_g=
-prs_context *gc,
+ static GSList *emulator_list;
+@@ -179,6 +190,33 @@ static void notify_status_watches(struct ofono_emulato=
+r *e, void *data)
  	}
  }
  =
 
-+static ofono_bool_t set_primary_context_powered(struct pri_context *ctx,
-+						ofono_bool_t value)
++static struct ofono_emulator_req *ofono_emulator_req_new(void *cb,
++							void *cb_data)
 +{
-+	struct ofono_gprs_context *gc =3D ctx->gprs->context_driver;
++	struct ofono_emulator_req *req;
 +
-+	if (gc =3D=3D NULL || gc->driver->activate_primary =3D=3D NULL ||
-+			gc->driver->deactivate_primary =3D=3D NULL ||
-+			ctx->gprs->cid_map =3D=3D NULL)
-+		return FALSE;
++	req =3D g_try_new0(struct ofono_emulator_req, 1);
++	if (!req)
++		return req;
 +
-+	if (gc->pending)
-+		return FALSE;
++	req->cb =3D cb;
++	req->cb_data =3D cb_data;
 +
-+	if (ctx->active =3D=3D value)
-+		return FALSE;
-+
-+	if (value && !ctx->gprs->attached)
-+		return FALSE;
-+
-+	if (ctx->gprs->flags & GPRS_FLAG_ATTACHING)
-+		return FALSE;
-+
-+	if (value) {
-+		ctx->context.cid =3D gprs_cid_alloc(ctx->gprs);
-+
-+		if (ctx->context.cid =3D=3D 0)
-+			return FALSE;
-+
-+		if (ctx->context.cid !=3D
-+				idmap_get_min(ctx->gprs->cid_map)) {
-+			ofono_error("Multiple active contexts are"
-+					" not yet supported");
-+
-+			gprs_cid_release(ctx->gprs, ctx->context.cid);
-+			ctx->context.cid =3D 0;
-+
-+			return FALSE;
-+		}
-+	}
-+
-+	if (value)
-+		gc->driver->activate_primary(gc, &ctx->context,
-+					pri_activate_callback, ctx);
-+	else
-+		gc->driver->deactivate_primary(gc, ctx->context.cid,
-+					pri_deactivate_callback, ctx);
-+
-+	return TRUE;
++	return req;
 +}
 +
-+static void ofono_emulator_dun_disconnect(struct ofono_gprs *gprs,
-+				struct ofono_emulator_req *req)
++static void generic_cb(GAtServerResult res, void *user_data)
 +{
-+	struct pri_context *dun;
++	struct ofono_emulator *e =3D user_data;
++	GAtServer *server =3D e->server;
 +
-+	dun =3D gprs_context_by_type(gprs, GPRS_CONTEXT_TYPE_DUN);
-+	if (!dun) {
-+		req->cb(G_AT_SERVER_RESULT_NO_CARRIER, req->cb_data);
-+		return;
-+	}
++	g_at_server_send_final(server, res);
 +
-+	dun_deactivate(dun);
++	e->status =3D OFONO_EMULATOR_STATUS_IDLE;
 +
-+	context_dbus_unregister(dun);
-+	gprs->contexts =3D g_slist_remove(gprs->contexts, dun);
-+
-+	req->cb(G_AT_SERVER_RESULT_NO_CARRIER, req->cb_data);
++	notify_status_watches(e, NULL);
 +}
 +
-+static void ofono_emulator_dun_connect(struct ofono_gprs *gprs,
-+				struct ofono_emulator_dun_connect_req *req)
+ static void ppp_connect_cb(GAtServerResult res, void *user_data)
+ {
+ 	struct ofono_emulator *e =3D user_data;
+@@ -383,6 +421,338 @@ error:
+ 	g_at_server_send_final(server, res);
+ }
+ =
+
++static gboolean send_ok(gpointer user_data)
 +{
-+	struct pri_context *dun;
-+	const char *dns[3];
++	struct ofono_emulator *e =3D user_data;
 +
-+	dun =3D gprs_context_by_type(gprs, GPRS_CONTEXT_TYPE_DUN);
-+	if (!dun) {
-+		req->cb(G_AT_SERVER_RESULT_ERROR, req->cb_data);
-+		return;
-+	}
-+
-+	dns[0] =3D req->dns1;
-+	dns[1] =3D req->dns2;
-+	dns[2] =3D 0;
-+
-+	dun_activate(req->iface, req->local, req->peer, dns, dun);
-+
-+	req->cb(G_AT_SERVER_RESULT_OK, req->cb_data);
-+}
-+
-+static void ofono_emulator_remove_sources(struct ofono_gprs *gprs)
-+{
-+	if (gprs =3D=3D NULL)
-+		return;
-+
-+	if (gprs->timeout_source)
-+		g_source_remove(gprs->timeout_source);
-+
-+	if (gprs->attach_source)
-+		g_source_remove(gprs->attach_source);
-+
-+	if (gprs->context_source)
-+		g_source_remove(gprs->context_source);
-+}
-+
-+static gboolean emulator_gprs_timeout(gpointer user_data)
-+{
-+	struct gprs_dun_data *data =3D user_data;
-+	struct ofono_gprs *gprs =3D data->gprs;
-+	struct pri_context *context =3D data->context;
-+	struct ofono_error error;
-+
-+	ofono_emulator_remove_sources(gprs);
-+
-+	if (context->active =3D=3D TRUE)
-+		goto done;
-+
-+	error.type =3D OFONO_ERROR_TYPE_FAILURE;
-+	data->cb(&error, NULL, NULL, NULL, NULL, data->cb_data);
-+
-+done:
-+	g_free(data);
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
 +
 +	return FALSE;
 +}
 +
-+static gboolean pri_context_update(gpointer user_data)
++static void cfun_cb(GAtServerRequestType type, GAtResult *cmd,
++					gpointer user_data)
 +{
-+	struct gprs_dun_data *data =3D user_data;
-+	struct ofono_gprs *gprs =3D data->gprs;
-+	struct pri_context *context =3D data->context;
-+	struct context_settings *settings =3D context->settings;
-+	struct ofono_error error;
++	struct ofono_emulator *e =3D user_data;
++	char buf[50];
 +
-+	DBG("active %d\n", context->active);
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_info(e, "+CFUN: (0-1)", TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		snprintf(buf, sizeof(buf), "+CFUN: %d", e->modem_mode);
++		ofono_emulator_send_info(e, buf, TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int mode;
 +
-+	if (context->active !=3D TRUE)
-+		return TRUE;
++		g_at_result_iter_init(&iter, cmd);
++		g_at_result_iter_next(&iter, "+CFUN=3D");
 +
-+	gprs->context_source =3D 0;
-+	g_source_remove(gprs->timeout_source);
-+
-+	error.type =3D OFONO_ERROR_TYPE_NO_ERROR;
-+
-+	data->cb(&error, settings->interface, DUN_LOCAL, DUN_PEER,
-+					(const char **)settings->dns,
-+					data->cb_data);
-+
-+	g_free(data);
-+
-+	return FALSE;
-+}
-+
-+static gboolean gprs_attach_update(gpointer user_data)
-+{
-+	struct gprs_dun_data *data =3D user_data;
-+	struct ofono_gprs *gprs =3D data->gprs;
-+	struct pri_context *context =3D data->context;
-+
-+	DBG("attached %d driver attached %d\n", gprs->attached,
-+						gprs->driver_attached);
-+
-+	if (gprs->attached !=3D TRUE || gprs->driver_attached !=3D TRUE)
-+		return TRUE;
-+
-+	gprs->attach_source =3D 0;
-+
-+	if (context->active !=3D TRUE) {
-+		set_primary_context_powered(context, TRUE);
-+
-+		/* wait until the primary context is actived */
-+		gprs->context_source =3D g_timeout_add_seconds(1,
-+						pri_context_update, data);
-+		return FALSE;
-+	}
-+
-+	pri_context_update(data);
-+
-+	return FALSE;
-+}
-+
-+static ofono_bool_t gprs_dun_connect(struct pri_context *dun,
-+					ofono_emulator_gprs_connect_cb cb,
-+					void *cb_data)
-+{
-+	struct ofono_gprs *gprs =3D dun->gprs;
-+	struct pri_context *context;
-+	struct gprs_dun_data *data =3D g_try_new0(struct gprs_dun_data, 1);
-+
-+	if (!data)
-+		return FALSE;
-+
-+	/* Create context for real modem if not connected yet */
-+	if (gprs->contexts)
-+		context =3D gprs_context_by_type(gprs,
-+						GPRS_CONTEXT_TYPE_INTERNET);
-+	else
-+		context =3D ofono_gprs_create_context(gprs,
-+						"default", "internet");
-+
-+	if (!context)
-+		return FALSE;
-+
-+	data->gprs =3D gprs;
-+	data->cb =3D cb;
-+	data->cb_data =3D cb_data;
-+	data->context =3D context;
-+
-+	gprs->timeout_source =3D g_timeout_add_seconds(EMULATOR_GPRS_TIMEOUT,
-+						emulator_gprs_timeout, data);
-+
-+	/* check gprs attaching status */
-+	if (!gprs->powered || !gprs->attached || !gprs->driver_attached) {
-+		gprs->powered =3D TRUE;
-+
-+		gprs_netreg_update(gprs);
-+
-+		/* wait until GPRS is attached */
-+		gprs->attach_source =3D g_timeout_add_seconds(1,
-+						gprs_attach_update, data);
-+		return TRUE;
-+	}
-+
-+	gprs_attach_update(data);
-+
-+	return TRUE;
-+}
-+
-+static void ofono_emulator_gprs_connect(struct ofono_gprs *gprs,
-+				struct ofono_emulator_gprs_connect_req *req)
-+{
-+	const char *dial_str =3D req->dial_str;
-+	struct pri_context *dun;
-+	struct ofono_error error;
-+
-+	DBG("dial call %s", dial_str);
-+
-+	/* Create DUN context if not exists */
-+	dun =3D gprs_context_by_type(gprs, GPRS_CONTEXT_TYPE_DUN);
-+	if (!dun) {
-+		dun =3D ofono_gprs_create_context(gprs, "dun", "dun");
-+		if (!dun)
++		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
 +			goto error;
-+	}
 +
-+	if (!gprs_dun_connect(dun, req->cb, req->cb_data))
++		if (mode !=3D 0 && mode !=3D 1)
++			goto error;
++
++		DBG("set CFUN to %d", mode);
++
++		e->modem_mode =3D mode;
++		g_timeout_add_seconds(1, send_ok, e);
++		break;
++	}
++	default:
 +		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void cpin_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++		/* not implement yet*/
++	default:
++		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void creg_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	char buf[256];
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		snprintf(buf, sizeof(buf), "+CREG: %d, %x, %x, %x",
++					e->modem_creg, e->netreg_status,
++					e->netreg_lac, e->netreg_ci);
++		ofono_emulator_send_info(e, buf, TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int mode;
++
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "+CREG=3D");
++
++		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
++			goto error;
++
++		if (mode < 0 || mode > 2)
++			goto error;
++
++		DBG("set netreg status %d", mode);
++
++		e->modem_creg =3D mode;
++
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++
++		break;
++	}
++	default:
++		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void cgreg_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	char buf[256];
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		snprintf(buf, sizeof(buf), "+CGREG: %d, %d", e->modem_cgreg,
++					e->gprs_status);
++		ofono_emulator_send_info(e, buf, TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int mode;
++
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "+CGREG=3D");
++
++		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
++			goto error;
++
++		if (mode < 0 || mode > 2)
++			goto error;
++
++		DBG("set GPRS cgreg status %d", mode);
++
++		e->modem_cgreg =3D mode;
++
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++
++		break;
++	}
++	default:
++		goto error;
++	};
 +
 +	return;
 +error:
-+	error.type =3D OFONO_ERROR_TYPE_FAILURE;
-+	req->cb(&error, NULL, NULL, NULL, NULL, req->cb_data);
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
 +}
 +
- static void dun_status_watch(struct ofono_emulator *e,
- 					enum ofono_emulator_status status,
- 					void *data, void *user_data)
++static void cops_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	char buf[50];
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		snprintf(buf, sizeof(buf), "+COPS: %d", e->modem_cops);
++		ofono_emulator_send_info(e, buf, TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int mode;
++
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "+COPS=3D");
++
++		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
++			goto error;
++
++		if (mode < 0 || mode > 2)
++			goto error;
++
++		DBG("set GPRS cops status %d", mode);
++
++		e->modem_cops =3D mode;
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++
++		break;
++	}
++	default:
++		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void cgatt_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	struct ofono_emulator_req *req;
++	char buf[12];
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		snprintf(buf, sizeof(buf), "+CGATT: %d", e->modem_attached);
++		ofono_emulator_send_info(e, buf, TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int attached;
++
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "+CGATT=3D");
++
++		if (g_at_result_iter_next_number(&iter, &attached) =3D=3D FALSE)
++			goto error;
++
++		if (attached !=3D 0 && attached !=3D 1)
++			goto error;
++
++		DBG("set GPRS attach status %d", attached);
++
++		req =3D ofono_emulator_req_new(generic_cb, e);
++		if (!req)
++			goto error;
++
++		req->data =3D &attached;
++
++		e->status =3D OFONO_EMULATOR_STATUS_SET_CGATT;
++
++		notify_status_watches(e, req);
++
++		e->modem_attached =3D attached;
++		g_free(req);
++		break;
++	}
++	default:
++		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void cgdcont_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	struct ofono_emulator_req *req;
++	char buf[256];
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		snprintf(buf, sizeof(buf), "+CGDCONT: %d", e->modem_context);
++		ofono_emulator_send_info(e, buf, TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int cid;
++		const char *protocol;
++
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "+CGDCONT=3D");
++
++		if (g_at_result_iter_next_number(&iter, &cid) =3D=3D FALSE)
++			goto error;
++
++		if (g_at_result_iter_next_string(&iter, &protocol) =3D=3D FALSE)
++			goto error;
++
++		DBG("set CGDCONT %d %s", cid, protocol);
++
++		req =3D ofono_emulator_req_new(generic_cb, e);
++		if (!req)
++			goto error;
++
++		e->status =3D OFONO_EMULATOR_STATUS_SET_CGDCONT;
++
++		notify_status_watches(e, req);
++
++		e->modem_context =3D cid;
++
++		g_free(req);
++		break;
++	}
++	default:
++		goto error;
++	};
++
++	return;
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
+ static void emulator_remove(struct ofono_atom *atom)
  {
-+	struct ofono_gprs *gprs =3D user_data;
-+
- 	if (e =3D=3D NULL)
- 		return;
+ 	struct ofono_emulator *e =3D  __ofono_atom_get_data(atom);
+@@ -465,6 +835,13 @@ ofono_bool_t ofono_emulator_enable(struct ofono_emulat=
+or *e, int fd)
+ 	g_at_server_set_disconnect_function(e->server, emulator_disconnect, e);
  =
 
- 	switch (status) {
-+	case OFONO_EMULATOR_STATUS_GPRS_CONNECT:
-+		ofono_emulator_gprs_connect(gprs, data);
-+		break;
-+	case OFONO_EMULATOR_STATUS_DUN_CONNECTING:
-+		ofono_emulator_dun_connect(gprs, data);
-+		break;
-+	case OFONO_EMULATOR_STATUS_DUN_CONNECTED:
-+		break;
-+	case OFONO_EMULATOR_STATUS_DUN_DISCONNECTED:
-+		ofono_emulator_dun_disconnect(gprs, data);
-+		break;
-+	case OFONO_EMULATOR_STATUS_DESTROY:
-+		ofono_emulator_remove_sources(gprs);
-+		break;
- 	default:
- 		break;
- 	}
-@@ -1584,6 +2017,8 @@ static void gprs_unregister(struct ofono_atom *atom)
- 		gprs->dun =3D NULL;
- 	}
+ 	g_at_server_register(e->server, "D", dial_cb, e, NULL);
++	g_at_server_register(e->server, "+CFUN", cfun_cb, e, NULL);
++	g_at_server_register(e->server, "+CPIN", cpin_cb, e, NULL);
++	g_at_server_register(e->server, "+CREG", creg_cb, e, NULL);
++	g_at_server_register(e->server, "+CGREG", cgreg_cb, e, NULL);
++	g_at_server_register(e->server, "+COPS", cops_cb, e, NULL);
++	g_at_server_register(e->server, "+CGATT", cgatt_cb, e, NULL);
++	g_at_server_register(e->server, "+CGDCONT", cgdcont_cb, e, NULL);
  =
 
-+	ofono_emulator_remove_sources(gprs);
-+
- 	ofono_modem_remove_interface(modem,
- 					OFONO_DATA_CONNECTION_MANAGER_INTERFACE);
- 	g_dbus_unregister_interface(conn, path,
+ 	g_io_channel_unref(channel);
+ =
+
 -- =
 
 1.6.3.3
 
 
---===============3740295420548367153==--
+--===============8883310285695261724==--
 
