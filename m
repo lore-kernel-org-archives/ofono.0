@@ -1,69 +1,137 @@
-Content-Type: multipart/mixed; boundary="===============9212742281780818650=="
+Content-Type: multipart/mixed; boundary="===============5721994281616054178=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 04/15] emulator: Add get properities for emulator
-Date: Wed, 07 Jul 2010 18:01:41 +0800
-Message-ID: <1278496912-13777-5-git-send-email-zhenhua.zhang@intel.com>
-In-Reply-To: <1278496912-13777-4-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 02/15] watch: Simplify ofono_watchlist remove item
+Date: Wed, 07 Jul 2010 18:01:39 +0800
+Message-ID: <1278496912-13777-3-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1278496912-13777-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9212742281780818650==
+--===============5721994281616054178==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-oFono properties:
-"Powered": Whether the emulator is powered on.
-"Type": Type could be one of supported emulator type, default is DUN.
+Use g_slist function to remove items from ofono watchlist.
 ---
- src/emulator.c |   28 +++++++++++++++++++++++++++-
- 1 files changed, 27 insertions(+), 1 deletions(-)
+ src/watch.c |   69 ++++++++++++++++++++++++++++---------------------------=
+---
+ 1 files changed, 33 insertions(+), 36 deletions(-)
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 7551eb6..86a2eee 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -288,7 +288,33 @@ error:
- static DBusMessage *emulator_get_properties(DBusConnection *conn,
- 						DBusMessage *msg, void *data)
- {
--	return dbus_message_new_method_return(msg);
-+	struct ofono_emulator *e =3D data;
-+	DBusMessage *reply;
-+	DBusMessageIter iter;
-+	DBusMessageIter dict;
-+	const char *type_str;
-+	int type;
-+
-+	reply =3D dbus_message_new_method_return(msg);
-+	if (!reply)
-+		return NULL;
-+
-+	dbus_message_iter_init_append(reply, &iter);
-+
-+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-+					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-+					&dict);
-+
-+	ofono_dbus_dict_append(&dict, "Powered", DBUS_TYPE_BOOLEAN,
-+					&e->powered);
-+
-+	type =3D e->driver->type;
-+	type_str =3D ofono_emulator_type_to_str(type);
-+	ofono_dbus_dict_append(&dict, "Type", DBUS_TYPE_STRING, &type_str);
-+
-+	dbus_message_iter_close_container(&iter, &dict);
-+
-+	return reply;
+diff --git a/src/watch.c b/src/watch.c
+index f93b68c..cd3d908 100644
+--- a/src/watch.c
++++ b/src/watch.c
+@@ -46,58 +46,55 @@ unsigned int __ofono_watchlist_add_item(struct ofono_wa=
+tchlist *watchlist,
+ 	return item->id;
  }
  =
 
- static DBusMessage *emulator_enable(DBusConnection *conn,
+-gboolean __ofono_watchlist_remove_item(struct ofono_watchlist *watchlist,
+-					unsigned int id)
++static gint watchlist_item_compare_by_id(gconstpointer a, gconstpointer b)
+ {
+-	struct ofono_watchlist_item *item;
+-	GSList *p;
+-	GSList *c;
+-
+-	p =3D NULL;
+-	c =3D watchlist->items;
++	const struct ofono_watchlist_item *item =3D a;
++	unsigned int id =3D GPOINTER_TO_UINT(b);
+ =
+
+-	while (c) {
+-		item =3D c->data;
++	if (item->id < id)
++		return -1;
+ =
+
+-		if (item->id !=3D id) {
+-			p =3D c;
+-			c =3D c->next;
+-			continue;
+-		}
++	if (item->id > id)
++		return 1;
+ =
+
+-		if (p)
+-			p->next =3D c->next;
+-		else
+-			watchlist->items =3D c->next;
+-
+-		if (item->destroy)
+-			item->destroy(item->notify_data);
++	return 0;
++}
+ =
+
+-		if (watchlist->destroy)
+-			watchlist->destroy(item);
+-		g_slist_free_1(c);
++static void watchlist_remove_item(void *data, void *user_data)
++{
++	struct ofono_watchlist_item *item =3D data;
++	struct ofono_watchlist *watchlist =3D user_data;
+ =
+
+-		return TRUE;
+-	}
++	if (item->destroy)
++		item->destroy(item->notify_data);
+ =
+
+-	return FALSE;
++	if (watchlist->destroy)
++		watchlist->destroy(item);
+ }
+ =
+
+-void __ofono_watchlist_free(struct ofono_watchlist *watchlist)
++gboolean __ofono_watchlist_remove_item(struct ofono_watchlist *watchlist,
++					unsigned int id)
+ {
+ 	struct ofono_watchlist_item *item;
+ 	GSList *l;
+ =
+
+-	for (l =3D watchlist->items; l; l =3D l->next) {
+-		item =3D l->data;
++	l =3D g_slist_find_custom(watchlist->items, GUINT_TO_POINTER(id),
++						watchlist_item_compare_by_id);
++	if (l =3D=3D NULL)
++		return FALSE;
+ =
+
+-		if (item->destroy)
+-			item->destroy(item->notify_data);
++	item =3D l->data;
+ =
+
+-		if (watchlist->destroy)
+-			watchlist->destroy(item);
+-	}
++	watchlist->items =3D g_slist_remove(watchlist->items, item);
+ =
+
++	watchlist_remove_item(item, watchlist);
++
++	return TRUE;
++}
++
++void __ofono_watchlist_free(struct ofono_watchlist *watchlist)
++{
++	g_slist_foreach(watchlist->items, watchlist_remove_item, watchlist);
+ 	g_slist_free(watchlist->items);
+ 	watchlist->items =3D NULL;
+ 	g_free(watchlist);
 -- =
 
 1.6.3.3
 
 
---===============9212742281780818650==--
+--===============5721994281616054178==--
 
