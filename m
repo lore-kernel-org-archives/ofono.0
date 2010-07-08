@@ -1,44 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============8960739921301082205=="
+Content-Type: multipart/mixed; boundary="===============0847841338768617078=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 1/2] Support option --disable-optimization
-Date: Thu, 08 Jul 2010 18:57:18 +0800
-Message-ID: <1278586639-6329-1-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 2/2] Change sw2 only when cmd is not empty
+Date: Thu, 08 Jul 2010 18:57:19 +0800
+Message-ID: <1278586639-6329-2-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1278586639-6329-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8960739921301082205==
+--===============0847841338768617078==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- configure.ac |    7 +++++++
- 1 files changed, 7 insertions(+), 0 deletions(-)
+ src/phonesim.cpp |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/configure.ac b/configure.ac
-index 887c91a..a85fda3 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -14,6 +14,13 @@ PKG_PROG_PKG_CONFIG
- AC_PROG_CXX
- AC_PROG_INSTALL
+diff --git a/src/phonesim.cpp b/src/phonesim.cpp
+index d5d7d87..8210f51 100644
+--- a/src/phonesim.cpp
++++ b/src/phonesim.cpp
+@@ -923,9 +923,10 @@ bool SimRules::simCsimOk( const QByteArray& payload )
  =
 
-+AC_ARG_ENABLE(optimization, AC_HELP_STRING([--disable-optimization],
-+			[disable code optimization through compiler]), [
-+	if (test "${enableval}" =3D "no"); then
-+		CXXFLAGS=3D"$CXXFLAGS -O0"
-+	fi
-+])
-+
- PKG_CHECK_MODULES(QT, QtCore QtGui QtXml QtNetwork, dummy=3Dyes,
- 						AC_MSG_ERROR(Qt is required))
- AC_SUBST(QT_CFLAGS)
+     if ( toolkitApp ) {
+         QByteArray cmd =3D toolkitApp->fetch();
+-        if ( !cmd.isEmpty() )
++        if ( !cmd.isEmpty() ) {
+             sw1 =3D 0x91;
+             sw2 =3D cmd.size();
++        }
+     }
+ =
+
+     resp +=3D sw1;
 -- =
 
 1.7.0.4
 
 
---===============8960739921301082205==--
+--===============0847841338768617078==--
 
