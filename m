@@ -1,47 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============5141495414908256448=="
+Content-Type: multipart/mixed; boundary="===============5783131937063533497=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 00/14][RESEND] STK patches without agent
-Date: Thu, 08 Jul 2010 14:28:29 -0500
-Message-ID: <4C3626DD.8010800@gmail.com>
-In-Reply-To: <1278455949-2823-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH] huawei: recreate the GPRS atom on hup
+Date: Thu, 08 Jul 2010 14:30:30 -0500
+Message-ID: <4C362756.20507@gmail.com>
+In-Reply-To: <1278584269-3995-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5141495414908256448==
+--===============5783131937063533497==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Zhenhua,
 
-On 07/06/2010 05:38 PM, Andrzej Zaborowski wrote:
-> These are some patches I sent before reordered and refactored to
-> skip stuff related to the Agent API, i.e. related to the UI.
+On 07/08/2010 05:17 AM, Zhenhua Zhang wrote:
+> System is either crashed or usb_serial module reports warnings after
+> activate/deactivate GPRS context several times. Handle this by remove
+> and recreate the GPRS atom in oFono.
 > =
 
-> Andrzej Zaborowski (14):
->   stk: Utilities for proactive command/envelope handling.
->   mbmmodem: End session on *STKEND.
->   stk: Handle the More Time proactive command as a nop.
->   Add OFONO_ERROR_TYPE_SIM for negative SIM statuses.
->   atmodem: Make sim operations return sim error codes.
->   stk: Handle ENVELOPEs in a queue, retry on sim busy.
->   Add __ofono_sms_submit for other atoms to submit SMs.
->   stk: Handle the Send SMS proactive command.
->   Add Dbus interface names for STK.
->   stk: Handle the Set Up Idle Text proactive command.
->   sktutil: Use the Mandatory flag in parse_dataobj.
->   stkutil: Timer Value is conditional, not optional.
->   stk: Handle the Timer Management proactive command.
->   stk: Handle the Poll Interval proactive command.
+> Tested with Huawei E1552, EM770W.
+> System: Ubuntu 9.10.
+> Kernel: 2.6.31-16-generic #53-Ubuntu SMP
+> ---
+>  plugins/huawei.c |    2 ++
+>  1 files changed, 2 insertions(+), 0 deletions(-)
+> =
 
-All patches in this series have been pushed upstream with some
-refactoring afterwards.  Please review and make sure I didn't screw
-something up.
+> diff --git a/plugins/huawei.c b/plugins/huawei.c
+> index cfc693d..6cc1448 100644
+> --- a/plugins/huawei.c
+> +++ b/plugins/huawei.c
+> @@ -237,6 +237,7 @@ static void huawei_disconnect(gpointer user_data)
+>  	DBG("");
+>  =
+
+>  	ofono_gprs_context_remove(data->gc);
+> +	ofono_gprs_remove(data->gprs);
+>  =
+
+>  	g_at_chat_unref(data->modem);
+>  	data->modem =3D NULL;
+> @@ -250,6 +251,7 @@ static void huawei_disconnect(gpointer user_data)
+>  =
+
+>  	ofono_info("Reopened GPRS context channel");
+>  =
+
+> +	data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->pcui);
+>  	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
+>  							data->modem);
+>  =
+
+
+This is really not the preferred solution.  Can we investigate deeper
+into what is crashing here?  Perhaps we're not waiting on the 'NO
+CARRIER' signal from the modem before attempting another context activation?
 
 Regards,
 -Denis
 
---===============5141495414908256448==--
+--===============5783131937063533497==--
 
