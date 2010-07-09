@@ -1,28 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============3458415166014149556=="
+Content-Type: multipart/mixed; boundary="===============0632271747236000740=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 0/1] Avoid timeout too quickly in PPP handshaking
-Date: Fri, 09 Jul 2010 16:53:50 +0800
-Message-ID: <1278665631-22082-1-git-send-email-zhenhua.zhang@intel.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH 1/3] Make fetch command function as external
+Date: Fri, 09 Jul 2010 23:09:25 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731F09AF71@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1278687128-8983-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3458415166014149556==
+--===============0632271747236000740==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
-The patch is to increase the Max-Failure count for NAKs in IPCP handshaking=
-. It is inspired by the similar implementation in pppd. Our PPP server uses=
- IPCP NAKs to stall until acquiring the client IP address from DHCP server,=
- so we need to increase the max failure count (default is 5) in IPCP handsh=
-aking.
+>-----Original Message-----
+>From: Yang Gu [mailto:gyagp0(a)gmail.com]
+>Sent: Friday, July 09, 2010 10:52 PM
+>To: ofono(a)ofono.org
+>Cc: Gu, Yang
+>Subject: [PATCH 1/3] Make fetch command function as external
+>+
+>+void at_sim_fetch_command(GAtChat *chat, struct ofono_stk *stk, int lengt=
+h)
+>+{
+>+	char buf[64];
+>+	struct cb_data *cbd =3D cb_data_new(chat, stk);
+>+
+>+	snprintf(buf, sizeof(buf), "AT+CSIM=3D10,A0120000%02hhX", length);
+>+	g_at_chat_send(chat, buf, csim_prefix, csim_fetch_cb, cbd, g_free);
 
-Thanks,
-Zhenhua
+Both chat and stk need to be passed to callback function, so I use cb_data =
+here. Any comment?
 
 
---===============3458415166014149556==--
+
+Regards,
+-Yang
+
+--===============0632271747236000740==--
 
