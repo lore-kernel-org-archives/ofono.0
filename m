@@ -1,34 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============0336281725223210736=="
+Content-Type: multipart/mixed; boundary="===============1863316047227909610=="
 MIME-Version: 1.0
-From: linux mobile <rams.linux.mobile@gmail.com>
-Subject: Request for ofono code guidance
-Date: Fri, 09 Jul 2010 18:16:59 +0530
-Message-ID: <AANLkTil3CrI0GBZ1DuEu4FyuzKrdly6nF1B4aGOP1RB0@mail.gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/1] ppp: Add MAX_IPCP_FAILURE to avoid timeout quickly
+Date: Fri, 09 Jul 2010 09:54:02 -0300
+Message-ID: <1278680042.10421.100.camel@localhost.localdomain>
+In-Reply-To: <1278665631-22082-2-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0336281725223210736==
+--===============1863316047227909610==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Zhenhua,
+
+> We use IPCP NAK response to stall the progress of acquiring the client
+> IP address from DHCP server. So we need to increase the max failure of
+> NAKs in IPCP handshaking.
+> ---
+>  gatchat/ppp_cp.c   |    8 ++++++--
+>  gatchat/ppp_cp.h   |    2 +-
+>  gatchat/ppp_ipcp.c |   10 +++++++++-
+>  gatchat/ppp_lcp.c  |    2 +-
+>  4 files changed, 17 insertions(+), 5 deletions(-)
+
+patch has been applied. Thanks.
+
+Regards
+
+Marcel
 
 
-I would like to understand the ofono code.
-Can any body guide me easy way to proceed.
 
-Thanks
-
---===============0336281725223210736==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-SGksPGJyPjxicj48YnI+SSB3b3VsZCBsaWtlIHRvIHVuZGVyc3RhbmQgdGhlIG9mb25vIGNvZGUu
-PGJyPkNhbiBhbnkgYm9keSBndWlkZSBtZSBlYXN5IHdheSB0byBwcm9jZWVkLjxicj48YnI+VGhh
-bmtzPGJyPgo=
-
---===============0336281725223210736==--
+--===============1863316047227909610==--
 
