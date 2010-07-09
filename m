@@ -1,32 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============7103124561268057946=="
+Content-Type: multipart/mixed; boundary="===============7440697482021506056=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] Interpret "" Alpha Id as empty data object
-Date: Fri, 09 Jul 2010 12:32:01 -0500
-Message-ID: <4C375D11.8060802@gmail.com>
-In-Reply-To: <1278687128-8983-3-git-send-email-yang.gu@intel.com>
+From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+Subject: Re: [SMS D-Bus 11/23] struct tx_queue_entry: add fields and destructor
+Date: Fri, 09 Jul 2010 14:53:39 -0700
+Message-ID: <1278712419.2327.170.camel@localhost.localdomain>
+In-Reply-To: <4C375A29.6090004@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7103124561268057946==
+--===============7440697482021506056==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 07/09/2010 09:52 AM, Yang Gu wrote:
-> There needs to be a way to distinguish between no alphaid and "empty
-> data object" because on some occasions they have different meanings.  In
-> the Call Control envelope, no Alpha Identifier means the terminal can
-> inform the user about the call being modified by SIM while empty data
-> object means no hint should be given.
+On Fri, 2010-07-09 at 10:19 -0700, Denis Kenzior wrote: =
 
-I applied this one, however I noticed that lots of unit tests for things
-besides call control were affected.  Question to both of you: Should we
-g_free & NULL empty Alpha Identifiers in commands that do not allow this
-to be empty?
+> On 07/09/2010 12:11 PM, Inaky Perez-Gonzalez wrote:
+> > On Thu, 2010-07-08 at 17:22 -0700, Denis Kenzior wrote: =
 
-Regards,
--Denis
+> >> Inaky,
+> >>
+> >> ....
+> >>>>
+> >>>> No worries, take your time.  Just as a heads up, I pushed some chang=
+es
+> >>>> to src/sms.c today.
+> >>>
+> >>> Grrr -- found the bug and deal with it. However, when I tried to pull
+> >>> your tree to rebase on top, I got weird conflicts on stkutil.c -- don=
+'t
+> >>> have time to diagnose now, but just wanted to ask: did you do a rebas=
+e? =
 
---===============7103124561268057946==--
+> >>
+> >> Yep.
+> > =
+
+> > Rats. Don't. Rebase. A. Public. Tree. Please! :)
+> > =
+
+> > =
+
+> =
+
+> Maybe we're not talking about the same thing.  My workflow is
+> =
+
+> git commit / git am
+> git fetch
+> git rebase
+> git push
+
+gee, didn't see this -- well, if the rebase is changing the commit IDs,
+which it probably does, then you are breaking the commit history. Would
+depend on the details.
+
+Anyway, I am not so sure that is the problem. Spent the whole day going
+around it and I still couldn't figure the sucker out. Will keep trying.
+
+
+--===============7440697482021506056==--
 
