@@ -1,90 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============7462314738460360263=="
+Content-Type: multipart/mixed; boundary="===============5374467324375461982=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: Re: [PATCH 1/9] stkutil: display text attributes as html
-Date: Fri, 09 Jul 2010 15:26:11 -0700
-Message-ID: <20100709152611.370518f9@kcaccard-MOBL3>
-In-Reply-To: <4C379F25.9090302@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [SMS D-Bus 11/23] struct tx_queue_entry: add fields and destructor
+Date: Fri, 09 Jul 2010 19:28:23 -0300
+Message-ID: <1278714503.10421.152.camel@localhost.localdomain>
+In-Reply-To: <1278712419.2327.170.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7462314738460360263==
+--===============5374467324375461982==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 09 Jul 2010 17:13:57 -0500
-Denis Kenzior <denkenz@gmail.com> wrote:
+Hi Inaky,
 
-> Hi Kristen,
-> =
-
-> > I agree with you that this does not match the spec.  I did this
-> > deliberately, because I had a problem deciding how to deal with =
-
-> > the test case which you requested I include, which was defined =
-
-> > in test_sms.c (header_test).  I included the test case below
-> > for your reference.
+> > Maybe we're not talking about the same thing.  My workflow is
 > > =
 
-> > static struct html_attr_test html_attr_data_1 =3D {
-> >         .text =3D "EMS messages can contain italic, bold, large, small =
-and "
-> >                 "colored text",
-> >         .text_attr =3D {
-> >                 .len =3D 20,
-> >                 .attributes =3D { 0x19, 0x06, 0x20, 0x00, 0x21, 0x04, 0=
-x10, 0x00,
-> >                                 0x27, 0x05, 0x04, 0x00, 0x2E, 0x05, 0x0=
-8, 0x00,
-> >                                 0x38, 0x07, 0x00, 0x2B },
-> >         },
-> >         .html =3D "EMS messages can contain <span style=3D\"font-style:=
- "
-> >                 "italic;\">italic</span>, <span style=3D\"font-weight: =
-bold;\">"
-> >                 "bold</span>, <span style=3D\"font-size: big;\">large</=
-span>, "
-> >                 "<span style=3D\"font-size: small;\">small</span> and "
-> >                 "<span style=3D\"color: #FFFF00;background-color: #C11B=
-17;\">"
-> >                 "colored</span> text",
-> > };
-> > =
-
-> > So, you have your first formatting at start position 0x19, with
-> > format code 0x20, and color not set (0x00).  Since previously
-> > you had no formatting from the beginning to byte 0x19, and this
-> > formatting specifies an alignment value of 0, if we interpret
-> > this the way you suggest we will now insert a <div > tag with
-> > left alignment specified at character 0x19, which would cause
-> > a break in the text.  So, we can chose to interpret left
-> > alignment as really meaning left alignment, which would be
-> > correct according to the spec, but if this test case is truly
-> > representative of what SIMs might send us, then we are going to
-> > have some weird looking strings resulting.
-> > =
-
-> > How would you suggest handling this?
+> > git commit / git am
+> > git fetch
+> > git rebase
+> > git push
 > =
 
-> The above test is pretty arbitrary, so I wouldn't worry too much about
-> it.  I think that the explicit left alignment is better and is in line
-> with tests from 102.384.
+> gee, didn't see this -- well, if the rebase is changing the commit IDs,
+> which it probably does, then you are breaking the commit history. Would
+> depend on the details.
 > =
 
-> However, maybe generating some additional SMS messages with EMS text
-> attributes for testing might be a good idea.  See if anyone has an old
-> Sony Ericsson mobile around?
-> =
+> Anyway, I am not so sure that is the problem. Spent the whole day going
+> around it and I still couldn't figure the sucker out. Will keep trying.
 
-> Regards,
-> -Denis
+the ofono.git master tree never got re-based. All commit ids are fully
+atomic. So that is not the problem.
 
-I'll delete this test then.  Not sure if I'll be able to find a Sony
-Ericsson laying around, so adding other SMS messages might need to be
-delayed.
+Regards
 
---===============7462314738460360263==--
+Marcel
+
+
+
+--===============5374467324375461982==--
 
