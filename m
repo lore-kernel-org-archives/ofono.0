@@ -1,168 +1,316 @@
-Content-Type: multipart/mixed; boundary="===============5370861209538176259=="
+Content-Type: multipart/mixed; boundary="===============0591397290568382441=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Ofono in Maemo scratchbox--compilation failed.
-Date: Fri, 09 Jul 2010 10:55:02 -0300
-Message-ID: <1278683702.10421.116.camel@localhost.localdomain>
-In-Reply-To: <AANLkTimBx-_UnBayGYpPV8OcoW4o5IUbtB_Gm32qoCSt@mail.gmail.com>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: Re: [PATCH 2/6] bluetooth: Add register service for bluetooth
+Date: Fri, 09 Jul 2010 11:20:39 -0300
+Message-ID: <20100709142039.GB22985@vigoh>
+In-Reply-To: <1278308709-13908-3-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5370861209538176259==
+--===============0591397290568382441==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+Hi Zhenhua,
 
-> I am trying to compile Ofono in Maemo Scratchbox SDK enviornment. =
+* Zhenhua Zhang <zhenhua.zhang@intel.com> [2010-07-05 13:45:05 +0800]:
 
+> Add bluetooth_register_service() and bluetooth_unregister_service()
+> where bluetooth profiles plugins like DUN GW can register themselves per
+> adapter. It shares existing bluetooth framework to listen bluetooth
+> events (new adapters, bluetoothd shutdown, etc..)
+> ---
+>  plugins/bluetooth.c |  125 ++++++++++++++++++++++++++++++++++++++++++---=
+------
+>  plugins/bluetooth.h |    8 +++
+>  2 files changed, 112 insertions(+), 21 deletions(-)
 > =
 
-> Here is the bootstrap-configure output:
-> -------------------------------------------------------------------------=
-----------------------------------------------------------------------
-> [sbox-FREMANTLE_X86: ~/ofono] > ./bootstrap-configure =
+> diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+> index 5a85eaa..3a3b5e6 100644
+> --- a/plugins/bluetooth.c
+> +++ b/plugins/bluetooth.c
+> @@ -38,8 +38,19 @@
+>  =
 
-> configure.ac: installing `./install-sh'
-> configure.ac: installing `./missing'
-> Makefile.am: installing `./compile'
-> Makefile.am: installing `./depcomp'
-> checking for a BSD-compatible install... /scratchbox/tools/bin/install
-> -c
-> checking whether build environment is sane... yes
-> checking for gawk... gawk
-> checking whether make sets $(MAKE)... yes
-> checking whether to enable maintainer-specific portions of
-> Makefiles... yes
-> checking for pkg-config... /scratchbox/tools/bin/pkg-config
-> checking pkg-config is at least version 0.9.0... yes
-> checking for style of include used by make... GNU
-> checking for gcc... gcc
-> checking for C compiler default output file name... a.out
-> checking whether the C compiler works... yes
-> checking whether we are cross compiling... no
-> checking for suffix of executables... =
+>  static DBusConnection *connection;
+>  static GHashTable *uuid_hash =3D NULL;
+> +static GHashTable *service_hash =3D NULL;
+>  static GHashTable *adapter_address_hash =3D NULL;
+>  =
 
-> checking for suffix of object files... o
-> checking whether we are using the GNU C compiler... yes
-> checking whether gcc accepts -g... yes
-> checking for gcc option to accept ISO C89... none needed
-> checking dependency style of gcc... gcc3
-> checking for C/C++ restrict keyword... no
-> checking for gcc... (cached) gcc
-> checking whether we are using the GNU C compiler... (cached) yes
-> checking whether gcc accepts -g... (cached) yes
-> checking for gcc option to accept ISO C89... (cached) none needed
-> checking dependency style of gcc... (cached) gcc3
-> checking whether gcc and cc understand -c and -o together... yes
-> checking whether gcc accepts -fPIE... yes
-> checking for a BSD-compatible install... /scratchbox/tools/bin/install
-> -c
-> checking for a sed that does not truncate
-> output... /scratchbox/tools/bin/sed
-> checking for gawk... (cached) gawk
-> checking build system type... i486-pc-linux-gnu
-> checking host system type... i486-pc-linux-gnu
-> checking for a sed that does not truncate
-> output... /scratchbox/tools/bin/sed
-> checking for grep that handles long lines and
-> -e... /scratchbox/tools/bin/grep
-> checking for egrep... /scratchbox/tools/bin/grep -E
-> checking for ld used by
-> gcc... /scratchbox/compilers/cs2007q3-glibc2.5-i486/i486-pc-linux-gnu/bin=
-/ld
-> checking if the linker
-> (/scratchbox/compilers/cs2007q3-glibc2.5-i486/i486-pc-linux-gnu/bin/ld) i=
-s GNU ld... yes
-> checking
-> for /scratchbox/compilers/cs2007q3-glibc2.5-i486/i486-pc-linux-gnu/bin/ld=
- option to reload object files... -r
-> checking for BSD-compatible nm... /scratchbox/compilers/bin/nm -B
-> checking whether ln -s works... yes
-> checking how to recognize dependent libraries... pass_all
-> checking how to run the C preprocessor... gcc -E
-> checking for ANSI C header files... yes
-> checking for sys/types.h... yes
-> checking for sys/stat.h... yes
-> checking for stdlib.h... yes
-> checking for string.h... yes
-> checking for memory.h... yes
-> checking for strings.h... yes
-> checking for inttypes.h... yes
-> checking for stdint.h... yes
-> checking for unistd.h... yes
-> checking dlfcn.h usability... yes
-> checking dlfcn.h presence... yes
-> checking for dlfcn.h... yes
-> checking the maximum length of command line arguments... 98304
-> checking command to parse /scratchbox/compilers/bin/nm -B output from
-> gcc object... failed
-> checking for objdir... .libs
-> checking for ar... ar
-> checking for ranlib... ranlib
-> checking for strip... strip
-> checking if gcc supports -fno-rtti -fno-exceptions... no
-> checking for gcc option to produce PIC... -fPIC
-> checking if gcc PIC flag -fPIC works... yes
-> checking if gcc static flag -static works... yes
-> checking if gcc supports -c -o file.o... yes
-> checking whether the gcc linker
-> (/scratchbox/compilers/cs2007q3-glibc2.5-i486/i486-pc-linux-gnu/bin/ld) s=
-upports shared libraries... yes
-> checking whether -lc should be explicitly linked in... no
-> checking dynamic linker characteristics... GNU/Linux ld.so
-> checking how to hardcode library paths into programs... immediate
-> checking whether stripping libraries is possible... yes
-> checking if libtool supports shared libraries... yes
-> checking whether to build shared libraries... yes
-> checking whether to build static libraries... no
-> configure: creating libtool
-> checking for BSD-compatible nm...
-> (cached) /scratchbox/compilers/bin/nm -B
-> checking for signalfd in -lc... yes
-> checking for dlopen in -ldl... yes
-> checking for GLIB... yes
-> checking for DBUS... yes
-> checking for dbus_watch_get_unix_fd in -ldbus-1... yes
-> checking for dbus_connection_can_send_type in -ldbus-1... no
-> checking for UDEV... yes
-> checking for CAPNG... yes
-> configure: creating ./config.status
-> config.status: creating Makefile
-> config.status: creating include/version.h
-> config.status: creating config.h
-> config.status: executing depfiles commands
-> -------------------------------------------------------------------
-> =
+> +static char *bluetooth_service_type_to_str(enum bluetooth_service_type t=
+ype)
+> +{
+> +	switch (type) {
+> +	case DUN_GATEWAY:
+> +		return "DUN";
+> +	default:
+> +		return "";
+> +	}
+> +}
+> +
 
-> =
+We actually don't need this function, you can put the =
 
-> But while running make, i get the following error. =
+'enum bluetooth_service_type' value as hash key. Sounds better.
 
-> =
+>  void bluetooth_create_path(const char *dev_addr, const char *adapter_add=
+r,
+>  				char *buf, int size)
+>  {
+> @@ -376,6 +387,9 @@ static void adapter_properties_cb(DBusPendingCall *ca=
+ll, gpointer user_data)
+>  	GSList *device_list =3D NULL;
+>  	GSList *l;
+>  	const char *addr;
+> +	GHashTableIter hash_iter;
+> +	gpointer key, value;
+> +	struct bluetooth_profile *profile;
+>  =
 
-> [sbox-FREMANTLE_X86: ~/ofono] > make
-> make --no-print-directory all-am
-> include/ofono
-> make[1]: include/ofono: Command not found
-> make[1]: *** [include/ofono/log.h] Error 127
-> make: *** [all] Error 2
-> -------------------------------------------------------------------------=
----
-> =
+>  	reply =3D dbus_pending_call_steal_reply(call);
+>  =
 
-> What could be the reason? Could anyone help?
+> @@ -393,6 +407,12 @@ static void adapter_properties_cb(DBusPendingCall *c=
+all, gpointer user_data)
+>  	g_hash_table_insert(adapter_address_hash,
+>  				g_strdup(path), g_strdup(addr));
+>  =
 
-the reason is that the include/ofono symlink is not created correctly.
-Must be an issue in the scratchbox setup. You need to find someone that
-actually knows more about it.
+> +	g_hash_table_iter_init(&hash_iter, service_hash);
+> +	while (g_hash_table_iter_next(&hash_iter, &key, &value)) {
+> +		profile =3D value;
+> +		profile->create(path, NULL, addr, NULL);
 
-Regards
+You have to check if profile and profile->create is not NULL. It is more
+safe.
 
-Marcel
+> +	}
+> +
+>  	for (l =3D device_list; l; l =3D l->next) {
+>  		const char *device =3D l->data;
+>  =
 
+> @@ -492,10 +512,13 @@ static void bluetooth_remove_all_modem(gpointer key=
+, gpointer value,
+>  =
 
+>  static void bluetooth_disconnect(DBusConnection *connection, void *user_=
+data)
+>  {
+> -	if (!uuid_hash)
+> -		return;
+> +	if (uuid_hash)
+> +		g_hash_table_foreach(uuid_hash, bluetooth_remove_all_modem,
+> +					NULL);
+>  =
 
---===============5370861209538176259==--
+> -	g_hash_table_foreach(uuid_hash, bluetooth_remove_all_modem, NULL);
+> +	if (service_hash)
+> +		g_hash_table_foreach(service_hash, bluetooth_remove_all_modem,
+> +					NULL);
+>  }
+>  =
+
+>  static guint bluetooth_watch;
+> @@ -503,12 +526,12 @@ static guint adapter_added_watch;
+>  static guint adapter_removed_watch;
+>  s.tatic guint property_watch;
+>  =
+
+> -int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *=
+profile)
+> +static int bluetooth_init()
+>  {
+
+So I prefer a real refcount structure here, and call this
+bluetooth_ref(). What do you think?
+
+>  	int err;
+>  =
+
+> -	if (uuid_hash)
+> -		goto done;
+> +	if (adapter_address_hash)
+> +		return 0;
+>  =
+
+>  	connection =3D ofono_dbus_get_connection();
+>  =
+
+> @@ -536,19 +559,9 @@ int bluetooth_register_uuid(const char *uuid, struct=
+ bluetooth_profile *profile)
+>  		goto remove;
+>  	}
+>  =
+
+> -	uuid_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+> -						g_free, NULL);
+> -
+>  	adapter_address_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+>  						g_free, g_free);
+>  =
+
+> -done:
+> -	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
+> -
+> -	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
+> -				manager_properties_cb, NULL, NULL, -1,
+> -				DBUS_TYPE_INVALID);
+> -
+>  	return 0;
+>  =
+
+>  remove:
+> @@ -556,14 +569,13 @@ remove:
+>  	g_dbus_remove_watch(connection, adapter_added_watch);
+>  	g_dbus_remove_watch(connection, adapter_removed_watch);
+>  	g_dbus_remove_watch(connection, property_watch);
+> +
+>  	return err;
+>  }
+>  =
+
+> -void bluetooth_unregister_uuid(const char *uuid)
+> +static void bluetooth_exit()
+
+and this one coul be bluetooth_unref()
+
+>  {
+> -	g_hash_table_remove(uuid_hash, uuid);
+> -
+> -	if (g_hash_table_size(uuid_hash))
+> +	if (uuid_hash !=3D NULL || service_hash !=3D NULL)
+>  		return;
+>  =
+
+>  	g_dbus_remove_watch(connection, bluetooth_watch);
+> @@ -571,9 +583,80 @@ void bluetooth_unregister_uuid(const char *uuid)
+>  	g_dbus_remove_watch(connection, adapter_removed_watch);
+>  	g_dbus_remove_watch(connection, property_watch);
+>  =
+
+> -	g_hash_table_destroy(uuid_hash);
+>  	g_hash_table_destroy(adapter_address_hash);
+> +}
+> +
+> +
+> +int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *=
+profile)
+> +{
+> +	int err;
+> +
+> +	err =3D bluetooth_init();
+> +	if (err)
+> +		return err;
+> +
+> +	if (!uuid_hash)
+> +		uuid_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+> +							g_free, NULL);
+> +
+> +	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
+> +
+> +	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
+> +				manager_properties_cb, NULL, NULL, -1,
+> +				DBUS_TYPE_INVALID);
+> +
+> +	return 0;
+> +}
+> +
+> +void bluetooth_unregister_uuid(const char *uuid)
+> +{
+> +	g_hash_table_remove(uuid_hash, uuid);
+> +
+> +	if (g_hash_table_size(uuid_hash) > 0)
+> +		return;
+> +
+> +	g_hash_table_destroy(uuid_hash);
+>  	uuid_hash =3D NULL;
+> +	bluetooth_exit();
+> +}
+> +
+> +int bluetooth_register_service(enum bluetooth_service_type type,
+> +					struct bluetooth_profile *profile)
+> +{
+> +	int err;
+> +	char *type_str;
+> +
+> +	err =3D bluetooth_init();
+> +	if (err)
+> +		return err;
+> +
+> +	type_str =3D bluetooth_service_type_to_str(type);
+> +
+> +	if (!service_hash)
+> +		service_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+> +							g_free, NULL);
+> +
+> +	g_hash_table_insert(service_hash, g_strdup(type_str), profile);
+> +
+> +	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
+> +				manager_properties_cb, NULL, NULL, -1,
+> +				DBUS_TYPE_INVALID);
+> +
+> +	return 0;
+> +}
+> +
+> +void bluetooth_unregister_service(enum bluetooth_service_type type)
+> +{
+> +	char *type_str =3D bluetooth_service_type_to_str(type);
+> +
+> +	g_hash_table_remove(service_hash, type_str);
+> +
+> +	if (g_hash_table_size(service_hash) > 0)
+> +		return;
+> +
+> +	g_hash_table_destroy(service_hash);
+> +	service_hash =3D NULL;
+> +	bluetooth_exit();
+>  }
+>  =
+
+>  OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
+> diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+> index fb0d841..84707a9 100644
+> --- a/plugins/bluetooth.h
+> +++ b/plugins/bluetooth.h
+> @@ -28,6 +28,10 @@
+>  /* Profiles bitfield */
+>  #define HFP_AG 0x01
+>  =
+
+> +enum bluetooth_service_type {
+> +	DUN_GATEWAY,
+> +};
+> +
+>  struct bluetooth_profile {
+>  	const char *name;
+>  	int (*create)(const char *device, const char *dev_addr,
+> @@ -40,6 +44,10 @@ int bluetooth_register_uuid(const char *uuid,
+>  				struct bluetooth_profile *profile);
+>  void bluetooth_unregister_uuid(const char *uuid);
+>  =
+
+> +int bluetooth_register_service(enum bluetooth_service_type type,
+> +					struct bluetooth_profile *profile);
+> +void bluetooth_unregister_service(enum bluetooth_service_type type);
+> +
+>  void bluetooth_create_path(const char *dev_addr, const char *adapter_add=
+r,
+>  							char *buf, int size);
+>  =
+
+> -- =
+
+> 1.6.3.3
+
+-- =
+
+Gustavo F. Padovan
+http://padovan.org
+
+--===============0591397290568382441==--
 
