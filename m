@@ -1,198 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============1277561697001873693=="
+Content-Type: multipart/mixed; boundary="===============6096933911302656594=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: Ofono in Maemo scratchbox--compilation failed.
-Date: Mon, 12 Jul 2010 12:26:04 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B351F7702A5@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <1278683702.10421.116.camel@localhost.localdomain>
+From: s s <sk53901@gmail.com>
+Subject: problem when setting "VoiceNoReplyTimeout" property in call-forwarding
+Date: Mon, 12 Jul 2010 16:59:43 +0530
+Message-ID: <AANLkTim5cWQ2rWlWfYw-UGgPFfUH3gFBax_FoBRHh9Dx@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1277561697001873693==
+--===============6096933911302656594==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+Hi all ,
 
-Marcel Holtmann wrote:
-> Hi Arun,
-> =
+        In ofono call-forwarding use cases , i am trying to set
+"VoiceNoReplyTimeout" property which is of type uint16 . below is the piece
+of code
 
->> I am trying to compile Ofono in Maemo Scratchbox SDK enviornment.
->> =
-
->> Here is the bootstrap-configure output:
->> =
-
-> ---------------------------------------------------------------
-> ---------------------------------------------------------------
-> -----------------
->> [sbox-FREMANTLE_X86: ~/ofono] > ./bootstrap-configure
->> configure.ac: installing `./install-sh'
->> configure.ac: installing `./missing'
->> Makefile.am: installing `./compile'
->> Makefile.am: installing `./depcomp'
->> checking for a BSD-compatible install...
->> /scratchbox/tools/bin/install -c checking whether build environment
->> is sane... yes =
-
->> checking for gawk... gawk
->> checking whether make sets $(MAKE)... yes
->> checking whether to enable maintainer-specific portions of
->> Makefiles... yes checking for pkg-config...
->> /scratchbox/tools/bin/pkg-config =
-
->> checking pkg-config is at least version 0.9.0... yes
->> checking for style of include used by make... GNU
->> checking for gcc... gcc
->> checking for C compiler default output file name... a.out
->> checking whether the C compiler works... yes
->> checking whether we are cross compiling... no
->> checking for suffix of executables...
->> checking for suffix of object files... o
->> checking whether we are using the GNU C compiler... yes
->> checking whether gcc accepts -g... yes
->> checking for gcc option to accept ISO C89... none needed
->> checking dependency style of gcc... gcc3
->> checking for C/C++ restrict keyword... no
->> checking for gcc... (cached) gcc
->> checking whether we are using the GNU C compiler... (cached) yes
->> checking whether gcc accepts -g... (cached) yes
->> checking for gcc option to accept ISO C89... (cached) none needed
->> checking dependency style of gcc... (cached) gcc3
->> checking whether gcc and cc understand -c and -o together... yes
->> checking whether gcc accepts -fPIE... yes
->> checking for a BSD-compatible install...
->> /scratchbox/tools/bin/install -c checking for a sed that does not
->> truncate =
-
->> output... /scratchbox/tools/bin/sed
->> checking for gawk... (cached) gawk
->> checking build system type... i486-pc-linux-gnu
->> checking host system type... i486-pc-linux-gnu
->> checking for a sed that does not truncate
->> output... /scratchbox/tools/bin/sed
->> checking for grep that handles long lines and
->> -e... /scratchbox/tools/bin/grep
->> checking for egrep... /scratchbox/tools/bin/grep -E
->> checking for ld used by
->> gcc...
-> /scratchbox/compilers/cs2007q3-glibc2.5-i486/i486-pc-linux-gnu/bin/ld
->> checking if the linker
->> =
-
-> (/scratchbox/compilers/cs2007q3-glibc2.5-i486/i486-pc-linux-gnu
-> /bin/ld) is GNU ld... yes
->> checking
->> for
-> /scratchbox/compilers/cs2007q3-glibc2.5-i486/i486-pc-linux-gnu/
-> bin/ld option to reload object files... -r
->> checking for BSD-compatible nm... /scratchbox/compilers/bin/nm -B
->> checking whether ln -s works... yes
->> checking how to recognize dependent libraries... pass_all
->> checking how to run the C preprocessor... gcc -E
->> checking for ANSI C header files... yes
->> checking for sys/types.h... yes
->> checking for sys/stat.h... yes
->> checking for stdlib.h... yes
->> checking for string.h... yes
->> checking for memory.h... yes
->> checking for strings.h... yes
->> checking for inttypes.h... yes
->> checking for stdint.h... yes
->> checking for unistd.h... yes
->> checking dlfcn.h usability... yes
->> checking dlfcn.h presence... yes
->> checking for dlfcn.h... yes
->> checking the maximum length of command line arguments... 98304
->> checking command to parse /scratchbox/compilers/bin/nm -B output
->> from gcc object... failed checking for objdir... .libs
->> checking for ar... ar
->> checking for ranlib... ranlib
->> checking for strip... strip
->> checking if gcc supports -fno-rtti -fno-exceptions... no
->> checking for gcc option to produce PIC... -fPIC
->> checking if gcc PIC flag -fPIC works... yes
->> checking if gcc static flag -static works... yes
->> checking if gcc supports -c -o file.o... yes
->> checking whether the gcc linker
->> =
-
-> (/scratchbox/compilers/cs2007q3-glibc2.5-i486/i486-pc-linux-gnu
-> /bin/ld) supports shared libraries... yes
->> checking whether -lc should be explicitly linked in... no
->> checking dynamic linker characteristics... GNU/Linux ld.so
->> checking how to hardcode library paths into programs... immediate
->> checking whether stripping libraries is possible... yes
->> checking if libtool supports shared libraries... yes
->> checking whether to build shared libraries... yes
->> checking whether to build static libraries... no
->> configure: creating libtool
->> checking for BSD-compatible nm...
->> (cached) /scratchbox/compilers/bin/nm -B
->> checking for signalfd in -lc... yes
->> checking for dlopen in -ldl... yes
->> checking for GLIB... yes
->> checking for DBUS... yes
->> checking for dbus_watch_get_unix_fd in -ldbus-1... yes
->> checking for dbus_connection_can_send_type in -ldbus-1... no
->> checking for UDEV... yes checking for CAPNG... yes
->> configure: creating ./config.status
->> config.status: creating Makefile
->> config.status: creating include/version.h
->> config.status: creating config.h
->> config.status: executing depfiles commands
->> -------------------------------------------------------------------
->> =
-
->> =
-
->> But while running make, i get the following error.
->> =
-
->> [sbox-FREMANTLE_X86: ~/ofono] > make
->> make --no-print-directory all-am
->> include/ofono
->> make[1]: include/ofono: Command not found
->> make[1]: *** [include/ofono/log.h] Error 127
->> make: *** [all] Error 2
->> =
-
-> ---------------------------------------------------------------
-> -------------
->> =
-
->> What could be the reason? Could anyone help?
-
-Automake in the scrachbox is 1.9. On Ubuntu 9.10, I am using automake 1.11 =
-and it works fine for me. You might need to try newer version automake/auto=
-conf.
-
-> the reason is that the include/ofono symlink is not created correctly.
-> Must be an issue in the scratchbox setup. You need to find someone
-> that actually knows more about it. =
-
-> =
-
-> Regards
-> =
-
-> Marcel
-> =
-
-> =
-
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+uint time_out=3D15;
+GValue val=3DG_VALUE_INIT;
+g_value_init(&val,G_TYPE_UINT);
+GError *error=3DNULL;
+g_value_set_uint(&val,time_out);
+    if(!dbus_g_proxy_call (proxy, "SetProperty", &error,
+G_TYPE_STRING,"VoiceNoReplyTimeout", G_TYPE_VALUE,&val, G_TYPE_INVALID,
+G_TYPE_INVALID))
+    {
+                   g_print("failed\n %s ",error->message);
+    }
 
 
+if i execute the above  piece of code i am getting error ->"Invalid
+arguments in method call"
 
-Regards,
-Zhenhua
+i tried to look into the ofono soruce code , in that i tried to get the data
+types what it is expecting , and i got with numbers 117 and 113
+g_print("\n arg type %d %d \n"
+,dbus_message_iter_get_arg_type(&var),DBUS_TYPE_UINT16)
 
 
---===============1277561697001873693==--
+when i checked the number references in DBus specification  i found
+UINT16    113 (ASCII 'q')
+
+how to add an unint16 value to a GValue ?
+
+--===============6096933911302656594==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+SGkgYWxsICw8YnI+PGJyPqCgoKCgoKAgSW4gb2Zvbm8gY2FsbC1mb3J3YXJkaW5nIHVzZSBjYXNl
+cyAsIGkgYW0gdHJ5aW5nIHRvIHNldCAmcXVvdDtWb2ljZU5vUmVwbHlUaW1lb3V0JnF1b3Q7IHBy
+b3BlcnR5IHdoaWNoIGlzIG9mIHR5cGUgdWludDE2IC4gYmVsb3cgaXMgdGhlIHBpZWNlIG9mIGNv
+ZGU8YnI+PGJyPnVpbnQgdGltZV9vdXQ9MTU7PGJyPkdWYWx1ZSB2YWw9R19WQUxVRV9JTklUOzxi
+cj4KZ192YWx1ZV9pbml0KCZhbXA7dmFsLEdfVFlQRV9VSU5UKTs8YnI+R0Vycm9yICplcnJvcj1O
+VUxMOzxicj5nX3ZhbHVlX3NldF91aW50KCZhbXA7dmFsLHRpbWVfb3V0KTs8YnI+oKCgIGlmKCFk
+YnVzX2dfcHJveHlfY2FsbCAocHJveHksICZxdW90O1NldFByb3BlcnR5JnF1b3Q7LCAmYW1wO2Vy
+cm9yLCBHX1RZUEVfU1RSSU5HLCZxdW90O1ZvaWNlTm9SZXBseVRpbWVvdXQmcXVvdDssIEdfVFlQ
+RV9WQUxVRSwmYW1wO3ZhbCwgR19UWVBFX0lOVkFMSUQsIEdfVFlQRV9JTlZBTElEKSk8YnI+CqCg
+oCB7PGJyPqCgoKCgoCCgoKAgoKCgoKCgoCBnX3ByaW50KCZxdW90O2ZhaWxlZFxuICVzICZxdW90
+OyxlcnJvci0mZ3Q7bWVzc2FnZSk7PGJyPqCgoCB9PGJyPjxicj48YnI+aWYgaSBleGVjdXRlIHRo
+ZSBhYm92ZaAgcGllY2Ugb2YgY29kZSBpIGFtIGdldHRpbmcgZXJyb3IgLSZndDsmcXVvdDtJbnZh
+bGlkIGFyZ3VtZW50cyBpbiBtZXRob2QgY2FsbCZxdW90Ozxicj48YnI+aSB0cmllZCB0byBsb29r
+IGludG8gdGhlIG9mb25vIHNvcnVjZSBjb2RlICwgaW4gdGhhdCBpIHRyaWVkIHRvIGdldCB0aGUg
+ZGF0YSB0eXBlcyB3aGF0IGl0IGlzIGV4cGVjdGluZyAsIGFuZCBpIGdvdCB3aXRoIG51bWJlcnMg
+MTE3IGFuZCAxMTM8YnI+CmdfcHJpbnQoJnF1b3Q7XG4gYXJnIHR5cGUgJWQgJWQgXG4mcXVvdDsg
+LGRidXNfbWVzc2FnZV9pdGVyX2dldF9hcmdfdHlwZSgmYW1wO3ZhciksREJVU19UWVBFX1VJTlQx
+Nik8YnI+PGJyPjxicj53aGVuIGkgY2hlY2tlZCB0aGUgbnVtYmVyIHJlZmVyZW5jZXMgaW4gREJ1
+cyBzcGVjaWZpY2F0aW9uoCBpIGZvdW5kIDxicj5VSU5UMTagoKAgMTEzIChBU0NJSSAmIzM5O3Em
+IzM5Oyk8YnI+Cjxicj5ob3cgdG8gYWRkIGFuIHVuaW50MTYgdmFsdWUgdG8gYSBHVmFsdWUgPzxi
+cj48YnI+PGJyPgo=
+
+--===============6096933911302656594==--
 
