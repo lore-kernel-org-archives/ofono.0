@@ -1,297 +1,211 @@
-Content-Type: multipart/mixed; boundary="===============3215983374057185543=="
+Content-Type: multipart/mixed; boundary="===============3093423767579340164=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 3/9] test-stkutil: add html attribute test for Display Text
- tests
-Date: Tue, 13 Jul 2010 05:40:49 -0700
-Message-ID: <1279024855-10586-4-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH 2/9] test-stkutil: add unit test for html text attributes
+Date: Tue, 13 Jul 2010 05:40:48 -0700
+Message-ID: <1279024855-10586-3-git-send-email-kristen@linux.intel.com>
 In-Reply-To: <1279024855-10586-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3215983374057185543==
+--===============3093423767579340164==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-stkutil.c |  211 +++++++++++++++++++++++++++++++++++++++++++++++=
+ unit/test-stkutil.c |   96 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 211 insertions(+), 0 deletions(-)
+ 1 files changed, 96 insertions(+), 0 deletions(-)
 
 diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index 2a56259..bca2899 100644
+index dbd5b5e..2a56259 100644
 --- a/unit/test-stkutil.c
 +++ b/unit/test-stkutil.c
-@@ -537,6 +537,7 @@ struct display_text_test {
- 	struct stk_duration duration;
- 	struct stk_text_attribute text_attr;
- 	struct stk_frame_id frame_id;
-+	const char *html;
+@@ -478,6 +478,29 @@ static inline void check_cdma_sms_tpdu(
+ 	check_common_byte_array(command, test);
+ }
+ =
+
++static void check_text_attr_html(const struct stk_text_attribute *test,
++				char *text, const char *expected_html)
++{
++	char *html;
++	unsigned short attrs[256];
++	int i;
++
++	if (expected_html =3D=3D NULL)
++		return;
++
++	for (i =3D 0; i < test->len; i +=3D 4) {
++		attrs[i] =3D test->attributes[i];
++		attrs[i + 1] =3D test->attributes[i + 1];
++		attrs[i + 2] =3D test->attributes[i + 2];
++		attrs[i + 3] =3D test->attributes[i + 3];
++	}
++	html =3D stk_text_to_html(text, attrs, test->len / 4);
++
++	g_assert(memcmp(html, expected_html, strlen(expected_html)) =3D=3D 0);
++
++	g_free(html);
++}
++
+ /* Defined in TS 102.223 Section 8.72 */
+ static void check_text_attr(const struct stk_text_attribute *command,
+ 					const struct stk_text_attribute *test)
+@@ -22139,6 +22162,70 @@ static const struct envelope_test timer_expiration=
+_data_221a =3D {
+ 	},
  };
  =
 
- unsigned char display_text_111[] =3D { 0xD0, 0x1A, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-@@ -632,6 +633,69 @@ unsigned char display_text_711[] =3D { 0xD0, 0x19, 0x8=
-1, 0x03, 0x01, 0x21, 0x80,
- 					0x63, 0x6F, 0x6E, 0x64, 0x84, 0x02,
- 					0x01, 0x0A };
++struct html_attr_test {
++	char *text;
++	struct stk_text_attribute text_attr;
++	char *html;
++};
++
++static struct html_attr_test html_attr_data_1 =3D {
++	.text =3D "Blue green green green",
++	.text_attr =3D {
++		.len =3D 8,
++		.attributes =3D {	0x00, 0x00, 0x03, 0x94, 0x00, 0x04, 0x03,
++				0x96 },
++	},
++	.html =3D "<span style=3D\"color: #0000A0;background-color: #FFFFFF;\">"
++		"Blue</span><span style=3D\"color: #347235;background-color: "
++		"#FFFFFF;\"> green green green</span>",
++};
++
++static struct html_attr_test html_attr_data_2 =3D {
++	.text =3D "abc",
++	.text_attr =3D {
++		.len =3D 8,
++		.attributes =3D { 0x00, 0x02, 0x03, 0x94, 0x01, 0x02, 0x03,
++				0x96 },
++	},
++	.html =3D "<span style=3D\"color: #347235;background-color: #FFFFFF;\">"
++		"a</span><span style=3D\"color: #0000A0;background-color: "
++		"#FFFFFF;\">bc</span>",
++};
++
++static struct html_attr_test html_attr_data_3 =3D {
++	.text =3D "1 < 2, 2 > 1, 1 & 0 =3D=3D 0\nSpecial Chars are Fun\r\nTo Writ=
+e",
++	.text_attr =3D {
++		.len =3D 4,
++		.attributes =3D { 0x00, 0x00, 0x03, 0x00 },
++	},
++	.html =3D "1 &lt; 2, 2 &gt; 1, 1 &amp; 0 =3D=3D 0<br/>Special Chars are F=
+un"
++		"<br/>To Write",
++};
++
++static struct html_attr_test html_attr_data_4 =3D {
++	.text =3D "=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC"
++		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC"
++		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC"
++		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC"
++		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC",
++	.text_attr =3D {
++		.len =3D 4,
++		.attributes =3D { 0x00, 0x00, 0x03, 0x94 },
++	},
++	.html =3D "<span style=3D\"color: #347235;background-color: #FFFFFF;\">"
++		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC"
++		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC"
++		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC"
++		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
+=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
+=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC"
++		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
+=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC</span>",
++};
++
++static void test_html_attr(gconstpointer data)
++{
++	const struct html_attr_test *test =3D data;
++	check_text_attr_html(&test->text_attr, test->text, test->html);
++}
++
+ int main(int argc, char **argv)
+ {
+ 	g_test_init(&argc, &argv, NULL);
+@@ -24146,5 +24233,14 @@ int main(int argc, char **argv)
+ 	g_test_add_data_func("/teststk/Timer Expiration 2.2.1A",
+ 			&timer_expiration_data_221a, test_envelope_encoding);
  =
 
-+unsigned char display_text_811[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x00, 0xB4 };
++	g_test_add_data_func("/teststk/HTML Attribute Test 1",
++				&html_attr_data_1, test_html_attr);
++	g_test_add_data_func("/teststk/HTML Attribute Test 2",
++				&html_attr_data_2, test_html_attr);
++	g_test_add_data_func("/teststk/HTML Attribute Test 3",
++				&html_attr_data_3, test_html_attr);
++	g_test_add_data_func("/teststk/HTML Attribute Test 4",
++				&html_attr_data_4, test_html_attr);
 +
-+unsigned char display_text_821[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x01, 0xB4 };
-+
-+unsigned char display_text_831[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x02, 0xB4 };
-+
-+unsigned char display_text_841[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x04, 0xB4 };
-+
-+unsigned char display_text_851[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x08, 0xB4 };
-+
-+unsigned char display_text_861[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x10, 0xB4 };
-+
-+unsigned char display_text_871[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x20, 0xB4 };
-+
-+unsigned char display_text_881[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x40, 0xB4 };
-+
-+unsigned char display_text_891[] =3D { 0xD0, 0x22, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
-+					0x82, 0x02, 0x81, 0x02, 0x8D, 0x11,
-+					0x04, 0x54, 0x65, 0x78, 0x74, 0x20,
-+					0x41, 0x74, 0x74, 0x72, 0x69, 0x62,
-+					0x75, 0x74, 0x65, 0x20, 0x31, 0xD0,
-+					0x04, 0x00, 0x10, 0x80, 0xB4 };
-+
- unsigned char display_text_911[] =3D { 0xD0, 0x10, 0x81, 0x03, 0x01, 0x21,=
- 0x80,
- 					0x82, 0x02, 0x81, 0x02, 0x8D, 0x05,
- 					0x08, 0x4F, 0x60, 0x59, 0x7D };
-@@ -737,6 +801,132 @@ static struct display_text_test display_text_data_711=
- =3D {
- 	}
- };
- =
-
-+static struct display_text_test display_text_data_811 =3D {
-+	.pdu =3D display_text_811,
-+	.pdu_len =3D sizeof(display_text_811),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x00, 0xB4 },
-+	},
-+	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"color: "
-+		"#347235;background-color: #FFFF00;\">Text Attribute 1</span>"
-+		"</div>",
-+};
-+
-+static struct display_text_test display_text_data_821 =3D {
-+	.pdu =3D display_text_821,
-+	.pdu_len =3D sizeof(display_text_821),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x01, 0xB4 },
-+	},
-+	.html =3D "<div style=3D\"text-align: center;\"><span style=3D\"color: "
-+		"#347235;background-color: #FFFF00;\">Text Attribute 1</span>"
-+		"</div>",
-+};
-+
-+static struct display_text_test display_text_data_831 =3D {
-+	.pdu =3D display_text_831,
-+	.pdu_len =3D sizeof(display_text_831),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x02, 0xB4 },
-+	},
-+	.html =3D "<div style=3D\"text-align: right;\"><span style=3D\"color: "
-+		"#347235;background-color: #FFFF00;\">Text Attribute 1</span>"
-+		"</div>",
-+};
-+
-+static struct display_text_test display_text_data_841 =3D {
-+	.pdu =3D display_text_841,
-+	.pdu_len =3D sizeof(display_text_841),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x04, 0xB4 },
-+	},
-+	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"font-size: "
-+		"big;color: #347235;background-color: #FFFF00;\">"
-+		"Text Attribute 1</span></div>",
-+};
-+
-+static struct display_text_test display_text_data_851 =3D {
-+	.pdu =3D display_text_851,
-+	.pdu_len =3D sizeof(display_text_851),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x08, 0xB4 },
-+	},
-+	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"font-size: "
-+		"small;color: #347235;background-color: #FFFF00;\">"
-+		"Text Attribute 1</span></div>",
-+};
-+
-+static struct display_text_test display_text_data_861 =3D {
-+	.pdu =3D display_text_861,
-+	.pdu_len =3D sizeof(display_text_861),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x10, 0xB4 },
-+	},
-+	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"font-weight=
-: "
-+		"bold;color: #347235;background-color: #FFFF00;\">"
-+		"Text Attribute 1</span></div>",
-+};
-+
-+static struct display_text_test display_text_data_871 =3D {
-+	.pdu =3D display_text_871,
-+	.pdu_len =3D sizeof(display_text_871),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x20, 0xB4 },
-+	},
-+	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"font-style:=
- "
-+		"italic;color: #347235;background-color: #FFFF00;\">"
-+		"Text Attribute 1</span>",
-+};
-+
-+static struct display_text_test display_text_data_881 =3D {
-+	.pdu =3D display_text_881,
-+	.pdu_len =3D sizeof(display_text_881),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x40, 0xB4 },
-+	},
-+	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\""
-+		"text-decoration: underline;color: #347235;"
-+		"background-color: #FFFF00;\">Text Attribute 1</span></div>",
-+};
-+
-+static struct display_text_test display_text_data_891 =3D {
-+	.pdu =3D display_text_891,
-+	.pdu_len =3D sizeof(display_text_891),
-+	.qualifier =3D 0x80,
-+	.text =3D "Text Attribute 1",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x10, 0x80, 0xB4 },
-+	},
-+	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\""
-+		"text-decoration: line-through;color: #347235;"
-+		"background-color: #FFFF00;\">Text Attribute 1</span>",
-+};
-+
- static struct display_text_test display_text_data_911 =3D {
- 	.pdu =3D display_text_911,
- 	.pdu_len =3D sizeof(display_text_911),
-@@ -777,6 +967,9 @@ static void test_display_text(gconstpointer data)
- 	check_duration(&command->display_text.duration, &test->duration);
- 	check_text_attr(&command->display_text.text_attr,
- 						&test->text_attr);
-+	check_text_attr_html(&command->display_text.text_attr,
-+				command->display_text.text,
-+				test->html);
- 	check_frame_id(&command->display_text.frame_id, &test->frame_id);
- =
-
- 	stk_command_free(command);
-@@ -22252,6 +22445,24 @@ int main(int argc, char **argv)
- 				&display_text_data_611, test_display_text);
- 	g_test_add_data_func("/teststk/Display Text 7.1.1",
- 				&display_text_data_711, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.1.1",
-+				&display_text_data_811, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.2.1",
-+				&display_text_data_821, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.3.1",
-+				&display_text_data_831, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.4.1",
-+				&display_text_data_841, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.5.1",
-+				&display_text_data_851, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.6.1",
-+				&display_text_data_861, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.7.1",
-+				&display_text_data_871, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.8.1",
-+				&display_text_data_881, test_display_text);
-+	g_test_add_data_func("/teststk/Display Text 8.9.1",
-+				&display_text_data_891, test_display_text);
- 	g_test_add_data_func("/teststk/Display Text 9.1.1",
- 				&display_text_data_911, test_display_text);
- 	g_test_add_data_func("/teststk/Display Text 10.1.1",
+ 	return g_test_run();
+ }
 -- =
 
 1.6.6.1
 
 
---===============3215983374057185543==--
+--===============3093423767579340164==--
 
