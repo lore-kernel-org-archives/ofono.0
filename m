@@ -1,41 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============8374121704031942985=="
+Content-Type: multipart/mixed; boundary="===============0754061551006828698=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 3/3] Use specific vendor for phonesim stk
-Date: Tue, 13 Jul 2010 18:30:01 +0800
-Message-ID: <1279017001-23915-3-git-send-email-yang.gu@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/3] Make fetch command function as external
+Date: Tue, 13 Jul 2010 09:55:38 -0500
+Message-ID: <4C3C7E6A.2040804@gmail.com>
 In-Reply-To: <1279017001-23915-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8374121704031942985==
+--===============0754061551006828698==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/phonesim.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi Yang,
 
-diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index d0cd7f3..9c5b2cb 100644
---- a/plugins/phonesim.c
-+++ b/plugins/phonesim.c
-@@ -289,7 +289,7 @@ static void phonesim_pre_sim(struct ofono_modem *modem)
- 	else
- 		ofono_voicecall_create(modem, 0, "atmodem", data->chat);
- =
+On 07/13/2010 05:29 AM, Yang Gu wrote:
+> ---
+>  Makefile.am                |    1 +
+>  drivers/atmodem/sim-poll.c |   55 +-------------------------------------=
+-----
+>  drivers/atmodem/stk.c      |   51 ++++++++++++++++++++++++++++++++++++++=
+++
+>  drivers/atmodem/stk.h      |   22 +++++++++++++++++
+>  4 files changed, 76 insertions(+), 53 deletions(-)
+>  create mode 100644 drivers/atmodem/stk.h
 
--	ofono_stk_create(modem, 0, "atmodem", data->chat);
-+	ofono_stk_create(modem, OFONO_VENDOR_PHONESIM, "atmodem", data->chat);
- =
+Applied, thanks.
 
- 	if (sim)
- 		ofono_sim_inserted_notify(sim, TRUE);
--- =
+Regards,
+-Denis
 
-1.7.0.4
-
-
---===============8374121704031942985==--
+--===============0754061551006828698==--
 
