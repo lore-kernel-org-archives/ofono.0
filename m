@@ -1,211 +1,253 @@
-Content-Type: multipart/mixed; boundary="===============3093423767579340164=="
+Content-Type: multipart/mixed; boundary="===============4627841855672338370=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 2/9] test-stkutil: add unit test for html text attributes
-Date: Tue, 13 Jul 2010 05:40:48 -0700
-Message-ID: <1279024855-10586-3-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH 4/9] test-stkutil: add html attribute tests for get_inkey_test
+Date: Tue, 13 Jul 2010 05:40:50 -0700
+Message-ID: <1279024855-10586-5-git-send-email-kristen@linux.intel.com>
 In-Reply-To: <1279024855-10586-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3093423767579340164==
+--===============4627841855672338370==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-stkutil.c |   96 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 96 insertions(+), 0 deletions(-)
+ unit/test-stkutil.c |   75 ++++++++++++++++++++++++++++++++++++++++-------=
+----
+ 1 files changed, 59 insertions(+), 16 deletions(-)
 
 diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index dbd5b5e..2a56259 100644
+index bca2899..c38b272 100644
 --- a/unit/test-stkutil.c
 +++ b/unit/test-stkutil.c
-@@ -478,6 +478,29 @@ static inline void check_cdma_sms_tpdu(
- 	check_common_byte_array(command, test);
- }
- =
-
-+static void check_text_attr_html(const struct stk_text_attribute *test,
-+				char *text, const char *expected_html)
-+{
+@@ -984,6 +984,7 @@ struct get_inkey_test {
+ 	struct stk_duration duration;
+ 	struct stk_text_attribute text_attr;
+ 	struct stk_frame_id frame_id;
 +	char *html;
-+	unsigned short attrs[256];
-+	int i;
-+
-+	if (expected_html =3D=3D NULL)
-+		return;
-+
-+	for (i =3D 0; i < test->len; i +=3D 4) {
-+		attrs[i] =3D test->attributes[i];
-+		attrs[i + 1] =3D test->attributes[i + 1];
-+		attrs[i + 2] =3D test->attributes[i + 2];
-+		attrs[i + 3] =3D test->attributes[i + 3];
-+	}
-+	html =3D stk_text_to_html(text, attrs, test->len / 4);
-+
-+	g_assert(memcmp(html, expected_html, strlen(expected_html)) =3D=3D 0);
-+
-+	g_free(html);
-+}
-+
- /* Defined in TS 102.223 Section 8.72 */
- static void check_text_attr(const struct stk_text_attribute *command,
- 					const struct stk_text_attribute *test)
-@@ -22139,6 +22162,70 @@ static const struct envelope_test timer_expiration=
-_data_221a =3D {
- 	},
  };
  =
 
-+struct html_attr_test {
-+	char *text;
-+	struct stk_text_attribute text_attr;
-+	char *html;
-+};
-+
-+static struct html_attr_test html_attr_data_1 =3D {
-+	.text =3D "Blue green green green",
-+	.text_attr =3D {
-+		.len =3D 8,
-+		.attributes =3D {	0x00, 0x00, 0x03, 0x94, 0x00, 0x04, 0x03,
-+				0x96 },
+ static unsigned char get_inkey_111[] =3D { 0xD0, 0x15, 0x81, 0x03, 0x01, 0=
+x22,
+@@ -1589,7 +1590,9 @@ static struct get_inkey_test get_inkey_data_911 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+-	}
 +	},
-+	.html =3D "<span style=3D\"color: #0000A0;background-color: #FFFFFF;\">"
-+		"Blue</span><span style=3D\"color: #347235;background-color: "
-+		"#FFFFFF;\"> green green green</span>",
-+};
-+
-+static struct html_attr_test html_attr_data_2 =3D {
-+	.text =3D "abc",
-+	.text_attr =3D {
-+		.len =3D 8,
-+		.attributes =3D { 0x00, 0x02, 0x03, 0x94, 0x01, 0x02, 0x03,
-+				0x96 },
-+	},
-+	.html =3D "<span style=3D\"color: #347235;background-color: #FFFFFF;\">"
-+		"a</span><span style=3D\"color: #0000A0;background-color: "
-+		"#FFFFFF;\">bc</span>",
-+};
-+
-+static struct html_attr_test html_attr_data_3 =3D {
-+	.text =3D "1 < 2, 2 > 1, 1 & 0 =3D=3D 0\nSpecial Chars are Fun\r\nTo Writ=
-e",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x00, 0x03, 0x00 },
-+	},
-+	.html =3D "1 &lt; 2, 2 &gt; 1, 1 &amp; 0 =3D=3D 0<br/>Special Chars are F=
-un"
-+		"<br/>To Write",
-+};
-+
-+static struct html_attr_test html_attr_data_4 =3D {
-+	.text =3D "=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC"
-+		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC"
-+		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC"
-+		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC"
-+		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC",
-+	.text_attr =3D {
-+		.len =3D 4,
-+		.attributes =3D { 0x00, 0x00, 0x03, 0x94 },
-+	},
-+	.html =3D "<span style=3D\"color: #347235;background-color: #FFFFFF;\">"
-+		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC"
-+		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC"
-+		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC"
-+		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=
-=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=
-=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC"
-+		"=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=
-=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC=E2=82=AC</span>",
-+};
-+
-+static void test_html_attr(gconstpointer data)
-+{
-+	const struct html_attr_test *test =3D data;
-+	check_text_attr_html(&test->text_attr, test->text, test->html);
-+}
-+
- int main(int argc, char **argv)
- {
- 	g_test_init(&argc, &argv, NULL);
-@@ -24146,5 +24233,14 @@ int main(int argc, char **argv)
- 	g_test_add_data_func("/teststk/Timer Expiration 2.2.1A",
- 			&timer_expiration_data_221a, test_envelope_encoding);
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"color: "
++		"#347235;background-color: #FFFF00;\">Enter \"+\"</span></div>",
+ };
  =
 
-+	g_test_add_data_func("/teststk/HTML Attribute Test 1",
-+				&html_attr_data_1, test_html_attr);
-+	g_test_add_data_func("/teststk/HTML Attribute Test 2",
-+				&html_attr_data_2, test_html_attr);
-+	g_test_add_data_func("/teststk/HTML Attribute Test 3",
-+				&html_attr_data_3, test_html_attr);
-+	g_test_add_data_func("/teststk/HTML Attribute Test 4",
-+				&html_attr_data_4, test_html_attr);
-+
- 	return g_test_run();
- }
+ static struct get_inkey_test get_inkey_data_912 =3D {
+@@ -1607,7 +1610,10 @@ static struct get_inkey_test get_inkey_data_921 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x01, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: center;\"><span style=3D\"color: "
++		"#347235;background-color: #FFFF00;\">Enter \"+\"</span>"
++		"</div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_922 =3D {
+@@ -1625,7 +1631,10 @@ static struct get_inkey_test get_inkey_data_931 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x02, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: right;\"><span style=3D\"color: "
++		"#347235;background-color: #FFFF00;\">Enter \"+\"</span>"
++		"</div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_932 =3D {
+@@ -1643,7 +1652,10 @@ static struct get_inkey_test get_inkey_data_941 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x04, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"font-size: "
++		"big;color: #347235;background-color: #FFFF00;\">Enter \"+\""
++		"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_942 =3D {
+@@ -1654,7 +1666,9 @@ static struct get_inkey_test get_inkey_data_942 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"color: "
++		"#347235;background-color: #FFFF00;\">Enter \"#\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_943 =3D {
+@@ -1672,7 +1686,10 @@ static struct get_inkey_test get_inkey_data_951 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x08, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"font-size: "
++		"small;color: #347235;background-color: #FFFF00;\">"
++		"Enter \"+\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_952 =3D {
+@@ -1683,7 +1700,9 @@ static struct get_inkey_test get_inkey_data_952 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"color: "
++		"#347235;background-color: #FFFF00;\">Enter \"#\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_953 =3D {
+@@ -1701,7 +1720,10 @@ static struct get_inkey_test get_inkey_data_961 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x10, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"font-weight=
+: "
++		"bold;color: #347235;background-color: #FFFF00;\">Enter \"+\""
++		"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_962 =3D {
+@@ -1712,7 +1734,9 @@ static struct get_inkey_test get_inkey_data_962 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"color: "
++		"#347235;background-color: #FFFF00;\">Enter \"#\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_963 =3D {
+@@ -1730,7 +1754,10 @@ static struct get_inkey_test get_inkey_data_971 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x20, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"font-style:=
+ "
++		"italic;color: #347235;background-color: #FFFF00;\">"
++		"Enter \"+\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_972 =3D {
+@@ -1741,7 +1768,9 @@ static struct get_inkey_test get_inkey_data_972 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"color: "
++		"#347235;background-color: #FFFF00;\">Enter \"#\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_973 =3D {
+@@ -1759,7 +1788,10 @@ static struct get_inkey_test get_inkey_data_981 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x40, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\""
++		"text-decoration: underline;color: #347235;"
++		"background-color: #FFFF00;\">Enter \"+\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_982 =3D {
+@@ -1770,7 +1802,9 @@ static struct get_inkey_test get_inkey_data_982 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"color: "
++		"#347235;background-color: #FFFF00;\">Enter \"#\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_983 =3D {
+@@ -1788,7 +1822,10 @@ static struct get_inkey_test get_inkey_data_991 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x80, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\""
++		"text-decoration: line-through;color: #347235;"
++		"background-color: #FFFF00;\">Enter \"+\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_992a =3D {
+@@ -1799,7 +1836,9 @@ static struct get_inkey_test get_inkey_data_992a =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"color: "
++		"#347235;background-color: #FFFF00;\">Enter \"#\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_992b =3D {
+@@ -1824,7 +1863,9 @@ static struct get_inkey_test get_inkey_data_9101 =3D {
+ 	.text_attr =3D {
+ 		.len =3D 4,
+ 		.attributes =3D { 0x00, 0x09, 0x00, 0xB4 }
+-	}
++	},
++	.html =3D "<div style=3D\"text-align: left;\"><span style=3D\"color: "
++		"#347235;background-color: #FFFF00;\">Enter \"+\"</span></div>",
+ };
+ =
+
+ static struct get_inkey_test get_inkey_data_9102 =3D {
+@@ -1906,6 +1947,8 @@ static void test_get_inkey(gconstpointer data)
+ 	check_duration(&command->get_inkey.duration, &test->duration);
+ 	check_text_attr(&command->get_inkey.text_attr,
+ 						&test->text_attr);
++	check_text_attr_html(&command->get_inkey.text_attr,
++				command->get_inkey.text, test->html);
+ 	check_frame_id(&command->get_inkey.frame_id, &test->frame_id);
+ =
+
+ 	stk_command_free(command);
 -- =
 
 1.6.6.1
 
 
---===============3093423767579340164==--
+--===============4627841855672338370==--
 
