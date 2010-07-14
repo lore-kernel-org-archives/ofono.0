@@ -1,137 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============2440367497395476589=="
+Content-Type: multipart/mixed; boundary="===============4108615009681410678=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] mbm: poll SIM status when initializing
-Date: Wed, 14 Jul 2010 19:28:32 +0300
-Message-ID: <1279124912-13663-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] mbm: poll SIM status when initializing
+Date: Wed, 14 Jul 2010 11:40:16 -0500
+Message-ID: <4C3DE870.5030604@gmail.com>
+In-Reply-To: <1279124912-13663-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2440367497395476589==
+--===============4108615009681410678==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Pekka,
 
----
- plugins/mbm.c |   39 +++++++++++++++++++++++++++++++++++----
- 1 files changed, 35 insertions(+), 4 deletions(-)
+> @@ -54,6 +55,8 @@ static const char *none_prefix[] =3D { NULL };
+>  struct mbm_data {
+>  	GAtChat *modem_port;
+>  	GAtChat *data_port;
+> +	guint sim_poll;
+> +	guint sim_polled;
+>  	gboolean have_sim;
+>  };
 
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 864b0df..9e63005 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -26,6 +26,7 @@
- #include <stdio.h>
- #include <errno.h>
- #include <stdlib.h>
-+#include <string.h>
- =
+Can we rename sim_poll to cpin_poll_source?
 
- #include <glib.h>
- #include <gatchat.h>
-@@ -54,6 +55,8 @@ static const char *none_prefix[] =3D { NULL };
- struct mbm_data {
- 	GAtChat *modem_port;
- 	GAtChat *data_port;
-+	guint sim_poll;
-+	guint sim_polled;
- 	gboolean have_sim;
- };
- =
+Can we rename sim_polled to cpin_poll_retry or cpin_poll_retries?
 
-@@ -82,6 +85,10 @@ static void mbm_remove(struct ofono_modem *modem)
- =
+> -	/* Modem returns error if there is no SIM in slot */
+> +	/* Modem returns +CME ERROR: 10 if SIM is not ready. */
+> +	if (!ok && result->final_or_pdu &&
+> +		!strcmp(result->final_or_pdu, "+CME ERROR: 10") &&
+> +		data->sim_polled++ < 5) {
+> +		data->sim_poll =3D
+> +			g_timeout_add_seconds(1, init_simpin_check, modem);
+> +		return;
+> +	}
+> +
 
- 	g_at_chat_unref(data->data_port);
- 	g_at_chat_unref(data->modem_port);
-+
-+	if (data->sim_poll > 0)
-+		g_source_remove(data->sim_poll);
-+
- 	g_free(data);
- }
- =
+Please note that whenever you have a multi-line if condition like the
+one above, the conditions after the if should be indented one more level
+than the if body block.  E.g. put an extra indent before !strcmp and
+data->sim_polled.
 
-@@ -92,6 +99,8 @@ static void mbm_debug(const char *str, void *user_data)
- 	ofono_info("%s %s", prefix, str);
- }
- =
+Regards,
+-Denis
 
-+static gboolean init_simpin_check(gpointer user_data);
-+
- static void simpin_check(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -99,17 +108,40 @@ static void simpin_check(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
-
- 	DBG("");
- =
-
--	/* Modem returns error if there is no SIM in slot */
-+	/* Modem returns +CME ERROR: 10 if SIM is not ready. */
-+	if (!ok && result->final_or_pdu &&
-+		!strcmp(result->final_or_pdu, "+CME ERROR: 10") &&
-+		data->sim_polled++ < 5) {
-+		data->sim_poll =3D
-+			g_timeout_add_seconds(1, init_simpin_check, modem);
-+		return;
-+	}
-+
-+	data->sim_polled =3D 0;
-+
-+	/* Modem returns ERROR if there is no SIM in slot. */
- 	data->have_sim =3D ok;
- =
-
- 	ofono_modem_set_powered(modem, TRUE);
- }
- =
-
--static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
-+static gboolean init_simpin_check(gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
- 	struct mbm_data *data =3D ofono_modem_get_data(modem);
- =
-
-+	data->sim_poll =3D 0;
-+
-+	g_at_chat_send(data->modem_port, "AT+CPIN?", cpin_prefix,
-+			simpin_check, modem, NULL);
-+
-+	return FALSE;
-+}
-+
-+static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+
- 	DBG("");
- =
-
- 	if (!ok) {
-@@ -117,8 +149,7 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 		return;
- 	}
- =
-
--	g_at_chat_send(data->modem_port, "AT+CPIN?", cpin_prefix,
--			simpin_check, modem, NULL);
-+	init_simpin_check(modem);
- }
- =
-
- static void cfun_query(gboolean ok, GAtResult *result, gpointer user_data)
--- =
-
-1.7.0.4
-
-
---===============2440367497395476589==--
+--===============4108615009681410678==--
 
