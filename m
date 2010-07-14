@@ -1,49 +1,109 @@
-Content-Type: multipart/mixed; boundary="===============8858382445980772924=="
+Content-Type: multipart/mixed; boundary="===============0603875605904278350=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: [PATCH 1/6] emulator: Add ofono_emulator framework
-Date: Wed, 14 Jul 2010 09:50:30 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B351F7EE66D@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4C3D1704.1020403@gmail.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] mbm: poll SIM status when initializing
+Date: Wed, 14 Jul 2010 18:43:44 +0300
+Message-ID: <1279122224-5274-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8858382445980772924==
+--===============0603875605904278350==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Denis Kenzior wrote:
-> Hi Zhenhua,
-> =
+---
+ plugins/mbm.c |   28 ++++++++++++++++++++++++----
+ 1 files changed, 24 insertions(+), 4 deletions(-)
 
->> I grabed code from obex to register&start DUN GW service
-> when we parse adapter properties. From patch 6/6, you can see
-> my current implementation is to find the first powered modem
-> that having GRPS atom. Load settings from modem.conf could be
-> another option. But what if the modem is detected from udev?
-> It could be huawei0, huawei1 or huawei<N>.
-> =
+diff --git a/plugins/mbm.c b/plugins/mbm.c
+index 864b0df..5058b7c 100644
+--- a/plugins/mbm.c
++++ b/plugins/mbm.c
+@@ -26,6 +26,7 @@
+ #include <stdio.h>
+ #include <errno.h>
+ #include <stdlib.h>
++#include <string.h>
+ =
 
-> Doing it via .conf file is still possible.  E.g. we might be able to
-> stipulate that only modems with a particular driver get exported (e.g.
-> driver=3D"huawei" or driver=3D"isi")  Or perhaps a hardcoded path / first
-> modem available.  I wouldn't worry about it for now, do whatever is
-> easiest.  The more interesting part is getting the oFono core
-> emulator bits working. =
+ #include <glib.h>
+ #include <gatchat.h>
+@@ -92,6 +93,8 @@ static void mbm_debug(const char *str, void *user_data)
+ 	ofono_info("%s %s", prefix, str);
+ }
+ =
 
-> =
++static gboolean init_simpin_check(gpointer user_data);
++
+ static void simpin_check(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+@@ -99,17 +102,35 @@ static void simpin_check(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ =
 
-> Regards,
-> -Denis
+ 	DBG("");
+ =
 
-Sure. Will update the patches soon.
+-	/* Modem returns error if there is no SIM in slot */
++	/* Modem returns +CME ERROR: 10 if SIM is not ready. */
++	if (!ok && result->final_or_pdu &&
++		!strcmp(result->final_or_pdu, "+CME ERROR: 10")) {
++		g_timeout_add_seconds(1, init_simpin_check, modem);
++		return;
++	}
++
++	/* Modem returns ERROR if there is no SIM in slot. */
+ 	data->have_sim =3D ok;
+ =
 
-Regards,
-Zhenhua
+ 	ofono_modem_set_powered(modem, TRUE);
+ }
+ =
+
+-static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
++
++static gboolean init_simpin_check(gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+ 	struct mbm_data *data =3D ofono_modem_get_data(modem);
+ =
+
++	g_at_chat_send(data->modem_port, "AT+CPIN?", cpin_prefix,
++			simpin_check, modem, NULL);
++
++	return FALSE;
++}
++
++static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++
+ 	DBG("");
+ =
+
+ 	if (!ok) {
+@@ -117,8 +138,7 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 		return;
+ 	}
+ =
+
+-	g_at_chat_send(data->modem_port, "AT+CPIN?", cpin_prefix,
+-			simpin_check, modem, NULL);
++	init_simpin_check(modem);
+ }
+ =
+
+ static void cfun_query(gboolean ok, GAtResult *result, gpointer user_data)
+-- =
+
+1.7.0.4
 
 
---===============8858382445980772924==--
+--===============0603875605904278350==--
 
