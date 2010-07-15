@@ -1,51 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============4108615009681410678=="
+Content-Type: multipart/mixed; boundary="===============5036681468271176328=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] mbm: poll SIM status when initializing
-Date: Wed, 14 Jul 2010 11:40:16 -0500
-Message-ID: <4C3DE870.5030604@gmail.com>
-In-Reply-To: <1279124912-13663-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Nicola Mfb <nicola.mfb@gmail.com>
+Subject: Error sending DTMF with calypso
+Date: Thu, 15 Jul 2010 04:03:17 +0200
+Message-ID: <AANLkTil4AMwD5v6V_SGtSlXyHgpeMpnsgYhlSzz2TjEm@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4108615009681410678==
+--===============5036681468271176328==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi!
+I tried SendTones with calypso during an active call but it failed (v0.22):
 
-> @@ -54,6 +55,8 @@ static const char *none_prefix[] =3D { NULL };
->  struct mbm_data {
->  	GAtChat *modem_port;
->  	GAtChat *data_port;
-> +	guint sim_poll;
-> +	guint sim_polled;
->  	gboolean have_sim;
->  };
+ofonod[259]: DLC0: > AT\r
+ofonod[259]: DLC0: < \r\nOK\r\n
+ofonod[259]: DLC0: Finally woke up the modem
+ofonod[259]: DLC0: > AT+VTS=3D"1"\r
+ofonod[259]: DLC0: < \r\nERROR\r\n
+ofonod[259]: src/voicecall.c:generic_callback() command failed with
+error: Unknown error type
 
-Can we rename sim_poll to cpin_poll_source?
+Am I missing somethings?
 
-Can we rename sim_polled to cpin_poll_retry or cpin_poll_retries?
+    Niko
 
-> -	/* Modem returns error if there is no SIM in slot */
-> +	/* Modem returns +CME ERROR: 10 if SIM is not ready. */
-> +	if (!ok && result->final_or_pdu &&
-> +		!strcmp(result->final_or_pdu, "+CME ERROR: 10") &&
-> +		data->sim_polled++ < 5) {
-> +		data->sim_poll =3D
-> +			g_timeout_add_seconds(1, init_simpin_check, modem);
-> +		return;
-> +	}
-> +
-
-Please note that whenever you have a multi-line if condition like the
-one above, the conditions after the if should be indented one more level
-than the if body block.  E.g. put an extra indent before !strcmp and
-data->sim_polled.
-
-Regards,
--Denis
-
---===============4108615009681410678==--
+--===============5036681468271176328==--
 
