@@ -1,138 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============7072223001858961008=="
+Content-Type: multipart/mixed; boundary="===============5899701937108642828=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] mbm: poll SIM status when initializing
-Date: Thu, 15 Jul 2010 17:05:02 +0300
-Message-ID: <1279202702-20194-1-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <4C3DE870.5030604@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] mbm: poll SIM status when initializing
+Date: Thu, 15 Jul 2010 09:20:34 -0500
+Message-ID: <4C3F1932.7010702@gmail.com>
+In-Reply-To: <1279202702-20194-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7072223001858961008==
+--===============5899701937108642828==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Pekka,
 
----
- plugins/mbm.c |   39 +++++++++++++++++++++++++++++++++++----
- 1 files changed, 35 insertions(+), 4 deletions(-)
+On 07/15/2010 09:05 AM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> =
 
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 864b0df..4f6b46e 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -26,6 +26,7 @@
- #include <stdio.h>
- #include <errno.h>
- #include <stdlib.h>
-+#include <string.h>
- =
-
- #include <glib.h>
- #include <gatchat.h>
-@@ -54,6 +55,8 @@ static const char *none_prefix[] =3D { NULL };
- struct mbm_data {
- 	GAtChat *modem_port;
- 	GAtChat *data_port;
-+	guint cpin_poll_source;
-+	guint cpin_poll_count;
- 	gboolean have_sim;
- };
- =
-
-@@ -82,6 +85,10 @@ static void mbm_remove(struct ofono_modem *modem)
- =
-
- 	g_at_chat_unref(data->data_port);
- 	g_at_chat_unref(data->modem_port);
-+
-+	if (data->cpin_poll_source > 0)
-+		g_source_remove(data->cpin_poll_source);
-+
- 	g_free(data);
- }
- =
-
-@@ -92,6 +99,8 @@ static void mbm_debug(const char *str, void *user_data)
- 	ofono_info("%s %s", prefix, str);
- }
- =
-
-+static gboolean init_simpin_check(gpointer user_data);
-+
- static void simpin_check(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -99,17 +108,40 @@ static void simpin_check(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
- =
-
- 	DBG("");
- =
-
--	/* Modem returns error if there is no SIM in slot */
-+	/* Modem returns +CME ERROR: 10 if SIM is not ready. */
-+	if (!ok && result->final_or_pdu &&
-+			!strcmp(result->final_or_pdu, "+CME ERROR: 10") &&
-+			data->cpin_poll_count++ < 5) {
-+		data->cpin_poll_source =3D
-+			g_timeout_add_seconds(1, init_simpin_check, modem);
-+		return;
-+	}
-+
-+	data->cpin_poll_count =3D 0;
-+
-+	/* Modem returns ERROR if there is no SIM in slot. */
- 	data->have_sim =3D ok;
- =
-
- 	ofono_modem_set_powered(modem, TRUE);
- }
- =
-
--static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
-+static gboolean init_simpin_check(gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
- 	struct mbm_data *data =3D ofono_modem_get_data(modem);
- =
-
-+	data->cpin_poll_source =3D 0;
-+
-+	g_at_chat_send(data->modem_port, "AT+CPIN?", cpin_prefix,
-+			simpin_check, modem, NULL);
-+
-+	return FALSE;
-+}
-+
-+static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+
- 	DBG("");
- =
-
- 	if (!ok) {
-@@ -117,8 +149,7 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 		return;
- 	}
- =
-
--	g_at_chat_send(data->modem_port, "AT+CPIN?", cpin_prefix,
--			simpin_check, modem, NULL);
-+	init_simpin_check(modem);
- }
- =
-
- static void cfun_query(gboolean ok, GAtResult *result, gpointer user_data)
--- =
-
-1.7.0.4
+> ---
+>  plugins/mbm.c |   39 +++++++++++++++++++++++++++++++++++----
+>  1 files changed, 35 insertions(+), 4 deletions(-)
+> =
 
 
---===============7072223001858961008==--
+Patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============5899701937108642828==--
 
