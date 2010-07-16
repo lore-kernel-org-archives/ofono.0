@@ -1,43 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============2184650445153754491=="
+Content-Type: multipart/mixed; boundary="===============4612939418676413125=="
 MIME-Version: 1.0
-From: Zheng Zhang <zwxplay@gmail.com>
-Subject: Porting the oFono to our HW platform
-Date: Fri, 16 Jul 2010 16:04:54 +0800
-Message-ID: <AANLkTinCoFnnOTFXCq8FPcu-GvjptIc-a4xnff6yH5T-@mail.gmail.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: Porting the oFono to our HW platform
+Date: Fri, 16 Jul 2010 17:49:03 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731F17D38E@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <AANLkTinCoFnnOTFXCq8FPcu-GvjptIc-a4xnff6yH5T-@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2184650445153754491==
+--===============4612939418676413125==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi everyone,
-I am studying the oFono, and maybe we have a future task to port the oFono
-to our HW platform, so how much work we should do? And I have concerned that
-the task should cover ofono/drivers and ofono/plugins.
-Generally speaking, the CPU vender should help us for the ofono/drivers for
-their own modems.And we will make the plugin works well between the oFono
-Core and drivers.(Maybe the the main job is to populate the struct
-ofono_modem_driver)
-Is my understanding correct? Thank you for your suggestions!
+Hi, =
 
---===============2184650445153754491==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
 
-SGkgZXZlcnlvbmUsIDxicj5JIGFtIHN0dWR5aW5nIHRoZSBvRm9ubywgYW5kIG1heWJlIHdlIGhh
-dmUgYSBmdXR1cmUgdGFzayB0byBwb3J0IHRoZSBvRm9ubyB0byBvdXIgSFcgcGxhdGZvcm0sIHNv
-IGhvdyBtdWNoIHdvcmsgd2Ugc2hvdWxkIGRvPyBBbmQgSSBoYXZlIGNvbmNlcm5lZCB0aGF0IHRo
-ZSB0YXNrIHNob3VsZCBjb3ZlciBvZm9uby9kcml2ZXJzIGFuZCBvZm9uby9wbHVnaW5zLjxicj4K
-R2VuZXJhbGx5IHNwZWFraW5nLCB0aGUgQ1BVIHZlbmRlciBzaG91bGQgaGVscCB1cyBmb3IgdGhl
-IG9mb25vL2RyaXZlcnMgZm9yIHRoZWlyIG93biBtb2RlbXMuQW5kIHdlIHdpbGwgbWFrZSB0aGUg
-cGx1Z2luIHdvcmtzIHdlbGwgYmV0d2VlbiB0aGUgb0Zvbm8gQ29yZSBhbmQgZHJpdmVycy4oTWF5
-YmUgdGhlIHRoZSBtYWluIGpvYiBpcyB0byBwb3B1bGF0ZSB0aGUgc3RydWN0IG9mb25vX21vZGVt
-X2RyaXZlcikgPGJyPgpJcyBteSB1bmRlcnN0YW5kaW5nIGNvcnJlY3Q/IFRoYW5rIHlvdSBmb3Ig
-eW91ciBzdWdnZXN0aW9ucyEgPGJyPjxicj4K
 
---===============2184650445153754491==--
+> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beh=
+alf Of Zheng Zhang
+> Sent: Friday, July 16, 2010 4:05 PM
+> To: ofono(a)ofono.org
+> Subject: Porting the oFono to our HW platform
+>
+> Hi everyone, =
+
+> I am studying the oFono, and maybe we have a future task to port the oFon=
+o to our HW platform, so how much work we should do? And I have concerned t=
+hat the task should cover ofono/drivers and ofono/plugins.
+> Generally speaking, the CPU vender should help us for the ofono/drivers f=
+or their own modems.And we will make the plugin works well between the oFon=
+o Core and drivers.(Maybe the the main job is to populate the struct ofono_=
+modem_driver) =
+
+> Is my understanding correct? Thank you for your suggestions! =
+
+
+It depends on what kind of modem you have, and how many features you want t=
+o support. In general, to make oFono recognize your modem would not be very=
+ hard, given that your modem driver (just hardware driver, not the ones in =
+ofono/drivers directory) is ready. But if your modem is specific, most of e=
+ffort would be paid in ofono/drivers directory. Otherwise, you may reuse ex=
+ist AT driver or other drivers, and the whole workload would be trivial. =
+
+
+Regards,
+-Yang
+
+--===============4612939418676413125==--
 
