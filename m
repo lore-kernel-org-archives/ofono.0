@@ -1,51 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============4612939418676413125=="
+Content-Type: multipart/mixed; boundary="===============8210265200772326438=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: Porting the oFono to our HW platform
-Date: Fri, 16 Jul 2010 17:49:03 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A4731F17D38E@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <AANLkTinCoFnnOTFXCq8FPcu-GvjptIc-a4xnff6yH5T-@mail.gmail.com>
+From: Florian Steinel <florian.steinel@gmail.com>
+Subject: Huawei E176 - not online
+Date: Sun, 18 Jul 2010 13:04:41 +0200
+Message-ID: <20100718110441.GA20371@h02.hostsharing.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4612939418676413125==
+--===============8210265200772326438==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, =
+Hi,
+
+I can't get my Huawei E176 USB Stick into the online state.
+
+Maybe commit cc6a43c477c1310643279139ba6808799a8c637e removed to much code?
+(rssi_notify)
+
+OFONO_AT_DEBUG=3D1 ofonod -n -d '*' 2>atlog
+./enable_modem
+
+./list-modem output:
+[ /huawei0 ]
+    Features =3D sim =
+
+    Powered =3D 1
+    Interfaces =3D org.ofono.SimManager =
+
+    Online =3D 0
+    Model =3D E176
+    Manufacturer =3D huawei
+    Serial =3D ***************
+    Revision =3D 11.104.14.01.55
+    [ org.ofono.SimManager ]
+        Present =3D 0
 
 
 
-> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beh=
-alf Of Zheng Zhang
-> Sent: Friday, July 16, 2010 4:05 PM
-> To: ofono(a)ofono.org
-> Subject: Porting the oFono to our HW platform
->
-> Hi everyone, =
+atlog output:
 
-> I am studying the oFono, and maybe we have a future task to port the oFon=
-o to our HW platform, so how much work we should do? And I have concerned t=
-hat the task should cover ofono/drivers and ofono/plugins.
-> Generally speaking, the CPU vender should help us for the ofono/drivers f=
-or their own modems.And we will make the plugin works well between the oFon=
-o Core and drivers.(Maybe the the main job is to populate the struct ofono_=
-modem_driver) =
+ofonod[15261]: oFono version 0.25
+ofonod[15261]: Pcui:< \r\n^BOOT:********,0,2,0,25\r\n
+ofonod[15261]: Pcui:> ATE0\r
+ofonod[15261]: Pcui:< \r\n^RSSI:99\r\n\r\n^SRVST:0\r\n\r\n^MODE:0,0\r\n\r\n=
+^RSSI:10\r\n\r\n^SRVST:1\r\n\r\n^MODE:5,4\r\n\r\n^BOOT:********,0,0,0,25\r\=
+n\r\nOK\r\n
+ofonod[15261]: Pcui:> AT+CFUN=3D1\r
+ofonod[15261]: Pcui:< \r\nOK\r\n
+ofonod[15261]: Pcui:> AT^SYSINFO\r
+ofonod[15261]: Pcui:< \r\n^SYSINFO:1,0,1,5,0,,4\r\n\r\nOK\r\n
+ofonod[15261]: Pcui:> AT+CGMI\r
+ofonod[15261]: Pcui:< \r\nhuawei\r\n\r\nOK\r\n
+ofonod[15261]: Pcui:> AT+CGMM\r
+ofonod[15261]: Pcui:< \r\nE176\r\n\r\nOK\r\n
+ofonod[15261]: Pcui:> AT+CGMR\r
+ofonod[15261]: Pcui:< \r\n11.104.14.01.55\r\n\r\nOK\r\n
+ofonod[15261]: Pcui:> AT+CGSN\r
+ofonod[15261]: Pcui:< \r\n***************\r\n\r\nOK\r\n
+ofonod[15261]: Pcui:< \r\n^BOOT:********,0,0,0,25\r\n
+ofonod[15261]: Pcui:< \r\n^BOOT:********,0,0,0,25\r\n
+ofonod[15261]: Pcui:< \r\n^BOOT:********,0,0,0,25\r\n
+ofonod[15261]: Pcui:< \r\n^BOOT:********,0,0,0,25\r\n
+ofonod[15261]: Pcui:< \r\n^BOOT:********,0,0,0,25\r\n
+ofonod[15261]: Pcui:< \r\n^BOOT:********,0,0,0,25\r\n
+ofonod[15261]: Pcui:< \r\n^BOOT:********,0,0,0,25\r\n
+ofonod[15261]: Pcui:< \r\n^BOOT:********,0,0,0,25\r\n
 
-> Is my understanding correct? Thank you for your suggestions! =
+Florian Steinel
 
-
-It depends on what kind of modem you have, and how many features you want t=
-o support. In general, to make oFono recognize your modem would not be very=
- hard, given that your modem driver (just hardware driver, not the ones in =
-ofono/drivers directory) is ready. But if your modem is specific, most of e=
-ffort would be paid in ofono/drivers directory. Otherwise, you may reuse ex=
-ist AT driver or other drivers, and the whole workload would be trivial. =
-
-
-Regards,
--Yang
-
---===============4612939418676413125==--
+--===============8210265200772326438==--
 
