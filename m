@@ -1,219 +1,150 @@
-Content-Type: multipart/mixed; boundary="===============1675918573905937258=="
+Content-Type: multipart/mixed; boundary="===============3620051170005818743=="
 MIME-Version: 1.0
-From: Florian Steinel <Florian.Steinel@gmail.com>
-Subject: [PATCH 1/1] (RFC) Huawei: Modify ^SYSINFO logic
-Date: Mon, 19 Jul 2010 00:09:03 +0200
-Message-ID: <20100718220903.GA10397@h02.hostsharing.net>
-In-Reply-To: <20100718201936.GA29262@h02.hostsharing.net>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: [PATCH 1/4] remove log to make bluetooth.c a static library
+Date: Sun, 18 Jul 2010 19:57:26 -0300
+Message-ID: <1279493849-22930-1-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1675918573905937258==
+--===============3620051170005818743==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/huawei.c |  114 +++++++++++++++++++++++++++++++++++++++++++++++++-=
----
- 1 files changed, 105 insertions(+), 9 deletions(-)
+ plugins/bluetooth.c |   27 +++------------------------
+ 1 files changed, 3 insertions(+), 24 deletions(-)
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index cfc693d..c14b076 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -57,12 +57,22 @@
- =
-
- static const char *none_prefix[] =3D { NULL };
- static const char *sysinfo_prefix[] =3D { "^SYSINFO:", NULL };
-+static const char *cpin_prefix[] =3D { "CPIN:", NULL };
-+
-+enum my_sim_state {
-+	SIM_STATE_INVALID_OR_PIN_BLOCKED =3D 0,
-+	SIM_STATE_NORMAL_SIM_CARD =3D 1,
-+	SIM_STATE_SIM_NOT_VALID_IN_CS_MODE =3D 2,
-+	SIM_STATE_SIM_NOT_VALID_IN_PS_MODE =3D 3,
-+	SIM_STATE_SIM_NOT_VALID_IN_CS_OR_PS_MODE =3D 4,
-+	SIM_STATE_SIM_NOT_PRESENT =3D 255
-+};
- =
-
- struct huawei_data {
- 	GAtChat *modem;
- 	GAtChat *pcui;
- 	struct ofono_sim *sim;
--	gint sim_state;
-+	enum my_sim_state sim_state;
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
- };
-@@ -101,19 +111,105 @@ static void huawei_debug(const char *str, void *user=
-_data)
- 	ofono_info("%s%s", prefix, str);
- }
- =
-
--static void notify_sim_state(struct ofono_modem *modem, gint sim_state)
-+static void notify_sim_state(struct ofono_modem *modem, enum my_sim_state =
-sim_state)
- {
- 	struct huawei_data *data =3D ofono_modem_get_data(modem);
- =
-
--	if (data->sim_state =3D=3D 0 && sim_state =3D=3D 1) {
--		ofono_sim_inserted_notify(data->sim, TRUE);
--		data->sim_state =3D sim_state;
--	} else if (data->sim_state =3D=3D 1 && sim_state =3D=3D 0) {
--		ofono_sim_inserted_notify(data->sim, FALSE);
--		data->sim_state =3D sim_state;
-+	switch (sim_state) {
-+	case SIM_STATE_INVALID_OR_PIN_BLOCKED:
-+		if (data->sim_state !=3D sim_state) {
-+			/* TODO copy code from mbm.c function init_simpin_check and ff */
-+			ofono_sim_inserted_notify(data->sim, TRUE);
-+		}
-+
-+		break;
-+
-+	case SIM_STATE_NORMAL_SIM_CARD:
-+		if (data->sim_state !=3D sim_state) {
-+			ofono_sim_inserted_notify(data->sim, TRUE);
-+		}
-+
-+		break;
-+
-+	case SIM_STATE_SIM_NOT_VALID_IN_CS_MODE:
-+		if (data->sim_state !=3D sim_state) {
-+			ofono_sim_inserted_notify(data->sim, FALSE);
-+		}
-+
-+		break;
-+
-+	case SIM_STATE_SIM_NOT_VALID_IN_PS_MODE:
-+		if (data->sim_state !=3D sim_state) {
-+			ofono_sim_inserted_notify(data->sim, FALSE);
-+		}
-+
-+		break;
-+
-+	case SIM_STATE_SIM_NOT_VALID_IN_CS_OR_PS_MODE:
-+		if (data->sim_state !=3D sim_state) {
-+			ofono_sim_inserted_notify(data->sim, FALSE);
-+		}
-+
-+		break;
-+
-+	case SIM_STATE_SIM_NOT_PRESENT:
-+		if (data->sim_state !=3D sim_state) {
-+			ofono_sim_inserted_notify(data->sim, FALSE);
-+		}
-+
-+		break;
-+
-+	default:
-+		break;
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index 5a85eaa..1079838 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -77,7 +77,6 @@ int bluetooth_send_with_reply(const char *path, const cha=
+r *interface,
+ 	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, path,
+ 						interface, method);
+ 	if (!msg) {
+-		ofono_error("Unable to allocate new D-Bus %s message", method);
+ 		err =3D -ENOMEM;
+ 		goto fail;
  	}
-+	data->sim_state =3D sim_state;
- }
+@@ -96,7 +95,6 @@ int bluetooth_send_with_reply(const char *path, const cha=
+r *interface,
+ 		timeout *=3D 1000;
  =
 
-+/*
-+ *
-+ * SYSINFO =3D a,b,c,d,e,f
-+ *
-+ * a :
-+ *   0 - no network access =
+ 	if (!dbus_connection_send_with_reply(connection, msg, &call, timeout)) {
+-		ofono_error("Sending %s failed", method);
+ 		err =3D -EIO;
+ 		goto fail;
+ 	}
+@@ -246,18 +244,11 @@ static void device_properties_cb(DBusPendingCall *cal=
+l, gpointer user_data)
+ =
 
-+ *   1 - limited access to the network =
+ 	reply =3D dbus_pending_call_steal_reply(call);
+ =
 
-+ *   2 - normal access to the network =
+-	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
+-		DBG("Bluetooth daemon is apparently not available.");
++	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN))
+ 		goto done;
+-	}
+-
+-	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR) {
+-		if (!dbus_message_is_error(reply, DBUS_ERROR_UNKNOWN_METHOD))
+-			ofono_info("Error from GetProperties reply: %s",
+-					dbus_message_get_error_name(reply));
+ =
 
-+ *   3 - limited access to networks in your area =
++	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR)
+ 		goto done;
+-	}
+ =
 
-+ *   4 - Power saving mode =
+ 	bluetooth_parse_properties(reply, "UUIDs", has_uuid, &have_uuid,
+ 				"Adapter", parse_string, &adapter,
+@@ -285,8 +276,6 @@ static void parse_devices(DBusMessageIter *array, gpoin=
+ter user_data)
+ 	DBusMessageIter value;
+ 	GSList **device_list =3D user_data;
+ =
 
-+ * b:
-+ *   0 - no access to the call date =
+-	DBG("");
+-
+ 	if (dbus_message_iter_get_arg_type(array) !=3D DBUS_TYPE_ARRAY)
+ 		return;
+ =
 
-+ *   1 - only the circuit switching =
+@@ -380,7 +369,6 @@ static void adapter_properties_cb(DBusPendingCall *call=
+, gpointer user_data)
+ 	reply =3D dbus_pending_call_steal_reply(call);
+ =
 
-+ *   2 - only the packet switching =
-
-+ *   3 - PS + SC =
-
-+ *   4 - had not registered =
-
-+ * c:
-+ *   0 - registered in your home network =
-
-+ *   1 - registered in roaming =
-
-+ * d:
-+ *   0 - no network access =
-
-+ *   1 - APMs =
-
-+ *   2 - CDMA =
-
-+ *   3 - GSM / GPRS =
-
-+ *   4 - HDR =
-
-+ *   5 - WCDMA =
-
-+ *   6 - GPS =
-
-+ * e:
-+ *   0 - invalid SIM card or PIN code blocked =
-
-+ *   1 - normal SIM card =
-
-+ *   2 - SIM card not valid in CS mode =
-
-+ *   3 - SIM card not valid in PS mode =
-
-+ *   4 - SIM card not valid in PS or CS mode =
-
-+ * f:
-+ *   0 - no network access =
-
-+ *   1 - GSM mode =
-
-+ *   2 - GPRS =
-
-+ *   3 - Mode EDGE =
-
-+ *   4 - WCDMA mode =
-
-+ *   5 - HSDPA mode =
-
-+ *   6 - HSUPA mode =
-
-+ *   7 - mode HSPA =
-
-+ *   8 - HSPA + mode
-+ *
-+ */
- static void sysinfo_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-@@ -277,7 +373,7 @@ static int huawei_enable(struct ofono_modem *modem)
- 		return -EIO;
+ 	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
+-		DBG("Bluetooth daemon is apparently not available.");
+ 		goto done;
  	}
  =
 
--	data->sim_state =3D 0;
-+	data->sim_state =3D SIM_STATE_SIM_NOT_PRESENT;
+@@ -389,7 +377,6 @@ static void adapter_properties_cb(DBusPendingCall *call=
+, gpointer user_data)
+ 					"Address", parse_string, &addr,
+ 					NULL);
  =
 
- 	g_at_chat_send(data->pcui, "ATE0", none_prefix, NULL, NULL, NULL);
+-	DBG("Adapter Address: %s, Path: %s", addr, path);
+ 	g_hash_table_insert(adapter_address_hash,
+ 				g_strdup(path), g_strdup(addr));
  =
 
+@@ -439,8 +426,6 @@ static void parse_adapters(DBusMessageIter *array, gpoi=
+nter user_data)
+ {
+ 	DBusMessageIter value;
+ =
+
+-	DBG("");
+-
+ 	if (dbus_message_iter_get_arg_type(array) !=3D DBUS_TYPE_ARRAY)
+ 		return;
+ =
+
+@@ -452,8 +437,6 @@ static void parse_adapters(DBusMessageIter *array, gpoi=
+nter user_data)
+ =
+
+ 		dbus_message_iter_get_basic(&value, &path);
+ =
+
+-		DBG("Calling GetProperties on %s", path);
+-
+ 		bluetooth_send_with_reply(path, BLUEZ_ADAPTER_INTERFACE,
+ 				"GetProperties", adapter_properties_cb,
+ 				g_strdup(path), g_free, -1, DBUS_TYPE_INVALID);
+@@ -468,12 +451,8 @@ static void manager_properties_cb(DBusPendingCall *cal=
+l, gpointer user_data)
+ =
+
+ 	reply =3D dbus_pending_call_steal_reply(call);
+ =
+
+-	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
+-		DBG("Bluetooth daemon is apparently not available.");
++	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN))
+ 		goto done;
+-	}
+-
+-	DBG("");
+ =
+
+ 	bluetooth_parse_properties(reply, "Adapters", parse_adapters, NULL,
+ 						NULL);
 -- =
 
-1.7.1
+1.7.1.1
 
 
---===============1675918573905937258==--
+--===============3620051170005818743==--
 
