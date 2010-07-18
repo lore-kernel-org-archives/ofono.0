@@ -1,150 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============3620051170005818743=="
+Content-Type: multipart/mixed; boundary="===============7302059913933437543=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: [PATCH 1/4] remove log to make bluetooth.c a static library
-Date: Sun, 18 Jul 2010 19:57:26 -0300
-Message-ID: <1279493849-22930-1-git-send-email-gustavo@padovan.org>
+Subject: [PATCH 2/4] bluetooth: move uuid to struct bluetooth_profile
+Date: Sun, 18 Jul 2010 19:57:27 -0300
+Message-ID: <1279493849-22930-2-git-send-email-gustavo@padovan.org>
+In-Reply-To: <1279493849-22930-1-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3620051170005818743==
+--===============7302059913933437543==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/bluetooth.c |   27 +++------------------------
- 1 files changed, 3 insertions(+), 24 deletions(-)
+ plugins/bluetooth.c |    4 ++--
+ plugins/bluetooth.h |    4 ++--
+ plugins/hfp.c       |    3 ++-
+ 3 files changed, 6 insertions(+), 5 deletions(-)
 
 diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index 5a85eaa..1079838 100644
+index 1079838..f74c9c5 100644
 --- a/plugins/bluetooth.c
 +++ b/plugins/bluetooth.c
-@@ -77,7 +77,6 @@ int bluetooth_send_with_reply(const char *path, const cha=
-r *interface,
- 	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, path,
- 						interface, method);
- 	if (!msg) {
--		ofono_error("Unable to allocate new D-Bus %s message", method);
- 		err =3D -ENOMEM;
- 		goto fail;
- 	}
-@@ -96,7 +95,6 @@ int bluetooth_send_with_reply(const char *path, const cha=
-r *interface,
- 		timeout *=3D 1000;
+@@ -482,7 +482,7 @@ static guint adapter_added_watch;
+ static guint adapter_removed_watch;
+ static guint property_watch;
  =
 
- 	if (!dbus_connection_send_with_reply(connection, msg, &call, timeout)) {
--		ofono_error("Sending %s failed", method);
- 		err =3D -EIO;
- 		goto fail;
- 	}
-@@ -246,18 +244,11 @@ static void device_properties_cb(DBusPendingCall *cal=
-l, gpointer user_data)
- =
-
- 	reply =3D dbus_pending_call_steal_reply(call);
- =
-
--	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
--		DBG("Bluetooth daemon is apparently not available.");
-+	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN))
- 		goto done;
--	}
--
--	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR) {
--		if (!dbus_message_is_error(reply, DBUS_ERROR_UNKNOWN_METHOD))
--			ofono_info("Error from GetProperties reply: %s",
--					dbus_message_get_error_name(reply));
- =
-
-+	if (dbus_message_get_type(reply) =3D=3D DBUS_MESSAGE_TYPE_ERROR)
- 		goto done;
--	}
- =
-
- 	bluetooth_parse_properties(reply, "UUIDs", has_uuid, &have_uuid,
- 				"Adapter", parse_string, &adapter,
-@@ -285,8 +276,6 @@ static void parse_devices(DBusMessageIter *array, gpoin=
-ter user_data)
- 	DBusMessageIter value;
- 	GSList **device_list =3D user_data;
- =
-
--	DBG("");
--
- 	if (dbus_message_iter_get_arg_type(array) !=3D DBUS_TYPE_ARRAY)
- 		return;
- =
-
-@@ -380,7 +369,6 @@ static void adapter_properties_cb(DBusPendingCall *call=
-, gpointer user_data)
- 	reply =3D dbus_pending_call_steal_reply(call);
- =
-
- 	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
--		DBG("Bluetooth daemon is apparently not available.");
- 		goto done;
- 	}
- =
-
-@@ -389,7 +377,6 @@ static void adapter_properties_cb(DBusPendingCall *call=
-, gpointer user_data)
- 					"Address", parse_string, &addr,
- 					NULL);
- =
-
--	DBG("Adapter Address: %s, Path: %s", addr, path);
- 	g_hash_table_insert(adapter_address_hash,
- 				g_strdup(path), g_strdup(addr));
- =
-
-@@ -439,8 +426,6 @@ static void parse_adapters(DBusMessageIter *array, gpoi=
-nter user_data)
+-int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
+ofile)
++int bluetooth_register_uuid(struct bluetooth_profile *profile)
  {
- 	DBusMessageIter value;
+ 	int err;
  =
 
--	DBG("");
--
- 	if (dbus_message_iter_get_arg_type(array) !=3D DBUS_TYPE_ARRAY)
- 		return;
+@@ -522,7 +522,7 @@ int bluetooth_register_uuid(const char *uuid, struct bl=
+uetooth_profile *profile)
+ 						g_free, g_free);
  =
 
-@@ -452,8 +437,6 @@ static void parse_adapters(DBusMessageIter *array, gpoi=
-nter user_data)
+ done:
+-	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
++	g_hash_table_insert(uuid_hash, g_strdup(profile->uuid), profile);
  =
 
- 		dbus_message_iter_get_basic(&value, &path);
+ 	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
+ 				manager_properties_cb, NULL, NULL, -1,
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index fb0d841..1cb950b 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -30,14 +30,14 @@
  =
 
--		DBG("Calling GetProperties on %s", path);
--
- 		bluetooth_send_with_reply(path, BLUEZ_ADAPTER_INTERFACE,
- 				"GetProperties", adapter_properties_cb,
- 				g_strdup(path), g_free, -1, DBUS_TYPE_INVALID);
-@@ -468,12 +451,8 @@ static void manager_properties_cb(DBusPendingCall *cal=
-l, gpointer user_data)
+ struct bluetooth_profile {
+ 	const char *name;
++	const char *uuid;
+ 	int (*create)(const char *device, const char *dev_addr,
+ 			const char *adapter_addr, const char *alias);
+ 	void (*remove_all)();
+ 	void (*set_alias)(const char *device, const char *);
+ };
  =
 
- 	reply =3D dbus_pending_call_steal_reply(call);
+-int bluetooth_register_uuid(const char *uuid,
+-				struct bluetooth_profile *profile);
++int bluetooth_register_uuid(struct bluetooth_profile *profile);
+ void bluetooth_unregister_uuid(const char *uuid);
  =
 
--	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
--		DBG("Bluetooth daemon is apparently not available.");
-+	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN))
- 		goto done;
--	}
--
--	DBG("");
+ void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
+diff --git a/plugins/hfp.c b/plugins/hfp.c
+index b6cd415..76923f0 100644
+--- a/plugins/hfp.c
++++ b/plugins/hfp.c
+@@ -674,6 +674,7 @@ static struct ofono_modem_driver hfp_driver =3D {
  =
 
- 	bluetooth_parse_properties(reply, "Adapters", parse_adapters, NULL,
- 						NULL);
+ static struct bluetooth_profile hfp_profile =3D {
+ 	.name		=3D "hfp",
++	.uuid		=3D HFP_AG_UUID,
+ 	.create		=3D hfp_create_modem,
+ 	.remove_all	=3D hfp_remove_all_modem,
+ 	.set_alias	=3D hfp_set_alias,
+@@ -692,7 +693,7 @@ static int hfp_init()
+ 	if (err < 0)
+ 		return err;
+ =
+
+-	err =3D bluetooth_register_uuid(HFP_AG_UUID, &hfp_profile);
++	err =3D bluetooth_register_uuid(&hfp_profile);
+ 	if (err < 0) {
+ 		ofono_modem_driver_unregister(&hfp_driver);
+ 		return err;
 -- =
 
 1.7.1.1
 
 
---===============3620051170005818743==--
+--===============7302059913933437543==--
 
