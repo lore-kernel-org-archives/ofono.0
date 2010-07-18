@@ -1,41 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============5097834731060711740=="
+Content-Type: multipart/mixed; boundary="===============7252900263368581775=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <gustavo@padovan.org>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: [PATCH 4/4] make bluetooth.{c,h} a static library
-Date: Sun, 18 Jul 2010 20:05:22 -0300
-Message-ID: <20100718230522.GB3406@vigoh>
-In-Reply-To: <1279494072.4572.10.camel@localhost.localdomain>
+Date: Sun, 18 Jul 2010 16:10:21 -0700
+Message-ID: <1279494621.4572.13.camel@localhost.localdomain>
+In-Reply-To: <20100718230522.GB3406@vigoh>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5097834731060711740==
+--===============7252900263368581775==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Gustavo,
 
-* Marcel Holtmann <marcel@holtmann.org> [2010-07-18 16:01:12 -0700]:
+> > >  Makefile.am         |    7 +++----
+> > >  plugins/bluetooth.c |    3 ---
+> > >  2 files changed, 3 insertions(+), 7 deletions(-)
+> > =
 
-> Hi Gustavo,
+> > why are we doing this exactly? If I missed it, please explain it again
+> > since I am not sure that I agree.
 > =
 
-> >  Makefile.am         |    7 +++----
-> >  plugins/bluetooth.c |    3 ---
-> >  2 files changed, 3 insertions(+), 7 deletions(-)
-> =
+> We are doing this for the DUN daemon. As you guys said to me it will be
+> separated daemon in oFono sources, so we need bluetooth.c as a static
+> library to reuse it in the DUN daemon.
 
-> why are we doing this exactly? If I missed it, please explain it again
-> since I am not sure that I agree.
+we need to discuss this again. I am not sure it is the best idea to have
+this as a separate daemon. I argue with myself forth and back on this
+idea. One option is to do this as an oFono atom, another one is to do
+this as a separate daemon. Currently the atom idea is winning.
 
-We are doing this for the DUN daemon. As you guys said to me it will be
-separated daemon in oFono sources, so we need bluetooth.c as a static
-library to reuse it in the DUN daemon.
+Also there is no need to create a static library for doing this. That is
+just wrong. We can do the build magic with autofoo properly and without
+having to use a hack with a static library.
 
--- =
+Regards
 
-Gustavo F. Padovan
-http://padovan.org
+Marcel
 
---===============5097834731060711740==--
+
+
+--===============7252900263368581775==--
 
