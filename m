@@ -1,40 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============2636371049706566996=="
+Content-Type: multipart/mixed; boundary="===============4557053875473607225=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 4/4] Dont check Signed-off-by by default
-Date: Mon, 19 Jul 2010 14:19:29 +0800
-Message-ID: <1279520369-13214-4-git-send-email-yang.gu@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/4] Add coding style document
+Date: Mon, 19 Jul 2010 12:45:35 -0500
+Message-ID: <4C448F3F.9040309@gmail.com>
 In-Reply-To: <1279520369-13214-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2636371049706566996==
+--===============4557053875473607225==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/checkpatch.pl |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi Yang,
 
-diff --git a/test/checkpatch.pl b/test/checkpatch.pl
-index 767670d..2a4faa0 100755
---- a/test/checkpatch.pl
-+++ b/test/checkpatch.pl
-@@ -16,7 +16,7 @@ use Getopt::Long qw(:config no_auto_abbrev);
- =
-
- my $quiet =3D 0;
- my $tree =3D 1;
--my $chk_signoff =3D 1;
-+my $chk_signoff =3D 0;
- my $chk_patch =3D 1;
- my $tst_only;
- my $emacs =3D 0;
--- =
-
-1.7.0.4
+On 07/19/2010 01:19 AM, Yang Gu wrote:
+> ---
+>  doc/coding_style.txt |  151 ++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 151 insertions(+), 0 deletions(-)
+>  create mode 100644 doc/coding_style.txt
+> =
 
 
---===============2636371049706566996==--
+This patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============4557053875473607225==--
 
