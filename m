@@ -1,34 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5060638010732112093=="
+Content-Type: multipart/mixed; boundary="===============7921993732573193509=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
-Subject: Re: PIPE use in ofono
-Date: Tue, 20 Jul 2010 09:56:06 +0200
-Message-ID: <2a6a6e43b9194891123a9ece20f09357@chewa.net>
-In-Reply-To: <81C3A93C17462B4BBD7E272753C10579169FAB43B6@EXDCVYMBSTM005.EQ1STM.local>
+From: Matthias =?unknown-8bit?q?G=C3=BCnther?= <matgnt@gmail.com>
+Subject: Howto about Qt QML and Ofono
+Date: Tue, 20 Jul 2010 10:01:56 +0200
+Message-ID: <4C4557F4.2060907@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5060638010732112093==
+--===============7921993732573193509==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi all together.
 
-On Tue, 20 Jul 2010 09:22:04 +0200, Hemant-vilas RAMDASI
-<hemant.ramdasi@stericsson.com> wrote:
-> Is pipe/pep concept in ISI  modem, specific to a modem inside N900? Or is
-> it generic to any Nokia modem?
+I wrote a little howto about how to use Ofono with Phonesim in the back
+and a Qt application as frontend. The Qt applicatin is devided into two
+parts, the C++ part where all the D-Bus stuff is handled and the QML
+part where you can use C++ methods to e.g. activate the Ofono modem or
+do something when an Ofono signal is recieved. The howto is separated
+into three parts:
 
-It should be available in any Nokia modem that exposes the USB CDC Phonet
-vendor-specific interface. If I recall correctly, it worked with my Nokia
-N95.
+>http://matgnt.wordpress.com/2010/07/19/qt-ofono-d-bus-and-qml-part-1/
+>http://matgnt.wordpress.com/2010/07/19/qt-ofono-d-bus-and-qml-part-2/
+>http://matgnt.wordpress.com/2010/07/19/qt-ofono-d-bus-and-qml-part-3/
 
--- =
+I hope this helps people out there to create cool new phone
+applications. You're welcome to leave a note here or on the howto directly.
 
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net
-http://fi.linkedin.com/in/remidenis
+Best regards,
+Matthias
 
-
---===============5060638010732112093==--
+--===============7921993732573193509==--
 
