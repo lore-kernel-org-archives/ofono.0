@@ -1,206 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============5031337354820016143=="
+Content-Type: multipart/mixed; boundary="===============7189527796323578262=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: [PATCH] doc: stk-api proposal
-Date: Mon, 19 Jul 2010 17:28:48 -0500
-Message-ID: <1279578528-22281-1-git-send-email-denkenz@gmail.com>
+From: =?unknown-8bit?b?4LC44LCk4LGN4LCvIOCwleCwv+Cwt+Cxi+CwsOCxjQ==?= <satyakishore.kalva@gmail.com>
+Subject: Reg. MMS Support in oFono
+Date: Tue, 20 Jul 2010 12:27:29 +0530
+Message-ID: <AANLkTimFG3k_KjmHIjME1z1Si32VMorrrA4crdnSskDn@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5031337354820016143==
+--===============7189527796323578262==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Up for comment is the Sim Application Toolkit API proposal for oFono.  It is
-largely based on Andrew's API proposal with several changes in areas I felt
-needed further attention.  I'd like all interested to comment, what looks
-good, what looks crummy?  Is anything missing?
-
-Please note that the proposal only covers Setup Menu, Setup Idle Mode Text,
-Select Item, Display Text, Get Inkey and Get Input proactive commands.
-
-Also, several aspects of these commands are explicitly ignored, e.g. the us=
-er
-help system.
----
- doc/stk-api.txt |  162 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 162 insertions(+), 0 deletions(-)
- create mode 100644 doc/stk-api.txt
-
-diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-new file mode 100644
-index 0000000..96bf710
---- /dev/null
-+++ b/doc/stk-api.txt
-@@ -0,0 +1,162 @@
-+SimToolkit Hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Service		org.ofono
-+Interface	org.ofono.SimToolkit
-+Object path	[variable prefix]/{modem0,modem1,...}
-+
-+Methods		dict GetProperties()
-+
-+			Returns properties for the SimToolkit object.  See the
-+			properties section for available properties.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+
-+		void RegisterAgent(object path)
-+
-+			Registers a default agent to be used for SIM initiated
-+			actions such as Display Text, Get Inkey or Get Input.
-+			These can typically occur when a special SMS is
-+			received and might not involve interaction from the
-+			user.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.InUse
-+
-+		void UnregisterAgent(object path)
-+
-+			Unregisters the default agent.  If no agent is
-+			registered then unsolicited commands from the SIM
-+			are rejected.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.InvalidFormat
-+					 [service].Error.NotFound
-+					 [service].Error.NotAuthorized
-+
-+Properties	string IdleText
-+
-+			Contains the text to be used when the home screen is
-+			idle.  This text is set by the SIM and can be changed
-+			at any time.
-+
-+		array{string} MainMenuItems
-+
-+			Contains the items that make up the main menu.  This
-+			is populated by the SIM when it sends the Setup Menu
-+			Proactive Command.  The main menu is always available,
-+			but its contents can be changed at any time.
-+
-+		array{array{bytes}} MainMenuIcons
-+
-+			Contains the icons associated with the main menu items.
-+
-+		string MainMenuTitle
-+
-+			Contains the title of the main menu.
-+
-+SimToolkitAgent Hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Service		unique name
-+Interface	org.ofono.SimToolkitAgent
-+Object path	freely definable
-+
-+Methods		byte SelectItem(string title, array{string} items,
-+				array{array{byte}} icons, byte default)
-+
-+			Tells the agent to ask the user to select an item
-+			from the menu.  This function should return the index
-+			of the item or an error given below:
-+
-+			Possible Errors: [service].Error.SimToolkit.GoBack
-+
-+			Implementation notes:
-+
-+			- Data / Navigation type not indicated
-+			- Soft key preferred not indicated
-+			- Help available ignored
-+
-+		void DisplayText(string text, boolean urgent)
-+
-+			Tells the agent to display text from the SIM.  The
-+			boolean urgent parameter tells the agent whether this
-+			is an urgent message and all other messages should be
-+			cleared prior to the display of this text.
-+
-+			Possible Errors: [service].Error.SimToolkit.GoBack
-+
-+			Implementation notes:
-+
-+			- High / normal priority indicated by urgent
-+			- clear / wait for user handled by setting a higher
-+			  timeout in the case of wait for user flag and using
-+			  the Cancel() method appropriately.  If the agent
-+			  returns earlier from this method call, a terminal
-+			  response is sent.
-+			- Immediate Response indication is handled internally,
-+			  terminal response is sent immediately and no other
-+			  indication is given to the user / agent.  Response
-+			  from this method call is ignored and an infinite
-+			  timeout is used for the method call.  Once another
-+			  proactive command arrives, and the DisplayText is
-+			  still pending, Cancel() is called.
-+
-+		string GetInput(string alpha, array{byte} icon,
-+				string default, byte min, byte max,
-+				boolean hide_typing)
-+
-+			Tells the agent to request an input string from the
-+			user.  The alpha parameter and icon gives context to
-+			the user.  The default string contains the suggested
-+			default by the SIM.  The min and max parameters contain
-+			how many characters the user should enter.  The
-+			parameter hide_typing indicates whether user's typing
-+			should be opaque.
-+
-+			Possible Errors: [service].Error.SimToolkit.GoBack
-+
-+		string GetDigits(string alpha, array{byte} icon,
-+					string default, byte min, byte max,
-+					boolean hide_typing)
-+
-+			Same as GetInput but only digit characters (0-9, *#+)
-+			are expected.
-+
-+			Possible Errors: [service].Error.SimToolkit.GoBack
-+
-+		string GetKey(string alpha, array{byte} icon)
-+
-+			Tells the agent to request a single input key from
-+			the user.  The alpha parameter contains the context
-+			for the request.
-+
-+			Possible Errors: [service].Error.SimToolkit.GoBack
-+
-+		string GetDigit(string alpha, array{byte} icon)
-+
-+			Same as above, but only digits (0-9, *#+) are
-+			expected.
-+
-+			Possible Errors: [service].Error.SimToolkit.GoBack
-+
-+		boolean GetConfirmation(string alpha, array{byte} icon)
-+
-+			Asks the agent to get confirmation from the user.
-+
-+			Possible Errors: [service].Error.SimToolkit.GoBack
-+
-+		void Cancel()
-+
-+			Asks the agent to cancel any ongoing operation in
-+			progress.  This is usually either because the agent
-+			is taking too long to respond or the Sim Application
-+			has terminated the session.
-+
-+		void Release()
-+
-+			Agent is being released, possibly because of oFono
-+			terminating, SimToolkit interface torn down or modem
-+			off.  If the agent is registered as a global agent,
-+			no UnregisterAgent call is expected.
--- =
-
-1.7.0.4
+Hi All,
 
 
---===============5031337354820016143==--
+I have one doubt regarding MMS features.
+
+In previous mail list ofono team mention that "*MMS is not supported by
+oFono, these belong in a separate daemon*". Related link is as follows  :
+http://lists.ofono.org/pipermail/ofono/2010-June/002672.html
+
+I thought it is ConnMan.
+
+But in ConnMan mailing list it is saying that "*oFono will export these via
+a Socks5 or HTTP proxy to the MMS application without having ConnMan
+involved*". Related link is as follows :
+http://lists.connman.net/pipermail/connman/2010-June/001515.html
+
+May I know what is that daemon that supports MMS features (upload /
+download, MMS read receipt indication, Delivery report indication).
+
+Thanks,
+Satya.
+
+--===============7189527796323578262==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+SGkgQWxsLKA8ZGl2Pjxicj48L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PkkgaGF2ZSBvbmUgZG91
+YnQgcmVnYXJkaW5nIE1NUyBmZWF0dXJlcy6gPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5JbiBw
+cmV2aW91cyBtYWlsIGxpc3Qgb2Zvbm8gdGVhbSBtZW50aW9uIHRoYXQgJnF1b3Q7PGI+TU1TIGlz
+IG5vdCBzdXBwb3J0ZWQgYnkgb0Zvbm8sIHRoZXNlIGJlbG9uZyBpbiBhIHNlcGFyYXRlIGRhZW1v
+bjwvYj4mcXVvdDsuIFJlbGF0ZWQgbGluayBpcyBhcyBmb2xsb3dzIKA6oKA8YSBocmVmPSJodHRw
+Oi8vbGlzdHMub2Zvbm8ub3JnL3BpcGVybWFpbC9vZm9uby8yMDEwLUp1bmUvMDAyNjcyLmh0bWwi
+Pmh0dHA6Ly9saXN0cy5vZm9uby5vcmcvcGlwZXJtYWlsL29mb25vLzIwMTAtSnVuZS8wMDI2NzIu
+aHRtbDwvYT48L2Rpdj4KCjxkaXY+PGJyPjwvZGl2PjxkaXY+SSB0aG91Z2h0IGl0IGlzIENvbm5N
+YW4uIKA8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PkJ1dCBpbiBDb25uTWFuIG1haWxpbmcgbGlz
+dCBpdCBpcyBzYXlpbmcgdGhhdCAmcXVvdDs8Yj5vRm9ubyB3aWxsIGV4cG9ydCB0aGVzZSB2aWEg
+YSBTb2NrczUgb3IgSFRUUCBwcm94eSB0byB0aGUgTU1TIGFwcGxpY2F0aW9uIHdpdGhvdXQgaGF2
+aW5nIENvbm5NYW4gaW52b2x2ZWQ8L2I+JnF1b3Q7LiBSZWxhdGVkIGxpbmsgaXMgYXMgZm9sbG93
+cyA6oDxhIGhyZWY9Imh0dHA6Ly9saXN0cy5jb25ubWFuLm5ldC9waXBlcm1haWwvY29ubm1hbi8y
+MDEwLUp1bmUvMDAxNTE1Lmh0bWwiPmh0dHA6Ly9saXN0cy5jb25ubWFuLm5ldC9waXBlcm1haWwv
+Y29ubm1hbi8yMDEwLUp1bmUvMDAxNTE1Lmh0bWw8L2E+PC9kaXY+Cgo8ZGl2Pjxicj48L2Rpdj48
+bWV0YSBodHRwLWVxdWl2PSJjb250ZW50LXR5cGUiIGNvbnRlbnQ9InRleHQvaHRtbDsgY2hhcnNl
+dD11dGYtOCI+PGRpdj5NYXkgSSBrbm93IHdoYXQgaXMgdGhhdCBkYWVtb24gdGhhdCBzdXBwb3J0
+cyBNTVMgZmVhdHVyZXMgKHVwbG9hZCAvIGRvd25sb2FkLCBNTVMgcmVhZCByZWNlaXB0IGluZGlj
+YXRpb24sIERlbGl2ZXJ5IHJlcG9ydCBpbmRpY2F0aW9uKS48L2Rpdj4KCjxkaXY+PGJyPjwvZGl2
+PjxkaXY+VGhhbmtzLKA8L2Rpdj48ZGl2PlNhdHlhLjwvZGl2PjxkaXY+PGJyPjwvZGl2PjxtZXRh
+IGh0dHAtZXF1aXY9ImNvbnRlbnQtdHlwZSIgY29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXV0
+Zi04Ij4K
+
+--===============7189527796323578262==--
 
