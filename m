@@ -1,174 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============8997324394133763508=="
+Content-Type: multipart/mixed; boundary="===============5866090834525449291=="
 MIME-Version: 1.0
-From: Alan KREUTZ <alan.kreutz.vz@rdf.renesas.com>
-Subject: ISI drivers test simulator
-Date: Tue, 20 Jul 2010 11:28:59 +0200
-Message-ID: <A9AC1023FCA4654D92AC24C2A8F6A092017C1472@renesas4bis.renesas-rdf.local>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+Subject: Re: ISI drivers test simulator
+Date: Tue, 20 Jul 2010 12:25:44 +0200
+Message-ID: <563d79ac52a667af8ebd79bca6afd9b9@chewa.net>
+In-Reply-To: <A9AC1023FCA4654D92AC24C2A8F6A092017C1472@renesas4bis.renesas-rdf.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8997324394133763508==
+--===============5866090834525449291==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello all, =
 
- =
+On Tue, 20 Jul 2010 11:28:59 +0200, "Alan KREUTZ"
+<alan.kreutz.vz@rdf.renesas.com> wrote:
+> 1-    Is, the fact to test oFono ISI driver with a Nokia phone, the only
+> way to test ISI drivers or is there a simulator like phonesim for ISI
+> driver?
 
-I started to study and work on oFono and I'm searching for a way to test
-ISI modem driver.
- =
+Yes.
 
-I have noticed that oFono AT modem driver can be tested with phonesim
-simulator and that it can be possible to use oFono ISI drivers with a
-Nokia mobile phone (for example N900 mobile phone). =
+> 2-    How to test oFono with a Nokia mobile? I believe that the plugin
+> usbpnmodem.c must be used to communicate with modem via USB and it seems
+> that Maemo (or MeeGo) is mandatory too. Is this correct?
 
- =
+Yes and no. Some of the oFono atoms from the ISI driver do work with S60
+phones and S40 phones too.
 
-My questions are:
-1-    Is, the fact to test oFono ISI driver with a Nokia phone, the only
-way to test ISI drivers or is there a simulator like phonesim for ISI
-driver?
- =
+> 3-    And last question, if a Nokia modem is connected via USB to a PC,
+> is the Nokia's modem disconnected from UI part in order to receive and
+> treat only messages from host (PC/oFono)?
 
-2-    How to test oFono with a Nokia mobile? I believe that the plugin
-usbpnmodem.c must be used to communicate with modem via USB and it seems
-that Maemo (or MeeGo) is mandatory too. Is this correct?
- =
+Some features won't work, notably SMS reception.
 
-3-    And last question, if a Nokia modem is connected via USB to a PC,
-is the Nokia's modem disconnected from UI part in order to receive and
-treat only messages from host (PC/oFono)?
- =
+-- =
 
-Thanks for your answer,
- =
-
-Best Regards,
- =
-
-Alan
- =
-
- =
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net
+http://fi.linkedin.com/in/remidenis
 
 
- =
-
-
-
---===============8997324394133763508==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
-bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxucz0iaHR0
-cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1D
-b250ZW50LVR5cGUgY29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEg
-bmFtZT1HZW5lcmF0b3IgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTEgKGZpbHRlcmVkIG1lZGl1
-bSkiPgo8c3R5bGU+CjwhLS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtm
-b250LWZhbWlseTpXaW5nZGluZ3M7CglwYW5vc2UtMTo1IDAgMCAwIDAgMCAwIDAgMCAwO30KQGZv
-bnQtZmFjZQoJe2ZvbnQtZmFtaWx5OiJNUyBNaW5jaG8iOwoJcGFub3NlLTE6MiAyIDYgOSA0IDIg
-NSA4IDMgNDt9CkBmb250LWZhY2UKCXtmb250LWZhbWlseToiXEBNUyBNaW5jaG8iOwoJcGFub3Nl
-LTE6MCAwIDAgMCAwIDAgMCAwIDAgMDt9CiAvKiBTdHlsZSBEZWZpbml0aW9ucyAqLwogcC5Nc29O
-b3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowY207CgltYXJnaW4t
-Ym90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTIuMHB0OwoJZm9udC1mYW1pbHk6IlRpbWVzIE5l
-dyBSb21hbiI7fQphOmxpbmssIHNwYW4uTXNvSHlwZXJsaW5rCgl7Y29sb3I6Ymx1ZTsKCXRleHQt
-ZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJsaW5rRm9sbG93
-ZWQKCXtjb2xvcjpwdXJwbGU7Cgl0ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30KcHJlCgl7bWFy
-Z2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMC4wcHQ7Cglmb250
-LWZhbWlseToiQ291cmllciBOZXciO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUtdHlw
-ZTpwZXJzb25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6QXJpYWw7Cgljb2xvcjp3aW5kb3d0ZXh0
-O30KQHBhZ2UgU2VjdGlvbjEKCXtzaXplOjU5NS4zcHQgODQxLjlwdDsKCW1hcmdpbjo3MC44NXB0
-IDcwLjg1cHQgNzAuODVwdCA3MC44NXB0O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9
-CiAvKiBMaXN0IERlZmluaXRpb25zICovCiBAbGlzdCBsMAoJe21zby1saXN0LWlkOjEyMTY0MzE4
-MDM7Cgltc28tbGlzdC10ZW1wbGF0ZS1pZHM6MTU1NDQzODc5NDt9CkBsaXN0IGwwOmxldmVsMQoJ
-e21zby1sZXZlbC1udW1iZXItZm9ybWF0OmJ1bGxldDsKCW1zby1sZXZlbC10ZXh0OlxGMEI3OwoJ
-bXNvLWxldmVsLXRhYi1zdG9wOjM2LjBwdDsKCW1zby1sZXZlbC1udW1iZXItcG9zaXRpb246bGVm
-dDsKCXRleHQtaW5kZW50Oi0xOC4wcHQ7Cgltc28tYW5zaS1mb250LXNpemU6MTAuMHB0OwoJZm9u
-dC1mYW1pbHk6U3ltYm9sO30KQGxpc3QgbDEKCXttc28tbGlzdC1pZDoxNTg2MzA2NDYxOwoJbXNv
-LWxpc3QtdHlwZTpoeWJyaWQ7Cgltc28tbGlzdC10ZW1wbGF0ZS1pZHM6LTk4MDc1NjUyNCAtMTg3
-MjA0NDE0NiA2Nzg5NTMyMSA2Nzg5NTMyMyA2Nzg5NTMxMSA2Nzg5NTMyMSA2Nzg5NTMyMyA2Nzg5
-NTMxMSA2Nzg5NTMyMSA2Nzg5NTMyMzt9CkBsaXN0IGwxOmxldmVsMQoJe21zby1sZXZlbC10ZXh0
-OiUxLTsKCW1zby1sZXZlbC10YWItc3RvcDozNi4wcHQ7Cgltc28tbGV2ZWwtbnVtYmVyLXBvc2l0
-aW9uOmxlZnQ7Cgl0ZXh0LWluZGVudDotMTguMHB0O30Kb2wKCXttYXJnaW4tYm90dG9tOjBjbTt9
-CnVsCgl7bWFyZ2luLWJvdHRvbTowY207fQotLT4KPC9zdHlsZT4KCjwvaGVhZD4KCjxib2R5IGxh
-bmc9RlIgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT4KCjxkaXYgY2xhc3M9U2VjdGlvbjE+PHByZT48
-Zm9udCBzaXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFuCnN0eWxlPSdmb250LXNpemU6MTAu
-MHB0Jz5IZWxsbyBhbGwsIDxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250
-CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQn
-PjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250CnNpemU9MiBm
-YWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBw
-dCc+SSBzdGFydGVkIHRvIHN0dWR5IGFuZCB3b3JrIG9uIG9Gb25vIGFuZCBJJiM4MjE3O20gc2Vh
-cmNoaW5nIGZvciBhIHdheSB0byB0ZXN0IElTSSBtb2RlbSBkcml2ZXIuPG86cD48L286cD48L3Nw
-YW4+PC9mb250PjwvcHJlPjxwcmU+PGZvbnQKc2l6ZT0yIGZhY2U9IkNvdXJpZXIgTmV3Ij48c3Bh
-biBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz48bzpwPiZuYnNwOzwvbzpwPjwv
-c3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmllciBOZXciPjxz
-cGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPkkgaGF2ZSBub3RpY2VkIHRo
-YXQgb0Zvbm8gQVQgbW9kZW0gZHJpdmVyIGNhbiBiZSB0ZXN0ZWQgd2l0aCBwaG9uZXNpbSBzaW11
-bGF0b3IgYW5kIHRoYXQgaXQgY2FuIGJlIHBvc3NpYmxlIHRvIHVzZSBvRm9ubyBJU0kgZHJpdmVy
-cyB3aXRoIGEgTm9raWEgbW9iaWxlIHBob25lIChmb3IgZXhhbXBsZSBOOTAwIG1vYmlsZSBwaG9u
-ZSkuIDxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250CnNpemU9MiBmYWNl
-PSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+
-PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcHJlPjxwcmU+PGZvbnQKc2l6ZT0yIGZh
-Y2U9IkNvdXJpZXIgTmV3Ij48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6MTAuMHB0
-Jz5NeSBxdWVzdGlvbnMgYXJlOjxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlCnN0
-eWxlPSdtYXJnaW4tbGVmdDozNi4wcHQ7dGV4dC1pbmRlbnQ6LTE4LjBwdDttc28tbGlzdDpsMSBs
-ZXZlbDEgbGZvMic+PCFbaWYgIXN1cHBvcnRMaXN0c10+PGZvbnQKc2l6ZT0yIGZhY2U9IkNvdXJp
-ZXIgTmV3Ij48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz48c3Bhbgpz
-dHlsZT0nbXNvLWxpc3Q6SWdub3JlJz4xLTxmb250IHNpemU9MSBmYWNlPSJUaW1lcyBOZXcgUm9t
-YW4iPjxzcGFuCnN0eWxlPSdmb250OjcuMHB0ICJUaW1lcyBOZXcgUm9tYW4iJz4mbmJzcDsmbmJz
-cDsmbmJzcDsgPC9zcGFuPjwvZm9udD48L3NwYW4+PC9zcGFuPjwvZm9udD48IVtlbmRpZl0+PHNw
-YW4KbGFuZz1FTi1HQj5JcywgdGhlIGZhY3QgdG8gdGVzdCBvRm9ubyBJU0kgZHJpdmVyIHdpdGgg
-YSBOb2tpYSBwaG9uZSwgdGhlIG9ubHkgd2F5IHRvIHRlc3QgSVNJIGRyaXZlcnMgb3IgaXMgdGhl
-cmUgYSBzaW11bGF0b3IgbGlrZSBwaG9uZXNpbSBmb3IgSVNJIGRyaXZlcj88bzpwPjwvbzpwPjwv
-c3Bhbj48L3ByZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFu
-Zz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+
-PC9mb250PjwvcHJlPjxwcmUKc3R5bGU9J21hcmdpbi1sZWZ0OjM2LjBwdDt0ZXh0LWluZGVudDot
-MTguMHB0O21zby1saXN0OmwxIGxldmVsMSBsZm8yJz48IVtpZiAhc3VwcG9ydExpc3RzXT48Zm9u
-dApzaXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQt
-c2l6ZToxMC4wcHQnPjxzcGFuCnN0eWxlPSdtc28tbGlzdDpJZ25vcmUnPjItPGZvbnQgc2l6ZT0x
-IGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+PHNwYW4Kc3R5bGU9J2ZvbnQ6Ny4wcHQgIlRpbWVzIE5l
-dyBSb21hbiInPiZuYnNwOyZuYnNwOyZuYnNwOyA8L3NwYW4+PC9mb250Pjwvc3Bhbj48L3NwYW4+
-PC9mb250PjwhW2VuZGlmXT48c3BhbgpsYW5nPUVOLUdCPkhvdyB0byB0ZXN0IG9Gb25vIHdpdGgg
-YSBOb2tpYSBtb2JpbGU/IEkgYmVsaWV2ZSB0aGF0IHRoZSBwbHVnaW4gdXNicG5tb2RlbS5jIG11
-c3QgYmUgdXNlZCB0byBjb21tdW5pY2F0ZSB3aXRoIG1vZGVtIHZpYSBVU0IgYW5kIGl0IHNlZW1z
-IHRoYXQgTWFlbW8gKG9yIE1lZUdvKSBpcyBtYW5kYXRvcnkgdG9vLiBJcyB0aGlzIGNvcnJlY3Q/
-PG86cD48L286cD48L3NwYW4+PC9wcmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmllciBO
-ZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxvOnA+Jm5ic3A7
-PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlCnN0eWxlPSdtYXJnaW4tbGVmdDozNi4wcHQ7
-dGV4dC1pbmRlbnQ6LTE4LjBwdDttc28tbGlzdDpsMSBsZXZlbDEgbGZvMic+PCFbaWYgIXN1cHBv
-cnRMaXN0c10+PGZvbnQKc2l6ZT0yIGZhY2U9IkNvdXJpZXIgTmV3Ij48c3BhbiBsYW5nPUVOLUdC
-IHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz48c3BhbgpzdHlsZT0nbXNvLWxpc3Q6SWdub3JlJz4z
-LTxmb250IHNpemU9MSBmYWNlPSJUaW1lcyBOZXcgUm9tYW4iPjxzcGFuCnN0eWxlPSdmb250Ojcu
-MHB0ICJUaW1lcyBOZXcgUm9tYW4iJz4mbmJzcDsmbmJzcDsmbmJzcDsgPC9zcGFuPjwvZm9udD48
-L3NwYW4+PC9zcGFuPjwvZm9udD48IVtlbmRpZl0+PHNwYW4KbGFuZz1FTi1HQj5BbmQgbGFzdCBx
-dWVzdGlvbiwgaWYgYSBOb2tpYSBtb2RlbSBpcyBjb25uZWN0ZWQgdmlhIFVTQiB0byBhIFBDLCBp
-cyB0aGUgTm9raWEmIzgyMTc7cyBtb2RlbSBkaXNjb25uZWN0ZWQgZnJvbSBVSSBwYXJ0IGluIG9y
-ZGVyIHRvIHJlY2VpdmUgYW5kIHRyZWF0IG9ubHkgbWVzc2FnZXMgZnJvbSBob3N0IChQQy9vRm9u
-byk/PG86cD48L286cD48L3NwYW4+PC9wcmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmll
-ciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxvOnA+Jm5i
-c3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3Vy
-aWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+VGhhbmtz
-IGZvciB5b3VyIGFuc3dlciw8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9u
-dApzaXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQt
-c2l6ZToxMC4wcHQnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxm
-b250CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9u
-dC1zaXplOjEwLjBwdCc+QmVzdCBSZWdhcmRzLDxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3By
-ZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBz
-dHlsZT0nZm9udC1zaXplOjEwLjBwdCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250Pjwv
-cHJlPjxwcmU+PGZvbnQKc2l6ZT0yIGZhY2U9IkNvdXJpZXIgTmV3Ij48c3BhbiBsYW5nPUVOLUdC
-IHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz5BbGFuPG86cD48L286cD48L3NwYW4+PC9mb250Pjwv
-cHJlPjxwcmU+PGZvbnQKc2l6ZT0yIGZhY2U9IkNvdXJpZXIgTmV3Ij48c3BhbiBsYW5nPUVOLUdC
-IHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+
-PC9wcmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFuIGxhbmc9RU4t
-R0Igc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9u
-dD48L3ByZT4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTMgZmFjZT0iVGltZXMgTmV3
-IFJvbWFuIj48c3BhbiBsYW5nPUVOLUdCCnN0eWxlPSdmb250LXNpemU6MTIuMHB0Jz48bzpwPiZu
-YnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPC9kaXY+Cgo8L2JvZHk+Cgo8L2h0bWw+Cg==
-
---===============8997324394133763508==--
+--===============5866090834525449291==--
 
