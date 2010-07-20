@@ -1,34 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============3246883446104535813=="
+Content-Type: multipart/mixed; boundary="===============4508953289243896947=="
 MIME-Version: 1.0
-From: Stefan Schmidt <stefan@datenfreihafen.org>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Reg. MMS Support in oFono
-Date: Tue, 20 Jul 2010 09:14:20 +0200
-Message-ID: <20100720071420.GG1512@excalibur.local>
+Date: Tue, 20 Jul 2010 00:16:17 -0700
+Message-ID: <1279610177.4572.53.camel@localhost.localdomain>
 In-Reply-To: <AANLkTimFG3k_KjmHIjME1z1Si32VMorrrA4crdnSskDn@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3246883446104535813==
+--===============4508953289243896947==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello.
+Hi Satya,
 
-On Tue, 2010-07-20 at 12:27, =E0=B0=B8=E0=B0=A4=E0=B1=8D=E0=B0=AF =E0=B0=95=
-=E0=B0=BF=E0=B0=B7=E0=B1=8B=E0=B0=B0=E0=B1=8D  wrote:
+> I have one doubt regarding MMS features. =
+
+> =
+
+> =
+
+> In previous mail list ofono team mention that "MMS is not supported by
+> oFono, these belong in a separate daemon". Related link is as follows
+>  :  http://lists.ofono.org/pipermail/ofono/2010-June/002672.html
+> =
+
+> =
+
+> I thought it is ConnMan.  =
+
+> =
+
+> =
+
+> But in ConnMan mailing list it is saying that "oFono will export these
+> via a Socks5 or HTTP proxy to the MMS application without having
+> ConnMan involved". Related link is as
+> follows : http://lists.connman.net/pipermail/connman/2010-June/001515.html
+> =
+
 > =
 
 > May I know what is that daemon that supports MMS features (upload /
 > download, MMS read receipt indication, Delivery report indication).
 
-Who says there is already such a daemon. The devs have been describing the
-architecture they are planning to use for the potential MMS integration. As=
- far
-as I know there is now such MMS daemon available at the moment.
+this is all true. The MMS application/daemon will talk over a Socks5
+proxy to oFono to get access to the MMSC. And will use oFono's D-Bus
+interface to get MMS push notifications.
 
-regards
-Stefan Schmidt
+For MMS support we are on purpose trying to avoid using ConnMan and will
+handle all TCP connections that the MMS application/daemon needs via a
+proxy. This is important to not interfere with the Internet connections.
+In general the contexts for MMS are just for MMS only and so we handle
+them internally in oFono.
 
---===============3246883446104535813==--
+I might look rather complicated and complex right now, but once the
+basic pieces are getting merged into oFono, I hope this becomes a lot
+clearer.
+
+Regards
+
+Marcel
+
+
+
+--===============4508953289243896947==--
 
