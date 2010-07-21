@@ -1,61 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============0659792762590837651=="
+Content-Type: multipart/mixed; boundary="===============8438489717385595754=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: Howto about Qt QML and Ofono
-Date: Wed, 21 Jul 2010 16:15:26 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A473272A2B61@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4C4557F4.2060907@gmail.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: Huawei E176 - not online
+Date: Wed, 21 Jul 2010 10:56:28 +0200
+Message-ID: <4C46B63C.3060704@canonical.com>
+In-Reply-To: <20100718110441.GA20371@h02.hostsharing.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0659792762590837651==
+--===============8438489717385595754==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Matthias,
+On 07/18/2010 01:04 PM, Florian Steinel wrote:
+> Hi,
+>    =
 
->-----Original Message-----
->From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf Of
->Matthias G=C3=BCnther
->Sent: Tuesday, July 20, 2010 4:02 PM
->To: qt-qml(a)trolltech.com; ofono(a)ofono.org
->Subject: Howto about Qt QML and Ofono
->
->Hi all together.
->
->I wrote a little howto about how to use Ofono with Phonesim in the back
->and a Qt application as frontend. The Qt applicatin is devided into two
->parts, the C++ part where all the D-Bus stuff is handled and the QML
->part where you can use C++ methods to e.g. activate the Ofono modem or
->do something when an Ofono signal is recieved. The howto is separated
->into three parts:
->
->>http://matgnt.wordpress.com/2010/07/19/qt-ofono-d-bus-and-qml-part-1/
->>http://matgnt.wordpress.com/2010/07/19/qt-ofono-d-bus-and-qml-part-2/
->>http://matgnt.wordpress.com/2010/07/19/qt-ofono-d-bus-and-qml-part-3/
->
->I hope this helps people out there to create cool new phone
->applications. You're welcome to leave a note here or on the howto directly.
->
+Hi Florian,
+> I can't get my Huawei E176 USB Stick into the online state.
+>    =
 
-Your lovely program gives a good demo on how to writing an application base=
-d on oFono. oFono does claim it will help on building application in a conv=
-enient way, so the prosperity of application will definitely bring feedback=
- to oFono and make oFono grow better. =
+I'm travelling and I don't have access to my Huawei E1552 right now. But =
 
-I have two comments on your first part: 1) configure is not in the git tree=
- of oFono, so we will use bootstrap-configure instead. 2) I'm sure your pho=
-nesim works well. But we also have another phonesim derived from your repo,=
- which we had some modification and enhancement in. The repo is "git://git.=
-kernel.org/pub/scm/network/ofono/phonesim.git". The building command is sam=
-e as oFono, and the execution command is "./phonesim -p 12345 -gui src/defa=
-ult.xml".
+I'll test it as soon as I get back home.
+> Maybe commit cc6a43c477c1310643279139ba6808799a8c637e removed to much cod=
+e?
+> (rssi_notify)
+>    =
 
+Commit 6a480bb861f9a83c46368a2ee50a23f062edc207 added the same code to =
 
-Regards,
--Yang
+atmodem/network-registration.c, I doubt that's the cause here.
+> ofonod[15261]: oFono version 0.25
+> ofonod[15261]: Pcui:<  \r\n^BOOT:********,0,2,0,25\r\n
+> ofonod[15261]: Pcui:>  ATE0\r
+> ofonod[15261]: Pcui:<  \r\n^RSSI:99\r\n\r\n^SRVST:0\r\n\r\n^MODE:0,0\r\n\=
+r\n^RSSI:10\r\n\r\n^SRVST:1\r\n\r\n^MODE:5,4\r\n\r\n^BOOT:********,0,0,0,25=
+\r\n\r\nOK\r\n
+> ofonod[15261]: Pcui:>  AT+CFUN=3D1\r
+> ofonod[15261]: Pcui:<  \r\nOK\r\n
+> ofonod[15261]: Pcui:>  AT^SYSINFO\r
+> ofonod[15261]: Pcui:<  \r\n^SYSINFO:1,0,1,5,0,,4\r\n\r\nOK\r\n
+> ofonod[15261]: Pcui:>  AT+CGMI\r
+> ofonod[15261]: Pcui:<  \r\nhuawei\r\n\r\nOK\r\n
+> ofonod[15261]: Pcui:>  AT+CGMM\r
+> ofonod[15261]: Pcui:<  \r\nE176\r\n\r\nOK\r\n
+> ofonod[15261]: Pcui:>  AT+CGMR\r
+> ofonod[15261]: Pcui:<  \r\n11.104.14.01.55\r\n\r\nOK\r\n
+> ofonod[15261]: Pcui:>  AT+CGSN\r
+> ofonod[15261]: Pcui:<  \r\n***************\r\n\r\nOK\r\n
+> ofonod[15261]: Pcui:<  \r\n^BOOT:********,0,0,0,25\r\n
+> ofonod[15261]: Pcui:<  \r\n^BOOT:********,0,0,0,25\r\n
+> ofonod[15261]: Pcui:<  \r\n^BOOT:********,0,0,0,25\r\n
+> ofonod[15261]: Pcui:<  \r\n^BOOT:********,0,0,0,25\r\n
+> ofonod[15261]: Pcui:<  \r\n^BOOT:********,0,0,0,25\r\n
+> ofonod[15261]: Pcui:<  \r\n^BOOT:********,0,0,0,25\r\n
+> ofonod[15261]: Pcui:<  \r\n^BOOT:********,0,0,0,25\r\n
+> ofonod[15261]: Pcui:<  \r\n^BOOT:********,0,0,0,25\r\n
+>    =
 
---===============0659792762590837651==--
+SIM doesn't seem to be ready. I would expect to see ^SIMST messages in =
+
+the log to notify when the SIM is ready, but for some reason there =
+
+aren't any.
+
+Do you know what was the last commit when your modem worked? You could =
+
+also try to bisect it, it's really easy with git.
+
+Kalle
+
+--===============8438489717385595754==--
 
