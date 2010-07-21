@@ -1,37 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============1252440333341273730=="
+Content-Type: multipart/mixed; boundary="===============5112389366260689656=="
 MIME-Version: 1.0
-From: Zheng Zhang <zwxplay@gmail.com>
-Subject: About the TDS-CDMA support of oFono
-Date: Wed, 21 Jul 2010 13:47:29 +0800
-Message-ID: <AANLkTilmjs6m3-mGiamBuT2u_deV6RrpnvPwBAntuueJ@mail.gmail.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH] Fix: Free modem name in ofono_modem_remove
+Date: Wed, 21 Jul 2010 14:41:14 +0800
+Message-ID: <1279694474-10635-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1252440333341273730==
+--===============5112389366260689656==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-I have a plan to use oFono in the TDS-CDMA environment in China.(Maybe I can
-use Huawei E180 USB Wireless modem).
-And it seems like that oFone only supported for WCDMA/GSM, so do I need some
-adaptation of oFone for the TDS-CDMA support?Thank you !
+Avoid the memory leak of modem name.
+---
+ src/modem.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-Br
-Zheng
+diff --git a/src/modem.c b/src/modem.c
+index ccbbc27..79a5d58 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -1495,6 +1495,7 @@ void ofono_modem_remove(struct ofono_modem *modem)
+ 	if (modem->driver_type)
+ 		g_free(modem->driver_type);
+ =
 
---===============1252440333341273730==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
++	g_free(modem->name);
+ 	g_free(modem->path);
+ 	g_free(modem);
+ }
+-- =
 
-SGksPGJyPkkgaGF2ZSBhIHBsYW4gdG8gdXNlIG9Gb25vIGluIHRoZSBURFMtQ0RNQSBlbnZpcm9u
-bWVudCBpbiBDaGluYS4oTWF5YmUgSSBjYW4gdXNlIEh1YXdlaSBFMTgwIFVTQiBXaXJlbGVzcyBt
-b2RlbSkuPGJyPkFuZCBpdCBzZWVtcyBsaWtlIHRoYXQgb0ZvbmUgb25seSBzdXBwb3J0ZWQgZm9y
-IFdDRE1BL0dTTSwgc28gZG8gSSBuZWVkIHNvbWUgYWRhcHRhdGlvbiBvZiBvRm9uZSBmb3IgdGhl
-IFREUy1DRE1BIHN1cHBvcnQ/VGhhbmsgeW91ICE8YnI+Cjxicj5Ccjxicj5aaGVuZzxicj4K
+1.7.0.4
 
---===============1252440333341273730==--
+
+--===============5112389366260689656==--
 
