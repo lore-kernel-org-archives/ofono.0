@@ -1,282 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2649263510406795474=="
+Content-Type: multipart/mixed; boundary="===============4108765916010458253=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 2/2] test-stkutil: unit test for img to xpm converter
-Date: Wed, 21 Jul 2010 22:06:22 -0700
-Message-ID: <1279775182-26340-3-git-send-email-kristen@linux.intel.com>
-In-Reply-To: <1279775182-26340-1-git-send-email-kristen@linux.intel.com>
+From: Matthias =?unknown-8bit?q?G=C3=BCnther?= <matgnt@gmail.com>
+Subject: Re: Howto about Qt QML and Ofono
+Date: Thu, 22 Jul 2010 15:30:49 +0200
+Message-ID: <4C484809.6090000@gmail.com>
+In-Reply-To: <CE761E84DADF2947A4AF22FB8D97A473272A2B61@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2649263510406795474==
+--===============4108765916010458253==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- unit/test-stkutil.c |  233 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 233 insertions(+), 0 deletions(-)
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index 1d7485a..97eb1c5 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -22693,6 +22693,226 @@ static void test_html_attr(gconstpointer data)
- 	check_text_attr_html(&test->text_attr, test->text, test->html);
- }
- =
+>> I wrote a little howto about how to use Ofono with Phonesim in the back
+>> and a Qt application as frontend. The Qt applicatin is devided into two
+>> parts, the C++ part where all the D-Bus stuff is handled and the QML
+>> part where you can use C++ methods to e.g. activate the Ofono modem or
+>> do something when an Ofono signal is recieved. The howto is separated
+>> into three parts:
+>>
+>>> http://matgnt.wordpress.com/2010/07/19/qt-ofono-d-bus-and-qml-part-1/
+>>> http://matgnt.wordpress.com/2010/07/19/qt-ofono-d-bus-and-qml-part-2/
+>>> http://matgnt.wordpress.com/2010/07/19/qt-ofono-d-bus-and-qml-part-3/
+>>
+>> I hope this helps people out there to create cool new phone
+>> applications. You're welcome to leave a note here or on the howto direct=
+ly.
+>>
+> =
 
-+struct img_xpm_test {
-+	const unsigned char *img;
-+	guint8 scheme;
-+	char *xpm;
-+};
-+
-+const unsigned char img1[] =3D { 0x05, 0x05, 0xFE, 0xEB, 0xBF, 0xFF, 0xFF,=
- 0xFF };
-+
-+const unsigned char img2[] =3D { 0x08, 0x08, 0x02, 0x03, 0x00, 0x16, 0xAA,
-+					0xAA, 0x80, 0x02, 0x85, 0x42, 0x81,
-+					0x42, 0x81, 0x42, 0x81, 0x52, 0x80,
-+					0x02, 0xAA, 0xAA, 0xFF, 0x00, 0x00,
-+					0x00, 0xFF, 0x00, 0x00, 0x00, 0xFF };
-+
-+const unsigned char img3[] =3D { 0x2E, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00,=
- 0x00,
-+				0x00, 0x01, 0xFF, 0x80, 0x00, 0x00, 0x00, 0x0F,
-+				0xFF, 0x00, 0x00, 0x00, 0x00, 0x77, 0xFE, 0x00,
-+				0x00, 0x00, 0x01, 0xBF, 0xF8, 0x00, 0x00, 0x00,
-+				0x06, 0xFF, 0xE0, 0x00, 0x00, 0x00, 0x1A, 0x03,
-+				0x80, 0x00, 0x00, 0x00, 0x6B, 0xF6, 0xBC, 0x00,
-+				0x00, 0x01, 0xAF, 0xD8, 0x38, 0x00, 0x00, 0x06,
-+				0xBF, 0x60, 0x20, 0x00, 0x00, 0x1A, 0xFD, 0x80,
-+				0x40, 0x00, 0x00, 0x6B, 0xF6, 0x00, 0x80, 0x00,
-+				0x01, 0xA0, 0x1F, 0x02, 0x00, 0x00, 0x06, 0xFF,
-+				0xE4, 0x04, 0x00, 0x00, 0x1B, 0xFF, 0x90, 0x10,
-+				0x00, 0x00, 0x6D, 0xEE, 0x40, 0x40, 0x00, 0x01,
-+				0xBF, 0xF9, 0x01, 0x00, 0x00, 0x6F, 0xFF, 0xE4,
-+				0x04, 0x00, 0x00, 0x1B, 0xFF, 0x90, 0x10, 0x00,
-+				0x00, 0x6F, 0xFE, 0x40, 0x40, 0x00, 0x01, 0xBF,
-+				0xF9, 0x01, 0x00, 0x00, 0x06, 0xFF, 0xE6, 0x04,
-+				0x00, 0x00, 0x1B, 0xFF, 0x88, 0x10, 0x00, 0x00,
-+				0x6F, 0xFE, 0x20, 0x40, 0x00, 0x01, 0xBF, 0xF8,
-+				0x66, 0x00, 0x00, 0x06, 0xFF, 0xE0, 0xF0, 0x00,
-+				0x00, 0x1B, 0xFF, 0x80, 0x80, 0x00, 0x00, 0x7F,
-+				0xFE, 0x00, 0x00, 0x00, 0x03, 0x00, 0x0C, 0x00,
-+				0x00, 0x00, 0x1F, 0xFF, 0xF8, 0x00, 0x00, 0x00,
-+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-+				0x1C, 0x21, 0x08, 0x44, 0xEE, 0x00, 0x48, 0xC4,
-+				0x31, 0x92, 0x20, 0x01, 0x25, 0x11, 0x45, 0x50,
-+				0x80, 0x07, 0x14, 0x45, 0x15, 0x43, 0x80, 0x12,
-+				0x71, 0x1C, 0x4D, 0x08, 0x00, 0x4A, 0x24, 0x89,
-+				0x32, 0x20, 0x01, 0xC8, 0x9E, 0x24, 0x4E,
-+				0xE0 };
-+
-+const unsigned char img4[] =3D { 0x18, 0x10, 0xFF, 0xFF, 0xFF, 0x80, 0x00,=
- 0x01,
-+				0x80, 0x00, 0x01, 0x80, 0x00, 0x01, 0x8F,
-+				0x3C, 0xF1, 0x89, 0x20, 0x81, 0x89, 0x20,
-+				0x81, 0x89, 0x20, 0xF1, 0x89, 0x20, 0x11,
-+				0x89, 0x20, 0x11, 0x89, 0x20, 0x11, 0x8F,
-+				0x3C, 0xF1, 0x80, 0x00, 0x01, 0x80, 0x00,
-+				0x01, 0x80, 0x00, 0x01, 0xFF, 0xFF, 0xFF };
-+
-+const unsigned char img5[] =3D { 0x08, 0x08, 0xFF, 0x03, 0xA5, 0x99, 0x99,
-+				0xA5, 0xC3, 0xFF };
-+
-+static struct img_xpm_test xpm_test_1 =3D {
-+	.img =3D img1,
-+	.scheme =3D 0x11,
-+	.xpm =3D "/* XPM */\n"
-+		"static char *xpm[] =3D {\n"
-+		"\"5 5 2 1\",\n"
-+		"\"0	c #000000\",\n"
-+		"\"1	c #FFFFFF\",\n"
-+		"\"11111\",\n"
-+		"\"11011\",\n"
-+		"\"10101\",\n"
-+		"\"11011\",\n"
-+		"\"11111\",\n"
-+		"};",
-+};
-+
-+static struct img_xpm_test xpm_test_2 =3D {
-+	.img =3D img2,
-+	.scheme =3D 0x21,
-+	.xpm =3D "/* XPM */\n"
-+		"static char *xpm[] =3D {\n"
-+		"\"8 8 3 1\",\n"
-+		"\"0	c #FF0000\",\n"
-+		"\"1	c #00FF00\",\n"
-+		"\"2	c #0000FF\",\n"
-+		"\"22222222\",\n"
-+		"\"20000002\",\n"
-+		"\"20111002\",\n"
-+		"\"20011002\",\n"
-+		"\"20011002\",\n"
-+		"\"20011102\",\n"
-+		"\"20000002\",\n"
-+		"\"22222222\",\n"
-+		"};",
-+};
-+
-+static struct img_xpm_test xpm_test_3 =3D {
-+	.img =3D img3,
-+	.scheme =3D 0x11,
-+	.xpm =3D "/* XPM */\n"
-+		"static char *xpm[] =3D {\n"
-+		"\"46 40 2 1\",\n"
-+		"\"0	c #000000\",\n"
-+		"\"1	c #FFFFFF\",\n"
-+		"\"0000000000000000000000000000000000000000000000\",\n"
-+		"\"0000000000000000011111111110000000000000000000\",\n"
-+		"\"0000000000000000111111111111000000000000000000\",\n"
-+		"\"0000000000000001110111111111100000000000000000\",\n"
-+		"\"0000000000000001101111111111100000000000000000\",\n"
-+		"\"0000000000000001101111111111100000000000000000\",\n"
-+		"\"0000000000000001101000000011100000000000000000\",\n"
-+		"\"0000000000000001101011111101101011110000000000\",\n"
-+		"\"0000000000000001101011111101100000111000000000\",\n"
-+		"\"0000000000000001101011111101100000001000000000\",\n"
-+		"\"0000000000000001101011111101100000000100000000\",\n"
-+		"\"0000000000000001101011111101100000000010000000\",\n"
-+		"\"0000000000000001101000000001111100000010000000\",\n"
-+		"\"0000000000000001101111111111100100000001000000\",\n"
-+		"\"0000000000000001101111111111100100000001000000\",\n"
-+		"\"0000000000000001101101111011100100000001000000\",\n"
-+		"\"0000000000000001101111111111100100000001000000\",\n"
-+		"\"0000000000011011111111111111100100000001000000\",\n"
-+		"\"0000000000000001101111111111100100000001000000\",\n"
-+		"\"0000000000000001101111111111100100000001000000\",\n"
-+		"\"0000000000000001101111111111100100000001000000\",\n"
-+		"\"0000000000000001101111111111100110000001000000\",\n"
-+		"\"0000000000000001101111111111100010000001000000\",\n"
-+		"\"0000000000000001101111111111100010000001000000\",\n"
-+		"\"0000000000000001101111111111100001100110000000\",\n"
-+		"\"0000000000000001101111111111100000111100000000\",\n"
-+		"\"0000000000000001101111111111100000001000000000\",\n"
-+		"\"0000000000000001111111111111100000000000000000\",\n"
-+		"\"0000000000000011000000000000110000000000000000\",\n"
-+		"\"0000000000000111111111111111111000000000000000\",\n"
-+		"\"0000000000000000000000000000000000000000000000\",\n"
-+		"\"0000000000000000000000000000000000000000000000\",\n"
-+		"\"0000000000000000000000000000000000000000000000\",\n"
-+		"\"0000011100001000010000100001000100111011100000\",\n"
-+		"\"0000010010001100010000110001100100100010000000\",\n"
-+		"\"0000010010010100010001010001010101000010000000\",\n"
-+		"\"0000011100010100010001010001010101000011100000\",\n"
-+		"\"0000010010011100010001110001001101000010000000\",\n"
-+		"\"0000010010100010010010001001001100100010000000\",\n"
-+		"\"0000011100100010011110001001000100111011100000\",\n"
-+		"};",
-+};
-+
-+static struct img_xpm_test xpm_test_4 =3D {
-+	.img =3D img4,
-+	.scheme =3D 0x11,
-+	.xpm =3D "/* XPM */\n"
-+		"static char *xpm[] =3D {\n"
-+		"\"24 16 2 1\",\n"
-+		"\"0	c #000000\",\n"
-+		"\"1	c #FFFFFF\",\n"
-+		"\"111111111111111111111111\",\n"
-+		"\"100000000000000000000001\",\n"
-+		"\"100000000000000000000001\",\n"
-+		"\"100000000000000000000001\",\n"
-+		"\"100011110011110011110001\",\n"
-+		"\"100010010010000010000001\",\n"
-+		"\"100010010010000010000001\",\n"
-+		"\"100010010010000011110001\",\n"
-+		"\"100010010010000000010001\",\n"
-+		"\"100010010010000000010001\",\n"
-+		"\"100010010010000000010001\",\n"
-+		"\"100011110011110011110001\",\n"
-+		"\"100000000000000000000001\",\n"
-+		"\"100000000000000000000001\",\n"
-+		"\"100000000000000000000001\",\n"
-+		"\"111111111111111111111111\",\n"
-+		"};",
-+};
-+
-+static struct img_xpm_test xpm_test_5 =3D {
-+	.img =3D img5,
-+	.scheme =3D 0x11,
-+	.xpm =3D "/* XPM */\n"
-+		"static char *xpm[] =3D {\n"
-+		"\"8 8 2 1\",\n"
-+		"\"0	c #000000\",\n"
-+		"\"1	c #FFFFFF\",\n"
-+		"\"11111111\",\n"
-+		"\"00000011\",\n"
-+		"\"10100101\",\n"
-+		"\"10011001\",\n"
-+		"\"10011001\",\n"
-+		"\"10100101\",\n"
-+		"\"11000011\",\n"
-+		"\"11111111\",\n"
-+		"};",
-+};
-+
-+static struct img_xpm_test xpm_test_6 =3D {
-+	.img =3D img2,
-+	.scheme =3D 0x22,
-+	.xpm =3D "/* XPM */\n"
-+		"static char *xpm[] =3D {\n"
-+		"\"8 8 3 1\",\n"
-+		"\"0	c #FF0000\",\n"
-+		"\"1	c #00FF00\",\n"
-+		"\"2	c None\",\n"
-+		"\"22222222\",\n"
-+		"\"20000002\",\n"
-+		"\"20111002\",\n"
-+		"\"20011002\",\n"
-+		"\"20011002\",\n"
-+		"\"20011102\",\n"
-+		"\"20000002\",\n"
-+		"\"22222222\",\n"
-+		"};",
-+};
-+
-+static void test_img_to_xpm(gconstpointer data)
-+{
-+	const struct img_xpm_test *test =3D data;
-+	char *xpm;
-+
-+	xpm =3D stk_image_to_xpm(test->img, test->scheme);
-+
-+	g_assert(memcmp(xpm, test->xpm, strlen(test->xpm)) =3D=3D 0);
-+	g_free(xpm);
-+}
-+
- int main(int argc, char **argv)
- {
- 	g_test_init(&argc, &argv, NULL);
-@@ -24727,5 +24947,18 @@ int main(int argc, char **argv)
- 	g_test_add_data_func("/teststk/HTML Attribute Test 4",
- 				&html_attr_data_4, test_html_attr);
- =
+> Your lovely program gives a good demo on how to writing an application ba=
+sed on oFono. oFono does claim it will help on building application in a co=
+nvenient way, so the prosperity of application will definitely bring feedba=
+ck to oFono and make oFono grow better. =
 
-+	g_test_add_data_func("/teststk/IMG to XPM Test 1",
-+				&xpm_test_1, test_img_to_xpm);
-+	g_test_add_data_func("/teststk/IMG to XPM Test 2",
-+				&xpm_test_2, test_img_to_xpm);
-+	g_test_add_data_func("/teststk/IMG to XPM Test 3",
-+				&xpm_test_3, test_img_to_xpm);
-+	g_test_add_data_func("/teststk/IMG to XPM Test 4",
-+				&xpm_test_4, test_img_to_xpm);
-+	g_test_add_data_func("/teststk/IMG to XPM Test 5",
-+				&xpm_test_5, test_img_to_xpm);
-+	g_test_add_data_func("/teststk/IMG to XPM Test 6",
-+				&xpm_test_6, test_img_to_xpm);
-+
- 	return g_test_run();
- }
--- =
+> I have two comments on your first part: 1) configure is not in the git tr=
+ee of oFono, so we will use bootstrap-configure instead. 2) I'm sure your p=
+honesim works well. But we also have another phonesim derived from your rep=
+o, which we had some modification and enhancement in. The repo is "git://gi=
+t.kernel.org/pub/scm/network/ofono/phonesim.git". The building command is s=
+ame as oFono, and the execution command is "./phonesim -p 12345 -gui src/de=
+fault.xml".
 
-1.6.6.1
+Thanks Yang, I've added the ./bootstrap command to the listing. I also
+wrote down a hint to the ofono branch of phonesim.
 
+Best regards,
+Matthias
 
---===============2649263510406795474==--
+--===============4108765916010458253==--
 
