@@ -1,152 +1,138 @@
-Content-Type: multipart/mixed; boundary="===============2990506652124733841=="
+Content-Type: multipart/mixed; boundary="===============0892746008684387773=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH] doc: stk-api proposal
-Date: Thu, 22 Jul 2010 04:01:58 +0200
-Message-ID: <AANLkTinvqZ-AJtx_bitEJ8mWybNDcJzRWQz5ooy96hya@mail.gmail.com>
-In-Reply-To: <4C478F58.9050309@gmail.com>
+From: Zheng Zhang <zwxplay@gmail.com>
+Subject: Re: ISI drivers test simulator
+Date: Thu, 22 Jul 2010 10:07:28 +0800
+Message-ID: <AANLkTim6kRgQ3DotahCJuY2Vx_qBHNB1TFRHcfauPZzm@mail.gmail.com>
+In-Reply-To: <33AB447FBD802F4E932063B962385B3527536A55@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2990506652124733841==
+--===============0892746008684387773==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
+I have integrated N900 MeeGo Day 1 image to my N900 device.But this MeeGo
+release is only a demo which do not support modem driver, so we can not  use
+oFono to operate Nokia's modem natively on N900 now.Of course, oFono has
+been integrated in this release, but can not be used.
 
-On 22 July 2010 02:22, Denis Kenzior <denkenz@gmail.com> wrote:
-> On 07/21/2010 05:06 PM, Shane Bryan wrote:
->>
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 [service].Error.No=
-tFound
->>> +
->>> [service].Error.NotAuthorized +
->>
->> - What are the plans for the configuration of services/object paths for
->> =C2=A0 "launch-able" Terminal Applications (AKA, Agents?)? =C2=A0Will th=
-ere be a
->> =C2=A0 stk.conf file or similar or will this be protected in a dbus serv=
-ice
->> =C2=A0 config file?
+Br
+Zheng
 
-Most likely the Terminal Applications capability will not be
-implemented for a while, it is not used by popular SIMs and is not
-very practical.  It may be implemented if needed.
+On Wed, Jul 21, 2010 at 10:37 PM, Zhang, Zhenhua <zhenhua.zhang@intel.com=
+>wrote:
 
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0string GetInput(string alpha=
-, array{byte} icon,
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0string default, byte min, byte max,
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0boolean hide_typing)
->>> +
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-Tells the agent to request an input string
->>> from the
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-user. =C2=A0The alpha parameter and icon gives
->>> context to
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-the user. =C2=A0The default string contains the
->>> suggested
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-default by the SIM. =C2=A0The min and max
->>> parameters contain
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-how many characters the user should enter.
->>> The
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-parameter hide_typing indicates whether
->>> user's typing
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-should be opaque.
->>> +
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-Possible Errors:
->>> [service].Error.SimToolkit.GoBack +
->>
->> - Same questions as above regarding the icon data formatting.
->>
->> - Given the min/max constraints, plus the default value, I assume
->> =C2=A0 that if the input provided by the user falls within (inclusive) b=
-oth
->> =C2=A0 conditions, this is what is returned, otherwise the value of defa=
-ult
->> =C2=A0 is returned, correct?
+> Hi Remi,
 >
-> No, this is more about validation. =C2=A0E.g. the agent should not return
-> more than max or less than min characters. =C2=A0A maximum value of 255 m=
-eans
-> no maximum is given.
+> R=C3=A9mi Denis-Courmont wrote:
+> > On Tue, 20 Jul 2010 11:28:59 +0200, "Alan KREUTZ"
+> > <alan.kreutz.vz@rdf.renesas.com> wrote:
+> >> 1-    Is, the fact to test oFono ISI driver with a Nokia phone, the
+> >> only way to test ISI drivers or is there a simulator like phonesim
+> >> for ISI driver?
+> >
+> > Yes.
+> >
+> >> 2-    How to test oFono with a Nokia mobile? I believe that the
+> >> plugin usbpnmodem.c must be used to communicate with modem via USB
+> >> and it seems that Maemo (or MeeGo) is mandatory too. Is this correct?
+> >
+> > Yes and no. Some of the oFono atoms from the ISI driver do work with
+> > S60 phones and S40 phones too.
+> >
+> >> 3-    And last question, if a Nokia modem is connected via USB to a
+> >> PC, is the Nokia's modem disconnected from UI part in order to
+> >> receive and treat only messages from host (PC/oFono)?
+> >
+> > Some features won't work, notably SMS reception.
 >
-> The user can either accept the default value or enter his own input.
-
-This really just means a text input field, with the default text as
-initial value, if any.
-
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0string GetKey(string alpha, =
-array{byte} icon)
->>> +
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-Tells the agent to request a single input
->>> key from
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-the user. =C2=A0The alpha parameter contains the
->>> context
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-for the request.
->>> +
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-Possible Errors:
->>> [service].Error.SimToolkit.GoBack +
->>
->> - I am assuming this "Key" is in fact meant to imply a single
->> =C2=A0 Character, not a scan code or keycode from some hardware key,
->> =C2=A0 correct? =C2=A0May seem obvious to some, but I can't always be su=
-re.
->>
+> One question I have: Can we install Meego image and use oFono to operate
+> Nokia's
+> modem natively on N900 now? Can we use voicecall/GPRS/SMS and other
+> availabe
+> featueres in oFono?
 >
-> Correct
+> > --
+> > R=C3=A9mi Denis-Courmont
+> > http://www.remlab.net
+> > http://fi.linkedin.com/in/remidenis
+> >
+> > _______________________________________________
+> > ofono mailing list
+> > ofono(a)ofono.org
+> > http://lists.ofono.org/listinfo/ofono
+>
+>
+>
+> Regards,
+> Zhenhua
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
-The SIM either requests a single gsm 7-bit character, a single unicode
-character or a single key press (on the physical keypad), depending on
-the parameters of the SIM command.  However this api does not make a
-distiction between these options (the previous api does has an
-"alphabet" parameter).
+--===============0892746008684387773==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
->>
->>
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0void Release()
->>> +
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-Agent is being released, possibly because of
->>> oFono
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-terminating, SimToolkit interface torn down
->>> or modem
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-off. =C2=A0If the agent is registered as a global
->>> agent,
->>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
-no UnregisterAgent call is expected.
->>
->> Ok, so in this case, the SimToolkit will call the agents Release()
->> method when (as asked above in the RegisterAgent() comments) the modem
->> Powered state goes from true to false (as well as under other possible
->> conditions, yeah, I know), correct?
+SGksPGJyPkkgaGF2ZSBpbnRlZ3JhdGVkIE45MDAgTWVlR28gRGF5IDEgaW1hZ2UgdG8gbXkgTjkw
+MCBkZXZpY2UuQnV0IHRoaXMgTWVlR28gcmVsZWFzZSBpcyBvbmx5IGEgZGVtbyB3aGljaCBkbyBu
+b3Qgc3VwcG9ydCBtb2RlbSBkcml2ZXIsIHNvIHdlIGNhbiBub3SgIHVzZSBvRm9ubyB0byBvcGVy
+YXRlIE5va2lhJiMzOTtzIG1vZGVtIG5hdGl2ZWx5IG9uIE45MDAgbm93Lk9mIGNvdXJzZSwgb0Zv
+bm8gaGFzIGJlZW4gaW50ZWdyYXRlZCBpbiB0aGlzIHJlbGVhc2UsIGJ1dCBjYW4gbm90IGJlIHVz
+ZWQuPGJyPgo8YnI+QnI8YnI+Wmhlbmc8YnI+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj5P
+biBXZWQsIEp1bCAyMSwgMjAxMCBhdCAxMDozNyBQTSwgWmhhbmcsIFpoZW5odWEgPHNwYW4gZGly
+PSJsdHIiPiZsdDs8YSBocmVmPSJtYWlsdG86emhlbmh1YS56aGFuZ0BpbnRlbC5jb20iPnpoZW5o
+dWEuemhhbmdAaW50ZWwuY29tPC9hPiZndDs8L3NwYW4+IHdyb3RlOjxicj48YmxvY2txdW90ZSBj
+bGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46IDBwdCAwcHQgMHB0IDAuOGV4OyBib3Jk
+ZXItbGVmdDogMXB4IHNvbGlkIHJnYigyMDQsIDIwNCwgMjA0KTsgcGFkZGluZy1sZWZ0OiAxZXg7
+Ij4KSGkgUmVtaSw8YnI+CjxkaXYgY2xhc3M9ImltIj48YnI+ClLpbWkgRGVuaXMtQ291cm1vbnQg
+d3JvdGU6PGJyPgomZ3Q7IE9uIFR1ZSwgMjAgSnVsIDIwMTAgMTE6Mjg6NTkgKzAyMDAsICZxdW90
+O0FsYW4gS1JFVVRaJnF1b3Q7PGJyPgomZ3Q7ICZsdDs8YSBocmVmPSJtYWlsdG86YWxhbi5rcmV1
+dHoudnpAcmRmLnJlbmVzYXMuY29tIj5hbGFuLmtyZXV0ei52ekByZGYucmVuZXNhcy5jb208L2E+
+Jmd0OyB3cm90ZTo8YnI+CiZndDsmZ3Q7IDEtIKAgoElzLCB0aGUgZmFjdCB0byB0ZXN0IG9Gb25v
+IElTSSBkcml2ZXIgd2l0aCBhIE5va2lhIHBob25lLCB0aGU8YnI+CiZndDsmZ3Q7IG9ubHkgd2F5
+IHRvIHRlc3QgSVNJIGRyaXZlcnMgb3IgaXMgdGhlcmUgYSBzaW11bGF0b3IgbGlrZSBwaG9uZXNp
+bTxicj4KJmd0OyZndDsgZm9yIElTSSBkcml2ZXI/PGJyPgomZ3Q7PGJyPgomZ3Q7IFllcy48YnI+
+CiZndDs8YnI+CiZndDsmZ3Q7IDItIKAgoEhvdyB0byB0ZXN0IG9Gb25vIHdpdGggYSBOb2tpYSBt
+b2JpbGU/IEkgYmVsaWV2ZSB0aGF0IHRoZTxicj4KJmd0OyZndDsgcGx1Z2luIHVzYnBubW9kZW0u
+YyBtdXN0IGJlIHVzZWQgdG8gY29tbXVuaWNhdGUgd2l0aCBtb2RlbSB2aWEgVVNCPGJyPgomZ3Q7
+Jmd0OyBhbmQgaXQgc2VlbXMgdGhhdCBNYWVtbyAob3IgTWVlR28pIGlzIG1hbmRhdG9yeSB0b28u
+IElzIHRoaXMgY29ycmVjdD88YnI+CiZndDs8YnI+CiZndDsgWWVzIGFuZCBuby4gU29tZSBvZiB0
+aGUgb0Zvbm8gYXRvbXMgZnJvbSB0aGUgSVNJIGRyaXZlciBkbyB3b3JrIHdpdGg8YnI+CiZndDsg
+UzYwIHBob25lcyBhbmQgUzQwIHBob25lcyB0b28uPGJyPgomZ3Q7PGJyPgomZ3Q7Jmd0OyAzLSCg
+IKBBbmQgbGFzdCBxdWVzdGlvbiwgaWYgYSBOb2tpYSBtb2RlbSBpcyBjb25uZWN0ZWQgdmlhIFVT
+QiB0byBhPGJyPgomZ3Q7Jmd0OyBQQywgaXMgdGhlIE5va2lhJiMzOTtzIG1vZGVtIGRpc2Nvbm5l
+Y3RlZCBmcm9tIFVJIHBhcnQgaW4gb3JkZXIgdG88YnI+CiZndDsmZ3Q7IHJlY2VpdmUgYW5kIHRy
+ZWF0IG9ubHkgbWVzc2FnZXMgZnJvbSBob3N0IChQQy9vRm9ubyk/PGJyPgomZ3Q7PGJyPgomZ3Q7
+IFNvbWUgZmVhdHVyZXMgd29uJiMzOTt0IHdvcmssIG5vdGFibHkgU01TIHJlY2VwdGlvbi48YnI+
+Cjxicj4KPC9kaXY+T25lIHF1ZXN0aW9uIEkgaGF2ZTogQ2FuIHdlIGluc3RhbGwgTWVlZ28gaW1h
+Z2UgYW5kIHVzZSBvRm9ubyB0byBvcGVyYXRlIE5va2lhJiMzOTtzPGJyPgptb2RlbSBuYXRpdmVs
+eSBvbiBOOTAwIG5vdz8gQ2FuIHdlIHVzZSB2b2ljZWNhbGwvR1BSUy9TTVMgYW5kIG90aGVyIGF2
+YWlsYWJlPGJyPgpmZWF0dWVyZXMgaW4gb0Zvbm8/PGJyPgo8YnI+CiZndDsgLS08YnI+CjxkaXYg
+Y2xhc3M9ImltIj4mZ3Q7IFLpbWkgRGVuaXMtQ291cm1vbnQ8YnI+CiZndDsgPGEgaHJlZj0iaHR0
+cDovL3d3dy5yZW1sYWIubmV0IiB0YXJnZXQ9Il9ibGFuayI+aHR0cDovL3d3dy5yZW1sYWIubmV0
+PC9hPjxicj4KJmd0OyA8YSBocmVmPSJodHRwOi8vZmkubGlua2VkaW4uY29tL2luL3JlbWlkZW5p
+cyIgdGFyZ2V0PSJfYmxhbmsiPmh0dHA6Ly9maS5saW5rZWRpbi5jb20vaW4vcmVtaWRlbmlzPC9h
+Pjxicj4KJmd0Ozxicj4KJmd0OyBfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fXzxicj4KJmd0OyBvZm9ubyBtYWlsaW5nIGxpc3Q8YnI+CiZndDsgPGEgaHJlZj0i
+bWFpbHRvOm9mb25vQG9mb25vLm9yZyI+b2Zvbm9Ab2Zvbm8ub3JnPC9hPjxicj4KJmd0OyA8YSBo
+cmVmPSJodHRwOi8vbGlzdHMub2Zvbm8ub3JnL2xpc3RpbmZvL29mb25vIiB0YXJnZXQ9Il9ibGFu
+ayI+aHR0cDovL2xpc3RzLm9mb25vLm9yZy9saXN0aW5mby9vZm9ubzwvYT48YnI+Cjxicj4KPGJy
+Pgo8YnI+CjwvZGl2PlJlZ2FyZHMsPGJyPgo8Zm9udCBjb2xvcj0iIzg4ODg4OCI+Wmhlbmh1YTxi
+cj4KPC9mb250PjxkaXY+PGRpdj48L2Rpdj48ZGl2IGNsYXNzPSJoNSI+PGJyPgpfX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXzxicj4Kb2Zvbm8gbWFpbGluZyBs
+aXN0PGJyPgo8YSBocmVmPSJtYWlsdG86b2Zvbm9Ab2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5vcmc8
+L2E+PGJyPgo8YSBocmVmPSJodHRwOi8vbGlzdHMub2Zvbm8ub3JnL2xpc3RpbmZvL29mb25vIiB0
+YXJnZXQ9Il9ibGFuayI+aHR0cDovL2xpc3RzLm9mb25vLm9yZy9saXN0aW5mby9vZm9ubzwvYT48
+YnI+CjwvZGl2PjwvZGl2PjwvYmxvY2txdW90ZT48L2Rpdj48YnI+Cg==
 
-Yes, additionally ofono will call Release() on the "user-initiated
-agent" when the card wants the UI to go back to the main menu or close
-the UI altogether.  The spec suggests / recommends that basically the
-application should go to main menu if the last action performed was a
-GoBack button press, otherwise the application should exit, but it may
-depend on the specific use case.  For example the javascript GUI
-client I use for testing this always has screen space available so it
-always goes to main menu.
-
-Regards
-
---===============2990506652124733841==--
+--===============0892746008684387773==--
 
