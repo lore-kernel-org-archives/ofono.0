@@ -1,49 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============3605019602715066479=="
+Content-Type: multipart/mixed; boundary="===============8695892251643041902=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 Subject: Re: [patch 12/20] struct tx_queue_entry: add a destructor
-Date: Fri, 23 Jul 2010 18:06:49 -0500
-Message-ID: <4C4A2089.7030804@gmail.com>
-In-Reply-To: <796fef7f2a9f6c407513467dc76247ad7886fced.1279918330.git.inaky.perez-gonzalez@intel.com>
+Date: Fri, 23 Jul 2010 16:11:02 -0700
+Message-ID: <1279926662.26204.142.camel@localhost.localdomain>
+In-Reply-To: <4C4A2089.7030804@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3605019602715066479==
+--===============8695892251643041902==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Inaky,
+On Fri, 2010-07-23 at 16:06 -0700, Denis Kenzior wrote: =
 
-> +
-> +/*
-> + * Destroy/release the contents of a 'struct tx_queue_entry'
-> + *
-> + * This releases resources allocated *inside* @entry and @entry
-> + * itself.
-> + */
-> +static void tx_queue_entry_destroy_free(gpointer _entry, gpointer unused)
+> Hi Inaky,
+> =
 
-Can't this be simply tx_queue_entry_free?  And feel free to take struct
-tx_queue_entry * here.  Casting the destructor in g_foo_foreach is
-acceptable.
+> > +
+> > +/*
+> > + * Destroy/release the contents of a 'struct tx_queue_entry'
+> > + *
+> > + * This releases resources allocated *inside* @entry and @entry
+> > + * itself.
+> > + */
+> > +static void tx_queue_entry_destroy_free(gpointer _entry, gpointer unus=
+ed)
+> =
 
-> +{
-> +	struct tx_queue_entry *entry =3D _entry;
-> +
-> +	if (entry->destroy)
-> +		entry->destroy(entry->data);
+> Can't this be simply tx_queue_entry_free?  And feel free to take struct
 
-An empty line after if/while/for blocks please.  I will update the
-coding-style document with this rule shortly.
+Sure, I'll rename that.
 
-> +	g_free(entry->pdus);
-> +	g_free(entry);
-> +}
-> +
+> tx_queue_entry * here.  Casting the destructor in g_foo_foreach is
+> acceptable.
 
-Regards,
--Denis
+Heh, I'd rather have it like this: Repeat after me in a 1000-loop: casts
+are evil and should be avoided for they muck the code by hiding warnings
+when you change things and miss updating all the sites ... =
 
---===============3605019602715066479==--
+
+> > +{
+> > +	struct tx_queue_entry *entry =3D _entry;
+> > +
+> > +	if (entry->destroy)
+> > +		entry->destroy(entry->data);
+> =
+
+> An empty line after if/while/for blocks please.  I will update the
+> coding-style document with this rule shortly.
+
+Will do, thanks
+
+
+--===============8695892251643041902==--
 
