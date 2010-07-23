@@ -1,209 +1,289 @@
-Content-Type: multipart/mixed; boundary="===============0802793592572645374=="
+Content-Type: multipart/mixed; boundary="===============8747103625684381811=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 1/2] stkutil: convert img to xpm
-Date: Thu, 22 Jul 2010 17:10:14 -0700
-Message-ID: <1279843815-28080-2-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH 2/2] test-stkutil: unit test for img to xpm converter
+Date: Thu, 22 Jul 2010 17:10:15 -0700
+Message-ID: <1279843815-28080-3-git-send-email-kristen@linux.intel.com>
 In-Reply-To: <1279843815-28080-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0802793592572645374==
+--===============8747103625684381811==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.c |  148 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ unit/test-stkutil.c |  240 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/stkutil.h |    8 +++
- 2 files changed, 156 insertions(+), 0 deletions(-)
+ 1 files changed, 240 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 9cac850..46ae026 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -6076,3 +6076,151 @@ char *stk_text_to_html(const char *utf8,
- 	/* return characters from string. Caller must free char data */
- 	return g_string_free(string, FALSE);
+diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
+index 1d7485a..ea65621 100644
+--- a/unit/test-stkutil.c
++++ b/unit/test-stkutil.c
+@@ -22693,6 +22693,233 @@ static void test_html_attr(gconstpointer data)
+ 	check_text_attr_html(&test->text_attr, test->text, test->html);
  }
-+
-+static const char chars_table[] =3D {
-+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C',
-+	'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-+	'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c',
-+	'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
-+	'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '+', '.' };
-+
-+char *stk_image_to_xpm(const unsigned char *img, unsigned int len,
-+			enum stk_img_scheme scheme)
-+{
-+	guint8 width, height;
-+	unsigned int ncolors, nbits, entry, cpp;
-+	unsigned int i, j;
-+	int bit, k;
-+	unsigned short clut_offset =3D 0;
-+	guint8 *clut;
-+	GString *xpm;
-+	unsigned int pos =3D 0;
-+	const char xpm_header[] =3D "/* XPM */\n";
-+	const char declaration[] =3D "static char *xpm[] =3D {\n";
-+	char c[3];
-+
-+	if (img =3D=3D NULL)
-+		return NULL;
-+
-+	/* sanity check length */
-+	if (len < 3)
-+		return NULL;
-+
-+	width =3D img[pos++];
-+	height =3D img[pos++];
-+
-+	if (scheme =3D=3D STK_IMG_SCHEME_BASIC) {
-+		nbits =3D 1;
-+		ncolors =3D 2;
-+
-+		if (pos + ((width * height)/8) > len)
-+			return NULL;
-+	} else {
-+		/* sanity check length */
-+		if (pos + 4 > len)
-+			return NULL;
-+
-+		nbits =3D img[pos++];
-+		ncolors =3D img[pos++];
-+
-+		/* the value of zero should be interpreted as 256 */
-+		if (ncolors =3D=3D 0)
-+			ncolors =3D 256;
-+
-+		clut_offset =3D img[pos++] << 8;
-+		clut_offset |=3D img[pos++];
-+
-+		if ((clut_offset + (ncolors * 3) > len) ||
-+			(pos + (width * height * nbits)/8) > clut_offset)
-+			return NULL;
-+	}
-+
-+	/* determine the number of chars need to represent the pixel */
-+	cpp =3D ncolors > 64 ? 2 : 1;
-+
-+	/*
-+	 * space needed:
-+	 * 	header line
-+	 *	declaration and beginning of assignment line
-+	 *	values - max length of 19
-+	 *	colors - ncolors * (cpp + whitespace + deliminators + color)
-+	 *	pixels - width * height * cpp + height deliminators "",\n
-+	 *	end of assignment - 2 chars "};"
-+	 */
-+	xpm =3D g_string_sized_new(strlen(xpm_header) + strlen(declaration) +
-+				19 + ((cpp + 14) * ncolors) +
-+				(width * height * cpp) + (4 * height) + 2);
-+	if (xpm =3D=3D NULL)
-+		return NULL;
-+
-+	/* add header, declaration, values */
-+	g_string_append(xpm, xpm_header);
-+	g_string_append(xpm, declaration);
-+	g_string_append_printf(xpm, "\"%d %d %d %d\",\n", width, height,
-+				ncolors, cpp);
-+
-+	/* create colors */
-+	if (scheme =3D=3D STK_IMG_SCHEME_BASIC) {
-+		g_string_append(xpm, "\"0\tc #000000\",\n");
-+		g_string_append(xpm, "\"1\tc #FFFFFF\",\n");
-+	} else {
-+		clut =3D (guint8 *) &img[clut_offset];
-+
-+		for (i =3D 0; i < ncolors; i++) {
-+			/* lookup char representation of this number */
-+			if (ncolors > 64) {
-+				c[0] =3D chars_table[i / 64];
-+				c[1] =3D chars_table[i % 64];
-+				c[2] =3D '\0';
-+			} else {
-+				c[0] =3D chars_table[i % 64];
-+				c[1] =3D '\0';
-+			}
-+
-+			if ((i =3D=3D (ncolors - 1)) &&
-+					scheme =3D=3D STK_IMG_SCHEME_TRANSPARENCY)
-+				g_string_append_printf(xpm,
-+					"\"%s\tc None\",\n", c);
-+			else
-+				g_string_append_printf(xpm,
-+					"\"%s\tc #%02hhX%02hhX%02hhX\",\n",
-+					c, clut[0], clut[1], clut[2]);
-+			clut +=3D 3;
-+		}
-+	}
-+
-+	/* height rows of width pixels */
-+	k =3D 7;
-+	for (i =3D 0; i < height; i++) {
-+		g_string_append(xpm, "\"");
-+		for (j =3D 0; j < width; j++) {
-+			entry =3D 0;
-+			for (bit =3D nbits - 1; bit >=3D 0; bit--) {
-+				entry |=3D (img[pos] >> k & 0x1) << bit;
-+				k--;
-+
-+				/* see if we crossed a byte boundary */
-+				if (k < 0) {
-+					k =3D 7;
-+					pos++;
-+				}
-+			}
-+
-+			/* lookup char representation of this number */
-+			if (ncolors > 64) {
-+				c[0] =3D chars_table[entry / 64];
-+				c[1] =3D chars_table[entry % 64];
-+				c[2] =3D '\0';
-+			} else {
-+				c[0] =3D chars_table[entry % 64];
-+				c[1] =3D '\0';
-+			}
-+			g_string_append_printf(xpm, "%s", c);
-+		}
-+		g_string_append(xpm, "\",\n");
-+	}
-+	g_string_append(xpm, "};");
-+
-+	/* Caller must free char data */
-+	return g_string_free(xpm, FALSE);
-+}
-diff --git a/src/stkutil.h b/src/stkutil.h
-index 1fbd68b..1e33a65 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -557,6 +557,12 @@ enum stk_me_status {
- 	STK_ME_STATUS_NOT_IDLE =3D 	0x01
- };
  =
 
-+enum stk_img_scheme {
-+	STK_IMG_SCHEME_BASIC =3D		0x11,
-+	STK_IMG_SCHEME_COLOR =3D		0x21,
-+	STK_IMG_SCHEME_TRANSPARENCY =3D	0x22,
++struct img_xpm_test {
++	const unsigned char *img;
++	unsigned int len;
++	guint8 scheme;
++	char *xpm;
 +};
 +
- /* For data object that only has a byte array with undetermined length */
- struct stk_common_byte_array {
- 	unsigned char *array;
-@@ -1644,3 +1650,5 @@ const unsigned char *stk_pdu_from_envelope(const stru=
-ct stk_envelope *envelope,
- 						unsigned int *out_length);
- char *stk_text_to_html(const char *text,
- 				const unsigned short *attrs, int num_attrs);
-+char *stk_image_to_xpm(const unsigned char *img, unsigned int len,
-+			enum stk_img_scheme scheme);
++const unsigned char img1[] =3D { 0x05, 0x05, 0xFE, 0xEB, 0xBF, 0xFF, 0xFF,=
+ 0xFF };
++
++const unsigned char img2[] =3D { 0x08, 0x08, 0x02, 0x03, 0x00, 0x16, 0xAA,
++					0xAA, 0x80, 0x02, 0x85, 0x42, 0x81,
++					0x42, 0x81, 0x42, 0x81, 0x52, 0x80,
++					0x02, 0xAA, 0xAA, 0xFF, 0x00, 0x00,
++					0x00, 0xFF, 0x00, 0x00, 0x00, 0xFF };
++
++const unsigned char img3[] =3D { 0x2E, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00,=
+ 0x00,
++				0x00, 0x01, 0xFF, 0x80, 0x00, 0x00, 0x00, 0x0F,
++				0xFF, 0x00, 0x00, 0x00, 0x00, 0x77, 0xFE, 0x00,
++				0x00, 0x00, 0x01, 0xBF, 0xF8, 0x00, 0x00, 0x00,
++				0x06, 0xFF, 0xE0, 0x00, 0x00, 0x00, 0x1A, 0x03,
++				0x80, 0x00, 0x00, 0x00, 0x6B, 0xF6, 0xBC, 0x00,
++				0x00, 0x01, 0xAF, 0xD8, 0x38, 0x00, 0x00, 0x06,
++				0xBF, 0x60, 0x20, 0x00, 0x00, 0x1A, 0xFD, 0x80,
++				0x40, 0x00, 0x00, 0x6B, 0xF6, 0x00, 0x80, 0x00,
++				0x01, 0xA0, 0x1F, 0x02, 0x00, 0x00, 0x06, 0xFF,
++				0xE4, 0x04, 0x00, 0x00, 0x1B, 0xFF, 0x90, 0x10,
++				0x00, 0x00, 0x6D, 0xEE, 0x40, 0x40, 0x00, 0x01,
++				0xBF, 0xF9, 0x01, 0x00, 0x00, 0x6F, 0xFF, 0xE4,
++				0x04, 0x00, 0x00, 0x1B, 0xFF, 0x90, 0x10, 0x00,
++				0x00, 0x6F, 0xFE, 0x40, 0x40, 0x00, 0x01, 0xBF,
++				0xF9, 0x01, 0x00, 0x00, 0x06, 0xFF, 0xE6, 0x04,
++				0x00, 0x00, 0x1B, 0xFF, 0x88, 0x10, 0x00, 0x00,
++				0x6F, 0xFE, 0x20, 0x40, 0x00, 0x01, 0xBF, 0xF8,
++				0x66, 0x00, 0x00, 0x06, 0xFF, 0xE0, 0xF0, 0x00,
++				0x00, 0x1B, 0xFF, 0x80, 0x80, 0x00, 0x00, 0x7F,
++				0xFE, 0x00, 0x00, 0x00, 0x03, 0x00, 0x0C, 0x00,
++				0x00, 0x00, 0x1F, 0xFF, 0xF8, 0x00, 0x00, 0x00,
++				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
++				0x1C, 0x21, 0x08, 0x44, 0xEE, 0x00, 0x48, 0xC4,
++				0x31, 0x92, 0x20, 0x01, 0x25, 0x11, 0x45, 0x50,
++				0x80, 0x07, 0x14, 0x45, 0x15, 0x43, 0x80, 0x12,
++				0x71, 0x1C, 0x4D, 0x08, 0x00, 0x4A, 0x24, 0x89,
++				0x32, 0x20, 0x01, 0xC8, 0x9E, 0x24, 0x4E,
++				0xE0 };
++
++const unsigned char img4[] =3D { 0x18, 0x10, 0xFF, 0xFF, 0xFF, 0x80, 0x00,=
+ 0x01,
++				0x80, 0x00, 0x01, 0x80, 0x00, 0x01, 0x8F,
++				0x3C, 0xF1, 0x89, 0x20, 0x81, 0x89, 0x20,
++				0x81, 0x89, 0x20, 0xF1, 0x89, 0x20, 0x11,
++				0x89, 0x20, 0x11, 0x89, 0x20, 0x11, 0x8F,
++				0x3C, 0xF1, 0x80, 0x00, 0x01, 0x80, 0x00,
++				0x01, 0x80, 0x00, 0x01, 0xFF, 0xFF, 0xFF };
++
++const unsigned char img5[] =3D { 0x08, 0x08, 0xFF, 0x03, 0xA5, 0x99, 0x99,
++				0xA5, 0xC3, 0xFF };
++
++static struct img_xpm_test xpm_test_1 =3D {
++	.img =3D img1,
++	.len =3D sizeof(img1),
++	.scheme =3D STK_IMG_SCHEME_BASIC,
++	.xpm =3D "/* XPM */\n"
++		"static char *xpm[] =3D {\n"
++		"\"5 5 2 1\",\n"
++		"\"0	c #000000\",\n"
++		"\"1	c #FFFFFF\",\n"
++		"\"11111\",\n"
++		"\"11011\",\n"
++		"\"10101\",\n"
++		"\"11011\",\n"
++		"\"11111\",\n"
++		"};",
++};
++
++static struct img_xpm_test xpm_test_2 =3D {
++	.img =3D img2,
++	.len =3D sizeof(img2),
++	.scheme =3D STK_IMG_SCHEME_COLOR,
++	.xpm =3D "/* XPM */\n"
++		"static char *xpm[] =3D {\n"
++		"\"8 8 3 1\",\n"
++		"\"0	c #FF0000\",\n"
++		"\"1	c #00FF00\",\n"
++		"\"2	c #0000FF\",\n"
++		"\"22222222\",\n"
++		"\"20000002\",\n"
++		"\"20111002\",\n"
++		"\"20011002\",\n"
++		"\"20011002\",\n"
++		"\"20011102\",\n"
++		"\"20000002\",\n"
++		"\"22222222\",\n"
++		"};",
++};
++
++static struct img_xpm_test xpm_test_3 =3D {
++	.img =3D img3,
++	.len =3D sizeof(img3),
++	.scheme =3D STK_IMG_SCHEME_BASIC,
++	.xpm =3D "/* XPM */\n"
++		"static char *xpm[] =3D {\n"
++		"\"46 40 2 1\",\n"
++		"\"0	c #000000\",\n"
++		"\"1	c #FFFFFF\",\n"
++		"\"0000000000000000000000000000000000000000000000\",\n"
++		"\"0000000000000000011111111110000000000000000000\",\n"
++		"\"0000000000000000111111111111000000000000000000\",\n"
++		"\"0000000000000001110111111111100000000000000000\",\n"
++		"\"0000000000000001101111111111100000000000000000\",\n"
++		"\"0000000000000001101111111111100000000000000000\",\n"
++		"\"0000000000000001101000000011100000000000000000\",\n"
++		"\"0000000000000001101011111101101011110000000000\",\n"
++		"\"0000000000000001101011111101100000111000000000\",\n"
++		"\"0000000000000001101011111101100000001000000000\",\n"
++		"\"0000000000000001101011111101100000000100000000\",\n"
++		"\"0000000000000001101011111101100000000010000000\",\n"
++		"\"0000000000000001101000000001111100000010000000\",\n"
++		"\"0000000000000001101111111111100100000001000000\",\n"
++		"\"0000000000000001101111111111100100000001000000\",\n"
++		"\"0000000000000001101101111011100100000001000000\",\n"
++		"\"0000000000000001101111111111100100000001000000\",\n"
++		"\"0000000000011011111111111111100100000001000000\",\n"
++		"\"0000000000000001101111111111100100000001000000\",\n"
++		"\"0000000000000001101111111111100100000001000000\",\n"
++		"\"0000000000000001101111111111100100000001000000\",\n"
++		"\"0000000000000001101111111111100110000001000000\",\n"
++		"\"0000000000000001101111111111100010000001000000\",\n"
++		"\"0000000000000001101111111111100010000001000000\",\n"
++		"\"0000000000000001101111111111100001100110000000\",\n"
++		"\"0000000000000001101111111111100000111100000000\",\n"
++		"\"0000000000000001101111111111100000001000000000\",\n"
++		"\"0000000000000001111111111111100000000000000000\",\n"
++		"\"0000000000000011000000000000110000000000000000\",\n"
++		"\"0000000000000111111111111111111000000000000000\",\n"
++		"\"0000000000000000000000000000000000000000000000\",\n"
++		"\"0000000000000000000000000000000000000000000000\",\n"
++		"\"0000000000000000000000000000000000000000000000\",\n"
++		"\"0000011100001000010000100001000100111011100000\",\n"
++		"\"0000010010001100010000110001100100100010000000\",\n"
++		"\"0000010010010100010001010001010101000010000000\",\n"
++		"\"0000011100010100010001010001010101000011100000\",\n"
++		"\"0000010010011100010001110001001101000010000000\",\n"
++		"\"0000010010100010010010001001001100100010000000\",\n"
++		"\"0000011100100010011110001001000100111011100000\",\n"
++		"};",
++};
++
++static struct img_xpm_test xpm_test_4 =3D {
++	.img =3D img4,
++	.len =3D sizeof(img4),
++	.scheme =3D STK_IMG_SCHEME_BASIC,
++	.xpm =3D "/* XPM */\n"
++		"static char *xpm[] =3D {\n"
++		"\"24 16 2 1\",\n"
++		"\"0	c #000000\",\n"
++		"\"1	c #FFFFFF\",\n"
++		"\"111111111111111111111111\",\n"
++		"\"100000000000000000000001\",\n"
++		"\"100000000000000000000001\",\n"
++		"\"100000000000000000000001\",\n"
++		"\"100011110011110011110001\",\n"
++		"\"100010010010000010000001\",\n"
++		"\"100010010010000010000001\",\n"
++		"\"100010010010000011110001\",\n"
++		"\"100010010010000000010001\",\n"
++		"\"100010010010000000010001\",\n"
++		"\"100010010010000000010001\",\n"
++		"\"100011110011110011110001\",\n"
++		"\"100000000000000000000001\",\n"
++		"\"100000000000000000000001\",\n"
++		"\"100000000000000000000001\",\n"
++		"\"111111111111111111111111\",\n"
++		"};",
++};
++
++static struct img_xpm_test xpm_test_5 =3D {
++	.img =3D img5,
++	.len =3D sizeof(img5),
++	.scheme =3D STK_IMG_SCHEME_BASIC,
++	.xpm =3D "/* XPM */\n"
++		"static char *xpm[] =3D {\n"
++		"\"8 8 2 1\",\n"
++		"\"0	c #000000\",\n"
++		"\"1	c #FFFFFF\",\n"
++		"\"11111111\",\n"
++		"\"00000011\",\n"
++		"\"10100101\",\n"
++		"\"10011001\",\n"
++		"\"10011001\",\n"
++		"\"10100101\",\n"
++		"\"11000011\",\n"
++		"\"11111111\",\n"
++		"};",
++};
++
++static struct img_xpm_test xpm_test_6 =3D {
++	.img =3D img2,
++	.len =3D sizeof(img2),
++	.scheme =3D STK_IMG_SCHEME_TRANSPARENCY,
++	.xpm =3D "/* XPM */\n"
++		"static char *xpm[] =3D {\n"
++		"\"8 8 3 1\",\n"
++		"\"0	c #FF0000\",\n"
++		"\"1	c #00FF00\",\n"
++		"\"2	c None\",\n"
++		"\"22222222\",\n"
++		"\"20000002\",\n"
++		"\"20111002\",\n"
++		"\"20011002\",\n"
++		"\"20011002\",\n"
++		"\"20011102\",\n"
++		"\"20000002\",\n"
++		"\"22222222\",\n"
++		"};",
++};
++
++static void test_img_to_xpm(gconstpointer data)
++{
++	const struct img_xpm_test *test =3D data;
++	char *xpm;
++
++	xpm =3D stk_image_to_xpm(test->img, test->len, test->scheme);
++
++	g_assert(memcmp(xpm, test->xpm, strlen(test->xpm)) =3D=3D 0);
++	g_free(xpm);
++}
++
+ int main(int argc, char **argv)
+ {
+ 	g_test_init(&argc, &argv, NULL);
+@@ -24727,5 +24954,18 @@ int main(int argc, char **argv)
+ 	g_test_add_data_func("/teststk/HTML Attribute Test 4",
+ 				&html_attr_data_4, test_html_attr);
+ =
+
++	g_test_add_data_func("/teststk/IMG to XPM Test 1",
++				&xpm_test_1, test_img_to_xpm);
++	g_test_add_data_func("/teststk/IMG to XPM Test 2",
++				&xpm_test_2, test_img_to_xpm);
++	g_test_add_data_func("/teststk/IMG to XPM Test 3",
++				&xpm_test_3, test_img_to_xpm);
++	g_test_add_data_func("/teststk/IMG to XPM Test 4",
++				&xpm_test_4, test_img_to_xpm);
++	g_test_add_data_func("/teststk/IMG to XPM Test 5",
++				&xpm_test_5, test_img_to_xpm);
++	g_test_add_data_func("/teststk/IMG to XPM Test 6",
++				&xpm_test_6, test_img_to_xpm);
++
+ 	return g_test_run();
+ }
 -- =
 
 1.6.6.1
 
 
---===============0802793592572645374==--
+--===============8747103625684381811==--
 
