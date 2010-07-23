@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============6356825644380690284=="
+Content-Type: multipart/mixed; boundary="===============4878947786683806184=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [patch 10/20] sms_text_prepare: document @use_delivery_reports
-Date: Fri, 23 Jul 2010 18:01:58 -0500
-Message-ID: <4C4A1F66.2050909@gmail.com>
-In-Reply-To: <6cc931db83455a66cbc6c85f34fbda053fc6e2cb.1279918330.git.inaky.perez-gonzalez@intel.com>
+Subject: Re: [patch 11/20] SMS: rename create_tx_queue_entry() to
+ tx_queue_entry_new()
+Date: Fri, 23 Jul 2010 18:02:33 -0500
+Message-ID: <4C4A1F89.1010406@gmail.com>
+In-Reply-To: <3b9588df5ecf0a6b8f0fe30fbf0411393131facd.1279918330.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6356825644380690284==
+--===============4878947786683806184==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,16 +20,17 @@ On 07/23/2010 03:59 PM, Inaky Perez-Gonzalez wrote:
 > From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 > =
 
+> This is for symmetry with tx_queue_entry_free()
 > ---
->  src/smsutil.c |    3 +++
->  1 files changed, 3 insertions(+), 0 deletions(-)
+>  src/sms.c |    6 +++---
+>  1 files changed, 3 insertions(+), 3 deletions(-)
 > =
 
 
-This one has been applied with a minor tweak to the commit message.
+Applied with a minor tweak to the commit header.
 
 Regards,
 -Denis
 
---===============6356825644380690284==--
+--===============4878947786683806184==--
 
