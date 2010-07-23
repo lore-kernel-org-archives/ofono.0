@@ -1,118 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============8749762442838962406=="
+Content-Type: multipart/mixed; boundary="===============2802888278564759493=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [patch 02/20] write_file: make transaction-safe
-Date: Fri, 23 Jul 2010 13:59:50 -0700
-Message-ID: <21ceadbaf2b2fc2479a381c123140d27ed7c36ba.1279918330.git.inaky.perez-gonzalez@intel.com>
+Subject: [patch 03/20] manpage: explain debugging options to -d
+Date: Fri, 23 Jul 2010 13:59:51 -0700
+Message-ID: <653d2f7bd50151fb28b287940f62ac16dfec1830.1279918330.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1279918330.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8749762442838962406==
+--===============2802888278564759493==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-write_file(), as written wasn't transaction-safe; a crash bewtween a
-file being open and the buffer being written before a safe close would
-leave the file with a set of undetermined contents.
-
-Modified to the file is written to a temporary file name; once
-completed, it is renamed to the final name. This way, a crash in the
-middle doesn't leave half-baked files.
+Modified HACKING and man page to have more formation on what are the
+debugging options and how to enable them.
 ---
- src/storage.c |   42 +++++++++++++++++++++++++++++++-----------
- 1 files changed, 31 insertions(+), 11 deletions(-)
+ HACKING      |   10 ++++++++++
+ doc/ofonod.8 |    5 ++++-
+ 2 files changed, 14 insertions(+), 1 deletions(-)
 
-diff --git a/src/storage.c b/src/storage.c
-index cac5835..c88a8c8 100644
---- a/src/storage.c
-+++ b/src/storage.c
-@@ -98,11 +98,21 @@ ssize_t read_file(unsigned char *buffer, size_t len,
- 	return r;
- }
+diff --git a/HACKING b/HACKING
+index ae420aa..e825185 100644
+--- a/HACKING
++++ b/HACKING
+@@ -81,3 +81,13 @@ automatically includes this option.
  =
 
-+/*
-+ * Write a buffer to a file in a transactionally safe form
-+ *
-+ * Given a buffer, write it to a file named after
-+ * @path_fmt+args. However, to make sure the file contents are
-+ * consistent (ie: a crash right after opening or during write()
-+ * doesn't leave a file half baked), the contents are written to a
-+ * file with a temporary name and when closed, it is renamed to the
-+ * specified name (@path_fmt+args).
-+ */
- ssize_t write_file(const unsigned char *buffer, size_t len, mode_t mode,
- 			const char *path_fmt, ...)
- {
- 	va_list ap;
--	char *path;
-+	char *tmp_path, *path;
- 	ssize_t r;
- 	int fd;
- =
-
-@@ -110,26 +120,36 @@ ssize_t write_file(const unsigned char *buffer, size_=
-t len, mode_t mode,
- 	path =3D g_strdup_vprintf(path_fmt, ap);
- 	va_end(ap);
- =
-
--	if (create_dirs(path, mode | S_IXUSR) !=3D 0) {
--		g_free(path);
--		return -1;
--	}
-+	tmp_path =3D g_strdup_printf("%s.XXXXXX.tmp", path);
- =
-
--	fd =3D TFR(open(path, O_WRONLY | O_CREAT | O_TRUNC, mode));
--	if (fd =3D=3D -1) {
--		g_free(path);
--		return -1;
--	}
-+	r =3D -1;
-+	if (create_dirs(path, mode | S_IXUSR) !=3D 0)
-+		goto error_create_dirs;
-+	fd =3D TFR(g_mkstemp_full(tmp_path, O_WRONLY | O_CREAT | O_TRUNC, mode));
-+	if (fd =3D=3D -1)
-+		goto error_mkstemp_full;
- =
-
- 	r =3D TFR(write(fd, buffer, len));
- =
-
- 	TFR(close(fd));
- =
-
- 	if (r !=3D (ssize_t) len) {
--		unlink(path);
- 		r =3D -1;
-+		goto error_write;
- 	}
- =
-
-+	/* Now that the file contents are written, rename to the real
-+	 * file name; this way we are uniquely sure that the whole
-+	 * thing is there. */
-+	unlink(path);
-+	/* conserve @r's value from 'write' */
-+	if (link(tmp_path, path) =3D=3D -1)
-+		r =3D -1;
-+error_write:
-+	unlink(tmp_path);
-+error_mkstemp_full:
-+error_create_dirs:
-+	g_free(tmp_path);
- 	g_free(path);
- 	return r;
- }
+ For production installations or distribution packaging it is important that
+ the "--enable-maintainer-mode" option is NOT used.
++
++Note multiple arguments to -d can be specified, colon, comma or space
++separated. The arguments are relative source code filenames for which
++debugging output should be enabled; output shell-style globs are
++accepted (e.g.: 'plugins/*:src/main.c').
++
++Other debugging settings that can be toggled:
++
++ - Environment variable OFONO_AT_DEBUG (set to 1): enable AT commands
++   debugging
+diff --git a/doc/ofonod.8 b/doc/ofonod.8
+index 474d7fb..7bb908c 100644
+--- a/doc/ofonod.8
++++ b/doc/ofonod.8
+@@ -18,7 +18,10 @@ is used to manage \fID-Bus\fP permissions for oFono.
+ .SH OPTIONS
+ .TP
+ .B --debug, -d
+-Enable debug information output.
++Enable debug information output. Note multiple arguments to -d can be
++specified, colon, comma or space separated. The arguments are relative
++source code filenames for which debugging output should be enabled;
++output shell-style globs are accepted (e.g.: "plugins/*:src/main.c").
+ .TP
+ .B --nodetach, -n
+ Don't run as daemon in background.
 -- =
 
 1.6.6.1
 
 
---===============8749762442838962406==--
+--===============2802888278564759493==--
 
