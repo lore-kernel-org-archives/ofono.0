@@ -1,58 +1,123 @@
-Content-Type: multipart/mixed; boundary="===============8695892251643041902=="
+Content-Type: multipart/mixed; boundary="===============2536624199280024836=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-Subject: Re: [patch 12/20] struct tx_queue_entry: add a destructor
-Date: Fri, 23 Jul 2010 16:11:02 -0700
-Message-ID: <1279926662.26204.142.camel@localhost.localdomain>
-In-Reply-To: <4C4A2089.7030804@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [patch 08/20] sms: document the org.ofono.SMSMessage D-Bus
+ interface
+Date: Fri, 23 Jul 2010 18:11:00 -0500
+Message-ID: <4C4A2184.1090701@gmail.com>
+In-Reply-To: <070f79ee2435a9d659652ae117c97fd203e70fe9.1279918330.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8695892251643041902==
+--===============2536624199280024836==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2010-07-23 at 16:06 -0700, Denis Kenzior wrote: =
+Hi Inaky,
 
-> Hi Inaky,
+On 07/23/2010 03:59 PM, Inaky Perez-Gonzalez wrote:
+> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 > =
 
-> > +
-> > +/*
-> > + * Destroy/release the contents of a 'struct tx_queue_entry'
-> > + *
-> > + * This releases resources allocated *inside* @entry and @entry
-> > + * itself.
-> > + */
-> > +static void tx_queue_entry_destroy_free(gpointer _entry, gpointer unus=
-ed)
+> ---
+>  doc/sms-api.txt |   49 +++++++++++++++++++++++++++++++++++++++++++++++--
+>  1 files changed, 47 insertions(+), 2 deletions(-)
 > =
 
-> Can't this be simply tx_queue_entry_free?  And feel free to take struct
+> diff --git a/doc/sms-api.txt b/doc/sms-api.txt
+> index 1fc32ac..af4baae 100644
+> --- a/doc/sms-api.txt
+> +++ b/doc/sms-api.txt
+> @@ -22,9 +22,27 @@ Methods		dict GetProperties()
+>  			Possible Errors: [service].Error.InvalidArguments
+>  					 [service].Error.DoesNotExist
+>  =
 
-Sure, I'll rename that.
+> -		void SendMessage(string to, string text)
+> +		string SendMessage(string destination_number, string text)
 
-> tx_queue_entry * here.  Casting the destructor in g_foo_foreach is
-> acceptable.
+Actually keep string to, I like that better.  The returned type should
+be 'object' (the object path of the new message) not 'string'.
 
-Heh, I'd rather have it like this: Repeat after me in a 1000-loop: casts
-are evil and should be avoided for they muck the code by hiding warnings
-when you change things and miss updating all the sites ... =
+>  =
 
+> -			Send the message in text to the number in to.
+> +                        Submit a message for delivery /
+> +                        processing. oFono owns it from now on until
+> +                        successful delivery, cancellation (by the
+> +                        user) or cancellation (by oFono). User has to
+> +                        keep a copy around as oFono only offers
+> +                        persistence to satisfy its needs.
+> +
+> +                        Returns the name of the D-Bus object that
+> +                        represents said SMS Message.
 
-> > +{
-> > +	struct tx_queue_entry *entry =3D _entry;
-> > +
-> > +	if (entry->destroy)
-> > +		entry->destroy(entry->data);
-> =
+Try to use tabs and not spaces for indentation.
 
-> An empty line after if/while/for blocks please.  I will update the
-> coding-style document with this rule shortly.
+> +
+> +			Possible Errors: [service].Error.InvalidArguments
+> +
+> +                array{string} PendingMessages()
 
-Will do, thanks
+array{object} here, and using Messages is better.
 
+> +
+> +                        Returns a list of SMS Messages that have been
+> +                        submitted for delivery and that are still
+> +                        pending.
+> +
+> +                        FIXME: currently not implemented
+>  =
 
---===============8695892251643041902==--
+>  Signals		PropertyChanged(string name, variant value)
+>  =
+
+> @@ -64,3 +82,30 @@ Properties	string ServiceCenterAddress
+>  				"ps-preferred" - Use CS if PS is unavailable
+>  =
+
+>  			By default oFono uses "cs-preferred" setting.
+> +
+> +
+> +SMS / Messaging interface
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D
+> +
+> +Service		org.ofono
+> +Interface	org.ofono.SMSMessage
+
+oFono API is full CamelCase, so this should be SmsMessage.
+
+> +Object path	[variable prefix]/modemX/message_id
+
+Please follow the conventions for Object Path, e.g. see
+doc/voicecall-api.txt
+
+> +
+> +Methods		dict GetProperties()
+> +
+> +			Returns a dictionary with the current
+> +			properties of a message.
+> +
+> +                void Cancel()
+> +
+> +                        Cancels a pending message's delivery.
+> +
+> +Signals		PropertyChanged(string name, variant value)
+> +
+> +			This signal indicates a changed value of the given
+> +			property.
+> +
+> +Properties	string TXState
+> +
+> +			Current transmission state.
+> +
+
+Rename this to State and include the possible state values please.
+
+Regards,
+-Denis
+
+--===============2536624199280024836==--
 
