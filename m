@@ -1,86 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============6700343722043396579=="
+Content-Type: multipart/mixed; boundary="===============6066514504122676328=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [patch 12/20] struct tx_queue_entry: add a destructor
-Date: Fri, 23 Jul 2010 14:00:00 -0700
-Message-ID: <796fef7f2a9f6c407513467dc76247ad7886fced.1279918330.git.inaky.perez-gonzalez@intel.com>
+Subject: [patch 13/20] SMS: encapsulate D-Bus specific data in 'struct
+ sms_msg_dbus_data'
+Date: Fri, 23 Jul 2010 14:00:01 -0700
+Message-ID: <5b31eccef49bc44a558f6a16cbaccbe1d36d06ee.1279918330.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1279918330.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6700343722043396579==
+--===============6066514504122676328==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-Introduce a destructor function to encapsulate all the release steps
-for this data type, as more are to be added later.
+This will ease adding later on other fields that are D-Bus specific
+and needed to export SMS messages in TX transit over D-Bus.
 ---
- src/sms.c |   25 +++++++++++++++++++------
- 1 files changed, 19 insertions(+), 6 deletions(-)
+ src/sms.c |   21 +++++++++++++++++++--
+ 1 files changed, 19 insertions(+), 2 deletions(-)
 
 diff --git a/src/sms.c b/src/sms.c
-index 85353ff..5f5df04 100644
+index 5f5df04..7bde919 100644
 --- a/src/sms.c
 +++ b/src/sms.c
-@@ -405,6 +405,23 @@ static DBusMessage *sms_set_property(DBusConnection *c=
-onn, DBusMessage *msg,
- 	return __ofono_error_invalid_args(msg);
+@@ -90,6 +90,17 @@ struct tx_queue_entry {
+ 	ofono_destroy_func destroy;
+ };
+ =
+
++/*
++ * Encapsulate information needed to export an SMS message over D-Bus.
++ *
++ * @dbus_path: path of the object in the D-Bus
++ * @dbus_msg: message this originated at
++ */
++struct sms_msg_dbus_data {
++	char *dbus_path;
++	DBusMessage *dbus_msg;
++};
++
+ static const char *sms_bearer_to_string(int bearer)
+ {
+ 	switch (bearer) {
+@@ -560,7 +571,8 @@ static struct tx_queue_entry *tx_queue_entry_new(GSList=
+ *msg_list)
+ static void send_message_cb(gboolean ok, void *data)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+-	DBusMessage *msg =3D data;
++	struct sms_msg_dbus_data *dbus_data =3D data;
++	DBusMessage *msg =3D dbus_data->dbus_msg;
+ 	DBusMessage *reply;
+ =
+
+ 	if (ok)
+@@ -573,9 +585,11 @@ static void send_message_cb(gboolean ok, void *data)
+ =
+
+ static void send_message_destroy(void *data)
+ {
+-	DBusMessage *msg =3D data;
++	struct sms_msg_dbus_data *dbus_data =3D data;
++	DBusMessage *msg =3D dbus_data->dbus_msg;
+ =
+
+ 	dbus_message_unref(msg);
++	g_free(dbus_data);
  }
  =
 
-+
-+/*
-+ * Destroy/release the contents of a 'struct tx_queue_entry'
+ /*
+@@ -590,6 +604,9 @@ static void send_message_destroy(void *data)
+  * is created by tx_queue_entry_new() and g_queue_push_tail()
+  * appends that entry to the SMS transmit queue. Then the tx_next()
+  * function is scheduled to run to process the queue.
 + *
-+ * This releases resources allocated *inside* @entry and @entry
-+ * itself.
-+ */
-+static void tx_queue_entry_destroy_free(gpointer _entry, gpointer unused)
-+{
-+	struct tx_queue_entry *entry =3D _entry;
-+
-+	if (entry->destroy)
-+		entry->destroy(entry->data);
-+	g_free(entry->pdus);
-+	g_free(entry);
-+}
-+
- static void tx_finished(const struct ofono_error *error, int mr, void *dat=
-a)
- {
- 	struct ofono_sms *sms =3D data;
-@@ -465,11 +482,7 @@ next_q:
- 						time(NULL), hs);
- 	}
- =
-
--	if (entry->destroy)
--		entry->destroy(entry->data);
--
--	g_free(entry->pdus);
--	g_free(entry);
-+	tx_queue_entry_destroy_free(entry, NULL);
- =
-
- 	if (g_queue_peek_head(sms->txq)) {
- 		DBG("Scheduling next");
-@@ -1129,7 +1142,7 @@ static void sms_remove(struct ofono_atom *atom)
- 	}
- =
-
- 	if (sms->txq) {
--		g_queue_foreach(sms->txq, (GFunc)g_free, NULL);
-+		g_queue_foreach(sms->txq, tx_queue_entry_destroy_free, NULL);
- 		g_queue_free(sms->txq);
- 		sms->txq =3D NULL;
- 	}
++ * @sms is the main SMS driver struct, @entry and @msg_list represent
++ * the current message being processed.
+  */
+ static DBusMessage *sms_send_message(DBusConnection *conn, DBusMessage *ms=
+g,
+ 					void *data)
 -- =
 
 1.6.6.1
 
 
---===============6700343722043396579==--
+--===============6066514504122676328==--
 
