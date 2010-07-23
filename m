@@ -1,123 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============2536624199280024836=="
+Content-Type: multipart/mixed; boundary="===============9001030218150025044=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [patch 08/20] sms: document the org.ofono.SMSMessage D-Bus
- interface
-Date: Fri, 23 Jul 2010 18:11:00 -0500
-Message-ID: <4C4A2184.1090701@gmail.com>
-In-Reply-To: <070f79ee2435a9d659652ae117c97fd203e70fe9.1279918330.git.inaky.perez-gonzalez@intel.com>
+Subject: Re: [patch 12/20] struct tx_queue_entry: add a destructor
+Date: Fri, 23 Jul 2010 18:14:49 -0500
+Message-ID: <4C4A2269.1050404@gmail.com>
+In-Reply-To: <1279926662.26204.142.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2536624199280024836==
+--===============9001030218150025044==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Inaky,
 
-On 07/23/2010 03:59 PM, Inaky Perez-Gonzalez wrote:
-> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+>> tx_queue_entry * here.  Casting the destructor in g_foo_foreach is
+>> acceptable.
 > =
 
-> ---
->  doc/sms-api.txt |   49 +++++++++++++++++++++++++++++++++++++++++++++++--
->  1 files changed, 47 insertions(+), 2 deletions(-)
+> Heh, I'd rather have it like this: Repeat after me in a 1000-loop: casts
+> are evil and should be avoided for they muck the code by hiding warnings
+> when you change things and miss updating all the sites ... =
+
 > =
 
-> diff --git a/doc/sms-api.txt b/doc/sms-api.txt
-> index 1fc32ac..af4baae 100644
-> --- a/doc/sms-api.txt
-> +++ b/doc/sms-api.txt
-> @@ -22,9 +22,27 @@ Methods		dict GetProperties()
->  			Possible Errors: [service].Error.InvalidArguments
->  					 [service].Error.DoesNotExist
->  =
 
-> -		void SendMessage(string to, string text)
-> +		string SendMessage(string destination_number, string text)
+I fully agree, but the extra silly NULL argument makes this worse than
+the cast.  And to be clear, g_foo_foreach is about the only place we
+explicitly allow casts.  If you feel you need to be pedantic, then write
+a GFunc specifically to do the foreach bit.
 
-Actually keep string to, I like that better.  The returned type should
-be 'object' (the object path of the new message) not 'string'.
+e.g. tx_queue_entry_free(struct tx_queue_entry *);
 
->  =
-
-> -			Send the message in text to the number in to.
-> +                        Submit a message for delivery /
-> +                        processing. oFono owns it from now on until
-> +                        successful delivery, cancellation (by the
-> +                        user) or cancellation (by oFono). User has to
-> +                        keep a copy around as oFono only offers
-> +                        persistence to satisfy its needs.
-> +
-> +                        Returns the name of the D-Bus object that
-> +                        represents said SMS Message.
-
-Try to use tabs and not spaces for indentation.
-
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +
-> +                array{string} PendingMessages()
-
-array{object} here, and using Messages is better.
-
-> +
-> +                        Returns a list of SMS Messages that have been
-> +                        submitted for delivery and that are still
-> +                        pending.
-> +
-> +                        FIXME: currently not implemented
->  =
-
->  Signals		PropertyChanged(string name, variant value)
->  =
-
-> @@ -64,3 +82,30 @@ Properties	string ServiceCenterAddress
->  				"ps-preferred" - Use CS if PS is unavailable
->  =
-
->  			By default oFono uses "cs-preferred" setting.
-> +
-> +
-> +SMS / Messaging interface
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D
-> +
-> +Service		org.ofono
-> +Interface	org.ofono.SMSMessage
-
-oFono API is full CamelCase, so this should be SmsMessage.
-
-> +Object path	[variable prefix]/modemX/message_id
-
-Please follow the conventions for Object Path, e.g. see
-doc/voicecall-api.txt
-
-> +
-> +Methods		dict GetProperties()
-> +
-> +			Returns a dictionary with the current
-> +			properties of a message.
-> +
-> +                void Cancel()
-> +
-> +                        Cancels a pending message's delivery.
-> +
-> +Signals		PropertyChanged(string name, variant value)
-> +
-> +			This signal indicates a changed value of the given
-> +			property.
-> +
-> +Properties	string TXState
-> +
-> +			Current transmission state.
-> +
-
-Rename this to State and include the possible state values please.
+txq_foreach_free(gpointer foo, gpointer user)
+{
+  struct tx_queue_entry *bar =3D foo;
+  tx_queue_entry_free(bar);
+}
 
 Regards,
 -Denis
 
---===============2536624199280024836==--
+--===============9001030218150025044==--
 
