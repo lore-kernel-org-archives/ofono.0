@@ -1,88 +1,118 @@
-Content-Type: multipart/mixed; boundary="===============8775686820025562565=="
+Content-Type: multipart/mixed; boundary="===============8749762442838962406=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [patch 00/20] SMS D-Bus support and misc small patches
-Date: Fri, 23 Jul 2010 13:59:48 -0700
-Message-ID: <cover.1279918330.git.inaky.perez-gonzalez@intel.com>
+Subject: [patch 02/20] write_file: make transaction-safe
+Date: Fri, 23 Jul 2010 13:59:50 -0700
+Message-ID: <21ceadbaf2b2fc2479a381c123140d27ed7c36ba.1279918330.git.inaky.perez-gonzalez@intel.com>
+In-Reply-To: <cover.1279918330.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8775686820025562565==
+--===============8749762442838962406==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-This (3rd? 4th?) version of the patchset builds the D-Bus support on
-top of the new _txq_submit() callback mechanism.
+write_file(), as written wasn't transaction-safe; a crash bewtween a
+file being open and the buffer being written before a safe close would
+leave the file with a set of undetermined contents.
 
-Note there are still a couple of opens that need discussion:
+Modified to the file is written to a temporary file name; once
+completed, it is renamed to the final name. This way, a crash in the
+middle doesn't leave half-baked files.
+---
+ src/storage.c |   42 +++++++++++++++++++++++++++++++-----------
+ 1 files changed, 31 insertions(+), 11 deletions(-)
 
- - the message ID is generated based on the contents of the message --
-   thus, the current way doesn't work. We need the caller to
-   _txq_submit() to generate it. It's been left out of the STK
-   stc.c:handle_command_send_sms() because I am not sure what is the
-   right way to do it -- need feedback on that.
+diff --git a/src/storage.c b/src/storage.c
+index cac5835..c88a8c8 100644
+--- a/src/storage.c
++++ b/src/storage.c
+@@ -98,11 +98,21 @@ ssize_t read_file(unsigned char *buffer, size_t len,
+ 	return r;
+ }
+ =
 
- - The generation of the SMS message ID based on contents still has
-   shortcomings: if we submit two messages with the same content and
-   destination number, the ID is the same [sms.c:sms_msg_send()]. What
-   other factor would make sense to add? time?
++/*
++ * Write a buffer to a file in a transactionally safe form
++ *
++ * Given a buffer, write it to a file named after
++ * @path_fmt+args. However, to make sure the file contents are
++ * consistent (ie: a crash right after opening or during write()
++ * doesn't leave a file half baked), the contents are written to a
++ * file with a temporary name and when closed, it is renamed to the
++ * specified name (@path_fmt+args).
++ */
+ ssize_t write_file(const unsigned char *buffer, size_t len, mode_t mode,
+ 			const char *path_fmt, ...)
+ {
+ 	va_list ap;
+-	char *path;
++	char *tmp_path, *path;
+ 	ssize_t r;
+ 	int fd;
+ =
 
-The following changes since commit 94344e967b4cd3edd65aa5254ef4b4f5dd037e69:
-  Denis Kenzior (1):
-        TODO: Major updates to STK related tasks
+@@ -110,26 +120,36 @@ ssize_t write_file(const unsigned char *buffer, size_=
+t len, mode_t mode,
+ 	path =3D g_strdup_vprintf(path_fmt, ap);
+ 	va_end(ap);
+ =
 
-are available in the git repository at:
+-	if (create_dirs(path, mode | S_IXUSR) !=3D 0) {
+-		g_free(path);
+-		return -1;
+-	}
++	tmp_path =3D g_strdup_printf("%s.XXXXXX.tmp", path);
+ =
 
-  git://gitorious.org/~inakypg/ofono/ofono-inakypg.git master
+-	fd =3D TFR(open(path, O_WRONLY | O_CREAT | O_TRUNC, mode));
+-	if (fd =3D=3D -1) {
+-		g_free(path);
+-		return -1;
+-	}
++	r =3D -1;
++	if (create_dirs(path, mode | S_IXUSR) !=3D 0)
++		goto error_create_dirs;
++	fd =3D TFR(g_mkstemp_full(tmp_path, O_WRONLY | O_CREAT | O_TRUNC, mode));
++	if (fd =3D=3D -1)
++		goto error_mkstemp_full;
+ =
 
-Patches follow for reviewing convenience.
+ 	r =3D TFR(write(fd, buffer, len));
+ =
 
-Inaky Perez-Gonzalez (20):
-      bug.h: Add BUILD_BUG_ON() and friends for compile-time assert checking
-      write_file: make transaction-safe
-      manpage: explain debugging options to -d
-      SMS: introduce message ID API
-      introduce DECLARE_SMS_ADDR_STR()
-      _assembly_encode_address: export and rename
-      SMS: implement SHA256-based message IDs [incomplete]
-      sms: document the org.ofono.SMSMessage D-Bus interface
-      SMS: document handle_sms_status_report()
-      sms_text_prepare: document @use_delivery_reports
-      SMS: rename create_tx_queue_entry() to tx_queue_entry_new()
-      struct tx_queue_entry: add a destructor
-      SMS: encapsulate D-Bus specific data in 'struct sms_msg_dbus_data'
-      SMS: introduce bare state machine and transitions
-      SMS: introduce Wait-for-Status-Report state and infrastructure
-      SMS: introduce a state change callback for TX messages
-      SMS: export outgoing messages over D-Bus
-      SMS: send D-Bus SMS-MSG::PropertyChanged signals when message changes=
- status
-      SMS: introduce sms_msg_cancel and its D-Bus wrapper
-      SMS: Implement D-Bus SMS-MSG::GetProperties
+ 	TFR(close(fd));
+ =
 
- HACKING                        |   10 +
- Makefile.am                    |    5 +-
- doc/ofonod.8                   |    5 +-
- doc/sms-api.txt                |   49 ++++-
- src/bug.h                      |   50 ++++
- src/ofono.h                    |   42 +++-
- src/sms.c                      |  598 ++++++++++++++++++++++++++++++++++--=
-----
- src/smsutil.c                  |  206 ++++++++++++++-
- src/smsutil.h                  |  122 ++++++++
- src/stk.c                      |   24 ++-
- src/storage.c                  |   42 ++-
- test/test-sms-msg-cancel       |  173 ++++++++++++
- test/test-sms-msg-state-change |   24 ++
- unit/test-sms-msg-id.c         |  212 ++++++++++++++
- 14 files changed, 1449 insertions(+), 113 deletions(-)
- create mode 100644 src/bug.h
- create mode 100755 test/test-sms-msg-cancel
- create mode 100755 test/test-sms-msg-state-change
- create mode 100644 unit/test-sms-msg-id.c
+ 	if (r !=3D (ssize_t) len) {
+-		unlink(path);
+ 		r =3D -1;
++		goto error_write;
+ 	}
+ =
 
---===============8775686820025562565==--
++	/* Now that the file contents are written, rename to the real
++	 * file name; this way we are uniquely sure that the whole
++	 * thing is there. */
++	unlink(path);
++	/* conserve @r's value from 'write' */
++	if (link(tmp_path, path) =3D=3D -1)
++		r =3D -1;
++error_write:
++	unlink(tmp_path);
++error_mkstemp_full:
++error_create_dirs:
++	g_free(tmp_path);
+ 	g_free(path);
+ 	return r;
+ }
+-- =
+
+1.6.6.1
+
+
+--===============8749762442838962406==--
 
