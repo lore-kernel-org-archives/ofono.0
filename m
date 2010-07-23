@@ -1,41 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0050003922755397326=="
+Content-Type: multipart/mixed; boundary="===============1931144663527817173=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [patch 06/20] _assembly_encode_address: export and rename
-Date: Fri, 23 Jul 2010 17:31:00 -0500
-Message-ID: <4C4A1824.9040000@gmail.com>
-In-Reply-To: <ebfe4b1dd715e2ebe6c155d2c32bce0f42a5014f.1279918330.git.inaky.perez-gonzalez@intel.com>
+From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+Subject: Re: [patch 02/20] write_file: make transaction-safe
+Date: Fri, 23 Jul 2010 15:31:59 -0700
+Message-ID: <1279924319.26204.135.camel@localhost.localdomain>
+In-Reply-To: <4C4A104B.2080406@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0050003922755397326==
+--===============1931144663527817173==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Inaky,
+On Fri, 2010-07-23 at 14:57 -0700, Denis Kenzior wrote: =
 
-On 07/23/2010 03:59 PM, Inaky Perez-Gonzalez wrote:
-> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+> Hi Inaky,
 > =
 
-> The new name better reflects the function's purpose.
-> =
+> On 07/23/2010 03:59 PM, Inaky Perez-Gonzalez wrote:
+> > From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+> > =
 
-> We need to export it, as for generating unique message naming (for
-> persistence and D-Bus object naming), we'll be using the
-> address.
-> ---
->  src/smsutil.c |    7 +++----
->  src/smsutil.h |    2 ++
->  2 files changed, 5 insertions(+), 4 deletions(-)
-> =
+> > write_file(), as written wasn't transaction-safe; a crash bewtween a
+> > file being open and the buffer being written before a safe close would
+> > leave the file with a set of undetermined contents.
+> > =
+
+> > Modified to the file is written to a temporary file name; once
+> > completed, it is renamed to the final name. This way, a crash in the
+> > middle doesn't leave half-baked files.
+
+all fixed, thanks
 
 
-Applied with a very small tweak to the commit header.  Thanks.
 
-Regards,
--Denis
-
---===============0050003922755397326==--
+--===============1931144663527817173==--
 
