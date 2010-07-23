@@ -1,34 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============6620901673063181271=="
+Content-Type: multipart/mixed; boundary="===============8583957743335010341=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] watch: Free service data in service_reply
-Date: Fri, 23 Jul 2010 08:32:34 -0700
-Message-ID: <1279899154.2621.20.camel@localhost.localdomain>
-In-Reply-To: <1279864871-799-1-git-send-email-zhenhua.zhang@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/5] stk: Add menu related utilities.
+Date: Fri, 23 Jul 2010 14:10:48 -0500
+Message-ID: <4C49E938.2030509@gmail.com>
+In-Reply-To: <1279798973-6612-2-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6620901673063181271==
+--===============8583957743335010341==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Andrew,
 
-> Avoid the memory leak of server_data.
-> ---
->  gdbus/watch.c |    5 ++++-
->  1 files changed, 4 insertions(+), 1 deletions(-)
+> +static struct stk_menu *stk_menu_create(const char *title,
+> +		const struct stk_text_attribute *title_attr, GSList *items,
+> +		const struct stk_item_text_attribute_list *item_attrs,
+> +		const struct stk_items_next_action_indicator *next_action,
+> +		int default_id, gboolean soft_key, gboolean has_help)
+> +{
 
-do me a favor and post this to linux-bluetooth(a)vger.kernel.org as well
-for the Bluetooth guys to review. After that I can take of applying it
-to all trees.
+I suggest breaking up this giant constructor with many arguments into
+two functions.  One that takes a setup_menu object and one that takes a
+select_item object.  Then fills in the items appropriately.
 
-Regards
+Regards,
+-Denis
 
-Marcel
-
-
-
---===============6620901673063181271==--
+--===============8583957743335010341==--
 
