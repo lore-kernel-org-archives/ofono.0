@@ -1,46 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============9001030218150025044=="
+Content-Type: multipart/mixed; boundary="===============4162904045722446608=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [patch 12/20] struct tx_queue_entry: add a destructor
-Date: Fri, 23 Jul 2010 18:14:49 -0500
-Message-ID: <4C4A2269.1050404@gmail.com>
-In-Reply-To: <1279926662.26204.142.camel@localhost.localdomain>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH v2] watch: Free service data in service_reply
+Date: Mon, 26 Jul 2010 09:10:26 +0800
+Message-ID: <1280106626-4726-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9001030218150025044==
+--===============4162904045722446608==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Inaky,
+Avoid the memory leak of server_data.
+---
+ gdbus/watch.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
->> tx_queue_entry * here.  Casting the destructor in g_foo_foreach is
->> acceptable.
-> =
+diff --git a/gdbus/watch.c b/gdbus/watch.c
+index 1d479fa..29f23e2 100644
+--- a/gdbus/watch.c
++++ b/gdbus/watch.c
+@@ -533,7 +533,7 @@ static void check_service(DBusConnection *connection, c=
+onst char *name,
+ 		goto done;
+ 	}
+ =
 
-> Heh, I'd rather have it like this: Repeat after me in a 1000-loop: casts
-> are evil and should be avoided for they muck the code by hiding warnings
-> when you change things and miss updating all the sites ... =
+-	dbus_pending_call_set_notify(call, service_reply, data, NULL);
++	dbus_pending_call_set_notify(call, service_reply, data, g_free);
+ =
 
-> =
+ 	dbus_pending_call_unref(call);
+ =
+
+-- =
+
+1.7.0.4
 
 
-I fully agree, but the extra silly NULL argument makes this worse than
-the cast.  And to be clear, g_foo_foreach is about the only place we
-explicitly allow casts.  If you feel you need to be pedantic, then write
-a GFunc specifically to do the foreach bit.
-
-e.g. tx_queue_entry_free(struct tx_queue_entry *);
-
-txq_foreach_free(gpointer foo, gpointer user)
-{
-  struct tx_queue_entry *bar =3D foo;
-  tx_queue_entry_free(bar);
-}
-
-Regards,
--Denis
-
---===============9001030218150025044==--
+--===============4162904045722446608==--
 
