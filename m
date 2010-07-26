@@ -1,43 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============4162904045722446608=="
+Content-Type: multipart/mixed; boundary="===============5770289742390763281=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH v2] watch: Free service data in service_reply
-Date: Mon, 26 Jul 2010 09:10:26 +0800
-Message-ID: <1280106626-4726-1-git-send-email-zhenhua.zhang@intel.com>
+From: Steven <liu-dj@neusoft.com>
+Subject: CDMA support in Ofono
+Date: Mon, 26 Jul 2010 10:27:59 +0800
+Message-ID: <4C4CF2AF.1060200@neusoft.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4162904045722446608==
+--===============5770289742390763281==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Avoid the memory leak of server_data.
----
- gdbus/watch.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi
 
-diff --git a/gdbus/watch.c b/gdbus/watch.c
-index 1d479fa..29f23e2 100644
---- a/gdbus/watch.c
-+++ b/gdbus/watch.c
-@@ -533,7 +533,7 @@ static void check_service(DBusConnection *connection, c=
-onst char *name,
- 		goto done;
- 	}
- =
+Currently, Ofono only support GSM/UTMS, is there any plan to support =
 
--	dbus_pending_call_set_notify(call, service_reply, data, NULL);
-+	dbus_pending_call_set_notify(call, service_reply, data, g_free);
- =
+CDMA/EVDO and when will Ofono support CDMA?
 
- 	dbus_pending_call_unref(call);
- =
+Any suggestions or ideas about supporting CDMA will be appreciated .
 
--- =
+steven
+---------------------------------------------------------------------------=
+------------------------
+Confidentiality Notice: The information contained in this e-mail and any ac=
+companying attachment(s) =
 
-1.7.0.4
+is intended only for the use of the intended recipient and may be confident=
+ial and/or privileged of =
+
+Neusoft Corporation, its subsidiaries and/or its affiliates. If any reader =
+of this communication is =
+
+not the intended recipient, unauthorized use, forwarding, printing,  storin=
+g, disclosure or copying =
+
+is strictly prohibited, and may be unlawful.If you have received this commu=
+nication in error,please =
+
+immediately notify the sender by return e-mail, and delete the original mes=
+sage and all copies from =
+
+your system. Thank you. =
+
+---------------------------------------------------------------------------=
+------------------------
 
 
---===============4162904045722446608==--
+--===============5770289742390763281==--
 
