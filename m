@@ -1,119 +1,147 @@
-Content-Type: multipart/mixed; boundary="===============4061840241189288460=="
+Content-Type: multipart/mixed; boundary="===============1844238344592551995=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: huawei: invalid APN name crashes ofono
-Date: Mon, 26 Jul 2010 18:12:06 +0300
-Message-ID: <8739v6l1kp.fsf@potku.valot.fi>
+From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+Subject: Re: [patch 08/20] sms: document the org.ofono.SMSMessage D-Bus
+ interface
+Date: Mon, 26 Jul 2010 10:19:18 -0700
+Message-ID: <1280164758.26204.157.camel@localhost.localdomain>
+In-Reply-To: <4C4A2184.1090701@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4061840241189288460==
+--===============1844238344592551995==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+On Fri, 2010-07-23 at 16:11 -0700, Denis Kenzior wrote: =
 
-I was testing my Huawei E1552 with connman and noticed that ofono
-crashes if I use incorrect APN name. Under gdb it didn't crash but it
-busylooped instead and this was in the log:
+> Hi Inaky,
+> =
 
-Jul 26 16:46:02 tukki ofonod[14367]: Modem:> AT+CGDCONT=3D1,"IP","foobar"\r
-Jul 26 16:46:02 tukki ofonod[14367]: Modem:< \r\nOK\r\n
-Jul 26 16:46:02 tukki ofonod[14367]: Modem:> AT+CGDATA=3D"PPP",1\r
-Jul 26 16:46:02 tukki ofonod[14367]: Modem:< \r\nCONNECT\r\n
-Jul 26 16:46:03 tukki ofonod[14367]: Pcui:< \r\n^RSSI:22\r\n
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:ppp_dis=
-connect() =
+> On 07/23/2010 03:59 PM, Inaky Perez-Gonzalez wrote:
+> > From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+> > =
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+> > ---
+> >  doc/sms-api.txt |   49 +++++++++++++++++++++++++++++++++++++++++++++++=
+--
+> >  1 files changed, 47 insertions(+), 2 deletions(-)
+> > =
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+> > diff --git a/doc/sms-api.txt b/doc/sms-api.txt
+> > index 1fc32ac..af4baae 100644
+> > --- a/doc/sms-api.txt
+> > +++ b/doc/sms-api.txt
+> > @@ -22,9 +22,27 @@ Methods		dict GetProperties()
+> >  			Possible Errors: [service].Error.InvalidArguments
+> >  					 [service].Error.DoesNotExist
+> >  =
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+> > -		void SendMessage(string to, string text)
+> > +		string SendMessage(string destination_number, string text)
+> =
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+> Actually keep string to, I like that better.  The returned type should
+> be 'object' (the object path of the new message) not 'string'.
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+Changed
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+> >  =
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+> > -			Send the message in text to the number in to.
+> > +                        Submit a message for delivery /
+> > +                        processing. oFono owns it from now on until
+> > +                        successful delivery, cancellation (by the
+> > +                        user) or cancellation (by oFono). User has to
+> > +                        keep a copy around as oFono only offers
+> > +                        persistence to satisfy its needs.
+> > +
+> > +                        Returns the name of the D-Bus object that
+> > +                        represents said SMS Message.
+> =
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+> Try to use tabs and not spaces for indentation.
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+Changed to tab (x8)
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+> > +
+> > +			Possible Errors: [service].Error.InvalidArguments
+> > +
+> > +                array{string} PendingMessages()
+> =
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+> array{object} here, and using Messages is better.
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+Done
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+> > +
+> > +                        Returns a list of SMS Messages that have been
+> > +                        submitted for delivery and that are still
+> > +                        pending.
+> > +
+> > +                        FIXME: currently not implemented
+> >  =
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+> >  Signals		PropertyChanged(string name, variant value)
+> >  =
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+> > @@ -64,3 +82,30 @@ Properties	string ServiceCenterAddress
+> >  				"ps-preferred" - Use CS if PS is unavailable
+> >  =
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+> >  			By default oFono uses "cs-preferred" setting.
+> > +
+> > +
+> > +SMS / Messaging interface
+> > +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D
+> > +
+> > +Service		org.ofono
+> > +Interface	org.ofono.SMSMessage
+> =
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+> oFono API is full CamelCase, so this should be SmsMessage.
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+I disagree. It would be like that if SMS was a word, but it is an
+acronym. It makes it quite confusing, if you ask me. If that's still how
+you like it, I'll change it, but I think it is wrong to capitalize an
+acronym.
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+> > +Object path	[variable prefix]/modemX/message_id
+> =
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+> Please follow the conventions for Object Path, e.g. see
+> doc/voicecall-api.txt
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+Fixed
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
-Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
-_context_remove() =
+> > +
+> > +Methods		dict GetProperties()
+> > +
+> > +			Returns a dictionary with the current
+> > +			properties of a message.
+> > +
+> > +                void Cancel()
+> > +
+> > +                        Cancels a pending message's delivery.
+> > +
+> > +Signals		PropertyChanged(string name, variant value)
+> > +
+> > +			This signal indicates a changed value of the given
+> > +			property.
+> > +
+> > +Properties	string TXState
+> > +
+> > +			Current transmission state.
+> > +
+> =
 
-Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+> Rename this to State and include the possible state values please.
 
-Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
- 0x6c88a0
+Done
 
-So huawei_disconnect() is recursively in an endless loop. Any ideas how
-to fix this properly?
 
--- =
 
-Kalle Valo
-
---===============4061840241189288460==--
+--===============1844238344592551995==--
 
