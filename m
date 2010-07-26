@@ -1,180 +1,164 @@
-Content-Type: multipart/mixed; boundary="===============0865439601853526346=="
+Content-Type: multipart/mixed; boundary="===============8719535526480499109=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 3/6] stk: Utilities to deal with menus.
-Date: Mon, 26 Jul 2010 15:14:37 +0200
-Message-ID: <1280150080-6257-3-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 5/6] stk: Handle the Select Item proactive command.
+Date: Mon, 26 Jul 2010 15:14:39 +0200
+Message-ID: <1280150080-6257-5-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1280150080-6257-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0865439601853526346==
+--===============8719535526480499109==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |  132 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 132 insertions(+), 0 deletions(-)
+ src/stk.c |  106 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 105 insertions(+), 1 deletions(-)
 
 diff --git a/src/stk.c b/src/stk.c
-index a4a091c..29174d7 100644
+index f212e9a..0aaf83d 100644
 --- a/src/stk.c
 +++ b/src/stk.c
-@@ -47,6 +47,17 @@ struct stk_timer {
- 	time_t start;
- };
- =
-
-+struct stk_menu {
-+	char *title;
-+	GSList *items;
-+	struct stk_items_next_action_indicator next_action;
-+	int default_item;
-+	struct stk_text_attribute title_attr;
-+	struct stk_item_text_attribute_list item_attrs;
-+	gboolean soft_key;
-+	gboolean has_help;
-+};
-+
- struct ofono_stk {
- 	const struct ofono_stk_driver *driver;
- 	void *driver_data;
-@@ -223,6 +234,127 @@ static void stk_command_cb(const struct ofono_error *=
-error, void *data)
- 	DBG("TERMINAL RESPONSE to a command reported no errors");
+@@ -75,7 +75,7 @@ struct ofono_stk {
+ 	guint remove_agent_source;
+ 	struct stk_app_agent *session_agent;
+ 	struct stk_app_agent *default_agent;
+-	struct stk_menu *main_menu;
++	struct stk_menu *main_menu, *select_item_menu;
+ 	gboolean in_session;
+ 	struct sms_submit_req *sms_submit_req;
+ 	char *idle_mode_text;
+@@ -1000,6 +1000,106 @@ static gboolean handle_command_set_up_menu(const st=
+ruct stk_command *cmd,
+ 	return TRUE;
  }
  =
 
-+static struct stk_menu *stk_menu_create(const char *title,
-+		const struct stk_text_attribute *title_attr, GSList *items,
-+		const struct stk_item_text_attribute_list *item_attrs,
-+		const struct stk_items_next_action_indicator *next_action,
-+		int default_id, gboolean soft_key, gboolean has_help)
++static void request_menu_send(DBusMessage *call, void *user_data)
 +{
-+	struct stk_menu *ret =3D g_new(struct stk_menu, 1);
-+	GSList *l;
-+	int i;
++	struct ofono_stk *stk =3D user_data;
++	struct stk_menu *menu =3D stk->select_item_menu;
 +
-+	ret->title =3D g_strdup(title ?: "");
-+	ret->items =3D g_slist_copy((GSList *) items);
-+	ret->default_item =3D -1;
-+	memcpy(&ret->next_action, next_action, sizeof(ret->next_action));
-+	memcpy(&ret->title_attr, title_attr, sizeof(ret->title_attr));
-+	memcpy(&ret->item_attrs, item_attrs, sizeof(ret->item_attrs));
-+	ret->soft_key =3D soft_key;
-+	ret->has_help =3D has_help;
++	dbus_message_set_member(call, "RequestSelection");
 +
-+	for (l =3D ret->items, i =3D 0; l; l =3D l->next, i++) {
-+		struct stk_item *j =3D g_memdup(l->data, sizeof(*j));
++	append_menu(call, menu);
++}
 +
-+		j->text =3D g_strdup(j->text);
-+		l->data =3D j;
++static void request_menu_cb(enum stk_agent_result result, DBusMessage *rep=
+ly,
++				void *user_data)
++{
++	struct ofono_stk *stk =3D user_data;
++	struct stk_menu *menu =3D stk->select_item_menu;
++	struct stk_item *item =3D NULL;
++	enum stk_result_type type;
++	unsigned char selection;
++	struct stk_response rsp;
++	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
+};
 +
-+		if (j->id =3D=3D default_id)
-+			ret->default_item =3D i;
++	switch (result) {
++	case STK_AGENT_RESULT_OK:
++		type =3D STK_RESULT_TYPE_SUCCESS;
++		break;
++
++	case STK_AGENT_RESULT_BACK:
++		type =3D STK_RESULT_TYPE_GO_BACK;
++		goto send;
++
++	case STK_AGENT_RESULT_TIMEOUT:
++		type =3D STK_RESULT_TYPE_NO_RESPONSE;
++		goto send;
++
++	case STK_AGENT_RESULT_TERMINATE:
++	default:
++		type =3D STK_RESULT_TYPE_USER_TERMINATED;
++		goto send;
++
++	case STK_AGENT_RESULT_CANCEL:
++		goto out;
 +	}
 +
-+	return ret;
-+}
++	if (dbus_message_get_args(reply, NULL,
++					DBUS_TYPE_BYTE, &selection,
++					DBUS_TYPE_INVALID) =3D=3D FALSE) {
++		type =3D STK_RESULT_TYPE_USER_TERMINATED;
 +
-+static struct stk_menu *stk_menu_create_from_set_up_menu(
-+						const struct stk_command *cmd)
-+{
-+	gboolean soft_key =3D (cmd->qualifier & (1 << 0)) !=3D 0;
-+	gboolean has_help =3D (cmd->qualifier & (1 << 7)) !=3D 0;
-+
-+	return stk_menu_create(cmd->setup_menu.alpha_id,
-+				&cmd->setup_menu.text_attr,
-+				cmd->setup_menu.items,
-+				&cmd->setup_menu.item_text_attr_list,
-+				&cmd->setup_menu.next_act,
-+				0, soft_key, has_help);
-+}
-+
-+static struct stk_menu *stk_menu_create_from_select_item(
-+						const struct stk_command *cmd)
-+{
-+	gboolean soft_key =3D (cmd->qualifier & (1 << 2)) !=3D 0;
-+	gboolean has_help =3D (cmd->qualifier & (1 << 7)) !=3D 0;
-+
-+	return stk_menu_create(cmd->select_item.alpha_id,
-+				&cmd->select_item.text_attr,
-+				cmd->select_item.items,
-+				&cmd->select_item.item_text_attr_list,
-+				&cmd->select_item.next_act,
-+				cmd->select_item.item_id, soft_key, has_help);
-+}
-+
-+static void stk_menu_free(struct stk_menu *menu)
-+{
-+	GSList *l;
-+
-+	for (l =3D menu->items; l; l =3D l->next) {
-+		struct stk_item *i =3D l->data;
-+
-+		g_free(i->text);
-+		g_free(i);
++		ofono_error("Can't parse the reply to SelectItem()");
++		goto send;
 +	}
 +
-+	g_slist_free(menu->items);
-+	g_free(menu->title);
-+	g_free(menu);
-+}
-+
-+static void append_menu_items(DBusMessageIter *iter, struct stk_menu *menu)
-+{
-+	DBusMessageIter variant, array, entry;
-+	GSList *l;
-+
-+	dbus_message_iter_open_container(iter, DBUS_TYPE_VARIANT,
-+						"a(sy)", &variant);
-+
-+	dbus_message_iter_open_container(&variant, DBUS_TYPE_ARRAY,
-+						"(sy)", &array);
-+
-+	for (l =3D menu->items; l; l =3D l->next) {
-+		struct stk_item *item =3D l->data;
-+		unsigned char icon_id =3D 0;
-+
-+		dbus_message_iter_open_container(&array, DBUS_TYPE_STRUCT,
-+							NULL, &entry);
-+
-+		dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING,
-+						&item->text);
-+		dbus_message_iter_append_basic(&entry, DBUS_TYPE_BYTE,
-+						&icon_id);
-+
-+		dbus_message_iter_close_container(&array, &entry);
++	item =3D g_slist_nth_data(menu->items, selection);
++	if (!item) {
++		type =3D STK_RESULT_TYPE_USER_TERMINATED;
++		ofono_error("Invalid item selected");
 +	}
 +
-+	dbus_message_iter_close_container(&variant, &array);
++send:
++	memset(&rsp, 0, sizeof(rsp));
++	rsp.result.type =3D type;
 +
-+	dbus_message_iter_close_container(iter, &variant);
++	if (item)
++		rsp.select_item.item_id =3D item->id;
++
++	if (stk_respond(stk, &rsp, stk_command_cb))
++		stk_command_cb(&error, stk);
++
++out:
++	stk_menu_free(menu);
++	stk->select_item_menu =3D NULL;
 +}
 +
-+static void append_menu(DBusMessage *msg, struct stk_menu *menu)
++static gboolean handle_command_select_item(const struct stk_command *cmd,
++						struct stk_response *rsp,
++						struct ofono_stk *stk)
 +{
-+	dbus_int16_t default_item =3D menu->default_item;
-+	unsigned char icon_id =3D 0;
-+	DBusMessageIter iter;
++	stk->select_item_menu =3D stk_menu_create_from_select_item(cmd);
 +
-+	dbus_message_iter_init_append(msg, &iter);
++	if (!stk->select_item_menu) {
++		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
 +
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &menu->title);
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_BYTE, &icon_id);
-+	append_menu_items(&iter, menu);
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT16, &default_item);
++		return TRUE;
++	}
++
++	if (!stk->in_session) {
++		stk->in_session =3D TRUE;
++
++		if (stk->main_menu)
++			emit_menu_changed(stk);
++	}
++
++	stk->cancel_cmd =3D stk_agent_request_cancel;
++
++	stk_agent_request_start(stk,
++				request_menu_send, request_menu_cb, 0);
++
++	return FALSE;
 +}
 +
- static void stk_alpha_id_set(struct ofono_stk *stk, const char *text)
+ static void stk_proactive_command_cancel(struct ofono_stk *stk)
  {
- 	/* TODO */
+ 	if (!stk->pending_cmd)
+@@ -1088,6 +1188,10 @@ void ofono_stk_proactive_command_notify(struct ofono=
+_stk *stk,
+ 			respond =3D handle_command_set_up_menu(stk->pending_cmd,
+ 								&rsp, stk);
+ 			break;
++		case STK_COMMAND_TYPE_SELECT_ITEM:
++			respond =3D handle_command_select_item(stk->pending_cmd,
++								&rsp, stk);
++			break;
+ 		}
+ =
+
+ 		if (respond)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============0865439601853526346==--
+--===============8719535526480499109==--
 
