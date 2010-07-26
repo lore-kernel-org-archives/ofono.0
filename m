@@ -1,42 +1,119 @@
-Content-Type: multipart/mixed; boundary="===============8346253754888694866=="
+Content-Type: multipart/mixed; boundary="===============4061840241189288460=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: CDMA support in Ofono
-Date: Sun, 25 Jul 2010 22:10:28 -0700
-Message-ID: <1280121028.2621.32.camel@localhost.localdomain>
-In-Reply-To: <4C4CF2AF.1060200@neusoft.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: huawei: invalid APN name crashes ofono
+Date: Mon, 26 Jul 2010 18:12:06 +0300
+Message-ID: <8739v6l1kp.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8346253754888694866==
+--===============4061840241189288460==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Steven,
+Hi,
 
-> Currently, Ofono only support GSM/UTMS, is there any plan to support =
+I was testing my Huawei E1552 with connman and noticed that ofono
+crashes if I use incorrect APN name. Under gdb it didn't crash but it
+busylooped instead and this was in the log:
 
-> CDMA/EVDO and when will Ofono support CDMA?
-> =
+Jul 26 16:46:02 tukki ofonod[14367]: Modem:> AT+CGDCONT=3D1,"IP","foobar"\r
+Jul 26 16:46:02 tukki ofonod[14367]: Modem:< \r\nOK\r\n
+Jul 26 16:46:02 tukki ofonod[14367]: Modem:> AT+CGDATA=3D"PPP",1\r
+Jul 26 16:46:02 tukki ofonod[14367]: Modem:< \r\nCONNECT\r\n
+Jul 26 16:46:03 tukki ofonod[14367]: Pcui:< \r\n^RSSI:22\r\n
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:ppp_dis=
+connect() =
 
-> Any suggestions or ideas about supporting CDMA will be appreciated .
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
 
-so CDMA and also EVDO is on the long-term feature list of oFono. Right
-now the focus is clearly on GSM/UMTS. One reason might be that CDMA in
-Europe is not really existent or that more documentation and/or hardware
-is available.
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
 
-I foresee that EVDO integration for data connections with oFono might be
-a lot simpler to integrate than a full CDMA stack with voice and text
-messaging features. However we are more than happy to see CDMA and EVDO
-contributions from other individuals or companies.
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
 
-Regards
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
 
-Marcel
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
 
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
 
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
 
---===============8346253754888694866==--
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+Jul 26 16:46:04 tukki ofonod[14367]: drivers/atmodem/gprs-context.c:at_gprs=
+_context_remove() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: plugins/huawei.c:huawei_disconnect() =
+
+Jul 26 16:46:04 tukki ofonod[14367]: src/gprs.c:gprs_context_remove() atom:=
+ 0x6c88a0
+
+So huawei_disconnect() is recursively in an endless loop. Any ideas how
+to fix this properly?
+
+-- =
+
+Kalle Valo
+
+--===============4061840241189288460==--
 
