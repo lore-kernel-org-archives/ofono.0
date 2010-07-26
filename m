@@ -1,54 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============4800202697038272043=="
+Content-Type: multipart/mixed; boundary="===============7839538731924867082=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-Subject: Re: [patch 12/20] struct tx_queue_entry: add a destructor
-Date: Mon, 26 Jul 2010 11:48:43 -0700
-Message-ID: <1280170123.26204.170.camel@localhost.localdomain>
-In-Reply-To: <4C4A2269.1050404@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] stkutil: convert img to xpm
+Date: Mon, 26 Jul 2010 14:47:00 -0500
+Message-ID: <4C4DE634.3020001@gmail.com>
+In-Reply-To: <1280168854-4151-2-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4800202697038272043==
+--===============7839538731924867082==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2010-07-23 at 16:14 -0700, Denis Kenzior wrote: =
+Hi Kristen,
 
-> Hi Inaky,
-> =
-
-> >> tx_queue_entry * here.  Casting the destructor in g_foo_foreach is
-> >> acceptable.
-> > =
-
-> > Heh, I'd rather have it like this: Repeat after me in a 1000-loop: casts
-> > are evil and should be avoided for they muck the code by hiding warnings
-> > when you change things and miss updating all the sites ... =
-
-> > =
-
-> =
-
-> I fully agree, but the extra silly NULL argument makes this worse than
-> the cast.  And to be clear, g_foo_foreach is about the only place we
-> explicitly allow casts.  If you feel you need to be pedantic, then write
-> a GFunc specifically to do the foreach bit.
-> =
-
-> e.g. tx_queue_entry_free(struct tx_queue_entry *);
-> =
-
-> txq_foreach_free(gpointer foo, gpointer user)
-> {
->   struct tx_queue_entry *bar =3D foo;
->   tx_queue_entry_free(bar);
-> }
+On 07/26/2010 01:27 PM, Kristen Carlson Accardi wrote:
+> ---
+>  src/stkutil.c |  147 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  src/stkutil.h |    9 ++++
+>  2 files changed, 156 insertions(+), 0 deletions(-)
 > =
 
 
-Done
+Both patches in this series have been applied, thanks.
 
+Regards,
+-Denis
 
---===============4800202697038272043==--
+--===============7839538731924867082==--
 
