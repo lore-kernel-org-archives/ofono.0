@@ -1,101 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============2284474287400965515=="
+Content-Type: multipart/mixed; boundary="===============0922008841422617667=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] Fix busylooped in ppp_disconnect for huawei modem
-Date: Tue, 27 Jul 2010 11:57:17 -0500
-Message-ID: <4C4F0FED.10401@gmail.com>
-In-Reply-To: <1280206726-2133-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [patch 07/20] SMS: implement SHA256-based message IDs [incomplete]
+Date: Tue, 27 Jul 2010 12:03:02 -0500
+Message-ID: <4C4F1146.8050409@gmail.com>
+In-Reply-To: <47f01a9253e6f181da9435a7d52a600220665aee.1279918330.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2284474287400965515==
+--===============0922008841422617667==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Inaky,
 
-On 07/26/2010 11:58 PM, Zhenhua Zhang wrote:
-> Huawei modem closes the modem port after PPP disconnect. So the channel
-> of gatchat is NULL in ppp_disconnect. In such case, we resume the chat
-> and it causes huawei_disconnect() get called and the gprs context is
-> removed later.
-> =
+> -unsigned int __ofono_sms_txq_submit(struct ofono_sms *sms, GSList *list,
+> -					unsigned int flags,
+> +struct tx_queue_entry * __ofono_sms_txq_submit(struct ofono_sms *sms, GS=
+List *list,
+> +					unsigned int flags, unsigned ref,
+>  					ofono_sms_txq_submit_cb_t cb,
+>  					void *data, ofono_destroy_func destroy);
 
-> Before removing this gprs context, we should reply the pending DBus
-> message to the client.
-> ---
->  drivers/atmodem/gprs-context.c |   17 +++++++++++++++--
->  1 files changed, 15 insertions(+), 2 deletions(-)
-> =
+I disagree with this, you're modifying an ofono internal API function to
+return a structure which is opaque and cannot be manipulated.  I'd
+rather see you returning a struct sms_uuid...
 
-> diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-contex=
-t.c
-> index fea80b0..2f5be9b 100644
-> --- a/drivers/atmodem/gprs-context.c
-> +++ b/drivers/atmodem/gprs-context.c
-> @@ -88,12 +88,18 @@ static void ppp_disconnect(GAtPPPDisconnectReason rea=
-son, gpointer user_data)
->  {
->  	struct ofono_gprs_context *gc =3D user_data;
->  	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
-> +	GAtIO *io =3D g_at_chat_get_io(gcd->chat);
->  =
-
->  	DBG("");
->  =
-
->  	g_at_ppp_unref(gcd->ppp);
->  	gcd->ppp =3D NULL;
-> -	g_at_chat_resume(gcd->chat);
-> +
-> +	if (g_at_io_get_channel(io) =3D=3D NULL) {
-> +		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, FALSE, NULL,
-> +					NULL, NULL, NULL, gcd->cb_data);
-> +		goto done;
-> +	}
-
-I don't believe the above addition is actually necessary, just moving
-the g_at_chat_resume to the bottom should be enough.
-
->  =
-
->  	switch (gcd->state) {
->  	case STATE_ENABLING:
-> @@ -108,8 +114,15 @@ static void ppp_disconnect(GAtPPPDisconnectReason re=
-ason, gpointer user_data)
->  		break;
->  	}
->  =
-
-> +done:
->  	gcd->active_context =3D 0;
->  	gcd->state =3D STATE_IDLE;
 > +	/*
-> +	 * If the channel of gcd->chat is NULL, it might cause
-> +	 * gprs_context_remove get called and the gprs context will be
-> +	 * removed.
+> +	 * Instead of using the telephone number/address we got from
+> +	 * D-Bus, we do the reverse formatting, so we get something
+> +	 * that has been normalized--this is used later and we do it
+> +	 * here to simplify error handling.
 > +	 */
-> +	g_at_chat_resume(gcd->chat);
->  }
->  =
+> +	sms_address_from_string(&receiver, to);
+> +	if (sms_address_to_hex_string(&receiver, receiver_str)
+> +	    =3D=3D FALSE)
+> +		return __ofono_error_failed(msg);
 
->  static gboolean setup_ppp(struct ofono_gprs_context *gc)
-> @@ -257,7 +270,7 @@ static void at_gprs_context_remove(struct ofono_gprs_=
-context *gc)
->  =
+Please avoid mixing tabs and spaces for indentation.  And in this case
+it is more readale to break up the function than the equals line.  E.g.
 
->  	DBG("");
->  =
-
-> -	if (gcd->state !=3D STATE_IDLE) {
-> +	if (gcd->state !=3D STATE_IDLE && gcd->ppp) {
->  		g_at_ppp_unref(gcd->ppp);
->  		g_at_chat_resume(gcd->chat);
->  	}
+if (sms_address_to_hex_string(&receiver,
+				receiver_str =3D=3D FALSE)
+	return __ofono_error_failed(msg);
 
 Regards,
 -Denis
 
---===============2284474287400965515==--
+--===============0922008841422617667==--
 
