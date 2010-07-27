@@ -1,80 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============0859580680343283006=="
+Content-Type: multipart/mixed; boundary="===============6916591769091598828=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [patch 20/20] SMS: Implement D-Bus SMS-MSG::GetProperties
-Date: Tue, 27 Jul 2010 12:18:48 -0500
-Message-ID: <4C4F14F8.5080700@gmail.com>
-In-Reply-To: <95963779354386a04005f5bf2067149d91a53969.1279918330.git.inaky.perez-gonzalez@intel.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: [PATCH] Fix busylooped in ppp_disconnect for huawei modem
+Date: Tue, 27 Jul 2010 22:39:30 +0300
+Message-ID: <87tynkk93h.fsf@potku.valot.fi>
+In-Reply-To: <33AB447FBD802F4E932063B962385B3528AA1DA4@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0859580680343283006==
+--===============6916591769091598828==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Inaky,
+"Zhang, Zhenhua" <zhenhua.zhang@intel.com> writes:
 
-> +static DBusMessage *dbus_sms_msg_get_properties(
-> +	DBusConnection * conn, DBusMessage *dbus_msg, void *_sms_msg)
-> +{
-> +	struct tx_queue_entry *sms_msg =3D _sms_msg;
-> +	DBusMessage *reply;
-> +	DBusMessageIter iter;
-> +	DBusMessageIter dict;
-> +	const char *str;
-> +
-> +	reply =3D dbus_message_new_method_return(dbus_msg);
-> +	if (!reply)
-> +		return NULL;
+> Hi Kalle,
 
-Empty line here
+Hi Zhenhua,
 
-> +	dbus_message_iter_init_append(reply, &iter);
-> +	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-> +					 OFONO_PROPERTIES_ARRAY_SIGNATURE,
-> +					 &dict);
+> Could you try my fix for this busy loop issue? It is not perfect but
+> at least work for me.
 
-Empty line here
+I noticed you sent v2. I'm testing that right now and will send the
+results as a reply to that mail.
 
-> +	str =3D ofono_sms_tx_state_to_string(sms_msg->state);
-> +	ofono_dbus_dict_append(&dict, "TXState", DBUS_TYPE_STRING, &str);
+> Btw, I still meet the kernel warning or even Ubuntu crash after
+> activate/deactivate gprs context multiple times on E1552. Do you see
+> such problem? the kernel dmesg is attached for reference.
 
-Empty line here
-> +	dbus_message_iter_close_container(&iter, &dict);
+I have had lots of disconnect issues, but they have been always in
+ofono. I don't recall seeing a single kernel issue during the last three
+months I have been testing my Huawei E1552.
 
-And one more here
+-- =
 
-Also, you might want to think about what other properties would be
-useful here.  E.g. perhaps queue time, submission time, To address,
-contents?
+Kalle Valo
 
-> +	return reply;
-> +}
-> +
-> +
-
-No double empty lines allowed.
-
->  /*
->   * Note that the D-Bus specific cleanups are taken care by the
->   * sms_msg_dbus_destroy() callback passed in dbus_sms_msg_send().
-> @@ -564,6 +587,8 @@ static DBusMessage *dbus_sms_msg_cancel(
->  =
-
->  static
->  GDBusMethodTable sms_msg_methods[] =3D {
-> +	{ "GetProperties",	"",	"a{sv}",
-> +	  dbus_sms_msg_get_properties, G_DBUS_METHOD_FLAG_ASYNC },
-
-Why exactly is this method ASYNC?
-
->  	{ "Cancel",		DBUS_TYPE_BOOLEAN_AS_STRING,	"",
->  	  dbus_sms_msg_cancel, 0 },
->  	{ }
-
-Regards,
--Denis
-
---===============0859580680343283006==--
+--===============6916591769091598828==--
 
