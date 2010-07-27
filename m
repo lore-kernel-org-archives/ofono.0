@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============3007524641570442790=="
+Content-Type: multipart/mixed; boundary="===============7141906427603843644=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
 Subject: [PATCH] sim: allow partial reads of tranparent files
-Date: Tue, 27 Jul 2010 16:12:36 -0700
-Message-ID: <1280272356-21747-1-git-send-email-kristen@linux.intel.com>
+Date: Tue, 27 Jul 2010 16:22:07 -0700
+Message-ID: <1280272927-21803-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3007524641570442790==
+--===============7141906427603843644==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,8 +16,8 @@ Implement ofono_sim_read_bytes().  For transparent files, this
 will read num_bytes from a specified offset of a given fileid.
 ---
  include/sim.h |    5 +++++
- src/sim.c     |   29 ++++++++++++++++++++++++++---
- 2 files changed, 31 insertions(+), 3 deletions(-)
+ src/sim.c     |   27 ++++++++++++++++++++++++---
+ 2 files changed, 29 insertions(+), 3 deletions(-)
 
 diff --git a/include/sim.h b/include/sim.h
 index 36a99b9..15cd6b8 100644
@@ -37,7 +37,7 @@ index 36a99b9..15cd6b8 100644
  			ofono_sim_file_write_cb_t cb,
  			enum ofono_sim_file_structure structure, int record,
 diff --git a/src/sim.c b/src/sim.c
-index 2514e7b..cd1cbf5 100644
+index 2514e7b..63dea19 100644
 --- a/src/sim.c
 +++ b/src/sim.c
 @@ -60,6 +60,8 @@ struct sim_file_op {
@@ -67,13 +67,13 @@ or *error,
  =
 
 -		sim->driver->read_file_transparent(sim, op->id, 0, op->length,
++		if (op->num_bytes < 0)
++			op->num_bytes =3D op->length;
++
 +		if (op->offset + op->num_bytes > op->length) {
 +			sim_op_error(sim);
 +			return FALSE;
 +		}
-+
-+		if (op->num_bytes < 0)
-+			op->num_bytes =3D op->length;
 +
 +		sim->driver->read_file_transparent(sim, op->id, op->offset,
 +						op->num_bytes,
@@ -92,20 +92,18 @@ or *error,
  			ofono_sim_file_read_cb_t cb, void *data)
  {
  	struct sim_file_op *op;
-@@ -1755,6 +1767,10 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
+@@ -1755,6 +1767,8 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
  	op->cb =3D cb;
  	op->userdata =3D data;
  	op->is_read =3D TRUE;
 +	op->offset =3D offset;
-+
-+	if (num_bytes > 0)
-+		op->num_bytes =3D num_bytes;
++	op->num_bytes =3D num_bytes;
  =
 
  	g_queue_push_tail(sim->simop_q, op);
  =
 
-@@ -1764,6 +1780,13 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
+@@ -1764,6 +1778,13 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
  	return 0;
  }
  =
@@ -125,5 +123,5 @@ or *error,
 1.7.1.1
 
 
---===============3007524641570442790==--
+--===============7141906427603843644==--
 
