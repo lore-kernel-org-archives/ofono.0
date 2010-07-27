@@ -1,122 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============5088271933341783425=="
+Content-Type: multipart/mixed; boundary="===============8109909462165940841=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: [PATCH] Fix busylooped in ppp_disconnect for huawei modem
-Date: Tue, 27 Jul 2010 12:52:29 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B3528AA1E6F@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4C4E51D2.4050709@gmail.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH v2] Fix busylooped in ppp_disconnect for huawei modem
+Date: Tue, 27 Jul 2010 12:58:46 +0800
+Message-ID: <1280206726-2133-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5088271933341783425==
+--===============8109909462165940841==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Huawei modem closes the modem port after PPP disconnect. So the channel
+of gatchat is NULL in ppp_disconnect. In such case, we resume the chat
+and it causes huawei_disconnect() get called and the gprs context is
+removed later.
 
-Denis Kenzior wrote:
-> Hi Zhenhua,
-> =
+Before removing this gprs context, we should reply the pending DBus
+message to the client.
+---
+ drivers/atmodem/gprs-context.c |   17 +++++++++++++++--
+ 1 files changed, 15 insertions(+), 2 deletions(-)
 
-> On 07/26/2010 09:39 PM, Zhenhua Zhang wrote:
->> Huawei modem closes the modem port after PPP disconnect. So the
->> channel =
+diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
+index fea80b0..2f5be9b 100644
+--- a/drivers/atmodem/gprs-context.c
++++ b/drivers/atmodem/gprs-context.c
+@@ -88,12 +88,18 @@ static void ppp_disconnect(GAtPPPDisconnectReason reaso=
+n, gpointer user_data)
+ {
+ 	struct ofono_gprs_context *gc =3D user_data;
+ 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
++	GAtIO *io =3D g_at_chat_get_io(gcd->chat);
+ =
 
->> of gatchat is NULL in ppp_disconnect. In such case, we should not
->> resume =
+ 	DBG("");
+ =
 
->> the chat and call disconnect function when removing the context.
-> =
+ 	g_at_ppp_unref(gcd->ppp);
+ 	gcd->ppp =3D NULL;
+-	g_at_chat_resume(gcd->chat);
++
++	if (g_at_io_get_channel(io) =3D=3D NULL) {
++		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, FALSE, NULL,
++					NULL, NULL, NULL, gcd->cb_data);
++		goto done;
++	}
+ =
 
-> Please reword the last sentence, we should resume the chat, but the
-> question is of timing...
+ 	switch (gcd->state) {
+ 	case STATE_ENABLING:
+@@ -108,8 +114,15 @@ static void ppp_disconnect(GAtPPPDisconnectReason reas=
+on, gpointer user_data)
+ 		break;
+ 	}
+ =
 
-It should be something like 'not resume the chat twice'. One is in
-ppp_disconnect and the second is in at_gprs_context_remove.
++done:
+ 	gcd->active_context =3D 0;
+ 	gcd->state =3D STATE_IDLE;
++	/*
++	 * If the channel of gcd->chat is NULL, it might cause
++	 * gprs_context_remove get called and the gprs context will be
++	 * removed.
++	 */
++	g_at_chat_resume(gcd->chat);
+ }
+ =
 
->> Secondly, before removing the gprs context, we should reply the
->> pending =
+ static gboolean setup_ppp(struct ofono_gprs_context *gc)
+@@ -257,7 +270,7 @@ static void at_gprs_context_remove(struct ofono_gprs_co=
+ntext *gc)
+ =
 
->> DBus message to the client.
->> ---
->>  drivers/atmodem/gprs-context.c |   13 ++++++++++++-
->>  1 files changed, 12 insertions(+), 1 deletions(-)
->> =
+ 	DBG("");
+ =
 
->> diff --git a/drivers/atmodem/gprs-context.c
->> b/drivers/atmodem/gprs-context.c =
+-	if (gcd->state !=3D STATE_IDLE) {
++	if (gcd->state !=3D STATE_IDLE && gcd->ppp) {
+ 		g_at_ppp_unref(gcd->ppp);
+ 		g_at_chat_resume(gcd->chat);
+ 	}
+-- =
 
->> index fea80b0..e2f291a 100644
->> --- a/drivers/atmodem/gprs-context.c
->> +++ b/drivers/atmodem/gprs-context.c
->> @@ -88,11 +88,22 @@ static void
->>  	ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_data) =
-
->>  	{ struct ofono_gprs_context *gc =3D user_data; struct
->> gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc); +	GAtIO
->> *io =3D g_at_chat_get_io(gcd->chat); =
-
->> =
-
->>  	DBG("");
->> =
-
->>  	g_at_ppp_unref(gcd->ppp);
->>  	gcd->ppp =3D NULL;
->> +
->> +	if (g_at_io_get_channel(io) =3D=3D NULL) {
->> +		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, FALSE, NULL,
->> +					NULL, NULL, NULL, gcd->cb_data);
->> +		gcd->active_context =3D 0;
->> +		gcd->state =3D STATE_IDLE;
->> +		g_at_chat_resume(gcd->chat);
->> +		return;
->> +	}
->> +
-> =
-
-> Instead of doing that, can't we simply move g_at_chat_resume to the
-> bottom of the function and put in a comment this might cause
-> gprs_context_remove to get called?
-
-It's better than my current way. The updated patch will send out soon. Plea=
-se =
-
-review it.
-
->>  	g_at_chat_resume(gcd->chat);
->> =
-
->>  	switch (gcd->state) {
->> @@ -257,7 +268,7 @@ static void at_gprs_context_remove(struct
->> ofono_gprs_context *gc) =
-
->> =
-
->>  	DBG("");
->> =
-
->> -	if (gcd->state !=3D STATE_IDLE) {
->> +	if (gcd->state !=3D STATE_IDLE && gcd->ppp) {
-> =
-
-> This along with the funny g_at_chat_resume logic is what seems to be
-> causing the infinite loop.
-> =
-
->>  		g_at_ppp_unref(gcd->ppp);
->>  		g_at_chat_resume(gcd->chat);
->>  	}
-> =
-
-> Thanks,
-> -Denis
+1.7.0.4
 
 
-
-Regards,
-Zhenhua
-
---===============5088271933341783425==--
+--===============8109909462165940841==--
 
