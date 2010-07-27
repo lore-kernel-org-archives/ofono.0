@@ -1,120 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============9151632205209198266=="
+Content-Type: multipart/mixed; boundary="===============0859580680343283006=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [patch 19/20] SMS: introduce sms_msg_cancel and its D-Bus wrapper
-Date: Tue, 27 Jul 2010 12:16:46 -0500
-Message-ID: <4C4F147E.5000706@gmail.com>
-In-Reply-To: <6d6f0ad3aacec87f5a6e75fed17e1020bfcddb0a.1279918330.git.inaky.perez-gonzalez@intel.com>
+Subject: Re: [patch 20/20] SMS: Implement D-Bus SMS-MSG::GetProperties
+Date: Tue, 27 Jul 2010 12:18:48 -0500
+Message-ID: <4C4F14F8.5080700@gmail.com>
+In-Reply-To: <95963779354386a04005f5bf2067149d91a53969.1279918330.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9151632205209198266==
+--===============0859580680343283006==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Inaky,
 
-On 07/23/2010 04:00 PM, Inaky Perez-Gonzalez wrote:
-> From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-> =
+> +static DBusMessage *dbus_sms_msg_get_properties(
+> +	DBusConnection * conn, DBusMessage *dbus_msg, void *_sms_msg)
+> +{
+> +	struct tx_queue_entry *sms_msg =3D _sms_msg;
+> +	DBusMessage *reply;
+> +	DBusMessageIter iter;
+> +	DBusMessageIter dict;
+> +	const char *str;
+> +
+> +	reply =3D dbus_message_new_method_return(dbus_msg);
+> +	if (!reply)
+> +		return NULL;
 
-> This introduces the ability to cancel a pending SMS message,
-> accessible via an internal API and over a D-Bus wrapper.
-> =
+Empty line here
 
-> Sending a note to the network to cancel an in-transit message is not
-> yet implemented.
-> =
+> +	dbus_message_iter_init_append(reply, &iter);
+> +	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+> +					 OFONO_PROPERTIES_ARRAY_SIGNATURE,
+> +					 &dict);
 
-> Note the test case code requires follow up commits that propagate the
-> message's state changes over D-Bus.
-> ---
->  src/sms.c                |   63 +++++++++++++++++
->  src/smsutil.h            |   15 ++++
->  test/test-sms-msg-cancel |  173 ++++++++++++++++++++++++++++++++++++++++=
-++++++
+Empty line here
 
-Multiple patches please.  One for each directory.
+> +	str =3D ofono_sms_tx_state_to_string(sms_msg->state);
+> +	ofono_dbus_dict_append(&dict, "TXState", DBUS_TYPE_STRING, &str);
 
->  3 files changed, 251 insertions(+), 0 deletions(-)
->  create mode 100755 test/test-sms-msg-cancel
-> =
+Empty line here
+> +	dbus_message_iter_close_container(&iter, &dict);
 
-> diff --git a/src/sms.c b/src/sms.c
-> index c0b2e00..97c9eab 100644
-> --- a/src/sms.c
-> +++ b/src/sms.c
-> @@ -538,6 +538,24 @@ static void __ofono_sms_tx_state_set(struct tx_queue=
-_entry *entry,
->  =
+And one more here
 
->  =
+Also, you might want to think about what other properties would be
+useful here.  E.g. perhaps queue time, submission time, To address,
+contents?
+
+> +	return reply;
+> +}
+> +
+> +
+
+No double empty lines allowed.
 
 >  /*
-> + * Note that the D-Bus specific cleanups are taken care by the
-> + * sms_msg_dbus_destroy() callback passed in dbus_sms_msg_send().
-> + */
-> +static DBusMessage *dbus_sms_msg_cancel(
-> +	DBusConnection * conn, DBusMessage *msg, void *data)
-> +{
-> +	gboolean do_network_cancel =3D FALSE;
-> +	struct tx_queue_entry *sms_msg =3D data;
-> +	if (!dbus_message_get_args(msg, NULL,
-> +				   DBUS_TYPE_BOOLEAN, &do_network_cancel))
-> +		return __ofono_error_invalid_args(msg);
-> +	sms_msg_cancel(sms_msg,
-> +		       do_network_cancel ? SMS_MSG_CANCEL_IN_NETWORK : 0);
-> +	return dbus_message_new_method_return(msg);
-> +}
-> +
-> +
+>   * Note that the D-Bus specific cleanups are taken care by the
+>   * sms_msg_dbus_destroy() callback passed in dbus_sms_msg_send().
+> @@ -564,6 +587,8 @@ static DBusMessage *dbus_sms_msg_cancel(
+>  =
 
-You're ignoring about every part of the coding standard in this chunk...
+>  static
+>  GDBusMethodTable sms_msg_methods[] =3D {
+> +	{ "GetProperties",	"",	"a{sv}",
+> +	  dbus_sms_msg_get_properties, G_DBUS_METHOD_FLAG_ASYNC },
 
-> +/**
-> + * Cancel a pending SMS message
-> + *
-> + * @sms_msg: message to cancel
-> + * @flags: modifies for the action
-> + *
-> + * This function cancels a message that is pending or being
-> + * actively transmitted. Note that after this function returns, the
-> + * @sms_msg handle is no longer valid.
-> + *
-> + * \internal
-> + *
-> + * There is no need to cancel the calling of tx_next() by
-> + * g_timeout_add() scheduled in sms_msg_send(). The rationale behind
-> + * this is that the tx_next() function is scheduled to go over the
-> + * list of messages in the @sms object, so it might have been
-> + * scheduled for other messages also rather than just for this one
-> + * @sms_msg. By the time it gets to run, it might see the list empty
-> + * or see other messages, but @sms_msg won't be there.
-> + */
-> +void sms_msg_cancel(struct tx_queue_entry *sms_msg,
-> +		    enum sms_msg_cancel_flags flags)
-> +{
-> +	struct ofono_sms *sms =3D sms_msg->sms_mgr;
-> +	DBG("%s (%p)\n", __func__, sms_msg);
-> +	if (sms_msg->state =3D=3D OFONO_SMS_TX_ST_QUEUED)
-> +		g_queue_remove(sms->txq, sms_msg);
-> +	else if (sms_msg->state =3D=3D OFONO_SMS_TX_ST_WSR)
-> +		g_queue_remove(sms->tx_wsrq, sms_msg);
-> +	ofono_sms_tx_state_set(sms_msg, OFONO_SMS_TX_ST_CANCELING);
-> +	if (flags & SMS_MSG_CANCEL_IN_NETWORK)
-> +		ofono_warn("%s(): SMS_MSG_CANCEL_IN_NETWORK support "
-> +			   "not yet implemented\n", __func__);
-> +	ofono_sms_tx_state_set(sms_msg, OFONO_SMS_TX_ST_CANCELLED);
-> +	tx_queue_entry_destroy_free(sms_msg, NULL);
-> +}
-> +
-> +
+Why exactly is this method ASYNC?
 
-And again ignoring the coding standard...
+>  	{ "Cancel",		DBUS_TYPE_BOOLEAN_AS_STRING,	"",
+>  	  dbus_sms_msg_cancel, 0 },
+>  	{ }
 
 Regards,
 -Denis
 
---===============9151632205209198266==--
+--===============0859580680343283006==--
 
