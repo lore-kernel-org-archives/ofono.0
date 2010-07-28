@@ -1,75 +1,236 @@
-Content-Type: multipart/mixed; boundary="===============0960333883405772072=="
+Content-Type: multipart/mixed; boundary="===============1361983529809735393=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH v3] Fix busylooped in ppp_disconnect for huawei modem
-Date: Wed, 28 Jul 2010 08:25:26 +0800
-Message-ID: <1280276726-17360-1-git-send-email-zhenhua.zhang@intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 2/6] stk: Add STK agent registration api.
+Date: Wed, 28 Jul 2010 08:09:33 +0200
+Message-ID: <1280297377-20692-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1280297377-20692-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0960333883405772072==
+--===============1361983529809735393==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Huawei modem closes the modem port after PPP disconnect. So the channel
-of gatchat is NULL in ppp_disconnect. In such case, we resume the chat
-and it causes huawei_disconnect() get called and the gprs context is
-removed later.
-
-Before removing this gprs context, we should reply the pending DBus
-message to the client.
+This implements the agent registration and lifecycle and the command
+implementations will use the functions added here and in the previous
+patch.
 ---
- drivers/atmodem/gprs-context.c |    9 +++++++--
- 1 files changed, 7 insertions(+), 2 deletions(-)
+ src/stk.c |  146 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 146 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index fea80b0..6589560 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -93,7 +93,6 @@ static void ppp_disconnect(GAtPPPDisconnectReason reason,=
- gpointer user_data)
+diff --git a/src/stk.c b/src/stk.c
+index 556dc68..8109d48 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -38,6 +38,7 @@
+ #include "common.h"
+ #include "smsutil.h"
+ #include "stkutil.h"
++#include "stkagent.h"
  =
 
- 	g_at_ppp_unref(gcd->ppp);
- 	gcd->ppp =3D NULL;
--	g_at_chat_resume(gcd->chat);
+ static GSList *g_drivers =3D NULL;
  =
 
- 	switch (gcd->state) {
- 	case STATE_ENABLING:
-@@ -110,6 +109,12 @@ static void ppp_disconnect(GAtPPPDisconnectReason reas=
-on, gpointer user_data)
+@@ -57,6 +58,12 @@ struct ofono_stk {
+ 	struct stk_timer timers[8];
+ 	guint timers_source;
  =
 
- 	gcd->active_context =3D 0;
- 	gcd->state =3D STATE_IDLE;
-+	/*
-+	 * If the channel of gcd->chat is NULL, it might cause
-+	 * gprs_context_remove get called and the gprs context will be
-+	 * removed.
-+	 */
-+	g_at_chat_resume(gcd->chat);
++	int timeout;
++	int short_timeout;
++	guint remove_agent_source;
++	struct stk_app_agent *session_agent;
++	struct stk_app_agent *default_agent;
++	struct stk_app_agent *current_agent; /* Always one of the above two */
+ 	struct sms_submit_req *sms_submit_req;
+ 	char *idle_mode_text;
+ };
+@@ -255,8 +262,134 @@ static DBusMessage *stk_get_properties(DBusConnection=
+ *conn,
+ 	return reply;
  }
  =
 
- static gboolean setup_ppp(struct ofono_gprs_context *gc)
-@@ -257,7 +262,7 @@ static void at_gprs_context_remove(struct ofono_gprs_co=
-ntext *gc)
++static void stk_agent_request_cancel(struct ofono_stk *stk)
++{
++	if (stk->session_agent)
++		app_agent_request_cancel(stk->session_agent);
++
++	if (stk->default_agent)
++		app_agent_request_cancel(stk->default_agent);
++}
++
++static void default_agent_notify(gpointer user_data)
++{
++	struct ofono_stk *stk =3D user_data;
++
++	stk->default_agent =3D NULL;
++
++	stk->current_agent =3D stk->session_agent;
++}
++
++static void session_agent_notify(gpointer user_data)
++{
++	struct ofono_stk *stk =3D user_data;
++
++	stk->session_agent =3D NULL;
++
++	stk->current_agent =3D stk->default_agent;
++
++	if (stk->remove_agent_source) {
++		g_source_remove(stk->remove_agent_source);
++		stk->remove_agent_source =3D 0;
++	}
++}
++
++static gboolean session_agent_remove_cb(gpointer user_data)
++{
++	struct ofono_stk *stk =3D user_data;
++
++	stk->remove_agent_source =3D 0;
++
++	app_agent_remove(stk->session_agent);
++
++	return FALSE;
++}
++
++/* Safely remove the agent even inside a callback */
++static void session_agent_remove(struct ofono_stk *stk)
++{
++	if (!stk->remove_agent_source)
++		stk->remove_agent_source =3D
++			g_timeout_add(0, session_agent_remove_cb, stk);
++}
++
++static DBusMessage *stk_register_agent(DBusConnection *conn,
++					DBusMessage *msg, void *data)
++{
++	struct ofono_stk *stk =3D data;
++	const char *agent_path;
++
++	if (stk->default_agent)
++		return __ofono_error_busy(msg);
++
++	if (dbus_message_get_args(msg, NULL,
++					DBUS_TYPE_OBJECT_PATH, &agent_path,
++					DBUS_TYPE_INVALID) =3D=3D FALSE)
++		return __ofono_error_invalid_args(msg);
++
++	stk->default_agent =3D app_agent_create(agent_path,
++						dbus_message_get_sender(msg),
++						TRUE, stk,
++						default_agent_notify);
++	if (!stk->default_agent)
++		return __ofono_error_failed(msg);
++
++	if (!stk->session_agent)
++		stk->current_agent =3D stk->default_agent;
++
++	return dbus_message_new_method_return(msg);
++}
++
++static DBusMessage *stk_unregister_agent(DBusConnection *conn,
++						DBusMessage *msg, void *data)
++{
++	struct ofono_stk *stk =3D data;
++	const char *agent_path;
++	const char *agent_bus =3D dbus_message_get_sender(msg);
++
++	if (dbus_message_get_args(msg, NULL,
++					DBUS_TYPE_OBJECT_PATH, &agent_path,
++					DBUS_TYPE_INVALID) =3D=3D FALSE)
++		return __ofono_error_invalid_args(msg);
++
++	if (!stk->default_agent)
++		return __ofono_error_failed(msg);
++
++	if (!app_agent_matches(stk->default_agent, agent_path, agent_bus))
++		return __ofono_error_failed(msg);
++
++	app_agent_remove(stk->default_agent);
++
++	return dbus_message_new_method_return(msg);
++}
++
++static DBusMessage *stk_select_item(DBusConnection *conn,
++					DBusMessage *msg, void *data)
++{
++	struct ofono_stk *stk =3D data;
++	const char *agent_path;
++	unsigned char selection;
++
++	if (stk->session_agent)
++		return __ofono_error_busy(msg);
++
++	if (dbus_message_get_args(msg, NULL,
++					DBUS_TYPE_BYTE, &selection,
++					DBUS_TYPE_OBJECT_PATH, &agent_path,
++					DBUS_TYPE_INVALID) =3D=3D FALSE)
++		return __ofono_error_invalid_args(msg);
++
++	/* TODO */
++
++	return __ofono_error_not_implemented(msg);
++}
++
+ static GDBusMethodTable stk_methods[] =3D {
+ 	{ "GetProperties",		"",	"a{sv}",stk_get_properties },
++	{ "SelectItem",			"yo",	"",	stk_select_item,
++					G_DBUS_METHOD_FLAG_ASYNC },
++	{ "RegisterAgent",		"o",	"",	stk_register_agent },
++	{ "UnregisterAgent",		"o",	"",	stk_unregister_agent },
  =
 
- 	DBG("");
+ 	{ }
+ };
+@@ -576,6 +709,11 @@ static void stk_proactive_command_cancel(struct ofono_=
+stk *stk)
+ void ofono_stk_proactive_session_end_notify(struct ofono_stk *stk)
+ {
+ 	stk_proactive_command_cancel(stk);
++
++	if (stk->session_agent) {
++		app_agent_remove(stk->session_agent);
++		stk->session_agent =3D NULL;
++	}
+ }
  =
 
--	if (gcd->state !=3D STATE_IDLE) {
-+	if (gcd->state !=3D STATE_IDLE && gcd->ppp) {
- 		g_at_ppp_unref(gcd->ppp);
- 		g_at_chat_resume(gcd->chat);
- 	}
+ void ofono_stk_proactive_command_notify(struct ofono_stk *stk,
+@@ -687,6 +825,12 @@ static void stk_unregister(struct ofono_atom *atom)
+ 	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
+ 	const char *path =3D __ofono_atom_get_path(atom);
+ =
+
++	if (stk->session_agent)
++		app_agent_remove(stk->session_agent);
++
++	if (stk->default_agent)
++		app_agent_remove(stk->default_agent);
++
+ 	if (stk->pending_cmd) {
+ 		stk_command_free(stk->pending_cmd);
+ 		stk->pending_cmd =3D NULL;
+@@ -778,6 +922,8 @@ void ofono_stk_register(struct ofono_stk *stk)
+ =
+
+ 	__ofono_atom_register(stk->atom, stk_unregister);
+ =
+
++	stk->timeout =3D 600; /* 10 minutes */
++	stk->short_timeout =3D 20; /* 20 seconds */
+ 	stk->envelope_q =3D g_queue_new();
+ }
+ =
+
 -- =
 
-1.7.0.4
+1.7.1.86.g0e460.dirty
 
 
---===============0960333883405772072==--
+--===============1361983529809735393==--
 
