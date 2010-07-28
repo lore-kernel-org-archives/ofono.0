@@ -1,403 +1,192 @@
-Content-Type: multipart/mixed; boundary="===============6553541028973018737=="
+Content-Type: multipart/mixed; boundary="===============5304954167357096966=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 1/6] Add STK agent utilities and logic.
-Date: Wed, 28 Jul 2010 08:09:32 +0200
-Message-ID: <1280297377-20692-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 3/6] stk: Utilities to deal with menus.
+Date: Wed, 28 Jul 2010 08:09:34 +0200
+Message-ID: <1280297377-20692-3-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1280297377-20692-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6553541028973018737==
+--===============5304954167357096966==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am    |    2 +-
- src/stkagent.c |  294 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ src/stk.c      |   67 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/stkagent.h |   46 +++++++++
- 3 files changed, 341 insertions(+), 1 deletions(-)
- create mode 100644 src/stkagent.c
- create mode 100644 src/stkagent.h
+ src/stkagent.c |   37 +++++++++++++++++++++++++++++++
+ src/stkagent.h |   18 +++++++++++++++
+ 3 files changed, 122 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index e256841..0e9086b 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -270,7 +270,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
-es) \
- 			src/storage.c src/cbs.c src/watch.c src/call-volume.c \
- 			src/gprs.c src/idmap.h src/idmap.c \
- 			src/radio-settings.c src/stkutil.h src/stkutil.c \
--			src/nettime.c
-+			src/nettime.c src/stkagent.c src/stkagent.h
+diff --git a/src/stk.c b/src/stk.c
+index 8109d48..852c251 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -224,6 +224,73 @@ static void stk_command_cb(const struct ofono_error *e=
+rror, void *data)
+ 	DBG("TERMINAL RESPONSE to a command reported no errors");
+ }
  =
 
- src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
-@ -ldl
- =
-
++static struct stk_menu *stk_menu_create(const char *title,
++		const struct stk_text_attribute *title_attr, GSList *items,
++		const struct stk_item_text_attribute_list *item_attrs,
++		int default_id, gboolean soft_key, gboolean has_help)
++{
++	struct stk_menu *ret =3D g_new(struct stk_menu, 1);
++	GSList *l;
++	int i;
++
++	ret->title =3D g_strdup(title ? title : "");
++	ret->icon_id =3D 0;
++	ret->items =3D g_new0(struct stk_menu_item, g_slist_length(items) + 1);
++	ret->default_item =3D -1;
++	ret->soft_key =3D soft_key;
++	ret->has_help =3D has_help;
++
++	for (l =3D items, i =3D 0; l; l =3D l->next, i++) {
++		struct stk_item *item =3D l->data;
++
++		ret->items[i].text =3D g_strdup(item->text);
++		ret->items[i].item_id =3D item->id;
++
++		if (item->id =3D=3D default_id)
++			ret->default_item =3D i;
++	}
++
++	return ret;
++}
++
++static struct stk_menu *stk_menu_create_from_set_up_menu(
++						const struct stk_command *cmd)
++{
++	gboolean soft_key =3D (cmd->qualifier & (1 << 0)) !=3D 0;
++	gboolean has_help =3D (cmd->qualifier & (1 << 7)) !=3D 0;
++
++	return stk_menu_create(cmd->setup_menu.alpha_id,
++				&cmd->setup_menu.text_attr,
++				cmd->setup_menu.items,
++				&cmd->setup_menu.item_text_attr_list,
++				0, soft_key, has_help);
++}
++
++static struct stk_menu *stk_menu_create_from_select_item(
++						const struct stk_command *cmd)
++{
++	gboolean soft_key =3D (cmd->qualifier & (1 << 2)) !=3D 0;
++	gboolean has_help =3D (cmd->qualifier & (1 << 7)) !=3D 0;
++
++	return stk_menu_create(cmd->select_item.alpha_id,
++				&cmd->select_item.text_attr,
++				cmd->select_item.items,
++				&cmd->select_item.item_text_attr_list,
++				cmd->select_item.item_id, soft_key, has_help);
++}
++
++static void stk_menu_free(struct stk_menu *menu)
++{
++	struct stk_menu_item *i;
++
++	for (i =3D menu->items; i->text; i++)
++		g_free(i->text);
++
++	g_free(menu->items);
++	g_free(menu->title);
++	g_free(menu);
++}
++
+ static void stk_alpha_id_set(struct ofono_stk *stk, const char *text)
+ {
+ 	/* TODO */
 diff --git a/src/stkagent.c b/src/stkagent.c
-new file mode 100644
-index 0000000..8feda6d
---- /dev/null
+index 8feda6d..0daf7d0 100644
+--- a/src/stkagent.c
 +++ b/src/stkagent.c
-@@ -0,0 +1,293 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
+@@ -292,3 +292,40 @@ struct stk_app_agent *app_agent_create(const char *pat=
+h, const char *sender,
+ =
+
+ 	return agent;
+ }
 +
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#define _GNU_SOURCE
-+#include <stdint.h>
-+#include <string.h>
-+
-+#include <glib.h>
-+#include <gdbus.h>
-+
-+#include "ofono.h"
-+
-+#include "stkagent.h"
-+
-+typedef void (*app_agent_request_return)(struct stk_app_agent *agent,
-+						enum stk_agent_result result,
-+						DBusMessage *reply);
-+
-+struct stk_app_agent {
-+	char *path;
-+	char *bus;
-+	DBusMessage *msg;
-+	DBusPendingCall *call;
-+	guint disconnect_watch;
-+	guint cmd_send_source;
-+	app_agent_request_return cmd_cb;
-+	int cmd_timeout;
-+	app_agent_generic_cb user_cb;
-+	void *data;
-+	ofono_bool_t is_default;
-+	GDestroyNotify notify;
-+};
-+
-+#define OFONO_NAVIGATION_PREFIX OFONO_SERVICE ".Error"
-+#define OFONO_NAVIGATION_GOBACK OFONO_NAVIGATION_PREFIX ".GoBack"
-+#define OFONO_NAVIGATION_TERMINATED OFONO_NAVIGATION_PREFIX ".EndSession"
-+
-+static void app_agent_request_send_cancel(struct stk_app_agent *agent)
++static void append_menu_items(DBusMessageIter *iter,
++				const struct stk_menu *menu)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	DBusMessage *message;
++	DBusMessageIter array, entry;
++	const struct stk_menu_item *i;
 +
-+	message =3D dbus_message_new_method_call(agent->bus, agent->path,
-+						OFONO_SIM_APP_INTERFACE,
-+						"Cancel");
-+	if (message =3D=3D NULL)
-+		return;
++	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
++						"(sy)", &array);
 +
-+	dbus_message_set_no_reply(message, TRUE);
++	for (i =3D menu->items; i->text; i++) {
++		dbus_message_iter_open_container(&array, DBUS_TYPE_STRUCT,
++							NULL, &entry);
 +
-+	g_dbus_send_message(conn, message);
-+}
++		dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING,
++						&i->text);
++		dbus_message_iter_append_basic(&entry, DBUS_TYPE_BYTE,
++						&i->icon_id);
 +
-+static void app_agent_request_end(struct stk_app_agent *agent)
-+{
-+	agent->cmd_cb =3D NULL;
-+
-+	if (agent->cmd_send_source) {
-+		g_source_remove(agent->cmd_send_source);
-+		agent->cmd_send_source =3D 0;
++		dbus_message_iter_close_container(&array, &entry);
 +	}
 +
-+	if (agent->msg) {
-+		dbus_message_unref(agent->msg);
-+		agent->msg =3D NULL;
-+	}
-+
-+	if (agent->call) {
-+		dbus_pending_call_cancel(agent->call);
-+		dbus_pending_call_unref(agent->call);
-+		agent->call =3D NULL;
-+	}
++	dbus_message_iter_close_container(iter, &array);
 +}
 +
-+ofono_bool_t app_agent_busy(struct stk_app_agent *agent)
++void append_menu_items_variant(DBusMessageIter *iter,
++				const struct stk_menu *menu)
 +{
-+	return agent->cmd_cb !=3D NULL;
-+}
++	DBusMessageIter variant;
 +
-+ofono_bool_t app_agent_matches(struct stk_app_agent *agent,
-+				const char *path, const char *sender)
-+{
-+	return !strcmp(agent->path, path) && !strcmp(agent->bus, sender);
-+}
++	dbus_message_iter_open_container(iter, DBUS_TYPE_VARIANT,
++						"a(sy)", &variant);
 +
-+void app_agent_request_cancel(struct stk_app_agent *agent)
-+{
-+	if (!app_agent_busy(agent))
-+		return;
++	append_menu_items(&variant, menu);
 +
-+	agent->cmd_cb(agent, STK_AGENT_RESULT_CANCEL, NULL);
-+
-+	app_agent_request_end(agent);
-+
-+	app_agent_request_send_cancel(agent);
-+}
-+
-+static void app_agent_request_terminate(struct stk_app_agent *agent)
-+{
-+	agent->cmd_cb(agent, STK_AGENT_RESULT_TERMINATE, NULL);
-+
-+	app_agent_request_end(agent);
-+}
-+
-+void app_agent_remove(struct stk_app_agent *agent)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+
-+	if (agent->disconnect_watch) {
-+		DBusMessage *message;
-+
-+		if (app_agent_busy(agent)) {
-+			app_agent_request_terminate(agent);
-+
-+			app_agent_request_send_cancel(agent);
-+		}
-+
-+		message =3D dbus_message_new_method_call(agent->bus, agent->path,
-+							OFONO_SIM_APP_INTERFACE,
-+							"Release");
-+		if (message) {
-+			dbus_message_set_no_reply(message, TRUE);
-+
-+			g_dbus_send_message(conn, message);
-+		}
-+
-+		g_dbus_remove_watch(conn, agent->disconnect_watch);
-+		agent->disconnect_watch =3D 0;
-+	} else {
-+		if (app_agent_busy(agent))
-+			app_agent_request_terminate(agent);
-+	}
-+
-+	if (agent->notify)
-+		agent->notify(agent->data);
-+
-+	g_free(agent->path);
-+	g_free(agent->bus);
-+	g_free(agent);
-+}
-+
-+static void app_agent_request_reply_handle(DBusPendingCall *call, void *da=
-ta)
-+{
-+	struct stk_app_agent *agent =3D data;
-+	DBusError err;
-+	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
-+	enum stk_agent_result result =3D STK_AGENT_RESULT_OK;
-+
-+	dbus_error_init(&err);
-+	if (dbus_set_error_from_message(&err, reply)) {
-+		ofono_error("SimAppAgent %s replied with error %s, %s",
-+				agent->path, err.name, err.message);
-+
-+		if (g_str_equal(err.name, DBUS_ERROR_NO_REPLY))
-+			result =3D STK_AGENT_RESULT_TIMEOUT;
-+		if (g_str_equal(err.name, OFONO_NAVIGATION_GOBACK))
-+			result =3D STK_AGENT_RESULT_BACK;
-+		else
-+			result =3D STK_AGENT_RESULT_TERMINATE;
-+
-+		dbus_error_free(&err);
-+	}
-+
-+	agent->cmd_cb(agent, result, reply);
-+
-+	app_agent_request_end(agent);
-+
-+	dbus_message_unref(reply);
-+
-+	if (result !=3D STK_AGENT_RESULT_TERMINATE)
-+		return;
-+
-+	if (agent->is_default)
-+		return;
-+
-+	app_agent_remove(agent);
-+}
-+
-+static gboolean app_agent_request_send(gpointer user_data)
-+{
-+	struct stk_app_agent *agent =3D user_data;
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+
-+	agent->cmd_send_source =3D 0;
-+
-+	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
-+						agent->cmd_timeout) =3D=3D FALSE ||
-+			agent->call =3D=3D NULL) {
-+		ofono_error("Couldn't send a method call");
-+
-+		app_agent_request_terminate(agent);
-+
-+		return FALSE;
-+	}
-+
-+	dbus_pending_call_set_notify(agent->call,
-+					app_agent_request_reply_handle,
-+					agent, NULL);
-+
-+	return FALSE;
-+}
-+
-+static gboolean app_agent_request_start(struct stk_app_agent *agent,
-+					const char *method,
-+					app_agent_request_return cb,
-+					app_agent_generic_cb user_cb,
-+					int timeout)
-+{
-+	if (agent =3D=3D NULL) {
-+		cb(agent, STK_AGENT_RESULT_TERMINATE, NULL);
-+
-+		return FALSE;
-+	}
-+
-+	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
-+							OFONO_SIM_APP_INTERFACE,
-+							method);
-+	if (agent->msg =3D=3D NULL) {
-+		ofono_error("Couldn't make a DBusMessage");
-+
-+		cb(agent, STK_AGENT_RESULT_TERMINATE, NULL);
-+
-+		return FALSE;
-+	}
-+
-+	if (app_agent_busy(agent))
-+		app_agent_request_cancel(agent);
-+
-+	agent->cmd_cb =3D cb;
-+	agent->cmd_timeout =3D timeout;
-+	agent->user_cb =3D user_cb;
-+
-+	agent->cmd_send_source =3D g_timeout_add(0, app_agent_request_send,
-+						agent);
-+
-+	return TRUE;
-+}
-+
-+static void app_agent_disconnect_cb(DBusConnection *conn, void *user_data)
-+{
-+	struct stk_app_agent *agent =3D user_data;
-+
-+	ofono_debug("Agent exited without calling Unregister");
-+
-+	agent->disconnect_watch =3D 0;
-+
-+	app_agent_remove(user_data);
-+}
-+
-+struct stk_app_agent *app_agent_create(const char *path, const char *sende=
-r,
-+					ofono_bool_t is_default,
-+					void *user_data, GDestroyNotify notify)
-+{
-+	struct stk_app_agent *agent =3D g_try_new0(struct stk_app_agent, 1);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+
-+	if (!agent)
-+		return NULL;
-+
-+	agent->path =3D g_strdup(path);
-+	agent->bus =3D g_strdup(sender);
-+	agent->data =3D user_data;
-+	agent->notify =3D notify;
-+	agent->is_default =3D is_default;
-+
-+	agent->disconnect_watch =3D g_dbus_add_disconnect_watch(conn, sender,
-+							app_agent_disconnect_cb,
-+							agent, NULL);
-+
-+	return agent;
++	dbus_message_iter_close_container(iter, &variant);
 +}
 diff --git a/src/stkagent.h b/src/stkagent.h
-new file mode 100644
-index 0000000..23a65fc
---- /dev/null
+index 23a65fc..d1f3ffb 100644
+--- a/src/stkagent.h
 +++ b/src/stkagent.h
-@@ -0,0 +1,46 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+enum stk_agent_result {
-+	STK_AGENT_RESULT_OK,
-+	STK_AGENT_RESULT_BACK,
-+	STK_AGENT_RESULT_TERMINATE,
-+	STK_AGENT_RESULT_HELP,
-+	STK_AGENT_RESULT_TIMEOUT,
-+	STK_AGENT_RESULT_CANCEL,
+@@ -19,6 +19,21 @@
+  *
+  */
+ =
+
++struct stk_menu_item {
++	char *text;
++	uint8_t icon_id;
++	uint8_t item_id;
 +};
 +
-+typedef void (*app_agent_generic_cb)(enum stk_agent_result result,
-+					void *user_data);
++struct stk_menu {
++	char *title;
++	uint8_t icon_id;
++	struct stk_menu_item *items;
++	int default_item;
++	gboolean soft_key;
++	gboolean has_help;
++};
 +
-+struct stk_app_agent;
+ enum stk_agent_result {
+ 	STK_AGENT_RESULT_OK,
+ 	STK_AGENT_RESULT_BACK,
+@@ -44,3 +59,6 @@ ofono_bool_t app_agent_matches(struct stk_app_agent *agen=
+t,
+ 				const char *path, const char *sender);
+ =
+
+ void app_agent_request_cancel(struct stk_app_agent *agent);
 +
-+struct stk_app_agent *app_agent_create(const char *path, const char *sende=
-r,
-+					ofono_bool_t is_default,
-+					void *user_data, GDestroyNotify notify);
-+
-+void app_agent_remove(struct stk_app_agent *agent);
-+
-+ofono_bool_t app_agent_busy(struct stk_app_agent *agent);
-+ofono_bool_t app_agent_matches(struct stk_app_agent *agent,
-+				const char *path, const char *sender);
-+
-+void app_agent_request_cancel(struct stk_app_agent *agent);
++void append_menu_items_variant(DBusMessageIter *iter,
++				const struct stk_menu *menu);
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============6553541028973018737==--
+--===============5304954167357096966==--
 
