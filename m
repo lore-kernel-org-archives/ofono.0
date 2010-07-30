@@ -1,96 +1,422 @@
-Content-Type: multipart/mixed; boundary="===============3844816149455684309=="
+Content-Type: multipart/mixed; boundary="===============5812830869008084945=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-Subject: Re: [patch 13/20] SMS: encapsulate D-Bus specific data in 'struct
- sms_msg_dbus_data'
-Date: Thu, 29 Jul 2010 16:23:07 -0700
-Message-ID: <1280445787.16826.91.camel@localhost.localdomain>
-In-Reply-To: <4C51FDF9.3080003@gmail.com>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: [PATCH 1/3] Bluetooth DUN modem prototype
+Date: Thu, 29 Jul 2010 23:09:11 -0300
+Message-ID: <1280455753-24523-1-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3844816149455684309==
+--===============5812830869008084945==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2010-07-29 at 15:17 -0700, Denis Kenzior wrote: =
+Add a still dummy DUN code, now it can only creates and removes modems.
+The DUN plugin follows the HFP one a lot, the is basics a copy of some
+HFP plugin's parts.
+---
+ Makefile.am                 |    6 ++
+ drivers/dunmodem/dunmodem.c |   51 +++++++++++
+ drivers/dunmodem/dunmodem.h |   29 ++++++
+ plugins/bluetooth.c         |   11 +++
+ plugins/bluetooth.h         |    2 +
+ plugins/dun.c               |  202 +++++++++++++++++++++++++++++++++++++++=
+++++
+ 6 files changed, 301 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/dunmodem/dunmodem.c
+ create mode 100644 drivers/dunmodem/dunmodem.h
+ create mode 100644 plugins/dun.c
 
-> Hi Inaky,
-> =
+diff --git a/Makefile.am b/Makefile.am
+index e256841..a6f2bff 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -179,6 +179,9 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/hfpmodem/network-registration.c \
+ 			drivers/hfpmodem/call-volume.c
+ =
 
-> On 07/29/2010 04:47 PM, Inaky Perez-Gonzalez wrote:
-> > On Tue, 2010-07-27 at 10:08 -0700, Denis Kenzior wrote:
-> >> Hi Inaky,
-> >> =
++builtin_modules +=3D dunmodem
++builtin_sources +=3D drivers/dunmodem/dunmodem.h drivers/dunmodem/dunmodem=
+.c
++
+ builtin_modules +=3D mbmmodem
+ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/mbmmodem/mbmmodem.h \
+@@ -242,6 +245,9 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blueto=
+oth.h
+ builtin_modules +=3D hfp
+ builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
+ =
 
-> >>> +/* + * Encapsulate information needed to export an SMS message =
++builtin_modules +=3D dun
++builtin_sources +=3D plugins/dun.c
++
+ builtin_modules +=3D palmpre
+ builtin_sources +=3D plugins/palmpre.c
+ =
 
-> >>> over D-Bus. + * + * @dbus_path: path of the object in the D-Bus
-> >>> + * @dbus_msg: message this originated at + */ +struct =
+diff --git a/drivers/dunmodem/dunmodem.c b/drivers/dunmodem/dunmodem.c
+new file mode 100644
+index 0000000..8658bee
+--- /dev/null
++++ b/drivers/dunmodem/dunmodem.c
+@@ -0,0 +1,51 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <stdio.h>
++#include <string.h>
++#include <errno.h>
++#include <glib.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++
++#include "dunmodem.h"
++
++static int dunmodem_init(void)
++{
++	return 0;
++}
++
++static void dunmodem_exit(void)
++{
++}
++
++OFONO_PLUGIN_DEFINE(dunmodem, "Dial-up Networking Driver", VERSION,
++		OFONO_PLUGIN_PRIORITY_DEFAULT, dunmodem_init, dunmodem_exit)
++
+diff --git a/drivers/dunmodem/dunmodem.h b/drivers/dunmodem/dunmodem.h
+new file mode 100644
+index 0000000..6bbf7b9
+--- /dev/null
++++ b/drivers/dunmodem/dunmodem.h
+@@ -0,0 +1,29 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++#ifndef __DUN_MODEM_H__
++#define __DUN_MODEM_H__
++
++struct dun_data {
++	char *dun_path;
++};
++
++#endif
++
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index 5a85eaa..b7ec0d3 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -218,6 +218,9 @@ static void has_uuid(DBusMessageIter *array, gpointer u=
+ser_data)
+ 		if (!strcasecmp(uuid, HFP_AG_UUID))
+ 			*profiles |=3D HFP_AG;
+ =
 
-> >>> sms_msg_dbus_data { +	char *dbus_path; +	DBusMessage *dbus_msg; =
++		if (!strcasecmp(uuid, DUN_GW_UUID))
++			*profiles |=3D DUN_GW;
++
+ 		dbus_message_iter_next(&value);
+ 	}
+ }
+@@ -276,6 +279,14 @@ static void device_properties_cb(DBusPendingCall *call=
+, gpointer user_data)
+ 		profile->create(path, device_addr, adapter_addr, alias);
+ 	}
+ =
 
-> >>> +}; +
-> >> =
++	if ((have_uuid & DUN_GW) && device_addr && adapter_addr) {
++		profile =3D g_hash_table_lookup(uuid_hash, DUN_GW_UUID);
++		if (!profile || !profile->create)
++			goto done;
++
++		profile->create(path, device_addr, adapter_addr, alias);
++	}
++
+ done:
+ 	dbus_message_unref(reply);
+ }
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index fb0d841..09e6efa 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -24,9 +24,11 @@
+ #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
+ =
 
-> >> I don't really see a point for this structure.  When you send an =
+ #define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
++#define DUN_GW_UUID	"00001103-0000-1000-8000-00805F9B34FB"
+ =
 
-> >> SMS, assuming the arguments and format were valid, you return =
+ /* Profiles bitfield */
+ #define HFP_AG 0x01
++#define DUN_GW 0x02
+ =
 
-> >> straight away. Thus SendMessage should be marked as not being
-> >> ASYNC and storing of DBusMessage is unnecessary.  Rest can be
-> >> handled by txq_submit and the dbus path can be easily generated
-> >> based on the UUID.
-> > =
+ struct bluetooth_profile {
+ 	const char *name;
+diff --git a/plugins/dun.c b/plugins/dun.c
+new file mode 100644
+index 0000000..9b4288e
+--- /dev/null
++++ b/plugins/dun.c
+@@ -0,0 +1,202 @@
++/*
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++#include <stdio.h>
++#include <string.h>
++#include <errno.h>
++#include <glib.h>
++#include <ofono.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++
++#include <drivers/dunmodem/dunmodem.h>
++
++#include <ofono/dbus.h>
++
++#include "bluetooth.h"
++
++#ifndef DBUS_TYPE_UNIX_FD
++#define DBUS_TYPE_UNIX_FD -1
++#endif
++
++static DBusConnection *connection;
++static GHashTable *modem_hash =3D NULL;
++
++static int dun_create_modem(const char *device, const char *dev_addr,
++				const char *adapter_addr, const char *alias)
++{
++	struct ofono_modem *modem;
++	struct dun_data *data;
++	char buf[256];
++
++	/* We already have this device in our hash, ignore */
++	if (g_hash_table_lookup(modem_hash, device) !=3D NULL)
++		return -EALREADY;
++
++	ofono_info("Using device: %s, devaddr: %s, adapter: %s",
++			device, dev_addr, adapter_addr);
++
++	strcpy(buf, "dun/");
++	bluetooth_create_path(dev_addr, adapter_addr, buf + 4, sizeof(buf) - 4);
++
++	modem =3D ofono_modem_create(buf, "dun");
++	if (modem =3D=3D NULL)
++		return -ENOMEM;
++
++	data =3D g_try_new0(struct dun_data, 1);
++	if (!data)
++		goto free;
++
++	data->dun_path =3D g_strdup(device);
++	if (data->dun_path =3D=3D NULL)
++		goto free;
++
++	ofono_modem_set_data(modem, data);
++	ofono_modem_set_name(modem, alias);
++	ofono_modem_register(modem);
++
++	g_hash_table_insert(modem_hash, g_strdup(device), modem);
++	return 0;
++
++free:
++	g_free(data);
++	ofono_modem_remove(modem);
++
++	return -ENOMEM;
++}
++
++static gboolean dun_remove_each_modem(gpointer key, gpointer value, gpoint=
+er user_data)
++{
++	struct ofono_modem *modem =3D value;
++
++	ofono_modem_remove(modem);
++
++	return TRUE;
++}
++
++static void dun_remove_all_modem()
++{
++	if (modem_hash =3D=3D NULL)
++		return;
++
++	g_hash_table_foreach_remove(modem_hash, dun_remove_each_modem, NULL);
++}
++
++static void dun_set_alias(const char *device, const char *alias)
++{
++	struct ofono_modem *modem;
++
++	if (!device || !alias)
++		return;
++
++	modem =3D	g_hash_table_lookup(modem_hash, device);
++	if (!modem)
++		return;
++
++	ofono_modem_set_name(modem, alias);
++}
++
++static int dun_probe(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++	return 0;
++}
++
++static void dun_remove(struct ofono_modem *modem)
++{
++	struct dun_data *data =3D ofono_modem_get_data(modem);
++
++	g_hash_table_remove(modem_hash, data->dun_path);
++
++	g_free(data->dun_path);
++	g_free(data);
++
++	ofono_modem_set_data(modem, NULL);
++}
++
++static int dun_enable(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++	return 0;
++}
++
++static int dun_disable(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++	return 0;
++}
++
++static struct ofono_modem_driver dun_driver =3D {
++	.name		=3D "dun",
++	.probe		=3D dun_probe,
++	.remove		=3D dun_remove,
++	.enable		=3D dun_enable,
++	.disable	=3D dun_disable,
++};
++
++static struct bluetooth_profile dun_profile =3D {
++	.name		=3D "dun",
++	.create		=3D dun_create_modem,
++	.remove_all	=3D dun_remove_all_modem,
++	.set_alias	=3D dun_set_alias,
++};
++
++static int dun_init()
++{
++	int err;
++
++	if (DBUS_TYPE_UNIX_FD < 0)
++		return -EBADF;
++
++	connection =3D ofono_dbus_get_connection();
++
++	err =3D ofono_modem_driver_register(&dun_driver);
++	if (err < 0)
++		return err;
++
++	err =3D bluetooth_register_uuid(DUN_GW_UUID, &dun_profile);
++	if (err < 0) {
++		ofono_modem_driver_unregister(&dun_driver);
++		return err;
++	}
++
++	modem_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
++						g_free, NULL);
++
++	return 0;
++}
++
++static void dun_exit()
++{
++	bluetooth_unregister_uuid(DUN_GW_UUID);
++	ofono_modem_driver_unregister(&dun_driver);
++
++	g_hash_table_destroy(modem_hash);
++}
++
++OFONO_PLUGIN_DEFINE(dun, "Dial-up Networking Profile Plugins", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_init, dun_exit)
+-- =
 
-> > First it serves as transitional storage -- later in the commit =
-
-> > sequences the dbus_msg is removed as it is, as you say, unneeded
-> > once all the code is made sync. If at the end only one member is
-> > left (dbus_msg)
-> =
-
-> Don't get me wrong, if a structure is necessary in the end, so be it.
-> However, during the review I only see a structure being introduced that
-> is totally unnecessary.  You can simply pass dbus_path around as
-> userdata.
-
-Agreed -- at the end, once everything is cleaned up only dbus_path is
-necessary, and I agree it could be passed instead of having the struct.
-However, for all the intermediate commits not to break (and thus break
-bisectability), having that there is a must. =
+1.7.1.1
 
 
-However, with so much reorganization in the code that has happened
-during this review process, it is probably possible to do with out it.
-I'll re-audit all that to see how it can be killed.
-
-> If/when this structure does become necessary, feel free to
-> introduce it.
-> =
-
-> > =
-
-> > In our discussions to plan this stuff you said you wanted the D-Bus =
-
-> > unique name to contain the UUID and the number of PDUs =
-
-> > (/modemX/UUID_PDUs). That means I need to access the SMS object if I
-> >  want to generate the name on the fly. I need a backpointer for
-> > that.
-> > =
-
-> > Even if we remove the _PDUs requirement:
-> =
-
-> There is no such requirement.  If I gave you this idea, then I must have
-> not been clear enough.  I meant that PDUs would be used to generate the
-> UUID.
-
-That simplifies things further, thanks.
-
-
-
---===============3844816149455684309==--
+--===============5812830869008084945==--
 
