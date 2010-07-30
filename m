@@ -1,27 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============3595604033353731181=="
+Content-Type: multipart/mixed; boundary="===============6130956420722405959=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: RE: USSD support in ofono-0.25
-Date: Fri, 30 Jul 2010 11:40:44 -0700
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9011193E961@orsmsx508.amr.corp.intel.com>
-In-Reply-To: <AANLkTimeWdbweQ40WpH-NRjq4LD0pfJtCd=HWbXRHw7Q@mail.gmail.com>
+From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+Subject: Re: [patch 19/20] SMS: introduce sms_msg_cancel and its D-Bus wrapper
+Date: Fri, 30 Jul 2010 16:12:39 -0700
+Message-ID: <1280531559.3982.9.camel@localhost.localdomain>
+In-Reply-To: <4C4F147E.5000706@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3595604033353731181==
+--===============6130956420722405959==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-s s wrote:
-> supplementaryservices-api.txt is not available in doc folder in
-> ofono-0.25.tar.gz ,is there any other location to find it?
+On Tue, 2010-07-27 at 10:16 -0700, Denis Kenzior wrote: =
 
-http://git.kernel.org/?p=3Dnetwork/ofono/ofono.git;a=3Dblob_plain;f=3Ddoc/s=
-upplementaryservices-api.txt;hb=3D7cd09ee21aff49afc7f5678cb56f8c5300ca42b4
+> Hi Inaky,
+> =
 
-Cheers,
-Waldo
+> On 07/23/2010 04:00 PM, Inaky Perez-Gonzalez wrote:
+> > From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
+> > =
 
---===============3595604033353731181==--
+> > This introduces the ability to cancel a pending SMS message,
+> > accessible via an internal API and over a D-Bus wrapper.
+> > =
+
+> > Sending a note to the network to cancel an in-transit message is not
+> > yet implemented.
+> > =
+
+> > Note the test case code requires follow up commits that propagate the
+> > message's state changes over D-Bus.
+> > ---
+> >  src/sms.c                |   63 +++++++++++++++++
+> >  src/smsutil.h            |   15 ++++
+> >  test/test-sms-msg-cancel |  173 ++++++++++++++++++++++++++++++++++++++=
+++++++++
+> =
+
+> Multiple patches please.  One for each directory.
+> ...
+>
+
+> You're ignoring about every part of the coding standard in this chunk...
+> =
+
+> ...
+
+> And again ignoring the coding standard...
+
+All feedback for this fixed, thanks.
+
+
+
+--===============6130956420722405959==--
 
