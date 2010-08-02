@@ -1,36 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============4281489999382187522=="
+Content-Type: multipart/mixed; boundary="===============2866940576151713563=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3] Fix busylooped in ppp_disconnect for huawei modem
-Date: Mon, 02 Aug 2010 14:13:56 -0500
-Message-ID: <4C5718F4.8040001@gmail.com>
-In-Reply-To: <1280276726-17360-1-git-send-email-zhenhua.zhang@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] huawei: fix double include of GPRS header
+Date: Mon, 02 Aug 2010 12:16:27 -0700
+Message-ID: <1280776587.12579.35.camel@localhost.localdomain>
+In-Reply-To: <1280774681-13223-1-git-send-email-jprvita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4281489999382187522==
+--===============2866940576151713563==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Joao,
 
-On 07/27/2010 07:25 PM, Zhenhua Zhang wrote:
-> Huawei modem closes the modem port after PPP disconnect. So the channel
-> of gatchat is NULL in ppp_disconnect. In such case, we resume the chat
-> and it causes huawei_disconnect() get called and the gprs context is
-> removed later.
-> =
-
-> Before removing this gprs context, we should reply the pending DBus
-> message to the client.
 > ---
+>  plugins/huawei.c |    1 -
+>  1 files changed, 0 insertions(+), 1 deletions(-)
 
-Since V2 was reported to work I went ahead and applied this version.
-Thanks for the fix.
+nice catch. Patch has been applied.
 
-Regards,
--Denis
+Regards
 
---===============4281489999382187522==--
+Marcel
+
+
+
+--===============2866940576151713563==--
 
