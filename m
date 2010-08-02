@@ -1,71 +1,156 @@
-Content-Type: multipart/mixed; boundary="===============3860673008400528697=="
+Content-Type: multipart/mixed; boundary="===============6072371090068821611=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-Subject: Re: [patch 07/20] SMS: implement SHA256-based message IDs [incomplete]
-Date: Fri, 30 Jul 2010 17:22:16 -0700
-Message-ID: <1280535736.3982.19.camel@localhost.localdomain>
-In-Reply-To: <4C51F4A8.4040603@gmail.com>
+From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
+Subject: RE: [PATCH 2/3] Add dun_enable() function
+Date: Mon, 02 Aug 2010 22:24:02 +0800
+Message-ID: <33AB447FBD802F4E932063B962385B3528D48144@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1280455753-24523-2-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3860673008400528697==
+--===============6072371090068821611==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2010-07-29 at 14:37 -0700, Denis Kenzior wrote: =
+Hi Padovan,
 
-> On 07/29/2010 04:26 PM, Inaky Perez-Gonzalez wrote:
-> > On Tue, 2010-07-27 at 10:03 -0700, Denis Kenzior wrote: =
-
-> >> Hi Inaky,
-> >>
-> >>> -unsigned int __ofono_sms_txq_submit(struct ofono_sms *sms, GSList *l=
-ist,
-> >>> -					unsigned int flags,
-> >>> +struct tx_queue_entry * __ofono_sms_txq_submit(struct ofono_sms *sms=
-, GSList *list,
-> >>> +					unsigned int flags, unsigned ref,
-> >>>  					ofono_sms_txq_submit_cb_t cb,
-> >>>  					void *data, ofono_destroy_func destroy);
-> >>
-> >> I disagree with this, you're modifying an ofono internal API function =
-to
-> >> return a structure which is opaque and cannot be manipulated.  I'd
-> >> rather see you returning a struct sms_uuid...
-> > =
-
-> > I need a handle to operate on. The D-Bus wrappers need something they
-> > can use to dispose of the structure (call tx_queue_entry_destroy() on
-> > the error path) and to pass to sms_msg_cancel(). The structure is not
-> > manipulated (except for accessing the UUID and #PDUs, which should
-> > probably be coded out to a helper).
-> > =
-
-> > This could be solved by having at the entry point of those functions or
-> > wrappers of a lookup function that looks for the UUID in the list of
-> > messages, but that would be adding more code and wasting time for no
-> > benefit. I disagree on adding unnecessary steps.
-> > =
+Gustavo F. Padovan wrote:
+> dun_enable() is called by setting the Powered property to true.
+> It creates a rfcomm link throught the BlueZ Serial API.
+> ---
+>  drivers/dunmodem/dunmodem.h |    1 +
+>  plugins/bluetooth.h         |    1 +
+>  plugins/dun.c               |   61
+>  +++++++++++++++++++++++++++++++++++++++++- 3 files changed, 61
+> insertions(+), 2 deletions(-) =
 
 > =
 
-> I need to look at this in detail.  Can you simply grab the tx_entry from
-> the back of the queue for now?
+> diff --git a/drivers/dunmodem/dunmodem.h b/drivers/dunmodem/dunmodem.h
+> index 6bbf7b9..16eb9e7 100644
+> --- a/drivers/dunmodem/dunmodem.h
+> +++ b/drivers/dunmodem/dunmodem.h
+> @@ -23,6 +23,7 @@
+> =
 
-Yes, that could be done, but it is way too dirty. Assumes *a lot* of
-knowledge about internal implementation details. A no-no.
+>  struct dun_data {
+>  	char *dun_path;
+> +	const char *rfcomm;
+>  };
+> =
 
->   I'm really against modifying txq_submit right now.
+>  #endif
+> diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+> index 09e6efa..c20b36d 100644
+> --- a/plugins/bluetooth.h
+> +++ b/plugins/bluetooth.h
+> @@ -22,6 +22,7 @@
+>  #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
+>  #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
+>  #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
+> +#define	BLUEZ_SERIAL_INTERFACE		BLUEZ_SERVICE ".Serial"
+> =
 
-In any case it has to be modified to add the state change callback. =
+>  #define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
+>  #define DUN_GW_UUID	"00001103-0000-1000-8000-00805F9B34FB"
+> diff --git a/plugins/dun.c b/plugins/dun.c
+> index 9b4288e..7dc8422 100644
+> --- a/plugins/dun.c
+> +++ b/plugins/dun.c
+> @@ -25,6 +25,7 @@
+>  #include <stdio.h>
+>  #include <string.h>
+>  #include <errno.h>
+> +#include <gdbus.h>
+>  #include <glib.h>
+>  #include <ofono.h>
+> =
+
+> @@ -138,10 +139,66 @@ static void dun_remove(struct ofono_modem
+>  	*modem) ofono_modem_set_data(modem, NULL);
+>  }
+> =
+
+> +static void dun_connect_reply(DBusPendingCall *call, gpointer
+> user_data) +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct dun_data *data =3D ofono_modem_get_data(modem);
+> +	const char *dev;
+> +	DBusError derr;
+> +	DBusMessage *reply, *msg;
+> +
+> +	reply =3D dbus_pending_call_steal_reply(call);
+> +
+> +	if (ofono_modem_get_powered(modem))
+> +		goto done;
+> +
+> +	if (!dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &dev,
+> +				DBUS_TYPE_INVALID))
+> +		goto done;
+> +
+> +	data->rfcomm =3D dev;
+> +
+> +	dbus_error_init(&derr);
+> +	if (!dbus_set_error_from_message(&derr, reply))
+> +		goto done;
+> +
+> +	DBG("Connect reply: %s", derr.message);
+> +
+> +	if (dbus_error_has_name(&derr, DBUS_ERROR_NO_REPLY)) {
+> +		msg =3D dbus_message_new_method_call(BLUEZ_SERVICE,
+> +				data->dun_path,
+> +				BLUEZ_SERIAL_INTERFACE, "Disconnect");
+> +		if (!msg)
+> +			ofono_error("Disconnect failed");
+> +		else
+> +			g_dbus_send_message(connection, msg);
+> +	}
+> +
+> +	ofono_modem_set_powered(modem, FALSE);
+> +
+> +	dbus_error_free(&derr);
+> +
+> +done:
+> +	ofono_modem_set_powered(modem, TRUE);
+
+You might want to power on modem before jumping to this label. If there's a=
+ny error
+from dbus, you power off but then power on the modem again. It's wrong.
+
+> +	dbus_message_unref(reply);
+> +}
+> +
+>  static int dun_enable(struct ofono_modem *modem)
+>  {
+> -	DBG("%p", modem);
+> -	return 0;
+> +	struct dun_data *data =3D ofono_modem_get_data(modem);
+> +	int status;
+> +	const char *uuid =3D DUN_GW_UUID;
+> +
+> +	status =3D bluetooth_send_with_reply(data->dun_path,
+> +					BLUEZ_SERIAL_INTERFACE, "Connect",
+> +					dun_connect_reply, modem, NULL,
+> +					15, DBUS_TYPE_STRING, &uuid,
+> +					DBUS_TYPE_INVALID);
+
+Shall we define a macro like DBUS_TIMEOUT instead of hard code 15 seconds?
+What do you think?
+
+> +	if (status < 0)
+> +		return -EINVAL;
+> +
+> +	return -EINPROGRESS;
+>  }
+> =
+
+>  static int dun_disable(struct ofono_modem *modem)
 
 
-It has only *one* user asides from the SMS code and the changes don't
-impact said user negatively at all, so it shouldn't be such a big deal.
 
+Regards,
+Zhenhua
 
-
-
---===============3860673008400528697==--
+--===============6072371090068821611==--
 
