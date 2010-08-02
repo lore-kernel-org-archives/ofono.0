@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6072371090068821611=="
+Content-Type: multipart/mixed; boundary="===============7798312633368610896=="
 MIME-Version: 1.0
 From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
 Subject: RE: [PATCH 2/3] Add dun_enable() function
-Date: Mon, 02 Aug 2010 22:24:02 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B3528D48144@shsmsx501.ccr.corp.intel.com>
+Date: Mon, 02 Aug 2010 22:28:47 +0800
+Message-ID: <33AB447FBD802F4E932063B962385B3528D48149@shsmsx501.ccr.corp.intel.com>
 In-Reply-To: <1280455753-24523-2-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6072371090068821611==
+--===============7798312633368610896==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -90,7 +90,11 @@ Gustavo F. Padovan wrote:
 > +		goto done;
 > +
 > +	data->rfcomm =3D dev;
-> +
+
+One more comment here, I'd suggest to use g_strdup(dev). Because the device
+String is from dbus reply and later we will unref the reply. What do you th=
+ink?
+
 > +	dbus_error_init(&derr);
 > +	if (!dbus_set_error_from_message(&derr, reply))
 > +		goto done;
@@ -113,11 +117,6 @@ Gustavo F. Padovan wrote:
 > +
 > +done:
 > +	ofono_modem_set_powered(modem, TRUE);
-
-You might want to power on modem before jumping to this label. If there's a=
-ny error
-from dbus, you power off but then power on the modem again. It's wrong.
-
 > +	dbus_message_unref(reply);
 > +}
 > +
@@ -134,10 +133,7 @@ from dbus, you power off but then power on the modem again. It's wrong.
 > +					dun_connect_reply, modem, NULL,
 > +					15, DBUS_TYPE_STRING, &uuid,
 > +					DBUS_TYPE_INVALID);
-
-Shall we define a macro like DBUS_TIMEOUT instead of hard code 15 seconds?
-What do you think?
-
+> +
 > +	if (status < 0)
 > +		return -EINVAL;
 > +
@@ -152,5 +148,5 @@ What do you think?
 Regards,
 Zhenhua
 
---===============6072371090068821611==--
+--===============7798312633368610896==--
 
