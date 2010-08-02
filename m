@@ -1,37 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============7315357870836246964=="
+Content-Type: multipart/mixed; boundary="===============4281489999382187522=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Jo=C3=A3o?= Paulo Rechi Vita <jprvita@profusion.mobi>
-Subject: [PATCH] huawei: fix double include of GPRS header
-Date: Mon, 02 Aug 2010 15:44:41 -0300
-Message-ID: <1280774681-13223-1-git-send-email-jprvita@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v3] Fix busylooped in ppp_disconnect for huawei modem
+Date: Mon, 02 Aug 2010 14:13:56 -0500
+Message-ID: <4C5718F4.8040001@gmail.com>
+In-Reply-To: <1280276726-17360-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7315357870836246964==
+--===============4281489999382187522==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/huawei.c |    1 -
- 1 files changed, 0 insertions(+), 1 deletions(-)
+Hi Zhenhua,
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index cfc693d..47d59d0 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -41,7 +41,6 @@
- #include <ofono/sms.h>
- #include <ofono/ussd.h>
- #include <ofono/gprs.h>
--#include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
- #include <ofono/voicecall.h>
- #include <ofono/call-forwarding.h>
--- =
+On 07/27/2010 07:25 PM, Zhenhua Zhang wrote:
+> Huawei modem closes the modem port after PPP disconnect. So the channel
+> of gatchat is NULL in ppp_disconnect. In such case, we resume the chat
+> and it causes huawei_disconnect() get called and the gprs context is
+> removed later.
+> =
 
-1.7.0.4
+> Before removing this gprs context, we should reply the pending DBus
+> message to the client.
+> ---
 
+Since V2 was reported to work I went ahead and applied this version.
+Thanks for the fix.
 
---===============7315357870836246964==--
+Regards,
+-Denis
+
+--===============4281489999382187522==--
 
