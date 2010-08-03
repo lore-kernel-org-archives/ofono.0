@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8927417739209125809=="
+Content-Type: multipart/mixed; boundary="===============8493644817037457044=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus 04/19] sms: document the org.ofono.SmsMessage interface
-Date: Tue, 03 Aug 2010 16:50:53 -0700
-Message-ID: <132619446c7d4601f9c4aed14db84c555be4a36b.1280879410.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus 05/19] sms: document handle_sms_status_report()
+Date: Tue, 03 Aug 2010 16:50:54 -0700
+Message-ID: <7b2bbdc43c9f236371818587e8a9177973260da5.1280879410.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1280879410.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8927417739209125809==
+--===============8493644817037457044==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,84 +16,35 @@ Content-Transfer-Encoding: quoted-printable
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
 ---
- doc/sms-api.txt |   49 +++++++++++++++++++++++++++++++++++++++++++++++--
- 1 files changed, 47 insertions(+), 2 deletions(-)
+ src/sms.c |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
 
-diff --git a/doc/sms-api.txt b/doc/sms-api.txt
-index 1fc32ac..2bf588f 100644
---- a/doc/sms-api.txt
-+++ b/doc/sms-api.txt
-@@ -22,9 +22,27 @@ Methods		dict GetProperties()
- 			Possible Errors: [service].Error.InvalidArguments
- 					 [service].Error.DoesNotExist
+diff --git a/src/sms.c b/src/sms.c
+index 39d4a32..8d9a55e 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -859,6 +859,15 @@ static void handle_deliver(struct ofono_sms *sms, cons=
+t struct sms *incoming)
+ 	g_slist_free(l);
+ }
  =
 
--		void SendMessage(string to, string text)
-+		object SendMessage(string to, string text)
- =
-
--			Send the message in text to the number in to.
-+			Submit a message for delivery /
-+			processing. oFono owns it from now on until
-+			successful delivery, cancellation (by the
-+			user) or cancellation (by oFono). User has to
-+			keep a copy around as oFono only offers
-+			persistence to satisfy its needs.
 +
-+			Returns the name of the D-Bus object that
-+			represents said SMS Message.
-+
-+			Possible Errors: [service].Error.InvalidArguments
-+
-+		array{object} Messages()
-+
-+			Returns a list of SMS Messages that have been
-+			submitted for delivery and that are still
-+			pending.
-+
-+			FIXME: currently not implemented
- =
-
- Signals		PropertyChanged(string name, variant value)
- =
-
-@@ -64,3 +82,30 @@ Properties	string ServiceCenterAddress
- 				"ps-preferred" - Use CS if PS is unavailable
- =
-
- 			By default oFono uses "cs-preferred" setting.
-+
-+
-+SMS / Messaging interface
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D
-+
-+Service		org.ofono
-+Interface	org.ofono.SmsMessage
-+Object path	[variable prefix]/{modem0,modem1...}/{message01,message02...}
-+
-+Methods		dict GetProperties()
-+
-+			Returns a dictionary with the current
-+			properties of a message.
-+
-+		void Cancel()
-+
-+			Cancels a pending message's delivery.
-+
-+Signals		PropertyChanged(string name, variant value)
-+
-+			This signal indicates a changed value of the given
-+			property.
-+
-+Properties	string State
-+
-+			Current transmission state {queued, wsr, done,
-+			canceling, cancelled, failed, expired}
++/*
++ * Handle a delivery/status report has been received for an SMS
++ * apparently sent from here.
++ *
++ * We need to find the message in the SMS manager's
++ * waiting-for-acknoledge queue (sms->tx_wfaq) and remove it. As well,
++ * fill out history for it.
++ */
+ static void handle_sms_status_report(struct ofono_sms *sms,
+ 						const struct sms *incoming)
+ {
 -- =
 
 1.6.6.1
 
 
---===============8927417739209125809==--
+--===============8493644817037457044==--
 
