@@ -1,115 +1,123 @@
-Content-Type: multipart/mixed; boundary="===============8296396025931816754=="
+Content-Type: multipart/mixed; boundary="===============6745642594994739186=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: Re: [PATCH 2/3] Add dun_enable() function
-Date: Tue, 03 Aug 2010 19:58:29 -0300
-Message-ID: <20100803225829.GA28060@vigoh>
-In-Reply-To: <33AB447FBD802F4E932063B962385B3528D48149@shsmsx501.ccr.corp.intel.com>
+From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
+Subject: [SMS D-Bus 01/19] write_file: make transaction-safe
+Date: Tue, 03 Aug 2010 16:50:50 -0700
+Message-ID: <53fe712f7b5927ee95d34c9d3d66751136e6ee6f.1280879410.git.inaky.perez-gonzalez@intel.com>
+In-Reply-To: <cover.1280879410.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8296396025931816754==
+--===============6745642594994739186==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-* Zhang, Zhenhua <zhenhua.zhang@intel.com> [2010-08-02 22:28:47 +0800]:
+write_file(), as written wasn't transaction-safe; a crash bewtween a
+file being open and the buffer being written before a safe close would
+leave the file with a set of undetermined contents.
 
-> Hi Padovan,
-> =
+Modified to the file is written to a temporary file name; once
+completed, it is renamed to the final name. This way, a crash in the
+middle doesn't leave half-baked files.
+---
+ src/storage.c |   47 ++++++++++++++++++++++++++++++++++++-----------
+ 1 files changed, 36 insertions(+), 11 deletions(-)
 
-> Gustavo F. Padovan wrote:
-> > dun_enable() is called by setting the Powered property to true.
-> > It creates a rfcomm link throught the BlueZ Serial API.
-> > ---
-> >  drivers/dunmodem/dunmodem.h |    1 +
-> >  plugins/bluetooth.h         |    1 +
-> >  plugins/dun.c               |   61
-> >  +++++++++++++++++++++++++++++++++++++++++- 3 files changed, 61
-> > insertions(+), 2 deletions(-) =
+diff --git a/src/storage.c b/src/storage.c
+index cac5835..530439d 100644
+--- a/src/storage.c
++++ b/src/storage.c
+@@ -98,11 +98,21 @@ ssize_t read_file(unsigned char *buffer, size_t len,
+ 	return r;
+ }
+ =
 
-> > =
++/*
++ * Write a buffer to a file in a transactionally safe form
++ *
++ * Given a buffer, write it to a file named after
++ * @path_fmt+args. However, to make sure the file contents are
++ * consistent (ie: a crash right after opening or during write()
++ * doesn't leave a file half baked), the contents are written to a
++ * file with a temporary name and when closed, it is renamed to the
++ * specified name (@path_fmt+args).
++ */
+ ssize_t write_file(const unsigned char *buffer, size_t len, mode_t mode,
+ 			const char *path_fmt, ...)
+ {
+ 	va_list ap;
+-	char *path;
++	char *tmp_path, *path;
+ 	ssize_t r;
+ 	int fd;
+ =
 
-> > diff --git a/drivers/dunmodem/dunmodem.h b/drivers/dunmodem/dunmodem.h
-> > index 6bbf7b9..16eb9e7 100644
-> > --- a/drivers/dunmodem/dunmodem.h
-> > +++ b/drivers/dunmodem/dunmodem.h
-> > @@ -23,6 +23,7 @@
-> > =
+@@ -110,26 +120,41 @@ ssize_t write_file(const unsigned char *buffer, size_=
+t len, mode_t mode,
+ 	path =3D g_strdup_vprintf(path_fmt, ap);
+ 	va_end(ap);
+ =
 
-> >  struct dun_data {
-> >  	char *dun_path;
-> > +	const char *rfcomm;
-> >  };
-> > =
+-	if (create_dirs(path, mode | S_IXUSR) !=3D 0) {
+-		g_free(path);
+-		return -1;
+-	}
++	tmp_path =3D g_strdup_printf("%s.XXXXXX.tmp", path);
+ =
 
-> >  #endif
-> > diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-> > index 09e6efa..c20b36d 100644
-> > --- a/plugins/bluetooth.h
-> > +++ b/plugins/bluetooth.h
-> > @@ -22,6 +22,7 @@
-> >  #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
-> >  #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
-> >  #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-> > +#define	BLUEZ_SERIAL_INTERFACE		BLUEZ_SERVICE ".Serial"
-> > =
+-	fd =3D TFR(open(path, O_WRONLY | O_CREAT | O_TRUNC, mode));
+-	if (fd =3D=3D -1) {
+-		g_free(path);
+-		return -1;
+-	}
++	r =3D -1;
++	if (create_dirs(path, mode | S_IXUSR) !=3D 0)
++		goto error_create_dirs;
++
++	fd =3D TFR(g_mkstemp_full(tmp_path, O_WRONLY | O_CREAT | O_TRUNC, mode));
++	if (fd =3D=3D -1)
++		goto error_mkstemp_full;
+ =
 
-> >  #define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
-> >  #define DUN_GW_UUID	"00001103-0000-1000-8000-00805F9B34FB"
-> > diff --git a/plugins/dun.c b/plugins/dun.c
-> > index 9b4288e..7dc8422 100644
-> > --- a/plugins/dun.c
-> > +++ b/plugins/dun.c
-> > @@ -25,6 +25,7 @@
-> >  #include <stdio.h>
-> >  #include <string.h>
-> >  #include <errno.h>
-> > +#include <gdbus.h>
-> >  #include <glib.h>
-> >  #include <ofono.h>
-> > =
+ 	r =3D TFR(write(fd, buffer, len));
+ =
 
-> > @@ -138,10 +139,66 @@ static void dun_remove(struct ofono_modem
-> >  	*modem) ofono_modem_set_data(modem, NULL);
-> >  }
-> > =
+ 	TFR(close(fd));
+ =
 
-> > +static void dun_connect_reply(DBusPendingCall *call, gpointer
-> > user_data) +{
-> > +	struct ofono_modem *modem =3D user_data;
-> > +	struct dun_data *data =3D ofono_modem_get_data(modem);
-> > +	const char *dev;
-> > +	DBusError derr;
-> > +	DBusMessage *reply, *msg;
-> > +
-> > +	reply =3D dbus_pending_call_steal_reply(call);
-> > +
-> > +	if (ofono_modem_get_powered(modem))
-> > +		goto done;
-> > +
-> > +	if (!dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &dev,
-> > +				DBUS_TYPE_INVALID))
-> > +		goto done;
-> > +
-> > +	data->rfcomm =3D dev;
-> =
+ 	if (r !=3D (ssize_t) len) {
+-		unlink(path);
+ 		r =3D -1;
++		goto error_write;
+ 	}
+ =
 
-> One more comment here, I'd suggest to use g_strdup(dev). Because the devi=
-ce
-> String is from dbus reply and later we will unref the reply. What do you =
-think?
-> =
-
-
-Thanks for all the comments, I fix the patches and resend them. ;)
-
++	/*
++	 * Now that the file contents are written, rename to the real
++	 * file name; this way we are uniquely sure that the whole
++	 * thing is there.
++	 */
++	unlink(path);
++
++	/* conserve @r's value from 'write' */
++	if (link(tmp_path, path) =3D=3D -1)
++		r =3D -1;
++
++error_write:
++	unlink(tmp_path);
++error_mkstemp_full:
++error_create_dirs:
++	g_free(tmp_path);
+ 	g_free(path);
+ 	return r;
+ }
 -- =
 
-Gustavo F. Padovan
-http://padovan.org
+1.6.6.1
 
---===============8296396025931816754==--
+
+--===============6745642594994739186==--
 
