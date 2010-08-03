@@ -1,122 +1,156 @@
-Content-Type: multipart/mixed; boundary="===============5468885701001137898=="
+Content-Type: multipart/mixed; boundary="===============8561072060099957925=="
 MIME-Version: 1.0
-From: Huang, Ye <ye.huang@intel.com>
-Subject: How to get the SMS stored in SIM card
-Date: Tue, 03 Aug 2010 17:37:17 +0800
-Message-ID: <B32E3D5F1713054290B4FF257B89C51A1F666AAB7E@shsmsx502.ccr.corp.intel.com>
+From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
+Subject: RE: Add CDMA/EVDO into TODO
+Date: Tue, 03 Aug 2010 11:49:35 +0200
+Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE805424D07@ism-mail03.corp.ad.wrs.com>
+In-Reply-To: <1280813419.12579.78.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5468885701001137898==
+--===============8561072060099957925==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi
+Hi Marcel,
 
-The SMS we receive is class 1, right? Where to find the SMS we receive whic=
-h store in SIM through ofono API? Thanks.
+> -----Original Message-----
+> From: Marcel Holtmann [mailto:marcel(a)holtmann.org]
+> Sent: Tuesday, August 03, 2010 1:30 PM
+> To: ofono(a)ofono.org
+> Cc: Zhang, Caiwen; Schoppa, Chris
+> Subject: Re: Add CDMA/EVDO into TODO
+> =
 
-Best regards,
-Ye
+> Hi Penghuo,
+> =
+
+> I am not fully against submitting patches as attachments, but if you do
+> expect reviews, then we do prefer inline patches. I would advise to
+> start using git send-email for patch submission.
+> =
+
+> > From 9af61f4d2546ff28a8b1ed9546c41f5f3c945f5a Mon Sep 17 00:00:00
+> 2001
+> > From: Pengzhuo wang <pengzhuo.wang0@windriver.com>
+> > Date: Tue, 3 Aug 2010 19:53:32 +0800
+> > Subject: [PATCH] Update TODO to add CDMA/EVDO support
+> >
+> > ---
+> >  TODO |   25 +++++++++++++++++++++++++
+> >  1 files changed, 25 insertions(+), 0 deletions(-)
+> >
+> > diff --git a/TODO b/TODO
+> > index 5221324..b9130d3 100644
+> > --- a/TODO
+> > +++ b/TODO
+> > @@ -567,3 +567,28 @@ Miscellaneous
+> >
+> >    Priority: High
+> >    Complexity: C1
+> > +
+> > +CDMA/EVDO
+> > +=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> > +
+> > +- Extend modem interface with a 'Type' property to indicate the
+> modem
+> > type.
+> > +
+> > +  Priority: High
+> > +  Complexity: C1
+> =
+
+> We need to discuss this with Denis. Either we do it here on the mailing
+> list or on #ofono IRC channel on Freenode.
+> =
+
+> > +- Disable CDMA unsupport feature for CDMA modem. Include USSD,
+> > supplementary services,
+> > +  SSN, PDP context.
+> > +
+> > +  Priority: High
+> > +  Complexity: C2
+> =
+
+> Actually this is not a TODO item. That is a modem plugin specific
+> detail. If your modem (CDMA or not) doesn't supports such features,
+> then
+> don't enable the atoms for it.
+> =
+
+> So I say that this already supported ;)
+> =
 
 
---===============5468885701001137898==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+I do agree, besides, some atoms such as call-barring, call-setting ...
+Need do a little change, we need to disable the USSD watch and SSN watch et=
+c.
 
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
-b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
-b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
-aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
-QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
-MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
-Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
-dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
-YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
-ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
-aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
-YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
-OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
-Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
-VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
-Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
-cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
-MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
-ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
-cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
-dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
-bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
-dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
-eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
-dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
-LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
-Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
-cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
-dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
-Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
-Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
-aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczp3
-Zj0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvd29ya2Zsb3cv
-IiB4bWxuczpkc3NzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS8yMDA2L2Rp
-Z3NpZy1zZXR1cCIgeG1sbnM6ZHNzaT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZp
-Y2UvMjAwNi9kaWdzaWciIHhtbG5zOm1kc3NpPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0
-cy5vcmcvcGFja2FnZS8yMDA2L2RpZ2l0YWwtc2lnbmF0dXJlIiB4bWxuczptdmVyPSJodHRwOi8v
-c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvbWFya3VwLWNvbXBhdGliaWxpdHkvMjAwNiIgeG1s
-bnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4
-bWxuczptcmVscz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAw
-Ni9yZWxhdGlvbnNoaXBzIiB4bWxuczpzcHdwPSJodHRwOi8vbWljcm9zb2Z0LmNvbS9zaGFyZXBv
-aW50L3dlYnBhcnRwYWdlcyIgeG1sbnM6ZXgxMnQ9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5j
-b20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi90eXBlcyIgeG1sbnM6ZXgxMm09Imh0dHA6Ly9zY2hl
-bWFzLm1pY3Jvc29mdC5jb20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi9tZXNzYWdlcyIgeG1sbnM6
-cHB0c2w9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC9zb2FwL1NsaWRl
-TGlicmFyeS8iIHhtbG5zOnNwc2w9Imh0dHA6Ly9taWNyb3NvZnQuY29tL3dlYnNlcnZpY2VzL1No
-YXJlUG9pbnRQb3J0YWxTZXJ2ZXIvUHVibGlzaGVkTGlua3NTZXJ2aWNlIiB4bWxuczpaPSJ1cm46
-c2NoZW1hcy1taWNyb3NvZnQtY29tOiIgeG1sbnM6c3Q9IiYjMTsiIHhtbG5zPSJodHRwOi8vd3d3
-LnczLm9yZy9UUi9SRUMtaHRtbDQwIj4KCjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQt
-VHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBuYW1lPUdl
-bmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+Cjxz
-dHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
-aWx5OlNpbVN1bjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQpAZm9udC1mYWNlCgl7
-Zm9udC1mYW1pbHk6U2ltU3VuOwoJcGFub3NlLTE6MiAxIDYgMCAzIDEgMSAxIDEgMTt9CkBmb250
-LWZhY2UKCXtmb250LWZhbWlseTpDYWxpYnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAy
-IDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6U2ltU3VuOwoJcGFub3NlLTE6MiAxIDYgMCAz
-IDEgMSAxIDEgMTt9CiAvKiBTdHlsZSBEZWZpbml0aW9ucyAqLwogcC5Nc29Ob3JtYWwsIGxpLk1z
-b05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowY207CgltYXJnaW4tYm90dG9tOi4wMDAx
-cHQ7Cgl0ZXh0LWFsaWduOmp1c3RpZnk7Cgl0ZXh0LWp1c3RpZnk6aW50ZXItaWRlb2dyYXBoOwoJ
-Zm9udC1zaXplOjEwLjVwdDsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7fQph
-OmxpbmssIHNwYW4uTXNvSHlwZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6
-Ymx1ZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlw
-ZXJsaW5rRm9sbG93ZWQKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0
-ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUt
-dHlwZTpwZXJzb25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlm
-IjsKCWNvbG9yOndpbmRvd3RleHQ7Cglmb250LXdlaWdodDpub3JtYWw7Cglmb250LXN0eWxlOm5v
-cm1hbDsKCXRleHQtZGVjb3JhdGlvbjpub25lIG5vbmU7fQouTXNvQ2hwRGVmYXVsdAoJe21zby1z
-dHlsZS10eXBlOmV4cG9ydC1vbmx5O30KIC8qIFBhZ2UgRGVmaW5pdGlvbnMgKi8KIEBwYWdlIFdv
-cmRTZWN0aW9uMQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA5MC4wcHQg
-NzIuMHB0IDkwLjBwdDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9Ci0t
-Pgo8L3N0eWxlPgo8IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlZGVmYXVsdHMgdjpl
-eHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3Rl
-IG1zbyA5XT48eG1sPgogPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgogIDxvOmlkbWFwIHY6
-ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgogPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0t
-Pgo8L2hlYWQ+Cgo8Ym9keSBsYW5nPVpILUNOIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGUgc3R5bGU9
-J3RleHQtanVzdGlmeS10cmltOnB1bmN0dWF0aW9uJz4KCjxkaXYgY2xhc3M9V29yZFNlY3Rpb24x
-PgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZTox
-MS4wcHQnPkhpPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFu
-IGxhbmc9RU4tVVMgc3R5bGU9J2ZvbnQtc2l6ZToxMS4wcHQnPjxvOnA+Jm5ic3A7PC9vOnA+PC9z
-cGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTIHN0eWxlPSdmb250
-LXNpemU6MTEuMHB0Jz5UaGUgU01TIHdlIHJlY2VpdmUKaXMgY2xhc3MgMSwgcmlnaHQ/IFdoZXJl
-IHRvIGZpbmQgdGhlIFNNUyB3ZSByZWNlaXZlIHdoaWNoIHN0b3JlIGluIFNJTSB0aHJvdWdoCm9m
-b25vIEFQST8gVGhhbmtzLiA8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3Jt
-YWw+PHNwYW4gbGFuZz1FTi1VUyBzdHlsZT0nZm9udC1zaXplOjExLjBwdCc+PG86cD4mbmJzcDs8
-L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVMgc3R5
-bGU9J2ZvbnQtc2l6ZToxMS4wcHQnPkJlc3QgcmVnYXJkcyw8YnI+ClllIDxvOnA+PC9vOnA+PC9z
-cGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7
-PC9vOnA+PC9zcGFuPjwvcD4KCjwvZGl2PgoKPC9ib2R5PgoKPC9odG1sPgo=
+> > +- Add call forwarding, call waiting, network registration
+> > implementation for CDMA.
+> > +
+> > +  Priority: High
+> > +  Complexity: C4
+> =
 
---===============5468885701001137898==--
+> This is more like add CDMA specific atom drivers for netreg etc. That
+> these are CDMA specific is more a minor detail.
+> =
+
+> I like to hear Denis comment on his, but first guess would be that this
+> should be done as drivers/cdmamodem/...
+> =
+
+These features in CDMA are very different from that in GSM. Call forwarding=
+ and call waiting
+are achieved by dial a specified number(feature code). In CDMA system, the =
+modem =
+
+will always auto register network, but in GSM system, there are different r=
+egister modes,
+and can scan neighbor networks. =
+
+
+So we would like implement them in separate files such as cdma_call-forward=
+ing.c ...
+But not base on current implementation.
+
+> > +- Change radio setting, SIM manager, SMS manager, voice call manager,
+> > Data Connection
+> > +  Manager to make them support both GSM and CDMA
+> > +
+> > +  Priority: High
+> > +  Complexity: C8
+> =
+
+> I think you have to be a bit more specific here. Maybe it is a good
+> idea
+> to split them into separate items.
+> =
+
+> Regards
+> =
+
+> Marcel
+> =
+
+
+Yes, we do agree. We will do it. =
+
+
+Generally, before do any change, we will sent out the proposed solution,
+and collect the suggestion first.
+
+
+Best regard,
+
+Caiwen =
+
+
+
+
+
+
+--===============8561072060099957925==--
 
