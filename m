@@ -1,105 +1,273 @@
-Content-Type: multipart/mixed; boundary="===============8454838790640459101=="
+Content-Type: multipart/mixed; boundary="===============2000327600691702083=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus 00/19] pull request
-Date: Tue, 03 Aug 2010 16:50:49 -0700
-Message-ID: <cover.1280879410.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus 03/19] sms: implement SHA256-based message IDs [incomplete]
+Date: Tue, 03 Aug 2010 16:50:52 -0700
+Message-ID: <91ce0be38ecd281e810284966d0f285ad187db23.1280879410.git.inaky.perez-gonzalez@intel.com>
+In-Reply-To: <cover.1280879410.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8454838790640459101==
+--===============2000327600691702083==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-- UUID code reworked, simplified to Dennis' suggestion
+This patch removes the sequential SMS message identification gig and
+replaces it with a 16-bit hash cookie based off message contents.
 
-- UUID code integrated -- still kind of incomplete because we need to
-  see what to do when the message contents and destination number is
-  the same.
+FIXME: [incomplete] need to figure out how to do so that identical
+messages sent to different or the same numbers also have a different
+ID.
+---
+ src/ofono.h |    9 +++++----
+ src/sms.c   |   55 +++++++++++++++++++++++--------------------------------
+ src/stk.c   |    5 +++--
+ 3 files changed, 31 insertions(+), 38 deletions(-)
 
-- BUG_ON* removed, not used anymore
+diff --git a/src/ofono.h b/src/ofono.h
+index aaa01d9..b73797b 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -185,10 +185,11 @@ enum ofono_sms_submit_flag {
+ =
 
-- removed 'struct sms_msg_dbus_data', pass around 'dbus_path' as
-  private data.
+ typedef void (*ofono_sms_txq_submit_cb_t)(gboolean ok, void *data);
+ =
 
-- D-Bus: =
+-unsigned int __ofono_sms_txq_submit(struct ofono_sms *sms, GSList *list,
+-					unsigned int flags,
+-					ofono_sms_txq_submit_cb_t cb,
+-					void *data, ofono_destroy_func destroy);
++struct tx_queue_entry *__ofono_sms_txq_submit(
++	struct ofono_sms *sms, GSList *list,
++	unsigned int flags, unsigned ref,
++	ofono_sms_txq_submit_cb_t cb,
++	void *data, ofono_destroy_func destroy);
+ =
+
+ #include <ofono/sim.h>
+ #include <ofono/stk.h>
+diff --git a/src/sms.c b/src/sms.c
+index 35364db..39d4a32 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -55,7 +55,6 @@ struct ofono_sms {
+ 	DBusMessage *pending;
+ 	struct ofono_phone_number sca;
+ 	struct sms_assembly *assembly;
+-	unsigned int next_msg_id;
+ 	guint ref;
+ 	GQueue *txq;
+ 	gint tx_source;
+@@ -589,7 +588,8 @@ static DBusMessage *sms_send_message(DBusConnection *co=
+nn, DBusMessage *msg,
+ 	int ref_offset;
+ 	struct ofono_modem *modem;
+ 	unsigned int flags;
+-	unsigned int msg_id;
++	guint16 msg_id;
++	struct tx_queue_entry *sms_msg;
+ =
+
+ 	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &to,
+ 					DBUS_TYPE_STRING, &text,
+@@ -605,24 +605,19 @@ static DBusMessage *sms_send_message(DBusConnection *=
+conn, DBusMessage *msg,
+ 	if (!msg_list)
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+-	set_ref_and_to(msg_list, sms->ref, ref_offset, to);
+-	DBG("ref: %d, offset: %d", sms->ref, ref_offset);
+-
+-	if (ref_offset !=3D 0) {
+-		if (sms->ref =3D=3D 65536)
+-			sms->ref =3D 1;
+-		else
+-			sms->ref =3D sms->ref + 1;
+-	}
++	msg_id =3D sms_uuid_from_pdu_list(msg_list);
++	set_ref_and_to(msg_list, msg_id, ref_offset, to);
++	DBG("SMS ID: 0x%04x", msg_id);
+ =
+
+ 	flags =3D OFONO_SMS_SUBMIT_FLAG_RECORD_HISTORY;
+ 	flags |=3D OFONO_SMS_SUBMIT_FLAG_RETRY;
+ 	if (sms->use_delivery_reports)
+ 		flags |=3D OFONO_SMS_SUBMIT_FLAG_REQUEST_SR;
+ =
+
+-	msg_id =3D __ofono_sms_txq_submit(sms, msg_list, flags, send_message_cb,
+-						dbus_message_ref(msg),
+-						send_message_destroy);
++	sms_msg =3D __ofono_sms_txq_submit(sms, msg_list, flags, msg_id,
++					 send_message_cb,
++					 dbus_message_ref(msg),
++					 send_message_destroy);
+ =
+
+ 	g_slist_foreach(msg_list, (GFunc)g_free, NULL);
+ 	g_slist_free(msg_list);
+@@ -659,7 +654,7 @@ static void dispatch_app_datagram(struct ofono_sms *sms=
+, int dst, int src,
+ }
+ =
+
+ static void dispatch_text_message(struct ofono_sms *sms,
+-					const char *message,
++					const char *message, guint16 msg_id,
+ 					enum sms_class cls,
+ 					const struct sms_address *addr,
+ 					const struct sms_scts *scts)
+@@ -717,11 +712,9 @@ static void dispatch_text_message(struct ofono_sms *sm=
+s,
+ =
+
+ 	g_dbus_send_message(conn, signal);
+ =
+
+-	if (cls !=3D SMS_CLASS_0) {
+-		__ofono_history_sms_received(modem, sms->next_msg_id, str,
++	if (cls !=3D SMS_CLASS_0)
++		__ofono_history_sms_received(modem, msg_id, str,
+ 						&remote, &local, message);
+-		sms->next_msg_id +=3D 1;
+-	}
+ }
+ =
+
+ static void sms_dispatch(struct ofono_sms *sms, GSList *sms_list)
+@@ -732,6 +725,7 @@ static void sms_dispatch(struct ofono_sms *sms, GSList =
+*sms_list)
+ 	enum sms_class cls;
+ 	int srcport =3D -1;
+ 	int dstport =3D -1;
++	guint16 msg_id;
+ =
+
+ 	if (sms_list =3D=3D NULL)
+ 		return;
+@@ -749,6 +743,7 @@ static void sms_dispatch(struct ofono_sms *sms, GSList =
+*sms_list)
+ 	 * used, the addresses are the same across all segments.
+ 	 */
+ =
+
++	msg_id =3D sms_uuid_from_pdu_list(sms_list);
+ 	for (l =3D sms_list; l; l =3D l->next) {
+ 		guint8 dcs;
+ 		gboolean comp =3D FALSE;
+@@ -825,8 +820,8 @@ static void sms_dispatch(struct ofono_sms *sms, GSList =
+*sms_list)
+ =
+
+ 		s =3D sms_list->data;
+ =
+
+-		dispatch_text_message(sms, message, cls, &s->deliver.oaddr,
+-					&s->deliver.scts);
++		dispatch_text_message(sms, message, msg_id, cls,
++					&s->deliver.oaddr, &s->deliver.scts);
+ 		g_free(message);
+ 	}
+ }
+@@ -1104,8 +1099,6 @@ static void sms_remove(struct ofono_atom *atom)
+ =
+
+ 	if (sms->settings) {
+ 		g_key_file_set_integer(sms->settings, SETTINGS_GROUP,
+-					"NextMessageId", sms->next_msg_id);
+-		g_key_file_set_integer(sms->settings, SETTINGS_GROUP,
+ 					"NextReference", sms->ref);
+ 		g_key_file_set_boolean(sms->settings, SETTINGS_GROUP,
+ 					"UseDeliveryReports",
+@@ -1201,9 +1194,6 @@ static void sms_load_settings(struct ofono_sms *sms, =
+const char *imsi)
+ =
+
+ 	sms->imsi =3D g_strdup(imsi);
+ =
+
+-	sms->next_msg_id =3D g_key_file_get_integer(sms->settings, SETTINGS_GROUP,
+-							"NextMessageId", NULL);
+-
+ 	sms->ref =3D g_key_file_get_integer(sms->settings, SETTINGS_GROUP,
+ 							"NextReference", NULL);
+ 	if (sms->ref >=3D 65536)
+@@ -1306,10 +1296,11 @@ void *ofono_sms_get_data(struct ofono_sms *sms)
+ 	return sms->driver_data;
+ }
+ =
+
+-unsigned int __ofono_sms_txq_submit(struct ofono_sms *sms, GSList *list,
+-					unsigned int flags,
+-					ofono_sms_txq_submit_cb_t cb,
+-					void *data, ofono_destroy_func destroy)
++struct tx_queue_entry *__ofono_sms_txq_submit(
++	struct ofono_sms *sms, GSList *list,
++	unsigned int flags, unsigned msg_id,
++	ofono_sms_txq_submit_cb_t cb,
++	void *data, ofono_destroy_func destroy)
+ {
+ 	struct tx_queue_entry *entry =3D tx_queue_entry_new(list);
+ =
+
+@@ -1320,7 +1311,7 @@ unsigned int __ofono_sms_txq_submit(struct ofono_sms =
+*sms, GSList *list,
+ 				sizeof(entry->receiver));
+ 	}
+ =
+
+-	entry->msg_id =3D sms->next_msg_id++;
++	entry->msg_id =3D msg_id;
+ 	entry->flags =3D flags;
+ 	entry->cb =3D cb;
+ 	entry->data =3D data;
+@@ -1331,5 +1322,5 @@ unsigned int __ofono_sms_txq_submit(struct ofono_sms =
+*sms, GSList *list,
+ 	if (g_queue_get_length(sms->txq) =3D=3D 1)
+ 		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
+ =
+
+-	return entry->msg_id;
++	return entry;
+ }
+diff --git a/src/stk.c b/src/stk.c
+index 556dc68..620811b 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -323,6 +323,7 @@ static gboolean handle_command_send_sms(const struct st=
+k_command *cmd,
+ 	struct ofono_atom *sms_atom;
+ 	struct ofono_sms *sms;
+ 	GSList msg_list;
++	guint16 msg_id;
+ =
+
+ 	sms_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SMS);
+ =
+
+@@ -338,8 +339,8 @@ static gboolean handle_command_send_sms(const struct st=
+k_command *cmd,
+ =
+
+ 	msg_list.data =3D (void *) &cmd->send_sms.gsm_sms;
+ 	msg_list.next =3D NULL;
+-
+-	__ofono_sms_txq_submit(sms, &msg_list, 0, send_sms_submit_cb,
++	msg_id =3D sms_uuid_from_pdu_list(&msg_list);
++	__ofono_sms_txq_submit(sms, &msg_list, 0, msg_id, send_sms_submit_cb,
+ 				stk->sms_submit_req, g_free);
+ =
+
+ 	stk->cancel_cmd =3D send_sms_cancel;
+-- =
+
+1.6.6.1
 
 
-  number of PDUs not longer part of the D-Bus name
-
-  added 'To' to the D-Bus properties; ignored for now
-  submittion/delivery times as it will complicate the interface -- we
-  need another callback for property change specification. Is it worth
-  it?
-
-  Fixed GetProperties method mistakenly marked ASYNC
-
-  Interface renamed to SmsManager
-
-  Cleaned up doc/sms-api.txt according to feedback
-
-- unfolded tx_queue_entry_destroy_free  into
-  tx_queue_entry_free_foreach() and tx_queue_entry_free() according to
-  feedback. =
-
-
-- broke up multi-directory commits
-
-- cleaned up style violations
-
-- add a fix to generation of symlinks for headers, it broke in VPATH
-  builds.
-
-The following changes since commit 6f1ab8b6794333673fefc3d52f9b0388526a56cd:
-  Kristen Carlson Accardi (1):
-        test-stkutil: unit test for img to xpm converter
-
-are available in the git repository at:
-
-  git://gitorious.org/~inakypg/ofono/ofono-inakypg.git master
-
-Patches follow for reviewing convenience.
-
-Inaky Perez-Gonzalez (19):
-      write_file: make transaction-safe
-      sms: introduce message ID API
-      sms: implement SHA256-based message IDs [incomplete]
-      sms: document the org.ofono.SmsMessage interface
-      sms: document handle_sms_status_report()
-      struct tx_queue_entry: add a destructor
-      sms: introduce bare state machine and transitions
-      sms: introduce the Wait-for-Status-Report state
-      sms: introduce a state change callback for messages
-      sms: export outgoing messages over D-Bus
-      sms: send PropertyChanged signals on state change
-      sms: introduce sms_msg_cancel and its D-Bus wrapper
-      sms: Implement D-Bus SMS-MSG::GetProperties
-      sms: document SMS Message's D-Bus 'To' property
-      sms: test code for message's D-Bus GetProperties
-      automake: fix generation of symlinks for headers
-      sms: document variable usage in sms_msg_send()
-      sms: add test case for message cancel
-      sms: add test case for state change signals
-
- Makefile.am                      |    2 +-
- doc/sms-api.txt                  |   54 ++++-
- src/ofono.h                      |   45 +++-
- src/sms.c                        |  581 ++++++++++++++++++++++++++++++++--=
-----
- src/smsutil.c                    |   78 +++++
- src/smsutil.h                    |    8 +
- src/stk.c                        |   22 ++-
- src/storage.c                    |   47 +++-
- test/test-sms-msg-cancel         |  173 +++++++++++
- test/test-sms-msg-get-properties |   26 ++
- test/test-sms-msg-state-change   |   24 ++
- 11 files changed, 951 insertions(+), 109 deletions(-)
- create mode 100755 test/test-sms-msg-cancel
- create mode 100755 test/test-sms-msg-get-properties
- create mode 100755 test/test-sms-msg-state-change
-
---===============8454838790640459101==--
+--===============2000327600691702083==--
 
