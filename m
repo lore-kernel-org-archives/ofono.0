@@ -1,123 +1,105 @@
-Content-Type: multipart/mixed; boundary="===============6745642594994739186=="
+Content-Type: multipart/mixed; boundary="===============8454838790640459101=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus 01/19] write_file: make transaction-safe
-Date: Tue, 03 Aug 2010 16:50:50 -0700
-Message-ID: <53fe712f7b5927ee95d34c9d3d66751136e6ee6f.1280879410.git.inaky.perez-gonzalez@intel.com>
-In-Reply-To: <cover.1280879410.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus 00/19] pull request
+Date: Tue, 03 Aug 2010 16:50:49 -0700
+Message-ID: <cover.1280879410.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6745642594994739186==
+--===============8454838790640459101==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-write_file(), as written wasn't transaction-safe; a crash bewtween a
-file being open and the buffer being written before a safe close would
-leave the file with a set of undetermined contents.
+- UUID code reworked, simplified to Dennis' suggestion
 
-Modified to the file is written to a temporary file name; once
-completed, it is renamed to the final name. This way, a crash in the
-middle doesn't leave half-baked files.
----
- src/storage.c |   47 ++++++++++++++++++++++++++++++++++++-----------
- 1 files changed, 36 insertions(+), 11 deletions(-)
+- UUID code integrated -- still kind of incomplete because we need to
+  see what to do when the message contents and destination number is
+  the same.
 
-diff --git a/src/storage.c b/src/storage.c
-index cac5835..530439d 100644
---- a/src/storage.c
-+++ b/src/storage.c
-@@ -98,11 +98,21 @@ ssize_t read_file(unsigned char *buffer, size_t len,
- 	return r;
- }
- =
+- BUG_ON* removed, not used anymore
 
-+/*
-+ * Write a buffer to a file in a transactionally safe form
-+ *
-+ * Given a buffer, write it to a file named after
-+ * @path_fmt+args. However, to make sure the file contents are
-+ * consistent (ie: a crash right after opening or during write()
-+ * doesn't leave a file half baked), the contents are written to a
-+ * file with a temporary name and when closed, it is renamed to the
-+ * specified name (@path_fmt+args).
-+ */
- ssize_t write_file(const unsigned char *buffer, size_t len, mode_t mode,
- 			const char *path_fmt, ...)
- {
- 	va_list ap;
--	char *path;
-+	char *tmp_path, *path;
- 	ssize_t r;
- 	int fd;
- =
+- removed 'struct sms_msg_dbus_data', pass around 'dbus_path' as
+  private data.
 
-@@ -110,26 +120,41 @@ ssize_t write_file(const unsigned char *buffer, size_=
-t len, mode_t mode,
- 	path =3D g_strdup_vprintf(path_fmt, ap);
- 	va_end(ap);
- =
-
--	if (create_dirs(path, mode | S_IXUSR) !=3D 0) {
--		g_free(path);
--		return -1;
--	}
-+	tmp_path =3D g_strdup_printf("%s.XXXXXX.tmp", path);
- =
-
--	fd =3D TFR(open(path, O_WRONLY | O_CREAT | O_TRUNC, mode));
--	if (fd =3D=3D -1) {
--		g_free(path);
--		return -1;
--	}
-+	r =3D -1;
-+	if (create_dirs(path, mode | S_IXUSR) !=3D 0)
-+		goto error_create_dirs;
-+
-+	fd =3D TFR(g_mkstemp_full(tmp_path, O_WRONLY | O_CREAT | O_TRUNC, mode));
-+	if (fd =3D=3D -1)
-+		goto error_mkstemp_full;
- =
-
- 	r =3D TFR(write(fd, buffer, len));
- =
-
- 	TFR(close(fd));
- =
-
- 	if (r !=3D (ssize_t) len) {
--		unlink(path);
- 		r =3D -1;
-+		goto error_write;
- 	}
- =
-
-+	/*
-+	 * Now that the file contents are written, rename to the real
-+	 * file name; this way we are uniquely sure that the whole
-+	 * thing is there.
-+	 */
-+	unlink(path);
-+
-+	/* conserve @r's value from 'write' */
-+	if (link(tmp_path, path) =3D=3D -1)
-+		r =3D -1;
-+
-+error_write:
-+	unlink(tmp_path);
-+error_mkstemp_full:
-+error_create_dirs:
-+	g_free(tmp_path);
- 	g_free(path);
- 	return r;
- }
--- =
-
-1.6.6.1
+- D-Bus: =
 
 
---===============6745642594994739186==--
+  number of PDUs not longer part of the D-Bus name
+
+  added 'To' to the D-Bus properties; ignored for now
+  submittion/delivery times as it will complicate the interface -- we
+  need another callback for property change specification. Is it worth
+  it?
+
+  Fixed GetProperties method mistakenly marked ASYNC
+
+  Interface renamed to SmsManager
+
+  Cleaned up doc/sms-api.txt according to feedback
+
+- unfolded tx_queue_entry_destroy_free  into
+  tx_queue_entry_free_foreach() and tx_queue_entry_free() according to
+  feedback. =
+
+
+- broke up multi-directory commits
+
+- cleaned up style violations
+
+- add a fix to generation of symlinks for headers, it broke in VPATH
+  builds.
+
+The following changes since commit 6f1ab8b6794333673fefc3d52f9b0388526a56cd:
+  Kristen Carlson Accardi (1):
+        test-stkutil: unit test for img to xpm converter
+
+are available in the git repository at:
+
+  git://gitorious.org/~inakypg/ofono/ofono-inakypg.git master
+
+Patches follow for reviewing convenience.
+
+Inaky Perez-Gonzalez (19):
+      write_file: make transaction-safe
+      sms: introduce message ID API
+      sms: implement SHA256-based message IDs [incomplete]
+      sms: document the org.ofono.SmsMessage interface
+      sms: document handle_sms_status_report()
+      struct tx_queue_entry: add a destructor
+      sms: introduce bare state machine and transitions
+      sms: introduce the Wait-for-Status-Report state
+      sms: introduce a state change callback for messages
+      sms: export outgoing messages over D-Bus
+      sms: send PropertyChanged signals on state change
+      sms: introduce sms_msg_cancel and its D-Bus wrapper
+      sms: Implement D-Bus SMS-MSG::GetProperties
+      sms: document SMS Message's D-Bus 'To' property
+      sms: test code for message's D-Bus GetProperties
+      automake: fix generation of symlinks for headers
+      sms: document variable usage in sms_msg_send()
+      sms: add test case for message cancel
+      sms: add test case for state change signals
+
+ Makefile.am                      |    2 +-
+ doc/sms-api.txt                  |   54 ++++-
+ src/ofono.h                      |   45 +++-
+ src/sms.c                        |  581 ++++++++++++++++++++++++++++++++--=
+----
+ src/smsutil.c                    |   78 +++++
+ src/smsutil.h                    |    8 +
+ src/stk.c                        |   22 ++-
+ src/storage.c                    |   47 +++-
+ test/test-sms-msg-cancel         |  173 +++++++++++
+ test/test-sms-msg-get-properties |   26 ++
+ test/test-sms-msg-state-change   |   24 ++
+ 11 files changed, 951 insertions(+), 109 deletions(-)
+ create mode 100755 test/test-sms-msg-cancel
+ create mode 100755 test/test-sms-msg-get-properties
+ create mode 100755 test/test-sms-msg-state-change
+
+--===============8454838790640459101==--
 
