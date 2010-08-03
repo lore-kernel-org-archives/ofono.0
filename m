@@ -1,134 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============3168014103569333001=="
+Content-Type: multipart/mixed; boundary="===============8927417739209125809=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus 02/19] sms: introduce message ID API
-Date: Tue, 03 Aug 2010 16:50:51 -0700
-Message-ID: <bd8631bab66aae8b4ac756782cd44fbc87116d0e.1280879410.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus 04/19] sms: document the org.ofono.SmsMessage interface
+Date: Tue, 03 Aug 2010 16:50:53 -0700
+Message-ID: <132619446c7d4601f9c4aed14db84c555be4a36b.1280879410.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1280879410.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3168014103569333001==
+--===============8927417739209125809==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-This adds a simple API to use for generating unique IDs for SMS
-messages. Will be used by follow up commits.
-
-The ID is not generic, but specifc to SMS messages (due to having to
-dig inside 'struct sms') and thus generates directly 16-bit IDs.
 ---
- src/smsutil.c |   78 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/smsutil.h |    2 +
- 2 files changed, 80 insertions(+), 0 deletions(-)
+ doc/sms-api.txt |   49 +++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 files changed, 47 insertions(+), 2 deletions(-)
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 22c70cf..b958ee0 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -3983,3 +3983,81 @@ char *ussd_decode(int dcs, int len, const unsigned c=
-har *data)
+diff --git a/doc/sms-api.txt b/doc/sms-api.txt
+index 1fc32ac..2bf588f 100644
+--- a/doc/sms-api.txt
++++ b/doc/sms-api.txt
+@@ -22,9 +22,27 @@ Methods		dict GetProperties()
+ 			Possible Errors: [service].Error.InvalidArguments
+ 					 [service].Error.DoesNotExist
  =
 
- 	return utf8;
- }
-+
-+static
-+int __sms_uuid_from_pdu(GChecksum *checksum, const struct sms *sms_pdu)
-+{
-+	const guint8 *buf;
-+	size_t buf_len;
-+
-+	switch (sms_pdu->type) {
-+	case SMS_TYPE_DELIVER:
-+		buf =3D sms_pdu->deliver.ud;
-+		buf_len =3D sms_pdu->deliver.udl;
-+		break;
-+	case SMS_TYPE_DELIVER_REPORT_ACK:
-+		buf =3D sms_pdu->deliver_ack_report.ud;
-+		buf_len =3D sms_pdu->deliver_ack_report.udl;
-+		break;
-+	case SMS_TYPE_DELIVER_REPORT_ERROR:
-+		buf =3D sms_pdu->deliver_err_report.ud;
-+		buf_len =3D sms_pdu->deliver_err_report.udl;
-+		break;
-+	case SMS_TYPE_STATUS_REPORT:
-+		buf =3D sms_pdu->status_report.ud;
-+		buf_len =3D sms_pdu->status_report.udl;
-+		break;
-+	case SMS_TYPE_SUBMIT:
-+		buf =3D sms_pdu->submit.ud;
-+		buf_len =3D sms_pdu->submit.udl;
-+		break;
-+	case SMS_TYPE_SUBMIT_REPORT_ACK:
-+		buf =3D sms_pdu->submit_ack_report.ud;
-+		buf_len =3D sms_pdu->submit_ack_report.udl;
-+		break;
-+	case SMS_TYPE_SUBMIT_REPORT_ERROR:
-+		buf =3D sms_pdu->submit_err_report.ud;
-+		buf_len =3D sms_pdu->submit_err_report.udl;
-+		break;
-+	case SMS_TYPE_COMMAND:
-+		buf =3D sms_pdu->command.cd;
-+		buf_len =3D sms_pdu->command.cdl;
-+		break;
-+	default:
-+		return 1;
-+	}
-+	g_checksum_update(checksum, buf, buf_len);
-+	return 0;
-+}
-+
-+/**
-+ * Generate a UUID from an SMS PDU List
-+ *
-+ * @param sms_pdu_list GSlist containing 'struct sms' nodes to
-+ *     generate the UUID from.
-+ * @return 0 in error (no memory or serious code inconsistency in the
-+ *     input data structures), otherwise the SMS UUID.
-+ */
-+guint16 sms_uuid_from_pdu_list(const GSList *sms_pdu_list)
-+{
-+	guint16 uuid =3D 0;
-+	GChecksum *checksum;
-+	const GSList *node;
-+	gsize uuid_size =3D g_checksum_type_get_length(G_CHECKSUM_SHA256);
-+	guint8 data[uuid_size];
-+
-+	checksum =3D g_checksum_new(G_CHECKSUM_SHA256);
-+	if (checksum =3D=3D NULL)
-+		goto error_new;
-+	for (node =3D sms_pdu_list; node; node =3D node->next) {
-+		struct sms *sms_pdu =3D node->data;
-+		if (__sms_uuid_from_pdu(checksum, sms_pdu))
-+			goto error_pdu;
-+	}
-+	g_checksum_get_digest(checksum, data, &uuid_size);
-+	uuid =3D data[0] | data[1] << 8;
-+error_pdu:
-+	g_checksum_free(checksum);
-+error_new:
-+	return uuid;
-+}
-diff --git a/src/smsutil.h b/src/smsutil.h
-index ca64b18..66486b7 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -547,3 +547,5 @@ GSList *cbs_optimize_ranges(GSList *ranges);
- gboolean cbs_topic_in_range(unsigned int topic, GSList *ranges);
+-		void SendMessage(string to, string text)
++		object SendMessage(string to, string text)
  =
 
- char *ussd_decode(int dcs, int len, const unsigned char *data);
+-			Send the message in text to the number in to.
++			Submit a message for delivery /
++			processing. oFono owns it from now on until
++			successful delivery, cancellation (by the
++			user) or cancellation (by oFono). User has to
++			keep a copy around as oFono only offers
++			persistence to satisfy its needs.
 +
-+guint16 sms_uuid_from_pdu_list(const GSList *sms_pdu_list);
++			Returns the name of the D-Bus object that
++			represents said SMS Message.
++
++			Possible Errors: [service].Error.InvalidArguments
++
++		array{object} Messages()
++
++			Returns a list of SMS Messages that have been
++			submitted for delivery and that are still
++			pending.
++
++			FIXME: currently not implemented
+ =
+
+ Signals		PropertyChanged(string name, variant value)
+ =
+
+@@ -64,3 +82,30 @@ Properties	string ServiceCenterAddress
+ 				"ps-preferred" - Use CS if PS is unavailable
+ =
+
+ 			By default oFono uses "cs-preferred" setting.
++
++
++SMS / Messaging interface
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D
++
++Service		org.ofono
++Interface	org.ofono.SmsMessage
++Object path	[variable prefix]/{modem0,modem1...}/{message01,message02...}
++
++Methods		dict GetProperties()
++
++			Returns a dictionary with the current
++			properties of a message.
++
++		void Cancel()
++
++			Cancels a pending message's delivery.
++
++Signals		PropertyChanged(string name, variant value)
++
++			This signal indicates a changed value of the given
++			property.
++
++Properties	string State
++
++			Current transmission state {queued, wsr, done,
++			canceling, cancelled, failed, expired}
 -- =
 
 1.6.6.1
 
 
---===============3168014103569333001==--
+--===============8927417739209125809==--
 
