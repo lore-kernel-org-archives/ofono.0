@@ -1,58 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============5233792693910171046=="
+Content-Type: multipart/mixed; boundary="===============7755619509015807056=="
 MIME-Version: 1.0
-From: Wang, Pengzhuo <Pengzhuo.Wang@windriver.com>
-Subject: Add CDMA/EVDO into TODO
-Date: Tue, 03 Aug 2010 07:14:39 +0200
-Message-ID: <52CF90264091A14888078A031D780F43060FCB01@ism-mail03.corp.ad.wrs.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Add CDMA/EVDO into TODO
+Date: Mon, 02 Aug 2010 22:30:19 -0700
+Message-ID: <1280813419.12579.78.camel@localhost.localdomain>
+In-Reply-To: <52CF90264091A14888078A031D780F43060FCB01@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5233792693910171046==
+--===============7755619509015807056==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello All
-       I have a plan to add CDMA/EVDO support into ofono. The
-attachement is TODO patch I get ready to submit into ofono.
-In this patch file is  a simple description about what CDMA/EVDO
-features will be covered.   I'd love to have your thoughts about this.
+Hi Penghuo,
 
-Best Regards
- =
+I am not fully against submitting patches as attachments, but if you do
+expect reviews, then we do prefer inline patches. I would advise to
+start using git send-email for patch submission.
 
-pengzhuo wang(bobwang)
-Professional Service | WindRiver P.R.China Room3-H,New JinQiao Plaza,
-No.585 Xizhang Rd(M),Shanghai,200003,P.R.C Tel:86-21-63585586/87/89/90
-ext.208 Fax:86-21-63585591
+> From 9af61f4d2546ff28a8b1ed9546c41f5f3c945f5a Mon Sep 17 00:00:00 2001
+> From: Pengzhuo wang <pengzhuo.wang0@windriver.com>
+> Date: Tue, 3 Aug 2010 19:53:32 +0800
+> Subject: [PATCH] Update TODO to add CDMA/EVDO support
+> =
+
+> ---
+>  TODO |   25 +++++++++++++++++++++++++
+>  1 files changed, 25 insertions(+), 0 deletions(-)
+> =
+
+> diff --git a/TODO b/TODO
+> index 5221324..b9130d3 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -567,3 +567,28 @@ Miscellaneous
+>  =
+
+>    Priority: High
+>    Complexity: C1
+> +
+> +CDMA/EVDO
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +- Extend modem interface with a 'Type' property to indicate the modem
+> type. =
+
+> +
+> +  Priority: High
+> +  Complexity: C1
+
+We need to discuss this with Denis. Either we do it here on the mailing
+list or on #ofono IRC channel on Freenode.
+
+> +- Disable CDMA unsupport feature for CDMA modem. Include USSD,
+> supplementary services, =
+
+> +  SSN, PDP context.  =
+
+> +  =
+
+> +  Priority: High
+> +  Complexity: C2
+
+Actually this is not a TODO item. That is a modem plugin specific
+detail. If your modem (CDMA or not) doesn't supports such features, then
+don't enable the atoms for it.
+
+So I say that this already supported ;)
+
+> +- Add call forwarding, call waiting, network registration
+> implementation for CDMA.
+> +  =
+
+> +  Priority: High
+> +  Complexity: C4
+
+This is more like add CDMA specific atom drivers for netreg etc. That
+these are CDMA specific is more a minor detail.
+
+I like to hear Denis comment on his, but first guess would be that this
+should be done as drivers/cdmamodem/...
+
+> +- Change radio setting, SIM manager, SMS manager, voice call manager,
+> Data Connection
+> +  Manager to make them support both GSM and CDMA
+> +  =
+
+> +  Priority: High
+> +  Complexity: C8
+
+I think you have to be a bit more specific here. Maybe it is a good idea
+to split them into separate items.
+
+Regards
+
+Marcel
 
 
---===============5233792693910171046==
-Content-Type: application/octet-stream
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="0001-Update-TODO-to-add-CDMA-EVDO-support.patch"
 
-RnJvbSA5YWY2MWY0ZDI1NDZmZjI4YThiMWVkOTU0NmM0MWY1ZjNjOTQ1ZjVhIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBQZW5nemh1byB3YW5nIDxwZW5nemh1by53YW5nMEB3aW5kcml2
-ZXIuY29tPgpEYXRlOiBUdWUsIDMgQXVnIDIwMTAgMTk6NTM6MzIgKzA4MDAKU3ViamVjdDogW1BB
-VENIXSBVcGRhdGUgVE9ETyB0byBhZGQgQ0RNQS9FVkRPIHN1cHBvcnQKCi0tLQogVE9ETyB8ICAg
-MjUgKysrKysrKysrKysrKysrKysrKysrKysrKwogMSBmaWxlcyBjaGFuZ2VkLCAyNSBpbnNlcnRp
-b25zKCspLCAwIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL1RPRE8gYi9UT0RPCmluZGV4IDUy
-MjEzMjQuLmI5MTMwZDMgMTAwNjQ0Ci0tLSBhL1RPRE8KKysrIGIvVE9ETwpAQCAtNTY3LDMgKzU2
-NywyOCBAQCBNaXNjZWxsYW5lb3VzCiAKICAgUHJpb3JpdHk6IEhpZ2gKICAgQ29tcGxleGl0eTog
-QzEKKworQ0RNQS9FVkRPCis9PT09PT09PT0KKworLSBFeHRlbmQgbW9kZW0gaW50ZXJmYWNlIHdp
-dGggYSAnVHlwZScgcHJvcGVydHkgdG8gaW5kaWNhdGUgdGhlIG1vZGVtIHR5cGUuIAorCisgIFBy
-aW9yaXR5OiBIaWdoCisgIENvbXBsZXhpdHk6IEMxCisKKy0gRGlzYWJsZSBDRE1BIHVuc3VwcG9y
-dCBmZWF0dXJlIGZvciBDRE1BIG1vZGVtLiBJbmNsdWRlIFVTU0QsIHN1cHBsZW1lbnRhcnkgc2Vy
-dmljZXMsIAorICBTU04sIFBEUCBjb250ZXh0LiAgCisgIAorICBQcmlvcml0eTogSGlnaAorICBD
-b21wbGV4aXR5OiBDMgorICAKKy0gQWRkIGNhbGwgZm9yd2FyZGluZywgY2FsbCB3YWl0aW5nLCBu
-ZXR3b3JrIHJlZ2lzdHJhdGlvbiBpbXBsZW1lbnRhdGlvbiBmb3IgQ0RNQS4KKyAgCisgIFByaW9y
-aXR5OiBIaWdoCisgIENvbXBsZXhpdHk6IEM0CisKKy0gQ2hhbmdlIHJhZGlvIHNldHRpbmcsIFNJ
-TSBtYW5hZ2VyLCBTTVMgbWFuYWdlciwgdm9pY2UgY2FsbCBtYW5hZ2VyLCBEYXRhIENvbm5lY3Rp
-b24KKyAgTWFuYWdlciB0byBtYWtlIHRoZW0gc3VwcG9ydCBib3RoIEdTTSBhbmQgQ0RNQQorICAK
-KyAgUHJpb3JpdHk6IEhpZ2gKKyAgQ29tcGxleGl0eTogQzgKLS0gCjEuNi41LjIKCg==
-
---===============5233792693910171046==--
+--===============7755619509015807056==--
 
