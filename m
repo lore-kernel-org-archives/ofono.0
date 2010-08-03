@@ -1,159 +1,115 @@
-Content-Type: multipart/mixed; boundary="===============3637611461184274592=="
+Content-Type: multipart/mixed; boundary="===============8296396025931816754=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Jo=C3=A3o?= Paulo Rechi Vita <jprvita@profusion.mobi>
-Subject: [PATCH] huawei: Fix SIM state logic
-Date: Tue, 03 Aug 2010 18:22:55 -0300
-Message-ID: <1280870575-9714-1-git-send-email-jprvita@profusion.mobi>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: Re: [PATCH 2/3] Add dun_enable() function
+Date: Tue, 03 Aug 2010 19:58:29 -0300
+Message-ID: <20100803225829.GA28060@vigoh>
+In-Reply-To: <33AB447FBD802F4E932063B962385B3528D48149@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3637611461184274592==
+--===============8296396025931816754==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add support for voice-only SIM cards and enable phonebook atom for
-non-voice modems.
----
- plugins/huawei.c |   56 +++++++++++++++++++++++++++++++++++---------------=
----
- 1 files changed, 37 insertions(+), 19 deletions(-)
+Hi Zhenhua,
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 47d59d0..fd31d2c 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -104,13 +104,15 @@ static void notify_sim_state(struct ofono_modem *mode=
-m, gint sim_state)
- {
- 	struct huawei_data *data =3D ofono_modem_get_data(modem);
- =
+* Zhang, Zhenhua <zhenhua.zhang@intel.com> [2010-08-02 22:28:47 +0800]:
 
--	if (data->sim_state =3D=3D 0 && sim_state =3D=3D 1) {
--		ofono_sim_inserted_notify(data->sim, TRUE);
--		data->sim_state =3D sim_state;
--	} else if (data->sim_state =3D=3D 1 && sim_state =3D=3D 0) {
-+	if (data->sim_state =3D=3D sim_state)
-+		return;
-+
-+	if (sim_state =3D=3D 255)
- 		ofono_sim_inserted_notify(data->sim, FALSE);
--		data->sim_state =3D sim_state;
--	}
-+	else
-+		ofono_sim_inserted_notify(data->sim, TRUE);
-+
-+	data->sim_state =3D sim_state;
- }
- =
+> Hi Padovan,
+> =
 
- static void sysinfo_cb(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -235,7 +237,8 @@ static void huawei_disconnect(gpointer user_data)
- =
+> Gustavo F. Padovan wrote:
+> > dun_enable() is called by setting the Powered property to true.
+> > It creates a rfcomm link throught the BlueZ Serial API.
+> > ---
+> >  drivers/dunmodem/dunmodem.h |    1 +
+> >  plugins/bluetooth.h         |    1 +
+> >  plugins/dun.c               |   61
+> >  +++++++++++++++++++++++++++++++++++++++++- 3 files changed, 61
+> > insertions(+), 2 deletions(-) =
 
- 	DBG("");
- =
+> > =
 
--	ofono_gprs_context_remove(data->gc);
-+	if (data->gc)
-+		ofono_gprs_context_remove(data->gc);
- =
+> > diff --git a/drivers/dunmodem/dunmodem.h b/drivers/dunmodem/dunmodem.h
+> > index 6bbf7b9..16eb9e7 100644
+> > --- a/drivers/dunmodem/dunmodem.h
+> > +++ b/drivers/dunmodem/dunmodem.h
+> > @@ -23,6 +23,7 @@
+> > =
 
- 	g_at_chat_unref(data->modem);
- 	data->modem =3D NULL;
-@@ -247,13 +250,15 @@ static void huawei_disconnect(gpointer user_data)
- 	g_at_chat_set_disconnect_function(data->modem,
- 						huawei_disconnect, modem);
- =
+> >  struct dun_data {
+> >  	char *dun_path;
+> > +	const char *rfcomm;
+> >  };
+> > =
 
--	ofono_info("Reopened GPRS context channel");
-+	if (data->sim_state =3D=3D 1 || data->sim_state =3D=3D 2) {
-+		ofono_info("Reopened GPRS context channel");
- =
+> >  #endif
+> > diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+> > index 09e6efa..c20b36d 100644
+> > --- a/plugins/bluetooth.h
+> > +++ b/plugins/bluetooth.h
+> > @@ -22,6 +22,7 @@
+> >  #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
+> >  #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
+> >  #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
+> > +#define	BLUEZ_SERIAL_INTERFACE		BLUEZ_SERVICE ".Serial"
+> > =
 
--	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
--							data->modem);
-+		data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
-+								data->modem);
- =
+> >  #define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
+> >  #define DUN_GW_UUID	"00001103-0000-1000-8000-00805F9B34FB"
+> > diff --git a/plugins/dun.c b/plugins/dun.c
+> > index 9b4288e..7dc8422 100644
+> > --- a/plugins/dun.c
+> > +++ b/plugins/dun.c
+> > @@ -25,6 +25,7 @@
+> >  #include <stdio.h>
+> >  #include <string.h>
+> >  #include <errno.h>
+> > +#include <gdbus.h>
+> >  #include <glib.h>
+> >  #include <ofono.h>
+> > =
 
--	if (data->gprs && data->gc)
--		ofono_gprs_add_context(data->gprs, data->gc);
-+		if (data->gprs && data->gc)
-+			ofono_gprs_add_context(data->gprs, data->gc);
-+	}
- }
- =
+> > @@ -138,10 +139,66 @@ static void dun_remove(struct ofono_modem
+> >  	*modem) ofono_modem_set_data(modem, NULL);
+> >  }
+> > =
 
- static int huawei_enable(struct ofono_modem *modem)
-@@ -333,7 +338,8 @@ static void huawei_pre_sim(struct ofono_modem *modem)
- 	ofono_devinfo_create(modem, 0, "atmodem", data->pcui);
- 	data->sim =3D ofono_sim_create(modem, 0, "atmodem", data->pcui);
- =
+> > +static void dun_connect_reply(DBusPendingCall *call, gpointer
+> > user_data) +{
+> > +	struct ofono_modem *modem =3D user_data;
+> > +	struct dun_data *data =3D ofono_modem_get_data(modem);
+> > +	const char *dev;
+> > +	DBusError derr;
+> > +	DBusMessage *reply, *msg;
+> > +
+> > +	reply =3D dbus_pending_call_steal_reply(call);
+> > +
+> > +	if (ofono_modem_get_powered(modem))
+> > +		goto done;
+> > +
+> > +	if (!dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &dev,
+> > +				DBUS_TYPE_INVALID))
+> > +		goto done;
+> > +
+> > +	data->rfcomm =3D dev;
+> =
 
--	if (ofono_modem_get_boolean(modem, "HasVoice") =3D=3D TRUE)
-+	if ((data->sim_state =3D=3D 1 || data->sim_state =3D=3D 3) &&
-+			ofono_modem_get_boolean(modem, "HasVoice") =3D=3D TRUE)
- 		ofono_voicecall_create(modem, 0, "atmodem", data->pcui);
- }
- =
+> One more comment here, I'd suggest to use g_strdup(dev). Because the devi=
+ce
+> String is from dbus reply and later we will unref the reply. What do you =
+think?
+> =
 
-@@ -345,6 +351,14 @@ static void huawei_post_sim(struct ofono_modem *modem)
- =
 
- 	DBG("%p", modem);
- =
+Thanks for all the comments, I fix the patches and resend them. ;)
 
-+	if (data->sim_state =3D=3D 255)
-+		return;
-+
-+	if (data->sim_state =3D=3D 4) {
-+		ofono_phonebook_create(modem, 0, "atmodem", data->pcui);
-+		return;
-+	}
-+
- 	netreg =3D ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
- 								data->pcui);
- =
-
-@@ -352,19 +366,23 @@ static void huawei_post_sim(struct ofono_modem *modem)
- 	ofono_cbs_create(modem, OFONO_VENDOR_QUALCOMM_MSM, "atmodem",
- 								data->pcui);
- 	ofono_ussd_create(modem, 0, "atmodem", data->pcui);
-+	ofono_phonebook_create(modem, 0, "atmodem", data->pcui);
- =
-
--	data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->pcui);
--	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
-+	if (data->sim_state =3D=3D 1 || data->sim_state =3D=3D 2) {
-+		data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->pcui);
-+		data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
-+								data->modem);
- =
-
--	if (data->gprs && data->gc)
--		ofono_gprs_add_context(data->gprs, data->gc);
-+		if (data->gprs && data->gc)
-+			ofono_gprs_add_context(data->gprs, data->gc);
-+	}
- =
-
--	if (ofono_modem_get_boolean(modem, "HasVoice") =3D=3D TRUE) {
-+	if ((data->sim_state =3D=3D 1 || data->sim_state =3D=3D 3) &&
-+			ofono_modem_get_boolean(modem, "HasVoice") =3D=3D TRUE) {
- 		ofono_call_forwarding_create(modem, 0, "atmodem", data->pcui);
- 		ofono_call_settings_create(modem, 0, "atmodem", data->pcui);
- 		ofono_call_barring_create(modem, 0, "atmodem", data->pcui);
- 		ofono_ssn_create(modem, 0, "atmodem", data->pcui);
--		ofono_phonebook_create(modem, 0, "atmodem", data->pcui);
- =
-
- 		mw =3D ofono_message_waiting_create(modem);
- 		if (mw)
 -- =
 
-1.7.0.4
+Gustavo F. Padovan
+http://padovan.org
 
-
---===============3637611461184274592==--
+--===============8296396025931816754==--
 
