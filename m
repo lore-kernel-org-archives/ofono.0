@@ -1,90 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7950945097188094450=="
+Content-Type: multipart/mixed; boundary="===============5233792693910171046=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-Subject: Re: [patch 20/20] SMS: Implement D-Bus SMS-MSG::GetProperties
-Date: Mon, 02 Aug 2010 12:14:39 -0700
-Message-ID: <1280776479.11046.651.camel@localhost.localdomain>
-In-Reply-To: <4C4F14F8.5080700@gmail.com>
+From: Wang, Pengzhuo <Pengzhuo.Wang@windriver.com>
+Subject: Add CDMA/EVDO into TODO
+Date: Tue, 03 Aug 2010 07:14:39 +0200
+Message-ID: <52CF90264091A14888078A031D780F43060FCB01@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7950945097188094450==
+--===============5233792693910171046==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, 2010-07-27 at 10:18 -0700, Denis Kenzior wrote: =
+Hello All
+       I have a plan to add CDMA/EVDO support into ofono. The
+attachement is TODO patch I get ready to submit into ofono.
+In this patch file is  a simple description about what CDMA/EVDO
+features will be covered.   I'd love to have your thoughts about this.
 
-> Hi Inaky,
-> =
+Best Regards
+ =
 
-> > +static DBusMessage *dbus_sms_msg_get_properties(
-> > +	DBusConnection * conn, DBusMessage *dbus_msg, void *_sms_msg)
-> > +{
-> > +	struct tx_queue_entry *sms_msg =3D _sms_msg;
-> > +	DBusMessage *reply;
-> > +	DBusMessageIter iter;
-> > +	DBusMessageIter dict;
-> > +	const char *str;
-> > +
-> > +	reply =3D dbus_message_new_method_return(dbus_msg);
-> > +	if (!reply)
-> > +		return NULL;
-> =
-
-> Empty line here
-... =
-
-> Empty line here
-... =
-
-> Empty line here
-... =
-
-> And one more here
-
-Done
-
-> Also, you might want to think about what other properties would be
-> useful here.  E.g. perhaps queue time, submission time, To address,
-> contents?
-
-None are needed so far
-
-Contents will be quite messy, as there is only binary encoded data at
-this point and we might not even know how to decode it (let's say a
-binary list of PDUs vs a text message).
-
-Other immediate ones are submission and delivery time, which also means
-we'd have to have a (property changed) signal for them and that'd
-require adding another callback in the core code [I am talking
-_txq_submit()]. I am going to leave it out for now because I don't want
-to add more complexity -- it's easy to add them later, but will require
-more changes.
-
-> No double empty lines allowed.
-
-fixed
-
-> >  /*
-> >   * Note that the D-Bus specific cleanups are taken care by the
-> >   * sms_msg_dbus_destroy() callback passed in dbus_sms_msg_send().
-> > @@ -564,6 +587,8 @@ static DBusMessage *dbus_sms_msg_cancel(
-> >  =
-
-> >  static
-> >  GDBusMethodTable sms_msg_methods[] =3D {
-> > +	{ "GetProperties",	"",	"a{sv}",
-> > +	  dbus_sms_msg_get_properties, G_DBUS_METHOD_FLAG_ASYNC },
-> =
-
-> Why exactly is this method ASYNC?
-
-Hmm, that was cut & paste from the manager's get_properties and it is
-obviously wrong -- fixed thanks
+pengzhuo wang(bobwang)
+Professional Service | WindRiver P.R.China Room3-H,New JinQiao Plaza,
+No.585 Xizhang Rd(M),Shanghai,200003,P.R.C Tel:86-21-63585586/87/89/90
+ext.208 Fax:86-21-63585591
 
 
+--===============5233792693910171046==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-Update-TODO-to-add-CDMA-EVDO-support.patch"
 
+RnJvbSA5YWY2MWY0ZDI1NDZmZjI4YThiMWVkOTU0NmM0MWY1ZjNjOTQ1ZjVhIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBQZW5nemh1byB3YW5nIDxwZW5nemh1by53YW5nMEB3aW5kcml2
+ZXIuY29tPgpEYXRlOiBUdWUsIDMgQXVnIDIwMTAgMTk6NTM6MzIgKzA4MDAKU3ViamVjdDogW1BB
+VENIXSBVcGRhdGUgVE9ETyB0byBhZGQgQ0RNQS9FVkRPIHN1cHBvcnQKCi0tLQogVE9ETyB8ICAg
+MjUgKysrKysrKysrKysrKysrKysrKysrKysrKwogMSBmaWxlcyBjaGFuZ2VkLCAyNSBpbnNlcnRp
+b25zKCspLCAwIGRlbGV0aW9ucygtKQoKZGlmZiAtLWdpdCBhL1RPRE8gYi9UT0RPCmluZGV4IDUy
+MjEzMjQuLmI5MTMwZDMgMTAwNjQ0Ci0tLSBhL1RPRE8KKysrIGIvVE9ETwpAQCAtNTY3LDMgKzU2
+NywyOCBAQCBNaXNjZWxsYW5lb3VzCiAKICAgUHJpb3JpdHk6IEhpZ2gKICAgQ29tcGxleGl0eTog
+QzEKKworQ0RNQS9FVkRPCis9PT09PT09PT0KKworLSBFeHRlbmQgbW9kZW0gaW50ZXJmYWNlIHdp
+dGggYSAnVHlwZScgcHJvcGVydHkgdG8gaW5kaWNhdGUgdGhlIG1vZGVtIHR5cGUuIAorCisgIFBy
+aW9yaXR5OiBIaWdoCisgIENvbXBsZXhpdHk6IEMxCisKKy0gRGlzYWJsZSBDRE1BIHVuc3VwcG9y
+dCBmZWF0dXJlIGZvciBDRE1BIG1vZGVtLiBJbmNsdWRlIFVTU0QsIHN1cHBsZW1lbnRhcnkgc2Vy
+dmljZXMsIAorICBTU04sIFBEUCBjb250ZXh0LiAgCisgIAorICBQcmlvcml0eTogSGlnaAorICBD
+b21wbGV4aXR5OiBDMgorICAKKy0gQWRkIGNhbGwgZm9yd2FyZGluZywgY2FsbCB3YWl0aW5nLCBu
+ZXR3b3JrIHJlZ2lzdHJhdGlvbiBpbXBsZW1lbnRhdGlvbiBmb3IgQ0RNQS4KKyAgCisgIFByaW9y
+aXR5OiBIaWdoCisgIENvbXBsZXhpdHk6IEM0CisKKy0gQ2hhbmdlIHJhZGlvIHNldHRpbmcsIFNJ
+TSBtYW5hZ2VyLCBTTVMgbWFuYWdlciwgdm9pY2UgY2FsbCBtYW5hZ2VyLCBEYXRhIENvbm5lY3Rp
+b24KKyAgTWFuYWdlciB0byBtYWtlIHRoZW0gc3VwcG9ydCBib3RoIEdTTSBhbmQgQ0RNQQorICAK
+KyAgUHJpb3JpdHk6IEhpZ2gKKyAgQ29tcGxleGl0eTogQzgKLS0gCjEuNi41LjIKCg==
 
---===============7950945097188094450==--
+--===============5233792693910171046==--
 
