@@ -1,270 +1,244 @@
-Content-Type: multipart/mixed; boundary="===============1794251617341985874=="
+Content-Type: multipart/mixed; boundary="===============7757135755189467223=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/4] stk: Handle the Get Inkey proactive command.
-Date: Wed, 04 Aug 2010 06:55:02 +0200
-Message-ID: <1280897704-15361-2-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 3/4] stkagent: Implement RequestInput/RequestDigits.
+Date: Wed, 04 Aug 2010 06:55:03 +0200
+Message-ID: <1280897704-15361-3-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1280897704-15361-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1794251617341985874==
+--===============7757135755189467223==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I don't have any card that actually makes use of Get Inkey so it's
-not tested on hardware.
 ---
- src/stk.c |  200 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ src/stkagent.c |  179 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 200 insertions(+), 0 deletions(-)
+ src/stkagent.h |   13 ++++
+ 2 files changed, 192 insertions(+), 0 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index 4146443..9331934 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -32,6 +32,7 @@
- #include <gdbus.h>
- #include <errno.h>
- #include <time.h>
-+#include <sys/time.h>
+diff --git a/src/stkagent.c b/src/stkagent.c
+index 6352fb2..692b470 100644
+--- a/src/stkagent.c
++++ b/src/stkagent.c
+@@ -670,3 +670,182 @@ int stk_agent_request_key(struct stk_agent *agent, co=
+nst char *text,
  =
 
- #include "ofono.h"
- =
-
-@@ -69,6 +70,7 @@ struct ofono_stk {
- 	guint remove_agent_source;
- 	struct sms_submit_req *sms_submit_req;
- 	char *idle_mode_text;
-+	struct timeval get_inkey_start_ts;
- };
- =
-
- struct envelope_op {
-@@ -1134,6 +1136,199 @@ static gboolean handle_command_display_text(const s=
-truct stk_command *cmd,
- 	return stk->immediate_response;
+ 	return 0;
  }
- =
-
-+static void set_get_inkey_duration(struct stk_duration *duration,
-+					struct timeval *start_ts)
++
++static void get_digits_cb(DBusPendingCall *call, void *data)
 +{
-+	struct timeval end_ts;
-+	int interval;
++	struct stk_agent *agent =3D data;
++	stk_agent_string_cb cb =3D agent->user_cb;
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	enum stk_agent_result result;
++	gboolean remove_agent;
++	char *string;
 +
-+	gettimeofday(&end_ts, NULL);
-+
-+	interval =3D (end_ts.tv_usec + 1099999 - start_ts->tv_usec) / 100000;
-+	interval +=3D (end_ts.tv_sec - start_ts->tv_sec) * 10;
-+	interval -=3D 10;
-+
-+	switch (duration->unit) {
-+	case STK_DURATION_TYPE_MINUTES:
-+		interval =3D (interval + 59) / 60;
-+	case STK_DURATION_TYPE_SECONDS:
-+		interval =3D (interval + 9) / 10;
-+	case STK_DURATION_TYPE_SECOND_TENTHS:
-+		break;
++	if (check_error(agent, reply,
++			ALLOWED_ERROR_GO_BACK | ALLOWED_ERROR_TERMINATE,
++			&result) =3D=3D -EINVAL) {
++		remove_agent =3D TRUE;
++		goto error;
 +	}
 +
-+	duration->interval =3D interval;
-+}
-+
-+static void request_confirmation_cb(enum stk_agent_result result,
-+					gboolean confirm,
-+					void *user_data)
-+{
-+	struct ofono_stk *stk =3D user_data;
-+	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
-};
-+	struct stk_command_get_inkey *cmd =3D &stk->pending_cmd->get_inkey;
-+	uint8_t qualifier =3D stk->pending_cmd->qualifier;
-+	struct stk_response rsp;
-+
-+	switch (result) {
-+	case STK_AGENT_RESULT_OK:
-+		memset(&rsp, 0, sizeof(rsp));
-+
-+		rsp.result.type =3D STK_RESULT_TYPE_SUCCESS;
-+		rsp.get_inkey.text.text =3D confirm ? "" : NULL;
-+		rsp.get_inkey.text.yesno =3D TRUE;
-+
-+		if (cmd->duration.interval) {
-+			rsp.get_inkey.duration.unit =3D cmd->duration.unit;
-+			set_get_inkey_duration(&rsp.get_inkey.duration,
-+						&stk->get_inkey_start_ts);
-+		}
-+
-+		if (stk_respond(stk, &rsp, stk_command_cb))
-+			stk_command_cb(&error, stk);
-+
-+		break;
-+
-+	case STK_AGENT_RESULT_BACK:
-+		send_simple_response(stk, STK_RESULT_TYPE_GO_BACK);
-+		break;
-+
-+	case STK_AGENT_RESULT_TIMEOUT:
-+		send_simple_response(stk, STK_RESULT_TYPE_NO_RESPONSE);
-+		break;
-+
-+	case STK_AGENT_RESULT_HELP:
-+		if ((qualifier & (1 << 7)) =3D=3D 0) {
-+			ofono_error("Help requested but not available");
-+
-+			send_simple_response(stk,
-+					STK_RESULT_TYPE_USER_TERMINATED);
-+			break;
-+		}
-+
-+		send_simple_response(stk, STK_RESULT_TYPE_HELP_REQUESTED);
-+		break;
-+
-+	case STK_AGENT_RESULT_TERMINATE:
-+	default:
-+		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
-+		break;
-+	}
-+}
-+
-+static void request_key_cb(enum stk_agent_result result, char *string,
-+				void *user_data)
-+{
-+	struct ofono_stk *stk =3D user_data;
-+	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
-};
-+	struct stk_command_get_inkey *cmd =3D &stk->pending_cmd->get_inkey;
-+	uint8_t qualifier =3D stk->pending_cmd->qualifier;
-+	struct stk_response rsp;
-+
-+	switch (result) {
-+	case STK_AGENT_RESULT_OK:
-+		memset(&rsp, 0, sizeof(rsp));
-+
-+		rsp.result.type =3D STK_RESULT_TYPE_SUCCESS;
-+		rsp.get_inkey.text.text =3D string;
-+
-+		if (cmd->duration.interval) {
-+			rsp.get_inkey.duration.unit =3D cmd->duration.unit;
-+			set_get_inkey_duration(&rsp.get_inkey.duration,
-+						&stk->get_inkey_start_ts);
-+		}
-+
-+		if (stk_respond(stk, &rsp, stk_command_cb))
-+			stk_command_cb(&error, stk);
-+
-+		break;
-+
-+	case STK_AGENT_RESULT_BACK:
-+		send_simple_response(stk, STK_RESULT_TYPE_GO_BACK);
-+		break;
-+
-+	case STK_AGENT_RESULT_TIMEOUT:
-+		send_simple_response(stk, STK_RESULT_TYPE_NO_RESPONSE);
-+		break;
-+
-+	case STK_AGENT_RESULT_HELP:
-+		if ((qualifier & (1 << 7)) =3D=3D 0) {
-+			ofono_error("Help requested but not available");
-+
-+			send_simple_response(stk,
-+					STK_RESULT_TYPE_USER_TERMINATED);
-+			break;
-+		}
-+
-+		send_simple_response(stk, STK_RESULT_TYPE_HELP_REQUESTED);
-+		break;
-+
-+	case STK_AGENT_RESULT_TERMINATE:
-+	default:
-+		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
-+		break;
-+	}
-+}
-+
-+static gboolean handle_command_get_inkey(const struct stk_command *cmd,
-+						struct stk_response *rsp,
-+						struct ofono_stk *stk)
-+{
-+	int timeout =3D stk->timeout * 1000;
-+	const struct stk_command_get_inkey *gi =3D &cmd->get_inkey;
-+	uint8_t qualifier =3D stk->pending_cmd->qualifier;
-+	gboolean alphabet =3D (qualifier & (1 << 0)) !=3D 0;
-+	gboolean ucs2 =3D (qualifier & (1 << 1)) !=3D 0;
-+	gboolean yesno =3D (qualifier & (1 << 2)) !=3D 0;
-+	/*
-+	 * Note: immediate response and help parameter values are not
-+	 * provided by current api.
-+	 */
-+	uint8_t icon_id =3D 0;
-+	int err;
-+
-+	if (gi->duration.interval) {
-+		timeout =3D gi->duration.interval;
-+		switch (gi->duration.unit) {
-+		case STK_DURATION_TYPE_MINUTES:
-+			timeout *=3D 60;
-+		case STK_DURATION_TYPE_SECONDS:
-+			timeout *=3D 10;
-+		case STK_DURATION_TYPE_SECOND_TENTHS:
-+			timeout *=3D 100;
-+		}
++	if (result !=3D STK_AGENT_RESULT_OK) {
++		cb(result, NULL, agent->user_data);
++		goto done;
 +	}
 +
-+	gettimeofday(&stk->get_inkey_start_ts, NULL);
++	if (dbus_message_get_args(reply, NULL,
++					DBUS_TYPE_STRING, &string,
++					DBUS_TYPE_INVALID) =3D=3D FALSE) {
++		ofono_error("Can't parse the reply to GetDigits()");
++		remove_agent =3D TRUE;
++		goto error;
++	}
 +
-+	stk->cancel_cmd =3D stk_request_cancel;
++	cb(result, string, agent->user_data);
 +
-+	if (yesno)
-+		err =3D stk_agent_request_confirmation(stk->current_agent,
-+							gi->text, icon_id,
-+							request_confirmation_cb,
-+							stk, NULL, timeout);
-+	else if (alphabet)
-+		err =3D stk_agent_request_key(stk->current_agent, gi->text,
-+						icon_id, ucs2, request_key_cb,
-+						stk, NULL, timeout);
++done:
++	if (result =3D=3D STK_AGENT_RESULT_TERMINATE && agent->remove_on_terminat=
+e)
++		remove_agent =3D TRUE;
 +	else
-+		err =3D stk_agent_request_digit(stk->current_agent, gi->text,
-+						icon_id, request_key_cb,
-+						stk, NULL, timeout);
++		remove_agent =3D FALSE;
 +
-+	if (err < 0) {
-+		/*
-+		 * We most likely got an out of memory error, tell SIM
-+		 * to retry
-+		 */
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		return TRUE;
-+	}
++error:
++	stk_agent_request_end(agent);
++	dbus_message_unref(reply);
 +
-+	return FALSE;
++	if (remove_agent)
++		stk_agent_free(agent);
 +}
 +
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
- {
- 	if (stk->immediate_response)
-@@ -1268,6 +1463,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
-_stk *stk,
- 							&rsp, stk);
- 		break;
++int stk_agent_request_digits(struct stk_agent *agent, const char *text,
++				uint8_t icon_id, const char *default_text,
++				int min, int max, ofono_bool_t hidden,
++				stk_agent_string_cb cb, void *user_data,
++				ofono_destroy_func destroy, int timeout)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	uint8_t min_val =3D min;
++	uint8_t max_val =3D max;
++	dbus_bool_t hidden_val =3D hidden;
++
++	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
++							OFONO_SIM_APP_INTERFACE,
++							"RequestDigits");
++	if (agent->msg =3D=3D NULL)
++		return -ENOMEM;
++
++	if (default_text =3D=3D NULL)
++		default_text =3D "";
++
++	dbus_message_append_args(agent->msg,
++					DBUS_TYPE_STRING, &text,
++					DBUS_TYPE_BYTE, &icon_id,
++					DBUS_TYPE_STRING, &default_text,
++					DBUS_TYPE_BYTE, &min_val,
++					DBUS_TYPE_BYTE, &max_val,
++					DBUS_TYPE_BOOLEAN, &hidden_val,
++					DBUS_TYPE_INVALID);
++
++	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
++						timeout) =3D=3D FALSE ||
++			agent->call =3D=3D NULL)
++		return -EIO;
++
++	agent->user_cb =3D cb;
++	agent->user_data =3D user_data;
++	agent->user_destroy =3D destroy;
++
++	dbus_pending_call_set_notify(agent->call, get_digits_cb,
++					agent, NULL);
++
++	return 0;
++}
++
++static void get_input_cb(DBusPendingCall *call, void *data)
++{
++	struct stk_agent *agent =3D data;
++	stk_agent_string_cb cb =3D agent->user_cb;
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	enum stk_agent_result result;
++	gboolean remove_agent;
++	char *string;
++
++	if (check_error(agent, reply,
++			ALLOWED_ERROR_GO_BACK | ALLOWED_ERROR_TERMINATE,
++			&result) =3D=3D -EINVAL) {
++		remove_agent =3D TRUE;
++		goto error;
++	}
++
++	if (result !=3D STK_AGENT_RESULT_OK) {
++		cb(result, NULL, agent->user_data);
++		goto done;
++	}
++
++	if (dbus_message_get_args(reply, NULL,
++					DBUS_TYPE_STRING, &string,
++					DBUS_TYPE_INVALID) =3D=3D FALSE) {
++		ofono_error("Can't parse the reply to GetInput()");
++		remove_agent =3D TRUE;
++		goto error;
++	}
++
++	cb(result, string, agent->user_data);
++
++done:
++	if (result =3D=3D STK_AGENT_RESULT_TERMINATE && agent->remove_on_terminat=
+e)
++		remove_agent =3D TRUE;
++	else
++		remove_agent =3D FALSE;
++
++error:
++	stk_agent_request_end(agent);
++	dbus_message_unref(reply);
++
++	if (remove_agent)
++		stk_agent_free(agent);
++}
++
++int stk_agent_request_input(struct stk_agent *agent, const char *text,
++				uint8_t icon_id, const char *default_text,
++				ofono_bool_t unicode_charset, int min, int max,
++				ofono_bool_t hidden, stk_agent_string_cb cb,
++				void *user_data, ofono_destroy_func destroy,
++				int timeout)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	uint8_t min_val =3D min;
++	uint8_t max_val =3D max;
++	dbus_bool_t hidden_val =3D hidden;
++
++	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
++							OFONO_SIM_APP_INTERFACE,
++							"RequestInput");
++	if (agent->msg =3D=3D NULL)
++		return -ENOMEM;
++
++	if (default_text =3D=3D NULL)
++		default_text =3D "";
++
++	dbus_message_append_args(agent->msg,
++					DBUS_TYPE_STRING, &text,
++					DBUS_TYPE_BYTE, &icon_id,
++					DBUS_TYPE_STRING, &default_text,
++					DBUS_TYPE_BYTE, &min_val,
++					DBUS_TYPE_BYTE, &max_val,
++					DBUS_TYPE_BOOLEAN, &hidden_val,
++					DBUS_TYPE_INVALID);
++
++	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
++						timeout) =3D=3D FALSE ||
++			agent->call =3D=3D NULL)
++		return -EIO;
++
++	agent->user_cb =3D cb;
++	agent->user_data =3D user_data;
++	agent->user_destroy =3D destroy;
++
++	dbus_pending_call_set_notify(agent->call, get_input_cb,
++					agent, NULL);
++
++	return 0;
++}
+diff --git a/src/stkagent.h b/src/stkagent.h
+index 8b9a931..3faabe7 100644
+--- a/src/stkagent.h
++++ b/src/stkagent.h
+@@ -100,5 +100,18 @@ int stk_agent_request_key(struct stk_agent *agent, con=
+st char *text,
+ 				stk_agent_string_cb cb, void *user_data,
+ 				ofono_destroy_func destroy, int timeout);
  =
 
-+	case STK_COMMAND_TYPE_GET_INKEY:
-+		respond =3D handle_command_get_inkey(stk->pending_cmd,
-+							&rsp, stk);
-+		break;
++int stk_agent_request_digits(struct stk_agent *agent, const char *text,
++				uint8_t icon_id, const char *default_text,
++				int min, int max, ofono_bool_t hidden,
++				stk_agent_string_cb cb, void *user_data,
++				ofono_destroy_func destroy, int timeout);
 +
- 	default:
- 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
- 		break;
++int stk_agent_request_input(struct stk_agent *agent, const char *text,
++				uint8_t icon_id, const char *default_text,
++				ofono_bool_t unicode_charset, int min, int max,
++				ofono_bool_t hidden, stk_agent_string_cb cb,
++				void *user_data, ofono_destroy_func destroy,
++				int timeout);
++
+ void append_menu_items_variant(DBusMessageIter *iter,
+ 				const struct stk_menu_item *items);
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============1794251617341985874==--
+--===============7757135755189467223==--
 
