@@ -1,60 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============3706526103270169964=="
+Content-Type: multipart/mixed; boundary="===============1796647228146764709=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus 19/19] sms: add test case for state change signals
-Date: Tue, 03 Aug 2010 16:51:08 -0700
-Message-ID: <95c991195611017a25cee47cf9c96eea39c5d7d7.1280879410.git.inaky.perez-gonzalez@intel.com>
-In-Reply-To: <cover.1280879410.git.inaky.perez-gonzalez@intel.com>
+From: Gustavo F. Padovan <gustavo@padovan.org>
+Subject: [PATCH 1/5] bluetooth: define DBUS_TIMEOUT macro
+Date: Wed, 04 Aug 2010 07:22:10 -0300
+Message-ID: <1280917334-4519-1-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3706526103270169964==
+--===============1796647228146764709==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-
 ---
- test/test-sms-msg-state-change |   24 ++++++++++++++++++++++++
- 1 files changed, 24 insertions(+), 0 deletions(-)
- create mode 100755 test/test-sms-msg-state-change
+ plugins/bluetooth.h |    2 ++
+ plugins/hfp.c       |    6 +++---
+ 2 files changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/test/test-sms-msg-state-change b/test/test-sms-msg-state-change
-new file mode 100755
-index 0000000..331b722
---- /dev/null
-+++ b/test/test-sms-msg-state-change
-@@ -0,0 +1,24 @@
-+#!/usr/bin/python
+diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+index fb0d841..b70bb0c 100644
+--- a/plugins/bluetooth.h
++++ b/plugins/bluetooth.h
+@@ -23,6 +23,8 @@
+ #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
+ #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
+ =
+
++#define DBUS_TIMEOUT 15
 +
-+import gobject
-+
-+import dbus
-+import dbus.mainloop.glib
-+
-+def property_changed(name, value, path, interface):
-+        if interface =3D=3D "org.ofono.SmsMessage":
-+                print "%s: name %s value %s interface %s" \
-+                    % (path, name, value, interface)
-+
-+if __name__ =3D=3D '__main__':
-+        print "FIXME: this should test the whole state change transition m=
-achine"
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+
-+	bus =3D dbus.SystemBus()
-+
-+	bus.add_signal_receiver(
-+                property_changed, bus_name=3D"org.ofono",
-+                signal_name =3D "PropertyChanged", path_keyword=3D"path",
-+                interface_keyword=3D"interface")
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
+ #define HFP_AG_UUID	"0000111F-0000-1000-8000-00805F9B34FB"
+ =
+
+ /* Profiles bitfield */
+diff --git a/plugins/hfp.c b/plugins/hfp.c
+index b6cd415..0337891 100644
+--- a/plugins/hfp.c
++++ b/plugins/hfp.c
+@@ -595,7 +595,7 @@ static int hfp_enable(struct ofono_modem *modem)
+ 	status =3D bluetooth_send_with_reply(data->handsfree_path,
+ 					BLUEZ_GATEWAY_INTERFACE, "Connect",
+ 					hfp_connect_reply, modem, NULL,
+-					15, DBUS_TYPE_INVALID);
++					DBUS_TIMEOUT, DBUS_TYPE_INVALID);
+ =
+
+ 	if (status < 0)
+ 		return -EINVAL;
+@@ -636,8 +636,8 @@ static int hfp_disable(struct ofono_modem *modem)
+ 	if (data->agent_registered) {
+ 		status =3D bluetooth_send_with_reply(data->handsfree_path,
+ 					BLUEZ_GATEWAY_INTERFACE, "Disconnect",
+-					hfp_power_down, modem, NULL, 15,
+-					DBUS_TYPE_INVALID);
++					hfp_power_down, modem, NULL,
++					DBUS_TIMEOUT, DBUS_TYPE_INVALID);
+ =
+
+ 		if (status < 0)
+ 			return -EINVAL;
 -- =
 
-1.6.6.1
+1.7.1.1
 
 
---===============3706526103270169964==--
+--===============1796647228146764709==--
 
