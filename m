@@ -1,231 +1,336 @@
-Content-Type: multipart/mixed; boundary="===============7274754372274620132=="
+Content-Type: multipart/mixed; boundary="===============3987616871965021257=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [RFC] STE-driver: Terminating voice call in state DIALING/ALERTING.
-Date: Wed, 04 Aug 2010 16:21:56 +0200
-Message-ID: <1280931716-2811-1-git-send-email-sjurbren@gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 1/4] stkagent: Implement RequestConfirmation/Key/Digit.
+Date: Wed, 04 Aug 2010 06:55:01 +0200
+Message-ID: <1280897704-15361-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7274754372274620132==
+--===============3987616871965021257==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
-
-This patch splits the callback hangup into hangup_all and hangup_active.
-
 ---
-Hi Denis,
-I'm picking up a really old thread here...
+ src/stkagent.c |  240 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/stkagent.h |   24 ++++++
+ 2 files changed, 264 insertions(+), 0 deletions(-)
 
-> Denis Kenzior wrote:
->>>> c) If you have an call on hold and initiate a new call, but want to
->>>> terminate the newly initiated call (DIALING), then this call cannot
->>>> be terminated with CHLD=3D1X, but you would have to use ATH (or
->>>> possible CHUP).
->>>
->>> Yes, so this is the case that we do need to take care of in the core.
->>> Most
->>> modems let us get away with sending release_specific up to this point.
->>
->> For the STE modem, calls in state DIALING and ALERTING will have to be
->>  terminated with ATH or AT+CHUP, AT+CHLD=3D1x does not work. This means =
-that
->>  the current implementation, using release_specific (and thus AT+CHLD=3D=
-1x)
->>  will not work.
->
-> Yep, so please critique my earlier suggestion of splitting up hangup
-> into two methods: hangup_all and hangup_active.  Modem drivers will need =
-to
-> provide one or the other or both.
-> The core can then use the hangup_active (if available) in those cases whe=
-re
-> release_specific might not work.  The condition for hangup_active will be=
- that
-> it does not affect held or waiting calls.  For ST-E the hangup_active
-> implementation will simply be +CHUP. For modems that do not have this
-> available we will fall back to release_specific and assume that on those
-> CHLD=3D1X or equivalent can affect dialing/alerting calls.
+diff --git a/src/stkagent.c b/src/stkagent.c
+index 22ff7c6..6352fb2 100644
+--- a/src/stkagent.c
++++ b/src/stkagent.c
+@@ -33,6 +33,7 @@
+ =
 
-If I understand you correctly STE driver should implement
-hangup_active using +CUP. Core should then use hangup_active on calls
-in state DIALING and ALERTING - Yes, I think this would work.
+ #include "ofono.h"
+ =
 
-> hangup_all can also be used for cases where we loop release_specific
-> over all active/dialing/alerting/held/incoming calls.  For ST-E the hangu=
-p_all
-> implementation might be +CHUP;CHLD=3D1n;...;+CHLD=3D1m where n, m, etc are
-> ids of the HELD calls.  We should not hangup waiting calls to be compliant
-> with section 6.5.5.1 of 3GPP 22.030:
-> "Entering END	-Releases the subscriber from all calls
-> (except a possible waiting call)."
++#include "common.h"
+ #include "stkagent.h"
+ =
 
-I guess the stedriver will not implement the hangup_all because the STE
-modem does not have an AT command for terminating all calls. (I assume you
-don't want the driver to iterate over calls constructing a command like:
-"+CHUP;CHLD=3D1n;...;+CHLD=3D1m").
+ enum allowed_error {
+@@ -430,3 +431,242 @@ int stk_agent_display_text(struct stk_agent *agent, c=
+onst char *text,
+ =
 
-I've probably not understood your proposal fully, but I have tried to
-put together some code based on it. Please have a look and check if =
-
-you had something like this in mind.
-
-However, I think we can solve this even simpler if we just
-call hangup for any ALERTING/DIALING call..
-
-Regards
-Sjur
-
-diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
-index a56709a..2ddae05 100644
---- a/drivers/stemodem/voicecall.c
-+++ b/drivers/stemodem/voicecall.c
-@@ -260,7 +260,7 @@ static void ste_answer(struct ofono_voicecall *vc,
- 	ste_template("ATA", vc, ste_generic_cb, 0, cb, data);
+ 	return 0;
  }
- =
-
--static void ste_hangup(struct ofono_voicecall *vc,
-+static void ste_hangup_active(struct ofono_voicecall *vc,
- 			ofono_voicecall_cb_t cb, void *data)
- {
- 	ste_template("AT+CHUP", vc, ste_generic_cb, 0x3f, cb, data);
-@@ -569,7 +569,7 @@ static struct ofono_voicecall_driver driver =3D {
- 	.remove			=3D ste_voicecall_remove,
- 	.dial			=3D ste_dial,
- 	.answer			=3D ste_answer,
--	.hangup			=3D ste_hangup,
-+	.hangup_active		=3D ste_hangup_active,
- 	.hold_all_active	=3D ste_hold_all_active,
- 	.release_all_held	=3D ste_release_all_held,
- 	.set_udub		=3D ste_set_udub,
-diff --git a/include/voicecall.h b/include/voicecall.h
-index 6ceb3d8..2500e5f 100644
---- a/include/voicecall.h
-+++ b/include/voicecall.h
-@@ -67,7 +67,11 @@ struct ofono_voicecall_driver {
- 			ofono_voicecall_cb_t cb, void *data);
- 	void (*answer)(struct ofono_voicecall *vc,
- 			ofono_voicecall_cb_t cb, void *data);
--	void (*hangup)(struct ofono_voicecall *vc,
-+	void (*hangup_all)(struct ofono_voicecall *vc,
-+			ofono_voicecall_cb_t cb, void *data);
-+/* HACK: for temporary backwards compability */
-+#define hangup_active hangup
-+	void (*hangup_active)(struct ofono_voicecall *vc,
- 			ofono_voicecall_cb_t cb, void *data);
- 	void (*hold_all_active)(struct ofono_voicecall *vc,
- 			ofono_voicecall_cb_t cb, void *data);
-diff --git a/src/voicecall.c b/src/voicecall.c
-index a30aaa5..a420777 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -264,12 +264,12 @@ static DBusMessage *voicecall_hangup(DBusConnection *=
-conn,
- 	/* According to various specs, other than 27.007, +CHUP is used
- 	 * to reject an incoming call
- 	 */
--	if (call->status =3D=3D CALL_STATUS_INCOMING) {
-+	if (vc->driver->hangup_active && call->status =3D=3D CALL_STATUS_INCOMING=
-) {
- 		if (vc->driver->hangup =3D=3D NULL)
- 			return __ofono_error_not_implemented(msg);
- =
-
- 		vc->pending =3D dbus_message_ref(msg);
--		vc->driver->hangup(vc, generic_callback, vc);
-+		vc->driver->hangup_active(vc, generic_callback, vc);
- =
-
- 		return NULL;
- 	}
-@@ -286,12 +286,12 @@ static DBusMessage *voicecall_hangup(DBusConnection *=
-conn,
- =
-
- 	num_calls =3D g_slist_length(vc->call_list);
- =
-
--	if (num_calls =3D=3D 1 && vc->driver->hangup &&
-+	if (vc->driver->hangup_active && num_calls =3D=3D 1 && vc->driver->hangup=
- &&
- 			(call->status =3D=3D CALL_STATUS_ACTIVE ||
- 				call->status =3D=3D CALL_STATUS_DIALING ||
- 				call->status =3D=3D CALL_STATUS_ALERTING)) {
- 		vc->pending =3D dbus_message_ref(msg);
--		vc->driver->hangup(vc, generic_callback, vc);
-+		vc->driver->hangup_active(vc, generic_callback, vc);
- =
-
- 		return NULL;
- 	}
-@@ -304,6 +304,16 @@ static DBusMessage *voicecall_hangup(DBusConnection *c=
-onn,
- 		return NULL;
- 	}
- =
-
-+	if (vc->driver->hangup_active !=3D NULL &&
-+		(call->status =3D=3D CALL_STATUS_ALERTING ||
-+			call->status =3D=3D CALL_STATUS_DIALING)) {
 +
-+		vc->pending =3D dbus_message_ref(msg);
-+		vc->driver->hangup_active(vc, generic_callback, vc);
++static void get_confirmation_cb(DBusPendingCall *call, void *data)
++{
++	struct stk_agent *agent =3D data;
++	stk_agent_confirmation_cb cb =3D agent->user_cb;
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	enum stk_agent_result result;
++	gboolean remove_agent;
++	dbus_bool_t confirm;
 +
-+		return NULL;
++	if (check_error(agent, reply,
++			ALLOWED_ERROR_GO_BACK | ALLOWED_ERROR_TERMINATE,
++			&result) =3D=3D -EINVAL) {
++		remove_agent =3D TRUE;
++		goto error;
 +	}
 +
- 	if (vc->driver->release_specific =3D=3D NULL)
- 		return __ofono_error_not_implemented(msg);
- =
-
-@@ -762,7 +772,14 @@ static void voicecalls_release_next(struct ofono_voice=
-call *vc)
- =
-
- 	vc->release_list =3D g_slist_remove(vc->release_list, call);
- =
-
--	vc->driver->release_specific(vc, call->call->id,
-+	if (vc->driver->hangup_active !=3D NULL &&
-+		(call->call->status =3D=3D CALL_STATUS_ALERTING ||
-+			call->call->status =3D=3D CALL_STATUS_DIALING ||
-+			call->call->status =3D=3D CALL_STATUS_INCOMING))
++	if (result !=3D STK_AGENT_RESULT_OK) {
++		cb(result, FALSE, agent->user_data);
++		goto done;
++	}
 +
-+		vc->driver->hangup_active(vc, multirelease_callback, vc);
++	if (dbus_message_get_args(reply, NULL,
++					DBUS_TYPE_BOOLEAN, &confirm,
++					DBUS_TYPE_INVALID) =3D=3D FALSE) {
++		ofono_error("Can't parse the reply to GetConfirmation()");
++		remove_agent =3D TRUE;
++		goto error;
++	}
++
++	cb(result, confirm, agent->user_data);
++
++done:
++	if (result =3D=3D STK_AGENT_RESULT_TERMINATE && agent->remove_on_terminat=
+e)
++		remove_agent =3D TRUE;
 +	else
-+		vc->driver->release_specific(vc, call->call->id,
- 						multirelease_callback, vc);
- }
- =
-
-@@ -1131,9 +1148,12 @@ static DBusMessage *manager_hangup_all(DBusConnectio=
-n *conn,
- =
-
- 	vc->pending =3D dbus_message_ref(msg);
- =
-
--	voicecalls_release_queue(vc, vc->call_list);
--	voicecalls_release_next(vc);
--
-+	if (vc->driver->hangup_all !=3D NULL)
-+		vc->driver->hangup_all(vc, generic_callback, vc);
-+	else {
-+		voicecalls_release_queue(vc, vc->call_list);
-+		voicecalls_release_next(vc);
++		remove_agent =3D FALSE;
++
++error:
++	stk_agent_request_end(agent);
++	dbus_message_unref(reply);
++
++	if (remove_agent)
++		stk_agent_free(agent);
++}
++
++int stk_agent_request_confirmation(struct stk_agent *agent,
++					const char *text, uint8_t icon_id,
++					stk_agent_confirmation_cb cb,
++					void *user_data,
++					ofono_destroy_func destroy,
++					int timeout)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++
++	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
++							OFONO_SIM_APP_INTERFACE,
++							"RequestConfirmation");
++	if (agent->msg =3D=3D NULL)
++		return -ENOMEM;
++
++	dbus_message_append_args(agent->msg,
++					DBUS_TYPE_STRING, &text,
++					DBUS_TYPE_BYTE, &icon_id,
++					DBUS_TYPE_INVALID);
++
++	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
++						timeout) =3D=3D FALSE ||
++			agent->call =3D=3D NULL)
++		return -EIO;
++
++	agent->user_cb =3D cb;
++	agent->user_data =3D user_data;
++	agent->user_destroy =3D destroy;
++
++	dbus_pending_call_set_notify(agent->call, get_confirmation_cb,
++					agent, NULL);
++
++	return 0;
++}
++
++static void get_digit_cb(DBusPendingCall *call, void *data)
++{
++	struct stk_agent *agent =3D data;
++	stk_agent_string_cb cb =3D agent->user_cb;
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	enum stk_agent_result result;
++	gboolean remove_agent;
++	char *digit;
++
++	if (check_error(agent, reply,
++			ALLOWED_ERROR_GO_BACK | ALLOWED_ERROR_TERMINATE,
++			&result) =3D=3D -EINVAL) {
++		remove_agent =3D TRUE;
++		goto error;
 +	}
- 	return NULL;
- }
++
++	if (result !=3D STK_AGENT_RESULT_OK) {
++		cb(result, NULL, agent->user_data);
++		goto done;
++	}
++
++	if (dbus_message_get_args(reply, NULL,
++					DBUS_TYPE_STRING, &digit,
++					DBUS_TYPE_INVALID) =3D=3D FALSE ||
++			strlen(digit) !=3D 1 ||
++			!valid_phone_number_format(digit)) {
++		ofono_error("Can't parse the reply to GetDigit()");
++		remove_agent =3D TRUE;
++		goto error;
++	}
++
++	cb(result, digit, agent->user_data);
++
++done:
++	if (result =3D=3D STK_AGENT_RESULT_TERMINATE && agent->remove_on_terminat=
+e)
++		remove_agent =3D TRUE;
++	else
++		remove_agent =3D FALSE;
++
++error:
++	stk_agent_request_end(agent);
++	dbus_message_unref(reply);
++
++	if (remove_agent)
++		stk_agent_free(agent);
++}
++
++int stk_agent_request_digit(struct stk_agent *agent,
++				const char *text, uint8_t icon_id,
++				stk_agent_string_cb cb, void *user_data,
++				ofono_destroy_func destroy, int timeout)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++
++	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
++							OFONO_SIM_APP_INTERFACE,
++							"RequestDigit");
++	if (agent->msg =3D=3D NULL)
++		return -ENOMEM;
++
++	dbus_message_append_args(agent->msg,
++					DBUS_TYPE_STRING, &text,
++					DBUS_TYPE_BYTE, &icon_id,
++					DBUS_TYPE_INVALID);
++
++	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
++						timeout) =3D=3D FALSE ||
++			agent->call =3D=3D NULL)
++		return -EIO;
++
++	agent->user_cb =3D cb;
++	agent->user_data =3D user_data;
++	agent->user_destroy =3D destroy;
++
++	dbus_pending_call_set_notify(agent->call, get_digit_cb,
++					agent, NULL);
++
++	return 0;
++}
++
++static void get_key_cb(DBusPendingCall *call, void *data)
++{
++	struct stk_agent *agent =3D data;
++	stk_agent_string_cb cb =3D agent->user_cb;
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	enum stk_agent_result result;
++	gboolean remove_agent;
++	char *key;
++
++	if (check_error(agent, reply,
++			ALLOWED_ERROR_GO_BACK | ALLOWED_ERROR_TERMINATE,
++			&result) =3D=3D -EINVAL) {
++		remove_agent =3D TRUE;
++		goto error;
++	}
++
++	if (result !=3D STK_AGENT_RESULT_OK) {
++		cb(result, NULL, agent->user_data);
++		goto done;
++	}
++
++	if (dbus_message_get_args(reply, NULL,
++					DBUS_TYPE_STRING, &key,
++					DBUS_TYPE_INVALID) =3D=3D FALSE ||
++			g_utf8_strlen(key, 10) !=3D 1) {
++		ofono_error("Can't parse the reply to GetKey()");
++		remove_agent =3D TRUE;
++		goto error;
++	}
++
++	cb(result, key, agent->user_data);
++
++done:
++	if (result =3D=3D STK_AGENT_RESULT_TERMINATE && agent->remove_on_terminat=
+e)
++		remove_agent =3D TRUE;
++	else
++		remove_agent =3D FALSE;
++
++error:
++	stk_agent_request_end(agent);
++	dbus_message_unref(reply);
++
++	if (remove_agent)
++		stk_agent_free(agent);
++}
++
++int stk_agent_request_key(struct stk_agent *agent, const char *text,
++				uint8_t icon_id, ofono_bool_t unicode_charset,
++				stk_agent_string_cb cb, void *user_data,
++				ofono_destroy_func destroy, int timeout)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++
++	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
++							OFONO_SIM_APP_INTERFACE,
++							"RequestKey");
++	if (agent->msg =3D=3D NULL)
++		return -ENOMEM;
++
++	dbus_message_append_args(agent->msg,
++					DBUS_TYPE_STRING, &text,
++					DBUS_TYPE_BYTE, &icon_id,
++					DBUS_TYPE_INVALID);
++
++	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
++						timeout) =3D=3D FALSE ||
++			agent->call =3D=3D NULL)
++		return -EIO;
++
++	agent->user_cb =3D cb;
++	agent->user_data =3D user_data;
++	agent->user_destroy =3D destroy;
++
++	dbus_pending_call_set_notify(agent->call, get_key_cb,
++					agent, NULL);
++
++	return 0;
++}
+diff --git a/src/stkagent.h b/src/stkagent.h
+index d9e79dc..8b9a931 100644
+--- a/src/stkagent.h
++++ b/src/stkagent.h
+@@ -50,6 +50,13 @@ typedef void (*stk_agent_display_text_cb)(enum stk_agent=
+_result result,
+ typedef void (*stk_agent_selection_cb)(enum stk_agent_result result,
+ 					uint8_t id, void *user_data);
  =
 
++typedef void (*stk_agent_confirmation_cb)(enum stk_agent_result result,
++						ofono_bool_t confirm,
++						void *user_data);
++
++typedef void (*stk_agent_string_cb)(enum stk_agent_result result,
++					char *string, void *user_data);
++
+ struct stk_agent *stk_agent_new(const char *path, const char *sender,
+ 					ofono_bool_t remove_on_terminate);
+ =
+
+@@ -76,5 +83,22 @@ int stk_agent_display_text(struct stk_agent *agent, cons=
+t char *text,
+ 				void *user_data, ofono_destroy_func destroy,
+ 				int timeout);
+ =
+
++int stk_agent_request_confirmation(struct stk_agent *agent,
++					const char *text, uint8_t icon_id,
++					stk_agent_confirmation_cb cb,
++					void *user_data,
++					ofono_destroy_func destroy,
++					int timeout);
++
++int stk_agent_request_digit(struct stk_agent *agent,
++				const char *text, uint8_t icon_id,
++				stk_agent_string_cb cb, void *user_data,
++				ofono_destroy_func destroy, int timeout);
++
++int stk_agent_request_key(struct stk_agent *agent, const char *text,
++				uint8_t icon_id, ofono_bool_t unicode_charset,
++				stk_agent_string_cb cb, void *user_data,
++				ofono_destroy_func destroy, int timeout);
++
+ void append_menu_items_variant(DBusMessageIter *iter,
+ 				const struct stk_menu_item *items);
 -- =
 
-1.6.3.3
+1.7.1.86.g0e460.dirty
 
 
---===============7274754372274620132==--
+--===============3987616871965021257==--
 
