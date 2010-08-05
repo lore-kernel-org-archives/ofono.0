@@ -1,51 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============4748795355288907643=="
+Content-Type: multipart/mixed; boundary="===============0341645002471495144=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [SMS D-Bus v5 14/17] automake: fix generation of symlinks for
- headers
-Date: Fri, 06 Aug 2010 04:22:23 +0200
-Message-ID: <1281061343.12579.119.camel@localhost.localdomain>
-In-Reply-To: <d1fab71b92d743e419cc05f18c4286deb5b9a447.1281054654.git.inaky.perez-gonzalez@intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 1/6] phonesim: Don't use VENDOR_PHONESIM for Calypso.
+Date: Thu, 05 Aug 2010 19:30:52 +0200
+Message-ID: <1281029457-9048-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4748795355288907643==
+--===============0341645002471495144==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Inaky,
+Also move the STK initialisation to post-sim because it is more logical
+there (even if it makes no difference under phonesim).
 
-> When running 'make distcheck' from a vpath build directory (ie: one
-> that is not where the source lives), the target headers in
-> include/ofono are not generated properly due to a typo in the
-> Makefile.am, that is using _srcdir where _buildir should be being
-> used.
-> ---
->  Makefile.am |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
+I'm not sure if there's any user of the "calypso" mode in phonesim
+driver now, perhaps it can be removed.
+---
+ plugins/phonesim.c |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
 
-> diff --git a/Makefile.am b/Makefile.am
-> index b64ce8e..28d1e77 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -446,7 +446,7 @@ include/ofono/version.h: include/version.h
->  =
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 9c5b2cb..97fa530 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -289,8 +289,6 @@ static void phonesim_pre_sim(struct ofono_modem *modem)
+ 	else
+ 		ofono_voicecall_create(modem, 0, "atmodem", data->chat);
+ =
 
->  include/ofono/%.h: include/%.h
->  	$(AM_V_at)$(MKDIR_P) include/ofono
-> -	$(AM_V_GEN)$(LN_S) $(abs_top_srcdir)/$< $@
-> +	$(AM_V_GEN)$(LN_S) $(abs_top_builddir)/$< $@
+-	ofono_stk_create(modem, OFONO_VENDOR_PHONESIM, "atmodem", data->chat);
+-
+ 	if (sim)
+ 		ofono_sim_inserted_notify(sim, TRUE);
+ }
+@@ -304,6 +302,10 @@ static void phonesim_post_sim(struct ofono_modem *mode=
+m)
+ =
 
-are we having the same problem in ConnMan. I am seeing only builddir be
-used for the version.h generation.
+ 	DBG("%p", modem);
+ =
 
-Regards
++	if (!data->calypso)
++		ofono_stk_create(modem, OFONO_VENDOR_PHONESIM,
++					"atmodem", data->chat);
++
+ 	ofono_ussd_create(modem, 0, "atmodem", data->chat);
+ 	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
+ 	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
+-- =
 
-Marcel
+1.7.1.86.g0e460.dirty
 
 
-
---===============4748795355288907643==--
+--===============0341645002471495144==--
 
