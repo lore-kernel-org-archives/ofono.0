@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============0141519216052628719=="
+Content-Type: multipart/mixed; boundary="===============6236758657347317286=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [SMS D-Bus 02/19] sms: introduce message ID API
-Date: Thu, 05 Aug 2010 12:10:13 -0500
-Message-ID: <4C5AF075.4090109@gmail.com>
-In-Reply-To: <bd8631bab66aae8b4ac756782cd44fbc87116d0e.1280879410.git.inaky.perez-gonzalez@intel.com>
+Subject: Re: [SMS D-Bus 03/19] sms: implement SHA256-based message IDs
+ [incomplete]
+Date: Thu, 05 Aug 2010 12:20:34 -0500
+Message-ID: <4C5AF2E2.2090009@gmail.com>
+In-Reply-To: <91ce0be38ecd281e810284966d0f285ad187db23.1280879410.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0141519216052628719==
+--===============6236758657347317286==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,142 +20,274 @@ On 08/03/2010 06:50 PM, Inaky Perez-Gonzalez wrote:
 > From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 > =
 
-> This adds a simple API to use for generating unique IDs for SMS
-> messages. Will be used by follow up commits.
+> This patch removes the sequential SMS message identification gig and
+> replaces it with a 16-bit hash cookie based off message contents.
 > =
 
-> The ID is not generic, but specifc to SMS messages (due to having to
-> dig inside 'struct sms') and thus generates directly 16-bit IDs.
+> FIXME: [incomplete] need to figure out how to do so that identical
+> messages sent to different or the same numbers also have a different
+> ID.
 > ---
->  src/smsutil.c |   78 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/smsutil.h |    2 +
->  2 files changed, 80 insertions(+), 0 deletions(-)
+>  src/ofono.h |    9 +++++----
+>  src/sms.c   |   55 +++++++++++++++++++++++------------------------------=
+--
+>  src/stk.c   |    5 +++--
+>  3 files changed, 31 insertions(+), 38 deletions(-)
 > =
 
-> diff --git a/src/smsutil.c b/src/smsutil.c
-> index 22c70cf..b958ee0 100644
-> --- a/src/smsutil.c
-> +++ b/src/smsutil.c
-> @@ -3983,3 +3983,81 @@ char *ussd_decode(int dcs, int len, const unsigned=
- char *data)
+> diff --git a/src/ofono.h b/src/ofono.h
+> index aaa01d9..b73797b 100644
+> --- a/src/ofono.h
+> +++ b/src/ofono.h
+> @@ -185,10 +185,11 @@ enum ofono_sms_submit_flag {
 >  =
 
->  	return utf8;
+>  typedef void (*ofono_sms_txq_submit_cb_t)(gboolean ok, void *data);
+>  =
+
+> -unsigned int __ofono_sms_txq_submit(struct ofono_sms *sms, GSList *list,
+> -					unsigned int flags,
+> -					ofono_sms_txq_submit_cb_t cb,
+> -					void *data, ofono_destroy_func destroy);
+> +struct tx_queue_entry *__ofono_sms_txq_submit(
+> +	struct ofono_sms *sms, GSList *list,
+> +	unsigned int flags, unsigned ref,
+> +	ofono_sms_txq_submit_cb_t cb,
+> +	void *data, ofono_destroy_func destroy);
+
+As I said before, please don't mess with this function.
+
+>  =
+
+>  #include <ofono/sim.h>
+>  #include <ofono/stk.h>
+> diff --git a/src/sms.c b/src/sms.c
+> index 35364db..39d4a32 100644
+> --- a/src/sms.c
+> +++ b/src/sms.c
+> @@ -55,7 +55,6 @@ struct ofono_sms {
+>  	DBusMessage *pending;
+>  	struct ofono_phone_number sca;
+>  	struct sms_assembly *assembly;
+> -	unsigned int next_msg_id;
+>  	guint ref;
+>  	GQueue *txq;
+>  	gint tx_source;
+> @@ -589,7 +588,8 @@ static DBusMessage *sms_send_message(DBusConnection *=
+conn, DBusMessage *msg,
+>  	int ref_offset;
+>  	struct ofono_modem *modem;
+>  	unsigned int flags;
+> -	unsigned int msg_id;
+> +	guint16 msg_id;
+> +	struct tx_queue_entry *sms_msg;
+>  =
+
+>  	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &to,
+>  					DBUS_TYPE_STRING, &text,
+> @@ -605,24 +605,19 @@ static DBusMessage *sms_send_message(DBusConnection=
+ *conn, DBusMessage *msg,
+>  	if (!msg_list)
+>  		return __ofono_error_invalid_format(msg);
+>  =
+
+> -	set_ref_and_to(msg_list, sms->ref, ref_offset, to);
+> -	DBG("ref: %d, offset: %d", sms->ref, ref_offset);
+> -
+> -	if (ref_offset !=3D 0) {
+> -		if (sms->ref =3D=3D 65536)
+> -			sms->ref =3D 1;
+> -		else
+> -			sms->ref =3D sms->ref + 1;
+> -	}
+> +	msg_id =3D sms_uuid_from_pdu_list(msg_list);
+
+You're calculating the ID before setting the ref and to? That is pretty
+silly ;)
+
+> +	set_ref_and_to(msg_list, msg_id, ref_offset, to);
+> +	DBG("SMS ID: 0x%04x", msg_id);
+>  =
+
+>  	flags =3D OFONO_SMS_SUBMIT_FLAG_RECORD_HISTORY;
+>  	flags |=3D OFONO_SMS_SUBMIT_FLAG_RETRY;
+>  	if (sms->use_delivery_reports)
+>  		flags |=3D OFONO_SMS_SUBMIT_FLAG_REQUEST_SR;
+>  =
+
+> -	msg_id =3D __ofono_sms_txq_submit(sms, msg_list, flags, send_message_cb,
+> -						dbus_message_ref(msg),
+> -						send_message_destroy);
+> +	sms_msg =3D __ofono_sms_txq_submit(sms, msg_list, flags, msg_id,
+> +					 send_message_cb,
+> +					 dbus_message_ref(msg),
+> +					 send_message_destroy);
+
+Make the ID calculation happen inside tx_queue_entry_new.  That function
+already converts all the SMS objects into a PDU.  So simply hashing the
+PDUs there would be very easy.
+
+>  =
+
+>  	g_slist_foreach(msg_list, (GFunc)g_free, NULL);
+>  	g_slist_free(msg_list);
+> @@ -659,7 +654,7 @@ static void dispatch_app_datagram(struct ofono_sms *s=
+ms, int dst, int src,
 >  }
-> +
-> +static
-> +int __sms_uuid_from_pdu(GChecksum *checksum, const struct sms *sms_pdu)
-
-Since this is a static function, it is preferable not to prefix it with __
-
-> +{
-> +	const guint8 *buf;
-> +	size_t buf_len;
-> +
-> +	switch (sms_pdu->type) {
-> +	case SMS_TYPE_DELIVER:
-> +		buf =3D sms_pdu->deliver.ud;
-> +		buf_len =3D sms_pdu->deliver.udl;
-> +		break;
-> +	case SMS_TYPE_DELIVER_REPORT_ACK:
-> +		buf =3D sms_pdu->deliver_ack_report.ud;
-> +		buf_len =3D sms_pdu->deliver_ack_report.udl;
-> +		break;
-> +	case SMS_TYPE_DELIVER_REPORT_ERROR:
-> +		buf =3D sms_pdu->deliver_err_report.ud;
-> +		buf_len =3D sms_pdu->deliver_err_report.udl;
-> +		break;
-> +	case SMS_TYPE_STATUS_REPORT:
-> +		buf =3D sms_pdu->status_report.ud;
-> +		buf_len =3D sms_pdu->status_report.udl;
-> +		break;
-> +	case SMS_TYPE_SUBMIT:
-> +		buf =3D sms_pdu->submit.ud;
-> +		buf_len =3D sms_pdu->submit.udl;
-> +		break;
-> +	case SMS_TYPE_SUBMIT_REPORT_ACK:
-> +		buf =3D sms_pdu->submit_ack_report.ud;
-> +		buf_len =3D sms_pdu->submit_ack_report.udl;
-> +		break;
-> +	case SMS_TYPE_SUBMIT_REPORT_ERROR:
-> +		buf =3D sms_pdu->submit_err_report.ud;
-> +		buf_len =3D sms_pdu->submit_err_report.udl;
-> +		break;
-> +	case SMS_TYPE_COMMAND:
-> +		buf =3D sms_pdu->command.cd;
-> +		buf_len =3D sms_pdu->command.cdl;
-> +		break;
-
-This part is wrong, the user-data (ud) is not the entirety of the PDU.
-It is just the message payload.  Hashing over it only is not enough.
-
-> +	default:
-> +		return 1;
-
-You might want to make this function return TRUE/FALSE...
-
-> +	}
-> +	g_checksum_update(checksum, buf, buf_len);
-
-An empty line before g_checksum_update()
-> +	return 0;
-> +}
-> +
-> +/**
-> + * Generate a UUID from an SMS PDU List
-> + *
-> + * @param sms_pdu_list GSlist containing 'struct sms' nodes to
-> + *     generate the UUID from.
-> + * @return 0 in error (no memory or serious code inconsistency in the
-> + *     input data structures), otherwise the SMS UUID.
-> + */
-> +guint16 sms_uuid_from_pdu_list(const GSList *sms_pdu_list)
-> +{
-> +	guint16 uuid =3D 0;
-> +	GChecksum *checksum;
-> +	const GSList *node;
-> +	gsize uuid_size =3D g_checksum_type_get_length(G_CHECKSUM_SHA256);
-> +	guint8 data[uuid_size];
-> +
-> +	checksum =3D g_checksum_new(G_CHECKSUM_SHA256);
-> +	if (checksum =3D=3D NULL)
-> +		goto error_new;
-> +	for (node =3D sms_pdu_list; node; node =3D node->next) {
-> +		struct sms *sms_pdu =3D node->data;
-> +		if (__sms_uuid_from_pdu(checksum, sms_pdu))
-> +			goto error_pdu;
-> +	}
-> +	g_checksum_get_digest(checksum, data, &uuid_size);
-> +	uuid =3D data[0] | data[1] << 8;
-
-The current message id is 32 bits.  Why are we stopping@16?  We could
-go all the way to 64 if needed...
-
-Also, we need to take time and some random value into account.  Perhaps
-including time() output and a simple static counter into the hashing
-function would make it unique for those 'same sender, same contents
-messages'
-
-> +error_pdu:
-> +	g_checksum_free(checksum);
-> +error_new:
-> +	return uuid;
-> +}
-> diff --git a/src/smsutil.h b/src/smsutil.h
-> index ca64b18..66486b7 100644
-> --- a/src/smsutil.h
-> +++ b/src/smsutil.h
-> @@ -547,3 +547,5 @@ GSList *cbs_optimize_ranges(GSList *ranges);
->  gboolean cbs_topic_in_range(unsigned int topic, GSList *ranges);
 >  =
 
->  char *ussd_decode(int dcs, int len, const unsigned char *data);
-> +
-> +guint16 sms_uuid_from_pdu_list(const GSList *sms_pdu_list);
+>  static void dispatch_text_message(struct ofono_sms *sms,
+> -					const char *message,
+> +					const char *message, guint16 msg_id,
+>  					enum sms_class cls,
+>  					const struct sms_address *addr,
+>  					const struct sms_scts *scts)
+> @@ -717,11 +712,9 @@ static void dispatch_text_message(struct ofono_sms *=
+sms,
+>  =
+
+>  	g_dbus_send_message(conn, signal);
+>  =
+
+> -	if (cls !=3D SMS_CLASS_0) {
+> -		__ofono_history_sms_received(modem, sms->next_msg_id, str,
+> +	if (cls !=3D SMS_CLASS_0)
+> +		__ofono_history_sms_received(modem, msg_id, str,
+>  						&remote, &local, message);
+> -		sms->next_msg_id +=3D 1;
+> -	}
+>  }
+>  =
+
+>  static void sms_dispatch(struct ofono_sms *sms, GSList *sms_list)
+> @@ -732,6 +725,7 @@ static void sms_dispatch(struct ofono_sms *sms, GSLis=
+t *sms_list)
+>  	enum sms_class cls;
+>  	int srcport =3D -1;
+>  	int dstport =3D -1;
+> +	guint16 msg_id;
+>  =
+
+>  	if (sms_list =3D=3D NULL)
+>  		return;
+> @@ -749,6 +743,7 @@ static void sms_dispatch(struct ofono_sms *sms, GSLis=
+t *sms_list)
+>  	 * used, the addresses are the same across all segments.
+>  	 */
+>  =
+
+> +	msg_id =3D sms_uuid_from_pdu_list(sms_list);
+>  	for (l =3D sms_list; l; l =3D l->next) {
+>  		guint8 dcs;
+>  		gboolean comp =3D FALSE;
+> @@ -825,8 +820,8 @@ static void sms_dispatch(struct ofono_sms *sms, GSLis=
+t *sms_list)
+>  =
+
+>  		s =3D sms_list->data;
+>  =
+
+> -		dispatch_text_message(sms, message, cls, &s->deliver.oaddr,
+> -					&s->deliver.scts);
+> +		dispatch_text_message(sms, message, msg_id, cls,
+> +					&s->deliver.oaddr, &s->deliver.scts);
+>  		g_free(message);
+>  	}
+>  }
+> @@ -1104,8 +1099,6 @@ static void sms_remove(struct ofono_atom *atom)
+>  =
+
+>  	if (sms->settings) {
+>  		g_key_file_set_integer(sms->settings, SETTINGS_GROUP,
+> -					"NextMessageId", sms->next_msg_id);
+> -		g_key_file_set_integer(sms->settings, SETTINGS_GROUP,
+>  					"NextReference", sms->ref);
+>  		g_key_file_set_boolean(sms->settings, SETTINGS_GROUP,
+>  					"UseDeliveryReports",
+> @@ -1201,9 +1194,6 @@ static void sms_load_settings(struct ofono_sms *sms=
+, const char *imsi)
+>  =
+
+>  	sms->imsi =3D g_strdup(imsi);
+>  =
+
+> -	sms->next_msg_id =3D g_key_file_get_integer(sms->settings, SETTINGS_GRO=
+UP,
+> -							"NextMessageId", NULL);
+> -
+>  	sms->ref =3D g_key_file_get_integer(sms->settings, SETTINGS_GROUP,
+>  							"NextReference", NULL);
+>  	if (sms->ref >=3D 65536)
+> @@ -1306,10 +1296,11 @@ void *ofono_sms_get_data(struct ofono_sms *sms)
+>  	return sms->driver_data;
+>  }
+>  =
+
+> -unsigned int __ofono_sms_txq_submit(struct ofono_sms *sms, GSList *list,
+> -					unsigned int flags,
+> -					ofono_sms_txq_submit_cb_t cb,
+> -					void *data, ofono_destroy_func destroy)
+> +struct tx_queue_entry *__ofono_sms_txq_submit(
+> +	struct ofono_sms *sms, GSList *list,
+> +	unsigned int flags, unsigned msg_id,
+> +	ofono_sms_txq_submit_cb_t cb,
+> +	void *data, ofono_destroy_func destroy)
+>  {
+>  	struct tx_queue_entry *entry =3D tx_queue_entry_new(list);
+>  =
+
+> @@ -1320,7 +1311,7 @@ unsigned int __ofono_sms_txq_submit(struct ofono_sm=
+s *sms, GSList *list,
+>  				sizeof(entry->receiver));
+>  	}
+>  =
+
+> -	entry->msg_id =3D sms->next_msg_id++;
+> +	entry->msg_id =3D msg_id;
+>  	entry->flags =3D flags;
+>  	entry->cb =3D cb;
+>  	entry->data =3D data;
+> @@ -1331,5 +1322,5 @@ unsigned int __ofono_sms_txq_submit(struct ofono_sm=
+s *sms, GSList *list,
+>  	if (g_queue_get_length(sms->txq) =3D=3D 1)
+>  		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
+>  =
+
+> -	return entry->msg_id;
+> +	return entry;
+>  }
+> diff --git a/src/stk.c b/src/stk.c
+> index 556dc68..620811b 100644
+> --- a/src/stk.c
+> +++ b/src/stk.c
+> @@ -323,6 +323,7 @@ static gboolean handle_command_send_sms(const struct =
+stk_command *cmd,
+>  	struct ofono_atom *sms_atom;
+>  	struct ofono_sms *sms;
+>  	GSList msg_list;
+> +	guint16 msg_id;
+>  =
+
+>  	sms_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SMS);
+>  =
+
+> @@ -338,8 +339,8 @@ static gboolean handle_command_send_sms(const struct =
+stk_command *cmd,
+>  =
+
+>  	msg_list.data =3D (void *) &cmd->send_sms.gsm_sms;
+>  	msg_list.next =3D NULL;
+> -
+> -	__ofono_sms_txq_submit(sms, &msg_list, 0, send_sms_submit_cb,
+> +	msg_id =3D sms_uuid_from_pdu_list(&msg_list);
+> +	__ofono_sms_txq_submit(sms, &msg_list, 0, msg_id, send_sms_submit_cb,
+>  				stk->sms_submit_req, g_free);
+>  =
+
+>  	stk->cancel_cmd =3D send_sms_cancel;
 
 Regards,
 -Denis
 
---===============0141519216052628719==--
+--===============6236758657347317286==--
 
