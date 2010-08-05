@@ -1,81 +1,135 @@
-Content-Type: multipart/mixed; boundary="===============6379697511445797254=="
+Content-Type: multipart/mixed; boundary="===============1550848474620605086=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: Re: [SMS D-Bus 02/19] sms: introduce message ID API
-Date: Thu, 05 Aug 2010 11:37:51 -0700
-Message-ID: <1281033471.19261.108.camel@localhost.localdomain>
-In-Reply-To: <4C5B0127.8050703@gmail.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: Re: [RFC] STE-driver: Terminating voice call in state
+ DIALING/ALERTING.
+Date: Thu, 05 Aug 2010 21:04:32 +0200
+Message-ID: <AANLkTinPx07H7LUBiy6SGYRCX7nWCaLUUMwv3wmSjPST@mail.gmail.com>
+In-Reply-To: <4C5AE5AC.70806@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6379697511445797254==
+--===============1550848474620605086==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2010-08-05 at 13:21 -0500, Denis Kenzior wrote: =
+Hi Denis,
 
-> Hi Inaky,
-> =
+Denis Kenzior wrote:
+>> I'm picking up a really old thread here...
+>Yes a really old thread ;)
+Better late than never, right? :-)
 
-> On 08/05/2010 01:07 PM, Inaky Perez-Gonzalez wrote:
-> > On Thu, 2010-08-05 at 13:02 -0500, Denis Kenzior wrote: =
+...
+>> However, I think we can solve this even simpler if we just
+>> call hangup for any ALERTING/DIALING call..
+>This is a real gray area.  On some devices this will work, on others it
+>might have un-intentional consequences.  At least on the calypso,
+>sending CHUP/ATH will terminate all calls not in the WAITING state.
 
-> >> Hi Inaky,
-> >>
-> >>>> The current message id is 32 bits.  Why are we stopping at 16?  We c=
-ould
-> >>>> go all the way to 64 if needed...
-> >>>
-> >>> Well, at the end what gets sent to the network is 16 bits right?
-> >>
-> >> So I think we're all confused here.  This ID is not being sent to the
-> >> network.  It is only used for uniquely identifying the message over
-> >> D-Bus and to message history.  This number can be as small or as big as
-> >> we want.
-> > =
+Ok, so we should go forward with this proposal then.
+I'll try to send a new RFC within the next couple of days.
 
-> > I was under the impression that you wanted to use this for the ref also,
-> > and thus it is imprinted into the PDUs by set_ref_and_to(). Can you
-> > confirm this?
-> > =
+My initial intention here was not to submit patches
+on src/voicecall.c, but to make sure I understood your proposal properly.
+Let me know how you think we should go forward with this, as this
+impacts all drivers/*/voicecall.c
 
-> =
+>> -	 if (call->status =3D=3D CALL_STATUS_INCOMING) {
+>> +	 if (vc->driver->hangup_active && call->status =3D=3D CALL_STATUS_INCO=
+MING) {
+>
+>You're breaking the logic somewhat here.  If the call is INCOMING, we
+>shouldn't skip the rest of the block if hangup_active is not implemented.
+>
+>>		 if (vc->driver->hangup =3D=3D NULL)
+>>			 return __ofono_error_not_implemented(msg);
+>>
+>>		 vc->pending =3D dbus_message_ref(msg);
+>> -		 vc->driver->hangup(vc, generic_callback, vc);
+>> +		 vc->driver->hangup_active(vc, generic_callback, vc);
+>>
+>>		 return NULL;
+>>	 }
+>
+>Here we need to check whether hangup_active or hangup_all are
+>implemented. If both are, then prefer hangup_all.  This would make it
+>easier to keep compatibility with current drivers.
 
-> No, you're totally confused ;)  Ref is only sent on messages that are
-> multi-fragment.  It is not used for single-fragment messages.  The logic
-> is currently implemented per spec and I never had the intention to do it
-> any other way.
+Did you have something like this in mind then:
 
-Okay, so then this means that all the current ref infrastructure
-(monotonically increased) is left in place and the message ID stuff is
-used only internally for D-Bus and whichever other needs there are. I'll
-up it to 64-bits.
+	if (call->status =3D=3D CALL_STATUS_INCOMING) {
+		vc->pending =3D dbus_message_ref(msg);
+		if (vc->driver->hangup_all)
+			vc->driver->hangup_all(vc, generic_callback, vc);
+		else if (vc->driver->hangup_active)
+			vc->driver->hangup_active(vc, generic_callback, vc);
+		else
+			return __ofono_error_not_implemented(msg);
 
-> > Ok, I see your concern. Proper seeding of the RNG should take care of
-> > that case, but either way works. If you want hashing + time() seeding
-> > that can be done easily.
-> > =
+		return NULL;
+	}
 
-> > I still could use clarification on which other fields of the 'struct
-> > sms' union you want to have hashed other than the PDU payloads.
-> > =
+Should we do not_implemented here or did you intend the drivers to be allow=
+ed
+to not implement hangup_active nor hangup_all, and fall through to
+release_specific?
 
-> =
+>
+>> @@ -286,12 +286,12 @@ static DBusMessage *voicecall_hangup(DBusConnectio=
+n *conn,
+>>
+>>	 num_calls =3D g_slist_length(vc->call_list);
+>>
+>> -	 if (num_calls =3D=3D 1 && vc->driver->hangup &&
+>> +	 if (vc->driver->hangup_active && num_calls =3D=3D 1 && vc->driver->ha=
+ngup &&
+>
+>This should probably be a condition something like:
+>
+>if (num_calls =3D=3D 1 && (vc->driver->hangup || vc->driver->hangup_active)
+>...
+>
+>>			 (call->status =3D=3D CALL_STATUS_ACTIVE ||
+>>				 call->status =3D=3D CALL_STATUS_DIALING ||
+>>				 call->status =3D=3D CALL_STATUS_ALERTING)) {
+>>		 vc->pending =3D dbus_message_ref(msg);
+>> -		 vc->driver->hangup(vc, generic_callback, vc);
+>> +		 vc->driver->hangup_active(vc, generic_callback, vc);
+>
+>And again prefer hangup_all over hangup_active to keep compatibility
+>with old drivers.
 
-> All of them.  Again, it might be much simpler to do this over the
-> fragments when they are in true PDU form.  This can be done in
-> sms_assembly and tx_queue_entry_new since they deal with fragments alread=
-y.
-> =
 
-> Alternatively handling the individual structure fields can be done as wel=
-l.
+Something like this then:
+if (num_calls =3D=3D 1 && (vc->driver->hangup_all || vc->driver->hangup_act=
+ive) &&
+			(call->status =3D=3D CALL_STATUS_ACTIVE ||
+				call->status =3D=3D CALL_STATUS_DIALING ||
+				call->status =3D=3D CALL_STATUS_ALERTING)) {
+		vc->pending =3D dbus_message_ref(msg);
+		 if (vc->driver->hangup_all)
+			vc->driver->hangup_all(vc, generic_callback, vc);
+		 else if (vc->driver->hangup_active)
+			vc->driver->hangup_active(vc, generic_callback, vc);
+		 else
+			return __ofono_error_not_implemented(msg);
 
-I'll look into it.
+>This reminds me that we should treat INCOMING calls in HangupAll
+>specially. It should not be handled here.
 
+What did you have in mind?
 
+>HangupAll should also skip waiting calls.
 
+voicecalls_release_queue and voicecalls_release_next are used for
+multiparty_hangup as well, I assume you want the same behaviour for multi-p=
+arty
+so that we can do these changes in voicecalls_release_queue, right?
 
---===============6379697511445797254==--
+Regards
+Sjur
+
+--===============1550848474620605086==--
 
