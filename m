@@ -1,58 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============7954494666671820144=="
+Content-Type: multipart/mixed; boundary="===============4397797537972799392=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 7/7] test: add get-icon script
-Date: Thu, 05 Aug 2010 14:32:40 -0700
-Message-ID: <1281043960-9616-8-git-send-email-kristen@linux.intel.com>
-In-Reply-To: <1281043960-9616-1-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH] simfilesystem: make EFimg a linear fixed file type
+Date: Thu, 05 Aug 2010 14:33:37 -0700
+Message-ID: <1281044017-9663-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7954494666671820144==
+--===============4397797537972799392==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/get-icon |   25 +++++++++++++++++++++++++
- 1 files changed, 25 insertions(+), 0 deletions(-)
- create mode 100755 test/get-icon
+ src/simfilesystem.cpp |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/test/get-icon b/test/get-icon
-new file mode 100755
-index 0000000..680ae13
---- /dev/null
-+++ b/test/get-icon
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 3:
-+	path =3D sys.argv[1]
-+	id =3D int(sys.argv[2], 16)
-+elif len(sys.argv) =3D=3D 2:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+				 'org.ofono.Manager')
-+	properties =3D manager.GetProperties()
-+	path =3D properties["Modems"][0]
-+	id =3D int(sys.argv[1], 16)
-+else:
-+	print "%s [PATH] icon_id" % (sys.argv[0])
-+
-+simmanager =3D dbus.Interface(bus.get_object('org.ofono', path),
-+			    'org.ofono.SimManager')
-+
-+xpm =3D simmanager.GetIcon(id)
-+
-+print "Received xpm: %s" % (xpm)
+diff --git a/src/simfilesystem.cpp b/src/simfilesystem.cpp
+index 6781ac9..d193328 100644
+--- a/src/simfilesystem.cpp
++++ b/src/simfilesystem.cpp
+@@ -110,7 +110,7 @@ static SimFileInfo const knownFiles[] =3D
+     {"2F05",        "3F00",     "EFpl",        0x11ff44,  FILE_TYPE_TRANSP=
+ARENT},
+ =
+
+     {"5F50",        "7F10",     "DFgraphics",  0,         FILE_TYPE_TRANSP=
+ARENT},
+-    {"4F20",        "5F50",     "EFimg",       0x14ff44,  FILE_TYPE_TRANSP=
+ARENT},
++    {"4F20",        "5F50",     "EFimg",       0x14ff44,  FILE_TYPE_LINEAR=
+_FIXED},
+     {"4F01",        "5F50",     "EFimg1",      0x14ff44,  FILE_TYPE_TRANSP=
+ARENT},
+     {"4F02",        "5F50",     "EFimg2",      0x14ff44,  FILE_TYPE_TRANSP=
+ARENT},
+     {"4F03",        "5F50",     "EFimg3",      0x14ff44,  FILE_TYPE_TRANSP=
+ARENT},
 -- =
 
 1.7.1.1
 
 
---===============7954494666671820144==--
+--===============4397797537972799392==--
 
