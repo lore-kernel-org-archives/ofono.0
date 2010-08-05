@@ -1,181 +1,131 @@
-Content-Type: multipart/mixed; boundary="===============2612210613116360242=="
+Content-Type: multipart/mixed; boundary="===============2549073706478327490=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: Re: [SMS D-Bus 02/19] sms: introduce message ID API
-Date: Thu, 05 Aug 2010 10:18:39 -0700
-Message-ID: <1281028719.19261.82.camel@localhost.localdomain>
-In-Reply-To: <4C5AF075.4090109@gmail.com>
+Subject: Re: [PATCH v3 2/2] huawei: add gprs context
+Date: Thu, 05 Aug 2010 10:29:51 -0700
+Message-ID: <1281029391.19261.92.camel@localhost.localdomain>
+In-Reply-To: <87fwytwqnt.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2612210613116360242==
+--===============2549073706478327490==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2010-08-05 at 12:10 -0500, Denis Kenzior wrote: =
+Hi Kale
 
-> Hi Inaky,
+On Thu, 2010-08-05 at 08:54 +0300, Kalle Valo wrote: =
+
+> .... =
+
+> >> Oh man, I have to fix my emacs settings :/
+> >
+> > Did you find a set of emacs offset settings to get to oFono's liking?
+> > I've been fiddling with it for a while, but keep alking in circles
+> > around it. It's been too long since I've done emacs config :(
 > =
 
-> On 08/03/2010 06:50 PM, Inaky Perez-Gonzalez wrote:
-> > From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-> > =
-
-> > This adds a simple API to use for generating unique IDs for SMS
-> > messages. Will be used by follow up commits.
-> > =
-
-> > The ID is not generic, but specifc to SMS messages (due to having to
-> > dig inside 'struct sms') and thus generates directly 16-bit IDs.
-> > ---
-> >  src/smsutil.c |   78 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++++
-> >  src/smsutil.h |    2 +
-> >  2 files changed, 80 insertions(+), 0 deletions(-)
-> > =
-
-> > diff --git a/src/smsutil.c b/src/smsutil.c
-> > index 22c70cf..b958ee0 100644
-> > --- a/src/smsutil.c
-> > +++ b/src/smsutil.c
-> > @@ -3983,3 +3983,81 @@ char *ussd_decode(int dcs, int len, const unsign=
-ed char *data)
-> >  =
-
-> >  	return utf8;
-> >  }
-> > +
-> > +static
-> > +int __sms_uuid_from_pdu(GChecksum *checksum, const struct sms *sms_pdu)
+> This is my setup:
 > =
 
-> Since this is a static function, it is preferable not to prefix it with __
+> ; from linux/Documentation/CodingStyle
+> (defun c-lineup-arglist-tabs-only (ignored)
+>   "Line up argument lists by tabs, not spaces"
+>   (let* ((anchor (c-langelem-pos c-syntactic-element))
+> 	 (column (c-langelem-2nd-pos c-syntactic-element))
+> 	 (offset (- (1+ column) anchor))
+> 	 (steps (floor offset c-basic-offset)))
+>     (* (max steps 1)
+>        c-basic-offset)))
 
-Will do
+Thanks! Phew ... this is a handful of lisp! I don't understand anything
+that is not basic anymore :) -- I gave it a whiz and one thing I saw was
+that
 
-> > +{
-> > +	const guint8 *buf;
-> > +	size_t buf_len;
-> > +
-> > +	switch (sms_pdu->type) {
-> > +	case SMS_TYPE_DELIVER:
-> > +		buf =3D sms_pdu->deliver.ud;
-> > +		buf_len =3D sms_pdu->deliver.udl;
-> > +		break;
-> > +	case SMS_TYPE_DELIVER_REPORT_ACK:
-> > +		buf =3D sms_pdu->deliver_ack_report.ud;
-> > +		buf_len =3D sms_pdu->deliver_ack_report.udl;
-> > +		break;
-> > +	case SMS_TYPE_DELIVER_REPORT_ERROR:
-> > +		buf =3D sms_pdu->deliver_err_report.ud;
-> > +		buf_len =3D sms_pdu->deliver_err_report.udl;
-> > +		break;
-> > +	case SMS_TYPE_STATUS_REPORT:
-> > +		buf =3D sms_pdu->status_report.ud;
-> > +		buf_len =3D sms_pdu->status_report.udl;
-> > +		break;
-> > +	case SMS_TYPE_SUBMIT:
-> > +		buf =3D sms_pdu->submit.ud;
-> > +		buf_len =3D sms_pdu->submit.udl;
-> > +		break;
-> > +	case SMS_TYPE_SUBMIT_REPORT_ACK:
-> > +		buf =3D sms_pdu->submit_ack_report.ud;
-> > +		buf_len =3D sms_pdu->submit_ack_report.udl;
-> > +		break;
-> > +	case SMS_TYPE_SUBMIT_REPORT_ERROR:
-> > +		buf =3D sms_pdu->submit_err_report.ud;
-> > +		buf_len =3D sms_pdu->submit_err_report.udl;
-> > +		break;
-> > +	case SMS_TYPE_COMMAND:
-> > +		buf =3D sms_pdu->command.cd;
-> > +		buf_len =3D sms_pdu->command.cdl;
-> > +		break;
+struct tx_queue_entry *__ofono_sms_txq_submit(struct ofono_sms *sms,
+						GSList *list,
+						unsigned int flags, unsigned msg_id,
+						ofono_sms_msg_stch_cb_t stch_cb,
+						void *data, ofono_destroy_func destroy)
+
+is being formatted as:
+
+struct tx_queue_entry *__ofono_sms_txq_submit(struct ofono_sms *sms,
+					GSList *list,
+					unsigned int flags, unsigned msg_id,
+					ofono_sms_msg_stch_cb_t stch_cb,
+					void *data, ofono_destroy_func destroy)
+
+ie: one c-basic-offset less than it should -- I really can't figure out whe=
+re to poke.
+
+> (add-hook 'c-mode-common-hook
+>           (lambda ()
+>             ;; Add kernel style
+>             (c-add-style
+>              "linux-tabs-only"
+>              '("linux" (c-offsets-alist
+>                         (arglist-cont-nonempty
+>                          c-lineup-gcc-asm-reg
+>                          c-lineup-arglist-tabs-only))))))
 > =
 
-> This part is wrong, the user-data (ud) is not the entirety of the PDU.
-> It is just the message payload.  Hashing over it only is not enough.
-
-So which other fields for each type in the union are to be taken into
-account?
-
-From our discussions, I was under the impression that we wanted to hash
-only on the contents of the message and destination -- this actually led
-to the problem of the same sender and data issue below...[more on it
-below].
-
-> > +	default:
-> > +		return 1;
+> And whenever I start editing ofono or connman, I run command "C-c .
+> linux-tabs-only" choose the style. But it's not perfect yet, for example
+> I need to manually add tabs when having multi-line function calls.
 > =
 
-> You might want to make this function return TRUE/FALSE...
 
-Ok =
+I have a code snippet for automate the mode setting:
 
+;; Initialization hook
+(add-hook 'c-mode-common-hook 'c-select-style)
 
-> > +	}
-> > +	g_checksum_update(checksum, buf, buf_len);
-> =
+;; this looks at the path and based on the name, sets a style -- it =
 
-> An empty line before g_checksum_update()
+;; is setup to my work habits -- I keep all my ofono work in
+;; ~/something/ofono/ofono.git, kernel work in ~/something/linux/*..
 
-k
+(defun c-select-style ()
+  (let
+      ((style c-default-style))
+    (if (string-match =
 
-> > +	return 0;
-> > +}
-> > +
-> > +/**
-> > + * Generate a UUID from an SMS PDU List
-> > + *
-> > + * @param sms_pdu_list GSlist containing 'struct sms' nodes to
-> > + *     generate the UUID from.
-> > + * @return 0 in error (no memory or serious code inconsistency in the
-> > + *     input data structures), otherwise the SMS UUID.
-> > + */
-> > +guint16 sms_uuid_from_pdu_list(const GSList *sms_pdu_list)
-> > +{
-> > +	guint16 uuid =3D 0;
-> > +	GChecksum *checksum;
-> > +	const GSList *node;
-> > +	gsize uuid_size =3D g_checksum_type_get_length(G_CHECKSUM_SHA256);
-> > +	guint8 data[uuid_size];
-> > +
-> > +	checksum =3D g_checksum_new(G_CHECKSUM_SHA256);
-> > +	if (checksum =3D=3D NULL)
-> > +		goto error_new;
-> > +	for (node =3D sms_pdu_list; node; node =3D node->next) {
-> > +		struct sms *sms_pdu =3D node->data;
-> > +		if (__sms_uuid_from_pdu(checksum, sms_pdu))
-> > +			goto error_pdu;
-> > +	}
-> > +	g_checksum_get_digest(checksum, data, &uuid_size);
-> > +	uuid =3D data[0] | data[1] << 8;
-> =
-
-> The current message id is 32 bits.  Why are we stopping at 16?  We could
-> go all the way to 64 if needed...
-
-Well, at the end what gets sent to the network is 16 bits right?
-
-> Also, we need to take time and some random value into account.  Perhaps
-> including time() output and a simple static counter into the hashing
-> function would make it unique for those 'same sender, same contents
-> messages'
-
-So then we really don't care about being able to regenerate the hash ID
-from the contents?
-
-The design discussions we held about this involved being able to, with
-the content of the message and destination number, generating a hash
-that could be uniquely reproduced by rehashing it again. You had a
-reason for it and I can't remember which one it was -- I should have
-written it down. But that brought the problem of 'somebody sending the
-same message to the same number' which yields the same ID.
-
-However, if to fix that we are adding randomness in the form of time(),
-why bother with the contents? let's just do a random ID from the ground
-up and save us the pain of hashing.
+         "linux[^/]*"
+         buffer-file-truename)
+        (progn
+          (c-set-style "linux")
+          (setq indent-tabs-mode t)
+          (setq c-basic-offset 8)
+          (setq style "linux")
+          )
+      (if (string-match "ofono[^/]*/" buffer-file-truename)
+          (progn
+;; I renamed your c-style to 'ofono' so not to get confused :)
+            (c-set-style "ofono")
+            (setq indent-tabs-mode t)
+            (setq c-basic-offset 8)
+            (setq style "ofono")
+            )
+        ;; Default
+        (progn
+          (c-set-style "linux")
+          (setq indent-tabs-mode t)
+          (setq c-basic-offset 8)
+          (setq style "ofono")
+          )
+        )
+      )
+    (setq c-indent-comments-syntactically-p t)
+    (define-key c-mode-map "\C-m" 'c-context-line-break)
+    (c-toggle-auto-hungry-state 1)
+    (message (concat "C style set to " style))
+    )
+  )
 
 
---===============2612210613116360242==--
+
+
+--===============2549073706478327490==--
 
