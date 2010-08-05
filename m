@@ -1,151 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============4762472937309005040=="
+Content-Type: multipart/mixed; boundary="===============7351470378899042070=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 1/6] bluetooth: Add reference count for bluetooth utils
-Date: Thu, 05 Aug 2010 09:51:27 +0800
-Message-ID: <1280973092-3966-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 4/6] modem: Add method to get modem by path
+Date: Thu, 05 Aug 2010 09:51:30 +0800
+Message-ID: <1280973092-3966-4-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1280973092-3966-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4762472937309005040==
+--===============7351470378899042070==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add bluetooth_ref()/bluetooth_unref() to support reference count in
-bluetooth utils.
+Return modem instance by searching modem path.
 ---
- plugins/bluetooth.c |   62 +++++++++++++++++++++++++++++++++++++----------=
-----
- 1 files changed, 45 insertions(+), 17 deletions(-)
+ include/modem.h |    1 +
+ src/modem.c     |   15 +++++++++++++++
+ 2 files changed, 16 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index 5a85eaa..10cc49d 100644
---- a/plugins/bluetooth.c
-+++ b/plugins/bluetooth.c
-@@ -39,6 +39,7 @@
- static DBusConnection *connection;
- static GHashTable *uuid_hash =3D NULL;
- static GHashTable *adapter_address_hash =3D NULL;
-+static gint ref_count;
+diff --git a/include/modem.h b/include/modem.h
+index e1cd049..34c3fbf 100644
+--- a/include/modem.h
++++ b/include/modem.h
+@@ -36,6 +36,7 @@ void ofono_modem_remove_interface(struct ofono_modem *mod=
+em,
+ 					const char *interface);
  =
 
- void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
- 				char *buf, int size)
-@@ -503,13 +504,10 @@ static guint adapter_added_watch;
- static guint adapter_removed_watch;
- static guint property_watch;
+ const char *ofono_modem_get_path(struct ofono_modem *modem);
++struct ofono_modem *ofono_modem_get_modem_by_path(const char *path);
  =
 
--int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
-ofile)
-+static int bluetooth_init()
- {
- 	int err;
- =
-
--	if (uuid_hash)
--		goto done;
--
- 	connection =3D ofono_dbus_get_connection();
- =
-
- 	bluetooth_watch =3D g_dbus_add_service_watch(connection, BLUEZ_SERVICE,
-@@ -542,13 +540,6 @@ int bluetooth_register_uuid(const char *uuid, struct b=
-luetooth_profile *profile)
- 	adapter_address_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
- 						g_free, g_free);
- =
-
--done:
--	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
--
--	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
--				manager_properties_cb, NULL, NULL, -1,
--				DBUS_TYPE_INVALID);
--
- 	return 0;
- =
-
- remove:
-@@ -556,14 +547,27 @@ remove:
- 	g_dbus_remove_watch(connection, adapter_added_watch);
- 	g_dbus_remove_watch(connection, adapter_removed_watch);
- 	g_dbus_remove_watch(connection, property_watch);
-+
- 	return err;
+ void ofono_modem_set_data(struct ofono_modem *modem, void *data);
+ void *ofono_modem_get_data(struct ofono_modem *modem);
+diff --git a/src/modem.c b/src/modem.c
+index f89d609..6907a5e 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -157,6 +157,21 @@ const char *ofono_modem_get_path(struct ofono_modem *m=
+odem)
+ 	return NULL;
  }
  =
 
--void bluetooth_unregister_uuid(const char *uuid)
-+static int bluetooth_ref()
- {
--	g_hash_table_remove(uuid_hash, uuid);
-+	g_atomic_int_inc(&ref_count);
++struct ofono_modem *ofono_modem_get_modem_by_path(const char *path)
++{
++	GSList *l;
++	struct ofono_modem *modem =3D NULL;
 +
-+	if (ref_count > 1)
-+		return 0;
++	for (l =3D g_modem_list; l; l =3D l->next) {
++		modem =3D l->data;
 +
-+	return bluetooth_init();
++		if (g_str_equal(modem->path, path))
++			break;
++	}
++
++	return modem;
 +}
 +
-+static void bluetooth_unref()
-+{
-+	gboolean is_zero;
-+
-+	is_zero =3D g_atomic_int_dec_and_test(&ref_count);
- =
-
--	if (g_hash_table_size(uuid_hash))
-+	if (is_zero =3D=3D FALSE)
- 		return;
- =
-
- 	g_dbus_remove_watch(connection, bluetooth_watch);
-@@ -571,9 +575,33 @@ void bluetooth_unregister_uuid(const char *uuid)
- 	g_dbus_remove_watch(connection, adapter_removed_watch);
- 	g_dbus_remove_watch(connection, property_watch);
- =
-
--	g_hash_table_destroy(uuid_hash);
--	g_hash_table_destroy(adapter_address_hash);
--	uuid_hash =3D NULL;
-+	if (uuid_hash)
-+		g_hash_table_destroy(uuid_hash);
-+
-+	if (adapter_address_hash)
-+		g_hash_table_destroy(adapter_address_hash);
-+}
-+
-+int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
-ofile)
-+{
-+	int err =3D bluetooth_ref();
-+
-+	if (err !=3D 0)
-+		return err;
-+
-+	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
-+
-+	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
-+				manager_properties_cb, NULL, NULL, -1,
-+				DBUS_TYPE_INVALID);
-+	return 0;
-+}
-+
-+void bluetooth_unregister_uuid(const char *uuid)
-+{
-+	g_hash_table_remove(uuid_hash, uuid);
-+
-+	bluetooth_unref();
- }
- =
-
- OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
+ struct ofono_atom *__ofono_modem_add_atom(struct ofono_modem *modem,
+ 					enum ofono_atom_type type,
+ 					void (*destruct)(struct ofono_atom *),
 -- =
 
 1.7.0.4
 
 
---===============4762472937309005040==--
+--===============7351470378899042070==--
 
