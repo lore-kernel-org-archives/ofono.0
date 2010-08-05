@@ -1,228 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============4857572167149533348=="
+Content-Type: multipart/mixed; boundary="===============0397663020109113868=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Jo=C3=A3o?= Paulo Rechi Vita <jprvita@profusion.mobi>
-Subject: [PATCH] huawei: Fix SIM state logic
-Date: Thu, 05 Aug 2010 15:18:18 -0300
-Message-ID: <1281032298-30607-2-git-send-email-jprvita@profusion.mobi>
-In-Reply-To: <1281032298-30607-1-git-send-email-jprvita@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [SMS D-Bus 02/19] sms: introduce message ID API
+Date: Thu, 05 Aug 2010 13:21:27 -0500
+Message-ID: <4C5B0127.8050703@gmail.com>
+In-Reply-To: <1281031630.19261.98.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4857572167149533348==
+--===============0397663020109113868==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add support for voice-only SIM cards and enable phonebook atom for
-non-voice modems.
----
- plugins/huawei.c |   79 +++++++++++++++++++++++++++++++++++++-------------=
-----
- 1 files changed, 54 insertions(+), 25 deletions(-)
+Hi Inaky,
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 47d59d0..76dfbb8 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -57,11 +57,20 @@
- static const char *none_prefix[] =3D { NULL };
- static const char *sysinfo_prefix[] =3D { "^SYSINFO:", NULL };
- =
+On 08/05/2010 01:07 PM, Inaky Perez-Gonzalez wrote:
+> On Thu, 2010-08-05 at 13:02 -0500, Denis Kenzior wrote: =
 
-+enum huawei_sim_state {
-+	HUAWEI_SIM_STATE_INVALID_OR_LOCKED =3D 0,
-+	HUAWEI_SIM_STATE_VALID =3D 1,
-+	HUAWEI_SIM_STATE_INVALID_CS =3D 2,
-+	HUAWEI_SIM_STATE_INVALID_PS =3D 3,
-+	HUAWEI_SIM_STATE_INVALID_PS_AND_CS =3D 4,
-+	HUAWEI_SIM_STATE_NOT_EXISTENT =3D 255
-+};
-+
- struct huawei_data {
- 	GAtChat *modem;
- 	GAtChat *pcui;
- 	struct ofono_sim *sim;
--	gint sim_state;
-+	enum huawei_sim_state sim_state;
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
- };
-@@ -100,17 +109,17 @@ static void huawei_debug(const char *str, void *user_=
-data)
- 	ofono_info("%s%s", prefix, str);
- }
- =
+>> Hi Inaky,
+>>
+>>>> The current message id is 32 bits.  Why are we stopping at 16?  We cou=
+ld
+>>>> go all the way to 64 if needed...
+>>>
+>>> Well, at the end what gets sent to the network is 16 bits right?
+>>
+>> So I think we're all confused here.  This ID is not being sent to the
+>> network.  It is only used for uniquely identifying the message over
+>> D-Bus and to message history.  This number can be as small or as big as
+>> we want.
+> =
 
--static void notify_sim_state(struct ofono_modem *modem, gint sim_state)
-+static void notify_sim_state(struct ofono_modem *modem,
-+		enum huawei_sim_state sim_state)
- {
- 	struct huawei_data *data =3D ofono_modem_get_data(modem);
- =
-
--	if (data->sim_state =3D=3D 0 && sim_state =3D=3D 1) {
--		ofono_sim_inserted_notify(data->sim, TRUE);
--		data->sim_state =3D sim_state;
--	} else if (data->sim_state =3D=3D 1 && sim_state =3D=3D 0) {
-+	if (sim_state =3D=3D HUAWEI_SIM_STATE_NOT_EXISTENT)
- 		ofono_sim_inserted_notify(data->sim, FALSE);
--		data->sim_state =3D sim_state;
--	}
-+	else
-+		ofono_sim_inserted_notify(data->sim, TRUE);
-+
-+	data->sim_state =3D sim_state;
- }
- =
-
- static void sysinfo_cb(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -142,24 +151,24 @@ static void sysinfo_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 	if (!g_at_result_iter_next_number(&iter, &sim_state))
- 		return;
- =
-
--	notify_sim_state(modem, sim_state);
-+	notify_sim_state(modem, (enum huawei_sim_state) sim_state);
- }
- =
-
- static void simst_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
- 	GAtResultIter iter;
--	int state;
-+	gint sim_state;
- =
-
- 	g_at_result_iter_init(&iter, result);
- =
-
- 	if (!g_at_result_iter_next(&iter, "^SIMST:"))
- 		return;
- =
-
--	if (!g_at_result_iter_next_number(&iter, &state))
-+	if (!g_at_result_iter_next_number(&iter, &sim_state))
- 		return;
- =
-
--	notify_sim_state(modem, state);
-+	notify_sim_state(modem, (enum huawei_sim_state) sim_state);
- }
- =
-
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -235,7 +244,8 @@ static void huawei_disconnect(gpointer user_data)
- =
-
- 	DBG("");
- =
-
--	ofono_gprs_context_remove(data->gc);
-+	if (data->gc)
-+		ofono_gprs_context_remove(data->gc);
- =
-
- 	g_at_chat_unref(data->modem);
- 	data->modem =3D NULL;
-@@ -247,13 +257,16 @@ static void huawei_disconnect(gpointer user_data)
- 	g_at_chat_set_disconnect_function(data->modem,
- 						huawei_disconnect, modem);
- =
-
--	ofono_info("Reopened GPRS context channel");
-+	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
-+			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
-+		ofono_info("Reopened GPRS context channel");
- =
-
--	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
--							data->modem);
-+		data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
-+								data->modem);
- =
-
--	if (data->gprs && data->gc)
--		ofono_gprs_add_context(data->gprs, data->gc);
-+		if (data->gprs && data->gc)
-+			ofono_gprs_add_context(data->gprs, data->gc);
-+	}
- }
- =
-
- static int huawei_enable(struct ofono_modem *modem)
-@@ -333,7 +346,9 @@ static void huawei_pre_sim(struct ofono_modem *modem)
- 	ofono_devinfo_create(modem, 0, "atmodem", data->pcui);
- 	data->sim =3D ofono_sim_create(modem, 0, "atmodem", data->pcui);
- =
-
--	if (ofono_modem_get_boolean(modem, "HasVoice") =3D=3D TRUE)
-+	if ((data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
-+			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_PS) &&
-+			ofono_modem_get_boolean(modem, "HasVoice") =3D=3D TRUE)
- 		ofono_voicecall_create(modem, 0, "atmodem", data->pcui);
- }
- =
-
-@@ -345,6 +360,14 @@ static void huawei_post_sim(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
-+	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_NOT_EXISTENT)
-+		return;
-+
-+	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_PS_AND_CS) {
-+		ofono_phonebook_create(modem, 0, "atmodem", data->pcui);
-+		return;
-+	}
-+
- 	netreg =3D ofono_netreg_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
- 								data->pcui);
- =
-
-@@ -352,19 +375,25 @@ static void huawei_post_sim(struct ofono_modem *modem)
- 	ofono_cbs_create(modem, OFONO_VENDOR_QUALCOMM_MSM, "atmodem",
- 								data->pcui);
- 	ofono_ussd_create(modem, 0, "atmodem", data->pcui);
-+	ofono_phonebook_create(modem, 0, "atmodem", data->pcui);
- =
-
--	data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->pcui);
--	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
-+	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
-+			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
-+		data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->pcui);
-+		data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
-+								data->modem);
- =
-
--	if (data->gprs && data->gc)
--		ofono_gprs_add_context(data->gprs, data->gc);
-+		if (data->gprs && data->gc)
-+			ofono_gprs_add_context(data->gprs, data->gc);
-+	}
- =
-
--	if (ofono_modem_get_boolean(modem, "HasVoice") =3D=3D TRUE) {
-+	if ((data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
-+			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_PS) &&
-+			ofono_modem_get_boolean(modem, "HasVoice") =3D=3D TRUE) {
- 		ofono_call_forwarding_create(modem, 0, "atmodem", data->pcui);
- 		ofono_call_settings_create(modem, 0, "atmodem", data->pcui);
- 		ofono_call_barring_create(modem, 0, "atmodem", data->pcui);
- 		ofono_ssn_create(modem, 0, "atmodem", data->pcui);
--		ofono_phonebook_create(modem, 0, "atmodem", data->pcui);
- =
-
- 		mw =3D ofono_message_waiting_create(modem);
- 		if (mw)
--- =
-
-1.7.0.4
+> I was under the impression that you wanted to use this for the ref also,
+> and thus it is imprinted into the PDUs by set_ref_and_to(). Can you
+> confirm this?
+> =
 
 
---===============4857572167149533348==--
+No, you're totally confused ;)  Ref is only sent on messages that are
+multi-fragment.  It is not used for single-fragment messages.  The logic
+is currently implemented per spec and I never had the intention to do it
+any other way.
+
+> Ok, I see your concern. Proper seeding of the RNG should take care of
+> that case, but either way works. If you want hashing + time() seeding
+> that can be done easily.
+> =
+
+> I still could use clarification on which other fields of the 'struct
+> sms' union you want to have hashed other than the PDU payloads.
+> =
+
+
+All of them.  Again, it might be much simpler to do this over the
+fragments when they are in true PDU form.  This can be done in
+sms_assembly and tx_queue_entry_new since they deal with fragments already.
+
+Alternatively handling the individual structure fields can be done as well.
+
+Regards,
+-Denis
+
+--===============0397663020109113868==--
 
