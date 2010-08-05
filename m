@@ -1,70 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============1875587122892124027=="
+Content-Type: multipart/mixed; boundary="===============2575497275423290510=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: [PATCH v3 2/2] huawei: add gprs context
-Date: Thu, 05 Aug 2010 08:54:14 +0300
-Message-ID: <87fwytwqnt.fsf@potku.valot.fi>
-In-Reply-To: <1280951948.19261.63.camel@localhost.localdomain>
+From: Florian Mayer (Mayer Electronics) <Florian.Mayer@mayer-electronics.de>
+Subject: Huawei EM770W SIM card issues
+Date: Thu, 05 Aug 2010 09:48:06 +0200
+Message-ID: <4C5A6CB6.8020903@mayer-electronics.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1875587122892124027==
+--===============2575497275423290510==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Inaky Perez-Gonzalez <inaky@linux.intel.com> writes:
+Hello,
 
-> Hi Kale
+we encountered the following problem with the EM770W: If the SIM card is =
 
-Hi Inaky,
+plugged in after our test system is powered on, it is not recognised in =
 
-> On Thu, 2010-05-20 at 10:35 +0300, Kalle Valo wrote: =
+ofono. Even if we restart ofonod after plugging in the SIM card. We use =
 
->> Denis Kenzior <denkenz@gmail.com> writes:
->> =
+the 2.6.35~rc5 kernel from Meego 1.1 trunk because we encountered =
 
->> > No mixing of tabs & spaces for indentation
->> =
+problems in the option driver with Kernel 2.6.33.3 (the communication =
 
->> Fixed.
->> =
+got stuck from time to time). For ofono we use the latest 0.26 and for =
 
->> Oh man, I have to fix my emacs settings :/
->
-> Did you find a set of emacs offset settings to get to oFono's liking?
-> I've been fiddling with it for a while, but keep alking in circles
-> around it. It's been too long since I've done emacs config :(
+connman 0.55.
 
-This is my setup:
+Is this a bug relted to ofono or a limitation of the Huawei hardware?
 
-; from linux/Documentation/CodingStyle
-(defun c-lineup-arglist-tabs-only (ignored)
-  "Line up argument lists by tabs, not spaces"
-  (let* ((anchor (c-langelem-pos c-syntactic-element))
-	 (column (c-langelem-2nd-pos c-syntactic-element))
-	 (offset (- (1+ column) anchor))
-	 (steps (floor offset c-basic-offset)))
-    (* (max steps 1)
-       c-basic-offset)))
+Regards
+Florian Mayer
+Mayer Electronics
 
-(add-hook 'c-mode-common-hook
-          (lambda ()
-            ;; Add kernel style
-            (c-add-style
-             "linux-tabs-only"
-             '("linux" (c-offsets-alist
-                        (arglist-cont-nonempty
-                         c-lineup-gcc-asm-reg
-                         c-lineup-arglist-tabs-only))))))
-
-And whenever I start editing ofono or connman, I run command "C-c .
-linux-tabs-only" choose the style. But it's not perfect yet, for example
-I need to manually add tabs when having multi-line function calls.
-
--- =
-
-Kalle Valo
-
---===============1875587122892124027==--
+--===============2575497275423290510==--
 
