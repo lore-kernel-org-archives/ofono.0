@@ -1,131 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============2549073706478327490=="
+Content-Type: multipart/mixed; boundary="===============8957011019285583377=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: Re: [PATCH v3 2/2] huawei: add gprs context
-Date: Thu, 05 Aug 2010 10:29:51 -0700
-Message-ID: <1281029391.19261.92.camel@localhost.localdomain>
-In-Reply-To: <87fwytwqnt.fsf@potku.valot.fi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [SMS D-Bus 02/19] sms: introduce message ID API
+Date: Thu, 05 Aug 2010 13:02:25 -0500
+Message-ID: <4C5AFCB1.1000901@gmail.com>
+In-Reply-To: <1281028719.19261.82.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2549073706478327490==
+--===============8957011019285583377==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kale
+Hi Inaky,
 
-On Thu, 2010-08-05 at 08:54 +0300, Kalle Valo wrote: =
-
-> .... =
-
-> >> Oh man, I have to fix my emacs settings :/
-> >
-> > Did you find a set of emacs offset settings to get to oFono's liking?
-> > I've been fiddling with it for a while, but keep alking in circles
-> > around it. It's been too long since I've done emacs config :(
+>> The current message id is 32 bits.  Why are we stopping at 16?  We could
+>> go all the way to 64 if needed...
 > =
 
-> This is my setup:
+> Well, at the end what gets sent to the network is 16 bits right?
+
+So I think we're all confused here.  This ID is not being sent to the
+network.  It is only used for uniquely identifying the message over
+D-Bus and to message history.  This number can be as small or as big as
+we want.
+
 > =
 
-> ; from linux/Documentation/CodingStyle
-> (defun c-lineup-arglist-tabs-only (ignored)
->   "Line up argument lists by tabs, not spaces"
->   (let* ((anchor (c-langelem-pos c-syntactic-element))
-> 	 (column (c-langelem-2nd-pos c-syntactic-element))
-> 	 (offset (- (1+ column) anchor))
-> 	 (steps (floor offset c-basic-offset)))
->     (* (max steps 1)
->        c-basic-offset)))
-
-Thanks! Phew ... this is a handful of lisp! I don't understand anything
-that is not basic anymore :) -- I gave it a whiz and one thing I saw was
-that
-
-struct tx_queue_entry *__ofono_sms_txq_submit(struct ofono_sms *sms,
-						GSList *list,
-						unsigned int flags, unsigned msg_id,
-						ofono_sms_msg_stch_cb_t stch_cb,
-						void *data, ofono_destroy_func destroy)
-
-is being formatted as:
-
-struct tx_queue_entry *__ofono_sms_txq_submit(struct ofono_sms *sms,
-					GSList *list,
-					unsigned int flags, unsigned msg_id,
-					ofono_sms_msg_stch_cb_t stch_cb,
-					void *data, ofono_destroy_func destroy)
-
-ie: one c-basic-offset less than it should -- I really can't figure out whe=
-re to poke.
-
-> (add-hook 'c-mode-common-hook
->           (lambda ()
->             ;; Add kernel style
->             (c-add-style
->              "linux-tabs-only"
->              '("linux" (c-offsets-alist
->                         (arglist-cont-nonempty
->                          c-lineup-gcc-asm-reg
->                          c-lineup-arglist-tabs-only))))))
+>> Also, we need to take time and some random value into account.  Perhaps
+>> including time() output and a simple static counter into the hashing
+>> function would make it unique for those 'same sender, same contents
+>> messages'
 > =
 
-> And whenever I start editing ofono or connman, I run command "C-c .
-> linux-tabs-only" choose the style. But it's not perfect yet, for example
-> I need to manually add tabs when having multi-line function calls.
+> So then we really don't care about being able to regenerate the hash ID
+> from the contents?
+> =
+
+> The design discussions we held about this involved being able to, with
+> the content of the message and destination number, generating a hash
+> that could be uniquely reproduced by rehashing it again. You had a
+> reason for it and I can't remember which one it was -- I should have
+> written it down. But that brought the problem of 'somebody sending the
+> same message to the same number' which yields the same ID.
+> =
+
+> However, if to fix that we are adding randomness in the form of time(),
+> why bother with the contents? let's just do a random ID from the ground
+> up and save us the pain of hashing.
 > =
 
 
-I have a code snippet for automate the mode setting:
+I don't remember this discussion any more.  There might be a case where
+an old message is re-delivered because oFono crashed after delivery but
+before deletion.
 
-;; Initialization hook
-(add-hook 'c-mode-common-hook 'c-select-style)
+At least to me it seems that generating a random int is really not
+guaranteed to be unique over reboots.  Hashing seems way better.
+However, I'm not a math/crypto geek, so feel free to prove me wrong.
 
-;; this looks at the path and based on the name, sets a style -- it =
+Regards,
+-Denis
 
-;; is setup to my work habits -- I keep all my ofono work in
-;; ~/something/ofono/ofono.git, kernel work in ~/something/linux/*..
-
-(defun c-select-style ()
-  (let
-      ((style c-default-style))
-    (if (string-match =
-
-         "linux[^/]*"
-         buffer-file-truename)
-        (progn
-          (c-set-style "linux")
-          (setq indent-tabs-mode t)
-          (setq c-basic-offset 8)
-          (setq style "linux")
-          )
-      (if (string-match "ofono[^/]*/" buffer-file-truename)
-          (progn
-;; I renamed your c-style to 'ofono' so not to get confused :)
-            (c-set-style "ofono")
-            (setq indent-tabs-mode t)
-            (setq c-basic-offset 8)
-            (setq style "ofono")
-            )
-        ;; Default
-        (progn
-          (c-set-style "linux")
-          (setq indent-tabs-mode t)
-          (setq c-basic-offset 8)
-          (setq style "ofono")
-          )
-        )
-      )
-    (setq c-indent-comments-syntactically-p t)
-    (define-key c-mode-map "\C-m" 'c-context-line-break)
-    (c-toggle-auto-hungry-state 1)
-    (message (concat "C style set to " style))
-    )
-  )
-
-
-
-
---===============2549073706478327490==--
+--===============8957011019285583377==--
 
