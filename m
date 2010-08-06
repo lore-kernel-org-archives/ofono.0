@@ -1,48 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============9033958699386433132=="
+Content-Type: multipart/mixed; boundary="===============8430684860671248696=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus v5 14/17] automake: fix generation of symlinks for headers
-Date: Thu, 05 Aug 2010 17:55:36 -0700
-Message-ID: <d1fab71b92d743e419cc05f18c4286deb5b9a447.1281054654.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus v5 15/17] sms: document variable usage in sms_msg_send()
+Date: Thu, 05 Aug 2010 17:55:37 -0700
+Message-ID: <bcf747d99941a9272363acfed1b8f3cd23c5e2b8.1281054654.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1281054654.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9033958699386433132==
+--===============8430684860671248696==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-When running 'make distcheck' from a vpath build directory (ie: one
-that is not where the source lives), the target headers in
-include/ofono are not generated properly due to a typo in the
-Makefile.am, that is using _srcdir where _buildir should be being
-used.
 ---
- Makefile.am |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ src/sms.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index b64ce8e..28d1e77 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -446,7 +446,7 @@ include/ofono/version.h: include/version.h
- =
-
- include/ofono/%.h: include/%.h
- 	$(AM_V_at)$(MKDIR_P) include/ofono
--	$(AM_V_GEN)$(LN_S) $(abs_top_srcdir)/$< $@
-+	$(AM_V_GEN)$(LN_S) $(abs_top_builddir)/$< $@
- =
-
- clean-local:
- 	@$(RM) -rf include/ofono
+diff --git a/src/sms.c b/src/sms.c
+index e648fd0..2b21e0c 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -851,6 +851,9 @@ enum sms_msg_send_flags {
+  * is created by tx_queue_entry_new() and g_queue_push_tail()
+  * appends that entry to the SMS transmit queue. Then the tx_next()
+  * function is scheduled to run to process the queue.
++ *
++ * @sms is the main SMS driver struct, @entry and @msg_list represent
++ * the current message being processed.
+  */
+ static
+ struct tx_queue_entry *sms_msg_send(
 -- =
 
 1.6.6.1
 
 
---===============9033958699386433132==--
+--===============8430684860671248696==--
 
