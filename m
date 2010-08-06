@@ -1,62 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============8857036820744124859=="
+Content-Type: multipart/mixed; boundary="===============9033958699386433132=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus v5 13/17] sms: test code for message's D-Bus GetProperties
-Date: Thu, 05 Aug 2010 17:55:35 -0700
-Message-ID: <86580a851fe96e1dbe48e9c8b9995f6733e5ae79.1281054654.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus v5 14/17] automake: fix generation of symlinks for headers
+Date: Thu, 05 Aug 2010 17:55:36 -0700
+Message-ID: <d1fab71b92d743e419cc05f18c4286deb5b9a447.1281054654.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1281054654.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8857036820744124859==
+--===============9033958699386433132==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
+When running 'make distcheck' from a vpath build directory (ie: one
+that is not where the source lives), the target headers in
+include/ofono are not generated properly due to a typo in the
+Makefile.am, that is using _srcdir where _buildir should be being
+used.
 ---
- test/test-sms-msg-get-properties |   26 ++++++++++++++++++++++++++
- 1 files changed, 26 insertions(+), 0 deletions(-)
- create mode 100755 test/test-sms-msg-get-properties
+ Makefile.am |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/test/test-sms-msg-get-properties b/test/test-sms-msg-get-prope=
-rties
-new file mode 100755
-index 0000000..eaac7b8
---- /dev/null
-+++ b/test/test-sms-msg-get-properties
-@@ -0,0 +1,26 @@
-+#!/usr/bin/python
-+
-+import sys
-+import dbus
-+
-+if len(sys.argv) !=3D 2:
-+    print "Error: missing argument (SMS message D-Bus object name)"
-+    sys.exit(1)
-+
-+
-+bus =3D dbus.SystemBus()
-+
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+                         'org.ofono.Manager')
-+
-+properties =3D manager.GetProperties()
-+
-+path =3D properties["Modems"][0]
-+
-+manager =3D dbus.Interface(bus.get_object('org.ofono', path),
-+                         'org.ofono.SmsManager')
-+
-+sms_msg =3D dbus.Interface(bus.get_object('org.ofono', sys.argv[1]),
-+                         'org.ofono.SmsMessage')
-+properties =3D sms_msg.GetProperties()
-+print "To: %s\nState: %s\n" % (properties["To"], properties["State"])
+diff --git a/Makefile.am b/Makefile.am
+index b64ce8e..28d1e77 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -446,7 +446,7 @@ include/ofono/version.h: include/version.h
+ =
+
+ include/ofono/%.h: include/%.h
+ 	$(AM_V_at)$(MKDIR_P) include/ofono
+-	$(AM_V_GEN)$(LN_S) $(abs_top_srcdir)/$< $@
++	$(AM_V_GEN)$(LN_S) $(abs_top_builddir)/$< $@
+ =
+
+ clean-local:
+ 	@$(RM) -rf include/ofono
 -- =
 
 1.6.6.1
 
 
---===============8857036820744124859==--
+--===============9033958699386433132==--
 
