@@ -1,214 +1,212 @@
-Content-Type: multipart/mixed; boundary="===============0227348552287675601=="
+Content-Type: multipart/mixed; boundary="===============2907083012464942476=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus v5 06/17] sms: introduce the Wait-for-Status-Report state
-Date: Thu, 05 Aug 2010 17:55:28 -0700
-Message-ID: <376e87b34d9475f0b1fb986006587dd703c78036.1281054654.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus v5 07/17] sms: introduce a state change callback for
+ messages
+Date: Thu, 05 Aug 2010 17:55:29 -0700
+Message-ID: <253c51f49b1260f3fcab643ce950e1838e3dbb89.1281054654.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1281054654.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0227348552287675601==
+--===============2907083012464942476==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-A WSR (Waiting for Status Report) state definition is added to the
-state transtition machine; as well, a queue (ofono_sms->tx_wfaq) where
-messages waiting for an status report are queued. When the message's
-delivery is acknowledged, the message is removed from the queue and
-the message's status machine is updated, which can trigger things such
-as D-Bus signals.
+When the SMS message going through the TX hoops changes states, call
+the given callback function (if any). This will be used later to hook
+up the D-Bus propagation of property changed signals.
+
+Note this will do away with the ofono_sms_txq_submit_cb callback, as
+it can be implemented in terms of a state change callback.
 ---
- src/sms.c |   80 +++++++++++++++++++++++++++++++++++++++++++++++++++++++--=
----
- 1 files changed, 73 insertions(+), 7 deletions(-)
+ src/ofono.h |    5 +++--
+ src/sms.c   |   31 +++++++++++++++++++++++--------
+ src/stk.c   |   19 +++++++++++++++++--
+ 3 files changed, 43 insertions(+), 12 deletions(-)
+
+diff --git a/src/ofono.h b/src/ofono.h
+index 2f7dfba..38e877f 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -216,12 +216,13 @@ enum ofono_sms_tx_state {
+ =
+
+ const char *ofono_sms_tx_state_to_string(enum ofono_sms_tx_state);
+ =
+
+-typedef void (*ofono_sms_txq_submit_cb_t)(gboolean ok, void *data);
++typedef void (*ofono_sms_msg_stch_cb_t)(void *data,
++					enum ofono_sms_tx_state new_state);
+ =
+
+ struct tx_queue_entry *__ofono_sms_txq_submit(struct ofono_sms *sms,
+ 						GSList *list,
+ 						unsigned int flags,
+-						ofono_sms_txq_submit_cb_t cb,
++						ofono_sms_msg_stch_cb_t stch_cb,
+ 						void *data,
+ 						ofono_destroy_func destroy);
+ =
 
 diff --git a/src/sms.c b/src/sms.c
-index 90be5c1..a5e3a85 100644
+index a5e3a85..0d786a1 100644
 --- a/src/sms.c
 +++ b/src/sms.c
-@@ -67,6 +67,11 @@ const char *ofono_sms_tx_state_to_string(enum ofono_sms_=
-tx_state status)
- 	}
- }
- =
-
-+/**
-+ * @tx_wsrq: Waiting-for-Status-Report queue; messages in this queue
-+ *     have been delivered but are waiting to be acknoledged by the
-+ *     network.
-+ */
- struct ofono_sms {
- 	int flags;
- 	DBusMessage *pending;
-@@ -75,6 +80,7 @@ struct ofono_sms {
- 	unsigned int next_msg_id;
- 	guint ref;
- 	GQueue *txq;
-+	GQueue *tx_wsrq;
- 	gint tx_source;
- 	struct ofono_message_waiting *mw;
- 	unsigned int mw_watch;
-@@ -475,10 +481,19 @@ static void __ofono_sms_tx_state_set(struct tx_queue_=
-entry *entry,
- 	case OFONO_SMS_TX_ST_QUEUED:
- 		ofono_sms_tx_state_check(
- 			file, line, entry, state_old, state_new,
-+			1 << OFONO_SMS_TX_ST_WSR
-+			| 1 << OFONO_SMS_TX_ST_DONE
-+			| 1 << OFONO_SMS_TX_ST_CANCELING);
-+		g_queue_remove(entry->sms_mgr->txq, entry);
-+		break;
-+	case OFONO_SMS_TX_ST_WSR:
-+		ofono_sms_tx_state_check(
-+			file, line, entry, state_old, state_new,
- 			1 << OFONO_SMS_TX_ST_DONE
- 			| 1 << OFONO_SMS_TX_ST_CANCELING
--			| 1 << OFONO_SMS_TX_ST_FAILED);
--		g_queue_remove(entry->sms_mgr->txq, entry);
-+			| 1 << OFONO_SMS_TX_ST_FAILED
-+			| 1 << OFONO_SMS_TX_ST_EXPIRED);
-+		g_queue_remove(entry->sms_mgr->tx_wsrq, entry);
- 		break;
- 	case OFONO_SMS_TX_ST_CANCELING:
- 		ofono_sms_tx_state_check(
-@@ -521,6 +536,8 @@ static void tx_queue_entry_destroy(struct tx_queue_entr=
-y *entry)
- =
-
- 	if (entry->state =3D=3D OFONO_SMS_TX_ST_QUEUED)
- 		g_queue_remove(entry->sms_mgr->txq, entry);
-+	else if (entry->state =3D=3D OFONO_SMS_TX_ST_WSR)
-+		g_queue_remove(entry->sms_mgr->tx_wsrq, entry);
- =
-
- 	entry->state =3D __OFONO_SMS_TX_ST_INVALID;
- 	g_free(entry);
-@@ -593,12 +610,16 @@ next_q:
- 		__ofono_history_sms_send_status(modem, entry->msg_id,
- 						time(NULL), hs);
- 	}
--	if (ok)
-+	if (ok && entry->flags & OFONO_SMS_SUBMIT_FLAG_REQUEST_SR) {
-+		ofono_sms_tx_state_set(entry, OFONO_SMS_TX_ST_WSR);
-+		g_queue_push_tail(sms->tx_wsrq, entry);
-+	} else if (ok && !(entry->flags & OFONO_SMS_SUBMIT_FLAG_REQUEST_SR)) {
- 		ofono_sms_tx_state_set(entry, OFONO_SMS_TX_ST_DONE);
--	else
-+		tx_queue_entry_destroy(entry);
-+	} else {
- 		ofono_sms_tx_state_set(entry, OFONO_SMS_TX_ST_FAILED);
--
--	tx_queue_entry_destroy(entry);
-+		tx_queue_entry_destroy(entry);
-+	}
- =
-
- 	if (g_queue_peek_head(sms->txq)) {
- 		DBG("Scheduling next");
-@@ -1041,13 +1062,45 @@ static void handle_deliver(struct ofono_sms *sms, c=
-onst struct sms *incoming)
- 	g_slist_free(l);
- }
- =
-
-+/*
-+ * Pack information needed to locate a message from a Status Report
-+ * and decide if it was succesfully delivered.
-+ */
-+struct sms_msg_sr_locator {
-+	unsigned int msg_id;
-+	gboolean delivered;
-+};
-+
-+/*
-+ * This function is a g_queue_foreach() functor called by
-+ * handle_sms_status_report() to destroy the message that matches the
-+ * reported MSG-ID in the SMS manager's list of messages waiting for
-+ * acknowledgement.
-+ */
-+static void  __sms_find_destroy_by_msg_id(gpointer _sms_msg, gpointer _loc=
-ator)
-+{
-+	const struct sms_msg_sr_locator *locator =3D _locator;
-+	struct tx_queue_entry *sms_msg =3D _sms_msg;
-+
-+	if (sms_msg->msg_id !=3D locator->msg_id)
-+		return;
-+	ofono_debug("SMS: ACKED %p msg_id match %x", sms_msg, locator->msg_id);
-+	g_queue_remove(sms_msg->sms_mgr->tx_wsrq, sms_msg);
-+
-+	if (locator->delivered)
-+		ofono_sms_tx_state_set(sms_msg, OFONO_SMS_TX_ST_DONE);
-+	else
-+		ofono_sms_tx_state_set(sms_msg, OFONO_SMS_TX_ST_FAILED);
-+
-+	tx_queue_entry_destroy(sms_msg);
-+}
- =
-
- /*
-  * Handle a delivery/status report has been received for an SMS
-  * apparently sent from here.
-  *
-  * We need to find the message in the SMS manager's
-- * waiting-for-acknoledge queue (sms->tx_wfaq) and remove it. As well,
-+ * waiting-for-status report queue (sms->tx_wsrq) and remove it. As well,
-  * fill out history for it.
-  */
- static void handle_sms_status_report(struct ofono_sms *sms,
-@@ -1056,11 +1109,16 @@ static void handle_sms_status_report(struct ofono_s=
-ms *sms,
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(sms->atom);
- 	gboolean delivered;
+@@ -115,7 +115,7 @@ struct tx_queue_entry {
  	unsigned int msg_id;
-+	struct sms_msg_sr_locator locator;
+ 	unsigned int retry;
+ 	unsigned int flags;
+-	ofono_sms_txq_submit_cb_t cb;
++	ofono_sms_msg_stch_cb_t stch_cb;
+ 	void *data;
+ 	ofono_destroy_func destroy;
+ };
+@@ -518,6 +518,8 @@ static void __ofono_sms_tx_state_set(struct tx_queue_en=
+try *entry,
+ 	ofono_debug("%s:%d: SMS state change: %p %u -> %u\n",
+ 		    file, line, entry, state_old, state_new);
+ 	entry->state =3D state_new;
++	if (entry->stch_cb)
++		entry->stch_cb(entry->data, state_new);
+ }
  =
 
- 	if (status_report_assembly_report(sms->sr_assembly, incoming, &msg_id,
- 						&delivered) =3D=3D FALSE)
- 		return;
  =
 
-+	locator.msg_id =3D msg_id;
-+	locator.delivered =3D delivered;
-+	g_queue_foreach(sms->tx_wsrq, __sms_find_destroy_by_msg_id, &locator);
+@@ -596,9 +598,6 @@ static void tx_finished(const struct ofono_error *error=
+, int mr, void *data)
+ next_q:
+ 	entry =3D g_queue_peek_head(sms->txq);
+ =
+
+-	if (entry->cb)
+-		entry->cb(ok, entry->data);
+-
+ 	if (entry->flags & OFONO_SMS_SUBMIT_FLAG_RECORD_HISTORY) {
+ 		enum ofono_history_sms_status hs;
+ =
+
+@@ -742,11 +741,26 @@ static struct tx_queue_entry *tx_queue_entry_new(GSLi=
+st *msg_list)
+ 	return entry;
+ }
+ =
+
+-static void send_message_cb(gboolean ok, void *data)
++static void send_message_stch_cb(void *data, enum ofono_sms_tx_state new_s=
+tate)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	DBusMessage *msg =3D data;
+ 	DBusMessage *reply;
++	gboolean ok;
 +
- 	__ofono_history_sms_send_status(modem, msg_id, time(NULL),
- 			delivered ? OFONO_HISTORY_SMS_STATUS_DELIVERED :
- 			OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED);
-@@ -1288,6 +1346,13 @@ static void sms_remove(struct ofono_atom *atom)
- 		sms->txq =3D NULL;
++	/*
++	 * We care about only the final states
++	 * (DONE/CANCELLED/FAILED/EXPIRED), the rest are just
++	 * ignored.
++	 */
++	if (new_state =3D=3D OFONO_SMS_TX_ST_DONE)
++		ok =3D TRUE;
++	else if (new_state =3D=3D OFONO_SMS_TX_ST_CANCELLED
++		 || new_state =3D=3D OFONO_SMS_TX_ST_FAILED
++		 || new_state =3D=3D OFONO_SMS_TX_ST_EXPIRED)
++		ok =3D FALSE;
++	else
++		return;
+ =
+
+ 	if (ok)
+ 		reply =3D dbus_message_new_method_return(msg);
+@@ -817,7 +831,8 @@ static DBusMessage *sms_send_message(DBusConnection *co=
+nn, DBusMessage *msg,
+ 	if (sms->use_delivery_reports)
+ 		flags |=3D OFONO_SMS_SUBMIT_FLAG_REQUEST_SR;
+ =
+
+-	sms_msg =3D __ofono_sms_txq_submit(sms, msg_list, flags, send_message_cb,
++	sms_msg =3D __ofono_sms_txq_submit(sms, msg_list, flags,
++						send_message_stch_cb,
+ 						dbus_message_ref(msg),
+ 						send_message_destroy);
+ =
+
+@@ -1561,7 +1576,7 @@ void *ofono_sms_get_data(struct ofono_sms *sms)
+ struct tx_queue_entry *__ofono_sms_txq_submit(struct ofono_sms *sms,
+ 						GSList *list,
+ 						unsigned int flags,
+-						ofono_sms_txq_submit_cb_t cb,
++						ofono_sms_msg_stch_cb_t stch_cb,
+ 						void *data,
+ 						ofono_destroy_func destroy)
+ {
+@@ -1575,7 +1590,7 @@ struct tx_queue_entry *__ofono_sms_txq_submit(struct =
+ofono_sms *sms,
  	}
  =
 
-+	if (sms->tx_wsrq) {
-+		g_queue_foreach(sms->tx_wsrq,
-+				tx_queue_entry_destroy_foreach, NULL);
-+		g_queue_free(sms->tx_wsrq);
-+		sms->tx_wsrq =3D NULL;
-+	}
-+
- 	if (sms->settings) {
- 		g_key_file_set_integer(sms->settings, SETTINGS_GROUP,
- 					"NextMessageId", sms->next_msg_id);
-@@ -1344,6 +1409,7 @@ struct ofono_sms *ofono_sms_create(struct ofono_modem=
- *modem,
- 	sms->sca.type =3D 129;
- 	sms->ref =3D 1;
- 	sms->txq =3D g_queue_new();
-+	sms->tx_wsrq =3D g_queue_new();
- 	sms->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_SMS,
- 						sms_remove, sms);
+ 	entry->flags =3D flags;
+-	entry->cb =3D cb;
++	entry->stch_cb =3D stch_cb;
+ 	entry->data =3D data;
+ 	entry->destroy =3D destroy;
+ 	entry->sms_mgr =3D sms;
+diff --git a/src/stk.c b/src/stk.c
+index 7d98f92..5636eb6 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -660,12 +660,27 @@ static void send_sms_cancel(struct ofono_stk *stk)
+ 	stk_alpha_id_unset(stk);
+ }
  =
 
+-static void send_sms_submit_cb(gboolean ok, void *data)
++static void send_sms_stch_cb(void *data, enum ofono_sms_tx_state new_state)
+ {
+ 	struct sms_submit_req *req =3D data;
+ 	struct ofono_stk *stk =3D req->stk;
+ 	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
+ 	struct stk_response rsp;
++	gboolean ok;
++
++	/*
++	 * We care about only the final states
++	 * (DONE/CANCELLED/FAILED/EXPIRED), the rest are just
++	 * ignored.
++	 */
++	if (new_state =3D=3D OFONO_SMS_TX_ST_DONE)
++		ok =3D TRUE;
++	else if (new_state =3D=3D OFONO_SMS_TX_ST_CANCELLED
++		 || new_state =3D=3D OFONO_SMS_TX_ST_FAILED
++		 || new_state =3D=3D OFONO_SMS_TX_ST_EXPIRED)
++		ok =3D FALSE;
++	else
++		return;
+ =
+
+ 	ofono_debug("SMS submission %s", ok ? "successful" : "failed");
+ =
+
+@@ -712,7 +727,7 @@ static gboolean handle_command_send_sms(const struct st=
+k_command *cmd,
+ 	msg_list.data =3D (void *) &cmd->send_sms.gsm_sms;
+ 	msg_list.next =3D NULL;
+ =
+
+-	__ofono_sms_txq_submit(sms, &msg_list, 0, send_sms_submit_cb,
++	__ofono_sms_txq_submit(sms, &msg_list, 0, send_sms_stch_cb,
+ 				stk->sms_submit_req, g_free);
+ =
+
+ 	stk->cancel_cmd =3D send_sms_cancel;
 -- =
 
 1.6.6.1
 
 
---===============0227348552287675601==--
+--===============2907083012464942476==--
 
