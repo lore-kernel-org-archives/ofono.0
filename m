@@ -1,56 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============0819347227755313792=="
+Content-Type: multipart/mixed; boundary="===============7983095546349717992=="
 MIME-Version: 1.0
-From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
-Subject: Re: [SMS D-Bus v5 14/17] automake: fix generation of symlinks for
- headers
-Date: Fri, 06 Aug 2010 09:53:54 -0700
-Message-ID: <1281113634.9561.2.camel@localhost.localdomain>
-In-Reply-To: <1281061343.12579.119.camel@localhost.localdomain>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/6] phonesim: Don't use VENDOR_PHONESIM for Calypso.
+Date: Fri, 06 Aug 2010 12:17:58 -0500
+Message-ID: <4C5C43C6.6090300@gmail.com>
+In-Reply-To: <1281029457-9048-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0819347227755313792==
+--===============7983095546349717992==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2010-08-05 at 19:22 -0700, Marcel Holtmann wrote: =
+Hi Andrew,
 
-> Hi Inaky,
+On 08/05/2010 12:30 PM, Andrzej Zaborowski wrote:
+> Also move the STK initialisation to post-sim because it is more logical
+> there (even if it makes no difference under phonesim).
 > =
 
-> > When running 'make distcheck' from a vpath build directory (ie: one
-> > that is not where the source lives), the target headers in
-> > include/ofono are not generated properly due to a typo in the
-> > Makefile.am, that is using _srcdir where _buildir should be being
-> > used.
-> > ---
-> >  Makefile.am |    2 +-
-> >  1 files changed, 1 insertions(+), 1 deletions(-)
-> > =
+> I'm not sure if there's any user of the "calypso" mode in phonesim
+> driver now, perhaps it can be removed.
 
-> > diff --git a/Makefile.am b/Makefile.am
-> > index b64ce8e..28d1e77 100644
-> > --- a/Makefile.am
-> > +++ b/Makefile.am
-> > @@ -446,7 +446,7 @@ include/ofono/version.h: include/version.h
-> >  =
+Could you please do me a favor and put 'comment' paragraphs in the
+git-send-email block specifically designated for this?  These are fairly
+context specific questions and make no sense to be included in the
+commit history.  I have to git --amend and take them out manually.
 
-> >  include/ofono/%.h: include/%.h
-> >  	$(AM_V_at)$(MKDIR_P) include/ofono
-> > -	$(AM_V_GEN)$(LN_S) $(abs_top_srcdir)/$< $@
-> > +	$(AM_V_GEN)$(LN_S) $(abs_top_builddir)/$< $@
-> =
+To answer your question, we use 'calypso' driver for phonesim when using
+the Freerunner modem over TCP.  This way oFono can be quickly run and
+tested without the need to cross-compile.  This part is still useful in
+certain circumstances, so it is safe to leave it in for now...
 
-> are we having the same problem in ConnMan. I am seeing only builddir be
-> used for the version.h generation.
+All patches in this series have been applied.
 
-Sorry, not groking what do you mean. So yes, this does exactly the same
-thing as done for version.h, where it works pretty well.
+Regards,
+-Denis
 
-Haven't tried connman, but it will have the same problem if you use a
-similar construct.
-
-
---===============0819347227755313792==--
+--===============7983095546349717992==--
 
