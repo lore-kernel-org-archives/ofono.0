@@ -1,134 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============2655054511298327324=="
+Content-Type: multipart/mixed; boundary="===============6859292917408953485=="
 MIME-Version: 1.0
 From: Inaky Perez-Gonzalez <inaky@linux.intel.com>
-Subject: [SMS D-Bus v5 10/17] sms: introduce sms_msg_cancel and its D-Bus
- wrapper
-Date: Thu, 05 Aug 2010 17:55:32 -0700
-Message-ID: <861265d3d27f7f16f822bfcceae9c9345e7cb6d6.1281054654.git.inaky.perez-gonzalez@intel.com>
+Subject: [SMS D-Bus v5 11/17] sms: Implement D-Bus SMS-MSG::GetProperties
+Date: Thu, 05 Aug 2010 17:55:33 -0700
+Message-ID: <ff262a82b5e0f37858c8880acc989f4679124b81.1281054654.git.inaky.perez-gonzalez@intel.com>
 In-Reply-To: <cover.1281054654.git.inaky.perez-gonzalez@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2655054511298327324==
+--===============6859292917408953485==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Inaky Perez-Gonzalez <inaky.perez-gonzalez@intel.com>
 
-This introduces the ability to cancel a pending SMS message,
-accessible via an internal API and over a D-Bus wrapper.
-
-Sending a note to the network to cancel an in-transit message is not
-yet implemented.
-
-Note the test case code requires follow up commits that propagate the
-message's state changes over D-Bus.
+Currently this only returns the state of the SMS message and the
+destination number. Note we make the @receiver field in 'struct
+tx_queue_entry' be always filled out in __ofono_sms_txq_submit() as
+now it is always needed for the properties, not only when a Status
+Report is requested.
 ---
- src/sms.c |   55 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 55 insertions(+), 0 deletions(-)
+ src/sms.c |   39 +++++++++++++++++++++++++++++++++------
+ 1 files changed, 33 insertions(+), 6 deletions(-)
 
 diff --git a/src/sms.c b/src/sms.c
-index 638492e..40b4cf1 100644
+index 40b4cf1..e648fd0 100644
 --- a/src/sms.c
 +++ b/src/sms.c
-@@ -527,6 +527,20 @@ static void __ofono_sms_tx_state_set(struct tx_queue_e=
+@@ -526,7 +526,35 @@ static void __ofono_sms_tx_state_set(struct tx_queue_e=
 ntry *entry,
+ 		entry->stch_cb(entry->data, state_new);
  }
  =
 
++static DBusMessage *dbus_sms_msg_get_properties(
++	DBusConnection * conn, DBusMessage *dbus_msg, void *_sms_msg)
++{
++	struct tx_queue_entry *sms_msg =3D _sms_msg;
++	DBusMessage *reply;
++	DBusMessageIter iter;
++	DBusMessageIter dict;
++	const char *str;
++
++	reply =3D dbus_message_new_method_return(dbus_msg);
++	if (!reply)
++		return NULL;
++
++	dbus_message_iter_init_append(reply, &iter);
  =
 
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					 OFONO_PROPERTIES_ARRAY_SIGNATURE,
++					 &dict);
 +
-+static void sms_msg_cancel(struct tx_queue_entry *);
-+/*
-+ * Note that the D-Bus specific cleanups are taken care by the
-+ * sms_msg_dbus_destroy() callback passed in dbus_sms_msg_send().
-+ */
-+static DBusMessage *dbus_sms_msg_cancel(
-+	DBusConnection * conn, DBusMessage *msg, void *data)
-+{
-+	struct tx_queue_entry *sms_msg =3D data;
-+	sms_msg_cancel(sms_msg);
-+	return dbus_message_new_method_return(msg);
++	str =3D ofono_sms_tx_state_to_string(sms_msg->state);
++	ofono_dbus_dict_append(&dict, "State", DBUS_TYPE_STRING, &str);
++
++	str =3D sms_address_to_string(&sms_msg->receiver);
++	ofono_dbus_dict_append(&dict, "To", DBUS_TYPE_STRING, &str);
++
++	dbus_message_iter_close_container(&iter, &dict);
++
++	return reply;
 +}
-+
+ =
+
+ static void sms_msg_cancel(struct tx_queue_entry *);
  /*
-  * D-Bus SMS Message interface
-  *
-@@ -536,6 +550,8 @@ static void __ofono_sms_tx_state_set(struct tx_queue_en=
-try *entry,
+@@ -550,6 +578,8 @@ static DBusMessage *dbus_sms_msg_cancel(
  =
 
  static
  GDBusMethodTable sms_msg_methods[] =3D {
-+	{ "Cancel",		"",	"",
-+	  dbus_sms_msg_cancel, 0 },
++	{ "GetProperties",	"",	"a{sv}",
++	  dbus_sms_msg_get_properties, 0 },
+ 	{ "Cancel",		"",	"",
+ 	  dbus_sms_msg_cancel, 0 },
  	{ }
- };
+@@ -1757,13 +1787,10 @@ struct tx_queue_entry *__ofono_sms_txq_submit(struc=
+t ofono_sms *sms,
+ 						ofono_destroy_func destroy)
+ {
+ 	struct tx_queue_entry *entry =3D tx_queue_entry_new(list);
++	struct sms *head =3D list->data;
  =
 
-@@ -581,6 +597,11 @@ static void tx_finished(const struct ofono_error *erro=
-r, int mr, void *data)
- 	gboolean ok =3D error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR;
+-	if (flags & OFONO_SMS_SUBMIT_FLAG_REQUEST_SR) {
+-		struct sms *head =3D list->data;
+-
+-		memcpy(&entry->receiver, &head->submit.daddr,
+-				sizeof(entry->receiver));
+-	}
++	memcpy(&entry->receiver, &head->submit.daddr,
++		sizeof(entry->receiver));
  =
 
- 	DBG("tx_finished");
-+	/*
-+	 * Queue is empty? Messages might have been cancelled.
-+	 */
-+	if (entry =3D=3D NULL)
-+		return;
- =
-
- 	if (ok =3D=3D FALSE) {
- 		if (!(entry->flags & OFONO_SMS_SUBMIT_FLAG_RETRY)) {
-@@ -854,6 +875,40 @@ struct tx_queue_entry *sms_msg_send(
- 	return sms_msg;
- }
- =
-
-+/**
-+ * Cancel a pending SMS message
-+ *
-+ * @sms_msg: message to cancel
-+ *
-+ * This function cancels a message that is pending or being
-+ * actively transmitted. Note that after this function returns, the
-+ * @sms_msg handle is no longer valid.
-+ *
-+ * \internal
-+ *
-+ * There is no need to cancel the calling of tx_next() by
-+ * g_timeout_add() scheduled in sms_msg_send(). The rationale behind
-+ * this is that the tx_next() function is scheduled to go over the
-+ * list of messages in the @sms object, so it might have been
-+ * scheduled for other messages also rather than just for this one
-+ * @sms_msg. By the time it gets to run, it might see the list empty
-+ * or see other messages, but @sms_msg won't be there.
-+ */
-+static void sms_msg_cancel(struct tx_queue_entry *sms_msg)
-+{
-+	struct ofono_sms *sms =3D sms_msg->sms_mgr;
-+	DBG("%s (%p)\n", __func__, sms_msg);
-+
-+	if (sms_msg->state =3D=3D OFONO_SMS_TX_ST_QUEUED)
-+		g_queue_remove(sms->txq, sms_msg);
-+	else if (sms_msg->state =3D=3D OFONO_SMS_TX_ST_WSR)
-+		g_queue_remove(sms->tx_wsrq, sms_msg);
-+
-+	ofono_sms_tx_state_set(sms_msg, OFONO_SMS_TX_ST_CANCELING);
-+	ofono_sms_tx_state_set(sms_msg, OFONO_SMS_TX_ST_CANCELLED);
-+	tx_queue_entry_destroy(sms_msg);
-+}
-+
- /*
-  * Send a PropertyChange signal when the state changes
-  *
+ 	entry->flags =3D flags;
+ 	entry->stch_cb =3D stch_cb;
 -- =
 
 1.6.6.1
 
 
---===============2655054511298327324==--
+--===============6859292917408953485==--
 
