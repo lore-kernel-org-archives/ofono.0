@@ -1,122 +1,187 @@
-Content-Type: multipart/mixed; boundary="===============9032358196492480084=="
+Content-Type: multipart/mixed; boundary="===============4634210226478187047=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCH 1/3] voicecall: Rename cb-function hangup to hangup_active in
- core and drivers.
-Date: Mon, 09 Aug 2010 21:58:09 +0200
-Message-ID: <1281383891-8373-1-git-send-email-sjurbren@gmail.com>
+Subject: [PATCH 2/3] voicecall: Add support for function hangup_all
+Date: Mon, 09 Aug 2010 21:58:10 +0200
+Message-ID: <1281383891-8373-2-git-send-email-sjurbren@gmail.com>
+In-Reply-To: <1281383891-8373-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9032358196492480084==
+--===============4634210226478187047==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Sjur Br=C3=A6ndeland <sjur@sjur-laptop.(none)>
 
----
- drivers/atmodem/voicecall.c      |    4 ++--
- drivers/calypsomodem/voicecall.c |    2 +-
- drivers/hfpmodem/voicecall.c     |    2 +-
- drivers/isimodem/voicecall.c     |    2 +-
- drivers/stemodem/voicecall.c     |    2 +-
- include/voicecall.h              |    2 +-
- 6 files changed, 7 insertions(+), 7 deletions(-)
+This patch fixes problem for modems that cannot terminate DIALING/ALERTING
+calls with CHUP=3D1X. The main change is that voicecall-callback function
+hangup is split into the functions hangup_all and hangup_active.
 
-diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
-index fce9144..2578779 100644
---- a/drivers/atmodem/voicecall.c
-+++ b/drivers/atmodem/voicecall.c
-@@ -409,7 +409,7 @@ static void at_answer(struct ofono_voicecall *vc,
- static void at_hangup(struct ofono_voicecall *vc,
- 			ofono_voicecall_cb_t cb, void *data)
- {
--	/* Hangup all calls */
-+	/* Hangup active call */
- 	at_template("AT+CHUP", vc, generic_cb, 0x3f, cb, data);
+Changes:
+o In cases where hangup previously was used, hangup_all is used if implemen=
+ted
+  otherwise hangup_active is used.
+o Call in state DIALING/ALERTING is released with hangup_active if implemen=
+ted.
+o manager_hangup_all will simply call hangup_all if implemented.
+o manager_hangup_all will release calls in state ALERTING/DIALING/INCOMING
+  using hangup_active otherwise release_specific.
+---
+ include/voicecall.h |    2 +
+ src/voicecall.c     |   56 +++++++++++++++++++++++++++++++++++++++--------=
+---
+ 2 files changed, 45 insertions(+), 13 deletions(-)
+
+diff --git a/include/voicecall.h b/include/voicecall.h
+index 998c02d..2356fcf 100644
+--- a/include/voicecall.h
++++ b/include/voicecall.h
+@@ -69,6 +69,8 @@ struct ofono_voicecall_driver {
+ 			ofono_voicecall_cb_t cb, void *data);
+ 	void (*hangup_active)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
++	void (*hangup_all)(struct ofono_voicecall *vc,
++			ofono_voicecall_cb_t cb, void *data);
+ 	void (*hold_all_active)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
+ 	void (*release_all_held)(struct ofono_voicecall *vc,
+diff --git a/src/voicecall.c b/src/voicecall.c
+index a30aaa5..49b9c79 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -261,15 +261,18 @@ static DBusMessage *voicecall_hangup(DBusConnection *=
+conn,
+ 	if (vc->pending)
+ 		return __ofono_error_busy(msg);
+ =
+
+-	/* According to various specs, other than 27.007, +CHUP is used
+-	 * to reject an incoming call
+-	 */
+ 	if (call->status =3D=3D CALL_STATUS_INCOMING) {
+-		if (vc->driver->hangup =3D=3D NULL)
++
++		if (vc->driver->hangup_all =3D=3D NULL &&
++				vc->driver->hangup_active =3D=3D NULL)
+ 			return __ofono_error_not_implemented(msg);
+ =
+
+ 		vc->pending =3D dbus_message_ref(msg);
+-		vc->driver->hangup(vc, generic_callback, vc);
++
++		if (vc->driver->hangup_all)
++			vc->driver->hangup_all(vc, generic_callback, vc);
++		else
++			vc->driver->hangup_active(vc, generic_callback, vc);
+ =
+
+ 		return NULL;
+ 	}
+@@ -286,12 +289,18 @@ static DBusMessage *voicecall_hangup(DBusConnection *=
+conn,
+ =
+
+ 	num_calls =3D g_slist_length(vc->call_list);
+ =
+
+-	if (num_calls =3D=3D 1 && vc->driver->hangup &&
++	if (num_calls =3D=3D 1 &&
+ 			(call->status =3D=3D CALL_STATUS_ACTIVE ||
+ 				call->status =3D=3D CALL_STATUS_DIALING ||
+-				call->status =3D=3D CALL_STATUS_ALERTING)) {
++				call->status =3D=3D CALL_STATUS_ALERTING) &&
++				(vc->driver->hangup_all !=3D NULL ||
++					vc->driver->hangup_active !=3D NULL)) {
+ 		vc->pending =3D dbus_message_ref(msg);
+-		vc->driver->hangup(vc, generic_callback, vc);
++
++		if (vc->driver->hangup_all)
++			vc->driver->hangup_all(vc, generic_callback, vc);
++		else
++			vc->driver->hangup_active(vc, generic_callback, vc);
+ =
+
+ 		return NULL;
+ 	}
+@@ -304,6 +313,15 @@ static DBusMessage *voicecall_hangup(DBusConnection *c=
+onn,
+ 		return NULL;
+ 	}
+ =
+
++	if (vc->driver->hangup_active !=3D NULL &&
++		(call->status =3D=3D CALL_STATUS_ALERTING ||
++			call->status =3D=3D CALL_STATUS_DIALING)) {
++		vc->pending =3D dbus_message_ref(msg);
++		vc->driver->hangup_active(vc, generic_callback, vc);
++
++		return NULL;
++	}
++
+ 	if (vc->driver->release_specific =3D=3D NULL)
+ 		return __ofono_error_not_implemented(msg);
+ =
+
+@@ -762,7 +780,14 @@ static void voicecalls_release_next(struct ofono_voice=
+call *vc)
+ =
+
+ 	vc->release_list =3D g_slist_remove(vc->release_list, call);
+ =
+
+-	vc->driver->release_specific(vc, call->call->id,
++	if (vc->driver->hangup_active !=3D NULL &&
++			(call->call->status =3D=3D CALL_STATUS_ALERTING ||
++				call->call->status =3D=3D CALL_STATUS_DIALING ||
++				call->call->status =3D=3D CALL_STATUS_INCOMING))
++
++		vc->driver->hangup_active(vc, multirelease_callback, vc);
++	else
++		vc->driver->release_specific(vc, call->call->id,
+ 						multirelease_callback, vc);
  }
  =
 
-@@ -874,7 +874,7 @@ static struct ofono_voicecall_driver driver =3D {
- 	.remove			=3D at_voicecall_remove,
- 	.dial			=3D at_dial,
- 	.answer			=3D at_answer,
--	.hangup			=3D at_hangup,
-+	.hangup_active		=3D at_hangup,
- 	.hold_all_active	=3D at_hold_all_active,
- 	.release_all_held	=3D at_release_all_held,
- 	.set_udub		=3D at_set_udub,
-diff --git a/drivers/calypsomodem/voicecall.c b/drivers/calypsomodem/voicec=
-all.c
-index 511d533..56ec5a9 100644
---- a/drivers/calypsomodem/voicecall.c
-+++ b/drivers/calypsomodem/voicecall.c
-@@ -407,7 +407,7 @@ static struct ofono_voicecall_driver driver =3D {
- 	.remove			=3D calypso_voicecall_remove,
- 	.dial			=3D calypso_dial,
- 	.answer			=3D calypso_answer,
--	.hangup			=3D calypso_hangup,
-+	.hangup_active		=3D calypso_hangup,
- 	.hold_all_active	=3D calypso_hold_all_active,
- 	.release_all_held	=3D calypso_release_all_held,
- 	.set_udub		=3D calypso_set_udub,
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index f83f26a..69923cc 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -1166,7 +1166,7 @@ static struct ofono_voicecall_driver driver =3D {
- 	.remove			=3D hfp_voicecall_remove,
- 	.dial			=3D hfp_dial,
- 	.answer			=3D hfp_answer,
--	.hangup			=3D hfp_hangup,
-+	.hangup_active		=3D hfp_hangup,
- 	.hold_all_active	=3D hfp_hold_all_active,
- 	.release_all_held	=3D hfp_release_all_held,
- 	.set_udub		=3D hfp_set_udub,
-diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index 3e28dae..4b720be 100644
---- a/drivers/isimodem/voicecall.c
-+++ b/drivers/isimodem/voicecall.c
-@@ -1318,7 +1318,7 @@ static struct ofono_voicecall_driver driver =3D {
- 	.remove			=3D isi_voicecall_remove,
- 	.dial			=3D isi_dial,
- 	.answer			=3D isi_answer,
--	.hangup			=3D isi_hangup,
-+	.hangup_active		=3D isi_hangup,
- 	.hold_all_active	=3D isi_hold_all_active,
- 	.release_all_held	=3D isi_release_all_held,
- 	.set_udub		=3D isi_set_udub,
-diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
-index a56709a..daadf54 100644
---- a/drivers/stemodem/voicecall.c
-+++ b/drivers/stemodem/voicecall.c
-@@ -569,7 +569,7 @@ static struct ofono_voicecall_driver driver =3D {
- 	.remove			=3D ste_voicecall_remove,
- 	.dial			=3D ste_dial,
- 	.answer			=3D ste_answer,
--	.hangup			=3D ste_hangup,
-+	.hangup_active		=3D ste_hangup,
- 	.hold_all_active	=3D ste_hold_all_active,
- 	.release_all_held	=3D ste_release_all_held,
- 	.set_udub		=3D ste_set_udub,
-diff --git a/include/voicecall.h b/include/voicecall.h
-index 6ceb3d8..998c02d 100644
---- a/include/voicecall.h
-+++ b/include/voicecall.h
-@@ -67,7 +67,7 @@ struct ofono_voicecall_driver {
- 			ofono_voicecall_cb_t cb, void *data);
- 	void (*answer)(struct ofono_voicecall *vc,
- 			ofono_voicecall_cb_t cb, void *data);
--	void (*hangup)(struct ofono_voicecall *vc,
-+	void (*hangup_active)(struct ofono_voicecall *vc,
- 			ofono_voicecall_cb_t cb, void *data);
- 	void (*hold_all_active)(struct ofono_voicecall *vc,
- 			ofono_voicecall_cb_t cb, void *data);
+@@ -1119,7 +1144,9 @@ static DBusMessage *manager_hangup_all(DBusConnection=
+ *conn,
+ 	if (vc->pending)
+ 		return __ofono_error_busy(msg);
+ =
+
+-	if (!vc->driver->release_specific)
++	if (vc->driver->hangup_all =3D=3D NULL &&
++		(vc->driver->release_specific =3D=3D NULL ||
++			vc->driver->hangup_active =3D=3D NULL))
+ 		return __ofono_error_not_implemented(msg);
+ =
+
+ 	if (vc->call_list =3D=3D NULL) {
+@@ -1131,9 +1158,12 @@ static DBusMessage *manager_hangup_all(DBusConnectio=
+n *conn,
+ =
+
+ 	vc->pending =3D dbus_message_ref(msg);
+ =
+
+-	voicecalls_release_queue(vc, vc->call_list);
+-	voicecalls_release_next(vc);
+-
++	if (vc->driver->hangup_all !=3D NULL)
++		vc->driver->hangup_all(vc, generic_callback, vc);
++	else {
++		voicecalls_release_queue(vc, vc->call_list);
++		voicecalls_release_next(vc);
++	}
+ 	return NULL;
+ }
+ =
+
 -- =
 
 1.6.3.3
 
 
---===============9032358196492480084==--
+--===============4634210226478187047==--
 
