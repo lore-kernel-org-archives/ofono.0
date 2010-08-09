@@ -1,137 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============3130926174864099196=="
+Content-Type: multipart/mixed; boundary="===============6531202552859100725=="
 MIME-Version: 1.0
 From: Leaf John <leafjohn@gmail.com>
-Subject: [PATCH] add default property setter for modemconf
-Date: Mon, 09 Aug 2010 14:48:35 +0800
-Message-ID: <AANLkTi=itV4peGUyvxmU5LeS-cryWVTqFJm=jR5dPuM_@mail.gmail.com>
+Subject: Re: [PATCH] add default property setter for modemconf
+Date: Mon, 09 Aug 2010 14:49:30 +0800
+Message-ID: <AANLkTinOiyhRYp4EwezsYnWgaweGTPJj0jrHoSz+Q3=_@mail.gmail.com>
+In-Reply-To: <AANLkTi=itV4peGUyvxmU5LeS-cryWVTqFJm=jR5dPuM_@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3130926174864099196==
+--===============6531202552859100725==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I was trying to run ofono for a huawei usb modem on my meego netbook,
-but the udev on netbook seems not work for ofono, so that I've to
-mannualy write settings in modem.conf.
-
-Huawei driver needs two device, pcui & modem, and I can't specify them
-by either Interface & Device in modem.conf.
-
-Then I wrote this patch, It will load all Key=3DValue pairs in
-modem.conf file( Except Driver=3Dxxx pair ), and store them to modem
-properties.
-
-Then I add Pcui=3D & Modem=3D entry in modem.conf file, it works, I can
-use ofono to send & recieve message by huawei stick now.
-
-Here comes the patch:
------------------------------------------------------------------
-
-diff -wpB --git a/plugins/modem.conf b/plugins/modem.conf
-index 66bf932..e1ef1cd 100644
-
-#Author: Leaf Johnson <leafjohn@gmail.com>
-#Based on ofono 0.25
-#Introduciton:
-#This patch will add a function to modemconf.c: set_default_modem_param;
-#It will load all Key=3DValue pairs in modem.conf file( Except
-Driver=3Dxxx pair ), and store them to modem properties.
-#It is used in the system doesn't have enough udev support, e.g. meego netb=
-ooks.
-#The modification in modem.conf is the adaption for using Huawei
-USB-modem on a meego netbook.
-
---- a/plugins/modem.conf
-+++ b/plugins/modem.conf
-@@ -44,3 +44,9 @@
- #[n900]
- #Driver=3Dn900modem
- #Interface=3Dphonet0
-+
-+#Huawei driver, for meego platform
-+#[Huawei]
-+#Driver=3Dhuawei
-+#Pcui=3D/dev/ttyUSB_utps_pcui
-+#Modem=3D/dev/ttyUSB_utps_modem
-diff --git a/plugins/modemconf.c b/plugins/modemconf.c
-index 3747cd9..646dc6a 100644
---- a/plugins/modemconf.c
-+++ b/plugins/modemconf.c
-@@ -128,6 +128,32 @@ static int set_interface(struct ofono_modem *modem,
- 	return 0;
- }
-
-+static int set_default_modem_param( struct ofono_modem *modem,
-+						GKeyFile *keyfile, const char * group )
-+{
-+	char **keys;
-+	char **ptr;
-+	char *value;
-+
-+	keys =3D g_key_file_get_keys( keyfile, group, NULL, NULL );
-+	if( ! keys ){//get error
-+		return -EINVAL;
-+	}
-+
-+	for( ptr =3D keys; *ptr !=3D NULL; ++ptr ){
-+		value =3D g_key_file_get_string( keyfile, group, *ptr, NULL );
-+		if( ! value )
-+			continue;
-+		if( ! g_str_equal( *ptr, "Driver" ) )
-+			ofono_modem_set_string( modem, *ptr, value );
-+		g_free( value );
-+		value =3D NULL;
-+	}
-+	g_strfreev( keys );
-+
-+	return 0;
-+}
-+
- static struct {
- 	const char *driver;
- 	int (*func) (struct ofono_modem *modem,
-@@ -142,6 +168,7 @@ static struct {
- 	{ "palmpre",	set_device	},
- 	{ "isimodem",	set_interface	},
- 	{ "n900modem",	set_interface	},
-+	{ "huawei", 	set_default_modem_param	},
- 	{ NULL }
- };
-
-@@ -150,6 +177,7 @@ static struct ofono_modem *create_modem(GKeyFile
-*keyfile, const char *group)
- 	struct ofono_modem *modem;
- 	char *driver;
- 	int i;
-+	int processed=3D0;
-
- 	driver =3D g_key_file_get_string(keyfile, group, "Driver", NULL);
- 	if (!driver)
-@@ -160,8 +188,14 @@ static struct ofono_modem *create_modem(GKeyFile
-*keyfile, const char *group)
- 		goto error;
-
- 	for (i =3D 0; setup_helpers[i].driver; i++) {
--		if (!g_strcmp0(driver, setup_helpers[i].driver))
-+		if (!g_strcmp0(driver, setup_helpers[i].driver)){
- 			setup_helpers[i].func(modem, keyfile, group);
-+			processed =3D 1;
-+			break;
-+		}
-+	}
-+	if( ! processed ){//Unregconizable driver name, use default param setter
-+		set_default_modem_param( modem, keyfile, group );
- 	}
-
- error:
-
+Sorry, I forgot the patch file..
 
 -- =
 
 Best Reagres,
 Leaf Johnson<leafjohn@gmail.com>
 
---===============3130926174864099196==--
+--===============6531202552859100725==
+Content-Type: text/x-patch
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="default_mdm.patch"
+
+ZGlmZiAtd3BCIC0tZ2l0IGEvcGx1Z2lucy9tb2RlbS5jb25mIGIvcGx1Z2lucy9tb2RlbS5jb25m
+CmluZGV4IDY2YmY5MzIuLmUxZWYxY2QgMTAwNjQ0CgojQXV0aG9yOiBMZWFmIEpvaG5zb24gPGxl
+YWZqb2huQGdtYWlsLmNvbT4KI0Jhc2VkIG9uIG9mb25vIDAuMjUKI0ludHJvZHVjaXRvbjoKI1Ro
+aXMgcGF0Y2ggd2lsbCBhZGQgYSBmdW5jdGlvbiB0byBtb2RlbWNvbmYuYzogc2V0X2RlZmF1bHRf
+bW9kZW1fcGFyYW07CiNJdCB3aWxsIGxvYWQgYWxsIEtleT1WYWx1ZSBwYWlycyBpbiBtb2RlbS5j
+b25mIGZpbGUoIEV4Y2VwdCBEcml2ZXI9eHh4IHBhaXIgKSwgYW5kIHN0b3JlIHRoZW0gdG8gbW9k
+ZW0gcHJvcGVydGllcy4KI0l0IGlzIHVzZWQgaW4gdGhlIHN5c3RlbSBkb2Vzbid0IGhhdmUgZW5v
+dWdoIHVkZXYgc3VwcG9ydCwgZS5nLiBtZWVnbyBuZXRib29rcy4KI1RoZSBtb2RpZmljYXRpb24g
+aW4gbW9kZW0uY29uZiBpcyB0aGUgYWRhcHRpb24gZm9yIHVzaW5nIEh1YXdlaSBVU0ItbW9kZW0g
+b24gYSBtZWVnbyBuZXRib29rLgoKLS0tIGEvcGx1Z2lucy9tb2RlbS5jb25mCisrKyBiL3BsdWdp
+bnMvbW9kZW0uY29uZgpAQCAtNDQsMyArNDQsOSBAQAogI1tuOTAwXQogI0RyaXZlcj1uOTAwbW9k
+ZW0KICNJbnRlcmZhY2U9cGhvbmV0MAorCisjSHVhd2VpIGRyaXZlciwgZm9yIG1lZWdvIHBsYXRm
+b3JtCisjW0h1YXdlaV0KKyNEcml2ZXI9aHVhd2VpCisjUGN1aT0vZGV2L3R0eVVTQl91dHBzX3Bj
+dWkKKyNNb2RlbT0vZGV2L3R0eVVTQl91dHBzX21vZGVtCmRpZmYgLS1naXQgYS9wbHVnaW5zL21v
+ZGVtY29uZi5jIGIvcGx1Z2lucy9tb2RlbWNvbmYuYwppbmRleCAzNzQ3Y2Q5Li42NDZkYzZhIDEw
+MDY0NAotLS0gYS9wbHVnaW5zL21vZGVtY29uZi5jCisrKyBiL3BsdWdpbnMvbW9kZW1jb25mLmMK
+QEAgLTEyOCw2ICsxMjgsMzIgQEAgc3RhdGljIGludCBzZXRfaW50ZXJmYWNlKHN0cnVjdCBvZm9u
+b19tb2RlbSAqbW9kZW0sCiAJcmV0dXJuIDA7CiB9CiAKK3N0YXRpYyBpbnQgc2V0X2RlZmF1bHRf
+bW9kZW1fcGFyYW0oIHN0cnVjdCBvZm9ub19tb2RlbSAqbW9kZW0sCisJCQkJCQlHS2V5RmlsZSAq
+a2V5ZmlsZSwgY29uc3QgY2hhciAqIGdyb3VwICkKK3sKKwljaGFyICoqa2V5czsKKwljaGFyICoq
+cHRyOworCWNoYXIgKnZhbHVlOworCisJa2V5cyA9IGdfa2V5X2ZpbGVfZ2V0X2tleXMoIGtleWZp
+bGUsIGdyb3VwLCBOVUxMLCBOVUxMICk7CisJaWYoICEga2V5cyApey8vZ2V0IGVycm9yCisJCXJl
+dHVybiAtRUlOVkFMOworCX0KKworCWZvciggcHRyID0ga2V5czsgKnB0ciAhPSBOVUxMOyArK3B0
+ciApeworCQl2YWx1ZSA9IGdfa2V5X2ZpbGVfZ2V0X3N0cmluZygga2V5ZmlsZSwgZ3JvdXAsICpw
+dHIsIE5VTEwgKTsKKwkJaWYoICEgdmFsdWUgKQorCQkJY29udGludWU7CisJCWlmKCAhIGdfc3Ry
+X2VxdWFsKCAqcHRyLCAiRHJpdmVyIiApICkKKwkJCW9mb25vX21vZGVtX3NldF9zdHJpbmcoIG1v
+ZGVtLCAqcHRyLCB2YWx1ZSApOworCQlnX2ZyZWUoIHZhbHVlICk7CisJCXZhbHVlID0gTlVMTDsK
+Kwl9CisJZ19zdHJmcmVldigga2V5cyApOworCisJcmV0dXJuIDA7Cit9CisKIHN0YXRpYyBzdHJ1
+Y3QgewogCWNvbnN0IGNoYXIgKmRyaXZlcjsKIAlpbnQgKCpmdW5jKSAoc3RydWN0IG9mb25vX21v
+ZGVtICptb2RlbSwKQEAgLTE0Miw2ICsxNjgsNyBAQCBzdGF0aWMgc3RydWN0IHsKIAl7ICJwYWxt
+cHJlIiwJc2V0X2RldmljZQl9LAogCXsgImlzaW1vZGVtIiwJc2V0X2ludGVyZmFjZQl9LAogCXsg
+Im45MDBtb2RlbSIsCXNldF9pbnRlcmZhY2UJfSwKKwl7ICJodWF3ZWkiLCAJc2V0X2RlZmF1bHRf
+bW9kZW1fcGFyYW0JfSwKIAl7IE5VTEwgfQogfTsKIApAQCAtMTUwLDYgKzE3Nyw3IEBAIHN0YXRp
+YyBzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKmNyZWF0ZV9tb2RlbShHS2V5RmlsZSAqa2V5ZmlsZSwgY29u
+c3QgY2hhciAqZ3JvdXApCiAJc3RydWN0IG9mb25vX21vZGVtICptb2RlbTsKIAljaGFyICpkcml2
+ZXI7CiAJaW50IGk7CisJaW50IHByb2Nlc3NlZD0wOwogCiAJZHJpdmVyID0gZ19rZXlfZmlsZV9n
+ZXRfc3RyaW5nKGtleWZpbGUsIGdyb3VwLCAiRHJpdmVyIiwgTlVMTCk7CiAJaWYgKCFkcml2ZXIp
+CkBAIC0xNjAsOCArMTg4LDE0IEBAIHN0YXRpYyBzdHJ1Y3Qgb2Zvbm9fbW9kZW0gKmNyZWF0ZV9t
+b2RlbShHS2V5RmlsZSAqa2V5ZmlsZSwgY29uc3QgY2hhciAqZ3JvdXApCiAJCWdvdG8gZXJyb3I7
+CiAKIAlmb3IgKGkgPSAwOyBzZXR1cF9oZWxwZXJzW2ldLmRyaXZlcjsgaSsrKSB7Ci0JCWlmICgh
+Z19zdHJjbXAwKGRyaXZlciwgc2V0dXBfaGVscGVyc1tpXS5kcml2ZXIpKQorCQlpZiAoIWdfc3Ry
+Y21wMChkcml2ZXIsIHNldHVwX2hlbHBlcnNbaV0uZHJpdmVyKSl7CiAJCQlzZXR1cF9oZWxwZXJz
+W2ldLmZ1bmMobW9kZW0sIGtleWZpbGUsIGdyb3VwKTsKKwkJCXByb2Nlc3NlZCA9IDE7CisJCQli
+cmVhazsKKwkJfQorCX0KKwlpZiggISBwcm9jZXNzZWQgKXsvL1VucmVnY29uaXphYmxlIGRyaXZl
+ciBuYW1lLCB1c2UgZGVmYXVsdCBwYXJhbSBzZXR0ZXIKKwkJc2V0X2RlZmF1bHRfbW9kZW1fcGFy
+YW0oIG1vZGVtLCBrZXlmaWxlLCBncm91cCApOwogCX0KIAogZXJyb3I6Cgo=
+
+--===============6531202552859100725==--
 
