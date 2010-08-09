@@ -1,87 +1,122 @@
-Content-Type: multipart/mixed; boundary="===============1663083691612980100=="
+Content-Type: multipart/mixed; boundary="===============6201540814746146198=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCH 3/3] voicecall: manager_hangup_all should not terminate
- waiting calls.
-Date: Mon, 09 Aug 2010 21:58:11 +0200
-Message-ID: <1281383891-8373-3-git-send-email-sjurbren@gmail.com>
-In-Reply-To: <1281383891-8373-2-git-send-email-sjurbren@gmail.com>
+Subject: [PATCH resend 1/3] voicecall: Rename cb-function hangup to
+ hangup_active in core and drivers.
+Date: Mon, 09 Aug 2010 23:18:37 +0200
+Message-ID: <1281388719-11781-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1663083691612980100==
+--===============6201540814746146198==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Sjur Br=C3=A6ndeland <sjur@sjur-laptop.(none)>
+From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
 ---
- src/voicecall.c |   16 +++++++++++-----
- 1 files changed, 11 insertions(+), 5 deletions(-)
+ drivers/atmodem/voicecall.c      |    4 ++--
+ drivers/calypsomodem/voicecall.c |    2 +-
+ drivers/hfpmodem/voicecall.c     |    2 +-
+ drivers/isimodem/voicecall.c     |    2 +-
+ drivers/stemodem/voicecall.c     |    2 +-
+ include/voicecall.h              |    2 +-
+ 6 files changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 49b9c79..4341d29 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -758,15 +758,21 @@ static void emit_multiparty_call_list_changed(struct =
-ofono_voicecall *vc)
- 				real_emit_multiparty_call_list_changed, vc);
- }
- =
-
--static void voicecalls_release_queue(struct ofono_voicecall *vc, GSList *c=
-alls)
-+static void voicecalls_release_queue(struct ofono_voicecall *vc, GSList *c=
-alls,
-+					gboolean skip_waiting)
+diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
+index fce9144..2578779 100644
+--- a/drivers/atmodem/voicecall.c
++++ b/drivers/atmodem/voicecall.c
+@@ -409,7 +409,7 @@ static void at_answer(struct ofono_voicecall *vc,
+ static void at_hangup(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data)
  {
- 	GSList *l;
-+	struct ofono_call *call;
- =
-
- 	g_slist_free(vc->release_list);
- 	vc->release_list =3D NULL;
- =
-
--	for (l =3D calls; l; l =3D l->next)
--		vc->release_list =3D g_slist_prepend(vc->release_list, l->data);
-+	for (l =3D calls; l; l =3D l->next) {
-+		call =3D l->data;
-+		if (!skip_waiting || call->status !=3D CALL_STATUS_WAITING)
-+			vc->release_list =3D
-+				g_slist_prepend(vc->release_list,call);
-+	 }
+-	/* Hangup all calls */
++	/* Hangup active call */
+ 	at_template("AT+CHUP", vc, generic_cb, 0x3f, cb, data);
  }
  =
 
- static void voicecalls_release_next(struct ofono_voicecall *vc)
-@@ -1161,7 +1167,7 @@ static DBusMessage *manager_hangup_all(DBusConnection=
- *conn,
- 	if (vc->driver->hangup_all !=3D NULL)
- 		vc->driver->hangup_all(vc, generic_callback, vc);
- 	else {
--		voicecalls_release_queue(vc, vc->call_list);
-+		voicecalls_release_queue(vc, vc->call_list, TRUE);
- 		voicecalls_release_next(vc);
- 	}
- 	return NULL;
-@@ -1400,7 +1406,7 @@ static DBusMessage *multiparty_hangup(DBusConnection =
-*conn,
- =
-
- 	/* Fall back to the old-fashioned way */
- 	vc->flags |=3D VOICECALLS_FLAG_MULTI_RELEASE;
--	voicecalls_release_queue(vc, vc->multiparty_list);
-+	voicecalls_release_queue(vc, vc->multiparty_list,FALSE);
- 	voicecalls_release_next(vc);
- =
-
- out:
+@@ -874,7 +874,7 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.remove			=3D at_voicecall_remove,
+ 	.dial			=3D at_dial,
+ 	.answer			=3D at_answer,
+-	.hangup			=3D at_hangup,
++	.hangup_active		=3D at_hangup,
+ 	.hold_all_active	=3D at_hold_all_active,
+ 	.release_all_held	=3D at_release_all_held,
+ 	.set_udub		=3D at_set_udub,
+diff --git a/drivers/calypsomodem/voicecall.c b/drivers/calypsomodem/voicec=
+all.c
+index 511d533..56ec5a9 100644
+--- a/drivers/calypsomodem/voicecall.c
++++ b/drivers/calypsomodem/voicecall.c
+@@ -407,7 +407,7 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.remove			=3D calypso_voicecall_remove,
+ 	.dial			=3D calypso_dial,
+ 	.answer			=3D calypso_answer,
+-	.hangup			=3D calypso_hangup,
++	.hangup_active		=3D calypso_hangup,
+ 	.hold_all_active	=3D calypso_hold_all_active,
+ 	.release_all_held	=3D calypso_release_all_held,
+ 	.set_udub		=3D calypso_set_udub,
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index f83f26a..69923cc 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -1166,7 +1166,7 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.remove			=3D hfp_voicecall_remove,
+ 	.dial			=3D hfp_dial,
+ 	.answer			=3D hfp_answer,
+-	.hangup			=3D hfp_hangup,
++	.hangup_active		=3D hfp_hangup,
+ 	.hold_all_active	=3D hfp_hold_all_active,
+ 	.release_all_held	=3D hfp_release_all_held,
+ 	.set_udub		=3D hfp_set_udub,
+diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+index 3e28dae..4b720be 100644
+--- a/drivers/isimodem/voicecall.c
++++ b/drivers/isimodem/voicecall.c
+@@ -1318,7 +1318,7 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.remove			=3D isi_voicecall_remove,
+ 	.dial			=3D isi_dial,
+ 	.answer			=3D isi_answer,
+-	.hangup			=3D isi_hangup,
++	.hangup_active		=3D isi_hangup,
+ 	.hold_all_active	=3D isi_hold_all_active,
+ 	.release_all_held	=3D isi_release_all_held,
+ 	.set_udub		=3D isi_set_udub,
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index a56709a..daadf54 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -569,7 +569,7 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.remove			=3D ste_voicecall_remove,
+ 	.dial			=3D ste_dial,
+ 	.answer			=3D ste_answer,
+-	.hangup			=3D ste_hangup,
++	.hangup_active		=3D ste_hangup,
+ 	.hold_all_active	=3D ste_hold_all_active,
+ 	.release_all_held	=3D ste_release_all_held,
+ 	.set_udub		=3D ste_set_udub,
+diff --git a/include/voicecall.h b/include/voicecall.h
+index 6ceb3d8..998c02d 100644
+--- a/include/voicecall.h
++++ b/include/voicecall.h
+@@ -67,7 +67,7 @@ struct ofono_voicecall_driver {
+ 			ofono_voicecall_cb_t cb, void *data);
+ 	void (*answer)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
+-	void (*hangup)(struct ofono_voicecall *vc,
++	void (*hangup_active)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
+ 	void (*hold_all_active)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
 -- =
 
 1.6.3.3
 
 
---===============1663083691612980100==--
+--===============6201540814746146198==--
 
