@@ -1,49 +1,109 @@
-Content-Type: multipart/mixed; boundary="===============7423506467846266520=="
+Content-Type: multipart/mixed; boundary="===============8559264007188552170=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] gprs: Fix release cid in gprs_deactive_for_remove
-Date: Mon, 09 Aug 2010 09:11:29 -0500
-Message-ID: <4C600C91.7000501@gmail.com>
-In-Reply-To: <1281346091-24758-1-git-send-email-zhenhua.zhang@intel.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: [PATCH] Add test scripts to to lock and unlock pin
+Date: Mon, 09 Aug 2010 17:22:31 +0300
+Message-ID: <20100809142231.30805.82378.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7423506467846266520==
+--===============8559264007188552170==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
 
-On 08/09/2010 04:28 AM, Zhenhua Zhang wrote:
-> Similiar to pri_deactive_callback, we should release the context id in
-> gprs_deactive_for_remove() as well.
-> ---
->  src/gprs.c |    3 +++
->  1 files changed, 3 insertions(+), 0 deletions(-)
-> =
+---
+ Makefile.am     |    4 +++-
+ test/lock-pin   |   27 +++++++++++++++++++++++++++
+ test/unlock-pin |   27 +++++++++++++++++++++++++++
+ 3 files changed, 57 insertions(+), 1 deletions(-)
+ create mode 100755 test/lock-pin
+ create mode 100755 test/unlock-pin
 
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 8d807dd..2c5bb4e 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -1262,6 +1262,9 @@ static void gprs_deactivate_for_remove(const struct=
- ofono_error *error,
->  		return;
->  	}
->  =
+diff --git a/Makefile.am b/Makefile.am
+index 8d1d2c2..38210e2 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -344,7 +344,9 @@ test_scripts =3D test/activate-context \
+ 		test/set-use-sms-reports \
+ 		test/set-cbs-topics \
+ 		test/enable-cbs \
+-		test/propose-scan
++		test/propose-scan \
++		test/lock-pin \
++		test/unlock-pin
+ =
 
-> +	gprs_cid_release(gprs, ctx->context.cid);
-> +	ctx->context.cid =3D 0;
-> +
->  	if (gprs->settings) {
->  		g_key_file_remove_group(gprs->settings, ctx->key, NULL);
->  		storage_sync(gprs->imsi, SETTINGS_STORE, gprs->settings);
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/test/lock-pin b/test/lock-pin
+new file mode 100755
+index 0000000..a0b6e30
+--- /dev/null
++++ b/test/lock-pin
+@@ -0,0 +1,27 @@
++#!/usr/bin/python
++
++import dbus
++import sys
++
++bus =3D dbus.SystemBus()
++
++if len(sys.argv) =3D=3D 4:
++	path =3D sys.argv[1]
++	pin_type =3D sys.argv[2]
++	pin =3D sys.argv[3]
++elif len(sys.argv) =3D=3D 3:
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++				 'org.ofono.Manager')
++	properties =3D manager.GetProperties()
++	path =3D properties["Modems"][0]
++	pin_type =3D sys.argv[1]
++	pin =3D sys.argv[2]
++else:
++	print "%s [PATH] pin_type pin" % (sys.argv[0])
++	sys.exit(0)
++
++print "Lock %s %s for modem %s..." % (pin_type, pin, path)
++
++simmanager =3D dbus.Interface(bus.get_object('org.ofono', path),
++			    'org.ofono.SimManager')
++simmanager.LockPin(pin_type, pin)
+diff --git a/test/unlock-pin b/test/unlock-pin
+new file mode 100755
+index 0000000..4a05cd4
+--- /dev/null
++++ b/test/unlock-pin
+@@ -0,0 +1,27 @@
++#!/usr/bin/python
++
++import dbus
++import sys
++
++bus =3D dbus.SystemBus()
++
++if len(sys.argv) =3D=3D 4:
++	path =3D sys.argv[1]
++	pin_type =3D sys.argv[2]
++	pin =3D sys.argv[3]
++elif len(sys.argv) =3D=3D 3:
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++				 'org.ofono.Manager')
++	properties =3D manager.GetProperties()
++	path =3D properties["Modems"][0]
++	pin_type =3D sys.argv[1]
++	pin =3D sys.argv[2]
++else:
++	print "%s [PATH] pin_type pin" % (sys.argv[0])
++	sys.exit(0)
++
++print "Unlock %s %s for modem %s..." % (pin_type, pin, path)
++
++simmanager =3D dbus.Interface(bus.get_object('org.ofono', path),
++			    'org.ofono.SimManager')
++simmanager.UnlockPin(pin_type, pin)
 
-Great catch.  Patch has been applied, thanks.
 
-Regards,
--Denis
-
---===============7423506467846266520==--
+--===============8559264007188552170==--
 
