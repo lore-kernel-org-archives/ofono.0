@@ -1,43 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============2641962994801534138=="
+Content-Type: multipart/mixed; boundary="===============7985191263393944620=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH] gprs: Fix release cid in gprs_deactive_for_remove
-Date: Mon, 09 Aug 2010 17:28:11 +0800
-Message-ID: <1281346091-24758-1-git-send-email-zhenhua.zhang@intel.com>
+From: Leaf John <leafjohn@gmail.com>
+Subject: Re: [PATCH] add default property setter for modemconf
+Date: Mon, 09 Aug 2010 21:19:12 +0800
+Message-ID: <AANLkTikACCyFboLAXubGHLGUYP656okw65LowfMwqQXc@mail.gmail.com>
+In-Reply-To: <1281344299.12579.196.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2641962994801534138==
+--===============7985191263393944620==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Similiar to pri_deactive_callback, we should release the context id in
-gprs_deactive_for_remove() as well.
----
- src/gprs.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+On Mon, Aug 9, 2010 at 4:58 PM, Marcel Holtmann <marcel@holtmann.org> wro=
+te:
+> a gentle reminder that this mailing list has a NO top posting policy.
+> Like many open source mailing lists.
+>
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 8d807dd..2c5bb4e 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1262,6 +1262,9 @@ static void gprs_deactivate_for_remove(const struct o=
-fono_error *error,
- 		return;
- 	}
- =
+Sorry for that, I haven't read the convention of this community.
 
-+	gprs_cid_release(gprs, ctx->context.cid);
-+	ctx->context.cid =3D 0;
-+
- 	if (gprs->settings) {
- 		g_key_file_remove_group(gprs->settings, ctx->key, NULL);
- 		storage_sync(gprs->imsi, SETTINGS_STORE, gprs->settings);
+
+> For the N900 you can use ISI plugin. Using AT commands is a pretty bad
+> idea with the N900 actually.
+>
+> And why should MeeGo be different than any other distro. That sounds
+> more like a udev ofono.rules bug than an actual issue. I think that we
+> fixed all of these issues in the latest oFono release. So you should
+> update and then this patch seems to be not needed anymore.
+>
+
+My company network was down during this morning. so I missed a
+week-ends' update. :-) .
+
+However, in the N900 case,  I don't think this is a bug of ofono. When
+plugged N900 to a opensuse system, there will be two network interface
+usb0 and usbpn0, and from the source code I know the isi plugin will
+use usbpnx ( x is specify by the Interface property of modem) net
+interface to communicate with the phone. But in meego there is only
+usb0 interface that isi driver simply ignored.
+
+I'll try to update the meego udev-rules packages tommorrow and see
+whether it works. Thank you for your time.
+
+
+
 -- =
 
-1.7.0.4
+Best Reagres,
+Leaf Johnson<leafjohn@gmail.com>
 
-
---===============2641962994801534138==--
+--===============7985191263393944620==--
 
