@@ -1,31 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============7656341701234669352=="
+Content-Type: multipart/mixed; boundary="===============3089324908217386994=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 0/10] Unregister AT notifiers when removing drivers
-Date: Tue, 10 Aug 2010 22:43:39 +0800
-Message-ID: <1281451429-17257-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 01/10] gatchat: Check notify id in g_at_chat_unregister
+Date: Tue, 10 Aug 2010 22:43:40 +0800
+Message-ID: <1281451429-17257-2-git-send-email-zhenhua.zhang@intel.com>
+In-Reply-To: <1281451429-17257-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7656341701234669352==
+--===============3089324908217386994==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Return earlier if notify id is zero.
+---
+ gatchat/gatchat.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-This series unregister AT notifiers in removing various AT modem drivers wh=
-en modem goes to offline mode. Please review them.
+diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
+index f192a90..a177e10 100644
+--- a/gatchat/gatchat.c
++++ b/gatchat/gatchat.c
+@@ -1169,7 +1169,7 @@ gboolean g_at_chat_unregister(GAtChat *chat, guint id)
+ 	gpointer key, value;
+ 	GSList *l;
+ =
 
-We should fix other modem drivers other than atmodem as well. I will send s=
-eperate patches for review.
+-	if (chat =3D=3D NULL || chat->notify_list =3D=3D NULL)
++	if (chat =3D=3D NULL || chat->notify_list =3D=3D NULL || id =3D=3D 0)
+ 		return FALSE;
+ =
 
-To Emmanuel, could you try these patches to see wheter it fixes your proble=
-ms? Thanks.
+ 	g_hash_table_iter_init(&iter, chat->notify_list);
+-- =
 
-Regards,
-Zhenhua
+1.7.0.4
 
 
---===============7656341701234669352==--
+--===============3089324908217386994==--
 
