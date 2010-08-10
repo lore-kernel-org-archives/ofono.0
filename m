@@ -1,147 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============7042600801159650596=="
+Content-Type: multipart/mixed; boundary="===============8620485630661568513=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 05/10] ussd: Unregister AT notifiers when removing
-Date: Tue, 10 Aug 2010 22:43:44 +0800
-Message-ID: <1281451429-17257-6-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 06/10] ssn: Unregister AT notifiers when removing
+Date: Tue, 10 Aug 2010 22:43:45 +0800
+Message-ID: <1281451429-17257-7-git-send-email-zhenhua.zhang@intel.com>
 In-Reply-To: <1281451429-17257-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7042600801159650596==
+--===============8620485630661568513==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add struct ussd_data to hold gatchat and cusd_id. So that we could
-unregister AT notifications in driver removing phase.
+Unregister AT notifications when removing ssn driver.
 ---
- drivers/atmodem/ussd.c |   33 ++++++++++++++++++++++++++-------
- 1 files changed, 26 insertions(+), 7 deletions(-)
+ drivers/atmodem/ssn.c |   30 ++++++++++++++++++++++++++----
+ 1 files changed, 26 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/atmodem/ussd.c b/drivers/atmodem/ussd.c
-index 555ce13..0def9b1 100644
---- a/drivers/atmodem/ussd.c
-+++ b/drivers/atmodem/ussd.c
-@@ -47,6 +47,11 @@ struct cusd_req {
- 	struct ofono_ussd *ussd;
- };
+diff --git a/drivers/atmodem/ssn.c b/drivers/atmodem/ssn.c
+index f219cde..ce8f1e0 100644
+--- a/drivers/atmodem/ssn.c
++++ b/drivers/atmodem/ssn.c
+@@ -39,6 +39,12 @@
  =
 
-+struct ussd_data {
-+	GAtChat *chat;
-+	guint cusd_id;
-+};
-+
- static const char *cusd_prefix[] =3D { "+CUSD:", NULL };
  static const char *none_prefix[] =3D { NULL };
  =
 
-@@ -119,7 +124,7 @@ static void cusd_request_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- static void at_ussd_request(struct ofono_ussd *ussd, const char *str,
- 				ofono_ussd_cb_t cb, void *data)
++struct ssn_data {
++	GAtChat *chat;
++	guint cssi_id;
++	guint cssu_id;
++};
++
+ static void cssi_notify(GAtResult *result, gpointer user_data)
  {
--	GAtChat *chat =3D ofono_ussd_get_data(ussd);
-+	struct ussd_data *ud =3D ofono_ussd_get_data(ussd);
- 	struct cusd_req *cbd =3D g_try_new0(struct cusd_req, 1);
- 	unsigned char *converted =3D NULL;
- 	int dcs;
-@@ -152,7 +157,7 @@ static void at_ussd_request(struct ofono_ussd *ussd, co=
-nst char *str,
- 	g_free(converted);
- 	converted =3D NULL;
- =
-
--	if (g_at_chat_send(chat, buf, cusd_prefix,
-+	if (g_at_chat_send(ud->chat, buf, cusd_prefix,
- 				cusd_request_cb, cbd, g_free) > 0)
- 		return;
- =
-
-@@ -180,13 +185,13 @@ static void cusd_cancel_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- static void at_ussd_cancel(struct ofono_ussd *ussd,
- 				ofono_ussd_cb_t cb, void *data)
+ 	struct ofono_ssn *ssn =3D user_data;
+@@ -100,10 +106,12 @@ static void at_ssn_initialized(gboolean ok, GAtResult=
+ *result,
+ 				gpointer user_data)
  {
--	GAtChat *chat =3D ofono_ussd_get_data(ussd);
-+	struct ussd_data *ud =3D ofono_ussd_get_data(ussd);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	struct ofono_ssn *ssn =3D user_data;
+-	GAtChat *chat =3D ofono_ssn_get_data(ssn);
++	struct ssn_data *sd =3D ofono_ssn_get_data(ssn);
  =
 
- 	if (!cbd)
- 		goto error;
+-	g_at_chat_register(chat, "+CSSI:", cssi_notify, FALSE, ssn, NULL);
+-	g_at_chat_register(chat, "+CSSU:", cssu_notify, FALSE, ssn, NULL);
++	sd->cssi_id =3D g_at_chat_register(sd->chat, "+CSSI:", cssi_notify,
++						FALSE, ssn, NULL);
++	sd->cssu_id =3D g_at_chat_register(sd->chat, "+CSSU:", cssu_notify,
++						FALSE, ssn, NULL);
  =
 
--	if (g_at_chat_send(chat, "AT+CUSD=3D2", none_prefix,
-+	if (g_at_chat_send(ud->chat, "AT+CUSD=3D2", none_prefix,
- 				cusd_cancel_cb, cbd, g_free) > 0)
- 		return;
- =
-
-@@ -207,14 +212,16 @@ static void cusd_notify(GAtResult *result, gpointer u=
-ser_data)
- static void at_ussd_register(gboolean ok, GAtResult *result, gpointer user)
- {
- 	struct ofono_ussd *ussd =3D user;
--	GAtChat *chat =3D ofono_ussd_get_data(ussd);
-+	struct ussd_data *data =3D ofono_ussd_get_data(ussd);
- =
-
- 	if (!ok) {
- 		ofono_error("Could not enable CUSD notifications");
- 		return;
- 	}
- =
-
--	g_at_chat_register(chat, "+CUSD:", cusd_notify, FALSE, ussd, NULL);
-+	data->cusd_id =3D g_at_chat_register(data->chat, "+CUSD:",
-+						cusd_notify, FALSE,
-+						ussd, NULL);
- =
-
- 	ofono_ussd_register(ussd);
+ 	ofono_ssn_register(ssn);
  }
-@@ -223,8 +230,13 @@ static int at_ussd_probe(struct ofono_ussd *ussd, unsi=
-gned int vendor,
+@@ -112,8 +120,14 @@ static int at_ssn_probe(struct ofono_ssn *ssn, unsigne=
+d int vendor,
  				void *data)
  {
  	GAtChat *chat =3D data;
-+	struct ussd_data *ud;
++	struct ssn_data *sd;
 +
-+	ud =3D g_new0(struct ussd_data, 1);
++	sd =3D g_new0(struct ssn_data, 1);
 +
-+	ud->chat =3D chat;
++	sd->chat =3D chat;
++
++	ofono_ssn_set_data(ssn, sd);
  =
 
--	ofono_ussd_set_data(ussd, chat);
-+	ofono_ussd_set_data(ussd, ud);
+-	ofono_ssn_set_data(ssn, chat);
+ 	g_at_chat_send(chat, "AT+CSSN=3D1,1", none_prefix,
+ 			at_ssn_initialized, ssn, NULL);
  =
 
- 	g_at_chat_send(chat, "AT+CUSD=3D1", NULL, at_ussd_register, ussd, NULL);
+@@ -122,6 +136,14 @@ static int at_ssn_probe(struct ofono_ssn *ssn, unsigne=
+d int vendor,
  =
 
-@@ -233,6 +245,13 @@ static int at_ussd_probe(struct ofono_ussd *ussd, unsi=
-gned int vendor,
- =
-
- static void at_ussd_remove(struct ofono_ussd *ussd)
+ static void at_ssn_remove(struct ofono_ssn *ssn)
  {
-+	struct ussd_data *ud =3D ofono_ussd_get_data(ussd);
++	struct ssn_data *sd =3D ofono_ssn_get_data(ssn);
 +
-+	g_at_chat_unregister(ud->chat, ud->cusd_id);
++	g_at_chat_unregister(sd->chat, sd->cssi_id);
++	g_at_chat_unregister(sd->chat, sd->cssu_id);
 +
-+	ofono_ussd_set_data(ussd, NULL);
++	ofono_ssn_set_data(ssn, NULL);
 +
-+	g_free(ud);
++	g_free(sd);
  }
  =
 
- static struct ofono_ussd_driver driver =3D {
+ static struct ofono_ssn_driver driver =3D {
 -- =
 
 1.7.0.4
 
 
---===============7042600801159650596==--
+--===============8620485630661568513==--
 
