@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7066548915008810381=="
+Content-Type: multipart/mixed; boundary="===============4416801505318974412=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] huawei: poll sim state
-Date: Wed, 11 Aug 2010 18:08:58 -0500
-Message-ID: <4C632D8A.2080704@gmail.com>
-In-Reply-To: <20100810095735.18457.31162.stgit@potku.valot.fi>
+Subject: Re: [PATCH 2/2] huawei: postpone post_sim until SIM is ready
+Date: Wed, 11 Aug 2010 18:23:48 -0500
+Message-ID: <4C633104.7000502@gmail.com>
+In-Reply-To: <20100810095741.18457.64025.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7066548915008810381==
+--===============4416801505318974412==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,117 +16,41 @@ Content-Transfer-Encoding: quoted-printable
 Hi Kalle,
 
 On 08/10/2010 04:57 AM, Kalle Valo wrote:
-> On my Huawei E1552 when I plug in the modem (ie. cold start) with PIN loc=
-ked
-> SIM, the sim state is 255 (HUAWEI_SIM_STATE_NOT_EXISTENT). As the modem
-> doesn't send ^SIMST notifications, poll the sim state until it's ready.
+> On my Huawei E1552 with PIN locked SIM sim_state is 0 when calling
+> huawei_post_sim() and gprs context is not registered. This is because
+> ^SIMST notification is received only after huawei_post_sim() is called:
 > =
 
-> In theory it might be possible to do this better, for example follow
-> ^BOOT notifications or something, but it's unknown what parameter we
-> should check for.
-> ---
->  plugins/huawei.c |   34 ++++++++++++++++++++++++++++++----
->  1 files changed, 30 insertions(+), 4 deletions(-)
+> Aug 10 12:38:33 tukki ofonod[6565]: plugins/huawei.c:huawei_post_sim() 0x=
+6cdb50
+> [...]
+> Aug 10 12:38:34 tukki ofonod[6565]: Pcui:< \r\n^SIMST:1\r\n\r\n^SRVST:2\r=
+\n
+> Aug 10 12:38:34 tukki ofonod[6565]: plugins/huawei.c:notify_sim_state() 1
 > =
 
-> diff --git a/plugins/huawei.c b/plugins/huawei.c
-> index f8ada24..ba66513 100644
-> --- a/plugins/huawei.c
-> +++ b/plugins/huawei.c
-> @@ -73,8 +73,11 @@ struct huawei_data {
->  	enum huawei_sim_state sim_state;
->  	struct ofono_gprs *gprs;
->  	struct ofono_gprs_context *gc;
-> +	guint query_sim_state;
->  };
->  =
+> Add a test to wait for sim_state to be ready and also a call to
+> notify_sim_state() to call huawei_post_sim() whenever needed.
 
-> +static gboolean query_sim_state(gpointer user_data);
-> +
->  static int huawei_probe(struct ofono_modem *modem)
->  {
->  	struct huawei_data *data;
-> @@ -114,8 +117,15 @@ static void notify_sim_state(struct ofono_modem *mod=
-em,
->  {
->  	struct huawei_data *data =3D ofono_modem_get_data(modem);
->  =
+So this problem affects multiple modem families and I think we should
+solve it a bit better.  What I'm proposing is to introduce a new
+function to include/sim.h.  Something like:
 
-> -	if (sim_state =3D=3D HUAWEI_SIM_STATE_NOT_EXISTENT)
-> +	DBG("%d", sim_state);
-> +
-> +	if (sim_state =3D=3D HUAWEI_SIM_STATE_NOT_EXISTENT) {
->  		ofono_sim_inserted_notify(data->sim, FALSE);
-> +
-> +		/* SIM is not ready, try again a bit later */
-> +		data->query_sim_state =3D
-> +			g_timeout_add_seconds(2, query_sim_state, modem);
-> +	}
+void ofono_sim_ready_notify(struct ofono_sim *sim);
 
-Polling the sim state forever might not be a good idea if the SIM is not
-inserted in the first place.  You might want to give up after several
-tries or so.
+The way it should work is as follows:
 
->  	else
->  		ofono_sim_inserted_notify(data->sim, TRUE);
->  =
+When oFono determines the SIM PIN is READY, it checks whether
+ofono_sim_ready_notify has been called.  If it hasn't, then it stalls
+the initialization procedure (and calling post_sim) until
+ofono_sim_ready_notify is called.
 
-> @@ -154,6 +164,21 @@ static void sysinfo_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
->  	notify_sim_state(modem, (enum huawei_sim_state) sim_state);
->  }
->  =
-
-> +static gboolean query_sim_state(gpointer user_data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct huawei_data *data =3D ofono_modem_get_data(modem);
-> +
-> +	DBG("");
-> +
-> +	data->query_sim_state =3D 0;
-> +
-> +	g_at_chat_send(data->pcui, "AT^SYSINFO", sysinfo_prefix,
-> +			sysinfo_cb, modem, NULL);
-> +
-> +	return FALSE;
-> +}
-> +
->  static void simst_notify(GAtResult *result, gpointer user_data)
->  {
->  	struct ofono_modem *modem =3D user_data;
-> @@ -187,9 +212,7 @@ static void cfun_enable(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
->  	g_at_chat_register(data->pcui, "^SIMST:", simst_notify,
->  							FALSE, modem, NULL);
->  =
-
-> -	/* query current sim state */
-> -	g_at_chat_send(data->pcui, "AT^SYSINFO", sysinfo_prefix,
-> -					sysinfo_cb, modem, NULL);
-> +	query_sim_state(modem);
->  }
->  =
-
->  static GAtChat *create_port(const char *device)
-> @@ -319,6 +342,9 @@ static int huawei_disable(struct ofono_modem *modem)
->  =
-
->  	DBG("%p", modem);
->  =
-
-> +	if (data->query_sim_state)
-> +		g_source_remove(data->query_sim_state);
-> +
->  	if (data->modem) {
->  		g_at_chat_cancel_all(data->modem);
->  		g_at_chat_unregister_all(data->modem);
-
-Otherwise patch looks good.
+This way if the SIM is not PIN locked, the driver can call sim_inserted
+and sim_ready at once.  If the PIN is locked, the driver can notify
+sim_ready later.
 
 Regards,
 -Denis
 
---===============7066548915008810381==--
+--===============4416801505318974412==--
 
