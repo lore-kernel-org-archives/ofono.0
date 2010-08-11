@@ -1,186 +1,347 @@
-Content-Type: multipart/mixed; boundary="===============6944303035195386916=="
+Content-Type: multipart/mixed; boundary="===============6654514947260178943=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 02/16] emulator: Add status watches for ofono emulator
-Date: Wed, 11 Aug 2010 10:26:27 +0800
-Message-ID: <1281493601-14351-3-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 05/16] emulator: Implement dialing up for DUN
+Date: Wed, 11 Aug 2010 10:26:30 +0800
+Message-ID: <1281493601-14351-6-git-send-email-zhenhua.zhang@intel.com>
 In-Reply-To: <1281493601-14351-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6944303035195386916==
+--===============6654514947260178943==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The status watches monitor the emulator activities. Other atoms like
-gprs, netreg could register notification to watch emulator status
-changes.
+It handles client ATD*99# request and complete GPRS connection. Pass
+client IP address through IPCP packet to client side.
 ---
- include/emulator.h |    6 +++++
- src/emulator.c     |   60 ++++++++++++++++++++++++++++++++++++++++++++++++=
+ include/emulator.h |   30 +++++++
+ src/emulator.c     |  222 ++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/ofono.h        |   11 +++++++++
- 3 files changed, 77 insertions(+), 0 deletions(-)
+ 2 files changed, 252 insertions(+), 0 deletions(-)
 
 diff --git a/include/emulator.h b/include/emulator.h
-index 1033e59..29e87b9 100644
+index 2a45c65..641f38c 100644
 --- a/include/emulator.h
 +++ b/include/emulator.h
-@@ -30,6 +30,12 @@ extern "C" {
+@@ -34,10 +34,40 @@ enum ofono_emulator_status {
+ 	OFONO_EMULATOR_STATUS_IDLE =3D 0,
+ 	OFONO_EMULATOR_STATUS_CREATE,
+ 	OFONO_EMULATOR_STATUS_DESTROY,
++	OFONO_EMULATOR_STATUS_DUN_CONNECT,
++	OFONO_EMULATOR_STATUS_DUN_CONNECTED,
++	OFONO_EMULATOR_STATUS_DUN_DISCONNECTED,
+ };
  =
 
- struct ofono_emulator;
+ enum _GAtServerResult;
  =
 
-+enum ofono_emulator_status {
-+	OFONO_EMULATOR_STATUS_IDLE =3D 0,
-+	OFONO_EMULATOR_STATUS_CREATE,
-+	OFONO_EMULATOR_STATUS_DESTROY,
++typedef void (*ofono_emulator_cb_t)(enum _GAtServerResult res, void *data);
++
++struct ofono_emulator_req {
++	void *data;
++	ofono_emulator_cb_t cb;
++	void *cb_data;
++};
++
++typedef void (*ofono_emulator_gprs_connect_cb)(const struct ofono_error *e=
+rror,
++						const char *interface,
++						const char *local,
++						const char *peer,
++						const char **dns, void *data);
++
++struct ofono_emulator_gprs_connect_req {
++	const char *dial_str;
++	ofono_emulator_gprs_connect_cb cb;
++	void *cb_data;
++};
++
++struct ofono_emulator_gprs_context_req {
++	const char *proto;
++	const char *apn;
++	ofono_emulator_cb_t cb;
++	void *cb_data;
 +};
 +
  struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
  						enum ofono_atom_type type,
  						GIOChannel *io);
 diff --git a/src/emulator.c b/src/emulator.c
-index 6219bb1..f9e82a0 100644
+index 9ecc06c..378426c 100644
 --- a/src/emulator.c
 +++ b/src/emulator.c
-@@ -39,6 +39,8 @@ struct ofono_emulator {
+@@ -32,6 +32,22 @@
+ #include "ofono.h"
+ #include "common.h"
+ #include "gatserver.h"
++#include "gatppp.h"
++
++struct context_settings {
++	char *interface;
++	gboolean static_ip;
++	char *ip;
++	char *netmask;
++	char *gateway;
++	char **dns;
++};
++
++struct dun_context {
++	ofono_bool_t active;
++	struct context_settings settings;
++	struct ofono_gprs_primary_context pri_ctx;
++};
+ =
+
+ struct ofono_emulator {
+ 	struct ofono_modem *modem;
+@@ -39,6 +55,8 @@ struct ofono_emulator {
  	enum ofono_atom_type type;
  	unsigned int id;
  	GAtServer *server;
-+	enum ofono_emulator_status status;
-+	struct ofono_watchlist *status_watches;
++	GAtPPP *ppp;
++	struct dun_context context;
+ 	enum ofono_emulator_status status;
+ 	struct ofono_watchlist *status_watches;
  };
- =
-
- static unsigned int ofono_emulator_ids;
-@@ -69,12 +71,31 @@ static void ofono_emulator_release_id(int id)
- 	ofono_emulator_ids &=3D ~(0x1 << id);
+@@ -113,6 +131,201 @@ static void notify_status_watches(struct ofono_emulat=
+or *e, void *data)
+ 	}
  }
  =
 
-+static void notify_status_watches(struct ofono_emulator *e, void *data)
++static struct ofono_emulator_req *ofono_emulator_req_new(void *cb,
++							void *cb_data)
 +{
-+	struct ofono_watchlist_item *item;
-+	ofono_emulator_status_notify_cb_t notify;
-+	GSList *l;
++	struct ofono_emulator_req *req;
 +
-+	for (l =3D e->status_watches->items; l; l =3D l->next) {
-+		item =3D l->data;
-+		notify =3D item->notify;
++	req =3D g_try_new0(struct ofono_emulator_req, 1);
++	if (!req)
++		return req;
 +
-+		notify(e, e->status, data, item->notify_data);
++	req->cb =3D cb;
++	req->cb_data =3D cb_data;
++
++	return req;
++}
++
++static void ppp_connect(const char *interface, const char *local,
++			const char *remote,
++			const char *dns1, const char *dns2,
++			gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	struct dun_context *ctx =3D &e->context;
++	struct context_settings *settings =3D &ctx->settings;
++
++	e->status =3D OFONO_EMULATOR_STATUS_DUN_CONNECTED;
++	ctx->active =3D TRUE;
++
++	DBG("DUN server connected!\n");
++
++	DBG("Network Device: %s\n", settings->interface);
++	DBG("IP Address: %s\n", settings->ip);
++	DBG("Remote IP Address: %s\n", settings->gateway);
++	DBG("Primary DNS Server: %s\n", settings->dns[0]);
++	DBG("Secondary DNS Server: %s\n", settings->dns[1]);
++}
++
++static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
+ta)
++{
++	struct ofono_emulator *e =3D user_data;
++	struct dun_context *ctx =3D &e->context;
++	struct context_settings *settings =3D &ctx->settings;
++	struct ofono_emulator_req *req;
++
++	DBG("");
++
++	g_at_ppp_unref(e->ppp);
++	e->ppp =3D NULL;
++
++	g_at_server_resume(e->server);
++
++	ctx->active =3D FALSE;
++
++	g_free(settings->interface);
++	g_free(settings->ip);
++	g_free(settings->netmask);
++	g_free(settings->gateway);
++	g_strfreev(settings->dns);
++
++	req =3D ofono_emulator_req_new(NULL, NULL);
++	if (!req)
++		return;
++
++	e->status =3D OFONO_EMULATOR_STATUS_DUN_DISCONNECTED;
++	notify_status_watches(e, req);
++
++	g_free(req);
++}
++
++static gboolean setup_ppp(gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	GAtServer *server =3D e->server;
++	GAtIO *io;
++	struct context_settings *settings =3D &e->context.settings;
++
++	DBG("");
++
++	io =3D g_at_server_get_io(server);
++
++	/* suspend server port */
++	g_at_server_suspend(server);
++
++	/* open ppp */
++	e->ppp =3D g_at_ppp_server_new_from_io(io, settings->ip);
++	if (e->ppp =3D=3D NULL) {
++		g_at_server_resume(server);
++		return FALSE;
 +	}
++
++	g_at_ppp_set_server_info(e->ppp, settings->gateway,
++					settings->dns[0], settings->dns[1]);
++	g_at_ppp_set_credentials(e->ppp, "", "");
++	g_at_ppp_set_debug(e->ppp, ofono_emulator_debug, "PPP");
++
++	/* set connect and disconnect callbacks */
++	g_at_ppp_set_connect_function(e->ppp, ppp_connect, e);
++	g_at_ppp_set_disconnect_function(e->ppp, ppp_disconnect, e);
++
++	return FALSE;
++}
++
++static void gprs_connect_cb(const struct ofono_error *error,
++				const char *interface,
++				const char *local,
++				const char *peer,
++				const char **dns, void *data)
++{
++	struct ofono_emulator *e =3D data;
++	struct context_settings *settings =3D &e->context.settings;
++	const char *netmask =3D "255.255.255.255";
++
++	DBG("");
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
++		goto error;
++
++	if (!dns[0] || !dns[1])
++		goto error;
++
++	settings->interface =3D g_strdup(interface);
++	settings->static_ip =3D FALSE;
++	settings->ip =3D g_strdup(local);
++	settings->netmask =3D g_strdup(netmask);
++	settings->gateway =3D g_strdup(peer);
++	settings->dns =3D g_strdupv((char **)dns);
++
++	g_at_server_send_intermediate(e->server, "CONNECT");
++
++	g_idle_add(setup_ppp, e);
++
++	return;
++
++error:
++	g_at_server_send_final(e->server, G_AT_SERVER_RESULT_NO_CARRIER);
++}
++
++static gboolean dial_call(struct ofono_emulator *e, const char *dial_str)
++{
++	char c =3D *dial_str;
++
++	DBG("dial call %s", dial_str);
++
++	if (c =3D=3D '*' || c =3D=3D '#' || c =3D=3D 'T' || c =3D=3D 't') {
++		struct ofono_emulator_gprs_connect_req *req;
++
++		req =3D g_try_new0(struct ofono_emulator_gprs_connect_req, 1);
++		if (!req)
++			return FALSE;
++
++		req->cb =3D gprs_connect_cb;
++		req->cb_data =3D e;
++		req->dial_str =3D dial_str;
++
++		e->status =3D OFONO_EMULATOR_STATUS_DUN_CONNECT;
++		notify_status_watches(e, req);
++
++		g_free(req);
++	}
++
++	return TRUE;
++}
++
++static void dial_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	GAtServer *server =3D e->server;
++	GAtServerResult res =3D G_AT_SERVER_RESULT_ERROR;
++	GAtResultIter iter;
++	const char *dial_str;
++
++	if (type !=3D G_AT_SERVER_REQUEST_TYPE_SET)
++		goto error;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "D"))
++		goto error;
++
++	dial_str =3D g_at_result_iter_raw_line(&iter);
++	if (!dial_str)
++		goto error;
++
++	if (e->context.active =3D=3D TRUE)
++		goto error;
++
++	if (!dial_call(e, dial_str))
++		goto error;
++
++	return;
++
++error:
++	g_at_server_send_final(server, res);
 +}
 +
  static void emulator_remove(struct ofono_atom *atom)
  {
  	struct ofono_emulator *e =3D  __ofono_atom_get_data(atom);
+@@ -173,6 +386,13 @@ static void emulator_disconnect(gpointer user_data)
  =
 
- 	DBG("");
- =
-
-+	e->status =3D OFONO_EMULATOR_STATUS_DESTROY;
-+	notify_status_watches(e, NULL);
-+
-+	__ofono_watchlist_free(e->status_watches);
-+
- 	g_at_server_shutdown(e->server);
- 	g_at_server_unref(e->server);
- 	e->server =3D NULL;
-@@ -84,6 +105,37 @@ static void emulator_remove(struct ofono_atom *atom)
- 	e =3D NULL;
- }
- =
-
-+unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *e,
-+				ofono_emulator_status_notify_cb_t notify,
-+				void *data, ofono_destroy_func destroy)
-+{
-+	struct ofono_watchlist_item *item;
-+
-+	DBG("%p", e);
-+
-+	if (e =3D=3D NULL)
-+		return 0;
-+
-+	if (notify =3D=3D NULL)
-+		return 0;
-+
-+	item =3D g_new0(struct ofono_watchlist_item, 1);
-+
-+	item->notify =3D notify;
-+	item->destroy =3D destroy;
-+	item->notify_data =3D data;
-+
-+	return __ofono_watchlist_add_item(e->status_watches, item);
-+}
-+
-+gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
-+						unsigned int id)
-+{
-+	DBG("%p", e);
-+
-+	return __ofono_watchlist_remove_item(e->status_watches, id);
-+}
-+
- static void emulator_disconnect(gpointer user_data)
+ static void emulator_unregister(struct ofono_atom *atom)
  {
- 	struct ofono_emulator *e =3D user_data;
-@@ -91,6 +143,10 @@ static void emulator_disconnect(gpointer user_data)
- 	__ofono_atom_free(e->atom);
++	struct ofono_emulator *e =3D  __ofono_atom_get_data(atom);
++
++	if (e->ppp) {
++		g_at_ppp_shutdown(e->ppp);
++		g_at_ppp_unref(e->ppp);
++		e->ppp =3D NULL;
++	}
  }
  =
 
-+static void emulator_unregister(struct ofono_atom *atom)
-+{
-+}
-+
  struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
- 						enum ofono_atom_type type,
- 						GIOChannel *channel)
-@@ -115,7 +171,11 @@ struct ofono_emulator *ofono_emulator_create(struct of=
-ono_modem *modem,
- 	e->modem =3D modem;
- 	e->type =3D type;
- 	e->id =3D ofono_emulator_next_id();
-+	e->status_watches =3D __ofono_watchlist_new(g_free);
-+	e->status =3D OFONO_EMULATOR_STATUS_CREATE;
- 	e->atom =3D __ofono_modem_add_atom(modem, type, emulator_remove, e);
+@@ -205,5 +425,7 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
+no_modem *modem,
  =
 
-+	__ofono_atom_register(e->atom, emulator_unregister);
+ 	__ofono_atom_register(e->atom, emulator_unregister);
+ =
+
++	g_at_server_register(e->server, "D", dial_cb, e, NULL);
 +
  	return e;
  }
-diff --git a/src/ofono.h b/src/ofono.h
-index 8982a95..a7a9849 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -292,3 +292,14 @@ void __ofono_nettime_info_received(struct ofono_modem =
-*modem,
- 					struct ofono_network_time *info);
- =
-
- #include <ofono/emulator.h>
-+
-+typedef void (*ofono_emulator_status_notify_cb_t)(struct ofono_emulator *e,
-+					enum ofono_emulator_status status,
-+					void *data, void *user_data);
-+
-+unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *e,
-+				ofono_emulator_status_notify_cb_t notify,
-+				void *data, ofono_destroy_func destroy);
-+
-+gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
-+						unsigned int id);
 -- =
 
 1.7.0.4
 
 
---===============6944303035195386916==--
+--===============6654514947260178943==--
 
