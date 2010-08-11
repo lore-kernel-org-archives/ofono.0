@@ -1,137 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============8733115622074143829=="
+Content-Type: multipart/mixed; boundary="===============1705223865333901386=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 03/16] emulator: Add emulator status watches in gprs atom
-Date: Wed, 11 Aug 2010 10:26:28 +0800
-Message-ID: <1281493601-14351-4-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 04/16] emulator: Add APIs to send GAtServer result
+Date: Wed, 11 Aug 2010 10:26:29 +0800
+Message-ID: <1281493601-14351-5-git-send-email-zhenhua.zhang@intel.com>
 In-Reply-To: <1281493601-14351-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8733115622074143829==
+--===============1705223865333901386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add dun_watch to watch emulator status update in gprs atom. So that gprs
-atom could get notified when we get request to create new PPP connection
-from DUN client;
+Defines APIs to send final/intermediate/unsolicited result to DUN
+client.
 ---
- src/gprs.c |   60 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 60 insertions(+), 0 deletions(-)
+ include/emulator.h |    2 ++
+ src/emulator.c     |   28 ++++++++++++++++++++++++++++
+ src/ofono.h        |   11 +++++++++++
+ 3 files changed, 41 insertions(+), 0 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 6c6f07e..8002cf4 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -80,6 +80,9 @@ struct ofono_gprs {
- 	const struct ofono_gprs_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	struct ofono_emulator *dun;
-+	unsigned int dun_watch;
-+	unsigned int dun_status_watch;
+diff --git a/include/emulator.h b/include/emulator.h
+index 29e87b9..2a45c65 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -36,6 +36,8 @@ enum ofono_emulator_status {
+ 	OFONO_EMULATOR_STATUS_DESTROY,
  };
  =
 
- struct ofono_gprs_context {
-@@ -1459,6 +1462,39 @@ void ofono_gprs_context_deactivated(struct ofono_gpr=
-s_context *gc,
- 	}
++enum _GAtServerResult;
++
+ struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
+ 						enum ofono_atom_type type,
+ 						GIOChannel *io);
+diff --git a/src/emulator.c b/src/emulator.c
+index f9e82a0..9ecc06c 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -71,6 +71,34 @@ static void ofono_emulator_release_id(int id)
+ 	ofono_emulator_ids &=3D ~(0x1 << id);
  }
  =
 
-+static void dun_status_watch(struct ofono_emulator *e,
-+					enum ofono_emulator_status status,
-+					void *data, void *user_data)
++void ofono_emulator_send_final(struct ofono_emulator *e, GAtServerResult r=
+esult)
 +{
-+	if (e =3D=3D NULL)
-+		return;
-+
-+	switch (status) {
-+	default:
-+		break;
-+	}
++	g_at_server_send_final(e->server, result);
 +}
 +
-+static void dun_watch(struct ofono_atom *atom,
-+					enum ofono_atom_watch_condition cond,
-+					void *data)
++void ofono_emulator_send_ext_final(struct ofono_emulator *e, const char *r=
+esult)
 +{
-+	struct ofono_gprs *gprs =3D data;
-+	struct ofono_emulator *e =3D __ofono_atom_get_data(atom);
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		gprs->dun_status_watch =3D 0;
-+		gprs->dun =3D NULL;
-+		return;
-+	}
-+
-+	DBG("");
-+
-+	gprs->dun =3D e;
-+	gprs->dun_status_watch =3D __ofono_emulator_add_status_watch(e,
-+						dun_status_watch, gprs, NULL);
++	g_at_server_send_ext_final(e->server, result);
 +}
 +
- int ofono_gprs_context_driver_register(const struct ofono_gprs_context_dri=
-ver *d)
++void ofono_emulator_send_intermediate(struct ofono_emulator *e,
++						const char *result)
++{
++	g_at_server_send_intermediate(e->server, result);
++}
++
++void ofono_emulator_send_unsolicited(struct ofono_emulator *e,
++						const char *result)
++{
++	g_at_server_send_unsolicited(e->server, result);
++}
++
++void ofono_emulator_send_info(struct ofono_emulator *e, const char *line,
++						gboolean last)
++{
++	g_at_server_send_info(e->server, line, last);
++}
++
+ static void notify_status_watches(struct ofono_emulator *e, void *data)
  {
- 	DBG("driver: %p, name: %s", d, d->name);
-@@ -1608,6 +1644,18 @@ static void gprs_unregister(struct ofono_atom *atom)
- 		gprs->netreg =3D NULL;
- 	}
+ 	struct ofono_watchlist_item *item;
+diff --git a/src/ofono.h b/src/ofono.h
+index a7a9849..d5c600d 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -303,3 +303,14 @@ unsigned int __ofono_emulator_add_status_watch(struct =
+ofono_emulator *e,
  =
 
-+	if (gprs->dun_watch) {
-+		if (gprs->dun_status_watch) {
-+			__ofono_emulator_remove_status_watch(gprs->dun,
-+							gprs->dun_status_watch);
-+			gprs->dun_status_watch =3D 0;
-+		}
+ gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
+ 						unsigned int id);
 +
-+		__ofono_modem_remove_atom_watch(modem, gprs->dun_watch);
-+		gprs->dun_watch =3D 0;
-+		gprs->dun =3D NULL;
-+	}
-+
- 	ofono_modem_remove_interface(modem,
- 					OFONO_DATA_CONNECTION_MANAGER_INTERFACE);
- 	g_dbus_unregister_interface(conn, path,
-@@ -1862,6 +1910,7 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
- 	const char *path =3D __ofono_atom_get_path(gprs->atom);
- 	struct ofono_atom *netreg_atom;
- 	struct ofono_atom *sim_atom;
-+	struct ofono_atom *dun_atom;
- =
-
- 	if (!g_dbus_register_interface(conn, path,
- 					OFONO_DATA_CONNECTION_MANAGER_INTERFACE,
-@@ -1895,6 +1944,17 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
- 		netreg_watch(netreg_atom,
- 				OFONO_ATOM_WATCH_CONDITION_REGISTERED, gprs);
- =
-
-+	gprs->dun_watch =3D __ofono_modem_add_atom_watch(modem,
-+						OFONO_ATOM_TYPE_EMULATOR_DUN,
-+						dun_watch, gprs, NULL);
-+
-+	dun_atom =3D __ofono_modem_find_atom(modem,
-+						OFONO_ATOM_TYPE_EMULATOR_DUN);
-+
-+	if (dun_atom && __ofono_atom_get_registered(dun_atom))
-+		dun_watch(dun_atom,
-+				OFONO_ATOM_WATCH_CONDITION_REGISTERED, gprs);
-+
- 	__ofono_atom_register(gprs->atom, gprs_unregister);
- }
- =
-
++void ofono_emulator_send_final(struct ofono_emulator *e,
++					enum _GAtServerResult result);
++void ofono_emulator_send_ext_final(struct ofono_emulator *e,
++					const char *result);
++void ofono_emulator_send_intermediate(struct ofono_emulator *e,
++					const char *result);
++void ofono_emulator_send_unsolicited(struct ofono_emulator *e,
++					const char *result);
++void ofono_emulator_send_info(struct ofono_emulator *e, const char *line,
++					gboolean last);
 -- =
 
 1.7.0.4
 
 
---===============8733115622074143829==--
+--===============1705223865333901386==--
 
