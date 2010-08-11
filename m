@@ -1,47 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============4398856684648770299=="
+Content-Type: multipart/mixed; boundary="===============4093815056555521991=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/10] Unregister AT notifiers when removing drivers
-Date: Wed, 11 Aug 2010 18:25:09 -0500
-Message-ID: <4C633155.8070200@gmail.com>
-In-Reply-To: <1281451429-17257-1-git-send-email-zhenhua.zhang@intel.com>
+Subject: Re: [PATCH] Emit initial LineIdentification and State.
+Date: Wed, 11 Aug 2010 18:28:02 -0500
+Message-ID: <4C633202.2060407@gmail.com>
+In-Reply-To: <1281379675-10055-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4398856684648770299==
+--===============4093815056555521991==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Pekka,
 
-On 08/10/2010 09:43 AM, Zhenhua Zhang wrote:
-> Hi,
+On 08/09/2010 01:47 PM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
 > =
 
-> This series unregister AT notifiers in removing various AT modem drivers =
-when modem goes to offline mode. Please review them.
-> =
+> Allow following of call states without calling GetProperties.
 
-> We should fix other modem drivers other than atmodem as well. I will send=
- seperate patches for review.
-> =
-
-> To Emmanuel, could you try these patches to see wheter it fixes your prob=
-lems? Thanks.
-> =
-
-> Regards,
-> Zhenhua
-> =
-
-
-Your patches are fine, however there is an alternative we'd like to
-explore first that might turn out to be better.  It does require some
-surgery to GAtChat...
+We decided to solve this a little bit more nicely and address some of
+the long standing round-trip issues with the Voicecall API.  Please
+check the latest doc/voicecall-api.txt & doc/voicecallmanager-api.txt
+for more details.
 
 Regards,
 -Denis
 
---===============4398856684648770299==--
+--===============4093815056555521991==--
 
