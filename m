@@ -1,48 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============6661218930581912683=="
+Content-Type: multipart/mixed; boundary="===============0822734585748723313=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Removal of modemconf plugin
-Date: Thu, 12 Aug 2010 11:00:11 -0400
-Message-ID: <1281625211.12579.279.camel@localhost.localdomain>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH resend 1/3] voicecall: Rename cb-function hangup to
+ hangup_active in core and drivers.
+Date: Wed, 11 Aug 2010 18:03:19 -0500
+Message-ID: <4C632C37.4000509@gmail.com>
+In-Reply-To: <1281388719-11781-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6661218930581912683==
+--===============0822734585748723313==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Sjur,
 
-so the modemconf plugin seemed to be a good idea at the time I wrote it,
-but lately is causes more issues and confusion than it solves. So we
-will be removing this plugin shortly.
+On 08/09/2010 04:18 PM, Sjur Br=C3=A6ndeland wrote:
+> From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+> =
 
-For this to happen the following dependencies need to be solved first:
+> ---
+>  drivers/atmodem/voicecall.c      |    4 ++--
+>  drivers/calypsomodem/voicecall.c |    2 +-
+>  drivers/hfpmodem/voicecall.c     |    2 +-
+>  drivers/isimodem/voicecall.c     |    2 +-
+>  drivers/stemodem/voicecall.c     |    2 +-
+>  include/voicecall.h              |    2 +-
+>  6 files changed, 7 insertions(+), 7 deletions(-)
 
-	1) Move phonesim plugin over to use /etc/ofono/phonesim.conf
+I applied patch 1 and 2.  For patch 3 I changed my mind and fixed it
+slightly differently (e.g. just always skipping WAITING calls).
 
-	2) Create configure option to build without phonesim support
+Regards,
+-Denis
 
-	3) Create udev rule for Calypso device detection
-
-	4) Modify Calypso plugin to work with udev rule
-
-Using special udev rules for special devices (in conjunction with the
-oFono auto-detection rule) make the process of setting up oFono for the
-system integrator a lot simpler. No manual configuration file patching
-anymore. Just installation of an additional udev rule.
-
-The open here is the ISI modem detection, but this should be clearly
-done via a Phonet plugin. And also the N900 specific case inside
-modemconf is just wrong. This needs to be fixed and just auto-detected
-via Phonet or maybe just via RTNL directly.
-
-Regards
-
-Marcel
-
-
-
---===============6661218930581912683==--
+--===============0822734585748723313==--
 
