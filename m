@@ -1,102 +1,128 @@
-Content-Type: multipart/mixed; boundary="===============4726413729249647578=="
+Content-Type: multipart/mixed; boundary="===============6654657679780621302=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: Startup sequence for Online / offline mode
-Date: Thu, 12 Aug 2010 10:23:21 -0700
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C90111C20B21@orsmsx508.amr.corp.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 5/5] smsutil: save pending status reports to imsi file
+Date: Thu, 12 Aug 2010 12:24:42 -0500
+Message-ID: <4C642E5A.4010408@gmail.com>
+In-Reply-To: <24565F61DC5D5D4BA9D07416A6B5EE6A01C21F@JKLMAIL02.ixonos.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4726413729249647578==
+--===============6654657679780621302==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Modem drivers that support Online / offline mode default to offline when oF=
-ono loads them. Which component is responsible for calling oFono and switch=
- the modem to online mode? Will that component be part of MeeGo?
+Hi Petteri,
+
+On 08/10/2010 11:25 AM, Tikander Petteri wrote:
+> Hi Denis,
+> =
+
+> I'm the guy, who already introduced shortly yesterday to Inaky, and I'm c=
+ontinuing Pasi Miettinen's fine
+> work with SMS status-reports.
+
+Good to have you aboard :)
+
+> So, here are some comments (included below) for updating status report-fu=
+nctionality for your earlier comments,
+> how SR-functionality could be improved.
+> =
 
 
-Cheers,
+<snip>
 
-Waldo
+>> General comment here is that you're duplicating much of the code that
+>> inserts
+>> the information into the data structure.  You can play the same trick as
+>> sms_assembly which uses a single function to do the heavy lifting,
+>>  but takes
+>> an argument whether to store this info on disk.  Obviously during
+>>  load you
+>> don't want to re-save this information on disk.  Then your load function
+>> becomes much smaller and easier to understand.
+>>
+> =
 
---
+> OK. I agree that generally single function for heavy lifting is nicer sol=
+ution.
+> I will implement some general function, which handles adding of new id-ta=
+ble (if not already added)
+> to assembly-table, and storing necessary node-information there. After th=
+at I will move some functionality from
+> sr_assembly_load_backup() to this general function. Also this function ca=
+n be used when sending new sms-text message.
+> And I will add new parameter for telling, if this function will save data=
+ to imsi-file on disk or not.
+> Existing sms-assembly handles it that way. But, one difference with sms-a=
+ssembly and status-report logic is, that
+> sms-assembly naturally stores every messages of concatenated, long SMS-me=
+ssage to own backup files, but status report
+> gathers all information belonging to the same long SMS-message (using mes=
+sage reference numbers) to the single file.
+> =
 
-Intel Corporation - Hillsboro, Oregon
+> So Pasi implemented in the loading-phase (sr_assembly_load_backup) storin=
+g of MR-numbers simply
+> by copying the whole buffer containing MR's belonging to the single conca=
+tenated message-node:
+> =
 
-Ultra Mobility Group - Platform Software Architecture
+> 1) memcpy(node->mrs, buf, sizeof(node->mrs));
+> =
 
-Tel: +1 503 264 6237 - Mobile: +1 503 703-7327
+> And naturally when sending single message, single MR-bit is set up ('stat=
+us_report_assembly_add_fragment()'):
+> =
+
+> 2) node->mrs[offset] |=3D bit;
+> =
+
+> So, when now implementing new general function, one solution could be to =
+bring MR-string as parameter
+> so way (1) could be used in different cases.
+> =
+
+> Also I have to take care of variable 'sent_mrs', which will be incremente=
+d in the sms-submit, but not in the loading phase.
+>
+
+I agree there are going to be differences.  See how far you get trying
+to unify these behind a single function and send for another round of
+reviews.
+
+<snip>
+
+>>>       return ret;
+>>>  }
+>>>
+>>> +static gboolean sr_assembly_add_fragment_backup(const char *imsi,
+>>> +                                     const struct id_table_node *node,
+>>> +                                     unsigned int msg_id)
+>>
+>> Lets be consistent with how sms assembly works.  E.g. take the main
+>>  assembly
+>> object and return void.  Just helps to read the code when it is
+>>  consistent.
+>>
+> =
+
+> OK. Lets give main assembly to this (and corresponding) function(s).
+> How about return value? For instance existing sms assembly-function 'sms_=
+assembly_add_fragment_backup()'
+> already returns something else than void.
+> =
 
 
---===============4726413729249647578==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+sms_assembly_add_fragment_backup returns the new list of fragments.
+What value can we return from this function?  I think returning
+TRUE/FALSE for file write failures are not worth it.  There's not much
+that can be done in that case anyway...  So it seems void is good
+enough, but feel free to suggest something.
 
-PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
-bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxuczpzdDE9
-InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgeG1sbnM9Imh0dHA6
-Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiPgoKPGhlYWQ+CjxNRVRBIEhUVFAtRVFVSVY9IkNv
-bnRlbnQtVHlwZSIgQ09OVEVOVD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEg
-bmFtZT1HZW5lcmF0b3IgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTEgKGZpbHRlcmVkIG1lZGl1
-bSkiPgo8bzpTbWFydFRhZ1R5cGUgbmFtZXNwYWNldXJpPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQt
-Y29tOm9mZmljZTpzbWFydHRhZ3MiCiBuYW1lPSJTdGF0ZSIvPgo8bzpTbWFydFRhZ1R5cGUgbmFt
-ZXNwYWNldXJpPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzbWFydHRhZ3MiCiBu
-YW1lPSJDaXR5Ii8+CjxvOlNtYXJ0VGFnVHlwZSBuYW1lc3BhY2V1cmk9InVybjpzY2hlbWFzLW1p
-Y3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIKIG5hbWU9InBsYWNlIi8+CjwhLS1baWYgIW1z
-b10+CjxzdHlsZT4Kc3QxXDoqe2JlaGF2aW9yOnVybCgjZGVmYXVsdCNpZW9vdWkpIH0KPC9zdHls
-ZT4KPCFbZW5kaWZdLS0+CjxzdHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZv
-bnQtZmFjZQoJe2ZvbnQtZmFtaWx5OkJhdGFuZzsKCXBhbm9zZS0xOjIgMyA2IDAgMCAxIDEgMSAx
-IDE7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IlxAQmF0YW5nIjsKCXBhbm9zZS0xOjIgMyA2
-IDAgMCAxIDEgMSAxIDE7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBs
-aS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTou
-MDAwMXB0OwoJZm9udC1zaXplOjEyLjBwdDsKCWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4i
-O30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRp
-b246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29s
-b3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnAuTXNvUGxhaW5UZXh0LCBs
-aS5Nc29QbGFpblRleHQsIGRpdi5Nc29QbGFpblRleHQKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJv
-dHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjEwLjBwdDsKCWZvbnQtZmFtaWx5OiJDb3VyaWVyIE5l
-dyI7fQpwLk1zb0F1dG9TaWcsIGxpLk1zb0F1dG9TaWcsIGRpdi5Nc29BdXRvU2lnCgl7bWFyZ2lu
-OjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMi4wcHQ7Cglmb250LWZh
-bWlseToiVGltZXMgTmV3IFJvbWFuIjt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5
-cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OkFyaWFsOwoJY29sb3I6d2luZG93dGV4
-dDt9CkBwYWdlIFNlY3Rpb24xCgl7c2l6ZTo2MTIuMHB0IDc5Mi4wcHQ7CgltYXJnaW46NzIuMHB0
-IDkwLjBwdCA3Mi4wcHQgOTAuMHB0O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0t
-Pgo8L3N0eWxlPgoKPC9oZWFkPgoKPGJvZHkgbGFuZz1FTi1VUyBsaW5rPWJsdWUgdmxpbms9cHVy
-cGxlPgoKPGRpdiBjbGFzcz1TZWN0aW9uMT4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXpl
-PTIgZmFjZT1BcmlhbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6
-QXJpYWwnPk1vZGVtIGRyaXZlcnMgdGhhdCBzdXBwb3J0IE9ubGluZSAvIG9mZmxpbmUgbW9kZSBk
-ZWZhdWx0IHRvCm9mZmxpbmUgd2hlbiBvRm9ubyBsb2FkcyB0aGVtLiBXaGljaCBjb21wb25lbnQg
-aXMgcmVzcG9uc2libGUgZm9yIGNhbGxpbmcgb0Zvbm8KYW5kIHN3aXRjaCB0aGUgbW9kZW0gdG8g
-b25saW5lIG1vZGU/IFdpbGwgdGhhdCBjb21wb25lbnQgYmUgcGFydCBvZiBNZWVHbz88bzpwPjwv
-bzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBm
-YWNlPUFyaWFsPjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlh
-bCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb0F1dG9T
-aWc+PGZvbnQgc2l6ZT0yIGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+PHNwYW4gc3R5bGU9J2ZvbnQt
-c2l6ZToKMTAuMHB0Jz5DaGVlcnMsPC9zcGFuPjwvZm9udD48bzpwPjwvbzpwPjwvcD4KCjxwIGNs
-YXNzPU1zb0F1dG9TaWc+PGZvbnQgc2l6ZT0yIGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+PHNwYW4g
-c3R5bGU9J2ZvbnQtc2l6ZToKMTAuMHB0Jz5XYWxkbzwvc3Bhbj48L2ZvbnQ+PG86cD48L286cD48
-L3A+Cgo8cCBjbGFzcz1Nc29BdXRvU2lnPjxmb250IHNpemU9MiBjb2xvcj1ibHVlIGZhY2U9IlRp
-bWVzIE5ldyBSb21hbiI+PHNwYW4Kc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7Y29sb3I6Ymx1ZSc+
-LS0gPC9zcGFuPjwvZm9udD48bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb0F1dG9TaWc+PGZv
-bnQgc2l6ZT0yIGNvbG9yPWJsdWUgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48c3BhbgpzdHlsZT0n
-Zm9udC1zaXplOjEwLjBwdDtjb2xvcjpibHVlJz5JbnRlbCBDb3Jwb3JhdGlvbiAtIDxzdDE6cGxh
-Y2UgdzpzdD0ib24iPjxzdDE6Q2l0eQogdzpzdD0ib24iPkhpbGxzYm9ybzwvc3QxOkNpdHk+LCA8
-c3QxOlN0YXRlIHc6c3Q9Im9uIj5PcmVnb248L3N0MTpTdGF0ZT48L3N0MTpwbGFjZT48bzpwPjwv
-bzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvQXV0b1NpZz48Zm9udCBzaXplPTIg
-Y29sb3I9Ymx1ZSBmYWNlPSJUaW1lcyBOZXcgUm9tYW4iPjxzcGFuCnN0eWxlPSdmb250LXNpemU6
-MTAuMHB0O2NvbG9yOmJsdWUnPlVsdHJhIE1vYmlsaXR5IEdyb3VwIC0gUGxhdGZvcm0gU29mdHdh
-cmUKQXJjaGl0ZWN0dXJlPC9zcGFuPjwvZm9udD48bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1z
-b0F1dG9TaWc+PGZvbnQgc2l6ZT0yIGNvbG9yPWJsdWUgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48
-c3BhbgpzdHlsZT0nZm9udC1zaXplOjEwLjBwdDtjb2xvcjpibHVlJz5UZWw6ICsxIDUwMyAyNjQg
-NjIzNyAtIDxzdDE6Q2l0eSB3OnN0PSJvbiI+PHN0MTpwbGFjZQogdzpzdD0ib24iPk1vYmlsZTwv
-c3QxOnBsYWNlPjwvc3QxOkNpdHk+OiArMSA1MDMgNzAzLTczMjc8L3NwYW4+PC9mb250PjxvOnA+
-PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MyBmYWNlPSJUaW1lcyBO
-ZXcgUm9tYW4iPjxzcGFuIHN0eWxlPSdmb250LXNpemU6CjEyLjBwdCc+PG86cD4mbmJzcDs8L286
-cD48L3NwYW4+PC9mb250PjwvcD4KCjwvZGl2PgoKPC9ib2R5PgoKPC9odG1sPgo=
+Regards,
+-Denis
 
---===============4726413729249647578==--
+--===============6654657679780621302==--
 
