@@ -1,48 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============8186667039410702290=="
+Content-Type: multipart/mixed; boundary="===============4248665760604429239=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Terminating emergency calls
-Date: Thu, 12 Aug 2010 13:23:58 -0500
-Message-ID: <4C643C3E.9080803@gmail.com>
-In-Reply-To: <AANLkTik4EnzzKZi6JEk8Ai+it9C4z3YL+Rr95fG51z94@mail.gmail.com>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: Startup sequence for Online / offline mode
+Date: Thu, 12 Aug 2010 15:02:15 -0700
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C90111C20D94@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <1281636412.12579.289.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8186667039410702290==
+--===============4248665760604429239==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+>>> Modem drivers that support Online / offline mode default to offline when
+>>> oFono loads them. Which component is responsible for calling oFono and
+>>> switch the modem to online mode? Will that component be part of MeeGo?
+>> =
 
-On 08/12/2010 12:39 PM, Sjur Br=C3=A6ndeland wrote:
-> Hi Denis.
-> =
+>>This feature is still highly experimental and not all of the details
+>>have been figured out (only ISI supports it today).
+>> =
 
-> I thought of one more issue with voice calls.
-> I don't think it is safe to to terminate emergency calls using
-> release_specific, AT+CHLD=3D1X.
-> At least this don't work for STE modems.
-> =
+>>Our current thinking is to have ConnMan manage the Online state of the
+>>GSM modems (e.g. replace Powered handling with Online handling.)
+>>However, we're still pretty far from that; we'd need to migrate all
+>>existing modem drivers to manage Online/Offline state properly first.
+>
+>I agree with Denis here. The Online state needs to be controlled by
+>ConnMan, but we haven't done that change yet. It would break current
+>users since we haven't migrated all modems to handle Online state
+>properly or emulate it if needed.
 
-> I suggest calls in state active should be terminated using hangup_all
-> or hangup_active.
-> What do you think?
+My understanding was that the Online state would be initialized by a compon=
+ent like Telepathy-ring or some sort of system management daemon to ensure =
+that the dialer is up and running and able to accept calls before the Onlin=
+e state is entered. If ConnMan initializes the Online state, how is it ensu=
+red that all required clients (Dialer, SMS, etc.) have registered already?
 
-So in the case of a single call, the emergency call will be terminated
-using hangup_all / hangup_active anyway.  I have relaxed the single call
-restriction for active calls when hangup_active is provided by the
-driver.  Refer to c7b13ec2fe664b122216a312f2442c9ca26f5f43
+Cheers,
+Waldo
 
-For mpty calls this gets tricky.  I'd like some answers to these questions:
-
-- Can Emergency calls participate in mpty?
-- Can Emergency calls be HELD?
-- How do we recognize Emergency calls?  Is simple string matching of
-numbers in EmergencyNumbers of VoiceCallManager enough?
-
-Regards,
--Denis
-
---===============8186667039410702290==--
+--===============4248665760604429239==--
 
