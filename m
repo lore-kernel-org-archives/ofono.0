@@ -1,38 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============6112368182291272133=="
+Content-Type: multipart/mixed; boundary="===============4726413729249647578=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: maximum number of gsm 7 bit character in a concatenate sms
- message, supported by Ofono
-Date: Thu, 12 Aug 2010 11:59:43 -0500
-Message-ID: <4C64287F.10309@gmail.com>
-In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D40187032190253@irsmsx501.ger.corp.intel.com>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: Startup sequence for Online / offline mode
+Date: Thu, 12 Aug 2010 10:23:21 -0700
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C90111C20B21@orsmsx508.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6112368182291272133==
+--===============4726413729249647578==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alain,
+Modem drivers that support Online / offline mode default to offline when oF=
+ono loads them. Which component is responsible for calling oFono and switch=
+ the modem to online mode? Will that component be part of MeeGo?
 
-On 08/12/2010 08:13 AM, Kouassu, AlainX wrote:
-> All,
-> =
 
->  =
+Cheers,
 
-> =
+Waldo
 
-> Could someone tell me the maximum number  of characters in a
-> concatenated  sms message containing standard gsm 7 bit  characters , I
-> could send using ofono ?
+--
 
-Please see unit/test-sms.c test_prepare_limits() for a comprehensive
-answer to your question.
+Intel Corporation - Hillsboro, Oregon
 
-Regards,
--Denis
+Ultra Mobility Group - Platform Software Architecture
 
---===============6112368182291272133==--
+Tel: +1 503 264 6237 - Mobile: +1 503 703-7327
+
+
+--===============4726413729249647578==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxuczpzdDE9
+InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIgeG1sbnM9Imh0dHA6
+Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiPgoKPGhlYWQ+CjxNRVRBIEhUVFAtRVFVSVY9IkNv
+bnRlbnQtVHlwZSIgQ09OVEVOVD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEg
+bmFtZT1HZW5lcmF0b3IgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTEgKGZpbHRlcmVkIG1lZGl1
+bSkiPgo8bzpTbWFydFRhZ1R5cGUgbmFtZXNwYWNldXJpPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQt
+Y29tOm9mZmljZTpzbWFydHRhZ3MiCiBuYW1lPSJTdGF0ZSIvPgo8bzpTbWFydFRhZ1R5cGUgbmFt
+ZXNwYWNldXJpPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzbWFydHRhZ3MiCiBu
+YW1lPSJDaXR5Ii8+CjxvOlNtYXJ0VGFnVHlwZSBuYW1lc3BhY2V1cmk9InVybjpzY2hlbWFzLW1p
+Y3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIKIG5hbWU9InBsYWNlIi8+CjwhLS1baWYgIW1z
+b10+CjxzdHlsZT4Kc3QxXDoqe2JlaGF2aW9yOnVybCgjZGVmYXVsdCNpZW9vdWkpIH0KPC9zdHls
+ZT4KPCFbZW5kaWZdLS0+CjxzdHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZv
+bnQtZmFjZQoJe2ZvbnQtZmFtaWx5OkJhdGFuZzsKCXBhbm9zZS0xOjIgMyA2IDAgMCAxIDEgMSAx
+IDE7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IlxAQmF0YW5nIjsKCXBhbm9zZS0xOjIgMyA2
+IDAgMCAxIDEgMSAxIDE7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBs
+aS5Nc29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTou
+MDAwMXB0OwoJZm9udC1zaXplOjEyLjBwdDsKCWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4i
+O30KYTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRp
+b246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29s
+b3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnAuTXNvUGxhaW5UZXh0LCBs
+aS5Nc29QbGFpblRleHQsIGRpdi5Nc29QbGFpblRleHQKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJv
+dHRvbTouMDAwMXB0OwoJZm9udC1zaXplOjEwLjBwdDsKCWZvbnQtZmFtaWx5OiJDb3VyaWVyIE5l
+dyI7fQpwLk1zb0F1dG9TaWcsIGxpLk1zb0F1dG9TaWcsIGRpdi5Nc29BdXRvU2lnCgl7bWFyZ2lu
+OjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMi4wcHQ7Cglmb250LWZh
+bWlseToiVGltZXMgTmV3IFJvbWFuIjt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5
+cGU6cGVyc29uYWwtY29tcG9zZTsKCWZvbnQtZmFtaWx5OkFyaWFsOwoJY29sb3I6d2luZG93dGV4
+dDt9CkBwYWdlIFNlY3Rpb24xCgl7c2l6ZTo2MTIuMHB0IDc5Mi4wcHQ7CgltYXJnaW46NzIuMHB0
+IDkwLjBwdCA3Mi4wcHQgOTAuMHB0O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9uMTt9Ci0t
+Pgo8L3N0eWxlPgoKPC9oZWFkPgoKPGJvZHkgbGFuZz1FTi1VUyBsaW5rPWJsdWUgdmxpbms9cHVy
+cGxlPgoKPGRpdiBjbGFzcz1TZWN0aW9uMT4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXpl
+PTIgZmFjZT1BcmlhbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdDsKZm9udC1mYW1pbHk6
+QXJpYWwnPk1vZGVtIGRyaXZlcnMgdGhhdCBzdXBwb3J0IE9ubGluZSAvIG9mZmxpbmUgbW9kZSBk
+ZWZhdWx0IHRvCm9mZmxpbmUgd2hlbiBvRm9ubyBsb2FkcyB0aGVtLiBXaGljaCBjb21wb25lbnQg
+aXMgcmVzcG9uc2libGUgZm9yIGNhbGxpbmcgb0Zvbm8KYW5kIHN3aXRjaCB0aGUgbW9kZW0gdG8g
+b25saW5lIG1vZGU/IFdpbGwgdGhhdCBjb21wb25lbnQgYmUgcGFydCBvZiBNZWVHbz88bzpwPjwv
+bzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBm
+YWNlPUFyaWFsPjxzcGFuIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Owpmb250LWZhbWlseTpBcmlh
+bCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb0F1dG9T
+aWc+PGZvbnQgc2l6ZT0yIGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+PHNwYW4gc3R5bGU9J2ZvbnQt
+c2l6ZToKMTAuMHB0Jz5DaGVlcnMsPC9zcGFuPjwvZm9udD48bzpwPjwvbzpwPjwvcD4KCjxwIGNs
+YXNzPU1zb0F1dG9TaWc+PGZvbnQgc2l6ZT0yIGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+PHNwYW4g
+c3R5bGU9J2ZvbnQtc2l6ZToKMTAuMHB0Jz5XYWxkbzwvc3Bhbj48L2ZvbnQ+PG86cD48L286cD48
+L3A+Cgo8cCBjbGFzcz1Nc29BdXRvU2lnPjxmb250IHNpemU9MiBjb2xvcj1ibHVlIGZhY2U9IlRp
+bWVzIE5ldyBSb21hbiI+PHNwYW4Kc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7Y29sb3I6Ymx1ZSc+
+LS0gPC9zcGFuPjwvZm9udD48bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb0F1dG9TaWc+PGZv
+bnQgc2l6ZT0yIGNvbG9yPWJsdWUgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48c3BhbgpzdHlsZT0n
+Zm9udC1zaXplOjEwLjBwdDtjb2xvcjpibHVlJz5JbnRlbCBDb3Jwb3JhdGlvbiAtIDxzdDE6cGxh
+Y2UgdzpzdD0ib24iPjxzdDE6Q2l0eQogdzpzdD0ib24iPkhpbGxzYm9ybzwvc3QxOkNpdHk+LCA8
+c3QxOlN0YXRlIHc6c3Q9Im9uIj5PcmVnb248L3N0MTpTdGF0ZT48L3N0MTpwbGFjZT48bzpwPjwv
+bzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvQXV0b1NpZz48Zm9udCBzaXplPTIg
+Y29sb3I9Ymx1ZSBmYWNlPSJUaW1lcyBOZXcgUm9tYW4iPjxzcGFuCnN0eWxlPSdmb250LXNpemU6
+MTAuMHB0O2NvbG9yOmJsdWUnPlVsdHJhIE1vYmlsaXR5IEdyb3VwIC0gUGxhdGZvcm0gU29mdHdh
+cmUKQXJjaGl0ZWN0dXJlPC9zcGFuPjwvZm9udD48bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1z
+b0F1dG9TaWc+PGZvbnQgc2l6ZT0yIGNvbG9yPWJsdWUgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48
+c3BhbgpzdHlsZT0nZm9udC1zaXplOjEwLjBwdDtjb2xvcjpibHVlJz5UZWw6ICsxIDUwMyAyNjQg
+NjIzNyAtIDxzdDE6Q2l0eSB3OnN0PSJvbiI+PHN0MTpwbGFjZQogdzpzdD0ib24iPk1vYmlsZTwv
+c3QxOnBsYWNlPjwvc3QxOkNpdHk+OiArMSA1MDMgNzAzLTczMjc8L3NwYW4+PC9mb250PjxvOnA+
+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MyBmYWNlPSJUaW1lcyBO
+ZXcgUm9tYW4iPjxzcGFuIHN0eWxlPSdmb250LXNpemU6CjEyLjBwdCc+PG86cD4mbmJzcDs8L286
+cD48L3NwYW4+PC9mb250PjwvcD4KCjwvZGl2PgoKPC9ib2R5PgoKPC9odG1sPgo=
+
+--===============4726413729249647578==--
 
