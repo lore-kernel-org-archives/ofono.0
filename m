@@ -1,31 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============0030026808550061959=="
+Content-Type: multipart/mixed; boundary="===============5506483312718633409=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Removal of modemconf plugin
-Date: Fri, 13 Aug 2010 14:56:44 +0200
-Message-ID: <1281704204.23399.6.camel@localhost.localdomain>
-In-Reply-To: <AANLkTimO=+LMfoazfJR1Dq8V2yrDPzZi_RkEo5ttWJpW@mail.gmail.com>
+Subject: Re: Enabling/disabling the GPS part of a Huawei EM770W
+Date: Fri, 13 Aug 2010 15:00:05 +0200
+Message-ID: <1281704405.23399.7.camel@localhost.localdomain>
+In-Reply-To: <4C650F0E.2060401@mayer-electronics.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0030026808550061959==
+--===============5506483312718633409==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Florian,
 
-> > The open here is the ISI modem detection, but this should be clearly
-> > done via a Phonet plugin. And also the N900 specific case inside
-> > modemconf is just wrong. This needs to be fixed and just auto-detected
-> > via Phonet or maybe just via RTNL directly.
-> =
+> is it possible to enable / disable the GPS part of a Huawei EM770W 3G =
 
-> Once we get proper n900modem driver tested and integrated, the
-> isimodem stuff can be removed, too.
+> modem through a DBUS command? It is done with the command AT^WPDGP and =
 
-so how close are you with that. I am going to remove modemconf sooner
-than later actually.
+> AT^WPEND on the modem (tested it on PCUI port). Or is it possible to =
+
+> send generic AT commands through DBUS?
+
+we know that we need some sort of power control atom for GPS devices.
+The Ericsson MBM and Option HSO have also GPS chips on board. So far
+nobody has proposed a GPS atom for power control of the GPS device yet.
+So you could be the first one. Go ahead and send a patch.
 
 Regards
 
@@ -33,5 +34,5 @@ Marcel
 
 
 
---===============0030026808550061959==--
+--===============5506483312718633409==--
 
