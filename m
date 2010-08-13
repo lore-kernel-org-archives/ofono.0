@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5878977281199764788=="
+Content-Type: multipart/mixed; boundary="===============2332353946339179089=="
 MIME-Version: 1.0
 From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: [PATCH 0/10] Unregister AT notifiers when removing drivers
-Date: Fri, 13 Aug 2010 08:59:03 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B3528F0C1EB@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <1281611083.12579.249.camel@localhost.localdomain>
+Subject: RE: [PATCH 04/16] emulator: Add APIs to send GAtServer result
+Date: Fri, 13 Aug 2010 09:08:28 +0800
+Message-ID: <33AB447FBD802F4E932063B962385B3528F0C2A9@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1281613963.12579.269.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5878977281199764788==
+--===============2332353946339179089==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,23 +19,39 @@ Marcel Holtmann wrote:
 > Hi Zhenhua,
 > =
 
->> This series unregister AT notifiers in removing various AT modem
->> drivers when modem goes to offline mode. Please review them. =
+>> Defines APIs to send final/intermediate/unsolicited result to DUN
+>> client. ---
+>>  include/emulator.h |    2 ++
+>>  src/emulator.c     |   28 ++++++++++++++++++++++++++++
+>>  src/ofono.h        |   11 +++++++++++
+>>  3 files changed, 41 insertions(+), 0 deletions(-)
+>> =
 
+>> diff --git a/include/emulator.h b/include/emulator.h
+>> index 29e87b9..2a45c65 100644
+>> --- a/include/emulator.h
+>> +++ b/include/emulator.h
+>> @@ -36,6 +36,8 @@ enum ofono_emulator_status {
+>>  	OFONO_EMULATOR_STATUS_DESTROY,
+>>  };
+>> =
+
+>> +enum _GAtServerResult;
+>> +
 > =
 
-> just a heads up here that Denis and I talked about this. And we are
-> going to fix this inside GAtChat in the background for you. Trying to
-> fix this single handed in every atom driver is wrong.
-> =
+> this is not good. It should not be needed outside of GAtChat. Why not
+> just include gatserver.h?
 
-> This approach creates too much of a maintenance burden. And additional
-> code complexity and memory footprint doing it this way. So we have to
-> tackle it in a central place. And that is GAtChat.
+My original purpose is to avoid including another gatserver header in .h fi=
+le.
+So far, we don't include gatchat.h/gatserver.h in oFono core header file.
 
-Thanks for update. Yes. The fix by Denis looks smart and make sense to
-me. By using fa?ade pattern, we don't require user to track
-register/unregister of AT notifers any more.
+> And in addition the _GAt declaration should never be used. Why not use
+> the typedef one?
+
+If we allow to include gatserver.h, this problem is gone. We do have typedef
+in gatserver.h.
 
 > Regards
 > =
@@ -53,5 +69,5 @@ register/unregister of AT notifers any more.
 Regards,
 Zhenhua
 
---===============5878977281199764788==--
+--===============2332353946339179089==--
 
