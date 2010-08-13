@@ -1,60 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============0436442508035930327=="
+Content-Type: multipart/mixed; boundary="===============0487785303497486614=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH 04/16] emulator: Add APIs to send GAtServer result
-Date: Fri, 13 Aug 2010 15:06:03 +0200
-Message-ID: <1281704763.23399.12.camel@localhost.localdomain>
-In-Reply-To: <33AB447FBD802F4E932063B962385B3528F0C2A9@shsmsx501.ccr.corp.intel.com>
+Subject: Re: [PATCH] Emit initial LineIdentification and State.
+Date: Fri, 13 Aug 2010 15:28:05 +0200
+Message-ID: <1281706085.23399.13.camel@localhost.localdomain>
+In-Reply-To: <AANLkTi=_V_+Q2NzjVdahgMQXqHawMrO6A=nLTW0afMox@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0436442508035930327==
+--===============0487785303497486614==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Pekka,
 
-> >> Defines APIs to send final/intermediate/unsolicited result to DUN
-> >> client. ---
-> >>  include/emulator.h |    2 ++
-> >>  src/emulator.c     |   28 ++++++++++++++++++++++++++++
-> >>  src/ofono.h        |   11 +++++++++++
-> >>  3 files changed, 41 insertions(+), 0 deletions(-)
-> >> =
-
-> >> diff --git a/include/emulator.h b/include/emulator.h
-> >> index 29e87b9..2a45c65 100644
-> >> --- a/include/emulator.h
-> >> +++ b/include/emulator.h
-> >> @@ -36,6 +36,8 @@ enum ofono_emulator_status {
-> >>  	OFONO_EMULATOR_STATUS_DESTROY,
-> >>  };
-> >> =
-
-> >> +enum _GAtServerResult;
-> >> +
-> > =
-
-> > this is not good. It should not be needed outside of GAtChat. Why not
-> > just include gatserver.h?
+> >> Allow following of call states without calling GetProperties.
+> >
+> > We decided to solve this a little bit more nicely and address some of
+> > the long standing round-trip issues with the Voicecall API.  Please
+> > check the latest doc/voicecall-api.txt & doc/voicecallmanager-api.txt
+> > for more details.
 > =
 
-> My original purpose is to avoid including another gatserver header in .h =
-file.
-> So far, we don't include gatchat.h/gatserver.h in oFono core header file.
-> =
+> OK, cool. I'll go and update tp-ring..
 
-> > And in addition the _GAt declaration should never be used. Why not use
-> > the typedef one?
-> =
-
-> If we allow to include gatserver.h, this problem is gone. We do have type=
-def
-> in gatserver.h.
-
-good point here, but your way of avoiding this is not really clean
-either. Lets discuss this with Denis and see what he thinks.
+give Denis at least a bit to do the needed core changes. So far we only
+updated the documentation ;)
 
 Regards
 
@@ -62,5 +34,5 @@ Marcel
 
 
 
---===============0436442508035930327==--
+--===============0487785303497486614==--
 
