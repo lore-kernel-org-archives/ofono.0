@@ -1,30 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============2784102345447931736=="
+Content-Type: multipart/mixed; boundary="===============9026813416752816813=="
 MIME-Version: 1.0
 From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: Removal of modemconf plugin
-Date: Fri, 13 Aug 2010 11:52:39 +0300
-Message-ID: <AANLkTimO=+LMfoazfJR1Dq8V2yrDPzZi_RkEo5ttWJpW@mail.gmail.com>
-In-Reply-To: <1281625211.12579.279.camel@localhost.localdomain>
+Subject: Re: [PATCH] Emit initial LineIdentification and State.
+Date: Fri, 13 Aug 2010 12:12:30 +0300
+Message-ID: <AANLkTi=_V_+Q2NzjVdahgMQXqHawMrO6A=nLTW0afMox@mail.gmail.com>
+In-Reply-To: <4C633202.2060407@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2784102345447931736==
+--===============9026813416752816813==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-2010/8/12 Marcel Holtmann <marcel@holtmann.org>:
-> The open here is the ISI modem detection, but this should be clearly
-> done via a Phonet plugin. And also the N900 specific case inside
-> modemconf is just wrong. This needs to be fixed and just auto-detected
-> via Phonet or maybe just via RTNL directly.
+Hi Denis,
 
-Once we get proper n900modem driver tested and integrated, the
-isimodem stuff can be removed, too.
+2010/8/12 Denis Kenzior <denkenz@gmail.com>:
+>> Allow following of call states without calling GetProperties.
+>
+> We decided to solve this a little bit more nicely and address some of
+> the long standing round-trip issues with the Voicecall API. =C2=A0Please
+> check the latest doc/voicecall-api.txt & doc/voicecallmanager-api.txt
+> for more details.
+
+OK, cool. I'll go and update tp-ring..
 
 -- =
 
 Pekka.Pessi mail at nokia.com
 
---===============2784102345447931736==--
+--===============9026813416752816813==--
 
