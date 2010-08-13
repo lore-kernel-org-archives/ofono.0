@@ -1,34 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============5556385710210300767=="
+Content-Type: multipart/mixed; boundary="===============7746730845909144555=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Enabling/disabling the GPS part of a Huawei EM770W
-Date: Fri, 13 Aug 2010 10:38:07 -0500
-Message-ID: <4C6566DF.1020404@gmail.com>
-In-Reply-To: <4C650F0E.2060401@mayer-electronics.de>
+Subject: Re: [PATCH 2/2] huawei: postpone post_sim until SIM is ready
+Date: Fri, 13 Aug 2010 10:38:45 -0500
+Message-ID: <4C656705.1030902@gmail.com>
+In-Reply-To: <87eie353p2.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5556385710210300767==
+--===============7746730845909144555==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Florian,
+Hi Kalle,
 
-On 08/13/2010 04:23 AM, Florian Mayer (Mayer Electronics) wrote:
-> Hello folks,
+On 08/13/2010 03:15 AM, Kalle Valo wrote:
+> Hi Denis,
 > =
 
-> is it possible to enable / disable the GPS part of a Huawei EM770W 3G
-> modem through a DBUS command? It is done with the command AT^WPDGP and
-> AT^WPEND on the modem (tested it on PCUI port). Or is it possible to
-> send generic AT commands through DBUS?
+> Denis Kenzior <denkenz@gmail.com> writes:
+> =
 
-I've added a task for this to the oFono TODO list.  As Marcel mentioned,
-if you wish to have a crack at it, feel free to assign yourself the Owner.
+>> So this problem affects multiple modem families and I think we should
+>> solve it a bit better.  What I'm proposing is to introduce a new
+>> function to include/sim.h.  Something like:
+>>
+>> void ofono_sim_ready_notify(struct ofono_sim *sim);
+>>
+>> The way it should work is as follows:
+>>
+>> When oFono determines the SIM PIN is READY, it checks whether
+>> ofono_sim_ready_notify has been called.  If it hasn't, then it stalls
+>> the initialization procedure (and calling post_sim) until
+>> ofono_sim_ready_notify is called.
+>>
+>> This way if the SIM is not PIN locked, the driver can call sim_inserted
+>> and sim_ready at once.  If the PIN is locked, the driver can notify
+>> sim_ready later.
+> =
+
+> Sounds good to me. Do you want to implement it? ;) I'm a bit busy right
+> now and it might take some time before I can find time for this.
+> =
+
+
+I'm a bit swamped at the moment.  I have added a TODO task for this
+feature so we don't forget.
 
 Regards,
 -Denis
 
---===============5556385710210300767==--
+--===============7746730845909144555==--
 
