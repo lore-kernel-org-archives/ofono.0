@@ -1,33 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============9026813416752816813=="
+Content-Type: multipart/mixed; boundary="===============0790231512050825572=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [PATCH] Emit initial LineIdentification and State.
-Date: Fri, 13 Aug 2010 12:12:30 +0300
-Message-ID: <AANLkTi=_V_+Q2NzjVdahgMQXqHawMrO6A=nLTW0afMox@mail.gmail.com>
-In-Reply-To: <4C633202.2060407@gmail.com>
+From: Florian Mayer (Mayer Electronics) <Florian.Mayer@mayer-electronics.de>
+Subject: Enabling/disabling the GPS part of a Huawei EM770W
+Date: Fri, 13 Aug 2010 11:23:26 +0200
+Message-ID: <4C650F0E.2060401@mayer-electronics.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9026813416752816813==
+--===============0790231512050825572==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hello folks,
 
-2010/8/12 Denis Kenzior <denkenz@gmail.com>:
->> Allow following of call states without calling GetProperties.
->
-> We decided to solve this a little bit more nicely and address some of
-> the long standing round-trip issues with the Voicecall API. =C2=A0Please
-> check the latest doc/voicecall-api.txt & doc/voicecallmanager-api.txt
-> for more details.
+is it possible to enable / disable the GPS part of a Huawei EM770W 3G =
 
-OK, cool. I'll go and update tp-ring..
+modem through a DBUS command? It is done with the command AT^WPDGP and =
 
--- =
+AT^WPEND on the modem (tested it on PCUI port). Or is it possible to =
 
-Pekka.Pessi mail at nokia.com
+send generic AT commands through DBUS?
 
---===============9026813416752816813==--
+Regards
+Florian Mayer
+
+
+--===============0790231512050825572==--
 
