@@ -1,46 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============4401096485150048720=="
+Content-Type: multipart/mixed; boundary="===============8067977210413678720=="
 MIME-Version: 1.0
-From: Naresh Mehta <nareshtechs@gmail.com>
-Subject: Query on Ofono Architecture for multiple RATs
-Date: Fri, 13 Aug 2010 08:46:24 +0200
-Message-ID: <AANLkTi=koUsUv-Zdn0D3XrJtgSKzFscV9ejN93k-d1mn@mail.gmail.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: Startup sequence for Online / offline mode
+Date: Fri, 13 Aug 2010 11:02:07 +0300
+Message-ID: <87vd7f54ao.fsf@potku.valot.fi>
+In-Reply-To: <4C643159.7070409@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4401096485150048720==
+--===============8067977210413678720==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Dear Ofono team,
+Denis Kenzior <denkenz@gmail.com> writes:
 
-Lets suppose that I have a modem which implements various radio access
-technologies like CDMA, WCDMA,  GSM, LTE, etc. The questions I have
-are:
+> On 08/12/2010 12:23 PM, Bastian, Waldo wrote:
+>> Modem drivers that support Online / offline mode default to offline when
+>> oFono loads them. Which component is responsible for calling oFono and
+>> switch the modem to online mode? Will that component be part of MeeGo?
+>
+> This feature is still highly experimental and not all of the details
+> have been figured out (only ISI supports it today).
+>
+> Our current thinking is to have ConnMan manage the Online state of the
+> GSM modems (e.g. replace Powered handling with Online handling.)
+> However, we're still pretty far from that; we'd need to migrate all
+> existing modem drivers to manage Online/Offline state properly first.
 
-- How should this modem look like inside Ofono and be exposed outside of Of=
-ono?
-- Do you expect to have separate modem drivers for CDMA, WCDMA/GSM and
-LTE or a single driver covering these varied RATs would be accepted?
-- Can there be multiple atoms to support the same functionality in
-various RATs (like SMS or emergency calls) or we can modify one atom
-to support all the RATs?
-- I guess connman needs to know of the different connections such a
-modem supports and trigger them accordingly? How might this
-functionality look like?
-- Can the Ofono DBus API differentiate between various RATs based on
-parameters or some new messages needs to be defined if we use a single
-modem driver for multiple RATs?
+As online state is not supported by connman yet, ofono should default to
+online state until connman support is finished. For example, now it's
+impossible to use N900 as a modem with connman because the modem is in
+offline state.
 
-Please advise. Any pointers/suggestions would be of great help.
+Will you accept patches to ofono to change the default state? It can be
+reverted once the connman support is finished.
 
 -- =
 
+Kalle Valo
 
-BR; Naresh
-
-visit me at:
-http://www.naresh.se/
-
---===============4401096485150048720==--
+--===============8067977210413678720==--
 
