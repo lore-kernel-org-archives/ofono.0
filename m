@@ -1,53 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============3330035714344341995=="
+Content-Type: multipart/mixed; boundary="===============5556385710210300767=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Startup sequence for Online / offline mode
-Date: Fri, 13 Aug 2010 10:03:50 -0500
-Message-ID: <4C655ED6.1000801@gmail.com>
-In-Reply-To: <87vd7f54ao.fsf@potku.valot.fi>
+Subject: Re: Enabling/disabling the GPS part of a Huawei EM770W
+Date: Fri, 13 Aug 2010 10:38:07 -0500
+Message-ID: <4C6566DF.1020404@gmail.com>
+In-Reply-To: <4C650F0E.2060401@mayer-electronics.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3330035714344341995==
+--===============5556385710210300767==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+Hi Florian,
 
-On 08/13/2010 03:02 AM, Kalle Valo wrote:
-> Denis Kenzior <denkenz@gmail.com> writes:
+On 08/13/2010 04:23 AM, Florian Mayer (Mayer Electronics) wrote:
+> Hello folks,
 > =
 
->> On 08/12/2010 12:23 PM, Bastian, Waldo wrote:
->>> Modem drivers that support Online / offline mode default to offline when
->>> oFono loads them. Which component is responsible for calling oFono and
->>> switch the modem to online mode? Will that component be part of MeeGo?
->>
->> This feature is still highly experimental and not all of the details
->> have been figured out (only ISI supports it today).
->>
->> Our current thinking is to have ConnMan manage the Online state of the
->> GSM modems (e.g. replace Powered handling with Online handling.)
->> However, we're still pretty far from that; we'd need to migrate all
->> existing modem drivers to manage Online/Offline state properly first.
-> =
+> is it possible to enable / disable the GPS part of a Huawei EM770W 3G
+> modem through a DBUS command? It is done with the command AT^WPDGP and
+> AT^WPEND on the modem (tested it on PCUI port). Or is it possible to
+> send generic AT commands through DBUS?
 
-> As online state is not supported by connman yet, ofono should default to
-> online state until connman support is finished. For example, now it's
-> impossible to use N900 as a modem with connman because the modem is in
-> offline state.
-> =
-
-> Will you accept patches to ofono to change the default state? It can be
-> reverted once the connman support is finished.
-> =
-
-
-I'd be fine with that in the interim.
+I've added a task for this to the oFono TODO list.  As Marcel mentioned,
+if you wish to have a crack at it, feel free to assign yourself the Owner.
 
 Regards,
 -Denis
 
---===============3330035714344341995==--
+--===============5556385710210300767==--
 
