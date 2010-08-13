@@ -1,51 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============7861189990450810506=="
+Content-Type: multipart/mixed; boundary="===============4501765766378672656=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/6] stemodem: Add support for STK.
-Date: Fri, 13 Aug 2010 13:13:33 -0500
-Message-ID: <4C658B4D.6030605@gmail.com>
-In-Reply-To: <1281696794-10891-3-git-send-email-sjur.brandeland@stericsson.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: Startup sequence for Online / offline mode
+Date: Fri, 13 Aug 2010 21:19:02 +0300
+Message-ID: <AANLkTinz3K8naBTnjz-e9LSf_c0O2C4tGxch=x01qoV2@mail.gmail.com>
+In-Reply-To: <4C655ED6.1000801@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7861189990450810506==
+--===============4501765766378672656==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Hi all,
 
-> diff --git a/plugins/ste.c b/plugins/ste.c
-> index f3ae0b2..ab48e18 100644
-> --- a/plugins/ste.c
-> +++ b/plugins/ste.c
-> @@ -54,6 +54,7 @@
->  #include <ofono/voicecall.h>
->  #include <ofono/gprs.h>
->  #include <ofono/gprs-context.h>
-> +#include <ofono/stk.h>
->  #include <drivers/atmodem/vendor.h>
->  =
 
->  #include <drivers/stemodem/caif_socket.h>
-> @@ -241,6 +242,7 @@ static void ste_post_sim(struct ofono_modem *modem)
->  =
+2010/8/13 Denis Kenzior <denkenz@gmail.com>:
+>> As online state is not supported by connman yet, ofono should default to
+>> online state until connman support is finished. For example, now it's
+>> impossible to use N900 as a modem with connman because the modem is in
+>> offline state.
+>>
+>> Will you accept patches to ofono to change the default state? It can be
+>> reverted once the connman support is finished.
 
->  	gprs =3D ofono_gprs_create(modem,
->  			OFONO_VENDOR_STE, "atmodem", data->chat);
-> +	ofono_stk_create(modem, 0, "stemodem", data->chat);
->  	gc =3D ofono_gprs_context_create(modem, 0, "stemodem", data->chat);
->  =
+> I'd be fine with that in the interim.
 
->  	if (gprs && gc)
+FYI, I've submitted online patches against the ofono plugin to the
+connman list. It seems to work fine with my N900 and isimodem driver,
+scratching Kalle's most immediate itches.
 
-If this is indeed just a copy of the mbm driver, can't you simply do
-this part and use ofono_stk_create(modem, 0, "mbmmodem", data->chat) ?
+-- =
 
-It seems wasteful to copy parts around.
+Pekka.Pessi mail at nokia.com
 
-Regards,
--Denis
-
---===============7861189990450810506==--
+--===============4501765766378672656==--
 
