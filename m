@@ -1,44 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8067977210413678720=="
+Content-Type: multipart/mixed; boundary="===============8972298593142827864=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: Startup sequence for Online / offline mode
-Date: Fri, 13 Aug 2010 11:02:07 +0300
-Message-ID: <87vd7f54ao.fsf@potku.valot.fi>
-In-Reply-To: <4C643159.7070409@gmail.com>
+Subject: Re: Removal of modemconf plugin
+Date: Fri, 13 Aug 2010 11:06:40 +0300
+Message-ID: <87r5i35433.fsf@potku.valot.fi>
+In-Reply-To: <1281625211.12579.279.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8067977210413678720==
+--===============8972298593142827864==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Denis Kenzior <denkenz@gmail.com> writes:
+Hi Marcel,
 
-> On 08/12/2010 12:23 PM, Bastian, Waldo wrote:
->> Modem drivers that support Online / offline mode default to offline when
->> oFono loads them. Which component is responsible for calling oFono and
->> switch the modem to online mode? Will that component be part of MeeGo?
+Marcel Holtmann <marcel@holtmann.org> writes:
+
+> Using special udev rules for special devices (in conjunction with the
+> oFono auto-detection rule) make the process of setting up oFono for the
+> system integrator a lot simpler. No manual configuration file patching
+> anymore. Just installation of an additional udev rule.
 >
-> This feature is still highly experimental and not all of the details
-> have been figured out (only ISI supports it today).
->
-> Our current thinking is to have ConnMan manage the Online state of the
-> GSM modems (e.g. replace Powered handling with Online handling.)
-> However, we're still pretty far from that; we'd need to migrate all
-> existing modem drivers to manage Online/Offline state properly first.
+> The open here is the ISI modem detection, but this should be clearly
+> done via a Phonet plugin. And also the N900 specific case inside
+> modemconf is just wrong. This needs to be fixed and just auto-detected
+> via Phonet or maybe just via RTNL directly.
 
-As online state is not supported by connman yet, ofono should default to
-online state until connman support is finished. For example, now it's
-impossible to use N900 as a modem with connman because the modem is in
-offline state.
-
-Will you accept patches to ofono to change the default state? It can be
-reverted once the connman support is finished.
+What about old style serial port modems? How can we configure them if
+you remove modemconf?
 
 -- =
 
 Kalle Valo
 
---===============8067977210413678720==--
+--===============8972298593142827864==--
 
