@@ -1,38 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============8972298593142827864=="
+Content-Type: multipart/mixed; boundary="===============2295307954369141686=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: Removal of modemconf plugin
-Date: Fri, 13 Aug 2010 11:06:40 +0300
-Message-ID: <87r5i35433.fsf@potku.valot.fi>
-In-Reply-To: <1281625211.12579.279.camel@localhost.localdomain>
+Subject: Re: [PATCH 1/2] huawei: poll sim state
+Date: Fri, 13 Aug 2010 11:11:56 +0300
+Message-ID: <87iq3f53ub.fsf@potku.valot.fi>
+In-Reply-To: <4C632D8A.2080704@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8972298593142827864==
+--===============2295307954369141686==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Denis Kenzior <denkenz@gmail.com> writes:
 
-Marcel Holtmann <marcel@holtmann.org> writes:
+> Hi Kalle,
 
-> Using special udev rules for special devices (in conjunction with the
-> oFono auto-detection rule) make the process of setting up oFono for the
-> system integrator a lot simpler. No manual configuration file patching
-> anymore. Just installation of an additional udev rule.
+Hi Denis,
+
+> On 08/10/2010 04:57 AM, Kalle Valo wrote:
 >
-> The open here is the ISI modem detection, but this should be clearly
-> done via a Phonet plugin. And also the N900 specific case inside
-> modemconf is just wrong. This needs to be fixed and just auto-detected
-> via Phonet or maybe just via RTNL directly.
+>> In theory it might be possible to do this better, for example follow
+>> ^BOOT notifications or something, but it's unknown what parameter we
+>> should check for.
 
-What about old style serial port modems? How can we configure them if
-you remove modemconf?
+Do you know if I can use BOOT messages (or something else) here? Polling
+usually creates a load of problems and I would like to avoid it at all
+costs.
+
+>> +		/* SIM is not ready, try again a bit later */
+>> +		data->query_sim_state =3D
+>> +			g_timeout_add_seconds(2, query_sim_state, modem);
+>> +	}
+>
+> Polling the sim state forever might not be a good idea if the SIM is not
+> inserted in the first place.  You might want to give up after several
+> tries or so.
+
+Good point. I'll add a counter for this (unless I can think of something
+else).
 
 -- =
 
 Kalle Valo
 
---===============8972298593142827864==--
+--===============2295307954369141686==--
 
