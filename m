@@ -1,104 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============7835044965281157484=="
+Content-Type: multipart/mixed; boundary="===============5833561748276534433=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCH v4 7/7] plugins/ste: Use SOCK_STREAM for CAIF and enable
- interface specification.
-Date: Mon, 16 Aug 2010 23:12:12 +0200
-Message-ID: <1281993134-3926-7-git-send-email-sjurbren@gmail.com>
-In-Reply-To: <1281993134-3926-6-git-send-email-sjurbren@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH v3 2/7] plugins/ste: SIM - STE registers as MBM to utilize
+ mbm quirks.
+Date: Mon, 16 Aug 2010 22:45:43 +0200
+Message-ID: <1281991543.23399.43.camel@localhost.localdomain>
+In-Reply-To: <1281990950-21705-2-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7835044965281157484==
+--===============5833561748276534433==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+Hi Sjur,
 
----
- plugins/modem.conf  |    5 +++++
- plugins/modemconf.c |    1 +
- plugins/ste.c       |   20 +++++++++++++++++++-
- 3 files changed, 25 insertions(+), 1 deletions(-)
+> >do we really wanna create another vendor quirk here. If both modems
+> >behave identical then just pass OFONO_VENDOR_MBM in the SIM atom
+> >registration and be done with it.
+> =
 
-diff --git a/plugins/modem.conf b/plugins/modem.conf
-index 66bf932..b577114 100644
---- a/plugins/modem.conf
-+++ b/plugins/modem.conf
-@@ -44,3 +44,8 @@
- #[n900]
- #Driver=3Dn900modem
- #Interface=3Dphonet0
-+
-+# Sample STE modem
-+#[ste]
-+#Interface=3DcfttyS0
-+#Driver=3Dste
-diff --git a/plugins/modemconf.c b/plugins/modemconf.c
-index 3747cd9..d7b1354 100644
---- a/plugins/modemconf.c
-+++ b/plugins/modemconf.c
-@@ -138,6 +138,7 @@ static struct {
- 	{ "g1",		set_device	},
- 	{ "wavecom",	set_device	},
- 	{ "ste",	set_device	},
-+	{ "ste",	set_interface	},
- 	{ "calypso",	set_device	},
- 	{ "palmpre",	set_device	},
- 	{ "isimodem",	set_interface	},
-diff --git a/plugins/ste.c b/plugins/ste.c
-index 5a71945..e737bbb 100644
---- a/plugins/ste.c
-+++ b/plugins/ste.c
-@@ -30,6 +30,7 @@
- #include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
-+#include <net/if.h>
- =
+> Re-use the MBM quirk rather than adding STE quirks in atmodem/sim.c
+> =
 
- #include <glib.h>
- #include <gatchat.h>
-@@ -171,14 +172,31 @@ static int ste_enable(struct ofono_modem *modem)
- 	if (!device) {
- 		struct sockaddr_caif addr;
- 		int err;
-+		const char *interface;
- =
+> ---
+>  plugins/ste.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> =
 
- 		/* Create a CAIF socket for AT Service */
--		fd =3D socket(AF_CAIF, SOCK_SEQPACKET, CAIFPROTO_AT);
-+		fd =3D socket(AF_CAIF, SOCK_STREAM, CAIFPROTO_AT);
- 		if (fd < 0) {
- 			ofono_error("Failed to create CAIF socket for AT");
- 			return -EIO;
- 		}
- =
+> diff --git a/plugins/ste.c b/plugins/ste.c
+> index 9cb49d3..9d9afd6 100644
+> --- a/plugins/ste.c
+> +++ b/plugins/ste.c
+> @@ -214,7 +214,7 @@ static void ste_pre_sim(struct ofono_modem *modem)
+>  =
 
-+		/* Bind CAIF socket to specified interface */
-+		interface =3D ofono_modem_get_string(modem, "Interface");
-+		if (interface) {
-+			struct ifreq ifreq;
-+			memset(&ifreq, 0, sizeof(ifreq));
-+			strcpy(ifreq.ifr_name, interface);
-+			err =3D setsockopt(fd, SOL_SOCKET,
-+					SO_BINDTODEVICE, &ifreq, sizeof(ifreq));
-+			if (err < 0) {
-+				ofono_error("Failed to bind caif socket "
-+					"to interface");
-+				close(fd);
-+				return err;
-+			}
-+		}
-+
- 		memset(&addr, 0, sizeof(addr));
- 		addr.family =3D AF_CAIF;
- 		addr.u.at.type =3D CAIF_ATTYPE_PLAIN;
--- =
+>  	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
+>  	sim =3D ofono_sim_create(modem, 0, "atmodem", data->chat);
+> -	ofono_voicecall_create(modem, 0, "stemodem", data->chat);
+> +	ofono_voicecall_create(modem, OFONO_VENDOR_MBM, "stemodem", data->chat);
 
-1.6.3.3
+this looks wrong. You are using a STE specific modem driver already. Why
+do you need to pass a quirk here as well.
+
+Did I confuse you with one of my other replies or did I confuse myself
+here in the review?
+
+Regards
+
+Marcel
 
 
---===============7835044965281157484==--
+
+--===============5833561748276534433==--
 
