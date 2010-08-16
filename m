@@ -1,62 +1,186 @@
-Content-Type: multipart/mixed; boundary="===============7584561360847675094=="
+Content-Type: multipart/mixed; boundary="===============2637344528857815537=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjur.brandeland@stericsson.com>
-Subject: [PATCHv2 4/7] stemodem: Add Radio Settings to STE Modem
-Date: Mon, 16 Aug 2010 15:54:05 +0200
-Message-ID: <1281966848-14553-5-git-send-email-sjur.brandeland@stericsson.com>
+Subject: [PATCHv2 6/7] stemodem: Use RTNL for creating CAIF interface
+Date: Mon, 16 Aug 2010 15:54:07 +0200
+Message-ID: <1281966848-14553-7-git-send-email-sjur.brandeland@stericsson.com>
 In-Reply-To: <1281966848-14553-1-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7584561360847675094==
+--===============2637344528857815537==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+CAIF in Linux kernel 2.6.35 must use RTNL for configuring
+CAIF interfaces.
 ---
-Changes since last patch set:
-o Moved updates to plugins/ste to separate patch.
-o Updated error handling.
-o Style issues.
-
-
- Makefile.am                       |    4 +-
- drivers/stemodem/radio-settings.c |  223 +++++++++++++++++++++++++++++++++=
+ Makefile.am                     |    4 +-
+ drivers/stemodem/gprs-context.c |   51 +++++--
+ drivers/stemodem/rtnl.c         |  318 +++++++++++++++++++++++++++++++++++=
 ++++
- drivers/stemodem/stemodem.c       |    2 +
- drivers/stemodem/stemodem.h       |    2 +
- 4 files changed, 230 insertions(+), 1 deletions(-)
- create mode 100644 drivers/stemodem/radio-settings.c
+ drivers/stemodem/rtnl.h         |   24 +++
+ 4 files changed, 383 insertions(+), 14 deletions(-)
+ create mode 100644 drivers/stemodem/rtnl.c
+ create mode 100644 drivers/stemodem/rtnl.h
 
 diff --git a/Makefile.am b/Makefile.am
-index 2f0b745..3e1efde 100644
+index 3e1efde..1298fb9 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -204,7 +204,9 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/stemodem/voicecall.c \
+@@ -205,7 +205,9 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
  			drivers/stemodem/gprs-context.c \
  			drivers/stemodem/caif_socket.h \
--			drivers/stemodem/if_caif.h
-+			drivers/stemodem/if_caif.h \
-+			drivers/stemodem/radio-settings.c
-+
+ 			drivers/stemodem/if_caif.h \
+-			drivers/stemodem/radio-settings.c
++			drivers/stemodem/radio-settings.c \
++			drivers/stemodem/rtnl.h \
++			drivers/stemodem/rtnl.c
+ =
+
  =
 
  builtin_modules +=3D phonesim
- builtin_sources +=3D plugins/phonesim.c
-diff --git a/drivers/stemodem/radio-settings.c b/drivers/stemodem/radio-set=
-tings.c
+diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
+t.c
+index ace9d6e..591df33 100644
+--- a/drivers/stemodem/gprs-context.c
++++ b/drivers/stemodem/gprs-context.c
+@@ -43,8 +43,9 @@
+ =
+
+ #include "gatchat.h"
+ #include "gatresult.h"
++
++#include "rtnl.h"
+ #include "stemodem.h"
+-#include "caif_socket.h"
+ #include "if_caif.h"
+ =
+
+ #define MAX_CAIF_DEVICES 7
+@@ -68,7 +69,8 @@ struct conn_info {
+ 	unsigned int cid;
+ 	unsigned int device;
+ 	unsigned int channel_id;
+-	char interface[10];
++	char ifname[16];
++	int ifindex;
+ };
+ =
+
+ struct eppsd_response {
+@@ -171,17 +173,40 @@ static struct conn_info *conn_info_create(unsigned in=
+t device,
+ /*
+  * Creates a new IP interface for CAIF.
+  */
+-static gboolean caif_if_create(const char *interface, unsigned int connid)
++static gboolean caif_if_create(struct conn_info *conn)
+ {
+-	return FALSE;
++
++	strcpy(conn->ifname, "caif%d");
++	if (rtnl_create_caif_interface(IFLA_CAIF_IPV4_CONNID,
++					conn->channel_id,
++					conn->ifname,
++					&conn->ifindex) < 0) {
++		DBG("Failed to create IP interface for CAIF");
++		return FALSE;
++	}
++
++	DBG("created CAIF interface ch:%d ifname:%s ifindex:%d\n",
++		conn->channel_id, conn->ifname, conn->ifindex);
++
++	return TRUE;
+ }
+ =
+
+ /*
+  * Removes IP interface for CAIF.
+  */
+-static gboolean caif_if_remove(const char *interface, unsigned int connid)
++static gboolean caif_if_remove(struct conn_info *conn)
+ {
+-	return FALSE;
++
++	if (rtnl_delete_caif_interface(conn->ifindex) < 0) {
++		ofono_error("Failed to delete caif interface %s",
++			conn->ifname);
++		return FALSE;
++	}
++
++	DBG("removed CAIF interface ch:%d ifname:%s ifindex:%d\n",
++		conn->channel_id, conn->ifname, conn->ifindex);
++
++	return TRUE;
+ }
+ =
+
+ static void ste_eppsd_down_cb(gboolean ok, GAtResult *result,
+@@ -211,9 +236,9 @@ static void ste_eppsd_down_cb(gboolean ok, GAtResult *r=
+esult,
+ =
+
+ 	conn =3D l->data;
+ =
+
+-	if (!caif_if_remove(conn->interface, conn->channel_id)) {
++	if (!caif_if_remove(conn)) {
+ 		DBG("Failed to remove caif interface %s.",
+-				conn->interface);
++				conn->ifname);
+ 	}
+ =
+
+ 	conn->cid =3D 0;
+@@ -283,16 +308,16 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+ 	dns[1] =3D rsp.dns_server2;
+ 	dns[2] =3D NULL;
+ =
+
+-	sprintf(conn->interface, "caif%u", conn->device);
++	sprintf(conn->ifname, "caif%u", conn->device);
+ =
+
+-	if (!caif_if_create(conn->interface, conn->channel_id)) {
++	if (!caif_if_create(conn)) {
+ 		ofono_error("Failed to create caif interface %s.",
+-				conn->interface);
++				conn->ifname);
+ 		CALLBACK_WITH_SUCCESS(cb, NULL, FALSE, rsp.ip_address,
+ 				rsp.subnet_mask, rsp.default_gateway,
+ 				dns, cbd->data);
+ 	} else {
+-		CALLBACK_WITH_SUCCESS(cb, conn->interface,
++		CALLBACK_WITH_SUCCESS(cb, conn->ifname,
+ 				FALSE, rsp.ip_address, rsp.subnet_mask,
+ 				rsp.default_gateway, dns, cbd->data);
+ 	}
+@@ -544,7 +569,7 @@ static void ste_gprs_context_remove(struct ofono_gprs_c=
+ontext *gc)
+ static struct ofono_gprs_context_driver driver =3D {
+ 	.name			=3D "stemodem",
+ 	.probe			=3D ste_gprs_context_probe,
+-	.remove			=3D ste_gprs_context_remove,
++	.remove		=3D ste_gprs_context_remove,
+ 	.activate_primary	=3D ste_gprs_activate_primary,
+ 	.deactivate_primary	=3D ste_gprs_deactivate_primary,
+ };
+diff --git a/drivers/stemodem/rtnl.c b/drivers/stemodem/rtnl.c
 new file mode 100644
-index 0000000..0c5b438
+index 0000000..7990810
 --- /dev/null
-+++ b/drivers/stemodem/radio-settings.c
-@@ -0,0 +1,223 @@
++++ b/drivers/stemodem/rtnl.c
+@@ -0,0 +1,318 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
 + *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
 + *  Copyright (C) 2010 ST-Ericsson AB.
++ *
 + *  This program is free software; you can redistribute it and/or modify
 + *  it under the terms of the GNU General Public License version 2 as
 + *  published by the Free Software Foundation.
@@ -77,233 +201,338 @@ index 0000000..0c5b438
 +#include <config.h>
 +#endif
 +
-+#define _GNU_SOURCE
 +#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <errno.h>
++#include <unistd.h>
++#include <net/if_arp.h>
++#include <linux/rtnetlink.h>
 +
 +#include <glib.h>
 +
 +#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/radio-settings.h>
 +
-+#include "gatchat.h"
-+#include "gatresult.h"
++#include "if_caif.h"
++#include "rtnl.h"
 +
-+#include "stemodem.h"
++#define NLMSG_TAIL(nmsg) \
++	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
 +
-+static const char *none_prefix[] =3D { NULL };
-+static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
-+
-+struct radio_settings_data {
-+	GAtChat *chat;
++struct iplink_req {
++	struct nlmsghdr n;
++	struct ifinfomsg i;
++	char pad[1024];
++	int ifindex;
++	char ifname[16];
++	int result;
 +};
 +
-+enum ste_radio_mode {
-+	STE_RADIO_OFF =3D 0,
-+	STE_RADIO_ON =3D 1,
-+	STE_RADIO_FLIGHT_MODE =3D 4,
-+	STE_RADIO_GSM_ONLY =3D 5,
-+	STE_RADIO_WCDMA_ONLY =3D 6
-+};
++static guint32 ipconfig_seqnr =3D 1;
 +
-+static gboolean ste_mode_to_ofono_mode(enum ste_radio_mode stemode,
-+				enum ofono_radio_access_mode *mode)
++static gboolean get_ifname(struct ifinfomsg *msg, int bytes,
++			const char **ifname)
 +{
-+	switch (stemode) {
-+	case STE_RADIO_ON:
-+		*mode =3D OFONO_RADIO_ACCESS_MODE_ANY;
-+		return TRUE;
-+	case STE_RADIO_GSM_ONLY:
-+		*mode =3D OFONO_RADIO_ACCESS_MODE_GSM;
-+		return TRUE;
-+	case STE_RADIO_WCDMA_ONLY:
-+		*mode =3D OFONO_RADIO_ACCESS_MODE_UMTS;
-+		return TRUE;
-+	default:
-+		return FALSE;
-+	}
++	struct rtattr *attr;
++
++	for (attr =3D IFLA_RTA(msg); RTA_OK(attr, bytes);
++			attr =3D RTA_NEXT(attr, bytes))
++
++		if (attr->rta_type =3D=3D IFLA_IFNAME &&
++				ifname !=3D NULL) {
++			*ifname =3D RTA_DATA(attr);
++			return TRUE;
++		}
++
++	return FALSE;
 +}
 +
-+static gboolean ofono_mode_to_ste_mode(enum ofono_radio_access_mode mode,
-+				enum ste_radio_mode *stemode)
++static void handle_rtnl_response(struct iplink_req *req, unsigned short ty=
+pe,
++					int index, unsigned flags,
++					unsigned change, struct ifinfomsg *msg,
++					int bytes)
 +{
-+	switch (mode) {
-+	case OFONO_RADIO_ACCESS_MODE_ANY:
-+		*stemode =3D STE_RADIO_ON;
-+		return TRUE;
-+	case OFONO_RADIO_ACCESS_MODE_GSM:
-+		*stemode =3D STE_RADIO_GSM_ONLY;
-+		return TRUE;
++	const char *ifname =3D NULL;
 +
-+	case OFONO_RADIO_ACCESS_MODE_UMTS:
-+		*stemode =3D STE_RADIO_WCDMA_ONLY;
-+		return TRUE;
-+	default:
-+		return FALSE;
-+	}
++	get_ifname(msg, bytes, &ifname);
++	req->ifindex =3D index;
++	strncpy(req->ifname, ifname,
++			sizeof(req->ifname));
++	req->ifname[sizeof(req->ifname)-1] =3D '\0';
 +}
 +
-+static void sterat_query_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
++static int send_iplink_req(int sk, struct iplink_req *req)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_radio_settings_rat_mode_query_cb_t cb =3D cbd->cb;
-+	enum ofono_radio_access_mode mode;
-+	GAtResultIter iter;
-+	int value;
++	struct sockaddr_nl addr;
 +
-+	decode_at_error(&error, g_at_result_final_response(result));
++	memset(&addr, 0, sizeof(addr));
++	addr.nl_family =3D AF_NETLINK;
 +
-+	if (!ok) {
-+		cb(&error, -1, cbd->data);
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CFUN:"))
-+		goto err;
-+
-+	if (!g_at_result_iter_next_number(&iter, &value))
-+		goto err;
-+
-+	if (!ste_mode_to_ofono_mode(value, &mode))
-+		goto err;
-+
-+	CALLBACK_WITH_SUCCESS(cb, mode, cbd->data);
-+
-+	return;
-+
-+err:
-+	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++	return sendto(sk, req, req->n.nlmsg_len, 0,
++			(struct sockaddr *) &addr, sizeof(addr));
 +}
 +
-+static void ste_query_rat_mode(struct ofono_radio_settings *rs,
-+				ofono_radio_settings_rat_mode_query_cb_t cb,
-+				void *data)
++static int parse_rtnl_message(void *buf, size_t len, struct iplink_req *re=
+q)
 +{
-+	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
++	struct ifinfomsg *msg;
 +
-+	if (g_at_chat_send(rsd->chat, "AT+CFUN?", cfun_prefix,
-+					sterat_query_cb, cbd, g_free) =3D=3D 0) {
-+		CALLBACK_WITH_FAILURE(cb, -1, data);
-+		g_free(cbd);
++	while (len > 0) {
++		struct nlmsghdr *hdr =3D buf;
++		struct nlmsgerr *err;
++
++		if (!NLMSG_OK(hdr, len))
++			break;
++
++		if (hdr->nlmsg_type =3D=3D NLMSG_ERROR) {
++			err =3D NLMSG_DATA(hdr);
++			DBG("RTNL failed: seq:%d error %d (%s)",
++					hdr->nlmsg_seq, err->error,
++					strerror(-err->error));
++			req->result =3D err->error;
++			return err->error;
++		}
++
++		else if (hdr->nlmsg_type =3D=3D RTM_NEWLINK ||
++			hdr->nlmsg_type =3D=3D RTM_DELLINK) {
++			msg =3D (struct ifinfomsg *) NLMSG_DATA(hdr);
++			handle_rtnl_response(req, msg->ifi_type,
++					msg->ifi_index, msg->ifi_flags,
++					msg->ifi_change, msg,
++					IFA_PAYLOAD(hdr));
++			break;
++		} else
++			return -1;
++
++		len -=3D hdr->nlmsg_len;
++		buf +=3D hdr->nlmsg_len;
 +	}
++	return 1;
 +}
 +
-+static void sterat_modify_cb(gboolean ok, GAtResult *result, gpointer user=
-_data)
++static int netlink_get_response(int sk, struct iplink_req *req)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_radio_settings_rat_mode_set_cb_t cb =3D cbd->cb;
++	unsigned char buf[4096];
++	int ret;
 +
-+	decode_at_error(&error, g_at_result_final_response(result));
++	memset(buf, 0, sizeof(buf));
 +
-+	if (!ok) {
-+		cb(&error, -1, cbd->data);
-+		return;
-+	}
++	do {
++		ret =3D read(sk, buf, sizeof(buf));
++		if (ret < 0)
++			break;
++		ret =3D parse_rtnl_message(buf, sizeof(buf), req);
++	} while (ret > 0);
 +
-+	CALLBACK_WITH_SUCCESS(cb, cbd->data);
++	return ret;
 +}
 +
-+static void ste_set_rat_mode(struct ofono_radio_settings *rs,
-+				enum ofono_radio_access_mode mode,
-+				ofono_radio_settings_rat_mode_set_cb_t cb,
-+				void *data)
++static int add_attribute(struct nlmsghdr *n, int maxlen, int type,
++			const void *data, int datalen)
 +{
-+	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char buf[20];
-+	enum ste_radio_mode value;
++	int len =3D RTA_LENGTH(datalen);
++	struct rtattr *rta;
 +
-+	if (!ofono_mode_to_ste_mode(mode, &value)) {
-+		CALLBACK_WITH_FAILURE(cb, data);
-+		g_free(cbd);
-+		return;
++	if ((int)(NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len)) > maxlen) {
++		DBG("attribute to large for message %d %d %d\n",
++				n->nlmsg_len, len, maxlen);
++		return -1;
 +	}
 +
-+	snprintf(buf, sizeof(buf), "AT+CFUN=3D%u", value);
-+
-+	if (g_at_chat_send(rsd->chat, buf, none_prefix,
-+					sterat_modify_cb, cbd, g_free) =3D=3D 0) {
-+		CALLBACK_WITH_FAILURE(cb, data);
-+		g_free(cbd);
-+	}
-+}
-+
-+static int ste_radio_settings_probe(struct ofono_radio_settings *rs,
-+					unsigned int vendor, void *data)
-+{
-+	GAtChat *chat =3D data;
-+	struct radio_settings_data *rsd;
-+	rsd =3D g_try_new0(struct radio_settings_data, 1);
-+	if (!rsd)
-+		return -ENOMEM;
-+
-+	rsd->chat =3D chat;
-+
-+	ofono_radio_settings_set_data(rs, rsd);
-+	ofono_radio_settings_register(rs);
++	rta =3D NLMSG_TAIL(n);
++	rta->rta_type =3D type;
++	rta->rta_len =3D len;
++	memcpy(RTA_DATA(rta), data, datalen);
++	n->nlmsg_len =3D NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
 +
 +	return 0;
 +}
 +
-+static void ste_radio_settings_remove(struct ofono_radio_settings *rs)
++static int create_caif_interface(int sk, struct iplink_req *req,
++					int connection_type, char *ifname,
++					int nsapi, int loop_enabled)
 +{
-+	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
-+	ofono_radio_settings_set_data(rs, NULL);
-+	g_free(rsd);
++	char type[] =3D "caif";
++	struct rtattr *linkinfo;
++	struct rtattr *data;
++
++	req->n.nlmsg_len =3D NLMSG_LENGTH(sizeof(struct ifinfomsg));
++	req->n.nlmsg_flags =3D NLM_F_REQUEST|NLM_F_CREATE|NLM_F_EXCL|NLM_F_ACK;
++	req->n.nlmsg_type =3D RTM_NEWLINK;
++	req->n.nlmsg_seq =3D ipconfig_seqnr++;
++	req->i.ifi_family =3D AF_UNSPEC;
++
++	linkinfo =3D NLMSG_TAIL(&req->n);
++
++	add_attribute(&req->n, sizeof(*req), IFLA_LINKINFO,
++			NULL, 0);
++
++	add_attribute(&req->n, sizeof(*req), IFLA_INFO_KIND,
++			type, strlen(type));
++
++	add_attribute(&req->n, sizeof(*req), IFLA_IFNAME,
++			ifname, strlen(ifname));
++
++	data =3D NLMSG_TAIL(&req->n);
++	add_attribute(&req->n, sizeof(*req), IFLA_INFO_DATA,
++			NULL, 0);
++
++	if (connection_type =3D=3D IFLA_CAIF_IPV4_CONNID)
++		add_attribute(&req->n, sizeof(*req),
++				IFLA_CAIF_IPV4_CONNID, &nsapi, sizeof(nsapi));
++	else if (connection_type =3D=3D IFLA_CAIF_IPV6_CONNID)
++		add_attribute(&req->n, sizeof(*req),
++				IFLA_CAIF_IPV6_CONNID, &nsapi, sizeof(nsapi));
++	else {
++		DBG("unsupported linktype\n");
++		g_free(req);
++		return -1;
++	}
++
++	if (loop_enabled) {
++		int loop;
++		add_attribute(&req->n, sizeof(*req),
++				IFLA_CAIF_LOOPBACK, &loop, sizeof(loop));
++	}
++
++	data->rta_len =3D (void *)NLMSG_TAIL(&req->n) - (void *)data;
++
++	linkinfo->rta_len =3D (void *)NLMSG_TAIL(&req->n) - (void *)linkinfo;
++
++	return send_iplink_req(sk, req);
 +}
 +
-+static struct ofono_radio_settings_driver driver =3D {
-+	.name			=3D "stemodem",
-+	.probe			=3D ste_radio_settings_probe,
-+	.remove		=3D ste_radio_settings_remove,
-+	.query_rat_mode	=3D ste_query_rat_mode,
-+	.set_rat_mode		=3D ste_set_rat_mode
-+};
-+
-+void ste_radio_settings_init()
++static int destroy_caif_interface(int sk, struct iplink_req *req, int ifin=
+dex)
 +{
-+	ofono_radio_settings_driver_register(&driver);
++
++	req->n.nlmsg_len =3D NLMSG_LENGTH(sizeof(struct ifinfomsg));
++	req->n.nlmsg_flags =3D NLM_F_REQUEST|NLM_F_CREATE|NLM_F_EXCL|NLM_F_ACK;
++	req->n.nlmsg_type =3D RTM_DELLINK;
++	req->n.nlmsg_seq =3D ipconfig_seqnr++;
++	req->i.ifi_family =3D AF_UNSPEC;
++	req->i.ifi_index =3D ifindex;
++
++	return send_iplink_req(sk, req);
 +}
 +
-+void ste_radio_settings_exit()
++static int rtnl_init(void)
 +{
-+	ofono_radio_settings_driver_unregister(&driver);
++	struct sockaddr_nl addr;
++	int sk, ret;
++
++	sk =3D socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
++	if (sk < 0)
++		return sk;
++
++	memset(&addr, 0, sizeof(addr));
++	addr.nl_family =3D AF_NETLINK;
++	addr.nl_groups =3D RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV4_ROUTE;
++
++	ret =3D bind(sk, (struct sockaddr *) &addr, sizeof(addr));
++
++	if (ret < 0) {
++		close(sk);
++		return ret;
++	}
++
++	return sk;
 +}
-diff --git a/drivers/stemodem/stemodem.c b/drivers/stemodem/stemodem.c
-index 0ba7878..15c6c53 100644
---- a/drivers/stemodem/stemodem.c
-+++ b/drivers/stemodem/stemodem.c
-@@ -39,6 +39,7 @@ static int stemodem_init(void)
- 	ste_voicecall_init();
- 	ste_gprs_context_init();
- 	mbm_stk_init();
-+	ste_radio_settings_init();
- =
-
- 	return 0;
- }
-@@ -48,6 +49,7 @@ static void stemodem_exit(void)
- 	ste_voicecall_exit();
- 	ste_gprs_context_exit();
- 	mbm_stk_exit();
-+	ste_radio_settings_exit();
- }
- =
-
- OFONO_PLUGIN_DEFINE(stemodem, "STE modem driver", VERSION,
-
++
++/* Note ifname is in/out and must be minimum size 16 */
++int rtnl_create_caif_interface(int type, int conn_id, char ifname[16],
++					int *ifindex)
++{
++	int sk, ret;
++	int loop =3D 0;
++	struct iplink_req req;
++
++	memset(&req, 0, sizeof(req));
++	*ifindex =3D -1;
++
++	sk =3D rtnl_init();
++	ret =3D sk;
++	if (sk < 0)
++		goto out;
++
++	ret =3D create_caif_interface(sk, &req, type, ifname, conn_id, loop);
++	if (ret < 0)
++		goto out;
++
++	ret =3D netlink_get_response(sk, &req);
++	if (ret < 0)
++		goto out;
++
++	strncpy(ifname, req.ifname, sizeof(req.ifname));
++	ifname[sizeof(req.ifname)-1] =3D '\0';
++	*ifindex =3D req.ifindex;
++	ret =3D req.result;
++
++out:
++	close(sk);
++	return ret;
++}
++
++int rtnl_delete_caif_interface(int ifid)
++{
++	struct iplink_req req;
++	int sk, ret;
++
++	memset(&req, 0, sizeof(req));
++
++	sk =3D rtnl_init();
++	ret =3D sk;
++	if (sk < 0)
++		goto out;
++
++	ret =3D destroy_caif_interface(sk, &req, ifid);
++	if (ret < 0)
++		goto out;
++
++	ret =3D netlink_get_response(sk, &req);
++	if (ret < 0)
++		goto out;
++
++	ret =3D req.result;
++
++out:
++	close(sk);
++	return ret;
++}
+diff --git a/drivers/stemodem/rtnl.h b/drivers/stemodem/rtnl.h
+new file mode 100644
+index 0000000..8f6a84f
+--- /dev/null
++++ b/drivers/stemodem/rtnl.h
+@@ -0,0 +1,24 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 ST-Ericsson AB.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++extern int rtnl_create_caif_interface(int type, int conn_id, char ifname[1=
+6],
++					int *ifindex);
++extern int rtnl_delete_caif_interface(int ifid);
 -- =
 
 1.6.3.3
 
 
---===============7584561360847675094==--
+--===============2637344528857815537==--
 
