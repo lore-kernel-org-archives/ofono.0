@@ -1,60 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1936130798607233131=="
+Content-Type: multipart/mixed; boundary="===============4531677334792514528=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCHv2 2/7] atmodem: Enable STE usage of AT*EPEV and AT*EPEE
- for PIN handling.
-Date: Mon, 16 Aug 2010 16:03:13 +0200
-Message-ID: <1281967393.23399.38.camel@localhost.localdomain>
-In-Reply-To: <1281966848-14553-3-git-send-email-sjur.brandeland@stericsson.com>
+Subject: Re: [PATCHv2 4/7] stemodem: Add Radio Settings to STE Modem
+Date: Mon, 16 Aug 2010 16:05:24 +0200
+Message-ID: <1281967524.23399.40.camel@localhost.localdomain>
+In-Reply-To: <1281966848-14553-5-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1936130798607233131==
+--===============4531677334792514528==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Sjur,
 
->  drivers/atmodem/sim.c |    9 ++++++---
->  1 files changed, 6 insertions(+), 3 deletions(-)
+> Changes since last patch set:
+> o Moved updates to plugins/ste to separate patch.
+> o Updated error handling.
+> o Style issues.
 > =
 
-> diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-> index eb40ad7..8e7c403 100644
-> --- a/drivers/atmodem/sim.c
-> +++ b/drivers/atmodem/sim.c
-> @@ -567,10 +567,12 @@ static void at_pin_send_cb(gboolean ok, GAtResult *=
-result,
->  	decode_at_error(&error, g_at_result_final_response(result));
->  =
+> =
 
->  	/*
-> -	 * On the MBM modem, AT+CPIN? keeps returning SIM PIN for a moment
-> -	 * after successful AT+CPIN=3D"..", but sends *EPEV when that changes.
-> +	 * On the MBM and STE modem, AT+CPIN? keeps returning SIM PIN for a
-> +	 * moment after successful AT+CPIN=3D"..", but sends *EPEV when that
-> +	 * changes.
->  	 */
-> -	if (ok && sd->vendor =3D=3D OFONO_VENDOR_MBM) {
-> +	if (ok && (sd->vendor =3D=3D OFONO_VENDOR_MBM ||
-> +			sd->vendor =3D=3D OFONO_VENDOR_STE)) {
->  		sd->epev_id =3D g_at_chat_register(sd->chat, "*EPEV",
->  							at_epev_notify,
->  							FALSE, cbd, g_free);
-> @@ -817,6 +819,7 @@ static int at_sim_probe(struct ofono_sim *sim, unsign=
-ed int vendor,
->  	case OFONO_VENDOR_WAVECOM:
->  		g_at_chat_add_terminator(sd->chat, "+CPIN:", 6, TRUE);
->  		break;
-> +	case OFONO_VENDOR_STE:
->  	case OFONO_VENDOR_MBM:
->  		g_at_chat_send(sd->chat, "AT*EPEE=3D1", NULL, NULL, NULL, NULL);
->  		break;
+>  Makefile.am                       |    4 +-
+>  drivers/stemodem/radio-settings.c |  223 +++++++++++++++++++++++++++++++=
+++++++
+>  drivers/stemodem/stemodem.c       |    2 +
+>  drivers/stemodem/stemodem.h       |    2 +
+>  4 files changed, 230 insertions(+), 1 deletions(-)
+>  create mode 100644 drivers/stemodem/radio-settings.c
 
-do we really wanna create another vendor quirk here. If both modems
-behave identical then just pass OFONO_VENDOR_MBM in the SIM atom
-registration and be done with it.
+is this identical to how MBM does it? If yes, then I prefer we add this
+to drivers/mbmmodem/ and you just reference it. If not then I like to
+see the MBM version of this and where it actually differs. Maybe a MBM
+version with a STE quirk is better.
+
+I prefer doing this in MBM since that modem driver was just the first.
+There is no other preference here ;)
 
 Regards
 
@@ -62,5 +45,5 @@ Marcel
 
 
 
---===============1936130798607233131==--
+--===============4531677334792514528==--
 
