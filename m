@@ -1,99 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============1305853557487399542=="
+Content-Type: multipart/mixed; boundary="===============1936130798607233131=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCHv2 1/7] stemodem: Add support for STK by including MBM
- implementation.
-Date: Mon, 16 Aug 2010 16:01:27 +0200
-Message-ID: <1281967287.23399.36.camel@localhost.localdomain>
-In-Reply-To: <1281966848-14553-2-git-send-email-sjur.brandeland@stericsson.com>
+Subject: Re: [PATCHv2 2/7] atmodem: Enable STE usage of AT*EPEV and AT*EPEE
+ for PIN handling.
+Date: Mon, 16 Aug 2010 16:03:13 +0200
+Message-ID: <1281967393.23399.38.camel@localhost.localdomain>
+In-Reply-To: <1281966848-14553-3-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1305853557487399542==
+--===============1936130798607233131==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Sjur,
 
-> Changes:
->  o Use MBM stk driver implementation (avoid copying code).
->    Note: stemodm.h has to declare the mbm_stk_init/exit functions because
->    	 importing mbmdriver causes compile errors due to duplicated
-> 	 declarations.
+>  drivers/atmodem/sim.c |    9 ++++++---
+>  1 files changed, 6 insertions(+), 3 deletions(-)
 > =
 
-> =
-
->  drivers/stemodem/stemodem.c |    2 ++
->  drivers/stemodem/stemodem.h |    2 ++
->  plugins/ste.c               |    2 ++
->  3 files changed, 6 insertions(+), 0 deletions(-)
-> =
-
-> diff --git a/drivers/stemodem/stemodem.c b/drivers/stemodem/stemodem.c
-> index c18a8b5..0ba7878 100644
-> --- a/drivers/stemodem/stemodem.c
-> +++ b/drivers/stemodem/stemodem.c
-> @@ -38,6 +38,7 @@ static int stemodem_init(void)
->  {
->  	ste_voicecall_init();
->  	ste_gprs_context_init();
-> +	mbm_stk_init();
+> diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+> index eb40ad7..8e7c403 100644
+> --- a/drivers/atmodem/sim.c
+> +++ b/drivers/atmodem/sim.c
+> @@ -567,10 +567,12 @@ static void at_pin_send_cb(gboolean ok, GAtResult *=
+result,
+>  	decode_at_error(&error, g_at_result_final_response(result));
 >  =
 
->  	return 0;
->  }
-> @@ -46,6 +47,7 @@ static void stemodem_exit(void)
->  {
->  	ste_voicecall_exit();
->  	ste_gprs_context_exit();
-> +	mbm_stk_exit();
->  }
->  =
+>  	/*
+> -	 * On the MBM modem, AT+CPIN? keeps returning SIM PIN for a moment
+> -	 * after successful AT+CPIN=3D"..", but sends *EPEV when that changes.
+> +	 * On the MBM and STE modem, AT+CPIN? keeps returning SIM PIN for a
+> +	 * moment after successful AT+CPIN=3D"..", but sends *EPEV when that
+> +	 * changes.
+>  	 */
+> -	if (ok && sd->vendor =3D=3D OFONO_VENDOR_MBM) {
+> +	if (ok && (sd->vendor =3D=3D OFONO_VENDOR_MBM ||
+> +			sd->vendor =3D=3D OFONO_VENDOR_STE)) {
+>  		sd->epev_id =3D g_at_chat_register(sd->chat, "*EPEV",
+>  							at_epev_notify,
+>  							FALSE, cbd, g_free);
+> @@ -817,6 +819,7 @@ static int at_sim_probe(struct ofono_sim *sim, unsign=
+ed int vendor,
+>  	case OFONO_VENDOR_WAVECOM:
+>  		g_at_chat_add_terminator(sd->chat, "+CPIN:", 6, TRUE);
+>  		break;
+> +	case OFONO_VENDOR_STE:
+>  	case OFONO_VENDOR_MBM:
+>  		g_at_chat_send(sd->chat, "AT*EPEE=3D1", NULL, NULL, NULL, NULL);
+>  		break;
 
->  OFONO_PLUGIN_DEFINE(stemodem, "STE modem driver", VERSION,
-> diff --git a/drivers/stemodem/stemodem.h b/drivers/stemodem/stemodem.h
-> index 267e001..e10abd3 100644
-> --- a/drivers/stemodem/stemodem.h
-> +++ b/drivers/stemodem/stemodem.h
-> @@ -28,3 +28,5 @@ extern void ste_gprs_context_exit();
->  extern void ste_voicecall_init();
->  extern void ste_voicecall_exit();
->  =
-
-> +extern void mbm_stk_init();
-> +extern void mbm_stk_exit();
-
-all the magic above is not needed. The build system builds the plugins
-properly and you can cross reference modem drivers from your modem
-plugin without any problems.
-
-> diff --git a/plugins/ste.c b/plugins/ste.c
-> index f3ae0b2..9cb49d3 100644
-> --- a/plugins/ste.c
-> +++ b/plugins/ste.c
-> @@ -54,6 +54,7 @@
->  #include <ofono/voicecall.h>
->  #include <ofono/gprs.h>
->  #include <ofono/gprs-context.h>
-> +#include <ofono/stk.h>
->  #include <drivers/atmodem/vendor.h>
->  =
-
->  #include <drivers/stemodem/caif_socket.h>
-> @@ -241,6 +242,7 @@ static void ste_post_sim(struct ofono_modem *modem)
->  =
-
->  	gprs =3D ofono_gprs_create(modem,
->  			OFONO_VENDOR_STE, "atmodem", data->chat);
-> +	ofono_stk_create(modem, 0, "mbmmodem", data->chat);
->  	gc =3D ofono_gprs_context_create(modem, 0, "stemodem", data->chat);
->  =
-
->  	if (gprs && gc)
-
-Only these two changes are needed.
+do we really wanna create another vendor quirk here. If both modems
+behave identical then just pass OFONO_VENDOR_MBM in the SIM atom
+registration and be done with it.
 
 Regards
 
@@ -101,5 +62,5 @@ Marcel
 
 
 
---===============1305853557487399542==--
+--===============1936130798607233131==--
 
