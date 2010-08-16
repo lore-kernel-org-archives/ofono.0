@@ -1,60 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0896989728326291210=="
+Content-Type: multipart/mixed; boundary="===============6733819394735543311=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjur.brandeland@stericsson.com>
-Subject: [PATCHv2 0/7] Resubmitting STE Driver patches.
-Date: Mon, 16 Aug 2010 15:54:01 +0200
-Message-ID: <1281966848-14553-1-git-send-email-sjur.brandeland@stericsson.com>
+Subject: [PATCHv2 2/7] atmodem: Enable STE usage of AT*EPEV and AT*EPEE for
+ PIN handling.
+Date: Mon, 16 Aug 2010 15:54:03 +0200
+Message-ID: <1281966848-14553-3-git-send-email-sjur.brandeland@stericsson.com>
+In-Reply-To: <1281966848-14553-1-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0896989728326291210==
+--===============6733819394735543311==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Resubmitting based on rebase comments from Denis K.
-Changes:
+---
+ drivers/atmodem/sim.c |    9 ++++++---
+ 1 files changed, 6 insertions(+), 3 deletions(-)
 
-o  SIM-ready and Radio-Settings are now split in two parts,
-   one patch for driver and one for plugin.
-o  Use MBM stk driver implementation (avoid copying code).
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index eb40ad7..8e7c403 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -567,10 +567,12 @@ static void at_pin_send_cb(gboolean ok, GAtResult *re=
+sult,
+ 	decode_at_error(&error, g_at_result_final_response(result));
+ =
 
-o  Updated error handling for Radio Settings.
+ 	/*
+-	 * On the MBM modem, AT+CPIN? keeps returning SIM PIN for a moment
+-	 * after successful AT+CPIN=3D"..", but sends *EPEV when that changes.
++	 * On the MBM and STE modem, AT+CPIN? keeps returning SIM PIN for a
++	 * moment after successful AT+CPIN=3D"..", but sends *EPEV when that
++	 * changes.
+ 	 */
+-	if (ok && sd->vendor =3D=3D OFONO_VENDOR_MBM) {
++	if (ok && (sd->vendor =3D=3D OFONO_VENDOR_MBM ||
++			sd->vendor =3D=3D OFONO_VENDOR_STE)) {
+ 		sd->epev_id =3D g_at_chat_register(sd->chat, "*EPEV",
+ 							at_epev_notify,
+ 							FALSE, cbd, g_free);
+@@ -817,6 +819,7 @@ static int at_sim_probe(struct ofono_sim *sim, unsigned=
+ int vendor,
+ 	case OFONO_VENDOR_WAVECOM:
+ 		g_at_chat_add_terminator(sd->chat, "+CPIN:", 6, TRUE);
+ 		break;
++	case OFONO_VENDOR_STE:
+ 	case OFONO_VENDOR_MBM:
+ 		g_at_chat_send(sd->chat, "AT*EPEE=3D1", NULL, NULL, NULL, NULL);
+ 		break;
+-- =
 
-o  Various Style issues (new line and tabs).
-
-New patch:
-o  Added patch for plugins/ste using Socket stream mode for CAIF,
-   and adding support for specifying CAIF interface to bind to.
-
-
-Sjur Br=C3=A6ndeland (7):
-  stemodem: Add support for STK by including MBM implementation.
-  atmodem: Enable STE usage of AT*EPEV and AT*EPEE for PIN handling.
-  stemodem: Add polling for SIM ready.
-  stemodem: Add Radio Settings to STE Modem
-  plugins/ste: Add Radio-Settings
-  stemodem: Use RTNL for creating CAIF interface
-  plugins/ste: Use SOCK_STREAM for CAIF and enable interface
-    specification.
-
- Makefile.am                       |    6 +-
- drivers/atmodem/sim.c             |    9 +-
- drivers/stemodem/gprs-context.c   |   51 +++++--
- drivers/stemodem/radio-settings.c |  225 ++++++++++++++++++++++++++
- drivers/stemodem/rtnl.c           |  318 +++++++++++++++++++++++++++++++++=
-++++
- drivers/stemodem/rtnl.h           |   24 +++
- drivers/stemodem/stemodem.c       |    4 +
- drivers/stemodem/stemodem.h       |    5 +
- plugins/modem.conf                |    5 +
- plugins/modemconf.c               |    1 +
- plugins/ste.c                     |   79 +++++++++-
- 11 files changed, 706 insertions(+), 21 deletions(-)
- create mode 100644 drivers/stemodem/radio-settings.c
- create mode 100644 drivers/stemodem/rtnl.c
- create mode 100644 drivers/stemodem/rtnl.h
+1.6.3.3
 
 
---===============0896989728326291210==--
+--===============6733819394735543311==--
 
