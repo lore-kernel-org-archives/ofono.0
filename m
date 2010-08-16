@@ -1,214 +1,223 @@
-Content-Type: multipart/mixed; boundary="===============2407835196654403408=="
+Content-Type: multipart/mixed; boundary="===============8760731812869213957=="
 MIME-Version: 1.0
-From: Thadeu Lima de Souza Cascardo <cascardo@holoscopio.com>
-Subject: [PATCH] atmodem/phonebook: parse text as hexstring
-Date: Sat, 14 Aug 2010 00:04:18 -0300
-Message-ID: <1281755058-15572-1-git-send-email-cascardo@holoscopio.com>
+From: Petteri Tikander <petteri.tikander@ixonos.com>
+Subject: [RFC_PATCH 3/4] smsutil:add proper checking of sms-address in status
+ report-function
+Date: Mon, 16 Aug 2010 10:08:52 +0300
+Message-ID: <1281942533-9126-3-git-send-email-petteri.tikander@ixonos.com>
+In-Reply-To: <1281942533-9126-2-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2407835196654403408==
+--===============8760731812869213957==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Some modems omit the quotes when dumping strings in UCS2. Parsing
-them as hexstring already does the hex decoding and accepts missing
-quotes.
 ---
- drivers/atmodem/phonebook.c |  142 +++++++++++++++++++++------------------=
-----
- 1 files changed, 69 insertions(+), 73 deletions(-)
+ src/smsutil.c |   54 ++++++++++++++++++++++++++----------------------------
+ 1 files changed, 26 insertions(+), 28 deletions(-)
 
-diff --git a/drivers/atmodem/phonebook.c b/drivers/atmodem/phonebook.c
-index 89d090b..9e376d3 100644
---- a/drivers/atmodem/phonebook.c
-+++ b/drivers/atmodem/phonebook.c
-@@ -59,16 +59,53 @@ struct pb_data {
- 	GAtChat *chat;
- };
+diff --git a/src/smsutil.c b/src/smsutil.c
+index 0972988..25e405c 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -46,7 +46,7 @@
+ #define SMS_BACKUP_PATH_FILE SMS_BACKUP_PATH_DIR "/%03i"
  =
 
--static char *ucs2_to_utf8(const char *str)
-+static void warn_bad_text(const char *text)
+ #define SMS_SR_BACKUP_PATH STORAGEDIR "/%s/sms_sr"
+-#define SMS_SR_BACKUP_PATH_DIR SMS_SR_BACKUP_PATH "/%s-%i-%i"
++#define SMS_SR_BACKUP_PATH_DIR SMS_SR_BACKUP_PATH "/%s"
+ #define SMS_SR_BACKUP_PATH_FILE SMS_SR_BACKUP_PATH_DIR "/%i"
+ =
+
+ #define SMS_ADDR_FMT "%24[0-9A-F]"
+@@ -2417,7 +2417,7 @@ static void sms_assembly_backup_free(struct sms_assem=
+bly *assembly,
  {
--	long len;
--	unsigned char *ucs2;
-+	ofono_warn("Name field conversion to UTF8 failed, this can indicate a"
-+		" problem with modem integration, as this field"
-+		" is required by 27.007.  Contents of name reported"
-+		" by modem: %s", text);
-+}
+ 	char *path;
+ 	int seq;
+-	char straddr[25];
++	DECLARE_SMS_ADDR_STR(straddr);
+ =
+
+ 	if (!assembly->imsi)
+ 		return;
+@@ -2652,7 +2652,8 @@ static void sr_assembly_load_backup(GHashTable *assem=
+bly_table,
+ {
+ 	char *path;
+ 	struct dirent **ids;
+-	struct sms_address sms_addr, *addr;
++	struct sms_address addr;
++	DECLARE_SMS_ADDR_STR(straddr);
+ 	struct id_table_node *node;
+ 	GHashTable *id_table;
+ 	int len;
+@@ -2666,13 +2667,12 @@ static void sr_assembly_load_backup(GHashTable *ass=
+embly_table,
+ 	if (addr_dir->d_type !=3D DT_DIR)
+ 		return;
+ =
+
+-	addr =3D &sms_addr;
++	/* Max of SMS address size is 12 bytes, hex encoded */
++	if (sscanf(addr_dir->d_name, SMS_ADDR_FMT, straddr) < 1)
++		return;
+ =
+
+-	if (sscanf(addr_dir->d_name, SMS_ADDR_FMT "-%i-%i",
+-			addr->address, (int *) &addr->number_type,
+-			(int *) &addr->numbering_plan) < 3) {
++	if (sms_assembly_extract_address(straddr, &addr) =3D=3D FALSE)
+ 		return;
+-	}
+ =
+
+ 	/* Go through different msg_ids. */
+ 	path =3D g_strdup_printf(SMS_SR_BACKUP_PATH "/%s", imsi,
+@@ -2687,12 +2687,12 @@ static void sr_assembly_load_backup(GHashTable *ass=
+embly_table,
+ 	id_table =3D g_hash_table_new_full(g_int_hash, g_int_equal,
+ 							g_free, g_free);
+ =
+
+-	assembly_table_key =3D g_try_malloc(sizeof(addr->address));
++	assembly_table_key =3D g_try_malloc(sizeof(addr.address));
+ =
+
+ 	if (assembly_table_key =3D=3D NULL)
+ 		return;
+ =
+
+-	g_strlcpy(assembly_table_key, addr->address, sizeof(addr->address));
++	g_strlcpy(assembly_table_key, addr.address, sizeof(addr.address));
+ 	g_hash_table_insert(assembly_table, assembly_table_key, id_table);
+ =
+
+ 	while (len--) {
+@@ -2716,7 +2716,7 @@ static void sr_assembly_load_backup(GHashTable *assem=
+bly_table,
+ 		}
+ 		/* Gather the data for id_table node */
+ 		node =3D g_new0(struct id_table_node, 1);
+-		memcpy(&node->to, addr, sizeof(*addr));
++		memcpy(&node->to, &addr, sizeof(addr));
+ 		node->expiration =3D segment_stat.st_mtime;
+ 		memcpy(node->mrs, buf, sizeof(node->mrs));
+ 		memcpy(&node->total_mrs, buf + sizeof(node->mrs),
+@@ -2766,7 +2766,6 @@ struct status_report_assembly *status_report_assembly=
+_new(const char *imsi)
+ 		/* Go through different addresses. Each address can relate to
+ 		 * 1-n msg_ids.
+ 		 */
+-
+ 		while (len--) {
+ 			sr_assembly_load_backup(ret->assembly_table, imsi,
+ 								addresses[len]);
+@@ -2786,10 +2785,14 @@ static gboolean sr_assembly_add_fragment_backup(con=
+st char *imsi,
+ 	int len =3D sizeof(node->mrs) + sizeof(node->total_mrs) +
+ 			sizeof(node->sent_mrs) + sizeof(node->deliverable);
+ 	unsigned char buf[len];
++	DECLARE_SMS_ADDR_STR(straddr);
+ =
+
+ 	if (!imsi)
+ 		return FALSE;
+ =
+
++	if (sms_address_to_hex_string(&node->to, straddr) =3D=3D FALSE)
++		return FALSE;
 +
-+static gboolean parse_text(GAtResultIter *iter, char **str, int encoding,
-+			   gboolean mandatory)
-+{
-+	const char *string;
-+	const guint8 *hex;
-+	int len;
- 	char *utf8;
--	ucs2 =3D decode_hex(str, -1, &len, 0);
--	utf8 =3D g_convert((char *)ucs2, len, "UTF-8//TRANSLIT", "UCS-2BE",
--					NULL, NULL, NULL);
--	g_free(ucs2);
--	return utf8;
-+	/* charset_current is CHARSET_UCS2, CHARSET_IRA or CHARSET_UTF8 */
-+	if (encoding =3D=3D CHARSET_UCS2) {
-+		/*
-+		 * Some devices omit the quotes, so use hexstring,
-+		 * which also decode to hex
-+		 */
-+		if (g_at_result_iter_next_hexstring(iter, &hex, &len))
-+			utf8 =3D g_convert((const gchar*) hex, len,
-+						"UTF-8//TRANSLIT", "UCS-2BE",
-+						NULL, NULL, NULL);
-+		else
-+			return FALSE;
+ 	memcpy(buf, node->mrs, sizeof(node->mrs));
+ =
+
+ 	memcpy(buf + sizeof(node->mrs), &node->total_mrs,
+@@ -2801,10 +2804,9 @@ static gboolean sr_assembly_add_fragment_backup(cons=
+t char *imsi,
+ 	memcpy(buf + sizeof(node->mrs) + sizeof(node->total_mrs) +
+ 	sizeof(node->sent_mrs),	&node->deliverable, sizeof(node->deliverable));
+ =
+
+-	/* storagedir/%s/sms_sr/%s-%i-%i/%i */
++	/* storagedir/%s/sms_sr/%s/%i */
+ 	if (write_file(buf, len, SMS_BACKUP_MODE, SMS_SR_BACKUP_PATH_FILE, imsi,
+-			node->to.address, node->to.number_type,
+-			node->to.numbering_plan, msg_id) !=3D len)
++			straddr, msg_id) !=3D len)
+ 		return FALSE;
+ =
+
+ 	return TRUE;
+@@ -2815,19 +2817,20 @@ static gboolean sr_assembly_remove_fragment_backup(=
+const char *imsi,
+ 					unsigned int msg_id)
+ {
+ 	char *path;
++	DECLARE_SMS_ADDR_STR(straddr);
+ =
+
+ 	if (!imsi)
+ 		return FALSE;
+ =
+
+-	path =3D g_strdup_printf(SMS_SR_BACKUP_PATH_FILE, imsi, node->to.address,
+-				node->to.number_type, node->to.numbering_plan,
+-				msg_id);
++	if (sms_address_to_hex_string(&node->to, straddr) =3D=3D FALSE)
++		return FALSE;
 +
-+		if (utf8) {
-+			*str =3D utf8;
-+			return TRUE;
-+		} else {
-+			if (mandatory)
-+				warn_bad_text(string);
-+			return FALSE;
-+		}
-+	} else {
-+		/*
-+		 * In the case of IRA charset, assume these are Latin1
-+		 * characters, same as in UTF8
-+		 */
-+		if (g_at_result_iter_next_string(iter, &string)) {
-+				*str =3D g_strdup(string);
-+				return TRUE;
-+		}
-+	}
-+	return FALSE;
++	path =3D g_strdup_printf(SMS_SR_BACKUP_PATH_FILE, imsi, straddr, msg_id);
+ =
+
+ 	unlink(path);
+ 	g_free(path);
+ =
+
+-	path =3D g_strdup_printf(SMS_SR_BACKUP_PATH_DIR, imsi, node->to.address,
+-				node->to.number_type, node->to.numbering_plan);
++	path =3D g_strdup_printf(SMS_SR_BACKUP_PATH_DIR, imsi, straddr);
+ =
+
+ 	/* If the address does not have relating msg_ids anymore, remove it */
+ 	rmdir(path);
+@@ -2836,14 +2839,6 @@ static gboolean sr_assembly_remove_fragment_backup(c=
+onst char *imsi,
+ 	return TRUE;
  }
  =
 
- static const char *best_charset(int supported)
-@@ -110,15 +147,15 @@ static void at_cpbr_notify(GAtResult *result, gpointe=
-r user_data)
- 		int index;
- 		const char *number;
- 		int type;
--		const char *text;
-+		char *text;
- 		int hidden =3D -1;
--		const char *group =3D NULL;
-+		char *group =3D NULL;
- 		const char *adnumber =3D NULL;
- 		int adtype =3D -1;
--		const char *secondtext =3D NULL;
--		const char *email =3D NULL;
--		const char *sip_uri =3D NULL;
--		const char *tel_uri =3D NULL;
-+		char *secondtext =3D NULL;
-+		char *email =3D NULL;
-+		char *sip_uri =3D NULL;
-+		char *tel_uri =3D NULL;
- =
-
- 		if (!g_at_result_iter_next_number(&iter, &index))
- 			continue;
-@@ -129,70 +166,29 @@ static void at_cpbr_notify(GAtResult *result, gpointe=
-r user_data)
- 		if (!g_at_result_iter_next_number(&iter, &type))
- 			continue;
- =
-
--		if (!g_at_result_iter_next_string(&iter, &text))
-+		if (!parse_text(&iter, &text, current, TRUE))
- 			continue;
- =
-
- 		g_at_result_iter_next_number(&iter, &hidden);
--		g_at_result_iter_next_string(&iter, &group);
-+		parse_text(&iter, &group, current, FALSE);
- 		g_at_result_iter_next_string(&iter, &adnumber);
- 		g_at_result_iter_next_number(&iter, &adtype);
--		g_at_result_iter_next_string(&iter, &secondtext);
--		g_at_result_iter_next_string(&iter, &email);
--		g_at_result_iter_next_string(&iter, &sip_uri);
--		g_at_result_iter_next_string(&iter, &tel_uri);
+-static gboolean sr_assembly_update_fragment_backup(const char *imsi,
+-					const struct id_table_node *node,
+-					unsigned int msg_id)
+-{
+-	return sr_assembly_remove_fragment_backup(imsi, node, msg_id) &&
+-			sr_assembly_add_fragment_backup(imsi, node, msg_id);
+-}
 -
--		/* charset_current is either CHARSET_UCS2 or CHARSET_UTF8 */
--		if (current =3D=3D CHARSET_UCS2) {
--			char *text_utf8;
--			char *group_utf8 =3D NULL;
--			char *secondtext_utf8 =3D NULL;
--			char *email_utf8 =3D NULL;
--			char *sip_uri_utf8 =3D NULL;
--			char *tel_uri_utf8 =3D NULL;
--
--			text_utf8 =3D ucs2_to_utf8(text);
--
--			if (text_utf8 =3D=3D NULL)
--				ofono_warn("Name field conversion to UTF8"
--						" failed, this can indicate a"
--						" problem with modem"
--						" integration, as this field"
--						" is required by 27.007."
--						"  Contents of name reported"
--						" by modem: %s", text);
--
--			if (group)
--				group_utf8 =3D ucs2_to_utf8(group);
--			if (secondtext)
--				secondtext_utf8 =3D ucs2_to_utf8(secondtext);
--			if (email)
--				email_utf8 =3D ucs2_to_utf8(email);
--			if (sip_uri)
--				sip_uri_utf8 =3D ucs2_to_utf8(sip_uri);
--			if (tel_uri)
--				tel_uri_utf8 =3D ucs2_to_utf8(tel_uri);
--
--			ofono_phonebook_entry(pb, index, number, type,
--				text_utf8, hidden, group_utf8, adnumber,
--				adtype, secondtext_utf8, email_utf8,
--				sip_uri_utf8, tel_uri_utf8);
--
--			g_free(text_utf8);
--			g_free(group_utf8);
--			g_free(secondtext_utf8);
--			g_free(email_utf8);
--			g_free(sip_uri_utf8);
--			g_free(tel_uri_utf8);
--		} else {
--			/* In the case of IRA charset, assume these are Latin1
--			 * characters, same as in UTF8
--			 */
--			ofono_phonebook_entry(pb, index, number, type,
--				text, hidden, group, adnumber,
--				adtype, secondtext, email,
--				sip_uri, tel_uri);
--
--		}
-+		parse_text(&iter, &secondtext, current, FALSE);
-+		parse_text(&iter, &email, current, FALSE);
-+		parse_text(&iter, &sip_uri, current, FALSE);
-+		parse_text(&iter, &tel_uri, current, FALSE);
-+
-+		ofono_phonebook_entry(pb, index, number, type,
-+			text, hidden, group, adnumber,
-+			adtype, secondtext, email,
-+			sip_uri, tel_uri);
-+
-+		g_free(text);
-+		g_free(group);
-+		g_free(secondtext);
-+		g_free(email);
-+		g_free(sip_uri);
-+		g_free(tel_uri);
+ void status_report_assembly_free(struct status_report_assembly *assembly)
+ {
+ 	g_hash_table_destroy(assembly->assembly_table);
+@@ -2930,6 +2925,9 @@ gboolean status_report_assembly_report(struct status_=
+report_assembly *assembly,
  	}
- }
+ =
+
+ 	if (pending =3D=3D TRUE && node->deliverable =3D=3D TRUE) {
++		/* More status reports expected, and already received
++		   reports completed. Update backup file.
++		 */
+ 		sr_assembly_add_fragment_backup(assembly->imsi, node,
+ 						*((unsigned int *) key));
  =
 
 -- =
 
-1.7.1
+1.6.3.3
 
 
---===============2407835196654403408==--
+
+--===============8760731812869213957==--
 
