@@ -1,102 +1,105 @@
-Content-Type: multipart/mixed; boundary="===============8530524876840000708=="
+Content-Type: multipart/mixed; boundary="===============1305853557487399542=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjur.brandeland@stericsson.com>
-Subject: [PATCHv2 7/7] plugins/ste: Use SOCK_STREAM for CAIF and enable
- interface specification.
-Date: Mon, 16 Aug 2010 15:54:08 +0200
-Message-ID: <1281966848-14553-8-git-send-email-sjur.brandeland@stericsson.com>
-In-Reply-To: <1281966848-14553-1-git-send-email-sjur.brandeland@stericsson.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCHv2 1/7] stemodem: Add support for STK by including MBM
+ implementation.
+Date: Mon, 16 Aug 2010 16:01:27 +0200
+Message-ID: <1281967287.23399.36.camel@localhost.localdomain>
+In-Reply-To: <1281966848-14553-2-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8530524876840000708==
+--===============1305853557487399542==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/modem.conf  |    5 +++++
- plugins/modemconf.c |    1 +
- plugins/ste.c       |   20 +++++++++++++++++++-
- 3 files changed, 25 insertions(+), 1 deletions(-)
+Hi Sjur,
 
-diff --git a/plugins/modem.conf b/plugins/modem.conf
-index 66bf932..b577114 100644
---- a/plugins/modem.conf
-+++ b/plugins/modem.conf
-@@ -44,3 +44,8 @@
- #[n900]
- #Driver=3Dn900modem
- #Interface=3Dphonet0
-+
-+# Sample STE modem
-+#[ste]
-+#Interface=3DcfttyS0
-+#Driver=3Dste
-diff --git a/plugins/modemconf.c b/plugins/modemconf.c
-index 3747cd9..d7b1354 100644
---- a/plugins/modemconf.c
-+++ b/plugins/modemconf.c
-@@ -138,6 +138,7 @@ static struct {
- 	{ "g1",		set_device	},
- 	{ "wavecom",	set_device	},
- 	{ "ste",	set_device	},
-+	{ "ste",	set_interface	},
- 	{ "calypso",	set_device	},
- 	{ "palmpre",	set_device	},
- 	{ "isimodem",	set_interface	},
-diff --git a/plugins/ste.c b/plugins/ste.c
-index 1e3ed9d..3e227af 100644
---- a/plugins/ste.c
-+++ b/plugins/ste.c
-@@ -30,6 +30,7 @@
- #include <stdlib.h>
- #include <string.h>
- #include <unistd.h>
-+#include <net/if.h>
- =
+> Changes:
+>  o Use MBM stk driver implementation (avoid copying code).
+>    Note: stemodm.h has to declare the mbm_stk_init/exit functions because
+>    	 importing mbmdriver causes compile errors due to duplicated
+> 	 declarations.
+> =
 
- #include <glib.h>
- #include <gatchat.h>
-@@ -171,14 +172,31 @@ static int ste_enable(struct ofono_modem *modem)
- 	if (!device) {
- 		struct sockaddr_caif addr;
- 		int err;
-+		const char *interface;
- =
+> =
 
- 		/* Create a CAIF socket for AT Service */
--		fd =3D socket(AF_CAIF, SOCK_SEQPACKET, CAIFPROTO_AT);
-+		fd =3D socket(AF_CAIF, SOCK_STREAM, CAIFPROTO_AT);
- 		if (fd < 0) {
- 			ofono_error("Failed to create CAIF socket for AT");
- 			return -EIO;
- 		}
- =
+>  drivers/stemodem/stemodem.c |    2 ++
+>  drivers/stemodem/stemodem.h |    2 ++
+>  plugins/ste.c               |    2 ++
+>  3 files changed, 6 insertions(+), 0 deletions(-)
+> =
 
-+		/* Bind CAIF socket to specified interface */
-+		interface =3D ofono_modem_get_string(modem, "Interface");
-+		if (interface) {
-+			struct ifreq ifreq;
-+			memset(&ifreq, 0, sizeof(ifreq));
-+			strcpy(ifreq.ifr_name, interface);
-+			err =3D setsockopt(fd, SOL_SOCKET,
-+					SO_BINDTODEVICE, &ifreq, sizeof(ifreq));
-+			if (err < 0) {
-+				ofono_error("Failed to bind caif socket "
-+					"to interface");
-+				close(fd);
-+				return err;
-+			}
-+		}
-+
- 		memset(&addr, 0, sizeof(addr));
- 		addr.family =3D AF_CAIF;
- 		addr.u.at.type =3D CAIF_ATTYPE_PLAIN;
--- =
+> diff --git a/drivers/stemodem/stemodem.c b/drivers/stemodem/stemodem.c
+> index c18a8b5..0ba7878 100644
+> --- a/drivers/stemodem/stemodem.c
+> +++ b/drivers/stemodem/stemodem.c
+> @@ -38,6 +38,7 @@ static int stemodem_init(void)
+>  {
+>  	ste_voicecall_init();
+>  	ste_gprs_context_init();
+> +	mbm_stk_init();
+>  =
 
-1.6.3.3
+>  	return 0;
+>  }
+> @@ -46,6 +47,7 @@ static void stemodem_exit(void)
+>  {
+>  	ste_voicecall_exit();
+>  	ste_gprs_context_exit();
+> +	mbm_stk_exit();
+>  }
+>  =
+
+>  OFONO_PLUGIN_DEFINE(stemodem, "STE modem driver", VERSION,
+> diff --git a/drivers/stemodem/stemodem.h b/drivers/stemodem/stemodem.h
+> index 267e001..e10abd3 100644
+> --- a/drivers/stemodem/stemodem.h
+> +++ b/drivers/stemodem/stemodem.h
+> @@ -28,3 +28,5 @@ extern void ste_gprs_context_exit();
+>  extern void ste_voicecall_init();
+>  extern void ste_voicecall_exit();
+>  =
+
+> +extern void mbm_stk_init();
+> +extern void mbm_stk_exit();
+
+all the magic above is not needed. The build system builds the plugins
+properly and you can cross reference modem drivers from your modem
+plugin without any problems.
+
+> diff --git a/plugins/ste.c b/plugins/ste.c
+> index f3ae0b2..9cb49d3 100644
+> --- a/plugins/ste.c
+> +++ b/plugins/ste.c
+> @@ -54,6 +54,7 @@
+>  #include <ofono/voicecall.h>
+>  #include <ofono/gprs.h>
+>  #include <ofono/gprs-context.h>
+> +#include <ofono/stk.h>
+>  #include <drivers/atmodem/vendor.h>
+>  =
+
+>  #include <drivers/stemodem/caif_socket.h>
+> @@ -241,6 +242,7 @@ static void ste_post_sim(struct ofono_modem *modem)
+>  =
+
+>  	gprs =3D ofono_gprs_create(modem,
+>  			OFONO_VENDOR_STE, "atmodem", data->chat);
+> +	ofono_stk_create(modem, 0, "mbmmodem", data->chat);
+>  	gc =3D ofono_gprs_context_create(modem, 0, "stemodem", data->chat);
+>  =
+
+>  	if (gprs && gc)
+
+Only these two changes are needed.
+
+Regards
+
+Marcel
 
 
---===============8530524876840000708==--
+
+--===============1305853557487399542==--
 
