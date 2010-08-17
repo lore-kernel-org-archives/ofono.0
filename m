@@ -1,38 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============7519925363107021476=="
+Content-Type: multipart/mixed; boundary="===============6190166985707847875=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v5 2/8] stemodem: Add polling for SIM ready.
-Date: Tue, 17 Aug 2010 14:58:43 +0200
-Message-ID: <1282049923.23399.96.camel@localhost.localdomain>
-In-Reply-To: <1282047754-15562-3-git-send-email-sjur.brandeland@stericsson.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] [RfC] stk-api: Proposed Set Up Call api.
+Date: Tue, 17 Aug 2010 05:02:15 +0200
+Message-ID: <1282014135-12297-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7519925363107021476==
+--===============6190166985707847875==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+---
+ doc/stk-api.txt |   15 +++++++++++++++
+ 1 files changed, 15 insertions(+), 0 deletions(-)
 
-> Interim solution until support for SIM 'ready' notification is supported.
-> ---
-> Change: AT-channel configuration is moved to separate patch.
-> =
+diff --git a/doc/stk-api.txt b/doc/stk-api.txt
+index 2e863a9..b85c7db 100644
+--- a/doc/stk-api.txt
++++ b/doc/stk-api.txt
+@@ -55,6 +55,14 @@ Signals		PropertyChanged(string property, variant value)
+ 			Signal is emitted whenever a property has changed.
+ 			The new value is passed as the signal argument.
+ =
 
->  plugins/ste.c |   52 ++++++++++++++++++++++++++++++++++++++++++++++++++--
->  1 files changed, 50 insertions(+), 2 deletions(-)
++		CallSetUp(string message, byte icon_id, object call)
++
++			Informs about a new VoiceCall that is being set
++			up as a result of a UICC request and gives the
++			message associated with the call to be shown to
++			the user.  Hanging-up the call before it is
++			connected will terminate the current session.
++
+ Properties	string IdleText
+ =
 
-patch has been applied.
+ 			Contains the text to be used when the home screen is
+@@ -189,6 +197,13 @@ Methods		byte RequestSelection(string title, byte icon=
+_id,
+ =
 
-Denis, if you don't like it then feel free to revert it. For me it
-looked fine until we have better solution for this.
+ 			Possible Errors: [service].Error.SimToolkit.GoBack
+ =
 
-Regards
++		boolean ConfirmCallSetup(string message, byte icon_id)
++
++			Asks the agent to request user to confirm an
++			outgoing call setup.
++
++			Possible Errors: [service].Error.SimToolkit.EndSession
++
+ 		void Cancel()
+ =
 
-Marcel
+ 			Asks the agent to cancel any ongoing operation in
+-- =
+
+1.7.1.86.g0e460.dirty
 
 
-
---===============7519925363107021476==--
+--===============6190166985707847875==--
 
