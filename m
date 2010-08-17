@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============8785480472574617189=="
+Content-Type: multipart/mixed; boundary="===============2293500505064325160=="
 MIME-Version: 1.0
 From: Florian Mayer (Mayer Electronics) <Florian.Mayer@mayer-electronics.de>
 Subject: ppp0 interface is not configured
-Date: Tue, 17 Aug 2010 18:38:33 +0200
-Message-ID: <4C6ABB09.9000307@mayer-electronics.de>
+Date: Tue, 17 Aug 2010 18:41:03 +0200
+Message-ID: <4C6ABB9F.5080104@mayer-electronics.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8785480472574617189==
+--===============2293500505064325160==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -108,5 +108,5 @@ Address=3D88.128.36.75 }
 
 
 
---===============8785480472574617189==--
+--===============2293500505064325160==--
 
