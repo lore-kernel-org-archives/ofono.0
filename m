@@ -1,39 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============6602242524695331287=="
+Content-Type: multipart/mixed; boundary="===============3803161408579071154=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjur.brandeland@stericsson.com>
-Subject: [PATCH v5 6/8] plugins/modemconf.c add support for Interface for STE
- plugin.
-Date: Tue, 17 Aug 2010 14:22:32 +0200
-Message-ID: <1282047754-15562-7-git-send-email-sjur.brandeland@stericsson.com>
+Subject: [PATCH v5 8/8] plugins: Add STE sample to modem.conf
+Date: Tue, 17 Aug 2010 14:22:34 +0200
+Message-ID: <1282047754-15562-9-git-send-email-sjur.brandeland@stericsson.com>
 In-Reply-To: <1282047754-15562-1-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6602242524695331287==
+--===============3803161408579071154==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/modemconf.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ plugins/modem.conf |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/modemconf.c b/plugins/modemconf.c
-index 3747cd9..d7b1354 100644
---- a/plugins/modemconf.c
-+++ b/plugins/modemconf.c
-@@ -138,6 +138,7 @@ static struct {
- 	{ "g1",		set_device	},
- 	{ "wavecom",	set_device	},
- 	{ "ste",	set_device	},
-+	{ "ste",	set_interface	},
- 	{ "calypso",	set_device	},
- 	{ "palmpre",	set_device	},
- 	{ "isimodem",	set_interface	},
+diff --git a/plugins/modem.conf b/plugins/modem.conf
+index 66bf932..b577114 100644
+--- a/plugins/modem.conf
++++ b/plugins/modem.conf
+@@ -44,3 +44,8 @@
+ #[n900]
+ #Driver=3Dn900modem
+ #Interface=3Dphonet0
++
++# Sample STE modem
++#[ste]
++#Interface=3DcfttyS0
++#Driver=3Dste
 -- =
 
 1.6.3.3
 
 
---===============6602242524695331287==--
+--===============3803161408579071154==--
 
