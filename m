@@ -1,58 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============9127074811665477209=="
+Content-Type: multipart/mixed; boundary="===============4666068572538714723=="
 MIME-Version: 1.0
-From: caiwen.zhang <caiwenzhang@163.com>
-Subject: [PATCH 2/2] add CDMA radio setting support
-Date: Tue, 17 Aug 2010 03:40:03 +0000
-Message-ID: <1282016390-12516-1-git-send-email-caiwenzhang@163.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC_PATCH 1/4] TODO: Owner of Status report task
+Date: Mon, 16 Aug 2010 23:18:57 -0500
+Message-ID: <4C6A0DB1.5040509@gmail.com>
+In-Reply-To: <1281943610-9314-1-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9127074811665477209==
+--===============4666068572538714723==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/radio-settings.c |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
+Hi Petteri,
 
-diff --git a/src/radio-settings.c b/src/radio-settings.c
-index f70d870..4952eac 100644
---- a/src/radio-settings.c
-+++ b/src/radio-settings.c
-@@ -58,6 +58,12 @@ static const char *radio_access_mode_to_string(enum ofon=
-o_radio_access_mode mode
- 		return "umts";
- 	case OFONO_RADIO_ACCESS_MODE_LTE:
- 		return "lte";
-+	case OFONO_CDMA_RADIO_ACCESS_MODE_CDMA:
-+		return "cdma";
-+	case OFONO_CDMA_RADIO_ACCESS_MODE_HDR:
-+		return "hdr";
-+	case OFONO_CDMA_RADIO_ACCESS_MODE_HYBRID:
-+		return "hybird";
- 	default:
- 		return "";
- 	}
-@@ -74,6 +80,12 @@ static int string_to_radio_access_mode(const char *mode)
- 		return OFONO_RADIO_ACCESS_MODE_UMTS;
- 	if (g_strcmp0(mode, "lte") =3D=3D 0)
- 		return OFONO_RADIO_ACCESS_MODE_LTE;
-+	if (g_strcmp0(mode, "cdma") =3D=3D 0)
-+		return OFONO_CDMA_RADIO_ACCESS_MODE_CDMA;
-+	if (g_strcmp0(mode, "hdr") =3D=3D 0)
-+		return OFONO_CDMA_RADIO_ACCESS_MODE_HDR;
-+	if (g_strcmp0(mode, "hybird") =3D=3D 0)
-+		return OFONO_CDMA_RADIO_ACCESS_MODE_HYBRID;
- 	return -1;
- }
- =
+On 08/16/2010 02:26 AM, Petteri Tikander wrote:
+> ---
+>  TODO |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> =
 
--- =
+> diff --git a/TODO b/TODO
+> index 5221324..3481018 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -101,7 +101,7 @@ SMS
+>  =
 
-1.7.0.4
+>    Priority: Medium
+>    Complexity: C4
+> -  Owner: Pasi Miettinen <pasi.miettinen@ixonos.com>
+> +  Owner: Petteri Tikander <petteri.tikander@ixonos.com>
+>  =
 
+>  =
 
+>  SIM / SIM File system
 
---===============9127074811665477209==--
+This patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============4666068572538714723==--
 
