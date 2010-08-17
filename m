@@ -1,63 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============4275004456677842970=="
+Content-Type: multipart/mixed; boundary="===============5882222372217748734=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] stkagent: Free pending call when destroying agent.
-Date: Tue, 17 Aug 2010 17:37:00 +0200
-Message-ID: <1282059423-28864-2-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1282059423-28864-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH] list-modems: Pretty-print main menu.
+Date: Tue, 17 Aug 2010 17:36:59 +0200
+Message-ID: <1282059423-28864-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4275004456677842970==
+--===============5882222372217748734==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Otherwise we leak memory and additionally D-bus invokes the method
-callback and since the agent is already destroyed, we segfault.
 ---
- src/stkagent.c |   11 ++++++-----
- 1 files changed, 6 insertions(+), 5 deletions(-)
+ test/list-modems |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkagent.c b/src/stkagent.c
-index fc05493..e71436d 100644
---- a/src/stkagent.c
-+++ b/src/stkagent.c
-@@ -127,19 +127,20 @@ void stk_agent_request_cancel(struct stk_agent *agent)
- 		return;
- =
-
- 	dbus_pending_call_cancel(agent->call);
--	stk_agent_send_cancel(agent);
-+
-+	if (agent->disconnect_watch)
-+		stk_agent_send_cancel(agent);
-+
- 	stk_agent_request_end(agent);
- }
- =
-
- void stk_agent_free(struct stk_agent *agent)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
--	gboolean busy =3D agent->call !=3D NULL;
- =
-
--	if (agent->disconnect_watch) {
--		if (busy)
--			stk_agent_send_cancel(agent);
-+	stk_agent_request_cancel(agent);
- =
-
-+	if (agent->disconnect_watch) {
- 		stk_agent_send_release(agent);
- =
-
- 		g_dbus_remove_watch(conn, agent->disconnect_watch);
+diff --git a/test/list-modems b/test/list-modems
+index 191743b..eee00b0 100755
+--- a/test/list-modems
++++ b/test/list-modems
+@@ -58,6 +58,9 @@ for path in properties["Modems"]:
+ 						"MicrophoneVolume",
+ 						"SpeakerVolume"]:
+ 				val =3D int(properties[key])
++			elif key in ["MainMenu"]:
++				val =3D ", ".join([ text + " (" + str(int(icon)) +
++					")" for text, icon in properties[key] ])
+ 			else:
+ 				val =3D str(properties[key])
+ 			print "        %s =3D %s" % (key, val)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============4275004456677842970==--
+--===============5882222372217748734==--
 
