@@ -1,44 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============7438448536068581337=="
+Content-Type: multipart/mixed; boundary="===============6250542290644489614=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjur.brandeland@stericsson.com>
-Subject: [PATCH v5 1/8] plugins/ste: SIM - STE registers as MBM to utilize mbm
- quirks.
-Date: Tue, 17 Aug 2010 14:22:27 +0200
-Message-ID: <1282047754-15562-2-git-send-email-sjur.brandeland@stericsson.com>
-In-Reply-To: <1282047754-15562-1-git-send-email-sjur.brandeland@stericsson.com>
+Subject: [PATCH v5 0/8] Resubmitting STE Driver Patches.
+Date: Tue, 17 Aug 2010 14:22:26 +0200
+Message-ID: <1282047754-15562-1-git-send-email-sjur.brandeland@stericsson.com>
+In-Reply-To: <1281966848-14553-1-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7438448536068581337==
+--===============6250542290644489614==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Change: This time the right line is hopefully being edited.
+Resubmitting same changes as last patch set, but
+some of the patches are split up in smaller parts.
+The RTNL patch is removed and replaced by a separate RFC.
 
- plugins/ste.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Sjur Br=C3=A6ndeland (8):
+  plugins/ste: SIM - STE registers as MBM to utilize mbm quirks.
+  stemodem: Add polling for SIM ready.
+  plugins/ste: Add AT Channel configurations (new)
+  stemodem: Add Radio Settings to STE Modem
+  plugins/ste: Add Radio-Settings
+  plugins/modemconf.c add support for Interface for STE plugin. (new)
+  plugins/ste: Use SOCK_STREAM for CAIF and enable interface
+    specification.
+  plugins: Add STE sample to modem.conf (new)
 
-diff --git a/plugins/ste.c b/plugins/ste.c
-index 5b34704..ef375ea 100644
---- a/plugins/ste.c
-+++ b/plugins/ste.c
-@@ -213,7 +213,7 @@ static void ste_pre_sim(struct ofono_modem *modem)
- 	DBG("%p", modem);
- =
-
- 	ofono_devinfo_create(modem, 0, "atmodem", data->chat);
--	sim =3D ofono_sim_create(modem, 0, "atmodem", data->chat);
-+	sim =3D ofono_sim_create(modem, OFONO_VENDOR_MBM, "atmodem", data->chat);
- 	ofono_voicecall_create(modem, 0, "stemodem", data->chat);
- =
-
- 	if (sim)
--- =
-
-1.6.3.3
+ Makefile.am                       |    2 +
+ drivers/stemodem/radio-settings.c |  225 +++++++++++++++++++++++++++++++++=
+++++
+ drivers/stemodem/stemodem.c       |    2 +
+ drivers/stemodem/stemodem.h       |    2 +
+ plugins/modem.conf                |    5 +
+ plugins/modemconf.c               |    1 +
+ plugins/ste.c                     |   79 ++++++++++++-
+ 7 files changed, 311 insertions(+), 5 deletions(-)
+ create mode 100644 drivers/stemodem/radio-settings.c
 
 
---===============7438448536068581337==--
+--===============6250542290644489614==--
 
