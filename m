@@ -1,108 +1,154 @@
-Content-Type: multipart/mixed; boundary="===============3751328883438373653=="
+Content-Type: multipart/mixed; boundary="===============5630341879729781302=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] [RfC] stk-api: Proposed Set Up Call api.
-Date: Tue, 17 Aug 2010 18:04:57 +0200
-Message-ID: <1282061097.23399.118.camel@localhost.localdomain>
-In-Reply-To: <AANLkTimDpcPUxOBtpz3NMROGbVuyBy5TMgfDzTPcA6BN@mail.gmail.com>
+From: Kouassu, AlainX <alainx.kouassu@intel.com>
+Subject: RAT , signal Strength indication ofono 0.23
+Date: Tue, 17 Aug 2010 17:05:35 +0100
+Message-ID: <9F3EABD6E3419B4C81F34EAABB4D401870321E1DD5@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3751328883438373653==
+--===============5630341879729781302==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+All,
 
-> >>  doc/stk-api.txt |   15 +++++++++++++++
-> >>  1 files changed, 15 insertions(+), 0 deletions(-)
-> >>
-> >> diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-> >> index 2e863a9..b85c7db 100644
-> >> --- a/doc/stk-api.txt
-> >> +++ b/doc/stk-api.txt
-> >> @@ -55,6 +55,14 @@ Signals            PropertyChanged(string property,=
- variant value)
-> >>                       Signal is emitted whenever a property has change=
-d.
-> >>                       The new value is passed as the signal argument.
-> >>
-> >> +             CallSetUp(string message, byte icon_id, object call)
-> >
-> > to be consistent this should be CallSetup(...)
-> =
+Is the "Strength" property and the "Technology" fully implemented in org.of=
+ono.NetworkRegistration  on Ofono 0.23 ?
+Is org.ofono.NetworkRegistration is  fully integrated on Ofono 0.23 ?
 
-> They're not interchangeable though because setup is a noun, and in
-> this case we're notifying that "a call has been set up / is being set
-> up".
-
-then I prefer something like CallSetupCompleted or similar. Do we need a
-CallSetupFailed as well? Can it fail? Is this an expected behavior, can
-we ignore it?
-
-> >> +                     Informs about a new VoiceCall that is being set
-> >> +                     up as a result of a UICC request and gives the
-> >> +                     message associated with the call to be shown to
-> >> +                     the user.  Hanging-up the call before it is
-> >> +                     connected will terminate the current session.
-> >> +
-> >>  Properties   string IdleText
-> >>
-> >>                       Contains the text to be used when the home scree=
-n is
-> >> @@ -189,6 +197,13 @@ Methods          byte RequestSelection(string tit=
-le, byte icon_id,
-> >>
-> >>                       Possible Errors: [service].Error.SimToolkit.GoBa=
-ck
-> >>
-> >> +             boolean ConfirmCallSetup(string message, byte icon_id)
-> >> +
-> >> +                     Asks the agent to request user to confirm an
-> >> +                     outgoing call setup.
-> >> +
-> >> +                     Possible Errors: [service].Error.SimToolkit.EndS=
-ession
-> >> +
-> >>               void Cancel()
-> >>
-> >>                       Asks the agent to cancel any ongoing operation in
-> >
-> > Why do we need two handlers here. One signal and one agent callback. I
-> > do understand the agent callback. That is pretty obvious, but why do you
-> > also wanna send the signal as well. Would this be just go via the voice
-> > call interface and be transparent for the dialer?
-> =
-
-> This is a possiblity, I'm not very sure what would be the best option.
->  The reason for the signal was so that the alpha id can be associated
-> with given VoiceCall object. (The same VoiceCall object will of course
-> be available in VoiceCallManager properties).
-> =
-
-> The timeline for call setup is something like:
-> =
-
->  * Modem asks user for confirmation using icon1 / alphaId1.
->  * User confirms
->  * Modem starts dialling, screen displays icon2 / alphaId2,
->  * Call is connected, modem replies to the proactive command, screen
-> keeps displaying icon2 / alphaId2 until the phone call is over.
-
-For simplicity, I would say that this should just happen via the new
-CallAdded signal and we make icon and alphaid part of the call
-properties. That would be my idea right now.
-
-Maybe we just generalize this into Message and Icon property anyway. The
-Icon is rather useless, but the Message could be useful for CNAP support
-as well. Just an idea.
-
-Regards
-
-Marcel
+I am testing Ofono 0.23 on top of Medfield platform with a Agilent 8960 (Ne=
+twork simulator)
+I have noticed  that at ofono level  RAT indication and signal strength are=
+ not updated when the RAT change or when the signal level change.
 
 
+Thanks,
+Alain
 
---===============3751328883438373653==--
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============5630341879729781302==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
+b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
+QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
+MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
+Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
+dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
+YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
+ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
+YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
+OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
+Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
+VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
+Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
+cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
+MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
+ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
+cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
+bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
+eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
+dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
+LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
+Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
+cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
+dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
+aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczp3
+Zj0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvd29ya2Zsb3cv
+IiB4bWxuczpkc3NzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS8yMDA2L2Rp
+Z3NpZy1zZXR1cCIgeG1sbnM6ZHNzaT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZp
+Y2UvMjAwNi9kaWdzaWciIHhtbG5zOm1kc3NpPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0
+cy5vcmcvcGFja2FnZS8yMDA2L2RpZ2l0YWwtc2lnbmF0dXJlIiB4bWxuczptdmVyPSJodHRwOi8v
+c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvbWFya3VwLWNvbXBhdGliaWxpdHkvMjAwNiIgeG1s
+bnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4
+bWxuczptcmVscz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAw
+Ni9yZWxhdGlvbnNoaXBzIiB4bWxuczpzcHdwPSJodHRwOi8vbWljcm9zb2Z0LmNvbS9zaGFyZXBv
+aW50L3dlYnBhcnRwYWdlcyIgeG1sbnM6ZXgxMnQ9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5j
+b20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi90eXBlcyIgeG1sbnM6ZXgxMm09Imh0dHA6Ly9zY2hl
+bWFzLm1pY3Jvc29mdC5jb20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi9tZXNzYWdlcyIgeG1sbnM6
+cHB0c2w9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC9zb2FwL1NsaWRl
+TGlicmFyeS8iIHhtbG5zOnNwc2w9Imh0dHA6Ly9taWNyb3NvZnQuY29tL3dlYnNlcnZpY2VzL1No
+YXJlUG9pbnRQb3J0YWxTZXJ2ZXIvUHVibGlzaGVkTGlua3NTZXJ2aWNlIiB4bWxuczpaPSJ1cm46
+c2NoZW1hcy1taWNyb3NvZnQtY29tOiIgeG1sbnM6c3Q9IiYjMTsiIHhtbG5zPSJodHRwOi8vd3d3
+LnczLm9yZy9UUi9SRUMtaHRtbDQwIj4KCjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQt
+VHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBuYW1lPUdl
+bmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+Cjxz
+dHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OkNhbGlicmk7CglwYW5vc2UtMToyIDE1IDUgMiAyIDIgNCAzIDIgNDt9CiAvKiBTdHlsZSBE
+ZWZpbml0aW9ucyAqLwogcC5Nc29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJ
+e21hcmdpbjowY207CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJ
+Zm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBl
+cmxpbmsKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0
+aW9uOnVuZGVybGluZTt9CmE6dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe21z
+by1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRl
+cmxpbmU7fQpzcGFuLkVtYWlsU3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBv
+c2U7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4
+dDt9Ci5Nc29DaHBEZWZhdWx0Cgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7fQpAcGFnZSBX
+b3JkU2VjdGlvbjEKCXtzaXplOjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdpbjo3Mi4wcHQgNzIuMHB0
+IDcyLjBwdCA3Mi4wcHQ7fQpkaXYuV29yZFNlY3Rpb24xCgl7cGFnZTpXb3JkU2VjdGlvbjE7fQot
+LT4KPC9zdHlsZT4KPCEtLVtpZiBndGUgbXNvIDldPjx4bWw+CiA8bzpzaGFwZWRlZmF1bHRzIHY6
+ZXh0PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3htbD48IVtlbmRpZl0tLT48IS0tW2lmIGd0
+ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlbGF5b3V0IHY6ZXh0PSJlZGl0Ij4KICA8bzppZG1hcCB2
+OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KIDwvbzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0t
+LT4KPC9oZWFkPgoKPGJvZHkgbGFuZz1FTi1VUyBsaW5rPWJsdWUgdmxpbms9cHVycGxlPgoKPGRp
+diBjbGFzcz1Xb3JkU2VjdGlvbjE+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+QWxsLCA8bzpwPjwvbzpw
+PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4KCjxwIGNsYXNz
+PU1zb05vcm1hbD5JcyB0aGUgJiM4MjIwO1N0cmVuZ3RoJiM4MjIxOyBwcm9wZXJ0eSBhbmQgdGhl
+ICYjODIyMDtUZWNobm9sb2d5JiM4MjIxOwpmdWxseSBpbXBsZW1lbnRlZCBpbiBvcmcub2Zvbm8u
+TmV0d29ya1JlZ2lzdHJhdGlvbiAmbmJzcDtvbiBPZm9ubyAwLjIzID88bzpwPjwvbzpwPjwvcD4K
+CjxwIGNsYXNzPU1zb05vcm1hbD5JcyBvcmcub2Zvbm8uTmV0d29ya1JlZ2lzdHJhdGlvbiBpcyAm
+bmJzcDtmdWxseSBpbnRlZ3JhdGVkIG9uCk9mb25vIDAuMjMgPzxvOnA+PC9vOnA+PC9wPgoKPHAg
+Y2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFs
+PkkgYW0gdGVzdGluZyBPZm9ubyAwLjIzIG9uIHRvcCBvZiBNZWRmaWVsZCBwbGF0Zm9ybSB3aXRo
+IGEKQWdpbGVudCA4OTYwIChOZXR3b3JrIHNpbXVsYXRvcik8bzpwPjwvbzpwPjwvcD4KCjxwIGNs
+YXNzPU1zb05vcm1hbD5JIGhhdmUgbm90aWNlZCAmbmJzcDt0aGF0IGF0IG9mb25vIGxldmVsICZu
+YnNwO1JBVAppbmRpY2F0aW9uIGFuZCBzaWduYWwgc3RyZW5ndGggYXJlIG5vdCB1cGRhdGVkIHdo
+ZW4gdGhlIFJBVCBjaGFuZ2Ugb3Igd2hlbiB0aGUKc2lnbmFsIGxldmVsIGNoYW5nZS48bzpwPjwv
+bzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4KCjxwIGNs
+YXNzPU1zb05vcm1hbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjkuMHB0O2ZvbnQtZmFtaWx5OiJD
+b3VyaWVyIE5ldyI7CmNvbG9yOmJsYWNrJz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8
+cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZTo5LjBwdDtmb250LWZhbWls
+eToiQ291cmllciBOZXciOwpjb2xvcjpibGFjayc+VGhhbmtzLDxvOnA+PC9vOnA+PC9zcGFuPjwv
+cD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBzdHlsZT0nZm9udC1zaXplOjkuMHB0O2ZvbnQt
+ZmFtaWx5OiJDb3VyaWVyIE5ldyI7CmNvbG9yOmJsYWNrJz5BbGFpbjxvOnA+PC9vOnA+PC9zcGFu
+PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4KCjwvZGl2PgoK
+PHByZT4tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0KSW50ZWwgQ29ycG9yYXRpb24gU0FTIChGcmVuY2ggc2ltcGxpZmll
+ZCBqb2ludCBzdG9jayBjb21wYW55KQpSZWdpc3RlcmVkIGhlYWRxdWFydGVyczogIkxlcyBNb250
+YWxldHMiLSAyLCBydWUgZGUgUGFyaXMsIAo5MjE5NiBNZXVkb24gQ2VkZXgsIEZyYW5jZQpSZWdp
+c3RyYXRpb24gTnVtYmVyOiAgMzAyIDQ1NiAxOTkgUi5DLlMuIE5BTlRFUlJFCkNhcGl0YWw6IDQs
+NTcyLDAwMCBFdXJvcwoKVGhpcyBlLW1haWwgYW5kIGFueSBhdHRhY2htZW50cyBtYXkgY29udGFp
+biBjb25maWRlbnRpYWwgbWF0ZXJpYWwgZm9yCnRoZSBzb2xlIHVzZSBvZiB0aGUgaW50ZW5kZWQg
+cmVjaXBpZW50KHMpLiBBbnkgcmV2aWV3IG9yIGRpc3RyaWJ1dGlvbgpieSBvdGhlcnMgaXMgc3Ry
+aWN0bHkgcHJvaGliaXRlZC4gSWYgeW91IGFyZSBub3QgdGhlIGludGVuZGVkCnJlY2lwaWVudCwg
+cGxlYXNlIGNvbnRhY3QgdGhlIHNlbmRlciBhbmQgZGVsZXRlIGFsbCBjb3BpZXMuCjwvcHJlPjwv
+Ym9keT4KCjwvaHRtbD4K
+
+--===============5630341879729781302==--
 
