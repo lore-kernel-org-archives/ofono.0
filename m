@@ -1,73 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============0664649671641255855=="
+Content-Type: multipart/mixed; boundary="===============4275004456677842970=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Connecting with Huawei E226
-Date: Tue, 17 Aug 2010 20:45:13 -0500
-Message-ID: <4C6B3B29.1010109@gmail.com>
-In-Reply-To: <AANLkTin3h2nEwhgwYtEaJr9vy-nWK4bzcxhks2EeLeZj@mail.gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] stkagent: Free pending call when destroying agent.
+Date: Tue, 17 Aug 2010 17:37:00 +0200
+Message-ID: <1282059423-28864-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1282059423-28864-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0664649671641255855==
+--===============4275004456677842970==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Thiago,
+Otherwise we leak memory and additionally D-bus invokes the method
+callback and since the agent is already destroyed, we segfault.
+---
+ src/stkagent.c |   11 ++++++-----
+ 1 files changed, 6 insertions(+), 5 deletions(-)
 
-On 08/17/2010 03:31 PM, Thiago Cangussu de Castro Gomes wrote:
-> Hi all,
-> =
+diff --git a/src/stkagent.c b/src/stkagent.c
+index fc05493..e71436d 100644
+--- a/src/stkagent.c
++++ b/src/stkagent.c
+@@ -127,19 +127,20 @@ void stk_agent_request_cancel(struct stk_agent *agent)
+ 		return;
+ =
 
-> I'm trying to connect with a Huawei E226, but I'm getting
-> different behavior whether I start ofonod with the modem (USB) plugged
-> in or not:
-> =
+ 	dbus_pending_call_cancel(agent->call);
+-	stk_agent_send_cancel(agent);
++
++	if (agent->disconnect_watch)
++		stk_agent_send_cancel(agent);
++
+ 	stk_agent_request_end(agent);
+ }
+ =
 
-> Scenario 1:
-> =
+ void stk_agent_free(struct stk_agent *agent)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+-	gboolean busy =3D agent->call !=3D NULL;
+ =
 
-> 1 - start ofonod
-> 2 - plug the modem
-> 3 - not working
-> =
+-	if (agent->disconnect_watch) {
+-		if (busy)
+-			stk_agent_send_cancel(agent);
++	stk_agent_request_cancel(agent);
+ =
 
-> Log: huawei-connected.log (attached)
-> =
++	if (agent->disconnect_watch) {
+ 		stk_agent_send_release(agent);
+ =
 
-> Scenario 2:
-> =
+ 		g_dbus_remove_watch(conn, agent->disconnect_watch);
+-- =
 
-> 1 - start ofonod
-> 2 - plug the modem
-> 3 - call disable-modem
-> 4 - call enable-modem
-> 5 - it works
-> =
+1.7.1.86.g0e460.dirty
 
-> Log: huawei-testscripts.log
-> =
 
-> Scenario 3:
-> =
-
-> 1 - plug the modem
-> 2 - start ofonod
-> 3 - it works
-> =
-
-> Log file: huawei-not-connected.log
-> =
-
-> I'm testing with MeeGo, ofono from git and connman 0.57.
-
-The problem with the failed cases it that oFono / ConnMan combination is
-simply too fast.  It tries to access the Modem before it had the chance
-to properly initialize the SIM card.  We have pushed some fixes upstream
-after the 0.26 release that should alleviate this.
-
-Regards,
--Denis
-
---===============0664649671641255855==--
+--===============4275004456677842970==--
 
