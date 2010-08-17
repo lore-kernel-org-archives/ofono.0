@@ -1,42 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============0521858328116371249=="
+Content-Type: multipart/mixed; boundary="===============9127074811665477209=="
 MIME-Version: 1.0
 From: caiwen.zhang <caiwenzhang@163.com>
-Subject: [PATCH 1/2] add CDMA radio setting support
-Date: Tue, 17 Aug 2010 03:39:00 +0000
-Message-ID: <1282016329-12485-1-git-send-email-caiwenzhang@163.com>
+Subject: [PATCH 2/2] add CDMA radio setting support
+Date: Tue, 17 Aug 2010 03:40:03 +0000
+Message-ID: <1282016390-12516-1-git-send-email-caiwenzhang@163.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0521858328116371249==
+--===============9127074811665477209==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/radio-settings.h |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ src/radio-settings.c |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
-diff --git a/include/radio-settings.h b/include/radio-settings.h
-index d41ec0b..1391271 100644
---- a/include/radio-settings.h
-+++ b/include/radio-settings.h
-@@ -33,6 +33,10 @@ enum ofono_radio_access_mode {
- 	OFONO_RADIO_ACCESS_MODE_GSM	=3D 1,
- 	OFONO_RADIO_ACCESS_MODE_UMTS	=3D 2,
- 	OFONO_RADIO_ACCESS_MODE_LTE	=3D 3,
-+
-+	OFONO_CDMA_RADIO_ACCESS_MODE_CDMA =3D 4,
-+	OFONO_CDMA_RADIO_ACCESS_MODE_HDR =3D 5,
-+	OFONO_CDMA_RADIO_ACCESS_MODE_HYBRID =3D 6,  //CDMA/HDR HYBRID
- };
+diff --git a/src/radio-settings.c b/src/radio-settings.c
+index f70d870..4952eac 100644
+--- a/src/radio-settings.c
++++ b/src/radio-settings.c
+@@ -58,6 +58,12 @@ static const char *radio_access_mode_to_string(enum ofon=
+o_radio_access_mode mode
+ 		return "umts";
+ 	case OFONO_RADIO_ACCESS_MODE_LTE:
+ 		return "lte";
++	case OFONO_CDMA_RADIO_ACCESS_MODE_CDMA:
++		return "cdma";
++	case OFONO_CDMA_RADIO_ACCESS_MODE_HDR:
++		return "hdr";
++	case OFONO_CDMA_RADIO_ACCESS_MODE_HYBRID:
++		return "hybird";
+ 	default:
+ 		return "";
+ 	}
+@@ -74,6 +80,12 @@ static int string_to_radio_access_mode(const char *mode)
+ 		return OFONO_RADIO_ACCESS_MODE_UMTS;
+ 	if (g_strcmp0(mode, "lte") =3D=3D 0)
+ 		return OFONO_RADIO_ACCESS_MODE_LTE;
++	if (g_strcmp0(mode, "cdma") =3D=3D 0)
++		return OFONO_CDMA_RADIO_ACCESS_MODE_CDMA;
++	if (g_strcmp0(mode, "hdr") =3D=3D 0)
++		return OFONO_CDMA_RADIO_ACCESS_MODE_HDR;
++	if (g_strcmp0(mode, "hybird") =3D=3D 0)
++		return OFONO_CDMA_RADIO_ACCESS_MODE_HYBRID;
+ 	return -1;
+ }
  =
 
- struct ofono_radio_settings;
 -- =
 
 1.7.0.4
 
 
 
---===============0521858328116371249==--
+--===============9127074811665477209==--
 
