@@ -1,24 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============7019652745766298527=="
+Content-Type: multipart/mixed; boundary="===============7519925363107021476=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v5 8/8] plugins: Add STE sample to modem.conf
-Date: Tue, 17 Aug 2010 14:51:59 +0200
-Message-ID: <1282049519.23399.95.camel@localhost.localdomain>
-In-Reply-To: <1282047754-15562-9-git-send-email-sjur.brandeland@stericsson.com>
+Subject: Re: [PATCH v5 2/8] stemodem: Add polling for SIM ready.
+Date: Tue, 17 Aug 2010 14:58:43 +0200
+Message-ID: <1282049923.23399.96.camel@localhost.localdomain>
+In-Reply-To: <1282047754-15562-3-git-send-email-sjur.brandeland@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7019652745766298527==
+--===============7519925363107021476==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Sjur,
 
->  plugins/modem.conf |    5 +++++
->  1 files changed, 5 insertions(+), 0 deletions(-)
+> Interim solution until support for SIM 'ready' notification is supported.
+> ---
+> Change: AT-channel configuration is moved to separate patch.
+> =
 
-patch has been applied. Thanks.
+>  plugins/ste.c |   52 ++++++++++++++++++++++++++++++++++++++++++++++++++--
+>  1 files changed, 50 insertions(+), 2 deletions(-)
+
+patch has been applied.
+
+Denis, if you don't like it then feel free to revert it. For me it
+looked fine until we have better solution for this.
 
 Regards
 
@@ -26,5 +34,5 @@ Marcel
 
 
 
---===============7019652745766298527==--
+--===============7519925363107021476==--
 
