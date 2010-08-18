@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============4345315490655214596=="
+Content-Type: multipart/mixed; boundary="===============1081965413320450831=="
 MIME-Version: 1.0
 From: Kouassu, AlainX <alainx.kouassu@intel.com>
 Subject: Recall: RAT , signal Strength indication ofono 0.23
-Date: Wed, 18 Aug 2010 09:00:19 +0100
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D401870321E1E08@irsmsx501.ger.corp.intel.com>
+Date: Wed, 18 Aug 2010 09:00:56 +0100
+Message-ID: <9F3EABD6E3419B4C81F34EAABB4D401870321E1E09@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4345315490655214596==
+--===============1081965413320450831==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -28,5 +28,5 @@ by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
 
---===============4345315490655214596==--
+--===============1081965413320450831==--
 
