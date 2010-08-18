@@ -1,40 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============7377859198655616938=="
+Content-Type: multipart/mixed; boundary="===============4345315490655214596=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: Startup sequence for Online / offline mode
-Date: Wed, 18 Aug 2010 10:57:42 +0300
-Message-ID: <87sk2cwdxl.fsf@potku.valot.fi>
-In-Reply-To: <AANLkTinz3K8naBTnjz-e9LSf_c0O2C4tGxch=x01qoV2@mail.gmail.com>
+From: Kouassu, AlainX <alainx.kouassu@intel.com>
+Subject: Recall: RAT , signal Strength indication ofono 0.23
+Date: Wed, 18 Aug 2010 09:00:19 +0100
+Message-ID: <9F3EABD6E3419B4C81F34EAABB4D401870321E1E08@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7377859198655616938==
+--===============4345315490655214596==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Pekka Pessi <ppessi@gmail.com> writes:
+Kouassu, AlainX would like to recall the message, "RAT , signal Strength in=
+dication ofono 0.23".
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-> 2010/8/13 Denis Kenzior <denkenz@gmail.com>:
->>> As online state is not supported by connman yet, ofono should default to
->>> online state until connman support is finished. For example, now it's
->>> impossible to use N900 as a modem with connman because the modem is in
->>> offline state.
->>>
->>> Will you accept patches to ofono to change the default state? It can be
->>> reverted once the connman support is finished.
->
->> I'd be fine with that in the interim.
->
-> FYI, I've submitted online patches against the ofono plugin to the
-> connman list. It seems to work fine with my N900 and isimodem driver,
-> scratching Kalle's most immediate itches.
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-Awesome! I'll test them as soon as they are commited to git.
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
--- =
 
-Kalle Valo
-
---===============7377859198655616938==--
+--===============4345315490655214596==--
 
