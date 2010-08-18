@@ -1,94 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8800144354591568217=="
+Content-Type: multipart/mixed; boundary="===============7377859198655616938=="
 MIME-Version: 1.0
-From: Kouassu, AlainX <alainx.kouassu@intel.com>
-Subject: RE: RAT , signal Strength indication ofono 0.23
-Date: Wed, 18 Aug 2010 08:54:27 +0100
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D401870321E1E05@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <4C6AB542.3060106@gmail.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: Startup sequence for Online / offline mode
+Date: Wed, 18 Aug 2010 10:57:42 +0300
+Message-ID: <87sk2cwdxl.fsf@potku.valot.fi>
+In-Reply-To: <AANLkTinz3K8naBTnjz-e9LSf_c0O2C4tGxch=x01qoV2@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8800144354591568217==
+--===============7377859198655616938==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-HI Denis,
+Pekka Pessi <ppessi@gmail.com> writes:
 
-I am testing with Infineon modem 6080. In fact the property like CellId or =
-LocationAreaCode are sometimes updated but the property technology (RAT) is=
- never indicated, in the other hand the property Strength is =
+> 2010/8/13 Denis Kenzior <denkenz@gmail.com>:
+>>> As online state is not supported by connman yet, ofono should default to
+>>> online state until connman support is finished. For example, now it's
+>>> impossible to use N900 as a modem with connman because the modem is in
+>>> offline state.
+>>>
+>>> Will you accept patches to ofono to change the default state? It can be
+>>> reverted once the connman support is finished.
+>
+>> I'd be fine with that in the interim.
+>
+> FYI, I've submitted online patches against the ofono plugin to the
+> connman list. It seems to work fine with my N900 and isimodem driver,
+> scratching Kalle's most immediate itches.
 
-not updated when the signal strength of the cell change. Is sound like netw=
-orkregistration API is not fully working or implemented ?
+Awesome! I'll test them as soon as they are commited to git.
 
-Thanks,
-Alain Kouassu
+-- =
 
+Kalle Valo
 
-
-
------Original Message-----
-From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
-
-Sent: Tuesday, August 17, 2010 6:14 PM
-To: ofono(a)ofono.org
-Cc: Kouassu, AlainX
-Subject: Re: RAT , signal Strength indication ofono 0.23
-
-Hi Alain,
-
-On 08/17/2010 11:05 AM, Kouassu, AlainX wrote:
-> All,
-> =
-
->  =
-
-> =
-
-> Is the "Strength" property and the "Technology" fully implemented in
-> org.ofono.NetworkRegistration  on Ofono 0.23 ?
-> =
-
-> Is org.ofono.NetworkRegistration is  fully integrated on Ofono 0.23 ?
-> =
-
->  =
-
-
-If the modem driver provides it, then sure.  Please do keep in mind that
-oFono 0.23 is pretty ancient now, our development moves pretty quickly.
-
-> =
-
-> I am testing Ofono 0.23 on top of Medfield platform with a Agilent 8960
-> (Network simulator)
-> =
-
-> I have noticed  that at ofono level  RAT indication and signal strength
-> are not updated when the RAT change or when the signal level change.
-> =
-
->  =
-
-
-What modem are you using?  Is the driver for this modem upstream?
-
-Regards,
--Denis
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============8800144354591568217==--
+--===============7377859198655616938==--
 
