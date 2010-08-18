@@ -1,32 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============1081965413320450831=="
+Content-Type: multipart/mixed; boundary="===============3389440930694347472=="
 MIME-Version: 1.0
-From: Kouassu, AlainX <alainx.kouassu@intel.com>
-Subject: Recall: RAT , signal Strength indication ofono 0.23
-Date: Wed, 18 Aug 2010 09:00:56 +0100
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D401870321E1E09@irsmsx501.ger.corp.intel.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: Recall: RAT , signal Strength indication ofono 0.23
+Date: Wed, 18 Aug 2010 11:09:12 +0300
+Message-ID: <87ocd0wdef.fsf@potku.valot.fi>
+In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D401870321E1E08@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1081965413320450831==
+--===============3389440930694347472==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Kouassu, AlainX would like to recall the message, "RAT , signal Strength in=
-dication ofono 0.23".
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+"Kouassu, AlainX" <alainx.kouassu@intel.com> writes:
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+> Kouassu, AlainX would like to recall the message, "RAT , signal
+> Strength indication ofono 0.23".
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+-EUNSUPPORTED
 
+-- =
 
---===============1081965413320450831==--
+Kalle Valo
+
+--===============3389440930694347472==--
 
