@@ -1,89 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============4815907072104531519=="
+Content-Type: multipart/mixed; boundary="===============8457687817969379074=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] [RfC] doc: Proposed Set Up Call api.
-Date: Wed, 18 Aug 2010 17:03:05 +0200
-Message-ID: <1282143785.23399.152.camel@localhost.localdomain>
-In-Reply-To: <1282100467-890-1-git-send-email-andrew.zaborowski@intel.com>
+From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
+Subject: UIM manager atom APIs review request
+Date: Wed, 18 Aug 2010 18:03:24 +0200
+Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE8055DC99D@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4815907072104531519==
+--===============8457687817969379074==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi all,
 
-> The normal sequence for call setup is:
-> =
+I am going to implement an UIM manager atom for CDMA extension. Its APIs wi=
+ll be almost the same as =
 
-> * Modem asks user for confirmation using icon1 / alphaId1.
-> * User confirms
-> * Modem starts dialling, screen displays icon2 / alphaId2,
-> * Call is connected, modem replies to the proactive command, screen
->   keeps displaying icon2 / alphaId2 until the phone call is over.
-> ---
->  doc/stk-api.txt       |   11 +++++++++++
->  doc/voicecall-api.txt |   11 +++++++++++
->  2 files changed, 22 insertions(+), 0 deletions(-)
-> =
+current SIM manger atom's APIs. =C2=A0But I suggest maybe will can do some =
+changes:
 
-> diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-> index 2e863a9..dcb8e2b 100644
-> --- a/doc/stk-api.txt
-> +++ b/doc/stk-api.txt
-> @@ -189,6 +189,17 @@ Methods		byte RequestSelection(string title, byte ic=
-on_id,
->  =
+	1. Add PIN remain retry count support
+	2. replace properties 'Present' 'PinRequired' and 'LockedPins' with a new =
+add property 'Status'
 
->  			Possible Errors: [service].Error.SimToolkit.GoBack
->  =
+Properties	string Status [readonly]
+			=
 
-> +		boolean ConfirmCallSetup(string information, byte icon_id)
-> +
-> +			Asks the agent to request user to confirm an
-> +			outgoing call setup.  If confirmed, the next new
-> +			outgoing call reported by VoiceCallManager will
-> +			have the Information and Icon properties set to
-> +			inform the user.  Hanging up before the call is
-> +			connected will cause EndSession reply to be sent.
-> +
-> +			Possible Errors: [service].Error.SimToolkit.EndSession
-> +
->  		void Cancel()
->  =
+			Contains the string type of the status of the SIM.  =
 
->  			Asks the agent to cancel any ongoing operation in
-> diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-> index 59e3568..f0ba316 100644
-> --- a/doc/voicecall-api.txt
-> +++ b/doc/voicecall-api.txt
-> @@ -114,3 +114,14 @@ Properties	string LineIdentification [readonly]
->  			stamped when the call enters the "active" state.
->  			Client applications can use this to infer somewhat
->  			reliable call duration information.
-> +
-> +		string Information [readonly, optional]
-> +
-> +			Contains information related to the call for the
-> +			user.  Currently this property is set for calls
-> +			initiated by SIM Toolkit applications.
-> +
-> +		byte Icon [readonly, optional]
-> +
-> +			Icon identifier to be used instead of or together
-> +			with the text information.
+			The possible values are:
+			"ready" - Not waiting for a password
+			"pin" - SIM PIN is required
+			"phone" - Phone-to-SIM PIN is required  [GSM only]
+			"firstphone" - Phone-to-very-first SIM
+						PIN is required  [GSM only]
+			"pin2" - SIM PIN2 is required
+			"network" - Network Personalization password is
+						required  [GSM only]
+			"netsub" - Network subset personalization
+						password is required  [GSM only]
+			"service" - Service Provider personalization
+						password is required  [GSM only]
+			"corp" - Corporate personalization password
+						is required  [GSM only]
+			"puk" - SIM PUK is required
+			"firstphonepuk" - Phone-to-very-first SIM PUK is
+						required  [GSM only]
+			"puk2" - SIM PUK2 is required
+			"networkpuk" - Network personalization unblocking
+						password is required  [GSM only]
+			"netsubpuk" - Network subset personalization
+						unblocking password is required  [GSM only]
+			"servicepuk" - Service provider personalization
+						unblocking password is required  [GSM only]
+			"corppuk" - Corporate personalization unblocking
+						password is required  [GSM only]
+			"absent" - No SIM inserted
 
-I would be fine with this. At least for an initial attempt to implement
-this. We need to see how far we get from here. If it doesn't work out
-then we have to get back to the drawing board.
+		array{uint8} PinRetryCount [readonly]
+		=
 
-Regards
-
-Marcel
+			 Contains the remain retry count of PIN,PIN2,PUK and PUK2
 
 
+I marked all the values that only support in GSM with [GSM only]. =C2=A0=C2=
+=A0
 
---===============4815907072104531519==--
+Yes, ofono current API is OK. This is just my suggestion. Maybe I should co=
+mpletely =
+
+follow current SIM manger atom's APIs.
+
+Any suggestion? =
+
+
+Thanks!
+
+Caiwen
+
+
+--===============8457687817969379074==--
 
