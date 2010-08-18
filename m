@@ -1,40 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============5941742888661424842=="
+Content-Type: multipart/mixed; boundary="===============6172270410975740377=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH] simfilesystem: correct sw2 response for binary read
-Date: Wed, 18 Aug 2010 04:14:54 -0700
-Message-ID: <1282130094-7586-1-git-send-email-kristen@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC_PATCH 4/4] smsutil: added function for data handling of
+ status report
+Date: Wed, 18 Aug 2010 13:11:02 -0500
+Message-ID: <4C6C2236.2050007@gmail.com>
+In-Reply-To: <201008182053.08551.petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5941742888661424842==
+--===============6172270410975740377==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-according to spec, sw2 should be the number of bytes read, which
-is just length.
----
- src/simfilesystem.cpp |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi Petteri,
 
-diff --git a/src/simfilesystem.cpp b/src/simfilesystem.cpp
-index d193328..6e05039 100644
---- a/src/simfilesystem.cpp
-+++ b/src/simfilesystem.cpp
-@@ -226,7 +226,7 @@ void SimFileSystem::crsm( const QString& args )
-                     sw2 =3D 0x02;
-                 } else if ( length ) {
-                     sw1 =3D 0x9f;
--                    sw2 =3D length - offset;
-+                    sw2 =3D length;
-                     response =3D
-                         QAtUtils::toHex( contents.mid( offset, length ) );
-                 } else {
--- =
+>> If we can write / read the node structure directly, then I'm actually
+>> thinking we won't be needing this patch at all.
+> =
 
-1.7.2.1
+> OK. We'll get nicer code-solution with packed node-structure, and get rid=
+ of =
+
+> memcopies etc.  So, could it be that I'll just send you updated [PATCH 2/=
+4], =
+
+> and that's only needed patch with status report backup-files?
+> =
 
 
---===============5941742888661424842==--
+Sounds like it should be sufficient.  Lets go in this direction and mop
+up any further issues afterwards.
+
+Regards,
+-Denis
+
+--===============6172270410975740377==--
 
