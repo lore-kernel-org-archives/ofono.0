@@ -1,52 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============1019745579348243543=="
+Content-Type: multipart/mixed; boundary="===============8800144354591568217=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v2] [RfC] doc: Proposed Set Up Call api.
-Date: Wed, 18 Aug 2010 08:38:50 +0200
-Message-ID: <1282113530.23399.131.camel@localhost.localdomain>
-In-Reply-To: <4C6B705B.1070400@gmail.com>
+From: Kouassu, AlainX <alainx.kouassu@intel.com>
+Subject: RE: RAT , signal Strength indication ofono 0.23
+Date: Wed, 18 Aug 2010 08:54:27 +0100
+Message-ID: <9F3EABD6E3419B4C81F34EAABB4D401870321E1E05@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <4C6AB542.3060106@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1019745579348243543==
+--===============8800144354591568217==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+HI Denis,
 
-> > diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-> > index efeae42..dae3ec2 100644
-> > --- a/doc/voicecall-api.txt
-> > +++ b/doc/voicecall-api.txt
-> > @@ -106,3 +106,14 @@ Properties	string LineIdentification [readonly]
-> >  			stamped when the call enters the "active" state.
-> >  			Client applications can use this to infer somewhat
-> >  			reliable call duration information.
-> > +
-> > +		string Information [readonly, optional]
-> > +
-> > +			Contains information related to the call for the
-> > +			user.  Currently this property is set for calls
-> > +			initiated by SIM Toolkit applications.
-> > +
-> > +		string IconID [readonly, optional]
-> > +
-> > +			Icon identifier to be used instead of or together
-> > +			with the text information.
+I am testing with Infineon modem 6080. In fact the property like CellId or =
+LocationAreaCode are sometimes updated but the property technology (RAT) is=
+ never indicated, in the other hand the property Strength is =
+
+not updated when the signal strength of the cell change. Is sound like netw=
+orkregistration API is not fully working or implemented ?
+
+Thanks,
+Alain Kouassu
+
+
+
+
+-----Original Message-----
+From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
+
+Sent: Tuesday, August 17, 2010 6:14 PM
+To: ofono(a)ofono.org
+Cc: Kouassu, AlainX
+Subject: Re: RAT , signal Strength indication ofono 0.23
+
+Hi Alain,
+
+On 08/17/2010 11:05 AM, Kouassu, AlainX wrote:
+> All,
 > =
 
-> So my preference here is simply Icon, or IconIdentifier.  IconID breaks
-> our pure CamelCase rules for APIs.
+>  =
 
-I think we used Icons in STK API and thus this should be Icon to match
-with it. But yes, either plain Icon or IconIdentifier.
+> =
 
-Regards
+> Is the "Strength" property and the "Technology" fully implemented in
+> org.ofono.NetworkRegistration  on Ofono 0.23 ?
+> =
 
-Marcel
+> Is org.ofono.NetworkRegistration is  fully integrated on Ofono 0.23 ?
+> =
+
+>  =
 
 
+If the modem driver provides it, then sure.  Please do keep in mind that
+oFono 0.23 is pretty ancient now, our development moves pretty quickly.
 
---===============1019745579348243543==--
+> =
+
+> I am testing Ofono 0.23 on top of Medfield platform with a Agilent 8960
+> (Network simulator)
+> =
+
+> I have noticed  that at ofono level  RAT indication and signal strength
+> are not updated when the RAT change or when the signal level change.
+> =
+
+>  =
+
+
+What modem are you using?  Is the driver for this modem upstream?
+
+Regards,
+-Denis
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============8800144354591568217==--
 
