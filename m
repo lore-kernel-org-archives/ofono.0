@@ -1,112 +1,328 @@
-Content-Type: multipart/mixed; boundary="===============6163835433524945827=="
+Content-Type: multipart/mixed; boundary="===============5806444421010579936=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 3/6] sim: read EFimg
-Date: Wed, 18 Aug 2010 04:25:20 -0700
-Message-ID: <1282130723-10488-4-git-send-email-kristen@linux.intel.com>
+Subject: [PATCH 4/6] sim: read EFiidf
+Date: Wed, 18 Aug 2010 04:25:21 -0700
+Message-ID: <1282130723-10488-5-git-send-email-kristen@linux.intel.com>
 In-Reply-To: <1282130723-10488-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6163835433524945827==
+--===============5806444421010579936==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Read EFimg when the sim is ready, and store it in memory.
+EFiidf can be larger than 256 bytes, so allow callers to read
+portions of the EFiidf from a specified offset.  Cache EFiidf
+files as blocks of 256 bytes so that it's not necessary to
+read the entire (potentially large) file.
 ---
- src/sim.c |   47 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 47 insertions(+), 0 deletions(-)
+ src/sim.c |  201 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 198 insertions(+), 3 deletions(-)
 
 diff --git a/src/sim.c b/src/sim.c
-index d2ed780..6d723bb 100644
+index 6d723bb..d79c5e1 100644
 --- a/src/sim.c
 +++ b/src/sim.c
-@@ -88,6 +88,8 @@ struct ofono_sim {
- 	unsigned char efmsisdn_records;
- 	unsigned char *efli;
- 	unsigned char efli_length;
-+	unsigned char *efimg;
-+	int efimg_length;
- 	enum ofono_sim_cphs_phase cphs_phase;
- 	unsigned char cphs_service_table[2];
- 	struct ofono_watchlist *state_watches;
-@@ -1001,6 +1003,44 @@ static void sim_own_numbers_update(struct ofono_sim =
-*sim)
- 			sim_msisdn_read_cb, sim);
+@@ -47,6 +47,7 @@
+ #define SIM_CACHE_PATH STORAGEDIR "/%s-%i/%04x"
+ #define SIM_CACHE_PATH_LEN(imsilen) (strlen(SIM_CACHE_PATH) - 3 + imsilen)
+ #define SIM_CACHE_HEADER_SIZE 6
++#define SIM_IIDF_CACHE_PATH SIM_CACHE_PATH ".%02x"
+ =
+
+ static GSList *g_drivers =3D NULL;
+ =
+
+@@ -55,16 +56,20 @@ static gboolean sim_op_retrieve_next(gpointer user);
+ static void sim_own_numbers_update(struct ofono_sim *sim);
+ static void sim_pin_check(struct ofono_sim *sim);
+ static void sim_set_ready(struct ofono_sim *sim);
++static gboolean sim_op_read_block(gpointer user_data);
+ =
+
+ struct sim_file_op {
+ 	int id;
+ 	gboolean cache;
+ 	enum ofono_sim_file_structure structure;
++	unsigned short offset;
++	int num_bytes;
+ 	int length;
+ 	int record_length;
+ 	int current;
+ 	gconstpointer cb;
+ 	gboolean is_read;
++	gboolean is_image;
+ 	void *buffer;
+ 	void *userdata;
+ };
+@@ -1610,9 +1615,13 @@ static void sim_op_info_cb(const struct ofono_error =
+*error, int length,
+ 	else
+ 		op->record_length =3D record_length;
+ =
+
+-	op->current =3D 1;
+ =
+
+-	sim->simop_source =3D g_timeout_add(0, sim_op_retrieve_next, sim);
++	if (op->is_image)
++		sim->simop_source =3D g_timeout_add(0, sim_op_read_block, sim);
++	else {
++		op->current =3D 1;
++		sim->simop_source =3D g_timeout_add(0, sim_op_retrieve_next, sim);
++	}
+ =
+
+ 	if (op->cache && imsi) {
+ 		unsigned char fileinfo[6];
+@@ -1694,6 +1703,12 @@ static gboolean sim_op_check_cached(struct ofono_sim=
+ *sim)
+ 	structure =3D fileinfo[3];
+ 	record_length =3D (fileinfo[4] << 8) | fileinfo[5];
+ =
+
++	if (op->is_image) {
++		op->length =3D file_length;
++		ret =3D TRUE;
++		goto cleanup;
++	}
++
+ 	if (structure =3D=3D OFONO_SIM_FILE_STRUCTURE_TRANSPARENT)
+ 		record_length =3D file_length;
+ =
+
+@@ -1733,6 +1748,170 @@ cleanup:
+ 	return ret;
  }
  =
 
-+static void sim_efimg_read_cb(int ok, int length, int record,
-+				const unsigned char *data,
-+				int record_length, void *userdata)
++static void sim_op_read_block_cb(const struct ofono_error *error,
++				const unsigned char *data, int len, void *user)
 +{
-+	struct ofono_sim *sim =3D userdata;
-+	unsigned char *efimg;
-+	int num_records =3D length / record_length;
++	struct ofono_sim *sim =3D user;
++	struct sim_file_op *op =3D g_queue_peek_head(sim->simop_q);
++	int start_block, end_block;
++	int start, length;
++	unsigned char *buf;
 +
-+	if (!ok)
++	if ((error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) || (len =3D=3D 0)) {
++		sim_op_error(sim);
 +		return;
-+
-+	/*
-+	 * EFimg descriptors are 9 bytes long.
-+	 * Byte 1 of the record is the number of descriptors per record.
-+	 */
-+	if (record_length < 10)
-+		return;
-+
-+	if (sim->efimg =3D=3D NULL) {
-+		sim->efimg =3D g_try_malloc0(num_records * 9);
-+
-+		if (sim->efimg =3D=3D NULL)
-+			return;
-+
-+		sim->efimg_length =3D num_records * 9;
 +	}
 +
-+	/*
-+	 * TBD - if we have more than one descriptor per record,
-+	 * pick the nicest one.  For now we use the first one.
-+	 */
++	/* cache this block */
++	write_file(data, len, SIM_CACHE_MODE, SIM_IIDF_CACHE_PATH,
++			sim->imsi, sim->phase, op->id, op->current);
 +
-+	/* copy descriptor into slot for this record */
-+	efimg =3D &sim->efimg[(record - 1) * 9];
++	/* buffer this block */
++	start_block =3D op->offset / 256;
++	end_block =3D (op->offset + (op->num_bytes - 1)) / 256;
 +
-+	memcpy(efimg, &data[1], 9);
++	if (op->current =3D=3D start_block) {
++		start =3D op->offset % 256;
++		buf =3D op->buffer;
++	} else {
++		start =3D 0;
++		buf =3D op->buffer + (op->current * 256);
++	}
++
++	length =3D op->num_bytes % 256;
++
++	if ((length =3D=3D 0) || (op->current !=3D end_block))
++		length =3D 256;
++
++	memcpy(buf, &data[start], length);
++
++	op->current++;
++
++	sim->simop_source =3D g_timeout_add(0, sim_op_read_block, sim);
 +}
 +
- static void sim_ready(void *user, enum ofono_sim_state new_state)
- {
- 	struct ofono_sim *sim =3D user;
-@@ -1015,6 +1055,8 @@ static void sim_ready(void *user, enum ofono_sim_stat=
-e new_state)
- 			sim_ad_read_cb, sim);
- 	ofono_sim_read(sim, SIM_EFSDN_FILEID, OFONO_SIM_FILE_STRUCTURE_FIXED,
- 			sim_sdn_read_cb, sim);
-+	ofono_sim_read(sim, SIM_EFIMG_FILEID, OFONO_SIM_FILE_STRUCTURE_FIXED,
-+			sim_efimg_read_cb, sim);
- }
- =
-
- static void sim_cphs_information_read_cb(int ok, int length, int record,
-@@ -1934,6 +1976,11 @@ static void sim_free_state(struct ofono_sim *sim)
- 		g_strfreev(sim->language_prefs);
- 		sim->language_prefs =3D NULL;
- 	}
++static gboolean sim_op_check_cached_block(struct ofono_sim *sim)
++{
++	struct sim_file_op *op =3D g_queue_peek_head(sim->simop_q);
++	char *path;
++	int fd;
++	char *imsi =3D sim->imsi;
++	int start_block, end_block;
++	int start, length, len;
++	unsigned char *buf;
 +
-+	if (sim->efimg) {
-+		g_free(sim->efimg);
-+		sim->efimg =3D NULL;
++	if (!imsi)
++		return FALSE;
++
++	path =3D g_strdup_printf(SIM_IIDF_CACHE_PATH, imsi, sim->phase, op->id,
++					op->current);
++
++	if (path =3D=3D NULL)
++		return FALSE;
++
++	fd =3D TFR(open(path, O_RDONLY));
++	g_free(path);
++
++	if (fd =3D=3D -1) {
++		if (errno !=3D ENOENT)
++			DBG("Error %i opening cache file for "
++					"fileid %04x, IMSI %s",
++					errno, op->id, imsi);
++
++		return FALSE;
 +	}
++
++	/* figure out where we should start reading from */
++	start_block =3D op->offset / 256;
++	end_block =3D (op->offset + (op->num_bytes - 1)) / 256;
++
++	if (op->current =3D=3D start_block) {
++		start =3D op->offset % 256;
++		buf =3D op->buffer;
++	} else {
++		start =3D 0;
++		buf =3D op->buffer + (op->current * 256);
++	}
++
++	length =3D op->num_bytes % 256;
++
++	if ((length =3D=3D 0) || (op->current !=3D end_block))
++		length =3D 256;
++
++	/* lseek to the right place in the file */
++	TFR(lseek(fd, start, SEEK_CUR));
++
++	len =3D TFR(read(fd, buf, length));
++
++	if (len !=3D length)
++		return FALSE;
++
++	op->current++;
++
++	sim->simop_source =3D g_timeout_add(0, sim_op_read_block, sim);
++
++	return TRUE;
++}
++
++static gboolean sim_op_read_block(gpointer user_data)
++{
++	struct ofono_sim *sim =3D user_data;
++	struct sim_file_op *op =3D g_queue_peek_head(sim->simop_q);
++	int end_block;
++	ofono_sim_file_read_cb_t cb =3D op->cb;
++	int read_bytes;
++
++	end_block =3D (op->offset + (op->num_bytes - 1)) / 256;
++
++	if (op->current > end_block) {
++		cb(1, op->num_bytes, op->current, op->buffer,
++				op->record_length, op->userdata);
++
++		op =3D g_queue_pop_head(sim->simop_q);
++
++		g_free(op->buffer);
++
++		sim_file_op_free(op);
++
++		if (g_queue_get_length(sim->simop_q) > 0)
++			sim->simop_source =3D g_timeout_add(0, sim_op_next, sim);
++
++		return FALSE;
++	}
++
++	/* see if this block is cached */
++	if (sim_op_check_cached_block(sim) =3D=3D TRUE)
++		return FALSE;
++
++	if (op->length < ((op->current + 1) * 256))
++		read_bytes =3D op->length % 256;
++	else
++		read_bytes =3D 256;
++
++	sim->driver->read_file_transparent(sim, op->id,
++						op->current * 256,
++						read_bytes,
++						sim_op_read_block_cb, sim);
++	return FALSE;
++}
++
++static void sim_op_get_image(struct ofono_sim *sim)
++{
++	struct sim_file_op *op =3D g_queue_peek_head(sim->simop_q);
++
++	/* allocate space to buffer the data till we've collected it all */
++	op->buffer =3D g_try_malloc0(op->num_bytes);
++
++	/* initialize current */
++	op->current =3D op->offset / 256;
++
++	/* need to get the length of the file */
++	if (sim_op_check_cached(sim) =3D=3D FALSE)
++		sim->driver->read_file_info(sim, op->id, sim_op_info_cb, sim);
++	else
++		sim->simop_source =3D g_timeout_add(0, sim_op_read_block, sim);
++}
++
+ static gboolean sim_op_next(gpointer user_data)
+ {
+ 	struct ofono_sim *sim =3D user_data;
+@@ -1745,6 +1924,11 @@ static gboolean sim_op_next(gpointer user_data)
+ =
+
+ 	op =3D g_queue_peek_head(sim->simop_q);
+ =
+
++	if (op->is_image) {
++		sim_op_get_image(sim);
++		return FALSE;
++	}
++
+ 	if (op->is_read =3D=3D TRUE) {
+ 		if (sim_op_check_cached(sim)) {
+ 			op =3D g_queue_pop_head(sim->simop_q);
+@@ -1787,8 +1971,9 @@ static gboolean sim_op_next(gpointer user_data)
+ 	return FALSE;
  }
  =
 
- void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inserte=
-d)
+-int ofono_sim_read(struct ofono_sim *sim, int id,
++static int ofono_sim_read_bytes(struct ofono_sim *sim, int id,
+ 			enum ofono_sim_file_structure expected_type,
++			unsigned short offset, int num_bytes,
+ 			ofono_sim_file_read_cb_t cb, void *data)
+ {
+ 	struct sim_file_op *op;
+@@ -1819,6 +2004,9 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
+ 	op->cb =3D cb;
+ 	op->userdata =3D data;
+ 	op->is_read =3D TRUE;
++	op->offset =3D offset;
++	op->num_bytes =3D num_bytes;
++	op->is_image =3D ((((id >> 8) & 0xFF) =3D=3D 0x4F) && (id !=3D 0x4F20));
+ =
+
+ 	g_queue_push_tail(sim->simop_q, op);
+ =
+
+@@ -1828,6 +2016,13 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
+ 	return 0;
+ }
+ =
+
++int ofono_sim_read(struct ofono_sim *sim, int id,
++			enum ofono_sim_file_structure expected_type,
++			ofono_sim_file_read_cb_t cb, void *data)
++{
++	return ofono_sim_read_bytes(sim, id, expected_type, 0, -1, cb, data);
++}
++
+ int ofono_sim_write(struct ofono_sim *sim, int id,
+ 			ofono_sim_file_write_cb_t cb,
+ 			enum ofono_sim_file_structure structure, int record,
 -- =
 
 1.7.2.1
 
 
---===============6163835433524945827==--
+--===============5806444421010579936==--
 
