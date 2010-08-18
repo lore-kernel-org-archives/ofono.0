@@ -1,79 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============3021447676196654592=="
+Content-Type: multipart/mixed; boundary="===============2117170875188110991=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] [RfC] doc: Proposed Set Up Call api.
-Date: Wed, 18 Aug 2010 05:01:07 +0200
-Message-ID: <1282100467-890-1-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <4C6B705B.1070400@gmail.com>
+From: Thiago Cangussu de Castro Gomes <thiagoc@syst.com.br>
+Subject: Re: Connecting with Huawei E226
+Date: Wed, 18 Aug 2010 11:06:25 -0300
+Message-ID: <AANLkTinVWfb22rdDprxbbbGKY-fB9kywbTrNBNHxsi-8@mail.gmail.com>
+In-Reply-To: <4C6B3B29.1010109@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3021447676196654592==
+--===============2117170875188110991==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The normal sequence for call setup is:
+On Tue, Aug 17, 2010 at 10:45 PM, Denis Kenzior <denkenz@gmail.com> wrote:
+>
+> > I'm trying to connect with a Huawei E226, but I'm getting
+> > different behavior whether I start ofonod with the modem (USB) plugged
+> > in or not:
+> >
+> > Scenario 1:
+> >
+> > 1 - start ofonod
+> > 2 - plug the modem
+> > 3 - not working
+> >
+> > Log: huawei-connected.log (attached)
+> >
+> > Scenario 2:
+> >
+> > 1 - start ofonod
+> > 2 - plug the modem
+> > 3 - call disable-modem
+> > 4 - call enable-modem
+> > 5 - it works
+> >
+> > Log: huawei-testscripts.log
+> >
+> > Scenario 3:
+> >
+> > 1 - plug the modem
+> > 2 - start ofonod
+> > 3 - it works
+> >
+> > Log file: huawei-not-connected.log
+> >
+> > I'm testing with MeeGo, ofono from git and connman 0.57.
+>
+> The problem with the failed cases it that oFono / ConnMan combination is
+> simply too fast. =C2=A0It tries to access the Modem before it had the cha=
+nce
+> to properly initialize the SIM card. =C2=A0We have pushed some fixes upst=
+ream
+> after the 0.26 release that should alleviate this.
 
-* Modem asks user for confirmation using icon1 / alphaId1.
-* User confirms
-* Modem starts dialling, screen displays icon2 / alphaId2,
-* Call is connected, modem replies to the proactive command, screen
-  keeps displaying icon2 / alphaId2 until the phone call is over.
----
- doc/stk-api.txt       |   11 +++++++++++
- doc/voicecall-api.txt |   11 +++++++++++
- 2 files changed, 22 insertions(+), 0 deletions(-)
+Thanks for the response. You are right, I can reproduce the problem
+even with connman turned off, by calling the test scripts before the
+modem is ready.
 
-diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-index 2e863a9..dcb8e2b 100644
---- a/doc/stk-api.txt
-+++ b/doc/stk-api.txt
-@@ -189,6 +189,17 @@ Methods		byte RequestSelection(string title, byte icon=
-_id,
- =
+I'm using both ofono and connman from git, with all the available
+updates so far. Does it mean that the fixes didn't solved the issue in
+my case? Could you point me to the patches?
 
- 			Possible Errors: [service].Error.SimToolkit.GoBack
- =
+Thanks,
+Thiago
 
-+		boolean ConfirmCallSetup(string information, byte icon_id)
-+
-+			Asks the agent to request user to confirm an
-+			outgoing call setup.  If confirmed, the next new
-+			outgoing call reported by VoiceCallManager will
-+			have the Information and Icon properties set to
-+			inform the user.  Hanging up before the call is
-+			connected will cause EndSession reply to be sent.
-+
-+			Possible Errors: [service].Error.SimToolkit.EndSession
-+
- 		void Cancel()
- =
-
- 			Asks the agent to cancel any ongoing operation in
-diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-index 59e3568..f0ba316 100644
---- a/doc/voicecall-api.txt
-+++ b/doc/voicecall-api.txt
-@@ -114,3 +114,14 @@ Properties	string LineIdentification [readonly]
- 			stamped when the call enters the "active" state.
- 			Client applications can use this to infer somewhat
- 			reliable call duration information.
-+
-+		string Information [readonly, optional]
-+
-+			Contains information related to the call for the
-+			user.  Currently this property is set for calls
-+			initiated by SIM Toolkit applications.
-+
-+		byte Icon [readonly, optional]
-+
-+			Icon identifier to be used instead of or together
-+			with the text information.
--- =
-
-1.7.1.86.g0e460.dirty
-
-
---===============3021447676196654592==--
+--===============2117170875188110991==--
 
