@@ -1,45 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============7554313033729107430=="
+Content-Type: multipart/mixed; boundary="===============4244677230107362850=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Connecting with Huawei E226
-Date: Wed, 18 Aug 2010 12:02:33 -0500
-Message-ID: <4C6C1229.4090106@gmail.com>
-In-Reply-To: <AANLkTinVWfb22rdDprxbbbGKY-fB9kywbTrNBNHxsi-8@mail.gmail.com>
+Subject: Re: [PATCH] [RfC] doc: Proposed Set Up Call api.
+Date: Wed, 18 Aug 2010 12:29:00 -0500
+Message-ID: <4C6C185C.3040304@gmail.com>
+In-Reply-To: <1282100467-890-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7554313033729107430==
+--===============4244677230107362850==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Thiago,
+Hi Andrew,
 
->> The problem with the failed cases it that oFono / ConnMan combination is
->> simply too fast.  It tries to access the Modem before it had the chance
->> to properly initialize the SIM card.  We have pushed some fixes upstream
->> after the 0.26 release that should alleviate this.
+On 08/17/2010 10:01 PM, Andrzej Zaborowski wrote:
+> The normal sequence for call setup is:
 > =
 
-> Thanks for the response. You are right, I can reproduce the problem
-> even with connman turned off, by calling the test scripts before the
-> modem is ready.
+> * Modem asks user for confirmation using icon1 / alphaId1.
+> * User confirms
+> * Modem starts dialling, screen displays icon2 / alphaId2,
+> * Call is connected, modem replies to the proactive command, screen
+>   keeps displaying icon2 / alphaId2 until the phone call is over.
+> ---
+>  doc/stk-api.txt       |   11 +++++++++++
+>  doc/voicecall-api.txt |   11 +++++++++++
+>  2 files changed, 22 insertions(+), 0 deletions(-)
 > =
 
-> I'm using both ofono and connman from git, with all the available
-> updates so far. Does it mean that the fixes didn't solved the issue in
-> my case? Could you point me to the patches?
 
-For your particular case these patches from Kalle would be helpful:
-
-[PATCH 1/2] huawei: poll sim state
-[PATCH 2/2] huawei: postpone post_sim until SIM is ready
-
-However, they weren't integrated upstream due to some concerns.  See the
-entire thread for more details.
+Since we have seemingly reached consensus on the API direction, I went
+ahead and applied this patch.  Thanks.
 
 Regards,
 -Denis
 
---===============7554313033729107430==--
+--===============4244677230107362850==--
 
