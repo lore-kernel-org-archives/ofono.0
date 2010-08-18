@@ -1,69 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2117170875188110991=="
+Content-Type: multipart/mixed; boundary="===============7615759014916505280=="
 MIME-Version: 1.0
-From: Thiago Cangussu de Castro Gomes <thiagoc@syst.com.br>
-Subject: Re: Connecting with Huawei E226
-Date: Wed, 18 Aug 2010 11:06:25 -0300
-Message-ID: <AANLkTinVWfb22rdDprxbbbGKY-fB9kywbTrNBNHxsi-8@mail.gmail.com>
-In-Reply-To: <4C6B3B29.1010109@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: RAT , signal Strength indication ofono 0.23
+Date: Wed, 18 Aug 2010 09:10:07 -0500
+Message-ID: <4C6BE9BF.3030409@gmail.com>
+In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D401870321E1E0E@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2117170875188110991==
+--===============7615759014916505280==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Aug 17, 2010 at 10:45 PM, Denis Kenzior <denkenz@gmail.com> wrote:
->
-> > I'm trying to connect with a Huawei E226, but I'm getting
-> > different behavior whether I start ofonod with the modem (USB) plugged
-> > in or not:
-> >
-> > Scenario 1:
-> >
-> > 1 - start ofonod
-> > 2 - plug the modem
-> > 3 - not working
-> >
-> > Log: huawei-connected.log (attached)
-> >
-> > Scenario 2:
-> >
-> > 1 - start ofonod
-> > 2 - plug the modem
-> > 3 - call disable-modem
-> > 4 - call enable-modem
-> > 5 - it works
-> >
-> > Log: huawei-testscripts.log
-> >
-> > Scenario 3:
-> >
-> > 1 - plug the modem
-> > 2 - start ofonod
-> > 3 - it works
-> >
-> > Log file: huawei-not-connected.log
-> >
-> > I'm testing with MeeGo, ofono from git and connman 0.57.
->
-> The problem with the failed cases it that oFono / ConnMan combination is
-> simply too fast. =C2=A0It tries to access the Modem before it had the cha=
-nce
-> to properly initialize the SIM card. =C2=A0We have pushed some fixes upst=
-ream
-> after the 0.26 release that should alleviate this.
+Hi Alain,
 
-Thanks for the response. You are right, I can reproduce the problem
-even with connman turned off, by calling the test scripts before the
-modem is ready.
+On 08/18/2010 03:09 AM, Kouassu, AlainX wrote:
+> HI Denis,
+> =
 
-I'm using both ofono and connman from git, with all the available
-updates so far. Does it mean that the fixes didn't solved the issue in
-my case? Could you point me to the patches?
 
-Thanks,
-Thiago
+Just a kind reminder to stop top-posting on this mailing list.  Please
+observe our netiquette here.
 
---===============2117170875188110991==--
+> In fact the property like CellId or LocationAreaCode are sometimes update=
+d but the property Technology (RAT) is never indicated, in the other hand t=
+he property Strength is not updated when the signal strength of the cell ch=
+ange. Is sound like networkregistration API is not fully working or impleme=
+nted ?
+
+There are two players here, oFono core and the modem driver.  There are
+no known issues with the core, but it relies on the driver to work
+properly.  LAC / CI, signal strength reporting works just fine on other
+hardware and has been working for quite some time.
+
+Since you're using a modem / driver that is not upstream and have not
+provided an AT Command debug log we don't have enough information to
+diagnose the problem.
+
+For signal strength and technology reporting most vendors use
+proprietary AT commands.  Perhaps your modem's netreg driver is not
+integrated properly?
+
+> =
+
+> Thanks,
+> Alain Kouassu
+
+Regards,
+-Denis
+
+--===============7615759014916505280==--
 
