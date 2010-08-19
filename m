@@ -1,63 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============4047850575034541616=="
+Content-Type: multipart/mixed; boundary="===============4659599554729346926=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [PATCH 1/3] mbm: fix initial polling for sim
-Date: Thu, 19 Aug 2010 17:49:18 +0300
-Message-ID: <AANLkTikOtDojsgSLXYbXaC+Riq3O-VuNKdaACm=9c_oY@mail.gmail.com>
-In-Reply-To: <AANLkTi=Ax00HcTWahQGKe+N+djKVqrN+FhnoKsKrXwRj@mail.gmail.com>
+From: temp oraire <caniboul31@gmail.com>
+Subject: sms class or sms coding
+Date: Thu, 19 Aug 2010 15:19:42 +0000
+Message-ID: <AANLkTimgs_ooOxM52xU4Nev5EHm=foGXTOSRQe4qxHfR@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4047850575034541616==
+--===============4659599554729346926==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel and Sjur,
+Hello,
 
-> > There seems to be no specific error codes returned when SIM is missing.=
- Poll
-> > at least 5 times upon an error and give up after that.
-> > ---
-> >  plugins/mbm.c |    8 +++-----
-> >  1 files changed, 3 insertions(+), 5 deletions(-)
-> >
-> > diff --git a/plugins/mbm.c b/plugins/mbm.c
-> > index 6f71553..bebf5aa 100644
-> > --- a/plugins/mbm.c
-> > +++ b/plugins/mbm.c
-> > @@ -108,10 +108,8 @@ static void simpin_check(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
-> >
-> >     DBG("");
-> >
-> > -   /* Modem returns +CME ERROR: 10 if SIM is not ready. */
-> > -   if (!ok && result->final_or_pdu &&
-> > -                   !strcmp(result->final_or_pdu, "+CME ERROR: 10") &&
-> > -                   data->cpin_poll_count++ < 5) {
-> > +   /* Modem returns an error if SIM is not ready. */
-> > +   if (!ok && data->cpin_poll_count++ < 5) {
-> >             data->cpin_poll_source =3D
-> >                     g_timeout_add_seconds(1, init_simpin_check, modem);
->
-> maybe the STE modem is a bit more specific here than the MBM one. Which
-> MBM modem did you test this with?
+I would like to know if data coding scheme for sms or sms classes( 0, 1....)
+will be display in the received sms details given by SmsManager Inteface
+later.
+Currently I'm working on several tests on a meego platform and I would like
+to check several information on recieved sms.
+Also I would like to to be able to send sms with different classes ,  is it
+possible ?
 
-I've been testing with F3507g, branded as Dell 5530.
+Maybe I'm wrong but I have seen on sms.c source code that this information
+could be send in the details of received message.
 
-The existing mbm sim detection logic is based on my earlier tests
-without connman. It worked when I manually called test/enable-modem.
+Currently I try to make my test only by using the given interfaces and the
+code is in python.
 
-When using ofono with connman, the modem gets powered immediately after
-it gets configured by kernel. Sometimes mbm seems to be still in the middle=
- of
-its initialization when ofono tries to enable it.
+regards,
+Canis
 
---Pekka
+--===============4659599554729346926==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
--- =
+SGVsbG8sPGJyPjxicj5JIHdvdWxkIGxpa2UgdG8ga25vdyBpZiBkYXRhIGNvZGluZyBzY2hlbWUg
+Zm9yIHNtcyBvciBzbXMgY2xhc3NlcyggMCwgMS4uLi4pIHdpbGwgYmUgZGlzcGxheSBpbiB0aGUg
+cmVjZWl2ZWQgc21zIGRldGFpbHMgZ2l2ZW4gYnkgU21zTWFuYWdlciBJbnRlZmFjZSBsYXRlci48
+YnI+Q3VycmVudGx5IEkmIzM5O20gd29ya2luZyBvbiBzZXZlcmFsIHRlc3RzIG9uIGEgbWVlZ28g
+cGxhdGZvcm0gYW5kIEkgd291bGQgbGlrZSB0byBjaGVjayBzZXZlcmFsIGluZm9ybWF0aW9uIG9u
+IHJlY2lldmVkIHNtcy48YnI+CkFsc28gSSB3b3VsZCBsaWtlIHRvIHRvIGJlIGFibGUgdG8gc2Vu
+ZCBzbXMgd2l0aCBkaWZmZXJlbnQgY2xhc3NlcyAsoCBpcyBpdCBwb3NzaWJsZSA/PGJyPjxicj5N
+YXliZSBJJiMzOTttIHdyb25nIGJ1dCBJIGhhdmUgc2VlbiBvbiBzbXMuYyBzb3VyY2UgY29kZSB0
+aGF0IHRoaXMgaW5mb3JtYXRpb24gY291bGQgYmUgc2VuZCBpbiB0aGUgZGV0YWlscyBvZiByZWNl
+aXZlZCBtZXNzYWdlLjxicj4KPGJyPkN1cnJlbnRseSBJIHRyeSB0byBtYWtlIG15IHRlc3Qgb25s
+eSBieSB1c2luZyB0aGUgZ2l2ZW4gaW50ZXJmYWNlcyBhbmQgdGhlIGNvZGUgaXMgaW4gcHl0aG9u
+Ljxicj48YnI+cmVnYXJkcyw8YnI+Q2FuaXM8YnI+Cg==
 
-Pekka.Pessi mail at nokia.com
-
---===============4047850575034541616==--
+--===============4659599554729346926==--
 
