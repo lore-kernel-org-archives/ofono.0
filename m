@@ -1,47 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============2972749861726993376=="
+Content-Type: multipart/mixed; boundary="===============2472380740314593788=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Gatmux doubt and suggestion
-Date: Thu, 19 Aug 2010 12:51:27 +0200
-Message-ID: <1282215087.23399.169.camel@localhost.localdomain>
-In-Reply-To: <B668883EB5DD7144ADFC248A72176EA8029A7E46@fioues07.ebgroup.elektrobit.com>
+Subject: Re: About Connection between PPP and linux Sockets
+Date: Thu, 19 Aug 2010 12:54:19 +0200
+Message-ID: <1282215259.23399.171.camel@localhost.localdomain>
+In-Reply-To: <4C6CF9E7.6080206@neusoft.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2972749861726993376==
+--===============2472380740314593788==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+Hi Steven,
 
-> In mux_query_cb(), the frame size is taken as default (31 or 64). We
-> have a case where the default values are not accepted by the modem.
+> I have a little question just as the title said?
+> In Ofono how to connect PPP to Linux socket, when we receive packet from =
+
+> network, how the packet go through the kernel to application=EF=BC=9F
 > =
 
-> Gatmux is a generic component, and so makes all modem to use the
-> default values, one needs to modify the gatmux to enable for example,
-> a larger frame size.
-> =
+> modem -->PPP-->? --> linux kernel(network part)--> socket --> application?
 
-> Why not let the modem plug-in parse the CMUX query and decide on a
-> suitable configuration for enabling MUX? =
+it is more like this:
 
-> =
+modem -> TTY -> PPP -> TUN/TAP -> Kernel Net-Stack -> socket -> application.
 
-> What is your opinion?
+With the TTY being in kernel, the PPP being in userspace, and TUN/TAP
+etc. begin in the kernel again.
 
-patches are welcome.
-
-However you do know that the GAtMux has setup functions for basic and
-advanced mode. So you could parse AT+CMUX all by yourself in the modem
-plugin.
-
-GAtMux *g_at_mux_new_gsm0710_basic(GIOChannel *channel, int framesize);
-GAtMux *g_at_mux_new_gsm0710_advanced(GIOChannel *channel, int framesize);
-
-There is no requirement to actually use g_at_mux_setup_gsm0710(), but it
-is a lot more convenient.
+A future enhancement is to use the kernel PPP layer, but we haven't
+gotten there yet.
 
 Regards
 
@@ -49,5 +39,5 @@ Marcel
 
 
 
---===============2972749861726993376==--
+--===============2472380740314593788==--
 
