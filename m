@@ -1,47 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============5464245306006893330=="
+Content-Type: multipart/mixed; boundary="===============4047850575034541616=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Gatmux doubt and suggestion
-Date: Thu, 19 Aug 2010 09:27:51 -0500
-Message-ID: <4C6D3F67.70507@gmail.com>
-In-Reply-To: <B668883EB5DD7144ADFC248A72176EA8029A7E46@fioues07.ebgroup.elektrobit.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [PATCH 1/3] mbm: fix initial polling for sim
+Date: Thu, 19 Aug 2010 17:49:18 +0300
+Message-ID: <AANLkTikOtDojsgSLXYbXaC+Riq3O-VuNKdaACm=9c_oY@mail.gmail.com>
+In-Reply-To: <AANLkTi=Ax00HcTWahQGKe+N+djKVqrN+FhnoKsKrXwRj@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5464245306006893330==
+--===============4047850575034541616==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+Hi Marcel and Sjur,
 
-On 08/19/2010 04:27 AM, Arun.Ravindran(a)elektrobit.com wrote:
-> =
+> > There seems to be no specific error codes returned when SIM is missing.=
+ Poll
+> > at least 5 times upon an error and give up after that.
+> > ---
+> >  plugins/mbm.c |    8 +++-----
+> >  1 files changed, 3 insertions(+), 5 deletions(-)
+> >
+> > diff --git a/plugins/mbm.c b/plugins/mbm.c
+> > index 6f71553..bebf5aa 100644
+> > --- a/plugins/mbm.c
+> > +++ b/plugins/mbm.c
+> > @@ -108,10 +108,8 @@ static void simpin_check(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+> >
+> >     DBG("");
+> >
+> > -   /* Modem returns +CME ERROR: 10 if SIM is not ready. */
+> > -   if (!ok && result->final_or_pdu &&
+> > -                   !strcmp(result->final_or_pdu, "+CME ERROR: 10") &&
+> > -                   data->cpin_poll_count++ < 5) {
+> > +   /* Modem returns an error if SIM is not ready. */
+> > +   if (!ok && data->cpin_poll_count++ < 5) {
+> >             data->cpin_poll_source =3D
+> >                     g_timeout_add_seconds(1, init_simpin_check, modem);
+>
+> maybe the STE modem is a bit more specific here than the MBM one. Which
+> MBM modem did you test this with?
 
-> Hi All,
-> =
+I've been testing with F3507g, branded as Dell 5530.
 
-> In mux_query_cb(), the frame size is taken as default (31 or 64). We
-> have a case where the default values are not accepted by the modem.
-> =
+The existing mbm sim detection logic is based on my earlier tests
+without connman. It worked when I manually called test/enable-modem.
 
-> Gatmux is a generic component, and so makes all modem to use the default
-> values, one needs to modify the gatmux to enable for example, a larger
-> frame size.
-> =
+When using ofono with connman, the modem gets powered immediately after
+it gets configured by kernel. Sometimes mbm seems to be still in the middle=
+ of
+its initialization when ofono tries to enable it.
 
-> Why not let the modem plug-in parse the CMUX query and decide on a
-> suitable configuration for enabling MUX?
-> =
+--Pekka
 
-> What is your opinion?
+-- =
 
-g_at_mux_setup_gsm0710 is really meant for the default cases.  If you
-have some particular hardware in mind that requires specific parameters,
-then sending the AT+CMUX command directly is a much better idea.
+Pekka.Pessi mail at nokia.com
 
-Regards,
--Denis
-
---===============5464245306006893330==--
+--===============4047850575034541616==--
 
