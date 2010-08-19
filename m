@@ -1,28 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============9189011476792209014=="
+Content-Type: multipart/mixed; boundary="===============2972749861726993376=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [PATCH 1/3] mbm: fix initial polling for sim
-Date: Thu, 19 Aug 2010 10:59:09 +0200
-Message-ID: <AANLkTi=Ax00HcTWahQGKe+N+djKVqrN+FhnoKsKrXwRj@mail.gmail.com>
-In-Reply-To: <1282207304.23399.162.camel@localhost.localdomain>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Gatmux doubt and suggestion
+Date: Thu, 19 Aug 2010 12:51:27 +0200
+Message-ID: <1282215087.23399.169.camel@localhost.localdomain>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA8029A7E46@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9189011476792209014==
+--===============2972749861726993376==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Marcel Holtmann <marcel@holtmann.org> wrote:
+Hi Arun,
 
-> maybe the STE modem is a bit more specific here than the MBM one. Which
-> MBM modem did you test this with?
+> In mux_query_cb(), the frame size is taken as default (31 or 64). We
+> have a case where the default values are not accepted by the modem.
+> =
 
-I have been using MBM as template for my sim ready changes, so I don't think
-there is any point at looking at STE driver at this point in time.
+> Gatmux is a generic component, and so makes all modem to use the
+> default values, one needs to modify the gatmux to enable for example,
+> a larger frame size.
+> =
+
+> Why not let the modem plug-in parse the CMUX query and decide on a
+> suitable configuration for enabling MUX? =
+
+> =
+
+> What is your opinion?
+
+patches are welcome.
+
+However you do know that the GAtMux has setup functions for basic and
+advanced mode. So you could parse AT+CMUX all by yourself in the modem
+plugin.
+
+GAtMux *g_at_mux_new_gsm0710_basic(GIOChannel *channel, int framesize);
+GAtMux *g_at_mux_new_gsm0710_advanced(GIOChannel *channel, int framesize);
+
+There is no requirement to actually use g_at_mux_setup_gsm0710(), but it
+is a lot more convenient.
 
 Regards
-Sjur
 
---===============9189011476792209014==--
+Marcel
+
+
+
+--===============2972749861726993376==--
 
