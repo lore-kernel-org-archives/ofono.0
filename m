@@ -1,61 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============5180950398404156042=="
+Content-Type: multipart/mixed; boundary="===============9218012967986796130=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Connecting with Huawei E226
-Date: Wed, 18 Aug 2010 17:31:36 -0500
-Message-ID: <4C6C5F48.7080103@gmail.com>
-In-Reply-To: <AANLkTi=x_xNOK3FJx85tJte5bp_eywT4+azmbgaLQ1vj@mail.gmail.com>
+From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
+Subject: UIM manager atom APIs review request
+Date: Thu, 19 Aug 2010 05:46:27 +0200
+Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE8055DCAEB@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5180950398404156042==
+--===============9218012967986796130==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Thiago,
+Hi all,
 
-On 08/18/2010 05:26 PM, Thiago Cangussu de Castro Gomes wrote:
-> On Wed, Aug 18, 2010 at 2:02 PM, Denis Kenzior <denkenz@gmail.com> wrot=
-e:
->> Hi Thiago,
->>
->>>> The problem with the failed cases it that oFono / ConnMan combination =
-is
->>>> simply too fast.  It tries to access the Modem before it had the chance
->>>> to properly initialize the SIM card.  We have pushed some fixes upstre=
-am
->>>> after the 0.26 release that should alleviate this.
->>>
->>> Thanks for the response. You are right, I can reproduce the problem
->>> even with connman turned off, by calling the test scripts before the
->>> modem is ready.
->>>
->>> I'm using both ofono and connman from git, with all the available
->>> updates so far. Does it mean that the fixes didn't solved the issue in
->>> my case? Could you point me to the patches?
->>
->> For your particular case these patches from Kalle would be helpful:
->>
->> [PATCH 1/2] huawei: poll sim state
->> [PATCH 2/2] huawei: postpone post_sim until SIM is ready
->>
->> However, they weren't integrated upstream due to some concerns.  See the
->> entire thread for more details.
-> =
+I am going to implement an UIM manager atom for CDMA extension. Its APIs wi=
+ll be almost the same as =
 
-> I've applied the patches but unfortunately it didn't fixed the issue.
-> Still can't connect when the modem is plugged after ofonod is started.
-> I can send the logs if anyone thinks it's useful.
-> =
+current SIM manger atom's APIs. =C2=A0But I suggest maybe will can do some =
+changes:
+
+	1. Add PIN remain retry count support
+	2. replace properties 'Present' 'PinRequired' and 'LockedPins' with a new =
+add property 'Status'
+
+Properties	string Status [readonly]
+			=
+
+			Contains the string type of the status of the SIM.  =
+
+			The possible values are:
+			"ready" - Not waiting for a password
+			"pin" - SIM PIN is required
+			"phone" - Phone-to-SIM PIN is required  [GSM only]
+			"firstphone" - Phone-to-very-first SIM
+						PIN is required  [GSM only]
+			"pin2" - SIM PIN2 is required
+			"network" - Network Personalization password is
+						required  [GSM only]
+			"netsub" - Network subset personalization
+						password is required  [GSM only]
+			"service" - Service Provider personalization
+						password is required  [GSM only]
+			"corp" - Corporate personalization password
+						is required  [GSM only]
+			"puk" - SIM PUK is required
+			"firstphonepuk" - Phone-to-very-first SIM PUK is
+						required  [GSM only]
+			"puk2" - SIM PUK2 is required
+			"networkpuk" - Network personalization unblocking
+						password is required  [GSM only]
+			"netsubpuk" - Network subset personalization
+						unblocking password is required  [GSM only]
+			"servicepuk" - Service provider personalization
+						unblocking password is required  [GSM only]
+			"corppuk" - Corporate personalization unblocking
+						password is required  [GSM only]
+			"absent" - No SIM inserted
+
+		array{uint8} PinRetryCount [readonly]
+		=
+
+			 Contains the remain retry count of PIN,PIN2,PUK and PUK2
 
 
-Sorry to hear you're having trouble.  Kalle reported similar issues were
-fixed with his patches on the E1552.  Sending the logs would probably be
-helpful.
+I marked all the values that only support in GSM with [GSM only]. =C2=A0=C2=
+=A0
 
-Regards,
--Denis
+Yes, ofono current API is OK. This is just my suggestion. Maybe I should co=
+mpletely =
 
---===============5180950398404156042==--
+follow current SIM manger atom's APIs.
+
+Any suggestion? =
+
+
+Thanks!
+
+Caiwen
+
+
+--===============9218012967986796130==--
 
