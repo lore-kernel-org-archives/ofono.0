@@ -1,41 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============1831744452586614479=="
+Content-Type: multipart/mixed; boundary="===============5845793153953604427=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 1/2] Make function reset_available() return void
-Date: Thu, 19 Aug 2010 14:05:34 +0800
-Message-ID: <1282197935-9118-1-git-send-email-yang.gu@intel.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: UIM manager atom APIs review request
+Date: Thu, 19 Aug 2010 09:32:11 +0300
+Message-ID: <87y6c3un84.fsf@potku.valot.fi>
+In-Reply-To: <D87B22B1FE8C0F479CA9BEAD6C25AAE8055DC99D@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1831744452586614479==
+--===============5845793153953604427==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This change is to dispel compiler's complaint.
----
- src/network.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+"Zhang, Caiwen" <Caiwen.Zhang@windriver.com> writes:
 
-diff --git a/src/network.c b/src/network.c
-index f5b9a5e..190eba9 100644
---- a/src/network.c
-+++ b/src/network.c
-@@ -1175,7 +1175,7 @@ static void notify_status_watches(struct ofono_netreg=
- *netreg)
- 	}
- }
- =
+> I am going to implement an UIM manager atom for CDMA extension. Its APIs =
+will be almost the same as =
 
--static gboolean reset_available(struct network_operator_data *old,
-+static void reset_available(struct network_operator_data *old,
- 				const struct ofono_network_operator *new)
- {
- 	if (old =3D=3D NULL)
+> current SIM manger atom's APIs. =C2=A0But I suggest maybe will can do som=
+e changes:
+>
+> 	1. Add PIN remain retry count support
+
+Doesn't GSM also support this? If yes, any pointers/tips how to access
+the retry count from the modem/SIM? I need this in my UI and I would
+like to give a shot implementing this in ofono, but I don't know where
+to start.
+
+(Actually I doubt that my Huawei E1552 even supports this, but miracles
+do happen some times...)
+
 -- =
 
-1.7.0.4
+Kalle Valo
 
-
---===============1831744452586614479==--
+--===============5845793153953604427==--
 
