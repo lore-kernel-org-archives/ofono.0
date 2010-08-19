@@ -1,37 +1,122 @@
-Content-Type: multipart/mixed; boundary="===============2472380740314593788=="
+Content-Type: multipart/mixed; boundary="===============9209295555374960433=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: About Connection between PPP and linux Sockets
-Date: Thu, 19 Aug 2010 12:54:19 +0200
-Message-ID: <1282215259.23399.171.camel@localhost.localdomain>
-In-Reply-To: <4C6CF9E7.6080206@neusoft.com>
+Subject: RE: UIM manager atom APIs review request
+Date: Thu, 19 Aug 2010 12:57:34 +0200
+Message-ID: <1282215454.23399.174.camel@localhost.localdomain>
+In-Reply-To: <D87B22B1FE8C0F479CA9BEAD6C25AAE8055DCC91@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2472380740314593788==
+--===============9209295555374960433==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Steven,
+Hi Caiwen,
 
-> I have a little question just as the title said?
-> In Ofono how to connect PPP to Linux socket, when we receive packet from =
+> > > I am going to implement an UIM manager atom for CDMA extension. Its
+> > APIs will be almost the same as
+> > > current SIM manger atom's APIs.  But I suggest maybe will can do
+> some
+> > changes:
+> > >
+> > > 	1. Add PIN remain retry count support
+> > > 	2. replace properties 'Present' 'PinRequired' and 'LockedPins'
+> > with a new add property 'Status'
+> > >
+> > > Properties	string Status [readonly]
+> > >
+> > > 			Contains the string type of the status of the
+> SIM.
+> > > 			The possible values are:
+> > > 			"ready" - Not waiting for a password
+> > > 			"pin" - SIM PIN is required
+> > > 			"phone" - Phone-to-SIM PIN is required  [GSM
+> only]
+> > > 			"firstphone" - Phone-to-very-first SIM
+> > > 						PIN is required  [GSM
+> only]
+> > > 			"pin2" - SIM PIN2 is required
+> > > 			"network" - Network Personalization password is
+> > > 						required  [GSM only]
+> > > 			"netsub" - Network subset personalization
+> > > 						password is required
+> [GSM only]
+> > > 			"service" - Service Provider personalization
+> > > 						password is required
+> [GSM only]
+> > > 			"corp" - Corporate personalization password
+> > > 						is required  [GSM only]
+> > > 			"puk" - SIM PUK is required
+> > > 			"firstphonepuk" - Phone-to-very-first SIM PUK is
+> > > 						required  [GSM only]
+> > > 			"puk2" - SIM PUK2 is required
+> > > 			"networkpuk" - Network personalization
+> unblocking
+> > > 						password is required
+> [GSM only]
+> > > 			"netsubpuk" - Network subset personalization
+> > > 						unblocking password is
+> required
+> > [GSM only]
+> > > 			"servicepuk" - Service provider personalization
+> > > 						unblocking password is
+> required
+> > [GSM only]
+> > > 			"corppuk" - Corporate personalization unblocking
+> > > 						password is required
+> [GSM only]
+> > > 			"absent" - No SIM inserted
+> > =
 
-> network, how the packet go through the kernel to application=EF=BC=9F
+> > why? What is wrong with the current properties? I like to see this
+> from
+> > the UI point of view (and ConnMan as one user) why we should change
+> it.
+> > =
+
+> Current properties are OK. I think maybe we can improve it. Generally,
+> user
+> Only care the SIM status, e.g. whether SIM is insert or need input
+> password.
+> In fact, He/she doesn't care which Pins are locked. So we can simplify
+> it. =
+
+> replace 'Present' 'PinRequired' with "Status" and remove 'LockedPins'.
 > =
 
-> modem -->PPP-->? --> linux kernel(network part)--> socket --> application?
+> In fact, there is no way to get all the Locked Pins, 'LockedPins'
+> property
+> Value maybe incorrect.
 
-it is more like this:
+actually the user and the UI cares about which PIN is locked. It has to
+tell the user which PIN to enter and how long it is. So that is
+important.
 
-modem -> TTY -> PPP -> TUN/TAP -> Kernel Net-Stack -> socket -> application.
+> > > 		array{uint8} PinRetryCount [readonly]
+> > >
+> > > 			 Contains the remain retry count of PIN,PIN2,PUK
+> and
+> > PUK2
+> > =
 
-With the TTY being in kernel, the PPP being in userspace, and TUN/TAP
-etc. begin in the kernel again.
+> > Only uint8 is needed here. The UI doesn't care about the retries other
+> > PINs. I only care about the current one it needs to enter.
+> > =
 
-A future enhancement is to use the kernel PPP layer, but we haven't
-gotten there yet.
+> There are some cases that need show PIN remain retry count  but the SIM
+> status =
+
+> is ready (Not waiting for a password). =
+
+> such as, activates/ deactivate PIN lock. =
+
+
+And when is that. I don't see that use case. Why would you show the
+remaining entries if your SIM card is active and unlocked?
+
+Please provide clear examples where this would be needed.
 
 Regards
 
@@ -39,5 +124,5 @@ Marcel
 
 
 
---===============2472380740314593788==--
+--===============9209295555374960433==--
 
