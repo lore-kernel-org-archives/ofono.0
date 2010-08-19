@@ -1,128 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============9209295555374960433=="
+Content-Type: multipart/mixed; boundary="===============1410569834685860704=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: UIM manager atom APIs review request
-Date: Thu, 19 Aug 2010 12:57:34 +0200
-Message-ID: <1282215454.23399.174.camel@localhost.localdomain>
-In-Reply-To: <D87B22B1FE8C0F479CA9BEAD6C25AAE8055DCC91@ism-mail03.corp.ad.wrs.com>
+From: Arun.Ravindran@elektrobit.com
+Subject: RE: Gatmux doubt and suggestion
+Date: Thu, 19 Aug 2010 14:08:53 +0300
+Message-ID: <B668883EB5DD7144ADFC248A72176EA8029A7E8B@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <1282215087.23399.169.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9209295555374960433==
+--===============1410569834685860704==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Caiwen,
+ =
 
-> > > I am going to implement an UIM manager atom for CDMA extension. Its
-> > APIs will be almost the same as
-> > > current SIM manger atom's APIs.  But I suggest maybe will can do
-> some
-> > changes:
-> > >
-> > > 	1. Add PIN remain retry count support
-> > > 	2. replace properties 'Present' 'PinRequired' and 'LockedPins'
-> > with a new add property 'Status'
-> > >
-> > > Properties	string Status [readonly]
-> > >
-> > > 			Contains the string type of the status of the
-> SIM.
-> > > 			The possible values are:
-> > > 			"ready" - Not waiting for a password
-> > > 			"pin" - SIM PIN is required
-> > > 			"phone" - Phone-to-SIM PIN is required  [GSM
-> only]
-> > > 			"firstphone" - Phone-to-very-first SIM
-> > > 						PIN is required  [GSM
-> only]
-> > > 			"pin2" - SIM PIN2 is required
-> > > 			"network" - Network Personalization password is
-> > > 						required  [GSM only]
-> > > 			"netsub" - Network subset personalization
-> > > 						password is required
-> [GSM only]
-> > > 			"service" - Service Provider personalization
-> > > 						password is required
-> [GSM only]
-> > > 			"corp" - Corporate personalization password
-> > > 						is required  [GSM only]
-> > > 			"puk" - SIM PUK is required
-> > > 			"firstphonepuk" - Phone-to-very-first SIM PUK is
-> > > 						required  [GSM only]
-> > > 			"puk2" - SIM PUK2 is required
-> > > 			"networkpuk" - Network personalization
-> unblocking
-> > > 						password is required
-> [GSM only]
-> > > 			"netsubpuk" - Network subset personalization
-> > > 						unblocking password is
-> required
-> > [GSM only]
-> > > 			"servicepuk" - Service provider personalization
-> > > 						unblocking password is
-> required
-> > [GSM only]
-> > > 			"corppuk" - Corporate personalization unblocking
-> > > 						password is required
-> [GSM only]
-> > > 			"absent" - No SIM inserted
-> > =
+Hi Marcel,
 
-> > why? What is wrong with the current properties? I like to see this
-> from
-> > the UI point of view (and ConnMan as one user) why we should change
-> it.
-> > =
+> Hi Arun,
 
-> Current properties are OK. I think maybe we can improve it. Generally,
-> user
-> Only care the SIM status, e.g. whether SIM is insert or need input
-> password.
-> In fact, He/she doesn't care which Pins are locked. So we can simplify
-> it. =
+> In mux_query_cb(), the frame size is taken as default (31 or 64). We =
 
-> replace 'Present' 'PinRequired' with "Status" and remove 'LockedPins'.
+> have a case where the default values are not accepted by the modem.
 > =
 
-> In fact, there is no way to get all the Locked Pins, 'LockedPins'
-> property
-> Value maybe incorrect.
+> Gatmux is a generic component, and so makes all modem to use the =
 
-actually the user and the UI cares about which PIN is locked. It has to
-tell the user which PIN to enter and how long it is. So that is
-important.
+> default values, one needs to modify the gatmux to enable for example, =
 
-> > > 		array{uint8} PinRetryCount [readonly]
-> > >
-> > > 			 Contains the remain retry count of PIN,PIN2,PUK
-> and
-> > PUK2
-> > =
+> a larger frame size.
+> =
 
-> > Only uint8 is needed here. The UI doesn't care about the retries other
-> > PINs. I only care about the current one it needs to enter.
-> > =
+> Why not let the modem plug-in parse the CMUX query and decide on a =
 
-> There are some cases that need show PIN remain retry count  but the SIM
-> status =
+> suitable configuration for enabling MUX?
+> =
 
-> is ready (Not waiting for a password). =
+> What is your opinion?
 
-> such as, activates/ deactivate PIN lock. =
+> patches are welcome.
+> However you do know that the GAtMux has setup functions for basic and
+advanced mode. So you could parse AT+CMUX all by yourself in the modem
+plugin.
+> GAtMux *g_at_mux_new_gsm0710_basic(GIOChannel *channel, int
+framesize); GAtMux *g_at_mux_new_gsm0710_advanced(GIOChannel *channel,
+int framesize);
+> There is no requirement to actually use g_at_mux_setup_gsm0710(), but
+it is a lot more convenient.
 
+I am thinking of a solution, where the modem plugin passes a call back
+function pointer to g_at_mux_setup_gsm0710(). mux_query_cb() can call
+this call back function during processing of CMUX=3D? Response. This call
+back function will be a member of struct mux_setup_data. This way the
+modem plugins can have the freedom to set the CMUX parameters if they
+wish to do so. If the call back is NULL the default values are applied
+as now.
 
-And when is that. I don't see that use case. Why would you show the
-remaining entries if your SIM card is active and unlocked?
+But this involves patches in the existing plugins (calypso etc) and
+Gatmux, but gives options to plugins (their of values or default
+values).
 
-Please provide clear examples where this would be needed.
+What is your opinion about this?
 
 Regards
-
-Marcel
-
+Arun
 
 
---===============9209295555374960433==--
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
+
+
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
+
+
+
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
+
+
+--===============1410569834685860704==--
 
