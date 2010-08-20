@@ -1,113 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============7843461185891122967=="
+Content-Type: multipart/mixed; boundary="===============8594043421608044401=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: About Connection between PPP and linux Sockets
-Date: Fri, 20 Aug 2010 10:21:52 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B352A3540B8@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4C6DE51A.4010703@neusoft.com>
+From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Subject: [PATCH] udev: Add check for serial before string operation
+Date: Fri, 20 Aug 2010 11:10:39 +0800
+Message-ID: <1282273839-4990-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7843461185891122967==
+--===============8594043421608044401==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Steven,
+'serial' could be NULL in some case. So it need to add check before
+doing string operation.
+---
+ plugins/udev.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-Steven wrote:
-> Hi Zhang,
-> =
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 84399de..6720a0c 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -86,7 +86,7 @@ static const char *get_serial(struct udev_device *udev_de=
+vice)
+ 		entry =3D udev_list_entry_get_next(entry);
+ 	}
+ =
 
-> Zhang, Zhenhua wrote:
->> Hi Steven,
->> =
+-	if (strpbrk(serial, ".-_?*") !=3D NULL)
++	if (serial && strpbrk(serial, ".-_?*") !=3D NULL)
+ 		return NULL;
+ =
 
->> Steven wrote:
->>> Hi Zhang
->>> Zhang, Zhenhua wrote:
->>>> Hi Marcel,
->>>> =
+ 	return serial;
+-- =
 
->>>> Marcel Holtmann wrote:
->>>>> Hi Steven,
->>>>> =
+1.7.0.4
 
->>>>>> I have a little question just as the title said?
->>>>>> In Ofono how to connect PPP to Linux socket, when we receive
->>>>>> packet from network, how the packet go through the kernel to
->>>>>> application=EF=BC=9F =
 
->>>>>> =
-
->>>>>> modem -->PPP-->? --> linux kernel(network part)--> socket -->
->>>>>> application?
->>>>> it is more like this:
->>>>> =
-
->>>>> modem -> TTY -> PPP -> TUN/TAP -> Kernel Net-Stack -> socket ->
->>>>> application. =
-
->>>>> =
-
->>>>> With the TTY being in kernel, the PPP being in userspace, and
->>>>> TUN/TAP etc. begin in the kernel again.
->>>>> =
-
->>>>> A future enhancement is to use the kernel PPP layer, but we
->>>>> haven't gotten there yet.
->>>> I am interested to know how could we use kernel PPP layer instead
->>>> of gatppp. Shall we add this item into our TODO?
->>>> =
-
->>> Maybe you can reference to RILD in Android, it used kernel PPP.
->> =
-
->> Thanks. Will take a look then.
-> =
-
-> This information is a good start point.
-> http://www.devdiv.net/viewthread-26543
-> =
-
-> But only for Chinese people:(
-
-Thanks. I have read this before. ;-). The original article is from maxleng'=
-s blog:
-
-http://blog.csdn.net/maxleng/archive/2010/05/10/5576509.aspx
-
-However, it's just a big picture about phone stack in Android. It said noth=
-ing about how Android works with kernel PPP layer.
-
-> B.R
-> =
-
-> Steven
-> =
-
-> -------------------------------------------------------------------------=
---------------------------
-> Confidentiality Notice: The information contained in this e-mail and
-> any accompanying attachment(s) is intended only for the use of the
-> intended recipient and may be confidential and/or privileged of
-> Neusoft Corporation, its subsidiaries and/or its affiliates. If any
-> reader of this communication is not the intended recipient,
-> unauthorized use, forwarding, printing,  storing, disclosure or
-> copying is strictly prohibited, and may be unlawful.If you have
-> received this communication in error,please immediately notify the
-> sender by return e-mail, and delete the original message and all
-> copies from your system. Thank you.
-> -------------------------------------------------------------------------=
---------------------------
-> _______________________________________________   =
-
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
-
-Regards,
-Zhenhua
-
---===============7843461185891122967==--
+--===============8594043421608044401==--
 
