@@ -1,57 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============4788329516961681273=="
+Content-Type: multipart/mixed; boundary="===============2879380863729787444=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] stk: reorder: Don't access freed memory in Send SMS
-Date: Fri, 20 Aug 2010 04:07:09 +0200
-Message-ID: <1282270029-2909-1-git-send-email-andrew.zaborowski@intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+Subject: Re: About Connection between PPP and linux Sockets
+Date: Fri, 20 Aug 2010 15:11:40 +0200
+Message-ID: <6d4cb3c3e5039f1b09ef29d548ef1530@chewa.net>
+In-Reply-To: <1282304015.23399.210.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4788329516961681273==
+--===============2879380863729787444==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Responding to the stk->pending_cmd frees it, we need to read it
-before that.
----
- src/stk.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index ce71075..f391396 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -695,6 +695,10 @@ static void send_sms_submit_cb(gboolean ok, void *data)
- 		return;
- 	}
- =
+On Fri, 20 Aug 2010 13:33:35 +0200, Marcel Holtmann <marcel@holtmann.org>
+wrote:
+> for a mobile telephony stack, pppd is wrong. Once you understand how 3G
+> missuses PPP for IP and PDP context setup, you see what I mean ;)
 
-+	if (stk->pending_cmd->send_sms.alpha_id &&
-+			stk->pending_cmd->send_sms.alpha_id[0])
-+		stk_alpha_id_unset(stk);
-+
- 	memset(&rsp, 0, sizeof(rsp));
- =
+For mobile telephony, PPP as a _protocol_ is wrong - sure. That being
+stated, I don't see how pppd as a _software_ is better or worse than any
+other PPP implementation.
 
- 	if (ok =3D=3D FALSE)
-@@ -702,10 +706,6 @@ static void send_sms_submit_cb(gboolean ok, void *data)
- =
+Considering the high bandwidth involved in high HSPA categories, and soon
+LTE networks, going through user space seems like a bad idea. That's why
+Phonet GPRS has its own kernel network device driver, even though Phonet
+can also interact with a TUN device. As such, the PPP-only modems are
+hopeless. Then why bother rewriting a custom PPP implementation that will
+be suboptimal in any case?
 
- 	if (stk_respond(stk, &rsp, stk_command_cb))
- 		stk_command_cb(&failure, stk);
--
--	if (stk->pending_cmd->send_sms.alpha_id &&
--			stk->pending_cmd->send_sms.alpha_id[0])
--		stk_alpha_id_unset(stk);
- }
- =
+oFono PPP is just as non-performant as pppd in case the user-space AT MUX
+is used. And it seems worse in case the kernel AT MUX or a raw TTY is used
+(pppd has kernel path then).
 
- static gboolean handle_command_send_sms(const struct stk_command *cmd,
+
+So I must be missing something.
+
 -- =
 
-1.7.1.86.g0e460.dirty
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net
+http://fi.linkedin.com/in/remidenis
 
 
---===============4788329516961681273==--
+--===============2879380863729787444==--
 
