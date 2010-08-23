@@ -1,44 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============8317729533358743899=="
+Content-Type: multipart/mixed; boundary="===============4564103663084172633=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] hfp: fix typo
-Date: Mon, 23 Aug 2010 20:15:53 +0200
-Message-ID: <1282587353.23399.249.camel@localhost.localdomain>
-In-Reply-To: <1282586689-6776-1-git-send-email-jprvita@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/2] sim: Read EFust and EFest
+Date: Mon, 23 Aug 2010 14:31:17 -0500
+Message-ID: <4C72CC85.6090208@gmail.com>
+In-Reply-To: <1282197935-9118-2-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8317729533358743899==
+--===============4564103663084172633==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Joao,
+Hi Yang,
 
+On 08/19/2010 01:05 AM, Yang Gu wrote:
 > ---
->  plugins/hfp.c |    6 +++---
->  1 files changed, 3 insertions(+), 3 deletions(-)
-> =
+>  src/sim.c     |   75 +++++++++++++++++++++++++++++++++++++++-
+>  src/simutil.c |   18 ++++++++++
+>  src/simutil.h |  105 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  3 files changed, 196 insertions(+), 2 deletions(-)
 
-> diff --git a/plugins/hfp.c b/plugins/hfp.c
-> index 0337891..9a892db 100644
-> --- a/plugins/hfp.c
-> +++ b/plugins/hfp.c
-> @@ -83,7 +83,7 @@ static void clear_data(struct ofono_modem *modem)
->  	memset(data->cind_pos, 0, sizeof(data->cind_pos));
->  }
->  =
+This patch has now been applied.  However, please send a follow on patch
+to support EFsst from 11.11 and 51.011.  The file id is the same as
+EFust, however the structure is actually different.
 
-> -static void sevice_level_conn_established(struct ofono_modem *modem)
-> +static void service_level_conn_established(struct ofono_modem *modem)
+Regards,
+-Denis
 
-good one. Patch has been applied.
-
-Regards
-
-Marcel
-
-
-
---===============8317729533358743899==--
+--===============4564103663084172633==--
 
