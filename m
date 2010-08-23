@@ -1,196 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============3876344013264599241=="
+Content-Type: multipart/mixed; boundary="===============2420438313213492581=="
 MIME-Version: 1.0
-From: Su, Yong <Yong.Su@windriver.com>
-Subject: Support text mode sms send and receive
-Date: Mon, 23 Aug 2010 02:11:52 -0700
-Message-ID: <C6FAFDDBC4402D44BFC43E57565F0219039D85CD@ala-mail09.corp.ad.wrs.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: About ppp_receive()
+Date: Mon, 23 Aug 2010 11:12:45 +0200
+Message-ID: <1282554765.23399.225.camel@localhost.localdomain>
+In-Reply-To: <4C720A59.5000504@neusoft.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3876344013264599241==
+--===============2420438313213492581==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, all:
- =
+Hi Steven,
 
-Our project used ZTE EVDO modem. But this modem only supports sending
-and receiving sms with text mode. =
+> In function ppp_receive, we first check the protocol type of this frame =
 
-I have modify oFono gatchat code to support this. But it conflicted with
-original gatchat architecture.
-Does oFono plan to support text mode sms send&receive?
- =
+> like:
+> =
 
- =
+>   guint16 protocol =3D ppp_proto(buf);
+> =
 
-Following are some AT commands:
- =
+> and here we assumed the length of the protocol field is 16 bits, but in =
 
-Send sms: AT^HCMGS=3D<da><CR><msg><ctrl-Z>
- =
+> RFC 1661, the protocol field should be one or two octets.
+> =
 
-<da>: Receiver phone number
-<msg>: value of message content
-<ctrl-Z>: end character 0x1A (UCS2 format is 0x001A)
- =
+> "The Protocol field is one or two octets, and its value identifies
+> the datagram encapsulated in the Information field of the packet."
+> =
 
-Firstly, send ^HCMGS=3D<da> end of <CR>, TE waits MS response
-<CR><LF><greater_than><space> (IRA 13, 10, 62, 32).
-Secondly, send message content and end of <ctrl-Z>. =
+> why we given the assumption that protocol field is 16 bit length?
+> =
 
- =
+> In CDMA 2000 environment, just as the Sprint Network, PPP should support =
 
-<msg> example, for string "oFono" :
- =
+>   a compressed protocol field. Is there anything difference between GSM =
 
-chat command is 0x6F, 0x46, 0x6F,0x6E,0x6F, end character is 0x1A  if
-<format> is CDMA ASCII
-chat command is 0x00, 0x6F, 0x00, 0x46, 0x00, 0x6F,0x00, 0x6E,0x00,
-0x6F, end character is 0x00, 0x1A  if <format> is CDMA UCS2 BE
-(PS: <format> can be set by another AT command)
- =
+> and CDMA?
 
- =
+in GSM we are not using PPP over the air interface. The PPP session is
+only between oFono and the modem hardware. If CDMA also talks PPP over
+the air interface then that would be really sad :(
 
- =
+Regards
 
-Receive sms:  ^HCMT:
-<callerID>,<year>,<month>,<day>,<hour>,<minute>,<second>,<lang>,<format>
-,<length>,<prt>,<prv>,<type><CR><LF><msg><ctrl-Z><CR><LF>
- =
+Marcel
 
-Important tag:
- =
 
-<callerID>: Sender phone number
-<format>: ASCII or UCS2 BE
-<length>: Message content length, not contain <ctrl-Z>
-<msg>: value of message content, same as above command
- =
 
- =
-
- =
-
- =
-
- =
-
- =
-
-Best Regards
-Su Yong
- =
-
-=20
-
---===============3876344013264599241==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMCBUcmFuc2l0aW9uYWwv
-L0VOIj4KPEhUTUw+PEhFQUQ+CjxNRVRBIGh0dHAtZXF1aXY9Q29udGVudC1UeXBlIGNvbnRlbnQ9
-InRleHQvaHRtbDsgY2hhcnNldD11cy1hc2NpaSI+CjxNRVRBIGNvbnRlbnQ9Ik1TSFRNTCA2LjAw
-LjI5MDAuNjAwMyIgbmFtZT1HRU5FUkFUT1I+PC9IRUFEPgo8Qk9EWT4KPERJVj48Rk9OVCBmYWNl
-PUFyaWFsIHNpemU9Mj48U1BBTiBjbGFzcz00OTMyOTE4MDgtMjMwODIwMTA+SGksIAphbGw6PC9T
-UEFOPjwvRk9OVD48L0RJVj4KPERJVj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9Mj48U1BBTiAKY2xh
-c3M9NDkzMjkxODA4LTIzMDgyMDEwPjwvU1BBTj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVY+PEZP
-TlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gY2xhc3M9NDkzMjkxODA4LTIzMDgyMDEwPk91ciZu
-YnNwO3Byb2plY3QgCnVzZWQgWlRFIEVWRE8gbW9kZW0uIEJ1dCB0aGlzIG1vZGVtIG9ubHkgc3Vw
-cG9ydHMgc2VuZGluZyBhbmQgCnJlY2VpdmluZyZuYnNwO3NtcyZuYnNwO3dpdGggdGV4dCBtb2Rl
-LiA8L1NQQU4+PC9GT05UPjwvRElWPgo8RElWPjxGT05UIGZhY2U9QXJpYWwgc2l6ZT0yPjxTUEFO
-IGNsYXNzPTQ5MzI5MTgwOC0yMzA4MjAxMD48U1BBTiAKY2xhc3M9NDkzMjkxODA4LTIzMDgyMDEw
-PkkgaGF2ZSBtb2RpZnkgb0Zvbm8gZ2F0Y2hhdCBjb2RlIHRvIHN1cHBvcnQgdGhpcy4gQnV0IApp
-dCBjb25mbGljdGVkIHdpdGggb3JpZ2luYWwgZ2F0Y2hhdCBhcmNoaXRlY3R1cmUuPC9TUEFOPjwv
-U1BBTj48L0ZPTlQ+PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gY2xh
-c3M9NDkzMjkxODA4LTIzMDgyMDEwPkRvZXMgb0Zvbm8gcGxhbiB0byAKc3VwcG9ydCB0ZXh0IG1v
-ZGUgc21zIHNlbmQmYW1wO3JlY2VpdmU/PC9TUEFOPjwvRk9OVD48L0RJVj4KPERJVj48Rk9OVCBm
-YWNlPUFyaWFsIHNpemU9Mj48U1BBTiAKY2xhc3M9NDkzMjkxODA4LTIzMDgyMDEwPjwvU1BBTj48
-L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gCmNs
-YXNzPTQ5MzI5MTgwOC0yMzA4MjAxMD48L1NQQU4+PC9GT05UPiZuYnNwOzwvRElWPgo8RElWPjxG
-T05UIGZhY2U9QXJpYWwgc2l6ZT0yPjxTUEFOIGNsYXNzPTQ5MzI5MTgwOC0yMzA4MjAxMD5Gb2xs
-b3dpbmcgYXJlIHNvbWUgCkFUIGNvbW1hbmRzOjwvU1BBTj48L0ZPTlQ+PC9ESVY+CjxESVY+PEZP
-TlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gCmNsYXNzPTQ5MzI5MTgwOC0yMzA4MjAxMD48L1NQ
-QU4+PC9GT05UPiZuYnNwOzwvRElWPgo8RElWPjxGT05UIGZhY2U9QXJpYWwgc2l6ZT0yPjxTUEFO
-IGNsYXNzPTQ5MzI5MTgwOC0yMzA4MjAxMD5TZW5kIHNtczogCkFUXkhDTUdTPSZsdDtkYSZndDsm
-bHQ7Q1ImZ3Q7Jmx0O21zZyZndDsmbHQ7Y3RybC1aJmd0OzwvU1BBTj48L0ZPTlQ+PC9ESVY+CjxE
-SVY+PEZPTlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gCmNsYXNzPTQ5MzI5MTgwOC0yMzA4MjAx
-MD48L1NQQU4+PC9GT05UPiZuYnNwOzwvRElWPgo8RElWPjxGT05UIGZhY2U9QXJpYWwgc2l6ZT0y
-PjxTUEFOIGNsYXNzPTQ5MzI5MTgwOC0yMzA4MjAxMD4mbHQ7ZGEmZ3Q7OiBSZWNlaXZlciAKcGhv
-bmUgbnVtYmVyPC9TUEFOPjwvRk9OVD48L0RJVj4KPERJVj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9
-Mj48U1BBTiBjbGFzcz00OTMyOTE4MDgtMjMwODIwMTA+Jmx0O21zZyZndDs6IHZhbHVlIApvZiBt
-ZXNzYWdlIGNvbnRlbnQ8L1NQQU4+PC9GT05UPjwvRElWPgo8RElWPjxGT05UIGZhY2U9QXJpYWwg
-c2l6ZT0yPjxTUEFOIGNsYXNzPTQ5MzI5MTgwOC0yMzA4MjAxMD4mbHQ7Y3RybC1aJmd0OzogZW5k
-IApjaGFyYWN0ZXIgMHgxQSZuYnNwOyhVQ1MyIGZvcm1hdCBpcyAweDAwMUEpPC9TUEFOPjwvRk9O
-VD48L0RJVj4KPERJVj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9Mj48U1BBTiAKY2xhc3M9NDkzMjkx
-ODA4LTIzMDgyMDEwPjwvU1BBTj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1B
-cmlhbCBzaXplPTI+PFNQQU4gY2xhc3M9NDkzMjkxODA4LTIzMDgyMDEwPkZpcnN0bHksIHNlbmQg
-Cl5IQ01HUz0mbHQ7ZGEmZ3Q7IGVuZCBvZiAmbHQ7Q1ImZ3Q7LCBURSB3YWl0cyBNUyByZXNwb25z
-ZSAKJmx0O0NSJmd0OyZsdDtMRiZndDsmbHQ7Z3JlYXRlcl90aGFuJmd0OyZsdDtzcGFjZSZndDsg
-KElSQSAxMywgMTAsIDYyLCAKMzIpLjwvU1BBTj48L0ZPTlQ+PC9ESVY+CjxESVY+PEZPTlQgZmFj
-ZT1BcmlhbCBzaXplPTI+PFNQQU4gY2xhc3M9NDkzMjkxODA4LTIzMDgyMDEwPlNlY29uZGx5LCBz
-ZW5kIAptZXNzYWdlIGNvbnRlbnQgYW5kIGVuZCBvZiAmbHQ7Y3RybC1aJmd0Oy4gPC9TUEFOPjwv
-Rk9OVD48L0RJVj4KPERJVj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9Mj48U1BBTiAKY2xhc3M9NDkz
-MjkxODA4LTIzMDgyMDEwPjwvU1BBTj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVY+PEZPTlQgZmFj
-ZT1BcmlhbCBzaXplPTI+PFNQQU4gY2xhc3M9NDkzMjkxODA4LTIzMDgyMDEwPiZsdDttc2cmZ3Q7
-IAo8L1NQQU4+PC9GT05UPjxGT05UIGZhY2U9QXJpYWwgc2l6ZT0yPjxTUEFOIGNsYXNzPTQ5MzI5
-MTgwOC0yMzA4MjAxMD5leGFtcGxlLCAKZm9yIHN0cmluZyAib0Zvbm8iIDo8L1NQQU4+PC9GT05U
-PjwvRElWPgo8RElWPjxGT05UIGZhY2U9QXJpYWwgc2l6ZT0yPjxTUEFOIApjbGFzcz00OTMyOTE4
-MDgtMjMwODIwMTA+PC9TUEFOPjwvRk9OVD4mbmJzcDs8L0RJVj4KPERJVj48Rk9OVCBmYWNlPUFy
-aWFsIHNpemU9Mj48U1BBTiBjbGFzcz00OTMyOTE4MDgtMjMwODIwMTA+Y2hhdCBjb21tYW5kIGlz
-IAoweDZGLCAweDQ2LCAweDZGLDB4NkUsMHg2RiwgZW5kIGNoYXJhY3RlciBpcyAweDFBJm5ic3A7
-IGlmICZsdDtmb3JtYXQmZ3Q7IGlzIApDRE1BIEFTQ0lJPC9TUEFOPjwvRk9OVD48L0RJVj4KPERJ
-Vj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9Mj48U1BBTiBjbGFzcz00OTMyOTE4MDgtMjMwODIwMTA+
-Y2hhdCBjb21tYW5kJm5ic3A7aXMgCjB4MDAsIDB4NkYsIDB4MDAsIDB4NDYsIDB4MDAsIDB4NkYs
-MHgwMCwgMHg2RSwweDAwLCAweDZGLCBlbmQgY2hhcmFjdGVyIGlzIDB4MDAsIAoweDFBJm5ic3A7
-IGlmICZsdDtmb3JtYXQmZ3Q7IGlzIENETUEgVUNTMiBCRTwvU1BBTj48L0ZPTlQ+PC9ESVY+CjxE
-SVY+PEZPTlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gY2xhc3M9NDkzMjkxODA4LTIzMDgyMDEw
-PihQUzogJmx0O2Zvcm1hdCZndDsgCmNhbiBiZSBzZXQgYnkgYW5vdGhlciBBVCBjb21tYW5kKTwv
-U1BBTj48L0ZPTlQ+PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gCmNs
-YXNzPTQ5MzI5MTgwOC0yMzA4MjAxMD48L1NQQU4+PC9GT05UPiZuYnNwOzwvRElWPgo8RElWPjxG
-T05UIGZhY2U9QXJpYWwgc2l6ZT0yPjxTUEFOIApjbGFzcz00OTMyOTE4MDgtMjMwODIwMTA+PC9T
-UEFOPjwvRk9OVD4mbmJzcDs8L0RJVj4KPERJVj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9Mj48U1BB
-TiAKY2xhc3M9NDkzMjkxODA4LTIzMDgyMDEwPjwvU1BBTj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxE
-SVY+PEZPTlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gY2xhc3M9NDkzMjkxODA4LTIzMDgyMDEw
-PlJlY2VpdmUgc21zOiZuYnNwOyAKXkhDTVQ6IAombHQ7Y2FsbGVySUQmZ3Q7LCZsdDt5ZWFyJmd0
-OywmbHQ7bW9udGgmZ3Q7LCZsdDtkYXkmZ3Q7LCZsdDtob3VyJmd0OywmbHQ7bWludXRlJmd0Oywm
-bHQ7c2Vjb25kJmd0OywmbHQ7bGFuZyZndDssJmx0O2Zvcm1hdCZndDssJmx0O2xlbmd0aCZndDss
-Jmx0O3BydCZndDssJmx0O3BydiZndDssJmx0O3R5cGUmZ3Q7Jmx0O0NSJmd0OyZsdDtMRiZndDsm
-bHQ7bXNnJmd0OyZsdDtjdHJsLVomZ3Q7Jmx0O0NSJmd0OyZsdDtMRiZndDs8L1NQQU4+PC9GT05U
-PjwvRElWPgo8RElWPjxGT05UIGZhY2U9QXJpYWwgc2l6ZT0yPjxTUEFOIApjbGFzcz00OTMyOTE4
-MDgtMjMwODIwMTA+PC9TUEFOPjwvRk9OVD4mbmJzcDs8L0RJVj4KPERJVj48Rk9OVCBmYWNlPUFy
-aWFsIHNpemU9Mj48U1BBTiBjbGFzcz00OTMyOTE4MDgtMjMwODIwMTA+SW1wb3J0YW50IAp0YWc6
-PC9TUEFOPjwvRk9OVD48L0RJVj4KPERJVj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9Mj48U1BBTiAK
-Y2xhc3M9NDkzMjkxODA4LTIzMDgyMDEwPjwvU1BBTj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVY+
-PEZPTlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gY2xhc3M9NDkzMjkxODA4LTIzMDgyMDEwPiZs
-dDtjYWxsZXJJRCZndDs6IApTZW5kZXIgcGhvbmUgbnVtYmVyPC9TUEFOPjwvRk9OVD48L0RJVj4K
-PERJVj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9Mj48U1BBTiBjbGFzcz00OTMyOTE4MDgtMjMwODIw
-MTA+Jmx0O2Zvcm1hdCZndDs6IApBU0NJSSBvciBVQ1MyIEJFPC9TUEFOPjwvRk9OVD48L0RJVj4K
-PERJVj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9Mj48U1BBTiAKY2xhc3M9NDkzMjkxODA4LTIzMDgy
-MDEwPiZsdDtsZW5ndGgmZ3Q7OiZuYnNwO01lc3NhZ2UgY29udGVudCZuYnNwO2xlbmd0aCwgbm90
-IApjb250YWluICZsdDtjdHJsLVomZ3Q7PC9TUEFOPjwvRk9OVD48L0RJVj4KPERJVj48Rk9OVCBm
-YWNlPUFyaWFsIHNpemU9Mj48U1BBTiBjbGFzcz00OTMyOTE4MDgtMjMwODIwMTA+Jmx0O21zZyZn
-dDs6IHZhbHVlIApvZiBtZXNzYWdlIGNvbnRlbnQsIHNhbWUgYXMgYWJvdmUgY29tbWFuZDwvU1BB
-Tj48L0ZPTlQ+PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gCmNsYXNz
-PTQ5MzI5MTgwOC0yMzA4MjAxMD48L1NQQU4+PC9GT05UPiZuYnNwOzwvRElWPgo8RElWPjxGT05U
-IGZhY2U9QXJpYWwgc2l6ZT0yPjxTUEFOIApjbGFzcz00OTMyOTE4MDgtMjMwODIwMTA+PC9TUEFO
-PjwvRk9OVD4mbmJzcDs8L0RJVj4KPERJVj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9Mj48U1BBTiAK
-Y2xhc3M9NDkzMjkxODA4LTIzMDgyMDEwPjwvU1BBTj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVY+
-PEZPTlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gCmNsYXNzPTQ5MzI5MTgwOC0yMzA4MjAxMD48
-L1NQQU4+PC9GT05UPiZuYnNwOzwvRElWPgo8RElWPjxGT05UIGZhY2U9QXJpYWwgc2l6ZT0yPjxT
-UEFOIApjbGFzcz00OTMyOTE4MDgtMjMwODIwMTA+PC9TUEFOPjwvRk9OVD4mbmJzcDs8L0RJVj4K
-PERJVj48Rk9OVCBmYWNlPUFyaWFsIHNpemU9Mj48L0ZPTlQ+Jm5ic3A7PC9ESVY+CjxESVYgYWxp
-Z249bGVmdD4KPERJViBhbGlnbj1sZWZ0PjxGT05UIGZhY2U9QXJpYWw+PEZPTlQgc2l6ZT0yPjxT
-UEFOIApjbGFzcz01OTUxODE4MDMtMDYwNTIwMTA+QmVzdCBSZWdhcmRzPC9TUEFOPjwvRk9OVD48
-L0ZPTlQ+PC9ESVY+CjxESVY+PEZPTlQgZmFjZT1BcmlhbD48Rk9OVCBzaXplPTI+PFNQQU4gY2xh
-c3M9NTk1MTgxODAzLTA2MDUyMDEwPlN1IApZb25nPC9TUEFOPjwvRk9OVD48L0ZPTlQ+PC9ESVY+
-CjxESVY+PEZPTlQgZmFjZT1BcmlhbCBzaXplPTI+PFNQQU4gY2xhc3M9NTk1MTgxODAzLTA2MDUy
-MDEwPjxTUEFOIApjbGFzcz00OTMyOTE4MDgtMjMwODIwMTA+PC9TUEFOPjwvU1BBTj48L0ZPTlQ+
-Jm5ic3A7PC9ESVY+PC9ESVY+CjxESVY+Jm5ic3A7PC9ESVY+PC9CT0RZPjwvSFRNTD4K
-
---===============3876344013264599241==--
+--===============2420438313213492581==--
 
