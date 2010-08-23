@@ -1,42 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============5441796973424592383=="
+Content-Type: multipart/mixed; boundary="===============6456166913564038743=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] add cdma relative specs
-Date: Mon, 23 Aug 2010 12:43:07 +0200
-Message-ID: <1282560187.23399.233.camel@localhost.localdomain>
-In-Reply-To: <1282556091-3046-1-git-send-email-caiwenzhang@163.com>
+From: caiwen.zhang <caiwenzhang@163.com>
+Subject: [PATCH 1/2] add cdma radio setting
+Date: Mon, 23 Aug 2010 18:45:41 +0800
+Message-ID: <1282560341-2486-1-git-send-email-caiwenzhang@163.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5441796973424592383==
+--===============6456166913564038743==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Caiwen,
+---
+ include/radio-settings.h |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
+ mode change 100644 =3D> 100755 include/radio-settings.h
 
-> ---
->  doc/standards.txt |   85 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 85 insertions(+), 0 deletions(-)
->  mode change 100644 =3D> 100755 doc/standards.txt
+diff --git a/include/radio-settings.h b/include/radio-settings.h
+old mode 100644
+new mode 100755
+index d41ec0b..59b86c1
+--- a/include/radio-settings.h
++++ b/include/radio-settings.h
+@@ -33,6 +33,10 @@ enum ofono_radio_access_mode {
+ 	OFONO_RADIO_ACCESS_MODE_GSM	=3D 1,
+ 	OFONO_RADIO_ACCESS_MODE_UMTS	=3D 2,
+ 	OFONO_RADIO_ACCESS_MODE_LTE	=3D 3,
++
++	OFONO_CDMA_RADIO_ACCESS_MODE_CDMA =3D 4,
++	OFONO_CDMA_RADIO_ACCESS_MODE_HDR =3D 5,
++	OFONO_CDMA_RADIO_ACCESS_MODE_HYBRID =3D 6,  /* CDMA/HDR HYBRID */
+ };
+ =
 
-this is still not gonna work out. So first of all your email address
-should reflect a proper one. And I expect a proper name in it.
+ struct ofono_radio_settings;
+-- =
 
-Check with git am and git log on how your email could be applied and how
-it would look.
-
-And second please refrain from mode changing files. I know this happens
-when you work on FAT file systems or a different OS, but it is not
-acceptable. Check the git format-patch results. It clearly should alarm
-you if the diffstat shows something like this.
-
-Regards
-
-Marcel
+1.7.0.4
 
 
 
---===============5441796973424592383==--
+--===============6456166913564038743==--
 
