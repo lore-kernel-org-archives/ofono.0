@@ -1,34 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4564103663084172633=="
+Content-Type: multipart/mixed; boundary="===============8717336151764714043=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] sim: Read EFust and EFest
-Date: Mon, 23 Aug 2010 14:31:17 -0500
-Message-ID: <4C72CC85.6090208@gmail.com>
-In-Reply-To: <1282197935-9118-2-git-send-email-yang.gu@intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH] todo: add owner for sim ready notification task
+Date: Mon, 23 Aug 2010 07:07:14 -0700
+Message-ID: <1282572434-21989-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4564103663084172633==
+--===============8717336151764714043==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+---
+ TODO |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-On 08/19/2010 01:05 AM, Yang Gu wrote:
-> ---
->  src/sim.c     |   75 +++++++++++++++++++++++++++++++++++++++-
->  src/simutil.c |   18 ++++++++++
->  src/simutil.h |  105 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  3 files changed, 196 insertions(+), 2 deletions(-)
+diff --git a/TODO b/TODO
+index 97f43e1..a97f076 100644
+--- a/TODO
++++ b/TODO
+@@ -158,6 +158,7 @@ SIM / SIM File system
+ =
 
-This patch has now been applied.  However, please send a follow on patch
-to support EFsst from 11.11 and 51.011.  The file id is the same as
-EFust, however the structure is actually different.
+   Priority: High
+   Complexity: C2
++  Owner: Kristen Carlson Accardi <kristen@linux.intel.com>
+ =
 
-Regards,
--Denis
+ =
 
---===============4564103663084172633==--
+ Modem Emulator
+-- =
+
+1.7.2.1
+
+
+--===============8717336151764714043==--
 
