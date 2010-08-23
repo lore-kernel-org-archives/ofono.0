@@ -1,158 +1,167 @@
-Content-Type: multipart/mixed; boundary="===============2491023002823640522=="
+Content-Type: multipart/mixed; boundary="===============2152483761559134663=="
 MIME-Version: 1.0
-From: caiwen.zhang <caiwenzhang@163.com>
-Subject: [PATCH] add cdma extension todo
-Date: Mon, 23 Aug 2010 15:04:05 +0800
-Message-ID: <1282547045-2511-1-git-send-email-caiwenzhang@163.com>
+From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
+Subject: modem atom api change request for support GSM&CDMA dual mode
+Date: Mon, 23 Aug 2010 09:27:03 +0200
+Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE8055DD203@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2491023002823640522==
+--===============2152483761559134663==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |   76 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 76 insertions(+), 0 deletions(-)
- mode change 100644 =3D> 100755 TODO
+Hi all,
 
-diff --git a/TODO b/TODO
-old mode 100644
-new mode 100755
-index 97f43e1..2af5b10
---- a/TODO
-+++ b/TODO
-@@ -613,3 +613,79 @@ Miscellaneous
  =
 
-   Priority: Low
-   Complexity: C4
-+
-+
-+CDMA/EVDO
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+- Extend modem interface with a 'Type' property to indicate the modem type.
-+   =
 
-+  Priority: High
-+  Complexity: C1
-+
-+- Add CDMA call settings support, include: =
+Considering support GSM + CDMA dual mode, it is necessary to let upper
+layer to know
 
-+  Call forwarding(include busy, no answer, default and unconditional situa=
-tion),
-+  Calling Number Identification Presentation(CNIP), Calling Number Identif=
-ication
-+  Restriction(CNIR), Do Not Disturb(DND), Call Delivery(CD), Call Waiting(=
-CW)=C2=A3=C2=AC
-+  Voice Privacy(VP) etc.
-+
-+  All these services except VP are achieved through similar way: get relev=
-ant feature code =
-
-+   -> compose dialing string -> originate a voice call.
-+
-+  Priority: High
-+  Complexity: C2
-+
-+- Extend radio setting, add CDMA radio access technology support. The CDMA=
- modem preferred
-+  technology can be CDMA, HDR or CDMA/HDR hybrid.
-+  =
-
-+  Priority: Medium
-+  Complexity: C1
-+
-+- Add UIM support. UIM support change pin, enter pin, reset pin, set pin l=
-ock, get pin lock setting,
-+  get pin remain retry time, and get information that stored in UIM, inclu=
-de MCC/MNC, ruimid, IMSI, =
-
-+  MDN, PRL version etc.
-+
-+  Priority: High
-+  Complexity: C4
-+
-+- Add CDMA SMS support, include broadcast short message. In CDMA, broadcas=
-t short message is =
-
-+  a kind of SMS. CDMA SMS manager atom will support SMS sending and receiv=
-ing. Many CDMA modems
-+  may only support text mode and other modems only support PDU mode. In CD=
-MA SMS manage atom will
-+  define a data structure that contain every parameters and subparameters =
-defined in C.S0015. In =
-
-+  relative modem driver plug-in, the relevant fields(text mode) or PDU(may=
- be manufacturer =
-
-+  specific) will be parsed and filled into the data structure, then it wil=
-l be proceed in CDMA =
-
-+  SMS manager atom.
-+ =
-
-+  Special SMSs, SCPT, CATPT and voice mail notification(VMN)(please refer =
-to C.S0015 section 4.3.8,
-+  4.3.9, 4.3.5)will be processed in ofono, and other messages with a port =
-number (include WAP push =
-
-+  message) will be processed by external plug-ins. CDMA SMS manager atom o=
-ffer an API for register =
-
-+  external plug-in. =
-
-+  =
-
-+  Priority: High
-+  Complexity: C8
-+
-+- Add CDMA voice call support. CDMA voice call will support originate/end/=
-hold a call,
-+  transfer a call, 3WC(three-way calling), conference call and DTMF. For a=
- voice call, can get
-+  its status, CLI and ending result(if it is end).
-+  =
-
-+  Priority: High
-+  Complexity: C6
-+
-+- Add CDMA Data connection support. CDMA data connection manager support s=
-tart/end a data connect =
-
-+  according to the settings from other module(upper layer or ConnMan)and g=
-et/set Qos. =
-
-+
-+  Priority: High
-+  Complexity: C4
-+
-+- Add SIM/UIM data access support. Add a card atom, it will support read/u=
-pdate/delete/add conatact
-+  add SMS in SIM/UIM card. =
-
-+
-+  Priority: High
-+  Complexity: C6
-+  =
-
-+- Add CTCC modem driver. The CTCC modem driver will totally obey <China Te=
-lecom CDMA terminal =
-
-+  requirement specification -- 1xEV-DORevA Data Terminal AT command Interf=
-ace fascicule V1.1>
-+
-+  Priority: High
-+  Complexity: C10
-+
--- =
-
-1.7.0.4
+the type of the modem currently in use.  My proposed solution is add a
+property 'Type' in =
 
 
+modem atom to indicate it.  The following is the definition of the
+property:
 
---===============2491023002823640522==--
+ =
+
+
+string Type [readonly]                   =
+
+
+                                =
+
+
+Type of the modem. The possible values are:
+
+                                                "gsm" - the modem is a
+GSM modem
+
+                                                "cdma" - the modem is a
+CDMA modem
+
+                                                "unknown" - the modem is
+neither a GSM modem nor
+
+                                                                  a CDMA
+modem
+
+ =
+
+
+ =
+
+
+Any suggestion or concern?
+
+ =
+
+
+Thanks!
+
+ =
+
+
+ =
+
+
+Best regards,
+
+Caiwen
+
+
+--===============2152483761559134663==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
+dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEgbmFtZT1HZW5lcmF0b3Ig
+Y29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTIgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+Cjwh
+LS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseTpTaW1T
+dW47CglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OlNpbVN1bjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAxIDE7fQpAZm9udC1mYWNlCgl7
+Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KQGZv
+bnQtZmFjZQoJe2ZvbnQtZmFtaWx5OlNpbVN1bjsKCXBhbm9zZS0xOjIgMSA2IDAgMyAxIDEgMSAx
+IDE7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBsaS5Nc29Ob3JtYWws
+IGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGluOwoJbWFyZ2luLWJvdHRvbTouMDAwMXB0OwoJZm9u
+dC1zaXplOjExLjBwdDsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7fQphOmxp
+bmssIHNwYW4uTXNvSHlwZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6Ymx1
+ZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlwZXJs
+aW5rRm9sbG93ZWQKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0ZXh0
+LWRlY29yYXRpb246dW5kZXJsaW5lO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUtdHlw
+ZTpwZXJzb25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjsK
+CWNvbG9yOndpbmRvd3RleHQ7fQouTXNvQ2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4cG9y
+dC1vbmx5O30KQHBhZ2UgV29yZFNlY3Rpb24xCgl7c2l6ZTo4LjVpbiAxMS4waW47CgltYXJnaW46
+MS4waW4gMS4yNWluIDEuMGluIDEuMjVpbjt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRT
+ZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBl
+ZGVmYXVsdHMgdjpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0t
+PjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgogPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgog
+IDxvOmlkbWFwIHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgogPC9vOnNoYXBlbGF5b3V0PjwveG1s
+PjwhW2VuZGlmXS0tPgo8L2hlYWQ+Cgo8Ym9keSBsYW5nPUVOLVVTIGxpbms9Ymx1ZSB2bGluaz1w
+dXJwbGU+Cgo8ZGl2IGNsYXNzPVdvcmRTZWN0aW9uMT4KCjxwIGNsYXNzPU1zb05vcm1hbD5IaSBh
+bGwsPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48
+L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+Q29uc2lkZXJpbmcgc3VwcG9ydCBHU00gKyBDRE1BIGR1
+YWwgbW9kZSwgaXQgaXMgbmVjZXNzYXJ5IHRvCmxldCB1cHBlciBsYXllciB0byBrbm93PG86cD48
+L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+dGhlIHR5cGUgb2YgdGhlIG1vZGVtIGN1cnJl
+bnRseSBpbiB1c2UuICZuYnNwO015IHByb3Bvc2VkCnNvbHV0aW9uIGlzIGFkZCBhIHByb3BlcnR5
+ICYjODIxNjtUeXBlJiM4MjE3OyBpbiA8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1h
+bD5tb2RlbSBhdG9tIHRvIGluZGljYXRlIGl0LiZuYnNwOyBUaGUgZm9sbG93aW5nIGlzIHRoZSBk
+ZWZpbml0aW9uCm9mIHRoZSBwcm9wZXJ0eTo8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05v
+cm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0ndGV4
+dC1pbmRlbnQ6LjVpbic+c3RyaW5nIFR5cGUgW3JlYWRvbmx5XSZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyA8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNz
+PU1zb05vcm1hbD4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgJm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IDxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFs
+IHN0eWxlPSdtYXJnaW4tbGVmdDouNWluO3RleHQtaW5kZW50Oi41aW4nPlR5cGUgb2YgdGhlIG1v
+ZGVtLgpUaGUgcG9zc2libGUgdmFsdWVzIGFyZTo8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1z
+b05vcm1hbD4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsgJnF1b3Q7Z3NtJnF1b3Q7Ci0gdGhlIG1vZGVtIGlzIGEgR1NNIG1vZGVtPG86cD48L286
+cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7ICZxdW90O2NkbWEmcXVvdDsKLSB0aGUgbW9kZW0gaXMg
+YSBDRE1BIG1vZGVtPG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7ICZxdW90O3Vua25v
+d24mcXVvdDsKLSB0aGUgbW9kZW0gaXMgbmVpdGhlciBhIEdTTSBtb2RlbSBub3I8bzpwPjwvbzpw
+PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsgJm5ic3A7CmEgQ0RNQSBtb2RlbTxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9y
+bWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7
+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPkFueSBzdWdnZXN0aW9uIG9yIGNvbmNlcm4/
+PG86cD48L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48L3A+
+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+VGhhbmtzITxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNv
+Tm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5i
+c3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPkJlc3QgcmVnYXJkcyw8bzpwPjwvbzpw
+PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD5DYWl3ZW48bzpwPjwvbzpwPjwvcD4KCjwvZGl2PgoK
+PC9ib2R5PgoKPC9odG1sPgo=
+
+--===============2152483761559134663==--
 
