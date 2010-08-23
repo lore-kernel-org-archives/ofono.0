@@ -1,40 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8717336151764714043=="
+Content-Type: multipart/mixed; boundary="===============1462781219950978969=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH] todo: add owner for sim ready notification task
-Date: Mon, 23 Aug 2010 07:07:14 -0700
-Message-ID: <1282572434-21989-1-git-send-email-kristen@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] todo: add owner for sim ready notification task
+Date: Mon, 23 Aug 2010 23:16:26 +0200
+Message-ID: <1282598186.23399.255.camel@localhost.localdomain>
+In-Reply-To: <1282572434-21989-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8717336151764714043==
+--===============1462781219950978969==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+Hi Kristen,
 
-diff --git a/TODO b/TODO
-index 97f43e1..a97f076 100644
---- a/TODO
-+++ b/TODO
-@@ -158,6 +158,7 @@ SIM / SIM File system
- =
+> ---
+>  TODO |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
+> =
 
-   Priority: High
-   Complexity: C2
-+  Owner: Kristen Carlson Accardi <kristen@linux.intel.com>
- =
+> diff --git a/TODO b/TODO
+> index 97f43e1..a97f076 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -158,6 +158,7 @@ SIM / SIM File system
+>  =
 
- =
+>    Priority: High
+>    Complexity: C2
+> +  Owner: Kristen Carlson Accardi <kristen@linux.intel.com>
 
- Modem Emulator
--- =
+patch has been applied. Thanks for taking up this task.
 
-1.7.2.1
+Regards
+
+Marcel
 
 
---===============8717336151764714043==--
+
+--===============1462781219950978969==--
 
