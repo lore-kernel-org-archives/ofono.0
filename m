@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============7873472118895698547=="
+Content-Type: multipart/mixed; boundary="===============0976980885422340953=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [PATCH] mbm: implement Online property
-Date: Mon, 23 Aug 2010 20:49:25 +0300
-Message-ID: <1282585765-20277-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [PATCH] calypso: implement Online property
+Date: Mon, 23 Aug 2010 21:01:42 +0300
+Message-ID: <1282586502-21076-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7873472118895698547==
+--===============0976980885422340953==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -15,42 +15,41 @@ Content-Transfer-Encoding: quoted-printable
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
 ---
- plugins/mbm.c |   42 ++++++++++++++++++++++++++++++++++++++----
- 1 files changed, 38 insertions(+), 4 deletions(-)
+ plugins/calypso.c |   32 +++++++++++++++++++++++++++++---
+ 1 files changed, 29 insertions(+), 3 deletions(-)
 
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 753a4f1..c9b0ea4 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -47,6 +47,7 @@
- #include <ofono/log.h>
+diff --git a/plugins/calypso.c b/plugins/calypso.c
+index a2d4ec8..e47cf19 100644
+--- a/plugins/calypso.c
++++ b/plugins/calypso.c
+@@ -57,6 +57,7 @@
+ #include <ofono/stk.h>
  =
 
  #include <drivers/atmodem/vendor.h>
 +#include <drivers/atmodem/atutil.h>
  =
 
- static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
- static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
-@@ -169,8 +170,8 @@ static void cfun_query(gboolean ok, GAtResult *result, =
-gpointer user_data)
+ #define CALYPSO_POWER_PATH "/sys/bus/platform/devices/neo1973-pm-gsm.0/pow=
+er_on"
+ #define CALYPSO_RESET_PATH "/sys/bus/platform/devices/neo1973-pm-gsm.0/res=
+et"
+@@ -518,14 +519,38 @@ static void calypso_pre_sim(struct ofono_modem *modem)
+ 	if (data->have_sim && data->sim)
+ 		ofono_stk_create(modem, 0, "calypsomodem", data->dlcs[AUX_DLC]);
  =
 
- 	g_at_result_iter_next_number(&iter, &status);
+-	g_at_chat_send(data->dlcs[AUX_DLC], "AT+CFUN=3D1",
++	g_at_chat_send(data->dlcs[AUX_DLC], "AT+CFUN=3D1;+CFUN=3D4",
+ 			none_prefix, NULL, NULL, NULL);
  =
 
--	if (status =3D=3D 4) {
--		g_at_chat_send(data->modem_port, "AT+CFUN=3D1", none_prefix,
-+	if (status !=3D 4) {
-+		g_at_chat_send(data->modem_port, "AT+CFUN=3D4", none_prefix,
- 				cfun_enable, modem, NULL);
- 		return;
- 	}
-@@ -365,6 +366,30 @@ static int mbm_disable(struct ofono_modem *modem)
- 	return -EINPROGRESS;
+ 	if (data->have_sim && data->sim)
+ 		ofono_sim_inserted_notify(data->sim, TRUE);
  }
  =
 
+-static void calypso_post_sim(struct ofono_modem *modem)
 +static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
 ta)
 +{
@@ -63,63 +62,40 @@ ta)
 +		CALLBACK_WITH_FAILURE(cb, cbd->data);
 +}
 +
-+static void mbm_set_online(struct ofono_modem *modem, ofono_bool_t online,
++static void calypso_set_online(struct ofono_modem *modem, ofono_bool_t onl=
+ine,
 +				ofono_modem_online_cb_t cb, void *user_data)
 +{
-+	struct mbm_data *data =3D ofono_modem_get_data(modem);
++	struct calypso_data *data =3D ofono_modem_get_data(modem);
 +	struct cb_data *cbd =3D cb_data_new(cb, user_data);
 +	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
 +
 +	DBG("modem %p %s", modem, online ? "online" : "offline");
 +
-+	g_at_chat_send(data->modem_port, command, NULL,
++	g_at_chat_send(data->dlcs[AUX_DLC], command, NULL,
 +			set_online_cb, cbd, g_free);
 +}
 +
- static void mbm_pre_sim(struct ofono_modem *modem)
++static void calypso_post_online(struct ofono_modem *modem)
  {
- 	struct mbm_data *data =3D ofono_modem_get_data(modem);
-@@ -383,12 +408,19 @@ static void mbm_pre_sim(struct ofono_modem *modem)
- static void mbm_post_sim(struct ofono_modem *modem)
- {
- 	struct mbm_data *data =3D ofono_modem_get_data(modem);
--	struct ofono_gprs *gprs;
--	struct ofono_gprs_context *gc;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_stk_create(modem, 0, "mbmmodem", data->modem_port);
-+}
-+
-+static void mbm_post_online(struct ofono_modem *modem)
-+{
-+	struct mbm_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_gprs *gprs;
-+	struct ofono_gprs_context *gc;
-+
-+	DBG("%p", modem);
- =
-
- 	ofono_netreg_create(modem, OFONO_VENDOR_MBM,
- 					"atmodem", data->modem_port);
-@@ -412,8 +444,10 @@ static struct ofono_modem_driver mbm_driver =3D {
- 	.remove		=3D mbm_remove,
- 	.enable		=3D mbm_enable,
- 	.disable	=3D mbm_disable,
-+	.set_online     =3D mbm_set_online,
- 	.pre_sim	=3D mbm_pre_sim,
- 	.post_sim	=3D mbm_post_sim,
-+	.post_online    =3D mbm_post_online,
+ 	struct calypso_data *data =3D ofono_modem_get_data(modem);
+ 	struct ofono_message_waiting *mw;
+@@ -553,8 +578,9 @@ static struct ofono_modem_driver calypso_driver =3D {
+ 	.remove		=3D calypso_remove,
+ 	.enable		=3D calypso_enable,
+ 	.disable	=3D calypso_disable,
++	.set_online     =3D calypso_set_online,
+ 	.pre_sim	=3D calypso_pre_sim,
+-	.post_sim	=3D calypso_post_sim,
++	.post_online	=3D calypso_post_online,
  };
  =
 
- static int mbm_init(void)
+ static int calypso_init(void)
 -- =
 
 1.7.0.4
 
 
---===============7873472118895698547==--
+--===============0976980885422340953==--
 
