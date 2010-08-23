@@ -1,140 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============2336521029940826656=="
+Content-Type: multipart/mixed; boundary="===============5441796973424592383=="
 MIME-Version: 1.0
-From: caiwen.zhang <caiwenzhang@163.com>
-Subject: [PATCH] add cdma relative specs
-Date: Mon, 23 Aug 2010 17:34:51 +0800
-Message-ID: <1282556091-3046-1-git-send-email-caiwenzhang@163.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] add cdma relative specs
+Date: Mon, 23 Aug 2010 12:43:07 +0200
+Message-ID: <1282560187.23399.233.camel@localhost.localdomain>
+In-Reply-To: <1282556091-3046-1-git-send-email-caiwenzhang@163.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2336521029940826656==
+--===============5441796973424592383==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/standards.txt |   85 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 85 insertions(+), 0 deletions(-)
- mode change 100644 =3D> 100755 doc/standards.txt
+Hi Caiwen,
 
-diff --git a/doc/standards.txt b/doc/standards.txt
-old mode 100644
-new mode 100755
-index a7eaa5e..1b8c23f
---- a/doc/standards.txt
-+++ b/doc/standards.txt
-@@ -81,3 +81,88 @@ technology specific features (e.g. UMTS/CDMA).
- - 102.384: Card Application Toolkit (CAT) conformance specification
- =
+> ---
+>  doc/standards.txt |   85 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 85 insertions(+), 0 deletions(-)
+>  mode change 100644 =3D> 100755 doc/standards.txt
 
- Describes test methodology and test cases for 102.223.
-+
-+
-+
-+Core 3GPP2 Specifications
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+- C.R1001-G: Administration of Parameter Value Assignments for cdma2000 =
+this is still not gonna work out. So first of all your email address
+should reflect a proper one. And I expect a proper name in it.
 
-+	Spread Spectrum Standards - Release G
-+
-+Describes the value of various parameters that defined in other specificat=
-ions
-+	=
+Check with git am and git log on how your email could be applied and how
+it would look.
 
-+- C.S0015-B: Short Message Service (SMS) for Wideband Spread Spectrum Syst=
-ems
-+
-+Describes the SMS service(include broadcast short message)in detail. provi=
-ding
-+delivery of text and numeric information for paging, messaging, and voice =
-mail =
+And second please refrain from mode changing files. I know this happens
+when you work on FAT file systems or a different OS, but it is not
+acceptable. Check the git format-patch results. It clearly should alarm
+you if the diffstat shows something like this.
 
-+notification.
-+
-+- C.S0023-D: Removable User Identity Module for Spread Spectrum Systems
-+
-+Describes the contents of the R-UIM, R-UIM initialization procedures, func=
-tions,
-+commands, file architecture and the coding of felementary files.
-+
-+- C.S0035-A: CDMA Card Application Toolkit (CCAT)
-+
-+Describes the core functionality of CCAT.
-+
-+- S.R0006-000 Wireless Features Description
-+
-+Describes the general definitions and concepts of a subset of wireless fea=
-tures.
-+
-+- S.R0006-100 Wireless Features Description: General Background and Assump=
-tions
-+
-+Describes the general background and assumption of wireless features.
-+
-+3GPP2 Wireless Features Description
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+- S.R0006-501:	Call Delivery
-+- S.R0006-502:	Call Forwarding--Busy
-+- S.R0006-503:	Call Forwarding--Default
-+- S.R0006-504:	Call Forwarding--No Answer
-+- S.R0006-505:	Call Forwarding--Unconditional
-+- S.R0006-506:	Call Transfer
-+- S.R0006-507:	Call Waiting
-+- S.R0006-508:	Calling Number Identification Presentation
-+- S.R0006-509:	Calling Number Identification Restriction
-+- S.R0006-510:	Conference Calling
-+- S.R0006-511:	Do Not Disturb
-+- S.R0006-512:	Flexible Alerting
-+- S.R0006-513:	Message Waiting Notification
-+- S.R0006-514:	Mobile Access Hunting
-+- S.R0006-515:	Password Call Acceptance
-+- S.R0006-516:	Preferred Language
-+- S.R0006-517:	Priority Access and Channel Assignment
-+- S.R0006-518:	Remote Feature Control
-+- S.R0006-519:	Selective Call Acceptance
-+- S.R0006-520:	Subscriber PIN Access
-+- S.R0006-521:	Subscriber PIN Intercept
-+- S.R0006-522:	Three-Way Calling
-+- S.R0006-523:	Voice Message Retrieval
-+- S.R0006-524:	Voice Privacy
-+- S.R0006-525:	Asynchronous Data Service
-+- S.R0006-526:	Calling Name Presentation
-+- S.R0006-527:	Calling Name Restriction
-+- S.R0006-528:	Data Privacy
-+- S.R0006-529:	Emergency Services
-+- S.R0006-530:	Group 3 Facsimile Service
-+- S.R0006-531:	Network Directed System Selection
-+- S.R0006-532:	Non-Public Service Mode
-+- S.R0006-533:	Over-the-Air Service Provisioning
-+- S.R0006-534:	Service Negotiation
-+- S.R0006-535:	User Group
-+- S.R0006-536:	Group 3 Analog Facsimile Service
-+- S.R0006-601:	Short Message Delivery - Point-to-Point Bearer Service
-+- S.R0006-602:	Wireless Features Description: Wireless Messaging Teleservi=
-ce
-+- S.R0006-603:	Wireless Features Description: Wireless Paging Teleservice
-+- S.R0006-701:	Wireless Features Description: Mobile Station Functionality
-+- S.R0006-801:	Wireless Features Description: System Functionality
-+- S.R0006-802:	Wireless Features Description: Subscriber Confidentiality
-+- S.R0006-803:	Wireless Features Description: Network Services
-+- S.R0006-804:	Wireless Features Description: Enhanced Security Services
-+- S.R0006-805:	Wireless Features Description: CDMA Packet Data Service
-+- S.R0006-806:	Wireless Features Description: Over-the-Air Parameter Admin=
-istration
-+- S.R0006-807:	Wireless Features Description: Generic Broadcast Teleservic=
-e Transport
-+	Capability: Network Perspective
-+- S.R0006-808:	Wireless Features Description: Circuit Switched Call Preced=
-ence Over =
+Regards
 
-+	CDMA Packet Data Session
--- =
-
-1.7.0.4
+Marcel
 
 
 
---===============2336521029940826656==--
+--===============5441796973424592383==--
 
