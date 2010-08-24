@@ -1,65 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============5135742823737990637=="
+Content-Type: multipart/mixed; boundary="===============4023264464760968993=="
 MIME-Version: 1.0
-From: Steven <liu-dj@neusoft.com>
-Subject: About Gatmux
-Date: Tue, 24 Aug 2010 17:47:38 +0800
-Message-ID: <4C73953A.3080102@neusoft.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH v3] Add CDMA specs
+Date: Tue, 24 Aug 2010 12:00:54 +0200
+Message-ID: <1282644054.6841.14.camel@localhost.localdomain>
+In-Reply-To: <1282642891-2067-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5135742823737990637==
+--===============4023264464760968993==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Caiwen,
 
-In DLC establish phase, 27.010 have said if the station wish to =
+> ---
+>  doc/standards.txt |   85 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 85 insertions(+), 0 deletions(-)
 
-establish a DLC, if the responding station is ready to establish the =
+patch has been applied. Thanks.
 
-connection it will reply with a UA frame with the F-bit set to 1. If the =
+Regards
 
-responding station is not ready or unwilling to establish the particular =
-
-DLC it will reply with a DM frame with the F-bit set to 1.
-
-But in function gsm0710_packet, i can't find the corresponding =
-
-processing, so does retransmit processing.
-
-So does Gatmux support this, or it will support?
-
-Any suggestion will welcome
-
-B.R
-
-Steven
----------------------------------------------------------------------------=
-------------------------
-Confidentiality Notice: The information contained in this e-mail and any ac=
-companying attachment(s) =
-
-is intended only for the use of the intended recipient and may be confident=
-ial and/or privileged of =
-
-Neusoft Corporation, its subsidiaries and/or its affiliates. If any reader =
-of this communication is =
-
-not the intended recipient, unauthorized use, forwarding, printing,  storin=
-g, disclosure or copying =
-
-is strictly prohibited, and may be unlawful.If you have received this commu=
-nication in error,please =
-
-immediately notify the sender by return e-mail, and delete the original mes=
-sage and all copies from =
-
-your system. Thank you. =
-
----------------------------------------------------------------------------=
-------------------------
+Marcel
 
 
---===============5135742823737990637==--
+
+--===============4023264464760968993==--
 
