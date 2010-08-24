@@ -1,45 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============7195296256975970099=="
+Content-Type: multipart/mixed; boundary="===============0622447440494142400=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 2/2] mbm: use sim_ready_notify
-Date: Tue, 24 Aug 2010 07:24:14 -0700
-Message-ID: <1282659854-28097-2-git-send-email-kristen@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/2] sim: add sim_ready_notify
+Date: Tue, 24 Aug 2010 23:32:20 +0200
+Message-ID: <1282685540.6841.23.camel@localhost.localdomain>
 In-Reply-To: <1282659854-28097-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7195296256975970099==
+--===============0622447440494142400==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/mbm.c |    5 ++++-
- 1 files changed, 4 insertions(+), 1 deletions(-)
-
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 8541aaf..5a82bf2 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -335,8 +335,11 @@ static void mbm_pre_sim(struct ofono_modem *modem)
- 	sim =3D ofono_sim_create(modem, OFONO_VENDOR_MBM,
- 					"atmodem", data->modem_port);
+Hi Kristen,
  =
 
--	if (data->have_sim && sim)
-+	if (sim)
- 		ofono_sim_inserted_notify(sim, TRUE);
-+
-+	if (data->have_sim)
-+		ofono_sim_ready_notify(sim);
- }
- =
+> +#define SIM_STATUS_READY		1
+> +#define SIM_STATUS_WAITING_FOR_PIN	(1 << 1)
+> +
 
- static void mbm_post_sim(struct ofono_modem *modem)
--- =
+as a general rule, I prefer if you also do (1 << 0) instead of 1. Sounds
+maybe a bit silly a first, but it make it easier to read and more
+consistent. And we let the compiler do the actual optimization ;)
 
-1.7.2.1
+Regards
+
+Marcel
 
 
---===============7195296256975970099==--
+
+--===============0622447440494142400==--
 
