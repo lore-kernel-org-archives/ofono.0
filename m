@@ -1,417 +1,216 @@
-Content-Type: multipart/mixed; boundary="===============6002922141389290787=="
+Content-Type: multipart/mixed; boundary="===============3326497420625969908=="
 MIME-Version: 1.0
-From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: Re: [RFC PATCH v2 2/4] smsutil: storing/loading sms status report
- over reboot
-Date: Wed, 25 Aug 2010 22:56:27 +0300
-Message-ID: <201008252256.27310.petteri.tikander@ixonos.com>
-In-Reply-To: <4C744D16.50202@gmail.com>
+From: Keith Collins <kcollins@neusoft.com>
+Subject: New to OFONO
+Date: Wed, 25 Aug 2010 16:47:12 -0400
+Message-ID: <003a01cb4496$b3424900$19c6db00$@com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6002922141389290787==
+--===============3326497420625969908==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
-and thanks for the comments.
-I'm changing the code according to your comments. So I'll change backup-fil=
-e =
+Hi,
 
-system to more like flat-system. Earlier messages were stored in address-ba=
-sed =
-
-subdirectories, and now, if I understood correctly, those sub-directories =
-
-shouldn't exist anymore. But instead, should be stored in next form in the =
-
-same directory:
-
-sms_addr_1_msg1...
-sms_addr_1_msgn
-sms_addr_2_msg1...
-sms_addr_2_msgn
-
-OK. I already made some implementation, but for some strange reason my test=
-ing =
-
-crashes after first sms-message and status-notify (OK, that works, but next =
-
-sms-message sequencies fail):(
-I have to investigate tomorrow, what's wrong in my code/environment. At lea=
-st =
-
-my modem seems not to work properly all the time, because similar problems =
-
-occur, when I execute 0.26-version.
-
-Br, Petteri
-
-> Hi Petteri,
-> =
-
-> On 08/19/2010 12:41 PM, Petteri Tikander wrote:
-> > ---
-> >  src/smsutil.c |  192
-> > +++++++++++++++++++++++++++++++++++++++++++++++++++++++-- src/smsutil.h=
- |
-> >    2 +-
-> >  2 files changed, 188 insertions(+), 6 deletions(-)
-> >
-> > diff --git a/src/smsutil.c b/src/smsutil.c
-> > index c60b8ec..b001a1d 100644
-> > --- a/src/smsutil.c
-> > +++ b/src/smsutil.c
-> > @@ -45,6 +45,10 @@
-> >  #define SMS_BACKUP_PATH_DIR SMS_BACKUP_PATH "/%s-%i-%i"
-> >  #define SMS_BACKUP_PATH_FILE SMS_BACKUP_PATH_DIR "/%03i"
-> >
-> > +#define SMS_SR_BACKUP_PATH STORAGEDIR "/%s/sms_sr"
-> > +#define SMS_SR_BACKUP_PATH_DIR SMS_SR_BACKUP_PATH "/%s"
-> > +#define SMS_SR_BACKUP_PATH_FILE SMS_SR_BACKUP_PATH_DIR "/%i"
-> > +
-> >  #define SMS_ADDR_FMT "%24[0-9A-F]"
-> >
-> >  static GSList *sms_assembly_add_fragment_backup(struct sms_assembly
-> > *assembly, @@ -2413,7 +2417,7 @@ static void
-> > sms_assembly_backup_free(struct sms_assembly *assembly, {
-> >       char *path;
-> >       int seq;
-> > -     char straddr[25];
-> > +     DECLARE_SMS_ADDR_STR(straddr);
-> >
-> >       if (!assembly->imsi)
-> >               return;
-> > @@ -2642,20 +2646,182 @@ void sms_assembly_expire(struct sms_assembly
-> > *assembly, time_t before) }
-> >  }
-> >
-> > +static void sr_assembly_load_backup(GHashTable *assembly_table,
-> > +                                     const char *imsi,
-> > +                                     const struct dirent *addr_dir)
-> > +{
-> > +     char *path;
-> > +     struct dirent **ids;
-> > +     struct sms_address addr;
-> > +     DECLARE_SMS_ADDR_STR(straddr);
-> > +     struct id_table_node *node;
-> > +     GHashTable *id_table;
-> > +     int len;
-> > +     int r;
-> > +     char *assembly_table_key;
-> > +     unsigned int *id_table_key;
-> > +     struct stat segment_stat;
-> > +
-> > +     if (addr_dir->d_type !=3D DT_DIR)
-> > +             return;
-> > +
-> > +     /* Max of SMS address size is 12 bytes, hex encoded */
-> > +     if (sscanf(addr_dir->d_name, SMS_ADDR_FMT, straddr) < 1)
-> > +             return;
-> > +
-> =
-
-> Potential suggestion might be to use a flatter directory structure and
-> do something like SMS_ADDR_FMT "-%d"...
-> =
-
-> > +     if (sms_assembly_extract_address(straddr, &addr) =3D=3D FALSE)
-> > +             return;
-> > +
-> > +     /* Go through different msg_ids. */
-> > +     path =3D g_strdup_printf(SMS_SR_BACKUP_PATH "/%s", imsi,
-> > +                                                     addr_dir->d_name);
-> > +     len =3D scandir(path, &ids, NULL, versionsort);
-> > +
-> > +     g_free(path);
-> > +
-> > +     if (len < 0)
-> > +             return;
-> > +
-> > +     id_table =3D g_hash_table_new_full(g_int_hash, g_int_equal,
-> > +                                                     g_free, g_free);
-> > +
-> > +     assembly_table_key =3D g_try_malloc(sizeof(addr.address));
-> > +
-> > +     if (assembly_table_key =3D=3D NULL)
-> > +             return;
-> > +
-> > +     assembly_table_key =3D g_strdup(sms_address_to_string(&addr));
-> =
-
-> g_strdup already mallocs the needed space.  The above g_try_malloc is
-> only leaking memory.
-> =
-
-> > +     g_hash_table_insert(assembly_table, assembly_table_key, id_table);
-> > +
-> > +     while (len--) {
-> > +             path =3D g_strdup_printf(SMS_SR_BACKUP_PATH "/%s/%s",
-> > +                             imsi, addr_dir->d_name, ids[len]->d_name);
-> > +
-> =
-
-> You have to make sure to sanitize ids[len]->d_name.  If it is not an
-> integer, then it needs to be skipped.  Also watch out for atoi() use
-> below, strtol is a much better alternative.
-> =
-
-> > +             node =3D g_new0(struct id_table_node, 1);
-> > +
-> > +             r =3D read_file((unsigned char *) node,
-> > +                             sizeof(struct id_table_node),
-> > +                             SMS_SR_BACKUP_PATH "/%s/%s",
-> > +                             imsi, addr_dir->d_name, ids[len]->d_name);
-> > +
-> > +             if (r < 0) {
-> > +                     g_free(path);
-> > +                     g_free(ids[len]);
-> > +                     g_free(node);
-> > +                     continue;
-> > +             }
-> > +
-> > +             r =3D stat(path, &segment_stat);
-> =
-
-> Hah, for sms_assembly we were extra tricky and used the modification
-> time stamp on the file system as the received time stamp in the node
-> structure.  This works because the file is written at the same time.
-> Since we're being lazy and writing out the structure directly this part
-> is not needed.
-> =
-
-> > +
-> > +             if (r !=3D 0) {
-> > +                     g_free(path);
-> > +                     g_free(ids[len]);
-> > +                     g_free(node);
-> > +                     continue;
-> > +             }
-> > +
-> > +             /* Node ready, create key and add them to the table */
-> > +             id_table_key =3D g_new0(unsigned int, 1);
-> > +             *id_table_key =3D atoi(ids[len]->d_name);
-> > +
-> > +             g_hash_table_insert(id_table, id_table_key, node);
-> > +
-> > +             g_free(path);
-> > +             g_free(ids[len]);
-> > +     }
-> > +     g_free(ids);
-> > +}
-> > +
-> >  struct status_report_assembly *status_report_assembly_new(const char
-> > *imsi) {
-> > +     char *path;
-> > +     int len;
-> > +     struct dirent **addresses;
-> >       struct status_report_assembly *ret =3D
-> >                               g_new0(struct status_report_assembly, 1);
-> >
-> >       ret->assembly_table =3D g_hash_table_new_full(g_str_hash,
-> > g_str_equal, g_free, (GDestroyNotify)g_hash_table_destroy);
-> >
-> > -     if (imsi)
-> > +     if (imsi) {
-> >               ret->imsi =3D imsi;
-> >
-> > +             /* Restore state from backup */
-> > +             path =3D g_strdup_printf(SMS_SR_BACKUP_PATH, imsi);
-> > +             len =3D scandir(path, &addresses, NULL, alphasort);
-> > +
-> > +             g_free(path);
-> > +
-> > +             if (len < 0)
-> > +                     return ret;
-> > +
-> > +             /* Go through different addresses. Each address can relate
-> > to +              * 1-n msg_ids.
-> > +              */
-> =
-
-> Please stick to our multi-line comment guidelines, doc/coding-style.txt
-> item M2.  And yes I know the sms_assembly does it this way :)
-> =
-
-> > +
-> > +             while (len--) {
-> > +                     sr_assembly_load_backup(ret->assembly_table, imsi,
-> > +                                                            =
-
-> > addresses[len]); +                     g_free(addresses[len]);
-> > +             }
-> > +
-> > +             g_free(addresses);
-> > +     }
-> > +
-> =
-
-> This part looks good otherwise
-> =
-
-> >       return ret;
-> >  }
-> >
-> > +static gboolean sr_assembly_add_fragment_backup(const char *imsi,
-> > +                                     const struct id_table_node *node,
-> > +                                     const struct sms_address *addr,
-> > +                                     unsigned int msg_id)
-> > +{
-> > +     int len =3D sizeof(struct id_table_node);
-> > +     DECLARE_SMS_ADDR_STR(straddr);
-> > +
-> > +     if (!imsi)
-> > +             return FALSE;
-> > +
-> > +     if (sms_address_to_hex_string(addr, straddr) =3D=3D FALSE)
-> > +             return FALSE;
-> > +
-> > +     /* storagedir/%s/sms_sr/%s/%i */
-> > +     if (write_file((unsigned char *) node, len, SMS_BACKUP_MODE,
-> > +                     SMS_SR_BACKUP_PATH_FILE, imsi,
-> > +                     straddr, msg_id) !=3D len)
-> > +             return FALSE;
-> > +
-> > +     return TRUE;
-> > +}
-> > +
-> > +static gboolean sr_assembly_remove_fragment_backup(const char *imsi,
-> > +                                     const struct id_table_node *node,
-> > +                                     const struct sms_address *addr,
-> > +                                     unsigned int msg_id)
-> > +{
-> > +     char *path;
-> > +     DECLARE_SMS_ADDR_STR(straddr);
-> > +
-> > +     if (!imsi)
-> > +             return FALSE;
-> > +
-> > +     if (sms_address_to_hex_string(addr, straddr) =3D=3D FALSE)
-> > +             return FALSE;
-> > +
-> > +     path =3D g_strdup_printf(SMS_SR_BACKUP_PATH_FILE, imsi, straddr,
-> > msg_id); +
-> > +     unlink(path);
-> > +     g_free(path);
-> > +
-> > +     path =3D g_strdup_printf(SMS_SR_BACKUP_PATH_DIR, imsi, straddr);
-> > +
-> > +     /* If the address does not have relating msg_ids anymore, remove =
-it
-> > */ +     rmdir(path);
-> > +     g_free(path);
-> > +
-> > +     return TRUE;
-> > +}
-> > +
-> =
-
-> Looks good, but see my earlier comment above about a flatter file
->  structure.
-> =
-
-> >  void status_report_assembly_free(struct status_report_assembly
-> > *assembly) {
-> >       g_hash_table_destroy(assembly->assembly_table);
-> > @@ -2698,6 +2864,7 @@ gboolean status_report_assembly_report(struct
-> > status_report_assembly *assembly, GHashTableIter iter;
-> >       gboolean pending;
-> >       int i;
-> > +     unsigned int msg_id;
-> >
-> >       /* We ignore temporary or tempfinal status reports */
-> >       if (sr_st_to_delivered(status_report->status_report.st,
-> > @@ -2714,7 +2881,6 @@ gboolean status_report_assembly_report(struct
-> > status_report_assembly *assembly, g_hash_table_iter_init(&iter,
-> > id_table);
-> >       while (g_hash_table_iter_next(&iter, &key, &value)) {
-> >               node =3D value;
-> > -
-> =
-
-> This newline is actually needed, please see doc/coding-style.txt item M1
-> =
-
-> >               if (node->mrs[offset] & bit)
-> >                       break;
-> >
-> > @@ -2743,14 +2909,29 @@ gboolean status_report_assembly_report(struct
-> > status_report_assembly *assembly, }
-> >       }
-> >
-> > -     if (pending =3D=3D TRUE && node->deliverable =3D=3D TRUE)
-> > +     msg_id =3D *(unsigned int *) key;
-> > +
-> > +     if (pending =3D=3D TRUE && node->deliverable =3D=3D TRUE) {
-> > +             /* More status reports expected, and already received
-> > +              * reports completed. Update backup file.
-> > +              */
-> =
-
-> Coding style item M2
-> =
-
-> > +             sr_assembly_add_fragment_backup(
-> > +                                     assembly->imsi, node,
-> > +                                    =
-
-> > &status_report->status_report.raddr, +                                 =
-  =
-
-> >  msg_id);
-> > +
-> >               return FALSE;
-> > +     }
-> >
-> >       if (out_delivered)
-> >               *out_delivered =3D node->deliverable;
-> >
-> >       if (out_id)
-> > -             *out_id =3D *((unsigned int *) key);
-> > +             *out_id =3D msg_id;
-> > +
-> > +     sr_assembly_remove_fragment_backup(assembly->imsi, node,
-> > +                                    =
-
-> > &status_report->status_report.raddr, +                                 =
-  =
-
-> >  msg_id);
-> >
-> >       g_hash_table_iter_remove(&iter);
-> >
-> > @@ -2804,6 +2985,7 @@ void status_report_assembly_add_fragment(
-> >       node->mrs[offset] |=3D bit;
-> >       node->expiration =3D expiration;
-> >       node->sent_mrs++;
-> > +     sr_assembly_add_fragment_backup(assembly->imsi, node, to, msg_id);
-> >  }
-> >
-> >  void status_report_assembly_expire(struct status_report_assembly
-> > *assembly, diff --git a/src/smsutil.h b/src/smsutil.h
-> > index eb70b6d..3c6b3ae 100644
-> > --- a/src/smsutil.h
-> > +++ b/src/smsutil.h
-> > @@ -370,7 +370,7 @@ struct id_table_node {
-> >       unsigned char total_mrs;
-> >       unsigned char sent_mrs;
-> >       gboolean deliverable;
-> > -};
-> > +} __attribute__((packed));
-> >
-> >  struct status_report_assembly {
-> >       const char *imsi;
-> =
-
-> Rest looks fine.
-> =
-
-> Thanks,
-> -Denis
-> =
+ =
 
 
+I am new to OFONO, but I have 11 years of experience in smartphone telephony
+development.  I have worked on both UMTS and CDMA product designs for
+different mobile operators, handset manufacturers, chipset vendors and o/s
+vendors.  I know the challenges of designing a telephony subsystem that will
+support different chipsets, messaging protocols and operator
+networks/requirements.  I am interested in getting more documentation on
+OFONO, including the APIs for DBUS, Modem Plug-In and Utility.  I'd also
+like to know what functionality gaps exists in either UMTS or CDMA so that I
+could concentrate on some of those areas for my code contributions.
 
---===============6002922141389290787==--
+ =
+
+
+Thanks,  =
+
+
+ =
+
+
+Keith Collins
+
+CTO Mobile Software
+
+Neusoft America, Inc. =
+
+
+3000 RDU Center Drive, Suite 119 =
+
+
+Morrisville, NC 27560 =
+
+
+kcollins(a)neusoft.com
+
+www.neusoft.com
+
+ =
+
+
+---------------------------------------------------------------------------=
+------------------------
+Confidentiality Notice: The information contained in this e-mail and any ac=
+companying attachment(s) =
+
+is intended only for the use of the intended recipient and may be confident=
+ial and/or privileged of =
+
+Neusoft Corporation, its subsidiaries and/or its affiliates. If any reader =
+of this communication is =
+
+not the intended recipient, unauthorized use, forwarding, printing,  storin=
+g, disclosure or copying =
+
+is strictly prohibited, and may be unlawful.If you have received this commu=
+nication in error,please =
+
+immediately notify the sender by return e-mail, and delete the original mes=
+sage and all copies from =
+
+your system. Thank you. =
+
+---------------------------------------------------------------------------=
+------------------------
+
+--===============3326497420625969908==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
+b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
+QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
+MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
+Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
+dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
+YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
+ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
+YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
+OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
+Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
+VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
+Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
+cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
+MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
+ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
+cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
+bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
+eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
+dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
+LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
+Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
+cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
+dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
+aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczp3
+Zj0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvd29ya2Zsb3cv
+IiB4bWxuczpkc3NzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS8yMDA2L2Rp
+Z3NpZy1zZXR1cCIgeG1sbnM6ZHNzaT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZp
+Y2UvMjAwNi9kaWdzaWciIHhtbG5zOm1kc3NpPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0
+cy5vcmcvcGFja2FnZS8yMDA2L2RpZ2l0YWwtc2lnbmF0dXJlIiB4bWxuczptdmVyPSJodHRwOi8v
+c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvbWFya3VwLWNvbXBhdGliaWxpdHkvMjAwNiIgeG1s
+bnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4
+bWxuczptcmVscz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAw
+Ni9yZWxhdGlvbnNoaXBzIiB4bWxuczpzcHdwPSJodHRwOi8vbWljcm9zb2Z0LmNvbS9zaGFyZXBv
+aW50L3dlYnBhcnRwYWdlcyIgeG1sbnM6ZXgxMnQ9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5j
+b20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi90eXBlcyIgeG1sbnM6ZXgxMm09Imh0dHA6Ly9zY2hl
+bWFzLm1pY3Jvc29mdC5jb20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi9tZXNzYWdlcyIgeG1sbnM6
+cHB0c2w9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC9zb2FwL1NsaWRl
+TGlicmFyeS8iIHhtbG5zOnNwc2w9Imh0dHA6Ly9taWNyb3NvZnQuY29tL3dlYnNlcnZpY2VzL1No
+YXJlUG9pbnRQb3J0YWxTZXJ2ZXIvUHVibGlzaGVkTGlua3NTZXJ2aWNlIiB4bWxuczpaPSJ1cm46
+c2NoZW1hcy1taWNyb3NvZnQtY29tOiIgeG1sbnM6c3Q9IiYjMTsiIHhtbG5zPSJodHRwOi8vd3d3
+LnczLm9yZy9UUi9SRUMtaHRtbDQwIj4KCjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQt
+VHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBuYW1lPUdl
+bmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+Cjxz
+dHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OkNhbGlicmk7CglwYW5vc2UtMToyIDE1IDUgMiAyIDIgNCAzIDIgNDt9CiAvKiBTdHlsZSBE
+ZWZpbml0aW9ucyAqLwogcC5Nc29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJ
+e21hcmdpbjowaW47CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJ
+Zm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlmIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBl
+cmxpbmsKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0
+aW9uOnVuZGVybGluZTt9CmE6dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe21z
+by1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRl
+cmxpbmU7fQpzcGFuLkVtYWlsU3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBv
+c2U7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4
+dDt9Ci5Nc29DaHBEZWZhdWx0Cgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7fQpAcGFnZSBX
+b3JkU2VjdGlvbjEKCXtzaXplOjguNWluIDExLjBpbjsKCW1hcmdpbjoxLjBpbiAxLjBpbiAxLjBp
+biAxLjBpbjt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9Ci0tPgo8L3N0
+eWxlPgo8IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVk
+aXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5
+XT48eG1sPgogPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgogIDxvOmlkbWFwIHY6ZXh0PSJl
+ZGl0IiBkYXRhPSIxIiAvPgogPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPgo8L2hl
+YWQ+Cgo8Ym9keSBsYW5nPUVOLVVTIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGU+Cgo8ZGl2IGNsYXNz
+PVdvcmRTZWN0aW9uMT4KCjxwIGNsYXNzPU1zb05vcm1hbD5IaSw8bzpwPjwvbzpwPjwvcD4KCjxw
+IGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1h
+bD5JIGFtIG5ldyB0byBPRk9OTywgYnV0IEkgaGF2ZSAxMSB5ZWFycyBvZiBleHBlcmllbmNlIGlu
+IHNtYXJ0cGhvbmUKdGVsZXBob255IGRldmVsb3BtZW50LiZuYnNwOyBJIGhhdmUgd29ya2VkIG9u
+IGJvdGggVU1UUyBhbmQgQ0RNQSBwcm9kdWN0CmRlc2lnbnMgZm9yIGRpZmZlcmVudCBtb2JpbGUg
+b3BlcmF0b3JzLCBoYW5kc2V0IG1hbnVmYWN0dXJlcnMsIGNoaXBzZXQgdmVuZG9ycwphbmQgby9z
+IHZlbmRvcnMuJm5ic3A7IEkga25vdyB0aGUgY2hhbGxlbmdlcyBvZiBkZXNpZ25pbmcgYSB0ZWxl
+cGhvbnkgc3Vic3lzdGVtCnRoYXQgd2lsbCBzdXBwb3J0IGRpZmZlcmVudCBjaGlwc2V0cywgbWVz
+c2FnaW5nIHByb3RvY29scyBhbmQgb3BlcmF0b3IgbmV0d29ya3MvcmVxdWlyZW1lbnRzLiZuYnNw
+OwpJIGFtIGludGVyZXN0ZWQgaW4gZ2V0dGluZyBtb3JlIGRvY3VtZW50YXRpb24gb24gT0ZPTk8s
+IGluY2x1ZGluZyB0aGUgQVBJcyBmb3IgREJVUywKTW9kZW0gUGx1Zy1JbiBhbmQgVXRpbGl0eS4m
+bmJzcDsgSSYjODIxNztkIGFsc28gbGlrZSB0byBrbm93IHdoYXQgZnVuY3Rpb25hbGl0eQpnYXBz
+IGV4aXN0cyBpbiBlaXRoZXIgVU1UUyBvciBDRE1BIHNvIHRoYXQgSSBjb3VsZCBjb25jZW50cmF0
+ZSBvbiBzb21lIG9mIHRob3NlCmFyZWFzIGZvciBteSBjb2RlIGNvbnRyaWJ1dGlvbnMuPG86cD48
+L286cD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48L3A+Cgo8cCBj
+bGFzcz1Nc29Ob3JtYWw+VGhhbmtzLCAmbmJzcDs8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1z
+b05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0n
+dGV4dC1hdXRvc3BhY2U6bm9uZSc+PGk+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS41cHQ7CmNv
+bG9yOmJsYWNrJz5LZWl0aCBDb2xsaW5zPG86cD48L286cD48L3NwYW4+PC9pPjwvcD4KCjxwIGNs
+YXNzPU1zb05vcm1hbCBzdHlsZT0ndGV4dC1hdXRvc3BhY2U6bm9uZSc+PGk+PHNwYW4gc3R5bGU9
+J2ZvbnQtc2l6ZToxMS41cHQ7CmNvbG9yOmJsYWNrJz5DVE8gTW9iaWxlIFNvZnR3YXJlPG86cD48
+L286cD48L3NwYW4+PC9pPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0ndGV4dC1hdXRv
+c3BhY2U6bm9uZSc+PGk+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS41cHQ7CmNvbG9yOmJsYWNr
+Jz5OZXVzb2Z0IEFtZXJpY2EsIEluYy4gPG86cD48L286cD48L3NwYW4+PC9pPjwvcD4KCjxwIGNs
+YXNzPU1zb05vcm1hbCBzdHlsZT0ndGV4dC1hdXRvc3BhY2U6bm9uZSc+PGk+PHNwYW4gc3R5bGU9
+J2ZvbnQtc2l6ZToxMS41cHQ7CmNvbG9yOmJsYWNrJz4zMDAwIFJEVSBDZW50ZXIgRHJpdmUsIFN1
+aXRlIDExOSA8bzpwPjwvbzpwPjwvc3Bhbj48L2k+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsIHN0
+eWxlPSd0ZXh0LWF1dG9zcGFjZTpub25lJz48aT48c3BhbiBzdHlsZT0nZm9udC1zaXplOjExLjVw
+dDsKY29sb3I6YmxhY2snPk1vcnJpc3ZpbGxlLCBOQyAyNzU2MCA8bzpwPjwvbzpwPjwvc3Bhbj48
+L2k+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsIHN0eWxlPSd0ZXh0LWF1dG9zcGFjZTpub25lJz48
+aT48c3BhbiBzdHlsZT0nZm9udC1zaXplOjExLjVwdDsKY29sb3I6YmxhY2snPjxhIGhyZWY9Im1h
+aWx0bzprY29sbGluc0BuZXVzb2Z0LmNvbSI+a2NvbGxpbnNAbmV1c29mdC5jb208L2E+PG86cD48
+L286cD48L3NwYW4+PC9pPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0ndGV4dC1hdXRv
+c3BhY2U6bm9uZSc+PGk+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS41cHQ7CmNvbG9yOmJsYWNr
+Jz48YSBocmVmPSJodHRwOi8vd3d3Lm5ldXNvZnQuY29tIj53d3cubmV1c29mdC5jb208L2E+PG86
+cD48L286cD48L3NwYW4+PC9pPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0ndGV4dC1h
+dXRvc3BhY2U6bm9uZSc+PGk+PHNwYW4gc3R5bGU9J2ZvbnQtc2l6ZToxMS41cHQ7CmNvbG9yOmJs
+YWNrJz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2k+PC9wPgoKPC9kaXY+Cgo8cHJlPi0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpDb25maWRlbnRpYWxpdHkgTm90
+aWNlOiBUaGUgaW5mb3JtYXRpb24gY29udGFpbmVkIGluIHRoaXMgZS1tYWlsIGFuZCBhbnkgYWNj
+b21wYW55aW5nIGF0dGFjaG1lbnQocykgCmlzIGludGVuZGVkIG9ubHkgZm9yIHRoZSB1c2Ugb2Yg
+dGhlIGludGVuZGVkIHJlY2lwaWVudCBhbmQgbWF5IGJlIGNvbmZpZGVudGlhbCBhbmQvb3IgcHJp
+dmlsZWdlZCBvZiAKTmV1c29mdCBDb3Jwb3JhdGlvbiwgaXRzIHN1YnNpZGlhcmllcyBhbmQvb3Ig
+aXRzIGFmZmlsaWF0ZXMuIElmIGFueSByZWFkZXIgb2YgdGhpcyBjb21tdW5pY2F0aW9uIGlzIApu
+b3QgdGhlIGludGVuZGVkIHJlY2lwaWVudCwgdW5hdXRob3JpemVkIHVzZSwgZm9yd2FyZGluZywg
+cHJpbnRpbmcsICBzdG9yaW5nLCBkaXNjbG9zdXJlIG9yIGNvcHlpbmcgCmlzIHN0cmljdGx5IHBy
+b2hpYml0ZWQsIGFuZCBtYXkgYmUgdW5sYXdmdWwuSWYgeW91IGhhdmUgcmVjZWl2ZWQgdGhpcyBj
+b21tdW5pY2F0aW9uIGluIGVycm9yLHBsZWFzZSAKaW1tZWRpYXRlbHkgbm90aWZ5IHRoZSBzZW5k
+ZXIgYnkgcmV0dXJuIGUtbWFpbCwgYW5kIGRlbGV0ZSB0aGUgb3JpZ2luYWwgbWVzc2FnZSBhbmQg
+YWxsIGNvcGllcyBmcm9tIAp5b3VyIHN5c3RlbS4gVGhhbmsgeW91LiAKLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCjwvcHJlPjwvYm9keT4KCjwvaHRtbD4K
+
+--===============3326497420625969908==--
 
