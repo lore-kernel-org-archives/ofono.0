@@ -1,79 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============3091539814598759012=="
+Content-Type: multipart/mixed; boundary="===============6323903558525803075=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH] mbm: add quirks for Dell D5530
-Date: Wed, 25 Aug 2010 20:05:57 +0200
-Message-ID: <1282759557.6841.53.camel@localhost.localdomain>
-In-Reply-To: <4C754900.6060808@gmail.com>
+Date: Wed, 25 Aug 2010 13:08:40 -0500
+Message-ID: <4C755C28.9020106@gmail.com>
+In-Reply-To: <1282759557.6841.53.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3091539814598759012==
+--===============6323903558525803075==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Marcel,
 
-> > Dell D5530 is an OEM version of F3507g. It has an annoying habit of
-> > announcing itself to world with its own name. It also crashes upon
-> > processing received cbs messages.
-> > ---
-> >  plugins/mbm.c |   55 +++++++++++++++++++++++++++++++++++++++++++++++++=
-++++--
-> >  1 files changed, 53 insertions(+), 2 deletions(-)
-> > =
-
-> > diff --git a/plugins/mbm.c b/plugins/mbm.c
-> > index c9b0ea4..1c2b9a8 100644
-> > --- a/plugins/mbm.c
-> > +++ b/plugins/mbm.c
-> > @@ -53,9 +53,15 @@ static const char *cfun_prefix[] =3D { "+CFUN:", NUL=
-L };
-> >  static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
-> >  static const char *none_prefix[] =3D { NULL };
-> >  =
-
-> > +enum mbm_variant {
-> > +	MBM_GENERIC,
-> > +	MBM_DELL_D5530,		/* OEM of F3507g */
-> > +};
-> > +
-> >  struct mbm_data {
-> >  	GAtChat *modem_port;
-> >  	GAtChat *data_port;
-> > +	enum mbm_variant variant;
-> >  	guint poll_source;
-> >  	guint poll_count;
-> >  	gboolean have_sim;
-> > @@ -137,9 +143,50 @@ static gboolean init_simpin_check(gpointer user_da=
-ta)
-> >  	return FALSE;
-> >  }
-> >  =
-
-> > +static void d5530_notify(GAtResult *result, gpointer user_data)
-> > +{
-> > +	DBG("D5530");
-> > +}
-> > +
+On 08/25/2010 01:05 PM, Marcel Holtmann wrote:
+> Hi Denis,
 > =
 
-> Should we really bother with this one? Or you're trying to be like
-> Marcel and waste some processing time with unused unsolicited
-> notifications? :)
+>>> Dell D5530 is an OEM version of F3507g. It has an annoying habit of
+>>> announcing itself to world with its own name. It also crashes upon
+>>> processing received cbs messages.
+>>> ---
+>>>  plugins/mbm.c |   55 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++--
+>>>  1 files changed, 53 insertions(+), 2 deletions(-)
+>>>
+>>> diff --git a/plugins/mbm.c b/plugins/mbm.c
+>>> index c9b0ea4..1c2b9a8 100644
+>>> --- a/plugins/mbm.c
+>>> +++ b/plugins/mbm.c
+>>> @@ -53,9 +53,15 @@ static const char *cfun_prefix[] =3D { "+CFUN:", NUL=
+L };
+>>>  static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+>>>  static const char *none_prefix[] =3D { NULL };
+>>>  =
 
-I think we should until we have this all figured out. More debug output
-is always a good thing.
+>>> +enum mbm_variant {
+>>> +	MBM_GENERIC,
+>>> +	MBM_DELL_D5530,		/* OEM of F3507g */
+>>> +};
+>>> +
+>>>  struct mbm_data {
+>>>  	GAtChat *modem_port;
+>>>  	GAtChat *data_port;
+>>> +	enum mbm_variant variant;
+>>>  	guint poll_source;
+>>>  	guint poll_count;
+>>>  	gboolean have_sim;
+>>> @@ -137,9 +143,50 @@ static gboolean init_simpin_check(gpointer user_da=
+ta)
+>>>  	return FALSE;
+>>>  }
+>>>  =
 
-And yes, essentially there is some processing wasted, but then again,
-this hardware is so damn stupid broken it deserves to be punished ;)
+>>> +static void d5530_notify(GAtResult *result, gpointer user_data)
+>>> +{
+>>> +	DBG("D5530");
+>>> +}
+>>> +
+>>
+>> Should we really bother with this one? Or you're trying to be like
+>> Marcel and waste some processing time with unused unsolicited
+>> notifications? :)
+> =
 
-Regards
+> I think we should until we have this all figured out. More debug output
+> is always a good thing.
+> =
 
-Marcel
+> And yes, essentially there is some processing wasted, but then again,
+> this hardware is so damn stupid broken it deserves to be punished ;)
+> =
 
 
+I have to disagree, I can understand if you take the unsolicited
+notification and break it down somewhat (like we used to with OCTI,
+OWCTI, etc for HSO).  But just printing a debug seems useless.
 
---===============3091539814598759012==--
+Regards,
+-Denis
+
+--===============6323903558525803075==--
 
