@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8501300328204326592=="
+Content-Type: multipart/mixed; boundary="===============0819365105695387911=="
 MIME-Version: 1.0
 From: Steven <liu-dj@neusoft.com>
 Subject: Re: About ppp_receive()
-Date: Wed, 25 Aug 2010 10:04:21 +0800
-Message-ID: <4C747A25.4090707@neusoft.com>
+Date: Wed, 25 Aug 2010 10:17:31 +0800
+Message-ID: <4C747D3B.1000407@neusoft.com>
 In-Reply-To: <33AB447FBD802F4E932063B962385B352A45BD4E@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8501300328204326592==
+--===============0819365105695387911==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -87,10 +87,15 @@ re welcome to improve that part.
 > =
 
 > Btw, I do see some code related with MAGIC_NUMBER in ppp_lcp.c.
-> =
 
+Yes, it has come code about MAGIC_NUMBER, but just placeholder, not =
 
-I will check it.
+processing anything, if you interested this, you can reference to the =
+
+corresponding part of RFC 1661.
+
+anyway, if we want to implement a full PPP stack, we have a long way to go.
+
 
 >> We should first check if PPP protocol field is compressed or not, and
 >> then get the right protocol value to form a 16 bits protocol field,
@@ -102,16 +107,7 @@ I will check it.
 
 > I don't understand why having such policy at all. Your code defintely won=
 't leak any IP since we all follow with the standard spec.
->
-
-
-In my company, i can't using git, usb or any other thing which contact =
-
-with the outer world, but the only thing i can use to contact with the =
-
-outer world is MY THUNDERBIRD!!!:(, It's a awful thing.
-
-Maybe i can commit my patch when i go home:), if my son doesn't annoy me.
+> =
 
 >> First byte of PPP protocol field may be compressed, if the LS bit is 1
 >> then this indicates that the upper protocol us compressed, because the
@@ -127,6 +123,8 @@ Maybe i can commit my patch when i go home:), if my son doesn't annoy me.
 >> B.R
 >>
 >> Steven
+
+> =
 
 
 ---------------------------------------------------------------------------=
@@ -155,5 +153,5 @@ your system. Thank you. =
 ------------------------
 
 
---===============8501300328204326592==--
+--===============0819365105695387911==--
 
