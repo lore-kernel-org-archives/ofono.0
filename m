@@ -1,62 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============1607299015948031921=="
+Content-Type: multipart/mixed; boundary="===============5261950590445285931=="
 MIME-Version: 1.0
 From: Steven <liu-dj@neusoft.com>
 Subject: Re: About ppp_receive()
-Date: Wed, 25 Aug 2010 13:36:56 +0800
-Message-ID: <4C74ABF8.6040305@neusoft.com>
-In-Reply-To: <1282712847.6841.44.camel@localhost.localdomain>
+Date: Wed, 25 Aug 2010 13:49:22 +0800
+Message-ID: <4C74AEE2.3050405@neusoft.com>
+In-Reply-To: <4C74ABF8.6040305@neusoft.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1607299015948031921==
+--===============5261950590445285931==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Marcel,
 
-Marcel Holtmann wrote:
-> Hi Steven,
+Steven wrote:
+> Hi Marcel,
 > =
 
->>>>>> NO, just as the above have said ,we only negotiate two options, it's=
- ok
->>>>>> for our PPP stack and it runs correctly.
->>>>> Then I'm confused.  What is your concern here? :)
->>>> currently, we worked on a Qualcomm CDMA chip, and it worked on a Relay =
-
->>>> mode, just relay the air PPP packet to host, and in Ofono we should =
-
->>>> support PFC to satisfy the spec (Sprint Spec.), But Ofono does not =
-
->>>> support PFC, so comes this question.
->>>>
->>>>  From my personal point, Ofono should support PFC.
->>> as you might have clearly figured from Denis and my responses, our PPP
->>> code was designed to talk to a modem, not a network.
->>>
->>> We don't want to implement a full blown PPP stack with all nasty
->>> features. If this is needed for CDMA, because they push the PPP frames
->>> over the air, then actually getting the kernel PPP frame processing
->>> hooked up to our LCP and IPIP userspace code is the right thing to do
->>> here.
->>>
->>> At the moment we are not really putting additional energy into PPP since
->>> it is a dying protocol in the GSM world. The networks never required it
->> I got it.
+> Marcel Holtmann wrote:
+>> Hi Steven,
 >>
->>> and the modem hardware/firmware moves over to highspeed direct IP
->>> interfaces.
->> I like to know this tech, is there any spec on this topic?
+>>>>>>> NO, just as the above have said ,we only negotiate two options, =
+
+>>>>>>> it's ok
+>>>>>>> for our PPP stack and it runs correctly.
+>>>>>> Then I'm confused.  What is your concern here? :)
+>>>>> currently, we worked on a Qualcomm CDMA chip, and it worked on a =
+
+>>>>> Relay mode, just relay the air PPP packet to host, and in Ofono we =
+
+>>>>> should support PFC to satisfy the spec (Sprint Spec.), But Ofono =
+
+>>>>> does not support PFC, so comes this question.
+>>>>>
+>>>>>  From my personal point, Ofono should support PFC.
+>>>> as you might have clearly figured from Denis and my responses, our PPP
+>>>> code was designed to talk to a modem, not a network.
+>>>>
+>>>> We don't want to implement a full blown PPP stack with all nasty
+>>>> features. If this is needed for CDMA, because they push the PPP frames
+>>>> over the air, then actually getting the kernel PPP frame processing
+>>>> hooked up to our LCP and IPIP userspace code is the right thing to do
+>>>> here.
+>>>>
+>>>> At the moment we are not really putting additional energy into PPP =
+
+>>>> since
+>>>> it is a dying protocol in the GSM world. The networks never required it
+>>> I got it.
+>>>
+>>>> and the modem hardware/firmware moves over to highspeed direct IP
+>>>> interfaces.
+>>> I like to know this tech, is there any spec on this topic?
+>>
+>> check oFono's Ericsson MBM or Option HSO support. Or Google for it.
 > =
 
-> check oFono's Ericsson MBM or Option HSO support. Or Google for it.
+>  Thanks for your sharing. I will dig it.
 
-  Thanks for your sharing. I will dig it.
+
+This time, I'm totally understand why to implement this PPP stack in =
+
+Ofono in GSM world.
+Thanks.
 
 Regards
 
 Steven
+
+
 ---------------------------------------------------------------------------=
 ------------------------
 Confidentiality Notice: The information contained in this e-mail and any ac=
@@ -83,5 +97,5 @@ your system. Thank you. =
 ------------------------
 
 
---===============1607299015948031921==--
+--===============5261950590445285931==--
 
