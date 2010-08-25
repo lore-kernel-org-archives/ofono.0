@@ -1,102 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============4728831010675755847=="
+Content-Type: multipart/mixed; boundary="===============1007459186158249193=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: About ppp_receive()
-Date: Wed, 25 Aug 2010 06:12:10 +0200
-Message-ID: <1282709530.6841.38.camel@localhost.localdomain>
-In-Reply-To: <4C747268.3020300@neusoft.com>
+Date: Wed, 25 Aug 2010 06:18:38 +0200
+Message-ID: <1282709918.6841.43.camel@localhost.localdomain>
+In-Reply-To: <4C7492A8.8010902@neusoft.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4728831010675755847==
+--===============1007459186158249193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Steven,
 
-> >> In function ppp_receive, we first check the protocol type of this
-> >> frame =
-
-> >> like:
-> >>
-> >>   guint16 protocol =3D ppp_proto(buf);
-> >>
-> >> and here we assumed the length of the protocol field is 16 bits, but
-> >> in =
-
-> >> RFC 1661, the protocol field should be one or two octets.
-> >>
-> >> "The Protocol field is one or two octets, and its value identifies
-> >> the datagram encapsulated in the Information field of the packet."
-> >>
-> >> why we given the assumption that protocol field is 16 bit length?
+> >> NO, just as the above have said ,we only negotiate two options, it's ok
+> >> for our PPP stack and it runs correctly.
 > > =
 
-> > First I am not ppp expert. :-).
-> > =
-
-> > If you take look at pppd source code, main.c, get_input() also always f=
-etch two bytes 'protocol' for struct protent as well.
-> > =
-
-> > Can you give a case we failed in our ppp stack?
+> > Then I'm confused.  What is your concern here? :)
 > =
 
-> If you interested in this topic, you can reference RFC 1661 Section 6.5, =
+> currently, we worked on a Qualcomm CDMA chip, and it worked on a Relay =
 
-> which said
+> mode, just relay the air PPP packet to host, and in Ofono we should =
+
+> support PFC to satisfy the spec (Sprint Spec.), But Ofono does not =
+
+> support PFC, so comes this question.
 > =
 
-> --------------
-> This Configuration Option provides a method to negotiate the
-> compression of the PPP Protocol field. By default, all
-> implementations MUST transmit packets with two octet PPP Protocol
-> fields.
-> PPP Protocol field numbers are chosen such that some values may be
-> compressed into a single octet form which is clearly
-> distinguishable from the two octet form. This Configuration
-> Option is sent to inform the peer that the implementation can
-> receive such single octet Protocol fields.
-> -------------
-> =
+>  From my personal point, Ofono should support PFC.
 
-> In our current source code, because we only negotiate two configuration =
+as you might have clearly figured from Denis and my responses, our PPP
+code was designed to talk to a modem, not a network.
 
-> options - REQ_OPTION_MRU and REQ_OPTION_ACCM. so it's okey for our PPP =
+We don't want to implement a full blown PPP stack with all nasty
+features. If this is needed for CDMA, because they push the PPP frames
+over the air, then actually getting the kernel PPP frame processing
+hooked up to our LCP and IPIP userspace code is the right thing to do
+here.
 
-> stack.
-> =
-
-> But some carriers, like China Telecom or Sprint Network etc, will =
-
-> support the full configuration =
-
-> options(Magic-Number,Protocol-Field-Compression,Address-and-Control-Field=
--Compression),
-> So if PFC option is used ,our code will got wrong with ppp_receive().
-
-in the GSM world, the PPP is between the oFono and the modem hardware.
-Not between oFono and the network. So for GSM we don't even care single
-bit what the networks wants since it never sees PPP.
-
-I asked this before, CDMA talks PPP over the air to the network? That
-would be rather stupid and a big waste.
-
-> We should first check if PPP protocol field is compressed or not, and =
-
-> then get the right protocol value to form a 16 bits protocol field, and =
-
->   pass this value to the rest functions.
-> =
-
-> Because of my company's security policy ,I can't provide a patch for =
-
-> this issue. But i can provide a method for doing this. Here it is.
-
-To be quite blunt with you, this is an open source project. If you have
-an itch to scratch then we expect you to send a patch. Telling us what
-we have to do or should do is not helping here.
+At the moment we are not really putting additional energy into PPP since
+it is a dying protocol in the GSM world. The networks never required it
+and the modem hardware/firmware moves over to highspeed direct IP
+interfaces.
 
 Regards
 
@@ -104,5 +53,5 @@ Marcel
 
 
 
---===============4728831010675755847==--
+--===============1007459186158249193==--
 
