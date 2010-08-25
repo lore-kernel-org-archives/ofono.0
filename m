@@ -1,34 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============8117517889419755757=="
+Content-Type: multipart/mixed; boundary="===============2655711568545698751=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] mbm: add quirks for Dell D5530
-Date: Wed, 25 Aug 2010 12:18:52 -0500
-Message-ID: <4C75507C.80909@gmail.com>
-In-Reply-To: <1282756396-9714-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH] simfilesystem: correct sw2 response for binary read
+Date: Wed, 25 Aug 2010 12:46:11 -0500
+Message-ID: <4C7556E3.2090701@gmail.com>
+In-Reply-To: <1282130094-7586-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8117517889419755757==
+--===============2655711568545698751==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Kristen,
 
-On 08/25/2010 12:13 PM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+On 08/18/2010 06:14 AM, Kristen Carlson Accardi wrote:
+> according to spec, sw2 should be the number of bytes read, which
+> is just length.
+> ---
 
-> Dell D5530 is an OEM version of F3507g. It has an annoying habit of
-> announcing itself to world with its own name. Another problem is some wei=
-rd
-> +CGAP messages at the same time. It also crashes upon processing received
-> CBS messages.
-
-Applied, thanks.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============8117517889419755757==--
+--===============2655711568545698751==--
 
