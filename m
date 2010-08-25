@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8539107926288198210=="
+Content-Type: multipart/mixed; boundary="===============0712833418950332559=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] monitor-ofono: deep pretty-print
-Date: Wed, 25 Aug 2010 11:48:31 -0500
-Message-ID: <4C75495F.10104@gmail.com>
-In-Reply-To: <1282737422-13005-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH 2/2] test-monitor: monitor irregular signals
+Date: Wed, 25 Aug 2010 11:48:53 -0500
+Message-ID: <4C754975.60606@gmail.com>
+In-Reply-To: <1282737422-13005-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8539107926288198210==
+--===============0712833418950332559==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,9 +20,9 @@ On 08/25/2010 06:57 AM, Pekka.Pessi(a)nokia.com wrote:
 > =
 
 > ---
->  test/monitor-ofono |   60 +++++++++++++++++++++++++++++++++++++++-------=
------
->  1 files changed, 46 insertions(+), 14 deletions(-)
+>  test/monitor-ofono |   63 ++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 63 insertions(+), 0 deletions(-)
 > =
 
 
@@ -31,5 +31,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============8539107926288198210==--
+--===============0712833418950332559==--
 
