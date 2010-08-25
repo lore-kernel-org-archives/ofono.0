@@ -1,89 +1,138 @@
-Content-Type: multipart/mixed; boundary="===============8751766547582142074=="
+Content-Type: multipart/mixed; boundary="===============5678314556538538387=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Connecting with Huawei E226
-Date: Tue, 24 Aug 2010 18:45:14 -0500
-Message-ID: <4C74598A.9080304@gmail.com>
-In-Reply-To: <AANLkTimGinjnPR2w1KV4UBz5YC-1WKqZR5DFQBrtRLx_@mail.gmail.com>
+From: Steven <liu-dj@neusoft.com>
+Subject: Re: About ppp_receive()
+Date: Wed, 25 Aug 2010 09:31:20 +0800
+Message-ID: <4C747268.3020300@neusoft.com>
+In-Reply-To: <33AB447FBD802F4E932063B962385B352A45BB94@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8751766547582142074==
+--===============5678314556538538387==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Thiago,
+Hi Zhenhua
 
-On 08/24/2010 05:58 PM, Thiago Cangussu de Castro Gomes wrote:
-> On Tue, Aug 24, 2010 at 7:16 PM, Denis Kenzior <denkenz@gmail.com> wrot=
-e:
->> Hi Thiago,
->>
->> On 08/24/2010 03:25 PM, Thiago Cangussu de Castro Gomes wrote:
->>> On Wed, Aug 18, 2010 at 7:31 PM, Denis Kenzior <denkenz@gmail.com> wr=
-ote:
->>>>>> For your particular case these patches from Kalle would be helpful:
->>>>>>
->>>>>> [PATCH 1/2] huawei: poll sim state
->>>>>> [PATCH 2/2] huawei: postpone post_sim until SIM is ready
->>>>>>
->>>>>> However, they weren't integrated upstream due to some concerns.  See=
- the
->>>>>> entire thread for more details.
->>>>>
->>>>> I've applied the patches but unfortunately it didn't fixed the issue.
->>>>> Still can't connect when the modem is plugged after ofonod is started.
->>>>> I can send the logs if anyone thinks it's useful.
->>>>>
->>>>
->>>> Sorry to hear you're having trouble.  Kalle reported similar issues we=
-re
->>>> fixed with his patches on the E1552.  Sending the logs would probably =
-be
->>>> helpful.
->>>
->>> Here are (attached) the logs. I turned off connman. The two tests scena=
-rios are:
->>>
->>> Test A (connect-modem-after-fast.log)
->>>
->>> - start ofono
->>> - plug the modem
->>> - call enable-modem just after inserting the modem
->>>
->>> Test B (connect-modem-after-slow.log)
->>>
->>> - start ofono
->>> - plug the modem
->>> - wait until the modem led switches from green to blue
->>> - call enable-modem after some seconds
->>>
->>> The second scenario is what happens when connmand is running, and is
->>> the most common use case: someone plugs in the modem with the system
->>> running.
->>
->> It seems you forgot to include the actual logs.
+Zhang, Zhenhua wrote:
+> Hi Steven,
 > =
 
-> Let me try again :)
+> Steven wrote:
+>> Hi,
+>>
+>> In function ppp_receive, we first check the protocol type of this
+>> frame =
+
+>> like:
+>>
+>>   guint16 protocol =3D ppp_proto(buf);
+>>
+>> and here we assumed the length of the protocol field is 16 bits, but
+>> in =
+
+>> RFC 1661, the protocol field should be one or two octets.
+>>
+>> "The Protocol field is one or two octets, and its value identifies
+>> the datagram encapsulated in the Information field of the packet."
+>>
+>> why we given the assumption that protocol field is 16 bit length?
 > =
 
-> I forgot also to mention that I used list-context to see if the
-> enable-modem was successful. The test B is the one that fails.
+> First I am not ppp expert. :-).
+> =
 
-From the logs it seems Test A is what fails since we never add any atoms
-in that one.  Basically the problem is that your modem firmware never
-tells us that the SIM has been initialized by sending us a ^SIMST
-notification.
+> If you take look at pppd source code, main.c, get_input() also always fet=
+ch two bytes 'protocol' for struct protent as well.
+> =
 
-Kalle's patch relies on SIMST being delivered eventually.  Since it
-never does, oFono is under the impression that your SIM is invalid.  We
-probably need to query SYSINFO a few more times in this case, but it
-seems all Huawei firmwares act slightly differently here.
+> Can you give a case we failed in our ppp stack?
 
-Regards,
--Denis
+If you interested in this topic, you can reference RFC 1661 Section 6.5, =
 
---===============8751766547582142074==--
+which said
+
+--------------
+This Configuration Option provides a method to negotiate the
+compression of the PPP Protocol field. By default, all
+implementations MUST transmit packets with two octet PPP Protocol
+fields.
+PPP Protocol field numbers are chosen such that some values may be
+compressed into a single octet form which is clearly
+distinguishable from the two octet form. This Configuration
+Option is sent to inform the peer that the implementation can
+receive such single octet Protocol fields.
+-------------
+
+In our current source code, because we only negotiate two configuration =
+
+options - REQ_OPTION_MRU and REQ_OPTION_ACCM. so it's okey for our PPP =
+
+stack.
+
+But some carriers, like China Telecom or Sprint Network etc, will =
+
+support the full configuration =
+
+options(Magic-Number,Protocol-Field-Compression,Address-and-Control-Field-C=
+ompression),
+So if PFC option is used ,our code will got wrong with ppp_receive().
+
+We should first check if PPP protocol field is compressed or not, and =
+
+then get the right protocol value to form a 16 bits protocol field, and =
+
+  pass this value to the rest functions.
+
+Because of my company's security policy ,I can't provide a patch for =
+
+this issue. But i can provide a method for doing this. Here it is.
+
+First byte of PPP protocol field may be compressed, if the LS bit is 1 =
+
+then this indicates that the upper protocol us compressed, because the =
+
+upper byte should be even, the lower byte should be odd.
+
+>> In CDMA 2000 environment, just as the Sprint Network, PPP should
+>>   support a compressed protocol field. Is there anything difference
+>> between GSM =
+
+>> and CDMA?
+>>
+>> B.R
+>>
+>> Steven
+
+B.R
+
+Steven
+---------------------------------------------------------------------------=
+------------------------
+Confidentiality Notice: The information contained in this e-mail and any ac=
+companying attachment(s) =
+
+is intended only for the use of the intended recipient and may be confident=
+ial and/or privileged of =
+
+Neusoft Corporation, its subsidiaries and/or its affiliates. If any reader =
+of this communication is =
+
+not the intended recipient, unauthorized use, forwarding, printing,  storin=
+g, disclosure or copying =
+
+is strictly prohibited, and may be unlawful.If you have received this commu=
+nication in error,please =
+
+immediately notify the sender by return e-mail, and delete the original mes=
+sage and all copies from =
+
+your system. Thank you. =
+
+---------------------------------------------------------------------------=
+------------------------
+
+
+--===============5678314556538538387==--
 
