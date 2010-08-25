@@ -1,125 +1,215 @@
-Content-Type: multipart/mixed; boundary="===============1302938073605237583=="
+Content-Type: multipart/mixed; boundary="===============7457845614248677326=="
 MIME-Version: 1.0
-From: Arun.Ravindran@elektrobit.com
-Subject: Implementing support for a  new modem- how to?
-Date: Wed, 25 Aug 2010 11:39:54 +0300
-Message-ID: <B668883EB5DD7144ADFC248A72176EA8029A85B1@fioues07.ebgroup.elektrobit.com>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH] sim: Read EFsst
+Date: Wed, 25 Aug 2010 19:29:08 +0800
+Message-ID: <1282735748-23050-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1302938073605237583==
+--===============7457845614248677326==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+---
+ src/sim.c     |   31 +++++++++++++++++++++++++++-
+ src/simutil.c |   18 ++++++++++++++++
+ src/simutil.h |   63 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 3 files changed, 111 insertions(+), 1 deletions(-)
 
-Hi All,
+diff --git a/src/sim.c b/src/sim.c
+index 9bc9906..1491edd 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -99,6 +99,8 @@ struct ofono_sim {
+ 	unsigned char efust_length;
+ 	unsigned char *efest;
+ 	unsigned char efest_length;
++	unsigned char *efsst;
++	unsigned char efsst_length;
+ };
+ =
 
-We are working with this type of modem,  and would like to submit
-patches to oFono. We found that we have to make few modifications to
-some of the AT command responses and also may have to introduce to
-support for a few new commands. =
+ struct msisdn_set_request {
+@@ -1048,7 +1050,7 @@ out:
+ 	sim_retrieve_imsi(sim);
+ }
+ =
+
+-static void sim_efust_read_cb(int ok, int length, int record,
++static void sim_efsst_read_cb(int ok, int length, int record,
+ 				const unsigned char *data,
+ 				int record_length, void *userdata)
+ {
+@@ -1057,6 +1059,27 @@ static void sim_efust_read_cb(int ok, int length, in=
+t record,
+ 	if (!ok)
+ 		goto out;
+ =
+
++	if (length < 2) {
++		ofono_error("EFsst shall contain@least two bytes");
++		goto out;
++	}
++
++	sim->efsst =3D g_memdup(data, length);
++	sim->efsst_length =3D length;
++
++out:
++	sim_retrieve_imsi(sim);
++}
++
++static void sim_efust_read_cb(int ok, int length, int record,
++				const unsigned char *data,
++				int record_length, void *userdata)
++{
++	struct ofono_sim *sim =3D userdata;
++
++	if (!ok)
++		goto error;
++
+ 	if (length < 1) {
+ 		ofono_error("EFust shall contain@least one byte");
+ 		goto out;
+@@ -1073,6 +1096,12 @@ static void sim_efust_read_cb(int ok, int length, in=
+t record,
+ =
+
+ out:
+ 	sim_retrieve_imsi(sim);
++	return;
++
++error:
++	ofono_sim_read(sim, SIM_EFSST_FILEID,
++			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
++			sim_efsst_read_cb, sim);
+ }
+ =
+
+ static void sim_cphs_information_read_cb(int ok, int length, int record,
+diff --git a/src/simutil.c b/src/simutil.c
+index 2d0764c..c7c221e 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -1434,3 +1434,21 @@ gboolean sim_est_is_active(unsigned char *efest, uns=
+igned char len,
+ =
+
+ 	return (efest[index / 8] >> (index % 8)) & 1;
+ }
++
++gboolean sim_sst_is_available(unsigned char *efsst, unsigned char len,
++						enum sim_sst_service index)
++{
++	if (index >=3D len * 4)
++		return FALSE;
++
++	return (efsst[index / 4] >> ((index % 4) * 2)) & 1;
++}
++
++gboolean sim_sst_is_active(unsigned char *efsst, unsigned char len,
++						enum sim_sst_service index)
++{
++	if (index >=3D len * 4)
++		return FALSE;
++
++	return (efsst[index / 4] >> (((index % 4) * 2) + 1)) & 1;
++}
+diff --git a/src/simutil.h b/src/simutil.h
+index 4db950b..9ecc044 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -27,6 +27,7 @@ enum sim_fileid {
+ 	SIM_EF_CPHS_INFORMATION_FILEID =3D 0x6f16,
+ 	SIM_EF_CPHS_MBDN_FILEID =3D 0x6f17,
+ 	SIM_EFUST_FILEID =3D 0x6f38,
++	SIM_EFSST_FILEID =3D 0x6f38, /* same with EFust */
+ 	SIM_EFMSISDN_FILEID =3D 0x6f40,
+ 	SIM_EFSPN_FILEID =3D 0x6f46,
+ 	SIM_EFSDN_FILEID =3D 0x6f49,
+@@ -153,6 +154,64 @@ enum sim_est_service {
+ 	SIM_EST_SERVICE_ACL				=3D 2
+ };
+ =
+
++/* 51.011 Section 10.3.7 */
++enum sim_sst_service {
++	SIM_SST_SERVICE_CHV1_DISABLE 			=3D 0,
++	SIM_SST_SERVICE_ADN				=3D 1,
++	SIM_SST_SERVICE_FDN				=3D 2,
++	SIM_SST_SERVICE_SMS				=3D 3,
++	SIM_SST_SERVICE_AOC				=3D 4,
++	SIM_SST_SERVICE_CCP				=3D 5,
++	SIM_SST_SERVICE_PLMN_SELECTOR			=3D 6,
++	SIM_SST_SERVICE_MSISDN				=3D 8,
++	SIM_SST_SERVICE_EXT_1				=3D 9,
++	SIM_SST_SERVICE_EXT_2				=3D 10,
++	SIM_SST_SERVICE_SMSP				=3D 11,
++	SIM_SST_SERVICE_LND				=3D 12,
++	SIM_SST_SERVICE_CBS_ID				=3D 13,
++	SIM_SST_SERVICE_GROUP_ID_LEVEL_1		=3D 14,
++	SIM_SST_SERVICE_GROUP_ID_LEVEL_2		=3D 15,
++	SIM_SST_SERVICE_PROVIDER_NAME			=3D 16,
++	SIM_SST_SERVICE_SDN				=3D 17,
++	SIM_SST_SERVICE_EXT_3				=3D 18,
++	SIM_SST_SERVICE_EFVGCS_EFVGCSS			=3D 20,
++	SIM_SST_SERVICE_EFVBS_EFVBSS			=3D 21,
++	SIM_SST_SERVICE_PRECEDENCE_PREEMPTION		=3D 22,
++	SIM_SST_SERVICE_EMLPP				=3D 23,
++	SIM_SST_SERVICE_DATA_DOWNLOAD_SMS_CB		=3D 24,
++	SIM_SST_SERVICE_DATA_DOWNLOAD_SMS_PP		=3D 25,
++	SIM_SST_SERVICE_MENU_SELECTION			=3D 26,
++	SIM_SST_SERVICE_CALL_CONTROL			=3D 27,
++	SIM_SST_SERVICE_PROACTIVE_SIM			=3D 28,
++	SIM_SST_SERVICE_CBS_ID_RANGE			=3D 29,
++	SIM_SST_SERVICE_BDN				=3D 30,
++	SIM_SST_SERVICE_EXT_4				=3D 31,
++	SIM_SST_SERVICE_DEPERSONALISATION_CTRL_KEY	=3D 32,
++	SIM_SST_SERVICE_NETWORK_LIST			=3D 33,
++	SIM_SST_SERVICE_SMSR				=3D 34,
++	SIM_SST_SERVICE_NIA				=3D 35,
++	SIM_SST_SERVICE_MO_SMS_SIM			=3D 36,
++	SIM_SST_SERVICE_GPRS				=3D 37,
++	SIM_SST_SERVICE_IMG				=3D 38,
++	SIM_SST_SERVICE_SOLSA				=3D 39,
++	SIM_SST_SERVICE_USSD_CALL_CONTROL		=3D 40,
++	SIM_SST_SERVICE_RUN_AT_COMMAND			=3D 41,
++	SIM_SST_SERVICE_USER_PLMN			=3D 42,
++	SIM_SST_SERVICE_OPERATOR_PLMN			=3D 43,
++	SIM_SST_SERVICE_HPLMN				=3D 44,
++	SIM_SST_SERVICE_CPBCCH				=3D 45,
++	SIM_SST_SERVICE_INVESTIGATION_SCAN		=3D 46,
++	SIM_SST_SERVICE_EXT_CCP				=3D 47,
++	SIM_SST_SERVICE_MEXE				=3D 48,
++	SIM_SST_SERVICE_RPLMN				=3D 49,
++	SIM_SST_SERVICE_PLMN_NETWORK_NAME		=3D 50,
++	SIM_SST_SERVICE_OPERATOR_PLMN_LIST		=3D 51,
++	SIM_SST_SERVICE_MAILBOX_DIALLING_NUMBERS	=3D 52,
++	SIM_SST_SERVICE_MWIS				=3D 53,
++	SIM_SST_SERVICE_CFIS				=3D 54,
++	SIM_SST_SERVICE_PROVIDER_DISPLAY_INFO		=3D 55
++};
++
+ #define SIM_EFSPN_DC_HOME_PLMN_BIT 0x1
+ #define SIM_EFSPN_DC_ROAMING_SPN_BIT 0x2
+ =
+
+@@ -371,3 +430,7 @@ gboolean sim_ust_is_available(unsigned char *service_us=
+t, unsigned char len,
+ 						enum sim_ust_service index);
+ gboolean sim_est_is_active(unsigned char *service_est, unsigned char len,
+ 						enum sim_est_service index);
++gboolean sim_sst_is_available(unsigned char *service_sst, unsigned char le=
+n,
++						enum sim_sst_service index);
++gboolean sim_sst_is_active(unsigned char *service_sst, unsigned char len,
++						enum sim_sst_service index);
+-- =
+
+1.7.0.4
 
 
-We found that in network registration sms, call meter and gprs there are
-few AT command responses which differ from what is available in the
-generic AT modem of ofono. There are few new commands to be supported in
-network registration, gprs context etc, in order to support this modem.
-
-Do we need write new atom drivers even though the change is only in one
-of the AT command response?, or can we use the vendor variable (where
-ever available) to include this, as part of the generic at modem
-drivers?
-
-What is the recommended way to implement support for such a modem, so
-that we can start submitting patches?
-
-------------------------------------------------------------------------
----------------------
-
-Regards
-Arun Ravindran
-Specialist, Elektrobit OYJ
-Keilasatama 5, Espoo
-M: +358403445507
-
-
-
-----------------------------------------------------------------
-Please note: This e-mail may contain confidential information
-intended solely for the addressee. If you have received this
-e-mail in error, please do not disclose it to anyone, notify
-the sender promptly, and delete the message from your system.
-Thank you.
-
-
-
-----------------------------------------------------------------
-Please note: This e-mail may contain confidential information
-intended solely for the addressee. If you have received this
-e-mail in error, please do not disclose it to anyone, notify
-the sender promptly, and delete the message from your system.
-Thank you.
-
-
---===============1302938073605237583==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDMuMi8vRU4iPgo8SFRNTD4K
-PEhFQUQ+CjxNRVRBIEhUVFAtRVFVSVY9IkNvbnRlbnQtVHlwZSIgQ09OVEVOVD0idGV4dC9odG1s
-OyBjaGFyc2V0PXVzLWFzY2lpIj4KPE1FVEEgTkFNRT0iR2VuZXJhdG9yIiBDT05URU5UPSJNUyBF
-eGNoYW5nZSBTZXJ2ZXIgdmVyc2lvbiA2LjUuNzY1NC4xMiI+CjxUSVRMRT5JbXBsZW1lbnRpbmcg
-c3VwcG9ydCBmb3IgYSAgbmV3IG1vZGVtLSBob3cgdG8/PC9USVRMRT4KPC9IRUFEPgo8Qk9EWT4K
-PCEtLSBDb252ZXJ0ZWQgZnJvbSB0ZXh0L3J0ZiBmb3JtYXQgLS0+CjxCUj4KCjxQPjxTUEFOIExB
-Tkc9ImZpIj48Rk9OVCBTSVpFPTIgRkFDRT0iQXJpYWwiPkhpIEFsbCw8L0ZPTlQ+PC9TUEFOPgo8
-L1A+Cgo8UD48U1BBTiBMQU5HPSJmaSI+PEZPTlQgU0laRT0yIEZBQ0U9IkFyaWFsIj5XZSBhcmUg
-d29ya2luZyB3aXRoIHRoaXMgdHlwZSBvZiBtb2RlbSwmbmJzcDsgYW5kIHdvdWxkIGxpa2UgdG8g
-c3VibWl0IHBhdGNoZXMgdG8gb0Zvbm8uIFdlIGZvdW5kIHRoYXQgd2UgaGF2ZSB0byBtYWtlIGZl
-dyBtb2RpZmljYXRpb25zIHRvIHNvbWUgb2YgdGhlIEFUIGNvbW1hbmQgcmVzcG9uc2VzIGFuZCBh
-bHNvIG1heSBoYXZlIHRvIGludHJvZHVjZSB0byBzdXBwb3J0IGZvciBhIGZldyBuZXcgY29tbWFu
-ZHMuIDwvRk9OVD48L1NQQU4+PC9QPgoKPFA+PFNQQU4gTEFORz0iZmkiPjxGT05UIFNJWkU9MiBG
-QUNFPSJBcmlhbCI+V2UgZm91bmQgdGhhdCBpbiBuZXR3b3JrIHJlZ2lzdHJhdGlvbiBzbXMsIGNh
-bGwgbWV0ZXIgYW5kIGdwcnMgdGhlcmUgYXJlIGZldyBBVCBjb21tYW5kIHJlc3BvbnNlcyB3aGlj
-aCBkaWZmZXIgZnJvbSB3aGF0IGlzIGF2YWlsYWJsZSBpbiB0aGUgZ2VuZXJpYyBBVCBtb2RlbSBv
-ZiBvZm9uby4gVGhlcmUgYXJlIGZldyBuZXcgY29tbWFuZHMgdG8gYmUgc3VwcG9ydGVkIGluIG5l
-dHdvcmsgcmVnaXN0cmF0aW9uLCBncHJzIGNvbnRleHQgZXRjLCBpbiBvcmRlciB0byBzdXBwb3J0
-IHRoaXMgbW9kZW0uPC9GT05UPjwvU1BBTj48L1A+Cgo8UD48U1BBTiBMQU5HPSJmaSI+PEZPTlQg
-U0laRT0yIEZBQ0U9IkFyaWFsIj5EbyB3ZSBuZWVkIHdyaXRlIG5ldyBhdG9tIGRyaXZlcnMgZXZl
-biB0aG91Z2ggdGhlIGNoYW5nZSBpcyBvbmx5IGluIG9uZSBvZiB0aGUgQVQgY29tbWFuZCByZXNw
-b25zZT8sIG9yIGNhbiB3ZSB1c2UgdGhlIHZlbmRvciB2YXJpYWJsZSAod2hlcmUgZXZlciBhdmFp
-bGFibGUpIHRvIGluY2x1ZGUgdGhpcywgYXMgcGFydCBvZiB0aGUgZ2VuZXJpYyBhdCBtb2RlbSBk
-cml2ZXJzPzwvRk9OVD48L1NQQU4+PC9QPgoKPFA+PFNQQU4gTEFORz0iZmkiPjxGT05UIFNJWkU9
-MiBGQUNFPSJBcmlhbCI+V2hhdCBpcyB0aGUgcmVjb21tZW5kZWQgd2F5IHRvIGltcGxlbWVudCBz
-dXBwb3J0IGZvciBzdWNoIGEgbW9kZW0sIHNvIHRoYXQgd2UgY2FuIHN0YXJ0IHN1Ym1pdHRpbmcg
-cGF0Y2hlcz88L0ZPTlQ+PC9TUEFOPgo8L1A+Cgo8UD48Qj48ST48U1BBTiBMQU5HPSJmaSI+PEZP
-TlQgQ09MT1I9IiMwMDAwRkYiIEZBQ0U9IkFyaWFsIj4tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS08L0ZPTlQ+PC9TUEFOPjwvST48L0I+CjwvUD4KCjxQPjxCPjxJPjxTUEFOIExB
-Tkc9ImZpIj48Rk9OVCBDT0xPUj0iIzAwMDBGRiIgRkFDRT0iQXJpYWwiPlJlZ2FyZHM8L0ZPTlQ+
-PC9TUEFOPjwvST48L0I+Cgo8QlI+PEI+PEk+PFNQQU4gTEFORz0iZmkiPjxGT05UIENPTE9SPSIj
-MDAwMEZGIiBGQUNFPSJBcmlhbCI+QXJ1biBSYXZpbmRyYW48L0ZPTlQ+PC9TUEFOPjwvST48L0I+
-Cgo8QlI+PEI+PEk+PFNQQU4gTEFORz0iZmkiPjxGT05UIENPTE9SPSIjMDAwMEZGIiBGQUNFPSJB
-cmlhbCI+U3BlY2lhbGlzdCwgRWxla3Ryb2JpdCBPWUo8L0ZPTlQ+PC9TUEFOPjwvST48L0I+Cgo8
-QlI+PEI+PEk+PFNQQU4gTEFORz0iZmkiPjxGT05UIENPTE9SPSIjMDAwMEZGIiBGQUNFPSJBcmlh
-bCI+S2VpbGFzYXRhbWEgNSwgRXNwb288L0ZPTlQ+PC9TUEFOPjwvST48L0I+Cgo8QlI+PEI+PEk+
-PFNQQU4gTEFORz0iZmkiPjxGT05UIENPTE9SPSIjMDAwMEZGIiBGQUNFPSJBcmlhbCI+TTogKzM1
-ODQwMzQ0NTUwNzwvRk9OVD48L1NQQU4+PC9JPjwvQj48ST48U1BBTiBMQU5HPSJmaSI+PC9TUEFO
-PjwvST48U1BBTiBMQU5HPSJmaSI+PC9TUEFOPjxTUEFOIExBTkc9ImVuLXVzIj48L1NQQU4+Cjwv
-UD4KCjxwcmU+Ci0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0KUGxlYXNlIG5vdGU6IFRoaXMgZS1tYWlsIG1heSBjb250YWluIGNv
-bmZpZGVudGlhbCBpbmZvcm1hdGlvbgppbnRlbmRlZCBzb2xlbHkgZm9yIHRoZSBhZGRyZXNzZWUu
-IElmIHlvdSBoYXZlIHJlY2VpdmVkIHRoaXMKZS1tYWlsIGluIGVycm9yLCBwbGVhc2UgZG8gbm90
-IGRpc2Nsb3NlIGl0IHRvIGFueW9uZSwgbm90aWZ5CnRoZSBzZW5kZXIgcHJvbXB0bHksIGFuZCBk
-ZWxldGUgdGhlIG1lc3NhZ2UgZnJvbSB5b3VyIHN5c3RlbS4KVGhhbmsgeW91Lgo8L3ByZT4KCjxw
-cmU+Ci0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0KUGxlYXNlIG5vdGU6IFRoaXMgZS1tYWlsIG1heSBjb250YWluIGNvbmZpZGVu
-dGlhbCBpbmZvcm1hdGlvbgppbnRlbmRlZCBzb2xlbHkgZm9yIHRoZSBhZGRyZXNzZWUuIElmIHlv
-dSBoYXZlIHJlY2VpdmVkIHRoaXMKZS1tYWlsIGluIGVycm9yLCBwbGVhc2UgZG8gbm90IGRpc2Ns
-b3NlIGl0IHRvIGFueW9uZSwgbm90aWZ5CnRoZSBzZW5kZXIgcHJvbXB0bHksIGFuZCBkZWxldGUg
-dGhlIG1lc3NhZ2UgZnJvbSB5b3VyIHN5c3RlbS4KVGhhbmsgeW91Lgo8L3ByZT4KCjwvQk9EWT4K
-PC9IVE1MPg==
---===============1302938073605237583==--
+--===============7457845614248677326==--
 
