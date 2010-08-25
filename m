@@ -1,148 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============0440800085302083765=="
+Content-Type: multipart/mixed; boundary="===============6897084157540790414=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] mbm: add quirks for Dell D5530
-Date: Wed, 25 Aug 2010 20:13:16 +0300
-Message-ID: <1282756396-9714-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] sim: Read EFsst
+Date: Wed, 25 Aug 2010 12:17:07 -0500
+Message-ID: <4C755013.3040603@gmail.com>
+In-Reply-To: <1282735748-23050-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0440800085302083765==
+--===============6897084157540790414==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Yang,
 
-Dell D5530 is an OEM version of F3507g. It has an annoying habit of
-announcing itself to world with its own name. Another problem is some weird
-+CGAP messages at the same time. It also crashes upon processing received
-CBS messages.
----
- plugins/mbm.c |   64 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++-
- 1 files changed, 62 insertions(+), 2 deletions(-)
+> -static void sim_efust_read_cb(int ok, int length, int record,
+> +static void sim_efsst_read_cb(int ok, int length, int record,
+>  				const unsigned char *data,
+>  				int record_length, void *userdata)
+>  {
+> @@ -1057,6 +1059,27 @@ static void sim_efust_read_cb(int ok, int length, =
+int record,
+>  	if (!ok)
+>  		goto out;
+>  =
 
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 8541aaf..cc3a0f5 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -52,12 +52,18 @@ static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
- static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
- static const char *none_prefix[] =3D { NULL };
- =
+> +	if (length < 2) {
+> +		ofono_error("EFsst shall contain at least two bytes");
+> +		goto out;
+> +	}
+> +
+> +	sim->efsst =3D g_memdup(data, length);
+> +	sim->efsst_length =3D length;
+> +
+> +out:
+> +	sim_retrieve_imsi(sim);
+> +}
+> +
+> +static void sim_efust_read_cb(int ok, int length, int record,
+> +				const unsigned char *data,
+> +				int record_length, void *userdata)
+> +{
+> +	struct ofono_sim *sim =3D userdata;
+> +
+> +	if (!ok)
+> +		goto error;
+> +
+>  	if (length < 1) {
+>  		ofono_error("EFust shall contain at least one byte");
+>  		goto out;
+> @@ -1073,6 +1096,12 @@ static void sim_efust_read_cb(int ok, int length, =
+int record,
+>  =
 
-+enum mbm_variant {
-+	MBM_GENERIC,
-+	MBM_DELL_D5530,		/* OEM of F3507g */
-+};
-+
- struct mbm_data {
- 	GAtChat *modem_port;
- 	GAtChat *data_port;
- 	guint cpin_poll_source;
- 	guint cpin_poll_count;
- 	gboolean have_sim;
-+	enum mbm_variant variant;
- };
- =
+>  out:
+>  	sim_retrieve_imsi(sim);
+> +	return;
+> +
+> +error:
+> +	ofono_sim_read(sim, SIM_EFSST_FILEID,
+> +			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+> +			sim_efsst_read_cb, sim);
+>  }
 
- static int mbm_probe(struct ofono_modem *modem)
-@@ -136,9 +142,54 @@ static gboolean init_simpin_check(gpointer user_data)
- 	return FALSE;
- }
- =
+That is really not how it works.  If the file ID is the same then you
+need some other information to determine whether this is a phase 3 or a
+phase 2 SIM.  Look at how EFecc reading in voicecall.c is done.  In
+other words, this function needs to make an intelligent decision whether
+this is EFsst or EFust.
 
-+static void d5530_notify(GAtResult *result, gpointer user_data)
-+{
-+	DBG("D5530");
-+}
-+
-+static void mbm_quirk_d5530(struct ofono_modem *modem)
-+{
-+	struct mbm_data *data =3D ofono_modem_get_data(modem);
-+
-+	data->variant =3D MBM_DELL_D5530;
-+
-+	/* This Dell modem sends some unsolicated messages when it boots. */
-+	/* Try to ignore them. */
-+	g_at_chat_register(data->modem_port, "D5530", d5530_notify,
-+				FALSE, NULL, NULL);
-+	g_at_chat_register(data->modem_port, "+CGAP:", d5530_notify,
-+				FALSE, NULL, NULL);
-+}
-+
-+static void mbm_check_model(gboolean ok, GAtResult *result, gpointer user_=
-data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	GAtResultIter iter;
-+	char const *model =3D "";
-+
-+	DBG("");
-+
-+	if (!ok)
-+		goto done;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	while (g_at_result_iter_next(&iter, NULL)) {
-+		if (!g_at_result_iter_next_unquoted_string(&iter, &model))
-+			continue;
-+
-+		if (g_str_equal(model, "D5530"))
-+			mbm_quirk_d5530(modem);
-+	}
-+
-+done:
-+	init_simpin_check(modem);
-+}
-+
- static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct ofono_modem *modem =3D user_data;
-+	struct mbm_data *data =3D ofono_modem_get_data(modem);
- =
+In your case the only heuristic we have is EFphase, which is mandatory
+for all Phase 2 SIMs (and absent in all Phase 3 SIMs).
 
- 	DBG("");
- =
+Regards,
+-Denis
 
-@@ -147,7 +198,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
- gpointer user_data)
- 		return;
- 	}
- =
-
--	init_simpin_check(modem);
-+	g_at_chat_send(data->modem_port, "AT+CGMM", NULL,
-+			mbm_check_model, modem, NULL);
- }
- =
-
- static void cfun_query(gboolean ok, GAtResult *result, gpointer user_data)
-@@ -353,7 +405,15 @@ static void mbm_post_sim(struct ofono_modem *modem)
- 					"atmodem", data->modem_port);
- =
-
- 	ofono_sms_create(modem, 0, "atmodem", data->modem_port);
--	ofono_cbs_create(modem, 0, "atmodem", data->modem_port);
-+
-+	switch (data->variant) {
-+	case MBM_DELL_D5530:
-+		/* DELL D5530 crashes when it processes CBSs */
-+		break;
-+	default:
-+		ofono_cbs_create(modem, 0, "atmodem", data->modem_port);
-+	}
-+
- 	ofono_ussd_create(modem, 0, "atmodem", data->modem_port);
- =
-
- 	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
--- =
-
-1.7.0.4
-
-
---===============0440800085302083765==--
+--===============6897084157540790414==--
 
