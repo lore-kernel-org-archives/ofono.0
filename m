@@ -1,128 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============1177820006580929495=="
+Content-Type: multipart/mixed; boundary="===============3091539814598759012=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/6] sim: read EFimg
-Date: Wed, 25 Aug 2010 13:03:33 -0500
-Message-ID: <4C755AF5.7010100@gmail.com>
-In-Reply-To: <1282130723-10488-4-git-send-email-kristen@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] mbm: add quirks for Dell D5530
+Date: Wed, 25 Aug 2010 20:05:57 +0200
+Message-ID: <1282759557.6841.53.camel@localhost.localdomain>
+In-Reply-To: <4C754900.6060808@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1177820006580929495==
+--===============3091539814598759012==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+Hi Denis,
 
-On 08/18/2010 06:25 AM, Kristen Carlson Accardi wrote:
-> Read EFimg when the sim is ready, and store it in memory.
-> ---
->  src/sim.c |   47 +++++++++++++++++++++++++++++++++++++++++++++++
->  1 files changed, 47 insertions(+), 0 deletions(-)
+> > Dell D5530 is an OEM version of F3507g. It has an annoying habit of
+> > announcing itself to world with its own name. It also crashes upon
+> > processing received cbs messages.
+> > ---
+> >  plugins/mbm.c |   55 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++--
+> >  1 files changed, 53 insertions(+), 2 deletions(-)
+> > =
+
+> > diff --git a/plugins/mbm.c b/plugins/mbm.c
+> > index c9b0ea4..1c2b9a8 100644
+> > --- a/plugins/mbm.c
+> > +++ b/plugins/mbm.c
+> > @@ -53,9 +53,15 @@ static const char *cfun_prefix[] =3D { "+CFUN:", NUL=
+L };
+> >  static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+> >  static const char *none_prefix[] =3D { NULL };
+> >  =
+
+> > +enum mbm_variant {
+> > +	MBM_GENERIC,
+> > +	MBM_DELL_D5530,		/* OEM of F3507g */
+> > +};
+> > +
+> >  struct mbm_data {
+> >  	GAtChat *modem_port;
+> >  	GAtChat *data_port;
+> > +	enum mbm_variant variant;
+> >  	guint poll_source;
+> >  	guint poll_count;
+> >  	gboolean have_sim;
+> > @@ -137,9 +143,50 @@ static gboolean init_simpin_check(gpointer user_da=
+ta)
+> >  	return FALSE;
+> >  }
+> >  =
+
+> > +static void d5530_notify(GAtResult *result, gpointer user_data)
+> > +{
+> > +	DBG("D5530");
+> > +}
+> > +
 > =
 
-> diff --git a/src/sim.c b/src/sim.c
-> index d2ed780..6d723bb 100644
-> --- a/src/sim.c
-> +++ b/src/sim.c
-> @@ -88,6 +88,8 @@ struct ofono_sim {
->  	unsigned char efmsisdn_records;
->  	unsigned char *efli;
->  	unsigned char efli_length;
-> +	unsigned char *efimg;
-> +	int efimg_length;
->  	enum ofono_sim_cphs_phase cphs_phase;
->  	unsigned char cphs_service_table[2];
->  	struct ofono_watchlist *state_watches;
-> @@ -1001,6 +1003,44 @@ static void sim_own_numbers_update(struct ofono_si=
-m *sim)
->  			sim_msisdn_read_cb, sim);
->  }
->  =
+> Should we really bother with this one? Or you're trying to be like
+> Marcel and waste some processing time with unused unsolicited
+> notifications? :)
 
-> +static void sim_efimg_read_cb(int ok, int length, int record,
-> +				const unsigned char *data,
-> +				int record_length, void *userdata)
-> +{
-> +	struct ofono_sim *sim =3D userdata;
-> +	unsigned char *efimg;
-> +	int num_records =3D length / record_length;
+I think we should until we have this all figured out. More debug output
+is always a good thing.
 
-Doing this before checking OK will result in a division by zero.
+And yes, essentially there is some processing wasted, but then again,
+this hardware is so damn stupid broken it deserves to be punished ;)
 
-> +
-> +	if (!ok)
-> +		return;
-> +
-> +	/*
-> +	 * EFimg descriptors are 9 bytes long.
-> +	 * Byte 1 of the record is the number of descriptors per record.
-> +	 */
-> +	if (record_length < 10)
-> +		return;
+Regards
 
-I also suggest doing something like:
+Marcel
 
-if ((record_length % 9) !=3D 2 && (record_length % 9) !=3D 1)
-	return;
 
-to be very pedantic.
 
-> +
-> +	if (sim->efimg =3D=3D NULL) {
-> +		sim->efimg =3D g_try_malloc0(num_records * 9);
-> +
-> +		if (sim->efimg =3D=3D NULL)
-> +			return;
-> +
-> +		sim->efimg_length =3D num_records * 9;
-> +	}
-> +
-> +	/*
-> +	 * TBD - if we have more than one descriptor per record,
-> +	 * pick the nicest one.  For now we use the first one.
-> +	 */
-> +
-> +	/* copy descriptor into slot for this record */
-> +	efimg =3D &sim->efimg[(record - 1) * 9];
-> +
-> +	memcpy(efimg, &data[1], 9);
-> +}
-> +
->  static void sim_ready(void *user, enum ofono_sim_state new_state)
->  {
->  	struct ofono_sim *sim =3D user;
-> @@ -1015,6 +1055,8 @@ static void sim_ready(void *user, enum ofono_sim_st=
-ate new_state)
->  			sim_ad_read_cb, sim);
->  	ofono_sim_read(sim, SIM_EFSDN_FILEID, OFONO_SIM_FILE_STRUCTURE_FIXED,
->  			sim_sdn_read_cb, sim);
-> +	ofono_sim_read(sim, SIM_EFIMG_FILEID, OFONO_SIM_FILE_STRUCTURE_FIXED,
-> +			sim_efimg_read_cb, sim);
->  }
->  =
-
->  static void sim_cphs_information_read_cb(int ok, int length, int record,
-> @@ -1934,6 +1976,11 @@ static void sim_free_state(struct ofono_sim *sim)
->  		g_strfreev(sim->language_prefs);
->  		sim->language_prefs =3D NULL;
->  	}
-> +
-> +	if (sim->efimg) {
-> +		g_free(sim->efimg);
-> +		sim->efimg =3D NULL;
-> +	}
->  }
->  =
-
->  void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inser=
-ted)
-
-Otherwise looks fine.
-
-Regards,
--Denis
-
---===============1177820006580929495==--
+--===============3091539814598759012==--
 
