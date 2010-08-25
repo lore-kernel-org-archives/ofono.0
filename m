@@ -1,62 +1,134 @@
-Content-Type: multipart/mixed; boundary="===============1651374434562546672=="
+Content-Type: multipart/mixed; boundary="===============6585394636254739502=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Implementing support for a  new modem- how to?
-Date: Wed, 25 Aug 2010 17:27:59 +0200
-Message-ID: <1282750079.6841.51.camel@localhost.localdomain>
-In-Reply-To: <B668883EB5DD7144ADFC248A72176EA8029A85B1@fioues07.ebgroup.elektrobit.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] mbm: add quirks for Dell D5530
+Date: Wed, 25 Aug 2010 19:16:21 +0300
+Message-ID: <1282752981-27284-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1651374434562546672==
+--===============6585394636254739502==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-> We are working with this type of modem,  and would like to submit
-> patches to oFono. We found that we have to make few modifications to
-> some of the AT command responses and also may have to introduce to
-> support for a few new commands. =
+Dell D5530 is an OEM version of F3507g. It has an annoying habit of
+announcing itself to world with its own name. It also crashes upon
+processing received cbs messages.
+---
+ plugins/mbm.c |   55 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+--
+ 1 files changed, 53 insertions(+), 2 deletions(-)
 
-> =
+diff --git a/plugins/mbm.c b/plugins/mbm.c
+index c9b0ea4..1c2b9a8 100644
+--- a/plugins/mbm.c
++++ b/plugins/mbm.c
+@@ -53,9 +53,15 @@ static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
+ static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+ static const char *none_prefix[] =3D { NULL };
+ =
 
-> We found that in network registration sms, call meter and gprs there
-> are few AT command responses which differ from what is available in
-> the generic AT modem of ofono. There are few new commands to be
-> supported in network registration, gprs context etc, in order to
-> support this modem.
-> =
++enum mbm_variant {
++	MBM_GENERIC,
++	MBM_DELL_D5530,		/* OEM of F3507g */
++};
++
+ struct mbm_data {
+ 	GAtChat *modem_port;
+ 	GAtChat *data_port;
++	enum mbm_variant variant;
+ 	guint poll_source;
+ 	guint poll_count;
+ 	gboolean have_sim;
+@@ -137,9 +143,50 @@ static gboolean init_simpin_check(gpointer user_data)
+ 	return FALSE;
+ }
+ =
 
-> Do we need write new atom drivers even though the change is only in
-> one of the AT command response?, or can we use the vendor variable
-> (where ever available) to include this, as part of the generic at
-> modem drivers?
-> =
++static void d5530_notify(GAtResult *result, gpointer user_data)
++{
++	DBG("D5530");
++}
++
++static void mbm_quirk_d5530(struct ofono_modem *modem)
++{
++	struct mbm_data *data =3D ofono_modem_get_data(modem);
++
++	data->variant =3D MBM_DELL_D5530;
++
++	g_at_chat_register(data->modem_port, "D5530", d5530_notify,
++				FALSE, NULL, NULL);
++}
++
++static void mbm_check_model(gboolean ok, GAtResult *result, gpointer user_=
+data)
++{
++	struct ofono_modem *modem =3D user_data;
++	GAtResultIter iter;
++	char const *model =3D "";
++
++	DBG("");
++
++	if (!ok)
++		goto done;
++
++	g_at_result_iter_init(&iter, result);
++
++	while (g_at_result_iter_next(&iter, NULL)) {
++		if (!g_at_result_iter_next_unquoted_string(&iter, &model))
++			continue;
++
++		if (g_str_equal(model, "D5530"))
++			mbm_quirk_d5530(modem);
++	}
++
++done:
++	init_simpin_check(modem);
++}
++
+ static void cfun_enable(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
++	struct mbm_data *data =3D ofono_modem_get_data(modem);
+ =
 
-> What is the recommended way to implement support for such a modem, so
-> that we can start submitting patches?
+ 	DBG("");
+ =
 
-there is no generic answer to this. Until you post patches and show us
-details on what is different from the GSM AT command specification this
-is all speculations.
+@@ -148,7 +195,8 @@ static void cfun_enable(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 		return;
+ 	}
+ =
 
-However there are two ways:
+-	init_simpin_check(modem);
++	g_at_chat_send(data->modem_port, "AT+CGMM", NULL,
++			mbm_check_model, modem, NULL);
+ }
+ =
 
-a) Write a new atom driver
+ static void cfun_query(gboolean ok, GAtResult *result, gpointer user_data)
+@@ -426,7 +474,10 @@ static void mbm_post_online(struct ofono_modem *modem)
+ 					"atmodem", data->modem_port);
+ =
 
-b) Use the atmodem atom driver with a vendor quirk
+ 	ofono_sms_create(modem, 0, "atmodem", data->modem_port);
+-	ofono_cbs_create(modem, 0, "atmodem", data->modem_port);
++
++	if (data->variant !=3D MBM_DELL_D5530)
++		ofono_cbs_create(modem, 0, "atmodem", data->modem_port);
++
+ 	ofono_ussd_create(modem, 0, "atmodem", data->modem_port);
+ =
 
-In a lot of cases we just do vendor quirks. Check the source code for
-examples. But again, until we have more details, I can't tell what is
-the correct approach for your specific modem.
+ 	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
+-- =
 
-Regards
-
-Marcel
+1.7.0.4
 
 
-
---===============1651374434562546672==--
+--===============6585394636254739502==--
 
