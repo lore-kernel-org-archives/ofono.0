@@ -1,29 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1377362267428567738=="
+Content-Type: multipart/mixed; boundary="===============0009669339827784571=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/6] stkutil: change uint32_t to guint32
-Date: Wed, 25 Aug 2010 13:49:39 -0500
-Message-ID: <4C7565C3.4080709@gmail.com>
-In-Reply-To: <1282734025-3375-3-git-send-email-kristen@linux.intel.com>
+Subject: Re: [PATCH 3/6] sim: read EFimg
+Date: Wed, 25 Aug 2010 13:52:10 -0500
+Message-ID: <4C75665A.6070104@gmail.com>
+In-Reply-To: <1282734025-3375-4-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1377362267428567738==
+--===============0009669339827784571==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Kristen,
 
-On 08/25/2010 06:00 AM, Kristen Carlson Accardi wrote:
-> This helps avoid needing to include any extra header files if
-> stkutil.h is included in sim.c
-> ---
+> +static void sim_efimg_read_cb(int ok, int length, int record,
+> +				const unsigned char *data,
+> +				int record_length, void *userdata)
+> +{
+> +	struct ofono_sim *sim =3D userdata;
+> +	unsigned char *efimg;
+> +	int num_records;
+> +
+> +	if (!ok)
+> +		return;
+> +
+> +	num_records =3D length / record_length;
+> +
+> +	/*
+> +	 * EFimg descriptors are 9 bytes long.
+> +	 * Byte 1 of the record is the number of descriptors per record.
+> +	 */
+> +	if (record_length < 10)
+> +		return;
+> +
 
-This patch has been applied, thanks.
+See my reply to the previous version regarding being more pedantic.  Fix
+that and lets get this one upstream.
 
 Regards,
 -Denis
 
---===============1377362267428567738==--
+--===============0009669339827784571==--
 
