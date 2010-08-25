@@ -1,215 +1,112 @@
-Content-Type: multipart/mixed; boundary="===============7457845614248677326=="
+Content-Type: multipart/mixed; boundary="===============1964041367395927222=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH] sim: Read EFsst
-Date: Wed, 25 Aug 2010 19:29:08 +0800
-Message-ID: <1282735748-23050-1-git-send-email-yang.gu@intel.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH 2/2] test-monitor: monitor irregular signals
+Date: Wed, 25 Aug 2010 14:57:02 +0300
+Message-ID: <1282737422-13005-2-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1282737422-13005-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7457845614248677326==
+--===============1964041367395927222==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
+
 ---
- src/sim.c     |   31 +++++++++++++++++++++++++++-
- src/simutil.c |   18 ++++++++++++++++
- src/simutil.h |   63 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ test/monitor-ofono |   63 ++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 3 files changed, 111 insertions(+), 1 deletions(-)
+ 1 files changed, 63 insertions(+), 0 deletions(-)
 
-diff --git a/src/sim.c b/src/sim.c
-index 9bc9906..1491edd 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -99,6 +99,8 @@ struct ofono_sim {
- 	unsigned char efust_length;
- 	unsigned char *efest;
- 	unsigned char efest_length;
-+	unsigned char *efsst;
-+	unsigned char efsst_length;
- };
+diff --git a/test/monitor-ofono b/test/monitor-ofono
+index 94febac..86239eb 100755
+--- a/test/monitor-ofono
++++ b/test/monitor-ofono
+@@ -54,6 +54,23 @@ def property_changed(name, value, path, interface):
+ 	iface =3D interface[interface.rfind(".") + 1:]
+ 	print "{%s} [%s] %s =3D %s" % (iface, path, name, pretty(value))
  =
 
- struct msisdn_set_request {
-@@ -1048,7 +1050,7 @@ out:
- 	sim_retrieve_imsi(sim);
- }
++def added(name, value, member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s %s" % (iface, member, name, pretty(value))
++
++def removed(name, member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s" % (iface, name, member)
++
++def event(member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s" % (iface, path, member)
++
++def message(msg, args, member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s %s (%s)" % (iface, path, member,
++					str(msg), pretty(args))
++
+ if __name__ =3D=3D '__main__':
+ 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
  =
 
--static void sim_efust_read_cb(int ok, int length, int record,
-+static void sim_efsst_read_cb(int ok, int length, int record,
- 				const unsigned char *data,
- 				int record_length, void *userdata)
- {
-@@ -1057,6 +1059,27 @@ static void sim_efust_read_cb(int ok, int length, in=
-t record,
- 	if (!ok)
- 		goto out;
+@@ -65,5 +82,51 @@ if __name__ =3D=3D '__main__':
+ 						path_keyword=3D"path",
+ 						interface_keyword=3D"interface")
  =
 
-+	if (length < 2) {
-+		ofono_error("EFsst shall contain@least two bytes");
-+		goto out;
-+	}
++	for member in ["IncomingBarringInEffect",
++		       "OutgoingBarringInEffect",
++		       "NearMaximumWarning"]:
++		bus.add_signal_receiver(event,
++					bus_name=3D"org.ofono",
++					signal_name =3D member,
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
 +
-+	sim->efsst =3D g_memdup(data, length);
-+	sim->efsst_length =3D length;
++	bus.add_signal_receiver(added,
++					bus_name=3D"org.ofono",
++					signal_name =3D "ContextAdded",
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
 +
-+out:
-+	sim_retrieve_imsi(sim);
-+}
++	bus.add_signal_receiver(removed,
++					bus_name=3D"org.ofono",
++					signal_name =3D "ContextRemoved",
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
 +
-+static void sim_efust_read_cb(int ok, int length, int record,
-+				const unsigned char *data,
-+				int record_length, void *userdata)
-+{
-+	struct ofono_sim *sim =3D userdata;
++	bus.add_signal_receiver(added,
++				bus_name=3D"org.ofono",
++					signal_name =3D "CallAdded",
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
++	bus.add_signal_receiver(removed,
++				bus_name=3D"org.ofono",
++					signal_name =3D "CallRemoved",
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
 +
-+	if (!ok)
-+		goto error;
++	for member in ["IncomingBroadcast", "EmergencyBroadcast",
++		       "IncomingMessage", "ImmediateMessage"]:
++		bus.add_signal_receiver(message,
++					bus_name=3D"org.ofono",
++					signal_name =3D member,
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
 +
- 	if (length < 1) {
- 		ofono_error("EFust shall contain@least one byte");
- 		goto out;
-@@ -1073,6 +1096,12 @@ static void sim_efust_read_cb(int ok, int length, in=
-t record,
- =
-
- out:
- 	sim_retrieve_imsi(sim);
-+	return;
-+
-+error:
-+	ofono_sim_read(sim, SIM_EFSST_FILEID,
-+			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
-+			sim_efsst_read_cb, sim);
- }
- =
-
- static void sim_cphs_information_read_cb(int ok, int length, int record,
-diff --git a/src/simutil.c b/src/simutil.c
-index 2d0764c..c7c221e 100644
---- a/src/simutil.c
-+++ b/src/simutil.c
-@@ -1434,3 +1434,21 @@ gboolean sim_est_is_active(unsigned char *efest, uns=
-igned char len,
- =
-
- 	return (efest[index / 8] >> (index % 8)) & 1;
- }
-+
-+gboolean sim_sst_is_available(unsigned char *efsst, unsigned char len,
-+						enum sim_sst_service index)
-+{
-+	if (index >=3D len * 4)
-+		return FALSE;
-+
-+	return (efsst[index / 4] >> ((index % 4) * 2)) & 1;
-+}
-+
-+gboolean sim_sst_is_active(unsigned char *efsst, unsigned char len,
-+						enum sim_sst_service index)
-+{
-+	if (index >=3D len * 4)
-+		return FALSE;
-+
-+	return (efsst[index / 4] >> (((index % 4) * 2) + 1)) & 1;
-+}
-diff --git a/src/simutil.h b/src/simutil.h
-index 4db950b..9ecc044 100644
---- a/src/simutil.h
-+++ b/src/simutil.h
-@@ -27,6 +27,7 @@ enum sim_fileid {
- 	SIM_EF_CPHS_INFORMATION_FILEID =3D 0x6f16,
- 	SIM_EF_CPHS_MBDN_FILEID =3D 0x6f17,
- 	SIM_EFUST_FILEID =3D 0x6f38,
-+	SIM_EFSST_FILEID =3D 0x6f38, /* same with EFust */
- 	SIM_EFMSISDN_FILEID =3D 0x6f40,
- 	SIM_EFSPN_FILEID =3D 0x6f46,
- 	SIM_EFSDN_FILEID =3D 0x6f49,
-@@ -153,6 +154,64 @@ enum sim_est_service {
- 	SIM_EST_SERVICE_ACL				=3D 2
- };
- =
-
-+/* 51.011 Section 10.3.7 */
-+enum sim_sst_service {
-+	SIM_SST_SERVICE_CHV1_DISABLE 			=3D 0,
-+	SIM_SST_SERVICE_ADN				=3D 1,
-+	SIM_SST_SERVICE_FDN				=3D 2,
-+	SIM_SST_SERVICE_SMS				=3D 3,
-+	SIM_SST_SERVICE_AOC				=3D 4,
-+	SIM_SST_SERVICE_CCP				=3D 5,
-+	SIM_SST_SERVICE_PLMN_SELECTOR			=3D 6,
-+	SIM_SST_SERVICE_MSISDN				=3D 8,
-+	SIM_SST_SERVICE_EXT_1				=3D 9,
-+	SIM_SST_SERVICE_EXT_2				=3D 10,
-+	SIM_SST_SERVICE_SMSP				=3D 11,
-+	SIM_SST_SERVICE_LND				=3D 12,
-+	SIM_SST_SERVICE_CBS_ID				=3D 13,
-+	SIM_SST_SERVICE_GROUP_ID_LEVEL_1		=3D 14,
-+	SIM_SST_SERVICE_GROUP_ID_LEVEL_2		=3D 15,
-+	SIM_SST_SERVICE_PROVIDER_NAME			=3D 16,
-+	SIM_SST_SERVICE_SDN				=3D 17,
-+	SIM_SST_SERVICE_EXT_3				=3D 18,
-+	SIM_SST_SERVICE_EFVGCS_EFVGCSS			=3D 20,
-+	SIM_SST_SERVICE_EFVBS_EFVBSS			=3D 21,
-+	SIM_SST_SERVICE_PRECEDENCE_PREEMPTION		=3D 22,
-+	SIM_SST_SERVICE_EMLPP				=3D 23,
-+	SIM_SST_SERVICE_DATA_DOWNLOAD_SMS_CB		=3D 24,
-+	SIM_SST_SERVICE_DATA_DOWNLOAD_SMS_PP		=3D 25,
-+	SIM_SST_SERVICE_MENU_SELECTION			=3D 26,
-+	SIM_SST_SERVICE_CALL_CONTROL			=3D 27,
-+	SIM_SST_SERVICE_PROACTIVE_SIM			=3D 28,
-+	SIM_SST_SERVICE_CBS_ID_RANGE			=3D 29,
-+	SIM_SST_SERVICE_BDN				=3D 30,
-+	SIM_SST_SERVICE_EXT_4				=3D 31,
-+	SIM_SST_SERVICE_DEPERSONALISATION_CTRL_KEY	=3D 32,
-+	SIM_SST_SERVICE_NETWORK_LIST			=3D 33,
-+	SIM_SST_SERVICE_SMSR				=3D 34,
-+	SIM_SST_SERVICE_NIA				=3D 35,
-+	SIM_SST_SERVICE_MO_SMS_SIM			=3D 36,
-+	SIM_SST_SERVICE_GPRS				=3D 37,
-+	SIM_SST_SERVICE_IMG				=3D 38,
-+	SIM_SST_SERVICE_SOLSA				=3D 39,
-+	SIM_SST_SERVICE_USSD_CALL_CONTROL		=3D 40,
-+	SIM_SST_SERVICE_RUN_AT_COMMAND			=3D 41,
-+	SIM_SST_SERVICE_USER_PLMN			=3D 42,
-+	SIM_SST_SERVICE_OPERATOR_PLMN			=3D 43,
-+	SIM_SST_SERVICE_HPLMN				=3D 44,
-+	SIM_SST_SERVICE_CPBCCH				=3D 45,
-+	SIM_SST_SERVICE_INVESTIGATION_SCAN		=3D 46,
-+	SIM_SST_SERVICE_EXT_CCP				=3D 47,
-+	SIM_SST_SERVICE_MEXE				=3D 48,
-+	SIM_SST_SERVICE_RPLMN				=3D 49,
-+	SIM_SST_SERVICE_PLMN_NETWORK_NAME		=3D 50,
-+	SIM_SST_SERVICE_OPERATOR_PLMN_LIST		=3D 51,
-+	SIM_SST_SERVICE_MAILBOX_DIALLING_NUMBERS	=3D 52,
-+	SIM_SST_SERVICE_MWIS				=3D 53,
-+	SIM_SST_SERVICE_CFIS				=3D 54,
-+	SIM_SST_SERVICE_PROVIDER_DISPLAY_INFO		=3D 55
-+};
-+
- #define SIM_EFSPN_DC_HOME_PLMN_BIT 0x1
- #define SIM_EFSPN_DC_ROAMING_SPN_BIT 0x2
- =
-
-@@ -371,3 +430,7 @@ gboolean sim_ust_is_available(unsigned char *service_us=
-t, unsigned char len,
- 						enum sim_ust_service index);
- gboolean sim_est_is_active(unsigned char *service_est, unsigned char len,
- 						enum sim_est_service index);
-+gboolean sim_sst_is_available(unsigned char *service_sst, unsigned char le=
-n,
-+						enum sim_sst_service index);
-+gboolean sim_sst_is_active(unsigned char *service_sst, unsigned char len,
-+						enum sim_sst_service index);
+ 	mainloop =3D gobject.MainLoop()
+ 	mainloop.run()
 -- =
 
 1.7.0.4
 
 
---===============7457845614248677326==--
+--===============1964041367395927222==--
 
