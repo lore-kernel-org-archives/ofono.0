@@ -1,86 +1,100 @@
-Content-Type: multipart/mixed; boundary="===============7120482521365265595=="
+Content-Type: multipart/mixed; boundary="===============8983046724337269639=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 2/2] atmodem: call sim_ready_notify when epev is received
-Date: Wed, 25 Aug 2010 04:23:12 -0700
-Message-ID: <1282735392-5283-3-git-send-email-kristen@linux.intel.com>
-In-Reply-To: <1282735392-5283-1-git-send-email-kristen@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] mbm: add quirks for Dell D5530
+Date: Wed, 25 Aug 2010 13:29:24 -0500
+Message-ID: <4C756104.90504@gmail.com>
+In-Reply-To: <1282760583.6841.54.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7120482521365265595==
+--===============8983046724337269639==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/sim.c |   12 ++++++++----
- 1 files changed, 8 insertions(+), 4 deletions(-)
+Hi Marcel,
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 21bc933..44ecc1a 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -537,13 +537,16 @@ static gboolean at_epev_unregister(gpointer user_data)
- static void at_epev_notify(GAtResult *result, gpointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
--	struct sim_data *sd =3D cbd->user;
-+	struct ofono_sim *sim =3D cbd->user;
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
- 	struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_NO_ERROR };
- =
+On 08/25/2010 01:23 PM, Marcel Holtmann wrote:
+> Hi Denis,
+> =
 
- 	if (sd->epev_source)
- 		return;
- =
+>>>>> Dell D5530 is an OEM version of F3507g. It has an annoying habit of
+>>>>> announcing itself to world with its own name. It also crashes upon
+>>>>> processing received cbs messages.
+>>>>> ---
+>>>>>  plugins/mbm.c |   55 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++++--
+>>>>>  1 files changed, 53 insertions(+), 2 deletions(-)
+>>>>>
+>>>>> diff --git a/plugins/mbm.c b/plugins/mbm.c
+>>>>> index c9b0ea4..1c2b9a8 100644
+>>>>> --- a/plugins/mbm.c
+>>>>> +++ b/plugins/mbm.c
+>>>>> @@ -53,9 +53,15 @@ static const char *cfun_prefix[] =3D { "+CFUN:", N=
+ULL };
+>>>>>  static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+>>>>>  static const char *none_prefix[] =3D { NULL };
+>>>>>  =
 
-+	ofono_sim_ready_notify(sim);
-+
- 	cb(&error, cbd->data);
- =
+>>>>> +enum mbm_variant {
+>>>>> +	MBM_GENERIC,
+>>>>> +	MBM_DELL_D5530,		/* OEM of F3507g */
+>>>>> +};
+>>>>> +
+>>>>>  struct mbm_data {
+>>>>>  	GAtChat *modem_port;
+>>>>>  	GAtChat *data_port;
+>>>>> +	enum mbm_variant variant;
+>>>>>  	guint poll_source;
+>>>>>  	guint poll_count;
+>>>>>  	gboolean have_sim;
+>>>>> @@ -137,9 +143,50 @@ static gboolean init_simpin_check(gpointer user_=
+data)
+>>>>>  	return FALSE;
+>>>>>  }
+>>>>>  =
 
- 	sd->epev_source =3D g_timeout_add(0, at_epev_unregister, sd);
-@@ -553,7 +556,8 @@ static void at_pin_send_cb(gboolean ok, GAtResult *resu=
-lt,
- 				gpointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
--	struct sim_data *sd =3D cbd->user;
-+	struct ofono_sim *sim =3D cbd->user;
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
- 	struct ofono_error error;
- =
+>>>>> +static void d5530_notify(GAtResult *result, gpointer user_data)
+>>>>> +{
+>>>>> +	DBG("D5530");
+>>>>> +}
+>>>>> +
+>>>>
+>>>> Should we really bother with this one? Or you're trying to be like
+>>>> Marcel and waste some processing time with unused unsolicited
+>>>> notifications? :)
+>>>
+>>> I think we should until we have this all figured out. More debug output
+>>> is always a good thing.
+>>>
+>>> And yes, essentially there is some processing wasted, but then again,
+>>> this hardware is so damn stupid broken it deserves to be punished ;)
+>>>
+>>
+>> I have to disagree, I can understand if you take the unsolicited
+>> notification and break it down somewhat (like we used to with OCTI,
+>> OWCTI, etc for HSO).  But just printing a debug seems useless.
+> =
 
-@@ -590,15 +594,15 @@ static void at_lock_unlock_cb(gboolean ok, GAtResult =
-*result,
- static void at_pin_send(struct ofono_sim *sim, const char *passwd,
- 			ofono_sim_lock_unlock_cb_t cb, void *data)
- {
--	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	char buf[64];
- 	int ret;
- =
+> then lets break it down ;)
+> =
 
- 	if (!cbd)
- 		goto error;
- =
-
--	cbd->user =3D sd;
-+	cbd->user =3D sim;
- =
-
- 	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\"", passwd);
- =
-
--- =
-
-1.7.2.1
+> 	DBG("D");
+> 	DBG("5");
+> 	DBG("5");
+> 	DBG("3");
+> 	DBG("0");
+> =
 
 
---===============7120482521365265595==--
+Funny ;)
+
+I meant more like, if you don't g_at_result_iter_init() in the callback,
+then don't bother registering for it in the first place.
+
+Regards,
+-Denis
+
+--===============8983046724337269639==--
 
