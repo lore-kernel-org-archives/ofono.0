@@ -1,51 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============2280610964750861984=="
+Content-Type: multipart/mixed; boundary="===============1651374434562546672=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: [PATCH] sim: Ensure to call sim_pin_check
-Date: Wed, 25 Aug 2010 23:22:59 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A4732A516664@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4C75318D.4070906@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Implementing support for a  new modem- how to?
+Date: Wed, 25 Aug 2010 17:27:59 +0200
+Message-ID: <1282750079.6841.51.camel@localhost.localdomain>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA8029A85B1@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2280610964750861984==
+--===============1651374434562546672==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Arun,
+
+> We are working with this type of modem,  and would like to submit
+> patches to oFono. We found that we have to make few modifications to
+> some of the AT command responses and also may have to introduce to
+> support for a few new commands. =
+
+> =
+
+> We found that in network registration sms, call meter and gprs there
+> are few AT command responses which differ from what is available in
+> the generic AT modem of ofono. There are few new commands to be
+> supported in network registration, gprs context etc, in order to
+> support this modem.
+> =
+
+> Do we need write new atom drivers even though the change is only in
+> one of the AT command response?, or can we use the vendor variable
+> (where ever available) to include this, as part of the generic at
+> modem drivers?
+> =
+
+> What is the recommended way to implement support for such a modem, so
+> that we can start submitting patches?
+
+there is no generic answer to this. Until you post patches and show us
+details on what is different from the GSM AT command specification this
+is all speculations.
+
+However there are two ways:
+
+a) Write a new atom driver
+
+b) Use the atmodem atom driver with a vendor quirk
+
+In a lot of cases we just do vendor quirks. Check the source code for
+examples. But again, until we have more details, I can't tell what is
+the correct approach for your specific modem.
+
+Regards
+
+Marcel
 
 
->-----Original Message-----
->From: Denis Kenzior [mailto:denkenz(a)gmail.com]
->Sent: Wednesday, August 25, 2010 11:07 PM
->To: ofono(a)ofono.org
->Cc: Gu, Yang
->Subject: Re: [PATCH] sim: Ensure to call sim_pin_check
->
->Hi Yang,
->
->> Your solution is better than mine, and might be Denis' intention of modi=
-fication.
->Honestly, I ever thought about the change like your proposal (Actually it =
-was the same
->as ppessi's patch), but I had a concern on current code. Now we read EFli =
-and EFpl in
->parallel. Is it guaranteed the callback of EFli will be called before the =
-callback of EFpl?
->IMO, it can't always guarantee this. If I'm correct, your solution is just=
- half way to the
->final target. Maybe we need to work out a better one:)
->
->Please note that the ofono_sim_read functions do not work in parallel.
->All file operations are added to a queue and executed sequentially.
->Hence we can rely on a certain order here.
 
-I see. So Jeevaka and Ppessi's patch is definitely better than mine.
-
-
-Regards,
--Yang
-
---===============2280610964750861984==--
+--===============1651374434562546672==--
 
