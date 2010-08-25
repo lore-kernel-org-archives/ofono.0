@@ -1,192 +1,144 @@
-Content-Type: multipart/mixed; boundary="===============4794272592285108911=="
+Content-Type: multipart/mixed; boundary="===============5038021007313761807=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: About ppp_receive()
-Date: Wed, 25 Aug 2010 10:17:38 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B352A45BD92@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4C747A25.4090707@neusoft.com>
+From: Su, Yong <Yong.Su@windriver.com>
+Subject: RE: Support text mode sms send and receive
+Date: Tue, 24 Aug 2010 19:33:14 -0700
+Message-ID: <C6FAFDDBC4402D44BFC43E57565F021903A4ECB8@ala-mail09.corp.ad.wrs.com>
+In-Reply-To: <4C7414B9.40606@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4794272592285108911==
+--===============5038021007313761807==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Steven,
 
-Steven wrote:
-> Hi Zhenhua,
+ Hi Denis,
+
+> -----Original Message-----
+> From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
+
+> Sent: 2010=E5=B9=B48=E6=9C=8825=E6=97=A5 2:52
+> To: ofono(a)ofono.org
+> Cc: Su, Yong
+> Subject: Re: Support text mode sms send and receive
 > =
 
-> Zhang, Zhenhua wrote:
->> Hi Steven,
->> =
+> Hi Su Yong,
+> =
 
->> Steven wrote:
->>> Hi Zhenhua
->>> =
+> On 08/23/2010 04:11 AM, Su, Yong wrote:
+> > Hi, all:
+> >  =
 
->>> Zhang, Zhenhua wrote:
->>>> Hi Steven,
->>>> =
+> > Our project used ZTE EVDO modem. But this modem only =
 
->>>> Steven wrote:
->>>>> Hi,
->>>>> =
+> supports sending =
 
->>>>> In function ppp_receive, we first check the protocol type of this
->>>>> frame like: =
+> > and receiving sms with text mode.
+> > I have modify oFono gatchat code to support this. But it conflicted =
 
->>>>> =
+> > with original gatchat architecture.
+> > Does oFono plan to support text mode sms send&receive?
+> >  =
 
->>>>>   guint16 protocol =3D ppp_proto(buf);
->>>>> =
-
->>>>> and here we assumed the length of the protocol field is 16 bits,
->>>>> but in RFC 1661, the protocol field should be one or two octets.
->>>>> =
-
->>>>> "The Protocol field is one or two octets, and its value identifies
->>>>> the datagram encapsulated in the Information field of the packet."
->>>>> =
-
->>>>> why we given the assumption that protocol field is 16 bit length?
->>>> First I am not ppp expert. :-).
->>>> =
-
->>>> If you take look at pppd source code, main.c, get_input() also
->>>> always fetch two bytes 'protocol' for struct protent as well.
->>>> =
-
->>>> Can you give a case we failed in our ppp stack?
->>> If you interested in this topic, you can reference RFC 1661 Section
->>> 6.5,
->>> which said
->>> =
-
->>> --------------
->>> This Configuration Option provides a method to negotiate the
->>> compression of the PPP Protocol field. By default, all
->>> implementations MUST transmit packets with two octet PPP Protocol
->>> fields. PPP Protocol field numbers are chosen such that some values
->>> may be compressed into a single octet form which is clearly
->>> distinguishable from the two octet form. This Configuration
->>> Option is sent to inform the peer that the implementation can
->>> receive such single octet Protocol fields.
->>> -------------
->>> =
-
->>> In our current source code, because we only negotiate two
->>> configuration options - REQ_OPTION_MRU and REQ_OPTION_ACCM. so it's
->>> okey for our PPP stack.
->> =
-
->> Yes. It's handled in the LCP layer. The code is majorly implemented
->> by Kristen and Denis. Maybe they could have more comments on that. =
-
->> =
-
->>> But some carriers, like China Telecom or Sprint Network etc, will
->>> support the full configuration
->>> options(Magic-Number,Protocol-Field-Compression,Address-and-Control-Fie=
-ld-Compression),
->>> So if PFC option is used ,our code will got wrong with
->>> ppp_receive(). =
-
->> =
-
->> Agree, we don't have pcompress, accompression like pppd yet. So
->> patches are welcome to improve that part. =
-
->> =
-
->> Btw, I do see some code related with MAGIC_NUMBER in ppp_lcp.c.
->> =
+> >  =
 
 > =
 
-> I will check it.
+> So oFono explicitly does not want to support text mode.  =
+
+> There are many reasons for this, but let me list the most =
+
+> important ones:
 > =
 
->>> We should first check if PPP protocol field is compressed or not,
->>> and then get the right protocol value to form a 16 bits protocol
->>>   field, and pass this value to the rest functions.
->>> =
+> - oFono core deals with raw PDUs.  That is the universal =
 
->>> Because of my company's security policy ,I can't provide a patch for
->>> this issue. But i can provide a method for doing this. Here it is.
->> =
+> standard between AT modems and binary protocol based modems.  =
 
->> I don't understand why having such policy at all. Your code
->> defintely won't leak any IP since we all follow with the standard
->> spec.  =
+> This PDU format is well understood, simple to decode / =
 
->> =
+> generate and the utilities in oFono cover just about every =
 
+> use case.  If you decide to do text mode, then you will have to:
+> 	- Solve the AT command parser issues
+> 	- Collect all the SMS pieces
+> 	- Encode them back into a PDU
 > =
 
+> At which point oFono will take the PDU and decode it back to =
+
+> something that can be used.  This is a MAJOR waste of CPU =
+
+> power and resources.
+> Changing the driver API here is highly unlikely.
 > =
 
-> In my company, i can't using git, usb or any other thing which contact
-> with the outer world, but the only thing i can use to contact with the
-> outer world is MY THUNDERBIRD!!!:(, It's a awful thing.
+> This is not to mention other interaction problems which =
+
+> depend on PDU mode being available (e.g. Sim Toolkit Send =
+
+> SMS, SMS-PP Data Download, etc)
 > =
 
-> Maybe i can commit my patch when i go home:), if my son doesn't annoy
-> me. =
+> - Text mode depends on setting or otherwise messing with =
 
+> +CSCS.  Most AT command based modems do not handle this very =
 
-Sure. Git is so powerful that you can definitely work any place you like to=
-. You only need the network when you do 'git pull' and 'git send-email'. ;-)
+> gracefully.  Most other drivers will expect the IRA character =
 
->>> First byte of PPP protocol field may be compressed, if the LS bit
->>> is 1 then this indicates that the upper protocol us compressed,
->>> because the upper byte should be even, the lower byte should be odd.
->>> =
+> set and you will start random errors.  There's of course a =
 
->>>>> In CDMA 2000 environment, just as the Sprint Network, PPP should
->>>>>   support a compressed protocol field. Is there anything
->>>>> difference between GSM and CDMA? =
+> chance that your modem can handle this properly (perhaps you =
 
->>>>> =
+> have a decent multiplexer implementation in which CSCS =
 
->>>>> B.R
->>>>> =
+> affects a single channel only, _and_ you wall-off the SMS =
 
->>>>> Steven
->>> B.R
->>> =
+> part on that multiplexer channel), but my experience with GSM =
 
->>> Steven
+> modems leaves me extremely skeptical.
 > =
 
+> - The AT parser for this is essentially a disaster area.  =
+
+> Every modem has its own quirks for text mode.  It is =
+
+> something that a human being can understand and work around, =
+
+> but for a library like GAtChat the complexity will be huge.  =
+
+> Even if you make it work on this particular modem, it _has_ =
+
+> to work on other modems as well.
 > =
 
-> -------------------------------------------------------------------------=
---------------------------
-> Confidentiality Notice: The information contained in this e-mail and
-> any accompanying attachment(s) is intended only for the use of the
-> intended recipient and may be confidential and/or privileged of
-> Neusoft Corporation, its subsidiaries and/or its affiliates. If any
-> reader of this communication is not the intended recipient,
-> unauthorized use, forwarding, printing,  storing, disclosure or
-> copying is strictly prohibited, and may be unlawful.If you have
-> received this communication in error,please immediately notify the
-> sender by return e-mail, and delete the original message and all
-> copies from your system. Thank you.
-> -------------------------------------------------------------------------=
---------------------------
+> Please note that there are no modern GSM telephony stacks =
+
+> that use text mode SMS for exactly those reasons.  So the =
+
+> question is, can you ask your modem manufacturer to provide =
+
+> firmware that supports PDU mode?
 > =
 
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+> Regards,
+> -Denis
+> =
 
 
-Regards,
-Zhenhua
+Thank you very much.  As you said, every modem has its own quirks for text =
+mode, so my patch only works on particular modem, like ZTE EVDO modem or Hu=
+aiwei EVDO modem for China Telcom.
 
---===============4794272592285108911==--
+We will push ZTE to update modem firmware to support PDU mode, but I am afr=
+aid that ZTE can't agree with us.
+
+I have one question. If ZTE doesn't plan to modify, can we modify code with=
+out oFono team verified in our project?
+
+
+--===============5038021007313761807==--
 
