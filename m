@@ -1,119 +1,260 @@
-Content-Type: multipart/mixed; boundary="===============2160666412309149787=="
+Content-Type: multipart/mixed; boundary="===============4036638722890525854=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 1/3] stkagent: Add ConfirmCallSetup request.
-Date: Wed, 25 Aug 2010 17:49:15 +0200
-Message-ID: <1282751357-7086-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 3/3] stk: Handle the Set Up Call proactive command.
+Date: Wed, 25 Aug 2010 17:49:17 +0200
+Message-ID: <1282751357-7086-3-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1282751357-7086-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2160666412309149787==
+--===============4036638722890525854==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkagent.c |   65 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ src/stk.c |  198 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/stkagent.h |    5 ++++
- 2 files changed, 70 insertions(+), 0 deletions(-)
+ 1 files changed, 198 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkagent.c b/src/stkagent.c
-index e71436d..f62c2bd 100644
---- a/src/stkagent.c
-+++ b/src/stkagent.c
-@@ -789,3 +789,68 @@ int stk_agent_request_input(struct stk_agent *agent, c=
-onst char *text,
- =
-
- 	return 0;
+diff --git a/src/stk.c b/src/stk.c
+index f391396..f0ca9b7 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -1399,6 +1399,198 @@ static gboolean handle_command_get_input(const stru=
+ct stk_command *cmd,
+ 	return FALSE;
  }
-+
-+static void confirm_call_cb(DBusPendingCall *call, void *data)
-+{
-+	struct stk_agent *agent =3D data;
-+	stk_agent_confirmation_cb cb =3D agent->user_cb;
-+	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
-+	enum stk_agent_result result;
-+	gboolean remove_agent;
-+	dbus_bool_t confirm;
-+
-+	if (check_error(agent, reply,
-+			ALLOWED_ERROR_TERMINATE, &result) =3D=3D -EINVAL) {
-+		remove_agent =3D TRUE;
-+		goto error;
-+	}
-+
-+	if (result !=3D STK_AGENT_RESULT_OK) {
-+		cb(result, FALSE, agent->user_data);
-+		goto done;
-+	}
-+
-+	if (dbus_message_get_args(reply, NULL,
-+					DBUS_TYPE_BOOLEAN, &confirm,
-+					DBUS_TYPE_INVALID) =3D=3D FALSE) {
-+		ofono_error("Can't parse the reply to ConfirmCallSetup()");
-+		remove_agent =3D TRUE;
-+		goto error;
-+	}
-+
-+	cb(result, confirm, agent->user_data);
-+
-+	CALLBACK_END();
-+}
-+
-+int stk_agent_confirm_call(struct stk_agent *agent, const char *text,
-+				uint8_t icon_id, stk_agent_confirmation_cb cb,
-+				void *user_data, ofono_destroy_func destroy,
-+				int timeout)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+
-+	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
-+							OFONO_SIM_APP_INTERFACE,
-+							"ConfirmCallSetup");
-+	if (agent->msg =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	dbus_message_append_args(agent->msg,
-+					DBUS_TYPE_STRING, &text,
-+					DBUS_TYPE_BYTE, &icon_id,
-+					DBUS_TYPE_INVALID);
-+
-+	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
-+						timeout) =3D=3D FALSE ||
-+			agent->call =3D=3D NULL)
-+		return -EIO;
-+
-+	agent->user_cb =3D cb;
-+	agent->user_data =3D user_data;
-+	agent->user_destroy =3D destroy;
-+
-+	dbus_pending_call_set_notify(agent->call, confirm_call_cb, agent, NULL);
-+
-+	return 0;
-+}
-diff --git a/src/stkagent.h b/src/stkagent.h
-index 70f1f88..c644210 100644
---- a/src/stkagent.h
-+++ b/src/stkagent.h
-@@ -112,5 +112,10 @@ int stk_agent_request_input(struct stk_agent *agent, c=
-onst char *text,
- 				void *user_data, ofono_destroy_func destroy,
- 				int timeout);
  =
 
-+int stk_agent_confirm_call(struct stk_agent *agent, const char *text,
-+				uint8_t icon_id, stk_agent_confirmation_cb cb,
-+				void *user_data, ofono_destroy_func destroy,
-+				int timeout);
++static void call_setup_connected(struct ofono_call *call, void *data)
++{
++	struct ofono_stk *stk =3D data;
++	struct stk_response rsp;
++	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
+};
++	static unsigned char facility_rejected_result[] =3D { 0x9d };
 +
- void append_menu_items_variant(DBusMessageIter *iter,
- 				const struct stk_menu_item *items);
++	if (!call) {
++		memset(&rsp, 0, sizeof(rsp));
++
++		rsp.result.type =3D STK_RESULT_TYPE_NETWORK_UNAVAILABLE;
++		rsp.result.additional_len =3D sizeof(facility_rejected_result);
++		rsp.result.additional =3D facility_rejected_result;
++
++		if (stk_respond(stk, &rsp, stk_command_cb))
++			stk_command_cb(&error, stk);
++
++		return;
++	}
++
++	if (call->status =3D=3D CALL_STATUS_ACTIVE)
++		send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
++	else
++		send_simple_response(stk, STK_RESULT_TYPE_USER_CANCEL);
++}
++
++static void call_setup_cancel(struct ofono_stk *stk)
++{
++	struct ofono_voicecall *vc;
++	struct ofono_atom *vc_atom;
++
++	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
++						OFONO_ATOM_TYPE_VOICECALL);
++	if (!vc_atom)
++		return;
++
++	vc =3D __ofono_atom_get_data(vc_atom);
++	if (vc)
++		__ofono_voicecall_dial_cancel(vc);
++}
++
++static void confirm_call_cb(enum stk_agent_result result, gboolean confirm,
++				void *user_data)
++{
++	struct ofono_stk *stk =3D user_data;
++	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
+};
++	const struct stk_command_setup_call *sc =3D &stk->pending_cmd->setup_call;
++	uint8_t qualifier =3D stk->pending_cmd->qualifier;
++	static unsigned char busy_on_call_result[] =3D { 0x02 };
++	static unsigned char no_cause_result[] =3D { 0x00 };
++	struct ofono_voicecall *vc =3D NULL;
++	struct ofono_atom *vc_atom;
++	struct stk_response rsp;
++	int err;
++
++	switch (result) {
++	case STK_AGENT_RESULT_TIMEOUT:
++		confirm =3D FALSE;
++		/* Fall through */
++
++	case STK_AGENT_RESULT_OK:
++		if (confirm)
++			break;
++
++		send_simple_response(stk, STK_RESULT_TYPE_USER_REJECT);
++		return;
++
++	case STK_AGENT_RESULT_TERMINATE:
++	default:
++		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
++		return;
++	}
++
++	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
++						OFONO_ATOM_TYPE_VOICECALL);
++	if (vc_atom)
++		vc =3D __ofono_atom_get_data(vc_atom);
++
++	if (!vc) {
++		send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
++		return;
++	}
++
++	/*
++	 * The terminal may have become busy while we were waiting for
++	 * user confirmation.
++	 */
++	if (__ofono_voicecall_busy(vc) && (qualifier =3D=3D 0 || qualifier =3D=3D=
+ 1)) {
++		memset(&rsp, 0, sizeof(rsp));
++
++		rsp.result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
++		rsp.result.additional_len =3D sizeof(busy_on_call_result);
++		rsp.result.additional =3D busy_on_call_result;
++
++		if (stk_respond(stk, &rsp, stk_command_cb))
++			stk_command_cb(&error, stk);
++
++		return;
++	}
++
++	err =3D __ofono_voicecall_dial(vc, sc->addr.number, sc->addr.ton_npi,
++					sc->alpha_id_call_setup, 0,
++					qualifier >> 1, call_setup_connected,
++					stk);
++	if (err >=3D 0) {
++		stk->cancel_cmd =3D call_setup_cancel;
++
++		return;
++	}
++
++	if (err =3D=3D -EBUSY) {
++		send_simple_response(stk, STK_RESULT_TYPE_TERMINAL_BUSY);
++
++		return;
++	}
++
++	if (err =3D=3D -ENOSYS) {
++		send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
++
++		return;
++	}
++
++	memset(&rsp, 0, sizeof(rsp));
++
++	rsp.result.type =3D STK_RESULT_TYPE_NETWORK_UNAVAILABLE;
++	rsp.result.additional_len =3D sizeof(no_cause_result);
++	rsp.result.additional =3D no_cause_result;
++
++	if (stk_respond(stk, &rsp, stk_command_cb))
++		stk_command_cb(&error, stk);
++}
++
++static gboolean handle_command_set_up_call(const struct stk_command *cmd,
++						struct stk_response *rsp,
++						struct ofono_stk *stk)
++{
++	const struct stk_command_setup_call *sc =3D &cmd->setup_call;
++	uint8_t qualifier =3D cmd->qualifier;
++	static unsigned char busy_on_call_result[] =3D { 0x02 };
++	struct ofono_voicecall *vc =3D NULL;
++	struct ofono_atom *vc_atom;
++	int err;
++
++	if (qualifier > 5) {
++		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
++		return TRUE;
++	}
++
++	/*
++	 * Passing called party subaddress and establishing non-speech
++	 * calls are not supported.
++	 */
++	if (sc->ccp.len || sc->subaddr.len) {
++		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
++		return TRUE;
++	}
++
++	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
++						OFONO_ATOM_TYPE_VOICECALL);
++	if (vc_atom)
++		vc =3D __ofono_atom_get_data(vc_atom);
++
++	if (!vc) {
++		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
++		return TRUE;
++	}
++
++	if (__ofono_voicecall_busy(vc) && (qualifier =3D=3D 0 || qualifier =3D=3D=
+ 1)) {
++		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
++		rsp->result.additional_len =3D sizeof(busy_on_call_result);
++		rsp->result.additional =3D busy_on_call_result;
++		return TRUE;
++	}
++
++	stk->cancel_cmd =3D stk_request_cancel;
++
++	err =3D stk_agent_confirm_call(stk->current_agent, sc->alpha_id_usr_cfm,
++					0, confirm_call_cb, stk, NULL,
++					stk->timeout * 1000);
++
++	if (err < 0) {
++		/*
++		 * We most likely got an out of memory error, tell SIM
++		 * to retry
++		 */
++		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
++		return TRUE;
++	}
++
++	return FALSE;
++}
++
+ static void stk_proactive_command_cancel(struct ofono_stk *stk)
+ {
+ 	if (stk->immediate_response)
+@@ -1482,6 +1674,7 @@ void ofono_stk_proactive_command_notify(struct ofono_=
+stk *stk,
+ 		case STK_COMMAND_TYPE_GET_INKEY:
+ 		case STK_COMMAND_TYPE_GET_INPUT:
+ 		case STK_COMMAND_TYPE_PLAY_TONE:
++		case STK_COMMAND_TYPE_SETUP_CALL:
+ 			send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
+ 			return;
+ =
+
+@@ -1543,6 +1736,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
+_stk *stk,
+ 							&rsp, stk);
+ 		break;
+ =
+
++	case STK_COMMAND_TYPE_SETUP_CALL:
++		respond =3D handle_command_set_up_call(stk->pending_cmd,
++							&rsp, stk);
++		break;
++
+ 	default:
+ 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
+ 		break;
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============2160666412309149787==--
+--===============4036638722890525854==--
 
