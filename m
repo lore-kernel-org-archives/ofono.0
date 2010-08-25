@@ -1,35 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0712833418950332559=="
+Content-Type: multipart/mixed; boundary="===============8002228639711051281=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] test-monitor: monitor irregular signals
-Date: Wed, 25 Aug 2010 11:48:53 -0500
-Message-ID: <4C754975.60606@gmail.com>
-In-Reply-To: <1282737422-13005-2-git-send-email-Pekka.Pessi@nokia.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [PATCH] mbm: add quirks for Dell D5530
+Date: Wed, 25 Aug 2010 19:54:12 +0300
+Message-ID: <AANLkTi=NpeunSHPdny_VzNLBy7VX5+AZfMrbC0LsY+EX@mail.gmail.com>
+In-Reply-To: <4C754900.6060808@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0712833418950332559==
+--===============8002228639711051281==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+2010/8/25 Denis Kenzior <denkenz@gmail.com>:
+> Should we really bother with this one? Or you're trying to be like
+> Marcel and waste some processing time with unused unsolicited
+> notifications? :)
 
-On 08/25/2010 06:57 AM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+I'm trying to develop with this fine piece of hardware. First time it
+was funny when my IMSI was D5530. Or +GCAP: +CGSM, +DS.
 
-> ---
->  test/monitor-ofono |   63 ++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 63 insertions(+), 0 deletions(-)
-> =
+> Can you rebase your patch, I get this when applying:
+>
+> denkenz(a)ubuntu:~/ofono-master$ git am --3way ~/merge/\[PATCH\]\ mbm\:\
+> add\ quirks\ for\ Dell\ D5530.eml
+> Applying: mbm: add quirks for Dell D5530
+> fatal: sha1 information is lacking or useless (plugins/mbm.c).
+> Repository lacks necessary blobs to fall back on 3-way merge.
+> Cannot fall back to three-way merge.
+> Patch failed at 0001 mbm: add quirks for Dell D5530
+> When you have resolved this problem run "git am -3 --resolved".
+> If you would prefer to skip this patch, instead run "git am -3 --skip".
+> To restore the original branch and stop patching run "git am -3 --abort".
 
+I'll do.
 
-Patch has been applied, thanks.
+-- =
 
-Regards,
--Denis
+Pekka.Pessi mail at nokia.com
 
---===============0712833418950332559==--
+--===============8002228639711051281==--
 
