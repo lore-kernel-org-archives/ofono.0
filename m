@@ -1,260 +1,178 @@
-Content-Type: multipart/mixed; boundary="===============4036638722890525854=="
+Content-Type: multipart/mixed; boundary="===============3628310064741330314=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 3/3] stk: Handle the Set Up Call proactive command.
-Date: Wed, 25 Aug 2010 17:49:17 +0200
-Message-ID: <1282751357-7086-3-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1282751357-7086-1-git-send-email-andrew.zaborowski@intel.com>
+From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
+Subject: RE: [PATCH v2] Add CDMA extension tasks
+Date: Thu, 26 Aug 2010 04:52:15 +0200
+Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE8056A6CC2@ism-mail03.corp.ad.wrs.com>
+In-Reply-To: <D87B22B1FE8C0F479CA9BEAD6C25AAE8056A6C4A@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4036638722890525854==
+--===============3628310064741330314==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/stk.c |  198 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 198 insertions(+), 0 deletions(-)
+Hi Jeevaka,
 
-diff --git a/src/stk.c b/src/stk.c
-index f391396..f0ca9b7 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1399,6 +1399,198 @@ static gboolean handle_command_get_input(const stru=
-ct stk_command *cmd,
- 	return FALSE;
- }
- =
+I'd like remind you that please use plaint text and follow the mail rule of=
+ ofono.
+(I have ever make the same mistake several days ago :) ).
 
-+static void call_setup_connected(struct ofono_call *call, void *data)
-+{
-+	struct ofono_stk *stk =3D data;
-+	struct stk_response rsp;
-+	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
-};
-+	static unsigned char facility_rejected_result[] =3D { 0x9d };
-+
-+	if (!call) {
-+		memset(&rsp, 0, sizeof(rsp));
-+
-+		rsp.result.type =3D STK_RESULT_TYPE_NETWORK_UNAVAILABLE;
-+		rsp.result.additional_len =3D sizeof(facility_rejected_result);
-+		rsp.result.additional =3D facility_rejected_result;
-+
-+		if (stk_respond(stk, &rsp, stk_command_cb))
-+			stk_command_cb(&error, stk);
-+
-+		return;
-+	}
-+
-+	if (call->status =3D=3D CALL_STATUS_ACTIVE)
-+		send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
-+	else
-+		send_simple_response(stk, STK_RESULT_TYPE_USER_CANCEL);
-+}
-+
-+static void call_setup_cancel(struct ofono_stk *stk)
-+{
-+	struct ofono_voicecall *vc;
-+	struct ofono_atom *vc_atom;
-+
-+	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
-+						OFONO_ATOM_TYPE_VOICECALL);
-+	if (!vc_atom)
-+		return;
-+
-+	vc =3D __ofono_atom_get_data(vc_atom);
-+	if (vc)
-+		__ofono_voicecall_dial_cancel(vc);
-+}
-+
-+static void confirm_call_cb(enum stk_agent_result result, gboolean confirm,
-+				void *user_data)
-+{
-+	struct ofono_stk *stk =3D user_data;
-+	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
-};
-+	const struct stk_command_setup_call *sc =3D &stk->pending_cmd->setup_call;
-+	uint8_t qualifier =3D stk->pending_cmd->qualifier;
-+	static unsigned char busy_on_call_result[] =3D { 0x02 };
-+	static unsigned char no_cause_result[] =3D { 0x00 };
-+	struct ofono_voicecall *vc =3D NULL;
-+	struct ofono_atom *vc_atom;
-+	struct stk_response rsp;
-+	int err;
-+
-+	switch (result) {
-+	case STK_AGENT_RESULT_TIMEOUT:
-+		confirm =3D FALSE;
-+		/* Fall through */
-+
-+	case STK_AGENT_RESULT_OK:
-+		if (confirm)
-+			break;
-+
-+		send_simple_response(stk, STK_RESULT_TYPE_USER_REJECT);
-+		return;
-+
-+	case STK_AGENT_RESULT_TERMINATE:
-+	default:
-+		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
-+		return;
-+	}
-+
-+	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
-+						OFONO_ATOM_TYPE_VOICECALL);
-+	if (vc_atom)
-+		vc =3D __ofono_atom_get_data(vc_atom);
-+
-+	if (!vc) {
-+		send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
-+		return;
-+	}
-+
-+	/*
-+	 * The terminal may have become busy while we were waiting for
-+	 * user confirmation.
-+	 */
-+	if (__ofono_voicecall_busy(vc) && (qualifier =3D=3D 0 || qualifier =3D=3D=
- 1)) {
-+		memset(&rsp, 0, sizeof(rsp));
-+
-+		rsp.result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		rsp.result.additional_len =3D sizeof(busy_on_call_result);
-+		rsp.result.additional =3D busy_on_call_result;
-+
-+		if (stk_respond(stk, &rsp, stk_command_cb))
-+			stk_command_cb(&error, stk);
-+
-+		return;
-+	}
-+
-+	err =3D __ofono_voicecall_dial(vc, sc->addr.number, sc->addr.ton_npi,
-+					sc->alpha_id_call_setup, 0,
-+					qualifier >> 1, call_setup_connected,
-+					stk);
-+	if (err >=3D 0) {
-+		stk->cancel_cmd =3D call_setup_cancel;
-+
-+		return;
-+	}
-+
-+	if (err =3D=3D -EBUSY) {
-+		send_simple_response(stk, STK_RESULT_TYPE_TERMINAL_BUSY);
-+
-+		return;
-+	}
-+
-+	if (err =3D=3D -ENOSYS) {
-+		send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
-+
-+		return;
-+	}
-+
-+	memset(&rsp, 0, sizeof(rsp));
-+
-+	rsp.result.type =3D STK_RESULT_TYPE_NETWORK_UNAVAILABLE;
-+	rsp.result.additional_len =3D sizeof(no_cause_result);
-+	rsp.result.additional =3D no_cause_result;
-+
-+	if (stk_respond(stk, &rsp, stk_command_cb))
-+		stk_command_cb(&error, stk);
-+}
-+
-+static gboolean handle_command_set_up_call(const struct stk_command *cmd,
-+						struct stk_response *rsp,
-+						struct ofono_stk *stk)
-+{
-+	const struct stk_command_setup_call *sc =3D &cmd->setup_call;
-+	uint8_t qualifier =3D cmd->qualifier;
-+	static unsigned char busy_on_call_result[] =3D { 0x02 };
-+	struct ofono_voicecall *vc =3D NULL;
-+	struct ofono_atom *vc_atom;
-+	int err;
-+
-+	if (qualifier > 5) {
-+		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
-+		return TRUE;
-+	}
-+
-+	/*
-+	 * Passing called party subaddress and establishing non-speech
-+	 * calls are not supported.
-+	 */
-+	if (sc->ccp.len || sc->subaddr.len) {
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+	}
-+
-+	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
-+						OFONO_ATOM_TYPE_VOICECALL);
-+	if (vc_atom)
-+		vc =3D __ofono_atom_get_data(vc_atom);
-+
-+	if (!vc) {
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+	}
-+
-+	if (__ofono_voicecall_busy(vc) && (qualifier =3D=3D 0 || qualifier =3D=3D=
- 1)) {
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		rsp->result.additional_len =3D sizeof(busy_on_call_result);
-+		rsp->result.additional =3D busy_on_call_result;
-+		return TRUE;
-+	}
-+
-+	stk->cancel_cmd =3D stk_request_cancel;
-+
-+	err =3D stk_agent_confirm_call(stk->current_agent, sc->alpha_id_usr_cfm,
-+					0, confirm_call_cb, stk, NULL,
-+					stk->timeout * 1000);
-+
-+	if (err < 0) {
-+		/*
-+		 * We most likely got an out of memory error, tell SIM
-+		 * to retry
-+		 */
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		return TRUE;
-+	}
-+
-+	return FALSE;
-+}
-+
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
- {
- 	if (stk->immediate_response)
-@@ -1482,6 +1674,7 @@ void ofono_stk_proactive_command_notify(struct ofono_=
-stk *stk,
- 		case STK_COMMAND_TYPE_GET_INKEY:
- 		case STK_COMMAND_TYPE_GET_INPUT:
- 		case STK_COMMAND_TYPE_PLAY_TONE:
-+		case STK_COMMAND_TYPE_SETUP_CALL:
- 			send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
- 			return;
- =
+> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On
+> Behalf Of Jeevaka Prabu Badrappan
+> Sent: Wednesday, August 25, 2010 5:46 PM
+> To: ofono(a)ofono.org,
+> =
 
-@@ -1543,6 +1736,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
-_stk *stk,
- 							&rsp, stk);
- 		break;
- =
+> Subject: Re: [PATCH v2] Add CDMA extension tasks
+> =
 
-+	case STK_COMMAND_TYPE_SETUP_CALL:
-+		respond =3D handle_command_set_up_call(stk->pending_cmd,
-+							&rsp, stk);
-+		break;
-+
- 	default:
- 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
- 		break;
--- =
+> Hi Caiwen,
+> =
 
-1.7.1.86.g0e460.dirty
+> ---
+> =C2=A0TODO | =C2=A0 76
+> ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+> =C2=A01 files changed, 76 insertions(+), 0 deletions(-)
+> =
+
+> diff --git a/TODO b/TODO
+> index a97f076..b159c07 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -614,3 +614,79 @@ Miscellaneous
+> =
+
+> =C2=A0 Priority: Low
+> =C2=A0 Complexity: C4
+> +
+> +
+> +CDMA/EVDO
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +- Extend modem interface with a 'Type' property to indicate the modem
+> type.
+> +
+> + =C2=A0Priority: High
+> + =C2=A0Complexity: C1
+> +
+> +- Add UIM support. UIM support change pin, enter pin, reset pin, set
+> pin lock, get pin lock setting,
+> + =C2=A0get pin remain retry time, and get information that stored in UIM,
+> include MCC/MNC, ruimid, IMSI,
+> + =C2=A0MDN, PRL version etc.
+> +
+> + =C2=A0Priority: High
+> + =C2=A0Complexity: C4
+> +
+> +- Add CDMA SMS support, include broadcast short message. In CDMA,
+> broadcast short message is
+> + =C2=A0a kind of SMS. CDMA SMS manager atom will support SMS sending and
+> receiving. Many CDMA modems
+> + =C2=A0may only support text mode and other modems only support PDU mode.
+> In CDMA SMS manage atom will
+> + =C2=A0define a data structure that contain every parameters and
+> subparameters defined in C.S0015. In
+> + =C2=A0relative modem driver plug-in, the relevant fields(text mode) or
+> PDU(may be manufacturer
+> + =C2=A0specific) will be parsed and filled into the data structure, then=
+ it
+> will be proceed in CDMA
+> + =C2=A0SMS manager atom.
+> +
+> + =C2=A0Special SMSs, SCPT, CATPT and voice mail notification(VMN)(please
+> refer to C.S0015 section 4.3.8,
+> + =C2=A04.3.9, 4.3.5)will be processed in ofono, and other messages with a
+> port number (include WAP push
+> + =C2=A0message) will be processed by external plug-ins. CDMA SMS manager
+> atom offer an API for register
+> + =C2=A0external plug-in.
+> +
+> + =C2=A0Priority: High
+> + =C2=A0Complexity: C8
+> +
+> +- Add CDMA voice call support. CDMA voice call will support
+> originate/end/hold a call,
+> + =C2=A0transfer a call, 3WC(three-way calling), conference call and DTMF.
+> For a voice call, can get
+> + =C2=A0its status, CLI and ending result(if it is end).
+> +
+> + =C2=A0Priority: High
+> + =C2=A0Complexity: C6
+> +
+> +- Add CDMA Data connection support. CDMA data connection manager
+> support start/end a data connect
+> + =C2=A0according to the settings from other module(upper layer or
+> ConnMan)and get/set Qos.
+> +
+> + =C2=A0Priority: High
+> + =C2=A0Complexity: C4
+> +
+> +- Add SIM/UIM data access support. Add a card atom, it will support
+> read/update/delete/add conatact
+> + =C2=A0add SMS in SIM/UIM card.
+> +
+> + =C2=A0Priority: High
+> + =C2=A0Complexity: C6
+> +
+> +- Add CTCC modem driver. The CTCC modem driver will totally obey
+> <China Telecom CDMA terminal
+> + =C2=A0requirement specification -- 1xEV-DORevA Data Terminal AT command
+> Interface fascicule V1.1>
+> +
+> + =C2=A0Priority: High
+> + =C2=A0Complexity: C10
+> +
+> --
+> 1.7.0.4
+> =
+
+> It looks like you are providing new dbus interface for UIM(SimManager),
+> DataConnection(DataConnectionManager), etc...
+
+You know, GSM and CDMA is very different in some features. It is impossible=
+ keep
+All the APIs the same. We will try our best to keep the D-bus APIs the same=
+ as ofono =
+
+current APIs.
+If I have different idea about ofono current APIs. I will pop up and discus=
+s in
+IRC or this mail list. Before, implement a CDMA atom, I will post the propo=
+sed APIs.
+It is very thankful if you pop up your suggestion and concern.
+
+UIMManager APIs will be the same as SimManager. I just post my thinking abo=
+ut the =
+
+Current APIs, you know, generally, R-UIM follow 3GPP TS 51.011 too. Its fun=
+ction is =
+
+the same as SIM. =
 
 
---===============4036638722890525854==--
+> If so, what is the need for providing a new interface, why can't we
+> extend the existing SimManager, DataConnectionManager etc... to support
+> CDMA usecases.
+> If we provide new interfaces, there could be changes needed in upper
+> layers for eg: ConnMan.
+> =
+
+> Could you clarify?
+
+I think some changes are unavoidable. What we can do is try to minimize it. =
+
+
+For ConnMan, if you'd like support multi-data connection. Maybe you should =
+implement =
+
+a plug-in for CDMA/Evdo, just like we you do for WIFI or other data connect=
+ion.
+
+
+Best regards,
+Caiwen
+
+--===============3628310064741330314==--
 
