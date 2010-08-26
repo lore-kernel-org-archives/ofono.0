@@ -1,67 +1,129 @@
-Content-Type: multipart/mixed; boundary="===============5256467967489149418=="
+Content-Type: multipart/mixed; boundary="===============1848771483916693020=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [sim-fdn PATCH 3/4] Added test/disable-fdn
-Date: Thu, 26 Aug 2010 15:52:40 +0300
-Message-ID: <1282827161-8351-4-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1282827161-8351-3-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [sim-fdn PATCH 1/4] sim: add EnableFDN and DisableFDN methods
+Date: Thu, 26 Aug 2010 15:52:38 +0300
+Message-ID: <1282827161-8351-2-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1282827161-8351-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5256467967489149418==
+--===============1848771483916693020==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
----
- test/disable-fdn |   31 +++++++++++++++++++++++++++++++
- 1 files changed, 31 insertions(+), 0 deletions(-)
- create mode 100755 test/disable-fdn
+Enable or disable Fixed Dialing Numbers feature on SIM card.
 
-diff --git a/test/disable-fdn b/test/disable-fdn
-new file mode 100755
-index 0000000..61b731d
---- /dev/null
-+++ b/test/disable-fdn
-@@ -0,0 +1,31 @@
-+#!/usr/bin/python
+If enabled, calls can be dialled or SMSs sent only to numbers listed on
+special FDN phonebook on the SIM card.
+---
+ include/sim.h |    3 ++
+ src/sim.c     |   59 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 62 insertions(+), 0 deletions(-)
+
+diff --git a/include/sim.h b/include/sim.h
+index d3e564c..4639671 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -157,6 +157,9 @@ struct ofono_sim_driver {
+ 	void (*query_locked)(struct ofono_sim *sim,
+ 			enum ofono_sim_password_type type,
+ 			ofono_sim_locked_cb_t cb, void *data);
++	void (*enable_fdn)(struct ofono_sim *sim,
++			int enable, const char *passwd,
++			ofono_sim_lock_unlock_cb_t cb, void *data);
+ };
+ =
+
+ int ofono_sim_driver_register(const struct ofono_sim_driver *d);
+diff --git a/src/sim.c b/src/sim.c
+index bac77e0..7af4565 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -626,6 +626,61 @@ static DBusMessage *sim_unlock_pin(DBusConnection *con=
+n, DBusMessage *msg,
+ 	return sim_lock_or_unlock(sim, 0, conn, msg);
+ }
+ =
+
++static void sim_fdn_cb(const struct ofono_error *error, void *data)
++{
++	struct ofono_sim *sim =3D data;
++	DBusMessage *reply;
 +
-+import dbus
-+import sys
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
++		reply =3D dbus_message_new_method_return(sim->pending);
++	else
++		reply =3D __ofono_error_failed(sim->pending);
 +
-+bus =3D dbus.SystemBus()
++	__ofono_dbus_pending_reply(&sim->pending, reply);
++}
 +
-+def default_modem():
-+	manager =3D bus.get_object('org.ofono', '/')
-+	properties =3D manager.GetProperties(dbus_interface =3D 'org.ofono.Manage=
-r')
-+	modems =3D properties["Modems"]
-+	if not modems:
-+		sys.stderr.write("No modems available\n")
-+		sys.exit(1)
-+	return modems[0]
++static DBusMessage *sim_fdn(struct ofono_sim *sim, int enable,
++				DBusConnection *conn, DBusMessage *msg)
++{
++	const char *pin;
 +
-+if len(sys.argv) =3D=3D 3:
-+	path, pin =3D sys.argv[1:]
-+elif len(sys.argv) =3D=3D 2:
-+	path, pin =3D default_modem(), sys.argv[1]
-+else:
-+	print "%s [PATH] pin2" % (sys.argv[0])
-+	sys.exit(0)
++	if (!sim->driver->enable_fdn)
++		return __ofono_error_not_implemented(msg);
 +
-+print "Disable FDN for modem %s..." % (path,)
++	if (sim->pending)
++		return __ofono_error_busy(msg);
 +
-+modem =3D bus.get_object('org.ofono', path)
++	if (dbus_message_get_args(msg, NULL,
++					DBUS_TYPE_STRING, &pin,
++					DBUS_TYPE_INVALID) =3D=3D FALSE)
++		return __ofono_error_invalid_args(msg);
 +
-+simmanager =3D dbus.Interface(modem, 'org.ofono.SimManager')
++	if (!is_valid_pin(pin, PIN_TYPE_PIN))
++		return __ofono_error_invalid_format(msg);
 +
-+simmanager.DisableFDN(pin)
++	sim->pending =3D dbus_message_ref(msg);
++
++	sim->driver->enable_fdn(sim, enable, pin, sim_fdn_cb, sim);
++
++	return NULL;
++}
++
++static DBusMessage *sim_enable_fdn(DBusConnection *conn, DBusMessage *msg,
++					void *data)
++{
++	struct ofono_sim *sim =3D data;
++
++	return sim_fdn(sim, 1, conn, msg);
++}
++
++static DBusMessage *sim_disable_fdn(DBusConnection *conn, DBusMessage *msg,
++					void *data)
++{
++	struct ofono_sim *sim =3D data;
++
++	return sim_fdn(sim, 0, conn, msg);
++}
++
+ static void sim_change_pin_cb(const struct ofono_error *error, void *data)
+ {
+ 	struct ofono_sim *sim =3D data;
+@@ -787,6 +842,10 @@ static GDBusMethodTable sim_methods[] =3D {
+ 							G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ "UnlockPin",		"ss",	"",		sim_unlock_pin,
+ 							G_DBUS_METHOD_FLAG_ASYNC },
++	{ "EnableFDN",		"s",	"",		sim_enable_fdn,
++							G_DBUS_METHOD_FLAG_ASYNC },
++	{ "DisableFDN",		"s",	"",		sim_disable_fdn,
++							G_DBUS_METHOD_FLAG_ASYNC },
+ 	{ }
+ };
+ =
+
 -- =
 
 1.7.0.4
 
 
---===============5256467967489149418==--
+--===============1848771483916693020==--
 
