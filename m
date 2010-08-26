@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2454747170447995873=="
+Content-Type: multipart/mixed; boundary="===============3086655138327426684=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [sim-fdn PATCH 2/4] atmodem/sim: implement enable_fdn
-Date: Thu, 26 Aug 2010 15:52:39 +0300
-Message-ID: <1282827161-8351-3-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1282827161-8351-2-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [sim-fdn PATCH 4/4] Added test/enable-fdn
+Date: Thu, 26 Aug 2010 15:52:41 +0300
+Message-ID: <1282827161-8351-5-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1282827161-8351-4-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2454747170447995873==
+--===============3086655138327426684==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,63 +16,52 @@ Content-Transfer-Encoding: quoted-printable
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
 ---
- drivers/atmodem/sim.c |   30 ++++++++++++++++++++++++++++++
- 1 files changed, 30 insertions(+), 0 deletions(-)
+ test/enable-fdn |   31 +++++++++++++++++++++++++++++++
+ 1 files changed, 31 insertions(+), 0 deletions(-)
+ create mode 100755 test/enable-fdn
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 2f68b5f..1a6b1f4 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -856,6 +856,35 @@ error:
- 	CALLBACK_WITH_FAILURE(cb, -1, data);
- }
- =
-
-+static void at_enable_fdn(struct ofono_sim *sim,
-+				int enable, const char *passwd,
-+				ofono_sim_lock_unlock_cb_t cb, void *data)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char buf[64];
-+	int ret;
+diff --git a/test/enable-fdn b/test/enable-fdn
+new file mode 100755
+index 0000000..3061e36
+--- /dev/null
++++ b/test/enable-fdn
+@@ -0,0 +1,31 @@
++#!/usr/bin/python
 +
-+	if (!cbd)
-+		goto error;
++import dbus
++import sys
 +
-+	snprintf(buf, sizeof(buf), "AT+CLCK=3D\"%s\",%i,\"%s\"",
-+			"FD", enable ? 1 : 0, passwd);
++bus =3D dbus.SystemBus()
 +
-+	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
-+				at_lock_unlock_cb, cbd, g_free);
++def default_modem():
++	manager =3D bus.get_object('org.ofono', '/')
++	properties =3D manager.GetProperties(dbus_interface =3D 'org.ofono.Manage=
+r')
++	modems =3D properties["Modems"]
++	if not modems:
++		sys.stderr.write("No modems available\n")
++		sys.exit(1)
++	return modems[0]
 +
-+	memset(buf, 0, sizeof(buf));
++if len(sys.argv) =3D=3D 3:
++	path, pin =3D sys.argv[1:]
++elif len(sys.argv) =3D=3D 2:
++	path, pin =3D default_modem(), sys.argv[1]
++else:
++	print "%s [PATH] pin2" % (sys.argv[0])
++	sys.exit(0)
 +
-+	if (ret > 0)
-+		return;
++print "Enable FDN for modem %s..." % (path,)
 +
-+error:
-+	g_free(cbd);
++modem =3D bus.get_object('org.ofono', path)
 +
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
++simmanager =3D dbus.Interface(modem, 'org.ofono.SimManager')
 +
- static gboolean at_sim_register(gpointer user)
- {
- 	struct ofono_sim *sim =3D user;
-@@ -923,6 +952,7 @@ static struct ofono_sim_driver driver =3D {
- 	.lock			=3D at_pin_enable,
- 	.change_passwd		=3D at_change_passwd,
- 	.query_locked		=3D at_pin_query_enabled,
-+	.enable_fdn             =3D at_enable_fdn,
- };
- =
-
- void at_sim_init()
++simmanager.EnableFDN(pin)
 -- =
 
 1.7.0.4
 
 
---===============2454747170447995873==--
+--===============3086655138327426684==--
 
