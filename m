@@ -1,49 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4906338153653338193=="
+Content-Type: multipart/mixed; boundary="===============4505083837715713198=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v2] Add CDMA extension tasks
-Date: Thu, 26 Aug 2010 10:09:53 +0200
-Message-ID: <1282810193.6841.69.camel@localhost.localdomain>
-In-Reply-To: <1282646541-1655-1-git-send-email-caiwen.zhang@windriver.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH] sim: Read EFsst
+Date: Thu, 26 Aug 2010 17:12:49 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4732A516CB5@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <4C755013.3040603@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4906338153653338193==
+--===============4505083837715713198==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Caiwen,
+Hi Denis,
 
-> ---
->  TODO |   76 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 76 insertions(+), 0 deletions(-)
-> =
 
-> diff --git a/TODO b/TODO
-> index a97f076..b159c07 100644
-> --- a/TODO
-> +++ b/TODO
-> @@ -614,3 +614,79 @@ Miscellaneous
->  =
-
->    Priority: Low
->    Complexity: C4
-> +
-> +
-> +CDMA/EVDO
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D
-
-so Denis and I are still discussing some basic details on how to handle
-CDMA the right way. Especially in case you only have text SMS and
-non-pdu based SIM Toolkit. I give you an update soon.
-
-Regards
-
-Marcel
+>>  out:
+>>  	sim_retrieve_imsi(sim);
+>> +	return;
+>> +
+>> +error:
+>> +	ofono_sim_read(sim, SIM_EFSST_FILEID,
+>> +			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+>> +			sim_efsst_read_cb, sim);
+>>  }
+>
+>That is really not how it works.  If the file ID is the same then you
+>need some other information to determine whether this is a phase 3 or a
+>phase 2 SIM.  Look at how EFecc reading in voicecall.c is done.  In
+>other words, this function needs to make an intelligent decision whether
+>this is EFsst or EFust.
+>
+>In your case the only heuristic we have is EFphase, which is mandatory
+>for all Phase 2 SIMs (and absent in all Phase 3 SIMs).
 
 
 
---===============4906338153653338193==--
+
+
+--===============4505083837715713198==--
 
