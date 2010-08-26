@@ -1,75 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============8785310917407333171=="
+Content-Type: multipart/mixed; boundary="===============8900064471211426101=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [sim-fdn PATCH 1/4] sim: add EnableFDN and DisableFDN methods
-Date: Thu, 26 Aug 2010 11:12:57 -0500
-Message-ID: <4C769289.4080605@gmail.com>
-In-Reply-To: <AANLkTi=iBgBu1KihScHS9LEg2Y_+wb8EjRVzEYAQAp1i@mail.gmail.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: [PATCH] sim: Read EFsst
+Date: Thu, 26 Aug 2010 18:51:59 +0200
+Message-ID: <AANLkTinA3XTK_g+Ym1Yv6tD4yyBzFmChs+kHbn=8DiX6@mail.gmail.com>
+In-Reply-To: <CE761E84DADF2947A4AF22FB8D97A4732A516D1E@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8785310917407333171==
+--===============8900064471211426101==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi,
 
-On 08/26/2010 11:08 AM, Pekka Pessi wrote:
-> Hi Denis,
-> =
+On 26 August 2010 12:12, Gu, Yang <yang.gu@intel.com> wrote:
+> Last time, you mentioned " 3G device + 3G sim -> EFust and EFest, while 2=
+G device + 3G sim -> EFsst". And I think EFphase only means the SIM phase. =
+So just using SIM phase to do the judgement would put us in a risk if we ha=
+ve a phase 3 SIM and 2G device, right? You also mentioned this is the best =
+way we currently have. Do you hint we have no (general) way to get the phas=
+e of device?
+>
+> But I still think there is some problem here: For this case, EFust and EF=
+sst have the same file id and type. So I suppose they can't co-exist in the=
+ SIM file system. Otherwise, we couldn't read them by just using the file i=
+d and file type. If so, and if I were a SIM manufacturer, how should I deci=
+de which one, EFust and EFsst, will be put in? I would have no knowledge wh=
+at the phase of user's device. So the rule to obey is to have my choice mat=
+ch the EFphase. That is, 3G sim -> EFust and 2G sim ->EFsst.
 
-> 2010/8/26 Denis Kenzior <denkenz@gmail.com>:
->>>>> Enable or disable Fixed Dialing Numbers feature on SIM card.
->>>>>
->>>>> If enabled, calls can be dialled or SMSs sent only to numbers listed =
-on
->>>>> special FDN phonebook on the SIM card.
->>>>
->>>> FDN has serious implications for the rest of the system, particularly =
-on
->>>> SMS atom and Sim Toolkit.  oFono will either have to support the entire
->>>> thing properly or use a 'limited' FDN mode (e.g. if FDN is enabled, we
->>>> only permit emergency calls.)
->>>
->>>> We have really not made our mind what makes sense here yet.
->>>
->>> I think most modems support FDN in the firmware. (Well, famous last
->>> words.) I don't think it makes any sense to support or "support" it in
->>> oFono.
->>
->> You're correct.  However, if FDN is enabled, carriers require that SMSes
->> to numbers not in FDN to be rejected.  It is quite unclear whether this
->> is done in the firmware or not.  If oFono has to handle it internally,
->> then we also require access to the FDN phonebook.
->>
->> Sim Toolkit interactions require FDN to be explicitly ignored for Send
->> SMS, Setup Call.  If these are not handled in the firmware, then we
->> can't properly support FDN.
-> =
+As far as I understand, a 3G SIM can actually have two filesystems.
+One of them contains the EFphase, EFsst, and other files, while the
+other filesystem contains EFust, EFest and no EFphase (some files will
+be the same).  That's why we have separate cache for them.  If a 2G
+modem initiates the card as 2G then the card needs to consistently act
+as a 2G card.
 
-> Do you think oFono should reject the SIM if it happens to have FDN enable=
-d? Why?
+Regards
 
-There is actually some 3GPP spec that mandates low-functionality mode if
-FDN is not properly supported by the terminal.  e.g. 31.102:
-"In case FDN is enabled, an ME which does not support FDN shall allow
-emergency calls but shall not allow MO-CS calls and MO-SMS.
-If BDN is enabled, an ME which does not support Call Control shall allow
-emergency calls but shall not allow MO-CS calls."
-
-> =
-
-> If we don't support FDN restrictions, we don't support. This has
-> nothing to do whether we should allow the user to disable the FDN on
-> the SIM card or not.
-> =
-
-
-You might be right, I'm just saying we need to explore the issue more fully.
-
-Regards,
--Denis
-
---===============8785310917407333171==--
+--===============8900064471211426101==--
 
