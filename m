@@ -1,79 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============2714372239145831594=="
+Content-Type: multipart/mixed; boundary="===============2640762152855994463=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] gprs: add debug info
-Date: Thu, 26 Aug 2010 16:08:52 +0300
-Message-ID: <1282828132-8989-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [sim-reset-pin PATCH 1/4] sim: pass reset password type to driver
+Date: Thu, 26 Aug 2010 10:10:08 -0500
+Message-ID: <4C7683D0.1030501@gmail.com>
+In-Reply-To: <1282826957-8238-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2714372239145831594==
+--===============2640762152855994463==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Pekka,
 
----
- src/gprs.c |    9 +++++++++
- 1 files changed, 9 insertions(+), 0 deletions(-)
+On 08/26/2010 07:49 AM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> =
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 9b11053..d57115b 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -945,6 +945,9 @@ static void registration_status_cb(const struct ofono_e=
-rror *error,
- {
- 	struct ofono_gprs *gprs =3D data;
- =
+> ---
+>  include/sim.h |    5 +++--
+>  src/sim.c     |    9 +++++++--
+>  2 files changed, 10 insertions(+), 4 deletions(-)
+> =
 
-+	DBG("%s error %d status %d", __ofono_atom_get_path(gprs->atom),
-+		error->type, status);
-+
- 	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
- 		ofono_gprs_status_notify(gprs, status);
- =
+> diff --git a/include/sim.h b/include/sim.h
+> index 36a99b9..d3e564c 100644
+> --- a/include/sim.h
+> +++ b/include/sim.h
+> @@ -143,8 +143,9 @@ struct ofono_sim_driver {
+>  			ofono_sim_passwd_cb_t cb, void *data);
+>  	void (*send_passwd)(struct ofono_sim *sim, const char *passwd,
+>  			ofono_sim_lock_unlock_cb_t cb, void *data);
+> -	void (*reset_passwd)(struct ofono_sim *sim, const char *puk,
+> -			const char *passwd,
+> +	void (*reset_passwd)(struct ofono_sim *sim,
+> +			enum ofono_sim_password_type type,
+> +			const char *puk, const char *passwd,
+>  			ofono_sim_lock_unlock_cb_t cb, void *data);
 
-@@ -958,6 +961,8 @@ static void gprs_attach_callback(const struct ofono_err=
-or *error, void *data)
- {
- 	struct ofono_gprs *gprs =3D data;
- =
+I don't get it, reset_passwd maps to +CPIN which does not take a type
+parameter...
 
-+	DBG("%s error =3D %d", __ofono_atom_get_path(gprs->atom), error->type);
-+
- 	gprs->flags &=3D ~GPRS_FLAG_ATTACHING;
- =
+>  	void (*change_passwd)(struct ofono_sim *sim,
+>  			enum ofono_sim_password_type type,
+> diff --git a/src/sim.c b/src/sim.c
+> index 04a708b..bac77e0 100644
+> --- a/src/sim.c
+> +++ b/src/sim.c
+> @@ -753,8 +753,13 @@ static DBusMessage *sim_reset_pin(DBusConnection *co=
+nn, DBusMessage *msg,
+>  =
 
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
-@@ -1425,6 +1430,8 @@ static GDBusSignalTable manager_signals[] =3D {
- =
+>  	type =3D sim_string_to_passwd(typestr);
+>  =
 
- void ofono_gprs_detached_notify(struct ofono_gprs *gprs)
- {
-+	DBG("%s", __ofono_atom_get_path(gprs->atom));
-+
- 	gprs->driver_attached =3D FALSE;
- 	gprs_attached_update(gprs);
- =
+> -	if (type =3D=3D OFONO_SIM_PASSWORD_NONE || type !=3D sim->pin_type)
+> +	switch (type) {
+> +	case OFONO_SIM_PASSWORD_SIM_PIN:
+> +	case OFONO_SIM_PASSWORD_SIM_PIN2:
+> +		break;
 
-@@ -1437,6 +1444,8 @@ void ofono_gprs_detached_notify(struct ofono_gprs *gp=
-rs)
- =
+sim->pin_type is PUK or PUK2  here, not PIN/PIN2.
 
- void ofono_gprs_status_notify(struct ofono_gprs *gprs, int status)
- {
-+	DBG("%s status %d", __ofono_atom_get_path(gprs->atom), status);
-+
- 	gprs->status =3D status;
- =
+> +	default:
+>  		return __ofono_error_invalid_format(msg);
+> +	}
+>  =
 
- 	if (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
--- =
+>  	if (!is_valid_pin(puk, PIN_TYPE_PUK))
+>  		return __ofono_error_invalid_format(msg);
+> @@ -763,7 +768,7 @@ static DBusMessage *sim_reset_pin(DBusConnection *con=
+n, DBusMessage *msg,
+>  		return __ofono_error_invalid_format(msg);
+>  =
 
-1.7.0.4
+>  	sim->pending =3D dbus_message_ref(msg);
+> -	sim->driver->reset_passwd(sim, puk, pin, sim_enter_pin_cb, sim);
+> +	sim->driver->reset_passwd(sim, type, puk, pin, sim_enter_pin_cb, sim);
+>  =
 
+>  	return NULL;
+>  }
 
---===============2714372239145831594==--
+Regards,
+-Denis
+
+--===============2640762152855994463==--
 
