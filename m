@@ -1,31 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============6068014186788581956=="
+Content-Type: multipart/mixed; boundary="===============4906338153653338193=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] stkagent: Add ConfirmCallSetup request.
-Date: Wed, 25 Aug 2010 22:39:40 -0500
-Message-ID: <4C75E1FC.50205@gmail.com>
-In-Reply-To: <1282751357-7086-1-git-send-email-andrew.zaborowski@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH v2] Add CDMA extension tasks
+Date: Thu, 26 Aug 2010 10:09:53 +0200
+Message-ID: <1282810193.6841.69.camel@localhost.localdomain>
+In-Reply-To: <1282646541-1655-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6068014186788581956==
+--===============4906338153653338193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Caiwen,
 
-On 08/25/2010 10:49 AM, Andrzej Zaborowski wrote:
 > ---
->  src/stkagent.c |   65 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+>  TODO |   76 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++++
->  src/stkagent.h |    5 ++++
->  2 files changed, 70 insertions(+), 0 deletions(-)
+>  1 files changed, 76 insertions(+), 0 deletions(-)
+> =
 
-Patch has been applied, thanks.
+> diff --git a/TODO b/TODO
+> index a97f076..b159c07 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -614,3 +614,79 @@ Miscellaneous
+>  =
 
-Regards,
--Denis
+>    Priority: Low
+>    Complexity: C4
+> +
+> +
+> +CDMA/EVDO
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D
 
---===============6068014186788581956==--
+so Denis and I are still discussing some basic details on how to handle
+CDMA the right way. Especially in case you only have text SMS and
+non-pdu based SIM Toolkit. I give you an update soon.
+
+Regards
+
+Marcel
+
+
+
+--===============4906338153653338193==--
 
