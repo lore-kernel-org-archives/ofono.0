@@ -1,70 +1,339 @@
-Content-Type: multipart/mixed; boundary="===============5790415262133106889=="
+Content-Type: multipart/mixed; boundary="===============3725788867544959484=="
 MIME-Version: 1.0
-From: Thiago Cangussu de Castro Gomes <thiagoc@syst.com.br>
-Subject: Re: Connecting with Huawei E226
-Date: Fri, 27 Aug 2010 09:58:33 -0300
-Message-ID: <AANLkTimPTy-bXSCJNXFiAo8U8+SLe0KzQ18AxdzGZvJy@mail.gmail.com>
-In-Reply-To: <1282896123.6841.76.camel@localhost.localdomain>
+From: Petteri Tikander <petteri.tikander@ixonos.com>
+Subject: [RFC PATCH v3 2/4] smsutil: storing/loading sms status report over
+ reboot
+Date: Fri, 27 Aug 2010 21:09:56 +0300
+Message-ID: <1282932596-24494-1-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5790415262133106889==
+--===============3725788867544959484==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
-On Fri, Aug 27, 2010 at 5:02 AM, Marcel Holtmann <marcel@holtmann.org> wr=
-ote:
-> Hi Thiago,
->
->> >> I forgot also to mention that I used list-context to see if the
->> >> enable-modem was successful. The test B is the one that fails.
->> >
->> > From the logs it seems Test A is what fails since we never add any ato=
-ms
->> > in that one. =C2=A0Basically the problem is that your modem firmware n=
-ever
->> > tells us that the SIM has been initialized by sending us a ^SIMST
->> > notification.
->> >
->> > Kalle's patch relies on SIMST being delivered eventually. =C2=A0Since =
-it
->> > never does, oFono is under the impression that your SIM is invalid. =
-=C2=A0We
->> > probably need to query SYSINFO a few more times in this case, but it
->> > seems all Huawei firmwares act slightly differently here.
->>
->> Is there something else I can do to help solve this issue? I tried
->> another modem, a ZTE MF110, that is not working either. I installed
->> wvdial on my MeeGo machine and was able to connect using both the
->> Huawei and ZTE modems. I also tested the devices under Ubuntu Lucid
->> and Fedora 13 (both with Networkmanager) and they worked out of the
->> box.
->
-> the problem is that neither wvdial nor NM are proper telephony stacks.
-> They are both in the end just dialers. So that comparison is not helping
-> us since oFono has to do way more work before we can just "dial" an
-> Internet connection.
->
-> We get this fixed, but not as quick as you might like us too. The Huawei
-> and ZTE modems are showing race condition behavior. And that is mainly
-> because oFono is just too fast and they can't initialize the SIM fast
-> enough for us.
+---
+ src/smsutil.c |  176 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++--
+ src/smsutil.h |   10 +++-
+ 2 files changed, 180 insertions(+), 6 deletions(-)
 
-I understand. I mixed up two problems and that got confusing. The ZTE
-modem is not showing the race condition issue. It didn't showed up
-when I called list-modems. That is why I tested it with other
-software, just to be sure it works with linux (MeeGo in this case). I
-will test again with the ZTE modem and send the logs to the list.
+diff --git a/src/smsutil.c b/src/smsutil.c
+index c60b8ec..88c567c 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -33,6 +33,7 @@
+ #include <unistd.h>
+ =
 
-I am reading the code and some specs from 3GPP, but it's all new stuff
-to me and you will probably fix this before I can even understand what
-is really going on :) For now I'll keep testing the new code and
-sending the logs to the list.
+ #include <glib.h>
++#include <errno.h>
+ =
 
-Regards,
-Thiago
+ #include "util.h"
+ #include "storage.h"
+@@ -45,6 +46,9 @@
+ #define SMS_BACKUP_PATH_DIR SMS_BACKUP_PATH "/%s-%i-%i"
+ #define SMS_BACKUP_PATH_FILE SMS_BACKUP_PATH_DIR "/%03i"
+ =
 
---===============5790415262133106889==--
++#define SMS_SR_BACKUP_PATH STORAGEDIR "/%s/sms_sr"
++#define SMS_SR_BACKUP_PATH_FILE SMS_SR_BACKUP_PATH "/%s-%i"
++
+ #define SMS_ADDR_FMT "%24[0-9A-F]"
+ =
+
+ static GSList *sms_assembly_add_fragment_backup(struct sms_assembly *assem=
+bly,
+@@ -2413,7 +2417,7 @@ static void sms_assembly_backup_free(struct sms_assem=
+bly *assembly,
+ {
+ 	char *path;
+ 	int seq;
+-	char straddr[25];
++	DECLARE_SMS_ADDR_STR(straddr);
+ =
+
+ 	if (!assembly->imsi)
+ 		return;
+@@ -2529,7 +2533,8 @@ static GSList *sms_assembly_add_fragment_backup(struc=
+t sms_assembly *assembly,
+ 		if (ref !=3D node->ref)
+ 			continue;
+ =
+
+-		/* Message Reference and address the same, but max is not
++		/*
++		 * Message Reference and address the same, but max is not
+ 		 * ignore the SMS completely
+ 		 */
+ 		if (max !=3D node->max_fragments)
+@@ -2642,20 +2647,163 @@ void sms_assembly_expire(struct sms_assembly *asse=
+mbly, time_t before)
+ 	}
+ }
+ =
+
++static void sr_assembly_load_backup(GHashTable *assembly_table,
++					const char *imsi,
++					const struct dirent *addr_dir)
++{
++	struct sms_address addr;
++	DECLARE_SMS_ADDR_STR(straddr);
++	struct id_table_node *node;
++	GHashTable *id_table;
++	int r;
++	char *assembly_table_key;
++	unsigned int *id_table_key;
++	DECLARE_SMS_MSGID_STR(str_msg_id);
++	char *endp;
++	unsigned int msg_id;
++
++	if (addr_dir->d_type !=3D DT_REG)
++		return;
++
++	/*
++	 * All SMS-messages under the same IMSI-code are
++	 * included in the same directory.
++	 * So, SMS-address and message ID are included in the same file name
++	 * Max of SMS address size is 12 bytes, hex encoded
++	 */
++	if (sscanf(addr_dir->d_name, SMS_ADDR_FMT "-" SMS_MSGID_FMT,
++				straddr, str_msg_id) < 2)
++		return;
++
++	if (sms_assembly_extract_address(straddr, &addr) =3D=3D FALSE)
++		return;
++
++	errno =3D 0;
++	msg_id =3D strtoul(str_msg_id, &endp, 10);
++
++	if (*endp !=3D '\0')
++		return;
++
++	if (errno =3D=3D ERANGE && msg_id =3D=3D UINT_MAX)
++		return;
++
++	id_table =3D g_hash_table_lookup(assembly_table,
++					sms_address_to_string(&addr));
++
++	/* Create hashtable keyed by the to address if required */
++	if (id_table =3D=3D NULL) {
++		id_table =3D g_hash_table_new_full(g_int_hash, g_int_equal,
++							g_free, g_free);
++
++		assembly_table_key =3D g_strdup(sms_address_to_string(&addr));
++		g_hash_table_insert(assembly_table, assembly_table_key,
++					id_table);
++	}
++
++	node =3D g_new0(struct id_table_node, 1);
++
++	r =3D read_file((unsigned char *) node,
++			sizeof(struct id_table_node),
++			SMS_SR_BACKUP_PATH "/%s",
++			imsi, addr_dir->d_name);
++
++	if (r < 0) {
++		g_free(node);
++		return;
++	}
++
++	/* Node ready, create key and add them to the table */
++	id_table_key =3D g_new0(unsigned int, 1);
++	*id_table_key =3D msg_id;
++
++	g_hash_table_insert(id_table, id_table_key, node);
++}
++
+ struct status_report_assembly *status_report_assembly_new(const char *imsi)
+ {
++	char *path;
++	int len;
++	struct dirent **addresses;
+ 	struct status_report_assembly *ret =3D
+ 				g_new0(struct status_report_assembly, 1);
+ =
+
+ 	ret->assembly_table =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+ 				g_free, (GDestroyNotify)g_hash_table_destroy);
+ =
+
+-	if (imsi)
++	if (imsi) {
+ 		ret->imsi =3D imsi;
+ =
+
++		/* Restore state from backup */
++		path =3D g_strdup_printf(SMS_SR_BACKUP_PATH, imsi);
++		len =3D scandir(path, &addresses, NULL, alphasort);
++
++		g_free(path);
++
++		if (len < 0)
++			return ret;
++
++		/*
++		 * Go through different addresses. Each address can relate to
++		 * 1-n msg_ids.
++		 */
++
++		while (len--) {
++			sr_assembly_load_backup(ret->assembly_table, imsi,
++								addresses[len]);
++			g_free(addresses[len]);
++		}
++
++		g_free(addresses);
++	}
++
+ 	return ret;
+ }
+ =
+
++static gboolean sr_assembly_add_fragment_backup(const char *imsi,
++					const struct id_table_node *node,
++					const struct sms_address *addr,
++					unsigned int msg_id)
++{
++	int len =3D sizeof(struct id_table_node);
++	DECLARE_SMS_ADDR_STR(straddr);
++
++	if (!imsi)
++		return FALSE;
++
++	if (sms_address_to_hex_string(addr, straddr) =3D=3D FALSE)
++		return FALSE;
++
++	/* storagedir/%s/sms_sr/%s-%i */
++	if (write_file((unsigned char *) node, len, SMS_BACKUP_MODE,
++			SMS_SR_BACKUP_PATH_FILE, imsi,
++			straddr, msg_id) !=3D len)
++		return FALSE;
++
++	return TRUE;
++}
++
++static gboolean sr_assembly_remove_fragment_backup(const char *imsi,
++					const struct id_table_node *node,
++					const struct sms_address *addr,
++					unsigned int msg_id)
++{
++	char *path;
++	DECLARE_SMS_ADDR_STR(straddr);
++
++	if (!imsi)
++		return FALSE;
++
++	if (sms_address_to_hex_string(addr, straddr) =3D=3D FALSE)
++		return FALSE;
++
++	path =3D g_strdup_printf(SMS_SR_BACKUP_PATH_FILE, imsi, straddr, msg_id);
++
++	unlink(path);
++	g_free(path);
++
++	return TRUE;
++}
++
+ void status_report_assembly_free(struct status_report_assembly *assembly)
+ {
+ 	g_hash_table_destroy(assembly->assembly_table);
+@@ -2698,6 +2846,7 @@ gboolean status_report_assembly_report(struct status_=
+report_assembly *assembly,
+ 	GHashTableIter iter;
+ 	gboolean pending;
+ 	int i;
++	unsigned int msg_id;
+ =
+
+ 	/* We ignore temporary or tempfinal status reports */
+ 	if (sr_st_to_delivered(status_report->status_report.st,
+@@ -2743,14 +2892,30 @@ gboolean status_report_assembly_report(struct statu=
+s_report_assembly *assembly,
+ 		}
+ 	}
+ =
+
+-	if (pending =3D=3D TRUE && node->deliverable =3D=3D TRUE)
++	msg_id =3D *(unsigned int *) key;
++
++	if (pending =3D=3D TRUE && node->deliverable =3D=3D TRUE) {
++		/*
++		 * More status reports expected, and already received
++		 * reports completed. Update backup file.
++		 */
++		sr_assembly_add_fragment_backup(
++					assembly->imsi, node,
++					&status_report->status_report.raddr,
++					msg_id);
++
+ 		return FALSE;
++	}
+ =
+
+ 	if (out_delivered)
+ 		*out_delivered =3D node->deliverable;
+ =
+
+ 	if (out_id)
+-		*out_id =3D *((unsigned int *) key);
++		*out_id =3D msg_id;
++
++	sr_assembly_remove_fragment_backup(assembly->imsi, node,
++					&status_report->status_report.raddr,
++					msg_id);
+ =
+
+ 	g_hash_table_iter_remove(&iter);
+ =
+
+@@ -2804,6 +2969,7 @@ void status_report_assembly_add_fragment(
+ 	node->mrs[offset] |=3D bit;
+ 	node->expiration =3D expiration;
+ 	node->sent_mrs++;
++	sr_assembly_add_fragment_backup(assembly->imsi, node, to, msg_id);
+ }
+ =
+
+ void status_report_assembly_expire(struct status_report_assembly *assembly,
+diff --git a/src/smsutil.h b/src/smsutil.h
+index eb70b6d..e5ef73a 100644
+--- a/src/smsutil.h
++++ b/src/smsutil.h
+@@ -370,7 +370,7 @@ struct id_table_node {
+ 	unsigned char total_mrs;
+ 	unsigned char sent_mrs;
+ 	gboolean deliverable;
+-};
++} __attribute__((packed));
+ =
+
+ struct status_report_assembly {
+ 	const char *imsi;
+@@ -437,6 +437,14 @@ gboolean sms_encode(const struct sms *in, int *len, in=
+t *tpdu_len,
+  */
+ #define DECLARE_SMS_ADDR_STR(a) char a[25]
+ =
+
++/*
++ * Length is based on the msg_id being 10 digits (max uint)
++ * plus a terminating NUL char. But for more detailed
++ * digit-verification, recerve space for 11 characters plus NUL char.
++ */
++#define DECLARE_SMS_MSGID_STR(a) char a[12]
++#define SMS_MSGID_FMT "%11s"
++
+ gboolean sms_decode_address_field(const unsigned char *pdu, int len,
+ 					int *offset, gboolean sc,
+ 					struct sms_address *out);
+-- =
+
+1.6.3.3
+
+
+
+--===============3725788867544959484==--
 
