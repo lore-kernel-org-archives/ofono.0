@@ -1,67 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============8294903745374064035=="
+Content-Type: multipart/mixed; boundary="===============8529561601607351712=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Thiago Cangussu de Castro Gomes <thiagoc@syst.com.br>
 Subject: Re: Connecting with Huawei E226
-Date: Fri, 27 Aug 2010 20:14:50 +0200
-Message-ID: <1282932890.6841.79.camel@localhost.localdomain>
-In-Reply-To: <AANLkTimPTy-bXSCJNXFiAo8U8+SLe0KzQ18AxdzGZvJy@mail.gmail.com>
+Date: Fri, 27 Aug 2010 15:57:09 -0300
+Message-ID: <AANLkTi=zGHmLy0y1FdJvDY7-4=_OFt0Vs0O6CC-osPYW@mail.gmail.com>
+In-Reply-To: <1282932890.6841.79.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8294903745374064035==
+--===============8529561601607351712==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Thiago,
+>> I understand. I mixed up two problems and that got confusing. The ZTE
+>> modem is not showing the race condition issue. It didn't showed up
+>> when I called list-modems. That is why I tested it with other
+>> software, just to be sure it works with linux (MeeGo in this case). I
+>> will test again with the ZTE modem and send the logs to the list.
+>
+> my ZTE modem works, but you need the latest oFono and its udev rules to
+> make it detect.
 
-> >> >> I forgot also to mention that I used list-context to see if the
-> >> >> enable-modem was successful. The test B is the one that fails.
-> >> >
-> >> > From the logs it seems Test A is what fails since we never add any a=
-toms
-> >> > in that one.  Basically the problem is that your modem firmware never
-> >> > tells us that the SIM has been initialized by sending us a ^SIMST
-> >> > notification.
-> >> >
-> >> > Kalle's patch relies on SIMST being delivered eventually.  Since it
-> >> > never does, oFono is under the impression that your SIM is invalid. =
- We
-> >> > probably need to query SYSINFO a few more times in this case, but it
-> >> > seems all Huawei firmwares act slightly differently here.
-> >>
-> >> Is there something else I can do to help solve this issue? I tried
-> >> another modem, a ZTE MF110, that is not working either. I installed
-> >> wvdial on my MeeGo machine and was able to connect using both the
-> >> Huawei and ZTE modems. I also tested the devices under Ubuntu Lucid
-> >> and Fedora 13 (both with Networkmanager) and they worked out of the
-> >> box.
-> >
-> > the problem is that neither wvdial nor NM are proper telephony stacks.
-> > They are both in the end just dialers. So that comparison is not helping
-> > us since oFono has to do way more work before we can just "dial" an
-> > Internet connection.
-> >
-> > We get this fixed, but not as quick as you might like us too. The Huawei
-> > and ZTE modems are showing race condition behavior. And that is mainly
-> > because oFono is just too fast and they can't initialize the SIM fast
-> > enough for us.
-> =
+I'm using ofono from git (last commit from yesterday) and the udev
+rules are installed and loaded. The ZTE is a MF110.
 
-> I understand. I mixed up two problems and that got confusing. The ZTE
-> modem is not showing the race condition issue. It didn't showed up
-> when I called list-modems. That is why I tested it with other
-> software, just to be sure it works with linux (MeeGo in this case). I
-> will test again with the ZTE modem and send the logs to the list.
+When I plug the device, I need to call eject /dev/sr0, only after that
+it is recognized correctly. After that, the following appears on ofono
+log:
 
-my ZTE modem works, but you need the latest oFono and its udev rules to
-make it detect.
+ofonod[1632]: src/modem.c:ofono_modem_create() name: P671A2VIVD010000, type=
+: zte
+ofonod[1632]: src/modem.c:set_modem_property() modem 0x87ca1b0 property Path
+ofonod[1632]: src/modem.c:set_modem_property() modem 0x87ca1b0
+property Registered
+ofonod[1632]: plugins/udev.c:add_modem()
+/devices/pci0000:00/0000:00:1d.7/usb1/1-1/1-1:1.0/ttyUSB0/tty/ttyUSB0
+(zte)
+ofonod[1632]: plugins/udev.c:add_zte() modem 0x87ca1b0
+ofonod[1632]: src/modem.c:get_modem_property() modem 0x87ca1b0
+property ModemRegistered
+ofonod[1632]: src/modem.c:get_modem_property() modem 0x87ca1b0
+property AuxRegistered
+ofonod[1632]: src/modem.c:get_modem_property() modem 0x87ca1b0 property Path
+ofonod[1632]: plugins/udev.c:add_modem()
+/devices/pci0000:00/0000:00:1d.7/usb1/1-1/1-1:1.3/ttyUSB2/tty/ttyUSB2
+(zte)
+ofonod[1632]: plugins/udev.c:add_zte() modem 0x87ca1b0
+ofonod[1632]: src/modem.c:get_modem_property() modem 0x87ca1b0
+property ModemRegistered
+ofonod[1632]: src/modem.c:get_modem_property() modem 0x87ca1b0
+property AuxRegistered
+ofonod[1632]: src/modem.c:get_modem_property() modem 0x87ca1b0 property Path
+ofonod[1632]: plugins/udev.c:add_modem()
+/devices/pci0000:00/0000:00:1d.7/usb1/1-1/1-1:1.1/ttyUSB1/tty/ttyUSB1
+(zte)
+ofonod[1632]: plugins/udev.c:add_zte() modem 0x87ca1b0
+ofonod[1632]: src/modem.c:get_modem_property() modem 0x87ca1b0
+property ModemRegistered
+ofonod[1632]: src/modem.c:get_modem_property() modem 0x87ca1b0
+property AuxRegistered
 
-Regards
+After that, if I run list-modems nothing happens.
 
-Marcel
+I don't know if it is related, but I'm getting lots of error messages
+from option driver:
 
+option: option_instat_callback: error -2
 
+They appear as soon as the modem is detected (after eject /dev/sr0).
 
---===============8294903745374064035==--
+Regards,
+Thiago
+
+--===============8529561601607351712==--
 
