@@ -1,76 +1,211 @@
-Content-Type: multipart/mixed; boundary="===============3771561030475037746=="
+Content-Type: multipart/mixed; boundary="===============5414362831514123600=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Connecting with Huawei E226
-Date: Sat, 28 Aug 2010 08:21:09 +0200
-Message-ID: <1282976469.6841.83.camel@localhost.localdomain>
-In-Reply-To: <AANLkTikjhDsmvG==d4f9D=Zic+CXjGgUyJvfk1Fmv3Za@mail.gmail.com>
+From: Thadeu Lima de Souza Cascardo <cascardo@holoscopio.com>
+Subject: [PATCH v3] atmodem/phonebook: parse text as hexstring
+Date: Sat, 28 Aug 2010 04:27:19 -0300
+Message-ID: <1282980439-12044-1-git-send-email-cascardo@holoscopio.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3771561030475037746==
+--===============5414362831514123600==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Thiago,
+Some modems omit the quotes when dumping strings in UCS2. Parsing
+them as hexstring already does the hex decoding and accepts missing
+quotes.
+---
+ drivers/atmodem/phonebook.c |  138 ++++++++++++++++++++-------------------=
+---
+ 1 files changed, 66 insertions(+), 72 deletions(-)
 
-> >> I don't know if it is related, but I'm getting lots of error messages
-> >> from option driver:
-> >>
-> >> option: option_instat_callback: error -2
-> >>
-> >> They appear as soon as the modem is detected (after eject /dev/sr0).
-> >
-> > Sounds like a kernel bug. Which one are you using?
-> =
+diff --git a/drivers/atmodem/phonebook.c b/drivers/atmodem/phonebook.c
+index 785d539..1d5e1a9 100644
+--- a/drivers/atmodem/phonebook.c
++++ b/drivers/atmodem/phonebook.c
+@@ -59,16 +59,49 @@ struct pb_data {
+ 	GAtChat *chat;
+ };
+ =
 
-> 2.6.33.5
-> =
+-static char *ucs2_to_utf8(const char *str)
++static void warn_bad()
+ {
+-	long len;
+-	unsigned char *ucs2;
++	ofono_warn("Name field conversion to UTF8 failed, this can indicate a"
++		" problem with modem integration, as this field"
++		" is required by 27.007.");
++}
++
++static gboolean parse_text(GAtResultIter *iter, char **str, int encoding)
++{
++	const char *string;
++	const guint8 *hex;
++	int len;
+ 	char *utf8;
+-	ucs2 =3D decode_hex(str, -1, &len, 0);
+-	utf8 =3D g_convert((char *)ucs2, len, "UTF-8//TRANSLIT", "UCS-2BE",
++	/* charset_current is CHARSET_UCS2, CHARSET_IRA or CHARSET_UTF8 */
++	if (encoding =3D=3D CHARSET_UCS2) {
++		/*
++		 * Some devices omit the quotes, so use hexstring,
++		 * which also decode to hex
++		 */
++		if (g_at_result_iter_next_hexstring(iter, &hex, &len) =3D=3D FALSE)
++			return FALSE;
++
++		utf8 =3D g_convert((const gchar*) hex, len,
++					"UTF-8//TRANSLIT", "UCS-2BE",
+ 					NULL, NULL, NULL);
+-	g_free(ucs2);
+-	return utf8;
++
++		if (utf8) {
++			*str =3D utf8;
++			return TRUE;
++		}
++
++		return FALSE;
++	}
++	/*
++	 * In the case of IRA charset, assume these are Latin1
++	 * characters, same as in UTF8
++	 */
++	if (g_at_result_iter_next_string(iter, &string)) {
++		*str =3D g_strdup(string);
++		return TRUE;
++	}
++
++	return FALSE;
+ }
+ =
 
-> > However show us your /proc/bus/usb/devices content for this modem.
-> =
+ static const char *best_charset(int supported)
+@@ -110,15 +143,15 @@ static void at_cpbr_notify(GAtResult *result, gpointe=
+r user_data)
+ 		int index;
+ 		const char *number;
+ 		int type;
+-		const char *text;
++		char *text;
+ 		int hidden =3D -1;
+-		const char *group =3D NULL;
++		char *group =3D NULL;
+ 		const char *adnumber =3D NULL;
+ 		int adtype =3D -1;
+-		const char *secondtext =3D NULL;
+-		const char *email =3D NULL;
+-		const char *sip_uri =3D NULL;
+-		const char *tel_uri =3D NULL;
++		char *secondtext =3D NULL;
++		char *email =3D NULL;
++		char *sip_uri =3D NULL;
++		char *tel_uri =3D NULL;
+ =
 
-> T:  Bus=3D01 Lev=3D01 Prnt=3D01 Port=3D00 Cnt=3D01 Dev#=3D  6 Spd=3D480 M=
-xCh=3D 0
-> D:  Ver=3D 2.00 Cls=3D00(>ifc ) Sub=3D00 Prot=3D00 MxPS=3D64 #Cfgs=3D  1
-> P:  Vendor=3D19d2 ProdID=3D0031 Rev=3D 0.00
-> C:* #Ifs=3D 4 Cfg#=3D 1 Atr=3De0 MxPwr=3D500mA
-> I:* If#=3D 0 Alt=3D 0 #EPs=3D 2 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
-=3Doption
-> E:  Ad=3D81(I) Atr=3D02(Bulk) MxPS=3D 512 Ivl=3D0ms
-> E:  Ad=3D01(O) Atr=3D02(Bulk) MxPS=3D 512 Ivl=3D4ms
-> I:* If#=3D 1 Alt=3D 0 #EPs=3D 2 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
-=3Doption
-> E:  Ad=3D82(I) Atr=3D02(Bulk) MxPS=3D 512 Ivl=3D0ms
-> E:  Ad=3D02(O) Atr=3D02(Bulk) MxPS=3D 512 Ivl=3D4ms
-> I:* If#=3D 2 Alt=3D 0 #EPs=3D 2 Cls=3D08(stor.) Sub=3D06 Prot=3D50 Driver=
-=3Dusb-storage
-> E:  Ad=3D03(O) Atr=3D02(Bulk) MxPS=3D 512 Ivl=3D0ms
-> E:  Ad=3D83(I) Atr=3D02(Bulk) MxPS=3D 512 Ivl=3D0ms
-> I:* If#=3D 3 Alt=3D 0 #EPs=3D 3 Cls=3Dff(vend.) Sub=3Dff Prot=3Dff Driver=
-=3Doption
-> E:  Ad=3D84(I) Atr=3D03(Int.) MxPS=3D  64 Ivl=3D2ms
-> E:  Ad=3D85(I) Atr=3D02(Bulk) MxPS=3D 512 Ivl=3D0ms
-> E:  Ad=3D04(O) Atr=3D02(Bulk) MxPS=3D 512 Ivl=3D4ms
-> =
+ 		if (!g_at_result_iter_next_number(&iter, &index))
+ 			continue;
+@@ -129,70 +162,31 @@ static void at_cpbr_notify(GAtResult *result, gpointe=
+r user_data)
+ 		if (!g_at_result_iter_next_number(&iter, &type))
+ 			continue;
+ =
 
-> From lsusb:
-> =
+-		if (!g_at_result_iter_next_string(&iter, &text))
++		if (!parse_text(&iter, &text, current)) {
++			warn_bad();
+ 			continue;
++		}
+ =
 
-> Bus 001 Device 006: ID 19d2:0031 ONDA Communication S.p.A.
+ 		g_at_result_iter_next_number(&iter, &hidden);
+-		g_at_result_iter_next_string(&iter, &group);
++		parse_text(&iter, &group, current);
+ 		g_at_result_iter_next_string(&iter, &adnumber);
+ 		g_at_result_iter_next_number(&iter, &adtype);
+-		g_at_result_iter_next_string(&iter, &secondtext);
+-		g_at_result_iter_next_string(&iter, &email);
+-		g_at_result_iter_next_string(&iter, &sip_uri);
+-		g_at_result_iter_next_string(&iter, &tel_uri);
+-
+-		/* charset_current is either CHARSET_UCS2 or CHARSET_UTF8 */
+-		if (current =3D=3D CHARSET_UCS2) {
+-			char *text_utf8;
+-			char *group_utf8 =3D NULL;
+-			char *secondtext_utf8 =3D NULL;
+-			char *email_utf8 =3D NULL;
+-			char *sip_uri_utf8 =3D NULL;
+-			char *tel_uri_utf8 =3D NULL;
+-
+-			text_utf8 =3D ucs2_to_utf8(text);
+-
+-			if (text_utf8 =3D=3D NULL)
+-				ofono_warn("Name field conversion to UTF8"
+-						" failed, this can indicate a"
+-						" problem with modem"
+-						" integration, as this field"
+-						" is required by 27.007."
+-						"  Contents of name reported"
+-						" by modem: %s", text);
+-
+-			if (group)
+-				group_utf8 =3D ucs2_to_utf8(group);
+-			if (secondtext)
+-				secondtext_utf8 =3D ucs2_to_utf8(secondtext);
+-			if (email)
+-				email_utf8 =3D ucs2_to_utf8(email);
+-			if (sip_uri)
+-				sip_uri_utf8 =3D ucs2_to_utf8(sip_uri);
+-			if (tel_uri)
+-				tel_uri_utf8 =3D ucs2_to_utf8(tel_uri);
+-
+-			ofono_phonebook_entry(pb, index, number, type,
+-				text_utf8, hidden, group_utf8, adnumber,
+-				adtype, secondtext_utf8, email_utf8,
+-				sip_uri_utf8, tel_uri_utf8);
+-
+-			g_free(text_utf8);
+-			g_free(group_utf8);
+-			g_free(secondtext_utf8);
+-			g_free(email_utf8);
+-			g_free(sip_uri_utf8);
+-			g_free(tel_uri_utf8);
+-		} else {
+-			/* In the case of IRA charset, assume these are Latin1
+-			 * characters, same as in UTF8
+-			 */
+-			ofono_phonebook_entry(pb, index, number, type,
+-				text, hidden, group, adnumber,
+-				adtype, secondtext, email,
+-				sip_uri, tel_uri);
+-
+-		}
++		parse_text(&iter, &secondtext, current);
++		parse_text(&iter, &email, current);
++		parse_text(&iter, &sip_uri, current);
++		parse_text(&iter, &tel_uri, current);
++
++		ofono_phonebook_entry(pb, index, number, type,
++			text, hidden, group, adnumber,
++			adtype, secondtext, email,
++			sip_uri, tel_uri);
++
++		g_free(text);
++		g_free(group);
++		g_free(secondtext);
++		g_free(email);
++		g_free(sip_uri);
++		g_free(tel_uri);
+ 	}
+ }
+ =
 
-so for sure the udev rule for your modem was missing. I added that one
-now.
+-- =
 
-If the option driver is causing a problem, then I don't know. However I
-am using a 2.6.33.6 F13 kernel without any problems.
-
-Regards
-
-Marcel
+1.7.1
 
 
-
---===============3771561030475037746==--
+--===============5414362831514123600==--
 
