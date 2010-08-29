@@ -1,211 +1,209 @@
-Content-Type: multipart/mixed; boundary="===============5414362831514123600=="
+Content-Type: multipart/mixed; boundary="===============0986634853312147053=="
 MIME-Version: 1.0
-From: Thadeu Lima de Souza Cascardo <cascardo@holoscopio.com>
-Subject: [PATCH v3] atmodem/phonebook: parse text as hexstring
-Date: Sat, 28 Aug 2010 04:27:19 -0300
-Message-ID: <1282980439-12044-1-git-send-email-cascardo@holoscopio.com>
+From: Yang Gu <gyagp0@gmail.com>
+Subject: [PATCH v2 1/1] sim: Read EFsst
+Date: Sun, 29 Aug 2010 16:51:41 +0800
+Message-ID: <1283071901-24385-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5414362831514123600==
+--===============0986634853312147053==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Some modems omit the quotes when dumping strings in UCS2. Parsing
-them as hexstring already does the hex decoding and accepts missing
-quotes.
 ---
- drivers/atmodem/phonebook.c |  138 ++++++++++++++++++++-------------------=
----
- 1 files changed, 66 insertions(+), 72 deletions(-)
+ src/sim.c     |   34 ++++++++++++++++++++++++++++--
+ src/simutil.c |   18 ++++++++++++++++
+ src/simutil.h |   63 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 3 files changed, 112 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/atmodem/phonebook.c b/drivers/atmodem/phonebook.c
-index 785d539..1d5e1a9 100644
---- a/drivers/atmodem/phonebook.c
-+++ b/drivers/atmodem/phonebook.c
-@@ -59,16 +59,49 @@ struct pb_data {
- 	GAtChat *chat;
+diff --git a/src/sim.c b/src/sim.c
+index f8884a2..6cbb2eb 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -101,6 +101,8 @@ struct ofono_sim {
+ 	unsigned char efust_length;
+ 	unsigned char *efest;
+ 	unsigned char efest_length;
++	unsigned char *efsst;
++	unsigned char efsst_length;
  };
  =
 
--static char *ucs2_to_utf8(const char *str)
-+static void warn_bad()
- {
--	long len;
--	unsigned char *ucs2;
-+	ofono_warn("Name field conversion to UTF8 failed, this can indicate a"
-+		" problem with modem integration, as this field"
-+		" is required by 27.007.");
+ struct msisdn_set_request {
+@@ -1072,6 +1074,27 @@ static void sim_retrieve_imsi(struct ofono_sim *sim)
+ 	sim->driver->read_imsi(sim, sim_imsi_cb, sim);
+ }
+ =
+
++static void sim_efsst_read_cb(int ok, int length, int record,
++				const unsigned char *data,
++				int record_length, void *userdata)
++{
++	struct ofono_sim *sim =3D userdata;
++
++	if (!ok)
++		goto out;
++
++	if (length < 2) {
++		ofono_error("EFsst shall contain@least two bytes");
++		goto out;
++	}
++
++	sim->efsst =3D g_memdup(data, length);
++	sim->efsst_length =3D length;
++
++out:
++	sim_retrieve_imsi(sim);
 +}
 +
-+static gboolean parse_text(GAtResultIter *iter, char **str, int encoding)
+ static void sim_efest_read_cb(int ok, int length, int record,
+ 				const unsigned char *data,
+ 				int record_length, void *userdata)
+@@ -1192,9 +1215,14 @@ static void sim_initialize_after_pin(struct ofono_si=
+m *sim)
+ 			sim_cphs_information_read_cb, sim);
+ =
+
+ 	/* Also retrieve the GSM service table */
+-	ofono_sim_read(sim, SIM_EFUST_FILEID,
+-			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+-			sim_efust_read_cb, sim);
++	if (sim->phase >=3D OFONO_SIM_PHASE_3G)
++		ofono_sim_read(sim, SIM_EFUST_FILEID,
++				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
++				sim_efust_read_cb, sim);
++	else
++		ofono_sim_read(sim, SIM_EFSST_FILEID,
++				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
++				sim_efsst_read_cb, sim);
+ }
+ =
+
+ static void sim_pin_query_cb(const struct ofono_error *error,
+diff --git a/src/simutil.c b/src/simutil.c
+index ac054ae..4af6810 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -1434,3 +1434,21 @@ gboolean sim_est_is_active(unsigned char *efest, uns=
+igned char len,
+ =
+
+ 	return (efest[index / 8] >> (index % 8)) & 1;
+ }
++
++gboolean sim_sst_is_available(unsigned char *efsst, unsigned char len,
++						enum sim_sst_service index)
 +{
-+	const char *string;
-+	const guint8 *hex;
-+	int len;
- 	char *utf8;
--	ucs2 =3D decode_hex(str, -1, &len, 0);
--	utf8 =3D g_convert((char *)ucs2, len, "UTF-8//TRANSLIT", "UCS-2BE",
-+	/* charset_current is CHARSET_UCS2, CHARSET_IRA or CHARSET_UTF8 */
-+	if (encoding =3D=3D CHARSET_UCS2) {
-+		/*
-+		 * Some devices omit the quotes, so use hexstring,
-+		 * which also decode to hex
-+		 */
-+		if (g_at_result_iter_next_hexstring(iter, &hex, &len) =3D=3D FALSE)
-+			return FALSE;
-+
-+		utf8 =3D g_convert((const gchar*) hex, len,
-+					"UTF-8//TRANSLIT", "UCS-2BE",
- 					NULL, NULL, NULL);
--	g_free(ucs2);
--	return utf8;
-+
-+		if (utf8) {
-+			*str =3D utf8;
-+			return TRUE;
-+		}
-+
++	if (index >=3D len * 4u)
 +		return FALSE;
-+	}
-+	/*
-+	 * In the case of IRA charset, assume these are Latin1
-+	 * characters, same as in UTF8
-+	 */
-+	if (g_at_result_iter_next_string(iter, &string)) {
-+		*str =3D g_strdup(string);
-+		return TRUE;
-+	}
 +
-+	return FALSE;
- }
- =
-
- static const char *best_charset(int supported)
-@@ -110,15 +143,15 @@ static void at_cpbr_notify(GAtResult *result, gpointe=
-r user_data)
- 		int index;
- 		const char *number;
- 		int type;
--		const char *text;
-+		char *text;
- 		int hidden =3D -1;
--		const char *group =3D NULL;
-+		char *group =3D NULL;
- 		const char *adnumber =3D NULL;
- 		int adtype =3D -1;
--		const char *secondtext =3D NULL;
--		const char *email =3D NULL;
--		const char *sip_uri =3D NULL;
--		const char *tel_uri =3D NULL;
-+		char *secondtext =3D NULL;
-+		char *email =3D NULL;
-+		char *sip_uri =3D NULL;
-+		char *tel_uri =3D NULL;
- =
-
- 		if (!g_at_result_iter_next_number(&iter, &index))
- 			continue;
-@@ -129,70 +162,31 @@ static void at_cpbr_notify(GAtResult *result, gpointe=
-r user_data)
- 		if (!g_at_result_iter_next_number(&iter, &type))
- 			continue;
- =
-
--		if (!g_at_result_iter_next_string(&iter, &text))
-+		if (!parse_text(&iter, &text, current)) {
-+			warn_bad();
- 			continue;
-+		}
- =
-
- 		g_at_result_iter_next_number(&iter, &hidden);
--		g_at_result_iter_next_string(&iter, &group);
-+		parse_text(&iter, &group, current);
- 		g_at_result_iter_next_string(&iter, &adnumber);
- 		g_at_result_iter_next_number(&iter, &adtype);
--		g_at_result_iter_next_string(&iter, &secondtext);
--		g_at_result_iter_next_string(&iter, &email);
--		g_at_result_iter_next_string(&iter, &sip_uri);
--		g_at_result_iter_next_string(&iter, &tel_uri);
--
--		/* charset_current is either CHARSET_UCS2 or CHARSET_UTF8 */
--		if (current =3D=3D CHARSET_UCS2) {
--			char *text_utf8;
--			char *group_utf8 =3D NULL;
--			char *secondtext_utf8 =3D NULL;
--			char *email_utf8 =3D NULL;
--			char *sip_uri_utf8 =3D NULL;
--			char *tel_uri_utf8 =3D NULL;
--
--			text_utf8 =3D ucs2_to_utf8(text);
--
--			if (text_utf8 =3D=3D NULL)
--				ofono_warn("Name field conversion to UTF8"
--						" failed, this can indicate a"
--						" problem with modem"
--						" integration, as this field"
--						" is required by 27.007."
--						"  Contents of name reported"
--						" by modem: %s", text);
--
--			if (group)
--				group_utf8 =3D ucs2_to_utf8(group);
--			if (secondtext)
--				secondtext_utf8 =3D ucs2_to_utf8(secondtext);
--			if (email)
--				email_utf8 =3D ucs2_to_utf8(email);
--			if (sip_uri)
--				sip_uri_utf8 =3D ucs2_to_utf8(sip_uri);
--			if (tel_uri)
--				tel_uri_utf8 =3D ucs2_to_utf8(tel_uri);
--
--			ofono_phonebook_entry(pb, index, number, type,
--				text_utf8, hidden, group_utf8, adnumber,
--				adtype, secondtext_utf8, email_utf8,
--				sip_uri_utf8, tel_uri_utf8);
--
--			g_free(text_utf8);
--			g_free(group_utf8);
--			g_free(secondtext_utf8);
--			g_free(email_utf8);
--			g_free(sip_uri_utf8);
--			g_free(tel_uri_utf8);
--		} else {
--			/* In the case of IRA charset, assume these are Latin1
--			 * characters, same as in UTF8
--			 */
--			ofono_phonebook_entry(pb, index, number, type,
--				text, hidden, group, adnumber,
--				adtype, secondtext, email,
--				sip_uri, tel_uri);
--
--		}
-+		parse_text(&iter, &secondtext, current);
-+		parse_text(&iter, &email, current);
-+		parse_text(&iter, &sip_uri, current);
-+		parse_text(&iter, &tel_uri, current);
++	return (efsst[index / 4] >> ((index % 4) * 2)) & 1;
++}
 +
-+		ofono_phonebook_entry(pb, index, number, type,
-+			text, hidden, group, adnumber,
-+			adtype, secondtext, email,
-+			sip_uri, tel_uri);
++gboolean sim_sst_is_active(unsigned char *efsst, unsigned char len,
++						enum sim_sst_service index)
++{
++	if (index >=3D len * 4u)
++		return FALSE;
 +
-+		g_free(text);
-+		g_free(group);
-+		g_free(secondtext);
-+		g_free(email);
-+		g_free(sip_uri);
-+		g_free(tel_uri);
- 	}
- }
++	return (efsst[index / 4] >> (((index % 4) * 2) + 1)) & 1;
++}
+diff --git a/src/simutil.h b/src/simutil.h
+index 65e651a..0a94c67 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -28,6 +28,7 @@ enum sim_fileid {
+ 	SIM_EF_CPHS_INFORMATION_FILEID =3D 0x6f16,
+ 	SIM_EF_CPHS_MBDN_FILEID =3D 0x6f17,
+ 	SIM_EFUST_FILEID =3D 0x6f38,
++	SIM_EFSST_FILEID =3D 0x6f38, /* same as EFust */
+ 	SIM_EFMSISDN_FILEID =3D 0x6f40,
+ 	SIM_EFSPN_FILEID =3D 0x6f46,
+ 	SIM_EFSDN_FILEID =3D 0x6f49,
+@@ -154,6 +155,64 @@ enum sim_est_service {
+ 	SIM_EST_SERVICE_ACL				=3D 2
+ };
  =
 
++/* 51.011 Section 10.3.7 */
++enum sim_sst_service {
++	SIM_SST_SERVICE_CHV1_DISABLE 			=3D 0,
++	SIM_SST_SERVICE_ADN				=3D 1,
++	SIM_SST_SERVICE_FDN				=3D 2,
++	SIM_SST_SERVICE_SMS				=3D 3,
++	SIM_SST_SERVICE_AOC				=3D 4,
++	SIM_SST_SERVICE_CCP				=3D 5,
++	SIM_SST_SERVICE_PLMN_SELECTOR			=3D 6,
++	SIM_SST_SERVICE_MSISDN				=3D 8,
++	SIM_SST_SERVICE_EXT_1				=3D 9,
++	SIM_SST_SERVICE_EXT_2				=3D 10,
++	SIM_SST_SERVICE_SMSP				=3D 11,
++	SIM_SST_SERVICE_LND				=3D 12,
++	SIM_SST_SERVICE_CBS_ID				=3D 13,
++	SIM_SST_SERVICE_GROUP_ID_LEVEL_1		=3D 14,
++	SIM_SST_SERVICE_GROUP_ID_LEVEL_2		=3D 15,
++	SIM_SST_SERVICE_PROVIDER_NAME			=3D 16,
++	SIM_SST_SERVICE_SDN				=3D 17,
++	SIM_SST_SERVICE_EXT_3				=3D 18,
++	SIM_SST_SERVICE_EFVGCS_EFVGCSS			=3D 20,
++	SIM_SST_SERVICE_EFVBS_EFVBSS			=3D 21,
++	SIM_SST_SERVICE_PRECEDENCE_PREEMPTION		=3D 22,
++	SIM_SST_SERVICE_EMLPP				=3D 23,
++	SIM_SST_SERVICE_DATA_DOWNLOAD_SMS_CB		=3D 24,
++	SIM_SST_SERVICE_DATA_DOWNLOAD_SMS_PP		=3D 25,
++	SIM_SST_SERVICE_MENU_SELECTION			=3D 26,
++	SIM_SST_SERVICE_CALL_CONTROL			=3D 27,
++	SIM_SST_SERVICE_PROACTIVE_SIM			=3D 28,
++	SIM_SST_SERVICE_CBS_ID_RANGE			=3D 29,
++	SIM_SST_SERVICE_BDN				=3D 30,
++	SIM_SST_SERVICE_EXT_4				=3D 31,
++	SIM_SST_SERVICE_DEPERSONALISATION_CTRL_KEY	=3D 32,
++	SIM_SST_SERVICE_NETWORK_LIST			=3D 33,
++	SIM_SST_SERVICE_SMSR				=3D 34,
++	SIM_SST_SERVICE_NIA				=3D 35,
++	SIM_SST_SERVICE_MO_SMS_SIM			=3D 36,
++	SIM_SST_SERVICE_GPRS				=3D 37,
++	SIM_SST_SERVICE_IMG				=3D 38,
++	SIM_SST_SERVICE_SOLSA				=3D 39,
++	SIM_SST_SERVICE_USSD_CALL_CONTROL		=3D 40,
++	SIM_SST_SERVICE_RUN_AT_COMMAND			=3D 41,
++	SIM_SST_SERVICE_USER_PLMN			=3D 42,
++	SIM_SST_SERVICE_OPERATOR_PLMN			=3D 43,
++	SIM_SST_SERVICE_HPLMN				=3D 44,
++	SIM_SST_SERVICE_CPBCCH				=3D 45,
++	SIM_SST_SERVICE_INVESTIGATION_SCAN		=3D 46,
++	SIM_SST_SERVICE_EXT_CCP				=3D 47,
++	SIM_SST_SERVICE_MEXE				=3D 48,
++	SIM_SST_SERVICE_RPLMN				=3D 49,
++	SIM_SST_SERVICE_PLMN_NETWORK_NAME		=3D 50,
++	SIM_SST_SERVICE_OPERATOR_PLMN_LIST		=3D 51,
++	SIM_SST_SERVICE_MAILBOX_DIALLING_NUMBERS	=3D 52,
++	SIM_SST_SERVICE_MWIS				=3D 53,
++	SIM_SST_SERVICE_CFIS				=3D 54,
++	SIM_SST_SERVICE_PROVIDER_DISPLAY_INFO		=3D 55
++};
++
+ #define SIM_EFSPN_DC_HOME_PLMN_BIT 0x1
+ #define SIM_EFSPN_DC_ROAMING_SPN_BIT 0x2
+ =
+
+@@ -372,3 +431,7 @@ gboolean sim_ust_is_available(unsigned char *service_us=
+t, unsigned char len,
+ 						enum sim_ust_service index);
+ gboolean sim_est_is_active(unsigned char *service_est, unsigned char len,
+ 						enum sim_est_service index);
++gboolean sim_sst_is_available(unsigned char *service_sst, unsigned char le=
+n,
++						enum sim_sst_service index);
++gboolean sim_sst_is_active(unsigned char *service_sst, unsigned char len,
++						enum sim_sst_service index);
 -- =
 
-1.7.1
+1.7.0.4
 
 
---===============5414362831514123600==--
+--===============0986634853312147053==--
 
