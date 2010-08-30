@@ -1,27 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============7824921965400792566=="
+Content-Type: multipart/mixed; boundary="===============8391518946218734056=="
 MIME-Version: 1.0
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 0/1] Add faked sim driver for hfp modem
-Date: Mon, 30 Aug 2010 17:50:16 +0800
-Message-ID: <1283161817-22935-1-git-send-email-zhenhua.zhang@intel.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] mbm: D5530 gets bogus +GCAP, not +CGAP
+Date: Mon, 30 Aug 2010 16:36:31 +0300
+Message-ID: <1283175391-20915-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7824921965400792566==
+--===============8391518946218734056==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-The hfp modem driver doesn't work after recent sim related changes. So that=
- I fake a sim driver for hfpmodem.
+---
+ plugins/mbm.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-Please review it. Thanks!
+diff --git a/plugins/mbm.c b/plugins/mbm.c
+index d0e084f..46cf7a0 100644
+--- a/plugins/mbm.c
++++ b/plugins/mbm.c
+@@ -158,7 +158,7 @@ static void mbm_quirk_d5530(struct ofono_modem *modem)
+ 	/* Try to ignore them. */
+ 	g_at_chat_register(data->modem_port, "D5530", d5530_notify,
+ 				FALSE, NULL, NULL);
+-	g_at_chat_register(data->modem_port, "+CGAP:", d5530_notify,
++	g_at_chat_register(data->modem_port, "+GCAP:", d5530_notify,
+ 				FALSE, NULL, NULL);
+ }
+ =
 
-Regards,
-Zhenhua
+-- =
+
+1.7.0.4
 
 
---===============7824921965400792566==--
+--===============8391518946218734056==--
 
