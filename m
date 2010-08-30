@@ -1,258 +1,92 @@
-Content-Type: multipart/mixed; boundary="===============4220133218987588389=="
+Content-Type: multipart/mixed; boundary="===============1557899407278228018=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [g_isi_send RFC 1/3] gisi: added g_isi_send() and g_isi_vsend()
-Date: Mon, 30 Aug 2010 19:42:37 +0300
-Message-ID: <1283186559-4548-2-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1283186559-4548-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [sim-reset-pin-v2 2/3] atmodem/sim: add pin type to PIN reset method
+Date: Mon, 30 Aug 2010 20:53:43 +0300
+Message-ID: <1283190824-9876-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1283190824-9876-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4220133218987588389==
+--===============1557899407278228018==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Include a finalize function in GIsiRequest
+The PIN reset requires that modem waits for corresponding PUK code.
 ---
- gisi/client.c |   97 ++++++++++++++++++++++++++++++++++++++++++++++++++---=
----
- gisi/client.h |   12 +++++++
- 2 files changed, 98 insertions(+), 11 deletions(-)
+ drivers/atmodem/sim.c |   14 ++++++++++++--
+ 1 files changed, 12 insertions(+), 2 deletions(-)
 
-diff --git a/gisi/client.c b/gisi/client.c
-index 640484d..a1aa709 100644
---- a/gisi/client.c
-+++ b/gisi/client.c
-@@ -52,6 +52,7 @@ struct _GIsiRequest {
- 	guint timeout;
- 	GIsiResponseFunc func;
- 	void *data;
-+	GDestroyNotify notify;
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 21bc933..a80891c 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -44,6 +44,7 @@
+ struct sim_data {
+ 	GAtChat *chat;
+ 	unsigned int vendor;
++	enum ofono_sim_password_type cpin_type;
+ 	guint epev_id;
+ 	guint epev_source;
  };
+@@ -459,6 +460,8 @@ static void at_cpin_cb(gboolean ok, GAtResult *result, =
+gpointer user_data)
+ 	int len =3D sizeof(at_sim_name) / sizeof(*at_sim_name);
+ 	const char *final =3D g_at_result_final_response(result);
  =
 
- struct _GIsiIndication {
-@@ -240,6 +241,9 @@ static void g_isi_cleanup_req(void *data)
- 		req->func(req->client, NULL, 0, 0, req->data);
- 	req->client->error =3D 0;
- =
-
-+	if (req->notify)
-+		req->notify(req->data);
++	sd->cpin_type =3D OFONO_SIM_PASSWORD_NONE;
 +
- 	if (req->timeout > 0)
- 		g_source_remove(req->timeout);
+ 	if (sd->vendor =3D=3D OFONO_VENDOR_WAVECOM && ok && strlen(final) > 7)
+ 		decode_at_error(&error, "OK");
+ 	else
+@@ -498,6 +501,8 @@ static void at_cpin_cb(gboolean ok, GAtResult *result, =
+gpointer user_data)
  =
 
-@@ -329,31 +333,90 @@ GIsiRequest *g_isi_request_make(GIsiClient *client, c=
-onst void *__restrict buf,
- 				size_t len, unsigned timeout,
- 				GIsiResponseFunc cb, void *opaque)
+ 	DBG("crsm_pin_cb: %s", pin_required);
+ =
+
++	sd->cpin_type =3D pin_type;
++
+ 	cb(&error, pin_type, cbd->data);
+ }
+ =
+
+@@ -616,8 +621,9 @@ error:
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ }
+ =
+
+-static void at_pin_send_puk(struct ofono_sim *sim, const char *puk,
+-				const char *passwd,
++static void at_pin_send_puk(struct ofono_sim *sim,
++				enum ofono_sim_password_type type,
++				const char *puk, const char *passwd,
+ 				ofono_sim_lock_unlock_cb_t cb, void *data)
  {
-+	return g_isi_send(client, buf, len, timeout, cb, opaque, NULL);
-+}
+ 	struct sim_data *sd =3D ofono_sim_get_data(sim);
+@@ -628,6 +634,10 @@ static void at_pin_send_puk(struct ofono_sim *sim, con=
+st char *puk,
+ 	if (!cbd)
+ 		goto error;
+ =
+
++	if (type !=3D OFONO_SIM_PASSWORD_SIM_PIN ||
++			sd->cpin_type !=3D OFONO_SIM_PASSWORD_SIM_PUK)
++		goto error;
 +
-+/**
-+ * Make an ISI request and register a callback to process the response(s) =
-to
-+ * the resulting transaction.
-+ * @param cl ISI client (from g_isi_client_create())
-+ * @param iov scatter-gather array to the request payload
-+ * @param iovlen number of vectors in the scatter-gather array
-+ * @param timeout timeout in seconds
-+ * @param cb callback to process response(s)
-+ * @param opaque data for the callback
-+ */
-+GIsiRequest *g_isi_request_vmake(GIsiClient *client, const struct iovec *i=
-ov,
-+					size_t iovlen, unsigned timeout,
-+					GIsiResponseFunc func, void *opaque)
-+{
-+	return g_isi_vsend(client, iov, iovlen, timeout, func, opaque, NULL);
-+}
-+
-+/**
-+ * Send an ISI request and register a callback to process the response(s) =
-to
-+ * the resulting transaction.
-+ *
-+ * If @a notify is non-NULL but @a opaque is NULL, @a errno is not set and=
- a
-+ * NULL pointer is returned.
-+ *
-+ * @param cl ISI client (from g_isi_client_create())
-+ * @param buf pointer to request payload
-+ * @param len request payload byte length
-+ * @param timeout timeout in seconds
-+ * @param cb callback to process response(s)
-+ * @param opaque data for the callback
-+ * @param notify finalizer function for the @a opaque data (may be NULL)
-+ *
-+ * @return
-+ * A pointer to a newly created GIsiRequest.
-+ *
-+ * @errors
-+ * If an error occurs, @a notify is called, @a errno is set accordingly and
-+ * a NULL pointer is returned.
-+ */
-+GIsiRequest *g_isi_send(GIsiClient *client,
-+			const void *__restrict buf, size_t len,
-+			unsigned timeout,
-+			GIsiResponseFunc cb, void *opaque,
-+			GDestroyNotify notify)
-+{
- 	const struct iovec iov =3D {
- 		.iov_base =3D (void *)buf,
- 		.iov_len =3D len,
- 	};
+ 	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\",\"%s\"", puk, passwd);
  =
 
--	if (!client)
--		return NULL;
--
--	return g_isi_request_vmake(client, &iov, 1, timeout, cb, opaque);
-+	return g_isi_vsend(client, &iov, 1, timeout, cb, opaque, notify);
- }
- =
-
-+
- /**
-- * Make an ISI request and register a callback to process the response(s) =
-to
-+ * Send an ISI request and register a callback to process the response(s) =
-to
-  * the resulting transaction.
-+ *
-+ * If @a notify is non-NULL but @a opaque is NULL, @a errno is not set and=
- a
-+ * NULL pointer is returned.
-+ *
-  * @param cl ISI client (from g_isi_client_create())
-  * @param iov scatter-gather array to the request payload
-  * @param iovlen number of vectors in the scatter-gather array
-  * @param timeout timeout in seconds
-  * @param cb callback to process response(s)
-  * @param opaque data for the callback
-+ * @param notify finalizer function for the @a opaque data (may be NULL)
-+ *
-+ * @return
-+ * A pointer to a newly created GIsiRequest.
-+ *
-+ * @errors
-+ * If an error occurs, @a notify is called, @a errno is set accordingly and
-+ * a NULL pointer is returned.
-  */
--GIsiRequest *g_isi_request_vmake(GIsiClient *client,
--					const struct iovec *__restrict iov,
--					size_t iovlen, unsigned timeout,
--					GIsiResponseFunc cb, void *opaque)
-+GIsiRequest *g_isi_vsend(GIsiClient *client,
-+				const struct iovec *__restrict iov,
-+				size_t iovlen, unsigned timeout,
-+				GIsiResponseFunc cb, void *opaque,
-+				GDestroyNotify notify)
- {
- 	struct iovec _iov[1 + iovlen];
- 	struct sockaddr_pn dst =3D {
-@@ -375,21 +438,25 @@ GIsiRequest *g_isi_request_vmake(GIsiClient *client,
- 	GIsiRequest *req;
- 	GIsiRequest **old;
- =
-
-+	if (opaque =3D=3D NULL && notify !=3D NULL)
-+		return NULL;
-+
- 	if (!client) {
- 		errno =3D EINVAL;
--		return NULL;
-+		goto notify;
- 	}
- =
-
- 	req =3D g_try_new0(GIsiRequest, 1);
- 	if (!req) {
- 		errno =3D ENOMEM;
--		return NULL;
-+		goto notify;
- 	}
- =
-
- 	req->client =3D client;
- 	req->id =3D (client->reqs.last + 1) % 255;
- 	req->func =3D cb;
- 	req->data =3D opaque;
-+	req->notify =3D notify;
- =
-
- 	old =3D tsearch(req, &client->reqs.pending, g_isi_cmp);
- 	if (!old) {
-@@ -438,6 +505,10 @@ GIsiRequest *g_isi_request_vmake(GIsiClient *client,
- error:
- 	tdelete(req, &client->reqs.pending, g_isi_cmp);
- 	g_free(req);
-+
-+notify:
-+	if (notify)
-+		notify(opaque);
- 	return NULL;
- }
- =
-
-@@ -455,6 +526,10 @@ void g_isi_request_cancel(GIsiRequest *req)
- 		g_source_remove(req->timeout);
- =
-
- 	tdelete(req, &req->client->reqs.pending, g_isi_cmp);
-+
-+	if (req->notify)
-+		req->notify(req->data);
-+
- 	g_free(req);
- }
- =
-
-diff --git a/gisi/client.h b/gisi/client.h
-index 7046f31..e5ba01d 100644
---- a/gisi/client.h
-+++ b/gisi/client.h
-@@ -27,6 +27,7 @@ extern "C" {
- #endif
- =
-
- #include <stdint.h>
-+#include <glib/gtypes.h>
- #include <gisi/modem.h>
- =
-
- struct _GIsiClient;
-@@ -72,6 +73,17 @@ GIsiRequest *g_isi_request_vmake(GIsiClient *client, con=
-st struct iovec *iov,
- 					size_t iovlen, unsigned timeout,
- 					GIsiResponseFunc func, void *opaque);
- =
-
-+GIsiRequest *g_isi_send(GIsiClient *client, const void *data, size_t len,
-+			unsigned timeout,
-+			GIsiResponseFunc func, void *opaque,
-+			GDestroyNotify notify);
-+
-+GIsiRequest *g_isi_vsend(GIsiClient *client,
-+				const struct iovec *iov, size_t iovlen,
-+				unsigned timeout,
-+				GIsiResponseFunc func, void *opaque,
-+				GDestroyNotify notify);
-+
- void g_isi_request_cancel(GIsiRequest *req);
- =
-
- int g_isi_subscribe(GIsiClient *client, uint8_t type,
+ 	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
 -- =
 
 1.7.0.4
 
 
---===============4220133218987588389==--
+--===============1557899407278228018==--
 
