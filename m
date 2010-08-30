@@ -1,34 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============7085589343071870551=="
+Content-Type: multipart/mixed; boundary="===============7626782747102625033=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] mbm: D5530 gets bogus +GCAP, not +CGAP
-Date: Mon, 30 Aug 2010 11:29:05 -0500
-Message-ID: <4C7BDC51.5070102@gmail.com>
-In-Reply-To: <1283175391-20915-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Pekka.Pessi@nokia.com
+Subject: [g_isi_send RFC 0/3] g_isi_send()
+Date: Mon, 30 Aug 2010 19:42:36 +0300
+Message-ID: <1283186559-4548-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7085589343071870551==
+--===============7626782747102625033==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi all,
 
-On 08/30/2010 08:36 AM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+I've added the function g_isi_send() to the gisi client API.  It has been
+modeled after g_at_chat_send(), in other words, it includes a GDestroyNotify
+function.
 
-> ---
->  plugins/mbm.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
+The GDestroyNotify gets called after the sent request is complete (the
+result cb returns TRUE or the request is canceled).
+
+The latter two patches just show how to to use g_isi_send().
+
+Now, to the evil parts:
+
+In order to simplify the client code, the destroy notify is also called if
+the request could not be sent successfully. In the same vein, if the opaque
+data is NULL but destroy notify is non-NULL, the g_isi_send() just returns
+NULL but does not set errno.
+
+So, we can do something like
+
+if (!g_isi_send(clnt, msg, len, resp_cb, isi_cb_data_new(cb, data), g_free))
+	CALLBACK_WITH_FAILURE(cb, data);
+else
+	return;
+
+--Pekka
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============7085589343071870551==--
+--===============7626782747102625033==--
 
