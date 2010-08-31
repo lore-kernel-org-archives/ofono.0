@@ -1,119 +1,313 @@
-Content-Type: multipart/mixed; boundary="===============3121359473262699079=="
+Content-Type: multipart/mixed; boundary="===============8165622353488942936=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [RFC] Add agent API to message atom
-Date: Tue, 31 Aug 2010 09:20:52 +0300
-Message-ID: <AANLkTikEyMUfaHuPDFEsLx=ByaJLQ6VaxYipVeY0yYmh@mail.gmail.com>
-In-Reply-To: <D87B22B1FE8C0F479CA9BEAD6C25AAE8056A7653@ism-mail03.corp.ad.wrs.com>
+From: Arun.Ravindran@elektrobit.com
+Subject: RE: Atmodem PPP Link establishment issues
+Date: Tue, 31 Aug 2010 07:47:40 +0000
+Message-ID: <B668883EB5DD7144ADFC248A72176EA80292CDE8@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <1278420326.2789.35.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3121359473262699079==
+--===============8165622353488942936==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Marcel, =
 
-2010/8/31 Zhang, Caiwen <Caiwen.Zhang@windriver.com>:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 void RegisterApplicationAgen=
-t(object path, uint dest, uint
->> src)
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-Registers an agent to receive application messages.
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-The object path defines the path of the agent that
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-will be called when an application message is ready
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-to be dispatched.
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-The dest parameter is the destination application
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-port number, and the src parameter is the optional
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-source application port number.
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-Possible Errors: [service].Error.InvalidArguments
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0[service].Err=
-or.InvalidFormat
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0[service].Err=
-or.InUse
->> +
-> Push message is a kind of application message. If an agent register both
-> RegisterPushAgent and RegisterApplicationAgent, will the message be proce=
-ssed
-> Twice. Will you offer same way to avoid this?
 
-I think we'll just have a single ApplicationAgent interface that works
-with app ports. I was thinking it would be elegant to be able to
-register an agent only using the WAP app ID, but perhaps that's just a
-waste of time.
+> Hi Arun,
 
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 void IncomingMessage(string =
-message, dict info)
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-New incoming text SMS received. =C2=A0Info has Sender,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-LocalSentTime, and SentTime information.
->> +
->
-> Is the 'message' the text content of the income message(I mean the decode=
-d user data)?
+> please try to compose proper emails and not just forward or reply to
+your own message to send it again.
 
-Just the body of the message (UTF-8 string), just like in the signals.
+> We are using atmodem plugin and are trying to get the PPP up and =
 
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 void IncomingPush(array{byte=
-} message, dict info)
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-New incoming push message received. =C2=A0Info has Sender,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-LocalSentTime, SentTime, and ApplicationId
->> information.
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 void IncomingApplication(arr=
-ay{byte} message, dict info)
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-New incoming application message received. =C2=A0Info has
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-Sender, LocalSentTime, SentTime, DestinationPort, and
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-SourcePort information.
->> +
->
-> Is the 'message' the whole PDU or only the user data?
+> running.  I am able to create and activate context, but the PPP link =
 
-The user data excluding the user data header, which we decode and
-provide in the dict.
+> establishment seems to have issues.
+> =
 
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 void Release()
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-Agent is being released, possibly because of oFono
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-terminating, the MessageManager interface being torn
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-down or modem powering down.
->> --
->> 1.7.0.4
->>
->
-> Will you consider send push message and application message?
+> The list-context script returns:
+> =
 
-Ah, good point. Yes, we obviously need to support sending binary
-messages as well.
+> [ /generic ] =
 
-Cheers,
-Aki
+>     [ /generic/primarycontext3 ] =
 
---===============3121359473262699079==--
+>         Username =3D =
+
+>         Name =3D Internet access =
+
+>         Settings =3D { Interface=3Dppp0 Netmask=3D255.255.255.255 =
+
+> Method=3Dstatic DomainNameServers=3D192.89.123.231,192.89.123.230,
+> Address=3D109.240.91.14 }
+> =
+
+>         Active =3D 1 =
+
+>         AccessPointName =3D internet =
+
+>         Password =3D =
+
+>         Type =3D internet
+> =
+
+> But for a PPP link, there needs to be two ip addresses, one local and =
+
+> one of the peer. Here in the settings you see only one IP address.
+
+> No they don't have to be. Who says so. The second address of PPP is
+totally irrelevant since it is a point-to-point link and we do interface
+routing (route add default dev > ppp0).
+
+> I collected the logs during the PPP link establishment, (frames and a =
+
+> brief detail about it)
+> =
+
+> Sent from  Ofono: =
+
+> Frame: 0x7e 0xff   0x7d 0x23 0xc0 0x21 0x7d 0x21 0x7d 0x21 0x7d 0x20
+> 0x7d 0x2a 0x7d 0x22 0x7d 0x26 0x7d 0x20 0x7d 0x20 0x7d 0x20 0x7d 0x20
+> 0x58 0x7b 0x7e
+> =
+
+> 03 c021 1 (conf req) 1 (id) 0x000a (length) 2 (accm) 6 (length) 0000 =
+
+> fcs
+> =
+
+> Recv from Modem: =
+
+> Frame: 0x7e 0xff 0x7d 0x23 0xc0 0x21 0x7d 0x21 0x7d 0x21 0x7d 0x20 =
+
+> 0x7d 0x34 0x7d 0x22 0x7d 0x26 0x7d 0x20 0x7d 0x20 0x7d 0x20 0x7d 0x20 =
+
+> 0x7d 0x25 0x7d 0x26 0xd2 0x8a 0xde 0xd2 0x7d 0x27 0x7d 0x22 0x7d 0x28 =
+
+> 0x7d 0x22 0xbf 0x7d 0x35 0x7e
+> =
+
+> 3 c021 1 (conf req) 1 (id) 0x0034 2 6 0 0 0 0 5(magic num) 6 d2 8a de
+> d2 7(protocol compression) 2 (id) 8 (addr, control compres) 2 fcs
+> =
+
+> =
+
+> Frame: 0x7e 0xff 0x7d 0x23 0xc0 0x21 0x7d 0x22 0x7d 0x21 0x7d 0x20 =
+
+> 0x7d 0x2a 0x7d 0x22 0x7d 0x26 0x7d 0x20 0x7d 0x20 0x7d 0x20 0x7d 0x20
+> 0x31 0x7d 0x2f 0x7e
+> =
+
+> 3 c021 2 (conf ack) 1 (id) 0x000a 2 6 0 0 0 0 fcs
+> =
+
+> Sent from  ofono: =
+
+> Frame: 0x7e 0xff 0x7d 0x23 0xc0 0x21 0x7d 0x22 0x7d 0x21 0x7d 0x20 =
+
+> 0x7d 0x34 0x7d 0x22 0x7d 0x26 0x7d 0x20 0x7d 0x20 0x7d 0x20 0x7d 0x20 =
+
+> 0x7d 0x25 0x7d 0x26 0xd2 0x8a 0xde 0xd2 0x7d 0x27 0x7d 0x22 0x7d 0x28 =
+
+> 0x7d 0x22 0x54 0x7c 0x7e
+> =
+
+> 3 c021 2 (conf ack) 1 0x0034 2 6 0000 5 6 d2 8a de d2 7 2 8 2 fcs
+> =
+
+> =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x1 0x1 0x0 0x22 0x3 0x6 0x0 0x0 0x0 =
+
+> 0x0 0x81 0x6 0x0 0x0 0x0 0x0 0x83 0x6 0x0 0x0 0x0 0x0 0x82 0x6 0x0 0x0
+
+> 0x0 0x0 0x84 0x6 0x0 0x0 0x0 0x0 0x80 0x52 0x7e
+> =
+
+> 3 8021 1 (conf req) 1 (id) 0x0022 (length)  3 (ip) 6 0000 81(dns1) 6 =
+
+> 0000 83(nbns1) 6 0000 82(dns2) 6 0000 84 (nbns2) 6 0000 fcs
+> =
+
+> Recv from Modem: =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x3 0x1 0x0 0x10 0x81 0x6 0xa 0xb 0xc =
+
+> 0xd 0x83 0x6 0xa 0xb 0xc 0xe 0x4d 0x4d 0x7e
+> 3 8021 3(conf nak) 1 (id) 0x010 81 (dns1) 6 abcd 83 (dns2) 6 abce fcs
+> =
+
+> Sent from ofono: =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x1 0x2 0x0 0x22 0x3 0x6 0x0 0x0 0x0 =
+
+> 0x0 0x81 0x6 0xa 0xb 0xc 0xd 0x83 0x6 0xa 0xb 0xc 0xe 0x82 0x6 0x0 0x0
+
+> 0x0 0x0 0x84 0x6 0x0 0x0 0x0 0x0 0xad 0x7a 0x7e
+> =
+
+> 3 8021 1 (conf ack) 2 (id) 0x0022 3 6 0000 81 6 abcd 83 6 abce 82 6 =
+
+> 0000 84 6 0000 fcs
+> =
+
+> Recv from Modem: =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x3 0x2 0x0 0x10 0x81 0x6 0xa 0xb 0xc =
+
+> 0xd 0x83 0x6 0xa 0xb 0xc 0xe 0x33 0x95 0x7e
+> 3 8021 3(conf nak) 2 (id) 0x010 81 (dns1) 6 abcd 83 (dns2) 6 abce fcs
+> =
+
+> Sent from ofono: =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x1 0x3 0x0 0x22 0x3 0x6 0x0 0x0 0x0 =
+
+> 0x0 0x81 0x6 0xa 0xb 0xc 0xd 0x83 0x6 0xa 0xb 0xc 0xe 0x82 0x6 0x0 0x0
+
+> 0x0 0x0 0x84 0x6 0x0 0x0 0x0 0x0 0xce 0x3a 0x7e
+> =
+
+> 3 8021 1 (conf req) 3 (id) 0x0022 3 6 0000 81 6 abcd 83 6 abce 82 6 =
+
+> 0000 84 6 0000 fcs
+> =
+
+> Recv from Modem: =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x1 0x1 0x0 0x4 0x0 0xb7 0x7e
+> 3 8021 1 (conf req) 1 (id) 0 4  0 fcs
+> =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x4 0x3 0x0 0x10 0x82 0x6 0x0 0x0 0x0 =
+
+> 0x0 0x84 0x6 0x0 0x0 0x0 0x0 0x34 0xcc 0x7e
+> 3 8021 4 (conf reject) 3(id) 0x0010 82 6 0000 84 6 0000 fcs
+> =
+
+> Sent from ofono: =
+
+> Frame: 0xff 0x3 0x80 0x21 0x2 0x1 0x0 0x4 0xcd 0x92 0x7e
+> 3 8021 2 (conf ack) 1 (id) 0 4
+> =
+
+> Frame: 0xff 0x3 0x80 0x21 0x1 0x4 0x0 0x16 0x3 0x6 0x0 0x0 0x0 0x0
+> 0x81 0x6 0xa 0xb 0xc 0xd 0x83 0x6 0xa 0xb 0xc 0xe 0xe3 0x9 0x7e
+> =
+
+> 3 8021 1 (conf req)  4 (id) 0x0016 3 6  0000 81 6 abcd 83 6 abce fcs
+> =
+
+> Recv from modem: =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x3 0x4 0x0 0x16 0x3 0x6 0x6d 0xf0 0x40
+
+> 0xbe 0x81 0x6 0xc0 0x59 0x7b 0xe7 0x83 0x6 0xc0 0x59 0x7b 0xe6 0xc5
+> 0xf1 0x7e
+> =
+
+> 3 8021 3 (conf nak) 4 (id) 0x0016 3 (ip) 6 6d f0 40 be 81 (dns1) 6 c0
+> 59 7b e7 83 (dns2) 6 c0 59 7b e6 fcs
+> =
+
+> Sent from ofono: =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x1 0x5 0x0 0x16 0x3 0x6 0x6d 0xf0 0x40
+
+> 0xbe 0x81 0x6 0xc0 0x59 0x7b 0xe7 0x83 0x6 0xc0 0x59 0x7b 0xe6 0x2 =
+
+> 0x9c 0x7e
+> =
+
+> 3 8021 1 (conf req) 5 (id) 0x0016 3 6 6d f0 40 be 81 6 c0 59 7b e7 83
+> 6 c0 59 7b e6 fcs
+> =
+
+> Recv from Modem: =
+
+> Frame: 0x7e 0xff 0x3 0x80 0x21 0x2 0x5 0x0 0x16 0x3 0x6 0x6d 0xf0 0x40
+
+> 0xbe 0x81 0x6 0xc0 0x59 0x7b 0xe7 0x83 0x6 0xc0 0x59 0x7b 0xe6 0xf4 =
+
+> 0x6f 0x7e
+> =
+
+> 3 8021 2 (conf ack) 5 (id) 0x0016 3 6 6d f0 40 be 81 6 c0 59 7b e7 83
+> 6 c0 59 7b e6 fcs
+> =
+
+> I could not find any issues in the state transition w.r.t the RFC, but
+
+> I get only one IP address, what is going wrong? Could any one help?
+
+> As I said above. Nothing is going wrong. It will just work :)
+
+> Regards
+
+> Marcel
+
+I have used the "route add default dev ppp0" command and also added the
+nameserver details to the resolv.conf file.
+I can see that firefox (for example) is using the interface ppp0, but
+there is nothing coming from modem for the packets sent across the link.
+Wireshark shows the DNS queries sent across the ppp0 interface, but
+nothing is received through the link from modem.
+
+The same modem, works perfectly with wvdial, and i get 2 ip addresses
+after ppp negotiation. I tried replacing the AT+CGDATA with ATD *99# in
+ofono, but the result is same.
+I also tried by setting few QoS parameters and nothing seems to resolve
+this issue.
+
+Also ifconfig lists the ppp0 interface created as =
+
+
+ppp0      Link encap:UNSPEC  HWaddr
+00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00
+          UP POINTOPOINT RUNNING NOARP MULTICAST  MTU:1500  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:500
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+You can see that the Link encap is showing UNSPEC, but in actual it
+should be Point-to-Point, and also the HW address, is set as 00, and
+there should not be this option at all.
+
+I tried to set the negotiated ip address to the interface using ifconfig
+and also using ioctl, but all fails with error.
+
+Definitely there is something wrong with the PPP link establishment or
+the way interface is created, but I am unable to pin point where the
+issue is. =
+
+Any help is highly appreciated.
+
+Regards
+Arun Ravindran
+
+
+
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
+
+
+
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
+
+
+--===============8165622353488942936==--
 
