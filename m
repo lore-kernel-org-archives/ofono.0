@@ -1,19 +1,22 @@
-Content-Type: multipart/mixed; boundary="===============8679256370892904524=="
+Content-Type: multipart/mixed; boundary="===============3906460273190615222=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Arun.Ravindran@elektrobit.com
 Subject: RE: Atmodem PPP Link establishment issues
-Date: Tue, 31 Aug 2010 08:32:20 -0400
-Message-ID: <1283257940.7452.8.camel@localhost.localdomain>
-In-Reply-To: <B668883EB5DD7144ADFC248A72176EA8029A8D4D@fioues07.ebgroup.elektrobit.com>
+Date: Tue, 31 Aug 2010 15:34:47 +0300
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802A0E173@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <1283257940.7452.8.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8679256370892904524==
+--===============3906460273190615222==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+
+Hi Marcel,
+
+> Hi Arun,
 
 > Please ignore this mail...
 > =
@@ -23,13 +26,36 @@ Hi Arun,
 
 > We could resolve the PPP issues.
 
-okay. So what was the resolution on your side?
+> okay. So what was the resolution on your side?
+
+The test scripts available with ofono itself provided the solutions.
 
 Regards
-
-Marcel
-
+Arun
 
 
---===============8679256370892904524==--
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
+
+
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
+
+
+
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
+
+
+--===============3906460273190615222==--
 
