@@ -1,51 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============7092480691115905906=="
+Content-Type: multipart/mixed; boundary="===============7602741736211235227=="
 MIME-Version: 1.0
 From: Jeevaka.Badrappan@elektrobit.com
 Subject: RE: Clarification on USSD support in ofono
-Date: Tue, 31 Aug 2010 18:39:39 +0300
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802A0E1B0@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <AANLkTinDO02k1GSRUzFr3WaJX+4wxkrf_dS7L9UY2a_F@mail.gmail.com>
+Date: Tue, 31 Aug 2010 18:48:06 +0300
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802A0E1B9@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <4C7D1BEF.50800@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7092480691115905906==
+--===============7602741736211235227==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+
+Hi Denis,
  =
 
-> Yes, the driver api may need a change like this.  The current API was
-created based on the fact that many modems don't understand anything
-other than DCS =3D 15.  However =
+> The original USSD API actually did look like this.  It used binary
+data
+> + dcs field.  However, we quickly found that all modems are screwed up
+> in this area.  The specification added binary PDU mode to SMS and CBS,
+but never bothered with USSD.  So all modems get this part wrong.
 
-> with STK's "Send USSD" command, sending the requested DCS as-is is
-probably our best bet.
+> Currently about the best we can do is pass UTF8 around.  If you have a
+modem that gets this part right, we'd like to hear about it.  If the
+Send USSD proactive command is =
 
-> There is a hope that most modems implement Send USSD in their firmware
-so that ofono doesn't have to do anything (this is the case on the Texas
-Instruments Calypso modem), > do you have a modem that you know does not
-handle Send USSD internally?  Of course it makes sense to implement the
-fallback in ofono anyway.
+> not handled by the modem, then oFono will try to do its best.
+However, we make no guarantees ;)
 
-> Have you been working on implementation of this command? I'm asking to
-avoid duplicating the effort.
+I think its better to send the dcs and the binary data to the atom
+driver. If the modem doesn't support other than GSM 7-bit alphabet, then
+the conversion can be done in the atom driver. This way it will be
+general to any modem.
 
-No, I dont have any modem which doesn't handle the Send USSD command
-internally. =
-
-
-Yes, I have done some implementation. Planning to test it with the
-phonesim. If needed, I can do the implementation of the Send USSD
-command.
+Let me know your views on this.
 
 Regards,
 jeevaka
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-http://lists.ofono.org/listinfo/ofono
 
 
 ----------------------------------------------------------------
@@ -65,5 +58,5 @@ the sender promptly, and delete the message from your system.
 Thank you.
 
 
---===============7092480691115905906==--
+--===============7602741736211235227==--
 
