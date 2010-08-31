@@ -1,168 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============4669293179672232965=="
+Content-Type: multipart/mixed; boundary="===============4916257541271878357=="
 MIME-Version: 1.0
 From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
-Subject: RE: [RFC] Add agent API to message atom
-Date: Tue, 31 Aug 2010 05:37:20 +0200
-Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE8056A7653@ism-mail03.corp.ad.wrs.com>
-In-Reply-To: <1283183452-3897-1-git-send-email-aki.niemi@nokia.com>
+Subject: RE: [PATCH v2] Add CDMA extension tasks
+Date: Tue, 31 Aug 2010 05:39:25 +0200
+Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE8056A7655@ism-mail03.corp.ad.wrs.com>
+In-Reply-To: <1282810193.6841.69.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4669293179672232965==
+--===============4916257541271878357==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki=EF=BC=8C
+Hi Marcel,
 
-
-> ---
->  doc/message-api.txt |   97
-> +++++++++++++++++++++++++++++++++++++++++++++++++++
->  1 files changed, 97 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/doc/message-api.txt b/doc/message-api.txt
-> index 693a111..ce96315 100644
-> --- a/doc/message-api.txt
-> +++ b/doc/message-api.txt
-> @@ -26,6 +26,66 @@ Methods		dict GetProperties()
+> > ---
+> >  TODO |   76
+> ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+> >  1 files changed, 76 insertions(+), 0 deletions(-)
+> >
+> > diff --git a/TODO b/TODO
+> > index a97f076..b159c07 100644
+> > --- a/TODO
+> > +++ b/TODO
+> > @@ -614,3 +614,79 @@ Miscellaneous
+> >
+> >    Priority: Low
+> >    Complexity: C4
+> > +
+> > +
+> > +CDMA/EVDO
+> > +=3D=3D=3D=3D=3D=3D=3D=3D=3D
 > =
 
->  			Send the message in text to the number in to.
-> =
-
-> +		void RegisterTextAgent(object path, string match)
-> +
-> +			Registers an agent to receive messages.
-> +
-> +			The object path defines the path of the agent that
-> +			will be called when a message is ready to be
-> +			dispatched.  The match parameter takes an optional
-> +			matching rule in a restricted subset of regular
-> +			expression syntax.
-> +
-> +			TODO: accepted regexp syntax.  Perhaps only allow
-> +			simple match rules for the beginning and end of a
-> +			message, as well as a free text token match for the
-> +			entire message.
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +					 [service].Error.InvalidFormat
-> +					 [service].Error.InUse
-> +
-> +		void RegisterPushAgent(object path, string id)
-> +
-> +			Registers an agent to receive push messages.
-> +
-> +			The object path defines the path of the agent that
-> +			will be called when a push message is ready to be
-> +			dispatched.  The id parameter takes an optional
-> +			WAP application ID that is used to match incoming
-> +			push messages.
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +					 [service].Error.InvalidFormat
-> +					 [service].Error.InUse
-> +
-> +		void RegisterApplicationAgent(object path, uint dest, uint
-> src)
-> +
-> +			Registers an agent to receive application messages.
-> +
-> +			The object path defines the path of the agent that
-> +			will be called when an application message is ready
-> +			to be dispatched.
-> +
-> +			The dest parameter is the destination application
-> +			port number, and the src parameter is the optional
-> +			source application port number.
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +					 [service].Error.InvalidFormat
-> +					 [service].Error.InUse
-> +
-Push message is a kind of application message. If an agent register both
-RegisterPushAgent and RegisterApplicationAgent, will the message be process=
-ed
-Twice. Will you offer same way to avoid this?
-
-> +		void UnregisterAgent(object path)
-> +
-> +			Unregisters an agent.  If no agent is registered
-> +			that matches the type of an arriving message, it is
-> +			silently dropped.
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +					 [service].Error.InvalidFormat
-> +					 [service].Error.NotFound
-> +					 [service].Error.NotAuthorized
-> +
->  Signals		PropertyChanged(string name, variant value)
-> =
-
->  			This signal indicates a changed value of the given
-> @@ -64,3 +124,40 @@ Properties	string ServiceCenterAddress
->  				"ps-preferred" - Use CS if PS is unavailable
-> =
-
->  			By default oFono uses "cs-preferred" setting.
-> +
-> +
-> +MessageAgent Hierarchy [experimental]
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +Service		unique name
-> +Interface	org.ofono.MessageAgent
-> +Object path	freely definable
-> +
-> +Methods		void ImmediateMessage(string message, dict info)
-> +
-> +			New immediate (class 0) SMS received.  Info has
-> Sender,
-> +			LocalSentTime, and SentTime information.  Sender
-> +			address is given in string format.  LocalSentTime and
-> +			SentTime are given in string form using ISO8601
-> format.
-> +
-> +		void IncomingMessage(string message, dict info)
-> +
-> +			New incoming text SMS received.  Info has Sender,
-> +			LocalSentTime, and SentTime information.
-> +
-
-Is the 'message' the text content of the income message(I mean the decoded =
-user data)?
-
-> +		void IncomingPush(array{byte} message, dict info)
-> +
-> +			New incoming push message received.  Info has Sender,
-> +			LocalSentTime, SentTime, and ApplicationId
-> information.
-> +
-> +		void IncomingApplication(array{byte} message, dict info)
-> +
-> +			New incoming application message received.  Info has
-> +			Sender, LocalSentTime, SentTime, DestinationPort, and
-> +			SourcePort information.
-> +
-
-Is the 'message' the whole PDU or only the user data? =
-
-
-> +		void Release()
-> +
-> +			Agent is being released, possibly because of oFono
-> +			terminating, the MessageManager interface being torn
-> +			down or modem powering down.
-> --
-> 1.7.0.4
+> so Denis and I are still discussing some basic details on how to
+handle
+> CDMA the right way. Especially in case you only have text SMS and
+> non-pdu based SIM Toolkit. I give you an update soon.
 > =
 
 
-Will you consider send push message and application message?
+Is there any update? =
 
-Thanks!
+
+
 
 Best regards,
 Caiwen
@@ -172,5 +56,5 @@ Caiwen
 
 
 
---===============4669293179672232965==--
+--===============4916257541271878357==--
 
