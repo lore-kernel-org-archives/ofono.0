@@ -1,224 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============8864595354152674420=="
+Content-Type: multipart/mixed; boundary="===============1172898433010093109=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH v3 1/1] sim: Read EFsst
-Date: Tue, 31 Aug 2010 17:58:00 +0800
-Message-ID: <1283248680-12986-1-git-send-email-yang.gu@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Clarification on USSD support in ofono
+Date: Tue, 31 Aug 2010 08:29:25 -0400
+Message-ID: <1283257765.7452.7.camel@localhost.localdomain>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA8029A8D64@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8864595354152674420==
+--===============1172898433010093109==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/sim.c     |   40 +++++++++++++++++++++++++++++++++--
- src/simutil.c |   18 ++++++++++++++++
- src/simutil.h |   63 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 118 insertions(+), 3 deletions(-)
+Hi Jeevaka,
 
-diff --git a/src/sim.c b/src/sim.c
-index fd9b412..ff559a9 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -101,6 +101,8 @@ struct ofono_sim {
- 	unsigned char efust_length;
- 	unsigned char *efest;
- 	unsigned char efest_length;
-+	unsigned char *efsst;
-+	unsigned char efsst_length;
- };
- =
-
- struct msisdn_set_request {
-@@ -1072,6 +1074,27 @@ static void sim_retrieve_imsi(struct ofono_sim *sim)
- 	sim->driver->read_imsi(sim, sim_imsi_cb, sim);
- }
- =
-
-+static void sim_efsst_read_cb(int ok, int length, int record,
-+				const unsigned char *data,
-+				int record_length, void *userdata)
-+{
-+	struct ofono_sim *sim =3D userdata;
-+
-+	if (!ok)
-+		goto out;
-+
-+	if (length < 2) {
-+		ofono_error("EFsst shall contain@least two bytes");
-+		goto out;
-+	}
-+
-+	sim->efsst =3D g_memdup(data, length);
-+	sim->efsst_length =3D length;
-+
-+out:
-+	sim_retrieve_imsi(sim);
-+}
-+
- static void sim_efest_read_cb(int ok, int length, int record,
- 				const unsigned char *data,
- 				int record_length, void *userdata)
-@@ -1192,9 +1215,14 @@ static void sim_initialize_after_pin(struct ofono_si=
-m *sim)
- 			sim_cphs_information_read_cb, sim);
- =
-
- 	/* Also retrieve the GSM service table */
--	ofono_sim_read(sim, SIM_EFUST_FILEID,
--			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
--			sim_efust_read_cb, sim);
-+	if (sim->phase >=3D OFONO_SIM_PHASE_3G)
-+		ofono_sim_read(sim, SIM_EFUST_FILEID,
-+				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
-+				sim_efust_read_cb, sim);
-+	else
-+		ofono_sim_read(sim, SIM_EFSST_FILEID,
-+				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
-+				sim_efsst_read_cb, sim);
- }
- =
-
- static void sim_pin_query_cb(const struct ofono_error *error,
-@@ -2046,6 +2074,12 @@ static void sim_free_state(struct ofono_sim *sim)
- 		sim->efest_length =3D 0;
- 	}
- =
-
-+	if (sim->efsst) {
-+		g_free(sim->efsst);
-+		sim->efsst =3D NULL;
-+		sim->efsst_length =3D 0;
-+	}
-+
- 	sim->mnc_length =3D 0;
- =
-
- 	if (sim->efimg) {
-diff --git a/src/simutil.c b/src/simutil.c
-index ac054ae..4af6810 100644
---- a/src/simutil.c
-+++ b/src/simutil.c
-@@ -1434,3 +1434,21 @@ gboolean sim_est_is_active(unsigned char *efest, uns=
-igned char len,
- =
-
- 	return (efest[index / 8] >> (index % 8)) & 1;
- }
-+
-+gboolean sim_sst_is_available(unsigned char *efsst, unsigned char len,
-+						enum sim_sst_service index)
-+{
-+	if (index >=3D len * 4u)
-+		return FALSE;
-+
-+	return (efsst[index / 4] >> ((index % 4) * 2)) & 1;
-+}
-+
-+gboolean sim_sst_is_active(unsigned char *efsst, unsigned char len,
-+						enum sim_sst_service index)
-+{
-+	if (index >=3D len * 4u)
-+		return FALSE;
-+
-+	return (efsst[index / 4] >> (((index % 4) * 2) + 1)) & 1;
-+}
-diff --git a/src/simutil.h b/src/simutil.h
-index 65e651a..0a94c67 100644
---- a/src/simutil.h
-+++ b/src/simutil.h
-@@ -28,6 +28,7 @@ enum sim_fileid {
- 	SIM_EF_CPHS_INFORMATION_FILEID =3D 0x6f16,
- 	SIM_EF_CPHS_MBDN_FILEID =3D 0x6f17,
- 	SIM_EFUST_FILEID =3D 0x6f38,
-+	SIM_EFSST_FILEID =3D 0x6f38, /* same as EFust */
- 	SIM_EFMSISDN_FILEID =3D 0x6f40,
- 	SIM_EFSPN_FILEID =3D 0x6f46,
- 	SIM_EFSDN_FILEID =3D 0x6f49,
-@@ -154,6 +155,64 @@ enum sim_est_service {
- 	SIM_EST_SERVICE_ACL				=3D 2
- };
- =
-
-+/* 51.011 Section 10.3.7 */
-+enum sim_sst_service {
-+	SIM_SST_SERVICE_CHV1_DISABLE 			=3D 0,
-+	SIM_SST_SERVICE_ADN				=3D 1,
-+	SIM_SST_SERVICE_FDN				=3D 2,
-+	SIM_SST_SERVICE_SMS				=3D 3,
-+	SIM_SST_SERVICE_AOC				=3D 4,
-+	SIM_SST_SERVICE_CCP				=3D 5,
-+	SIM_SST_SERVICE_PLMN_SELECTOR			=3D 6,
-+	SIM_SST_SERVICE_MSISDN				=3D 8,
-+	SIM_SST_SERVICE_EXT_1				=3D 9,
-+	SIM_SST_SERVICE_EXT_2				=3D 10,
-+	SIM_SST_SERVICE_SMSP				=3D 11,
-+	SIM_SST_SERVICE_LND				=3D 12,
-+	SIM_SST_SERVICE_CBS_ID				=3D 13,
-+	SIM_SST_SERVICE_GROUP_ID_LEVEL_1		=3D 14,
-+	SIM_SST_SERVICE_GROUP_ID_LEVEL_2		=3D 15,
-+	SIM_SST_SERVICE_PROVIDER_NAME			=3D 16,
-+	SIM_SST_SERVICE_SDN				=3D 17,
-+	SIM_SST_SERVICE_EXT_3				=3D 18,
-+	SIM_SST_SERVICE_EFVGCS_EFVGCSS			=3D 20,
-+	SIM_SST_SERVICE_EFVBS_EFVBSS			=3D 21,
-+	SIM_SST_SERVICE_PRECEDENCE_PREEMPTION		=3D 22,
-+	SIM_SST_SERVICE_EMLPP				=3D 23,
-+	SIM_SST_SERVICE_DATA_DOWNLOAD_SMS_CB		=3D 24,
-+	SIM_SST_SERVICE_DATA_DOWNLOAD_SMS_PP		=3D 25,
-+	SIM_SST_SERVICE_MENU_SELECTION			=3D 26,
-+	SIM_SST_SERVICE_CALL_CONTROL			=3D 27,
-+	SIM_SST_SERVICE_PROACTIVE_SIM			=3D 28,
-+	SIM_SST_SERVICE_CBS_ID_RANGE			=3D 29,
-+	SIM_SST_SERVICE_BDN				=3D 30,
-+	SIM_SST_SERVICE_EXT_4				=3D 31,
-+	SIM_SST_SERVICE_DEPERSONALISATION_CTRL_KEY	=3D 32,
-+	SIM_SST_SERVICE_NETWORK_LIST			=3D 33,
-+	SIM_SST_SERVICE_SMSR				=3D 34,
-+	SIM_SST_SERVICE_NIA				=3D 35,
-+	SIM_SST_SERVICE_MO_SMS_SIM			=3D 36,
-+	SIM_SST_SERVICE_GPRS				=3D 37,
-+	SIM_SST_SERVICE_IMG				=3D 38,
-+	SIM_SST_SERVICE_SOLSA				=3D 39,
-+	SIM_SST_SERVICE_USSD_CALL_CONTROL		=3D 40,
-+	SIM_SST_SERVICE_RUN_AT_COMMAND			=3D 41,
-+	SIM_SST_SERVICE_USER_PLMN			=3D 42,
-+	SIM_SST_SERVICE_OPERATOR_PLMN			=3D 43,
-+	SIM_SST_SERVICE_HPLMN				=3D 44,
-+	SIM_SST_SERVICE_CPBCCH				=3D 45,
-+	SIM_SST_SERVICE_INVESTIGATION_SCAN		=3D 46,
-+	SIM_SST_SERVICE_EXT_CCP				=3D 47,
-+	SIM_SST_SERVICE_MEXE				=3D 48,
-+	SIM_SST_SERVICE_RPLMN				=3D 49,
-+	SIM_SST_SERVICE_PLMN_NETWORK_NAME		=3D 50,
-+	SIM_SST_SERVICE_OPERATOR_PLMN_LIST		=3D 51,
-+	SIM_SST_SERVICE_MAILBOX_DIALLING_NUMBERS	=3D 52,
-+	SIM_SST_SERVICE_MWIS				=3D 53,
-+	SIM_SST_SERVICE_CFIS				=3D 54,
-+	SIM_SST_SERVICE_PROVIDER_DISPLAY_INFO		=3D 55
-+};
-+
- #define SIM_EFSPN_DC_HOME_PLMN_BIT 0x1
- #define SIM_EFSPN_DC_ROAMING_SPN_BIT 0x2
- =
-
-@@ -372,3 +431,7 @@ gboolean sim_ust_is_available(unsigned char *service_us=
-t, unsigned char len,
- 						enum sim_ust_service index);
- gboolean sim_est_is_active(unsigned char *service_est, unsigned char len,
- 						enum sim_est_service index);
-+gboolean sim_sst_is_available(unsigned char *service_sst, unsigned char le=
-n,
-+						enum sim_sst_service index);
-+gboolean sim_sst_is_active(unsigned char *service_sst, unsigned char len,
-+						enum sim_sst_service index);
--- =
-
-1.7.0.4
+>   Currently, oFono expects the USSD string in UTF-8. ofono(Atom driver
+> - AT or ISI) converts the UTF-8 string to GSM 7-bit default alphabet
+> and sends it to the network. In this way, we will always send the data
+> coding scheme as GSM 7-bit default alphabet or whatever the character
+> set modem is configured. Why are we not sending the USSD string with
+> DCS(Data coding scheme) as is to the network? There are USIM
+> conformance test cases which expects the DCS(Data coding scheme) and
+> USSD string sent as it is to the network. Also, as per the 3GPP TS
+> 24.090, DCS and USSD string are sent as part of UnstructuredSS-Request
+> to the network and MT is not expected to interpret the string.
+> But ,here oFono doesn't have the interface to accept DCS(Data coding
+> scheme) and also it expects the USSD string to be in UTF-8. =
 
 
---===============8864595354152674420==--
+the one main design goal behind oFono's D-Bus APIs is to make them
+useful for users. This means that the main input data type are strings
+and they are UTF-8.
+
+If you need magic binary APIs that are only used by specific application
+or even purely for conformance testing, then you need to propose an
+interface for these. By default we will not make application to any kind
+of conversation.
+
+Every single nasty conversion that has to be done by every single
+application using such an interface is wrong. Complexity belongs into
+oFono and not the application. The idea of just pushing complex tasks up
+into the application so that oFono doesn't have to deal with it is a
+really bad idea. Remember that one main goal of oFono is to make the
+usage of standard telephony functionality as easy as possible when you
+are developing telephony applications.
+
+Regards
+
+Marcel
+
+
+
+--===============1172898433010093109==--
 
