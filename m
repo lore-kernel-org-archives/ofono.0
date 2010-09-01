@@ -1,21 +1,22 @@
-Content-Type: multipart/mixed; boundary="===============4321568803625048537=="
+Content-Type: multipart/mixed; boundary="===============6032704550719946112=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
 Subject: Re: [PATCH 02/11] Changes done as per the changed driver API
-Date: Wed, 01 Sep 2010 15:49:12 +0300
-Message-ID: <AANLkTinZwThD6Y0oifubMVz=TF=Q6ZuutMeyFKLBpAKv@mail.gmail.com>
+Date: Wed, 01 Sep 2010 17:12:02 +0200
+Message-ID: <AANLkTi=xZgRGy3PYVS5OJyXkXA5bLzQ26ZibG+ki54s8@mail.gmail.com>
 In-Reply-To: <1283338836-13572-2-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4321568803625048537==
+--===============6032704550719946112==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi,
 
-2010/9/1 Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>:
+On 1 September 2010 13:00, Jeevaka Badrappan
+<jeevaka.badrappan@elektrobit.com> wrote:
 > ---
 > =C2=A0drivers/atmodem/ussd.c | =C2=A0 87 +++++++++++++++++++++++++++++---=
 ---------------
@@ -78,15 +79,82 @@ tent);
 > -out:
 > - =C2=A0 =C2=A0 =C2=A0 ofono_ussd_notify(ussd, status, converted);
 > + =C2=A0 =C2=A0 =C2=A0 ofono_ussd_notify(ussd, status, dcs, msg, msg_len);
+>
+> - =C2=A0 =C2=A0 =C2=A0 g_free(converted);
+> + =C2=A0 =C2=A0 =C2=A0 g_free(msg);
+> =C2=A0}
 
-I thought the modem already unpacks the ussd message to 8-bit gsm and
-the dcs parameter is rather meaningless in that case. Perhaps the
-atmodem ussd should re-pack the string in order to achieve the desired
-symmetry on the API?
+I agree with Pekka that maybe this should repack the 7-bit messages
+into packed 7-bit, as this is what STK will be expecting in response
+(I think).  Also, why are we g_memdup'ing the content instead of using
+directly?
 
--- =
+>
+> =C2=A0static void cusd_request_cb(gboolean ok, GAtResult *result, gpointe=
+r user_data)
+> @@ -117,47 +109,76 @@ static void cusd_request_cb(gboolean ok, GAtResult =
+*result, gpointer user_data)
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0cusd_parse(result, ussd);
+> =C2=A0}
+>
+> -static void at_ussd_request(struct ofono_ussd *ussd, const char *str,
+> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_ussd_cb_t cb, void *user_data)
+> +static void at_ussd_request(struct ofono_ussd *ussd, int dcs,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0const unsigned char *str, int str_len,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0ofono_ussd_cb_t cb, void *user_data)
+> =C2=A0{
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct ussd_data *data =3D ofono_ussd_get_data=
+(ussd);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct cb_data *cbd =3D cb_data_new(cb, user_d=
+ata);
+> + =C2=A0 =C2=A0 =C2=A0 int dcs_value =3D 0x0f; =C2=A0// GSM 7 bit default=
+ alphabet
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0unsigned char *converted =3D NULL;
+> - =C2=A0 =C2=A0 =C2=A0 int dcs;
+> - =C2=A0 =C2=A0 =C2=A0 int max_len;
+> + =C2=A0 =C2=A0 =C2=A0 unsigned char *coded_str =3D NULL;
+> + =C2=A0 =C2=A0 =C2=A0 long coded_str_len;
+> + =C2=A0 =C2=A0 =C2=A0 long num_packed;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0long written;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0char buf[256];
+> + =C2=A0 =C2=A0 =C2=A0 char *encoded_data =3D NULL;
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0if (!cbd)
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0goto error;
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0cbd->user =3D ussd;
+>
+> - =C2=A0 =C2=A0 =C2=A0 converted =3D convert_utf8_to_gsm(str, strlen(str)=
+, NULL, &written, 0);
+> + =C2=A0 =C2=A0 =C2=A0 if (dcs =3D=3D -1){
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 converted =3D convert_=
+utf8_to_gsm((const char *) str, str_len, NULL, &written, 0);
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!converted)
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 goto error;
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* As per 3GPP TS 23.0=
+38, When this character set is used,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* the characters=
+ of the message are packed in octets as shown in section 6.1.2.1.1,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0* and the messag=
+e can consist of up to 160 characters.
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0*/
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 coded_str =3D pack_7bi=
+t(converted, written, 0, TRUE,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &num_packed, 0);
 
-Pekka.Pessi mail at nokia.com
+You could use pack_7bit_own_buf here too.
 
---===============4321568803625048537==--
+Please check the style doc about spaces after/before {}.
+
+Best regards
+
+--===============6032704550719946112==--
 
