@@ -1,164 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============0301918139272731630=="
+Content-Type: multipart/mixed; boundary="===============4388524691332550480=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 06/11] Send USSD proactive command handling
-Date: Wed, 01 Sep 2010 04:00:31 -0700
-Message-ID: <1283338836-13572-6-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 07/11] added stk_response_text_string for USSD result
+Date: Wed, 01 Sep 2010 04:00:32 -0700
+Message-ID: <1283338836-13572-7-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1283338836-13572-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0301918139272731630==
+--===============4388524691332550480==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |  115 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 115 insertions(+), 0 deletions(-)
+ src/stkutil.h |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index 3fda2af..66a98b4 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1590,6 +1590,117 @@ static gboolean handle_command_set_up_call(const st=
-ruct stk_command *cmd,
- 	return FALSE;
- }
+diff --git a/src/stkutil.h b/src/stkutil.h
+index 44d167a..66d2e55 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -237,6 +237,7 @@ enum stk_result_type {
+ 	STK_RESULT_TYPE_GO_BACK =3D			0x11,
+ 	STK_RESULT_TYPE_NO_RESPONSE =3D			0x12,
+ 	STK_RESULT_TYPE_HELP_REQUESTED =3D		0x13,
++	STK_RESULT_TYPE_USSD_OR_SS_USER_TERMINATION =3D   0x14,
  =
 
-+static void send_ussd_callback( int error, int dcs, const unsigned char* m=
-sg,
-+                                int msg_len, void* userdata)
-+{
-+	struct ofono_stk *stk =3D userdata;
-+	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
-+	struct stk_response rsp;
-+
-+	if (stk->pending_cmd->send_ussd.alpha_id &&
-+		stk->pending_cmd->send_ussd.alpha_id[0])
-+		stk_alpha_id_unset(stk);
-+
-+	switch (error) {
-+	case OFONO_USSD_FAILURE_NONE:
-+		memset(&rsp, 0, sizeof(rsp));
-+
-+		rsp.result.type =3D STK_RESULT_TYPE_SUCCESS;
-+
-+		rsp.send_ussd.dcs =3D dcs;
-+		rsp.send_ussd.text =3D g_memdup(msg, msg_len);
-+
-+		if (stk_respond(stk, &rsp, stk_command_cb))
-+		        stk_command_cb(&failure, stk);
-+
-+		break;
-+	case OFONO_USSD_FAILURE_USER_TERMINATED:
-+		send_simple_response(stk, STK_RESULT_TYPE_USSD_OR_SS_USER_TERMINATION);
-+		break;
-+	case OFONO_USSD_FAILURE_TIMED_OUT:
-+		send_simple_response(stk, STK_RESULT_TYPE_NETWORK_UNAVAILABLE);
-+		break;
-+	case OFONO_USSD_FAILURE_RETURN_ERROR:
-+		send_simple_response(stk, STK_RESULT_TYPE_USSD_RETURN_ERROR);
-+		break;
-+	}
-+}
-+
-+static gboolean handle_command_send_ussd(const struct stk_command *cmd,
-+                                        struct stk_response *rsp,
-+                                        struct ofono_stk *stk)
-+{
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
-+	static unsigned char busy_on_ss_result[] =3D { 0x03 };
-+	static unsigned char busy_on_ussd_result[] =3D { 0x08 };
-+	int err;
-+
-+	struct ofono_atom *cf_atom;
-+	struct ofono_atom *cb_atom;
-+	struct ofono_atom *cs_atom;
-+	struct ofono_atom *ussd_atom;
-+
-+	struct ofono_call_forwarding *cf;
-+	struct ofono_call_barring *cb;
-+	struct ofono_call_settings *cs;
-+	struct ofono_ussd *ussd;
-+
-+	cf_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_FORWARDIN=
-G);
-+	cb_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_BARRING);
-+	cs_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_SETTINGS);
-+	ussd_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_USSD);
-+
-+	if (!cf_atom || !__ofono_atom_get_registered(cf_atom) ||
-+		!cb_atom || !__ofono_atom_get_registered(cb_atom) ||
-+		!cs_atom || !__ofono_atom_get_registered(cs_atom)) {
-+	=
-
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+	}
-+
-+	cf =3D __ofono_atom_get_data(cf_atom);
-+	cb =3D __ofono_atom_get_data(cb_atom);
-+	cs =3D __ofono_atom_get_data(cs_atom);
-+	ussd =3D __ofono_atom_get_data(ussd_atom);
-+
-+	if (__ofono_call_barring_is_busy(cb) ||
-+		__ofono_call_forwarding_is_busy(cf) ||
-+		__ofono_call_settings_is_busy(cs)){
-+		=
-
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		rsp->result.additional_len =3D sizeof(busy_on_ss_result);
-+		rsp->result.additional =3D busy_on_ss_result;
-+		return TRUE;
-+	}
-+
-+	if (__ofono_ussd_is_busy(ussd)){
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		rsp->result.additional_len =3D sizeof(busy_on_ussd_result);
-+		rsp->result.additional =3D busy_on_ussd_result;
-+		return TRUE;
-+	}
-+
-+	err =3D __ofono_ussd_initiate( ussd, cmd->send_ussd.ussd_string.dcs,
-+                         cmd->send_ussd.ussd_string.string,
-+                         cmd->send_ussd.ussd_string.len,
-+                         send_ussd_callback, stk);
-+
-+	if (err >=3D 0) {
-+		return FALSE;
-+	}
-+
-+	if (err =3D=3D -ENOSYS) {
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+
-+		return TRUE;
-+	}
-+
-+	if (cmd->send_ussd.alpha_id && cmd->send_ussd.alpha_id[0])
-+		stk_alpha_id_set(stk, cmd->send_ussd.alpha_id);
-+
-+	return FALSE;
-+}
-+
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
- {
- 	if (stk->immediate_response)
-@@ -1740,6 +1851,10 @@ void ofono_stk_proactive_command_notify(struct ofono=
-_stk *stk,
- 		respond =3D handle_command_set_up_call(stk->pending_cmd,
- 							&rsp, stk);
- 		break;
-+	case STK_COMMAND_TYPE_SEND_USSD:
-+		respond =3D handle_command_send_ussd(stk->pending_cmd,
-+                                           &rsp, stk);
-+		break;
+ 	/* 0x20 to 0x2F are used to indicate that SIM should retry */
+ 	STK_RESULT_TYPE_TERMINAL_BUSY =3D			0x20,
+@@ -254,6 +255,7 @@ enum stk_result_type {
+ 	STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD =3D		0x32,
+ 	STK_RESULT_TYPE_COMMAND_ID_UNKNOWN =3D		0x33,
+ 	STK_RESULT_TYPE_MINIMUM_NOT_MET =3D		0x36,
++	STK_RESULT_TYPE_USSD_RETURN_ERROR =3D             0x37,
+ 	STK_RESULT_TYPE_CALL_CONTROL_PERMANENT =3D	0x39,
+ 	STK_RESULT_TYPE_BIP_ERROR =3D			0x3A,
+ 	STK_RESULT_TYPE_ACCESS_TECHNOLOGY_ERROR =3D	0x3B,
+@@ -1445,6 +1447,11 @@ struct stk_response_run_at_command {
+ 	const char *at_response;
+ };
  =
 
- 	default:
- 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
++struct stk_response_text_string {
++	unsigned char dcs;
++	const unsigned char *text;
++};
++
+ struct stk_response {
+ 	unsigned char number;
+ 	unsigned char type;
+@@ -1474,6 +1481,7 @@ struct stk_response {
+ 		struct stk_response_generic send_dtmf;
+ 		struct stk_response_generic language_notification;
+ 		struct stk_response_generic launch_browser;
++		struct stk_response_text_string send_ussd;
+ 	};
+ =
+
+ 	void (*destructor)(struct stk_response *response);
 -- =
 
 1.7.0.4
@@ -182,5 +83,5 @@ the sender promptly, and delete the message from your system.
 Thank you.
 
 
---===============0301918139272731630==--
+--===============4388524691332550480==--
 
