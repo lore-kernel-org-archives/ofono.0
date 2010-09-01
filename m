@@ -1,40 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============5569527280238230770=="
+Content-Type: multipart/mixed; boundary="===============4556045544448122647=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: Clarification on USSD support in ofono
-Date: Wed, 01 Sep 2010 13:59:59 +0300
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802A0E38B@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <4C7D2A21.8030605@gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 01/11] added Send USSD string maximum length
+Date: Wed, 01 Sep 2010 04:00:26 -0700
+Message-ID: <1283338836-13572-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5569527280238230770==
+--===============4556045544448122647==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+---
+ include/types.h |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/include/types.h b/include/types.h
+index 6098cba..e25ff02 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -77,6 +77,8 @@ struct ofono_error {
+ };
  =
 
-Hi Denis,
+ #define OFONO_MAX_PHONE_NUMBER_LENGTH 20
++#define OFONO_MAX_USSD_LENGTH 160
++
+ =
 
-> Can you send what you have so far to the list?  Andrew and Yang are
-actually already looking into this, so it might be nice for the three of
-you to be on the same page and not duplicate effort.
+ struct ofono_phone_number {
+ 	char number[OFONO_MAX_PHONE_NUMBER_LENGTH + 1];
+-- =
 
-I'm sending the patches for the Send USSD proactive command handling. I
-have tested the changes with the modified phonesim. Let me know if you
-need the modified phonesim files.
-
-Thanks and Regards,
-Jeevaka
-
-
-----------------------------------------------------------------
-Please note: This e-mail may contain confidential information
-intended solely for the addressee. If you have received this
-e-mail in error, please do not disclose it to anyone, notify
-the sender promptly, and delete the message from your system.
-Thank you.
+1.7.0.4
 
 
 
@@ -46,5 +45,14 @@ the sender promptly, and delete the message from your system.
 Thank you.
 
 
---===============5569527280238230770==--
+
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
+
+
+--===============4556045544448122647==--
 
