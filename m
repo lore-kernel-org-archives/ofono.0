@@ -1,53 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============2724737967989975375=="
+Content-Type: multipart/mixed; boundary="===============5569527280238230770=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [PATCH 2/2] Add: n900modem driver
-Date: Wed, 01 Sep 2010 11:32:01 +0300
-Message-ID: <AANLkTinaL6nA4nCiLx4Xtg-p7NJCh7=tTRu8-X1JpUoc@mail.gmail.com>
-In-Reply-To: <6741e76801885a065863f2d50dee4c50@chewa.net>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: Clarification on USSD support in ofono
+Date: Wed, 01 Sep 2010 13:59:59 +0300
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802A0E38B@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <4C7D2A21.8030605@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2724737967989975375==
+--===============5569527280238230770==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi R=C3=A9mi,
+ =
 
-2010/8/31 R=C3=A9mi Denis-Courmont <remi@remlab.net>:
-> I don't understand what this code is supposed to do in the first place.
-> Autoconfiguration of the Phonet stack is the kernel's job (or phonet-util=
-s'
-> on older kernels). This really really does not belong in oFono. That is a
-> complete denial of the reasons why Phonet is a socket API, i.e. that more
-> than one user-space process can use it at a time. If you want oFono to ta=
-ke
-> care of everything, you really should just steal the USB interface via
-> libusb and/or use the raw SSI character device. Not that I'd advise doing
-> so.
+Hi Denis,
 
-It does what kernel or phonet-utils are supposed to do but which they do no=
-t do.
+> Can you send what you have so far to the list?  Andrew and Yang are
+actually already looking into this, so it might be nice for the three of
+you to be on the same page and not duplicate effort.
 
-> In any case, if you need to know whether you're on SSI or USB, you should
-> check the link-layer address, not the name of the interface. I do hope
-> that, if and when the SSI driver goes upstream, the interface will be
-> called ssi0 or mcsaab0 rather than phonet0 by the way.
+I'm sending the patches for the Send USSD proactive command handling. I
+have tested the changes with the modified phonesim. Let me know if you
+need the modified phonesim files.
 
-When the HSI driver goes to upstream, hopefully they do the
-autoconfiguration as they should do. We can use another plugin with
-the new kernels.
+Thanks and Regards,
+Jeevaka
 
-> Then there's the GPIO lines. Ideally, the hardware specifics should be
-> taken care of by the kernel.
 
-Ideally, there should be handles on women. Or the beer glasses should be bi=
-gger.
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
 
--- =
 
-Pekka.Pessi mail at nokia.com
 
---===============2724737967989975375==--
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
+
+
+--===============5569527280238230770==--
 
