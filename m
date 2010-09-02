@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============9108927950685027696=="
+Content-Type: multipart/mixed; boundary="===============1524143609865140735=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH] Fix adding 8bit reference number
-Date: Thu, 02 Sep 2010 10:29:01 +0300
-Message-ID: <1283412541-27770-1-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCHv2] Fix adding 8bit reference number
+Date: Thu, 02 Sep 2010 10:47:43 +0300
+Message-ID: <1283413663-30349-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9108927950685027696==
+--===============1524143609865140735==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,7 +17,7 @@ Content-Transfer-Encoding: quoted-printable
  1 files changed, 12 insertions(+), 7 deletions(-)
 
 diff --git a/src/sms.c b/src/sms.c
-index 7298563..e3582e1 100644
+index 7298563..2012fe5 100644
 --- a/src/sms.c
 +++ b/src/sms.c
 @@ -522,7 +522,7 @@ static gboolean tx_next(gpointer user_data)
@@ -63,7 +63,7 @@ nn, DBusMessage *msg,
  =
 
 -	set_ref_and_to(msg_list, sms->ref, ref_offset, to);
-+	set_ref_and_to(msg_list, sms->ref, ref_offset, use_16bit_ref, to);
++	set_ref_and_to(msg_list, sms->ref, ref_offset, TRUE, to);
  	DBG("ref: %d, offset: %d", sms->ref, ref_offset);
  =
 
@@ -73,5 +73,5 @@ nn, DBusMessage *msg,
 1.7.0.4
 
 
---===============9108927950685027696==--
+--===============1524143609865140735==--
 
