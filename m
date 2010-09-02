@@ -1,34 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============5009078225083616992=="
+Content-Type: multipart/mixed; boundary="===============0394638649038600025=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 4/4] Add documentation for the Alphabet property
-Date: Thu, 02 Sep 2010 22:08:23 +0300
-Message-ID: <AANLkTin8Ao4EY8=8BXQFcaM+9546ZjHjaFqF1X7j1EUQ@mail.gmail.com>
-In-Reply-To: <1283451558.6640.6.camel@localhost.localdomain>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH][RfC] doc: Play Tone command proposed d-bus API
+Date: Thu, 02 Sep 2010 15:19:57 +0200
+Message-ID: <1283433597-26387-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5009078225083616992==
+--===============0394638649038600025==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+An open question is if it makes more sense to send the tone code as a
+byte just as they come from UICC or as string names of the tones
+("Ringing tone", "General beep"...).
+---
+ doc/stk-api.txt |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
-2010/9/2 Marcel Holtmann <marcel@holtmann.org>:
-> If we think we wanna expose this inside the UI, then of course we have
-> to ask ourselves if this is something a user should be really exposed
-> to. So this needs use cases and justification for it.
+diff --git a/doc/stk-api.txt b/doc/stk-api.txt
+index d0dd740..2e6ce92 100644
+--- a/doc/stk-api.txt
++++ b/doc/stk-api.txt
+@@ -200,6 +200,18 @@ Methods		byte RequestSelection(string title, byte icon=
+_id,
+ =
 
-Ideally, you'd want none of these parameters exposed to the user. I
-mean seriously, do you know your SMSC address, or anyone who does? Or
-care about the SMS bearer? I sure don't... But if you're a user in
-Spain, it sure would be nice to change the factory default of
-"reduced" alphabet, so that you don't look like an idiot when bragging
-to your colleagues at work about sitting on the beach sipping Cura=C3=A7ao.
+ 			Possible Errors: [service].Error.SimToolkit.EndSession
+ =
 
-Cheers,
-Aki
++		void PlayTone(byte tone, string text, byte icon_id)
++
++			Tells the agent to play an autio tone.  A
++			continuous or repeatable tone is played for the
++			duration of the method call (until it is cancelled),
++			otherwise it is played once and the method should
++			return.  The text parameter contains an optional
++			text to be displayed to the user.  Tone numbers are
++			listed in TS 102.223 Section 8.16.
++
++			Possible Errors: [service].Error.SimToolkit.EndSession
++
+ 		void Cancel()
+ =
 
---===============5009078225083616992==--
+ 			Asks the agent to cancel any ongoing operation in
+-- =
+
+1.7.1.86.g0e460.dirty
+
+
+--===============0394638649038600025==--
 
