@@ -1,32 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============2981979448002730662=="
+Content-Type: multipart/mixed; boundary="===============9108927950685027696=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: [g_isi_send PATCH 3/3] isimodem/ussd: use g_isi_send()
-Date: Thu, 02 Sep 2010 08:42:53 +0300
-Message-ID: <1283406173.718.30.camel@tucson.research.nokia.com>
-In-Reply-To: <1283342623-21353-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [PATCH] Fix adding 8bit reference number
+Date: Thu, 02 Sep 2010 10:29:01 +0300
+Message-ID: <1283412541-27770-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2981979448002730662==
+--===============9108927950685027696==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, 2010-09-01 at 14:03 +0200, Pessi Pekka (Nokia-MS/Helsinki)
-wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+---
+ src/sms.c |   19 ++++++++++++-------
+ 1 files changed, 12 insertions(+), 7 deletions(-)
 
-> ---
->  drivers/isimodem/ussd.c |   21 ++++++++++-----------
->  1 files changed, 10 insertions(+), 11 deletions(-)
+diff --git a/src/sms.c b/src/sms.c
+index 7298563..e3582e1 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -522,7 +522,7 @@ static gboolean tx_next(gpointer user_data)
+ }
+ =
 
-Pushed, thanks.
+ static void set_ref_and_to(GSList *msg_list, guint16 ref, int offset,
+-				const char *to)
++				gboolean use_16bit, const char *to)
+ {
+ 	GSList *l;
+ 	struct sms *sms;
+@@ -530,12 +530,17 @@ static void set_ref_and_to(GSList *msg_list, guint16 =
+ref, int offset,
+ 	for (l =3D msg_list; l; l =3D l->next) {
+ 		sms =3D l->data;
+ =
 
-Cheers,
-Aki
+-		if (offset !=3D 0) {
+-			sms->submit.ud[offset] =3D (ref & 0xf0) >> 8;
+-			sms->submit.ud[offset+1] =3D (ref & 0x0f);
+-		}
+-
+ 		sms_address_from_string(&sms->submit.daddr, to);
++
++		if (offset =3D=3D 0)
++			continue;
++
++		if (use_16bit) {
++			sms->submit.ud[offset] =3D ref & 0xf0 >> 8;
++			sms->submit.ud[offset+1] =3D ref & 0x0f;
++		} else {
++			sms->submit.ud[offset] =3D ref & 0x0f;
++		}
+ 	}
+ }
+ =
+
+@@ -621,7 +626,7 @@ static DBusMessage *sms_send_message(DBusConnection *co=
+nn, DBusMessage *msg,
+ 	if (!msg_list)
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+-	set_ref_and_to(msg_list, sms->ref, ref_offset, to);
++	set_ref_and_to(msg_list, sms->ref, ref_offset, use_16bit_ref, to);
+ 	DBG("ref: %d, offset: %d", sms->ref, ref_offset);
+ =
+
+ 	if (ref_offset !=3D 0) {
+-- =
+
+1.7.0.4
 
 
---===============2981979448002730662==--
+--===============9108927950685027696==--
 
