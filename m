@@ -1,119 +1,149 @@
-Content-Type: multipart/mixed; boundary="===============1812394669244240184=="
+Content-Type: multipart/mixed; boundary="===============7326004500122832988=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [emergency PATCH 1/2] TODO: added emergency mode proposal
-Date: Thu, 02 Sep 2010 18:38:58 +0300
-Message-ID: <1283441939-19098-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Rolf Offermanns <rolf.offermanns@gmx.net>
+Subject: Huawei K3715 and E172 test results
+Date: Thu, 02 Sep 2010 17:45:25 +0200
+Message-ID: <4C7FC695.90809@gmx.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1812394669244240184==
+--===============7326004500122832988==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi All,
 
-Collected emergency-related features into one section.
----
- TODO |   50 +++++++++++++++++++++++++++++++++++++++++---------
- 1 files changed, 41 insertions(+), 9 deletions(-)
+I did some tests with the following setup:
 
-diff --git a/TODO b/TODO
-index 97f43e1..c4853ad 100644
---- a/TODO
-+++ b/TODO
-@@ -510,8 +510,30 @@ Sim Toolkit
-   Owner: Kristen Carlson Accardi <kristen@linux.intel.com>
- =
+- Meego Netbook 1.0.x
+- ofono git (1.9.2010)
+  + Patch "[PATCH 1/2] huawei: poll sim state" from Kalle
+- connman git (31.8.2010)
+  + Patchset "[ofono-refactor-v2 PATCH xx] oFono API breakage, take 2"
+  + Patchset "[service-leak PATCH xxx] fix service leak"
+- EeePC 1005HA
+- Huawei K3715 (Vodafone Mobile Connect USB)
+- Huawei E172  (Vodafone Mobile Connect USB)
 
- =
+Below is a summary of the results. I have separate logfiles for each
+test run with "OFONO_AT_DEBUG=3D1 ofonod -n -d '*'" output. Shall I post
+them here?
 
--Miscellaneous
--=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+Emergency Calls
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+- Modem Emergency mode.  Support network registration and online/offline
-+  mode during the emergency calls and related network activity (e.g.,
-+  network-initiated location request via supplementary service channel).
-+
-+  Proposed solution is to introduce a new Emergency boolean property to the
-+  Modem D-Bus interface and new functions to modem interface:
-+
-+  - ofono_modem_emergency_mode_inc()
-+  - ofono_modem_emergency_mode_dec()
-+  - ofono_modem_emergency_mode_get()
-+  - ofono_modem_add_emergency_mode_watch()
-+  - ofono_modem_remove_emergency_mode_watch()
-+
-+  When emergency mode is requested, modem is set to online (if needed) and
-+  the watchers are notified. There can be multiple parties requesting
-+  emergency mode.  When all of them have completed the emergency-related
-+  operation and called ofono_modem_emergency_mode_dec(), modem is set to
-+  offline (if needed) and the watchers are again notified.
-+
-+  Priority: High
-+  Complexity: C2
- =
+Please let me know what I can do to improve the Huawei support.
 
- - Country / Operator specific emergency numbers.  Figure out how to support
-   countries / operators with specific mandated emergency numbers which are
-@@ -520,8 +542,25 @@ Miscellaneous
-   assumed to be managed by the modem.  If no such functionality is availab=
-le,
-   then the 3GPP mandated behavior is used.
- =
+Thanks to Kalle and Pekka for helping out on IRC.
 
-+  Priority: High
-   Complexity: C2
-+
-+- Network updating the emergency number list. Support the list of emergency
-+  numbers dynamically updated by the network.
-+
-   Priority: High
-+  Complexity: C2
-+
-+- Extend the voicecall interface with a property indicating whether this c=
-all
-+  is an emergency call (essentially the CLI matches one of the numbers on =
-the
-+  emergency calling codes list.)
-+
-+  Priority: High
-+  Complexity: C1
-+
-+
-+Miscellaneous
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
-
- - Bluetooth SAP Client support.  The Telit UC864-G devices support Bluetoo=
-th
-   SAP client mode.  This requires the use of a modem side-channel to read =
-the
-@@ -586,13 +625,6 @@ Miscellaneous
-   Priority: High
-   Complexity: C1
- =
-
--- Extend the voicecall interface with a property indicating whether this c=
-all
--  is an emergency call (essentially the CLI matches one of the numbers on =
-the
--  emergency calling codes list.)
--
--  Priority: High
--  Complexity: C1
--
- - TTY (hearing impaired) support.  Add a new oFono atom type that will ena=
-ble
-   the user to enable or disable the TTY support on the modem.  Support for
-   automatic detection of TTY (signaled by the driver) is also desired.
--- =
-
-1.7.0.4
+-Rolf
 
 
---===============1812394669244240184==--
+Test run 1: Huawei K3715 with unlocked SIM (no PIN required)
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D
+1. Start ofonod after modem has settled
+   -> Everything is fine
+   -> Modem shows up in connman
+2. Unplug / plug
+   -> First sysinfo shows sim_state: 0
+   -> Later sysinfo calls return sim_state: 1 (checked in Minicom)
+   -> Modem not detected in connman
+3. Unplug / plug
+   -> same as 2.
+4. Unplug / plug
+   -> same as 2.
+5. Unplug / plug
+   -> same as 2.
+
+Summary: Modem only works if already settled before ofonod starts.
+
+
+Test run 2: Huawei K3715 with locked SIM (PIN required)
+Note: Whenever a "PIN required" showed up, I used the "tests/enter-pin"
+script.
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D
+1. Start ofonod after modem has settled
+   -> Everything is fine
+   -> Modem shows up in connman
+2. Unplug / plug
+   -> same as 1.
+3. Unplug / plug
+   -> enter-pin throws "DBus.Error.NoReply" exception
+   -> Modem not detected in connman
+4. Unplug / plug
+   -> same as 3.
+5. Unplug / plug
+   -> same as 1.
+
+Summary: Modem works if already settled before ofond starts and
+sometimes when plugged in.
+
+
+Test run 3: Huawei E172 with unlocked SIM (no PIN required)
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D
+1. Start ofonod after modem has settled
+   -> Everything is fine
+   -> Modem shows up in connman
+2. Unplug / plug
+   -> First sysinfo shows sim_state: 255 (handled by Kalles patch)
+   -> Next SYSINFO shows sim_state: 1
+   -> Modem not detected in connman
+3. Unplug / plug
+   -> First sysinfo shows sim_state: 255
+   -> Next SYSINFO shows sim_state: 0(!)
+   -> Then a SIMST reply comes in (not there in 2.)
+   -> Modem not detected in connman
+4. Unplug / plug
+   -> First sysinfo shows sim_state: 255
+   -> Next SYSINFO shows sim_state: 0(!)
+   -> No SIMST reply
+   -> Modem not detected in connman
+5. Unplug / plug
+   -> First sysinfo shows sim_state: 255
+   -> Next SYSINFO shows sim_state: 1
+   -> Modem shows up in connman
+
+Summary: Modem works if already settled before ofond starts and seldom
+when plugged in. Several different behaviours are observed.
+
+
+
+Test run 4: Huawei E172 with locked SIM (PIN required)
+Note: Whenever a "PIN required" showed up, I used the "tests/enter-pin"
+script.
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D
+1. Start ofonod after modem has settled
+   -> Everything is fine
+   -> Modem shows up in connman
+2. Unplug / plug
+   -> AT chat gets out of sync early (no "right" reply after ATE0)
+   -> Modem not detected in connman
+3. Unplug / plug
+    -> same as 1.
+4. Unplug / plug
+    -> same as 1.
+5. Unplug / plug
+   -> First sysinfo shows sim_state: 255
+   -> Next SYSINFO gets no reply
+      -> This happened quite often in other tests. The modem is still
+         delivering replies to previous commands and the SYSINFO
+         request seems to get lost.
+   -> Modem not detected in connman
+
+Summary: Modem works if already settled before ofond starts and seldom
+when plugged in. Several different behaviours are observed.
+
+
+
+--===============7326004500122832988==--
 
