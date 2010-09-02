@@ -1,90 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============7028359820783218343=="
+Content-Type: multipart/mixed; boundary="===============7711315407851793740=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [sim-reset-pin-v2 1/3] sim: pass reset password type to driver
-Date: Thu, 02 Sep 2010 19:35:04 +0300
-Message-ID: <AANLkTikEK3+kZDF0Ad0VVqO0WY9J8VxtUhh-DomtcYNm@mail.gmail.com>
-In-Reply-To: <4C7EB314.6010808@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/4] Add so called reduced charset support to SMS
+Date: Thu, 02 Sep 2010 11:43:40 -0500
+Message-ID: <4C7FD43C.4020300@gmail.com>
+In-Reply-To: <1283413960-31490-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7028359820783218343==
+--===============7711315407851793740==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Aki,
 
-2010/9/1 Denis Kenzior <denkenz@gmail.com>:
->> =C2=A0 =C2=A0 =C2=A0 void (*send_passwd)(struct ofono_sim *sim, const ch=
-ar *passwd,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 ofono_sim_lock_unlock_cb_t cb, void *data);
->> - =C2=A0 =C2=A0 void (*reset_passwd)(struct ofono_sim *sim, const char *=
-puk,
->> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-const char *passwd,
->> + =C2=A0 =C2=A0 void (*reset_passwd)(struct ofono_sim *sim,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-enum ofono_sim_password_type type,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-const char *puk, const char *passwd,
->
-> Honestly I'm still lost, why are we doing this again? =C2=A0reset_passwd
-> corresponds to CPIN from 27.007. =C2=A0This one does not accept a type. =
-=C2=A0Some
-> modems (like the calypso) have the +CPIN2 command which can be used to
-> enter PIN/PUK2. =C2=A0Are you trying to solve this case?
+On 09/02/2010 02:52 AM, Aki Niemi wrote:
+> This "reduced" charset support is available in some current phones to
+> reduce the number of segments that a message takes.
+> =
 
-Yes, I'm trying to reset PIN2. The +CPIN=3D"puk","pin" uses the type
-from the last +CPIN?. Unfortunately it may be transient (and I still
-don't understand how the PIN2 is supposed to be entered using the AT
-command interface).
+> Normally, when characters are encountered that don't have a
+> representation in the GSM 7 bit alphabet, the encoding switches to
+> UCS-2 that takes roughly twice as much space.
+> =
 
-> If so, we either need to add the type to both reset_passwd and
-> send_passwd or leave this up to the driver to figure out.
+> This reduced charset feature transliterates the input string, so that
+> more unicode characters fit the GSM alphabet. The obvious downside is
+> that transliterating loses information, i.e., the text gets dumbed
+> down, and what the recipient receives is not the original text.
+> =
 
-OK, I'll do it that way.
+> Nevertheless, in some regions, this is a must-have feature.
+> ---
+>  src/util.c       |  137 ++++++++++++++++++++++++++++++++++++++++++++++++=
++++---
+>  src/util.h       |    4 ++
+>  unit/test-util.c |   18 +++++++
 
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 ofono_sim_lock_unlock_cb_t cb, void *data);
->> =C2=A0 =C2=A0 =C2=A0 void (*change_passwd)(struct ofono_sim *sim,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 enum ofono_sim_password_type type,
->> diff --git a/src/sim.c b/src/sim.c
->> index d0b5988..5e918f2 100644
->> --- a/src/sim.c
->> +++ b/src/sim.c
->> @@ -747,8 +747,13 @@ static DBusMessage *sim_reset_pin(DBusConnection *c=
-onn, DBusMessage *msg,
->>
->> =C2=A0 =C2=A0 =C2=A0 type =3D sim_string_to_passwd(typestr);
->>
->> - =C2=A0 =C2=A0 if (type =3D=3D OFONO_SIM_PASSWORD_NONE || type !=3D sim=
-->pin_type)
->> + =C2=A0 =C2=A0 switch (type) {
->> + =C2=A0 =C2=A0 case OFONO_SIM_PASSWORD_SIM_PIN:
->> + =C2=A0 =C2=A0 case OFONO_SIM_PASSWORD_SIM_PIN2:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 break;
->> + =C2=A0 =C2=A0 default:
->
-> And now you're changing the API semantics completely. =C2=A0ResetPin is
-> supposed to be called like this:
->
-> ResetPin("puk"/"puk2"/"corppuk"/"networkpuk"/etc, puk, newpin)
->
-> Now you're changing this to be called like:
->
-> ResetPin("pin"/"pin2", ...)
->
-> I'm not necessarily saying this is a bad idea, but this does not cover
-> all the other puks described in 27.007.
+Please break this up into two patches.  By convention patches that touch
+multiple directories should be broken up, unless needed for compilation
+to succeed.
 
-Oops.  I'll remove the check, it should be in the driver.
+>  3 files changed, 152 insertions(+), 7 deletions(-)
 
--- =
+<snip>
 
-Pekka.Pessi mail at nokia.com
+> =
 
---===============7028359820783218343==--
+> -	if (locking_lang >=3D GSM_DIALECT_INVALID)
+> +	if (locking_lang > GSM_DIALECT_INVALID)
+>  		return NULL;
+>  =
+
+> -	if (single_lang >=3D GSM_DIALECT_INVALID)
+> +	if (single_lang > GSM_DIALECT_INVALID)
+>  		return NULL;
+>  =
+
+
+I think this is simply too evil, can't we just change
+unicode_single_shift_lookup and gsm_locking_shift_lookup to take the
+codepoint table and length directly?  Then breakout the core of
+convert_gsm_to_utf8_with_lang into a separate function and pass the
+table + len to it.  Should be cleaner and more readable in my opinion.
+
+Regards,
+-Denis
+
+--===============7711315407851793740==--
 
