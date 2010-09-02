@@ -1,111 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============2506338758901350006=="
+Content-Type: multipart/mixed; boundary="===============8770938648749152397=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [sim-reset-pin-v2 1/3] sim: pass reset password type to driver
-Date: Wed, 01 Sep 2010 15:09:56 -0500
-Message-ID: <4C7EB314.6010808@gmail.com>
-In-Reply-To: <1283190824-9876-2-git-send-email-Pekka.Pessi@nokia.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: [PATCH 07/11] added stk_response_text_string for USSD result
+Date: Thu, 02 Sep 2010 02:22:31 +0200
+Message-ID: <AANLkTim+N9mXH81UDsMmT2r6twrG2SiUaa-12uUFe9tW@mail.gmail.com>
+In-Reply-To: <4C7E724D.8000106@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2506338758901350006==
+--===============8770938648749152397==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Jeevaka,
 
-On 08/30/2010 12:53 PM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+On 1 September 2010 17:33, Denis Kenzior <denkenz@gmail.com> wrote:
+> On 09/01/2010 06:00 AM, Jeevaka Badrappan wrote:
+>> ---
+>> =C2=A0src/stkutil.h | =C2=A0 =C2=A08 ++++++++
+>> =C2=A01 files changed, 8 insertions(+), 0 deletions(-)
+>>
+>> diff --git a/src/stkutil.h b/src/stkutil.h
+>> index 44d167a..66d2e55 100644
+>> --- a/src/stkutil.h
+>> +++ b/src/stkutil.h
+>> @@ -237,6 +237,7 @@ enum stk_result_type {
+>> =C2=A0 =C2=A0 =C2=A0 STK_RESULT_TYPE_GO_BACK =3D =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x11,
+>> =C2=A0 =C2=A0 =C2=A0 STK_RESULT_TYPE_NO_RESPONSE =3D =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x12,
+>> =C2=A0 =C2=A0 =C2=A0 STK_RESULT_TYPE_HELP_REQUESTED =3D =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x13,
+>> + =C2=A0 =C2=A0 STK_RESULT_TYPE_USSD_OR_SS_USER_TERMINATION =3D =C2=A0 0=
+x14,
+>>
+>> =C2=A0 =C2=A0 =C2=A0 /* 0x20 to 0x2F are used to indicate that SIM shoul=
+d retry */
+>> =C2=A0 =C2=A0 =C2=A0 STK_RESULT_TYPE_TERMINAL_BUSY =3D =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x20,
+>> @@ -254,6 +255,7 @@ enum stk_result_type {
+>> =C2=A0 =C2=A0 =C2=A0 STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD =3D =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 0x32,
+>> =C2=A0 =C2=A0 =C2=A0 STK_RESULT_TYPE_COMMAND_ID_UNKNOWN =3D =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x33,
+>> =C2=A0 =C2=A0 =C2=A0 STK_RESULT_TYPE_MINIMUM_NOT_MET =3D =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x36,
+>> + =C2=A0 =C2=A0 STK_RESULT_TYPE_USSD_RETURN_ERROR =3D =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 0x37,
+>> =C2=A0 =C2=A0 =C2=A0 STK_RESULT_TYPE_CALL_CONTROL_PERMANENT =3D =C2=A0 =
+=C2=A0 =C2=A0 =C2=A00x39,
+>> =C2=A0 =C2=A0 =C2=A0 STK_RESULT_TYPE_BIP_ERROR =3D =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x3A,
+>> =C2=A0 =C2=A0 =C2=A0 STK_RESULT_TYPE_ACCESS_TECHNOLOGY_ERROR =3D =C2=A0 =
+=C2=A0 =C2=A0 0x3B,
+>> @@ -1445,6 +1447,11 @@ struct stk_response_run_at_command {
+>> =C2=A0 =C2=A0 =C2=A0 const char *at_response;
+>> =C2=A0};
+>>
+>> +struct stk_response_text_string {
+>> + =C2=A0 =C2=A0 unsigned char dcs;
+>> + =C2=A0 =C2=A0 const unsigned char *text;
+>> +};
+>> +
+>
+> 3GPP 31.111 says that the terminal response to Send USSD should contain
+> a simple Text String. =C2=A0The DCS of the text string in STK is different
+> from DCS that is returned by USSD. =C2=A0Copying it directly from the USSD
+> DCS seems incorrect. =C2=A0Or is there something I'm missing?
 
-> ---
->  include/sim.h |    5 +++--
->  src/sim.c     |    9 +++++++--
->  2 files changed, 10 insertions(+), 4 deletions(-)
-> =
+On irc we figured that the best hint about what is expected to be
+returned is in the tests in 31.124.  +CUSD returns sms-like DCS, while
+STK expects Cell Broadcast-like DCS and recommends using only the
+values 00, 04, 08, so there needs to be a translation from one to the
+other (perhaps in stk.c in the ussd callback).  I think you'll also
+need a length field in this struct as the data can contain 0s.
 
-> diff --git a/include/sim.h b/include/sim.h
-> index 36a99b9..d3e564c 100644
-> --- a/include/sim.h
-> +++ b/include/sim.h
-> @@ -143,8 +143,9 @@ struct ofono_sim_driver {
->  			ofono_sim_passwd_cb_t cb, void *data);
->  	void (*send_passwd)(struct ofono_sim *sim, const char *passwd,
->  			ofono_sim_lock_unlock_cb_t cb, void *data);
-> -	void (*reset_passwd)(struct ofono_sim *sim, const char *puk,
-> -			const char *passwd,
-> +	void (*reset_passwd)(struct ofono_sim *sim,
-> +			enum ofono_sim_password_type type,
-> +			const char *puk, const char *passwd,
+Best regards
 
-Honestly I'm still lost, why are we doing this again?  reset_passwd
-corresponds to CPIN from 27.007.  This one does not accept a type.  Some
-modems (like the calypso) have the +CPIN2 command which can be used to
-enter PIN/PUK2.  Are you trying to solve this case?
-
-If so, we either need to add the type to both reset_passwd and
-send_passwd or leave this up to the driver to figure out.
-
->  			ofono_sim_lock_unlock_cb_t cb, void *data);
->  	void (*change_passwd)(struct ofono_sim *sim,
->  			enum ofono_sim_password_type type,
-> diff --git a/src/sim.c b/src/sim.c
-> index d0b5988..5e918f2 100644
-> --- a/src/sim.c
-> +++ b/src/sim.c
-> @@ -747,8 +747,13 @@ static DBusMessage *sim_reset_pin(DBusConnection *co=
-nn, DBusMessage *msg,
->  =
-
->  	type =3D sim_string_to_passwd(typestr);
->  =
-
-> -	if (type =3D=3D OFONO_SIM_PASSWORD_NONE || type !=3D sim->pin_type)
-> +	switch (type) {
-> +	case OFONO_SIM_PASSWORD_SIM_PIN:
-> +	case OFONO_SIM_PASSWORD_SIM_PIN2:
-> +		break;
-> +	default:
-
-And now you're changing the API semantics completely.  ResetPin is
-supposed to be called like this:
-
-ResetPin("puk"/"puk2"/"corppuk"/"networkpuk"/etc, puk, newpin)
-
-Now you're changing this to be called like:
-
-ResetPin("pin"/"pin2", ...)
-
-I'm not necessarily saying this is a bad idea, but this does not cover
-all the other puks described in 27.007.  It also arbitrarily changes the
-API with no reasoning given.
-
-If you're making such subtle changes, at least describe the reasoning in
-the commit description.  Otherwise everyone has to stare at this code
-and figure out what you're doing and why.
-
->  		return __ofono_error_invalid_format(msg);
-> +	}
->  =
-
->  	if (!is_valid_pin(puk, PIN_TYPE_PUK))
->  		return __ofono_error_invalid_format(msg);
-> @@ -757,7 +762,7 @@ static DBusMessage *sim_reset_pin(DBusConnection *con=
-n, DBusMessage *msg,
->  		return __ofono_error_invalid_format(msg);
->  =
-
->  	sim->pending =3D dbus_message_ref(msg);
-> -	sim->driver->reset_passwd(sim, puk, pin, sim_enter_pin_cb, sim);
-> +	sim->driver->reset_passwd(sim, type, puk, pin, sim_enter_pin_cb, sim);
->  =
-
->  	return NULL;
->  }
-
-Regards,
--Denis
-
---===============2506338758901350006==--
+--===============8770938648749152397==--
 
