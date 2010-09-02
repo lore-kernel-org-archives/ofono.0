@@ -1,63 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============0783393184422066001=="
+Content-Type: multipart/mixed; boundary="===============4529908504979994749=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH] Default to using 8bit reference numbers
-Date: Thu, 02 Sep 2010 10:54:50 +0300
-Message-ID: <1283414090-31727-1-git-send-email-aki.niemi@nokia.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: [PATCH 02/11] Changes done as per the changed driver API
+Date: Thu, 02 Sep 2010 11:00:59 +0300
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802A0E4F1@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <AANLkTi=xZgRGy3PYVS5OJyXkXA5bLzQ26ZibG+ki54s8@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0783393184422066001==
+--===============4529908504979994749==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Just like the rest of the world is doing.
----
- src/sms.c |    5 +++--
- 1 files changed, 3 insertions(+), 2 deletions(-)
-
-diff --git a/src/sms.c b/src/sms.c
-index 8262d0c..cdaa629 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -687,6 +687,7 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
- 	struct ofono_modem *modem;
- 	unsigned int flags;
- 	unsigned int msg_id;
-+	gboolean use_16bit_ref =3D FALSE;
  =
 
- 	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &to,
- 					DBUS_TYPE_STRING, &text,
-@@ -696,7 +697,7 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
- 	if (valid_phone_number_format(to) =3D=3D FALSE)
- 		return __ofono_error_invalid_format(msg);
- =
+Hi Pekka,
 
--	msg_list =3D sms_text_prepare_with_alphabet(text, 0, TRUE,
-+	msg_list =3D sms_text_prepare_with_alphabet(text, 0, use_16bit_ref,
- 						&ref_offset,
- 						sms->use_delivery_reports,
- 						sms->alphabet);
-@@ -704,7 +705,7 @@ static DBusMessage *sms_send_message(DBusConnection *co=
-nn, DBusMessage *msg,
- 	if (!msg_list)
- 		return __ofono_error_invalid_format(msg);
- =
+> I thought the modem already unpacks the ussd message to 8-bit gsm and
+the dcs parameter is rather meaningless in that case. Perhaps the
+atmodem ussd should re-pack the string in order to achieve the =
 
--	set_ref_and_to(msg_list, sms->ref, ref_offset, TRUE, to);
-+	set_ref_and_to(msg_list, sms->ref, ref_offset, use_16bit_ref, to);
- 	DBG("ref: %d, offset: %d", sms->ref, ref_offset);
- =
+> desired symmetry on the API?
 
- 	if (ref_offset !=3D 0) {
--- =
+Agree that the modem already unpacks the string received from the
+network to the "character set" set by TE(UCS2 or UTF-8 or ...). Atom
+driver will do the conversion to UTF-8 based on active character set
+supported by modem, so it should have information of the active
+character set. At present, we read and set the "character set" in the
+phonebook atom driver. USSD atom driver could to do the same or the
+reading/setting of character set can be done during the modem
+initialisation (eg: atgen.c). I would prefer to have the reading and
+setting of character set during the modem initialisation. I hope the
+character set is not set by some other component apart from ofono :-)
 
-1.7.0.4
+Regards,
+jeevaka
 
 
---===============0783393184422066001==--
+
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
+
+
+
+----------------------------------------------------------------
+Please note: This e-mail may contain confidential information
+intended solely for the addressee. If you have received this
+e-mail in error, please do not disclose it to anyone, notify
+the sender promptly, and delete the message from your system.
+Thank you.
+
+
+--===============4529908504979994749==--
 
