@@ -1,51 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============6330522910457149951=="
+Content-Type: multipart/mixed; boundary="===============2018810865253957157=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [PATCH 07/11] added stk_response_text_string for USSD result
-Date: Thu, 02 Sep 2010 11:05:26 +0300
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802A0E4F4@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <AANLkTim+N9mXH81UDsMmT2r6twrG2SiUaa-12uUFe9tW@mail.gmail.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] doc: clarify password usage in call barring api
+Date: Thu, 02 Sep 2010 16:26:08 +0300
+Message-ID: <1283433968-11970-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6330522910457149951==
+--===============2018810865253957157==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
+
+---
+ doc/call-barring-api.txt |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/doc/call-barring-api.txt b/doc/call-barring-api.txt
+index 41ae4b1..9c615c7 100644
+--- a/doc/call-barring-api.txt
++++ b/doc/call-barring-api.txt
+@@ -26,11 +26,11 @@ Methods		dict GetProperties()
  =
 
-Hi,
+ 			Disables barrings for outgoing calls.
+ =
 
-> On irc we figured that the best hint about what is expected to be
-returned is in the tests in 31.124.  +CUSD returns sms-like DCS, while
-STK expects Cell Broadcast-like DCS and recommends using only the >
-values 00, 04, 08, so there needs to be a translation from one to the
-other (perhaps in stk.c in the ussd callback).  I think you'll also need
-a length field in this struct as the data can contain 0s.
+-		void SetProperty(string property, variant value, string pin2)
++		void SetProperty(string property, variant value, string netpwd)
+ =
 
-Will fix the code as per the comments.
+ 			Sets the given property value to that specified in
+-			call parameter.  For all properties, the password
+-			(typically PIN2) must be provided.
++			call parameter.  For all properties, the network
++			password must be provided.
+ =
 
-Thanks and Regards,
-jeevaka
+ Signals		PropertyChanged(string property, variant value)
+ =
 
+-- =
 
-----------------------------------------------------------------
-Please note: This e-mail may contain confidential information
-intended solely for the addressee. If you have received this
-e-mail in error, please do not disclose it to anyone, notify
-the sender promptly, and delete the message from your system.
-Thank you.
-
+1.7.0.4
 
 
-----------------------------------------------------------------
-Please note: This e-mail may contain confidential information
-intended solely for the addressee. If you have received this
-e-mail in error, please do not disclose it to anyone, notify
-the sender promptly, and delete the message from your system.
-Thank you.
-
-
---===============6330522910457149951==--
+--===============2018810865253957157==--
 
