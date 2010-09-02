@@ -1,56 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8120935506811416495=="
+Content-Type: multipart/mixed; boundary="===============2633073489524927399=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/4] Add documentation for the Alphabet property
-Date: Thu, 02 Sep 2010 12:01:50 -0500
-Message-ID: <4C7FD87E.8040905@gmail.com>
-In-Reply-To: <1283413960-31490-4-git-send-email-aki.niemi@nokia.com>
+Subject: Re: [PATCHv2] Fix adding 8bit reference number
+Date: Thu, 02 Sep 2010 12:16:30 -0500
+Message-ID: <4C7FDBEE.9010007@gmail.com>
+In-Reply-To: <1283413663-30349-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8120935506811416495==
+--===============2633073489524927399==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Aki,
 
-On 09/02/2010 02:52 AM, Aki Niemi wrote:
-> ---
->  doc/message-api.txt |   15 +++++++++++++++
->  1 files changed, 15 insertions(+), 0 deletions(-)
-> =
+> -		if (offset !=3D 0) {
+> -			sms->submit.ud[offset] =3D (ref & 0xf0) >> 8;
+> -			sms->submit.ud[offset+1] =3D (ref & 0x0f);
+> -		}
+> -
+>  		sms_address_from_string(&sms->submit.daddr, to);
+> +
+> +		if (offset =3D=3D 0)
+> +			continue;
+> +
+> +		if (use_16bit) {
+> +			sms->submit.ud[offset] =3D ref & 0xf0 >> 8;
 
-> diff --git a/doc/message-api.txt b/doc/message-api.txt
-> index 693a111..9e8ea33 100644
-> --- a/doc/message-api.txt
-> +++ b/doc/message-api.txt
-> @@ -64,3 +64,18 @@ Properties	string ServiceCenterAddress
->  				"ps-preferred" - Use CS if PS is unavailable
->  =
+This doesn't look right at all, bitwise shift >> has higher precedence
+than bitwise AND &.
 
->  			By default oFono uses "cs-preferred" setting.
-> +
-> +		string Alphabet
-> +
-> +			Contains the alphabet setting for outgoing SMSs.
-> +			Possible values are:
-> +
-> +				"default" - Default GSM alphabet
-> +				"turkish" - Turkish alphabet
-> +				"spanish" - Spanish alphabet
-> +				"portuguese" - Portuguese alphabet
-> +				"reduced" - Non-standard extension that adds
-> +					translit support to the default alphabet
-> +
-> +			The standard, language-specific alphabets are defined in
-> +			3GPP TS23.038, Annex A.
-
-I want to hear everyone's thoughts on whether this should be in
-ofono/main.conf or an actual property.  We still never decides this...
+> +			sms->submit.ud[offset+1] =3D ref & 0x0f;
+> +		} else {
+> +			sms->submit.ud[offset] =3D ref & 0x0f;
+> +		}
 
 Regards,
 -Denis
 
---===============8120935506811416495==--
+--===============2633073489524927399==--
 
