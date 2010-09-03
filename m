@@ -1,61 +1,150 @@
-Content-Type: multipart/mixed; boundary="===============6991329932211834703=="
+Content-Type: multipart/mixed; boundary="===============9072306961672327691=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Patch: "Added missing DCS handling in stkutil and stk" Description
-Date: Fri, 03 Sep 2010 16:10:40 -0500
-Message-ID: <4C816450.4020907@gmail.com>
-In-Reply-To: <AANLkTikRo0aM549pBa5G=Muh8oQUcTZc5KQM82G0Yq1o@mail.gmail.com>
+From: Schoppa, Chris <Chris.Schoppa@windriver.com>
+Subject: Update on "Source/Destination port addressing scheme from 3GPP
+ 23.040" TODO task?
+Date: Fri, 03 Sep 2010 14:46:55 -0700
+Message-ID: <58BD0469C48A7443A479A13D101685E305042BF2@ala-mail09.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6991329932211834703==
+--===============9072306961672327691==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+As we start to flesh out thinking on how to handle SMS notifications, and W=
+AP Push =C3=A0 MMS message notification in particular, the need for the pro=
+posed SMS message routing to handlers based on Destination Port becomes mor=
+e urgent.
 
-On 09/02/2010 08:59 PM, Jeevaka Prabu Badrappan wrote:
-> Hi Andrzej,
-> =
+ =
 
->> There are two cases:
->>  * Get Inkey/Get Input, where the answer is actual text, in this case
->> the dcs can be determined automatically,
->>
->>  * Send USSD where we're sending the "8.15 Text string" but the
->> contents don't actually have to contain a string, it may be any data
->> that the network sends us.  So to me it makes more sense to handle
->> this using a separate structure like you did in your original patch,
->> which contains len, dcs and contents.
-> =
 
-> Yes, I undestand for the Get Inkey/Get Input, dcs is determined
-> automatically. Currently, we are providing one function for building
-> each data object specificed in 3GPP specification. If we provide a new
-> structure, then we need to provide a new function for building the
-> text string data object. This will result in having 2
-> build_dataobj_text( existing one for handling Get Inkey and Get Input)
-> and build_dataobj_ussdtext(new one for handling the section 8.15),
+Is there any current activity happening on this task from the TODO list?
 
-I agree with Andrew completely here.
+ =
 
-In effect your modifications to build_dataobj_text are doing this
-anyway.  You're also forcing the Display Text, Get Input, Get Inkey, etc
-objects to care about details of USSD, which they really shouldn't.  The
-code will be much simpler to follow if we use a different structure for
-this particular case.
 
-> which is deviating from the existing ones. If we extend the existing
-> structure and add generalised handling which is done now in this
-> patch, we won't be deviating from the existing things.
+Best regards,
 
-Actually the spec is deviating from the intended purpose of the Text
-data object (which should contain Text), so handling it specifically is
-actually better.
+ =
 
-Regards,
--Denis
 
---===============6991329932211834703==--
+Chris...
+
+ =
+
+
+Chris Schoppa | Wind River | Professional Services | Tel 858 824 4325
+
+ =
+
+
+
+--===============9072306961672327691==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
+b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
+QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
+MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
+Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
+dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
+YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
+ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
+YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
+OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
+Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
+VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
+Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
+cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
+MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
+ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
+cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
+bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
+eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
+dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
+LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
+Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
+cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
+dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
+aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczp3
+Zj0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvd29ya2Zsb3cv
+IiB4bWxuczpkc3NzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS8yMDA2L2Rp
+Z3NpZy1zZXR1cCIgeG1sbnM6ZHNzaT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZp
+Y2UvMjAwNi9kaWdzaWciIHhtbG5zOm1kc3NpPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0
+cy5vcmcvcGFja2FnZS8yMDA2L2RpZ2l0YWwtc2lnbmF0dXJlIiB4bWxuczptdmVyPSJodHRwOi8v
+c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvbWFya3VwLWNvbXBhdGliaWxpdHkvMjAwNiIgeG1s
+bnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4
+bWxuczptcmVscz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAw
+Ni9yZWxhdGlvbnNoaXBzIiB4bWxuczpzcHdwPSJodHRwOi8vbWljcm9zb2Z0LmNvbS9zaGFyZXBv
+aW50L3dlYnBhcnRwYWdlcyIgeG1sbnM6ZXgxMnQ9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5j
+b20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi90eXBlcyIgeG1sbnM6ZXgxMm09Imh0dHA6Ly9zY2hl
+bWFzLm1pY3Jvc29mdC5jb20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi9tZXNzYWdlcyIgeG1sbnM6
+cHB0c2w9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC9zb2FwL1NsaWRl
+TGlicmFyeS8iIHhtbG5zOnNwc2w9Imh0dHA6Ly9taWNyb3NvZnQuY29tL3dlYnNlcnZpY2VzL1No
+YXJlUG9pbnRQb3J0YWxTZXJ2ZXIvUHVibGlzaGVkTGlua3NTZXJ2aWNlIiB4bWxuczpaPSJ1cm46
+c2NoZW1hcy1taWNyb3NvZnQtY29tOiIgeG1sbnM6c3Q9IiYjMTsiIHhtbG5zPSJodHRwOi8vd3d3
+LnczLm9yZy9UUi9SRUMtaHRtbDQwIj4KCjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQt
+VHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9aXNvLTg4NTktMSI+CjxtZXRhIG5hbWU9
+R2VuZXJhdG9yIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDEyIChmaWx0ZXJlZCBtZWRpdW0pIj4K
+PHN0eWxlPgo8IS0tCiAvKiBGb250IERlZmluaXRpb25zICovCiBAZm9udC1mYWNlCgl7Zm9udC1m
+YW1pbHk6V2luZ2RpbmdzOwoJcGFub3NlLTE6NSAwIDAgMCAwIDAgMCAwIDAgMDt9CkBmb250LWZh
+Y2UKCXtmb250LWZhbWlseToiQ2FtYnJpYSBNYXRoIjsKCXBhbm9zZS0xOjIgNCA1IDMgNSA0IDYg
+MyAyIDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUg
+NSAyIDIgMiA0IDMgMiA0O30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFtaWx5OkNhbmRhcmE7CglwYW5v
+c2UtMToyIDE0IDUgMiAzIDMgMyAyIDIgNDt9CiAvKiBTdHlsZSBEZWZpbml0aW9ucyAqLwogcC5N
+c29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowaW47CgltYXJn
+aW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6IkNhbGli
+cmkiLCJzYW5zLXNlcmlmIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBlcmxpbmsKCXttc28tc3R5bGUt
+cHJpb3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CmE6
+dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe21zby1zdHlsZS1wcmlvcml0eTo5
+OTsKCWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpzcGFuLkVtYWls
+U3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7Cglmb250LWZhbWlseToi
+Q2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4dDt9Ci5Nc29DaHBEZWZhdWx0
+Cgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXpl
+OjguNWluIDExLjBpbjsKCW1hcmdpbjoxLjBpbiAxLjBpbiAxLjBpbiAxLjBpbjt9CmRpdi5Xb3Jk
+U2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8IS0tW2lmIGd0ZSBt
+c28gOV0+PHhtbD4KIDxvOnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYi
+IC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1sPgogPG86c2hhcGVs
+YXlvdXQgdjpleHQ9ImVkaXQiPgogIDxvOmlkbWFwIHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgog
+PC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPgo8L2hlYWQ+Cgo8Ym9keSBsYW5nPUVO
+LVVTIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGU+Cgo8ZGl2IGNsYXNzPVdvcmRTZWN0aW9uMT4KCjxw
+IGNsYXNzPU1zb05vcm1hbD5BcyB3ZSBzdGFydCB0byBmbGVzaCBvdXQgdGhpbmtpbmcgb24gaG93
+IHRvIGhhbmRsZSBTTVMKbm90aWZpY2F0aW9ucywgYW5kIFdBUCBQdXNoIDxzcGFuIHN0eWxlPSdm
+b250LWZhbWlseTpXaW5nZGluZ3MnPuA8L3NwYW4+IE1NUwptZXNzYWdlIG5vdGlmaWNhdGlvbiBp
+biBwYXJ0aWN1bGFyLCB0aGUgbmVlZCBmb3IgdGhlIHByb3Bvc2VkIFNNUyBtZXNzYWdlCnJvdXRp
+bmcgdG8gaGFuZGxlcnMgYmFzZWQgb24gRGVzdGluYXRpb24gUG9ydCBiZWNvbWVzIG1vcmUgdXJn
+ZW50LjxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+
+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPklzIHRoZXJlIGFueSBjdXJyZW50IGFjdGl2aXR5IGhh
+cHBlbmluZyBvbiB0aGlzIHRhc2sgZnJvbQp0aGUgVE9ETyBsaXN0PzxvOnA+PC9vOnA+PC9wPgoK
+PHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9y
+bWFsPkJlc3QgcmVnYXJkcyw8bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48bzpw
+PiZuYnNwOzwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD5DaHJpcyYjODIzMDs8bzpwPjwv
+bzpwPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4KCjxwIGNs
+YXNzPU1zb05vcm1hbCBzdHlsZT0ndGV4dC1hdXRvc3BhY2U6bm9uZSc+PHNwYW4gc3R5bGU9J2Nv
+bG9yOmdyYXknPkNocmlzClNjaG9wcGE8L3NwYW4+PHNwYW4gc3R5bGU9J2NvbG9yOmJsYWNrJz4g
+PC9zcGFuPjxzcGFuIHN0eWxlPSdjb2xvcjpncmF5Jz58PC9zcGFuPjxzcGFuCnN0eWxlPSdjb2xv
+cjpibGFjayc+IDwvc3Bhbj48c3BhbiBzdHlsZT0nY29sb3I6cmVkJz5XaW5kIFJpdmVyPC9zcGFu
+PjxzcGFuCnN0eWxlPSdjb2xvcjpibGFjayc+IDwvc3Bhbj48c3BhbiBzdHlsZT0nY29sb3I6Z3Jh
+eSc+fCBQcm9mZXNzaW9uYWwgU2VydmljZXMgfApUZWwgODU4IDgyNCA0MzI1PC9zcGFuPjxiPjxz
+cGFuIHN0eWxlPSdmb250LXNpemU6MTAuMHB0O2ZvbnQtZmFtaWx5OiJDYW5kYXJhIiwic2Fucy1z
+ZXJpZiI7CmNvbG9yOiMxRjQ5N0QnPjxvOnA+PC9vOnA+PC9zcGFuPjwvYj48L3A+Cgo8cCBjbGFz
+cz1Nc29Ob3JtYWw+PG86cD4mbmJzcDs8L286cD48L3A+Cgo8L2Rpdj4KCjwvYm9keT4KCjwvaHRt
+bD4K
+
+--===============9072306961672327691==--
 
