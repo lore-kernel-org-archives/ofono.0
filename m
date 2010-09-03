@@ -1,72 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============6517830636502562306=="
+Content-Type: multipart/mixed; boundary="===============8627388207741285002=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: [PATCH 2/4] Enable alphabets in smsutils
-Date: Fri, 03 Sep 2010 15:15:51 +0300
-Message-ID: <1283516151.25646.2.camel@tucson.research.nokia.com>
-In-Reply-To: <4C7FD6E8.206@gmail.com>
+Subject: [alphabets-PATCHv2 2/5] Unit test for reduced charset
+Date: Fri, 03 Sep 2010 16:22:57 +0300
+Message-ID: <1283520180-20700-2-git-send-email-aki.niemi@nokia.com>
+In-Reply-To: <1283520180-20700-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6517830636502562306==
+--===============8627388207741285002==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2010-09-02 at 18:55 +0200, ext Denis Kenzior wrote:
-> > -	if (offset !=3D 0)
-> > -		template.submit.udhi =3D FALSE;
-> > -
-> =
+---
+ unit/test-util.c |   20 ++++++++++++++++++++
+ 1 files changed, 20 insertions(+), 0 deletions(-)
 
-> This part doesn't look right.  The check should actually set udhi to
-> TRUE, since we can be issuing a return in the next if statement...
+diff --git a/unit/test-util.c b/unit/test-util.c
+index de62848..4d9282a 100644
+--- a/unit/test-util.c
++++ b/unit/test-util.c
+@@ -486,6 +486,25 @@ static void test_valid_turkish()
+ 	}
+ }
+ =
 
-That's why it's removed. This was doing nothing before, as offset at
-this point was always zero, and the template had anyway been memset to
-zero.
++static void test_encode_translit()
++{
++	const char *utf8   =3D "=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=
+=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=
+=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=
+=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=
+=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=
+=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=
+=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=
+=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=
+=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=
+=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=
+=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD=EF=BF=BD";
++	const char *expect =3D "EeYyIiAaEeUuIiOoAaYyUuOoIiAEUIOcAaOoYyUuIi";
++	long nwritten;
++	long nread;
++	unsigned char *res;
++
++	res =3D convert_utf8_to_gsm_with_lang(utf8, sizeof(utf8), &nread, &nwritt=
+en,
++						0, GSM_DIALECT_REDUCED,
++						GSM_DIALECT_REDUCED);
++
++	g_assert(res);
++	g_assert(nread =3D=3D sizeof(utf8));
++	g_assert(memcmp(res, expect, nwritten) =3D=3D 0);
++
++	g_free(res);
++}
++
+ static const char hex_packed[] =3D "493A283D0795C3F33C88FE06C9CB6132885EC6=
+D34"
+ 					"1EDF27C1E3E97E7207B3A0C0A5241E377BB1D"
+ 					"7693E72E";
+@@ -912,6 +931,7 @@ int main(int argc, char **argv)
+ 	g_test_add_func("/testutil/Invalid Conversions", test_invalid);
+ 	g_test_add_func("/testutil/Valid Conversions", test_valid);
+ 	g_test_add_func("/testutil/Valid Turkish National Variant Conversions", t=
+est_valid_turkish);
++	g_test_add_func("/testutil/Encode with transliteration", test_encode_tran=
+slit);
+ 	g_test_add_func("/testutil/Decode Encode", test_decode_encode);
+ 	g_test_add_func("/testutil/Pack Size", test_pack_size);
+ 	g_test_add_func("/testutil/CBS CR Handling", test_cr_handling);
+-- =
 
-> > +enum sms_alphabet {
-> > +	SMS_ALPHABET_DEFAULT =3D 0,
-> > +	SMS_ALPHABET_TURKISH,
-> > +	SMS_ALPHABET_SPANISH,
-> > +	SMS_ALPHABET_PORTUGUESE,
-> > +	SMS_ALPHABET_REDUCED,
-> > +	SMS_ALHPABET_INVALID,
-> =
-
-> Why is the INVALID part needed at all?
-
-Removed.
-
-> > +};
-> > +
-> >  enum sms_mwi_type {
-> >  	SMS_MWI_TYPE_VOICE =3D 0,
-> >  	SMS_MWI_TYPE_FAX =3D 1,
-> > @@ -516,6 +525,11 @@ void status_report_assembly_expire(struct status_r=
-eport_assembly *assembly,
-> >  					time_t before, GFunc foreach_func,
-> >  					gpointer data);
-> >  =
-
-> > +GSList *sms_text_prepare_with_alphabet(const char *utf8, guint16 ref,
-> > +					gboolean use_16bit, int *ref_offset,
-> > +					gboolean use_delivery_reports,
-> > +					enum sms_alphabet alphabet);
-> > +
-> >  GSList *sms_text_prepare(const char *utf8, guint16 ref,
-> >  				gboolean use_16bit, int *ref_offset,
-> >  				gboolean use_delivery_reports);
-> =
-
-> Do you have time to write unit tests for this as well?
-
-I'll do that.
-
-Cheers,
-Aki
+1.7.0.4
 
 
---===============6517830636502562306==--
+--===============8627388207741285002==--
 
