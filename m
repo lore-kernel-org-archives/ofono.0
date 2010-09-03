@@ -1,55 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5859107228330486946=="
+Content-Type: multipart/mixed; boundary="===============6130292218972672651=="
 MIME-Version: 1.0
-From: Mats BERGSTROM <mats.m.bergstrom@stericsson.com>
-Subject: ISI 2.5 modem
-Date: Fri, 03 Sep 2010 16:16:18 +0200
-Message-ID: <60A0044626BD4F4B98AFAA96AB19D35E3B6FDCED9A@EXDCVYMBSTM006.EQ1STM.local>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [PATCH 2/4] Enable alphabets in smsutils
+Date: Fri, 03 Sep 2010 17:40:57 +0300
+Message-ID: <AANLkTi=DWN54mvFZzn=odY9soF6h4hLVyQt30T0CvBSO@mail.gmail.com>
+In-Reply-To: <1283413960-31490-2-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5859107228330486946==
+--===============6130292218972672651==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-	I work at ST-Ericsson and we are working on a
-driver for an ISI 2.5 modem.  =
+Morjes Aki,
 
+2010/9/2 Aki Niemi <aki.niemi@nokia.com>:
+> + =C2=A0 =C2=A0 =C2=A0 case SMS_ALPHABET_TURKISH:
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 gsm_encoded =3D conver=
+t_utf8_to_gsm_with_lang(utf8, -1, NULL,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &written, 0,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 GSM_DIALECT_TURKISH,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 GSM_DIALECT_TURKISH);
 
-We want to contribute this work.
+If you look at the tables,  the idea is normally to use either locking
+Turkish and default single, or default locking and Turkish single
+shift, never both.
 
-How do we proceed?
+Also, if it is possible to fit the message to one segment only using
+national single shift table, single shift should be used (if receiver
+does not support national variants, the result is much less garbled).
 
-Best Regards
-     /Mats Bergstr=C3=B6m
+I just peeked in the 23.038 from release 9, it seems to me that we are
+bound to get much more entertainment.
 
+--Pekka
 
+-- =
 
+Pekka.Pessi mail at nokia.com
 
-Mats Bergstr=C3=B6m
-MeeGo Community Coordinator
-
-ST-Ericsson
-Nya Vattentornet
-SE-22183, Lund
-Sweden
-www.stericsson.com
-Office: +46 46 104260
-Mobile: +46 76=C2=A0139 5856
-Fax: +46 46 106274
-Email: mats.m.bergstrom(a)stericsson.com
-This communication is confidential and intended solely for the addressee(s)=
-. Any unauthorized review, use, disclosure or distribution is prohibited. I=
-f you believe this message has been sent to you in error, please notify the=
- sender by replying to this transmission and delete the message without dis=
-closing it. Thank you.
-
-E-mail including attachments is susceptible to data corruption, interceptio=
-n, unauthorized amendment, tampering and viruses, and we only send and rece=
-ive emails on the basis that we are not liable for any such corruption, int=
-erception, amendment, tampering or viruses or any consequences thereof.
-
-
---===============5859107228330486946==--
+--===============6130292218972672651==--
 
