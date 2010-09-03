@@ -1,71 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============2025161098065320635=="
+Content-Type: multipart/mixed; boundary="===============4363434070974746458=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 2/4] Enable alphabets in smsutils
-Date: Fri, 03 Sep 2010 20:09:09 +0300
-Message-ID: <AANLkTikUq6eQuhGj3eSaNt4Vh=YK4p6w-Ep5sLDB58HV@mail.gmail.com>
-In-Reply-To: <AANLkTi=DWN54mvFZzn=odY9soF6h4hLVyQt30T0CvBSO@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Huawei K3715 and E172 test results
+Date: Fri, 03 Sep 2010 14:09:41 -0500
+Message-ID: <4C8147F5.6060600@gmail.com>
+In-Reply-To: <4C7FC695.90809@gmx.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2025161098065320635==
+--===============4363434070974746458==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Rolf,
 
-2010/9/3 Pekka Pessi <ppessi@gmail.com>:
-> Morjes Aki,
->
-> 2010/9/2 Aki Niemi <aki.niemi@nokia.com>:
->> + =C2=A0 =C2=A0 =C2=A0 case SMS_ALPHABET_TURKISH:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 gsm_encoded =3D conve=
-rt_utf8_to_gsm_with_lang(utf8, -1, NULL,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &written, 0,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 GSM_DIALECT_TURKISH,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 GSM_DIALECT_TURKISH);
->
-> If you look at the tables, =C2=A0the idea is normally to use either locki=
-ng
-> Turkish and default single, or default locking and Turkish single
-> shift, never both.
+On 09/02/2010 10:45 AM, Rolf Offermanns wrote:
+> Hi All,
+> =
 
-I suppose I should've looked at the tables, then.
+> I did some tests with the following setup:
+> =
 
-Anyway, the best way to use the dialects would obviously be to find
-the optimal encoding, and use as few extension tables as possible.
-That is missing currently.
+> - Meego Netbook 1.0.x
+> - ofono git (1.9.2010)
+>   + Patch "[PATCH 1/2] huawei: poll sim state" from Kalle
+> - connman git (31.8.2010)
+>   + Patchset "[ofono-refactor-v2 PATCH xx] oFono API breakage, take 2"
+>   + Patchset "[service-leak PATCH xxx] fix service leak"
+> - EeePC 1005HA
+> - Huawei K3715 (Vodafone Mobile Connect USB)
+> - Huawei E172  (Vodafone Mobile Connect USB)
+> =
 
-> Also, if it is possible to fit the message to one segment only using
-> national single shift table, single shift should be used (if receiver
-> does not support national variants, the result is much less garbled).
+> Below is a summary of the results. I have separate logfiles for each
+> test run with "OFONO_AT_DEBUG=3D1 ofonod -n -d '*'" output. Shall I post
+> them here?
 
-Sure, you could even try any combination of dialects to find the
-optimal encoding.
+I think having the log files for reference would be helpful.  Right now
+it seems everyone is busy with other tasks, but hopefully someone can
+get Huawei support in better shape soon.  Kalle was on the right track
+with his patches, so hopefully a solution is not far off.
+> =
 
-If you look at the Turkish tables, they try to align with the default
-tables. That is, if the recipient doesn't understand the extensions,
-they will use a rather similar looking character from the default
-table.
+> Please let me know what I can do to improve the Huawei support.
+> =
 
-That principle is gone with Portuguese and later extensions.
+> Thanks to Kalle and Pekka for helping out on IRC.
+> =
 
-> I just peeked in the 23.038 from release 9, it seems to me that we are
-> bound to get much more entertainment.
+> -Rolf
 
-The funny thing is that the new tables seem to pack a lot of new
-characters into single shift. Which compared with UCS-2, is of course
-only 2bits per character more efficient.
+Regards,
+-Denis
 
-Cheers,
-Aki
-
---===============2025161098065320635==--
+--===============4363434070974746458==--
 
