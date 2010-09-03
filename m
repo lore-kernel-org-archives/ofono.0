@@ -1,58 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============4363434070974746458=="
+Content-Type: multipart/mixed; boundary="===============6991329932211834703=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Huawei K3715 and E172 test results
-Date: Fri, 03 Sep 2010 14:09:41 -0500
-Message-ID: <4C8147F5.6060600@gmail.com>
-In-Reply-To: <4C7FC695.90809@gmx.net>
+Subject: Re: Patch: "Added missing DCS handling in stkutil and stk" Description
+Date: Fri, 03 Sep 2010 16:10:40 -0500
+Message-ID: <4C816450.4020907@gmail.com>
+In-Reply-To: <AANLkTikRo0aM549pBa5G=Muh8oQUcTZc5KQM82G0Yq1o@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4363434070974746458==
+--===============6991329932211834703==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rolf,
+Hi Jeevaka,
 
-On 09/02/2010 10:45 AM, Rolf Offermanns wrote:
-> Hi All,
+On 09/02/2010 08:59 PM, Jeevaka Prabu Badrappan wrote:
+> Hi Andrzej,
 > =
 
-> I did some tests with the following setup:
+>> There are two cases:
+>>  * Get Inkey/Get Input, where the answer is actual text, in this case
+>> the dcs can be determined automatically,
+>>
+>>  * Send USSD where we're sending the "8.15 Text string" but the
+>> contents don't actually have to contain a string, it may be any data
+>> that the network sends us.  So to me it makes more sense to handle
+>> this using a separate structure like you did in your original patch,
+>> which contains len, dcs and contents.
 > =
 
-> - Meego Netbook 1.0.x
-> - ofono git (1.9.2010)
->   + Patch "[PATCH 1/2] huawei: poll sim state" from Kalle
-> - connman git (31.8.2010)
->   + Patchset "[ofono-refactor-v2 PATCH xx] oFono API breakage, take 2"
->   + Patchset "[service-leak PATCH xxx] fix service leak"
-> - EeePC 1005HA
-> - Huawei K3715 (Vodafone Mobile Connect USB)
-> - Huawei E172  (Vodafone Mobile Connect USB)
-> =
+> Yes, I undestand for the Get Inkey/Get Input, dcs is determined
+> automatically. Currently, we are providing one function for building
+> each data object specificed in 3GPP specification. If we provide a new
+> structure, then we need to provide a new function for building the
+> text string data object. This will result in having 2
+> build_dataobj_text( existing one for handling Get Inkey and Get Input)
+> and build_dataobj_ussdtext(new one for handling the section 8.15),
 
-> Below is a summary of the results. I have separate logfiles for each
-> test run with "OFONO_AT_DEBUG=3D1 ofonod -n -d '*'" output. Shall I post
-> them here?
+I agree with Andrew completely here.
 
-I think having the log files for reference would be helpful.  Right now
-it seems everyone is busy with other tasks, but hopefully someone can
-get Huawei support in better shape soon.  Kalle was on the right track
-with his patches, so hopefully a solution is not far off.
-> =
+In effect your modifications to build_dataobj_text are doing this
+anyway.  You're also forcing the Display Text, Get Input, Get Inkey, etc
+objects to care about details of USSD, which they really shouldn't.  The
+code will be much simpler to follow if we use a different structure for
+this particular case.
 
-> Please let me know what I can do to improve the Huawei support.
-> =
+> which is deviating from the existing ones. If we extend the existing
+> structure and add generalised handling which is done now in this
+> patch, we won't be deviating from the existing things.
 
-> Thanks to Kalle and Pekka for helping out on IRC.
-> =
-
-> -Rolf
+Actually the spec is deviating from the intended purpose of the Text
+data object (which should contain Text), so handling it specifically is
+actually better.
 
 Regards,
 -Denis
 
---===============4363434070974746458==--
+--===============6991329932211834703==--
 
