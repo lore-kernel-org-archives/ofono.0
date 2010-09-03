@@ -1,55 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0394638649038600025=="
+Content-Type: multipart/mixed; boundary="===============1804850519833262523=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH][RfC] doc: Play Tone command proposed d-bus API
-Date: Thu, 02 Sep 2010 15:19:57 +0200
-Message-ID: <1283433597-26387-1-git-send-email-andrew.zaborowski@intel.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: Patch: "Added missing DCS handling in stkutil and stk" Description
+Date: Fri, 03 Sep 2010 02:57:02 +0200
+Message-ID: <AANLkTi=vwa2GYP43LQaOpSg_wzZUAyDxyKeG4TX=-PP-@mail.gmail.com>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802A0E5D5@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0394638649038600025==
+--===============1804850519833262523==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-An open question is if it makes more sense to send the tone code as a
-byte just as they come from UICC or as string names of the tones
-("Ringing tone", "General beep"...).
----
- doc/stk-api.txt |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
+Hi Jeevaka,
 
-diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-index d0dd740..2e6ce92 100644
---- a/doc/stk-api.txt
-+++ b/doc/stk-api.txt
-@@ -200,6 +200,18 @@ Methods		byte RequestSelection(string title, byte icon=
-_id,
- =
+On 2 September 2010 16:16,  <Jeevaka.Badrappan@elektrobit.com> wrote:
+> =C2=A0The following patch "Added missing DCS handling in stkutil and stk"
+> handles the missing dcs case as:
+>
+> =C2=A0As per 3GPP TS 31.111 section 8.15 Text string structure requires d=
+cs
+> and text string to be sent. Current stkutil function and data structure
+> is missing the dcs information.
+> =C2=A0In this patch, we handle the case where dcs will be a value other t=
+han
+> -1, yesno and packed values are false. This text string structure is
+> used in Terminal response of Get Inkey, Get Input and Send USSD.
 
- 			Possible Errors: [service].Error.SimToolkit.EndSession
- =
+There are two cases:
+ * Get Inkey/Get Input, where the answer is actual text, in this case
+the dcs can be determined automatically,
 
-+		void PlayTone(byte tone, string text, byte icon_id)
-+
-+			Tells the agent to play an autio tone.  A
-+			continuous or repeatable tone is played for the
-+			duration of the method call (until it is cancelled),
-+			otherwise it is played once and the method should
-+			return.  The text parameter contains an optional
-+			text to be displayed to the user.  Tone numbers are
-+			listed in TS 102.223 Section 8.16.
-+
-+			Possible Errors: [service].Error.SimToolkit.EndSession
-+
- 		void Cancel()
- =
+ * Send USSD where we're sending the "8.15 Text string" but the
+contents don't actually have to contain a string, it may be any data
+that the network sends us.  So to me it makes more sense to handle
+this using a separate structure like you did in your original patch,
+which contains len, dcs and contents.
 
- 			Asks the agent to cancel any ongoing operation in
--- =
+Best regards
 
-1.7.1.86.g0e460.dirty
-
-
---===============0394638649038600025==--
+--===============1804850519833262523==--
 
