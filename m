@@ -1,130 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============0306566690690310448=="
+Content-Type: multipart/mixed; boundary="===============8261951727562994741=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [online-impl-v2 PATCH 01/10] atgen: implement Online property
-Date: Mon, 06 Sep 2010 21:46:11 +0300
-Message-ID: <1283798780-16363-2-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1283798780-16363-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [online-impl-v2 PATCH 00/10] implement Online property
+Date: Mon, 06 Sep 2010 21:46:10 +0300
+Message-ID: <1283798780-16363-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0306566690690310448==
+--===============8261951727562994741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi all,
 
----
- plugins/atgen.c |   47 ++++++++++++++++++++++++++++++++++++++++++++++-
- 1 files changed, 46 insertions(+), 1 deletions(-)
+Here are 2nd stab at implementing Online property with various modem
+drivers.
 
-diff --git a/plugins/atgen.c b/plugins/atgen.c
-index a6eee60..1ce2467 100644
---- a/plugins/atgen.c
-+++ b/plugins/atgen.c
-@@ -49,6 +49,7 @@
- #include <ofono/ussd.h>
- #include <ofono/voicecall.h>
- =
+Some more obvious errors (in using g_at_chat_send()) have been
+fixed. Huawei has been updated after the comment from Marcel.
 
-+#include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/sim-poll.h>
- =
+I've dropped support for the Nokia usb stick, according to the spec it
+does not implement but AT+CFUN=3D0 and AT+CFUN=3D1. (Not that I have tested
+what AT+CFUN=3D0 does.)
 
- #include <ofono/gprs.h>
-@@ -154,11 +155,45 @@ static int atgen_disable(struct ofono_modem *modem)
- =
+Again, I have not been able to test with most modems. All of them might
+not make sense (if the modem does not support AT+CFUN=3D4, for
+instance). There might be some common caveats.  E.g., if the modem does
+to wake up with AT+CFUN=3D4, it might work with an initial cfun command
+like "AT+CFUN=3D1 ; +CFUN=3D4". At least Calypso requires such an
+initialization command.
 
- 	ofono_modem_set_data(modem, NULL);
- =
+I'd appreciate if the people with access to various hardware could test
+them with the patches here (using test/enable-modem, test/online-modem
+and test/offline-modem, or, e.g., the connman with "ofono-refactor-v2"
+and "service-leak" patches).
 
-+	g_at_chat_send(chat, "AT+CFUN=3D4", NULL, NULL, NULL, NULL);
-+
- 	g_at_chat_unref(chat);
- =
-
- 	return 0;
- }
- =
-
-+static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_modem_online_cb_t cb =3D cbd->cb;
-+
-+	if (ok)
-+		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+	else
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
-+static void atgen_set_online(struct ofono_modem *modem, ofono_bool_t onlin=
-e,
-+				ofono_modem_online_cb_t cb, void *user_data)
-+{
-+	GAtChat *chat =3D ofono_modem_get_data(modem);
-+	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
-+
-+	DBG("modem %p %s", modem, online ? "online" : "offline");
-+
-+	if (!cbd)
-+		goto error;
-+
-+	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
-+		return;
-+
-+error:
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
- static void atgen_pre_sim(struct ofono_modem *modem)
- {
- 	GAtChat *chat =3D ofono_modem_get_data(modem);
-@@ -177,6 +212,15 @@ static void atgen_pre_sim(struct ofono_modem *modem)
- static void atgen_post_sim(struct ofono_modem *modem)
- {
- 	GAtChat *chat =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	ofono_phonebook_create(modem, 0, "atmodem", chat);
-+}
-+
-+static void atgen_post_online(struct ofono_modem *modem)
-+{
-+	GAtChat *chat =3D ofono_modem_get_data(modem);
- 	struct ofono_message_waiting *mw;
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
-@@ -191,7 +235,6 @@ static void atgen_post_sim(struct ofono_modem *modem)
- 	ofono_call_barring_create(modem, 0, "atmodem", chat);
- 	ofono_ssn_create(modem, 0, "atmodem", chat);
- 	ofono_sms_create(modem, 0, "atmodem", chat);
--	ofono_phonebook_create(modem, 0, "atmodem", chat);
- 	gprs =3D ofono_gprs_create(modem,0, "atmodem", chat);
- 	gc =3D ofono_gprs_context_create(modem, 0, "atmodem", chat);
- 	if (gprs && gc)
-@@ -208,8 +251,10 @@ static struct ofono_modem_driver atgen_driver =3D {
- 	.remove		=3D atgen_remove,
- 	.enable		=3D atgen_enable,
- 	.disable	=3D atgen_disable,
-+	.set_online     =3D atgen_set_online,
- 	.pre_sim	=3D atgen_pre_sim,
- 	.post_sim	=3D atgen_post_sim,
-+	.post_online	=3D atgen_post_online,
- };
- =
-
- static int atgen_init(void)
--- =
-
-1.7.0.4
+--Pekka
 
 
---===============0306566690690310448==--
+--===============8261951727562994741==--
 
