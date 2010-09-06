@@ -1,135 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============3909334360564086427=="
+Content-Type: multipart/mixed; boundary="===============0029134861176920745=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [online-impl-v2 PATCH 06/10] mbm: implement Online property
-Date: Mon, 06 Sep 2010 21:46:16 +0300
-Message-ID: <1283798780-16363-7-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1283798780-16363-6-git-send-email-Pekka.Pessi@nokia.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 2/2] stk and stkutil changes for Send USSD proactive
+ command
+Date: Tue, 07 Sep 2010 01:54:19 +0200
+Message-ID: <AANLkTimRZ9XVx+1FcFdhTwY4B97XFcqDnJj5XzVRvqkn@mail.gmail.com>
+In-Reply-To: <1283764886-17588-2-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3909334360564086427==
+--===============0029134861176920745==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi,
 
----
- plugins/mbm.c |   51 +++++++++++++++++++++++++++++++++++++++++++++++----
- 1 files changed, 47 insertions(+), 4 deletions(-)
+On 6 September 2010 11:21, Jeevaka Badrappan
+<jeevaka.badrappan@elektrobit.com> wrote:
+> ---
+> =C2=A0src/stk.c =C2=A0 =C2=A0 | =C2=A0137 +++++++++++++++++++++++++++++++=
+++++++++++++++++++++++++-
+> =C2=A0src/stkutil.c | =C2=A0 22 +++++++++
+> =C2=A0src/stkutil.h | =C2=A0 13 +++++
+> =C2=A03 files changed, 169 insertions(+), 3 deletions(-)
+>
+> diff --git a/src/stk.c b/src/stk.c
+> index 3fda2af..5d84141 100644
+> --- a/src/stk.c
+> +++ b/src/stk.c
+> @@ -56,10 +56,8 @@ struct ofono_stk {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0void (*cancel_cmd)(struct ofono_stk *stk);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0GQueue *envelope_q;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0DBusMessage *pending;
+> -
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_timer timers[8];
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0guint timers_source;
+> -
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0int timeout;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0int short_timeout;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct stk_agent *session_agent;
+> @@ -1590,6 +1588,136 @@ static gboolean handle_command_set_up_call(const =
+struct stk_command *cmd,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0return FALSE;
+> =C2=A0}
+>
+> +static void send_ussd_callback( int error, int dcs, const unsigned char =
+*msg,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0int msg_len, void *userdata)
+> +{
+> + =C2=A0 =C2=A0 =C2=A0 struct ofono_stk *stk =3D userdata;
+> + =C2=A0 =C2=A0 =C2=A0 struct ofono_error failure =3D { .type =3D OFONO_E=
+RROR_TYPE_FAILURE };
+> + =C2=A0 =C2=A0 =C2=A0 struct stk_response rsp;
+> + =C2=A0 =C2=A0 =C2=A0 enum sms_charset charset;
+> +
+> + =C2=A0 =C2=A0 =C2=A0 if (stk->pending_cmd->send_ussd.alpha_id &&
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 stk->pending_cmd->send=
+_ussd.alpha_id[0])
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 stk_alpha_id_unset(stk=
+);
+> +
+> + =C2=A0 =C2=A0 =C2=A0 switch (error) {
+> + =C2=A0 =C2=A0 =C2=A0 case OFONO_USSD_FAILURE_NONE:
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 memset(&rsp, 0, sizeof=
+(rsp));
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 rsp.result.type =3D ST=
+K_RESULT_TYPE_SUCCESS;
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (!cbs_dcs_decode(dc=
+s, NULL, NULL, &charset,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 NULL, NULL, =
+NULL))
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 rsp.send_ussd.text.dcs =3D -1;
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 else
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 rsp.send_ussd.text.dcs =3D charset;
 
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 5bc4575..7ea9f48 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -46,6 +46,7 @@
- #include <ofono/gprs-context.h>
- #include <ofono/log.h>
- =
+What is the meaning of that -1?  I don't see this value handled in stkutil.
 
-+#include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
- =
+The rest of this patch looks okay to me, but you have some formatting
+issues: space after '(' above, and the first hunk removes empty lines.
+ Other than that I think Denis might want you to split this patch into
+stk patch and stkutil patch.
 
- static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
-@@ -221,8 +222,8 @@ static void cfun_query(gboolean ok, GAtResult *result, =
-gpointer user_data)
- =
+With regards to 1/2 he'll probably want one patch for atmodem, one for
+isimodem, one for include, one for plugin, etc.  Also I think it's
+fair to assume that the charset is IRA and there's not need to account
+for other possibilities, but other might have different opinions.  And
+I'm not sure if the enum sms_charset values change should be global,
+or translation should be done here in stk.c.
 
- 	g_at_result_iter_next_number(&iter, &status);
- =
+Best regards
 
--	if (status =3D=3D 4) {
--		g_at_chat_send(data->modem_port, "AT+CFUN=3D1", none_prefix,
-+	if (status !=3D 4) {
-+		g_at_chat_send(data->modem_port, "AT+CFUN=3D4", none_prefix,
- 				cfun_enable, modem, NULL);
- 		return;
- 	}
-@@ -417,6 +418,39 @@ static int mbm_disable(struct ofono_modem *modem)
- 	return -EINPROGRESS;
- }
- =
-
-+static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_modem_online_cb_t cb =3D cbd->cb;
-+
-+	if (ok)
-+		CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+	else
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
-+static void mbm_set_online(struct ofono_modem *modem, ofono_bool_t online,
-+				ofono_modem_online_cb_t cb, void *user_data)
-+{
-+	struct mbm_data *data =3D ofono_modem_get_data(modem);
-+	GAtChat *chat =3D data->modem_port;
-+	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
-+
-+	DBG("modem %p %s", modem, online ? "online" : "offline");
-+
-+	if (!cbd)
-+		goto error;
-+
-+	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
-+		return;
-+
-+error:
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
- static void mbm_pre_sim(struct ofono_modem *modem)
- {
- 	struct mbm_data *data =3D ofono_modem_get_data(modem);
-@@ -435,12 +469,19 @@ static void mbm_pre_sim(struct ofono_modem *modem)
- static void mbm_post_sim(struct ofono_modem *modem)
- {
- 	struct mbm_data *data =3D ofono_modem_get_data(modem);
--	struct ofono_gprs *gprs;
--	struct ofono_gprs_context *gc;
- =
-
- 	DBG("%p", modem);
- =
-
- 	ofono_stk_create(modem, 0, "mbmmodem", data->modem_port);
-+}
-+
-+static void mbm_post_online(struct ofono_modem *modem)
-+{
-+	struct mbm_data *data =3D ofono_modem_get_data(modem);
-+	struct ofono_gprs *gprs;
-+	struct ofono_gprs_context *gc;
-+
-+	DBG("%p", modem);
- =
-
- 	ofono_netreg_create(modem, OFONO_VENDOR_MBM,
- 					"atmodem", data->modem_port);
-@@ -472,8 +513,10 @@ static struct ofono_modem_driver mbm_driver =3D {
- 	.remove		=3D mbm_remove,
- 	.enable		=3D mbm_enable,
- 	.disable	=3D mbm_disable,
-+	.set_online     =3D mbm_set_online,
- 	.pre_sim	=3D mbm_pre_sim,
- 	.post_sim	=3D mbm_post_sim,
-+	.post_online    =3D mbm_post_online,
- };
- =
-
- static int mbm_init(void)
--- =
-
-1.7.0.4
-
-
---===============3909334360564086427==--
+--===============0029134861176920745==--
 
