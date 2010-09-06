@@ -1,55 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============6311239171428737462=="
+Content-Type: multipart/mixed; boundary="===============5891321560805564424=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: Patch: "Added missing DCS handling in stkutil and stk" Description
-Date: Mon, 06 Sep 2010 12:34:19 +0300
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802A0E92C@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <4C816450.4020907@gmail.com>
+From: Pekka.Pessi@nokia.com
+Subject: [originated PATCH 2/2] voicecall: add "Originated" property
+Date: Mon, 06 Sep 2010 18:09:28 +0300
+Message-ID: <1283785768-4509-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1283785768-4509-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6311239171428737462==
+--===============5891321560805564424==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
+
+---
+ src/voicecall.c |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
+
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 2833fc6..d61ddd1 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -234,6 +234,7 @@ static void append_voicecall_properties(struct voicecal=
+l *v,
+ 	const char *callerid;
+ 	const char *timestr;
+ 	ofono_bool_t mpty;
++	ofono_bool_t mo;
  =
 
-Hi Denis, Andrzej,
+ 	status =3D call_status_to_string(call->status);
+ 	callerid =3D phone_number_to_string(&call->phone_number);
+@@ -262,6 +263,13 @@ static void append_voicecall_properties(struct voiceca=
+ll *v,
+ =
 
-> Actually the spec is deviating from the intended purpose of the Text
-data object (which =
+ 	ofono_dbus_dict_append(dict, "Multiparty", DBUS_TYPE_BOOLEAN, &mpty);
+ =
 
-> should contain Text), so handling it specifically is actually better.
++	if (call->direction)
++		mo =3D FALSE;
++	else
++		mo =3D TRUE;
++
++	ofono_dbus_dict_append(dict, "Originated", DBUS_TYPE_BOOLEAN, &mo);
++
+ 	if (v->message)
+ 		ofono_dbus_dict_append(dict, "Information", DBUS_TYPE_STRING,
+ 					&v->message);
+-- =
 
-I have incorported the comments as part of the Patch "stk and stkutil
-changes for Send USSD proactive command". As per your comments, I have
-also grouped the "Send USSD" proactive command into 2 =
-
-compilable patches "[PATCH 1/2] Internal and Driver API changes for Send
-USSD proactive command" and "[PATCH 2/2] stk and stkutil changes for
-Send USSD proactive command."
-
-Thanks and Regards,
-Jeevaka
-
-
-----------------------------------------------------------------
-Please note: This e-mail may contain confidential information
-intended solely for the addressee. If you have received this
-e-mail in error, please do not disclose it to anyone, notify
-the sender promptly, and delete the message from your system.
-Thank you.
+1.7.0.4
 
 
-
-----------------------------------------------------------------
-Please note: This e-mail may contain confidential information
-intended solely for the addressee. If you have received this
-e-mail in error, please do not disclose it to anyone, notify
-the sender promptly, and delete the message from your system.
-Thank you.
-
-
---===============6311239171428737462==--
+--===============5891321560805564424==--
 
