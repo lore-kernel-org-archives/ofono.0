@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5462032027722393352=="
+Content-Type: multipart/mixed; boundary="===============1289332569896297915=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [online-impl-v2 PATCH 10/10] zte: implement Online property
-Date: Mon, 06 Sep 2010 21:46:20 +0300
-Message-ID: <1283798780-16363-11-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1283798780-16363-10-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [online-impl-v2 PATCH 07/10] novatel: implement Online property
+Date: Mon, 06 Sep 2010 21:46:17 +0300
+Message-ID: <1283798780-16363-8-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1283798780-16363-7-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5462032027722393352==
+--===============1289332569896297915==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,35 +16,26 @@ Content-Transfer-Encoding: quoted-printable
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
 ---
- plugins/zte.c |   49 ++++++++++++++++++++++++++++++++++++++++++++++---
- 1 files changed, 46 insertions(+), 3 deletions(-)
+ plugins/novatel.c |   40 +++++++++++++++++++++++++++++++++++++---
+ 1 files changed, 37 insertions(+), 3 deletions(-)
 
-diff --git a/plugins/zte.c b/plugins/zte.c
-index 7a8c9c7..c82b2b5 100644
---- a/plugins/zte.c
-+++ b/plugins/zte.c
-@@ -45,6 +45,7 @@
- #include <ofono/phonebook.h>
- #include <ofono/log.h>
+diff --git a/plugins/novatel.c b/plugins/novatel.c
+index 38a6c3b..51360ab 100644
+--- a/plugins/novatel.c
++++ b/plugins/novatel.c
+@@ -156,7 +156,7 @@ static void nwdmat_action(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ 							NULL, NULL, NULL);
  =
 
-+#include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
+ done:
+-	g_at_chat_send(data->primary, "AT+CFUN=3D1", none_prefix,
++	g_at_chat_send(data->primary, "AT+CFUN=3D4", none_prefix,
+ 						cfun_enable, modem, NULL);
+ }
  =
 
- static const char *none_prefix[] =3D { NULL };
-@@ -182,7 +183,7 @@ static int zte_enable(struct ofono_modem *modem)
- 	g_at_chat_send(data->aux, "ATE0 +CMEE=3D1", none_prefix,
- 						NULL, NULL, NULL);
- =
-
--	g_at_chat_send(data->aux, "AT+CFUN=3D1", none_prefix,
-+	g_at_chat_send(data->aux, "AT+CFUN=3D4", none_prefix,
- 					cfun_enable, modem, NULL);
- =
-
- 	return -EINPROGRESS;
-@@ -226,6 +227,39 @@ static int zte_disable(struct ofono_modem *modem)
+@@ -288,6 +288,39 @@ static int novatel_disable(struct ofono_modem *modem)
  	return -EINPROGRESS;
  }
  =
@@ -61,11 +52,12 @@ ta)
 +		CALLBACK_WITH_FAILURE(cb, cbd->data);
 +}
 +
-+static void zte_set_online(struct ofono_modem *modem, ofono_bool_t online,
++static void novatel_set_online(struct ofono_modem *modem, ofono_bool_t onl=
+ine,
 +				ofono_modem_online_cb_t cb, void *user_data)
 +{
-+	struct zte_data *data =3D ofono_modem_get_data(modem);
-+	GAtChat *chat =3D data->aux;
++	struct novatel_data *data =3D ofono_modem_get_data(modem);
++	GAtChat *chat =3D data->primary;
 +	struct cb_data *cbd =3D cb_data_new(cb, user_data);
 +	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
 +
@@ -83,54 +75,36 @@ ta)
 +	CALLBACK_WITH_FAILURE(cb, cbd->data);
 +}
 +
- static void zte_pre_sim(struct ofono_modem *modem)
+ static void novatel_pre_sim(struct ofono_modem *modem)
  {
- 	struct zte_data *data =3D ofono_modem_get_data(modem);
-@@ -247,6 +281,15 @@ static void zte_post_sim(struct ofono_modem *modem)
+ 	struct novatel_data *data =3D ofono_modem_get_data(modem);
+@@ -309,7 +342,7 @@ static void novatel_pre_sim(struct ofono_modem *modem)
+ 		ofono_sim_inserted_notify(sim, TRUE);
+ }
  =
 
- 	DBG("%p", modem);
+-static void novatel_post_sim(struct ofono_modem *modem)
++static void novatel_post_online(struct ofono_modem *modem)
+ {
+ 	struct novatel_data *data =3D ofono_modem_get_data(modem);
  =
 
-+	ofono_phonebook_create(modem, 0, "atmodem", data->aux);
-+}
-+
-+static void zte_post_online(struct ofono_modem *modem)
-+{
-+	struct zte_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
- 	ofono_netreg_create(modem, OFONO_VENDOR_ZTE, "atmodem", data->aux);
- =
-
- 	ofono_sms_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
-@@ -255,8 +298,6 @@ static void zte_post_sim(struct ofono_modem *modem)
- 					"atmodem", data->aux);
- 	ofono_ussd_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
- 					"atmodem", data->aux);
--	ofono_phonebook_create(modem, 0, "atmodem", data->aux);
--
- 	data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->aux);
- =
-
- 	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->modem);
-@@ -271,8 +312,10 @@ static struct ofono_modem_driver zte_driver =3D {
- 	.remove		=3D zte_remove,
- 	.enable		=3D zte_enable,
- 	.disable	=3D zte_disable,
-+	.set_online     =3D zte_set_online,
- 	.pre_sim	=3D zte_pre_sim,
- 	.post_sim	=3D zte_post_sim,
-+	.post_online    =3D zte_post_online,
+@@ -351,8 +384,9 @@ static struct ofono_modem_driver novatel_driver =3D {
+ 	.remove		=3D novatel_remove,
+ 	.enable		=3D novatel_enable,
+ 	.disable	=3D novatel_disable,
++	.set_online     =3D novatel_set_online,
+ 	.pre_sim	=3D novatel_pre_sim,
+-	.post_sim	=3D novatel_post_sim,
++	.post_online	=3D novatel_post_online,
  };
  =
 
- static int zte_init(void)
+ static int novatel_init(void)
 -- =
 
 1.7.0.4
 
 
---===============5462032027722393352==--
+--===============1289332569896297915==--
 
