@@ -1,313 +1,159 @@
-Content-Type: multipart/mixed; boundary="===============8294820001529265331=="
+Content-Type: multipart/mixed; boundary="===============2069509008448150754=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] stk and stkutil changes for Send USSD proactive
- command
-Date: Tue, 07 Sep 2010 09:58:44 -0500
-Message-ID: <4C865324.3010702@gmail.com>
-In-Reply-To: <1283764886-17588-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: [PATCH 1/2] Internal and Driver API changes for Send USSD
+ proactive command
+Date: Tue, 07 Sep 2010 20:29:26 +0300
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802A0EB55@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <4C86523B.7060804@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8294820001529265331==
+--===============2069509008448150754==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 09/06/2010 04:21 AM, Jeevaka Badrappan wrote:
-> ---
->  src/stk.c     |  137 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++-
->  src/stkutil.c |   22 +++++++++
->  src/stkutil.h |   13 +++++
->  3 files changed, 169 insertions(+), 3 deletions(-)
+ =
 
-Changes to stkutil should come in a separate patch.
+Hi Denis,
 
-> =
-
-> diff --git a/src/stk.c b/src/stk.c
-> index 3fda2af..5d84141 100644
-> --- a/src/stk.c
-> +++ b/src/stk.c
-> @@ -56,10 +56,8 @@ struct ofono_stk {
->  	void (*cancel_cmd)(struct ofono_stk *stk);
->  	GQueue *envelope_q;
->  	DBusMessage *pending;
-> -
->  	struct stk_timer timers[8];
->  	guint timers_source;
-> -
->  	int timeout;
->  	int short_timeout;
->  	struct stk_agent *session_agent;
-
-Please don't ever do this.  The empty lines are there for a reason.  If
-you disagree, then send a separate RFC patch.
-
-> @@ -1590,6 +1588,136 @@ static gboolean handle_command_set_up_call(const =
-struct stk_command *cmd,
->  	return FALSE;
->  }
 >  =
 
-> +static void send_ussd_callback( int error, int dcs, const unsigned char =
-*msg,
-> +                                int msg_len, void *userdata)
-> +{
-> +	struct ofono_stk *stk =3D userdata;
-> +	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
-> +	struct stk_response rsp;
-> +	enum sms_charset charset;
-> +	=
-
-> +	if (stk->pending_cmd->send_ussd.alpha_id &&
-> +		stk->pending_cmd->send_ussd.alpha_id[0])
-> +		stk_alpha_id_unset(stk);
-> +
-> +	switch (error) {
-> +	case OFONO_USSD_FAILURE_NONE:
-> +		memset(&rsp, 0, sizeof(rsp));
-> +
-> +		rsp.result.type =3D STK_RESULT_TYPE_SUCCESS;
-> +
-> +		if (!cbs_dcs_decode(dcs, NULL, NULL, &charset,
-> +			            	NULL, NULL, NULL))
-> +			rsp.send_ussd.text.dcs =3D -1;
-> +		else
-> +			rsp.send_ussd.text.dcs =3D charset;
-> +
-> +		rsp.send_ussd.text.text =3D msg;
-> +		rsp.send_ussd.text.len =3D msg_len;
-> +
-> +		if (stk_respond(stk, &rsp, stk_command_cb))
-> +			stk_command_cb(&failure, stk);
-> +
-> +		break;
-> +	case OFONO_USSD_FAILURE_USER_TERMINATED:
-> +		send_simple_response(stk, STK_RESULT_TYPE_USSD_OR_SS_USER_TERMINATION);
-> +		break;
-> +	case OFONO_USSD_FAILURE_TIMED_OUT:
-> +		send_simple_response(stk, STK_RESULT_TYPE_NETWORK_UNAVAILABLE);
-> +		break;
-> +	case OFONO_USSD_FAILURE_RETURN_ERROR:
-> +		send_simple_response(stk, STK_RESULT_TYPE_USSD_RETURN_ERROR);
-> +		break;
-> +	}
-> +}
-> +
-> +static gboolean handle_command_send_ussd(const struct stk_command *cmd,
-> +                                        struct stk_response *rsp,
-> +                                        struct ofono_stk *stk)
-> +{
-> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
-> +	static unsigned char busy_on_ss_result[] =3D { 0x03 };
-> +	static unsigned char busy_on_ussd_result[] =3D { 0x08 };
-> +	int err;
-> +
-> +	struct ofono_atom *cf_atom;
-> +	struct ofono_atom *cb_atom;
-> +	struct ofono_atom *cs_atom;
-> +	struct ofono_atom *ussd_atom;
-> +
-> +	struct ofono_call_forwarding *cf;
-> +	struct ofono_call_barring *cb;
-> +	struct ofono_call_settings *cs;
-> +	struct ofono_ussd *ussd;
-> +
-> +	cf_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_FORWARD=
-ING);
-> +	cb_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_BARRING=
-);
-> +	cs_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_SETTING=
-S);
-> +	ussd_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_USSD);
-> +
-> +	if (cf_atom && __ofono_atom_get_registered(cf_atom)) {
-> +		cf =3D __ofono_atom_get_data(cf_atom);
-> +		if (__ofono_call_forwarding_is_busy(cf)) {
-> +		    rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-> +		    rsp->result.additional_len =3D sizeof(busy_on_ss_result);
-> +		    rsp->result.additional =3D busy_on_ss_result;
-> +		    return TRUE;
+> -	else if (charset =3D=3D SMS_CHARSET_8BIT) {
+> -		/* TODO: Figure out what to do with 8 bit data */
+> +	if (charset =3D=3D SMS_CHARSET_7BIT) {
+> +		switch (data->charset) {
+> +		case AT_UTIL_CHARSET_GSM:
+> +			msg =3D convert_gsm_to_utf8((const guint8 *)
+content,
+> +		                      strlen(content), NULL, &msg_len,
+0);
+> +			break;
+> +		case AT_UTIL_CHARSET_PCCP437:
+> +		case AT_UTIL_CHARSET_PCDN:
+> +		case AT_UTIL_CHARSET_8859_1:
+> +		case AT_UTIL_CHARSET_IRA:
+> +		default:
+> +			DBG("charset:%d not supported", data->charset);
+> +			status =3D 4; /* Not supported */
 > +		}
-> +	}
-> +
-> +	if (cb_atom && __ofono_atom_get_registered(cb_atom)) {
-> +		cb =3D __ofono_atom_get_data(cb_atom);
-> +		if (__ofono_call_barring_is_busy(cb)) {
-> +		    rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-> +		    rsp->result.additional_len =3D sizeof(busy_on_ss_result);
-> +		    rsp->result.additional =3D busy_on_ss_result;
-> +		    return TRUE;
-> +		}
-> +	}
-> +
-> +	if (cs_atom && __ofono_atom_get_registered(cs_atom)) {
-> +		cs =3D __ofono_atom_get_data(cs_atom);
-> +		if (__ofono_call_settings_is_busy(cs)) {
-> +		    rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-> +		    rsp->result.additional_len =3D sizeof(busy_on_ss_result);
-> +		    rsp->result.additional =3D busy_on_ss_result;
-> +		    return TRUE;
-> +		}
-> +	}
-> +
-> +	if (!ussd_atom || !__ofono_atom_get_registered(ussd_atom)) {
-> +		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-> +		return TRUE;
-> +	}
-> +
-> +	ussd =3D __ofono_atom_get_data(ussd_atom);
-> +
-> +	if (__ofono_ussd_is_busy(ussd)) {
-> +		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-> +		rsp->result.additional_len =3D sizeof(busy_on_ussd_result);
-> +		rsp->result.additional =3D busy_on_ussd_result;
-> +		return TRUE;
-> +	}
-> +
-> +	err =3D __ofono_ussd_initiate( ussd, cmd->send_ussd.ussd_string.dcs,
-> +        	                 cmd->send_ussd.ussd_string.string,
-> +        	                 cmd->send_ussd.ussd_string.len,
-> +        	                 send_ussd_callback, stk);
-> +
-> +	if (err >=3D 0) =
+> +	} else if (charset =3D=3D SMS_CHARSET_8BIT) {
+> +		/* MT/TA converts each 8 bit octet into two IRA
+character
+> +		* long hexadecimal number (e.g. octet with integer value
+42
+> +		* is presented to TE as two characters 2A (IRA 50 and
+65))
+> +		*/
+>  		ofono_error("8-bit coded USSD response received");
+>  		status =3D 4; /* Not supported */
 
-> +		return FALSE;
-> +
-> +	if (err =3D=3D -ENOSYS) {
-> +		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-> +		return TRUE;
-> +	}
-> +
-> +	if (cmd->send_ussd.alpha_id && cmd->send_ussd.alpha_id[0])
-> +		stk_alpha_id_set(stk, cmd->send_ussd.alpha_id);
-> +
-> +	return FALSE;
-> +}
-> +
->  static void stk_proactive_command_cancel(struct ofono_stk *stk)
->  {
->  	if (stk->immediate_response)
-> @@ -1740,7 +1868,10 @@ void ofono_stk_proactive_command_notify(struct ofo=
-no_stk *stk,
->  		respond =3D handle_command_set_up_call(stk->pending_cmd,
->  							&rsp, stk);
->  		break;
-> -
-> +	case STK_COMMAND_TYPE_SEND_USSD:
-> +		respond =3D handle_command_send_ussd(stk->pending_cmd,
-> +							&rsp, stk);
-> +		break;
->  	default:
->  		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
->  		break;
-> diff --git a/src/stkutil.c b/src/stkutil.c
-> index ae4cc32..48d409b 100644
-> --- a/src/stkutil.c
-> +++ b/src/stkutil.c
-> @@ -4170,6 +4170,22 @@ static gboolean build_dataobj_text(struct stk_tlv_=
-builder *tlv,
->  	return stk_tlv_builder_close_container(tlv);
->  }
+> If we're not handling 8BIT USSDs, what exactly is the point of this
+exercise?
+
+  Based on the dcs received from network and TE character set chosen,
+modem converts the received ussd response string.
+
+	DCS_from_network		TE_char_set
+Conversion done by Modem
+	GSM 7-bit default		=
+
+					PCCP437		GSM 7-bit
+default alphabet to PCCP437
+					PCDN			GSM
+7-bit default alphabet to PCDN
+					ISO8859-1		GSM
+7-bit default alphabet to 8859-1
+					IRA			GSM
+7-bit default alphabet to IRA
+					GSM 7-bit		None
+ =
+
+	8-bit - In this case, modem doesn't relay on the chosen TE
+character set. Modem converts each 8-bit octet into
+		two IRA character long hexadecimal number =
+
+
+  I left the 8-bit USSD case unhandled, as I didn't find the conversion
+function for converting the IRA to the 8-bit data.
+Also 3GPP TS Specification, doesn't have any information on what needs
+to be done if the dcs received is UCS2.
+
+> -	g_free(converted);
+> +	ofono_ussd_notify(ussd, status, -1, (const guint8 *) msg, (int) =
+
+> +msg_len);
+
+> Err, why are we passing UTF8 text as binary data + len?  I'm lost.
+You either do UTF8 always, or full binary always.
+
 >  =
 
-> +/* Defined in TS 102.223 Section 8.15 - USSD specific case*/
-> +static gboolean build_dataobj_ussd_text(struct stk_tlv_builder *tlv,
-> +					const void *data, gboolean cr)
-> +{
-> +	const struct stk_ussd_text *text =3D data;
-> +	unsigned char tag =3D STK_DATA_OBJECT_TYPE_TEXT;
-> +
-> +	if (!text->text || !text->len)
-> +		return TRUE;
-> +
-> +	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
-> +		stk_tlv_builder_append_byte(tlv, text->dcs) &&
-> +		stk_tlv_builder_append_bytes(tlv, text->text, text->len) &&
-> +		stk_tlv_builder_close_container(tlv);
-> +}
-> +
->  /* Described in TS 131.111 Section 8.17 */
->  static gboolean build_dataobj_ussd_string(struct stk_tlv_builder *tlv,
->  					const void *data, gboolean cr)
-> @@ -5459,6 +5475,12 @@ const unsigned char *stk_pdu_from_response(const s=
-truct stk_response *response,
->  	case STK_COMMAND_TYPE_LANGUAGE_NOTIFICATION:
->  	case STK_COMMAND_TYPE_LAUNCH_BROWSER:
->  		break;
-> +	case STK_COMMAND_TYPE_SEND_USSD:
-> +		ok =3D build_dataobj(&builder,
-> +				build_dataobj_ussd_text, DATAOBJ_FLAG_CR,
-> +				&response->send_ussd.text,
-> +				NULL);
-> +		break;
->  	default:
->  		return NULL;
->  	};
-> diff --git a/src/stkutil.h b/src/stkutil.h
-> index 44d167a..fac0553 100644
-> --- a/src/stkutil.h
-> +++ b/src/stkutil.h
-> @@ -237,6 +237,7 @@ enum stk_result_type {
->  	STK_RESULT_TYPE_GO_BACK =3D			0x11,
->  	STK_RESULT_TYPE_NO_RESPONSE =3D			0x12,
->  	STK_RESULT_TYPE_HELP_REQUESTED =3D		0x13,
-> +	STK_RESULT_TYPE_USSD_OR_SS_USER_TERMINATION =3D   0x14,
+> -	converted =3D convert_utf8_to_gsm(str, strlen(str), NULL,
+&written, 0);
+> +	if (dcs =3D=3D -1) {
+> +		converted =3D convert_utf8_to_gsm((const char *) str,
+str_len, NULL, =
+
+> +&written, 0);
+
+> Get rid of this.  The core either passes a raw USSD data or UTF8.
+> There's no mix and match here.
+
+As you know, USSD string coming via dbus interface will be in UTF8
+format. Whereas, USSD string
+coming from the USAT will be in binary data + len. =
+
+
+Do you mean to say that the core will convert the UTF-8 USSD string
+coming from the user(dbus interface) into GSM 8-bit and send it to the
+driver side?
+
+> -	if (written > max_len)
+> -		goto error;
+> +		/* As per 3GPP TS 23.038, When this character set is
+used,
+> +		 * the characters of the message are packed in octets as
+shown in section 6.1.2.1.1,
+> +		 * and the message can consist of up to 160 characters.
+> +		 */
+> +		pack_7bit_own_buf(converted, written, 0, TRUE,
+> +                		      &num_packed, 0, coded_str);
+
+> CUSD does not take packed GSM data, so I'm lost here
+
+As you know, when a message is coded in 7-bit default alphabet, the
+message can then consists of upto 182 user charcters.
+I just packed it so that the maximum message length will be 160
+characters for all the cases. Do you mean, CUSD won't take packed GSM
+data? =
+
+
 >  =
 
->  	/* 0x20 to 0x2F are used to indicate that SIM should retry */
->  	STK_RESULT_TYPE_TERMINAL_BUSY =3D			0x20,
-> @@ -254,6 +255,7 @@ enum stk_result_type {
->  	STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD =3D		0x32,
->  	STK_RESULT_TYPE_COMMAND_ID_UNKNOWN =3D		0x33,
->  	STK_RESULT_TYPE_MINIMUM_NOT_MET =3D		0x36,
-> +	STK_RESULT_TYPE_USSD_RETURN_ERROR =3D             0x37,
->  	STK_RESULT_TYPE_CALL_CONTROL_PERMANENT =3D	0x39,
->  	STK_RESULT_TYPE_BIP_ERROR =3D			0x3A,
->  	STK_RESULT_TYPE_ACCESS_TECHNOLOGY_ERROR =3D	0x3B,
-> @@ -1374,6 +1376,12 @@ struct stk_answer_text {
->  	 */
+>  enum sms_charset {
+> -	SMS_CHARSET_7BIT =3D 0,
+> -	SMS_CHARSET_8BIT =3D 1,
+> -	SMS_CHARSET_UCS2 =3D 2,
+> +	SMS_CHARSET_7BIT =3D 0x00,
+> +	SMS_CHARSET_8BIT =3D 0x04,
+> +	SMS_CHARSET_UCS2 =3D 0x08,
 
-Modifications to the enum should also be in a separate patch.
+> Please don't mess with this enum, the USSD DCS has nothing to do with
+SMS.
 
->  };
->  =
+I agree the SMS dcs is different from the CBS dcs. But this enumeration
+is just used within ofono for knowing the coding scheme used. =
 
-> +struct stk_ussd_text {
-> +	const unsigned char *text;
-> +	int dcs;
-> +	int len;
-> +};
-> +
->  struct stk_response_get_inkey {
->  	struct stk_answer_text text;
->  	struct stk_duration duration;
-> @@ -1445,6 +1453,10 @@ struct stk_response_run_at_command {
->  	const char *at_response;
->  };
->  =
+Currently, we are using this enumeration in SMS, CBS and USSD as well. I
+have just changed the values so that it matches with the USAT
+values. Since, this enumeration is used to just determine the character
+sets, I didn't find any valid reason why we have to introduce a
+new enumeration just with the USAT specific values.
 
-> +struct stk_response_send_ussd {
-> +        struct stk_ussd_text text;
-> +};
-> +
->  struct stk_response {
->  	unsigned char number;
->  	unsigned char type;
-> @@ -1474,6 +1486,7 @@ struct stk_response {
->  		struct stk_response_generic send_dtmf;
->  		struct stk_response_generic language_notification;
->  		struct stk_response_generic launch_browser;
-> +		struct stk_response_send_ussd send_ussd;
->  	};
->  =
+Thanks and Regards,
+Jeevaka
 
->  	void (*destructor)(struct stk_response *response);
-
-Regards,
--Denis
-
---===============8294820001529265331==--
+--===============2069509008448150754==--
 
