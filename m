@@ -1,37 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============5591411899459673114=="
+Content-Type: multipart/mixed; boundary="===============8514058500968808615=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: How to get the SMS stored in SIM card
-Date: Tue, 07 Sep 2010 10:20:17 +0200
-Message-ID: <1283847617.6640.21.camel@localhost.localdomain>
-In-Reply-To: <F2E9EB7348B8264F86B6AB8151CE2D7928045C89E5@shsmsx502.ccr.corp.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: status-report expiration
+Date: Tue, 07 Sep 2010 09:19:17 -0500
+Message-ID: <4C8649E5.4040505@gmail.com>
+In-Reply-To: <201009061910.18720.petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5591411899459673114==
+--===============8514058500968808615==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lily,
+Hi Petteri,
 
-same rules for you than for everybody else. No top posting allowed on
-this mailing list. Please follow proper mailing list netiquette here.
+On 09/06/2010 11:10 AM, Petteri Tikander wrote:
+> Hi Denis,
+> =
 
->   I have question about "The default SMS driver programs the modem to rep=
-ort SMS PDUs directly to the core". I want to know how to deal with the rec=
-eived sms by ofono core? Where to save the sms? =
+> I'm implementing expiration-logic for status report and have couple of =
+
+> questions. =
+
+> =
+
+> My expiration function under development goes through every =
+
+> addresses and corresponding messages (nodes) from hash-tables, and checks =
+
+> the expiration time. But when finding expired message, it cannot remove =
+
+> corresponding backup-files, because in this moment backup-file contains t=
+he =
+
+> whole sms-addressing information (address+numbering plan+number type), bu=
+t key =
+
+> of the hash-table (sms-address) doesn't. So, first I thought simply to ad=
+d also =
+
+> numbering plan+number type in the hash-key. So what do you think, could i=
+t be =
+
+> a good idea (to include the complete address, but to waste more memory)? =
+OK, I =
+
+> can also change the function to find backup-file by not taking into accou=
+nt =
+
+> numbering plan+number type at all. For example, I can go through backup-f=
+iles, =
+
+> capture just the sms-address (and message-id), and then search the correc=
+t =
+
+> node from the hash-table (not necessarily nice solution).
+
+oFono supports sending SMS messages only to international (prefixed by
++) or 'unknown' (not prefixed by +) numbers.  So you can actually easily
+figure out the ton/npi and number based on the address string.  This is
+in effect what sms_address_to_hex_string does...
+
+> =
+
+> The another question is: is it enough in this moment just to implement =
+
+> expiration function (and some unit-tests), as in existing sms-assembly =
+
+> solution, when waiting for incoming sms-delivery messages? Seems that in =
+the =
+
+> case of sms-assembly, expiration-status for all messages is polled in som=
+e =
+
+> interval. So, possibly you have already earlier discussed about this issu=
+e, =
+
+> but how expiration-checking is signaled to sms-util? Will oFono-api take =
+care =
+
+> internally of triggering the expiration-status some how? Or, will oFono-a=
+pi =
+
+> receive expiration-checking calls outside oFono via D-bus.
+> =
 
 
-Inside oFono the SMS are delivered via the history abstraction. So you
-need a history plugin that decides about the actual storage of the SMS
-on your system. This is platform dependent.
+For now it is enough just to implement the expiration function and a
+unit test.  We still need to hook this up into the core somewhere.  Most
+likely it will be a 24 hour timer and we'll also run expiration at
+startup if more than 24 hours have elapsed since the last check.
 
-Regards
+e.g. something like:
+LastExpiration =3D settings.LastExpiration
+if (LastExpiration - now > 24 hours)
+	run expiration
+	LastExpiration =3D now
 
-Marcel
+set timer until LastExpiration + 24 hours.
 
+Regards,
+-Denis
 
-
---===============5591411899459673114==--
+--===============8514058500968808615==--
 
