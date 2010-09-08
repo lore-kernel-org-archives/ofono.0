@@ -1,40 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============4970885479168575751=="
+Content-Type: multipart/mixed; boundary="===============5969615195745804057=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH] TODO: update owner persist outgoing SMS messages task
-Date: Wed, 08 Sep 2010 07:47:24 -0700
-Message-ID: <1283957244-26837-1-git-send-email-kristen@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [online-impl-v2 PATCH 01/10] atgen: implement Online property
+Date: Thu, 09 Sep 2010 01:30:30 +0200
+Message-ID: <1283988630.6640.129.camel@localhost.localdomain>
+In-Reply-To: <1283798780-16363-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4970885479168575751==
+--===============5969615195745804057==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+Hi Pekka,
 
-diff --git a/TODO b/TODO
-index c4853ad..0c39da4 100644
---- a/TODO
-+++ b/TODO
-@@ -78,6 +78,7 @@ SMS
- =
+>  plugins/atgen.c |   47 ++++++++++++++++++++++++++++++++++++++++++++++-
+>  1 files changed, 46 insertions(+), 1 deletions(-)
 
-   Priority: High
-   Complexity: C1
-+  Owner: Kristen Carlson Accardi <kristen@linux.intel.com>
- =
+patch has been applied.
 
- - Better unique ID for incoming / outgoing messages.  Currently oFono uses
-   a simple incremental counter stored in the settings store (NextMessageId=
-).
--- =
+Regards
 
-1.7.2.2
+Marcel
 
 
---===============4970885479168575751==--
+
+--===============5969615195745804057==--
 
