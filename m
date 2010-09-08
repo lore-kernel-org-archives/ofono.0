@@ -1,34 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============1546412724383148078=="
+Content-Type: multipart/mixed; boundary="===============4970885479168575751=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: Huawei K3715 and E172 test results
-Date: Wed, 08 Sep 2010 22:08:27 +0300
-Message-ID: <87r5h4catw.fsf@potku.valot.fi>
-In-Reply-To: <4C8147F5.6060600@gmail.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH] TODO: update owner persist outgoing SMS messages task
+Date: Wed, 08 Sep 2010 07:47:24 -0700
+Message-ID: <1283957244-26837-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1546412724383148078==
+--===============4970885479168575751==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ TODO |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-Denis Kenzior <denkenz@gmail.com> writes:
+diff --git a/TODO b/TODO
+index c4853ad..0c39da4 100644
+--- a/TODO
++++ b/TODO
+@@ -78,6 +78,7 @@ SMS
+ =
 
-> I think having the log files for reference would be helpful.  Right now
-> it seems everyone is busy with other tasks, but hopefully someone can
-> get Huawei support in better shape soon.  Kalle was on the right track
-> with his patches, so hopefully a solution is not far off.
+   Priority: High
+   Complexity: C1
++  Owner: Kristen Carlson Accardi <kristen@linux.intel.com>
+ =
 
-The Ubuntu beta released last week kept me quite busy and I hasn't been
-able to work on ofono at all. I'm travelling right now, but as I get
-back home early next week I'll start looking huawei again.
-
+ - Better unique ID for incoming / outgoing messages.  Currently oFono uses
+   a simple incremental counter stored in the settings store (NextMessageId=
+).
 -- =
 
-Kalle Valo
+1.7.2.2
 
---===============1546412724383148078==--
+
+--===============4970885479168575751==--
 
