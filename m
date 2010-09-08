@@ -1,63 +1,117 @@
-Content-Type: multipart/mixed; boundary="===============0979109673052930594=="
+Content-Type: multipart/mixed; boundary="===============8617896497073545085=="
 MIME-Version: 1.0
-From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: [RFC PATCH 2/2] sms_util: remove unused parameter
-Date: Wed, 08 Sep 2010 13:31:27 +0300
-Message-ID: <1283941887-20426-2-git-send-email-petteri.tikander@ixonos.com>
-In-Reply-To: <1283941887-20426-1-git-send-email-petteri.tikander@ixonos.com>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: [RFCv3] Add message agent API
+Date: Wed, 08 Sep 2010 15:36:59 +0300
+Message-ID: <1283949419-30222-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0979109673052930594==
+--===============8617896497073545085==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/smsutil.c |    4 +---
- 1 files changed, 1 insertions(+), 3 deletions(-)
+ doc/message-api.txt |   72 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 72 insertions(+), 0 deletions(-)
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 0e756c7..26c7951 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -2771,7 +2771,6 @@ static gboolean sr_assembly_add_fragment_backup(const=
- char *imsi,
- }
+diff --git a/doc/message-api.txt b/doc/message-api.txt
+index 693a111..4b7c287 100644
+--- a/doc/message-api.txt
++++ b/doc/message-api.txt
+@@ -26,6 +26,43 @@ Methods		dict GetProperties()
  =
 
- static gboolean sr_assembly_remove_fragment_backup(const char *imsi,
--					const struct id_table_node *node,
- 					const struct sms_address *addr,
- 					unsigned int msg_id)
- {
-@@ -2901,7 +2900,7 @@ gboolean status_report_assembly_report(struct status_=
-report_assembly *assembly,
- 	if (out_id)
- 		*out_id =3D msg_id;
+ 			Send the message in text to the number in to.
  =
 
--	sr_assembly_remove_fragment_backup(assembly->imsi, node,
-+	sr_assembly_remove_fragment_backup(assembly->imsi,
- 					&status_report->status_report.raddr,
- 					msg_id);
++		void RegisterAgent(object path, string type)
++
++			Registers an agent to handle received messages.
++
++			The object path defines the path of the agent that
++			will be called when a message is ready to be
++			dispatched.  The type parameters accepts a MIME
++			type of the messages this agent is willing to
++			accept.  Some common types include:
++
++				"text/plain" - Regular text messages
++				"text/x-vcard" - vCard objects
++				"text/calendar" - vCalendar objects
++				"application/vnd.oma.push" - WAP push
++				"application/x-sms-agent" - Any datagram
++
++			Wildcards are not allowed as the MIME subtype, but
++			registering an agent on a generic port is supported.
++			For instance, to listen on port 5678, the agent
++			would need to register using type:
++
++				"application/x-sms-agent;port=3D5678"
++
++			Possible Errors: [service].Error.InvalidArguments
++					 [service].Error.InvalidFormat
++					 [service].Error.InUse
++
++		void UnregisterAgent(object path)
++
++			Unregisters an agent.  If no agents exist that
++			can handle an incoming message, it will be
++			silently dropped.
++
++			Possible Errors: [service].Error.InvalidArguments
++					 [service].Error.InvalidFormat
++					 [service].NotFound
++
+ Signals		PropertyChanged(string name, variant value)
  =
 
-@@ -2997,7 +2996,6 @@ void status_report_assembly_expire(struct status_repo=
-rt_assembly *assembly,
+ 			This signal indicates a changed value of the given
+@@ -64,3 +101,38 @@ Properties	string ServiceCenterAddress
+ 				"ps-preferred" - Use CS if PS is unavailable
  =
 
- 				sr_assembly_remove_fragment_backup(
- 								assembly->imsi,
--								node,
- 								&addr,
- 								msg_id);
- 			}
+ 			By default oFono uses "cs-preferred" setting.
++
++
++MessageAgent Hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		unique name
++Interface	org.ofono.MessageAgent
++Object path	freely definable
++
++Methods		void HandleTextMessage(string message, dict info)
++
++			New incoming text SMS received.  Info has Sender
++			LocalSentTime, and SentTime information.  Sender
++			address is given in string format.  LocalSentTime
++			and SentTime are given in string form using
++			ISO8601 format.
++
++		void HandleDatagram(array{byte}, dict info)
++
++			New incoming datagram SMS received.  Info has
++			Sender, LocalSentTime, SentTime, MediaType or
++			DestinationPort, and SourcePort information.
++			Sender address is given in string format.
++			LocalSentTime and SentTime are given in string
++			using ISO8601 format.  MediaType is given as
++			a MIME media type in string form, if it is
++			a known type.  Otherwise, DestinationPort is
++			given as a 16bit unsigned integer.  SourcePort
++			is always given as a 16bit unsigned integer.
++
++		void Release()
++
++			Agent is being released, possibly because of oFono
++			terminating, the MessageManager interface being
++			torn down or modem powering down.
 -- =
 
-1.6.3.3
+1.7.0.4
 
 
-
---===============0979109673052930594==--
+--===============8617896497073545085==--
 
