@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8364120973951638681=="
+Content-Type: multipart/mixed; boundary="===============0357251963950562027=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 1/2] Add Suspended property to GPRS atom
-Date: Wed, 08 Sep 2010 12:17:00 +0300
-Message-ID: <1283937421-19465-2-git-send-email-mika.liljeberg@nokia.com>
+Subject: [PATCH 2/2] isimodem: Implement Suspended property
+Date: Wed, 08 Sep 2010 12:17:01 +0300
+Message-ID: <1283937421-19465-3-git-send-email-mika.liljeberg@nokia.com>
 In-Reply-To: <1283937421-19465-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8364120973951638681==
+--===============0357251963950562027==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,113 +16,239 @@ Content-Transfer-Encoding: quoted-printable
 
 Signed-off-by: Mika Liljeberg <mika.liljeberg@nokia.com>
 ---
- doc/connman-api.txt |   19 +++++++++++++++++++
- include/gprs.h      |    1 +
- src/gprs.c          |   21 +++++++++++++++++++++
- 3 files changed, 41 insertions(+), 0 deletions(-)
+ drivers/isimodem/debug.c |   25 +++++++++++++++
+ drivers/isimodem/debug.h |    2 +
+ drivers/isimodem/gpds.h  |   17 ++++++++++
+ drivers/isimodem/gprs.c  |   74 ++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 4 files changed, 117 insertions(+), 1 deletions(-)
 
-diff --git a/doc/connman-api.txt b/doc/connman-api.txt
-index 43d8897..b576e19 100644
---- a/doc/connman-api.txt
-+++ b/doc/connman-api.txt
-@@ -77,6 +77,25 @@ Properties	boolean Attached [readonly]
- 			be available, e.g. receiving SMS over packet radio
- 			or network initiated PDP activation.
+diff --git a/drivers/isimodem/debug.c b/drivers/isimodem/debug.c
+index 86530fd..b398797 100644
+--- a/drivers/isimodem/debug.c
++++ b/drivers/isimodem/debug.c
+@@ -979,6 +979,31 @@ const char *gpds_isi_cause_name(enum gpds_isi_cause va=
+lue)
+ 	return "GPDS_<UNKNOWN>";
+ }
  =
 
-+		boolean Suspended [readonly]
++const char *gpds_transfer_status_name(enum gpds_transfer_status value)
++{
++	switch (value) {
++		_(GPDS_TRANSFER_NOT_AVAIL);
++		_(GPDS_TRANSFER_AVAIL);
++	}
++	return "GPDS_<UNKNOWN>";
++}
 +
-+			Contains whether the GPRS service is suspended.
-+			During suspended state the modem is attached to the
-+			GPRS service and all contexts remain established,
-+			however, data transfer is not possible.
++const char *gpds_transfer_cause_name(enum gpds_transfer_cause value)
++{
++	switch (value) {
++		_(GPDS_TRANSFER_CAUSE_ATTACHED);
++		_(GPDS_TRANSFER_CAUSE_DETACHED);
++		_(GPDS_TRANSFER_CAUSE_RESUMED);
++		_(GPDS_TRANSFER_CAUSE_SUSPENDED_NO_COVERAGE);
++		_(GPDS_TRANSFER_CAUSE_SUSPENDED_CALL_SMS);
++		_(GPDS_TRANSFER_CAUSE_SUSPENDED_CALL);
++		_(GPDS_TRANSFER_CAUSE_SUSPENDED_RAU);
++		_(GPDS_TRANSFER_CAUSE_SUSPENDED_LU);
++		_(GPDS_TRANSFER_CAUSE_DSAC_RESTRICTION);
++	}
++	return "GPDS_<UNKNOWN>";
++}
 +
-+			The suspended state may be entered if the modem is
-+			temporarily out of network coverage. GPRS class B
-+			modems will suspend GPRS whenever a voice call is
-+			active at the same time. GPRS may also be suspended
-+			if the network does not support simultaneous packet
-+			data and voice. Various signalling procedures may
-+			also cause GPRS to be briefly suspended.
-+
-+			As the suspension may be brief, clients should wait
-+			for an appropriate time for GPRS service to resume
-+			before taking corrective action.
-+
- 		boolean RoamingAllowed [readwrite]
+ #undef _
  =
 
- 			Contains whether data roaming is allowed.  In the off
-diff --git a/include/gprs.h b/include/gprs.h
-index a1cbcd9..7578513 100644
---- a/include/gprs.h
-+++ b/include/gprs.h
-@@ -49,6 +49,7 @@ struct ofono_gprs_driver {
+ static void hex_dump(const char *name, const uint8_t m[], size_t len)
+diff --git a/drivers/isimodem/debug.h b/drivers/isimodem/debug.h
+index d507991..1ad5547 100644
+--- a/drivers/isimodem/debug.h
++++ b/drivers/isimodem/debug.h
+@@ -70,6 +70,8 @@ const char *gpds_message_id_name(enum gpds_message_id val=
+ue);
+ const char *gpds_subblock_name(enum gpds_subblock value);
+ const char *gpds_status_name(enum gpds_status value);
+ const char *gpds_isi_cause_name(enum gpds_isi_cause value);
++const char *gpds_transfer_status_name(enum gpds_transfer_status value);
++const char *gpds_transfer_cause_name(enum gpds_transfer_cause value);
  =
 
- void ofono_gprs_status_notify(struct ofono_gprs *gprs, int status);
- void ofono_gprs_detached_notify(struct ofono_gprs *gprs);
-+void ofono_gprs_suspend_notify(struct ofono_gprs *gprs, ofono_bool_t statu=
-s);
- =
-
- int ofono_gprs_driver_register(const struct ofono_gprs_driver *d);
- void ofono_gprs_driver_unregister(const struct ofono_gprs_driver *d);
-diff --git a/src/gprs.c b/src/gprs.c
-index d57115b..288ddd5 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -64,6 +64,7 @@ struct ofono_gprs {
- 	ofono_bool_t driver_attached;
- 	ofono_bool_t roaming_allowed;
- 	ofono_bool_t powered;
-+	ofono_bool_t suspended;
- 	int status;
- 	int flags;
- 	struct idmap *pid_map;
-@@ -1052,6 +1053,9 @@ static DBusMessage *gprs_get_properties(DBusConnectio=
-n *conn,
- 	value =3D gprs->powered;
- 	ofono_dbus_dict_append(&dict, "Powered", DBUS_TYPE_BOOLEAN, &value);
- =
-
-+	value =3D gprs->suspended;
-+	ofono_dbus_dict_append(&dict, "Suspended", DBUS_TYPE_BOOLEAN, &value);
-+
- 	dbus_message_iter_close_container(&iter, &dict);
- =
-
- 	return reply;
-@@ -1428,6 +1432,23 @@ static GDBusSignalTable manager_signals[] =3D {
- 	{ }
+ void ss_debug(const void *restrict buf, size_t len, void *data);
+ void mtc_debug(const void *restrict buf, size_t len, void *data);
+diff --git a/drivers/isimodem/gpds.h b/drivers/isimodem/gpds.h
+index 86d4d95..9bb60e6 100644
+--- a/drivers/isimodem/gpds.h
++++ b/drivers/isimodem/gpds.h
+@@ -202,6 +202,23 @@ enum gpds_isi_cause {
+ 	GPDS_CAUSE_AUT_FAILURE =3D		0xFF,
  };
  =
 
-+void ofono_gprs_suspend_notify(struct ofono_gprs *gprs, ofono_bool_t statu=
-s)
++enum gpds_transfer_status {
++	GPDS_TRANSFER_NOT_AVAIL =3D		0x00,
++	GPDS_TRANSFER_AVAIL =3D			0x01,
++};
++
++enum gpds_transfer_cause {
++	GPDS_TRANSFER_CAUSE_ATTACHED =3D			0x02,
++	GPDS_TRANSFER_CAUSE_DETACHED =3D			0x03,
++	GPDS_TRANSFER_CAUSE_RESUMED =3D			0x04,
++	GPDS_TRANSFER_CAUSE_SUSPENDED_NO_COVERAGE =3D	0x05,
++	GPDS_TRANSFER_CAUSE_SUSPENDED_CALL_SMS =3D	0x07,
++	GPDS_TRANSFER_CAUSE_SUSPENDED_CALL =3D		0x08,
++	GPDS_TRANSFER_CAUSE_SUSPENDED_RAU =3D		0x09,
++	GPDS_TRANSFER_CAUSE_SUSPENDED_LU =3D		0x0A,
++	GPDS_TRANSFER_CAUSE_DSAC_RESTRICTION =3D		0x0B,
++};
++
+ enum gpds_context_type {
+ 	GPDS_CONT_TYPE_NORMAL =3D			0x00,
+ 	GPDS_CONT_TYPE_NWI =3D			0x01,
+diff --git a/drivers/isimodem/gprs.c b/drivers/isimodem/gprs.c
+index 6f4f686..573dbb5 100644
+--- a/drivers/isimodem/gprs.c
++++ b/drivers/isimodem/gprs.c
+@@ -41,6 +41,8 @@
+ #include "gpds.h"
+ #include "debug.h"
+ =
+
++#define SUSPEND_TIMEOUT		8 /* s */
++
+ /* 27.007 Section 10.1.20 <stat> */
+ enum network_registration_status {
+ 	GPRS_STAT_NOT_REGISTERED =3D 0,
+@@ -53,6 +55,7 @@ enum network_registration_status {
+ =
+
+ struct gprs_data {
+ 	GIsiClient *client;
++	guint timeout;
+ };
+ =
+
+ static void detach_ind_cb(GIsiClient *client,
+@@ -72,6 +75,70 @@ static void detach_ind_cb(GIsiClient *client,
+ 	/*ofono_gprs_detached_notify(gprs);*/
+ }
+ =
+
++static gboolean suspend_timeout(gpointer data)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path =3D __ofono_atom_get_path(gprs->atom);
-+	dbus_bool_t value =3D status;
++	struct ofono_gprs *gprs =3D data;
++	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
 +
-+	if (gprs->suspended =3D=3D status)
-+		return;
-+
-+	DBG("%s suspended %d", __ofono_atom_get_path(gprs->atom), status);
-+
-+	gprs->suspended =3D status;
-+	ofono_dbus_signal_property_changed(conn, path,
-+					OFONO_CONNECTION_MANAGER_INTERFACE,
-+					"Suspended", DBUS_TYPE_BOOLEAN, &value);
++	ofono_gprs_suspend_notify(gprs, TRUE);
++	gd->timeout =3D 0;
++	return FALSE;
 +}
 +
- void ofono_gprs_detached_notify(struct ofono_gprs *gprs)
++static void suspend_notify(struct ofono_gprs *gprs,
++				uint8_t suspend_status,
++				uint8_t suspend_cause)
++{
++	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
++	ofono_bool_t status =3D FALSE;
++
++	DBG("transfer status: %s (0x%02"PRIx8") cause %s (0x%02"PRIx8")",
++		gpds_transfer_status_name(suspend_status), suspend_status,
++		gpds_transfer_cause_name(suspend_cause), suspend_cause);
++
++	if (suspend_status =3D=3D GPDS_TRANSFER_NOT_AVAIL) {
++		switch (suspend_cause) {
++		case GPDS_TRANSFER_CAUSE_SUSPENDED_NO_COVERAGE:
++		case GPDS_TRANSFER_CAUSE_SUSPENDED_CALL:
++			status =3D TRUE;
++			break;
++
++		case GPDS_TRANSFER_CAUSE_SUSPENDED_CALL_SMS:
++		case GPDS_TRANSFER_CAUSE_SUSPENDED_RAU:
++		case GPDS_TRANSFER_CAUSE_SUSPENDED_LU:
++			if (gd->timeout)
++				return;
++			gd->timeout =3D g_timeout_add_seconds(SUSPEND_TIMEOUT,
++								suspend_timeout,
++								gprs);
++			return;
++
++		default:
++			return;
++		}
++	}
++
++	if (gd->timeout) {
++		g_source_remove(gd->timeout);
++		gd->timeout =3D 0;
++	}
++
++	ofono_gprs_suspend_notify(gprs, status);
++}
++
++static void transfer_status_ind_cb(GIsiClient *client,
++					const void *restrict data, size_t len,
++					uint16_t object, void *opaque)
++{
++	struct ofono_gprs *gprs =3D opaque;
++	const unsigned char *msg =3D data;
++
++	if (!msg || len < 3 || msg[0] !=3D GPDS_TRANSFER_STATUS_IND)
++		return;
++
++	suspend_notify(gprs, msg[1], msg[2]);
++}
++
+ static gboolean isi_gprs_register(gpointer user)
  {
- 	DBG("%s", __ofono_atom_get_path(gprs->atom));
+ 	struct ofono_gprs *gprs =3D user;
+@@ -83,6 +150,8 @@ static gboolean isi_gprs_register(gpointer user)
+ 		g_isi_client_set_debug(gd->client, gpds_debug, NULL);
+ =
+
+ 	g_isi_subscribe(gd->client, GPDS_DETACH_IND, detach_ind_cb, gprs);
++	g_isi_subscribe(gd->client, GPDS_TRANSFER_STATUS_IND,
++			transfer_status_ind_cb, gprs);
+ =
+
+ 	ofono_gprs_register(user);
+ =
+
+@@ -258,6 +327,7 @@ static gboolean status_resp_cb(GIsiClient *client,
+ 	const unsigned char *msg =3D data;
+ 	struct isi_cb_data *cbd =3D opaque;
+ 	ofono_gprs_status_cb_t cb =3D cbd->cb;
++	struct ofono_gprs *gprs =3D cbd->data;
+ 	int status;
+ =
+
+ 	if (!msg) {
+@@ -265,7 +335,7 @@ static gboolean status_resp_cb(GIsiClient *client,
+ 		goto error;
+ 	}
+ =
+
+-	if (len < 2 || msg[0] !=3D GPDS_STATUS_RESP)
++	if (len < 13 || msg[0] !=3D GPDS_STATUS_RESP)
+ 		return FALSE;
+ =
+
+ 	/* FIXME: the core still expects reg status, and not a boolean
+@@ -281,6 +351,8 @@ static gboolean status_resp_cb(GIsiClient *client,
+ 		status =3D GPRS_STAT_UNKNOWN;
+ 	}
+ =
+
++	suspend_notify(gprs, msg[11], msg[12]);
++
+ 	CALLBACK_WITH_SUCCESS(cb, status, cbd->data);
+ =
+
+ 	return TRUE;
 -- =
 
 1.7.0.4
 
 
---===============8364120973951638681==--
+--===============0357251963950562027==--
 
