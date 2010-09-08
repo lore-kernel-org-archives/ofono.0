@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0395254940698966146=="
+Content-Type: multipart/mixed; boundary="===============8645020687657375492=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [online-impl-v2 PATCH 06/10] mbm: implement Online property
-Date: Thu, 09 Sep 2010 01:30:38 +0200
-Message-ID: <1283988638.6640.133.camel@localhost.localdomain>
-In-Reply-To: <1283798780-16363-7-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [online-impl-v2 PATCH 07/10] novatel: implement Online property
+Date: Thu, 09 Sep 2010 01:30:36 +0200
+Message-ID: <1283988636.6640.132.camel@localhost.localdomain>
+In-Reply-To: <1283798780-16363-8-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0395254940698966146==
+--===============8645020687657375492==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,8 +16,8 @@ Content-Transfer-Encoding: quoted-printable
 Hi Pekka,
 
 > ---
->  plugins/mbm.c |   51 +++++++++++++++++++++++++++++++++++++++++++++++----
->  1 files changed, 47 insertions(+), 4 deletions(-)
+>  plugins/novatel.c |   40 +++++++++++++++++++++++++++++++++++++---
+>  1 files changed, 37 insertions(+), 3 deletions(-)
 
 patch has been applied.
 
@@ -27,5 +27,5 @@ Marcel
 
 
 
---===============0395254940698966146==--
+--===============8645020687657375492==--
 
