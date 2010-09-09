@@ -1,112 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============2933539672952457965=="
+Content-Type: multipart/mixed; boundary="===============1861212889770709547=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 03/12] phonesim changes for setting TE character set
-Date: Thu, 09 Sep 2010 05:31:47 -0700
-Message-ID: <1284035516-21359-4-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 04/12] USSD atom driver changes to read current character
+ setting
+Date: Thu, 09 Sep 2010 05:31:48 -0700
+Message-ID: <1284035516-21359-5-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1284035516-21359-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2933539672952457965==
+--===============1861212889770709547==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/phonesim.c |   54 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 54 insertions(+), 0 deletions(-)
+ drivers/atmodem/ussd.c |   18 ++++++++++++++++++
+ 1 files changed, 18 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index d3caa20..521e8ae 100644
---- a/plugins/phonesim.c
-+++ b/plugins/phonesim.c
-@@ -64,6 +64,7 @@
- #include <drivers/atmodem/atutil.h>
+diff --git a/drivers/atmodem/ussd.c b/drivers/atmodem/ussd.c
+index 1e1fc25..cb1515f 100644
+--- a/drivers/atmodem/ussd.c
++++ b/drivers/atmodem/ussd.c
+@@ -44,12 +44,27 @@
  =
 
+ static const char *cusd_prefix[] =3D { "+CUSD:", NULL };
  static const char *none_prefix[] =3D { NULL };
 +static const char *cscs_prefix[] =3D { "+CSCS:", NULL };
  =
 
- struct phonesim_data {
- 	GAtMux *mux;
-@@ -72,6 +73,57 @@ struct phonesim_data {
- 	gboolean use_mux;
+ struct ussd_data {
+ 	GAtChat *chat;
+ 	unsigned int vendor;
++	enum at_util_charset charset;
  };
  =
 
-+static const char *best_charset(int supported)
-+{
-+	const char *charset =3D "Invalid";
-+
-+	if (supported & AT_UTIL_CHARSET_UCS2)
-+		charset =3D "UCS2";
-+
-+	if (supported & AT_UTIL_CHARSET_GSM)
-+		charset =3D "GSM";
-+
-+	return charset;
-+}
-+
-+static void set_charset_cb(gboolean ok, GAtResult *result,
++static void read_charset_cb(gboolean ok, GAtResult *result,
 +				gpointer user_data)
 +{
-+	if (!ok)
-+		ofono_error("Setting character set failed");
-+}
-+
-+static void list_charsets_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct phonesim_data *data =3D ofono_modem_get_data(modem);
-+	const char *charset;
-+	int supported =3D 0;
-+	char buf[32];
++	struct ussd_data *data =3D user_data;
++	const char *str =3D NULL;
 +
 +	if (!ok)
 +		return;
 +
-+	if (!at_util_parse_cscs_supported(result, &supported))
-+		return;
-+
-+	charset =3D best_charset(supported);
-+	snprintf(buf, sizeof(buf), "AT+CSCS=3D\"%s\"", charset);
-+
-+	if (!g_at_chat_send(data->chat, buf, none_prefix, set_charset_cb, =
-
-+			modem, NULL))
-+		ofono_error("Setting charset: %s failed", charset);
++	if (at_util_parse_cscs_query(result, &str))
++		at_util_charset_string_to_charset(str, &data->charset);
 +}
 +
-+static void list_charsets(struct ofono_modem *modem)
-+{
-+	struct phonesim_data *data =3D ofono_modem_get_data(modem);
-+	if (!g_at_chat_send(data->chat, "AT+CSCS=3D?", cscs_prefix,
-+			list_charsets_cb, modem, NULL))
-+		ofono_error("AT+CSCS=3D? request failed");
-+}
-+
- static int phonesim_probe(struct ofono_modem *modem)
+ static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
  {
- 	struct phonesim_data *data;
-@@ -321,6 +373,8 @@ static void phonesim_pre_sim(struct ofono_modem *modem)
+ 	GAtResultIter iter;
+@@ -247,6 +262,9 @@ static int at_ussd_probe(struct ofono_ussd *ussd, unsig=
+ned int vendor,
  =
 
- 	if (sim)
- 		ofono_sim_inserted_notify(sim, TRUE);
+ 	ofono_ussd_set_data(ussd, data);
+ =
+
++	g_at_chat_send(chat, "AT+CSCS?", cscs_prefix, read_charset_cb, data,
++			NULL);
 +
-+	list_charsets(modem);
- }
+ 	g_at_chat_send(chat, "AT+CUSD=3D1", NULL, at_ussd_register, ussd, NULL);
  =
 
- static void phonesim_post_sim(struct ofono_modem *modem)
+ 	return 0;
 -- =
 
 1.7.0.4
 
 
---===============2933539672952457965==--
+--===============1861212889770709547==--
 
