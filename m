@@ -1,39 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============7381943812894274054=="
+Content-Type: multipart/mixed; boundary="===============1022932567612900012=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCHv2 2/6] Add message agent interface definition
-Date: Thu, 09 Sep 2010 12:52:52 +0300
-Message-ID: <1284025976-13294-3-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCHv2 4/6] Add message agent implementation to build
+Date: Thu, 09 Sep 2010 12:52:54 +0300
+Message-ID: <1284025976-13294-5-git-send-email-aki.niemi@nokia.com>
 In-Reply-To: <1284025976-13294-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7381943812894274054==
+--===============1022932567612900012==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/dbus.h |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ Makefile.am |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/include/dbus.h b/include/dbus.h
-index 8cd214d..fb8109f 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -41,6 +41,7 @@ extern "C" {
- #define OFONO_CONNECTION_CONTEXT_INTERFACE "org.ofono.ConnectionContext"
- #define OFONO_CONNECTION_MANAGER_INTERFACE "org.ofono.ConnectionManager"
- #define OFONO_MESSAGE_MANAGER_INTERFACE "org.ofono.MessageManager"
-+#define OFONO_MESSAGE_AGENT_INTERFACE "org.ofono.MessageAgent"
- #define OFONO_MESSAGE_WAITING_INTERFACE "org.ofono.MessageWaiting"
- #define OFONO_NETWORK_REGISTRATION_INTERFACE "org.ofono.NetworkRegistratio=
-n"
- #define OFONO_NETWORK_OPERATOR_INTERFACE "org.ofono.NetworkOperator"
+diff --git a/Makefile.am b/Makefile.am
+index f31180e..fddcaad 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -282,7 +282,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
+es) \
+ 			src/storage.c src/cbs.c src/watch.c src/call-volume.c \
+ 			src/gprs.c src/idmap.h src/idmap.c \
+ 			src/radio-settings.c src/stkutil.h src/stkutil.c \
+-			src/nettime.c src/stkagent.c src/stkagent.h
++			src/nettime.c src/stkagent.c src/stkagent.h \
++			src/smsagent.c src/smsagent.h
+ =
+
+ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
+@ -ldl
+ =
+
 -- =
 
 1.7.0.4
 
 
---===============7381943812894274054==--
+--===============1022932567612900012==--
 
