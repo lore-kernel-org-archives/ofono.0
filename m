@@ -1,14 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============7778156164511814243=="
+Content-Type: multipart/mixed; boundary="===============8885073798554494319=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCHv2 6/6] Add test message agent
-Date: Thu, 09 Sep 2010 12:52:56 +0300
-Message-ID: <1284025976-13294-7-git-send-email-aki.niemi@nokia.com>
-In-Reply-To: <1284025976-13294-1-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCHv3 6/6] Add test message agent
+Date: Thu, 09 Sep 2010 13:06:26 +0300
+Message-ID: <1284026786-15972-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7778156164511814243==
+--===============8885073798554494319==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -21,7 +20,7 @@ Content-Transfer-Encoding: quoted-printable
 
 diff --git a/test/sms-agent b/test/sms-agent
 new file mode 100755
-index 0000000..c3630fa
+index 0000000..2fea2a6
 --- /dev/null
 +++ b/test/sms-agent
 @@ -0,0 +1,84 @@
@@ -49,7 +48,7 @@ index 0000000..c3630fa
 +
 +	@dbus.service.method("org.ofono.MessageAgent",
 +				in_signature=3D"sa{sv}", out_signature=3D"")
-+	def HandleTextMessage(self, message, props):
++	def HandleMessage(self, message, props):
 +		print "From: %s" % props["Sender"]
 +		print "SentTime: %s" % props["SentTime"]
 +		print "LocalSentTime: %s" % props["LocalSentTime"]
@@ -114,5 +113,5 @@ index 0000000..c3630fa
 1.7.0.4
 
 
---===============7778156164511814243==--
+--===============8885073798554494319==--
 
