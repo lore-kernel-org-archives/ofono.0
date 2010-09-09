@@ -1,62 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============5461256102375090286=="
+Content-Type: multipart/mixed; boundary="===============6794626507084417037=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 07/12] Add internal api __ofono_call_settings_is_busy
-Date: Thu, 09 Sep 2010 05:31:51 -0700
-Message-ID: <1284035516-21359-8-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 08/12] Add Send USSD command specific result codes
+Date: Thu, 09 Sep 2010 05:31:52 -0700
+Message-ID: <1284035516-21359-9-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1284035516-21359-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5461256102375090286==
+--===============6794626507084417037==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/call-settings.c |    5 +++++
- src/ofono.h         |    3 +++
- 2 files changed, 8 insertions(+), 0 deletions(-)
+ src/stkutil.h |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/src/call-settings.c b/src/call-settings.c
-index ab20062..9c536e9 100644
---- a/src/call-settings.c
-+++ b/src/call-settings.c
-@@ -778,6 +778,11 @@ static void cs_unregister_ss_controls(struct ofono_cal=
-l_settings *cs)
- 		__ofono_ussd_ssc_unregister(cs->ussd, "77");
- }
+diff --git a/src/stkutil.h b/src/stkutil.h
+index 44d167a..00cb264 100644
+--- a/src/stkutil.h
++++ b/src/stkutil.h
+@@ -237,6 +237,7 @@ enum stk_result_type {
+ 	STK_RESULT_TYPE_GO_BACK =3D			0x11,
+ 	STK_RESULT_TYPE_NO_RESPONSE =3D			0x12,
+ 	STK_RESULT_TYPE_HELP_REQUESTED =3D		0x13,
++	STK_RESULT_TYPE_USSD_OR_SS_USER_TERMINATION =3D	0x14,
  =
 
-+gboolean __ofono_call_settings_is_busy(struct ofono_call_settings *cs)
-+{
-+	return cs->pending ? TRUE : FALSE;
-+}
-+
- static DBusMessage *generate_get_properties_reply(struct ofono_call_settin=
-gs *cs,
- 							DBusMessage *msg)
- {
-diff --git a/src/ofono.h b/src/ofono.h
-index c3329a6..9b8d938 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -172,6 +172,9 @@ gboolean __ofono_call_forwarding_is_busy(struct ofono_c=
-all_forwarding *cf);
- =
-
- #include <ofono/call-meter.h>
- #include <ofono/call-settings.h>
-+
-+gboolean __ofono_call_settings_is_busy(struct ofono_call_settings *cs);
-+
- #include <ofono/cbs.h>
- #include <ofono/devinfo.h>
- #include <ofono/phonebook.h>
+ 	/* 0x20 to 0x2F are used to indicate that SIM should retry */
+ 	STK_RESULT_TYPE_TERMINAL_BUSY =3D			0x20,
+@@ -254,6 +255,7 @@ enum stk_result_type {
+ 	STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD =3D		0x32,
+ 	STK_RESULT_TYPE_COMMAND_ID_UNKNOWN =3D		0x33,
+ 	STK_RESULT_TYPE_MINIMUM_NOT_MET =3D		0x36,
++	STK_RESULT_TYPE_USSD_RETURN_ERROR =3D		0x37,
+ 	STK_RESULT_TYPE_CALL_CONTROL_PERMANENT =3D	0x39,
+ 	STK_RESULT_TYPE_BIP_ERROR =3D			0x3A,
+ 	STK_RESULT_TYPE_ACCESS_TECHNOLOGY_ERROR =3D	0x3B,
 -- =
 
 1.7.0.4
 
 
---===============5461256102375090286==--
+--===============6794626507084417037==--
 
