@@ -1,69 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============4622945794449772304=="
+Content-Type: multipart/mixed; boundary="===============0316033567162901583=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [online-impl-v2 PATCH 00/10] implement Online property
-Date: Thu, 09 Sep 2010 01:36:13 +0200
-Message-ID: <1283988973.6640.141.camel@localhost.localdomain>
-In-Reply-To: <1283798780-16363-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [originated PATCH 0/2]
+Date: Wed, 08 Sep 2010 21:18:14 -0500
+Message-ID: <4C8843E6.5060106@gmail.com>
+In-Reply-To: <1283785768-4509-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4622945794449772304==
+--===============0316033567162901583==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pekka,
 
-> Here are 2nd stab at implementing Online property with various modem
-> drivers.
-
-so I pushed most of them, but not all of them.
-
-STE version needs testing by the STE guys, but I did run into some SIM
-not ready issues with MBM when switching online/offline a few times. So
-that needs to be looked into.
-
-I did leave Palm Pre and G1 patches out. Andrew is the best candidate
-for testing these. I have no idea on how they behave.
-
-> Some more obvious errors (in using g_at_chat_send()) have been
-> fixed. Huawei has been updated after the comment from Marcel.
-
-The Huawei has more and more issues with SIM not ready now. This needs
-fixing anyway. I pushed the patch anymore to make these symptoms more
-clear to everybody.
-
-> I've dropped support for the Nokia usb stick, according to the spec it
-> does not implement but AT+CFUN=3D0 and AT+CFUN=3D1. (Not that I have test=
-ed
-> what AT+CFUN=3D0 does.)
-
-I have that stuck, but that beast is broken like crazy. The firmware has
-even a bug with AT+COPS :(
-
-> Again, I have not been able to test with most modems. All of them might
-> not make sense (if the modem does not support AT+CFUN=3D4, for
-> instance). There might be some common caveats.  E.g., if the modem does
-> to wake up with AT+CFUN=3D4, it might work with an initial cfun command
-> like "AT+CFUN=3D1 ; +CFUN=3D4". At least Calypso requires such an
-> initialization command.
+On 09/06/2010 10:09 AM, Pekka.Pessi(a)nokia.com wrote:
+> Hi all,
 > =
 
-> I'd appreciate if the people with access to various hardware could test
-> them with the patches here (using test/enable-modem, test/online-modem
-> and test/offline-modem, or, e.g., the connman with "ofono-refactor-v2"
-> and "service-leak" patches).
+> This patch adds the "Originated" property to the VoiceCall interface. It
+> is used to determine if the call is originated from the mobile or not.
 
-I have done basic testing and so far so good. Huawei and MBM needs
-further attention for sure. I am more than shocked that I actually do
-have all this crap hardware on my desk :(
+Just throwing ideas, but would 'string Direction' with possible values
+"in" or "incoming" and "out" or "outgoing" be a bit clearer?
 
-Regards
+> =
 
-Marcel
+> The originated information can be deducted from the call state assuming
+> the client does follow the call states from the beqginning. However,
+> after the call gets activated call states are common for the mobile
+> originated and mobile terminated calls.
 
+Out of curiosity, how exactly is this useful?
 
+Regards,
+-Denis
 
---===============4622945794449772304==--
+--===============0316033567162901583==--
 
