@@ -1,47 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============6794626507084417037=="
+Content-Type: multipart/mixed; boundary="===============1727728256417562356=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 08/12] Add Send USSD command specific result codes
-Date: Thu, 09 Sep 2010 05:31:52 -0700
-Message-ID: <1284035516-21359-9-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 10/12] Add build_dataobj_ussd_text for ussd specific text
+ string handling
+Date: Thu, 09 Sep 2010 05:31:54 -0700
+Message-ID: <1284035516-21359-11-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1284035516-21359-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6794626507084417037==
+--===============1727728256417562356==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stkutil.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ src/stkutil.c |   35 +++++++++++++++++++++++++++++++++++
+ 1 files changed, 35 insertions(+), 0 deletions(-)
 
-diff --git a/src/stkutil.h b/src/stkutil.h
-index 44d167a..00cb264 100644
---- a/src/stkutil.h
-+++ b/src/stkutil.h
-@@ -237,6 +237,7 @@ enum stk_result_type {
- 	STK_RESULT_TYPE_GO_BACK =3D			0x11,
- 	STK_RESULT_TYPE_NO_RESPONSE =3D			0x12,
- 	STK_RESULT_TYPE_HELP_REQUESTED =3D		0x13,
-+	STK_RESULT_TYPE_USSD_OR_SS_USER_TERMINATION =3D	0x14,
+diff --git a/src/stkutil.c b/src/stkutil.c
+index ae4cc32..e953ead 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -4170,6 +4170,34 @@ static gboolean build_dataobj_text(struct stk_tlv_bu=
+ilder *tlv,
+ 	return stk_tlv_builder_close_container(tlv);
+ }
  =
 
- 	/* 0x20 to 0x2F are used to indicate that SIM should retry */
- 	STK_RESULT_TYPE_TERMINAL_BUSY =3D			0x20,
-@@ -254,6 +255,7 @@ enum stk_result_type {
- 	STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD =3D		0x32,
- 	STK_RESULT_TYPE_COMMAND_ID_UNKNOWN =3D		0x33,
- 	STK_RESULT_TYPE_MINIMUM_NOT_MET =3D		0x36,
-+	STK_RESULT_TYPE_USSD_RETURN_ERROR =3D		0x37,
- 	STK_RESULT_TYPE_CALL_CONTROL_PERMANENT =3D	0x39,
- 	STK_RESULT_TYPE_BIP_ERROR =3D			0x3A,
- 	STK_RESULT_TYPE_ACCESS_TECHNOLOGY_ERROR =3D	0x3B,
++/* Defined in TS 102.223 Section 8.15 - USSD specific case*/
++static gboolean build_dataobj_ussd_text(struct stk_tlv_builder *tlv,
++					const void *data, gboolean cr)
++{
++	const struct stk_ussd_text *text =3D data;
++	unsigned char tag =3D STK_DATA_OBJECT_TYPE_TEXT;
++	gboolean ret;
++
++	if (!text->text || !text->len)
++		return TRUE;
++
++	if (stk_tlv_builder_open_container(tlv, cr, tag, TRUE) !=3D TRUE)
++		return FALSE;
++
++	if (text->dcs !=3D -1) {
++		if (stk_tlv_builder_append_byte(tlv, text->dcs) !=3D TRUE)
++			return FALSE;
++		=
+
++		ret =3D stk_tlv_builder_append_bytes(tlv, text->text, text->len);
++	} else
++		ret =3D stk_tlv_builder_append_text(tlv, -1, (const char *) text->text);
++
++	if (ret !=3D TRUE)
++		return ret;
++
++	return stk_tlv_builder_close_container(tlv);
++}
++
+ /* Described in TS 131.111 Section 8.17 */
+ static gboolean build_dataobj_ussd_string(struct stk_tlv_builder *tlv,
+ 					const void *data, gboolean cr)
+@@ -5459,6 +5487,13 @@ const unsigned char *stk_pdu_from_response(const str=
+uct stk_response *response,
+ 	case STK_COMMAND_TYPE_LANGUAGE_NOTIFICATION:
+ 	case STK_COMMAND_TYPE_LAUNCH_BROWSER:
+ 		break;
++	case STK_COMMAND_TYPE_SEND_USSD:
++		ok =3D build_dataobj(&builder,
++					build_dataobj_ussd_text,
++					DATAOBJ_FLAG_CR,
++					&response->send_ussd.text,
++					NULL);
++		break;
+ 	default:
+ 		return NULL;
+ 	};
 -- =
 
 1.7.0.4
 
 
---===============6794626507084417037==--
+--===============1727728256417562356==--
 
