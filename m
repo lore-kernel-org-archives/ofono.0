@@ -1,118 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============3161717518725234833=="
+Content-Type: multipart/mixed; boundary="===============4315391760969802367=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH] Add test message agent
-Date: Thu, 09 Sep 2010 11:12:35 +0300
-Message-ID: <1284019955-11948-1-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCHv2 0/6] Add message agent interface
+Date: Thu, 09 Sep 2010 12:52:50 +0300
+Message-ID: <1284025976-13294-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3161717518725234833==
+--===============4315391760969802367==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/sms-agent |   84 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+Hi All,
+
+Here the same set with a whitespace fix and fix for a discrepancy in
+the method name in documentation and in code.
+
+Here is the diffstat:
+
+ Makefile.am         |    3 +-
+ doc/message-api.txt |   63 ++++++++
+ include/dbus.h      |    1 +
+ src/sms.c           |  207 +++++++++++++++++++++++---
+ src/smsagent.c      |  416 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 84 insertions(+), 0 deletions(-)
- create mode 100755 test/sms-agent
+ src/smsagent.h      |   66 ++++++++
+ test/sms-agent      |   84 +++++++++++
+ 7 files changed, 819 insertions(+), 21 deletions(-)
 
-diff --git a/test/sms-agent b/test/sms-agent
-new file mode 100755
-index 0000000..e627602
---- /dev/null
-+++ b/test/sms-agent
-@@ -0,0 +1,84 @@
-+#!/usr/bin/python
-+
-+import gobject
-+
-+import sys
-+import dbus
-+import dbus.service
-+import dbus.mainloop.glib
-+
-+class SmsAgent(dbus.service.Object):
-+
-+	def __init__(self, bus, path):
-+		dbus.service.Object.__init__(self, bus, path)
-+
-+		print "Started agent %s at %s" % (bus, path)
-+
-+	@dbus.service.method("org.ofono.MessageAgent",
-+				in_signature=3D"", out_signature=3D"")
-+	def Release(self):
-+		print "Release, quitting"
-+		mainloop.quit()
-+
-+	@dbus.service.method("org.ofono.MessageAgent",
-+				in_signature=3D"sa{sv}", out_signature=3D"")
-+	def HandleTextMessage(self, message, props):
-+		print "From: %s" % props["Sender"]
-+		print "SentTime: %s" % props["SentTime"]
-+		print "LocalSentTime: %s" % props["LocalSentTime"]
-+		print "Text: %s" % message
-+
-+	@dbus.service.method("org.ofono.MessageAgent",
-+					in_signature=3D"aya{sv}", out_signature=3D"")
-+	def HandleDatagram(self, data, props):
-+		print "From: %s" % props["Sender"]
-+		try:
-+			print "ContentType: %s" % props["ContentType"]
-+		except KeyError:
-+			print "DestinationPort: %s" % props["DestinationPort"]
-+
-+		print "SourcePort: %d" % props["SourcePort"]
-+		print "SentTime: %s" % props["SentTime"]
-+		print "LocalSentTime: %s" % props["LocalSentTime"]
-+		print "Size: %d bytes" % len(data)
-+
-+		outstr =3D u''
-+		for byte in data:
-+			if byte > 128:
-+				outstr +=3D '?'
-+			else:
-+				outstr +=3D chr(byte)
-+
-+		print outstr
-+
-+if __name__ =3D=3D '__main__':
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+
-+	if len(sys.argv) < 2:
-+		print "Usage: %s <media_type>" % sys.argv[0]
-+		sys.exit(1)
-+
-+	bus =3D dbus.SystemBus()
-+	manager =3D dbus.Interface(bus.get_object("org.ofono", "/"),
-+						"org.ofono.Manager")
-+
-+	properties =3D manager.GetProperties()
-+	=
-
-+	for path in properties["Modems"]:
-+		modem =3D dbus.Interface(bus.get_object('org.ofono', path),
-+							'org.ofono.Modem')
-+
-+		properties =3D modem.GetProperties()
-+
-+		if "org.ofono.MessageManager" not in properties["Interfaces"]:
-+			continue
-+
-+		sms =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.MessageManager')
-+
-+	path =3D "/test/agent"
-+	agent =3D SmsAgent(bus, path)
-+	sms.RegisterAgent(path, sys.argv[1])
-+
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
--- =
-
-1.7.0.4
+Cheers,
+Aki
 
 
---===============3161717518725234833==--
+--===============4315391760969802367==--
 
