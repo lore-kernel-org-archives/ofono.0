@@ -1,34 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============1753572159746462598=="
+Content-Type: multipart/mixed; boundary="===============3015163658818723311=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Check if ussd is busy when doing ss
-Date: Thu, 09 Sep 2010 09:07:29 -0500
-Message-ID: <4C88EA21.3020302@gmail.com>
-In-Reply-To: <1283739595-11903-1-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH] test: Update test-voicecall to reflect DBus types
+Date: Thu, 09 Sep 2010 09:08:00 -0500
+Message-ID: <4C88EA40.5030903@gmail.com>
+In-Reply-To: <1283603712-21043-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1753572159746462598==
+--===============3015163658818723311==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Jeevaka,
 
-On 09/05/2010 09:19 PM, Yang Gu wrote:
-> It's still not clear how ss and ussd interfere with each other. Current
-> decision is each ss (call-barring, call-forwarding, etc.) has
-> interference with ussd, but there is no interference within these ss.
-> That is, call-barring has interference with ussd, but call-barring has
-> no interference with call-forwarding.
+On 09/04/2010 07:35 AM, Jeevaka Badrappan wrote:
+> ---
+>  test/test-voicecall |   55 ++++++++++++++++++++++++++-------------------=
+-----
+>  1 files changed, 29 insertions(+), 26 deletions(-)
 
-Patch has been applied, but I broke it up into four patches.
-
-Are you planning to take care of cb_ss_control, cb_ss_password,
-cf_ss_control and cs_ss_control busy conditions separately?
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============1753572159746462598==--
+--===============3015163658818723311==--
 
