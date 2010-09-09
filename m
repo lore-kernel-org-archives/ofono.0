@@ -1,56 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============2379545725775927090=="
+Content-Type: multipart/mixed; boundary="===============4653873336878874370=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Ofono and BT interaction
-Date: Thu, 09 Sep 2010 09:25:58 -0500
-Message-ID: <4C88EE76.6020002@gmail.com>
-In-Reply-To: <2A84145621092446B6659B8A0F28E26F46D581ECC2@irsmsx501.ger.corp.intel.com>
+Subject: Re: [PATCH] phonesim: Simulate a Send DTMF command in sim app.
+Date: Thu, 09 Sep 2010 09:29:11 -0500
+Message-ID: <4C88EF37.8070809@gmail.com>
+In-Reply-To: <1283968475-4848-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2379545725775927090==
+--===============4653873336878874370==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Emmanuel,
+Hi Andrew,
 
-On 09/09/2010 08:19 AM, Berthier, Emmanuel wrote:
-> After pairing a Handset BT device with my Meego Handset board, ofono
-> sees a new modem called /hfp/XXXXXX and can start a voice call on it.
-> =
+On 09/08/2010 12:54 PM, Andrzej Zaborowski wrote:
+> ---
+>  src/qsimcommand.cpp    |    6 ++++--
+>  src/simapplication.cpp |   23 +++++++++++++++++++++++
+>  src/simapplication.h   |    1 +
+>  3 files changed, 28 insertions(+), 2 deletions(-)
 
-> It is an interesting feature from a Netbook perspective, but could be
-> very confusing from a Handset perspective.
-> =
-
->  =
-
-> =
-
-> I would prefer to remove BT devices from ofono modem list.
-> =
-
->  =
-
-> =
-
-> What=E2=80=99s the best solution?
-> =
-
-> - disable BT modem client profile?
-> =
-
-> - disable ofono HFP modem support?
-> =
-
-
-Would filtering by Modem type be enough? E.g. oFono could expose a
-string Type property on the Modem Interface.  Possible values might be
-'gsm', 'cdma', 'hfp', etc.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============2379545725775927090==--
+--===============4653873336878874370==--
 
