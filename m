@@ -1,30 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============3015163658818723311=="
+Content-Type: multipart/mixed; boundary="===============8100125416886580080=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] test: Update test-voicecall to reflect DBus types
-Date: Thu, 09 Sep 2010 09:08:00 -0500
-Message-ID: <4C88EA40.5030903@gmail.com>
-In-Reply-To: <1283603712-21043-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: Re: [PATCH] TODO: update owner persist outgoing SMS messages task
+Date: Thu, 09 Sep 2010 09:09:12 -0500
+Message-ID: <4C88EA88.6090905@gmail.com>
+In-Reply-To: <1283957244-26837-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3015163658818723311==
+--===============8100125416886580080==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Kristen,
 
-On 09/04/2010 07:35 AM, Jeevaka Badrappan wrote:
+On 09/08/2010 09:47 AM, Kristen Carlson Accardi wrote:
 > ---
->  test/test-voicecall |   55 ++++++++++++++++++++++++++-------------------=
------
->  1 files changed, 29 insertions(+), 26 deletions(-)
+>  TODO |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
+> =
 
-Patch has been applied, thanks.
+> diff --git a/TODO b/TODO
+> index c4853ad..0c39da4 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -78,6 +78,7 @@ SMS
+>  =
+
+>    Priority: High
+>    Complexity: C1
+> +  Owner: Kristen Carlson Accardi <kristen@linux.intel.com>
+>  =
+
+>  - Better unique ID for incoming / outgoing messages.  Currently oFono us=
+es
+>    a simple incremental counter stored in the settings store (NextMessage=
+Id).
+
+Patch applied, thanks for taking this up.
 
 Regards,
 -Denis
 
---===============3015163658818723311==--
+--===============8100125416886580080==--
 
