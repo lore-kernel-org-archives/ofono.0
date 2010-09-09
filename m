@@ -1,173 +1,108 @@
-Content-Type: multipart/mixed; boundary="===============2268513840203140036=="
+Content-Type: multipart/mixed; boundary="===============6743731977230286066=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Simulate send ss command in sim app
-Date: Thu, 09 Sep 2010 12:33:51 -0500
-Message-ID: <4C891A7F.7040303@gmail.com>
-In-Reply-To: <1284047237-5012-1-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 1/2] Add Suspended property to GPRS atom
+Date: Thu, 09 Sep 2010 12:57:29 -0500
+Message-ID: <4C892009.2010203@gmail.com>
+In-Reply-To: <1284034091-8288-2-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2268513840203140036==
+--===============6743731977230286066==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Mika,
 
-> +void DemoSimApplication::CBMenu( const QSimTerminalResponse& resp )
-> +{
-> +    QSimCommand cmd;
-> +
-> +    if ( resp.result() =3D=3D QSimTerminalResponse::Success ) {
-> +        switch ( resp.menuItem() ) {
-> +
-> +            case CBMenu_Registration:
-> +            {
-> +                cmd.setType( QSimCommand::SendSS );
-> +                cmd.setDestinationDevice( QSimCommand::Network );
-> +                cmd.setNumber( "**33#" );
-> +                command( cmd, this, SLOT(sendCBMenu()) );
-> +            }
-> +            break;
-> +
-> +            case CBMenu_Activation:
-> +            {
-> +                cmd.setType( QSimCommand::SendSS );
-> +                cmd.setDestinationDevice( QSimCommand::Network );
-> +                cmd.setNumber( "*33#" );
-> +                command( cmd, this, SLOT(sendCBMenu()) );
-> +            }
-> +            break;
+On 09/09/2010 07:08 AM, Mika Liljeberg wrote:
+> =
 
-You have to be careful here:
-- For call barring, activation and registration are equivalent
-- Activation requires PIN2, so this is not a valid request
+> Signed-off-by: Mika Liljeberg <mika.liljeberg@nokia.com>
 
-> +
-> +            case CBMenu_Interrogation:
-> +            {
-> +                cmd.setType( QSimCommand::SendSS );
-> +                cmd.setDestinationDevice( QSimCommand::Network );
-> +                cmd.setNumber( "*#33#" );
-> +                command( cmd, this, SLOT(sendCBMenu()) );
-> +            }
-> +                break;
-> +
-> +            case CBMenu_Deactivation:
-> +            {
-> +                cmd.setType( QSimCommand::SendSS );
-> +                cmd.setDestinationDevice( QSimCommand::Network );
-> +                cmd.setNumber( "#33#" );
-> +                command( cmd, this, SLOT(sendCBMenu()) );
-> +            }
-> +            break;
-> +
-> +            case CBMenu_Erasure:
-> +            {
-> +                cmd.setType( QSimCommand::SendSS );
-> +                cmd.setDestinationDevice( QSimCommand::Network );
-> +                cmd.setNumber( "##33#" );
-> +                command( cmd, this, SLOT(sendCBMenu()) );
-> +            }
-> +            break;
+We don't use Signed-off-by, could you please configure your git not to
+include it?  The only other nitpick I have is on your commit header, it
+should include gprs: prefix.  E.g.
 
-Same comments as for Activation/Registration above
+gprs: add Suspended property...
 
-> +
-> +            default:
-> +                endSession();
-> +                break;
-> +        }
-> +    } else if ( resp.result() =3D=3D QSimTerminalResponse::BackwardMove =
-) {
-> +        sendSendSSMenu();
-> +    } else {
-> +        endSession();
-> +    }
-> +}
-> +
+We do this to help people quickly scan git log and figure out whether a
+patch potentially affects the area they are interested in.
 
-<snip>
+> ---
+>  doc/connman-api.txt |   19 ++++++++++++++
+>  include/gprs.h      |   10 +++++++
+>  src/gprs.c          |   69 +++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  3 files changed, 98 insertions(+), 0 deletions(-)
+> =
 
-> +void DemoSimApplication::CFMenu( const QSimTerminalResponse& resp )
-> +{
-> +    QSimCommand cmd;
-> +
-> +    if ( resp.result() =3D=3D QSimTerminalResponse::Success ) {
-> +        switch ( resp.menuItem() ) {
-> +
-> +            case CFMenu_Registration:
-> +            {
-> +                cmd.setType( QSimCommand::SendSS );
-> +                cmd.setDestinationDevice( QSimCommand::Network );
-> +                cmd.setNumber( "**002#" );
-> +                command( cmd, this, SLOT(sendCFMenu()) );
+> diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+> index 43d8897..b576e19 100644
+> --- a/doc/connman-api.txt
+> +++ b/doc/connman-api.txt
+> @@ -77,6 +77,25 @@ Properties	boolean Attached [readonly]
+>  			be available, e.g. receiving SMS over packet radio
+>  			or network initiated PDP activation.
+>  =
 
-This is not a valid request, registration must provide a phone number
+> +		boolean Suspended [readonly]
 
-> +            }
-> +            break;
-> +
-> +            case CFMenu_Activation:
-> +            {
-> +                cmd.setType( QSimCommand::SendSS );
-> +                cmd.setDestinationDevice( QSimCommand::Network );
-> +                cmd.setNumber( "*002#" );
-> +                command( cmd, this, SLOT(sendCFMenu()) );
-> +            }
-> +            break;
-> +
-> +            case CFMenu_Interrogation:
-> +            {
-> +                cmd.setType( QSimCommand::SendSS );
-> +                cmd.setDestinationDevice( QSimCommand::Network );
-> +                cmd.setNumber( "*#002#" );
-> +                command( cmd, this, SLOT(sendCFMenu()) );
-> +            }
-> +            break;
+My only thought here is that we should also make Suspended property
+optional.  My thought here is that if we're not 'Attached', then
+reporting Suspended is not really useful.
 
-Interrogation of 'All CF' is actually not supported natively by GSM.
-oFono handles this nicely, but you should filter such requests for Send
-SS.  Same goes for call barring '330', '333' and '353' services.  Refer
-to 22.004 Section 7.2 for more details.
+> @@ -1052,6 +1114,9 @@ static DBusMessage *gprs_get_properties(DBusConnect=
+ion *conn,
+>  	value =3D gprs->powered;
+>  	ofono_dbus_dict_append(&dict, "Powered", DBUS_TYPE_BOOLEAN, &value);
+>  =
 
+> +	value =3D gprs->suspended;
+> +	ofono_dbus_dict_append(&dict, "Suspended", DBUS_TYPE_BOOLEAN, &value);
 > +
-> +            case CFMenu_Deactivation:
-> +            {
-> +                cmd.setType( QSimCommand::SendSS );
-> +                cmd.setDestinationDevice( QSimCommand::Network );
-> +                cmd.setNumber( "#002#" );
-> +                command( cmd, this, SLOT(sendCFMenu()) );
-> +            }
-> +            break;
-> +
-> +            case CFMenu_Erasure:
-> +            {
-> +                cmd.setType( QSimCommand::SendSS );
-> +                cmd.setDestinationDevice( QSimCommand::Network );
-> +                cmd.setNumber( "##002#" );
-> +                command( cmd, this, SLOT(sendCFMenu()) );
-> +            }
-> +            break;
-> +
-> +            default:
-> +                endSession();
-> +                break;
-> +        }
-> +    } else if ( resp.result() =3D=3D QSimTerminalResponse::BackwardMove =
-) {
-> +        sendSendSSMenu();
-> +    } else {
-> +        endSession();
-> +    }
-> +}
+>  	dbus_message_iter_close_container(&iter, &dict);
+>  =
 
-Please fix up this patch with the call forwarding / call barring
-changes.  Otherwise it looks good to me.
+>  	return reply;
+
+See my comment above here, perhaps we should only include this in the
+dict if Attached is true.
+
+> @@ -1697,6 +1762,9 @@ static void gprs_remove(struct ofono_atom *atom)
+>  	if (gprs =3D=3D NULL)
+>  		return;
+>  =
+
+> +	if (gprs->suspend_timeout)
+> +		g_source_remove(gprs->suspend_timeout);
+> +
+>  	if (gprs->pid_map) {
+>  		idmap_free(gprs->pid_map);
+>  		gprs->pid_map =3D NULL;
+> @@ -1746,6 +1814,7 @@ struct ofono_gprs *ofono_gprs_create(struct ofono_m=
+odem *modem,
+>  =
+
+>  	gprs->status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
+>  	gprs->netreg_status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
+> +	gprs->suspended =3D TRUE;
+>  	gprs->pid_map =3D idmap_new(MAX_CONTEXTS);
+>  =
+
+>  	return gprs;
+
+And this could be just set to FALSE (or not set since the structure is
+zeroed)
+
+Otherwise patch looks great.
+
+Another housekeeping item: Please send a patch taking ownership of this
+task on the TODO list.  See ofono/TODO, the GPRS section.  This way
+others know not to interfere with your work.
 
 Regards,
 -Denis
 
---===============2268513840203140036==--
+--===============6743731977230286066==--
 
