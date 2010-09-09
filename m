@@ -1,117 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8885073798554494319=="
+Content-Type: multipart/mixed; boundary="===============0107624048213700364=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCHv3 6/6] Add test message agent
-Date: Thu, 09 Sep 2010 13:06:26 +0300
-Message-ID: <1284026786-15972-1-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCH] Fix wrong code point in Portuguese table
+Date: Thu, 09 Sep 2010 14:32:34 +0300
+Message-ID: <1284031954-29204-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8885073798554494319==
+--===============0107624048213700364==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/sms-agent |   84 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 84 insertions(+), 0 deletions(-)
- create mode 100755 test/sms-agent
+ src/util.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/test/sms-agent b/test/sms-agent
-new file mode 100755
-index 0000000..2fea2a6
---- /dev/null
-+++ b/test/sms-agent
-@@ -0,0 +1,84 @@
-+#!/usr/bin/python
-+
-+import gobject
-+
-+import sys
-+import dbus
-+import dbus.service
-+import dbus.mainloop.glib
-+
-+class SmsAgent(dbus.service.Object):
-+
-+	def __init__(self, bus, path):
-+		dbus.service.Object.__init__(self, bus, path)
-+
-+		print "Started agent %s at %s" % (bus, path)
-+
-+	@dbus.service.method("org.ofono.MessageAgent",
-+				in_signature=3D"", out_signature=3D"")
-+	def Release(self):
-+		print "Release, quitting"
-+		mainloop.quit()
-+
-+	@dbus.service.method("org.ofono.MessageAgent",
-+				in_signature=3D"sa{sv}", out_signature=3D"")
-+	def HandleMessage(self, message, props):
-+		print "From: %s" % props["Sender"]
-+		print "SentTime: %s" % props["SentTime"]
-+		print "LocalSentTime: %s" % props["LocalSentTime"]
-+		print "Text: %s" % message
-+
-+	@dbus.service.method("org.ofono.MessageAgent",
-+					in_signature=3D"aya{sv}", out_signature=3D"")
-+	def HandleDatagram(self, data, props):
-+		print "From: %s" % props["Sender"]
-+		try:
-+			print "ContentType: %s" % props["ContentType"]
-+		except KeyError:
-+			print "DestinationPort: %s" % props["DestinationPort"]
-+
-+		print "SourcePort: %d" % props["SourcePort"]
-+		print "SentTime: %s" % props["SentTime"]
-+		print "LocalSentTime: %s" % props["LocalSentTime"]
-+		print "Size: %d bytes" % len(data)
-+
-+		outstr =3D u''
-+		for byte in data:
-+			if byte > 128:
-+				outstr +=3D '?'
-+			else:
-+				outstr +=3D chr(byte)
-+
-+		print outstr
-+
-+if __name__ =3D=3D '__main__':
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+
-+	if len(sys.argv) < 2:
-+		print "Usage: %s <media_type>" % sys.argv[0]
-+		sys.exit(1)
-+
-+	bus =3D dbus.SystemBus()
-+	manager =3D dbus.Interface(bus.get_object("org.ofono", "/"),
-+						"org.ofono.Manager")
-+
-+	properties =3D manager.GetProperties()
-+
-+	for path in properties["Modems"]:
-+		modem =3D dbus.Interface(bus.get_object('org.ofono', path),
-+							'org.ofono.Modem')
-+
-+		properties =3D modem.GetProperties()
-+
-+		if "org.ofono.MessageManager" not in properties["Interfaces"]:
-+			continue
-+
-+		sms =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.MessageManager')
-+
-+	path =3D "/test/agent"
-+	agent =3D SmsAgent(bus, path)
-+	sms.RegisterAgent(path, sys.argv[1])
-+
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
+diff --git a/src/util.c b/src/util.c
+index fd8b305..bb90f6c 100644
+--- a/src/util.c
++++ b/src/util.c
+@@ -400,7 +400,7 @@ static const unsigned short por_gsm[] =3D {
+ 	0x0028, 0x0029, 0x002A, 0x002B, 0x002C, 0x002D, 0x002E, 0x002F, /* 0x2F */
+ 	0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037, /* 0x37 */
+ 	0x0038, 0x0039, 0x003A, 0x003B, 0x003C, 0x003D, 0x003E, 0x003F, /* 0x3F */
+-	0x00A1, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047, /* 0x47 */
++	0x00CD, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047, /* 0x47 */
+ 	0x0048, 0x0049, 0x004A, 0x004B, 0x004C, 0x004D, 0x004E, 0x004F, /* 0x4F */
+ 	0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057, /* 0x57 */
+ 	0x0058, 0x0059, 0x005A, 0x00C3, 0x00D5, 0x00DA, 0x00DC, 0x00A7, /* 0x5F */
 -- =
 
 1.7.0.4
 
 
---===============8885073798554494319==--
+--===============0107624048213700364==--
 
