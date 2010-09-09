@@ -1,29 +1,124 @@
-Content-Type: multipart/mixed; boundary="===============5363669818418509260=="
+Content-Type: multipart/mixed; boundary="===============8964013093723189383=="
 MIME-Version: 1.0
-From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: Add Suspended property to GPRS (take 2)
-Date: Thu, 09 Sep 2010 15:08:09 +0300
-Message-ID: <1284034091-8288-1-git-send-email-mika.liljeberg@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 02/12] atgen changes for setting TE character set
+Date: Thu, 09 Sep 2010 05:31:46 -0700
+Message-ID: <1284035516-21359-3-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1284035516-21359-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5363669818418509260==
+--===============8964013093723189383==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-[PATCH 1/2] Add Suspended property to GPRS atom
-[PATCH 2/2] isimodem: implement Suspended property
-
- doc/connman-api.txt      |   19 ++++++++++++
- drivers/isimodem/debug.c |   25 ++++++++++++++++
- drivers/isimodem/debug.h |    2 +
- drivers/isimodem/gpds.h  |   17 +++++++++++
- drivers/isimodem/gprs.c  |   56 ++++++++++++++++++++++++++++++++++++-
- include/gprs.h           |   10 ++++++
- src/gprs.c               |   69 ++++++++++++++++++++++++++++++++++++++++++=
+---
+ plugins/atgen.c |   59 +++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 7 files changed, 197 insertions(+), 1 deletions(-)
+ 1 files changed, 59 insertions(+), 0 deletions(-)
 
---===============5363669818418509260==--
+diff --git a/plugins/atgen.c b/plugins/atgen.c
+index 1ce2467..a8ca177 100644
+--- a/plugins/atgen.c
++++ b/plugins/atgen.c
+@@ -25,6 +25,8 @@
+ =
+
+ #include <errno.h>
+ #include <stdlib.h>
++#include <string.h>
++#include <stdio.h>
+ =
+
+ #include <glib.h>
+ #include <gatchat.h>
+@@ -55,6 +57,9 @@
+ #include <ofono/gprs.h>
+ #include <ofono/gprs-context.h>
+ =
+
++static const char *none_prefix[] =3D { NULL };
++static const char *cscs_prefix[] =3D { "+CSCS:", NULL };
++
+ static const char *tty_opts[] =3D {
+ 	"Baud",
+ 	"Read",
+@@ -67,6 +72,58 @@ static const char *tty_opts[] =3D {
+ 	NULL,
+ };
+ =
+
++static const char *best_charset(int supported)
++{
++	const char *charset =3D "Invalid";
++
++	if (supported & AT_UTIL_CHARSET_GSM)
++		charset =3D "GSM";
++
++	if (supported & AT_UTIL_CHARSET_UTF8)
++		charset =3D "UTF-8";
++
++	return charset;
++}
++
++static void set_charset_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	if (!ok)
++		ofono_error("Setting character set failed");
++}
++
++static void list_charsets_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	GAtChat *chat =3D ofono_modem_get_data(modem);
++	const char *charset;
++	int supported =3D 0;
++	char buf[32];
++
++	if (!ok)
++		return;
++
++	if (!at_util_parse_cscs_supported(result, &supported))
++		return;
++
++	charset =3D best_charset(supported);
++	snprintf(buf, sizeof(buf), "AT+CSCS=3D\"%s\"", charset);
++
++	if (!g_at_chat_send(chat, buf, none_prefix, set_charset_cb, modem,
++			NULL))
++		ofono_error("AT+CSCS=3D%s request failed", charset);
++}
++
++static void list_charsets(struct ofono_modem *modem)
++{
++	GAtChat *chat =3D ofono_modem_get_data(modem);
++
++	if (!g_at_chat_send(chat, "AT+CSCS=3D?", cscs_prefix,
++			list_charsets_cb, modem, NULL))
++		ofono_error("AT+CSCS=3D? request failed");
++}
++
+ static int atgen_probe(struct ofono_modem *modem)
+ {
+ 	return 0;
+@@ -207,6 +264,8 @@ static void atgen_pre_sim(struct ofono_modem *modem)
+ =
+
+ 	if (sim)
+ 		ofono_sim_inserted_notify(sim, TRUE);
++
++	list_charsets(modem);
+ }
+ =
+
+ static void atgen_post_sim(struct ofono_modem *modem)
+-- =
+
+1.7.0.4
+
+
+--===============8964013093723189383==--
 
