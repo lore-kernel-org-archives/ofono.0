@@ -1,76 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============1861212889770709547=="
+Content-Type: multipart/mixed; boundary="===============3074207465817488248=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 04/12] USSD atom driver changes to read current character
- setting
-Date: Thu, 09 Sep 2010 05:31:48 -0700
-Message-ID: <1284035516-21359-5-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 05/12] Add internal api __ofono_call_barring_is_busy
+Date: Thu, 09 Sep 2010 05:31:49 -0700
+Message-ID: <1284035516-21359-6-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1284035516-21359-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1861212889770709547==
+--===============3074207465817488248==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/ussd.c |   18 ++++++++++++++++++
- 1 files changed, 18 insertions(+), 0 deletions(-)
+ src/call-barring.c |    5 +++++
+ src/ofono.h        |    3 +++
+ 2 files changed, 8 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/ussd.c b/drivers/atmodem/ussd.c
-index 1e1fc25..cb1515f 100644
---- a/drivers/atmodem/ussd.c
-+++ b/drivers/atmodem/ussd.c
-@@ -44,12 +44,27 @@
+diff --git a/src/call-barring.c b/src/call-barring.c
+index 7607f3f..a0ac689 100644
+--- a/src/call-barring.c
++++ b/src/call-barring.c
+@@ -580,6 +580,11 @@ static void cb_unregister_ss_controls(struct ofono_cal=
+l_barring *cb)
+ 	__ofono_ussd_passwd_unregister(cb->ussd, "353");
+ }
  =
 
- static const char *cusd_prefix[] =3D { "+CUSD:", NULL };
- static const char *none_prefix[] =3D { NULL };
-+static const char *cscs_prefix[] =3D { "+CSCS:", NULL };
- =
-
- struct ussd_data {
- 	GAtChat *chat;
- 	unsigned int vendor;
-+	enum at_util_charset charset;
- };
- =
-
-+static void read_charset_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
++gboolean __ofono_call_barring_is_busy(struct ofono_call_barring *cb)
 +{
-+	struct ussd_data *data =3D user_data;
-+	const char *str =3D NULL;
-+
-+	if (!ok)
-+		return;
-+
-+	if (at_util_parse_cscs_query(result, &str))
-+		at_util_charset_string_to_charset(str, &data->charset);
++	return cb->pending ? TRUE : FALSE;
 +}
 +
- static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- {
- 	GAtResultIter iter;
-@@ -247,6 +262,9 @@ static int at_ussd_probe(struct ofono_ussd *ussd, unsig=
-ned int vendor,
+ static inline void cb_append_property(struct ofono_call_barring *cb,
+ 					DBusMessageIter *dict, int start,
+ 					int end, int cls, const char *property)
+diff --git a/src/ofono.h b/src/ofono.h
+index d95f2f2..41ba115 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -163,6 +163,9 @@ gboolean __ofono_modem_remove_atom_watch(struct ofono_m=
+odem *modem,
+ void __ofono_atom_free(struct ofono_atom *atom);
  =
 
- 	ofono_ussd_set_data(ussd, data);
- =
-
-+	g_at_chat_send(chat, "AT+CSCS?", cscs_prefix, read_charset_cb, data,
-+			NULL);
+ #include <ofono/call-barring.h>
 +
- 	g_at_chat_send(chat, "AT+CUSD=3D1", NULL, at_ussd_register, ussd, NULL);
- =
-
- 	return 0;
++gboolean __ofono_call_barring_is_busy(struct ofono_call_barring *cb);
++
+ #include <ofono/call-forwarding.h>
+ #include <ofono/call-meter.h>
+ #include <ofono/call-settings.h>
 -- =
 
 1.7.0.4
 
 
---===============1861212889770709547==--
+--===============3074207465817488248==--
 
