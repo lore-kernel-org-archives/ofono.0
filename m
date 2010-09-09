@@ -1,74 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============3848748648966785792=="
+Content-Type: multipart/mixed; boundary="===============5745655860430986337=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 04/13] USSD atom driver changes to read current character
- setting
-Date: Thu, 09 Sep 2010 12:02:57 -0700
-Message-ID: <1284058977-15575-1-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1284035516-21359-5-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 10/13] Add build_dataobj_ussd_text for ussd specific text
+ string handling
+Date: Thu, 09 Sep 2010 12:06:04 -0700
+Message-ID: <1284059164-15645-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <4C88FDBE.70706@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3848748648966785792==
+--===============5745655860430986337==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/ussd.c |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
+ src/stkutil.c |   23 +++++++++++++++++++++++
+ 1 files changed, 23 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/ussd.c b/drivers/atmodem/ussd.c
-index 1e1fc25..30145ad 100644
---- a/drivers/atmodem/ussd.c
-+++ b/drivers/atmodem/ussd.c
-@@ -44,12 +44,25 @@
+diff --git a/src/stkutil.c b/src/stkutil.c
+index ae4cc32..c69ebba 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -4170,6 +4170,22 @@ static gboolean build_dataobj_text(struct stk_tlv_bu=
+ilder *tlv,
+ 	return stk_tlv_builder_close_container(tlv);
+ }
  =
 
- static const char *cusd_prefix[] =3D { "+CUSD:", NULL };
- static const char *none_prefix[] =3D { NULL };
-+static const char *cscs_prefix[] =3D { "+CSCS:", NULL };
- =
-
- struct ussd_data {
- 	GAtChat *chat;
- 	unsigned int vendor;
-+	enum at_util_charset charset;
- };
- =
-
-+static void read_charset_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
++/* Defined in TS 102.223 Section 8.15 - USSD specific case*/
++static gboolean build_dataobj_ussd_text(struct stk_tlv_builder *tlv,
++					const void *data, gboolean cr)
 +{
-+	struct ussd_data *data =3D user_data;
++	const struct stk_ussd_text *text =3D data;
++	unsigned char tag =3D STK_DATA_OBJECT_TYPE_TEXT;
 +
-+	if (!ok)
-+		return;
++	if (!text->text)
++		return TRUE;
 +
-+	at_util_parse_cscs_query(result, &data->charset);
++	return stk_tlv_builder_open_container(tlv, cr, tag, TRUE) &&
++		stk_tlv_builder_append_byte(tlv, text->dcs) &&
++		stk_tlv_builder_append_bytes(tlv, text->text, text->len) &&
++		stk_tlv_builder_close_container(tlv);
 +}
 +
- static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- {
- 	GAtResultIter iter;
-@@ -247,6 +260,9 @@ static int at_ussd_probe(struct ofono_ussd *ussd, unsig=
-ned int vendor,
- =
-
- 	ofono_ussd_set_data(ussd, data);
- =
-
-+	g_at_chat_send(chat, "AT+CSCS?", cscs_prefix, read_charset_cb, data,
-+			NULL);
-+
- 	g_at_chat_send(chat, "AT+CUSD=3D1", NULL, at_ussd_register, ussd, NULL);
- =
-
- 	return 0;
+ /* Described in TS 131.111 Section 8.17 */
+ static gboolean build_dataobj_ussd_string(struct stk_tlv_builder *tlv,
+ 					const void *data, gboolean cr)
+@@ -5459,6 +5475,13 @@ const unsigned char *stk_pdu_from_response(const str=
+uct stk_response *response,
+ 	case STK_COMMAND_TYPE_LANGUAGE_NOTIFICATION:
+ 	case STK_COMMAND_TYPE_LAUNCH_BROWSER:
+ 		break;
++	case STK_COMMAND_TYPE_SEND_USSD:
++		ok =3D build_dataobj(&builder,
++					build_dataobj_ussd_text,
++					DATAOBJ_FLAG_CR,
++					&response->send_ussd.text,
++					NULL);
++		break;
+ 	default:
+ 		return NULL;
+ 	};
 -- =
 
 1.7.0.4
 
 
---===============3848748648966785792==--
+--===============5745655860430986337==--
 
