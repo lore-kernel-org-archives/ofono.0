@@ -1,766 +1,162 @@
-Content-Type: multipart/mixed; boundary="===============0899303341624804410=="
+Content-Type: multipart/mixed; boundary="===============6211419032942308513=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 11/12] Internal and Driver api changes for Send USSD proactive
- command
-Date: Thu, 09 Sep 2010 05:31:55 -0700
-Message-ID: <1284035516-21359-12-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1284035516-21359-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Berthier, Emmanuel <emmanuel.berthier@intel.com>
+Subject: Ofono and BT interaction
+Date: Thu, 09 Sep 2010 14:19:17 +0100
+Message-ID: <2A84145621092446B6659B8A0F28E26F46D581ECC2@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0899303341624804410==
+--===============6211419032942308513==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/ussd.c  |   81 ++++++++++-----------
- drivers/isimodem/ussd.c |   44 ++++--------
- include/types.h         |    1 +
- include/ussd.h          |    8 ++-
- src/ofono.h             |   17 +++++
- src/ussd.c              |  179 ++++++++++++++++++++++++++++++++++++++++++-=
-----
- 6 files changed, 236 insertions(+), 94 deletions(-)
-
-diff --git a/drivers/atmodem/ussd.c b/drivers/atmodem/ussd.c
-index cb1515f..573417a 100644
---- a/drivers/atmodem/ussd.c
-+++ b/drivers/atmodem/ussd.c
-@@ -67,15 +67,14 @@ static void read_charset_cb(gboolean ok, GAtResult *res=
-ult,
- =
-
- static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- {
-+	struct ussd_data *data =3D ofono_ussd_get_data(ussd);
- 	GAtResultIter iter;
- 	int status;
- 	int dcs;
- 	const char *content;
--	char *converted =3D NULL;
--	gboolean udhi;
- 	enum sms_charset charset;
--	gboolean compressed;
--	gboolean iso639;
-+	unsigned char msg[182];
-+	long msg_len =3D 0;
- =
-
- 	g_at_result_iter_init(&iter, result);
- =
-
-@@ -89,33 +88,27 @@ static void cusd_parse(GAtResult *result, struct ofono_=
-ussd *ussd)
- 		goto out;
- =
-
- 	if (g_at_result_iter_next_number(&iter, &dcs)) {
--		if (!cbs_dcs_decode(dcs, &udhi, NULL, &charset,
--					&compressed, NULL, &iso639))
--			goto out;
--
--		if (udhi || compressed || iso639)
-+		if (!cbs_dcs_decode(dcs, NULL, NULL, &charset,
-+					NULL, NULL, NULL))
- 			goto out;
- 	} else
- 		charset =3D SMS_CHARSET_7BIT;
- =
-
--	if (charset =3D=3D SMS_CHARSET_7BIT)
--		converted =3D convert_gsm_to_utf8((const guint8 *) content,
--						strlen(content), NULL, NULL, 0);
--
--	else if (charset =3D=3D SMS_CHARSET_8BIT) {
--		/* TODO: Figure out what to do with 8 bit data */
--		ofono_error("8-bit coded USSD response received");
--		status =3D 4; /* Not supported */
--	} else {
-+	if (charset =3D=3D SMS_CHARSET_7BIT) {
-+		if (data->charset =3D=3D AT_UTIL_CHARSET_GSM)
-+			pack_7bit_own_buf((const guint8 *) content, =
-
-+					strlen(content), 0, TRUE,
-+					&msg_len, 0, msg);
-+	} else if (charset =3D=3D SMS_CHARSET_8BIT)
-+		decode_hex_own_buf(content, -1, &msg_len, 0, msg);
-+	else {
- 		/* No other encoding is mentioned in TS27007 7.15 */
- 		ofono_error("Unsupported USSD data coding scheme (%02x)", dcs);
- 		status =3D 4; /* Not supported */
- 	}
- =
-
- out:
--	ofono_ussd_notify(ussd, status, converted);
--
--	g_free(converted);
-+	ofono_ussd_notify(ussd, status, dcs, msg, (int) msg_len);
- }
- =
-
- static void cusd_request_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-@@ -132,45 +125,50 @@ static void cusd_request_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 	cusd_parse(result, ussd);
- }
- =
-
--static void at_ussd_request(struct ofono_ussd *ussd, const char *str,
-+static void at_ussd_request(struct ofono_ussd *ussd, int dcs,
-+				const unsigned char *binary_data,
-+				int binary_data_len,
- 				ofono_ussd_cb_t cb, void *user_data)
- {
- 	struct ussd_data *data =3D ofono_ussd_get_data(ussd);
- 	struct cb_data *cbd =3D cb_data_new(cb, user_data);
--	unsigned char *converted =3D NULL;
--	int dcs;
--	int max_len;
--	long written;
- 	char buf[256];
-+	long max_chars =3D 182;
-+	unsigned char *unpacked_buf =3D NULL;
-+	long written;
-+	enum sms_charset charset;
- =
-
- 	if (!cbd)
- 		goto error;
- =
-
- 	cbd->user =3D ussd;
-+        =
-
-+	if (!cbs_dcs_decode(dcs, NULL, NULL, &charset,
-+					NULL, NULL, NULL))
-+		charset =3D SMS_CHARSET_7BIT;
- =
-
--	converted =3D convert_utf8_to_gsm(str, strlen(str), NULL, &written, 0);
--
--	if (!converted)
--		goto error;
--	else {
--		dcs =3D 15;
--		max_len =3D 182;
--	}
-+	if (charset =3D=3D SMS_CHARSET_7BIT) {
-+		unpacked_buf =3D unpack_7bit(binary_data, binary_data_len, 0,
-+						TRUE, max_chars, &written, 0);
- =
-
--	if (written > max_len)
--		goto error;
-+		if ( !unpacked_buf || written <=3D 0)
-+			goto error;
- =
-
--	snprintf(buf, sizeof(buf), "AT+CUSD=3D1,\"%.*s\",%d",
--			(int) written, converted, dcs);
-+		snprintf(buf, sizeof(buf), "AT+CUSD=3D1,\"%.*s\",%d",
-+				(int) written, unpacked_buf, dcs);
- =
-
--	g_free(converted);
--	converted =3D NULL;
-+		g_free(unpacked_buf);
-+		unpacked_buf =3D NULL;
-+	} else =
-
-+		snprintf(buf, sizeof(buf), "AT+CUSD=3D1,\"%.*s\",%d",
-+				binary_data_len, binary_data, dcs);
- =
-
- 	if (data->vendor =3D=3D OFONO_VENDOR_QUALCOMM_MSM) {
- 		/* Ensure that the modem is using GSM character set. It
- 		 * seems it defaults to IRA and then umlauts are not
- 		 * properly encoded. The modem returns some weird from
--		 * of Latin-1, but it is not really Latin-1 either. */
-+		 * of Latin-1, but it is not really Latin-1 either.
-+		 */
- 		g_at_chat_send(data->chat, "AT+CSCS=3D\"GSM\"", none_prefix,
- 							NULL, NULL, NULL);
- 	}
-@@ -181,7 +179,6 @@ static void at_ussd_request(struct ofono_ussd *ussd, co=
-nst char *str,
- =
-
- error:
- 	g_free(cbd);
--	g_free(converted);
- =
-
- 	CALLBACK_WITH_FAILURE(cb, user_data);
- }
-diff --git a/drivers/isimodem/ussd.c b/drivers/isimodem/ussd.c
-index 330a141..6ac945b 100644
---- a/drivers/isimodem/ussd.c
-+++ b/drivers/isimodem/ussd.c
-@@ -74,7 +74,9 @@ static void ussd_parse(struct ofono_ussd *ussd, const voi=
-d *restrict data,
- {
- 	const unsigned char *msg =3D data;
- 	int status =3D OFONO_USSD_STATUS_NOT_SUPPORTED;
--	char *converted =3D NULL;
-+	int msg_len =3D 0;
-+	int dcs =3D -1;
-+	unsigned char *coded_msg =3D NULL;
- =
-
- 	if (!msg || len < 4)
- 		goto out;
-@@ -84,14 +86,11 @@ static void ussd_parse(struct ofono_ussd *ussd, const v=
-oid *restrict data,
- 	if (msg[3] =3D=3D 0 || (size_t)(msg[3] + 4) > len)
- 		goto out;
- =
-
--	converted =3D ussd_decode(msg[1], msg[3], msg + 4);
--
--	if (converted)
--		status =3D OFONO_USSD_STATUS_NOTIFY;
--
-+	dcs =3D msg[1];
-+	msg_len =3D msg[3];
-+	coded_msg =3D (guint8 *) msg+4;
- out:
--	ofono_ussd_notify(ussd, status, converted);
--	g_free(converted);
-+	ofono_ussd_notify(ussd, status, dcs, coded_msg, msg_len);
- }
- =
-
- =
-
-@@ -129,7 +128,7 @@ error:
- }
- =
-
- static GIsiRequest *ussd_send(GIsiClient *client,
--				uint8_t *str, size_t len,
-+				int dcs, uint8_t *str, size_t len,
- 				void *data, GDestroyNotify notify)
- {
- 	const uint8_t msg[] =3D {
-@@ -138,7 +137,7 @@ static GIsiRequest *ussd_send(GIsiClient *client,
- 		0x01,		/* subblock count */
- 		SS_GSM_USSD_STRING,
- 		4 + len + 3,	/* subblock length */
--		0x0f,		/* DCS */
-+		dcs,		/* DCS */
- 		len,		/* string length */
- 		/* USSD string goes here */
- 	};
-@@ -152,33 +151,18 @@ static GIsiRequest *ussd_send(GIsiClient *client,
- 				ussd_send_resp_cb, data, notify);
- }
- =
-
--static void isi_request(struct ofono_ussd *ussd, const char *str,
--				ofono_ussd_cb_t cb, void *data)
-+static void isi_request(struct ofono_ussd *ussd, int dcs,
-+			const unsigned char *binary_data, int binary_data_len,
-+			ofono_ussd_cb_t cb, void *data)
- {
- 	struct ussd_data *ud =3D ofono_ussd_get_data(ussd);
- 	struct isi_cb_data *cbd =3D isi_cb_data_new(ussd, cb, data);
--	unsigned char buf[256];
--	unsigned char *packed =3D NULL;
--	unsigned char *converted =3D NULL;
--	long num_packed;
--	long written;
- =
-
- 	if (!cbd)
- 		goto error;
- =
-
--	converted =3D convert_utf8_to_gsm(str, strlen(str), NULL, &written, 0);
--	if (!converted)
--		goto error;
--
--	packed =3D pack_7bit_own_buf(converted, written, 0, TRUE,
--					&num_packed, 0, buf);
--
--	g_free(converted);
--
--	if (written > SS_MAX_USSD_LENGTH)
--		goto error;
--
--	if (ussd_send(ud->client, packed, num_packed, cbd, g_free))
-+	if (ussd_send(ud->client, dcs, (guint8 *) binary_data,
-+			binary_data_len, cbd, g_free))
- 		return;
- =
-
- error:
-diff --git a/include/types.h b/include/types.h
-index 6098cba..fbd3c6a 100644
---- a/include/types.h
-+++ b/include/types.h
-@@ -77,6 +77,7 @@ struct ofono_error {
- };
- =
-
- #define OFONO_MAX_PHONE_NUMBER_LENGTH 20
-+#define OFONO_MAX_USSD_LENGTH 160
- =
-
- struct ofono_phone_number {
- 	char number[OFONO_MAX_PHONE_NUMBER_LENGTH + 1];
-diff --git a/include/ussd.h b/include/ussd.h
-index 96e04cb..08dfc40 100644
---- a/include/ussd.h
-+++ b/include/ussd.h
-@@ -45,13 +45,15 @@ struct ofono_ussd_driver {
- 	const char *name;
- 	int (*probe)(struct ofono_ussd *ussd, unsigned int vendor, void *data);
- 	void (*remove)(struct ofono_ussd *ussd);
--	void (*request)(struct ofono_ussd *ussd, const char *str,
--				ofono_ussd_cb_t, void *data);
-+	void (*request)(struct ofono_ussd *ussd, int dcs,
-+			const unsigned char *binary_data, int binary_data_len,
-+			ofono_ussd_cb_t, void *data);
- 	void (*cancel)(struct ofono_ussd *ussd,
- 				ofono_ussd_cb_t cb, void *data);
- };
- =
-
--void ofono_ussd_notify(struct ofono_ussd *ussd, int status, const char *st=
-r);
-+void ofono_ussd_notify(struct ofono_ussd *ussd, int status, int dcs,
-+			const unsigned char *data, int data_len);
- =
-
- int ofono_ussd_driver_register(const struct ofono_ussd_driver *d);
- void ofono_ussd_driver_unregister(const struct ofono_ussd_driver *d);
-diff --git a/src/ofono.h b/src/ofono.h
-index 9b8d938..bc67c73 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -244,6 +244,13 @@ gboolean __ofono_ssn_mt_watch_remove(struct ofono_ssn =
-*ssn, int id);
- =
-
- #include <ofono/ussd.h>
- =
-
-+enum ofono_ussd_failure {
-+	OFONO_USSD_FAILURE_NONE,
-+	OFONO_USSD_FAILURE_USER_TERMINATED,
-+	OFONO_USSD_FAILURE_RETURN_ERROR,
-+	OFONO_USSD_FAILURE_TIMED_OUT,
-+};
-+
- typedef gboolean (*ofono_ussd_ssc_cb_t)(int type,
- 					const char *sc,
- 					const char *sia, const char *sib,
-@@ -254,6 +261,10 @@ typedef gboolean (*ofono_ussd_passwd_cb_t)(const char =
-*sc,
- 					const char *old, const char *new,
- 					DBusMessage *msg, void *data);
- =
-
-+typedef void (*ofono_ussd_request_cb_t)(int error, int dcs,
-+					const unsigned char *str,
-+					int str_len, void *data);
-+
- gboolean __ofono_ussd_ssc_register(struct ofono_ussd *ussd, const char *sc,
- 					ofono_ussd_ssc_cb_t cb, void *data,
- 					ofono_destroy_func destroy);
-@@ -264,6 +275,12 @@ gboolean __ofono_ussd_passwd_register(struct ofono_uss=
-d *ussd, const char *sc,
- 					ofono_destroy_func destroy);
- void __ofono_ussd_passwd_unregister(struct ofono_ussd *ussd, const char *s=
-c);
- =
-
-+gboolean __ofono_ussd_is_busy(struct ofono_ussd *ussd);
-+
-+int __ofono_ussd_initiate(struct ofono_ussd *ussd, int dcs,
-+			const unsigned char *binary_data, int binary_data_len,
-+			ofono_ussd_request_cb_t cb, void *user_data);
-+
- #include <ofono/netreg.h>
- =
-
- typedef void (*ofono_netreg_status_notify_cb_t)(int status, int lac, int c=
-i,
-diff --git a/src/ussd.c b/src/ussd.c
-index 825d560..c58bd7c 100644
---- a/src/ussd.c
-+++ b/src/ussd.c
-@@ -34,6 +34,8 @@
- #include "ofono.h"
- =
-
- #include "common.h"
-+#include "smsutil.h"
-+#include "util.h"
- =
-
- #define SUPPLEMENTARY_SERVICES_INTERFACE "org.ofono.SupplementaryServices"
- =
-
-@@ -46,6 +48,15 @@ enum ussd_state {
- 	USSD_STATE_RESPONSE_SENT,
- };
- =
-
-+struct ussd_request {
-+	struct ofono_ussd *ussd;
-+	int dcs;
-+	unsigned char *str;
-+	int str_len;
-+	ofono_ussd_request_cb_t cb;
-+	void *user_data;
-+};
-+
- struct ofono_ussd {
- 	int state;
- 	DBusMessage *pending;
-@@ -56,6 +67,7 @@ struct ofono_ussd {
- 	const struct ofono_ussd_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	struct ussd_request *req;
- };
- =
-
- struct ssc_entry {
-@@ -306,15 +318,56 @@ static void ussd_change_state(struct ofono_ussd *ussd=
-, int state)
- 			"State", DBUS_TYPE_STRING, &value);
- }
- =
-
--void ofono_ussd_notify(struct ofono_ussd *ussd, int status, const char *st=
-r)
-+static void ussd_request_finish(struct ofono_ussd *ussd, int error, int dc=
-s,
-+				const unsigned char *str, int str_len)
-+{
-+	struct ussd_request *req =3D ussd->req;
-+
-+	if (req && req->cb) {
-+		req->cb(error, dcs, str, str_len, req->user_data);
-+		g_free(req->str);
-+		g_free(req);
-+		ussd->req =3D NULL;
-+	}
-+}
-+
-+static int ussd_status_to_failure_code(int status)
-+{
-+	switch (status) {
-+	case OFONO_USSD_STATUS_TIMED_OUT:
-+		return OFONO_USSD_FAILURE_TIMED_OUT;
-+	case OFONO_USSD_STATUS_NOT_SUPPORTED:
-+		return OFONO_USSD_FAILURE_RETURN_ERROR;
-+	}
-+
-+	return OFONO_USSD_FAILURE_NONE;
-+}
-+
-+void ofono_ussd_notify(struct ofono_ussd *ussd, int status, int dcs,
-+			const unsigned char *data, int data_len)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	const char *ussdstr =3D "USSD";
-+	char *utf8_str =3D NULL;
-+	gboolean utf8_str_valid =3D FALSE;
- 	const char sig[] =3D { DBUS_TYPE_STRING, 0 };
- 	DBusMessage *reply;
- 	DBusMessageIter iter;
- 	DBusMessageIter variant;
- =
-
-+	if (ussd->req &&
-+		(status =3D=3D OFONO_USSD_STATUS_NOTIFY ||
-+		status =3D=3D OFONO_USSD_STATUS_TERMINATED ||
-+		status =3D=3D OFONO_USSD_STATUS_TIMED_OUT ||
-+		status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED)) {
-+
-+		ussd_request_finish(ussd, ussd_status_to_failure_code(status),
-+					dcs, data, data_len);
-+
-+		ussd_change_state(ussd, USSD_STATE_IDLE);
-+		return;
-+	}
-+
- 	if (status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED) {
- 		ussd_change_state(ussd, USSD_STATE_IDLE);
- =
-
-@@ -334,15 +387,21 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int s=
-tatus, const char *str)
- 		reply =3D __ofono_error_timed_out(ussd->pending);
- 		goto out;
- 	}
-+	=
-
-+	if (data && data_len > 0)
-+		utf8_str =3D ussd_decode(dcs, data_len, data);
-+
-+	if (!utf8_str) {
-+		utf8_str =3D "";
-+		status =3D OFONO_USSD_STATUS_NOTIFY;
-+	} else
-+		utf8_str_valid =3D TRUE;
- =
-
- 	/* TODO: Rework this in the Agent framework */
- 	if (ussd->state =3D=3D USSD_STATE_ACTIVE) {
- =
-
- 		reply =3D dbus_message_new_method_return(ussd->pending);
- =
-
--		if (!str)
--			str =3D "";
--
- 		dbus_message_iter_init_append(reply, &iter);
- =
-
- 		dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING,
-@@ -352,7 +411,7 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int sta=
-tus, const char *str)
- 							&variant);
- =
-
- 		dbus_message_iter_append_basic(&variant, DBUS_TYPE_STRING,
--						&str);
-+						&utf8_str);
- =
-
- 		dbus_message_iter_close_container(&iter, &variant);
- =
-
-@@ -364,10 +423,7 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int st=
-atus, const char *str)
- 	} else if (ussd->state =3D=3D USSD_STATE_RESPONSE_SENT) {
- 		reply =3D dbus_message_new_method_return(ussd->pending);
- =
-
--		if (!str)
--			str =3D "";
--
--		dbus_message_append_args(reply, DBUS_TYPE_STRING, &str,
-+		dbus_message_append_args(reply, DBUS_TYPE_STRING, &utf8_str,
- 						DBUS_TYPE_INVALID);
- =
-
- 		if (status =3D=3D OFONO_USSD_STATUS_ACTION_REQUIRED)
-@@ -387,20 +443,17 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int s=
-tatus, const char *str)
- 			signal_name =3D "NotificationReceived";
- 		}
- =
-
--		if (!str)
--			str =3D "";
--
- 		g_dbus_emit_signal(conn, path,
- 				SUPPLEMENTARY_SERVICES_INTERFACE, signal_name,
--				DBUS_TYPE_STRING, &str, DBUS_TYPE_INVALID);
-+				DBUS_TYPE_STRING, &utf8_str, DBUS_TYPE_INVALID);
- =
-
- 		ussd_change_state(ussd, new_state);
--		return;
-+		goto free;
- 	} else {
- 		ofono_error("Received an unsolicited USSD but can't handle.");
--		DBG("USSD is: status: %d, %s", status, str);
-+		DBG("USSD is: status: %d, %s", status, utf8_str);
- =
-
--		return;
-+		goto free;
- 	}
- =
-
- out:
-@@ -408,6 +461,10 @@ out:
- =
-
- 	dbus_message_unref(ussd->pending);
- 	ussd->pending =3D NULL;
-+
-+free:
-+	if (utf8_str_valid)
-+		g_free(utf8_str);
- }
- =
-
- static void ussd_callback(const struct ofono_error *error, void *data)
-@@ -436,6 +493,12 @@ static DBusMessage *ussd_initiate(DBusConnection *conn=
-, DBusMessage *msg,
- {
- 	struct ofono_ussd *ussd =3D data;
- 	const char *str;
-+	int dcs =3D 0x0f;
-+	unsigned char buf[256];
-+	unsigned char *converted;
-+	unsigned char *packed =3D NULL;
-+	long num_packed;
-+	long written;
- =
-
- 	if (ussd->pending)
- 		return __ofono_error_busy(msg);
-@@ -458,14 +521,27 @@ static DBusMessage *ussd_initiate(DBusConnection *con=
-n, DBusMessage *msg,
- 	if (!valid_ussd_string(str))
- 		return __ofono_error_invalid_format(msg);
- =
-
--	DBG("OK, running USSD request");
-+	converted =3D convert_utf8_to_gsm(str, strlen(str), NULL, &written, 0);
-+	if (!converted)
-+		return __ofono_error_invalid_format(msg);
-+
-+	packed =3D pack_7bit_own_buf(converted, written, 0, TRUE,
-+					&num_packed, 0, buf);
-+
-+	g_free(converted);
-+
-+	if (num_packed > OFONO_MAX_USSD_LENGTH)
-+		return __ofono_error_invalid_format(msg);
- =
-
- 	if (!ussd->driver->request)
- 		return __ofono_error_not_implemented(msg);
- =
-
-+	DBG("OK, running USSD request");
-+
- 	ussd->pending =3D dbus_message_ref(msg);
- =
-
--	ussd->driver->request(ussd, str, ussd_callback, ussd);
-+	ussd->driver->request(ussd, dcs, packed, (int) num_packed,
-+				ussd_callback, ussd);
- =
-
- 	return NULL;
- }
-@@ -496,6 +572,12 @@ static DBusMessage *ussd_respond(DBusConnection *conn,=
- DBusMessage *msg,
- {
- 	struct ofono_ussd *ussd =3D data;
- 	const char *str;
-+	int dcs =3D 0x0f;
-+	unsigned char buf[256];
-+	unsigned char *converted;
-+	unsigned char *packed =3D NULL;
-+	long num_packed;
-+	long written;
- =
-
- 	if (ussd->pending)
- 		return __ofono_error_busy(msg);
-@@ -510,12 +592,25 @@ static DBusMessage *ussd_respond(DBusConnection *conn=
-, DBusMessage *msg,
- 	if (strlen(str) =3D=3D 0)
- 		return __ofono_error_invalid_format(msg);
- =
-
-+	converted =3D convert_utf8_to_gsm(str, strlen(str), NULL, &written, 0);
-+	if (!converted)
-+		return __ofono_error_invalid_format(msg);
-+
-+	packed =3D pack_7bit_own_buf(converted, written, 0, TRUE,
-+					&num_packed, 0, buf);
-+
-+	g_free(converted);
-+
-+	if (num_packed > OFONO_MAX_USSD_LENGTH)
-+		return __ofono_error_invalid_args(msg);
-+
- 	if (!ussd->driver->request)
- 		return __ofono_error_not_implemented(msg);
- =
-
- 	ussd->pending =3D dbus_message_ref(msg);
- =
-
--	ussd->driver->request(ussd, str, ussd_response_callback, ussd);
-+	ussd->driver->request(ussd, dcs, packed, (int) num_packed,
-+				ussd_response_callback, ussd);
- =
-
- 	return NULL;
- }
-@@ -543,6 +638,9 @@ static void ussd_cancel_callback(const struct ofono_err=
-or *error, void *data)
- 	reply =3D dbus_message_new_method_return(ussd->cancel);
- 	__ofono_dbus_pending_reply(&ussd->cancel, reply);
- =
-
-+	if (ussd->req)
-+		ussd_request_finish(ussd, -1, USSD_STATE_USER_ACTION, NULL, -1);
-+
- 	ussd_change_state(ussd, USSD_STATE_IDLE);
- }
- =
-
-@@ -741,3 +839,46 @@ void *ofono_ussd_get_data(struct ofono_ussd *ussd)
- {
- 	return ussd->driver_data;
- }
-+
-+static void ussd_request_callback(const struct ofono_error *error, void *d=
-ata)
-+{
-+	struct ofono_ussd *ussd =3D data;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
-+		ussd_request_finish(ussd, OFONO_USSD_FAILURE_RETURN_ERROR, -1, NULL, -1);
-+	else
-+		ussd_change_state(ussd,USSD_STATE_ACTIVE);
-+}
-+
-+gboolean __ofono_ussd_is_busy(struct ofono_ussd *ussd)
-+{
-+	if (ussd->pending || ussd->state !=3D USSD_STATE_IDLE || ussd->req)
-+		return TRUE;
-+
-+	return FALSE;
-+}
-+
-+int __ofono_ussd_initiate(struct ofono_ussd *ussd, int dcs,
-+				const unsigned char *binary_data,
-+				int binary_data_len,
-+				ofono_ussd_request_cb_t cb, void *user_data)
-+{
-+	struct ussd_request *req;
-+
-+	if (!ussd->driver->request)
-+		return -ENOSYS;
-+
-+	req =3D g_try_new0(struct ussd_request, 1);
-+	req->dcs =3D dcs;
-+	req->str =3D g_memdup(binary_data, binary_data_len);
-+	req->str_len =3D binary_data_len;
-+	req->cb =3D cb;
-+	req->user_data =3D user_data;
-+
-+	ussd->req =3D req;
-+
-+	ussd->driver->request(ussd, dcs, binary_data, binary_data_len,
-+				ussd_request_callback, ussd);
-+
-+	return 0;
-+}
--- =
-
-1.7.0.4
-
-
---===============0899303341624804410==--
+After pairing a Handset BT device with my Meego Handset board, ofono sees a=
+ new modem called /hfp/XXXXXX and can start a voice call on it.
+
+It is an interesting feature from a Netbook perspective, but could be very =
+confusing from a Handset perspective.
+
+
+
+I would prefer to remove BT devices from ofono modem list.
+
+
+
+What's the best solution?
+
+- disable BT modem client profile?
+
+- disable ofono HFP modem support?
+
+Emmanuel.
+
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============6211419032942308513==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
+b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
+QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
+MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
+Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
+dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
+YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
+ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
+YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
+OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
+Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
+VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
+Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
+cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
+MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
+ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
+cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
+bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
+eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
+dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
+LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
+Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
+cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
+dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
+aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczp3
+Zj0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvd29ya2Zsb3cv
+IiB4bWxuczpkc3NzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS8yMDA2L2Rp
+Z3NpZy1zZXR1cCIgeG1sbnM6ZHNzaT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZp
+Y2UvMjAwNi9kaWdzaWciIHhtbG5zOm1kc3NpPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0
+cy5vcmcvcGFja2FnZS8yMDA2L2RpZ2l0YWwtc2lnbmF0dXJlIiB4bWxuczptdmVyPSJodHRwOi8v
+c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvbWFya3VwLWNvbXBhdGliaWxpdHkvMjAwNiIgeG1s
+bnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4
+bWxuczptcmVscz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAw
+Ni9yZWxhdGlvbnNoaXBzIiB4bWxuczpzcHdwPSJodHRwOi8vbWljcm9zb2Z0LmNvbS9zaGFyZXBv
+aW50L3dlYnBhcnRwYWdlcyIgeG1sbnM6ZXgxMnQ9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5j
+b20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi90eXBlcyIgeG1sbnM6ZXgxMm09Imh0dHA6Ly9zY2hl
+bWFzLm1pY3Jvc29mdC5jb20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi9tZXNzYWdlcyIgeG1sbnM6
+cHB0c2w9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC9zb2FwL1NsaWRl
+TGlicmFyeS8iIHhtbG5zOnNwc2w9Imh0dHA6Ly9taWNyb3NvZnQuY29tL3dlYnNlcnZpY2VzL1No
+YXJlUG9pbnRQb3J0YWxTZXJ2ZXIvUHVibGlzaGVkTGlua3NTZXJ2aWNlIiB4bWxuczpaPSJ1cm46
+c2NoZW1hcy1taWNyb3NvZnQtY29tOiIgeG1sbnM6c3Q9IiYjMTsiIHhtbG5zPSJodHRwOi8vd3d3
+LnczLm9yZy9UUi9SRUMtaHRtbDQwIj4KCjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQt
+VHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9dXMtYXNjaWkiPgo8bWV0YSBuYW1lPUdl
+bmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+Cjxz
+dHlsZT4KPCEtLQogLyogRm9udCBEZWZpbml0aW9ucyAqLwogQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OkNhbGlicmk7CglwYW5vc2UtMToyIDE1IDUgMiAyIDIgNCAzIDIgNDt9CkBmb250LWZhY2UK
+CXtmb250LWZhbWlseTpDb25zb2xhczsKCXBhbm9zZS0xOjIgMTEgNiA5IDIgMiA0IDMgMiA0O30K
+IC8qIFN0eWxlIERlZmluaXRpb25zICovCiBwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYu
+TXNvTm9ybWFsCgl7bWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6
+ZToxMS4wcHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBz
+cGFuLk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0
+ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0Zv
+bGxvd2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNv
+cmF0aW9uOnVuZGVybGluZTt9CnAuTXNvUGxhaW5UZXh0LCBsaS5Nc29QbGFpblRleHQsIGRpdi5N
+c29QbGFpblRleHQKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgltc28tc3R5bGUtbGluazoiUGxh
+aW4gVGV4dCBDaGFyIjsKCW1hcmdpbjowY207CgltYXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglmb250
+LXNpemU6MTAuNXB0OwoJZm9udC1mYW1pbHk6Q29uc29sYXM7fQpzcGFuLkVtYWlsU3R5bGUxNwoJ
+e21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7Cglmb250LWZhbWlseToiQ2FsaWJyaSIs
+InNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4dDt9CnNwYW4uUGxhaW5UZXh0Q2hhcgoJe21z
+by1zdHlsZS1uYW1lOiJQbGFpbiBUZXh0IENoYXIiOwoJbXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJ
+bXNvLXN0eWxlLWxpbms6IlBsYWluIFRleHQiOwoJZm9udC1mYW1pbHk6Q29uc29sYXM7fQouTXNv
+Q2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4cG9ydC1vbmx5O30KQHBhZ2UgV29yZFNlY3Rp
+b24xCgl7c2l6ZTo2MTIuMHB0IDc5Mi4wcHQ7CgltYXJnaW46NzAuODVwdCA3MC44NXB0IDcwLjg1
+cHQgNzAuODVwdDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9Ci0tPgo8
+L3N0eWxlPgo8IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlZGVmYXVsdHMgdjpleHQ9
+ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3RlIG1z
+byA5XT48eG1sPgogPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgogIDxvOmlkbWFwIHY6ZXh0
+PSJlZGl0IiBkYXRhPSIxIiAvPgogPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPgo8
+L2hlYWQ+Cgo8Ym9keSBsYW5nPUVOLVVTIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGU+Cgo8ZGl2IGNs
+YXNzPVdvcmRTZWN0aW9uMT4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD5BZnRlciBwYWlyaW5nIGEg
+SGFuZHNldCBCVCBkZXZpY2Ugd2l0aCBteSBNZWVnbyBIYW5kc2V0CmJvYXJkLCBvZm9ubyBzZWVz
+IGEgbmV3IG1vZGVtIGNhbGxlZCAvaGZwL1hYWFhYWCBhbmQgY2FuIHN0YXJ0IGEgdm9pY2UgY2Fs
+bCBvbgppdC48bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD5JdCBpcyBhbiBp
+bnRlcmVzdGluZyBmZWF0dXJlIGZyb20gYSBOZXRib29rIHBlcnNwZWN0aXZlLApidXQgY291bGQg
+YmUgdmVyeSBjb25mdXNpbmcgZnJvbSBhIEhhbmRzZXQgcGVyc3BlY3RpdmUuPG86cD48L286cD48
+L3A+Cgo8cCBjbGFzcz1Nc29QbGFpblRleHQ+PG86cD4mbmJzcDs8L286cD48L3A+Cgo8cCBjbGFz
+cz1Nc29QbGFpblRleHQ+SSB3b3VsZCBwcmVmZXIgdG8gcmVtb3ZlIEJUIGRldmljZXMgZnJvbSBv
+Zm9ubyBtb2RlbQpsaXN0LjxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0Pjxv
+OnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvUGxhaW5UZXh0PldoYXQmIzgyMTc7cyB0
+aGUgYmVzdCBzb2x1dGlvbj88bzpwPjwvbzpwPjwvcD4KCjxwIGNsYXNzPU1zb1BsYWluVGV4dD4t
+IGRpc2FibGUgQlQgbW9kZW0gY2xpZW50IHByb2ZpbGU/PG86cD48L286cD48L3A+Cgo8cCBjbGFz
+cz1Nc29QbGFpblRleHQ+LSBkaXNhYmxlIG9mb25vIEhGUCBtb2RlbSBzdXBwb3J0PzxvOnA+PC9v
+OnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xh
+c3M9TXNvTm9ybWFsPjxzcGFuIHN0eWxlPSdjb2xvcjpibGFjayc+RW1tYW51ZWwuPC9zcGFuPiA8
+c3BhbiBsYW5nPUZSPjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48
+c3BhbiBsYW5nPUZSPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4KCjwvZGl2PgoKPHByZT4t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0KSW50ZWwgQ29ycG9yYXRpb24gU0FTIChGcmVuY2ggc2ltcGxpZmllZCBqb2lu
+dCBzdG9jayBjb21wYW55KQpSZWdpc3RlcmVkIGhlYWRxdWFydGVyczogIkxlcyBNb250YWxldHMi
+LSAyLCBydWUgZGUgUGFyaXMsIAo5MjE5NiBNZXVkb24gQ2VkZXgsIEZyYW5jZQpSZWdpc3RyYXRp
+b24gTnVtYmVyOiAgMzAyIDQ1NiAxOTkgUi5DLlMuIE5BTlRFUlJFCkNhcGl0YWw6IDQsNTcyLDAw
+MCBFdXJvcwoKVGhpcyBlLW1haWwgYW5kIGFueSBhdHRhY2htZW50cyBtYXkgY29udGFpbiBjb25m
+aWRlbnRpYWwgbWF0ZXJpYWwgZm9yCnRoZSBzb2xlIHVzZSBvZiB0aGUgaW50ZW5kZWQgcmVjaXBp
+ZW50KHMpLiBBbnkgcmV2aWV3IG9yIGRpc3RyaWJ1dGlvbgpieSBvdGhlcnMgaXMgc3RyaWN0bHkg
+cHJvaGliaXRlZC4gSWYgeW91IGFyZSBub3QgdGhlIGludGVuZGVkCnJlY2lwaWVudCwgcGxlYXNl
+IGNvbnRhY3QgdGhlIHNlbmRlciBhbmQgZGVsZXRlIGFsbCBjb3BpZXMuCjwvcHJlPjwvYm9keT4K
+CjwvaHRtbD4K
+
+--===============6211419032942308513==--
 
