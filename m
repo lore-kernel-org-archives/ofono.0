@@ -1,93 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============8897377496190796919=="
+Content-Type: multipart/mixed; boundary="===============4054929193394242923=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] doc: Play Tone command proposed d-bus API.
-Date: Thu, 09 Sep 2010 18:23:42 +0200
-Message-ID: <1284049422.20451.5.camel@aeonflux.t-mobile.de>
-In-Reply-To: <1283968796-5308-1-git-send-email-andrew.zaborowski@intel.com>
+From: Berthier, Emmanuel <emmanuel.berthier@intel.com>
+Subject: RE: Ofono and BT interaction
+Date: Thu, 09 Sep 2010 17:49:07 +0100
+Message-ID: <2A84145621092446B6659B8A0F28E26F46D581ED94@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <4C88EE76.6020002@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8897377496190796919==
+--===============4054929193394242923==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Denis,
 
-> This is a version with the tone identified by a string based on irc
-> discussion, I leave the decision to you about which version to use.
-> ---
->  doc/stk-api.txt |   32 ++++++++++++++++++++++++++++++++
->  1 files changed, 32 insertions(+), 0 deletions(-)
+It's a good solution for ofono clients, but ofono will still dialogue with =
+BT Modem (init), which is not very desirable.
+
+Emmanuel.
+
+-----Original Message-----
+From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
+
+Sent: Thursday, September 09, 2010 4:26 PM
+To: ofono(a)ofono.org
+Cc: Berthier, Emmanuel
+Subject: Re: Ofono and BT interaction
+
+Hi Emmanuel,
+
+On 09/09/2010 08:19 AM, Berthier, Emmanuel wrote:
+> After pairing a Handset BT device with my Meego Handset board, ofono
+> sees a new modem called /hfp/XXXXXX and can start a voice call on it.
 > =
 
-> diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-> index d0dd740..14819a7 100644
-> --- a/doc/stk-api.txt
-> +++ b/doc/stk-api.txt
-> @@ -200,6 +200,38 @@ Methods		byte RequestSelection(string title, byte ic=
-on_id,
+> It is an interesting feature from a Netbook perspective, but could be
+> very confusing from a Handset perspective.
+> =
+
 >  =
 
->  			Possible Errors: [service].Error.SimToolkit.EndSession
+> =
+
+> I would prefer to remove BT devices from ofono modem list.
+> =
+
 >  =
 
-> +		void PlayTone(string tone, boolean loop,
-> +				string text, byte icon_id)
-> +
-> +			Tells the agent to play an audio tone.  A repeatable
-> +			tone is played for the duration of the method call
-> +			(until it is cancelled), otherwise it is played once
-> +			and the method should return.  The text parameter
-> +			contains an optional text to be displayed to the
-> +			user.  The following tones are defined:
+> =
 
-string sounds here more than reasonable. For the looping part we have to
-clarify when to return from this method. For non repeating tones it is
-pretty clear. It should return when playing the tone finished. For the
-repeating one we can return right away, or after the first iteration has
-played. That needs to be properly described in what to expect from the
-agent.
+> What's the best solution?
+> =
 
-Also has PlayTone and PlayLoop method calls considered to have a clearer
-semantic separation?
+> - disable BT modem client profile?
+> =
 
-> +				"dial tone"
-> +				"busy"
-> +				"congestion"
-> +				"radio path acknowledge"
-> +				"radio path not available"
-> +				"error"
-> +				"call waiting"
-> +				"ringing tone"
-> +				"general beep"
-> +				"positive acknowledgement"
-> +				"negative acknowledgement"
-> +				"user ringing tone"
-> +				"user sms alert"
-> +				"critical" (high priority)
-> +				"vibrate"
-> +				"happy"
-> +				"sad"
-> +				"urgent action"
-> +				"question"
-> +				"message received"
-
-I prefer to have them as "call-waiting" with a - in between. Space are
-sort of a bad idea for constant type strings. And we do similar things
-for "cs-preferred" etc. But essentially I agree that strings are way
-better.
-
-Can we also fix the typo in acknowledgment ;)
-
-The alternate text string comes from the SIM Toolkit, right?
-
-Regards
-
-Marcel
+> - disable ofono HFP modem support?
+> =
 
 
+Would filtering by Modem type be enough? E.g. oFono could expose a
+string Type property on the Modem Interface.  Possible values might be
+'gsm', 'cdma', 'hfp', etc.
 
---===============8897377496190796919==--
+Regards,
+-Denis
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============4054929193394242923==--
 
