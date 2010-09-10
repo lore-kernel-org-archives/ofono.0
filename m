@@ -1,81 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============8672393696973398387=="
+Content-Type: multipart/mixed; boundary="===============2442974794600194449=="
 MIME-Version: 1.0
-From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 4/4] test: add enable-gprs and disable-gprs scripts
-Date: Fri, 10 Sep 2010 16:50:59 +0300
-Message-ID: <1284126659-18741-5-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1284126659-18741-1-git-send-email-mika.liljeberg@nokia.com>
+From: Petteri Tikander <petteri.tikander@ixonos.com>
+Subject: [RFC PATCH v2 2/4] unit: Add unit test for status report expiration
+Date: Fri, 10 Sep 2010 17:28:20 +0300
+Message-ID: <1284128902-16727-2-git-send-email-petteri.tikander@ixonos.com>
+In-Reply-To: <1284128902-16727-1-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8672393696973398387==
+--===============2442974794600194449==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/disable-gprs |   20 ++++++++++++++++++++
- test/enable-gprs  |   20 ++++++++++++++++++++
- 2 files changed, 40 insertions(+), 0 deletions(-)
- create mode 100755 test/disable-gprs
- create mode 100755 test/enable-gprs
+ unit/test-sms.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
-diff --git a/test/disable-gprs b/test/disable-gprs
-new file mode 100755
-index 0000000..cca2c78
---- /dev/null
-+++ b/test/disable-gprs
-@@ -0,0 +1,20 @@
-+#!/usr/bin/python
+diff --git a/unit/test-sms.c b/unit/test-sms.c
+index d56cdce..0ff9cd5 100644
+--- a/unit/test-sms.c
++++ b/unit/test-sms.c
+@@ -1301,6 +1301,13 @@ static void test_sr_assembly()
+ 	sms_address_from_string(&addr, "+4915259911630");
+ =
+
+ 	sra =3D status_report_assembly_new(NULL);
 +
-+import dbus
-+import sys
++	status_report_assembly_add_fragment(sra, 42, &addr, 4, time(NULL), 2);
++	status_report_assembly_add_fragment(sra, 42, &addr, 5, time(NULL), 2);
 +
-+bus =3D dbus.SystemBus()
++	status_report_assembly_expire(sra, time(NULL) + 40);
++	g_assert(g_hash_table_size(sra->assembly_table) =3D=3D 0);
 +
-+if len(sys.argv) =3D=3D 2:
-+	path =3D sys.argv[1]
-+else:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+			'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+
-+print "Disconnecting GPRS on modem %s..." % path
-+cm =3D dbus.Interface(bus.get_object('org.ofono', path),
-+		'org.ofono.ConnectionManager')
-+
-+cm.SetProperty("Powered", dbus.Boolean(0))
-diff --git a/test/enable-gprs b/test/enable-gprs
-new file mode 100755
-index 0000000..2b273a7
---- /dev/null
-+++ b/test/enable-gprs
-@@ -0,0 +1,20 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 2:
-+	path =3D sys.argv[1]
-+else:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+			'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+
-+print "Connecting modem %s..." % path
-+cm =3D dbus.Interface(bus.get_object('org.ofono', path),
-+		'org.ofono.ConnectionManager')
-+
-+cm.SetProperty("Powered", dbus.Boolean(1))
+ 	status_report_assembly_add_fragment(sra, 42, &addr, 4, time(NULL), 2);
+ 	status_report_assembly_add_fragment(sra, 42, &addr, 5, time(NULL), 2);
+ =
+
 -- =
 
-1.7.0.4
+1.6.3.3
 
 
---===============8672393696973398387==--
+
+--===============2442974794600194449==--
 
