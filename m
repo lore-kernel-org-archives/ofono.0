@@ -1,227 +1,134 @@
-Content-Type: multipart/mixed; boundary="===============5778467042841060209=="
+Content-Type: multipart/mixed; boundary="===============3770763217807644240=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 7/8] Add __ofono_ussd_initiate internal api for Sending USSD
-Date: Thu, 09 Sep 2010 13:25:15 -0700
-Message-ID: <1284063915-24808-2-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1284063915-24808-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH] Fix sending User Cancel response to Set Up Call.
+Date: Fri, 10 Sep 2010 03:03:26 +0200
+Message-ID: <AANLkTinrUh0=Orm4uR+62DqugQFnKwF0hP9_G2pfOhvR@mail.gmail.com>
+In-Reply-To: <4C88F128.4040007@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5778467042841060209==
+--===============3770763217807644240==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/ofono.h |   14 +++++++++
- src/ussd.c  |   85 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 2 files changed, 98 insertions(+), 1 deletions(-)
+On 9 September 2010 16:37, Denis Kenzior <denkenz@gmail.com> wrote:
+> Hi Andrew,
+>
+> On 09/08/2010 12:59 PM, Andrzej Zaborowski wrote:
+>> One of the clean-up commits changed the semantics of the dial request
+>> callback's parameter (NULL if call setup failed, non-NULL if success
+>> or user cancelled).
+>> ---
+>> =C2=A0src/stk.c =C2=A0 =C2=A0 =C2=A0 | =C2=A0 =C2=A02 +-
+>> =C2=A0src/voicecall.c | =C2=A0 14 ++++++++++++++
+>> =C2=A02 files changed, 15 insertions(+), 1 deletions(-)
+>>
+>> diff --git a/src/stk.c b/src/stk.c
+>> index b469467..b6ed4c3 100644
+>> --- a/src/stk.c
+>> +++ b/src/stk.c
+>> @@ -1419,7 +1419,7 @@ static void call_setup_connected(struct ofono_call=
+ *call, void *data)
+>> =C2=A0 =C2=A0 =C2=A0 static struct ofono_error error =3D { .type =3D OFO=
+NO_ERROR_TYPE_FAILURE };
+>> =C2=A0 =C2=A0 =C2=A0 static unsigned char facility_rejected_result[] =3D=
+ { 0x9d };
+>>
+>> - =C2=A0 =C2=A0 if (!call) {
+>> + =C2=A0 =C2=A0 if (!call || call->status =3D=3D CALL_STATUS_DISCONNECTE=
+D) {
+>
+> If the call has been disconnected by the user, shouldn't we be sending
+> USER_CANCEL? =C2=A0At least that is what the old behavior implies.
 
-diff --git a/src/ofono.h b/src/ofono.h
-index 7e814c9..9786829 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -244,6 +244,13 @@ gboolean __ofono_ssn_mt_watch_remove(struct ofono_ssn =
-*ssn, int id);
- =
+In that case yes, but if it's disconnected because connecting failed,
+then we report this to the card.
 
- #include <ofono/ussd.h>
- =
+I noticed that http://git.kernel.org/?p=3Dnetwork/ofono/ofono.git;a=3Dcommi=
+tdiff;h=3Ded562ba2b04b56b9a688d40906bb783027c4a1e6
+changed the behaviour slightly (but the old behaviour was probably
+wrong too).
 
-+enum ofono_ussd_failure {
-+	OFONO_USSD_FAILURE_NONE,
-+	OFONO_USSD_FAILURE_USER_TERMINATED,
-+	OFONO_USSD_FAILURE_RETURN_ERROR,
-+	OFONO_USSD_FAILURE_TIMED_OUT,
-+};
-+
- typedef gboolean (*ofono_ussd_ssc_cb_t)(int type,
- 					const char *sc,
- 					const char *sia, const char *sib,
-@@ -254,6 +261,9 @@ typedef gboolean (*ofono_ussd_passwd_cb_t)(const char *=
-sc,
- 					const char *old, const char *new,
- 					DBusMessage *msg, void *data);
- =
+>
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 memset(&rsp, 0, sizeof(=
+rsp));
+>>
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 rsp.result.type =3D STK=
+_RESULT_TYPE_NETWORK_UNAVAILABLE;
+>> diff --git a/src/voicecall.c b/src/voicecall.c
+>> index 3bd4dff..e536089 100644
+>> --- a/src/voicecall.c
+>> +++ b/src/voicecall.c
+>> @@ -361,6 +361,16 @@ static DBusMessage *voicecall_deflect(DBusConnectio=
+n *conn,
+>> =C2=A0 =C2=A0 =C2=A0 return NULL;
+>> =C2=A0}
+>>
+>> +static void dial_request_user_cancel(struct ofono_voicecall *vc,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct voicecall *c=
+all)
+>> +{
+>> + =C2=A0 =C2=A0 if (!vc->dial_req)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
+>> +
+>> + =C2=A0 =C2=A0 if (!call || call =3D=3D vc->dial_req->call)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 dial_request_finish(vc->dial=
+_req->call->vc, TRUE);
+>> +}
+>> +
+>> =C2=A0static DBusMessage *voicecall_hangup(DBusConnection *conn,
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBusMessage =
+*msg, void *data)
+>> =C2=A0{
+>> @@ -372,6 +382,8 @@ static DBusMessage *voicecall_hangup(DBusConnection =
+*conn,
+>> =C2=A0 =C2=A0 =C2=A0 if (vc->pending)
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return __ofono_error_bu=
+sy(msg);
+>>
+>> + =C2=A0 =C2=A0 dial_request_user_cancel(vc, v);
+>> +
+>
+> I don't see the need for this part, don't we already take care of this
+> in voicecall_set_call_status?
 
-+typedef void (*ofono_ussd_request_cb_t)(int error, int dcs,
-+					const unsigned char *pdu, int len, void *data);
-+
- gboolean __ofono_ussd_ssc_register(struct ofono_ussd *ussd, const char *sc,
- 					ofono_ussd_ssc_cb_t cb, void *data,
- 					ofono_destroy_func destroy);
-@@ -265,6 +275,10 @@ gboolean __ofono_ussd_passwd_register(struct ofono_uss=
-d *ussd, const char *sc,
- void __ofono_ussd_passwd_unregister(struct ofono_ussd *ussd, const char *s=
-c);
- gboolean __ofono_ussd_is_busy(struct ofono_ussd *ussd);
- =
+At that point we can't tell where it was a network error / busy signal
+/ etc, or the user cancelled the call (which has a different result
+value sent to sim).
 
-+int __ofono_ussd_initiate(struct ofono_ussd *ussd, int dcs,
-+			const unsigned char *pdu, int len,
-+			ofono_ussd_request_cb_t cb, void *user_data);
-+
- #include <ofono/netreg.h>
- =
+>
+>> =C2=A0 =C2=A0 =C2=A0 switch (call->status) {
+>> =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_DISCONNECTED:
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return __ofono_error_fa=
+iled(msg);
+>> @@ -1278,6 +1290,8 @@ static DBusMessage *manager_hangup_all(DBusConnect=
+ion *conn,
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return reply;
+>> =C2=A0 =C2=A0 =C2=A0 }
+>>
+>> + =C2=A0 =C2=A0 dial_request_user_cancel(vc, NULL);
+>> +
+>
+> Same as above...
+>
+>> =C2=A0 =C2=A0 =C2=A0 vc->flags |=3D VOICECALLS_FLAG_MULTI_RELEASE;
+>>
+>> =C2=A0 =C2=A0 =C2=A0 vc->pending =3D dbus_message_ref(msg);
+>
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
- typedef void (*ofono_netreg_status_notify_cb_t)(int status, int lac, int c=
-i,
-diff --git a/src/ussd.c b/src/ussd.c
-index a2e9e72..4db3bce 100644
---- a/src/ussd.c
-+++ b/src/ussd.c
-@@ -49,6 +49,15 @@ enum ussd_state {
- 	USSD_STATE_RESPONSE_SENT,
- };
- =
+Regards,
+Andrew
 
-+struct ussd_request {
-+	struct ofono_ussd *ussd;
-+	int dcs;
-+	unsigned char *pdu;
-+	int len;
-+	ofono_ussd_request_cb_t cb;
-+	void *user_data;
-+};
-+
- struct ofono_ussd {
- 	int state;
- 	DBusMessage *pending;
-@@ -59,6 +68,7 @@ struct ofono_ussd {
- 	const struct ofono_ussd_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	struct ussd_request *req;
- };
- =
-
- struct ssc_entry {
-@@ -73,7 +83,7 @@ gboolean __ofono_ussd_is_busy(struct ofono_ussd *ussd)
- 	if (!ussd)
- 		return FALSE;
- =
-
--	if (ussd->pending || ussd->state !=3D USSD_STATE_IDLE)
-+	if (ussd->pending || ussd->state !=3D USSD_STATE_IDLE || ussd->req)
- 		return TRUE;
- =
-
- 	return FALSE;
-@@ -320,6 +330,31 @@ static void ussd_change_state(struct ofono_ussd *ussd,=
- int state)
- 			"State", DBUS_TYPE_STRING, &value);
- }
- =
-
-+static void ussd_request_finish(struct ofono_ussd *ussd, int error, int dc=
-s,
-+				const unsigned char *pdu, int len)
-+{
-+	struct ussd_request *req =3D ussd->req;
-+
-+	if (req && req->cb) {
-+		req->cb(error, dcs, pdu, len, req->user_data);
-+		g_free(req->pdu);
-+		g_free(req);
-+		ussd->req =3D NULL;
-+	}
-+}
-+
-+static int ussd_status_to_failure_code(int status)
-+{
-+	switch (status) {
-+	case OFONO_USSD_STATUS_TIMED_OUT:
-+		return OFONO_USSD_FAILURE_TIMED_OUT;
-+	case OFONO_USSD_STATUS_NOT_SUPPORTED:
-+		return OFONO_USSD_FAILURE_RETURN_ERROR;
-+	}
-+
-+	return OFONO_USSD_FAILURE_NONE;
-+}
-+
- void ofono_ussd_notify(struct ofono_ussd *ussd, int status, int dcs,
- 			const unsigned char *data, int data_len)
- {
-@@ -332,6 +367,19 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int st=
-atus, int dcs,
- 	DBusMessageIter iter;
- 	DBusMessageIter variant;
- =
-
-+	if (ussd->req &&
-+		(status =3D=3D OFONO_USSD_STATUS_NOTIFY ||
-+		status =3D=3D OFONO_USSD_STATUS_TERMINATED ||
-+		status =3D=3D OFONO_USSD_STATUS_TIMED_OUT ||
-+		status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED)) {
-+
-+		ussd_request_finish(ussd, ussd_status_to_failure_code(status),
-+					dcs, data, data_len);
-+
-+		ussd_change_state(ussd, USSD_STATE_IDLE);
-+		return;
-+	}
-+
- 	if (status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED) {
- 		ussd_change_state(ussd, USSD_STATE_IDLE);
- =
-
-@@ -602,6 +650,9 @@ static void ussd_cancel_callback(const struct ofono_err=
-or *error, void *data)
- 	reply =3D dbus_message_new_method_return(ussd->cancel);
- 	__ofono_dbus_pending_reply(&ussd->cancel, reply);
- =
-
-+	if (ussd->req)
-+		ussd_request_finish(ussd, -1, USSD_STATE_USER_ACTION, NULL, -1);
-+
- 	ussd_change_state(ussd, USSD_STATE_IDLE);
- }
- =
-
-@@ -801,3 +852,35 @@ void *ofono_ussd_get_data(struct ofono_ussd *ussd)
- 	return ussd->driver_data;
- }
- =
-
-+static void ussd_request_callback(const struct ofono_error *error, void *d=
-ata)
-+{
-+	struct ofono_ussd *ussd =3D data;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
-+		ussd_request_finish(ussd, OFONO_USSD_FAILURE_RETURN_ERROR, -1, NULL, -1);
-+	else
-+		ussd_change_state(ussd,USSD_STATE_ACTIVE);
-+}
-+
-+int __ofono_ussd_initiate(struct ofono_ussd *ussd, int dcs,
-+				const unsigned char *pdu, int len,
-+				ofono_ussd_request_cb_t cb, void *user_data)
-+{
-+	struct ussd_request *req;
-+
-+	if (!ussd->driver->request)
-+		return -ENOSYS;
-+
-+	req =3D g_try_new0(struct ussd_request, 1);
-+	req->dcs =3D dcs;
-+	req->pdu =3D g_memdup(pdu, len);
-+	req->len =3D len;
-+	req->cb =3D cb;
-+	req->user_data =3D user_data;
-+
-+	ussd->req =3D req;
-+
-+	ussd->driver->request(ussd, dcs, pdu, len, ussd_request_callback, ussd);
-+
-+	return 0;
-+}
--- =
-
-1.7.0.4
-
-
---===============5778467042841060209==--
+--===============3770763217807644240==--
 
