@@ -1,35 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============6154201031120915634=="
+Content-Type: multipart/mixed; boundary="===============4457779378844077127=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: RFC: Supporting STK without PDUs
-Date: Fri, 10 Sep 2010 23:48:35 +0200
-Message-ID: <1284155315.20451.14.camel@aeonflux.t-mobile.de>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C901145B3ED3@orsmsx508.amr.corp.intel.com>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: RFC: Supporting STK without PDUs
+Date: Fri, 10 Sep 2010 15:33:38 -0700
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C901145BEDBE@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <4C8AA55A.1090800@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6154201031120915634==
+--===============4457779378844077127==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
+> We have already had a discussion on this one when designing the current
+> stk modem API.  The bottom line is that oFono tries to keep its core <->
+> modem interfaces minimal and exposing the entirety of stkutil.h as
+> official API is definitely too much.
+> =
 
-> It looks like the preferred way to handle STK with IFX modems is to use a=
- dedicated mode where the modem handles most of STK commands and only a few=
- remaining commands are passed on to the apps processor for further handlin=
-g.
+> So right now you will need to re-encode into PDU form to support such
+> modems (or ask the vendor to give the raw pdus)  While this is a bit of
+> a performance hit, it isn't too bad as the PDUs are always smaller than
+> 256 bytes.
 
-as far as I know, the IFX firmware also supports what they call raw
-mode. That mode is purely PDU based. Why just not use that one and let
-oFono do the hard work. Seems to be working perfectly fine for MBM, STE
-and Calypso based hardware.
+In that case we would still want to use functionality from stkutil.c to do =
+the actual re-encoding. So in my mind it is a trade-off between forking stk=
+util.c for one or more modem-plugins or exporting stkutil.h Given that the =
+type definitions in stkutil.h are a relative straightforward mapping of TS =
+102.223 and friends, it may not qualify as a "minimal" API but it will be a=
+ rather stable API. So I would like to ask to reconsider exposing the type =
+definitions as part of the official oFono modem API.
 
-Regards
+Cheers,
+Waldo
 
-Marcel
-
-
-
---===============6154201031120915634==--
+--===============4457779378844077127==--
 
