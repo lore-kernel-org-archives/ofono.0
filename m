@@ -1,57 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============0124381298388036932=="
+Content-Type: multipart/mixed; boundary="===============8907628500176658226=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Ofono and BT interaction
-Date: Fri, 10 Sep 2010 10:30:26 -0500
-Message-ID: <4C8A4F12.3080409@gmail.com>
-In-Reply-To: <2A84145621092446B6659B8A0F28E26F46D581EF8D@irsmsx501.ger.corp.intel.com>
+Subject: Re: [RFC PATCH v2 1/4] sms_util: status_report_expiration
+Date: Fri, 10 Sep 2010 10:49:55 -0500
+Message-ID: <4C8A53A3.7000001@gmail.com>
+In-Reply-To: <1284128902-16727-1-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0124381298388036932==
+--===============8907628500176658226==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Emmanuel,
+Hi Petteri,
 
-On 09/10/2010 09:35 AM, Berthier, Emmanuel wrote:
-> Hi Marcel,
-> =
+On 09/10/2010 09:28 AM, Petteri Tikander wrote:
+> ---
+>  src/smsutil.c |   51 ++++++++++++++++++++++++++++++++++++++++++++++++---
+>  src/smsutil.h |    3 +--
+>  2 files changed, 49 insertions(+), 5 deletions(-)
 
->>>> If you power on the HFP modem. If not, then oFono will do nothing.
->>>
->>> Yes, that's one solution. How to do that at BlueZ level?
->>
->> no idea actually.
->>
->>>> You can always start ofonod with -P hfp and then the HFP support shoul=
-d be
->>>> ignored. At least that works for testing.
->>>
->>> Very interesting.
->>> I've not found "-P" option in ofono 0.25, nor in the last 0.28 source t=
-ree.
->>> Did I miss something?
->>
->> No you didn't. It is a ConnMan feature that we never ported over to
->> oFono. Not a big deal to add, but so far nobody did the work.
-> =
+All four patches have been applied.  Thanks :)
 
-> So, the question is still open:
-> How can I cut the link between ofono and BlueZ?
-> =
+The only thing pending on this part is to handle the Status Report
+recipient address being 'tweaked' by the network.
 
+I've been hearing reports that some networks actually rewrite the
+address (e.g. change national number to international, etc) which causes
+our status reports to not match.
 
-I still don't understand what you're trying to accomplish.  If you don't
-want to establish an HFP connections, simply don't
-Modem.SetProperty("Powered", True).  Or is your issue that ConnMan
-automatically powers on the HFP devices?
+We can do two things:
+1. Rely on message reference only.  This seems dangerous
+2. Fallback to a 'fuzzy'.  E.g. try to match on the reference and last n
+digits of the phone number, ignoring ton/npi.  This can get tricky as
+some national numbers can get different prefixes from the equivalent
+international number, so we need to pick a nice value of 'n'.
 
-If you don't want HFP modems to even be seen, disable the hfp plugin.
+E.g. in Australia:
+
++61 4 1234 5678 is the international number or:
+04 1234 5678 is the national number.
+
+Let me know if you can think of a third option.
 
 Regards,
 -Denis
 
---===============0124381298388036932==--
+--===============8907628500176658226==--
 
