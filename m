@@ -1,52 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============0982178369239150898=="
+Content-Type: multipart/mixed; boundary="===============6049501862892978538=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: Ofono and BT interaction
-Date: Fri, 10 Sep 2010 10:07:25 +0200
-Message-ID: <1284106045.20451.10.camel@aeonflux.t-mobile.de>
-In-Reply-To: <2A84145621092446B6659B8A0F28E26F46D581EE20@irsmsx501.ger.corp.intel.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH] Check if ussd is busy when doing ss
+Date: Fri, 10 Sep 2010 16:27:06 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4732A6EF9B4@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <4C88EA21.3020302@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0982178369239150898==
+--===============6049501862892978538==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Emmanuel,
-
-> > this is an open source mailing list, so please use proper netiquette and
-> > do NOT top post. No ever exceptions.
-> =
-
-> Oops, sorry for that.
-> =
-
-> > If you power on the HFP modem. If not, then oFono will do nothing.
-> =
-
-> Yes, that's one solution. How to do that at BlueZ level?
-
-no idea actually.
-
-> > You can always start ofonod with -P hfp and then the HFP support should=
- be
-> > ignored. At least that works for testing.
-> =
-
-> Very interesting.
-> I've not found "-P" option in ofono 0.25, nor in the last 0.28 source tre=
-e.
-> Did I miss something?
-
-No you didn't. It is a ConnMan feature that we never ported over to
-oFono. Not a big deal to add, but so far nobody did the work.
-
-Regards
-
-Marcel
+Hi Denis,
 
 
+>-----Original Message-----
+>From: Denis Kenzior [mailto:denkenz(a)gmail.com]
+>Sent: Thursday, September 09, 2010 10:07 PM
+>To: ofono(a)ofono.org
+>Cc: Gu, Yang
+>Subject: Re: [PATCH] Check if ussd is busy when doing ss
+>
+>Hi Yang,
+>
+>On 09/05/2010 09:19 PM, Yang Gu wrote:
+>> It's still not clear how ss and ussd interfere with each other. Current
+>> decision is each ss (call-barring, call-forwarding, etc.) has
+>> interference with ussd, but there is no interference within these ss.
+>> That is, call-barring has interference with ussd, but call-barring has
+>> no interference with call-forwarding.
+>
+>Patch has been applied, but I broke it up into four patches.
+>
+>Are you planning to take care of cb_ss_control, cb_ss_password,
+>cf_ss_control and cs_ss_control busy conditions separately?
+>
 
---===============0982178369239150898==--
+I'm not following your question. We already check if ussd is busy at the be=
+ginning of ussd_initiate(), so these functions are ok with necessary checks=
+. =
+
+On the other hand, I think we need also check if either of these supplement=
+ary services (call barring, call forwarding and call settings) is busy when=
+ doing a real unstructured supplementary service (ussd_initiate(),ussd_resp=
+ond(), etc.). =
+
+
+
+Regards,
+-Yang
+
+--===============6049501862892978538==--
 
