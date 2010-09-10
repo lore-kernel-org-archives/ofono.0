@@ -1,56 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============6049501862892978538=="
+Content-Type: multipart/mixed; boundary="===============6805581494838972899=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: [PATCH] Check if ussd is busy when doing ss
-Date: Fri, 10 Sep 2010 16:27:06 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A4732A6EF9B4@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4C88EA21.3020302@gmail.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [originated PATCH 0/2]
+Date: Fri, 10 Sep 2010 13:59:09 +0300
+Message-ID: <AANLkTin9PpRrd1GHefXJLUA1WtKZ-HVpqxyjkAKqsa8X@mail.gmail.com>
+In-Reply-To: <4C8843E6.5060106@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6049501862892978538==
+--===============6805581494838972899==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-
->-----Original Message-----
->From: Denis Kenzior [mailto:denkenz(a)gmail.com]
->Sent: Thursday, September 09, 2010 10:07 PM
->To: ofono(a)ofono.org
->Cc: Gu, Yang
->Subject: Re: [PATCH] Check if ussd is busy when doing ss
+>> This patch adds the "Originated" property to the VoiceCall interface. It
+>> is used to determine if the call is originated from the mobile or not.
 >
->Hi Yang,
+> Just throwing ideas, but would 'string Direction' with possible values
+> "in" or "incoming" and "out" or "outgoing" be a bit clearer?
+
+It sounds better, yes.
+
+>> The originated information can be deducted from the call state assuming
+>> the client does follow the call states from the beqginning. However,
+>> after the call gets activated call states are common for the mobile
+>> originated and mobile terminated calls.
 >
->On 09/05/2010 09:19 PM, Yang Gu wrote:
->> It's still not clear how ss and ussd interfere with each other. Current
->> decision is each ss (call-barring, call-forwarding, etc.) has
->> interference with ussd, but there is no interference within these ss.
->> That is, call-barring has interference with ussd, but call-barring has
->> no interference with call-forwarding.
->
->Patch has been applied, but I broke it up into four patches.
->
->Are you planning to take care of cb_ss_control, cb_ss_password,
->cf_ss_control and cs_ss_control busy conditions separately?
->
+> Out of curiosity, how exactly is this useful?
 
-I'm not following your question. We already check if ussd is busy at the be=
-ginning of ussd_initiate(), so these functions are ok with necessary checks=
-. =
+For logging purposes. Recovering after a call-related server.
 
-On the other hand, I think we need also check if either of these supplement=
-ary services (call barring, call forwarding and call settings) is busy when=
- doing a real unstructured supplementary service (ussd_initiate(),ussd_resp=
-ond(), etc.). =
+There might be some weird calls with no intermediate calls where there
+are no intermediate states, too. SRVCC comes to mind, there the cs
+call gets created out of thin air.
 
+-- =
 
+Pekka.Pessi mail at nokia.com
 
-Regards,
--Yang
-
---===============6049501862892978538==--
+--===============6805581494838972899==--
 
