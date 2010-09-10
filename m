@@ -1,108 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============4038159067763179915=="
+Content-Type: multipart/mixed; boundary="===============8264385302085163030=="
 MIME-Version: 1.0
-From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: [RFC PATCH v2 1/4] sms_util: status_report_expiration
-Date: Fri, 10 Sep 2010 17:28:19 +0300
-Message-ID: <1284128902-16727-1-git-send-email-petteri.tikander@ixonos.com>
+From: Berthier, Emmanuel <emmanuel.berthier@intel.com>
+Subject: RE: Ofono and BT interaction
+Date: Fri, 10 Sep 2010 15:35:05 +0100
+Message-ID: <2A84145621092446B6659B8A0F28E26F46D581EF8D@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <1284106045.20451.10.camel@aeonflux.t-mobile.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4038159067763179915==
+--===============8264385302085163030==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/smsutil.c |   51 ++++++++++++++++++++++++++++++++++++++++++++++++---
- src/smsutil.h |    3 +--
- 2 files changed, 49 insertions(+), 5 deletions(-)
+Hi Marcel,
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 0de420b..ae8f1ef 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -2961,10 +2961,55 @@ void status_report_assembly_add_fragment(
- }
- =
+> > > If you power on the HFP modem. If not, then oFono will do nothing.
+> > =
 
- void status_report_assembly_expire(struct status_report_assembly *assembly,
--					time_t before, GFunc foreach_func,
--					gpointer data)
-+					time_t before)
- {
--	/*TODO*/
-+	GHashTable *id_table;
-+	GHashTableIter iter_addr, iter_node;
-+	struct sms_address addr;
-+	char *straddr;
-+	gpointer key;
-+	unsigned int msg_id;
-+	struct id_table_node *node;
-+
-+	g_hash_table_iter_init(&iter_addr, assembly->assembly_table);
-+
-+	/*
-+	 * Go through different addresses. Each address can relate to
-+	 * 1-n msg_ids.
-+	 */
-+	while (g_hash_table_iter_next(&iter_addr, (gpointer) &straddr,
-+					(gpointer) &id_table)) {
-+
-+		sms_address_from_string(&addr, straddr);
-+		g_hash_table_iter_init(&iter_node, id_table);
-+
-+		/* Go through different messages. */
-+		while (g_hash_table_iter_next(&iter_node, &key,
-+						(gpointer) &node)) {
-+			msg_id =3D *(unsigned int *) key;
-+
-+			/*
-+			 * If message is expired, removed it from the
-+			 * hash-table and remove the backup-file
-+			 */
-+			if (node->expiration <=3D before) {
-+				g_hash_table_iter_remove(&iter_node);
-+
-+				sr_assembly_remove_fragment_backup(
-+								assembly->imsi,
-+								node,
-+								&addr,
-+								msg_id);
-+			}
-+		}
-+
-+		/*
-+		 * If all messages are removed, remove address
-+		 * from the hash-table.
-+		 */
-+		if (g_hash_table_size(id_table) =3D=3D 0)
-+			g_hash_table_iter_remove(&iter_addr);
-+	}
- }
- =
+> > Yes, that's one solution. How to do that at BlueZ level?
+>
+> no idea actually.
+>
+> > > You can always start ofonod with -P hfp and then the HFP support shou=
+ld be
+> > > ignored. At least that works for testing.
+> > =
 
- static inline GSList *sms_list_append(GSList *l, const struct sms *in)
-diff --git a/src/smsutil.h b/src/smsutil.h
-index 3c6b3ae..0e0ddf4 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -513,8 +513,7 @@ void status_report_assembly_add_fragment(struct status_=
-report_assembly
- 					unsigned char mr, time_t expiration,
- 					unsigned char total_mrs);
- void status_report_assembly_expire(struct status_report_assembly *assembly,
--					time_t before, GFunc foreach_func,
--					gpointer data);
-+					time_t before);
- =
+> > Very interesting.
+> > I've not found "-P" option in ofono 0.25, nor in the last 0.28 source t=
+ree.
+> > Did I miss something?
+>
+> No you didn't. It is a ConnMan feature that we never ported over to
+> oFono. Not a big deal to add, but so far nobody did the work.
 
- GSList *sms_text_prepare(const char *utf8, guint16 ref,
- 				gboolean use_16bit, int *ref_offset,
--- =
+So, the question is still open:
+How can I cut the link between ofono and BlueZ?
 
-1.6.3.3
+Emmanuel.
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
---===============4038159067763179915==--
+--===============8264385302085163030==--
 
