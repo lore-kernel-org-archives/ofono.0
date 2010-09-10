@@ -1,44 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============6805581494838972899=="
+Content-Type: multipart/mixed; boundary="===============0993226914101540041=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [originated PATCH 0/2]
-Date: Fri, 10 Sep 2010 13:59:09 +0300
-Message-ID: <AANLkTin9PpRrd1GHefXJLUA1WtKZ-HVpqxyjkAKqsa8X@mail.gmail.com>
-In-Reply-To: <4C8843E6.5060106@gmail.com>
+From: Mika Liljeberg <mika.liljeberg@nokia.com>
+Subject: [PATCH 1/4] TODO: Claim ownership of Suspended property for GPRS
+Date: Fri, 10 Sep 2010 16:50:56 +0300
+Message-ID: <1284126659-18741-2-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1284126659-18741-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6805581494838972899==
+--===============0993226914101540041==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ TODO |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
->> This patch adds the "Originated" property to the VoiceCall interface. It
->> is used to determine if the call is originated from the mobile or not.
->
-> Just throwing ideas, but would 'string Direction' with possible values
-> "in" or "incoming" and "out" or "outgoing" be a bit clearer?
+diff --git a/TODO b/TODO
+index 26f8b84..d41df04 100644
+--- a/TODO
++++ b/TODO
+@@ -233,7 +233,8 @@ GPRS
+   Complexity: C2
+ =
 
-It sounds better, yes.
+ - Add support for GPRS suspended event.  Expose this to the UI by adding a=
+ new
+-  'Suspended' property on the DataConnectionManager D-Bus interface.
++  'Suspended' property on the ConnectionManager D-Bus interface.
++  Owner: Mika Liljeberg <mika.liljeberg@nokia.com>
+ =
 
->> The originated information can be deducted from the call state assuming
->> the client does follow the call states from the beqginning. However,
->> after the call gets activated call states are common for the mobile
->> originated and mobile terminated calls.
->
-> Out of curiosity, how exactly is this useful?
-
-For logging purposes. Recovering after a call-related server.
-
-There might be some weird calls with no intermediate calls where there
-are no intermediate states, too. SRVCC comes to mind, there the cs
-call gets created out of thin air.
-
+   Priority: High
+   Complexity: C1
 -- =
 
-Pekka.Pessi mail at nokia.com
+1.7.0.4
 
---===============6805581494838972899==--
+
+--===============0993226914101540041==--
 
