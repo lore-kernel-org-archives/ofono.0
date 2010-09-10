@@ -1,47 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============2442974794600194449=="
+Content-Type: multipart/mixed; boundary="===============1117459470005980842=="
 MIME-Version: 1.0
 From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: [RFC PATCH v2 2/4] unit: Add unit test for status report expiration
-Date: Fri, 10 Sep 2010 17:28:20 +0300
-Message-ID: <1284128902-16727-2-git-send-email-petteri.tikander@ixonos.com>
-In-Reply-To: <1284128902-16727-1-git-send-email-petteri.tikander@ixonos.com>
+Subject: [RFC PATCH v2 3/4] sms_util: remove unused parameter
+Date: Fri, 10 Sep 2010 17:28:21 +0300
+Message-ID: <1284128902-16727-3-git-send-email-petteri.tikander@ixonos.com>
+In-Reply-To: <1284128902-16727-2-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2442974794600194449==
+--===============1117459470005980842==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-sms.c |    7 +++++++
- 1 files changed, 7 insertions(+), 0 deletions(-)
+ src/smsutil.c |    4 +---
+ 1 files changed, 1 insertions(+), 3 deletions(-)
 
-diff --git a/unit/test-sms.c b/unit/test-sms.c
-index d56cdce..0ff9cd5 100644
---- a/unit/test-sms.c
-+++ b/unit/test-sms.c
-@@ -1301,6 +1301,13 @@ static void test_sr_assembly()
- 	sms_address_from_string(&addr, "+4915259911630");
+diff --git a/src/smsutil.c b/src/smsutil.c
+index ae8f1ef..a124f54 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -2771,7 +2771,6 @@ static gboolean sr_assembly_add_fragment_backup(const=
+ char *imsi,
+ }
  =
 
- 	sra =3D status_report_assembly_new(NULL);
-+
-+	status_report_assembly_add_fragment(sra, 42, &addr, 4, time(NULL), 2);
-+	status_report_assembly_add_fragment(sra, 42, &addr, 5, time(NULL), 2);
-+
-+	status_report_assembly_expire(sra, time(NULL) + 40);
-+	g_assert(g_hash_table_size(sra->assembly_table) =3D=3D 0);
-+
- 	status_report_assembly_add_fragment(sra, 42, &addr, 4, time(NULL), 2);
- 	status_report_assembly_add_fragment(sra, 42, &addr, 5, time(NULL), 2);
+ static gboolean sr_assembly_remove_fragment_backup(const char *imsi,
+-					const struct id_table_node *node,
+ 					const struct sms_address *addr,
+ 					unsigned int msg_id)
+ {
+@@ -2901,7 +2900,7 @@ gboolean status_report_assembly_report(struct status_=
+report_assembly *assembly,
+ 	if (out_id)
+ 		*out_id =3D msg_id;
  =
 
+-	sr_assembly_remove_fragment_backup(assembly->imsi, node,
++	sr_assembly_remove_fragment_backup(assembly->imsi,
+ 					&status_report->status_report.raddr,
+ 					msg_id);
+ =
+
+@@ -2997,7 +2996,6 @@ void status_report_assembly_expire(struct status_repo=
+rt_assembly *assembly,
+ =
+
+ 				sr_assembly_remove_fragment_backup(
+ 								assembly->imsi,
+-								node,
+ 								&addr,
+ 								msg_id);
+ 			}
 -- =
 
 1.6.3.3
 
 
 
---===============2442974794600194449==--
+--===============1117459470005980842==--
 
