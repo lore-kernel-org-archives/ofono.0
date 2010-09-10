@@ -1,134 +1,111 @@
-Content-Type: multipart/mixed; boundary="===============3770763217807644240=="
+Content-Type: multipart/mixed; boundary="===============2760479475362232146=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: [PATCH] Fix sending User Cancel response to Set Up Call.
-Date: Fri, 10 Sep 2010 03:03:26 +0200
-Message-ID: <AANLkTinrUh0=Orm4uR+62DqugQFnKwF0hP9_G2pfOhvR@mail.gmail.com>
-In-Reply-To: <4C88F128.4040007@gmail.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: [PATCH] doc: Play Tone command proposed d-bus API.
+Date: Fri, 10 Sep 2010 03:12:21 +0200
+Message-ID: <AANLkTik+59Trir-GW8vy+sRRa8CqCvWPNBUACSe5Vj4M@mail.gmail.com>
+In-Reply-To: <1284049422.20451.5.camel@aeonflux.t-mobile.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3770763217807644240==
+--===============2760479475362232146==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 9 September 2010 16:37, Denis Kenzior <denkenz@gmail.com> wrote:
-> Hi Andrew,
->
-> On 09/08/2010 12:59 PM, Andrzej Zaborowski wrote:
->> One of the clean-up commits changed the semantics of the dial request
->> callback's parameter (NULL if call setup failed, non-NULL if success
->> or user cancelled).
->> ---
->> =C2=A0src/stk.c =C2=A0 =C2=A0 =C2=A0 | =C2=A0 =C2=A02 +-
->> =C2=A0src/voicecall.c | =C2=A0 14 ++++++++++++++
->> =C2=A02 files changed, 15 insertions(+), 1 deletions(-)
->>
->> diff --git a/src/stk.c b/src/stk.c
->> index b469467..b6ed4c3 100644
->> --- a/src/stk.c
->> +++ b/src/stk.c
->> @@ -1419,7 +1419,7 @@ static void call_setup_connected(struct ofono_call=
- *call, void *data)
->> =C2=A0 =C2=A0 =C2=A0 static struct ofono_error error =3D { .type =3D OFO=
-NO_ERROR_TYPE_FAILURE };
->> =C2=A0 =C2=A0 =C2=A0 static unsigned char facility_rejected_result[] =3D=
- { 0x9d };
->>
->> - =C2=A0 =C2=A0 if (!call) {
->> + =C2=A0 =C2=A0 if (!call || call->status =3D=3D CALL_STATUS_DISCONNECTE=
-D) {
->
-> If the call has been disconnected by the user, shouldn't we be sending
-> USER_CANCEL? =C2=A0At least that is what the old behavior implies.
+Hi,
 
-In that case yes, but if it's disconnected because connecting failed,
-then we report this to the card.
-
-I noticed that http://git.kernel.org/?p=3Dnetwork/ofono/ofono.git;a=3Dcommi=
-tdiff;h=3Ded562ba2b04b56b9a688d40906bb783027c4a1e6
-changed the behaviour slightly (but the old behaviour was probably
-wrong too).
-
->
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 memset(&rsp, 0, sizeof(=
-rsp));
->>
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 rsp.result.type =3D STK=
-_RESULT_TYPE_NETWORK_UNAVAILABLE;
->> diff --git a/src/voicecall.c b/src/voicecall.c
->> index 3bd4dff..e536089 100644
->> --- a/src/voicecall.c
->> +++ b/src/voicecall.c
->> @@ -361,6 +361,16 @@ static DBusMessage *voicecall_deflect(DBusConnectio=
-n *conn,
->> =C2=A0 =C2=A0 =C2=A0 return NULL;
->> =C2=A0}
->>
->> +static void dial_request_user_cancel(struct ofono_voicecall *vc,
+On 9 September 2010 18:23, Marcel Holtmann <marcel@holtmann.org> wrote:
 >> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct voicecall *c=
-all)
->> +{
->> + =C2=A0 =C2=A0 if (!vc->dial_req)
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
->> +
->> + =C2=A0 =C2=A0 if (!call || call =3D=3D vc->dial_req->call)
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 dial_request_finish(vc->dial=
-_req->call->vc, TRUE);
->> +}
->> +
->> =C2=A0static DBusMessage *voicecall_hangup(DBusConnection *conn,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBusMessage =
-*msg, void *data)
->> =C2=A0{
->> @@ -372,6 +382,8 @@ static DBusMessage *voicecall_hangup(DBusConnection =
-*conn,
->> =C2=A0 =C2=A0 =C2=A0 if (vc->pending)
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return __ofono_error_bu=
-sy(msg);
->>
->> + =C2=A0 =C2=A0 dial_request_user_cancel(vc, v);
->> +
+Tells the agent to play an audio tone. =C2=A0A repeatable
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+tone is played for the duration of the method call
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+(until it is cancelled), otherwise it is played once
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+and the method should return. =C2=A0The text parameter
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+contains an optional text to be displayed to the
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+user. =C2=A0The following tones are defined:
 >
-> I don't see the need for this part, don't we already take care of this
-> in voicecall_set_call_status?
+> string sounds here more than reasonable. For the looping part we have to
+> clarify when to return from this method. For non repeating tones it is
+> pretty clear. It should return when playing the tone finished. For the
+> repeating one we can return right away, or after the first iteration has
+> played. That needs to be properly described in what to expect from the
+> agent.
 
-At that point we can't tell where it was a network error / busy signal
-/ etc, or the user cancelled the call (which has a different result
-value sent to sim).
+My idea is for it to wait until the call is cancelled, and not return.
+ Otherwise we'll have to send the duration in a 0.1s units.
 
 >
->> =C2=A0 =C2=A0 =C2=A0 switch (call->status) {
->> =C2=A0 =C2=A0 =C2=A0 case CALL_STATUS_DISCONNECTED:
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return __ofono_error_fa=
-iled(msg);
->> @@ -1278,6 +1290,8 @@ static DBusMessage *manager_hangup_all(DBusConnect=
-ion *conn,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return reply;
->> =C2=A0 =C2=A0 =C2=A0 }
->>
->> + =C2=A0 =C2=A0 dial_request_user_cancel(vc, NULL);
->> +
+> Also has PlayTone and PlayLoop method calls considered to have a clearer
+> semantic separation?
+
+That's a good idea, I'll change it to use the separate methods unless
+someone objects.
+
 >
-> Same as above...
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "dial tone"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "busy"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "congestion"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "radio path acknowledge"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "radio path not available"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "error"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "call waiting"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "ringing tone"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "general beep"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "positive acknowledgement"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "negative acknowledgement"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "user ringing tone"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "user sms alert"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "critical" (high priority)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "vibrate"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "happy"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "sad"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "urgent action"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "question"
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 "message received"
 >
->> =C2=A0 =C2=A0 =C2=A0 vc->flags |=3D VOICECALLS_FLAG_MULTI_RELEASE;
->>
->> =C2=A0 =C2=A0 =C2=A0 vc->pending =3D dbus_message_ref(msg);
->
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+> I prefer to have them as "call-waiting" with a - in between. Space are
+> sort of a bad idea for constant type strings. And we do similar things
+> for "cs-preferred" etc.
+
+Ok.
+
+> Can we also fix the typo in acknowledgment ;)
+
+I think I copied it from the spec (I'll check), the interwebs claims
+both forms are correct :)
+
+> The alternate text string comes from the SIM Toolkit, right?
+
+Yes, it's actually the AlphaId / Icon to be displayed *while* playing,
+not instead.
 
 Regards,
 Andrew
 
---===============3770763217807644240==--
+--===============2760479475362232146==--
 
