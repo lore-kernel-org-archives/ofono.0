@@ -1,56 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============8264385302085163030=="
+Content-Type: multipart/mixed; boundary="===============0124381298388036932=="
 MIME-Version: 1.0
-From: Berthier, Emmanuel <emmanuel.berthier@intel.com>
-Subject: RE: Ofono and BT interaction
-Date: Fri, 10 Sep 2010 15:35:05 +0100
-Message-ID: <2A84145621092446B6659B8A0F28E26F46D581EF8D@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <1284106045.20451.10.camel@aeonflux.t-mobile.de>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Ofono and BT interaction
+Date: Fri, 10 Sep 2010 10:30:26 -0500
+Message-ID: <4C8A4F12.3080409@gmail.com>
+In-Reply-To: <2A84145621092446B6659B8A0F28E26F46D581EF8D@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8264385302085163030==
+--===============0124381298388036932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Emmanuel,
 
-> > > If you power on the HFP modem. If not, then oFono will do nothing.
-> > =
+On 09/10/2010 09:35 AM, Berthier, Emmanuel wrote:
+> Hi Marcel,
+> =
 
-> > Yes, that's one solution. How to do that at BlueZ level?
->
-> no idea actually.
->
-> > > You can always start ofonod with -P hfp and then the HFP support shou=
-ld be
-> > > ignored. At least that works for testing.
-> > =
-
-> > Very interesting.
-> > I've not found "-P" option in ofono 0.25, nor in the last 0.28 source t=
+>>>> If you power on the HFP modem. If not, then oFono will do nothing.
+>>>
+>>> Yes, that's one solution. How to do that at BlueZ level?
+>>
+>> no idea actually.
+>>
+>>>> You can always start ofonod with -P hfp and then the HFP support shoul=
+d be
+>>>> ignored. At least that works for testing.
+>>>
+>>> Very interesting.
+>>> I've not found "-P" option in ofono 0.25, nor in the last 0.28 source t=
 ree.
-> > Did I miss something?
->
-> No you didn't. It is a ConnMan feature that we never ported over to
-> oFono. Not a big deal to add, but so far nobody did the work.
+>>> Did I miss something?
+>>
+>> No you didn't. It is a ConnMan feature that we never ported over to
+>> oFono. Not a big deal to add, but so far nobody did the work.
+> =
 
-So, the question is still open:
-How can I cut the link between ofono and BlueZ?
+> So, the question is still open:
+> How can I cut the link between ofono and BlueZ?
+> =
 
-Emmanuel.
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+I still don't understand what you're trying to accomplish.  If you don't
+want to establish an HFP connections, simply don't
+Modem.SetProperty("Powered", True).  Or is your issue that ConnMan
+automatically powers on the HFP devices?
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+If you don't want HFP modems to even be seen, disable the hfp plugin.
 
---===============8264385302085163030==--
+Regards,
+-Denis
+
+--===============0124381298388036932==--
 
