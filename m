@@ -1,49 +1,130 @@
-Content-Type: multipart/mixed; boundary="===============0227590297103194319=="
+Content-Type: multipart/mixed; boundary="===============2697098949754501473=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: RFC: Supporting STK without PDUs
-Date: Sat, 11 Sep 2010 01:08:43 +0200
-Message-ID: <1284160123.20451.16.camel@aeonflux.t-mobile.de>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C901145BEDBE@orsmsx508.amr.corp.intel.com>
+From: Rajyalakshmi Bommaraju <Rajyalakshmi.Bommaraju@intel.com>
+Subject: Patch for merging voicecallhistory plugin implementation
+Date: Fri, 10 Sep 2010 16:12:31 -0700
+Message-ID: <1284160352-3416-1-git-send-email-Rajyalakshmi.Bommaraju@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0227590297103194319==
+--===============2697098949754501473==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
 
-> > We have already had a discussion on this one when designing the current
-> > stk modem API.  The bottom line is that oFono tries to keep its core <->
-> > modem interfaces minimal and exposing the entirety of stkutil.h as
-> > official API is definitely too much.
-> > =
-
-> > So right now you will need to re-encode into PDU form to support such
-> > modems (or ask the vendor to give the raw pdus)  While this is a bit of
-> > a performance hit, it isn't too bad as the PDUs are always smaller than
-> > 256 bytes.
-> =
-
-> In that case we would still want to use functionality from stkutil.c to d=
-o the actual re-encoding. So in my mind it is a trade-off between forking s=
-tkutil.c for one or more modem-plugins or exporting stkutil.h Given that th=
-e type definitions in stkutil.h are a relative straightforward mapping of T=
-S 102.223 and friends, it may not qualify as a "minimal" API but it will be=
- a rather stable API. So I would like to ask to reconsider exposing the typ=
-e definitions as part of the official oFono modem API.
-
-what is the big deal with just using the PDU interface of the IFX
-firmware? Why go through all this trouble if your target modem actually
-does support PDU mode?
-
-Regards
-
-Marcel
+							Call History Plugin =
 
 
+Introduction:
+Callhistory is a plugin loaded by ofono for persisting voice call history i=
+nformation in a disk file. Plugin exports dbus methods and signals as org.o=
+fono.callhistory interface. Whenever there is a voice call in the system, o=
+fono calls the plugin with the infomation (lineid,calltype,start time, end =
+time) , plugin writes the information is written to the file , increments t=
+he 'unread' field in the header and sends out dbus signal with the number o=
+f unread records. Client (dialer) requests history records by calling metho=
+d "GetVoiceHistory" exposed on the callhistory interface. After receiving i=
+nformation client calls the "SetVoiceHistoryRead" as an acknowledgement to =
+indicate end of transaction. The pointers in the header are adjusted approp=
+riately (explained clearly below).
 
---===============0227590297103194319==--
+Design : Plugin uses memory mapped file for high performance input/output o=
+perations. File is used as cyclic queue for storing or reading records, it =
+store s 50 records of 78bytes,hence fixed size file of 3916 bytes is used. =
+File's first 16 bytes were used for storing header, and next 3900 bytes for=
+ data. Header structure has head pointer, tail pointer,unread and lastid. H=
+ead pointer points to next slot for writing record into,tail for reading re=
+cord, unread for number of history records unread by client, lastid for id =
+of the last record that is written.
+
+Below is the file structure: (3916 bytes)
+
+|Header|Data| =
+
+0     16
+
+Header Structure: (16 bytes)
+
+|head|tail|unread|lastid|
+0    4    8      12     16
+
+
+head : Points to next slot for writing
+
+tail : Points to next record to be read
+
+unread : Number of Unread records so far
+
+lastid : Number of the record that is last written =
+
+
+
+Below is the structure of the history record:
+History Record:(78 bytes)
+
+|id|lineid|calltype|start time|end time|
+
+id : Record id
+
+lineid : phone Number
+
+calltype : Outgoing/Incoming/Missed =
+
+
+start time: start time in UTC
+
+end time: end time in UTC
+
+ =
+
+When the plugin is loaded by the ofono, it opens or creates a disk file of =
+3916 bytes size and maps it into fixed size memory space. Plugin reads the =
+header of the file , if the 'unread' records is > 0 , a signal is sent out =
+on the dbus with the information of number of unread records. =
+
+
+Requesting data by client: =
+
+When the client calls "GetVoiceHistory" method,plugin uses temp_tail and te=
+mp_unread variables to accomplish reads and copying data into dbus structur=
+e. It copies tail pointer of the header into temporary tail pointer and sta=
+rts to read history records one at a time from the location pointed by the =
+temp tail pointer , copies the structure it to the dbus structure, incremen=
+ts the temp tail pointer by size of the history record (78 bytes) and reads=
+ data from the next record location , this is repeated until it reaches hea=
+d pointer. when all the unread records are packed as dbus structure it is s=
+ent to the client. Once the data received, client needs to "SetVoiceHistory=
+Read" method to indicate that it received the data. Plugin will write the t=
+ail pointer with the temp tail pointer and unread records number is decreme=
+nted by temp_unread. Using temp_tail and temp_unread variables protect from=
+ modifying the header if there is any loss in data delivery. If client does=
+nt call 'SetVoiceHistoryRead' then the actual header pointers wont be updat=
+ed in the file. =
+
+
+Writing record into the file:
+When Ofono calls the plugin with call information (phone number, call type,=
+ call start time , call end time), plugin increaments the lastid to create =
+record id for this record ,writes the record in the location pointed by hea=
+d, and the head pointer is incremented by size of record (78 bytes), "unrea=
+d" variable is incremented by 1. If the head reaches end of file (3916) the=
+n it is reset it back to begining of the data portion of the file (16 bytes=
+). A dbus signal is sent out with number of current unread records. Plugin =
+keeps writing the records in circular queue.
+
+Locking: =
+
+Accessing Memory mapped file pointer , all header fields (head,tail,unread,=
+lastid), temp_unread,temp_tail are synchronized by a mutex. writing into me=
+mory file and reading from memory file happen asynchronously, so mutex is u=
+sed to protect the memory mapped file pointer , header, temp_unread, temp_t=
+ail.
+
+Limitations:
+History is limited to storing 50 records. The above design assumes that the=
+re is only one client (either dialer or a history daemon) that reads data a=
+nd sends acknowledgemnts.=20
+
+--===============2697098949754501473==--
 
