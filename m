@@ -1,59 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============2118974459398923578=="
+Content-Type: multipart/mixed; boundary="===============5507646584601517281=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/4] Add Suspended property to GPRS (take 3)
-Date: Fri, 10 Sep 2010 11:00:35 -0500
-Message-ID: <4C8A5623.8010805@gmail.com>
-In-Reply-To: <1284126659-18741-1-git-send-email-mika.liljeberg@nokia.com>
+Subject: Re: [PATCH 03/13] phonesim changes for setting TE character set
+Date: Fri, 10 Sep 2010 12:07:44 -0500
+Message-ID: <4C8A65E0.7040105@gmail.com>
+In-Reply-To: <1284058904-15526-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2118974459398923578==
+--===============5507646584601517281==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+Hi Jeevaka,
 
-On 09/10/2010 08:50 AM, Mika Liljeberg wrote:
-> Comments from Denis applied.
+On 09/09/2010 02:01 PM, Jeevaka Badrappan wrote:
+> ---
+>  plugins/phonesim.c |   45 +++++++++++++++++++++++++++++++++++++++++++++
+>  1 files changed, 45 insertions(+), 0 deletions(-)
 > =
 
-> Br,
-> =
 
-> 	MikaL
-> =
+We use pretty strict git settings, your patch does not apply due to
+whitespace corruption:
 
-> [PATCH 1/4] TODO: Claim ownership of Suspended property for GPRS
-> [PATCH 2/4] gprs: add Suspended property
-> [PATCH 3/4] isimodem: implement Suspended property
-> [PATCH 4/4] test: add enable-gprs and disable-gprs scripts
-> =
+Applying: phonesim changes for setting TE character set
+/home/denkenz/ofono-master/.git/rebase-apply/patch:58: trailing whitespace.
+	=
 
->  TODO                     |    3 +-
->  doc/connman-api.txt      |   19 ++++++++++++
->  drivers/isimodem/debug.c |   25 ++++++++++++++++
->  drivers/isimodem/debug.h |    2 +
->  drivers/isimodem/gpds.h  |   17 +++++++++++
->  drivers/isimodem/gprs.c  |   56 +++++++++++++++++++++++++++++++++++-
->  include/gprs.h           |   10 ++++++
->  src/gprs.c               |   72 ++++++++++++++++++++++++++++++++++++++++=
-++++++
->  test/disable-gprs        |   20 +++++++++++++
->  test/enable-gprs         |   20 +++++++++++++
->  10 files changed, 242 insertions(+), 2 deletions(-)
-
-All four patches have been applied.  Thanks :)
-
-Just a heads up, when you're adding new files to the project, check to
-see whether the build system (Makefile.am) needs to be told about these
-files.  In this case you forgot to add the two test scripts to
-Makefile.am.  Running 'make distcheck' whenever new files are added
-helps catch most of such issues.
+fatal: 1 line adds whitespace errors.
+Patch failed at 0001 phonesim changes for setting TE character set
+When you have resolved this problem run "git am --resolved".
+If you would prefer to skip this patch, instead run "git am --skip".
+To restore the original branch and stop patching run "git am --abort".
 
 Regards,
 -Denis
 
---===============2118974459398923578==--
+--===============5507646584601517281==--
 
