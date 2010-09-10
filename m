@@ -1,68 +1,108 @@
-Content-Type: multipart/mixed; boundary="===============8906344615716782960=="
+Content-Type: multipart/mixed; boundary="===============9193684546882583516=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 10/13] Add build_dataobj_ussd_text for ussd specific text
- string handling
-Date: Fri, 10 Sep 2010 12:29:01 -0500
-Message-ID: <4C8A6ADD.1030104@gmail.com>
-In-Reply-To: <1284059164-15645-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Petteri Tikander <petteri.tikander@ixonos.com>
+Subject: Re: [RFC PATCH v2 1/4] sms_util: status_report_expiration
+Date: Fri, 10 Sep 2010 20:39:02 +0300
+Message-ID: <201009102039.02324.petteri.tikander@ixonos.com>
+In-Reply-To: <4C8A53A3.7000001@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8906344615716782960==
+--===============9193684546882583516==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Denis,
 
-On 09/09/2010 02:06 PM, Jeevaka Badrappan wrote:
-> ---
->  src/stkutil.c |   23 +++++++++++++++++++++++
->  1 files changed, 23 insertions(+), 0 deletions(-)
+> Hi Petteri,
 > =
 
-> diff --git a/src/stkutil.c b/src/stkutil.c
-> index ae4cc32..c69ebba 100644
-> --- a/src/stkutil.c
-> +++ b/src/stkutil.c
-> @@ -4170,6 +4170,22 @@ static gboolean build_dataobj_text(struct stk_tlv_=
-builder *tlv,
->  	return stk_tlv_builder_close_container(tlv);
->  }
->  =
+> On 09/10/2010 09:28 AM, Petteri Tikander wrote:
+> > ---
+> >  src/smsutil.c |   51 ++++++++++++++++++++++++++++++++++++++++++++++++-=
+--
+> >  src/smsutil.h |    3 +--
+> >  2 files changed, 49 insertions(+), 5 deletions(-)
+> =
 
-> +/* Defined in TS 102.223 Section 8.15 - USSD specific case*/
-> +static gboolean build_dataobj_ussd_text(struct stk_tlv_builder *tlv,
-> +					const void *data, gboolean cr)
-> +{
-> +	const struct stk_ussd_text *text =3D data;
-> +	unsigned char tag =3D STK_DATA_OBJECT_TYPE_TEXT;
-> +
-> +	if (!text->text)
-> +		return TRUE;
+> All four patches have been applied.  Thanks :)
 
-This still does not handle empty data.  We should do something like:
+Thanks for you for assistance!
 
-open_container()
+> =
 
-if (text->len > 0) {
-	append_byte(dcs);
-	append_bytes(text);
-}
+> The only thing pending on this part is to handle the Status Report
+> recipient address being 'tweaked' by the network.
+> =
 
-close_container()
+> I've been hearing reports that some networks actually rewrite the
+> address (e.g. change national number to international, etc) which causes
+> our status reports to not match.
+> =
 
-> +
-> +	return stk_tlv_builder_open_container(tlv, cr, tag, TRUE) &&
-> +		stk_tlv_builder_append_byte(tlv, text->dcs) &&
-> +		stk_tlv_builder_append_bytes(tlv, text->text, text->len) &&
-> +		stk_tlv_builder_close_container(tlv);
-> +}
-> +
+> We can do two things:
+> 1. Rely on message reference only.  This seems dangerous
+> 2. Fallback to a 'fuzzy'.  E.g. try to match on the reference and last n
+> digits of the phone number, ignoring ton/npi.  This can get tricky as
+> some national numbers can get different prefixes from the equivalent
+> international number, so we need to pick a nice value of 'n'.
+> =
 
-Regards,
--Denis
 
---===============8906344615716782960==--
+Perhaps we can pick 'n' for number from the original number, in which SMS-
+message was submitted:
+
+      04 1234 5678 is the national number
+
+Then we must remember to drop the first digit from the area code (or operat=
+or =
+
+code or what ever it's called): 04=3D> 4 =
+
+
+So the number-string to be compared in the status report-response will be '=
+4 =
+
+1234 5678'
+
+And after receiving status report in the international format just find =
+
+correspondence with the international number (+61 4 1234 5678); last digits =
+
+should match.
+
+OK. I don't know (at least haven't heart), will some operators drop more th=
+an =
+
+one digit from the area code. This would cause problems anyway, when checki=
+ng =
+
+number-correspondence. But, I believe, number-checking presented above is =
+
+better than nothing for 'national->international'-situation. =
+
+
+
+> E.g. in Australia:
+> =
+
+> +61 4 1234 5678 is the international number or:
+> 04 1234 5678 is the national number.
+> =
+
+> Let me know if you can think of a third option.
+> =
+
+> Regards,
+> -Denis
+> =
+
+
+Have a nice week end.
+
+Br, Petteri
+
+
+--===============9193684546882583516==--
 
