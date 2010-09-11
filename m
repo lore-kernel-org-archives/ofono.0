@@ -1,44 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============5237374434564522348=="
+Content-Type: multipart/mixed; boundary="===============5131173252585862499=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/1] Add support to enable/disable specific plugin
-Date: Sat, 11 Sep 2010 12:42:37 +0200
-Message-ID: <1284201757.20451.18.camel@aeonflux.t-mobile.de>
-In-Reply-To: <1284195492-5424-2-git-send-email-zhenhua.zhang@intel.com>
+From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
+Subject: RE: [PATCH 1/1] Add support to enable/disable specific plugin
+Date: Sat, 11 Sep 2010 18:53:32 +0800
+Message-ID: <33AB447FBD802F4E932063B962385B352A720CD0@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1284201757.20451.18.camel@aeonflux.t-mobile.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5237374434564522348==
+--===============5131173252585862499==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhenhua,
+Hi Holtmann,
 
-> Support to load or not load specific plugin when ofono is started.
-> E.g., use 'ofonod -P hfp' to disable hfp plugin.
-> ---
->  src/main.c |   11 ++++++++++-
->  1 files changed, 10 insertions(+), 1 deletions(-)
+Marcel Holtmann wrote:
+> Hi Zhenhua,
+> =
 
-patch has been applied. I did all the hard work - just forgot to hook it
-up properly ;)
- =
+>> Support to load or not load specific plugin when ofono is started.
+>> E.g., use 'ofonod -P hfp' to disable hfp plugin.
+>> ---
+>>  src/main.c |   11 ++++++++++-
+>>  1 files changed, 10 insertions(+), 1 deletions(-)
+> =
 
-> -	__ofono_plugin_init(NULL, NULL);
-> +	__ofono_plugin_init(option_plugin, option_noplugin);
-> +
-> +	g_free(option_plugin);
-> +	g_free(option_noplugin);
+> patch has been applied. I did all the hard work - just forgot to hook
+> it up properly ;)
 
-Please also send a ConnMan patch to fix the memory leak that ConnMan has
-here actually.
+Thanks.
 
-Regards
+>> -	__ofono_plugin_init(NULL, NULL);
+>> +	__ofono_plugin_init(option_plugin, option_noplugin); +
+>> +	g_free(option_plugin);
+>> +	g_free(option_noplugin);
+> =
 
-Marcel
+> Please also send a ConnMan patch to fix the memory leak that ConnMan
+> has here actually.
+
+ConnMan does free the string propertly. So we don't need more fixes. :-)
+
+Regards,
+Zhenhua
+
+> Regards
+> =
+
+> Marcel
+> =
+
+> =
+
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
 
 
---===============5237374434564522348==--
+Regards,
+Zhenhua
+
+
+--===============5131173252585862499==--
 
