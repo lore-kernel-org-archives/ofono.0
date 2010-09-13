@@ -1,73 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============2848902527631867125=="
+Content-Type: multipart/mixed; boundary="===============7309338356983037431=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 4/8] USSD atom driver changes to read current character setting
-Date: Mon, 13 Sep 2010 16:00:13 -0700
-Message-ID: <1284418817-28575-5-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1284418817-28575-4-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 1/8] smsutil: Add USSD encoding function
+Date: Mon, 13 Sep 2010 16:00:10 -0700
+Message-ID: <1284418817-28575-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1284418817-28575-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2848902527631867125==
+--===============7309338356983037431==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/ussd.c |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
+ src/smsutil.c |   29 +++++++++++++++++++++++++++++
+ src/smsutil.h |    1 +
+ 2 files changed, 30 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/ussd.c b/drivers/atmodem/ussd.c
-index 1e1fc25..30145ad 100644
---- a/drivers/atmodem/ussd.c
-+++ b/drivers/atmodem/ussd.c
-@@ -44,12 +44,25 @@
+diff --git a/src/smsutil.c b/src/smsutil.c
+index 26c7951..0d68d33 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -4179,3 +4179,32 @@ char *ussd_decode(int dcs, int len, const unsigned c=
+har *data)
  =
 
- static const char *cusd_prefix[] =3D { "+CUSD:", NULL };
- static const char *none_prefix[] =3D { NULL };
-+static const char *cscs_prefix[] =3D { "+CSCS:", NULL };
- =
-
- struct ussd_data {
- 	GAtChat *chat;
- 	unsigned int vendor;
-+	enum at_util_charset charset;
- };
- =
-
-+static void read_charset_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
+ 	return utf8;
+ }
++
++gboolean ussd_encode(const char *str, long *items_written, unsigned char *=
+pdu)
 +{
-+	struct ussd_data *data =3D user_data;
++	unsigned char *converted =3D NULL;
++	long written;
++	long num_packed;
 +
-+	if (!ok)
-+		return;
++	if (!pdu)
++		return FALSE;
 +
-+	at_util_parse_cscs_query(result, &data->charset);
++	converted =3D convert_utf8_to_gsm(str, -1, NULL, &written, 0);
++	if (!converted || written > 182)
++		goto error;
++
++	pack_7bit_own_buf(converted, written, 0, TRUE, &num_packed, 0, pdu);
++
++	g_free(converted);
++
++	if (num_packed < 1)
++		return FALSE;
++
++	if (items_written)
++		*items_written =3D num_packed;
++
++	return TRUE;
++error:
++	g_free(converted);
++	return FALSE;
 +}
-+
- static void cusd_parse(GAtResult *result, struct ofono_ussd *ussd)
- {
- 	GAtResultIter iter;
-@@ -247,6 +260,9 @@ static int at_ussd_probe(struct ofono_ussd *ussd, unsig=
-ned int vendor,
+diff --git a/src/smsutil.h b/src/smsutil.h
+index 0e0ddf4..a81fd6d 100644
+--- a/src/smsutil.h
++++ b/src/smsutil.h
+@@ -544,3 +544,4 @@ GSList *cbs_optimize_ranges(GSList *ranges);
+ gboolean cbs_topic_in_range(unsigned int topic, GSList *ranges);
  =
 
- 	ofono_ussd_set_data(ussd, data);
- =
-
-+	g_at_chat_send(chat, "AT+CSCS?", cscs_prefix, read_charset_cb, data,
-+			NULL);
-+
- 	g_at_chat_send(chat, "AT+CUSD=3D1", NULL, at_ussd_register, ussd, NULL);
- =
-
- 	return 0;
+ char *ussd_decode(int dcs, int len, const unsigned char *data);
++gboolean ussd_encode(const char *str, long *items_written, unsigned char *=
+pdu);
 -- =
 
 1.7.0.4
 
 
---===============2848902527631867125==--
+--===============7309338356983037431==--
 
