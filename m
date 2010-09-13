@@ -1,167 +1,153 @@
-Content-Type: multipart/mixed; boundary="===============6674248854524145143=="
+Content-Type: multipart/mixed; boundary="===============8121976462496644007=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 2/8] util: Add UCS2 to GSM 7bit converion function
-Date: Mon, 13 Sep 2010 16:00:11 -0700
-Message-ID: <1284418817-28575-3-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1284418817-28575-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 3/8] test-util: Add function for validating UCS2 to GSM bit
+ conversion
+Date: Mon, 13 Sep 2010 16:00:12 -0700
+Message-ID: <1284418817-28575-4-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1284418817-28575-3-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6674248854524145143==
+--===============8121976462496644007==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/util.c |  108 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ unit/test-util.c |   80 ++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/util.h |   10 +++++
- 2 files changed, 118 insertions(+), 0 deletions(-)
+ 1 files changed, 80 insertions(+), 0 deletions(-)
 
-diff --git a/src/util.c b/src/util.c
-index bb90f6c..b2a9321 100644
---- a/src/util.c
-+++ b/src/util.c
-@@ -1261,3 +1261,111 @@ unsigned char *utf8_to_sim_string(const char *utf,
+diff --git a/unit/test-util.c b/unit/test-util.c
+index de62848..9df61dd 100644
+--- a/unit/test-util.c
++++ b/unit/test-util.c
+@@ -38,6 +38,10 @@ const unsigned char invalid_gsm_extended_len[] =3D {
+ 	0x1b, 0x28, 0x1b
+ };
  =
 
- 	return result;
++const unsigned char invalid_ucs2[] =3D {
++	0x03, 0x93, 0x00, 0x00
++};
++
+ unsigned short gsm_to_unicode_map[] =3D
+ {
+ 0x00,	0x0040,
+@@ -342,6 +346,7 @@ static void test_invalid()
+ 	long nwritten;
+ 	long nread;
+ 	char *res;
++	unsigned char *gsm;
+ =
+
+ 	res =3D convert_gsm_to_utf8(invalid_gsm_extended, 0, &nread, &nwritten,
+ 					0);
+@@ -362,6 +367,19 @@ static void test_invalid()
+ 					&nread, &nwritten, 0);
+ 	g_assert(res =3D=3D NULL);
+ 	g_assert(nread =3D=3D 3);
++
++	gsm =3D convert_ucs2_to_gsm(invalid_ucs2,
++					sizeof(invalid_ucs2),
++					&nread, &nwritten, 0);
++	g_assert(gsm =3D=3D NULL);
++	g_assert(nread =3D=3D 1);
++
++	nread =3D 0;
++	gsm =3D convert_ucs2_to_gsm(invalid_ucs2,
++					sizeof(invalid_ucs2) - 1,
++					&nread, &nwritten, 0);
++	g_assert(gsm =3D=3D NULL);
++	g_assert(nread =3D=3D 0);
  }
-+
-+/*!
-+ * Converts UCS2 encoded text to GSM alphabet. The result is unpacked,
-+ * with the 7th bit always 0. If terminator is not 0, a terminator charact=
-er
-+ * is appended to the result.
-+ *
-+ * Returns the encoded data or NULL if the data could not be encoded. The
-+ * data must be freed by the caller. If items_read is not NULL, it contains
-+ * the actual number of bytes read. If items_written is not NULL, contains
-+ * the number of bytes written.
-+ */
-+unsigned char *convert_ucs2_to_gsm_with_lang(const unsigned char *text,
-+					long len, long *items_read,
-+					long *items_written,
-+					unsigned char terminator,
-+					enum gsm_dialect locking_lang,
-+					enum gsm_dialect single_lang)
+ =
+
+ static void test_valid()
+@@ -905,6 +923,67 @@ static void test_sim()
+ 	g_assert(utf8 =3D=3D NULL);
+ }
+ =
+
++static void test_unicode_to_gsm()
 +{
-+	long nchars =3D 0;
-+	const unsigned char *in;
-+	unsigned char *out;
-+	unsigned char *res =3D NULL;
-+	long res_len;
-+	long i;
++	long nwritten;
++	long nread;
++	int i;
++	unsigned char *res;
++	char *utf8;
++	unsigned char buf[2];
++	unsigned char *back;
++	gunichar2 verify;
 +
-+	if (locking_lang >=3D GSM_DIALECT_INVALID)
-+		return NULL;
++	static int map_size =3D
++		sizeof(gsm_to_unicode_map) / sizeof(unsigned short) / 2;
 +
-+	if (single_lang >=3D GSM_DIALECT_INVALID)
-+		return NULL;
++	for (i =3D 0; i < map_size; i++) {
++		unsigned short c =3D gsm_to_unicode_map[i*2+1];
 +
-+	if (len < 1 || len % 2)
-+		return NULL;
++		buf[0] =3D c >> 8;
++		buf[1] =3D c & 0xff;
 +
-+	in =3D text;
-+	res_len =3D 0;
++		res =3D convert_ucs2_to_gsm(buf, 2, &nread, &nwritten, 0);
++		g_assert(res);
 +
-+	for (i =3D 0; i < len; i+=3D2) {
-+		gunichar c =3D (in[i] << 8) | in[i+1];
-+		unsigned short converted =3D GUND;
++		if (g_test_verbose())
++			g_print("nread:%ld, nwritten:%ld, %s\n",
++				nread, nwritten, res);
 +
-+		if (c > 0xffff)
-+			goto err_out;
-+
-+		converted =3D unicode_locking_shift_lookup(c, locking_lang);
-+
-+		if (converted =3D=3D GUND)
-+			converted =3D unicode_single_shift_lookup(c, single_lang);
-+
-+		if (converted =3D=3D GUND)
-+			goto err_out;
-+
-+		if (converted & 0x1b00)
-+			res_len +=3D 2;
++		if (res[0] =3D=3D 0x1B)
++			g_assert(nwritten =3D=3D 2);
 +		else
-+			res_len +=3D 1;
++			g_assert(nwritten =3D=3D 1);
 +
-+		nchars +=3D 1;
-+	}
++		utf8 =3D g_convert((const gchar *) buf, 2,
++				"UTF-8", "UCS-2BE",
++				NULL, NULL, NULL);
++		g_assert(utf8);
 +
-+	res =3D g_try_malloc(res_len + (terminator ? 1 : 0));
-+	if (!res)
-+		goto err_out;
++		back =3D convert_utf8_to_gsm(utf8, strlen(utf8), &nread,
++						&nwritten, 0);
++		g_assert(back);
 +
-+	in =3D text;
-+	out =3D res;
-+
-+	for (i =3D 0; i < len; i+=3D2) {
-+		gunichar c =3D (in[i] << 8) | in[i+1];
-+		unsigned short converted =3D GUND;
-+
-+		converted =3D unicode_locking_shift_lookup(c, locking_lang);
-+
-+		if (converted =3D=3D GUND)
-+			converted =3D unicode_single_shift_lookup(c, single_lang);
-+
-+		if (converted & 0x1b00) {
-+			*out =3D 0x1b;
-+			++out;
++		if (back[0] =3D=3D 0x1B) {
++			g_assert(nwritten =3D=3D 2);
++			verify =3D back[0] << 8 | back[1];
++		} else {
++			g_assert(nwritten =3D=3D 1);
++			verify =3D back[0];
 +		}
 +
-+		*out =3D converted;
-+		++out;
++		if (g_test_verbose())
++			g_print("nwritten:%ld, verify: 0x%x\n",
++				nwritten, verify);
++
++		g_assert(verify =3D=3D gsm_to_unicode_map[i*2]);
++
++		g_free(res);
++		g_free(back);
++		g_free(utf8);
 +	}
-+
-+	if (terminator)
-+		*out =3D terminator;
-+
-+	if (items_written)
-+		*items_written =3D out - res;
-+
-+err_out:
-+	if (items_read)
-+		*items_read =3D nchars;
-+
-+	return res;
 +}
 +
-+unsigned char *convert_ucs2_to_gsm(const unsigned char *text, long len,
-+				long *items_read, long *items_written,
-+				unsigned char terminator)
-+{
-+	return convert_ucs2_to_gsm_with_lang(text, len, items_read,
-+						items_written,
-+						terminator,
-+						GSM_DIALECT_DEFAULT,
-+						GSM_DIALECT_DEFAULT);
-+}
-diff --git a/src/util.h b/src/util.h
-index 9da81aa..76498ad 100644
---- a/src/util.h
-+++ b/src/util.h
-@@ -80,3 +80,13 @@ char *sim_string_to_utf8(const unsigned char *buffer, in=
-t length);
+ int main(int argc, char **argv)
+ {
+ 	g_test_init(&argc, &argv, NULL);
+@@ -918,6 +997,7 @@ int main(int argc, char **argv)
+ 	g_test_add_func("/testutil/SMS Handling", test_sms_handling);
+ 	g_test_add_func("/testutil/Offset Handling", test_offset_handling);
+ 	g_test_add_func("/testutil/SIM conversions", test_sim);
++	g_test_add_func("/testutil/Valid Unicode to GSM Conversion", test_unicode=
+_to_gsm);
  =
 
- unsigned char *utf8_to_sim_string(const char *utf,
- 					int max_length, int *out_length);
-+
-+unsigned char *convert_ucs2_to_gsm_with_lang(const unsigned char *text, lo=
-ng len,
-+					long *items_read, long *items_written,
-+					unsigned char terminator,
-+					enum gsm_dialect locking_lang,
-+					enum gsm_dialect single_lang);
-+
-+unsigned char *convert_ucs2_to_gsm(const unsigned char *text, long len,
-+				long *items_read, long *items_written,
-+				unsigned char terminator);
+ 	return g_test_run();
+ }
 -- =
 
 1.7.0.4
 
 
---===============6674248854524145143==--
+--===============8121976462496644007==--
 
