@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5952083974663575589=="
+Content-Type: multipart/mixed; boundary="===============8104183767087792918=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 1/6] Fix common misspellings in documentation
-Date: Tue, 14 Sep 2010 00:06:00 -0300
-Message-ID: <1284433565-26126-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 2/6] Fix common misspellings in drivers
+Date: Tue, 14 Sep 2010 00:06:01 -0300
+Message-ID: <1284433565-26126-2-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <4C8EDFF9.4060006@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5952083974663575589==
+--===============8104183767087792918==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,94 +20,102 @@ hines.
 From the list cited above, the substitution script found the following
 misspellings:
 
-accomodate->accommodate
-targetted->targeted
+subsidary(-ies)->subsidiary(-ies)
 transfering->transferring
-witheld->withheld
-withold->withhold
 ---
- doc/call-settings-api.txt    |    6 +++---
- doc/ofono-paper.txt          |    4 ++--
- doc/voicecallmanager-api.txt |    2 +-
- 3 files changed, 6 insertions(+), 6 deletions(-)
+ drivers/atmodem/voicecall.c     |    2 +-
+ drivers/hfpmodem/voicecall.c    |    2 +-
+ drivers/isimodem/gpds.h         |    2 +-
+ drivers/isimodem/gprs-context.c |    2 +-
+ drivers/isimodem/gprs.c         |    2 +-
+ drivers/stemodem/voicecall.c    |    2 +-
+ 6 files changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/doc/call-settings-api.txt b/doc/call-settings-api.txt
-index a345b9c..e98ce0c 100644
---- a/doc/call-settings-api.txt
-+++ b/doc/call-settings-api.txt
-@@ -47,7 +47,7 @@ Properties	string CallingLinePresentation [readonly]
- 			Contains the value of the connected line identification
- 			restriction property. The value indicates the state of
- 			the COLR supplementary service in the network.  If
--			enabled, the network will withold subscriber number
-+			enabled, the network will withhold subscriber number
- 			information from the calling party on incoming calls.
- 			The possible values are:
- 				"disabled",
-@@ -77,12 +77,12 @@ Properties	string CallingLinePresentation [readonly]
- 		string HideCallerId [readwrite]
+diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
+index eaf3a95..7c788f4 100644
+--- a/drivers/atmodem/voicecall.c
++++ b/drivers/atmodem/voicecall.c
+@@ -508,7 +508,7 @@ static void at_transfer(struct ofono_voicecall *vc,
+ 	unsigned int transfer =3D 0x1 | 0x2;
  =
 
- 			Sets whether the ID of the caller will should be
--			provided or witheld for outgoing calls.  This setting
-+			provided or withheld for outgoing calls.  This setting
- 			is also modified by the status of the CLIR supplementary
- 			service in the network (see the CallingLineRestriction
- 			property).  The three possible values are:
- 				"default" - Uses the network setting
--				"enabled" - CLIR invoked, caller id is witheld
-+				"enabled" - CLIR invoked, caller id is withheld
- 				"disabled" - CLIR suppressed, caller id is
- 						provided
+ 	/* Transfer can puts held & active calls together and disconnects
+-	 * from both.  However, some networks support transfering of
++	 * from both.  However, some networks support transferring of
+ 	 * dialing/ringing calls as well.
+ 	 */
+ 	transfer |=3D 0x4 | 0x8;
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index 8ae4430..e96ec7c 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -562,7 +562,7 @@ static void hfp_transfer(struct ofono_voicecall *vc,
+ {
+ 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+ 	/* Transfer can puts held & active calls together and disconnects
+-	 * from both.  However, some networks support transfering of
++	 * from both.  However, some networks support transferring of
+ 	 * dialing/ringing calls as well.
+ 	 */
+ 	unsigned int transfer =3D 0x1 | 0x2 | 0x4 | 0x8;
+diff --git a/drivers/isimodem/gpds.h b/drivers/isimodem/gpds.h
+index 9bb60e6..a62c47b 100644
+--- a/drivers/isimodem/gpds.h
++++ b/drivers/isimodem/gpds.h
+@@ -1,7 +1,7 @@
+ /*
+  * This file is part of oFono - Open Source Telephony
+  *
+- * Copyright (C) 2010  Nokia Corporation and/or its subsidary(-ies).
++ * Copyright (C) 2010  Nokia Corporation and/or its subsidiary(-ies).
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 as
+diff --git a/drivers/isimodem/gprs-context.c b/drivers/isimodem/gprs-contex=
+t.c
+index 9fdc677..8144940 100644
+--- a/drivers/isimodem/gprs-context.c
++++ b/drivers/isimodem/gprs-context.c
+@@ -1,7 +1,7 @@
+ /*
+  * This file is part of oFono - Open Source Telephony
+  *
+- * Copyright (C) 2010  Nokia Corporation and/or its subsidary(-ies).
++ * Copyright (C) 2010  Nokia Corporation and/or its subsidiary(-ies).
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 as
+diff --git a/drivers/isimodem/gprs.c b/drivers/isimodem/gprs.c
+index 93786ec..adac374 100644
+--- a/drivers/isimodem/gprs.c
++++ b/drivers/isimodem/gprs.c
+@@ -1,7 +1,7 @@
+ /*
+  * This file is part of oFono - Open Source Telephony
+  *
+- * Copyright (C) 2010  Nokia Corporation and/or its subsidary(-ies).
++ * Copyright (C) 2010  Nokia Corporation and/or its subsidiary(-ies).
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License version 2 as
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index 5cf38bb..6b43ebd 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -340,7 +340,7 @@ static void ste_transfer(struct ofono_voicecall *vc,
+ 	unsigned int transfer =3D 0x1 | 0x2;
  =
 
-diff --git a/doc/ofono-paper.txt b/doc/ofono-paper.txt
-index df3f0b3..ec6d01b 100644
---- a/doc/ofono-paper.txt
-+++ b/doc/ofono-paper.txt
-@@ -7,7 +7,7 @@ Linux and other open source components are now used extensi=
-vely on both desktop
- and mobile embedded devices.  They provide networking, power management,
- database and other core OS infrastructure.  However, up to this point no
- viable open source solution for mobile telephony existed.  oFono aims to
--change that; it is a telephony host stack specifically targetted at both
-+change that; it is a telephony host stack specifically targeted at both
- mobile embedded and desktop systems.
- =
-
- Launched on May 11, 2009 oFono aims to provide a solid framework for buili=
-dng
-@@ -97,7 +97,7 @@ for low-level operations.  This interface is based on 3GP=
-P TS 27.007 "AT
- command set for User Equipment" and 3GPP TS 27.005 "DTE-DCE interface for =
-SMS
- and CBS".  oFono assumes that all operations are fully asynchronous.
- =
-
--This means that oFono can accomodate a wide variety of devices, including
-+This means that oFono can accommodate a wide variety of devices, including
- full-featured modems (AT command based and otherwise), data-only cards, and
- modem like devices (e.g. Bluetooth Handsfree and Sim Access Profile device=
-s,
- etc.)
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 620720f..11af23a 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -34,7 +34,7 @@ Methods		array{object,dict} GetCalls()
- =
-
- 			Joins the currently Active (or Outgoing, depending
- 			on network support) and Held calls together and
--			disconnects both calls. In effect transfering
-+			disconnects both calls. In effect transferring
- 			one party to the other. This procedure requires
- 			an Active and Held call and the Explicit Call Transfer
- 			(ECT) supplementary service to be active.
+ 	/* Transfer can puts held & active calls together and disconnects
+-	 * from both.  However, some networks support transfering of
++	 * from both.  However, some networks support transferring of
+ 	 * dialing/ringing calls as well.
+ 	 */
+ 	transfer |=3D 0x4 | 0x8;
 -- =
 
 1.7.2.3
 
 
---===============5952083974663575589==--
+--===============8104183767087792918==--
 
