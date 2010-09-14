@@ -1,178 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============0923150267207816368=="
+Content-Type: multipart/mixed; boundary="===============4801195811170809493=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] phonesim: simulate language notification in sim app
-Date: Tue, 14 Sep 2010 15:27:55 -0700
-Message-ID: <1284503275-21395-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH] Fix common misspellings
+Date: Tue, 14 Sep 2010 19:36:13 -0300
+Message-ID: <AANLkTinSaL8amVpp1KOUkmWuL1xZj6YqLrWsHJZAtY_E@mail.gmail.com>
+In-Reply-To: <CE761E84DADF2947A4AF22FB8D97A4732A73C43E@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0923150267207816368==
+--===============4801195811170809493==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/qsimcommand.cpp    |   11 ++++++++
- src/simapplication.cpp |   68 ++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/simapplication.h   |    2 +
- 3 files changed, 81 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/src/qsimcommand.cpp b/src/qsimcommand.cpp
-index 9a9a169..9746592 100644
---- a/src/qsimcommand.cpp
-+++ b/src/qsimcommand.cpp
-@@ -3280,6 +3280,17 @@ QByteArray QSimCommand::toPdu( QSimCommand::ToPduOpt=
-ions options ) const
-         }
-         break;
- =
+On Tue, Sep 14, 2010 at 12:21 AM, Gu, Yang <yang.gu@intel.com> wrote:
+> This is an interesting patch. I guess you must have some tool/script to h=
+elp you find all the misspellings against this list. Could you please share=
+ the tool/script? After all, we can check the code in the future as this ki=
+nd of mistake may happen from time to time.
 
-+        case LanguageNotification:
-+        {
-+            if ( qualifier & 0x01 ) {
-+                data +=3D (char)0xAD;
-+                data +=3D (char)0x02;
-+                data +=3D (char)0x73;
-+                data +=3D (char)0x65;
-+            }
-+        }
-+        break;
-+
-         default: break;
-     }
- =
+Yes, I use a script I made based on the format of misspelling
+corrections available at wikipedia. I've uploaded the 3 files I used
+to http://people.profusion.mobi/~lucas/playground/
 
-diff --git a/src/simapplication.cpp b/src/simapplication.cpp
-index 4af510b..a54ec10 100644
---- a/src/simapplication.cpp
-+++ b/src/simapplication.cpp
-@@ -281,6 +281,7 @@ const QString DemoSimApplication::getName()
- #define MainMenu_Browser    9
- #define MainMenu_DTMF       10
- #define MainMenu_SendSS     11
-+#define MainMenu_Language   12
- =
+First, and most important: fix-typos.sh. It reads from stdin the words
+to fix in the following format:
 
- #define SportsMenu_Chess        1
- #define SportsMenu_Painting     2
-@@ -329,6 +330,10 @@ const QString DemoSimApplication::getName()
- #define CoLRMenu_Interrogation    2
- #define CoLRMenu_Deactivation     3
- =
+word->correction
 
-+#define Language_Specific       1
-+#define Language_Non_Specific   2
-+#define Language_Main           3
-+
- void DemoSimApplication::mainMenu()
- {
-     QSimCommand cmd;
-@@ -381,6 +386,10 @@ void DemoSimApplication::mainMenu()
-     item.setLabel( "Send SS" );
-     items +=3D item;
- =
+If there is more than 1 possible fix, use a "," in the end of the
+correction. In that case it will output to stderr the suggestions
+instead of automatically fixing.
 
-+    item.setIdentifier( MainMenu_Language );
-+    item.setLabel( "Language Notification" );
-+    items +=3D item;
-+
-     cmd.setMenuItems( items );
- =
+The second file, typos.txt, is the dictionary, based on that of
+wikipedia. I prepared it paying attention to some problematic words
+and suggestions from other projects (mainly EFL and Linux kernel)
 
-     command( cmd, 0, 0 );
-@@ -481,6 +490,12 @@ void DemoSimApplication::mainMenuSelection( int id )
-         }
-         break;
- =
-
-+        case MainMenu_Language:
-+        {
-+            sendLanguageMenu();
-+        }
-+        break;
-+
-         default:
-         {
-             // Don't know what this item is, so just re-display the main m=
-enu.
-@@ -1642,3 +1657,56 @@ void DemoSimApplication::CoLRMenu( const QSimTermina=
-lResponse& resp )
-         endSession();
-     }
- }
-+
-+void DemoSimApplication::sendLanguageMenu()
-+{
-+    QSimCommand cmd;
-+    QSimMenuItem item;
-+    QList<QSimMenuItem> items;
-+
-+    cmd.setType( QSimCommand::SelectItem );
-+    cmd.setTitle( "Language Notification" );
-+
-+    item.setIdentifier( Language_Specific );
-+    item.setLabel( "Specific Language" );
-+    items +=3D item;
-+
-+    item.setIdentifier( Language_Non_Specific );
-+    item.setLabel( "Non-Specific Language" );
-+    items +=3D item;
-+
-+    item.setIdentifier( Language_Main );
-+    item.setLabel( "Return to main menu" );
-+    items +=3D item;
-+
-+    cmd.setMenuItems( items );
-+
-+    command( cmd, this, SLOT(languageMenu(QSimTerminalResponse)) );
-+}
-+
-+void DemoSimApplication::languageMenu( const QSimTerminalResponse& resp )
-+{
-+    QSimCommand cmd;
-+
-+    if ( resp.result() =3D=3D QSimTerminalResponse::Success ) {
-+        cmd.setDestinationDevice( QSimCommand::ME );
-+        cmd.setSourceDevice( QSimCommand::SIM );
-+        cmd.setType( QSimCommand::LanguageNotification );
-+
-+        // Item selected.
-+        switch ( resp.menuItem() ) {
-+        case Language_Specific:
-+            cmd.setQualifier( 1 );
-+            command( cmd, this, SLOT(sendLanguageMenu()) );
-+            break;
-+        case Language_Non_Specific:
-+            cmd.setQualifier( 0 );
-+            command( cmd, this, SLOT(sendLanguageMenu()) );
-+            break;
-+        default:
-+            endSession();
-+            break;
-+        }
-+    } else
-+        endSession();
-+}
-diff --git a/src/simapplication.h b/src/simapplication.h
-index 0f67317..fc57423 100644
---- a/src/simapplication.h
-+++ b/src/simapplication.h
-@@ -109,6 +109,8 @@ protected slots:
-     void CoLPMenu( const QSimTerminalResponse& resp );
-     void sendCoLRMenu();
-     void CoLRMenu( const QSimTerminalResponse& resp );
-+    void sendLanguageMenu();
-+    void languageMenu( const QSimTerminalResponse& resp );
- =
-
- private:
-     int sticksLeft;
--- =
-
-1.7.0.4
+The third file is a script to get the changed words in the format I
+used in commit message. It needs to be in a git repository in order to
+work.
 
 
---===============0923150267207816368==--
+I usually run like this:
+
+~/bin/fix-typos.sh 2>&1 > /tmp/log.txt < ~/tmp/typos.txt | tee /tmp/log2.txt
+
+In /tmp/log.txt will be the progress of the substitutions. It will
+print it word it's searching for.
+In /tmp/log2.txt will be the fixes made and suggestions about other
+words that can be manually fixed later.
+
+
+I hope this helps.
+
+
+
+regards
+
+Lucas De Marchi
+
+--===============4801195811170809493==--
 
