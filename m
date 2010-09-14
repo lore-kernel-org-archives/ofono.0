@@ -1,33 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============8559407892526152861=="
+Content-Type: multipart/mixed; boundary="===============0122247977669418173=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: [online-impl-v2 PATCH 00/10] implement Online property
-Date: Wed, 15 Sep 2010 06:28:00 +0900
-Message-ID: <1284499680.2405.64.camel@localhost.localdomain>
-In-Reply-To: <AANLkTimbMfCJef=u8=zYQ=ya56CEnTyzOn4++AdNvgb5@mail.gmail.com>
+Date: Wed, 15 Sep 2010 06:30:27 +0900
+Message-ID: <1284499827.2405.67.camel@localhost.localdomain>
+In-Reply-To: <AANLkTinNFDnPKe5dNniR7thus-6TtacO5EoJCBQT=FKo@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8559407892526152861==
+--===============0122247977669418173==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Hi Pekka,
 
 > > STE version needs testing by the STE guys, but I did run into some SIM
 > > not ready issues with MBM when switching online/offline a few times. So
 > > that needs to be looked into.
 > =
 
-> OK, I'll put in on our list.
-> Perhaps you could send me thelogs if you still have them around?
+> Please have a peek in your AT log and see if there are some spurious
+> +GCAP: lines? My Dell 5530 branded MBM apparently sends internal
+> AT+GCAP command. Command and its results gets echoed to the serial
+> port which obviously confuses the AT parser. Perhaps most MBMs would
+> benefit from registering dummy "+GCAP:".
 
-don't have them with me. But I just did a lot off online-modem,
-offline-modem, disable-modem, enable-modem executions in random order to
-see how it behaves. MBM with older F35xx models had some issues. The STE
-I haven't tested, but it might be similar. Maybe it is just fine
-actually.
+that is clearly not with mine. I have the MBM original and the Lenovo
+branded ones which are not branded at all actually. So these behave
+properly and no +GCAP in between.
+
+> > The Huawei has more and more issues with SIM not ready now. This needs
+> > fixing anyway. I pushed the patch anymore to make these symptoms more
+> > clear to everybody.
+> =
+
+> I'll try to remember to fish out my Huawei from the junk box and see
+> what it has to offer now. ;)
+
+I have like 5 different Huawei models now. I just didn't have the time
+to dig into this to get it fixed. Basically the online mode support show
+the same symptoms than plugging in the modem while ofonod is already
+running. So the SIM ready support needs a bit of re-work I assume.
 
 Regards
 
@@ -35,5 +49,5 @@ Marcel
 
 
 
---===============8559407892526152861==--
+--===============0122247977669418173==--
 
