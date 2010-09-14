@@ -1,222 +1,178 @@
-Content-Type: multipart/mixed; boundary="===============8114940579385013590=="
+Content-Type: multipart/mixed; boundary="===============0923150267207816368=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 3/4] stk: Handling of Send USSD proactive command
-Date: Tue, 14 Sep 2010 14:49:52 -0700
-Message-ID: <1284500992-20180-1-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1284418817-28575-8-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] phonesim: simulate language notification in sim app
+Date: Tue, 14 Sep 2010 15:27:55 -0700
+Message-ID: <1284503275-21395-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8114940579385013590==
+--===============0923150267207816368==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |  173 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 172 insertions(+), 1 deletions(-)
+ src/qsimcommand.cpp    |   11 ++++++++
+ src/simapplication.cpp |   68 ++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/simapplication.h   |    2 +
+ 3 files changed, 81 insertions(+), 0 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index 04bfc65..f94643f 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1590,6 +1590,174 @@ static gboolean handle_command_set_up_call(const st=
-ruct stk_command *cmd,
- 	return FALSE;
- }
+diff --git a/src/qsimcommand.cpp b/src/qsimcommand.cpp
+index 9a9a169..9746592 100644
+--- a/src/qsimcommand.cpp
++++ b/src/qsimcommand.cpp
+@@ -3280,6 +3280,17 @@ QByteArray QSimCommand::toPdu( QSimCommand::ToPduOpt=
+ions options ) const
+         }
+         break;
  =
 
-+static void send_ussd_cancel(struct ofono_stk *stk)
-+{
-+	struct ofono_ussd *ussd;
-+	struct ofono_atom *atom;
++        case LanguageNotification:
++        {
++            if ( qualifier & 0x01 ) {
++                data +=3D (char)0xAD;
++                data +=3D (char)0x02;
++                data +=3D (char)0x73;
++                data +=3D (char)0x65;
++            }
++        }
++        break;
 +
-+	atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
-+						OFONO_ATOM_TYPE_USSD);
-+	if (!atom)
-+		return;
+         default: break;
+     }
+ =
+
+diff --git a/src/simapplication.cpp b/src/simapplication.cpp
+index 4af510b..a54ec10 100644
+--- a/src/simapplication.cpp
++++ b/src/simapplication.cpp
+@@ -281,6 +281,7 @@ const QString DemoSimApplication::getName()
+ #define MainMenu_Browser    9
+ #define MainMenu_DTMF       10
+ #define MainMenu_SendSS     11
++#define MainMenu_Language   12
+ =
+
+ #define SportsMenu_Chess        1
+ #define SportsMenu_Painting     2
+@@ -329,6 +330,10 @@ const QString DemoSimApplication::getName()
+ #define CoLRMenu_Interrogation    2
+ #define CoLRMenu_Deactivation     3
+ =
+
++#define Language_Specific       1
++#define Language_Non_Specific   2
++#define Language_Main           3
 +
-+	ussd =3D __ofono_atom_get_data(atom);
-+	if (ussd)
-+		__ofono_ussd_initiate_cancel(ussd);
-+
-+	if (stk->pending_cmd->send_ussd.alpha_id &&
-+			stk->pending_cmd->send_ussd.alpha_id[0])
-+		stk_alpha_id_unset(stk);
-+}
-+
-+static void send_ussd_callback(int error, int dcs, const unsigned char *ms=
-g,
-+				int msg_len, void *userdata)
-+{
-+	struct ofono_stk *stk =3D userdata;
-+	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
-+	struct stk_response rsp;
-+	enum sms_charset charset;
-+
-+	if (stk->pending_cmd->send_ussd.alpha_id &&
-+			stk->pending_cmd->send_ussd.alpha_id[0])
-+		stk_alpha_id_unset(stk);
-+
-+	memset(&rsp, 0, sizeof(rsp));
-+
-+	switch (error) {
-+	case 0:
-+		if (cbs_dcs_decode(dcs, NULL, NULL, &charset,
-+					NULL, NULL, NULL)) {
-+			if (charset =3D=3D SMS_CHARSET_7BIT)
-+				rsp.send_ussd.text.dcs =3D 0x00;
-+			else if (charset =3D=3D SMS_CHARSET_8BIT)
-+				rsp.send_ussd.text.dcs =3D 0x04;
-+			else if (charset =3D=3D SMS_CHARSET_UCS2)
-+				rsp.send_ussd.text.dcs =3D 0x08;
-+
-+			rsp.result.type =3D STK_RESULT_TYPE_SUCCESS;
-+			rsp.send_ussd.text.text =3D msg;
-+			rsp.send_ussd.text.len =3D msg_len;
-+		} else {
-+			rsp.result.type =3D STK_RESULT_TYPE_USSD_RETURN_ERROR;
-+			rsp.result.additional =3D (unsigned char *) &error;
-+			rsp.result.additional_len =3D 1;
-+			rsp.send_ussd.text.dcs =3D -1;
-+		}
-+
-+		if (stk_respond(stk, &rsp, stk_command_cb))
-+			stk_command_cb(&failure, stk);
-+
-+		break;
-+	case -ECANCELED:
-+		send_simple_response(stk,
-+				STK_RESULT_TYPE_USSD_OR_SS_USER_TERMINATION);
-+		break;
-+	case -ETIMEDOUT:
-+		send_simple_response(stk, STK_RESULT_TYPE_NETWORK_UNAVAILABLE);
-+		break;
-+	default:
-+		rsp.result.type =3D STK_RESULT_TYPE_USSD_RETURN_ERROR;
-+		rsp.result.additional =3D (unsigned char *) &error;
-+		rsp.result.additional_len =3D 1;
-+		rsp.send_ussd.text.dcs =3D -1;
-+
-+		if (stk_respond(stk, &rsp, stk_command_cb))
-+			stk_command_cb(&failure, stk);
-+
-+		break;
-+	}
-+}
-+
-+static gboolean handle_command_send_ussd(const struct stk_command *cmd,
-+					struct stk_response *rsp,
-+					struct ofono_stk *stk)
-+{
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
-+	static unsigned char busy_on_ss_result[] =3D { 0x03 };
-+	static unsigned char busy_on_ussd_result[] =3D { 0x08 };
-+	struct ofono_atom *atom;
-+	struct ofono_ussd *ussd;
-+	int err;
-+
-+	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_FORWARDING);
-+	if (atom && __ofono_atom_get_registered(atom)) {
-+		struct ofono_call_forwarding *cf =3D __ofono_atom_get_data(atom);
-+
-+		if (__ofono_call_forwarding_is_busy(cf)) {
-+			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
-+			rsp->result.additional =3D busy_on_ss_result;
-+			return TRUE;
-+		}
-+	}
-+
-+	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_BARRING);
-+	if (atom && __ofono_atom_get_registered(atom)) {
-+		struct ofono_call_barring *cb =3D __ofono_atom_get_data(atom);
-+
-+		if (__ofono_call_barring_is_busy(cb)) {
-+			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
-+			rsp->result.additional =3D busy_on_ss_result;
-+			return TRUE;
-+		}
-+	}
-+
-+	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_SETTINGS);
-+	if (atom && __ofono_atom_get_registered(atom)) {
-+		struct ofono_call_settings *cs =3D __ofono_atom_get_data(atom);
-+
-+		if (__ofono_call_settings_is_busy(cs)) {
-+			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
-+			rsp->result.additional =3D busy_on_ss_result;
-+			return TRUE;
-+		}
-+	}
-+
-+	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_USSD);
-+	if (!atom || !__ofono_atom_get_registered(atom)) {
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+	}
-+
-+	ussd =3D __ofono_atom_get_data(atom);
-+	if (__ofono_ussd_is_busy(ussd)) {
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		rsp->result.additional_len =3D sizeof(busy_on_ussd_result);
-+		rsp->result.additional =3D busy_on_ussd_result;
-+		return TRUE;
-+	}
-+
-+	err =3D __ofono_ussd_initiate(ussd, cmd->send_ussd.ussd_string.dcs,
-+					cmd->send_ussd.ussd_string.string,
-+					cmd->send_ussd.ussd_string.len,
-+					send_ussd_callback, stk);
-+
-+	if (err >=3D 0) {
-+		stk->cancel_cmd =3D send_ussd_cancel;
-+
-+		return FALSE;
-+	}
-+
-+	if (err =3D=3D -ENOSYS) {
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+	}
-+
-+	if (err =3D=3D -EBUSY) {
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		rsp->result.additional_len =3D sizeof(busy_on_ussd_result);
-+		rsp->result.additional =3D busy_on_ussd_result;
-+		return TRUE;
-+	}
-+
-+	if (cmd->send_ussd.alpha_id && cmd->send_ussd.alpha_id[0])
-+		stk_alpha_id_set(stk, cmd->send_ussd.alpha_id);
-+
-+	return FALSE;
-+}
-+
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
+ void DemoSimApplication::mainMenu()
  {
- 	if (stk->immediate_response)
-@@ -1740,7 +1908,10 @@ void ofono_stk_proactive_command_notify(struct ofono=
-_stk *stk,
- 		respond =3D handle_command_set_up_call(stk->pending_cmd,
- 							&rsp, stk);
- 		break;
--
-+	case STK_COMMAND_TYPE_SEND_USSD:
-+		respond =3D handle_command_send_ussd(stk->pending_cmd,
-+							&rsp, stk);
-+		break;
- 	default:
- 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
- 		break;
+     QSimCommand cmd;
+@@ -381,6 +386,10 @@ void DemoSimApplication::mainMenu()
+     item.setLabel( "Send SS" );
+     items +=3D item;
+ =
+
++    item.setIdentifier( MainMenu_Language );
++    item.setLabel( "Language Notification" );
++    items +=3D item;
++
+     cmd.setMenuItems( items );
+ =
+
+     command( cmd, 0, 0 );
+@@ -481,6 +490,12 @@ void DemoSimApplication::mainMenuSelection( int id )
+         }
+         break;
+ =
+
++        case MainMenu_Language:
++        {
++            sendLanguageMenu();
++        }
++        break;
++
+         default:
+         {
+             // Don't know what this item is, so just re-display the main m=
+enu.
+@@ -1642,3 +1657,56 @@ void DemoSimApplication::CoLRMenu( const QSimTermina=
+lResponse& resp )
+         endSession();
+     }
+ }
++
++void DemoSimApplication::sendLanguageMenu()
++{
++    QSimCommand cmd;
++    QSimMenuItem item;
++    QList<QSimMenuItem> items;
++
++    cmd.setType( QSimCommand::SelectItem );
++    cmd.setTitle( "Language Notification" );
++
++    item.setIdentifier( Language_Specific );
++    item.setLabel( "Specific Language" );
++    items +=3D item;
++
++    item.setIdentifier( Language_Non_Specific );
++    item.setLabel( "Non-Specific Language" );
++    items +=3D item;
++
++    item.setIdentifier( Language_Main );
++    item.setLabel( "Return to main menu" );
++    items +=3D item;
++
++    cmd.setMenuItems( items );
++
++    command( cmd, this, SLOT(languageMenu(QSimTerminalResponse)) );
++}
++
++void DemoSimApplication::languageMenu( const QSimTerminalResponse& resp )
++{
++    QSimCommand cmd;
++
++    if ( resp.result() =3D=3D QSimTerminalResponse::Success ) {
++        cmd.setDestinationDevice( QSimCommand::ME );
++        cmd.setSourceDevice( QSimCommand::SIM );
++        cmd.setType( QSimCommand::LanguageNotification );
++
++        // Item selected.
++        switch ( resp.menuItem() ) {
++        case Language_Specific:
++            cmd.setQualifier( 1 );
++            command( cmd, this, SLOT(sendLanguageMenu()) );
++            break;
++        case Language_Non_Specific:
++            cmd.setQualifier( 0 );
++            command( cmd, this, SLOT(sendLanguageMenu()) );
++            break;
++        default:
++            endSession();
++            break;
++        }
++    } else
++        endSession();
++}
+diff --git a/src/simapplication.h b/src/simapplication.h
+index 0f67317..fc57423 100644
+--- a/src/simapplication.h
++++ b/src/simapplication.h
+@@ -109,6 +109,8 @@ protected slots:
+     void CoLPMenu( const QSimTerminalResponse& resp );
+     void sendCoLRMenu();
+     void CoLRMenu( const QSimTerminalResponse& resp );
++    void sendLanguageMenu();
++    void languageMenu( const QSimTerminalResponse& resp );
+ =
+
+ private:
+     int sticksLeft;
 -- =
 
 1.7.0.4
 
 
---===============8114940579385013590==--
+--===============0923150267207816368==--
 
