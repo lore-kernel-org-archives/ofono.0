@@ -1,172 +1,239 @@
-Content-Type: multipart/mixed; boundary="===============7037205988134626915=="
+Content-Type: multipart/mixed; boundary="===============1572168707631051295=="
 MIME-Version: 1.0
-From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: [RFC PATCH 1/2] smsutil: national to international conversion in
- status report
-Date: Tue, 14 Sep 2010 20:38:45 +0300
-Message-ID: <1284485926-5255-1-git-send-email-petteri.tikander@ixonos.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 6/8] Add __ofono_ussd_initiate internal api for Sending
+ USSD
+Date: Tue, 14 Sep 2010 12:45:12 -0500
+Message-ID: <4C8FB4A8.9050303@gmail.com>
+In-Reply-To: <1284418817-28575-7-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7037205988134626915==
+--===============1572168707631051295==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/smsutil.c |   70 ++++++++++++++++++++++++++++++++++++++++++++---------=
----
- 1 files changed, 55 insertions(+), 15 deletions(-)
+Hi Jeevaka,
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 26c7951..2d47289 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -2826,14 +2826,18 @@ gboolean status_report_assembly_report(struct statu=
-s_report_assembly *assembly,
- 	unsigned int offset =3D status_report->status_report.mr / 32;
- 	unsigned int bit =3D 1 << (status_report->status_report.mr % 32);
- 	struct id_table_node *node =3D NULL;
--	const char *straddr;
-+	const char *straddr, *sent_addr;
-+	struct sms_address addr;
- 	GHashTable *id_table;
- 	gpointer key, value;
- 	gboolean delivered;
--	GHashTableIter iter;
-+	GHashTableIter iter_addr, iter;
- 	gboolean pending;
- 	int i;
- 	unsigned int msg_id;
-+	unsigned int n_digits;
-+	unsigned int len_sent_addr;
-+	unsigned int len_rec_addr;
- =
+On 09/13/2010 06:00 PM, Jeevaka Badrappan wrote:
+> ---
+>  src/ofono.h |    7 +++++
+>  src/ussd.c  |   86 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++++-
+>  2 files changed, 92 insertions(+), 1 deletions(-)
+> =
 
- 	/* We ignore temporary or tempfinal status reports */
- 	if (sr_st_to_delivered(status_report->status_report.st,
-@@ -2841,20 +2845,54 @@ gboolean status_report_assembly_report(struct statu=
-s_report_assembly *assembly,
- 		return FALSE;
- =
+> diff --git a/src/ofono.h b/src/ofono.h
+> index f1c0973..8ab6a2e 100644
+> --- a/src/ofono.h
+> +++ b/src/ofono.h
+> @@ -258,6 +258,9 @@ typedef gboolean (*ofono_ussd_passwd_cb_t)(const char=
+ *sc,
+>  					const char *old, const char *new,
+>  					DBusMessage *msg, void *data);
+>  =
 
- 	straddr =3D sms_address_to_string(&status_report->status_report.raddr);
--	id_table =3D g_hash_table_lookup(assembly->assembly_table, straddr);
- =
+> +typedef void (*ofono_ussd_request_cb_t)(int error, int dcs,
+> +					const unsigned char *pdu, int len, void *data);
+> +
+>  gboolean __ofono_ussd_ssc_register(struct ofono_ussd *ussd, const char *=
+sc,
+>  					ofono_ussd_ssc_cb_t cb, void *data,
+>  					ofono_destroy_func destroy);
+> @@ -269,6 +272,10 @@ gboolean __ofono_ussd_passwd_register(struct ofono_u=
+ssd *ussd, const char *sc,
+>  void __ofono_ussd_passwd_unregister(struct ofono_ussd *ussd, const char =
+*sc);
+>  gboolean __ofono_ussd_is_busy(struct ofono_ussd *ussd);
+>  =
 
--	/* key (receiver address) does not exist in assembly */
--	if (id_table =3D=3D NULL)
--		return FALSE;
-+	g_hash_table_iter_init(&iter_addr, assembly->assembly_table);
- =
+> +int __ofono_ussd_initiate(struct ofono_ussd *ussd, int dcs,
+> +			const unsigned char *pdu, int len,
+> +			ofono_ussd_request_cb_t cb, void *user_data);
+> +
 
--	g_hash_table_iter_init(&iter, id_table);
--	while (g_hash_table_iter_next(&iter, &key, &value)) {
--		node =3D value;
-+	/*
-+	 * Go through all addresses. Each address can relate to
-+	 * 1-n msg_ids.
-+	 */
-+	while (g_hash_table_iter_next(&iter_addr, (gpointer) &sent_addr,
-+					(gpointer) &id_table)) {
-+		/*
-+		 * Some networks can change address to international format,
-+		 * although address is sent in the national format.
-+		 * So notify this special case by checking only
-+		 * last six digits. If address contains less than six digits,
-+		 * compare only existing digits.
-+		 */
-+		if ((straddr[0] =3D=3D '+') && (sent_addr[0] !=3D '+')) {
-+			len_sent_addr =3D strlen(sent_addr);
-+			len_rec_addr =3D strlen(straddr);
-+			n_digits =3D (len_sent_addr > 6) ? 6 : len_sent_addr;
- =
+Do we need a cancel here as well?  In case the SIM cancels the session.
 
--		if (node->mrs[offset] & bit)
--			break;
-+			if (strcmp(&straddr[len_rec_addr - n_digits],
-+					&sent_addr[len_sent_addr - n_digits]))
-+				continue;
-+		}
-+		/*
-+		 * In other cases the whole number received in the status report
-+		 * should match with the number originally sent.
-+		 */
-+		else if (strcmp(straddr, sent_addr))
-+				continue;
-+
-+		g_hash_table_iter_init(&iter, id_table);
-+		while (g_hash_table_iter_next(&iter, &key, &value)) {
-+			node =3D value;
-+
-+			if (node->mrs[offset] & bit)
-+				break;
- =
+>  #include <ofono/netreg.h>
+>  =
 
--		node =3D NULL;
-+			node =3D NULL;
-+		}
-+
-+		/*
-+		 * Received address with MR matched with one of the stored
-+		 * addresses and MR, so no need to continue searching.
-+		 */
-+		if (node)
-+			break;
- 	}
- =
+>  typedef void (*ofono_netreg_status_notify_cb_t)(int status, int lac, int=
+ ci,
+> diff --git a/src/ussd.c b/src/ussd.c
+> index 8d9c98d..af0aae1 100644
+> --- a/src/ussd.c
+> +++ b/src/ussd.c
+> @@ -49,6 +49,15 @@ enum ussd_state {
+>  	USSD_STATE_RESPONSE_SENT,
+>  };
+>  =
 
- 	/* Unable to find a message reference belonging to this address */
-@@ -2881,6 +2919,8 @@ gboolean status_report_assembly_report(struct status_=
-report_assembly *assembly,
- =
+> +struct ussd_request {
+> +	struct ofono_ussd *ussd;
+> +	int dcs;
+> +	unsigned char *pdu;
+> +	int len;
+> +	ofono_ussd_request_cb_t cb;
+> +	void *user_data;
+> +};
+> +
+>  struct ofono_ussd {
+>  	int state;
+>  	DBusMessage *pending;
+> @@ -59,6 +68,7 @@ struct ofono_ussd {
+>  	const struct ofono_ussd_driver *driver;
+>  	void *driver_data;
+>  	struct ofono_atom *atom;
+> +	struct ussd_request *req;
+>  };
+>  =
 
- 	msg_id =3D *(unsigned int *) key;
- =
+>  struct ssc_entry {
+> @@ -73,7 +83,7 @@ gboolean __ofono_ussd_is_busy(struct ofono_ussd *ussd)
+>  	if (!ussd)
+>  		return FALSE;
+>  =
 
-+	sms_address_from_string(&addr, sent_addr);
-+
- 	if (pending =3D=3D TRUE && node->deliverable =3D=3D TRUE) {
- 		/*
- 		 * More status reports expected, and already received
-@@ -2888,7 +2928,7 @@ gboolean status_report_assembly_report(struct status_=
-report_assembly *assembly,
- 		 */
- 		sr_assembly_add_fragment_backup(
- 					assembly->imsi, node,
--					&status_report->status_report.raddr,
-+					&addr,
- 					msg_id);
- =
+> -	if (ussd->pending || ussd->state !=3D USSD_STATE_IDLE)
+> +	if (ussd->pending || ussd->state !=3D USSD_STATE_IDLE || ussd->req)
+>  		return TRUE;
 
- 		return FALSE;
-@@ -2901,14 +2941,14 @@ gboolean status_report_assembly_report(struct statu=
-s_report_assembly *assembly,
- 		*out_id =3D msg_id;
- =
+You might also want to make sure that initiate / respond / cancel cannot
+interfere with the SIM request.
 
- 	sr_assembly_remove_fragment_backup(assembly->imsi,
--					&status_report->status_report.raddr,
-+					&addr,
- 					msg_id);
- =
+>  =
 
- 	g_hash_table_iter_remove(&iter);
- =
+>  	return FALSE;
+> @@ -320,6 +330,31 @@ static void ussd_change_state(struct ofono_ussd *uss=
+d, int state)
+>  			"State", DBUS_TYPE_STRING, &value);
+>  }
+>  =
 
- 	if (g_hash_table_size(id_table) =3D=3D 0)
- 		g_hash_table_remove(assembly->assembly_table,
--				status_report->status_report.raddr.address);
-+					sent_addr);
- =
+> +static void ussd_request_finish(struct ofono_ussd *ussd, int error, int =
+dcs,
+> +				const unsigned char *pdu, int len)
+> +{
+> +	struct ussd_request *req =3D ussd->req;
+> +
+> +	if (req && req->cb) {
+> +		req->cb(error, dcs, pdu, len, req->user_data);
 
- 	return TRUE;
- }
--- =
+> +		g_free(req->pdu);
+> +		g_free(req);
+> +		ussd->req =3D NULL;
 
-1.6.3.3
+What if req->cb is NULL?
 
+> +	}
+> +}
+> +
+> +static int ussd_status_to_failure_code(int status)
+> +{
+> +	switch (status) {
+> +	case OFONO_USSD_STATUS_TIMED_OUT:
+> +		return -ETIMEDOUT;
+> +	case OFONO_USSD_STATUS_NOT_SUPPORTED:
+> +		return -ENOSYS;
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+>  void ofono_ussd_notify(struct ofono_ussd *ussd, int status, int dcs,
+>  			const unsigned char *data, int data_len)
+>  {
+> @@ -332,6 +367,19 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int =
+status, int dcs,
+>  	DBusMessageIter iter;
+>  	DBusMessageIter variant;
+>  =
 
+> +	if (ussd->req &&
+> +		(status =3D=3D OFONO_USSD_STATUS_NOTIFY ||
+> +		status =3D=3D OFONO_USSD_STATUS_TERMINATED ||
+> +		status =3D=3D OFONO_USSD_STATUS_TIMED_OUT ||
+> +		status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED)) {
+> +
 
---===============7037205988134626915==--
+Please check coding style section M4
+
+So what happens if the network sends a ACTION_REQUIRED as a response to
+the STK ussd?
+
+> +		ussd_request_finish(ussd, ussd_status_to_failure_code(status),
+> +					dcs, data, data_len);
+> +
+> +		ussd_change_state(ussd, USSD_STATE_IDLE);
+> +		return;
+> +	}
+> +
+>  	if (status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED) {
+>  		ussd_change_state(ussd, USSD_STATE_IDLE);
+>  =
+
+> @@ -577,6 +625,9 @@ static void ussd_cancel_callback(const struct ofono_e=
+rror *error, void *data)
+>  	reply =3D dbus_message_new_method_return(ussd->cancel);
+>  	__ofono_dbus_pending_reply(&ussd->cancel, reply);
+>  =
+
+> +	if (ussd->req)
+> +		ussd_request_finish(ussd, -1, -ECANCELED, NULL, -1);
+> +
+>  	ussd_change_state(ussd, USSD_STATE_IDLE);
+>  }
+>  =
+
+> @@ -775,3 +826,36 @@ void *ofono_ussd_get_data(struct ofono_ussd *ussd)
+>  {
+>  	return ussd->driver_data;
+>  }
+> +
+> +static void ussd_request_callback(const struct ofono_error *error, void =
+*data)
+> +{
+> +	struct ofono_ussd *ussd =3D data;
+> +
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
+> +		ussd_request_finish(ussd, error->error, -1, NULL, -1);
+> +	else
+> +		ussd_change_state(ussd,USSD_STATE_ACTIVE);
+
+Missing space after the comma
+
+> +}
+> +
+> +int __ofono_ussd_initiate(struct ofono_ussd *ussd, int dcs,
+> +				const unsigned char *pdu, int len,
+> +				ofono_ussd_request_cb_t cb, void *user_data)
+> +{
+> +	struct ussd_request *req;
+> +
+
+You might want to check the busy condition here as well, just to be
+pedantic.  This is what voicecall_dial does...
+
+> +	if (!ussd->driver->request)
+> +		return -ENOSYS;
+> +
+> +	req =3D g_try_new0(struct ussd_request, 1);
+> +	req->dcs =3D dcs;
+> +	req->pdu =3D g_memdup(pdu, len);
+> +	req->len =3D len;
+> +	req->cb =3D cb;
+> +	req->user_data =3D user_data;
+> +
+> +	ussd->req =3D req;
+> +
+> +	ussd->driver->request(ussd, dcs, pdu, len, ussd_request_callback, ussd);
+> +
+> +	return 0;
+> +}
+
+Regards,
+-Denis
+
+--===============1572168707631051295==--
 
