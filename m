@@ -1,236 +1,222 @@
-Content-Type: multipart/mixed; boundary="===============2375898060155287417=="
+Content-Type: multipart/mixed; boundary="===============8114940579385013590=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 2/4] Add __ofono_ussd_initiate internal api for Sending USSD
-Date: Tue, 14 Sep 2010 14:31:52 -0700
-Message-ID: <1284499912-19979-1-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <4C8FB4A8.9050303@gmail.com>
+Subject: [PATCH 3/4] stk: Handling of Send USSD proactive command
+Date: Tue, 14 Sep 2010 14:49:52 -0700
+Message-ID: <1284500992-20180-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1284418817-28575-8-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2375898060155287417==
+--===============8114940579385013590==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/ofono.h |    8 +++++
- src/ussd.c  |  101 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+---
- 2 files changed, 104 insertions(+), 5 deletions(-)
+ src/stk.c |  173 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 172 insertions(+), 1 deletions(-)
 
-diff --git a/src/ofono.h b/src/ofono.h
-index f1c0973..f64f149 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -258,6 +258,9 @@ typedef gboolean (*ofono_ussd_passwd_cb_t)(const char *=
-sc,
- 					const char *old, const char *new,
- 					DBusMessage *msg, void *data);
- =
-
-+typedef void (*ofono_ussd_request_cb_t)(int error, int dcs,
-+					const unsigned char *pdu, int len, void *data);
-+
- gboolean __ofono_ussd_ssc_register(struct ofono_ussd *ussd, const char *sc,
- 					ofono_ussd_ssc_cb_t cb, void *data,
- 					ofono_destroy_func destroy);
-@@ -269,6 +272,11 @@ gboolean __ofono_ussd_passwd_register(struct ofono_uss=
-d *ussd, const char *sc,
- void __ofono_ussd_passwd_unregister(struct ofono_ussd *ussd, const char *s=
-c);
- gboolean __ofono_ussd_is_busy(struct ofono_ussd *ussd);
- =
-
-+int __ofono_ussd_initiate(struct ofono_ussd *ussd, int dcs,
-+			const unsigned char *pdu, int len,
-+			ofono_ussd_request_cb_t cb, void *user_data);
-+void __ofono_ussd_initiate_cancel(struct ofono_ussd *ussd);
-+
- #include <ofono/netreg.h>
- =
-
- typedef void (*ofono_netreg_status_notify_cb_t)(int status, int lac, int c=
-i,
-diff --git a/src/ussd.c b/src/ussd.c
-index f89345a..cb1d2e1 100644
---- a/src/ussd.c
-+++ b/src/ussd.c
-@@ -49,6 +49,15 @@ enum ussd_state {
- 	USSD_STATE_RESPONSE_SENT,
- };
- =
-
-+struct ussd_request {
-+	struct ofono_ussd *ussd;
-+	int dcs;
-+	unsigned char *pdu;
-+	int len;
-+	ofono_ussd_request_cb_t cb;
-+	void *user_data;
-+};
-+
- struct ofono_ussd {
- 	int state;
- 	DBusMessage *pending;
-@@ -59,6 +68,7 @@ struct ofono_ussd {
- 	const struct ofono_ussd_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	struct ussd_request *req;
- };
- =
-
- struct ssc_entry {
-@@ -73,7 +83,7 @@ gboolean __ofono_ussd_is_busy(struct ofono_ussd *ussd)
- 	if (!ussd)
- 		return FALSE;
- =
-
--	if (ussd->pending || ussd->state !=3D USSD_STATE_IDLE)
-+	if (ussd->pending || ussd->state !=3D USSD_STATE_IDLE || ussd->req)
- 		return TRUE;
- =
-
+diff --git a/src/stk.c b/src/stk.c
+index 04bfc65..f94643f 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -1590,6 +1590,174 @@ static gboolean handle_command_set_up_call(const st=
+ruct stk_command *cmd,
  	return FALSE;
-@@ -320,6 +330,31 @@ static void ussd_change_state(struct ofono_ussd *ussd,=
- int state)
- 			"State", DBUS_TYPE_STRING, &value);
  }
  =
 
-+static void ussd_request_finish(struct ofono_ussd *ussd, int error, int dc=
-s,
-+				const unsigned char *pdu, int len)
++static void send_ussd_cancel(struct ofono_stk *stk)
 +{
-+	struct ussd_request *req =3D ussd->req;
++	struct ofono_ussd *ussd;
++	struct ofono_atom *atom;
 +
-+	if (req && req->cb)
-+		req->cb(error, dcs, pdu, len, req->user_data);
-+
-+	g_free(req->pdu);
-+	g_free(req);
-+	ussd->req =3D NULL;
-+}
-+
-+static int ussd_status_to_failure_code(int status)
-+{
-+	switch (status) {
-+	case OFONO_USSD_STATUS_TIMED_OUT:
-+		return -ETIMEDOUT;
-+	case OFONO_USSD_STATUS_NOT_SUPPORTED:
-+		return -ENOSYS;
-+	}
-+
-+	return 0;
-+}
-+
- void ofono_ussd_notify(struct ofono_ussd *ussd, int status, int dcs,
- 			const unsigned char *data, int data_len)
- {
-@@ -332,6 +367,18 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int st=
-atus, int dcs,
- 	DBusMessageIter iter;
- 	DBusMessageIter variant;
- =
-
-+	if (ussd->req &&
-+			(status =3D=3D OFONO_USSD_STATUS_NOTIFY ||
-+			status =3D=3D OFONO_USSD_STATUS_TERMINATED ||
-+			status =3D=3D OFONO_USSD_STATUS_TIMED_OUT ||
-+			status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED)) {
-+		ussd_request_finish(ussd, ussd_status_to_failure_code(status),
-+					dcs, data, data_len);
-+
-+		ussd_change_state(ussd, USSD_STATE_IDLE);
++	atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
++						OFONO_ATOM_TYPE_USSD);
++	if (!atom)
 +		return;
++
++	ussd =3D __ofono_atom_get_data(atom);
++	if (ussd)
++		__ofono_ussd_initiate_cancel(ussd);
++
++	if (stk->pending_cmd->send_ussd.alpha_id &&
++			stk->pending_cmd->send_ussd.alpha_id[0])
++		stk_alpha_id_unset(stk);
++}
++
++static void send_ussd_callback(int error, int dcs, const unsigned char *ms=
+g,
++				int msg_len, void *userdata)
++{
++	struct ofono_stk *stk =3D userdata;
++	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
++	struct stk_response rsp;
++	enum sms_charset charset;
++
++	if (stk->pending_cmd->send_ussd.alpha_id &&
++			stk->pending_cmd->send_ussd.alpha_id[0])
++		stk_alpha_id_unset(stk);
++
++	memset(&rsp, 0, sizeof(rsp));
++
++	switch (error) {
++	case 0:
++		if (cbs_dcs_decode(dcs, NULL, NULL, &charset,
++					NULL, NULL, NULL)) {
++			if (charset =3D=3D SMS_CHARSET_7BIT)
++				rsp.send_ussd.text.dcs =3D 0x00;
++			else if (charset =3D=3D SMS_CHARSET_8BIT)
++				rsp.send_ussd.text.dcs =3D 0x04;
++			else if (charset =3D=3D SMS_CHARSET_UCS2)
++				rsp.send_ussd.text.dcs =3D 0x08;
++
++			rsp.result.type =3D STK_RESULT_TYPE_SUCCESS;
++			rsp.send_ussd.text.text =3D msg;
++			rsp.send_ussd.text.len =3D msg_len;
++		} else {
++			rsp.result.type =3D STK_RESULT_TYPE_USSD_RETURN_ERROR;
++			rsp.result.additional =3D (unsigned char *) &error;
++			rsp.result.additional_len =3D 1;
++			rsp.send_ussd.text.dcs =3D -1;
++		}
++
++		if (stk_respond(stk, &rsp, stk_command_cb))
++			stk_command_cb(&failure, stk);
++
++		break;
++	case -ECANCELED:
++		send_simple_response(stk,
++				STK_RESULT_TYPE_USSD_OR_SS_USER_TERMINATION);
++		break;
++	case -ETIMEDOUT:
++		send_simple_response(stk, STK_RESULT_TYPE_NETWORK_UNAVAILABLE);
++		break;
++	default:
++		rsp.result.type =3D STK_RESULT_TYPE_USSD_RETURN_ERROR;
++		rsp.result.additional =3D (unsigned char *) &error;
++		rsp.result.additional_len =3D 1;
++		rsp.send_ussd.text.dcs =3D -1;
++
++		if (stk_respond(stk, &rsp, stk_command_cb))
++			stk_command_cb(&failure, stk);
++
++		break;
++	}
++}
++
++static gboolean handle_command_send_ussd(const struct stk_command *cmd,
++					struct stk_response *rsp,
++					struct ofono_stk *stk)
++{
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
++	static unsigned char busy_on_ss_result[] =3D { 0x03 };
++	static unsigned char busy_on_ussd_result[] =3D { 0x08 };
++	struct ofono_atom *atom;
++	struct ofono_ussd *ussd;
++	int err;
++
++	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_FORWARDING);
++	if (atom && __ofono_atom_get_registered(atom)) {
++		struct ofono_call_forwarding *cf =3D __ofono_atom_get_data(atom);
++
++		if (__ofono_call_forwarding_is_busy(cf)) {
++			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
++			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
++			rsp->result.additional =3D busy_on_ss_result;
++			return TRUE;
++		}
 +	}
 +
- 	if (status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED) {
- 		ussd_change_state(ussd, USSD_STATE_IDLE);
- =
-
-@@ -465,10 +512,7 @@ static DBusMessage *ussd_initiate(DBusConnection *conn=
-, DBusMessage *msg,
- 	unsigned char buf[160];
- 	long num_packed;
- =
-
--	if (ussd->pending)
--		return __ofono_error_busy(msg);
++	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_BARRING);
++	if (atom && __ofono_atom_get_registered(atom)) {
++		struct ofono_call_barring *cb =3D __ofono_atom_get_data(atom);
++
++		if (__ofono_call_barring_is_busy(cb)) {
++			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
++			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
++			rsp->result.additional =3D busy_on_ss_result;
++			return TRUE;
++		}
++	}
++
++	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_CALL_SETTINGS);
++	if (atom && __ofono_atom_get_registered(atom)) {
++		struct ofono_call_settings *cs =3D __ofono_atom_get_data(atom);
++
++		if (__ofono_call_settings_is_busy(cs)) {
++			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
++			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
++			rsp->result.additional =3D busy_on_ss_result;
++			return TRUE;
++		}
++	}
++
++	atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_USSD);
++	if (!atom || !__ofono_atom_get_registered(atom)) {
++		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
++		return TRUE;
++	}
++
++	ussd =3D __ofono_atom_get_data(atom);
++	if (__ofono_ussd_is_busy(ussd)) {
++		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
++		rsp->result.additional_len =3D sizeof(busy_on_ussd_result);
++		rsp->result.additional =3D busy_on_ussd_result;
++		return TRUE;
++	}
++
++	err =3D __ofono_ussd_initiate(ussd, cmd->send_ussd.ussd_string.dcs,
++					cmd->send_ussd.ussd_string.string,
++					cmd->send_ussd.ussd_string.len,
++					send_ussd_callback, stk);
++
++	if (err >=3D 0) {
++		stk->cancel_cmd =3D send_ussd_cancel;
++
++		return FALSE;
++	}
++
++	if (err =3D=3D -ENOSYS) {
++		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
++		return TRUE;
++	}
++
++	if (err =3D=3D -EBUSY) {
++		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
++		rsp->result.additional_len =3D sizeof(busy_on_ussd_result);
++		rsp->result.additional =3D busy_on_ussd_result;
++		return TRUE;
++	}
++
++	if (cmd->send_ussd.alpha_id && cmd->send_ussd.alpha_id[0])
++		stk_alpha_id_set(stk, cmd->send_ussd.alpha_id);
++
++	return FALSE;
++}
++
+ static void stk_proactive_command_cancel(struct ofono_stk *stk)
+ {
+ 	if (stk->immediate_response)
+@@ -1740,7 +1908,10 @@ void ofono_stk_proactive_command_notify(struct ofono=
+_stk *stk,
+ 		respond =3D handle_command_set_up_call(stk->pending_cmd,
+ 							&rsp, stk);
+ 		break;
 -
--	if (ussd->state !=3D USSD_STATE_IDLE)
-+	if (__ofono_ussd_is_busy(ussd))
- 		return __ofono_error_busy(msg);
- =
-
- 	if (dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &str,
-@@ -581,6 +625,9 @@ static void ussd_cancel_callback(const struct ofono_err=
-or *error, void *data)
- 	reply =3D dbus_message_new_method_return(ussd->cancel);
- 	__ofono_dbus_pending_reply(&ussd->cancel, reply);
- =
-
-+	if (ussd->req)
-+		ussd_request_finish(ussd, -1, -ECANCELED, NULL, -1);
-+
- 	ussd_change_state(ussd, USSD_STATE_IDLE);
- }
- =
-
-@@ -779,3 +826,47 @@ void *ofono_ussd_get_data(struct ofono_ussd *ussd)
- {
- 	return ussd->driver_data;
- }
-+
-+static void ussd_request_callback(const struct ofono_error *error, void *d=
-ata)
-+{
-+	struct ofono_ussd *ussd =3D data;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
-+		ussd_request_finish(ussd, error->error, -1, NULL, -1);
-+	else
-+		ussd_change_state(ussd, USSD_STATE_ACTIVE);
-+}
-+
-+int __ofono_ussd_initiate(struct ofono_ussd *ussd, int dcs,
-+				const unsigned char *pdu, int len,
-+				ofono_ussd_request_cb_t cb, void *user_data)
-+{
-+	struct ussd_request *req;
-+
-+	if (!ussd->driver->request)
-+		return -ENOSYS;
-+
-+	if (__ofono_ussd_is_busy(ussd))
-+		return -EBUSY;
-+
-+	req =3D g_try_new0(struct ussd_request, 1);
-+	req->dcs =3D dcs;
-+	req->pdu =3D g_memdup(pdu, len);
-+	req->len =3D len;
-+	req->cb =3D cb;
-+	req->user_data =3D user_data;
-+
-+	ussd->req =3D req;
-+
-+	ussd->driver->request(ussd, dcs, pdu, len, ussd_request_callback, ussd);
-+
-+	return 0;
-+}
-+
-+void __ofono_ussd_initiate_cancel(struct ofono_ussd *ussd)
-+{
-+	if (!ussd->req || !ussd->req->cb)
-+		return;
-+
-+	ussd->req->cb =3D NULL;
-+}
++	case STK_COMMAND_TYPE_SEND_USSD:
++		respond =3D handle_command_send_ussd(stk->pending_cmd,
++							&rsp, stk);
++		break;
+ 	default:
+ 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
+ 		break;
 -- =
 
 1.7.0.4
 
 
---===============2375898060155287417==--
+--===============8114940579385013590==--
 
