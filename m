@@ -1,44 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============2523833970145794410=="
+Content-Type: multipart/mixed; boundary="===============2823134206117866337=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] TODO: Add Support for Language Notification proactive command
-Date: Mon, 13 Sep 2010 23:56:43 -0700
-Message-ID: <1284447403-2705-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 2/6] Fix common misspellings in drivers
+Date: Tue, 14 Sep 2010 16:02:45 +0900
+Message-ID: <1284447765.2405.51.camel@localhost.localdomain>
+In-Reply-To: <AANLkTim_dpW=WF-s0oJmFd9E1dMwT43sypkMRrjMP9N-@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2523833970145794410==
+--===============2823134206117866337==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    6 ++++++
- 1 files changed, 6 insertions(+), 0 deletions(-)
+Hi Aki,
 
-diff --git a/TODO b/TODO
-index d41df04..8abf1c7 100644
---- a/TODO
-+++ b/TODO
-@@ -511,6 +511,12 @@ Sim Toolkit
-   Complexity: C2
-   Owner: Kristen Carlson Accardi <kristen@linux.intel.com>
- =
+> >> - * Copyright (C) 2010  Nokia Corporation and/or its subsidary(-ies).
+> >> + * Copyright (C) 2010  Nokia Corporation and/or its subsidiary(-ies).
+> >
+> > for these kind of changes, I prefer if you have buy in from the Nokia
+> > guys. Some companies have strict rules on the copyright header. I know
+> > that with Intel we try to follow them consistently for all projects. So
+> > if Nokia wants to "misspell" this, then that is fine with me actually.
+> =
 
-+- Support Language Notification proactive command.
-+
-+  Priority: Medium
-+  Complexity: C1
-+  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-+
- =
+> This is a real misspelling; in other places in the source tree it is
+> spelled correctly.
 
- Emergency Calls
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
--- =
+fair enough. And all of the patches have been pushed now.
 
-1.7.0.4
+Regards
+
+Marcel
 
 
---===============2523833970145794410==--
+
+--===============2823134206117866337==--
 
