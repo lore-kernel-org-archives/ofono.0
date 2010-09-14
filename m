@@ -1,239 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============1572168707631051295=="
+Content-Type: multipart/mixed; boundary="===============0832377690836023945=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 6/8] Add __ofono_ussd_initiate internal api for Sending
- USSD
-Date: Tue, 14 Sep 2010 12:45:12 -0500
-Message-ID: <4C8FB4A8.9050303@gmail.com>
-In-Reply-To: <1284418817-28575-7-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [online-impl-v2 PATCH 00/10] implement Online property
+Date: Tue, 14 Sep 2010 21:49:19 +0300
+Message-ID: <AANLkTinNFDnPKe5dNniR7thus-6TtacO5EoJCBQT=FKo@mail.gmail.com>
+In-Reply-To: <1283988973.6640.141.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1572168707631051295==
+--===============0832377690836023945==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi,
 
-On 09/13/2010 06:00 PM, Jeevaka Badrappan wrote:
-> ---
->  src/ofono.h |    7 +++++
->  src/ussd.c  |   86 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  2 files changed, 92 insertions(+), 1 deletions(-)
-> =
+2010/9/9 Marcel Holtmann <marcel@holtmann.org>:
+>> Here are 2nd stab at implementing Online property with various modem
+>> drivers.
+>
+> so I pushed most of them, but not all of them.
 
-> diff --git a/src/ofono.h b/src/ofono.h
-> index f1c0973..8ab6a2e 100644
-> --- a/src/ofono.h
-> +++ b/src/ofono.h
-> @@ -258,6 +258,9 @@ typedef gboolean (*ofono_ussd_passwd_cb_t)(const char=
- *sc,
->  					const char *old, const char *new,
->  					DBusMessage *msg, void *data);
->  =
+Ok. Cool.
 
-> +typedef void (*ofono_ussd_request_cb_t)(int error, int dcs,
-> +					const unsigned char *pdu, int len, void *data);
-> +
->  gboolean __ofono_ussd_ssc_register(struct ofono_ussd *ussd, const char *=
-sc,
->  					ofono_ussd_ssc_cb_t cb, void *data,
->  					ofono_destroy_func destroy);
-> @@ -269,6 +272,10 @@ gboolean __ofono_ussd_passwd_register(struct ofono_u=
-ssd *ussd, const char *sc,
->  void __ofono_ussd_passwd_unregister(struct ofono_ussd *ussd, const char =
-*sc);
->  gboolean __ofono_ussd_is_busy(struct ofono_ussd *ussd);
->  =
+> STE version needs testing by the STE guys, but I did run into some SIM
+> not ready issues with MBM when switching online/offline a few times. So
+> that needs to be looked into.
 
-> +int __ofono_ussd_initiate(struct ofono_ussd *ussd, int dcs,
-> +			const unsigned char *pdu, int len,
-> +			ofono_ussd_request_cb_t cb, void *user_data);
-> +
+Please have a peek in your AT log and see if there are some spurious
++GCAP: lines? My Dell 5530 branded MBM apparently sends internal
+AT+GCAP command. Command and its results gets echoed to the serial
+port which obviously confuses the AT parser. Perhaps most MBMs would
+benefit from registering dummy "+GCAP:".
 
-Do we need a cancel here as well?  In case the SIM cancels the session.
+> The Huawei has more and more issues with SIM not ready now. This needs
+> fixing anyway. I pushed the patch anymore to make these symptoms more
+> clear to everybody.
 
->  #include <ofono/netreg.h>
->  =
+I'll try to remember to fish out my Huawei from the junk box and see
+what it has to offer now. ;)
 
->  typedef void (*ofono_netreg_status_notify_cb_t)(int status, int lac, int=
- ci,
-> diff --git a/src/ussd.c b/src/ussd.c
-> index 8d9c98d..af0aae1 100644
-> --- a/src/ussd.c
-> +++ b/src/ussd.c
-> @@ -49,6 +49,15 @@ enum ussd_state {
->  	USSD_STATE_RESPONSE_SENT,
->  };
->  =
+-- =
 
-> +struct ussd_request {
-> +	struct ofono_ussd *ussd;
-> +	int dcs;
-> +	unsigned char *pdu;
-> +	int len;
-> +	ofono_ussd_request_cb_t cb;
-> +	void *user_data;
-> +};
-> +
->  struct ofono_ussd {
->  	int state;
->  	DBusMessage *pending;
-> @@ -59,6 +68,7 @@ struct ofono_ussd {
->  	const struct ofono_ussd_driver *driver;
->  	void *driver_data;
->  	struct ofono_atom *atom;
-> +	struct ussd_request *req;
->  };
->  =
+Pekka.Pessi mail at nokia.com
 
->  struct ssc_entry {
-> @@ -73,7 +83,7 @@ gboolean __ofono_ussd_is_busy(struct ofono_ussd *ussd)
->  	if (!ussd)
->  		return FALSE;
->  =
-
-> -	if (ussd->pending || ussd->state !=3D USSD_STATE_IDLE)
-> +	if (ussd->pending || ussd->state !=3D USSD_STATE_IDLE || ussd->req)
->  		return TRUE;
-
-You might also want to make sure that initiate / respond / cancel cannot
-interfere with the SIM request.
-
->  =
-
->  	return FALSE;
-> @@ -320,6 +330,31 @@ static void ussd_change_state(struct ofono_ussd *uss=
-d, int state)
->  			"State", DBUS_TYPE_STRING, &value);
->  }
->  =
-
-> +static void ussd_request_finish(struct ofono_ussd *ussd, int error, int =
-dcs,
-> +				const unsigned char *pdu, int len)
-> +{
-> +	struct ussd_request *req =3D ussd->req;
-> +
-> +	if (req && req->cb) {
-> +		req->cb(error, dcs, pdu, len, req->user_data);
-
-> +		g_free(req->pdu);
-> +		g_free(req);
-> +		ussd->req =3D NULL;
-
-What if req->cb is NULL?
-
-> +	}
-> +}
-> +
-> +static int ussd_status_to_failure_code(int status)
-> +{
-> +	switch (status) {
-> +	case OFONO_USSD_STATUS_TIMED_OUT:
-> +		return -ETIMEDOUT;
-> +	case OFONO_USSD_STATUS_NOT_SUPPORTED:
-> +		return -ENOSYS;
-> +	}
-> +
-> +	return 0;
-> +}
-> +
->  void ofono_ussd_notify(struct ofono_ussd *ussd, int status, int dcs,
->  			const unsigned char *data, int data_len)
->  {
-> @@ -332,6 +367,19 @@ void ofono_ussd_notify(struct ofono_ussd *ussd, int =
-status, int dcs,
->  	DBusMessageIter iter;
->  	DBusMessageIter variant;
->  =
-
-> +	if (ussd->req &&
-> +		(status =3D=3D OFONO_USSD_STATUS_NOTIFY ||
-> +		status =3D=3D OFONO_USSD_STATUS_TERMINATED ||
-> +		status =3D=3D OFONO_USSD_STATUS_TIMED_OUT ||
-> +		status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED)) {
-> +
-
-Please check coding style section M4
-
-So what happens if the network sends a ACTION_REQUIRED as a response to
-the STK ussd?
-
-> +		ussd_request_finish(ussd, ussd_status_to_failure_code(status),
-> +					dcs, data, data_len);
-> +
-> +		ussd_change_state(ussd, USSD_STATE_IDLE);
-> +		return;
-> +	}
-> +
->  	if (status =3D=3D OFONO_USSD_STATUS_NOT_SUPPORTED) {
->  		ussd_change_state(ussd, USSD_STATE_IDLE);
->  =
-
-> @@ -577,6 +625,9 @@ static void ussd_cancel_callback(const struct ofono_e=
-rror *error, void *data)
->  	reply =3D dbus_message_new_method_return(ussd->cancel);
->  	__ofono_dbus_pending_reply(&ussd->cancel, reply);
->  =
-
-> +	if (ussd->req)
-> +		ussd_request_finish(ussd, -1, -ECANCELED, NULL, -1);
-> +
->  	ussd_change_state(ussd, USSD_STATE_IDLE);
->  }
->  =
-
-> @@ -775,3 +826,36 @@ void *ofono_ussd_get_data(struct ofono_ussd *ussd)
->  {
->  	return ussd->driver_data;
->  }
-> +
-> +static void ussd_request_callback(const struct ofono_error *error, void =
-*data)
-> +{
-> +	struct ofono_ussd *ussd =3D data;
-> +
-> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
-> +		ussd_request_finish(ussd, error->error, -1, NULL, -1);
-> +	else
-> +		ussd_change_state(ussd,USSD_STATE_ACTIVE);
-
-Missing space after the comma
-
-> +}
-> +
-> +int __ofono_ussd_initiate(struct ofono_ussd *ussd, int dcs,
-> +				const unsigned char *pdu, int len,
-> +				ofono_ussd_request_cb_t cb, void *user_data)
-> +{
-> +	struct ussd_request *req;
-> +
-
-You might want to check the busy condition here as well, just to be
-pedantic.  This is what voicecall_dial does...
-
-> +	if (!ussd->driver->request)
-> +		return -ENOSYS;
-> +
-> +	req =3D g_try_new0(struct ussd_request, 1);
-> +	req->dcs =3D dcs;
-> +	req->pdu =3D g_memdup(pdu, len);
-> +	req->len =3D len;
-> +	req->cb =3D cb;
-> +	req->user_data =3D user_data;
-> +
-> +	ussd->req =3D req;
-> +
-> +	ussd->driver->request(ussd, dcs, pdu, len, ussd_request_callback, ussd);
-> +
-> +	return 0;
-> +}
-
-Regards,
--Denis
-
---===============1572168707631051295==--
+--===============0832377690836023945==--
 
