@@ -1,38 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============7833840098446492036=="
+Content-Type: multipart/mixed; boundary="===============2523833970145794410=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 2/6] Fix common misspellings in drivers
-Date: Tue, 14 Sep 2010 09:51:08 +0300
-Message-ID: <AANLkTim_dpW=WF-s0oJmFd9E1dMwT43sypkMRrjMP9N-@mail.gmail.com>
-In-Reply-To: <1284440921.2405.48.camel@localhost.localdomain>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] TODO: Add Support for Language Notification proactive command
+Date: Mon, 13 Sep 2010 23:56:43 -0700
+Message-ID: <1284447403-2705-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7833840098446492036==
+--===============2523833970145794410==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ TODO |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
-2010/9/14 Marcel Holtmann <marcel@holtmann.org>:
-> Hi Lucas,
->
->> - * Copyright (C) 2010 =C2=A0Nokia Corporation and/or its subsidary(-ies=
-).
->> + * Copyright (C) 2010 =C2=A0Nokia Corporation and/or its subsidiary(-ie=
-s).
->
-> for these kind of changes, I prefer if you have buy in from the Nokia
-> guys. Some companies have strict rules on the copyright header. I know
-> that with Intel we try to follow them consistently for all projects. So
-> if Nokia wants to "misspell" this, then that is fine with me actually.
+diff --git a/TODO b/TODO
+index d41df04..8abf1c7 100644
+--- a/TODO
++++ b/TODO
+@@ -511,6 +511,12 @@ Sim Toolkit
+   Complexity: C2
+   Owner: Kristen Carlson Accardi <kristen@linux.intel.com>
+ =
 
-This is a real misspelling; in other places in the source tree it is
-spelled correctly.
++- Support Language Notification proactive command.
++
++  Priority: Medium
++  Complexity: C1
++  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
++
+ =
 
-Cheers,
-Aki
+ Emergency Calls
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+-- =
 
---===============7833840098446492036==--
+1.7.0.4
+
+
+--===============2523833970145794410==--
 
