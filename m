@@ -1,57 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============3522371804161721934=="
+Content-Type: multipart/mixed; boundary="===============7652874659710901627=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] phonesim: simulate language notification in sim app
-Date: Wed, 15 Sep 2010 13:54:01 -0500
-Message-ID: <4C911649.6070505@gmail.com>
-In-Reply-To: <1284503275-21395-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] set phonesim character set to GSM
+Date: Wed, 15 Sep 2010 11:55:32 -0700
+Message-ID: <1284576932-6502-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3522371804161721934==
+--===============7652874659710901627==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+---
+ plugins/phonesim.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-On 09/14/2010 05:27 PM, Jeevaka Badrappan wrote:
-> ---
->  src/qsimcommand.cpp    |   11 ++++++++
->  src/simapplication.cpp |   68 ++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/simapplication.h   |    2 +
->  3 files changed, 81 insertions(+), 0 deletions(-)
-> =
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index d3caa20..7aa59ff 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -253,6 +253,8 @@ static int phonesim_enable(struct ofono_modem *modem)
+ 		data->chat =3D NULL;
+ 	}
+ =
 
-> diff --git a/src/qsimcommand.cpp b/src/qsimcommand.cpp
-> index 9a9a169..9746592 100644
-> --- a/src/qsimcommand.cpp
-> +++ b/src/qsimcommand.cpp
-> @@ -3280,6 +3280,17 @@ QByteArray QSimCommand::toPdu( QSimCommand::ToPduO=
-ptions options ) const
->          }
->          break;
->  =
++	g_at_chat_send(data->chat, "AT+CSCS=3D\"GSM\"", none_prefix, NULL, NULL, =
+NULL);
++
+ 	return 0;
+ }
+ =
 
-> +        case LanguageNotification:
-> +        {
-> +            if ( qualifier & 0x01 ) {
-> +                data +=3D (char)0xAD;
-> +                data +=3D (char)0x02;
-> +                data +=3D (char)0x73;
-> +                data +=3D (char)0x65;
-> +            }
-> +        }
-> +        break;
-> +
+-- =
 
-I'd really prefer that this wasn't completely hard-coded.  Can we make
-an enum of some sort, or even use a QString (null means no language
-object included)
+1.7.0.4
 
-Regards,
--Denis
 
---===============3522371804161721934==--
+--===============7652874659710901627==--
 
