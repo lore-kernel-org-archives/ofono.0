@@ -1,33 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============8976965156371923776=="
+Content-Type: multipart/mixed; boundary="===============3522371804161721934=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
-Subject: Re: [n900 PATCH 2/5] isigen: generic modem driver plugin for isimodems
-Date: Wed, 15 Sep 2010 20:07:05 +0200
-Message-ID: <5fe7a635c2abdce7711d8a5ddff2bb66@chewa.net>
-In-Reply-To: <1284569974-22505-3-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] phonesim: simulate language notification in sim app
+Date: Wed, 15 Sep 2010 13:54:01 -0500
+Message-ID: <4C911649.6070505@gmail.com>
+In-Reply-To: <1284503275-21395-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8976965156371923776==
+--===============3522371804161721934==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Jeevaka,
 
-   Hello
+On 09/14/2010 05:27 PM, Jeevaka Badrappan wrote:
+> ---
+>  src/qsimcommand.cpp    |   11 ++++++++
+>  src/simapplication.cpp |   68 ++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  src/simapplication.h   |    2 +
+>  3 files changed, 81 insertions(+), 0 deletions(-)
+> =
 
-Please. Don't put netlink *settings* in oFono. This kills the whole idea of
-having a common socket stack that can be shared by several processes. If
-you want to run against the Maemo kernel, then you have phonet-utils and
-sscd taking care of that anyway. As for the Meego kernel, it should get a
-up-to-date and patched Phonet stack as needed.
+> diff --git a/src/qsimcommand.cpp b/src/qsimcommand.cpp
+> index 9a9a169..9746592 100644
+> --- a/src/qsimcommand.cpp
+> +++ b/src/qsimcommand.cpp
+> @@ -3280,6 +3280,17 @@ QByteArray QSimCommand::toPdu( QSimCommand::ToPduO=
+ptions options ) const
+>          }
+>          break;
+>  =
 
--- =
+> +        case LanguageNotification:
+> +        {
+> +            if ( qualifier & 0x01 ) {
+> +                data +=3D (char)0xAD;
+> +                data +=3D (char)0x02;
+> +                data +=3D (char)0x73;
+> +                data +=3D (char)0x65;
+> +            }
+> +        }
+> +        break;
+> +
 
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net
-http://fi.linkedin.com/in/remidenis
+I'd really prefer that this wasn't completely hard-coded.  Can we make
+an enum of some sort, or even use a QString (null means no language
+object included)
 
+Regards,
+-Denis
 
---===============8976965156371923776==--
+--===============3522371804161721934==--
 
