@@ -1,38 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============2194496197624236884=="
+Content-Type: multipart/mixed; boundary="===============8976965156371923776=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/4] stk: Handling of Send USSD proactive command
-Date: Wed, 15 Sep 2010 12:15:20 -0500
-Message-ID: <4C90FF28.3010903@gmail.com>
-In-Reply-To: <1284500992-20180-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+Subject: Re: [n900 PATCH 2/5] isigen: generic modem driver plugin for isimodems
+Date: Wed, 15 Sep 2010 20:07:05 +0200
+Message-ID: <5fe7a635c2abdce7711d8a5ddff2bb66@chewa.net>
+In-Reply-To: <1284569974-22505-3-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2194496197624236884==
+--===============8976965156371923776==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
 
-On 09/14/2010 04:49 PM, Jeevaka Badrappan wrote:
-> ---
->  src/stk.c |  173 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  1 files changed, 172 insertions(+), 1 deletions(-)
->
+   Hello
 
-This patch has been applied, but refactored afterward.
+Please. Don't put netlink *settings* in oFono. This kills the whole idea of
+having a common socket stack that can be shared by several processes. If
+you want to run against the Maemo kernel, then you have phonet-utils and
+sscd taking care of that anyway. As for the Meego kernel, it should get a
+up-to-date and patched Phonet stack as needed.
 
-> +			rsp.result.type =3D STK_RESULT_TYPE_USSD_RETURN_ERROR;
-> +			rsp.result.additional =3D (unsigned char *) &error;
-> +			rsp.result.additional_len =3D 1;
+-- =
 
-This part made no sense to me, why are we sending our internal error
-enum to the SIM?
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net
+http://fi.linkedin.com/in/remidenis
 
-Regards,
--Denis
 
---===============2194496197624236884==--
+--===============8976965156371923776==--
 
