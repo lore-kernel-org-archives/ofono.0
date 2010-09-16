@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============0609004491304387720=="
+Content-Type: multipart/mixed; boundary="===============2515880637032906048=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [isimodem-ussd PATCH 4/5] isimodem/debug: debug USSD type
-Date: Thu, 16 Sep 2010 20:32:48 +0300
-Message-ID: <1284658369-1988-5-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1284658369-1988-4-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [isimodem-ussd PATCH 1/5] ussd.h: +CUSD is documented in 27.007
+ section 7.15
+Date: Thu, 16 Sep 2010 20:32:45 +0300
+Message-ID: <1284658369-1988-2-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1284658369-1988-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0609004491304387720==
+--===============2515880637032906048==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,53 +17,27 @@ Content-Transfer-Encoding: quoted-printable
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
 ---
- drivers/isimodem/debug.c |   13 +++++++++++++
- drivers/isimodem/debug.h |    1 +
- 2 files changed, 14 insertions(+), 0 deletions(-)
+ include/ussd.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/isimodem/debug.c b/drivers/isimodem/debug.c
-index b398797..d226c51 100644
---- a/drivers/isimodem/debug.c
-+++ b/drivers/isimodem/debug.c
-@@ -70,6 +70,19 @@ const char *ss_message_id_name(enum ss_message_id value)
- 	return "SS_<UNKNOWN>";
- }
+diff --git a/include/ussd.h b/include/ussd.h
+index 360ef00..82057f2 100644
+--- a/include/ussd.h
++++ b/include/ussd.h
+@@ -28,6 +28,7 @@ extern "C" {
  =
 
-+const char *ss_ussd_type_name(enum ss_ussd_type value)
-+{
-+	switch (value) {
-+		_(SS_GSM_USSD_MT_REPLY);
-+		_(SS_GSM_USSD_COMMAND);
-+		_(SS_GSM_USSD_REQUEST);
-+		_(SS_GSM_USSD_NOTIFY);
-+		_(SS_GSM_USSD_END);
-+	}
-+	return "SS_<UNKNOWN>";
-+}
-+
-+
- const char *ss_subblock_name(enum ss_subblock value)
- {
- 	switch (value) {
-diff --git a/drivers/isimodem/debug.h b/drivers/isimodem/debug.h
-index 1ad5547..f03f4ec 100644
---- a/drivers/isimodem/debug.h
-+++ b/drivers/isimodem/debug.h
-@@ -34,6 +34,7 @@
+ #include <ofono/types.h>
  =
 
- const char *ss_message_id_name(enum ss_message_id value);
- const char *ss_subblock_name(enum ss_subblock value);
-+const char *ss_ussd_type_name(enum ss_ussd_type value);
- =
-
- const char *mtc_isi_cause_name(enum mtc_isi_cause value);
- const char *mtc_message_id_name(enum mtc_message_id value);
++/* 3GPP TS 27.007 section 7.15, values for <m> */
+ enum ofono_ussd_status {
+ 	OFONO_USSD_STATUS_NOTIFY =3D 0,
+ 	OFONO_USSD_STATUS_ACTION_REQUIRED =3D 1,
 -- =
 
 1.7.0.4
 
 
---===============0609004491304387720==--
+--===============2515880637032906048==--
 
