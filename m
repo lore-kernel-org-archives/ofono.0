@@ -1,40 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============4484759924002212398=="
+Content-Type: multipart/mixed; boundary="===============3611885446224023567=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [n900 PATCH 2/5] isigen: generic modem driver plugin for isimodems
-Date: Thu, 16 Sep 2010 15:26:34 +0900
-Message-ID: <1284618394.2405.94.camel@localhost.localdomain>
-In-Reply-To: <AANLkTi=xzhegzPBPKPYnJLfbVRzyhwFZkGo2ZKtF49_r@mail.gmail.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] isimodem/ussd: clean const casts
+Date: Thu, 16 Sep 2010 16:50:06 +0300
+Message-ID: <1284645006-3361-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4484759924002212398==
+--===============3611885446224023567==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-> >> That is the goal if and when we have up-to-date kernel, but
-> >> we are not there yet.
-> >
-> > I don't see the point of adding temporary cruft to the main oFono
-> > repository then.
-> =
+---
+ drivers/isimodem/ussd.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-> Well, I see value in having oFono upstream work as-is with the current
-> MeeGo kernel. The plugin could of course reside somewhere else, but
-> that is just adding extra work for packagers. And it's not like we
-> can't fix the plugin once MeeGo has a proper kernel in place.
+diff --git a/drivers/isimodem/ussd.c b/drivers/isimodem/ussd.c
+index 19ba30e..2f4091c 100644
+--- a/drivers/isimodem/ussd.c
++++ b/drivers/isimodem/ussd.c
+@@ -119,7 +119,7 @@ error:
+ }
+ =
 
-what is the current state of Phonet support (including N900) and the
-current MeeGo kernel? Are we missing patches?
+ static GIsiRequest *ussd_send(GIsiClient *client,
+-				int dcs, uint8_t *str, size_t len,
++				int dcs, uint8_t const *str, size_t len,
+ 				void *data, GDestroyNotify notify)
+ {
+ 	const uint8_t msg[] =3D {
+@@ -135,7 +135,7 @@ static GIsiRequest *ussd_send(GIsiClient *client,
+ =
 
-Regards
+ 	const struct iovec iov[2] =3D {
+ 		{ (uint8_t *)msg, sizeof(msg) },
+-		{ str, len }
++		{ (uint8_t *)str, len }
+ 	};
+ =
 
-Marcel
+ 	return g_isi_vsend(client, iov, 2, SS_TIMEOUT,
+@@ -152,7 +152,7 @@ static void isi_request(struct ofono_ussd *ussd, int dc=
+s,
+ 	if (!cbd)
+ 		goto error;
+ =
+
+-	if (ussd_send(ud->client, dcs, (guint8 *) pdu, len, cbd, g_free))
++	if (ussd_send(ud->client, dcs, pdu, len, cbd, g_free))
+ 		return;
+ =
+
+ error:
+-- =
+
+1.7.0.4
 
 
-
---===============4484759924002212398==--
+--===============3611885446224023567==--
 
