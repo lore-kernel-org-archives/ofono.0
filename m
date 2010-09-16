@@ -1,39 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============8725655483435501166=="
+Content-Type: multipart/mixed; boundary="===============8360666924360938353=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [isimodem-ussd PATCH 0/5] USSD fixes
-Date: Thu, 16 Sep 2010 13:54:31 -0500
-Message-ID: <4C9267E7.6080801@gmail.com>
-In-Reply-To: <1284658369-1988-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH] phonesim: simulate language notification in sim app
+Date: Thu, 16 Sep 2010 14:41:41 -0500
+Message-ID: <4C9272F5.4080401@gmail.com>
+In-Reply-To: <1284662367-7004-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8725655483435501166==
+--===============8360666924360938353==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Jeevaka,
 
-On 09/16/2010 12:32 PM, Pekka.Pessi(a)nokia.com wrote:
-> Hi all,
-> =
+On 09/16/2010 01:39 PM, Jeevaka Badrappan wrote:
+> ---
+>  src/qsimcommand.cpp    |   38 ++++++++++++++++++++++++
+>  src/qsimcommand.h      |    3 ++
+>  src/simapplication.cpp |   76 ++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  src/simapplication.h   |    2 +
+>  4 files changed, 119 insertions(+), 0 deletions(-)
 
-> I've updated the isimodem ussd implementation to allow network-initiated
-> operations. I've added some debug logging to the core ussd, too.
-> =
-
-> The isimodem ussd now works with simple USSD applications with
-> puSS-Request and uSS-Requests, but uSS-Notifys while a mobile-originated
-> puSS-Request is pending seem not to work properly.
-> =
-
-
-All five patches have been pushed.  I did get a small compilation error
-(64 bit system).  Please check that the fix is appropriate.
+Patch looks good to me, applied.  Thanks.
 
 Regards,
 -Denis
 
---===============8725655483435501166==--
+--===============8360666924360938353==--
 
