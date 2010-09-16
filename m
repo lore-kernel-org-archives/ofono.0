@@ -1,45 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============8215608075287256186=="
+Content-Type: multipart/mixed; boundary="===============4407734507368678643=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+From: Aki Niemi <aki@protocolpolice.com>
 Subject: Re: [n900 PATCH 2/5] isigen: generic modem driver plugin for isimodems
-Date: Thu, 16 Sep 2010 00:00:50 +0200
-Message-ID: <44275fc19e27d37f9bebdc6657d9b44a@chewa.net>
-In-Reply-To: <AANLkTimnRCYk+SYt5HuWDhUHDWmeeohjQQNpjE7AYhGu@mail.gmail.com>
+Date: Thu, 16 Sep 2010 09:02:09 +0300
+Message-ID: <AANLkTi=xzhegzPBPKPYnJLfbVRzyhwFZkGo2ZKtF49_r@mail.gmail.com>
+In-Reply-To: <44275fc19e27d37f9bebdc6657d9b44a@chewa.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8215608075287256186==
+--===============4407734507368678643==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi R=C3=A9mi,
 
-On Thu, 16 Sep 2010 00:27:00 +0300, Pekka Pessi <ppessi@gmail.com> wrote:
-> 2010/9/15 R=C3=A9mi Denis-Courmont <remi@remlab.net>:
->> Please. Don't put netlink *settings* in oFono. This kills the whole idea
->> of having a common socket stack that can be shared by several processes.
->> If you want to run against the Maemo kernel, then you have phonet-utils
->> and sscd taking care of that anyway. As for the Meego kernel, it should
->> get a up-to-date and patched Phonet stack as needed.
-> =
+2010/9/16 R=C3=A9mi Denis-Courmont <remi@remlab.net>:
+>> That is the goal if and when we have up-to-date kernel, but
+>> we are not there yet.
+>
+> I don't see the point of adding temporary cruft to the main oFono
+> repository then.
 
-> I'm all for including settings as udev rules and driving the plugins
-> from udev.
+Well, I see value in having oFono upstream work as-is with the current
+MeeGo kernel. The plugin could of course reside somewhere else, but
+that is just adding extra work for packagers. And it's not like we
+can't fix the plugin once MeeGo has a proper kernel in place.
 
-Right.
+Cheers,
+Aki
 
-> That is the goal if and when we have up-to-date kernel, but
-> we are not there yet.
-
-I don't see the point of adding temporary cruft to the main oFono
-repository then.
-
--- =
-
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net
-http://fi.linkedin.com/in/remidenis
-
-
---===============8215608075287256186==--
+--===============4407734507368678643==--
 
