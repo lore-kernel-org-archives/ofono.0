@@ -1,230 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============0637590556612303888=="
+Content-Type: multipart/mixed; boundary="===============5696634633161342057=="
 MIME-Version: 1.0
-From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: Re: [RFC PATCH 1/2] smsutil: national to international conversion in
- status report
-Date: Fri, 17 Sep 2010 20:24:46 +0300
-Message-ID: <201009172024.47124.petteri.tikander@ixonos.com>
-In-Reply-To: <4C90EFF5.3060709@gmail.com>
+From: Bommaraju, Rajyalakshmi <rajyalakshmi.bommaraju@intel.com>
+Subject: RE: Description of Voice call history plugin patch
+Date: Fri, 17 Sep 2010 12:00:18 -0600
+Message-ID: <E1A1564674E5754FB00AB9AC949D5E3260C826D380@rrsmsx501.amr.corp.intel.com>
+In-Reply-To: <1284711409.2405.192.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0637590556612303888==
+--===============5696634633161342057==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Please see my comments below.
 
-> Hi Petteri,
+-----Original Message-----
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of Marcel Holtmann
+Sent: Friday, September 17, 2010 1:17 AM
+To: ofono(a)ofono.org
+Subject: Re: Description of Voice call history plugin patch
+Marcel,
+
+> Callhistory is a plugin loaded by ofono for persisting voice call history=
+ information in a disk file. Plugin exports dbus methods and signals as org=
+.ofono.callhistory interface. Whenever there is a voice call in the system,=
+ ofono calls the plugin with the infomation (lineid,calltype,start time, en=
+d time) , plugin writes the information into the file , increments the 'unr=
+ead' field in the header and sends out dbus signal with the number of unrea=
+d records. Client (dialer) requests history records by calling method "GetV=
+oiceHistory" exposed on the callhistory interface. After receiving informat=
+ion client calls the "SetVoiceHistoryRead" as an acknowledgement to indicat=
+e end of transaction. The pointers in the header are adjusted appropriately=
+ (explained clearly below).
 > =
 
-> On 09/15/2010 02:25 AM, Petteri Tikander wrote:
-> > ---
-> >  src/smsutil.c |   70
-> > ++++++++++++++++++++++++++++++++++++++++++++------------ 1 files change=
-d,
-> > 55 insertions(+), 15 deletions(-)
-> >
-> > diff --git a/src/smsutil.c b/src/smsutil.c
-> > index 26c7951..2d47289 100644
-> > --- a/src/smsutil.c
-> > +++ b/src/smsutil.c
-> > @@ -2826,14 +2826,18 @@ gboolean status_report_assembly_report(struct
-> > status_report_assembly *assembly, unsigned int offset =3D
-> > status_report->status_report.mr / 32;
-> >  	unsigned int bit =3D 1 << (status_report->status_report.mr % 32);
-> >  	struct id_table_node *node =3D NULL;
-> > -	const char *straddr;
-> > +	const char *straddr, *sent_addr;
-> > +	struct sms_address addr;
-> >  	GHashTable *id_table;
-> >  	gpointer key, value;
-> >  	gboolean delivered;
-> > -	GHashTableIter iter;
-> > +	GHashTableIter iter_addr, iter;
-> >  	gboolean pending;
-> >  	int i;
-> >  	unsigned int msg_id;
-> > +	unsigned int n_digits;
-> > +	unsigned int len_sent_addr;
-> > +	unsigned int len_rec_addr;
-> >
-> >  	/* We ignore temporary or tempfinal status reports */
-> >  	if (sr_st_to_delivered(status_report->status_report.st,
-> > @@ -2841,20 +2845,54 @@ gboolean status_report_assembly_report(struct
-> > status_report_assembly *assembly, return FALSE;
-> >
-> >  	straddr =3D sms_address_to_string(&status_report->status_report.raddr=
-);
-> > -	id_table =3D g_hash_table_lookup(assembly->assembly_table, straddr);
-> >
-> > -	/* key (receiver address) does not exist in assembly */
-> > -	if (id_table =3D=3D NULL)
-> > -		return FALSE;
-> > +	g_hash_table_iter_init(&iter_addr, assembly->assembly_table);
-> >
-> > -	g_hash_table_iter_init(&iter, id_table);
-> > -	while (g_hash_table_iter_next(&iter, &key, &value)) {
-> > -		node =3D value;
-> =
+> Design : Plugin uses memory mapped file for high performance input/output=
+ operations. File is used as cyclic queue for storing or reading records, i=
+t store s 50 records of 78bytes,hence fixed size file of 3916 bytes is used=
+. File's first 16 bytes were used for storing header, and next 3900 bytes f=
+or data. Header structure has head pointer, tail pointer,unread and lastid.=
+ Head pointer points to next slot for writing record into,tail for reading =
+record, unread for number of history records unread by client, lastid for i=
+d of the last record that is written.
 
-> So my thinking is that for efficiency purposes we should try the direct
-> lookup first.  We don't want to pay the penalty of walking the entire
-> hash table every time for networks that are 'sane'.  If that fails, fall
-> back to the 'fuzzy' lookup.  This would also make the code a bit easier
-> to follow I think...
+I am not buying into this performance argument at all. How many calls to
+you expect per second.
 
-OK. Direct lookup would do this same and look nicer. But I think (but not =
+Raji >> Even if there are not many calls, operating system takes care of fl=
+ushing the file to disk if there is any ofono crash. =
 
-sure) that g_hash_table_lookup() does similar looping internally, as my =
+ =
 
-addition for while-looping address-tables. Well I was already taking =
-
-g_hash_table_lookup() back, but just making the code uglier when adding =
-
-'international to national'-logic. That's because of iterating msg-id nodes=
-, =
-
-so solution lead to two node-iteration loops.
-
-My idea was to find suitable address&Mr-pair. So if address matches but MR =
-
-doesn't, let's continue (while-loop inside while-loop).
-Was your idea actually that this inefficency-problem in looping occurs actu=
-ally =
-
-in this point: if for some reason in sane networks the address matches, but=
- MR =
-
-doesn't, function continues looping although it shouldn't? And then it loop=
-s =
-
-the entire table. In 'insane'-networks this is OK, because function is not =
-
-comparing necessarily the whole address?
+> When the plugin is loaded by the ofono, it opens or creates a disk file o=
+f 3916 bytes size and maps it into fixed size memory space. Plugin reads th=
+e header of the file , if the 'unread' records is > 0 , a signal is sent ou=
+t on the dbus with the information of number of unread records. =
 
 > =
 
-> > +	/*
-> > +	 * Go through all addresses. Each address can relate to
-> > +	 * 1-n msg_ids.
-> > +	 */
-> > +	while (g_hash_table_iter_next(&iter_addr, (gpointer) &sent_addr,
-> > +					(gpointer) &id_table)) {
-> > +		/*
-> > +		 * Some networks can change address to international format,
-> > +		 * although address is sent in the national format.
-> > +		 * So notify this special case by checking only
-> > +		 * last six digits. If address contains less than six digits,
-> > +		 * compare only existing digits.
-> > +		 */
-> > +		if ((straddr[0] =3D=3D '+') && (sent_addr[0] !=3D '+')) {
+> Requesting data by client: =
+
+> When the client calls "GetVoiceHistory" method,plugin uses temp_tail and =
+temp_unread variables to accomplish sending data to client. It copies tail =
+pointer stored in the header into temporary tail pointer ,starts to read hi=
+story records one at a time from the location pointed by the temp tail poin=
+ter , copies the into dbus structure, increments the temp tail pointer by s=
+ize of the history record (78 bytes) and reads data from the next record lo=
+cation , this is repeated until it reaches head pointer. when all the unrea=
+d records are read then the dbus structure is sent to the client. Once the =
+data received, client needs to "SetVoiceHistoryRead" method to indicate tha=
+t it received the data. Plugin will update the tail pointer with the temp t=
+ail pointer and unread records number is decremented by temp_unread. Using =
+temp_tail and temp_unread variables protect from modifying the header if th=
+ere is any loss in data delivery. If client doesnt call 'SetVoiceHistoryRea=
+d' then the act
+ ua
+>  l header pointers wont be updated in the file. =
+
 > =
 
-> In theory it could also be vice-versa...
+> Writing record into the file:
+> When Ofono calls the plugin with call information (phone number, call typ=
+e, call start time , call end time), plugin increaments the lastid to creat=
+e record id for this record ,writes the record in the location pointed by h=
+ead, and the head pointer is incremented by size of record (78 bytes), "unr=
+ead" variable is incremented by 1. If the head reaches end of file (3916) t=
+hen it is reset it back to begining of the data portion of the file (16 byt=
+es). A dbus signal is sent out with number of current unread records. Plugi=
+n keeps writing the records in circular queue.
 
-OK. Let's also taking care of 'international to national'-case.
+This sounds all way too complicated. And the D-Bus API design is
+actually racy since there is no clear access control on the history
+information.
 
-> =
+I think the proper solution is to create a call history plugin that
+creates a D-Bus interface for a call history agent.
 
-> > +			len_sent_addr =3D strlen(sent_addr);
-> > +			len_rec_addr =3D strlen(straddr);
-> > +			n_digits =3D (len_sent_addr > 6) ? 6 : len_sent_addr;
-> >
-> > -		if (node->mrs[offset] & bit)
-> > -			break;
-> > +			if (strcmp(&straddr[len_rec_addr - n_digits],
-> > +					&sent_addr[len_sent_addr - n_digits]))
-> =
+That way we know when an agent is present to consume history information
+and only if none is present we have to cache it on disk. And once an
+agent becomes available flush the cached information.
 
-> Perhaps we should simply start at the last position of both strings and
-> compare in reverse.  If the match is MIN(6, strlen(sent_addr))
-> characters, then accept this as a 'fuzzy' match.
-> =
+And the cache should be just be done with a simply appending to a file
+and then truncating it after reading it.
 
+Raji >> Marcel, James Ketrenos discussed this design with you back in april=
+. I will send you the thread on that. I was under impression that you both =
+agreed on this design.
 
-OK. Lets' compare single characters in the reverse order.
+Thanks for feedback,
+Raji
 
-> > +				continue;
-> > +		}
-> > +		/*
-> > +		 * In other cases the whole number received in the status report
-> > +		 * should match with the number originally sent.
-> > +		 */
-> > +		else if (strcmp(straddr, sent_addr))
-> > +				continue;
-> > +
-> > +		g_hash_table_iter_init(&iter, id_table);
-> > +		while (g_hash_table_iter_next(&iter, &key, &value)) {
-> > +			node =3D value;
-> > +
-> > +			if (node->mrs[offset] & bit)
-> > +				break;
-> >
-> > -		node =3D NULL;
-> > +			node =3D NULL;
-> > +		}
-> > +
-> > +		/*
-> > +		 * Received address with MR matched with one of the stored
-> > +		 * addresses and MR, so no need to continue searching.
-> > +		 */
-> > +		if (node)
-> > +			break;
-> >  	}
-> >
-> >  	/* Unable to find a message reference belonging to this address */
-> > @@ -2881,6 +2919,8 @@ gboolean status_report_assembly_report(struct
-> > status_report_assembly *assembly,
-> >
-> >  	msg_id =3D *(unsigned int *) key;
-> >
-> > +	sms_address_from_string(&addr, sent_addr);
-> > +
-> >  	if (pending =3D=3D TRUE && node->deliverable =3D=3D TRUE) {
-> >  		/*
-> >  		 * More status reports expected, and already received
-> > @@ -2888,7 +2928,7 @@ gboolean status_report_assembly_report(struct
-> > status_report_assembly *assembly, */
-> >  		sr_assembly_add_fragment_backup(
-> >  					assembly->imsi, node,
-> > -					&status_report->status_report.raddr,
-> > +					&addr,
-> >  					msg_id);
-> >
-> >  		return FALSE;
-> > @@ -2901,14 +2941,14 @@ gboolean status_report_assembly_report(struct
-> > status_report_assembly *assembly, *out_id =3D msg_id;
-> >
-> >  	sr_assembly_remove_fragment_backup(assembly->imsi,
-> > -					&status_report->status_report.raddr,
-> > +					&addr,
-> >  					msg_id);
-> >
-> >  	g_hash_table_iter_remove(&iter);
-> >
-> >  	if (g_hash_table_size(id_table) =3D=3D 0)
-> >  		g_hash_table_remove(assembly->assembly_table,
-> > -				status_report->status_report.raddr.address);
-> > +					sent_addr);
-> >
-> >  	return TRUE;
-> >  }
-> =
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
 
-> Otherwise it looks good.
-> =
-
-> Regards,
-> -Denis
-> =
-
-
-Have a nice week end.
-
-Br, Petteri
-
-
---===============0637590556612303888==--
+--===============5696634633161342057==--
 
