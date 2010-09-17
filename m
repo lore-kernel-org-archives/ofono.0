@@ -1,50 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============1051131223100340908=="
+Content-Type: multipart/mixed; boundary="===============0216979587025792299=="
 MIME-Version: 1.0
-From: ext-arun.1.ravindran@nokia.com
-Subject: Simulation of MT release of call to spcial number
-Date: Fri, 17 Sep 2010 07:56:43 +0000
-Message-ID: <A6458DBAF4336C41B8A71E751B2B9D62012AE3@008-AM1MPN1-003.mgdnok.nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: Description of Voice call history plugin patch
+Date: Fri, 17 Sep 2010 17:07:09 +0900
+Message-ID: <1284710829.2405.183.camel@localhost.localdomain>
+In-Reply-To: <E1A1564674E5754FB00AB9AC949D5E3260C826D076@rrsmsx501.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1051131223100340908==
+--===============0216979587025792299==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
- Hi,
+Hi Raji,
 
-The phonesim patch "[PATCH] Simulation of MT release of call to spcial numb=
-er" simulates an MT release of calls to special number.
+> > Design : Plugin uses memory mapped file for high performance input/outp=
+ut operations. File is used as cyclic queue for storing or reading records,=
+ it store s 50 records of 78bytes,hence fixed size file of 3916 bytes is us=
+ed. File's first 16 bytes were used for storing header, and next 3900 bytes=
+ for data. Header structure has head pointer, tail pointer,unread and lasti=
+d. Head pointer points to next slot for writing record into,tail for readin=
+g record, unread for number of history records unread by client, lastid for=
+ id of the last record that is written.
+> =
 
-The number is 05123xx, where xx is the time in seconds before the call is r=
-eleased.
-eg: 0512310, will cause the call to be connected and then released after 10=
- seconds.
+> Just a couple quick points.  Memory mapped files do not really give any
+> benefit over read/write/lseek for small files (e.g. less than a few
+> pages) with small record sizes (e.g. less than a 4K page.)  In fact
+> they're probably slower in these cases.
+> =
 
+> > Locking: =
+
+> > Accessing Memory mapped file pointer , all header fields (head,tail,unr=
+ead,lastid), temp_unread,temp_tail are synchronized by a mutex. writing int=
+o memory file and reading from memory file happen asynchronously, so mutex =
+is used to protect the memory mapped file pointer , header, temp_unread, te=
+mp_tail.
+> =
+
+> I'm totally confused by this one; you use no threads in your plugin (and
+> neither does oFono) and you have no external clients accessing the same
+> shared memory region.  It seems to me that locking is completely
+> unnecessary.
+> =
+
+> Raji > History reads are client driven, can happen during the write opera=
+tion. Same with writing, if there is any read operation in progress, write =
+operation needs to wait. So the mutex will lock the memory information unti=
+l read/write operation is done. =
+
+
+who reads from this file. The mutex is local to ofonod. If any other
+program reads from that memory you need a proper memory lock. The local
+mutex is not helping since ofonod is (on purpose) single threaded and
+thus no locking is actually needed since read and write operations from
+ofonod can't happen at the same time.
 
 Regards
-Arun
 
---===============1051131223100340908==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+Marcel
 
-PGh0bWwgZGlyPSJsdHIiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBj
-b250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9aXNvLTg4NTktMSI+CjxzdHlsZSBpZD0ib3dhUGFy
-YVN0eWxlIiB0eXBlPSJ0ZXh0L2NzcyI+UCB7bWFyZ2luLXRvcDowO21hcmdpbi1ib3R0b206MDt9
-PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBvY3NpPSIwIiBmcHN0eWxlPSIxIj4KPGRpdiBzdHlsZT0i
-ZGlyZWN0aW9uOiBsdHI7IGZvbnQtZmFtaWx5OiBUYWhvbWE7IGNvbG9yOiByZ2IoMCwgMCwgMCk7
-IGZvbnQtc2l6ZTogMTNweDsiPgo8ZGl2IHN0eWxlPSIiPiZuYnNwO0hpLDxicj4KPGJyPgpUaGUg
-cGhvbmVzaW0gcGF0Y2ggJnF1b3Q7W1BBVENIXSBTaW11bGF0aW9uIG9mIE1UIHJlbGVhc2Ugb2Yg
-Y2FsbCB0byBzcGNpYWwgbnVtYmVyJnF1b3Q7IHNpbXVsYXRlcyBhbiBNVCByZWxlYXNlIG9mIGNh
-bGxzIHRvIHNwZWNpYWwgbnVtYmVyLjxicj4KPGJyPgpUaGUgbnVtYmVyIGlzIDA1MTIzeHgsIHdo
-ZXJlIHh4IGlzIHRoZSB0aW1lIGluIHNlY29uZHMgYmVmb3JlIHRoZSBjYWxsIGlzIHJlbGVhc2Vk
-Ljxicj4KZWc6IDA1MTIzMTAsIHdpbGwgY2F1c2UgdGhlIGNhbGwgdG8gYmUgY29ubmVjdGVkIGFu
-ZCB0aGVuIHJlbGVhc2VkIGFmdGVyIDEwIHNlY29uZHMuPGJyPgo8YnI+Cjxicj4KUmVnYXJkczxi
-cj4KQXJ1biA8YnI+CjwvZGl2Pgo8L2Rpdj4KPC9ib2R5Pgo8L2h0bWw+Cg==
 
---===============1051131223100340908==--
+
+--===============0216979587025792299==--
 
