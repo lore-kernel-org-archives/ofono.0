@@ -1,92 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============4829138000520137476=="
+Content-Type: multipart/mixed; boundary="===============6228657129269500664=="
 MIME-Version: 1.0
 From: Kalle Valo <kalle.valo@canonical.com>
 Subject: Re: [RFC PATCH v1 2/2] huawei: fix online logic
-Date: Fri, 17 Sep 2010 16:58:32 +0300
-Message-ID: <87sk18cvzr.fsf@potku.valot.fi>
-In-Reply-To: <1284728032.2405.215.camel@localhost.localdomain>
+Date: Fri, 17 Sep 2010 17:16:53 +0300
+Message-ID: <87ocbwcv56.fsf@potku.valot.fi>
+In-Reply-To: <87sk18cvzr.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4829138000520137476==
+--===============6228657129269500664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Marcel Holtmann <marcel@holtmann.org> writes:
+Kalle Valo <kalle.valo@canonical.com> writes:
 
-> Hi Kalle,
+> I'm guessing ofono_sim_inserted_notify() has something to do this. When
+> I did some quick tests, IIRC I was able to see HUAWEI_SIM_STATE_VALID
+> only after I had called ofono_sim_inserted_notify(). =
 
-Hi Marcel,
-
->>  plugins/huawei.c |   79 ++++++++++++++++++++++++++++++++++++++---------=
--------
->>  1 files changed, 55 insertions(+), 24 deletions(-)
->> =
-
->> diff --git a/plugins/huawei.c b/plugins/huawei.c
->> index ad1c3ae..0b4e65e 100644
->> --- a/plugins/huawei.c
->> +++ b/plugins/huawei.c
->> @@ -78,6 +78,7 @@ struct huawei_data {
->>  	gboolean voice;
->>  	guint query_sim_state;
->>  	guint sim_poll_count;
->> +	struct cb_data *online_cbd;
->>  };
 >
-> doing it like this make me suspisious that this is the right approach.
-> No other modem plugin has to do it this way. Why does Huawei?
+> I think the way you are after is that we would first receive
+> HUAWEI_SIM_STATE_VALID (or the three other valid states) and only then
+> call ofono_sim_inserted_notify(). At least to me that would make sense.
+> I just don't know how to do that because I see only later in the
+> initialisation phase.
 
-I have no idea, it may very well be that doing the initialisation wrong.
-But the problem at hand I have it is that huawei_post_online() makes
-assumptions about sim_state:
+Just to show my problem. I did this on top of my two huawei v1 patches:
 
-	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
-			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
-		data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->pcui);
-		data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
-								data->modem);
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index 0b4e65e..ac26a02 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -185,9 +185,9 @@ static gboolean notify_sim_state(struct ofono_modem *mo=
+dem,
+        case HUAWEI_SIM_STATE_INVALID_OR_LOCKED:
+                ofono_modem_set_powered(modem, TRUE);
+ =
 
-		if (data->gprs && data->gc)
-			ofono_gprs_add_context(data->gprs, data->gc);
-	}
+-               if (data->sim)
+-                       ofono_sim_inserted_notify(data->sim, TRUE);
+-               break;
++               /* if (data->sim) */
++               /*      ofono_sim_inserted_notify(data->sim, TRUE); */
++               return TRUE;
+        case HUAWEI_SIM_STATE_VALID:
+        case HUAWEI_SIM_STATE_INVALID_CS:
+        case HUAWEI_SIM_STATE_INVALID_PS:
+@@ -199,8 +199,8 @@ static gboolean notify_sim_state(struct ofono_modem *mo=
+dem,
+                 */
+                ofono_modem_set_powered(modem, TRUE);
+ =
 
-And currently (with my setup) data->sim_state will be
-HUAWEI_SIM_STATE_INVALID_OR_LOCKED when post_online() is called and
-hence gprs context is not initialised. I didn't add the sim_state checks
-so I can't comment why they are needed. But this is the commit which
-added them:
+-               if (data->sim)
+-                       ofono_sim_inserted_notify(data->sim, TRUE);
++               /* if (data->sim) */
++               /*      ofono_sim_inserted_notify(data->sim, TRUE); */
+ =
 
-  commit f01de438bd4f834a27f9c36e74e6a1067f778a21
-  Author: Jo.o Paulo Rechi Vita <jprvita@profusion.mobi>
-  Date:   Thu Aug 5 16:13:08 2010 -0300
+                if (data->online_cbd) {
+                        cb =3D data->online_cbd->cb;
 
-    huawei: Fix SIM state logic
-    =
+So we are not calling sim_inserted() at all and poll for sim states for
+a while. And the output in cold start case is this:
 
-    Add support for voice-only SIM cards and enable phonebook atom for
-    non-voice modems.
+Sep 17 17:14:29 dell-m520 ofonod[2436]: plugins/huawei.c:notify_sim_state()=
+ 255
+Sep 17 17:14:32 dell-m520 ofonod[2436]: plugins/huawei.c:notify_sim_state()=
+ 0
+Sep 17 17:14:32 dell-m520 ofonod[2436]: plugins/huawei.c:notify_sim_state()=
+ 0
+Sep 17 17:14:34 dell-m520 ofonod[2436]: plugins/huawei.c:notify_sim_state()=
+ 0
+Sep 17 17:14:34 dell-m520 ofonod[2436]: plugins/huawei.c:notify_sim_state()=
+ 0
+Sep 17 17:14:36 dell-m520 ofonod[2436]: plugins/huawei.c:notify_sim_state()=
+ 0
+Sep 17 17:14:36 dell-m520 ofonod[2436]: plugins/huawei.c:notify_sim_state()=
+ 0
+Sep 17 17:14:38 dell-m520 ofonod[2436]: plugins/huawei.c:notify_sim_state()=
+ 0
 
-I don't have that much time to work on this, I just want to get huawei
-working again. But I'll try to do something.
-
-I'm guessing ofono_sim_inserted_notify() has something to do this. When
-I did some quick tests, IIRC I was able to see HUAWEI_SIM_STATE_VALID
-only after I had called ofono_sim_inserted_notify(). =
-
-
-I think the way you are after is that we would first receive
-HUAWEI_SIM_STATE_VALID (or the three other valid states) and only then
-call ofono_sim_inserted_notify(). At least to me that would make sense.
-I just don't know how to do that because I see only later in the
-initialisation phase.
-
-Thoughts?
+My modem always stays in HUAWEI_SIM_STATE_INVALID_OR_LOCKED (0) case
+forever.
 
 -- =
 
 Kalle Valo
 
---===============4829138000520137476==--
+--===============6228657129269500664==--
 
