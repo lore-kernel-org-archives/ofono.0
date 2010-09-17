@@ -1,49 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============8994974745069908861=="
+Content-Type: multipart/mixed; boundary="===============6252334199286612386=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] stk: Language Notification proactive cmd support
-Date: Thu, 16 Sep 2010 21:40:07 -0700
-Message-ID: <1284698407-12939-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Bommaraju, Rajyalakshmi <rajyalakshmi.bommaraju@intel.com>
+Subject: RE: Description of Voice call history plugin patch
+Date: Fri, 17 Sep 2010 00:32:43 -0600
+Message-ID: <E1A1564674E5754FB00AB9AC949D5E3260C826D076@rrsmsx501.amr.corp.intel.com>
+In-Reply-To: <4C92DDB0.8010101@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8994974745069908861==
+--===============6252334199286612386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/stk.c |   11 +++++++++++
- 1 files changed, 11 insertions(+), 0 deletions(-)
+Denis,
 
-diff --git a/src/stk.c b/src/stk.c
-index 63b1fd3..c9248df 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1907,6 +1907,17 @@ void ofono_stk_proactive_command_notify(struct ofono=
-_stk *stk,
- 							&rsp, stk);
- 		break;
- =
+Thanks for the feedback, I have given explanation for locking below.
 
-+	case STK_COMMAND_TYPE_LANGUAGE_NOTIFICATION:
-+		/*
-+		 * If any clients are interested, then the ISO639
-+		 * 2-letter codes has to be convered to language strings.
-+		 * Converted language strings has to be added to the
-+		 * property list.
-+		 */
-+		ofono_info("Language Code: %s",
-+			stk->pending_cmd->language_notification.language);
-+		break;
-+
- 	default:
- 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
- 		break;
--- =
+Thanks,
+Raji
+-----Original Message-----
+From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
 
-1.7.0.4
+Sent: Thursday, September 16, 2010 8:17 PM
+To: ofono(a)ofono.org
+Cc: Bommaraju, Rajyalakshmi
+Subject: Re: Description of Voice call history plugin patch
 
+Hi Raji,
 
---===============8994974745069908861==--
+> Design : Plugin uses memory mapped file for high performance input/output=
+ operations. File is used as cyclic queue for storing or reading records, i=
+t store s 50 records of 78bytes,hence fixed size file of 3916 bytes is used=
+. File's first 16 bytes were used for storing header, and next 3900 bytes f=
+or data. Header structure has head pointer, tail pointer,unread and lastid.=
+ Head pointer points to next slot for writing record into,tail for reading =
+record, unread for number of history records unread by client, lastid for i=
+d of the last record that is written.
+
+Just a couple quick points.  Memory mapped files do not really give any
+benefit over read/write/lseek for small files (e.g. less than a few
+pages) with small record sizes (e.g. less than a 4K page.)  In fact
+they're probably slower in these cases.
+
+> Locking: =
+
+> Accessing Memory mapped file pointer , all header fields (head,tail,unrea=
+d,lastid), temp_unread,temp_tail are synchronized by a mutex. writing into =
+memory file and reading from memory file happen asynchronously, so mutex is=
+ used to protect the memory mapped file pointer , header, temp_unread, temp=
+_tail.
+
+I'm totally confused by this one; you use no threads in your plugin (and
+neither does oFono) and you have no external clients accessing the same
+shared memory region.  It seems to me that locking is completely
+unnecessary.
+
+Raji > History reads are client driven, can happen during the write operati=
+on. Same with writing, if there is any read operation in progress, write op=
+eration needs to wait. So the mutex will lock the memory information until =
+read/write operation is done.=20
+
+--===============6252334199286612386==--
 
