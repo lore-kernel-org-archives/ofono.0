@@ -1,121 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============5696634633161342057=="
+Content-Type: multipart/mixed; boundary="===============0019175702506759439=="
 MIME-Version: 1.0
-From: Bommaraju, Rajyalakshmi <rajyalakshmi.bommaraju@intel.com>
-Subject: RE: Description of Voice call history plugin patch
-Date: Fri, 17 Sep 2010 12:00:18 -0600
-Message-ID: <E1A1564674E5754FB00AB9AC949D5E3260C826D380@rrsmsx501.amr.corp.intel.com>
-In-Reply-To: <1284711409.2405.192.camel@localhost.localdomain>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 1/2] smsutil: national to international conversion in
+ status report
+Date: Fri, 17 Sep 2010 13:15:22 -0500
+Message-ID: <4C93B03A.6060701@gmail.com>
+In-Reply-To: <201009172024.47124.petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5696634633161342057==
+--===============0019175702506759439==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Please see my comments below.
+Hi Petteri,
 
------Original Message-----
-From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
-f Of Marcel Holtmann
-Sent: Friday, September 17, 2010 1:17 AM
-To: ofono(a)ofono.org
-Subject: Re: Description of Voice call history plugin patch
-Marcel,
-
-> Callhistory is a plugin loaded by ofono for persisting voice call history=
- information in a disk file. Plugin exports dbus methods and signals as org=
-.ofono.callhistory interface. Whenever there is a voice call in the system,=
- ofono calls the plugin with the infomation (lineid,calltype,start time, en=
-d time) , plugin writes the information into the file , increments the 'unr=
-ead' field in the header and sends out dbus signal with the number of unrea=
-d records. Client (dialer) requests history records by calling method "GetV=
-oiceHistory" exposed on the callhistory interface. After receiving informat=
-ion client calls the "SetVoiceHistoryRead" as an acknowledgement to indicat=
-e end of transaction. The pointers in the header are adjusted appropriately=
- (explained clearly below).
+>> So my thinking is that for efficiency purposes we should try the direct
+>> lookup first.  We don't want to pay the penalty of walking the entire
+>> hash table every time for networks that are 'sane'.  If that fails, fall
+>> back to the 'fuzzy' lookup.  This would also make the code a bit easier
+>> to follow I think...
 > =
 
-> Design : Plugin uses memory mapped file for high performance input/output=
- operations. File is used as cyclic queue for storing or reading records, i=
-t store s 50 records of 78bytes,hence fixed size file of 3916 bytes is used=
-. File's first 16 bytes were used for storing header, and next 3900 bytes f=
-or data. Header structure has head pointer, tail pointer,unread and lastid.=
- Head pointer points to next slot for writing record into,tail for reading =
-record, unread for number of history records unread by client, lastid for i=
-d of the last record that is written.
+> OK. Direct lookup would do this same and look nicer. But I think (but not =
 
-I am not buying into this performance argument at all. How many calls to
-you expect per second.
+> sure) that g_hash_table_lookup() does similar looping internally, as my =
 
-Raji >> Even if there are not many calls, operating system takes care of fl=
-ushing the file to disk if there is any ofono crash. =
+> addition for while-looping address-tables. Well I was already taking =
 
- =
+> g_hash_table_lookup() back, but just making the code uglier when adding =
 
-> When the plugin is loaded by the ofono, it opens or creates a disk file o=
-f 3916 bytes size and maps it into fixed size memory space. Plugin reads th=
-e header of the file , if the 'unread' records is > 0 , a signal is sent ou=
-t on the dbus with the information of number of unread records. =
+> 'international to national'-logic. That's because of iterating msg-id nod=
+es, =
+
+> so solution lead to two node-iteration loops.
+
+Both looping and g_hash_table_lookup can be thought of as O(n) in the
+worst case.  However, in the average case the hash table is way faster,
+like O(1) or so.  The hash table is essentially an array, and the
+hashing function computes an index in the array...
 
 > =
 
-> Requesting data by client: =
+> My idea was to find suitable address&Mr-pair. So if address matches but M=
+R =
 
-> When the client calls "GetVoiceHistory" method,plugin uses temp_tail and =
-temp_unread variables to accomplish sending data to client. It copies tail =
-pointer stored in the header into temporary tail pointer ,starts to read hi=
-story records one at a time from the location pointed by the temp tail poin=
-ter , copies the into dbus structure, increments the temp tail pointer by s=
-ize of the history record (78 bytes) and reads data from the next record lo=
-cation , this is repeated until it reaches head pointer. when all the unrea=
-d records are read then the dbus structure is sent to the client. Once the =
-data received, client needs to "SetVoiceHistoryRead" method to indicate tha=
-t it received the data. Plugin will update the tail pointer with the temp t=
-ail pointer and unread records number is decremented by temp_unread. Using =
-temp_tail and temp_unread variables protect from modifying the header if th=
-ere is any loss in data delivery. If client doesnt call 'SetVoiceHistoryRea=
-d' then the act
- ua
->  l header pointers wont be updated in the file. =
+> doesn't, let's continue (while-loop inside while-loop).
+> Was your idea actually that this inefficency-problem in looping occurs ac=
+tually =
 
-> =
+> in this point: if for some reason in sane networks the address matches, b=
+ut MR =
 
-> Writing record into the file:
-> When Ofono calls the plugin with call information (phone number, call typ=
-e, call start time , call end time), plugin increaments the lastid to creat=
-e record id for this record ,writes the record in the location pointed by h=
-ead, and the head pointer is incremented by size of record (78 bytes), "unr=
-ead" variable is incremented by 1. If the head reaches end of file (3916) t=
-hen it is reset it back to begining of the data portion of the file (16 byt=
-es). A dbus signal is sent out with number of current unread records. Plugi=
-n keeps writing the records in circular queue.
+> doesn't, function continues looping although it shouldn't? And then it lo=
+ops =
 
-This sounds all way too complicated. And the D-Bus API design is
-actually racy since there is no clear access control on the history
-information.
+> the entire table. In 'insane'-networks this is OK, because function is no=
+t =
 
-I think the proper solution is to create a call history plugin that
-creates a D-Bus interface for a call history agent.
+> comparing necessarily the whole address?
 
-That way we know when an agent is present to consume history information
-and only if none is present we have to cache it on disk. And once an
-agent becomes available flush the cached information.
+So think of it like this, if a status report arrives from a 'sane
+network', the g_hash_table_lookup (e.g. how we do it today) will give us
+the sender address right away.  In the best case we compute the index of
+the address hash table node in time O(1), more if there are collisions.
+ We then perform a linear search on the status report assembly nodes
+associated with that address.
 
-And the cache should be just be done with a simply appending to a file
-and then truncating it after reading it.
+If the address was found, but no MR was, then simply discard the status
+report.  The fuzzy match will fail or give us the wrong answer anyway.
 
-Raji >> Marcel, James Ketrenos discussed this design with you back in april=
-. I will send you the thread on that. I was under impression that you both =
-agreed on this design.
+Only if the address was not found by direct lookup (e.g. the status
+report is from an insane network or simply mis-addressed /
+mis-delivered) should we go and try performing a fuzzy match.
 
-Thanks for feedback,
-Raji
+In general fast-tracking the most common path is a good idea.  It makes
+things seem faster in general.
 
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-http://lists.ofono.org/listinfo/ofono
+Regards,
+-Denis
 
---===============5696634633161342057==--
+--===============0019175702506759439==--
 
