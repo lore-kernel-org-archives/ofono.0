@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============5124106898243412258=="
+Content-Type: multipart/mixed; boundary="===============5219143157294383389=="
 MIME-Version: 1.0
 From: ext-arun.1.ravindran@nokia.com
 Subject: [PATCH] Simulation of MT release of call to spcial number
-Date: Fri, 17 Sep 2010 07:41:49 +0000
-Message-ID: <1284709111-17715-1-git-send-email-ext-arun.1.ravindran@nokia.com>
+Date: Fri, 17 Sep 2010 10:50:32 +0300
+Message-ID: <1284709832-17837-1-git-send-email-ext-arun.1.ravindran@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5124106898243412258==
+--===============5219143157294383389==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -94,5 +94,5 @@ ter xx seconds-->
 1.7.0.4
 
 
---===============5124106898243412258==--
+--===============5219143157294383389==--
 
