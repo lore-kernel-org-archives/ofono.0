@@ -1,98 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5219143157294383389=="
+Content-Type: multipart/mixed; boundary="===============1051131223100340908=="
 MIME-Version: 1.0
 From: ext-arun.1.ravindran@nokia.com
-Subject: [PATCH] Simulation of MT release of call to spcial number
-Date: Fri, 17 Sep 2010 10:50:32 +0300
-Message-ID: <1284709832-17837-1-git-send-email-ext-arun.1.ravindran@nokia.com>
+Subject: Simulation of MT release of call to spcial number
+Date: Fri, 17 Sep 2010 07:56:43 +0000
+Message-ID: <A6458DBAF4336C41B8A71E751B2B9D62012AE3@008-AM1MPN1-003.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5219143157294383389==
+--===============1051131223100340908==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
+ Hi,
 
----
- src/callmanager.cpp |   17 +++++++++++++++++
- src/callmanager.h   |    3 +++
- src/default.xml     |    1 +
- 3 files changed, 21 insertions(+), 0 deletions(-)
+The phonesim patch "[PATCH] Simulation of MT release of call to spcial numb=
+er" simulates an MT release of calls to special number.
 
-diff --git a/src/callmanager.cpp b/src/callmanager.cpp
-index 5336d27..06f426d 100644
---- a/src/callmanager.cpp
-+++ b/src/callmanager.cpp
-@@ -643,6 +643,17 @@ void CallManager::dialingToConnected()
-     // Transition the call to its new state.
-     callList[index].state =3D CallState_Active;
-     sendState( callList[index] );
-+    // If the dialed number starts with 05123, disconnect the
-+    // call after xx seconds, where xx is part of the dial string
-+    // as 05123xx
-+    if( callList[index].number.startsWith( "05123" ) ) {
-+        bool ok;
-+        QString temp =3D callList[index].number;
-+        temp =3D temp.replace( "05123" , "" );
-+        int timeout =3D temp.toInt( &ok, 10 );
-+        timeout =3D ok ? timeout * 1000: 10000;
-+        QTimer::singleShot( timeout, this, SLOT(hangup()) );
-+    }
- }
- =
-
- void CallManager::dialingToAlerting()
-@@ -686,6 +697,12 @@ void CallManager::hangupTimeout()
-     }
- }
- =
-
-+void CallManager::hangup()
-+{
-+    send ( "NO CARRIER" );
-+    hangupConnected();
-+}
-+
- void CallManager::sendNextRing()
- {
-     if ( idForIncoming() >=3D 0 ) {
-diff --git a/src/callmanager.h b/src/callmanager.h
-index 875687e..3dd01cd 100644
---- a/src/callmanager.h
-+++ b/src/callmanager.h
-@@ -128,6 +128,9 @@ private slots:
-     // Send the next RING indication for incoming calls.
-     void sendNextRing();
- =
-
-+    // Hangup the connected call after xx seconds
-+    void hangup();
-+
- private:
-     QList<CallInfo> callList;
-     QTimer *connectTimer;
-diff --git a/src/default.xml b/src/default.xml
-index ef8ac83..135bad3 100644
---- a/src/default.xml
-+++ b/src/default.xml
-@@ -7,6 +7,7 @@
- <!-- Note: dialing 177 will cause a dialback to simulate an incoming call,=
- and hangup after 5 seconds -->
- <!-- Note: dialing 166 will accept the incoming call and hangup up after 5=
- seconds-->
- <!-- Note: dialing 155 will elicit a 'BUSY' response from the recipient-->
-+<!-- Note: dialing 05123xx cause an MT disconnect of the connected call af=
-ter xx seconds-->
- =
-
- <!-- Initialize state variables -->
- =
-
--- =
-
-1.7.0.4
+The number is 05123xx, where xx is the time in seconds before the call is r=
+eleased.
+eg: 0512310, will cause the call to be connected and then released after 10=
+ seconds.
 
 
---===============5219143157294383389==--
+Regards
+Arun
+
+--===============1051131223100340908==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgZGlyPSJsdHIiPgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj0iQ29udGVudC1UeXBlIiBj
+b250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9aXNvLTg4NTktMSI+CjxzdHlsZSBpZD0ib3dhUGFy
+YVN0eWxlIiB0eXBlPSJ0ZXh0L2NzcyI+UCB7bWFyZ2luLXRvcDowO21hcmdpbi1ib3R0b206MDt9
+PC9zdHlsZT4KPC9oZWFkPgo8Ym9keSBvY3NpPSIwIiBmcHN0eWxlPSIxIj4KPGRpdiBzdHlsZT0i
+ZGlyZWN0aW9uOiBsdHI7IGZvbnQtZmFtaWx5OiBUYWhvbWE7IGNvbG9yOiByZ2IoMCwgMCwgMCk7
+IGZvbnQtc2l6ZTogMTNweDsiPgo8ZGl2IHN0eWxlPSIiPiZuYnNwO0hpLDxicj4KPGJyPgpUaGUg
+cGhvbmVzaW0gcGF0Y2ggJnF1b3Q7W1BBVENIXSBTaW11bGF0aW9uIG9mIE1UIHJlbGVhc2Ugb2Yg
+Y2FsbCB0byBzcGNpYWwgbnVtYmVyJnF1b3Q7IHNpbXVsYXRlcyBhbiBNVCByZWxlYXNlIG9mIGNh
+bGxzIHRvIHNwZWNpYWwgbnVtYmVyLjxicj4KPGJyPgpUaGUgbnVtYmVyIGlzIDA1MTIzeHgsIHdo
+ZXJlIHh4IGlzIHRoZSB0aW1lIGluIHNlY29uZHMgYmVmb3JlIHRoZSBjYWxsIGlzIHJlbGVhc2Vk
+Ljxicj4KZWc6IDA1MTIzMTAsIHdpbGwgY2F1c2UgdGhlIGNhbGwgdG8gYmUgY29ubmVjdGVkIGFu
+ZCB0aGVuIHJlbGVhc2VkIGFmdGVyIDEwIHNlY29uZHMuPGJyPgo8YnI+Cjxicj4KUmVnYXJkczxi
+cj4KQXJ1biA8YnI+CjwvZGl2Pgo8L2Rpdj4KPC9ib2R5Pgo8L2h0bWw+Cg==
+
+--===============1051131223100340908==--
 
