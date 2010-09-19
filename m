@@ -1,36 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============6589314285406599773=="
+Content-Type: multipart/mixed; boundary="===============4096955957959835056=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Simulation of MT release of call to special number
-Date: Fri, 17 Sep 2010 21:31:45 -0500
-Message-ID: <4C942491.60606@gmail.com>
-In-Reply-To: <1284711417-25424-1-git-send-email-ext-arun.1.ravindran@nokia.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH 1/1] Enable some atoms for hso modem
+Date: Sun, 19 Sep 2010 15:37:32 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4732A7F0250@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <4C936621.3080109@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6589314285406599773==
+--===============4096955957959835056==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Arun,
+Hi Denis and Marcel,
 
-On 09/17/2010 03:16 AM, ext-arun.1.ravindran(a)nokia.com wrote:
-> From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
-> =
+>> +
+>> +static void hso_post_sim(struct ofono_modem *modem)
+>> +{
+>> +	struct hso_data *data =3D ofono_modem_get_data(modem);
+>> +
+>> +	DBG("%p", modem);
+>> +
+>> +	ofono_phonebook_create(modem, 0, "atmodem", data->app);
+>> +}
+>> +
+>
+>This is OK
 
-> ---
->  src/callmanager.cpp |   17 +++++++++++++++++
->  src/callmanager.h   |    3 +++
->  src/default.xml     |    1 +
->  3 files changed, 21 insertions(+), 0 deletions(-)
-> =
+So I will send the patch to enable phonebook only:)
 
-
-Patch has been applied, thanks.
 
 Regards,
--Denis
+-Yang
 
---===============6589314285406599773==--
+--===============4096955957959835056==--
 
