@@ -1,30 +1,156 @@
-Content-Type: multipart/mixed; boundary="===============8345544216989307334=="
+Content-Type: multipart/mixed; boundary="===============3578680107761191828=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Enable phonebook for hso modem
-Date: Sun, 19 Sep 2010 20:38:42 +0900
-Message-ID: <1284896322.20811.1.camel@localhost.localdomain>
-In-Reply-To: <1284882414-17516-1-git-send-email-yang.gu@intel.com>
+From: Laurent THOMAS <laurent.thomas.xm@rdf.renesas.com>
+Subject: ofono gprs_primary_context description 
+Date: Mon, 20 Sep 2010 11:20:02 +0200
+Message-ID: <A9AC1023FCA4654D92AC24C2A8F6A09201AA8517@renesas4bis.renesas-rdf.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8345544216989307334==
+--===============3578680107761191828==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi,
 
->  plugins/hso.c |   11 +++++++++++
->  1 files changed, 11 insertions(+), 0 deletions(-)
-
-patch has been applied. Thanks.
-
-Regards
-
-Marcel
+ =
 
 
+According to the interface org.ofono.ConnectionContext description, the
+property "Name" is a free short string used to describe the context.
 
---===============8345544216989307334==--
+Extract from "conman-api.txt"
+
+Properties         string Name [readwrite]
+
+ =
+
+
+                                   The name is a free form string that
+describes this
+
+                                   context.  The name should not be
+empty and limited
+
+                                   to a short string for display
+purposes.
+
+ =
+
+
+But according to source code (version 0.28), this attribute is now only
+affected with the context String Type ("internet", "wap" or "mms") =
+
+
+ =
+
+
+is it really the expected behaviour or did I miss something ?
+
+ =
+
+
+Regards,
+
+            Laurent
+
+--=20
+
+--===============3578680107761191828==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6bz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6b2ZmaWNlIiB4
+bWxuczp3PSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTp3b3JkIiB4bWxucz0iaHR0
+cDovL3d3dy53My5vcmcvVFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1D
+b250ZW50LVR5cGUgY29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEg
+bmFtZT1HZW5lcmF0b3IgY29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTEgKGZpbHRlcmVkIG1lZGl1
+bSkiPgo8c3R5bGU+CjwhLS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtm
+b250LWZhbWlseToiTVMgTWluY2hvIjsKCXBhbm9zZS0xOjIgMiA2IDkgNCAyIDUgOCAzIDQ7fQpA
+Zm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6IlxATVMgTWluY2hvIjsKCXBhbm9zZS0xOjAgMCAwIDAg
+MCAwIDAgMCAwIDA7fQogLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KIHAuTXNvTm9ybWFsLCBsaS5N
+c29Ob3JtYWwsIGRpdi5Nc29Ob3JtYWwKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAw
+MXB0OwoJZm9udC1zaXplOjEyLjBwdDsKCWZvbnQtZmFtaWx5OiJUaW1lcyBOZXcgUm9tYW4iO30K
+YTpsaW5rLCBzcGFuLk1zb0h5cGVybGluawoJe2NvbG9yOmJsdWU7Cgl0ZXh0LWRlY29yYXRpb246
+dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7Y29sb3I6
+cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CnByZQoJe21hcmdpbjowY207Cglt
+YXJnaW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTAuMHB0OwoJZm9udC1mYW1pbHk6IkNv
+dXJpZXIgTmV3IjsKCWNvbG9yOmJsYWNrO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUt
+dHlwZTpwZXJzb25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6QXJpYWw7Cgljb2xvcjp3aW5kb3d0
+ZXh0O30KQHBhZ2UgU2VjdGlvbjEKCXtzaXplOjU5NS4zcHQgODQxLjlwdDsKCW1hcmdpbjo3MC44
+NXB0IDcwLjg1cHQgNzAuODVwdCA3MC44NXB0O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpTZWN0aW9u
+MTt9Ci0tPgo8L3N0eWxlPgoKPC9oZWFkPgoKPGJvZHkgbGFuZz1GUiBsaW5rPWJsdWUgdmxpbms9
+cHVycGxlPgoKPGRpdiBjbGFzcz1TZWN0aW9uMT4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBz
+aXplPTIgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6CjEwLjBw
+dDtmb250LWZhbWlseTpBcmlhbCc+SGksPG86cD48L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxw
+IGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdC
+IHN0eWxlPSdmb250LXNpemU6CjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+PG86cD4mbmJzcDs8
+L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIg
+ZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6CjEwLjBwdDtmb250
+LWZhbWlseTpBcmlhbCc+QWNjb3JkaW5nIHRvIHRoZSBpbnRlcmZhY2Ugb3JnLm9mb25vLkNvbm5l
+Y3Rpb25Db250ZXh0CmRlc2NyaXB0aW9uLCB0aGUgcHJvcGVydHkgJiM4MjIwO05hbWUmIzgyMjE7
+IGlzIGEgZnJlZSBzaG9ydCBzdHJpbmcgdXNlZCB0bwpkZXNjcmliZSB0aGUgY29udGV4dC48bzpw
+PjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9
+MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToKMTAuMHB0O2Zv
+bnQtZmFtaWx5OkFyaWFsJz5FeHRyYWN0IGZyb20gJiM4MjIwO2Nvbm1hbi1hcGkudHh0JiM4MjIx
+OzxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PGk+PGZv
+bnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1HQgpzdHlsZT0nZm9udC1zaXplOjEw
+LjBwdDtmb250LWZhbWlseTpBcmlhbDtmb250LXN0eWxlOml0YWxpYyc+UHJvcGVydGllcyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBzdHJpbmcKTmFtZSBb
+cmVhZHdyaXRlXTxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L2k+PC9wPgoKPHAgY2xhc3M9TXNv
+Tm9ybWFsPjxpPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0IKc3R5bGU9
+J2ZvbnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWw7Zm9udC1zdHlsZTppdGFsaWMnPjxv
+OnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L2k+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFs
+PjxpPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0IKc3R5bGU9J2ZvbnQt
+c2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWw7Zm9udC1zdHlsZTppdGFsaWMnPiZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBUaGUKbmFtZSBpcyBhIGZyZWUgZm9ybSBzdHJpbmcg
+dGhhdCBkZXNjcmliZXMgdGhpczxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L2k+PC9wPgoKPHAg
+Y2xhc3M9TXNvTm9ybWFsPjxpPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4t
+R0IKc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWw7Zm9udC1zdHlsZTpp
+dGFsaWMnPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyBjb250ZXh0LiZuYnNwOwpU
+aGUgbmFtZSBzaG91bGQgbm90IGJlIGVtcHR5IGFuZCBsaW1pdGVkPG86cD48L286cD48L3NwYW4+
+PC9mb250PjwvaT48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PGk+PGZvbnQgc2l6ZT0yIGZhY2U9
+QXJpYWw+PHNwYW4gbGFuZz1FTi1HQgpzdHlsZT0nZm9udC1zaXplOjEwLjBwdDtmb250LWZhbWls
+eTpBcmlhbDtmb250LXN0eWxlOml0YWxpYyc+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7IHRvCmEgc2hvcnQgc3RyaW5nIGZvciBkaXNwbGF5IHB1cnBvc2VzLjxvOnA+PC9vOnA+PC9z
+cGFuPjwvZm9udD48L2k+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNl
+PUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToKMTAuMHB0O2ZvbnQtZmFt
+aWx5OkFyaWFsJz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHAgY2xhc3M9
+TXNvTm9ybWFsPjxmb250IHNpemU9MiBmYWNlPUFyaWFsPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9
+J2ZvbnQtc2l6ZToKMTAuMHB0O2ZvbnQtZmFtaWx5OkFyaWFsJz5CdXQgYWNjb3JkaW5nIHRvIHNv
+dXJjZSBjb2RlICh2ZXJzaW9uIDAuMjgpLCB0aGlzIGF0dHJpYnV0ZQppcyBub3cgb25seSBhZmZl
+Y3RlZCB3aXRoIHRoZSBjb250ZXh0IFN0cmluZyBUeXBlICgmIzgyMjA7aW50ZXJuZXQmIzgyMjE7
+LCAmIzgyMjA7d2FwJiM4MjIxOwpvciAmIzgyMjA7bW1zJiM4MjIxOykgPG86cD48L286cD48L3Nw
+YW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1Bcmlh
+bD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6CjEwLjBwdDtmb250LWZhbWlseTpB
+cmlhbCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcD4KCjxwIGNsYXNzPU1zb05v
+cm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250
+LXNpemU6CjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+aXMgaXQgcmVhbGx5IHRoZSBleHBlY3Rl
+ZCBiZWhhdmlvdXIgb3IgZGlkIEkgbWlzcwpzb21ldGhpbmcgPzxvOnA+PC9vOnA+PC9zcGFuPjwv
+Zm9udD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNw
+YW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOgoxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwn
+PjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+
+PGZvbnQgc2l6ZT0yIGZhY2U9QXJpYWw+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXpl
+OgoxMC4wcHQ7Zm9udC1mYW1pbHk6QXJpYWwnPlJlZ2FyZHMsPG86cD48L286cD48L3NwYW4+PC9m
+b250PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48Zm9udCBzaXplPTIgZmFjZT1BcmlhbD48c3Bh
+biBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6CjEwLjBwdDtmb250LWZhbWlseTpBcmlhbCc+
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7IExhdXJlbnQ8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wPgoKPHByZT48Zm9u
+dCBzaXplPTIgY29sb3I9YmxhY2sgZmFjZT0iQ291cmllciBOZXciPjxzcGFuIHN0eWxlPSdmb250
+LXNpemU6MTAuMHB0Jz4tLSA8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PC9kaXY+Cgo8
+L2JvZHk+Cgo8L2h0bWw+Cg==
+
+--===============3578680107761191828==--
 
