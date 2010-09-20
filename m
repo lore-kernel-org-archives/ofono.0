@@ -1,32 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============7267729245412248793=="
+Content-Type: multipart/mixed; boundary="===============1930025470506306640=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: Reg: Memory capacity exceeded
-Date: Mon, 20 Sep 2010 15:53:13 +0300
-Message-ID: <1284987193.12393.485.camel@tucson.research.nokia.com>
-In-Reply-To: <AANLkTi=Mo_RcFNXfoPUhFpXE5JWuDF=cJ-cn48LjR9ab@mail.gmail.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: Reg: Memory capacity exceeded
+Date: Mon, 20 Sep 2010 17:08:41 +0300
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802A51A03@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <4C97573D.90406@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7267729245412248793==
+--===============1930025470506306640==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, 2010-09-20 at 14:29 +0200, ext Pekka Pessi wrote:
-> I'm afraid there is a PICS case for this thing. I cannot recall how we
-> got N900 through this particular hoop, but probably we just waived
-> this particular test case irrelevant.
+ =
 
-I know we have the machinery in place in N900 to report memory exceeded
-to the network. And I even remember it getting tested at some point,
-basically flooding /var/spool/sms is enough to trigger it.
+Hi Denis,
 
-If this can be waived, though, good riddance.
+> The thing is, oFono configures SMS for direct delivery (e.g. no SM/ME
+storage).  And even if direct delivery does not work (e.g. crappy modem
+or Class 2 / Class 3 messages) oFono still removes the SMS =
 
-Cheers,
-Aki
+> as soon as it is delivered.  We should never hit a sim/me memory full
+conditions.
 
+> So I don't see how this test case even applies.
 
---===============7267729245412248793==--
+Little bit lost now. Are we speaking about the sending or receiving of
+SMS?
+
+Memory capacity exceeded applies to incoming SMS. Incoming SMS can be
+stored in SIM or in ME storage. If the SMS storage for incoming SMS is
+full, then the ME can inform the network that it can't handle any more
+class 1/class 2 incoming SMS due to maximum memory capacity reached.
+Once the user frees some memory by deleting some messages, then ME can
+inform network that it is ready now to receive messages. So, I believe
+this test case applies but as Pessi Pekka said we can waive this test
+case.
+
+Regards,
+jeevaka
+
+--===============1930025470506306640==--
 
