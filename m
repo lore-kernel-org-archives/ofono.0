@@ -1,45 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============6515675131148660822=="
+Content-Type: multipart/mixed; boundary="===============4972988717468686579=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: Reg: Memory capacity exceeded
-Date: Mon, 20 Sep 2010 15:39:57 +0300
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802A519E5@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <AANLkTi=Mo_RcFNXfoPUhFpXE5JWuDF=cJ-cn48LjR9ab@mail.gmail.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: [PATCH v2 0/2] huawei: fix cold start
+Date: Mon, 20 Sep 2010 15:40:20 +0300
+Message-ID: <20100920123957.12498.61806.stgit@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6515675131148660822==
+--===============4972988717468686579==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Here's my second round of getting huawei working again in cold start.
+Locked pin sims worked in v1, but in these patches they are again
+broken. I had to omit that problem now because I want to have Huawei
+working again quickly.
 
-> Of course, one can argue whether this feature really has some real =
+Please test and provide feedback.
 
-> world relevance or is purely theoretical.
->
-> I wonder if it is a type approval requirement to support?
+---
 
-> I'm afraid there is a PICS case for this thing. I cannot recall how we
-got N900 through this particular hoop, but probably we just waived this
-particular test case irrelevant.
-
-correct. There is a USIM conformance case on this message capacitiy
-exceeded information. As per the 3GPP 31.121 specification section 8.2:
-
-"If all SMS data field are full and furthermore all memory capacity
-reserved for SMS inside the ME is filled up to maximum and a SM(Short
-Message) was rejected, then this shall be indicated in the SMS Status
-file.(EFsmss)"
-
-For more information on this, refer 3GPP TS 31.121 section 8.2
-
-There is also test cases related to SMS read from USIM. =
+Kalle Valo (2):
+      huawei: poll sim state
+      huawei: fix online logic
 
 
-Regards,
-jeevaka
+ plugins/huawei.c |  133 +++++++++++++++++++++++++++++++++++++++++---------=
+----
+ 1 files changed, 101 insertions(+), 32 deletions(-)
 
---===============6515675131148660822==--
+
+--===============4972988717468686579==--
 
