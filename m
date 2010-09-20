@@ -1,54 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============5465036204374638152=="
+Content-Type: multipart/mixed; boundary="===============1423606629426559971=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Reg: Memory capacity exceeded
-Date: Mon, 20 Sep 2010 07:44:45 -0500
-Message-ID: <4C97573D.90406@gmail.com>
-In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802A519E5@fioues07.ebgroup.elektrobit.com>
+Subject: Re: ofono gprs_primary_context description
+Date: Mon, 20 Sep 2010 07:49:48 -0500
+Message-ID: <4C97586C.8000801@gmail.com>
+In-Reply-To: <A9AC1023FCA4654D92AC24C2A8F6A09201AA8517@renesas4bis.renesas-rdf.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5465036204374638152==
+--===============1423606629426559971==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Laurent,
 
-On 09/20/2010 07:39 AM, Jeevaka.Badrappan(a)elektrobit.com wrote:
+On 09/20/2010 04:20 AM, Laurent THOMAS wrote:
 > Hi,
 > =
 
->> Of course, one can argue whether this feature really has some real =
+>  =
 
->> world relevance or is purely theoretical.
->>
->> I wonder if it is a type approval requirement to support?
 > =
 
->> I'm afraid there is a PICS case for this thing. I cannot recall how we
-> got N900 through this particular hoop, but probably we just waived this
-> particular test case irrelevant.
+> According to the interface org.ofono.ConnectionContext description, the
+> property =E2=80=9CName=E2=80=9D is a free short string used to describe t=
+he context.
 > =
 
-> correct. There is a USIM conformance case on this message capacitiy
-> exceeded information. As per the 3GPP 31.121 specification section 8.2:
+> Extract from =E2=80=9Cconman-api.txt=E2=80=9D
 > =
 
-> "If all SMS data field are full and furthermore all memory capacity
-> reserved for SMS inside the ME is filled up to maximum and a SM(Short
-> Message) was rejected, then this shall be indicated in the SMS Status
-> file.(EFsmss)"
+> /Properties         string Name [readwrite]/
+> =
 
-The thing is, oFono configures SMS for direct delivery (e.g. no SM/ME
-storage).  And even if direct delivery does not work (e.g. crappy modem
-or Class 2 / Class 3 messages) oFono still removes the SMS as soon as it
-is delivered.  We should never hit a sim/me memory full conditions.
+> / /
+> =
 
-So I don't see how this test case even applies.
+> /                                   The name is a free form string that
+> describes this/
+> =
+
+> /                                   context.  The name should not be
+> empty and limited/
+> =
+
+> /                                   to a short string for display purpose=
+s./
+> =
+
+>  =
+
+> =
+
+> But according to source code (version 0.28), this attribute is now only
+> affected with the context String Type (=E2=80=9Cinternet=E2=80=9D, =E2=80=
+=9Cwap=E2=80=9D or =E2=80=9Cmms=E2=80=9D)
+> =
+
+>  =
+
+> =
+
+> is it really the expected behaviour or did I miss something ?
+
+By default the Name is set to the context type.  E.g. creating an
+"internet" context results in the name being set to "internet."  You can
+still reset the Name later to whatever you wish.
+
+~/ofono-master$ test/list-contexts
+[ /phonesim ]
+    [ /phonesim/context1 ]
+        Username =3D
+        Protocol =3D ip
+        Name =3D Foobar
+        Settings =3D { }
+        Active =3D 0
+        AccessPointName =3D
+        Password =3D
+        Type =3D internet
+
 
 Regards,
 -Denis
 
---===============5465036204374638152==--
+--===============1423606629426559971==--
 
