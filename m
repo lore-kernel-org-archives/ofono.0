@@ -1,39 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============6534589676839977963=="
+Content-Type: multipart/mixed; boundary="===============8974363715748350735=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Fix build outside of tree after linker script change
-Date: Wed, 22 Sep 2010 09:22:48 +0900
-Message-ID: <1285114968.20811.56.camel@localhost.localdomain>
-In-Reply-To: <1285087254-28185-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] Fix multi-line comment style issues
+Date: Tue, 21 Sep 2010 21:17:19 -0500
+Message-ID: <4C99672F.60602@gmail.com>
+In-Reply-To: <1285096695-4647-2-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6534589676839977963==
+--===============8974363715748350735==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+Hi Jeevaka,
 
-> Let configure generate connman.ver file and copy it to the build
-> directory.
+On 09/21/2010 02:18 PM, Jeevaka Badrappan wrote:
 > ---
->  .gitignore       |    1 +
->  configure.ac     |    2 +-
->  src/ofono.ver    |    7 -------
->  src/ofono.ver.in |    7 +++++++
->  4 files changed, 9 insertions(+), 8 deletions(-)
->  delete mode 100644 src/ofono.ver
->  create mode 100644 src/ofono.ver.in
+>  src/call-barring.c    |    9 ++++++---
+>  src/call-forwarding.c |   15 ++++++++++-----
+>  src/call-meter.c      |    6 ++++--
+>  src/call-settings.c   |    3 ++-
+>  src/cbs.c             |   15 ++++++++++-----
+>  src/common.c          |   15 ++++++++++-----
+>  src/gprs.c            |    9 ++++++---
+>  src/message-waiting.c |   20 +++++++++++++-------
+>  src/network.c         |   33 ++++++++++++++++++++++-----------
+>  src/phonebook.c       |    5 +++--
+>  src/sim.c             |   18 ++++++++++++------
+>  src/simutil.c         |   33 ++++++++++++++++++++++-----------
+>  src/sms.c             |   27 ++++++++++++++++++---------
+>  src/smsutil.c         |   33 +++++++++++++++++++++------------
+>  src/stkutil.c         |   18 ++++++++++++------
+>  src/stkutil.h         |    9 +++++----
+>  src/ussd.c            |   12 +++++++-----
+>  src/util.c            |   21 ++++++++++++++-------
+>  src/voicecall.c       |   33 ++++++++++++++++++++++-----------
+>  19 files changed, 219 insertions(+), 115 deletions(-)
 
-I fixed this properly with using $(srcdir). No extra file creation
-needed.
+Patch has been applied, thanks.
 
-Regards
+Regards,
+-Denis
 
-Marcel
-
-
-
---===============6534589676839977963==--
+--===============8974363715748350735==--
 
