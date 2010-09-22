@@ -1,63 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============5864236912383980659=="
+Content-Type: multipart/mixed; boundary="===============5027659794430975253=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] Fix test-sms.
-Date: Wed, 22 Sep 2010 22:08:38 +0300
-Message-ID: <1285182518-15932-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 1/2] smsutil: add fuzzy address check for status report
+Date: Wed, 22 Sep 2010 16:33:13 -0500
+Message-ID: <4C9A7619.4030705@gmail.com>
+In-Reply-To: <1285089125-23921-1-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5864236912383980659==
+--===============5027659794430975253==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+On 09/21/2010 12:12 PM, Petteri Tikander wrote:
+> ---
+>  src/smsutil.c |  103 ++++++++++++++++++++++++++++++++++++++++++++++++---=
+------
+>  1 files changed, 87 insertions(+), 16 deletions(-)
 
-Allow user to set SRR and SMSC.
----
- test/send-sms |   23 +++++++++++++++++------
- 1 files changed, 17 insertions(+), 6 deletions(-)
+Both patches have been applied, thanks!  I reflowed the first patch a
+bit just to make it a little easier to follow.
 
-diff --git a/test/send-sms b/test/send-sms
-index bd1fae5..19d0e35 100755
---- a/test/send-sms
-+++ b/test/send-sms
-@@ -14,11 +14,22 @@ path =3D modems[0][0]
- manager =3D dbus.Interface(bus.get_object('org.ofono', path),
- 					'org.ofono.MessageManager')
- =
+I've also marked the status report task as done.
 
-+smsc =3D None
-+
-+if sys.argv[1] =3D=3D "--smsc":
-+	smsc =3D sys.argv[2]
-+	del sys.argv[1:2]
-+
-+if sys.argv[1].startswith("--smsc=3D"):
-+	smsc =3D sys.argv[1].split("=3D", 2)[1]
-+	del sys.argv[1]
-+
-+if smsc:
-+	manager.SetProperty("ServiceCenterAddress", dbus.String(smsc))
-+
- if len(sys.argv) =3D=3D 4:
--	manager.SetProperty("UseDeliveryReports",
--					dbus.Boolean(int(sys.argv[1])))
--	path =3D manager.SendMessage(sys.argv[1], sys.argv[2])
--else:
--	path =3D manager.SendMessage(sys.argv[1], sys.argv[2])
-+ 	manager.SetProperty("UseDeliveryReports",
-+ 					dbus.Boolean(int(sys.argv[1])))
-+	del sys.argv[1]
- =
+Thanks,
+-Denis
 
--print path
-+print manager.SendMessage(sys.argv[1], sys.argv[2])
--- =
-
-1.7.0.4
-
-
---===============5864236912383980659==--
+--===============5027659794430975253==--
 
