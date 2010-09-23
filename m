@@ -1,71 +1,233 @@
-Content-Type: multipart/mixed; boundary="===============0705897195144345815=="
+Content-Type: multipart/mixed; boundary="===============5688884350020661586=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Support multiple -p and -P option
-Date: Thu, 23 Sep 2010 11:18:53 +0900
-Message-ID: <1285208333.20811.64.camel@localhost.localdomain>
-In-Reply-To: <1285168276-2809-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Anthony CROLAIS <anthony.crolais.yw@rdf.renesas.com>
+Subject: support of "emergency call when SIM not inserted" ?
+Date: Thu, 23 Sep 2010 15:43:23 +0200
+Message-ID: <A9AC1023FCA4654D92AC24C2A8F6A09201B01496@renesas4bis.renesas-rdf.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0705897195144345815==
+--===============5688884350020661586==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi all,
+ =
 
-> ---
->  src/main.c   |   12 ++++++------
->  src/ofono.h  |    2 +-
->  src/plugin.c |   28 ++++++++++++++++++----------
->  3 files changed, 25 insertions(+), 17 deletions(-)
-> =
+I am new to oFono.
+It seems an important challenge to design a telephony system that will
+support =
 
-> diff --git a/src/main.c b/src/main.c
-> index 20bf0d7..9cf32eb 100644
-> --- a/src/main.c
-> +++ b/src/main.c
-> @@ -93,8 +93,8 @@ static void system_bus_disconnected(DBusConnection *con=
-n, void *user_data)
->  }
->  =
+several 3GPP modems. I would like to participate.
+ =
 
->  static gchar *option_debug =3D NULL;
-> -static gchar *option_plugin =3D NULL;
-> -static gchar *option_noplugin =3D NULL;
-> +static gchar **option_plugin;
-> +static gchar **option_noplugin;
->  static gboolean option_detach =3D TRUE;
->  static gboolean option_version =3D FALSE;
->  =
+I have read documentation (ofono-paper, coding-style, api for oFono
+Interfaces).
+I have started to cover source code: modem part, sim part...
+ =
 
-> @@ -113,9 +113,9 @@ static GOptionEntry options[] =3D {
->  	{ "debug", 'd', G_OPTION_FLAG_OPTIONAL_ARG,
->  				G_OPTION_ARG_CALLBACK, parse_debug,
->  				"Specify debug options to enable", "DEBUG" },
-> -	{ "plugin", 'p', 0, G_OPTION_ARG_STRING, &option_plugin,
-> +	{ "plugin", 'p', 0, G_OPTION_ARG_STRING_ARRAY, &option_plugin,
->  				"Specify plugins to load", "NAME" },
-> -	{ "noplugin", 'P', 0, G_OPTION_ARG_STRING, &option_noplugin,
-> +	{ "noplugin", 'P', 0, G_OPTION_ARG_STRING_ARRAY, &option_noplugin,
->  				"Specify plugins not to load", "NAME" },
->  	{ "nodetach", 'n', G_OPTION_FLAG_REVERSE,
->  				G_OPTION_ARG_NONE, &option_detach,
+I need a clarification about SIM:
+Most GSM mobile phones can dial emergency calls even when the phone is
+without a SIM card.
+But it seems that oFono does not support an emergency call if the sim
+driver is present but no SIM is inserted:
+ =
 
-in general I am fine with this, but we need to be a bit more consistent
-across projects and across options here.
+Indeed, if no sim is inserted, each access to SIM (e.g. read EF) =
 
-So if we do it like this then we have to also make this work for ConnMan
-and then also the --debug option should be able to handle multiple
-options. Besides the magic of separating via : and , which is already
-supported and documented there.
+via AT command is responded with "+CME ERROR: 10".
+Thus, sim initialization sequence can be sum-up like this:
+1) sim_pin_check(sim) is called although the reading of SIM EF have
+failed (EFicc, EFli, EFpl...).
+2) SIM pin check procedure fails and sim_initialize_after_pin() is not
+entered =
 
-Regards
+As a consequence, sim state variable is NEVER set to
+"OFONO_SIM_STATE_READY"
+As a consequence, modem state is NEVER set to "MODEM_STATE_OFFLINE"
+3) Then, if modem "Online" property is set to ON, it fails because modem
+state is still MODEM_STATE_PRE_SIM
+=3D> So the radio is not powered on and emergency call can not be
+established.
+ =
 
-Marcel
+So my question is:
+I would like to know if support of "emergency call when sim not
+inserted" is part of oFono requirements?
+If yes, a detection of SIM presence seems necessary as well as a correct
+"online property management" in that case.
+A TO DO could be added (I can try to)
+ =
 
+ =
 
+Thanks & regards,
+ =
 
---===============0705897195144345815==--
+Anthony Crolais
+=20
+
+--===============5688884350020661586==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
+b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
+QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
+MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
+Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
+dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
+YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
+ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
+YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
+OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
+Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
+VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
+Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
+cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
+MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
+ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
+cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
+bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
+eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
+dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
+LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
+Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
+cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
+dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
+aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczpz
+dD0iJiMxOyIgeG1sbnM6c3QxPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzbWFy
+dHRhZ3MiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy9UUi9SRUMtaHRtbDQwIj4KCjxoZWFkPgo8
+bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQtVHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9
+dXMtYXNjaWkiPgo8bWV0YSBuYW1lPUdlbmVyYXRvciBjb250ZW50PSJNaWNyb3NvZnQgV29yZCAx
+MSAoZmlsdGVyZWQgbWVkaXVtKSI+CjxvOlNtYXJ0VGFnVHlwZSBuYW1lc3BhY2V1cmk9InVybjpz
+Y2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOnNtYXJ0dGFncyIKIG5hbWU9Im1ldHJpY2NvbnZl
+cnRlciIvPgo8IS0tW2lmICFtc29dPgo8c3R5bGU+CnN0MVw6KntiZWhhdmlvcjp1cmwoI2RlZmF1
+bHQjaWVvb3VpKSB9Cjwvc3R5bGU+CjwhW2VuZGlmXS0tPgo8c3R5bGU+CjwhLS0KIC8qIEZvbnQg
+RGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiTVMgTWluY2hvIjsKCXBh
+bm9zZS0xOjIgMiA2IDkgNCAyIDUgOCAzIDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6VmVy
+ZGFuYTsKCXBhbm9zZS0xOjIgMTEgNiA0IDMgNSA0IDQgMiA0O30KQGZvbnQtZmFjZQoJe2ZvbnQt
+ZmFtaWx5OiJcQE1TIE1pbmNobyI7CglwYW5vc2UtMToyIDIgNiA5IDQgMiA1IDggMyA0O30KIC8q
+IFN0eWxlIERlZmluaXRpb25zICovCiBwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNv
+Tm9ybWFsCgl7bWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZTox
+Mi4wcHQ7Cglmb250LWZhbWlseToiVGltZXMgTmV3IFJvbWFuIjt9CmE6bGluaywgc3Bhbi5Nc29I
+eXBlcmxpbmsKCXtjb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CmE6dmlz
+aXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe2NvbG9yOnB1cnBsZTsKCXRleHQtZGVj
+b3JhdGlvbjp1bmRlcmxpbmU7fQpwcmUKCXttYXJnaW46MGNtOwoJbWFyZ2luLWJvdHRvbTouMDAw
+MXB0OwoJZm9udC1zaXplOjEwLjBwdDsKCWZvbnQtZmFtaWx5OiJDb3VyaWVyIE5ldyI7fQpzcGFu
+LkVtYWlsU3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7Cglmb250LWZh
+bWlseTpWZXJkYW5hOwoJY29sb3I6bmF2eTsKCWZvbnQtd2VpZ2h0Om5vcm1hbDsKCWZvbnQtc3R5
+bGU6bm9ybWFsO30KQHBhZ2UgU2VjdGlvbjEKCXtzaXplOjU5NS4zcHQgODQxLjlwdDsKCW1hcmdp
+bjo3MC44NXB0IDcwLjg1cHQgNzAuODVwdCA3MC44NXB0O30KZGl2LlNlY3Rpb24xCgl7cGFnZTpT
+ZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgoKPC9oZWFkPgoKPGJvZHkgbGFuZz1GUiBsaW5rPWJsdWUg
+dmxpbms9cHVycGxlPgoKPGRpdiBjbGFzcz1TZWN0aW9uMT48cHJlPjxmb250IHNpemU9MiBmYWNl
+PSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQgpzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+
+SGkgYWxsLDxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250CnNpemU9MiBm
+YWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBw
+dCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcHJlPjxwcmU+PGZvbnQKc2l6ZT0y
+IGZhY2U9IkNvdXJpZXIgTmV3Ij48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6MTAu
+MHB0Jz5JIGFtIG5ldyB0byBvRm9uby48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHBy
+ZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9
+J2ZvbnQtc2l6ZToxMC4wcHQnPkl0IHNlZW1zIGFuIGltcG9ydGFudCBjaGFsbGVuZ2UgdG8gZGVz
+aWduIGEgdGVsZXBob255IHN5c3RlbSB0aGF0IHdpbGwgc3VwcG9ydCA8bzpwPjwvbzpwPjwvc3Bh
+bj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFu
+IGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPnNldmVyYWwgM0dQUCBtb2RlbXMu
+IEkgd291bGQgbGlrZSB0byBwYXJ0aWNpcGF0ZS48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9w
+cmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFuIGxhbmc9RU4tR0Ig
+c3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48
+L3ByZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1H
+QiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+SSBoYXZlIHJlYWQgZG9jdW1lbnRhdGlvbiAob2Zv
+bm8tcGFwZXIsIGNvZGluZy1zdHlsZSwgYXBpIGZvciBvRm9ubyBJbnRlcmZhY2VzKS48bzpwPjwv
+bzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmllciBO
+ZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPkkgaGF2ZSBzdGFy
+dGVkIHRvIGNvdmVyIHNvdXJjZSBjb2RlOiBtb2RlbSBwYXJ0LCBzaW0gcGFydCYjODIzMDs8bzpw
+PjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmll
+ciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxvOnA+Jm5i
+c3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3Vy
+aWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+SSBuZWVk
+IGEgY2xhcmlmaWNhdGlvbiBhYm91dCBTSU06PG86cD48L286cD48L3NwYW4+PC9mb250PjwvcHJl
+PjxwcmU+PGZvbnQKc2l6ZT0yIGZhY2U9IkNvdXJpZXIgTmV3Ij48c3BhbiBsYW5nPUVOLUdCIHN0
+eWxlPSdmb250LXNpemU6MTAuMHB0Jz5Nb3N0IEdTTSBtb2JpbGUgcGhvbmVzIGNhbiBkaWFsIGVt
+ZXJnZW5jeSBjYWxscyBldmVuIHdoZW4gdGhlIHBob25lIGlzIHdpdGhvdXQgYSBTSU0gY2FyZC48
+bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291
+cmllciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPkJ1dCBp
+dCBzZWVtcyB0aGF0IG9Gb25vIGRvZXMgbm90IHN1cHBvcnQgYW4gZW1lcmdlbmN5IGNhbGwgaWYg
+dGhlIHNpbSBkcml2ZXIgaXMgcHJlc2VudCBidXQgbm8gU0lNIGlzIGluc2VydGVkOjxvOnA+PC9v
+OnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5l
+dyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+PG86cD4mbmJzcDs8
+L286cD48L3NwYW4+PC9mb250PjwvcHJlPjxwcmU+PGZvbnQKc2l6ZT0yIGZhY2U9IkNvdXJpZXIg
+TmV3Ij48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz5JbmRlZWQsIGlm
+IG5vIHNpbSBpcyBpbnNlcnRlZCwgZWFjaCBhY2Nlc3MgdG8gU0lNIChlLmcuIHJlYWQgRUYpIDxv
+OnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3Vy
+aWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+dmlhIEFU
+IGNvbW1hbmQgaXMgcmVzcG9uZGVkIHdpdGggJiM4MjIwOytDTUUgRVJST1I6IDxzdDE6bWV0cmlj
+Y29udmVydGVyClByb2R1Y3RJRD0iMTAmIzgyMjE7IiB3OnN0PSJvbiI+MTAmIzgyMjE7PC9zdDE6
+bWV0cmljY29udmVydGVyPi48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9u
+dApzaXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQt
+c2l6ZToxMC4wcHQnPlRodXMsIHNpbSBpbml0aWFsaXphdGlvbiBzZXF1ZW5jZSBjYW4gYmUgc3Vt
+LXVwIGxpa2UgdGhpczo8bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9udApz
+aXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6
+ZToxMC4wcHQnPjEpIHNpbV9waW5fY2hlY2soc2ltKSBpcyBjYWxsZWQgYWx0aG91Z2ggdGhlIHJl
+YWRpbmcgb2YgU0lNIEVGIGhhdmUgZmFpbGVkIChFRmljYywgRUZsaSwgRUZwbCYjODIzMDspLjxv
+OnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3Vy
+aWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+MikgU0lN
+IHBpbiBjaGVjayBwcm9jZWR1cmUgZmFpbHMgYW5kIHNpbV9pbml0aWFsaXplX2FmdGVyX3Bpbigp
+IGlzIG5vdCBlbnRlcmVkIDxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250
+CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1z
+aXplOjEwLjBwdCc+QXMgYSBjb25zZXF1ZW5jZSwgPC9zcGFuPjwvZm9udD48c3BhbgpsYW5nPUVO
+LUdCPnNpbSBzdGF0ZSB2YXJpYWJsZSBpcyBORVZFUiBzZXQgdG8gJiM4MjIwO09GT05PX1NJTV9T
+VEFURV9SRUFEWSYjODIyMTs8bzpwPjwvbzpwPjwvc3Bhbj48L3ByZT48cHJlPjxmb250CnNpemU9
+MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEw
+LjBwdCc+QXMgYSBjb25zZXF1ZW5jZSwgbW9kZW0gc3RhdGUgaXMgTkVWRVIgc2V0IHRvICYjODIy
+MDtNT0RFTV9TVEFURV9PRkZMSU5FJiM4MjIxOzwvc3Bhbj48L2ZvbnQ+PHNwYW4KbGFuZz1FTi1H
+Qj48bzpwPjwvbzpwPjwvc3Bhbj48L3ByZT48cHJlPjxmb250IHNpemU9MiBmYWNlPSJDb3VyaWVy
+IE5ldyI+PHNwYW4KbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+MykgVGhlbiwg
+aWYgbW9kZW0gJiM4MjIwO09ubGluZSYjODIyMTsgcHJvcGVydHkgaXMgc2V0IHRvIE9OLCBpdCBm
+YWlscyBiZWNhdXNlIG1vZGVtIHN0YXRlIGlzIHN0aWxsIE1PREVNX1NUQVRFX1BSRV9TSU08bzpw
+PjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmll
+ciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPj0mZ3Q7IFNv
+IHRoZSByYWRpbyBpcyBub3QgcG93ZXJlZCBvbiBhbmQgZW1lcmdlbmN5IGNhbGwgY2FuIG5vdCBi
+ZSBlc3RhYmxpc2hlZC48bzpwPjwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9udApz
+aXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6
+ZToxMC4wcHQnPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250
+CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1z
+aXplOjEwLjBwdCc+U28gbXkgcXVlc3Rpb24gaXM6PG86cD48L286cD48L3NwYW4+PC9mb250Pjwv
+cHJlPjxwcmU+PGZvbnQKc2l6ZT0yIGZhY2U9IkNvdXJpZXIgTmV3Ij48c3BhbiBsYW5nPUVOLUdC
+IHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz5JIHdvdWxkIGxpa2UgdG8ga25vdyBpZiBzdXBwb3J0
+IG9mICYjODIyMDtlbWVyZ2VuY3kgY2FsbCB3aGVuIHNpbSBub3QgaW5zZXJ0ZWQmIzgyMjE7IGlz
+IHBhcnQgb2Ygb0Zvbm8gcmVxdWlyZW1lbnRzPzxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3By
+ZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBz
+dHlsZT0nZm9udC1zaXplOjEwLjBwdCc+SWYgeWVzLCBhIGRldGVjdGlvbiBvZiBTSU0gcHJlc2Vu
+Y2Ugc2VlbXMgbmVjZXNzYXJ5IGFzIHdlbGwgYXMgYSBjb3JyZWN0ICYjODIyMDtvbmxpbmUgcHJv
+cGVydHkgbWFuYWdlbWVudCYjODIyMTsgaW4gdGhhdCBjYXNlLjxvOnA+PC9vOnA+PC9zcGFuPjwv
+Zm9udD48L3ByZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFu
+Zz1FTi1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+QSBUTyBETyBjb3VsZCBiZSBhZGRlZCAo
+SSBjYW4gdHJ5IHRvKTxvOnA+PC9vOnA+PC9zcGFuPjwvZm9udD48L3ByZT48cHJlPjxmb250CnNp
+emU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1FTi1HQiBzdHlsZT0nZm9udC1zaXpl
+OjEwLjBwdCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9mb250PjwvcHJlPjxwcmU+PGZvbnQK
+c2l6ZT0yIGZhY2U9IkNvdXJpZXIgTmV3Ij48c3BhbiBsYW5nPUVOLUdCIHN0eWxlPSdmb250LXNp
+emU6MTAuMHB0Jz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9u
+dApzaXplPTIgZmFjZT0iQ291cmllciBOZXciPjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQt
+c2l6ZToxMC4wcHQnPlRoYW5rcyAmYW1wOyByZWdhcmRzLDxvOnA+PC9vOnA+PC9zcGFuPjwvZm9u
+dD48L3ByZT48cHJlPjxmb250CnNpemU9MiBmYWNlPSJDb3VyaWVyIE5ldyI+PHNwYW4gbGFuZz1F
+Ti1HQiBzdHlsZT0nZm9udC1zaXplOjEwLjBwdCc+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9m
+b250PjwvcHJlPjxwcmU+PGZvbnQKc2l6ZT0yIGZhY2U9IkNvdXJpZXIgTmV3Ij48c3BhbiBsYW5n
+PUVOLUdCIHN0eWxlPSdmb250LXNpemU6MTAuMHB0Jz5BbnRob255IENyb2xhaXM8bzpwPjwvbzpw
+Pjwvc3Bhbj48L2ZvbnQ+PC9wcmU+PHByZT48Zm9udApzaXplPTIgZmFjZT0iQ291cmllciBOZXci
+PjxzcGFuIGxhbmc9RU4tR0Igc3R5bGU9J2ZvbnQtc2l6ZToxMC4wcHQnPjxvOnA+Jm5ic3A7PC9v
+OnA+PC9zcGFuPjwvZm9udD48L3ByZT48L2Rpdj4KCjwvYm9keT4KCjwvaHRtbD4K
+
+--===============5688884350020661586==--
 
