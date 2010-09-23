@@ -1,54 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============6095908280283437375=="
+Content-Type: multipart/mixed; boundary="===============0705897195144345815=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Fix test-sms.
-Date: Thu, 23 Sep 2010 11:14:56 +0900
-Message-ID: <1285208096.20811.62.camel@localhost.localdomain>
-In-Reply-To: <1285182518-15932-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH] Support multiple -p and -P option
+Date: Thu, 23 Sep 2010 11:18:53 +0900
+Message-ID: <1285208333.20811.64.camel@localhost.localdomain>
+In-Reply-To: <1285168276-2809-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6095908280283437375==
+--===============0705897195144345815==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pekka,
 
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
-
-> Allow user to set SRR and SMSC.
 > ---
->  test/send-sms |   23 +++++++++++++++++------
->  1 files changed, 17 insertions(+), 6 deletions(-)
+>  src/main.c   |   12 ++++++------
+>  src/ofono.h  |    2 +-
+>  src/plugin.c |   28 ++++++++++++++++++----------
+>  3 files changed, 25 insertions(+), 17 deletions(-)
 > =
 
-> diff --git a/test/send-sms b/test/send-sms
-> index bd1fae5..19d0e35 100755
-> --- a/test/send-sms
-> +++ b/test/send-sms
-> @@ -14,11 +14,22 @@ path =3D modems[0][0]
->  manager =3D dbus.Interface(bus.get_object('org.ofono', path),
->  					'org.ofono.MessageManager')
+> diff --git a/src/main.c b/src/main.c
+> index 20bf0d7..9cf32eb 100644
+> --- a/src/main.c
+> +++ b/src/main.c
+> @@ -93,8 +93,8 @@ static void system_bus_disconnected(DBusConnection *con=
+n, void *user_data)
+>  }
 >  =
 
-> +smsc =3D None
-> +
-> +if sys.argv[1] =3D=3D "--smsc":
-> +	smsc =3D sys.argv[2]
-> +	del sys.argv[1:2]
-> +
-> +if sys.argv[1].startswith("--smsc=3D"):
-> +	smsc =3D sys.argv[1].split("=3D", 2)[1]
-> +	del sys.argv[1]
-> +
-> +if smsc:
-> +	manager.SetProperty("ServiceCenterAddress", dbus.String(smsc))
+>  static gchar *option_debug =3D NULL;
+> -static gchar *option_plugin =3D NULL;
+> -static gchar *option_noplugin =3D NULL;
+> +static gchar **option_plugin;
+> +static gchar **option_noplugin;
+>  static gboolean option_detach =3D TRUE;
+>  static gboolean option_version =3D FALSE;
+>  =
 
-the SMSC is a global message manager property, I prefer to just have a
-test script that just modifies it. Using set-service-center-address
-would be way better then trying to include this in this test script.
+> @@ -113,9 +113,9 @@ static GOptionEntry options[] =3D {
+>  	{ "debug", 'd', G_OPTION_FLAG_OPTIONAL_ARG,
+>  				G_OPTION_ARG_CALLBACK, parse_debug,
+>  				"Specify debug options to enable", "DEBUG" },
+> -	{ "plugin", 'p', 0, G_OPTION_ARG_STRING, &option_plugin,
+> +	{ "plugin", 'p', 0, G_OPTION_ARG_STRING_ARRAY, &option_plugin,
+>  				"Specify plugins to load", "NAME" },
+> -	{ "noplugin", 'P', 0, G_OPTION_ARG_STRING, &option_noplugin,
+> +	{ "noplugin", 'P', 0, G_OPTION_ARG_STRING_ARRAY, &option_noplugin,
+>  				"Specify plugins not to load", "NAME" },
+>  	{ "nodetach", 'n', G_OPTION_FLAG_REVERSE,
+>  				G_OPTION_ARG_NONE, &option_detach,
+
+in general I am fine with this, but we need to be a bit more consistent
+across projects and across options here.
+
+So if we do it like this then we have to also make this work for ConnMan
+and then also the --debug option should be able to handle multiple
+options. Besides the magic of separating via : and , which is already
+supported and documented there.
 
 Regards
 
@@ -56,5 +67,5 @@ Marcel
 
 
 
---===============6095908280283437375==--
+--===============0705897195144345815==--
 
