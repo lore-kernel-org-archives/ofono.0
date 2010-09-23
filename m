@@ -1,42 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============6159208023274117507=="
+Content-Type: multipart/mixed; boundary="===============6270940622074352802=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] Add GPRS suspension to doc/features.txt
-Date: Thu, 23 Sep 2010 18:11:36 +0300
-Message-ID: <1285254696-31910-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: support of "emergency call when SIM not inserted" ?
+Date: Thu, 23 Sep 2010 10:14:24 -0500
+Message-ID: <4C9B6ED0.5010607@gmail.com>
+In-Reply-To: <A9AC1023FCA4654D92AC24C2A8F6A09201B01496@renesas4bis.renesas-rdf.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6159208023274117507==
+--===============6270940622074352802==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Anthony,
 
----
- doc/features.txt |    7 +++++++
- 1 files changed, 7 insertions(+), 0 deletions(-)
+> =
 
-diff --git a/doc/features.txt b/doc/features.txt
-index 534b8de..601d58c 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -96,3 +96,10 @@ Short Messaging Service
-   incoming messages is only generated when the SMS is fully assembled.  The
-   hash used is SHA1.  This unique identifier is used to identify the SMS
-   message to history plugins as well.
-+
-+
-+GPRS
-+=3D=3D=3D=3D
-+
-+- The packet data service may be temporarily suspended while a circuit
-+  switched service such as voice call or SMS is active.
--- =
+> I need a clarification about SIM:
+> =
 
-1.7.0.4
+> Most GSM mobile phones can dial emergency calls even when the phone is wi=
+thout a SIM card.
+> =
+
+> But it seems that oFono does not support an emergency call if the sim dri=
+ver is present but no SIM is inserted:
+> =
 
 
---===============6159208023274117507==--
+This used to be supported, but was broken by the new Online state
+changes.  Basically we need a way to trigger Online state when an
+emergency call is dialed, but remain in Offline state if the SIM is not
+inserted / locked.
+
+Please see the Emergency Calls section in the TODO list.
+
+Regards,
+-Denis
+
+--===============6270940622074352802==--
 
