@@ -1,38 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============2397089685355511257=="
+Content-Type: multipart/mixed; boundary="===============6021006894807294105=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Fix test-sms.
-Date: Thu, 23 Sep 2010 23:31:45 +0900
-Message-ID: <1285252305.20811.77.camel@localhost.localdomain>
-In-Reply-To: <AANLkTim=ZYKsRmmHgN-7_4umbHBJiALw0XPrwkuYVs1H@mail.gmail.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] TODO: GPRS suspended is done
+Date: Thu, 23 Sep 2010 17:37:10 +0300
+Message-ID: <1285252630-29484-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2397089685355511257==
+--===============6021006894807294105==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-> >> +if smsc:
-> >> +     manager.SetProperty("ServiceCenterAddress", dbus.String(smsc))
-> >
-> > the SMSC is a global message manager property, I prefer to just have a
-> > test script that just modifies it. Using set-service-center-address
-> > would be way better then trying to include this in this test script.
-> =
+---
+ TODO |    7 -------
+ 1 files changed, 0 insertions(+), 7 deletions(-)
 
-> What about the SRR? Should I move setting it to a separate script, too?
+diff --git a/TODO b/TODO
+index 3b9a5ab..a651cf3 100644
+--- a/TODO
++++ b/TODO
+@@ -220,13 +220,6 @@ GPRS
+   Priority: High
+   Complexity: C2
+ =
 
-that is called set-use-sms-reports. So from my point of view that extra
-option is not needed at all.
+-- Add support for GPRS suspended event.  Expose this to the UI by adding a=
+ new
+-  'Suspended' property on the ConnectionManager D-Bus interface.
+-
+-  Owner: Mika Liljeberg <mika.liljeberg@nokia.com>
+-  Priority: High
+-  Complexity: C1
+-
+ - Add support for IPv6 GPRS contexts.
+ =
 
-Regards
+   Priority: Medium
+-- =
 
-Marcel
+1.7.0.4
 
 
-
---===============2397089685355511257==--
+--===============6021006894807294105==--
 
