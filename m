@@ -1,53 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============6294640496764885800=="
+Content-Type: multipart/mixed; boundary="===============0558100205465281594=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Pekka Pessi <ppessi@gmail.com>
 Subject: Re: support of "emergency call when SIM not inserted" ?
-Date: Thu, 23 Sep 2010 22:54:02 +0900
-Message-ID: <1285250042.20811.76.camel@localhost.localdomain>
-In-Reply-To: <A9AC1023FCA4654D92AC24C2A8F6A09201B01496@renesas4bis.renesas-rdf.local>
+Date: Thu, 23 Sep 2010 17:13:26 +0300
+Message-ID: <AANLkTimP-Tvv49XQUeJ1Jef2F9bgxH-eG23mYyMDJ1Rd@mail.gmail.com>
+In-Reply-To: <1285250042.20811.76.camel@localhost.localdomain>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6294640496764885800==
+--===============0558100205465281594==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Anthony,
+Hi everyone,
 
-new rule for everybody, no more HTML emails on this mailing list.
-Actually not really a new rule, but I forgot to enforce it. So please
-fix your mail clients.
+2010/9/23 Marcel Holtmann <marcel@holtmann.org>:
+>> I need a clarification about SIM:
+>> Most GSM mobile phones can dial emergency calls even when the phone is
+>> without a SIM card.
+>> But it seems that oFono does not support an emergency call if the sim
+>> driver is present but no SIM is inserted:
+>
+> I have never tested it by myself, but this should actually work just
+> fine. The voice call driver is registered in the pre-SIM state and has
+> some special handling when no SIM is present.
+>
+> If it does not work, then this is a bug.
 
-> I am new to oFono.
-> It seems an important challenge to design a telephony system that will
-> support =
+It definitely is a bug (or missing feature). Andras from our team is
+working on it, he can probably post patches on emergency call
+handling. Shortly, the modem will register to network if a emergency
+call is to be dialed.
 
-> several 3GPP modems. I would like to participate.
->  =
+-- =
 
-> I have read documentation (ofono-paper, coding-style, api for oFono
-> Interfaces).
-> I have started to cover source code: modem part, sim part...
->  =
+Pekka.Pessi mail at nokia.com
 
-> I need a clarification about SIM:
-> Most GSM mobile phones can dial emergency calls even when the phone is
-> without a SIM card.
-> But it seems that oFono does not support an emergency call if the sim
-> driver is present but no SIM is inserted:
-
-I have never tested it by myself, but this should actually work just
-fine. The voice call driver is registered in the pre-SIM state and has
-some special handling when no SIM is present.
-
-If it does not work, then this is a bug.
-
-Regards
-
-Marcel
-
-
-
---===============6294640496764885800==--
+--===============0558100205465281594==--
 
