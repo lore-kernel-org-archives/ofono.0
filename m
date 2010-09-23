@@ -1,37 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============2597466653939981836=="
+Content-Type: multipart/mixed; boundary="===============2240236123781524847=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Add GPRS suspension to doc/features.txt
-Date: Thu, 23 Sep 2010 13:22:59 -0500
-Message-ID: <4C9B9B03.6070506@gmail.com>
-In-Reply-To: <1285254696-31910-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH 1/2] Fix valid_ussd_string()
+Date: Thu, 23 Sep 2010 13:27:41 -0500
+Message-ID: <4C9B9C1D.6070803@gmail.com>
+In-Reply-To: <1285263737-9017-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2597466653939981836==
+--===============2240236123781524847==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pekka,
 
-On 09/23/2010 10:11 AM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+> -	 * According to 22.030 Figure 3.5.3.2 USSD strings can be:
+> -	 *
+> -	 * Supplementary service control
+> -	 * SIM control
+> -	 * Manufacturer defined
+> -	 * Terminated by '#'
+> -	 * Short String - This can be any 2 digit short string.  If the string
+> -	 *                starts with a '1' and no calls are in progress then
+> -	 *                this string is treated as a call setup request
+> -	 *
+> -	 * Everything else is not a valid USSD string
+> +	 * As an exception, if a 2 digit string starts with a '1' and
+> +	 * there are no calls in progress then this string is treated as
+> +	 * a call setup request instead.
 
-> ---
->  doc/features.txt |    7 +++++++
->  1 files changed, 7 insertions(+), 0 deletions(-)
+You are now removing any reference to 22.030 and simply stating the
+'facts'.  I prefer that the spec trail be left in.  So at least these
+comments should not be removed.
 
-When marking a task done, please send a patch for both TODO and
-doc/features.txt.  This is easier to track.
-
-Also, your patch did not apply since you have not rebased.  Please make
-sure to rebase before any patch submissions.  I had to fix both of these
-issues manually with some nasty commit conflicts / squashing.
+The rest looks fine to me.
 
 Regards,
 -Denis
 
---===============2597466653939981836==--
+--===============2240236123781524847==--
 
