@@ -1,131 +1,149 @@
-Content-Type: multipart/mixed; boundary="===============7437238316094084383=="
+Content-Type: multipart/mixed; boundary="===============5374009457719686946=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] Support -p and -P options with list of plugins
-Date: Fri, 24 Sep 2010 17:22:40 +0300
-Message-ID: <1285338160-18844-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Yang Gu <gyagp0@gmail.com>
+Subject: [PATCH 1/1] Enable Qt Script
+Date: Fri, 24 Sep 2010 23:49:29 +0800
+Message-ID: <1285343369-10418-2-git-send-email-gyagp0@gmail.com>
+In-Reply-To: <1285343369-10418-1-git-send-email-gyagp0@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7437238316094084383==
+--===============5374009457719686946==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+From: Yang Gu <yang.gu@intel.com>
 
 ---
- src/main.c   |    4 ++--
- src/plugin.c |   38 +++++++++++++++++++++++++++-----------
- 2 files changed, 29 insertions(+), 13 deletions(-)
+ configure.ac    |    2 +-
+ src/control.cpp |   60 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 61 insertions(+), 1 deletions(-)
 
-diff --git a/src/main.c b/src/main.c
-index 20bf0d7..9869ac8 100644
---- a/src/main.c
-+++ b/src/main.c
-@@ -114,9 +114,9 @@ static GOptionEntry options[] =3D {
- 				G_OPTION_ARG_CALLBACK, parse_debug,
- 				"Specify debug options to enable", "DEBUG" },
- 	{ "plugin", 'p', 0, G_OPTION_ARG_STRING, &option_plugin,
--				"Specify plugins to load", "NAME" },
-+				"Specify plugins to load", "NAME,..," },
- 	{ "noplugin", 'P', 0, G_OPTION_ARG_STRING, &option_noplugin,
--				"Specify plugins not to load", "NAME" },
-+				"Specify plugins not to load", "NAME,..." },
- 	{ "nodetach", 'n', G_OPTION_FLAG_REVERSE,
- 				G_OPTION_ARG_NONE, &option_detach,
- 				"Don't run as daemon in background" },
-diff --git a/src/plugin.c b/src/plugin.c
-index 159014b..68fe318 100644
---- a/src/plugin.c
-+++ b/src/plugin.c
-@@ -72,18 +72,26 @@ static gboolean add_plugin(void *handle, struct ofono_p=
-lugin_desc *desc)
+diff --git a/configure.ac b/configure.ac
+index 4d10494..d5d674e 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -21,7 +21,7 @@ AC_ARG_ENABLE(optimization, AC_HELP_STRING([--disable-opt=
+imization],
+ 	fi
+ ])
+ =
+
+-PKG_CHECK_MODULES(QT, QtCore QtGui QtXml QtNetwork, dummy=3Dyes,
++PKG_CHECK_MODULES(QT, QtCore QtGui QtXml QtNetwork  QtScript, dummy=3Dyes,
+ 						AC_MSG_ERROR(Qt is required))
+ AC_SUBST(QT_CFLAGS)
+ AC_SUBST(QT_LIBS)
+diff --git a/src/control.cpp b/src/control.cpp
+index 34a228f..9de4ef7 100644
+--- a/src/control.cpp
++++ b/src/control.cpp
+@@ -33,6 +33,8 @@
+ #include <QFile>
+ #include <QDir>
+ #include <QtGui/QHeaderView>
++#include <QtScript>
++#include <qfilesystemwatcher.h>
+ #include "attranslator.h"
+ =
+
+ #define TWO_BYTE_MAX 65535
+@@ -74,6 +76,7 @@ private slots:
+     void simInsertRemove();
+     void simAppStart();
+     void simAppAbort();
++    void handleDirChanged(const QString &path);
+ =
+
+ signals:
+     void unsolicitedCommand(const QString &);
+@@ -105,6 +108,10 @@ private:
+         static int nextId;
+     };
+     QList<VoicemailItem> mailbox;
++    QScriptEngine engine;
++    QString dirPath;
++    QStringList fileList;
++    QFileSystemWatcher fileSystemWatcher;
+ };
+ #include "control.moc"
+ =
+
+@@ -149,9 +156,62 @@ ControlWidget::ControlWidget(const QString &ruleFile, =
+Control *parent)
+ =
+
+     handleNewApp();
+ =
+
++    /* Export tabs to be accessed by script */
++    QScriptValue qsTab =3D engine.newQObject(ui->tab);
++    engine.globalObject().setProperty("tabRegistration", qsTab);
++
++    QScriptValue qsTab2 =3D engine.newQObject(ui->tab_2);
++    engine.globalObject().setProperty("tabCBM", qsTab2);
++
++    QScriptValue qsTab3 =3D engine.newQObject(ui->tab_3);
++    engine.globalObject().setProperty("tabSMS", qsTab3);
++
++    QScriptValue qsTab4 =3D engine.newQObject(ui->tab_4);
++    engine.globalObject().setProperty("tabVoiceMail", qsTab4);
++
++    QScriptValue qsTab5 =3D engine.newQObject(ui->tab_5);
++    engine.globalObject().setProperty("tabUSSD", qsTab5);
++
++    QScriptValue qsTab6 =3D engine.newQObject(ui->tab_6);
++    engine.globalObject().setProperty("tabSIM", qsTab6);
++
++    dirPath =3D "/tmp/scripts/";
++
++    QDir *dir =3D new QDir(dirPath);
++    dir->mkpath(dirPath);
++
++    fileList =3D dir->entryList(QDir::Files);
++
++    fileSystemWatcher.addPath(dirPath);
++    connect(&fileSystemWatcher, SIGNAL(directoryChanged(const QString &)),=
+ this, SLOT(handleDirChanged(const QString &)));
++
+     show();
  }
  =
 
- static gboolean check_plugin(struct ofono_plugin_desc *desc,
--				const char *pattern, const char *exclude)
-+				char **patterns, char **excludes)
- {
--	if (exclude !=3D NULL &&
--			g_pattern_match_simple(exclude, desc->name) =3D=3D TRUE) {
--		ofono_info("Excluding %s", desc->description);
--		return FALSE;
-+	if (excludes) {
-+		for (; *excludes; excludes++)
-+			if (g_pattern_match_simple(*excludes, desc->name))
-+				break;
-+		if (*excludes) {
-+			ofono_info("Excluding %s", desc->description);
-+			return FALSE;
-+		}
- 	}
- =
-
--	if (pattern !=3D NULL &&
--			g_pattern_match_simple(pattern, desc->name) =3D=3D FALSE) {
--		ofono_info("Ignoring %s", desc->description);
--		return FALSE;
-+	if (patterns) {
-+		for (; *patterns; patterns++)
-+			if (g_pattern_match_simple(*patterns, desc->name))
-+				break;
-+		if (!*patterns) {
-+			ofono_info("Ignoring %s", desc->description);
-+			return FALSE;
-+		}
- 	}
- =
-
- 	return TRUE;
-@@ -93,6 +101,8 @@ static gboolean check_plugin(struct ofono_plugin_desc *d=
-esc,
- =
-
- int __ofono_plugin_init(const char *pattern, const char *exclude)
- {
-+	gchar **patterns =3D NULL;
-+	gchar **excludes =3D NULL;
- 	GSList *list;
- 	GDir *dir;
- 	const gchar *file;
-@@ -101,9 +111,15 @@ int __ofono_plugin_init(const char *pattern, const cha=
-r *exclude)
- =
-
- 	DBG("");
- =
-
-+	if (pattern)
-+		patterns =3D g_strsplit_set(pattern, ", ", -1);
++void ControlWidget::handleDirChanged(const QString &path)
++{
++    QDir *dir =3D new QDir(dirPath);
++    QStringList newFileList =3D dir->entryList(QDir::Files);
 +
-+	if (exclude)
-+		excludes =3D g_strsplit_set(exclude, ", ", -1);
++    for (int i =3D 0; i < newFileList.size(); ++i)
++        if (!fileList.contains(newFileList.at(i))) {
++            QString fileName(dirPath + newFileList.at(i));
++            qDebug() << fileName << "was added to observed directory.";
++            QFile scriptFile(fileName);
++            scriptFile.open(QIODevice::ReadOnly);
++            QTextStream stream(&scriptFile);
++            QString contents =3D stream.readAll();
++            scriptFile.close();
 +
- 	for (i =3D 0; __ofono_builtin[i]; i++) {
- 		if (check_plugin(__ofono_builtin[i],
--					pattern, exclude) =3D=3D FALSE)
-+					patterns, excludes) =3D=3D FALSE)
- 			continue;
- =
-
- 		add_plugin(NULL, __ofono_builtin[i]);
-@@ -139,7 +155,7 @@ int __ofono_plugin_init(const char *pattern, const char=
- *exclude)
- 				continue;
- 			}
- =
-
--			if (check_plugin(desc, pattern, exclude) =3D=3D FALSE) {
-+			if (check_plugin(desc, patterns, excludes) =3D=3D FALSE) {
- 				dlclose(handle);
- 				continue;
- 			}
++            QScriptValue qsScript =3D engine.evaluate(contents, fileName);
++            if (qsScript.isError())
++                qDebug() << fileName << qsScript.property("lineNumber").to=
+Int32() << qsScript.toString();
++        }
++
++    fileList.clear();
++    fileList =3D newFileList;
++}
++
+ void ControlWidget::closeEvent(QCloseEvent *event)
+ {
+     event->ignore();
 -- =
 
 1.7.0.4
 
 
---===============7437238316094084383==--
+--===============5374009457719686946==--
 
