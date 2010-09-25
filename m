@@ -1,132 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============1151219514765603680=="
+Content-Type: multipart/mixed; boundary="===============4361478299370917839=="
 MIME-Version: 1.0
-From: rajyalakshmi bommaraju <rajyalakshmi.bommaraju@intel.com>
-Subject: Re: Please comment on callhistory API
-Date: Fri, 24 Sep 2010 15:00:00 -0700
-Message-ID: <4C9D1F60.6090005@intel.com>
-In-Reply-To: <1285291025.20811.102.camel@localhost.localdomain>
+From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
+Subject: RE: [PATCH 0/1] Patch Description
+Date: Sat, 25 Sep 2010 11:00:53 +0800
+Message-ID: <33AB447FBD802F4E932063B962385B352D6BDDC0@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1285343369-10418-1-git-send-email-gyagp0@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1151219514765603680==
+--===============4361478299370917839==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Marcel,
-I have incorporated your feedback into the document . Please let me know =
+Hi,
 
-if anything needs to be changed.
+Yang Gu wrote:
+> Phonesim is most of time a convenient way to test oFono. For example,
+> it can be used to test MO call, as well as MT call. =
 
-Thanks
-Raji
+> And talking about test area, test automation is quite important
+> regarding to both efficiency and effectiveness. In the test of MO
+> call, scripts can be used to interact with oFono via D-Bus to make
+> test automation possible. However, in the test of MT call, currently
+> we have to enter the caller number and click some button in Phonesim
+> GUI to simulate an incoming call, which makes test automation
+> unrealistic. This patch is to enable Qt script (JavaScript following
+> ECMAScript spec) in Phonesim, so that we can have some script control
+> its GUI conveniently, and satisfy the test automation.       =
 
-			Callhistory Adapter-Agent
+> =
 
+> With this patch, Phonesim can work in the following way:
+> 1. It observes some specific directory (/tmp/scripts) to see if there
+> is some test scripts added. =
 
-CallHistory is a built in plugin for ofono. It uses CallHistoryAgent api =
+> 2. Once Phonesim finds a new test script is added, it will parse and
+> execute the script. =
 
-exposed by client to push voice call history information. =
+> 3. You may add more and more test scripts to the specific directory
+> with your test goes on. =
 
-CallHistoryAgent api is a service interface exposed by client over dbus. =
+> =
 
-Plugin exposes CallHistory interface that CallHistoryAgent registers and =
+> Below are two examples:
+> # call.js (Simulate a MT call)
+> tabRegistration.gbIncomingCall.leCaller.text =3D "12345";
+> tabRegistration.gbIncomingCall.pbIncomingCall.click();
+> =
 
-unregisters with. if the CallHistoryAgent registers with CallHistory =
+> This script will help you enter the caller number as "12345", and
+> click "Call" button in Phonesim GUI. Once this script is copied to
+> the observed directory, oFono will get an incoming call.  =
 
-then plugin pushes the history information to the agent soon as it =
+> =
 
-receives from ofono, otherwise it caches the data in a disk file until =
+> # sms.js (Simulate a MT sms)
+> tabSMS.gbMessage1.leMessageSender.text =3D "Yang";
+> tabSMS.gbMessage1.leSMSClass.text =3D "1";
+> tabSMS.gbMessage1.teSMSText.setPlainText("This message is sent
+> automatically from Phonesim"); =
 
-agent registers, once agent registers plugin will read the data from the =
+> tabSMS.gbMessage1.pbSendSMSMessage.click();
+> =
 
-disk file and pushes all the records to it.
+> This script will help you fill the sms sender, class, text, and then
+> click the "Send Message" button for you. Once it's added into the
+> specific directory, oFono will get an incoming message.  =
 
-CallHistory:
+> =
 
-it is going to register and unregister the agent. It calls the methods =
-
-on the agent for delivering history information whent the agent is up =
-
-and running. The history record will be written to the disk if agent =
-
-method returns error or if the agent is not running.
-
-
-CallHistory hierarchy
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-
-Service : org.ofono
-Interface : org.ofono.CallHistory
-Object path : [variable prefix]/{modem0,modem1,...}/CallHistory
-
-Methods 	void RegisterAgent (objectpath)
-
-			RegisterAgent method registers the agent object path. Methods on this =
-
-			agent will be called if history needs to push data.
-
-			Possible Errors: [service].Error.InvalidArguments
-			[service].Error.InvalidFormat
-			[service].Error.InUse
-
-		void UnregisterAgent (objectpath)
-
-			UnregisterAgent method unregister the already registered agent object pa=
-th.
-
-			Possible Errors: [service].Error.InvalidArguments
-			[service].Error.InvalidFormat
-			[service].Error.InUse
-
-CallHistoryAgent hierarchy
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-
-Service Name : Unique Name
-Interface : org.ofono.CallHistoryAgent
-Objectpath : Freely definable
-
-Methods 	void SendHistory( array{dict})
-
-			This method gets called by ofono to deliver an array of records. Each =
-
-			record is represented as a dictionary, all the dict properties are =
-
-			described in the "Properties" section.
-
-			Possible Errors: [service].Error.Unsuccessful
-
-		void Release()
-			Cleans up agent, assumes that agent is already unregistered, so not =
-
-			needed to unregister.
-
-Properties
-=3D=3D=3D=3D=3D=3D=3D
-		integer Uid [Read Only]
-			Integer representing the unique id of the history record
-
-		string Calltype [Read Only]
-			string representing the call type. Call type can be one of the following =
-
-			three alternatives
-			"outgoing" - it is an outgoing call
-			"incoming" - it is an incoming call
-			"missed" - it is a missed call
-
-		string LineIdentification [Read Only]
-			string representing the LineIdentification , for outgoing call it is the =
-
-			phone number dialed. For Incoming call it is the CLIP, or COLP if =
-
-			received by the underlying implementation.
-
-		string StartTime [Read Only]
-			String representing start time of the call
-
-		string EndTime [Read Only]
-			String representing end time of the call
+> Don't know if this is the best way to make Phonesim support test
+> automation. So comments are welcome:) =
 
 
---===============1151219514765603680==--
+It's awesome! I tried the patch and simply copy call.js to /tmp/scripts and=
+ it makes a call to oFono like a magic. ;-)
+
+> -----
+> Yang Gu (1):
+>   Enable Qt Script
+> =
+
+>  configure.ac    |    2 +-
+>  src/control.cpp |   60
+>  +++++++++++++++++++++++++++++++++++++++++++++++++++++++ 2 files
+> changed, 61 insertions(+), 1 deletions(-) =
+
+> =
+
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+
+Regards,
+Zhenhua
+
+--===============4361478299370917839==--
 
