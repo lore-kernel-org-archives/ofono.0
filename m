@@ -1,47 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============7400800440535698501=="
+Content-Type: multipart/mixed; boundary="===============1902510541046413679=="
 MIME-Version: 1.0
-From: Frank Gau <fgau@gau-net.de>
-Subject: [PATCH] calypso: update power and reset path
-Date: Mon, 27 Sep 2010 16:05:14 +0200
-Message-ID: <1285596314-3186-1-git-send-email-fgau@gau-net.de>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: [PATCHv2] Fix 8bit port handling
+Date: Mon, 27 Sep 2010 18:45:06 +0300
+Message-ID: <1285602306-24259-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7400800440535698501==
+--===============1902510541046413679==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/calypso.c |    4 ++--
+ src/sms.c |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/calypso.c b/plugins/calypso.c
-index ea55ed4..130fa6e 100644
---- a/plugins/calypso.c
-+++ b/plugins/calypso.c
-@@ -58,8 +58,8 @@
+diff --git a/src/sms.c b/src/sms.c
+index 303d673..99b0812 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -1333,8 +1333,8 @@ static void sms_dispatch(struct ofono_sms *sms, GSLis=
+t *sms_list)
+ 		}
  =
 
- #include <drivers/atmodem/vendor.h>
+ 		if (sms_extract_app_port(s, &cdst, &csrc, &is_8bit)) {
+-			csrc =3D is_8bit ? csrc : (csrc << 8);
+-			cdst =3D is_8bit ? cdst : (cdst << 8);
++			csrc =3D is_8bit ? (csrc << 8) : csrc;
++			cdst =3D is_8bit ? (cdst << 8) : cdst;
  =
 
--#define CALYPSO_POWER_PATH "/sys/bus/platform/devices/neo1973-pm-gsm.0/pow=
-er_on"
--#define CALYPSO_RESET_PATH "/sys/bus/platform/devices/neo1973-pm-gsm.0/res=
-et"
-+#define CALYPSO_POWER_PATH "/sys/bus/platform/devices/gta02-pm-gsm.0/power=
-_on"
-+#define CALYPSO_RESET_PATH "/sys/bus/platform/devices/gta02-pm-gsm.0/reset"
- =
-
- enum powercycle_state {
- 	POWERCYCLE_STATE_POWER0 =3D 0,
+ 			if (l =3D=3D sms_list) {
+ 				srcport =3D csrc;
 -- =
 
-1.7.1
+1.7.0.4
 
 
-
---===============7400800440535698501==--
+--===============1902510541046413679==--
 
