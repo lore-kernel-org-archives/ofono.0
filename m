@@ -1,131 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0352215235596860954=="
+Content-Type: multipart/mixed; boundary="===============7400800440535698501=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH 1/2] Include datagram support to history API
-Date: Mon, 27 Sep 2010 16:24:36 +0300
-Message-ID: <1285593877-31638-1-git-send-email-aki.niemi@nokia.com>
+From: Frank Gau <fgau@gau-net.de>
+Subject: [PATCH] calypso: update power and reset path
+Date: Mon, 27 Sep 2010 16:05:14 +0200
+Message-ID: <1285596314-3186-1-git-send-email-fgau@gau-net.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0352215235596860954==
+--===============7400800440535698501==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/history.h |    5 +++++
- src/history.c     |   47 ++++++++++++++++++++++++++++++++++++++++++++++-
- src/ofono.h       |    8 ++++++++
- 3 files changed, 59 insertions(+), 1 deletions(-)
+ plugins/calypso.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/include/history.h b/include/history.h
-index c1c4aa1..e661f24 100644
---- a/include/history.h
-+++ b/include/history.h
-@@ -58,6 +58,11 @@ struct ofono_history_driver {
- 				const struct ofono_uuid *uuid, const char *from,
- 				const struct tm *remote, const struct tm *local,
- 				const char *text);
-+	void (*datagram_received)(struct ofono_history_context *context,
-+				const struct ofono_uuid *uuid, const char *from,
-+				int dst, int src, const struct tm *remote,
-+				const struct tm *local,
-+				const unsigned char *buffer, unsigned len);
- 	void (*sms_send_pending)(struct ofono_history_context *context,
- 					const struct ofono_uuid *uuid,
- 					const char *to,
-diff --git a/src/history.c b/src/history.c
-index 0229cf5..2610141 100644
---- a/src/history.c
-+++ b/src/history.c
-@@ -47,7 +47,15 @@ struct history_call_foreach_data {
- struct history_sms_foreach_data {
- 	const struct ofono_uuid *uuid;
- 	const char *address;
--	const char *text;
-+	union {
-+		const char *text;
-+		struct {
-+			const unsigned char *data;
-+			unsigned len;
-+			guint16 dst;
-+			guint16 src;
-+		};
-+	};
- 	union {
- 		struct {
- 			const struct tm *remote;
-@@ -193,6 +201,43 @@ void __ofono_history_sms_received(struct ofono_modem *=
-modem,
- 					history_sms_received, &hfd);
- }
+diff --git a/plugins/calypso.c b/plugins/calypso.c
+index ea55ed4..130fa6e 100644
+--- a/plugins/calypso.c
++++ b/plugins/calypso.c
+@@ -58,8 +58,8 @@
  =
 
-+static void history_datagram_received(struct ofono_atom *atom, void *data)
-+{
-+	struct ofono_history_context *context =3D __ofono_atom_get_data(atom);
-+	struct history_sms_foreach_data *hfd =3D data;
-+
-+	if (context->driver->datagram_received =3D=3D NULL)
-+		return;
-+
-+	context->driver->datagram_received(context, hfd->uuid, hfd->address,
-+						hfd->dst, hfd->src,
-+						hfd->remote, hfd->local,
-+						hfd->data, hfd->len);
-+}
-+
-+void __ofono_history_datagram_received(struct ofono_modem *modem,
-+					const struct ofono_uuid *uuid,
-+					const char *from, int dst, int src,
-+					const struct tm *remote,
-+					const struct tm *local,
-+					const unsigned char *buffer,
-+					unsigned len)
-+{
-+	struct history_sms_foreach_data hfd;
-+
-+	hfd.uuid =3D uuid;
-+	hfd.address =3D from;
-+	hfd.dst =3D dst;
-+	hfd.src =3D src;
-+	hfd.remote =3D remote;
-+	hfd.local =3D local;
-+	hfd.data =3D buffer;
-+	hfd.len =3D len;
-+
-+	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_HISTORY,
-+					history_datagram_received, &hfd);
-+}
-+
- static void history_sms_send_pending(struct ofono_atom *atom, void *data)
- {
- 	struct ofono_history_context *context =3D __ofono_atom_get_data(atom);
-diff --git a/src/ofono.h b/src/ofono.h
-index 41ce011..b068f48 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -311,6 +311,14 @@ void __ofono_history_sms_received(struct ofono_modem *=
-modem,
- 					const struct tm *local,
- 					const char *text);
+ #include <drivers/atmodem/vendor.h>
  =
 
-+void __ofono_history_datagram_received(struct ofono_modem *modem,
-+					const struct ofono_uuid *uuid,
-+					const char *from, int dst, int src,
-+					const struct tm *remote,
-+					const struct tm *local,
-+					const unsigned char *buffer,
-+					unsigned len);
-+
- void __ofono_history_sms_send_pending(struct ofono_modem *modem,
- 					const struct ofono_uuid *uuid,
- 					const char *to,
+-#define CALYPSO_POWER_PATH "/sys/bus/platform/devices/neo1973-pm-gsm.0/pow=
+er_on"
+-#define CALYPSO_RESET_PATH "/sys/bus/platform/devices/neo1973-pm-gsm.0/res=
+et"
++#define CALYPSO_POWER_PATH "/sys/bus/platform/devices/gta02-pm-gsm.0/power=
+_on"
++#define CALYPSO_RESET_PATH "/sys/bus/platform/devices/gta02-pm-gsm.0/reset"
+ =
+
+ enum powercycle_state {
+ 	POWERCYCLE_STATE_POWER0 =3D 0,
 -- =
 
-1.7.0.4
+1.7.1
 
 
---===============0352215235596860954==--
+
+--===============7400800440535698501==--
 
