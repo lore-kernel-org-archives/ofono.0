@@ -1,47 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============0071988008277773902=="
+Content-Type: multipart/mixed; boundary="===============2159907072505000960=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Moises Silva <moises.silva@gmail.com>
 Subject: Re: Using ofono HFP
-Date: Sun, 26 Sep 2010 19:26:42 -0500
-Message-ID: <4C9FE4C2.9060507@gmail.com>
-In-Reply-To: <AANLkTimM6B4VQZW=cTP4DfzOukrKCM9wEKs-iCRbFPDK@mail.gmail.com>
+Date: Sun, 26 Sep 2010 20:37:40 -0400
+Message-ID: <AANLkTi=innf614+FcEZMPrDc2fwRt-k29WcCJt9rhpr5@mail.gmail.com>
+In-Reply-To: <4C9FE4C2.9060507@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0071988008277773902==
+--===============2159907072505000960==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Moises,
-
-> I was advised by padovan on IRC that I should try dbus >=3D 1.3 ... I am
-> going to try that today, I was putting that off cuz this seemed like a
-> lower level issue and upgrading dbus seemed like non-trivial since many
-> things depend on dbus and fedora 13 does not seem to include rpm for
-> dbus >=3D 1.3
+Hi Denis,
 
 Neither oFono nor BlueZ will enable the plugins for HFP support unless
-DBus-1.3 is installed (or alternatively a hacked dbus-1.2 with file
-descriptor passing support)
+> DBus-1.3 is installed (or alternatively a hacked dbus-1.2 with file
+> descriptor passing support)
 
-> =
 
-> Can I somehow to try ofono connect to my cell and not the other way aroun=
-d?
+That explains a lot.
 
-The connection initiator is actually irrelevant.  You just need to make
-sure that BlueZ has paired with your device and the HandsfreeGateway
-interface is created for your device.
 
-> The final goal here is NOT use this with pulseaudio, but rather have
-> access to the SCO socket so I can manipulate the audio.
 
-If you want this, then you will need to eventually write your own plugin
-that will manage the RFCOMM and SCO sockets.  Today, BlueZ does this part...
+> If you want this, then you will need to eventually write your own plugin
+> that will manage the RFCOMM and SCO sockets.  Today, BlueZ does this
+> part...
+>
+
+I will look into that then. Thanks a lot for the response. This puts me back
+in the right track.
 
 Regards,
--Denis
 
---===============0071988008277773902==--
+-
+Moises
+
+--===============2159907072505000960==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+SGkgRGVuaXMsPGRpdj48YnI+PGRpdj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+PGJsb2NrcXVv
+dGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxl
+ZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleDsiPk5laXRoZXIgb0Zvbm8gbm9yIEJs
+dWVaIHdpbGwgZW5hYmxlIHRoZSBwbHVnaW5zIGZvciBIRlAgc3VwcG9ydCB1bmxlc3M8YnI+CgpE
+QnVzLTEuMyBpcyBpbnN0YWxsZWQgKG9yIGFsdGVybmF0aXZlbHkgYSBoYWNrZWQgZGJ1cy0xLjIg
+d2l0aCBmaWxlPGJyPgpkZXNjcmlwdG9yIHBhc3Npbmcgc3VwcG9ydCk8L2Jsb2NrcXVvdGU+PGRp
+dj48YnI+PC9kaXY+PGRpdj5UaGF0IGV4cGxhaW5zIGEgbG90LjwvZGl2PjxkaXY+PGJyPjwvZGl2
+PjxkaXY+wqA8L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJn
+aW46MCAwIDAgLjhleDtib3JkZXItbGVmdDoxcHggI2NjYyBzb2xpZDtwYWRkaW5nLWxlZnQ6MWV4
+OyI+PGRpdiBjbGFzcz0iaW0iPgo8L2Rpdj5JZiB5b3Ugd2FudCB0aGlzLCB0aGVuIHlvdSB3aWxs
+IG5lZWQgdG8gZXZlbnR1YWxseSB3cml0ZSB5b3VyIG93biBwbHVnaW48YnI+CnRoYXQgd2lsbCBt
+YW5hZ2UgdGhlIFJGQ09NTSBhbmQgU0NPIHNvY2tldHMuIMKgVG9kYXksIEJsdWVaIGRvZXMgdGhp
+cyBwYXJ0Li4uPGJyPjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2Pkkgd2lsbCBsb29r
+IGludG8gdGhhdCB0aGVuLiBUaGFua3MgYSBsb3QgZm9yIHRoZSByZXNwb25zZS4gVGhpcyBwdXRz
+IG1lIGJhY2sgaW4gdGhlIHJpZ2h0IHRyYWNrLjwvZGl2PjxkaXY+Cjxicj48L2Rpdj48ZGl2PlJl
+Z2FyZHMsPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj4tPC9kaXY+PGRpdj5Nb2lzZXM8L2Rpdj48
+ZGl2Pjxicj48L2Rpdj48L2Rpdj48L2Rpdj48L2Rpdj4K
+
+--===============2159907072505000960==--
 
