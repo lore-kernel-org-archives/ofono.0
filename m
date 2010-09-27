@@ -1,58 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============6216613726321932076=="
+Content-Type: multipart/mixed; boundary="===============3830592490708763466=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Please comment on callhistory API
-Date: Tue, 28 Sep 2010 07:21:22 +0900
-Message-ID: <1285626082.9845.16.camel@aeonflux>
-In-Reply-To: <4CA100DF.40402@intel.com>
+Date: Mon, 27 Sep 2010 18:08:04 -0500
+Message-ID: <4CA123D4.9080500@gmail.com>
+In-Reply-To: <1285609846.9845.11.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6216613726321932076==
+--===============3830592490708763466==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Raji,
+Hi Marcel,
 
-this is the second time I have to remind you to not top post. Next time
-I will ignore your email. Just a friendly reminder to follow proper
-mailing list etiquette.
+On 09/27/2010 12:50 PM, Marcel Holtmann wrote:
+> Hi Raji,
+> =
 
-> org.ofono.History will be the main adapter interface and =
+>> CallHistory hierarchy
+>> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>>
+>> Service : org.ofono
+>> Interface : org.ofono.CallHistory
+>> Object path : [variable prefix]/{modem0,modem1,...}/CallHistory
+> =
 
-> org.ofono.CallHistoryAgent the callhistory agent and =
+> the object path is wrong here. This should be pretty much on the main /
+> object path. And not on per modem and not in a sub-path.
+> =
 
-> org.ofono.SmsHistoryAgent as the sms history agent. I want to seperate =
+> I really don't think that per modem history makes sense. Denis?
 
-> the two agents so that sms app will expose sms history agent and dialer =
+The idea here is that you can track history by the modem object or more
+likely the IMSI.  Thus when switching SIMs or in dual-sim mode phones,
+the history shown might change depending on the current SIM.
 
-> will register and expose callhistory agent. Then it will be clear which =
+>> Properties
+>> =3D=3D=3D=3D=3D=3D=3D
+>> 		integer Uid [Read Only]
+>> 			Integer representing the unique id of the history record
+> =
 
-> agent is interested in which history, vs one org.ofono.HistoryAgent =
+> In this case I would prefer UID as value and in uint32 please. D-Bus
+> doesn't have an integer type.
+> =
 
-> exposing ReportCall and ReportTextMessage methods. In the later case =
+> Also do we actually need this? Denis?
 
-> adapter needs to flush both smshistory and callsistory onto two agents =
+This is not actually needed, we only track when a call has been ended or
+missed.
 
-> even though agents are not interested only in type of history.
+Regards,
+-Denis
 
-actually not really. So why does the dialer and SMS application need to
-register for the history? Isn't that going to be stored central in
-Tracker or something similar. Should not be Tracker or some Tracker
-helper be registering the agent?
-
-I might be wrong, but does it really make sense to separate it on this
-level?
-
-And it needs to be MessageHistoryAgent if we decide to go for this. We
-banned the shortcut "sms" from the rest of the API.
-
-Regards
-
-Marcel
-
-
-
---===============6216613726321932076==--
+--===============3830592490708763466==--
 
