@@ -1,32 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============5834108116698691393=="
+Content-Type: multipart/mixed; boundary="===============4910121737410950020=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/5] ss: Use function to judge if it's busy
-Date: Sun, 26 Sep 2010 20:05:24 -0500
-Message-ID: <4C9FEDD4.3090000@gmail.com>
-In-Reply-To: <1285064479-12907-4-git-send-email-yang.gu@intel.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH 5/5] cf: Handle send ss proactive command
+Date: Mon, 27 Sep 2010 10:11:29 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A4732D912FDC@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802A51C75@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5834108116698691393==
+--===============4910121737410950020==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Jeevaka,
 
-On 09/21/2010 05:21 AM, Yang Gu wrote:
-> ---
->  src/call-barring.c    |   12 ++++++------
->  src/call-forwarding.c |   11 +++++++----
->  src/call-settings.c   |   12 ++++++------
->  3 files changed, 19 insertions(+), 16 deletions(-)
 
-This patch has been applied, thanks.
+>-----Original Message-----
+>From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
+lf Of
+>Jeevaka.Badrappan(a)elektrobit.com
+>Sent: Wednesday, September 22, 2010 3:29 AM
+>To: ofono(a)ofono.org
+>Subject: RE: [PATCH 5/5] cf: Handle send ss proactive command
+>
+>Hi Yang,
+>
+>> --- a/src/stk.c
+>> +++ b/src/stk.c
+>
+>> +	unsigned char addnl[2];
+>> +
+>> +	default:
+>> +		DBG("Send ss finishes with error type: %d",
+>error->type);
+>> +		rsp.result.type =3D STK_RESULT_TYPE_SS_RETURN_ERROR;
+>> +		addnl[0] =3D (unsigned char) error->error;
+>> +		addnl[1] =3D STK_RESULT_ADDNL_SS_PB_NO_SPECIFIC_CAUSE;
+>> +		rsp.result.additional =3D addnl;
+>> +		rsp.result.additional_len =3D 2;
+>> +		break;
+>> +	}
+>> +
+>
+>Isn't the above code, has to be something like
+>
+>	unsigned char addnl;
+>
+>	default:
+>		rsp.result.type =3D STK_RESULT_TYPE_SS_RETURN_ERROR;
+>		addnl =3D STK_RESULT_ADDNL_SS_PB_NO_SPECIFIC_CAUSE;
+>		rsp.result.additional =3D &addnl;
+>		rsp.result.additional_len =3D 1;
+
+You are right and I will change the code following this. Thanks for the com=
+ment!
+
 
 Regards,
--Denis
+-Yang
 
-
---===============5834108116698691393==--
+--===============4910121737410950020==--
 
