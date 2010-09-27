@@ -1,59 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============3830592490708763466=="
+Content-Type: multipart/mixed; boundary="===============2777076152668402758=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Please comment on callhistory API
-Date: Mon, 27 Sep 2010 18:08:04 -0500
-Message-ID: <4CA123D4.9080500@gmail.com>
-In-Reply-To: <1285609846.9845.11.camel@aeonflux>
+Date: Tue, 28 Sep 2010 08:14:44 +0900
+Message-ID: <1285629284.9845.18.camel@aeonflux>
+In-Reply-To: <4CA123D4.9080500@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3830592490708763466==
+--===============2777076152668402758==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Denis,
 
-On 09/27/2010 12:50 PM, Marcel Holtmann wrote:
-> Hi Raji,
+> >> CallHistory hierarchy
+> >> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> >>
+> >> Service : org.ofono
+> >> Interface : org.ofono.CallHistory
+> >> Object path : [variable prefix]/{modem0,modem1,...}/CallHistory
+> > =
+
+> > the object path is wrong here. This should be pretty much on the main /
+> > object path. And not on per modem and not in a sub-path.
+> > =
+
+> > I really don't think that per modem history makes sense. Denis?
 > =
 
->> CallHistory hierarchy
->> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->>
->> Service : org.ofono
->> Interface : org.ofono.CallHistory
->> Object path : [variable prefix]/{modem0,modem1,...}/CallHistory
-> =
+> The idea here is that you can track history by the modem object or more
+> likely the IMSI.  Thus when switching SIMs or in dual-sim mode phones,
+> the history shown might change depending on the current SIM.
 
-> the object path is wrong here. This should be pretty much on the main /
-> object path. And not on per modem and not in a sub-path.
-> =
+by modem makes no sense. That might change at any time. For example even
+if you get a phone replacement. So not really helpful.
 
-> I really don't think that per modem history makes sense. Denis?
+The IMSI I can see, but isn't it better then just to include the IMSI
+into the report send to the history application. Not that I actually
+like sending the IMSI around so much :(
 
-The idea here is that you can track history by the modem object or more
-likely the IMSI.  Thus when switching SIMs or in dual-sim mode phones,
-the history shown might change depending on the current SIM.
+Regards
 
->> Properties
->> =3D=3D=3D=3D=3D=3D=3D
->> 		integer Uid [Read Only]
->> 			Integer representing the unique id of the history record
-> =
+Marcel
 
-> In this case I would prefer UID as value and in uint32 please. D-Bus
-> doesn't have an integer type.
-> =
 
-> Also do we actually need this? Denis?
 
-This is not actually needed, we only track when a call has been ended or
-missed.
-
-Regards,
--Denis
-
---===============3830592490708763466==--
+--===============2777076152668402758==--
 
