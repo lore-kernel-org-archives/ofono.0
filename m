@@ -1,120 +1,131 @@
-Content-Type: multipart/mixed; boundary="===============4795439652347063593=="
+Content-Type: multipart/mixed; boundary="===============0352215235596860954=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH 2/2] Add datagram dispatch to sms atom
-Date: Mon, 27 Sep 2010 16:24:37 +0300
-Message-ID: <1285593877-31638-2-git-send-email-aki.niemi@nokia.com>
-In-Reply-To: <1285593877-31638-1-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCH 1/2] Include datagram support to history API
+Date: Mon, 27 Sep 2010 16:24:36 +0300
+Message-ID: <1285593877-31638-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4795439652347063593==
+--===============0352215235596860954==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/sms.c |   41 +++++++++++++++++++++++++++--------------
- 1 files changed, 27 insertions(+), 14 deletions(-)
+ include/history.h |    5 +++++
+ src/history.c     |   47 ++++++++++++++++++++++++++++++++++++++++++++++-
+ src/ofono.h       |    8 ++++++++
+ 3 files changed, 59 insertions(+), 1 deletions(-)
 
-diff --git a/src/sms.c b/src/sms.c
-index 9bf7feb..e6a2f9c 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -1064,12 +1064,24 @@ static gboolean compute_incoming_msgid(GSList *sms_=
-list,
- 	return TRUE;
+diff --git a/include/history.h b/include/history.h
+index c1c4aa1..e661f24 100644
+--- a/include/history.h
++++ b/include/history.h
+@@ -58,6 +58,11 @@ struct ofono_history_driver {
+ 				const struct ofono_uuid *uuid, const char *from,
+ 				const struct tm *remote, const struct tm *local,
+ 				const char *text);
++	void (*datagram_received)(struct ofono_history_context *context,
++				const struct ofono_uuid *uuid, const char *from,
++				int dst, int src, const struct tm *remote,
++				const struct tm *local,
++				const unsigned char *buffer, unsigned len);
+ 	void (*sms_send_pending)(struct ofono_history_context *context,
+ 					const struct ofono_uuid *uuid,
+ 					const char *to,
+diff --git a/src/history.c b/src/history.c
+index 0229cf5..2610141 100644
+--- a/src/history.c
++++ b/src/history.c
+@@ -47,7 +47,15 @@ struct history_call_foreach_data {
+ struct history_sms_foreach_data {
+ 	const struct ofono_uuid *uuid;
+ 	const char *address;
+-	const char *text;
++	union {
++		const char *text;
++		struct {
++			const unsigned char *data;
++			unsigned len;
++			guint16 dst;
++			guint16 src;
++		};
++	};
+ 	union {
+ 		struct {
+ 			const struct tm *remote;
+@@ -193,6 +201,43 @@ void __ofono_history_sms_received(struct ofono_modem *=
+modem,
+ 					history_sms_received, &hfd);
  }
  =
 
--static void dispatch_app_datagram(struct ofono_sms *sms, int dst, int src,
--					unsigned char *buf, long len)
-+static void dispatch_app_datagram(struct ofono_sms *sms,
-+					const struct ofono_uuid *uuid,
-+					int dst, int src,
-+					unsigned char *buf, unsigned len,
-+					const struct sms_address *addr,
-+					const struct sms_scts *scts)
- {
--	DBG("Got app datagram for dst port: %d, src port: %d",
--			dst, src);
--	DBG("Contents-Len: %ld", len);
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(sms->atom);
-+	const char *sender =3D sms_address_to_string(addr);
-+	time_t ts;
-+	struct tm remote;
-+	struct tm local;
++static void history_datagram_received(struct ofono_atom *atom, void *data)
++{
++	struct ofono_history_context *context =3D __ofono_atom_get_data(atom);
++	struct history_sms_foreach_data *hfd =3D data;
 +
-+	ts =3D sms_scts_to_time(scts, &remote);
-+	localtime_r(&ts, &local);
-+
-+	__ofono_history_datagram_received(modem, uuid, sender, dst, src,
-+						&remote, &local, buf, len);
- }
- =
-
- static void dispatch_text_message(struct ofono_sms *sms,
-@@ -1141,6 +1153,7 @@ static void sms_dispatch(struct ofono_sms *sms, GSLis=
-t *sms_list)
- {
- 	GSList *l;
- 	const struct sms *s;
-+	struct ofono_uuid uuid;
- 	enum sms_charset uninitialized_var(old_charset);
- 	enum sms_class cls;
- 	int srcport =3D -1;
-@@ -1214,6 +1227,11 @@ static void sms_dispatch(struct ofono_sms *sms, GSLi=
-st *sms_list)
- 		}
- 	}
- =
-
-+	if (!compute_incoming_msgid(sms_list, &uuid))
++	if (context->driver->datagram_received =3D=3D NULL)
 +		return;
 +
-+	s =3D sms_list->data;
++	context->driver->datagram_received(context, hfd->uuid, hfd->address,
++						hfd->dst, hfd->src,
++						hfd->remote, hfd->local,
++						hfd->data, hfd->len);
++}
 +
- 	/* Handle datagram */
- 	if (old_charset =3D=3D SMS_CHARSET_8BIT) {
- 		unsigned char *buf;
-@@ -1230,23 +1248,18 @@ static void sms_dispatch(struct ofono_sms *sms, GSL=
-ist *sms_list)
- 		if (!buf)
- 			return;
++void __ofono_history_datagram_received(struct ofono_modem *modem,
++					const struct ofono_uuid *uuid,
++					const char *from, int dst, int src,
++					const struct tm *remote,
++					const struct tm *local,
++					const unsigned char *buffer,
++					unsigned len)
++{
++	struct history_sms_foreach_data hfd;
++
++	hfd.uuid =3D uuid;
++	hfd.address =3D from;
++	hfd.dst =3D dst;
++	hfd.src =3D src;
++	hfd.remote =3D remote;
++	hfd.local =3D local;
++	hfd.data =3D buffer;
++	hfd.len =3D len;
++
++	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_HISTORY,
++					history_datagram_received, &hfd);
++}
++
+ static void history_sms_send_pending(struct ofono_atom *atom, void *data)
+ {
+ 	struct ofono_history_context *context =3D __ofono_atom_get_data(atom);
+diff --git a/src/ofono.h b/src/ofono.h
+index 41ce011..b068f48 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -311,6 +311,14 @@ void __ofono_history_sms_received(struct ofono_modem *=
+modem,
+ 					const struct tm *local,
+ 					const char *text);
  =
 
--		dispatch_app_datagram(sms, dstport, srcport, buf, len);
-+		dispatch_app_datagram(sms, &uuid, dstport, srcport, buf, len,
-+					&s->deliver.oaddr, &s->deliver.scts);
- =
-
- 		g_free(buf);
- 	} else {
--		struct ofono_uuid uuid;
- 		char *message =3D sms_decode_text(sms_list);
- =
-
- 		if (!message)
- 			return;
- =
-
--		if (compute_incoming_msgid(sms_list, &uuid)) {
--			s =3D sms_list->data;
--
--			dispatch_text_message(sms, &uuid, message, cls,
--						&s->deliver.oaddr,
--						&s->deliver.scts);
--		}
-+		dispatch_text_message(sms, &uuid, message, cls,
-+					&s->deliver.oaddr, &s->deliver.scts);
- =
-
- 		g_free(message);
- 	}
++void __ofono_history_datagram_received(struct ofono_modem *modem,
++					const struct ofono_uuid *uuid,
++					const char *from, int dst, int src,
++					const struct tm *remote,
++					const struct tm *local,
++					const unsigned char *buffer,
++					unsigned len);
++
+ void __ofono_history_sms_send_pending(struct ofono_modem *modem,
+ 					const struct ofono_uuid *uuid,
+ 					const char *to,
 -- =
 
 1.7.0.4
 
 
---===============4795439652347063593==--
+--===============0352215235596860954==--
 
