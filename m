@@ -1,36 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============7598972176953297110=="
+Content-Type: multipart/mixed; boundary="===============7379452691957492815=="
 MIME-Version: 1.0
 From: Benoit Monin <benoit.monin@laposte.net>
-Subject: Option (hso) modem and PAP
-Date: Mon, 27 Sep 2010 14:36:14 +0200
-Message-ID: <4701421.25982.1285590974586.JavaMail.www@wwinf8219>
+Subject: [PATCH] Set username and password with create-context
+Date: Mon, 27 Sep 2010 14:37:20 +0200
+Message-ID: <27648846.26052.1285591040517.JavaMail.www@wwinf8219>
+In-Reply-To: <4701421.25982.1285590974586.JavaMail.www@wwinf8219>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7598972176953297110==
+--===============7379452691957492815==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 
-Hi,
+Add the possibility to set the username and the password
+with create-context, in complement of the APN.
+---
+test/create-context | 28 +++++++++++++++++++++++-----
+1 files changed, 23 insertions(+), 5 deletions(-)
 
-I have been trying an Option modem with ofono recently.
-It took me a while to establish a connection because the APN
-we're using needs a username and password. Apparently Option
-swapped the username and password of the AT command AT$QCPDPP.
+diff --git a/test/create-context b/test/create-context
+index 6777ba7..6e42053 100755
+--- a/test/create-context
++++ b/test/create-context
+@@ -27,10 +27,28 @@ for path, properties in modems:
+context =3D dbus.Interface(bus.get_object('org.ofono', path),
+'org.ofono.ConnectionContext')
 
-Also, it seems that some other Option modem uses AT_OPDPP
-instead of AT$QCPDPP, see http://www.pharscape.org/Quicksilver.html
+- try:
+- context.SetProperty("AccessPointName", sys.argv[1])
+- except IndexError:
+- print "Usage: %s " % sys.argv[0]
++ if len(sys.argv) =3D=3D 2:
++ AccessPointName =3D sys.argv[1]
++ Username =3D ""
++ Password =3D ""
++ elif len(sys.argv) =3D=3D 3:
++ AccessPointName =3D sys.argv[1]
++ Username =3D ""
++ Password =3D sys.argv[2]
++ elif len(sys.argv) =3D=3D 4:
++ AccessPointName =3D sys.argv[1]
++ Username =3D sys.argv[2]
++ Password =3D sys.argv[3]
++ else:
++ print "Usage:"
++ print "\t%s " % sys.argv[0]
++ print "\t%s  =
 
-I'll send two patches in reply to this message. The first one
-adds username and password optional parameters to
-test/create-context. And the second one swaps username and
-password for hso modem in PAP mode.
+" % sys.argv[0]
++ print "\t%s   =
 
-Beno=C3=AEt.
+" % sys.argv[0]
+exit(1)
 
+- print "Setting APN of %s to %s" % (path, sys.argv[1])
++ context.SetProperty("AccessPointName", AccessPointName)
++ print "Setting APN of %s to \"%s\"" % (path, AccessPointName)
++ context.SetProperty("Username", Username)
++ print "Setting username of %s to \"%s\"" % (path, Username)
++ context.SetProperty("Password", Password)
++ print "Setting password of %s to \"%s\"" % (path, Password)
 --
+
 
 
 
@@ -43,5 +76,5 @@ Une messagerie gratuite, garantie =C3=A0 vie et des services en plus, =C3=
 Je cr=C3=A9e ma bo=C3=AEte mail www.laposte.net
 
 
---===============7598972176953297110==--
+--===============7379452691957492815==--
 
