@@ -1,62 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============7067056484110609186=="
+Content-Type: multipart/mixed; boundary="===============0071988008277773902=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/1] Patch Description
-Date: Sun, 26 Sep 2010 18:38:32 -0500
-Message-ID: <4C9FD978.7050502@gmail.com>
-In-Reply-To: <1285343369-10418-1-git-send-email-gyagp0@gmail.com>
+Subject: Re: Using ofono HFP
+Date: Sun, 26 Sep 2010 19:26:42 -0500
+Message-ID: <4C9FE4C2.9060507@gmail.com>
+In-Reply-To: <AANLkTimM6B4VQZW=cTP4DfzOukrKCM9wEKs-iCRbFPDK@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7067056484110609186==
+--===============0071988008277773902==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Moises,
 
-On 09/24/2010 10:49 AM, Yang Gu wrote:
-> Phonesim is most of time a convenient way to test oFono. For example, it =
-can be used to test MO call, as well as MT call. =
+> I was advised by padovan on IRC that I should try dbus >=3D 1.3 ... I am
+> going to try that today, I was putting that off cuz this seemed like a
+> lower level issue and upgrading dbus seemed like non-trivial since many
+> things depend on dbus and fedora 13 does not seem to include rpm for
+> dbus >=3D 1.3
 
-> And talking about test area, test automation is quite important regarding=
- to both efficiency and effectiveness. In the test of MO call, scripts can =
-be used to interact with oFono via D-Bus to make test automation possible. =
-However, in the test of MT call, currently we have to enter the caller numb=
-er and click some button in Phonesim GUI to simulate an incoming call, whic=
-h makes test automation unrealistic.
-> This patch is to enable Qt script (JavaScript following ECMAScript spec) =
-in Phonesim, so that we can have some script control its GUI conveniently, =
-and satisfy the test automation.
+Neither oFono nor BlueZ will enable the plugins for HFP support unless
+DBus-1.3 is installed (or alternatively a hacked dbus-1.2 with file
+descriptor passing support)
+
 > =
 
+> Can I somehow to try ofono connect to my cell and not the other way aroun=
+d?
 
-I like this idea
+The connection initiator is actually irrelevant.  You just need to make
+sure that BlueZ has paired with your device and the HandsfreeGateway
+interface is created for your device.
 
-> With this patch, Phonesim can work in the following way:
-> 1. It observes some specific directory (/tmp/scripts) to see if there is =
-some test scripts added.
-> 2. Once Phonesim finds a new test script is added, it will parse and exec=
-ute the script.
-> 3. You may add more and more test scripts to the specific directory with =
-your test goes on.
-> =
+> The final goal here is NOT use this with pulseaudio, but rather have
+> access to the SCO socket so I can manipulate the audio.
 
-
-However, using cp to run scripts seems a bit un-intuitive.  Perhaps a
-simple D-Bus interface which can run the scripts would be better?
-
-E.g. something like
-
-org.ofono.Phonesim:
-
-string Run(string script)
-
-where the script contains the script to run and the return value might
-return whatever is printed from the script.
+If you want this, then you will need to eventually write your own plugin
+that will manage the RFCOMM and SCO sockets.  Today, BlueZ does this part...
 
 Regards,
 -Denis
 
---===============7067056484110609186==--
+--===============0071988008277773902==--
 
