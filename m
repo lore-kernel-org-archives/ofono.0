@@ -1,64 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============4910121737410950020=="
+Content-Type: multipart/mixed; boundary="===============7598972176953297110=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: [PATCH 5/5] cf: Handle send ss proactive command
-Date: Mon, 27 Sep 2010 10:11:29 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A4732D912FDC@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802A51C75@fioues07.ebgroup.elektrobit.com>
+From: Benoit Monin <benoit.monin@laposte.net>
+Subject: Option (hso) modem and PAP
+Date: Mon, 27 Sep 2010 14:36:14 +0200
+Message-ID: <4701421.25982.1285590974586.JavaMail.www@wwinf8219>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4910121737410950020==
+--===============7598972176953297110==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+
+Hi,
+
+I have been trying an Option modem with ofono recently.
+It took me a while to establish a connection because the APN
+we're using needs a username and password. Apparently Option
+swapped the username and password of the AT command AT$QCPDPP.
+
+Also, it seems that some other Option modem uses AT_OPDPP
+instead of AT$QCPDPP, see http://www.pharscape.org/Quicksilver.html
+
+I'll send two patches in reply to this message. The first one
+adds username and password optional parameters to
+test/create-context. And the second one swaps username and
+password for hso modem in PAP mode.
+
+Beno=C3=AEt.
+
+--
 
 
->-----Original Message-----
->From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf Of
->Jeevaka.Badrappan(a)elektrobit.com
->Sent: Wednesday, September 22, 2010 3:29 AM
->To: ofono(a)ofono.org
->Subject: RE: [PATCH 5/5] cf: Handle send ss proactive command
->
->Hi Yang,
->
->> --- a/src/stk.c
->> +++ b/src/stk.c
->
->> +	unsigned char addnl[2];
->> +
->> +	default:
->> +		DBG("Send ss finishes with error type: %d",
->error->type);
->> +		rsp.result.type =3D STK_RESULT_TYPE_SS_RETURN_ERROR;
->> +		addnl[0] =3D (unsigned char) error->error;
->> +		addnl[1] =3D STK_RESULT_ADDNL_SS_PB_NO_SPECIFIC_CAUSE;
->> +		rsp.result.additional =3D addnl;
->> +		rsp.result.additional_len =3D 2;
->> +		break;
->> +	}
->> +
->
->Isn't the above code, has to be something like
->
->	unsigned char addnl;
->
->	default:
->		rsp.result.type =3D STK_RESULT_TYPE_SS_RETURN_ERROR;
->		addnl =3D STK_RESULT_ADDNL_SS_PB_NO_SPECIFIC_CAUSE;
->		rsp.result.additional =3D &addnl;
->		rsp.result.additional_len =3D 1;
-
-You are right and I will change the code following this. Thanks for the com=
-ment!
 
 
-Regards,
--Yang
 
---===============4910121737410950020==--
+
+
+Une messagerie gratuite, garantie =C3=A0 vie et des services en plus, =C3=
+=A7a vous tente ?
+Je cr=C3=A9e ma bo=C3=AEte mail www.laposte.net
+
+
+--===============7598972176953297110==--
 
