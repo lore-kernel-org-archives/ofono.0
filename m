@@ -1,31 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============0811705067511936032=="
+Content-Type: multipart/mixed; boundary="===============0223725206150363834=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv2] Fix 8bit port handling
-Date: Mon, 27 Sep 2010 18:58:08 -0500
-Message-ID: <4CA12F90.4040209@gmail.com>
-In-Reply-To: <1285602306-24259-1-git-send-email-aki.niemi@nokia.com>
+Subject: Re: [PATCH] calypso: update power and reset path
+Date: Mon, 27 Sep 2010 19:10:39 -0500
+Message-ID: <4CA1327F.1060905@gmail.com>
+In-Reply-To: <1285596314-3186-1-git-send-email-fgau@gau-net.de>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0811705067511936032==
+--===============0223725206150363834==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi Frank,
 
-On 09/27/2010 10:45 AM, Aki Niemi wrote:
+On 09/27/2010 09:05 AM, Frank Gau wrote:
 > ---
->  src/sms.c |    4 ++--
+>  plugins/calypso.c |    4 ++--
 >  1 files changed, 2 insertions(+), 2 deletions(-)
-> =
 
+Patch has been applied, thanks.  I'm assuming this will work with the
+latest Freerunner kernels only?
 
-This one looks good to me.
-
-Thanks,
+Regards,
 -Denis
 
---===============0811705067511936032==--
+--===============0223725206150363834==--
 
