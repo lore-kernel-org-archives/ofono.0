@@ -1,64 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============5254621708476336175=="
+Content-Type: multipart/mixed; boundary="===============5918784939470856706=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: Using ofono HFP
-Date: Tue, 28 Sep 2010 11:23:02 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B352D8D7EF9@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <AANLkTimEy-OSuie6CmO44v3ivYAYq3wyLw7yrOhoYEUy@mail.gmail.com>
+From: Moises Silva <moises.silva@gmail.com>
+Subject: Re: Using ofono HFP
+Date: Mon, 27 Sep 2010 23:57:49 -0400
+Message-ID: <AANLkTin=6zp7izuHq-L76x=mW0wDrzo0M3-x7jMr5+aM@mail.gmail.com>
+In-Reply-To: <33AB447FBD802F4E932063B962385B352D8D7EF9@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5254621708476336175==
+--===============5918784939470856706==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Silva, =
+On Mon, Sep 27, 2010 at 11:23 PM, Zhang, Zhenhua
+<zhenhua.zhang@intel.com> wrote:
+>
+> [Zhenhua] I have some experience on HFP as I am main contributor of HFP i=
+n the oFono. Would you mind me to update your wiki page to add detailed inf=
+ormation related with HFP?
+>
+> Btw, Could you send plain text format mail to the mailing list in the fut=
+ure as it's an formal upstream project. I tried but I cann't reply
+> your mail propertly.
 
+Hello Zhenhua,
 
-	From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
-lf Of Moises Silva
-	Sent: Tuesday, September 28, 2010 10:45 AM
-	To: ofono(a)ofono.org
-	Subject: Re: Using ofono HFP
-	=
+By all means, add anything you wish to the wiki page.
 
-	=
+I apologize for the HTML, I did not realize my gmail client was setup for H=
+TML.
 
-	On Mon, Sep 27, 2010 at 9:26 PM, Zhang, Zhenhua <zhenhua.zhang@intel.com=
-> wrote:
-	=
+--
+Moises Silva
 
-
-		Right. See bluez/audio/unix.c for BlueZ part SCO code that cooperate with=
- pulseaudio. BlueZ sends SCO fd to pulseaudio via UNIX type socks.
-		=
-
-		=
-
-
-
-	Thanks a lot for the additional help. I just setup a quick wiki page to st=
-art documenting this: http://ofono.org/wiki/hands-free-profile
-
-	It's small and crappy, but it's a start. I will keep improving it as I go.
-
-[Zhenhua] I have some experience on HFP as I am main contributor of HFP in =
-the oFono. Would you mind me to update your wiki page to add detailed infor=
-mation related with HFP?
-
-Btw, Could you send plain text format mail to the mailing list in the futur=
-e as it's an formal upstream project. I tried but I cann't reply your mail =
-propertly.
-
-Thanks,
-Zhenhua
-
-	Regards,
-
-	-
-	Moises Silva
-
-
---===============5254621708476336175==--
+--===============5918784939470856706==--
 
