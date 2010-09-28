@@ -1,74 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0087450170871418643=="
+Content-Type: multipart/mixed; boundary="===============6389584435993401114=="
 MIME-Version: 1.0
-From: Zhang, Zhenhua <zhenhua.zhang@intel.com>
-Subject: RE: Using ofono HFP
-Date: Tue, 28 Sep 2010 09:26:21 +0800
-Message-ID: <33AB447FBD802F4E932063B962385B352D8D7DC7@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4C9FE4C2.9060507@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/7] Include datagram support to history API
+Date: Mon, 27 Sep 2010 21:16:51 -0500
+Message-ID: <4CA15013.9070009@gmail.com>
+In-Reply-To: <1285606459-1297-2-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0087450170871418643==
+--===============6389584435993401114==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Moises,
+Hi Aki,
 
-Denis Kenzior wrote:
-> Hi Moises,
-> =
+> --- a/src/history.c
+> +++ b/src/history.c
+> @@ -47,7 +47,15 @@ struct history_call_foreach_data {
+>  struct history_sms_foreach_data {
+>  	const struct ofono_uuid *uuid;
+>  	const char *address;
+> -	const char *text;
+> +	union {
+> +		const char *text;
+> +		struct {
+> +			const unsigned char *data;
+> +			unsigned len;
+> +			guint16 dst;
+> +			guint16 src;
 
->> I was advised by padovan on IRC that I should try dbus >=3D 1.3 ... I
->> am going to try that today, I was putting that off cuz this seemed
->> like a lower level issue and upgrading dbus seemed like non-trivial
->> since many things depend on dbus and fedora 13 does not seem to
->> include rpm for dbus >=3D 1.3
-> =
+Are you overflowing the dst/src ports for the 16 bit case by any chance?
+ With the 8bit port fix patch, we're actually using 24 bits to store
+these values.  There might need to be a comment in the history API about
+this.
 
-> Neither oFono nor BlueZ will enable the plugins for HFP support unless
-> DBus-1.3 is installed (or alternatively a hacked dbus-1.2 with file
-> descriptor passing support) =
+Are 8 bit ports even used in practice?  If not, then might be that
+shifting 8-bit values by 16 is better...
 
-
-Denis is right. For example, my ubuntu 10.04 has dbus-1.3.0 so HFP works sm=
-oothly on my laptop. I remember there's someone has a hacked dbus-1.2 with =
-fd passing support. It does work but I would recommend you use dbus-1.3.
-
->> =
-
->> Can I somehow to try ofono connect to my cell and not the other way
->> around? =
-
-> =
-
-> The connection initiator is actually irrelevant.  You just need to
-> make sure that BlueZ has paired with your device and the
-> HandsfreeGateway interface is created for your device.
-> =
-
->> The final goal here is NOT use this with pulseaudio, but rather have
->> access to the SCO socket so I can manipulate the audio.
-> =
-
-> If you want this, then you will need to eventually write your
-> own plugin
-> that will manage the RFCOMM and SCO sockets.  Today, BlueZ
-> does this part...
-
-Right. See bluez/audio/unix.c for BlueZ part SCO code that cooperate with p=
-ulseaudio. BlueZ sends SCO fd to pulseaudio via UNIX type socks.
-
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+Other than that, I'm happy with this one.
 
 Regards,
-Zhenhua
+-Denis
 
-
---===============0087450170871418643==--
+--===============6389584435993401114==--
 
