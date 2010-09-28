@@ -1,43 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============6028992383900091874=="
+Content-Type: multipart/mixed; boundary="===============2829575798068108924=="
 MIME-Version: 1.0
-From: Benoit Monin <benoit.monin@laposte.net>
-Subject: Re: [PATCH] hso : swap username and password for PAP
-Date: Tue, 28 Sep 2010 10:03:52 +0200
-Message-ID: <10351225.348913.1285661032136.JavaMail.www@wwinf8203>
-In-Reply-To: <4CA136E8.8050102@gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: simulate Send USSD in sim app
+Date: Tue, 28 Sep 2010 04:09:29 -0700
+Message-ID: <1285672170-12656-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6028992383900091874==
+--===============2829575798068108924==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi,
 
-> De : "Denis Kenzior" =
+ Following patch simulates the Send USSD proactive command in sim applicati=
+on.
+ 7-bit, 8-bit and UCS2 USSD data are covered in this simulation.
 
-> =
+Regards,
+jeevaka
 
-> Your patch submission seems mangled:
-[...]
-> I went ahead and fixed this for you.
-> =
-
-Oops, sorry about that. Thanks for applying the patch.
-
-> Regards,
-> -Denis
->
-Beno=C3=AEt.
-
---
-
-
-
-Une messagerie gratuite, garantie =C3=A0 vie et des services en plus, =C3=
-=A7a vous tente ?
-Je cr=C3=A9e ma bo=C3=AEte mail www.laposte.net
-
-
---===============6028992383900091874==--
+--===============2829575798068108924==--
 
