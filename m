@@ -1,95 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============2499177567483080642=="
+Content-Type: multipart/mixed; boundary="===============5268860037417922083=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Please comment on callhistory API
-Date: Tue, 28 Sep 2010 23:08:53 +0900
-Message-ID: <1285682933.2657.5.camel@aeonflux>
-In-Reply-To: <4CA1291A.3040909@intel.com>
+From: =?unknown-8bit?b?6LW15Y2O5oiQ?= <z151614650@126.com>
+Subject: ofono
+Date: Tue, 28 Sep 2010 22:09:35 +0800
+Message-ID: <134024a.10b13.12b58ad537c.Coremail.z151614650@126.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2499177567483080642==
+--===============5268860037417922083==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Raji,
-
-> > this is the second time I have to remind you to not top post. Next time
-> > I will ignore your email. Just a friendly reminder to follow proper
-> > mailing list etiquette.
-> >
-> >   =
-
-> >> org.ofono.History will be the main adapter interface and =
-
-> >> org.ofono.CallHistoryAgent the callhistory agent and =
-
-> >> org.ofono.SmsHistoryAgent as the sms history agent. I want to seperate =
-
-> >> the two agents so that sms app will expose sms history agent and diale=
-r =
-
-> >> will register and expose callhistory agent. Then it will be clear whic=
-h =
-
-> >> agent is interested in which history, vs one org.ofono.HistoryAgent =
-
-> >> exposing ReportCall and ReportTextMessage methods. In the later case =
-
-> >> adapter needs to flush both smshistory and callsistory onto two agents =
-
-> >> even though agents are not interested only in type of history.
-> >>     =
-
-> >
-> > actually not really. So why does the dialer and SMS application need to
-> > register for the history? Isn't that going to be stored central in
-> > Tracker or something similar. Should not be Tracker or some Tracker
-> > helper be registering the agent?
-> >   =
-
-> No, Dialer and Sms applications are the ones that read and stores =
-
-> locally, this will probably move to tracker eventually.
-> So I dont think we can assume that there is going to be a tracker agent.
-> > I might be wrong, but does it really make sense to separate it on this
-> > level?
-> >   =
-
-> I am thinking by separating the applications will only register and get =
-
-> data they are interested in.
-
-so Denis and I had a long chat about this. And essentially the history
-agent concept is not really something that we should maintain long term.
-We need be able to Tracker to listen on the D-Bus system bus and have
-oFono history plugin send data directly to Tracker. The history plugin
-should track if Tracker is running or not. If not spool. Otherwise send
-data to Tracker directly. Everything else is a pretty much complicated
-design.
-
-However for a short term solution, you could do a history agent concept
-as part of a MeeGo specific plugin.
-
-So use org.ofono as D-Bus service name and com.meego.TelephonyHistory
-and com.meego.TelephonyHistoryAgent as interface names.
-
-The main object path is / since are not going to make this based on a
-per modem.
-
-Two method calls in the agent a) ReportVoiceCall a) ReportTextMessage
-and that is it in. In the info dict include the Modem property which
-points to the modem object this information originates from.
-
-Failure of not existing a) or b) should be handled gracefully so that in
-the first error case we don't retry anymore.
-
-Regards
-
-Marcel
+Dear:
+   when I install the ofono, I have problems. I use the ofono-0.26 and set =
+up the ofono process ,come into the "test" dir.At the first ,I use the ./en=
+able-modem command .Secondly, when i use the ./test-voicecall /generic 1008=
+6,it show error.The error is that the operation failed .I trace the code,th=
+e var in the atd_cb funaction show that ok=3D0. IF ok=3D0,the function goto=
+ error.I don not know the reasion.
+   I look forward to contacting to me.Please send the reasion to the email:=
+zhao.huacheng(a)zte.com.
+   Thank you!
 
 
 
---===============2499177567483080642==--
+=E5=85=A8=E5=9B=BD=E6=9C=80=E4=BD=8E=E4=BB=B7=EF=BC=8C=E5=A4=A9=E5=A4=A9=E5=
+=9C=A8=E5=AE=B6=E5=86=B2=E7=85=A7=E7=89=87=EF=BC=8C24=E5=B0=8F=E6=97=B6=E5=
+=8F=91=E8=B4=A7=E4=B8=8A=E9=97=A8=EF=BC=81
+
+--===============5268860037417922083==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PERJVj5EZWFyOjwvRElWPgo8RElWPiZuYnNwOyZuYnNwOyB3aGVuIEkgaW5zdGFsbCB0aGUgb2Zv
+bm8sIEkgaGF2ZSBwcm9ibGVtcy4gSSB1c2UgdGhlIG9mb25vLTAuMjYgYW5kIHNldCB1cCB0aGUg
+b2Zvbm8gcHJvY2VzcyAsY29tZSBpbnRvIHRoZSAidGVzdCIgZGlyLkF0IHRoZSBmaXJzdCAsSSB1
+c2UgdGhlIC4vZW5hYmxlLW1vZGVtIGNvbW1hbmQgLlNlY29uZGx5LCB3aGVuIGkgdXNlIHRoZSAu
+L3Rlc3Qtdm9pY2VjYWxsIC9nZW5lcmljIDEwMDg2LGl0IHNob3cgZXJyb3IuVGhlIGVycm9yIGlz
+IHRoYXQgdGhlIG9wZXJhdGlvbiBmYWlsZWQgLkkgdHJhY2UgdGhlIGNvZGUsdGhlIHZhciBpbiB0
+aGUgYXRkX2NiIGZ1bmFjdGlvbiBzaG93IHRoYXQgb2s9MC4gSUYgb2s9MCx0aGUgZnVuY3Rpb24g
+Z290byBlcnJvci5JIGRvbiBub3Qga25vdyB0aGUgcmVhc2lvbi48L0RJVj4KPERJVj4mbmJzcDsm
+bmJzcDsgSSBsb29rIGZvcndhcmQgdG8gY29udGFjdGluZyB0byBtZS5QbGVhc2Ugc2VuZCB0aGUg
+cmVhc2lvbiB0byB0aGUgZW1haWw6PEEgaHJlZj0ibWFpbHRvOnpoYW8uaHVhY2hlbmdAenRlLmNv
+bSI+emhhby5odWFjaGVuZ0B6dGUuY29tPC9BPi48L0RJVj4KPERJVj4mbmJzcDsmbmJzcDsgVGhh
+bmsgeW91ITwvRElWPjxCUj48QlI+PFNQQU4gdGl0bGU9Im5ldGVhc2Vmb290ZXIiPjxTUEFOIGlk
+PSJuZXRlYXNlX21haWxfZm9vdGVyIj4KPEhSPgo8QSBocmVmPSJodHRwOi8veXhwLjE2My5jb20v
+cGhvdG8vZXAuaHRtbD9zc3M9ZnJvbXl4MDkxMSIgdGFyZ2V0PSJfYmxhbmsiPsirufrX7rXNvNuj
+rMzszOzU2rzSs+XV1caso6wyNNChyrG3orv1yc/DxaOhPC9BPiA8L1NQQU4+PC9TUEFOPjxicj48
+YnI+PHNwYW4gdGl0bGU9Im5ldGVhc2Vmb290ZXIiPjxzcGFuIGlkPSJuZXRlYXNlX21haWxfZm9v
+dGVyIj48aHIvPgo8YSBocmVmPSJodHRwOi8veXhwLjE2My5jb20vcGhvdG8vZXAuaHRtbD9zc3M9
+ZnJvbXl4MDkxMSIgdGFyZ2V0PSJfYmxhbmsiPsirufrX7rXNvNujrMzszOzU2rzSs+XV1caso6wy
+NNChyrG3orv1yc/DxaOhPC9hPgo8L3NwYW4+PC9zcGFuPg==
+--===============5268860037417922083==--
 
