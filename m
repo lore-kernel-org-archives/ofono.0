@@ -1,38 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============5918784939470856706=="
+Content-Type: multipart/mixed; boundary="===============6028992383900091874=="
 MIME-Version: 1.0
-From: Moises Silva <moises.silva@gmail.com>
-Subject: Re: Using ofono HFP
-Date: Mon, 27 Sep 2010 23:57:49 -0400
-Message-ID: <AANLkTin=6zp7izuHq-L76x=mW0wDrzo0M3-x7jMr5+aM@mail.gmail.com>
-In-Reply-To: <33AB447FBD802F4E932063B962385B352D8D7EF9@shsmsx501.ccr.corp.intel.com>
+From: Benoit Monin <benoit.monin@laposte.net>
+Subject: Re: [PATCH] hso : swap username and password for PAP
+Date: Tue, 28 Sep 2010 10:03:52 +0200
+Message-ID: <10351225.348913.1285661032136.JavaMail.www@wwinf8203>
+In-Reply-To: <4CA136E8.8050102@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5918784939470856706==
+--===============6028992383900091874==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, Sep 27, 2010 at 11:23 PM, Zhang, Zhenhua
-<zhenhua.zhang@intel.com> wrote:
+
+> De : "Denis Kenzior" =
+
+> =
+
+> Your patch submission seems mangled:
+[...]
+> I went ahead and fixed this for you.
+> =
+
+Oops, sorry about that. Thanks for applying the patch.
+
+> Regards,
+> -Denis
 >
-> [Zhenhua] I have some experience on HFP as I am main contributor of HFP i=
-n the oFono. Would you mind me to update your wiki page to add detailed inf=
-ormation related with HFP?
->
-> Btw, Could you send plain text format mail to the mailing list in the fut=
-ure as it's an formal upstream project. I tried but I cann't reply
-> your mail propertly.
-
-Hello Zhenhua,
-
-By all means, add anything you wish to the wiki page.
-
-I apologize for the HTML, I did not realize my gmail client was setup for H=
-TML.
+Beno=C3=AEt.
 
 --
-Moises Silva
 
---===============5918784939470856706==--
+
+
+Une messagerie gratuite, garantie =C3=A0 vie et des services en plus, =C3=
+=A7a vous tente ?
+Je cr=C3=A9e ma bo=C3=AEte mail www.laposte.net
+
+
+--===============6028992383900091874==--
 
