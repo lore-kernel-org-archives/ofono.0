@@ -1,173 +1,197 @@
-Content-Type: multipart/mixed; boundary="===============7212450677282053056=="
+Content-Type: multipart/mixed; boundary="===============5241918404106816499=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 18/21] gprs: Add status watch functions
-Date: Wed, 29 Sep 2010 17:44:58 +0800
-Message-ID: <1285753501-7668-19-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 21/21] emulator: Watch netreg status changes
+Date: Wed, 29 Sep 2010 17:45:01 +0800
+Message-ID: <1285753501-7668-22-git-send-email-zhenhua.zhang@intel.com>
 In-Reply-To: <1285753501-7668-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7212450677282053056==
+--===============5241918404106816499==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-So DUN server could watch GPRS status changes and notify client
-unsolicited results like +CGREG.
+Watch netreg status update to notify DUN client, such as +CREG
+unsolicited result.
 ---
- include/gprs.h |    9 +++++++++
- src/gprs.c     |   55 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++
- 2 files changed, 64 insertions(+), 0 deletions(-)
+ src/emulator.c |  106 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 106 insertions(+), 0 deletions(-)
 
-diff --git a/include/gprs.h b/include/gprs.h
-index ad7925c..7985115 100644
---- a/include/gprs.h
-+++ b/include/gprs.h
-@@ -36,6 +36,8 @@ typedef void (*ofono_gprs_status_cb_t)(const struct ofono=
-_error *error,
- =
-
- typedef void (*ofono_gprs_cb_t)(const struct ofono_error *error, void *dat=
-a);
- =
-
-+typedef void (*ofono_gprs_status_notify_cb_t)(const int status, void *data=
-);
-+
- struct ofono_gprs_driver {
- 	const char *name;
- 	int (*probe)(struct ofono_gprs *gprs, unsigned int vendor,
-@@ -77,6 +79,13 @@ void ofono_gprs_set_cid_range(struct ofono_gprs *gprs,
- void ofono_gprs_add_context(struct ofono_gprs *gprs,
- 				struct ofono_gprs_context *gc);
- =
-
-+unsigned int __ofono_gprs_add_status_watch(struct ofono_gprs *gprs,
-+				ofono_gprs_status_notify_cb_t cb,
-+				void *data, ofono_destroy_func destroy);
-+
-+gboolean __ofono_gprs_remove_status_watch(struct ofono_gprs *gprs,
-+						unsigned int id);
-+
- #ifdef __cplusplus
- }
- #endif
-diff --git a/src/gprs.c b/src/gprs.c
-index eabc825..1285a4b 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -96,6 +96,7 @@ struct ofono_gprs {
- 	const struct ofono_gprs_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	struct ofono_watchlist *status_watches;
- 	struct ofono_emulator *dun;
- 	unsigned int dun_watch;
- 	unsigned int dun_status_watch;
-@@ -1523,6 +1524,51 @@ static GDBusSignalTable manager_signals[] =3D {
- 	{ }
+diff --git a/src/emulator.c b/src/emulator.c
+index 7701510..3444461 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -56,6 +56,9 @@ struct modem_settings {
+ 	int cops;
+ 	int attached;
+ 	int gprs_status;
++	int netreg_status;
++	int netreg_lac;
++	int netreg_ci;
  };
  =
 
-+unsigned int __ofono_gprs_add_status_watch(struct ofono_gprs *gprs,
-+				ofono_gprs_status_notify_cb_t notify,
-+				void *data, ofono_destroy_func destroy)
+ struct ofono_emulator {
+@@ -72,6 +75,9 @@ struct ofono_emulator {
+ 	struct ofono_gprs *gprs;
+ 	unsigned int gprs_watch;
+ 	unsigned int gprs_status_watch;
++	struct ofono_netreg *netreg;
++	unsigned int netreg_watch;
++	unsigned int netreg_status_watch;
+ };
+ =
+
+ static GSList *emulator_drivers =3D NULL;
+@@ -265,12 +271,19 @@ static void creg_cb(GAtServerRequestType type, GAtRes=
+ult *result,
+ 					gpointer user_data)
+ {
+ 	struct ofono_emulator *e =3D user_data;
++	char buf[256];
+ =
+
+ 	switch (type) {
+ 	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
+ 		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
+ 		break;
+ 	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		snprintf(buf, sizeof(buf), "+CREG: %d, %x, %x, %x",
++						e->settings.creg,
++						e->settings.netreg_status,
++						e->settings.netreg_lac,
++						e->settings.netreg_ci);
++		ofono_emulator_send_info(e, buf, TRUE);
+ 		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
+ 		break;
+ 	case G_AT_SERVER_REQUEST_TYPE_SET:
+@@ -790,6 +803,86 @@ static void add_gprs_watches(struct ofono_emulator *e)
+ 				OFONO_ATOM_WATCH_CONDITION_REGISTERED, e);
+ }
+ =
+
++static void emulator_netreg_update(struct ofono_emulator *e)
 +{
-+	struct ofono_watchlist_item *item;
++	GAtServer *server =3D e->server;
++	char buf[256];
 +
-+	DBG("%p", gprs);
-+
-+	if (gprs =3D=3D NULL)
-+		return 0;
-+
-+	if (notify =3D=3D NULL)
-+		return 0;
-+
-+	item =3D g_new0(struct ofono_watchlist_item, 1);
-+
-+	item->notify =3D notify;
-+	item->destroy =3D destroy;
-+	item->notify_data =3D data;
-+
-+	return __ofono_watchlist_add_item(gprs->status_watches, item);
-+}
-+
-+gboolean __ofono_gprs_remove_status_watch(struct ofono_gprs *gprs,
-+						unsigned int id)
-+{
-+	DBG("%p", gprs);
-+
-+	return __ofono_watchlist_remove_item(gprs->status_watches, id);
-+}
-+
-+static void notify_status_watches(struct ofono_gprs *gprs)
-+{
-+	struct ofono_watchlist_item *item;
-+	GSList *l;
-+	ofono_gprs_status_notify_cb_t notify;
-+
-+	for (l =3D gprs->status_watches->items; l; l =3D l->next) {
-+		item =3D l->data;
-+		notify =3D item->notify;
-+
-+		notify(gprs->status, item->notify_data);
++	switch (e->settings.creg) {
++	case 0:
++		break;
++	case 1:
++		snprintf(buf, sizeof(buf), "+CREG: %d",
++						e->settings.netreg_status);
++		g_at_server_send_unsolicited(server, buf);
++		break;
++	case 2:
++		snprintf(buf, sizeof(buf), "+CREG: %d, %x, %x",
++						e->settings.netreg_status,
++						e->settings.netreg_lac,
++						e->settings.netreg_ci);
++		g_at_server_send_unsolicited(server, buf);
++		break;
++	default:
++		break;
 +	}
 +}
 +
- void ofono_gprs_detached_notify(struct ofono_gprs *gprs)
++static void netreg_status_changed(int status, int lac, int ci, int tech,
++					const char *mcc, const char *mnc,
++					void *data)
++{
++	struct ofono_emulator *e =3D data;
++
++	DBG("%d %d %d", status, lac, ci);
++
++	e->settings.netreg_status =3D status;
++	e->settings.netreg_lac =3D lac;
++	e->settings.netreg_ci =3D ci;
++
++	emulator_netreg_update(e);
++}
++
++static void netreg_watch(struct ofono_atom *atom,
++				enum ofono_atom_watch_condition cond,
++				void *data)
++{
++	struct ofono_emulator *e =3D data;
++	struct ofono_netreg *netreg;
++
++	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
++		e->netreg_status_watch =3D 0;
++		e->netreg =3D NULL;
++		return;
++	}
++
++	netreg =3D __ofono_atom_get_data(atom);
++	e->netreg =3D netreg;
++	e->settings.netreg_status =3D ofono_netreg_get_status(netreg);
++	e->settings.netreg_lac =3D ofono_netreg_get_location(netreg);
++	e->settings.netreg_ci =3D ofono_netreg_get_cellid(netreg);
++	e->netreg_status_watch =3D __ofono_netreg_add_status_watch(e->netreg,
++					netreg_status_changed, e, NULL);
++
++	emulator_netreg_update(e);
++}
++
++static void add_netreg_watches(struct ofono_emulator *e)
++{
++	struct ofono_modem *modem =3D e->modem;
++	struct ofono_atom *netreg_atom;
++
++	e->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
++					OFONO_ATOM_TYPE_NETREG,
++					netreg_watch, e, NULL);
++
++	netreg_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_NETREG);
++
++	if (netreg_atom && __ofono_atom_get_registered(netreg_atom))
++		netreg_watch(netreg_atom,
++				OFONO_ATOM_WATCH_CONDITION_REGISTERED, e);
++}
++
+ int ofono_emulator_enable(struct ofono_emulator *e, GIOChannel *channel)
  {
- 	DBG("%s", __ofono_atom_get_path(gprs->atom));
-@@ -1530,6 +1576,8 @@ void ofono_gprs_detached_notify(struct ofono_gprs *gp=
-rs)
- 	gprs->driver_attached =3D FALSE;
- 	gprs_attached_update(gprs);
+ 	if (channel =3D=3D NULL)
+@@ -815,6 +908,7 @@ int ofono_emulator_enable(struct ofono_emulator *e, GIO=
+Channel *channel)
+ 	g_at_server_register(e->server, "+CGDCONT", cgdcont_cb, e, NULL);
  =
 
-+	notify_status_watches(gprs);
+ 	add_gprs_watches(e);
++	add_netreg_watches(e);
+ =
+
+ 	return 0;
+ }
+@@ -855,6 +949,18 @@ static void emulator_remove(struct ofono_atom *atom)
+ 		e->gprs =3D NULL;
+ 	}
+ =
+
++	if (e->netreg_watch) {
++		if (e->netreg_status_watch) {
++			__ofono_netreg_remove_status_watch(e->netreg,
++						e->netreg_status_watch);
++			e->netreg_status_watch =3D 0;
++		}
 +
- 	/*
- 	 * TODO: The network forced a detach, we should wait for some time
- 	 * and try to re-attach.  This might also be related to a suspend
-@@ -1560,6 +1608,8 @@ void ofono_gprs_status_notify(struct ofono_gprs *gprs=
-, int status)
- 	gprs->driver_attached =3D TRUE;
- 	gprs_attached_update(gprs);
- =
-
-+	notify_status_watches(gprs);
++		__ofono_modem_remove_atom_watch(e->modem, e->netreg_watch);
++		e->netreg_watch =3D 0;
++		e->netreg =3D NULL;
++	}
 +
- 	return;
+ 	e->status =3D OFONO_EMULATOR_STATUS_DESTROY;
+ 	notify_status_watches(e, NULL);
  =
 
- detach:
-@@ -2040,6 +2090,9 @@ static void gprs_unregister(struct ofono_atom *atom)
- 	const char *path =3D __ofono_atom_get_path(atom);
- 	GSList *l;
- =
-
-+	__ofono_watchlist_free(gprs->status_watches);
-+	gprs->status_watches =3D NULL;
-+
- 	if (gprs->settings) {
- 		storage_close(gprs->imsi, SETTINGS_STORE,
- 				gprs->settings, TRUE);
-@@ -2379,6 +2432,8 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
- 	ofono_modem_add_interface(modem,
- 				OFONO_CONNECTION_MANAGER_INTERFACE);
- =
-
-+	gprs->status_watches =3D __ofono_watchlist_new(g_free);
-+
- 	sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
- =
-
- 	if (sim_atom) {
 -- =
 
 1.7.0.4
 
 
---===============7212450677282053056==--
+--===============5241918404106816499==--
 
