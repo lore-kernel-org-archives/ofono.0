@@ -1,64 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============2840112639003888190=="
+Content-Type: multipart/mixed; boundary="===============4122843044870659373=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 19/21] gprs: Add gprs_get_status
-Date: Wed, 29 Sep 2010 17:44:59 +0800
-Message-ID: <1285753501-7668-20-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 15/21] gprs: Add DUN +CGATT support in gprs atom
+Date: Wed, 29 Sep 2010 17:44:55 +0800
+Message-ID: <1285753501-7668-16-git-send-email-zhenhua.zhang@intel.com>
 In-Reply-To: <1285753501-7668-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2840112639003888190==
+--===============4122843044870659373==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-DUN server want to get latest GPRS status.
+DUN client may request to attach/deattach GPRS network. Use
+gprs_netreg_update to set attach/deattach status.
 ---
- include/gprs.h |    2 ++
- src/gprs.c     |    8 ++++++++
- 2 files changed, 10 insertions(+), 0 deletions(-)
+ src/gprs.c |   19 +++++++++++++++++++
+ 1 files changed, 19 insertions(+), 0 deletions(-)
 
-diff --git a/include/gprs.h b/include/gprs.h
-index 7985115..05cc086 100644
---- a/include/gprs.h
-+++ b/include/gprs.h
-@@ -86,6 +86,8 @@ unsigned int __ofono_gprs_add_status_watch(struct ofono_g=
-prs *gprs,
- gboolean __ofono_gprs_remove_status_watch(struct ofono_gprs *gprs,
- 						unsigned int id);
- =
-
-+int ofono_gprs_get_status(struct ofono_gprs *gprs);
-+
- #ifdef __cplusplus
- }
- #endif
 diff --git a/src/gprs.c b/src/gprs.c
-index 1285a4b..e7fc768 100644
+index ccc6ca5..01babdc 100644
 --- a/src/gprs.c
 +++ b/src/gprs.c
-@@ -2063,6 +2063,14 @@ struct ofono_modem *ofono_gprs_context_get_modem(str=
-uct ofono_gprs_context *gc)
- 	return __ofono_atom_get_modem(gc->atom);
+@@ -39,6 +39,8 @@
+ #include "common.h"
+ #include "storage.h"
+ #include "idmap.h"
++#include "gatserver.h"
++
+ =
+
+ #define GPRS_FLAG_ATTACHING 0x1
+ #define GPRS_FLAG_RECHECK 0x2
+@@ -1603,14 +1605,31 @@ void ofono_gprs_context_deactivated(struct ofono_gp=
+rs_context *gc,
+ 	}
  }
  =
 
-+int ofono_gprs_get_status(struct ofono_gprs *gprs)
++static void ofono_gprs_set_cgatt(struct ofono_gprs *gprs,
++				struct ofono_emulator_req *req)
 +{
-+	if (gprs =3D=3D NULL)
-+		return -1;
++	int *mode =3D req->data;
 +
-+	return gprs->status;
++	gprs->powered =3D *mode;
++
++	gprs_netreg_update(gprs);
++
++	req->cb(G_AT_SERVER_RESULT_OK, req->cb_data);
 +}
 +
- int ofono_gprs_driver_register(const struct ofono_gprs_driver *d)
+ static void dun_status_watch(struct ofono_emulator *e,
+ 					enum ofono_emulator_status status,
+ 					void *data, void *user_data)
  {
- 	DBG("driver: %p, name: %s", d, d->name);
++	struct ofono_gprs *gprs =3D user_data;
++
+ 	if (e =3D=3D NULL)
+ 		return;
+ =
+
+ 	switch (status) {
++	case OFONO_EMULATOR_STATUS_SET_CGATT:
++		ofono_gprs_set_cgatt(gprs, data);
++		break;
+ 	default:
+ 		break;
+ 	}
 -- =
 
 1.7.0.4
 
 
---===============2840112639003888190==--
+--===============4122843044870659373==--
 
