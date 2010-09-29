@@ -1,36 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============5364966324284125709=="
+Content-Type: multipart/mixed; boundary="===============1523964461339388673=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [PATCH] phonesim: simulate Send USSD in sim app
-Date: Wed, 29 Sep 2010 13:10:42 +0300
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802AA0C94@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <4CA30EE3.8000606@gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: Additional info for failed SAT-Send USSD case 
+Date: Wed, 29 Sep 2010 05:28:15 -0700
+Message-ID: <1285763296-7208-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5364966324284125709==
+--===============1523964461339388673==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
- =
+Hi,
 
-Hi Denis, Marcel,
+ Following patch handles the SAT initiated Send USSD failure case. =
 
-> what was wrong with the clear indication that this patch is messed up.
-> =
+As per the 3GPP 31.111 specification section 6.4.12, when a SAT initiated =
 
-> This patch comes from a stupid Windows system that tries to change =
+Send USSD fails, error code from the network should be sent as =
 
-> every single mode to 0755. Please fix this.
+additional information(part of Result data). If no additional information
+can be sent, then 0( No specific cause can be given) should be sent.
 
-> Whoops, my fault totally missed this.  I wonder if there are git
-settings that can warn about this...
+ Due to the current limitations, this patch sends "No Specific cause can be =
 
-Sorry for this mess. I'll make sure this doesn't happen again.
+givent" to the SAT.
 
-Thanks and Regards,
+Regards,
 jeevaka
 
---===============5364966324284125709==--
+--===============1523964461339388673==--
 
