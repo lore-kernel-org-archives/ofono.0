@@ -1,461 +1,169 @@
-Content-Type: multipart/mixed; boundary="===============4391937700678434521=="
+Content-Type: multipart/mixed; boundary="===============2837642266476883832=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 13/21] emulator: Register mandatory AT command handlers
-Date: Wed, 29 Sep 2010 17:44:53 +0800
-Message-ID: <1285753501-7668-14-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 05/21] dun_gw: Add DUN server plugin for oFono
+Date: Wed, 29 Sep 2010 17:44:45 +0800
+Message-ID: <1285753501-7668-6-git-send-email-zhenhua.zhang@intel.com>
 In-Reply-To: <1285753501-7668-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4391937700678434521==
+--===============2837642266476883832==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Register mandatory AT command handlers for DUN server.
+DUN server is probed when modem state changes to online. It registers
+DUN record to Bluetooth adapter and wait for incoming DUN connection.
 ---
- include/emulator.h |    2 +
- src/emulator.c     |  380 ++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am      |    3 +
+ plugins/dun_gw.c |  113 ++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 382 insertions(+), 0 deletions(-)
+ 2 files changed, 116 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/dun_gw.c
 
-diff --git a/include/emulator.h b/include/emulator.h
-index e6eeb06..71ed78a 100644
---- a/include/emulator.h
-+++ b/include/emulator.h
-@@ -37,6 +37,8 @@ enum ofono_emulator_status {
- 	OFONO_EMULATOR_STATUS_DUN_CONNECT,
- 	OFONO_EMULATOR_STATUS_DUN_CONNECTED,
- 	OFONO_EMULATOR_STATUS_DUN_DISCONNECTED,
-+	OFONO_EMULATOR_STATUS_SET_CGATT,
-+	OFONO_EMULATOR_STATUS_SET_CGDCONT,
- };
+diff --git a/Makefile.am b/Makefile.am
+index c509050..9ef6858 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -264,6 +264,9 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blueto=
+oth.h
+ builtin_modules +=3D hfp
+ builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
  =
 
- enum _GAtServerResult;
-diff --git a/src/emulator.c b/src/emulator.c
-index 3329b36..2a089a1 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -49,6 +49,14 @@ struct dun_context {
- 	struct ofono_gprs_primary_context pri_ctx;
- };
++builtin_modules +=3D dun_gw
++builtin_sources +=3D $(btio_sources) plugins/dun_gw.c plugins/bluetooth.h
++
+ builtin_modules +=3D palmpre
+ builtin_sources +=3D plugins/palmpre.c
  =
 
-+struct modem_settings {
-+	int mode;
-+	int creg;
-+	int cgreg;
-+	int cops;
-+	int attached;
+diff --git a/plugins/dun_gw.c b/plugins/dun_gw.c
+new file mode 100644
+index 0000000..4e33d75
+--- /dev/null
++++ b/plugins/dun_gw.c
+@@ -0,0 +1,113 @@
++/*
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++#include <stdio.h>
++#include <string.h>
++#include <errno.h>
++#include <glib.h>
++#include <ofono.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <gdbus.h>
++
++#include "bluetooth.h"
++
++#define DUN_GW_CHANNEL	1
++
++static struct server *server;
++
++static void dun_gw_connect_cb(GIOChannel *io, GError *err, gpointer user_d=
+ata)
++{
++	struct ofono_emulator *emulator =3D user_data;
++
++	DBG("");
++
++	if (err) {
++		DBG("%s", err->message);
++		goto failed;
++	}
++
++	if (ofono_emulator_enable(emulator, io) < 0)
++		goto failed;
++
++	return;
++
++failed:
++	g_io_channel_shutdown(io, TRUE, NULL);
++	ofono_emulator_remove(emulator);
++	bluetooth_unregister_server(server);
++	server =3D NULL;
++}
++
++static int dun_gw_probe(struct ofono_emulator *emulator,
++				struct ofono_modem *modem)
++{
++	struct ofono_atom *gprs;
++
++	if (server)
++		return -1;
++
++	DBG("");
++
++	gprs =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_GPRS);
++	/* Make sure the modem has GPRS atom */
++	if (!gprs)
++		return -1;
++
++	server =3D bluetooth_register_server(DUN_GW, "Dial-Up Networking",
++				DUN_GW_CHANNEL, dun_gw_connect_cb, emulator);
++}
++
++static void dun_gw_remove()
++{
++	if (server =3D=3D NULL)
++		return;
++
++	DBG("");
++
++	bluetooth_unregister_server(server);
++	server =3D NULL;
++}
++
++static struct ofono_emulator_driver emulator_driver =3D {
++	.name =3D "Dial-Up Networking",
++	.type =3D OFONO_ATOM_TYPE_EMULATOR_DUN,
++	.probe =3D dun_gw_probe,
++	.remove =3D dun_gw_remove,
 +};
 +
- struct ofono_emulator {
- 	struct ofono_modem *modem;
- 	struct ofono_atom *atom;
-@@ -57,6 +65,7 @@ struct ofono_emulator {
- 	GAtPPP *ppp;
- 	struct dun_context context;
- 	struct ofono_emulator_driver *driver;
-+	struct modem_settings settings;
- 	enum ofono_emulator_status status;
- 	struct ofono_watchlist *status_watches;
- };
-@@ -157,6 +166,370 @@ static struct ofono_emulator_req *ofono_emulator_req_=
-new(void *cb,
- 	return req;
- }
- =
-
-+static void generic_cb(GAtServerResult res, void *user_data)
++static int dun_gw_init()
 +{
-+	struct ofono_emulator *e =3D user_data;
-+	GAtServer *server =3D e->server;
-+
-+	g_at_server_send_final(server, res);
-+
-+	e->status =3D OFONO_EMULATOR_STATUS_IDLE;
-+
-+	notify_status_watches(e, NULL);
++	return ofono_emulator_driver_register(&emulator_driver);
 +}
 +
-+static gboolean send_ok(gpointer user_data)
++static void dun_gw_exit()
 +{
-+	struct ofono_emulator *e =3D user_data;
-+
-+	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+
-+	return FALSE;
++	ofono_emulator_driver_unregister(&emulator_driver);
 +}
 +
-+static void cfun_cb(GAtServerRequestType type, GAtResult *cmd,
-+					gpointer user_data)
-+{
-+	struct ofono_emulator *e =3D user_data;
-+	char buf[50];
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		ofono_emulator_send_info(e, "+CFUN: (0-1)", TRUE);
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		snprintf(buf, sizeof(buf), "+CFUN: %d", e->settings.mode);
-+		ofono_emulator_send_info(e, buf, TRUE);
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_SET:
-+	{
-+		GAtResultIter iter;
-+		int mode;
-+
-+		g_at_result_iter_init(&iter, cmd);
-+		g_at_result_iter_next(&iter, "+CFUN=3D");
-+
-+		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
-+			goto error;
-+
-+		if (mode !=3D 0 && mode !=3D 1)
-+			goto error;
-+
-+		DBG("set CFUN to %d", mode);
-+
-+		e->settings.mode =3D mode;
-+		g_timeout_add_seconds(1, send_ok, e);
-+		break;
-+	}
-+	default:
-+		goto error;
-+	};
-+
-+	return;
-+
-+error:
-+	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
-+}
-+
-+static void cpin_cb(GAtServerRequestType type, GAtResult *result,
-+					gpointer user_data)
-+{
-+	struct ofono_emulator *e =3D user_data;
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_SET:
-+		/* not implement yet*/
-+	default:
-+		goto error;
-+	};
-+
-+	return;
-+
-+error:
-+	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
-+}
-+
-+static void creg_cb(GAtServerRequestType type, GAtResult *result,
-+					gpointer user_data)
-+{
-+	struct ofono_emulator *e =3D user_data;
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_SET:
-+	{
-+		GAtResultIter iter;
-+		int mode;
-+
-+		g_at_result_iter_init(&iter, result);
-+		g_at_result_iter_next(&iter, "+CREG=3D");
-+
-+		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
-+			goto error;
-+
-+		if (mode < 0 || mode > 2)
-+			goto error;
-+
-+		DBG("set netreg status %d", mode);
-+
-+		e->settings.creg =3D mode;
-+
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+
-+		break;
-+	}
-+	default:
-+		goto error;
-+	};
-+
-+	return;
-+
-+error:
-+	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
-+}
-+
-+static void cgreg_cb(GAtServerRequestType type, GAtResult *result,
-+					gpointer user_data)
-+{
-+	struct ofono_emulator *e =3D user_data;
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_SET:
-+	{
-+		GAtResultIter iter;
-+		int mode;
-+
-+		g_at_result_iter_init(&iter, result);
-+		g_at_result_iter_next(&iter, "+CGREG=3D");
-+
-+		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
-+			goto error;
-+
-+		if (mode < 0 || mode > 2)
-+			goto error;
-+
-+		DBG("set GPRS cgreg status %d", mode);
-+
-+		e->settings.cgreg =3D mode;
-+
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+
-+		break;
-+	}
-+	default:
-+		goto error;
-+	};
-+
-+	return;
-+error:
-+	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
-+}
-+
-+static void cops_cb(GAtServerRequestType type, GAtResult *result,
-+					gpointer user_data)
-+{
-+	struct ofono_emulator *e =3D user_data;
-+	char buf[50];
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		snprintf(buf, sizeof(buf), "+COPS: %d", e->settings.cops);
-+		ofono_emulator_send_info(e, buf, TRUE);
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_SET:
-+	{
-+		GAtResultIter iter;
-+		int mode;
-+
-+		g_at_result_iter_init(&iter, result);
-+		g_at_result_iter_next(&iter, "+COPS=3D");
-+
-+		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
-+			goto error;
-+
-+		if (mode < 0 || mode > 2)
-+			goto error;
-+
-+		DBG("set GPRS cops status %d", mode);
-+
-+		e->settings.cops =3D mode;
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+
-+		break;
-+	}
-+	default:
-+		goto error;
-+	};
-+
-+	return;
-+
-+error:
-+	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
-+}
-+
-+static void cgatt_cb(GAtServerRequestType type, GAtResult *result,
-+					gpointer user_data)
-+{
-+	struct ofono_emulator *e =3D user_data;
-+	struct ofono_emulator_req *req;
-+	char buf[12];
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		snprintf(buf, sizeof(buf), "+CGATT: %d", e->settings.attached);
-+		ofono_emulator_send_info(e, buf, TRUE);
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_SET:
-+	{
-+		GAtResultIter iter;
-+		int attached;
-+
-+		g_at_result_iter_init(&iter, result);
-+		g_at_result_iter_next(&iter, "+CGATT=3D");
-+
-+		if (g_at_result_iter_next_number(&iter, &attached) =3D=3D FALSE)
-+			goto error;
-+
-+		if (attached !=3D 0 && attached !=3D 1)
-+			goto error;
-+
-+		DBG("set GPRS attach status %d", attached);
-+
-+		req =3D ofono_emulator_req_new(generic_cb, e);
-+		if (!req)
-+			goto error;
-+
-+		req->data =3D &attached;
-+
-+		e->status =3D OFONO_EMULATOR_STATUS_SET_CGATT;
-+
-+		notify_status_watches(e, req);
-+
-+		e->settings.attached =3D attached;
-+		g_free(req);
-+		break;
-+	}
-+	default:
-+		goto error;
-+	};
-+
-+	return;
-+
-+error:
-+	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
-+}
-+
-+static void cgdcont_cb(GAtServerRequestType type, GAtResult *result,
-+					gpointer user_data)
-+{
-+	struct ofono_emulator *e =3D user_data;
-+	struct ofono_emulator_gprs_context_req *req;
-+	struct dun_context *context =3D &e->context;
-+	struct ofono_gprs_primary_context *ctx =3D &context->pri_ctx;
-+	char buf[256];
-+
-+	switch (type) {
-+	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+	{
-+		const char *proto =3D gprs_proto_to_string(ctx->proto);
-+
-+		snprintf(buf, sizeof(buf), "+CGDCONT: %d, \"%s\", \"%s\"",
-+						ctx->cid, proto, ctx->apn);
-+		ofono_emulator_send_info(e, buf, TRUE);
-+		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
-+		break;
-+	}
-+	case G_AT_SERVER_REQUEST_TYPE_SET:
-+	{
-+		GAtResultIter iter;
-+		unsigned int cid;
-+		const char *proto;
-+		const char *apn;
-+
-+		g_at_result_iter_init(&iter, result);
-+		g_at_result_iter_next(&iter, "+CGDCONT=3D");
-+
-+		if (g_at_result_iter_next_number(&iter, (gint *)&cid) =3D=3D FALSE)
-+			goto error;
-+
-+		if (g_at_result_iter_next_string(&iter, &proto) =3D=3D FALSE)
-+			goto error;
-+
-+		if (g_at_result_iter_next_string(&iter, &apn) =3D=3D FALSE)
-+			goto error;
-+
-+		DBG("set CGDCONT %d %s %s", cid, proto, apn);
-+
-+		if (cid <=3D 0 || proto =3D=3D NULL || apn =3D=3D NULL)
-+			goto error;
-+
-+		if (cid =3D=3D ctx->cid)
-+			goto error;
-+
-+		if (context->active)
-+			goto error;
-+
-+		ctx->cid =3D cid;
-+		gprs_proto_from_string(proto, &ctx->proto);
-+		strncpy(ctx->apn, apn, OFONO_GPRS_MAX_APN_LENGTH);
-+		ctx->apn[OFONO_GPRS_MAX_APN_LENGTH] =3D '\0';
-+
-+		req =3D g_try_new0(struct ofono_emulator_gprs_context_req, 1);
-+		if (!req)
-+			goto error;
-+
-+		req->proto =3D proto;
-+		req->apn =3D apn;
-+		req->cb =3D generic_cb;
-+		req->cb_data =3D e;
-+
-+		e->status =3D OFONO_EMULATOR_STATUS_SET_CGDCONT;
-+
-+		notify_status_watches(e, req);
-+
-+		g_free(req);
-+		break;
-+	}
-+	default:
-+		goto error;
-+	};
-+
-+	return;
-+
-+error:
-+	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
-+}
-+
- static void ppp_connect(const char *interface, const char *local,
- 			const char *remote,
- 			const char *dns1, const char *dns2,
-@@ -353,6 +726,13 @@ int ofono_emulator_enable(struct ofono_emulator *e, GI=
-OChannel *channel)
- 						e);
- =
-
- 	g_at_server_register(e->server, "D", dial_cb, e, NULL);
-+	g_at_server_register(e->server, "+CFUN", cfun_cb, e, NULL);
-+	g_at_server_register(e->server, "+CPIN", cpin_cb, e, NULL);
-+	g_at_server_register(e->server, "+CREG", creg_cb, e, NULL);
-+	g_at_server_register(e->server, "+CGREG", cgreg_cb, e, NULL);
-+	g_at_server_register(e->server, "+COPS", cops_cb, e, NULL);
-+	g_at_server_register(e->server, "+CGATT", cgatt_cb, e, NULL);
-+	g_at_server_register(e->server, "+CGDCONT", cgdcont_cb, e, NULL);
- =
-
- 	return 0;
- }
++OFONO_PLUGIN_DEFINE(dun_gw, "Dial-up Networking Profile Plugins", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_gw_init, dun_gw_exit)
 -- =
 
 1.7.0.4
 
 
---===============4391937700678434521==--
+--===============2837642266476883832==--
 
