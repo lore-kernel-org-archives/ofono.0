@@ -1,108 +1,149 @@
-Content-Type: multipart/mixed; boundary="===============5999560012852066609=="
+Content-Type: multipart/mixed; boundary="===============3828192909609266357=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 09/21] emulator: Add APIs to send GAtServer result
-Date: Wed, 29 Sep 2010 17:44:49 +0800
-Message-ID: <1285753501-7668-10-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 14/21] gprs: Refactor to share remove_context method
+Date: Wed, 29 Sep 2010 17:44:54 +0800
+Message-ID: <1285753501-7668-15-git-send-email-zhenhua.zhang@intel.com>
 In-Reply-To: <1285753501-7668-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5999560012852066609==
+--===============3828192909609266357==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Defines APIs to send final/intermediate/unsolicited result to DUN
-client.
- Please enter the commit message for your changes. Lines starting
+Remove duplicated code in gprs_deactivate_for_remove and
+gprs_remove_context. So they could share the same remove_context method.
 ---
- include/emulator.h |    2 ++
- src/emulator.c     |   28 ++++++++++++++++++++++++++++
- src/ofono.h        |   11 +++++++++++
- 3 files changed, 41 insertions(+), 0 deletions(-)
+ src/gprs.c |   58 ++++++++++++++++++++++++++++----------------------------=
+--
+ 1 files changed, 28 insertions(+), 30 deletions(-)
 
-diff --git a/include/emulator.h b/include/emulator.h
-index 99ae218..0d5568c 100644
---- a/include/emulator.h
-+++ b/include/emulator.h
-@@ -36,6 +36,8 @@ enum ofono_emulator_status {
- 	OFONO_EMULATOR_STATUS_DESTROY,
- };
- =
-
-+enum _GAtServerResult;
-+
- struct ofono_emulator_driver {
- 	const char *name;
- 	enum ofono_atom_type type;
-diff --git a/src/emulator.c b/src/emulator.c
-index c68dbf8..455af11 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -82,6 +82,34 @@ static void ofono_emulator_release_id(int id)
- 	ofono_emulator_ids &=3D ~(0x1 << id);
+diff --git a/src/gprs.c b/src/gprs.c
+index b39e361..ccc6ca5 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1324,26 +1324,14 @@ static DBusMessage *gprs_add_context(DBusConnection=
+ *conn,
+ 	return NULL;
  }
  =
 
-+void ofono_emulator_send_final(struct ofono_emulator *e, GAtServerResult r=
-esult)
-+{
-+	g_at_server_send_final(e->server, result);
-+}
-+
-+void ofono_emulator_send_ext_final(struct ofono_emulator *e, const char *r=
-esult)
-+{
-+	g_at_server_send_ext_final(e->server, result);
-+}
-+
-+void ofono_emulator_send_intermediate(struct ofono_emulator *e,
-+						const char *result)
-+{
-+	g_at_server_send_intermediate(e->server, result);
-+}
-+
-+void ofono_emulator_send_unsolicited(struct ofono_emulator *e,
-+						const char *result)
-+{
-+	g_at_server_send_unsolicited(e->server, result);
-+}
-+
-+void ofono_emulator_send_info(struct ofono_emulator *e, const char *line,
-+						gboolean last)
-+{
-+	g_at_server_send_info(e->server, line, last);
-+}
-+
- static void notify_status_watches(struct ofono_emulator *e, void *data)
+-static void gprs_deactivate_for_remove(const struct ofono_error *error,
+-						void *data)
++static void remove_context(struct pri_context *ctx)
  {
- 	struct ofono_watchlist_item *item;
-diff --git a/src/ofono.h b/src/ofono.h
-index 4cc03f9..9ace0d1 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -350,3 +350,14 @@ unsigned int __ofono_emulator_add_status_watch(struct =
-ofono_emulator *e,
+-	struct pri_context *ctx =3D data;
+ 	struct ofono_gprs *gprs =3D ctx->gprs;
+ 	DBusConnection *conn;
+ 	char *path;
+ 	const char *atompath;
  =
 
- gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
- 						unsigned int id);
+-	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Removing context failed with error: %s",
+-				telephony_error_to_str(error));
+-
+-		__ofono_dbus_pending_reply(&gprs->pending,
+-					__ofono_error_failed(gprs->pending));
+-		return;
+-	}
+-
+-	gprs_cid_release(gprs, ctx->context.cid);
+-	ctx->context.cid =3D 0;
++	DBG("%s", ctx->path);
+ =
+
+ 	if (gprs->settings) {
+ 		g_key_file_remove_group(gprs->settings, ctx->key, NULL);
+@@ -1356,9 +1344,6 @@ static void gprs_deactivate_for_remove(const struct o=
+fono_error *error,
+ 	context_dbus_unregister(ctx);
+ 	gprs->contexts =3D g_slist_remove(gprs->contexts, ctx);
+ =
+
+-	__ofono_dbus_pending_reply(&gprs->pending,
+-				dbus_message_new_method_return(gprs->pending));
+-
+ 	atompath =3D __ofono_atom_get_path(gprs->atom);
+ 	conn =3D ofono_dbus_get_connection();
+ 	g_dbus_emit_signal(conn, atompath, OFONO_CONNECTION_MANAGER_INTERFACE,
+@@ -1367,13 +1352,37 @@ static void gprs_deactivate_for_remove(const struct=
+ ofono_error *error,
+ 	g_free(path);
+ }
+ =
+
++static void gprs_deactivate_for_remove(const struct ofono_error *error,
++						void *data)
++{
++	struct pri_context *ctx =3D data;
++	struct ofono_gprs *gprs =3D ctx->gprs;
 +
-+void ofono_emulator_send_final(struct ofono_emulator *e,
-+					enum _GAtServerResult result);
-+void ofono_emulator_send_ext_final(struct ofono_emulator *e,
-+					const char *result);
-+void ofono_emulator_send_intermediate(struct ofono_emulator *e,
-+					const char *result);
-+void ofono_emulator_send_unsolicited(struct ofono_emulator *e,
-+					const char *result);
-+void ofono_emulator_send_info(struct ofono_emulator *e, const char *line,
-+					gboolean last);
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		DBG("Removing context failed with error: %s",
++				telephony_error_to_str(error));
++
++		__ofono_dbus_pending_reply(&gprs->pending,
++					__ofono_error_failed(gprs->pending));
++		return;
++	}
++
++	gprs_cid_release(gprs, ctx->context.cid);
++	ctx->context.cid =3D 0;
++
++	remove_context(ctx);
++
++	if (gprs->pending)
++		__ofono_dbus_pending_reply(&gprs->pending,
++				dbus_message_new_method_return(gprs->pending));
++}
++
+ static DBusMessage *gprs_remove_context(DBusConnection *conn,
+ 					DBusMessage *msg, void *data)
+ {
+ 	struct ofono_gprs *gprs =3D data;
+ 	struct pri_context *ctx;
+ 	const char *path;
+-	const char *atompath;
+ =
+
+ 	if (!dbus_message_get_args(msg, NULL, DBUS_TYPE_OBJECT_PATH, &path,
+ 					DBUS_TYPE_INVALID))
+@@ -1395,22 +1404,11 @@ static DBusMessage *gprs_remove_context(DBusConnect=
+ion *conn,
+ 		return NULL;
+ 	}
+ =
+
+-	if (gprs->settings) {
+-		g_key_file_remove_group(gprs->settings, ctx->key, NULL);
+-		storage_sync(gprs->imsi, SETTINGS_STORE, gprs->settings);
+-	}
+-
+ 	DBG("Unregistering context: %s\n", ctx->path);
+-	context_dbus_unregister(ctx);
+-	gprs->contexts =3D g_slist_remove(gprs->contexts, ctx);
++	remove_context(ctx);
+ =
+
+ 	g_dbus_send_reply(conn, msg, DBUS_TYPE_INVALID);
+ =
+
+-	atompath =3D __ofono_atom_get_path(gprs->atom);
+-	g_dbus_emit_signal(conn, atompath, OFONO_CONNECTION_MANAGER_INTERFACE,
+-				"ContextRemoved", DBUS_TYPE_OBJECT_PATH, &path,
+-				DBUS_TYPE_INVALID);
+-
+ 	return NULL;
+ }
+ =
+
 -- =
 
 1.7.0.4
 
 
---===============5999560012852066609==--
+--===============3828192909609266357==--
 
