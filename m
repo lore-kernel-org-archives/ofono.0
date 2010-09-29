@@ -1,55 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============9173877199455248804=="
+Content-Type: multipart/mixed; boundary="===============7551140408227358074=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Using ofono HFP
-Date: Tue, 28 Sep 2010 21:50:44 -0500
-Message-ID: <4CA2A984.4030208@gmail.com>
-In-Reply-To: <AANLkTin6yP6y+TPgbrMeQ=2QnKKkpLy8-eSGTb3LZDOf@mail.gmail.com>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: Re: [PATCH 3/7] Add message agent interface documentation
+Date: Wed, 29 Sep 2010 08:56:10 +0300
+Message-ID: <1285739770.3863.59.camel@tucson.research.nokia.com>
+In-Reply-To: <4CA2A400.1050102@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9173877199455248804==
+--===============7551140408227358074==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Moises,
-
-On 09/28/2010 09:33 PM, Moises Silva wrote:
-> On Mon, Sep 27, 2010 at 9:26 PM, Zhang, Zhenhua <zhenhua.zhang@intel.co=
-m> wrote:
->>
->> Right. See bluez/audio/unix.c for BlueZ part SCO code that cooperate wit=
-h pulseaudio. BlueZ sends SCO fd to pulseaudio via UNIX
->> type socks.
+On Wed, 2010-09-29 at 04:27 +0200, ext Denis Kenzior wrote:
+> Hi Aki,
 > =
 
-> This put me in the right direction and I have a clearer idea of how to
-> do it. I found odd though that it seems I need to copy the ipc.c and
-> ipc.h files into my own app. Any reason they are not part of
-> libbluetooth API?
+> On 09/27/2010 11:54 AM, Aki Niemi wrote:
+> > ---
+> >  doc/message-api.txt |   51 +++++++++++++++++++++++++++++++++++++++++++=
+++++++++
+> >  1 files changed, 51 insertions(+), 0 deletions(-)
+> > =
+
+> > diff --git a/doc/message-api.txt b/doc/message-api.txt
+> > index 9e8d02f..5bdc98d 100644
+> > --- a/doc/message-api.txt
+> > +++ b/doc/message-api.txt
+> > @@ -38,6 +38,29 @@ Methods		dict GetProperties()
+> >  			message could be queued successfully, this method
+> >  			returns an object path to the created Message object.
+> >  =
+
+> > +		void RegisterAgent(object path)
+> > +
+> > +			Registers an agent to handle received messages.
+> > +
+> > +			The object path defines the path of the agent that
+> > +			will be called when either a text message, a vCard
+> > +			object or a vCalendar object is ready to be
+> > +			dispatched.
+> > +
+> > +			Possible Errors: [service].Error.InvalidArguments
+> > +					 [service].Error.InvalidFormat
+> > +					 [service].Error.InUse
 > =
 
-> Another thing that puzzles me is that supposedly DBUS >=3D 1.3 is needed
-> to be able to pass file descriptors. However as you pointed out and
-> per ipc.c the file descriptor is sent using a unix socket. Why the
-> need for DBUS file descriptor passing?
+> So me and Marcel had a very long talk about this.  We are basically fine
+> using an Agent for text messaging (however, we agreed that it isn't
+> really necessary, the signals and history cover all realistic use cases).
+
+So you agree to an agent interface for receiving SMSs only? Because
+there is no usable API to history, so you can't offer that as an
+alternative.
+
+My preference would've been a single agent for all text(ish) messages,
+though.
+
+There's also no need for separate signal handlers and history lookup, if
+the agent interface also does spooling, or can otherwise guarantee the
+agent always receives the messages.
+
+Also, telepathy-ring won't have any use for call history; call history
+is stored by the UIs along with the history of other types of calls. As
+for messages, the history interface is not needed if the main message
+interface works as it should.
+
+> What we did not like is being able to register multiple agents.  So
+> instead we decided that using explicit APIs for this is better.
+
+Explicit API for what? Don't your proposal allow multiple agents as
+well?
+
+> Please
+> see the detailed proposal in doc/smartmessaging-api.txt and
+> doc/pushnotification-api.txt.
+
+Honestly, if this is really a proposal, then shouldn't it have been sent
+as an RFC patch to the mailing list? It's a bit hard to comment on it
+now.
+
+For new interfaces, I'd prefer all project participants to work
+according to the same set of rules.
+
+> The SmartMessaging API will handle reception of vCalendars and vCards.
+> This API also covers sending of these objects.
+
+Why array{byte} and not just string?
+
+> The PushNotification API will handle WAP PUSH requests.
 > =
 
+> We'd like to do all of this from a plugin, so the last thing to figure
+> out is the plumbing for plugins to be able to track the lifetime of the
+> sms atom and register the interface appropriately.
 
-There are two descriptors involved here.  DBus 1.3 is needed to have
-BlueZ pass the RFCOMM file descriptor to oFono for the control socket.
-E.g. the socket where AT commands are being passed.  This is done by
-using HandsfreeGateway and HandsfreeAgent.  See doc/hfp-api.txt in BlueZ.
+Implement them as history plugins?
 
-The second descriptor (what ipc.c and ipc.h deal with) is used to pass
-the SCO fd to PulseAudio or gStreamer.  This fd is used for Audio.
-Marcel or Johan might know better, but I think the reason for ipc.c and
-ipc.h was that DBus did not support fd-passing at the time BlueZ audio
-integration work was being done.
+Cheers,
+Aki
 
-Regards,
--Denis
 
---===============9173877199455248804==--
+--===============7551140408227358074==--
 
