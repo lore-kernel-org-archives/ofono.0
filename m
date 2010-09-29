@@ -1,53 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============5241918404106816499=="
+Content-Type: multipart/mixed; boundary="===============8946776057575720249=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 21/21] emulator: Watch netreg status changes
-Date: Wed, 29 Sep 2010 17:45:01 +0800
-Message-ID: <1285753501-7668-22-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 20/21] emulator: Watch GPRS status changes
+Date: Wed, 29 Sep 2010 17:45:00 +0800
+Message-ID: <1285753501-7668-21-git-send-email-zhenhua.zhang@intel.com>
 In-Reply-To: <1285753501-7668-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5241918404106816499==
+--===============8946776057575720249==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Watch netreg status update to notify DUN client, such as +CREG
+Watch GPRS status update to notify DUN client, such as +CGREG
 unsolicited result.
 ---
- src/emulator.c |  106 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+ src/emulator.c |   94 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 106 insertions(+), 0 deletions(-)
+ 1 files changed, 94 insertions(+), 0 deletions(-)
 
 diff --git a/src/emulator.c b/src/emulator.c
-index 7701510..3444461 100644
+index 2a089a1..7701510 100644
 --- a/src/emulator.c
 +++ b/src/emulator.c
-@@ -56,6 +56,9 @@ struct modem_settings {
+@@ -55,6 +55,7 @@ struct modem_settings {
+ 	int cgreg;
  	int cops;
  	int attached;
- 	int gprs_status;
-+	int netreg_status;
-+	int netreg_lac;
-+	int netreg_ci;
++	int gprs_status;
  };
  =
 
  struct ofono_emulator {
-@@ -72,6 +75,9 @@ struct ofono_emulator {
- 	struct ofono_gprs *gprs;
- 	unsigned int gprs_watch;
- 	unsigned int gprs_status_watch;
-+	struct ofono_netreg *netreg;
-+	unsigned int netreg_watch;
-+	unsigned int netreg_status_watch;
+@@ -68,6 +69,9 @@ struct ofono_emulator {
+ 	struct modem_settings settings;
+ 	enum ofono_emulator_status status;
+ 	struct ofono_watchlist *status_watches;
++	struct ofono_gprs *gprs;
++	unsigned int gprs_watch;
++	unsigned int gprs_status_watch;
  };
  =
 
  static GSList *emulator_drivers =3D NULL;
-@@ -265,12 +271,19 @@ static void creg_cb(GAtServerRequestType type, GAtRes=
-ult *result,
+@@ -305,12 +309,16 @@ static void cgreg_cb(GAtServerRequestType type, GAtRe=
+sult *result,
  					gpointer user_data)
  {
  	struct ofono_emulator *e =3D user_data;
@@ -59,38 +57,33 @@ ult *result,
  		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
  		break;
  	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		snprintf(buf, sizeof(buf), "+CREG: %d, %x, %x, %x",
-+						e->settings.creg,
-+						e->settings.netreg_status,
-+						e->settings.netreg_lac,
-+						e->settings.netreg_ci);
++		snprintf(buf, sizeof(buf), "+CGREG: %d, %d", e->settings.cgreg,
++					e->settings.gprs_status);
 +		ofono_emulator_send_info(e, buf, TRUE);
  		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
  		break;
  	case G_AT_SERVER_REQUEST_TYPE_SET:
-@@ -790,6 +803,86 @@ static void add_gprs_watches(struct ofono_emulator *e)
- 				OFONO_ATOM_WATCH_CONDITION_REGISTERED, e);
+@@ -710,6 +718,78 @@ error:
+ 	g_at_server_send_final(server, res);
  }
  =
 
-+static void emulator_netreg_update(struct ofono_emulator *e)
++static void emulator_gprs_update(struct ofono_emulator *e)
 +{
 +	GAtServer *server =3D e->server;
 +	char buf[256];
 +
-+	switch (e->settings.creg) {
++	switch (e->settings.cgreg) {
 +	case 0:
 +		break;
 +	case 1:
-+		snprintf(buf, sizeof(buf), "+CREG: %d",
-+						e->settings.netreg_status);
++		snprintf(buf, sizeof(buf), "+CGREG: %d",
++						e->settings.gprs_status);
 +		g_at_server_send_unsolicited(server, buf);
 +		break;
 +	case 2:
-+		snprintf(buf, sizeof(buf), "+CREG: %d, %x, %x",
-+						e->settings.netreg_status,
-+						e->settings.netreg_lac,
-+						e->settings.netreg_ci);
++		snprintf(buf, sizeof(buf), "+CGREG: %d",
++						e->settings.gprs_status);
 +		g_at_server_send_unsolicited(server, buf);
 +		break;
 +	default:
@@ -98,90 +91,85 @@ ult *result,
 +	}
 +}
 +
-+static void netreg_status_changed(int status, int lac, int ci, int tech,
-+					const char *mcc, const char *mnc,
-+					void *data)
++static void gprs_status_changed(int status, void *data)
 +{
 +	struct ofono_emulator *e =3D data;
 +
-+	DBG("%d %d %d", status, lac, ci);
++	DBG("%d", status);
 +
-+	e->settings.netreg_status =3D status;
-+	e->settings.netreg_lac =3D lac;
-+	e->settings.netreg_ci =3D ci;
++	e->settings.gprs_status =3D status;
 +
-+	emulator_netreg_update(e);
++	emulator_gprs_update(e);
 +}
 +
-+static void netreg_watch(struct ofono_atom *atom,
++static void gprs_watch(struct ofono_atom *atom,
 +				enum ofono_atom_watch_condition cond,
 +				void *data)
 +{
 +	struct ofono_emulator *e =3D data;
-+	struct ofono_netreg *netreg;
++	struct ofono_gprs *gprs;
 +
 +	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		e->netreg_status_watch =3D 0;
-+		e->netreg =3D NULL;
++		e->gprs_status_watch =3D 0;
++		e->gprs =3D NULL;
 +		return;
 +	}
 +
-+	netreg =3D __ofono_atom_get_data(atom);
-+	e->netreg =3D netreg;
-+	e->settings.netreg_status =3D ofono_netreg_get_status(netreg);
-+	e->settings.netreg_lac =3D ofono_netreg_get_location(netreg);
-+	e->settings.netreg_ci =3D ofono_netreg_get_cellid(netreg);
-+	e->netreg_status_watch =3D __ofono_netreg_add_status_watch(e->netreg,
-+					netreg_status_changed, e, NULL);
++	gprs =3D __ofono_atom_get_data(atom);
++	e->gprs =3D gprs;
++	e->settings.gprs_status =3D ofono_gprs_get_status(gprs);
++	e->gprs_status_watch =3D __ofono_gprs_add_status_watch(e->gprs,
++					gprs_status_changed, e, NULL);
 +
-+	emulator_netreg_update(e);
++	emulator_gprs_update(e);
 +}
 +
-+static void add_netreg_watches(struct ofono_emulator *e)
++static void add_gprs_watches(struct ofono_emulator *e)
 +{
 +	struct ofono_modem *modem =3D e->modem;
-+	struct ofono_atom *netreg_atom;
++	struct ofono_atom *gprs_atom;
 +
-+	e->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
-+					OFONO_ATOM_TYPE_NETREG,
-+					netreg_watch, e, NULL);
++	e->gprs_watch =3D __ofono_modem_add_atom_watch(modem,
++					OFONO_ATOM_TYPE_GPRS,
++					gprs_watch, e, NULL);
 +
-+	netreg_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_NETREG);
++	gprs_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_GPRS);
 +
-+	if (netreg_atom && __ofono_atom_get_registered(netreg_atom))
-+		netreg_watch(netreg_atom,
++	if (gprs_atom && __ofono_atom_get_registered(gprs_atom))
++		gprs_watch(gprs_atom,
 +				OFONO_ATOM_WATCH_CONDITION_REGISTERED, e);
 +}
 +
  int ofono_emulator_enable(struct ofono_emulator *e, GIOChannel *channel)
  {
  	if (channel =3D=3D NULL)
-@@ -815,6 +908,7 @@ int ofono_emulator_enable(struct ofono_emulator *e, GIO=
+@@ -734,6 +814,8 @@ int ofono_emulator_enable(struct ofono_emulator *e, GIO=
 Channel *channel)
+ 	g_at_server_register(e->server, "+CGATT", cgatt_cb, e, NULL);
  	g_at_server_register(e->server, "+CGDCONT", cgdcont_cb, e, NULL);
  =
 
- 	add_gprs_watches(e);
-+	add_netreg_watches(e);
- =
-
++	add_gprs_watches(e);
++
  	return 0;
  }
-@@ -855,6 +949,18 @@ static void emulator_remove(struct ofono_atom *atom)
- 		e->gprs =3D NULL;
- 	}
  =
 
-+	if (e->netreg_watch) {
-+		if (e->netreg_status_watch) {
-+			__ofono_netreg_remove_status_watch(e->netreg,
-+						e->netreg_status_watch);
-+			e->netreg_status_watch =3D 0;
+@@ -761,6 +843,18 @@ static void emulator_remove(struct ofono_atom *atom)
+ 	if (e->server)
+ 		emulator_disable(e);
+ =
+
++	if (e->gprs_watch) {
++		if (e->gprs_status_watch) {
++			__ofono_gprs_remove_status_watch(e->gprs,
++						e->gprs_status_watch);
++			e->gprs_status_watch =3D 0;
 +		}
 +
-+		__ofono_modem_remove_atom_watch(e->modem, e->netreg_watch);
-+		e->netreg_watch =3D 0;
-+		e->netreg =3D NULL;
++		__ofono_modem_remove_atom_watch(e->modem, e->gprs_watch);
++		e->gprs_watch =3D 0;
++		e->gprs =3D NULL;
 +	}
 +
  	e->status =3D OFONO_EMULATOR_STATUS_DESTROY;
@@ -193,5 +181,5 @@ Channel *channel)
 1.7.0.4
 
 
---===============5241918404106816499==--
+--===============8946776057575720249==--
 
