@@ -1,28 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============6329366462225401810=="
+Content-Type: multipart/mixed; boundary="===============9173877199455248804=="
 MIME-Version: 1.0
-From: Moises Silva <moises.silva@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: Using ofono HFP
-Date: Tue, 28 Sep 2010 22:50:46 -0400
-Message-ID: <AANLkTikYqo_DOZffjuPz0V7DgZocCfiLFJUn_z3j5dTe@mail.gmail.com>
-In-Reply-To: <33AB447FBD802F4E932063B962385B352D956D0A@shsmsx501.ccr.corp.intel.com>
+Date: Tue, 28 Sep 2010 21:50:44 -0500
+Message-ID: <4CA2A984.4030208@gmail.com>
+In-Reply-To: <AANLkTin6yP6y+TPgbrMeQ=2QnKKkpLy8-eSGTb3LZDOf@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6329366462225401810==
+--===============9173877199455248804==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Sep 28, 2010 at 10:44 PM, Zhang, Zhenhua
-<zhenhua.zhang@intel.com> wrote:
-> DBUS file descriptor passing is used in BlueZ/oFono communication, to pas=
-s RFCOMM port file handler to another process. I guess
-> dbus 1.3 has some wrapper for such file descriptor passing magic.
+Hi Moises,
 
-Oooh, the RFCOMM for the AT commands, of course. I get it now.
+On 09/28/2010 09:33 PM, Moises Silva wrote:
+> On Mon, Sep 27, 2010 at 9:26 PM, Zhang, Zhenhua <zhenhua.zhang@intel.co=
+m> wrote:
+>>
+>> Right. See bluez/audio/unix.c for BlueZ part SCO code that cooperate wit=
+h pulseaudio. BlueZ sends SCO fd to pulseaudio via UNIX
+>> type socks.
+> =
 
---
-Moises Silva
+> This put me in the right direction and I have a clearer idea of how to
+> do it. I found odd though that it seems I need to copy the ipc.c and
+> ipc.h files into my own app. Any reason they are not part of
+> libbluetooth API?
+> =
 
---===============6329366462225401810==--
+> Another thing that puzzles me is that supposedly DBUS >=3D 1.3 is needed
+> to be able to pass file descriptors. However as you pointed out and
+> per ipc.c the file descriptor is sent using a unix socket. Why the
+> need for DBUS file descriptor passing?
+> =
+
+
+There are two descriptors involved here.  DBus 1.3 is needed to have
+BlueZ pass the RFCOMM file descriptor to oFono for the control socket.
+E.g. the socket where AT commands are being passed.  This is done by
+using HandsfreeGateway and HandsfreeAgent.  See doc/hfp-api.txt in BlueZ.
+
+The second descriptor (what ipc.c and ipc.h deal with) is used to pass
+the SCO fd to PulseAudio or gStreamer.  This fd is used for Audio.
+Marcel or Johan might know better, but I think the reason for ipc.c and
+ipc.h was that DBus did not support fd-passing at the time BlueZ audio
+integration work was being done.
+
+Regards,
+-Denis
+
+--===============9173877199455248804==--
 
