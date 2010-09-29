@@ -1,173 +1,461 @@
-Content-Type: multipart/mixed; boundary="===============5641096861363874848=="
+Content-Type: multipart/mixed; boundary="===============4391937700678434521=="
 MIME-Version: 1.0
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
-Subject: [PATCH 07/21] emulator: Add status watches for ofono emulator
-Date: Wed, 29 Sep 2010 17:44:47 +0800
-Message-ID: <1285753501-7668-8-git-send-email-zhenhua.zhang@intel.com>
+Subject: [PATCH 13/21] emulator: Register mandatory AT command handlers
+Date: Wed, 29 Sep 2010 17:44:53 +0800
+Message-ID: <1285753501-7668-14-git-send-email-zhenhua.zhang@intel.com>
 In-Reply-To: <1285753501-7668-1-git-send-email-zhenhua.zhang@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5641096861363874848==
+--===============4391937700678434521==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The status watches monitor the emulator activities. Other atoms like
-gprs, netreg could register notification to watch emulator status
-changes.
+Register mandatory AT command handlers for DUN server.
 ---
- include/emulator.h |    6 +++++
- src/emulator.c     |   54 ++++++++++++++++++++++++++++++++++++++++++++++++=
+ include/emulator.h |    2 +
+ src/emulator.c     |  380 ++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/ofono.h        |   11 ++++++++++
- 3 files changed, 71 insertions(+), 0 deletions(-)
+ 2 files changed, 382 insertions(+), 0 deletions(-)
 
 diff --git a/include/emulator.h b/include/emulator.h
-index 2691928..99ae218 100644
+index e6eeb06..71ed78a 100644
 --- a/include/emulator.h
 +++ b/include/emulator.h
-@@ -30,6 +30,12 @@ extern "C" {
- =
-
- struct ofono_emulator;
- =
-
-+enum ofono_emulator_status {
-+	OFONO_EMULATOR_STATUS_IDLE =3D 0,
-+	OFONO_EMULATOR_STATUS_CREATE,
-+	OFONO_EMULATOR_STATUS_DESTROY,
-+};
-+
- struct ofono_emulator_driver {
- 	const char *name;
- 	enum ofono_atom_type type;
-diff --git a/src/emulator.c b/src/emulator.c
-index 1ede79a..c68dbf8 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -39,6 +39,8 @@ struct ofono_emulator {
- 	unsigned int id;
- 	GAtServer *server;
- 	struct ofono_emulator_driver *driver;
-+	enum ofono_emulator_status status;
-+	struct ofono_watchlist *status_watches;
+@@ -37,6 +37,8 @@ enum ofono_emulator_status {
+ 	OFONO_EMULATOR_STATUS_DUN_CONNECT,
+ 	OFONO_EMULATOR_STATUS_DUN_CONNECTED,
+ 	OFONO_EMULATOR_STATUS_DUN_DISCONNECTED,
++	OFONO_EMULATOR_STATUS_SET_CGATT,
++	OFONO_EMULATOR_STATUS_SET_CGDCONT,
  };
  =
 
- static GSList *emulator_drivers =3D NULL;
-@@ -80,6 +82,20 @@ static void ofono_emulator_release_id(int id)
- 	ofono_emulator_ids &=3D ~(0x1 << id);
+ enum _GAtServerResult;
+diff --git a/src/emulator.c b/src/emulator.c
+index 3329b36..2a089a1 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -49,6 +49,14 @@ struct dun_context {
+ 	struct ofono_gprs_primary_context pri_ctx;
+ };
+ =
+
++struct modem_settings {
++	int mode;
++	int creg;
++	int cgreg;
++	int cops;
++	int attached;
++};
++
+ struct ofono_emulator {
+ 	struct ofono_modem *modem;
+ 	struct ofono_atom *atom;
+@@ -57,6 +65,7 @@ struct ofono_emulator {
+ 	GAtPPP *ppp;
+ 	struct dun_context context;
+ 	struct ofono_emulator_driver *driver;
++	struct modem_settings settings;
+ 	enum ofono_emulator_status status;
+ 	struct ofono_watchlist *status_watches;
+ };
+@@ -157,6 +166,370 @@ static struct ofono_emulator_req *ofono_emulator_req_=
+new(void *cb,
+ 	return req;
  }
  =
 
-+static void notify_status_watches(struct ofono_emulator *e, void *data)
++static void generic_cb(GAtServerResult res, void *user_data)
 +{
-+	struct ofono_watchlist_item *item;
-+	ofono_emulator_status_notify_cb_t notify;
-+	GSList *l;
++	struct ofono_emulator *e =3D user_data;
++	GAtServer *server =3D e->server;
 +
-+	for (l =3D e->status_watches->items; l; l =3D l->next) {
-+		item =3D l->data;
-+		notify =3D item->notify;
++	g_at_server_send_final(server, res);
 +
-+		notify(e, e->status, data, item->notify_data);
-+	}
-+}
++	e->status =3D OFONO_EMULATOR_STATUS_IDLE;
 +
- int ofono_emulator_enable(struct ofono_emulator *e, GIOChannel *channel)
- {
- 	if (channel =3D=3D NULL)
-@@ -116,6 +132,11 @@ static void emulator_remove(struct ofono_atom *atom)
- 	if (e->server)
- 		emulator_disable(e);
- =
-
-+	e->status =3D OFONO_EMULATOR_STATUS_DESTROY;
 +	notify_status_watches(e, NULL);
-+
-+	__ofono_watchlist_free(e->status_watches);
-+
- 	ofono_emulator_release_id(e->id);
- =
-
- 	if (e->driver->remove)
-@@ -125,6 +146,37 @@ static void emulator_remove(struct ofono_atom *atom)
- 	e =3D NULL;
- }
- =
-
-+unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *e,
-+				ofono_emulator_status_notify_cb_t notify,
-+				void *data, ofono_destroy_func destroy)
-+{
-+	struct ofono_watchlist_item *item;
-+
-+	DBG("%p", e);
-+
-+	if (e =3D=3D NULL)
-+		return 0;
-+
-+	if (notify =3D=3D NULL)
-+		return 0;
-+
-+	item =3D g_new0(struct ofono_watchlist_item, 1);
-+
-+	item->notify =3D notify;
-+	item->destroy =3D destroy;
-+	item->notify_data =3D data;
-+
-+	return __ofono_watchlist_add_item(e->status_watches, item);
 +}
 +
-+gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
-+						unsigned int id)
++static gboolean send_ok(gpointer user_data)
 +{
-+	DBG("%p", e);
++	struct ofono_emulator *e =3D user_data;
 +
-+	return __ofono_watchlist_remove_item(e->status_watches, id);
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++
++	return FALSE;
 +}
 +
- struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
- 					struct ofono_emulator_driver *driver)
- {
-@@ -148,6 +200,8 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
-no_modem *modem,
- 	}
++static void cfun_cb(GAtServerRequestType type, GAtResult *cmd,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	char buf[50];
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_info(e, "+CFUN: (0-1)", TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		snprintf(buf, sizeof(buf), "+CFUN: %d", e->settings.mode);
++		ofono_emulator_send_info(e, buf, TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int mode;
++
++		g_at_result_iter_init(&iter, cmd);
++		g_at_result_iter_next(&iter, "+CFUN=3D");
++
++		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
++			goto error;
++
++		if (mode !=3D 0 && mode !=3D 1)
++			goto error;
++
++		DBG("set CFUN to %d", mode);
++
++		e->settings.mode =3D mode;
++		g_timeout_add_seconds(1, send_ok, e);
++		break;
++	}
++	default:
++		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void cpin_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++		/* not implement yet*/
++	default:
++		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void creg_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int mode;
++
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "+CREG=3D");
++
++		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
++			goto error;
++
++		if (mode < 0 || mode > 2)
++			goto error;
++
++		DBG("set netreg status %d", mode);
++
++		e->settings.creg =3D mode;
++
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++
++		break;
++	}
++	default:
++		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void cgreg_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int mode;
++
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "+CGREG=3D");
++
++		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
++			goto error;
++
++		if (mode < 0 || mode > 2)
++			goto error;
++
++		DBG("set GPRS cgreg status %d", mode);
++
++		e->settings.cgreg =3D mode;
++
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++
++		break;
++	}
++	default:
++		goto error;
++	};
++
++	return;
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void cops_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	char buf[50];
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		snprintf(buf, sizeof(buf), "+COPS: %d", e->settings.cops);
++		ofono_emulator_send_info(e, buf, TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int mode;
++
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "+COPS=3D");
++
++		if (g_at_result_iter_next_number(&iter, &mode) =3D=3D FALSE)
++			goto error;
++
++		if (mode < 0 || mode > 2)
++			goto error;
++
++		DBG("set GPRS cops status %d", mode);
++
++		e->settings.cops =3D mode;
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++
++		break;
++	}
++	default:
++		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void cgatt_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	struct ofono_emulator_req *req;
++	char buf[12];
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++		snprintf(buf, sizeof(buf), "+CGATT: %d", e->settings.attached);
++		ofono_emulator_send_info(e, buf, TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		int attached;
++
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "+CGATT=3D");
++
++		if (g_at_result_iter_next_number(&iter, &attached) =3D=3D FALSE)
++			goto error;
++
++		if (attached !=3D 0 && attached !=3D 1)
++			goto error;
++
++		DBG("set GPRS attach status %d", attached);
++
++		req =3D ofono_emulator_req_new(generic_cb, e);
++		if (!req)
++			goto error;
++
++		req->data =3D &attached;
++
++		e->status =3D OFONO_EMULATOR_STATUS_SET_CGATT;
++
++		notify_status_watches(e, req);
++
++		e->settings.attached =3D attached;
++		g_free(req);
++		break;
++	}
++	default:
++		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
++static void cgdcont_cb(GAtServerRequestType type, GAtResult *result,
++					gpointer user_data)
++{
++	struct ofono_emulator *e =3D user_data;
++	struct ofono_emulator_gprs_context_req *req;
++	struct dun_context *context =3D &e->context;
++	struct ofono_gprs_primary_context *ctx =3D &context->pri_ctx;
++	char buf[256];
++
++	switch (type) {
++	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	case G_AT_SERVER_REQUEST_TYPE_QUERY:
++	{
++		const char *proto =3D gprs_proto_to_string(ctx->proto);
++
++		snprintf(buf, sizeof(buf), "+CGDCONT: %d, \"%s\", \"%s\"",
++						ctx->cid, proto, ctx->apn);
++		ofono_emulator_send_info(e, buf, TRUE);
++		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
++		break;
++	}
++	case G_AT_SERVER_REQUEST_TYPE_SET:
++	{
++		GAtResultIter iter;
++		unsigned int cid;
++		const char *proto;
++		const char *apn;
++
++		g_at_result_iter_init(&iter, result);
++		g_at_result_iter_next(&iter, "+CGDCONT=3D");
++
++		if (g_at_result_iter_next_number(&iter, (gint *)&cid) =3D=3D FALSE)
++			goto error;
++
++		if (g_at_result_iter_next_string(&iter, &proto) =3D=3D FALSE)
++			goto error;
++
++		if (g_at_result_iter_next_string(&iter, &apn) =3D=3D FALSE)
++			goto error;
++
++		DBG("set CGDCONT %d %s %s", cid, proto, apn);
++
++		if (cid <=3D 0 || proto =3D=3D NULL || apn =3D=3D NULL)
++			goto error;
++
++		if (cid =3D=3D ctx->cid)
++			goto error;
++
++		if (context->active)
++			goto error;
++
++		ctx->cid =3D cid;
++		gprs_proto_from_string(proto, &ctx->proto);
++		strncpy(ctx->apn, apn, OFONO_GPRS_MAX_APN_LENGTH);
++		ctx->apn[OFONO_GPRS_MAX_APN_LENGTH] =3D '\0';
++
++		req =3D g_try_new0(struct ofono_emulator_gprs_context_req, 1);
++		if (!req)
++			goto error;
++
++		req->proto =3D proto;
++		req->apn =3D apn;
++		req->cb =3D generic_cb;
++		req->cb_data =3D e;
++
++		e->status =3D OFONO_EMULATOR_STATUS_SET_CGDCONT;
++
++		notify_status_watches(e, req);
++
++		g_free(req);
++		break;
++	}
++	default:
++		goto error;
++	};
++
++	return;
++
++error:
++	ofono_emulator_send_final(e, G_AT_SERVER_RESULT_ERROR);
++}
++
+ static void ppp_connect(const char *interface, const char *local,
+ 			const char *remote,
+ 			const char *dns1, const char *dns2,
+@@ -353,6 +726,13 @@ int ofono_emulator_enable(struct ofono_emulator *e, GI=
+OChannel *channel)
+ 						e);
  =
 
- 	e->id =3D ofono_emulator_next_id();
-+	e->status_watches =3D __ofono_watchlist_new(g_free);
-+	e->status =3D OFONO_EMULATOR_STATUS_CREATE;
+ 	g_at_server_register(e->server, "D", dial_cb, e, NULL);
++	g_at_server_register(e->server, "+CFUN", cfun_cb, e, NULL);
++	g_at_server_register(e->server, "+CPIN", cpin_cb, e, NULL);
++	g_at_server_register(e->server, "+CREG", creg_cb, e, NULL);
++	g_at_server_register(e->server, "+CGREG", cgreg_cb, e, NULL);
++	g_at_server_register(e->server, "+COPS", cops_cb, e, NULL);
++	g_at_server_register(e->server, "+CGATT", cgatt_cb, e, NULL);
++	g_at_server_register(e->server, "+CGDCONT", cgdcont_cb, e, NULL);
  =
 
- 	return e;
+ 	return 0;
  }
-diff --git a/src/ofono.h b/src/ofono.h
-index 29cfe57..4cc03f9 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -339,3 +339,14 @@ void __ofono_nettime_info_received(struct ofono_modem =
-*modem,
- #include <ofono/emulator.h>
- =
-
- void __ofono_emulator_probe_drivers(struct ofono_modem *modem);
-+
-+typedef void (*ofono_emulator_status_notify_cb_t)(struct ofono_emulator *e,
-+					enum ofono_emulator_status status,
-+					void *data, void *user_data);
-+
-+unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *e,
-+				ofono_emulator_status_notify_cb_t notify,
-+				void *data, ofono_destroy_func destroy);
-+
-+gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
-+						unsigned int id);
 -- =
 
 1.7.0.4
 
 
---===============5641096861363874848==--
+--===============4391937700678434521==--
 
