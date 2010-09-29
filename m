@@ -1,69 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8799856574645565183=="
+Content-Type: multipart/mixed; boundary="===============7952925488077074569=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/7] Add message agent interface documentation
-Date: Tue, 28 Sep 2010 21:27:12 -0500
-Message-ID: <4CA2A400.1050102@gmail.com>
-In-Reply-To: <1285606459-1297-4-git-send-email-aki.niemi@nokia.com>
+From: Moises Silva <moises.silva@gmail.com>
+Subject: Re: Using ofono HFP
+Date: Tue, 28 Sep 2010 22:33:49 -0400
+Message-ID: <AANLkTin6yP6y+TPgbrMeQ=2QnKKkpLy8-eSGTb3LZDOf@mail.gmail.com>
+In-Reply-To: <33AB447FBD802F4E932063B962385B352D8D7DC7@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8799856574645565183==
+--===============7952925488077074569==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+On Mon, Sep 27, 2010 at 9:26 PM, Zhang, Zhenhua <zhenhua.zhang@intel.com>=
+ wrote:
+>
+> Right. See bluez/audio/unix.c for BlueZ part SCO code that cooperate with=
+ pulseaudio. BlueZ sends SCO fd to pulseaudio via UNIX
+> type socks.
 
-On 09/27/2010 11:54 AM, Aki Niemi wrote:
-> ---
->  doc/message-api.txt |   51 +++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 51 insertions(+), 0 deletions(-)
-> =
+This put me in the right direction and I have a clearer idea of how to
+do it. I found odd though that it seems I need to copy the ipc.c and
+ipc.h files into my own app. Any reason they are not part of
+libbluetooth API?
 
-> diff --git a/doc/message-api.txt b/doc/message-api.txt
-> index 9e8d02f..5bdc98d 100644
-> --- a/doc/message-api.txt
-> +++ b/doc/message-api.txt
-> @@ -38,6 +38,29 @@ Methods		dict GetProperties()
->  			message could be queued successfully, this method
->  			returns an object path to the created Message object.
->  =
+Another thing that puzzles me is that supposedly DBUS >=3D 1.3 is needed
+to be able to pass file descriptors. However as you pointed out and
+per ipc.c the file descriptor is sent using a unix socket. Why the
+need for DBUS file descriptor passing?
 
-> +		void RegisterAgent(object path)
-> +
-> +			Registers an agent to handle received messages.
-> +
-> +			The object path defines the path of the agent that
-> +			will be called when either a text message, a vCard
-> +			object or a vCalendar object is ready to be
-> +			dispatched.
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +					 [service].Error.InvalidFormat
-> +					 [service].Error.InUse
+I'm gonna start testing right away and most likely will be back with
+more questions (like what's the audio format, sampling rate and such)
+:-)
 
-So me and Marcel had a very long talk about this.  We are basically fine
-using an Agent for text messaging (however, we agreed that it isn't
-really necessary, the signals and history cover all realistic use cases).
+Thanks,
 
-What we did not like is being able to register multiple agents.  So
-instead we decided that using explicit APIs for this is better.  Please
-see the detailed proposal in doc/smartmessaging-api.txt and
-doc/pushnotification-api.txt.
+--
+Moises Silva
 
-The SmartMessaging API will handle reception of vCalendars and vCards.
-This API also covers sending of these objects.
-
-The PushNotification API will handle WAP PUSH requests.
-
-We'd like to do all of this from a plugin, so the last thing to figure
-out is the plumbing for plugins to be able to track the lifetime of the
-sms atom and register the interface appropriately.
-
-Regards,
--Denis
-
---===============8799856574645565183==--
+--===============7952925488077074569==--
 
