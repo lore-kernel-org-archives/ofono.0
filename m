@@ -1,56 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============5871745435267973139=="
+Content-Type: multipart/mixed; boundary="===============3018806887166435134=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] stk: Additional info for failed Send USSD case
-Date: Thu, 30 Sep 2010 23:32:57 -0700
-Message-ID: <1285914777-25989-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Yang Gu <gyagp0@gmail.com>
+Subject: [PATCH v2 2/3] Some instances in ControlWidget need to be deleted
+Date: Fri, 01 Oct 2010 01:52:25 +0800
+Message-ID: <1285869146-30183-3-git-send-email-gyagp0@gmail.com>
+In-Reply-To: <1285869146-30183-1-git-send-email-gyagp0@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5871745435267973139==
+--===============3018806887166435134==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |    9 ++++++++-
- 1 files changed, 8 insertions(+), 1 deletions(-)
+ src/control.cpp |    6 ++++++
+ src/control.h   |    1 +
+ 2 files changed, 7 insertions(+), 0 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index bbbc4fd..80b4d23 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1621,6 +1621,7 @@ static void send_ussd_callback(int error, int dcs, co=
-nst unsigned char *msg,
- 	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
- 	struct stk_response rsp;
- 	enum sms_charset charset;
-+	unsigned char no_cause[] =3D { 0x00 };
- =
-
- 	if (stk->pending_cmd->send_ussd.alpha_id &&
- 			stk->pending_cmd->send_ussd.alpha_id[0])
-@@ -1661,7 +1662,13 @@ static void send_ussd_callback(int error, int dcs, c=
-onst unsigned char *msg,
- 		break;
- =
-
- 	default:
--		send_simple_response(stk, STK_RESULT_TYPE_USSD_RETURN_ERROR);
-+		rsp.result.type =3D STK_RESULT_TYPE_USSD_RETURN_ERROR;
-+		rsp.result.additional_len =3D sizeof(no_cause);
-+		rsp.result.additional =3D no_cause;
-+
-+		if (stk_respond(stk, &rsp, stk_command_cb))
-+			stk_command_cb(&failure, stk);
-+
- 		break;
- 	}
+diff --git a/src/control.cpp b/src/control.cpp
+index 458ee43..9e2c1f0 100644
+--- a/src/control.cpp
++++ b/src/control.cpp
+@@ -89,6 +89,12 @@ void ControlWidget::closeEvent(QCloseEvent *event)
+     hide();
  }
+ =
+
++ControlWidget::~ControlWidget()
++{
++    delete ui;
++    delete translator;
++}
++
+ Control::Control(const QString& ruleFile, SimRules *sr, QObject *parent)
+         : HardwareManipulator(sr, parent),
+         widget(new ControlWidget(ruleFile, this))
+diff --git a/src/control.h b/src/control.h
+index 3577e8d..95536dc 100644
+--- a/src/control.h
++++ b/src/control.h
+@@ -31,6 +31,7 @@ class ControlWidget : public QWidget
+ Q_OBJECT
+ public:
+     ControlWidget( const QString&, Control*);
++    ~ControlWidget();
+ =
+
+     void handleFromData( const QString& );
+     void handleToData( const QString& );
 -- =
 
 1.7.0.4
 
 
---===============5871745435267973139==--
+--===============3018806887166435134==--
 
