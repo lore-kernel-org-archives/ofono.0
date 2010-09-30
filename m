@@ -1,111 +1,242 @@
-Content-Type: multipart/mixed; boundary="===============0058798003649297361=="
+Content-Type: multipart/mixed; boundary="===============3062820293882048607=="
 MIME-Version: 1.0
 From: Yang Gu <gyagp0@gmail.com>
-Subject: [PATCH v2 0/3] Patch Description
-Date: Fri, 01 Oct 2010 01:52:23 +0800
-Message-ID: <1285869146-30183-1-git-send-email-gyagp0@gmail.com>
+Subject: [PATCH v2 1/3] Move def of class ControlWidget to header file
+Date: Fri, 01 Oct 2010 01:52:24 +0800
+Message-ID: <1285869146-30183-2-git-send-email-gyagp0@gmail.com>
+In-Reply-To: <1285869146-30183-1-git-send-email-gyagp0@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0058798003649297361==
+--===============3062820293882048607==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This series of patches fix the compilation problem, as well as some memory =
-leak. But the main focus is to enable Qt script so that phonesim GUI can be=
- controlled using JavaScript. In the meantime, D-Bus support is added for t=
-he sake of test automation.
+Currently any modification on control.cpp will result in some unrelated
+obj to be regenerated, because the definition of class ControlWidget is
+in this .cpp file. This patch wants to fix this problem.
+---
+ Makefile.am     |    5 +---
+ src/control.cpp |   69 ---------------------------------------------------=
+---
+ src/control.h   |   70 +++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 3 files changed, 70 insertions(+), 74 deletions(-)
 
-Here are several examples:
-1. call.js (stands for incoming call and copy it to /tmp/call/)
-tabRegistration.gbIncomingCall.leCaller.text =3D "12345";
-tabRegistration.gbIncomingCall.pbIncomingCall.click();
+diff --git a/Makefile.am b/Makefile.am
+index 34198a5..f124b08 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -53,15 +53,12 @@ MAINTAINERCLEANFILES =3D Makefile.in \
+ 	aclocal.m4 configure depcomp missing install-sh
+ =
 
-Then we set the path of script and run the script with its name
-dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Scrip=
-t.SetPath string:/tmp/call
-dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Scrip=
-t.Run string:call.js
+ =
 
-Now we have simulated an incoming call.
+-$(src_phonesim_OBJECTS): src/control.moc src/ui_controlbase.h
++$(src_phonesim_OBJECTS): src/ui_controlbase.h
+ =
 
-2. sms.js (stands for incoming sms and copy it to /tmp/sms/)
-tabSMS.gbMessage1.leMessageSender.text =3D "Yang";
-tabSMS.gbMessage1.leSMSClass.text =3D "1";
-tabSMS.gbMessage1.teSMSText.setPlainText("This message is sent automaticall=
-y from phonesim");
-tabSMS.gbMessage1.pbSendSMSMessage.click();
+ QT_V_MOC   =3D $(QT_V_MOC_$(V))
+ QT_V_MOC_  =3D $(QT_V_MOC_$(AM_DEFAULT_VERBOSITY))
+ QT_V_MOC_0 =3D @echo "  MOC   " $@;
+ =
 
-Then we do the similar things as first example:
-dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Scrip=
-t.SetPath string:/tmp/sms
-dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Scrip=
-t.Run string:sms.js
+-src/control.moc: src/control.cpp
+-	$(QT_V_MOC)$(MOC) $(QT_CFLAGS) $(INCLUDES) $< -o $@
+-
+ src/moc_%.cpp: src/%.h
+ 	$(QT_V_MOC)$(MOC) $< -o $@
+ =
 
-Now we have simulated an incoming sms.
+diff --git a/src/control.cpp b/src/control.cpp
+index 34a228f..458ee43 100644
+--- a/src/control.cpp
++++ b/src/control.cpp
+@@ -18,7 +18,6 @@
+ **************************************************************************=
+**/
+ =
 
-3. Get the current path for script
-dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Scrip=
-t.GetPath
+ #include "control.h"
+-#include "ui_controlbase.h"
+ #include <qpushbutton.h>
+ #include <qslider.h>
+ #include <qcheckbox.h>
+@@ -33,7 +32,6 @@
+ #include <QFile>
+ #include <QDir>
+ #include <QtGui/QHeaderView>
+-#include "attranslator.h"
+ =
 
-4. Make script return some string
-The string can be any string, number, bool, date, etc in JavaScript, but it=
- couldn't be a object because of some side effect. Refer "QScriptValue Clas=
-s Reference" for details.
-For example, if you want to know the current incoming number, you may write=
- a script as below:
-// number.js
-tabRegistration.gbIncomingCall.leCaller.text
+ #define TWO_BYTE_MAX 65535
+ #define FOUR_CHAR 4
+@@ -41,73 +39,6 @@
+ #define EIGHT_CHAR 8
+ #define HEX_BASE 16
+ =
 
-After running the script the similar way as above, you may get the number. =
+-class ControlWidget : public QWidget
+-{
+-Q_OBJECT
+-public:
+-    ControlWidget( const QString&, Control*);
+-
+-    void handleFromData( const QString& );
+-    void handleToData( const QString& );
+-    void handleNewApp();
+-
+-private slots:
+-    void sendSQ();
+-    void sendBC();
+-    void chargingChanged(int state);
+-    void sendOPS();
+-    void sendREG();
+-    void sendCBM();
+-    void sendSMSMessage();
+-    void sendMGD();
+-    void selectFile();
+-    void sendSMSDatagram();
+-    void sendCall();
+-    void atChanged();
+-    void resetTranslator();
+-    void addVoicemail();
+-    void delVoicemail();
+-    void sendVMNotify( int type =3D 0 );
+-    void sendEVMNotify();
+-    void sendUSSD();
+-    void cancelUSSD();
+-    void simInsertRemove();
+-    void simAppStart();
+-    void simAppAbort();
+-
+-signals:
+-    void unsolicitedCommand(const QString &);
+-    void command(const QString &);
+-    void variableChanged(const QString &, const QString &);
+-    void switchTo(const QString &);
+-    void startIncomingCall(const QString &);
+-
+-protected:
+-    void closeEvent(QCloseEvent *event);
+-
+-private:
+-    Ui_ControlBase *ui;
+-    Control *p;
+-    AtTranslator *translator;
+-
+-    class VoicemailItem {
+-    public:
+-        VoicemailItem( const QString &sender, bool urgent );
+-
+-        QTableWidgetItem sender;
+-        QTableWidgetItem priority;
+-        QTableWidgetItem pending;
+-
+-        bool notifyReceived;
+-        bool notifyDeleted;
+-        int id;
+-
+-        static int nextId;
+-    };
+-    QList<VoicemailItem> mailbox;
+-};
+-#include "control.moc"
+-
+ ControlWidget::ControlWidget(const QString &ruleFile, Control *parent)
+     : QWidget(), p(parent)
+ {
+diff --git a/src/control.h b/src/control.h
+index 32db57e..3577e8d 100644
+--- a/src/control.h
++++ b/src/control.h
+@@ -21,8 +21,76 @@
+ #define CONTROL_H
+ =
+
+ #include <hardwaremanipulator.h>
++#include "ui_controlbase.h"
++#include "attranslator.h"
+ =
+
+-class ControlWidget;
++class Control;
++
++class ControlWidget : public QWidget
++{
++Q_OBJECT
++public:
++    ControlWidget( const QString&, Control*);
++
++    void handleFromData( const QString& );
++    void handleToData( const QString& );
++    void handleNewApp();
++
++private slots:
++    void sendSQ();
++    void sendBC();
++    void chargingChanged(int state);
++    void sendOPS();
++    void sendREG();
++    void sendCBM();
++    void sendSMSMessage();
++    void sendMGD();
++    void selectFile();
++    void sendSMSDatagram();
++    void sendCall();
++    void atChanged();
++    void resetTranslator();
++    void addVoicemail();
++    void delVoicemail();
++    void sendVMNotify( int type =3D 0 );
++    void sendEVMNotify();
++    void sendUSSD();
++    void cancelUSSD();
++    void simInsertRemove();
++    void simAppStart();
++    void simAppAbort();
++
++signals:
++    void unsolicitedCommand(const QString &);
++    void command(const QString &);
++    void variableChanged(const QString &, const QString &);
++    void switchTo(const QString &);
++    void startIncomingCall(const QString &);
++
++protected:
++    void closeEvent(QCloseEvent *event);
++
++private:
++    Ui_ControlBase *ui;
++    Control *p;
++    AtTranslator *translator;
++
++    class VoicemailItem {
++    public:
++        VoicemailItem( const QString &sender, bool urgent );
++
++        QTableWidgetItem sender;
++        QTableWidgetItem priority;
++        QTableWidgetItem pending;
++
++        bool notifyReceived;
++        bool notifyDeleted;
++        int id;
++
++        static int nextId;
++    };
++    QList<VoicemailItem> mailbox;
++};
+ =
+
+ class Control: public HardwareManipulator
+ {
+-- =
+
+1.7.0.4
 
 
-By the way, you may need below file (/etc/dbus-1/system.d/phonesim.conf) so=
- that phonesim can register its service in system bus:
-<!-- This configuration file specifies the required security policies
-     for oFono core daemon to work. -->
-
-<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-BUS Bus Configuration 1.0=
-//EN"
- "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
-<busconfig>
-
-  <!-- ../system.conf have denied everything, so we just punch some holes -=
-->
-
-  <policy user=3D"root">
-    <allow own=3D"org.phonesim"/>
-    <allow send_destination=3D"org.phonesim"/>
-  </policy>
-
-  <policy at_console=3D"true">
-    <allow send_destination=3D"org.phonesim"/>
-  </policy>
-
-  <policy context=3D"default">
-    <deny send_destination=3D"org.phonesim"/>
-  </policy>
-
-</busconfig>
-
-
-
-Comments are welcome!
-
-------------
-Yang Gu (3):
-  Move def of class ControlWidget to header file
-  Some instances in ControlWidget need to be deleted
-  Enable Qt Script
-
- Makefile.am     |    5 +-
- configure.ac    |    2 +-
- src/control.cpp |  165 ++++++++++++++++++++++++++++++++-------------------=
-----
- src/control.h   |  106 +++++++++++++++++++++++++++++++++++-
- 4 files changed, 203 insertions(+), 75 deletions(-)
-
-
---===============0058798003649297361==--
+--===============3062820293882048607==--
 
