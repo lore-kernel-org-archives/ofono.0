@@ -1,237 +1,124 @@
-Content-Type: multipart/mixed; boundary="===============8349843434684676621=="
+Content-Type: multipart/mixed; boundary="===============5188118837007296569=="
 MIME-Version: 1.0
-From: Yang Gu <gyagp0@gmail.com>
-Subject: [PATCH v2 3/3] Enable Qt Script
-Date: Fri, 01 Oct 2010 01:52:26 +0800
-Message-ID: <1285869146-30183-4-git-send-email-gyagp0@gmail.com>
-In-Reply-To: <1285869146-30183-1-git-send-email-gyagp0@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Please comment on callhistory API
+Date: Fri, 01 Oct 2010 09:33:37 +0200
+Message-ID: <1285918417.4231.7.camel@aeonflux>
+In-Reply-To: <4CA4D9DD.4090703@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8349843434684676621==
+--===============5188118837007296569==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch is to enable Qt script so that GUI can be controlled using
-JavaScript. In the meantime, D-Bus support is added for the sake of test
-automation.
----
- configure.ac    |    2 +-
- src/control.cpp |   90 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/control.h   |   35 +++++++++++++++++++++
- 3 files changed, 126 insertions(+), 1 deletions(-)
+Hi Raji,
 
-diff --git a/configure.ac b/configure.ac
-index 4d10494..d5d674e 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -21,7 +21,7 @@ AC_ARG_ENABLE(optimization, AC_HELP_STRING([--disable-opt=
-imization],
- 	fi
- ])
- =
+> >>>> org.ofono.History will be the main adapter interface and =
 
--PKG_CHECK_MODULES(QT, QtCore QtGui QtXml QtNetwork, dummy=3Dyes,
-+PKG_CHECK_MODULES(QT, QtCore QtGui QtXml QtNetwork  QtScript, dummy=3Dyes,
- 						AC_MSG_ERROR(Qt is required))
- AC_SUBST(QT_CFLAGS)
- AC_SUBST(QT_LIBS)
-diff --git a/src/control.cpp b/src/control.cpp
-index 9e2c1f0..c01705b 100644
---- a/src/control.cpp
-+++ b/src/control.cpp
-@@ -51,6 +51,15 @@ ControlWidget::ControlWidget(const QString &ruleFile, Co=
-ntrol *parent)
-     ui =3D new Ui_ControlBase;
-     ui->setupUi(this);
- =
+> >>>> org.ofono.CallHistoryAgent the callhistory agent and =
 
-+    script =3D new Script(this, ui);
-+
-+    if (!QDBusConnection::systemBus().registerService("org.phonesim")) {
-+        qWarning() << QDBusConnection::systemBus().lastError().message();
-+        exit(-1);
-+    }
-+
-+    QDBusConnection::systemBus().registerObject("/", script, QDBusConnecti=
-on::ExportAllSlots);
-+
-     connect(ui->hsSignalQuality, SIGNAL(valueChanged(int)), this, SLOT(sen=
-dSQ()));
-     connect(ui->hsBatteryCharge, SIGNAL(valueChanged(int)), this, SLOT(sen=
-dBC()));
-     connect(ui->hsBatteryCharging, SIGNAL(stateChanged(int)), this, SLOT(c=
-hargingChanged(int)));
-@@ -91,6 +100,7 @@ void ControlWidget::closeEvent(QCloseEvent *event)
- =
+> >>>> org.ofono.SmsHistoryAgent as the sms history agent. I want to sepera=
+te =
 
- ControlWidget::~ControlWidget()
- {
-+    delete script;
-     delete ui;
-     delete translator;
- }
-@@ -445,3 +455,83 @@ void ControlWidget::simAppAbort()
- {
-     p->simAppAbort();
- }
-+
-+Script::Script(QObject *obj, Ui_ControlBase *ui) : QDBusAbstractAdaptor(ob=
-j)
-+{
-+    /* Export tabs to be accessed by script */
-+    QScriptValue qsTab =3D engine.newQObject(ui->tab);
-+    engine.globalObject().setProperty("tabRegistration", qsTab);
-+
-+    QScriptValue qsTab2 =3D engine.newQObject(ui->tab_2);
-+    engine.globalObject().setProperty("tabCBM", qsTab2);
-+
-+    QScriptValue qsTab3 =3D engine.newQObject(ui->tab_3);
-+    engine.globalObject().setProperty("tabSMS", qsTab3);
-+
-+    QScriptValue qsTab4 =3D engine.newQObject(ui->tab_4);
-+    engine.globalObject().setProperty("tabVoiceMail", qsTab4);
-+
-+    QScriptValue qsTab5 =3D engine.newQObject(ui->tab_5);
-+    engine.globalObject().setProperty("tabUSSD", qsTab5);
-+
-+    QScriptValue qsTab6 =3D engine.newQObject(ui->tab_6);
-+    engine.globalObject().setProperty("tabSIM", qsTab6);
-+}
-+
-+void Script::SetPath(const QString &path, const QDBusMessage &msg)
-+{
-+    QDir dir(path);
-+    if (!dir.exists()) {
-+        QDBusMessage reply =3D msg.createErrorReply("org.phonesim.Error.Pa=
-thNotFound", "Path doesn't exist");
-+        QDBusConnection::systemBus().send(reply);
-+        return;
-+    }
-+
-+    dirPath =3D path;
-+}
-+
-+QString Script::GetPath()
-+{
-+    return dirPath;
-+}
-+
-+QString Script::Run(const QString &name, const QDBusMessage &msg)
-+{
-+    QString fileName;
-+
-+    if (dirPath.endsWith('/'))
-+        fileName =3D dirPath + name;
-+    else
-+        fileName =3D dirPath + "/" + name;
-+
-+    QFile scriptFile(fileName);
-+
-+    if (!scriptFile.open(QIODevice::ReadOnly)) {
-+        QDBusMessage reply =3D msg.createErrorReply("org.phonesim.Error.Fi=
-leNotFound", "Script file doesn't exist");
-+        QDBusConnection::systemBus().send(reply);
-+        return QString();
-+    }
-+
-+    QTextStream stream(&scriptFile);
-+    stream.setCodec("UTF-8");
-+    QString contents =3D stream.readAll();
-+    scriptFile.close();
-+
-+    QScriptValue qsScript =3D engine.evaluate(contents);
-+    if (qsScript.isError()) {
-+        QString info =3D fileName + ", line " + qsScript.property("lineNum=
-ber").toString() + ", " + qsScript.toString();
-+        QDBusMessage reply =3D msg.createErrorReply("org.phonesim.Error.Sc=
-riptExecError", info);
-+        QDBusConnection::systemBus().send(reply);
-+        return QString();
-+    }
-+
-+    /*
-+     * If this QScriptValue is an object, calling this function has side e=
-ffects on the script engine,
-+     * since the engine will call the object's toString() function (and po=
-ssibly valueOf()) in an attempt
-+     * to convert the object to a primitive value (possibly resulting in a=
-n uncaught script exception).
-+     */
-+    if (qsScript.isObject() || qsScript.isUndefined())
-+        return QString();
-+
-+    return qsScript.toString();
-+}
-diff --git a/src/control.h b/src/control.h
-index 95536dc..e455437 100644
---- a/src/control.h
-+++ b/src/control.h
-@@ -21,11 +21,45 @@
- #define CONTROL_H
- =
+> >>>> the two agents so that sms app will expose sms history agent and dia=
+ler =
 
- #include <hardwaremanipulator.h>
-+#include <QtDBus/QtDBus>
-+#include <QtScript>
- #include "ui_controlbase.h"
- #include "attranslator.h"
- =
+> >>>> will register and expose callhistory agent. Then it will be clear wh=
+ich =
 
- class Control;
- =
+> >>>> agent is interested in which history, vs one org.ofono.HistoryAgent =
 
-+class Script: public QDBusAbstractAdaptor
-+{
-+Q_OBJECT
-+    Q_CLASSINFO("D-Bus Interface", "org.phonesim.Script")
-+    Q_CLASSINFO("D-Bus Introspection", ""
-+"  <interface name=3D\"org.phonesim.Script\">\n"
-+"    <method name=3D\"SetPath\">\n"
-+"      <arg direction=3D\"in\" type=3D\"s\" name=3D\"path\"/>\n"
-+"    </method>\n"
-+"    <method name=3D\"GetPath\">\n"
-+"      <arg direction=3D\"out\" type=3D\"s\" name=3D\"path\"/>\n"
-+"    </method>\n"
-+"    <method name=3D\"Run\">\n"
-+"      <arg direction=3D\"in\" type=3D\"s\" name=3D\"name\"/>\n"
-+"      <arg direction=3D\"out\" type=3D\"s\" name=3D\"result\"/>\n"
-+"    </method>\n"
-+"  </interface>\n"
-+        "")
-+
-+public:
-+    Script(QObject *obj, Ui_ControlBase *ui);
-+
-+public slots:
-+    void SetPath(const QString &path, const QDBusMessage &msg);
-+    QString GetPath();
-+    QString Run(const QString &name, const QDBusMessage &msg);
-+
-+private:
-+    QString dirPath;
-+    QScriptEngine engine;
-+};
-+
- class ControlWidget : public QWidget
- {
- Q_OBJECT
-@@ -73,6 +107,7 @@ protected:
- =
+> >>>> exposing ReportCall and ReportTextMessage methods. In the later case =
 
- private:
-     Ui_ControlBase *ui;
-+    Script *script;
-     Control *p;
-     AtTranslator *translator;
- =
+> >>>> adapter needs to flush both smshistory and callsistory onto two agen=
+ts =
 
--- =
+> >>>> even though agents are not interested only in type of history.
+> >>>>     =
 
-1.7.0.4
+> >>>>         =
+
+> >>> actually not really. So why does the dialer and SMS application need =
+to
+> >>> register for the history? Isn't that going to be stored central in
+> >>> Tracker or something similar. Should not be Tracker or some Tracker
+> >>> helper be registering the agent?
+> >>>   =
+
+> >>>       =
+
+> >> No, Dialer and Sms applications are the ones that read and stores =
+
+> >> locally, this will probably move to tracker eventually.
+> >> So I dont think we can assume that there is going to be a tracker agen=
+t.
+> >>     =
+
+> >>> I might be wrong, but does it really make sense to separate it on this
+> >>> level?
+> >>>   =
+
+> >>>       =
+
+> >> I am thinking by separating the applications will only register and ge=
+t =
+
+> >> data they are interested in.
+> >>     =
+
+> >
+> > so Denis and I had a long chat about this. And essentially the history
+> > agent concept is not really something that we should maintain long term.
+> > We need be able to Tracker to listen on the D-Bus system bus and have
+> > oFono history plugin send data directly to Tracker. The history plugin
+> > should track if Tracker is running or not. If not spool. Otherwise send
+> > data to Tracker directly. Everything else is a pretty much complicated
+> > design.
+> >
+> > However for a short term solution, you could do a history agent concept
+> > as part of a MeeGo specific plugin.
+> >
+> > So use org.ofono as D-Bus service name and com.meego.TelephonyHistory
+> > and com.meego.TelephonyHistoryAgent as interface names.
+> >
+> > The main object path is / since are not going to make this based on a
+> > per modem.
+> >
+> > Two method calls in the agent a) ReportVoiceCall a) ReportTextMessage
+> > and that is it in. In the info dict include the Modem property which
+> > points to the modem object this information originates from.
+>  For outgoing TextMessages, ofono updates the history plugin in two metho=
+d calls, first all the text message history related properties msg id, mess=
+age , local received time,actual sent time, lineid and status=3D'Pending' a=
+nd in another method ofono updates plugin with the status. Earlier design, =
+I sent out history record with pending status and  when I received  status =
+update I  used  'property changed'  signal for status update. But I use 'ui=
+nt32,variant' type which is not consistent with the current ofono property =
+changed signal type. My questions,
+>  1) Are you ok with using signal for status update, this lets us send out=
+ history as soon as we receive them if the agent is running      =
+
+> =
+
+>  2) If we want to avoid signal, then we can store the outgoing text messa=
+ge record until we receive the status update from ofono, combine them and s=
+end out in case of agent running. In case of agent not running we do this a=
+nyway. =
 
 
---===============8349843434684676621==--
+you can just send the method call (it is not a signal in this case) both
+times. When you get the pending one and once the final one. The SMS
+contains its own SHA-1 based id. So the history application can easily
+update its database. It can be used as primary key. oFono ensures its
+uniqueness as good as SHA-1 hash can do.
+
+Regards
+
+Marcel
+
+
+
+--===============5188118837007296569==--
 
