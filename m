@@ -1,25 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============4072635028730747015=="
+Content-Type: multipart/mixed; boundary="===============3545405729091822686=="
 MIME-Version: 1.0
-From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH TODO 0/1] Take ownership of fast dormancy
-Date: Fri, 01 Oct 2010 11:14:12 +0300
-Message-ID: <1285920853-4004-1-git-send-email-mika.liljeberg@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH TODO 1/1] Take ownership of fast dormancy
+Date: Fri, 01 Oct 2010 11:32:43 +0200
+Message-ID: <1285925563.4231.8.camel@aeonflux>
+In-Reply-To: <1285920853-4004-2-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4072635028730747015==
+--===============3545405729091822686==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Mika,
 
-Hi guys,
+>  TODO |   15 ++++++++++-----
+>  1 files changed, 10 insertions(+), 5 deletions(-)
 
-I'd like to work on fast dormancy. See TODO patch for description.
+patch has been applied. Thanks.
 
-Br,
+Regards
 
-    MikaL
+Marcel
 
---===============4072635028730747015==--
+
+
+--===============3545405729091822686==--
 
