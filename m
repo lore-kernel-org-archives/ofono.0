@@ -1,34 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============8012875014462829643=="
+Content-Type: multipart/mixed; boundary="===============4932088104434588954=="
 MIME-Version: 1.0
-From: Debayan Banerjee <debayanin@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Huawei EC1260 not working
-Date: Fri, 01 Oct 2010 18:56:20 +0530
-Message-ID: <AANLkTi=rDCNzSY+kc1vMKKJoBdgdMNMc+WhJACo28X6V@mail.gmail.com>
-In-Reply-To: <1285936159.4231.12.camel@aeonflux>
+Date: Fri, 01 Oct 2010 16:05:39 +0200
+Message-ID: <1285941939.4231.13.camel@aeonflux>
+In-Reply-To: <AANLkTi=rDCNzSY+kc1vMKKJoBdgdMNMc+WhJACo28X6V@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8012875014462829643==
+--===============4932088104434588954==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
->
-> that is a bit too old oFono version. Otherwise it would just work.
+Hi Debayan,
 
-It *did* just work :)
+> > that is a bit too old oFono version. Otherwise it would just work.
+> =
 
-However I still dont see connman showing the device. Arent ofono and
-connman supposed to be compatible with each other?
+> It *did* just work :)
+> =
 
->
+> However I still dont see connman showing the device. Arent ofono and
+> connman supposed to be compatible with each other?
+
+do you have the latest version of ConnMan as well? You would need to
+update ConnMan.
+
+Regards
+
+Marcel
 
 
 
--- =
-
-Debayan Banerjee
-Software Engineer
-
---===============8012875014462829643==--
+--===============4932088104434588954==--
 
