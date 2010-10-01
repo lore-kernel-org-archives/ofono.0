@@ -1,31 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============0016314730087241749=="
+Content-Type: multipart/mixed; boundary="===============5871745435267973139=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] smart_messaging: Remove interface on atom removal
-Date: Thu, 30 Sep 2010 19:11:23 -0500
-Message-ID: <4CA5272B.2080005@gmail.com>
-In-Reply-To: <1285834925-18213-1-git-send-email-aki.niemi@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] stk: Additional info for failed Send USSD case
+Date: Thu, 30 Sep 2010 23:32:57 -0700
+Message-ID: <1285914777-25989-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0016314730087241749==
+--===============5871745435267973139==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+---
+ src/stk.c |    9 ++++++++-
+ 1 files changed, 8 insertions(+), 1 deletions(-)
 
-On 09/30/2010 03:22 AM, Aki Niemi wrote:
-> ---
->  plugins/smart_messaging.c |    3 +++
->  1 files changed, 3 insertions(+), 0 deletions(-)
-> =
+diff --git a/src/stk.c b/src/stk.c
+index bbbc4fd..80b4d23 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -1621,6 +1621,7 @@ static void send_ussd_callback(int error, int dcs, co=
+nst unsigned char *msg,
+ 	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
+ 	struct stk_response rsp;
+ 	enum sms_charset charset;
++	unsigned char no_cause[] =3D { 0x00 };
+ =
+
+ 	if (stk->pending_cmd->send_ussd.alpha_id &&
+ 			stk->pending_cmd->send_ussd.alpha_id[0])
+@@ -1661,7 +1662,13 @@ static void send_ussd_callback(int error, int dcs, c=
+onst unsigned char *msg,
+ 		break;
+ =
+
+ 	default:
+-		send_simple_response(stk, STK_RESULT_TYPE_USSD_RETURN_ERROR);
++		rsp.result.type =3D STK_RESULT_TYPE_USSD_RETURN_ERROR;
++		rsp.result.additional_len =3D sizeof(no_cause);
++		rsp.result.additional =3D no_cause;
++
++		if (stk_respond(stk, &rsp, stk_command_cb))
++			stk_command_cb(&failure, stk);
++
+ 		break;
+ 	}
+ }
+-- =
+
+1.7.0.4
 
 
-This patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============0016314730087241749==--
+--===============5871745435267973139==--
 
