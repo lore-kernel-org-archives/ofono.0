@@ -1,46 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============8192080688707832405=="
+Content-Type: multipart/mixed; boundary="===============6199362597349450749=="
 MIME-Version: 1.0
-From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: Re: [RFC PATCH 1/4] sim: check if FD is enabled in the SIM-card
-Date: Mon, 04 Oct 2010 15:19:49 +0300
-Message-ID: <201010041519.49934.petteri.tikander@ixonos.com>
-In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802AA1144@fioues07.ebgroup.elektrobit.com>
+From: Pekka.Pessi@nokia.com
+Subject: [fix-isi-udev PATCH 2/3] udev: refactor add_isi
+Date: Mon, 04 Oct 2010 16:11:05 +0300
+Message-ID: <1286197866-19572-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1286197866-19572-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8192080688707832405==
+--===============6199362597349450749==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, Jeevaka.
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Well yes, function naming is misleading. I just had some idea for collectin=
-g =
+Gather OFONO_ISI_ADDRESS from same udev device node as OFONO_DRIVER.
+---
+ plugins/udev.c |   20 +++++++++++++++-----
+ 1 files changed, 15 insertions(+), 5 deletions(-)
 
-different kind of call-restrictions (FDN, BDN, other?) under the same check=
-ing =
+diff --git a/plugins/udev.c b/plugins/udev.c
+index d506234..a352b90 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -420,19 +420,29 @@ static void add_nokia(struct ofono_modem *modem,
+ static void add_isi(struct ofono_modem *modem,
+ 					struct udev_device *udev_device)
+ {
+-	const char *ifname, *addr;
++	const char *ifname, *type, *addr;
+ =
 
-function sim_call_barring_check(), which now supports only FDN.
-Well perhaps changing name from sim_call_barring_check() to =
+ 	DBG("modem %p", modem);
+ =
 
-sim_call_restriction_check() would be more descriptive?
+-	ifname =3D udev_device_get_sysname(udev_device);
+-	ofono_modem_set_string(modem, "Interface", ifname);
+-
+-	DBG("interface %s", ifname);
++	if (ofono_modem_get_string(modem, "Interface"))
++		return;
+ =
 
-Then it could call proper driver-functions. OK, I'll change driver-function =
+ 	addr =3D get_property(udev_device, "OFONO_ISI_ADDRESS");
+ 	if (addr !=3D NULL)
+ 		ofono_modem_set_integer(modem, "Address", atoi(addr));
+ =
 
-query_call_barred() to something more descriptive for Fixed Dial-purpose.
++	if (g_strcmp0(udev_device_get_subsystem(udev_device), "net") !=3D 0)
++		return;
++
++	type =3D udev_device_get_sysattr_value(udev_device, "type");
++	if (g_strcmp0(type, "820") !=3D 0)
++		return;
++
++	ifname =3D udev_device_get_sysname(udev_device);
++	ofono_modem_set_string(modem, "Interface", ifname);
++
++	DBG("interface %s", ifname);
++
+ 	ofono_modem_register(modem);
+ }
+ =
 
-Br, Petteri
+-- =
+
+1.7.0.4
 
 
-> Function names are misleading(eg: query_call_barred,
-> sim_call_barring_check). Is it better to use the function name like
-> query_fdn_status??
-> =
-
-> Regards,
-> jeevaka
-
-
---===============8192080688707832405==--
+--===============6199362597349450749==--
 
