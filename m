@@ -1,43 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============1055851982699633517=="
+Content-Type: multipart/mixed; boundary="===============5530565951346498126=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [fix-isi-udev PATCH 0/3] Improve udev with isi
-Date: Mon, 04 Oct 2010 16:11:03 +0300
-Message-ID: <1286197866-19572-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [fix-isi-udev PATCH 3/3] ofono.rules: assign isigen driver by USB ids
+Date: Mon, 04 Oct 2010 16:11:06 +0300
+Message-ID: <1286197866-19572-4-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1286197866-19572-3-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1055851982699633517==
+--===============5530565951346498126==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello all,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Here are three patches for udev. For a reason or another, the current
-ofono.rules does not work very well in Ubuntu 10.04. The "isigen" driver
-is available when the device is added, but not when the udev devices are
-enumerated.
+Now using the USB vendor and product IDs like the rest of the oFono
+drivers.
 
-[fix-isi-udev PATCH 1/3] udev: do not use post-143 libudev features
+For reasons left unclear, the SUBSYSTEMS rule did not work consistently
+in Ubuntu 10.04.
+---
+ plugins/ofono.rules |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-Patch 1/3 provides a replacement function for
-udev_device_get_property_value(), which is not available in libudev
-version 143 required by configure.ac.
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 6517757..ccae688 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -342,9 +342,6 @@ SUBSYSTEM!=3D"net", GOTO=3D"ofono_isi_end"
+ ATTRS{type}!=3D"820", GOTO=3D"ofono_isi_end"
+ KERNELS=3D=3D"gadget", GOTO=3D"ofono_isi_end"
+ =
 
-[fix-isi-udev PATCH 2/3] udev: refactor add_isi
+-# Generic / PC Suite mode
+-SUBSYSTEMS=3D=3D"usb", ENV{OFONO_DRIVER}=3D"isigen", ENV{OFONO_ISI_ADDRESS=
+}=3D"16"
+-
+ # Nokia N900 modem
+ SUBSYSTEMS=3D=3D"hsi", ENV{OFONO_DRIVER}=3D"n900", ENV{OFONO_ISI_ADDRESS}=
+=3D"108"
+ =
 
-Patch 2/3 models the add_isi like other add_* functions: it gathers the
-information from device nodes and registers the modem when all the
-required information is present. Also, it registers the modem only when
-a correct phonet device with Ethernet type 820 is found.
+@@ -404,6 +401,9 @@ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"130=
+b", ENV{OFONO_DRIVER}=3D"mbm"
+ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"130c", ENV{OFONO_DRIVE=
+R}=3D"mbm"
+ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"1311", ENV{OFONO_DRIVE=
+R}=3D"mbm"
+ =
 
-[fix-isi-udev PATCH 3/3] ofono.rules: assign isigen driver by USB ids
++# Nokia default (with PC Suite)
++ATTRS{idVendor}=3D=3D"0421", ENV{OFONO_DRIVER}=3D"isigen", ENV{OFONO_ISI_A=
+DDRESS}=3D"16"
++
+ # Nokia Internet Stick CS-10
+ ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"060e", ENV{OFONO_DRIVE=
+R}=3D"nokia"
+ =
 
-Patch 3/3 provides a udev rule that detects the isigen driver using the
-USB vendor (and product) ids, just like the other modem rules.
+-- =
 
---Pekka
+1.7.0.4
 
---===============1055851982699633517==--
+
+--===============5530565951346498126==--
 
