@@ -1,127 +1,127 @@
-Content-Type: multipart/mixed; boundary="===============6395149410971517301=="
+Content-Type: multipart/mixed; boundary="===============0362795208063442131=="
 MIME-Version: 1.0
-From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: Re: [RFC PATCH 1/4] sim: check if FD is enabled in the SIM-card
-Date: Mon, 04 Oct 2010 19:17:27 +0300
-Message-ID: <201010041917.28066.petteri.tikander@ixonos.com>
-In-Reply-To: <1286000558.4231.35.camel@aeonflux>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: [PATCH 1/4] simfs: cache images
+Date: Mon, 04 Oct 2010 15:33:19 -0700
+Message-ID: <1286231602-18692-2-git-send-email-kristen@linux.intel.com>
+In-Reply-To: <1286231602-18692-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6395149410971517301==
+--===============0362795208063442131==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+---
+ src/simfs.c |   62 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/simfs.h |    4 +++
+ 2 files changed, 66 insertions(+), 0 deletions(-)
 
-and thanks for the valid comments.
+diff --git a/src/simfs.c b/src/simfs.c
+index b5b12b4..5fbee8b 100644
+--- a/src/simfs.c
++++ b/src/simfs.c
+@@ -47,6 +47,7 @@
+ #define SIM_CACHE_PATH SIM_CACHE_BASEPATH "/%04x"
+ #define SIM_CACHE_HEADER_SIZE 38
+ #define SIM_FILE_INFO_SIZE 6
++#define SIM_IMAGE_CACHE_PATH STORAGEDIR "/%s-%i/images/%d.xpm"
+ =
 
-> Hi Petteri Tikander,
-> =
+ #define SIM_FS_VERSION 1
+ =
 
-> > ---
-> >  drivers/atmodem/sim.c |   23 +++++++++++++++++++++
-> >  include/sim.h         |    3 ++
-> >  src/sim.c             |   52
-> > +++++++++++++++++++++++++++++++++++++++++++++++++ 3 files changed, 78
-> > insertions(+), 0 deletions(-)
-> =
+@@ -722,6 +723,67 @@ int sim_fs_write(struct sim_fs *fs, int id, ofono_sim_=
+file_write_cb_t cb,
+ 	return 0;
+ }
+ =
 
-> these need to be split into two separate patches no matter what. First
-> one is adding a feature to the core. The other is implementing it in the
-> atom driver.
++void sim_fs_cache_image(struct sim_fs *fs, const char *image, int id)
++{
++	const char *imsi;
++	enum ofono_sim_phase phase;
++
++	if (fs =3D=3D NULL || image =3D=3D NULL)
++		return;
++
++	imsi =3D ofono_sim_get_imsi(fs->sim);
++	phase =3D ofono_sim_get_phase(fs->sim);
++
++	if (imsi)
++		write_file((const unsigned char *) image, strlen(image),
++				SIM_CACHE_MODE, SIM_IMAGE_CACHE_PATH, imsi,
++				phase, id);
++}
++
++char *sim_fs_get_cached_image(struct sim_fs *fs, int id)
++{
++	const char *imsi;
++	enum ofono_sim_phase phase;
++	unsigned short image_length;
++	int fd;
++	char *buffer;
++	char *path;
++	int len;
++	struct stat st_buf;
++
++	if (fs =3D=3D NULL)
++		return NULL;
++
++	imsi =3D ofono_sim_get_imsi(fs->sim);
++	phase =3D ofono_sim_get_phase(fs->sim);
++
++	path =3D g_strdup_printf(SIM_IMAGE_CACHE_PATH, imsi, phase, id);
++
++	TFR(stat(path, &st_buf));
++
++	fd =3D TFR(open(path, O_RDONLY));
++
++	g_free(path);
++
++	if (fd < 0)
++		return NULL;
++
++	image_length =3D st_buf.st_size;
++
++	buffer =3D g_try_malloc0(image_length + 1);
++
++	len =3D TFR(read(fd, buffer, image_length));
++
++	TFR(close(fd));
++
++	if (len !=3D image_length) {
++		g_free(buffer);
++		return NULL;
++	}
++
++	return buffer;
++}
++
+ static void remove_cachefile(const char *imsi, enum ofono_sim_phase phase,
+ 				const struct dirent *file)
+ {
+diff --git a/src/simfs.h b/src/simfs.h
+index 6d5dded..c0b4c51 100644
+--- a/src/simfs.h
++++ b/src/simfs.h
+@@ -35,4 +35,8 @@ int sim_fs_write(struct sim_fs *fs, int id, ofono_sim_fil=
+e_write_cb_t cb,
+ 			enum ofono_sim_file_structure structure, int record,
+ 			const unsigned char *data, int length, void *userdata);
+ =
 
-OK.
++char *sim_fs_get_cached_image(struct sim_fs *fs, int id);
++
++void sim_fs_cache_image(struct sim_fs *fs, const char *image, int id);
++
+ void sim_fs_free(struct sim_fs *fs);
+-- =
 
-> =
-
-> I know that you guys talked with Denis about this, so I might be just
-> missing something here.
-> =
-
-
-You did not necessarily missed anything:) So logically presim-state in SIM-
-enabled FDN has sense (or even switching to OFF_LINE-state). It can be my =
-
-misunderstanding. We had some discussion with Denis of this issue, and I =
-
-understood it so, that oFono-api has to remove rest of the atoms, if FDN is =
-
-enabled (so also SIM- and voicecall atoms). At least it was easy way to fil=
-ter =
-
-any calls.
-
-Well, the removal of the SIM-atom (what my patch-code did) wasn't a good id=
-ea =
-
-from me. Seems that SIM-initialization routine will be done every time when =
-
-waking up from the POWER-OFF state to the emergency-mode :(
-
-Anyway, I ensured the situation (staying in the presim-state) by next kind =
-of =
-
-test (by making some test-code, where FDN-enabled SIM causes keeping in the =
-
-PRE_SIM-state):
-
-1) enable FDN in SIM
-
-2) enable modem:
-	- create SIM-atom/voice call atom/.../read some EFs/.../read IMSI-code/rea=
-d =
-
-	FDN enabled-status
-
-3) dial to some number in the FDN-list
-
-4) call passed!
-
-Well, why the call passed to B-subscriber: it shouldn't because modem shoul=
-d =
-
-be offline (AT+CFUN=3D1 not given yet). But my test-modem doesn't understan=
-d =
-
-'AT+CFUN=3D4'- command, so it can pass calls anyway. OK, most modems will =
-
-not start dialing. But anyway, if modem is in the offline, it still receive=
-s =
-
-'ATD####'-command through atom/driver-chain, handles it, and probably retur=
-ns =
-
-some error.
-
-So the basic question is now, should the voicecall-atom also be removed in =
-
-the call-restrictions (FDN/BDN-situations etc), causing calls to be filtere=
-d in =
-
-very early phase. Or voicecall-atom not even created until switching to =
-
-ON_LINE (emergency-mode logic switches). Or is it OK to accept situation =
-
-mentioned below (let trust the modem to filter calls), and keep the voiceca=
-ll-
-logic visible all the time?  Or, probably to add some condition in voicecal=
-l =
-
-atoms's methods for canceling calls when not being in the MODEM_ON_LINE-sta=
-te.
-
-
-> The requirement for minimum FDN support is really to power down the
-> modem and not leave it in pre_sim state for emergency calls?
-> =
-
-
-Thanks.
-
-Br, Petteri
+1.7.2.1
 
 
---===============6395149410971517301==--
+--===============0362795208063442131==--
 
