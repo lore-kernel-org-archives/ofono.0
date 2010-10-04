@@ -1,127 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============8378280205875774154=="
+Content-Type: multipart/mixed; boundary="===============3780620256888954020=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [fix-isi-udev PATCH 1/3] udev: do not use post-143 libudev features
-Date: Mon, 04 Oct 2010 16:11:04 +0300
-Message-ID: <1286197866-19572-2-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1286197866-19572-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [RFC PATCH 1/4] sim: check if FD is enabled in the SIM-card
+Date: Mon, 04 Oct 2010 16:31:48 +0300
+Message-ID: <AANLkTi=q4f5H=knNbV9jq+R1c7oW-duobJJ1zOFbWqVx@mail.gmail.com>
+In-Reply-To: <1285949201-2994-2-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8378280205875774154==
+--===============3780620256888954020==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Moro Petteri and others,
 
-There is no udev_device_get_property_value() in libudev version 143.
----
- plugins/udev.c |   38 ++++++++++++++++----------------------
- 1 files changed, 16 insertions(+), 22 deletions(-)
+2010/10/1 Petteri Tikander <petteri.tikander@ixonos.com>:
+> index 42b19bd..e73a995 100644
+> --- a/include/sim.h
+> +++ b/include/sim.h
+> @@ -74,6 +74,7 @@ enum ofono_sim_cphs_phase {
+> =C2=A0enum ofono_sim_state {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0OFONO_SIM_STATE_NOT_PRESENT,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0OFONO_SIM_STATE_INSERTED,
+> + =C2=A0 =C2=A0 =C2=A0 OFONO_SIM_STATE_FAILED,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0OFONO_SIM_STATE_READY,
+> =C2=A0};
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 3c2c09c..d506234 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -55,38 +55,34 @@ static struct ofono_modem *find_modem(const char *devpa=
-th)
- 	return NULL;
- }
- =
-
--static const char *get_driver(struct udev_device *udev_device)
-+static const char *get_property(struct udev_device *device,
-+				char const *property_name)
- {
- 	struct udev_list_entry *entry;
--	const char *driver =3D NULL;
- =
-
--	entry =3D udev_device_get_properties_list_entry(udev_device);
-+	entry =3D udev_device_get_properties_list_entry(device);
- 	while (entry) {
- 		const char *name =3D udev_list_entry_get_name(entry);
- =
-
--		if (g_strcmp0(name, "OFONO_DRIVER") =3D=3D 0)
--			driver =3D udev_list_entry_get_value(entry);
-+		if (g_strcmp0(name, property_name) =3D=3D 0)
-+			return udev_list_entry_get_value(entry);
- =
-
- 		entry =3D udev_list_entry_get_next(entry);
- 	}
- =
-
--	return driver;
-+	return NULL;
- }
- =
-
--static const char *get_serial(struct udev_device *udev_device)
-+static const char *get_driver(struct udev_device *udev_device)
- {
--	struct udev_list_entry *entry;
--	const char *serial =3D NULL;
--
--	entry =3D udev_device_get_properties_list_entry(udev_device);
--	while (entry) {
--		const char *name =3D udev_list_entry_get_name(entry);
-+	return get_property(udev_device, "OFONO_DRIVER");
-+}
- =
-
--		if (g_strcmp0(name, "ID_SERIAL_SHORT") =3D=3D 0)
--			serial =3D udev_list_entry_get_value(entry);
-+static const char *get_serial(struct udev_device *udev_device)
-+{
-+	const char *serial;
- =
-
--		entry =3D udev_list_entry_get_next(entry);
--	}
-+	serial =3D get_property(udev_device, "ID_SERIAL_SHORT");
- =
-
- 	if (serial !=3D NULL) {
- 		unsigned int i, len =3D strlen(serial);
-@@ -147,8 +143,7 @@ static void add_mbm(struct ofono_modem *modem,
- 			g_str_has_suffix(desc, "Mini-Card Network Adapter") ||
- 			g_str_has_suffix(desc, "Broadband Network Adapter") ||
- 			g_str_has_suffix(desc, "Minicard NetworkAdapter")) {
--		devnode =3D udev_device_get_property_value(udev_device,
--								"INTERFACE");
-+		devnode =3D get_property(udev_device, "INTERFACE");
- 		ofono_modem_set_string(modem, NETWORK_INTERFACE, devnode);
- 	} else {
- 		return;
-@@ -194,8 +189,7 @@ static void add_hso(struct ofono_modem *modem,
- 		else if (g_str_has_suffix(type, "Control") =3D=3D TRUE)
- 			ofono_modem_set_string(modem, CONTROL_PORT, devnode);
- 	} else if (g_str_equal(subsystem, "net") =3D=3D TRUE) {
--		devnode =3D udev_device_get_property_value(udev_device,
--								"INTERFACE");
-+		devnode =3D get_property(udev_device, "INTERFACE");
- 		ofono_modem_set_string(modem, NETWORK_INTERFACE, devnode);
- 	} else {
- 		return;
-@@ -435,7 +429,7 @@ static void add_isi(struct ofono_modem *modem,
- =
-
- 	DBG("interface %s", ifname);
- =
-
--	addr =3D udev_device_get_property_value(udev_device, "OFONO_ISI_ADDRESS");
-+	addr =3D get_property(udev_device, "OFONO_ISI_ADDRESS");
- 	if (addr !=3D NULL)
- 		ofono_modem_set_integer(modem, "Address", atoi(addr));
- =
+Would it be a good idea to let modem driver indicate the failure state
+in some cases? I recall the N900 modem had some pathological cases
+where it crashed if a SIM has certain services enabled?
 
 -- =
 
-1.7.0.4
+Pekka.Pessi mail at nokia.com
 
-
---===============8378280205875774154==--
+--===============3780620256888954020==--
 
