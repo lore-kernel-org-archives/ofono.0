@@ -1,73 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============6199362597349450749=="
+Content-Type: multipart/mixed; boundary="===============1055851982699633517=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [fix-isi-udev PATCH 2/3] udev: refactor add_isi
-Date: Mon, 04 Oct 2010 16:11:05 +0300
-Message-ID: <1286197866-19572-3-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1286197866-19572-2-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [fix-isi-udev PATCH 0/3] Improve udev with isi
+Date: Mon, 04 Oct 2010 16:11:03 +0300
+Message-ID: <1286197866-19572-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6199362597349450749==
+--===============1055851982699633517==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hello all,
 
-Gather OFONO_ISI_ADDRESS from same udev device node as OFONO_DRIVER.
----
- plugins/udev.c |   20 +++++++++++++++-----
- 1 files changed, 15 insertions(+), 5 deletions(-)
+Here are three patches for udev. For a reason or another, the current
+ofono.rules does not work very well in Ubuntu 10.04. The "isigen" driver
+is available when the device is added, but not when the udev devices are
+enumerated.
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index d506234..a352b90 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -420,19 +420,29 @@ static void add_nokia(struct ofono_modem *modem,
- static void add_isi(struct ofono_modem *modem,
- 					struct udev_device *udev_device)
- {
--	const char *ifname, *addr;
-+	const char *ifname, *type, *addr;
- =
+[fix-isi-udev PATCH 1/3] udev: do not use post-143 libudev features
 
- 	DBG("modem %p", modem);
- =
+Patch 1/3 provides a replacement function for
+udev_device_get_property_value(), which is not available in libudev
+version 143 required by configure.ac.
 
--	ifname =3D udev_device_get_sysname(udev_device);
--	ofono_modem_set_string(modem, "Interface", ifname);
--
--	DBG("interface %s", ifname);
-+	if (ofono_modem_get_string(modem, "Interface"))
-+		return;
- =
+[fix-isi-udev PATCH 2/3] udev: refactor add_isi
 
- 	addr =3D get_property(udev_device, "OFONO_ISI_ADDRESS");
- 	if (addr !=3D NULL)
- 		ofono_modem_set_integer(modem, "Address", atoi(addr));
- =
+Patch 2/3 models the add_isi like other add_* functions: it gathers the
+information from device nodes and registers the modem when all the
+required information is present. Also, it registers the modem only when
+a correct phonet device with Ethernet type 820 is found.
 
-+	if (g_strcmp0(udev_device_get_subsystem(udev_device), "net") !=3D 0)
-+		return;
-+
-+	type =3D udev_device_get_sysattr_value(udev_device, "type");
-+	if (g_strcmp0(type, "820") !=3D 0)
-+		return;
-+
-+	ifname =3D udev_device_get_sysname(udev_device);
-+	ofono_modem_set_string(modem, "Interface", ifname);
-+
-+	DBG("interface %s", ifname);
-+
- 	ofono_modem_register(modem);
- }
- =
+[fix-isi-udev PATCH 3/3] ofono.rules: assign isigen driver by USB ids
 
--- =
+Patch 3/3 provides a udev rule that detects the isigen driver using the
+USB vendor (and product) ids, just like the other modem rules.
 
-1.7.0.4
+--Pekka
 
-
---===============6199362597349450749==--
+--===============1055851982699633517==--
 
