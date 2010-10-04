@@ -1,30 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============2673890155321649819=="
+Content-Type: multipart/mixed; boundary="===============4665517044161515396=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] TODO: BDN description update
-Date: Mon, 04 Oct 2010 13:51:50 +0200
-Message-ID: <1286193110.17473.7.camel@aeonflux>
-In-Reply-To: <1286191587-7297-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Query related to UDUB for voice calls.
+Date: Mon, 04 Oct 2010 07:16:52 -0500
+Message-ID: <4CA9C5B4.4070705@gmail.com>
+In-Reply-To: <AANLkTikyjKjkx_j=ug_yEoC2=W+OpsKG23Dr9PYf5f04@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2673890155321649819==
+--===============4665517044161515396==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Sankar,
 
->  TODO |    7 ++++---
->  1 files changed, 4 insertions(+), 3 deletions(-)
+This is your final reminder about not top-posting on this list.  All
+further Emails like this will be ignored.
 
-patch has been applied. Thanks.
+On 10/04/2010 01:58 AM, Sankar wrote:
+> HI Denis,
+> =
 
-Regards
+> Thanks for the response. I feel like due to the limitation of the AT
+> modem interface through 27007, we are missing the basic functionality
+> defined in the other specifications for UDUB.
+> Please comment.
 
-Marcel
+What limitation? If I hang up an incoming call I expect it to go to
+voice mail.  Why would you want to do it any other way?
 
+oFono has to work with both AT and non-AT command modems, without
+becoming overly complicated.  This means that the core has to assume
+some behavior.  Since the only viable standard is 27.007, that is what
+we stick to (even though some AT modem manufacturers don't)
 
+However, in this particular case the behavior is the one that makes the
+most sense to the user.  So I'm really not seeing your concern here...
 
---===============2673890155321649819==--
+Regards,
+-Denis
+
+--===============4665517044161515396==--
 
