@@ -1,63 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============1009499305456697989=="
+Content-Type: multipart/mixed; boundary="===============6537445741607512453=="
 MIME-Version: 1.0
-From: Alexander Kanavin <alexander.kanavin@nokia.com>
-Subject: Re: return values of org.ofono.SupplementaryServices.Initiate
-Date: Tue, 05 Oct 2010 15:41:42 +0300
-Message-ID: <4CAB1D06.50503@nokia.com>
-In-Reply-To: <1286280392.17473.85.camel@aeonflux>
+From: sai koushik <saikoushik539@gmail.com>
+Subject: Error in setting "VoiceNoReplyTimeout" property in call-forwarding
+Date: Tue, 05 Oct 2010 20:19:18 +0530
+Message-ID: <AANLkTinv1TVbNL0-vzgm+UN8mV_HUq5xbfjBX69QaUsi@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1009499305456697989==
+--===============6537445741607512453==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 05.10.2010 15:06, ext Marcel Holtmann wrote:
->> doc/supplementaryservices-api.txt says nothing about return values of
->> SupplementeryServices.Initiate method (or that the method can take SS
->> requests in addition to USSD). Can the API designer/implementer fix this
->> please?
->
-> why don't you just send a patch for it if it is unclear?
+Hi,
 
-If it was a small update I would just send a patch. But a typical return =
+we are working on use-case to activate call-forwarding rule when no
+reply , but ofono is returning error "Invalid arguments in method
+call" when trying to set the reply-timeout value.
 
-value for example is:
+below is the code for the use-case
 
-(u'CallBarring',
-  (u'interrogation',
-   u'AllBarringServices',
-   {u'DataAllIncoming': u'disabled',
-    u'DataAllOutgoing': u'disabled',
-    u'DataIncomingWhenRoaming': u'disabled',
-    u'DataInternationalOutgoing': u'disabled',
-    u'DataInternationalOutgoingExceptHome': u'disabled',
-    u'FaxAllIncoming': u'disabled',
-    u'FaxAllOutgoing': u'disabled',
-    u'FaxIncomingWhenRoaming': u'disabled',
-    u'FaxInternationalOutgoing': u'disabled',
-    u'FaxInternationalOutgoingExceptHome': u'disabled',
-    u'VoiceAllIncoming': u'disabled',
-    u'VoiceAllOutgoing': u'disabled',
-    u'VoiceIncomingWhenRoaming': u'disabled',
-    u'VoiceInternationalOutgoing': u'disabled',
-    u'VoiceInternationalOutgoingExceptHome': u'disabled'}))
+GValue val=3D{0,{{0}}};
+g_value_init(&val,G_TYPE_UINT);
 
-Now multiply this by all possible combinations of supplementary services, =
+uint value=3D30;
+g_value_set_uint(&val,value);
 
-supplementary service operations and basic services. Remember the second =
+GError *error=3DNULL;
+dbus_g_proxy_call (proxy,"SetProperty", &error,
+G_TYPE_STRING,"VoiceNoReplyTimeout", G_TYPE_VALUE,&val,
+G_TYPE_INVALID, G_TYPE_INVALID);
 
-argument is a variant, so it's entirely freeform. So I sought to ask about =
 
-this on the list first.
+in our observation , when preparing DBusMessage, it is taking uint32
+as basic type for uint ,
+and in ofono after receiving DBusMessage it is expecting for value of
+type DBUS_TYPE_UINT16 but the message contains DBUS_TYPE_UINT32 type
+value.
 
-A patch(set) that changes the API shouldn't be accepted in the first place =
+is there is any specific reason to expect the time-out value as uint16 type.
 
-if it doesn't properly update the documentation.
+ we are following the pre-requisites to set the reply-timput value as
+specified in call-forwarding doc.
+	=
 
-Regards,
-Alex
+Thanks
+sai.
 
---===============1009499305456697989==--
+--===============6537445741607512453==--
 
