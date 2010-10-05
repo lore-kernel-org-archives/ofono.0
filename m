@@ -1,43 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============2149072630291129142=="
+Content-Type: multipart/mixed; boundary="===============9150981104552740114=="
 MIME-Version: 1.0
-From: Alexander Kanavin <alexander.kanavin@nokia.com>
-Subject: return values of org.ofono.SupplementaryServices.Initiate
-Date: Tue, 05 Oct 2010 13:28:55 +0300
-Message-ID: <4CAAFDE7.8050109@nokia.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] sms: fix type error
+Date: Tue, 05 Oct 2010 13:37:55 +0300
+Message-ID: <1286275075-31292-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2149072630291129142==
+--===============9150981104552740114==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-doc/supplementaryservices-api.txt says nothing about return values of =
+---
+ src/sms.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-SupplementeryServices.Initiate method (or that the method can take SS =
+diff --git a/src/sms.c b/src/sms.c
+index b7051b9..aee9a61 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -69,7 +69,7 @@ struct ofono_sms {
+ 	struct sms_assembly *assembly;
+ 	guint ref;
+ 	GQueue *txq;
+-	gint tx_source;
++	guint tx_source;
+ 	struct ofono_message_waiting *mw;
+ 	unsigned int mw_watch;
+ 	struct ofono_sim *sim;
+-- =
 
-requests in addition to USSD). Can the API designer/implementer fix this =
+1.7.0.4
 
-please?
 
-string, variant Initiate(string command)
-
-			Sends a USSD command string to the network
-			initiating a session.  When the request is handled
-			by the appropriate node of the network, the
-			method returns the response or an appropriate
-			error.  The network may be awaiting further response
-			from the ME after returning from this method and no
-			new command can be initiated until this one is
-			cancelled or ended.
-
-			Possible Errors: [service].Error.Timedout
-			Possible Errors: [service].Error.Canceled
-
-Regards,
-Alex
-
---===============2149072630291129142==--
+--===============9150981104552740114==--
 
