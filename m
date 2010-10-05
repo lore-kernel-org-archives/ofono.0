@@ -1,42 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============1183124242580063698=="
+Content-Type: multipart/mixed; boundary="===============4429297838790807327=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] TODO: ofono_sim_ready_notify()
-Date: Tue, 05 Oct 2010 18:49:28 +0300
-Message-ID: <1286293768-23460-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] TODO: ofono_sim_ready_notify()
+Date: Tue, 05 Oct 2010 17:59:01 +0200
+Message-ID: <1286294341.2588.6.camel@aeonflux>
+In-Reply-To: <1286293768-23460-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1183124242580063698==
+--===============4429297838790807327==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Pekka,
 
----
- TODO |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+> ---
+>  TODO |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/TODO b/TODO
-index 8d4a26e..5589bb1 100644
---- a/TODO
-+++ b/TODO
-@@ -137,6 +137,7 @@ SIM / SIM File system
- =
+I applied this patch.
 
-   Priority: High
-   Complexity: C2
-+  Owner: Pekka Pessi <pekka.pessi@nokia.com>
- =
+However you do remember that we had issues when we tried this the first
+time. It looked simpler on paper then it was when trying to make this
+work with all modem plugins. Remember that this has to work with all
+modem plugins and not just ISI or IFX for that matter.
 
- =
+Regards
 
- Modem Emulator
--- =
-
-1.7.0.4
+Marcel
 
 
---===============1183124242580063698==--
+
+--===============4429297838790807327==--
 
