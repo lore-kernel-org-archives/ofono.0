@@ -1,41 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============1391586516360439911=="
+Content-Type: multipart/mixed; boundary="===============1183124242580063698=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Need Help with GetProperties() method on SimManager interface.
-Date: Tue, 05 Oct 2010 16:57:19 +0200
-Message-ID: <1286290639.2588.2.camel@aeonflux>
-In-Reply-To: <AANLkTimDSTJU6hsQSK1V8BO33KXSxA7nACkyyDfGBFmh@mail.gmail.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] TODO: ofono_sim_ready_notify()
+Date: Tue, 05 Oct 2010 18:49:28 +0300
+Message-ID: <1286293768-23460-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1391586516360439911==
+--===============1183124242580063698==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sai,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
->      We are testing SimManager interface , In that we want to check
-> the whether sim is present  or not.
->      To do  that we are invoking "GetProperties" method on SimManager
-> interface , but in return we are getting all the properties on the
-> given interface .
->      As a result of this we are facing some delays  to parse all properti=
-es,
-> =
+---
+ TODO |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-> is there any mechanism in ofono to get value of the required property
-> on the given interface?
+diff --git a/TODO b/TODO
+index 8d4a26e..5589bb1 100644
+--- a/TODO
++++ b/TODO
+@@ -137,6 +137,7 @@ SIM / SIM File system
+ =
 
-no there is not. When starting your application you are suppose to get
-all properties of an interface. And from there on use signals to monitor
-its changes.
+   Priority: High
+   Complexity: C2
++  Owner: Pekka Pessi <pekka.pessi@nokia.com>
+ =
 
-Regards
+ =
 
-Marcel
+ Modem Emulator
+-- =
+
+1.7.0.4
 
 
-
---===============1391586516360439911==--
+--===============1183124242580063698==--
 
