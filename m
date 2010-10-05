@@ -1,51 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============6537445741607512453=="
+Content-Type: multipart/mixed; boundary="===============3807457765031969965=="
 MIME-Version: 1.0
 From: sai koushik <saikoushik539@gmail.com>
-Subject: Error in setting "VoiceNoReplyTimeout" property in call-forwarding
-Date: Tue, 05 Oct 2010 20:19:18 +0530
-Message-ID: <AANLkTinv1TVbNL0-vzgm+UN8mV_HUq5xbfjBX69QaUsi@mail.gmail.com>
+Subject: Need Help with GetProperties() method on SimManager interface.
+Date: Tue, 05 Oct 2010 20:23:52 +0530
+Message-ID: <AANLkTimDSTJU6hsQSK1V8BO33KXSxA7nACkyyDfGBFmh@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6537445741607512453==
+--===============3807457765031969965==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
+     We are testing SimManager interface , In that we want to check
+the whether sim is present  or not.
+     To do  that we are invoking "GetProperties" method on SimManager
+interface , but in return we are getting all the properties on the
+given interface .
+     As a result of this we are facing some delays  to parse all properties,
 
-we are working on use-case to activate call-forwarding rule when no
-reply , but ofono is returning error "Invalid arguments in method
-call" when trying to set the reply-timeout value.
+is there any mechanism in ofono to get value of the required property
+on the given interface?
 
-below is the code for the use-case
-
-GValue val=3D{0,{{0}}};
-g_value_init(&val,G_TYPE_UINT);
-
-uint value=3D30;
-g_value_set_uint(&val,value);
-
-GError *error=3DNULL;
-dbus_g_proxy_call (proxy,"SetProperty", &error,
-G_TYPE_STRING,"VoiceNoReplyTimeout", G_TYPE_VALUE,&val,
-G_TYPE_INVALID, G_TYPE_INVALID);
-
-
-in our observation , when preparing DBusMessage, it is taking uint32
-as basic type for uint ,
-and in ofono after receiving DBusMessage it is expecting for value of
-type DBUS_TYPE_UINT16 but the message contains DBUS_TYPE_UINT32 type
-value.
-
-is there is any specific reason to expect the time-out value as uint16 type.
-
- we are following the pre-requisites to set the reply-timput value as
-specified in call-forwarding doc.
-	=
 
 Thanks
 sai.
 
---===============6537445741607512453==--
+--===============3807457765031969965==--
 
