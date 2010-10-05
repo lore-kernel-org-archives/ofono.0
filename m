@@ -1,87 +1,198 @@
-Content-Type: multipart/mixed; boundary="===============3114029323389803625=="
+Content-Type: multipart/mixed; boundary="===============7792453088943186214=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [RFC online/offline atoms PATCH 4/4] isigen: create sms and gprs in
- post_sim
-Date: Tue, 05 Oct 2010 14:35:12 +0300
-Message-ID: <1286278512-3529-5-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1286278512-3529-4-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [RFC online/offline atoms PATCH 2/4] sms: watch modem state
+Date: Tue, 05 Oct 2010 14:35:10 +0300
+Message-ID: <1286278512-3529-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1286278512-3529-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3114029323389803625==
+--===============7792453088943186214==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
+Allow use of SMS atom in online and offline states.  The messages are
+queued but not sent in offline mode. Errors occurring when an SMS is
+being sent while transition from online to offline are handled
+gracefully.
 ---
- plugins/isigen.c |   20 ++++++++++----------
- 1 files changed, 10 insertions(+), 10 deletions(-)
+ src/sms.c |   46 ++++++++++++++++++++++++++++++++++++++++++----
+ 1 files changed, 42 insertions(+), 4 deletions(-)
 
-diff --git a/plugins/isigen.c b/plugins/isigen.c
-index db61fdb..d550a34 100644
---- a/plugins/isigen.c
-+++ b/plugins/isigen.c
-@@ -395,22 +395,29 @@ static void isigen_pre_sim(struct ofono_modem *modem)
- static void isigen_post_sim(struct ofono_modem *modem)
- {
- 	struct isi_data *isi =3D ofono_modem_get_data(modem);
-+	struct ofono_gprs *gprs;
-+	struct ofono_gprs_context *gc;
+diff --git a/src/sms.c b/src/sms.c
+index aee9a61..f79bb7d 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -72,6 +72,7 @@ struct ofono_sms {
+ 	guint tx_source;
+ 	struct ofono_message_waiting *mw;
+ 	unsigned int mw_watch;
++	unsigned int online_watch;
+ 	struct ofono_sim *sim;
+ 	GKeyFile *settings;
+ 	char *imsi;
+@@ -661,6 +662,11 @@ static void tx_finished(const struct ofono_error *erro=
+r, int mr, void *data)
+ 	DBG("tx_finished");
  =
 
- 	DBG("(%p) with %s", modem, isi->ifname);
- =
-
- 	ofono_phonebook_create(isi->modem, 0, "isimodem", isi->idx);
-+	ofono_sms_create(isi->modem, 0, "isimodem", isi->idx);
-+	gprs =3D ofono_gprs_create(isi->modem, 0, "isimodem", isi->idx);
-+	gc =3D ofono_gprs_context_create(isi->modem, 0, "isimodem", isi->idx);
+ 	if (ok =3D=3D FALSE) {
++		/* Retry again when back in online mode */
++		/* Note this does not increment retry count */
++		if (!ofono_modem_get_online(modem))
++			return;
 +
-+	if (gprs && gc)
-+		ofono_gprs_add_context(gprs, gc);
-+	else
-+		DBG("Failed to add context");
- }
+ 		if (!(entry->flags & OFONO_SMS_SUBMIT_FLAG_RETRY))
+ 			goto next_q;
  =
 
- static void isigen_post_online(struct ofono_modem *modem)
+@@ -668,7 +674,7 @@ static void tx_finished(const struct ofono_error *error=
+, int mr, void *data)
+ =
+
+ 		if (entry->retry < TXQ_MAX_RETRIES) {
+ 			DBG("Sending failed, retry in %d secs",
+-					entry->retry * 5);
++				entry->retry * 5);
+ 			sms->tx_source =3D g_timeout_add_seconds(entry->retry * 5,
+ 								tx_next, sms);
+ 			return;
+@@ -718,6 +724,9 @@ next_q:
+ =
+
+ 	tx_queue_entry_destroy(entry);
+ =
+
++	if (!ofono_modem_get_online(modem))
++		return;
++
+ 	if (g_queue_peek_head(sms->txq)) {
+ 		DBG("Scheduling next");
+ 		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
+@@ -727,6 +736,7 @@ next_q:
+ static gboolean tx_next(gpointer user_data)
  {
- 	struct isi_data *isi =3D ofono_modem_get_data(modem);
--	struct ofono_gprs *gprs;
--	struct ofono_gprs_context *gc;
+ 	struct ofono_sms *sms =3D user_data;
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(sms->atom);
+ 	int send_mms =3D 0;
+ 	struct tx_queue_entry *entry =3D g_queue_peek_head(sms->txq);
+ 	struct pending_pdu *pdu =3D &entry->pdus[entry->cur_pdu];
+@@ -741,6 +751,9 @@ static gboolean tx_next(gpointer user_data)
+ 	if (!entry)
+ 		return FALSE;
  =
 
- 	DBG("(%p) with %s", modem, isi->ifname);
- =
-
- 	ofono_netreg_create(isi->modem, 0, "isimodem", isi->idx);
--	ofono_sms_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_cbs_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ssn_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ussd_create(isi->modem, 0, "isimodem", isi->idx);
-@@ -419,13 +426,6 @@ static void isigen_post_online(struct ofono_modem *mod=
-em)
- 	ofono_call_barring_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_meter_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_radio_settings_create(isi->modem, 0, "isimodem", isi->idx);
--	gprs =3D ofono_gprs_create(isi->modem, 0, "isimodem", isi->idx);
--	gc =3D ofono_gprs_context_create(isi->modem, 0, "isimodem", isi->idx);
--
--	if (gprs && gc)
--		ofono_gprs_add_context(gprs, gc);
--	else
--		DBG("Failed to add context");
++	if (!ofono_modem_get_online(modem))
++		return FALSE;
++
+ 	if (g_queue_get_length(sms->txq) > 1
+ 			|| (entry->num_pdus - entry->cur_pdu) > 1)
+ 		send_mms =3D 1;
+@@ -751,6 +764,21 @@ static gboolean tx_next(gpointer user_data)
+ 	return FALSE;
  }
  =
 
- static struct ofono_modem_driver driver =3D {
++static void online_watch(enum ofono_modem_state modem_state, void *data)
++{
++
++	struct ofono_sms *sms =3D data;
++
++	if (modem_state !=3D MODEM_STATE_ONLINE)
++		return;
++
++	if (sms->tx_source > 0)
++		return;
++
++	if (g_queue_get_length(sms->txq))
++		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
++}
++
+ static void set_ref_and_to(GSList *msg_list, guint16 ref, int offset,
+ 				gboolean use_16bit, const char *to)
+ {
+@@ -943,14 +971,15 @@ static DBusMessage *sms_send_message(DBusConnection *=
+conn, DBusMessage *msg,
+ =
+
+ 	g_queue_push_tail(sms->txq, entry);
+ =
+
+-	if (g_queue_get_length(sms->txq) =3D=3D 1)
++	modem =3D __ofono_atom_get_modem(sms->atom);
++
++	if (ofono_modem_get_online(modem) && g_queue_get_length(sms->txq) =3D=3D =
+1)
+ 		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
+ =
+
+ 	path =3D message_build_path(sms, m);
+ 	g_dbus_send_reply(conn, msg, DBUS_TYPE_OBJECT_PATH, &path,
+ 					DBUS_TYPE_INVALID);
+ =
+
+-	modem =3D __ofono_atom_get_modem(sms->atom);
+ 	__ofono_history_sms_send_pending(modem, &entry->uuid,
+ 						to, time(NULL), text);
+ =
+
+@@ -1512,6 +1541,11 @@ static void sms_unregister(struct ofono_atom *atom)
+ 		sms->mw =3D NULL;
+ 	}
+ =
+
++	if (sms->online_watch) {
++		__ofono_modem_remove_state_watch(modem, sms->online_watch);
++		sms->online_watch =3D 0;
++	}
++
+ 	if (sms->messages) {
+ 		GHashTableIter iter;
+ 		struct message *m;
+@@ -1714,6 +1748,9 @@ void ofono_sms_register(struct ofono_sms *sms)
+ 	if (mw_atom && __ofono_atom_get_registered(mw_atom))
+ 		mw_watch(mw_atom, OFONO_ATOM_WATCH_CONDITION_REGISTERED, sms);
+ =
+
++	sms->online_watch =3D __ofono_modem_add_state_watch(modem,
++					online_watch, sms, NULL);
++
+ 	sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
+ =
+
+ 	/*
+@@ -1765,6 +1802,7 @@ int __ofono_sms_txq_submit(struct ofono_sms *sms, GSL=
+ist *list,
+ 				ofono_sms_txq_submit_cb_t cb,
+ 				void *data, ofono_destroy_func destroy)
+ {
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(sms->atom);
+ 	struct tx_queue_entry *entry;
+ =
+
+ 	entry =3D tx_queue_entry_new(list, flags, cb, data, destroy);
+@@ -1773,7 +1811,7 @@ int __ofono_sms_txq_submit(struct ofono_sms *sms, GSL=
+ist *list,
+ =
+
+ 	g_queue_push_tail(sms->txq, entry);
+ =
+
+-	if (g_queue_get_length(sms->txq) =3D=3D 1)
++	if (ofono_modem_get_online(modem) && g_queue_get_length(sms->txq) =3D=3D =
+1)
+ 		sms->tx_source =3D g_timeout_add(0, tx_next, sms);
+ =
+
+ 	if (uuid)
 -- =
 
 1.7.0.4
 
 
---===============3114029323389803625==--
+--===============7792453088943186214==--
 
