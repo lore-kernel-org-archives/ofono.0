@@ -1,54 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============7282548638056828283=="
+Content-Type: multipart/mixed; boundary="===============9094222470188522230=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC online/offline atoms PATCH 4/4] isigen: create sms and gprs
- in post_sim
-Date: Tue, 05 Oct 2010 14:04:24 +0200
-Message-ID: <1286280264.17473.84.camel@aeonflux>
-In-Reply-To: <1286278512-3529-5-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: return values of org.ofono.SupplementaryServices.Initiate
+Date: Tue, 05 Oct 2010 14:06:32 +0200
+Message-ID: <1286280392.17473.85.camel@aeonflux>
+In-Reply-To: <4CAAFDE7.8050109@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7282548638056828283==
+--===============9094222470188522230==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Alex,
 
-> ---
->  plugins/isigen.c |   20 ++++++++++----------
->  1 files changed, 10 insertions(+), 10 deletions(-)
-> =
+> doc/supplementaryservices-api.txt says nothing about return values of =
 
-> diff --git a/plugins/isigen.c b/plugins/isigen.c
-> index db61fdb..d550a34 100644
-> --- a/plugins/isigen.c
-> +++ b/plugins/isigen.c
-> @@ -395,22 +395,29 @@ static void isigen_pre_sim(struct ofono_modem *mode=
-m)
->  static void isigen_post_sim(struct ofono_modem *modem)
->  {
->  	struct isi_data *isi =3D ofono_modem_get_data(modem);
-> +	struct ofono_gprs *gprs;
-> +	struct ofono_gprs_context *gc;
->  =
+> SupplementeryServices.Initiate method (or that the method can take SS =
 
->  	DBG("(%p) with %s", modem, isi->ifname);
->  =
+> requests in addition to USSD). Can the API designer/implementer fix this =
 
->  	ofono_phonebook_create(isi->modem, 0, "isimodem", isi->idx);
-> +	ofono_sms_create(isi->modem, 0, "isimodem", isi->idx);
-> +	gprs =3D ofono_gprs_create(isi->modem, 0, "isimodem", isi->idx);
-> +	gc =3D ofono_gprs_context_create(isi->modem, 0, "isimodem", isi->idx);
+> please?
 
-what advantage to we have from moving SMS and GPRS atom into the
-post_sim state? I am trying to really understand what this is trying to
-do and what is the difference of just doing it when in post_online
-state.
-
-Are we expecting SMS and GPRS to just bring the modem online if needed
-or what is this about? I don't see how useful this could be.
+why don't you just send a patch for it if it is unclear?
 
 Regards
 
@@ -56,5 +31,5 @@ Marcel
 
 
 
---===============7282548638056828283==--
+--===============9094222470188522230==--
 
