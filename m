@@ -1,40 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============2304671391941770847=="
+Content-Type: multipart/mixed; boundary="===============8445562366855942427=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [PATCH] TODO: ofono_sim_ready_notify()
-Date: Tue, 05 Oct 2010 19:15:32 +0300
-Message-ID: <AANLkTi=W+H0xg8Cy1vZUUnB6vPZYgZhPdaiUVb4Odc-7@mail.gmail.com>
-In-Reply-To: <1286294341.2588.6.camel@aeonflux>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [RFC sim-ready-v0 PATCH 2/3] atmodem/sim: use
+ ofono_sim_ready_notify
+Date: Tue, 05 Oct 2010 18:45:56 +0200
+Message-ID: <1286297156.2588.8.camel@aeonflux>
+In-Reply-To: <1286294661-24300-3-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2304671391941770847==
+--===============8445562366855942427==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Pekka,
 
-2010/10/5 Marcel Holtmann <marcel@holtmann.org>:
-> However you do remember that we had issues when we tried this the first
-> time. It looked simpler on paper then it was when trying to make this
-> work with all modem plugins. Remember that this has to work with all
-> modem plugins and not just ISI or IFX for that matter.
+> The ofono_sim_driver->query_passwd_state callback will return
+> OFONO_SIM_PASSWORD_INVALID if SIM is not really ready yet. When the sim
+> gets ready or timeout occurs, ofono_sim_ready_notify() is called.
 
-Yes, this is a very tricky problem. I've sent my first stab to the list.
+this reminds me that the current quirks won't work when entering the
+PUK. The only thing hat has been working is when entering the PIN and
+waiting for a SIM ready signal. When the PUK is required our code path
+is different and it also needs to do the SIM ready notification. You
+might wanna have a look into that as well.
 
-The core side is very simple, but the atmodem driver probably needs
-different approach. Perhaps something similar to isimodem with a ready
-flag and indications registered at probe time.
+Regards
 
-Also, probing SIM readiness is tricky in case oFono starts later than
-the modem boots. On isimodem side I now try to read some CPHS
-information which is available only when SIM is really readable. Most
-atmodems probably need a similar firmware-specific hack.
+Marcel
 
--- =
 
-Pekka.Pessi mail at nokia.com
 
---===============2304671391941770847==--
+--===============8445562366855942427==--
 
