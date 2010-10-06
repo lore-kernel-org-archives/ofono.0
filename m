@@ -1,24 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============4874306169660373436=="
+Content-Type: multipart/mixed; boundary="===============3568070081259779797=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/2] ussd: check g_try_new0 return value
-Date: Wed, 06 Oct 2010 17:27:37 +0200
-Message-ID: <1286378857.6145.30.camel@aeonflux>
-In-Reply-To: <1286377300-21614-2-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: Handling of Fixed Dialing
+Date: Wed, 06 Oct 2010 17:29:51 +0200
+Message-ID: <1286378991.6145.31.camel@aeonflux>
+In-Reply-To: <1286374677-2932-1-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4874306169660373436==
+--===============3568070081259779797==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Petteri,
 
->  src/ussd.c |    3 +++
->  1 files changed, 3 insertions(+), 0 deletions(-)
+> First patch checks if Fixed Dialing is enabled in the SIM-card
+> by reading FD-activated bit from EFsst or EFest. If FDN is enabled, =
 
-patch has been applied. Thanks.
+> SIM initialization procedure is stopped, and modem will stay in the PRE-S=
+IM state. =
+
+> If FD is enabled, this is signaled via DBUS.
+
+don't forget to update the documentation with the new D-Bus property.
 
 Regards
 
@@ -26,5 +31,5 @@ Marcel
 
 
 
---===============4874306169660373436==--
+--===============3568070081259779797==--
 
