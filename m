@@ -1,43 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============1274070895877898976=="
+Content-Type: multipart/mixed; boundary="===============8123553751882187159=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC online/offline atoms PATCH 2/4] sms: watch modem state
-Date: Wed, 06 Oct 2010 10:54:40 +0200
-Message-ID: <1286355280.6145.20.camel@aeonflux>
-In-Reply-To: <4CABC509.2080502@gmail.com>
+Subject: Re: [RFC online/offline atoms PATCH 4/4] isigen: create sms and gprs
+ in post_sim
+Date: Wed, 06 Oct 2010 10:55:10 +0200
+Message-ID: <1286355310.6145.21.camel@aeonflux>
+In-Reply-To: <4CABC578.7070606@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1274070895877898976==
+--===============8123553751882187159==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-> >> Allow use of SMS atom in online and offline states.  The messages are
-> >> queued but not sent in offline mode. Errors occurring when an SMS is
-> >> being sent while transition from online to offline are handled
-> >> gracefully.
-> > =
-
-> > do we really want this? How is this suppose to work from the user
-> > experience. I think just failing SendMessage with a proper error is a
-> > more clear indication.
+> > what advantage to we have from moving SMS and GPRS atom into the
+> > post_sim state? I am trying to really understand what this is trying to
+> > do and what is the difference of just doing it when in post_online
+> > state.
 > =
 
-> That is a valid point, the code should be able to handle this use case,
-> but from a UI stand point I don't know what is better.
-> =
+> We'd like to be able to toggle GPRS settings even if in offline state.
+> There's nothing preventing us from creating / deleting / editing
+> contexts or setting the RoamingAllowed property for instance.
 
-> The main reason for moving sms atom from online to offline is the
-> ability to switch the settings.  In particular the SMSC address which is
-> stored on the SIM.
-
-good enough reason for me. Just blindly spooling SMS is not what I want
-right now. We should just fail with a proper error for now. Being able
-to send SMS when offline needs a bit more thinking about on how the user
-exceptions are and should be handled.
+same as with SMS. Good enough reason for me to do it this way.
 
 Regards
 
@@ -45,5 +34,5 @@ Marcel
 
 
 
---===============1274070895877898976==--
+--===============8123553751882187159==--
 
