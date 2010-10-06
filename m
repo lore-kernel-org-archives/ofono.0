@@ -1,275 +1,300 @@
-Content-Type: multipart/mixed; boundary="===============6618266633312112965=="
+Content-Type: multipart/mixed; boundary="===============5072534689382639350=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/3] stk: Handle the Send DTMF proactive command.
-Date: Wed, 06 Oct 2010 12:35:02 +0200
-Message-ID: <1286361303-8712-3-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 3/3][RfC] atmodem: Handle pauses in DTMF string
+Date: Wed, 06 Oct 2010 12:35:03 +0200
+Message-ID: <1286361303-8712-4-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1286361303-8712-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6618266633312112965==
+--===============5072534689382639350==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |  168 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+---
- 1 files changed, 160 insertions(+), 8 deletions(-)
+ drivers/atmodem/voicecall.c |  162 +++++++++++++++++++++++++++++++++++----=
+----
+ 1 files changed, 134 insertions(+), 28 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index 80b4d23..84a22c9 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -70,7 +70,7 @@ struct ofono_stk {
- 	gboolean respond_on_exit;
- 	ofono_bool_t immediate_response;
- 	guint remove_agent_source;
--	struct sms_submit_req *sms_submit_req;
-+	struct extern_req *extern_req;
- 	char *idle_mode_text;
- 	struct timeval get_inkey_start_ts;
- };
-@@ -83,7 +83,7 @@ struct envelope_op {
- 			const unsigned char *data, int length);
+diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
+index 8b43865..cc75803 100644
+--- a/drivers/atmodem/voicecall.c
++++ b/drivers/atmodem/voicecall.c
+@@ -47,6 +47,9 @@
+  /* Amount of time we give for CLIP to arrive before we commence CLCC poll=
+ */
+ #define CLIP_INTERVAL 200
+ =
+
++ /* When +VTD returns 0, an unspecified manufacturer specific delay is use=
+d */
++#define TONE_DURATION 1000
++
+ static const char *clcc_prefix[] =3D { "+CLCC:", NULL };
+ static const char *none_prefix[] =3D { NULL };
+ =
+
+@@ -59,6 +62,8 @@ struct voicecall_data {
+ 	unsigned int clcc_source;
+ 	GAtChat *chat;
+ 	unsigned int vendor;
++	struct tone_req *tr;
++	unsigned int tone_duration;
  };
  =
 
--struct sms_submit_req {
-+struct extern_req {
- 	struct ofono_stk *stk;
- 	gboolean cancelled;
+ struct release_id_req {
+@@ -75,7 +80,18 @@ struct change_state_req {
+ 	int affected_types;
  };
-@@ -660,7 +660,7 @@ static gboolean handle_command_more_time(const struct s=
-tk_command *cmd,
  =
 
- static void send_sms_cancel(struct ofono_stk *stk)
++struct tone_req {
++	struct ofono_voicecall *vc;
++	ofono_voicecall_cb_t cb;
++	void *data;
++	char *tone_str;
++	char *left;
++	int delay;
++	guint source;
++};
++
+ static gboolean poll_clcc(gpointer user_data);
++static gboolean tone_request_run(gpointer user_data);
+ =
+
+ static int class_to_call_type(int cls)
  {
--	stk->sms_submit_req->cancelled =3D TRUE;
-+	stk->extern_req->cancelled =3D TRUE;
- =
-
- 	if (!stk->pending_cmd->send_sms.alpha_id ||
- 			!stk->pending_cmd->send_sms.alpha_id[0])
-@@ -671,7 +671,7 @@ static void send_sms_cancel(struct ofono_stk *stk)
- =
-
- static void send_sms_submit_cb(gboolean ok, void *data)
- {
--	struct sms_submit_req *req =3D data;
-+	struct extern_req *req =3D data;
- 	struct ofono_stk *stk =3D req->stk;
- 	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
- 	struct stk_response rsp;
-@@ -697,6 +697,12 @@ static void send_sms_submit_cb(gboolean ok, void *data)
- 		stk_command_cb(&failure, stk);
+@@ -522,52 +538,116 @@ static void at_deflect(struct ofono_voicecall *vc,
+ 	at_template(buf, vc, generic_cb, incoming_or_waiting, cb, data);
  }
  =
 
-+static void extern_req_start(struct ofono_stk *stk)
-+{
-+	stk->extern_req =3D g_new0(struct extern_req, 1);
-+	stk->extern_req->stk =3D stk;
-+}
+-static void vts_cb(gboolean ok, GAtResult *result, gpointer user_data)
++static void tone_request_finish(struct tone_req *tr, GAtResult *result, in=
+t err)
+ {
+-	struct cb_data *cbd =3D user_data;
+-	ofono_voicecall_cb_t cb =3D cbd->cb;
+ 	struct ofono_error error;
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(tr->vc);
+ =
+
+-	decode_at_error(&error, g_at_result_final_response(result));
+-	cb(&error, cbd->data);
++	if (tr->source)
++		g_source_remove(tr->source);
 +
- static gboolean handle_command_send_sms(const struct stk_command *cmd,
- 					struct stk_response *rsp,
- 					struct ofono_stk *stk)
-@@ -715,15 +721,14 @@ static gboolean handle_command_send_sms(const struct =
-stk_command *cmd,
- =
-
- 	sms =3D __ofono_atom_get_data(sms_atom);
- =
-
--	stk->sms_submit_req =3D g_new0(struct sms_submit_req, 1);
--	stk->sms_submit_req->stk =3D stk;
-+	extern_req_start(stk);
- =
-
- 	msg_list.data =3D (void *) &cmd->send_sms.gsm_sms;
- 	msg_list.next =3D NULL;
- =
-
- 	if (__ofono_sms_txq_submit(sms, &msg_list, 0, NULL, send_sms_submit_cb,
--				stk->sms_submit_req, g_free) < 0) {
--		g_free(stk->sms_submit_req);
-+				stk->extern_req, g_free) < 0) {
-+		g_free(stk->extern_req);
- 		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
- 		return TRUE;
- 	}
-@@ -1824,6 +1829,148 @@ static gboolean handle_command_refresh(const struct=
- stk_command *cmd,
- 	return TRUE;
++	if (result)
++		decode_at_error(&error, g_at_result_final_response(result));
++	else {
++		error.type =3D err ? OFONO_ERROR_TYPE_FAILURE :
++			OFONO_ERROR_TYPE_NO_ERROR;
++		error.error =3D err;
++	}
++
++	tr->cb(&error, tr->data);
++
++	g_free(vd->tr);
++	vd->tr =3D NULL;
  }
  =
 
-+static void send_dtmf_cancel(struct ofono_stk *stk)
-+{
-+	stk->respond_on_exit =3D FALSE;
-+	stk->extern_req->cancelled =3D TRUE;
+-static void at_send_dtmf(struct ofono_voicecall *vc, const char *dtmf,
+-			ofono_voicecall_cb_t cb, void *data)
++static void vts_cb(gboolean ok, GAtResult *result, gpointer user_data)
+ {
+-	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+-	struct cb_data *cbd =3D cb_data_new(cb, data);
+-	int len =3D strlen(dtmf);
++	struct tone_req *tr =3D user_data;
 +
-+	if (stk->pending_cmd->send_dtmf.alpha_id &&
-+			stk->pending_cmd->send_dtmf.alpha_id[0])
-+		stk_alpha_id_unset(stk);
++	if (!ok) {
++		tone_request_finish(tr, result, 0);
++		return;
++	}
++
++	tr->source =3D g_timeout_add(tr->delay, tone_request_run, tr);
 +}
 +
-+static void dtmf_sent_cb(const struct ofono_error *error, void *user_data)
++static gboolean tone_request_run(gpointer user_data)
 +{
-+	struct extern_req *req =3D user_data;
-+	struct ofono_stk *stk =3D req->stk;
-+	gboolean cancelled =3D req->cancelled;
-+
-+	g_free(req);
-+
-+	if (cancelled) {
-+		DBG("Received a DTMF Sent callback after the "
-+				"proactive command was cancelled");
-+		return;
++	struct tone_req *tr =3D user_data;
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(tr->vc);
++	static const char *dtmf =3D "0123456789#*ABCDabcd";
++	char buf[2048], *i;
+ 	int s;
+-	int i;
+-	char *buf;
+ =
+
+-	if (!cbd)
+-		goto error;
++	tr->source =3D 0;
+ =
+
+-	/* strlen("+VTS=3D\"T\";") =3D 9 + initial AT + null */
+-	buf =3D g_try_new(char, len * 9 + 3);
++	if (*tr->left =3D=3D '\0') {
++		tone_request_finish(tr, NULL, 0);
++		return FALSE;
 +	}
-+
-+	stk->respond_on_exit =3D FALSE;
-+
-+	if (stk->pending_cmd->send_dtmf.alpha_id &&
-+			stk->pending_cmd->send_dtmf.alpha_id[0])
-+		stk_alpha_id_unset(stk);
-+
-+	if (error->type =3D=3D OFONO_ERROR_TYPE_FAILURE &&
-+			error->error =3D=3D ENOENT) {
-+		struct stk_response rsp;
-+		static unsigned char not_in_speech_call_result[] =3D { 0x07 };
-+		static struct ofono_error failure =3D
-+			{ .type =3D OFONO_ERROR_TYPE_FAILURE };
-+
-+		memset(&rsp, 0, sizeof(rsp));
-+
-+		rsp.result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		rsp.result.additional_len =3D sizeof(not_in_speech_call_result);
-+		rsp.result.additional =3D not_in_speech_call_result;
-+
-+		if (stk_respond(stk, &rsp, stk_command_cb))
-+			stk_command_cb(&failure, stk);
-+
-+		return;
+ =
+
+-	if (!buf)
+-		goto error;
++	strcpy(buf, "AT");
++	i =3D buf + 2;
+ =
+
+-	s =3D sprintf(buf, "AT+VTS=3D\"%c\"", dtmf[0]);
++	tr->delay =3D 0;
+ =
+
+-	for (i =3D 1; i < len; i++)
+-		s +=3D sprintf(buf + s, ";+VTS=3D\"%c\"", dtmf[i]);
++	while (*tr->left && strchr(dtmf, *tr->left)) {
++		if (tr->delay)
++			*i++ =3D ';';
++		i +=3D sprintf(i, "+VTS=3D\"%c\"", *tr->left++);
+ =
+
+-	s =3D g_at_chat_send(vd->chat, buf, none_prefix,
+-				vts_cb, cbd, g_free);
++		tr->delay +=3D vd->tone_duration;
 +	}
-+
-+	if (error->type =3D=3D OFONO_ERROR_TYPE_FAILURE &&
-+			error->error =3D=3D ENOENT) {
-+		send_simple_response(stk, STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD);
-+		return;
+ =
+
+-	g_free(buf);
++	if (*tr->left && *tr->left !=3D ',') {
++		tone_request_finish(tr, NULL, EINVAL);
++		return FALSE;
 +	}
-+
-+	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
-+		send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
-+	else
-+		send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
-+}
-+
-+static gboolean handle_command_send_dtmf(const struct stk_command *cmd,
-+						struct stk_response *rsp,
-+						struct ofono_stk *stk)
-+{
-+	static unsigned char not_in_speech_call_result[] =3D { 0x07 };
-+	struct ofono_voicecall *vc =3D NULL;
-+	struct ofono_atom *vc_atom;
-+	char dtmf[256], *digit;
-+	char *dtmf_from =3D "01234567890abcABC";
-+	char *dtmf_to =3D "01234567890*#,*#,";
-+	int err, pos;
-+
-+	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
-+						OFONO_ATOM_TYPE_VOICECALL);
-+	if (vc_atom)
-+		vc =3D __ofono_atom_get_data(vc_atom);
-+
-+	if (!vc) {
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+	}
-+
-+	/* Convert the DTMF string to phone number format */
-+	for (pos =3D 0; cmd->send_dtmf.dtmf[pos] !=3D 0; pos++) {
-+		digit =3D strchr(dtmf_from, cmd->send_dtmf.dtmf[pos]);
-+		if (!digit) {
-+			rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
-+			return TRUE;
-+		}
-+
-+		dtmf[pos] =3D dtmf_to[digit - dtmf_from];
-+	}
-+	dtmf[pos] =3D 0;
-+
-+	extern_req_start(stk);
-+
-+	err =3D __ofono_voicecall_send_tone(vc, dtmf,
-+						dtmf_sent_cb, stk->extern_req);
-+	if (err < 0)
-+		g_free(stk->extern_req);
-+
-+	if (err =3D=3D -EBUSY) {
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		return TRUE;
-+	}
-+
-+	if (err =3D=3D -ENOSYS) {
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+	}
-+
-+	if (err =3D=3D -ENOENT) {
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		rsp->result.additional_len =3D sizeof(not_in_speech_call_result);
-+		rsp->result.additional =3D not_in_speech_call_result;
-+		return TRUE;
-+	}
-+
-+	if (err < 0) {
-+		/*
-+		 * We most likely got an out of memory error, tell SIM
-+		 * to retry
-+		 */
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		return TRUE;
-+	}
-+
-+	if (cmd->send_dtmf.alpha_id && cmd->send_dtmf.alpha_id[0])
-+		stk_alpha_id_set(stk, cmd->send_dtmf.alpha_id);
-+
+ =
+
+-	if (s > 0)
 +	/*
-+	 * Note that we don't strictly require an agent to be connected,
-+	 * but to comply with 6.4.24 we need to send a End Session when
-+	 * the user decides so.
++	 * Wait 3 seconds per PAUSE, same as for DTMF separator characters
++	 * passed in a telephone number according to TS 22.101 A.21,
++	 * although 27.007 claims this delay can be set using S8 and
++	 * defaults to 2 seconds.
 +	 */
-+	stk->respond_on_exit =3D TRUE;
-+	stk->cancel_cmd =3D send_dtmf_cancel;
++	while (*tr->left =3D=3D ',') {
++		tr->left++;
++		tr->delay +=3D 3000;
++	}
++
++	if (i > buf + 2) {
++		s =3D g_at_chat_send(vd->chat, buf, none_prefix, vts_cb,
++					tr, NULL);
++
++		if (s <=3D 0)
++			tone_request_finish(tr, NULL, EIO);
++	} else
++		vts_cb(TRUE, NULL, tr);
 +
 +	return FALSE;
 +}
 +
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
- {
- 	if (stk->immediate_response)
-@@ -1996,6 +2143,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
-_stk *stk,
- 							&rsp, stk);
- 		break;
++static void at_send_dtmf(struct ofono_voicecall *vc, const char *dtmf,
++			ofono_voicecall_cb_t cb, void *data)
++{
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++	struct tone_req *tr =3D g_try_new0(struct tone_req, 1);
++
++	if (!tr || vd->tr) {
++		CALLBACK_WITH_FAILURE(cb, data);
+ 		return;
++	}
  =
 
-+	case STK_COMMAND_TYPE_SEND_DTMF:
-+		respond =3D handle_command_send_dtmf(stk->pending_cmd,
-+							&rsp, stk);
-+		break;
+-error:
+-	g_free(cbd);
++	tr->vc =3D vc;
++	tr->cb =3D cb;
++	tr->data =3D data;
++	tr->tone_str =3D g_strdup(dtmf);
++	tr->left =3D tr->tone_str;
+ =
+
+-	CALLBACK_WITH_FAILURE(cb, data);
++	vd->tr =3D tr;
 +
- 	default:
- 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
- 		break;
++	tone_request_run(tr);
+ }
+ =
+
+ static void ring_notify(GAtResult *result, gpointer user_data)
+@@ -800,6 +880,26 @@ static void busy_notify(GAtResult *result, gpointer us=
+er_data)
+ 			clcc_poll_cb, vc, NULL);
+ }
+ =
+
++static void vtd_query_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct ofono_voicecall *vc =3D user_data;
++	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
++	GAtResultIter iter;
++	int duration;
++
++	if (!ok)
++		return;
++
++	g_at_result_iter_init(&iter, result);
++	g_at_result_iter_next(&iter, "+VTD:");
++
++	if (!g_at_result_iter_next_number(&iter, &duration))
++		return;
++
++	if (duration)
++		vd->tone_duration =3D duration * 100;
++}
++
+ static void at_voicecall_initialized(gboolean ok, GAtResult *result,
+ 					gpointer user_data)
+ {
+@@ -840,12 +940,15 @@ static int at_voicecall_probe(struct ofono_voicecall =
+*vc, unsigned int vendor,
+ =
+
+ 	vd->chat =3D g_at_chat_clone(chat);
+ 	vd->vendor =3D vendor;
++	vd->tone_duration =3D TONE_DURATION;
+ =
+
+ 	ofono_voicecall_set_data(vc, vd);
+ =
+
+ 	g_at_chat_send(vd->chat, "AT+CRC=3D1", NULL, NULL, NULL, NULL);
+ 	g_at_chat_send(vd->chat, "AT+CLIP=3D1", NULL, NULL, NULL, NULL);
+ 	g_at_chat_send(vd->chat, "AT+COLP=3D1", NULL, NULL, NULL, NULL);
++	g_at_chat_send(vd->chat, "AT+VTD?", NULL,
++				vtd_query_cb, vc, NULL);
+ 	g_at_chat_send(vd->chat, "AT+CCWA=3D1", NULL,
+ 				at_voicecall_initialized, vc, NULL);
+ =
+
+@@ -859,6 +962,9 @@ static void at_voicecall_remove(struct ofono_voicecall =
+*vc)
+ 	if (vd->clcc_source)
+ 		g_source_remove(vd->clcc_source);
+ =
+
++	if (vd->tr)
++		tone_request_finish(vd->tr, NULL, ESHUTDOWN);
++
+ 	g_slist_foreach(vd->calls, (GFunc) g_free, NULL);
+ 	g_slist_free(vd->calls);
+ =
+
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============6618266633312112965==--
+--===============5072534689382639350==--
 
