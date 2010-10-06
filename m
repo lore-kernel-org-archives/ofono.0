@@ -1,32 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============8123553751882187159=="
+Content-Type: multipart/mixed; boundary="===============5601741255327436247=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC online/offline atoms PATCH 4/4] isigen: create sms and gprs
- in post_sim
-Date: Wed, 06 Oct 2010 10:55:10 +0200
-Message-ID: <1286355310.6145.21.camel@aeonflux>
-In-Reply-To: <4CABC578.7070606@gmail.com>
+Subject: Re: CDMA SMS Handling
+Date: Wed, 06 Oct 2010 11:01:40 +0200
+Message-ID: <1286355700.6145.26.camel@aeonflux>
+In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702AC9A8D@usrdes03.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8123553751882187159==
+--===============5601741255327436247==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Rajesh.
 
-> > what advantage to we have from moving SMS and GPRS atom into the
-> > post_sim state? I am trying to really understand what this is trying to
-> > do and what is the difference of just doing it when in post_online
-> > state.
-> =
+> There was a discussion about the CDMA SMS handling and CDMA PDUs in
+> the
+> IRC channel couple of days before. I would like to highlight the
+> differences between CDMA and GSM PDU and how we should proceed with
+> this
+> from my understanding. Let me know your opinion.
 
-> We'd like to be able to toggle GPRS settings even if in offline state.
-> There's nothing preventing us from creating / deleting / editing
-> contexts or setting the RoamingAllowed property for instance.
+thanks for the details and yes, we knew that the PDU format is
+different. I am currently happy to see PDUs on CDMA at all right now.
+Previous talks revealed that CDMA hardware might just only expose text
+mode for AT commands. And that is a nasty situation that is almost
+impossible to support within oFono.
 
-same as with SMS. Good enough reason for me to do it this way.
+If you guys have example SMS PDUs for CDMA, please collect them and lets
+write some unit tests for it. Getting a head start on CDMA can't hurt
+even we still have some GSM details to sort out first.
 
 Regards
 
@@ -34,5 +38,5 @@ Marcel
 
 
 
---===============8123553751882187159==--
+--===============5601741255327436247==--
 
