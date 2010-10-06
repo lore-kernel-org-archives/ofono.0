@@ -1,56 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============6940018994076716774=="
+Content-Type: multipart/mixed; boundary="===============8663900138165557483=="
 MIME-Version: 1.0
 From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: [RFC PATCH 2/3] modem: some debugs added for indicating modem state
- change
-Date: Wed, 06 Oct 2010 17:17:56 +0300
-Message-ID: <1286374677-2932-3-git-send-email-petteri.tikander@ixonos.com>
-In-Reply-To: <1286374677-2932-2-git-send-email-petteri.tikander@ixonos.com>
+Subject: [RFC PATCH 3/3] sim: ensure existence of imsi-code when handling
+ sim_get_properties
+Date: Wed, 06 Oct 2010 17:17:57 +0300
+Message-ID: <1286374677-2932-4-git-send-email-petteri.tikander@ixonos.com>
+In-Reply-To: <1286374677-2932-3-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6940018994076716774==
+--===============8663900138165557483==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/modem.c |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ src/sim.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/src/modem.c b/src/modem.c
-index 7a29edf..583b79f 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -330,6 +330,8 @@ static void flush_atoms(struct ofono_modem *modem, enum=
- modem_state new_state)
- 	GSList *prev;
- 	GSList *tmp;
+diff --git a/src/sim.c b/src/sim.c
+index 930d6bf..5f4f90e 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -311,7 +311,7 @@ static DBusMessage *sim_get_properties(DBusConnection *=
+conn,
+ 	ofono_dbus_dict_append(&dict, "FixedDialing", DBUS_TYPE_BOOLEAN,
+ 				&sim->fixed_dialing);
  =
 
-+	DBG("");
-+
- 	prev =3D NULL;
- 	cur =3D modem->atoms;
- =
-
-@@ -367,6 +369,8 @@ static void modem_change_state(struct ofono_modem *mode=
-m,
- 	enum modem_state old_state =3D modem->modem_state;
- 	ofono_bool_t new_online =3D new_state =3D=3D MODEM_STATE_ONLINE;
- =
-
-+	DBG("old state: %d, new state: %d", old_state, new_state);
-+
- 	if (old_state =3D=3D new_state)
- 		return;
- =
-
+-	if (sim->mnc_length) {
++	if (sim->mnc_length && sim->imsi) {
+ 		char mcc[OFONO_MAX_MCC_LENGTH + 1];
+ 		char mnc[OFONO_MAX_MNC_LENGTH + 1];
+ 		const char *str;
 -- =
 
 1.6.3.3
 
 
 
---===============6940018994076716774==--
+--===============8663900138165557483==--
 
