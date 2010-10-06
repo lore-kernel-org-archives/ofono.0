@@ -1,34 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============3514182407499713368=="
+Content-Type: multipart/mixed; boundary="===============6940018994076716774=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH-v2] isimodem/voicecall: fix hangup_active
-Date: Wed, 06 Oct 2010 12:08:47 +0200
-Message-ID: <1286359727.6145.28.camel@aeonflux>
-In-Reply-To: <1286359109-30506-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Petteri Tikander <petteri.tikander@ixonos.com>
+Subject: [RFC PATCH 2/3] modem: some debugs added for indicating modem state
+ change
+Date: Wed, 06 Oct 2010 17:17:56 +0300
+Message-ID: <1286374677-2932-3-git-send-email-petteri.tikander@ixonos.com>
+In-Reply-To: <1286374677-2932-2-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3514182407499713368==
+--===============6940018994076716774==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+---
+ src/modem.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-> ---
->  drivers/isimodem/voicecall.c |    7 +++----
->  1 files changed, 3 insertions(+), 4 deletions(-)
+diff --git a/src/modem.c b/src/modem.c
+index 7a29edf..583b79f 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -330,6 +330,8 @@ static void flush_atoms(struct ofono_modem *modem, enum=
+ modem_state new_state)
+ 	GSList *prev;
+ 	GSList *tmp;
+ =
 
-patch has been applied. Thanks.
++	DBG("");
++
+ 	prev =3D NULL;
+ 	cur =3D modem->atoms;
+ =
 
-However there are more AT command references in the code that you might
-wanna remove and replace with proper ISI specific comments.
+@@ -367,6 +369,8 @@ static void modem_change_state(struct ofono_modem *mode=
+m,
+ 	enum modem_state old_state =3D modem->modem_state;
+ 	ofono_bool_t new_online =3D new_state =3D=3D MODEM_STATE_ONLINE;
+ =
 
-Regards
++	DBG("old state: %d, new state: %d", old_state, new_state);
++
+ 	if (old_state =3D=3D new_state)
+ 		return;
+ =
 
-Marcel
+-- =
+
+1.6.3.3
 
 
 
---===============3514182407499713368==--
+--===============6940018994076716774==--
 
