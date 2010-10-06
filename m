@@ -1,42 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============0755728549350820343=="
+Content-Type: multipart/mixed; boundary="===============8203017319517573812=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] TODO: ofono_sim_ready_notify()
-Date: Tue, 05 Oct 2010 18:57:04 +0200
-Message-ID: <1286297824.2588.10.camel@aeonflux>
-In-Reply-To: <AANLkTi=W+H0xg8Cy1vZUUnB6vPZYgZhPdaiUVb4Odc-7@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC online/offline atoms PATCH 2/4] sms: watch modem state
+Date: Tue, 05 Oct 2010 19:38:33 -0500
+Message-ID: <4CABC509.2080502@gmail.com>
+In-Reply-To: <1286279995.17473.81.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0755728549350820343==
+--===============8203017319517573812==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Marcel,
 
-> > However you do remember that we had issues when we tried this the first
-> > time. It looked simpler on paper then it was when trying to make this
-> > work with all modem plugins. Remember that this has to work with all
-> > modem plugins and not just ISI or IFX for that matter.
+On 10/05/2010 06:59 AM, Marcel Holtmann wrote:
+> Hi Pekka,
 > =
 
-> Yes, this is a very tricky problem. I've sent my first stab to the list.
+>> Allow use of SMS atom in online and offline states.  The messages are
+>> queued but not sent in offline mode. Errors occurring when an SMS is
+>> being sent while transition from online to offline are handled
+>> gracefully.
 > =
 
-> The core side is very simple, but the atmodem driver probably needs
-> different approach. Perhaps something similar to isimodem with a ready
-> flag and indications registered at probe time.
+> do we really want this? How is this suppose to work from the user
+> experience. I think just failing SendMessage with a proper error is a
+> more clear indication.
 
-as long as we have a proper fallback for modems that have no indication
-whatsoever I am fine. And I think we have a bunch of these cheapo
-dongles where we just have to default to SIM ready eventually.
+That is a valid point, the code should be able to handle this use case,
+but from a UI stand point I don't know what is better.
 
-Regards
+The main reason for moving sms atom from online to offline is the
+ability to switch the settings.  In particular the SMSC address which is
+stored on the SIM.
 
-Marcel
+Regards,
+-Denis
 
-
-
---===============0755728549350820343==--
+--===============8203017319517573812==--
 
