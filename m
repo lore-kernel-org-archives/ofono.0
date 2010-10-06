@@ -1,42 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============5601741255327436247=="
+Content-Type: multipart/mixed; boundary="===============2045130605317594268=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: CDMA SMS Handling
-Date: Wed, 06 Oct 2010 11:01:40 +0200
-Message-ID: <1286355700.6145.26.camel@aeonflux>
-In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702AC9A8D@usrdes03.ebgroup.elektrobit.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] isimodem/voicecall: fix hangup_active
+Date: Wed, 06 Oct 2010 12:23:01 +0300
+Message-ID: <1286356981-29522-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5601741255327436247==
+--===============2045130605317594268==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rajesh.
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-> There was a discussion about the CDMA SMS handling and CDMA PDUs in
-> the
-> IRC channel couple of days before. I would like to highlight the
-> differences between CDMA and GSM PDU and how we should proceed with
-> this
-> from my understanding. Let me know your opinion.
+---
+ drivers/isimodem/voicecall.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-thanks for the details and yes, we knew that the PDU format is
-different. I am currently happy to see PDUs on CDMA at all right now.
-Previous talks revealed that CDMA hardware might just only expose text
-mode for AT commands. And that is a nasty situation that is almost
-impossible to support within oFono.
+diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+index 4b720be..ace2346 100644
+--- a/drivers/isimodem/voicecall.c
++++ b/drivers/isimodem/voicecall.c
+@@ -988,11 +988,11 @@ static void isi_answer(struct ofono_voicecall *ovc,
+ 	isi_call_answer_req(ovc, CALL_ID_ALL, cb, data);
+ }
+ =
 
-If you guys have example SMS PDUs for CDMA, please collect them and lets
-write some unit tests for it. Getting a head start on CDMA can't hurt
-even we still have some GSM details to sort out first.
+-static void isi_hangup(struct ofono_voicecall *ovc,
++static void isi_hangup_active(struct ofono_voicecall *ovc,
+ 			ofono_voicecall_cb_t cb, void *data)
+ {
+ 	/* AT+CHUP */
+-	isi_call_release_req(ovc, CALL_ID_ALL, CALL_CAUSE_TYPE_CLIENT,
++	isi_call_release_req(ovc, CALL_ID_ACTIVE, CALL_CAUSE_TYPE_CLIENT,
+ 				CALL_CAUSE_RELEASE_BY_USER, cb, data);
+ }
+ =
 
-Regards
+@@ -1318,7 +1318,7 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.remove			=3D isi_voicecall_remove,
+ 	.dial			=3D isi_dial,
+ 	.answer			=3D isi_answer,
+-	.hangup_active		=3D isi_hangup,
++	.hangup_active		=3D isi_hangup_active,
+ 	.hold_all_active	=3D isi_hold_all_active,
+ 	.release_all_held	=3D isi_release_all_held,
+ 	.set_udub		=3D isi_set_udub,
+-- =
 
-Marcel
+1.7.0.4
 
 
-
---===============5601741255327436247==--
+--===============2045130605317594268==--
 
