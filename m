@@ -1,109 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============0393650177468291328=="
+Content-Type: multipart/mixed; boundary="===============7504025372683893028=="
 MIME-Version: 1.0
-From: Alexander A Khryukin <alexander@mezon.ru>
-Subject: airplus MCD-650
-Date: Thu, 07 Oct 2010 14:13:46 +0400
-Message-ID: <1286446426.22751.4.camel@mezon.ru>
+From: Alexander Kanavin <alexander.kanavin@nokia.com>
+Subject: [PATCH 1/3] Fix typo in SS enum to string conversion
+Date: Thu, 07 Oct 2010 13:50:54 +0300
+Message-ID: <1286448656-25186-1-git-send-email-alexander.kanavin@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0393650177468291328==
+--===============7504025372683893028==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all.I have a modem airplus MCD-650 =
+---
+ src/common.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/src/common.c b/src/common.c
+index 55c4b40..bcd42f6 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -438,7 +438,7 @@ const char *ss_control_type_to_string(enum ss_control_t=
+ype type)
+ {
+ 	switch (type) {
+ 	case SS_CONTROL_TYPE_ACTIVATION:
+-		return "acivation";
++		return "activation";
+ 	case SS_CONTROL_TYPE_REGISTRATION:
+ 		return "registration";
+ 	case SS_CONTROL_TYPE_QUERY:
+-- =
+
+1.7.0.4
 
 
-lsusb
-
-Bus 002 Device 055: ID 1edf:6004
-
-
-/etc/ofono/modem.conf
-[atgen]
-Driver=3Datgen
-Device=3D/dev/ttyACM0
-Baud=3D460800
-
-
-when i plug modem in ofonod see =
-
-
-ofonod[3925]: src/modem.c:ofono_modem_create() name: (null), type: atgen
-ofonod[3925]: src/modem.c:set_modem_property() modem 0x82aaed8 property
-Path
-ofonod[3925]: src/modem.c:set_modem_property() modem 0x82aaed8 property
-Registered
-ofonod[3925]:
-plugins/udev.c:add_modem() /devices/pci0000:00/0000:00:1d.0/usb2/2-1/2-1:1.=
-0/tty/ttyACM0 (atgen)
-
-/usr/lib/ofono/test/list-modems =
-
-
-
-[ /atgen1 ]
-    Interfaces =3D =
-
-    Powered =3D 0
-    Features =3D =
-
-    Online =3D 0
-
-[ /atgen ]
-    Interfaces =3D =
-
-    Powered =3D 0
-    Features =3D =
-
-    Online =3D 0
-
-
-/usr/lib/ofono/test/enable-modem /atgen
-Connecting modem /atgen...
-
-Connecting to modem succesfull
-
-
-
-/usr/lib/ofono/test/list-modems =
-
-
-[ /atgen1 ]
-    Interfaces =3D =
-
-    Powered =3D 0
-    Features =3D =
-
-    Online =3D 0
-
-[ /atgen ]
-    Interfaces =3D org.ofono.VoiceCallManager org.ofono.SimManager =
-
-    Powered =3D 1
-    Features =3D sim =
-
-    Online =3D 0
-    [ org.ofono.VoiceCallManager ]
-        EmergencyNumbers =3D 112 911 000 08 110 999 118 119 =
-
-    [ org.ofono.SimManager ]
-        SubscriberNumbers =3D =
-
-        LockedPins =3D =
-
-        PinRequired =3D none
-        Present =3D 1
-
-
-
-
-Looks like i sim manager.
-Modem not working.
-Whats wrong and how to fix it?
-
-
-
---===============0393650177468291328==--
+--===============7504025372683893028==--
 
