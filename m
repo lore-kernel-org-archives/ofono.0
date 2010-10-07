@@ -1,756 +1,389 @@
-Content-Type: multipart/mixed; boundary="===============1079445844436809404=="
+Content-Type: multipart/mixed; boundary="===============4892592294915921663=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 1/2] stk: Expose icon IDs on D-Bus.
-Date: Thu, 07 Oct 2010 16:20:05 +0200
-Message-ID: <1286461206-4446-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 2/2] stk: Apply STK text attributes as html.
+Date: Thu, 07 Oct 2010 16:20:06 +0200
+Message-ID: <1286461206-4446-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1286461206-4446-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1079445844436809404==
+--===============4892592294915921663==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Update the docs to match the properties in stk.c.
 ---
- doc/stk-api.txt |   16 ++++++-
- src/stk.c       |  112 ++++++++++++++++++++++++++++++++++-----------------=
-----
- src/stkagent.c  |   41 ++++++++++++--------
- src/stkagent.h  |   34 +++++++++-------
- 4 files changed, 125 insertions(+), 78 deletions(-)
+ src/stk.c |  142 +++++++++++++++++++++++++++++++++++++++++++++++++++------=
+---
+ 1 files changed, 120 insertions(+), 22 deletions(-)
 
-diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-index f5b9ebc..c29872a 100644
---- a/doc/stk-api.txt
-+++ b/doc/stk-api.txt
-@@ -55,23 +55,33 @@ Signals		PropertyChanged(string property, variant value)
- 			Signal is emitted whenever a property has changed.
- 			The new value is passed as the signal argument.
- =
-
--Properties	string IdleText
-+Properties	string IdleModeText
- =
-
- 			Contains the text to be used when the home screen is
--			idle.  This text is set by the SIM and can be changed
-+			idle.  This text is set by the SIM and can change
- 			at any time.
- =
-
-+		byte IdleModeIcon
-+
-+			Contains the identifier of the icon accompanying
-+			the idle mode text.
-+
- 		array{struct{string, byte}} MainMenu
- =
-
- 			Contains the items that make up the main menu.  This
- 			is populated by the SIM when it sends the Setup Menu
- 			Proactive Command.  The main menu is always available,
--			but its contents can be changed at any time.
-+			but its contents can be changed at any time.  Each
-+			item contains the item label and icon identifier.
- =
-
- 		string MainMenuTitle
- =
-
- 			Contains the title of the main menu.
- =
-
-+		string MainMenuIcon
-+
-+			Contains the identifier of the icon for the main menu.
-+
- 		array{byte} Icons
- =
-
- 			Contains the identifiers of all available icons for
 diff --git a/src/stk.c b/src/stk.c
-index 84a22c9..7aa2ea6 100644
+index 7aa2ea6..22b5270 100644
 --- a/src/stk.c
 +++ b/src/stk.c
-@@ -72,6 +72,7 @@ struct ofono_stk {
- 	guint remove_agent_source;
- 	struct extern_req *extern_req;
- 	char *idle_mode_text;
-+	struct stk_icon_id idle_mode_icon;
- 	struct timeval get_inkey_start_ts;
- };
- =
-
-@@ -256,19 +257,28 @@ void __ofono_cbs_sim_download(struct ofono_stk *stk, =
-const struct cbs *msg)
+@@ -256,6 +256,22 @@ void __ofono_cbs_sim_download(struct ofono_stk *stk, c=
+onst struct cbs *msg)
+ 		stk_cbs_download_cb(stk, FALSE, NULL, -1);
  }
  =
 
++static char *dbus_apply_text_attributes(const char *text,
++					const struct stk_text_attribute *attr)
++{
++	uint16_t buf[256], *i =3D buf;
++	const uint8_t *j =3D attr->attributes;
++	const uint8_t *end =3D j + attr->len;
++
++	if (attr->len & 3)
++		return NULL;
++
++	while (j < end)
++		*i++ =3D *j++;
++
++	return stk_text_to_html(text, buf, attr->len / 4);
++}
++
  static struct stk_menu *stk_menu_create(const char *title,
--		const struct stk_text_attribute *title_attr, GSList *items,
-+		const struct stk_text_attribute *title_attr,
-+		const struct stk_icon_id *icon, GSList *items,
- 		const struct stk_item_text_attribute_list *item_attrs,
-+		const struct stk_item_icon_id_list *item_icon_ids,
- 		int default_id, gboolean soft_key, gboolean has_help)
- {
- 	struct stk_menu *ret =3D g_new(struct stk_menu, 1);
-+	unsigned int len =3D g_slist_length(items);
+ 		const struct stk_text_attribute *title_attr,
+ 		const struct stk_icon_id *icon, GSList *items,
+@@ -267,6 +283,7 @@ static struct stk_menu *stk_menu_create(const char *tit=
+le,
+ 	unsigned int len =3D g_slist_length(items);
  	GSList *l;
  	int i;
++	struct stk_text_attribute attr;
  =
 
  	DBG("");
  =
 
-+	if (item_attrs && item_attrs->len && item_attrs->len !=3D len * 4)
+@@ -276,7 +293,11 @@ static struct stk_menu *stk_menu_create(const char *ti=
+tle,
+ 	if (item_icon_ids && item_icon_ids->len && item_icon_ids->len !=3D len)
+ 		goto error;
+ =
+
+-	ret->title =3D g_strdup(title ? title : "");
++	ret->title =3D dbus_apply_text_attributes(title ? title : "",
++						title_attr);
++	if (!ret->title)
 +		goto error;
 +
-+	if (item_icon_ids && item_icon_ids->len && item_icon_ids->len !=3D len)
-+		goto error;
-+
- 	ret->title =3D g_strdup(title ? title : "");
--	ret->icon_id =3D 0;
--	ret->items =3D g_new0(struct stk_menu_item, g_slist_length(items) + 1);
-+	memcpy(&ret->icon, icon, sizeof(ret->icon));
-+	ret->items =3D g_new0(struct stk_menu_item, len + 1);
+ 	memcpy(&ret->icon, icon, sizeof(ret->icon));
+ 	ret->items =3D g_new0(struct stk_menu_item, len + 1);
  	ret->default_item =3D -1;
- 	ret->soft_key =3D soft_key;
- 	ret->has_help =3D has_help;
-@@ -278,12 +288,18 @@ static struct stk_menu *stk_menu_create(const char *t=
-itle,
+@@ -285,9 +306,21 @@ static struct stk_menu *stk_menu_create(const char *ti=
+tle,
  =
 
- 		ret->items[i].text =3D g_strdup(item->text);
+ 	for (l =3D items, i =3D 0; l; l =3D l->next, i++) {
+ 		struct stk_item *item =3D l->data;
++		char *text;
+ =
+
+-		ret->items[i].text =3D g_strdup(item->text);
  		ret->items[i].item_id =3D item->id;
-+		if (item_icon_ids && item_icon_ids->len)
-+			ret->items[i].icon_id =3D item_icon_ids->list[i];
- =
-
- 		if (item->id =3D=3D default_id)
- 			ret->default_item =3D i;
- 	}
- =
-
- 	return ret;
 +
-+error:
-+	g_free(ret);
-+	return NULL;
- }
- =
-
- static struct stk_menu *stk_menu_create_from_set_up_menu(
-@@ -294,8 +310,10 @@ static struct stk_menu *stk_menu_create_from_set_up_me=
-nu(
- =
-
- 	return stk_menu_create(cmd->setup_menu.alpha_id,
- 				&cmd->setup_menu.text_attr,
-+				&cmd->setup_menu.icon_id,
- 				cmd->setup_menu.items,
- 				&cmd->setup_menu.item_text_attr_list,
-+				&cmd->setup_menu.item_icon_id_list,
- 				0, soft_key, has_help);
- }
- =
-
-@@ -307,8 +325,10 @@ static struct stk_menu *stk_menu_create_from_select_it=
-em(
- =
-
- 	return stk_menu_create(cmd->select_item.alpha_id,
- 				&cmd->select_item.text_attr,
-+				&cmd->select_item.icon_id,
- 				cmd->select_item.items,
- 				&cmd->select_item.item_text_attr_list,
-+				&cmd->select_item.item_icon_id_list,
- 				cmd->select_item.item_id, soft_key, has_help);
- }
- =
-
-@@ -345,6 +365,11 @@ static void emit_menu_changed(struct ofono_stk *stk)
- 						"MainMenuTitle",
- 						DBUS_TYPE_STRING, &menu->title);
- =
-
-+	ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_STK_INTERFACE,
-+						"MainMenuIcon",
-+						DBUS_TYPE_BYTE, &menu->icon.id);
++		text =3D NULL;
++		if (item_attrs && item_attrs->len) {
++			memcpy(attr.attributes, &item_attrs->list[i * 4], 4);
++			attr.len =3D 4;
 +
- 	signal =3D dbus_message_new_signal(path, OFONO_STK_INTERFACE,
- 						"PropertyChanged");
- 	if (!signal) {
-@@ -371,6 +396,9 @@ static void dict_append_menu(DBusMessageIter *dict, str=
-uct stk_menu *menu)
- 	ofono_dbus_dict_append(dict, "MainMenuTitle",
- 				DBUS_TYPE_STRING, &menu->title);
- =
-
-+	ofono_dbus_dict_append(dict, "MainMenuIcon",
-+				DBUS_TYPE_BYTE, &menu->icon.id);
++			text =3D dbus_apply_text_attributes(item->text, &attr);
++		}
++		if (!text)
++			text =3D strdup(item->text);
++		ret->items[i].text =3D text;
 +
- 	dbus_message_iter_open_container(dict, DBUS_TYPE_DICT_ENTRY,
- 						NULL, &entry);
+ 		if (item_icon_ids && item_icon_ids->len)
+ 			ret->items[i].icon_id =3D item_icon_ids->list[i];
  =
 
-@@ -381,7 +409,8 @@ static void dict_append_menu(DBusMessageIter *dict, str=
+@@ -409,7 +442,8 @@ static void dict_append_menu(DBusMessageIter *dict, str=
 uct stk_menu *menu)
  	dbus_message_iter_close_container(dict, &entry);
  }
  =
 
--static void stk_alpha_id_set(struct ofono_stk *stk, const char *text)
-+static void stk_alpha_id_set(struct ofono_stk *stk, const char *text,
-+		const struct stk_icon_id *icon)
+-static void stk_alpha_id_set(struct ofono_stk *stk, const char *text,
++static void stk_alpha_id_set(struct ofono_stk *stk,
++		const char *text, const struct stk_text_attribute *attr,
+ 		const struct stk_icon_id *icon)
  {
  	/* TODO */
- }
-@@ -414,6 +443,10 @@ static DBusMessage *stk_get_properties(DBusConnection =
-*conn,
- 	ofono_dbus_dict_append(&dict, "IdleModeText",
- 				DBUS_TYPE_STRING, &idle_mode_text);
- =
-
-+	if (stk->idle_mode_icon.id)
-+		ofono_dbus_dict_append(&dict, "IdleModeIcon", DBUS_TYPE_BYTE,
-+					&stk->idle_mode_icon.id);
-+
- 	if (stk->main_menu)
- 		dict_append_menu(&dict, stk->main_menu);
- =
-
-@@ -662,10 +695,6 @@ static void send_sms_cancel(struct ofono_stk *stk)
- {
- 	stk->extern_req->cancelled =3D TRUE;
- =
-
--	if (!stk->pending_cmd->send_sms.alpha_id ||
--			!stk->pending_cmd->send_sms.alpha_id[0])
--		return;
--
- 	stk_alpha_id_unset(stk);
- }
- =
-
-@@ -684,9 +713,7 @@ static void send_sms_submit_cb(gboolean ok, void *data)
- 		return;
- 	}
- =
-
--	if (stk->pending_cmd->send_sms.alpha_id &&
--			stk->pending_cmd->send_sms.alpha_id[0])
--		stk_alpha_id_unset(stk);
-+	stk_alpha_id_unset(stk);
- =
-
- 	memset(&rsp, 0, sizeof(rsp));
- =
-
-@@ -735,8 +762,7 @@ static gboolean handle_command_send_sms(const struct st=
+@@ -762,7 +796,8 @@ static gboolean handle_command_send_sms(const struct st=
 k_command *cmd,
  =
 
  	stk->cancel_cmd =3D send_sms_cancel;
  =
 
--	if (cmd->send_sms.alpha_id && cmd->send_sms.alpha_id[0])
--		stk_alpha_id_set(stk, cmd->send_sms.alpha_id);
-+	stk_alpha_id_set(stk, cmd->send_sms.alpha_id, &cmd->send_sms.icon_id);
+-	stk_alpha_id_set(stk, cmd->send_sms.alpha_id, &cmd->send_sms.icon_id);
++	stk_alpha_id_set(stk, cmd->send_sms.alpha_id, &cmd->send_sms.text_attr,
++				&cmd->send_sms.icon_id);
  =
 
  	return FALSE;
  }
-@@ -763,6 +789,16 @@ static gboolean handle_command_set_idle_text(const str=
-uct stk_command *cmd,
- 						DBUS_TYPE_STRING,
- 						&idle_mode_text);
+@@ -773,17 +808,26 @@ static gboolean handle_command_set_idle_text(const st=
+ruct stk_command *cmd,
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	const char *path =3D __ofono_atom_get_path(stk->atom);
+-	const char *idle_mode_text;
++	char *idle_mode_text =3D NULL;
  =
 
-+	if (stk->idle_mode_icon.id !=3D cmd->setup_idle_mode_text.icon_id.id) {
-+		memcpy(&stk->idle_mode_icon, &cmd->setup_idle_mode_text.icon_id,
-+				sizeof(stk->idle_mode_icon));
+-	if (stk->idle_mode_text) {
+-		g_free(stk->idle_mode_text);
+-		stk->idle_mode_text =3D NULL;
++	if (cmd->setup_idle_mode_text.text) {
++		idle_mode_text =3D dbus_apply_text_attributes(
++					cmd->setup_idle_mode_text.text,
++					&cmd->setup_idle_mode_text.text_attr);
 +
-+		ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_STK_INTERFACE,
-+						"IdleModeIcon", DBUS_TYPE_BYTE,
-+						&stk->idle_mode_icon.id);
-+	}
++		if (!idle_mode_text) {
++			rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
 +
- 	return TRUE;
- }
- =
-
-@@ -1144,8 +1180,8 @@ static gboolean handle_command_display_text(const str=
-uct stk_command *cmd,
++			return TRUE;
++		}
  	}
  =
 
- 	/* We most likely got an out of memory error, tell SIM to retry */
--	if (stk_agent_display_text(stk->current_agent, dt->text, 0, priority,
--					display_text_cb, stk,
-+	if (stk_agent_display_text(stk->current_agent, dt->text, &dt->icon_id,
-+					priority, display_text_cb, stk,
- 					display_text_destroy, timeout) < 0) {
+-	if (cmd->setup_idle_mode_text.text)
+-		stk->idle_mode_text =3D g_strdup(cmd->setup_idle_mode_text.text);
++	if (stk->idle_mode_text)
++		g_free(stk->idle_mode_text);
++
++	stk->idle_mode_text =3D idle_mode_text;
+ =
+
+-	idle_mode_text =3D stk->idle_mode_text ? stk->idle_mode_text : "";
++	idle_mode_text =3D idle_mode_text ? idle_mode_text : "";
+ 	ofono_dbus_signal_property_changed(conn, path, OFONO_STK_INTERFACE,
+ 						"IdleModeText",
+ 						DBUS_TYPE_STRING,
+@@ -1166,6 +1210,14 @@ static gboolean handle_command_display_text(const st=
+ruct stk_command *cmd,
+ 	struct stk_command_display_text *dt =3D &stk->pending_cmd->display_text;
+ 	uint8_t qualifier =3D stk->pending_cmd->qualifier;
+ 	ofono_bool_t priority =3D (qualifier & (1 << 0)) !=3D 0;
++	char *text =3D dbus_apply_text_attributes(dt->text, &dt->text_attr);
++	int err;
++
++	if (!text) {
++		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
++
++		return TRUE;
++	}
+ =
+
+ 	if (dt->duration.interval) {
+ 		timeout =3D dt->duration.interval;
+@@ -1179,10 +1231,13 @@ static gboolean handle_command_display_text(const s=
+truct stk_command *cmd,
+ 		}
+ 	}
+ =
+
+-	/* We most likely got an out of memory error, tell SIM to retry */
+-	if (stk_agent_display_text(stk->current_agent, dt->text, &dt->icon_id,
++	err =3D stk_agent_display_text(stk->current_agent, text, &dt->icon_id,
+ 					priority, display_text_cb, stk,
+-					display_text_destroy, timeout) < 0) {
++					display_text_destroy, timeout);
++	g_free(text);
++
++	/* We most likely got an out of memory error, tell SIM to retry */
++	if (err < 0) {
  		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
  		return TRUE;
-@@ -1288,7 +1324,6 @@ static gboolean handle_command_get_inkey(const struct=
+ 	}
+@@ -1316,6 +1371,7 @@ static gboolean handle_command_get_inkey(const struct=
  stk_command *cmd,
- 	 * Note: immediate response and help parameter values are not
- 	 * provided by current api.
+ {
+ 	int timeout =3D stk->timeout * 1000;
+ 	const struct stk_command_get_inkey *gi =3D &cmd->get_inkey;
++	char *text =3D dbus_apply_text_attributes(gi->text, &gi->text_attr);
+ 	uint8_t qualifier =3D stk->pending_cmd->qualifier;
+ 	gboolean alphabet =3D (qualifier & (1 << 0)) !=3D 0;
+ 	gboolean ucs2 =3D (qualifier & (1 << 1)) !=3D 0;
+@@ -1326,6 +1382,12 @@ static gboolean handle_command_get_inkey(const struc=
+t stk_command *cmd,
  	 */
--	uint8_t icon_id =3D 0;
  	int err;
  =
 
++	if (!text) {
++		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
++
++		return TRUE;
++	}
++
  	if (gi->duration.interval) {
-@@ -1307,16 +1342,17 @@ static gboolean handle_command_get_inkey(const stru=
+ 		timeout =3D gi->duration.interval;
+ 		switch (gi->duration.unit) {
+@@ -1342,18 +1404,19 @@ static gboolean handle_command_get_inkey(const stru=
 ct stk_command *cmd,
  =
 
  	if (yesno)
  		err =3D stk_agent_request_confirmation(stk->current_agent,
--							gi->text, icon_id,
-+							gi->text, &gi->icon_id,
+-							gi->text, &gi->icon_id,
++							text, &gi->icon_id,
  							request_confirmation_cb,
  							stk, NULL, timeout);
  	else if (alphabet)
- 		err =3D stk_agent_request_key(stk->current_agent, gi->text,
--						icon_id, ucs2, request_key_cb,
--						stk, NULL, timeout);
-+						&gi->icon_id, ucs2,
-+						request_key_cb, stk, NULL,
-+						timeout);
+-		err =3D stk_agent_request_key(stk->current_agent, gi->text,
++		err =3D stk_agent_request_key(stk->current_agent, text,
+ 						&gi->icon_id, ucs2,
+ 						request_key_cb, stk, NULL,
+ 						timeout);
  	else
- 		err =3D stk_agent_request_digit(stk->current_agent, gi->text,
--						icon_id, request_key_cb,
-+						&gi->icon_id, request_key_cb,
+-		err =3D stk_agent_request_digit(stk->current_agent, gi->text,
++		err =3D stk_agent_request_digit(stk->current_agent, text,
+ 						&gi->icon_id, request_key_cb,
  						stk, NULL, timeout);
- =
-
- 	if (err < 0) {
-@@ -1382,19 +1418,18 @@ static gboolean handle_command_get_input(const stru=
-ct stk_command *cmd,
- 	gboolean alphabet =3D (qualifier & (1 << 0)) !=3D 0;
- 	gboolean ucs2 =3D (qualifier & (1 << 1)) !=3D 0;
- 	gboolean hidden =3D (qualifier & (1 << 2)) !=3D 0;
--	uint8_t icon_id =3D 0;
- 	int err;
- =
-
- 	if (alphabet)
- 		err =3D stk_agent_request_input(stk->current_agent, gi->text,
--						icon_id, gi->default_text, ucs2,
--						gi->resp_len.min,
-+						&gi->icon_id, gi->default_text,
-+						ucs2, gi->resp_len.min,
- 						gi->resp_len.max, hidden,
- 						request_string_cb,
- 						stk, NULL, timeout);
- 	else
- 		err =3D stk_agent_request_digits(stk->current_agent, gi->text,
--						icon_id, gi->default_text,
-+						&gi->icon_id, gi->default_text,
- 						gi->resp_len.min,
- 						gi->resp_len.max, hidden,
- 						request_string_cb,
-@@ -1501,7 +1536,8 @@ static void confirm_call_cb(enum stk_agent_result res=
-ult, gboolean confirm,
- 	}
- =
-
- 	err =3D __ofono_voicecall_dial(vc, sc->addr.number, sc->addr.ton_npi,
--					sc->alpha_id_call_setup, 0,
-+					sc->alpha_id_call_setup,
-+					sc->icon_id_call_setup.id,
- 					qualifier >> 1, call_setup_connected,
- 					stk);
- 	if (err >=3D 0) {
-@@ -1582,8 +1618,8 @@ static gboolean handle_command_set_up_call(const stru=
-ct stk_command *cmd,
- 	}
- =
-
- 	err =3D stk_agent_confirm_call(stk->current_agent, sc->alpha_id_usr_cfm,
--					0, confirm_call_cb, stk, NULL,
--					stk->timeout * 1000);
-+					&sc->icon_id_usr_cfm, confirm_call_cb,
-+					stk, NULL, stk->timeout * 1000);
++	g_free(text);
  =
 
  	if (err < 0) {
  		/*
-@@ -1614,9 +1650,7 @@ static void send_ussd_cancel(struct ofono_stk *stk)
- 	if (ussd)
- 		__ofono_ussd_initiate_cancel(ussd);
+@@ -1414,12 +1477,19 @@ static gboolean handle_command_get_input(const stru=
+ct stk_command *cmd,
+ {
+ 	int timeout =3D stk->timeout * 1000;
+ 	const struct stk_command_get_input *gi =3D &cmd->get_input;
++	char *text =3D dbus_apply_text_attributes(gi->text, &gi->text_attr);
+ 	uint8_t qualifier =3D stk->pending_cmd->qualifier;
+ 	gboolean alphabet =3D (qualifier & (1 << 0)) !=3D 0;
+ 	gboolean ucs2 =3D (qualifier & (1 << 1)) !=3D 0;
+ 	gboolean hidden =3D (qualifier & (1 << 2)) !=3D 0;
+ 	int err;
  =
 
--	if (stk->pending_cmd->send_ussd.alpha_id &&
--			stk->pending_cmd->send_ussd.alpha_id[0])
--		stk_alpha_id_unset(stk);
-+	stk_alpha_id_unset(stk);
- }
++	if (!text) {
++		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
++
++		return TRUE;
++	}
++
+ 	if (alphabet)
+ 		err =3D stk_agent_request_input(stk->current_agent, gi->text,
+ 						&gi->icon_id, gi->default_text,
+@@ -1434,6 +1504,7 @@ static gboolean handle_command_get_input(const struct=
+ stk_command *cmd,
+ 						gi->resp_len.max, hidden,
+ 						request_string_cb,
+ 						stk, NULL, timeout);
++	g_free(text);
  =
 
- static void send_ussd_callback(int error, int dcs, const unsigned char *ms=
-g,
-@@ -1628,9 +1662,7 @@ static void send_ussd_callback(int error, int dcs, co=
-nst unsigned char *msg,
- 	enum sms_charset charset;
- 	unsigned char no_cause[] =3D { 0x00 };
+ 	if (err < 0) {
+ 		/*
+@@ -1500,6 +1571,7 @@ static void confirm_call_cb(enum stk_agent_result res=
+ult, gboolean confirm,
+ 	uint8_t qualifier =3D stk->pending_cmd->qualifier;
+ 	static unsigned char busy_on_call_result[] =3D { 0x02 };
+ 	static unsigned char no_cause_result[] =3D { 0x00 };
++	char *alpha_id =3D NULL;
+ 	struct ofono_voicecall *vc =3D NULL;
+ 	struct ofono_atom *vc_atom;
+ 	struct stk_response rsp;
+@@ -1535,11 +1607,22 @@ static void confirm_call_cb(enum stk_agent_result r=
+esult, gboolean confirm,
+ 		return;
+ 	}
  =
 
--	if (stk->pending_cmd->send_ussd.alpha_id &&
--			stk->pending_cmd->send_ussd.alpha_id[0])
--		stk_alpha_id_unset(stk);
-+	stk_alpha_id_unset(stk);
++	if (sc->alpha_id_call_setup) {
++		alpha_id =3D dbus_apply_text_attributes(sc->alpha_id_call_setup,
++						&sc->text_attr_call_setup);
++		if (!alpha_id) {
++			send_simple_response(stk,
++					STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD);
++			return;
++		}
++	}
++
+ 	err =3D __ofono_voicecall_dial(vc, sc->addr.number, sc->addr.ton_npi,
+-					sc->alpha_id_call_setup,
+-					sc->icon_id_call_setup.id,
++					alpha_id, sc->icon_id_call_setup.id,
+ 					qualifier >> 1, call_setup_connected,
+ 					stk);
++	g_free(alpha_id);
++
+ 	if (err >=3D 0) {
+ 		stk->cancel_cmd =3D call_setup_cancel;
  =
 
- 	memset(&rsp, 0, sizeof(rsp));
+@@ -1582,6 +1665,7 @@ static gboolean handle_command_set_up_call(const stru=
+ct stk_command *cmd,
+ 	const struct stk_command_setup_call *sc =3D &cmd->setup_call;
+ 	uint8_t qualifier =3D cmd->qualifier;
+ 	static unsigned char busy_on_call_result[] =3D { 0x02 };
++	char *alpha_id =3D NULL;
+ 	struct ofono_voicecall *vc =3D NULL;
+ 	struct ofono_atom *vc_atom;
+ 	int err;
+@@ -1617,9 +1701,19 @@ static gboolean handle_command_set_up_call(const str=
+uct stk_command *cmd,
+ 		return TRUE;
+ 	}
  =
 
-@@ -1762,8 +1794,7 @@ static gboolean handle_command_send_ussd(const struct=
+-	err =3D stk_agent_confirm_call(stk->current_agent, sc->alpha_id_usr_cfm,
++	if (sc->alpha_id_usr_cfm) {
++		alpha_id =3D dbus_apply_text_attributes(sc->alpha_id_usr_cfm,
++							&sc->text_attr_usr_cfm);
++		if (!alpha_id) {
++			rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
++			return TRUE;
++		}
++	}
++
++	err =3D stk_agent_confirm_call(stk->current_agent, alpha_id,
+ 					&sc->icon_id_usr_cfm, confirm_call_cb,
+ 					stk, NULL, stk->timeout * 1000);
++	g_free(alpha_id);
+ =
+
+ 	if (err < 0) {
+ 		/*
+@@ -1794,7 +1888,9 @@ static gboolean handle_command_send_ussd(const struct=
  stk_command *cmd,
  		return TRUE;
  	}
  =
 
--	if (cmd->send_ussd.alpha_id && cmd->send_ussd.alpha_id[0])
--		stk_alpha_id_set(stk, cmd->send_ussd.alpha_id);
-+	stk_alpha_id_set(stk, cmd->send_ussd.alpha_id, &cmd->send_ussd.icon_id);
+-	stk_alpha_id_set(stk, cmd->send_ussd.alpha_id, &cmd->send_ussd.icon_id);
++	stk_alpha_id_set(stk, cmd->send_ussd.alpha_id,
++				&cmd->send_ussd.text_attr,
++				&cmd->send_ussd.icon_id);
  =
 
  	return FALSE;
  }
-@@ -1834,9 +1865,7 @@ static void send_dtmf_cancel(struct ofono_stk *stk)
- 	stk->respond_on_exit =3D FALSE;
- 	stk->extern_req->cancelled =3D TRUE;
- =
-
--	if (stk->pending_cmd->send_dtmf.alpha_id &&
--			stk->pending_cmd->send_dtmf.alpha_id[0])
--		stk_alpha_id_unset(stk);
-+	stk_alpha_id_unset(stk);
- }
- =
-
- static void dtmf_sent_cb(const struct ofono_error *error, void *user_data)
-@@ -1855,9 +1884,7 @@ static void dtmf_sent_cb(const struct ofono_error *er=
-ror, void *user_data)
- =
-
- 	stk->respond_on_exit =3D FALSE;
- =
-
--	if (stk->pending_cmd->send_dtmf.alpha_id &&
--			stk->pending_cmd->send_dtmf.alpha_id[0])
--		stk_alpha_id_unset(stk);
-+	stk_alpha_id_unset(stk);
- =
-
- 	if (error->type =3D=3D OFONO_ERROR_TYPE_FAILURE &&
- 			error->error =3D=3D ENOENT) {
-@@ -1957,8 +1984,7 @@ static gboolean handle_command_send_dtmf(const struct=
+@@ -1984,7 +2080,9 @@ static gboolean handle_command_send_dtmf(const struct=
  stk_command *cmd,
  		return TRUE;
  	}
  =
 
--	if (cmd->send_dtmf.alpha_id && cmd->send_dtmf.alpha_id[0])
--		stk_alpha_id_set(stk, cmd->send_dtmf.alpha_id);
-+	stk_alpha_id_set(stk, cmd->send_dtmf.alpha_id, &cmd->send_dtmf.icon_id);
+-	stk_alpha_id_set(stk, cmd->send_dtmf.alpha_id, &cmd->send_dtmf.icon_id);
++	stk_alpha_id_set(stk, cmd->send_dtmf.alpha_id,
++				&cmd->send_dtmf.text_attr,
++				&cmd->send_dtmf.icon_id);
  =
 
  	/*
  	 * Note that we don't strictly require an agent to be connected,
-diff --git a/src/stkagent.c b/src/stkagent.c
-index f62c2bd..354b87d 100644
---- a/src/stkagent.c
-+++ b/src/stkagent.c
-@@ -34,6 +34,8 @@
- #include "ofono.h"
- =
-
- #include "common.h"
-+#include "smsutil.h"
-+#include "stkutil.h"
- #include "stkagent.h"
- =
-
- enum allowed_error {
-@@ -343,7 +345,7 @@ int stk_agent_request_selection(struct stk_agent *agent,
- 	dbus_message_iter_init_append(agent->msg, &iter);
- =
-
- 	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &menu->title);
--	dbus_message_iter_append_basic(&iter, DBUS_TYPE_BYTE, &menu->icon_id);
-+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_BYTE, &menu->icon.id);
- 	append_menu_items(&iter, menu->items);
- 	dbus_message_iter_append_basic(&iter, DBUS_TYPE_INT16, &default_item);
- =
-
-@@ -396,7 +398,8 @@ static void display_text_cb(DBusPendingCall *call, void=
- *data)
- }
- =
-
- int stk_agent_display_text(struct stk_agent *agent, const char *text,
--				uint8_t icon_id, ofono_bool_t urgent,
-+				const struct stk_icon_id *icon,
-+				ofono_bool_t urgent,
- 				stk_agent_display_text_cb cb,
- 				void *user_data, ofono_destroy_func destroy,
- 				int timeout)
-@@ -412,7 +415,7 @@ int stk_agent_display_text(struct stk_agent *agent, con=
-st char *text,
- =
-
- 	dbus_message_append_args(agent->msg,
- 					DBUS_TYPE_STRING, &text,
--					DBUS_TYPE_BYTE, &icon_id,
-+					DBUS_TYPE_BYTE, &icon->id,
- 					DBUS_TYPE_BOOLEAN, &priority,
- 					DBUS_TYPE_INVALID);
- =
-
-@@ -465,8 +468,8 @@ static void get_confirmation_cb(DBusPendingCall *call, =
-void *data)
- 	CALLBACK_END();
- }
- =
-
--int stk_agent_request_confirmation(struct stk_agent *agent,
--					const char *text, uint8_t icon_id,
-+int stk_agent_request_confirmation(struct stk_agent *agent, const char *te=
-xt,
-+					const struct stk_icon_id *icon,
- 					stk_agent_confirmation_cb cb,
- 					void *user_data,
- 					ofono_destroy_func destroy,
-@@ -482,7 +485,7 @@ int stk_agent_request_confirmation(struct stk_agent *ag=
-ent,
- =
-
- 	dbus_message_append_args(agent->msg,
- 					DBUS_TYPE_STRING, &text,
--					DBUS_TYPE_BYTE, &icon_id,
-+					DBUS_TYPE_BYTE, &icon->id,
- 					DBUS_TYPE_INVALID);
- =
-
- 	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
-@@ -536,8 +539,8 @@ static void get_digit_cb(DBusPendingCall *call, void *d=
-ata)
- 	CALLBACK_END();
- }
- =
-
--int stk_agent_request_digit(struct stk_agent *agent,
--				const char *text, uint8_t icon_id,
-+int stk_agent_request_digit(struct stk_agent *agent, const char *text,
-+				const struct stk_icon_id *icon,
- 				stk_agent_string_cb cb, void *user_data,
- 				ofono_destroy_func destroy, int timeout)
- {
-@@ -551,7 +554,7 @@ int stk_agent_request_digit(struct stk_agent *agent,
- =
-
- 	dbus_message_append_args(agent->msg,
- 					DBUS_TYPE_STRING, &text,
--					DBUS_TYPE_BYTE, &icon_id,
-+					DBUS_TYPE_BYTE, &icon->id,
- 					DBUS_TYPE_INVALID);
- =
-
- 	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
-@@ -604,7 +607,8 @@ static void get_key_cb(DBusPendingCall *call, void *dat=
-a)
- }
- =
-
- int stk_agent_request_key(struct stk_agent *agent, const char *text,
--				uint8_t icon_id, ofono_bool_t unicode_charset,
-+				const struct stk_icon_id *icon,
-+				ofono_bool_t unicode_charset,
- 				stk_agent_string_cb cb, void *user_data,
- 				ofono_destroy_func destroy, int timeout)
- {
-@@ -618,7 +622,7 @@ int stk_agent_request_key(struct stk_agent *agent, cons=
-t char *text,
- =
-
- 	dbus_message_append_args(agent->msg,
- 					DBUS_TYPE_STRING, &text,
--					DBUS_TYPE_BYTE, &icon_id,
-+					DBUS_TYPE_BYTE, &icon->id,
- 					DBUS_TYPE_INVALID);
- =
-
- 	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
-@@ -670,7 +674,8 @@ static void get_digits_cb(DBusPendingCall *call, void *=
-data)
- }
- =
-
- int stk_agent_request_digits(struct stk_agent *agent, const char *text,
--				uint8_t icon_id, const char *default_text,
-+				const struct stk_icon_id *icon,
-+				const char *default_text,
- 				int min, int max, ofono_bool_t hidden,
- 				stk_agent_string_cb cb, void *user_data,
- 				ofono_destroy_func destroy, int timeout)
-@@ -691,7 +696,7 @@ int stk_agent_request_digits(struct stk_agent *agent, c=
-onst char *text,
- =
-
- 	dbus_message_append_args(agent->msg,
- 					DBUS_TYPE_STRING, &text,
--					DBUS_TYPE_BYTE, &icon_id,
-+					DBUS_TYPE_BYTE, &icon->id,
- 					DBUS_TYPE_STRING, &default_text,
- 					DBUS_TYPE_BYTE, &min_val,
- 					DBUS_TYPE_BYTE, &max_val,
-@@ -747,7 +752,8 @@ static void get_input_cb(DBusPendingCall *call, void *d=
-ata)
- }
- =
-
- int stk_agent_request_input(struct stk_agent *agent, const char *text,
--				uint8_t icon_id, const char *default_text,
-+				const struct stk_icon_id *icon,
-+				const char *default_text,
- 				ofono_bool_t unicode_charset, int min, int max,
- 				ofono_bool_t hidden, stk_agent_string_cb cb,
- 				void *user_data, ofono_destroy_func destroy,
-@@ -769,7 +775,7 @@ int stk_agent_request_input(struct stk_agent *agent, co=
-nst char *text,
- =
-
- 	dbus_message_append_args(agent->msg,
- 					DBUS_TYPE_STRING, &text,
--					DBUS_TYPE_BYTE, &icon_id,
-+					DBUS_TYPE_BYTE, &icon->id,
- 					DBUS_TYPE_STRING, &default_text,
- 					DBUS_TYPE_BYTE, &min_val,
- 					DBUS_TYPE_BYTE, &max_val,
-@@ -824,7 +830,8 @@ static void confirm_call_cb(DBusPendingCall *call, void=
- *data)
- }
- =
-
- int stk_agent_confirm_call(struct stk_agent *agent, const char *text,
--				uint8_t icon_id, stk_agent_confirmation_cb cb,
-+				const struct stk_icon_id *icon,
-+				stk_agent_confirmation_cb cb,
- 				void *user_data, ofono_destroy_func destroy,
- 				int timeout)
- {
-@@ -838,7 +845,7 @@ int stk_agent_confirm_call(struct stk_agent *agent, con=
-st char *text,
- =
-
- 	dbus_message_append_args(agent->msg,
- 					DBUS_TYPE_STRING, &text,
--					DBUS_TYPE_BYTE, &icon_id,
-+					DBUS_TYPE_BYTE, &icon->id,
- 					DBUS_TYPE_INVALID);
- =
-
- 	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
-diff --git a/src/stkagent.h b/src/stkagent.h
-index c644210..97c4eca 100644
---- a/src/stkagent.h
-+++ b/src/stkagent.h
-@@ -36,7 +36,7 @@ struct stk_menu_item {
- =
-
- struct stk_menu {
- 	char *title;
--	uint8_t icon_id;
-+	struct stk_icon_id icon;
- 	struct stk_menu_item *items;
- 	int default_item;
- 	gboolean soft_key;
-@@ -77,45 +77,49 @@ int stk_agent_request_selection(struct stk_agent *agent,
- 				int timeout);
- =
-
- int stk_agent_display_text(struct stk_agent *agent, const char *text,
--				uint8_t icon_id, ofono_bool_t urgent,
-+				const struct stk_icon_id *icon,
-+				ofono_bool_t urgent,
- 				stk_agent_display_text_cb cb,
- 				void *user_data, ofono_destroy_func destroy,
- 				int timeout);
- =
-
--int stk_agent_request_confirmation(struct stk_agent *agent,
--					const char *text, uint8_t icon_id,
-+int stk_agent_request_confirmation(struct stk_agent *agent, const char *te=
-xt,
-+					const struct stk_icon_id *icon,
- 					stk_agent_confirmation_cb cb,
- 					void *user_data,
- 					ofono_destroy_func destroy,
- 					int timeout);
- =
-
--int stk_agent_request_digit(struct stk_agent *agent,
--				const char *text, uint8_t icon_id,
-+int stk_agent_request_digit(struct stk_agent *agent, const char *text,
-+				const struct stk_icon_id *icon,
- 				stk_agent_string_cb cb, void *user_data,
- 				ofono_destroy_func destroy, int timeout);
- =
-
- int stk_agent_request_key(struct stk_agent *agent, const char *text,
--				uint8_t icon_id, ofono_bool_t unicode_charset,
-+				const struct stk_icon_id *icon,
-+				ofono_bool_t unicode_charset,
- 				stk_agent_string_cb cb, void *user_data,
- 				ofono_destroy_func destroy, int timeout);
- =
-
- int stk_agent_request_digits(struct stk_agent *agent, const char *text,
--				uint8_t icon_id, const char *default_text,
--				int min, int max, ofono_bool_t hidden,
--				stk_agent_string_cb cb, void *user_data,
--				ofono_destroy_func destroy, int timeout);
-+				const struct stk_icon_id *icon,
-+				const char *default_text, int min, int max,
-+				ofono_bool_t hidden, stk_agent_string_cb cb,
-+				void *user_data, ofono_destroy_func destroy,
-+				int timeout);
- =
-
- int stk_agent_request_input(struct stk_agent *agent, const char *text,
--				uint8_t icon_id, const char *default_text,
-+				const struct stk_icon_id *icon,
-+				const char *default_text,
- 				ofono_bool_t unicode_charset, int min, int max,
- 				ofono_bool_t hidden, stk_agent_string_cb cb,
- 				void *user_data, ofono_destroy_func destroy,
- 				int timeout);
- =
-
- int stk_agent_confirm_call(struct stk_agent *agent, const char *text,
--				uint8_t icon_id, stk_agent_confirmation_cb cb,
--				void *user_data, ofono_destroy_func destroy,
--				int timeout);
-+				const struct stk_icon_id *icon,
-+				stk_agent_confirmation_cb cb, void *user_data,
-+				ofono_destroy_func destroy, int timeout);
- =
-
- void append_menu_items_variant(DBusMessageIter *iter,
- 				const struct stk_menu_item *items);
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============1079445844436809404==--
+--===============4892592294915921663==--
 
