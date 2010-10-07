@@ -1,52 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============7734063452092904762=="
+Content-Type: multipart/mixed; boundary="===============6729732618093824106=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
 Subject: [PATCH 2/4] radio settings: add FastDormancy property
-Date: Thu, 07 Oct 2010 16:21:56 +0300
-Message-ID: <1286457718-9051-3-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1286457718-9051-1-git-send-email-mika.liljeberg@nokia.com>
+Date: Thu, 07 Oct 2010 16:37:31 +0300
+Message-ID: <1286458653-12096-3-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1286458653-12096-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7734063452092904762==
+--===============6729732618093824106==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/radio-settings.h |   12 +++++
+ include/radio-settings.h |   14 ++++++
  src/radio-settings.c     |  104 ++++++++++++++++++++++++++++++++++++++++++=
 +++-
- 2 files changed, 115 insertions(+), 1 deletions(-)
+ 2 files changed, 117 insertions(+), 1 deletions(-)
 
 diff --git a/include/radio-settings.h b/include/radio-settings.h
-index d41ec0b..7152355 100644
+index d41ec0b..20c2a51 100644
 --- a/include/radio-settings.h
 +++ b/include/radio-settings.h
-@@ -42,6 +42,11 @@ typedef void (*ofono_radio_settings_rat_mode_set_cb_t)(c=
+@@ -42,6 +42,13 @@ typedef void (*ofono_radio_settings_rat_mode_set_cb_t)(c=
 onst struct ofono_error
  typedef void (*ofono_radio_settings_rat_mode_query_cb_t)(const struct ofon=
 o_error *error,
  						enum ofono_radio_access_mode mode,
  						void *data);
-+typedef void (*ofono_radio_settings_fast_dormancy_set_cb_t)(const struct o=
-fono_error *error,
-+							void *data);
-+typedef void (*ofono_radio_settings_fast_dormancy_query_cb_t)(const struct=
- ofono_error *error,
-+							ofono_bool_t enable,
-+							void *data);
++typedef void (*ofono_radio_settings_fast_dormancy_set_cb_t)(
++	const struct ofono_error *error,
++	void *data);
++typedef void (*ofono_radio_settings_fast_dormancy_query_cb_t)(
++	const struct ofono_error *error,
++	ofono_bool_t enable,
++	void *data);
  =
 
  struct ofono_radio_settings_driver {
  	const char *name;
-@@ -55,6 +60,13 @@ struct ofono_radio_settings_driver {
+@@ -55,6 +62,13 @@ struct ofono_radio_settings_driver {
  				enum ofono_radio_access_mode mode,
  				ofono_radio_settings_rat_mode_set_cb_t cb,
  				void *data);
 +	void (*query_fast_dormancy)(struct ofono_radio_settings *rs,
-+				ofono_radio_settings_fast_dormancy_query_cb_t cb,
-+				void *data);
++			ofono_radio_settings_fast_dormancy_query_cb_t cb,
++			void *data);
 +	void (*set_fast_dormancy)(struct ofono_radio_settings *rs,
 +				ofono_bool_t enable,
 +				ofono_radio_settings_fast_dormancy_set_cb_t,
@@ -57,7 +57,7 @@ fono_error *error,
  int ofono_radio_settings_driver_register(const struct ofono_radio_settings=
 _driver *d);
 diff --git a/src/radio-settings.c b/src/radio-settings.c
-index 7cdd411..113bc3d 100644
+index 5b6ef9e..e6f0980 100644
 --- a/src/radio-settings.c
 +++ b/src/radio-settings.c
 @@ -33,7 +33,9 @@
@@ -92,11 +92,10 @@ index 7cdd411..113bc3d 100644
 +					void *data);
  =
 
- static DBusMessage *radio_get_properties_reply(DBusMessage *msg, struct of=
-ono_radio_settings *rs)
- {
-@@ -109,6 +116,17 @@ static DBusMessage *radio_get_properties_reply(DBusMes=
-sage *msg, struct ofono_ra
+ static DBusMessage *radio_get_properties_reply(DBusMessage *msg,
+ 					       struct ofono_radio_settings *rs)
+@@ -110,6 +117,17 @@ static DBusMessage *radio_get_properties_reply(DBusMes=
+sage *msg,
  		return NULL;
  	}
  =
@@ -116,7 +115,7 @@ sage *msg, struct ofono_ra
  =
 
  	return reply;
-@@ -174,6 +192,67 @@ static void radio_rat_mode_query_callback(const struct=
+@@ -175,6 +193,67 @@ static void radio_rat_mode_query_callback(const struct=
  ofono_error *error,
  		__ofono_dbus_pending_reply(&rs->pending, reply);
  }
@@ -187,7 +186,7 @@ sage *msg, struct ofono_ra
  *msg,
  					void *data)
  {
-@@ -235,6 +314,29 @@ static DBusMessage *radio_set_property(DBusConnection =
+@@ -236,6 +315,29 @@ static DBusMessage *radio_set_property(DBusConnection =
 *conn, DBusMessage *msg,
  		rs->driver->set_rat_mode(rs, mode, radio_mode_set_callback, rs);
  =
@@ -225,5 +224,5 @@ sage *msg, struct ofono_ra
 1.7.0.4
 
 
---===============7734063452092904762==--
+--===============6729732618093824106==--
 
