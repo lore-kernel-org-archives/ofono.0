@@ -1,161 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============3705953879166223090=="
+Content-Type: multipart/mixed; boundary="===============2996904096001762692=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 1/4] radio settings: allow for more than one property
-Date: Thu, 07 Oct 2010 16:21:55 +0300
-Message-ID: <1286457718-9051-2-git-send-email-mika.liljeberg@nokia.com>
+Subject: [PATCH 3/4] radio settings: document FastDormancy property
+Date: Thu, 07 Oct 2010 16:21:57 +0300
+Message-ID: <1286457718-9051-4-git-send-email-mika.liljeberg@nokia.com>
 In-Reply-To: <1286457718-9051-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3705953879166223090==
+--===============2996904096001762692==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Restructure code to allow other properties besides
-TechnologyPreference to be returned.
 ---
- src/radio-settings.c |   60 +++++++++++++++++++++++++---------------------=
-----
- 1 files changed, 30 insertions(+), 30 deletions(-)
+ doc/radio-settings-api.txt |   22 ++++++++++++++++++++++
+ 1 files changed, 22 insertions(+), 0 deletions(-)
 
-diff --git a/src/radio-settings.c b/src/radio-settings.c
-index f70d870..7cdd411 100644
---- a/src/radio-settings.c
-+++ b/src/radio-settings.c
-@@ -77,15 +77,16 @@ static int string_to_radio_access_mode(const char *mode)
- 	return -1;
- }
- =
-
--static DBusMessage *radio_get_properties_reply(DBusMessage *msg,
--						struct ofono_radio_settings *rs)
-+static void radio_rat_mode_query_callback(const struct ofono_error *error,
-+					enum ofono_radio_access_mode mode,
-+					void *data);
+diff --git a/doc/radio-settings-api.txt b/doc/radio-settings-api.txt
+index 3372abd..f1b91ad 100644
+--- a/doc/radio-settings-api.txt
++++ b/doc/radio-settings-api.txt
+@@ -41,3 +41,25 @@ Properties	string TechnologyPreference [read-write]
+ 				"gsm"	Only GSM used for radio access.
+ 				"umts"	Only UMTS used for radio access.
+ 				"lte"	Only LTE used for radio acccess.
 +
-+static DBusMessage *radio_get_properties_reply(DBusMessage *msg, struct of=
-ono_radio_settings *rs)
- {
- 	DBusMessage *reply;
- 	DBusMessageIter iter;
- 	DBusMessageIter dict;
- =
-
--	const char *mode =3D radio_access_mode_to_string(rs->mode);
--
- 	reply =3D dbus_message_new_method_return(msg);
- 	if (!reply)
- 		return NULL;
-@@ -96,8 +97,17 @@ static DBusMessage *radio_get_properties_reply(DBusMessa=
-ge *msg,
- 					OFONO_PROPERTIES_ARRAY_SIGNATURE,
- 					&dict);
- =
-
--	ofono_dbus_dict_append(&dict, "TechnologyPreference", DBUS_TYPE_STRING,
--				&mode);
-+	if (rs->flags & RADIO_SETTINGS_MODE_CACHED) {
-+		const char *mode =3D radio_access_mode_to_string(rs->mode);
-+		ofono_dbus_dict_append(&dict, "TechnologyPreference",
-+				DBUS_TYPE_STRING, &mode);
-+	} else if (rs->driver->query_rat_mode) {
-+		rs->pending =3D dbus_message_ref(msg);
-+		rs->driver->query_rat_mode(rs,
-+					radio_rat_mode_query_callback, rs);
-+		dbus_message_unref(reply);
-+		return NULL;
-+	}
- =
-
- 	dbus_message_iter_close_container(&iter, &dict);
- =
-
-@@ -107,23 +117,21 @@ static DBusMessage *radio_get_properties_reply(DBusMe=
-ssage *msg,
- static void radio_set_rat_mode(struct ofono_radio_settings *rs,
- 				enum ofono_radio_access_mode mode)
- {
--	DBusConnection *conn =3D ofono_dbus_get_connection();
--	const char *path;
--	const char *str_mode;
-+	if ((rs->flags & RADIO_SETTINGS_MODE_CACHED) &&
-+		rs->mode !=3D (int)mode) {
- =
-
--	if (rs->mode =3D=3D (int)mode)
--		return;
-+		DBusConnection *conn =3D ofono_dbus_get_connection();
-+		const char *path =3D __ofono_atom_get_path(rs->atom);
-+		const char *str_mode =3D radio_access_mode_to_string(rs->mode);
++		boolean	FastDormancy [read-write, optional]
 +
-+		ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_RADIO_SETTINGS_INTERFACE,
-+						"TechnologyPreference",
-+						DBUS_TYPE_STRING, &str_mode);
-+	}
- =
-
- 	rs->mode =3D mode;
- 	rs->flags |=3D RADIO_SETTINGS_MODE_CACHED;
--
--	path =3D __ofono_atom_get_path(rs->atom);
--	str_mode =3D radio_access_mode_to_string(rs->mode);
--
--	ofono_dbus_signal_property_changed(conn, path,
--					OFONO_RADIO_SETTINGS_INTERFACE,
--					"TechnologyPreference", DBUS_TYPE_STRING,
--					&str_mode);
- }
- =
-
- static void radio_mode_set_callback(const struct ofono_error *error, void =
-*data)
-@@ -162,7 +170,8 @@ static void radio_rat_mode_query_callback(const struct =
-ofono_error *error,
- 	radio_set_rat_mode(rs, mode);
- =
-
- 	reply =3D radio_get_properties_reply(rs->pending, rs);
--	__ofono_dbus_pending_reply(&rs->pending, reply);
-+	if (reply)
-+		__ofono_dbus_pending_reply(&rs->pending, reply);
- }
- =
-
- static DBusMessage *radio_get_properties(DBusConnection *conn, DBusMessage=
- *msg,
-@@ -170,19 +179,10 @@ static DBusMessage *radio_get_properties(DBusConnecti=
-on *conn, DBusMessage *msg,
- {
- 	struct ofono_radio_settings *rs =3D data;
- =
-
--	if (rs->flags & RADIO_SETTINGS_MODE_CACHED)
--		return radio_get_properties_reply(msg, rs);
--
--	if (!rs->driver->query_rat_mode)
--		return __ofono_error_not_implemented(msg);
--
- 	if (rs->pending)
- 		return __ofono_error_busy(msg);
- =
-
--	rs->pending =3D dbus_message_ref(msg);
--	rs->driver->query_rat_mode(rs, radio_rat_mode_query_callback, rs);
--
--	return NULL;
-+	return radio_get_properties_reply(msg, rs);
- }
- =
-
- static DBusMessage *radio_set_property(DBusConnection *conn, DBusMessage *=
-msg,
++			This property will enable or disable fast
++			dormancy. Fast dormancy refers to UE initiated
++			release of radio resources quickly after a
++			burst of data transfer has ended. Normally,
++			radio resources are released by the network
++			after a timeout configured by the network
++			operator. Fast dormancy allows the modem to
++			release radio resources more quickly.
++			Typically, fast dormancy would be enabled if
++			no data transfer is predicted to occur in the
++			near future, for instance, when the end user
++			is not actively using the device. This is a
++			major power-saving feature for mobile devices,
++			but can be ignored for USB sticks or PCI
++			devices.
++
++			If the modem does not support such a feature
++			the property should never be exposed to the
++			user.
 -- =
 
 1.7.0.4
 
 
---===============3705953879166223090==--
+--===============2996904096001762692==--
 
