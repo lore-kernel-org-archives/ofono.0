@@ -1,55 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============6855116668258659746=="
+Content-Type: multipart/mixed; boundary="===============2240236949702777253=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 3/4] radio settings: document FastDormancy property
-Date: Thu, 07 Oct 2010 17:34:28 +0200
-Message-ID: <1286465668.6145.155.camel@aeonflux>
-In-Reply-To: <1286458653-12096-4-git-send-email-mika.liljeberg@nokia.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: Handling of Fixed Dialing
+Date: Thu, 07 Oct 2010 19:40:08 +0300
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802AF634E@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <201010071828.04248.petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6855116668258659746==
+--===============2240236949702777253==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+ =
 
-> diff --git a/doc/radio-settings-api.txt b/doc/radio-settings-api.txt
-> index 3372abd..f1b91ad 100644
-> --- a/doc/radio-settings-api.txt
-> +++ b/doc/radio-settings-api.txt
-> @@ -41,3 +41,25 @@ Properties	string TechnologyPreference [read-write]
->  				"gsm"	Only GSM used for radio access.
->  				"umts"	Only UMTS used for radio access.
->  				"lte"	Only LTE used for radio acccess.
-> +
-> +		boolean	FastDormancy [read-write, optional]
-> +
-> +			This property will enable or disable fast
-> +			dormancy. Fast dormancy refers to UE initiated
-> +			release of radio resources quickly after a
-> +			burst of data transfer has ended. Normally,
-> +			radio resources are released by the network
-> +			after a timeout configured by the network
-> +			operator. Fast dormancy allows the modem to
-> +			release radio resources more quickly.
-> +			Typically, fast dormancy would be enabled if
-> +			no data transfer is predicted to occur in the
-> +			near future, for instance, when the end user
-> +			is not actively using the device. This is a
-> +			major power-saving feature for mobile devices,
-> +			but can be ignored for USB sticks or PCI
-> +			devices.
+Hi Petteri,
 
-so how does the future prediction is suppose to work. Are we shipping a
-time machine together with oFono ;)
+> and thanks for the comments.
 
-Regards
+> I checked the invalidated-flag of EFadn (from file status-byte of GET
+RESPONSE) and it actually changed according to FDN-enabling/disabling.
+But for some reason I didn't =
 
-Marcel
+> got any change in EFsst for FDN/ADN-services. Could it be a good idea
+to add also reading of EFadn in the SIM-initialization routine, check
+invalidated-flag, and make =
+
+> decision of continuing initialization routine based on that?
+
+  Exactly, thats what the specification also says. EFsst will inform 2
+things: SIM's capabilty to support the service and service's
+availability for the card holder. EFadn's file status is the one we need
+to depend on for FDN enabled/disabled status. =
 
 
+> The other issue was that selection of service table (SIM/USIM) based
+on EFphase. So SIM returns '3' in my tests. But the SIM-card seems to be
+of type SIM (not USIM), =
 
---===============6855116668258659746==--
+> because I accessed some USIM-type elementary files (EFest,
+> EFpbr) and those returned only error-codes. Like phase (3g) wouldn't
+actually be exactly the same thing than USIM-type. What about doing the
+next change in the SIM-init =
+
+> routine (not trusting to EFphase response when accessing the correct
+service tables):
+
+> - read first EFest
+> - if EFest-access gives a valid response, read EFust
+> - if EFest-access doesn't give a valid response, read EFsst
+
+EFphase information is not the correct way to determine the SIM card
+type(SIM/USIM). =
+
+
+In most of the message based modems(eg: isimodem), there exists a
+mechanism to get the type of the card. =
+
+
+AT based modem is the issue. Since most of the AT based modems doesn't
+support AT+CSIM, its difficult to determine the card type.
+
+I still believe that we need to determine the card type during the SIM
+initialization itself for reading the right SIM files.
+
+Regards,
+jeevaka
+
+
+--===============2240236949702777253==--
 
