@@ -1,45 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============8062242397822822852=="
+Content-Type: multipart/mixed; boundary="===============4824346977466940605=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: CDMA SMS Handling
-Date: Wed, 06 Oct 2010 19:10:04 -0500
-Message-ID: <4CAD0FDC.7030103@gmail.com>
-In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702AC9A8D@usrdes03.ebgroup.elektrobit.com>
+Subject: Re: return values of org.ofono.SupplementaryServices.Initiate
+Date: Wed, 06 Oct 2010 19:37:24 -0500
+Message-ID: <4CAD1644.40302@gmail.com>
+In-Reply-To: <4CAB1D06.50503@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8062242397822822852==
+--===============4824346977466940605==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rajesh,
+Hi Alexander,
 
-> As from the above decoding example we can see there is substantial
-> differences between the GSM and CDMA SMS specifications and so the SMS
-> atom needs many additions and needs to be heavily modified to support
-> also CDMA SMS handling. Currently the oFono sms file unit handles the
-> common and the GSM technology aspects of the SMS stack along with the
-> smsutils. The SMS atom has the GSM specific members, segmentation and
-> queuing logic. The smsutils mainly takes care of encoding/decoding of
-> the PDUs, which is GSM specific. As the segmentation and queuing logic
-> and the interface is common for both GSM and CDMA, we could reuse this
-> common code and add the CDMA handling into it and create a new
-> cdmasmsutils unit to support the CDMA SMS specifics, much like the
-> smsutils does already for GSM.
+On 10/05/2010 07:41 AM, Alexander Kanavin wrote:
+> On 05.10.2010 15:06, ext Marcel Holtmann wrote:
+>>> doc/supplementaryservices-api.txt says nothing about return values of
+>>> SupplementeryServices.Initiate method (or that the method can take SS
+>>> requests in addition to USSD). Can the API designer/implementer fix this
+>>> please?
+>>
+>> why don't you just send a patch for it if it is unclear?
+> =
 
-This gets my vote, I like to start bottom up.  E.g. build the
-infrastructure first, with unit tests, etc and then hook up the
-controlling logic.  So starting cdma smsutils seems like a good idea to me.
+> If it was a small update I would just send a patch. But a typical return
+> value for example is:
+> =
 
-Do note however that there's more to smsutils than basic parsing.  We
-also have sms fragmentation / de-fragmentation logic, sms assembly
-serialization, status reports, character encoding / decoding, etc.  We
-will have to figure out which parts can be re-used for both CDMA and GSM
-as we go along...
+> (u'CallBarring',
+>  (u'interrogation',
+>   u'AllBarringServices',
+>   {u'DataAllIncoming': u'disabled',
+>    u'DataAllOutgoing': u'disabled',
+>    u'DataIncomingWhenRoaming': u'disabled',
+>    u'DataInternationalOutgoing': u'disabled',
+>    u'DataInternationalOutgoingExceptHome': u'disabled',
+>    u'FaxAllIncoming': u'disabled',
+>    u'FaxAllOutgoing': u'disabled',
+>    u'FaxIncomingWhenRoaming': u'disabled',
+>    u'FaxInternationalOutgoing': u'disabled',
+>    u'FaxInternationalOutgoingExceptHome': u'disabled',
+>    u'VoiceAllIncoming': u'disabled',
+>    u'VoiceAllOutgoing': u'disabled',
+>    u'VoiceIncomingWhenRoaming': u'disabled',
+>    u'VoiceInternationalOutgoing': u'disabled',
+>    u'VoiceInternationalOutgoingExceptHome': u'disabled'}))
+> =
+
+> Now multiply this by all possible combinations of supplementary
+> services, supplementary service operations and basic services. Remember
+> the second argument is a variant, so it's entirely freeform. So I sought
+> to ask about this on the list first.
+
+This is on my TODO list, but honestly it would take you no more than 2
+hours to do this yourself for most of the reply types.  All the reply
+generators are nicely compartmentalized (call-barring.c:
+generate_ss_query_reply, call-forwarding.c: cf_ss_control_reply,
+call-settings.c: generate_cw_ss_query_reply, clip_colp_colr_ss_query_cb)
+
+And you don't really need to handle all the combinations, simply stating
+that the elements returned in the dictionary were affected by the SS
+operation is enough.
+
+> =
+
+> A patch(set) that changes the API shouldn't be accepted in the first
+> place if it doesn't properly update the documentation.
+
+This patch set predates the launch of oFono as 'oFono'.  So far nobody
+has been attempting to use this API ;)
 
 Regards,
 -Denis
 
---===============8062242397822822852==--
+--===============4824346977466940605==--
 
