@@ -1,56 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============2996904096001762692=="
+Content-Type: multipart/mixed; boundary="===============2055943500322795838=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 3/4] radio settings: document FastDormancy property
-Date: Thu, 07 Oct 2010 16:21:57 +0300
-Message-ID: <1286457718-9051-4-git-send-email-mika.liljeberg@nokia.com>
+Subject: [PATCH 4/4] test: add scripts to enable and disable fast dormancy
+Date: Thu, 07 Oct 2010 16:21:58 +0300
+Message-ID: <1286457718-9051-5-git-send-email-mika.liljeberg@nokia.com>
 In-Reply-To: <1286457718-9051-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2996904096001762692==
+--===============2055943500322795838==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/radio-settings-api.txt |   22 ++++++++++++++++++++++
- 1 files changed, 22 insertions(+), 0 deletions(-)
+ Makefile.am                |    4 +++-
+ test/disable-fast-dormancy |   20 ++++++++++++++++++++
+ test/enable-fast-dormancy  |   20 ++++++++++++++++++++
+ 3 files changed, 43 insertions(+), 1 deletions(-)
+ create mode 100755 test/disable-fast-dormancy
+ create mode 100755 test/enable-fast-dormancy
 
-diff --git a/doc/radio-settings-api.txt b/doc/radio-settings-api.txt
-index 3372abd..f1b91ad 100644
---- a/doc/radio-settings-api.txt
-+++ b/doc/radio-settings-api.txt
-@@ -41,3 +41,25 @@ Properties	string TechnologyPreference [read-write]
- 				"gsm"	Only GSM used for radio access.
- 				"umts"	Only UMTS used for radio access.
- 				"lte"	Only LTE used for radio acccess.
+diff --git a/Makefile.am b/Makefile.am
+index 6c56459..7a56cb4 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -407,7 +407,9 @@ test_scripts =3D test/backtrace \
+ 		test/lock-pin \
+ 		test/unlock-pin \
+ 		test/enable-gprs \
+-		test/disable-gprs
++		test/disable-gprs \
++		test/enable-fast-dormancy \
++		test/disable-fast-dormancy
+ =
+
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/test/disable-fast-dormancy b/test/disable-fast-dormancy
+new file mode 100755
+index 0000000..ec326aa
+--- /dev/null
++++ b/test/disable-fast-dormancy
+@@ -0,0 +1,20 @@
++#!/usr/bin/python
 +
-+		boolean	FastDormancy [read-write, optional]
++import dbus
++import sys
 +
-+			This property will enable or disable fast
-+			dormancy. Fast dormancy refers to UE initiated
-+			release of radio resources quickly after a
-+			burst of data transfer has ended. Normally,
-+			radio resources are released by the network
-+			after a timeout configured by the network
-+			operator. Fast dormancy allows the modem to
-+			release radio resources more quickly.
-+			Typically, fast dormancy would be enabled if
-+			no data transfer is predicted to occur in the
-+			near future, for instance, when the end user
-+			is not actively using the device. This is a
-+			major power-saving feature for mobile devices,
-+			but can be ignored for USB sticks or PCI
-+			devices.
++bus =3D dbus.SystemBus()
 +
-+			If the modem does not support such a feature
-+			the property should never be exposed to the
-+			user.
++if len(sys.argv) =3D=3D 2:
++	path =3D sys.argv[1]
++else:
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++			'org.ofono.Manager')
++	modems =3D manager.GetModems()
++	path =3D modems[0][0]
++
++print "Disabling fast dormancy on modem %s..." % path
++cm =3D dbus.Interface(bus.get_object('org.ofono', path),
++		'org.ofono.RadioSettings')
++
++cm.SetProperty("FastDormancy", dbus.Boolean(0))
+diff --git a/test/enable-fast-dormancy b/test/enable-fast-dormancy
+new file mode 100755
+index 0000000..93ec1d5
+--- /dev/null
++++ b/test/enable-fast-dormancy
+@@ -0,0 +1,20 @@
++#!/usr/bin/python
++
++import dbus
++import sys
++
++bus =3D dbus.SystemBus()
++
++if len(sys.argv) =3D=3D 2:
++	path =3D sys.argv[1]
++else:
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++			'org.ofono.Manager')
++	modems =3D manager.GetModems()
++	path =3D modems[0][0]
++
++print "Enabling fast dormancy on modem %s..." % path
++cm =3D dbus.Interface(bus.get_object('org.ofono', path),
++		'org.ofono.RadioSettings')
++
++cm.SetProperty("FastDormancy", dbus.Boolean(1))
 -- =
 
 1.7.0.4
 
 
---===============2996904096001762692==--
+--===============2055943500322795838==--
 
