@@ -1,39 +1,109 @@
-Content-Type: multipart/mixed; boundary="===============8077757833665204739=="
+Content-Type: multipart/mixed; boundary="===============0393650177468291328=="
 MIME-Version: 1.0
-From: Alexander Kanavin <alexander.kanavin@nokia.com>
-Subject: Re: return values of org.ofono.SupplementaryServices.Initiate
-Date: Thu, 07 Oct 2010 12:49:52 +0300
-Message-ID: <4CAD97C0.4050203@nokia.com>
-In-Reply-To: <4CAD1644.40302@gmail.com>
+From: Alexander A Khryukin <alexander@mezon.ru>
+Subject: airplus MCD-650
+Date: Thu, 07 Oct 2010 14:13:46 +0400
+Message-ID: <1286446426.22751.4.camel@mezon.ru>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8077757833665204739==
+--===============0393650177468291328==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 07.10.2010 3:37, ext Denis Kenzior wrote:
-> This is on my TODO list, but honestly it would take you no more than 2
-> hours to do this yourself for most of the reply types.  All the reply
-> generators are nicely compartmentalized (call-barring.c:
-> generate_ss_query_reply, call-forwarding.c: cf_ss_control_reply,
-> call-settings.c: generate_cw_ss_query_reply, clip_colp_colr_ss_query_cb)
->
-> And you don't really need to handle all the combinations, simply stating
-> that the elements returned in the dictionary were affected by the SS
-> operation is enough.
+Hi all.I have a modem airplus MCD-650 =
 
-Yeah, I'm actually halfway through that now. I also found a couple of typos =
 
-in the code. Patches will come soon.
+lsusb
 
-> This patch set predates the launch of oFono as 'oFono'.  So far nobody
-> has been attempting to use this API ;)
+Bus 002 Device 055: ID 1edf:6004
 
-Except me I guess - I'm now working on a Qt bindings library for oFono.
 
-Alex
+/etc/ofono/modem.conf
+[atgen]
+Driver=3Datgen
+Device=3D/dev/ttyACM0
+Baud=3D460800
 
---===============8077757833665204739==--
+
+when i plug modem in ofonod see =
+
+
+ofonod[3925]: src/modem.c:ofono_modem_create() name: (null), type: atgen
+ofonod[3925]: src/modem.c:set_modem_property() modem 0x82aaed8 property
+Path
+ofonod[3925]: src/modem.c:set_modem_property() modem 0x82aaed8 property
+Registered
+ofonod[3925]:
+plugins/udev.c:add_modem() /devices/pci0000:00/0000:00:1d.0/usb2/2-1/2-1:1.=
+0/tty/ttyACM0 (atgen)
+
+/usr/lib/ofono/test/list-modems =
+
+
+
+[ /atgen1 ]
+    Interfaces =3D =
+
+    Powered =3D 0
+    Features =3D =
+
+    Online =3D 0
+
+[ /atgen ]
+    Interfaces =3D =
+
+    Powered =3D 0
+    Features =3D =
+
+    Online =3D 0
+
+
+/usr/lib/ofono/test/enable-modem /atgen
+Connecting modem /atgen...
+
+Connecting to modem succesfull
+
+
+
+/usr/lib/ofono/test/list-modems =
+
+
+[ /atgen1 ]
+    Interfaces =3D =
+
+    Powered =3D 0
+    Features =3D =
+
+    Online =3D 0
+
+[ /atgen ]
+    Interfaces =3D org.ofono.VoiceCallManager org.ofono.SimManager =
+
+    Powered =3D 1
+    Features =3D sim =
+
+    Online =3D 0
+    [ org.ofono.VoiceCallManager ]
+        EmergencyNumbers =3D 112 911 000 08 110 999 118 119 =
+
+    [ org.ofono.SimManager ]
+        SubscriberNumbers =3D =
+
+        LockedPins =3D =
+
+        PinRequired =3D none
+        Present =3D 1
+
+
+
+
+Looks like i sim manager.
+Modem not working.
+Whats wrong and how to fix it?
+
+
+
+--===============0393650177468291328==--
 
