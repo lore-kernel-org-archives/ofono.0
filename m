@@ -1,341 +1,164 @@
-Content-Type: multipart/mixed; boundary="===============3173302184718289878=="
+Content-Type: multipart/mixed; boundary="===============0180098161909768052=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [RFC ssn PATCH 3/4] isimodem/ssn: add common notifications
-Date: Fri, 08 Oct 2010 18:36:39 +0300
-Message-ID: <1286552200-18282-4-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1286552200-18282-3-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [RFC ssn PATCH 2/4] ssn: add ssn code argument to ssn notify callbacks
+Date: Fri, 08 Oct 2010 18:36:38 +0300
+Message-ID: <1286552200-18282-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1286552200-18282-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3173302184718289878==
+--===============0180098161909768052==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Add notifications on hold, retrieve, multiparty, call waiting, barrings,
-and various notifications on call forwarding.
-
-Note that driver uses the CUG index parameter to pass call IDs to core.
+Including the ssn code as an argument in notify callbacks allows
+handling of multiple notifications in single function.
 ---
- drivers/isimodem/call.h |   12 +++
- drivers/isimodem/ssn.c  |  224 +++++++++++++++++++++++++++++++++++++++++++=
-++--
- 2 files changed, 227 insertions(+), 9 deletions(-)
+ src/call-barring.c |   33 +++++++++++----------------------
+ src/ofono.h        |    4 ++--
+ src/ssn.c          |    8 ++++++--
+ 3 files changed, 19 insertions(+), 26 deletions(-)
 
-diff --git a/drivers/isimodem/call.h b/drivers/isimodem/call.h
-index 2901971..9a8ba39 100644
---- a/drivers/isimodem/call.h
-+++ b/drivers/isimodem/call.h
-@@ -402,6 +402,18 @@ enum {
- 	CALL_DTMF_DISABLE_TONE_IND_SEND =3D 0x02
+diff --git a/src/call-barring.c b/src/call-barring.c
+index 7a17479..e2de404 100644
+--- a/src/call-barring.c
++++ b/src/call-barring.c
+@@ -993,33 +993,22 @@ static GDBusSignalTable cb_signals[] =3D {
+ 	{ }
  };
  =
 
-+enum {
-+	CALL_GSM_SSI_CALL_IS_WAITING =3D		0x01,
-+	CALL_GSM_SSI_MPTY =3D			0x02,
-+	CALL_GSM_SSI_CLIR_SUPPR_REJ =3D		0x04,
-+};
-+
-+enum {
-+	CALL_GSM_SSN_INCOMING_IS_FWD =3D		0x01,
-+	CALL_GSM_SSN_INCOMING_FWD =3D		0x02,
-+	CALL_GSM_SSN_OUTGOING_FWD =3D		0x04,
-+};
-+
- #ifdef __cplusplus
- };
- #endif
-diff --git a/drivers/isimodem/ssn.c b/drivers/isimodem/ssn.c
-index def3b0c..1e1f659 100644
---- a/drivers/isimodem/ssn.c
-+++ b/drivers/isimodem/ssn.c
-@@ -1,7 +1,7 @@
- /*
-  * This file is part of oFono - Open Source Telephony
-  *
-- * Copyright (C) 2009 Nokia Corporation and/or its subsidiary(-ies).
-+ * Copyright (C) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
-  *
-  * Contact: Aki Niemi <aki.niemi@nokia.com>
-  *
-@@ -32,42 +32,248 @@
- #include <errno.h>
- =
-
- #include <glib.h>
-+#include <arpa/inet.h>
- =
-
- #include <gisi/client.h>
-+#include <gisi/iter.h>
- =
-
- #include <ofono/log.h>
- #include <ofono/modem.h>
- #include <ofono/ssn.h>
- =
-
- #include "isimodem.h"
-+#include "call.h"
-+#include "ss.h"
- =
-
--#define PN_SS			0x06
--
--struct ssn_data {
-+struct isi_ssn {
- 	GIsiClient *client;
- };
- =
-
-+static void isi_ssn_ss_code(struct ofono_ssn *ssn, uint16_t ss_code)
-+{
-+	int cssi;
-+
-+	DBG("ss_code=3D%u", ss_code);
-+
-+	/* ss-code is MMI code from 22.030 */
-+
-+	switch (ss_code) {
-+	case SS_GSM_FORW_UNCONDITIONAL:
-+	case SS_GSM_ALL_FORWARDINGS:
-+		/* 3GPP TS 22.082 clause 1.1.1 */
-+		cssi =3D OFONO_SS_MO_UNCONDITIONAL_FORWARDING;
-+		break;
-+
-+	case SS_GSM_FORW_NO_REPLY:
-+	case SS_GSM_FORW_NO_REACH:
-+	case SS_GSM_FORW_BUSY:
-+	case SS_GSM_ALL_COND_FORWARDINGS:
-+		/* 3GPP TS 22.082 clauses 2.1.1, 3.1.1, 4.1.1 */
-+		cssi =3D OFONO_SS_MO_CONDITIONAL_FORWARDING;
-+		break;
-+
-+	case SS_GSM_BARR_ALL_OUT:
-+	case SS_GSM_OUTGOING_BARR_SERV:
-+	case SS_GSM_BARR_OUT_INTER:
-+	case SS_GSM_BARR_OUT_INTER_EXC_HOME:
-+		/* 3GPP TS 22.088 clause 1.1 */
-+		cssi =3D OFONO_SS_MO_OUTGOING_BARRING;
-+		break;
-+
-+	case SS_GSM_INCOMING_BARR_SERV:
-+	case SS_GSM_BARR_ALL_IN:
-+	case SS_GSM_BARR_ALL_IN_ROAM:
-+		/* 3GPP TS 22.088 clause 2.1 */
-+		/* Called subscriber has barred incoming calls */
-+		cssi =3D OFONO_SS_MO_INCOMING_BARRING;
-+		break;
-+
-+	default:
-+		return;
-+	}
-+
-+	ofono_ssn_cssi_notify(ssn, cssi, 0);
-+}
-+
-+static void isi_ssn_ss_notification(struct ofono_ssn *ssn, int id,
-+					uint8_t ss_notification)
-+{
-+	int code;
-+
-+	struct ofono_phone_number number =3D { };
-+
-+	/* See SS-Notification in TS 22.080 clause 4.4.2 */
-+
-+	if (ss_notification & (1 << 2)) {
-+		/* "Call is forwarded" indication to A-subscriber */
-+		/* 3GPP TS 22.082 clauses 1.1.3, 2.1.3, 3.1.3, 4.1.3 */
-+		code =3D OFONO_SS_MO_CALL_FORWARDED;
-+		ofono_ssn_cssi_notify(ssn, code, id);
-+	} else if (ss_notification & (1 << 1)) {
-+		/* "Call is forwarded" indication to B subscriber */
-+		/* 3GPP TS 24.082 clauses 2.1.1, 3.1.1 */
-+		code =3D OFONO_SS_MT_OTHER_CALL_FORWARDED;
-+		ofono_ssn_cssu_notify(ssn, code, 0, number);
-+		/* A subscriber address is not relayed to mobile */
-+	} else if (ss_notification & (1 << 0)) {
-+		/* "Call is forwarded" indication to C subscriber */
-+		/* 3GPP TS 22.082 clauses 1.1.2, 2.1.2, 3.1.2, 4.1.2 */
-+		code =3D OFONO_SS_MT_CALL_FORWARDED;
-+		ofono_ssn_cssu_notify(ssn, code, id, number);
-+		/* The redirecting address is not part of notifySS */
-+		/* However, it is available in CALL_COMING_IND */
-+	}
-+}
-+
-+static void isi_ssn_notify_indicator(struct ofono_ssn *ssn, int id,
-+					uint8_t ss_indicators,
-+					struct ofono_phone_number *number)
-+{
-+	DBG("");
-+
-+	if (ss_indicators & CALL_GSM_SSI_CALL_IS_WAITING) {
-+		ofono_ssn_cssi_notify(ssn,
-+			OFONO_SS_MO_CALL_WAITING, id);
-+	}
-+
-+	if (ss_indicators & CALL_GSM_SSI_MPTY) {
-+		/* call is connected to multiparty by remote end */
-+		ofono_ssn_cssu_notify(ssn,
-+			OFONO_SS_MT_MULTIPARTY_VOICECALL, id, number);
-+	}
-+
-+	if (ss_indicators & CALL_GSM_SSI_CLIR_SUPPR_REJ) {
-+		ofono_ssn_cssi_notify(ssn,
-+			OFONO_SS_MO_CLIR_SUPPRESSION_REJECTED, id);
-+	}
-+}
-+
-+static void isi_ssn_hold_indicator(struct ofono_ssn *ssn, int id, uint8_t =
-hold)
-+{
-+	int code;
-+
-+	struct ofono_phone_number number =3D { };
-+
-+	DBG("CallOnHoldIndication=3D%u", hold);
-+
-+	if (hold)
-+		code =3D OFONO_SS_MT_VOICECALL_ON_HOLD;
-+	else
-+		code =3D OFONO_SS_MT_VOICECALL_RETRIEVED;
-+
-+	ofono_ssn_cssu_notify(ssn, code, id, &number);
-+}
-+
-+static void isi_ssn_ind(GIsiClient *client,
-+			void const *restrict data, size_t len,
-+			uint16_t object, void *user)
-+{
-+	struct ofono_ssn *ssn =3D user;
-+	struct {
-+		uint8_t message_id, call_id, sub_blocks;
-+	} const *m =3D data;
-+	int id;
-+	uint16_t ss_code =3D 0;
-+	uint8_t ss_notification =3D 0;
-+	uint8_t ss_indicators;
-+	uint8_t ss_hold;
-+	struct {
-+		int ss_notification;
-+		int ss_status;
-+		int ss_indicators;
-+		int ss_hold;
-+	} got =3D { };
-+	GIsiSubBlockIter sb[1];
-+
-+	if (len < 3)
-+		return;		/* runt */
-+
-+	id =3D m->call_id & 7;
-+	if (id =3D=3D 0)
-+		return;
-+
-+	DBG("id %u, len =3D %zu", id, len);
-+
-+	for (g_isi_sb_iter_init(sb, data, len, (sizeof *m));
-+			g_isi_sb_iter_is_valid(sb);
-+				g_isi_sb_iter_next(sb)) {
-+		switch (g_isi_sb_iter_get_id(sb)) {
-+		case CALL_GSM_SS_CODE:
-+			g_isi_sb_iter_get_word(sb, &ss_code, 2);
-+			break;
-+
-+		case CALL_GSM_SS_STATUS:
-+			got.ss_status =3D 1;
-+			break;
-+
-+		case CALL_GSM_SS_NOTIFY:
-+			if (g_isi_sb_iter_get_byte(sb, &ss_notification, 2))
-+				got.ss_notification =3D 1;
-+			break;
-+
-+		case CALL_GSM_SS_NOTIFY_INDICATOR:
-+			if (g_isi_sb_iter_get_byte(sb, &ss_indicators, 2))
-+				got.ss_indicators =3D 1;
-+			break;
-+
-+		case CALL_GSM_SS_HOLD_INDICATOR:
-+			if (g_isi_sb_iter_get_byte(sb, &ss_hold, 2))
-+				got.ss_hold =3D 1;
-+			break;
-+
-+		case CALL_GSM_SS_ECT_INDICATOR:
-+			/* TODO */
-+			break;
-+
-+		case CALL_GSM_CUG_INFO:
-+			/* TODO */
-+			break;
-+		}
-+	}
-+
-+	if (got.ss_notification)
-+		isi_ssn_ss_notification(ssn, id, ss_notification);
-+	else if (got.ss_status)
-+		isi_ssn_ss_code(ssn, ss_code);
-+
-+	if (got.ss_indicators)
-+		isi_ssn_notify_indicator(ssn, id, ss_indicators);
-+
-+	if (got.ss_hold)
-+		isi_ssn_hold_indicator(ssn, id, ss_hold);
-+}
-+
- static int isi_ssn_probe(struct ofono_ssn *ssn, unsigned int vendor,
- 				void *user)
+-static void call_barring_incoming_enabled_notify(int idx, void *userdata)
++static void call_barring_notify(int code, int idx, void *userdata)
  {
--	GIsiModem *idx =3D user;
--	struct ssn_data *data =3D g_try_new0(struct ssn_data, 1);
-+	GIsiModem *modem =3D user;
-+	struct isi_ssn *data;
+ 	struct ofono_call_barring *cb =3D userdata;
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	const char *path =3D __ofono_atom_get_path(cb->atom);
++	char const *member;
  =
 
-+	DBG("");
-+
-+	data =3D g_try_new0(struct isi_ssn, 1);
- 	if (!data)
- 		return -ENOMEM;
+-	g_dbus_emit_signal(conn, path, OFONO_CALL_BARRING_INTERFACE,
+-			"IncomingBarringInEffect", DBUS_TYPE_INVALID);
+-}
+-
+-static void call_barring_outgoing_enabled_notify(int idx, void *userdata)
+-{
+-	struct ofono_call_barring *cb =3D userdata;
+-	DBusConnection *conn =3D ofono_dbus_get_connection();
+-	const char *path =3D __ofono_atom_get_path(cb->atom);
+-	DBusMessage *signal;
+-
+-	signal =3D dbus_message_new_signal(path, OFONO_CALL_BARRING_INTERFACE,
+-						"OutgoingBarringInEffect");
+-
+-	if (!signal) {
+-		ofono_error("Unable to allocate new %s.OutgoingBarringInEffect"
+-				" signal", OFONO_CALL_BARRING_INTERFACE);
++	if (code =3D=3D OFONO_SS_MO_INCOMING_BARRING)
++		member =3D "IncomingBarringInEffect";
++	else if (code =3D=3D OFONO_SS_MO_OUTGOING_BARRING)
++		member =3D "OutgoingBarringInEffect";
++	else
+ 		return;
+-	}
  =
 
--	data->client =3D g_isi_client_create(idx, PN_SS);
--	if (!data->client)
-+	data->client =3D g_isi_client_create(modem, PN_CALL);
-+	if (!data->client) {
-+		g_free(data);
- 		return -ENOMEM;
-+	}
- =
-
- 	ofono_ssn_set_data(ssn, data);
- =
-
-+	ofono_ssn_register(ssn);
-+
-+	g_isi_subscribe(data->client, CALL_GSM_NOTIFICATION_IND,
-+			isi_ssn_ind, ssn);
-+
- 	return 0;
+-	g_dbus_send_message(conn, signal);
++	g_dbus_emit_signal(conn, path, OFONO_CALL_BARRING_INTERFACE,
++				member, DBUS_TYPE_INVALID);
  }
  =
 
- static void isi_ssn_remove(struct ofono_ssn *ssn)
- {
--	struct ssn_data *data =3D ofono_ssn_get_data(ssn);
-+	struct isi_ssn *data =3D ofono_ssn_get_data(ssn);
+ int ofono_call_barring_driver_register(const struct ofono_call_barring_dri=
+ver *d)
+@@ -1132,11 +1121,11 @@ static void ssn_watch(struct ofono_atom *atom,
  =
 
- 	if (data) {
- 		g_isi_client_destroy(data->client);
+ 	cb->incoming_bar_watch =3D
+ 		__ofono_ssn_mo_watch_add(cb->ssn, OFONO_SS_MO_INCOMING_BARRING,
+-				call_barring_incoming_enabled_notify, cb, NULL);
++				call_barring_notify, cb, NULL);
+ =
+
+ 	cb->outgoing_bar_watch =3D
+ 		__ofono_ssn_mo_watch_add(cb->ssn, OFONO_SS_MO_OUTGOING_BARRING,
+-				call_barring_outgoing_enabled_notify, cb, NULL);
++				call_barring_notify, cb, NULL);
+ }
+ =
+
+ static void ussd_watch(struct ofono_atom *atom,
+diff --git a/src/ofono.h b/src/ofono.h
+index 6c7f649..1cbc935 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -243,8 +243,8 @@ void __ofono_cbs_sim_download(struct ofono_stk *stk, co=
+nst struct cbs *msg);
+ =
+
+ #include <ofono/ssn.h>
+ =
+
+-typedef void (*ofono_ssn_mo_notify_cb)(int index, void *user);
+-typedef void (*ofono_ssn_mt_notify_cb)(int index,
++typedef void (*ofono_ssn_mo_notify_cb)(int index, int mo_code, void *user);
++typedef void (*ofono_ssn_mt_notify_cb)(int index, int mt_code,
+ 					const struct ofono_phone_number *ph,
+ 					void *user);
+ =
+
+diff --git a/src/ssn.c b/src/ssn.c
+index b886dba..8a4ad70 100644
+--- a/src/ssn.c
++++ b/src/ssn.c
+@@ -118,12 +118,14 @@ void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, int=
+ code1, int index)
+ 	GSList *l;
+ 	ofono_ssn_mo_notify_cb notify;
+ =
+
++	DBG("ssn %p, code %u, index %u", (void *)ssn, code1, index);
++
+ 	for (l =3D ssn->mo_handler_list->items; l; l =3D l->next) {
+ 		h =3D l->data;
+ 		notify =3D h->item.notify;
+ =
+
+ 		if (h->code =3D=3D code1)
+-			notify(index, h->item.notify_data);
++			notify(index, code1, h->item.notify_data);
+ 	}
+ }
+ =
+
+@@ -134,12 +136,14 @@ void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, int=
+ code2, int index,
+ 	GSList *l;
+ 	ofono_ssn_mt_notify_cb notify;
+ =
+
++	DBG("ssn %p, code %u, index %u", (void *)ssn, code2, index);
++
+ 	for (l =3D ssn->mt_handler_list->items; l; l =3D l->next) {
+ 		h =3D l->data;
+ 		notify =3D h->item.notify;
+ =
+
+ 		if (h->code =3D=3D code2)
+-			notify(index, ph, h->item.notify_data);
++			notify(index, code2, ph, h->item.notify_data);
+ 	}
+ }
+ =
+
 -- =
 
 1.7.0.4
 
 
---===============3173302184718289878==--
+--===============0180098161909768052==--
 
