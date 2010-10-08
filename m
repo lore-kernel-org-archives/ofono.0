@@ -1,181 +1,138 @@
-Content-Type: multipart/mixed; boundary="===============0331481458172252168=="
+Content-Type: multipart/mixed; boundary="===============3748218601250850718=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [RFC ssn PATCH 4/4] D-Bus API for Supplementary Service Notifications
-Date: Fri, 08 Oct 2010 18:36:40 +0300
-Message-ID: <1286552200-18282-5-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1286552200-18282-4-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [RFC ssn PATCH 1/4] ssn: include ssn codes in public API
+Date: Fri, 08 Oct 2010 18:36:37 +0300
+Message-ID: <1286552200-18282-2-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1286552200-18282-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0331481458172252168==
+--===============3748218601250850718==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
+Include +CSSI and +CSSU codes in <include/ssn.h> and prefix them with
+OFONO_.
+
+Added CSSU code 10, OFONO_SS_MT_OTHER_CALL_FORWARDED, which is sent to
+mobile if call was forwarded while mobile was engaged with other
+call(s).
 ---
- doc/call-barring-api.txt     |   10 -------
- doc/call-forwarding-api.txt  |    9 +++++++
- doc/voicecall-api.txt        |   55 ++++++++++++++++++++++++++++++++++++++=
-+++-
- doc/voicecallmanager-api.txt |    5 ++++
- 4 files changed, 68 insertions(+), 11 deletions(-)
+ include/ssn.h      |   29 ++++++++++++++++++++++++++++-
+ src/call-barring.c |    4 ++--
+ src/common.h       |   26 --------------------------
+ 3 files changed, 30 insertions(+), 29 deletions(-)
 
-diff --git a/doc/call-barring-api.txt b/doc/call-barring-api.txt
-index 41ae4b1..1534494 100644
---- a/doc/call-barring-api.txt
-+++ b/doc/call-barring-api.txt
-@@ -37,16 +37,6 @@ Signals		PropertyChanged(string property, variant value)
- 			Signal is emitted whenever a property has changed.
- 			The new value is passed as the signal argument.
+diff --git a/include/ssn.h b/include/ssn.h
+index d640cad..4e6d65c 100644
+--- a/include/ssn.h
++++ b/include/ssn.h
+@@ -36,8 +36,35 @@ struct ofono_ssn_driver {
+ 	void (*remove)(struct ofono_ssn *ssn);
+ };
  =
 
--		IncomingBarringInEffect()
+-/* SSN notifications (CSSI and CSSU).  */
++/* TS 27.007 Supplementary service notifications +CSSN (CSSI and CSSU) */
++enum ofono_ssn_cssi {
++	OFONO_SS_MO_UNCONDITIONAL_FORWARDING	=3D 0,
++	OFONO_SS_MO_CONDITIONAL_FORWARDING	=3D 1,
++	OFONO_SS_MO_CALL_FORWARDED		=3D 2,
++	OFONO_SS_MO_CALL_WAITING		=3D 3,
++	OFONO_SS_MO_CUG_CALL			=3D 4,
++	OFONO_SS_MO_OUTGOING_BARRING		=3D 5,
++	OFONO_SS_MO_INCOMING_BARRING		=3D 6,
++	OFONO_SS_MO_CLIR_SUPPRESSION_REJECTED	=3D 7,
++	OFONO_SS_MO_CALL_DEFLECTED		=3D 8,
++};
++
+ void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, int code, int index);
++
++enum ofono_ssn_cssu {
++	OFONO_SS_MT_CALL_FORWARDED		=3D 0,
++	OFONO_SS_MT_CUG_CALL			=3D 1,
++	OFONO_SS_MT_VOICECALL_ON_HOLD		=3D 2,
++	OFONO_SS_MT_VOICECALL_RETRIEVED		=3D 3,
++	OFONO_SS_MT_MULTIPARTY_VOICECALL	=3D 4,
++	OFONO_SS_MT_VOICECALL_HOLD_RELEASED	=3D 5,
++	OFONO_SS_MT_FORWARD_CHECK_SS_MESSAGE	=3D 6,
++	OFONO_SS_MT_VOICECALL_IN_TRANSFER	=3D 7,
++	OFONO_SS_MT_VOICECALL_TRANSFERRED	=3D 8,
++	OFONO_SS_MT_CALL_DEFLECTED		=3D 9,
++	OFONO_SS_MT_OTHER_CALL_FORWARDED        =3D 10,
++};
++
+ void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, int code, int index,
+ 				const struct ofono_phone_number *number);
+ =
+
+diff --git a/src/call-barring.c b/src/call-barring.c
+index f89602e..7a17479 100644
+--- a/src/call-barring.c
++++ b/src/call-barring.c
+@@ -1131,11 +1131,11 @@ static void ssn_watch(struct ofono_atom *atom,
+ 	cb->ssn =3D __ofono_atom_get_data(atom);
+ =
+
+ 	cb->incoming_bar_watch =3D
+-		__ofono_ssn_mo_watch_add(cb->ssn, SS_MO_INCOMING_BARRING,
++		__ofono_ssn_mo_watch_add(cb->ssn, OFONO_SS_MO_INCOMING_BARRING,
+ 				call_barring_incoming_enabled_notify, cb, NULL);
+ =
+
+ 	cb->outgoing_bar_watch =3D
+-		__ofono_ssn_mo_watch_add(cb->ssn, SS_MO_OUTGOING_BARRING,
++		__ofono_ssn_mo_watch_add(cb->ssn, OFONO_SS_MO_OUTGOING_BARRING,
+ 				call_barring_outgoing_enabled_notify, cb, NULL);
+ }
+ =
+
+diff --git a/src/common.h b/src/common.h
+index c43e46d..7a148b5 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -89,32 +89,6 @@ enum ss_control_type {
+ 	SS_CONTROL_TYPE_ERASURE,
+ };
+ =
+
+-/* TS 27.007 Supplementary service notifications +CSSN */
+-enum ss_cssi {
+-	SS_MO_UNCONDITIONAL_FORWARDING	=3D 0,
+-	SS_MO_CONDITIONAL_FORWARDING	=3D 1,
+-	SS_MO_CALL_FORWARDED		=3D 2,
+-	SS_MO_CALL_WAITING		=3D 3,
+-	SS_MO_CUG_CALL			=3D 4,
+-	SS_MO_OUTGOING_BARRING		=3D 5,
+-	SS_MO_INCOMING_BARRING		=3D 6,
+-	SS_MO_CLIR_SUPPRESSION_REJECTED	=3D 7,
+-	SS_MO_CALL_DEFLECTED		=3D 8,
+-};
 -
--			Signal is emitted when a call is made and an
--			incoming call barring supplementary service is in use.
+-enum ss_cssu {
+-	SS_MT_CALL_FORWARDED		=3D 0,
+-	SS_MT_CUG_CALL			=3D 1,
+-	SS_MT_VOICECALL_ON_HOLD		=3D 2,
+-	SS_MT_VOICECALL_RETRIEVED	=3D 3,
+-	SS_MT_MULTIPARTY_VOICECALL	=3D 4,
+-	SS_MT_VOICECALL_HOLD_RELEASED	=3D 5,
+-	SS_MT_FORWARD_CHECK_SS_MESSAGE	=3D 6,
+-	SS_MT_VOICECALL_IN_TRANSFER	=3D 7,
+-	SS_MT_VOICECALL_TRANSFERRED	=3D 8,
+-	SS_MT_CALL_DEFLECTED		=3D 9,
+-};
 -
--		OutgoingBarringInEffect()
--
--			Signal is emitted when a call is made and an
--			outgoing call barring supplementary service is in use.
--
- Properties	string VoiceIncoming [readwrite]
- =
-
- 			Contains the value of the barrings for the incoming
-diff --git a/doc/call-forwarding-api.txt b/doc/call-forwarding-api.txt
-index 067531a..a97165b 100644
---- a/doc/call-forwarding-api.txt
-+++ b/doc/call-forwarding-api.txt
-@@ -26,6 +26,15 @@ Signals		PropertyChanged(string property, variant value)
- 			Signal is emitted whenever a property has changed.
- 			The new value is passed as the signal argument.
- =
-
-+		ForwardingInEffect(string condition)
-+
-+			This informational signal is emitted when an outgoing
-+			call is made. It indicates that a voice call
-+			forwarding for incoming calls is in use. Condition can
-+			be either of:
-+				"unconditional" - VoiceUnconditional is active
-+				"conditional" - A conditional rule is active
-+
- Properties	string VoiceUnconditional [readwrite]
- =
-
- 			Contains the value of the voice unconditional call
-diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-index f0ba316..a6c0b42 100644
---- a/doc/voicecall-api.txt
-+++ b/doc/voicecall-api.txt
-@@ -73,6 +73,54 @@ Signals		PropertyChanged(string property, variant value)
- 			of this signal as optional. This signal will be
- 			emitted before the PropertyChanged signal.
- =
-
-+		JoinedMultiparty()
-+
-+			Signal is emitted when remote party joins the
-+			call into a multiparty conference.
-+
-+			Note that there is no corresponding event when
-+			remote party splits call from the multiparty
-+			conference.
-+
-+		Waiting()
-+
-+			Signal is emitted when an outgoing call is waiting.
-+
-+		OutgoingBarred()
-+
-+			Signal is emitted when caller's outgoing barring
-+			services prevent call from being connected.
-+
-+			This signal can be emitted while call is being
-+			disconnected or while a recorded announcement is
-+			played.
-+
-+		IngomingBarred()
-+
-+			Signal is emitted when callee's incoming barring
-+			services prevent call from being connected.
-+
-+			This signal can be emitted while call is being
-+			disconnected or while a recorded announcement is
-+			played.
-+
-+		IncomingRedirected(string)
-+
-+			Signal is emitted when network indicates that an
-+			incoming call has been redirected.  The value
-+			contains the phone number of the party that
-+			redirected the call if available.
-+
-+		OutgoingRedirected()
-+
-+			Signal is emitted when an outgoing call has been
-+			redirected.
-+
-+		CallerIDRestrictionRejected()
-+
-+			Signal is emitted when caller requested Caller
-+			ID Restriction but network rejects it.
-+
- Properties	string LineIdentification [readonly]
- =
-
- 			Contains the Line Identification information returned
-@@ -90,7 +138,7 @@ Properties	string LineIdentification [readonly]
- 		boolean Multiparty [readonly]
- =
-
- 			Contains the indication if the voice call is part
--			of a multiparty call or not.
-+			of a multiparty call set up by user or not.
- =
-
- 			Notifications if a call becomes part or leaves a
- 			multipart call are sent.
-@@ -115,6 +163,11 @@ Properties	string LineIdentification [readonly]
- 			Client applications can use this to infer somewhat
- 			reliable call duration information.
- =
-
-+		boolean OnHold [readonly]
-+
-+			Contains the indication if the remote party has
-+			put call on hold.
-+
- 		string Information [readonly, optional]
- =
-
- 			Contains information related to the call for the
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 11af23a..34ed9de 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -132,6 +132,11 @@ Signals		CallAdded(object path, dict properties)
- 			released.  The object path is no longer accessible
- 			after this signal and only emitted for reference.
- =
-
-+		IncomingCallForwarded
-+
-+			This signal is sent when an incoming voice call
-+			has been forwarded by the network.
-+
- Properties	array{string} EmergencyNumbers
- =
-
- 			Contains the list of emergency numbers recognized
+ enum pin_type {
+ 	PIN_TYPE_NONE,
+ 	PIN_TYPE_PIN,
 -- =
 
 1.7.0.4
 
 
---===============0331481458172252168==--
+--===============3748218601250850718==--
 
