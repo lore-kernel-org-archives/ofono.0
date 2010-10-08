@@ -1,52 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============1721684343541503600=="
+Content-Type: multipart/mixed; boundary="===============0181219332851536307=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
-Subject: Re: [fix-isi-udev PATCH 3/3] ofono.rules: assign isigen driver by USB
- ids
-Date: Fri, 08 Oct 2010 12:31:33 +0200
-Message-ID: <4d47700d3dfead943bb373e7c62bdff5@chewa.net>
-In-Reply-To: <1286197866-19572-4-git-send-email-Pekka.Pessi@nokia.com>
+From: Alexander A Khryukin <alexander@mezon.ru>
+Subject: huawei e1550
+Date: Fri, 08 Oct 2010 16:20:46 +0400
+Message-ID: <1286540446.22751.19.camel@mezon.ru>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1721684343541503600==
+--===============0181219332851536307==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi all.
+I have a huawei 1550 GSM-modem.
+When i plug it to usb =
 
 
 
-On Mon,  4 Oct 2010 16:11:06 +0300, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+/usr/lib/ofono/test/list-modems =
 
-> Now using the USB vendor and product IDs like the rest of the oFono
-> drivers.
-> =
+[ /huawei0 ]
+    Features =3D sim =
 
-> For reasons left unclear, the SUBSYSTEMS rule did not work consistently
-> in Ubuntu 10.04.
+    Powered =3D 1
+    Interfaces =3D org.ofono.SupplementaryServices org.ofono.CallBarring
+org.ofono.CallSettings org.ofono.CallForwarding org.ofono.MessageWaiting
+org.ofono.AudioSettings org.ofono.VoiceCallManager org.ofono.SimManager =
 
-The network device is not part of the USB subsystem, only its parent
-device.
+    Online =3D 1
+    Model =3D E1550
+    Manufacturer =3D huawei
+    Serial =3D 353142033084081
+    Revision =3D 11.608.12.00.143
+    [ org.ofono.SupplementaryServices ]
+        State =3D idle
+    [ org.ofono.CallBarring ]
 
-> +# Nokia default (with PC Suite)
-> +ATTRS{idVendor}=3D=3D"0421", ENV{OFONO_DRIVER}=3D"isigen",
-> ENV{OFONO_ISI_ADDRESS}=3D"16"
-> +
-
-This will match the whole USB gadget. How do you get the Phonet interface
-from that?
-
-I would simply match on Ethernet type 820 and kernel name usbpnXXX.
-
--- =
-
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net
-http://fi.linkedin.com/in/remidenis
+        VoiceOutgoing =3D disabled
+        VoiceIncoming =3D disabled
+    [ org.ofono.CallSettings ]
 
 
---===============1721684343541503600==--
+All fine.
+In UX-interface i see section "3G" =
+
+but modem cant find operator's network
+
+I compare with HUAWEI E620 USB modem
+When i plug it in UX i see my network "Megafon" and can connect.
+
+If use ppp+usb_modeswitch modem working and can dial.
+
+
+
+--===============0181219332851536307==--
 
