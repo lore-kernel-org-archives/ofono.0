@@ -1,32 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============7500021523168211730=="
+Content-Type: multipart/mixed; boundary="===============2397415482702370736=="
 MIME-Version: 1.0
-From: Alexander Kanavin <alexander.kanavin@nokia.com>
-Subject: Re: [fix-isi-udev PATCH 0/3] Improve udev with isi
-Date: Fri, 08 Oct 2010 11:45:13 +0300
-Message-ID: <4CAEDA19.9080506@nokia.com>
-In-Reply-To: <1286480461.9665.558.camel@tucson.research.nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [PATCH 3/4] radio settings: document FastDormancy property
+Date: Fri, 08 Oct 2010 10:55:48 +0200
+Message-ID: <1286528148.6145.198.camel@aeonflux>
+In-Reply-To: <C358A26273CF2948B8BCDBA661A581782A7CE20A82@NOK-EUMSG-03.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7500021523168211730==
+--===============2397415482702370736==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 07.10.2010 22:41, ext Aki Niemi wrote:
->> [fix-isi-udev PATCH 3/3] ofono.rules: assign isigen driver by USB ids
->
-> This one was left dangling; let's see if we can come up with a better
-> way to match the modems driven by cdc_phonet. (Although, admittedly this
-> same approach is already used with some AT modems.)
+Hi Mika,
 
-I suppose you could match by usb interface class and subclass? (02 and 254 =
+> > so how does the future prediction is suppose to work. Are we =
 
-respectively -  the first is standardized, but the second seems to be just =
+> > shipping a
+> > time machine together with oFono ;)
+> =
 
-made up by Nokia at some point, so we better keep the vendor id too)
+> I would say the heuristic is system dependent. Typical way would be to mo=
+nitor events from different input devices. If no events arrive for a specif=
+ied time the user is assumed to be inactive. The user might also have some =
+explicit way to do this, such as locking the display and keys.
 
-Alex
+and by that extend we drain the battery since every single component has
+to send keep-alive messages around. Or it has to accept that the wakeup
+time for its GPRS connection is horrible.
 
---===============7500021523168211730==--
+I am not per-se against doing the interface like this, but we have
+discussed this in the beginning of the year. And I like to see how we
+are planning to use this API to support fast dormancy properly and most
+efficient.
+
+So lets take a MeeGo system running on a mobile phone, how would we use
+this property for this. What other system components do we have to
+monitor? Which are our input sources for this?
+
+Help me to get the full picture of this and how it should be integrated
+into a complete system. Just checking of the fast dormancy check box is
+not gonna be enough here.
+
+Regards
+
+Marcel
+
+
+
+--===============2397415482702370736==--
 
