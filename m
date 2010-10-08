@@ -1,58 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============0181219332851536307=="
+Content-Type: multipart/mixed; boundary="===============2425973128364210815=="
 MIME-Version: 1.0
-From: Alexander A Khryukin <alexander@mezon.ru>
-Subject: huawei e1550
-Date: Fri, 08 Oct 2010 16:20:46 +0400
-Message-ID: <1286540446.22751.19.camel@mezon.ru>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [fix-isi-udev PATCH 3/3] ofono.rules: assign isigen driver by USB
+ ids
+Date: Fri, 08 Oct 2010 15:43:43 +0300
+Message-ID: <AANLkTi=qRA_ZniO=mO70+9q6x7ks=W5Sz1woA49SCaSE@mail.gmail.com>
+In-Reply-To: <4d47700d3dfead943bb373e7c62bdff5@chewa.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0181219332851536307==
+--===============2425973128364210815==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all.
-I have a huawei 1550 GSM-modem.
-When i plug it to usb =
+Hi,
 
+2010/10/8 R=C3=A9mi Denis-Courmont <remi@remlab.net>:
+>> Now using the USB vendor and product IDs like the rest of the oFono
+>> drivers.
+>>
+>> For reasons left unclear, the SUBSYSTEMS rule did not work consistently
+>> in Ubuntu 10.04.
+>
+> The network device is not part of the USB subsystem, only its parent
+> device.
 
+Yes, the last S in SUBSYSTEMS refer to a SUBSYSTEM of a parent.
 
-/usr/lib/ofono/test/list-modems =
+>> +# Nokia default (with PC Suite)
+>> +ATTRS{idVendor}=3D=3D"0421", ENV{OFONO_DRIVER}=3D"isigen",
+>> ENV{OFONO_ISI_ADDRESS}=3D"16"
+>> +
+>
+> This will match the whole USB gadget.
 
-[ /huawei0 ]
-    Features =3D sim =
+That is the point. We don't want one modem with at command tty and
+another with phonet interface.
 
-    Powered =3D 1
-    Interfaces =3D org.ofono.SupplementaryServices org.ofono.CallBarring
-org.ofono.CallSettings org.ofono.CallForwarding org.ofono.MessageWaiting
-org.ofono.AudioSettings org.ofono.VoiceCallManager org.ofono.SimManager =
+> How do you get the Phonet interface
+> from that?
 
-    Online =3D 1
-    Model =3D E1550
-    Manufacturer =3D huawei
-    Serial =3D 353142033084081
-    Revision =3D 11.608.12.00.143
-    [ org.ofono.SupplementaryServices ]
-        State =3D idle
-    [ org.ofono.CallBarring ]
+> I would simply match on Ethernet type 820 and
 
-        VoiceOutgoing =3D disabled
-        VoiceIncoming =3D disabled
-    [ org.ofono.CallSettings ]
+isi_add() does the Ethernet type matching. For a reason or another
+Lucid udev rules fails to match the type sysattr when enumerating
+existing devices.
 
+> kernel name usbpnXXX.
 
-All fine.
-In UX-interface i see section "3G" =
+The interface name is ignored as an expert earlier advised. ;)
 
-but modem cant find operator's network
+-- =
 
-I compare with HUAWEI E620 USB modem
-When i plug it in UX i see my network "Megafon" and can connect.
+Pekka.Pessi mail at nokia.com
 
-If use ppp+usb_modeswitch modem working and can dial.
-
-
-
---===============0181219332851536307==--
+--===============2425973128364210815==--
 
