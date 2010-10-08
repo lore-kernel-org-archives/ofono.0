@@ -1,56 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============6600152977948734646=="
+Content-Type: multipart/mixed; boundary="===============1721684343541503600=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] TODO: long phone numbers
-Date: Fri, 08 Oct 2010 12:06:20 +0200
-Message-ID: <1286532380.6145.250.camel@aeonflux>
-In-Reply-To: <1286532150-27030-1-git-send-email-Pekka.Pessi@nokia.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+Subject: Re: [fix-isi-udev PATCH 3/3] ofono.rules: assign isigen driver by USB
+ ids
+Date: Fri, 08 Oct 2010 12:31:33 +0200
+Message-ID: <4d47700d3dfead943bb373e7c62bdff5@chewa.net>
+In-Reply-To: <1286197866-19572-4-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6600152977948734646==
+--===============1721684343541503600==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
 
-> ---
->  TODO |    7 +++++++
->  1 files changed, 7 insertions(+), 0 deletions(-)
+
+
+On Mon,  4 Oct 2010 16:11:06 +0300, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
 > =
 
-> diff --git a/TODO b/TODO
-> index 5589bb1..a96c187 100644
-> --- a/TODO
-> +++ b/TODO
-> @@ -285,11 +285,18 @@ Voicecall
->    Complexity: C1
->    Owner: Pekka Pessi <pekka.pessi@nokia.com>
->  =
+> Now using the USB vendor and product IDs like the rest of the oFono
+> drivers.
+> =
 
-> +- Long phone numbers. According to 3GPP TS 24.008, the callee address
-> +  can be up to 80 digits long.
+> For reasons left unclear, the SUBSYSTEMS rule did not work consistently
+> in Ubuntu 10.04.
+
+The network device is not part of the USB subsystem, only its parent
+device.
+
+> +# Nokia default (with PC Suite)
+> +ATTRS{idVendor}=3D=3D"0421", ENV{OFONO_DRIVER}=3D"isigen",
+> ENV{OFONO_ISI_ADDRESS}=3D"16"
 > +
-> +  Priority: Medium
-> +  Complexity: C2
-> +
->  - Dial strings. Include CLIR prefixes and 2nd stage dial strings in the
->    DialString call property. Add dialstring accessor method to C API.
->  =
 
->    Priority: Medium
->    Complexity: C4
-> +  Owner: Pekka Pessi <pekka.pessi@nokia.com>
+This will match the whole USB gadget. How do you get the Phonet interface
+from that?
 
-so either this is a typo or you meant to do this, but then the subject
-is not matching what the patch does.
+I would simply match on Ethernet type 820 and kernel name usbpnXXX.
 
-Regards
+-- =
 
-Marcel
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net
+http://fi.linkedin.com/in/remidenis
 
 
-
---===============6600152977948734646==--
+--===============1721684343541503600==--
 
