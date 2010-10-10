@@ -1,108 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============4596628581005447637=="
+Content-Type: multipart/mixed; boundary="===============1780251292243241814=="
 MIME-Version: 1.0
-From: Rajesh.Nagaiah@elektrobit.com
-Subject: RE: CDMA SMS Handling
-Date: Fri, 08 Oct 2010 18:19:43 -0700
-Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702ACA2F9@usrdes03.ebgroup.elektrobit.com>
-In-Reply-To: <4CAD0FDC.7030103@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [ussd-mmi PATCH 1/4] Fix valid_ussd_string()
+Date: Sun, 10 Oct 2010 06:08:23 -0500
+Message-ID: <4CB19EA7.9000708@gmail.com>
+In-Reply-To: <1286376739-20677-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4596628581005447637==
+--===============1780251292243241814==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis/Marcel,
+Hi Pekka,
 
->This gets my vote, I like to start bottom up.  E.g. build the
-infrastructure first, with unit tests, etc and then hook
->up the controlling logic.  So starting cdma smsutils =
+On 10/06/2010 09:52 AM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> =
 
->seems like a good idea to me.
+> The valid_ussd_string() returns now true if MMI input is to be sent as
+> USSD.
+> =
 
-I agree, starting with the cdma smsutils should be the starting point,
-along with the unit test developement.
+> The comment about USSD routing is removed, it is out of scope of oFono.
+> The cellular network routes the USSD requests based on the rules laid
+> out in the 22.090, however, any string that can be encoded according to
+> the rules of 23.038 is valid USSD.
+> ---
+>  src/common.c |   44 +++++++++++++++++++-------------------------
+>  src/common.h |    2 +-
+>  src/ussd.c   |   13 ++++++++++++-
+>  3 files changed, 32 insertions(+), 27 deletions(-)
+> =
 
->Do note however that there's more to smsutils than basic parsing.  We
-also have sms fragmentation / de-fragmentation
->logic, sms assembly serialization, status reports, =
 
->character encoding / decoding, etc.  We will have to figure out which
-parts can be re-used for both CDMA and GSM as we =
+Somehow this patch got mangled, so I had to be creative when trying to
+apply it.  I broke it up into two patches and fixed up the style slightly.
 
->go along...
+Patch has been applied, thanks.
 
-I did an analysis of the existing smsutils fuctionalities for the code
-reusability. If we can make the struct sms common for both GSM and CDMA
-by having them as union members, then we can re-use sms assembly
-serialization and fragmentation/de-fragmentation logic with only minor
-changes and no interface changes. Also this struct change will later
-help in multimode case as well, if we have plans for a multimode stack.
+Regards,
+-Denis
 
-Existing struct sms:
-
-struct sms {
-	struct sms_address sc_addr;
-	enum sms_type type;
-	union {
-		struct sms_deliver deliver;
-		struct sms_deliver_ack_report deliver_ack_report;
-		struct sms_deliver_err_report deliver_err_report;
-		struct sms_submit submit;
-		struct sms_submit_ack_report submit_ack_report;
-		struct sms_submit_err_report submit_err_report;
-		struct sms_command command;
-		struct sms_status_report status_report;
-	};
-};
-
-Proposed struct sms:
-
-struct sms {
-	enum sms_type type;
-	union {
-		struct gsm_sms g_sms;
-		struct cdma_sms c_sms;
-	};
-};
-
-struct gsm_sms {
-	struct sms_address sc_addr;
-	enum gsm_sms_type type;
-	union {
-		struct sms_deliver deliver;
-		struct sms_deliver_ack_report deliver_ack_report;
-		struct sms_deliver_err_report deliver_err_report;
-		struct sms_submit submit;
-		struct sms_submit_ack_report submit_ack_report;
-		struct sms_submit_err_report submit_err_report;
-		struct sms_command command;
-		struct sms_status_report status_report;
-	};
-};
-
-struct cdma_sms {
-	enum cdma_sms_type type;
-	union {
-		struct cdma_sms_deliver deliver;
-		struct cdma_sms_submit submit;
-		struct cdma_sms_cancel cancel;
-		struct cdma_sms_delivery_ack delivery_ack;
-		struct cdma_sms_user_ack user_ack;
-		struct cdma_sms_read_ack read_ack;
-		struct cdma_sms_deliver_report deliver_report;
-		struct cdma_sms_submit_report submit_report;
-	};
-};
-
-Let me know your feedback on this. If we agree on this, then one of the
-first tasks should be to do this struct change on the exising code, so
-that GSM developement can happen parallely based on this new structural
-change.
-
-BR,
-Rajesh
-
---===============4596628581005447637==--
+--===============1780251292243241814==--
 
