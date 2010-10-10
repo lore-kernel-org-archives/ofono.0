@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============5228775699046525437=="
+Content-Type: multipart/mixed; boundary="===============0021124764628172647=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [ussd-mmi PATCH 2/4] Check stk requests in
- __ofono_voicecall_is_busy()
-Date: Sun, 10 Oct 2010 06:08:43 -0500
-Message-ID: <4CB19EBB.9060807@gmail.com>
-In-Reply-To: <1286376739-20677-3-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [ussd-mmi PATCH 3/4] voicecall: remove dial_request_finish() cb
+ param
+Date: Sun, 10 Oct 2010 06:09:08 -0500
+Message-ID: <4CB19ED4.7090606@gmail.com>
+In-Reply-To: <1286376739-20677-4-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5228775699046525437==
+--===============0021124764628172647==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,18 +20,17 @@ On 10/06/2010 09:52 AM, Pekka.Pessi(a)nokia.com wrote:
 > From: Pekka Pessi <Pekka.Pessi@nokia.com>
 > =
 
-> Return true if a call is being dialed by stk.
+> There is no need for callback param anymore.
+> ---
+>  src/voicecall.c |   18 +++++++++---------
+>  1 files changed, 9 insertions(+), 9 deletions(-)
 > =
 
-> Use __ofono_voicecall_is_busy() in __ofono_voicecall_dial().
-> ---
->  src/voicecall.c |    9 ++-------
->  1 files changed, 2 insertions(+), 7 deletions(-)
 
 Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============5228775699046525437==--
+--===============0021124764628172647==--
 
