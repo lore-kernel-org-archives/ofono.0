@@ -1,63 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============7384395362707002348=="
+Content-Type: multipart/mixed; boundary="===============4710583751775636444=="
 MIME-Version: 1.0
 From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [PATCH] isimodem: add some ss error enums
-Date: Tue, 12 Oct 2010 20:23:58 +0300
-Message-ID: <AANLkTi=stJ2fd_KXr8CdB-r9h45rBKmTPMtX23tY3j0C@mail.gmail.com>
-In-Reply-To: <4CB1AA6D.5060402@gmail.com>
+Subject: Re: [PATCH] TODO: long phone numbers
+Date: Tue, 12 Oct 2010 20:25:48 +0300
+Message-ID: <AANLkTinZ9Qkj5hE4QQt_U_5J9UHgh7Kq-ktNTMtdGc75@mail.gmail.com>
+In-Reply-To: <4CAFAE79.5040100@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7384395362707002348==
+--===============4710583751775636444==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-2010/10/10 Denis Kenzior <denkenz@gmail.com>:
->> +enum ss_other_error {
->> + =C2=A0 =C2=A0 SS_SERVICE_BUSY =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x00,
->> + =C2=A0 =C2=A0 SS_GSM_MM_RELEASE =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x01,
->> + =C2=A0 =C2=A0 SS_GSM_DATA_ERROR =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x02,
->> + =C2=A0 =C2=A0 SS_GSM_TIMER_EXPIRED =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x03,
->> + =C2=A0 =C2=A0 SS_GSM_REQUEST_CANCELLED =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 =C2=A0 =C2=A00x04,
->> + =C2=A0 =C2=A0 SS_GSM_INDICATE_DEVICE_PASSWORD =3D =C2=A0 =C2=A0 =C2=A0=
- 0x05,
->> + =C2=A0 =C2=A0 SS_GSM_ACTIVATION_DATA_LOST =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 0x09,
->> + =C2=A0 =C2=A0 SS_GSM_MM_ERROR =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x0B,
->> + =C2=A0 =C2=A0 SS_GSM_SERVICE_NOT_ON_FDN_LIST =3D =C2=A0 =C2=A0 =C2=A0 =
-=C2=A00x0C,
->> + =C2=A0 =C2=A0 SS_SIMATKCC_REJECTED =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x0D,
->> + =C2=A0 =C2=A0 SS_SIMATKCC_MODIFIED =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x0E,
->> + =C2=A0 =C2=A0 SS_CS_INACTIVE =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A00x0F,
->> + =C2=A0 =C2=A0 /* SS_GSM_SS_NOT_AVAILABLE =3D =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A00x12, */
->> + =C2=A0 =C2=A0 /* SS_GSM_USSD_BUSY =3D =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 0x48, */
+2010/10/9 Denis Kenzior <denkenz@gmail.com>:
+>> +- Long phone numbers. According to 3GPP TS 24.008, the callee address
+>> + =C2=A0can be up to 80 digits long.
 >
-> Why are these commented out?
+> Is the goal here to only enable this on ATD or are we also talking about
+> using EFext chaining here? =C2=A0Either way, a better description of the =
+task
+> scope might be helpful.
 
-The isimodem supplementary service API designer have decided to save a
-couple of code points and reused the MAP error enums in as error codes
-generated internally.
-
-I'll check the indenting, add a comment clarifying the comments and resubmi=
-t.
+Both, but I guess EFext chaining also going further as it has to
+support dial strings which are not part of the phone number.
 
 -- =
 
 Pekka.Pessi mail at nokia.com
 
---===============7384395362707002348==--
+--===============4710583751775636444==--
 
