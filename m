@@ -1,78 +1,126 @@
-Content-Type: multipart/mixed; boundary="===============6355596412001750344=="
+Content-Type: multipart/mixed; boundary="===============2157165185362081438=="
 MIME-Version: 1.0
-From: Torgny Johansson <torgny.johansson@ericsson.com>
-Subject: [PATCH] Add Ericsson c3607w and HP f3607gw/f3307 devices to udev
- rules file
-Date: Tue, 12 Oct 2010 14:41:03 +0200
-Message-ID: <1286887263-24639-1-git-send-email-torgny.johansson@ericsson.com>
+From: Petteri Tikander <petteri.tikander@ixonos.com>
+Subject: [RFC PATCH 1/8] sim: add function to read general info from SIM
+ EF-file
+Date: Tue, 12 Oct 2010 18:18:07 +0300
+Message-ID: <1286896694-3054-2-git-send-email-petteri.tikander@ixonos.com>
+In-Reply-To: <1286896694-3054-1-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6355596412001750344==
+--===============2157165185362081438==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Function reads file length, record length, file status etc,
+but doesn't retrieve any EF-contents.
+Request for EFadn is added, but this commit just debugs
+the response.
 ---
- plugins/ofono.rules |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
+ include/sim.h |   11 +++++++++++
+ src/sim.c     |   30 ++++++++++++++++++++++++++++--
+ 2 files changed, 39 insertions(+), 2 deletions(-)
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index 0f0f1fc..f46d198 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -380,6 +380,10 @@ ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"19=
-04", ENV{OFONO_DRIVER}=3D"mbm"
- ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"1905", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"1906", ENV{OFONO_DRIVE=
-R}=3D"mbm"
+diff --git a/include/sim.h b/include/sim.h
+index 42b19bd..8dd6131 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -82,6 +82,7 @@ typedef void (*ofono_sim_file_info_cb_t)(const struct ofo=
+no_error *error,
+ 					enum ofono_sim_file_structure structure,
+ 					int recordlength,
+ 					const unsigned char access[3],
++					unsigned char file_status,
+ 					void *data);
  =
 
-+# Ericsson c3607w
-+ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"190b", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"1049", ENV{OFONO_DRIVE=
-R}=3D"mbm"
+ typedef void (*ofono_sim_read_cb_t)(const struct ofono_error *error,
+@@ -206,6 +207,16 @@ int ofono_sim_write(struct ofono_sim *sim, int id,
+ int ofono_sim_read_bytes(struct ofono_sim *sim, int id,
+ 			unsigned short offset, unsigned short num_bytes,
+ 			ofono_sim_file_read_cb_t cb, void *data);
 +
- # Ericsson F3307
- ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"190a", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"1909", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-@@ -398,6 +402,18 @@ ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"81=
-84", ENV{OFONO_DRIVER}=3D"mbm"
- ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"818b", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"818c", ENV{OFONO_DRIVE=
-R}=3D"mbm"
++/*
++ * This function reads only general info from SIM-file with
++ * requested id (file length, record length, file status etc),
++ * not any records.
++ */
++int ofono_sim_read_info(struct ofono_sim *sim, int id,
++			enum ofono_sim_file_structure expected,
++			ofono_sim_file_read_cb_t cb, void *data);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/src/sim.c b/src/sim.c
+index 6f10d4c..f0633bb 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -1183,6 +1183,15 @@ static void sim_efphase_read_cb(int ok, int length, =
+int record,
+ 		sim->phase =3D data[0];
+ }
  =
 
-+# HP hs2330 Mobile Broadband Module
-+ATTRS{idVendor}=3D=3D"03f0", ATTRS{idProduct}=3D=3D"271d", ENV{OFONO_DRIVE=
-R}=3D"mbm"
++static void sim_info_read_cb(int ok, int length, int record,
++					const unsigned char *file_status,
++					int record_length, void *userdata)
++{
++	DBG("OK: %d, length: %d, record: %d, \
++		file_status: %x, record_length: %d",
++		ok, length, record, file_status[0], record_length);
++}
 +
-+# HP hs2320 Mobile Broadband Module
-+ATTRS{idVendor}=3D=3D"03f0", ATTRS{idProduct}=3D=3D"261d", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+
-+# HP lc2000 Mobile Broadband Module
-+ATTRS{idVendor}=3D=3D"03f0", ATTRS{idProduct}=3D=3D"301d", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+
-+# HP lc2010 Mobile Broadband Module
-+ATTRS{idVendor}=3D=3D"03f0", ATTRS{idProduct}=3D=3D"2f1d", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+
- # Toshiba
- ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"130b", ENV{OFONO_DRIVE=
-R}=3D"mbm"
+ static void sim_initialize_after_pin(struct ofono_sim *sim)
+ {
+ 	ofono_sim_read(sim, SIM_EFPHASE_FILEID,
+@@ -1530,7 +1539,7 @@ int ofono_sim_read_bytes(struct ofono_sim *sim, int i=
+d,
+ 		return -1;
  =
 
+ 	return sim_fs_read(sim->simfs, id, OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+-				offset, num_bytes, cb, data);
++				FALSE, offset, num_bytes, cb, data);
+ }
+ =
+
+ int ofono_sim_read(struct ofono_sim *sim, int id,
+@@ -1540,7 +1549,24 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
+ 	if (sim =3D=3D NULL)
+ 		return -1;
+ =
+
+-	return sim_fs_read(sim->simfs, id, expected_type, 0, 0, cb, data);
++	return sim_fs_read(sim->simfs, id, expected_type, FALSE,
++				0, 0, cb, data);
++}
++
++int ofono_sim_read_info(struct ofono_sim *sim, int id,
++			enum ofono_sim_file_structure expected_type,
++			ofono_sim_file_read_cb_t cb, void *data)
++{
++	/*
++	 * Retrieve EF-info only (file length, record length, file status etc).
++	 * So this function doesn't retrieve actual EF-contents.
++	 */
++
++	if (sim =3D=3D NULL)
++		return -1;
++
++	return sim_fs_read(sim->simfs, id, expected_type, TRUE,
++				0, 0, cb, data);
+ }
+ =
+
+ int ofono_sim_write(struct ofono_sim *sim, int id,
 -- =
 
-1.7.0.4
+1.6.3.3
 
 
---===============6355596412001750344==--
+
+--===============2157165185362081438==--
 
