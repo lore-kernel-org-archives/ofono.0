@@ -1,114 +1,118 @@
-Content-Type: multipart/mixed; boundary="===============2677891727357584209=="
+Content-Type: multipart/mixed; boundary="===============0474358012258806018=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC online/offline atoms PATCH 3/4] gprs: watch modem state
-Date: Wed, 13 Oct 2010 15:53:01 -0500
-Message-ID: <4CB61C2D.7080104@gmail.com>
-In-Reply-To: <1286278512-3529-4-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: CDMA SMS Handling
+Date: Wed, 13 Oct 2010 16:21:35 -0500
+Message-ID: <4CB622DF.9030601@gmail.com>
+In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702ACA2F9@usrdes03.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2677891727357584209==
+--===============0474358012258806018==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Rajesh,
 
-On 10/05/2010 06:35 AM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> I did an analysis of the existing smsutils fuctionalities for the code
+> reusability. If we can make the struct sms common for both GSM and CDMA
+> by having them as union members, then we can re-use sms assembly
+> serialization and fragmentation/de-fragmentation logic with only minor
+> changes and no interface changes. Also this struct change will later
+> help in multimode case as well, if we have plans for a multimode stack.
 > =
 
-> Indicate detach when modem is in offline state.
-> ---
->  src/gprs.c |   26 ++++++++++++++++++++++++++
->  1 files changed, 26 insertions(+), 0 deletions(-)
+> Existing struct sms:
 > =
 
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 3f085ed..431275c 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -76,6 +76,7 @@ struct ofono_gprs {
->  	struct ofono_netreg *netreg;
->  	unsigned int netreg_watch;
->  	unsigned int status_watch;
-> +	unsigned int online_watch;
->  	GKeyFile *settings;
->  	char *imsi;
->  	DBusMessage *pending;
-> @@ -1048,8 +1049,17 @@ static void gprs_attach_callback(const struct ofon=
-o_error *error, void *data)
->  =
+> struct sms {
+> 	struct sms_address sc_addr;
+> 	enum sms_type type;
+> 	union {
+> 		struct sms_deliver deliver;
+> 		struct sms_deliver_ack_report deliver_ack_report;
+> 		struct sms_deliver_err_report deliver_err_report;
+> 		struct sms_submit submit;
+> 		struct sms_submit_ack_report submit_ack_report;
+> 		struct sms_submit_err_report submit_err_report;
+> 		struct sms_command command;
+> 		struct sms_status_report status_report;
+> 	};
+> };
+> =
 
->  static void gprs_netreg_update(struct ofono_gprs *gprs)
->  {
-> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
->  	ofono_bool_t attach;
->  =
+> Proposed struct sms:
+> =
 
-> +	if (!ofono_modem_get_online(modem)) {
-> +		gprs->flags &=3D ~(GPRS_FLAG_RECHECK | GPRS_FLAG_ATTACHING);
-> +		gprs->netreg_status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
-> +		gprs->driver_attached =3D FALSE;
-> +		gprs_attached_update(gprs);
-> +		return;
-> +	}
-> +
->  	attach =3D gprs->netreg_status =3D=3D NETWORK_REGISTRATION_STATUS_REGIS=
-TERED;
->  =
+> struct sms {
+> 	enum sms_type type;
+> 	union {
+> 		struct gsm_sms g_sms;
+> 		struct cdma_sms c_sms;
+> 	};
+> };
 
->  	attach =3D attach || (gprs->roaming_allowed &&
-> @@ -1740,6 +1750,11 @@ static void gprs_unregister(struct ofono_atom *ato=
-m)
->  		gprs->cid_map =3D NULL;
->  	}
->  =
+So personally I'd just extend the current enum sms_type with CDMA
+variants, e.g.:
+	SMS_TYPE_CDMA_DELIVER, SMS_TYPE_CDMA_SUBMIT, etc and add the cdma
+structures directly to the current union, e.g:
 
-> +	if (gprs->online_watch) {
-> +		__ofono_modem_remove_state_watch(modem, gprs->online_watch);
-> +		gprs->online_watch =3D 0;
-> +	}
-> +
->  	if (gprs->netreg_watch) {
->  		if (gprs->status_watch) {
->  			__ofono_netreg_remove_status_watch(gprs->netreg,
-> @@ -1844,6 +1859,14 @@ static void netreg_watch(struct ofono_atom *atom,
->  	gprs_netreg_update(gprs);
->  }
->  =
+struct sms {
+	struct sms_address sc_addr;
+	enum sms_type type;
+	union {
+		struct sms_deliver deliver;
+		struct sms_deliver_ack_report deliver_ack_report;
+		struct sms_deliver_err_report deliver_err_report;
+		struct sms_submit submit;
+		struct sms_submit_ack_report submit_ack_report;
+		struct sms_submit_err_report submit_err_report;
+		struct sms_command command;
+		struct sms_status_report status_report;
 
-> +static void online_watch(enum ofono_modem_state modem_state, void *data)
-> +{
-> +	struct ofono_gprs *gprs =3D data;
-> +
-> +	if (modem_state !=3D MODEM_STATE_ONLINE)
-> +		gprs_netreg_update(gprs);
+		/* CDMA */
+		struct sms_cdma_deliver deliver;
+		struct sms_cdma_submit submit;
+		...
+	};
+};
 
-So again, the question is whether it is better to watch for the netreg
-atom going away instead of using an online/offline watch...
+<snip>
 
-> +}
-> +
->  static gboolean load_context(struct ofono_gprs *gprs, const char *group)
->  {
->  	char *name =3D NULL;
-> @@ -2041,6 +2064,9 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
->  	ofono_modem_add_interface(modem,
->  				OFONO_CONNECTION_MANAGER_INTERFACE);
->  =
+> struct cdma_sms {
+> 	enum cdma_sms_type type;
 
-> +	gprs->online_watch =3D __ofono_modem_add_state_watch(modem,
-> +					online_watch, gprs, NULL);
-> +
->  	sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
->  =
+Does CDMA have an SMSC address?
 
->  	if (sim_atom) {
+> 	union {
+> 		struct cdma_sms_deliver deliver;
+> 		struct cdma_sms_submit submit;
+> 		struct cdma_sms_cancel cancel;
+> 		struct cdma_sms_delivery_ack delivery_ack;
+> 		struct cdma_sms_user_ack user_ack;
+> 		struct cdma_sms_read_ack read_ack;
+> 		struct cdma_sms_deliver_report deliver_report;
+> 		struct cdma_sms_submit_report submit_report;
+> 	};
+> };
+> =
+
+> Let me know your feedback on this. If we agree on this, then one of the
+> first tasks should be to do this struct change on the exising code, so
+> that GSM developement can happen parallely based on this new structural
+> change.
+
+Doing it the way I suggested would keep the impact on the current code
+base absolutely minimal.  This way you can start submitting patches
+right away for CDMA support without impacting anyone.  Once the CDMA
+aspects are stabilized and we're happy with them we can do the final
+struct / API refactoring as needed.
+
+Thoughts?
 
 Regards,
 -Denis
 
---===============2677891727357584209==--
+--===============0474358012258806018==--
 
