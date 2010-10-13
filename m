@@ -1,198 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============8852406837343558159=="
+Content-Type: multipart/mixed; boundary="===============2344305870752087647=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 12/13] stk: Handle the Play Tone proactive command.
-Date: Wed, 13 Oct 2010 15:54:15 +0200
-Message-ID: <1286978056-16600-12-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 13/13] [RfC] API for STK driver to signal executed commands.
+Date: Wed, 13 Oct 2010 15:54:16 +0200
+Message-ID: <1286978056-16600-13-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1286978056-16600-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8852406837343558159==
+--===============2344305870752087647==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-A memory leak in error path has been fixed since the previous version.
+Some modems are able to handle some proactive commands in their
+firmware or otherwise, if the command doesn't require input from user.
+Nevertheles ofono may need to update internal state or notify the user
+where necessary.  With this api the driver can notify core that a
+command is being executed in the modem or that a command is finished
+executing and the TERMINAL RESPONSE has been sent to SIM.  It would
+also be possible for a driver to handle a command.
 ---
- src/stk.c |  139 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 139 insertions(+), 0 deletions(-)
+ include/stk.h |    7 +++++++
+ src/stk.c     |   39 +++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 46 insertions(+), 0 deletions(-)
 
+diff --git a/include/stk.h b/include/stk.h
+index 638da9c..8f548d3 100644
+--- a/include/stk.h
++++ b/include/stk.h
+@@ -67,6 +67,13 @@ void ofono_stk_proactive_command_notify(struct ofono_stk=
+ *stk,
+ =
+
+ void ofono_stk_proactive_session_end_notify(struct ofono_stk *stk);
+ =
+
++void ofono_stk_proactive_command_handled_notify(struct ofono_stk *stk,
++						int length,
++						const unsigned char *pdu);
++void ofono_stk_terminal_response_sent_notify(struct ofono_stk *stk,
++						int length,
++						const unsigned char *pdu);
++
+ #ifdef __cplusplus
+ }
+ #endif
 diff --git a/src/stk.c b/src/stk.c
-index c06bf99..b3d2b40 100644
+index b3d2b40..69a5353 100644
 --- a/src/stk.c
 +++ b/src/stk.c
-@@ -89,6 +89,11 @@ struct extern_req {
- 	gboolean cancelled;
- };
- =
-
-+struct tone_info {
-+	const char *name;
-+	gboolean continuous;
-+};
-+
- #define ENVELOPE_RETRIES_DEFAULT 5
- =
-
- static void envelope_queue_run(struct ofono_stk *stk);
-@@ -2102,6 +2107,135 @@ static gboolean handle_command_send_dtmf(const stru=
-ct stk_command *cmd,
- 	return FALSE;
+@@ -2431,6 +2431,45 @@ void ofono_stk_proactive_command_notify(struct ofono=
+_stk *stk,
+ 		stk_command_cb(&error, stk);
  }
  =
 
-+static void play_tone_cb(enum stk_agent_result result, void *user_data)
++void ofono_stk_proactive_command_handled_notify(struct ofono_stk *stk,
++						int length,
++						const unsigned char *pdu)
 +{
-+	struct ofono_stk *stk =3D user_data;
++	struct stk_command *cmd;
 +
-+	stk->respond_on_exit =3D FALSE;
++	stk_proactive_command_cancel(stk);
 +
-+	switch (result) {
-+	case STK_AGENT_RESULT_OK:
-+	case STK_AGENT_RESULT_TIMEOUT:
-+		send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
++	cmd =3D stk_command_new_from_pdu(pdu, length);
++
++	if (!cmd || cmd->status !=3D STK_PARSE_RESULT_OK) {
++		ofono_error("Can't parse proactive command");
++
++		if (cmd)
++			stk_command_free(cmd);
++		return;
++	}
++
++	switch (cmd->type) {
++	case STK_COMMAND_TYPE_MORE_TIME:
 +		break;
 +
-+	default:
-+		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
++	case STK_COMMAND_TYPE_SEND_SMS:
++		stk_alpha_id_set(stk, cmd->send_sms.alpha_id,
++					&cmd->send_sms.text_attr,
++					&cmd->send_sms.icon_id);
 +		break;
 +	}
++
++	stk_command_free(cmd);
 +}
 +
-+static gboolean handle_command_play_tone(const struct stk_command *cmd,
-+						struct stk_response *rsp,
-+						struct ofono_stk *stk)
++void ofono_stk_terminal_response_sent_notify(struct ofono_stk *stk,
++						int length,
++						const unsigned char *pdu)
 +{
-+	static int manufacturer_timeout =3D 10000; /* 10 seconds */
-+	/* Continuous true/false according to 02.40 */
-+	static const struct tone_info tone_infos[] =3D {
-+		/* Default */
-+		[0x00] =3D { "dial-tone", TRUE },
-+
-+		/* Standard */
-+		[0x01] =3D { "dial-tone", TRUE },
-+		[0x02] =3D { "busy", TRUE },
-+		[0x03] =3D { "congestion", TRUE },
-+		[0x04] =3D { "radio-path-acknowledge", FALSE },
-+		[0x05] =3D { "radio-path-not-available", FALSE },
-+		[0x06] =3D { "error", TRUE },
-+		[0x07] =3D { "call-waiting", FALSE },
-+		[0x08] =3D { "ringing-tone", TRUE },
-+
-+		/* Proprietary */
-+		[0x10] =3D { "general-beep", FALSE },
-+		[0x11] =3D { "positive-acknowledgement", FALSE },
-+		[0x12] =3D { "negative-acknowledgement", FALSE },
-+		[0x13] =3D { "user-ringing-tone", TRUE },
-+		[0x14] =3D { "user-sms-alert", FALSE },
-+		[0x15] =3D { "critical", FALSE },
-+		[0x20] =3D { "vibrate", TRUE },
-+
-+		/* Themed */
-+		[0x30] =3D { "happy", FALSE },
-+		[0x31] =3D { "sad", FALSE },
-+		[0x32] =3D { "urgent-action", FALSE },
-+		[0x33] =3D { "question", FALSE },
-+		[0x34] =3D { "message-received", FALSE },
-+
-+		/* Melody */
-+		[0x40] =3D { "melody-1", FALSE },
-+		[0x41] =3D { "melody-2", FALSE },
-+		[0x42] =3D { "melody-3", FALSE },
-+		[0x43] =3D { "melody-4", FALSE },
-+		[0x44] =3D { "melody-5", FALSE },
-+		[0x45] =3D { "melody-6", FALSE },
-+		[0x46] =3D { "melody-7", FALSE },
-+		[0x47] =3D { "melody-8", FALSE },
-+	};
-+
-+	const struct stk_command_play_tone *pt =3D &cmd->play_tone;
-+	uint8_t qualifier =3D stk->pending_cmd->qualifier;
-+	gboolean vibrate =3D (qualifier & (1 << 0)) !=3D 0;
-+	char *text;
-+	int timeout;
-+	int err;
-+
-+	if (!tone_infos[pt->tone].name) {
-+		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
-+
-+		return TRUE;
-+	}
-+
-+	text =3D dbus_apply_text_attributes(pt->alpha_id ? pt->alpha_id : "",
-+						&pt->text_attr);
-+	if (!text) {
-+		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
-+
-+		return TRUE;
-+	}
-+
-+	if (pt->duration.interval) {
-+		timeout =3D pt->duration.interval;
-+		switch (pt->duration.unit) {
-+		case STK_DURATION_TYPE_MINUTES:
-+			timeout *=3D 60;
-+		case STK_DURATION_TYPE_SECONDS:
-+			timeout *=3D 10;
-+		case STK_DURATION_TYPE_SECOND_TENTHS:
-+			timeout *=3D 100;
-+		}
-+	} else
-+		timeout =3D manufacturer_timeout;
-+
-+	if (!tone_infos[pt->tone].continuous)
-+		/* Duration ignored */
-+		err =3D stk_agent_play_tone(stk->current_agent, text,
-+						&pt->icon_id, vibrate,
-+						tone_infos[pt->tone].name,
-+						play_tone_cb, stk, NULL,
-+						stk->timeout * 1000);
-+	else
-+		err =3D stk_agent_loop_tone(stk->current_agent, text,
-+						&pt->icon_id, vibrate,
-+						tone_infos[pt->tone].name,
-+						play_tone_cb, stk, NULL,
-+						timeout);
-+	g_free(text);
-+
-+	if (err < 0) {
-+		/*
-+		 * We most likely got an out of memory error, tell SIM
-+		 * to retry
-+		 */
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		return TRUE;
-+	}
-+
-+	stk->respond_on_exit =3D TRUE;
-+	stk->cancel_cmd =3D stk_request_cancel;
-+
-+	return FALSE;
++	stk_alpha_id_unset(stk);
 +}
 +
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
+ int ofono_stk_driver_register(const struct ofono_stk_driver *d)
  {
- 	if (stk->immediate_response)
-@@ -2279,6 +2413,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
-_stk *stk,
- 							&rsp, stk);
- 		break;
- =
-
-+	case STK_COMMAND_TYPE_PLAY_TONE:
-+		respond =3D handle_command_play_tone(stk->pending_cmd,
-+							&rsp, stk);
-+		break;
-+
- 	default:
- 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
- 		break;
+ 	DBG("driver: %p, name: %s", d, d->name);
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============8852406837343558159==--
+--===============2344305870752087647==--
 
