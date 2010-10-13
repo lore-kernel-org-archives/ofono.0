@@ -1,288 +1,135 @@
-Content-Type: multipart/mixed; boundary="===============1375409332653123185=="
+Content-Type: multipart/mixed; boundary="===============7655778886678290602=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] stk: Expose icon IDs on D-Bus.
-Date: Wed, 13 Oct 2010 09:34:14 -0500
-Message-ID: <4CB5C366.5020005@gmail.com>
-In-Reply-To: <1286461206-4446-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH v2 0/3] Patch Description
+Date: Wed, 13 Oct 2010 15:19:30 -0500
+Message-ID: <4CB61452.7020200@gmail.com>
+In-Reply-To: <1285869146-30183-1-git-send-email-gyagp0@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1375409332653123185==
+--===============7655778886678290602==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Yang,
 
-On 10/07/2010 09:20 AM, Andrzej Zaborowski wrote:
-> Update the docs to match the properties in stk.c.
-> ---
->  doc/stk-api.txt |   16 ++++++-
->  src/stk.c       |  112 ++++++++++++++++++++++++++++++++++---------------=
-------
->  src/stkagent.c  |   41 ++++++++++++--------
->  src/stkagent.h  |   34 +++++++++-------
->  4 files changed, 125 insertions(+), 78 deletions(-)
+On 09/30/2010 12:52 PM, Yang Gu wrote:
+> This series of patches fix the compilation problem, as well as some memor=
+y leak. But the main focus is to enable Qt script so that phonesim GUI can =
+be controlled using JavaScript. In the meantime, D-Bus support is added for=
+ the sake of test automation.
+> =
 
-This patch no longer applies, can you please rebase it?
+> Here are several examples:
+> 1. call.js (stands for incoming call and copy it to /tmp/call/)
+> tabRegistration.gbIncomingCall.leCaller.text =3D "12345";
+> tabRegistration.gbIncomingCall.pbIncomingCall.click();
 
-Also, please split up this patch up some more.
+So this is a great idea and all the patches have been pushed.  I've done
+a couple of quick modifications afterward.  More info below.
 
 > =
 
-> diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-> index f5b9ebc..c29872a 100644
-> --- a/doc/stk-api.txt
-> +++ b/doc/stk-api.txt
-> @@ -55,23 +55,33 @@ Signals		PropertyChanged(string property, variant val=
-ue)
->  			Signal is emitted whenever a property has changed.
->  			The new value is passed as the signal argument.
->  =
+> Then we set the path of script and run the script with its name
+> dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Scr=
+ipt.SetPath string:/tmp/call
+> dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Scr=
+ipt.Run string:call.js
+> =
 
-> -Properties	string IdleText
-> +Properties	string IdleModeText
+> Now we have simulated an incoming call.
+> =
 
-This is a bug fix, and should be in a separate patch.
+> 2. sms.js (stands for incoming sms and copy it to /tmp/sms/)
+> tabSMS.gbMessage1.leMessageSender.text =3D "Yang";
+> tabSMS.gbMessage1.leSMSClass.text =3D "1";
+> tabSMS.gbMessage1.teSMSText.setPlainText("This message is sent automatica=
+lly from phonesim");
+> tabSMS.gbMessage1.pbSendSMSMessage.click();
+> =
 
->  =
+> Then we do the similar things as first example:
+> dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Scr=
+ipt.SetPath string:/tmp/sms
+> dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Scr=
+ipt.Run string:sms.js
+> =
 
->  			Contains the text to be used when the home screen is
-> -			idle.  This text is set by the SIM and can be changed
-> +			idle.  This text is set by the SIM and can change
->  			at any time.
+> Now we have simulated an incoming sms.
+> =
 
-Squash this into the patch above.
+> 3. Get the current path for script
+> dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Scr=
+ipt.GetPath
+> =
 
->  =
+> 4. Make script return some string
+> The string can be any string, number, bool, date, etc in JavaScript, but =
+it couldn't be a object because of some side effect. Refer "QScriptValue Cl=
+ass Reference" for details.
+> For example, if you want to know the current incoming number, you may wri=
+te a script as below:
+> // number.js
+> tabRegistration.gbIncomingCall.leCaller.text
+> =
 
-> +		byte IdleModeIcon
-> +
-> +			Contains the identifier of the icon accompanying
-> +			the idle mode text.
-> +
->  		array{struct{string, byte}} MainMenu
->  =
-
->  			Contains the items that make up the main menu.  This
->  			is populated by the SIM when it sends the Setup Menu
->  			Proactive Command.  The main menu is always available,
-> -			but its contents can be changed at any time.
-> +			but its contents can be changed at any time.  Each
-> +			item contains the item label and icon identifier.
->  =
-
->  		string MainMenuTitle
->  =
-
->  			Contains the title of the main menu.
->  =
-
-> +		string MainMenuIcon
-> +
-> +			Contains the identifier of the icon for the main menu.
-> +
->  		array{byte} Icons
->  =
+> After running the script the similar way as above, you may get the number=
+. =
 
 
-Rest should be in a separate doc update patch.
+This is really valuable information.  Can you submit a patch that adds a
+quick document describing this functionality? Alternatively, adding a
+new section to the HACKING file might be an option as well.
 
->  			Contains the identifiers of all available icons for
-> diff --git a/src/stk.c b/src/stk.c
-> index 84a22c9..7aa2ea6 100644
-> --- a/src/stk.c
-> +++ b/src/stk.c
-> @@ -72,6 +72,7 @@ struct ofono_stk {
->  	guint remove_agent_source;
->  	struct extern_req *extern_req;
->  	char *idle_mode_text;
-> +	struct stk_icon_id idle_mode_icon;
+> =
 
-Idle Mode Icon and Main Menu Icon support should be in a separate patch.
+> By the way, you may need below file (/etc/dbus-1/system.d/phonesim.conf) =
+so that phonesim can register its service in system bus:
+> <!-- This configuration file specifies the required security policies
+>      for oFono core daemon to work. -->
+> =
 
->  	struct timeval get_inkey_start_ts;
->  };
->  =
+> <!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-BUS Bus Configuration 1=
+.0//EN"
+>  "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+> <busconfig>
+> =
 
-> @@ -256,19 +257,28 @@ void __ofono_cbs_sim_download(struct ofono_stk *stk=
-, const struct cbs *msg)
->  }
->  =
+>   <!-- ../system.conf have denied everything, so we just punch some holes=
+ -->
+> =
 
->  static struct stk_menu *stk_menu_create(const char *title,
-> -		const struct stk_text_attribute *title_attr, GSList *items,
-> +		const struct stk_text_attribute *title_attr,
-> +		const struct stk_icon_id *icon, GSList *items,
->  		const struct stk_item_text_attribute_list *item_attrs,
-> +		const struct stk_item_icon_id_list *item_icon_ids,
->  		int default_id, gboolean soft_key, gboolean has_help)
->  {
->  	struct stk_menu *ret =3D g_new(struct stk_menu, 1);
-> +	unsigned int len =3D g_slist_length(items);
->  	GSList *l;
->  	int i;
->  =
+>   <policy user=3D"root">
+>     <allow own=3D"org.phonesim"/>
+>     <allow send_destination=3D"org.phonesim"/>
+>   </policy>
+> =
 
->  	DBG("");
->  =
+>   <policy at_console=3D"true">
+>     <allow send_destination=3D"org.phonesim"/>
+>   </policy>
+> =
 
-> +	if (item_attrs && item_attrs->len && item_attrs->len !=3D len * 4)
-> +		goto error;
-> +
-> +	if (item_icon_ids && item_icon_ids->len && item_icon_ids->len !=3D len)
-> +		goto error;
-> +
->  	ret->title =3D g_strdup(title ? title : "");
-> -	ret->icon_id =3D 0;
-> -	ret->items =3D g_new0(struct stk_menu_item, g_slist_length(items) + 1);
-> +	memcpy(&ret->icon, icon, sizeof(ret->icon));
-> +	ret->items =3D g_new0(struct stk_menu_item, len + 1);
->  	ret->default_item =3D -1;
->  	ret->soft_key =3D soft_key;
->  	ret->has_help =3D has_help;
-> @@ -278,12 +288,18 @@ static struct stk_menu *stk_menu_create(const char =
-*title,
->  =
+>   <policy context=3D"default">
+>     <deny send_destination=3D"org.phonesim"/>
+>   </policy>
+> =
 
->  		ret->items[i].text =3D g_strdup(item->text);
->  		ret->items[i].item_id =3D item->id;
-> +		if (item_icon_ids && item_icon_ids->len)
-> +			ret->items[i].icon_id =3D item_icon_ids->list[i];
->  =
+> </busconfig>
+> =
 
->  		if (item->id =3D=3D default_id)
->  			ret->default_item =3D i;
->  	}
->  =
+> =
 
->  	return ret;
-> +
-> +error:
-> +	g_free(ret);
-> +	return NULL;
->  }
 
-This part should be in a separate patch
-
-<snip>
-
-> @@ -381,7 +409,8 @@ static void dict_append_menu(DBusMessageIter *dict, s=
-truct stk_menu *menu)
->  	dbus_message_iter_close_container(dict, &entry);
->  }
->  =
-
-> -static void stk_alpha_id_set(struct ofono_stk *stk, const char *text)
-> +static void stk_alpha_id_set(struct ofono_stk *stk, const char *text,
-> +		const struct stk_icon_id *icon)
-
-stk_alpha_id_set changes should be in a separate patch ;)
-
-<snip>
-
->  =
-
-> -	if (!stk->pending_cmd->send_sms.alpha_id ||
-> -			!stk->pending_cmd->send_sms.alpha_id[0])
-> -		return;
-> -
-
-This part does not look related to icon ids at all.  Please break it out
-into a separate patch.
-
->  	stk_alpha_id_unset(stk);
->  }
->  =
-
-> @@ -684,9 +713,7 @@ static void send_sms_submit_cb(gboolean ok, void *dat=
-a)
->  		return;
->  	}
->  =
-
-> -	if (stk->pending_cmd->send_sms.alpha_id &&
-> -			stk->pending_cmd->send_sms.alpha_id[0])
-> -		stk_alpha_id_unset(stk);
-> +	stk_alpha_id_unset(stk);
-
-Same comment as above.
-
-<snip>
-
-> @@ -1628,9 +1662,7 @@ static void send_ussd_callback(int error, int dcs, =
-const unsigned char *msg,
->  	enum sms_charset charset;
->  	unsigned char no_cause[] =3D { 0x00 };
->  =
-
-> -	if (stk->pending_cmd->send_ussd.alpha_id &&
-> -			stk->pending_cmd->send_ussd.alpha_id[0])
-> -		stk_alpha_id_unset(stk);
-> +	stk_alpha_id_unset(stk);
-
-And here as well.
-
-> @@ -1834,9 +1865,7 @@ static void send_dtmf_cancel(struct ofono_stk *stk)
->  	stk->respond_on_exit =3D FALSE;
->  	stk->extern_req->cancelled =3D TRUE;
->  =
-
-> -	if (stk->pending_cmd->send_dtmf.alpha_id &&
-> -			stk->pending_cmd->send_dtmf.alpha_id[0])
-> -		stk_alpha_id_unset(stk);
-> +	stk_alpha_id_unset(stk);
-
-And here
-
->  }
->  =
-
->  static void dtmf_sent_cb(const struct ofono_error *error, void *user_dat=
-a)
-> @@ -1855,9 +1884,7 @@ static void dtmf_sent_cb(const struct ofono_error *=
-error, void *user_data)
->  =
-
->  	stk->respond_on_exit =3D FALSE;
->  =
-
-> -	if (stk->pending_cmd->send_dtmf.alpha_id &&
-> -			stk->pending_cmd->send_dtmf.alpha_id[0])
-> -		stk_alpha_id_unset(stk);
-> +	stk_alpha_id_unset(stk);
-
-And here
-
-<snip>
-
->  struct stk_menu {
->  	char *title;
-> -	uint8_t icon_id;
-> +	struct stk_icon_id icon;
->  	struct stk_menu_item *items;
->  	int default_item;
->  	gboolean soft_key;
-
-The stk menu patches should be in a separate patch.
-
-> @@ -77,45 +77,49 @@ int stk_agent_request_selection(struct stk_agent *age=
-nt,
->  				int timeout);
->  =
-
->  int stk_agent_display_text(struct stk_agent *agent, const char *text,
-> -				uint8_t icon_id, ofono_bool_t urgent,
-> +				const struct stk_icon_id *icon,
-> +				ofono_bool_t urgent,
-
-<snip>
-
-The stkagent changes should be in a separate patch...
+One of the changes I made was to have phonesim register to the system
+bus.  This makes the above DBus configuration file unnecessary.  Running
+phonesim on the system bus was too much of a security risk, and wasn't
+really needed.
 
 Regards,
 -Denis
 
---===============1375409332653123185==--
+--===============7655778886678290602==--
 
