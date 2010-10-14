@@ -1,37 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============4508924823465961604=="
+Content-Type: multipart/mixed; boundary="===============7295538435032135335=="
 MIME-Version: 1.0
 From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH] isimodem/sms: do not try to save SCA to SIM
-Date: Thu, 14 Oct 2010 15:49:19 +0300
-Message-ID: <AANLkTimPwFh5ioDeOJb4C1BJBFOYsVNGBZ0p+_ux_zkY@mail.gmail.com>
-In-Reply-To: <1286960427-2267-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCHv2] sms: Implement text and datagram watch
+Date: Thu, 14 Oct 2010 15:51:32 +0300
+Message-ID: <AANLkTikxe-XpCRvQ-rU7nvsLNesKLz_GPSdrST9Ke8Y2@mail.gmail.com>
+In-Reply-To: <1285943068-17414-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4508924823465961604==
+--===============7295538435032135335==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi,
 
-2010/10/13  <Pekka.Pessi@nokia.com>:
-> It does not make sense to overwrite the SCA on SIM card, especially with
-> random bytes from the stack.
+2010/10/1 Aki Niemi <aki.niemi@nokia.com>:
+> Allow setting a watch for incoming text and datagram messages on the
+> sms atom.
 
-The request is telling the modem to only look for the SCA and skip the
-rest. That nosy sob just can't help put look anyway, can it? ;)
-
-Fixed this by initializing the filler.
-
-> AT command +CSCA does not write to SIM either, rather it saves the SCA
-> address to be used with further text mode SMSs.
-
-But the ServiceCenterAddress property is read from the SIM, so it
-seems only logical to write to the same place.
+This patch has been applied.
 
 Cheers,
 Aki
 
---===============4508924823465961604==--
+--===============7295538435032135335==--
 
