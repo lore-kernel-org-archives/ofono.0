@@ -1,29 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0265293145403465006=="
+Content-Type: multipart/mixed; boundary="===============2565538116035269469=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 7/8] sim: check if Fixed Dialing is enabled in the
- SIM-card
-Date: Thu, 14 Oct 2010 06:24:46 -0500
-Message-ID: <4CB6E87E.1040303@gmail.com>
-In-Reply-To: <1286896694-3054-8-git-send-email-petteri.tikander@ixonos.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: Using ofono HFP
+Date: Thu, 14 Oct 2010 15:00:20 +0300
+Message-ID: <AANLkTimvwFGZdWcGCLPwEyhRmLp=0HuxpzmDkCJpGW91@mail.gmail.com>
+In-Reply-To: <AANLkTi=uppgrW4-Q_ZjZU=2QqwGj7jm0kLLyqQ4SDVbq@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0265293145403465006==
+--===============2565538116035269469==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Petteri,
+Hi Moises,
 
-> +	/*
-> +	 * Check if Fixed Dialing is enabled in the SIM-card
-> +	 * (TS 11.11/TS 51.011, Section 9.3: FDN capability request).
+2010/10/8 Moises Silva <moises.silva@gmail.com>:
+> Just throwing another question in the air, what should be the best way
+> to go to use Ofono DBUS API from a C program?
+>
+> I am trying to write the C version of ./list-modems Python script. I
+> see in the D-BUS page that they don't recommend using the bare bones
+> D-BUS C API but rather bindings, like glib bindings. What do you
+> think? I was trying to use glib for the list-modems C port, but got
+> stuck on which data type to use for the return value of the GetModems
+> API.
 
-Can you double check that the Section above is correct?
+dbus-glib is, err, challenging. Use gdlib if you can.
 
-Regards,
--Denis
+On the other hand, telepathy-ring has a minimal implementation of
+Modem and ModemManager APIs for dbus-glib:
 
---===============0265293145403465006==--
+http://meego.gitorious.org/meego-cellular/telepathy-ring
+
+It uses some dbus-glib types from telepathy-glib, but otherwise it is
+does not depend on telepathy framework.
+
+-- =
+
+Pekka.Pessi mail at nokia.com
+
+--===============2565538116035269469==--
 
