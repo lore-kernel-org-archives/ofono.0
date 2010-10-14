@@ -1,117 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============8953231895722301530=="
+Content-Type: multipart/mixed; boundary="===============7245270772602771764=="
 MIME-Version: 1.0
 From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: [RFC PATCH 4/8] atmodem: returns file-status of SIM EF-file
-Date: Fri, 15 Oct 2010 00:02:51 +0300
-Message-ID: <1287090175-3018-5-git-send-email-petteri.tikander@ixonos.com>
-In-Reply-To: <1287090175-3018-4-git-send-email-petteri.tikander@ixonos.com>
+Subject: [RFC PATCH 6/8] sim: add function for reading only general info from
+ SIM-EF file
+Date: Fri, 15 Oct 2010 00:02:53 +0300
+Message-ID: <1287090175-3018-7-git-send-email-petteri.tikander@ixonos.com>
+In-Reply-To: <1287090175-3018-6-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8953231895722301530==
+--===============7245270772602771764==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Not actual EF-contents returned, but file length, record length, file statu=
+s etc.
 ---
- drivers/atmodem/sim.c |   21 +++++++++++++--------
- 1 files changed, 13 insertions(+), 8 deletions(-)
+ include/sim.h |   10 ++++++++++
+ src/sim.c     |   21 +++++++++++++++++++--
+ 2 files changed, 29 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index d0a7148..90d87bc 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -64,11 +64,12 @@ static void at_crsm_info_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- 	int flen, rlen;
- 	int str;
- 	unsigned char access[3];
-+	unsigned char file_status;
- =
-
- 	decode_at_error(&error, g_at_result_final_response(result));
- =
-
- 	if (!ok) {
--		cb(&error, -1, -1, -1, NULL, cbd->data);
-+		cb(&error, -1, -1, -1, NULL, 0, cbd->data);
- 		return;
- 	}
- =
-
-@@ -88,27 +89,31 @@ static void at_crsm_info_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- 		error.type =3D OFONO_ERROR_TYPE_SIM;
- 		error.error =3D (sw1 << 8) | sw2;
- =
-
--		cb(&error, -1, -1, -1, NULL, cbd->data);
-+		cb(&error, -1, -1, -1, NULL, 0, cbd->data);
- 		return;
- 	}
- =
-
- 	DBG("crsm_info_cb: %02x, %02x, %i", sw1, sw2, len);
- =
-
--	if (response[0] =3D=3D 0x62)
-+	if (response[0] =3D=3D 0x62) {
- 		ok =3D sim_parse_3g_get_response(response, len, &flen, &rlen,
- 						&str, access, NULL);
+diff --git a/include/sim.h b/include/sim.h
+index 7860e24..8dd6131 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -207,6 +207,16 @@ int ofono_sim_write(struct ofono_sim *sim, int id,
+ int ofono_sim_read_bytes(struct ofono_sim *sim, int id,
+ 			unsigned short offset, unsigned short num_bytes,
+ 			ofono_sim_file_read_cb_t cb, void *data);
 +
-+		file_status =3D SIM_FILE_STATUS_VALID;
-+	}
- 	else
- 		ok =3D sim_parse_2g_get_response(response, len, &flen, &rlen,
--						&str, access);
-+						&str, access, &file_status);
- =
-
- 	if (!ok)
- 		goto error;
- =
-
--	cb(&error, flen, str, rlen, access, cbd->data);
-+	cb(&error, flen, str, rlen, access, file_status, cbd->data);
++/*
++ * This function reads only general info from SIM-file with
++ * requested id (file length, record length, file status etc),
++ * not any records.
++ */
++int ofono_sim_read_info(struct ofono_sim *sim, int id,
++			enum ofono_sim_file_structure expected,
++			ofono_sim_file_read_cb_t cb, void *data);
 +
- 	return;
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/src/sim.c b/src/sim.c
+index ab38e4f..d189350 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -1710,7 +1710,7 @@ int ofono_sim_read_bytes(struct ofono_sim *sim, int i=
+d,
+ 		return -1;
  =
 
- error:
--	CALLBACK_WITH_FAILURE(cb, -1, -1, -1, NULL, cbd->data);
-+	CALLBACK_WITH_FAILURE(cb, -1, -1, -1, NULL, 0, cbd->data);
+ 	return sim_fs_read(sim->simfs, id, OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+-				offset, num_bytes, cb, data);
++				FALSE, offset, num_bytes, cb, data);
  }
  =
 
- static void at_sim_read_info(struct ofono_sim *sim, int fileid,
-@@ -123,7 +128,7 @@ static void at_sim_read_info(struct ofono_sim *sim, int=
- fileid,
- 		unsigned char access[3] =3D { 0x00, 0x00, 0x00 };
+ int ofono_sim_read(struct ofono_sim *sim, int id,
+@@ -1720,7 +1720,24 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
+ 	if (sim =3D=3D NULL)
+ 		return -1;
  =
 
- 		if (fileid =3D=3D SIM_EFAD_FILEID) {
--			CALLBACK_WITH_SUCCESS(cb, 4, 0, 0, access, data);
-+			CALLBACK_WITH_SUCCESS(cb, 4, 0, 0, access, 1, data);
- 			return;
- 		}
- 	}
-@@ -142,7 +147,7 @@ static void at_sim_read_info(struct ofono_sim *sim, int=
- fileid,
- 		return;
- =
-
- error:
--	CALLBACK_WITH_FAILURE(cb, -1, -1, -1, NULL, data);
-+	CALLBACK_WITH_FAILURE(cb, -1, -1, -1, NULL, 0, data);
+-	return sim_fs_read(sim->simfs, id, expected_type, 0, 0, cb, data);
++	return sim_fs_read(sim->simfs, id, expected_type, FALSE,
++				0, 0, cb, data);
++}
++
++int ofono_sim_read_info(struct ofono_sim *sim, int id,
++			enum ofono_sim_file_structure expected_type,
++			ofono_sim_file_read_cb_t cb, void *data)
++{
++	/*
++	 * Retrieve EF-info only (file length, record length, file status etc).
++	 * So this function doesn't retrieve actual EF-contents.
++	 */
++
++	if (sim =3D=3D NULL)
++		return -1;
++
++	return sim_fs_read(sim->simfs, id, expected_type, TRUE,
++				0, 0, cb, data);
  }
  =
 
- static void at_crsm_read_cb(gboolean ok, GAtResult *result,
+ int ofono_sim_write(struct ofono_sim *sim, int id,
 -- =
 
 1.6.3.3
 
 
 
---===============8953231895722301530==--
+--===============7245270772602771764==--
 
