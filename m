@@ -1,81 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============8431356104281222914=="
+Content-Type: multipart/mixed; boundary="===============7986781330322985408=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 5/8] isimodem: returns file-status of SIM EF-file
-Date: Thu, 14 Oct 2010 05:58:35 -0500
-Message-ID: <4CB6E25B.4040107@gmail.com>
-In-Reply-To: <1286896694-3054-6-git-send-email-petteri.tikander@ixonos.com>
+Subject: Re: [RFC PATCH 4/8] atmodem: returns file-status of SIM EF-file
+Date: Thu, 14 Oct 2010 06:03:09 -0500
+Message-ID: <4CB6E36D.5080207@gmail.com>
+In-Reply-To: <1286896694-3054-5-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8431356104281222914==
+--===============7986781330322985408==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Petteri,
 
-On 10/12/2010 10:18 AM, Petteri Tikander wrote:
-> ---
->  drivers/isimodem/sim.c |   12 ++++++++----
->  1 files changed, 8 insertions(+), 4 deletions(-)
-> =
+> +
+> +		file_status =3D SIM_FILE_STATUS_NOT_AVAILABLE;
 
-> diff --git a/drivers/isimodem/sim.c b/drivers/isimodem/sim.c
-> index e2ea275..bd7e9d6 100644
-> --- a/drivers/isimodem/sim.c
-> +++ b/drivers/isimodem/sim.c
-> @@ -54,6 +54,7 @@ struct file_info {
->  	int structure;
->  	int record_length;
->  	unsigned char access[3];
-> +	unsigned char file_status;
->  };
->  =
-
->  /* Returns file info */
-> @@ -66,7 +67,7 @@ static gboolean fake_file_info(gpointer user)
->  	DBG("Returning static file_info for %04x", fi->fileid);
->  	CALLBACK_WITH_SUCCESS(cb,
->  				fi->length, fi->structure, fi->record_length,
-> -				fi->access, cbd->data);
-> +				fi->access, fi->file_status, cbd->data);
->  	g_free(cbd);
->  	return FALSE;
->  }
-> @@ -76,8 +77,10 @@ static void isi_read_file_info(struct ofono_sim *sim, =
-int fileid,
->  {
->  	int i;
->  	static struct file_info const info[] =3D {
-> -		{ SIM_EFSPN_FILEID, 17, 0, 0, { 0x0f, 0xff, 0xff } },
-> -		{ SIM_EF_ICCID_FILEID, 10, 0, 0, { 0x0f, 0xff, 0xff } },
-> +		{ SIM_EFSPN_FILEID, 17, 0, 0, { 0x0f, 0xff, 0xff },
-> +			SIM_FILE_STATUS_NOT_INVALID },
-> +		{ SIM_EF_ICCID_FILEID, 10, 0, 0, { 0x0f, 0xff, 0xff },
-> +			SIM_FILE_STATUS_NOT_INVALID },
-
-Using 0 instead of SIM_FILE_STATUS_NOT_INVALID seems better.
-
->  	};
->  	int N =3D sizeof(info) / sizeof(info[0]);
->  	struct isi_cb_data *cbd;
-> @@ -91,7 +94,8 @@ static void isi_read_file_info(struct ofono_sim *sim, i=
-nt fileid,
->  	}
->  =
-
->  	DBG("Not implemented (fileid =3D %04x)", fileid);
-> -	CALLBACK_WITH_FAILURE(cb, -1, -1, -1, NULL, data);
-> +	CALLBACK_WITH_FAILURE(cb, -1, -1, -1, NULL,
-> +		SIM_FILE_STATUS_NOT_AVAILABLE, data);
->  }
->  =
-
->  static gboolean spn_resp_cb(GIsiClient *client,
+Thinking about it, I actually meant using 1 here, since that means the
+file is not invalidated.
 
 Regards,
 -Denis
 
---===============8431356104281222914==--
+--===============7986781330322985408==--
 
