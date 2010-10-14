@@ -1,44 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============2565538116035269469=="
+Content-Type: multipart/mixed; boundary="===============8691077445383359328=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: Using ofono HFP
-Date: Thu, 14 Oct 2010 15:00:20 +0300
-Message-ID: <AANLkTimvwFGZdWcGCLPwEyhRmLp=0HuxpzmDkCJpGW91@mail.gmail.com>
-In-Reply-To: <AANLkTi=uppgrW4-Q_ZjZU=2QqwGj7jm0kLLyqQ4SDVbq@mail.gmail.com>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH 1/2] Use org.ofono.phonesim.Script as interface name
+Date: Thu, 14 Oct 2010 20:34:41 +0800
+Message-ID: <1287059682-12973-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2565538116035269469==
+--===============8691077445383359328==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Moises,
+---
+ src/control.h |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-2010/10/8 Moises Silva <moises.silva@gmail.com>:
-> Just throwing another question in the air, what should be the best way
-> to go to use Ofono DBUS API from a C program?
->
-> I am trying to write the C version of ./list-modems Python script. I
-> see in the D-BUS page that they don't recommend using the bare bones
-> D-BUS C API but rather bindings, like glib bindings. What do you
-> think? I was trying to use glib for the list-modems C port, but got
-> stuck on which data type to use for the return value of the GetModems
-> API.
-
-dbus-glib is, err, challenging. Use gdlib if you can.
-
-On the other hand, telepathy-ring has a minimal implementation of
-Modem and ModemManager APIs for dbus-glib:
-
-http://meego.gitorious.org/meego-cellular/telepathy-ring
-
-It uses some dbus-glib types from telepathy-glib, but otherwise it is
-does not depend on telepathy framework.
-
+diff --git a/src/control.h b/src/control.h
+index e455437..3c85e22 100644
+--- a/src/control.h
++++ b/src/control.h
+@@ -31,9 +31,9 @@ class Control;
+ class Script: public QDBusAbstractAdaptor
+ {
+ Q_OBJECT
+-    Q_CLASSINFO("D-Bus Interface", "org.phonesim.Script")
++    Q_CLASSINFO("D-Bus Interface", "org.ofono.phonesim.Script")
+     Q_CLASSINFO("D-Bus Introspection", ""
+-"  <interface name=3D\"org.phonesim.Script\">\n"
++"  <interface name=3D\"org.ofono.phonesim.Script\">\n"
+ "    <method name=3D\"SetPath\">\n"
+ "      <arg direction=3D\"in\" type=3D\"s\" name=3D\"path\"/>\n"
+ "    </method>\n"
 -- =
 
-Pekka.Pessi mail at nokia.com
+1.7.2.3
 
---===============2565538116035269469==--
+
+--===============8691077445383359328==--
 
