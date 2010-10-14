@@ -1,157 +1,177 @@
-Content-Type: multipart/mixed; boundary="===============1639279574615628879=="
+Content-Type: multipart/mixed; boundary="===============1025209640709062576=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Alexander A Khryukin <alexander@mezon.ru>
 Subject: Re: list-modems patch
-Date: Thu, 14 Oct 2010 13:13:38 +0300
-Message-ID: <1287051218.3316.35.camel@aeonflux>
-In-Reply-To: <1287048855.32351.21.camel@mezon.ru>
+Date: Thu, 14 Oct 2010 14:36:00 +0400
+Message-ID: <1287052560.32351.28.camel@mezon.ru>
+In-Reply-To: <1287051218.3316.35.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1639279574615628879==
+--===============1025209640709062576==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alex,
-
-> > > Sometimes i see =
-
-> > > =
-
-> > > [root(a)alexander-desktop ofono-0.31]# /usr/lib/ofono/test/list-modem=
-s =
-
-> > > [ /huawei5 ]
-> > >     Features =3D sim =
-
-> > >     Powered =3D 1
-> > >     Interfaces =3D org.ofono.Phonebook org.ofono.AudioSettings
-> > > org.ofono.VoiceCallManager org.ofono.SimManager =
-
-> > >     Online =3D 0
-> > >     Model =3D E1550
-> > >     Manufacturer =3D huawei
-> > >     Serial =3D 353142033084081
-> > >     Revision =3D 11.608.12.00.143
-> > >     [ org.ofono.Phonebook ]
-> > >     [ org.ofono.AudioSettings ]
-> > > Traceback (most recent call last):
-> > >   File "/usr/lib/ofono/test/list-modems", line 61, in <module>
-> > >     print "        %s =3D %s" % (key, val).encode('ascii')
-> > > =
-
-> > > =
-
-> > > Patch
-> > > =
-
-> > > =
-
-> > > =
-
-> > > diff --git a/test/list-modems b/test/list-modems
-> > > index 557efd5..df1dca8 100755
-> > > --- a/test/list-modems
-> > > +++ b/test/list-modems
-> > > @@ -58,6 +58,10 @@ for path, properties in modems:
-> > >                                         ")" for text, icon in
-> > > properties[key] ])
-> > >                         else:
-> > >                              	val =3D str(properties[key])
-> > > -                       print "        %s =3D %s" % (key, val)
-> > > +                       try:
-> > > +                               print  "       %s =3D %s" % (key, val)
-> > > +                       except:
-> > > +                               continue
-> > > +
-> > =
-
-> > can you at least print the key value. Just not printing that property at
-> > all is bad since it is there. Just marking the value as not printable
-> > seems to be the better approach.
-> > =
-
-> > Regards
-> > =
-
-> > Marcel
-> > =
-
-> > =
-
-> > =
-
+=D0=92 =D0=A7=D1=82=D0=B2, 14/10/2010 =D0=B2 13:13 +0300, Marcel Holtmann =
+=D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> Hi Alex,
 > =
 
-> Last fully-working script
-> =
+> > > > Sometimes i see =
 
-> [ /huawei0 ]
-> =
+> > > > =
 
-> =
+> > > > [root(a)alexander-desktop ofono-0.31]# /usr/lib/ofono/test/list-mod=
+ems =
 
-> del overquote
-> =
+> > > > [ /huawei5 ]
+> > > >     Features =3D sim =
 
->         ServiceNumbers =3D [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=BE=
-=D1=89=D0=BD=D0=B8=D0=BA] =3D '111' [MT=D0=A1] =3D
-> '+78003330890' [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=B0=
+> > > >     Powered =3D 1
+> > > >     Interfaces =3D org.ofono.Phonebook org.ofono.AudioSettings
+> > > > org.ofono.VoiceCallManager org.ofono.SimManager =
+
+> > > >     Online =3D 0
+> > > >     Model =3D E1550
+> > > >     Manufacturer =3D huawei
+> > > >     Serial =3D 353142033084081
+> > > >     Revision =3D 11.608.12.00.143
+> > > >     [ org.ofono.Phonebook ]
+> > > >     [ org.ofono.AudioSettings ]
+> > > > Traceback (most recent call last):
+> > > >   File "/usr/lib/ofono/test/list-modems", line 61, in <module>
+> > > >     print "        %s =3D %s" % (key, val).encode('ascii')
+> > > > =
+
+> > > > =
+
+> > > > Patch
+> > > > =
+
+> > > > =
+
+> > > > =
+
+> > > > diff --git a/test/list-modems b/test/list-modems
+> > > > index 557efd5..df1dca8 100755
+> > > > --- a/test/list-modems
+> > > > +++ b/test/list-modems
+> > > > @@ -58,6 +58,10 @@ for path, properties in modems:
+> > > >                                         ")" for text, icon in
+> > > > properties[key] ])
+> > > >                         else:
+> > > >                              	val =3D str(properties[key])
+> > > > -                       print "        %s =3D %s" % (key, val)
+> > > > +                       try:
+> > > > +                               print  "       %s =3D %s" % (key, v=
+al)
+> > > > +                       except:
+> > > > +                               continue
+> > > > +
+> > > =
+
+> > > can you at least print the key value. Just not printing that property=
+ at
+> > > all is bad since it is there. Just marking the value as not printable
+> > > seems to be the better approach.
+> > > =
+
+> > > Regards
+> > > =
+
+> > > Marcel
+> > > =
+
+> > > =
+
+> > > =
+
+> > =
+
+> > Last fully-working script
+> > =
+
+> > [ /huawei0 ]
+> > =
+
+> > =
+
+> > del overquote
+> > =
+
+> >         ServiceNumbers =3D [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=
+=BE=D1=89=D0=BD=D0=B8=D0=BA] =3D '111' [MT=D0=A1] =3D
+> > '+78003330890' [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=B0=
 =D1=81=D0=B5=D0=BD=D0=B8=D1=8F] =3D '112' =
 
->         CardIdentifier =3D 89701012417666587513
->         LockedPins =3D =
+> >         CardIdentifier =3D 89701012417666587513
+> >         LockedPins =3D =
 
->         PinRequired =3D none
->         SubscriberIdentity =3D 250011766658751
->         Present =3D 1
-> =
+> >         PinRequired =3D none
+> >         SubscriberIdentity =3D 250011766658751
+> >         Present =3D 1
+> > =
 
-> =
+> > =
 
-> [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=BE=D1=89=D0=BD=D0=B8=D0=BA] - =
-in russian means "Mobile Partner"
-> [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=B0=D1=81=D0=B5=D0=
+> > [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=BE=D1=89=D0=BD=D0=B8=D0=BA] =
+- in russian means "Mobile Partner"
+> > [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=B0=D1=81=D0=B5=D0=
 =BD=D0=B8=D1=8F] - rescue rangers :3           =
 
+> > =
+
+> > =
+
+> > =
+
+> > =
+
+> > diff --git a/test/list-modems b/test/list-modems
+> > index 557efd5..59765f9 100755
+> > --- a/test/list-modems
+> > +++ b/test/list-modems
+> > @@ -58,6 +58,10 @@ for path, properties in modems:
+> >                                         ")" for text, icon in
+> > properties[key] ])
+> >                         else:
+> >                                 val =3D str(properties[key])
+> > -                       print "        %s =3D %s" % (key, val)
+> > -
+> > +                       try:
+> > +                               print "        %s =3D %s" %
+> > (key.encode('utf8'), val.encode('utf8'))
+> > +                       except:
+> > +                               print "Cannot encode some charcters
+> > please change locale"
+> > +                       else:
+> > +                                continue
+> >         print
+> =
+
+> patch does not apply. Please always check with git am that your patch
+> would apply cleanly. And that your mailer doesn't screw it up.
+> =
+
+> Regards
+> =
+
+> Marcel
 > =
 
 > =
 
 > =
 
-> =
 
-> diff --git a/test/list-modems b/test/list-modems
-> index 557efd5..59765f9 100755
-> --- a/test/list-modems
-> +++ b/test/list-modems
-> @@ -58,6 +58,10 @@ for path, properties in modems:
->                                         ")" for text, icon in
-> properties[key] ])
->                         else:
->                                 val =3D str(properties[key])
-> -                       print "        %s =3D %s" % (key, val)
-> -
-> +                       try:
-> +                               print "        %s =3D %s" %
-> (key.encode('utf8'), val.encode('utf8'))
-> +                       except:
-> +                               print "Cannot encode some charcters
-> please change locale"
-> +                       else:
-> +                                continue
->         print
+Evolution reformate message anyway
+Please click on link.
+Was checked and applied for me with success
 
-patch does not apply. Please always check with git am that your patch
-would apply cleanly. And that your mailer doesn't screw it up.
-
-Regards
-
-Marcel
+http://pastie.org/pastes/1220422/text
 
 
 
---===============1639279574615628879==--
+--===============1025209640709062576==--
 
