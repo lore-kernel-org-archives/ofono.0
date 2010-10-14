@@ -1,34 +1,141 @@
-Content-Type: multipart/mixed; boundary="===============5082108881378793274=="
+Content-Type: multipart/mixed; boundary="===============8226082619813230104=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 13/13] [RfC] API for STK driver to signal executed
- commands.
-Date: Thu, 14 Oct 2010 04:17:49 -0500
-Message-ID: <4CB6CABD.8070605@gmail.com>
-In-Reply-To: <1286978056-16600-13-git-send-email-andrew.zaborowski@intel.com>
+From: Alexander A Khryukin <alexander@mezon.ru>
+Subject: Re: list-modems patch
+Date: Thu, 14 Oct 2010 13:34:15 +0400
+Message-ID: <1287048855.32351.21.camel@mezon.ru>
+In-Reply-To: <1287045918.3316.34.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5082108881378793274==
+--===============8226082619813230104==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+=D0=92 =D0=A7=D1=82=D0=B2, 14/10/2010 =D0=B2 11:45 +0300, Marcel Holtmann =
+=D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> Hi Alex,
+> =
 
-On 10/13/2010 08:54 AM, Andrzej Zaborowski wrote:
-> Some modems are able to handle some proactive commands in their
-> firmware or otherwise, if the command doesn't require input from user.
-> Nevertheles ofono may need to update internal state or notify the user
-> where necessary.  With this api the driver can notify core that a
-> command is being executed in the modem or that a command is finished
-> executing and the TERMINAL RESPONSE has been sent to SIM.  It would
-> also be possible for a driver to handle a command.
+> > Sometimes i see =
 
-I applied this patch with a small tweak to make it compile.
+> > =
 
-Thanks,
--Denis
+> > [root(a)alexander-desktop ofono-0.31]# /usr/lib/ofono/test/list-modems =
 
---===============5082108881378793274==--
+> > [ /huawei5 ]
+> >     Features =3D sim =
+
+> >     Powered =3D 1
+> >     Interfaces =3D org.ofono.Phonebook org.ofono.AudioSettings
+> > org.ofono.VoiceCallManager org.ofono.SimManager =
+
+> >     Online =3D 0
+> >     Model =3D E1550
+> >     Manufacturer =3D huawei
+> >     Serial =3D 353142033084081
+> >     Revision =3D 11.608.12.00.143
+> >     [ org.ofono.Phonebook ]
+> >     [ org.ofono.AudioSettings ]
+> > Traceback (most recent call last):
+> >   File "/usr/lib/ofono/test/list-modems", line 61, in <module>
+> >     print "        %s =3D %s" % (key, val).encode('ascii')
+> > =
+
+> > =
+
+> > Patch
+> > =
+
+> > =
+
+> > =
+
+> > diff --git a/test/list-modems b/test/list-modems
+> > index 557efd5..df1dca8 100755
+> > --- a/test/list-modems
+> > +++ b/test/list-modems
+> > @@ -58,6 +58,10 @@ for path, properties in modems:
+> >                                         ")" for text, icon in
+> > properties[key] ])
+> >                         else:
+> >                              	val =3D str(properties[key])
+> > -                       print "        %s =3D %s" % (key, val)
+> > +                       try:
+> > +                               print  "       %s =3D %s" % (key, val)
+> > +                       except:
+> > +                               continue
+> > +
+> =
+
+> can you at least print the key value. Just not printing that property at
+> all is bad since it is there. Just marking the value as not printable
+> seems to be the better approach.
+> =
+
+> Regards
+> =
+
+> Marcel
+> =
+
+> =
+
+> =
+
+
+Last fully-working script
+
+[ /huawei0 ]
+
+
+del overquote
+
+        ServiceNumbers =3D [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=BE=D1=
+=89=D0=BD=D0=B8=D0=BA] =3D '111' [MT=D0=A1] =3D
+'+78003330890' [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=B0=D1=
+=81=D0=B5=D0=BD=D0=B8=D1=8F] =3D '112' =
+
+        CardIdentifier =3D 89701012417666587513
+        LockedPins =3D =
+
+        PinRequired =3D none
+        SubscriberIdentity =3D 250011766658751
+        Present =3D 1
+
+
+[=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=BE=D1=89=D0=BD=D0=B8=D0=BA] - in=
+ russian means "Mobile Partner"
+[=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=B0=D1=81=D0=B5=D0=BD=
+=D0=B8=D1=8F] - rescue rangers :3           =
+
+
+
+
+
+diff --git a/test/list-modems b/test/list-modems
+index 557efd5..59765f9 100755
+--- a/test/list-modems
++++ b/test/list-modems
+@@ -58,6 +58,10 @@ for path, properties in modems:
+                                        ")" for text, icon in
+properties[key] ])
+                        else:
+                                val =3D str(properties[key])
+-                       print "        %s =3D %s" % (key, val)
+-
++                       try:
++                               print "        %s =3D %s" %
+(key.encode('utf8'), val.encode('utf8'))
++                       except:
++                               print "Cannot encode some charcters
+please change locale"
++                       else:
++                                continue
+        print
+
+
+
+--===============8226082619813230104==--
 
