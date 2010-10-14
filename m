@@ -1,28 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============7295538435032135335=="
+Content-Type: multipart/mixed; boundary="===============1035375169235719302=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCHv2] sms: Implement text and datagram watch
-Date: Thu, 14 Oct 2010 15:51:32 +0300
-Message-ID: <AANLkTikxe-XpCRvQ-rU7nvsLNesKLz_GPSdrST9Ke8Y2@mail.gmail.com>
-In-Reply-To: <1285943068-17414-1-git-send-email-aki.niemi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] Use org.ofono.phonesim.Script as interface name
+Date: Thu, 14 Oct 2010 09:45:21 -0500
+Message-ID: <4CB71781.7050901@gmail.com>
+In-Reply-To: <1287059682-12973-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7295538435032135335==
+--===============1035375169235719302==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Yang,
 
-2010/10/1 Aki Niemi <aki.niemi@nokia.com>:
-> Allow setting a watch for incoming text and datagram messages on the
-> sms atom.
+On 10/14/2010 07:34 AM, Yang Gu wrote:
+> ---
+>  src/control.h |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
 
-This patch has been applied.
+Both patches have been applied, thanks.
 
-Cheers,
-Aki
+Regards,
+-Denis
 
---===============7295538435032135335==--
+--===============1035375169235719302==--
 
