@@ -1,149 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6724005865991748852=="
+Content-Type: multipart/mixed; boundary="===============6093143546972657250=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 2/8] simfs: add logic to retrieve only only EF-info,
- but no EF-contents
-Date: Thu, 14 Oct 2010 06:10:31 -0500
-Message-ID: <4CB6E527.90204@gmail.com>
-In-Reply-To: <1286896694-3054-3-git-send-email-petteri.tikander@ixonos.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH v2 0/3] Patch Description
+Date: Thu, 14 Oct 2010 19:17:56 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A473301905B3@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <4CB61452.7020200@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6724005865991748852==
+--===============6093143546972657250==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Petteri,
+Hi Denis,
 
-On 10/12/2010 10:18 AM, Petteri Tikander wrote:
-> Handling of new parameter (file status) from the driver added.
-> This commit doesn't store EF-info into cache yet.
-> ---
->  src/simfs.c |   27 +++++++++++++++++++++++----
->  src/simfs.h |    1 +
->  2 files changed, 24 insertions(+), 4 deletions(-)
-> =
 
-> diff --git a/src/simfs.c b/src/simfs.c
-> index b5b12b4..24ce7ec 100644
-> --- a/src/simfs.c
-> +++ b/src/simfs.c
-> @@ -58,6 +58,7 @@ struct sim_fs_op {
->  	int id;
->  	enum ofono_sim_file_structure structure;
->  	unsigned short offset;
-> +	gboolean info_only;
->  	int num_bytes;
->  	int length;
->  	int record_length;
-> @@ -426,7 +427,9 @@ static gboolean sim_fs_op_read_record(gpointer user)
->  static void sim_fs_op_info_cb(const struct ofono_error *error, int lengt=
-h,
->  				enum ofono_sim_file_structure structure,
->  				int record_length,
-> -				const unsigned char access[3], void *data)
-> +				const unsigned char access[3],
-> +				const unsigned char file_status,
-> +				void *data)
->  {
->  	struct sim_fs *fs =3D data;
->  	struct sim_fs_op *op =3D g_queue_peek_head(fs->op_q);
-> @@ -438,6 +441,7 @@ static void sim_fs_op_info_cb(const struct ofono_erro=
-r *error, int length,
->  	unsigned char fileinfo[SIM_CACHE_HEADER_SIZE];
->  	gboolean cache;
->  	char *path;
-> +	ofono_sim_file_read_cb_t cb =3D op->cb;
->  =
+>> Then we set the path of script and run the script with its name
+>> dbus-send --system --print-reply --dest=3Dorg.phonesim /
+>org.phonesim.Script.SetPath string:/tmp/call
+>> dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Sc=
+ript.Run
+>string:call.js
+>>
+>
+>One of the changes I made was to have phonesim register to the system
+>bus.  This makes the above DBus configuration file unnecessary.  Running
+>phonesim on the system bus was too much of a security risk, and wasn't
+>really needed.
+>
 
->  	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
->  		sim_fs_op_error(fs);
-> @@ -473,11 +477,24 @@ static void sim_fs_op_info_cb(const struct ofono_er=
-ror *error, int length,
->  =
-
->  		op->record_length =3D length;
->  		op->current =3D op->offset / 256;
-> -		fs->op_source =3D g_idle_add(sim_fs_op_read_block, fs);
-> +		if (!op->info_only)
-> +			fs->op_source =3D g_idle_add(sim_fs_op_read_block, fs);
-
-Please watch out for coding style violations.  There should be an empty
-line before the if statement.
-
->  	} else {
->  		op->record_length =3D record_length;
->  		op->current =3D 1;
-> -		fs->op_source =3D g_idle_add(sim_fs_op_read_record, fs);
-> +		if (!op->info_only)
-> +			fs->op_source =3D g_idle_add(sim_fs_op_read_record, fs);
-
-Same comment as above
-
-> +	}
-> +
-> +	if (op->info_only) {
-> +		/*
-> +		 * It's info-only request. So there is no need to request
-> +		 * actual contents of the EF-files. Just return the EF-info.
-> +		 */
-> +		cb(1, op->length, op->current,
-> +			&file_status, op->record_length, op->userdata);
-> +
-> +		sim_fs_end_current(fs);
->  	}
->  =
-
->  	if (imsi =3D=3D NULL || cache =3D=3D FALSE)
-> @@ -522,7 +539,7 @@ static gboolean sim_fs_op_check_cached(struct sim_fs =
-*fs)
->  	enum ofono_sim_file_structure structure;
->  	int record_length;
->  =
-
-> -	if (!imsi)
-> +	if (!imsi || !op->info_only)
->  		return FALSE;
->  =
-
->  	path =3D g_strdup_printf(SIM_CACHE_PATH, imsi, phase, op->id);
-> @@ -635,6 +652,7 @@ static gboolean sim_fs_op_next(gpointer user_data)
->  =
-
->  int sim_fs_read(struct sim_fs *fs, int id,
->  		enum ofono_sim_file_structure expected_type,
-> +		gboolean info_only,
->  		unsigned short offset, unsigned short num_bytes,
->  		ofono_sim_file_read_cb_t cb, void *data)
->  {
-> @@ -661,6 +679,7 @@ int sim_fs_read(struct sim_fs *fs, int id,
->  	op->is_read =3D TRUE;
->  	op->offset =3D offset;
->  	op->num_bytes =3D num_bytes;
-> +	op->info_only =3D info_only;
->  =
-
->  	g_queue_push_tail(fs->op_q, op);
->  =
-
-> diff --git a/src/simfs.h b/src/simfs.h
-> index 6d5dded..284d15b 100644
-> --- a/src/simfs.h
-> +++ b/src/simfs.h
-> @@ -26,6 +26,7 @@ struct sim_fs *sim_fs_new(struct ofono_sim *sim,
->  =
-
->  int sim_fs_read(struct sim_fs *fs, int id,
->  		enum ofono_sim_file_structure expected_type,
-> +		gboolean info_only,
->  		unsigned short offset, unsigned short num_bytes,
->  		ofono_sim_file_read_cb_t cb, void *data);
->  =
+Thanks for the modifications afterward, and I'm fine with most of them. One=
+ question is why you renamed the service name to "org.ofono.phonesim". I wo=
+nder why the phonesim should have relationship with ofono?
 
 
 Regards,
--Denis
+-Yang
 
---===============6724005865991748852==--
+--===============6093143546972657250==--
 
