@@ -1,161 +1,118 @@
-Content-Type: multipart/mixed; boundary="===============1204621792209664922=="
+Content-Type: multipart/mixed; boundary="===============7210538784446735062=="
 MIME-Version: 1.0
 From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: Re: [RFC PATCH 1/8] sim: add function to read general info from SIM
- EF-file
-Date: Thu, 14 Oct 2010 18:14:05 +0300
-Message-ID: <201010141814.05131.petteri.tikander@ixonos.com>
-In-Reply-To: <4CB6E460.5040104@gmail.com>
+Subject: Re: [RFC PATCH 3/8] simutil: response-handler returns now also
+ file-status
+Date: Thu, 14 Oct 2010 19:12:21 +0300
+Message-ID: <201010141912.21423.petteri.tikander@ixonos.com>
+In-Reply-To: <4CB6DE4D.1030107@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1204621792209664922==
+--===============7210538784446735062==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
-and thanks for comments
 
+> Hi Petteri,
+> =
+
+> On 10/12/2010 10:18 AM, Petteri Tikander wrote:
 > > ---
-> >  include/sim.h |   11 +++++++++++
-> >  src/sim.c     |   30 ++++++++++++++++++++++++++++--
-> >  2 files changed, 39 insertions(+), 2 deletions(-)
+> >  src/simutil.c |    5 ++++-
+> >  src/simutil.h |   11 ++++++++++-
+> >  2 files changed, 14 insertions(+), 2 deletions(-)
 > >
-> > diff --git a/include/sim.h b/include/sim.h
-> > index 42b19bd..8dd6131 100644
-> > --- a/include/sim.h
-> > +++ b/include/sim.h
-> > @@ -82,6 +82,7 @@ typedef void (*ofono_sim_file_info_cb_t)(const struct
-> > ofono_error *error, enum ofono_sim_file_structure structure,
-> >  					int recordlength,
-> >  					const unsigned char access[3],
-> > +					unsigned char file_status,
-> >  					void *data);
-> =
-
-> I suggest breaking this out into a separate patch and shuffling patch 4
-> and path 5 to follow after this patch.  This patch should also come
-> before the changes to ofono_sim_read_info.
-> =
-
-
-OK.
-
-I'll send in the next order (naturally updated versions according to the =
-
-comments):
-2/8, =
-
-3/8,
-1/8 (header-change only), =
-
-4/8, =
-
-5/8, =
-
-(6/8 applied),
-1/8 (source code change: ofono_sim_read_info, no call-back handling), =
-
-7/8, =
-
-8/8
-
-
-> >  typedef void (*ofono_sim_read_cb_t)(const struct ofono_error *error,
-> > @@ -206,6 +207,16 @@ int ofono_sim_write(struct ofono_sim *sim, int id,
-> >  int ofono_sim_read_bytes(struct ofono_sim *sim, int id,
-> >  			unsigned short offset, unsigned short num_bytes,
-> >  			ofono_sim_file_read_cb_t cb, void *data);
-> > +
-> > +/*
-> > + * This function reads only general info from SIM-file with
-> > + * requested id (file length, record length, file status etc),
-> > + * not any records.
-> > + */
-> > +int ofono_sim_read_info(struct ofono_sim *sim, int id,
-> > +			enum ofono_sim_file_structure expected,
-> > +			ofono_sim_file_read_cb_t cb, void *data);
-> > +
-> >  #ifdef __cplusplus
-> >  }
-> >  #endif
-> > diff --git a/src/sim.c b/src/sim.c
-> > index 6f10d4c..f0633bb 100644
-> > --- a/src/sim.c
-> > +++ b/src/sim.c
-> > @@ -1183,6 +1183,15 @@ static void sim_efphase_read_cb(int ok, int
-> > length, int record, sim->phase =3D data[0];
-> >  }
+> > diff --git a/src/simutil.c b/src/simutil.c
+> > index 65ce1ac..04ba975 100644
+> > --- a/src/simutil.c
+> > +++ b/src/simutil.c
+> > @@ -1405,7 +1405,8 @@ gboolean sim_parse_3g_get_response(const unsigned
+> > char *data, int len,
 > >
-> > +static void sim_info_read_cb(int ok, int length, int record,
-> > +					const unsigned char *file_status,
-> > +					int record_length, void *userdata)
-> > +{
-> > +	DBG("OK: %d, length: %d, record: %d, \
-> > +		file_status: %x, record_length: %d",
-> > +		ok, length, record, file_status[0], record_length);
-> > +}
-> > +
-> =
-
-> Is this function actually used?
-
-Yes, but not with that debug-content. I'll separate this patch into two =
-
-patches (header/source), and send source-patch in logical order (where =
-
-ofono_sim_read/ofono_sim_read_cb are really used without just debugging).
-> =
-
-> >  static void sim_initialize_after_pin(struct ofono_sim *sim)
+> >  gboolean sim_parse_2g_get_response(const unsigned char *response, int
+> > len, int *file_len, int *record_len,
+> > -					int *structure, unsigned char *access)
+> > +					int *structure, unsigned char *access,
+> > +					unsigned char *file_status)
 > >  {
-> >  	ofono_sim_read(sim, SIM_EFPHASE_FILEID,
-> > @@ -1530,7 +1539,7 @@ int ofono_sim_read_bytes(struct ofono_sim *sim, i=
-nt
-> > id, return -1;
+> >  	if (len < 14 || response[6] !=3D 0x04)
+> >  		return FALSE;
+> > @@ -1420,6 +1421,8 @@ gboolean sim_parse_2g_get_response(const unsigned
+> > char *response, int len, access[1] =3D response[9];
+> >  	access[2] =3D response[10];
 > >
-> >  	return sim_fs_read(sim->simfs, id,
-> > OFONO_SIM_FILE_STRUCTURE_TRANSPARENT, -				offset, num_bytes, cb, data);
-> > +				FALSE, offset, num_bytes, cb, data);
-> >  }
-> >
-> >  int ofono_sim_read(struct ofono_sim *sim, int id,
-> > @@ -1540,7 +1549,24 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
-> >  	if (sim =3D=3D NULL)
-> >  		return -1;
-> >
-> > -	return sim_fs_read(sim->simfs, id, expected_type, 0, 0, cb, data);
-> > +	return sim_fs_read(sim->simfs, id, expected_type, FALSE,
-> > +				0, 0, cb, data);
-> > +}
+> > +	*file_status =3D response[11];
 > > +
-> > +int ofono_sim_read_info(struct ofono_sim *sim, int id,
-> > +			enum ofono_sim_file_structure expected_type,
-> > +			ofono_sim_file_read_cb_t cb, void *data)
-> > +{
-> > +	/*
-> > +	 * Retrieve EF-info only (file length, record length, file status etc=
-).
-> > +	 * So this function doesn't retrieve actual EF-contents.
-> > +	 */
-> > +
-> > +	if (sim =3D=3D NULL)
-> > +		return -1;
-> > +
-> > +	return sim_fs_read(sim->simfs, id, expected_type, TRUE,
-> > +				0, 0, cb, data);
+> >  	if (response[13] =3D=3D 0x01 || response[13] =3D=3D 0x03)
+> >  		*record_len =3D response[14];
+> >  	else
 > =
 
-> This sim fs changes should precede this patch.
+> This looks fine.
 > =
 
 
-OK.
+:)
 
-> >  }
+> > diff --git a/src/simutil.h b/src/simutil.h
+> > index 54b99a0..bd8e4ac 100644
+> > --- a/src/simutil.h
+> > +++ b/src/simutil.h
+> > @@ -57,6 +57,14 @@ enum sim_file_access {
+> >  	SIM_FILE_ACCESS_NEVER =3D 15,
+> >  };
 > >
-> >  int ofono_sim_write(struct ofono_sim *sim, int id,
+> > +/* 51.011 Section 9.3 */
+> > +enum sim_file_status {
+> > +	SIM_FILE_STATUS_INVALID			=3D 0x00,
+> > +	SIM_FILE_STATUS_NOT_INVALID		=3D 0x01,
+> > +	SIM_FILE_STATUS_INVALID_BUT_ACCESS	=3D 0x04,
+> > +	SIM_FILE_STATUS_NOT_AVAILABLE		=3D 0xFF,
+> > +};
+> > +
+> =
+
+> I don't like this, you should structure this enum as a set of status flag=
+s.
+> =
+
+> E.g. SIM_FILE_STATUS_VALID =3D 0x01, SIM_FILE_STATUS_RW_WHEN_INVALID =3D =
+0x04
+> =
+
+> I don't see the need for the NOT_AVAILABLE enum since you will never
+> check this status in the 3G case.  Passing 0 here is fine.  But feel
+> free to correct me if I'm wrong.
+
+I can change definitions to describe pure bit-values. NOT_AVAILABLE-enum is=
+ not =
+
+actually used anywhere. So I can remove it :) =
+
+I just check invalidated-bit in the SIM-atom (which I'll have to change to =
+be =
+
+checked with AND-operation).
+
+> =
+
+> >  /* 131.102 Section 4.2.8 */
+> >  enum sim_ust_service {
+> >  	SIM_UST_SERVICE_LOCAL_PHONE_BOOK		=3D 0,
+> > @@ -425,7 +433,8 @@ gboolean sim_parse_3g_get_response(const unsigned
+> > char *data, int len,
+> >
+> >  gboolean sim_parse_2g_get_response(const unsigned char *response, int
+> > len, int *file_len, int *record_len,
+> > -					int *structure, unsigned char *access);
+> > +					int *structure, unsigned char *access,
+> > +					unsigned char *file_status);
+> >
+> >  gboolean sim_ust_is_available(unsigned char *service_ust, unsigned char
+> > len, enum sim_ust_service index);
 > =
 
 > Regards,
@@ -163,6 +120,8 @@ OK.
 > =
 
 
+Br, Petteri
 
---===============1204621792209664922==--
+
+--===============7210538784446735062==--
 
