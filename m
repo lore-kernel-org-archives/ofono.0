@@ -1,96 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============7245270772602771764=="
+Content-Type: multipart/mixed; boundary="===============1362666343136630115=="
 MIME-Version: 1.0
 From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: [RFC PATCH 6/8] sim: add function for reading only general info from
- SIM-EF file
-Date: Fri, 15 Oct 2010 00:02:53 +0300
-Message-ID: <1287090175-3018-7-git-send-email-petteri.tikander@ixonos.com>
-In-Reply-To: <1287090175-3018-6-git-send-email-petteri.tikander@ixonos.com>
+Subject: [RFC PATCH 2/8] simutil: response-handler returns now also file-status
+Date: Fri, 15 Oct 2010 00:02:49 +0300
+Message-ID: <1287090175-3018-3-git-send-email-petteri.tikander@ixonos.com>
+In-Reply-To: <1287090175-3018-2-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7245270772602771764==
+--===============1362666343136630115==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Not actual EF-contents returned, but file length, record length, file statu=
-s etc.
 ---
- include/sim.h |   10 ++++++++++
- src/sim.c     |   21 +++++++++++++++++++--
- 2 files changed, 29 insertions(+), 2 deletions(-)
+ src/simutil.c |    5 ++++-
+ src/simutil.h |   10 +++++++++-
+ 2 files changed, 13 insertions(+), 2 deletions(-)
 
-diff --git a/include/sim.h b/include/sim.h
-index 7860e24..8dd6131 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -207,6 +207,16 @@ int ofono_sim_write(struct ofono_sim *sim, int id,
- int ofono_sim_read_bytes(struct ofono_sim *sim, int id,
- 			unsigned short offset, unsigned short num_bytes,
- 			ofono_sim_file_read_cb_t cb, void *data);
-+
-+/*
-+ * This function reads only general info from SIM-file with
-+ * requested id (file length, record length, file status etc),
-+ * not any records.
-+ */
-+int ofono_sim_read_info(struct ofono_sim *sim, int id,
-+			enum ofono_sim_file_structure expected,
-+			ofono_sim_file_read_cb_t cb, void *data);
-+
- #ifdef __cplusplus
- }
- #endif
-diff --git a/src/sim.c b/src/sim.c
-index ab38e4f..d189350 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -1710,7 +1710,7 @@ int ofono_sim_read_bytes(struct ofono_sim *sim, int i=
-d,
- 		return -1;
+diff --git a/src/simutil.c b/src/simutil.c
+index ed0970c..0474d2a 100644
+--- a/src/simutil.c
++++ b/src/simutil.c
+@@ -1406,7 +1406,8 @@ gboolean sim_parse_3g_get_response(const unsigned cha=
+r *data, int len,
  =
 
- 	return sim_fs_read(sim->simfs, id, OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
--				offset, num_bytes, cb, data);
-+				FALSE, offset, num_bytes, cb, data);
- }
+ gboolean sim_parse_2g_get_response(const unsigned char *response, int len,
+ 					int *file_len, int *record_len,
+-					int *structure, unsigned char *access)
++					int *structure, unsigned char *access,
++					unsigned char *file_status)
+ {
+ 	if (len < 14 || response[6] !=3D 0x04)
+ 		return FALSE;
+@@ -1421,6 +1422,8 @@ gboolean sim_parse_2g_get_response(const unsigned cha=
+r *response, int len,
+ 	access[1] =3D response[9];
+ 	access[2] =3D response[10];
  =
 
- int ofono_sim_read(struct ofono_sim *sim, int id,
-@@ -1720,7 +1720,24 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
- 	if (sim =3D=3D NULL)
- 		return -1;
++	*file_status =3D response[11];
++
+ 	if (response[13] =3D=3D 0x01 || response[13] =3D=3D 0x03)
+ 		*record_len =3D response[14];
+ 	else
+diff --git a/src/simutil.h b/src/simutil.h
+index 69ef528..dc4ff57 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -58,6 +58,13 @@ enum sim_file_access {
+ 	SIM_FILE_ACCESS_NEVER =3D 15,
+ };
  =
 
--	return sim_fs_read(sim->simfs, id, expected_type, 0, 0, cb, data);
-+	return sim_fs_read(sim->simfs, id, expected_type, FALSE,
-+				0, 0, cb, data);
-+}
++/* 51.011 Section 9.3 */
++enum sim_file_status {
++	SIM_FILE_STATUS_INVALID			=3D 0x00,
++	SIM_FILE_STATUS_VALID			=3D 0x01,
++	SIM_FILE_STATUS_RW_WHEN_INVALID		=3D 0x04,
++};
 +
-+int ofono_sim_read_info(struct ofono_sim *sim, int id,
-+			enum ofono_sim_file_structure expected_type,
-+			ofono_sim_file_read_cb_t cb, void *data)
-+{
-+	/*
-+	 * Retrieve EF-info only (file length, record length, file status etc).
-+	 * So this function doesn't retrieve actual EF-contents.
-+	 */
-+
-+	if (sim =3D=3D NULL)
-+		return -1;
-+
-+	return sim_fs_read(sim->simfs, id, expected_type, TRUE,
-+				0, 0, cb, data);
- }
+ /* 131.102 Section 4.2.8 */
+ enum sim_ust_service {
+ 	SIM_UST_SERVICE_LOCAL_PHONE_BOOK		=3D 0,
+@@ -426,7 +433,8 @@ gboolean sim_parse_3g_get_response(const unsigned char =
+*data, int len,
  =
 
- int ofono_sim_write(struct ofono_sim *sim, int id,
+ gboolean sim_parse_2g_get_response(const unsigned char *response, int len,
+ 					int *file_len, int *record_len,
+-					int *structure, unsigned char *access);
++					int *structure, unsigned char *access,
++					unsigned char *file_status);
+ =
+
+ gboolean sim_ust_is_available(unsigned char *service_ust, unsigned char le=
+n,
+ 						enum sim_ust_service index);
 -- =
 
 1.6.3.3
 
 
 
---===============7245270772602771764==--
+--===============1362666343136630115==--
 
