@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============8647170404255462822=="
+Content-Type: multipart/mixed; boundary="===============6724005865991748852=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 1/8] sim: add function to read general info from SIM
- EF-file
-Date: Thu, 14 Oct 2010 06:07:12 -0500
-Message-ID: <4CB6E460.5040104@gmail.com>
-In-Reply-To: <1286896694-3054-2-git-send-email-petteri.tikander@ixonos.com>
+Subject: Re: [RFC PATCH 2/8] simfs: add logic to retrieve only only EF-info,
+ but no EF-contents
+Date: Thu, 14 Oct 2010 06:10:31 -0500
+Message-ID: <4CB6E527.90204@gmail.com>
+In-Reply-To: <1286896694-3054-3-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8647170404255462822==
+--===============6724005865991748852==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,123 +17,133 @@ Content-Transfer-Encoding: quoted-printable
 Hi Petteri,
 
 On 10/12/2010 10:18 AM, Petteri Tikander wrote:
-> Function reads file length, record length, file status etc,
-> but doesn't retrieve any EF-contents.
-> Request for EFadn is added, but this commit just debugs
-> the response.
+> Handling of new parameter (file status) from the driver added.
+> This commit doesn't store EF-info into cache yet.
 > ---
->  include/sim.h |   11 +++++++++++
->  src/sim.c     |   30 ++++++++++++++++++++++++++++--
->  2 files changed, 39 insertions(+), 2 deletions(-)
+>  src/simfs.c |   27 +++++++++++++++++++++++----
+>  src/simfs.h |    1 +
+>  2 files changed, 24 insertions(+), 4 deletions(-)
 > =
 
-> diff --git a/include/sim.h b/include/sim.h
-> index 42b19bd..8dd6131 100644
-> --- a/include/sim.h
-> +++ b/include/sim.h
-> @@ -82,6 +82,7 @@ typedef void (*ofono_sim_file_info_cb_t)(const struct o=
-fono_error *error,
->  					enum ofono_sim_file_structure structure,
->  					int recordlength,
->  					const unsigned char access[3],
-> +					unsigned char file_status,
->  					void *data);
-
-I suggest breaking this out into a separate patch and shuffling patch 4
-and path 5 to follow after this patch.  This patch should also come
-before the changes to ofono_sim_read_info.
-
->  =
-
->  typedef void (*ofono_sim_read_cb_t)(const struct ofono_error *error,
-> @@ -206,6 +207,16 @@ int ofono_sim_write(struct ofono_sim *sim, int id,
->  int ofono_sim_read_bytes(struct ofono_sim *sim, int id,
->  			unsigned short offset, unsigned short num_bytes,
->  			ofono_sim_file_read_cb_t cb, void *data);
-> +
-> +/*
-> + * This function reads only general info from SIM-file with
-> + * requested id (file length, record length, file status etc),
-> + * not any records.
-> + */
-> +int ofono_sim_read_info(struct ofono_sim *sim, int id,
-> +			enum ofono_sim_file_structure expected,
-> +			ofono_sim_file_read_cb_t cb, void *data);
-> +
->  #ifdef __cplusplus
->  }
->  #endif
-> diff --git a/src/sim.c b/src/sim.c
-> index 6f10d4c..f0633bb 100644
-> --- a/src/sim.c
-> +++ b/src/sim.c
-> @@ -1183,6 +1183,15 @@ static void sim_efphase_read_cb(int ok, int length=
-, int record,
->  		sim->phase =3D data[0];
->  }
->  =
-
-> +static void sim_info_read_cb(int ok, int length, int record,
-> +					const unsigned char *file_status,
-> +					int record_length, void *userdata)
-> +{
-> +	DBG("OK: %d, length: %d, record: %d, \
-> +		file_status: %x, record_length: %d",
-> +		ok, length, record, file_status[0], record_length);
-> +}
-> +
-
-Is this function actually used?
-
->  static void sim_initialize_after_pin(struct ofono_sim *sim)
+> diff --git a/src/simfs.c b/src/simfs.c
+> index b5b12b4..24ce7ec 100644
+> --- a/src/simfs.c
+> +++ b/src/simfs.c
+> @@ -58,6 +58,7 @@ struct sim_fs_op {
+>  	int id;
+>  	enum ofono_sim_file_structure structure;
+>  	unsigned short offset;
+> +	gboolean info_only;
+>  	int num_bytes;
+>  	int length;
+>  	int record_length;
+> @@ -426,7 +427,9 @@ static gboolean sim_fs_op_read_record(gpointer user)
+>  static void sim_fs_op_info_cb(const struct ofono_error *error, int lengt=
+h,
+>  				enum ofono_sim_file_structure structure,
+>  				int record_length,
+> -				const unsigned char access[3], void *data)
+> +				const unsigned char access[3],
+> +				const unsigned char file_status,
+> +				void *data)
 >  {
->  	ofono_sim_read(sim, SIM_EFPHASE_FILEID,
-> @@ -1530,7 +1539,7 @@ int ofono_sim_read_bytes(struct ofono_sim *sim, int=
- id,
->  		return -1;
+>  	struct sim_fs *fs =3D data;
+>  	struct sim_fs_op *op =3D g_queue_peek_head(fs->op_q);
+> @@ -438,6 +441,7 @@ static void sim_fs_op_info_cb(const struct ofono_erro=
+r *error, int length,
+>  	unsigned char fileinfo[SIM_CACHE_HEADER_SIZE];
+>  	gboolean cache;
+>  	char *path;
+> +	ofono_sim_file_read_cb_t cb =3D op->cb;
 >  =
 
->  	return sim_fs_read(sim->simfs, id, OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
-> -				offset, num_bytes, cb, data);
-> +				FALSE, offset, num_bytes, cb, data);
->  }
+>  	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+>  		sim_fs_op_error(fs);
+> @@ -473,11 +477,24 @@ static void sim_fs_op_info_cb(const struct ofono_er=
+ror *error, int length,
 >  =
 
->  int ofono_sim_read(struct ofono_sim *sim, int id,
-> @@ -1540,7 +1549,24 @@ int ofono_sim_read(struct ofono_sim *sim, int id,
->  	if (sim =3D=3D NULL)
->  		return -1;
->  =
+>  		op->record_length =3D length;
+>  		op->current =3D op->offset / 256;
+> -		fs->op_source =3D g_idle_add(sim_fs_op_read_block, fs);
+> +		if (!op->info_only)
+> +			fs->op_source =3D g_idle_add(sim_fs_op_read_block, fs);
 
-> -	return sim_fs_read(sim->simfs, id, expected_type, 0, 0, cb, data);
-> +	return sim_fs_read(sim->simfs, id, expected_type, FALSE,
-> +				0, 0, cb, data);
-> +}
+Please watch out for coding style violations.  There should be an empty
+line before the if statement.
+
+>  	} else {
+>  		op->record_length =3D record_length;
+>  		op->current =3D 1;
+> -		fs->op_source =3D g_idle_add(sim_fs_op_read_record, fs);
+> +		if (!op->info_only)
+> +			fs->op_source =3D g_idle_add(sim_fs_op_read_record, fs);
+
+Same comment as above
+
+> +	}
 > +
-> +int ofono_sim_read_info(struct ofono_sim *sim, int id,
-> +			enum ofono_sim_file_structure expected_type,
-> +			ofono_sim_file_read_cb_t cb, void *data)
-> +{
-> +	/*
-> +	 * Retrieve EF-info only (file length, record length, file status etc).
-> +	 * So this function doesn't retrieve actual EF-contents.
-> +	 */
+> +	if (op->info_only) {
+> +		/*
+> +		 * It's info-only request. So there is no need to request
+> +		 * actual contents of the EF-files. Just return the EF-info.
+> +		 */
+> +		cb(1, op->length, op->current,
+> +			&file_status, op->record_length, op->userdata);
 > +
-> +	if (sim =3D=3D NULL)
-> +		return -1;
-> +
-> +	return sim_fs_read(sim->simfs, id, expected_type, TRUE,
-> +				0, 0, cb, data);
-
-This sim fs changes should precede this patch.
-
->  }
+> +		sim_fs_end_current(fs);
+>  	}
 >  =
 
->  int ofono_sim_write(struct ofono_sim *sim, int id,
+>  	if (imsi =3D=3D NULL || cache =3D=3D FALSE)
+> @@ -522,7 +539,7 @@ static gboolean sim_fs_op_check_cached(struct sim_fs =
+*fs)
+>  	enum ofono_sim_file_structure structure;
+>  	int record_length;
+>  =
+
+> -	if (!imsi)
+> +	if (!imsi || !op->info_only)
+>  		return FALSE;
+>  =
+
+>  	path =3D g_strdup_printf(SIM_CACHE_PATH, imsi, phase, op->id);
+> @@ -635,6 +652,7 @@ static gboolean sim_fs_op_next(gpointer user_data)
+>  =
+
+>  int sim_fs_read(struct sim_fs *fs, int id,
+>  		enum ofono_sim_file_structure expected_type,
+> +		gboolean info_only,
+>  		unsigned short offset, unsigned short num_bytes,
+>  		ofono_sim_file_read_cb_t cb, void *data)
+>  {
+> @@ -661,6 +679,7 @@ int sim_fs_read(struct sim_fs *fs, int id,
+>  	op->is_read =3D TRUE;
+>  	op->offset =3D offset;
+>  	op->num_bytes =3D num_bytes;
+> +	op->info_only =3D info_only;
+>  =
+
+>  	g_queue_push_tail(fs->op_q, op);
+>  =
+
+> diff --git a/src/simfs.h b/src/simfs.h
+> index 6d5dded..284d15b 100644
+> --- a/src/simfs.h
+> +++ b/src/simfs.h
+> @@ -26,6 +26,7 @@ struct sim_fs *sim_fs_new(struct ofono_sim *sim,
+>  =
+
+>  int sim_fs_read(struct sim_fs *fs, int id,
+>  		enum ofono_sim_file_structure expected_type,
+> +		gboolean info_only,
+>  		unsigned short offset, unsigned short num_bytes,
+>  		ofono_sim_file_read_cb_t cb, void *data);
+>  =
+
 
 Regards,
 -Denis
 
---===============8647170404255462822==--
+--===============6724005865991748852==--
 
