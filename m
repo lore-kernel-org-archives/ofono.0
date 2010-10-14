@@ -1,54 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============9056496148959699649=="
+Content-Type: multipart/mixed; boundary="===============3226218370564661865=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC PATCH 8/8] doc: update sim-api
-Date: Thu, 14 Oct 2010 08:56:33 +0300
-Message-ID: <1287035793.3316.23.camel@aeonflux>
-In-Reply-To: <1286896694-3054-9-git-send-email-petteri.tikander@ixonos.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [RFC online/offline atoms PATCH 1/4] modem: add modem state watch
+Date: Thu, 14 Oct 2010 10:21:04 +0300
+Message-ID: <AANLkTinFdE1A1UmNzKZTP=b1B+vj8TEtQ_VGWGLLWo6s@mail.gmail.com>
+In-Reply-To: <4CB618FD.6050006@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9056496148959699649==
+--===============3226218370564661865==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Petteri,
+Hi Denis,
 
-> ---
->  doc/sim-api.txt |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
-> =
+2010/10/13 Denis Kenzior <denkenz@gmail.com>:
+>> @@ -177,6 +177,21 @@ unsigned int __ofono_modemwatch_add(ofono_modemwatc=
+h_cb_t cb, void *user,
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_destro=
+y_func destroy);
+>> =C2=A0gboolean __ofono_modemwatch_remove(unsigned int id);
+>>
+>> +enum ofono_modem_state {
+>> + =C2=A0 =C2=A0 MODEM_STATE_POWER_OFF,
+>> + =C2=A0 =C2=A0 MODEM_STATE_PRE_SIM,
+>> + =C2=A0 =C2=A0 MODEM_STATE_OFFLINE,
+>> + =C2=A0 =C2=A0 MODEM_STATE_ONLINE,
+>> +};
+>
+> Personally I don't see the need for anything besides an online/offline
+> watch. =C2=A0Nobody will ever care about the other states.
 
-> diff --git a/doc/sim-api.txt b/doc/sim-api.txt
-> index d5bf279..c502772 100644
-> --- a/doc/sim-api.txt
-> +++ b/doc/sim-api.txt
-> @@ -125,3 +125,7 @@ Properties	boolean Present [readonly]
->  =
+In principle, this information would be useful for voicecall atom. On
+the other hand, it can follow sim state, too. We'll change this (back)
+to online/offline unless we can figure other use for the full modem
+state.
 
->  			Contains the Intergrated Circuit Card Identifer (ICCID)
->  			which is read directly from the SIM.
-> +
-> +		boolean FixedDialing [readonly]
-> +
-> +			True if a Fixed Dialing is enabled in SIM card.
+-- =
 
-can we please make this a bit more verbose. I want to have some
-description on what this is intended for. So something along the line
-that you can detect that the SIM card is in fixed dialing mode. That
-this means you can make emergency calls only etc. So what is the impact
-for the application developers and what is expected from them todo.
+Pekka.Pessi mail at nokia.com
 
-Remember that these docs are not just for us, they are for the
-application developers and need to be as verbose as possible. So they go
-off into the right direction ;)
-
-Regards
-
-Marcel
-
-
-
---===============9056496148959699649==--
+--===============3226218370564661865==--
 
