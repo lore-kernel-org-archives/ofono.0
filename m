@@ -1,177 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============1025209640709062576=="
+Content-Type: multipart/mixed; boundary="===============9203773168972924373=="
 MIME-Version: 1.0
-From: Alexander A Khryukin <alexander@mezon.ru>
-Subject: Re: list-modems patch
-Date: Thu, 14 Oct 2010 14:36:00 +0400
-Message-ID: <1287052560.32351.28.camel@mezon.ru>
-In-Reply-To: <1287051218.3316.35.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 3/8] simutil: response-handler returns now also
+ file-status
+Date: Thu, 14 Oct 2010 05:41:17 -0500
+Message-ID: <4CB6DE4D.1030107@gmail.com>
+In-Reply-To: <1286896694-3054-4-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1025209640709062576==
+--===============9203773168972924373==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-=D0=92 =D0=A7=D1=82=D0=B2, 14/10/2010 =D0=B2 13:13 +0300, Marcel Holtmann =
-=D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> Hi Alex,
+Hi Petteri,
+
+On 10/12/2010 10:18 AM, Petteri Tikander wrote:
+> ---
+>  src/simutil.c |    5 ++++-
+>  src/simutil.h |   11 ++++++++++-
+>  2 files changed, 14 insertions(+), 2 deletions(-)
 > =
 
-> > > > Sometimes i see =
+> diff --git a/src/simutil.c b/src/simutil.c
+> index 65ce1ac..04ba975 100644
+> --- a/src/simutil.c
+> +++ b/src/simutil.c
+> @@ -1405,7 +1405,8 @@ gboolean sim_parse_3g_get_response(const unsigned c=
+har *data, int len,
+>  =
 
-> > > > =
+>  gboolean sim_parse_2g_get_response(const unsigned char *response, int le=
+n,
+>  					int *file_len, int *record_len,
+> -					int *structure, unsigned char *access)
+> +					int *structure, unsigned char *access,
+> +					unsigned char *file_status)
+>  {
+>  	if (len < 14 || response[6] !=3D 0x04)
+>  		return FALSE;
+> @@ -1420,6 +1421,8 @@ gboolean sim_parse_2g_get_response(const unsigned c=
+har *response, int len,
+>  	access[1] =3D response[9];
+>  	access[2] =3D response[10];
+>  =
 
-> > > > [root(a)alexander-desktop ofono-0.31]# /usr/lib/ofono/test/list-mod=
-ems =
+> +	*file_status =3D response[11];
+> +
+>  	if (response[13] =3D=3D 0x01 || response[13] =3D=3D 0x03)
+>  		*record_len =3D response[14];
+>  	else
 
-> > > > [ /huawei5 ]
-> > > >     Features =3D sim =
+This looks fine.
 
-> > > >     Powered =3D 1
-> > > >     Interfaces =3D org.ofono.Phonebook org.ofono.AudioSettings
-> > > > org.ofono.VoiceCallManager org.ofono.SimManager =
+> diff --git a/src/simutil.h b/src/simutil.h
+> index 54b99a0..bd8e4ac 100644
+> --- a/src/simutil.h
+> +++ b/src/simutil.h
+> @@ -57,6 +57,14 @@ enum sim_file_access {
+>  	SIM_FILE_ACCESS_NEVER =3D 15,
+>  };
+>  =
 
-> > > >     Online =3D 0
-> > > >     Model =3D E1550
-> > > >     Manufacturer =3D huawei
-> > > >     Serial =3D 353142033084081
-> > > >     Revision =3D 11.608.12.00.143
-> > > >     [ org.ofono.Phonebook ]
-> > > >     [ org.ofono.AudioSettings ]
-> > > > Traceback (most recent call last):
-> > > >   File "/usr/lib/ofono/test/list-modems", line 61, in <module>
-> > > >     print "        %s =3D %s" % (key, val).encode('ascii')
-> > > > =
+> +/* 51.011 Section 9.3 */
+> +enum sim_file_status {
+> +	SIM_FILE_STATUS_INVALID			=3D 0x00,
+> +	SIM_FILE_STATUS_NOT_INVALID		=3D 0x01,
+> +	SIM_FILE_STATUS_INVALID_BUT_ACCESS	=3D 0x04,
+> +	SIM_FILE_STATUS_NOT_AVAILABLE		=3D 0xFF,
+> +};
+> +
 
-> > > > =
+I don't like this, you should structure this enum as a set of status flags.
 
-> > > > Patch
-> > > > =
+E.g. SIM_FILE_STATUS_VALID =3D 0x01, SIM_FILE_STATUS_RW_WHEN_INVALID =3D 0x=
+04
 
-> > > > =
+I don't see the need for the NOT_AVAILABLE enum since you will never
+check this status in the 3G case.  Passing 0 here is fine.  But feel
+free to correct me if I'm wrong.
 
-> > > > =
+>  /* 131.102 Section 4.2.8 */
+>  enum sim_ust_service {
+>  	SIM_UST_SERVICE_LOCAL_PHONE_BOOK		=3D 0,
+> @@ -425,7 +433,8 @@ gboolean sim_parse_3g_get_response(const unsigned cha=
+r *data, int len,
+>  =
 
-> > > > diff --git a/test/list-modems b/test/list-modems
-> > > > index 557efd5..df1dca8 100755
-> > > > --- a/test/list-modems
-> > > > +++ b/test/list-modems
-> > > > @@ -58,6 +58,10 @@ for path, properties in modems:
-> > > >                                         ")" for text, icon in
-> > > > properties[key] ])
-> > > >                         else:
-> > > >                              	val =3D str(properties[key])
-> > > > -                       print "        %s =3D %s" % (key, val)
-> > > > +                       try:
-> > > > +                               print  "       %s =3D %s" % (key, v=
-al)
-> > > > +                       except:
-> > > > +                               continue
-> > > > +
-> > > =
+>  gboolean sim_parse_2g_get_response(const unsigned char *response, int le=
+n,
+>  					int *file_len, int *record_len,
+> -					int *structure, unsigned char *access);
+> +					int *structure, unsigned char *access,
+> +					unsigned char *file_status);
+>  =
 
-> > > can you at least print the key value. Just not printing that property=
- at
-> > > all is bad since it is there. Just marking the value as not printable
-> > > seems to be the better approach.
-> > > =
+>  gboolean sim_ust_is_available(unsigned char *service_ust, unsigned char =
+len,
+>  						enum sim_ust_service index);
 
-> > > Regards
-> > > =
+Regards,
+-Denis
 
-> > > Marcel
-> > > =
-
-> > > =
-
-> > > =
-
-> > =
-
-> > Last fully-working script
-> > =
-
-> > [ /huawei0 ]
-> > =
-
-> > =
-
-> > del overquote
-> > =
-
-> >         ServiceNumbers =3D [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=
-=BE=D1=89=D0=BD=D0=B8=D0=BA] =3D '111' [MT=D0=A1] =3D
-> > '+78003330890' [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=B0=
-=D1=81=D0=B5=D0=BD=D0=B8=D1=8F] =3D '112' =
-
-> >         CardIdentifier =3D 89701012417666587513
-> >         LockedPins =3D =
-
-> >         PinRequired =3D none
-> >         SubscriberIdentity =3D 250011766658751
-> >         Present =3D 1
-> > =
-
-> > =
-
-> > [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=BE=D1=89=D0=BD=D0=B8=D0=BA] =
-- in russian means "Mobile Partner"
-> > [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=B0=D1=81=D0=B5=D0=
-=BD=D0=B8=D1=8F] - rescue rangers :3           =
-
-> > =
-
-> > =
-
-> > =
-
-> > =
-
-> > diff --git a/test/list-modems b/test/list-modems
-> > index 557efd5..59765f9 100755
-> > --- a/test/list-modems
-> > +++ b/test/list-modems
-> > @@ -58,6 +58,10 @@ for path, properties in modems:
-> >                                         ")" for text, icon in
-> > properties[key] ])
-> >                         else:
-> >                                 val =3D str(properties[key])
-> > -                       print "        %s =3D %s" % (key, val)
-> > -
-> > +                       try:
-> > +                               print "        %s =3D %s" %
-> > (key.encode('utf8'), val.encode('utf8'))
-> > +                       except:
-> > +                               print "Cannot encode some charcters
-> > please change locale"
-> > +                       else:
-> > +                                continue
-> >         print
-> =
-
-> patch does not apply. Please always check with git am that your patch
-> would apply cleanly. And that your mailer doesn't screw it up.
-> =
-
-> Regards
-> =
-
-> Marcel
-> =
-
-> =
-
-> =
-
-
-Evolution reformate message anyway
-Please click on link.
-Was checked and applied for me with success
-
-http://pastie.org/pastes/1220422/text
-
-
-
---===============1025209640709062576==--
+--===============9203773168972924373==--
 
