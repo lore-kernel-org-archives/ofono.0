@@ -1,141 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============2863101935349559116=="
+Content-Type: multipart/mixed; boundary="===============4313200529890981734=="
 MIME-Version: 1.0
 From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: [RFC PATCH 1/8] simfs: add logic to retrieve only only EF-info,
- but no EF-contents
-Date: Fri, 15 Oct 2010 00:02:48 +0300
-Message-ID: <1287090175-3018-2-git-send-email-petteri.tikander@ixonos.com>
-In-Reply-To: <1287090175-3018-1-git-send-email-petteri.tikander@ixonos.com>
+Subject: [RFC PATCH 3/8] sim: add new parameter to file-info utility
+Date: Fri, 15 Oct 2010 00:02:50 +0300
+Message-ID: <1287090175-3018-4-git-send-email-petteri.tikander@ixonos.com>
+In-Reply-To: <1287090175-3018-3-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2863101935349559116==
+--===============4313200529890981734==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Handling of new parameter (file status) from the driver added.
-This commit doesn't store EF-info into cache yet.
 ---
- src/simfs.c |   29 +++++++++++++++++++++++++----
- src/simfs.h |    1 +
- 2 files changed, 26 insertions(+), 4 deletions(-)
+ include/sim.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/src/simfs.c b/src/simfs.c
-index fd768ef..ea09536 100644
---- a/src/simfs.c
-+++ b/src/simfs.c
-@@ -61,6 +61,7 @@ struct sim_fs_op {
- 	unsigned char *buffer;
- 	enum ofono_sim_file_structure structure;
- 	unsigned short offset;
-+	gboolean info_only;
- 	int num_bytes;
- 	int length;
- 	int record_length;
-@@ -433,7 +434,9 @@ static gboolean sim_fs_op_read_record(gpointer user)
- static void sim_fs_op_info_cb(const struct ofono_error *error, int length,
- 				enum ofono_sim_file_structure structure,
- 				int record_length,
--				const unsigned char access[3], void *data)
-+				const unsigned char access[3],
-+				const unsigned char file_status,
-+				void *data)
- {
- 	struct sim_fs *fs =3D data;
- 	struct sim_fs_op *op =3D g_queue_peek_head(fs->op_q);
-@@ -445,6 +448,7 @@ static void sim_fs_op_info_cb(const struct ofono_error =
-*error, int length,
- 	unsigned char fileinfo[SIM_CACHE_HEADER_SIZE];
- 	gboolean cache;
- 	char *path;
-+	ofono_sim_file_read_cb_t cb =3D op->cb;
+diff --git a/include/sim.h b/include/sim.h
+index 42b19bd..7860e24 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -82,6 +82,7 @@ typedef void (*ofono_sim_file_info_cb_t)(const struct ofo=
+no_error *error,
+ 					enum ofono_sim_file_structure structure,
+ 					int recordlength,
+ 					const unsigned char access[3],
++					unsigned char file_status,
+ 					void *data);
  =
 
- 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
- 		sim_fs_op_error(fs);
-@@ -480,11 +484,26 @@ static void sim_fs_op_info_cb(const struct ofono_erro=
-r *error, int length,
- =
-
- 		op->record_length =3D length;
- 		op->current =3D op->offset / 256;
--		fs->op_source =3D g_idle_add(sim_fs_op_read_block, fs);
-+
-+		if (!op->info_only)
-+			fs->op_source =3D g_idle_add(sim_fs_op_read_block, fs);
- 	} else {
- 		op->record_length =3D record_length;
- 		op->current =3D 1;
--		fs->op_source =3D g_idle_add(sim_fs_op_read_record, fs);
-+
-+		if (!op->info_only)
-+			fs->op_source =3D g_idle_add(sim_fs_op_read_record, fs);
-+	}
-+
-+	if (op->info_only) {
-+		/*
-+		 * It's info-only request. So there is no need to request
-+		 * actual contents of the EF-files. Just return the EF-info.
-+		 */
-+		cb(1, op->length, op->current,
-+			&file_status, op->record_length, op->userdata);
-+
-+		sim_fs_end_current(fs);
- 	}
- =
-
- 	if (imsi =3D=3D NULL || cache =3D=3D FALSE)
-@@ -529,7 +548,7 @@ static gboolean sim_fs_op_check_cached(struct sim_fs *f=
-s)
- 	enum ofono_sim_file_structure structure;
- 	int record_length;
- =
-
--	if (!imsi)
-+	if (!imsi || !op->info_only)
- 		return FALSE;
- =
-
- 	path =3D g_strdup_printf(SIM_CACHE_PATH, imsi, phase, op->id);
-@@ -642,6 +661,7 @@ static gboolean sim_fs_op_next(gpointer user_data)
- =
-
- int sim_fs_read(struct sim_fs *fs, int id,
- 		enum ofono_sim_file_structure expected_type,
-+		gboolean info_only,
- 		unsigned short offset, unsigned short num_bytes,
- 		ofono_sim_file_read_cb_t cb, void *data)
- {
-@@ -668,6 +688,7 @@ int sim_fs_read(struct sim_fs *fs, int id,
- 	op->is_read =3D TRUE;
- 	op->offset =3D offset;
- 	op->num_bytes =3D num_bytes;
-+	op->info_only =3D info_only;
- =
-
- 	g_queue_push_tail(fs->op_q, op);
- =
-
-diff --git a/src/simfs.h b/src/simfs.h
-index c0b4c51..40f00d4 100644
---- a/src/simfs.h
-+++ b/src/simfs.h
-@@ -26,6 +26,7 @@ struct sim_fs *sim_fs_new(struct ofono_sim *sim,
- =
-
- int sim_fs_read(struct sim_fs *fs, int id,
- 		enum ofono_sim_file_structure expected_type,
-+		gboolean info_only,
- 		unsigned short offset, unsigned short num_bytes,
- 		ofono_sim_file_read_cb_t cb, void *data);
- =
-
+ typedef void (*ofono_sim_read_cb_t)(const struct ofono_error *error,
 -- =
 
 1.6.3.3
 
 
 
---===============2863101935349559116==--
+--===============4313200529890981734==--
 
