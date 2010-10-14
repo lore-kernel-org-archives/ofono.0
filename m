@@ -1,31 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============4242339307270708686=="
+Content-Type: multipart/mixed; boundary="===============4651728025050187103=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 08/13] stk: IdleModeIcon and MainMenuIcon properties.
-Date: Thu, 14 Oct 2010 03:10:13 -0500
-Message-ID: <4CB6BAE5.2080804@gmail.com>
-In-Reply-To: <1286978056-16600-8-git-send-email-andrew.zaborowski@intel.com>
+From: Alexander A Khryukin <alexander@mezon.ru>
+Subject: list-modems patch
+Date: Thu, 14 Oct 2010 12:31:19 +0400
+Message-ID: <1287045079.32351.3.camel@mezon.ru>
+In-Reply-To: <4CB6BAE5.2080804@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4242339307270708686==
+--===============4651728025050187103==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
-
-On 10/13/2010 08:54 AM, Andrzej Zaborowski wrote:
-> ---
->  src/stk.c |   23 +++++++++++++++++++++++
->  1 files changed, 23 insertions(+), 0 deletions(-)
-> =
+Sometimes i see =
 
 
-Patch has been applied, thanks.
+[root(a)alexander-desktop ofono-0.31]# /usr/lib/ofono/test/list-modems =
 
-Regards,
--Denis
+[ /huawei5 ]
+    Features =3D sim =
 
---===============4242339307270708686==--
+    Powered =3D 1
+    Interfaces =3D org.ofono.Phonebook org.ofono.AudioSettings
+org.ofono.VoiceCallManager org.ofono.SimManager =
+
+    Online =3D 0
+    Model =3D E1550
+    Manufacturer =3D huawei
+    Serial =3D 353142033084081
+    Revision =3D 11.608.12.00.143
+    [ org.ofono.Phonebook ]
+    [ org.ofono.AudioSettings ]
+Traceback (most recent call last):
+  File "/usr/lib/ofono/test/list-modems", line 61, in <module>
+    print "        %s =3D %s" % (key, val).encode('ascii')
+
+
+Patch
+
+
+
+diff --git a/test/list-modems b/test/list-modems
+index 557efd5..df1dca8 100755
+--- a/test/list-modems
++++ b/test/list-modems
+@@ -58,6 +58,10 @@ for path, properties in modems:
+                                        ")" for text, icon in
+properties[key] ])
+                        else:
+                             	val =3D str(properties[key])
+-                       print "        %s =3D %s" % (key, val)
++                       try:
++                               print  "       %s =3D %s" % (key, val)
++                       except:
++                               continue
++
+
+        print
+
+
+
+
+
+
+
+--===============4651728025050187103==--
 
