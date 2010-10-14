@@ -1,42 +1,232 @@
-Content-Type: multipart/mixed; boundary="===============6093143546972657250=="
+Content-Type: multipart/mixed; boundary="===============3671379415948689434=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: [PATCH v2 0/3] Patch Description
-Date: Thu, 14 Oct 2010 19:17:56 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A473301905B3@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <4CB61452.7020200@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 7/8] sim: check if Fixed Dialing is enabled in the
+ SIM-card
+Date: Thu, 14 Oct 2010 06:22:06 -0500
+Message-ID: <4CB6E7DE.80908@gmail.com>
+In-Reply-To: <1286896694-3054-8-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6093143546972657250==
+--===============3671379415948689434==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Petteri,
 
+On 10/12/2010 10:18 AM, Petteri Tikander wrote:
+> If FD is enabled, halt SIM initialization procedure.
+> New property (FixedDialing) is added. If FD is enabled,
+> this has been signalled via DBUS.
+> ---
+>  src/sim.c |   81 ++++++++++++++++++++++++++++++++++++++++++++++++++++++-=
+------
+>  1 files changed, 72 insertions(+), 9 deletions(-)
+> =
 
->> Then we set the path of script and run the script with its name
->> dbus-send --system --print-reply --dest=3Dorg.phonesim /
->org.phonesim.Script.SetPath string:/tmp/call
->> dbus-send --system --print-reply --dest=3Dorg.phonesim / org.phonesim.Sc=
-ript.Run
->string:call.js
->>
->
->One of the changes I made was to have phonesim register to the system
->bus.  This makes the above DBus configuration file unnecessary.  Running
->phonesim on the system bus was too much of a security risk, and wasn't
->really needed.
->
+> diff --git a/src/sim.c b/src/sim.c
+> index f0633bb..4836f55 100644
+> --- a/src/sim.c
+> +++ b/src/sim.c
+> @@ -71,6 +71,7 @@ struct ofono_sim {
+>  	unsigned char efest_length;
+>  	unsigned char *efsst;
+>  	unsigned char efsst_length;
+> +	gboolean fixed_dialing;
+>  =
 
-Thanks for the modifications afterward, and I'm fine with most of them. One=
- question is why you renamed the service name to "org.ofono.phonesim". I wo=
-nder why the phonesim should have relationship with ofono?
+>  	char *imsi;
+>  =
 
+> @@ -307,6 +308,9 @@ static DBusMessage *sim_get_properties(DBusConnection=
+ *conn,
+>  		ofono_dbus_dict_append(&dict, "SubscriberIdentity",
+>  					DBUS_TYPE_STRING, &sim->imsi);
+>  =
+
+> +	ofono_dbus_dict_append(&dict, "FixedDialing", DBUS_TYPE_BOOLEAN,
+> +				&sim->fixed_dialing);
+> +
+>  	if (sim->mnc_length) {
+>  		char mcc[OFONO_MAX_MCC_LENGTH + 1];
+>  		char mnc[OFONO_MAX_MNC_LENGTH + 1];
+> @@ -1061,12 +1065,41 @@ static void sim_retrieve_imsi(struct ofono_sim *s=
+im)
+>  	sim->driver->read_imsi(sim, sim_imsi_cb, sim);
+>  }
+>  =
+
+> +static void sim_info_read_cb(int ok, int length, int record,
+> +					const unsigned char *file_status,
+> +					int record_length, void *userdata)
+> +{
+> +	struct ofono_sim *sim =3D userdata;
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path =3D __ofono_atom_get_path(sim->atom);
+
+I suggest moving the conn and path variable declarations into the if
+statement below.
+
+> +
+> +	if (!ok)
+> +		goto out;
+> +
+> +	if (*file_status !=3D SIM_FILE_STATUS_NOT_INVALID) {
+> +
+
+The empty line above is not needed
+
+> +		sim->fixed_dialing =3D TRUE;
+> +
+> +		ofono_dbus_signal_property_changed(conn, path,
+> +					OFONO_SIM_MANAGER_INTERFACE,
+> +					"FixedDialing",
+> +					DBUS_TYPE_BOOLEAN,
+> +					&sim->fixed_dialing);
+> +		return;
+> +	}
+> +
+> +out:
+> +	sim_retrieve_imsi(sim);
+> +}
+> +
+>  static void sim_efsst_read_cb(int ok, int length, int record,
+>  				const unsigned char *data,
+>  				int record_length, void *userdata)
+>  {
+>  	struct ofono_sim *sim =3D userdata;
+>  =
+
+> +	sim->fixed_dialing =3D FALSE;
+> +
+
+Why do you reset fixed_dialing to FALSE here?
+
+>  	if (!ok)
+>  		goto out;
+>  =
+
+> @@ -1078,6 +1111,21 @@ static void sim_efsst_read_cb(int ok, int length, =
+int record,
+>  	sim->efsst =3D g_memdup(data, length);
+>  	sim->efsst_length =3D length;
+>  =
+
+> +	/*
+> +	 * Check if Fixed Dialing is enabled in the SIM-card
+> +	 * (TS 11.11/TS 51.011, Section 9.3: FDN capability request).
+> +	 * If FDN is activated and ADN is invalidated,
+> +	 * don't continue initialization routine.
+> +	 */
+> +	if (sim_sst_is_active(sim->efsst, sim->efsst_length,
+> +				SIM_SST_SERVICE_FDN)) {
+> +
+> +		ofono_sim_read_info(sim, SIM_EFADN_FILEID,
+> +					OFONO_SIM_FILE_STRUCTURE_FIXED,
+> +					sim_info_read_cb, sim);
+> +		return;
+> +	}
+> +
+>  out:
+>  	sim_retrieve_imsi(sim);
+>  }
+> @@ -1087,6 +1135,8 @@ static void sim_efest_read_cb(int ok, int length, i=
+nt record,
+>  				int record_length, void *userdata)
+>  {
+>  	struct ofono_sim *sim =3D userdata;
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path =3D __ofono_atom_get_path(sim->atom);
+
+I suggest moving these variable declarations to the if statement below.
+
+>  =
+
+>  	if (!ok)
+>  		goto out;
+> @@ -1099,6 +1149,24 @@ static void sim_efest_read_cb(int ok, int length, =
+int record,
+>  	sim->efest =3D g_memdup(data, length);
+>  	sim->efest_length =3D length;
+>  =
+
+> +	/*
+> +	 * Check if Fixed Dialing is enabled in the USIM-card
+> +	 * (TS 31.102, Section 5.3.2: FDN capability request).
+> +	 * If FDN is activated, don't continue initialization routine.
+> +	 */
+> +	if (sim_est_is_active(sim->efest, sim->efest_length,
+> +				SIM_EST_SERVICE_FDN)) {
+> +
+> +		sim->fixed_dialing =3D TRUE;
+> +
+> +		ofono_dbus_signal_property_changed(conn, path,
+> +						OFONO_SIM_MANAGER_INTERFACE,
+> +						"FixedDialing",
+> +						DBUS_TYPE_BOOLEAN,
+> +						&sim->fixed_dialing);
+> +		return;
+> +	}
+> +
+>  out:
+>  	sim_retrieve_imsi(sim);
+>  }
+> @@ -1109,6 +1177,8 @@ static void sim_efust_read_cb(int ok, int length, i=
+nt record,
+>  {
+>  	struct ofono_sim *sim =3D userdata;
+>  =
+
+> +	sim->fixed_dialing =3D FALSE;
+> +
+
+Again, why set this to FALSE here?
+
+>  	if (!ok)
+>  		goto out;
+>  =
+
+> @@ -1183,15 +1253,6 @@ static void sim_efphase_read_cb(int ok, int length=
+, int record,
+>  		sim->phase =3D data[0];
+>  }
+>  =
+
+> -static void sim_info_read_cb(int ok, int length, int record,
+> -					const unsigned char *file_status,
+> -					int record_length, void *userdata)
+> -{
+> -	DBG("OK: %d, length: %d, record: %d, \
+> -		file_status: %x, record_length: %d",
+> -		ok, length, record, file_status[0], record_length);
+> -}
+> -
+
+This seems to be unrelated to the rest of the patch.
+
+>  static void sim_initialize_after_pin(struct ofono_sim *sim)
+>  {
+>  	ofono_sim_read(sim, SIM_EFPHASE_FILEID,
+> @@ -1691,6 +1752,8 @@ static void sim_free_state(struct ofono_sim *sim)
+>  		sim->efimg =3D NULL;
+>  		sim->efimg_length =3D 0;
+>  	}
+> +
+> +	sim->fixed_dialing =3D FALSE;
+
+And here?  I suggest you simply reset fixed_dialing to FALSE inside
+sim_free_state
+
+>  }
+>  =
+
+>  void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inser=
+ted)
 
 Regards,
--Yang
+-Denis
 
---===============6093143546972657250==--
+--===============3671379415948689434==--
 
