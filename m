@@ -1,206 +1,202 @@
-Content-Type: multipart/mixed; boundary="===============1938359192555502309=="
+Content-Type: multipart/mixed; boundary="===============2840358132589864375=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: list-modems patch
-Date: Fri, 15 Oct 2010 12:09:26 +0300
-Message-ID: <1287133766.3316.59.camel@aeonflux>
-In-Reply-To: <1287133345.21789.0.camel@mezon.ru>
+From: Predon, Frederic <frederic.predon@intel.com>
+Subject: Call Barring and MMI Supplementary Service codes
+Date: Fri, 15 Oct 2010 10:21:09 +0100
+Message-ID: <8250E4885F9967469CAC3FB5CBA2CE69934C889456@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1938359192555502309==
+--===============2840358132589864375==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Alex,
+Hi,
 
-> > > > > > > Sometimes i see =
+As per the 3GPP 22.030 Annex C:
+- the MMI Service Code "22" refers to "All sync services" telecommunication=
+ service.
+- the MMI Service Code "24" refers to "All data circuit sync" telecommunica=
+tion service.
+They are both linked to the same Basic Group Service 8.
+So as per our understanding, this means the "All sync services" is equal to=
+ "All data circuit sync". Is that everyone's comprehension as well?
 
-> > > > > > > =
+When we try to run Call Barring certification tests (particularly 31.8.3.1 =
+from 3GPP 51.010), the spec requires us to activate the call barring with t=
+he MMI code "22".
+We do it using org.ofono.SupplementaryServices.Initiate with the following =
+string "*33*1234*22#" (This is the activation of BAOC with password "1234" =
+on All Sync Services), Ofono then sends to the modem the following AT comma=
+nd: AT+CLCK=3D"AO",1,"1234",16
+According to the 3GPP 27.007 =C2=A77.4 (CLCK), 16 is "data circuit sync".
+So modem will translate that into "all data circuit sync" in the REGISTER m=
+essage sent to the network simulator.
+However according to 3GPP 51.010 31.8.3.1, only a REGISTER message containi=
+ng "All synchronous services" is awaited. So conformance  scripts will cons=
+ider the test as FAILED.
+We noticed the test would be PASS only if CLCK classx parameter was 80 (ins=
+tead of 16). 80 =3D 16 (data circuit sync) + 64 (dedicated packet access).
 
-> > > > > > > [root(a)alexander-desktop ofono-0.31]# /usr/lib/ofono/test/li=
-st-modems =
-
-> > > > > > > [ /huawei5 ]
-> > > > > > >     Features =3D sim =
-
-> > > > > > >     Powered =3D 1
-> > > > > > >     Interfaces =3D org.ofono.Phonebook org.ofono.AudioSettings
-> > > > > > > org.ofono.VoiceCallManager org.ofono.SimManager =
-
-> > > > > > >     Online =3D 0
-> > > > > > >     Model =3D E1550
-> > > > > > >     Manufacturer =3D huawei
-> > > > > > >     Serial =3D 353142033084081
-> > > > > > >     Revision =3D 11.608.12.00.143
-> > > > > > >     [ org.ofono.Phonebook ]
-> > > > > > >     [ org.ofono.AudioSettings ]
-> > > > > > > Traceback (most recent call last):
-> > > > > > >   File "/usr/lib/ofono/test/list-modems", line 61, in <module>
-> > > > > > >     print "        %s =3D %s" % (key, val).encode('ascii')
-> > > > > > > =
-
-> > > > > > > =
-
-> > > > > > > Patch
-> > > > > > > =
-
-> > > > > > > =
-
-> > > > > > > =
-
-> > > > > > > diff --git a/test/list-modems b/test/list-modems
-> > > > > > > index 557efd5..df1dca8 100755
-> > > > > > > --- a/test/list-modems
-> > > > > > > +++ b/test/list-modems
-> > > > > > > @@ -58,6 +58,10 @@ for path, properties in modems:
-> > > > > > >                                         ")" for text, icon in
-> > > > > > > properties[key] ])
-> > > > > > >                         else:
-> > > > > > >                              	val =3D str(properties[key])
-> > > > > > > -                       print "        %s =3D %s" % (key, val)
-> > > > > > > +                       try:
-> > > > > > > +                               print  "       %s =3D %s" % (=
-key, val)
-> > > > > > > +                       except:
-> > > > > > > +                               continue
-> > > > > > > +
-> > > > > > =
-
-> > > > > > can you at least print the key value. Just not printing that pr=
-operty at
-> > > > > > all is bad since it is there. Just marking the value as not pri=
-ntable
-> > > > > > seems to be the better approach.
-> > > > > > =
-
-> > > > > > Regards
-> > > > > > =
-
-> > > > > > Marcel
-> > > > > > =
-
-> > > > > > =
-
-> > > > > > =
-
-> > > > > =
-
-> > > > > Last fully-working script
-> > > > > =
-
-> > > > > [ /huawei0 ]
-> > > > > =
-
-> > > > > =
-
-> > > > > del overquote
-> > > > > =
-
-> > > > >         ServiceNumbers =3D [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=
-=BC=D0=BE=D1=89=D0=BD=D0=B8=D0=BA] =3D '111' [MT=D0=A1] =3D
-> > > > > '+78003330890' [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=
-=D0=B0=D1=81=D0=B5=D0=BD=D0=B8=D1=8F] =3D '112' =
-
-> > > > >         CardIdentifier =3D 89701012417666587513
-> > > > >         LockedPins =3D =
-
-> > > > >         PinRequired =3D none
-> > > > >         SubscriberIdentity =3D 250011766658751
-> > > > >         Present =3D 1
-> > > > > =
-
-> > > > > =
-
-> > > > > [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=BE=D1=89=D0=BD=D0=B8=
-=D0=BA] - in russian means "Mobile Partner"
-> > > > > [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=B0=D1=81=D0=
-=B5=D0=BD=D0=B8=D1=8F] - rescue rangers :3           =
-
-> > > > > =
-
-> > > > > =
-
-> > > > > =
-
-> > > > > =
-
-> > > > > diff --git a/test/list-modems b/test/list-modems
-> > > > > index 557efd5..59765f9 100755
-> > > > > --- a/test/list-modems
-> > > > > +++ b/test/list-modems
-> > > > > @@ -58,6 +58,10 @@ for path, properties in modems:
-> > > > >                                         ")" for text, icon in
-> > > > > properties[key] ])
-> > > > >                         else:
-> > > > >                                 val =3D str(properties[key])
-> > > > > -                       print "        %s =3D %s" % (key, val)
-> > > > > -
-> > > > > +                       try:
-> > > > > +                               print "        %s =3D %s" %
-> > > > > (key.encode('utf8'), val.encode('utf8'))
-> > > > > +                       except:
-> > > > > +                               print "Cannot encode some charcte=
-rs
-> > > > > please change locale"
-> > > > > +                       else:
-> > > > > +                                continue
-> > > > >         print
-> > > > =
-
-> > > > patch does not apply. Please always check with git am that your pat=
-ch
-> > > > would apply cleanly. And that your mailer doesn't screw it up.
-> > > > =
-
-> > > > Regards
-> > > > =
-
-> > > > Marcel
-> > > > =
-
-> > > > =
-
-> > > > =
-
-> > > =
-
-> > > Evolution reformate message anyway
-> > > Please click on link.
-> > > Was checked and applied for me with success
-> > > =
-
-> > > http://pastie.org/pastes/1220422/text
-> > =
-
-> > I see a whitespace damage in the patch and it is still not possible to
-> > apply this. Please send a proper patch to the mailing list. You do need
-> > to get your email client fixed anyway.
-> > =
-
-> > Regards
-> > =
-
-> > Marcel
-> > =
-
-> > =
-
-> > =
-
-> =
-
-> Patch verified with applying 2 times.
-> File in attach.
-
-if the patch does not apply with git am, it is not ready.
+Shouldn't we translate the "*33*1234*22#" MMI SS String into AT+CLCK=3D"AO"=
+,1,"1234",80 ?
 
 Regards
 
-Marcel
+Fred
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
---===============1938359192555502309==--
+--===============2840358132589864375==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6eD0idXJuOnNjaGVtYXMtbWljcm9z
+b2Z0LWNvbTpvZmZpY2U6ZXhjZWwiIHhtbG5zOnA9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206
+b2ZmaWNlOnBvd2VycG9pbnQiIHhtbG5zOmE9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOmFjY2VzcyIgeG1sbnM6ZHQ9InV1aWQ6QzJGNDEwMTAtNjVCMy0xMWQxLUEyOUYtMDBBQTAw
+QzE0ODgyIiB4bWxuczpzPSJ1dWlkOkJEQzZFM0YwLTZEQTMtMTFkMS1BMkEzLTAwQUEwMEMxNDg4
+MiIgeG1sbnM6cnM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206cm93c2V0IiB4bWxuczp6PSIj
+Um93c2V0U2NoZW1hIiB4bWxuczpiPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpw
+dWJsaXNoZXIiIHhtbG5zOnNzPSJ1cm46c2NoZW1hcy1taWNyb3NvZnQtY29tOm9mZmljZTpzcHJl
+YWRzaGVldCIgeG1sbnM6Yz0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6Y29tcG9u
+ZW50OnNwcmVhZHNoZWV0IiB4bWxuczpvZGM9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2Zm
+aWNlOm9kYyIgeG1sbnM6b2E9InVybjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOmFjdGl2
+YXRpb24iIHhtbG5zOmh0bWw9Imh0dHA6Ly93d3cudzMub3JnL1RSL1JFQy1odG1sNDAiIHhtbG5z
+OnE9Imh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3NvYXAvZW52ZWxvcGUvIiB4bWxuczpydGM9
+Imh0dHA6Ly9taWNyb3NvZnQuY29tL29mZmljZW5ldC9jb25mZXJlbmNpbmciIHhtbG5zOkQ9IkRB
+VjoiIHhtbG5zOlJlcGw9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vcmVwbC8iIHhtbG5z
+Om10PSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC9tZWV0aW5n
+cy8iIHhtbG5zOngyPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS9leGNlbC8y
+MDAzL3htbCIgeG1sbnM6cHBkYT0iaHR0cDovL3d3dy5wYXNzcG9ydC5jb20vTmFtZVNwYWNlLnhz
+ZCIgeG1sbnM6b2lzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29h
+cC9vaXMvIiB4bWxuczpkaXI9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9zb2FwL2RpcmVjdG9yeS8iIHhtbG5zOmRzPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwLzA5L3ht
+bGRzaWcjIiB4bWxuczpkc3A9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2lu
+dC9kc3AiIHhtbG5zOnVkYz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYyIg
+eG1sbnM6eHNkPSJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYSIgeG1sbnM6c3ViPSJo
+dHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3NoYXJlcG9pbnQvc29hcC8yMDAyLzEvYWxlcnRz
+LyIgeG1sbnM6ZWM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDEvMDQveG1sZW5jIyIgeG1sbnM6c3A9
+Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC8iIHhtbG5zOnNwcz0iaHR0
+cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvIiB4bWxuczp4c2k9Imh0
+dHA6Ly93d3cudzMub3JnLzIwMDEvWE1MU2NoZW1hLWluc3RhbmNlIiB4bWxuczp1ZGNzPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3NvYXAiIHhtbG5zOnVkY3hmPSJodHRw
+Oi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL2RhdGEvdWRjL3htbGZpbGUiIHhtbG5zOnVkY3AycD0i
+aHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9kYXRhL3VkYy9wYXJ0dG9wYXJ0IiB4bWxuczp3
+Zj0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9zaGFyZXBvaW50L3NvYXAvd29ya2Zsb3cv
+IiB4bWxuczpkc3NzPSJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL29mZmljZS8yMDA2L2Rp
+Z3NpZy1zZXR1cCIgeG1sbnM6ZHNzaT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZp
+Y2UvMjAwNi9kaWdzaWciIHhtbG5zOm1kc3NpPSJodHRwOi8vc2NoZW1hcy5vcGVueG1sZm9ybWF0
+cy5vcmcvcGFja2FnZS8yMDA2L2RpZ2l0YWwtc2lnbmF0dXJlIiB4bWxuczptdmVyPSJodHRwOi8v
+c2NoZW1hcy5vcGVueG1sZm9ybWF0cy5vcmcvbWFya3VwLWNvbXBhdGliaWxpdHkvMjAwNiIgeG1s
+bnM6bT0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4
+bWxuczptcmVscz0iaHR0cDovL3NjaGVtYXMub3BlbnhtbGZvcm1hdHMub3JnL3BhY2thZ2UvMjAw
+Ni9yZWxhdGlvbnNoaXBzIiB4bWxuczpzcHdwPSJodHRwOi8vbWljcm9zb2Z0LmNvbS9zaGFyZXBv
+aW50L3dlYnBhcnRwYWdlcyIgeG1sbnM6ZXgxMnQ9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5j
+b20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi90eXBlcyIgeG1sbnM6ZXgxMm09Imh0dHA6Ly9zY2hl
+bWFzLm1pY3Jvc29mdC5jb20vZXhjaGFuZ2Uvc2VydmljZXMvMjAwNi9tZXNzYWdlcyIgeG1sbnM6
+cHB0c2w9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vc2hhcmVwb2ludC9zb2FwL1NsaWRl
+TGlicmFyeS8iIHhtbG5zOnNwc2w9Imh0dHA6Ly9taWNyb3NvZnQuY29tL3dlYnNlcnZpY2VzL1No
+YXJlUG9pbnRQb3J0YWxTZXJ2ZXIvUHVibGlzaGVkTGlua3NTZXJ2aWNlIiB4bWxuczpaPSJ1cm46
+c2NoZW1hcy1taWNyb3NvZnQtY29tOiIgeG1sbnM6c3Q9IiYjMTsiIHhtbG5zPSJodHRwOi8vd3d3
+LnczLm9yZy9UUi9SRUMtaHRtbDQwIj4KCjxoZWFkPgo8bWV0YSBodHRwLWVxdWl2PUNvbnRlbnQt
+VHlwZSBjb250ZW50PSJ0ZXh0L2h0bWw7IGNoYXJzZXQ9aXNvLTg4NTktMSI+CjxtZXRhIG5hbWU9
+R2VuZXJhdG9yIGNvbnRlbnQ9Ik1pY3Jvc29mdCBXb3JkIDEyIChmaWx0ZXJlZCBtZWRpdW0pIj4K
+PHN0eWxlPgo8IS0tCiAvKiBGb250IERlZmluaXRpb25zICovCiBAZm9udC1mYWNlCgl7Zm9udC1m
+YW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KIC8qIFN0eWxl
+IERlZmluaXRpb25zICovCiBwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNvTm9ybWFs
+Cgl7bWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7
+Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFuLk1zb0h5
+cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0LWRlY29y
+YXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxvd2VkCgl7
+bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0aW9uOnVu
+ZGVybGluZTt9CnNwYW4uRW1haWxTdHlsZTE3Cgl7bXNvLXN0eWxlLXR5cGU6cGVyc29uYWwtY29t
+cG9zZTsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7Cgljb2xvcjp3aW5kb3d0
+ZXh0O30KLk1zb0NocERlZmF1bHQKCXttc28tc3R5bGUtdHlwZTpleHBvcnQtb25seTt9CkBwYWdl
+IFdvcmRTZWN0aW9uMQoJe3NpemU6NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA3Mi4w
+cHQgNzIuMHB0IDcyLjBwdDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9
+Ci0tPgo8L3N0eWxlPgo8IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlZGVmYXVsdHMg
+djpleHQ9ImVkaXQiIHNwaWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYg
+Z3RlIG1zbyA5XT48eG1sPgogPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgogIDxvOmlkbWFw
+IHY6ZXh0PSJlZGl0IiBkYXRhPSIxIiAvPgogPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlm
+XS0tPgo8L2hlYWQ+Cgo8Ym9keSBsYW5nPUZSIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGU+Cgo8ZGl2
+IGNsYXNzPVdvcmRTZWN0aW9uMT4KCjxwIGNsYXNzPU1zb05vcm1hbD5IaSw8bzpwPjwvbzpwPjwv
+cD4KCjxwIGNsYXNzPU1zb05vcm1hbD48bzpwPiZuYnNwOzwvbzpwPjwvcD4KCjxwIGNsYXNzPU1z
+b05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPkFzIHBlciB0aGUgM0dQUCAyMi4wMzAgQW5uZXggQzo8
+bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1V
+Uz4tIHRoZSBNTUkgU2VydmljZSBDb2RlICYjODIyMDsyMiYjODIyMTsKcmVmZXJzIHRvICYjODIy
+MDtBbGwgc3luYyBzZXJ2aWNlcyYjODIyMTsgdGVsZWNvbW11bmljYXRpb24gc2VydmljZS48bzpw
+PjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz4t
+IHRoZSBNTUkgU2VydmljZSBDb2RlICYjODIyMDsyNCYjODIyMTsKcmVmZXJzIHRvICYjODIyMDtB
+bGwgZGF0YSBjaXJjdWl0IHN5bmMmIzgyMjE7IHRlbGVjb21tdW5pY2F0aW9uIHNlcnZpY2UuPG86
+cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+
+VGhleSBhcmUgYm90aCBsaW5rZWQgdG8gdGhlIHNhbWUgQmFzaWMKR3JvdXAgU2VydmljZSA4Ljxv
+OnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVT
+PlNvIGFzIHBlciBvdXIgdW5kZXJzdGFuZGluZywgdGhpcyBtZWFucyB0aGUKJiM4MjIwO0FsbCBz
+eW5jIHNlcnZpY2VzJiM4MjIxOyBpcyBlcXVhbCB0byAmIzgyMjA7QWxsIGRhdGEgY2lyY3VpdApz
+eW5jJiM4MjIxOy4gSXMgdGhhdCBldmVyeW9uZSYjODIxNztzIGNvbXByZWhlbnNpb24gYXMgd2Vs
+bD88bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1F
+Ti1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNw
+YW4gbGFuZz1FTi1VUz5XaGVuIHdlIHRyeSB0byBydW4gQ2FsbCBCYXJyaW5nCmNlcnRpZmljYXRp
+b24gdGVzdHMgKHBhcnRpY3VsYXJseSAzMS44LjMuMSBmcm9tIDNHUFAgNTEuMDEwKSwgdGhlIHNw
+ZWMgcmVxdWlyZXMKdXMgdG8gYWN0aXZhdGUgdGhlIGNhbGwgYmFycmluZyB3aXRoIHRoZSBNTUkg
+Y29kZSAmIzgyMjA7MjImIzgyMjE7LjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1z
+b05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPldlIGRvIGl0IHVzaW5nCm9yZy5vZm9uby5TdXBwbGVt
+ZW50YXJ5U2VydmljZXMuSW5pdGlhdGUgd2l0aCB0aGUgZm9sbG93aW5nIHN0cmluZwomIzgyMjA7
+KjMzKjEyMzQqMjIjJiM4MjIxOyAoVGhpcyBpcyB0aGUgYWN0aXZhdGlvbiBvZiBCQU9DIHdpdGgg
+cGFzc3dvcmQKJiM4MjIwOzEyMzQmIzgyMjE7IG9uIEFsbCBTeW5jIFNlcnZpY2VzKSwgT2Zvbm8g
+dGhlbiBzZW5kcyB0byB0aGUgbW9kZW0gdGhlCmZvbGxvd2luZyBBVCBjb21tYW5kOiBBVCtDTENL
+PSYjODIyMTtBTyYjODIyMTssMSwmIzgyMjE7MTIzNCYjODIyMTssMTY8bzpwPjwvbzpwPjwvc3Bh
+bj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5BY2NvcmRpbmcgdG8g
+dGhlIDNHUFAgMjcuMDA3IKc3LjQgKENMQ0spLAoxNiBpcyAmIzgyMjA7ZGF0YSBjaXJjdWl0IHN5
+bmMmIzgyMjE7LjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3Bh
+biBsYW5nPUVOLVVTPlNvIG1vZGVtIHdpbGwgdHJhbnNsYXRlIHRoYXQgaW50byAmIzgyMjA7YWxs
+CmRhdGEgY2lyY3VpdCBzeW5jJiM4MjIxOyBpbiB0aGUgUkVHSVNURVIgbWVzc2FnZSBzZW50IHRv
+IHRoZSBuZXR3b3JrIHNpbXVsYXRvci48bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1N
+c29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5Ib3dldmVyIGFjY29yZGluZyB0byAzR1BQIDUxLjAx
+MCAzMS44LjMuMSwKb25seSBhIFJFR0lTVEVSIG1lc3NhZ2UgY29udGFpbmluZyAmIzgyMjA7QWxs
+IHN5bmNocm9ub3VzIHNlcnZpY2VzJiM4MjIxOyBpcwphd2FpdGVkLiBTbyBjb25mb3JtYW5jZSCg
+c2NyaXB0cyB3aWxsIGNvbnNpZGVyIHRoZSB0ZXN0IGFzIEZBSUxFRC48bzpwPjwvbzpwPjwvc3Bh
+bj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5XZSBub3RpY2VkIHRo
+ZSB0ZXN0IHdvdWxkIGJlIFBBU1Mgb25seSBpZgpDTENLIGNsYXNzeCBwYXJhbWV0ZXIgd2FzIDgw
+IChpbnN0ZWFkIG9mIDE2KS4gODAgPSAxNiAoZGF0YSBjaXJjdWl0IHN5bmMpICsgNjQKKGRlZGlj
+YXRlZCBwYWNrZXQgYWNjZXNzKS48bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29O
+b3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBj
+bGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5TaG91bGRuJiM4MjE3O3Qgd2UgdHJhbnNs
+YXRlIHRoZQomIzgyMjA7KjMzKjEyMzQqMjIjJiM4MjIxOyBNTUkgU1MgU3RyaW5nIGludG8KQVQr
+Q0xDSz0mIzgyMjE7QU8mIzgyMjE7LDEsJiM4MjIxOzEyMzQmIzgyMjE7LDgwID88bzpwPjwvbzpw
+Pjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZu
+YnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1V
+Uz5SZWdhcmRzPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFu
+IGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9y
+bWFsPjxzcGFuIGxhbmc9RU4tVVM+RnJlZDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjwvZGl2PgoK
+PGZvbnQgZmFjZT0ibW9ub3NwYWNlIj4tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS08YnI+CkludGVsIENvcnBvcmF0aW9u
+IFNBUyAoRnJlbmNoIHNpbXBsaWZpZWQgam9pbnQgc3RvY2sgY29tcGFueSk8YnI+ClJlZ2lzdGVy
+ZWQgaGVhZHF1YXJ0ZXJzOiAiTGVzIE1vbnRhbGV0cyItIDIsIHJ1ZSBkZSBQYXJpcywgPGJyPgo5
+MjE5NiBNZXVkb24gQ2VkZXgsIEZyYW5jZTxicj4KUmVnaXN0cmF0aW9uIE51bWJlcjombmJzcDsg
+MzAyIDQ1NiAxOTkgUi5DLlMuIE5BTlRFUlJFPGJyPgpDYXBpdGFsOiA0LDU3MiwwMDAgRXVyb3M8
+YnI+Cjxicj4KVGhpcyBlLW1haWwgYW5kIGFueSBhdHRhY2htZW50cyBtYXkgY29udGFpbiBjb25m
+aWRlbnRpYWwgbWF0ZXJpYWwgZm9yPGJyPgp0aGUgc29sZSB1c2Ugb2YgdGhlIGludGVuZGVkIHJl
+Y2lwaWVudChzKS4gQW55IHJldmlldyBvciBkaXN0cmlidXRpb248YnI+CmJ5IG90aGVycyBpcyBz
+dHJpY3RseSBwcm9oaWJpdGVkLiBJZiB5b3UgYXJlIG5vdCB0aGUgaW50ZW5kZWQ8YnI+CnJlY2lw
+aWVudCwgcGxlYXNlIGNvbnRhY3QgdGhlIHNlbmRlciBhbmQgZGVsZXRlIGFsbCBjb3BpZXMuPC9m
+b250PjwvYm9keT4KCjwvaHRtbD4K
+
+--===============2840358132589864375==--
 
