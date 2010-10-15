@@ -1,162 +1,185 @@
-Content-Type: multipart/mixed; boundary="===============9057436779971929866=="
+Content-Type: multipart/mixed; boundary="===============0896132077259467945=="
 MIME-Version: 1.0
-From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: [RFC PATCH 7/8] sim: check if Fixed Dialing is enabled in the SIM-card
-Date: Fri, 15 Oct 2010 00:02:54 +0300
-Message-ID: <1287090175-3018-8-git-send-email-petteri.tikander@ixonos.com>
-In-Reply-To: <1287090175-3018-7-git-send-email-petteri.tikander@ixonos.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: list-modems patch
+Date: Fri, 15 Oct 2010 09:17:17 +0300
+Message-ID: <1287123437.3316.44.camel@aeonflux>
+In-Reply-To: <1287052560.32351.28.camel@mezon.ru>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9057436779971929866==
+--===============0896132077259467945==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If SIM-card is inserted, status is checked from EFsst
-(is FDN activated) and EFadn (is ADN invalidated).
-If USIM-card is inserted, status is checked from EFest
-(is FDN activated).
+Hi Alex,
 
-If FD is enabled, halt SIM initialization procedure.
-New property (FixedDialing) is added. If FD is enabled,
-this has been signalled via DBUS.
----
- src/sim.c |   68 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 68 insertions(+), 0 deletions(-)
+> > > > > Sometimes i see =
 
-diff --git a/src/sim.c b/src/sim.c
-index d189350..45ab320 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -72,6 +72,7 @@ struct ofono_sim {
- 	unsigned char efest_length;
- 	unsigned char *efsst;
- 	unsigned char efsst_length;
-+	gboolean fixed_dialing;
- =
+> > > > > =
 
- 	char *imsi;
- =
+> > > > > [root(a)alexander-desktop ofono-0.31]# /usr/lib/ofono/test/list-m=
+odems =
 
-@@ -310,6 +311,9 @@ static DBusMessage *sim_get_properties(DBusConnection *=
-conn,
- 		ofono_dbus_dict_append(&dict, "SubscriberIdentity",
- 					DBUS_TYPE_STRING, &sim->imsi);
- =
+> > > > > [ /huawei5 ]
+> > > > >     Features =3D sim =
 
-+	ofono_dbus_dict_append(&dict, "FixedDialing", DBUS_TYPE_BOOLEAN,
-+				&sim->fixed_dialing);
-+
- 	if (sim->mnc_length) {
- 		char mcc[OFONO_MAX_MCC_LENGTH + 1];
- 		char mnc[OFONO_MAX_MNC_LENGTH + 1];
-@@ -1241,6 +1245,33 @@ static void sim_retrieve_imsi(struct ofono_sim *sim)
- 	sim->driver->read_imsi(sim, sim_imsi_cb, sim);
- }
- =
+> > > > >     Powered =3D 1
+> > > > >     Interfaces =3D org.ofono.Phonebook org.ofono.AudioSettings
+> > > > > org.ofono.VoiceCallManager org.ofono.SimManager =
 
-+static void sim_info_read_cb(int ok, int length, int record,
-+					const unsigned char *file_status,
-+					int record_length, void *userdata)
-+{
-+	struct ofono_sim *sim =3D userdata;
-+
-+	if (!ok)
-+		goto out;
-+
-+	if (*file_status !=3D SIM_FILE_STATUS_VALID) {
-+		DBusConnection *conn =3D ofono_dbus_get_connection();
-+		const char *path =3D __ofono_atom_get_path(sim->atom);
-+
-+		sim->fixed_dialing =3D TRUE;
-+
-+		ofono_dbus_signal_property_changed(conn, path,
-+					OFONO_SIM_MANAGER_INTERFACE,
-+					"FixedDialing",
-+					DBUS_TYPE_BOOLEAN,
-+					&sim->fixed_dialing);
-+		return;
-+	}
-+
-+out:
-+	sim_retrieve_imsi(sim);
-+}
-+
- static void sim_efsst_read_cb(int ok, int length, int record,
- 				const unsigned char *data,
- 				int record_length, void *userdata)
-@@ -1258,6 +1289,21 @@ static void sim_efsst_read_cb(int ok, int length, in=
-t record,
- 	sim->efsst =3D g_memdup(data, length);
- 	sim->efsst_length =3D length;
- =
+> > > > >     Online =3D 0
+> > > > >     Model =3D E1550
+> > > > >     Manufacturer =3D huawei
+> > > > >     Serial =3D 353142033084081
+> > > > >     Revision =3D 11.608.12.00.143
+> > > > >     [ org.ofono.Phonebook ]
+> > > > >     [ org.ofono.AudioSettings ]
+> > > > > Traceback (most recent call last):
+> > > > >   File "/usr/lib/ofono/test/list-modems", line 61, in <module>
+> > > > >     print "        %s =3D %s" % (key, val).encode('ascii')
+> > > > > =
 
-+	/*
-+	 * Check if Fixed Dialing is enabled in the SIM-card
-+	 * (TS 11.11/TS 51.011, Section 11.5.1: FDN capability request).
-+	 * If FDN is activated and ADN is invalidated,
-+	 * don't continue initialization routine.
-+	 */
-+	if (sim_sst_is_active(sim->efsst, sim->efsst_length,
-+				SIM_SST_SERVICE_FDN)) {
-+
-+		ofono_sim_read_info(sim, SIM_EFADN_FILEID,
-+					OFONO_SIM_FILE_STRUCTURE_FIXED,
-+					sim_info_read_cb, sim);
-+		return;
-+	}
-+
- out:
- 	sim_retrieve_imsi(sim);
- }
-@@ -1279,6 +1325,26 @@ static void sim_efest_read_cb(int ok, int length, in=
-t record,
- 	sim->efest =3D g_memdup(data, length);
- 	sim->efest_length =3D length;
- =
+> > > > > =
 
-+	/*
-+	 * Check if Fixed Dialing is enabled in the USIM-card
-+	 * (TS 31.102, Section 5.3.2: FDN capability request).
-+	 * If FDN is activated, don't continue initialization routine.
-+	 */
-+	if (sim_est_is_active(sim->efest, sim->efest_length,
-+				SIM_EST_SERVICE_FDN)) {
-+		DBusConnection *conn =3D ofono_dbus_get_connection();
-+		const char *path =3D __ofono_atom_get_path(sim->atom);
-+
-+		sim->fixed_dialing =3D TRUE;
-+
-+		ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_SIM_MANAGER_INTERFACE,
-+						"FixedDialing",
-+						DBUS_TYPE_BOOLEAN,
-+						&sim->fixed_dialing);
-+		return;
-+	}
-+
- out:
- 	sim_retrieve_imsi(sim);
- }
-@@ -1865,6 +1931,8 @@ static void sim_free_state(struct ofono_sim *sim)
- =
+> > > > > Patch
+> > > > > =
 
- 	g_free(sim->iidf_image);
- 	sim->iidf_image =3D NULL;
-+
-+	sim->fixed_dialing =3D FALSE;
- }
- =
+> > > > > =
 
- void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inserte=
-d)
--- =
+> > > > > =
 
-1.6.3.3
+> > > > > diff --git a/test/list-modems b/test/list-modems
+> > > > > index 557efd5..df1dca8 100755
+> > > > > --- a/test/list-modems
+> > > > > +++ b/test/list-modems
+> > > > > @@ -58,6 +58,10 @@ for path, properties in modems:
+> > > > >                                         ")" for text, icon in
+> > > > > properties[key] ])
+> > > > >                         else:
+> > > > >                              	val =3D str(properties[key])
+> > > > > -                       print "        %s =3D %s" % (key, val)
+> > > > > +                       try:
+> > > > > +                               print  "       %s =3D %s" % (key,=
+ val)
+> > > > > +                       except:
+> > > > > +                               continue
+> > > > > +
+> > > > =
+
+> > > > can you at least print the key value. Just not printing that proper=
+ty at
+> > > > all is bad since it is there. Just marking the value as not printab=
+le
+> > > > seems to be the better approach.
+> > > > =
+
+> > > > Regards
+> > > > =
+
+> > > > Marcel
+> > > > =
+
+> > > > =
+
+> > > > =
+
+> > > =
+
+> > > Last fully-working script
+> > > =
+
+> > > [ /huawei0 ]
+> > > =
+
+> > > =
+
+> > > del overquote
+> > > =
+
+> > >         ServiceNumbers =3D [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=
+=BE=D1=89=D0=BD=D0=B8=D0=BA] =3D '111' [MT=D0=A1] =3D
+> > > '+78003330890' [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=
+=B0=D1=81=D0=B5=D0=BD=D0=B8=D1=8F] =3D '112' =
+
+> > >         CardIdentifier =3D 89701012417666587513
+> > >         LockedPins =3D =
+
+> > >         PinRequired =3D none
+> > >         SubscriberIdentity =3D 250011766658751
+> > >         Present =3D 1
+> > > =
+
+> > > =
+
+> > > [=D0=9C=D0=BE=D0=B1. =D0=9F=D0=BE=D0=BC=D0=BE=D1=89=D0=BD=D0=B8=D0=BA=
+] - in russian means "Mobile Partner"
+> > > [=D0=A1=D0=BB=D1=83=D0=B6=D0=B1=D0=B0 =D1=81=D0=BF=D0=B0=D1=81=D0=B5=
+=D0=BD=D0=B8=D1=8F] - rescue rangers :3           =
+
+> > > =
+
+> > > =
+
+> > > =
+
+> > > =
+
+> > > diff --git a/test/list-modems b/test/list-modems
+> > > index 557efd5..59765f9 100755
+> > > --- a/test/list-modems
+> > > +++ b/test/list-modems
+> > > @@ -58,6 +58,10 @@ for path, properties in modems:
+> > >                                         ")" for text, icon in
+> > > properties[key] ])
+> > >                         else:
+> > >                                 val =3D str(properties[key])
+> > > -                       print "        %s =3D %s" % (key, val)
+> > > -
+> > > +                       try:
+> > > +                               print "        %s =3D %s" %
+> > > (key.encode('utf8'), val.encode('utf8'))
+> > > +                       except:
+> > > +                               print "Cannot encode some charcters
+> > > please change locale"
+> > > +                       else:
+> > > +                                continue
+> > >         print
+> > =
+
+> > patch does not apply. Please always check with git am that your patch
+> > would apply cleanly. And that your mailer doesn't screw it up.
+> > =
+
+> > Regards
+> > =
+
+> > Marcel
+> > =
+
+> > =
+
+> > =
+
+> =
+
+> Evolution reformate message anyway
+> Please click on link.
+> Was checked and applied for me with success
+> =
+
+> http://pastie.org/pastes/1220422/text
+
+I see a whitespace damage in the patch and it is still not possible to
+apply this. Please send a proper patch to the mailing list. You do need
+to get your email client fixed anyway.
+
+Regards
+
+Marcel
 
 
 
---===============9057436779971929866==--
+--===============0896132077259467945==--
 
