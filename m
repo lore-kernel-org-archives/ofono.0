@@ -1,15 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============8456526643157988908=="
+Content-Type: multipart/mixed; boundary="===============8679904114078920556=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 1/8] simfs: add logic to retrieve only only EF-info,
- but no EF-contents
-Date: Fri, 15 Oct 2010 07:19:53 -0500
-Message-ID: <4CB846E9.2070507@gmail.com>
-In-Reply-To: <1287090175-3018-2-git-send-email-petteri.tikander@ixonos.com>
+Subject: Re: [RFC PATCH 2/8] simutil: response-handler returns now also
+ file-status
+Date: Fri, 15 Oct 2010 07:20:46 -0500
+Message-ID: <4CB8471E.6030104@gmail.com>
+In-Reply-To: <1287090175-3018-3-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8456526643157988908==
+--===============8679904114078920556==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,26 +17,29 @@ Content-Transfer-Encoding: quoted-printable
 Hi Petteri,
 
 On 10/14/2010 04:02 PM, Petteri Tikander wrote:
-> Handling of new parameter (file status) from the driver added.
-> This commit doesn't store EF-info into cache yet.
+> ---
+>  src/simutil.c |    5 ++++-
+>  src/simutil.h |   10 +++++++++-
+>  2 files changed, 13 insertions(+), 2 deletions(-)
+> =
 
-Please keep your commit header to less than 50 characters.
+>  =
 
-> +	if (op->info_only) {
-> +		/*
-> +		 * It's info-only request. So there is no need to request
-> +		 * actual contents of the EF-files. Just return the EF-info.
-> +		 */
-> +		cb(1, op->length, op->current,
-> +			&file_status, op->record_length, op->userdata);
+> +/* 51.011 Section 9.3 */
+> +enum sim_file_status {
+> +	SIM_FILE_STATUS_INVALID			=3D 0x00,
+
+This enum value was not being used and I removed it afterwards.
+
+> +	SIM_FILE_STATUS_VALID			=3D 0x01,
+> +	SIM_FILE_STATUS_RW_WHEN_INVALID		=3D 0x04,
+> +};
 > +
 
-So I honestly don't like us using the ofono_sim_file_read_cb_t for the
-callback in the info only case.  Can we invent a new callback type
-specifically for this case?
+Otherwise, patch looked good and has been applied.
 
 Regards,
 -Denis
 
---===============8456526643157988908==--
+--===============8679904114078920556==--
 
