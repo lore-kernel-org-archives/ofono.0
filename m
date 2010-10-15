@@ -1,160 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============3423255521221689721=="
+Content-Type: multipart/mixed; boundary="===============8456526643157988908=="
 MIME-Version: 1.0
-From: Alexander Kanavin <alexander.kanavin@nokia.com>
-Subject: [PATCH] Document the SS control string API
-Date: Fri, 15 Oct 2010 14:53:01 +0300
-Message-ID: <1287143581-23582-1-git-send-email-alexander.kanavin@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 1/8] simfs: add logic to retrieve only only EF-info,
+ but no EF-contents
+Date: Fri, 15 Oct 2010 07:19:53 -0500
+Message-ID: <4CB846E9.2070507@gmail.com>
+In-Reply-To: <1287090175-3018-2-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3423255521221689721==
+--===============8456526643157988908==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/supplementaryservices-api.txt |  103 +++++++++++++++++++++++++++++++++=
-++-
- 1 files changed, 100 insertions(+), 3 deletions(-)
+Hi Petteri,
 
-diff --git a/doc/supplementaryservices-api.txt b/doc/supplementaryservices-=
-api.txt
-index 5ef123e..0857412 100644
---- a/doc/supplementaryservices-api.txt
-+++ b/doc/supplementaryservices-api.txt
-@@ -7,15 +7,22 @@ Object path	[variable prefix]/{modem0,modem1,...}
- =
+On 10/14/2010 04:02 PM, Petteri Tikander wrote:
+> Handling of new parameter (file status) from the driver added.
+> This commit doesn't store EF-info into cache yet.
 
- Methods		string, variant Initiate(string command)
- =
+Please keep your commit header to less than 50 characters.
 
--			Sends a USSD command string to the network
--			initiating a session.  When the request is handled
-+			If the command is a recognized supplementary service
-+			control string, the corresponding SS request is made
-+			and the result is returned.
-+
-+			Otherwise the command is sent to the network
-+			initiating a USSD session. When the request is handled
- 			by the appropriate node of the network, the
- 			method returns the response or an appropriate
--			error.  The network may be awaiting further response
-+			error. The network may be awaiting further response
- 			from the ME after returning from this method and no
- 			new command can be initiated until this one is
- 			cancelled or ended.
- =
+> +	if (op->info_only) {
+> +		/*
+> +		 * It's info-only request. So there is no need to request
+> +		 * actual contents of the EF-files. Just return the EF-info.
+> +		 */
+> +		cb(1, op->length, op->current,
+> +			&file_status, op->record_length, op->userdata);
+> +
 
-+			The output arguments are described in section
-+			"Initiate method outptut arguments" below.
-+
- 			Possible Errors: [service].Error.Timedout
- 			Possible Errors: [service].Error.Canceled
- =
+So I honestly don't like us using the ofono_sim_file_read_cb_t for the
+callback in the info only case.  Can we invent a new callback type
+specifically for this case?
 
-@@ -68,3 +75,93 @@ Properties	string State [readonly]
- 			"user-response"		The network is waiting for the
- 						user's response, client must
- 						call Respond().
-+
-+
-+Initiate method output arguments
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+The first return argument and the corresponding second return argument are:
-+
-+	"USSD"				string ussd_response
-+	"CallBarring"			(string ss_op, string cb_service,
-+					dict cb_dict)
-+	"CallForwarding"		(string ss_op, string cf_service,
-+					dict cf_dict)
-+	"CallWaiting"			(string ss_op, dict cw_dict)
-+	"CallingLinePresentation"	(string ss_op, string status)
-+	"CalledLinePresentation"	(string ss_op, string status)
-+	"CallingLineRestriction"	(string ss_op, string clir_status)
-+	"CalledLineRestriction"		(string ss_op, string status)
-+
-+ss_op contains the supplementary service operation:
-+
-+	"activation"
-+	"registration"
-+	"interrogation"
-+	"deactivation"
-+	"erasure"
-+
-+cb_service contains the call barring service for which the operation was
-+requested:
-+
-+	"AllOutgoing"
-+	"InternationalOutgoing"
-+	"InternationalOutgoingExceptHome"
-+	"AllIncoming"
-+	"IncomingWhenRoaming"
-+	"AllBarringServices"
-+	"AllOutgoingServices"
-+	"AllIncomingServices"
-+
-+cf_service contains the call forwarding service for which the operation was
-+requested:
-+
-+	"Unconditional"
-+	"Busy"
-+	"NoReply"
-+	"NotReachable"
-+	"All"
-+	"AllConditional"
-+
-+cb_dict contains basic service/call barring service combinations that were
-+affected by SS operation and their current status ("enabled" or "disabled"=
-).
-+The basic services are:
-+
-+	"Voice"
-+	"Data"
-+	"Fax"
-+	"Sms"
-+	"DataSync"
-+	"DataAsync"
-+	"DataPad"
-+	"DataPacket"
-+
-+To those the name of call barring service is appended, so the property and
-+value is for example:
-+
-+	"FaxIncomingWhenRoaming" : "disabled"
-+
-+cf_dict contains call forwarding properties affected by the operation.
-+Propery names are formed from basic service name and call forwarding
-+service name, for example:
-+
-+	"VoiceNoReply" : "+12345678"
-+
-+The property value is the phone number to which the call is forwarded.
-+
-+For "NoReply" service, there is also a timeout property, holding the timeo=
-ut
-+in seconds, for example:
-+
-+	"VoiceNoReplyTimeout" : 20
-+
-+cw_dict contains basic services with "CallWaiting" suffix that were affect=
-ed
-+by call waiting operation and their current status ("enabled" or "disabled=
-"),
-+for example:
-+
-+	"VoiceCallWaiting" : "enabled"
-+
-+status can be "disabled" or "enabled".
-+clir_status can be "disabled", "permanent", "on" or "off".
-+
-+More information about supplementary services is provided in
-+call-barring-api.txt, call-forwarding-api.txt and call-settings-api.txt
--- =
+Regards,
+-Denis
 
-1.7.1
-
-
---===============3423255521221689721==--
+--===============8456526643157988908==--
 
