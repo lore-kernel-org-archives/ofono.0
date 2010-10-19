@@ -1,44 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============7328623876195926464=="
+Content-Type: multipart/mixed; boundary="===============2063729067892324580=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: Identification of Active Application in UICC card
-Date: Tue, 19 Oct 2010 07:38:47 +0300
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802B3818D@fioues07.ebgroup.elektrobit.com>
+From: Rajesh.Nagaiah@elektrobit.com
+Subject: RE: Call Barring and MMI Supplementary Service codes
+Date: Mon, 18 Oct 2010 22:27:15 -0700
+Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702B72E8A@usrdes03.ebgroup.elektrobit.com>
+In-Reply-To: <4CBCBB6A.3060306@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7328623876195926464==
+--===============2063729067892324580==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Denis, =
 
-Hi,
+ =
 
-According to 3GPP specification 3GPP TS 31.102 section 5.1.1 USIM
-application selection, "After UICC activation, the ME selects a USIM
-application. If no EFDIR file is found or no USIM applications are
-listed in the EFDIR file, the ME may then try to select the GSM
-application as specified in TS 51.011".
+> My interpretation of 22.004 and 22.030 was that dedicated =
 
- If EFdir is present and if AID present is matching with the USIM
-AID(RID =3D A000000087, Application Code =3D 1002), then the selected/active
-application is 3G USIM. If EFdir is not present or the AID present is
-matching with the SIM AID(RID =3D A000000009, ETSI application code =3D
-0001), then the selected/active application is GSM. Information on the
-AID and RID can be found in the specification 3GPP TS 31.110.
+> packet access and dedicated PAD access were deprecated and no =
 
-RID - Registered application provider identifier
-AID - Application Identifier
+> longer being used.  The fact that they're still listed in =
 
- Since almost all the cards nowdays are UICC cards and EFdir is also a
-mandatory file, can we rely on the EFdir to confirm the active
-application? This way, we can avoid reading of files which are not
-present in the active application and also we can avoid issuing of
-multiple read requests for the same file(eg: EFecc)
+> 27.007 seems to be irrelevant.
 
-Thanks and Regards,
-jeevaka
+As dedicated packet access and dedicated PAD access is mentioned in
+27.007, the AT modems still consider these values while translating the
+corresponding Basic Service group. Thats the reason when sending 16 the
+AT modem translates it to "All data circuit sync" and  80  to "All Sync
+services" in REGISTER message(Fred can you confirm this ?). =
 
---===============7328623876195926464==--
+In case of message based modems, we have seperate MMI for All Sync
+services and All data circuit sync services and as MMI's for dedicated
+packet access and dedicated PAD access are deprecated the translation
+happens without conflict.
+
+> One possibility is that the bearer services covered by =
+
+> dedicated packet & dedicated pad access were lumped together =
+
+> with bearer services 20 and 30 from 3GPP 22.002.
+
+I think the dedicated packet access and dedicated PAD access bearers are
+deprecated, not grouped with BS 20 and 30.
+
+> >> Shouldn't we translate the "*33*1234*22#" MMI SS String =
+
+> into AT+CLCK=3D"AO",1,"1234",80 ?
+> > =
+
+> > From my understanding YES.
+> =
+
+> I actually am fine making this change, and it is quite =
+
+> trivial to boot.
+>  But before we do that, can we confirm that this is indeed =
+
+> mandated by the specs, and not an error in the test cases.
+
+There is no error in the corresponding test cases.
+
+> What values are expected from MMI services 25, 24 and 26?
+
+For MMI 22 (All Sync Services)=3D> 80 ("All data circuit sync" (16) + "All
+dedicated packet access" (64))
+
+For MMI 21 (All Async Services)=3D> 160 ("All data circuit async" (32) +
+"All dedicated PAD access" (128)).
+
+For MMI 26 (Telephony and All sync services)=3D> 81 (Telephony (1) + "All
+data circuit sync" (16) + "All dedicated packet access" (64))
+
+For MMI 24 (All data circuit sync)=3D> 16 ("All data circuit sync")
+
+For MMI 25 (All data circuit async)=3D> 32 ("All data circuit async")
+
+Fred, can you modify the values for MMI 22, 21 and 26 as above and
+confirm from the test result whether our understanding is correct or not
+? =
+
+
+BR,
+Rajesh
+
+--===============2063729067892324580==--
 
