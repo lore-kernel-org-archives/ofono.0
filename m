@@ -1,42 +1,125 @@
-Content-Type: multipart/mixed; boundary="===============0036889128790481795=="
+Content-Type: multipart/mixed; boundary="===============5087621955116598578=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [RFC sim-ready-v1 PATCH 0/3] ofono_sim_ready_notify
-Date: Tue, 19 Oct 2010 12:56:45 +0300
-Message-ID: <AANLkTin1JQ_uKQP9mFXW03tiQQihCk_EJnA5RbTP-aw9@mail.gmail.com>
-In-Reply-To: <1287481415.3316.138.camel@aeonflux>
+From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
+Subject: A way of polling SIM status 
+Date: Tue, 19 Oct 2010 12:41:23 +0200
+Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE805CEE378@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0036889128790481795==
+--===============5087621955116598578==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi, =
 
-2010/10/19 Marcel Holtmann <marcel@holtmann.org>:
-> so how do we handle AT command based modems that have no extra
-> indication of SIM ready state? Are we stuck with quirks in the atmodem
-> SIM driver or can we push these into the modem plugins?
 
-I forgot to mention that in 0 patch, but I added a dummy delay as the
-default way to handle the problem in atmodem sim driver:
+Due to some other tasks, it a long time did not take part in the
+discussion
+Here.  I see there are much discussion about how to polling SIM status. =
 
->>By default the driver don't trust the modem to do the right thing and
->>adds a delay of 1000 milliseconds after entering the PIN/PUK.  It is
->>possible to remove the delay by adding a suitable quirk in
->>at_wait_for_ready().
 
-I wonder if the delay is long enough. Someone complained in
-bugs.meego.com that Nokia Test Network SIM cards are so slow they
-don't work with the oFono in Meego 1.1 (0.26 with n900 plugin
-patches), but they probably are not the slowest SIMs that you can
-find.
+Maybe we can start to polling the SIM status with AT+CPIN? when the
+probe
+ function of SIM atom driver is invoke. If it return  +CME: 10  or +CME:
+SIM not
+ inserted. It means there is no SIM inserted. If it return other result,
+invoke =
 
--- =
+ofono_sim_register register the APIs first and then waiting user input
+password
+(if password is required) or notify SIM is ready(if SIM is ready).
 
-Pekka.Pessi mail at nokia.com
+Following are the proposed implementation:
 
---===============0036889128790481795==--
+static ofono_bool_t sim_status_poll(void *user_data)
+{
+	if(!user_data)
+		return FALSE;
+
+	struct ofono_sim *sim =3D user_data;
+	struct sim_data *ud =3D ofono_sim_get_data(sim);
+	=
+
+	g_at_chat_send(ud->chat, "AT+CPIN?", cpin_prefix,
+					sim_status_cb, sim, NULL);
+	return FALSE;
+}
+	=
+
+static void sim_status_cb(gboolean ok, GAtResult *result, gpointer
+user_data)
+{
+	struct ofono_sim *sim =3D user_data;
+	GAtResultIter iter;
+	struct ofono_error error;
+	const char *pin_required;
+	=
+
+	const char *final =3D g_at_result_final_response(result);
+
+	decode_at_error(&error, final);
+	if(error.type =3D=3D OFONO_ERROR_TYPE_CME && error.error =3D=3D 10)
+		return;  /* SIM is not inserted */
+	=
+
+	if (!ok)  {
+		g_timeout_add_seconds(5, sim_status_poll, sim);
+		return;
+	}
+	=
+
+	g_at_result_iter_init(&iter, result);
+
+	if (!g_at_result_iter_next(&iter, "+CPIN:"))  /* fatal error,
+should not occur */
+			return;
+
+	g_at_result_iter_next_unquoted_string(&iter, &pin_required);
+
+	ofono_bool_t ready =3D FALSE;
+	if (!strcasecmp(pin_required,
+at_sim_name[OFONO_SIM_PASSWORD_NONE].name))
+		ready =3D TRUE;
+
+	if( ofono_sim_get_state(sim) =3D=3D OFONO_SIM_STATE_NOT_PRESENT)  {
+		ofono_sim_register(sim);
+		ofono_sim_inserted_notify(sim, TRUE);
+	}
+	=
+
+	if( ready )
+		ofono_sim_set_ready(sim);
+	else =
+
+		g_timeout_add_seconds(5, sim_status_poll, sim);
+
+}
+
+static int at_sim_probe(struct ofono_sim *sim, unsigned int vendor,
+				void *data)
+{
+	GAtChat *chat =3D data;
+	struct sim_data *ud;
+
+	ud =3D g_new0(struct sim_data, 1);
+	ud->chat =3D chat;
+	ud->vendor =3D vendor;
+
+	ofono_sim_set_data(sim, ud);
+
+	g_at_chat_send(ud->chat, "AT+CPIN?", cpin_prefix,
+					sim_status_cb, sim, NULL);
+
+	return 0;
+}
+
+For modem that with SIM status unsolicited indication, should register
+And monitor the SIM status at the same time.
+
+Best regards
+Caiwen
+
+--===============5087621955116598578==--
 
