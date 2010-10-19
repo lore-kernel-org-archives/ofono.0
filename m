@@ -1,35 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============1898010548879122746=="
+Content-Type: multipart/mixed; boundary="===============5024062535666786803=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: How to get exact error from Ofono for sms sending failed case
-Date: Tue, 19 Oct 2010 13:26:02 -0500
-Message-ID: <4CBDE2BA.3@gmail.com>
-In-Reply-To: <AANLkTi=5zoxnO6PuqRubAWJFk4W80H=SA53Q_x9LAHK8@mail.gmail.com>
+Subject: Re: A way of polling SIM status
+Date: Tue, 19 Oct 2010 13:28:03 -0500
+Message-ID: <4CBDE333.7090605@gmail.com>
+In-Reply-To: <D87B22B1FE8C0F479CA9BEAD6C25AAE805CEE378@ism-mail03.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1898010548879122746==
+--===============5024062535666786803==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Caiwen,
 
-On 10/19/2010 01:06 PM, linux mobile wrote:
-> Hi,
+On 10/19/2010 05:41 AM, Zhang, Caiwen wrote:
+> Hi, =
+
 > =
 
-> How  to get exact error form Ofono for sms sending failed case
-> Eg: Network not reachable, flight mode, offline ..etc
+> Due to some other tasks, it a long time did not take part in the
+> discussion
+> Here.  I see there are much discussion about how to polling SIM status. =
+
 > =
 
-> Thanks
+> Maybe we can start to polling the SIM status with AT+CPIN? when the
+> probe
+>  function of SIM atom driver is invoke. If it return  +CME: 10  or +CME:
+> SIM not
+>  inserted. It means there is no SIM inserted. If it return other result,
+> invoke =
 
-oFono does not yet expose this information, this is still something we
-need to address...
+> ofono_sim_register register the APIs first and then waiting user input
+> password
+> (if password is required) or notify SIM is ready(if SIM is ready).
+> =
+
+> Following are the proposed implementation:
+> =
+
+
+Unfortunately some modems report CPIN: READY even though they're not
+ready.  The only reliable way to poll for this is to poll the IMSI, then
+the phonebook and the sms store and report ready only once all of them
+can be manipulated.
 
 Regards,
 -Denis
 
---===============1898010548879122746==--
+--===============5024062535666786803==--
 
