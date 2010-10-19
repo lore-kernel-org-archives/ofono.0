@@ -1,38 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============1431284923316333503=="
+Content-Type: multipart/mixed; boundary="===============7328623876195926464=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/5] stk: Support send ss response
-Date: Mon, 18 Oct 2010 17:34:54 -0500
-Message-ID: <4CBCCB8E.5010800@gmail.com>
-In-Reply-To: <AANLkTimG=8iM4=LymMVZUy5tHw9OXEdYmg8cjKpxaT_Q@mail.gmail.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: Identification of Active Application in UICC card
+Date: Tue, 19 Oct 2010 07:38:47 +0300
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802B3818D@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1431284923316333503==
+--===============7328623876195926464==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew/Yang,
 
-On 10/18/2010 12:30 PM, andrzej zaborowski wrote:
-> Hi,
-> =
+Hi,
 
-> On 18 October 2010 10:04, Gu, Yang <yang.gu@intel.com> wrote:
->> I couldn't understand this comment well. Additional information is a par=
-t of result dataobj, so it's already included. Is there something I should =
-handle further?
-> =
+According to 3GPP specification 3GPP TS 31.102 section 5.1.1 USIM
+application selection, "After UICC activation, the ME selects a USIM
+application. If no EFDIR file is found or no USIM applications are
+listed in the EFDIR file, the ME may then try to select the GSM
+application as specified in TS 51.011".
 
-> It seems correct to me, the result dataobj is added just before the switc=
-h().
+ If EFdir is present and if AID present is matching with the USIM
+AID(RID =3D A000000087, Application Code =3D 1002), then the selected/active
+application is 3G USIM. If EFdir is not present or the AID present is
+matching with the SIM AID(RID =3D A000000009, ETSI application code =3D
+0001), then the selected/active application is GSM. Information on the
+AID and RID can be found in the specification 3GPP TS 31.110.
 
-Yes you guys are right, for some reason I thought additional info was a
-separate object.
+RID - Registered application provider identifier
+AID - Application Identifier
 
-Regards,
--Denis
+ Since almost all the cards nowdays are UICC cards and EFdir is also a
+mandatory file, can we rely on the EFdir to confirm the active
+application? This way, we can avoid reading of files which are not
+present in the active application and also we can avoid issuing of
+multiple read requests for the same file(eg: EFecc)
 
---===============1431284923316333503==--
+Thanks and Regards,
+jeevaka
+
+--===============7328623876195926464==--
 
