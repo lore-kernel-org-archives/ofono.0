@@ -1,93 +1,130 @@
-Content-Type: multipart/mixed; boundary="===============3626808459532630464=="
+Content-Type: multipart/mixed; boundary="===============6137726153363700317=="
 MIME-Version: 1.0
-From: Pargada, Carlos <carlos.pargada@intel.com>
-Subject: RE: Call Barring and MMI Supplementary Service codes
-Date: Tue, 19 Oct 2010 12:37:16 +0100
-Message-ID: <2A84145621092446B6659B8A0F28E26F46FE8E432C@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702B72E8A@usrdes03.ebgroup.elektrobit.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 01/13] voicecall: __ofono_voicecall_send_tone internal api.
+Date: Tue, 19 Oct 2010 16:10:58 +0200
+Message-ID: <AANLkTimx4b7OR0wqzHv-J7wfbP5JN2m2RL71cVNbe6o8@mail.gmail.com>
+In-Reply-To: <4CB6C3A1.3090508@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3626808459532630464==
+--===============6137726153363700317==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rajesh,
+Hi Denis,
 
-> What values are expected from MMI services 25, 24 and 26?
+sorry for responding late.
 
-> For MMI 22 (All Sync Services)=3D> 80 ("All data circuit sync" (16) + "All
-> dedicated packet access" (64))
+On 14 October 2010 10:47, Denis Kenzior <denkenz@gmail.com> wrote:
+> On 10/13/2010 08:54 AM, Andrzej Zaborowski wrote:
+>> This provides a way for other atoms to send DTMF tones during a call.
+>> ---
+>> =C2=A0src/ofono.h =C2=A0 =C2=A0 | =C2=A0 =C2=A04 ++++
+>> =C2=A0src/voicecall.c | =C2=A0 16 ++++++++++++++++
+>> =C2=A02 files changed, 20 insertions(+), 0 deletions(-)
+>>
+>> diff --git a/src/ofono.h b/src/ofono.h
+>> index 6c7f649..6efd9ac 100644
+>> --- a/src/ofono.h
+>> +++ b/src/ofono.h
+>> @@ -218,6 +218,10 @@ int __ofono_voicecall_dial(struct ofono_voicecall *=
+vc,
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_voicecall_dial_cb_t cb, void *user=
+_data);
+>> =C2=A0void __ofono_voicecall_dial_cancel(struct ofono_voicecall *vc);
+>>
+>> +int __ofono_voicecall_send_tone(struct ofono_voicecall *vc,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 const char *tone_str,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_voicecall_cb_t cb, void *user_data);
+>> +
+>
+> So this one is structured according to __ofono_voicecall_dial, should we
+> also have __ofono_voicecall_send_tone_cancel?
+>
+>> =C2=A0#include <ofono/sms.h>
+>>
+>> =C2=A0struct sms;
+>> diff --git a/src/voicecall.c b/src/voicecall.c
+>> index 7b5fe3b..45e19ce 100644
+>> --- a/src/voicecall.c
+>> +++ b/src/voicecall.c
+>> @@ -2326,3 +2326,19 @@ void __ofono_voicecall_dial_cancel(struct ofono_v=
+oicecall *vc)
+>>
+>> =C2=A0 =C2=A0 =C2=A0 vc->dial_req->cb =3D NULL;
+>> =C2=A0}
+>> +
+>> +int __ofono_voicecall_send_tone(struct ofono_voicecall *vc,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 const char *tone_str,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_voicecall_cb_t cb, void *user_data)
+>> +{
+>> + =C2=A0 =C2=A0 if (!vc->driver->send_tones)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return -ENOSYS;
+>> +
+>> + =C2=A0 =C2=A0 /* Send DTMFs only if we have at least one connected cal=
+l */
+>> + =C2=A0 =C2=A0 if (!voicecalls_can_dtmf(vc))
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return -ENOENT;
+>
+> I'm a bit worried that we never check for BUSY conditions here, in
+> particular since we can get into this situation:
+>
+> Send DTMF
+> Cancel
+> Send DTMF
+>
+> Which results in two DTMF operations being outstanding.
+>
+>> +
+>> + =C2=A0 =C2=A0 vc->driver->send_tones(vc, tone_str, cb, user_data);
+>> +
+>> + =C2=A0 =C2=A0 return 0;
+>> +}
+>
+> We also don't busy out any D-Bus operations when Send DTMF is in progress=
+...
 
-> For MMI 21 (All Async Services)=3D> 160 ("All data circuit async" (32) +
-> "All dedicated PAD access" (128)).
+So I gave this some thought now and made an implementation based on
+the __ofono_voicecall_dial api, but I think that this old approach is
+actually working better for us.  There are a couple of scenarios
+(let's consider only atmodem first)
 
-> For MMI 26 (Telephony and All sync services)=3D> 81 (Telephony (1) + "All
-> data circuit sync" (16) + "All dedicated packet access" (64))
+1. Send DTMF - Cancel - Send DTMF
 
-> For MMI 24 (All data circuit sync)=3D> 16 ("All data circuit sync")
+in this case the second Send DTMF is going to return an error from the
+driver (not from core voicecall.c).  I don't think it's a big deal,
+but we could think of something like cancelling the driver .send_tones
+call, because the operation can potentially take a while -- this would
+need a little change in the driver api.
 
-> For MMI 25 (All data circuit async)=3D> 32 ("All data circuit async")
+2. Send DTMF - DBus command arrives,
 
-I confirm your analyze for translation between MMI code services and classx=
- parameters for CLCK AT command. =
+Now any DBus command (other than SendTone) will actually be sent to
+the driver and executed.  I think that's the correct thing to do --
+the user needs to be able to end the call at any time.  The tones
+being emitted should not actually interfere with anything.  The only
+thing we need to do is respond to the STK command with an error if the
+call is terminated before all tones finished being emitted.
 
-Assuming that dedicated packet access is an synchronous services and dedica=
-ted PAD access is an asynchronous services (2204-491, replaced by 2204)
+3. Modem is doing something and a Send DTMF stk command arrives,
 
+In this case the DTMFs will be delayed because of command
+serialisation in gatchat / gisi.  Should we return "terminal busy" to
+the card instead?
 
-MMI     group           oFono current translate table
-10	[1 to 6,12]		BEARER_CLASS_VOICE | BEARER_CLASS_FAX | BEARER_CLASS_SMS	1 =
-+ 4 + 8	OK
-11	[1        ]		BEARER_CLASS_VOICE							1		OK
-12	[2 to 6   ]		BEARER_CLASS_SMS | BEARER_CLASS_FAX					4 + 8		OK
-13	[6        ]		BEARER_CLASS_FAX								4		OK
-16	[2        ]		BEARER_CLASS_SMS								8		OK
-	=
+What do you think?  What behaviour do we want?
 
-	=
+The handling may be different in case of isimodem, so this would need
+checking anyway.
 
-19	[1, 3 to 6, 12]	BEARER_CLASS_VOICE | BEARER_CLASS_FAX				1 + 4		OK
-20	[7 to 11      ]	BEARER_CLASS_DATA_ASYNC | BEARER_CLASS_DATA_SYNC		16 + 3=
-2	to be replace by  16 + 32 + 64 + 128
-21	[7            ]	BEARER_CLASS_DATA_ASYNC							32		to be replace by	32 + =
-128			=
+Best regards
 
-22	[8            ]	BEARER_CLASS_DATA_SYNC							16		to be replace by	16 + 6=
-4		=
-
-24	[8            ]	BEARER_CLASS_DATA_SYNC							16		OK			=
-
-25	[7            ]	BEARER_CLASS_DATA_ASYNC							32		OK				=
-
-26	[1,8          ]	BEARER_CLASS_VOICE | BEARER_CLASS_DATA_SYNC			1 + 16	to =
-be replace by	 1 + 16+ 64             =
-
-
-I suggest to introduce you proposal on MMI 21, 22, 26 and also add changes =
-on MMI 20 =
-
-
-
-Regards
-
-Carlos
-
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============3626808459532630464==--
+--===============6137726153363700317==--
 
