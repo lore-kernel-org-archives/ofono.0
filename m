@@ -1,14 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============3359664416000119633=="
+Content-Type: multipart/mixed; boundary="===============3040008150855236461=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [PATCHv2 2/2] isi: fix hangup_active and set_udub methods
-Date: Wed, 20 Oct 2010 20:00:28 +0300
-Message-ID: <1287594028-29970-2-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1287594028-29970-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [PATCHv3] isi: fix hangup_active and set_udub methods
+Date: Wed, 20 Oct 2010 20:08:29 +0300
+Message-ID: <1287594509-32711-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3359664416000119633==
+--===============3040008150855236461==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,12 +16,12 @@ From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
 The concept of "active" call seems to be overloaded.
 ---
- drivers/isimodem/voicecall.c |   58 ++++++++++++++++++++++++++------------=
-----
- 1 files changed, 36 insertions(+), 22 deletions(-)
+ drivers/isimodem/voicecall.c |   60 +++++++++++++++++++++++++-------------=
+---
+ 1 files changed, 36 insertions(+), 24 deletions(-)
 
 diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index 82f7eef..a14a65c 100644
+index 82f7eef..c3365f6 100644
 --- a/drivers/isimodem/voicecall.c
 +++ b/drivers/isimodem/voicecall.c
 @@ -902,9 +902,9 @@ static int isi_call_status_to_clcc(struct isi_call cons=
@@ -80,14 +79,13 @@ t *call)
  }
  =
 
-@@ -1004,25 +1031,12 @@ static void isi_release_all_held(struct ofono_voice=
+@@ -1004,25 +1031,10 @@ static void isi_release_all_held(struct ofono_voice=
 call *ovc,
  static void isi_set_udub(struct ofono_voicecall *ovc,
  				ofono_voicecall_cb_t cb, void *data)
  {
 -	/* AT+CHLD=3D0 (w/ incoming calls) */
-+	/* Release waiting calls */
- 	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
+-	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
 -	int id =3D 0;
 -
 -	for (id =3D 1; id <=3D 7; id++) {
@@ -98,14 +96,14 @@ call *ovc,
 -		if (ivc->calls[id].status =3D=3D CALL_STATUS_COMING)
 -			break;
 -	}
- =
-
+-
 -	if (id <=3D 7)
 -		isi_call_release_req(ovc, id, CALL_CAUSE_TYPE_CLIENT,
 -					CALL_CAUSE_BUSY_USER_REQUEST,
 -					cb, data);
 -	else
 -		CALLBACK_WITH_FAILURE(cb, data);
++	/* Release waiting calls */
 +	isi_call_release_req(ovc, CALL_ID_WAITING,
 +		CALL_CAUSE_TYPE_CLIENT, CALL_CAUSE_BUSY_USER_REQUEST,
 +		cb, data);
@@ -113,7 +111,7 @@ call *ovc,
  =
 
  static void isi_retrieve(struct ofono_voicecall *ovc,
-@@ -1317,7 +1331,7 @@ static struct ofono_voicecall_driver driver =3D {
+@@ -1317,7 +1329,7 @@ static struct ofono_voicecall_driver driver =3D {
  	.remove			=3D isi_voicecall_remove,
  	.dial			=3D isi_dial,
  	.answer			=3D isi_answer,
@@ -127,5 +125,5 @@ call *ovc,
 1.7.1
 
 
---===============3359664416000119633==--
+--===============3040008150855236461==--
 
