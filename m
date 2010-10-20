@@ -1,35 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8341128556694494106=="
+Content-Type: multipart/mixed; boundary="===============2737985367801160006=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: A way of polling SIM status
-Date: Wed, 20 Oct 2010 16:21:49 +0300
-Message-ID: <AANLkTinUHKokaYjfc=jg0tmf+PSwSk7bbOr0FsgzpZom@mail.gmail.com>
-In-Reply-To: <4CBDE333.7090605@gmail.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH 1/2] voicecall: document voicecall driver methods
+Date: Wed, 20 Oct 2010 18:54:04 +0300
+Message-ID: <1287590045-23710-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8341128556694494106==
+--===============2737985367801160006==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-2010/10/19 Denis Kenzior <denkenz@gmail.com>:
-> Unfortunately some modems report CPIN: READY even though they're not
-> ready. =C2=A0The only reliable way to poll for this is to poll the IMSI, =
-then
-> the phonebook and the sms store and report ready only once all of them
-> can be manipulated.
+---
+ include/voicecall.h |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
-I seems to me that Caiwen is proposing SIM presence polling. Each and
-every modem does it now separately. Unfortunately this seems to be
-even trickier than PIN lock polling, at least MBM returns different
-error codes depending on how far its own initialization has got.
-
+diff --git a/include/voicecall.h b/include/voicecall.h
+index 2356fcf..6fd75ec 100644
+--- a/include/voicecall.h
++++ b/include/voicecall.h
+@@ -67,6 +67,7 @@ struct ofono_voicecall_driver {
+ 			ofono_voicecall_cb_t cb, void *data);
+ 	void (*answer)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
++	/* Release active, alerting, dialing, or incoming calls */
+ 	void (*hangup_active)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
+ 	void (*hangup_all)(struct ofono_voicecall *vc,
+@@ -75,8 +76,13 @@ struct ofono_voicecall_driver {
+ 			ofono_voicecall_cb_t cb, void *data);
+ 	void (*release_all_held)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
++	/* Release incoming or waiting calls */
+ 	void (*set_udub)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
++	/*
++	 * Release active, alerting, dialing, or incoming calls
++	 * and answer the waiting call.
++	 */
+ 	void (*release_all_active)(struct ofono_voicecall *vc,
+ 			ofono_voicecall_cb_t cb, void *data);
+ 	void (*release_specific)(struct ofono_voicecall *vc, int id,
 -- =
 
-Pekka.Pessi mail at nokia.com
+1.7.1
 
---===============8341128556694494106==--
+
+--===============2737985367801160006==--
 
