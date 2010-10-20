@@ -1,29 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============3803416050885138654=="
+Content-Type: multipart/mixed; boundary="===============3492349203921685403=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv3] isi: fix hangup_active and set_udub methods
-Date: Wed, 20 Oct 2010 12:56:04 -0500
-Message-ID: <4CBF2D34.3040109@gmail.com>
-In-Reply-To: <1287594509-32711-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH] isi: fix SMS
+Date: Wed, 20 Oct 2010 12:56:34 -0500
+Message-ID: <4CBF2D52.30601@gmail.com>
+In-Reply-To: <1287593094-29153-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3803416050885138654==
+--===============3492349203921685403==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pekka,
 
-On 10/20/2010 12:08 PM, Pekka.Pessi(a)nokia.com wrote:
+On 10/20/2010 11:44 AM, Pekka.Pessi(a)nokia.com wrote:
 > From: Pekka Pessi <Pekka.Pessi@nokia.com>
 > =
 
-> The concept of "active" call seems to be overloaded.
+> Read absence/presence flags from correct field.
+> =
+
+> Try to avoid overwriting other SMS parameters but SCA address.
+> =
+
+> Use g_isi_(v)send().
 > ---
->  drivers/isimodem/voicecall.c |   60 +++++++++++++++++++++++++-----------=
------
->  1 files changed, 36 insertions(+), 24 deletions(-)
+>  drivers/isimodem/sms.c |   93 +++++++++++++++++++++++++++++-------------=
+------
+>  1 files changed, 56 insertions(+), 37 deletions(-)
 > =
 
 
@@ -32,5 +38,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============3803416050885138654==--
+--===============3492349203921685403==--
 
