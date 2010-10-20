@@ -1,113 +1,299 @@
-Content-Type: multipart/mixed; boundary="===============7932482992675450816=="
+Content-Type: multipart/mixed; boundary="===============2874698370214069642=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [PATCH 2/2] isi: fix hangup_active and set_udub methods
-Date: Wed, 20 Oct 2010 18:54:05 +0300
-Message-ID: <1287590045-23710-2-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1287590045-23710-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [PATCH] isi: fix SMS
+Date: Wed, 20 Oct 2010 19:44:54 +0300
+Message-ID: <1287593094-29153-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7932482992675450816==
+--===============2874698370214069642==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-The concept of "active" call seems to be overloaded.
----
- drivers/isimodem/voicecall.c |   41 +++++++++++++++++++++++++++++++++++---=
----
- 1 files changed, 35 insertions(+), 6 deletions(-)
+Read absence/presence flags from correct field.
 
-diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index 82f7eef..fcb3e82 100644
---- a/drivers/isimodem/voicecall.c
-+++ b/drivers/isimodem/voicecall.c
-@@ -902,9 +902,9 @@ static int isi_call_status_to_clcc(struct isi_call cons=
-t *call)
- 		return 4;
- 	case CALL_STATUS_PROCEEDING:
- 		if ((call->mode_info & CALL_MODE_ORIGINATOR))
--			return 4;
-+			return 4; /* MT */
- 		else
--			return 2;
-+			return 2; /* MO */
- 	case CALL_STATUS_MO_ALERTING:
- 		return 3;
- 	case CALL_STATUS_MT_ALERTING:
-@@ -986,10 +986,37 @@ static void isi_answer(struct ofono_voicecall *ovc,
- 	isi_call_answer_req(ovc, CALL_ID_ALL, cb, data);
- }
+Try to avoid overwriting other SMS parameters but SCA address.
+
+Use g_isi_(v)send().
+---
+ drivers/isimodem/sms.c |   93 +++++++++++++++++++++++++++++---------------=
+----
+ 1 files changed, 56 insertions(+), 37 deletions(-)
+
+diff --git a/drivers/isimodem/sms.c b/drivers/isimodem/sms.c
+index d8c617f..89cd7d9 100644
+--- a/drivers/isimodem/sms.c
++++ b/drivers/isimodem/sms.c
+@@ -49,6 +49,18 @@
+ struct sms_data {
+ 	GIsiClient *client;
+ 	GIsiClient *sim;
++	/* This is a straightforward copy of the EF_smsp structure */
++	struct sim_parameters {
++		uint8_t      absent;
++		uint8_t      tp_pid;
++		uint8_t      tp_dcs;
++		uint8_t      tp_vp;
++		uint8_t      dst[12];
++		uint8_t      sca[12];
++		uint8_t      alphalen;
++		uint8_t      filler[3];
++		uint16_t     alpha[17];
++	} params;
+ };
  =
 
--static void isi_hangup_active(struct ofono_voicecall *ovc,
-+static void isi_hangup_current(struct ofono_voicecall *ovc,
- 			ofono_voicecall_cb_t cb, void *data)
+ static gboolean sca_query_resp_cb(GIsiClient *client,
+@@ -57,6 +69,8 @@ static gboolean sca_query_resp_cb(GIsiClient *client,
  {
--	isi_call_release_req(ovc, CALL_ID_ACTIVE, CALL_CAUSE_TYPE_CLIENT,
+ 	const uint8_t *msg =3D data;
+ 	struct isi_cb_data *cbd =3D opaque;
++	struct ofono_sms *sms =3D cbd->user;
++	struct sms_data *sd =3D ofono_sms_get_data(sms);
+ 	ofono_sms_sca_query_cb_t cb =3D cbd->cb;
+ =
+
+ 	struct ofono_phone_number sca;
+@@ -74,12 +88,24 @@ static gboolean sca_query_resp_cb(GIsiClient *client,
+ 	if (msg[3] !=3D SIM_SERV_OK)
+ 		goto error;
+ =
+
+-	/* Bitmask indicating presence of parameters -- second flag
+-	 * set is an indicator that the SCA is absent */
+-	if (msg[4] & 0x2)
++	if (len  > 3 + sizeof(sd->params))
++		len =3D 3 + sizeof(sd->params);
++	memcpy(&sd->params, msg + 3, len - 3);
++
++	if (sd->params.alphalen > 17)
++		sd->params.alphalen =3D 17;
++	else if (sd->params.alphalen < 1)
++		sd->params.alphalen =3D 1;
++	sd->params.alpha[sd->params.alphalen - 1] =3D '\0';
++
 +	/*
-+	 * Hangup call(s) that are not held or waiting:
-+	 * active calls or calls in progress.
++	 * Bitmask indicating absense of parameters --
++	 * If second bit is set it indicates that the SCA is absent
 +	 */
-+	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
-+	int id =3D 0;
-+
-+	for (id =3D 1; id <=3D 7; id++) {
-+		if (ivc->calls[id].call_id & CALL_ID_WAITING)
-+			continue;
-+		if (ivc->calls[id].call_id & CALL_ID_HOLD)
-+			continue;
-+
-+		switch (ivc->calls[id].status) {
-+		case CALL_STATUS_CREATE:
-+		case CALL_STATUS_COMING:
-+		case CALL_STATUS_PROCEEDING:
-+		case CALL_STATUS_MO_ALERTING:
-+		case CALL_STATUS_MT_ALERTING:
-+		case CALL_STATUS_ANSWERED:
-+			goto release_by_id;
-+		}
-+	}
-+
-+	id =3D CALL_ID_ACTIVE;
-+
-+release_by_id:
-+	isi_call_release_req(ovc, id, CALL_CAUSE_TYPE_CLIENT,
- 				CALL_CAUSE_RELEASE_BY_USER, cb, data);
++	if (sd->params.absent & 0x2)
+ 		goto error;
+ =
+
+-	bcd =3D msg + 19;
++	bcd =3D sd->params.sca;
+ 	bcd_len =3D bcd[0];
+ =
+
+ 	if (bcd_len <=3D 1 || bcd_len > 12)
+@@ -89,13 +115,10 @@ static gboolean sca_query_resp_cb(GIsiClient *client,
+ 	sca.type =3D bcd[1];
+ =
+
+ 	CALLBACK_WITH_SUCCESS(cb, &sca, cbd->data);
+-	goto out;
++	return TRUE;
+ =
+
+ error:
+ 	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
+-
+-out:
+-	g_free(cbd);
+ 	return TRUE;
  }
  =
 
-@@ -1015,9 +1042,11 @@ static void isi_set_udub(struct ofono_voicecall *ovc,
- 			break;
- 		if (ivc->calls[id].status =3D=3D CALL_STATUS_COMING)
- 			break;
-+		if (ivc->calls[id].status =3D=3D CALL_STATUS_PROCEEDING)
-+			break;
+@@ -114,8 +137,8 @@ static void isi_sca_query(struct ofono_sms *sms,
+ 	if (!cbd || !sd)
+ 		goto error;
+ =
+
+-	if (g_isi_request_make(sd->sim, msg, sizeof(msg), SIM_TIMEOUT,
+-				sca_query_resp_cb, cbd))
++	if (g_isi_send(sd->sim, msg, sizeof(msg), SIM_TIMEOUT,
++			sca_query_resp_cb, cbd, g_free))
+ 		return;
+ =
+
+ error:
+@@ -143,13 +166,10 @@ static gboolean sca_set_resp_cb(GIsiClient *client,
+ 		goto error;
+ =
+
+ 	CALLBACK_WITH_SUCCESS(cb, cbd->data);
+-	goto out;
++	return TRUE;
+ =
+
+ error:
+ 	CALLBACK_WITH_FAILURE(cb, cbd->data);
+-
+-out:
+-	g_free(cbd);
+ 	return TRUE;
+ }
+ =
+
+@@ -159,33 +179,31 @@ static void isi_sca_set(struct ofono_sms *sms,
+ {
+ 	struct sms_data *sd =3D ofono_sms_get_data(sms);
+ 	struct isi_cb_data *cbd =3D isi_cb_data_new(sms, cb, data);
++	uint8_t *bcd;
+ =
+
+ 	uint8_t msg[] =3D {
+ 		SIM_SMS_REQ,
+ 		UPDATE_PARAMETER,
+ 		1,	/* Location, default is 1 */
+-		0xFD,	/* Params present, only SCA */
+ 	};
+ =
+
+-	uint8_t filler[40] =3D { 0 };
+-	uint8_t bcd[12];
+-
+-	struct iovec iov[4] =3D {
++	struct iovec iov[] =3D {
+ 		{ msg, sizeof(msg) },
+-		{ filler, 15 },
+-		{ bcd, sizeof(bcd) },
+-		{ filler, 38 },
++		{ &sd->params, sizeof(sd->params) },
+ 	};
+ =
+
+ 	if (!cbd || !sd)
+ 		goto error;
+ =
+
++	bcd =3D sd->params.sca;
++	sd->params.absent &=3D ~0x02;
++
+ 	encode_bcd_number(sca->number, bcd + 2);
+ 	bcd[0] =3D 1 + (strlen(sca->number) + 1) / 2;
+ 	bcd[1] =3D sca->type & 0xFF;
+ =
+
+-	if (g_isi_request_vmake(sd->sim, iov, 4, SIM_TIMEOUT,
+-				sca_set_resp_cb, cbd))
++	if (g_isi_vsend(sd->sim, iov, G_N_ELEMENTS(iov), SIM_TIMEOUT,
++			sca_set_resp_cb, cbd, g_free))
+ 		return;
+ =
+
+ error:
+@@ -253,13 +271,10 @@ static gboolean submit_resp_cb(GIsiClient *client,
+ 		goto error;
+ =
+
+ 	CALLBACK_WITH_SUCCESS(cb, mr, cbd->data);
+-	goto out;
++	return TRUE;
+ =
+
+ error:
+ 	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+-
+-out:
+-	g_free(cbd);
+ 	return TRUE;
+ }
+ =
+
+@@ -316,8 +331,8 @@ static void isi_submit(struct ofono_sms *sms, unsigned =
+char *pdu,
+ 	if (!cbd || !sd)
+ 		goto error;
+ =
+
+-	if (g_isi_request_vmake(sd->client, iov, use_default ? 2 : 4, SMS_TIMEOUT,
+-				submit_resp_cb, cbd))
++	if (g_isi_vsend(sd->client, iov, use_default ? 2 : 4, SMS_TIMEOUT,
++			submit_resp_cb, cbd, g_free))
+ 		return;
+ =
+
+ error:
+@@ -356,6 +371,7 @@ static gboolean report_resp_cb(GIsiClient *client,
+ 		return FALSE;
+ =
+
+ 	DBG("Report resp cause=3D0x%"PRIx8, msg[1]);
++
+ 	return TRUE;
+ }
+ =
+
+@@ -378,8 +394,8 @@ static gboolean send_deliver_report(GIsiClient *client,=
+ gboolean success)
+ 		0,		/* Sub blocks */
+ 	};
+ =
+
+-	return g_isi_request_make(client, msg, sizeof(msg), SMS_TIMEOUT,
+-					report_resp_cb, NULL) !=3D NULL;
++	return g_isi_send(client, msg, sizeof(msg), SMS_TIMEOUT,
++				report_resp_cb, NULL, NULL) !=3D NULL;
+ }
+ =
+
+ static void routing_ntf_cb(GIsiClient *client,
+@@ -518,13 +534,16 @@ static int isi_sms_probe(struct ofono_sms *sms, unsig=
+ned int vendor,
+ 	if (!data)
+ 		return -ENOMEM;
+ =
+
++	data->params.absent =3D 0xff;
++	data->params.alphalen =3D 1; /* Includes final UCS2-coded NUL */
++
+ 	data->client =3D g_isi_client_create(idx, PN_SMS);
+ 	if (!data->client)
+ 		return -ENOMEM;
+ =
+
+ 	data->sim =3D g_isi_client_create(idx, PN_SIM);
+ 	if (!data->sim) {
+-		g_free(data->client);
++		g_isi_client_destroy(data->client);
+ 		return -ENOMEM;
  	}
  =
 
--	if (id <=3D 7)
-+	if (id <=3D 7 && (ivc->calls[id].mode_info & CALL_MODE_ORIGINATOR) =3D=3D=
- 1)
- 		isi_call_release_req(ovc, id, CALL_CAUSE_TYPE_CLIENT,
- 					CALL_CAUSE_BUSY_USER_REQUEST,
- 					cb, data);
-@@ -1317,7 +1346,7 @@ static struct ofono_voicecall_driver driver =3D {
- 	.remove			=3D isi_voicecall_remove,
- 	.dial			=3D isi_dial,
- 	.answer			=3D isi_answer,
--	.hangup_active		=3D isi_hangup_active,
-+	.hangup_active		=3D isi_hangup_current,
- 	.hold_all_active	=3D isi_hold_all_active,
- 	.release_all_held	=3D isi_release_all_held,
- 	.set_udub		=3D isi_set_udub,
+@@ -538,8 +557,8 @@ static int isi_sms_probe(struct ofono_sms *sms, unsigne=
+d int vendor,
+ =
+
+ 	g_isi_subscribe(data->client, SMS_MESSAGE_SEND_STATUS_IND,
+ 			send_status_ind_cb, sms);
+-	if (!g_isi_request_make(data->client, msg, sizeof(msg), SMS_TIMEOUT,
+-				routing_resp_cb, sms))
++	if (!g_isi_send(data->client, msg, sizeof(msg), SMS_TIMEOUT,
++			routing_resp_cb, sms, NULL))
+ 		DBG("Failed to set SMS routing.");
+ =
+
+ 	return 0;
+@@ -570,8 +589,8 @@ static void isi_sms_remove(struct ofono_sms *sms)
+ 	 * Send a promiscuous routing release, so as not to
+ 	 * hog resources unnecessarily after being removed
+ 	 */
+-	g_isi_request_make(data->client, msg, sizeof(msg),
+-				SMS_TIMEOUT, NULL, NULL);
++	g_isi_send(data->client, msg, sizeof(msg),
++			SMS_TIMEOUT, NULL, NULL, NULL);
+ 	g_isi_client_destroy(data->client);
+ 	g_isi_client_destroy(data->sim);
+ 	g_free(data);
 -- =
 
 1.7.1
 
 
---===============7932482992675450816==--
+--===============2874698370214069642==--
 
