@@ -1,43 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7612335723566812648=="
+Content-Type: multipart/mixed; boundary="===============1314152199295084746=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: [ANNOUNCE] oFono 0.32
-Date: Wed, 20 Oct 2010 22:21:47 -0500
-Message-ID: <4CBFB1CB.9070408@gmail.com>
+From: =?unknown-8bit?q?Beno=C3=AEt?= Monin <benoit.monin@gmx.fr>
+Subject: [PATCH] hso: Set modem name based on udev network interface name
+Date: Thu, 21 Oct 2010 10:26:20 +0200
+Message-ID: <20101021082620.178830@gmx.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7612335723566812648==
+--===============1314152199295084746==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Everyone,
+Useful if you have multiple identical modems and you need a way
+to know which modem you're talking to.
+---
+ plugins/udev.c | =C2=A0 =C2=A01 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-We've been promising for a long time to start doing release e-mails, so
-now is as good a time as any.
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 737a637..e687c01 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -191,6 +191,7 @@ static void add_hso(struct ofono_modem *modem,
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0} else if (g_str_equal(subsystem, "net") =3D=3D=
+ TRUE) {
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0devnode =3D get_pro=
+perty(udev_device, "INTERFACE");
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0ofono_modem_set_str=
+ing(modem, NETWORK_INTERFACE, devnode);
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_modem_set_name(mod=
+em, devnode);
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0} else {
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0}
+--
 
-oFono 0.32 is out.  This release is a mixed development and bug fix
-release with focus on stabilizing the Infineon modem support.  We also
-fix some long standing issues with USSD handling.
-
-ChangeLog:
-- Fix issue with AT+VTS not using quotes.
-- Fix issue with entering PUK and Infineon modems.
-- Fix issue with SIM hotswap and Infineon modems.
-- Fix issue with hangup active and ISI modems.
-- Fix issue with logic to validate USSD strings.
-- Add support for call in progress logic to USSD handling.
-- Add support for detecting FDN enabled SIM cards.
-- Add support for accessing SIM icon storage.
-
-The signed tarballs for oFono 0.32 can be found on kernel.org [1] [2].
-
-[1] http://www.kernel.org/pub/linux/network/ofono/ofono-0.32.tar.bz2
-[2] http://www.kernel.org/pub/linux/network/ofono/ofono-0.32.tar.bz2.sign
-
-Regards,
--Denis
-
---===============7612335723566812648==--
+--===============1314152199295084746==--
 
