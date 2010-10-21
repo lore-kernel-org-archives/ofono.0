@@ -1,225 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============5428128452156831501=="
+Content-Type: multipart/mixed; boundary="===============6450702953739347004=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/4] stk: Handle the Send DTMF proactive command.
-Date: Thu, 21 Oct 2010 07:09:06 +0200
-Message-ID: <1287637748-7230-2-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1287637748-7230-1-git-send-email-andrew.zaborowski@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Crash with activated GPRS and then loosing signal
+Date: Thu, 21 Oct 2010 23:23:32 +0200
+Message-ID: <1287696212.3316.167.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5428128452156831501==
+--===============6450702953739347004==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The default_agent_notify and session_agent_notify changes below are
-needed for respond_on_exit commands to be able to free up their
-resources, reset alpha id, etc.  Commands other than Send DTMF that
-use respond_on_exit are all associated with a agent method call and
-get notified about agent exit in the callback.
----
- src/stk.c |  143 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 142 insertions(+), 1 deletions(-)
+ofonod[24512]: GPRS1: > AT+CGDATA=3D"M-RAW_IP",1\r
+ofonod[24512]: GPRS1: < \r\nCONNECT\r\n
+ofonod[24512]: Net: < \r\n+XCIEV: 4,\r\n
+ofonod[24512]: Net: < \r\n+XCIEV: 3,\r\n
+ofonod[24512]: Net: < \r\n+XCIEV: 2,\r\n
+ofonod[24512]: Net: < \r\n+XCIEV: 1,\r\n
+ofonod[24512]: Net: < \r\n+CREG: 2\r\n
+process 24512: arguments to dbus_message_new_signal() were incorrect, asser=
+tion "_dbus_check_is_valid_path (path)" failed in file dbus-message.c line =
+1287.
+This is normally a bug in some application using the D-Bus library.
+  D-Bus not built with -rdynamic so unable to print a backtrace
+ofonod[24512]: Aborting (signal 6)
+ofonod[24512]: ++++++++ backtrace ++++++++
+ofonod[24512]: [0]: [0xb78c7400]
+ofonod[24512]: [1]: /lib/libc.so.6(abort+0x188) [0x202ea8]
+ofonod[24512]: [2]: /lib/libdbus-1.so.3() [0x580285]
+ofonod[24512]: [3]: /lib/libdbus-1.so.3() [0x57c176]
+ofonod[24512]: [4]: /lib/libdbus-1.so.3(dbus_message_new_signal+0x114) [0x5=
+6e904]
+ofonod[24512]: [5]: ./ofonod(ofono_dbus_signal_property_changed+0x23) [0x80=
+8eef3]
+ofonod[24512]: [6]: ./ofonod() [0x8090978]
+ofonod[24512]: [7]: ./ofonod() [0x80927b8]
+ofonod[24512]: [8]: ./ofonod(ofono_netreg_status_notify+0x246) [0x8092c86]
+ofonod[24512]: [9]: ./ofonod() [0x8066ec9]
+ofonod[24512]: [10]: /lib/libglib-2.0.so.0(g_slist_foreach+0x25) [0x487310]
+ofonod[24512]: [11]: ./ofonod() [0x8056476]
+ofonod[24512]: [12]: ./ofonod() [0x80584af]
+ofonod[24512]: [13]: /lib/libglib-2.0.so.0() [0x4a3c81]
+ofonod[24512]: [14]: /lib/libglib-2.0.so.0(g_main_context_dispatch+0x1b7) [=
+0x4717f9]
+ofonod[24512]: [15]: /lib/libglib-2.0.so.0() [0x471e20]
+ofonod[24512]: [16]: /lib/libglib-2.0.so.0(g_main_loop_run+0x221) [0x4723b7]
+ofonod[24512]: [17]: ./ofonod() [0x808b029]
+ofonod[24512]: [18]: /lib/libc.so.6(__libc_start_main+0xe7) [0x1eabb7]
+ofonod[24512]: [19]: ./ofonod() [0x8050581]
+ofonod[24512]: +++++++++++++++++++++++++++
 
-diff --git a/src/stk.c b/src/stk.c
-index 60b308b..d42a05f 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -74,6 +74,7 @@ struct ofono_stk {
- 	char *idle_mode_text;
- 	struct stk_icon_id idle_mode_icon;
- 	struct timeval get_inkey_start_ts;
-+	int dtmf_id;
- };
- =
-
- struct envelope_op {
-@@ -460,8 +461,12 @@ static void default_agent_notify(gpointer user_data)
- {
- 	struct ofono_stk *stk =3D user_data;
- =
-
--	if (stk->current_agent =3D=3D stk->default_agent && stk->respond_on_exit)
-+	if (stk->current_agent =3D=3D stk->default_agent && stk->respond_on_exit)=
- {
-+		if (stk->pending_cmd)
-+			stk->cancel_cmd(stk);
-+
- 		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
-+	}
- =
-
- 	stk->default_agent =3D NULL;
- 	stk->current_agent =3D stk->session_agent;
-@@ -475,6 +480,9 @@ static void session_agent_notify(gpointer user_data)
- 	DBG("Session Agent removed");
- =
-
- 	if (stk->current_agent =3D=3D stk->session_agent && stk->respond_on_exit)=
- {
-+		if (stk->pending_cmd)
-+			stk->cancel_cmd(stk);
-+
- 		DBG("Sending Terminate response for session agent");
- 		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
- 	}
-@@ -1852,6 +1860,134 @@ static gboolean handle_command_refresh(const struct=
- stk_command *cmd,
- 	return TRUE;
- }
- =
-
-+static void send_dtmf_cancel(struct ofono_stk *stk)
-+{
-+	struct ofono_voicecall *vc =3D NULL;
-+	struct ofono_atom *vc_atom;
-+
-+	stk->respond_on_exit =3D FALSE;
-+
-+	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
-+						OFONO_ATOM_TYPE_VOICECALL);
-+	if (vc_atom)
-+		vc =3D __ofono_atom_get_data(vc_atom);
-+
-+	if (vc) /* Should be always true here */
-+		__ofono_voicecall_tone_cancel(vc, stk->dtmf_id);
-+
-+	stk_alpha_id_unset(stk);
-+}
-+
-+static void dtmf_sent_cb(int error, void *user_data)
-+{
-+	struct ofono_stk *stk =3D user_data;
-+
-+	stk->respond_on_exit =3D FALSE;
-+
-+	stk_alpha_id_unset(stk);
-+
-+	if (error =3D=3D ENOENT) {
-+		struct stk_response rsp;
-+		static unsigned char not_in_speech_call_result[] =3D { 0x07 };
-+		static struct ofono_error failure =3D
-+			{ .type =3D OFONO_ERROR_TYPE_FAILURE };
-+
-+		memset(&rsp, 0, sizeof(rsp));
-+
-+		rsp.result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		rsp.result.additional_len =3D sizeof(not_in_speech_call_result);
-+		rsp.result.additional =3D not_in_speech_call_result;
-+
-+		if (stk_respond(stk, &rsp, stk_command_cb))
-+			stk_command_cb(&failure, stk);
-+
-+		return;
-+	}
-+
-+	if (error =3D=3D EINVAL)
-+		send_simple_response(stk, STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD);
-+	else if (error)
-+		send_simple_response(stk, STK_RESULT_TYPE_NOT_CAPABLE);
-+	else
-+		send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
-+}
-+
-+static gboolean handle_command_send_dtmf(const struct stk_command *cmd,
-+						struct stk_response *rsp,
-+						struct ofono_stk *stk)
-+{
-+	static unsigned char not_in_speech_call_result[] =3D { 0x07 };
-+	struct ofono_voicecall *vc =3D NULL;
-+	struct ofono_atom *vc_atom;
-+	char dtmf[256], *digit;
-+	char *dtmf_from =3D "01234567890abcABC";
-+	char *dtmf_to =3D "01234567890*#p*#p";
-+	int err, pos;
-+
-+	vc_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
-+						OFONO_ATOM_TYPE_VOICECALL);
-+	if (vc_atom)
-+		vc =3D __ofono_atom_get_data(vc_atom);
-+
-+	if (!vc) {
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+	}
-+
-+	/* Convert the DTMF string to phone number format */
-+	for (pos =3D 0; cmd->send_dtmf.dtmf[pos] !=3D 0; pos++) {
-+		digit =3D strchr(dtmf_from, cmd->send_dtmf.dtmf[pos]);
-+		if (!digit) {
-+			rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
-+			return TRUE;
-+		}
-+
-+		dtmf[pos] =3D dtmf_to[digit - dtmf_from];
-+	}
-+	dtmf[pos] =3D 0;
-+
-+	err =3D __ofono_voicecall_tone_send(vc, dtmf, dtmf_sent_cb, stk);
-+
-+	if (err =3D=3D -EBUSY) {
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		return TRUE;
-+	}
-+
-+	if (err =3D=3D -ENOSYS) {
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+	}
-+
-+	if (err =3D=3D -ENOENT) {
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		rsp->result.additional_len =3D sizeof(not_in_speech_call_result);
-+		rsp->result.additional =3D not_in_speech_call_result;
-+		return TRUE;
-+	}
-+
-+	if (err < 0) {
-+		/*
-+		 * We most likely got an out of memory error, tell SIM
-+		 * to retry
-+		 */
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		return TRUE;
-+	}
-+
-+	stk_alpha_id_set(stk, cmd->send_dtmf.alpha_id, &cmd->send_dtmf.icon_id);
-+
-+	/*
-+	 * Note that we don't strictly require an agent to be connected,
-+	 * but to comply with 6.4.24 we need to send a End Session when
-+	 * the user decides so.
-+	 */
-+	stk->respond_on_exit =3D TRUE;
-+	stk->cancel_cmd =3D send_dtmf_cancel;
-+	stk->dtmf_id =3D err;
-+
-+	return FALSE;
-+}
-+
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
- {
- 	if (stk->immediate_response)
-@@ -2024,6 +2160,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
-_stk *stk,
- 							&rsp, stk);
- 		break;
- =
-
-+	case STK_COMMAND_TYPE_SEND_DTMF:
-+		respond =3D handle_command_send_dtmf(stk->pending_cmd,
-+							&rsp, stk);
-+		break;
-+
- 	default:
- 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
- 		break;
--- =
-
-1.7.1.86.g0e460.dirty
+-------- backtrace --------
+[0]: ofono_dbus_signal_property_changed() [dbus.c:179]
+[1]: set_network_operator_status() [network.c:316]
+[2]: current_operator_callback() [network.c:1227]
+[3]: ofono_netreg_status_notify() [network.c:1329]
+[4]: creg_notify() [network-registration.c:983]
+[5]: at_chat_match_notify() [gatchat.c:414]
+[6]: received_data() [gatio.c:121]
+[7]: main() [main.c:240]
+[8]: _start() [audio-settings.c:0]
+---------------------------
 
 
---===============5428128452156831501==--
+
+--===============6450702953739347004==--
 
