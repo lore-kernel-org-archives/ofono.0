@@ -1,136 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============6494172741982981705=="
+Content-Type: multipart/mixed; boundary="===============4010545196303736475=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 1/4] radio settings: allow for more than one property
-Date: Fri, 22 Oct 2010 09:08:56 +0200
-Message-ID: <C358A26273CF2948B8BCDBA661A581782A7D092E75@NOK-EUMSG-03.mgdnok.nokia.com>
-In-Reply-To: <4CC04849.8070703@gmail.com>
+From: Sjur BRENDELAND <sjur.brandeland@stericsson.com>
+Subject: RE: [RFC] AGPS Support
+Date: Fri, 22 Oct 2010 12:09:22 +0200
+Message-ID: <81C3A93C17462B4BBD7E272753C105791945944934@EXDCVYMBSTM005.EQ1STM.local>
+In-Reply-To: <B4268AAFAFA3E244B5B0641D5914917048B5476159@EXDCVYMBSTM006.EQ1STM.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6494172741982981705==
+--===============4010545196303736475==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis, =
+Hi Bastian,
 
-
-> > Oops, will fix. For some reason my checkpatch script did =
-
-> not complain about this.
-> > =
-
-> > You must be using a script as well. To avoid unnecessary =
-
-> fuss like this, would it be possible to integrate it to the =
-
-> oFono tree so everyone would check their patches using the same thing?
+> Bastian, Waldo wrote:
 > =
 
-> Not a script, but Johan's magic vim macro.  I paste it here =
+> Please find attached a proposal for both a DBUS and Modem API for AGPS =
 
-> for reference:
-> highlight RedundantWhitespace ctermbg=3Dred guibg=3Dred
-> match RedundantWhitespace /\s\+$\|\t\+\ze \+[^*]\| \+\ze\t/
+> support. There are some minor changes compared to the proposal from =
+
+> May 14, 2010.
 > =
 
-> Between checkpatch, git am and this one we catch most issues.
-
-Thanks. Still, I'd vote for a common checkpatch script in the oFono tree. ;)
-
+...
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0void SendLCSFrame(=
+string frametype, string framedata)
 > =
 
-> > =
-
-> >> I prefer you keep the current implementation as it is =
-
-> consistent with
-> >> the rest of ofono core.  The way the rest of the core works =
-
-> >> is that you
-> >> query each in sequence, then set the the CACHED flag (only one is
-> >> actually required).
-> >>
-> >> We use a single cached flag to keep the logic simpler and =
-
-> optimize for
-> >> the general case (e.g. UI will query the properties first before
-> >> allowing the user to set them)  While this does lead to us =
-
-> >> querying some
-> >> attributes unnecessarily in certain extremely unlikely =
-
-> corner cases, I
-> >> believe it is an acceptable compromise.
-> > =
-
-> > This was my intention as well but I did it in a different =
-
-> way, as I didn't realize there was an existing pattern for it.
-> > =
-
-> > My code does actually query all the properties up front but =
-
-> I serialized the driver queries in a different way. I.e., I =
-
-> used a separate CACHED flag for each property to keep track =
-
-> of whether the value is already valid. Each driver callback =
-
-> attempts to create the pending reply. The attempt to create =
-
-> the reply either succeeds or triggers a new driver query for =
-
-> another missing property value. This goes on until all the =
-
-> properties are cached and the pending reply can be sent.
-> > =
-
-> > I now see that the other services use a separate state =
-
-> machine to fetch the properties. That introduces more code =
-
-> than my solution but I guess I can do it that way if you feel =
-
-> it is easier to read.
-> > =
-
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Send a LCS position protocol frame to the Mobile
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Network. The LCS frame typically represents a
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Position Response.
 > =
 
-> In the beginning we tried many approaches, including ones =
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0Valid frametypes are:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0rrlp_measure_position_response
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0rrc_measurement_report
+> =
 
-> similar to the
-> path you took.  We found that the current approach used in the core,
-> while while by no means perfect in every situation, was the best
-> compromise.  It is quite scalable as the number of attributes =
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0The raw frame data is formatted as the concatenated
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0sequence of the two digit hexadecimal representation
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0of each of its octets. Example: "00FC2345"
+....
+> struct ofono_lcs_frame {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0enum ofono_lcs_frame_type lcs_frame_type;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0int frame_length; =C2=A0 =C2=A0 =C2=A0 /* size=
+ of raw_frame in bytes */
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0unsigned char* raw_frame;
+> };
 
-> / queries
-> grows and it blocks multiple (potentially malicious) applications from
-> DDoSing the modem when the information is not cached.
 
-Well, my solution does exactly what you're asking, only with less code. You=
- seem to think that it allows parallel property queries from multiple clien=
-ts. That is not the case. See here:
 
-static DBusMessage *radio_get_properties(DBusConnection *conn, DBusMessage =
-*msg,
-                                        void *data)
-{
-        struct ofono_radio_settings *rs =3D data;
+The 27.007 Spec specifies positioning request/responses for AT where
+Positioning data are coded in XML data structures.
 
-        if (rs->pending)
-                return __ofono_error_busy(msg);
+I think the oFono interface should not use binary data, but rather be align=
+ed with 27.007
+and present decoded data as DBUS typed signals and methods with the same in=
+formation =
 
-        return radio_get_properties_reply(msg, rs);
-}
+content as specified in the XML data for AT+CPOS, AT+CPOSR.
 
-A busy error is returned if a previous query is in progress.
+In this way the vanilla AT driver could handle the CPOS, CPOR AT-commands
+and code/decode between XML and explicit data structures, which in turn
+oFono Core could code/decode as DBUS data types.
 
-I don't mind rewriting the stuff if need be but I'd like it to be for the r=
-ight reason.
+Regards,
+Sjur Br=C3=A6ndeland
 
-	MikaL
-
---===============6494172741982981705==--
+--===============4010545196303736475==--
 
