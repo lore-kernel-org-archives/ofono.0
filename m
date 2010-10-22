@@ -1,222 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============3022434928210867613=="
+Content-Type: multipart/mixed; boundary="===============4567069569659364788=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC ssn PATCH 4/4] D-Bus API for Supplementary Service
- Notifications
-Date: Fri, 22 Oct 2010 12:47:57 -0500
-Message-ID: <4CC1CE4D.1020007@gmail.com>
-In-Reply-To: <1286552200-18282-5-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [RFC ssn PATCH 1/4] Supplementary Service Notifications
+Date: Fri, 22 Oct 2010 12:50:03 -0500
+Message-ID: <4CC1CECB.8070908@gmail.com>
+In-Reply-To: <1286552200-18282-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3022434928210867613==
+--===============4567069569659364788==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Pekka,
 
+Sorry for replying so late.
+
 On 10/08/2010 10:36 AM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> Hello all,
 > =
 
-> ---
->  doc/call-barring-api.txt     |   10 -------
->  doc/call-forwarding-api.txt  |    9 +++++++
->  doc/voicecall-api.txt        |   55 ++++++++++++++++++++++++++++++++++++=
-+++++-
->  doc/voicecallmanager-api.txt |    5 ++++
->  4 files changed, 68 insertions(+), 11 deletions(-)
+> I've been working on supplementary service notifications (iow, trying to
+> decipher notifySS usage from 24.080 and related specifications).
 > =
 
-> diff --git a/doc/call-barring-api.txt b/doc/call-barring-api.txt
-> index 41ae4b1..1534494 100644
-> --- a/doc/call-barring-api.txt
-> +++ b/doc/call-barring-api.txt
-> @@ -37,16 +37,6 @@ Signals		PropertyChanged(string property, variant valu=
-e)
->  			Signal is emitted whenever a property has changed.
->  			The new value is passed as the signal argument.
->  =
+> SSN atom is not used much, so I ended up modifying the current notifier
+> API to include the SSN notification codes as a parameter of the notify
+> function.
+> =
 
-> -		IncomingBarringInEffect()
-> -
-> -			Signal is emitted when a call is made and an
-> -			incoming call barring supplementary service is in use.
-> -
-> -		OutgoingBarringInEffect()
-> -
-> -			Signal is emitted when a call is made and an
-> -			outgoing call barring supplementary service is in use.
-> -
->  Properties	string VoiceIncoming [readwrite]
->  =
+> I also wrote an isimodem driver for the SSNs. =
 
->  			Contains the value of the barrings for the incoming
-> diff --git a/doc/call-forwarding-api.txt b/doc/call-forwarding-api.txt
-> index 067531a..a97165b 100644
-> --- a/doc/call-forwarding-api.txt
-> +++ b/doc/call-forwarding-api.txt
-> @@ -26,6 +26,15 @@ Signals		PropertyChanged(string property, variant valu=
-e)
->  			Signal is emitted whenever a property has changed.
->  			The new value is passed as the signal argument.
->  =
+> =
 
-> +		ForwardingInEffect(string condition)
-> +
-> +			This informational signal is emitted when an outgoing
-> +			call is made. It indicates that a voice call
-> +			forwarding for incoming calls is in use. Condition can
-> +			be either of:
-> +				"unconditional" - VoiceUnconditional is active
-> +				"conditional" - A conditional rule is active
-> +
+> As for the D-Bus API, the modifications I propose are in the patch
+> 4. There is no implementation in src/voicecall.c or
+> src/call-forwarding.c, as I'd like to get the D-Bus API agreed first.
+> =
 
-So this maps to CSSI <code1> 0 or 1.  Sounds like this belongs on the
-voicecall interface (or perhaps voicecallmanager) as well.
+> I'd move the barring notifications to voicecall API, as they just
+> provide additional information on the reason why the call was
+> rejected. IncomingBarringInEffect is not about your barring services but
+> barring services for callee.
 
->  Properties	string VoiceUnconditional [readwrite]
->  =
+So I pretty much concur with your assessment here and agree we should
+move these out of the CallBarring interface.
 
->  			Contains the value of the voice unconditional call
-> diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-> index f0ba316..a6c0b42 100644
-> --- a/doc/voicecall-api.txt
-> +++ b/doc/voicecall-api.txt
-> @@ -73,6 +73,54 @@ Signals		PropertyChanged(string property, variant valu=
-e)
->  			of this signal as optional. This signal will be
->  			emitted before the PropertyChanged signal.
->  =
+> =
 
-> +		JoinedMultiparty()
-> +
-> +			Signal is emitted when remote party joins the
-> +			call into a multiparty conference.
-> +
-> +			Note that there is no corresponding event when
-> +			remote party splits call from the multiparty
-> +			conference.
-> +
-> +		Waiting()
-> +
-> +			Signal is emitted when an outgoing call is waiting.
+> Most of the CSSI and CSSU indications are no-brainers (once you match
+> the 27.007 language and various bits and pieces from 24.08*
+> specifications) from the API point-of-view but these really require a
+> call ID along with them:
 
-I'm fine with this one, but have you considered putting this on a the
-voicecallmanager interface?  This can only be emitted for dialing /
-alerting calls, so the scope is inherently known.  But I'm fine either way.
+Please note that CSSI is considered an intermediate response code to an
+ATD, and thus can always (well in theory ;) be associated with a dialing
+/ alerting call.
 
-> +
-> +		OutgoingBarred()
-> +
-> +			Signal is emitted when caller's outgoing barring
-> +			services prevent call from being connected.
-> +
-> +			This signal can be emitted while call is being
-> +			disconnected or while a recorded announcement is
-> +			played.
-> +
+> =
 
-I'm not so sure about this assessment on AT modems...
+>   - call has been put on hold (+CSSU: 2)
+>   - call has been retrieved (+CSSU: 3), and
+>   - joining call to a multiparty conference (+CSSU: 4)
+> =
 
-> +		IngomingBarred()
-> +
-> +			Signal is emitted when callee's incoming barring
-> +			services prevent call from being connected.
-> +
-> +			This signal can be emitted while call is being
-> +			disconnected or while a recorded announcement is
-> +			played.
+> The problem here is that the AT CSSI/CSSU notifications conveniently
+> strip away indication which call is put on hold, retrieved or joined to
+> a multiparty call.  I'd reuse the index with non-CUG codes (as I did in
+> isimodem driver patch) or add an extra call-id parameter to the
+> notifiers.  If the driver does not know call-id or there is no call-id
+> for the call, it can pass 0 to the core and let the core to select a
+> convenient victim.
 
-Please name this RemoteBarred()
+The problem is this won't work properly in all cases.  I'm pretty much
+OK with sticking CSSI codes onto the voicecall interface, but CSSU codes
+might need to remain as signals on the voice call manager without fancy
+handling.
 
-> +
-> +		IncomingRedirected(string)
-> +
-> +			Signal is emitted when network indicates that an
-> +			incoming call has been redirected.  The value
-> +			contains the phone number of the party that
-> +			redirected the call if available.
-
-Why is this one on the voice call interface while IncomingForwarded is
-on the voicecall manager interface?  I assume this refers to an incoming
-or waiting call being signaled as part of a deflection procedure?
-
-> +
-> +		OutgoingRedirected()
-> +
-> +			Signal is emitted when an outgoing call has been
-> +			redirected.
-
-Please stick with our terminology and name this Deflected().
-
-> +
-> +		CallerIDRestrictionRejected()
-> +
-> +			Signal is emitted when caller requested Caller
-> +			ID Restriction but network rejects it.
-
-Again for consistency, please use CallingLineRestrictionRejected()
-
-> +
->  Properties	string LineIdentification [readonly]
->  =
-
->  			Contains the Line Identification information returned
-> @@ -90,7 +138,7 @@ Properties	string LineIdentification [readonly]
->  		boolean Multiparty [readonly]
->  =
-
->  			Contains the indication if the voice call is part
-> -			of a multiparty call or not.
-> +			of a multiparty call set up by user or not.
->  =
-
->  			Notifications if a call becomes part or leaves a
->  			multipart call are sent.
-> @@ -115,6 +163,11 @@ Properties	string LineIdentification [readonly]
->  			Client applications can use this to infer somewhat
->  			reliable call duration information.
->  =
-
-> +		boolean OnHold [readonly]
-> +
-> +			Contains the indication if the remote party has
-> +			put call on hold.
-> +
-
-I'm not sure you can ever make this work on AT modems.  Perhaps making
-this a signal on the VoiceCallManager interface is better.
-
->  		string Information [readonly, optional]
->  =
-
->  			Contains information related to the call for the
-> diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-> index 11af23a..34ed9de 100644
-> --- a/doc/voicecallmanager-api.txt
-> +++ b/doc/voicecallmanager-api.txt
-> @@ -132,6 +132,11 @@ Signals		CallAdded(object path, dict properties)
->  			released.  The object path is no longer accessible
->  			after this signal and only emitted for reference.
->  =
-
-> +		IncomingCallForwarded
-> +
-> +			This signal is sent when an incoming voice call
-> +			has been forwarded by the network.
-> +
-
-What is this one referring to?  Is it a result of a transfer procedure?
-
->  Properties	array{string} EmergencyNumbers
->  =
-
->  			Contains the list of emergency numbers recognized
+I'm also in favor of getting rid of the SSN atom completely and
+squashing CSSI / CSSU notifications into the voicecall atom.
 
 Regards,
 -Denis
 
---===============3022434928210867613==--
+--===============4567069569659364788==--
 
