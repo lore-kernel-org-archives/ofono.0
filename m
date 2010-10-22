@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============0951821593603968721=="
+Content-Type: multipart/mixed; boundary="===============0286364934441853339=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 4/5] modem: some debugs added for indicating modem
- state change
-Date: Fri, 22 Oct 2010 12:22:23 -0500
-Message-ID: <4CC1C84F.5030209@gmail.com>
-In-Reply-To: <1287673093-3022-5-git-send-email-petteri.tikander@ixonos.com>
+Subject: Re: [RFC PATCH 5/5] sim: check existence of imsi-code
+Date: Fri, 22 Oct 2010 12:22:46 -0500
+Message-ID: <4CC1C866.1090801@gmail.com>
+In-Reply-To: <1287673093-3022-6-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0951821593603968721==
+--===============0286364934441853339==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,16 +16,18 @@ Content-Transfer-Encoding: quoted-printable
 Hi Petteri,
 
 On 10/21/2010 09:58 AM, Petteri Tikander wrote:
+> For instance: when handling sim_get_properties
+> in PRE_SIM-state imsi is not received/stored.
 > ---
->  src/modem.c |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
+>  src/sim.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+Good catch!  Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============0951821593603968721==--
+--===============0286364934441853339==--
 
