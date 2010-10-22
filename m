@@ -1,42 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============5396937758908569862=="
+Content-Type: multipart/mixed; boundary="===============7572772826973997525=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] hso: Set modem name based on udev network interface name
-Date: Fri, 22 Oct 2010 10:39:57 -0500
-Message-ID: <4CC1B04D.5010304@gmail.com>
-In-Reply-To: <20101021082620.178830@gmx.com>
+Subject: Re: [RFC] AGPS Support
+Date: Fri, 22 Oct 2010 10:57:22 -0500
+Message-ID: <4CC1B462.7040409@gmail.com>
+In-Reply-To: <81C3A93C17462B4BBD7E272753C105791945944934@EXDCVYMBSTM005.EQ1STM.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5396937758908569862==
+--===============7572772826973997525==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Beno=C3=AEt,
+Hi Sjur,
 
-On 10/21/2010 03:26 AM, "Beno=C3=AEt Monin" wrote:
-> Useful if you have multiple identical modems and you need a way
-> to know which modem you're talking to.
-> ---
->  plugins/udev.c |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
+> The 27.007 Spec specifies positioning request/responses for AT where
+> Positioning data are coded in XML data structures.
 > =
 
-> diff --git a/plugins/udev.c b/plugins/udev.c
-> index 737a637..e687c01 100644
-> --- a/plugins/udev.c
-> +++ b/plugins/udev.c
-> @@ -191,6 +191,7 @@ static void add_hso(struct ofono_modem *modem,
->         } else if (g_str_equal(subsystem, "net") =3D=3D TRUE) {
->                 devnode =3D get_property(udev_device, "INTERFACE");
->                 ofono_modem_set_string(modem, NETWORK_INTERFACE, devnode);
-> +               ofono_modem_set_name(modem, devnode);
+> I think the oFono interface should not use binary data, but rather be ali=
+gned with 27.007
+> and present decoded data as DBUS typed signals and methods with the same =
+information =
 
-I prefer you do this in plugins/hso and not in udev.
+> content as specified in the XML data for AT+CPOS, AT+CPOSR.
+
+This was proposed several times.  The main objections against the XML
+file format was the difficulty of parsing such a beast and support of it
+by modem vendors.
+
+Personally (and this is based on rather limited experience with this
+area) I'm not against the idea; it fits with oFono's overall strategy of
+following 27.007 whenever possible...
 
 Regards,
 -Denis
 
---===============5396937758908569862==--
+--===============7572772826973997525==--
 
