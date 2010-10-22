@@ -1,103 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============5183046341141021662=="
+Content-Type: multipart/mixed; boundary="===============0530053251991140541=="
 MIME-Version: 1.0
-From: Andras Domokos <andras.domokos@nokia.com>
-Subject: [RFC PATCH 3/3] modem: emergency state handling added
-Date: Fri, 22 Oct 2010 19:47:57 +0300
-Message-ID: <a5e60a52de0f266919a33a46532c378e4c997f42.1287763218.git.andras.domokos@nokia.com>
-In-Reply-To: <cover.1287763218.git.andras.domokos@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 1/5] simfs: retrieve only EF-info without EF-contents
+Date: Fri, 22 Oct 2010 12:19:46 -0500
+Message-ID: <4CC1C7B2.5000506@gmail.com>
+In-Reply-To: <1287673093-3022-2-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5183046341141021662==
+--===============0530053251991140541==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Petteri,
 
-Signed-off-by: Andras Domokos <andras.domokos@nokia.com>
----
- src/modem.c |   37 +++++++++++++++++++++++++++++++++++++
- 1 files changed, 37 insertions(+), 0 deletions(-)
+On 10/21/2010 09:58 AM, Petteri Tikander wrote:
+> ---
+>  include/sim.h |    5 ++++
+>  src/simfs.c   |   64 +++++++++++++++++++++++++++++++++++++++++++++++++++=
++++--
+>  src/simfs.h   |    4 +++
+>  3 files changed, 70 insertions(+), 3 deletions(-)
 
-diff --git a/src/modem.c b/src/modem.c
-index 9aeb49c..9e96cce 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -70,6 +70,8 @@ struct ofono_modem {
- 	struct ofono_sim	*sim;
- 	unsigned int		sim_watch;
- 	unsigned int		sim_ready_watch;
-+	unsigned int		voicecall_watch;
-+	unsigned int		emergency_watch;
- 	const struct ofono_modem_driver *driver;
- 	void			*driver_data;
- 	char			*driver_type;
-@@ -544,6 +546,34 @@ ofono_bool_t ofono_modem_get_online(struct ofono_modem=
- *modem)
- 	return modem->online;
- }
- =
+I applied this patch but did some evil amending, see my comments below:
 
-+static void emergency_state_watch(ofono_bool_t state, void *data);
-+static void voicecall_watch(struct ofono_atom *atom,
-+			enum ofono_atom_watch_condition cond, void *data)
-+{
-+	struct ofono_modem *modem =3D data;
-+	struct ofono_voicecall *vc;
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		modem->emergency_watch =3D 0;
-+		return;
-+	}
-+
-+	vc =3D __ofono_atom_get_data(atom);
-+	modem->emergency_watch =3D __ofono_voicecall_add_emergency_watch(vc,
-+							emergency_state_watch,
-+							modem, NULL);
-+}
-+
-+static void emergency_state_watch(ofono_bool_t state, void *data)
-+{
-+	struct ofono_modem *modem =3D data;
-+
-+	DBG("Emergency mode is %s", state ? "On" : "Off");
-+
-+	if (state)
-+			modem_change_state(modem, MODEM_STATE_ONLINE);
-+}
-+
- void __ofono_modem_append_properties(struct ofono_modem *modem,
- 						DBusMessageIter *dict)
- {
-@@ -1502,6 +1532,10 @@ int ofono_modem_register(struct ofono_modem *modem)
- 					OFONO_ATOM_TYPE_SIM,
- 					sim_watch, modem, NULL);
- =
+> =
 
-+	modem->voicecall_watch =3D __ofono_modem_add_atom_watch(modem,
-+					OFONO_ATOM_TYPE_VOICECALL,
-+					voicecall_watch, modem, NULL);
-+
- 	return 0;
- }
- =
+> diff --git a/include/sim.h b/include/sim.h
+> index 7860e24..15e1ea0 100644
+> --- a/include/sim.h
+> +++ b/include/sim.h
+> @@ -102,6 +102,11 @@ typedef void (*ofono_sim_file_read_cb_t)(int ok, int=
+ total_length, int record,
+>  					const unsigned char *data,
+>  					int record_length, void *userdata);
+>  =
 
-@@ -1531,6 +1565,9 @@ static void modem_unregister(struct ofono_modem *mode=
-m)
- 	modem->sim_watch =3D 0;
- 	modem->sim_ready_watch =3D 0;
- =
+> +typedef void (*ofono_sim_fs_read_info_cb_t)(int ok,
+> +					unsigned char file_status,
+> +					int total_length,
+> +					int record_length, void *userdata);
+> +
 
-+	modem->voicecall_watch =3D 0;
-+	modem->emergency_watch =3D 0;
-+
- 	g_slist_foreach(modem->interface_list, (GFunc) g_free, NULL);
- 	g_slist_free(modem->interface_list);
- 	modem->interface_list =3D NULL;
--- =
+I actually wanted this completely out of the public API and limited to
+simfs.h.  The reason is that only sim.c will be accessing this one, so
+no need to expose it to the rest of the system.
 
-1.7.0.4
+> -	if (!imsi)
+> +	if (!imsi || !op->info_only)
 
+This introduced a bug with the caching which I had to fix separately.
 
---===============5183046341141021662==--
+Regards,
+-Denis
+
+--===============0530053251991140541==--
 
