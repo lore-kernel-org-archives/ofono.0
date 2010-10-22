@@ -1,85 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============7484844548837274879=="
+Content-Type: multipart/mixed; boundary="===============3147864682158475924=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] common : bring back some details about technology
-Date: Fri, 22 Oct 2010 09:37:33 -0500
-Message-ID: <4CC1A1AD.7070705@gmail.com>
-In-Reply-To: <20101022142530.178840@gmx.com>
+Subject: Re: [PATCH 1/4] radio settings: allow for more than one property
+Date: Fri, 22 Oct 2010 09:55:46 -0500
+Message-ID: <4CC1A5F2.6000900@gmail.com>
+In-Reply-To: <C358A26273CF2948B8BCDBA661A581782A7D0933E3@NOK-EUMSG-03.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7484844548837274879==
+--===============3147864682158475924==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Beno=C3=AEt,
+Hi Mika,
 
-On 10/22/2010 09:01 AM, "Beno=C3=AEt Monin" wrote:
-> Hi Aki,
+On 10/22/2010 09:21 AM, Mika.Liljeberg(a)nokia.com wrote:
+> Hi Denis,
 > =
 
->> De : Aki Niemi
+>>> Thanks. Still, I'd vote for a common checkpatch script in =
+
+>> the oFono tree. ;)
+>>>
 >>
->> Hi,
->>
->> 2010/10/21 "Beno=C3=AEt Monin" <benoit.monin@gmx.fr>:
->>> diff --git a/src/common.c b/src/common.c
->>> index b5b9a6f..d571d81 100644
->>> --- a/src/common.c
->>> +++ b/src/common.c
->>> @@ -655,15 +655,15 @@ const char *registration_tech_to_string(int tech)
->>>         case ACCESS_TECHNOLOGY_GSM:
->>>                 return "gsm";
->>>         case ACCESS_TECHNOLOGY_GSM_COMPACT:
->>> -               return "gsm";
->>> +               return "gprs";
->>>         case ACCESS_TECHNOLOGY_UTRAN:
->>>                 return "umts";
->>>         case ACCESS_TECHNOLOGY_GSM_EGPRS:
->>>                 return "edge";
->>>         case ACCESS_TECHNOLOGY_UTRAN_HSDPA:
->>> -               return "hspa";
->>> +               return "hsdpa";
->>>         case ACCESS_TECHNOLOGY_UTRAN_HSUPA:
->>> -               return "hspa";
->>> +               return "hsupa";
->>>         case ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA:
->>>                 return "hspa";
->>>         case ACCESS_TECHNOLOGY_EUTRAN:
->>
->> Do you need to know if the cell supports high speed uplink, downlink
->> or both; or in fact, when uplink or downlink is active (i.e., channel
->> allocated)? Currently the API is telling you the former, and
->> supporting the latter would require changes not only in the D-Bus API,
->> but also in the driver API.
->>
-> The API is fine as-is, we just need a bit more details about the
-> technology in use. It will be purely informative in our application
-> anyway.
+>> Are you volunteering to maintain such a beast and make sure =
+
+>> it is up to
+>> date with the kernel upstream version?
 > =
 
->> As a side note, I think I was originally proposing using the
->> generation tags, but either way works for me. That is, I consider it
->> 3.5G when at least HSDPA is available.
->>
-> I was just thinking out loud about a "generation" field, I don't have
-> any need for it. And it can be obtained from the technology (correct
-> me if I'm wrong) :
+> Only if I get to decide on the coding style. Otherwise, I'm proposing you=
+ guys should do it. Anyway, this is just a friendly suggestion in with the =
+o sav e everyone's time.
 > =
 
 
-The way AT modems report technology is totally bizarre.  Daniel Wagner
-played quite extensively with HSO and technology reporting, but we
-failed to come up with a nice solution due to the stupid firmware on
-these devices.
+Nice try ;)
 
-This is when we then decided to use 2g/3g/4g information only in the
-NetworkRegistration atom and give the currently active bearer technology
-in the ConnectionManager atom.  Nobody has had time to do the latter.
+>> Yes, so let me give you a case where your approach breaks:
+>>
+>> Set the RAT property, then run two GetProperties at the same =
+
+>> time.  You
+>> end up querying FastDormancy twice.
+> =
+
+> No you won't, because the second GetProperties query will be terminated r=
+ight off the bat with ofono busy error. Again, see here:
+>
+
+I really don't want to argue about this.
+
+SetProperty("TechnologyPreference", ..)
+-> Sets RADIO_SETTINGS_MODE_CACHED
+
+GetProperties() -> queries Fast dormancy
+GetProperties() -> queries Fast dormancy
+->
+
++	} else if (rs->driver->query_fast_dormancy) {
++		rs->driver->query_fast_dormancy(rs,
++					fast_dormancy_query_callback, rs);
++		dbus_message_unref(reply);
++		return NULL;
++	}
++
+
+You never set pending in the FastDormancy case.
+
+> =
+
+> Understandable. Makes it difficult to improve on design patterns that hav=
+e already been replicated, though.
+> =
+
+
+Nobody is against improving things, but please try to do it in the
+appropriate forum.  E.g. and RFC to the mailing list or an IRC discussion.
 
 Regards,
 -Denis
 
---===============7484844548837274879==--
+--===============3147864682158475924==--
 
