@@ -1,36 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============5133712584618185983=="
+Content-Type: multipart/mixed; boundary="===============6694900632470137814=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC sim-ready-v1 PATCH 3/3] atmodem/sim: use
- ofono_sim_ready_notify
-Date: Fri, 22 Oct 2010 13:55:13 -0500
-Message-ID: <4CC1DE11.3000307@gmail.com>
-In-Reply-To: <1287416435-4307-4-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH 1/4] voicecall: __ofono_voicecall_tone_send internal api.
+Date: Fri, 22 Oct 2010 22:54:13 -0500
+Message-ID: <4CC25C65.60406@gmail.com>
+In-Reply-To: <1287637748-7230-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5133712584618185983==
+--===============6694900632470137814==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Andrew,
 
-> By default the driver don't trust the modem to do the right thing and
-> adds a delay of 1000 milliseconds after entering the PIN/PUK.  It is
-> possible to remove the delay by adding a suitable quirk in
-> at_wait_for_ready().
+On 10/21/2010 12:09 AM, Andrzej Zaborowski wrote:
+> This provides a way for other atoms to send DTMF tones during a call.
+> It is assumed that vc->driver->send_tone returns only after the tones
+> have finished being emitted.
 > =
 
-> However, the delay seems to be SIM-card-specific and 1000 ms might not
-> be enough. Finding a suitable default value might require experimenting
-> with a number of different SIM cards and modems.
+> In this version Dbus DTMF requests are in the same queue as STK
+> requests.
+> ---
+>  src/ofono.h     |    6 ++
+>  src/voicecall.c |  269 ++++++++++++++++++++++++++++++++++++++++++++++++-=
+------
+>  2 files changed, 243 insertions(+), 32 deletions(-)
+> =
 
-I really don't like this aspect.  Perhaps polling +CIMI, +CPBS / +CPMS
-might be a better idea?
+
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============5133712584618185983==--
+--===============6694900632470137814==--
 
