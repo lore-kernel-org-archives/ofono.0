@@ -1,180 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============4752307180733586993=="
+Content-Type: multipart/mixed; boundary="===============8929205249914265167=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/2] stk: Handle the Play Tone proactive command.
-Date: Mon, 25 Oct 2010 07:51:27 +0200
-Message-ID: <1287985887-15181-3-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1287985887-15181-1-git-send-email-andrew.zaborowski@intel.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: Call counters proposal (TODO patch)
+Date: Mon, 25 Oct 2010 22:43:46 +0300
+Message-ID: <AANLkTinMPwjA1bSfWtZdP8Mfx7rSENXsVNNX3T7k_HJf@mail.gmail.com>
+In-Reply-To: <1288016698.3613.2.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4752307180733586993==
+--===============8929205249914265167==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/stk.c |  131 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 131 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/src/stk.c b/src/stk.c
-index ebd3801..24326ae 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -2081,6 +2081,132 @@ static gboolean handle_command_send_dtmf(const stru=
-ct stk_command *cmd,
- 	return FALSE;
- }
- =
+2010/10/25 Marcel Holtmann <marcel@holtmann.org>:
+>> I am proposing adding Call counters to Voicecall. Here is the TODO patch:
+>>
+>> diff --git a/TODO b/TODO
+>> index d9a6580..89e180c 100644
+>> --- a/TODO
+>> +++ b/TODO
+>> @@ -329,6 +329,15 @@ Voicecall
+>> =C2=A0 =C2=A0 Complexity: C2
+>> =C2=A0 =C2=A0 Owner: Pekka Pessi <pekka.pessi@nokia.com>
+>>
+>> +- Call counters. Provide total outgoing and incoming call duration
+>> information.
+>> + =C2=A0Separate call counters will be maintained for each SIM card. Call
+>> counters
+>> + =C2=A0can be read and reset to 0, and must be backed up periodically t=
+o a
+>> + =C2=A0non-volatile storage place.
+>
+> what is wrong with using the history plugin API and working towards a
+> bridge to get these information into tracker.
 
-+static void play_tone_cb(enum stk_agent_result result, void *user_data)
-+{
-+	struct ofono_stk *stk =3D user_data;
-+
-+	stk->respond_on_exit =3D FALSE;
-+
-+	switch (result) {
-+	case STK_AGENT_RESULT_OK:
-+	case STK_AGENT_RESULT_TIMEOUT:
-+		send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
-+		break;
-+
-+	default:
-+		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
-+		break;
-+	}
-+}
-+
-+static gboolean handle_command_play_tone(const struct stk_command *cmd,
-+						struct stk_response *rsp,
-+						struct ofono_stk *stk)
-+{
-+	static int manufacturer_timeout =3D 10000; /* 10 seconds */
-+	static const struct {
-+		const char *name;
-+		/* Continuous true/false according to 02.40 */
-+		gboolean continuous;
-+	} tone_infos[] =3D {
-+		/* Default */
-+		[0x00] =3D { "dial-tone", TRUE },
-+
-+		/* Standard */
-+		[0x01] =3D { "dial-tone", TRUE },
-+		[0x02] =3D { "busy", TRUE },
-+		[0x03] =3D { "congestion", TRUE },
-+		[0x04] =3D { "radio-path-acknowledge", FALSE },
-+		[0x05] =3D { "radio-path-not-available", FALSE },
-+		[0x06] =3D { "error", TRUE },
-+		[0x07] =3D { "call-waiting", FALSE },
-+		[0x08] =3D { "ringing-tone", TRUE },
-+
-+		/* Proprietary */
-+		[0x10] =3D { "general-beep", FALSE },
-+		[0x11] =3D { "positive-acknowledgement", FALSE },
-+		[0x12] =3D { "negative-acknowledgement", FALSE },
-+		[0x13] =3D { "user-ringing-tone", TRUE },
-+		[0x14] =3D { "user-sms-alert", FALSE },
-+		[0x15] =3D { "critical", FALSE },
-+		[0x20] =3D { "vibrate", TRUE },
-+
-+		/* Themed */
-+		[0x30] =3D { "happy", FALSE },
-+		[0x31] =3D { "sad", FALSE },
-+		[0x32] =3D { "urgent-action", FALSE },
-+		[0x33] =3D { "question", FALSE },
-+		[0x34] =3D { "message-received", FALSE },
-+
-+		/* Melody */
-+		[0x40] =3D { "melody-1", FALSE },
-+		[0x41] =3D { "melody-2", FALSE },
-+		[0x42] =3D { "melody-3", FALSE },
-+		[0x43] =3D { "melody-4", FALSE },
-+		[0x44] =3D { "melody-5", FALSE },
-+		[0x45] =3D { "melody-6", FALSE },
-+		[0x46] =3D { "melody-7", FALSE },
-+		[0x47] =3D { "melody-8", FALSE },
-+	};
-+
-+	const struct stk_command_play_tone *pt =3D &cmd->play_tone;
-+	uint8_t qualifier =3D stk->pending_cmd->qualifier;
-+	gboolean vibrate =3D (qualifier & (1 << 0)) !=3D 0;
-+	char *text;
-+	int timeout;
-+	int err;
-+
-+	if (pt->tone > sizeof(tone_infos) / sizeof(*tone_infos) ||
-+			!tone_infos[pt->tone].name) {
-+		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
-+
-+		return TRUE;
-+	}
-+
-+	text =3D dbus_apply_text_attributes(pt->alpha_id ? pt->alpha_id : "",
-+						&pt->text_attr);
-+	if (!text) {
-+		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
-+
-+		return TRUE;
-+	}
-+
-+	if (pt->duration.interval)
-+		timeout =3D duration_to_msecs(&pt->duration);
-+	else
-+		timeout =3D manufacturer_timeout;
-+
-+	if (!tone_infos[pt->tone].continuous)
-+		/* Duration ignored */
-+		err =3D stk_agent_play_tone(stk->current_agent, text,
-+						&pt->icon_id, vibrate,
-+						tone_infos[pt->tone].name,
-+						play_tone_cb, stk, NULL,
-+						stk->timeout * 1000);
-+	else
-+		err =3D stk_agent_loop_tone(stk->current_agent, text,
-+						&pt->icon_id, vibrate,
-+						tone_infos[pt->tone].name,
-+						play_tone_cb, stk, NULL,
-+						timeout);
-+
-+	g_free(text);
-+
-+	if (err < 0) {
-+		/*
-+		 * We most likely got an out of memory error, tell SIM
-+		 * to retry
-+		 */
-+		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		return TRUE;
-+	}
-+
-+	stk->respond_on_exit =3D TRUE;
-+	stk->cancel_cmd =3D stk_request_cancel;
-+
-+	return FALSE;
-+}
-+
- static void stk_proactive_command_cancel(struct ofono_stk *stk)
- {
- 	if (stk->immediate_response)
-@@ -2258,6 +2384,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
-_stk *stk,
- 							&rsp, stk);
- 		break;
- =
+I think what Andras is suggesting here are per-IMSI properties. This
+can be done as a history plugin, sure, but probably a more natural
+place would be the voicecall atom.
 
-+	case STK_COMMAND_TYPE_PLAY_TONE:
-+		respond =3D handle_command_play_tone(stk->pending_cmd,
-+							&rsp, stk);
-+		break;
-+
- 	default:
- 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
- 		break;
--- =
+Cheers,
+Aki
 
-1.7.1.86.g0e460.dirty
-
-
---===============4752307180733586993==--
+--===============8929205249914265167==--
 
