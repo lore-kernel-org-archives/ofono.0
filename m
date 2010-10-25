@@ -1,136 +1,180 @@
-Content-Type: multipart/mixed; boundary="===============4244193043010667467=="
+Content-Type: multipart/mixed; boundary="===============4752307180733586993=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 1/2] stk: Add duration_to_msecs to reduce duplication.
-Date: Mon, 25 Oct 2010 07:51:26 +0200
-Message-ID: <1287985887-15181-2-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 2/2] stk: Handle the Play Tone proactive command.
+Date: Mon, 25 Oct 2010 07:51:27 +0200
+Message-ID: <1287985887-15181-3-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1287985887-15181-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4244193043010667467==
+--===============4752307180733586993==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |   61 ++++++++++++++++++++++++++-------------------------------=
-----
- 1 files changed, 26 insertions(+), 35 deletions(-)
+ src/stk.c |  131 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 131 insertions(+), 0 deletions(-)
 
 diff --git a/src/stk.c b/src/stk.c
-index 82bc91e..ebd3801 100644
+index ebd3801..24326ae 100644
 --- a/src/stk.c
 +++ b/src/stk.c
-@@ -437,6 +437,24 @@ static void stk_alpha_id_unset(struct ofono_stk *stk)
- 	/* TODO */
+@@ -2081,6 +2081,132 @@ static gboolean handle_command_send_dtmf(const stru=
+ct stk_command *cmd,
+ 	return FALSE;
  }
  =
 
-+static int duration_to_msecs(const struct stk_duration *duration)
++static void play_tone_cb(enum stk_agent_result result, void *user_data)
 +{
-+	int msecs =3D duration->interval;
++	struct ofono_stk *stk =3D user_data;
 +
-+	switch (duration->unit) {
-+	case STK_DURATION_TYPE_MINUTES:
-+		msecs *=3D 60;
-+		/* Fall through.  */
-+	case STK_DURATION_TYPE_SECONDS:
-+		msecs *=3D 10;
-+		/* Fall through.  */
-+	case STK_DURATION_TYPE_SECOND_TENTHS:
-+		msecs *=3D 100;
++	stk->respond_on_exit =3D FALSE;
++
++	switch (result) {
++	case STK_AGENT_RESULT_OK:
++	case STK_AGENT_RESULT_TIMEOUT:
++		send_simple_response(stk, STK_RESULT_TYPE_SUCCESS);
++		break;
++
++	default:
++		send_simple_response(stk, STK_RESULT_TYPE_USER_TERMINATED);
++		break;
 +	}
-+
-+	return msecs;
 +}
 +
- static DBusMessage *stk_get_properties(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
-@@ -1000,23 +1018,14 @@ static gboolean handle_command_poll_interval(const =
-struct stk_command *cmd,
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
- 	int seconds;
- =
-
--	switch (cmd->poll_interval.duration.unit) {
--	case STK_DURATION_TYPE_MINUTES:
--		seconds =3D cmd->poll_interval.duration.interval * 60;
--		break;
--	case STK_DURATION_TYPE_SECONDS:
--		seconds =3D cmd->poll_interval.duration.interval;
--		break;
--	case STK_DURATION_TYPE_SECOND_TENTHS:
--		seconds =3D (4 + cmd->poll_interval.duration.interval) / 10;
--		if (seconds < 1)
--			seconds =3D 1;
--		break;
--	default:
-+	if (!cmd->poll_interval.duration.interval) {
- 		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
- 		return TRUE;
- 	}
- =
-
-+	seconds =3D MAX(duration_to_msecs(&cmd->poll_interval.duration) / 1000,
-+			1);
++static gboolean handle_command_play_tone(const struct stk_command *cmd,
++						struct stk_response *rsp,
++						struct ofono_stk *stk)
++{
++	static int manufacturer_timeout =3D 10000; /* 10 seconds */
++	static const struct {
++		const char *name;
++		/* Continuous true/false according to 02.40 */
++		gboolean continuous;
++	} tone_infos[] =3D {
++		/* Default */
++		[0x00] =3D { "dial-tone", TRUE },
 +
- 	ofono_modem_set_integer(modem, "status-poll-interval", seconds);
++		/* Standard */
++		[0x01] =3D { "dial-tone", TRUE },
++		[0x02] =3D { "busy", TRUE },
++		[0x03] =3D { "congestion", TRUE },
++		[0x04] =3D { "radio-path-acknowledge", FALSE },
++		[0x05] =3D { "radio-path-not-available", FALSE },
++		[0x06] =3D { "error", TRUE },
++		[0x07] =3D { "call-waiting", FALSE },
++		[0x08] =3D { "ringing-tone", TRUE },
++
++		/* Proprietary */
++		[0x10] =3D { "general-beep", FALSE },
++		[0x11] =3D { "positive-acknowledgement", FALSE },
++		[0x12] =3D { "negative-acknowledgement", FALSE },
++		[0x13] =3D { "user-ringing-tone", TRUE },
++		[0x14] =3D { "user-sms-alert", FALSE },
++		[0x15] =3D { "critical", FALSE },
++		[0x20] =3D { "vibrate", TRUE },
++
++		/* Themed */
++		[0x30] =3D { "happy", FALSE },
++		[0x31] =3D { "sad", FALSE },
++		[0x32] =3D { "urgent-action", FALSE },
++		[0x33] =3D { "question", FALSE },
++		[0x34] =3D { "message-received", FALSE },
++
++		/* Melody */
++		[0x40] =3D { "melody-1", FALSE },
++		[0x41] =3D { "melody-2", FALSE },
++		[0x42] =3D { "melody-3", FALSE },
++		[0x43] =3D { "melody-4", FALSE },
++		[0x44] =3D { "melody-5", FALSE },
++		[0x45] =3D { "melody-6", FALSE },
++		[0x46] =3D { "melody-7", FALSE },
++		[0x47] =3D { "melody-8", FALSE },
++	};
++
++	const struct stk_command_play_tone *pt =3D &cmd->play_tone;
++	uint8_t qualifier =3D stk->pending_cmd->qualifier;
++	gboolean vibrate =3D (qualifier & (1 << 0)) !=3D 0;
++	char *text;
++	int timeout;
++	int err;
++
++	if (pt->tone > sizeof(tone_infos) / sizeof(*tone_infos) ||
++			!tone_infos[pt->tone].name) {
++		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
++
++		return TRUE;
++	}
++
++	text =3D dbus_apply_text_attributes(pt->alpha_id ? pt->alpha_id : "",
++						&pt->text_attr);
++	if (!text) {
++		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
++
++		return TRUE;
++	}
++
++	if (pt->duration.interval)
++		timeout =3D duration_to_msecs(&pt->duration);
++	else
++		timeout =3D manufacturer_timeout;
++
++	if (!tone_infos[pt->tone].continuous)
++		/* Duration ignored */
++		err =3D stk_agent_play_tone(stk->current_agent, text,
++						&pt->icon_id, vibrate,
++						tone_infos[pt->tone].name,
++						play_tone_cb, stk, NULL,
++						stk->timeout * 1000);
++	else
++		err =3D stk_agent_loop_tone(stk->current_agent, text,
++						&pt->icon_id, vibrate,
++						tone_infos[pt->tone].name,
++						play_tone_cb, stk, NULL,
++						timeout);
++
++	g_free(text);
++
++	if (err < 0) {
++		/*
++		 * We most likely got an out of memory error, tell SIM
++		 * to retry
++		 */
++		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
++		return TRUE;
++	}
++
++	stk->respond_on_exit =3D TRUE;
++	stk->cancel_cmd =3D stk_request_cancel;
++
++	return FALSE;
++}
++
+ static void stk_proactive_command_cancel(struct ofono_stk *stk)
+ {
+ 	if (stk->immediate_response)
+@@ -2258,6 +2384,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
+_stk *stk,
+ 							&rsp, stk);
+ 		break;
  =
 
- 	if (seconds > 255) {
-@@ -1219,17 +1228,8 @@ static gboolean handle_command_display_text(const st=
-ruct stk_command *cmd,
- 		return TRUE;
- 	}
- =
-
--	if (dt->duration.interval) {
--		timeout =3D dt->duration.interval;
--		switch (dt->duration.unit) {
--		case STK_DURATION_TYPE_MINUTES:
--			timeout *=3D 60;
--		case STK_DURATION_TYPE_SECONDS:
--			timeout *=3D 10;
--		case STK_DURATION_TYPE_SECOND_TENTHS:
--			timeout *=3D 100;
--		}
--	}
-+	if (dt->duration.interval)
-+		timeout =3D duration_to_msecs(&dt->duration);
- =
-
- 	err =3D stk_agent_display_text(stk->current_agent, text, &dt->icon_id,
- 					priority, display_text_cb, stk,
-@@ -1387,17 +1387,8 @@ static gboolean handle_command_get_inkey(const struc=
-t stk_command *cmd,
- 		return TRUE;
- 	}
- =
-
--	if (gi->duration.interval) {
--		timeout =3D gi->duration.interval;
--		switch (gi->duration.unit) {
--		case STK_DURATION_TYPE_MINUTES:
--			timeout *=3D 60;
--		case STK_DURATION_TYPE_SECONDS:
--			timeout *=3D 10;
--		case STK_DURATION_TYPE_SECOND_TENTHS:
--			timeout *=3D 100;
--		}
--	}
-+	if (gi->duration.interval)
-+		timeout =3D duration_to_msecs(&gi->duration);
- =
-
- 	gettimeofday(&stk->get_inkey_start_ts, NULL);
- =
-
++	case STK_COMMAND_TYPE_PLAY_TONE:
++		respond =3D handle_command_play_tone(stk->pending_cmd,
++							&rsp, stk);
++		break;
++
+ 	default:
+ 		rsp.result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
+ 		break;
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============4244193043010667467==--
+--===============4752307180733586993==--
 
