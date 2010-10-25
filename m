@@ -1,66 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============8206604029567628223=="
+Content-Type: multipart/mixed; boundary="===============2029798865938325258=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 1/4] radio settings: allow for more than one property
-Date: Mon, 25 Oct 2010 08:59:45 +0200
-Message-ID: <C358A26273CF2948B8BCDBA661A581782A7D884F06@NOK-EUMSG-03.mgdnok.nokia.com>
-In-Reply-To: <4CC1A5F2.6000900@gmail.com>
+From: =?unknown-8bit?q?Beno=C3=AEt?= Monin <benoit.monin@gmx.fr>
+Subject: Re: [PATCH] hso: Set modem name based on udev network interface name
+Date: Mon, 25 Oct 2010 11:13:28 +0200
+Message-ID: <20101025091609.178830@gmx.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8206604029567628223==
+--===============2029798865938325258==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis,
 
-> I really don't want to argue about this.
+> De : Denis Kenzior
 > =
 
-> SetProperty("TechnologyPreference", ..)
-> -> Sets RADIO_SETTINGS_MODE_CACHED
+> Hi Beno=C3=AEt,
 > =
 
-> GetProperties() -> queries Fast dormancy
-> GetProperties() -> queries Fast dormancy
-> ->
+> I prefer you do this in plugins/hso and not in udev.
 > =
 
-> +	} else if (rs->driver->query_fast_dormancy) {
-> +		rs->driver->query_fast_dormancy(rs,
-> +					=
+Is the patch below correct ? I moved the call to set_name
+to hso_probe.
 
-> fast_dormancy_query_callback, rs);
-> +		dbus_message_unref(reply);
-> +		return NULL;
-> +	}
-> +
-> =
+Beno=C3=AEt
+--
+Subject: [PATCH] hso: Set modem name based on udev network interface name
 
-> You never set pending in the FastDormancy case.
+Useful if you have multiple identical modems and you need a way
+to know which modem you're talking to.
+---
+ plugins/hso.c | =C2=A0 =C2=A06 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
-Good catch. That's a bug, of course. Doesn't invalidate the approach, thoug=
-h.
+diff --git a/plugins/hso.c b/plugins/hso.c
+index 055c63b..a9fb1ba 100644
+--- a/plugins/hso.c
++++ b/plugins/hso.c
+@@ -59,6 +59,7 @@ struct hso_data {
+ static int hso_probe(struct ofono_modem *modem)
+ {
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0struct hso_data *data;
++ =C2=A0 =C2=A0 =C2=A0 const char *interface;
 
-> > Understandable. Makes it difficult to improve on design =
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0DBG("%p", modem);
 
-> patterns that have already been replicated, though.
-> > =
+@@ -68,6 +69,11 @@ static int hso_probe(struct ofono_modem *modem)
 
-> =
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0ofono_modem_set_data(modem, data);
 
-> Nobody is against improving things, but please try to do it in the
-> appropriate forum.  E.g. and RFC to the mailing list or an =
++ =C2=A0 =C2=A0 =C2=A0 /* Set name based on network interface name */
++ =C2=A0 =C2=A0 =C2=A0 interface =3D ofono_modem_get_string(modem, "Network=
+Interface");
++ =C2=A0 =C2=A0 =C2=A0 if (interface)
++ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_modem_set_name(mod=
+em, interface);
++
+ =C2=A0 =C2=A0 =C2=A0 =C2=A0return 0;
+ }
 
-> IRC discussion.
+--
 
-Of course. This time I wasn't conciously trying to improve things, though. =
-Anyway, enough yakking. I'll do the rewrite sicne you're adamant.
-
-Br,
-
-	MikaL
-
---===============8206604029567628223==--
+--===============2029798865938325258==--
 
