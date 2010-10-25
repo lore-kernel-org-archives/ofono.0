@@ -1,68 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============2029798865938325258=="
+Content-Type: multipart/mixed; boundary="===============7813410582091225993=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Beno=C3=AEt?= Monin <benoit.monin@gmx.fr>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: [PATCH] hso: Set modem name based on udev network interface name
-Date: Mon, 25 Oct 2010 11:13:28 +0200
-Message-ID: <20101025091609.178830@gmx.com>
+Date: Mon, 25 Oct 2010 13:17:24 +0200
+Message-ID: <1288005444.9729.7.camel@aeonflux>
+In-Reply-To: <20101025091609.178830@gmx.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2029798865938325258==
+--===============7813410582091225993==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Benoit,
 
-> De : Denis Kenzior
+> Subject: [PATCH] hso: Set modem name based on udev network interface name
 > =
 
-> Hi Beno=C3=AEt,
+> Useful if you have multiple identical modems and you need a way
+> to know which modem you're talking to.
+> ---
+>  plugins/hso.c |    6 ++++++
+>  1 files changed, 6 insertions(+), 0 deletions(-)
 > =
 
-> I prefer you do this in plugins/hso and not in udev.
+> diff --git a/plugins/hso.c b/plugins/hso.c
+> index 055c63b..a9fb1ba 100644
+> --- a/plugins/hso.c
+> +++ b/plugins/hso.c
+> @@ -59,6 +59,7 @@ struct hso_data {
+>  static int hso_probe(struct ofono_modem *modem)
+>  {
+>         struct hso_data *data;
+> +       const char *interface;
 > =
 
-Is the patch below correct ? I moved the call to set_name
-to hso_probe.
+>         DBG("%p", modem);
+> =
 
-Beno=C3=AEt
---
-Subject: [PATCH] hso: Set modem name based on udev network interface name
+> @@ -68,6 +69,11 @@ static int hso_probe(struct ofono_modem *modem)
+> =
 
-Useful if you have multiple identical modems and you need a way
-to know which modem you're talking to.
----
- plugins/hso.c | =C2=A0 =C2=A06 ++++++
- 1 files changed, 6 insertions(+), 0 deletions(-)
+>         ofono_modem_set_data(modem, data);
+> =
 
-diff --git a/plugins/hso.c b/plugins/hso.c
-index 055c63b..a9fb1ba 100644
---- a/plugins/hso.c
-+++ b/plugins/hso.c
-@@ -59,6 +59,7 @@ struct hso_data {
- static int hso_probe(struct ofono_modem *modem)
- {
- =C2=A0 =C2=A0 =C2=A0 =C2=A0struct hso_data *data;
-+ =C2=A0 =C2=A0 =C2=A0 const char *interface;
+> +       /* Set name based on network interface name */
+> +       interface =3D ofono_modem_get_string(modem, "NetworkInterface");
+> +       if (interface)
+> +               ofono_modem_set_name(modem, interface);
+> +
+>         return 0;
+>  }
 
- =C2=A0 =C2=A0 =C2=A0 =C2=A0DBG("%p", modem);
+the friendly modem name is for devices that do have a friendly name,
+like Bluetooth headsets. Why do you wanna misuse the interface name
+here. I am a bit against this, because it leads to speculation and
+assumptions in userspace programs.
 
-@@ -68,6 +69,11 @@ static int hso_probe(struct ofono_modem *modem)
+Regards
 
- =C2=A0 =C2=A0 =C2=A0 =C2=A0ofono_modem_set_data(modem, data);
+Marcel
 
-+ =C2=A0 =C2=A0 =C2=A0 /* Set name based on network interface name */
-+ =C2=A0 =C2=A0 =C2=A0 interface =3D ofono_modem_get_string(modem, "Network=
-Interface");
-+ =C2=A0 =C2=A0 =C2=A0 if (interface)
-+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_modem_set_name(mod=
-em, interface);
-+
- =C2=A0 =C2=A0 =C2=A0 =C2=A0return 0;
- }
 
---
 
---===============2029798865938325258==--
+--===============7813410582091225993==--
 
