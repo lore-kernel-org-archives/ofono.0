@@ -1,41 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0957415742812382840=="
+Content-Type: multipart/mixed; boundary="===============4387588418651234691=="
 MIME-Version: 1.0
-From: Andras Domokos <andras.domokos@nokia.com>
-Subject: Call counters proposal (TODO patch)
-Date: Mon, 25 Oct 2010 16:02:32 +0300
-Message-ID: <4CC57FE8.3030009@nokia.com>
+From: Mika Liljeberg <mika.liljeberg@nokia.com>
+Subject: [PATCH 0/6] radio settings: fast dormancy support
+Date: Mon, 25 Oct 2010 16:28:04 +0300
+Message-ID: <1288013290-6124-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0957415742812382840==
+--===============4387588418651234691==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-I am proposing adding Call counters to Voicecall. Here is the TODO patch:
+Hi All,
 
-diff --git a/TODO b/TODO
-index d9a6580..89e180c 100644
---- a/TODO
-+++ b/TODO
-@@ -329,6 +329,15 @@ Voicecall
-    Complexity: C2
-    Owner: Pekka Pessi <pekka.pessi@nokia.com>
+Here's another go at fast dormancy. I hope I managed to address
+the concerns about the previous patch set. A driver implementation
+for isimodem is now included.
 
-+- Call counters. Provide total outgoing and incoming call duration =
+Br,
 
-information.
-+  Separate call counters will be maintained for each SIM card. Call =
-
-counters
-+  can be read and reset to 0, and must be backed up periodically to a
-+  non-volatile storage place.
-+
-+  Priority: Medium
-+  Complexity: C2
-+  Owner: Andras Domokos <andras.domokos@nokia.com>
-+
+	MikaL
 
 
---===============0957415742812382840==--
+[PATCH 1/6] radio settings: add FastDormancy property
+[PATCH 2/6] radio settings: document FastDormancy property
+[PATCH 3/6] test: add scripts to enable and disable fast dormancy
+[PATCH 4/6] isimodem: add support for FastDormancy property
+[PATCH 5/6] TODO: mark fast dormancy as done
+[PATCH 6/6] AUTHORS: add myself
+
+ AUTHORS                           |    1 +
+ Makefile.am                       |    4 +-
+ TODO                              |   20 ------
+ doc/features.txt                  |    8 ++
+ doc/radio-settings-api.txt        |   59 +++++++++++-----
+ drivers/isimodem/radio-settings.c |   91 +++++++++++++++++++++++++-
+ include/radio-settings.h          |   11 +++
+ src/radio-settings.c              |  134 +++++++++++++++++++++++++++++++++=
+---
+ test/disable-fast-dormancy        |   20 ++++++
+ test/enable-fast-dormancy         |   20 ++++++
+ 10 files changed, 316 insertions(+), 52 deletions(-)
+
+--===============4387588418651234691==--
 
