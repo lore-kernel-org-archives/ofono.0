@@ -1,60 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============8415941184793771866=="
+Content-Type: multipart/mixed; boundary="===============2189105504794355859=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 4/4] TODO: Marking the Barred Dialing task as done
-Date: Mon, 25 Oct 2010 04:34:17 -0700
-Message-ID: <1288006457-5415-5-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1288006457-5415-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: =?unknown-8bit?q?Beno=C3=AEt?= Monin <benoit.monin@gmx.fr>
+Subject: Re: [PATCH] hso: Set modem name based on udev network interface name
+Date: Mon, 25 Oct 2010 13:35:21 +0200
+Message-ID: <20101025120910.178860@gmx.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8415941184793771866==
+--===============2189105504794355859==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO             |    7 -------
- doc/features.txt |    5 +++++
- 2 files changed, 5 insertions(+), 7 deletions(-)
+Hi Marcel,
 
-diff --git a/TODO b/TODO
-index d9a6580..ad96241 100644
---- a/TODO
-+++ b/TODO
-@@ -110,13 +110,6 @@ SMS
- SIM / SIM File system
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
+> De : Marcel Holtmann
+> =
 
--- Barred Dialing numbers support.  BDN will not be supported by oFono.
--  If BDN service enabled SIM is used, oFono will go into emergency mode.
--
--  Priority: Low
--  Complexity: C2
--  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
--
- - Read / Write EFcfis.  Call forwarding settings can be bootstrapped on the
-   SIM for faster notification of the user that call forwarding is active.
-   These settings are stored in EFcfis.  oFono should read these settings a=
-nd
-diff --git a/doc/features.txt b/doc/features.txt
-index 3524e79..12be037 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -135,3 +135,8 @@ SIM
-   check if FDN support is allocated and enabled in the SIM.  If enabled,
-   oFono halts the SIM initialization procedure and the modem remains in the
-   PRESIM state.  In this state oFono will only allow emergency calls.
-+
-+- Barred Dialing support.  oFono reads the necessary bits from the SIM to
-+  check if BDN support is allocated and enabled in the SIM.  If enabled,
-+  oFono halts the SIM initialization procedure and the modem remains in the
-+  PRESIM state.  In this state oFono will only allow emergency calls.
--- =
+> Hi Benoit,
+> =
 
-1.7.0.4
+> the friendly modem name is for devices that do have a friendly name,
+> like Bluetooth headsets. Why do you wanna misuse the interface name
+> here. I am a bit against this, because it leads to speculation and
+> assumptions in userspace programs.
+> =
 
+Maybe I should give some details of what I'm trying to achieve. The
+device we're building has 2 identical modems with fixed position on
+USB. We also have the possibility to drive their power supply
+independently and to swap the sim cards.
 
---===============8415941184793771866==--
+I need a way to know which one is modem A and which one is modem B
+and I have no easy way of knowing the modem serial number or the
+sim subscriber id beforehand. With an udev rule, I can easily set
+a fixed name for the network interface of each modem. But under
+ofono, I can't tell which modem is which. That's why I added this
+"not-so-friendly" name.
+
+Is there a way of knowing which physical modem ofono is refering to ?
+I recognize that our case may not be the most common and I understand
+that you don't want to abuse the Name property. Maybe exposing the
+NetworkInterface as a modem property would be ok ? or exposing
+a PhysicalName ?
+
+--
+Beno=C3=AEt.
+
+--===============2189105504794355859==--
 
