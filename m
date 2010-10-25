@@ -1,48 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============2505937270111202651=="
+Content-Type: multipart/mixed; boundary="===============8206604029567628223=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] simfs: Fix issue with sim_fs_op_error
-Date: Sun, 24 Oct 2010 09:13:47 -0500
-Message-ID: <4CC43F1B.5000907@gmail.com>
-In-Reply-To: <1287921843-18631-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Mika.Liljeberg@nokia.com
+Subject: RE: [PATCH 1/4] radio settings: allow for more than one property
+Date: Mon, 25 Oct 2010 08:59:45 +0200
+Message-ID: <C358A26273CF2948B8BCDBA661A581782A7D884F06@NOK-EUMSG-03.mgdnok.nokia.com>
+In-Reply-To: <4CC1A5F2.6000900@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2505937270111202651==
+--===============8206604029567628223==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Denis,
 
-On 10/24/2010 07:04 AM, Jeevaka Badrappan wrote:
-> ---
->  src/simfs.c |    5 ++++-
->  1 files changed, 4 insertions(+), 1 deletions(-)
+> I really don't want to argue about this.
 > =
 
-> diff --git a/src/simfs.c b/src/simfs.c
-> index 4204aca..1e71f82 100644
-> --- a/src/simfs.c
-> +++ b/src/simfs.c
-> @@ -142,7 +142,10 @@ static void sim_fs_op_error(struct sim_fs *fs)
->  {
->  	struct sim_fs_op *op =3D g_queue_peek_head(fs->op_q);
->  =
+> SetProperty("TechnologyPreference", ..)
+> -> Sets RADIO_SETTINGS_MODE_CACHED
+> =
 
-> -	if (op->is_read =3D=3D TRUE)
-> +	if (op->info_only =3D=3D TRUE)
-> +		((sim_fs_read_info_cb_t) op->cb)
-> +			(0, 0, 0, 0, op->userdata);
-> +	else if (op->is_read =3D=3D TRUE)
->  		((ofono_sim_file_read_cb_t) op->cb)
->  			(0, 0, 0, 0, 0, op->userdata);
->  	else
+> GetProperties() -> queries Fast dormancy
+> GetProperties() -> queries Fast dormancy
+> ->
+> =
 
-Good catch.  Patch has been applied, thanks.
+> +	} else if (rs->driver->query_fast_dormancy) {
+> +		rs->driver->query_fast_dormancy(rs,
+> +					=
 
-Regards,
--Denis
+> fast_dormancy_query_callback, rs);
+> +		dbus_message_unref(reply);
+> +		return NULL;
+> +	}
+> +
+> =
 
---===============2505937270111202651==--
+> You never set pending in the FastDormancy case.
+
+Good catch. That's a bug, of course. Doesn't invalidate the approach, thoug=
+h.
+
+> > Understandable. Makes it difficult to improve on design =
+
+> patterns that have already been replicated, though.
+> > =
+
+> =
+
+> Nobody is against improving things, but please try to do it in the
+> appropriate forum.  E.g. and RFC to the mailing list or an =
+
+> IRC discussion.
+
+Of course. This time I wasn't conciously trying to improve things, though. =
+Anyway, enough yakking. I'll do the rewrite sicne you're adamant.
+
+Br,
+
+	MikaL
+
+--===============8206604029567628223==--
 
