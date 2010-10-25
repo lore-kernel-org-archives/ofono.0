@@ -1,319 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============2235471712855451335=="
+Content-Type: multipart/mixed; boundary="===============4139870636425815900=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 1/6] radio settings: add FastDormancy property
-Date: Mon, 25 Oct 2010 16:28:05 +0300
-Message-ID: <1288013290-6124-2-git-send-email-mika.liljeberg@nokia.com>
+Subject: [PATCH 2/6] radio settings: document FastDormancy property
+Date: Mon, 25 Oct 2010 16:28:06 +0300
+Message-ID: <1288013290-6124-3-git-send-email-mika.liljeberg@nokia.com>
 In-Reply-To: <1288013290-6124-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2235471712855451335==
+--===============4139870636425815900==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/radio-settings.h |   11 ++++
- src/radio-settings.c     |  134 +++++++++++++++++++++++++++++++++++++++++-=
+ doc/radio-settings-api.txt |   59 ++++++++++++++++++++++++++++++----------=
 ---
- 2 files changed, 133 insertions(+), 12 deletions(-)
+ 1 files changed, 41 insertions(+), 18 deletions(-)
 
-diff --git a/include/radio-settings.h b/include/radio-settings.h
-index d41ec0b..a6b19d0 100644
---- a/include/radio-settings.h
-+++ b/include/radio-settings.h
-@@ -42,6 +42,10 @@ typedef void (*ofono_radio_settings_rat_mode_set_cb_t)(c=
-onst struct ofono_error
- typedef void (*ofono_radio_settings_rat_mode_query_cb_t)(const struct ofon=
-o_error *error,
- 						enum ofono_radio_access_mode mode,
- 						void *data);
-+typedef void (*ofono_radio_settings_fast_dormancy_set_cb_t)(const struct o=
-fono_error *error,
-+							void *data);
-+typedef void (*ofono_radio_settings_fast_dormancy_query_cb_t)(const struct=
- ofono_error *error,
-+							int enable, void *data);
+diff --git a/doc/radio-settings-api.txt b/doc/radio-settings-api.txt
+index f1b91ad..00eca54 100644
+--- a/doc/radio-settings-api.txt
++++ b/doc/radio-settings-api.txt
+@@ -44,22 +44,45 @@ Properties	string TechnologyPreference [read-write]
  =
 
- struct ofono_radio_settings_driver {
- 	const char *name;
-@@ -55,6 +59,13 @@ struct ofono_radio_settings_driver {
- 				enum ofono_radio_access_mode mode,
- 				ofono_radio_settings_rat_mode_set_cb_t cb,
- 				void *data);
-+	void (*query_fast_dormancy)(struct ofono_radio_settings *rs,
-+			ofono_radio_settings_fast_dormancy_query_cb_t cb,
-+			void *data);
-+	void (*set_fast_dormancy)(struct ofono_radio_settings *rs,
-+				int enable,
-+				ofono_radio_settings_fast_dormancy_set_cb_t,
-+				void *data);
- };
+ 		boolean	FastDormancy [read-write, optional]
  =
 
- int ofono_radio_settings_driver_register(const struct ofono_radio_settings=
-_driver *d);
-diff --git a/src/radio-settings.c b/src/radio-settings.c
-index 3306be6..5441481 100644
---- a/src/radio-settings.c
-+++ b/src/radio-settings.c
-@@ -33,7 +33,7 @@
- #include "ofono.h"
- #include "common.h"
- =
-
--#define RADIO_SETTINGS_MODE_CACHED 0x1
-+#define RADIO_SETTINGS_FLAG_CACHED 0x1
- =
-
- static GSList *g_drivers =3D NULL;
- =
-
-@@ -42,6 +42,8 @@ struct ofono_radio_settings {
- 	int flags;
- 	enum ofono_radio_access_mode mode;
- 	enum ofono_radio_access_mode pending_mode;
-+	int fast_dormancy;
-+	int fast_dormancy_pending;
- 	const struct ofono_radio_settings_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-@@ -91,8 +93,6 @@ static DBusMessage *radio_get_properties_reply(DBusMessag=
-e *msg,
- 	DBusMessageIter iter;
- 	DBusMessageIter dict;
- =
-
--	const char *mode =3D radio_access_mode_to_string(rs->mode);
+-			This property will enable or disable fast
+-			dormancy. Fast dormancy refers to UE initiated
+-			release of radio resources quickly after a
+-			burst of data transfer has ended. Normally,
++			This property will enable or disable the fast
++			dormancy feature in the modem. Fast dormancy
++			refers to a modem feature that allows the
++			modem to quickly release radio resources after
++			a burst of data transfer has ended. Normally,
+ 			radio resources are released by the network
+-			after a timeout configured by the network
+-			operator. Fast dormancy allows the modem to
+-			release radio resources more quickly.
+-			Typically, fast dormancy would be enabled if
+-			no data transfer is predicted to occur in the
+-			near future, for instance, when the end user
+-			is not actively using the device. This is a
+-			major power-saving feature for mobile devices,
+-			but can be ignored for USB sticks or PCI
+-			devices.
 -
- 	reply =3D dbus_message_new_method_return(msg);
- 	if (!reply)
- 		return NULL;
-@@ -103,14 +103,60 @@ static DBusMessage *radio_get_properties_reply(DBusMe=
-ssage *msg,
- 					OFONO_PROPERTIES_ARRAY_SIGNATURE,
- 					&dict);
- =
-
--	ofono_dbus_dict_append(&dict, "TechnologyPreference",
-+	if ((int)rs->mode !=3D -1) {
-+		const char *mode =3D radio_access_mode_to_string(rs->mode);
-+		ofono_dbus_dict_append(&dict, "TechnologyPreference",
- 					DBUS_TYPE_STRING, &mode);
-+	}
+-			If the modem does not support such a feature
+-			the property should never be exposed to the
+-			user.
++			after a timeout configured by the network.
++			Fast dormancy allows the modem to release the
++			radio resources more quickly.
 +
-+	if (rs->fast_dormancy !=3D -1) {
-+		dbus_bool_t value =3D (rs->fast_dormancy !=3D 0);
-+		ofono_dbus_dict_append(&dict, "FastDormancy",
-+					DBUS_TYPE_BOOLEAN, &value);
-+	}
- =
-
- 	dbus_message_iter_close_container(&iter, &dict);
- =
-
- 	return reply;
- }
- =
-
-+static void radio_set_fast_dormancy(struct ofono_radio_settings *rs, int e=
-nable)
-+{
-+	if (rs->fast_dormancy !=3D enable) {
++			Fast dormancy is a major power-saving feature
++			for mobile devices. Typically, fast dormancy
++			would be enabled when the device is not being
++			interactively used by a human user and only
++			networking applications with keep-alive
++			traffic are active (e.g. mail client or a
++			presence application). In this case it is
++			desirable to release radio resources quickly
++			after a keep-alive transaction has ended,
++			since typically no network traffic will occur
++			until the next keep-alive transaction. Fast
++			dormancy should not be enabled during
++			interactive use because the release and setup
++			of radio resources introduces perceivable
++			delay for the end user.
 +
-+		DBusConnection *conn =3D ofono_dbus_get_connection();
-+		const char *path =3D __ofono_atom_get_path(rs->atom);
-+		dbus_bool_t value =3D (enable !=3D 0);
++			The fast dormancy implementation in the modem
++			is vendor specific. The implementation should
++			try to release radio resources more quickly,
++			when the situation allows it, but should also
++			take care not to increase the signalling load
++			on the cellular network by releasing and
++			re-establishing radio resources too often. The
++			modem should adjust its behaviour to the 3GPP
++			release supported by the network and the
++			parameters set by the operator.
 +
-+		ofono_dbus_signal_property_changed(conn, path,
-+						OFONO_RADIO_SETTINGS_INTERFACE,
-+						"FastDormancy",
-+						DBUS_TYPE_BOOLEAN, &value);
-+	}
-+
-+	rs->fast_dormancy =3D enable;
-+}
-+
-+static void radio_fast_dormancy_set_callback(const struct ofono_error *err=
-or,
-+						void *data)
-+{
-+	struct ofono_radio_settings *rs =3D data;
-+	DBusMessage *reply;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		DBG("Error setting fast dormancy");
-+		rs->fast_dormancy_pending =3D rs->fast_dormancy;
-+		reply =3D __ofono_error_failed(rs->pending);
-+		__ofono_dbus_pending_reply(&rs->pending, reply);
-+		return;
-+	}
-+
-+	reply =3D dbus_message_new_method_return(rs->pending);
-+	__ofono_dbus_pending_reply(&rs->pending, reply);
-+
-+	radio_set_fast_dormancy(rs, rs->fast_dormancy_pending);
-+}
-+
- static void radio_set_rat_mode(struct ofono_radio_settings *rs,
- 				enum ofono_radio_access_mode mode)
- {
-@@ -122,7 +168,6 @@ static void radio_set_rat_mode(struct ofono_radio_setti=
-ngs *rs,
- 		return;
- =
-
- 	rs->mode =3D mode;
--	rs->flags |=3D RADIO_SETTINGS_MODE_CACHED;
- =
-
- 	path =3D __ofono_atom_get_path(rs->atom);
- 	str_mode =3D radio_access_mode_to_string(rs->mode);
-@@ -152,6 +197,43 @@ static void radio_mode_set_callback(const struct ofono=
-_error *error, void *data)
- 	radio_set_rat_mode(rs, rs->pending_mode);
- }
- =
-
-+static void radio_send_properties_reply(struct ofono_radio_settings *rs)
-+{
-+	DBusMessage *reply;
-+
-+	rs->flags |=3D RADIO_SETTINGS_FLAG_CACHED;
-+	reply =3D radio_get_properties_reply(rs->pending, rs);
-+	__ofono_dbus_pending_reply(&rs->pending, reply);
-+}
-+
-+static void radio_fast_dormancy_query_callback(const struct ofono_error *e=
-rror,
-+						int enable, void *data)
-+{
-+	struct ofono_radio_settings *rs =3D data;
-+	DBusMessage *reply;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		DBG("Error during fast dormancy query");
-+		reply =3D __ofono_error_failed(rs->pending);
-+		__ofono_dbus_pending_reply(&rs->pending, reply);
-+		return;
-+	}
-+
-+	radio_set_fast_dormancy(rs, enable);
-+	radio_send_properties_reply(rs);
-+}
-+
-+static void radio_query_fast_dormancy(struct ofono_radio_settings *rs)
-+{
-+	if (!rs->driver->query_fast_dormancy) {
-+		radio_send_properties_reply(rs);
-+		return;
-+	}
-+
-+	rs->driver->query_fast_dormancy(rs, radio_fast_dormancy_query_callback,
-+					rs);
-+}
-+
- static void radio_rat_mode_query_callback(const struct ofono_error *error,
- 					enum ofono_radio_access_mode mode,
- 					void *data)
-@@ -167,9 +249,17 @@ static void radio_rat_mode_query_callback(const struct=
- ofono_error *error,
- 	}
- =
-
- 	radio_set_rat_mode(rs, mode);
-+	radio_query_fast_dormancy(rs);
-+}
- =
-
--	reply =3D radio_get_properties_reply(rs->pending, rs);
--	__ofono_dbus_pending_reply(&rs->pending, reply);
-+static void radio_query_rat_mode(struct ofono_radio_settings *rs)
-+{
-+	if (!rs->driver->query_rat_mode) {
-+		radio_query_fast_dormancy(rs);
-+		return;
-+	}
-+
-+	rs->driver->query_rat_mode(rs, radio_rat_mode_query_callback, rs);
- }
- =
-
- static DBusMessage *radio_get_properties(DBusConnection *conn,
-@@ -177,17 +267,14 @@ static DBusMessage *radio_get_properties(DBusConnecti=
-on *conn,
- {
- 	struct ofono_radio_settings *rs =3D data;
- =
-
--	if (rs->flags & RADIO_SETTINGS_MODE_CACHED)
-+	if (rs->flags & RADIO_SETTINGS_FLAG_CACHED)
- 		return radio_get_properties_reply(msg, rs);
- =
-
--	if (!rs->driver->query_rat_mode)
--		return __ofono_error_not_implemented(msg);
--
- 	if (rs->pending)
- 		return __ofono_error_busy(msg);
- =
-
- 	rs->pending =3D dbus_message_ref(msg);
--	rs->driver->query_rat_mode(rs, radio_rat_mode_query_callback, rs);
-+	radio_query_rat_mode(rs);
- =
-
- 	return NULL;
- }
-@@ -240,6 +327,28 @@ static DBusMessage *radio_set_property(DBusConnection =
-*conn, DBusMessage *msg,
- 		rs->driver->set_rat_mode(rs, mode, radio_mode_set_callback, rs);
- =
-
- 		return NULL;
-+	} else if (g_strcmp0(property, "FastDormancy") =3D=3D 0) {
-+		dbus_bool_t value;
-+		int target;
-+
-+		if (!rs->driver->set_fast_dormancy)
-+			return __ofono_error_not_implemented(msg);
-+
-+		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
-+			return __ofono_error_invalid_args(msg);
-+
-+		dbus_message_iter_get_basic(&var, &value);
-+		target =3D value;
-+
-+		if (rs->fast_dormancy_pending =3D=3D target)
-+			return dbus_message_new_method_return(msg);
-+
-+		rs->pending =3D dbus_message_ref(msg);
-+		rs->fast_dormancy_pending =3D target;
-+
-+		rs->driver->set_fast_dormancy(rs, target,
-+					radio_fast_dormancy_set_callback, rs);
-+		return NULL;
- 	}
- =
-
- 	return __ofono_error_invalid_args(msg);
-@@ -322,6 +431,7 @@ struct ofono_radio_settings *ofono_radio_settings_creat=
-e(struct ofono_modem *mod
- 		return NULL;
- =
-
- 	rs->mode =3D -1;
-+	rs->fast_dormancy =3D -1;
- =
-
- 	rs->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_RADIO_SETTINGS,
- 						radio_settings_remove, rs);
++			Fast dormancy can be ignored for externally
++			powered modems such as USB sticks or PCI
++			devices. If the modem does not support such a
++			feature the property should never be exposed
++			to the user.
 -- =
 
 1.7.0.4
 
 
---===============2235471712855451335==--
+--===============4139870636425815900==--
 
