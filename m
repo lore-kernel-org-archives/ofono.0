@@ -1,32 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============2884436285155526665=="
+Content-Type: multipart/mixed; boundary="===============8063753559842343327=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] stk: Handle the Play Tone proactive command.
-Date: Mon, 25 Oct 2010 17:27:49 -0500
-Message-ID: <4CC60465.5000709@gmail.com>
-In-Reply-To: <1287985887-15181-3-git-send-email-andrew.zaborowski@intel.com>
+From: Rajesh.Nagaiah@elektrobit.com
+Subject: Re: modem atom api change request for support GSM&CDMA dual mode
+Date: Mon, 25 Oct 2010 21:10:29 -0700
+Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702B73BAF@usrdes03.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2884436285155526665==
+--===============8063753559842343327==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Caiwen,
 
-On 10/25/2010 12:51 AM, Andrzej Zaborowski wrote:
-> ---
->  src/stk.c |  131 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 131 insertions(+), 0 deletions(-)
+>Zhang, Caiwen to ofono
+>
+>Hi all,
 > =
 
+>Considering support GSM + CDMA dual mode, it is necessary to let upper
+layer to
+>know the type of the modem currently in use. My proposed solution is
+add a =
 
-Patch has been applied, thanks.
+>property 'Type' in modem atom to indicate it. The following is the
+definition =
 
-Regards,
--Denis
+>of the property:
+> =
 
---===============2884436285155526665==--
+>string Type [readonly]                  =
+
+>                               =
+
+>Type of the modem. The possible values are:
+> "gsm" - the modem is a GSM modem
+> "cdma" - the modem is a CDMA modem
+> "unknown" - the modem is neither a GSM modem nor
+>             a CDMA modem
+
+As there are also Multimode modems(both GSM and CDMA), Property name
+Type would be misleading.
+
+string ModemAccessTechnology [readonly]
+
+Current Access Technology of the Modem. =
+
+The Possible values are:
+"gsm" - the current modem access technology is GSM
+"cdma" - the current modem access technology is CDMA
+
+BR,
+Rajesh
+
+--===============8063753559842343327==--
 
