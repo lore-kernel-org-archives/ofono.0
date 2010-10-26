@@ -1,62 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============8636296749517589300=="
+Content-Type: multipart/mixed; boundary="===============3260181485369279007=="
 MIME-Version: 1.0
-From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
-Subject: RE: modem atom api change request for support GSM&CDMA dual mode
-Date: Tue, 26 Oct 2010 08:52:17 +0200
-Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE805DC8D79@ism-mail03.corp.ad.wrs.com>
-In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702B73BC4@usrdes03.ebgroup.elektrobit.com>
+From: Mika Liljeberg <mika.liljeberg@nokia.com>
+Subject: [PATCH 1/6] radio settings: fix mode initializion
+Date: Tue, 26 Oct 2010 18:31:48 +0300
+Message-ID: <1288107113-2740-2-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1288107113-2740-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8636296749517589300==
+--===============3260181485369279007==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rajesh,
+---
+ include/radio-settings.h |    9 +++++----
+ src/radio-settings.c     |    2 +-
+ 2 files changed, 6 insertions(+), 5 deletions(-)
 
-> > Generally, Multimode modem will have different devices. So it
-> > can be regarded as two different modems. E.g. There is a
-> > multimode modem, there are two device files for Echo mode:
-> > such as /dev/ttyUSB0(for GSM) and /dev/ttyUSB1(for CDMA).
-> >
-> > Of course, there may be multimode modem that only offers one
-> > device file, or other similar cases.
-> =
+diff --git a/include/radio-settings.h b/include/radio-settings.h
+index d41ec0b..1b133e9 100644
+--- a/include/radio-settings.h
++++ b/include/radio-settings.h
+@@ -29,10 +29,11 @@ extern "C" {
+ #include <ofono/types.h>
+ =
 
-> Yes, I meant also the MM modem cases where it offers one device file,
-> which exposes the MM modem as a single device to the AP and also
-> offering
-> mode switching between GSM and CDMA. When considering both these cases
-> Property name ModemAccesSTechnology suits better than Type.
-> =
+ enum ofono_radio_access_mode {
+-	OFONO_RADIO_ACCESS_MODE_ANY	=3D 0,
+-	OFONO_RADIO_ACCESS_MODE_GSM	=3D 1,
+-	OFONO_RADIO_ACCESS_MODE_UMTS	=3D 2,
+-	OFONO_RADIO_ACCESS_MODE_LTE	=3D 3,
++	OFONO_RADIO_ACCESS_MODE_UNKNOWN	=3D 0,
++	OFONO_RADIO_ACCESS_MODE_ANY	=3D 1,
++	OFONO_RADIO_ACCESS_MODE_GSM	=3D 2,
++	OFONO_RADIO_ACCESS_MODE_UMTS	=3D 3,
++	OFONO_RADIO_ACCESS_MODE_LTE	=3D 4,
+ };
+ =
+
+ struct ofono_radio_settings;
+diff --git a/src/radio-settings.c b/src/radio-settings.c
+index 3306be6..173e5bf 100644
+--- a/src/radio-settings.c
++++ b/src/radio-settings.c
+@@ -321,7 +321,7 @@ struct ofono_radio_settings *ofono_radio_settings_creat=
+e(struct ofono_modem *mod
+ 	if (!rs)
+ 		return NULL;
+ =
+
+-	rs->mode =3D -1;
++	rs->mode =3D OFONO_RADIO_ACCESS_MODE_UNKNOWN;
+ =
+
+ 	rs->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_RADIO_SETTINGS,
+ 						radio_settings_remove, rs);
+-- =
+
+1.7.0.4
 
 
-Yes, I do agree.
-
-> > It seems it is very hard to support this case in ofono currently.
->
-> Any reasons ?
-> =
-
-
-Do you mean the multimode modem only works at one mode at a time. Can
-the =
-
-GSM and CDMA mode work at the same time. I means, such as when you are
-in a =
-
-GSM call you can receive CDMA SMS at the same time. If so, Could you
-please =
-
-describe how you achieve this? In my opinion, we need to do much change
-to
-make ofono support this.
-
-Best regards
-Caiwen
-
-
-
---===============8636296749517589300==--
+--===============3260181485369279007==--
 
