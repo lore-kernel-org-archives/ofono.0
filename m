@@ -1,93 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============2638002693552359743=="
+Content-Type: multipart/mixed; boundary="===============8370959458301575413=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] stk: Handle more commands in proactive_command_handled_notify.
-Date: Tue, 26 Oct 2010 10:52:05 +0200
-Message-ID: <1288083128-24058-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH] calypsomodem: Notify core about commands handled in modem.
+Date: Tue, 26 Oct 2010 10:52:06 +0200
+Message-ID: <1288083128-24058-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1288083128-24058-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2638002693552359743==
+--===============8370959458301575413==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/stk.c |   27 +++++++++++++++++++++++++++
- 1 files changed, 27 insertions(+), 0 deletions(-)
+ drivers/calypsomodem/stk.c |   27 ++++++++++++++++++++++++---
+ 1 files changed, 24 insertions(+), 3 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index 54994df..359f8e4 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -822,6 +822,7 @@ static gboolean handle_command_send_sms(const struct st=
-k_command *cmd,
- 	return FALSE;
- }
+diff --git a/drivers/calypsomodem/stk.c b/drivers/calypsomodem/stk.c
+index 052e1f9..7168fb0 100644
+--- a/drivers/calypsomodem/stk.c
++++ b/drivers/calypsomodem/stk.c
+@@ -209,13 +209,34 @@ static void sata_notify(GAtResult *result, gpointer u=
+ser_data)
  =
 
-+/* Note: may be called from ofono_stk_proactive_command_handled_notify */
- static gboolean handle_command_set_idle_text(const struct stk_command *cmd,
- 						struct stk_response *rsp,
- 						struct ofono_stk *stk)
-@@ -1041,6 +1042,7 @@ static gboolean handle_command_poll_interval(const st=
-ruct stk_command *cmd,
- 	return TRUE;
- }
- =
-
-+/* Note: may be called from ofono_stk_proactive_command_handled_notify */
- static gboolean handle_command_set_up_menu(const struct stk_command *cmd,
- 						struct stk_response *rsp,
- 						struct ofono_stk *stk)
-@@ -2407,6 +2409,7 @@ void ofono_stk_proactive_command_handled_notify(struc=
-t ofono_stk *stk,
- 						const unsigned char *pdu)
+ static void satn_notify(GAtResult *result, gpointer user_data)
  {
- 	struct stk_command *cmd;
-+	struct stk_response dummyrsp;
++	struct ofono_stk *stk =3D user_data;
++	GAtResultIter iter;
++	const guint8 *pdu;
++	gint len;
++	gboolean ret;
++
+ 	DBG("");
  =
 
- 	stk_proactive_command_cancel(stk);
++	/* Proactive command has been handled by the modem.  */
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "%SATN:"))
++		return;
++
++	ret =3D g_at_result_iter_next_hexstring(&iter, &pdu, &len);
++	if (!ret || len =3D=3D 0)
++		return;
++
+ 	/*
+-	 * Proactive command has been handled by the modem.  Should
+-	 * the core be notified?  For now we just ignore it because
+-	 * we must not respond to the command.
++	 * A proactive command starts with a Proactive UICC Command BER-TLV
++	 * short tag (0xd0) with optional pad bytes, a Terminal Response
++	 * starts with the Command Details CTLV tag (0x81).
+ 	 */
++	if (pdu[0] !=3D 0x81)
++		ofono_stk_proactive_command_handled_notify(stk, len, pdu);
++	else
++		ofono_stk_terminal_response_sent_notify(stk, len, pdu);
+ }
  =
 
-@@ -2431,6 +2434,30 @@ void ofono_stk_proactive_command_handled_notify(stru=
-ct ofono_stk *stk,
- 				&cmd->send_sms.text_attr,
- 				&cmd->send_sms.icon_id);
- 		break;
-+
-+	case STK_COMMAND_TYPE_SETUP_IDLE_MODE_TEXT:
-+		handle_command_set_idle_text(cmd, &dummyrsp, stk);
-+		break;
-+
-+	case STK_COMMAND_TYPE_SETUP_MENU:
-+		handle_command_set_up_menu(cmd, &dummyrsp, stk);
-+		break;
-+
-+	case STK_COMMAND_TYPE_SETUP_CALL:
-+		/* TODO */
-+		break;
-+
-+	case STK_COMMAND_TYPE_SEND_USSD:
-+		stk_alpha_id_set(stk, cmd->send_ussd.alpha_id,
-+				&cmd->send_ussd.text_attr,
-+				&cmd->send_ussd.icon_id);
-+		break;
-+
-+	case STK_COMMAND_TYPE_SEND_DTMF:
-+		stk_alpha_id_set(stk, cmd->send_dtmf.alpha_id,
-+				&cmd->send_dtmf.text_attr,
-+				&cmd->send_dtmf.icon_id);
-+		break;
- 	}
- =
-
- 	stk_command_free(cmd);
+ static void calypso_stk_register(gboolean ok, GAtResult *result,
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============2638002693552359743==--
+--===============8370959458301575413==--
 
