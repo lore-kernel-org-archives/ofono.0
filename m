@@ -1,72 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============1075693000683524886=="
+Content-Type: multipart/mixed; boundary="===============7753252096565968898=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] mbmmodem: Notify core about commands handled in modem.
-Date: Tue, 26 Oct 2010 10:52:07 +0200
-Message-ID: <1288083128-24058-3-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1288083128-24058-1-git-send-email-andrew.zaborowski@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] ifxmodem: Notify core about commands handled in modem.
+Date: Wed, 27 Oct 2010 00:03:59 +0200
+Message-ID: <1288130639.3613.26.camel@aeonflux>
+In-Reply-To: <1288083128-24058-4-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1075693000683524886==
+--===============7753252096565968898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/mbmmodem/stk.c |   28 +++++++++++++++++++++++++---
- 1 files changed, 25 insertions(+), 3 deletions(-)
+Hi Andrew,
 
-diff --git a/drivers/mbmmodem/stk.c b/drivers/mbmmodem/stk.c
-index f279057..a7633ee 100644
---- a/drivers/mbmmodem/stk.c
-+++ b/drivers/mbmmodem/stk.c
-@@ -179,12 +179,34 @@ static void stki_notify(GAtResult *result, gpointer u=
-ser_data)
- =
+> +	/*
+> +	 * A proactive command starts with a Proactive UICC Command BER-TLV
+> +	 * short tag (0xd0) with optional pad bytes, a Terminal Response
+> +	 * starts with the Command Details CTLV tag (0x81).
+> +	 */
+> +	if (pdu[0] !=3D 0x81)
+> +		ofono_stk_proactive_command_handled_notify(stk, len, pdu);
+> +	else
+> +		ofono_stk_terminal_response_sent_notify(stk, len, pdu);
 
- static void stkn_notify(GAtResult *result, gpointer user_data)
- {
-+	struct ofono_stk *stk =3D user_data;
-+	GAtResultIter iter;
-+	const guint8 *pdu;
-+	gint len;
-+	gboolean ret;
-+
- 	DBG("");
- =
+why are we duplicating this in every driver? Can we just not give the
+whole PDU back to core and let the core separate it?
 
--	/* Proactive command has been handled by the modem.  Should
--	 * the core be notified?  For now we just ignore it because
--	 * we must not respond to the command.
-+	/* Proactive command has been handled by the modem.  */
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "*STKN:"))
-+		return;
-+
-+	ret =3D g_at_result_iter_next_hexstring(&iter, &pdu, &len);
-+	if (!ret || len =3D=3D 0)
-+		return;
-+
-+	/*
-+	 * A proactive command starts with a Proactive UICC Command BER-TLV
-+	 * short tag (0xd0) with optional pad bytes, a Terminal Response
-+	 * starts with the Command Details CTLV tag (0x81).
- 	 */
-+	if (pdu[0] !=3D 0x81)
-+		ofono_stk_proactive_command_handled_notify(stk, len, pdu);
-+	else
-+		ofono_stk_terminal_response_sent_notify(stk, len, pdu);
- }
- =
+Regards
 
- static void stkend_notify(GAtResult *result, gpointer user_data)
--- =
-
-1.7.1.86.g0e460.dirty
+Marcel
 
 
---===============1075693000683524886==--
+
+--===============7753252096565968898==--
 
