@@ -1,61 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============2966575433206440156=="
+Content-Type: multipart/mixed; boundary="===============2638002693552359743=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH 2/6] stemodem: add default case
-Date: Tue, 26 Oct 2010 18:24:55 +0200
-Message-ID: <1288110295.3613.25.camel@aeonflux>
-In-Reply-To: <C358A26273CF2948B8BCDBA661A581782A7DBDF5BA@NOK-EUMSG-03.mgdnok.nokia.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] stk: Handle more commands in proactive_command_handled_notify.
+Date: Tue, 26 Oct 2010 10:52:05 +0200
+Message-ID: <1288083128-24058-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2966575433206440156==
+--===============2638002693552359743==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+---
+ src/stk.c |   27 +++++++++++++++++++++++++++
+ 1 files changed, 27 insertions(+), 0 deletions(-)
 
-> > > diff --git a/drivers/stemodem/radio-settings.c =
+diff --git a/src/stk.c b/src/stk.c
+index 54994df..359f8e4 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -822,6 +822,7 @@ static gboolean handle_command_send_sms(const struct st=
+k_command *cmd,
+ 	return FALSE;
+ }
+ =
 
-> > b/drivers/stemodem/radio-settings.c
-> > > index 5b16ec0..a345975 100644
-> > > --- a/drivers/stemodem/radio-settings.c
-> > > +++ b/drivers/stemodem/radio-settings.c
-> > > @@ -90,7 +90,7 @@ static gboolean =
++/* Note: may be called from ofono_stk_proactive_command_handled_notify */
+ static gboolean handle_command_set_idle_text(const struct stk_command *cmd,
+ 						struct stk_response *rsp,
+ 						struct ofono_stk *stk)
+@@ -1041,6 +1042,7 @@ static gboolean handle_command_poll_interval(const st=
+ruct stk_command *cmd,
+ 	return TRUE;
+ }
+ =
 
-> > ofono_mode_to_ste_mode(enum ofono_radio_access_mode mode,
-> > >  	case OFONO_RADIO_ACCESS_MODE_UMTS:
-> > >  		*stemode =3D STE_RADIO_WCDMA_ONLY;
-> > >  		return TRUE;
-> > > -	case OFONO_RADIO_ACCESS_MODE_LTE:
-> > > +	default:
-> > >  		break;
-> > =
++/* Note: may be called from ofono_stk_proactive_command_handled_notify */
+ static gboolean handle_command_set_up_menu(const struct stk_command *cmd,
+ 						struct stk_response *rsp,
+ 						struct ofono_stk *stk)
+@@ -2407,6 +2409,7 @@ void ofono_stk_proactive_command_handled_notify(struc=
+t ofono_stk *stk,
+ 						const unsigned char *pdu)
+ {
+ 	struct stk_command *cmd;
++	struct stk_response dummyrsp;
+ =
 
-> > no default for enums please. I want the compiler to warn us about not
-> > handled switch statements.
-> =
+ 	stk_proactive_command_cancel(stk);
+ =
 
-> That must be a new policy then, considering that stemodem is the only one=
- that failed compilation. Feel free to fix this one. The first two patches =
-in the set are unrelated to fast dormancy anyway.
+@@ -2431,6 +2434,30 @@ void ofono_stk_proactive_command_handled_notify(stru=
+ct ofono_stk *stk,
+ 				&cmd->send_sms.text_attr,
+ 				&cmd->send_sms.icon_id);
+ 		break;
++
++	case STK_COMMAND_TYPE_SETUP_IDLE_MODE_TEXT:
++		handle_command_set_idle_text(cmd, &dummyrsp, stk);
++		break;
++
++	case STK_COMMAND_TYPE_SETUP_MENU:
++		handle_command_set_up_menu(cmd, &dummyrsp, stk);
++		break;
++
++	case STK_COMMAND_TYPE_SETUP_CALL:
++		/* TODO */
++		break;
++
++	case STK_COMMAND_TYPE_SEND_USSD:
++		stk_alpha_id_set(stk, cmd->send_ussd.alpha_id,
++				&cmd->send_ussd.text_attr,
++				&cmd->send_ussd.icon_id);
++		break;
++
++	case STK_COMMAND_TYPE_SEND_DTMF:
++		stk_alpha_id_set(stk, cmd->send_dtmf.alpha_id,
++				&cmd->send_dtmf.text_attr,
++				&cmd->send_dtmf.icon_id);
++		break;
+ 	}
+ =
 
-that is the whole point here. You modified the enum and the compilation
-should fail unless you add a statement for that new item.
+ 	stk_command_free(cmd);
+-- =
 
-Let me make this clear, I do want the compilation to fail here and the
-STE driver is doing the right thing.
-
-There might be other cases where this is not consistent. I would prefer
-if that never happens, but somethings things slip through even close
-code review. If you know other cases, please let me know and we fix them
-as well here.
-
-Regards
-
-Marcel
+1.7.1.86.g0e460.dirty
 
 
-
---===============2966575433206440156==--
+--===============2638002693552359743==--
 
