@@ -1,13 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8302310559746549998=="
+Content-Type: multipart/mixed; boundary="===============3966069322904570773=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [P-CSCF PATCH 1/8] atmodem: add p-cscf parameters into context_up cb
-Date: Wed, 27 Oct 2010 18:39:07 +0300
-Message-ID: <1288193954-18402-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [P-CSCF PATCH 3/8] huawei: add p-cscf parameters into context_up cb
+Date: Wed, 27 Oct 2010 18:39:09 +0300
+Message-ID: <1288193954-18402-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1288193954-18402-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8302310559746549998==
+--===============3966069322904570773==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -15,73 +16,80 @@ Content-Transfer-Encoding: quoted-printable
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
 ---
- drivers/atmodem/gprs-context.c |   12 ++++++------
- 1 files changed, 6 insertions(+), 6 deletions(-)
+ drivers/huaweimodem/gprs-context.c |   13 +++++++------
+ 1 files changed, 7 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/atmodem/gprs-context.c b/drivers/atmodem/gprs-context.c
-index 03c6f46..11551e4 100644
---- a/drivers/atmodem/gprs-context.c
-+++ b/drivers/atmodem/gprs-context.c
-@@ -95,7 +95,7 @@ static void ppp_connect(const char *interface, const char=
- *local,
- 	gcd->state =3D STATE_ACTIVE;
- 	CALLBACK_WITH_SUCCESS(gcd->up_cb, interface, TRUE, local,
- 					STATIC_IP_NETMASK, NULL,
--					dns, gcd->cb_data);
-+					dns, NULL, gcd->cb_data);
- }
+diff --git a/drivers/huaweimodem/gprs-context.c b/drivers/huaweimodem/gprs-=
+context.c
+index 48e21ab..43e5248 100644
+--- a/drivers/huaweimodem/gprs-context.c
++++ b/drivers/huaweimodem/gprs-context.c
+@@ -69,7 +69,7 @@ static gboolean dhcp_poll(gpointer user_data)
  =
 
- static void ppp_disconnect(GAtPPPDisconnectReason reason, gpointer user_da=
-ta)
-@@ -111,7 +111,7 @@ static void ppp_disconnect(GAtPPPDisconnectReason reaso=
-n, gpointer user_data)
- 	switch (gcd->state) {
- 	case STATE_ENABLING:
- 		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, FALSE, NULL,
--					NULL, NULL, NULL, gcd->cb_data);
-+					NULL, NULL, NULL, NULL, gcd->cb_data);
- 		break;
- 	case STATE_DISABLING:
- 		CALLBACK_WITH_SUCCESS(gcd->down_cb, gcd->cb_data);
-@@ -181,7 +181,7 @@ static void at_cgdata_cb(gboolean ok, GAtResult *result=
-, gpointer user_data)
- 		gcd->state =3D STATE_IDLE;
+ 	if (gcd->dhcp_count > 20)
+ 		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, 0, NULL, NULL,
+-						NULL, NULL, gcd->cb_data);
++						NULL, NULL, NULL, gcd->cb_data);
+ 	else
+ 		check_dhcp(gc);
  =
 
- 		decode_at_error(&error, g_at_result_final_response(result));
--		gcd->up_cb(&error, NULL, 0, NULL, NULL, NULL, NULL,
-+		gcd->up_cb(&error, NULL, 0, NULL, NULL, NULL, NULL, NULL,
- 				gcd->cb_data);
- 		return;
- 	}
-@@ -204,7 +204,7 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *resul=
+@@ -193,7 +193,7 @@ static void dhcp_query_cb(gboolean ok, GAtResult *resul=
 t, gpointer user_data)
- 		gcd->state =3D STATE_IDLE;
+ 	interface =3D "invalid";
  =
 
- 		decode_at_error(&error, g_at_result_final_response(result));
--		gcd->up_cb(&error, NULL, 0, NULL, NULL, NULL, NULL,
-+		gcd->up_cb(&error, NULL, 0, NULL, NULL, NULL, NULL, NULL,
- 				gcd->cb_data);
- 		return;
- 	}
-@@ -217,7 +217,7 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *resul=
-t, gpointer user_data)
+ 	CALLBACK_WITH_SUCCESS(gcd->up_cb, interface, TRUE, ip,
+-					netmask, gateway, dns, gcd->cb_data);
++				netmask, gateway, dns, NULL, gcd->cb_data);
+ 	gcd->up_cb =3D NULL;
+ 	gcd->cb_data =3D NULL;
+ =
+
+@@ -261,7 +261,7 @@ static void at_ndisdup_up_cb(gboolean ok, GAtResult *re=
+sult,
  	gcd->active_context =3D 0;
- 	gcd->state =3D STATE_IDLE;
  =
 
--	CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, 0, NULL, NULL, NULL, NULL,
-+	CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, 0, NULL, NULL, NULL, NULL, NULL,
- 				gcd->cb_data);
+ 	decode_at_error(&error, g_at_result_final_response(result));
+-	cb(&error, NULL, FALSE, NULL, NULL, NULL, NULL, cbd->data);
++	cb(&error, NULL, FALSE, NULL, NULL, NULL, NULL, NULL, cbd->data);
  }
  =
 
-@@ -249,7 +249,7 @@ static void at_gprs_activate_primary(struct ofono_gprs_=
-context *gc,
- 				at_cgdcont_cb, gc, NULL) > 0)
+ static void at_cgdcont_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
+@@ -281,7 +281,7 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ 		gcd->active_context =3D 0;
+ =
+
+ 		decode_at_error(&error, g_at_result_final_response(result));
+-		cb(&error, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
++		cb(&error, NULL, 0, NULL, NULL, NULL, NULL, NULL, cbd->data);
  		return;
+ 	}
+ =
+
+@@ -297,7 +297,8 @@ static void at_cgdcont_cb(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ =
+
+ 	gcd->active_context =3D 0;
+ =
+
+-	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
++	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, NULL,
++				cbd->data);
+ }
+ =
+
+ static void huawei_gprs_activate_primary(struct ofono_gprs_context *gc,
+@@ -331,7 +332,7 @@ static void huawei_gprs_activate_primary(struct ofono_g=
+prs_context *gc,
+ error:
+ 	g_free(cbd);
  =
 
 -	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, data);
@@ -89,11 +97,11 @@ context *gc,
  }
  =
 
- static void at_gprs_deactivate_primary(struct ofono_gprs_context *gc,
+ static void huawei_gprs_deactivate_primary(struct ofono_gprs_context *gc,
 -- =
 
 1.7.1
 
 
---===============8302310559746549998==--
+--===============3966069322904570773==--
 
