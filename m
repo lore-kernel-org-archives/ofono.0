@@ -1,40 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5452637442539883347=="
+Content-Type: multipart/mixed; boundary="===============7243935773303432390=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] calypsomodem: Notify core about commands handled in modem.
-Date: Wed, 27 Oct 2010 12:27:23 -0500
-Message-ID: <4CC860FB.50109@gmail.com>
-In-Reply-To: <1288083128-24058-2-git-send-email-andrew.zaborowski@intel.com>
+From: johan.hedberg@gmail.com
+Subject: [PATCH] Fix string array memory leaks during plugin loading
+Date: Wed, 27 Oct 2010 16:21:05 -0400
+Message-ID: <1288210865-20706-1-git-send-email-johan.hedberg@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5452637442539883347==
+--===============7243935773303432390==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+From: Johan Hedberg <johan.hedberg@nokia.com>
 
->  	/*
-> -	 * Proactive command has been handled by the modem.  Should
-> -	 * the core be notified?  For now we just ignore it because
-> -	 * we must not respond to the command.
-> +	 * A proactive command starts with a Proactive UICC Command BER-TLV
-> +	 * short tag (0xd0) with optional pad bytes, a Terminal Response
-> +	 * starts with the Command Details CTLV tag (0x81).
->  	 */
-> +	if (pdu[0] !=3D 0x81)
-> +		ofono_stk_proactive_command_handled_notify(stk, len, pdu);
-> +	else
-> +		ofono_stk_terminal_response_sent_notify(stk, len, pdu);
->  }
+---
+ src/plugin.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-I removed terminal_response_sent_notify from the API and took care of
-this in the core.  I also went ahead and fixed up the three drivers in
-question.  Can you double check that I didn't screw this up?
+diff --git a/src/plugin.c b/src/plugin.c
+index 68fe318..7c0652b 100644
+--- a/src/plugin.c
++++ b/src/plugin.c
+@@ -176,6 +176,9 @@ int __ofono_plugin_init(const char *pattern, const char=
+ *exclude)
+ 		plugin->active =3D TRUE;
+ 	}
+ =
 
-Thanks,
--Denis
++	g_strfreev(patterns);
++	g_strfreev(excludes);
++
+ 	return 0;
+ }
+ =
 
---===============5452637442539883347==--
+-- =
+
+1.7.1
+
+
+--===============7243935773303432390==--
 
