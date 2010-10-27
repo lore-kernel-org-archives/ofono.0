@@ -1,119 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============7709940703371887267=="
+Content-Type: multipart/mixed; boundary="===============3082577345099144651=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Add CDMA/EVDO tasks in TODO
-Date: Wed, 27 Oct 2010 10:02:11 -0500
-Message-ID: <4CC83EF3.90808@gmail.com>
-In-Reply-To: <1288178195-16493-1-git-send-email-caiwen.zhang@windriver.com>
+From: Pekka.Pessi@nokia.com
+Subject: [P-CSCF PATCH 4/8] ifx: add p-cscf parameters into context_up cb
+Date: Wed, 27 Oct 2010 18:39:10 +0300
+Message-ID: <1288193954-18402-4-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1288193954-18402-3-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7709940703371887267==
+--===============3082577345099144651==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Caiwen,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-On 10/27/2010 06:16 AM, Zhang Caiwen wrote:
-> ---
->  TODO |   57 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
->  1 files changed, 57 insertions(+), 0 deletions(-)
-> =
+---
+ drivers/ifxmodem/gprs-context.c |    9 +++++----
+ 1 files changed, 5 insertions(+), 4 deletions(-)
 
-> diff --git a/TODO b/TODO
-> index 239bab0..efb2bff 100644
-> --- a/TODO
-> +++ b/TODO
-> @@ -543,3 +543,60 @@ Miscellaneous
->  =
+diff --git a/drivers/ifxmodem/gprs-context.c b/drivers/ifxmodem/gprs-contex=
+t.c
+index 2a2b8df..54a466f 100644
+--- a/drivers/ifxmodem/gprs-context.c
++++ b/drivers/ifxmodem/gprs-context.c
+@@ -124,12 +124,12 @@ static void failed_setup(struct ofono_gprs_context *g=
+c,
+ =
 
->    Priority: Low
->    Complexity: C4
-> +
-> +
-> +CDMA/EVDO
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +- Extend modem interface with a 'Mode' property to indicate the modem ty=
-pe.
-> +
-> +  Priority: High
-> +  Complexity: C1
-> +
-> +- Extend radio setting,add CDMA radio access technology support. The CDM=
-A modem
-> +  preferred technology can be CDMA, HDR or CDMA/HDR hybrid.
-> +
-> +  Priority: Medium
-> +  Complexity: C1
-> +  Owner: Zhang Caiwen <caiwen.zhang@windriver.com>
-> +
-> +- Add CDMA Network registration support. CDMA device will register to ne=
-twork
-> +  automaticlly. Unlike GSM,it don't support manually register to network=
-.So its
-> +  mainly function is to get CDMA network information. The information in=
-clude:
-> +  registration status, service domain, CDMA 1x signal strength, HDR sign=
-al
-> +  strength, MCC, MNC, SID, NID etc.
-> +
-> +  Priority: Medium
-> +  Complexity: C1
-> +  Owner: Zhang Caiwen <caiwen.zhang@windriver.com>
-> +
-> +- Add UIM support. UIM support change pin, enter pin, reset pin, set pin=
- lock,
-> +  get pin lock setting, get pin remain retry time, and get information t=
-hat
-> +  stored in UIM, include MCC/MNC, ruimid, IMSI,MDN, PRL version etc.
-> +
-> +  Priority: High
-> +  Complexity: C4
-> +  Owner: Zhang Caiwen <caiwen.zhang@windriver.com>
-> +
-> +- Add CDMA voice call support. CDMA voice call will support originate/en=
-d/hold
-> +  a call,transfer a call, 3WC(three-way calling), conference call and DT=
-MF. For
-> +  a voice call, can get its status, CLI and ending result(if it is end).
-> +
-> +  Priority: High
-> +  Complexity: C6
+ 	if (!result) {
+ 		CALLBACK_WITH_FAILURE(gcd->up_cb, NULL, 0, NULL, NULL,
+-						NULL, NULL, gcd->cb_data);
++					NULL, NULL, NULL, gcd->cb_data);
+ 		return;
+ 	}
+ =
 
-Please don't invent new complexity types.  If it is higher than a C4,
-mark it as a C8.
+ 	decode_at_error(&error, g_at_result_final_response(result));
+-	gcd->up_cb(&error, NULL, 0, NULL, NULL, NULL, NULL, gcd->cb_data);
++	gcd->up_cb(&error, NULL, 0, NULL, NULL, NULL, NULL, NULL, gcd->cb_data);
+ }
+ =
 
-> +  Owner: Zhang Zhengguang <zhengguang.Zhang@windriver.com>
-> +
-> +- Add CDMA Data connection support. CDMA data connection manager support
-> +  start/end a data connect according to the settings from other module(u=
-pper
-> +  layer or ConnMan).
-> +
-> +  Priority: High
-> +  Complexity: C4
-> +  Owner: Zhang Caiwen <caiwen.zhang@windriver.com>
-> +
-> +- Add SIM/UIM data access support. Add a card atom, it will support read=
-/update/
-> +  delete/add conatact add SMS in SIM/UIM card.
-> +
+ static void session_cb(gboolean ok, GAtResult *result, gpointer user_data)
+@@ -158,7 +158,8 @@ static void session_cb(gboolean ok, GAtResult *result, =
+gpointer user_data)
+ 		interface =3D "invalid";
+ =
 
-You do realize oFono doesn't really work this way.  Certainly
-update/delete/add contacts is not going to be accepted as a task.  And
-definitely a big no for SMS to the SIM/UIM.
+ 	CALLBACK_WITH_SUCCESS(gcd->up_cb, interface, TRUE, gcd->address,
+-				STATIC_IP_NETMASK, NULL, dns, gcd->cb_data);
++				STATIC_IP_NETMASK, NULL, dns, NULL,
++				gcd->cb_data);
+ =
 
-> +  Priority: High
-> +  Complexity: C6
+ 	gcd->up_cb =3D NULL;
+ 	gcd->cb_data =3D NULL;
+@@ -342,7 +343,7 @@ static void ifx_gprs_activate_primary(struct ofono_gprs=
+_context *gc,
+ 				setup_cb, gc, NULL) > 0)
+ 		return;
+ =
 
-Same comment as above.
+-	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, data);
++	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, NULL, data);
+ }
+ =
 
-> +
+ static void deactivate_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
+-- =
 
-Regards,
--Denis
+1.7.1
 
---===============7709940703371887267==--
+
+--===============3082577345099144651==--
 
