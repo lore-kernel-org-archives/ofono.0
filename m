@@ -1,76 +1,100 @@
-Content-Type: multipart/mixed; boundary="===============5329160999528332082=="
+Content-Type: multipart/mixed; boundary="===============5811688839635324408=="
 MIME-Version: 1.0
-From: Joly, Frederic <frederic.joly@intel.com>
-Subject: RE: [RFC] AGPS Support
-Date: Wed, 27 Oct 2010 10:39:18 +0100
-Message-ID: <129600E5E5FB004392DDC3FB599660D70104BC3ED9@irsmsx504.ger.corp.intel.com>
-In-Reply-To: <4CC1B462.7040409@gmail.com>
+From: Zhang Caiwen <caiwen.zhang@windriver.com>
+Subject: [PATCH] Add CDMA/EVDO tasks in TODO
+Date: Wed, 27 Oct 2010 19:16:35 +0800
+Message-ID: <1288178195-16493-1-git-send-email-caiwen.zhang@windriver.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5329160999528332082==
+--===============5811688839635324408==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi
+---
+ TODO |   57 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 57 insertions(+), 0 deletions(-)
 
-My two cents...
-> -----Original Message-----
-> =
+diff --git a/TODO b/TODO
+index 239bab0..efb2bff 100644
+--- a/TODO
++++ b/TODO
+@@ -543,3 +543,60 @@ Miscellaneous
+ =
 
-> > I think the oFono interface should not use binary data, but rather be
-> aligned with 27.007
-> > and present decoded data as DBUS typed signals and methods with the
-> same information
-> > content as specified in the XML data for AT+CPOS, AT+CPOSR.
-> =
+   Priority: Low
+   Complexity: C4
++
++
++CDMA/EVDO
++=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++- Extend modem interface with a 'Mode' property to indicate the modem type.
++
++  Priority: High
++  Complexity: C1
++
++- Extend radio setting,add CDMA radio access technology support. The CDMA =
+modem
++  preferred technology can be CDMA, HDR or CDMA/HDR hybrid.
++
++  Priority: Medium
++  Complexity: C1
++  Owner: Zhang Caiwen <caiwen.zhang@windriver.com>
++
++- Add CDMA Network registration support. CDMA device will register to netw=
+ork
++  automaticlly. Unlike GSM,it don't support manually register to network.S=
+o its
++  mainly function is to get CDMA network information. The information incl=
+ude:
++  registration status, service domain, CDMA 1x signal strength, HDR signal
++  strength, MCC, MNC, SID, NID etc.
++
++  Priority: Medium
++  Complexity: C1
++  Owner: Zhang Caiwen <caiwen.zhang@windriver.com>
++
++- Add UIM support. UIM support change pin, enter pin, reset pin, set pin l=
+ock,
++  get pin lock setting, get pin remain retry time, and get information that
++  stored in UIM, include MCC/MNC, ruimid, IMSI,MDN, PRL version etc.
++
++  Priority: High
++  Complexity: C4
++  Owner: Zhang Caiwen <caiwen.zhang@windriver.com>
++
++- Add CDMA voice call support. CDMA voice call will support originate/end/=
+hold
++  a call,transfer a call, 3WC(three-way calling), conference call and DTMF=
+. For
++  a voice call, can get its status, CLI and ending result(if it is end).
++
++  Priority: High
++  Complexity: C6
++  Owner: Zhang Zhengguang <zhengguang.Zhang@windriver.com>
++
++- Add CDMA Data connection support. CDMA data connection manager support
++  start/end a data connect according to the settings from other module(upp=
+er
++  layer or ConnMan).
++
++  Priority: High
++  Complexity: C4
++  Owner: Zhang Caiwen <caiwen.zhang@windriver.com>
++
++- Add SIM/UIM data access support. Add a card atom, it will support read/u=
+pdate/
++  delete/add conatact add SMS in SIM/UIM card.
++
++  Priority: High
++  Complexity: C6
++
+-- =
 
-> This was proposed several times.  The main objections against the XML
-> file format was the difficulty of parsing such a beast and support of
-> it
-> by modem vendors.
-> =
-
-> Personally (and this is based on rather limited experience with this
-> area) I'm not against the idea; it fits with oFono's overall strategy
-> of
-> following 27.007 whenever possible...
+1.7.0.4
 
 
-AFAIK, it does not exist a free standard API for satellite measurements and=
- GPS assistance data. Moreover, while Galileo and Compass GNSS are not yet =
-deployed, GLONASS support will be soon a need.
-
-So, the idea is to not interpret positioning data or request and to pass th=
-em transparently from the modem to the positioning framework and vis versa. =
-
-
-On positioning framework side, XML containers encoding/decoding does not se=
-em to be yet widely used, while the support of RRC and RRLP framing is comm=
-on, thanks to the support of SUPL.
-
-Using XML and 27.007 format would be great as long as long as ofono is not =
-obliged to interpret the XML containers. =
-
-
-BR,
-
-Fred =
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============5329160999528332082==--
+--===============5811688839635324408==--
 
