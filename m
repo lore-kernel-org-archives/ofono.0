@@ -1,135 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============4886863250517984622=="
+Content-Type: multipart/mixed; boundary="===============5329160999528332082=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH 2/6] stemodem: add default case
-Date: Wed, 27 Oct 2010 11:12:08 +0200
-Message-ID: <1288170728.3613.32.camel@aeonflux>
-In-Reply-To: <C358A26273CF2948B8BCDBA661A581782A7DBDFCDA@NOK-EUMSG-03.mgdnok.nokia.com>
+From: Joly, Frederic <frederic.joly@intel.com>
+Subject: RE: [RFC] AGPS Support
+Date: Wed, 27 Oct 2010 10:39:18 +0100
+Message-ID: <129600E5E5FB004392DDC3FB599660D70104BC3ED9@irsmsx504.ger.corp.intel.com>
+In-Reply-To: <4CC1B462.7040409@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4886863250517984622==
+--===============5329160999528332082==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+Hi
 
-> > > That must be a new policy then, considering that stemodem =
-
-> > is the only one that failed compilation. Feel free to fix =
-
-> > this one. The first two patches in the set are unrelated to =
-
-> > fast dormancy anyway.
-> > =
-
-> > that is the whole point here. You modified the enum and the =
-
-> > compilation
-> > should fail unless you add a statement for that new item.
-> > =
-
-> > Let me make this clear, I do want the compilation to fail here and the
-> > STE driver is doing the right thing.
+My two cents...
+> -----Original Message-----
 > =
 
-> I understand that. As I said, feel free to fix. Fast dormancy patches 3-6=
- should apply just fine without the first two courtesy patches.
-
-I am waiting for Denis review since he was looking at them initially.
-Once these are applied, we can take care of the fallout.
-
-> > There might be other cases where this is not consistent. I =
-
-> > would prefer
-> > if that never happens, but somethings things slip through even close
-> > code review. If you know other cases, please let me know and =
-
-> > we fix them
-> > as well here.
+> > I think the oFono interface should not use binary data, but rather be
+> aligned with 27.007
+> > and present decoded data as DBUS typed signals and methods with the
+> same information
+> > content as specified in the XML data for AT+CPOS, AT+CPOSR.
 > =
 
-> All the other drivers implementing radio settings. Here's a couple of exa=
-mples:
+> This was proposed several times.  The main objections against the XML
+> file format was the difficulty of parsing such a beast and support of
+> it
+> by modem vendors.
 > =
 
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 134)        switch (m=
-ode) {
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 135)        case OFON=
-O_RADIO_ACCESS_MODE_ANY:
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 136)                v=
-alue =3D 1;
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 137)                b=
-reak;
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 138)        case OFON=
-O_RADIO_ACCESS_MODE_GSM:
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 139)                v=
-alue =3D 0;
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 140)                b=
-reak;
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 141)        case OFON=
-O_RADIO_ACCESS_MODE_UMTS:
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 142)                v=
-alue =3D 2;
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 143)                b=
-reak;
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 144)        default:
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 145)                C=
-ALLBACK_WITH_FAILURE(cb, data);
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 146)                g=
-_free(cbd);
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 147)                r=
-eturn;
-> ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 148)        }
-> =
-
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 133)        switch (m=
-ode) {
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 134)        case OFON=
-O_RADIO_ACCESS_MODE_ANY:
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 135)                v=
-alue =3D 5;
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 136)                b=
-reak;
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 137)        case OFON=
-O_RADIO_ACCESS_MODE_GSM:
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 138)                v=
-alue =3D 0;
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 139)                b=
-reak;
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 140)        case OFON=
-O_RADIO_ACCESS_MODE_UMTS:
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 141)                v=
-alue =3D 1;
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 142)                b=
-reak;
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 143)        default:
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 144)                C=
-ALLBACK_WITH_FAILURE(cb, data);
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 145)                g=
-_free(cbd);
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 146)                r=
-eturn;
-> 30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 147)        }
-> =
-
-> Sorry, couldn't resist. ;-)
-
-I have no problem with that being pointing out. I actually encourage
-people pointing this out. This is clearly myself being stupid. And good
-thing is that this is open source, so I fixed it.
-
-With a code base of 100k lines of code and more, such things happen. And
-even with Denis and myself cross-reviewing each other this will still
-happen. Sometimes things just slip through the cracks. Part of
-development life. So once noticed this will be dealt with.
-
-Regards
-
-Marcel
+> Personally (and this is based on rather limited experience with this
+> area) I'm not against the idea; it fits with oFono's overall strategy
+> of
+> following 27.007 whenever possible...
 
 
+AFAIK, it does not exist a free standard API for satellite measurements and=
+ GPS assistance data. Moreover, while Galileo and Compass GNSS are not yet =
+deployed, GLONASS support will be soon a need.
 
---===============4886863250517984622==--
+So, the idea is to not interpret positioning data or request and to pass th=
+em transparently from the modem to the positioning framework and vis versa. =
+
+
+On positioning framework side, XML containers encoding/decoding does not se=
+em to be yet widely used, while the support of RRC and RRLP framing is comm=
+on, thanks to the support of SUPL.
+
+Using XML and 27.007 format would be great as long as long as ofono is not =
+obliged to interpret the XML containers. =
+
+
+BR,
+
+Fred =
+
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============5329160999528332082==--
 
