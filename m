@@ -1,91 +1,116 @@
-Content-Type: multipart/mixed; boundary="===============1956112049962135984=="
+Content-Type: multipart/mixed; boundary="===============0750714970936731400=="
 MIME-Version: 1.0
-From: Zhang, Caiwen <Caiwen.Zhang@windriver.com>
-Subject: RE: modem atom api change request for support GSM&CDMA dual mode
-Date: Wed, 27 Oct 2010 03:48:20 +0200
-Message-ID: <D87B22B1FE8C0F479CA9BEAD6C25AAE805DC9031@ism-mail03.corp.ad.wrs.com>
-In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702BC6B86@usrdes03.ebgroup.elektrobit.com>
+From: Mika.Liljeberg@nokia.com
+Subject: RE: [PATCH 2/6] stemodem: add default case
+Date: Wed, 27 Oct 2010 09:06:01 +0200
+Message-ID: <C358A26273CF2948B8BCDBA661A581782A7DBDFCDA@NOK-EUMSG-03.mgdnok.nokia.com>
+In-Reply-To: <1288110295.3613.25.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1956112049962135984==
+--===============0750714970936731400==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rajesh,
+Hi Marcel,
 
+> > That must be a new policy then, considering that stemodem =
+
+> is the only one that failed compilation. Feel free to fix =
+
+> this one. The first two patches in the set are unrelated to =
+
+> fast dormancy anyway.
 > =
 
-> > > > Generally, Multimode modem will have different devices.
-> > So it can be
-> > > > regarded as two different modems. E.g. There is a
-> > multimode modem,
-> > > > there are two device files for Echo mode:
-> > > > such as /dev/ttyUSB0(for GSM) and /dev/ttyUSB1(for CDMA).
-> > > >
-> > > > Of course, there may be multimode modem that only offers
-> > one device
-> > > > file, or other similar cases.
-> > >
-> > > Yes, I meant also the MM modem cases where it offers one
-> > device file,
-> > > which exposes the MM modem as a single device to the AP and also
-> > > offering mode switching between GSM and CDMA. When considering
-both
-> > > these cases Property name ModemAccesSTechnology suits better than
-> > > Type.
-> > >
-> >
-> > Yes, I do agree.
-> >
-> > > > It seems it is very hard to support this case in ofono
-currently.
-> > >
-> > > Any reasons ?
-> > >
-> >
-> > Do you mean the multimode modem only works at one mode at a
-> > time. Can the GSM and CDMA mode work at the same time.
+> that is the whole point here. You modified the enum and the =
+
+> compilation
+> should fail unless you add a statement for that new item.
 > =
 
-> Yes, I meant the one which works in One mode at a time, which provides
-> roaming between CDMA and GSM networks.Can I go ahead with the
-> modifications and submit the patch, as I am dependant on this task for
-> CDMA SMS developement ?
-> =
+> Let me make this clear, I do want the compilation to fail here and the
+> STE driver is doing the right thing.
 
+I understand that. As I said, feel free to fix. Fast dormancy patches 3-6 s=
+hould apply just fine without the first two courtesy patches.
 
-Yes. Our CDMA extension task suspended quite a long time in the past. So
-the patch is still not submit. Currently, it is ready and it is waiting
-for =
+> There might be other cases where this is not consistent. I =
 
-internal review. I'm sorry for the inconvenience. =
+> would prefer
+> if that never happens, but somethings things slip through even close
+> code review. If you know other cases, please let me know and =
 
+> we fix them
+> as well here.
 
-The change is very tiny, so if you wouldn't like wait, just go ahead and
-I'm =
+All the other drivers implementing radio settings. Here's a couple of examp=
+les:
 
-glad to wait for your patch.
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 134)        switch (mod=
+e) {
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 135)        case OFONO_=
+RADIO_ACCESS_MODE_ANY:
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 136)                val=
+ue =3D 1;
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 137)                bre=
+ak;
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 138)        case OFONO_=
+RADIO_ACCESS_MODE_GSM:
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 139)                val=
+ue =3D 0;
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 140)                bre=
+ak;
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 141)        case OFONO_=
+RADIO_ACCESS_MODE_UMTS:
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 142)                val=
+ue =3D 2;
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 143)                bre=
+ak;
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 144)        default:
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 145)                CAL=
+LBACK_WITH_FAILURE(cb, data);
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 146)                g_f=
+ree(cbd);
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 147)                ret=
+urn;
+ac63fd95 (Marcel Holtmann 2010-09-23 23:27:08 +0900 148)        }
 
-By the way, people are used to call this attribute 'mode', why not call
-the property
-'Mode'. :)
- =
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 133)        switch (mod=
+e) {
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 134)        case OFONO_=
+RADIO_ACCESS_MODE_ANY:
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 135)                val=
+ue =3D 5;
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 136)                bre=
+ak;
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 137)        case OFONO_=
+RADIO_ACCESS_MODE_GSM:
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 138)                val=
+ue =3D 0;
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 139)                bre=
+ak;
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 140)        case OFONO_=
+RADIO_ACCESS_MODE_UMTS:
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 141)                val=
+ue =3D 1;
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 142)                bre=
+ak;
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 143)        default:
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 144)                CAL=
+LBACK_WITH_FAILURE(cb, data);
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 145)                g_f=
+ree(cbd);
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 146)                ret=
+urn;
+30b054d0 (Marcel Holtmann 2010-06-06 15:18:57 -0700 147)        }
 
-> > I means, such as when you are in a GSM call you can receive
-> > CDMA SMS at the same time. If so, Could you please describe
-> > how you achieve this? In my opinion, we need to do much
-> > change to make ofono support this.
-> =
+Sorry, couldn't resist. ;-)
 
-> I am not sure if its possible to listen to the paging channel
-> in CDMA for notifications while the GSM call is active unless
-> it exposes to the AP as two different modems.
-> =
+Br,
 
+	MikaL
 
-
-
---===============1956112049962135984==--
+--===============0750714970936731400==--
 
