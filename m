@@ -1,113 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============8896430886914041665=="
+Content-Type: multipart/mixed; boundary="===============6840829297080636316=="
 MIME-Version: 1.0
 From: Rajesh Kadhiravan Nagaiah <Rajesh.Nagaiah@elektrobit.com>
-Subject: [PATCH 4/4] modem: Add modem access tech set/get functions
-Date: Thu, 28 Oct 2010 01:14:54 -0700
-Message-ID: <1288253694-25800-5-git-send-email-Rajesh.Nagaiah@elektrobit.com>
+Subject: [PATCH 3/4] common: Add modem access tech to string function
+Date: Thu, 28 Oct 2010 01:14:53 -0700
+Message-ID: <1288253694-25800-4-git-send-email-Rajesh.Nagaiah@elektrobit.com>
 In-Reply-To: <1288253694-25800-1-git-send-email-Rajesh.Nagaiah@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8896430886914041665==
+--===============6840829297080636316==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/modem.h |    4 ++++
- src/modem.c     |   30 ++++++++++++++++++++++++++++++
- src/ofono.h     |    2 ++
- 3 files changed, 36 insertions(+), 0 deletions(-)
+ src/common.c |   12 ++++++++++++
+ src/common.h |    2 ++
+ 2 files changed, 14 insertions(+), 0 deletions(-)
 
-diff --git a/include/modem.h b/include/modem.h
-index 7b13ee0..de941a9 100644
---- a/include/modem.h
-+++ b/include/modem.h
-@@ -69,6 +69,10 @@ ofono_bool_t ofono_modem_get_boolean(struct ofono_modem =
-*modem,
- typedef void (*ofono_modem_online_cb_t)(const struct ofono_error *error,
- 					void *data);
- =
-
-+void ofono_modem_set_access_tech(struct ofono_modem *modem,
-+					int access_tech);
-+int ofono_modem_get_access_tech(struct ofono_modem *modem);
-+
- struct ofono_modem_driver {
- 	const char *name;
- =
-
-diff --git a/src/modem.c b/src/modem.c
-index 3776461..cec6dd8 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -61,6 +61,7 @@ enum modem_state {
- struct ofono_modem {
- 	char			*path;
- 	enum modem_state	modem_state;
-+	guint8			access_tech;
- 	GSList			*atoms;
- 	struct ofono_watchlist	*atom_watches;
- 	GSList			*interface_list;
-@@ -1268,6 +1269,35 @@ ofono_bool_t ofono_modem_get_boolean(struct ofono_mo=
-dem *modem, const char *key)
- 	return value;
+diff --git a/src/common.c b/src/common.c
+index b5b9a6f..9b57b98 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -673,6 +673,18 @@ const char *registration_tech_to_string(int tech)
+ 	}
  }
  =
 
-+void ofono_modem_set_access_tech(struct ofono_modem *modem, int access_tec=
-h)
++const char *modem_access_tech_to_string(int access_tech)
 +{
-+	const char *tech =3D modem_access_tech_to_string(access_tech);
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+
-+	modem->access_tech =3D access_tech;
-+	ofono_dbus_signal_property_changed(conn, modem->path,
-+					OFONO_MODEM_INTERFACE,
-+					"ModemAccessTechnology",
-+					DBUS_TYPE_STRING,
-+					&tech);
++	switch (access_tech) {
++	case OFONO_MODEM_ACCESS_TECHNOLOGY_GSM:
++		return "gsm";
++	case OFONO_MODEM_ACCESS_TECHNOLOGY_CDMA:
++		return "cdma";
++	default:
++		return "";
++	}
 +}
 +
-+int ofono_modem_get_access_tech(struct ofono_modem *modem)
-+{
-+	if (modem =3D=3D NULL)
-+		return -1;
-+
-+	return modem->access_tech;
-+}
-+
-+int __ofono_modem_get_access_tech(struct ofono_modem *modem)
-+{
-+	if (modem =3D=3D NULL)
-+		return -1;
-+
-+	return modem->access_tech;
-+}
-+
- void ofono_modem_set_name(struct ofono_modem *modem, const char *name)
+ gboolean is_valid_apn(const char *apn)
  {
- 	if (modem->name)
-diff --git a/src/ofono.h b/src/ofono.h
-index bd7f33c..b4974a3 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -99,6 +99,8 @@ void __ofono_modem_callid_release(struct ofono_modem *mod=
-em, int id);
- void __ofono_modem_append_properties(struct ofono_modem *modem,
- 						DBusMessageIter *dict);
+ 	int i;
+diff --git a/src/common.h b/src/common.h
+index 8b5798a..f58ed68 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -146,4 +146,6 @@ gboolean is_valid_pin(const char *pin, enum pin_type ty=
+pe);
+ const char *registration_status_to_string(int status);
+ const char *registration_tech_to_string(int tech);
  =
 
-+int __ofono_modem_get_access_tech(struct ofono_modem *modem);
++const char *modem_access_tech_to_string(int access_tech);
 +
- struct ofono_atom;
- =
-
- enum ofono_atom_type {
+ gboolean is_valid_apn(const char *apn);
 -- =
 
 1.7.0.4
 
 
---===============8896430886914041665==--
+--===============6840829297080636316==--
 
