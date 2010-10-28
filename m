@@ -1,69 +1,84 @@
-Content-Type: multipart/mixed; boundary="===============4645107868559595634=="
+Content-Type: multipart/mixed; boundary="===============6686817223313595491=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 3/6] radio settings: add FastDormancy property
-Date: Thu, 28 Oct 2010 15:32:24 +0200
-Message-ID: <C358A26273CF2948B8BCDBA661A581782A7DCA1810@NOK-EUMSG-03.mgdnok.nokia.com>
-In-Reply-To: <4CC8EDA5.8030703@gmail.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: [PATCH 1/4] stemodem: Add rtnl header file.
+Date: Thu, 28 Oct 2010 16:03:58 +0200
+Message-ID: <1288274641-4216-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4645107868559595634==
+--===============6686817223313595491==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
-> Patch has been applied, thanks.  I did make a couple of minor tweaks
-> afterwards.
+Add new asynchronous rtnl interface for creating and deleting
+CAIF Network interfaces.
 
-Thanks. A question regarding this particular tweak:
+Creation takes struct rtnl_req_param as input containing
+ip type (v4/v6), channel id etc. The result is returned in
+struct rtnl_rsp_param containing the interface name and
+interface index.
 
-diff --git a/src/radio-settings.c b/src/radio-settings.c
-index cb0a598..eb2a42d 100644
---- a/src/radio-settings.c
-+++ b/src/radio-settings.c
-@@ -126,8 +126,7 @@ static void radio_set_fast_dormancy(struct ofono_radio_=
-settings *rs,
-        const char *path =3D __ofono_atom_get_path(rs->atom);
-        dbus_bool_t value =3D enable;
- =
+---
+ drivers/stemodem/rtnl.h |   41 +++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 41 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/stemodem/rtnl.h
 
--       if ((rs->flags & RADIO_SETTINGS_FLAG_CACHED) &&
--               rs->fast_dormancy =3D=3D enable)
-+       if (rs->fast_dormancy =3D=3D enable)
-                return;
- =
+diff --git a/drivers/stemodem/rtnl.h b/drivers/stemodem/rtnl.h
+new file mode 100644
+index 0000000..566452b
+--- /dev/null
++++ b/drivers/stemodem/rtnl.h
+@@ -0,0 +1,41 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 ST-Ericsson AB.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++struct rtnl_rsp_param {
++	int result;
++	gpointer user_data;
++	char ifname[IF_NAMESIZE];
++	int  ifindex;
++};
++
++struct rtnl_req_param {
++	void (*callback)(struct rtnl_rsp_param *param);
++	gpointer user_data;
++	int type;
++	int conn_id;
++	gboolean loop_enabled;
++};
++
++extern int rtnl_create_caif_interface(struct rtnl_req_param *req);
++extern int rtnl_delete_caif_interface(int ifid);
++
++extern int rtnl_init(void);
++extern void rtnl_exit(void);
++
+-- =
 
-        ofono_dbus_signal_property_changed(conn, path,
+1.6.3.3
 
-The fundamental problem here is that there is only a single CACHED flag for=
- multiple properties, which may be modified individually. So, either you ge=
-t extra signals or you get too few. I checked the CACHED flag here because =
-otherwise the following might happen:
 
-1. client tries to GetProperties() and gets the "Operation already in progr=
-ess" error.
-2. client waits for PropertyChanged signal to get the FastDormancy value
-3. signal never comes because the default value happens to match the one re=
-turned by the driver and the signal is suppressed
-
-I do agree that sending extra signals is bad but I think that not sending a=
- signal is even worse. If the client cannot rely on getting a PropertyChang=
-ed signal after a busy error, all it can do is resort to polling. I.e., eve=
-ry client has to implement a polling pattern for GetProperties:
-
-while (GetProperties() =3D=3D BUSY)
-	sleep(FOR_A_WHILE);
-
-Having a separate CACHED flag for each value would solve this optimally. Fa=
-iling that, I don't think a few extra signals is so bad. Forcing clients to=
- poll is just ugly.
-
-Am I missing something?
-
-	MikaL
-
---===============4645107868559595634==--
+--===============6686817223313595491==--
 
