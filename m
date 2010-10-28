@@ -1,103 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============3298204113858477005=="
+Content-Type: multipart/mixed; boundary="===============8223324329320458129=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/6] radio settings: add FastDormancy property
-Date: Thu, 28 Oct 2010 10:19:27 -0500
-Message-ID: <4CC9947F.8050205@gmail.com>
-In-Reply-To: <C358A26273CF2948B8BCDBA661A581782A7DCA1810@NOK-EUMSG-03.mgdnok.nokia.com>
+From: Rajesh.Nagaiah@elektrobit.com
+Subject: RE: [PATCH 1/4] doc: Add ModemAccessTechnology property
+Date: Thu, 28 Oct 2010 14:32:56 -0700
+Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702BC7128@usrdes03.ebgroup.elektrobit.com>
+In-Reply-To: <1288261617.3322.7.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3298204113858477005==
+--===============8223324329320458129==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+Hi Marcel, =
 
-On 10/28/2010 08:32 AM, Mika.Liljeberg(a)nokia.com wrote:
-> Hi Denis,
+ =
+
+> Hi Rajesh,
 > =
 
->> Patch has been applied, thanks.  I did make a couple of minor tweaks
->> afterwards.
+> >  doc/modem-api.txt |    9 +++++++++
+> >  1 files changed, 9 insertions(+), 0 deletions(-)
+> > =
+
+> > diff --git a/doc/modem-api.txt b/doc/modem-api.txt index =
+
+> > c48375e..f5a3026 100644
+> > --- a/doc/modem-api.txt
+> > +++ b/doc/modem-api.txt
+> > @@ -43,6 +43,15 @@ Properties	boolean Powered [readwrite]
+> >  			modem. The Emergency is true if an =
+
+> emergency call or
+> >  			related operation is currently active.
+> >  =
+
+> > +		string ModemAccessTechnology [readonly]
+> > +
+> > +			Contains current access techonology of =
+
+> the modem.
+> > +			Possible values are:
+> > +			"gsm" - the current modem access =
+
+> technology is GSM
+> > +			"cdma" - the current modem access =
+
+> technology is CDMA
+> > +
+> > +			By default oFono uses "gsm" setting.
+> > +
 > =
 
-> Thanks. A question regarding this particular tweak:
-> =
+> so you are in the org.ofono.Modem interface and its =
 
-> diff --git a/src/radio-settings.c b/src/radio-settings.c
-> index cb0a598..eb2a42d 100644
-> --- a/src/radio-settings.c
-> +++ b/src/radio-settings.c
-> @@ -126,8 +126,7 @@ static void radio_set_fast_dormancy(struct ofono_radi=
-o_settings *rs,
->         const char *path =3D __ofono_atom_get_path(rs->atom);
->         dbus_bool_t value =3D enable;
->  =
+> properties and you wanna prefix the property with "Modem". =
 
-> -       if ((rs->flags & RADIO_SETTINGS_FLAG_CACHED) &&
-> -               rs->fast_dormancy =3D=3D enable)
-> +       if (rs->fast_dormancy =3D=3D enable)
->                 return;
->  =
+> That is rather pointless duplication of information. So just =
 
->         ofono_dbus_signal_property_changed(conn, path,
-> =
+> strip that.
 
-> The fundamental problem here is that there is only a single CACHED flag f=
-or multiple properties, which may be modified individually. So, either you =
-get extra signals or you get too few. I checked the CACHED flag here becaus=
-e otherwise the following might happen:
+I prefix it with Modem just not to mix with the Network Access
+Technology. From the property name prespective I agree with you, its an
+redundant info as we are in org.ofono.Modem interface
 
-Yes, I know.  But this problem is present in every single atom.  oFono
-does not guarantee that every attribute is signaled when the atom is
-initialized.
+> The obvious question we have to discuss, if we really wanna =
 
-> =
+> do it this way. What are the pros and what are the cons?
 
-> 1. client tries to GetProperties() and gets the "Operation already in pro=
-gress" error.
-> 2. client waits for PropertyChanged signal to get the FastDormancy value
-> 3. signal never comes because the default value happens to match the one =
-returned by the driver and the signal is suppressed
->
+I quite didnt get this query, pros and cons about this property usage or
+?
 
-In general I think that for interfaces where this can happen, the
-likelihood is very low that it actually will in the real world.
+BR,
+Rajesh
 
-Do note that I have had the same argument with myself off and on for the
-past two years.  So far this was never raised as an issue.  If this ever
-becomes a problem, we can fix it properly using an appropriate idiom.
-
-> I do agree that sending extra signals is bad but I think that not sending=
- a signal is even worse. If the client cannot rely on getting a PropertyCha=
-nged signal after a busy error, all it can do is resort to polling. I.e., e=
-very client has to implement a polling pattern for GetProperties:
-> =
-
-> while (GetProperties() =3D=3D BUSY)
-> 	sleep(FOR_A_WHILE);
-> =
-
-> Having a separate CACHED flag for each value would solve this optimally. =
-Failing that, I don't think a few extra signals is so bad. Forcing clients =
-to poll is just ugly.
-> =
-
-
-Honestly, if you expect multiple applications to battle over the
-FastDormancy property, then it should be modeled differently.  Perhaps
-with application registration and lifetime tracking over D-Bus, similar
-to how agents work.
-
-> Am I missing something?
-> =
-
-> 	MikaL
-
-Regards,
--Denis
-
---===============3298204113858477005==--
+--===============8223324329320458129==--
 
