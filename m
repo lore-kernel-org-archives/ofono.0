@@ -1,41 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============4734218365103517055=="
+Content-Type: multipart/mixed; boundary="===============2588526217978447910=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCH 4/4] stemodem: Add rtnl to Makefile.
-Date: Thu, 28 Oct 2010 16:04:01 +0200
-Message-ID: <1288274641-4216-4-git-send-email-sjurbren@gmail.com>
-In-Reply-To: <1288274641-4216-1-git-send-email-sjurbren@gmail.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [PATCH] Document Proxy-CSCF setting.
+Date: Thu, 28 Oct 2010 18:00:17 +0300
+Message-ID: <AANLkTikArJRq7TNsr-qahbzJUGgTGzz-Hpkcvan-t0x6@mail.gmail.com>
+In-Reply-To: <1288191715.3613.37.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4734218365103517055==
+--===============2588526217978447910==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+Hi Marcel,
 
----
- Makefile.am |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+2010/10/27 Marcel Holtmann <marcel@holtmann.org>:
+> I am not going to apply this patch right now. Things with IMS are still
+> not really certain to me. And until there is an implementation that goes
+> along with this, it is a bit early.
 
-diff --git a/Makefile.am b/Makefile.am
-index 2562160..1b09a3c 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -226,6 +226,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/stemodem/stemodem.c \
- 			drivers/stemodem/voicecall.c \
- 			drivers/stemodem/radio-settings.c \
-+			drivers/stemodem/rtnl.c \
-+			drivers/stemodem/rtnl.h \
- 			drivers/stemodem/gprs-context.c \
- 			drivers/stemodem/caif_socket.h \
- 			drivers/stemodem/if_caif.h
+The Settings property walks and quaks like +CGCONTRDP (27.007 section
+10.1.23), there should be no uncertainty. I'll try to find out if I
+can find any modems actually supporting +CGCONTRDP.
+
 -- =
 
-1.6.3.3
+Pekka.Pessi mail at nokia.com
 
-
---===============4734218365103517055==--
+--===============2588526217978447910==--
 
