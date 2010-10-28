@@ -1,55 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============9211203102602487502=="
+Content-Type: multipart/mixed; boundary="===============3009263408911755156=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/4] doc: Add ModemAccessTechnology property
-Date: Thu, 28 Oct 2010 12:26:57 +0200
-Message-ID: <1288261617.3322.7.camel@aeonflux>
-In-Reply-To: <1288253694-25800-2-git-send-email-Rajesh.Nagaiah@elektrobit.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: Can I modify CallingLineRestriction(the Property of
+ CallSetting)	value to "disabled" or "enabled"
+Date: Thu, 28 Oct 2010 19:31:39 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A473303C3FEF@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1865303E0DED764181A9D882DEF65FB6785DE6487E@shsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9211203102602487502==
+--===============3009263408911755156==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rajesh,
+Hi Haitao,
 
->  doc/modem-api.txt |    9 +++++++++
->  1 files changed, 9 insertions(+), 0 deletions(-)
-> =
+> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beh=
+alf Of Ding, HaitaoX
+> Sent: Thursday, October 28, 2010 3:29 PM
+> To: ofono(a)ofono.org
+> Subject: Can I modify CallingLineRestriction(the Property of CallSetting)=
+ value to "disabled" or "enabled"
+>
+> Hi, =
 
-> diff --git a/doc/modem-api.txt b/doc/modem-api.txt
-> index c48375e..f5a3026 100644
-> --- a/doc/modem-api.txt
-> +++ b/doc/modem-api.txt
-> @@ -43,6 +43,15 @@ Properties	boolean Powered [readwrite]
->  			modem. The Emergency is true if an emergency call or
->  			related operation is currently active.
->  =
+>=C2=A0
+> Can I modify=C2=A0 CallingLineRestriction(the Property of CallSetting)=C2=
+=A0 value to "disalbed" or "enabled". =
 
-> +		string ModemAccessTechnology [readonly]
-> +
-> +			Contains current access techonology of the modem.
-> +			Possible values are:
-> +			"gsm" - the current modem access technology is GSM
-> +			"cdma" - the current modem access technology is CDMA
-> +
-> +			By default oFono uses "gsm" setting.
-> +
+>=C2=A0
+> I refer to the newest doc for CallSettings and found the CallingLineRestr=
+iction is a read-only property, is it means ofono does not support enable o=
+r disable CLIP. =
 
-so you are in the org.ofono.Modem interface and its properties and you
-wanna prefix the property with "Modem". That is rather pointless
-duplication of information. So just strip that.
+> Thanks a lot=E2=98=BA
+>
+=C2=A0
+You may set the property "HideCallerId"=C2=A0to "default", "disabled" or "e=
+nabled".
+=C2=A0
+=C2=A0
+Regards,
+-Yang=C2=A0
 
-The obvious question we have to discuss, if we really wanna do it this
-way. What are the pros and what are the cons?
-
-Regards
-
-Marcel
-
-
-
---===============9211203102602487502==--
+--===============3009263408911755156==--
 
