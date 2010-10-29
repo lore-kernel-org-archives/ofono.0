@@ -1,22 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============5244408888755957544=="
+Content-Type: multipart/mixed; boundary="===============4731721549226274980=="
 MIME-Version: 1.0
-From: Alexander A Khryukin <alexander@mezon.ru>
-Subject: Re: huawei e1550
-Date: Fri, 29 Oct 2010 15:39:30 +0400
-Message-ID: <1288352370.31603.0.camel@mezon.ru>
-In-Reply-To: <1287390614.2921.0.camel@mezon.ru>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] TODO: Owner of Read / Write EFcfis
+Date: Fri, 29 Oct 2010 14:29:22 +0200
+Message-ID: <1288355362.3322.34.camel@aeonflux>
+In-Reply-To: <1288332823-13056-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5244408888755957544==
+--===============4731721549226274980==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Bump.
-Same problem in 0.33 and 0.33 git
+Hi Jeevaka,
+
+>  TODO |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
+
+patch has been applied.
+
+Regards
+
+Marcel
 
 
 
---===============5244408888755957544==--
+--===============4731721549226274980==--
 
