@@ -1,40 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============5626218552667415567=="
+Content-Type: multipart/mixed; boundary="===============9167686690183070474=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] TODO: Owner of Read / Write EFcfis
-Date: Fri, 29 Oct 2010 09:13:43 +0300
-Message-ID: <1288332823-13056-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Su, Yong <Yong.Su@windriver.com>
+Subject: oFono SMS Validity Period and Message Class support
+Date: Fri, 29 Oct 2010 01:43:08 -0700
+Message-ID: <C6FAFDDBC4402D44BFC43E57565F0219045093F4@ala-mail09.corp.ad.wrs.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5626218552667415567==
+--===============9167686690183070474==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
-
-diff --git a/TODO b/TODO
-index 4ff53be..a01960e 100644
---- a/TODO
-+++ b/TODO
-@@ -117,6 +117,7 @@ SIM / SIM File system
+Hi, all:
  =
 
-   Priority: Low
-   Complexity: C2
-+  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+We are using ofono to send sms with validity period and message class in ou=
+r project.
+but by checking source code, it seems ofono doesn't support these requireme=
+nts.   =
+
+
+Current implemntation is the dbus interface "SendMessage" contains "To" and=
+ "Text" only.
  =
 
- - SIM Call History plugin.  New UICCs support four new SIM elementary files
-   for storing call history information on the SIM: EFici, EFict, EFoci, EF=
-oct.
--- =
+Does oFono plan to support these extra fields when sending sms? =
 
-1.7.0.4
+ =
+
+Thanks.
+ =
+
+ =
 
 
---===============5626218552667415567==--
+
+--===============9167686690183070474==--
 
