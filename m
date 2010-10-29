@@ -1,79 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8223324329320458129=="
+Content-Type: multipart/mixed; boundary="===============5626218552667415567=="
 MIME-Version: 1.0
-From: Rajesh.Nagaiah@elektrobit.com
-Subject: RE: [PATCH 1/4] doc: Add ModemAccessTechnology property
-Date: Thu, 28 Oct 2010 14:32:56 -0700
-Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702BC7128@usrdes03.ebgroup.elektrobit.com>
-In-Reply-To: <1288261617.3322.7.camel@aeonflux>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] TODO: Owner of Read / Write EFcfis
+Date: Fri, 29 Oct 2010 09:13:43 +0300
+Message-ID: <1288332823-13056-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8223324329320458129==
+--===============5626218552667415567==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel, =
+---
+ TODO |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
+diff --git a/TODO b/TODO
+index 4ff53be..a01960e 100644
+--- a/TODO
++++ b/TODO
+@@ -117,6 +117,7 @@ SIM / SIM File system
  =
 
-> Hi Rajesh,
-> =
+   Priority: Low
+   Complexity: C2
++  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+ =
 
-> >  doc/modem-api.txt |    9 +++++++++
-> >  1 files changed, 9 insertions(+), 0 deletions(-)
-> > =
+ - SIM Call History plugin.  New UICCs support four new SIM elementary files
+   for storing call history information on the SIM: EFici, EFict, EFoci, EF=
+oct.
+-- =
 
-> > diff --git a/doc/modem-api.txt b/doc/modem-api.txt index =
+1.7.0.4
 
-> > c48375e..f5a3026 100644
-> > --- a/doc/modem-api.txt
-> > +++ b/doc/modem-api.txt
-> > @@ -43,6 +43,15 @@ Properties	boolean Powered [readwrite]
-> >  			modem. The Emergency is true if an =
 
-> emergency call or
-> >  			related operation is currently active.
-> >  =
-
-> > +		string ModemAccessTechnology [readonly]
-> > +
-> > +			Contains current access techonology of =
-
-> the modem.
-> > +			Possible values are:
-> > +			"gsm" - the current modem access =
-
-> technology is GSM
-> > +			"cdma" - the current modem access =
-
-> technology is CDMA
-> > +
-> > +			By default oFono uses "gsm" setting.
-> > +
-> =
-
-> so you are in the org.ofono.Modem interface and its =
-
-> properties and you wanna prefix the property with "Modem". =
-
-> That is rather pointless duplication of information. So just =
-
-> strip that.
-
-I prefix it with Modem just not to mix with the Network Access
-Technology. From the property name prespective I agree with you, its an
-redundant info as we are in org.ofono.Modem interface
-
-> The obvious question we have to discuss, if we really wanna =
-
-> do it this way. What are the pros and what are the cons?
-
-I quite didnt get this query, pros and cons about this property usage or
-?
-
-BR,
-Rajesh
-
---===============8223324329320458129==--
+--===============5626218552667415567==--
 
