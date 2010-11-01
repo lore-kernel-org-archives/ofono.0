@@ -1,49 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============1344136484758986201=="
+Content-Type: multipart/mixed; boundary="===============0708605278015919703=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 3/6] radio settings: add FastDormancy property
-Date: Mon, 01 Nov 2010 10:18:36 +0100
-Message-ID: <C358A26273CF2948B8BCDBA661A581782BE902C43F@NOK-EUMSG-03.mgdnok.nokia.com>
-In-Reply-To: <4CCADB66.7010606@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [RFC PATCH 2/3] voicecall: emergency call handling added
+Date: Mon, 01 Nov 2010 10:41:41 +0100
+Message-ID: <1288604501.3322.104.camel@aeonflux>
+In-Reply-To: <C358A26273CF2948B8BCDBA661A581782BE902C40D@NOK-EUMSG-03.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1344136484758986201==
+--===============0708605278015919703==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Mika,
 
-> One of the biggest principles in oFono is not to perform premature
-> optimization.  Sure there is a potential issue, but nobody =
+> > > To give you a more complex example, it might well be that the gprs
+> > > connection needs to be torn down when making an emergency call in
+> > > 2G mode, there are such networks out there that prevents you from
+> > > making an emergency call if your device is attached to a =
 
-> knows whether
-> it will actually manifest itself outside of malicious code (which we
-> tell to bugger off) or what the most common manifestation =
+> > PDP context.
+> > > In this given situation it comes to the question how to =
 
-> pattern will be.
+> > bring down the
+> > > gprs connection. It can be done such that the gprs atom =
+
+> > will tear down
+> > > the connection after receiving the EmergencyMode notification, or
+> > > another option is to have gprs connection handling functions made
+> > =
+
+> > Have we established that this is actually still needed?  I thought you
+> > guys said all the networks that have this problem have been =
+
+> > fixed by now?
 > =
 
-> If / once we know for sure this is a problem, then we can solve it
-> properly.  So far this approach has been working very nicely for us.
-> There are countless occasions where taking the wait-and-see =
+> AFAIK, this is still a product requirement for us. I can recheck, but I j=
+ust asked last week and the answer was a very definite "Yes, this is still =
+required".
 
-> approach and
-> gathering more information allowed us to devise a much better solution
-> than we would have originally.
-> =
+as Denis and I mentioned, we have been told that this is not needed
+anymore. So where is this still needed?
 
-> So the general rule is: Do the simplest thing that is likely to work.
-> If it doesn't work, improve it.
+And again, this is something that the modem firmware should be doing
+anyway (if it is needed). The modem firmware knows best. And we do have
+the GPRS suspend support already to signal this back to the user.
 
-Can't fault the approach, it's generally a good one. That said, I see this =
-more as an API quality issue rather than an optimization issue. Anyway, I'v=
-e raised the concern. Let's hope my worries are unfounded.
+Regards
 
-Br,
+Marcel
 
-	MikaL
 
---===============1344136484758986201==--
+
+--===============0708605278015919703==--
 
