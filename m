@@ -1,94 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============7433103061878655523=="
+Content-Type: multipart/mixed; boundary="===============2987033902604298546=="
 MIME-Version: 1.0
-From: Su, Yong <Yong.Su@windriver.com>
-Subject: RE: oFono SMS Validity Period and Message Class support
-Date: Sun, 31 Oct 2010 20:58:01 -0700
-Message-ID: <C6FAFDDBC4402D44BFC43E57565F021904590D9D@ala-mail09.corp.ad.wrs.com>
-In-Reply-To: <4CCB024C.60809@gmail.com>
+From: Mika.Liljeberg@nokia.com
+Subject: RE: [RFC PATCH 2/3] voicecall: emergency call handling added
+Date: Mon, 01 Nov 2010 10:03:35 +0100
+Message-ID: <C358A26273CF2948B8BCDBA661A581782BE902C40D@NOK-EUMSG-03.mgdnok.nokia.com>
+In-Reply-To: <4CCB0531.2040208@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7433103061878655523==
+--===============2987033902604298546==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-
-
 Hi,
- =
 
+> > To give you a more complex example, it might well be that the gprs
+> > connection needs to be torn down when making an emergency call in
+> > 2G mode, there are such networks out there that prevents you from
+> > making an emergency call if your device is attached to a =
 
-> -----Original Message-----
-> From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
+> PDP context.
+> > In this given situation it comes to the question how to =
 
-> Sent: 2010?10?30? 1:20
-> To: ofono(a)ofono.org
-> Cc: Su, Yong
-> Subject: Re: oFono SMS Validity Period and Message Class support
+> bring down the
+> > gprs connection. It can be done such that the gprs atom =
+
+> will tear down
+> > the connection after receiving the EmergencyMode notification, or
+> > another option is to have gprs connection handling functions made
 > =
 
-> Hi,
-> =
+> Have we established that this is actually still needed?  I thought you
+> guys said all the networks that have this problem have been =
 
-> On 10/29/2010 03:43 AM, Su, Yong wrote:
-> > Hi, all:
-> >  =
+> fixed by now?
 
-> > We are using ofono to send sms with validity period and =
+AFAIK, this is still a product requirement for us. I can recheck, but I jus=
+t asked last week and the answer was a very definite "Yes, this is still re=
+quired".
 
-> message class in our project.
-> > but by checking source code, it seems ofono doesn't support =
+	MikaL
 
-> these requirements.   =
-
-> =
-
-> oFono does not allow you to set the validity period and =
-
-> simply hard-codes it (I believe 48 hours).  Unless you have a =
-
-> really good reason why you want to set the validity period, =
-
-> this isn't likely to change.
-> =
-
-> Sending SMS messages other than class unspecified makes no =
-
-> sense and will not be supported.  If you have some extremely =
-
-> specific use case in mind where this does make sense, please =
-
-> write your own oFono plugin.
-> =
-
-> > =
-
-> > Current implemntation is the dbus interface "SendMessage" =
-
-> contains "To" and "Text" only.
-> >  =
-
-> > Does oFono plan to support these extra fields when sending sms?
-> =
-
-> Right now the answer is no.
-> =
-
-> Regards,
-> -Denis
-> =
-
-> =
-
-
-Thanks. I know these fields are less used.
-
-But our customer require our phone must support to set SMS validity period =
-and Message Class.
-
-So, we will write oFono plugin to reslove it.
-
-
---===============7433103061878655523==--
+--===============2987033902604298546==--
 
