@@ -1,117 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============2092063093664419522=="
+Content-Type: multipart/mixed; boundary="===============7433103061878655523=="
 MIME-Version: 1.0
 From: Su, Yong <Yong.Su@windriver.com>
 Subject: RE: oFono SMS Validity Period and Message Class support
-Date: Sun, 31 Oct 2010 20:44:33 -0700
-Message-ID: <C6FAFDDBC4402D44BFC43E57565F021904590D98@ala-mail09.corp.ad.wrs.com>
-In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702BC71CC@usrdes03.ebgroup.elektrobit.com>
+Date: Sun, 31 Oct 2010 20:58:01 -0700
+Message-ID: <C6FAFDDBC4402D44BFC43E57565F021904590D9D@ala-mail09.corp.ad.wrs.com>
+In-Reply-To: <4CCB024C.60809@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2092063093664419522==
+--===============7433103061878655523==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 
- Hi,
+
+Hi,
+ =
+
 
 > -----Original Message-----
-> From: Rajesh.Nagaiah(a)elektrobit.com =
+> From: Denis Kenzior [mailto:denkenz(a)gmail.com] =
 
-> [mailto:Rajesh.Nagaiah(a)elektrobit.com] =
-
-> Sent: 2010?10?29? 18:09
+> Sent: 2010?10?30? 1:20
 > To: ofono(a)ofono.org
-> Subject: RE: oFono SMS Validity Period and Message Class support
+> Cc: Su, Yong
+> Subject: Re: oFono SMS Validity Period and Message Class support
 > =
 
 > Hi,
 > =
 
+> On 10/29/2010 03:43 AM, Su, Yong wrote:
 > > Hi, all:
 > >  =
 
 > > We are using ofono to send sms with validity period and =
 
-> message class =
-
-> > in our project.
+> message class in our project.
 > > but by checking source code, it seems ofono doesn't support =
 
-> > these requirements.   =
+> these requirements.   =
+
+> =
+
+> oFono does not allow you to set the validity period and =
+
+> simply hard-codes it (I believe 48 hours).  Unless you have a =
+
+> really good reason why you want to set the validity period, =
+
+> this isn't likely to change.
+> =
+
+> Sending SMS messages other than class unspecified makes no =
+
+> sense and will not be supported.  If you have some extremely =
+
+> specific use case in mind where this does make sense, please =
+
+> write your own oFono plugin.
+> =
 
 > > =
 
 > > Current implemntation is the dbus interface "SendMessage" =
 
-> > contains "To" and "Text" only.
+> contains "To" and "Text" only.
 > >  =
 
-> > Does oFono plan to support these extra fields when sending sms? =
-
-> >  =
-
+> > Does oFono plan to support these extra fields when sending sms?
 > =
 
-> Right now oFono uses hardcoded Relative validity period of value
-> 167 (24hrs: 12hrs +(167-143)x30mins)for SUBMIT message. =
-
+> Right now the answer is no.
 > =
 
-> If later supported then the Validity period should be part of =
-
-> the SMS app settings and the setting changes will trigger the =
-
-> property change in the org.ofono.MessageManager interface. =
-
-> But currently Validity Period property is missing in =
-
-> org.ofono.MessageManager interface. So it doesnt need to be =
-
-> part of the SendMessage dbus interface ?
-> =
-
-> Regarding the message class, none of the UE usually gives the =
-
-> a user setting for message class for outgoing SMS. So oFono =
-
-> uses unspecified message class and it sets only the encoding =
-
-> type (GSM 7bit or UCS2) in the DCS byte for the SUBMIT =
-
-> message. For the SMS DELIVER it decodes the Message class and =
-
-> handles it accordingly (Note: Class 2 messages are not =
-
-> supported in oFono)
-> =
-
-> BR,
-> Rajesh
+> Regards,
+> -Denis
 > =
 
 > =
 
 
-Thanks for your feedback. I know you are the CDMS SMS owner from the TODO l=
-ist. =
+Thanks. I know these fields are less used.
+
+But our customer require our phone must support to set SMS validity period =
+and Message Class.
+
+So, we will write oFono plugin to reslove it.
 
 
-We are developing one GSM&CDMA dual mode phone.  But current ofono is not s=
-upport CDMA SMS decode&encode as ISA637 PDU format. =
-
-
-Can I ask you another question about CDMA SMS? =
-
-
-I want to know the CDMA SMS delepment schedule if possible. =
-
-
-Thank you very much
-
-
-
-
---===============2092063093664419522==--
+--===============7433103061878655523==--
 
