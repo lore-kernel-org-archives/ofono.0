@@ -1,100 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============7942482697517130809=="
+Content-Type: multipart/mixed; boundary="===============4381507748469949878=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCHv2 1/2] stemodem: Add RTNL functionality managing CAIF
- Network Interfaces.
-Date: Tue, 02 Nov 2010 06:03:26 +0100
-Message-ID: <1288674206.3322.165.camel@aeonflux>
-In-Reply-To: <81C3A93C17462B4BBD7E272753C105791945A4F406@EXDCVYMBSTM005.EQ1STM.local>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH 2/2] coding_style: Add case for enum as switch variable
+Date: Tue, 02 Nov 2010 22:21:37 +0800
+Message-ID: <1288707697-26374-2-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1288707697-26374-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7942482697517130809==
+--===============4381507748469949878==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+---
+ doc/coding-style.txt |   32 ++++++++++++++++++++++++++++++++
+ 1 files changed, 32 insertions(+), 0 deletions(-)
 
-> > You don't really have to play this append/remove game. You can just
-> > append it after send_rtnl_req succeed. The read goes via the mainloop
-> > anyway and we are a single threaded program. So the order is
-> > guaranteed.
-> =
+diff --git a/doc/coding-style.txt b/doc/coding-style.txt
+index 9e5a811..6fa355e 100644
+--- a/doc/coding-style.txt
++++ b/doc/coding-style.txt
+@@ -173,6 +173,38 @@ enum animal_type {
+ 	ANIMAL_TYPE_TWO_LEGS =3D		2,
+ };
+ =
 
-> I'm not sure about this. I need to keep track of what
-> connection-id I assign to the CAIF Interface in the request and what =
++M12: Enum as switch variable
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++If the variable of a switch is an enum, you must not include a default in
++switch body. The reason for this is: If later on you modify the enum by ad=
+ding
++a new type, and forget to change the switch accordingly, the compiler will
++complain the new added type hasn't been handled.
++
++Example:
++
++enum animal_type {
++	ANIMAL_TYPE_FOUR_LEGS =3D		4,
++	ANIMAL_TYPE_EIGHT_LEGS =3D	8,
++	ANIMAL_TYPE_TWO_LEGS =3D		2,
++};
++
++enum animal_type t;
++
++switch (t) {
++case ANIMAL_TYPE_FOUR_LEGS:
++	...
++	break;
++case ANIMAL_TYPE_EIGHT_LEGS:
++	...
++	break;
++case ANIMAL_TYPE_TWO_LEGS:
++	...
++	break;
++default:  // wrong
++	break;
++}
++
+ O1: Shorten the name
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ Better to use abbreviation, rather than full name, to name a variable,
+-- =
 
-> interface name and interface index I get for that connection id
-> in the RTNL response.
-> This mapping between network interface and connection id is used =
-
-> when PDP Contexts are activated. The append/remove game provides me
-> with the request-response mapping. =
-
-
-I know what you are trying to protect here, but what I am saying is that
-just appending the struct to the list after you send it (and evaluated
-its error code) is just fine.
-
-You don't need to append it first, send the message, check error and in
-case of an error remove it again.
-
-The nature of single-thread application using a mainloop and where input
-is driven by that mainloop, ensures that you will only receive the reply
-to your message after you added it to the list. Even if that is done
-after you send it.
-
-So while it is fine to append the structure to the list for further
-tracking, you should just do it after you send the message and it
-succeeded and be done with it.
-
-And while we are at it. Essentially you also need to use asynchronous
-and non-blocking watch driven sending of your message in the first
-place. I did forget to check if you open the RTNL socket non-blocking,
-but you should be doing that.
-
-> > > +struct rtnl_rsp_param {
-> > > +	int result;
-> > > +	gpointer user_data;
-> > > +	char ifname[IF_NAMESIZE];
-> > > +	int  ifindex;
-> > > +};
-> > > +
-> > > +struct rtnl_req_param {
-> > > +	void (*callback)(struct rtnl_rsp_param *param);
-> > > +	gpointer user_data;
-> > > +	int type;
-> > > +	int conn_id;
-> > > +	gboolean loop_enabled;
-> > > +};
-> > > +
-> > > +extern int caif_rtnl_create_interface(struct rtnl_req_param *req);
-> > > +extern int caif_rtnl_delete_interface(int ifid);
-> > =
-
-> > I am not really sold on this param stuct thingy btw. Why do you need
-> > them? Just proper input params and output params for the callback
-> > handler would do them same. Won't they?
-> =
-
-> Yes, I could do that. But in that case I would prefer to typedef the =
-
-> response function to simplify create function's signature. Otherwise
-> I think the create function's signature gets too complex.
-
-typedef for function callbacks are just fine. I have no problem with
-that at all.
-
-I am not set in stone here, but for something this simple, it seems to
-me that the two structs is a bit of overhead and complexity that we
-could avoid.
-
-Regards
-
-Marcel
+1.7.2.3
 
 
-
---===============7942482697517130809==--
+--===============4381507748469949878==--
 
