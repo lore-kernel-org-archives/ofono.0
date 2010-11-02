@@ -1,39 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============8326925059560346208=="
+Content-Type: multipart/mixed; boundary="===============5838622315201784567=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 1/2] coding_style: Fix enum name
-Date: Tue, 02 Nov 2010 22:21:36 +0800
-Message-ID: <1288707697-26374-1-git-send-email-yang.gu@intel.com>
+From: Kristen Carlson Accardi <kristen@linux.intel.com>
+Subject: Re: [PATCH] simfs: fix incorrect math again
+Date: Tue, 02 Nov 2010 07:41:08 -0700
+Message-ID: <20101102074108.059f1d24@kcaccard-MOBL3>
+In-Reply-To: <1287080280-26368-1-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8326925059560346208==
+--===============5838622315201784567==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/coding-style.txt |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+On Thu, 14 Oct 2010 11:18:00 -0700
+Kristen Carlson Accardi <kristen@linux.intel.com> wrote:
 
-diff --git a/doc/coding-style.txt b/doc/coding-style.txt
-index 95ed50b..9e5a811 100644
---- a/doc/coding-style.txt
-+++ b/doc/coding-style.txt
-@@ -167,7 +167,7 @@ enum animal_type {
- If the enum contents have values (e.g. from specification) the preferred
- formatting is as follows:
- =
+> ---
+>  src/simfs.c |    6 ++----
+>  1 files changed, 2 insertions(+), 4 deletions(-)
+> =
 
--enum animal type {
-+enum animal_type {
- 	ANIMAL_TYPE_FOUR_LEGS =3D		4,
- 	ANIMAL_TYPE_EIGHT_LEGS =3D	8,
- 	ANIMAL_TYPE_TWO_LEGS =3D		2,
--- =
+> diff --git a/src/simfs.c b/src/simfs.c
+> index fd768ef..bcb6ff8 100644
+> --- a/src/simfs.c
+> +++ b/src/simfs.c
+> @@ -231,8 +231,7 @@ static void sim_fs_op_read_block_cb(const struct ofon=
+o_error *error,
+>  		tocopy =3D MIN(256 - op->offset % 256,
+>  				op->num_bytes - op->current * 256);
+>  	} else {
+> -		bufoff =3D (op->current - start_block - 1) * 256 +
+> -				op->offset % 256;
+> +		bufoff =3D op->current * 256;
+>  		dataoff =3D 0;
+>  		tocopy =3D MIN(256, op->num_bytes - op->current * 256);
+>  	}
+> @@ -294,8 +293,7 @@ static gboolean sim_fs_op_read_block(gpointer user_da=
+ta)
+>  			toread =3D MIN(256 - op->offset % 256,
+>  					op->num_bytes - op->current * 256);
+>  		} else {
+> -			bufoff =3D (op->current - start_block - 1) * 256 +
+> -					op->offset % 256;
+> +			bufoff =3D op->current * 256;
+>  			seekoff =3D SIM_CACHE_HEADER_SIZE + op->current * 256;
+>  			toread =3D MIN(256, op->num_bytes - op->current * 256);
+>  		}
 
-1.7.2.3
+Denis - any feedback on this patch?  If we don't add this bugfix,
+reads > 256 bytes will be broken.
+
+Thanks,
+Kristen
 
 
---===============8326925059560346208==--
+--===============5838622315201784567==--
 
