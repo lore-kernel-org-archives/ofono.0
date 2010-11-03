@@ -1,54 +1,247 @@
-Content-Type: multipart/mixed; boundary="===============5782301830444552111=="
+Content-Type: multipart/mixed; boundary="===============7510526100096523578=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC] AGPS Support
-Date: Tue, 02 Nov 2010 15:50:02 -0500
-Message-ID: <4CD0797A.5070602@gmail.com>
-In-Reply-To: <AANLkTi=fV5PfLtyzpWUsJt+uG0VoULdBUG5AAT-OxC0h@mail.gmail.com>
+From: Benis, Robertino <robertino.benis@intel.com>
+Subject: [RFC] [CHANGE 1/2] Addidng initial documentation for basic assisted
+ gps
+Date: Tue, 02 Nov 2010 18:02:05 -0700
+Message-ID: <CB28AA307186A940B1253A743EA1F20AA58B8B1B@orsmsx507.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5782301830444552111==
+--===============7510526100096523578==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Hi all,
 
-On 11/02/2010 03:36 PM, Sjur Br=C3=A6ndeland wrote:
-> Hi Denis,
-> =
-
-> Fredric wrote:
->> On positioning framework side, XML containers encoding/decoding does not=
- seem to be yet widely used, while the support of RRC and RRLP framing is c=
-ommon, thanks to the support of SUPL.
->>
->> Using XML and 27.007 format would be great as long as long as ofono is n=
-ot obliged to interpret the XML containers.
-> =
-
-> Denis, is this something you would consider as an option, to transport
-> both ASN.1 coded RRC / RRLP frames
-> and XML transparently over the oFono API ?
-> =
+This is first attempt to send out RFC for a-gps dbus documentation. It fill=
+ be followed by RFC for Infineon modem API implementation. =
 
 
-The question here is really about what has the best chance of being
-accepted as 'official' API prefixed with org.ofono.  I don't see the
-binary variant having a chance of being accepted right now.  With XML I
-can see it becoming the official API since it is defined by 27.007.
+Thank you for your comments in advance. :-)
 
-Having said that, both can indeed co-exist side-by-side.
+Thanks,
+-- r.
 
-What are the possible reasons as to why oFono might need to peek inside
-the XML?
+From de9edb7f6d711627721832cd268c5322abb1843e Mon Sep 17 00:00:00 2001
+From: Robertino Benis <robertino.benis@intel.com>
+Date: Tue, 2 Nov 2010 17:14:37 -0700
+Subject: [CHANGE 1/2] [RFC] Addidng initial documentation for basic assiste=
+d gps
+Organization: Intel =
 
-> Regards,
-> Sjur
+Cc: robertino.benis(a)intel.com
 
-Regards,
--Denis
+---
+ doc/assistedgps-manager-api.txt |  114 +++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 114 insertions(+), 0 deletions(-)
+ create mode 100644 doc/assistedgps-manager-api.txt
 
---===============5782301830444552111==--
+diff --git a/doc/assistedgps-manager-api.txt b/doc/assistedgps-manager-api.=
+txt
+new file mode 100644
+index 0000000..b09c8b1
+--- /dev/null
++++ b/doc/assistedgps-manager-api.txt
+@@ -0,0 +1,114 @@
++AgpsManager hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		org.ofono
++Interface	org.ofono.AgpsManager
++Object path	[variable prefix]/{modem0,modem1,...}
++
++Methods		dict GetProperties()
++
++			Returns properties for the modem object. See
++			the properties section for available properties.
++
++			Possible Errors: [service].Error.InvalidArguments
++
++		void SetProperty(string name, variant value)
++
++			Changes the value of the specified property. Only
++			properties that are listed as read-write are
++			changeable. On success a PropertyChanged signal
++			will be emitted.
++
++			Possible Errors: [service].Error.InvalidArguments
++					 [service].Error.DoesNotExist
++
++		void SendLCSFrame(string frametype, string framedata)
++
++			Send a LCS position protocol frame to the Mobile
++			Network. The LCS frame typically represents a
++			Position Response.
++
++			Valid frametypes are:
++				rrlp_measure_position_response
++				rrc_measurement_report
++
++			The raw frame data is formatted as the concatenated
++			sequence of the two digit hexadecimal representation
++			of each of its octets. Example: "00FC2345"
++
++		void RequestFineTimeInjection(string rat, uint16 pulselength)
++
++			Request modem to generate a fine time injection
++			pulse. pulselength is the duration of the pulse
++			expressed in radio frames.
++
++			rat specifies the access technology used to derive
++			the pulse from and can be "gsm" or "umts".
++			If the requested access technology is not currently
++			in use an error is returned.
++
++Signals		PropertyChanged(string name, variant value)
++
++			This signal indicates a changed value of the given
++			property.
++
++		IncomingLCSFrame(string frametypes, string framedata)
++
++			LCS positioning protocol frame received from the
++			Mobile Network.
++
++			Valid frametypes for the LCS frame are:
++				rrlp_assistance_data
++				rrlp_measure_position_request
++				rrc_assistance_data_delivery
++				rrc_measurement_control
++
++			Note that position/measurement requests can include
++			assistance data as well.
++
++			The raw frame data is formatted as the concatenated
++			sequence of the two digit hexadecimal representation
++			of each of its octets. Example: "00FC2345"
++
++		FineTimeInjectionNotification(dict radioframenumber)
++
++			Notification about fine time injection pulse
++			generated by modem. The radioframenumber dict
++			is defined as follow:
++
++			string AccessTechnology
++				"gsm" or "umts"
++			=
+
++			uint32 TdmaFrameNumber (gsm only)
++				range 0 - 2715647 (2048*26*51)
++
++			uint16 TdmaTimeslot (gsm only)
++				range 0 - 7
++
++			uint16 TimeslotBit (gsm only)
++				range 0 - 156
++
++			uint16 TimingAdvance (gsm only)
++				range 0 - 63
++
++			uint16 BcchArfcn (gsm only)
++				range 0 - 1023
++
++			uint16 Bsic (gsm only)
++				range 0 - 64
++
++			uint16 Sfn (umts only)
++				range 0 - 4095
++
++			string RrcState (umts only)
++				"cell_dch", "cell_fach", "cell_pch" or
++				"ura_pch"
++			=
+
++			uint16 RoundTripTime (umts only)
++				range 0 - 32766
++
++
++Properties	boolean LcsEnabled [readwrite]
++
++			If LcsEnabled is False, then no LCS positioning
++			protocol frames are received.
+-- =
+
+1.7.0.4
+
+
+
+--===============7510526100096523578==
+Content-Type: text/plain
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="0001-RFC-Addidng-initial-documentation-for-basic-assisted-g.txt"
+
+RnJvbSBkZTllZGI3ZjZkNzExNjI3NzIxODMyY2QyNjhjNTMyMmFiYjE4NDNlIE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBSb2JlcnRpbm8gQmVuaXMgPHJvYmVydGluby5iZW5pc0BpbnRl
+bC5jb20+CkRhdGU6IFR1ZSwgMiBOb3YgMjAxMCAxNzoxNDozNyAtMDcwMApTdWJqZWN0OiBbQ0hB
+TkdFIDEvMl0gW1JGQ10gQWRkaWRuZyBpbml0aWFsIGRvY3VtZW50YXRpb24gZm9yIGJhc2ljIGFz
+c2lzdGVkIGdwcwpPcmdhbml6YXRpb246IEludGVsIApDYzogcm9iZXJ0aW5vLmJlbmlzQGludGVs
+LmNvbQoKLS0tCiBkb2MvYXNzaXN0ZWRncHMtbWFuYWdlci1hcGkudHh0IHwgIDExNCArKysrKysr
+KysrKysrKysrKysrKysrKysrKysrKysrKysrKysrKysKIDEgZmlsZXMgY2hhbmdlZCwgMTE0IGlu
+c2VydGlvbnMoKyksIDAgZGVsZXRpb25zKC0pCiBjcmVhdGUgbW9kZSAxMDA2NDQgZG9jL2Fzc2lz
+dGVkZ3BzLW1hbmFnZXItYXBpLnR4dAoKZGlmZiAtLWdpdCBhL2RvYy9hc3Npc3RlZGdwcy1tYW5h
+Z2VyLWFwaS50eHQgYi9kb2MvYXNzaXN0ZWRncHMtbWFuYWdlci1hcGkudHh0Cm5ldyBmaWxlIG1v
+ZGUgMTAwNjQ0CmluZGV4IDAwMDAwMDAuLmIwOWM4YjEKLS0tIC9kZXYvbnVsbAorKysgYi9kb2Mv
+YXNzaXN0ZWRncHMtbWFuYWdlci1hcGkudHh0CkBAIC0wLDAgKzEsMTE0IEBACitBZ3BzTWFuYWdl
+ciBoaWVyYXJjaHkKKz09PT09PT09PT09PT09PT09PT09PQorCitTZXJ2aWNlCQlvcmcub2Zvbm8K
+K0ludGVyZmFjZQlvcmcub2Zvbm8uQWdwc01hbmFnZXIKK09iamVjdCBwYXRoCVt2YXJpYWJsZSBw
+cmVmaXhdL3ttb2RlbTAsbW9kZW0xLC4uLn0KKworTWV0aG9kcwkJZGljdCBHZXRQcm9wZXJ0aWVz
+KCkKKworCQkJUmV0dXJucyBwcm9wZXJ0aWVzIGZvciB0aGUgbW9kZW0gb2JqZWN0LiBTZWUKKwkJ
+CXRoZSBwcm9wZXJ0aWVzIHNlY3Rpb24gZm9yIGF2YWlsYWJsZSBwcm9wZXJ0aWVzLgorCisJCQlQ
+b3NzaWJsZSBFcnJvcnM6IFtzZXJ2aWNlXS5FcnJvci5JbnZhbGlkQXJndW1lbnRzCisKKwkJdm9p
+ZCBTZXRQcm9wZXJ0eShzdHJpbmcgbmFtZSwgdmFyaWFudCB2YWx1ZSkKKworCQkJQ2hhbmdlcyB0
+aGUgdmFsdWUgb2YgdGhlIHNwZWNpZmllZCBwcm9wZXJ0eS4gT25seQorCQkJcHJvcGVydGllcyB0
+aGF0IGFyZSBsaXN0ZWQgYXMgcmVhZC13cml0ZSBhcmUKKwkJCWNoYW5nZWFibGUuIE9uIHN1Y2Nl
+c3MgYSBQcm9wZXJ0eUNoYW5nZWQgc2lnbmFsCisJCQl3aWxsIGJlIGVtaXR0ZWQuCisKKwkJCVBv
+c3NpYmxlIEVycm9yczogW3NlcnZpY2VdLkVycm9yLkludmFsaWRBcmd1bWVudHMKKwkJCQkJIFtz
+ZXJ2aWNlXS5FcnJvci5Eb2VzTm90RXhpc3QKKworCQl2b2lkIFNlbmRMQ1NGcmFtZShzdHJpbmcg
+ZnJhbWV0eXBlLCBzdHJpbmcgZnJhbWVkYXRhKQorCisJCQlTZW5kIGEgTENTIHBvc2l0aW9uIHBy
+b3RvY29sIGZyYW1lIHRvIHRoZSBNb2JpbGUKKwkJCU5ldHdvcmsuIFRoZSBMQ1MgZnJhbWUgdHlw
+aWNhbGx5IHJlcHJlc2VudHMgYQorCQkJUG9zaXRpb24gUmVzcG9uc2UuCisKKwkJCVZhbGlkIGZy
+YW1ldHlwZXMgYXJlOgorCQkJCXJybHBfbWVhc3VyZV9wb3NpdGlvbl9yZXNwb25zZQorCQkJCXJy
+Y19tZWFzdXJlbWVudF9yZXBvcnQKKworCQkJVGhlIHJhdyBmcmFtZSBkYXRhIGlzIGZvcm1hdHRl
+ZCBhcyB0aGUgY29uY2F0ZW5hdGVkCisJCQlzZXF1ZW5jZSBvZiB0aGUgdHdvIGRpZ2l0IGhleGFk
+ZWNpbWFsIHJlcHJlc2VudGF0aW9uCisJCQlvZiBlYWNoIG9mIGl0cyBvY3RldHMuIEV4YW1wbGU6
+ICIwMEZDMjM0NSIKKworCQl2b2lkIFJlcXVlc3RGaW5lVGltZUluamVjdGlvbihzdHJpbmcgcmF0
+LCB1aW50MTYgcHVsc2VsZW5ndGgpCisKKwkJCVJlcXVlc3QgbW9kZW0gdG8gZ2VuZXJhdGUgYSBm
+aW5lIHRpbWUgaW5qZWN0aW9uCisJCQlwdWxzZS4gcHVsc2VsZW5ndGggaXMgdGhlIGR1cmF0aW9u
+IG9mIHRoZSBwdWxzZQorCQkJZXhwcmVzc2VkIGluIHJhZGlvIGZyYW1lcy4KKworCQkJcmF0IHNw
+ZWNpZmllcyB0aGUgYWNjZXNzIHRlY2hub2xvZ3kgdXNlZCB0byBkZXJpdmUKKwkJCXRoZSBwdWxz
+ZSBmcm9tIGFuZCBjYW4gYmUgImdzbSIgb3IgInVtdHMiLgorCQkJSWYgdGhlIHJlcXVlc3RlZCBh
+Y2Nlc3MgdGVjaG5vbG9neSBpcyBub3QgY3VycmVudGx5CisJCQlpbiB1c2UgYW4gZXJyb3IgaXMg
+cmV0dXJuZWQuCisKK1NpZ25hbHMJCVByb3BlcnR5Q2hhbmdlZChzdHJpbmcgbmFtZSwgdmFyaWFu
+dCB2YWx1ZSkKKworCQkJVGhpcyBzaWduYWwgaW5kaWNhdGVzIGEgY2hhbmdlZCB2YWx1ZSBvZiB0
+aGUgZ2l2ZW4KKwkJCXByb3BlcnR5LgorCisJCUluY29taW5nTENTRnJhbWUoc3RyaW5nIGZyYW1l
+dHlwZXMsIHN0cmluZyBmcmFtZWRhdGEpCisKKwkJCUxDUyBwb3NpdGlvbmluZyBwcm90b2NvbCBm
+cmFtZSByZWNlaXZlZCBmcm9tIHRoZQorCQkJTW9iaWxlIE5ldHdvcmsuCisKKwkJCVZhbGlkIGZy
+YW1ldHlwZXMgZm9yIHRoZSBMQ1MgZnJhbWUgYXJlOgorCQkJCXJybHBfYXNzaXN0YW5jZV9kYXRh
+CisJCQkJcnJscF9tZWFzdXJlX3Bvc2l0aW9uX3JlcXVlc3QKKwkJCQlycmNfYXNzaXN0YW5jZV9k
+YXRhX2RlbGl2ZXJ5CisJCQkJcnJjX21lYXN1cmVtZW50X2NvbnRyb2wKKworCQkJTm90ZSB0aGF0
+IHBvc2l0aW9uL21lYXN1cmVtZW50IHJlcXVlc3RzIGNhbiBpbmNsdWRlCisJCQlhc3Npc3RhbmNl
+IGRhdGEgYXMgd2VsbC4KKworCQkJVGhlIHJhdyBmcmFtZSBkYXRhIGlzIGZvcm1hdHRlZCBhcyB0
+aGUgY29uY2F0ZW5hdGVkCisJCQlzZXF1ZW5jZSBvZiB0aGUgdHdvIGRpZ2l0IGhleGFkZWNpbWFs
+IHJlcHJlc2VudGF0aW9uCisJCQlvZiBlYWNoIG9mIGl0cyBvY3RldHMuIEV4YW1wbGU6ICIwMEZD
+MjM0NSIKKworCQlGaW5lVGltZUluamVjdGlvbk5vdGlmaWNhdGlvbihkaWN0IHJhZGlvZnJhbWVu
+dW1iZXIpCisKKwkJCU5vdGlmaWNhdGlvbiBhYm91dCBmaW5lIHRpbWUgaW5qZWN0aW9uIHB1bHNl
+CisJCQlnZW5lcmF0ZWQgYnkgbW9kZW0uIFRoZSByYWRpb2ZyYW1lbnVtYmVyIGRpY3QKKwkJCWlz
+IGRlZmluZWQgYXMgZm9sbG93OgorCisJCQlzdHJpbmcgQWNjZXNzVGVjaG5vbG9neQorCQkJCSJn
+c20iIG9yICJ1bXRzIgorCQkJCisJCQl1aW50MzIgVGRtYUZyYW1lTnVtYmVyIChnc20gb25seSkK
+KwkJCQlyYW5nZSAwIC0gMjcxNTY0NyAoMjA0OCoyNio1MSkKKworCQkJdWludDE2IFRkbWFUaW1l
+c2xvdCAoZ3NtIG9ubHkpCisJCQkJcmFuZ2UgMCAtIDcKKworCQkJdWludDE2IFRpbWVzbG90Qml0
+IChnc20gb25seSkKKwkJCQlyYW5nZSAwIC0gMTU2CisKKwkJCXVpbnQxNiBUaW1pbmdBZHZhbmNl
+IChnc20gb25seSkKKwkJCQlyYW5nZSAwIC0gNjMKKworCQkJdWludDE2IEJjY2hBcmZjbiAoZ3Nt
+IG9ubHkpCisJCQkJcmFuZ2UgMCAtIDEwMjMKKworCQkJdWludDE2IEJzaWMgKGdzbSBvbmx5KQor
+CQkJCXJhbmdlIDAgLSA2NAorCisJCQl1aW50MTYgU2ZuICh1bXRzIG9ubHkpCisJCQkJcmFuZ2Ug
+MCAtIDQwOTUKKworCQkJc3RyaW5nIFJyY1N0YXRlICh1bXRzIG9ubHkpCisJCQkJImNlbGxfZGNo
+IiwgImNlbGxfZmFjaCIsICJjZWxsX3BjaCIgb3IKKwkJCQkidXJhX3BjaCIKKwkJCQorCQkJdWlu
+dDE2IFJvdW5kVHJpcFRpbWUgKHVtdHMgb25seSkKKwkJCQlyYW5nZSAwIC0gMzI3NjYKKworCitQ
+cm9wZXJ0aWVzCWJvb2xlYW4gTGNzRW5hYmxlZCBbcmVhZHdyaXRlXQorCisJCQlJZiBMY3NFbmFi
+bGVkIGlzIEZhbHNlLCB0aGVuIG5vIExDUyBwb3NpdGlvbmluZworCQkJcHJvdG9jb2wgZnJhbWVz
+IGFyZSByZWNlaXZlZC4KLS0gCjEuNy4wLjQKCg==
+
+--===============7510526100096523578==--
 
