@@ -1,117 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============2257051219629989035=="
+Content-Type: multipart/mixed; boundary="===============8979617223723882037=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] atmodem: Remove at_pin_send_puk_cb,
- and use at_pin_send_cb instead.
-Date: Wed, 03 Nov 2010 08:44:29 -0500
-Message-ID: <4CD1673D.5040105@gmail.com>
-In-Reply-To: <1288785996-10991-1-git-send-email-maritsofie.henriksen8@gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] TODO: Update Read/Write EFcfis description
+Date: Wed, 03 Nov 2010 07:34:57 -0700
+Message-ID: <1288794897-3779-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2257051219629989035==
+--===============8979617223723882037==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marit,
+---
+ TODO |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-On 11/03/2010 07:06 AM, Marit Henriksen wrote:
-> From: Marit Henriksen <marit.henriksen@stericsson.com>
-> =
+diff --git a/TODO b/TODO
+index 5968c08..ad4a19a 100644
+--- a/TODO
++++ b/TODO
+@@ -1,4 +1,4 @@
+-Background
++pBackground
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ =
 
-> When adding the use of pin event *EPEV also to at_pin_send_puk_cb,
-> it becomes identical to at_pin_send_cb, and can be removed.
-> ---
->  drivers/atmodem/sim.c |   44 +-------------------------------------------
->  1 files changed, 1 insertions(+), 43 deletions(-)
-> =
+ - Priority scale: High, Medium and Low
+@@ -114,7 +114,7 @@ SIM / SIM File system
+ - Read / Write EFcfis.  Call forwarding settings can be bootstrapped on the
+   SIM for faster notification of the user that call forwarding is active.
+   These settings are stored in EFcfis.  oFono should read these settings a=
+nd
+-  update the call history atom appropriately.
++  update the call forwarding atom appropriately.
+ =
 
-> diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-> index 3abd1d8..9cfdc65 100644
-> --- a/drivers/atmodem/sim.c
-> +++ b/drivers/atmodem/sim.c
-> @@ -647,48 +647,6 @@ error:
->  	CALLBACK_WITH_FAILURE(cb, data);
->  }
->  =
+   Priority: Low
+   Complexity: C2
+-- =
 
-> -static void at_pin_send_puk_cb(gboolean ok, GAtResult *result,
-> -				gpointer user_data)
-> -{
-> -	struct cb_data *cbd =3D user_data;
-> -	struct sim_data *sd =3D cbd->user;
-> -	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
-> -	struct ofono_error error;
-> -
-> -	decode_at_error(&error, g_at_result_final_response(result));
-> -
-> -	if (!ok)
-> -		goto done;
-> -
-> -	switch (sd->vendor) {
-> -	case OFONO_VENDOR_IFX:
-> -		/*
-> -		 * On the IFX modem, AT+CPIN? can return READY too
-> -		 * early and so use +XSIM notification to detect
-> -		 * the ready state of the SIM.
-> -		 */
-> -		sd->ready_id =3D g_at_chat_register(sd->chat, "+XSIM",
-> -							at_xsim_notify,
-> -							FALSE, cbd, g_free);
-> -		return;
-> -	case OFONO_VENDOR_MBM:
-> -		/*
-> -		 * On the MBM modem, AT+CPIN? keeps returning SIM PIN
-> -		 * for a moment after successful AT+CPIN=3D"..", but then
-> -		 * sends *EPEV when that changes.
-> -		 */
-> -		sd->ready_id =3D g_at_chat_register(sd->chat, "*EPEV",
-> -							at_epev_notify,
-> -							FALSE, cbd, g_free);
-> -		return;
-> -	}
-
-I'm fine with this patch but do note that it does not apply.  I guess
-that is because the OFONO_VENDOR_MBM part is not in the upstream repository.
-
-Applying: atmodem: Remove at_pin_send_puk_cb, and use at_pin_send_cb
-instead.
-fatal: sha1 information is lacking or useless (drivers/atmodem/sim.c).
-Repository lacks necessary blobs to fall back on 3-way merge.
-Cannot fall back to three-way merge.
-Patch failed at 0001 atmodem: Remove at_pin_send_puk_cb, and use
-at_pin_send_cb instead.
-When you have resolved this problem run "git am -3 --resolved".
-If you would prefer to skip this patch, instead run "git am -3 --skip".
-To restore the original branch and stop patching run "git am -3 --abort".
-
-> -
-> -done:
-> -	cb(&error, cbd->data);
-> -
-> -	g_free(cbd);
-> -}
-> -
->  static void at_pin_send_puk(struct ofono_sim *sim, const char *puk,
->  				const char *passwd,
->  				ofono_sim_lock_unlock_cb_t cb, void *data)
-> @@ -706,7 +664,7 @@ static void at_pin_send_puk(struct ofono_sim *sim, co=
-nst char *puk,
->  	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\",\"%s\"", puk, passwd);
->  =
-
->  	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
-> -				at_pin_send_puk_cb, cbd, NULL);
-> +				at_pin_send_cb, cbd, NULL);
->  =
-
->  	memset(buf, 0, sizeof(buf));
->  =
+1.7.0.4
 
 
-Regards,
--Denis
-
---===============2257051219629989035==--
+--===============8979617223723882037==--
 
