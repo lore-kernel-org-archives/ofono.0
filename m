@@ -1,46 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============6481668272003681566=="
+Content-Type: multipart/mixed; boundary="===============8020352594187700596=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] atmodem: Remove at_pin_send_puk_cb,
- and use at_pin_send_cb instead.
-Date: Wed, 03 Nov 2010 15:40:54 +0100
-Message-ID: <1288795254.9615.55.camel@aeonflux>
-In-Reply-To: <1288794927-11647-1-git-send-email-maritsofie.henriksen8@gmail.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [RFC] AGPS Support
+Date: Wed, 03 Nov 2010 19:40:41 +0200
+Message-ID: <AANLkTimt4=Gkh9K1Xh4qckTKKO+WqacdmtJJuf_Jaubd@mail.gmail.com>
+In-Reply-To: <AANLkTi=Oj=Ok9_QQsu+xhK+jF0fbSbpcxX4Qdu6f7xNK@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6481668272003681566==
+--===============8020352594187700596==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marit,
+Hi,
 
-> When adding the use of pin event *EPEV also to at_pin_send_puk_cb,
-> it becomes identical to at_pin_send_cb, and can be removed.
-> ---
-> New patch, this one should apply:)
+2010/11/3 Sjur Br=C3=A6ndeland <sjurbren@gmail.com>:
+> I was previously under the false impression that you wanted oFono API
+> to export AGPS functionality using dbus types only. Piping the AGPS
+> XML (or ASN.1 coded data)
+> through oFono certainly makes the oFono implementation much simpler.
+> I'm all for that :-)
 
-please also do [PATCH v2] so we know which version it is. git am will
-strip these nicely away from us.
+I think it has been the working assumption to just forward raw data
+over D-Bus; PDU as an array of bytes. I believe the ISI modem
+interface exposes raw ASN.1 PDUs directly.
 
->  drivers/atmodem/sim.c |   44 +-------------------------------------------
->  1 files changed, 1 insertions(+), 43 deletions(-)
+Obviously we need to pick one format for the D-Bus interface, but I'm
+a little wary of transcoding between the two formats, be it in the
+core or in the drivers.
 
-Applying: atmodem: Remove at_pin_send_puk_cb, and use at_pin_send_cb instea=
-d.
-error: patch failed: drivers/atmodem/sim.c:647
-error: drivers/atmodem/sim.c: patch does not apply
-Patch failed at 0001 atmodem: Remove at_pin_send_puk_cb, and use at_pin_sen=
-d_cb instead.
+Cheers,
+Aki
 
-It does not apply.
-
-Regards
-
-Marcel
-
-
-
---===============6481668272003681566==--
+--===============8020352594187700596==--
 
