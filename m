@@ -1,35 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============9220837766254276818=="
+Content-Type: multipart/mixed; boundary="===============6860710939207154201=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: [PATCH] isigen: increase offline timeout
-Date: Wed, 03 Nov 2010 20:52:57 +0200
-Message-ID: <1288810377.10533.184.camel@tucson>
-In-Reply-To: <AANLkTikpTANKVM6aBZpXAmjp82hthZAn6xN7fXJbuhFp@mail.gmail.com>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: [RFC] AGPS Support
+Date: Wed, 03 Nov 2010 11:59:12 -0700
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9011B7BFECE@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <1288780795.9615.44.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9220837766254276818==
+--===============6860710939207154201==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+> > For other modems sending the raw RRC/RRLP frames I guess the transcodin=
+g to XML
+> > would need to happen in the ofono driver or in ofono core if you want
+> > to expose an
+> > oFono XML API.
 
-On Wed, 2010-11-03 at 19:30 +0100, ext Pekka Pessi wrote:
-> > are you sure you just wanna hardcode it like this and not use a proper
-> > constant for it?
-> =
+> so here is my take on XML. If we have to parse it, then in general that
+> is a bad idea. Creating XML is just fine.
 
-> I'm not sure. It might depend on modem. Aki?
-
-Let's go with a proper constant, and make it sufficiently large. If it
-turns out this is a modem dependant property, then we will have to
-device some mechanism to tweak the timeouts used by drivers from modem
-plugins.
+You need both as it's not only a matter of converting the raw RRC/RRLP fram=
+es from
+the modem to XML, but the responses from the GPS engine are presumably in X=
+ML format as well
+then and the modem driver would need to parse that and re-create RRC/RRLP f=
+rames again (for modem that expects raw RRC/RRLP frames). See the tables in=
+ section 8.55 of 27.007 for the XML schemas. It refers to the ASN.1 syntax =
+for the definition of the value ranges.
 
 Cheers,
-Aki
+Waldo
 
-
---===============9220837766254276818==--
+--===============6860710939207154201==--
 
