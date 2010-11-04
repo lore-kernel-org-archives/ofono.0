@@ -1,77 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============1138004077455455470=="
+Content-Type: multipart/mixed; boundary="===============8173645426219399342=="
 MIME-Version: 1.0
-From: Frederic Crozat <fcrozat@novell.com>
-Subject: Re: Huawei EM 770 not working properly
-Date: Thu, 04 Nov 2010 14:40:22 +0000
-Message-ID: <4CD2C5D6020000B200056D4D@vpn.id2.novell.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [RFC] plugin/ste: Use D-Bus API from Modem Init Daemon for
+ autoconfig.
+Date: Thu, 04 Nov 2010 16:19:08 +0100
+Message-ID: <1288883948.9615.94.camel@aeonflux>
+In-Reply-To: <1288880304-16142-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1138004077455455470==
+--===============8173645426219399342==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Le jeudi 04 novembre 2010 =C3=A0 09:16 -0500, Denis Kenzior a =C3=A9crit :
-> Hi Frederic,
+Hi Sjur,
+
+> This patch introduces auto discovery of ST-Ericsson modems.
+> ST-Ericsson modems are managed by a Modem Init Daemon which
+> is responsible for start/stop/restart flashing etc. The
+> STE plugin monitors the modem state exposed from the
+> Modem Init Damon Dbus API. When the modem is in state "on"
+> the STE modem is created and registered.
 > =
 
-> On 11/04/2010 06:15 AM, Frederic Crozat wrote:
-> > Hi,
-> > =
+> The reason for not using the standard udev paradigm is that
+> the CAIF device is up before the modem is ready to setup AT channels.
+> For flashless modems CAIF is used as part of the boot. The Modem Init
+> Daemon is managing the flashless boot procedure and sets the State to
+> "on" when the modem is available.
 
-> > I'm trying to get ofono working properly with integrated 3G card on my
-> > EEE PC.
-> > =
+so I don't like this at all. This looks pretty nasty and like an ugly
+hack to get something working.
 
-> > Card is Huawei EM 770 (12d1:1001).
-> > =
+Please show us what Modem Init Daemon is actually doing.
 
-> > I'm testing with ofono 0.34.
-> > =
+Regards
 
-> > so far, the modem is correctly detected :
-> > =
-
-> > list-modem returns :
-> > [ /huawei0 ]
-> >  Features =3D sim
-> >  Powered =3D 1
-> >  Interfaces =3D org.ofono.SimManager
-> >  Online =3D 0
-> >  Model =3D EM770
-> >  Manufacturer =3D huawei
-> >  Serial =3D ....
-> >  Revision =3D 11.104.16.12.00
-> >  [ org.ofono.SimManager ] =
-
-> >   Present =3D 0
-> =
-
-> What is happening is that oFono thinks the sim is not inserted, and it
-> does not proceed further with modem initialization.  oFono polls the
-> SYSINFO command, with one of the fields being the status of the SIM.
-> =
-
-> Do you have a SIM PIN set?  The current huawei driver does not handle
-> this case gracefully yet, mainly because the huawei firmware is quite
-> 'peculiar'.
-
-Since I'm using SIM card from my N900, I've disabled PIN code and ofono
-worked properly and I was able to connect to my 3G operator (and see it
-is locking me out, because I have a 3G phone subscription and it is
-seeing a modem IMEI ...).
-
-So, next part would be to get PIN code working ;)
-
-From other collegues who bought the same netbook, it seems umtsmon is
-able to get PIN unlocking for this card.
-
--- =
-
-Frederic Crozat <fcrozat@novell.com>
-Novell
+Marcel
 
 
---===============1138004077455455470==--
+
+--===============8173645426219399342==--
 
