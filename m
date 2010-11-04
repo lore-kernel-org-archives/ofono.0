@@ -1,68 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============2019957513968868002=="
+Content-Type: multipart/mixed; boundary="===============0948387745204827145=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [PATCH v3 1/2] stemodem: Add RTNL functionality managing CAIF
- Network Interfaces.
-Date: Thu, 04 Nov 2010 15:02:13 +0100
-Message-ID: <AANLkTik8SAy8HEzS2+UPH6BGUEU+KcQcVCt6113Z01s-@mail.gmail.com>
-In-Reply-To: <1288809604-976-1-git-send-email-sjurbren@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: Huawei EM 770 not working properly
+Date: Thu, 04 Nov 2010 09:16:50 -0500
+Message-ID: <4CD2C052.1050909@gmail.com>
+In-Reply-To: <1288869331.10035.0.camel@par-r81vxc7.par.novell.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2019957513968868002==
+--===============0948387745204827145==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel.
+Hi Frederic,
 
-> +int caif_rtnl_init(void)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 struct sockaddr_nl addr;
-> + =C2=A0 =C2=A0 =C2=A0 int sk, err;
-> + =C2=A0 =C2=A0 =C2=A0 GError *gerr =3D NULL;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 sk =3D socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUT=
-E);
-> + =C2=A0 =C2=A0 =C2=A0 if (sk < 0)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return sk;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 memset(&addr, 0, sizeof(addr));
-> + =C2=A0 =C2=A0 =C2=A0 addr.nl_family =3D AF_NETLINK;
-> + =C2=A0 =C2=A0 =C2=A0 addr.nl_groups =3D RTMGRP_LINK | RTMGRP_IPV4_IFADD=
-R | RTMGRP_IPV4_ROUTE;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 err =3D bind(sk, (struct sockaddr *) &addr, sizeof=
-(addr));
-> + =C2=A0 =C2=A0 =C2=A0 if (err < 0) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 close(sk);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return err;
-> + =C2=A0 =C2=A0 =C2=A0 }
-> +
-> + =C2=A0 =C2=A0 =C2=A0 channel =3D g_io_channel_unix_new(sk);
-> + =C2=A0 =C2=A0 =C2=A0 g_io_channel_set_flags(channel, G_IO_FLAG_NONBLOCK=
-, &gerr);
-> + =C2=A0 =C2=A0 =C2=A0 g_io_channel_set_encoding(channel, NULL, &gerr);
-> + =C2=A0 =C2=A0 =C2=A0 g_io_channel_set_buffered(channel, TRUE);
-> + =C2=A0 =C2=A0 =C2=A0 g_io_channel_set_close_on_unref(channel, TRUE);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 rtnl_watch =3D g_io_add_watch(channel,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 G_IO_IN | G_IO_NVAL | G_IO_HUP | G_IO_ER=
-R,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 netlink_event, NULL);
-> + =C2=A0 =C2=A0 =C2=A0 pending_requests =3D NULL;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 return 0;
-> +}
+On 11/04/2010 06:15 AM, Frederic Crozat wrote:
+> Hi,
+> =
 
-Sigh, I realize I have a potential leak on gerr above. I'll wait for
-more review comments from you,
-and resubmit later.
+> I'm trying to get ofono working properly with integrated 3G card on my
+> EEE PC.
+> =
+
+> Card is Huawei EM 770 (12d1:1001).
+> =
+
+> I'm testing with ofono 0.34.
+> =
+
+> so far, the modem is correctly detected :
+> =
+
+> list-modem returns :
+> [ /huawei0 ]
+>  Features =3D sim
+>  Powered =3D 1
+>  Interfaces =3D org.ofono.SimManager
+>  Online =3D 0
+>  Model =3D EM770
+>  Manufacturer =3D huawei
+>  Serial =3D ....
+>  Revision =3D 11.104.16.12.00
+>  [ org.ofono.SimManager ] =
+
+>   Present =3D 0
+
+What is happening is that oFono thinks the sim is not inserted, and it
+does not proceed further with modem initialization.  oFono polls the
+SYSINFO command, with one of the fields being the status of the SIM.
+
+Do you have a SIM PIN set?  The current huawei driver does not handle
+this case gracefully yet, mainly because the huawei firmware is quite
+'peculiar'.
+
+The other possibility is that the EM770 firmware is simply acting
+different than other huawei devices and the driver needs to be updated.
+
+Kalle touched the SYSINFO polling last, so maybe he has more insight...
 
 Regards,
-Sjur
+-Denis
 
---===============2019957513968868002==--
+--===============0948387745204827145==--
 
