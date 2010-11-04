@@ -1,62 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============5068509123118723341=="
+Content-Type: multipart/mixed; boundary="===============2019957513968868002=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: [ANNOUNCE] oFono 0.34
-Date: Thu, 04 Nov 2010 08:53:27 -0500
-Message-ID: <4CD2BAD7.8080207@gmail.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: Re: [PATCH v3 1/2] stemodem: Add RTNL functionality managing CAIF
+ Network Interfaces.
+Date: Thu, 04 Nov 2010 15:02:13 +0100
+Message-ID: <AANLkTik8SAy8HEzS2+UPH6BGUEU+KcQcVCt6113Z01s-@mail.gmail.com>
+In-Reply-To: <1288809604-976-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5068509123118723341==
+--===============2019957513968868002==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Everyone,
+Hi Marcel.
 
-oFono 0.34 is out. This release is a mixed stabilization and development
-release.
+> +int caif_rtnl_init(void)
+> +{
+> + =C2=A0 =C2=A0 =C2=A0 struct sockaddr_nl addr;
+> + =C2=A0 =C2=A0 =C2=A0 int sk, err;
+> + =C2=A0 =C2=A0 =C2=A0 GError *gerr =3D NULL;
+> +
+> + =C2=A0 =C2=A0 =C2=A0 sk =3D socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUT=
+E);
+> + =C2=A0 =C2=A0 =C2=A0 if (sk < 0)
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return sk;
+> +
+> + =C2=A0 =C2=A0 =C2=A0 memset(&addr, 0, sizeof(addr));
+> + =C2=A0 =C2=A0 =C2=A0 addr.nl_family =3D AF_NETLINK;
+> + =C2=A0 =C2=A0 =C2=A0 addr.nl_groups =3D RTMGRP_LINK | RTMGRP_IPV4_IFADD=
+R | RTMGRP_IPV4_ROUTE;
+> +
+> + =C2=A0 =C2=A0 =C2=A0 err =3D bind(sk, (struct sockaddr *) &addr, sizeof=
+(addr));
+> + =C2=A0 =C2=A0 =C2=A0 if (err < 0) {
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 close(sk);
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return err;
+> + =C2=A0 =C2=A0 =C2=A0 }
+> +
+> + =C2=A0 =C2=A0 =C2=A0 channel =3D g_io_channel_unix_new(sk);
+> + =C2=A0 =C2=A0 =C2=A0 g_io_channel_set_flags(channel, G_IO_FLAG_NONBLOCK=
+, &gerr);
+> + =C2=A0 =C2=A0 =C2=A0 g_io_channel_set_encoding(channel, NULL, &gerr);
+> + =C2=A0 =C2=A0 =C2=A0 g_io_channel_set_buffered(channel, TRUE);
+> + =C2=A0 =C2=A0 =C2=A0 g_io_channel_set_close_on_unref(channel, TRUE);
+> +
+> + =C2=A0 =C2=A0 =C2=A0 rtnl_watch =3D g_io_add_watch(channel,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 G_IO_IN | G_IO_NVAL | G_IO_HUP | G_IO_ER=
+R,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 netlink_event, NULL);
+> + =C2=A0 =C2=A0 =C2=A0 pending_requests =3D NULL;
+> +
+> + =C2=A0 =C2=A0 =C2=A0 return 0;
+> +}
 
-The major change in this release is the removal of modemconf plugin.
-This plugin has been deprecated for some time and we decided it was time
-to finally remove it.  If you were using modemconf along with phonesim,
-the phonesim plugin now takes over this responsibility.  The
-configuration file format for this case remains almost unchanged, but
-has been moved to phonesim.conf.  For other users of modemconf, please
-switch to udev or write a dedicated plugin.
-
-Another major change is support for multiple active GPRS contexts.  This
-feature has been lightly tested on MBM and IFX modems, please report
-back any issues.
-
-Finally several crashing bugs were fixed and IFX support for GPRS
-connections was further stabilized.
-
-ChangeLog:
-- Fix issue with sim_fs_op_error handling.
-- Fix issue with not handling GPRS context driver failures.
-- Add support for multiple GPRS context activations.
-- Add support for deactivating all GPRS contexts.
-- Add support for configuring MMS context settings.
-- Add support for barred dialing indication property.
-- Add support for fast dormancy settings property.
-- Add support for handling Play Tone proactive command.
-- Add support for indicating handled STK proactive commands.
-- Add support for two active GPRS contexts with MBM modems.
-- Add support for time zone reporting with Ericsson MBM modems.
-- Add support for detecting IFX modems stuck in multiplexer mode.
-- Add support for IFX using up to three active GPRS contexts.
-- Add support for IFX device shutdown when DLC disconnects.
-- Add support for Phonesim specific configuration files.
-- Remove deprecated modem.conf support.
-
-The signed tarballs for oFono 0.34 can be found on kernel.org [1] [2].
-
-[1] http://www.kernel.org/pub/linux/network/ofono/ofono-0.34.tar.bz2
-[2] http://www.kernel.org/pub/linux/network/ofono/ofono-0.34.tar.bz2.sign
+Sigh, I realize I have a potential leak on gerr above. I'll wait for
+more review comments from you,
+and resubmit later.
 
 Regards,
--Denis
+Sjur
 
---===============5068509123118723341==--
+--===============2019957513968868002==--
 
