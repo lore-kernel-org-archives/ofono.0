@@ -1,156 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============0904244343930345574=="
+Content-Type: multipart/mixed; boundary="===============5068509123118723341=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Huawei EM 770 not working properly
-Date: Thu, 04 Nov 2010 13:17:41 +0100
-Message-ID: <1288873061.9615.90.camel@aeonflux>
-In-Reply-To: <1288869292.10276.10.camel@par-r81vxc7.par.novell.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: [ANNOUNCE] oFono 0.34
+Date: Thu, 04 Nov 2010 08:53:27 -0500
+Message-ID: <4CD2BAD7.8080207@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0904244343930345574==
+--===============5068509123118723341==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Frederic,
+Hi Everyone,
 
-> I'm trying to get ofono working properly with integrated 3G card on my
-> EEE PC.
-> =
+oFono 0.34 is out. This release is a mixed stabilization and development
+release.
 
-> Card is Huawei EM 770 (12d1:1001).
-> =
+The major change in this release is the removal of modemconf plugin.
+This plugin has been deprecated for some time and we decided it was time
+to finally remove it.  If you were using modemconf along with phonesim,
+the phonesim plugin now takes over this responsibility.  The
+configuration file format for this case remains almost unchanged, but
+has been moved to phonesim.conf.  For other users of modemconf, please
+switch to udev or write a dedicated plugin.
 
-> I'm testing with ofono 0.34.
-> =
+Another major change is support for multiple active GPRS contexts.  This
+feature has been lightly tested on MBM and IFX modems, please report
+back any issues.
 
-> so far, the modem is correctly detected :
-> =
+Finally several crashing bugs were fixed and IFX support for GPRS
+connections was further stabilized.
 
-> list-modem returns :
-> [ /huawei0 ]
->  Features =3D sim
->  Powered =3D 1
->  Interfaces =3D org.ofono.SimManager
->  Online =3D 0
->  Model =3D EM770
->  Manufacturer =3D huawei
->  Serial =3D ....
->  Revision =3D 11.104.16.12.00
->  [ org.ofono.SimManager ] =
+ChangeLog:
+- Fix issue with sim_fs_op_error handling.
+- Fix issue with not handling GPRS context driver failures.
+- Add support for multiple GPRS context activations.
+- Add support for deactivating all GPRS contexts.
+- Add support for configuring MMS context settings.
+- Add support for barred dialing indication property.
+- Add support for fast dormancy settings property.
+- Add support for handling Play Tone proactive command.
+- Add support for indicating handled STK proactive commands.
+- Add support for two active GPRS contexts with MBM modems.
+- Add support for time zone reporting with Ericsson MBM modems.
+- Add support for detecting IFX modems stuck in multiplexer mode.
+- Add support for IFX using up to three active GPRS contexts.
+- Add support for IFX device shutdown when DLC disconnects.
+- Add support for Phonesim specific configuration files.
+- Remove deprecated modem.conf support.
 
->   Present =3D 0
-> =
+The signed tarballs for oFono 0.34 can be found on kernel.org [1] [2].
 
-> And trying to put it "online" using online-modem returns
-> "org.ofono.Error.NotAvailable"
-> =
+[1] http://www.kernel.org/pub/linux/network/ofono/ofono-0.34.tar.bz2
+[2] http://www.kernel.org/pub/linux/network/ofono/ofono-0.34.tar.bz2.sign
 
-> Logs are as follow :
-> =
+Regards,
+-Denis
 
-> ofonod[1493]: plugins/bluetooth.c:manager_properties_cb() =
-
-> ofonod[1493]: plugins/bluetooth.c:parse_adapters() =
-
-> ofonod[1493]: plugins/bluetooth.c:parse_adapters() Calling GetProperties
-> on /org/bluez/465/hci0
-> ofonod[1493]: plugins/bluetooth.c:parse_devices() =
-
-> ofonod[1493]: plugins/bluetooth.c:adapter_properties_cb() Adapter
-> Address: 00:25:D3:A2:D1:09, Path: /org/bluez/465/hci0
-> ofonod[1493]: plugins/huawei.c:huawei_enable() 0x941b210
-> ofonod[1493]: plugins/huawei.c:open_device() Modem /dev/ttyUSB0
-> ofonod[1493]: plugins/huawei.c:open_device() Pcui /dev/ttyUSB2
-> ofonod[1493]: plugins/huawei.c:query_sim_state() =
-
-> ofonod[1493]: PCUI: > ATE0 +CMEE=3D1\r
-> ofonod[1493]: PCUI: < \r\nOK\r\n
-> ofonod[1493]: PCUI: > AT+CFUN=3D1\r
-> ofonod[1493]: PCUI: < \r\nOK\r\n
-> ofonod[1493]: plugins/huawei.c:cfun_enable() =
-
-> ofonod[1493]: PCUI: > AT^SYSINFO\r
-> ofonod[1493]: PCUI: < \r\n^SYSINFO:0,0,0,0,0,,0\r\n\r\nOK\r\n
-> ofonod[1493]: plugins/huawei.c:notify_sim_state() 0
-> ofonod[1493]: plugins/huawei.c:huawei_pre_sim() 0x941b210
-> ofonod[1493]: plugins/huawei.c:query_sim_state() =
-
-> ofonod[1493]: PCUI: > AT^U2DIAG?\r
-> ofonod[1493]: PCUI: < \r\nERROR\r\n
-> ofonod[1493]: PCUI: > AT^GETPORTMODE\r
-> ofonod[1493]: PCUI: < \r\nCOMMAND NOT SUPPORT\r\n
-> ofonod[1493]: PCUI: > AT^USSDMODE=3D?\r
-> ofonod[1493]: PCUI: < \r\nCOMMAND NOT SUPPORT\r\n
-> ofonod[1493]: PCUI: > AT^CVOICE=3D?\r
-> ofonod[1493]: PCUI: < \r\n^CVOICE:(1)\r\n\r\nOK\r\n
-> ofonod[1493]: PCUI: > AT^SYSINFO\r
-> ofonod[1493]: PCUI: < \r\n^SYSINFO:0,0,0,0,0,,0\r\n\r\nOK\r\n
-> ofonod[1493]: plugins/huawei.c:notify_sim_state() 0
-> ofonod[1493]: PCUI: > AT+CGMI\r
-> ofonod[1493]: PCUI: < \r\nhuawei\r\n\r\nOK\r\n
-> ofonod[1493]: PCUI: > AT^CVOICE?\r
-> ofonod[1493]: PCUI: < \r\n^CVOICE:1\r\n\r\nOK\r\n
-> ofonod[1493]: PCUI: > AT+CGMM\r
-> ofonod[1493]: PCUI: < \r\nEM770\r\n\r\nOK\r\n
-> ofonod[1493]: PCUI: > AT+CGMR\r
-> ofonod[1493]: PCUI: < \r\n11.104.16.12.00\r\n\r\nOK\r\n
-> ofonod[1493]: PCUI: > AT+CGSN\r
-> ofonod[1493]: PCUI: < \r\n355093024527802\r\n\r\nOK\r\n
-> ofonod[1493]: PCUI: < \r\n^RSSI:23\r\n\r\n^SRVST:1\r\n\r\n^MODE:5,4\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> ofonod[1493]: PCUI: < \r\n^BOOT:24527802,0,0,0,24\r\n
-> =
-
-> Any idea ?
-
-how long did you wait here? Sometimes the Huawei firmware needs a long
-time to detect if the SIM card is actually ready.
-
-Also it could be that the SIM card detection is broken with EM770. I
-would need to dig though the manual again.
-
-So the ^SRVST:1 means we are in Restricted Service mode. Whatever that
-actually means.
-
-The ^MODE:5,4 means we are in WCDMA mode (UMTS) without HSPA.
-
-So what I am missing is a ^SIMST notification telling us about the
-current SIM state. So it could be that this firmware just does not send
-one at all. So we might have to query AT+CPIN to figure out if the SIM
-card is indeed ready.
-
-Or the CFUN handling in this firmware is broken. I have one of these
-cards where it is the case as well. Behaves really wrongly, but I have
-had no time to look into it.
-
-Regards
-
-Marcel
-
-
-
---===============0904244343930345574==--
+--===============5068509123118723341==--
 
