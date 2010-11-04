@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============3601782400543206232=="
+Content-Type: multipart/mixed; boundary="===============6770462766939604044=="
 MIME-Version: 1.0
 From: Frederic Crozat <fcrozat@novell.com>
 Subject: Huawei EM 770 not working properly
-Date: Thu, 04 Nov 2010 12:14:52 +0100
-Message-ID: <1288869292.10276.10.camel@par-r81vxc7.par.novell.com>
+Date: Thu, 04 Nov 2010 12:15:31 +0100
+Message-ID: <1288869331.10035.0.camel@par-r81vxc7.par.novell.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3601782400543206232==
+--===============6770462766939604044==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -122,5 +122,6 @@ Frederic Crozat <fcrozat@novell.com>
 Novell
 
 
---===============3601782400543206232==--
+
+--===============6770462766939604044==--
 
