@@ -1,59 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============4811498348429047323=="
+Content-Type: multipart/mixed; boundary="===============0480532536087361764=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC 1/3] doc: addidng documentation for basic assisted gps
-Date: Fri, 05 Nov 2010 20:47:12 +0100
-Message-ID: <1288986432.9615.132.camel@aeonflux>
-In-Reply-To: <4CD459DB.1030705@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] sim: Check SIM pin status after changing pin.
+Date: Fri, 05 Nov 2010 15:12:35 -0500
+Message-ID: <4CD46533.6090404@gmail.com>
+In-Reply-To: <AANLkTimcZCHkLiyiwKOOxnT_kC1cAwS7J=A8-SaeozRg@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4811498348429047323==
+--===============0480532536087361764==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Marit,
 
-> >  doc/assistedgps-manager-api.txt |  114 +++++++++++++++++++++++++++++++=
-++++++++
-> >  1 files changed, 114 insertions(+), 0 deletions(-)
-> >  create mode 100644 doc/assistedgps-manager-api.txt
-> > =
+Just a gentle reminder not to top-post on this mailing list.
 
-> > diff --git a/doc/assistedgps-manager-api.txt b/doc/assistedgps-manager-=
-api.txt
-> > new file mode 100644
-> > index 0000000..b09c8b1
-> > --- /dev/null
-> > +++ b/doc/assistedgps-manager-api.txt
-> > @@ -0,0 +1,114 @@
-> > +AgpsManager hierarchy
-> > +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > +
-> > +Service		org.ofono
-> > +Interface	org.ofono.AgpsManager
+On 11/05/2010 09:25 AM, Marit Sofie Henriksen wrote:
+> Hi Denis.
+> OK, I can see that this approach was rather too simplistic... Maybe
+> checking the returned CME error would be a better idea?
+> I=E2=80=99m a bit unsure how (or if) to proceed with this. As this is in =
+the
+> core, and not our driver, it might be more on your table? If you think
+> it is important.
 > =
 
-> So in general I'm currently against introducing this API as oFono
-> official API.  I suggest prefixing this with an IFX specific identifier.
->  Maybe modem.ifx.AgpsManager.
 
-I would actually go one step further and call this com.infineon.Agps or
-something like that.
+Well this is definitely something we need to get right.  So feel free to
+send a patch to the TODO file adding this task.  The description is
+basically what I outlined in my earlier reply.  E.g. if change_pin
+fails, we should check PIN state.  If it is anything other than READY,
+tear the state back to pre_sim state and set the modem offline.
 
-As I stated this many times, before we make this a generic oFono API, we
-need at least three types of modems that support this kind of feature
-and find the common API.
+this task can go through the regular task lifecycle.  If you guys feel
+up to it, this is certainly something you can work on / contribute.
 
-For me this is clearly IFX and ISI right now. And it looks to me that
-Sjur has also shown interested, so the third one might be STE/MBM.
+Regards,
+-Denis
 
-Regards
-
-Marcel
-
-
-
---===============4811498348429047323==--
+--===============0480532536087361764==--
 
