@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6911359772444695664=="
+Content-Type: multipart/mixed; boundary="===============2990299590242503896=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC 1/3] doc: addidng documentation for basic assisted gps
-Date: Fri, 05 Nov 2010 14:24:11 -0500
-Message-ID: <4CD459DB.1030705@gmail.com>
-In-Reply-To: <1288979728-3369-2-git-send-email-robertino.benis@intel.com>
+Subject: Re: [RFC 2/3] agps: adding agps related functions
+Date: Fri, 05 Nov 2010 14:46:37 -0500
+Message-ID: <4CD45F1D.6070507@gmail.com>
+In-Reply-To: <1288979728-3369-3-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6911359772444695664==
+--===============2990299590242503896==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,169 +17,212 @@ Hi Robertino,
 
 On 11/05/2010 12:55 PM, Robertino Benis wrote:
 > ---
->  doc/assistedgps-manager-api.txt |  114 +++++++++++++++++++++++++++++++++=
+>  include/agps.h |  157 ++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++++
->  1 files changed, 114 insertions(+), 0 deletions(-)
->  create mode 100644 doc/assistedgps-manager-api.txt
+>  1 files changed, 157 insertions(+), 0 deletions(-)
+>  create mode 100644 include/agps.h
 > =
 
-> diff --git a/doc/assistedgps-manager-api.txt b/doc/assistedgps-manager-ap=
-i.txt
+> diff --git a/include/agps.h b/include/agps.h
 > new file mode 100644
-> index 0000000..b09c8b1
+> index 0000000..54f9b53
 > --- /dev/null
-> +++ b/doc/assistedgps-manager-api.txt
-> @@ -0,0 +1,114 @@
-> +AgpsManager hierarchy
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +Service		org.ofono
-> +Interface	org.ofono.AgpsManager
-
-So in general I'm currently against introducing this API as oFono
-official API.  I suggest prefixing this with an IFX specific identifier.
- Maybe modem.ifx.AgpsManager.
-
-> +Object path	[variable prefix]/{modem0,modem1,...}
-> +
-> +Methods		dict GetProperties()
-> +
-> +			Returns properties for the modem object. See
-> +			the properties section for available properties.
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +
-> +		void SetProperty(string name, variant value)
-> +
-> +			Changes the value of the specified property. Only
-> +			properties that are listed as read-write are
-> +			changeable. On success a PropertyChanged signal
-> +			will be emitted.
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +					 [service].Error.DoesNotExist
-> +
-> +		void SendLCSFrame(string frametype, string framedata)
-
-oFono is strict CamelCase, even for abbreviations.  You do this
-correctly above (AgpsManager) but not here.  Please be consistent.  And
-it might be a good idea to not have abbreviations at all.  What does LCS
-stand for in this case?
-
-> +
-> +			Send a LCS position protocol frame to the Mobile
-> +			Network. The LCS frame typically represents a
-> +			Position Response.
-> +
-> +			Valid frametypes are:
-> +				rrlp_measure_position_response
-> +				rrc_measurement_report
-> +
-> +			The raw frame data is formatted as the concatenated
-> +			sequence of the two digit hexadecimal representation
-> +			of each of its octets. Example: "00FC2345"
-
-Sending hex-encoded data screams as being non-portable and AT command
-modem specific.  Is this really your intent here?
-
-> +
-> +		void RequestFineTimeInjection(string rat, uint16 pulselength)
-> +
-> +			Request modem to generate a fine time injection
-> +			pulse. pulselength is the duration of the pulse
-> +			expressed in radio frames.
-> +
-> +			rat specifies the access technology used to derive
-> +			the pulse from and can be "gsm" or "umts".
-> +			If the requested access technology is not currently
-> +			in use an error is returned.
-
-It seems to me that making the upper layers pass in the rat as a
-parameter to this function is a pretty bad idea.  You should either have
-the atom figure this out if it can (e.g. by using netreg atom) or have
-the driver take care of this directly.
-
-> +
-> +Signals		PropertyChanged(string name, variant value)
-> +
-> +			This signal indicates a changed value of the given
-> +			property.
-> +
-> +		IncomingLCSFrame(string frametypes, string framedata)
-> +
-> +			LCS positioning protocol frame received from the
-> +			Mobile Network.
-> +
-> +			Valid frametypes for the LCS frame are:
-> +				rrlp_assistance_data
-> +				rrlp_measure_position_request
-> +				rrc_assistance_data_delivery
-> +				rrc_measurement_control
-> +
-> +			Note that position/measurement requests can include
-> +			assistance data as well.
-> +
-> +			The raw frame data is formatted as the concatenated
-> +			sequence of the two digit hexadecimal representation
-> +			of each of its octets. Example: "00FC2345"
-
-Same comment as above about LCS naming and hex-encoded strings.
-
-> +
-> +		FineTimeInjectionNotification(dict radioframenumber)
-> +
-> +			Notification about fine time injection pulse
-> +			generated by modem. The radioframenumber dict
-> +			is defined as follow:
+> +++ b/include/agps.h
+> @@ -0,0 +1,157 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
 > +
 
-Why is this returned in a separate signal as opposed to a reply to the
-RequestFineTimeInjection method call?
+Please follow _all_ coding conventions in oFono.  They're not optional
+and we actually are pretty consistent across the board.  Most of the
+common 'gotcha's are documented in doc/coding-style.txt.
 
-> +			string AccessTechnology
-> +				"gsm" or "umts"
-> +			=
+> +#ifndef __OFONO_AGPS_H_
+> +#define __OFONO_AGPS_H_
 
-> +			uint32 TdmaFrameNumber (gsm only)
-> +				range 0 - 2715647 (2048*26*51)
-> +
-> +			uint16 TdmaTimeslot (gsm only)
-> +				range 0 - 7
-> +
-> +			uint16 TimeslotBit (gsm only)
-> +				range 0 - 156
-> +
-> +			uint16 TimingAdvance (gsm only)
-> +				range 0 - 63
-> +
-> +			uint16 BcchArfcn (gsm only)
-> +				range 0 - 1023
-> +
-> +			uint16 Bsic (gsm only)
-> +				range 0 - 64
-> +
-> +			uint16 Sfn (umts only)
-> +				range 0 - 4095
-> +
-> +			string RrcState (umts only)
-> +				"cell_dch", "cell_fach", "cell_pch" or
-> +				"ura_pch"
-> +			=
+That should be __OFONO_AGPS_H
 
-> +			uint16 RoundTripTime (umts only)
-> +				range 0 - 32766
 > +
+> +#ifdef __cplusplus
+> +extern "C" {
+> +#endif
 > +
-> +Properties	boolean LcsEnabled [readwrite]
+> +#include <ofono/types.h>
 > +
-> +			If LcsEnabled is False, then no LCS positioning
-> +			protocol frames are received.
+> +enum ofono_lcs_frame_type {
+> +	RRLP_ASSISTANCE_DATA =3D 0,		/* from modem */
+> +	/* Position request can include assistance data as well */
+> +	RRLP_MEASURE_POSITION_REQUEST =3D 1,	/* from modem */
+> +	RRLP_MEASURE_POSITION_RESPONSE =3D 2,	/* from GPS */
+> +	RRC_ASSISTANCE_DATA_DELIVERY =3D 3,	/* from modem */
+> +	/* Measurement control can include assistance data as well */
+> +	RRC_MEASUREMENT_CONTROL =3D 4,		/* from modem */
+> +	RRC_MEASUREMENT_REPORT =3D 5,		/* from GPS */
+> +};
+> +
 
-In general it is a bad idea to have properties with abbreviations in
-them.  What does LCS stand for?
+Please see doc/coding-style.txt Section M11
+
+> +enum ofono_access_technology {
+> +	RADIO_ACCESS_TECHNOLOGY_GSM =3D 0,		/* GSM */
+> +	RADIO_ACCESS_TECHNOLOGY_UMTS =3D 1,		/* UMTS */
+> +};
+> +
+
+Please see doc/coding-style.txt Section M11
+
+> +enum ofono_rrc_state {
+> +	RRC_CELL_PCH =3D 0,
+> +	RRC_CELL_FACH =3D 1,
+> +	RRC_CELL_DCH =3D 2,
+> +	RRC_URA_PCH =3D 3,
+> +};
+> +
+
+Please see doc/coding-style.txt Section M11
+
+> +struct ofono_lcs_frame {
+> +	enum ofono_lcs_frame_type lcs_frame_type;
+> +	int frame_length;	/* size of raw_frame in bytes */
+> +	unsigned char  *raw_frame;
+> +};
+> +
+> +struct ofono_lcs_gsm_fn {
+> +	int TDMA_frame_number;	/* range 0 - 2715647 (2048*26*51) */
+> +	int TDMA_timeslot;		/* range 0 - 7 */
+> +	int timeslot_bit;		/* range 0 - 156 */
+> +	int timing_advance;		/* range 0 - 63 */
+> +	int bcch_arfcn;			/* range 0 - 1023 */
+> +	int bsic;				/* range 0 - 64 */
+> +};
+
+Try to keep the same indentation level for comments
+
+> +
+> +struct ofono_lcs_utran_fn {
+> +	int sfn;				/* range 0 - 4095 */
+> +	int rrc_state;			/* enum ofono_rrc_state */
+> +	int round_trip_time;	/* range 0 - 32766 */
+> +};
+> +
+> +struct ofono_lcs_radio_fn {
+> +	int radio_access_technology; /* enum access_technology */
+
+You define an enum for this, but now use an int?
+
+> +	union {
+> +		struct ofono_lcs_gsm_fn		gsm_frame_number;
+> +		struct ofono_lcs_utran_fn	utran_frame_number;
+> +	};
+> +};
+> +
+> +struct ofono_agps;
+> +
+> +typedef void (*ofono_agps_send_lcs_frame_cb_t)(const struct ofono_error =
+*error,
+> +				void *data);
+> +typedef void (*ofono_agps_receive_lcs_frame_cb_t)(
+> +				const struct ofono_error *error,
+> +				void *data);
+> +typedef void (*ofono_agps_inject_time_cb_t)(const struct ofono_error *er=
+ror,
+> +				struct ofono_lcs_radio_fn *radio_frame_number,
+> +				void *data);
+> +
+> +	/*
+> +	 * AGPS related functions, including LCS frame forwarding and
+> +	 * fine time injection
+> +	 */
+> +struct ofono_agps_driver {
+> +	const char *name;
+> +	int (*probe)(struct ofono_agps *agps, unsigned int vendor,
+> +			void *data);
+> +	void (*remove)(struct ofono_agps *agps);
+> +
+> +	/* The GPS manager can configure the modem to notify Assistance Data and
+> +	 * Position Requests from the Mobile Network by setting the LcsEnabled
+> +	 * status to true. If false, no notifications are sent from modem.
+> +	 */
+> +	void (*receive_lcs_frames)(struct ofono_agps *agps, int enabled,
+> +			ofono_agps_receive_lcs_frame_cb_t cb, void *data);
+> +
+> +	/* Assistance Data and Position Requests from the Mobile Network are
+> +	 * signalled via the ofono_agps_lcs_frame_notify function and the
+> +	 * oFono core to an external GPS manager. This GPS manager can reply
+> +	 * to Position Requests with one or more Position Responses which
+> +	 * are then send back to the modem via the send_lcs_frame function.
+> +	 */
+> +	void (*send_lcs_frame)(struct ofono_agps *agps,
+> +			struct ofono_lcs_frame *frame,
+> +			ofono_agps_send_lcs_frame_cb_t cb, void *data);
+> +
+> +	/* The GPS manager can ask the modem to generate a HW pulse (time
+> +	 * stamp) with a defined length and the modem replies indicates when
+> +	 * it generates the pulse. But as the modem has no precise idea of
+> +	 * Universal Time, it indicates at which radio frame number it
+> +	 * generated the pulse. The GPS manager which knows the link between
+> +	 * Universal Time and the Radio Frame number knows very precisely at
+> +	 * what time the pulse was generated and its duration.
+> +	 *
+> +	 * Timing accuracy is typically a few microseconds.
+> +	 */
+> +	void (*inject_time)(struct ofono_agps *agps,
+> +	int radio_access_technology, /* enum access_technology */
+> +	int pulse_length, /* duration of pulse in radio slots */
+> +	ofono_agps_inject_time_cb_t cb, void *data);
+> +};
+> +
+> +int ofono_agps_driver_register(const struct ofono_agps_driver *d);
+> +void ofono_agps_driver_unregister(const struct ofono_agps_driver *d);
+> +
+> +struct ofono_agps *ofono_agps_create(struct ofono_modem *modem,
+> +					unsigned int vendor, const char *driver,
+> +					void *data);
+> +
+> +void ofono_agps_register(struct ofono_agps *agps);
+> +void ofono_agps_remove(struct ofono_agps *agps);
+> +
+> +void ofono_agps_set_data(struct ofono_agps *agps, void *data);
+> +void *ofono_agps_get_data(struct ofono_agps *agps);
+> +
+> +void ofono_agps_lcs_frame_notify(struct ofono_agps *agps,
+> +			struct ofono_lcs_frame frame);
+> +
+> +#ifdef __cplusplus
+> +}
+> +#endif
+> +
+> +#endif /* __OFONO_AGPS_H */
+
+In general the feeling I have right now is that this API is not ready
+for inclusion into the core.  It seems too IFX specific and does not
+follow any published standard (e.g. 27.007).
+
+So my guidance would be to implement this API in the IFX drivers /
+plugin first.  We can then see whether / what other hardware
+manufacturers can support such an API.
 
 Regards,
 -Denis
 
---===============6911359772444695664==--
+--===============2990299590242503896==--
 
