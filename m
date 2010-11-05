@@ -1,492 +1,171 @@
-Content-Type: multipart/mixed; boundary="===============7342164882016187561=="
+Content-Type: multipart/mixed; boundary="===============2249944108774278247=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCH v4 1/2] stemodem: Add RTNL functionality managing CAIF Network
- Interfaces.
-Date: Fri, 05 Nov 2010 15:24:34 +0100
-Message-ID: <1288967075-17434-1-git-send-email-sjurbren@gmail.com>
+From: Marit Sofie Henriksen <maritsofie.henriksen8@gmail.com>
+Subject: Re: [PATCH] sim: Check SIM pin status after changing pin.
+Date: Fri, 05 Nov 2010 15:25:45 +0100
+Message-ID: <AANLkTimcZCHkLiyiwKOOxnT_kC1cAwS7J=A8-SaeozRg@mail.gmail.com>
+In-Reply-To: <4CD02CC6.30201@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7342164882016187561==
+--===============2249944108774278247==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
-
----
-
-Hi Marcel.
-
-I'm sorry about the formatting for the v3 version of this patch.
-I used git send-email via my gmail account, and ended up with base64 =
-
-MIME content encoding. I dont' know what went wrong :-(
-
-I think I have closed most of your review comments so far. I kept using
-sendto as I don't quite get how to use g_io_channel_write_chars for rtnl so=
-cket.
-(I think connman is using sendto as well.) I still set g_caif_devices =3D N=
-ULL just in
-case someone in future does init/exit more than once.
-
-The patch has been tested activating/deactivation and I have run valgrind s=
-howing
-no leaks on some unit tests (not yet upstreamed).
-
-Regards,
-Sjur
-
- Makefile.am                  |    2 +
- drivers/stemodem/caif_rtnl.c |  379 ++++++++++++++++++++++++++++++++++++++=
-++++
- drivers/stemodem/caif_rtnl.h |   29 ++++
- 3 files changed, 410 insertions(+), 0 deletions(-)
- create mode 100644 drivers/stemodem/caif_rtnl.c
- create mode 100644 drivers/stemodem/caif_rtnl.h
-
-diff --git a/Makefile.am b/Makefile.am
-index 05082de..f163b0a 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -226,6 +226,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/stemodem/stemodem.c \
- 			drivers/stemodem/voicecall.c \
- 			drivers/stemodem/radio-settings.c \
-+			drivers/stemodem/caif_rtnl.c \
-+			drivers/stemodem/caif_rtnl.h \
- 			drivers/stemodem/gprs-context.c \
- 			drivers/stemodem/caif_socket.h \
- 			drivers/stemodem/if_caif.h
-diff --git a/drivers/stemodem/caif_rtnl.c b/drivers/stemodem/caif_rtnl.c
-new file mode 100644
-index 0000000..ad58c93
---- /dev/null
-+++ b/drivers/stemodem/caif_rtnl.c
-@@ -0,0 +1,379 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010 ST-Ericsson AB.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <string.h>
-+#include <unistd.h>
-+#include <errno.h>
-+#include <net/if.h>
-+#include <net/if_arp.h>
-+#include <fcntl.h>
-+#include <linux/rtnetlink.h>
-+
-+#include <glib.h>
-+
-+#include <ofono/log.h>
-+
-+#include "if_caif.h"
-+#include "caif_rtnl.h"
-+
-+#define NLMSG_TAIL(nmsg) \
-+	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
-+
-+struct iplink_req {
-+	struct nlmsghdr n;
-+	struct ifinfomsg i;
-+	char pad[1024];
-+
-+	int request_id;
-+	int type;
-+	int conn_id;
-+	gpointer user_data;
-+	gboolean loop_enabled;
-+
-+	char ifname[IF_NAMESIZE];
-+	int  ifindex;
-+	caif_rtnl_create_cb_t callback;
-+};
-+
-+static GSList *pending_requests;
-+static guint32 rtnl_seqnr;
-+static guint  rtnl_watch;
-+static GIOChannel *channel;
-+
-+static gboolean get_ifname(struct ifinfomsg *msg, int bytes,
-+				const char **ifname)
-+{
-+	struct rtattr *attr;
-+
-+	for (attr =3D IFLA_RTA(msg); RTA_OK(attr, bytes);
-+		attr =3D RTA_NEXT(attr, bytes)) {
-+
-+		if (attr->rta_type =3D=3D IFLA_IFNAME &&
-+				ifname !=3D NULL) {
-+
-+			*ifname =3D RTA_DATA(attr);
-+			return TRUE;
-+		}
-+	}
-+
-+	return FALSE;
-+}
-+
-+static void store_newlink_param(struct iplink_req *req, unsigned short typ=
-e,
-+					int index, unsigned flags,
-+					unsigned change, struct ifinfomsg *msg,
-+					int bytes)
-+{
-+	const char *ifname =3D NULL;
-+
-+	get_ifname(msg, bytes, &ifname);
-+	strncpy(req->ifname, ifname,
-+			sizeof(req->ifname));
-+	req->ifname[sizeof(req->ifname)-1] =3D '\0';
-+	req->ifindex =3D index;
-+}
-+
-+static int send_rtnl_req(struct iplink_req *req)
-+{
-+	struct sockaddr_nl addr;
-+	int sk =3D g_io_channel_unix_get_fd(channel);
-+
-+	memset(&addr, 0, sizeof(addr));
-+	addr.nl_family =3D AF_NETLINK;
-+
-+	return sendto(sk, req, req->n.nlmsg_len, 0,
-+			(struct sockaddr *) &addr, sizeof(addr));
-+}
-+
-+static struct iplink_req *find_request(guint32 seq)
-+{
-+	GSList *list;
-+
-+	for (list =3D pending_requests; list; list =3D list->next) {
-+		struct iplink_req *req =3D list->data;
-+
-+		if (req->n.nlmsg_seq =3D=3D seq)
-+			return req;
-+	}
-+
-+	return NULL;
-+}
-+
-+static void rtnl_client_response(struct iplink_req *req, int result)
-+{
-+
-+	if (req->callback && req->n.nlmsg_type =3D=3D RTM_NEWLINK)
-+		req->callback(result, req->user_data,
-+				req->ifname, req->ifindex);
-+
-+	pending_requests =3D g_slist_remove(pending_requests, req);
-+	g_free(req);
-+}
-+
-+static void parse_rtnl_message(void *buf, size_t len)
-+{
-+	struct ifinfomsg *msg;
-+	struct iplink_req *req;
-+
-+	while (len > 0) {
-+		struct nlmsghdr *hdr =3D buf;
-+
-+		if (!NLMSG_OK(hdr, len))
-+			break;
-+
-+		if (hdr->nlmsg_type =3D=3D RTM_NEWLINK) {
-+			req =3D g_slist_nth_data(pending_requests, 0);
-+			if (req =3D=3D NULL)
-+				break;
-+
-+			msg =3D (struct ifinfomsg *) NLMSG_DATA(hdr);
-+			store_newlink_param(req, msg->ifi_type,
-+					msg->ifi_index, msg->ifi_flags,
-+					msg->ifi_change, msg,
-+					IFA_PAYLOAD(hdr));
-+			rtnl_client_response(req, 0);
-+			return;
-+
-+		} else if (hdr->nlmsg_type =3D=3D NLMSG_ERROR) {
-+			req =3D find_request(hdr->nlmsg_seq);
-+			if (req =3D=3D NULL)
-+				break;
-+
-+			DBG("nlmsg error req");
-+			rtnl_client_response(req, -1);
-+			return;
-+		}
-+
-+		len -=3D hdr->nlmsg_len;
-+		buf +=3D hdr->nlmsg_len;
-+	}
-+}
-+
-+static int add_attribute(struct nlmsghdr *n, int maxlen, int type,
-+				const void *data, int datalen)
-+{
-+	int len =3D RTA_LENGTH(datalen);
-+	struct rtattr *rta;
-+
-+	if ((int)(NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len)) > maxlen) {
-+		DBG("attribute to large for message %d %d %d\n",
-+				n->nlmsg_len, len, maxlen);
-+		return -1;
-+	}
-+
-+	rta =3D NLMSG_TAIL(n);
-+	rta->rta_type =3D type;
-+	rta->rta_len =3D len;
-+	memcpy(RTA_DATA(rta), data, datalen);
-+	n->nlmsg_len =3D NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
-+
-+	return 0;
-+}
-+
-+static int prep_rtnl_newlink_req(struct iplink_req *req)
-+{
-+	char type[] =3D "caif";
-+	struct rtattr *linkinfo;
-+	struct rtattr *data;
-+
-+	req->n.nlmsg_len =3D NLMSG_LENGTH(sizeof(struct ifinfomsg));
-+	req->n.nlmsg_flags =3D NLM_F_REQUEST|NLM_F_CREATE|NLM_F_EXCL;
-+	req->n.nlmsg_type =3D RTM_NEWLINK;
-+	req->n.nlmsg_seq =3D ++rtnl_seqnr;
-+	req->i.ifi_family =3D AF_UNSPEC;
-+
-+	linkinfo =3D NLMSG_TAIL(&req->n);
-+	add_attribute(&req->n, sizeof(*req), IFLA_LINKINFO,
-+			NULL, 0);
-+	add_attribute(&req->n, sizeof(*req), IFLA_INFO_KIND,
-+			type, strlen(type));
-+	data =3D NLMSG_TAIL(&req->n);
-+	add_attribute(&req->n, sizeof(*req), IFLA_INFO_DATA,
-+			NULL, 0);
-+
-+	switch (req->type) {
-+
-+	case IFLA_CAIF_IPV4_CONNID:
-+		add_attribute(&req->n, sizeof(*req),
-+				IFLA_CAIF_IPV4_CONNID, &req->conn_id,
-+				sizeof(req->conn_id));
-+		break;
-+
-+	case IFLA_CAIF_IPV6_CONNID:
-+		add_attribute(&req->n, sizeof(*req),
-+				IFLA_CAIF_IPV6_CONNID, &req->conn_id,
-+				sizeof(req->conn_id));
-+		break;
-+
-+	case __IFLA_CAIF_UNSPEC:
-+	case IFLA_CAIF_LOOPBACK:
-+	case __IFLA_CAIF_MAX:
-+		DBG("unsupported linktype");
-+		return -EINVAL;
-+	}
-+
-+	if (req->loop_enabled) {
-+		int loop =3D 1;
-+		add_attribute(&req->n, sizeof(*req),
-+				IFLA_CAIF_LOOPBACK, &loop, sizeof(loop));
-+	}
-+
-+	data->rta_len =3D (void *)NLMSG_TAIL(&req->n) - (void *)data;
-+	linkinfo->rta_len =3D (void *)NLMSG_TAIL(&req->n) - (void *)linkinfo;
-+
-+	return 0;
-+}
-+
-+static void prep_rtnl_dellink_req(struct iplink_req *req, int ifindex)
-+{
-+	req->n.nlmsg_len =3D NLMSG_LENGTH(sizeof(struct ifinfomsg));
-+	req->n.nlmsg_flags =3D NLM_F_REQUEST|NLM_F_CREATE|NLM_F_EXCL;
-+	req->n.nlmsg_type =3D RTM_DELLINK;
-+	req->n.nlmsg_seq =3D ++rtnl_seqnr;
-+	req->i.ifi_family =3D AF_UNSPEC;
-+	req->i.ifi_index =3D ifindex;
-+}
-+
-+static gboolean netlink_event(GIOChannel *chan,
-+				GIOCondition cond, gpointer data)
-+{
-+	unsigned char buf[4096];
-+	gsize len;
-+	GIOError err;
-+
-+	if (cond & (G_IO_NVAL | G_IO_HUP | G_IO_ERR)) {
-+		rtnl_watch =3D 0;
-+		return FALSE;
-+	}
-+
-+	memset(buf, 0, sizeof(buf));
-+
-+	err =3D g_io_channel_read(chan, (gchar *) buf, sizeof(buf), &len);
-+	if (err) {
-+		if (err =3D=3D G_IO_ERROR_AGAIN)
-+			return TRUE;
-+		rtnl_watch =3D 0;
-+		return FALSE;
-+	}
-+
-+	parse_rtnl_message(buf, len);
-+
-+	return TRUE;
-+}
-+
-+int caif_rtnl_init(void)
-+{
-+	struct sockaddr_nl addr;
-+	int sk, err;
-+
-+	sk =3D socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
-+	if (sk < 0)
-+		return sk;
-+
-+	memset(&addr, 0, sizeof(addr));
-+	addr.nl_family =3D AF_NETLINK;
-+	addr.nl_groups =3D RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV4_ROUTE;
-+
-+	err =3D bind(sk, (struct sockaddr *) &addr, sizeof(addr));
-+	if (err < 0) {
-+		close(sk);
-+		return err;
-+	}
-+
-+	channel =3D g_io_channel_unix_new(sk);
-+	g_io_channel_set_flags(channel, G_IO_FLAG_NONBLOCK, NULL);
-+	g_io_channel_set_close_on_unref(channel, TRUE);
-+
-+	rtnl_watch =3D g_io_add_watch(channel,
-+				G_IO_IN | G_IO_NVAL | G_IO_HUP | G_IO_ERR,
-+				netlink_event, NULL);
-+	pending_requests =3D NULL;
-+
-+	return 0;
-+}
-+
-+void caif_rtnl_exit(void)
-+{
-+	GSList *list;
-+
-+	if (rtnl_watch > 0)
-+		g_source_remove(rtnl_watch);
-+
-+	g_io_channel_unref(channel);
-+
-+	for (list =3D pending_requests; list; list =3D list->next) {
-+		struct iplink_req *req =3D list->data;
-+		g_free(req);
-+	}
-+
-+	g_slist_free(pending_requests);
-+}
-+
-+
-+int caif_rtnl_create_interface(gpointer user_data, int type, int connid,
-+		gboolean loop, caif_rtnl_create_cb_t cb)
-+{
-+	int err;
-+	struct iplink_req *req;
-+
-+	req =3D g_try_new0(struct iplink_req, 1);
-+	if (req =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	req->user_data =3D user_data;
-+	req->type =3D type;
-+	req->conn_id =3D connid;
-+	req->loop_enabled =3D loop;
-+	req->callback =3D cb;
-+
-+	err =3D prep_rtnl_newlink_req(req);
-+	if (err < 0)
-+		goto error;
-+
-+	err =3D send_rtnl_req(req);
-+	if (err < 0)
-+		goto error;
-+
-+	pending_requests =3D g_slist_append(pending_requests, req);
-+	return 0;
-+error:
-+	g_free(req);
-+	return err;
-+
-+}
-+
-+int caif_rtnl_delete_interface(int ifid)
-+{
-+	struct iplink_req req;
-+	int err;
-+	memset(&req, 0, sizeof(req));
-+	prep_rtnl_dellink_req(&req, ifid);
-+
-+	err =3D send_rtnl_req(&req);
-+	if (err < 0)
-+		return err;
-+
-+	return 0;
-+}
-diff --git a/drivers/stemodem/caif_rtnl.h b/drivers/stemodem/caif_rtnl.h
-new file mode 100644
-index 0000000..8eb1e5f
---- /dev/null
-+++ b/drivers/stemodem/caif_rtnl.h
-@@ -0,0 +1,29 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010 ST-Ericsson AB.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+typedef void (*caif_rtnl_create_cb_t) (int result, gpointer user_data,
-+		char *ifname, int ifindex);
-+
-+extern int caif_rtnl_create_interface(gpointer user_data, int type, int co=
-nnid,
-+		gboolean loop, caif_rtnl_create_cb_t cb);
-+extern int caif_rtnl_delete_interface(int ifid);
-+
-+extern int caif_rtnl_init(void);
-+extern void caif_rtnl_exit(void);
--- =
-
-1.6.3.3
+Hi Denis.
+OK, I can see that this approach was rather too simplistic... Maybe checking
+the returned CME error would be a better idea?
+I=E2=80=99m a bit unsure how (or if) to proceed with this. As this is in th=
+e core,
+and not our driver, it might be more on your table? If you think it is
+important.
 
 
---===============7342164882016187561==--
+
+Br Marit
+
+
+
+
+2010/11/2 Denis Kenzior <denkenz@gmail.com>
+
+> Hi Marit,
+>
+> On 11/02/2010 10:08 AM, Marit Henriksen wrote:
+> > From: Marit Henriksen <marit.henriksen@stericsson.com>
+> >
+> > When changing pin, it is possible to get in a state where the modem
+> requests puk
+> > (if incorrect pin is entered too many times). Need to check the SIM pin
+> status
+> > to discover this.
+> > ---
+> >  src/sim.c |   15 ++++++++-------
+> >  1 files changed, 8 insertions(+), 7 deletions(-)
+> >
+> > diff --git a/src/sim.c b/src/sim.c
+> > index 699ebe9..b2277c5 100644
+> > --- a/src/sim.c
+> > +++ b/src/sim.c
+> > @@ -628,15 +628,16 @@ static DBusMessage *sim_unlock_pin(DBusConnection
+> *conn, DBusMessage *msg,
+> >  static void sim_change_pin_cb(const struct ofono_error *error, void
+> *data)
+> >  {
+> >       struct ofono_sim *sim =3D data;
+> > +     DBusMessage *reply;
+> >
+> > -     if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> > -             __ofono_dbus_pending_reply(&sim->pending,
+> > -                             __ofono_error_failed(sim->pending));
+> > -             return;
+> > -     }
+> > +     if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR)
+> > +             reply =3D __ofono_error_failed(sim->pending);
+> > +     else
+> > +             reply =3D dbus_message_new_method_return(sim->pending);
+> >
+> > -     __ofono_dbus_pending_reply(&sim->pending,
+> > -
+> dbus_message_new_method_return(sim->pending));
+> > +     __ofono_dbus_pending_reply(&sim->pending, reply);
+> > +
+> > +     sim_pin_check(sim);
+>
+> I don't think that running sim_pin_check is such a good idea.  That
+> function initializes the sim interface when +CPIN returns READY.
+>
+> You also need to tear down the modem state back to pre-sim if the modem
+> asks for a PUK after change pin fails.  That entails removing all
+> post_sim/post_online atoms and bring the modem back to the offline state =
+;)
+>
+> >  }
+> >
+> >  static DBusMessage *sim_change_pin(DBusConnection *conn, DBusMessage
+> *msg,
+>
+> Regards,
+> -Denis
+>
+
+--===============2249944108774278247==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGRpdiBjbGFzcz0iTXNvTm9ybWFsIiBzdHlsZT0iTUFSR0lOOiAwY20gMGNtIDBwdCI+PHNwYW4g
+bGFuZz0iRU4tVVMiIHN0eWxlPSJtc28tYW5zaS1sYW5ndWFnZTogRU4tVVMiPjxmb250IHNpemU9
+IjMiPjxmb250IGZhY2U9IkNhbGlicmkiPkhpIERlbmlzLjwvZm9udD48L2ZvbnQ+PC9zcGFuPjwv
+ZGl2Pgo8ZGl2IGNsYXNzPSJNc29Ob3JtYWwiIHN0eWxlPSJNQVJHSU46IDBjbSAwY20gMHB0Ij48
+c3BhbiBsYW5nPSJFTi1VUyIgc3R5bGU9Im1zby1hbnNpLWxhbmd1YWdlOiBFTi1VUyI+PGZvbnQg
+c2l6ZT0iKzAiPjxmb250IGZhY2U9IkNhbGlicmkiPjxmb250IHNpemU9IjMiPk9LLCBJIGNhbiBz
+ZWUgdGhhdCB0aGlzIGFwcHJvYWNoIHdhcyByYXRoZXIgdG9vIHNpbXBsaXN0aWMuLi4gPC9mb250
+Pjxmb250IHNpemU9IjMiPjxzcGFuIGxhbmc9IkVOLVVTIiBzdHlsZT0ibXNvLWFuc2ktbGFuZ3Vh
+Z2U6IEVOLVVTOyBtc28tYXNjaWktZm9udC1mYW1pbHk6IENhbGlicmk7IG1zby1oYW5zaS1mb250
+LWZhbWlseTogQ2FsaWJyaSI+TWF5YmUgY2hlY2tpbmcgdGhlIHJldHVybmVkIENNRSBlcnJvciB3
+b3VsZCBiZSBhIGJldHRlciBpZGVhPzwvc3Bhbj48L2ZvbnQ+PC9mb250PjwvZm9udD48L3NwYW4+
+PC9kaXY+Cgo8ZGl2IGNsYXNzPSJNc29Ob3JtYWwiIHN0eWxlPSJNQVJHSU46IDBjbSAwY20gMHB0
+Ij48c3BhbiBsYW5nPSJFTi1VUyIgc3R5bGU9Im1zby1hbnNpLWxhbmd1YWdlOiBFTi1VUyI+PC9z
+cGFuPjxzcGFuIGxhbmc9IkVOLVVTIiBzdHlsZT0ibXNvLWFuc2ktbGFuZ3VhZ2U6IEVOLVVTIj48
+Zm9udCBzaXplPSIzIj48Zm9udCBmYWNlPSJDYWxpYnJpIj5Jkm0gYSBiaXQgdW5zdXJlIGhvdyAo
+b3IgaWYpIHRvIHByb2NlZWQgd2l0aCB0aGlzLiBBcyB0aGlzIGlzIGluIHRoZSBjb3JlLCBhbmQg
+bm90IG91ciBkcml2ZXIsIGl0IG1pZ2h0IGJlIG1vcmUgb24geW91ciB0YWJsZT8gSWYgeW91IHRo
+aW5rIGl0IGlzIGltcG9ydGFudC48L2ZvbnQ+PC9mb250Pjwvc3Bhbj48L2Rpdj4KCjxwIGNsYXNz
+PSJNc29Ob3JtYWwiIHN0eWxlPSJNQVJHSU46IDBjbSAwY20gMHB0Ij48c3BhbiBsYW5nPSJFTi1V
+UyIgc3R5bGU9Im1zby1hbnNpLWxhbmd1YWdlOiBFTi1VUyI+PGZvbnQgZmFjZT0iQ2FsaWJyaSIg
+c2l6ZT0iMyI+oDwvZm9udD48L3NwYW4+PC9wPgo8cCBjbGFzcz0iTXNvTm9ybWFsIiBzdHlsZT0i
+TUFSR0lOOiAwY20gMGNtIDBwdCI+PHNwYW4gbGFuZz0iRU4tVVMiIHN0eWxlPSJtc28tYW5zaS1s
+YW5ndWFnZTogRU4tVVMiPjxmb250IHNpemU9IjMiPjxmb250IGZhY2U9IkNhbGlicmkiPkJyIE1h
+cml0PC9mb250PjwvZm9udD48L3NwYW4+PC9wPgo8ZGl2PqA8L2Rpdj4KPGRpdj48YnI+PGJyPqA8
+L2Rpdj4KPGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPjIwMTAvMTEvMiBEZW5pcyBLZW56aW9yIDxz
+cGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOmRlbmtlbnpAZ21haWwuY29tIj5kZW5r
+ZW56QGdtYWlsLmNvbTwvYT4mZ3Q7PC9zcGFuPjxicj4KPGJsb2NrcXVvdGUgY2xhc3M9ImdtYWls
+X3F1b3RlIiBzdHlsZT0iUEFERElORy1MRUZUOiAxZXg7IE1BUkdJTjogMHB4IDBweCAwcHggMC44
+ZXg7IEJPUkRFUi1MRUZUOiAjY2NjIDFweCBzb2xpZCI+SGkgTWFyaXQsPGJyPgo8ZGl2Pgo8ZGl2
+PjwvZGl2Pgo8ZGl2IGNsYXNzPSJoNSI+PGJyPk9uIDExLzAyLzIwMTAgMTA6MDggQU0sIE1hcml0
+IEhlbnJpa3NlbiB3cm90ZTo8YnI+Jmd0OyBGcm9tOiBNYXJpdCBIZW5yaWtzZW4gJmx0OzxhIGhy
+ZWY9Im1haWx0bzptYXJpdC5oZW5yaWtzZW5Ac3Rlcmljc3Nvbi5jb20iPm1hcml0LmhlbnJpa3Nl
+bkBzdGVyaWNzc29uLmNvbTwvYT4mZ3Q7PGJyPiZndDs8YnI+Jmd0OyBXaGVuIGNoYW5naW5nIHBp
+biwgaXQgaXMgcG9zc2libGUgdG8gZ2V0IGluIGEgc3RhdGUgd2hlcmUgdGhlIG1vZGVtIHJlcXVl
+c3RzIHB1azxicj4KJmd0OyAoaWYgaW5jb3JyZWN0IHBpbiBpcyBlbnRlcmVkIHRvbyBtYW55IHRp
+bWVzKS4gTmVlZCB0byBjaGVjayB0aGUgU0lNIHBpbiBzdGF0dXM8YnI+Jmd0OyB0byBkaXNjb3Zl
+ciB0aGlzLjxicj4mZ3Q7IC0tLTxicj4mZ3Q7IKBzcmMvc2ltLmMgfCCgIDE1ICsrKysrKysrLS0t
+LS0tLTxicj4mZ3Q7IKAxIGZpbGVzIGNoYW5nZWQsIDggaW5zZXJ0aW9ucygrKSwgNyBkZWxldGlv
+bnMoLSk8YnI+CiZndDs8YnI+Jmd0OyBkaWZmIC0tZ2l0IGEvc3JjL3NpbS5jIGIvc3JjL3NpbS5j
+PGJyPiZndDsgaW5kZXggNjk5ZWJlOS4uYjIyNzdjNSAxMDA2NDQ8YnI+Jmd0OyAtLS0gYS9zcmMv
+c2ltLmM8YnI+Jmd0OyArKysgYi9zcmMvc2ltLmM8YnI+Jmd0OyBAQCAtNjI4LDE1ICs2MjgsMTYg
+QEAgc3RhdGljIERCdXNNZXNzYWdlICpzaW1fdW5sb2NrX3BpbihEQnVzQ29ubmVjdGlvbiAqY29u
+biwgREJ1c01lc3NhZ2UgKm1zZyw8YnI+CiZndDsgoHN0YXRpYyB2b2lkIHNpbV9jaGFuZ2VfcGlu
+X2NiKGNvbnN0IHN0cnVjdCBvZm9ub19lcnJvciAqZXJyb3IsIHZvaWQgKmRhdGEpPGJyPiZndDsg
+oHs8YnI+Jmd0OyCgIKAgoCBzdHJ1Y3Qgb2Zvbm9fc2ltICpzaW0gPSBkYXRhOzxicj4mZ3Q7ICsg
+oCCgIERCdXNNZXNzYWdlICpyZXBseTs8YnI+Jmd0Ozxicj4mZ3Q7IC0goCCgIGlmIChlcnJvci0m
+Z3Q7dHlwZSAhPSBPRk9OT19FUlJPUl9UWVBFX05PX0VSUk9SKSB7PGJyPgomZ3Q7IC0goCCgIKAg
+oCCgIKAgX19vZm9ub19kYnVzX3BlbmRpbmdfcmVwbHkoJmFtcDtzaW0tJmd0O3BlbmRpbmcsPGJy
+PiZndDsgLSCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgX19vZm9ub19lcnJvcl9mYWlsZWQo
+c2ltLSZndDtwZW5kaW5nKSk7PGJyPiZndDsgLSCgIKAgoCCgIKAgoCByZXR1cm47PGJyPiZndDsg
+LSCgIKAgfTxicj4mZ3Q7ICsgoCCgIGlmIChlcnJvci0mZ3Q7dHlwZSAhPSBPRk9OT19FUlJPUl9U
+WVBFX05PX0VSUk9SKTxicj4KJmd0OyArIKAgoCCgIKAgoCCgIHJlcGx5ID0gX19vZm9ub19lcnJv
+cl9mYWlsZWQoc2ltLSZndDtwZW5kaW5nKTs8YnI+Jmd0OyArIKAgoCBlbHNlPGJyPiZndDsgKyCg
+IKAgoCCgIKAgoCByZXBseSA9IGRidXNfbWVzc2FnZV9uZXdfbWV0aG9kX3JldHVybihzaW0tJmd0
+O3BlbmRpbmcpOzxicj4mZ3Q7PGJyPiZndDsgLSCgIKAgX19vZm9ub19kYnVzX3BlbmRpbmdfcmVw
+bHkoJmFtcDtzaW0tJmd0O3BlbmRpbmcsPGJyPgomZ3Q7IC0goCCgIKAgoCCgIKAgoCCgIKAgoCCg
+IKAgoCCgIGRidXNfbWVzc2FnZV9uZXdfbWV0aG9kX3JldHVybihzaW0tJmd0O3BlbmRpbmcpKTs8
+YnI+Jmd0OyArIKAgoCBfX29mb25vX2RidXNfcGVuZGluZ19yZXBseSgmYW1wO3NpbS0mZ3Q7cGVu
+ZGluZywgcmVwbHkpOzxicj4mZ3Q7ICs8YnI+Jmd0OyArIKAgoCBzaW1fcGluX2NoZWNrKHNpbSk7
+PGJyPjxicj48L2Rpdj48L2Rpdj5JIGRvbiYjMzk7dCB0aGluayB0aGF0IHJ1bm5pbmcgc2ltX3Bp
+bl9jaGVjayBpcyBzdWNoIGEgZ29vZCBpZGVhLiCgVGhhdDxicj4KZnVuY3Rpb24gaW5pdGlhbGl6
+ZXMgdGhlIHNpbSBpbnRlcmZhY2Ugd2hlbiArQ1BJTiByZXR1cm5zIFJFQURZLjxicj48YnI+WW91
+IGFsc28gbmVlZCB0byB0ZWFyIGRvd24gdGhlIG1vZGVtIHN0YXRlIGJhY2sgdG8gcHJlLXNpbSBp
+ZiB0aGUgbW9kZW08YnI+YXNrcyBmb3IgYSBQVUsgYWZ0ZXIgY2hhbmdlIHBpbiBmYWlscy4goFRo
+YXQgZW50YWlscyByZW1vdmluZyBhbGw8YnI+cG9zdF9zaW0vcG9zdF9vbmxpbmUgYXRvbXMgYW5k
+IGJyaW5nIHRoZSBtb2RlbSBiYWNrIHRvIHRoZSBvZmZsaW5lIHN0YXRlIDspPGJyPgoKPGRpdiBj
+bGFzcz0iaW0iPjxicj4mZ3Q7IKB9PGJyPiZndDs8YnI+Jmd0OyCgc3RhdGljIERCdXNNZXNzYWdl
+ICpzaW1fY2hhbmdlX3BpbihEQnVzQ29ubmVjdGlvbiAqY29ubiwgREJ1c01lc3NhZ2UgKm1zZyw8
+YnI+PGJyPjwvZGl2PlJlZ2FyZHMsPGJyPjxmb250IGNvbG9yPSIjODg4ODg4Ij4tRGVuaXM8YnI+
+PC9mb250PjwvYmxvY2txdW90ZT48L2Rpdj48YnI+Cg==
+
+--===============2249944108774278247==--
 
