@@ -1,15 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3438394849774552845=="
+Content-Type: multipart/mixed; boundary="===============7342164882016187561=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCH v4 2/2] stemodem: Update gprs-context to use rtnl to
- create/remove interfaces.
-Date: Fri, 05 Nov 2010 15:24:35 +0100
-Message-ID: <1288967075-17434-2-git-send-email-sjurbren@gmail.com>
-In-Reply-To: <1288967075-17434-1-git-send-email-sjurbren@gmail.com>
+Subject: [PATCH v4 1/2] stemodem: Add RTNL functionality managing CAIF Network
+ Interfaces.
+Date: Fri, 05 Nov 2010 15:24:34 +0100
+Message-ID: <1288967075-17434-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3438394849774552845==
+--===============7342164882016187561==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,503 +16,477 @@ Content-Transfer-Encoding: quoted-printable
 From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
 ---
- drivers/stemodem/gprs-context.c |  207 +++++++++++++++++++++++++----------=
-----
- 1 files changed, 135 insertions(+), 72 deletions(-)
 
-diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
-t.c
-index 9f59579..4260d31 100644
---- a/drivers/stemodem/gprs-context.c
-+++ b/drivers/stemodem/gprs-context.c
-@@ -28,6 +28,7 @@
- #include <string.h>
- #include <stdlib.h>
- #include <stdio.h>
+Hi Marcel.
+
+I'm sorry about the formatting for the v3 version of this patch.
+I used git send-email via my gmail account, and ended up with base64 =
+
+MIME content encoding. I dont' know what went wrong :-(
+
+I think I have closed most of your review comments so far. I kept using
+sendto as I don't quite get how to use g_io_channel_write_chars for rtnl so=
+cket.
+(I think connman is using sendto as well.) I still set g_caif_devices =3D N=
+ULL just in
+case someone in future does init/exit more than once.
+
+The patch has been tested activating/deactivation and I have run valgrind s=
+howing
+no leaks on some unit tests (not yet upstreamed).
+
+Regards,
+Sjur
+
+ Makefile.am                  |    2 +
+ drivers/stemodem/caif_rtnl.c |  379 ++++++++++++++++++++++++++++++++++++++=
+++++
+ drivers/stemodem/caif_rtnl.h |   29 ++++
+ 3 files changed, 410 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/stemodem/caif_rtnl.c
+ create mode 100644 drivers/stemodem/caif_rtnl.h
+
+diff --git a/Makefile.am b/Makefile.am
+index 05082de..f163b0a 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -226,6 +226,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/stemodem/stemodem.c \
+ 			drivers/stemodem/voicecall.c \
+ 			drivers/stemodem/radio-settings.c \
++			drivers/stemodem/caif_rtnl.c \
++			drivers/stemodem/caif_rtnl.h \
+ 			drivers/stemodem/gprs-context.c \
+ 			drivers/stemodem/caif_socket.h \
+ 			drivers/stemodem/if_caif.h
+diff --git a/drivers/stemodem/caif_rtnl.c b/drivers/stemodem/caif_rtnl.c
+new file mode 100644
+index 0000000..ad58c93
+--- /dev/null
++++ b/drivers/stemodem/caif_rtnl.c
+@@ -0,0 +1,379 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 ST-Ericsson AB.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <string.h>
++#include <unistd.h>
 +#include <errno.h>
- =
-
- #include <glib.h>
- =
-
-@@ -46,10 +47,11 @@
- #include "stemodem.h"
- #include "caif_socket.h"
- #include "if_caif.h"
++#include <net/if.h>
++#include <net/if_arp.h>
++#include <fcntl.h>
++#include <linux/rtnetlink.h>
++
++#include <glib.h>
++
++#include <ofono/log.h>
++
++#include "if_caif.h"
 +#include "caif_rtnl.h"
- =
-
--#define MAX_CAIF_DEVICES 7
-+#define MAX_CAIF_DEVICES 4
- #define MAX_DNS 2
--#define MAX_ELEM 20
-+#define IP_ADDR_LEN 20
- =
-
- #define AUTH_BUF_LENGTH (OFONO_GPRS_MAX_USERNAME_LENGTH + \
- 			OFONO_GPRS_MAX_PASSWORD_LENGTH + 128)
-@@ -65,21 +67,29 @@ struct gprs_context_data {
- };
- =
-
- struct conn_info {
-+	/*
-+	 * cid is allocated in oFono Core and is identifying
-+	 * the Account. cid =3D 0 indicates that it is currently unused.
-+	 */
- 	unsigned int cid;
--	unsigned int device;
-+	/* Id used by CAIF and EPPSD to identify the CAIF channel*/
- 	unsigned int channel_id;
--	char interface[10];
-+	/* Linux Interface Id */
-+	unsigned int ifindex;
-+	/* Linux Interface name */
-+	char interface[IF_NAMESIZE];
-+	gboolean created;
- };
- =
-
- struct eppsd_response {
- 	char *current;
--	char ip_address[MAX_ELEM];
--	char subnet_mask[MAX_ELEM];
--	char mtu[MAX_ELEM];
--	char default_gateway[MAX_ELEM];
--	char dns_server1[MAX_ELEM];
--	char dns_server2[MAX_ELEM];
--	char p_cscf_server[MAX_ELEM];
-+	char ip_address[IP_ADDR_LEN];
-+	char subnet_mask[IP_ADDR_LEN];
-+	char mtu[IP_ADDR_LEN];
-+	char default_gateway[IP_ADDR_LEN];
-+	char dns_server1[IP_ADDR_LEN];
-+	char dns_server2[IP_ADDR_LEN];
-+	char p_cscf_server[IP_ADDR_LEN];
- };
- =
-
- static void start_element_handler(GMarkupParseContext *context,
-@@ -122,8 +132,8 @@ static void text_handler(GMarkupParseContext *context,
- 	struct eppsd_response *rsp =3D user_data;
- =
-
- 	if (rsp->current) {
--		strncpy(rsp->current, text, MAX_ELEM);
--		rsp->current[MAX_ELEM] =3D 0;
-+		strncpy(rsp->current, text, IP_ADDR_LEN);
-+		rsp->current[IP_ADDR_LEN] =3D 0;
- 	}
- }
- =
-
-@@ -153,8 +163,7 @@ static gint conn_compare_by_cid(gconstpointer a, gconst=
-pointer b)
- 	return 0;
- }
- =
-
--static struct conn_info *conn_info_create(unsigned int device,
--						unsigned int channel_id)
-+static struct conn_info *conn_info_create(unsigned int channel_id)
- {
- 	struct conn_info *connection =3D g_try_new0(struct conn_info, 1);
- =
-
-@@ -162,26 +171,61 @@ static struct conn_info *conn_info_create(unsigned in=
-t device,
- 		return NULL;
- =
-
- 	connection->cid =3D 0;
--	connection->device =3D device;
- 	connection->channel_id =3D channel_id;
- =
-
- 	return connection;
- }
- =
-
-+static void rtnl_callback(int result, gpointer user_data,
-+		char *ifname, int ifindex)
++
++#define NLMSG_TAIL(nmsg) \
++	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
++
++struct iplink_req {
++	struct nlmsghdr n;
++	struct ifinfomsg i;
++	char pad[1024];
++
++	int request_id;
++	int type;
++	int conn_id;
++	gpointer user_data;
++	gboolean loop_enabled;
++
++	char ifname[IF_NAMESIZE];
++	int  ifindex;
++	caif_rtnl_create_cb_t callback;
++};
++
++static GSList *pending_requests;
++static guint32 rtnl_seqnr;
++static guint  rtnl_watch;
++static GIOChannel *channel;
++
++static gboolean get_ifname(struct ifinfomsg *msg, int bytes,
++				const char **ifname)
 +{
-+	struct conn_info *conn =3D user_data;
++	struct rtattr *attr;
 +
-+	strncpy(conn->interface, ifname, sizeof(conn->interface));
-+	conn->ifindex =3D ifindex;
++	for (attr =3D IFLA_RTA(msg); RTA_OK(attr, bytes);
++		attr =3D RTA_NEXT(attr, bytes)) {
 +
-+	if (result =3D=3D 0)
-+		conn->created =3D TRUE;
-+	else {
-+		conn->created =3D FALSE;
-+		DBG("Could not create CAIF Interface");
++		if (attr->rta_type =3D=3D IFLA_IFNAME &&
++				ifname !=3D NULL) {
++
++			*ifname =3D RTA_DATA(attr);
++			return TRUE;
++		}
++	}
++
++	return FALSE;
++}
++
++static void store_newlink_param(struct iplink_req *req, unsigned short typ=
+e,
++					int index, unsigned flags,
++					unsigned change, struct ifinfomsg *msg,
++					int bytes)
++{
++	const char *ifname =3D NULL;
++
++	get_ifname(msg, bytes, &ifname);
++	strncpy(req->ifname, ifname,
++			sizeof(req->ifname));
++	req->ifname[sizeof(req->ifname)-1] =3D '\0';
++	req->ifindex =3D index;
++}
++
++static int send_rtnl_req(struct iplink_req *req)
++{
++	struct sockaddr_nl addr;
++	int sk =3D g_io_channel_unix_get_fd(channel);
++
++	memset(&addr, 0, sizeof(addr));
++	addr.nl_family =3D AF_NETLINK;
++
++	return sendto(sk, req, req->n.nlmsg_len, 0,
++			(struct sockaddr *) &addr, sizeof(addr));
++}
++
++static struct iplink_req *find_request(guint32 seq)
++{
++	GSList *list;
++
++	for (list =3D pending_requests; list; list =3D list->next) {
++		struct iplink_req *req =3D list->data;
++
++		if (req->n.nlmsg_seq =3D=3D seq)
++			return req;
++	}
++
++	return NULL;
++}
++
++static void rtnl_client_response(struct iplink_req *req, int result)
++{
++
++	if (req->callback && req->n.nlmsg_type =3D=3D RTM_NEWLINK)
++		req->callback(result, req->user_data,
++				req->ifname, req->ifindex);
++
++	pending_requests =3D g_slist_remove(pending_requests, req);
++	g_free(req);
++}
++
++static void parse_rtnl_message(void *buf, size_t len)
++{
++	struct ifinfomsg *msg;
++	struct iplink_req *req;
++
++	while (len > 0) {
++		struct nlmsghdr *hdr =3D buf;
++
++		if (!NLMSG_OK(hdr, len))
++			break;
++
++		if (hdr->nlmsg_type =3D=3D RTM_NEWLINK) {
++			req =3D g_slist_nth_data(pending_requests, 0);
++			if (req =3D=3D NULL)
++				break;
++
++			msg =3D (struct ifinfomsg *) NLMSG_DATA(hdr);
++			store_newlink_param(req, msg->ifi_type,
++					msg->ifi_index, msg->ifi_flags,
++					msg->ifi_change, msg,
++					IFA_PAYLOAD(hdr));
++			rtnl_client_response(req, 0);
++			return;
++
++		} else if (hdr->nlmsg_type =3D=3D NLMSG_ERROR) {
++			req =3D find_request(hdr->nlmsg_seq);
++			if (req =3D=3D NULL)
++				break;
++
++			DBG("nlmsg error req");
++			rtnl_client_response(req, -1);
++			return;
++		}
++
++		len -=3D hdr->nlmsg_len;
++		buf +=3D hdr->nlmsg_len;
 +	}
 +}
 +
- /*
-  * Creates a new IP interface for CAIF.
-  */
--static gboolean caif_if_create(const char *interface, unsigned int connid)
-+static gboolean caif_if_create(struct conn_info *conn)
- {
--	return FALSE;
-+	int err;
++static int add_attribute(struct nlmsghdr *n, int maxlen, int type,
++				const void *data, int datalen)
++{
++	int len =3D RTA_LENGTH(datalen);
++	struct rtattr *rta;
 +
-+	err =3D caif_rtnl_create_interface(conn, IFLA_CAIF_IPV4_CONNID,
-+					conn->channel_id, FALSE, rtnl_callback);
-+	if (err < 0) {
-+		DBG("Failed to create IP interface for CAIF");
++	if ((int)(NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len)) > maxlen) {
++		DBG("attribute to large for message %d %d %d\n",
++				n->nlmsg_len, len, maxlen);
++		return -1;
++	}
++
++	rta =3D NLMSG_TAIL(n);
++	rta->rta_type =3D type;
++	rta->rta_len =3D len;
++	memcpy(RTA_DATA(rta), data, datalen);
++	n->nlmsg_len =3D NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
++
++	return 0;
++}
++
++static int prep_rtnl_newlink_req(struct iplink_req *req)
++{
++	char type[] =3D "caif";
++	struct rtattr *linkinfo;
++	struct rtattr *data;
++
++	req->n.nlmsg_len =3D NLMSG_LENGTH(sizeof(struct ifinfomsg));
++	req->n.nlmsg_flags =3D NLM_F_REQUEST|NLM_F_CREATE|NLM_F_EXCL;
++	req->n.nlmsg_type =3D RTM_NEWLINK;
++	req->n.nlmsg_seq =3D ++rtnl_seqnr;
++	req->i.ifi_family =3D AF_UNSPEC;
++
++	linkinfo =3D NLMSG_TAIL(&req->n);
++	add_attribute(&req->n, sizeof(*req), IFLA_LINKINFO,
++			NULL, 0);
++	add_attribute(&req->n, sizeof(*req), IFLA_INFO_KIND,
++			type, strlen(type));
++	data =3D NLMSG_TAIL(&req->n);
++	add_attribute(&req->n, sizeof(*req), IFLA_INFO_DATA,
++			NULL, 0);
++
++	switch (req->type) {
++
++	case IFLA_CAIF_IPV4_CONNID:
++		add_attribute(&req->n, sizeof(*req),
++				IFLA_CAIF_IPV4_CONNID, &req->conn_id,
++				sizeof(req->conn_id));
++		break;
++
++	case IFLA_CAIF_IPV6_CONNID:
++		add_attribute(&req->n, sizeof(*req),
++				IFLA_CAIF_IPV6_CONNID, &req->conn_id,
++				sizeof(req->conn_id));
++		break;
++
++	case __IFLA_CAIF_UNSPEC:
++	case IFLA_CAIF_LOOPBACK:
++	case __IFLA_CAIF_MAX:
++		DBG("unsupported linktype");
++		return -EINVAL;
++	}
++
++	if (req->loop_enabled) {
++		int loop =3D 1;
++		add_attribute(&req->n, sizeof(*req),
++				IFLA_CAIF_LOOPBACK, &loop, sizeof(loop));
++	}
++
++	data->rta_len =3D (void *)NLMSG_TAIL(&req->n) - (void *)data;
++	linkinfo->rta_len =3D (void *)NLMSG_TAIL(&req->n) - (void *)linkinfo;
++
++	return 0;
++}
++
++static void prep_rtnl_dellink_req(struct iplink_req *req, int ifindex)
++{
++	req->n.nlmsg_len =3D NLMSG_LENGTH(sizeof(struct ifinfomsg));
++	req->n.nlmsg_flags =3D NLM_F_REQUEST|NLM_F_CREATE|NLM_F_EXCL;
++	req->n.nlmsg_type =3D RTM_DELLINK;
++	req->n.nlmsg_seq =3D ++rtnl_seqnr;
++	req->i.ifi_family =3D AF_UNSPEC;
++	req->i.ifi_index =3D ifindex;
++}
++
++static gboolean netlink_event(GIOChannel *chan,
++				GIOCondition cond, gpointer data)
++{
++	unsigned char buf[4096];
++	gsize len;
++	GIOError err;
++
++	if (cond & (G_IO_NVAL | G_IO_HUP | G_IO_ERR)) {
++		rtnl_watch =3D 0;
 +		return FALSE;
 +	}
 +
++	memset(buf, 0, sizeof(buf));
++
++	err =3D g_io_channel_read(chan, (gchar *) buf, sizeof(buf), &len);
++	if (err) {
++		if (err =3D=3D G_IO_ERROR_AGAIN)
++			return TRUE;
++		rtnl_watch =3D 0;
++		return FALSE;
++	}
++
++	parse_rtnl_message(buf, len);
++
 +	return TRUE;
- }
- =
-
- /*
-  * Removes IP interface for CAIF.
-  */
--static gboolean caif_if_remove(const char *interface, unsigned int connid)
-+static void caif_if_remove(struct conn_info *conn)
- {
--	return FALSE;
-+	if (!conn->created)
-+		return;
++}
 +
-+	if (caif_rtnl_delete_interface(conn->ifindex) < 0) {
-+		ofono_error("Failed to delete caif interface %s",
-+			conn->interface);
-+		return;
++int caif_rtnl_init(void)
++{
++	struct sockaddr_nl addr;
++	int sk, err;
++
++	sk =3D socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
++	if (sk < 0)
++		return sk;
++
++	memset(&addr, 0, sizeof(addr));
++	addr.nl_family =3D AF_NETLINK;
++	addr.nl_groups =3D RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV4_ROUTE;
++
++	err =3D bind(sk, (struct sockaddr *) &addr, sizeof(addr));
++	if (err < 0) {
++		close(sk);
++		return err;
 +	}
 +
-+	DBG("removed CAIF interface ch:%d ifname:%s ifindex:%d\n",
-+		conn->channel_id, conn->interface, conn->ifindex);
-+	return;
- }
- =
-
- static void ste_eppsd_down_cb(gboolean ok, GAtResult *result,
-@@ -192,11 +236,14 @@ static void ste_eppsd_down_cb(gboolean ok, GAtResult =
-*result,
- 	struct ofono_gprs_context *gc =3D cbd->user;
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	struct ofono_error error;
--	struct conn_info *conn;
-+	struct conn_info *conn =3D NULL;
- 	GSList *l;
- =
-
--	if (!ok)
--		goto error;
-+	if (!ok) {
-+		decode_at_error(&error, g_at_result_final_response(result));
-+		cb(&error, cbd->data);
-+		return;
-+	}
- =
-
- 	l =3D g_slist_find_custom(g_caif_devices,
- 				GUINT_TO_POINTER(gcd->active_context),
-@@ -210,16 +257,8 @@ static void ste_eppsd_down_cb(gboolean ok, GAtResult *=
-result,
- 	}
- =
-
- 	conn =3D l->data;
--
--	if (!caif_if_remove(conn->interface, conn->channel_id)) {
--		DBG("Failed to remove caif interface %s.",
--				conn->interface);
--	}
--
- 	conn->cid =3D 0;
--
--	decode_at_error(&error, g_at_result_final_response(result));
--	cb(&error, cbd->data);
-+	CALLBACK_WITH_SUCCESS(cb, cbd->data);
- 	return;
- =
-
- error:
-@@ -237,26 +276,30 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
- 	GSList *l;
- 	int i;
- 	gsize length;
--	char *res_string;
-+	const char *res_string;
- 	const char *dns[MAX_DNS + 1];
- 	struct eppsd_response rsp;
- 	GMarkupParseContext *context =3D NULL;
-+	struct ofono_error error;
- =
-
- 	l =3D g_slist_find_custom(g_caif_devices,
- 				GUINT_TO_POINTER(gcd->active_context),
- 				conn_compare_by_cid);
- =
-
- 	if (!l) {
--		DBG("Did not find data (device and channel id)"
--					"for connection with cid; %d",
--					gcd->active_context);
-+		DBG("CAIF Device gone missing (cid:%d)", gcd->active_context);
- 		goto error;
- 	}
- =
-
- 	conn =3D l->data;
- =
-
--	if (!ok)
--		goto error;
-+	if (!ok) {
-+		conn->cid =3D 0;
-+		gcd->active_context =3D 0;
-+		decode_at_error(&error, g_at_result_final_response(result));
-+		cb(&error, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
-+		return;
-+	}
- =
-
- 	rsp.current =3D NULL;
- 	context =3D g_markup_parse_context_new(&parser, 0, &rsp, NULL);
-@@ -266,7 +309,7 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *res=
-ult, gpointer user_data)
- =
-
- 	for (i =3D 0; i < g_at_result_num_response_lines(result); i++) {
- 		g_at_result_iter_next(&iter, NULL);
--		res_string =3D strdup(g_at_result_iter_raw_line(&iter));
-+		res_string =3D g_at_result_iter_raw_line(&iter);
- 		length =3D strlen(res_string);
- =
-
- 		if (!g_markup_parse_context_parse(context, res_string,
-@@ -283,20 +326,9 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	dns[1] =3D rsp.dns_server2;
- 	dns[2] =3D NULL;
- =
-
--	sprintf(conn->interface, "caif%u", conn->device);
--
--	if (!caif_if_create(conn->interface, conn->channel_id)) {
--		ofono_error("Failed to create caif interface %s.",
--				conn->interface);
--		CALLBACK_WITH_SUCCESS(cb, NULL, FALSE, rsp.ip_address,
-+	CALLBACK_WITH_SUCCESS(cb, conn->interface, TRUE, rsp.ip_address,
- 				rsp.subnet_mask, rsp.default_gateway,
- 				dns, cbd->data);
--	} else {
--		CALLBACK_WITH_SUCCESS(cb, conn->interface,
--				FALSE, rsp.ip_address, rsp.subnet_mask,
--				rsp.default_gateway, dns, cbd->data);
--	}
--
- 	return;
- =
-
- error:
-@@ -308,6 +340,7 @@ error:
- 	if (conn)
- 		conn->cid =3D 0;
- =
-
-+	gcd->active_context =3D 0;
- 	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
- }
- =
-
-@@ -319,12 +352,23 @@ static void ste_cgdcont_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	struct cb_data *ncbd =3D NULL;
- 	char buf[128];
--	struct conn_info *conn;
-+	struct conn_info *conn =3D NULL;
- 	GSList *l;
- =
-
-+	l =3D g_slist_find_custom(g_caif_devices,
-+				GUINT_TO_POINTER(gcd->active_context),
-+				conn_compare_by_cid);
++	channel =3D g_io_channel_unix_new(sk);
++	g_io_channel_set_flags(channel, G_IO_FLAG_NONBLOCK, NULL);
++	g_io_channel_set_close_on_unref(channel, TRUE);
 +
-+	if (!l) {
-+		DBG("CAIF Device gone missing (cid:%d)", gcd->active_context);
++	rtnl_watch =3D g_io_add_watch(channel,
++				G_IO_IN | G_IO_NVAL | G_IO_HUP | G_IO_ERR,
++				netlink_event, NULL);
++	pending_requests =3D NULL;
++
++	return 0;
++}
++
++void caif_rtnl_exit(void)
++{
++	GSList *list;
++
++	if (rtnl_watch > 0)
++		g_source_remove(rtnl_watch);
++
++	g_io_channel_unref(channel);
++
++	for (list =3D pending_requests; list; list =3D list->next) {
++		struct iplink_req *req =3D list->data;
++		g_free(req);
++	}
++
++	g_slist_free(pending_requests);
++}
++
++
++int caif_rtnl_create_interface(gpointer user_data, int type, int connid,
++		gboolean loop, caif_rtnl_create_cb_t cb)
++{
++	int err;
++	struct iplink_req *req;
++
++	req =3D g_try_new0(struct iplink_req, 1);
++	if (req =3D=3D NULL)
++		return -ENOMEM;
++
++	req->user_data =3D user_data;
++	req->type =3D type;
++	req->conn_id =3D connid;
++	req->loop_enabled =3D loop;
++	req->callback =3D cb;
++
++	err =3D prep_rtnl_newlink_req(req);
++	if (err < 0)
 +		goto error;
-+	}
 +
-+	conn =3D l->data;
-+
- 	if (!ok) {
- 		struct ofono_error error;
--
-+		conn->cid =3D 0;
- 		gcd->active_context =3D 0;
- =
-
- 		decode_at_error(&error, g_at_result_final_response(result));
-@@ -332,26 +376,18 @@ static void ste_cgdcont_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 		return;
- 	}
- =
-
--	ncbd =3D g_memdup(cbd, sizeof(struct cb_data));
--
--	l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(0),
--				conn_compare_by_cid);
--
--	if (!l) {
--		DBG("at_cgdcont_cb, no more available devices");
--		goto error;
--	}
--
--	conn =3D l->data;
--	conn->cid =3D gcd->active_context;
- 	snprintf(buf, sizeof(buf), "AT*EPPSD=3D1,%u,%u",
- 			conn->channel_id, conn->cid);
-+	ncbd =3D g_memdup(cbd, sizeof(struct cb_data));
- =
-
- 	if (g_at_chat_send(gcd->chat, buf, NULL,
- 				ste_eppsd_up_cb, ncbd, g_free) > 0)
- 		return;
- =
-
- error:
-+	if (conn)
-+		conn->cid =3D 0;
-+
- 	g_free(ncbd);
- =
-
- 	gcd->active_context =3D 0;
-@@ -368,6 +404,8 @@ static void ste_gprs_activate_primary(struct ofono_gprs=
-_context *gc,
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[AUTH_BUF_LENGTH];
- 	int len;
-+	GSList *l;
-+	struct conn_info *conn =3D NULL;
- =
-
- 	if (!cbd)
- 		goto error;
-@@ -375,6 +413,23 @@ static void ste_gprs_activate_primary(struct ofono_gpr=
-s_context *gc,
- 	gcd->active_context =3D ctx->cid;
- 	cbd->user =3D gc;
- =
-
-+	/* Find free connection with cid zero */
-+	l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(0),
-+				conn_compare_by_cid);
-+
-+	if (!l) {
-+		DBG("No more available CAIF devices");
++	err =3D send_rtnl_req(req);
++	if (err < 0)
 +		goto error;
-+	}
 +
-+	conn =3D l->data;
-+	if (!conn->created) {
-+		DBG("CAIF interface not created (rtnl error?)");
-+		goto error;
-+	}
++	pending_requests =3D g_slist_append(pending_requests, req);
++	return 0;
++error:
++	g_free(req);
++	return err;
 +
-+	conn->cid =3D ctx->cid;
++}
 +
- 	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
- =
-
- 	if (ctx->apn)
-@@ -389,7 +444,7 @@ static void ste_gprs_activate_primary(struct ofono_gprs=
-_context *gc,
- 	 * Set username and password, this should be done after CGDCONT
- 	 * or an error can occur.  We don't bother with error checking
- 	 * here
--	 * */
-+	 */
- 	snprintf(buf, sizeof(buf), "AT*EIAAUW=3D%d,1,\"%s\",\"%s\"",
- 			ctx->cid, ctx->username, ctx->password);
- =
-
-@@ -398,6 +453,10 @@ static void ste_gprs_activate_primary(struct ofono_gpr=
-s_context *gc,
- 	return;
- =
-
- error:
-+	if (conn)
-+		conn->cid =3D 0;
++int caif_rtnl_delete_interface(int ifid)
++{
++	struct iplink_req req;
++	int err;
++	memset(&req, 0, sizeof(req));
++	prep_rtnl_dellink_req(&req, ifid);
 +
-+	gcd->active_context =3D 0;
- 	g_free(cbd);
- =
-
- 	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, data);
-@@ -423,8 +482,8 @@ static void ste_gprs_deactivate_primary(struct ofono_gp=
-rs_context *gc,
- 				conn_compare_by_cid);
- =
-
- 	if (!l) {
--		DBG("at_gprs_deactivate_primary, did not find"
--			"data (channel id) for connection with cid; %d", id);
-+		DBG("did not find data (channel id) "
-+				"for connection with cid; %d", id);
- 		goto error;
- 	}
- =
-
-@@ -516,9 +575,11 @@ static int ste_gprs_context_probe(struct ofono_gprs_co=
-ntext *gc,
- 	ofono_gprs_context_set_data(gc, gcd);
- =
-
- 	for (i =3D 0; i < MAX_CAIF_DEVICES; i++) {
--		ci =3D conn_info_create(i, i+1);
--		if (ci)
--			g_caif_devices =3D g_slist_append(g_caif_devices, ci);
-+		ci =3D conn_info_create(i+1);
-+		if (!ci)
-+			return -ENOMEM;
-+		caif_if_create(ci);
-+		g_caif_devices =3D g_slist_append(g_caif_devices, ci);
- 	}
- =
-
- 	return 0;
-@@ -527,7 +588,7 @@ static int ste_gprs_context_probe(struct ofono_gprs_con=
-text *gc,
- static void ste_gprs_context_remove(struct ofono_gprs_context *gc)
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
--
-+	g_slist_foreach(g_caif_devices, (GFunc) caif_if_remove, NULL);
- 	g_slist_foreach(g_caif_devices, (GFunc) g_free, NULL);
- 	g_slist_free(g_caif_devices);
- 	g_caif_devices =3D NULL;
-@@ -548,10 +609,12 @@ static struct ofono_gprs_context_driver driver =3D {
- =
-
- void ste_gprs_context_init()
- {
-+	caif_rtnl_init();
- 	ofono_gprs_context_driver_register(&driver);
- }
- =
-
- void ste_gprs_context_exit()
- {
-+	caif_rtnl_exit();
- 	ofono_gprs_context_driver_unregister(&driver);
- }
++	err =3D send_rtnl_req(&req);
++	if (err < 0)
++		return err;
++
++	return 0;
++}
+diff --git a/drivers/stemodem/caif_rtnl.h b/drivers/stemodem/caif_rtnl.h
+new file mode 100644
+index 0000000..8eb1e5f
+--- /dev/null
++++ b/drivers/stemodem/caif_rtnl.h
+@@ -0,0 +1,29 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 ST-Ericsson AB.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++typedef void (*caif_rtnl_create_cb_t) (int result, gpointer user_data,
++		char *ifname, int ifindex);
++
++extern int caif_rtnl_create_interface(gpointer user_data, int type, int co=
+nnid,
++		gboolean loop, caif_rtnl_create_cb_t cb);
++extern int caif_rtnl_delete_interface(int ifid);
++
++extern int caif_rtnl_init(void);
++extern void caif_rtnl_exit(void);
 -- =
 
 1.6.3.3
 
 
---===============3438394849774552845==--
+--===============7342164882016187561==--
 
