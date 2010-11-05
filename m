@@ -1,75 +1,185 @@
-Content-Type: multipart/mixed; boundary="===============5253465341092516182=="
+Content-Type: multipart/mixed; boundary="===============6911359772444695664=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] todo: ifxmodem apgs support
-Date: Fri, 05 Nov 2010 20:10:32 +0100
-Message-ID: <1288984232.9615.129.camel@aeonflux>
-In-Reply-To: <1288979728-3369-5-git-send-email-robertino.benis@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC 1/3] doc: addidng documentation for basic assisted gps
+Date: Fri, 05 Nov 2010 14:24:11 -0500
+Message-ID: <4CD459DB.1030705@gmail.com>
+In-Reply-To: <1288979728-3369-2-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5253465341092516182==
+--===============6911359772444695664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Robertino,
 
->  TODO |    5 +++++
->  1 files changed, 5 insertions(+), 0 deletions(-)
+On 11/05/2010 12:55 PM, Robertino Benis wrote:
+> ---
+>  doc/assistedgps-manager-api.txt |  114 +++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 114 insertions(+), 0 deletions(-)
+>  create mode 100644 doc/assistedgps-manager-api.txt
 > =
 
-> diff --git a/TODO b/TODO
-> index a5196f7..7ee7920 100644
-> --- a/TODO
-> +++ b/TODO
-> @@ -484,3 +484,8 @@ Miscellaneous
->  =
-
->    Priority: Low
->    Complexity: C4
+> diff --git a/doc/assistedgps-manager-api.txt b/doc/assistedgps-manager-ap=
+i.txt
+> new file mode 100644
+> index 0000000..b09c8b1
+> --- /dev/null
+> +++ b/doc/assistedgps-manager-api.txt
+> @@ -0,0 +1,114 @@
+> +AgpsManager hierarchy
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 > +
-> +- Modem support:  adding support for agps in Infenion modem driver.
+> +Service		org.ofono
+> +Interface	org.ofono.AgpsManager
+
+So in general I'm currently against introducing this API as oFono
+official API.  I suggest prefixing this with an IFX specific identifier.
+ Maybe modem.ifx.AgpsManager.
+
+> +Object path	[variable prefix]/{modem0,modem1,...}
 > +
-> +  Priority: High
-> +  Complexity: C3
+> +Methods		dict GetProperties()
+> +
+> +			Returns properties for the modem object. See
+> +			the properties section for available properties.
+> +
+> +			Possible Errors: [service].Error.InvalidArguments
+> +
+> +		void SetProperty(string name, variant value)
+> +
+> +			Changes the value of the specified property. Only
+> +			properties that are listed as read-write are
+> +			changeable. On success a PropertyChanged signal
+> +			will be emitted.
+> +
+> +			Possible Errors: [service].Error.InvalidArguments
+> +					 [service].Error.DoesNotExist
+> +
+> +		void SendLCSFrame(string frametype, string framedata)
 
-I was expecting to have a section for Modem support. So something like
-this:
+oFono is strict CamelCase, even for abbreviations.  You do this
+correctly above (AgpsManager) but not here.  Please be consistent.  And
+it might be a good idea to not have abbreviations at all.  What does LCS
+stand for in this case?
 
-Modem support
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +			Send a LCS position protocol frame to the Mobile
+> +			Network. The LCS frame typically represents a
+> +			Position Response.
+> +
+> +			Valid frametypes are:
+> +				rrlp_measure_position_response
+> +				rrc_measurement_report
+> +
+> +			The raw frame data is formatted as the concatenated
+> +			sequence of the two digit hexadecimal representation
+> +			of each of its octets. Example: "00FC2345"
 
-- Infineon modem: Add support ...
+Sending hex-encoded data screams as being non-portable and AT command
+modem specific.  Is this really your intent here?
 
-Please run your patches through a spellchecker. It is Infineon and
-either Assisted GPS or aGPS. And sentences should start with a capital
-letter. There are still a few tasks in the TODO. So you have some
-examples on how we expect the format.
+> +
+> +		void RequestFineTimeInjection(string rat, uint16 pulselength)
+> +
+> +			Request modem to generate a fine time injection
+> +			pulse. pulselength is the duration of the pulse
+> +			expressed in radio frames.
+> +
+> +			rat specifies the access technology used to derive
+> +			the pulse from and can be "gsm" or "umts".
+> +			If the requested access technology is not currently
+> +			in use an error is returned.
 
-The key point is consistency. Be it in the documentation, the TODO file
-or the source code itself.
+It seems to me that making the upper layers pass in the rat as a
+parameter to this function is a pretty bad idea.  You should either have
+the atom figure this out if it can (e.g. by using netreg atom) or have
+the driver take care of this directly.
 
-Please be also a bit more descriptive with the TODO entry so that others
-have an idea what it entails.
+> +
+> +Signals		PropertyChanged(string name, variant value)
+> +
+> +			This signal indicates a changed value of the given
+> +			property.
+> +
+> +		IncomingLCSFrame(string frametypes, string framedata)
+> +
+> +			LCS positioning protocol frame received from the
+> +			Mobile Network.
+> +
+> +			Valid frametypes for the LCS frame are:
+> +				rrlp_assistance_data
+> +				rrlp_measure_position_request
+> +				rrc_assistance_data_delivery
+> +				rrc_measurement_control
+> +
+> +			Note that position/measurement requests can include
+> +			assistance data as well.
+> +
+> +			The raw frame data is formatted as the concatenated
+> +			sequence of the two digit hexadecimal representation
+> +			of each of its octets. Example: "00FC2345"
 
-Also please don't invent your own complexity types. The TODO file has an
-introduction section that describes it pretty clearly.
+Same comment as above about LCS naming and hex-encoded strings.
 
-I say this complexity task is clearly only a C1.
+> +
+> +		FineTimeInjectionNotification(dict radioframenumber)
+> +
+> +			Notification about fine time injection pulse
+> +			generated by modem. The radioframenumber dict
+> +			is defined as follow:
+> +
 
-For the priority, this is a general overall oFono priority scale. So all
-modem support items should be a Low. It has nothing to do with product
-schedules or anything alike.
+Why is this returned in a separate signal as opposed to a reply to the
+RequestFineTimeInjection method call?
 
-And please also add an Owner for the entry. That would be you in this
-case.
+> +			string AccessTechnology
+> +				"gsm" or "umts"
+> +			=
 
-Regards
+> +			uint32 TdmaFrameNumber (gsm only)
+> +				range 0 - 2715647 (2048*26*51)
+> +
+> +			uint16 TdmaTimeslot (gsm only)
+> +				range 0 - 7
+> +
+> +			uint16 TimeslotBit (gsm only)
+> +				range 0 - 156
+> +
+> +			uint16 TimingAdvance (gsm only)
+> +				range 0 - 63
+> +
+> +			uint16 BcchArfcn (gsm only)
+> +				range 0 - 1023
+> +
+> +			uint16 Bsic (gsm only)
+> +				range 0 - 64
+> +
+> +			uint16 Sfn (umts only)
+> +				range 0 - 4095
+> +
+> +			string RrcState (umts only)
+> +				"cell_dch", "cell_fach", "cell_pch" or
+> +				"ura_pch"
+> +			=
 
-Marcel
+> +			uint16 RoundTripTime (umts only)
+> +				range 0 - 32766
+> +
+> +
+> +Properties	boolean LcsEnabled [readwrite]
+> +
+> +			If LcsEnabled is False, then no LCS positioning
+> +			protocol frames are received.
 
+In general it is a bad idea to have properties with abbreviations in
+them.  What does LCS stand for?
 
+Regards,
+-Denis
 
---===============5253465341092516182==--
+--===============6911359772444695664==--
 
