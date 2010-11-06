@@ -1,43 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============9024943352014429463=="
+Content-Type: multipart/mixed; boundary="===============7060763927826329691=="
 MIME-Version: 1.0
 From: Hannu Lyytinen <hannu.lyytinen@nomovok.com>
-Subject: [PATCH 2/2] Added Nokia CS-17 to udev rules.
-Date: Sat, 06 Nov 2010 21:48:48 +0200
-Message-ID: <1289072928-11812-2-git-send-email-hannu.lyytinen@nomovok.com>
-In-Reply-To: <1289072928-11812-1-git-send-email-hannu.lyytinen@nomovok.com>
+Subject: [PATCH 1/2] Fixes segfault when removing Nokia Datacard.
+Date: Sat, 06 Nov 2010 21:48:47 +0200
+Message-ID: <1289072928-11812-1-git-send-email-hannu.lyytinen@nomovok.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9024943352014429463==
+--===============7060763927826329691==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-The stick has to be initialized with usb_modeswitch, though.
 ---
- plugins/ofono.rules |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ plugins/nokia.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index f46d198..859da56 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -424,4 +424,7 @@ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"131=
-1", ENV{OFONO_DRIVER}=3D"mbm"
- # Nokia Internet Stick CS-10
- ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"060e", ENV{OFONO_DRIVE=
-R}=3D"nokia"
+diff --git a/plugins/nokia.c b/plugins/nokia.c
+index f65617b..bb8e2f3 100644
+--- a/plugins/nokia.c
++++ b/plugins/nokia.c
+@@ -130,7 +130,8 @@ static void nokia_disconnect(gpointer user_data)
  =
 
-+# Nokia Internet Stick CS-17
-+ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"0623", ENV{OFONO_DRIVE=
-R}=3D"nokia"
-+
- LABEL=3D"ofono_end"
+ 	DBG("");
+ =
+
+-	ofono_gprs_context_remove(data->gc);
++	if (data->gc)
++		ofono_gprs_context_remove(data->gc);
+ =
+
+ 	g_at_chat_unref(data->modem);
+ 	data->modem =3D NULL;
 -- =
 
 1.7.0.4
 
 
---===============9024943352014429463==--
+--===============7060763927826329691==--
 
