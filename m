@@ -1,288 +1,175 @@
-Content-Type: multipart/mixed; boundary="===============2647823889535875776=="
+Content-Type: multipart/mixed; boundary="===============1627253697291354035=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] isi: fix handling of incoming calls
-Date: Mon, 08 Nov 2010 17:11:47 +0200
-Message-ID: <1289229107-2046-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH] Move DBUS_GSM_ERROR_INTERFACE to OFONO_ERROR_INTERFACE
+Date: Mon, 08 Nov 2010 15:12:00 -0200
+Message-ID: <1289236320-19087-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2647823889535875776==
+--===============1627253697291354035==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
-
-Isimodem driver reports the incoming call as soon as possible, however,
-it is not possible to answer to an incoming a call before it is in
-"MT-ALERTING" or "WAITING" state.
-
-Also, report the early incoming call state to the core as "waiting" or
-"alerting", depending on the state of the other calls.
+The new name is more generic, which make more sense.
 ---
- drivers/isimodem/voicecall.c |  121 +++++++++++++++++++++++++++++++++++++-=
-----
- 1 files changed, 108 insertions(+), 13 deletions(-)
+ src/dbus.c |   32 ++++++++++++++++----------------
+ 1 files changed, 16 insertions(+), 16 deletions(-)
 
-diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index c3365f6..d4bb05f 100644
---- a/drivers/isimodem/voicecall.c
-+++ b/drivers/isimodem/voicecall.c
-@@ -65,8 +65,10 @@ struct isi_voicecall {
- static void isi_call_notify(struct ofono_voicecall *ovc,
- 				struct isi_call *call);
- static void isi_call_release(struct ofono_voicecall *, struct isi_call *);
--static struct ofono_call isi_call_as_ofono_call(struct isi_call const *);
--static int isi_call_status_to_clcc(struct isi_call const *call);
-+static struct ofono_call isi_call_as_ofono_call(struct isi_voicecall const=
- *,
-+						struct isi_call const *);
-+static int isi_call_status_to_clcc(struct isi_voicecall const *,
-+					struct isi_call const *);
- static struct isi_call *isi_call_set_idle(struct isi_call *call);
+diff --git a/src/dbus.c b/src/dbus.c
+index c51f2a9..8a685aa 100644
+--- a/src/dbus.c
++++ b/src/dbus.c
+@@ -28,7 +28,7 @@
  =
 
- typedef void GIsiIndication(GIsiClient *client,
-@@ -97,12 +99,30 @@ typedef void isi_call_req_step(struct isi_call_req_cont=
-ext *, int reason);
- struct isi_call_req_context {
- 	struct isi_call_req_context *next, **prev;
- 	isi_call_req_step *step;
-+	int id;
- 	struct ofono_voicecall *ovc;
- 	ofono_voicecall_cb_t cb;
- 	void *data;
- };
+ #include "ofono.h"
  =
 
- static struct isi_call_req_context *
-+isi_call_req_context_new(struct ofono_voicecall *ovc,
-+				ofono_voicecall_cb_t cb, void *data)
-+{
-+	struct isi_call_req_context *irc;
-+
-+	irc =3D g_try_new0(struct isi_call_req_context, 1);
-+
-+	if (irc) {
-+		irc->ovc =3D ovc;
-+		irc->cb =3D cb;
-+		irc->data =3D data;
-+	}
-+
-+	return irc;
-+}
-+
-+static struct isi_call_req_context *
- isi_call_req(struct ofono_voicecall *ovc,
- 		void const *restrict req,
- 		size_t len,
-@@ -135,7 +155,8 @@ isi_call_req(struct ofono_voicecall *ovc,
- }
+-#define DBUS_GSM_ERROR_INTERFACE "org.ofono.Error"
++#define OFONO_ERROR_INTERFACE "org.ofono.Error"
  =
 
- static void isi_ctx_queue(struct isi_call_req_context *irc,
--				isi_call_req_step *next)
-+				isi_call_req_step *next,
-+				int id)
+ static DBusConnection *g_connection;
+ =
+
+@@ -247,52 +247,52 @@ int ofono_dbus_signal_dict_property_changed(DBusConne=
+ction *conn,
+ =
+
+ DBusMessage *__ofono_error_invalid_args(DBusMessage *msg)
  {
- 	if (irc->prev =3D=3D NULL) {
- 		struct isi_voicecall *ivc =3D ofono_voicecall_get_data(irc->ovc);
-@@ -149,6 +170,7 @@ static void isi_ctx_queue(struct isi_call_req_context *=
-irc,
- 	}
- =
-
- 	irc->step =3D next;
-+	irc->id =3D id;
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE
+ 					".InvalidArguments",
+ 					"Invalid arguments in method call");
  }
  =
 
- static void isi_ctx_remove(struct isi_call_req_context *irc)
-@@ -503,18 +525,65 @@ static void isi_call_status_ind_cb(GIsiClient *client,
- 	isi_call_notify(ovc, call);
- }
- =
-
-+static void isi_wait_alerting(struct isi_call_req_context *irc, int event);
-+
- static struct isi_call_req_context *
- isi_call_answer_req(struct ofono_voicecall *ovc,
- 			uint8_t call_id, ofono_voicecall_cb_t cb, void *data)
+ DBusMessage *__ofono_error_invalid_format(DBusMessage *msg)
  {
-+	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
-+
- 	uint8_t const req[] =3D {
- 		CALL_ANSWER_REQ, call_id, 0
- 	};
- 	size_t rlen =3D sizeof req;
- =
-
-+	int id =3D 0;
-+
-+	for (id =3D 1; id <=3D 7; id++) {
-+		if ((ivc->calls[id].status =3D=3D CALL_STATUS_PROCEEDING ||
-+				ivc->calls[id].status =3D=3D CALL_STATUS_COMING) &&
-+			(ivc->calls[id].mode_info & CALL_MODE_ORIGINATOR))
-+			break;
-+	}
-+
-+	if (id <=3D 7) {
-+		struct isi_call_req_context *irc;
-+		irc =3D isi_call_req_context_new(ovc, cb, data);
-+		if (irc) {
-+			isi_ctx_queue(irc, isi_wait_alerting, id);
-+			return irc;
-+		}
-+	}
-+
- 	return isi_call_req(ovc, req, rlen, isi_call_answer_resp, cb, data);
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE
+ 					".InvalidFormat",
+ 					"Argument format is not recognized");
  }
  =
 
-+static void isi_wait_alerting(struct isi_call_req_context *irc,
-+				int event)
-+{
-+	struct isi_voicecall *ivc;
-+
-+	DBG("irc=3D%p event=3D%u", (void *)irc, event);
-+
-+	switch (event) {
-+	case CALL_STATUS_MT_ALERTING:
-+	case CALL_STATUS_WAITING:
-+		isi_call_answer_req(irc->ovc, CALL_ID_ALL, irc->cb, irc->data);
-+		isi_ctx_free(irc);
-+		return;
-+	}
-+
-+	ivc =3D ofono_voicecall_get_data(irc->ovc);
-+	switch (ivc->calls[irc->id].status) {
-+	case CALL_STATUS_MO_RELEASE:
-+	case CALL_STATUS_MT_RELEASE:
-+	case CALL_STATUS_TERMINATED:
-+	case CALL_STATUS_IDLE:
-+		isi_ctx_return_failure(irc);
-+	}
-+}
-+
- static gboolean isi_call_answer_resp(GIsiClient *client,
- 					void const *restrict data,
- 					size_t len,
-@@ -830,11 +899,11 @@ static void isi_call_notify(struct ofono_voicecall *o=
-vc,
- 		return;
- 	}
- =
-
--	ocall =3D isi_call_as_ofono_call(call);
-+	ocall =3D isi_call_as_ofono_call(ivc, call);
- =
-
--	DBG("id=3D%u,%s,%u,\"%s\",%u,%u",
-+	DBG("id=3D%u,\"%s\",%u,\"%s\",%u,%u",
- 		ocall.id,
--		ocall.direction ? "terminated" : "originated",
-+		ocall.direction ? "incoming" : "outgoing",
- 		ocall.status,
- 		ocall.phone_number.number,
- 		ocall.phone_number.type,
-@@ -875,14 +944,15 @@ static void isi_call_release(struct ofono_voicecall *=
-ovc,
- 		isi_call_set_idle(call);
- }
- =
-
--static struct ofono_call isi_call_as_ofono_call(struct isi_call const *cal=
-l)
-+static struct ofono_call isi_call_as_ofono_call(struct isi_voicecall const=
- *ivc,
-+						struct isi_call const *call)
+ DBusMessage *__ofono_error_not_implemented(DBusMessage *msg)
  {
- 	struct ofono_call ocall =3D { call->id };
- 	struct ofono_phone_number *number =3D &ocall.phone_number;
- =
-
- 	ocall.type =3D 0;	/* Voice call */
- 	ocall.direction =3D call->mode_info & CALL_MODE_ORIGINATOR;
--	ocall.status =3D isi_call_status_to_clcc(call);
-+	ocall.status =3D isi_call_status_to_clcc(ivc, call);
- 	memcpy(number->number, call->address, sizeof number->number);
- 	number->type =3D 0x80 | call->addr_type;
- 	ocall.clip_validity =3D call->presentation & 3;
-@@ -892,17 +962,41 @@ static struct ofono_call isi_call_as_ofono_call(struc=
-t isi_call const *call)
- 	return ocall;
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE
+ 					".NotImplemented",
+ 					"Implementation not provided");
  }
  =
 
-+static int isi_call_waiting_or_alerting(struct isi_voicecall const *ivc,
-+					struct isi_call const *call)
-+{
-+	int id =3D 0;
-+
-+	for (id =3D 1; id <=3D 7; id++) {
-+		switch (ivc->calls[id].status) {
-+		case CALL_STATUS_ANSWERED:
-+		case CALL_STATUS_ACTIVE:
-+		case CALL_STATUS_MO_RELEASE:
-+		case CALL_STATUS_MT_RELEASE:
-+		case CALL_STATUS_HOLD_INITIATED:
-+		case CALL_STATUS_HOLD:
-+		case CALL_STATUS_RETRIEVE_INITIATED:
-+		case CALL_STATUS_RECONNECT_PENDING:
-+		case CALL_STATUS_SWAP_INITIATED:
-+			return 5; /* waiting */
-+		}
-+	}
-+
-+	return 4;		/* alerting */
-+}
-+
- /** Get +CLCC status */
--static int isi_call_status_to_clcc(struct isi_call const *call)
-+static int isi_call_status_to_clcc(struct isi_voicecall const *ivc,
-+					struct isi_call const *call)
+ DBusMessage *__ofono_error_failed(DBusMessage *msg)
  {
- 	switch (call->status) {
- 	case CALL_STATUS_CREATE:
- 		return 2;
- 	case CALL_STATUS_COMING:
--		return 4;
-+		return isi_call_waiting_or_alerting(ivc, call);
- 	case CALL_STATUS_PROCEEDING:
- 		if ((call->mode_info & CALL_MODE_ORIGINATOR))
--			return 4; /* MT */
-+			return isi_call_waiting_or_alerting(ivc, call); /* MT */
- 		else
- 			return 2; /* MO */
- 	case CALL_STATUS_MO_ALERTING:
-@@ -1072,9 +1166,9 @@ static void isi_release_all_active(struct ofono_voice=
-call *ovc,
- 		if (irc =3D=3D NULL)
- 			;
- 		else if (waiting)
--			isi_ctx_queue(irc, isi_wait_and_answer);
-+			isi_ctx_queue(irc, isi_wait_and_answer, 0);
- 		else if (hold)
--			isi_ctx_queue(irc, isi_wait_and_retrieve);
-+			isi_ctx_queue(irc, isi_wait_and_retrieve, 0);
- 	} else
- 		CALLBACK_WITH_FAILURE(cb, data);
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE ".Failed",
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".Failed",
+ 					"Operation failed");
  }
-@@ -1149,6 +1243,7 @@ static void isi_release_specific(struct ofono_voiceca=
-ll *ovc, int id,
- 		uint8_t cause =3D CALL_CAUSE_RELEASE_BY_USER;
  =
 
- 		switch (status->status) {
-+		case CALL_STATUS_COMING:
- 		case CALL_STATUS_MT_ALERTING:
- 		case CALL_STATUS_WAITING:
- 			cause =3D CALL_CAUSE_BUSY_USER_REQUEST;
+ DBusMessage *__ofono_error_busy(DBusMessage *msg)
+ {
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE ".InProgress",
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".InProgress",
+ 					"Operation already in progress");
+ }
+ =
+
+ DBusMessage *__ofono_error_not_found(DBusMessage *msg)
+ {
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE ".NotFound",
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".NotFound",
+ 			"Object is not found or not valid for this operation");
+ }
+ =
+
+ DBusMessage *__ofono_error_not_active(DBusMessage *msg)
+ {
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE ".NotActive",
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".NotActive",
+ 			"Operation is not active or in progress");
+ }
+ =
+
+ DBusMessage *__ofono_error_not_supported(DBusMessage *msg)
+ {
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE
+ 					".NotSupported",
+ 					"Operation is not supported by the"
+ 					" network / modem");
+@@ -300,45 +300,45 @@ DBusMessage *__ofono_error_not_supported(DBusMessage =
+*msg)
+ =
+
+ DBusMessage *__ofono_error_not_available(DBusMessage *msg)
+ {
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE
+ 					".NotAvailable",
+ 					"Operation currently not available");
+ }
+ =
+
+ DBusMessage *__ofono_error_timed_out(DBusMessage *msg)
+ {
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE ".Timedout",
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".Timedout",
+ 			"Operation failure due to timeout");
+ }
+ =
+
+ DBusMessage *__ofono_error_sim_not_ready(DBusMessage *msg)
+ {
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE ".SimNotReady",
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".SimNotReady",
+ 			"SIM is not ready or not inserted");
+ }
+ =
+
+ DBusMessage *__ofono_error_in_use(DBusMessage *msg)
+ {
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE ".InUse",
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".InUse",
+ 			"The resource is currently in use");
+ }
+ =
+
+ DBusMessage *__ofono_error_not_attached(DBusMessage *msg)
+ {
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE ".NotAttached",
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".NotAttached",
+ 			"GPRS is not attached");
+ }
+ =
+
+ DBusMessage *__ofono_error_attach_in_progress(DBusMessage *msg)
+ {
+ 	return g_dbus_create_error(msg,
+-				DBUS_GSM_ERROR_INTERFACE ".AttachInProgress",
++				OFONO_ERROR_INTERFACE ".AttachInProgress",
+ 				"GPRS Attach is in progress");
+ }
+ =
+
+ DBusMessage *__ofono_error_canceled(DBusMessage *msg)
+ {
+-	return g_dbus_create_error(msg, DBUS_GSM_ERROR_INTERFACE ".Canceled",
++	return g_dbus_create_error(msg, OFONO_ERROR_INTERFACE ".Canceled",
+ 					"Operation has been canceled");
+ }
+ =
+
 -- =
 
-1.7.1
+1.7.3.1
 
 
---===============2647823889535875776==--
+--===============1627253697291354035==--
 
