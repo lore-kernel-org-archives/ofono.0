@@ -1,35 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============2236088299763279700=="
+Content-Type: multipart/mixed; boundary="===============1345811315158964815=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] zte: use AT+CFUN=1;+CFUN=4 in enable
-Date: Mon, 08 Nov 2010 11:50:34 -0600
-Message-ID: <4CD8386A.20401@gmail.com>
-In-Reply-To: <1289238417-21476-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] gprs: NULL-safe ofono_gprs_context_remove()
+Date: Mon, 08 Nov 2010 20:41:07 +0200
+Message-ID: <1289241667-25149-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2236088299763279700==
+--===============1345811315158964815==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-On 11/08/2010 11:46 AM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+Check for NULL in one place.
+---
+ src/gprs.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-> Direct +CFUN transition 0 -> 4 gets SIM in inconsistent state.
-> ---
->  plugins/zte.c |    3 ++-
->  1 files changed, 2 insertions(+), 1 deletions(-)
-> =
+diff --git a/src/gprs.c b/src/gprs.c
+index 219bd4a..0f6fb0c 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2083,6 +2083,9 @@ struct ofono_gprs_context *ofono_gprs_context_create(=
+struct ofono_modem *modem,
+ =
+
+ void ofono_gprs_context_remove(struct ofono_gprs_context *gc)
+ {
++	if (gc =3D=3D NULL)
++		return;
++
+ 	__ofono_atom_free(gc->atom);
+ }
+ =
+
+-- =
+
+1.7.1
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============2236088299763279700==--
+--===============1345811315158964815==--
 
