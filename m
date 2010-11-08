@@ -1,32 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============1432601561157964932=="
+Content-Type: multipart/mixed; boundary="===============5291845706407954469=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Move DBUS_GSM_ERROR_INTERFACE to OFONO_ERROR_INTERFACE
-Date: Mon, 08 Nov 2010 11:39:12 -0600
-Message-ID: <4CD835C0.9050504@gmail.com>
-In-Reply-To: <1289236320-19087-1-git-send-email-padovan@profusion.mobi>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] zte: use AT+CFUN=1;+CFUN=4 in enable
+Date: Mon, 08 Nov 2010 19:46:57 +0200
+Message-ID: <1289238417-21476-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1432601561157964932==
+--===============5291845706407954469==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-On 11/08/2010 11:12 AM, Gustavo F. Padovan wrote:
-> The new name is more generic, which make more sense.
-> ---
->  src/dbus.c |   32 ++++++++++++++++----------------
->  1 files changed, 16 insertions(+), 16 deletions(-)
-> =
+Direct +CFUN transition 0 -> 4 gets SIM in inconsistent state.
+---
+ plugins/zte.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
+
+diff --git a/plugins/zte.c b/plugins/zte.c
+index 07f8466..83602eb 100644
+--- a/plugins/zte.c
++++ b/plugins/zte.c
+@@ -184,7 +184,8 @@ static int zte_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(data->aux, "ATE0 +CMEE=3D1", none_prefix,
+ 						NULL, NULL, NULL);
+ =
+
+-	g_at_chat_send(data->aux, "AT+CFUN=3D4", none_prefix,
++	/* Direct transition 0 -> 4 leaves SIM hosed */
++	g_at_chat_send(data->aux, "AT+CFUN=3D1;+CFUN=3D4", none_prefix,
+ 					cfun_enable, modem, NULL);
+ =
+
+ 	return -EINPROGRESS;
+-- =
+
+1.7.1
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============1432601561157964932==--
+--===============5291845706407954469==--
 
