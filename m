@@ -1,45 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============1345811315158964815=="
+Content-Type: multipart/mixed; boundary="===============8330646389859608079=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [PATCH] gprs: NULL-safe ofono_gprs_context_remove()
-Date: Mon, 08 Nov 2010 20:41:07 +0200
-Message-ID: <1289241667-25149-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [PATCH] udev: do not use weird serial with zte
+Date: Mon, 08 Nov 2010 20:41:24 +0200
+Message-ID: <1289241684-25197-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1345811315158964815==
+--===============8330646389859608079==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Check for NULL in one place.
 ---
- src/gprs.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ plugins/ofono.rules |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 219bd4a..0f6fb0c 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -2083,6 +2083,9 @@ struct ofono_gprs_context *ofono_gprs_context_create(=
-struct ofono_modem *modem,
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index f2a8162..da8a8ef 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -363,6 +363,8 @@ ATTRS{idVendor}=3D=3D"12d1", ENV{OFONO_DRIVER}=3D"huawe=
+i"
+ # ZTE Incorporated
+ ATTRS{idVendor}=3D=3D"19d2", ENV{OFONO_DRIVER}=3D"zte"
  =
 
- void ofono_gprs_context_remove(struct ofono_gprs_context *gc)
- {
-+	if (gc =3D=3D NULL)
-+		return;
++ATTRS{idVendor}=3D=3D"19d2", ATTRS{serial}=3D=3D"1234567890ABCDEF", ENV{ID=
+_SERIAL_SHORT}=3D""
 +
- 	__ofono_atom_free(gc->atom);
- }
- =
-
+ # Option Globetrotter
+ ATTRS{idVendor}=3D=3D"0af0", ATTRS{idProduct}=3D=3D"6911", ENV{OFONO_DRIVE=
+R}=3D"hso"
+ ATTRS{idVendor}=3D=3D"0af0", ATTRS{idProduct}=3D=3D"6971", ENV{OFONO_DRIVE=
+R}=3D"hso"
 -- =
 
 1.7.1
 
 
---===============1345811315158964815==--
+--===============8330646389859608079==--
 
