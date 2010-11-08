@@ -1,72 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============8325087920361912422=="
+Content-Type: multipart/mixed; boundary="===============5769541891237041489=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 3/3] Update TODO.
-Date: Sun, 07 Nov 2010 18:42:20 +0100
-Message-ID: <1289151740-9922-3-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1289151740-9922-1-git-send-email-andrew.zaborowski@intel.com>
+From: Torgny Johansson <torgny.johansson@ericsson.com>
+Subject: [PATCH] Add vid/pid for Ericsson F5521gw
+Date: Mon, 08 Nov 2010 09:48:37 +0100
+Message-ID: <1289206117-7838-1-git-send-email-torgny.johansson@ericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8325087920361912422==
+--===============5769541891237041489==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- TODO |   22 +++++++++++++---------
- 1 files changed, 13 insertions(+), 9 deletions(-)
+ plugins/ofono.rules |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/TODO b/TODO
-index 0d04208..c0dee09 100644
---- a/TODO
-+++ b/TODO
-@@ -76,6 +76,19 @@ SMS
-   Complexity: C4
-   Owner: Rajesh Kadhiravan Nagaiah <Rajesh.Nagaiah@elektrobit.com>
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 859da56..f2a8162 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -388,6 +388,9 @@ ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"104=
+9", ENV{OFONO_DRIVER}=3D"mbm"
+ ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"190a", ENV{OFONO_DRIVE=
+R}=3D"mbm"
+ ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"1909", ENV{OFONO_DRIVE=
+R}=3D"mbm"
  =
 
-+- Asynchronously acknowledge SMS DELIVER messages sent by the SMS driver
-+  to core using ofono_sms_deliver_notify().  This may require the struct
-+  ofono_sms_driver to be extended with one more function pointer like:
-+    void (*deliver_ack)(unsigned char *pdu, int len, cb_t cb, void *data)
-+  because currently messages are automatically acknowledged by either the
-+  modem (this is the case of some AT modems) or the driver right after
-+  ofono_sms_deliver_notify() and a failure to deliver at an upper level is
-+  ignored.  The PDU can be an RP-ACK or RP-ERROR message with optional
-+  TP-User-Content element, for example if returned from USIM Data Download.
++# Ericsson F5521gw
++ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"190d", ENV{OFONO_DRIVE=
+R}=3D"mbm"
 +
-+  Priority: Low
-+  Complexity: C2
-+
- SIM / SIM File system
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ # Sony-Ericsson MD300
+ ATTRS{idVendor}=3D=3D"0fce", ATTRS{idProduct}=3D=3D"d0cf", ENV{OFONO_DRIVE=
+R}=3D"mbm"
  =
 
-@@ -339,15 +352,6 @@ Sim Toolkit
-   Priority: High
-   Complexity: C8
- =
-
--- Support 'SMS-PP' Download Envelope.  Whenever a special type of SMS is
--  received indicating that this is an SMS-PP Download message, this message
--  will be sent to the SIM via an SMS-PP Download Envelope.  No user intera=
-ction
--  will be required.  If the modem hardware supports this transparently, th=
-en
--  no indication to oFono will be necessary.
--
--  Priority: High
--  Complexity: C2
--
- - Support Language Notification proactive command.
- =
-
-   Priority: Medium
 -- =
 
-1.7.1.86.g0e460.dirty
+1.7.1
 
 
---===============8325087920361912422==--
+--===============5769541891237041489==--
 
