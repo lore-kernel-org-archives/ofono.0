@@ -1,39 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============6010836136485404051=="
+Content-Type: multipart/mixed; boundary="===============0728306286096046443=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH] TODO: add owner to TTY support
-Date: Mon, 08 Nov 2010 17:07:05 -0200
-Message-ID: <1289243225-29478-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] gprs: NULL-safe ofono_gprs_context_remove()
+Date: Mon, 08 Nov 2010 13:13:03 -0600
+Message-ID: <4CD84BBF.7020602@gmail.com>
+In-Reply-To: <1289241667-25149-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6010836136485404051==
+--===============0728306286096046443==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+Hi Pekka,
 
-diff --git a/TODO b/TODO
-index a5196f7..1dcca92 100644
---- a/TODO
-+++ b/TODO
-@@ -474,6 +474,7 @@ Miscellaneous
- =
+On 11/08/2010 12:41 PM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+> =
 
-   Priority: High
-   Complexity: C1
-+  Owner: Lucas De Marchi <lucas.demarchi@profusion.mobi>
- =
+> Check for NULL in one place.
+> ---
 
- - Add support for GPS power control atom.  Many modem manufacturers provide
-   a GPS unit with their modem hardware.  This unit can be turned on or off
--- =
+Patch has been applied, thanks.
 
-1.7.3.2
+Regards,
+-Denis
 
-
---===============6010836136485404051==--
+--===============0728306286096046443==--
 
