@@ -1,21 +1,21 @@
-Content-Type: multipart/mixed; boundary="===============3253838697526238833=="
+Content-Type: multipart/mixed; boundary="===============7888129547174215424=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO: Add owner to silent modem reset
-Date: Mon, 08 Nov 2010 13:14:54 -0600
-Message-ID: <4CD84C2E.90909@gmail.com>
-In-Reply-To: <1289242719-19474-1-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH] TODO: add owner to TTY support
+Date: Mon, 08 Nov 2010 13:15:13 -0600
+Message-ID: <4CD84C41.8020604@gmail.com>
+In-Reply-To: <1289243225-29478-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3253838697526238833==
+--===============7888129547174215424==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Lucas,
 
-On 11/08/2010 12:58 PM, Gustavo F. Padovan wrote:
+On 11/08/2010 01:07 PM, Lucas De Marchi wrote:
 > ---
 >  TODO |    1 +
 >  1 files changed, 1 insertions(+), 0 deletions(-)
@@ -27,5 +27,5 @@ Patch has been applied, thanks for taking up this task.
 Regards,
 -Denis
 
---===============3253838697526238833==--
+--===============7888129547174215424==--
 
