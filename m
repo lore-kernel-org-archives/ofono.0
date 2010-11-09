@@ -1,30 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============4776660461700979775=="
+Content-Type: multipart/mixed; boundary="===============3346687005230352981=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [RFC PATCH 1/3] modem: add modem online-offline watch
-Date: Tue, 09 Nov 2010 19:31:53 +0900
-Message-ID: <1289298713.9615.208.camel@aeonflux>
+Date: Tue, 09 Nov 2010 08:26:02 -0600
+Message-ID: <4CD959FA.4090108@gmail.com>
 In-Reply-To: <cb6fb563f8142ff4f4790d043d860a98f3bc2929.1289226246.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4776660461700979775==
+--===============3346687005230352981==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andras,
 
+On 11/09/2010 02:59 AM, Andras Domokos wrote:
+> =
+
 > Signed-off-by: Andras Domokos <Andras.Domokos@nokia.com>
 
-please redo the patches without the Signed-off-by line. It is mentioned
-in doc/coding-style.txt that we do not use this.
+As Marcel already mentioned, we do not use Signed-off-by.
 
-Regards
+Otherwise this patch looks good to me.
 
-Marcel
+Regards,
+-Denis
 
-
-
---===============4776660461700979775==--
+--===============3346687005230352981==--
 
