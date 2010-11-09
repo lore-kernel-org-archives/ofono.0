@@ -1,128 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============0108527779597189876=="
+Content-Type: multipart/mixed; boundary="===============2983070638626059486=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: [PATCH 2/8] Add dun_enable() function
-Date: Tue, 09 Nov 2010 02:42:55 -0200
-Message-ID: <1289277781-6378-3-git-send-email-gustavo@padovan.org>
-In-Reply-To: <1289277781-6378-2-git-send-email-gustavo@padovan.org>
+Subject: [PATCH 3/8] Add dun_disable() to power down the modem
+Date: Tue, 09 Nov 2010 02:42:56 -0200
+Message-ID: <1289277781-6378-4-git-send-email-gustavo@padovan.org>
+In-Reply-To: <1289277781-6378-3-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0108527779597189876==
+--===============2983070638626059486==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-dun_enable() is called by setting the Powered property to true.
-It creates a rfcomm link throught the BlueZ Serial API.
+When setting Powered to 0 the link rfcomm is disconnected.
 ---
- drivers/dunmodem/dunmodem.h |    1 +
- plugins/bluetooth.h         |    1 +
- plugins/dun.c               |   62 +++++++++++++++++++++++++++++++++++++++=
-++-
- 3 files changed, 62 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/dunmodem/dunmodem.h b/drivers/dunmodem/dunmodem.h
-index 291e2ce..6d545c9 100644
---- a/drivers/dunmodem/dunmodem.h
-+++ b/drivers/dunmodem/dunmodem.h
-@@ -21,4 +21,5 @@
- =
-
- struct dun_data {
- 	char *dun_path;
-+	char *rfcomm;
- };
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index 7cf45f0..1c8103a 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -23,6 +23,7 @@
- #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
- #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
- #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-+#define	BLUEZ_SERIAL_INTERFACE		BLUEZ_SERVICE ".Serial"
- =
-
- #define DBUS_TIMEOUT 15
- =
+ plugins/dun.c |   42 ++++++++++++++++++++++++++++++++++++++++--
+ 1 files changed, 40 insertions(+), 2 deletions(-)
 
 diff --git a/plugins/dun.c b/plugins/dun.c
-index 1e9f972..60d0271 100644
+index 60d0271..3d1e5c4 100644
 --- a/plugins/dun.c
 +++ b/plugins/dun.c
-@@ -25,6 +25,7 @@
- #include <stdio.h>
- #include <string.h>
- #include <errno.h>
-+#include <gdbus.h>
- #include <glib.h>
- #include <ofono.h>
- =
-
-@@ -139,10 +140,67 @@ static void dun_remove(struct ofono_modem *modem)
- 	ofono_modem_set_data(modem, NULL);
+@@ -203,10 +203,48 @@ static int dun_enable(struct ofono_modem *modem)
+ 	return -EINPROGRESS;
  }
  =
 
-+static void dun_connect_reply(DBusPendingCall *call, gpointer user_data)
++static void dun_power_down(DBusPendingCall *call, gpointer user_data)
 +{
 +	struct ofono_modem *modem =3D user_data;
 +	struct dun_data *data =3D ofono_modem_get_data(modem);
-+	const char *dev;
++	DBusMessage *reply;
 +	DBusError derr;
-+	DBusMessage *reply, *msg;
 +
 +	reply =3D dbus_pending_call_steal_reply(call);
 +
-+	if (ofono_modem_get_powered(modem))
-+		goto done;
-+
-+	if (!dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &dev,
-+				DBUS_TYPE_INVALID))
-+		goto done;
-+
-+	data->rfcomm =3D g_strdup(dev);
-+
 +	dbus_error_init(&derr);
-+	if (!dbus_set_error_from_message(&derr, reply)) {
-+		ofono_modem_set_powered(modem, TRUE);
++	if (dbus_set_error_from_message(&derr, reply)) {
++		DBG("Disconnect reply: %s", derr.message);
++		dbus_error_free(&derr);
 +		goto done;
-+	}
-+
-+	DBG("Connect reply: %s", derr.message);
-+
-+	if (dbus_error_has_name(&derr, DBUS_ERROR_NO_REPLY)) {
-+		msg =3D dbus_message_new_method_call(BLUEZ_SERVICE,
-+				data->dun_path,
-+				BLUEZ_SERIAL_INTERFACE, "Disconnect");
-+		if (!msg)
-+			ofono_error("Disconnect failed");
-+		else
-+			g_dbus_send_message(connection, msg);
 +	}
 +
 +	ofono_modem_set_powered(modem, FALSE);
 +
-+	dbus_error_free(&derr);
-+
 +done:
++	g_free(data->rfcomm);
++
 +	dbus_message_unref(reply);
 +}
 +
- static int dun_enable(struct ofono_modem *modem)
+ static int dun_disable(struct ofono_modem *modem)
  {
 -	DBG("%p", modem);
 -	return 0;
 +	struct dun_data *data =3D ofono_modem_get_data(modem);
 +	int status;
-+	const char *uuid =3D DUN_GW_UUID;
++
++	if (!ofono_modem_get_powered(modem))
++		return 0;
 +
 +	status =3D bluetooth_send_with_reply(data->dun_path,
-+					BLUEZ_SERIAL_INTERFACE, "Connect",
-+					dun_connect_reply, modem, NULL,
-+					DBUS_TIMEOUT, DBUS_TYPE_STRING, &uuid,
-+					DBUS_TYPE_INVALID);
++				BLUEZ_SERIAL_INTERFACE, "Disconnect",
++				dun_power_down, modem, NULL, DBUS_TIMEOUT,
++				DBUS_TYPE_STRING, &data->rfcomm,
++				DBUS_TYPE_INVALID);
 +
 +	if (status < 0)
 +		return -EINVAL;
@@ -131,11 +74,11 @@ index 1e9f972..60d0271 100644
  }
  =
 
- static int dun_disable(struct ofono_modem *modem)
+ static struct ofono_modem_driver dun_driver =3D {
 -- =
 
 1.7.3
 
 
---===============0108527779597189876==--
+--===============2983070638626059486==--
 
