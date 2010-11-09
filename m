@@ -1,152 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============3170690614216825573=="
+Content-Type: multipart/mixed; boundary="===============7914409925416935919=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: [PATCH 4/8] dun: Add GAtChat for the rfcomm device
-Date: Tue, 09 Nov 2010 02:42:57 -0200
-Message-ID: <1289277781-6378-5-git-send-email-gustavo@padovan.org>
-In-Reply-To: <1289277781-6378-4-git-send-email-gustavo@padovan.org>
+Subject: [PATCH 6/8] Add gprs-context to DUN
+Date: Tue, 09 Nov 2010 02:42:59 -0200
+Message-ID: <1289277781-6378-7-git-send-email-gustavo@padovan.org>
+In-Reply-To: <1289277781-6378-6-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3170690614216825573==
+--===============7914409925416935919==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/dunmodem/dunmodem.c |    1 +
- drivers/dunmodem/dunmodem.h |    1 +
- plugins/dun.c               |   56 +++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 58 insertions(+), 0 deletions(-)
+ drivers/dunmodem/dunmodem.h |    3 +++
+ plugins/dun.c               |    8 ++++++++
+ 2 files changed, 11 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/dunmodem/dunmodem.c b/drivers/dunmodem/dunmodem.c
-index 5657668..1020dd2 100644
---- a/drivers/dunmodem/dunmodem.c
-+++ b/drivers/dunmodem/dunmodem.c
-@@ -30,6 +30,7 @@
- #include <errno.h>
- =
-
- #include <glib.h>
-+#include <gatchat.h>
- =
-
- #define OFONO_API_SUBJECT_TO_CHANGE
- #include <ofono/plugin.h>
 diff --git a/drivers/dunmodem/dunmodem.h b/drivers/dunmodem/dunmodem.h
-index 6d545c9..f7351b7 100644
+index f4c54dc..3af1fec 100644
 --- a/drivers/dunmodem/dunmodem.h
 +++ b/drivers/dunmodem/dunmodem.h
-@@ -22,4 +22,5 @@
+@@ -19,10 +19,13 @@
+  *
+  */
+ =
+
++#include <drivers/atmodem/atutil.h>
++
  struct dun_data {
  	char *dun_path;
  	char *rfcomm;
-+	GAtChat *chat;
+ 	GAtChat *chat;
++	struct ofono_gprs_context *gc;
  };
+ =
+
+ void dun_netreg_init();
 diff --git a/plugins/dun.c b/plugins/dun.c
-index 3d1e5c4..488e7a3 100644
+index 7e0b768..dff0d4c 100644
 --- a/plugins/dun.c
 +++ b/plugins/dun.c
-@@ -23,11 +23,14 @@
- #include <config.h>
- #endif
- #include <stdio.h>
-+#include <stdlib.h>
- #include <string.h>
- #include <errno.h>
- #include <gdbus.h>
- #include <glib.h>
- #include <ofono.h>
-+#include <gatchat.h>
-+#include <gattty.h>
+@@ -312,6 +312,13 @@ static void dun_pre_sim(struct ofono_modem *modem)
+ 	ofono_netreg_create(modem, 0, "dunmodem", data);
+ }
  =
 
- #define OFONO_API_SUBJECT_TO_CHANGE
- #include <ofono/plugin.h>
-@@ -47,6 +50,48 @@
- static DBusConnection *connection;
- static GHashTable *modem_hash =3D NULL;
- =
-
-+static void dun_debug(const char *str, void *user_data)
++static void dun_post_sim(struct ofono_modem *modem)
 +{
-+	ofono_info("%s", str);
++	struct dun_data *data =3D ofono_modem_get_data(modem);
++
++	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
 +}
 +
-+static GAtChat *create_port(const char *device)
-+{
-+	GAtSyntax *syntax;
-+	GIOChannel *channel;
-+	GAtChat *chat;
-+
-+	channel =3D g_at_tty_open(device, NULL);
-+	if (!channel)
-+		return NULL;
-+
-+	syntax =3D g_at_syntax_new_gsm_permissive();
-+	chat =3D g_at_chat_new(channel, syntax);
-+	g_at_syntax_unref(syntax);
-+	g_io_channel_unref(channel);
-+
-+	if (!chat)
-+		return NULL;
-+
-+	return chat;
-+}
-+
-+static GAtChat *open_device(const char *device, char *debug)
-+{
-+	GAtChat *chat;
-+
-+	DBG("%s", device);
-+
-+	chat =3D create_port(device);
-+	if (chat =3D=3D NULL)
-+		return NULL;
-+
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(chat, dun_debug, debug);
-+
-+	return chat;
-+}
-+
- static int dun_create_modem(const char *device, const char *dev_addr,
- 				const char *adapter_addr, const char *alias)
- {
-@@ -159,6 +204,10 @@ static void dun_connect_reply(DBusPendingCall *call, g=
-pointer user_data)
+ static struct ofono_modem_driver dun_driver =3D {
+ 	.name		=3D "dun",
+ 	.probe		=3D dun_probe,
+@@ -319,6 +326,7 @@ static struct ofono_modem_driver dun_driver =3D {
+ 	.enable		=3D dun_enable,
+ 	.disable	=3D dun_disable,
+ 	.pre_sim	=3D dun_pre_sim,
++	.post_sim	=3D dun_post_sim,
+ };
  =
 
- 	data->rfcomm =3D g_strdup(dev);
- =
-
-+	data->chat =3D open_device(dev, "Modem:");
-+	if (data->chat =3D=3D NULL)
-+		goto done;
-+
- 	dbus_error_init(&derr);
- 	if (!dbus_set_error_from_message(&derr, reply)) {
- 		ofono_modem_set_powered(modem, TRUE);
-@@ -235,6 +284,13 @@ static int dun_disable(struct ofono_modem *modem)
- 	if (!ofono_modem_get_powered(modem))
- 		return 0;
- =
-
-+	if (data->chat) {
-+		g_at_chat_cancel_all(data->chat);
-+		g_at_chat_unregister_all(data->chat);
-+		g_at_chat_unref(data->chat);
-+		data->chat =3D NULL;
-+	}
-+
- 	status =3D bluetooth_send_with_reply(data->dun_path,
- 				BLUEZ_SERIAL_INTERFACE, "Disconnect",
- 				dun_power_down, modem, NULL, DBUS_TIMEOUT,
+ static struct bluetooth_profile dun_profile =3D {
 -- =
 
 1.7.3
 
 
---===============3170690614216825573==--
+--===============7914409925416935919==--
 
