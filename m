@@ -1,181 +1,335 @@
-Content-Type: multipart/mixed; boundary="===============6525229064092828529=="
+Content-Type: multipart/mixed; boundary="===============0666359267817749675=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 2/3] modem: add EmergencyMode property
-Date: Tue, 09 Nov 2010 08:37:49 -0600
-Message-ID: <4CD95CBD.2070705@gmail.com>
-In-Reply-To: <f223f1f32b9778b4968e5041a130bf40d73ef382.1289226246.git.Andras.Domokos@nokia.com>
+Subject: Re: [RFC PATCH 3/3] voicecall: add emergency call handling
+Date: Tue, 09 Nov 2010 08:52:51 -0600
+Message-ID: <4CD96043.4030509@gmail.com>
+In-Reply-To: <7a8dc913d70a01ce874800a5fe25d026006d2ee6.1289226246.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6525229064092828529==
+--===============0666359267817749675==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andras,
 
-On 11/09/2010 02:59 AM, Andras Domokos wrote:
+On 11/09/2010 03:00 AM, Andras Domokos wrote:
 > =
 
 > Signed-off-by: Andras Domokos <Andras.Domokos@nokia.com>
 > ---
->  src/modem.c |   53 +++++++++++++++++++++++++++++++++++++++++++++++++++++
->  src/ofono.h |    4 ++++
->  2 files changed, 57 insertions(+), 0 deletions(-)
+>  src/voicecall.c |  101 +++++++++++++++++++++++++++++++++++++++++++++++++=
++++++-
+>  1 files changed, 100 insertions(+), 1 deletions(-)
 > =
 
-> diff --git a/src/modem.c b/src/modem.c
-> index f73cc1d..d7ad90e 100644
-> --- a/src/modem.c
-> +++ b/src/modem.c
-> @@ -72,6 +72,7 @@ struct ofono_modem {
->  	ofono_bool_t		powered_pending;
->  	guint			timeout;
->  	ofono_bool_t		online;
-> +	unsigned int		emergency_mode;
->  	struct ofono_watchlist	*online_watches;
->  	GHashTable		*properties;
->  	struct ofono_sim	*sim;
-> @@ -479,6 +480,50 @@ void __ofono_modem_remove_online_watch(struct ofono_=
-modem *modem, unsigned id)
->  	__ofono_watchlist_remove_item(modem->online_watches, id);
+> diff --git a/src/voicecall.c b/src/voicecall.c
+> index bd64432..0268ce1 100644
+> --- a/src/voicecall.c
+> +++ b/src/voicecall.c
+> @@ -52,6 +52,7 @@ struct ofono_voicecall {
+>  	struct ofono_sim *sim;
+>  	unsigned int sim_watch;
+>  	unsigned int sim_state_watch;
+> +	unsigned int modem_online_watch;
+>  	const struct ofono_voicecall_driver *driver;
+>  	void *driver_data;
+>  	struct ofono_atom *atom;
+> @@ -133,6 +134,22 @@ static void add_to_en_list(GSList **l, const char **=
+list)
+>  		*l =3D g_slist_prepend(*l, g_strdup(list[i++]));
 >  }
 >  =
 
-> +ofono_bool_t ofono_modem_get_emergency_mode(struct ofono_modem *modem)
+> +static gint number_compare(gconstpointer a, gconstpointer b)
 > +{
-> +	if (modem =3D=3D NULL)
+> +	const char *s1 =3D a, *s2 =3D b;
+> +	return strcmp(s1, s2);
+> +}
+> +
+> +static ofono_bool_t emergency_number(struct ofono_voicecall *vc,
+> +					const char *number)
+> +{
+> +	if (!number)
 > +		return FALSE;
 > +
-> +	return modem->emergency_mode !=3D 0;
+> +	return g_slist_find_custom(vc->en_list,
+> +				number, number_compare) ? TRUE : FALSE;
 > +}
 > +
-> +void ofono_modem_inc_emergency_mode(struct ofono_modem *modem)
-> +{
-> +	DBusConnection *conn =3D ofono_dbus_get_connection();
-> +	const char *path =3D ofono_modem_get_path(modem);
-> +	ofono_bool_t emergency_mode =3D modem->emergency_mode;
-
-I suggest getting rid of this variable
-
-> +	gboolean state =3D TRUE;
-> +
-> +	modem->emergency_mode++;
-> +	if (emergency_mode)
-> +		return;
-> +
-
-And checking if modem->emergency_mode > 1 here...
-
-> +	ofono_dbus_signal_property_changed(conn, path,
-> +						OFONO_MODEM_INTERFACE,
-> +						"EmergencyMode",
-> +						DBUS_TYPE_BOOLEAN,
-> +						&state);
-> +	modem_change_state(modem, MODEM_STATE_ONLINE);
-
-So we have to be a bit careful here.  You can't simply call
-modem_change_state here.  This results in calling the post_online
-method, which populates the atoms that function when the radio is on.
-Instead you need to call the set_online driver method directly.
-
-Also, you probably do not want to populate the online atoms in an
-emergency call situation.  Each atom driver / atom will perform
-initialization procedures when they're newly added.  This can
-potentially interfere with the voice call setup time, and not desirable.
- Not to mention that if we're actually in an emergency situation with
-the SIM removed or PIN locked, we do not want to populate the atoms in
-the first place.
-
-So the modem 'ONLINE_STATE' has to be slightly de-coupled from whether
-the radio is 'online'.
-
-> +}
-> +
-> +void ofono_modem_dec_emergency_mode(struct ofono_modem *modem)
-> +{
-> +	DBusConnection *conn =3D ofono_dbus_get_connection();
-> +	const char *path =3D ofono_modem_get_path(modem);
-> +	gboolean state =3D FALSE;
-> +
-> +	modem->emergency_mode--;
-> +	if (modem->emergency_mode)
-> +		return;
-> +
-> +	ofono_dbus_signal_property_changed(conn, path,
-> +						OFONO_MODEM_INTERFACE,
-> +						"EmergencyMode",
-> +						DBUS_TYPE_BOOLEAN,
-> +						&state);
-
-Here you should turn the radio off if it was off before starting the
-emergency call.
-
-> +}
-> +
->  static void online_cb(const struct ofono_error *error, void *data)
+>  static const char *disconnect_reason_to_string(enum ofono_disconnect_rea=
+son r)
 >  {
->  	struct ofono_modem *modem =3D data;
-> @@ -535,6 +580,9 @@ static DBusMessage *set_property_online(struct ofono_=
-modem *modem,
->  	if (modem->modem_state < MODEM_STATE_OFFLINE)
->  		return __ofono_error_not_available(msg);
+>  	switch (r) {
+> @@ -1125,6 +1142,7 @@ static struct voicecall *dial_handle_result(struct =
+ofono_voicecall *vc,
+>  static void manager_dial_callback(const struct ofono_error *error, void =
+*data)
+>  {
+>  	struct ofono_voicecall *vc =3D data;
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+>  	DBusMessage *reply;
+>  	const char *number;
+>  	gboolean need_to_emit;
+> @@ -1143,8 +1161,11 @@ static void manager_dial_callback(const struct ofo=
+no_error *error, void *data)
 >  =
 
-> +	if (modem->emergency_mode && online =3D=3D FALSE)
-> +		return __ofono_error_failed(msg);
+>  		dbus_message_append_args(reply, DBUS_TYPE_OBJECT_PATH, &path,
+>  						DBUS_TYPE_INVALID);
+> -	} else
+> +	} else {
+> +		if (emergency_number(vc, number))
+> +			ofono_modem_dec_emergency_mode(modem);
+
+Empty line here, please see coding-style.txt, Section M1
+
+>  		reply =3D __ofono_error_failed(vc->pending);
+> +	}
+>  =
+
+>  	__ofono_dbus_pending_reply(&vc->pending, reply);
+>  =
+
+> @@ -1156,6 +1177,7 @@ static DBusMessage *manager_dial(DBusConnection *co=
+nn,
+>  					DBusMessage *msg, void *data)
+>  {
+>  	struct ofono_voicecall *vc =3D data;
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+>  	const char *number;
+>  	struct ofono_phone_number ph;
+>  	const char *clirstr;
+> @@ -1195,6 +1217,13 @@ static DBusMessage *manager_dial(DBusConnection *c=
+onn,
+>  =
+
+>  	string_to_phone_number(number, &ph);
+>  =
+
+> +	if (emergency_number(vc, number)) {
+> +		ofono_bool_t online =3D ofono_modem_get_online(modem);
+
+Empty line here
+
+> +		ofono_modem_inc_emergency_mode(modem);
+
+And one here
+
+> +		if (!online)
+> +			return NULL;
+> +	}
 > +
->  	if (modem->online =3D=3D online)
->  		return dbus_message_new_method_return(msg);
+>  	vc->driver->dial(vc, &ph, clir, OFONO_CUG_OPTION_DEFAULT,
+>  				manager_dial_callback, vc);
 >  =
 
-> @@ -562,6 +610,7 @@ void __ofono_modem_append_properties(struct ofono_mod=
-em *modem,
->  	int i;
+> @@ -1748,6 +1777,7 @@ void ofono_voicecall_disconnected(struct ofono_voic=
+ecall *vc, int id,
+>  				const struct ofono_error *error)
+>  {
+>  	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+> +	const char *number;
 >  	GSList *l;
->  	struct ofono_atom *devinfo_atom;
-> +	ofono_bool_t state;
+>  	struct voicecall *call;
+>  	time_t ts;
+> @@ -1767,6 +1797,7 @@ void ofono_voicecall_disconnected(struct ofono_voic=
+ecall *vc, int id,
+>  	}
 >  =
 
->  	ofono_dbus_dict_append(dict, "Online", DBUS_TYPE_BOOLEAN,
->  				&modem->online);
-> @@ -569,6 +618,10 @@ void __ofono_modem_append_properties(struct ofono_mo=
-dem *modem,
->  	ofono_dbus_dict_append(dict, "Powered", DBUS_TYPE_BOOLEAN,
->  				&modem->powered);
+>  	call =3D l->data;
+> +	number =3D phone_number_to_string(&call->call->phone_number);
 >  =
 
-> +	state =3D ofono_modem_get_emergency_mode(modem);
-> +	ofono_dbus_dict_append(dict, "EmergencyMode",
-> +				DBUS_TYPE_BOOLEAN, &state);
+>  	ts =3D time(NULL);
+>  	prev_status =3D call->call->status;
+> @@ -1805,6 +1836,9 @@ void ofono_voicecall_disconnected(struct ofono_voic=
+ecall *vc, int id,
+>  =
+
+>  	voicecalls_emit_call_removed(vc, call);
+>  =
+
+> +	if (emergency_number(vc, number))
+> +		ofono_modem_dec_emergency_mode(modem);
 > +
->  	devinfo_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_DEVINFO=
-);
+
+I'm not convinced that you have the reference tracking completely
+correct.  You increment the ref when a call is dialed, as well as when
+it is notified + created.  However, you only decrement it when it is
+disconnected...
+
+>  	voicecall_dbus_unregister(vc, call);
 >  =
 
->  	/* We cheat a little here and don't check the registered status */
-> diff --git a/src/ofono.h b/src/ofono.h
-> index 35335b6..b5c32b4 100644
-> --- a/src/ofono.h
-> +++ b/src/ofono.h
-> @@ -185,6 +185,10 @@ unsigned int __ofono_modem_add_online_watch(struct o=
-fono_modem *modem,
->  void __ofono_modem_remove_online_watch(struct ofono_modem *modem,
->  		unsigned int id);
+>  	vc->call_list =3D g_slist_remove(vc->call_list, call);
+> @@ -1814,6 +1848,7 @@ void ofono_voicecall_notify(struct ofono_voicecall =
+*vc,
+>  				const struct ofono_call *call)
+>  {
+>  	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+> +	const char *number;
+>  	GSList *l;
+>  	struct voicecall *v =3D NULL;
+>  	struct ofono_call *newcall;
+> @@ -1860,6 +1895,10 @@ void ofono_voicecall_notify(struct ofono_voicecall=
+ *vc,
 >  =
 
-> +ofono_bool_t ofono_modem_get_emergency_mode(struct ofono_modem *modem);
-> +void ofono_modem_inc_emergency_mode(struct ofono_modem *modem);
-> +void ofono_modem_dec_emergency_mode(struct ofono_modem *modem);
+>  	vc->call_list =3D g_slist_insert_sorted(vc->call_list, v, call_compare);
+>  =
+
+> +	number =3D phone_number_to_string(&v->call->phone_number);
+> +	if (emergency_number(vc, number))
+> +		ofono_modem_inc_emergency_mode(modem);
 > +
->  #include <ofono/call-barring.h>
+>  	voicecalls_emit_call_added(vc, v);
 >  =
 
->  gboolean __ofono_call_barring_is_busy(struct ofono_call_barring *cb);
+>  	return;
+> @@ -2067,6 +2106,7 @@ static void voicecall_unregister(struct ofono_atom =
+*atom)
+>  static void voicecall_remove(struct ofono_atom *atom)
+>  {
+>  	struct ofono_voicecall *vc =3D __ofono_atom_get_data(atom);
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
+>  =
+
+>  	DBG("atom: %p", atom);
+>  =
+
+> @@ -2108,6 +2148,12 @@ static void voicecall_remove(struct ofono_atom *at=
+om)
+>  		g_queue_free(vc->toneq);
+>  	}
+>  =
+
+> +	if (vc->modem_online_watch) {
+> +		__ofono_modem_remove_online_watch(modem,
+> +						vc->modem_online_watch);
+> +		vc->modem_online_watch =3D 0;
+> +	}
+> +
+>  	g_free(vc);
+>  }
+>  =
+
+> @@ -2202,6 +2248,47 @@ static void sim_watch(struct ofono_atom *atom,
+>  	sim_state_watch(ofono_sim_get_state(sim), vc);
+>  }
+>  =
+
+> +static void modem_online_watch(ofono_bool_t state, void *data)
+> +{
+> +	struct ofono_voicecall *vc =3D data;
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+> +	DBusMessage *reply;
+> +	const char *number;
+> +	struct ofono_phone_number ph;
+> +	const char *clirstr;
+> +	enum ofono_clir_option clir;
+> +
+> +	if (!vc->pending)
+> +		return;
+> +
+> +	if (strcmp(dbus_message_get_member(vc->pending), "Dial"))
+> +		return;
+> +
+> +	if (dbus_message_get_args(vc->pending, NULL, DBUS_TYPE_STRING, &number,
+> +					DBUS_TYPE_STRING, &clirstr,
+> +					DBUS_TYPE_INVALID) =3D=3D FALSE) {
+> +		reply =3D __ofono_error_invalid_args(vc->pending);
+> +		__ofono_dbus_pending_reply(&vc->pending, reply);
+> +		return;
+> +	}
+> +
+> +	if (!emergency_number(vc, number))
+> +		return;
+> +
+> +	if (!ofono_modem_get_online(modem)) {
+
+Why do you need to use ofono_modem_get_online when the state parameter
+is already being passed in?
+
+> +		reply =3D __ofono_error_failed(vc->pending);
+> +		__ofono_dbus_pending_reply(&vc->pending, reply);
+> +		ofono_modem_dec_emergency_mode(modem);
+> +		return;
+> +	}
+> +
+> +	clir_string_to_clir(clirstr, &clir);
+> +	string_to_phone_number(number, &ph);
+> +
+> +	vc->driver->dial(vc, &ph, clir, OFONO_CUG_OPTION_DEFAULT,
+> +				manager_dial_callback, vc);
+> +}
+> +
+>  void ofono_voicecall_register(struct ofono_voicecall *vc)
+>  {
+>  	DBusConnection *conn =3D ofono_dbus_get_connection();
+> @@ -2220,6 +2307,9 @@ void ofono_voicecall_register(struct ofono_voicecal=
+l *vc)
+>  	}
+>  =
+
+>  	ofono_modem_add_interface(modem, OFONO_VOICECALL_MANAGER_INTERFACE);
+> +	vc->modem_online_watch =3D __ofono_modem_add_online_watch(modem,
+> +							modem_online_watch,
+> +							vc, NULL);
+>  =
+
+>  	/*
+>  	 * Start out with the 22.101 mandated numbers, if we have a SIM and
+> @@ -2297,6 +2387,7 @@ ofono_bool_t __ofono_voicecall_is_busy(struct ofono=
+_voicecall *vc,
+>  static void dial_request_cb(const struct ofono_error *error, void *data)
+>  {
+>  	struct ofono_voicecall *vc =3D data;
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+>  	gboolean need_to_emit;
+>  	struct voicecall *v;
+>  =
+
+> @@ -2306,6 +2397,9 @@ static void dial_request_cb(const struct ofono_erro=
+r *error, void *data)
+>  =
+
+>  	if (v =3D=3D NULL) {
+>  		dial_request_finish(vc);
+> +		if (emergency_number(vc,
+> +				phone_number_to_string(&vc->dial_req->ph)))
+> +			ofono_modem_inc_emergency_mode(modem);
+
+Do you mean ofono_modem_dec_emergency_mode here?
+
+>  		return;
+>  	}
+>  =
+
+> @@ -2331,6 +2425,11 @@ static void dial_request_cb(const struct ofono_err=
+or *error, void *data)
+>  =
+
+>  static void dial_request(struct ofono_voicecall *vc)
+>  {
+> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+> +
+> +	if (emergency_number(vc, phone_number_to_string(&vc->dial_req->ph)))
+> +		ofono_modem_inc_emergency_mode(modem);
+> +
+
+This part looks a bit fishy, you need to delay the dial request until we
+entered online mode.
+
+>  	vc->driver->dial(vc, &vc->dial_req->ph, OFONO_CLIR_OPTION_DEFAULT,
+>  				OFONO_CUG_OPTION_DEFAULT, dial_request_cb, vc);
+>  }
 
 Regards,
 -Denis
 
---===============6525229064092828529==--
+--===============0666359267817749675==--
 
