@@ -1,75 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============7914409925416935919=="
+Content-Type: multipart/mixed; boundary="===============8778654521836708902=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <gustavo@padovan.org>
-Subject: [PATCH 6/8] Add gprs-context to DUN
-Date: Tue, 09 Nov 2010 02:42:59 -0200
-Message-ID: <1289277781-6378-7-git-send-email-gustavo@padovan.org>
-In-Reply-To: <1289277781-6378-6-git-send-email-gustavo@padovan.org>
+Subject: [PATCH 7/8] gprs: Prevent crash due to a NULL pid_map
+Date: Tue, 09 Nov 2010 02:43:00 -0200
+Message-ID: <1289277781-6378-8-git-send-email-gustavo@padovan.org>
+In-Reply-To: <1289277781-6378-7-git-send-email-gustavo@padovan.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7914409925416935919==
+--===============8778654521836708902==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+gprs_drv->probe() may use pid_map, so we set it before call probe()
 ---
- drivers/dunmodem/dunmodem.h |    3 +++
- plugins/dun.c               |    8 ++++++++
- 2 files changed, 11 insertions(+), 0 deletions(-)
+ src/gprs.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/dunmodem/dunmodem.h b/drivers/dunmodem/dunmodem.h
-index f4c54dc..3af1fec 100644
---- a/drivers/dunmodem/dunmodem.h
-+++ b/drivers/dunmodem/dunmodem.h
-@@ -19,10 +19,13 @@
-  *
-  */
+diff --git a/src/gprs.c b/src/gprs.c
+index 0f6fb0c..76a4d5f 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -2221,6 +2221,10 @@ struct ofono_gprs *ofono_gprs_create(struct ofono_mo=
+dem *modem,
+ 	gprs->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_GPRS,
+ 						gprs_remove, gprs);
  =
 
-+#include <drivers/atmodem/atutil.h>
++	gprs->status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
++	gprs->netreg_status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
++	gprs->pid_map =3D idmap_new(MAX_CONTEXTS);
 +
- struct dun_data {
- 	char *dun_path;
- 	char *rfcomm;
- 	GAtChat *chat;
-+	struct ofono_gprs_context *gc;
- };
+ 	for (l =3D g_drivers; l; l =3D l->next) {
+ 		const struct ofono_gprs_driver *drv =3D l->data;
  =
 
- void dun_netreg_init();
-diff --git a/plugins/dun.c b/plugins/dun.c
-index 7e0b768..dff0d4c 100644
---- a/plugins/dun.c
-+++ b/plugins/dun.c
-@@ -312,6 +312,13 @@ static void dun_pre_sim(struct ofono_modem *modem)
- 	ofono_netreg_create(modem, 0, "dunmodem", data);
+@@ -2234,10 +2238,6 @@ struct ofono_gprs *ofono_gprs_create(struct ofono_mo=
+dem *modem,
+ 		break;
+ 	}
+ =
+
+-	gprs->status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
+-	gprs->netreg_status =3D NETWORK_REGISTRATION_STATUS_UNKNOWN;
+-	gprs->pid_map =3D idmap_new(MAX_CONTEXTS);
+-
+ 	return gprs;
  }
  =
 
-+static void dun_post_sim(struct ofono_modem *modem)
-+{
-+	struct dun_data *data =3D ofono_modem_get_data(modem);
-+
-+	data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem", data->chat);
-+}
-+
- static struct ofono_modem_driver dun_driver =3D {
- 	.name		=3D "dun",
- 	.probe		=3D dun_probe,
-@@ -319,6 +326,7 @@ static struct ofono_modem_driver dun_driver =3D {
- 	.enable		=3D dun_enable,
- 	.disable	=3D dun_disable,
- 	.pre_sim	=3D dun_pre_sim,
-+	.post_sim	=3D dun_post_sim,
- };
- =
-
- static struct bluetooth_profile dun_profile =3D {
 -- =
 
 1.7.3
 
 
---===============7914409925416935919==--
+--===============8778654521836708902==--
 
