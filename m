@@ -1,39 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============3473223343492150572=="
+Content-Type: multipart/mixed; boundary="===============2006102596339618574=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Add test/reset-pin
-Date: Wed, 10 Nov 2010 07:51:35 +0900
-Message-ID: <1289343095.9615.226.camel@aeonflux>
-In-Reply-To: <4CD97483.9020105@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] Force requirement for filename option in cmd line
+Date: Tue, 09 Nov 2010 17:07:36 -0600
+Message-ID: <4CD9D438.4020807@gmail.com>
+In-Reply-To: <1289328320-10160-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3473223343492150572==
+--===============2006102596339618574==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Gustavo,
 
-> > ---
-> >  test/reset-pin |   23 +++++++++++++++++++++++
-> >  1 files changed, 23 insertions(+), 0 deletions(-)
-> >  create mode 100755 test/reset-pin
-> > =
-
+On 11/09/2010 12:45 PM, Gustavo F. Padovan wrote:
+> ---
+>  src/main.cpp |    7 ++++++-
+>  1 files changed, 6 insertions(+), 1 deletions(-)
 > =
 
-> Patch has been applied, thanks.
 
-I saw that Denis fixed the Makefile.am for you. Please keep in mind to
-ensure that test scripts get included when building the release
-tarballs.
+This patch has been applied, thanks.
 
-Regards
+Regards,
+-Denis
 
-Marcel
-
-
-
---===============3473223343492150572==--
+--===============2006102596339618574==--
 
