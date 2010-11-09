@@ -1,97 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============8624708772450793820=="
+Content-Type: multipart/mixed; boundary="===============3473223343492150572=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH] Add SIM reset button
-Date: Tue, 09 Nov 2010 18:21:15 -0200
-Message-ID: <1289334075-10937-1-git-send-email-padovan@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] Add test/reset-pin
+Date: Wed, 10 Nov 2010 07:51:35 +0900
+Message-ID: <1289343095.9615.226.camel@aeonflux>
+In-Reply-To: <4CD97483.9020105@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8624708772450793820==
+--===============3473223343492150572==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-AT+CRST now send a reset resquest command
----
- src/control.cpp    |    6 ++++++
- src/control.h      |    1 +
- src/controlbase.ui |   16 ++++++++++++++++
- 3 files changed, 23 insertions(+), 0 deletions(-)
+Hi Pekka,
 
-diff --git a/src/control.cpp b/src/control.cpp
-index 2e22f69..1fa1978 100644
---- a/src/control.cpp
-+++ b/src/control.cpp
-@@ -84,6 +84,7 @@ ControlWidget::ControlWidget(const QString &ruleFile, Con=
-trol *parent)
-     connect(ui->cbSimInserted, SIGNAL(clicked()), this, SLOT(simInsertRemo=
-ve()));
-     connect(ui->pbStart, SIGNAL(clicked()), this, SLOT(simAppStart()));
-     connect(ui->pbAbort, SIGNAL(clicked()), this, SLOT(simAppAbort()));
-+    connect(ui->pbReset, SIGNAL(clicked()), this, SLOT(simAppReset()));
- =
+> > ---
+> >  test/reset-pin |   23 +++++++++++++++++++++++
+> >  1 files changed, 23 insertions(+), 0 deletions(-)
+> >  create mode 100755 test/reset-pin
+> > =
 
-     QStringList headers;
-     headers << "Sender" << "Priority" << "Notification Status";
-@@ -459,6 +460,11 @@ void ControlWidget::simAppAbort()
-     p->simAppAbort();
- }
- =
+> =
 
-+void ControlWidget::simAppReset()
-+{
-+    emit unsolicitedCommand("AT+CRST");
-+}
-+
- Script::Script(QObject *obj, Ui_ControlBase *ui) : QDBusAbstractAdaptor(ob=
-j)
- {
-     /* Export tabs to be accessed by script */
-diff --git a/src/control.h b/src/control.h
-index 3c85e22..6c4d8a8 100644
---- a/src/control.h
-+++ b/src/control.h
-@@ -94,6 +94,7 @@ private slots:
-     void simInsertRemove();
-     void simAppStart();
-     void simAppAbort();
-+    void simAppReset();
- =
+> Patch has been applied, thanks.
 
- signals:
-     void unsolicitedCommand(const QString &);
-diff --git a/src/controlbase.ui b/src/controlbase.ui
-index eca1898..ab06b51 100644
---- a/src/controlbase.ui
-+++ b/src/controlbase.ui
-@@ -1406,6 +1406,22 @@ p, li { white-space: pre-wrap; }
-             </property>
-            </widget>
-           </item>
-+          <item>
-+           <widget class=3D"QPushButton" name=3D"pbReset">
-+            <property name=3D"enabled">
-+             <bool>true</bool>
-+            </property>
-+            <property name=3D"maximumSize">
-+             <size>
-+              <width>185</width>
-+              <height>25</height>
-+             </size>
-+            </property>
-+            <property name=3D"text">
-+             <string>Reset</string>
-+            </property>
-+           </widget>
-+          </item>
-          </layout>
-         </widget>
-        </item>
--- =
+I saw that Denis fixed the Makefile.am for you. Please keep in mind to
+ensure that test scripts get included when building the release
+tarballs.
 
-1.7.3.1
+Regards
+
+Marcel
 
 
---===============8624708772450793820==--
+
+--===============3473223343492150572==--
 
