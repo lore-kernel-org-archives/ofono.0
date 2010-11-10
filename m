@@ -1,56 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============1166178059535550834=="
+Content-Type: multipart/mixed; boundary="===============8556815326443297878=="
 MIME-Version: 1.0
-From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 1/4] gisi: fix crash bug in g_isi_remove_subscription
-Date: Wed, 10 Nov 2010 14:22:28 +0200
-Message-ID: <1289391751-2844-2-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1289391751-2844-1-git-send-email-mika.liljeberg@nokia.com>
+From: John Mathew <john.mathew@elektrobit.com>
+Subject: [PATCH] TODO: Add owner to extend the voicecall interface with a
+ property indicating emergency call
+Date: Wed, 10 Nov 2010 07:25:44 -0500
+Message-ID: <1289391944-3184-1-git-send-email-john.mathew@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1166178059535550834==
+--===============8556815326443297878==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- gisi/client.c |    7 +++++--
- 1 files changed, 5 insertions(+), 2 deletions(-)
+ TODO |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/gisi/client.c b/gisi/client.c
-index 8ab3dc9..8e41331 100644
---- a/gisi/client.c
-+++ b/gisi/client.c
-@@ -744,16 +744,19 @@ int g_isi_subscribe(GIsiClient *client, uint8_t type,
-  */
- void g_isi_remove_subscription(GIsiClient *client, uint8_t res, uint8_t ty=
-pe)
- {
-+	void *ret;
- 	GIsiIndication *ind;
- 	unsigned int id =3D (res << 8) | type;
+diff --git a/TODO b/TODO
+index 84d5aa7..ed37c58 100644
+--- a/TODO
++++ b/TODO
+@@ -416,7 +416,7 @@ Emergency Calls
  =
 
- 	if (!client)
- 		return;
+   Priority: High
+   Complexity: C1
+-
++  Owner: John Mathew <john.mathew@elektrobit.com> =
+
  =
 
--	ind =3D tdelete(&id, &client->inds.subs, g_isi_cmp);
--	if (!ind)
-+	ret =3D tfind(&id, &client->inds.subs, g_isi_cmp);
-+	if (!ret)
- 		return;
- =
-
-+	ind =3D *(GIsiIndication **)ret;
-+	tdelete(ind, &client->inds.subs, g_isi_cmp);
- 	client->inds.count--;
- 	g_free(ind);
- }
+ Miscellaneous
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 -- =
 
 1.7.0.4
 
 
---===============1166178059535550834==--
+--===============8556815326443297878==--
 
