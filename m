@@ -1,65 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============5787348466338945071=="
+Content-Type: multipart/mixed; boundary="===============5320943524506686408=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO: Add owner to extend the voicecall interface with a
- property indicating emergency call
-Date: Wed, 10 Nov 2010 08:33:23 -0600
-Message-ID: <4CDAAD33.3070901@gmail.com>
-In-Reply-To: <1289391944-3184-1-git-send-email-john.mathew@elektrobit.com>
+Subject: Re: [PATCH] TODO: Check SIM pin status if sim_change_pin fails.
+Date: Wed, 10 Nov 2010 08:35:36 -0600
+Message-ID: <4CDAADB8.4090704@gmail.com>
+In-Reply-To: <1289388945-21096-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5787348466338945071==
+--===============5320943524506686408==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi John,
+Hi Marit,
 
-On 11/10/2010 06:25 AM, John Mathew wrote:
-> ---
->  TODO |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
+On 11/10/2010 05:35 AM, Marit Henriksen wrote:
+> From: Marit Henriksen <marit.henriksen@stericsson.com>
 > =
 
-> diff --git a/TODO b/TODO
-> index 84d5aa7..ed37c58 100644
-> --- a/TODO
-> +++ b/TODO
-> @@ -416,7 +416,7 @@ Emergency Calls
->  =
+> ---
+> I'm sorry if I gave the impression that I don't want to contribute to =
 
->    Priority: High
->    Complexity: C1
-> -
-> +  Owner: John Mathew <john.mathew@elektrobit.com> =
+> the development of oFono core, I guess I'm just not that familiar with
+> how things work. =
 
->  =
+> =
 
->  Miscellaneous
->  =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 
-We have pretty strict git apply settings in effect, so your patch does
-not apply:
-
-Applying: TODO: Add owner to extend the voicecall interface with a
-property indicating emergency call
-/home/denkenz/ofono-master/.git/rebase-apply/patch:14: trailing whitespace.
-  Owner: John Mathew <john.mathew@elektrobit.com>
-fatal: 1 line adds whitespace errors.
-Patch failed at 0001 TODO: Add owner to extend the voicecall interface
-with a property indicating emergency call
-
-Also, please keep your commit header under 50 characters.  And yes, I
-know the task description is rather 'long' in this case ;)  So sometimes
-we have to be a bit 'creative'.  Something like:
-
-"TODO: Assign Voicecall emergency property task"
-
-would work in this case.
+No worries, patch has been applied. Thanks.
 
 Regards,
 -Denis
 
---===============5787348466338945071==--
+--===============5320943524506686408==--
 
