@@ -1,69 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============7821742668884812715=="
+Content-Type: multipart/mixed; boundary="===============5787348466338945071=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 3/3] cbs: CB download must be enabled in SIM service tables.
-Date: Wed, 10 Nov 2010 04:27:52 +0100
-Message-ID: <1289359672-19206-3-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1289359672-19206-1-git-send-email-andrew.zaborowski@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] TODO: Add owner to extend the voicecall interface with a
+ property indicating emergency call
+Date: Wed, 10 Nov 2010 08:33:23 -0600
+Message-ID: <4CDAAD33.3070901@gmail.com>
+In-Reply-To: <1289391944-3184-1-git-send-email-john.mathew@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7821742668884812715==
+--===============5787348466338945071==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/cbs.c |   13 +++++++++++++
- 1 files changed, 13 insertions(+), 0 deletions(-)
+Hi John,
 
-diff --git a/src/cbs.c b/src/cbs.c
-index 6bd2f69..821985b 100644
---- a/src/cbs.c
-+++ b/src/cbs.c
-@@ -173,6 +173,7 @@ static void cbs_dispatch_text(struct ofono_cbs *cbs, en=
-um sms_class cls,
- void ofono_cbs_notify(struct ofono_cbs *cbs, const unsigned char *pdu,
- 				int pdu_len)
- {
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(cbs->atom);
- 	struct cbs c;
- 	enum sms_class cls;
- 	gboolean udhi;
-@@ -181,6 +182,7 @@ void ofono_cbs_notify(struct ofono_cbs *cbs, const unsi=
-gned char *pdu,
- 	enum sms_charset charset;
- 	char *message;
- 	char iso639_lang[3];
-+	struct ofono_atom *sim_atom;
- =
+On 11/10/2010 06:25 AM, John Mathew wrote:
+> ---
+>  TODO |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> =
 
- 	if (cbs->assembly =3D=3D NULL)
- 		return;
-@@ -191,6 +193,17 @@ void ofono_cbs_notify(struct ofono_cbs *cbs, const uns=
-igned char *pdu,
- 	}
- =
+> diff --git a/TODO b/TODO
+> index 84d5aa7..ed37c58 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -416,7 +416,7 @@ Emergency Calls
+>  =
 
- 	if (cbs_topic_in_range(c.message_identifier, cbs->efcbmid_contents)) {
-+		sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
-+
-+		if (!sim_atom)
-+			return;
-+
-+		if (!__ofono_sim_service_available(
-+					__ofono_atom_get_data(sim_atom),
-+					SIM_UST_SERVICE_DATA_DOWNLOAD_SMS_CB,
-+					SIM_SST_SERVICE_DATA_DOWNLOAD_SMS_CB))
-+			return;
-+
- 		if (cbs->stk)
- 			__ofono_cbs_sim_download(cbs->stk, &c);
- 		return;
--- =
+>    Priority: High
+>    Complexity: C1
+> -
+> +  Owner: John Mathew <john.mathew@elektrobit.com> =
 
-1.7.1.86.g0e460.dirty
+>  =
 
+>  Miscellaneous
+>  =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 
---===============7821742668884812715==--
+We have pretty strict git apply settings in effect, so your patch does
+not apply:
+
+Applying: TODO: Add owner to extend the voicecall interface with a
+property indicating emergency call
+/home/denkenz/ofono-master/.git/rebase-apply/patch:14: trailing whitespace.
+  Owner: John Mathew <john.mathew@elektrobit.com>
+fatal: 1 line adds whitespace errors.
+Patch failed at 0001 TODO: Add owner to extend the voicecall interface
+with a property indicating emergency call
+
+Also, please keep your commit header under 50 characters.  And yes, I
+know the task description is rather 'long' in this case ;)  So sometimes
+we have to be a bit 'creative'.  Something like:
+
+"TODO: Assign Voicecall emergency property task"
+
+would work in this case.
+
+Regards,
+-Denis
+
+--===============5787348466338945071==--
 
