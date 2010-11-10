@@ -1,146 +1,194 @@
-Content-Type: multipart/mixed; boundary="===============1209494577781966336=="
+Content-Type: multipart/mixed; boundary="===============6010389436048674960=="
 MIME-Version: 1.0
 From: Robertino Benis <robertino.benis@intel.com>
-Subject: [RFC v2 1/3] doc: addidng documentation for basic assisted gps
-Date: Wed, 10 Nov 2010 11:43:12 -0800
-Message-ID: <1289418194-2905-3-git-send-email-robertino.benis@intel.com>
+Subject: [RFC v2 2/3] agps: adding agps related functions
+Date: Wed, 10 Nov 2010 11:43:13 -0800
+Message-ID: <1289418194-2905-4-git-send-email-robertino.benis@intel.com>
 In-Reply-To: <1289418194-2905-1-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1209494577781966336==
+--===============6010389436048674960==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/assistedgps-manager-api.txt |  107 +++++++++++++++++++++++++++++++++++=
+ include/agps.h |  157 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 107 insertions(+), 0 deletions(-)
- create mode 100644 doc/assistedgps-manager-api.txt
+ 1 files changed, 157 insertions(+), 0 deletions(-)
+ create mode 100644 include/agps.h
 
-diff --git a/doc/assistedgps-manager-api.txt b/doc/assistedgps-manager-api.=
-txt
+diff --git a/include/agps.h b/include/agps.h
 new file mode 100644
-index 0000000..da0696c
+index 0000000..783136b
 --- /dev/null
-+++ b/doc/assistedgps-manager-api.txt
-@@ -0,0 +1,107 @@
-+AssistedPositioning Manager hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++++ b/include/agps.h
+@@ -0,0 +1,157 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2009-2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+	The purpose of this interface is to support Control Plane Assisted GPS by=
- transparently
-+	relaying positioning related information between the mobile network and a=
- positioning engine.
-+	The positioning information is relayed in the form of raw RRLP or RRC PDU=
-s as defined by
-+	3GPP TS 04.31 and 3GPP TS 25.331.
++#ifndef __OFONO_AGPS_H
++#define __OFONO_AGPS_H
 +
-+Service		org.ofono
-+Interface	org.ofono.ModemIFX.AssistedPositioning
-+Object path	[variable prefix]/{modem0,modem1,...}
++#ifdef __cplusplus
++extern "C" {
++#endif
 +
-+Methods		dict GetProperties()
++#include <ofono/types.h>
 +
-+			Returns properties for the modem object. See
-+			the properties section for available properties.
++enum ofono_lcs_frame_type {
++	RRLP_ASSISTANCE_DATA,		/* from modem */
++	/* Position request can include assistance data as well */
++	RRLP_MEASURE_POSITION_REQUEST,	/* from modem */
++	RRLP_MEASURE_POSITION_RESPONSE,	/* from GPS */
++	RRC_ASSISTANCE_DATA_DELIVERY,	/* from modem */
++	/* Measurement control can include assistance data as well */
++	RRC_MEASUREMENT_CONTROL,	/* from modem */
++	RRC_MEASUREMENT_REPORT,		/* from GPS */
++};
 +
-+			Possible Errors: [service].Error.InvalidArguments
++enum ofono_access_technology {
++	RADIO_ACCESS_TECHNOLOGY_GSM,	/* GSM */
++	RADIO_ACCESS_TECHNOLOGY_UMTS,	/* UMTS */
++};
 +
-+		void SetProperty(string name, variant value)
++enum ofono_rrc_state {
++	RRC_CELL_PCH,
++	RRC_CELL_FACH,
++	RRC_CELL_DCH,
++	RRC_URA_PCH,
++};
 +
-+			Changes the value of the specified property. Only
-+			properties that are listed as read-write are
-+			changeable. On success a PropertyChanged signal
-+			will be emitted.
++struct ofono_lcs_frame {
++	enum ofono_lcs_frame_type lcs_frame_type;
++	int frame_length;	/* size of raw_frame in bytes */
++	unsigned char  *raw_frame;
++};
 +
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.DoesNotExist
++struct ofono_lcs_gsm_fn {
++	int TDMA_frame_number;	/* range 0 - 2715647 (2048*26*51) */
++	int TDMA_timeslot;	/* range 0 - 7 */
++	int timeslot_bit;	/* range 0 - 156 */
++	int timing_advance;	/* range 0 - 63 */
++	int bcch_arfcn;		/* range 0 - 1023 */
++	int bsic;		/* range 0 - 64 */
++};
 +
-+		void SendFrame(string frametype, array{byte} framedata)
++struct ofono_lcs_utran_fn {
++	int sfn;		/* range 0 - 4095 */
++	int rrc_state;		/* enum ofono_rrc_state */
++	int round_trip_time;	/* range 0 - 32766 */
++};
 +
-+			Send a position protocol frame to the Mobile
-+			Network. The frame typically represents a
-+			Position Response.
++struct ofono_lcs_radio_fn {
++	enum ofono_access_technology radio_access_technology;
++	union {
++		struct ofono_lcs_gsm_fn		gsm_frame_number;
++		struct ofono_lcs_utran_fn	utran_frame_number;
++	};
++};
 +
-+			Valid frametypes are:
-+				rrlp_measure_position_response
-+				rrc_measurement_report
++struct ofono_agps;
 +
-+		dict RequestFineTimeInjection(string rat, uint16 pulselength)
++typedef void (*ofono_agps_send_lcs_frame_cb_t)(const struct ofono_error *e=
+rror,
++				void *data);
++typedef void (*ofono_agps_receive_lcs_frame_cb_t)(
++				const struct ofono_error *error,
++				void *data);
++typedef void (*ofono_agps_inject_time_cb_t)(const struct ofono_error *erro=
+r,
++				struct ofono_lcs_radio_fn *radio_frame_number,
++				void *data);
 +
-+			Request modem to generate a fine time injection
-+			pulse. pulselength is the duration of the pulse
-+			expressed in radio frames.
++	/*
++	* AGPS related functions, including LCS frame forwarding and
++	* fine time injection
++	*/
++struct ofono_agps_driver {
++	const char *name;
++	int (*probe)(struct ofono_agps *agps, unsigned int vendor,
++			void *data);
++	void (*remove)(struct ofono_agps *agps);
 +
-+			rat specifies the access technology used to derive
-+			the pulse from and can be "gsm" or "umts".
-+			If the requested access technology is not currently
-+			in use an error is returned.
++	/* The GPS manager can configure the modem to notify Assistance Data and
++	 * Position Requests from Mobile Network by enabling LcsEnabled status
++	 */
 +
-+			The radioframenumber dict is defined as follow:
++	 void (*receive_lcs_frames)(struct ofono_agps *agps, int enabled,
++			ofono_agps_receive_lcs_frame_cb_t cb, void *data);
 +
-+			string AccessTechnology
-+				"gsm" or "umts"
++	/* Assistance Data and Position Requests from the Mobile Network are
++	 * signalled via the ofono_agps_lcs_frame_notify function and the
++	 * oFono core to an external GPS manager. This GPS manager can reply
++	 * to Position Requests with one or more Position Responses which
++	 * are then send back to the modem via the send_lcs_frame function.
++	 */
++	void (*send_lcs_frame)(struct ofono_agps *agps,
++			struct ofono_lcs_frame *frame,
++			ofono_agps_send_lcs_frame_cb_t cb, void *data);
 +
-+			uint32 TdmaFrameNumber (gsm only)
-+				range 0 - 2715647 (2048*26*51)
++	/* The GPS manager can ask the modem to generate a HW pulse (time
++	 * stamp) with a defined length and the modem replies indicates when
++	 * it generates the pulse. But as the modem has no precise idea of
++	 * Universal Time, it indicates at which radio frame number it
++	 * generated the pulse. The GPS manager which knows the link between
++	 * Universal Time and the Radio Frame number knows very precisely at
++	 * what time the pulse was generated and its duration.
++	 *
++	 * Timing accuracy is typically a few microseconds.
++	 */
++	void (*inject_time)(struct ofono_agps *agps,
++	int radio_access_technology, /* enum access_technology */
++	int pulse_length, /* duration of pulse in radio slots */
++	ofono_agps_inject_time_cb_t cb, void *data);
++};
 +
-+			uint16 TdmaTimeslot (gsm only)
-+				range 0 - 7
++int ofono_agps_driver_register(const struct ofono_agps_driver *d);
++void ofono_agps_driver_unregister(const struct ofono_agps_driver *d);
 +
-+			uint16 TimeslotBit (gsm only)
-+				range 0 - 156
++struct ofono_agps *ofono_agps_create(struct ofono_modem *modem,
++					unsigned int vendor, const char *driver,
++					void *data);
 +
-+			uint16 TimingAdvance (gsm only)
-+				range 0 - 63
++void ofono_agps_register(struct ofono_agps *agps);
++void ofono_agps_remove(struct ofono_agps *agps);
 +
-+			uint16 BcchArfcn (gsm only)
-+				range 0 - 1023
++void ofono_agps_set_data(struct ofono_agps *agps, void *data);
++void *ofono_agps_get_data(struct ofono_agps *agps);
 +
-+			uint16 Bsic (gsm only)
-+				range 0 - 64
++void ofono_agps_lcs_frame_notify(struct ofono_agps *agps,
++			struct ofono_lcs_frame frame);
 +
-+			uint16 Sfn (umts only)
-+				range 0 - 4095
++#ifdef __cplusplus
++}
++#endif
 +
-+			string RrcState (umts only)
-+				"cell_dch", "cell_fach", "cell_pch" or
-+				"ura_pch"
-+
-+			uint16 RoundTripTime (umts only)
-+				range 0 - 32766
-+
-+Signals		PropertyChanged(string name, variant value)
-+
-+			This signal indicates a changed value of the given
-+			property.
-+
-+		IncomingFrame(string frametypes, string framedata)
-+
-+			Positioning protocol frame received from the
-+			Mobile Network.
-+
-+			Valid frametypes for the positioning frame are:
-+				rrlp_assistance_data
-+				rrlp_measure_position_request
-+				rrc_assistance_data_delivery
-+				rrc_measurement_control
-+
-+			Note that position/measurement requests can include
-+			assistance data as well.
-+
-+Properties	boolean Enabled [readwrite]
-+
-+			The AssistedPositioning service is disabled by default.
-+			After a client registers to listen for the IncomingFrame signal it
-+			must enable the service to receive positioning information.
++#endif /* __OFONO_AGPS_H */
 -- =
 
 1.7.0.4
 
 
---===============1209494577781966336==--
+--===============6010389436048674960==--
 
