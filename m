@@ -1,48 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============9142512910631944082=="
+Content-Type: multipart/mixed; boundary="===============6247296980481552282=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 4/4] isigen: make number of PDP contexts configurable
-Date: Thu, 11 Nov 2010 02:52:37 +0900
-Message-ID: <1289411557.9615.271.camel@aeonflux>
-In-Reply-To: <1289391751-2844-5-git-send-email-mika.liljeberg@nokia.com>
+Subject: Re: [RFC PATCH 2/3] modem: add EmergencyMode property
+Date: Thu, 11 Nov 2010 02:59:01 +0900
+Message-ID: <1289411941.9615.277.camel@aeonflux>
+In-Reply-To: <4CDAAB58.20000@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9142512910631944082==
+--===============6247296980481552282==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+Hi Denis,
 
->  plugins/isigen.c |   23 +++++++++++++++++------
->  plugins/udev.c   |    6 +++++-
->  2 files changed, 22 insertions(+), 7 deletions(-)
+> >> Here you should turn the radio off if it was off before starting the
+> >> emergency call.
+> >>
+> >>    =
 
-<snip>
- =
+> > =
 
-> @@ -434,6 +434,10 @@ static void add_isi(struct ofono_modem *modem,
->  	if (addr !=3D NULL)
->  		ofono_modem_set_integer(modem, "Address", atoi(addr));
->  =
+> > The rationale behind leaving the radio on after emergency calls
+> > was to have the theoretical possibility the emergency call center
+> > to call you back (when SIM card is present...). If this is an unrealist=
+ic
+> > scenario, I'll disable the radio after emergency calls in case it was o=
+ff
+> > before the call.
+> > =
 
-> +	pdps =3D get_property(udev_device, "OFONO_ISI_PDPS");
-> +	if (pdps !=3D NULL)
-> +		ofono_modem_set_integer(modem, "PDPS", atoi(pdps));
-> +
->  	if (g_strcmp0(udev_device_get_subsystem(udev_device), "net") !=3D 0)
->  		return;
+> =
 
-why to do you bother making this a configurable option? What isthe
-benefit here?
+> That is a fair point, however, just silently leaving us Online might not
+> be a good idea.
+> =
 
-Personally I think that always enabling 4 context if the hardware
-supports it should be enough. If you do support more then just enable
-more all the time. There are no real resources used in context of ISI
-anyway. The AT command based modems have a different problem since for
-most of them we need an extra TTY/DLC and an extra GAtChat object, but
-ISI does not have that problem.
+> I suggest finding out how exactly this is supposed to work.  E.g. can we
+> get away with starting an X minute timeout every time we leave emergency
+> mode and go offline automatically?  This timeout would obviously have to
+> be canceled if the user sets Online manually.
+
+on one hand I see this making perfect sense. For example just leave the
+modem in online state for lets say 15 minutes. But then on the other
+hand I am worried about regulatory requirements where the modem is
+suppose to be offline.
+
+So what I would propose here to actually leave the modem online for a
+really short period of time like 30 seconds or so. And then bring it
+back down. Then we can tweak that value to our needs. And in addition
+the user could switched it back online by himself and we avoid going
+into offline mode and back to online mode.
+
+Of course when switching to online mode by user we need to ensure that
+all atoms are brought up properly.
 
 Regards
 
@@ -50,5 +62,5 @@ Marcel
 
 
 
---===============9142512910631944082==--
+--===============6247296980481552282==--
 
