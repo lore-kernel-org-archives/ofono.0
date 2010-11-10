@@ -1,17 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============0687142967980250830=="
+Content-Type: multipart/mixed; boundary="===============6776899540703276898=="
 MIME-Version: 1.0
-From: Robertino Benis <robertino.benis@intel.com>
-Subject: [RFC v2 3/3] ifxmodem: adding modem API to support agps
-Date: Wed, 10 Nov 2010 11:43:14 -0800
-Message-ID: <1289418194-2905-5-git-send-email-robertino.benis@intel.com>
-In-Reply-To: <1289418194-2905-1-git-send-email-robertino.benis@intel.com>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: [RFC v2 3/3] ifxmodem: adding modem API to support agps
+Date: Wed, 10 Nov 2010 12:34:40 -0800
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9014BEE2D64@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <1289418194-2905-5-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0687142967980250830==
+--===============6776899540703276898==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
+
+The error handling in ifx_agps_inject_time_cb needs to have a call to CALLB=
+ACK_WITH_FAILURE.
+
+Calling g_at_chat_register(agd->chat, "%%XFTI:", ...) from ifx_agps_inject_=
+time_cb seems wrong:
+- It gets called multiple times
+- Are you sure that %XFTI can't come before the OK response?
+- agd->chat should be data->chat
+
+#define BUF_LEN should be removed as it isn't used
+
+In ifx_agps_send_lcs_frame the raw_frame isn't hex encoded before it gets i=
+nserted into the AT command.
+
+Cheers,
+Waldo
+
+-----Original Message-----
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of Robertino Benis
+Sent: Wednesday, November 10, 2010 11:43 AM
+To: ofono(a)ofono.org
+Cc: Ahmed, Suhail
+Subject: [RFC v2 3/3] ifxmodem: adding modem API to support agps
 
 ---
  drivers/ifxmodem/agps.c |  413 +++++++++++++++++++++++++++++++++++++++++++=
@@ -443,6 +468,10 @@ index 0000000..4e8d427
 
 1.7.0.4
 
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
 
---===============0687142967980250830==--
+--===============6776899540703276898==--
 
