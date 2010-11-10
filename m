@@ -1,42 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============8556815326443297878=="
+Content-Type: multipart/mixed; boundary="===============3806790592460515876=="
 MIME-Version: 1.0
-From: John Mathew <john.mathew@elektrobit.com>
-Subject: [PATCH] TODO: Add owner to extend the voicecall interface with a
- property indicating emergency call
-Date: Wed, 10 Nov 2010 07:25:44 -0500
-Message-ID: <1289391944-3184-1-git-send-email-john.mathew@elektrobit.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: Can I modify CallingLineRestriction(the Property of CallSetting)
+ value to "disabled" or "enabled"
+Date: Wed, 10 Nov 2010 14:32:32 +0200
+Message-ID: <AANLkTind3eJwUwGrxXE6LN9q3cV0eJySZtVNXYyzKpbb@mail.gmail.com>
+In-Reply-To: <CE761E84DADF2947A4AF22FB8D97A47330518CE2@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8556815326443297878==
+--===============3806790592460515876==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi all,
 
-diff --git a/TODO b/TODO
-index 84d5aa7..ed37c58 100644
---- a/TODO
-+++ b/TODO
-@@ -416,7 +416,7 @@ Emergency Calls
- =
+2010/11/10 Gu, Yang <yang.gu@intel.com>:
+>>According to your tip , I tried to set "HideCallerId" to "default", "disa=
+bled" and
+>>"enabled", and I can verify by run list-modem script that "HideCallerId" =
+had been
+>>modified . but I still could find phone number on both called party and c=
+alling party ,
+>>regardless the value of =C2=A0"HideCallerId" is what.
+>>
+>>How can I let phone number be withheld on incoming at called party , when=
+ I make a
+>>voice call.
+>
+> I think the reason is your operator doesn't provide this supplementary se=
+rvice. Below is my log when enable the "HideCallerId". I couldn't enable th=
+is feature either.
+>
+> ofonod[17734]: PCUI: > AT+CLIR=3D1\r
+> ofonod[17734]: PCUI: < \r\nOK\r\n
+> ofonod[17734]: PCUI: > AT+CLIR?\r
+> ofonod[17734]: PCUI: < \r\n+CLIR: 1,0\r\n\r\nOK\r\n
+> ofonod[17734]: drivers/atmodem/call-settings.c:clir_query_cb() clir_query=
+_cb: override: 1, network: 0
 
-   Priority: High
-   Complexity: C1
--
-+  Owner: John Mathew <john.mathew@elektrobit.com> =
+What happens when you make a call? Does call get rejected or do you
+get some CSSU indications?
 
- =
+Yang and Haitao, please set HideCallerId to "disabled", try to make
+call, then set HideCallerId to "enabled", try to make a call, and
+perhaps also try to make call with test/dial-number number enabled and
+test/dial-number disabled and then post the results.
 
- Miscellaneous
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 -- =
 
-1.7.0.4
+Pekka.Pessi mail at nokia.com
 
-
---===============8556815326443297878==--
+--===============3806790592460515876==--
 
