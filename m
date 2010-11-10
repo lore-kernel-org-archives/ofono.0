@@ -1,104 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============2245046975169832371=="
+Content-Type: multipart/mixed; boundary="===============4517492470744184060=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 2/3] modem: add EmergencyMode property
-Date: Wed, 10 Nov 2010 08:25:28 -0600
-Message-ID: <4CDAAB58.20000@gmail.com>
-In-Reply-To: <4CDAA8E0.3040403@nokia.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 1/3] sim: Add sim_service_available() for querying EFsst or
+ EFust.
+Date: Wed, 10 Nov 2010 04:27:50 +0100
+Message-ID: <1289359672-19206-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2245046975169832371==
+--===============4517492470744184060==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras,
+The function is not public api because the service constants are in
+src/simutil.h.
+---
+ src/ofono.h |    5 +++++
+ src/sim.c   |   15 +++++++++++++++
+ 2 files changed, 20 insertions(+), 0 deletions(-)
 
->> So we have to be a bit careful here.  You can't simply call
->> modem_change_state here.  This results in calling the post_online
->> method, which populates the atoms that function when the radio is on.
->> Instead you need to call the set_online driver method directly.
->>
->> Also, you probably do not want to populate the online atoms in an
->> emergency call situation.  Each atom driver / atom will perform
->> initialization procedures when they're newly added.  This can
->> potentially interfere with the voice call setup time, and not desirable.
->>   Not to mention that if we're actually in an emergency situation with
->> the SIM removed or PIN locked, we do not want to populate the atoms in
->> the first place.
->>
->> So the modem 'ONLINE_STATE' has to be slightly de-coupled from whether
->> the radio is 'online'.
->>
->>    =
+diff --git a/src/ofono.h b/src/ofono.h
+index e5b4acb..4d76d20 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -281,6 +281,11 @@ gboolean __ofono_sms_datagram_watch_remove(struct ofon=
+o_sms *sms,
+ unsigned short __ofono_sms_get_next_ref(struct ofono_sms *sms);
+ =
 
-> Good point, thanks. I am going to call directly the modem driver
-> set_online function with my own callback.
-> =
+ #include <ofono/sim.h>
++
++ofono_bool_t __ofono_sim_service_available(struct ofono_sim *sim,
++						int ust_service,
++						int sst_service);
++
+ #include <ofono/stk.h>
+ =
 
-> Now the question is whether modem->online should be toggled
-> according to the radio state changes? I think yes, and have the
-> change signaled on D-Bus (modem "Online" poperty).
+ typedef void (*__ofono_sms_sim_download_cb_t)(ofono_bool_t ok,
+diff --git a/src/sim.c b/src/sim.c
+index e5e304c..f362565 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -1928,6 +1928,21 @@ const unsigned char *ofono_sim_get_cphs_service_tabl=
+e(struct ofono_sim *sim)
+ 	return sim->cphs_service_table;
+ }
+ =
 
-That makes sense to me, yes.
++ofono_bool_t __ofono_sim_service_available(struct ofono_sim *sim,
++						int ust_service,
++						int sst_service)
++{
++	if (sim->efust)
++		return sim_ust_is_available(sim->efust, sim->efust_length,
++						ust_service);
++
++	if (sim->efsst)
++		return sim_sst_is_active(sim->efsst, sim->efsst_length,
++						sst_service);
++
++	return FALSE;
++}
++
+ static void sim_inserted_update(struct ofono_sim *sim)
+ {
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+-- =
 
-> =
-
-> There is another question then, when to notify the modem online
-> watchers, supposedly whenever modem->online changes, including
-> the changes triggered by the emergency call case.
-
-In the current structure this is just fine.  So let us run with it for
-now and see what happens.  In the future we might find something a bit
-more complicated is required, but we cross that bridge when we come to it.
-
-> =
-
->>> +}
->>> +
->>> +void ofono_modem_dec_emergency_mode(struct ofono_modem *modem)
->>> +{
->>> +    DBusConnection *conn =3D ofono_dbus_get_connection();
->>> +    const char *path =3D ofono_modem_get_path(modem);
->>> +    gboolean state =3D FALSE;
->>> +
->>> +    modem->emergency_mode--;
->>> +    if (modem->emergency_mode)
->>> +        return;
->>> +
->>> +    ofono_dbus_signal_property_changed(conn, path,
->>> +                        OFONO_MODEM_INTERFACE,
->>> +                        "EmergencyMode",
->>> +                        DBUS_TYPE_BOOLEAN,
->>> +                        &state);
->>>      =
-
->> Here you should turn the radio off if it was off before starting the
->> emergency call.
->>
->>    =
-
-> =
-
-> The rationale behind leaving the radio on after emergency calls
-> was to have the theoretical possibility the emergency call center
-> to call you back (when SIM card is present...). If this is an unrealistic
-> scenario, I'll disable the radio after emergency calls in case it was off
-> before the call.
-> =
+1.7.1.86.g0e460.dirty
 
 
-That is a fair point, however, just silently leaving us Online might not
-be a good idea.
-
-I suggest finding out how exactly this is supposed to work.  E.g. can we
-get away with starting an X minute timeout every time we leave emergency
-mode and go offline automatically?  This timeout would obviously have to
-be canceled if the user sets Online manually.
-
-Regards,
--Denis
-
---===============2245046975169832371==--
+--===============4517492470744184060==--
 
