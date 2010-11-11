@@ -1,38 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============7529894230728386818=="
+Content-Type: multipart/mixed; boundary="===============2013870915174370007=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: PPP disconnected via Huawei modem
-Date: Thu, 11 Nov 2010 10:09:04 -0600
-Message-ID: <4CDC1520.6000906@gmail.com>
-In-Reply-To: <AANLkTimyMY0Y3hf7wA=rJghB5MtVLgeji7wQ+VUr9anf@mail.gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [PATCH] voicecall: Add EmergencyCall property.
+Date: Fri, 12 Nov 2010 02:01:57 +0900
+Message-ID: <1289494917.3266.64.camel@aeonflux>
+In-Reply-To: <FE1DB9979BF5A743BEB836613423CAD80124E5F9@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7529894230728386818==
+--===============2013870915174370007==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Elton,
+Hi John,
 
-On 11/11/2010 01:14 AM, Chen Yuwei wrote:
-> Hi,
->  =
+please do not top post on this mailing list. I am really serious with
+the fact that I am going to ignore people from now on that do that.
 
-> I use MeeGo NB 10/26 release to browse some website via Huawei modem,
-> The PPP connection is disconnected when recieve a PPP event (RXJ-).
-> Then the PPP can not be connected anymore. Why?
-> What condition does ofono recieve this event?
+> Will change the property name to Emergency and resend the patch.
 
-We won't really know unless we have a detailed protocol trace.  Have you
-tried running gatchat/gsmdial to reproduce this problem?  That
-application has the ability to dump a detailed trace of the ppp packets.
+This was a question open for discussion. What would be the appropriate
+property name?
 
-See if you can reproduce the issue with gsmdial and include the ppp dump
-file.
+Regards
 
-Regards,
--Denis
+Marcel
 
---===============7529894230728386818==--
+
+
+--===============2013870915174370007==--
 
