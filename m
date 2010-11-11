@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============7104963315584961473=="
+Content-Type: multipart/mixed; boundary="===============6543504823186986619=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [PATCH] monitor-ofono: monitor DisconnectReason
-Date: Thu, 11 Nov 2010 14:54:24 +0200
-Message-ID: <1289480064-30384-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [PATCH] test/answer-calls: answer waiting calls, too
+Date: Thu, 11 Nov 2010 14:54:31 +0200
+Message-ID: <1289480071-30423-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7104963315584961473==
+--===============6543504823186986619==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -15,45 +15,65 @@ Content-Transfer-Encoding: quoted-printable
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
 ---
- test/monitor-ofono |   11 +++++++++++
- 1 files changed, 11 insertions(+), 0 deletions(-)
+ test/answer-calls |   20 ++++++++++----------
+ 1 files changed, 10 insertions(+), 10 deletions(-)
 
-diff --git a/test/monitor-ofono b/test/monitor-ofono
-index 2f49f76..8570c34 100755
---- a/test/monitor-ofono
-+++ b/test/monitor-ofono
-@@ -75,6 +75,10 @@ def ussd(msg, member, path, interface):
- 	iface =3D interface[interface.rfind(".") + 1:]
- 	print "{%s} [%s] %s %s" % (iface, path, member, str(msg))
+diff --git a/test/answer-calls b/test/answer-calls
+index 0deb832..1218c66 100755
+--- a/test/answer-calls
++++ b/test/answer-calls
+@@ -4,8 +4,11 @@ import dbus
  =
 
-+def value(value, member, path, interface):
-+	iface =3D interface[interface.rfind(".") + 1:]
-+	print "{%s} [%s] %s %s" % (iface, path, member, str(value))
+ bus =3D dbus.SystemBus()
+ =
+
+-manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
+-						'org.ofono.Manager')
++def oface(path, name):
++	obj =3D bus.get_object('org.ofono', path)
++	return dbus.Interface(obj, name)
 +
- if __name__ =3D=3D '__main__':
- 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
++manager =3D oface('/', 'org.ofono.Manager')
  =
 
-@@ -150,6 +154,13 @@ if __name__ =3D=3D '__main__':
- 						path_keyword=3D"path",
- 						interface_keyword=3D"interface")
+ modems =3D manager.GetModems()
  =
 
-+	bus.add_signal_receiver(value,
-+				bus_name=3D"org.ofono",
-+					signal_name =3D "DisconnectReason",
-+						member_keyword=3D"member",
-+						path_keyword=3D"path",
-+						interface_keyword=3D"interface")
-+
- 	for member in ["IncomingBroadcast", "EmergencyBroadcast",
- 			"IncomingMessage", "ImmediateMessage"]:
- 		bus.add_signal_receiver(message,
+@@ -15,8 +18,7 @@ for path, properties in modems:
+ 	if "org.ofono.VoiceCallManager" not in properties["Interfaces"]:
+ 		continue
+ =
+
+-	mgr =3D dbus.Interface(bus.get_object('org.ofono', path),
+-					'org.ofono.VoiceCallManager')
++	mgr =3D oface(path, 'org.ofono.VoiceCallManager')
+ =
+
+ 	calls =3D mgr.GetCalls()
+ =
+
+@@ -24,10 +26,8 @@ for path, properties in modems:
+ 		state =3D properties["State"]
+ 		print "[ %s ] %s" % (path, state)
+ =
+
+-		if state !=3D "incoming":
+-			continue
+-
+-		call =3D dbus.Interface(bus.get_object('org.ofono', path),
+-						'org.ofono.VoiceCall')
++		if state =3D=3D "incoming":
++			oface(path, 'org.ofono.VoiceCall').Answer()
++		elif state =3D=3D "waiting":
++			mgr.HoldAndAnswer()
+ =
+
+-		call.Answer()
 -- =
 
 1.7.1
 
 
---===============7104963315584961473==--
+--===============6543504823186986619==--
 
