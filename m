@@ -1,104 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============0315866766933222333=="
+Content-Type: multipart/mixed; boundary="===============7420163518146310341=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] voicecall: Add EmergencyCall property.
-Date: Thu, 11 Nov 2010 09:26:37 -0600
-Message-ID: <4CDC0B2D.6010407@gmail.com>
-In-Reply-To: <1289488333-1481-1-git-send-email-john.mathew@elektrobit.com>
+Subject: Re: [PATCH 4/4] isigen: make number of PDP contexts configurable
+Date: Thu, 11 Nov 2010 09:36:43 -0600
+Message-ID: <4CDC0D8B.4060404@gmail.com>
+In-Reply-To: <C358A26273CF2948B8BCDBA661A581782BE95B62A6@NOK-EUMSG-03.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0315866766933222333==
+--===============7420163518146310341==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi John,
+On 11/11/2010 02:16 AM, Mika.Liljeberg(a)nokia.com wrote:
+> Hi Marcel,
+> =
 
-> +static gboolean voicecall_isemergency(struct voicecall *v)
+>> why to do you bother making this a configurable option? What isthe
+>> benefit here?
+> =
 
-Please use voicecall_is_emergency
+> The maximum context count is a compile time option for the ISI modem. Hav=
+ing this option in oFono makes it possible to optimize the APE side resourc=
+e usage instead of overallocating drivers and contexts. Not a huge benefit,=
+ I guess, but the cost is not huge either.
+> =
 
-> +{
-> +	struct ofono_call *call =3D v->call;
-> +	const char *lineid_str;
-> +
-> +	lineid_str =3D phone_number_to_string(&call->phone_number);
-> +
-> +	if (g_slist_find_custom(v->vc->en_list, lineid_str,
-> +						(GCompareFunc) strcmp))
+> Not a big deal, though. I'll try to see if the context limit could be pro=
+bed somehow.
+> =
 
-As a general rule, the only function casting we allow is for GFunc use
-of g_free.  I really prefer that you write a separate function here.
 
-> +		return TRUE;
-> +	else
+The gprs context structure is about the size of 5 pointers, so there's
+not much to be saved here.  If you're worried about space usage of the
+isi specific data, you can always allocate it during the activation stage.
 
-Please drop the else, it isn't actually required and makes the code
-slightly cleaner.
+>> Personally I think that always enabling 4 context if the hardware
+>> supports it should be enough. If you do support more then just enable
+>> more all the time. There are no real resources used in context of ISI
+>> anyway. The AT command based modems have a different problem since for
+>> most of them we need an extra TTY/DLC and an extra GAtChat object, but
+>> ISI does not have that problem.
+> =
 
-> +		return FALSE;
-> +}
-> +
->  static void append_voicecall_properties(struct voicecall *v,
->  					DBusMessageIter *dict)
->  {
-> @@ -322,7 +336,8 @@ static void append_voicecall_properties(struct voicec=
-all *v,
->  	const char *status;
->  	const char *callerid;
->  	const char *timestr;
-> -	ofono_bool_t mpty;
-> +	ofono_bool_t mpt;
+> I don't see the difference. The AT modem resources should be allocated dy=
+namically as well, at context activation time. (Maybe that's the case alrea=
+dy, I didn't really check.) In any case, I believe oFono has to allow thing=
+s like external AT command processors and vendor specific modem tools to ac=
+cess the TTY's directly bypassing oFono. This means the mux channels should=
+ not be preallocated.
 
-Is there a reason you're changing this variable name?
-
-> +	dbus_bool_t emergency_call;
->  =
-
->  	status =3D call_status_to_string(call->status);
->  	callerid =3D phone_number_to_string(&call->phone_number);
-> @@ -358,6 +373,14 @@ static void append_voicecall_properties(struct voice=
-call *v,
->  	if (v->icon_id)
->  		ofono_dbus_dict_append(dict, "Icon", DBUS_TYPE_BYTE,
->  					&v->icon_id);
-> +
-> +	if (voicecall_isemergency(v))
-> +			emergency_call =3D TRUE;
-> +	else
-> +			emergency_call =3D FALSE;
-> +
-> +	ofono_dbus_dict_append(dict, "EmergencyCall", DBUS_TYPE_BOOLEAN,
-> +					&emergency_call);
->  }
->  =
-
->  static DBusMessage *voicecall_get_properties(DBusConnection *conn,
-> @@ -722,6 +745,15 @@ static void voicecall_set_call_lineid(struct voiceca=
-ll *v,
->  						OFONO_VOICECALL_INTERFACE,
->  						"LineIdentification",
->  						DBUS_TYPE_STRING, &lineid_str);
-> +
-> +	if (voicecall_isemergency(v)) {
-> +		dbus_bool_t emergency_call =3D TRUE;
-
-In general we prefer an empty line after every variable declaration block.
-
-> +		ofono_dbus_signal_property_changed(conn, path,
-> +						OFONO_VOICECALL_INTERFACE,
-> +						"EmergencyCall",
-> +						DBUS_TYPE_BOOLEAN,
-> +						&emergency_call);
-> +	}
->  }
->  =
-
->  static gboolean voicecall_dbus_register(struct voicecall *v)
+Hah, I know some people who vehemently disagree ;)  Of course I'm not
+one of them...  Strictly speaking what you say is possible even with
+today's architecture, however almost no AT modem we have supports more
+than about 3-4 contexts.  So doing this to save 300-400 bytes / context
+is simply not worth it at this point.
 
 Regards,
 -Denis
 
---===============0315866766933222333==--
+--===============7420163518146310341==--
 
