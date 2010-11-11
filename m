@@ -1,33 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============2962447681691526673=="
+Content-Type: multipart/mixed; boundary="===============3373663955735720810=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: isigen: enabled multiple PDP contexts
-Date: Thu, 11 Nov 2010 19:07:21 +0900
-Message-ID: <1289470041.3266.59.camel@aeonflux>
-In-Reply-To: <1289469648-18472-1-git-send-email-mika.liljeberg@nokia.com>
+From: Mika.Liljeberg@nokia.com
+Subject: RE: isigen: enabled multiple PDP contexts
+Date: Thu, 11 Nov 2010 11:55:37 +0100
+Message-ID: <C358A26273CF2948B8BCDBA661A581782BE95B64C2@NOK-EUMSG-03.mgdnok.nokia.com>
+In-Reply-To: <1289470041.3266.59.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2962447681691526673==
+--===============3373663955735720810==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+Hi Marcel,
 
-> Here's the patch to enable multiple PDP contexts in isigen.
-> Turns out that probing the context count is not feasible,
-> so we just default to four.
+> you might wanna ask your modem firmware guys to add something =
 
-you might wanna ask your modem firmware guys to add something like this.
-For me it would sounds like a good idea to know how many active GPRS
-contexts that specific modem supports.
+> like this.
+> For me it would sounds like a good idea to know how many active GPRS
+> contexts that specific modem supports.
 
-Regards
+You wouldn't suggest that if you knew the process involved. ;) Anyway, the =
+change would not help existing hardware.
 
-Marcel
+	MikaL
 
-
-
---===============2962447681691526673==--
+--===============3373663955735720810==--
 
