@@ -1,79 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============3260638613167054180=="
+Content-Type: multipart/mixed; boundary="===============2962447681691526673=="
 MIME-Version: 1.0
-From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 1/1] isigen: create four gprs contexts
-Date: Thu, 11 Nov 2010 12:00:48 +0200
-Message-ID: <1289469648-18472-2-git-send-email-mika.liljeberg@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: isigen: enabled multiple PDP contexts
+Date: Thu, 11 Nov 2010 19:07:21 +0900
+Message-ID: <1289470041.3266.59.camel@aeonflux>
 In-Reply-To: <1289469648-18472-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3260638613167054180==
+--===============2962447681691526673==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/isigen.c |   19 ++++++++++++++-----
- 1 files changed, 14 insertions(+), 5 deletions(-)
+Hi Mika,
 
-diff --git a/plugins/isigen.c b/plugins/isigen.c
-index 838d060..3ea7110 100644
---- a/plugins/isigen.c
-+++ b/plugins/isigen.c
-@@ -58,6 +58,8 @@
- #include "drivers/isimodem/mtc.h"
- #include "drivers/isimodem/debug.h"
- =
+> Here's the patch to enable multiple PDP contexts in isigen.
+> Turns out that probing the context count is not feasible,
+> so we just default to four.
 
-+#define ISI_DEFAULT_PDPS 4	/* Number of supported PDP contexts */
-+
- struct isi_data {
- 	struct ofono_modem *modem;
- 	char const *ifname;
-@@ -407,6 +409,7 @@ static void isigen_post_online(struct ofono_modem *mode=
-m)
- 	struct isi_data *isi =3D ofono_modem_get_data(modem);
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
-+	int i;
- =
+you might wanna ask your modem firmware guys to add something like this.
+For me it would sounds like a good idea to know how many active GPRS
+contexts that specific modem supports.
 
- 	DBG("(%p) with %s", modem, isi->ifname);
- =
+Regards
 
-@@ -420,13 +423,19 @@ static void isigen_post_online(struct ofono_modem *mo=
-dem)
- 	ofono_call_barring_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_meter_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_radio_settings_create(isi->modem, 0, "isimodem", isi->idx);
--	gprs =3D ofono_gprs_create(isi->modem, 0, "isimodem", isi->idx);
--	gc =3D ofono_gprs_context_create(isi->modem, 0, "isimodem", isi->idx);
- =
-
--	if (gprs && gc)
-+	gprs =3D ofono_gprs_create(isi->modem, 0, "isimodem", isi->idx);
-+	if (!gprs)
-+		return;
-+	for (i =3D 0; i < ISI_DEFAULT_PDPS; i++) {
-+		gc =3D ofono_gprs_context_create(isi->modem, 0,
-+						"isimodem", isi->idx);
-+		if (!gc) {
-+			DBG("Failed to add context %d", i);
-+			break;
-+		}
- 		ofono_gprs_add_context(gprs, gc);
--	else
--		DBG("Failed to add context");
-+	}
- }
- =
-
- static int isigen_enable(struct ofono_modem *modem)
--- =
-
-1.7.0.4
+Marcel
 
 
---===============3260638613167054180==--
+
+--===============2962447681691526673==--
 
