@@ -1,79 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============6543504823186986619=="
+Content-Type: multipart/mixed; boundary="===============7466837994204033700=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] test/answer-calls: answer waiting calls, too
-Date: Thu, 11 Nov 2010 14:54:31 +0200
-Message-ID: <1289480071-30423-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/1] isigen: create four gprs contexts
+Date: Thu, 11 Nov 2010 09:11:28 -0600
+Message-ID: <4CDC07A0.6030400@gmail.com>
+In-Reply-To: <1289469648-18472-2-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6543504823186986619==
+--===============7466837994204033700==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Mika,
 
----
- test/answer-calls |   20 ++++++++++----------
- 1 files changed, 10 insertions(+), 10 deletions(-)
+On 11/11/2010 04:00 AM, Mika Liljeberg wrote:
+> ---
+>  plugins/isigen.c |   19 ++++++++++++++-----
+>  1 files changed, 14 insertions(+), 5 deletions(-)
+> =
 
-diff --git a/test/answer-calls b/test/answer-calls
-index 0deb832..1218c66 100755
---- a/test/answer-calls
-+++ b/test/answer-calls
-@@ -4,8 +4,11 @@ import dbus
- =
+> diff --git a/plugins/isigen.c b/plugins/isigen.c
+> index 838d060..3ea7110 100644
+> --- a/plugins/isigen.c
+> +++ b/plugins/isigen.c
+> @@ -58,6 +58,8 @@
+>  #include "drivers/isimodem/mtc.h"
+>  #include "drivers/isimodem/debug.h"
+>  =
 
- bus =3D dbus.SystemBus()
- =
+> +#define ISI_DEFAULT_PDPS 4	/* Number of supported PDP contexts */
+> +
+>  struct isi_data {
+>  	struct ofono_modem *modem;
+>  	char const *ifname;
+> @@ -407,6 +409,7 @@ static void isigen_post_online(struct ofono_modem *mo=
+dem)
+>  	struct isi_data *isi =3D ofono_modem_get_data(modem);
+>  	struct ofono_gprs *gprs;
+>  	struct ofono_gprs_context *gc;
+> +	int i;
+>  =
 
--manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
--						'org.ofono.Manager')
-+def oface(path, name):
-+	obj =3D bus.get_object('org.ofono', path)
-+	return dbus.Interface(obj, name)
-+
-+manager =3D oface('/', 'org.ofono.Manager')
- =
+>  	DBG("(%p) with %s", modem, isi->ifname);
+>  =
 
- modems =3D manager.GetModems()
- =
+> @@ -420,13 +423,19 @@ static void isigen_post_online(struct ofono_modem *=
+modem)
+>  	ofono_call_barring_create(isi->modem, 0, "isimodem", isi->idx);
+>  	ofono_call_meter_create(isi->modem, 0, "isimodem", isi->idx);
+>  	ofono_radio_settings_create(isi->modem, 0, "isimodem", isi->idx);
+> -	gprs =3D ofono_gprs_create(isi->modem, 0, "isimodem", isi->idx);
+> -	gc =3D ofono_gprs_context_create(isi->modem, 0, "isimodem", isi->idx);
+>  =
 
-@@ -15,8 +18,7 @@ for path, properties in modems:
- 	if "org.ofono.VoiceCallManager" not in properties["Interfaces"]:
- 		continue
- =
+> -	if (gprs && gc)
+> +	gprs =3D ofono_gprs_create(isi->modem, 0, "isimodem", isi->idx);
+> +	if (!gprs)
+> +		return;
 
--	mgr =3D dbus.Interface(bus.get_object('org.ofono', path),
--					'org.ofono.VoiceCallManager')
-+	mgr =3D oface(path, 'org.ofono.VoiceCallManager')
- =
+Tiny nitpick, but please follow the coding style.  Specifically item M1.
 
- 	calls =3D mgr.GetCalls()
- =
+> +	for (i =3D 0; i < ISI_DEFAULT_PDPS; i++) {
+> +		gc =3D ofono_gprs_context_create(isi->modem, 0,
+> +						"isimodem", isi->idx);
+> +		if (!gc) {
+> +			DBG("Failed to add context %d", i);
+> +			break;
+> +		}
 
-@@ -24,10 +26,8 @@ for path, properties in modems:
- 		state =3D properties["State"]
- 		print "[ %s ] %s" % (path, state)
- =
+And again, item M1 here
 
--		if state !=3D "incoming":
--			continue
--
--		call =3D dbus.Interface(bus.get_object('org.ofono', path),
--						'org.ofono.VoiceCall')
-+		if state =3D=3D "incoming":
-+			oface(path, 'org.ofono.VoiceCall').Answer()
-+		elif state =3D=3D "waiting":
-+			mgr.HoldAndAnswer()
- =
+>  		ofono_gprs_add_context(gprs, gc);
+> -	else
+> -		DBG("Failed to add context");
+> +	}
+>  }
+>  =
 
--		call.Answer()
--- =
+>  static int isigen_enable(struct ofono_modem *modem)
 
-1.7.1
+Regards,
+-Denis
 
-
---===============6543504823186986619==--
+--===============7466837994204033700==--
 
