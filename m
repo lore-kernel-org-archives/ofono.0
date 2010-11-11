@@ -1,30 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============3373663955735720810=="
+Content-Type: multipart/mixed; boundary="===============7104963315584961473=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: isigen: enabled multiple PDP contexts
-Date: Thu, 11 Nov 2010 11:55:37 +0100
-Message-ID: <C358A26273CF2948B8BCDBA661A581782BE95B64C2@NOK-EUMSG-03.mgdnok.nokia.com>
-In-Reply-To: <1289470041.3266.59.camel@aeonflux>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] monitor-ofono: monitor DisconnectReason
+Date: Thu, 11 Nov 2010 14:54:24 +0200
+Message-ID: <1289480064-30384-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3373663955735720810==
+--===============7104963315584961473==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-> you might wanna ask your modem firmware guys to add something =
+---
+ test/monitor-ofono |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
 
-> like this.
-> For me it would sounds like a good idea to know how many active GPRS
-> contexts that specific modem supports.
+diff --git a/test/monitor-ofono b/test/monitor-ofono
+index 2f49f76..8570c34 100755
+--- a/test/monitor-ofono
++++ b/test/monitor-ofono
+@@ -75,6 +75,10 @@ def ussd(msg, member, path, interface):
+ 	iface =3D interface[interface.rfind(".") + 1:]
+ 	print "{%s} [%s] %s %s" % (iface, path, member, str(msg))
+ =
 
-You wouldn't suggest that if you knew the process involved. ;) Anyway, the =
-change would not help existing hardware.
++def value(value, member, path, interface):
++	iface =3D interface[interface.rfind(".") + 1:]
++	print "{%s} [%s] %s %s" % (iface, path, member, str(value))
++
+ if __name__ =3D=3D '__main__':
+ 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
+ =
 
-	MikaL
+@@ -150,6 +154,13 @@ if __name__ =3D=3D '__main__':
+ 						path_keyword=3D"path",
+ 						interface_keyword=3D"interface")
+ =
 
---===============3373663955735720810==--
++	bus.add_signal_receiver(value,
++				bus_name=3D"org.ofono",
++					signal_name =3D "DisconnectReason",
++						member_keyword=3D"member",
++						path_keyword=3D"path",
++						interface_keyword=3D"interface")
++
+ 	for member in ["IncomingBroadcast", "EmergencyBroadcast",
+ 			"IncomingMessage", "ImmediateMessage"]:
+ 		bus.add_signal_receiver(message,
+-- =
+
+1.7.1
+
+
+--===============7104963315584961473==--
 
