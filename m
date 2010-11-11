@@ -1,28 +1,104 @@
-Content-Type: multipart/mixed; boundary="===============8662617609452543066=="
+Content-Type: multipart/mixed; boundary="===============0315866766933222333=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 1/1] isigen: create four gprs contexts
-Date: Thu, 11 Nov 2010 16:24:09 +0100
-Message-ID: <C358A26273CF2948B8BCDBA661A581782BE96369D9@NOK-EUMSG-03.mgdnok.nokia.com>
-In-Reply-To: <4CDC07A0.6030400@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] voicecall: Add EmergencyCall property.
+Date: Thu, 11 Nov 2010 09:26:37 -0600
+Message-ID: <4CDC0B2D.6010407@gmail.com>
+In-Reply-To: <1289488333-1481-1-git-send-email-john.mathew@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8662617609452543066==
+--===============0315866766933222333==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi John,
 
-> Tiny nitpick, but please follow the coding style.  =
+> +static gboolean voicecall_isemergency(struct voicecall *v)
 
-> Specifically item M1.
+Please use voicecall_is_emergency
 
-Hookay. I wish I had a script that picked these things up... *wink*
+> +{
+> +	struct ofono_call *call =3D v->call;
+> +	const char *lineid_str;
+> +
+> +	lineid_str =3D phone_number_to_string(&call->phone_number);
+> +
+> +	if (g_slist_find_custom(v->vc->en_list, lineid_str,
+> +						(GCompareFunc) strcmp))
 
-;-)
+As a general rule, the only function casting we allow is for GFunc use
+of g_free.  I really prefer that you write a separate function here.
 
-	MikaL
+> +		return TRUE;
+> +	else
 
---===============8662617609452543066==--
+Please drop the else, it isn't actually required and makes the code
+slightly cleaner.
+
+> +		return FALSE;
+> +}
+> +
+>  static void append_voicecall_properties(struct voicecall *v,
+>  					DBusMessageIter *dict)
+>  {
+> @@ -322,7 +336,8 @@ static void append_voicecall_properties(struct voicec=
+all *v,
+>  	const char *status;
+>  	const char *callerid;
+>  	const char *timestr;
+> -	ofono_bool_t mpty;
+> +	ofono_bool_t mpt;
+
+Is there a reason you're changing this variable name?
+
+> +	dbus_bool_t emergency_call;
+>  =
+
+>  	status =3D call_status_to_string(call->status);
+>  	callerid =3D phone_number_to_string(&call->phone_number);
+> @@ -358,6 +373,14 @@ static void append_voicecall_properties(struct voice=
+call *v,
+>  	if (v->icon_id)
+>  		ofono_dbus_dict_append(dict, "Icon", DBUS_TYPE_BYTE,
+>  					&v->icon_id);
+> +
+> +	if (voicecall_isemergency(v))
+> +			emergency_call =3D TRUE;
+> +	else
+> +			emergency_call =3D FALSE;
+> +
+> +	ofono_dbus_dict_append(dict, "EmergencyCall", DBUS_TYPE_BOOLEAN,
+> +					&emergency_call);
+>  }
+>  =
+
+>  static DBusMessage *voicecall_get_properties(DBusConnection *conn,
+> @@ -722,6 +745,15 @@ static void voicecall_set_call_lineid(struct voiceca=
+ll *v,
+>  						OFONO_VOICECALL_INTERFACE,
+>  						"LineIdentification",
+>  						DBUS_TYPE_STRING, &lineid_str);
+> +
+> +	if (voicecall_isemergency(v)) {
+> +		dbus_bool_t emergency_call =3D TRUE;
+
+In general we prefer an empty line after every variable declaration block.
+
+> +		ofono_dbus_signal_property_changed(conn, path,
+> +						OFONO_VOICECALL_INTERFACE,
+> +						"EmergencyCall",
+> +						DBUS_TYPE_BOOLEAN,
+> +						&emergency_call);
+> +	}
+>  }
+>  =
+
+>  static gboolean voicecall_dbus_register(struct voicecall *v)
+
+Regards,
+-Denis
+
+--===============0315866766933222333==--
 
