@@ -1,104 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============5437235681223510333=="
+Content-Type: multipart/mixed; boundary="===============8600810975895796867=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [RFC 1/3] Simplify ofono_modem_set_powered() logic
-Date: Fri, 12 Nov 2010 17:56:10 -0200
-Message-ID: <1289591772-3256-1-git-send-email-padovan@profusion.mobi>
+Subject: [RFC 3/3] phonesim: Add modem reset trigger
+Date: Fri, 12 Nov 2010 17:56:12 -0200
+Message-ID: <1289591772-3256-3-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1289591772-3256-2-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5437235681223510333==
+--===============8600810975895796867==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/modem.c |   47 +++++++++++++++++++++++++----------------------
- 1 files changed, 25 insertions(+), 22 deletions(-)
+ plugins/phonesim.c |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/src/modem.c b/src/modem.c
-index 3776461..3fb6809 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -752,6 +752,7 @@ static GDBusSignalTable modem_signals[] =3D {
- void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool_t power=
-ed)
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index d2faf42..7426da6 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -237,6 +237,13 @@ static void cfun_set_on_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	ofono_modem_set_powered(modem, ok);
+ }
+ =
+
++static void crst_notify(GAtResult *result, gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++
++	ofono_modem_reset(modem);
++}
++
+ static void phonesim_disconnected(gpointer user_data)
  {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	dbus_bool_t dbus_powered =3D powered;
+ 	struct ofono_modem *modem =3D user_data;
+@@ -389,6 +396,9 @@ static int phonesim_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(data->chat, "AT+CSCS=3D\"GSM\"", none_prefix,
+ 			NULL, NULL, NULL);
  =
 
- 	if (modem->timeout > 0) {
- 		g_source_remove(modem->timeout);
-@@ -771,32 +772,34 @@ void ofono_modem_set_powered(struct ofono_modem *mode=
-m, ofono_bool_t powered)
- =
-
- 	modem->powered_pending =3D powered;
- =
-
--	if (modem->powered !=3D powered) {
--		dbus_bool_t dbus_powered =3D powered;
--		modem->powered =3D powered;
-+	if (modem->powered =3D=3D powered)
-+		goto out;
- =
-
--		if (modem->driver =3D=3D NULL) {
--			ofono_error("Calling ofono_modem_set_powered on a"
--					"modem with no driver is not valid, "
--					"please fix the modem driver.");
--			return;
--		}
-+	modem->powered =3D powered;
- =
-
--		ofono_dbus_signal_property_changed(conn, modem->path,
--						OFONO_MODEM_INTERFACE,
--						"Powered", DBUS_TYPE_BOOLEAN,
--						&dbus_powered);
-+	if (modem->driver =3D=3D NULL) {
-+		ofono_error("Calling ofono_modem_set_powered on a"
-+				"modem with no driver is not valid, "
-+				"please fix the modem driver.");
-+		return;
-+	}
- =
-
--		if (powered) {
--			modem_change_state(modem, MODEM_STATE_PRE_SIM);
-+	ofono_dbus_signal_property_changed(conn, modem->path,
-+					OFONO_MODEM_INTERFACE,
-+					"Powered", DBUS_TYPE_BOOLEAN,
-+					&dbus_powered);
- =
-
--			/* Force SIM Ready for devies with no sim atom */
--			if (__ofono_modem_find_atom(modem,
--						OFONO_ATOM_TYPE_SIM) =3D=3D NULL)
--				sim_state_watch(OFONO_SIM_STATE_READY, modem);
--		} else
--			modem_change_state(modem, MODEM_STATE_POWER_OFF);
--	}
-+	if (powered) {
-+		modem_change_state(modem, MODEM_STATE_PRE_SIM);
++	g_at_chat_register(data->chat, "+CRST:",
++				crst_notify, FALSE, modem, NULL);
 +
-+		/* Force SIM Ready for devies with no sim atom */
-+		if (__ofono_modem_find_atom(modem,
-+					OFONO_ATOM_TYPE_SIM) =3D=3D NULL)
-+			sim_state_watch(OFONO_SIM_STATE_READY, modem);
-+	} else
-+		modem_change_state(modem, MODEM_STATE_POWER_OFF);
-+
-+out:
+ 	return 0;
+ }
  =
 
- 	if (powering_down && powered =3D=3D FALSE) {
- 		modems_remaining -=3D 1;
 -- =
 
 1.7.3.1
 
 
---===============5437235681223510333==--
+--===============8600810975895796867==--
 
