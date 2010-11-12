@@ -1,193 +1,429 @@
-Content-Type: multipart/mixed; boundary="===============6474471401844120941=="
+Content-Type: multipart/mixed; boundary="===============1229346577850423275=="
 MIME-Version: 1.0
-From: Sjur BRENDELAND <sjur.brandeland@stericsson.com>
-Subject: RE: [PATCH v4 1/2] stemodem: Add RTNL functionality managing CAIF
- Network Interfaces.
-Date: Fri, 12 Nov 2010 11:21:50 +0100
-Message-ID: <81C3A93C17462B4BBD7E272753C105791945C0C40A@EXDCVYMBSTM005.EQ1STM.local>
-In-Reply-To: <1289514837.3266.88.camel@aeonflux>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: [PATCH v5] stemodem: Add RTNL functionality managing CAIF Network
+ Interfaces.
+Date: Fri, 12 Nov 2010 11:41:30 +0100
+Message-ID: <1289558490-22481-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6474471401844120941==
+--===============1229346577850423275==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel.
+From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
-> Does anything cleans up the channel when oFono unexpectedly crashes?
+---
+ Makefile.am                  |    2 +
+ drivers/stemodem/caif_rtnl.c |  340 ++++++++++++++++++++++++++++++++++++++=
+++++
+ drivers/stemodem/caif_rtnl.h |   29 ++++
+ 3 files changed, 371 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/stemodem/caif_rtnl.c
+ create mode 100644 drivers/stemodem/caif_rtnl.h
 
-No not yet. I suppose the interface will continue up until someone
-destroys it. Should we simply destroy all CAIF interfaces
-if oFono crashes? I think this would be the simplest approach.
+diff --git a/Makefile.am b/Makefile.am
+index 05082de..f163b0a 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -226,6 +226,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/stemodem/stemodem.c \
+ 			drivers/stemodem/voicecall.c \
+ 			drivers/stemodem/radio-settings.c \
++			drivers/stemodem/caif_rtnl.c \
++			drivers/stemodem/caif_rtnl.h \
+ 			drivers/stemodem/gprs-context.c \
+ 			drivers/stemodem/caif_socket.h \
+ 			drivers/stemodem/if_caif.h
+diff --git a/drivers/stemodem/caif_rtnl.c b/drivers/stemodem/caif_rtnl.c
+new file mode 100644
+index 0000000..4ce2401
+--- /dev/null
++++ b/drivers/stemodem/caif_rtnl.c
+@@ -0,0 +1,340 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 ST-Ericsson AB.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <string.h>
++#include <unistd.h>
++#include <errno.h>
++#include <net/if.h>
++#include <net/if_arp.h>
++#include <fcntl.h>
++#include <linux/rtnetlink.h>
++
++#include <glib.h>
++
++#include <ofono/log.h>
++
++#include "if_caif.h"
++#include "caif_rtnl.h"
++
++#define NLMSG_TAIL(nmsg) \
++	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
++
++#define RTNL_MSG_SIZE 4096
++
++struct rtnl_msg {
++	struct nlmsghdr n;
++	struct ifinfomsg i;
++	char data[RTNL_MSG_SIZE];
++};
++
++struct iplink_req {
++	guint32 rtnlmsg_seqnr;
++	gpointer user_data;
++	caif_rtnl_create_cb_t callback;
++};
++
++static GSList *pending_requests;
++static guint32 rtnl_seqnr;
++static guint rtnl_watch;
++static GIOChannel *rtnl_channel;
++
++static struct iplink_req *find_request(guint32 seq)
++{
++	GSList *list;
++
++	for (list =3D pending_requests; list; list =3D list->next) {
++		struct iplink_req *req =3D list->data;
++
++		if (req->rtnlmsg_seqnr =3D=3D seq)
++			return req;
++	}
++
++	return NULL;
++}
++
++static void parse_newlink_param(struct ifinfomsg *msg, int size,
++						int *ifindex, char *ifname)
++{
++	struct rtattr *attr;
++
++	for (attr =3D IFLA_RTA(msg); RTA_OK(attr, size);
++		attr =3D RTA_NEXT(attr, size)) {
++
++		if (attr->rta_type =3D=3D IFLA_IFNAME &&
++				ifname !=3D NULL) {
++
++			strncpy(ifname, RTA_DATA(attr), IF_NAMESIZE);
++			ifname[IF_NAMESIZE-1] =3D '\0';
++			break;
++		}
++	}
++
++	*ifindex =3D msg->ifi_index;
++}
++
++static void parse_rtnl_message(const void *buf, size_t len)
++{
++	struct ifinfomsg *msg;
++	struct iplink_req *req =3D NULL;
++	char ifname[IF_NAMESIZE];
++	int ifindex;
++
++	while (len > 0) {
++		const struct nlmsghdr *hdr =3D buf;
++
++		if (!NLMSG_OK(hdr, len))
++			break;
++
++		switch (hdr->nlmsg_type) {
++		case RTM_NEWLINK:
++			req =3D g_slist_nth_data(pending_requests, 0);
++			if (req =3D=3D NULL)
++				break;
++
++			msg =3D (struct ifinfomsg *) NLMSG_DATA(hdr);
++			parse_newlink_param(msg, IFA_PAYLOAD(hdr),
++							&ifindex, ifname);
++
++			if (req->callback)
++				req->callback(ifindex, ifname, req->user_data);
++			break;
++
++		case NLMSG_ERROR:
++			req =3D find_request(hdr->nlmsg_seq);
++			if (req =3D=3D NULL)
++				break;
++
++			DBG("nlmsg error req");
++			if (req->callback)
++				req->callback(-1, ifname, req->user_data);
++			break;
++		default:
++			break;
++		}
++
++		len -=3D hdr->nlmsg_len;
++		buf +=3D hdr->nlmsg_len;
++
++		if (req) {
++			pending_requests =3D g_slist_remove(pending_requests,
++								req);
++			g_free(req);
++			req =3D NULL;
++		}
++	}
++}
++
++static int add_attribute(struct nlmsghdr *n, unsigned int maxlen, int type,
++				const void *data, int datalen)
++{
++	int len =3D RTA_LENGTH(datalen);
++	struct rtattr *rta;
++
++	if ((NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len)) > maxlen) {
++		DBG("attribute to large for message %d %d %d\n",
++				n->nlmsg_len, len, maxlen);
++		return -1;
++	}
++
++	rta =3D NLMSG_TAIL(n);
++	rta->rta_type =3D type;
++	rta->rta_len =3D len;
++	memcpy(RTA_DATA(rta), data, datalen);
++	n->nlmsg_len =3D NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
++
++	return 0;
++}
++
++static void prep_rtnl_req(struct rtnl_msg *msg, int reqtype, guint seqnr)
++{
++	msg->n.nlmsg_len =3D NLMSG_LENGTH(sizeof(struct ifinfomsg));
++	msg->n.nlmsg_flags =3D NLM_F_REQUEST|NLM_F_CREATE|NLM_F_EXCL;
++	msg->n.nlmsg_type =3D reqtype;
++	msg->n.nlmsg_seq =3D seqnr;
++	msg->i.ifi_family =3D AF_UNSPEC;
++}
++
++static gboolean netlink_event(GIOChannel *chan,
++				GIOCondition cond, gpointer data)
++{
++	unsigned char buf[RTNL_MSG_SIZE];
++	int len;
++	int sk =3D g_io_channel_unix_get_fd(rtnl_channel);
++
++	if (cond & (G_IO_NVAL | G_IO_HUP | G_IO_ERR)) {
++		rtnl_watch =3D 0;
++		return FALSE;
++	}
++
++	memset(buf, 0, sizeof(buf));
++	len =3D recv(sk, (void *)&buf, sizeof(buf), MSG_DONTWAIT);
++	if (len < 0) {
++		if (len =3D=3D -EAGAIN)
++			return TRUE;
++		rtnl_watch =3D 0;
++		return FALSE;
++	}
++
++	parse_rtnl_message(buf, len);
++
++	return TRUE;
++}
++
++int caif_rtnl_init(void)
++{
++	struct sockaddr_nl addr;
++	int sk, err;
++
++	sk =3D socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
++	if (sk < 0)
++		return sk;
++
++	memset(&addr, 0, sizeof(addr));
++	addr.nl_family =3D AF_NETLINK;
++	addr.nl_groups =3D RTMGRP_LINK;
++
++	err =3D bind(sk, (struct sockaddr *) &addr, sizeof(addr));
++	if (err < 0) {
++		close(sk);
++		return err;
++	}
++
++	rtnl_channel =3D g_io_channel_unix_new(sk);
++	g_io_channel_set_flags(rtnl_channel, G_IO_FLAG_NONBLOCK, NULL);
++	g_io_channel_set_close_on_unref(rtnl_channel, TRUE);
++
++	rtnl_watch =3D g_io_add_watch(rtnl_channel,
++				G_IO_IN | G_IO_NVAL | G_IO_HUP | G_IO_ERR,
++				netlink_event, NULL);
++
++	return 0;
++}
++
++void caif_rtnl_exit(void)
++{
++	GSList *list;
++
++	if (rtnl_watch > 0)
++		g_source_remove(rtnl_watch);
++
++	g_io_channel_unref(rtnl_channel);
++
++	for (list =3D pending_requests; list; list =3D list->next) {
++		struct iplink_req *req =3D list->data;
++		g_free(req);
++	}
++
++	g_slist_free(pending_requests);
++}
++
++int caif_rtnl_create_interface(int type, int connid, int loop,
++				caif_rtnl_create_cb_t cb, void *user_data)
++{
++	struct iplink_req *req;
++	struct sockaddr_nl addr;
++	int err, sk;
++	struct rtnl_msg msg;
++	struct rtattr *linkinfo;
++	struct rtattr *data_start;
++
++	req =3D g_try_new0(struct iplink_req, 1);
++	if (req =3D=3D NULL)
++		return -ENOMEM;
++
++	req->user_data =3D user_data;
++	req->callback =3D cb;
++	memset(&msg, 0, RTNL_MSG_SIZE);
++
++	req->rtnlmsg_seqnr =3D ++rtnl_seqnr;
++	prep_rtnl_req(&msg, RTM_NEWLINK, req->rtnlmsg_seqnr);
++
++	linkinfo =3D NLMSG_TAIL(&msg.n);
++	add_attribute(&msg.n, sizeof(msg), IFLA_LINKINFO,
++			NULL, 0);
++	add_attribute(&msg.n, sizeof(msg), IFLA_INFO_KIND,
++			"caif", 4);
++	data_start =3D NLMSG_TAIL(&msg.n);
++	add_attribute(&msg.n, sizeof(msg), IFLA_INFO_DATA,
++			NULL, 0);
++
++	switch (type) {
++	case IFLA_CAIF_IPV4_CONNID:
++	case IFLA_CAIF_IPV6_CONNID:
++		add_attribute(&msg.n, sizeof(msg),
++				type, &connid,
++				sizeof(connid));
++		break;
++
++	case __IFLA_CAIF_UNSPEC:
++	case IFLA_CAIF_LOOPBACK:
++	case __IFLA_CAIF_MAX:
++		DBG("unsupported linktype");
++		return -EINVAL;
++	}
++
++	if (loop) {
++		add_attribute(&msg.n, sizeof(msg),
++				IFLA_CAIF_LOOPBACK, &loop, sizeof(loop));
++	}
++
++	data_start->rta_len =3D (void *)NLMSG_TAIL(&msg.n) - (void *)data_start;
++	linkinfo->rta_len =3D (void *)NLMSG_TAIL(&msg.n) - (void *)linkinfo;
++
++	memset(&addr, 0, sizeof(addr));
++	addr.nl_family =3D AF_NETLINK;
++	sk =3D g_io_channel_unix_get_fd(rtnl_channel);
++	err =3D sendto(sk, &msg, msg.n.nlmsg_len, 0,
++			(struct sockaddr *) &addr, sizeof(addr));
++	if (err < 0)
++		goto error;
++
++	pending_requests =3D g_slist_append(pending_requests, req);
++	return 0;
++
++error:
++	g_free(req);
++	return err;
++}
++
++int caif_rtnl_delete_interface(int ifid)
++{
++	struct sockaddr_nl addr;
++	struct rtnl_msg msg;
++	int err;
++	int sk =3D g_io_channel_unix_get_fd(rtnl_channel);
++
++	memset(&msg, 0, sizeof(msg));
++	prep_rtnl_req(&msg, RTM_DELLINK, ++rtnl_seqnr);
++	msg.i.ifi_index =3D ifid;
++	memset(&addr, 0, sizeof(addr));
++	addr.nl_family =3D AF_NETLINK;
++
++	err =3D sendto(sk, &msg, msg.n.nlmsg_len, 0,
++			(struct sockaddr *) &addr, sizeof(addr));
++	if (err < 0)
++		return err;
++
++	return 0;
++}
+diff --git a/drivers/stemodem/caif_rtnl.h b/drivers/stemodem/caif_rtnl.h
+new file mode 100644
+index 0000000..9e44b08
+--- /dev/null
++++ b/drivers/stemodem/caif_rtnl.h
+@@ -0,0 +1,29 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 ST-Ericsson AB.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++typedef void (*caif_rtnl_create_cb_t) (int ifindex, char *ifname,
++							void *user_data);
++
++extern int caif_rtnl_create_interface(int type, int connid, int loop,
++				caif_rtnl_create_cb_t cb, void *user_data);
++extern int caif_rtnl_delete_interface(int ifid);
++
++extern int caif_rtnl_init(void);
++extern void caif_rtnl_exit(void);
+-- =
 
-BTW, how does connman behave in this case? Will it do any attempt
-to clean up IP interfaces when it notices that oFono APIs has gone missing?
-And what about modem state, is it taken back to flight-mode (AT+CFUN=3D0) in
-order to reset everything?
-
-If you don't mind, I would prefer to do restart handling as the next step.
-It would be nice to finish this patch review first, what do you think?
-
-> =
-
-> I think you can just use a stack buffer when you actually send the
-> message. This is damn ugly and from a security point it actually scares
-> me.
-> =
-
-> Please only keep the seqnum in here. Since that is the only thing you
-> need to find that pending request. Just get rid of everything that you
-> don't need for the callback.
-
-Yes, done.
-
-> > I have squashed this into parse_rtnl_message, as you suggested.
-> > I'm not really convinced this was any cleaner though..?
-> > I end up with duplicating the code in the two if statements.
-> =
-
-> We will see. I might have been wrong, but in my mind it just locked
-> fine. I will take a second look when you send the updated patch.
-
-OK, tell me what you think about the next patch then.
-
-> > I think that the kernel implementation of rtnl will guarantee the
-> > requests to be processed in order. rtnetlink_rcv in
-> ..net/core/rtnetlink.c
-> > takes the rtnl_lock before processing the netlink messages.
-> > I believe this will guarantee that the NEWLINK responses will be
-> received
-> > in the same order as they are sent.
-> =
-
-> it might be keeping the order, but I wouldn't count on it. And just
-> using your find request function would make this code simpler.
-
-The seqnr is not present in the message header of this response message,
-so this will not be possible. I would prefer to stick with the current
-implementation. Or do you see another way forward?
- =
-
-> > > > +                   req =3D find_request(hdr->nlmsg_seq);
-> > > > +                   if (req =3D=3D NULL)
-> > > > +                           break;
-> > > > +
-> > > > +                   DBG("nlmsg error req");
-> > > > +                   rtnl_client_response(req, -1);
-> > > > +                   return;
-> > > > +           }
-> > >
-> > > If I understand this right, then you can always find the pending
-> > > request
-> > > and remove it here. No need for rtnl_client_response at all.
-> >
-> > Yes, I guess you are right. I can remove this callback.
-> > Currently I am only actually interested in the result when
-> > the interface is created successfully. Nothing particularly
-> > is done in gprs-context.c if it fails.
-> =
-
-> That is not what I meant. We should find that request and call the
-> callback, but I think this can be done a more generic way.
-> =
-
-> So whatever message you get, find the request that it belongs to. You
-> need that request struct anyway. And then just reply here.
-
-OK, I think I have done so. Have a look when I send the next patch.
-
-> > Actually I think io_channel_read is just fine here. I think connman
-> is doing
-> > the same thing for rtnl. It is the sending part which is problematic.
-> =
-
-> We should not be using that in ConnMan either actually. The _read is
-> fine, but deprecated. The new _read_chars is doing buffering and a bit
-> nasty in that area. So really just use recv() here.
-
-OK, I've changed it to recv.
-
-> > > So if we split out creating the NLMSG header into one helper
-> functions,
-> > > then you can easily prep the RTNL newlink message here inside the
-> > > function.
-> >
-> > Even with creating this helper function you suggested
-> > the prep_rtnl_newlink_req is on 45 lines. I think it makes sense
-> > still keep then separate. It is no big deal for me, but I would
-> prefer
-> > to avoid such a large functions,
-> =
-
-> As I said above, it looked good in my head. Maybe I was wrong, but in
-> general this is pretty simple sequential stuff. So it can be in one
-> function and still be easy readable. Lets have a look on how it looks
-> and then decide.
-
-OK, I've squashed the two functions. =
+1.6.3.3
 
 
-> =
-
-> > > This will also allow you to remove req->loop_enabled variables
-> since I
-> > > don't see need for storing them.
-> >
-> > You are right, the loop_enabled variable is not currently needed.
-> > However for various testing purposes we frequently want to run the
-> CAIF Interface
-> > in loopback mode (e.g. testing loopback to the modem). loopback_mode
-> will make the
-> > interface swap src and destination ip addresses so we actually can do
-> ping etc.
-> > If you are OK with this, I would prefer to keep this in order to make
-> testing easier.
-> > But again, I'm easy...
-> =
-
-> Having loopback mode is fine. I just meant that you don't have to store
-> the variable in the request struct since you build the request already.
-> =
-
-> Please store only things in your request struct that you do need later
-> on.
-
-OK, done. This struct is much smaller now.
-
-> =
-
-> > > > diff --git a/drivers/stemodem/caif_rtnl.h
-> > ...
-> > > > +typedef void (*caif_rtnl_create_cb_t) (int result, gpointer
-> > > user_data,
-> > > > +           char *ifname, int ifindex);
-...
-> > Yes, but ifindex is used when removing the CAIF IP Interface.
-> > It makes life a lot easier when removing an interface.
-> =
-
-> I saw that later. Then the result is pointless. Just negative ifindex
-> could be used for errors.
-> =
-
-> So this should be (int index, const char *interface, void *user_data).
-
-OK, done.
-
-> > Thank you for a very thorough review here Marcel.
-> =
-
-> No problem. Just RTNL takes always a bit to get used to again ;)
-
-Yes, ditto.  Going from ioctl with just a couple of function calls into rtnl
-has been surprisingly complex.
-
-Regards,
-Sjur
-
-
-
---===============6474471401844120941==--
+--===============1229346577850423275==--
 
