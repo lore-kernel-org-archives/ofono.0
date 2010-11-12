@@ -1,49 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============3097173596852918624=="
+Content-Type: multipart/mixed; boundary="===============0580523606533287932=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: Can I modify CallingLineRestriction(the Property of CallSetting)
- value to "disabled" or "enabled"
-Date: Fri, 12 Nov 2010 16:19:31 +0200
-Message-ID: <AANLkTi=-4hVwgoT=YmnSMhYNacz3yej1352GoXGHZfT0@mail.gmail.com>
-In-Reply-To: <CE761E84DADF2947A4AF22FB8D97A473305616E9@shsmsx501.ccr.corp.intel.com>
+From: Sjur BRENDELAND <sjur.brandeland@stericsson.com>
+Subject: RE: [PATCH v4 2/2] stemodem: Update gprs-context to use rtnl to
+ create/remove interfaces.
+Date: Fri, 12 Nov 2010 15:30:41 +0100
+Message-ID: <81C3A93C17462B4BBD7E272753C105791945C0C6B8@EXDCVYMBSTM005.EQ1STM.local>
+In-Reply-To: <1289453825.3266.38.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3097173596852918624==
+--===============0580523606533287932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Marcel.
+ =
 
-2010/11/11 Gu, Yang <yang.gu@intel.com>:
->>What happens when you make a call? Does call get rejected or do you
->>get some CSSU indications?
->
-> Thank you for the comments!
-> After setting HideCallerId to "enabled", and making an outgoing call, the=
- call arrived at another phone as normal, and I didn't see any CSSU indicat=
-ion. The call settings are listed below, in which the CallingLineRestrictio=
-n is always disabled. I think this means the network disables this feature.=
- I also confirmed with our operator (CMCC), and they said they don't suppor=
-t CLIR.
+> Can you please not try to squeeze such change in the same patch. Just
+> have a separate one that does this change.
+...
+> The more I looked through the rest of this patch, the more I thought
+> you need to split this patch into a cleanup and caif_rtnl usage patch.
 
-They really do not support it. Thanks for the logs.
+Yes, I have broken this into three patches.
+It's a bit hard to find the exactly what to put where, and
+tear apart what is already squashed. But have a look and
+see what you think.
 
-There is a Finnish operator (Aino) which does not have CLIR
-provisioned by default, they will reject the calls made with temporary
-CLIR invocation.
+> =
 
-It seems to me that the call-settings API stores the user preference
-to the modem (how that is done is up to the modem). This can lead to
-subtle privacy bugs if user has multiple SIM cards. I wonder if oFono
-should store the CLIR settings in IMSI-specific storage. oFono should
-somehow specify the interaction with the CLIR setting stored in the
-modem, too.
+> So I realized now that you are using ifindex as input for
+> caif_rtnl_delete_interface, now I am questioning why there is a result
+> parameter in the callback for caif_rtnl_create_interface.
 
--- =
+OK, agree - done.
 
-Pekka.Pessi mail at nokia.com
+> Why are we having this in the first place. CAIF network interfaces are
+> point-to-point, right? In that case you should just leave this NULL.
 
---===============3097173596852918624==--
+Yes - agree. PtP link should not report GW.
+
+> Please use '\0' instead of just 0. You might need to fix this at other
+> places as well.
+
+OK, done at least here..
+
+> > +static void rtnl_callback(int result, gpointer user_data,
+> > +		char *ifname, int ifindex)
+> > +{
+> > +	struct conn_info *conn =3D user_data;
+> > +
+> > +	strncpy(conn->interface, ifname, sizeof(conn->interface));
+> > +	conn->ifindex =3D ifindex;
+> > +
+> > +	if (result =3D=3D 0)
+> > +		conn->created =3D TRUE;
+> > +	else {
+> > +		conn->created =3D FALSE;
+> > +		DBG("Could not create CAIF Interface");
+> > +	}
+> > +}
+> =
+
+> So here is the think. This makes no sense. Either you get an error and
+> ifname and index are not valid or you succeed.
+> =
+
+> So this should be something like
+> =
+
+> 	if (ifname < 0) {
+> 		connman_error(...)
+> 		return;
+> 	}
+OK, I've done something similar.
+
+
+Regards,
+Sjur
+
+
+
+
+
+--===============0580523606533287932==--
 
