@@ -1,292 +1,160 @@
-Content-Type: multipart/mixed; boundary="===============2191266806884034885=="
+Content-Type: multipart/mixed; boundary="===============3160485880632482976=="
 MIME-Version: 1.0
 From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC PATCH 4/4] voicecall: add emergency call handling
-Date: Mon, 15 Nov 2010 18:58:06 +0200
-Message-ID: <c7831bef98959d40a0a022ebcc433312e7caadf2.1289838927.git.Andras.Domokos@nokia.com>
+Subject: [RFC PATCH 1/4] modem: add modem online-offline watch
+Date: Mon, 15 Nov 2010 18:57:55 +0200
+Message-ID: <627db679ae96c54a5caed2b683da5da95c9eb35b.1289838927.git.Andras.Domokos@nokia.com>
 In-Reply-To: <cover.1289838927.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2191266806884034885==
+--===============3160485880632482976==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Andras Domokos <andras.domokos@nokia.com>
+
 ---
- src/voicecall.c |  111 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 110 insertions(+), 1 deletions(-)
+ src/modem.c |   46 ++++++++++++++++++++++++++++++++++++++++++++++
+ src/ofono.h |    8 ++++++++
+ 2 files changed, 54 insertions(+), 0 deletions(-)
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 3af614b..066cdb9 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -52,6 +52,7 @@ struct ofono_voicecall {
- 	struct ofono_sim *sim;
- 	unsigned int sim_watch;
- 	unsigned int sim_state_watch;
-+	unsigned int modem_online_watch;
- 	const struct ofono_voicecall_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-@@ -133,6 +134,22 @@ static void add_to_en_list(GSList **l, const char **li=
-st)
- 		*l =3D g_slist_prepend(*l, g_strdup(list[i++]));
+diff --git a/src/modem.c b/src/modem.c
+index 3776461..f73cc1d 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -72,6 +72,7 @@ struct ofono_modem {
+ 	ofono_bool_t		powered_pending;
+ 	guint			timeout;
+ 	ofono_bool_t		online;
++	struct ofono_watchlist	*online_watches;
+ 	GHashTable		*properties;
+ 	struct ofono_sim	*sim;
+ 	unsigned int		sim_watch;
+@@ -362,6 +363,22 @@ static void flush_atoms(struct ofono_modem *modem, enu=
+m modem_state new_state)
+ 	}
  }
  =
 
-+static gint number_compare(gconstpointer a, gconstpointer b)
++static void notify_online_watches(struct ofono_modem *modem)
 +{
-+	const char *s1 =3D a, *s2 =3D b;
-+	return strcmp(s1, s2);
++	struct ofono_watchlist_item *item;
++	GSList *l;
++	ofono_modem_online_notify_func notify;
++
++	if (modem->online_watches =3D=3D NULL)
++		return;
++
++	for (l =3D modem->online_watches->items; l; l =3D l->next) {
++		item =3D l->data;
++		notify =3D item->notify;
++		notify(modem->online, item->notify_data);
++	}
 +}
 +
-+static ofono_bool_t emergency_number(struct ofono_voicecall *vc,
-+					const char *number)
+ static void modem_change_state(struct ofono_modem *modem,
+ 				enum modem_state new_state)
+ {
+@@ -404,11 +421,13 @@ static void modem_change_state(struct ofono_modem *mo=
+dem,
+ 			__ofono_history_probe_drivers(modem);
+ 			__ofono_nettime_probe_drivers(modem);
+ 		}
++		notify_online_watches(modem);
+ 		break;
+ =
+
+ 	case MODEM_STATE_ONLINE:
+ 		if (driver->post_online)
+ 			driver->post_online(modem);
++		notify_online_watches(modem);
+ 		break;
+ 	}
+ }
+@@ -437,6 +456,29 @@ static void sim_state_watch(enum ofono_sim_state new_s=
+tate, void *user)
+ 	}
+ }
+ =
+
++unsigned __ofono_modem_add_online_watch(struct ofono_modem *modem,
++		ofono_modem_online_notify_func notify,
++		void *data, ofono_destroy_func destroy)
 +{
-+	if (!number)
-+		return FALSE;
++	struct ofono_watchlist_item *item;
 +
-+	return g_slist_find_custom(vc->en_list,
-+				number, number_compare) ? TRUE : FALSE;
++	if (modem =3D=3D NULL || notify =3D=3D NULL)
++		return 0;
++
++	item =3D g_new0(struct ofono_watchlist_item, 1);
++
++	item->notify =3D notify;
++	item->destroy =3D destroy;
++	item->notify_data =3D data;
++
++	return __ofono_watchlist_add_item(modem->online_watches, item);
 +}
 +
- static const char *disconnect_reason_to_string(enum ofono_disconnect_reaso=
-n r)
- {
- 	switch (r) {
-@@ -1125,6 +1142,7 @@ static struct voicecall *dial_handle_result(struct of=
-ono_voicecall *vc,
- static void manager_dial_callback(const struct ofono_error *error, void *d=
-ata)
- {
- 	struct ofono_voicecall *vc =3D data;
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
- 	DBusMessage *reply;
- 	const char *number;
- 	gboolean need_to_emit;
-@@ -1143,8 +1161,12 @@ static void manager_dial_callback(const struct ofono=
-_error *error, void *data)
- =
-
- 		dbus_message_append_args(reply, DBUS_TYPE_OBJECT_PATH, &path,
- 						DBUS_TYPE_INVALID);
--	} else
-+	} else {
-+		if (emergency_number(vc, number))
-+			ofono_modem_dec_emergency_mode(modem);
-+
- 		reply =3D __ofono_error_failed(vc->pending);
-+	}
- =
-
- 	__ofono_dbus_pending_reply(&vc->pending, reply);
- =
-
-@@ -1156,6 +1178,7 @@ static DBusMessage *manager_dial(DBusConnection *conn,
- 					DBusMessage *msg, void *data)
- {
- 	struct ofono_voicecall *vc =3D data;
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
- 	const char *number;
- 	struct ofono_phone_number ph;
- 	const char *clirstr;
-@@ -1195,6 +1218,15 @@ static DBusMessage *manager_dial(DBusConnection *con=
-n,
- =
-
- 	string_to_phone_number(number, &ph);
- =
-
-+	if (emergency_number(vc, number)) {
-+		ofono_bool_t online =3D ofono_modem_get_online(modem);
-+
-+		ofono_modem_inc_emergency_mode(modem);
-+
-+		if (!online)
-+			return NULL;
-+	}
-+
- 	vc->driver->dial(vc, &ph, clir, OFONO_CUG_OPTION_DEFAULT,
- 				manager_dial_callback, vc);
- =
-
-@@ -1748,6 +1780,7 @@ void ofono_voicecall_disconnected(struct ofono_voicec=
-all *vc, int id,
- 				const struct ofono_error *error)
- {
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-+	const char *number;
- 	GSList *l;
- 	struct voicecall *call;
- 	time_t ts;
-@@ -1767,6 +1800,7 @@ void ofono_voicecall_disconnected(struct ofono_voicec=
-all *vc, int id,
- 	}
- =
-
- 	call =3D l->data;
-+	number =3D phone_number_to_string(&call->call->phone_number);
- =
-
- 	ts =3D time(NULL);
- 	prev_status =3D call->call->status;
-@@ -1805,6 +1839,9 @@ void ofono_voicecall_disconnected(struct ofono_voicec=
-all *vc, int id,
- =
-
- 	voicecalls_emit_call_removed(vc, call);
- =
-
-+	if (emergency_number(vc, number))
-+		ofono_modem_dec_emergency_mode(modem);
-+
- 	voicecall_dbus_unregister(vc, call);
- =
-
- 	vc->call_list =3D g_slist_remove(vc->call_list, call);
-@@ -2067,6 +2104,7 @@ static void voicecall_unregister(struct ofono_atom *a=
-tom)
- static void voicecall_remove(struct ofono_atom *atom)
- {
- 	struct ofono_voicecall *vc =3D __ofono_atom_get_data(atom);
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
- =
-
- 	DBG("atom: %p", atom);
- =
-
-@@ -2108,6 +2146,12 @@ static void voicecall_remove(struct ofono_atom *atom)
- 		g_queue_free(vc->toneq);
- 	}
- =
-
-+	if (vc->modem_online_watch) {
-+		__ofono_modem_remove_online_watch(modem,
-+						vc->modem_online_watch);
-+		vc->modem_online_watch =3D 0;
-+	}
-+
- 	g_free(vc);
- }
- =
-
-@@ -2205,6 +2249,7 @@ static void sim_watch(struct ofono_atom *atom,
- static void dial_request_cb(const struct ofono_error *error, void *data)
- {
- 	struct ofono_voicecall *vc =3D data;
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
- 	gboolean need_to_emit;
- 	struct voicecall *v;
- =
-
-@@ -2214,6 +2259,9 @@ static void dial_request_cb(const struct ofono_error =
-*error, void *data)
- =
-
- 	if (v =3D=3D NULL) {
- 		dial_request_finish(vc);
-+		if (emergency_number(vc,
-+				phone_number_to_string(&vc->dial_req->ph)))
-+			ofono_modem_dec_emergency_mode(modem);
- 		return;
- 	}
- =
-
-@@ -2237,6 +2285,53 @@ static void dial_request_cb(const struct ofono_error=
- *error, void *data)
- 		voicecalls_emit_call_added(vc, v);
- }
- =
-
-+static void modem_online_watch(ofono_bool_t online, void *data)
++void __ofono_modem_remove_online_watch(struct ofono_modem *modem, unsigned=
+ id)
 +{
-+	struct ofono_voicecall *vc =3D data;
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
-+	DBusMessage *reply;
-+	const char *number;
-+	struct ofono_phone_number ph;
-+	const char *clirstr;
-+	enum ofono_clir_option clir;
-+
-+	if (ofono_modem_get_emergency_mode(modem) !=3D TRUE)
-+		return;
-+
-+	if (vc->dial_req)
-+		vc->driver->dial(vc, &vc->dial_req->ph,
-+					OFONO_CLIR_OPTION_DEFAULT,
-+					OFONO_CUG_OPTION_DEFAULT,
-+					dial_request_cb, vc);
-+
-+	if (!vc->pending)
-+		return;
-+
-+	if (strcmp(dbus_message_get_member(vc->pending), "Dial"))
-+		return;
-+
-+	if (dbus_message_get_args(vc->pending, NULL, DBUS_TYPE_STRING, &number,
-+					DBUS_TYPE_STRING, &clirstr,
-+					DBUS_TYPE_INVALID) =3D=3D FALSE)
-+		return;
-+
-+	if (!emergency_number(vc, number))
-+		return;
-+
-+	if (!online) {
-+		reply =3D __ofono_error_failed(vc->pending);
-+		__ofono_dbus_pending_reply(&vc->pending, reply);
-+		ofono_modem_dec_emergency_mode(modem);
-+		return;
-+	}
-+
-+	clir_string_to_clir(clirstr, &clir);
-+	string_to_phone_number(number, &ph);
-+
-+	vc->driver->dial(vc, &ph, clir, OFONO_CUG_OPTION_DEFAULT,
-+				manager_dial_callback, vc);
++	__ofono_watchlist_remove_item(modem->online_watches, id);
 +}
 +
- void ofono_voicecall_register(struct ofono_voicecall *vc)
+ static void online_cb(const struct ofono_error *error, void *data)
  {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
-@@ -2255,6 +2350,9 @@ void ofono_voicecall_register(struct ofono_voicecall =
-*vc)
- 	}
+ 	struct ofono_modem *modem =3D data;
+@@ -1472,6 +1514,7 @@ int ofono_modem_register(struct ofono_modem *modem)
+ 	modem->driver_type =3D NULL;
  =
 
- 	ofono_modem_add_interface(modem, OFONO_VOICECALL_MANAGER_INTERFACE);
-+	vc->modem_online_watch =3D __ofono_modem_add_online_watch(modem,
-+							modem_online_watch,
-+							vc, NULL);
+ 	modem->atom_watches =3D __ofono_watchlist_new(g_free);
++	modem->online_watches =3D __ofono_watchlist_new(g_free);
  =
 
- 	/*
- 	 * Start out with the 22.101 mandated numbers, if we have a SIM and
-@@ -2331,6 +2429,17 @@ ofono_bool_t __ofono_voicecall_is_busy(struct ofono_=
-voicecall *vc,
+ 	emit_modem_added(modem);
+ 	call_modemwatches(modem, TRUE);
+@@ -1503,6 +1546,9 @@ static void modem_unregister(struct ofono_modem *mode=
+m)
+ 	__ofono_watchlist_free(modem->atom_watches);
+ 	modem->atom_watches =3D NULL;
  =
 
- static void dial_request(struct ofono_voicecall *vc)
- {
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
++	__ofono_watchlist_free(modem->online_watches);
++	modem->online_watches =3D NULL;
 +
-+	if (emergency_number(vc, phone_number_to_string(&vc->dial_req->ph))) {
-+		ofono_bool_t online =3D ofono_modem_get_online(modem);
+ 	modem->sim_watch =3D 0;
+ 	modem->sim_ready_watch =3D 0;
+ =
+
+diff --git a/src/ofono.h b/src/ofono.h
+index ab6ecd2..01cd6c0 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -177,6 +177,14 @@ unsigned int __ofono_modemwatch_add(ofono_modemwatch_c=
+b_t cb, void *user,
+ 					ofono_destroy_func destroy);
+ gboolean __ofono_modemwatch_remove(unsigned int id);
+ =
+
++typedef void (*ofono_modem_online_notify_func)(ofono_bool_t online,
++		void *data);
++unsigned int __ofono_modem_add_online_watch(struct ofono_modem *modem,
++		ofono_modem_online_notify_func notify,
++		void *data, ofono_destroy_func destroy);
++void __ofono_modem_remove_online_watch(struct ofono_modem *modem,
++		unsigned int id);
 +
-+		ofono_modem_inc_emergency_mode(modem);
-+
-+		if (!online)
-+			return;
-+	}
-+
- 	vc->driver->dial(vc, &vc->dial_req->ph, OFONO_CLIR_OPTION_DEFAULT,
- 				OFONO_CUG_OPTION_DEFAULT, dial_request_cb, vc);
- }
+ #include <ofono/call-barring.h>
+ =
+
+ gboolean __ofono_call_barring_is_busy(struct ofono_call_barring *cb);
 -- =
 
 1.7.0.4
 
 
---===============2191266806884034885==--
+--===============3160485880632482976==--
 
