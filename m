@@ -1,63 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============4733208035412022026=="
+Content-Type: multipart/mixed; boundary="===============4084885808436253654=="
 MIME-Version: 1.0
 From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC PATCH 2/5] history: expand history API
-Date: Mon, 15 Nov 2010 13:50:15 +0200
-Message-ID: <a66b016f1ffe986688b513d2703c35f05575ee7c.1289819191.git.Andras.Domokos@nokia.com>
+Subject: [RFC PATCH 1/5] history: expand history API include file
+Date: Mon, 15 Nov 2010 13:50:11 +0200
+Message-ID: <0db5c7f505293243a66ef977ba41f2d793e3c38b.1289819191.git.Andras.Domokos@nokia.com>
 In-Reply-To: <cover.1289819191.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4733208035412022026==
+--===============4084885808436253654==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/history.c |   24 ++++++++++++++++++++++++
- 1 files changed, 24 insertions(+), 0 deletions(-)
+ include/history.h |    3 +++
+ src/ofono.h       |    4 ++++
+ 2 files changed, 7 insertions(+), 0 deletions(-)
 
-diff --git a/src/history.c b/src/history.c
-index 0229cf5..31efadb 100644
---- a/src/history.c
-+++ b/src/history.c
-@@ -114,6 +114,30 @@ void __ofono_history_probe_drivers(struct ofono_modem =
-*modem)
- 	}
- }
+diff --git a/include/history.h b/include/history.h
+index c1c4aa1..a2490f6 100644
+--- a/include/history.h
++++ b/include/history.h
+@@ -49,6 +49,9 @@ struct ofono_history_driver {
+ 	const char *name;
+ 	int (*probe)(struct ofono_history_context *context);
+ 	void (*remove)(struct ofono_history_context *context);
++	void (*call_started)(struct ofono_history_context *context,
++				const struct ofono_call *call,
++				time_t start);
+ 	void (*call_ended)(struct ofono_history_context *context,
+ 				const struct ofono_call *call,
+ 				time_t start, time_t end);
+diff --git a/src/ofono.h b/src/ofono.h
+index 4d76d20..61a0637 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -368,6 +368,10 @@ void __ofono_netreg_set_base_station_name(struct ofono=
+_netreg *netreg,
  =
 
-+static void history_call_started(struct ofono_atom *atom, void *data)
-+{
-+	struct ofono_history_context *context =3D __ofono_atom_get_data(atom);
-+	struct history_call_foreach_data *hfd =3D data;
-+
-+	if (context->driver->call_started =3D=3D NULL)
-+		return;
-+
-+	context->driver->call_started(context, hfd->call, hfd->start);
-+}
-+
+ void __ofono_history_probe_drivers(struct ofono_modem *modem);
+ =
+
 +void __ofono_history_call_started(struct ofono_modem *modem,
 +				const struct ofono_call *call,
-+				time_t start)
-+{
-+	struct history_call_foreach_data hfd;
++				time_t start);
 +
-+	hfd.call =3D call;
-+	hfd.start =3D start;
-+
-+	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_HISTORY,
-+					history_call_started, &hfd);
-+}
-+
- static void history_call_ended(struct ofono_atom *atom, void *data)
- {
- 	struct ofono_history_context *context =3D __ofono_atom_get_data(atom);
+ void __ofono_history_call_ended(struct ofono_modem *modem,
+ 				const struct ofono_call *call,
+ 				time_t start, time_t end);
 -- =
 
 1.7.0.4
 
 
---===============4733208035412022026==--
+--===============4084885808436253654==--
 
