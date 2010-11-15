@@ -1,46 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============7886075994199086834=="
+Content-Type: multipart/mixed; boundary="===============2079165229744445969=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: [RFC] Refactoring ISI modem support
-Date: Mon, 15 Nov 2010 02:31:05 +0200
-Message-ID: <AANLkTikzdhi9H7qKJf=riBudUH+-fWqPU7xwjA81DXoM@mail.gmail.com>
+From: Kiviluoto, Jaakko J <jaakko.j.kiviluoto@intel.com>
+Subject: RE: [PATCH] TODO: Add vCard export to SM/ME stores
+Date: Mon, 15 Nov 2010 08:04:44 +0000
+Message-ID: <6E42A1B4DD2F7B4D80A1F26BB498BF9F8C9A039E9B@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <1289574670.3266.112.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7886075994199086834==
+--===============2079165229744445969==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi All,
+> > > To support this feature then first we need to convert the current
+> > > feature into returning a dict. And then have this feature using a
+> dict
+> > > as input.
+> >
+> > Is there already a specification/draft of the format of this dict? If
+> not, I would be tempted to use the 27.007 +CPBR/W field names as keys
+> (e.g. index, number, type, text, adnumber, secondtext, sip_uri, etc.)
+> =
 
-I've been working on improving the ISI modem support in oFono, mostly
-concentrating on the gisi library, but also on tweaking the drivers
-and plugins. You can follow the progress of this 'gisi' branch here:
+> there is not. So you need to propose one here.
 
-git://gitorious.org/~akiniemi/meego-cellular/ofono-aki.git
+For simplicity, I would propose that both import and export would use an ar=
+ray of dict's with the 27.007 keys:
 
-http://meego.gitorious.org/~akiniemi/meego-cellular/ofono-aki/trees/gisi
+index: type=3Dinteger, import=3Dalways export=3Dignored
+number: type=3Dstring, import=3Dalways/empty export=3Doptional/empty
+type: type=3Dinteger, import=3Dalways export=3Dmandatory
+text: type=3Dstring, import=3Dalways/empty export=3Doptional/empty
+hidden: type=3Dint, import=3Dalways, export=3Doptional/default=3D0
+group: type=3Dstring, import=3Dif nonempty, export=3Doptional
+adnumber: type=3Dstring, import=3Dif nonempty, export=3Doptional
+adtype: type=3Dinteger, import/export=3Dmandatory if adnumber nonempty
+secondtext: type=3Dstring, import=3Dif nonempty, export=3Doptional
+email: type=3Dstring, import=3Dif nonempty, export=3Doptional
+sip_uri: type=3Dstring, import=3Dif nonempty, export=3Doptional
+tel_uri: type=3Dstring, import=3Dif nonempty, export=3Doptional
 
-This is now shaping up enough to call for a bit wider review. Gisi is
-mostly where I think it should be, and seems to work. The new
-(redesigned, really) version is fixing some of the long-standing
-complaints. For instance, it is now using only a single PhoNet socket,
-managing indication subscriptions and reachability queries a bit more
-intelligently, and is caching modem reachability status and ISI
-resource versions for as long as the modem plugin is registered.
+Either 'text' or 'number' must be nonempty on export.
 
-Note that not all of the drivers or the n900 plugin have yet been
-adapted, but those that are seem to work.
+This simple scheme would also necessitate removing the contact merging from=
+ the import functionality. Would that be ok?
 
-I would really appreciate any comments you might have. Especially
-if you are working with gisi or isimodem, please take a look. The plan
-is to adapt the rest of the drivers and the n900 plugin in the next
-couple of weeks, test some more, rebase, and apply to the
-master tree.
+Otherwise the dict would have to contain a list of number structures instea=
+d of number/adnumber fields, and merging/unmerging would have to be (re)imp=
+lemented for both import and export.
 
-Cheers,
-Aki
+Jaakko
 
---===============7886075994199086834==--
+---------------------------------------------------------------------
+Intel Finland Oy
+Registered Address: PL 281, 00181 Helsinki =
+
+Business Identity Code: 0357606 - 4 =
+
+Domiciled in Helsinki =
+
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============2079165229744445969==--
 
