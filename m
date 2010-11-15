@@ -1,38 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============4888997187428694557=="
+Content-Type: multipart/mixed; boundary="===============7409563775283906952=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
-Subject: [RFC PATCH 0/2] Differentiate HSPA technologies
-Date: Mon, 15 Nov 2010 15:23:46 +0100
-Message-ID: <ec27632d1746f72703cc59e1f2cadf2a@chewa.net>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH 2/2] Update the network documentation
+Date: Mon, 15 Nov 2010 14:24:18 +0000
+Message-ID: <1289831156-32173-2-git-send-email-remi.denis-courmont@nokia.com>
+In-Reply-To: <ec27632d1746f72703cc59e1f2cadf2a@chewa.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4888997187428694557==
+--===============7409563775283906952==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-
-   Hello,
-
-In some use cases, I need to be able to list the active and available
-technologies. This patch set splits the three HSPA modes to enable which
-this requires.
-
-R=C3=A9mi Denis-Courmont (2):
-      Distinguish HSDPA, HSUPA or both as access technologies
-      Update the network documentation
-
+---
  doc/network-api.txt |    5 +++--
- src/common.c        |    4 ++--
- 2 files changed, 5 insertions(+), 4 deletions(-)
+ 1 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/doc/network-api.txt b/doc/network-api.txt
+index 083e918..9fb9974 100644
+--- a/doc/network-api.txt
++++ b/doc/network-api.txt
+@@ -125,8 +125,9 @@ Properties	string Mode [readonly]
+ =
+
+ 			Contains the technology of the current network.
+ =
+
+-			The possible values are: "gsm", "edge", "umts", "hspa",
+-							"lte"
++			The possible values are: "gsm", "edge", "umts",
++			"hsdpa", "hsupa", "hspa" (meaning both hsdpa and hsupa)
++			and "lte"
+ =
+
+ 			TODO: Values for CDMA and EVDO based networks.
+ =
 
 -- =
 
-R=C3=A9mi Denis-Courmont
-http://www.remlab.net
-http://fi.linkedin.com/in/remidenis
+1.7.1
 
 
---===============4888997187428694557==--
+--===============7409563775283906952==--
 
