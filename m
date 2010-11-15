@@ -1,52 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============7135416025492630130=="
+Content-Type: multipart/mixed; boundary="===============8723934933528664979=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: RE: [PATCH] TODO: Add vCard export to SM/ME stores
-Date: Mon, 15 Nov 2010 11:01:48 -0800
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C90157C37EC1@orsmsx508.amr.corp.intel.com>
-In-Reply-To: <1289550575.3266.103.camel@aeonflux>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 0/5] Call Counters
+Date: Mon, 15 Nov 2010 17:13:10 +0100
+Message-ID: <1289837590.3266.125.camel@aeonflux>
+In-Reply-To: <cover.1289819191.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7135416025492630130==
+--===============8723934933528664979==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Marcel wrote:
-> > diff --git a/TODO b/TODO
-> > index bf2305b..9dcb43f 100644
-> > --- a/TODO
-> > +++ b/TODO
-> > @@ -496,3 +496,14 @@ Miscellaneous
-> >  =
+Hi Andras,
 
-> >    Priority: Low
-> >    Complexity: C4
-> > +
-> > +- Enable exporting contact information from vCard data to SM and ME st=
-ores.
-> > +  Need to implement a robust vCard parser that can extract at least the
-> > +  fields supported by the existing phonebook module.  Functionality sh=
-ould
-> > +  be analoguous to existing import functionality.
-> =
+> Here a proposal for call counters implementation for keeping track
+> of the total incoming and outgoing call duration counters. Each
+> established call instance is contributing to either of the call
+> duration counters. The 2 counters are updated periodically when
+> there is an established call and the information is stored in
+> a file. The bookkeeping of the call duration counters are per IMSI
+> number.
+> The implementation makes use of the history framework which had to be
+> expanded with a function for marking the beginning of a voice call.
+> There is a D-Bus interface to call counters for reading and clearing
+> the counters.
 
-> and you will not be able to write a robust vCard parser that we can
-> safely run as root or with any kind of ofonod privileges. It is just way
-> too risky from a security point of view.
-> =
+and where is the API documentation for such a D-Bus interface?
 
-> To support this feature then first we need to convert the current
-> feature into returning a dict. And then have this feature using a dict
-> as input.
+Regards
 
-Does this mean that support for writing to the phonebook is expected to
-be added to the phonebook modem API as part of ofono core functionality?
-
-Cheers,
-Waldo
+Marcel
 
 
---===============7135416025492630130==--
+
+--===============8723934933528664979==--
 
