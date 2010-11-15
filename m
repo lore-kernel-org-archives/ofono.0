@@ -1,58 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============8045282303553442930=="
+Content-Type: multipart/mixed; boundary="===============0416646720181013663=="
 MIME-Version: 1.0
-From: Predon, Frederic <frederic.predon@intel.com>
-Subject: RE: [PATCH 0/4] Emergency Calls (3rd round)
-Date: Mon, 15 Nov 2010 10:45:53 +0000
-Message-ID: <8250E4885F9967469CAC3FB5CBA2CE69934C9E0A90@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <cover.1289664478.git.Andras.Domokos@nokia.com>
+From: Simon LETHBRIDGE <simon.lethbridge@stericsson.com>
+Subject: RE: [PATCH] doc: Add Location Services API
+Date: Mon, 15 Nov 2010 11:19:26 +0000
+Message-ID: <B4268AAFAFA3E244B5B0641D5914917048B767142E@EXDCVYMBSTM006.EQ1STM.local>
+In-Reply-To: <4CDC6501.3070206@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8045282303553442930==
+--===============0416646720181013663==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras,
+Hi Denis,
 
-> Here is a new proposal for emergency calls handling.
+> -----Original Message-----
+> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
+> Sent: 11 November 2010 21:50
+> To: ofono(a)ofono.org
+> Cc: Sjur Br=C3=A6ndeland; Simon LETHBRIDGE; Sjur BRENDELAND
+> Subject: Re: [PATCH] doc: Add Location Services API
+ =
+
+
 > =
 
-> Steps in handling emergency calls:
-> - subscribe to modem online notifications (add modem online watcher)
-> - an emergency call detected (phone number is emergency number)
-> - increment emergency mode
->   - advertise "EmergencyMode" property change on D-Bus (first call)
->   - set modem online if it's in offline mode (minimal setup)
->     - adevertise "Online" property change on D-Bus
-> - if modem is not online postpone making the call, otherwise make
->   the emergency call
-> - when modem online notification comes and there is postponed call
-> request
->   make the emergency call
-> - when an emergency call ends decrement emergency mode
->   - set modem offline if it was set online due to the emergency call
-> (last call)
->     - advertise "Online" property change on D-Bus
->   - advertise "EmergencyMode" property change on D-Bus (last call)
+> So let me summarize 27.007 briefly.  It defines the following elements =
 
-Do you handle the case of making an emergency call when there is no SIM car=
-d?
+> for +CPOS/+CPOSR:
+> =
 
-Fred
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+> - location
+> - assist_data
+> - pos_meas
+> - GPS_meas
+> - GPS_assist_req
+> - msg
+> - pos_err
+> =
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+> So from my understanding +CPOS command can be used to send <location>, =
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+> <GPS_assist_req> and <pos_err> elements.
+> =
+
+> And +CPOSR can transfer the following elements from the network:
+> <assist_data>, <pos_meas>, <msg>.
+> =
+
+> Am I right so far?
+
+This is substantially correct, however the assistance data request can only=
+ be
+made in response to a positioning request from the network.  If assistance =
+is
+required otherwise then an MOLR is needed, which we don't support yet. =
 
 
---===============8045282303553442930==--
+> =
+
+> Where does the <GPS_meas> element fall into?
+
+There are two types of procedure "MSB" where the location is calculated in =
+the mobile,
+and "MSA" where it is calculated in the network.  For MSA code phase measur=
+ements
+and doppler are sent to the network.  One possible benefit of MSA procedure=
+s is =
+
+that less assistance data needs to be transferred. =
+
+> =
+
+> What about other location services related commands defined in 27.007?
+> How do they fit in? E.g.:
+> - +CMOLR
+> - +CMTLR
+> - +CMTLRA
+These are not required for NILR (Network Initiated - Location Requests) =
+
+procedures (e.g. E911 procedures).  However it could be useful to add suppo=
+rt later.
+
+The current proposal only supports NILR.
+
+Regards,
+
+Simon
+
+
+--===============0416646720181013663==--
 
