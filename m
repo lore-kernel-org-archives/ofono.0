@@ -1,59 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============3487050488069916622=="
+Content-Type: multipart/mixed; boundary="===============4888997187428694557=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: [PATCH] stkutil: mask the DCS value to keep only the intersting bits
-Date: Mon, 15 Nov 2010 14:17:01 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D401881353DCF1D@irsmsx501.ger.corp.intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi@remlab.net>
+Subject: [RFC PATCH 0/2] Differentiate HSPA technologies
+Date: Mon, 15 Nov 2010 15:23:46 +0100
+Message-ID: <ec27632d1746f72703cc59e1f2cadf2a@chewa.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3487050488069916622==
+--===============4888997187428694557==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Guillaume Lucas <guillaumex.lucas@intel.com>
 
-For SIM tool kit only the bits 2 and 3 are interesting
-for the DCS value. The others ones sould be masked. The
-masking is necessary because some SIM car set the
-upper bits to 1.
----
- src/stkutil.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+   Hello,
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index cdd66bd..a54dd02 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -78,7 +78,7 @@ static char *decode_text(unsigned char dcs, int len, cons=
-t unsigned char *data)
- {
- 	char *utf8;
- =
+In some use cases, I need to be able to list the active and available
+technologies. This patch set splits the three HSPA modes to enable which
+this requires.
 
--	switch (dcs) {
-+	switch (dcs & 0x06) {
- 	case 0x00:
- 	{
- 		long written;
+R=C3=A9mi Denis-Courmont (2):
+      Distinguish HSDPA, HSUPA or both as access technologies
+      Update the network documentation
+
+ doc/network-api.txt |    5 +++--
+ src/common.c        |    4 ++--
+ 2 files changed, 5 insertions(+), 4 deletions(-)
+
 -- =
 
-1.7.0.4
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+R=C3=A9mi Denis-Courmont
+http://www.remlab.net
+http://fi.linkedin.com/in/remidenis
 
 
---===============3487050488069916622==--
+--===============4888997187428694557==--
 
