@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3160485880632482976=="
+Content-Type: multipart/mixed; boundary="===============5707157427065290457=="
 MIME-Version: 1.0
 From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC PATCH 1/4] modem: add modem online-offline watch
-Date: Mon, 15 Nov 2010 18:57:55 +0200
-Message-ID: <627db679ae96c54a5caed2b683da5da95c9eb35b.1289838927.git.Andras.Domokos@nokia.com>
+Subject: [RFC PATCH 2/4] modem: add EmergencyMode property
+Date: Mon, 15 Nov 2010 18:57:59 +0200
+Message-ID: <4ca29123438653b4b1c93fda1e67b62f2066a0d7.1289838927.git.Andras.Domokos@nokia.com>
 In-Reply-To: <cover.1289838927.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3160485880632482976==
+--===============5707157427065290457==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,136 +16,225 @@ Content-Transfer-Encoding: quoted-printable
 From: Andras Domokos <andras.domokos@nokia.com>
 
 ---
- src/modem.c |   46 ++++++++++++++++++++++++++++++++++++++++++++++
- src/ofono.h |    8 ++++++++
- 2 files changed, 54 insertions(+), 0 deletions(-)
+ src/modem.c |  134 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/ofono.h |    4 ++
+ 2 files changed, 138 insertions(+), 0 deletions(-)
 
 diff --git a/src/modem.c b/src/modem.c
-index 3776461..f73cc1d 100644
+index f73cc1d..4307914 100644
 --- a/src/modem.c
 +++ b/src/modem.c
-@@ -72,6 +72,7 @@ struct ofono_modem {
+@@ -61,6 +61,7 @@ enum modem_state {
+ struct ofono_modem {
+ 	char			*path;
+ 	enum modem_state	modem_state;
++	enum modem_state	modem_state_pre_emergency;
+ 	GSList			*atoms;
+ 	struct ofono_watchlist	*atom_watches;
+ 	GSList			*interface_list;
+@@ -72,6 +73,7 @@ struct ofono_modem {
  	ofono_bool_t		powered_pending;
  	guint			timeout;
  	ofono_bool_t		online;
-+	struct ofono_watchlist	*online_watches;
++	unsigned int		emergency_mode;
+ 	struct ofono_watchlist	*online_watches;
  	GHashTable		*properties;
  	struct ofono_sim	*sim;
- 	unsigned int		sim_watch;
-@@ -362,6 +363,22 @@ static void flush_atoms(struct ofono_modem *modem, enu=
-m modem_state new_state)
- 	}
+@@ -514,6 +516,127 @@ static void offline_cb(const struct ofono_error *erro=
+r, void *data)
+ 		modem_change_state(modem, MODEM_STATE_OFFLINE);
  }
  =
 
-+static void notify_online_watches(struct ofono_modem *modem)
++ofono_bool_t ofono_modem_get_emergency_mode(struct ofono_modem *modem)
 +{
-+	struct ofono_watchlist_item *item;
-+	GSList *l;
-+	ofono_modem_online_notify_func notify;
++	if (modem =3D=3D NULL)
++		return FALSE;
 +
-+	if (modem->online_watches =3D=3D NULL)
++	return modem->emergency_mode !=3D 0;
++}
++
++static void modem_change_online(struct ofono_modem *modem,
++				enum modem_state new_state)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	enum modem_state old_state =3D modem->modem_state;
++	ofono_bool_t new_online =3D new_state =3D=3D MODEM_STATE_ONLINE;
++
++	DBG("old state: %d, new state: %d", old_state, new_state);
++
++	if (new_online =3D=3D modem->online)
 +		return;
 +
-+	for (l =3D modem->online_watches->items; l; l =3D l->next) {
-+		item =3D l->data;
-+		notify =3D item->notify;
-+		notify(modem->online, item->notify_data);
++	modem->modem_state =3D new_state;
++	modem->online =3D new_online;
++
++	ofono_dbus_signal_property_changed(conn, modem->path,
++					OFONO_MODEM_INTERFACE, "Online",
++					DBUS_TYPE_BOOLEAN, &modem->online);
++
++	notify_online_watches(modem);
++}
++
++static void emergency_online_cb(const struct ofono_error *error, void *dat=
+a)
++{
++	struct ofono_modem *modem =3D data;
++
++	DBG("modem: %p", modem);
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
++			modem->modem_state !=3D MODEM_STATE_ONLINE)
++		modem_change_online(modem, MODEM_STATE_ONLINE);
++}
++
++static void emergency_offline_cb(const struct ofono_error *error, void *da=
+ta)
++{
++	struct ofono_modem *modem =3D data;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D ofono_modem_get_path(modem);
++	gboolean state =3D FALSE;
++
++	DBG("modem: %p", modem);
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
++			modem->modem_state =3D=3D MODEM_STATE_ONLINE)
++		modem_change_online(modem, modem->modem_state_pre_emergency);
++
++	modem->emergency_mode--;
++
++	ofono_dbus_signal_property_changed(conn, path,
++						OFONO_MODEM_INTERFACE,
++						"EmergencyMode",
++						DBUS_TYPE_BOOLEAN,
++						&state);
++}
++
++void ofono_modem_inc_emergency_mode(struct ofono_modem *modem)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D ofono_modem_get_path(modem);
++	gboolean state =3D TRUE;
++
++	DBG("modem: %p", modem);
++
++	modem->emergency_mode++;
++	if (modem->emergency_mode > 1)
++		return;
++
++	ofono_dbus_signal_property_changed(conn, path,
++						OFONO_MODEM_INTERFACE,
++						"EmergencyMode",
++						DBUS_TYPE_BOOLEAN,
++						&state);
++
++	modem->modem_state_pre_emergency =3D modem->modem_state;
++
++	if (modem->modem_state =3D=3D MODEM_STATE_ONLINE)
++		return;
++
++	modem->driver->set_online(modem, TRUE, emergency_online_cb, modem);
++}
++
++void ofono_modem_dec_emergency_mode(struct ofono_modem *modem)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D ofono_modem_get_path(modem);
++	gboolean state =3D FALSE;
++
++	DBG("modem: %p", modem);
++
++	if (modem->emergency_mode =3D=3D 0)
++		return;
++
++	if (modem->emergency_mode > 1) {
++		modem->emergency_mode--;
++		return;
 +	}
++
++	if (modem->modem_state =3D=3D MODEM_STATE_ONLINE &&
++		modem->modem_state_pre_emergency !=3D MODEM_STATE_ONLINE) {
++		modem->driver->set_online(modem, FALSE,
++						emergency_offline_cb, modem);
++		return;
++	}
++
++	modem->emergency_mode--;
++
++	ofono_dbus_signal_property_changed(conn, path,
++						OFONO_MODEM_INTERFACE,
++						"EmergencyMode",
++						DBUS_TYPE_BOOLEAN,
++						&state);
 +}
 +
- static void modem_change_state(struct ofono_modem *modem,
- 				enum modem_state new_state)
- {
-@@ -404,11 +421,13 @@ static void modem_change_state(struct ofono_modem *mo=
-dem,
- 			__ofono_history_probe_drivers(modem);
- 			__ofono_nettime_probe_drivers(modem);
- 		}
-+		notify_online_watches(modem);
- 		break;
+ static DBusMessage *set_property_online(struct ofono_modem *modem,
+ 					DBusMessage *msg,
+ 					DBusMessageIter *var)
+@@ -535,6 +658,9 @@ static DBusMessage *set_property_online(struct ofono_mo=
+dem *modem,
+ 	if (modem->modem_state < MODEM_STATE_OFFLINE)
+ 		return __ofono_error_not_available(msg);
  =
 
- 	case MODEM_STATE_ONLINE:
- 		if (driver->post_online)
- 			driver->post_online(modem);
-+		notify_online_watches(modem);
- 		break;
- 	}
- }
-@@ -437,6 +456,29 @@ static void sim_state_watch(enum ofono_sim_state new_s=
-tate, void *user)
- 	}
- }
++	if (modem->emergency_mode)
++		return __ofono_error_failed(msg);
++
+ 	if (modem->online =3D=3D online)
+ 		return dbus_message_new_method_return(msg);
  =
 
-+unsigned __ofono_modem_add_online_watch(struct ofono_modem *modem,
-+		ofono_modem_online_notify_func notify,
-+		void *data, ofono_destroy_func destroy)
-+{
-+	struct ofono_watchlist_item *item;
-+
-+	if (modem =3D=3D NULL || notify =3D=3D NULL)
-+		return 0;
-+
-+	item =3D g_new0(struct ofono_watchlist_item, 1);
-+
-+	item->notify =3D notify;
-+	item->destroy =3D destroy;
-+	item->notify_data =3D data;
-+
-+	return __ofono_watchlist_add_item(modem->online_watches, item);
-+}
-+
-+void __ofono_modem_remove_online_watch(struct ofono_modem *modem, unsigned=
- id)
-+{
-+	__ofono_watchlist_remove_item(modem->online_watches, id);
-+}
-+
- static void online_cb(const struct ofono_error *error, void *data)
- {
- 	struct ofono_modem *modem =3D data;
-@@ -1472,6 +1514,7 @@ int ofono_modem_register(struct ofono_modem *modem)
- 	modem->driver_type =3D NULL;
+@@ -562,6 +688,7 @@ void __ofono_modem_append_properties(struct ofono_modem=
+ *modem,
+ 	int i;
+ 	GSList *l;
+ 	struct ofono_atom *devinfo_atom;
++	ofono_bool_t state;
  =
 
- 	modem->atom_watches =3D __ofono_watchlist_new(g_free);
-+	modem->online_watches =3D __ofono_watchlist_new(g_free);
+ 	ofono_dbus_dict_append(dict, "Online", DBUS_TYPE_BOOLEAN,
+ 				&modem->online);
+@@ -569,6 +696,10 @@ void __ofono_modem_append_properties(struct ofono_mode=
+m *modem,
+ 	ofono_dbus_dict_append(dict, "Powered", DBUS_TYPE_BOOLEAN,
+ 				&modem->powered);
  =
 
- 	emit_modem_added(modem);
- 	call_modemwatches(modem, TRUE);
-@@ -1503,6 +1546,9 @@ static void modem_unregister(struct ofono_modem *mode=
-m)
- 	__ofono_watchlist_free(modem->atom_watches);
- 	modem->atom_watches =3D NULL;
- =
-
-+	__ofono_watchlist_free(modem->online_watches);
-+	modem->online_watches =3D NULL;
++	state =3D ofono_modem_get_emergency_mode(modem);
++	ofono_dbus_dict_append(dict, "EmergencyMode",
++				DBUS_TYPE_BOOLEAN, &state);
 +
- 	modem->sim_watch =3D 0;
- 	modem->sim_ready_watch =3D 0;
+ 	devinfo_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_DEVINFO);
  =
 
+ 	/* We cheat a little here and don't check the registered status */
+@@ -647,6 +778,9 @@ static int set_powered(struct ofono_modem *modem, ofono=
+_bool_t powered)
+ 	if (modem->powered_pending =3D=3D powered)
+ 		return -EALREADY;
+ =
+
++	if (modem->emergency_mode)
++		return -EINVAL;
++
+ 	/* Remove the atoms even if the driver is no longer available */
+ 	if (powered =3D=3D FALSE)
+ 		modem_change_state(modem, MODEM_STATE_POWER_OFF);
 diff --git a/src/ofono.h b/src/ofono.h
-index ab6ecd2..01cd6c0 100644
+index 01cd6c0..ac56a85 100644
 --- a/src/ofono.h
 +++ b/src/ofono.h
-@@ -177,6 +177,14 @@ unsigned int __ofono_modemwatch_add(ofono_modemwatch_c=
-b_t cb, void *user,
- 					ofono_destroy_func destroy);
- gboolean __ofono_modemwatch_remove(unsigned int id);
+@@ -185,6 +185,10 @@ unsigned int __ofono_modem_add_online_watch(struct ofo=
+no_modem *modem,
+ void __ofono_modem_remove_online_watch(struct ofono_modem *modem,
+ 		unsigned int id);
  =
 
-+typedef void (*ofono_modem_online_notify_func)(ofono_bool_t online,
-+		void *data);
-+unsigned int __ofono_modem_add_online_watch(struct ofono_modem *modem,
-+		ofono_modem_online_notify_func notify,
-+		void *data, ofono_destroy_func destroy);
-+void __ofono_modem_remove_online_watch(struct ofono_modem *modem,
-+		unsigned int id);
++ofono_bool_t ofono_modem_get_emergency_mode(struct ofono_modem *modem);
++void ofono_modem_inc_emergency_mode(struct ofono_modem *modem);
++void ofono_modem_dec_emergency_mode(struct ofono_modem *modem);
 +
  #include <ofono/call-barring.h>
  =
@@ -156,5 +245,5 @@ b_t cb, void *user,
 1.7.0.4
 
 
---===============3160485880632482976==--
+--===============5707157427065290457==--
 
