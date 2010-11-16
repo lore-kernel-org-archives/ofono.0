@@ -1,121 +1,146 @@
-Content-Type: multipart/mixed; boundary="===============1147510908565513355=="
+Content-Type: multipart/mixed; boundary="===============5077625792580460017=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH] Add SIM reset button
-Date: Tue, 16 Nov 2010 18:48:36 -0200
-Message-ID: <1289940516-14843-1-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 2/4] Add ofono_modem_reset()
+Date: Tue, 16 Nov 2010 18:49:07 -0200
+Message-ID: <1289940549-14896-2-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1289940549-14896-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1147510908565513355==
+--===============5077625792580460017==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-+CRST now send a reset resquest command
+Some modems can screw up everything and then we will need to do a silent
+reset of the modem. This patch take the modem back to the OFFLINE state.
 ---
- src/control.cpp    |    6 ++++++
- src/control.h      |    1 +
- src/controlbase.ui |   40 ++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 47 insertions(+), 0 deletions(-)
+ include/modem.h |    2 ++
+ src/modem.c     |   45 +++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 45 insertions(+), 2 deletions(-)
 
-diff --git a/src/control.cpp b/src/control.cpp
-index ab71752..014e657 100644
---- a/src/control.cpp
-+++ b/src/control.cpp
-@@ -84,6 +84,7 @@ ControlWidget::ControlWidget(const QString &ruleFile, Con=
-trol *parent)
-     connect(ui->cbSimInserted, SIGNAL(clicked()), this, SLOT(simInsertRemo=
-ve()));
-     connect(ui->pbStart, SIGNAL(clicked()), this, SLOT(simAppStart()));
-     connect(ui->pbAbort, SIGNAL(clicked()), this, SLOT(simAppAbort()));
-+    connect(ui->pbReset, SIGNAL(clicked()), this, SLOT(simAppReset()));
+diff --git a/include/modem.h b/include/modem.h
+index 7b13ee0..a92eb88 100644
+--- a/include/modem.h
++++ b/include/modem.h
+@@ -46,6 +46,8 @@ int ofono_modem_register(struct ofono_modem *modem);
+ ofono_bool_t ofono_modem_is_registered(struct ofono_modem *modem);
+ void ofono_modem_remove(struct ofono_modem *modem);
  =
 
-     QStringList headers;
-     headers << "Sender" << "Priority" << "Notification Status";
-@@ -466,6 +467,11 @@ void ControlWidget::simAppAbort()
-     p->simAppAbort();
++void ofono_modem_reset(struct ofono_modem *modem);
++
+ void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool_t power=
+ed);
+ ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem);
+ =
+
+diff --git a/src/modem.c b/src/modem.c
+index 3fb6809..9ed52c1 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -70,6 +70,7 @@ struct ofono_modem {
+ 	guint			interface_update;
+ 	ofono_bool_t		powered;
+ 	ofono_bool_t		powered_pending;
++	ofono_bool_t		reset;
+ 	guint			timeout;
+ 	ofono_bool_t		online;
+ 	GHashTable		*properties;
+@@ -433,6 +434,8 @@ static void sim_state_watch(enum ofono_sim_state new_st=
+ate, void *user)
+ 		if (modem->driver->set_online =3D=3D NULL)
+ 			modem_change_state(modem, MODEM_STATE_ONLINE);
+ =
+
++		modem->reset =3D FALSE;
++
+ 		break;
+ 	}
+ }
+@@ -784,7 +787,8 @@ void ofono_modem_set_powered(struct ofono_modem *modem,=
+ ofono_bool_t powered)
+ 		return;
+ 	}
+ =
+
+-	ofono_dbus_signal_property_changed(conn, modem->path,
++	if (!modem->reset)
++		ofono_dbus_signal_property_changed(conn, modem->path,
+ 					OFONO_MODEM_INTERFACE,
+ 					"Powered", DBUS_TYPE_BOOLEAN,
+ 					&dbus_powered);
+@@ -799,14 +803,25 @@ void ofono_modem_set_powered(struct ofono_modem *mode=
+m, ofono_bool_t powered)
+ 	} else
+ 		modem_change_state(modem, MODEM_STATE_POWER_OFF);
+ =
+
+-out:
++	if (modem->reset && !powering_down) {
++		if (!modem->powered) {
++			int err =3D set_powered(modem, TRUE);
++
++			if (err =3D=3D -EINPROGRESS)
++				return;
+ =
+
++			modem_change_state(modem, MODEM_STATE_PRE_SIM);
++		}
++	}
++
++out:
+ 	if (powering_down && powered =3D=3D FALSE) {
+ 		modems_remaining -=3D 1;
+ =
+
+ 		if (modems_remaining =3D=3D 0)
+ 			__ofono_exit();
+ 	}
++
  }
  =
 
-+void ControlWidget::simAppReset()
-+{
-+    emit unsolicitedCommand("+CRST:");
-+}
-+
- Script::Script(QObject *obj, Ui_ControlBase *ui) : QDBusAbstractAdaptor(ob=
-j)
- {
-     /* Export tabs to be accessed by script */
-diff --git a/src/control.h b/src/control.h
-index 3c85e22..6c4d8a8 100644
---- a/src/control.h
-+++ b/src/control.h
-@@ -94,6 +94,7 @@ private slots:
-     void simInsertRemove();
-     void simAppStart();
-     void simAppAbort();
-+    void simAppReset();
+ ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem)
+@@ -1566,6 +1581,32 @@ void ofono_modem_remove(struct ofono_modem *modem)
+ 	g_free(modem);
+ }
  =
 
- signals:
-     void unsolicitedCommand(const QString &);
-diff --git a/src/controlbase.ui b/src/controlbase.ui
-index e0cb5b5..2c91f95 100644
---- a/src/controlbase.ui
-+++ b/src/controlbase.ui
-@@ -1294,6 +1294,46 @@ p, li { white-space: pre-wrap; }
-        </item>
-       </layout>
-      </widget>
-+     <widget class=3D"QWidget" name=3D"tab_7">
-+      <attribute name=3D"title">
-+       <string>Modem</string>
-+      </attribute>
-+      <widget class=3D"QWidget" name=3D"gridLayoutWidget">
-+       <property name=3D"geometry">
-+        <rect>
-+         <x>9</x>
-+         <y>9</y>
-+         <width>591</width>
-+         <height>511</height>
-+        </rect>
-+       </property>
-+       <layout class=3D"QGridLayout" >
-+        <item row=3D"0" column=3D"1">
-+         <spacer>
-+          <property name=3D"orientation">
-+           <enum>Qt::Horizontal</enum>
-+          </property>
-+          <property name=3D"sizeType">
-+           <enum>QSizePolicy::Fixed</enum>
-+          </property>
-+          <property name=3D"sizeHint" stdset=3D"0">
-+           <size>
-+            <width>450</width>
-+            <height>20</height>
-+           </size>
-+          </property>
-+         </spacer>
-+        </item>
-+        <item row=3D"0" column=3D"0">
-+         <widget class=3D"QPushButton" name=3D"pbReset">
-+          <property name=3D"text">
-+           <string>Reset</string>
-+          </property>
-+         </widget>
-+        </item>
-+       </layout>
-+      </widget>
-+     </widget>
-     </widget>
-    </item>
-    <item>
++static gboolean __reset_modem(void *data)
++{
++	struct ofono_modem *modem =3D data;
++	int err;
++
++	modem->reset =3D TRUE;
++
++	err =3D set_powered(modem, FALSE);
++	if (err =3D=3D -EINPROGRESS)
++		return FALSE;
++
++	err =3D set_powered(modem, TRUE);
++	if (err =3D=3D -EINPROGRESS)
++		return FALSE;
++
++	modem_change_state(modem, MODEM_STATE_PRE_SIM);
++	return FALSE;
++}
++
++void ofono_modem_reset(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++
++	g_idle_add(__reset_modem, modem);
++}
++
+ int ofono_modem_driver_register(const struct ofono_modem_driver *d)
+ {
+ 	DBG("driver: %p, name: %s", d, d->name);
 -- =
 
 1.7.3.1
 
 
---===============1147510908565513355==--
+--===============5077625792580460017==--
 
