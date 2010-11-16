@@ -1,41 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============4271815665839524994=="
+Content-Type: multipart/mixed; boundary="===============4818941075835349755=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/4] Emergency Calls (3rd round)
-Date: Mon, 15 Nov 2010 17:17:16 +0100
-Message-ID: <1289837836.3266.128.camel@aeonflux>
-In-Reply-To: <4CE152EC.8090802@nokia.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH 1/2] Distinguish HSDPA, HSUPA or both as access technologies
+Date: Tue, 16 Nov 2010 12:59:11 +0200
+Message-ID: <1289905152-20137-1-git-send-email-remi.denis-courmont@nokia.com>
+In-Reply-To: <ec27632d1746f72703cc59e1f2cadf2a@chewa.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4271815665839524994==
+--===============4818941075835349755==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras,
+---
+ src/common.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-> I found a small issue in these patches, resulting into improper handling =
+diff --git a/src/common.c b/src/common.c
+index b5b9a6f..22bf1c2 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -661,9 +661,9 @@ const char *registration_tech_to_string(int tech)
+ 	case ACCESS_TECHNOLOGY_GSM_EGPRS:
+ 		return "edge";
+ 	case ACCESS_TECHNOLOGY_UTRAN_HSDPA:
+-		return "hspa";
++		return "hsdpa";
+ 	case ACCESS_TECHNOLOGY_UTRAN_HSUPA:
+-		return "hspa";
++		return "hsupa";
+ 	case ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA:
+ 		return "hspa";
+ 	case ACCESS_TECHNOLOGY_EUTRAN:
+-- =
 
-> of the emergency calls for the non-SIM cases, but now that has been =
-
-> fixed and I am going to create a new set of patches.
-> =
-
-> The answer to your question is yes, emergency calls will be also =
-
-> possible without a SIM card.
-
-please do NOT top post on this mailing list.
-
-In the last two weeks, I had to mention this way to many times. This is
-really not acceptable anymore :(
-
-Regards
-
-Marcel
+1.7.1
 
 
-
---===============4271815665839524994==--
+--===============4818941075835349755==--
 
