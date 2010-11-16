@@ -1,85 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============4791312671961108857=="
+Content-Type: multipart/mixed; boundary="===============1147510908565513355=="
 MIME-Version: 1.0
-From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC PATCH 1/2] common: add long dial string support
-Date: Tue, 16 Nov 2010 19:39:47 +0200
-Message-ID: <3db2789cb182bbe968fbd05e3e1fc9b482f8d85c.1289928966.git.Andras.Domokos@nokia.com>
-In-Reply-To: <cover.1289928966.git.Andras.Domokos@nokia.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH] Add SIM reset button
+Date: Tue, 16 Nov 2010 18:48:36 -0200
+Message-ID: <1289940516-14843-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4791312671961108857==
+--===============1147510908565513355==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
++CRST now send a reset resquest command
 ---
- include/types.h |    2 +-
- src/common.c    |   12 ++++++------
- 2 files changed, 7 insertions(+), 7 deletions(-)
+ src/control.cpp    |    6 ++++++
+ src/control.h      |    1 +
+ src/controlbase.ui |   40 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 47 insertions(+), 0 deletions(-)
 
-diff --git a/include/types.h b/include/types.h
-index ba2481f..b3d2247 100644
---- a/include/types.h
-+++ b/include/types.h
-@@ -76,7 +76,7 @@ struct ofono_error {
- 	int error;
- };
+diff --git a/src/control.cpp b/src/control.cpp
+index ab71752..014e657 100644
+--- a/src/control.cpp
++++ b/src/control.cpp
+@@ -84,6 +84,7 @@ ControlWidget::ControlWidget(const QString &ruleFile, Con=
+trol *parent)
+     connect(ui->cbSimInserted, SIGNAL(clicked()), this, SLOT(simInsertRemo=
+ve()));
+     connect(ui->pbStart, SIGNAL(clicked()), this, SLOT(simAppStart()));
+     connect(ui->pbAbort, SIGNAL(clicked()), this, SLOT(simAppAbort()));
++    connect(ui->pbReset, SIGNAL(clicked()), this, SLOT(simAppReset()));
  =
 
--#define OFONO_MAX_PHONE_NUMBER_LENGTH 20
-+#define OFONO_MAX_PHONE_NUMBER_LENGTH 120
- =
-
- struct ofono_phone_number {
- 	char number[OFONO_MAX_PHONE_NUMBER_LENGTH + 1];
-diff --git a/src/common.c b/src/common.c
-index b5b9a6f..de5a508 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -253,7 +253,7 @@ gboolean valid_phone_number_format(const char *number)
- 		if (number[i] >=3D '0' && number[i] <=3D '9')
- 			continue;
- =
-
--		if (number[i] =3D=3D '*' || number[i] =3D=3D '#')
-+		if (number[i] =3D=3D '*' || number[i] =3D=3D '#' || number[i] =3D=3D 'p')
- 			continue;
- =
-
- 		return FALSE;
-@@ -379,18 +379,18 @@ int mmi_service_code_to_bearer_class(int code)
- =
-
- const char *phone_number_to_string(const struct ofono_phone_number *ph)
- {
--	static char buffer[64];
-+	static char buffer[(OFONO_MAX_PHONE_NUMBER_LENGTH + 1) + 1];
- =
-
- 	if (ph->type =3D=3D 145 && (strlen(ph->number) > 0) &&
- 			ph->number[0] !=3D '+') {
- 		buffer[0] =3D '+';
--		strncpy(buffer + 1, ph->number, 62);
--		buffer[63] =3D '\0';
-+		strncpy(buffer + 1, ph->number, sizeof(buffer) - 2);
- 	} else {
--		strncpy(buffer, ph->number, 63);
--		buffer[63] =3D '\0';
-+		strncpy(buffer, ph->number, sizeof(buffer) - 1);
- 	}
- =
-
-+	buffer[sizeof(buffer) - 1] =3D '\0';
-+
- 	return buffer;
+     QStringList headers;
+     headers << "Sender" << "Priority" << "Notification Status";
+@@ -466,6 +467,11 @@ void ControlWidget::simAppAbort()
+     p->simAppAbort();
  }
  =
 
++void ControlWidget::simAppReset()
++{
++    emit unsolicitedCommand("+CRST:");
++}
++
+ Script::Script(QObject *obj, Ui_ControlBase *ui) : QDBusAbstractAdaptor(ob=
+j)
+ {
+     /* Export tabs to be accessed by script */
+diff --git a/src/control.h b/src/control.h
+index 3c85e22..6c4d8a8 100644
+--- a/src/control.h
++++ b/src/control.h
+@@ -94,6 +94,7 @@ private slots:
+     void simInsertRemove();
+     void simAppStart();
+     void simAppAbort();
++    void simAppReset();
+ =
+
+ signals:
+     void unsolicitedCommand(const QString &);
+diff --git a/src/controlbase.ui b/src/controlbase.ui
+index e0cb5b5..2c91f95 100644
+--- a/src/controlbase.ui
++++ b/src/controlbase.ui
+@@ -1294,6 +1294,46 @@ p, li { white-space: pre-wrap; }
+        </item>
+       </layout>
+      </widget>
++     <widget class=3D"QWidget" name=3D"tab_7">
++      <attribute name=3D"title">
++       <string>Modem</string>
++      </attribute>
++      <widget class=3D"QWidget" name=3D"gridLayoutWidget">
++       <property name=3D"geometry">
++        <rect>
++         <x>9</x>
++         <y>9</y>
++         <width>591</width>
++         <height>511</height>
++        </rect>
++       </property>
++       <layout class=3D"QGridLayout" >
++        <item row=3D"0" column=3D"1">
++         <spacer>
++          <property name=3D"orientation">
++           <enum>Qt::Horizontal</enum>
++          </property>
++          <property name=3D"sizeType">
++           <enum>QSizePolicy::Fixed</enum>
++          </property>
++          <property name=3D"sizeHint" stdset=3D"0">
++           <size>
++            <width>450</width>
++            <height>20</height>
++           </size>
++          </property>
++         </spacer>
++        </item>
++        <item row=3D"0" column=3D"0">
++         <widget class=3D"QPushButton" name=3D"pbReset">
++          <property name=3D"text">
++           <string>Reset</string>
++          </property>
++         </widget>
++        </item>
++       </layout>
++      </widget>
++     </widget>
+     </widget>
+    </item>
+    <item>
 -- =
 
-1.7.0.4
+1.7.3.1
 
 
---===============4791312671961108857==--
+--===============1147510908565513355==--
 
