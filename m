@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5914379519369259459=="
+Content-Type: multipart/mixed; boundary="===============4718389105021763463=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] coding-style: Add exception to M12 rule for external enums
-Date: Wed, 17 Nov 2010 08:28:43 -0600
-Message-ID: <4CE3E69B.4020701@gmail.com>
-In-Reply-To: <1289977754-7530-1-git-send-email-sjurbren@gmail.com>
+Subject: Re: [PATCH] todo: Add Location Service (AGPS) task.
+Date: Wed, 17 Nov 2010 08:29:23 -0600
+Message-ID: <4CE3E6C3.5030703@gmail.com>
+In-Reply-To: <1289977754-7530-2-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5914379519369259459==
+--===============4718389105021763463==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -20,15 +20,15 @@ On 11/17/2010 01:09 AM, Sjur Br=C3=A6ndeland wrote:
 > =
 
 > ---
->  doc/coding-style.txt |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
+>  TODO |    8 ++++++++
+>  1 files changed, 8 insertions(+), 0 deletions(-)
 > =
 
 
-Patch has been applied.  Thanks.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============5914379519369259459==--
+--===============4718389105021763463==--
 
