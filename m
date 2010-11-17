@@ -1,48 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============0505736546349717040=="
+Content-Type: multipart/mixed; boundary="===============8664582802828423734=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [RFC] plugin/ste: Use D-Bus API from Modem Init Daemon for
- autoconfig.
-Date: Wed, 17 Nov 2010 19:06:40 +0100
-Message-ID: <AANLkTikLKPhtL6__Yqzhp89+X1t_fzuXpHAx2UP86qLj@mail.gmail.com>
-In-Reply-To: <1289998849.29148.10.camel@aeonflux>
+From: Robertino Benis <robertino.benis@intel.com>
+Subject: [PATCH] ifxmodem: Adding fast dormancy support to Infineon modem
+Date: Wed, 17 Nov 2010 11:29:24 -0800
+Message-ID: <1290022164-24730-1-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0505736546349717040==
+--===============8664582802828423734==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel.
-> so how to you handle the case if you have two or more CAIF based modems
-> in the system? oFono does not impose a limit here.
+Initial patch to add fast dormancy to Infineon modem. Timeout is not
+supported yet.
 
-I guess there are at least two different scenarios here:
+Thanks,
+-- r.
 
-a) DualSim - In this case the Modem Init Daemon is working with one
-   piece of HW, and will expose one instance in the Dbus API.
-   We would have only one CAIF Link Layer interface.
-   The concept of two virtual modems should probably be handled
-   by the STE plugin that would have to register two modem instances
-   with two sets of AT channels to the different virtual modem instances.
+---
+ drivers/ifxmodem/radio-settings.c |   40 +++++++++++++++++++++++++++++++++=
++++-
+ 1 files changed, 39 insertions(+), 1 deletions(-)
 
-b) Testing - In some test setups it might be interesting having two or more
-   STE modems. In this scenario we should probably be able to support
-   multiple instances of modems and multiple CAIF Link Layer instances.
-   oFono would then need to know the CAIF Link Layer instance to bind to.
+diff --git a/drivers/ifxmodem/radio-settings.c b/drivers/ifxmodem/radio-set=
+tings.c
+index 89e97e7..68077db 100644
+--- a/drivers/ifxmodem/radio-settings.c
++++ b/drivers/ifxmodem/radio-settings.c
+@@ -27,6 +27,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <stdio.h>
++#include <stdint.h>
+ #include <errno.h>
+ =
 
-There might be other scenarios I haven't thought of. Did you have anything
-particular in mind Marcel?
+ #include <glib.h>
+@@ -45,6 +46,7 @@ static const char *xrat_prefix[] =3D { "+XRAT:", NULL };
+ =
 
-I would really prefer if we could get the basics implemented with one modem
-instance, and then look at the scenario with multiple modem instances as the
-next step. For now I think we should only update the Dbus-API so that more
-than one object path can be handled. Would this be acceptable to you Marcel?
+ struct radio_settings_data {
+ 	GAtChat *chat;
++	uint16_t fast_dormancy;
+ };
+ =
+
+ static void xrat_query_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
+@@ -196,12 +198,48 @@ static void ifx_radio_settings_remove(struct ofono_ra=
+dio_settings *rs)
+ 	g_free(rsd);
+ }
+ =
+
++static void update_fast_dormancy(struct radio_settings_data *rsd)
++{
++	char buf[20];
++
++	snprintf(buf, sizeof(buf), "AT+XFDOR=3D%u", rsd->fast_dormancy);
++
++	if (g_at_chat_send(rsd->chat, buf, NULL, NULL, NULL, NULL) > 0)
++		DBG("3G fast dormancy %s.",
++			rsd->fast_dormancy ? "enabled" : "disabled");
++	else
++		DBG("3G fast dormancy unchanged.");
++}
++
++static void ifx_set_fast_dormancy(struct ofono_radio_settings *rs,
++				int enable,
++				ofono_radio_settings_fast_dormancy_set_cb_t cb,
++				void *data)
++{
++	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
++	rsd->fast_dormancy =3D enable ? 1 : 0;
++	update_fast_dormancy(rsd);
++	CALLBACK_WITH_SUCCESS(cb, data);
++}
++
++static void ifx_query_fast_dormancy(struct ofono_radio_settings *rs,
++			ofono_radio_settings_fast_dormancy_query_cb_t cb,
++			void *data)
++{
++	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
++
++	/* there is no read AT command */
++	CALLBACK_WITH_SUCCESS(cb, rsd->fast_dormancy, data);
++}
++
+ static struct ofono_radio_settings_driver driver =3D {
+ 	.name			=3D "ifxmodem",
+ 	.probe			=3D ifx_radio_settings_probe,
+ 	.remove			=3D ifx_radio_settings_remove,
+ 	.query_rat_mode		=3D ifx_query_rat_mode,
+-	.set_rat_mode		=3D ifx_set_rat_mode
++	.set_rat_mode		=3D ifx_set_rat_mode,
++	.query_fast_dormancy	=3D ifx_query_fast_dormancy,
++	.set_fast_dormancy	=3D ifx_set_fast_dormancy
+ };
+ =
+
+ void ifx_radio_settings_init()
+-- =
+
+1.7.0.4
 
 
-Regards,
-Sjur
-
---===============0505736546349717040==--
+--===============8664582802828423734==--
 
