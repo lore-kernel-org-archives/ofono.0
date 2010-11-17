@@ -1,51 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============5283339549542545461=="
+Content-Type: multipart/mixed; boundary="===============6050343340159639461=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC] plugin/ste: Use D-Bus API from Modem Init Daemon for
- autoconfig.
-Date: Wed, 17 Nov 2010 14:00:49 +0100
-Message-ID: <1289998849.29148.10.camel@aeonflux>
-In-Reply-To: <AANLkTimHbn4ZRBA-3xvem6TFiKS4EinWywovh4=h4Vud@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] stkutil: mask the DCS value to keep only the intersting
+ bits
+Date: Wed, 17 Nov 2010 08:13:49 -0600
+Message-ID: <4CE3E31D.9050800@gmail.com>
+In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D401881353DCF1D@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5283339549542545461==
+--===============6050343340159639461==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Hi Guillaume,
 
-> >> We definitely need a synchronization mechanism between Modem Init Daem=
-on
-> >> and the other services, so we decided to use a D-Bus API for the
-> >> Modem Init Daemon to expose the modem state and an API for initiating
-> >> power-off, upgrade and reboot.
-> >
-> > do you have a link to the D-Bus of this daemon? I would prefer if you
-> > publish it first or at least the part of it used here.
+On 11/15/2010 08:17 AM, Lucas, GuillaumeX wrote:
+> From: Guillaume Lucas <guillaumex.lucas@intel.com>
 > =
 
-> This is an extract of the Modem Init Daemon D-Bus API.
-> Should I could put this the git for reference e.g. in drivers/stemodem/?
+> For SIM tool kit only the bits 2 and 3 are interesting
+> for the DCS value. The others ones sould be masked. The
+> masking is necessary because some SIM car set the
+> upper bits to 1.
+> ---
+>  src/stkutil.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
 > =
 
-> Modem Init Deamon
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> =
+> diff --git a/src/stkutil.c b/src/stkutil.c
+> index cdd66bd..a54dd02 100644
+> --- a/src/stkutil.c
+> +++ b/src/stkutil.c
+> @@ -78,7 +78,7 @@ static char *decode_text(unsigned char dcs, int len, co=
+nst unsigned char *data)
+>  {
+>  	char *utf8;
+>  =
 
-> Service	com.stericsson.modeminit
-> Interface	com.stericsson.modeminit.Modem
-> Object path	/
+> -	switch (dcs) {
+> +	switch (dcs & 0x06) {
 
-so how to you handle the case if you have two or more CAIF based modems
-in the system? oFono does not impose a limit here.
+Do you mean to bitwise and with 0xc here?  Otherwise you break the UCS2
+case.  Also do any SIMs use the '1111' Coding Bits Entry entry from
+23.038 Section 4?  If so, then we need to use sms_dcs_decode to retrieve
+the character set.
 
-Regards
+>  	case 0x00:
+>  	{
+>  		long written;
 
-Marcel
+Regards,
+-Denis
 
-
-
---===============5283339549542545461==--
+--===============6050343340159639461==--
 
