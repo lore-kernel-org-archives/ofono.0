@@ -1,29 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4444292091629612238=="
+Content-Type: multipart/mixed; boundary="===============1524202403389732282=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/4] Simplify ofono_modem_set_powered() logic
-Date: Wed, 17 Nov 2010 08:30:07 -0600
-Message-ID: <4CE3E6EF.30408@gmail.com>
-In-Reply-To: <1289940549-14896-1-git-send-email-padovan@profusion.mobi>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] util: Remove extra tab
+Date: Wed, 17 Nov 2010 07:32:43 -0800
+Message-ID: <1290007963-9806-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4444292091629612238==
+--===============1524202403389732282==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+---
+ src/util.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-On 11/16/2010 02:49 PM, Gustavo F. Padovan wrote:
-> ---
->  src/modem.c |   47 +++++++++++++++++++++++++----------------------
->  1 files changed, 25 insertions(+), 22 deletions(-)
+diff --git a/src/util.c b/src/util.c
+index 94b2fca..511683a 100644
+--- a/src/util.c
++++ b/src/util.c
+@@ -956,7 +956,7 @@ unsigned char *unpack_7bit_own_buf(const unsigned char =
+*in, long len,
+ 	 * character.
+ 	 */
+ 	if (ussd && (((out - buf) % 8) =3D=3D 0) && (*(out - 1) =3D=3D '\r'))
+-			out =3D out - 1;
++		out =3D out - 1;
+ =
 
-Patch has been applied, thanks.
+ 	if (terminator)
+ 		*out =3D terminator;
+-- =
 
-Regards,
--Denis
+1.7.0.4
 
---===============4444292091629612238==--
+
+--===============1524202403389732282==--
 
