@@ -1,31 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8001940589713550968=="
+Content-Type: multipart/mixed; boundary="===============7377905992733903659=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [PATCH] doc: Add Location Services API
-Date: Wed, 17 Nov 2010 07:34:38 +0100
-Message-ID: <AANLkTimL75b008HjWP3WyoPUjqBDC92nj4+AvBV196ey@mail.gmail.com>
-In-Reply-To: <1289516605.3266.94.camel@aeonflux>
+Subject: [PATCH] coding-style: Add exception to M12 rule for external enums
+Date: Wed, 17 Nov 2010 08:09:12 +0100
+Message-ID: <1289977754-7530-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8001940589713550968==
+--===============7377905992733903659==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel.
+From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
-> So far this looks like a nice and simple proposal. And it is driven by
-> an existing standard. I like that.
->
-> Sjur, are you guys up to the task of sending an initial atom
-> implementation and atmodem driver for it?
+---
+ doc/coding-style.txt |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-Yes, I think we should be able to, as longs as there is no big hurry.
-I'll send a patch on the TODO shortly.
+diff --git a/doc/coding-style.txt b/doc/coding-style.txt
+index 6fa355e..fb43891 100644
+--- a/doc/coding-style.txt
++++ b/doc/coding-style.txt
+@@ -205,6 +205,10 @@ default:  // wrong
+ 	break;
+ }
+ =
 
-Regards,
-Sjur
++However if the enum comes from an external header file outside ofono
++we cannot make any assumption of how the enum is defined and this
++rule might not apply.
++
+ O1: Shorten the name
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ Better to use abbreviation, rather than full name, to name a variable,
+-- =
 
---===============8001940589713550968==--
+1.7.0.4
+
+
+--===============7377905992733903659==--
 
