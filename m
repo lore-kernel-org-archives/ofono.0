@@ -1,149 +1,142 @@
-Content-Type: multipart/mixed; boundary="===============8518445912258343902=="
+Content-Type: multipart/mixed; boundary="===============7172336546914637754=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [isi-voicecall-fix PATCHv3 6/6] isi/voicecall: fix
- isi_release_all_active()
-Date: Tue, 16 Nov 2010 19:05:24 +0200
-Message-ID: <1289927124-30133-6-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1289927124-30133-5-git-send-email-Pekka.Pessi@nokia.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH 1/3] Add ofono_modem_reset()
+Date: Wed, 17 Nov 2010 20:56:46 -0200
+Message-ID: <1290034608-32307-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8518445912258343902==
+--===============7172336546914637754==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
-
-Handle to-be-waiting calls properly.
+Some modems can screw up everything and then we will need to do a silent
+reset of the modem. This patch take the modem back to the OFFLINE state.
 ---
- drivers/isimodem/voicecall.c |   66 +++++++++++++++++++++++++++++---------=
----
- 1 files changed, 46 insertions(+), 20 deletions(-)
+ include/modem.h |    2 ++
+ src/modem.c     |   44 +++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 45 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index cdd5d11..360994a 100644
---- a/drivers/isimodem/voicecall.c
-+++ b/drivers/isimodem/voicecall.c
-@@ -292,6 +292,23 @@ static int isi_call_status_to_clcc(struct isi_voicecal=
-l const *ivc,
- 	return CLCC_STATUS_ACTIVE;
+diff --git a/include/modem.h b/include/modem.h
+index 7b13ee0..a92eb88 100644
+--- a/include/modem.h
++++ b/include/modem.h
+@@ -46,6 +46,8 @@ int ofono_modem_register(struct ofono_modem *modem);
+ ofono_bool_t ofono_modem_is_registered(struct ofono_modem *modem);
+ void ofono_modem_remove(struct ofono_modem *modem);
+ =
+
++void ofono_modem_reset(struct ofono_modem *modem);
++
+ void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool_t power=
+ed);
+ ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem);
+ =
+
+diff --git a/src/modem.c b/src/modem.c
+index 6d346c3..e57f8fc 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -70,6 +70,7 @@ struct ofono_modem {
+ 	guint			interface_update;
+ 	ofono_bool_t		powered;
+ 	ofono_bool_t		powered_pending;
++	ofono_bool_t		reset;
+ 	guint			timeout;
+ 	ofono_bool_t		online;
+ 	GHashTable		*properties;
+@@ -433,6 +434,8 @@ static void sim_state_watch(enum ofono_sim_state new_st=
+ate, void *user)
+ 		if (modem->driver->set_online =3D=3D NULL)
+ 			modem_change_state(modem, MODEM_STATE_ONLINE);
+ =
+
++		modem->reset =3D FALSE;
++
+ 		break;
+ 	}
+ }
+@@ -784,7 +787,8 @@ void ofono_modem_set_powered(struct ofono_modem *modem,=
+ ofono_bool_t powered)
+ 		return;
+ 	}
+ =
+
+-	ofono_dbus_signal_property_changed(conn, modem->path,
++	if (!modem->reset)
++		ofono_dbus_signal_property_changed(conn, modem->path,
+ 					OFONO_MODEM_INTERFACE,
+ 					"Powered", DBUS_TYPE_BOOLEAN,
+ 					&dbus_powered);
+@@ -799,6 +803,17 @@ void ofono_modem_set_powered(struct ofono_modem *modem=
+, ofono_bool_t powered)
+ 	} else
+ 		modem_change_state(modem, MODEM_STATE_POWER_OFF);
+ =
+
++	if (modem->reset && !powering_down) {
++		if (!modem->powered) {
++			int err =3D set_powered(modem, TRUE);
++
++			if (err =3D=3D -EINPROGRESS)
++				return;
++
++			modem_change_state(modem, MODEM_STATE_PRE_SIM);
++		}
++	}
++
+ out:
+ 	if (powering_down && powered =3D=3D FALSE) {
+ 		modems_remaining -=3D 1;
+@@ -806,6 +821,7 @@ out:
+ 		if (modems_remaining =3D=3D 0)
+ 			__ofono_exit();
+ 	}
++
  }
  =
 
-+static gboolean is_call_waiting(struct isi_voicecall const *ivc,
-+				struct isi_call const *call)
+ ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem)
+@@ -1565,6 +1581,32 @@ void ofono_modem_remove(struct ofono_modem *modem)
+ 	g_free(modem);
+ }
+ =
+
++static gboolean __reset_modem(void *data)
 +{
-+	if (!(call->mode_info & CALL_MODE_ORIGINATOR))
++	struct ofono_modem *modem =3D data;
++	int err;
++
++	modem->reset =3D TRUE;
++
++	err =3D set_powered(modem, FALSE);
++	if (err =3D=3D -EINPROGRESS)
 +		return FALSE;
 +
-+	switch (call->status) {
-+	case CALL_STATUS_COMING:
-+	case CALL_STATUS_PROCEEDING:
-+		return isi_call_waiting_or_incoming(ivc) =3D=3D CLCC_STATUS_WAITING;
-+	case CALL_STATUS_WAITING:
-+		return TRUE;
-+	}
++	err =3D set_powered(modem, TRUE);
++	if (err =3D=3D -EINPROGRESS)
++		return FALSE;
 +
++	modem_change_state(modem, MODEM_STATE_PRE_SIM);
 +	return FALSE;
 +}
 +
- static struct ofono_call isi_call_as_ofono_call(struct isi_voicecall const=
- *ivc,
- 						struct isi_call const *call)
- {
-@@ -1119,35 +1136,40 @@ static isi_call_req_step isi_wait_and_answer, isi_w=
-ait_and_retrieve;
- static void isi_release_all_active(struct ofono_voicecall *ovc,
- 					ofono_voicecall_cb_t cb, void *data)
- {
--	/* AT+CHLD=3D1 */
- 	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
--	int id =3D 0, waiting =3D 0, active =3D 0, hold =3D 0;
-+	struct isi_call_req_context *irc;
-+	int id;
-+	int waiting_id =3D 0;
-+	int active =3D 0;
-+	int hold =3D 0;
- =
-
- 	for (id =3D 1; id <=3D 7; id++) {
--		if (ivc->calls[id].call_id & CALL_ID_WAITING)
--			waiting++;
-+		if (is_call_waiting(ivc, &ivc->calls[id]))
-+			waiting_id =3D id;
++void ofono_modem_reset(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
 +
- 		if (ivc->calls[id].call_id & CALL_ID_HOLD)
- 			hold++;
++	g_idle_add(__reset_modem, modem);
++}
 +
- 		if (ivc->calls[id].call_id & CALL_ID_ACTIVE)
- 			active++;
- 	}
- =
-
--	if (active) {
--		struct isi_call_req_context *irc;
--
--		irc =3D isi_call_release_req(ovc, CALL_ID_ACTIVE,
--						CALL_CAUSE_TYPE_CLIENT,
--						CALL_CAUSE_RELEASE_BY_USER,
--						cb, data);
--
--		if (irc =3D=3D NULL)
--			;
--		else if (waiting)
--			isi_ctx_queue(irc, isi_wait_and_answer, 0);
--		else if (hold)
--			isi_ctx_queue(irc, isi_wait_and_retrieve, 0);
--	} else
-+	if (!active) {
- 		CALLBACK_WITH_FAILURE(cb, data);
-+		return;
-+	}
-+
-+	irc =3D isi_call_release_req(ovc, CALL_ID_ACTIVE,
-+					CALL_CAUSE_TYPE_CLIENT,
-+					CALL_CAUSE_RELEASE_BY_USER,
-+					cb, data);
-+	if (!irc)
-+		return;
-+
-+	if (waiting_id)
-+		isi_ctx_queue(irc, isi_wait_and_answer, waiting_id);
-+	else if (hold)
-+		isi_ctx_queue(irc, isi_wait_and_retrieve, 0);
- }
- =
-
- static void isi_wait_and_answer(struct isi_call_req_context *irc,
-@@ -1155,8 +1177,10 @@ static void isi_wait_and_answer(struct isi_call_req_=
-context *irc,
+ int ofono_modem_driver_register(const struct ofono_modem_driver *d)
  {
- 	DBG("irc=3D%p event=3D%u", (void *)irc, event);
- 	switch (event) {
-+	case CALL_STATUS_MO_RELEASE:
-+	case CALL_STATUS_MT_RELEASE:
- 	case CALL_STATUS_TERMINATED:
--		isi_answer(irc->ovc, irc->cb, irc->data);
-+		isi_call_answer_req(irc->ovc, irc->id, irc->cb, irc->data);
- 		isi_ctx_free(irc);
- 		break;
- 	}
-@@ -1167,6 +1191,8 @@ static void isi_wait_and_retrieve(struct isi_call_req=
-_context *irc,
- {
- 	DBG("irc=3D%p event=3D%u", (void *)irc, event);
- 	switch (event) {
-+	case CALL_STATUS_MO_RELEASE:
-+	case CALL_STATUS_MT_RELEASE:
- 	case CALL_STATUS_TERMINATED:
- 		isi_retrieve(irc->ovc, irc->cb, irc->data);
- 		isi_ctx_free(irc);
+ 	DBG("driver: %p, name: %s", d, d->name);
 -- =
 
-1.7.1
+1.7.3.1
 
 
---===============8518445912258343902==--
+--===============7172336546914637754==--
 
