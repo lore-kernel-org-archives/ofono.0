@@ -1,40 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============1524202403389732282=="
+Content-Type: multipart/mixed; boundary="===============6650213390375925985=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] util: Remove extra tab
-Date: Wed, 17 Nov 2010 07:32:43 -0800
-Message-ID: <1290007963-9806-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] util: Remove extra tab
+Date: Wed, 17 Nov 2010 10:04:36 -0600
+Message-ID: <4CE3FD14.9090902@gmail.com>
+In-Reply-To: <1290007963-9806-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1524202403389732282==
+--===============6650213390375925985==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/util.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi Jeevaka,
 
-diff --git a/src/util.c b/src/util.c
-index 94b2fca..511683a 100644
---- a/src/util.c
-+++ b/src/util.c
-@@ -956,7 +956,7 @@ unsigned char *unpack_7bit_own_buf(const unsigned char =
-*in, long len,
- 	 * character.
- 	 */
- 	if (ussd && (((out - buf) % 8) =3D=3D 0) && (*(out - 1) =3D=3D '\r'))
--			out =3D out - 1;
-+		out =3D out - 1;
- =
-
- 	if (terminator)
- 		*out =3D terminator;
--- =
-
-1.7.0.4
+On 11/17/2010 09:32 AM, Jeevaka Badrappan wrote:
+> ---
+>  src/util.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> =
 
 
---===============1524202403389732282==--
+Patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============6650213390375925985==--
 
