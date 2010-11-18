@@ -1,41 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============0162006723298509356=="
+Content-Type: multipart/mixed; boundary="===============1242053577872081178=="
 MIME-Version: 1.0
-From: Benis, Robertino <robertino.benis@intel.com>
-Subject: RE: [PATCH] ifxmodem: Adding fast dormancy support to Infineon modem
-Date: Wed, 17 Nov 2010 22:15:20 -0800
-Message-ID: <CB28AA307186A940B1253A743EA1F20AA60D6C5B@orsmsx507.amr.corp.intel.com>
-In-Reply-To: <1290052063.29148.15.camel@aeonflux>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: Re: [PATCH 1/2] stemodem: Create network interfaces statically
+Date: Thu, 18 Nov 2010 09:03:08 +0100
+Message-ID: <AANLkTinFtqvnFFts9uBqSrHbJzrrkToifuqYXbz+pK6Z@mail.gmail.com>
+In-Reply-To: <1289760663-10334-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0162006723298509356==
+--===============1242053577872081178==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Denis & Marcel.
 
->> +	snprintf(buf, sizeof(buf), "AT+XFDOR=3D%u", rsd->fast_dormancy);
+> From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+>
+> Changes:
+> o Restructure code so interfaces are created statically when probe is cal=
+led.
+> o Removed some of the unnecessary initializations at declaration.
+> o No longer reporting "default gateway" on PtP IP Interface.
+> o Bugfix: Handle network initiated deactivation.
+> ---
+> =C2=A0drivers/stemodem/gprs-context.c | =C2=A0153 ++++++++++++++++++++++-=
+----------------
+> =C2=A01 files changed, 85 insertions(+), 68 deletions(-)
+>
+> diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-cont=
+ext.c
+> index 05fec3f..d8db23b 100644
+> --- a/drivers/stemodem/gprs-context.c
+> +++ b/drivers/stemodem/gprs-context.c
 
-> is this command for fast dormancy really doing exactly what is expected
-> according to doc/radio-settings.txt. In my last documentation from
-> Infineon, that is still not the case.
+Have you received this patch in readable format?
+I'm sending patches using git send-email over gmail,
+and when I check sent items in gmail, it comes up as base64 encoded.
+Is this garbled for you as well?
 
-According to the doc I have, modem implementation is quite close:
+BTW are you using patchwork or similar so I could check the patch
+status somewhere?
 
-"Trigger Fast Dormancy +XFDOR
-This command triggers fast dormancy if all conditions are passed successful=
- it will be send towards the network. There will be no confirmation if the =
-request was executed or not as in the last extend the full execution belong=
-s to the network."
+Regards,
+Sjur
 
-I tested this (with couple of weeks old FW), and on AT+XFDOR=3D1 got OK bac=
-k, which, I understand, doesn't mean much, since there is no other confirma=
-tion, and there is no read AT command available yet, but I thought it was a=
- good start.
-
-Thanks,
--- r.
-
---===============0162006723298509356==--
+--===============1242053577872081178==--
 
