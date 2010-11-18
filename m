@@ -1,44 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============1750398535100215706=="
+Content-Type: multipart/mixed; boundary="===============1492562347219368423=="
 MIME-Version: 1.0
-From: George Matveev <george@matveev.se>
-Subject: [PATCH] 	build: Update glib version in configure.ac
-Date: Thu, 18 Nov 2010 20:21:03 +0100
-Message-ID: <1290108063-3777-1-git-send-email-george@matveev.se>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: [PATCH] ifxmodem: Adding fast dormancy support to Infineon modem
+Date: Thu, 18 Nov 2010 12:18:30 -0800
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C90157D0A819@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <CB28AA307186A940B1253A743EA1F20AA60D6C5B@orsmsx507.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1750398535100215706==
+--===============1492562347219368423==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-function g_mkstemp_full in src/storage.c
-requires glib version 2.22 or higher
----
- configure.ac |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+> According to the doc I have, modem implementation is quite close:
+> =
 
-diff --git a/configure.ac b/configure.ac
-index 6aeab7c..c0f4217 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -67,8 +67,8 @@ AC_CHECK_LIB(c, signalfd, dummy=3Dyes,
- AC_CHECK_LIB(dl, dlopen, dummy=3Dyes,
- 			AC_MSG_ERROR(dynamic linking loader is required))
- =
+> "Trigger Fast Dormancy +XFDOR
+> This command triggers fast dormancy if all conditions are passed successf=
+ul it will be send =
 
--PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.16, dummy=3Dyes,
--				AC_MSG_ERROR(GLib >=3D 2.16 is required))
-+PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.22, dummy=3Dyes,
-+				AC_MSG_ERROR(GLib >=3D 2.22 is required))
- AC_SUBST(GLIB_CFLAGS)
- AC_SUBST(GLIB_LIBS)
- =
+> towards the network. There will be no confirmation if the request was exe=
+cuted or not as in the =
 
--- =
+> last extend the full execution belongs to the network."
 
-1.5.6.5
++XFDOR triggers fast dormancy once iff conditions are suitable. oFono expec=
+ts a mode where
+fast dormancy is triggered automatically by the modem _anytime_ conditions =
+have been suitable for the duration of a given timeout period. A command fo=
+r such mode is not yet available in IFX FW as far as I know.
 
+Cheers,
+Waldo
 
---===============1750398535100215706==--
+--===============1492562347219368423==--
 
