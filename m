@@ -1,44 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6014058136996744498=="
+Content-Type: multipart/mixed; boundary="===============4422585995218701454=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH] doc: fix typos
-Date: Thu, 18 Nov 2010 17:11:45 +0200
-Message-ID: <1290093105-6362-1-git-send-email-remi.denis-courmont@nokia.com>
+From: George Matveev <george@matveev.se>
+Subject: [PATCH] function g_mkstemp_full in src/storage.c
+Date: Thu, 18 Nov 2010 20:11:52 +0100
+Message-ID: <1290107512-3585-1-git-send-email-george@matveev.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6014058136996744498==
+--===============4422585995218701454==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/voicecallmanager-api.txt |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+ configure.ac |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 11af23a..d960f3c 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -18,10 +18,10 @@ Methods		array{object,dict} GetCalls()
- 		object Dial(string number, string hide_callerid)
+diff --git a/configure.ac b/configure.ac
+index 6aeab7c..c0f4217 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -67,8 +67,8 @@ AC_CHECK_LIB(c, signalfd, dummy=3Dyes,
+ AC_CHECK_LIB(dl, dlopen, dummy=3Dyes,
+ 			AC_MSG_ERROR(dynamic linking loader is required))
  =
 
- 			Initiates a new outgoing call. Returns the object path
--			to the newly created call. The clir variable holds
--			the CLIR override for this call.
-+			to the newly created call. The hide_callerid variable
-+			holds the CLIR override for this call.
- 			The defines values are:
--				"" or "default" - Default (Netowrk) CLIR mode
-+				"" or "default" - Default (Network) CLIR mode
- 							is used
- 				"enabled" - Hides callerid, CLIR Invocation
- 						is used
+-PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.16, dummy=3Dyes,
+-				AC_MSG_ERROR(GLib >=3D 2.16 is required))
++PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.22, dummy=3Dyes,
++				AC_MSG_ERROR(GLib >=3D 2.22 is required))
+ AC_SUBST(GLIB_CFLAGS)
+ AC_SUBST(GLIB_LIBS)
+ =
+
 -- =
 
-1.7.1
+1.5.6.5
 
 
---===============6014058136996744498==--
+--===============4422585995218701454==--
 
