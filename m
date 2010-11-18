@@ -1,273 +1,349 @@
-Content-Type: multipart/mixed; boundary="===============5211731399501517603=="
+Content-Type: multipart/mixed; boundary="===============3554385167343538965=="
 MIME-Version: 1.0
-From: Simon LETHBRIDGE <simon.lethbridge@stericsson.com>
-Subject: RE: [PATCH] doc: Add Location Services API (resending now that I am
- on ofono mailing list)
-Date: Thu, 18 Nov 2010 10:50:06 +0100
-Message-ID: <B4268AAFAFA3E244B5B0641D5914917048B76BEA90@EXDCVYMBSTM006.EQ1STM.local>
-In-Reply-To: <4CDC6501.3070206@gmail.com>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH] Simulate provide local info command
+Date: Thu, 18 Nov 2010 18:43:19 +0800
+Message-ID: <1290076999-27809-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5211731399501517603==
+--===============3554385167343538965==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ src/simapplication.cpp |  263 ++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/simapplication.h   |    2 +
+ 2 files changed, 265 insertions(+), 0 deletions(-)
 
-> -----Original Message-----
-> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
-> Sent: 11 November 2010 21:50
-> To: ofono(a)ofono.org
-> Cc: Sjur Br=C3=A6ndeland; Simon LETHBRIDGE; Sjur BRENDELAND
-> Subject: Re: [PATCH] doc: Add Location Services API
+diff --git a/src/simapplication.cpp b/src/simapplication.cpp
+index 7dc580f..901c5b9 100644
+--- a/src/simapplication.cpp
++++ b/src/simapplication.cpp
+@@ -284,6 +284,7 @@ const QString DemoSimApplication::getName()
+ #define MainMenu_SendSS     11
+ #define MainMenu_Language   12
+ #define MainMenu_SendUSSD   13
++#define MainMenu_LocalInfo  14
  =
 
+ #define SportsMenu_Chess        1
+ #define SportsMenu_Painting     2
+@@ -342,6 +343,24 @@ const QString DemoSimApplication::getName()
+ #define SendUSSD_Error      4
+ #define SendUSSD_Main       5
+ =
 
-> =
++#define LocalInfoMenu_Loc               1
++#define LocalInfoMenu_IMEI              2
++#define LocalInfoMenu_NMR               3
++#define LocalInfoMenu_Time              4
++#define LocalInfoMenu_Lang              5
++#define LocalInfoMenu_TimingAdvance     6
++#define LocalInfoMenu_Tech              7
++#define LocalInfoMenu_ESN               8
++#define LocalInfoMenu_IMEISV            9
++#define LocalInfoMenu_SearchMode        10
++#define LocalInfoMenu_Battery           11
++#define LocalInfoMenu_MEID              12
++#define LocalInfoMenu_WSID              13
++#define LocalInfoMenu_Broadcast         14
++#define LocalInfoMenu_Techs             15
++#define LocalInfoMenu_Locs              16
++#define LocalInfoMenu_NMRs              17
++
+ void DemoSimApplication::mainMenu()
+ {
+     QSimCommand cmd;
+@@ -402,6 +421,10 @@ void DemoSimApplication::mainMenu()
+     item.setLabel( "Send USSD" );
+     items +=3D item;
+ =
 
-> So let me summarize 27.007 briefly.  It defines the following elements =
++    item.setIdentifier( MainMenu_LocalInfo );
++    item.setLabel( "Provide Local Information" );
++    items +=3D item;
++
+     cmd.setMenuItems( items );
+ =
 
-> for +CPOS/+CPOSR:
-> =
+     command( cmd, 0, 0 );
+@@ -514,6 +537,12 @@ void DemoSimApplication::mainMenuSelection( int id )
+         }
+         break;
+ =
 
-> - location
-> - assist_data
-> - pos_meas
-> - GPS_meas
-> - GPS_assist_req
-> - msg
-> - pos_err
-> =
++        case MainMenu_LocalInfo:
++        {
++            sendLocalInfoMenu();
++        }
++        break;
++
+         default:
+         {
+             // Don't know what this item is, so just re-display the main m=
+enu.
+@@ -1832,3 +1861,237 @@ void DemoSimApplication::USSDMenu( const QSimTermin=
+alResponse& resp )
+         endSession();
+     }
+ }
++
++void DemoSimApplication::sendLocalInfoMenu()
++{
++    QSimCommand cmd;
++    QSimMenuItem item;
++    QList<QSimMenuItem> items;
++
++    cmd.setType( QSimCommand::SelectItem );
++    cmd.setTitle( "Provide Local Information" );
++
++    item.setIdentifier( LocalInfoMenu_Loc );
++    item.setLabel( "Location Information" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_IMEI );
++    item.setLabel( "IMEI" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_NMR );
++    item.setLabel( "Network Measurement results" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_Time );
++    item.setLabel( "Date, time and time zone" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_Lang );
++    item.setLabel( "Language setting" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_TimingAdvance );
++    item.setLabel( "Timing Advance" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_Tech );
++    item.setLabel( "Access Technology" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_ESN );
++    item.setLabel( "ESN" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_IMEISV );
++    item.setLabel( "IMEISV" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_SearchMode );
++    item.setLabel( "Search Mode" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_Battery );
++    item.setLabel( "Charge State of the Battery" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_MEID );
++    item.setLabel( "MEID" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_WSID );
++    item.setLabel( "WSID" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_Broadcast );
++    item.setLabel( "Broadcast Network information" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_Techs );
++    item.setLabel( "Multiple Access Technologies" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_Locs );
++    item.setLabel( "Location Information for multiple access technologies"=
+ );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_NMRs );
++    item.setLabel( "Network Measurement results for multiple access techno=
+logies" );
++    items +=3D item;
++
++    cmd.setMenuItems( items );
++
++    command( cmd, this, SLOT(localInfoMenu(QSimTerminalResponse)) );
++}
++
++void DemoSimApplication::localInfoMenu( const QSimTerminalResponse& resp )
++{
++    QSimCommand cmd;
++
++    if ( resp.result() =3D=3D QSimTerminalResponse::Success ) {
++        switch ( resp.menuItem() ) {
++
++            case LocalInfoMenu_Loc:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x00 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_IMEI:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x01 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_NMR:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x02 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_Time:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x03 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_Lang:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x04 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_TimingAdvance:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x05 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_Tech:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x06 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_ESN:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x07 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_IMEISV:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x08 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_SearchMode:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x09 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_Battery:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x0A );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_MEID:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x0B );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_WSID:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x0C );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_Broadcast:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x0D );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_Techs:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x0E );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_Locs:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x0F );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_NMRs:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x10 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            default:
++                endSession();
++                break;
++        }
++    } else {
++        endSession();
++    }
++}
+diff --git a/src/simapplication.h b/src/simapplication.h
+index 9d147ee..933635c 100644
+--- a/src/simapplication.h
++++ b/src/simapplication.h
+@@ -113,6 +113,8 @@ protected slots:
+     void languageMenu( const QSimTerminalResponse& resp );
+     void sendUSSDMenu();
+     void USSDMenu( const QSimTerminalResponse& resp );
++    void sendLocalInfoMenu();
++    void localInfoMenu ( const QSimTerminalResponse& resp );
+ =
 
-> So from my understanding +CPOS command can be used to send <location>, =
+ private:
+     int sticksLeft;
+-- =
 
-> <GPS_assist_req> and <pos_err> elements.
-> =
-
-> And +CPOSR can transfer the following elements from the network:
-> <assist_data>, <pos_meas>, <msg>.
-> =
-
-> Am I right so far?
-
-This is substantially correct, however the assistance data request can only=
- be made in response to a positioning request from the network.  If assista=
-nce is required otherwise then an MOLR is needed, which we don't support ye=
-t. =
+1.7.2.3
 
 
-> =
-
-> Where does the <GPS_meas> element fall into?
-
-There are two types of procedure "MSB" where the location is calculated in =
-the mobile, and "MSA" where it is calculated in the network.  For MSA code =
-phase measurements and doppler are sent to the network.  One possible benef=
-it of MSA procedures is that less assistance data needs to be transferred. =
-
-> =
-
-> What about other location services related commands defined in 27.007?
-> How do they fit in? E.g.:
-> - +CMOLR
-> - +CMTLR
-> - +CMTLRA
-These are not required for NILR (Network Initiated - Location Requests) pro=
-cedures (e.g. E911 procedures).  However it could be useful to add support =
-later.
-
-The current proposal only supports NILR.
-
-Regards,
-
-Simon
-
-
-> -----Original Message-----
-> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
-> Sent: 11 November 2010 21:50
-> To: ofono(a)ofono.org
-> Cc: Sjur Br=C3=A6ndeland; Simon LETHBRIDGE; Sjur BRENDELAND
-> Subject: Re: [PATCH] doc: Add Location Services API
-> =
-
-> Hi Sjur and Simon,
-> =
-
-> On 11/11/2010 01:44 PM, Sjur Br=C3=A6ndeland wrote:
-> > From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
-> >
-> > As requested, this is our initial proposal for a minimal API
-> > in order to support E911, based on the 27.007 defined AT
-> > commands.
-> >
-> > We've discussed internally different names for this API:
-> > AGNSSManager or AssistedGlobalNavigationSatelliteSystem,
-> > but ended up with the simpler LocationServicesManager.
-> >
-> > Looking forward to your comments on this API.
-> >
-> > Regards,
-> > Simon Lethbridge and
-> > Sjur Br=C3=A6ndeland
-> > ---
-> >  doc/location-services-api.txt |   56
-> +++++++++++++++++++++++++++++++++++++++++
-> >  1 files changed, 56 insertions(+), 0 deletions(-)
-> >  create mode 100644 doc/location-services-api.txt
-> >
-> > diff --git a/doc/location-services-api.txt b/doc/location-services-
-> api.txt
-> > new file mode 100644
-> > index 0000000..18ef230
-> > --- /dev/null
-> > +++ b/doc/location-services-api.txt
-> > @@ -0,0 +1,56 @@
-> > +LocationServicesManager hierarchy
-> > +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > +
-> > +Service	org.ofono
-> > +Interface	org.ofono.LocationServicesManager
-> =
-
-> I actually think LocationServices is enough..
-> =
-
-> So let me summarize 27.007 briefly.  It defines the following elements
-> for +CPOS/+CPOSR:
-> =
-
-> - location
-> - assist_data
-> - pos_meas
-> - GPS_meas
-> - GPS_assist_req
-> - msg
-> - pos_err
-> =
-
-> So from my understanding +CPOS command can be used to send <location>,
-> <GPS_assist_req> and <pos_err> elements.
-> =
-
-> And +CPOSR can transfer the following elements from the network:
-> <assist_data>, <pos_meas>, <msg>.
-> =
-
-> Am I right so far?
-> =
-
-> Where does the <GPS_meas> element fall into?
-> =
-
-> > +Object path	[variable prefix]/{modem0,modem1,...}
-> > +
-> > +Methods	dict GetProperties()
-> > +
-> > +			Returns properties for the modem object. See
-> > +			the properties section for available properties.
-> > +
-> > +			Possible Errors: [service].Error.InvalidArguments
-> > +
-> > +		void SetProperty(string name, variant value)
-> > +
-> > +			Changes the value of the specified property. Only
-> > +			properties that are listed as read-write are
-> > +			changeable. On success a PropertyChanged signal
-> > +			will be emitted.
-> > +
-> > +			Possible Errors: [service].Error.InvalidArguments
-> > +					 [service].Error.DoesNotExist
-> =
-
-> I think we can get rid of the above two methods, see below...
-> =
-
-> > +
-> > +		void SendPositioningControl(string xml_element)
-> > +
-> > +			Send an XML element conforming to the XML DTD for
-> <pos>
-> > +			as defined in 3GPP 27.007 Table 8.55-2.  This xml is
-> > +			used for transferring data associated with
-> positioning
-> > +			requests received via control plane from the network.
-> > +			This includes assistance data requests and the
-> results
-> > +			of positioning procedures. This method maps directly
-> to
-> > +			the 3GPP 27.007 AT+CPOS command.
-> > +
-> > +
-> > +Signals	PropertyChanged(string name, variant value)
-> > +
-> > +			This signal indicates a changed value of the given
-> > +			property.
-> > +
-> > +		PositioningRequest(string xml_element)
-> > +
-> > +			Receive an XML element conforming to the XML DTD for
-> > +			<pos> in 3GPP 27.007. This xml is used for
-> transferring
-> > +			data associated with positioning requests received,
-> via
-> > +			control plane, from the network. This includes
-> > +			measurement requests and assistance data. This signal
-> > +			maps directly to the 3GPP defined +CPOSR unsolicited
-> > +			result code.
-> =
-
-> How about transforming this signal into an Agent based API instead.  So
-> let us have a LocationServicesAgent API with the following rough API:
-> =
-
-> LocationServicesAgent
-> =
-
-> * Release() - Self explanatory
-> * HandleRequest(string xml) - Essentially gets passed the data from the
-> +CPOSR unsolicited response.
-> =
-
-> We can then add two more methods to the LocationServices interface:
-> =
-
-> * RegisterAgent()
-> * UnregisterAgent()
-> =
-
-> > +
-> > +Properties	boolean NetworkInitiatedProceduresEnabled [readwrite]
-> > +
-> > +			If NetworkInitiatedProceduresEnabled is False, then
-> > +			no Position Requests from the network are accepted.
-> > +			The modem is not enabled for positioning requests
-> > +			from the networks view point.
-> =
-
-> This property can then be potentially made redundant.  E.g. if there's
-> no agent registered, the network position requests are turned off.
-> Once
-> the agent is registered, they are turned on.
-> =
-
-> The SendPositioningControl function can then be tweaked to return an
-> error if the Agent is not registered.  I assume there's nothing useful
-> we can do without someone handling the data returned by +CPOSR.
-> =
-
-> What about other location services related commands defined in 27.007?
-> How do they fit in? E.g.:
-> - +CMOLR
-> - +CMTLR
-> - +CMTLRA
-> =
-
-> Regards,
-> -Denis
-
---===============5211731399501517603==--
+--===============3554385167343538965==--
 
