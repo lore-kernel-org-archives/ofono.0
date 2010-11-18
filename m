@@ -1,46 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============7901881215043667782=="
+Content-Type: multipart/mixed; boundary="===============8136977217540640483=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [RERESEND] [PATCH 2/2] Update the network documentation
-Date: Thu, 18 Nov 2010 13:35:08 +0200
-Message-ID: <1290080108-19576-2-git-send-email-remi.denis-courmont@nokia.com>
-In-Reply-To: <1290080108-19576-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
+Subject: Re: [RFC PATCH 1/2] common: add long dial string support
+Date: Thu, 18 Nov 2010 13:38:51 +0200
+Message-ID: <4CE5104B.9080305@nokia.com>
+In-Reply-To: <3db2789cb182bbe968fbd05e3e1fc9b482f8d85c.1289928966.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7901881215043667782==
+--===============8136977217540640483==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/network-api.txt |    5 +++--
- 1 files changed, 3 insertions(+), 2 deletions(-)
+Hi Denis, Marcel, Andras,
 
-diff --git a/doc/network-api.txt b/doc/network-api.txt
-index 083e918..9fb9974 100644
---- a/doc/network-api.txt
-+++ b/doc/network-api.txt
-@@ -125,8 +125,9 @@ Properties	string Mode [readonly]
- =
+>   include/types.h |    2 +-
+>   src/common.c    |   12 ++++++------
+>   2 files changed, 7 insertions(+), 7 deletions(-)
+>
+> diff --git a/include/types.h b/include/types.h
+> index ba2481f..b3d2247 100644
+> --- a/include/types.h
+> +++ b/include/types.h
+> @@ -76,7 +76,7 @@ struct ofono_error {
+>   	int error;
+>   };
+>
+> -#define OFONO_MAX_PHONE_NUMBER_LENGTH 20
+> +#define OFONO_MAX_PHONE_NUMBER_LENGTH 120
+>
+>   struct ofono_phone_number {
+>   	char number[OFONO_MAX_PHONE_NUMBER_LENGTH + 1];
+> diff --git a/src/common.c b/src/common.c
+> index b5b9a6f..de5a508 100644
+> --- a/src/common.c
+> +++ b/src/common.c
+> @@ -253,7 +253,7 @@ gboolean valid_phone_number_format(const char *number)
+>   		if (number[i]>=3D '0'&&  number[i]<=3D '9')
+>   			continue;
+>
+> -		if (number[i] =3D=3D '*' || number[i] =3D=3D '#')
+> +		if (number[i] =3D=3D '*' || number[i] =3D=3D '#' || number[i] =3D=3D '=
+p')
+>   			continue;
+>    =
 
- 			Contains the technology of the current network.
- =
+This function is used to check the phone number as valid in other places =
 
--			The possible values are: "gsm", "edge", "umts", "hspa",
--							"lte"
-+			The possible values are: "gsm", "edge", "umts",
-+			"hsdpa", "hsupa", "hspa" (meaning both hsdpa and hsupa)
-+			and "lte"
- =
+too.
 
- 			TODO: Values for CDMA and EVDO based networks.
- =
+Is it right to allow sms sending to numbers with '*', '#' and 'p' in it? =
 
--- =
-
-1.7.1
+I think ofono should return an error for the sms case.
 
 
---===============7901881215043667782==--
+Regards
+Arun
+
+
+--===============8136977217540640483==--
 
