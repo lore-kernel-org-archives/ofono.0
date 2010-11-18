@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============4290484782293485429=="
+Content-Type: multipart/mixed; boundary="===============3559986318003810460=="
 MIME-Version: 1.0
 From: George Matveev <george@matveev.se>
 Subject: [PATCH] build: Update glib version in configure.ac
-Date: Thu, 18 Nov 2010 12:03:30 +0000
-Message-ID: <1290081725-4767-1-git-send-email-george@matveev.se>
+Date: Thu, 18 Nov 2010 12:13:25 +0000
+Message-ID: <1290082324-4816-1-git-send-email-george@matveev.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4290484782293485429==
+--===============3559986318003810460==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -40,5 +40,5 @@ index 6aeab7c..c0f4217 100644
 1.5.6.5
 
 
---===============4290484782293485429==--
+--===============3559986318003810460==--
 
