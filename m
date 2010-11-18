@@ -1,58 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============2523416707626119727=="
+Content-Type: multipart/mixed; boundary="===============5975232015978984905=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 3/3] Add script to enable/disable TTY support
-Date: Thu, 18 Nov 2010 00:50:40 -0200
-Message-ID: <1290048640-28641-3-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1290048640-28641-2-git-send-email-lucas.demarchi@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] ifxmodem: Adding fast dormancy support to Infineon modem
+Date: Thu, 18 Nov 2010 04:47:43 +0100
+Message-ID: <1290052063.29148.15.camel@aeonflux>
+In-Reply-To: <1290022164-24730-1-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2523416707626119727==
+--===============5975232015978984905==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/set-tty |   25 +++++++++++++++++++++++++
- 1 files changed, 25 insertions(+), 0 deletions(-)
- create mode 100755 test/set-tty
+Hi Robertino,
 
-diff --git a/test/set-tty b/test/set-tty
-new file mode 100755
-index 0000000..cbbb043
---- /dev/null
-+++ b/test/set-tty
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 3:
-+	path =3D sys.argv[1]
-+	enable =3D int(sys.argv[2])
-+elif len(sys.argv) =3D=3D 2:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+	enable =3D int(sys.argv[1])
-+else:
-+	print "%s [PATH] {0|1}" % (sys.argv[0])
-+	exit(1)
-+
-+print "Setting TTY for modem %s..." % path
-+texttelephony =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.TextTelephony')
-+
-+texttelephony.SetProperty("Powered", dbus.Boolean(enable));
--- =
+> Initial patch to add fast dormancy to Infineon modem. Timeout is not
+> supported yet.
+> =
 
-1.7.3.2
+> Thanks,
+> -- r.
+> =
+
+> ---
+>  drivers/ifxmodem/radio-settings.c |   40 +++++++++++++++++++++++++++++++=
++++++-
+>  1 files changed, 39 insertions(+), 1 deletions(-)
+> =
+
+> diff --git a/drivers/ifxmodem/radio-settings.c b/drivers/ifxmodem/radio-s=
+ettings.c
+> index 89e97e7..68077db 100644
+> --- a/drivers/ifxmodem/radio-settings.c
+> +++ b/drivers/ifxmodem/radio-settings.c
+> @@ -27,6 +27,7 @@
+>  #include <string.h>
+>  #include <stdlib.h>
+>  #include <stdio.h>
+> +#include <stdint.h>
+>  #include <errno.h>
+>  =
+
+>  #include <glib.h>
+> @@ -45,6 +46,7 @@ static const char *xrat_prefix[] =3D { "+XRAT:", NULL };
+>  =
+
+>  struct radio_settings_data {
+>  	GAtChat *chat;
+> +	uint16_t fast_dormancy;
+>  };
+>  =
+
+>  static void xrat_query_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+> @@ -196,12 +198,48 @@ static void ifx_radio_settings_remove(struct ofono_=
+radio_settings *rs)
+>  	g_free(rsd);
+>  }
+>  =
+
+> +static void update_fast_dormancy(struct radio_settings_data *rsd)
+> +{
+> +	char buf[20];
+> +
+> +	snprintf(buf, sizeof(buf), "AT+XFDOR=3D%u", rsd->fast_dormancy);
+
+is this command for fast dormancy really doing exactly what is expected
+according to doc/radio-settings.txt. In my last documentation from
+Infineon, that is still not the case.
+
+Regards
+
+Marcel
 
 
---===============2523416707626119727==--
+
+--===============5975232015978984905==--
 
