@@ -1,58 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============8719390094488878385=="
+Content-Type: multipart/mixed; boundary="===============7379358851015908751=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 3/3] Add script to enable/disable TTY support
-Date: Thu, 18 Nov 2010 09:26:56 -0200
-Message-ID: <1290079616-2754-3-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1290079616-2754-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 1/3] Add TTY (hearing impaired) support
+Date: Thu, 18 Nov 2010 09:26:53 -0200
+Message-ID: <AANLkTinUWXjeiHChQi_9=yJ4qm8WPot=87fL-ba9_vxG@mail.gmail.com>
+In-Reply-To: <1290052269.29148.16.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8719390094488878385==
+--===============7379358851015908751==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/set-tty |   25 +++++++++++++++++++++++++
- 1 files changed, 25 insertions(+), 0 deletions(-)
- create mode 100755 test/set-tty
+Hi Marcel,
 
-diff --git a/test/set-tty b/test/set-tty
-new file mode 100755
-index 0000000..cbbb043
---- /dev/null
-+++ b/test/set-tty
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 3:
-+	path =3D sys.argv[1]
-+	enable =3D int(sys.argv[2])
-+elif len(sys.argv) =3D=3D 2:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+	enable =3D int(sys.argv[1])
-+else:
-+	print "%s [PATH] {0|1}" % (sys.argv[0])
-+	exit(1)
-+
-+print "Setting TTY for modem %s..." % path
-+texttelephony =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.TextTelephony')
-+
-+texttelephony.SetProperty("Powered", dbus.Boolean(enable));
--- =
+On Thu, Nov 18, 2010 at 1:51 AM, Marcel Holtmann <marcel@holtmann.org> wr=
+ote:
+> Hi Lucas,
+>
+>> =C2=A0Makefile.am =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=
+=A0 =C2=A05 +-
+>> =C2=A0include/dbus.h =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 | =C2=A0 =C2=A01=
+ +
+>> =C2=A0include/text-telephony.h | =C2=A0 71 ++++++++++
+>> =C2=A0src/modem.c =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=
+=A0 =C2=A01 +
+>> =C2=A0src/ofono.h =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0| =C2=
+=A0 =C2=A02 +
+>> =C2=A0src/text-telephony.c =C2=A0 =C2=A0 | =C2=A0333 +++++++++++++++++++=
++++++++++++++++++++++++++++
+>> =C2=A06 files changed, 411 insertions(+), 2 deletions(-)
+>> =C2=A0create mode 100644 include/text-telephony.h
+>> =C2=A0create mode 100644 src/text-telephony.c
+>
+> did I miss the patch for doc/text-telephony.txt?
 
-1.7.3.2
+Sorry, I missed that. I'm sending again with the docs.
 
+regards
 
---===============8719390094488878385==--
+Lucas De Marchi
+
+--===============7379358851015908751==--
 
