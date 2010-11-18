@@ -1,271 +1,246 @@
-Content-Type: multipart/mixed; boundary="===============8655450959986635378=="
+Content-Type: multipart/mixed; boundary="===============0883892090075783862=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 1/2] stk: provide access technology info
-Date: Thu, 18 Nov 2010 18:55:55 +0800
-Message-ID: <1290077756-28124-2-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1290077756-28124-1-git-send-email-yang.gu@intel.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH 2/3] phonesim: implement TTY interface
+Date: Thu, 18 Nov 2010 09:26:55 -0200
+Message-ID: <1290079616-2754-2-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1290079616-2754-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8655450959986635378==
+--===============0883892090075783862==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/network.c |   14 +++++
- src/ofono.h   |    1 +
- src/stk.c     |  179 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 194 insertions(+), 0 deletions(-)
+ plugins/phonesim.c |  148 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++--
+ 1 files changed, 144 insertions(+), 4 deletions(-)
 
-diff --git a/src/network.c b/src/network.c
-index f1d7724..481ece8 100644
---- a/src/network.c
-+++ b/src/network.c
-@@ -1852,3 +1852,17 @@ void *ofono_netreg_get_data(struct ofono_netreg *net=
-reg)
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index d2faf42..8c31df4 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -54,6 +54,7 @@
+ #include <ofono/stk.h>
+ #include <ofono/sms.h>
+ #include <ofono/ssn.h>
++#include <ofono/text-telephony.h>
+ #include <ofono/ussd.h>
+ #include <ofono/voicecall.h>
+ #include <ofono/gprs.h>
+@@ -64,6 +65,7 @@
+ #include <drivers/atmodem/atutil.h>
+ =
+
+ static const char *none_prefix[] =3D { NULL };
++static const char *ptty_prefix[] =3D { "+PTTY:", NULL };
+ static int next_iface =3D 0;
+ =
+
+ struct phonesim_data {
+@@ -78,6 +80,11 @@ struct gprs_context_data {
+ 	char *interface;
+ };
+ =
+
++struct text_telephony_data {
++	GAtChat *chat;
++	char *interface;
++};
++
+ static void at_cgact_up_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
  {
- 	return netreg->driver_data;
+ 	struct cb_data *cbd =3D user_data;
+@@ -190,12 +197,140 @@ static void phonesim_context_remove(struct ofono_gpr=
+s_context *gc)
+ 	g_free(gcd);
  }
-+
-+unsigned int __ofono_netreg_get_tech(struct ofono_netreg *netreg)
+ =
+
++static int phonesim_tty_probe(struct ofono_text_telephony *tt,
++				unsigned int vendor, void *data)
 +{
-+	GSList *o;
-+	unsigned int techs =3D 0;
-+	struct network_operator_data *opd;
++	GAtChat *chat =3D data;
++	struct text_telephony_data *ttd;
 +
-+	for (o =3D netreg->operator_list; o; o =3D o->next) {
-+		opd =3D o->data;
-+		techs |=3D opd->techs;
-+	}
++	ttd =3D g_try_new0(struct text_telephony_data, 1);
++	if (!ttd)
++		return -ENOMEM;
 +
-+	return techs;
++	ttd->chat =3D g_at_chat_clone(chat);
++	ttd->interface =3D g_strdup_printf("dummy%d", next_iface++);
++
++	ofono_text_telephony_set_data(tt, ttd);
++	ofono_text_telephony_register(tt);
++
++	return 0;
 +}
-diff --git a/src/ofono.h b/src/ofono.h
-index 4d76d20..c9d25ab 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -363,6 +363,7 @@ gboolean __ofono_netreg_remove_status_watch(struct ofon=
-o_netreg *netreg,
- =
-
- void __ofono_netreg_set_base_station_name(struct ofono_netreg *netreg,
- 						const char *name);
-+unsigned int __ofono_netreg_get_tech(struct ofono_netreg *netreg);
- =
-
- #include <ofono/history.h>
- =
-
-diff --git a/src/stk.c b/src/stk.c
-index 18beee6..eec1ddf 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1989,6 +1989,180 @@ static gboolean handle_command_refresh(const struct=
- stk_command *cmd,
- 	return TRUE;
- }
- =
-
-+static gboolean get_tech(struct ofono_stk *stk, struct stk_response *rsp,
-+							gboolean singleton)
++
++static void phonesim_tty_remove(struct ofono_text_telephony *tt)
 +{
-+	struct ofono_atom *atom;
-+	struct ofono_netreg *netreg;
-+	unsigned int tech;
-+	unsigned int tech_stk =3D 0;
-+	unsigned int i;
-+	int length =3D 0;
-+	int length_temp =3D 0;
-+	enum stk_access_technology_type *techs;
-+	static struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_FAILURE =
-};
++	struct text_telephony_data *ttd =3D ofono_text_telephony_get_data(tt);
 +
-+	atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
-+							OFONO_ATOM_TYPE_NETREG);
-+	if (!atom || !__ofono_atom_get_registered(atom))
-+		goto error;
++	DBG("");
 +
-+	netreg =3D __ofono_atom_get_data(atom);
-+	tech =3D __ofono_netreg_get_tech(netreg);
++	ofono_text_telephony_set_data(tt, NULL);
 +
-+	if (tech =3D=3D 0)
-+		goto error;
++	g_at_chat_unref(ttd->chat);
++	g_free(ttd->interface);
 +
-+	/* Stk has different definition of access technology, so do some map */
-+	if (tech & ((1 << ACCESS_TECHNOLOGY_GSM) ||
-+			(1 << ACCESS_TECHNOLOGY_GSM_COMPACT) ||
-+			(1 << ACCESS_TECHNOLOGY_GSM_EGPRS))) {
-+		tech_stk |=3D 1 << STK_ACCESS_TECHNOLOGY_GSM;
-+		length++;
++	g_free(ttd);
++}
 +
-+		if (singleton && (length =3D=3D 1))
-+			goto finish;
++static void tty_query_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct cb_data *cbd =3D user_data;
++	struct ofono_error error;
++	GAtResultIter iter;
++	ofono_text_telephony_query_cb_t cb =3D cbd->cb;
++	int value;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		cb(&error, -1, cbd->data);
++		return;
 +	}
 +
-+	if (tech & ((1 << ACCESS_TECHNOLOGY_UTRAN) ||
-+			(1 << ACCESS_TECHNOLOGY_UTRAN_HSDPA) ||
-+			(1 << ACCESS_TECHNOLOGY_UTRAN_HSUPA) ||
-+			(1 << ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA))) {
-+		tech_stk |=3D 1 << STK_ACCESS_TECHNOLOGY_UTRAN;
-+		length++;
++	g_at_result_iter_init(&iter, result);
 +
-+		if (singleton && (length =3D=3D 1))
-+			goto finish;
-+	}
-+
-+	if (tech & (1 << ACCESS_TECHNOLOGY_EUTRAN)) {
-+		tech_stk |=3D 1 << STK_ACCESS_TECHNOLOGY_EUTRAN;
-+		length++;
-+	}
-+
-+finish:
-+	if (length =3D=3D 0)
++	if (g_at_result_iter_next(&iter, "+PTTY:") =3D=3D FALSE)
 +		goto error;
 +
-+	techs =3D g_try_malloc(length);
-+	if (!techs)
++	if (g_at_result_iter_next_number(&iter, &value) =3D=3D FALSE)
 +		goto error;
 +
-+	for (i =3D 0; i < sizeof(tech_stk) * 8; i++)
-+		if (tech_stk & (1 << i))
-+			techs[length_temp++] =3D i;
++	cb(&error, value, cbd->data);
 +
-+	rsp->provide_local_info.access_technologies.techs =3D techs;
-+	rsp->provide_local_info.access_technologies.length =3D length;
-+	rsp->result.type =3D STK_RESULT_TYPE_SUCCESS;
-+
-+	if (stk_respond(stk, rsp, stk_command_cb))
-+		stk_command_cb(&error, stk);
-+
-+	g_free(techs);
-+	return FALSE;
++	return;
 +
 +error:
-+	rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+	return TRUE;
++
++	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
 +}
 +
-+static gboolean handle_command_provide_local_info(const struct stk_command=
- *cmd,
-+				struct stk_response *rsp, struct ofono_stk *stk)
++static void phonesim_tty_query(struct ofono_text_telephony *tt,
++				ofono_text_telephony_query_cb_t cb, void *data)
 +{
-+	switch (cmd->qualifier) {
-+	case 0:
-+		DBG("Location Information");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
++	struct text_telephony_data *ttd =3D ofono_text_telephony_get_data(tt);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
 +
-+	case 1:
-+		DBG("IMEI");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
++	DBG("");
 +
-+	case 2:
-+		DBG("Network Measurement results");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
++	if (!cbd)
++		goto error;
 +
-+	case 3:
-+		DBG("Date, time and time zone");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
++	if (g_at_chat_send(ttd->chat, "AT+PTTY?", ptty_prefix,
++				tty_query_cb, cbd, g_free) > 0)
++		return;
 +
-+	case 4:
-+		DBG("Language setting");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
++error:
++	g_free(cbd);
 +
-+	case 5:
-+		DBG("Timing Advance");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+
-+	case 6:
-+		DBG("Access Technology");
-+		return get_tech(stk, rsp, TRUE);
-+
-+	case 7:
-+		DBG("ESN");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+
-+	case 8:
-+		DBG("IMEISV");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+
-+	case 9:
-+		DBG("Search Mode");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+
-+	case 10:
-+		DBG("Charge State of the Battery");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+
-+	case 11:
-+		DBG("MEID");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+
-+	case 12:
-+		DBG("current WSID");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+
-+	case 13:
-+		DBG("Broadcast Network information");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+
-+	case 14:
-+		DBG("Multiple Access Technologies");
-+		return get_tech(stk, rsp, FALSE);
-+
-+	case 15:
-+		DBG("Location Information for multiple access technologies");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+
-+	case 16:
-+		DBG("Network Measurement results for "
-+					"multiple access technologies");
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+
-+	default:
-+		ofono_info("Undefined Provide Local Information qualifier: %d",
-+				cmd->qualifier);
-+		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-+		return TRUE;
-+	}
++	CALLBACK_WITH_FAILURE(cb, 0, data);
 +}
 +
- static void send_dtmf_cancel(struct ofono_stk *stk)
- {
- 	struct ofono_voicecall *vc =3D NULL;
-@@ -2421,6 +2595,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
-_stk *stk,
- 							&rsp, stk);
- 		break;
++static void tty_set_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_text_telephony_set_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++}
++
++static void phonesim_tty_set(struct ofono_text_telephony *tt, int enable,
++				ofono_text_telephony_set_cb_t cb, void *data)
++{
++	struct text_telephony_data *ttd =3D ofono_text_telephony_get_data(tt);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[12];
++
++	DBG("");
++
++	if (!cbd)
++		goto error;
++
++	enable =3D !!enable;
++	snprintf(buf, sizeof(buf), "AT+PTTY=3D%d", enable);
++
++	if (g_at_chat_send(ttd->chat, buf, none_prefix,
++					tty_set_cb, cbd, g_free) > 0)
++		return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
+ static struct ofono_gprs_context_driver context_driver =3D {
++	.name                   =3D "phonesim",
++	.probe                  =3D phonesim_context_probe,
++	.remove                 =3D phonesim_context_remove,
++	.activate_primary       =3D phonesim_activate_primary,
++	.deactivate_primary     =3D phonesim_deactivate_primary,
++};
++
++static struct ofono_text_telephony_driver tty_driver =3D {
+ 	.name			=3D "phonesim",
+-	.probe			=3D phonesim_context_probe,
+-	.remove			=3D phonesim_context_remove,
+-	.activate_primary	=3D phonesim_activate_primary,
+-	.deactivate_primary	=3D phonesim_deactivate_primary,
++	.probe			=3D phonesim_tty_probe,
++	.remove			=3D phonesim_tty_remove,
++	.query_tty		=3D phonesim_tty_query,
++	.set_tty		=3D phonesim_tty_set,
+ };
  =
 
-+	case STK_COMMAND_TYPE_PROVIDE_LOCAL_INFO:
-+		respond =3D handle_command_provide_local_info(stk->pending_cmd,
-+								&rsp, stk);
-+		break;
+ static int phonesim_probe(struct ofono_modem *modem)
+@@ -465,6 +600,7 @@ static void phonesim_post_sim(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
++	ofono_text_telephony_create(modem, 0, "phonesim", data->chat);
+ 	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
+ =
+
+ 	if (!data->calypso)
+@@ -630,6 +766,8 @@ static int phonesim_init(void)
+ =
+
+ 	ofono_gprs_context_driver_register(&context_driver);
+ =
+
++	ofono_text_telephony_driver_register(&tty_driver);
 +
- 	case STK_COMMAND_TYPE_SEND_DTMF:
- 		respond =3D handle_command_send_dtmf(stk->pending_cmd,
- 							&rsp, stk);
+ 	parse_config(CONFIGDIR "/phonesim.conf");
+ =
+
+ 	return 0;
+@@ -648,6 +786,8 @@ static void phonesim_exit(void)
+ 	g_slist_free(modem_list);
+ 	modem_list =3D NULL;
+ =
+
++	ofono_text_telephony_driver_unregister(&tty_driver);
++
+ 	ofono_gprs_context_driver_unregister(&context_driver);
+ =
+
+ 	ofono_modem_driver_unregister(&phonesim_driver);
 -- =
 
-1.7.2.3
+1.7.3.2
 
 
---===============8655450959986635378==--
+--===============0883892090075783862==--
 
