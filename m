@@ -1,42 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============3406390425759059647=="
+Content-Type: multipart/mixed; boundary="===============0908021538472963424=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 0/2] Provide Local Information
-Date: Thu, 18 Nov 2010 18:55:54 +0800
-Message-ID: <1290077756-28124-1-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 2/2] network: Use bit as size instead of byte
+Date: Thu, 18 Nov 2010 18:55:56 +0800
+Message-ID: <1290077756-28124-3-git-send-email-yang.gu@intel.com>
+In-Reply-To: <1290077756-28124-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3406390425759059647==
+--===============0908021538472963424==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Currently only the access technology in proactive command "Provide Local In=
-formation" is handled. In order not to bloat the patch, I plan to send the =
-left parts in separate patches. Would you please review this part first?
-I have some concerns/questions on this command:
-1. The definition of access technology got from network is different from t=
-he definition in stk, so I did some map here. Please comment if I made some=
-thing wrong.
-2. How about if oFono couldn't provide some information. For example, if oF=
-ono couldn't provide the time info, need we ask the application to provide =
-one? Thus we'd need to introduce an agent.
+---
+ src/network.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-Yang Gu (2):
-  stk: provide access technology info
-  network: Use bit as size instead of byte
+diff --git a/src/network.c b/src/network.c
+index 481ece8..5320f8d 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -129,7 +129,7 @@ static char **network_operator_technologies(struct netw=
+ork_operator_data *opd)
+ 	char **techs;
+ 	unsigned int i;
+ =
 
- src/network.c |   18 +++++-
- src/ofono.h   |    1 +
- src/stk.c     |  179 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 196 insertions(+), 2 deletions(-)
+-	for (i =3D 0; i < sizeof(opd->techs); i++) {
++	for (i =3D 0; i < sizeof(opd->techs) * 8; i++) {
+ 		if (opd->techs & (1 << i))
+ 			ntechs +=3D 1;
+ 	}
+@@ -137,7 +137,7 @@ static char **network_operator_technologies(struct netw=
+ork_operator_data *opd)
+ 	techs =3D g_new0(char *, ntechs + 1);
+ 	ntechs =3D 0;
+ =
+
+-	for (i =3D 0; i < sizeof(opd->techs); i++) {
++	for (i =3D 0; i < sizeof(opd->techs) * 8; i++) {
+ 		if (!(opd->techs & (1 << i)))
+ 			continue;
+ =
 
 -- =
 
 1.7.2.3
 
 
---===============3406390425759059647==--
+--===============0908021538472963424==--
 
