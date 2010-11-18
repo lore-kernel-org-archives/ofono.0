@@ -1,35 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============8462960562680514725=="
+Content-Type: multipart/mixed; boundary="===============7202354356052627789=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH 1/3] Add TTY (hearing impaired) support
-Date: Thu, 18 Nov 2010 09:30:46 -0200
-Message-ID: <AANLkTimvDC3MEuwSeKwnQdFFpPgfy7Fq3JYFS4MNgAoG@mail.gmail.com>
-In-Reply-To: <1290079616-2754-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [RERESEND] [PATCH 1/2] Distinguish HSDPA,
+ HSUPA or both as access technologies
+Date: Thu, 18 Nov 2010 13:35:07 +0200
+Message-ID: <1290080108-19576-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8462960562680514725==
+--===============7202354356052627789==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Nov 18, 2010 at 9:26 AM, Lucas De Marchi
-<lucas.demarchi@profusion.mobi> wrote:
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 Changes the value of the specified property. Only
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 properties that are listed as read-write are
+---
+ src/common.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-A minor issue I found with other docs, it's written here as
-"read-write" and in some places as "readwrite". Can these two forms be
-used interchangeably? I think it would be better to let all as
-read-write.
+diff --git a/src/common.c b/src/common.c
+index b5b9a6f..22bf1c2 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -661,9 +661,9 @@ const char *registration_tech_to_string(int tech)
+ 	case ACCESS_TECHNOLOGY_GSM_EGPRS:
+ 		return "edge";
+ 	case ACCESS_TECHNOLOGY_UTRAN_HSDPA:
+-		return "hspa";
++		return "hsdpa";
+ 	case ACCESS_TECHNOLOGY_UTRAN_HSUPA:
+-		return "hspa";
++		return "hsupa";
+ 	case ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA:
+ 		return "hspa";
+ 	case ACCESS_TECHNOLOGY_EUTRAN:
+-- =
+
+1.7.1
 
 
-
-regards,
-
-Lucas De Marchi
-
---===============8462960562680514725==--
+--===============7202354356052627789==--
 
