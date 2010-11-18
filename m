@@ -1,55 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============1626075047374873723=="
+Content-Type: multipart/mixed; boundary="===============6014058136996744498=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [PATCH 1/2] stk: provide access technology info
-Date: Thu, 18 Nov 2010 15:36:56 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802C076BD@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <1290077756-28124-2-git-send-email-yang.gu@intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH] doc: fix typos
+Date: Thu, 18 Nov 2010 17:11:45 +0200
+Message-ID: <1290093105-6362-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1626075047374873723==
+--===============6014058136996744498==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+---
+ doc/voicecallmanager-api.txt |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
+index 11af23a..d960f3c 100644
+--- a/doc/voicecallmanager-api.txt
++++ b/doc/voicecallmanager-api.txt
+@@ -18,10 +18,10 @@ Methods		array{object,dict} GetCalls()
+ 		object Dial(string number, string hide_callerid)
  =
 
-> +
-> +unsigned int __ofono_netreg_get_tech(struct ofono_netreg *netreg) {
-> +	GSList *o;
-> +	unsigned int techs =3D 0;
-> +	struct network_operator_data *opd;
-> +
-> +	for (o =3D netreg->operator_list; o; o =3D o->next) {
-> +		opd =3D o->data;
-> +		techs |=3D opd->techs;
-> +	}
-> +
-> +	return techs;
-> +}
+ 			Initiates a new outgoing call. Returns the object path
+-			to the newly created call. The clir variable holds
+-			the CLIR override for this call.
++			to the newly created call. The hide_callerid variable
++			holds the CLIR override for this call.
+ 			The defines values are:
+-				"" or "default" - Default (Netowrk) CLIR mode
++				"" or "default" - Default (Network) CLIR mode
+ 							is used
+ 				"enabled" - Hides callerid, CLIR Invocation
+ 						is used
+-- =
 
-Is this function intended to get the current access technology?  =
-
-
-As per the ETSI TS 102 223 specification 4.12 section, when the SAT
-issues Provide Local Information proactive command with Access
-Technology(0x06) as the command qualifier, we should provide the current
-access technology . So, as per my understanding we need to use
-netreg->technology. =
+1.7.1
 
 
-> void __ofono_netreg_set_base_station_name(struct ofono_netreg *netreg,
-> 						const char *name);
-> +unsigned int __ofono_netreg_get_tech(struct ofono_netreg *netreg);
- =
-
-Empty line needed between __ofono_netreg_set_base_station_name and
-__ofono_netreg_get_tech
-
-Regards,
-Jeevaka
-
---===============1626075047374873723==--
+--===============6014058136996744498==--
 
