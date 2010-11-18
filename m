@@ -1,245 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7728555008065687136=="
+Content-Type: multipart/mixed; boundary="===============2523416707626119727=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 2/3] phonesim: implement TTY interface
-Date: Thu, 18 Nov 2010 00:50:39 -0200
-Message-ID: <1290048640-28641-2-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 3/3] Add script to enable/disable TTY support
+Date: Thu, 18 Nov 2010 00:50:40 -0200
+Message-ID: <1290048640-28641-3-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1290048640-28641-2-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7728555008065687136==
+--===============2523416707626119727==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/phonesim.c |  148 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++--
- 1 files changed, 144 insertions(+), 4 deletions(-)
+ test/set-tty |   25 +++++++++++++++++++++++++
+ 1 files changed, 25 insertions(+), 0 deletions(-)
+ create mode 100755 test/set-tty
 
-diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index d2faf42..8c31df4 100644
---- a/plugins/phonesim.c
-+++ b/plugins/phonesim.c
-@@ -54,6 +54,7 @@
- #include <ofono/stk.h>
- #include <ofono/sms.h>
- #include <ofono/ssn.h>
-+#include <ofono/text-telephony.h>
- #include <ofono/ussd.h>
- #include <ofono/voicecall.h>
- #include <ofono/gprs.h>
-@@ -64,6 +65,7 @@
- #include <drivers/atmodem/atutil.h>
- =
-
- static const char *none_prefix[] =3D { NULL };
-+static const char *ptty_prefix[] =3D { "+PTTY:", NULL };
- static int next_iface =3D 0;
- =
-
- struct phonesim_data {
-@@ -78,6 +80,11 @@ struct gprs_context_data {
- 	char *interface;
- };
- =
-
-+struct text_telephony_data {
-+	GAtChat *chat;
-+	char *interface;
-+};
+diff --git a/test/set-tty b/test/set-tty
+new file mode 100755
+index 0000000..cbbb043
+--- /dev/null
++++ b/test/set-tty
+@@ -0,0 +1,25 @@
++#!/usr/bin/python
 +
- static void at_cgact_up_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
- {
- 	struct cb_data *cbd =3D user_data;
-@@ -190,12 +197,140 @@ static void phonesim_context_remove(struct ofono_gpr=
-s_context *gc)
- 	g_free(gcd);
- }
- =
-
-+static int phonesim_tty_probe(struct ofono_text_telephony *tt,
-+				unsigned int vendor, void *data)
-+{
-+	GAtChat *chat =3D data;
-+	struct text_telephony_data *ttd;
++import dbus
++import sys
 +
-+	ttd =3D g_try_new0(struct text_telephony_data, 1);
-+	if (!ttd)
-+		return -ENOMEM;
++bus =3D dbus.SystemBus()
 +
-+	ttd->chat =3D g_at_chat_clone(chat);
-+	ttd->interface =3D g_strdup_printf("dummy%d", next_iface++);
++if len(sys.argv) =3D=3D 3:
++	path =3D sys.argv[1]
++	enable =3D int(sys.argv[2])
++elif len(sys.argv) =3D=3D 2:
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++						'org.ofono.Manager')
++	modems =3D manager.GetModems()
++	path =3D modems[0][0]
++	enable =3D int(sys.argv[1])
++else:
++	print "%s [PATH] {0|1}" % (sys.argv[0])
++	exit(1)
 +
-+	ofono_text_telephony_set_data(tt, ttd);
-+	ofono_text_telephony_register(tt);
++print "Setting TTY for modem %s..." % path
++texttelephony =3D dbus.Interface(bus.get_object('org.ofono', path),
++						'org.ofono.TextTelephony')
 +
-+	return 0;
-+}
-+
-+static void phonesim_tty_remove(struct ofono_text_telephony *tt)
-+{
-+	struct text_telephony_data *ttd =3D ofono_text_telephony_get_data(tt);
-+
-+	DBG("");
-+
-+	ofono_text_telephony_set_data(tt, NULL);
-+
-+	g_at_chat_unref(ttd->chat);
-+	g_free(ttd->interface);
-+
-+	g_free(ttd);
-+}
-+
-+static void tty_query_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	struct ofono_error error;
-+	GAtResultIter iter;
-+	ofono_text_telephony_query_cb_t cb =3D cbd->cb;
-+	int value;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (!ok) {
-+		cb(&error, -1, cbd->data);
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (g_at_result_iter_next(&iter, "+PTTY:") =3D=3D FALSE)
-+		goto error;
-+
-+	if (g_at_result_iter_next_number(&iter, &value) =3D=3D FALSE)
-+		goto error;
-+
-+	cb(&error, value, cbd->data);
-+
-+	return;
-+
-+error:
-+
-+	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+}
-+
-+static void phonesim_tty_query(struct ofono_text_telephony *tt,
-+				ofono_text_telephony_query_cb_t cb, void *data)
-+{
-+	struct text_telephony_data *ttd =3D ofono_text_telephony_get_data(tt);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+
-+	DBG("");
-+
-+	if (!cbd)
-+		goto error;
-+
-+	if (g_at_chat_send(ttd->chat, "AT+PTTY?", ptty_prefix,
-+				tty_query_cb, cbd, g_free) > 0)
-+		return;
-+
-+error:
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, 0, data);
-+}
-+
-+static void tty_set_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_text_telephony_set_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+	cb(&error, cbd->data);
-+}
-+
-+static void phonesim_tty_set(struct ofono_text_telephony *tt, int enable,
-+				ofono_text_telephony_set_cb_t cb, void *data)
-+{
-+	struct text_telephony_data *ttd =3D ofono_text_telephony_get_data(tt);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char buf[12];
-+
-+	DBG("");
-+
-+	if (!cbd)
-+		goto error;
-+
-+	enable =3D !!enable;
-+	snprintf(buf, sizeof(buf), "AT+PTTY=3D%d", enable);
-+
-+	if (g_at_chat_send(ttd->chat, buf, none_prefix,
-+					tty_set_cb, cbd, g_free) > 0)
-+		return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, data);
-+	g_free(cbd);
-+}
-+
- static struct ofono_gprs_context_driver context_driver =3D {
-+	.name                   =3D "phonesim",
-+	.probe                  =3D phonesim_context_probe,
-+	.remove                 =3D phonesim_context_remove,
-+	.activate_primary       =3D phonesim_activate_primary,
-+	.deactivate_primary     =3D phonesim_deactivate_primary,
-+};
-+
-+static struct ofono_text_telephony_driver tty_driver =3D {
- 	.name			=3D "phonesim",
--	.probe			=3D phonesim_context_probe,
--	.remove			=3D phonesim_context_remove,
--	.activate_primary	=3D phonesim_activate_primary,
--	.deactivate_primary	=3D phonesim_deactivate_primary,
-+	.probe			=3D phonesim_tty_probe,
-+	.remove			=3D phonesim_tty_remove,
-+	.query_tty		=3D phonesim_tty_query,
-+	.set_tty		=3D phonesim_tty_set,
- };
- =
-
- static int phonesim_probe(struct ofono_modem *modem)
-@@ -465,6 +600,7 @@ static void phonesim_post_sim(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
-+	ofono_text_telephony_create(modem, 0, "phonesim", data->chat);
- 	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
- =
-
- 	if (!data->calypso)
-@@ -630,6 +766,8 @@ static int phonesim_init(void)
- =
-
- 	ofono_gprs_context_driver_register(&context_driver);
- =
-
-+	ofono_text_telephony_driver_register(&tty_driver);
-+
- 	parse_config(CONFIGDIR "/phonesim.conf");
- =
-
- 	return 0;
-@@ -648,6 +786,8 @@ static void phonesim_exit(void)
- 	g_slist_free(modem_list);
- 	modem_list =3D NULL;
- =
-
-+	ofono_text_telephony_driver_unregister(&tty_driver);
-+
- 	ofono_gprs_context_driver_unregister(&context_driver);
- =
-
- 	ofono_modem_driver_unregister(&phonesim_driver);
++texttelephony.SetProperty("Powered", dbus.Boolean(enable));
 -- =
 
 1.7.3.2
 
 
---===============7728555008065687136==--
+--===============2523416707626119727==--
 
