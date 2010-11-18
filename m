@@ -1,50 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============3669605618273612819=="
+Content-Type: multipart/mixed; boundary="===============4290484782293485429=="
 MIME-Version: 1.0
-From: John.Mathew@elektrobit.com
-Subject: RE: [PATCH] voicecall: Add EmergencyCall property.
-Date: Thu, 18 Nov 2010 13:58:32 +0200
-Message-ID: <FE1DB9979BF5A743BEB836613423CAD8012C9804@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <1289494917.3266.64.camel@aeonflux>
+From: George Matveev <george@matveev.se>
+Subject: [PATCH] build: Update glib version in configure.ac
+Date: Thu, 18 Nov 2010 12:03:30 +0000
+Message-ID: <1290081725-4767-1-git-send-email-george@matveev.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3669605618273612819==
+--===============4290484782293485429==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+function g_mkstemp_full in src/storage.c
+requires glib version 2.22 or higher
+---
+ configure.ac |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 6aeab7c..c0f4217 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -67,8 +67,8 @@ AC_CHECK_LIB(c, signalfd, dummy=3Dyes,
+ AC_CHECK_LIB(dl, dlopen, dummy=3Dyes,
+ 			AC_MSG_ERROR(dynamic linking loader is required))
  =
 
-Hi Marcel,
+-PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.16, dummy=3Dyes,
+-				AC_MSG_ERROR(GLib >=3D 2.16 is required))
++PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.22, dummy=3Dyes,
++				AC_MSG_ERROR(GLib >=3D 2.22 is required))
+ AC_SUBST(GLIB_CFLAGS)
+ AC_SUBST(GLIB_LIBS)
+ =
 
-> This was a question open for discussion. What would be the appropriate
-property name?
+-- =
 
-As per my understanding, this property is only to provide the Emergency
-call indication to the application side, so that applications can
-display a different UI compared to the normal UI. In this case, I think
-the property name "Emergency" is enough. =
-
-
-Since this is a property for the call, the following fits as well. We
-can remove the existing multiparty property and add it to the new
-property.
-
-string Type [readonly]
-       Contains the Type of the current call.
-
-       The Values can be:
-               "Normal"
-               "Emergency"
-		   "Data"
-	         "Multiparty"	=
+1.5.6.5
 
 
-Let me know your opinion on this.
-                          =
-
-regards
-John
-
---===============3669605618273612819==--
+--===============4290484782293485429==--
 
