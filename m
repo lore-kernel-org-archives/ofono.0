@@ -1,17 +1,19 @@
-Content-Type: multipart/mixed; boundary="===============4422585995218701454=="
+Content-Type: multipart/mixed; boundary="===============1750398535100215706=="
 MIME-Version: 1.0
 From: George Matveev <george@matveev.se>
-Subject: [PATCH] function g_mkstemp_full in src/storage.c
-Date: Thu, 18 Nov 2010 20:11:52 +0100
-Message-ID: <1290107512-3585-1-git-send-email-george@matveev.se>
+Subject: [PATCH] 	build: Update glib version in configure.ac
+Date: Thu, 18 Nov 2010 20:21:03 +0100
+Message-ID: <1290108063-3777-1-git-send-email-george@matveev.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4422585995218701454==
+--===============1750398535100215706==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+function g_mkstemp_full in src/storage.c
+requires glib version 2.22 or higher
 ---
  configure.ac |    4 ++--
  1 files changed, 2 insertions(+), 2 deletions(-)
@@ -38,5 +40,5 @@ index 6aeab7c..c0f4217 100644
 1.5.6.5
 
 
---===============4422585995218701454==--
+--===============1750398535100215706==--
 
