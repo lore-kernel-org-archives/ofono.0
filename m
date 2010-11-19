@@ -1,64 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5804231212950450949=="
+Content-Type: multipart/mixed; boundary="===============1049416095476553320=="
 MIME-Version: 1.0
-From: Gu, Yang <yang.gu@intel.com>
-Subject: RE: [PATCH 1/2] stk: provide access technology info
-Date: Fri, 19 Nov 2010 15:27:10 +0800
-Message-ID: <CE761E84DADF2947A4AF22FB8D97A473306474A2@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702CCB3A0@usrdes03.ebgroup.elektrobit.com>
+From: George Matveev <george@matveev.se>
+Subject: [PATCH] build: Update glib version in configure.ac
+Date: Fri, 19 Nov 2010 10:18:05 +0100
+Message-ID: <1290158285-3547-1-git-send-email-george@matveev.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5804231212950450949==
+--===============1049416095476553320==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rajesh & Jeevaka
+function g_mkstemp_full in src/storage.c
+requires glib version 2.22 or higher
+---
+ configure.ac |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
->> I think you're right. I'm not quite clear about the
->> difference. Could you help me clarify several questions?
->> Does it mean COPS only returns current available access
->> technology, while CREG returns current connected access technology?
->
->COPS returns the currently available operators and its
->corresponding access technologies. CREG returns the currently
->registered operator's access techonology. In provide local
->information as Jeeva mentioned we have to include only the current
->registered access technology.
->
->So the logic used in
->+static gboolean get_tech(struct ofono_stk *stk, struct stk_response
->*rsp,
->+							gboolean
->singleton)
->should also be changed apart from the
->+unsigned int __ofono_netreg_get_tech(struct ofono_netreg *netreg)
->change.
->
->> And if netreg->technology is used, what should be returned
->> once the multiple access technologies are requested?
->
->As said above, in this case only the current registered access
->technology should be returned and so irrespective of a platform
->supporting multiple technologies, the currently registered access
->technology will be only one type in a Single mode active case.
->
->> It seems oFono only supports one connected technology.
->
->Yes, currently only Single mode active case is supported.
->
->> In which situation we can connect to multiple access
->> technologies simultaneously?
->
->In Dual Mode Dual standby case.
+diff --git a/configure.ac b/configure.ac
+index 6aeab7c..c0f4217 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -67,8 +67,8 @@ AC_CHECK_LIB(c, signalfd, dummy=3Dyes,
+ AC_CHECK_LIB(dl, dlopen, dummy=3Dyes,
+ 			AC_MSG_ERROR(dynamic linking loader is required))
+ =
 
-Thank you both for the comments and answers to help me clarify the problems=
-, also make the code simpler than what I thought ;)
+-PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.16, dummy=3Dyes,
+-				AC_MSG_ERROR(GLib >=3D 2.16 is required))
++PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.22, dummy=3Dyes,
++				AC_MSG_ERROR(GLib >=3D 2.22 is required))
+ AC_SUBST(GLIB_CFLAGS)
+ AC_SUBST(GLIB_LIBS)
+ =
+
+-- =
+
+1.5.6.5
 
 
-Regards,
--Yang
-
-
---===============5804231212950450949==--
+--===============1049416095476553320==--
 
