@@ -1,38 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============1492562347219368423=="
+Content-Type: multipart/mixed; boundary="===============7452355618407276960=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: RE: [PATCH] ifxmodem: Adding fast dormancy support to Infineon modem
-Date: Thu, 18 Nov 2010 12:18:30 -0800
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C90157D0A819@orsmsx508.amr.corp.intel.com>
-In-Reply-To: <CB28AA307186A940B1253A743EA1F20AA60D6C5B@orsmsx507.amr.corp.intel.com>
+From: Gu, Yang <yang.gu@intel.com>
+Subject: RE: [PATCH 1/2] stk: provide access technology info
+Date: Fri, 19 Nov 2010 14:04:11 +0800
+Message-ID: <CE761E84DADF2947A4AF22FB8D97A473306473C1@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802C076BD@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1492562347219368423==
+--===============7452355618407276960==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> According to the doc I have, modem implementation is quite close:
-> =
+Hi Jeevaka,
 
-> "Trigger Fast Dormancy +XFDOR
-> This command triggers fast dormancy if all conditions are passed successf=
-ul it will be send =
+>
+>As per the ETSI TS 102 223 specification 4.12 section, when the SAT
+>issues Provide Local Information proactive command with Access
+>Technology(0x06) as the command qualifier, we should provide the current
+>access technology . So, as per my understanding we need to use
+>netreg->technology.
+>
+>> void __ofono_netreg_set_base_station_name(struct ofono_netreg *netreg,
+>> 						const char *name);
+>> +unsigned int __ofono_netreg_get_tech(struct ofono_netreg *netreg);
+>
+>Empty line needed between __ofono_netreg_set_base_station_name and
+>__ofono_netreg_get_tech
 
-> towards the network. There will be no confirmation if the request was exe=
-cuted or not as in the =
+I think you're right. I'm not quite clear about the difference. Could you h=
+elp me clarify several questions? =
 
-> last extend the full execution belongs to the network."
+Does it mean COPS only returns current available access technology, while C=
+REG returns current connected access technology? =
 
-+XFDOR triggers fast dormancy once iff conditions are suitable. oFono expec=
-ts a mode where
-fast dormancy is triggered automatically by the modem _anytime_ conditions =
-have been suitable for the duration of a given timeout period. A command fo=
-r such mode is not yet available in IFX FW as far as I know.
+And if netreg->technology is used, what should be returned once the multipl=
+e access technologies are requested? It seems oFono only supports one conne=
+cted technology.
+In which situation we can connect to multiple access technologies simultane=
+ously?
 
-Cheers,
-Waldo
 
---===============1492562347219368423==--
+Regards,
+-Yang
+
+--===============7452355618407276960==--
 
