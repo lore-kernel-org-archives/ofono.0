@@ -1,44 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============1049416095476553320=="
+Content-Type: multipart/mixed; boundary="===============4073803244145329433=="
 MIME-Version: 1.0
 From: George Matveev <george@matveev.se>
-Subject: [PATCH] build: Update glib version in configure.ac
-Date: Fri, 19 Nov 2010 10:18:05 +0100
-Message-ID: <1290158285-3547-1-git-send-email-george@matveev.se>
+Subject: Re: [PATCH] build: Update glib version in configure.ac
+Date: Fri, 19 Nov 2010 10:25:03 +0100
+Message-ID: <b15dad41b90dffb9b3e1adf169090637.squirrel@squirrel-webmail.surftown.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1049416095476553320==
+--===============4073803244145329433==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-function g_mkstemp_full in src/storage.c
-requires glib version 2.22 or higher
----
- configure.ac |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+Hi Marcel,
 
-diff --git a/configure.ac b/configure.ac
-index 6aeab7c..c0f4217 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -67,8 +67,8 @@ AC_CHECK_LIB(c, signalfd, dummy=3Dyes,
- AC_CHECK_LIB(dl, dlopen, dummy=3Dyes,
- 			AC_MSG_ERROR(dynamic linking loader is required))
- =
+you are right.
+I've just corrected that and resubmitted the patch, please review.
 
--PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.16, dummy=3Dyes,
--				AC_MSG_ERROR(GLib >=3D 2.16 is required))
-+PKG_CHECK_MODULES(GLIB, glib-2.0 >=3D 2.22, dummy=3Dyes,
-+				AC_MSG_ERROR(GLib >=3D 2.22 is required))
- AC_SUBST(GLIB_CFLAGS)
- AC_SUBST(GLIB_LIBS)
- =
+Best regards,
+George
 
--- =
+--------------------------- Ursprungligt brev ----------------------------
+=C3=84rende: Re: [PATCH] 	build: Update glib version in configure.ac
+Fr=C3=A5n:   "Marcel Holtmann" <marcel@holtmann.org>
+Datum:  Fr, 2010-11-19, 08:01 am
+Till:   ofono(a)ofono.org
+--------------------------------------------------------------------------
 
-1.5.6.5
+Hi George,
+
+> function g_mkstemp_full in src/storage.c
+> requires glib version 2.22 or higher
+> ---
+>  configure.ac |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
+
+patch looks good, but your subject line has a ^I character in it and I
+prefer not to figure out what git does with it. So please fix this
+first.
+
+Regards
+
+Marcel
 
 
---===============1049416095476553320==--
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
+
+
+
+--===============4073803244145329433==--
 
