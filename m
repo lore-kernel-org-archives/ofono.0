@@ -1,58 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============2127256334058923535=="
+Content-Type: multipart/mixed; boundary="===============0971778280069694231=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH] Add test script for the Lockdown property
-Date: Fri, 19 Nov 2010 20:20:18 -0200
-Message-ID: <1290205218-23337-1-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1290202629-23235-3-git-send-email-padovan@profusion.mobi>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 1/3] Add TTY (hearing impaired) support
+Date: Fri, 19 Nov 2010 20:26:11 -0200
+Message-ID: <AANLkTika9PFdjH_phXEMKw_v7L1yONdkP6SWJADvwDdf@mail.gmail.com>
+In-Reply-To: <20101119221807.GB19122@vigoh>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2127256334058923535==
+--===============0971778280069694231==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/lockdown-modem |   25 +++++++++++++++++++++++++
- 1 files changed, 25 insertions(+), 0 deletions(-)
- create mode 100755 test/lockdown-modem
+Hi, Gustavo
 
-diff --git a/test/lockdown-modem b/test/lockdown-modem
-new file mode 100755
-index 0000000..73f2199
---- /dev/null
-+++ b/test/lockdown-modem
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 2:
-+	path =3D sys.argv[1]
-+else:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+			'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+
-+print "Locking and disconnecting modem %s..." % path
-+modem =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.Modem')
-+
-+modem.SetProperty("Lockdown", dbus.Boolean(1))
-+
-+print "press ENTER to power up and unlock the modem %s" % path
-+sys.stdin.readline()
-+
-+modem.SetProperty("Lockdown", dbus.Boolean(0))
--- =
+On Fri, Nov 19, 2010 at 8:18 PM, Gustavo F. Padovan
+<padovan@profusion.mobi> wrote:
+>> +Properties =C2=A0 boolean Powered [readwrite]
+>
+> From what I remember in the discussion in the IRC, this should be
+> Enabled and not Powered.
+>
 
-1.7.3.1
+Dennis told me to send the patch with "Powered", so we can agree here
+what is the best name. Seems that Marcel prefers Powered though.
 
 
---===============2127256334058923535==--
+Lucas De Marchi
+
+--===============0971778280069694231==--
 
