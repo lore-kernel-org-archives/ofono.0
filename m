@@ -1,37 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============2470504372727525004=="
+Content-Type: multipart/mixed; boundary="===============3307720393730612400=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH] ifxmodem: Adding fast dormancy support to Infineon modem
-Date: Fri, 19 Nov 2010 07:58:36 +0100
-Message-ID: <1290149916.29148.25.camel@aeonflux>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C90157D0A819@orsmsx508.amr.corp.intel.com>
+Subject: Re: [PATCH] 	build: Update glib version in configure.ac
+Date: Fri, 19 Nov 2010 08:01:03 +0100
+Message-ID: <1290150063.29148.27.camel@aeonflux>
+In-Reply-To: <1290108063-3777-1-git-send-email-george@matveev.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2470504372727525004==
+--===============3307720393730612400==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
+Hi George,
 
-> > "Trigger Fast Dormancy +XFDOR
-> > This command triggers fast dormancy if all conditions are passed succes=
-sful it will be send =
+> function g_mkstemp_full in src/storage.c
+> requires glib version 2.22 or higher
+> ---
+>  configure.ac |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
 
-> > towards the network. There will be no confirmation if the request was e=
-xecuted or not as in the =
-
-> > last extend the full execution belongs to the network."
-> =
-
-> +XFDOR triggers fast dormancy once iff conditions are suitable. oFono exp=
-ects a mode where
-> fast dormancy is triggered automatically by the modem _anytime_ condition=
-s have been suitable for the duration of a given timeout period. A command =
-for such mode is not yet available in IFX FW as far as I know.
-
-that is what I remembered. Thanks for the clarification.
+patch looks good, but your subject line has a ^I character in it and I
+prefer not to figure out what git does with it. So please fix this
+first.
 
 Regards
 
@@ -39,5 +31,5 @@ Marcel
 
 
 
---===============2470504372727525004==--
+--===============3307720393730612400==--
 
