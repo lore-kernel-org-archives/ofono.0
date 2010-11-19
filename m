@@ -1,162 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7116262822310250012=="
+Content-Type: multipart/mixed; boundary="===============3889113217894263631=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v3 3/3] modem: add support to restore state when resetting
- the modem
-Date: Fri, 19 Nov 2010 19:36:30 -0200
-Message-ID: <1290202590-23190-3-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1290202590-23190-2-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 1/3] TODO: Add owner to implement the Lockdown property
+Date: Fri, 19 Nov 2010 19:37:07 -0200
+Message-ID: <1290202629-23235-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7116262822310250012==
+--===============3889113217894263631==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/modem.c |   74 ++++++++++++++++++++++++++++++++-----------------------=
----
- 1 files changed, 41 insertions(+), 33 deletions(-)
+ TODO |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/src/modem.c b/src/modem.c
-index e57f8fc..704de29 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -61,6 +61,7 @@ enum modem_state {
- struct ofono_modem {
- 	char			*path;
- 	enum modem_state	modem_state;
-+	enum modem_state	old_state;
- 	GSList			*atoms;
- 	struct ofono_watchlist	*atom_watches;
- 	GSList			*interface_list;
-@@ -375,7 +376,7 @@ static void modem_change_state(struct ofono_modem *mode=
-m,
- 	if (old_state =3D=3D new_state)
- 		return;
+diff --git a/TODO b/TODO
+index dec43fd..36afaeb 100644
+--- a/TODO
++++ b/TODO
+@@ -475,6 +475,7 @@ Miscellaneous
  =
 
--	if (new_online !=3D modem->online) {
-+	if (new_online !=3D modem->online && !modem->reset) {
- 		DBusConnection *conn =3D ofono_dbus_get_connection();
- 		modem->online =3D new_online;
- 		ofono_dbus_signal_property_changed(conn, modem->path,
-@@ -414,48 +415,26 @@ static void modem_change_state(struct ofono_modem *mo=
-dem,
- 	}
- }
+   Priority: Medium
+   Complexity: C2
++  Owner: Gustavo F Padovan <padovan@profusion.mobi>
  =
 
--static void sim_state_watch(enum ofono_sim_state new_state, void *user)
--{
--	struct ofono_modem *modem =3D user;
--
--	switch (new_state) {
--	case OFONO_SIM_STATE_NOT_PRESENT:
--		modem_change_state(modem, MODEM_STATE_PRE_SIM);
--		break;
--	case OFONO_SIM_STATE_INSERTED:
--		break;
--	case OFONO_SIM_STATE_READY:
--		modem_change_state(modem, MODEM_STATE_OFFLINE);
--
--		/*
--		 * If we don't have the set_online method, also proceed
--		 * straight to the online state
--		 */
--		if (modem->driver->set_online =3D=3D NULL)
--			modem_change_state(modem, MODEM_STATE_ONLINE);
--
--		modem->reset =3D FALSE;
--
--		break;
--	}
--}
--
- static void online_cb(const struct ofono_error *error, void *data)
- {
- 	struct ofono_modem *modem =3D data;
- 	DBusMessage *reply;
- =
-
- 	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
--			modem->modem_state =3D=3D MODEM_STATE_OFFLINE)
-+			modem->modem_state =3D=3D MODEM_STATE_OFFLINE) {
-+		modem_change_state(modem, MODEM_STATE_ONLINE);
-+
-+		if (modem->reset) {
-+			modem->reset =3D FALSE;
-+			return;
-+		}
-+
- 		reply =3D dbus_message_new_method_return(modem->pending);
--	else
-+	} else {
- 		reply =3D __ofono_error_failed(modem->pending);
-+	}
- =
-
- 	__ofono_dbus_pending_reply(&modem->pending, reply);
--
--	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
--			modem->modem_state =3D=3D MODEM_STATE_OFFLINE)
--		modem_change_state(modem, MODEM_STATE_ONLINE);
- }
- =
-
- static void offline_cb(const struct ofono_error *error, void *data)
-@@ -475,6 +454,34 @@ static void offline_cb(const struct ofono_error *error=
-, void *data)
- 		modem_change_state(modem, MODEM_STATE_OFFLINE);
- }
- =
-
-+static void sim_state_watch(enum ofono_sim_state new_state, void *user)
-+{
-+	struct ofono_modem *modem =3D user;
-+
-+	switch (new_state) {
-+	case OFONO_SIM_STATE_NOT_PRESENT:
-+		modem_change_state(modem, MODEM_STATE_PRE_SIM);
-+		break;
-+	case OFONO_SIM_STATE_INSERTED:
-+		break;
-+	case OFONO_SIM_STATE_READY:
-+		modem_change_state(modem, MODEM_STATE_OFFLINE);
-+
-+		/*
-+		 * If we don't have the set_online method, also proceed
-+		 * straight to the online state
-+		 */
-+		if (modem->driver->set_online =3D=3D NULL)
-+			modem_change_state(modem, MODEM_STATE_ONLINE);
-+		else if (modem->old_state > MODEM_STATE_OFFLINE)
-+			modem->driver->set_online(modem, 1, online_cb, modem);
-+		else
-+			modem->reset =3D FALSE;
-+
-+		break;
-+	}
-+}
-+
- static DBusMessage *set_property_online(struct ofono_modem *modem,
- 					DBusMessage *msg,
- 					DBusMessageIter *var)
-@@ -1586,6 +1593,7 @@ static gboolean __reset_modem(void *data)
- 	struct ofono_modem *modem =3D data;
- 	int err;
- =
-
-+	modem->old_state =3D modem->modem_state;
- 	modem->reset =3D TRUE;
- =
-
- 	err =3D set_powered(modem, FALSE);
+ - TTY (hearing impaired) support.  Add a new oFono atom type that will ena=
+ble
+   the user to enable or disable the TTY support on the modem.  Support for
 -- =
 
 1.7.3.1
 
 
---===============7116262822310250012==--
+--===============3889113217894263631==--
 
