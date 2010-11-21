@@ -1,139 +1,257 @@
-Content-Type: multipart/mixed; boundary="===============8827399441114240099=="
+Content-Type: multipart/mixed; boundary="===============5609984859574988578=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCHv3 2/2] stemodem: Use RTNL to create network interfaces.
-Date: Mon, 22 Nov 2010 00:01:41 +0100
-Message-ID: <1290380501-13594-2-git-send-email-sjurbren@gmail.com>
-In-Reply-To: <d34704fde1df023d47b287f4dad2a528.squirrel@squirrel-webmail.surftown.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 1/4] phonesim: Add Send Short Message commands to sim app menu.
+Date: Sun, 21 Nov 2010 16:51:35 +0100
+Message-ID: <1290354698-15749-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8827399441114240099==
+--===============5609984859574988578==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
-
 ---
-Changes from V2:
-o Squashed functions caif_if_create info ste_gprs_context_probe
+ src/simapplication.cpp |  148 ++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ src/simapplication.h   |    5 ++
+ 2 files changed, 152 insertions(+), 1 deletions(-)
 
- drivers/stemodem/gprs-context.c |   44 ++++++++++++++++++++++++++++++++---=
----
- 1 files changed, 37 insertions(+), 7 deletions(-)
-
-diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
-t.c
-index 3ccda87..f118453 100644
---- a/drivers/stemodem/gprs-context.c
-+++ b/drivers/stemodem/gprs-context.c
-@@ -47,6 +47,7 @@
- #include "stemodem.h"
- #include "caif_socket.h"
- #include "if_caif.h"
-+#include "caif_rtnl.h"
+diff --git a/src/simapplication.cpp b/src/simapplication.cpp
+index 7dc580f..9742fd9 100644
+--- a/src/simapplication.cpp
++++ b/src/simapplication.cpp
+@@ -21,6 +21,7 @@
+ #include <qatutils.h>
+ #include <qdebug.h>
+ #include <QTextCodec>
++#include "qsmsmessage.h"
  =
 
- #define MAX_CAIF_DEVICES 4
- #define MAX_DNS 2
-@@ -172,12 +173,20 @@ static struct conn_info *conn_info_create(unsigned in=
-t channel_id)
- 	return connection;
- }
- =
-
--/*
-- * Creates a new IP interface for CAIF.
-- */
--static gboolean caif_if_create(struct conn_info *conn)
-+static void rtnl_callback(int ifindex, const char *ifname, void *user_data)
+ class SimApplicationPrivate
  {
--	return FALSE;
-+	struct conn_info *conn =3D user_data;
-+
-+	if (ifindex < 0) {
-+		conn->created =3D FALSE;
-+		ofono_error("Failed to create caif interface %s",
-+			conn->interface);
-+		return;
-+	}
-+
-+	strncpy(conn->interface, ifname, sizeof(conn->interface));
-+	conn->ifindex =3D ifindex;
-+	conn->created =3D TRUE;
+@@ -258,7 +259,8 @@ void SimApplication::endSession()
  }
  =
 
- /*
-@@ -185,6 +194,18 @@ static gboolean caif_if_create(struct conn_info *conn)
-  */
- static void caif_if_remove(struct conn_info *conn)
+ DemoSimApplication::DemoSimApplication( SimRules *rules, QObject *parent )
+-    : SimApplication( rules, parent )
++    : SimApplication( rules, parent ), smsDestNumber( "12345" ),
++    smsText( "Hello" )
  {
-+	if (!conn->created)
-+		return;
-+
-+	if (caif_rtnl_delete_interface(conn->ifindex) < 0) {
-+		ofono_error("Failed to delete caif interface %s",
-+			conn->interface);
-+		return;
-+	}
-+
-+	DBG("removed CAIF interface ch:%d ifname:%s ifindex:%d\n",
-+		conn->channel_id, conn->interface, conn->ifindex);
-+	return;
  }
  =
 
- static void ste_eppsd_down_cb(gboolean ok, GAtResult *result,
-@@ -526,7 +547,7 @@ static int ste_gprs_context_probe(struct ofono_gprs_con=
-text *gc,
- 	GAtChat *chat =3D data;
- 	struct gprs_context_data *gcd;
- 	struct conn_info *ci;
--	int i;
-+	int i,err;
+@@ -284,6 +286,7 @@ const QString DemoSimApplication::getName()
+ #define MainMenu_SendSS     11
+ #define MainMenu_Language   12
+ #define MainMenu_SendUSSD   13
++#define MainMenu_SendSMS    14
  =
 
- 	gcd =3D g_new0(struct gprs_context_data, 1);
- 	gcd->chat =3D g_at_chat_clone(chat);
-@@ -539,7 +560,14 @@ static int ste_gprs_context_probe(struct ofono_gprs_co=
-ntext *gc,
- 		ci =3D conn_info_create(i+1);
- 		if (!ci)
- 			return -ENOMEM;
--		caif_if_create(ci);
-+		err =3D caif_rtnl_create_interface(IFLA_CAIF_IPV4_CONNID,
-+						ci->channel_id, FALSE,
-+						rtnl_callback, ci);
-+		if (err < 0) {
-+			DBG("Failed to create IP interface for CAIF");
-+			return err;
-+		}
+ #define SportsMenu_Chess        1
+ #define SportsMenu_Painting     2
+@@ -342,6 +345,13 @@ const QString DemoSimApplication::getName()
+ #define SendUSSD_Error      4
+ #define SendUSSD_Main       5
+ =
+
++enum SendSMSMenuItems {
++	SendSMS_Unpacked =3D 1,
++	SendSMS_Packed,
++	SendSMS_SetDestination,
++	SendSMS_SetContents,
++};
 +
- 		g_caif_devices =3D g_slist_append(g_caif_devices, ci);
- 	}
- =
-
-@@ -571,10 +599,12 @@ static struct ofono_gprs_context_driver driver =3D {
- =
-
- void ste_gprs_context_init()
+ void DemoSimApplication::mainMenu()
  {
-+	caif_rtnl_init();
- 	ofono_gprs_context_driver_register(&driver);
- }
+     QSimCommand cmd;
+@@ -402,6 +412,10 @@ void DemoSimApplication::mainMenu()
+     item.setLabel( "Send USSD" );
+     items +=3D item;
  =
 
- void ste_gprs_context_exit()
- {
-+	caif_rtnl_exit();
- 	ofono_gprs_context_driver_unregister(&driver);
++    item.setIdentifier( MainMenu_SendSMS );
++    item.setLabel( "Send SMS request" );
++    items +=3D item;
++
+     cmd.setMenuItems( items );
+ =
+
+     command( cmd, 0, 0 );
+@@ -514,6 +528,12 @@ void DemoSimApplication::mainMenuSelection( int id )
+         }
+         break;
+ =
+
++        case MainMenu_SendSMS:
++        {
++            sendSMSMenu();
++        }
++        break;
++
+         default:
+         {
+             // Don't know what this item is, so just re-display the main m=
+enu.
+@@ -1832,3 +1852,129 @@ void DemoSimApplication::USSDMenu( const QSimTermin=
+alResponse& resp )
+         endSession();
+     }
  }
++
++void DemoSimApplication::sendSMSMenu()
++{
++    QSimCommand cmd;
++    QSimMenuItem item;
++    QList<QSimMenuItem> items;
++
++    cmd.setType( QSimCommand::SelectItem );
++    cmd.setTitle( "Send SMS" );
++
++    item.setIdentifier( SendSMS_Unpacked );
++    item.setLabel( "Unpacked" );
++    items +=3D item;
++
++    item.setIdentifier( SendSMS_Packed );
++    item.setLabel( "Packed text" );
++    items +=3D item;
++
++    item.setIdentifier( SendSMS_SetDestination );
++    item.setLabel( "Set destination (" + smsDestNumber + ")" );
++    items +=3D item;
++
++    item.setIdentifier( SendSMS_SetContents );
++    item.setLabel( "Set content text" );
++    items +=3D item;
++
++    cmd.setMenuItems( items );
++
++    command( cmd, this, SLOT(smsMenuResp(QSimTerminalResponse)) );
++}
++
++void DemoSimApplication::smsMenuResp( const QSimTerminalResponse& resp )
++{
++    QSimCommand cmd;
++
++    if ( resp.result() !=3D QSimTerminalResponse::Success ) {
++        /* Unknown response - just go back to the main menu. */
++        endSession();
++
++        return;
++    }
++
++    /* Item selected. */
++    switch ( resp.menuItem() ) {
++    case SendSMS_Unpacked:
++        break;
++
++    case SendSMS_Packed:
++        cmd.setSmsPacking( true );
++        break;
++
++    case SendSMS_SetDestination:
++        cmd.setType( QSimCommand::GetInput );
++        cmd.setText( "Enter recipient number" );
++        cmd.setWantDigits( true );
++        cmd.setMinimumLength( 2 );
++        cmd.setMaximumLength( 20 );
++        cmd.setDefaultText( smsDestNumber );
++        command( cmd, this, SLOT(smsSetDestResp(QSimTerminalResponse)) );
++        return;
++
++    case SendSMS_SetContents:
++        cmd.setType( QSimCommand::GetInput );
++        cmd.setText( "Enter message text" );
++        cmd.setMaximumLength( 100 );
++        cmd.setDefaultText( smsText );
++        command( cmd, this, SLOT(smsSetTextResp(QSimTerminalResponse)) );
++        return;
++    }
++
++    QSMSMessage sms;
++    sms.setValidityPeriod( -1 );
++    sms.setMessageClass( 2 );
++    sms.setProtocol( 0 );
++    sms.setRecipient( smsDestNumber );
++    sms.setText( smsText );
++    sms.setForceGsm( false );
++    sms.setBestScheme( QSMS_8BitAlphabet );
++    sms.setDataCodingScheme( 0xf6 );
++
++    cmd.setType( QSimCommand::SendSMS );
++    cmd.setText( "Sending an SMS to our friends at " + smsDestNumber );
++    cmd.setNumber( "123" );
++    cmd.addExtensionField( 0x8b, sms.toPdu().mid( 1 ) );
++    cmd.setDestinationDevice( QSimCommand::Network );
++
++    command( cmd, this, SLOT(endSession()) );
++}
++
++void DemoSimApplication::smsSetDestResp( const QSimTerminalResponse& resp )
++{
++    if ( resp.result() =3D=3D QSimTerminalResponse::BackwardMove ) {
++        sendSMSMenu();
++
++        return;
++    }
++
++    if ( resp.result() !=3D QSimTerminalResponse::Success ) {
++        /* Unknown response - just go back to the main menu. */
++        endSession();
++
++        return;
++    }
++
++    smsDestNumber =3D resp.text();
++    sendSMSMenu();
++}
++
++void DemoSimApplication::smsSetTextResp( const QSimTerminalResponse& resp )
++{
++    if ( resp.result() =3D=3D QSimTerminalResponse::BackwardMove ) {
++        sendSMSMenu();
++
++        return;
++    }
++
++    if ( resp.result() !=3D QSimTerminalResponse::Success ) {
++        /* Unknown response - just go back to the main menu. */
++        endSession();
++
++        return;
++    }
++
++    smsText =3D resp.text();
++    sendSMSMenu();
++}
+diff --git a/src/simapplication.h b/src/simapplication.h
+index 9d147ee..326c4dc 100644
+--- a/src/simapplication.h
++++ b/src/simapplication.h
+@@ -113,10 +113,15 @@ protected slots:
+     void languageMenu( const QSimTerminalResponse& resp );
+     void sendUSSDMenu();
+     void USSDMenu( const QSimTerminalResponse& resp );
++    void sendSMSMenu();
++    void smsMenuResp( const QSimTerminalResponse& resp );
++    void smsSetDestResp( const QSimTerminalResponse& resp );
++    void smsSetTextResp( const QSimTerminalResponse& resp );
+ =
+
+ private:
+     int sticksLeft;
+     bool immediateResponse;
++    QString smsDestNumber, smsText;
+ };
+ =
+
+ #endif
 -- =
 
-1.7.0.4
+1.7.1.86.g0e460.dirty
 
 
---===============8827399441114240099==--
+--===============5609984859574988578==--
 
