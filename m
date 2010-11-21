@@ -1,100 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============8052434980103595546=="
+Content-Type: multipart/mixed; boundary="===============3215894771789466321=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCH RESEND] stemodem: Change use of types
-Date: Sun, 21 Nov 2010 21:55:15 +0100
-Message-ID: <1290372915-7911-3-git-send-email-sjurbren@gmail.com>
-In-Reply-To: <1289760663-10334-1-git-send-email-sjurbren@gmail.com>
+Subject: [PATCH 0/2] unit: STE Unit Tests
+Date: Sun, 21 Nov 2010 23:02:59 +0100
+Message-ID: <1290376981-4248-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8052434980103595546==
+--===============3215894771789466321==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
-Use the type __u32 for sequence counting rather than guint32,
-and "void *" instead of gpointer.
-Reduce the size of RTNL message buffer from 4096 to 1024,
-as this should be sufficient to hold the NEWLINK message.
+This patch set introduces unit tests for functionality in
+o CAIF RTNL functions in drivers/stemodem/caif_rtnl.c
+o GPRS context handling in drivers/stemodem/gprs-context.c
+o Radio State settings in drivers/stemodem/radio-settings.c
+o Test for CAIF Character devices are removed as this is not
+  supported by upstream version of CAIF.
 
----
-Last patch was sent with base64 encoding :-(
+The unit tests calls functions in the driver and simulates
+AT-responses received from the modem.
 
- drivers/stemodem/caif_rtnl.c |   14 +++++++-------
- 1 files changed, 7 insertions(+), 7 deletions(-)
+Patches should apply and compile cleanly. Successful execution
+depends on patches:
+stemodem: Create network interfaces statically
+stemodem: Use RTNL to create network interfaces.
 
-diff --git a/drivers/stemodem/caif_rtnl.c b/drivers/stemodem/caif_rtnl.c
-index 5d4073a..4c00446 100644
---- a/drivers/stemodem/caif_rtnl.c
-+++ b/drivers/stemodem/caif_rtnl.c
-@@ -41,7 +41,7 @@
- #define NLMSG_TAIL(nmsg) \
- 	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
- =
+Sjur Br=C3=A6ndeland (2):
+  unit: CAIF test: remove character dev tests and add RTNL.
+  unit: Add unit tests for STE modem
 
--#define RTNL_MSG_SIZE 4096
-+#define RTNL_MSG_SIZE 1024
- =
-
- struct rtnl_msg {
- 	struct nlmsghdr n;
-@@ -50,17 +50,17 @@ struct rtnl_msg {
- };
- =
-
- struct iplink_req {
--	guint32 rtnlmsg_seqnr;
--	gpointer user_data;
-+	__u32 rtnlmsg_seqnr;
-+	void *user_data;
- 	caif_rtnl_create_cb_t callback;
- };
- =
-
- static GSList *pending_requests;
--static guint32 rtnl_seqnr;
-+static __u32 rtnl_seqnr;
- static guint rtnl_watch;
- static GIOChannel *rtnl_channel;
- =
-
--static struct iplink_req *find_request(guint32 seq)
-+static struct iplink_req *find_request(__u32 seq)
- {
- 	GSList *list;
- =
-
-@@ -169,7 +169,7 @@ static int add_attribute(struct nlmsghdr *n, unsigned i=
-nt maxlen, int type,
- 	return 0;
- }
- =
-
--static inline void prep_rtnl_req(struct rtnl_msg *msg, int reqtype, guint =
-seqnr)
-+static inline void prep_rtnl_req(struct rtnl_msg *msg, int reqtype, __u32 =
-seqnr)
- {
- 	msg->n.nlmsg_len =3D NLMSG_LENGTH(sizeof(struct ifinfomsg));
- 	msg->n.nlmsg_flags =3D NLM_F_REQUEST|NLM_F_CREATE|NLM_F_EXCL;
-@@ -179,7 +179,7 @@ static inline void prep_rtnl_req(struct rtnl_msg *msg, =
-int reqtype, guint seqnr)
- }
- =
-
- static gboolean netlink_event(GIOChannel *chan,
--				GIOCondition cond, gpointer data)
-+				GIOCondition cond, void *data)
- {
- 	unsigned char buf[RTNL_MSG_SIZE];
- 	int len, sk;
--- =
-
-1.6.3.3
+ Makefile.am      |   19 ++-
+ unit/test-caif.c |  108 +++++++----
+ unit/test-ste.c  |  554 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 3 files changed, 645 insertions(+), 36 deletions(-)
+ create mode 100644 unit/test-ste.c
 
 
---===============8052434980103595546==--
+--===============3215894771789466321==--
 
