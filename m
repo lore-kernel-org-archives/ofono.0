@@ -1,121 +1,100 @@
-Content-Type: multipart/mixed; boundary="===============9158349996994343363=="
+Content-Type: multipart/mixed; boundary="===============8052434980103595546=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCH v2 2/2] stemodem: Use RTNL to create network interfaces.
-Date: Sun, 21 Nov 2010 21:55:14 +0100
-Message-ID: <1290372915-7911-2-git-send-email-sjurbren@gmail.com>
+Subject: [PATCH RESEND] stemodem: Change use of types
+Date: Sun, 21 Nov 2010 21:55:15 +0100
+Message-ID: <1290372915-7911-3-git-send-email-sjurbren@gmail.com>
 In-Reply-To: <1289760663-10334-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9158349996994343363==
+--===============8052434980103595546==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
+Use the type __u32 for sequence counting rather than guint32,
+and "void *" instead of gpointer.
+Reduce the size of RTNL message buffer from 4096 to 1024,
+as this should be sufficient to hold the NEWLINK message.
+
 ---
- drivers/stemodem/gprs-context.c |   43 +++++++++++++++++++++++++++++++++++=
-+++-
- 1 files changed, 42 insertions(+), 1 deletions(-)
+Last patch was sent with base64 encoding :-(
 
-diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
-t.c
-index 3ccda87..3859107 100644
---- a/drivers/stemodem/gprs-context.c
-+++ b/drivers/stemodem/gprs-context.c
-@@ -47,6 +47,7 @@
- #include "stemodem.h"
- #include "caif_socket.h"
- #include "if_caif.h"
-+#include "caif_rtnl.h"
+ drivers/stemodem/caif_rtnl.c |   14 +++++++-------
+ 1 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/stemodem/caif_rtnl.c b/drivers/stemodem/caif_rtnl.c
+index 5d4073a..4c00446 100644
+--- a/drivers/stemodem/caif_rtnl.c
++++ b/drivers/stemodem/caif_rtnl.c
+@@ -41,7 +41,7 @@
+ #define NLMSG_TAIL(nmsg) \
+ 	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
  =
 
- #define MAX_CAIF_DEVICES 4
- #define MAX_DNS 2
-@@ -172,12 +173,38 @@ static struct conn_info *conn_info_create(unsigned in=
-t channel_id)
- 	return connection;
- }
+-#define RTNL_MSG_SIZE 4096
++#define RTNL_MSG_SIZE 1024
  =
 
-+static void rtnl_callback(int ifindex, const char *ifname, void *user_data)
-+{
-+	struct conn_info *conn =3D user_data;
-+
-+	if (ifindex < 0) {
-+		conn->created =3D FALSE;
-+		ofono_error("Failed to create caif interface %s",
-+			conn->interface);
-+		return;
-+	}
-+
-+	strncpy(conn->interface, ifname, sizeof(conn->interface));
-+	conn->ifindex =3D ifindex;
-+	conn->created =3D TRUE;
-+}
-+
- /*
-  * Creates a new IP interface for CAIF.
-  */
- static gboolean caif_if_create(struct conn_info *conn)
+ struct rtnl_msg {
+ 	struct nlmsghdr n;
+@@ -50,17 +50,17 @@ struct rtnl_msg {
+ };
+ =
+
+ struct iplink_req {
+-	guint32 rtnlmsg_seqnr;
+-	gpointer user_data;
++	__u32 rtnlmsg_seqnr;
++	void *user_data;
+ 	caif_rtnl_create_cb_t callback;
+ };
+ =
+
+ static GSList *pending_requests;
+-static guint32 rtnl_seqnr;
++static __u32 rtnl_seqnr;
+ static guint rtnl_watch;
+ static GIOChannel *rtnl_channel;
+ =
+
+-static struct iplink_req *find_request(guint32 seq)
++static struct iplink_req *find_request(__u32 seq)
  {
--	return FALSE;
-+	int err;
-+
-+	err =3D caif_rtnl_create_interface(IFLA_CAIF_IPV4_CONNID,
-+						conn->channel_id, FALSE,
-+						rtnl_callback, conn);
-+	if (err < 0) {
-+		DBG("Failed to create IP interface for CAIF");
-+		return FALSE;
-+	}
-+
-+	return TRUE;
+ 	GSList *list;
+ =
+
+@@ -169,7 +169,7 @@ static int add_attribute(struct nlmsghdr *n, unsigned i=
+nt maxlen, int type,
+ 	return 0;
  }
  =
 
- /*
-@@ -185,6 +212,18 @@ static gboolean caif_if_create(struct conn_info *conn)
-  */
- static void caif_if_remove(struct conn_info *conn)
+-static inline void prep_rtnl_req(struct rtnl_msg *msg, int reqtype, guint =
+seqnr)
++static inline void prep_rtnl_req(struct rtnl_msg *msg, int reqtype, __u32 =
+seqnr)
  {
-+	if (!conn->created)
-+		return;
-+
-+	if (caif_rtnl_delete_interface(conn->ifindex) < 0) {
-+		ofono_error("Failed to delete caif interface %s",
-+			conn->interface);
-+		return;
-+	}
-+
-+	DBG("removed CAIF interface ch:%d ifname:%s ifindex:%d\n",
-+		conn->channel_id, conn->interface, conn->ifindex);
-+	return;
+ 	msg->n.nlmsg_len =3D NLMSG_LENGTH(sizeof(struct ifinfomsg));
+ 	msg->n.nlmsg_flags =3D NLM_F_REQUEST|NLM_F_CREATE|NLM_F_EXCL;
+@@ -179,7 +179,7 @@ static inline void prep_rtnl_req(struct rtnl_msg *msg, =
+int reqtype, guint seqnr)
  }
  =
 
- static void ste_eppsd_down_cb(gboolean ok, GAtResult *result,
-@@ -571,10 +610,12 @@ static struct ofono_gprs_context_driver driver =3D {
- =
-
- void ste_gprs_context_init()
+ static gboolean netlink_event(GIOChannel *chan,
+-				GIOCondition cond, gpointer data)
++				GIOCondition cond, void *data)
  {
-+	caif_rtnl_init();
- 	ofono_gprs_context_driver_register(&driver);
- }
- =
-
- void ste_gprs_context_exit()
- {
-+	caif_rtnl_exit();
- 	ofono_gprs_context_driver_unregister(&driver);
- }
+ 	unsigned char buf[RTNL_MSG_SIZE];
+ 	int len, sk;
 -- =
 
-1.7.0.4
+1.6.3.3
 
 
---===============9158349996994343363==--
+--===============8052434980103595546==--
 
