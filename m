@@ -1,33 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============1918662878600504845=="
+Content-Type: multipart/mixed; boundary="===============7560301363167316201=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
-Subject: RE: [PATCH] doc: Add Location Services API
-Date: Fri, 19 Nov 2010 18:04:29 -0800
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C90157D0B15E@orsmsx508.amr.corp.intel.com>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C90157D0B124@orsmsx508.amr.corp.intel.com>
+From: Kiviluoto, Jaakko J <jaakko.j.kiviluoto@intel.com>
+Subject: RE: [PATCH] TODO: Add vCard export to SM/ME stores
+Date: Sun, 21 Nov 2010 15:16:17 +0000
+Message-ID: <6E42A1B4DD2F7B4D80A1F26BB498BF9F8C9A0985D4@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <6E42A1B4DD2F7B4D80A1F26BB498BF9F8C9A039E9B@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1918662878600504845==
+--===============7560301363167316201==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-[Resend without the bottom quote - Damn you Outlook]
+> > > > To support this feature then first we need to convert the current
+> > > > feature into returning a dict. And then have this feature using a
+> > dict
+> > > > as input.
+> > >
+> > > Is there already a specification/draft of the format of this dict?
+> If
+> > not, I would be tempted to use the 27.007 +CPBR/W field names as keys
+> > (e.g. index, number, type, text, adnumber, secondtext, sip_uri, etc.)
+> >
+> > there is not. So you need to propose one here.
+> =
 
-Conformance testing per 3GPP 34.109s5.4.1.3 requires that
-RESET UE POSITIONING STORED INFO is handled.
-Similar for 3GPP RESET MS POSITIONING STORED INFO per 3GPP 44.014s12.
+> For simplicity, I would propose that both import and export would use
+> an array of dict's with the 27.007 keys:
+> =
 
-As far as I can see there is no provision for that in commands / XML
-defined by 27.007.
+> index: type=3Dinteger, import=3Dalways export=3Dignored
+> number: type=3Dstring, import=3Dalways/empty export=3Doptional/empty
+> type: type=3Dinteger, import=3Dalways export=3Dmandatory
+> text: type=3Dstring, import=3Dalways/empty export=3Doptional/empty
+> hidden: type=3Dint, import=3Dalways, export=3Doptional/default=3D0
+> group: type=3Dstring, import=3Dif nonempty, export=3Doptional
+> adnumber: type=3Dstring, import=3Dif nonempty, export=3Doptional
+> adtype: type=3Dinteger, import/export=3Dmandatory if adnumber nonempty
+> secondtext: type=3Dstring, import=3Dif nonempty, export=3Doptional
+> email: type=3Dstring, import=3Dif nonempty, export=3Doptional
+> sip_uri: type=3Dstring, import=3Dif nonempty, export=3Doptional
+> tel_uri: type=3Dstring, import=3Dif nonempty, export=3Doptional
+> =
 
-Would it make sense to add a ResetStoredInfo signal to the DBUS API for
-implementation in a modem specific way?
+> Either 'text' or 'number' must be nonempty on export.
+> =
 
-Cheers,
-Waldo
+> This simple scheme would also necessitate removing the contact merging
+> from the import functionality. Would that be ok?
+> =
+
+> Otherwise the dict would have to contain a list of number structures
+> instead of number/adnumber fields, and merging/unmerging would have to
+> be (re)implemented for both import and export.
+
+So, any comments on this format? Should I go ahead and re-implement the Imp=
+ort functionality, plus the new Export functionality?
+
+Jaakko
+
+---------------------------------------------------------------------
+Intel Finland Oy
+Registered Address: PL 281, 00181 Helsinki =
+
+Business Identity Code: 0357606 - 4 =
+
+Domiciled in Helsinki =
 
 
---===============1918662878600504845==--
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============7560301363167316201==--
 
