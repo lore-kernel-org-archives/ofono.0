@@ -1,36 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============7560301363167316201=="
+Content-Type: multipart/mixed; boundary="===============4784812671453241721=="
 MIME-Version: 1.0
-From: Kiviluoto, Jaakko J <jaakko.j.kiviluoto@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: RE: [PATCH] TODO: Add vCard export to SM/ME stores
-Date: Sun, 21 Nov 2010 15:16:17 +0000
-Message-ID: <6E42A1B4DD2F7B4D80A1F26BB498BF9F8C9A0985D4@irsmsx501.ger.corp.intel.com>
+Date: Sun, 21 Nov 2010 20:53:06 +0100
+Message-ID: <1290369186.29148.29.camel@aeonflux>
 In-Reply-To: <6E42A1B4DD2F7B4D80A1F26BB498BF9F8C9A039E9B@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7560301363167316201==
+--===============4784812671453241721==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> > > > To support this feature then first we need to convert the current
-> > > > feature into returning a dict. And then have this feature using a
-> > dict
-> > > > as input.
-> > >
-> > > Is there already a specification/draft of the format of this dict?
-> If
+Hi Jaako,
+
+> > > Is there already a specification/draft of the format of this dict? If
 > > not, I would be tempted to use the 27.007 +CPBR/W field names as keys
 > > (e.g. index, number, type, text, adnumber, secondtext, sip_uri, etc.)
-> >
+> > =
+
 > > there is not. So you need to propose one here.
 > =
 
-> For simplicity, I would propose that both import and export would use
-> an array of dict's with the 27.007 keys:
+> For simplicity, I would propose that both import and export would use an =
+array of dict's with the 27.007 keys:
 > =
 
 > index: type=3Dinteger, import=3Dalways export=3Dignored
+
+no index number. We will never use them. It is either the full phonebook
+at once or nothing. The write function has to empty out left over
+entries.
+
 > number: type=3Dstring, import=3Dalways/empty export=3Doptional/empty
 > type: type=3Dinteger, import=3Dalways export=3Dmandatory
 > text: type=3Dstring, import=3Dalways/empty export=3Doptional/empty
@@ -42,38 +44,16 @@ Content-Transfer-Encoding: quoted-printable
 > email: type=3Dstring, import=3Dif nonempty, export=3Doptional
 > sip_uri: type=3Dstring, import=3Dif nonempty, export=3Doptional
 > tel_uri: type=3Dstring, import=3Dif nonempty, export=3Doptional
-> =
 
-> Either 'text' or 'number' must be nonempty on export.
-> =
+Actually I prefer we use proper Dict field names. We never use anything
+literally from the specifications in this area. So why start now. Please
+propose proper human readable names.
 
-> This simple scheme would also necessitate removing the contact merging
-> from the import functionality. Would that be ok?
-> =
+Regards
 
-> Otherwise the dict would have to contain a list of number structures
-> instead of number/adnumber fields, and merging/unmerging would have to
-> be (re)implemented for both import and export.
-
-So, any comments on this format? Should I go ahead and re-implement the Imp=
-ort functionality, plus the new Export functionality?
-
-Jaakko
-
----------------------------------------------------------------------
-Intel Finland Oy
-Registered Address: PL 281, 00181 Helsinki =
-
-Business Identity Code: 0357606 - 4 =
-
-Domiciled in Helsinki =
+Marcel
 
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
 
-
---===============7560301363167316201==--
+--===============4784812671453241721==--
 
