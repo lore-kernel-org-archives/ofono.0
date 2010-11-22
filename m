@@ -1,37 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============6498712176699350754=="
+Content-Type: multipart/mixed; boundary="===============8371132143597884383=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 4/5] voicecall: add call counters
-Date: Mon, 22 Nov 2010 09:34:47 -0600
-Message-ID: <4CEA8D97.4060202@gmail.com>
-In-Reply-To: <68a1a9e9cf371358b6c100b372ae93a50e095bd7.1289819191.git.Andras.Domokos@nokia.com>
+Subject: Re: [PATCH] Add SIM reset button
+Date: Mon, 22 Nov 2010 09:40:45 -0600
+Message-ID: <4CEA8EFD.90409@gmail.com>
+In-Reply-To: <1289940516-14843-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6498712176699350754==
+--===============8371132143597884383==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras,
+Hi Gustavo,
 
-On 11/15/2010 05:50 AM, Andras Domokos wrote:
+On 11/16/2010 02:48 PM, Gustavo F. Padovan wrote:
+> +CRST now send a reset resquest command
 > ---
->  src/callcounters.c |  388 ++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 388 insertions(+), 0 deletions(-)
->  create mode 100644 src/callcounters.c
+>  src/control.cpp    |    6 ++++++
+>  src/control.h      |    1 +
+>  src/controlbase.ui |   40 ++++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 47 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/src/callcounters.c b/src/callcounters.c
+> diff --git a/src/control.cpp b/src/control.cpp
+> index ab71752..014e657 100644
+> --- a/src/control.cpp
+> +++ b/src/control.cpp
+> @@ -84,6 +84,7 @@ ControlWidget::ControlWidget(const QString &ruleFile, C=
+ontrol *parent)
+>      connect(ui->cbSimInserted, SIGNAL(clicked()), this, SLOT(simInsertRe=
+move()));
+>      connect(ui->pbStart, SIGNAL(clicked()), this, SLOT(simAppStart()));
+>      connect(ui->pbAbort, SIGNAL(clicked()), this, SLOT(simAppAbort()));
+> +    connect(ui->pbReset, SIGNAL(clicked()), this, SLOT(simAppReset()));
+>  =
 
-This patch should go together with Patch 5.  It is also missing the API
-documentation (which could be in a separate patch if you prefer).
+>      QStringList headers;
+>      headers << "Sender" << "Priority" << "Notification Status";
+> @@ -466,6 +467,11 @@ void ControlWidget::simAppAbort()
+>      p->simAppAbort();
+>  }
+>  =
 
-This file should also be inside the plugins directory and not src.
+> +void ControlWidget::simAppReset()
+
+Can you rename this slot into modemSilentReset or something?  This
+really has nothing to do with the SIM Application.
+
+> +{
+> +    emit unsolicitedCommand("+CRST:");
+> +}
+> +
+>  Script::Script(QObject *obj, Ui_ControlBase *ui) : QDBusAbstractAdaptor(=
+obj)
+>  {
+
+Otherwise looks good
 
 Regards,
 -Denis
 
---===============6498712176699350754==--
+--===============8371132143597884383==--
 
