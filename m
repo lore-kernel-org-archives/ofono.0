@@ -1,53 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============6212318136761484848=="
+Content-Type: multipart/mixed; boundary="===============0667507071125287561=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] stkutil: mask the DCS value to keep only the intersting
- bits
-Date: Mon, 22 Nov 2010 04:57:40 -0600
-Message-ID: <4CEA4CA4.4050604@gmail.com>
-In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D4018813542B193@irsmsx501.ger.corp.intel.com>
+Subject: Re: [RFC PATCH 1/2] common: add long dial string support
+Date: Mon, 22 Nov 2010 05:00:24 -0600
+Message-ID: <4CEA4D48.3000301@gmail.com>
+In-Reply-To: <4CE5104B.9080305@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6212318136761484848==
+--===============0667507071125287561==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Andras,
 
->>> -	switch (dcs) {
->>> +	switch (dcs & 0x06) {
+On 11/18/2010 05:38 AM, Arun Ravindran wrote:
+> Hi Denis, Marcel, Andras,
+> =
+
+>>   include/types.h |    2 +-
+>>   src/common.c    |   12 ++++++------
+>>   2 files changed, 7 insertions(+), 7 deletions(-)
 >>
->> Do you mean to bitwise and with 0xc here?  Otherwise you break the UCS2
->> case.  Also do any SIMs use the '1111' Coding Bits Entry entry from
->> 23.038 Section 4?  If so, then we need to use sms_dcs_decode to
->> retrieve
->> the character set.
+>> diff --git a/include/types.h b/include/types.h
+>> index ba2481f..b3d2247 100644
+>> --- a/include/types.h
+>> +++ b/include/types.h
+>> @@ -76,7 +76,7 @@ struct ofono_error {
+>>       int error;
+>>   };
+>>
+>> -#define OFONO_MAX_PHONE_NUMBER_LENGTH 20
+>> +#define OFONO_MAX_PHONE_NUMBER_LENGTH 120
+>>
+>>   struct ofono_phone_number {
+>>       char number[OFONO_MAX_PHONE_NUMBER_LENGTH + 1];
+>> diff --git a/src/common.c b/src/common.c
+>> index b5b9a6f..de5a508 100644
+>> --- a/src/common.c
+>> +++ b/src/common.c
+>> @@ -253,7 +253,7 @@ gboolean valid_phone_number_format(const char
+>> *number)
+>>           if (number[i]>=3D '0'&&  number[i]<=3D '9')
+>>               continue;
+>>
+>> -        if (number[i] =3D=3D '*' || number[i] =3D=3D '#')
+>> +        if (number[i] =3D=3D '*' || number[i] =3D=3D '#' || number[i] =
+=3D=3D 'p')
+>>               continue;
+>>    =
+
+> This function is used to check the phone number as valid in other places
+> too.
 > =
 
-> Yes you are right. I did a bit-shifting error in my mask and don't see it=
- during my test.
-> It's 0xc and not 0x6 to use for the mask.
+> Is it right to allow sms sending to numbers with '*', '#' and 'p' in it?
+> I think ofono should return an error for the sms case.
 > =
 
-> The issue that I've is effectively due to the fact that some SIMs use the=
- '1111' Coding Bits Entry (it's the case for French Orange SIM card for exa=
-mple). For me having the upper bits set to '1' do not really changes the ch=
-aracter set decoding (only diff is that UCS2 will not be possible in that c=
-ase). It's the reason why I've simply add a mask in the decode_text functio=
-n. Using the sms_dcs_decode function is probably better as the DCS of the S=
-IM ToolKit is the same as the one used for SMS.
-> =
 
-> Do you want that I re-publish a patch using the sms_dcs_decode function?
-
-Bitwise shifting with 0x0c would work.  However, to be safe we might
-just be extra pedantic and check that the DCS the SIM sends to us is
-actually valid.
+Arun has nailed it, hacking valid_phone_number_format is not the right
+way to go.  You need to separate this out a bit for the particular usecase.
 
 Regards,
 -Denis
 
---===============6212318136761484848==--
+--===============0667507071125287561==--
 
