@@ -1,48 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7491133189491656358=="
+Content-Type: multipart/mixed; boundary="===============5638864131370084848=="
 MIME-Version: 1.0
 From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [PATCH 0/5] Call Counters (2nd)
-Date: Mon, 22 Nov 2010 18:25:54 +0200
-Message-ID: <cover.1290442823.git.Andras.Domokos@nokia.com>
+Subject: [RFC PATCH 1/5] history: expand history API include file
+Date: Mon, 22 Nov 2010 18:25:58 +0200
+Message-ID: <a8cbb18df1857e4b6ea8a22c01f9c1cb801f9190.1290442823.git.Andras.Domokos@nokia.com>
+In-Reply-To: <cover.1290442823.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7491133189491656358==
+--===============5638864131370084848==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Here a proposal for call counters implementation for keeping track
-of the total incoming and outgoing call duration counters. Each
-established call instance is contributing to either of the call
-duration counters. The 2 counters are updated periodically when
-there is an established call and the information is stored in
-a file. The bookkeeping of the call duration counters are per IMSI
-number.
-The implementation makes use of the history framework which had to be
-expanded with a function for marking the beginning of a voice call.
-There is a D-Bus interface to call counters for reading and clearing
-the counters.
+---
+ include/history.h |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-Andras Domokos (5):
-  history: expand history API include file
-  history: expand history API
-  voicecall: take into use the new history function
-  plugins: add call counters
-  doc: call counters API doc
+diff --git a/include/history.h b/include/history.h
+index c1c4aa1..a2490f6 100644
+--- a/include/history.h
++++ b/include/history.h
+@@ -49,6 +49,9 @@ struct ofono_history_driver {
+ 	const char *name;
+ 	int (*probe)(struct ofono_history_context *context);
+ 	void (*remove)(struct ofono_history_context *context);
++	void (*call_started)(struct ofono_history_context *context,
++				const struct ofono_call *call,
++				time_t start);
+ 	void (*call_ended)(struct ofono_history_context *context,
+ 				const struct ofono_call *call,
+ 				time_t start, time_t end);
+-- =
 
- Makefile.am              |    3 +
- doc/callcounters-api.txt |   18 ++
- include/history.h        |    3 +
- plugins/callcounters.c   |  388 ++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/history.c            |   24 +++
- src/ofono.h              |    4 +
- src/voicecall.c          |    3 +
- 7 files changed, 443 insertions(+), 0 deletions(-)
- create mode 100644 doc/callcounters-api.txt
- create mode 100644 plugins/callcounters.c
+1.7.0.4
 
 
---===============7491133189491656358==--
+--===============5638864131370084848==--
 
