@@ -1,66 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============1591533043403525896=="
+Content-Type: multipart/mixed; boundary="===============6212318136761484848=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] stemodem: Create network interfaces statically
-Date: Mon, 22 Nov 2010 04:34:15 -0600
-Message-ID: <4CEA4727.8020506@gmail.com>
-In-Reply-To: <AANLkTinFtqvnFFts9uBqSrHbJzrrkToifuqYXbz+pK6Z@mail.gmail.com>
+Subject: Re: [PATCH] stkutil: mask the DCS value to keep only the intersting
+ bits
+Date: Mon, 22 Nov 2010 04:57:40 -0600
+Message-ID: <4CEA4CA4.4050604@gmail.com>
+In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D4018813542B193@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1591533043403525896==
+--===============6212318136761484848==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Hi Guillaume,
 
-On 11/18/2010 02:03 AM, Sjur Br=C3=A6ndeland wrote:
-> Hi Denis & Marcel.
-> =
-
->> From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+>>> -	switch (dcs) {
+>>> +	switch (dcs & 0x06) {
 >>
->> Changes:
->> o Restructure code so interfaces are created statically when probe is ca=
-lled.
->> o Removed some of the unnecessary initializations at declaration.
->> o No longer reporting "default gateway" on PtP IP Interface.
->> o Bugfix: Handle network initiated deactivation.
->> ---
->>  drivers/stemodem/gprs-context.c |  153 ++++++++++++++++++++++----------=
--------
->>  1 files changed, 85 insertions(+), 68 deletions(-)
->>
->> diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-con=
-text.c
->> index 05fec3f..d8db23b 100644
->> --- a/drivers/stemodem/gprs-context.c
->> +++ b/drivers/stemodem/gprs-context.c
+>> Do you mean to bitwise and with 0xc here?  Otherwise you break the UCS2
+>> case.  Also do any SIMs use the '1111' Coding Bits Entry entry from
+>> 23.038 Section 4?  If so, then we need to use sms_dcs_decode to
+>> retrieve
+>> the character set.
 > =
 
-> Have you received this patch in readable format?
-> I'm sending patches using git send-email over gmail,
-> and when I check sent items in gmail, it comes up as base64 encoded.
-> Is this garbled for you as well?
-
-They seem to come through fine for me at least.
-
+> Yes you are right. I did a bit-shifting error in my mask and don't see it=
+ during my test.
+> It's 0xc and not 0x6 to use for the mask.
 > =
 
-> BTW are you using patchwork or similar so I could check the patch
-> status somewhere?
+> The issue that I've is effectively due to the fact that some SIMs use the=
+ '1111' Coding Bits Entry (it's the case for French Orange SIM card for exa=
+mple). For me having the upper bits set to '1' do not really changes the ch=
+aracter set decoding (only diff is that UCS2 will not be possible in that c=
+ase). It's the reason why I've simply add a mask in the decode_text functio=
+n. Using the sms_dcs_decode function is probably better as the DCS of the S=
+IM ToolKit is the same as the one used for SMS.
 > =
 
+> Do you want that I re-publish a patch using the sms_dcs_decode function?
 
-Nope, but it has been suggested that this might be a good idea.  I'm
-open to the idea of trying this out, but don't promise I will like it ;)
-
-> Regards,
-> Sjur
+Bitwise shifting with 0x0c would work.  However, to be safe we might
+just be extra pedantic and check that the DCS the SIM sends to us is
+actually valid.
 
 Regards,
 -Denis
 
---===============1591533043403525896==--
+--===============6212318136761484848==--
 
