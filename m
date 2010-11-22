@@ -1,82 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============6281819486411151598=="
+Content-Type: multipart/mixed; boundary="===============3210832438420964460=="
 MIME-Version: 1.0
 From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC PATCH 2/5] history: expand history API
-Date: Mon, 22 Nov 2010 18:26:03 +0200
-Message-ID: <f02ad402010e3d577d9f4ccaa106dfff02262087.1290442823.git.Andras.Domokos@nokia.com>
+Subject: [RFC PATCH 3/5] voicecall: take into use the new history function
+Date: Mon, 22 Nov 2010 18:26:06 +0200
+Message-ID: <3b44aa561d01ae8dc733a3a24926caeb5417e0e5.1290442823.git.Andras.Domokos@nokia.com>
 In-Reply-To: <cover.1290442823.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6281819486411151598==
+--===============3210832438420964460==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/history.c |   24 ++++++++++++++++++++++++
- src/ofono.h   |    4 ++++
- 2 files changed, 28 insertions(+), 0 deletions(-)
+ src/voicecall.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/src/history.c b/src/history.c
-index 0229cf5..31efadb 100644
---- a/src/history.c
-+++ b/src/history.c
-@@ -114,6 +114,30 @@ void __ofono_history_probe_drivers(struct ofono_modem =
-*modem)
- 	}
- }
+diff --git a/src/voicecall.c b/src/voicecall.c
+index bd64432..b40d284 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -630,6 +630,7 @@ static void voicecall_emit_multiparty(struct voicecall =
+*call, gboolean mpty)
  =
 
-+static void history_call_started(struct ofono_atom *atom, void *data)
-+{
-+	struct ofono_history_context *context =3D __ofono_atom_get_data(atom);
-+	struct history_call_foreach_data *hfd =3D data;
-+
-+	if (context->driver->call_started =3D=3D NULL)
-+		return;
-+
-+	context->driver->call_started(context, hfd->call, hfd->start);
-+}
-+
-+void __ofono_history_call_started(struct ofono_modem *modem,
-+				const struct ofono_call *call,
-+				time_t start)
-+{
-+	struct history_call_foreach_data hfd;
-+
-+	hfd.call =3D call;
-+	hfd.start =3D start;
-+
-+	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_HISTORY,
-+					history_call_started, &hfd);
-+}
-+
- static void history_call_ended(struct ofono_atom *atom, void *data)
+ static void voicecall_set_call_status(struct voicecall *call, int status)
  {
- 	struct ofono_history_context *context =3D __ofono_atom_get_data(atom);
-diff --git a/src/ofono.h b/src/ofono.h
-index 4d76d20..61a0637 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -368,6 +368,10 @@ void __ofono_netreg_set_base_station_name(struct ofono=
-_netreg *netreg,
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(call->vc->atom);
+ 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	const char *path;
+ 	const char *status_str;
+@@ -658,6 +659,8 @@ static void voicecall_set_call_status(struct voicecall =
+*call, int status)
+ 		const char *timestr;
  =
 
- void __ofono_history_probe_drivers(struct ofono_modem *modem);
+ 		call->start_time =3D time(NULL);
++		__ofono_history_call_started(modem, call->call,
++						call->start_time);
+ 		timestr =3D time_to_str(&call->start_time);
  =
 
-+void __ofono_history_call_started(struct ofono_modem *modem,
-+				const struct ofono_call *call,
-+				time_t start);
-+
- void __ofono_history_call_ended(struct ofono_modem *modem,
- 				const struct ofono_call *call,
- 				time_t start, time_t end);
+ 		ofono_dbus_signal_property_changed(conn, path,
 -- =
 
 1.7.0.4
 
 
---===============6281819486411151598==--
+--===============3210832438420964460==--
 
