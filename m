@@ -1,79 +1,122 @@
-Content-Type: multipart/mixed; boundary="===============1535068426000225204=="
+Content-Type: multipart/mixed; boundary="===============0570467958953002203=="
 MIME-Version: 1.0
-From: Joly, Frederic <frederic.joly@intel.com>
-Subject: RE: [PATCH] doc: Add Location Services API (resending now that I am
- on ofono mailing list)
-Date: Mon, 22 Nov 2010 21:50:22 +0000
-Message-ID: <129600E5E5FB004392DDC3FB599660D70104DAF288@irsmsx504.ger.corp.intel.com>
-In-Reply-To: <B4268AAFAFA3E244B5B0641D5914917048B76BEA90@EXDCVYMBSTM006.EQ1STM.local>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH] Add modem silent reset button
+Date: Mon, 22 Nov 2010 20:05:22 -0200
+Message-ID: <1290463522-27458-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1535068426000225204==
+--===============0570467958953002203==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Simon,
++CRST now send a reset resquest command
+---
+ src/control.cpp    |    6 ++++++
+ src/control.h      |    1 +
+ src/controlbase.ui |   40 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 47 insertions(+), 0 deletions(-)
 
------Original Message-----
-From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
-f Of Simon LETHBRIDGE
-Sent: Thursday, November 18, 2010 10:50 AM
-To: Denis Kenzior; ofono(a)ofono.org
-Cc: Sjur BRENDELAND
-Subject: RE: [PATCH] doc: Add Location Services API (resending now that I a=
-m on ofono mailing list)
-
-> Hi Denis,
-
-> > -----Original Message-----
-> > From: Denis Kenzior [mailto:denkenz(a)gmail.com]
-> > Sent: 11 November 2010 21:50
-> > To: ofono(a)ofono.org
-> > Cc: Sjur Br=C3=A6ndeland; Simon LETHBRIDGE; Sjur BRENDELAND
-> > Subject: Re: [PATCH] doc: Add Location Services API
+diff --git a/src/control.cpp b/src/control.cpp
+index ab71752..75dae98 100644
+--- a/src/control.cpp
++++ b/src/control.cpp
+@@ -84,6 +84,7 @@ ControlWidget::ControlWidget(const QString &ruleFile, Con=
+trol *parent)
+     connect(ui->cbSimInserted, SIGNAL(clicked()), this, SLOT(simInsertRemo=
+ve()));
+     connect(ui->pbStart, SIGNAL(clicked()), this, SLOT(simAppStart()));
+     connect(ui->pbAbort, SIGNAL(clicked()), this, SLOT(simAppAbort()));
++    connect(ui->pbReset, SIGNAL(clicked()), this, SLOT(modemSilentReset())=
+);
  =
 
+     QStringList headers;
+     headers << "Sender" << "Priority" << "Notification Status";
+@@ -466,6 +467,11 @@ void ControlWidget::simAppAbort()
+     p->simAppAbort();
+ }
+ =
 
-> > =
++void ControlWidget::modemSilentReset()
++{
++    emit unsolicitedCommand("+CRST:");
++}
++
+ Script::Script(QObject *obj, Ui_ControlBase *ui) : QDBusAbstractAdaptor(ob=
+j)
+ {
+     /* Export tabs to be accessed by script */
+diff --git a/src/control.h b/src/control.h
+index 3c85e22..64a7af7 100644
+--- a/src/control.h
++++ b/src/control.h
+@@ -94,6 +94,7 @@ private slots:
+     void simInsertRemove();
+     void simAppStart();
+     void simAppAbort();
++    void modemSilentReset();
+ =
 
-> > And +CPOSR can transfer the following elements from the network:
-> > <assist_data>, <pos_meas>, <msg>.
-> > =
+ signals:
+     void unsolicitedCommand(const QString &);
+diff --git a/src/controlbase.ui b/src/controlbase.ui
+index e0cb5b5..2c91f95 100644
+--- a/src/controlbase.ui
++++ b/src/controlbase.ui
+@@ -1294,6 +1294,46 @@ p, li { white-space: pre-wrap; }
+        </item>
+       </layout>
+      </widget>
++     <widget class=3D"QWidget" name=3D"tab_7">
++      <attribute name=3D"title">
++       <string>Modem</string>
++      </attribute>
++      <widget class=3D"QWidget" name=3D"gridLayoutWidget">
++       <property name=3D"geometry">
++        <rect>
++         <x>9</x>
++         <y>9</y>
++         <width>591</width>
++         <height>511</height>
++        </rect>
++       </property>
++       <layout class=3D"QGridLayout" >
++        <item row=3D"0" column=3D"1">
++         <spacer>
++          <property name=3D"orientation">
++           <enum>Qt::Horizontal</enum>
++          </property>
++          <property name=3D"sizeType">
++           <enum>QSizePolicy::Fixed</enum>
++          </property>
++          <property name=3D"sizeHint" stdset=3D"0">
++           <size>
++            <width>450</width>
++            <height>20</height>
++           </size>
++          </property>
++         </spacer>
++        </item>
++        <item row=3D"0" column=3D"0">
++         <widget class=3D"QPushButton" name=3D"pbReset">
++          <property name=3D"text">
++           <string>Reset</string>
++          </property>
++         </widget>
++        </item>
++       </layout>
++      </widget>
++     </widget>
+     </widget>
+    </item>
+    <item>
+-- =
 
-> > Am I right so far?
-
-> This is substantially correct, however the assistance data request can on=
-ly be made in response to a positioning =
-
-> request from the network.  If assistance is required otherwise then an MO=
-LR is needed, which we don't support yet. =
-
-Since you mentioned in another post the LPP, I would just point out that in=
- 2G and 3G the MO-LR invoke was needed to request the assistance data, but =
-for 4G, this is not anymore the case. It seems you can directly request the=
- assistance data at the access stratum level. (see 36.355 =C2=A75.2.1 & =C2=
-=A76.3).
-So we should consider also assistance data request in the API proposal, I b=
-elieve.
+1.7.3.1
 
 
-BR,
-
-Fred
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============1535068426000225204==--
+--===============0570467958953002203==--
 
