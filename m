@@ -1,79 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============5256393768398640010=="
+Content-Type: multipart/mixed; boundary="===============7966460680030995218=="
 MIME-Version: 1.0
-From: Kiviluoto, Jaakko J <jaakko.j.kiviluoto@intel.com>
-Subject: RE: [PATCH] TODO: Add vCard export to SM/ME stores
-Date: Mon, 22 Nov 2010 08:05:19 +0000
-Message-ID: <6E42A1B4DD2F7B4D80A1F26BB498BF9F8C9A098615@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <1290369186.29148.29.camel@aeonflux>
+From: Marko.Ovaska@nokia.com
+Subject: RE: [PATCH] doc: Add Location Services API
+Date: Mon, 22 Nov 2010 10:01:14 +0100
+Message-ID: <B737AE8337D70F47B693AC85FA440B08328D6CF9C4@NOK-EUMSG-02.mgdnok.nokia.com>
+In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C90157D0B15E@orsmsx508.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5256393768398640010==
+--===============7966460680030995218==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> no index number. We will never use them. It is either the full
-> phonebook
-> at once or nothing. The write function has to empty out left over
-> entries.
-...
-> Actually I prefer we use proper Dict field names. We never use anything
-> literally from the specifications in this area. So why start now.
-> Please propose proper human readable names.
 
-Well, if we want a generic data structure, I assume it shouldn't be locked =
-to any finite amount of phone numbers (number, adnumber) per contact either?
+: -----Original Message-----
+: From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On
+: Behalf Of ext Bastian, Waldo
 
-Thus we should implement merging and I guess at the same time effort also t=
-he same number categorization that is implemented witht he current Import()=
- function.
+: Subject: RE: [PATCH] doc: Add Location Services API
+ =
 
-So the aa{sv} parameter/return value would be of format:
-{
-  'name'    : string,
-  'group'   : string,   // optional, for eg. organization
-  'hidden'  : integer,  // boolean value: defaults to 0
-  'numbers' : array of dict {
-    'number'   : string,
-    'category' : integer
-  },
-  'emails' : array of dict {
-    'address'  : string,
-    'category' : integer
-  },
-  'voip_uris' : array of dict {
-    'uri'      : string,
-    'category' : integer
-  },
-}
+: Conformance testing per 3GPP 34.109s5.4.1.3 requires that
+: RESET UE POSITIONING STORED INFO is handled.
+: Similar for 3GPP RESET MS POSITIONING STORED INFO per 3GPP 44.014s12.
+: =
 
-category : enum { // like existing "enum phonebook_number_type"
-  HOME, MOBILE, FAX, WORK, OTHER
-}
-
-Notes:
-- Phone numbers must have '+' to indicate international type.
-- VoIP uri's must have protocol prefix (e.g. 'sip:' or 'tel:')
-- Number/address items could also be (si) structs, whichever feels better.
-
-How does that sound?
-
-Jaakko
----------------------------------------------------------------------
-Intel Finland Oy
-Registered Address: PL 281, 00181 Helsinki =
-
-Business Identity Code: 0357606 - 4 =
-
-Domiciled in Helsinki =
+: As far as I can see there is no provision for that in commands / XML
+: defined by 27.007.
+: =
 
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+Hi!
+
+Entering the thread a bit late and partially to wrong thread. My comments w=
+ill overlap the AGPS thread as well.
+
+The client for the positioning interfaces two sources: OMA SUPL servers and=
+ cellular network servers. The SUPL definitions are in OMA TS ULP and AD SU=
+PL specs, for example V1.0 level from openmobilealliance.org.
+
+The SUPL data handling catch is that the SUPL server command and assistance=
+ data format refers directly to "TIA-801, RRLP or RRC" defined data transfe=
+r protocols. RRLP and RRC frames are ASN.1 BER en/decoded, and there is lim=
+ited number of location related commands.
+
+The oFono API means that positioning engine and either modem or oFono drive=
+r would need to do the XML to ASN.1 conversions. As discussed in AGPS threa=
+d. 27.007 position related definition does not mandate XML as such, it defi=
+nes the parameters in XML DTD.
+
+I'm proposing that either we have =
+
+a) fully opaque 'raw' 3GPP defined frames between modem and Linux
+b) or well defined D-BUS API for LCS commands, but keeping the assistance p=
+ayload in 'raw' format
+
+Both a) and b) approaches break the 27.007 defined positioning commands. Ra=
+tionale is that 27.007 positioning related re-formatting creates additional=
+ effort to any positioning engine, whether it resides in modem, dedicated c=
+hip or in Linux.
+
+  Marko
 
 
---===============5256393768398640010==--
+
+--===============7966460680030995218==--
 
