@@ -1,126 +1,177 @@
-Content-Type: multipart/mixed; boundary="===============2856655312509956346=="
+Content-Type: multipart/mixed; boundary="===============6755911271522862305=="
 MIME-Version: 1.0
 From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC PATCH 1/3] common: add long dial string support
-Date: Mon, 22 Nov 2010 18:36:28 +0200
-Message-ID: <c0634297366b1e329575e33a7fe6c3bf19d93167.1290436058.git.Andras.Domokos@nokia.com>
+Subject: [RFC PATCH 3/3] isimodem/voicecall: add long dial string support
+Date: Mon, 22 Nov 2010 18:36:33 +0200
+Message-ID: <08d536f042a2b7874d3309e5586af47ab1478c1f.1290436058.git.Andras.Domokos@nokia.com>
 In-Reply-To: <cover.1290436058.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2856655312509956346==
+--===============6755911271522862305==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/types.h |    2 +-
- src/common.c    |   38 +++++++++++++++++++++++++++++++++-----
- src/common.h    |    1 +
- 3 files changed, 35 insertions(+), 6 deletions(-)
+ drivers/isimodem/voicecall.c |   83 +++++++++++++++++++++++++++++++++-----=
+----
+ 1 files changed, 65 insertions(+), 18 deletions(-)
 
-diff --git a/include/types.h b/include/types.h
-index ba2481f..b3d2247 100644
---- a/include/types.h
-+++ b/include/types.h
-@@ -76,7 +76,7 @@ struct ofono_error {
- 	int error;
+diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+index c3365f6..b0dad72 100644
+--- a/drivers/isimodem/voicecall.c
++++ b/drivers/isimodem/voicecall.c
+@@ -49,7 +49,7 @@ struct isi_call {
+ 	uint8_t id, call_id, status, mode, mode_info, cause_type, cause;
+ 	uint8_t addr_type, presentation;
+ 	uint8_t reason;
+-	char address[20], addr_pad[4];
++	char address[OFONO_MAX_PHONE_NUMBER_LENGTH + 1], addr_pad[4];
  };
  =
 
--#define OFONO_MAX_PHONE_NUMBER_LENGTH 20
-+#define OFONO_MAX_PHONE_NUMBER_LENGTH 120
- =
-
- struct ofono_phone_number {
- 	char number[OFONO_MAX_PHONE_NUMBER_LENGTH + 1];
-diff --git a/src/common.c b/src/common.c
-index b5b9a6f..56a6aa8 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -262,6 +262,34 @@ gboolean valid_phone_number_format(const char *number)
- 	return TRUE;
+ struct isi_voicecall {
+@@ -244,6 +244,28 @@ static void isi_call_destination_address_sb_proc(struc=
+t isi_voicecall *ivc,
+ 		isi_call_any_address_sb_proc(ivc, call, sb);
  }
  =
 
-+gboolean valid_dial_string(const char *number)
++static void isi_call_destination_post_address_sb_proc(struct isi_voicecall=
+ *ivc,
++						struct isi_call *call,
++						GIsiSubBlockIter const *sb)
 +{
-+	int len =3D strlen(number);
-+	int begin =3D 0;
-+	int i;
++	uint8_t addr_info, addr_len;
++	char *address;
 +
-+	if (!len)
-+		return FALSE;
++	if (!call->address[0] ||
++		strlen(call->address) >=3D OFONO_MAX_PHONE_NUMBER_LENGTH)
++		return;
 +
-+	if (number[0] =3D=3D '+')
-+		begin =3D 1;
++	if (!g_isi_sb_iter_get_byte(sb, &addr_info, 2) ||
++		!g_isi_sb_iter_get_byte(sb, &addr_len, 3) ||
++		!g_isi_sb_iter_get_alpha_tag(sb, &address, 2 * addr_len, 4))
++		return;
 +
-+	if ((len - begin) > OFONO_MAX_PHONE_NUMBER_LENGTH)
-+		return FALSE;
++	strncat(call->address, address,
++		OFONO_MAX_PHONE_NUMBER_LENGTH - strlen(call->address));
++	g_free(address);
 +
-+	for (i =3D begin; i < len; i++) {
-+		if (number[i] >=3D '0' && number[i] <=3D '9')
-+			continue;
-+
-+		if (number[i] =3D=3D '*' || number[i] =3D=3D '#' || number[i] =3D=3D 'p')
-+			continue;
-+
-+		return FALSE;
-+	}
-+
-+	return TRUE;
 +}
 +
- const char *telephony_error_to_str(const struct ofono_error *error)
+ static void isi_call_mode_sb_proc(struct isi_voicecall *ivc,
+ 					struct isi_call *call,
+ 					GIsiSubBlockIter const *sb)
+@@ -371,40 +393,61 @@ static struct isi_call_req_context *
+ isi_call_create_req(struct ofono_voicecall *ovc,
+ 			uint8_t presentation,
+ 			uint8_t addr_type,
+-			char const address[21],
++			char const address[OFONO_MAX_PHONE_NUMBER_LENGTH + 1],
+ 			ofono_voicecall_cb_t cb,
+ 			void *data)
  {
- 	struct error_entry *e;
-@@ -379,18 +407,18 @@ int mmi_service_code_to_bearer_class(int code)
+-	size_t addr_len =3D strlen(address);
+-	size_t sub_len =3D (6 + 2 * addr_len + 3) & ~3;
+-	size_t i, offset =3D 3 + 4 + 8 + 6;
+-	uint8_t req[3 + 4 + 8 + 6 + 40] =3D {
++	uint8_t req[3 + 4 + 8 + 10 + 2 * OFONO_MAX_PHONE_NUMBER_LENGTH + 4] =3D {
+ 		CALL_CREATE_REQ,
+ 		0,		/* No id */
+-		3,		/* Mode, Clir, Number */
++		4,		/* Mode, Clir, Number, Postfix */
+ 		/* MODE SB */
+ 		CALL_MODE, 4, CALL_MODE_SPEECH, CALL_MODE_INFO_NONE,
+ 		/* ORIGIN_INFO SB */
+ 		CALL_ORIGIN_INFO, 8, presentation, 0, 0, 0, 0, 0,
+ 		/* DESTINATION_ADDRESS SB */
+ 		CALL_DESTINATION_ADDRESS,
+-		sub_len,
++		0,		/* sub_len */
+ 		addr_type & 0x7F,
+ 		0, 0,
+-		addr_len,
+-		/* uint16_t addr[20] */
++		0,		/* addr_len */
++		/* uint16_t addr[OFONO_MAX_PHONE_NUMBER_LENGTH] */
+ 	};
+-	size_t rlen =3D 3 + 4 + 8 + sub_len;
++	size_t i, j, offset;
  =
 
- const char *phone_number_to_string(const struct ofono_phone_number *ph)
- {
--	static char buffer[64];
-+	static char buffer[(OFONO_MAX_PHONE_NUMBER_LENGTH + 1) + 1];
- =
-
- 	if (ph->type =3D=3D 145 && (strlen(ph->number) > 0) &&
- 			ph->number[0] !=3D '+') {
- 		buffer[0] =3D '+';
--		strncpy(buffer + 1, ph->number, 62);
--		buffer[63] =3D '\0';
-+		strncpy(buffer + 1, ph->number, sizeof(buffer) - 2);
- 	} else {
--		strncpy(buffer, ph->number, 63);
--		buffer[63] =3D '\0';
-+		strncpy(buffer, ph->number, sizeof(buffer) - 1);
+-	if (addr_len > 20) {
+-		CALLBACK_WITH_FAILURE(cb, data);
+-		return NULL;
++	offset =3D 3 + 4 + 8;
++	for (i =3D 0, j =3D 0; address[i]; i++, j++) {
++		if (i > OFONO_MAX_PHONE_NUMBER_LENGTH)
++			goto out;
++		if (address[i] !=3D '*')
++			break;
++		req[offset + 6 + 2 * j + 1] =3D address[i];
  	}
  =
 
-+	buffer[sizeof(buffer) - 1] =3D '\0';
+-	for (i =3D 0; i < addr_len; i++)
+-		req[offset + 2 * i + 1] =3D address[i];
++	for (; address[i]; i++, j++) {
++		if (i > OFONO_MAX_PHONE_NUMBER_LENGTH)
++			goto out;
++		if (address[i] =3D=3D '*' || address[i] =3D=3D 'p' || address[i] =3D=3D =
+'#')
++			break;
++		req[offset + 6 + 2 * j + 1] =3D address[i];
++	}
++	req[offset + 5] =3D j;
++	offset +=3D (req[offset + 1] =3D (6 + 2 * j + 3) & ~3);
 +
- 	return buffer;
++	req[offset + 0] =3D CALL_DESTINATION_POST_ADDRESS;
++	for (j =3D 0; address[i]; i++, j++) {
++		if (i > OFONO_MAX_PHONE_NUMBER_LENGTH)
++			goto out;
++		req[offset + 4 + 2 * j + 1] =3D address[i];
++	}
++	req[offset + 3] =3D j;
++	offset +=3D (req[offset + 1] =3D (4 + 2 * j + 3) & ~3);
+ =
+
+-	return isi_call_req(ovc, req, rlen, isi_call_create_resp, cb, data);
++	return isi_call_req(ovc, req, offset, isi_call_create_resp, cb, data);
++
++out:
++	CALLBACK_WITH_FAILURE(cb, data);
++	return NULL;
  }
  =
 
-diff --git a/src/common.h b/src/common.h
-index 8b5798a..c7bfe26 100644
---- a/src/common.h
-+++ b/src/common.h
-@@ -125,6 +125,7 @@ enum pin_type {
- const char *telephony_error_to_str(const struct ofono_error *error);
+ static gboolean isi_call_create_resp(GIsiClient *client,
+@@ -477,13 +520,17 @@ static void isi_call_status_ind_cb(GIsiClient *client,
+ 			isi_call_destination_address_sb_proc(ivc, call, sb);
+ 			break;
  =
 
- gboolean valid_phone_number_format(const char *number);
-+gboolean valid_dial_string(const char *number);
- const char *phone_number_to_string(const struct ofono_phone_number *ph);
- void string_to_phone_number(const char *str, struct ofono_phone_number *ph=
-);
++		case CALL_DESTINATION_POST_ADDRESS:
++			isi_call_destination_post_address_sb_proc(ivc,
++								call, sb);
++			break;
++
+ 		case CALL_ORIGIN_ADDRESS:
+ 			isi_call_origin_address_sb_proc(ivc, call, sb);
+ 			break;
  =
 
+ 		case CALL_GSM_DETAILED_CAUSE:
+ 		case CALL_DESTINATION_PRE_ADDRESS:
+-		case CALL_DESTINATION_POST_ADDRESS:
+ 		case CALL_DESTINATION_SUBADDRESS:
+ 		case CALL_GSM_EVENT_INFO:
+ 		case CALL_NW_CAUSE:
 -- =
 
 1.7.0.4
 
 
---===============2856655312509956346==--
+--===============6755911271522862305==--
 
