@@ -1,81 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============2269220588213409762=="
+Content-Type: multipart/mixed; boundary="===============1535068426000225204=="
 MIME-Version: 1.0
-From: Rajesh.Nagaiah@elektrobit.com
-Subject: RE: [PATCH 0/3] Long dial string support (2nd)
-Date: Mon, 22 Nov 2010 12:58:15 -0800
-Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702CCB78F@usrdes03.ebgroup.elektrobit.com>
-In-Reply-To: <cover.1290436058.git.Andras.Domokos@nokia.com>
+From: Joly, Frederic <frederic.joly@intel.com>
+Subject: RE: [PATCH] doc: Add Location Services API (resending now that I am
+ on ofono mailing list)
+Date: Mon, 22 Nov 2010 21:50:22 +0000
+Message-ID: <129600E5E5FB004392DDC3FB599660D70104DAF288@irsmsx504.ger.corp.intel.com>
+In-Reply-To: <B4268AAFAFA3E244B5B0641D5914917048B76BEA90@EXDCVYMBSTM006.EQ1STM.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2269220588213409762==
+--===============1535068426000225204==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras, =
+Hi Simon,
+
+-----Original Message-----
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of Simon LETHBRIDGE
+Sent: Thursday, November 18, 2010 10:50 AM
+To: Denis Kenzior; ofono(a)ofono.org
+Cc: Sjur BRENDELAND
+Subject: RE: [PATCH] doc: Add Location Services API (resending now that I a=
+m on ofono mailing list)
+
+> Hi Denis,
+
+> > -----Original Message-----
+> > From: Denis Kenzior [mailto:denkenz(a)gmail.com]
+> > Sent: 11 November 2010 21:50
+> > To: ofono(a)ofono.org
+> > Cc: Sjur Br=C3=A6ndeland; Simon LETHBRIDGE; Sjur BRENDELAND
+> > Subject: Re: [PATCH] doc: Add Location Services API
+ =
 
 
-> Dial strings can now be as long as 120 digits (not counting =
+> > =
 
-> '+'). This feature is going to be needed by the FDN feature.
-> =
+> > And +CPOSR can transfer the following elements from the network:
+> > <assist_data>, <pos_meas>, <msg>.
+> > =
 
-> An FDN may consist of a phone number plus a DTMF string. In =
+> > Am I right so far?
 
-> order to have the call succeed when FDN is enabled, both =
+> This is substantially correct, however the assistance data request can on=
+ly be made in response to a positioning =
 
-> parts need to be provided when making a call, as a single dial string.
-> =
+> request from the network.  If assistance is required otherwise then an MO=
+LR is needed, which we don't support yet. =
 
-> For AT modems the long dial string can be and has to be =
+Since you mentioned in another post the LPP, I would just point out that in=
+ 2G and 3G the MO-LR invoke was needed to request the assistance data, but =
+for 4G, this is not anymore the case. It seems you can directly request the=
+ assistance data at the access stratum level. (see 36.355 =C2=A75.2.1 & =C2=
+=A76.3).
+So we should consider also assistance data request in the API proposal, I b=
+elieve.
 
-> passed as is to the modem, for ISI modems the dial string =
-
-> needs to be split into phone number (dest.
-> address sub block) and DTMF tone (post dest. address sub =
-
-> block) before feeding it to the modem.
-
-Sending the DTMF tone in post dest. address sub block in case of =
-
-the ISI modem or sending as part of the dial string in case of =
-
-AT modems, will the modem take care of DTMF postfix handling by =
-
-itself or its only going to use that for FDN check ?
-
-If its going to be earlier case, then not all modems support =
-
-this feature and also sending the postfix DTMF tone automatically =
-
-by the modem without notifying to the AP, then the user neither =
-
-wont be aware of ongoing DTMF tone sending as there will be no =
-
-local playback of the tone nor will have any control over the =
-
-DTMF tones sending.
-
-So we should parse the dial string and extract the DTMF postfix =
-
-(after the FDN check, anyways we are not suppoting FDN in oFono). =
-
-Once the call gets connected, then the postfix DTMF tones can be =
-
-sent out and signaled to the application about the start and stop
-events of each tone, so the application can generate the =
-
-corresponding DTMF tones using the tonegenerator for local =
-
-playback.
-
-Also currently the "w"/"W" stop character handling is not there, =
-
-so I am not sure if its intentionally left out or missing ?
 
 BR,
-Rajesh
 
---===============2269220588213409762==--
+Fred
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============1535068426000225204==--
 
