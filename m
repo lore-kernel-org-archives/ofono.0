@@ -1,76 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============4925262046452214784=="
+Content-Type: multipart/mixed; boundary="===============0494715629188287775=="
 MIME-Version: 1.0
 From: Joly, Frederic <frederic.joly@intel.com>
-Subject: RE: [RFC] AGPS Support
-Date: Mon, 22 Nov 2010 22:52:30 +0000
-Message-ID: <129600E5E5FB004392DDC3FB599660D70104DAF2A2@irsmsx504.ger.corp.intel.com>
-In-Reply-To: <1288780795.9615.44.camel@aeonflux>
+Subject: RE: [PATCH] doc: Add Location Services API
+Date: Mon, 22 Nov 2010 23:16:00 +0000
+Message-ID: <129600E5E5FB004392DDC3FB599660D70104DAF2A3@irsmsx504.ger.corp.intel.com>
+In-Reply-To: <B737AE8337D70F47B693AC85FA440B08328D6CF9C4@NOK-EUMSG-02.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4925262046452214784==
+--===============0494715629188287775==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Marko,
 
-Once again I apologise, I have not been able to react before on this.
+>-----Original Message-----
+>From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beha=
+lf Of Marko.Ovaska(a)nokia.com
+>Sent: Monday, November 22, 2010 10:01 AM
+>To: ofono(a)ofono.org; simon.lethbridge(a)stericsson.com
+>Cc: sjur.brandeland(a)stericsson.com
+>Subject: RE: [PATCH] doc: Add Location Services API
+>
+> I'm proposing that either we have =
 
-> -----Original Message-----
-> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beh=
-alf Of Marcel Holtmann
-> Sent: Wednesday, November 03, 2010 11:40 AM
-> To: Sjur Br=C3=A6ndeland
-> Cc: Ahmed, Suhail; Simon ETHBRIDGE; mats.tuneld(a)stericsson.com; ofono(a=
-)ofono.org
->Subject: Re: [RFC] AGPS Support
+> a) fully opaque 'raw' 3GPP defined frames between modem and Linux
+> b) or well defined D-BUS API for LCS commands, but keeping the assistance=
+ payload in 'raw' format
 
-> Or do we expect oFono core to do something with this data? I am under
-> the impression that oFono core is just a pipe here.
+> Both a) and b) approaches break the 27.007 defined positioning commands. =
+Rationale is that 27.007 positioning
+> related re-formatting creates additional effort to any positioning engine=
+, whether it resides in modem, dedicated
+>  chip or in Linux.
 
-> And in conclusion we have XML and ASN.1 adding some overhead to the
-> actual data that is encoded. None of them is coming for free.
-
-> If we wanna look at this not from the 27.007 standard angle, then we
-> have to look at what the users of this D-Bus are talking and what would
-> be easiest for them.
-
-
-These last sentences did not provoke any comments or reactions, but I would=
- have expected they did because they are pointing out an important fact.
-Ofono, in this feature, is just a pipe. The choice for proposing ASN.1 cont=
-ainers or more exactly passing directing RRC frames, RRLP frames or other a=
-ir interface protocols frames was driven by a simple fact: this data format=
-ting can be easily supported, if not already supported, by nearly all the G=
-PS vendors or positioning application frameworks, and this, thanks to the S=
-UPL clients which are embedded inside positioning application frameworks or=
- GPS daemons.
-
-Going to standard AT commands is virtuous, and all of us should support thi=
-s. =
-
-But the fact is that these AT commands for positioning support with xml dtd=
- (CPOS and CPOSR) are a late addition of release 8 end of 2008 while the co=
-rresponding features had been introduced in the 3GPP standard 9 or 10 years=
- ago (just check R99 04.31!). So the GPS and positioning industry had to fi=
-nd its own way before several years before the 3GPP minds proposing somethi=
-ng. =
+For the option b, I would tend to not support you. I just recheck the 23.03=
+2 (Universal GeoGraphical Area Description), and the number of ways to expr=
+ess a position with velocity and uncertainty may not make the API simple.
+Just have a look for instance the +CMOLR's XML DTD location_parameters. :)
+Moreover, GPS vendors and other positioning professionals would find more l=
+ogical to propose to use the WGS 84 datum for instance which is widely used=
+ and leave the burden to map the position to 3GPP style... =
 
 
-As of today, I'm suspicious about proposing the XML format as the only ofon=
-o solution.
-Do we have commitments from GPS vendors or positioning framework vendors or=
- telephone integrators that they are going to use the XML format?
-Does STE GPS framework supports these XML formats?
+BR,
 
-I think these considerations should be put in the balance before pushing a =
-single solution.
-
-Thanks for reading me up to here,
-
-Fred =
-
+Fred
 
 ---------------------------------------------------------------------
 Intel Corporation SAS (French simplified joint stock company)
@@ -86,5 +62,5 @@ by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
 
---===============4925262046452214784==--
+--===============0494715629188287775==--
 
