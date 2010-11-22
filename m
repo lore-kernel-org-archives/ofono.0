@@ -1,50 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============1230048707289227989=="
+Content-Type: multipart/mixed; boundary="===============1591533043403525896=="
 MIME-Version: 1.0
-From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
-Subject: Re: failed to send Concatenated sms message with ofono v0.33:
-Date: Mon, 22 Nov 2010 11:55:44 +0200
-Message-ID: <4CEA3E20.3070204@nokia.com>
-In-Reply-To: <1865303E0DED764181A9D882DEF65FB6815BEBBE6C@shsmsx502.ccr.corp.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] stemodem: Create network interfaces statically
+Date: Mon, 22 Nov 2010 04:34:15 -0600
+Message-ID: <4CEA4727.8020506@gmail.com>
+In-Reply-To: <AANLkTinFtqvnFFts9uBqSrHbJzrrkToifuqYXbz+pK6Z@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1230048707289227989==
+--===============1591533043403525896==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Haitao,
+Hi Sjur,
 
-> 09787000-097c6000 rw-p 00000000 00:00 0          [heap]
-> b782f000-b7831000 rwxs 00000000 b3:09 16617
-> /var/cache/callhistory/voicecallhistorydata
-> b7831000-b7835000 rwxs 00000000 b3:09 16615
-> /var/cache/smshistory/smshistorydata
-> b7835000-b783a000 r-xp 00000000 b3:09 356573
-> /usr/lib/ofono/plugins/smshistory.so
-> b783a000-b783b000 rw-p 00004000 b3:09 356573
-> /usr/lib/ofono/plugins/smshistory.so
-> b783b000-b783e000 rw-p 00000000 00:00 0
-> b7840000-b7843000 r-xp 00000000 b3:09 356574
-> /usr/lib/ofono/plugins/callhistory.so
-> b7843000-b7844000 rw-p 00003000 b3:09 356574
-> /usr/lib/ofono/plugins/callhistory.so
-> b7844000-b784b000 r--s 00000000 b3:09 309015
-> /usr/lib/gconv/gconv-modules.cache
-> b784b000-b784c000 rw-p 00000000 00:00 0
-> b784c000-b784d000 r-xp 00000000 00:00 0          [vdso]
-> bfb5c000-bfb7d000 rw-p 00000000 00:00 0          [stack]
-> ofonod[1366]: Aborting (signal 6)
->    =
+On 11/18/2010 02:03 AM, Sjur Br=C3=A6ndeland wrote:
+> Hi Denis & Marcel.
+> =
 
-This is an issue with smshistory plugin, not really oFono issue.
-There is already a bug in bugs.meego.com for this issue. (#9691).
+>> From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+>>
+>> Changes:
+>> o Restructure code so interfaces are created statically when probe is ca=
+lled.
+>> o Removed some of the unnecessary initializations at declaration.
+>> o No longer reporting "default gateway" on PtP IP Interface.
+>> o Bugfix: Handle network initiated deactivation.
+>> ---
+>>  drivers/stemodem/gprs-context.c |  153 ++++++++++++++++++++++----------=
+-------
+>>  1 files changed, 85 insertions(+), 68 deletions(-)
+>>
+>> diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-con=
+text.c
+>> index 05fec3f..d8db23b 100644
+>> --- a/drivers/stemodem/gprs-context.c
+>> +++ b/drivers/stemodem/gprs-context.c
+> =
 
-Regards
-Arun
+> Have you received this patch in readable format?
+> I'm sending patches using git send-email over gmail,
+> and when I check sent items in gmail, it comes up as base64 encoded.
+> Is this garbled for you as well?
+
+They seem to come through fine for me at least.
+
+> =
+
+> BTW are you using patchwork or similar so I could check the patch
+> status somewhere?
+> =
 
 
+Nope, but it has been suggested that this might be a good idea.  I'm
+open to the idea of trying this out, but don't promise I will like it ;)
 
+> Regards,
+> Sjur
 
---===============1230048707289227989==--
+Regards,
+-Denis
+
+--===============1591533043403525896==--
 
