@@ -1,52 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============0044225127057990434=="
+Content-Type: multipart/mixed; boundary="===============8101168656017719074=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Simulate provide local info command
-Date: Mon, 22 Nov 2010 08:31:51 -0600
-Message-ID: <4CEA7ED7.2080008@gmail.com>
-In-Reply-To: <1290076999-27809-1-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 3/4] phonesim: Add Timer Management commands to sim app
+ menu.
+Date: Mon, 22 Nov 2010 09:09:42 -0600
+Message-ID: <4CEA87B6.4010500@gmail.com>
+In-Reply-To: <1290354698-15749-3-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0044225127057990434==
+--===============8101168656017719074==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Andrew,
 
-On 11/18/2010 04:43 AM, Yang Gu wrote:
+On 11/21/2010 09:51 AM, Andrzej Zaborowski wrote:
 > ---
->  src/simapplication.cpp |  263 ++++++++++++++++++++++++++++++++++++++++++=
+>  src/qsimcommand.cpp          |   83 ++++++++++++++++++++
+>  src/qsimcommand.h            |    3 +
+>  src/qsimterminalresponse.cpp |   59 ++++++++++++++
+>  src/qsimterminalresponse.h   |    3 +
+>  src/simapplication.cpp       |  171 ++++++++++++++++++++++++++++++++++++=
 ++++++
->  src/simapplication.h   |    2 +
->  2 files changed, 265 insertions(+), 0 deletions(-)
+>  src/simapplication.h         |    6 ++
+>  6 files changed, 325 insertions(+), 0 deletions(-)
 > =
 
-> +#define LocalInfoMenu_Loc               1
-> +#define LocalInfoMenu_IMEI              2
-> +#define LocalInfoMenu_NMR               3
-> +#define LocalInfoMenu_Time              4
-> +#define LocalInfoMenu_Lang              5
-> +#define LocalInfoMenu_TimingAdvance     6
-> +#define LocalInfoMenu_Tech              7
-> +#define LocalInfoMenu_ESN               8
-> +#define LocalInfoMenu_IMEISV            9
-> +#define LocalInfoMenu_SearchMode        10
-> +#define LocalInfoMenu_Battery           11
-> +#define LocalInfoMenu_MEID              12
-> +#define LocalInfoMenu_WSID              13
-> +#define LocalInfoMenu_Broadcast         14
-> +#define LocalInfoMenu_Techs             15
-> +#define LocalInfoMenu_Locs              16
-> +#define LocalInfoMenu_NMRs              17
-> +
 
-We should really only support Time and Lang, the others are actually
-better handled by the modem firmware.
+  CXX    src/qsimcommand.o
+src/qsimcommand.cpp: In static member function =E2=80=98static QSimCommand
+QSimCommand::fromPdu(const QByteArray&)=E2=80=99:
+src/qsimcommand.cpp:2713: error: =E2=80=98uint8_t=E2=80=99 was not declared=
+ in this scope
+src/qsimcommand.cpp:2713: error: expected =E2=80=98)=E2=80=99 before =E2=80=
+=98pdu=E2=80=99
+src/qsimcommand.cpp:2714: error: expected =E2=80=98)=E2=80=99 before =E2=80=
+=98pdu=E2=80=99
+src/qsimcommand.cpp:2715: error: expected =E2=80=98)=E2=80=99 before =E2=80=
+=98pdu=E2=80=99
+src/qsimcommand.cpp:2716: error: expected =E2=80=98)=E2=80=99 before =E2=80=
+=98pdu=E2=80=99
+src/qsimcommand.cpp:2717: error: expected =E2=80=98)=E2=80=99 before =E2=80=
+=98pdu=E2=80=99
+src/qsimcommand.cpp:2718: error: expected =E2=80=98)=E2=80=99 before =E2=80=
+=98pdu=E2=80=99
 
 Regards,
 -Denis
 
---===============0044225127057990434==--
+--===============8101168656017719074==--
 
