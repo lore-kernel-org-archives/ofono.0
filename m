@@ -1,78 +1,85 @@
-Content-Type: multipart/mixed; boundary="===============8520591956547568841=="
+Content-Type: multipart/mixed; boundary="===============6975915022160384727=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: RE: [PATCH] stkutil: mask the DCS value to keep only the intersting
- bits
-Date: Tue, 23 Nov 2010 15:59:28 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D4018813542BD37@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <4CEA4CA4.4050604@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: STK DisplayText changes proposal
+Date: Tue, 23 Nov 2010 10:05:37 -0600
+Message-ID: <4CEBE651.4080502@gmail.com>
+In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D4018813542BD15@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8520591956547568841==
+--===============6975915022160384727==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Guillaume,
+
+On 11/23/2010 09:33 AM, Lucas, GuillaumeX wrote:
+> Hi,
+> =
+
+> According to the 3GPP specifications there is some missing points in the =
+SATK DisplayText implementation and I want to propose some API changes here.
+> =
+
+> 1. clear message after delay / wait for user to clear flag
+> =
+
+> This flag corresponds to the bit 8 of the command qualifier (see ETSI TS =
+102 223) and indicates how the message should be cleared by the UI.
+> In the STK agent documentation it's indicated that this flag is handled u=
+sing different timeout value for the Agent DisplayText method call. But tha=
+t doesn't seem the case in the code: there is no check of the flag.
+
+Andrew has to answer this one, it seems like there's a disconnect
+between the implementation and the docs.  Probably just a bug.
 
 > =
 
-> Hi Guillaume,
+> For me it's to the UI to handle the way how the message must be cleared a=
+nd not to ofono. With the current Agent DisplayText method API this is not =
+possible as there is no indication if the message must be cleared after a d=
+elay or after a user action. So I want to propose the following change for =
+the STK Agent:
 > =
 
-> >>> -	switch (dcs) {
-> >>> +	switch (dcs & 0x06) {
-> >>
-> >> Do you mean to bitwise and with 0xc here?  Otherwise you break the
-> UCS2
-> >> case.  Also do any SIMs use the '1111' Coding Bits Entry entry from
-> >> 23.038 Section 4?  If so, then we need to use sms_dcs_decode to
-> >> retrieve
-> >> the character set.
-> >
-> > Yes you are right. I did a bit-shifting error in my mask and don't
-> see it during my test.
-> > It's 0xc and not 0x6 to use for the mask.
-> >
-> > The issue that I've is effectively due to the fact that some SIMs use
-> the '1111' Coding Bits Entry (it's the case for French Orange SIM card
-> for example). For me having the upper bits set to '1' do not really
-> changes the character set decoding (only diff is that UCS2 will not be
-> possible in that case). It's the reason why I've simply add a mask in
-> the decode_text function. Using the sms_dcs_decode function is probably
-> better as the DCS of the SIM ToolKit is the same as the one used for
-> SMS.
-> >
-> > Do you want that I re-publish a patch using the sms_dcs_decode
-> function?
+> Change    void DisplayText(string text, byte icon_id, boolean urgent)
+> By        void DisplayText(string text, byte icon_id, boolean urgent, boo=
+lean clear_after_delay)
 > =
 
-> Bitwise shifting with 0x0c would work.  However, to be safe we might
-> just be extra pedantic and check that the DCS the SIM sends to us is
-> actually valid.
+> Where clear_after_delay boolean must be set to '1' for the clear message =
+after delay case and to '0' for the wait for user to clear case.
+
+Actually I really don't want to make this distinction.  The UI should
+always give the user the option to clear the message.  So just
+increasing the timeout when wait_for_user flag is set seems enough to me.
+
 > =
 
+> 2. Busy screen
+> =
 
-I agree.
-I will rewrite my patch using the sms_dcs_decode function to secure this.
+> The other missing point in the DisplayText implementation is the case of =
+the busy screen.
+> According to the sequence 1.2 of the ETSI TS 102 384 we must return a ter=
+minal response with the error "screen busy" when the ME is not in the idle =
+screen and if the text message is not urgent. In the current implementation=
+ there is no way to return this type of error in the terminal response.
+> =
+
+> I propose to add a new error code ScreenBusy in the same way of what it's=
+ done for GoBack and EndSession event.
+
+I can be convinced that this is a good idea.  However, in 99% of the
+cases the STK session is started by the user, so the screen should never
+be 'busy'.
+
+Andrew, what do you think?
 
 Regards,
-Guillaume
+-Denis
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============8520591956547568841==--
+--===============6975915022160384727==--
 
