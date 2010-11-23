@@ -1,47 +1,183 @@
-Content-Type: multipart/mixed; boundary="===============3872196942969489250=="
+Content-Type: multipart/mixed; boundary="===============7903760325481213081=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/3] Long dial string support (2nd)
-Date: Tue, 23 Nov 2010 11:41:40 -0600
-Message-ID: <4CEBFCD4.80204@gmail.com>
-In-Reply-To: <cover.1290436058.git.Andras.Domokos@nokia.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: Re: [PATCH -v3 1/3] Add ofono_modem_reset()
+Date: Tue, 23 Nov 2010 15:41:31 -0200
+Message-ID: <20101123174131.GA22502@vigoh>
+In-Reply-To: <4CEB9E1F.4020608@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3872196942969489250==
+--===============7903760325481213081==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 11/22/2010 10:36 AM, Andras Domokos wrote:
-> Dial strings can now be as long as 120 digits (not counting '+'). This fe=
-ature
-> is going to be needed by the FDN feature.
+Hi Denis,
+
+* Denis Kenzior <denkenz@gmail.com> [2010-11-23 04:57:35 -0600]:
+
+> Hi Gustavo,
 > =
 
-> An FDN may consist of a phone number plus a DTMF string. In order to have=
- the
-> call succeed when FDN is enabled, both parts need to be provided when mak=
-ing a
-> call, as a single dial string.
+> On 11/19/2010 03:36 PM, Gustavo F. Padovan wrote:
+> > Some modems can screw up everything and then we will need to do a silent
+> > reset of the modem. This patch take the modem back to the OFFLINE state.
+> > ---
+> >  include/modem.h |    2 ++
+> >  src/modem.c     |   44 +++++++++++++++++++++++++++++++++++++++++++-
+> >  2 files changed, 45 insertions(+), 1 deletions(-)
+> > =
 
-So as mentioned previously, oFono does not support FDN.  So why are we
-doing this again?
+> > diff --git a/include/modem.h b/include/modem.h
+> > index 7b13ee0..a92eb88 100644
+> > --- a/include/modem.h
+> > +++ b/include/modem.h
+> > @@ -46,6 +46,8 @@ int ofono_modem_register(struct ofono_modem *modem);
+> >  ofono_bool_t ofono_modem_is_registered(struct ofono_modem *modem);
+> >  void ofono_modem_remove(struct ofono_modem *modem);
+> >  =
+
+> > +void ofono_modem_reset(struct ofono_modem *modem);
+> > +
+> >  void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool_t p=
+owered);
+> >  ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem);
+> >  =
+
+> > diff --git a/src/modem.c b/src/modem.c
+> > index 6d346c3..e57f8fc 100644
+> > --- a/src/modem.c
+> > +++ b/src/modem.c
+> > @@ -70,6 +70,7 @@ struct ofono_modem {
+> >  	guint			interface_update;
+> >  	ofono_bool_t		powered;
+> >  	ofono_bool_t		powered_pending;
+> > +	ofono_bool_t		reset;
+> >  	guint			timeout;
+> >  	ofono_bool_t		online;
+> >  	GHashTable		*properties;
+> > @@ -433,6 +434,8 @@ static void sim_state_watch(enum ofono_sim_state ne=
+w_state, void *user)
+> >  		if (modem->driver->set_online =3D=3D NULL)
+> >  			modem_change_state(modem, MODEM_STATE_ONLINE);
+> >  =
+
+> > +		modem->reset =3D FALSE;
+> > +
+> >  		break;
+> >  	}
+> >  }
+> > @@ -784,7 +787,8 @@ void ofono_modem_set_powered(struct ofono_modem *mo=
+dem, ofono_bool_t powered)
+> >  		return;
+> >  	}
+> >  =
+
+> > -	ofono_dbus_signal_property_changed(conn, modem->path,
+> > +	if (!modem->reset)
+> > +		ofono_dbus_signal_property_changed(conn, modem->path,
+> >  					OFONO_MODEM_INTERFACE,
+> >  					"Powered", DBUS_TYPE_BOOLEAN,
+> >  					&dbus_powered);
+> > @@ -799,6 +803,17 @@ void ofono_modem_set_powered(struct ofono_modem *m=
+odem, ofono_bool_t powered)
+> >  	} else
+> >  		modem_change_state(modem, MODEM_STATE_POWER_OFF);
+> >  =
+
+> > +	if (modem->reset && !powering_down) {
+> > +		if (!modem->powered) {
+> > +			int err =3D set_powered(modem, TRUE);
+> > +
+> > +			if (err =3D=3D -EINPROGRESS)
+> > +				return;
+> > +
+> > +			modem_change_state(modem, MODEM_STATE_PRE_SIM);
+> > +		}
+> > +	}
+> > +
+> >  out:
+> >  	if (powering_down && powered =3D=3D FALSE) {
+> >  		modems_remaining -=3D 1;
+> > @@ -806,6 +821,7 @@ out:
+> >  		if (modems_remaining =3D=3D 0)
+> >  			__ofono_exit();
+> >  	}
+> > +
+> >  }
+> >  =
+
+> >  ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem)
+> > @@ -1565,6 +1581,32 @@ void ofono_modem_remove(struct ofono_modem *mode=
+m)
+> >  	g_free(modem);
+> >  }
+> >  =
+
+> > +static gboolean __reset_modem(void *data)
+> =
+
+> There's no need to use '__' prefix for static functions.  That prefix is
+> reserved for private API functions declared in ofono.h
+
+Ok.
 
 > =
 
-> For AT modems the long dial string can be and has to be passed as is to t=
-he
+> > +{
+> > +	struct ofono_modem *modem =3D data;
+> > +	int err;
+> > +
+> > +	modem->reset =3D TRUE;
+> > +
+> > +	err =3D set_powered(modem, FALSE);
+> > +	if (err =3D=3D -EINPROGRESS)
+> > +		return FALSE;
+> =
 
-Most AT modems have serious limitations on how many characters are
-supported in the dial string.  Not to mention that the pause character
-doesn't really always work.
+> So we really don't need to power down the modem for the silent reset.
+> Simply assume that the modem driver has performed the necessary steps of
+> cleaning up the modem to a 'powered off state'.  We can also assume that
+> silent resets only happen when the modem is at least powered.
 
-I can understand supporting long dialing numbers, but supporting dial
-strings is something else entirely...
+Ok.
 
-Regards,
--Denis
+> =
 
---===============3872196942969489250==--
+> One thing I'm not seeing in this patch is the functionality for getting
+> the modem back into online state after a silent reset.
+> =
+
+> > +
+> > +	err =3D set_powered(modem, TRUE);
+> > +	if (err =3D=3D -EINPROGRESS)
+> > +		return FALSE;
+> > +
+> > +	modem_change_state(modem, MODEM_STATE_PRE_SIM);
+> > +	return FALSE;
+> > +}
+> > +
+> > +void ofono_modem_reset(struct ofono_modem *modem)
+> > +{
+> > +	DBG("%p", modem);
+> > +
+> > +	g_idle_add(__reset_modem, modem);
+> =
+
+> In general I don't like using g_idle_add in the core.  What is the
+> purpose of this one?  If you really have to do it, please track the
+> gsource and make sure to remove it when the modem is removed.
+
+I was facing a segfault due to caling driver->disable here. It destroys
+the data->chat in phonesim, but we need it there because we are in the
+middle of callback. I'll ckeck if with the new changes you proposed we
+will still need this.
+
+-- =
+
+Gustavo F. Padovan
+http://profusion.mobi
+
+--===============7903760325481213081==--
 
