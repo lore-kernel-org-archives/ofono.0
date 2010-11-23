@@ -1,40 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============2806220459386430573=="
+Content-Type: multipart/mixed; boundary="===============8236224124561992927=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: Re: STK DisplayText changes proposal
-Date: Wed, 24 Nov 2010 00:29:40 +0100
-Message-ID: <AANLkTikaLZOFj2to93n9sMGYXtO29StLogb3j7PDgw=S@mail.gmail.com>
-In-Reply-To: <4CEBF500.1000607@gmail.com>
+Subject: Re: [PATCH] gatchat: make sure to unsubscribe the GAtIO write handler
+ on disconnect.
+Date: Wed, 24 Nov 2010 00:39:18 +0100
+Message-ID: <AANLkTin1FkZ65H2pHhgfJY=RMCTbpKzYHgeOeB0wBXCb@mail.gmail.com>
+In-Reply-To: <4CEB87E3.8050708@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2806220459386430573==
+--===============8236224124561992927==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 23 November 2010 18:08, Denis Kenzior <denkenz@gmail.com> wrote:
-> On 11/23/2010 10:55 AM, Andrzej Zaborowski wrote:
->> As for the clear after delay flag, there's a check for it in
->> display_text_cb (line 1248). =C2=A0As far as I can make out the only
->> difference is the response sent to the SIM.
+On 23 November 2010 10:22, Denis Kenzior <denkenz@gmail.com> wrote:
+> Actually I think the right fix is to remove the write watcher in
+> io_shutdown.
 >
-> So it has been a long time since those discussions, but it does seem to
-> me that using a higher timeout in the case of 'wait_for_user' flag seems
-> like a good idea. =C2=A0Do you remember why we left this out?
+> I pushed an experimental patch 99107c6c9d0ae42eb96621b0fc34972e418f1755,
+> please let me know if this fixes the issue.
 
-No, I don't, I'll send a patch to use the normal timeout instead of
-short timeout when clearing after user action is requested.  As for
-the proposal to add a parameter clear_after_delay and the ScreenBusy
-response I'm fine with both of them (as I don't think the saving from
-hiding these details is worth it) but I leave it up to you and
-Guillaume.  It seems that a user action always clears the message but
-it may be good to display a "confirm" button anyway.  The ScreenBusy
-response is also possible for other proactive commands so for
-consistency would need to be added there too.
+Yes, seems to have fixed the issue as well.
 
-Best regards,
-Andrew
+Thanks
 
---===============2806220459386430573==--
+--===============8236224124561992927==--
 
