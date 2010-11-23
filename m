@@ -1,54 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============6828426870531197542=="
+Content-Type: multipart/mixed; boundary="===============3395651050628323497=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH] radio-settings: update doc with possible errors
-Date: Tue, 23 Nov 2010 16:08:35 -0200
-Message-ID: <1290535715-18955-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Andras Domokos <andras.domokos@nokia.com>
+Subject: Re: [PATCH 0/3] Long dial string support (2nd)
+Date: Tue, 23 Nov 2010 20:19:02 +0200
+Message-ID: <4CEC0596.6030404@nokia.com>
+In-Reply-To: <4CEBFCD4.80204@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6828426870531197542==
+--===============3395651050628323497==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-When GetProperties() and SetProperty() are called, there are more errors
-that might be returned. Add them in documentation.
----
- doc/radio-settings-api.txt |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+On 11/23/2010 07:41 PM, ext Denis Kenzior wrote:
+> On 11/22/2010 10:36 AM, Andras Domokos wrote:
+>    =
 
-diff --git a/doc/radio-settings-api.txt b/doc/radio-settings-api.txt
-index ebf6138..e073d1d 100644
---- a/doc/radio-settings-api.txt
-+++ b/doc/radio-settings-api.txt
-@@ -11,6 +11,9 @@ Methods		dict GetProperties()
- 			properties section for available properties.
- =
+>> Dial strings can now be as long as 120 digits (not counting '+'). This f=
+eature
+>> is going to be needed by the FDN feature.
+>>
+>> An FDN may consist of a phone number plus a DTMF string. In order to hav=
+e the
+>> call succeed when FDN is enabled, both parts need to be provided when ma=
+king a
+>> call, as a single dial string.
+>>      =
 
- 			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.NotImplemented
-+					 [service].Error.InProgress
-+					 [service].Error.Failed
- =
+> So as mentioned previously, oFono does not support FDN.  So why are we
+> doing this again?
+>
+>    =
 
- 		void SetProperty(string name, variant value)
- =
+Even if we don't support FDN at this point, there is still a remaining
+related issue, who we are going to dial numbers like:
 
-@@ -22,6 +25,7 @@ Methods		dict GetProperties()
- 			Possible Errors: [service].Error.InvalidArguments
- 					 [service].Error.DoesNotExist
- 					 [service].Error.InProgress
-+					 [service].Error.Failed
- =
+12345456p1234#1111
 
- Signals		PropertyChanged(string property, variant value)
- =
+I think the the dial string could still be passed to the voicecall driver
+that will take care of the modem specific details, most importantly
+playing the DTMF tones and generating the tone events that would be
+propagated back to voicecall manager and to D-Bus from there.
+>> For AT modems the long dial string can be and has to be passed as is to =
+the
+>>      =
 
--- =
+> Most AT modems have serious limitations on how many characters are
+> supported in the dial string.  Not to mention that the pause character
+> doesn't really always work.
+>
+> I can understand supporting long dialing numbers, but supporting dial
+> strings is something else entirely...
+>
+> Regards,
+> -Denis
+>    =
 
-1.7.3.2
+Regards,
+Andras
 
 
---===============6828426870531197542==--
+--===============3395651050628323497==--
 
