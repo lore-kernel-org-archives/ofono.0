@@ -1,33 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============0118515837567033803=="
+Content-Type: multipart/mixed; boundary="===============6971430727680464951=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] string_to_phone_number: remove redumdant predicate
-Date: Tue, 23 Nov 2010 06:49:46 -0600
-Message-ID: <4CEBB86A.1030203@gmail.com>
-In-Reply-To: <1290516038-7926-1-git-send-email-remi.denis-courmont@nokia.com>
+Subject: CDMA Support
+Date: Tue, 23 Nov 2010 07:19:55 -0600
+Message-ID: <4CEBBF7B.8090307@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0118515837567033803==
+--===============6971430727680464951==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi R=C3=A9mi,
+Hi Everyone,
 
-On 11/23/2010 06:40 AM, R=C3=A9mi Denis-Courmont wrote:
-> If the first character is a plus sign, then it is not a nul, then
-> the string length is true anyway.
-> ---
->  src/common.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
+Anyone who has been following the oFono project knows that up until now
+oFono has been all about solving the GSM telephony stack problem.  We
+wanted to support CDMA, but were simply too busy to do so.  We'd like to
+change that.
 
+During the Meego conference several oFono developers held a small
+workshop to figure out how to proceed with supporting CDMA and its
+related technologies in oFono.  We had a very nice discussion and
+managed to hammer out the initial (highly preliminary) proposal for
+D-Bus APIs covering CDMA.
 
-Patch has been applied, thanks.
+The proposal covers the basics of voice calls, data connections,
+messaging and network registration details.  The documentation can be
+found under:
+doc/cdma-network-api.txt
+doc/cdma-voicecall-manager-api.txt
+doc/cdma-message-api.txt
+doc/cdma-connman-api.txt
+
+Please note that so far this is a proposal only and no actual
+implementation work has been done.  But I'd like this announcement to be
+the starting point for discussion and hopefully patch submissions for
+CDMA support :)
 
 Regards,
 -Denis
 
---===============0118515837567033803==--
+--===============6971430727680464951==--
 
