@@ -1,81 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============8767240765962045908=="
+Content-Type: multipart/mixed; boundary="===============0994357961044820622=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: Re: [PATCH -v3 3/3] modem: add support to restore state when
- resetting the modem
-Date: Tue, 23 Nov 2010 19:33:24 -0200
-Message-ID: <20101123213324.GF22502@vigoh>
-In-Reply-To: <20101123175009.GB22502@vigoh>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/3] Add Lockdown property to Modem interface
+Date: Tue, 23 Nov 2010 15:43:12 -0600
+Message-ID: <4CEC3570.7050709@gmail.com>
+In-Reply-To: <20101123175314.GC22502@vigoh>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8767240765962045908==
+--===============0994357961044820622==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-* Gustavo F. Padovan <padovan@profusion.mobi> [2010-11-23 15:50:09 -0200]:
+Hi Gustavo,
 
-> Hi Denis,
+On 11/23/2010 11:53 AM, Gustavo F. Padovan wrote:
+>>> +		boolean Lockdown [readwrite]
+>>> +
+>>> +			Boolean representing the lock state of the modem.
+>>> +			Setting it to true, makes the calling application hold
+>>> +			the modem lock and power it down. Setting to false
+>>> +			makes the it restore the modem state before the
+>>> +			lockdown and release the modem lock. Only the
+>>> +			application that holds the lock can power up the modem.
+>>> +			If the the application exits Lockdown is set to false.
+>>> +
+>>
+>> So me and Marcel discussed this briefly and I think we want to modify
+>> the behavior slightly.  When Lockdown is set to True, the modem should
+>> be brought down to Powered=3DOff state, and setting the Powered property
+>> should return an error.
 > =
 
-> * Denis Kenzior <denkenz@gmail.com> [2010-11-23 05:04:40 -0600]:
+> That's what my code does.
 > =
 
-> > Hi Gustavo,
-> > =
 
-> > On 11/19/2010 03:36 PM, Gustavo F. Padovan wrote:
-> > > ---
-> > >  src/modem.c |   74 ++++++++++++++++++++++++++++++++-----------------=
----------
-> > >  1 files changed, 41 insertions(+), 33 deletions(-)
-> > > =
+Yep.
 
-> > =
-
-> > Ah ok, you implement the getting back to online process in this patch.
-> > Ignore my previous comment.
-> > =
-
-> > > diff --git a/src/modem.c b/src/modem.c
-> > > index e57f8fc..704de29 100644
-> > > --- a/src/modem.c
-> > > +++ b/src/modem.c
-> > > @@ -61,6 +61,7 @@ enum modem_state {
-> > >  struct ofono_modem {
-> > >  	char			*path;
-> > >  	enum modem_state	modem_state;
-> > > +	enum modem_state	old_state;
-> > =
-
-> > Can we simply use a boolean like 'get_online' that is FALSE by default,
-> > but gets set to TRUE (assuming we're online) during a silent reset?
-> > This can then get re-used for implementing of the Lockdown property as =
-well.
+>>
+>> When Lockdown is set to False from True, only the lock is lifted.
+>> Powered state still has to be triggered manually.  This should make the
+>> implementation a little simpler.
 > =
 
-> Yeah, I'm reusing it there.
+> So this also means that we shall not restore the modem state when
+> someone set Powered to true?
 > =
 
-> > =
 
-> > It also seems that the 'reset' value is not really needed.
-> =
+No, lets forget doing this for now.  I think it was making things too
+complicated.
 
-> I'm using that to avoid emit DBus signal during the silent reset, Not
-> seeing how to do that without modem->reset, maybe we can rely on
-> modem->pending, not sure yet. =
+Regards,
+-Denis
 
-
-Or do you mean that have DBus signaling about Powered and Online during
-silent reset is just fine? That is starting to make sense to me. We may
-want to notify users that the modem is not there.
-
--- =
-
-Gustavo F. Padovan
-http://profusion.mobi
-
---===============8767240765962045908==--
+--===============0994357961044820622==--
 
