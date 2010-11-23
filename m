@@ -1,60 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0994357961044820622=="
+Content-Type: multipart/mixed; boundary="===============1756019805896036766=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] Add Lockdown property to Modem interface
-Date: Tue, 23 Nov 2010 15:43:12 -0600
-Message-ID: <4CEC3570.7050709@gmail.com>
-In-Reply-To: <20101123175314.GC22502@vigoh>
+Subject: Re: [RERESEND] [PATCH 2/2] Update the network documentation
+Date: Tue, 23 Nov 2010 15:45:07 -0600
+Message-ID: <4CEC35E3.8010601@gmail.com>
+In-Reply-To: <AANLkTimivA3nWN=ROdEFV4aMQVZ4+orwKQY1COO34Pea@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0994357961044820622==
+--===============1756019805896036766==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Aki,
 
-On 11/23/2010 11:53 AM, Gustavo F. Padovan wrote:
->>> +		boolean Lockdown [readwrite]
->>> +
->>> +			Boolean representing the lock state of the modem.
->>> +			Setting it to true, makes the calling application hold
->>> +			the modem lock and power it down. Setting to false
->>> +			makes the it restore the modem state before the
->>> +			lockdown and release the modem lock. Only the
->>> +			application that holds the lock can power up the modem.
->>> +			If the the application exits Lockdown is set to false.
->>> +
->>
->> So me and Marcel discussed this briefly and I think we want to modify
->> the behavior slightly.  When Lockdown is set to True, the modem should
->> be brought down to Powered=3DOff state, and setting the Powered property
->> should return an error.
+On 11/23/2010 01:20 PM, Aki Niemi wrote:
+> Hi,
 > =
 
-> That's what my code does.
+> 2010/11/23 Denis Kenzior <denkenz@gmail.com>:
+>> In fact we were planning to report the current bearer on the
+>> ConnectionManager interface once we figured out the vendor commands that
+>> can actually report this information.
+> =
+
+> Do you mean HSDPA/HSUPA channel allocations, or the tech reported by
+> CGREG? Because these can differ. For example, a Finnish operator's
+> cells will not indicate HS*PA support, but HSDPA channel will
+> nevertheless get allocated when data is moving. This is why for
+> instance the N900 will show a 3G icon when idle, but switch to 3.5G
+> when actively receiving data.
 > =
 
 
-Yep.
-
->>
->> When Lockdown is set to False from True, only the lock is lifted.
->> Powered state still has to be triggered manually.  This should make the
->> implementation a little simpler.
-> =
-
-> So this also means that we shall not restore the modem state when
-> someone set Powered to true?
-> =
-
-
-No, lets forget doing this for now.  I think it was making things too
-complicated.
+I mean the actual bearer being used.  The 27.007 equivalent would be
++CPSB, not what is reported by +CGREG.
 
 Regards,
 -Denis
 
---===============0994357961044820622==--
+--===============1756019805896036766==--
 
