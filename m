@@ -1,41 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============6983518051923837798=="
+Content-Type: multipart/mixed; boundary="===============5601260774990438933=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RERESEND] [PATCH 2/2] Update the network documentation
-Date: Tue, 23 Nov 2010 09:02:25 -0600
-Message-ID: <4CEBD781.8080000@gmail.com>
-In-Reply-To: <201011231658.18154.remi.denis-courmont@nokia.com>
+From: Simon LETHBRIDGE <simon.lethbridge@stericsson.com>
+Subject: RE: [RFCv2] doc: Assisted Satellite Navigation API and Agent API
+Date: Tue, 23 Nov 2010 16:07:26 +0100
+Message-ID: <B4268AAFAFA3E244B5B0641D5914917048BCE1C099@EXDCVYMBSTM006.EQ1STM.local>
+In-Reply-To: <AANLkTinO-T9Jig4GKNxiwtHVG8Yf-1prOnOiTJz4L5Jk@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6983518051923837798==
+--===============5601260774990438933==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi Andrzej
 
-> In fact, I have some cases where we'd need know whether HSDPA/HSUPA chann=
-els =
+> -----Original Message-----
+> From: andrzej zaborowski [mailto:balrogg(a)gmail.com]
 
-> are actually allocated, not just whether the cell supports them. ISI does =
 
-> that, but there does not seem to be any standard way to get that informat=
-ions =
+> =
 
-> out of the modem. In particular, I assume that both the CREG and CGREG =
+> Since (correct me if I'm wrong) SendPositioningControl can only be
+> called in response to PositioningRequest(), it would seem more logical
+> to skip SendPositioningControl and have the agent return the xml
+> string from PositioningRequest(), e.g.
+> =
 
-> technology indications are always equal :-(
+> string PositioningRequest(string xml_element)
+> =
 
-Actually they're not.  Most AT modems report HSPA/HSDPA/HSUPA only on
-the CGREG command.  CREG only reports umts/edge/gsm.
+> A D-bus call can take a couple of minutes to respond if needed.
+> =
 
-In fact we were planning to report the current bearer on the
-ConnectionManager interface once we figured out the vendor commands that
-can actually report this information.
+There may be several calls to PositioningRequest() before a response is sen=
+t.
+The ofono agent would need to interpret the messages to see =
+
+whether it should pend waiting for a response from the GNSS/GPS driver.  =
+
+Once a positioning procedure has been started it may get aborted.  =
+
+This abort may not be detected by the agent If the call
+to the PositioningRequest() does not return.
 
 Regards,
--Denis
 
---===============6983518051923837798==--
+Simon
+
+--===============5601260774990438933==--
 
