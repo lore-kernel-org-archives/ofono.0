@@ -1,56 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============5865746082573915431=="
+Content-Type: multipart/mixed; boundary="===============0643631604491841129=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/3] Long dial string support (2nd)
-Date: Tue, 23 Nov 2010 16:04:12 -0600
-Message-ID: <4CEC3A5C.8030509@gmail.com>
-In-Reply-To: <4CEC0596.6030404@nokia.com>
+Subject: Re: [PATCH -v3 3/3] modem: add support to restore state when
+ resetting the modem
+Date: Tue, 23 Nov 2010 16:07:31 -0600
+Message-ID: <4CEC3B23.6040404@gmail.com>
+In-Reply-To: <20101123213324.GF22502@vigoh>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5865746082573915431==
+--===============0643631604491841129==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras,
+Hi Gustavo,
 
-> Even if we don't support FDN at this point, there is still a remaining
-> related issue, who we are going to dial numbers like:
+>>>
+>>> It also seems that the 'reset' value is not really needed.
+>>
+>> I'm using that to avoid emit DBus signal during the silent reset, Not
+>> seeing how to do that without modem->reset, maybe we can rely on
+>> modem->pending, not sure yet. =
+
 > =
 
-> 12345456p1234#1111
+> Or do you mean that have DBus signaling about Powered and Online during
+> silent reset is just fine? That is starting to make sense to me. We may
+> want to notify users that the modem is not there.
 > =
 
-> I think the the dial string could still be passed to the voicecall driver
-> that will take care of the modem specific details, most importantly
-> playing the DTMF tones and generating the tone events that would be
-> propagated back to voicecall manager and to D-Bus from there.
 
-So we looked into what it would take to implement dial strings with AT
-modems.  The consensus was that passing the entire string to the driver
-was a bad idea as most modems simply do not support pause characters and
-have strict limitations on the number length.
+I actually think that emitting powered / online going on and off is
+okay, there's no real way to hide this since all the atoms have to be
+re-initialized.  So all the interfaces go away and magically re-appear,
+all properties are re-emitted, etc.  Not emitting Powered or Online is
+the least of our worries.
 
-The best idea we have came up with so far is to parse the string passed
-to dial and separate the actual number from the dial string.  The dial
-string then gets assigned to a separate property on the voice call
-object (see Dial String task in the TODO).
-
-We would then extend the call state logic to queue the dial string the
-same as a DTMF once the call is active.  If you study the DTMF logic,
-you will note that Andrew has recently made it into a tone queue.
-
-Today we burst up to 8 (arbitrarily picked number) DTMF tones per driver
-request.  What we could do is send a single tone at a time.  In theory
-this would allow us to emit the Tone Started / Tone Stopped signals
-(please see the provide feedback of sent DTMF tones task) as well.
-
-It sounds like the ISI modems already work this way and are nicely
-covered by this approach...
+Silent resets are really just about avoiding having the user re-enter
+the PIN when the modem crashes.
 
 Regards,
 -Denis
 
---===============5865746082573915431==--
+--===============0643631604491841129==--
 
