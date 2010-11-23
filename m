@@ -1,62 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============4955702101628649053=="
+Content-Type: multipart/mixed; boundary="===============0693873441455342501=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] Add Lockdown property to Modem interface
-Date: Tue, 23 Nov 2010 07:50:18 -0600
-Message-ID: <4CEBC69A.3010505@gmail.com>
-In-Reply-To: <1290202629-23235-3-git-send-email-padovan@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [PATCH] TODO: Add vCard export to SM/ME stores
+Date: Tue, 23 Nov 2010 14:51:20 +0100
+Message-ID: <1290520281.13641.8.camel@aeonflux.mpl.access-company.com>
+In-Reply-To: <6E42A1B4DD2F7B4D80A1F26BB498BF9F8C9A098A17@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4955702101628649053==
+--===============0693873441455342501==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Jaakko,
 
-On 11/19/2010 03:37 PM, Gustavo F. Padovan wrote:
-> Setting Lockdown to TRUE means power down the modem and hold a lock that
-> only permits the lock's owner power up the modem back. When released
-> it restores the last state of the modem before holding the lock.
-> ---
->  doc/modem-api.txt |   10 +++++
->  src/modem.c       |  114 +++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  2 files changed, 124 insertions(+), 0 deletions(-)
+> > To be honest, the more and more I think about this, the more my
+> > conclusion is to not support phonebook export. It is a bad idea. It is
+> > highly complex and it is not a feature that will be used anyway.
 > =
 
-> diff --git a/doc/modem-api.txt b/doc/modem-api.txt
-> index c48375e..3dd6dde 100644
-> --- a/doc/modem-api.txt
-> +++ b/doc/modem-api.txt
-> @@ -37,6 +37,16 @@ Properties	boolean Powered [readwrite]
->  			Boolean representing the rf state of the modem.
->  			Online is false in flight mode.
->  =
+> Ok, got it. Do you have any insight if MeeGo still wants this (http://bug=
+s.meego.com/show_bug.cgi?id=3D4476)?
 
-> +		boolean Lockdown [readwrite]
-> +
-> +			Boolean representing the lock state of the modem.
-> +			Setting it to true, makes the calling application hold
-> +			the modem lock and power it down. Setting to false
-> +			makes the it restore the modem state before the
-> +			lockdown and release the modem lock. Only the
-> +			application that holds the lock can power up the modem.
-> +			If the the application exits Lockdown is set to false.
-> +
+the requirement comes from wanting to pass the Chinese type approval.
+For a general user it makes no sense. This is a 21st century smart phone
+and not some feature phone from the 90ties.
 
-So me and Marcel discussed this briefly and I think we want to modify
-the behavior slightly.  When Lockdown is set to True, the modem should
-be brought down to Powered=3DOff state, and setting the Powered property
-should return an error.
+That said, I am curious on how Apple can sell the iPhone on the Chinese
+market without having support for writing to the SIM phonebook. Nobody
+could give me an answer to that so far.
 
-When Lockdown is set to False from True, only the lock is lifted.
-Powered state still has to be triggered manually.  This should make the
-implementation a little simpler.
+> If they do, will they need to maintain a separate branch, or do they need=
+ to implement it somehow with a separate component?
 
-Regards,
--Denis
+Private branches or a separate components are not allowed. It is either
+oFono supports it or it does not. This is actually pretty much a black
+or white feature.
 
---===============4955702101628649053==--
+Regards
+
+Marcel
+
+
+
+--===============0693873441455342501==--
 
