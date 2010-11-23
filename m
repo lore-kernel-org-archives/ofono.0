@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============7938081775200400823=="
+Content-Type: multipart/mixed; boundary="===============3511248660331861969=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH -v3 2/3] phonesim: Add modem reset trigger
-Date: Tue, 23 Nov 2010 04:59:33 -0600
-Message-ID: <4CEB9E95.8000703@gmail.com>
-In-Reply-To: <1290202590-23190-2-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH -v3 3/3] modem: add support to restore state when
+ resetting the modem
+Date: Tue, 23 Nov 2010 05:04:40 -0600
+Message-ID: <4CEB9FC8.6080504@gmail.com>
+In-Reply-To: <1290202590-23190-3-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7938081775200400823==
+--===============3511248660331861969==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,50 +18,33 @@ Hi Gustavo,
 
 On 11/19/2010 03:36 PM, Gustavo F. Padovan wrote:
 > ---
->  plugins/phonesim.c |   10 ++++++++++
->  1 files changed, 10 insertions(+), 0 deletions(-)
+>  src/modem.c |   74 ++++++++++++++++++++++++++++++++---------------------=
+-----
+>  1 files changed, 41 insertions(+), 33 deletions(-)
 > =
 
-> diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-> index d2faf42..7426da6 100644
-> --- a/plugins/phonesim.c
-> +++ b/plugins/phonesim.c
-> @@ -237,6 +237,13 @@ static void cfun_set_on_cb(gboolean ok, GAtResult *r=
-esult, gpointer user_data)
->  	ofono_modem_set_powered(modem, ok);
->  }
->  =
 
-> +static void crst_notify(GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_modem *modem =3D user_data;
-> +
-> +	ofono_modem_reset(modem);
+Ah ok, you implement the getting back to online process in this patch.
+Ignore my previous comment.
 
-I suggest you simply clean up the phonesim connection (e.g. closing the
-tcp socket) when you receive this notification, and then call
-modem_reset at the end.
+> diff --git a/src/modem.c b/src/modem.c
+> index e57f8fc..704de29 100644
+> --- a/src/modem.c
+> +++ b/src/modem.c
+> @@ -61,6 +61,7 @@ enum modem_state {
+>  struct ofono_modem {
+>  	char			*path;
+>  	enum modem_state	modem_state;
+> +	enum modem_state	old_state;
 
-> +}
-> +
->  static void phonesim_disconnected(gpointer user_data)
->  {
->  	struct ofono_modem *modem =3D user_data;
-> @@ -389,6 +396,9 @@ static int phonesim_enable(struct ofono_modem *modem)
->  	g_at_chat_send(data->chat, "AT+CSCS=3D\"GSM\"", none_prefix,
->  			NULL, NULL, NULL);
->  =
+Can we simply use a boolean like 'get_online' that is FALSE by default,
+but gets set to TRUE (assuming we're online) during a silent reset?
+This can then get re-used for implementing of the Lockdown property as well.
 
-> +	g_at_chat_register(data->chat, "+CRST:",
-> +				crst_notify, FALSE, modem, NULL);
-> +
->  	return 0;
->  }
->  =
-
+It also seems that the 'reset' value is not really needed.
 
 Regards,
 -Denis
 
---===============7938081775200400823==--
+--===============3511248660331861969==--
 
