@@ -1,59 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============1855402410131350120=="
+Content-Type: multipart/mixed; boundary="===============8520591956547568841=="
 MIME-Version: 1.0
 From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: STK DisplayText changes proposal
-Date: Tue, 23 Nov 2010 15:33:58 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D4018813542BD15@irsmsx501.ger.corp.intel.com>
+Subject: RE: [PATCH] stkutil: mask the DCS value to keep only the intersting
+ bits
+Date: Tue, 23 Nov 2010 15:59:28 +0000
+Message-ID: <9F3EABD6E3419B4C81F34EAABB4D4018813542BD37@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <4CEA4CA4.4050604@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1855402410131350120==
+--===============8520591956547568841==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis,
 
-According to the 3GPP specifications there is some missing points in the SA=
-TK DisplayText implementation and I want to propose some API changes here.
+> =
 
-1. clear message after delay / wait for user to clear flag
+> Hi Guillaume,
+> =
 
-This flag corresponds to the bit 8 of the command qualifier (see ETSI TS 10=
-2 223) and indicates how the message should be cleared by the UI.
-In the STK agent documentation it's indicated that this flag is handled usi=
-ng different timeout value for the Agent DisplayText method call. But that =
-doesn't seem the case in the code: there is no check of the flag.
+> >>> -	switch (dcs) {
+> >>> +	switch (dcs & 0x06) {
+> >>
+> >> Do you mean to bitwise and with 0xc here?  Otherwise you break the
+> UCS2
+> >> case.  Also do any SIMs use the '1111' Coding Bits Entry entry from
+> >> 23.038 Section 4?  If so, then we need to use sms_dcs_decode to
+> >> retrieve
+> >> the character set.
+> >
+> > Yes you are right. I did a bit-shifting error in my mask and don't
+> see it during my test.
+> > It's 0xc and not 0x6 to use for the mask.
+> >
+> > The issue that I've is effectively due to the fact that some SIMs use
+> the '1111' Coding Bits Entry (it's the case for French Orange SIM card
+> for example). For me having the upper bits set to '1' do not really
+> changes the character set decoding (only diff is that UCS2 will not be
+> possible in that case). It's the reason why I've simply add a mask in
+> the decode_text function. Using the sms_dcs_decode function is probably
+> better as the DCS of the SIM ToolKit is the same as the one used for
+> SMS.
+> >
+> > Do you want that I re-publish a patch using the sms_dcs_decode
+> function?
+> =
 
-For me it's to the UI to handle the way how the message must be cleared and=
- not to ofono. With the current Agent DisplayText method API this is not po=
-ssible as there is no indication if the message must be cleared after a del=
-ay or after a user action. So I want to propose the following change for th=
-e STK Agent:
+> Bitwise shifting with 0x0c would work.  However, to be safe we might
+> just be extra pedantic and check that the DCS the SIM sends to us is
+> actually valid.
+> =
 
-Change    void DisplayText(string text, byte icon_id, boolean urgent)
-By        void DisplayText(string text, byte icon_id, boolean urgent, boole=
-an clear_after_delay)
 
-Where clear_after_delay boolean must be set to '1' for the clear message af=
-ter delay case and to '0' for the wait for user to clear case.
-
-2. Busy screen
-
-The other missing point in the DisplayText implementation is the case of th=
-e busy screen.
-According to the sequence 1.2 of the ETSI TS 102 384 we must return a termi=
-nal response with the error "screen busy" when the ME is not in the idle sc=
-reen and if the text message is not urgent. In the current implementation t=
-here is no way to return this type of error in the terminal response.
-
-I propose to add a new error code ScreenBusy in the same way of what it's d=
-one for GoBack and EndSession event.
-
-Please let me know if you agree with it.
+I agree.
+I will rewrite my patch using the sms_dcs_decode function to secure this.
 
 Regards,
 Guillaume
+
 ---------------------------------------------------------------------
 Intel Corporation SAS (French simplified joint stock company)
 Registered headquarters: "Les Montalets"- 2, rue de Paris, =
@@ -68,5 +74,5 @@ by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
 
---===============1855402410131350120==--
+--===============8520591956547568841==--
 
