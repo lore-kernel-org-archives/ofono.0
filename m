@@ -1,88 +1,246 @@
-Content-Type: multipart/mixed; boundary="===============6252848016682100041=="
+Content-Type: multipart/mixed; boundary="===============6660476715882417480=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v2 5/7] text-telephony: add documentation
-Date: Tue, 23 Nov 2010 16:04:16 -0200
-Message-ID: <1290535458-18786-6-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH v2 6/7] phonesim: implement text-telephony atom
+Date: Tue, 23 Nov 2010 16:04:17 -0200
+Message-ID: <1290535458-18786-7-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1290535458-18786-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6252848016682100041==
+--===============6660476715882417480==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am                |    2 +-
- doc/text-telephony-api.txt |   39 +++++++++++++++++++++++++++++++++++++++
- 2 files changed, 40 insertions(+), 1 deletions(-)
- create mode 100644 doc/text-telephony-api.txt
+ plugins/phonesim.c |  148 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++--
+ 1 files changed, 144 insertions(+), 4 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index ee1313d..e231457 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -356,7 +356,7 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt \
- 			doc/message-api.txt doc/message-waiting-api.txt \
- 			doc/phonebook-api.txt doc/radio-settings-api.txt \
- 			doc/sim-api.txt doc/stk-api.txt \
--			doc/audio-settings-api.txt
-+			doc/audio-settings-api.txt doc/text-telephony-api.txt
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index d2faf42..8c31df4 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -54,6 +54,7 @@
+ #include <ofono/stk.h>
+ #include <ofono/sms.h>
+ #include <ofono/ssn.h>
++#include <ofono/text-telephony.h>
+ #include <ofono/ussd.h>
+ #include <ofono/voicecall.h>
+ #include <ofono/gprs.h>
+@@ -64,6 +65,7 @@
+ #include <drivers/atmodem/atutil.h>
  =
 
+ static const char *none_prefix[] =3D { NULL };
++static const char *ptty_prefix[] =3D { "+PTTY:", NULL };
+ static int next_iface =3D 0;
  =
 
- test_scripts =3D test/backtrace \
-diff --git a/doc/text-telephony-api.txt b/doc/text-telephony-api.txt
-new file mode 100644
-index 0000000..e7c898f
---- /dev/null
-+++ b/doc/text-telephony-api.txt
-@@ -0,0 +1,39 @@
-+Text Telephony hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ struct phonesim_data {
+@@ -78,6 +80,11 @@ struct gprs_context_data {
+ 	char *interface;
+ };
+ =
+
++struct text_telephony_data {
++	GAtChat *chat;
++	char *interface;
++};
 +
-+Service		org.ofono
-+Interface	org.ofono.TextTelephony
-+Object path	[variable prefix]/{modem0,modem1,...}
+ static void at_cgact_up_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+ {
+ 	struct cb_data *cbd =3D user_data;
+@@ -190,12 +197,140 @@ static void phonesim_context_remove(struct ofono_gpr=
+s_context *gc)
+ 	g_free(gcd);
+ }
+ =
+
++static int phonesim_tty_probe(struct ofono_text_telephony *tt,
++				unsigned int vendor, void *data)
++{
++	GAtChat *chat =3D data;
++	struct text_telephony_data *ttd;
 +
-+Methods		dict GetProperties()
++	ttd =3D g_try_new0(struct text_telephony_data, 1);
++	if (!ttd)
++		return -ENOMEM;
 +
-+			Returns all Text Telephony properties. See the
-+			properties section for available properties.
++	ttd->chat =3D g_at_chat_clone(chat);
++	ttd->interface =3D g_strdup_printf("dummy%d", next_iface++);
 +
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.Failed
++	ofono_text_telephony_set_data(tt, ttd);
++	ofono_text_telephony_register(tt);
 +
-+		void SetProperty(string name, variant value)
++	return 0;
++}
 +
-+			Changes the value of the specified property. Only
-+			properties that are listed as read-write are
-+			changeable. On success a PropertyChanged signal
-+			will be emitted.
++static void phonesim_tty_remove(struct ofono_text_telephony *tt)
++{
++	struct text_telephony_data *ttd =3D ofono_text_telephony_get_data(tt);
 +
-+			Possible Errors: [service].Error.InvalidArguments
-+					 [service].Error.InProgress
-+					 [service].Error.Failed
++	DBG("");
 +
-+Signals		PropertyChanged(string property, variant value)
++	ofono_text_telephony_set_data(tt, NULL);
 +
-+			This signal indicates a changed value of the given
-+			property.
++	g_at_chat_unref(ttd->chat);
++	g_free(ttd->interface);
 +
-+Properties	boolean	Powered [readwrite]
++	g_free(ttd);
++}
 +
-+			This property will enable or disable the text
-+			telephony feature in the modem.
++static void tty_query_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct cb_data *cbd =3D user_data;
++	struct ofono_error error;
++	GAtResultIter iter;
++	ofono_text_telephony_query_cb_t cb =3D cbd->cb;
++	int value;
 +
-+			Text telephony (TTY), also known as TDD, is a feature
-+			present in some modems that allow them to be used by
-+			hearing impaired people.
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		cb(&error, -1, cbd->data);
++		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	if (g_at_result_iter_next(&iter, "+PTTY:") =3D=3D FALSE)
++		goto error;
++
++	if (g_at_result_iter_next_number(&iter, &value) =3D=3D FALSE)
++		goto error;
++
++	cb(&error, value, cbd->data);
++
++	return;
++
++error:
++
++	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++}
++
++static void phonesim_tty_query(struct ofono_text_telephony *tt,
++				ofono_text_telephony_query_cb_t cb, void *data)
++{
++	struct text_telephony_data *ttd =3D ofono_text_telephony_get_data(tt);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	DBG("");
++
++	if (!cbd)
++		goto error;
++
++	if (g_at_chat_send(ttd->chat, "AT+PTTY?", ptty_prefix,
++				tty_query_cb, cbd, g_free) > 0)
++		return;
++
++error:
++	g_free(cbd);
++
++	CALLBACK_WITH_FAILURE(cb, 0, data);
++}
++
++static void tty_set_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_text_telephony_set_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++}
++
++static void phonesim_tty_set(struct ofono_text_telephony *tt, int enable,
++				ofono_text_telephony_set_cb_t cb, void *data)
++{
++	struct text_telephony_data *ttd =3D ofono_text_telephony_get_data(tt);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[12];
++
++	DBG("");
++
++	if (!cbd)
++		goto error;
++
++	enable =3D !!enable;
++	snprintf(buf, sizeof(buf), "AT+PTTY=3D%d", enable);
++
++	if (g_at_chat_send(ttd->chat, buf, none_prefix,
++					tty_set_cb, cbd, g_free) > 0)
++		return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
+ static struct ofono_gprs_context_driver context_driver =3D {
++	.name                   =3D "phonesim",
++	.probe                  =3D phonesim_context_probe,
++	.remove                 =3D phonesim_context_remove,
++	.activate_primary       =3D phonesim_activate_primary,
++	.deactivate_primary     =3D phonesim_deactivate_primary,
++};
++
++static struct ofono_text_telephony_driver tty_driver =3D {
+ 	.name			=3D "phonesim",
+-	.probe			=3D phonesim_context_probe,
+-	.remove			=3D phonesim_context_remove,
+-	.activate_primary	=3D phonesim_activate_primary,
+-	.deactivate_primary	=3D phonesim_deactivate_primary,
++	.probe			=3D phonesim_tty_probe,
++	.remove			=3D phonesim_tty_remove,
++	.query_tty		=3D phonesim_tty_query,
++	.set_tty		=3D phonesim_tty_set,
+ };
+ =
+
+ static int phonesim_probe(struct ofono_modem *modem)
+@@ -465,6 +600,7 @@ static void phonesim_post_sim(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
++	ofono_text_telephony_create(modem, 0, "phonesim", data->chat);
+ 	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
+ =
+
+ 	if (!data->calypso)
+@@ -630,6 +766,8 @@ static int phonesim_init(void)
+ =
+
+ 	ofono_gprs_context_driver_register(&context_driver);
+ =
+
++	ofono_text_telephony_driver_register(&tty_driver);
++
+ 	parse_config(CONFIGDIR "/phonesim.conf");
+ =
+
+ 	return 0;
+@@ -648,6 +786,8 @@ static void phonesim_exit(void)
+ 	g_slist_free(modem_list);
+ 	modem_list =3D NULL;
+ =
+
++	ofono_text_telephony_driver_unregister(&tty_driver);
++
+ 	ofono_gprs_context_driver_unregister(&context_driver);
+ =
+
+ 	ofono_modem_driver_unregister(&phonesim_driver);
 -- =
 
 1.7.3.2
 
 
---===============6252848016682100041==--
+--===============6660476715882417480==--
 
