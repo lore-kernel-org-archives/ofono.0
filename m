@@ -1,65 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============3395651050628323497=="
+Content-Type: multipart/mixed; boundary="===============7519814778238140430=="
 MIME-Version: 1.0
-From: Andras Domokos <andras.domokos@nokia.com>
-Subject: Re: [PATCH 0/3] Long dial string support (2nd)
-Date: Tue, 23 Nov 2010 20:19:02 +0200
-Message-ID: <4CEC0596.6030404@nokia.com>
-In-Reply-To: <4CEBFCD4.80204@gmail.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [RERESEND] [PATCH 2/2] Update the network documentation
+Date: Tue, 23 Nov 2010 21:20:00 +0200
+Message-ID: <AANLkTimivA3nWN=ROdEFV4aMQVZ4+orwKQY1COO34Pea@mail.gmail.com>
+In-Reply-To: <4CEBD781.8080000@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3395651050628323497==
+--===============7519814778238140430==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 11/23/2010 07:41 PM, ext Denis Kenzior wrote:
-> On 11/22/2010 10:36 AM, Andras Domokos wrote:
->    =
+Hi,
 
->> Dial strings can now be as long as 120 digits (not counting '+'). This f=
-eature
->> is going to be needed by the FDN feature.
->>
->> An FDN may consist of a phone number plus a DTMF string. In order to hav=
-e the
->> call succeed when FDN is enabled, both parts need to be provided when ma=
-king a
->> call, as a single dial string.
->>      =
+2010/11/23 Denis Kenzior <denkenz@gmail.com>:
+> In fact we were planning to report the current bearer on the
+> ConnectionManager interface once we figured out the vendor commands that
+> can actually report this information.
 
-> So as mentioned previously, oFono does not support FDN.  So why are we
-> doing this again?
->
->    =
+Do you mean HSDPA/HSUPA channel allocations, or the tech reported by
+CGREG? Because these can differ. For example, a Finnish operator's
+cells will not indicate HS*PA support, but HSDPA channel will
+nevertheless get allocated when data is moving. This is why for
+instance the N900 will show a 3G icon when idle, but switch to 3.5G
+when actively receiving data.
 
-Even if we don't support FDN at this point, there is still a remaining
-related issue, who we are going to dial numbers like:
+Also, we might need to expose CELL_DCH state at some point as well. I
+was thinking this could be a property in the RadioSettings interface.
 
-12345456p1234#1111
+Cheers,
+Aki
 
-I think the the dial string could still be passed to the voicecall driver
-that will take care of the modem specific details, most importantly
-playing the DTMF tones and generating the tone events that would be
-propagated back to voicecall manager and to D-Bus from there.
->> For AT modems the long dial string can be and has to be passed as is to =
-the
->>      =
-
-> Most AT modems have serious limitations on how many characters are
-> supported in the dial string.  Not to mention that the pause character
-> doesn't really always work.
->
-> I can understand supporting long dialing numbers, but supporting dial
-> strings is something else entirely...
->
-> Regards,
-> -Denis
->    =
-
-Regards,
-Andras
-
-
---===============3395651050628323497==--
+--===============7519814778238140430==--
 
