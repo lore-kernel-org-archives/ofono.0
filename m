@@ -1,85 +1,167 @@
-Content-Type: multipart/mixed; boundary="===============6975915022160384727=="
+Content-Type: multipart/mixed; boundary="===============5117287706144976971=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: STK DisplayText changes proposal
-Date: Tue, 23 Nov 2010 10:05:37 -0600
-Message-ID: <4CEBE651.4080502@gmail.com>
-In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D4018813542BD15@irsmsx501.ger.corp.intel.com>
+Subject: Re: [PATCH] SMS character set unit tests.
+Date: Tue, 23 Nov 2010 10:21:12 -0600
+Message-ID: <4CEBE9F8.4080004@gmail.com>
+In-Reply-To: <1290525693-22150-1-git-send-email-oleg.zhurakivskyy@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6975915022160384727==
+--===============5117287706144976971==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
+Hi Oleg,
 
-On 11/23/2010 09:33 AM, Lucas, GuillaumeX wrote:
-> Hi,
+On 11/23/2010 09:21 AM, Oleg Zhurakivskyy wrote:
+> ---
+>  unit/test-sms.c |  506 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 506 insertions(+), 0 deletions(-)
 > =
 
-> According to the 3GPP specifications there is some missing points in the =
-SATK DisplayText implementation and I want to propose some API changes here.
-> =
+> diff --git a/unit/test-sms.c b/unit/test-sms.c
+> index c8a9d9c..426d7d3 100644
+> --- a/unit/test-sms.c
+> +++ b/unit/test-sms.c
+> @@ -471,6 +471,488 @@ static void test_submit_encode()
+>  	g_free(encoded_pdu);
+>  }
+>  =
 
-> 1. clear message after delay / wait for user to clear flag
-> =
+> +static void test_charset_default_alphabet_decode()
+> +{
+> +	gboolean ret;
+> +	struct sms sms;
+> +	guint8 *pdu, *data;
+> +	gint64 pdu_len;
+> +	gint data_len;
+> +	enum sms_charset sms_charset;
+> +	gboolean sms_compressed;
+> +	gchar *spdu =3D
+> +		"0001000B91" "5310101010" "1000008080" "8060402818" "0E888462C1"
+> +		"68381E9088" "6442A9582E" "988C06C4E9" "783EA09068" "442A994EA8"
+> +		"946AC56AB9" "5EB0986C46" "ABD96EB89C" "6EC7EBF97E" "C0A070482C"
+> +		"1A8FC8A472" "C96C3A9FD0" "A8744AAD5A" "AFD8AC76CB" "ED7ABFE0B0"
+> +		"784C2E9BCF" "E8B47ACD6E" "BBDFF0B87C" "4EAFDBEFF8" "BC7ECFEFFB"
+> +		"FF";
+> +	gchar *text, expected_text[] =3D {
+> +		0x40, 0xc2, 0xa3, 0x24, 0xc2, 0xa5, 0xc3, 0xa8, 0xc3, 0xa9,
+> +		0xc3, 0xb9, 0xc3, 0xac, 0xc3, 0xb2, 0xc3, 0x87, 0x0a, 0xc3,
+> +		0x98, 0xc3, 0xb8, 0x0d, 0xc3, 0x85, 0xc3, 0xa5, 0xce, 0x94,
+> +		0x5f, 0xce, 0xa6, 0xce, 0x93, 0xce, 0x9b, 0xce, 0xa9, 0xce,
+> +		0xa0, 0xce, 0xa8, 0xce, 0xa3, 0xce, 0x98, 0xce, 0x9e, 0x20,
+> +		0xc3, 0x86, 0xc3, 0xa6, 0xc3, 0x9f, 0xc3, 0x89, 0x20, 0x21,
+> +		0x22, 0x23, 0xc2, 0xa4, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a,
+> +		0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34,
+> +		0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e,
+> +		0x3f, 0xc2, 0xa1, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+> +		0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 0x50, 0x51,
+> +		0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0xc3,
+> +		0x84, 0xc3, 0x96, 0xc3, 0x91, 0xc3, 0x9c, 0xc2, 0xa7, 0xc2,
+> +		0xbf, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69,
+> +		0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70, 0x71, 0x72, 0x73,
+> +		0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0xc3, 0xa4, 0xc3,
+> +		0xb6, 0xc3, 0xb1, 0xc3, 0xbc, 0xc3, 0xa0, 0x00
+> +	};
+> +
+> +	pdu =3D decode_hex(spdu, -1, &pdu_len, 0);
+> +
+> +	g_assert(pdu);
+> +
+> +	g_assert(pdu_len =3D=3D (gint64)strlen(spdu) / 2);
+> +
+> +	ret =3D sms_decode(pdu, pdu_len, FALSE, pdu_len, &sms);
+> +
+> +	g_assert(ret);
+> +
+> +	g_free(pdu);
+> +
+> +	g_assert(sms.type =3D=3D SMS_TYPE_DELIVER);
+> +
+> +	ret =3D sms_dcs_decode(sms.deliver.dcs, NULL, &sms_charset,
+> +			     &sms_compressed, NULL);
 
-> This flag corresponds to the bit 8 of the command qualifier (see ETSI TS =
-102 223) and indicates how the message should be cleared by the UI.
-> In the STK agent documentation it's indicated that this flag is handled u=
-sing different timeout value for the Agent DisplayText method call. But tha=
-t doesn't seem the case in the code: there is no check of the flag.
+Just a minor nitpick, but please don't mix tabs and spaces for
+indentation.  Stick to tabs.
 
-Andrew has to answer this one, it seems like there's a disconnect
-between the implementation and the docs.  Probably just a bug.
+> +	g_assert(ret);
+> +
+> +	g_assert(sms_charset =3D=3D SMS_CHARSET_7BIT);
+> +
+> +	g_assert(sms_compressed =3D=3D FALSE);
+> +
+> +	g_assert(sms.deliver.udl =3D=3D 128);
+> +
+> +	data_len =3D sms_udl_in_bytes(sms.deliver.udl, sms.deliver.dcs);
+> +
+> +	g_assert(data_len =3D=3D 112);
+> +
+> +	data =3D unpack_7bit(sms.deliver.ud, data_len, 0, FALSE,
+> +			   sms.deliver.udl, NULL, 0xff);
+> +	g_assert(data);
+> +
+> +	text =3D convert_gsm_to_utf8(data, -1, NULL, NULL, 0xff);
+> +
+> +	g_assert(text);
+> +
+> +	g_free(data);
+> +
+> +	g_assert(strcmp(expected_text, text) =3D=3D 0);
+> +
+> +	g_free(text);
+> +}
+> +
 
-> =
+<snip>
 
-> For me it's to the UI to handle the way how the message must be cleared a=
-nd not to ofono. With the current Agent DisplayText method API this is not =
-possible as there is no indication if the message must be cleared after a d=
-elay or after a user action. So I want to propose the following change for =
-the STK Agent:
-> =
+>  struct text_format_header {
+>  	unsigned char len;
+>  	unsigned char start;
+> @@ -1461,6 +1943,30 @@ int main(int argc, char **argv)
+>  	g_test_add_func("/testsms/Test Simple Submit", test_simple_submit);
+>  	g_test_add_func("/testsms/Test Submit Encode", test_submit_encode);
+>  =
 
-> Change    void DisplayText(string text, byte icon_id, boolean urgent)
-> By        void DisplayText(string text, byte icon_id, boolean urgent, boo=
-lean clear_after_delay)
-> =
+> +	g_test_add_func("/testsms/Test "
+> +			"GSM 7 bit Default Alphabet Decode",
+> +			test_charset_default_alphabet_decode);
+> +	g_test_add_func("/testsms/Test "
+> +			"GSM 7 bit Default Alphabet Extension Table Decode",
+> +			test_charset_default_alphabet_ext_decode);
+> +	g_test_add_func("/testsms/Test "
+> +			"Turkish National Language Locking Shift Table Decode",
+> +			test_charset_turkey_locking_shift_decode);
+> +	g_test_add_func("/testsms/Test "
+> +			"Turkish National Language Single Shift Table Decode",
+> +			test_charset_turkey_ext_decode);
+> +	g_test_add_func("/testsms/Test "
+> +			"Portuguese National Language Locking Shift "
+> +			"Table Decode",
+> +			test_charset_portugal_locking_shift_decode);
+> +	g_test_add_func("/testsms/Test "
+> +			"Portuguese National Language Single Shift "
+> +			"Table Decode",
+> +			test_charset_portugal_ext_decode);
+> +	g_test_add_func("/testsms/Test "
+> +			"Spanish National Language Single Shift Table Decode",
+> +			test_charset_spain_decode);
+> +
 
-> Where clear_after_delay boolean must be set to '1' for the clear message =
-after delay case and to '0' for the wait for user to clear case.
+So these functions are nearly identical except for the input data and
+the expected result.  So instead of using g_test_add_func I suggest you
+use g_test_add_data_func and create a data structure to hold the test.
 
-Actually I really don't want to make this distinction.  The UI should
-always give the user the option to clear the message.  So just
-increasing the timeout when wait_for_user flag is set seems enough to me.
+Please see unit/test-stkutil.c for _lots_ of great examples ;)
 
-> =
-
-> 2. Busy screen
-> =
-
-> The other missing point in the DisplayText implementation is the case of =
-the busy screen.
-> According to the sequence 1.2 of the ETSI TS 102 384 we must return a ter=
-minal response with the error "screen busy" when the ME is not in the idle =
-screen and if the text message is not urgent. In the current implementation=
- there is no way to return this type of error in the terminal response.
-> =
-
-> I propose to add a new error code ScreenBusy in the same way of what it's=
- done for GoBack and EndSession event.
-
-I can be convinced that this is a good idea.  However, in 99% of the
-cases the STK session is started by the user, so the screen should never
-be 'busy'.
-
-Andrew, what do you think?
+>  	g_test_add_data_func("/testsms/Test EMS UDH 1",
+>  			&ems_udh_test_1, test_ems_udh);
+>  	g_test_add_data_func("/testsms/Test EMS UDH 2",
 
 Regards,
 -Denis
 
---===============6975915022160384727==--
+--===============5117287706144976971==--
 
