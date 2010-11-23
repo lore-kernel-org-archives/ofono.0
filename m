@@ -1,58 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============6176742593296102327=="
+Content-Type: multipart/mixed; boundary="===============6828426870531197542=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v2 7/7] Add script to enable/disable text-telephony support
-Date: Tue, 23 Nov 2010 16:04:18 -0200
-Message-ID: <1290535458-18786-8-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1290535458-18786-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH] radio-settings: update doc with possible errors
+Date: Tue, 23 Nov 2010 16:08:35 -0200
+Message-ID: <1290535715-18955-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6176742593296102327==
+--===============6828426870531197542==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+When GetProperties() and SetProperty() are called, there are more errors
+that might be returned. Add them in documentation.
 ---
- test/set-tty |   25 +++++++++++++++++++++++++
- 1 files changed, 25 insertions(+), 0 deletions(-)
- create mode 100755 test/set-tty
+ doc/radio-settings-api.txt |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-diff --git a/test/set-tty b/test/set-tty
-new file mode 100755
-index 0000000..cbbb043
---- /dev/null
-+++ b/test/set-tty
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 3:
-+	path =3D sys.argv[1]
-+	enable =3D int(sys.argv[2])
-+elif len(sys.argv) =3D=3D 2:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+	enable =3D int(sys.argv[1])
-+else:
-+	print "%s [PATH] {0|1}" % (sys.argv[0])
-+	exit(1)
-+
-+print "Setting TTY for modem %s..." % path
-+texttelephony =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.TextTelephony')
-+
-+texttelephony.SetProperty("Powered", dbus.Boolean(enable));
+diff --git a/doc/radio-settings-api.txt b/doc/radio-settings-api.txt
+index ebf6138..e073d1d 100644
+--- a/doc/radio-settings-api.txt
++++ b/doc/radio-settings-api.txt
+@@ -11,6 +11,9 @@ Methods		dict GetProperties()
+ 			properties section for available properties.
+ =
+
+ 			Possible Errors: [service].Error.InvalidArguments
++					 [service].Error.NotImplemented
++					 [service].Error.InProgress
++					 [service].Error.Failed
+ =
+
+ 		void SetProperty(string name, variant value)
+ =
+
+@@ -22,6 +25,7 @@ Methods		dict GetProperties()
+ 			Possible Errors: [service].Error.InvalidArguments
+ 					 [service].Error.DoesNotExist
+ 					 [service].Error.InProgress
++					 [service].Error.Failed
+ =
+
+ Signals		PropertyChanged(string property, variant value)
+ =
+
 -- =
 
 1.7.3.2
 
 
---===============6176742593296102327==--
+--===============6828426870531197542==--
 
