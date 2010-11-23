@@ -1,45 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============6971430727680464951=="
+Content-Type: multipart/mixed; boundary="===============8892994459239452886=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: CDMA Support
-Date: Tue, 23 Nov 2010 07:19:55 -0600
-Message-ID: <4CEBBF7B.8090307@gmail.com>
+From: andrzej zaborowski <balrogg@gmail.com>
+Subject: Re: [RFCv2] doc: Assisted Satellite Navigation API and Agent API
+Date: Tue, 23 Nov 2010 14:28:21 +0100
+Message-ID: <AANLkTinO-T9Jig4GKNxiwtHVG8Yf-1prOnOiTJz4L5Jk@mail.gmail.com>
+In-Reply-To: <1290438707-10896-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6971430727680464951==
+--===============8892994459239452886==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Everyone,
+Hi Sjur,
 
-Anyone who has been following the oFono project knows that up until now
-oFono has been all about solving the GSM telephony stack problem.  We
-wanted to support CDMA, but were simply too busy to do so.  We'd like to
-change that.
+2010/11/22 Sjur Br=C3=A6ndeland <sjurbren@gmail.com>:
+> +Methods =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0void Send=
+PositioningControl(string xml_element)
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 Send an XML element conforming to the XML DTD for <pos>
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 as defined in 3GPP 27.007 Table 8.55-2. This xml is
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 used for transferring data associated with positioning
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 requests received via control plane from the network.
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 This includes assistance data requests and the results
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 of positioning procedures. This method maps directly to
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 the 3GPP 27.007 AT+CPOS command.
+...
+> +PositioningRequestAgent hierarchy
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +Service =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0unique na=
+me
+> +Interface =C2=A0 =C2=A0 =C2=A0org.ofono.PositioningRequestAgent
+> +Object path =C2=A0 =C2=A0freely definable
+> +
+> +Methods =C2=A0 =C2=A0 =C2=A0 =C2=A0void PositioningRequest(string xml_el=
+ement)
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 Receive an XML element conforming to the XML DTD for
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 <pos> in 3GPP 27.007. This xml is used for transferring
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 data associated with positioning requests received, via
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 control plane, from the network. This includes
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 measurement requests and assistance data. This method
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 maps directly to the 3GPP defined +CPOSR unsolicited
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 result code.
 
-During the Meego conference several oFono developers held a small
-workshop to figure out how to proceed with supporting CDMA and its
-related technologies in oFono.  We had a very nice discussion and
-managed to hammer out the initial (highly preliminary) proposal for
-D-Bus APIs covering CDMA.
+Since (correct me if I'm wrong) SendPositioningControl can only be
+called in response to PositioningRequest(), it would seem more logical
+to skip SendPositioningControl and have the agent return the xml
+string from PositioningRequest(), e.g.
 
-The proposal covers the basics of voice calls, data connections,
-messaging and network registration details.  The documentation can be
-found under:
-doc/cdma-network-api.txt
-doc/cdma-voicecall-manager-api.txt
-doc/cdma-message-api.txt
-doc/cdma-connman-api.txt
+string PositioningRequest(string xml_element)
 
-Please note that so far this is a proposal only and no actual
-implementation work has been done.  But I'd like this announcement to be
-the starting point for discussion and hopefully patch submissions for
-CDMA support :)
+A D-bus call can take a couple of minutes to respond if needed.
 
-Regards,
--Denis
+Best regards
 
---===============6971430727680464951==--
+--===============8892994459239452886==--
 
