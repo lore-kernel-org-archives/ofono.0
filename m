@@ -1,46 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============5594711816213054109=="
+Content-Type: multipart/mixed; boundary="===============5329431657154004631=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [PATCH] isi: Fix issue in call forwarding erase response
-Date: Wed, 24 Nov 2010 16:55:28 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802C07F0A@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <AANLkTing8i6CrbykTxR9JHKOE3vt=BBiqfbmkU6qJ+YN@mail.gmail.com>
+From: ext-arun.1.ravindran@nokia.com
+Subject: [PATCH] Doc Update voicecallmanager-api.txt
+Date: Wed, 24 Nov 2010 16:56:11 +0200
+Message-ID: <1290610571-17684-1-git-send-email-ext-arun.1.ravindran@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5594711816213054109==
+--===============5329431657154004631==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
+
+---
+ doc/voicecallmanager-api.txt |    9 ++++++++-
+ 1 files changed, 8 insertions(+), 1 deletions(-)
+
+diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
+index d960f3c..a4048d2 100644
+--- a/doc/voicecallmanager-api.txt
++++ b/doc/voicecallmanager-api.txt
+@@ -5,7 +5,14 @@ Service		org.ofono
+ Interface	org.ofono.VoiceCallManager
+ Object path	[variable prefix]/{modem0,modem1,...}
  =
 
-Hi Aki,
+-Methods		array{object,dict} GetCalls()
++Methods		dict GetProperties()
++
++			Returns properties for the VoiceCallManager Interface.
++			See the properties section for available properties.
++
++			Possible Errors: [service].Error.InvalidArguments
++
++		array{object,dict} GetCalls()
+ =
 
-> =
+ 			Get an array of call object paths and properties
+ 			that represents the currently present calls.
+-- =
 
-> I think the problem is that we try to decode the alpha tag =
-
-> even when it is not present, i.e., when _numlen is zero.
-> =
-
-> In fact, this has already been fixed in my current working =
-
-> tree in a bit different way. Mostly due to the fact that I added a new
-> g_isi_sb_iter_get_struct() method, which allows a little =
-
-> easier access to sub-blocks like the one above.
-> =
-
-> If you're curious, here's the tree with the fix:
-> http://meego.gitorious.org/~akiniemi/meego-cellular/ofono-aki/
-commits/gisi
-
-Went through your fix and it looks good.
-
-Regards,
-Jeevaka
+1.7.0.4
 
 
---===============5594711816213054109==--
+--===============5329431657154004631==--
 
