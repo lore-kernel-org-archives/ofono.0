@@ -1,332 +1,379 @@
-Content-Type: multipart/mixed; boundary="===============4838053605237818065=="
+Content-Type: multipart/mixed; boundary="===============0043893971764328453=="
 MIME-Version: 1.0
-From: Andras Domokos <andras.domokos@nokia.com>
-Subject: Re: [RFC PATCH 2/4] modem: add EmergencyMode property
-Date: Wed, 24 Nov 2010 17:42:35 +0200
-Message-ID: <4CED326B.8000503@nokia.com>
-In-Reply-To: <4CEB7F4C.7020002@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 4/7] text-telephony: implement interface/atom
+Date: Wed, 24 Nov 2010 09:58:29 -0600
+Message-ID: <4CED3625.3020409@gmail.com>
+In-Reply-To: <1290535458-18786-5-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4838053605237818065==
+--===============0043893971764328453==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Lucas,
 
-On 11/23/2010 10:46 AM, ext Denis Kenzior wrote:
-> Hi Andras,
->
-> On 11/15/2010 10:57 AM, Andras Domokos wrote:
->    =
+On 11/23/2010 12:04 PM, Lucas De Marchi wrote:
+> ---
+>  Makefile.am          |    2 +-
+>  src/ofono.h          |    2 +
+>  src/text-telephony.c |  341 ++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  3 files changed, 344 insertions(+), 1 deletions(-)
+>  create mode 100644 src/text-telephony.c
+> =
 
->> From: Andras Domokos<andras.domokos@nokia.com>
->>
->> ---
->>   src/modem.c |  134 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++++
->>   src/ofono.h |    4 ++
->>   2 files changed, 138 insertions(+), 0 deletions(-)
->>
->> diff --git a/src/modem.c b/src/modem.c
->> index f73cc1d..4307914 100644
->> --- a/src/modem.c
->> +++ b/src/modem.c
->> @@ -61,6 +61,7 @@ enum modem_state {
->>   struct ofono_modem {
->>        char                    *path;
->>        enum modem_state        modem_state;
->> +     enum modem_state        modem_state_pre_emergency;
->>        GSList                  *atoms;
->>        struct ofono_watchlist  *atom_watches;
->>        GSList                  *interface_list;
->> @@ -72,6 +73,7 @@ struct ofono_modem {
->>        ofono_bool_t            powered_pending;
->>        guint                   timeout;
->>        ofono_bool_t            online;
->> +     unsigned int            emergency_mode;
->>      =
+> diff --git a/Makefile.am b/Makefile.am
+> index fb075a0..ee1313d 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -319,7 +319,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sou=
+rces) src/ofono.ver \
+>  			src/radio-settings.c src/stkutil.h src/stkutil.c \
+>  			src/nettime.c src/stkagent.c src/stkagent.h \
+>  			src/simfs.c src/simfs.h src/audio-settings.c \
+> -			src/smsagent.c src/smsagent.h
+> +			src/smsagent.c src/smsagent.h src/text-telephony.c
+>  =
 
-> I really prefer this to be called 'emergency'
->
->    =
+>  src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LI=
+BS@ -ldl
+>  =
 
->>        struct ofono_watchlist  *online_watches;
->>        GHashTable              *properties;
->>        struct ofono_sim        *sim;
->> @@ -514,6 +516,127 @@ static void offline_cb(const struct ofono_error *e=
-rror, void *data)
->>                modem_change_state(modem, MODEM_STATE_OFFLINE);
->>   }
->>
->> +ofono_bool_t ofono_modem_get_emergency_mode(struct ofono_modem *modem)
->> +{
->> +     if (modem =3D=3D NULL)
->> +             return FALSE;
->> +
->> +     return modem->emergency_mode !=3D 0;
->> +}
->> +
->> +static void modem_change_online(struct ofono_modem *modem,
->> +                             enum modem_state new_state)
->> +{
->> +     DBusConnection *conn =3D ofono_dbus_get_connection();
->> +     enum modem_state old_state =3D modem->modem_state;
->> +     ofono_bool_t new_online =3D new_state =3D=3D MODEM_STATE_ONLINE;
->> +
->> +     DBG("old state: %d, new state: %d", old_state, new_state);
->> +
->> +     if (new_online =3D=3D modem->online)
->> +             return;
->> +
->> +     modem->modem_state =3D new_state;
->> +     modem->online =3D new_online;
->> +
->> +     ofono_dbus_signal_property_changed(conn, modem->path,
->> +                                     OFONO_MODEM_INTERFACE, "Online",
->> +                                     DBUS_TYPE_BOOLEAN,&modem->online);
->> +
->> +     notify_online_watches(modem);
->> +}
->> +
->> +static void emergency_online_cb(const struct ofono_error *error, void *=
-data)
->> +{
->> +     struct ofono_modem *modem =3D data;
->> +
->> +     DBG("modem: %p", modem);
->> +
->> +     if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR&&
->> +                     modem->modem_state !=3D MODEM_STATE_ONLINE)
->> +             modem_change_online(modem, MODEM_STATE_ONLINE);
->> +}
->> +
->> +static void emergency_offline_cb(const struct ofono_error *error, void =
-*data)
->> +{
->> +     struct ofono_modem *modem =3D data;
->> +     DBusConnection *conn =3D ofono_dbus_get_connection();
->> +     const char *path =3D ofono_modem_get_path(modem);
->> +     gboolean state =3D FALSE;
->> +
->> +     DBG("modem: %p", modem);
->> +
->> +     if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR&&
->> +                     modem->modem_state =3D=3D MODEM_STATE_ONLINE)
->> +             modem_change_online(modem, modem->modem_state_pre_emergenc=
-y);
->> +
->> +     modem->emergency_mode--;
->> +
->> +     ofono_dbus_signal_property_changed(conn, path,
->> +                                             OFONO_MODEM_INTERFACE,
->> +                                             "EmergencyMode",
->>      =
+> diff --git a/src/ofono.h b/src/ofono.h
+> index d1a4bdc..42736bb 100644
+> --- a/src/ofono.h
+> +++ b/src/ofono.h
+> @@ -125,6 +125,7 @@ enum ofono_atom_type {
+>  	OFONO_ATOM_TYPE_AUDIO_SETTINGS =3D 19,
+>  	OFONO_ATOM_TYPE_STK =3D 20,
+>  	OFONO_ATOM_TYPE_NETTIME =3D 21,
+> +	OFONO_ATOM_TYPE_TEXT_TELEPHONY =3D 22,
+>  };
+>  =
 
-> The property should really be called 'Emergency' to be in line with the
-> current API proposal (doc/modem-api.txt&  TODO)
->
->    =
+>  enum ofono_atom_watch_condition {
+> @@ -205,6 +206,7 @@ gboolean __ofono_call_settings_is_busy(struct ofono_c=
+all_settings *cs);
+>  #include <ofono/gprs-context.h>
+>  #include <ofono/radio-settings.h>
+>  #include <ofono/audio-settings.h>
+> +#include <ofono/text-telephony.h>
+>  =
 
->> +                                             DBUS_TYPE_BOOLEAN,
->> +&state);
->> +}
->> +
->> +void ofono_modem_inc_emergency_mode(struct ofono_modem *modem)
->> +{
->> +     DBusConnection *conn =3D ofono_dbus_get_connection();
->> +     const char *path =3D ofono_modem_get_path(modem);
->> +     gboolean state =3D TRUE;
->> +
->> +     DBG("modem: %p", modem);
->> +
->> +     modem->emergency_mode++;
->> +     if (modem->emergency_mode>  1)
->> +             return;
->> +
->> +     ofono_dbus_signal_property_changed(conn, path,
->> +                                             OFONO_MODEM_INTERFACE,
->> +                                             "EmergencyMode",
->>      =
+>  #include <ofono/voicecall.h>
+>  =
 
-> Again, 'Emergency' here
->
->    =
+> diff --git a/src/text-telephony.c b/src/text-telephony.c
+> new file mode 100644
+> index 0000000..df87378
+> --- /dev/null
+> +++ b/src/text-telephony.c
+> @@ -0,0 +1,341 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
+> + *  Copyright (C) 2010  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#include <string.h>
+> +#include <stdio.h>
+> +#include <errno.h>
+> +
+> +#include <glib.h>
+> +#include <gdbus.h>
+> +
+> +#include "ofono.h"
+> +#include "common.h"
+> +
+> +#define TEXT_TELEPHONY_FLAG_CACHED 0x1
+> +
+> +static GSList *g_drivers =3D NULL;
+> +
+> +struct ofono_text_telephony {
+> +	DBusMessage *pending;
+> +	int flags;
+> +	ofono_bool_t powered;
+> +	ofono_bool_t powered_pending;
+> +	const struct ofono_text_telephony_driver *driver;
+> +	void *driver_data;
+> +	struct ofono_atom *atom;
+> +};
+> +
+> +static DBusMessage *tt_get_properties_reply(DBusMessage *msg,
+> +						struct ofono_text_telephony *tt)
+> +{
+> +	DBusMessage *reply;
+> +	DBusMessageIter iter;
+> +	DBusMessageIter dict;
+> +	dbus_bool_t value;
+> +
+> +	reply =3D dbus_message_new_method_return(msg);
+> +	if (!reply)
+> +		return NULL;
+> +
+> +	dbus_message_iter_init_append(reply, &iter);
+> +	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+> +					OFONO_PROPERTIES_ARRAY_SIGNATURE,
+> +					&dict);
+> +
+> +	value =3D tt->powered;
+> +	ofono_dbus_dict_append(&dict, "Powered", DBUS_TYPE_BOOLEAN, &value);
 
->> +                                             DBUS_TYPE_BOOLEAN,
->> +&state);
->> +
->> +     modem->modem_state_pre_emergency =3D modem->modem_state;
->> +
->> +     if (modem->modem_state =3D=3D MODEM_STATE_ONLINE)
->> +             return;
->> +
->> +     modem->driver->set_online(modem, TRUE, emergency_online_cb, modem);
->> +}
->> +
->> +void ofono_modem_dec_emergency_mode(struct ofono_modem *modem)
->> +{
->> +     DBusConnection *conn =3D ofono_dbus_get_connection();
->> +     const char *path =3D ofono_modem_get_path(modem);
->> +     gboolean state =3D FALSE;
->> +
->> +     DBG("modem: %p", modem);
->> +
->> +     if (modem->emergency_mode =3D=3D 0)
->> +             return;
->>      =
+As mentioned previously, please use "Enabled" here.
 
-> Can you be a bit more pedantic and send an ofono_error for this case?
-> We probably want to track whether some plugin abuses the reference counti=
-ng.
->
->    =
+> +	dbus_message_iter_close_container(&iter, &dict);
+> +
+> +	return reply;
+> +}
+> +
+> +static void tt_set_powered(struct ofono_text_telephony *tt,
+> +					ofono_bool_t enable)
+> +{
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path =3D __ofono_atom_get_path(tt->atom);
+> +	dbus_bool_t value =3D enable;
+> +
+> +	if (tt->powered =3D=3D enable)
+> +		return;
+> +
+> +	ofono_dbus_signal_property_changed(conn, path,
+> +						OFONO_TEXT_TELEPHONY_INTERFACE,
+> +						"Powered",
+> +						DBUS_TYPE_BOOLEAN, &value);
+> +	tt->powered =3D enable;
+> +}
+> +
+> +static void tt_set_powered_callback(const struct ofono_error *error,
+> +						void *data)
+> +{
+> +	struct ofono_text_telephony *tt =3D data;
+> +	DBusMessage *reply;
+> +
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> +		DBG("Error setting powered property");
+> +
+> +		tt->powered_pending =3D tt->powered;
+> +
+> +		reply =3D __ofono_error_failed(tt->pending);
+> +		__ofono_dbus_pending_reply(&tt->pending, reply);
+> +
+> +		return;
+> +	}
+> +
+> +	reply =3D dbus_message_new_method_return(tt->pending);
+> +	__ofono_dbus_pending_reply(&tt->pending, reply);
+> +
+> +	tt_set_powered(tt, tt->powered_pending);
+> +}
+> +
+> +static void tt_send_properties_reply(struct ofono_text_telephony *tt)
+> +{
+> +	DBusMessage *reply;
+> +
+> +	tt->flags |=3D TEXT_TELEPHONY_FLAG_CACHED;
+> +
+> +	reply =3D tt_get_properties_reply(tt->pending, tt);
+> +	__ofono_dbus_pending_reply(&tt->pending, reply);
 
->> +
->> +     if (modem->emergency_mode>  1) {
->> +             modem->emergency_mode--;
->> +             return;
->> +     }
->> +
->> +     if (modem->modem_state =3D=3D MODEM_STATE_ONLINE&&
->> +             modem->modem_state_pre_emergency !=3D MODEM_STATE_ONLINE) {
->>      =
+I actually prefer to fold this function into powered_callback
 
-> Please indent one more, item M4 in coding-style.txt
->
->    =
+> +}
+> +
+> +static void tt_query_powered_callback(const struct ofono_error *error,
+> +						ofono_bool_t enable, void *data)
+> +{
+> +	struct ofono_text_telephony *tt =3D data;
+> +
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> +		DBusMessage *reply;
+> +
+> +		ofono_debug("Error during powered query");
+> +
+> +		reply =3D __ofono_error_failed(tt->pending);
+> +		__ofono_dbus_pending_reply(&tt->pending, reply);
+> +
+> +		return;
+> +	}
+> +
+> +	tt_set_powered(tt, enable);
+> +	tt_send_properties_reply(tt);
 
->> +             modem->driver->set_online(modem, FALSE,
->> +                                             emergency_offline_cb, mode=
-m);
->> +             return;
->> +     }
->> +
->> +     modem->emergency_mode--;
->> +
->> +     ofono_dbus_signal_property_changed(conn, path,
->> +                                             OFONO_MODEM_INTERFACE,
->> +                                             "EmergencyMode",
->>      =
+The oFono convention is to reply to the pending D-Bus method call and
+then signal the property changed signals.
 
-> And again, 'Emergency' here.
->
->    =
+> +}
+> +
+> +static DBusMessage *tt_get_properties(DBusConnection *conn,
+> +						DBusMessage *msg, void *data)
+> +{
+> +	struct ofono_text_telephony *tt =3D data;
+> +
+> +	if (tt->flags & TEXT_TELEPHONY_FLAG_CACHED)
+> +		return tt_get_properties_reply(msg, tt);
+> +
+> +	if (tt->pending)
+> +		return __ofono_error_busy(msg);
+> +
+> +	tt->pending =3D dbus_message_ref(msg);
+> +	tt->driver->query_tty(tt, tt_query_powered_callback, tt);
+> +
+> +	return NULL;
+> +}
+> +
+> +static DBusMessage *tt_set_property(DBusConnection *conn, DBusMessage *m=
+sg,
+> +					void *data)
+> +{
+> +	struct ofono_text_telephony *tt =3D data;
+> +	DBusMessageIter iter;
+> +	DBusMessageIter var;
+> +	const char *property;
+> +
+> +	if (tt->pending)
+> +		return __ofono_error_busy(msg);
+> +
+> +	if (!dbus_message_iter_init(msg, &iter))
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_get_basic(&iter, &property);
+> +	dbus_message_iter_next(&iter);
+> +
+> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
+> +		return __ofono_error_invalid_args(msg);
+> +
+> +	dbus_message_iter_recurse(&iter, &var);
+> +
+> +	if (g_strcmp0(property, "Powered") =3D=3D 0) {
+> +		dbus_bool_t value;
+> +		int target;
+> +
+> +		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
+> +			return __ofono_error_invalid_args(msg);
+> +
+> +		dbus_message_iter_get_basic(&var, &value);
+> +		target =3D value;
+> +
+> +		if (tt->powered =3D=3D target)
+> +			return dbus_message_new_method_return(msg);
+> +
+> +		tt->pending =3D dbus_message_ref(msg);
+> +		tt->powered_pending =3D target;
+> +
+> +		tt->driver->set_tty(tt, target,
+> +					tt_set_powered_callback, tt);
+> +		return NULL;
+> +	}
+> +
+> +	return __ofono_error_invalid_args(msg);
+> +}
 
->> +                                             DBUS_TYPE_BOOLEAN,
->> +&state);
->> +}
->> +
->>   static DBusMessage *set_property_online(struct ofono_modem *modem,
->>                                        DBusMessage *msg,
->>                                        DBusMessageIter *var)
->> @@ -535,6 +658,9 @@ static DBusMessage *set_property_online(struct ofono=
-_modem *modem,
->>        if (modem->modem_state<  MODEM_STATE_OFFLINE)
->>                return __ofono_error_not_available(msg);
->>
->> +     if (modem->emergency_mode)
->> +             return __ofono_error_failed(msg);
->> +
->>      =
+<snip>
 
-> Is it worth to create a new dbus error for this case?  Perhaps
-> ofono_error_emergency, or emergency_active?
->
->    =
+> +int ofono_text_telephony_driver_register(const struct ofono_text_telepho=
+ny_driver *d)
+> +{
+> +	DBG("driver: %p, name: %s", d, d->name);
+> +
+> +	if (!d || !d->probe)
+> +		return -EINVAL;
+> +
+> +	g_drivers =3D g_slist_prepend(g_drivers, (void *)d);
+> +
+> +	return 0;
+> +}
+> +
+> +void ofono_text_telephony_driver_unregister(const struct ofono_text_tele=
+phony_driver *d)
+> +{
+> +	DBG("driver: %p, name: %s", d, d->name);
+> +
+> +	if (!d)
 
->>        if (modem->online =3D=3D online)
->>                return dbus_message_new_method_return(msg);
->>
->> @@ -562,6 +688,7 @@ void __ofono_modem_append_properties(struct ofono_mo=
+The preferred style is to compare to NULL, e.g. if (d =3D=3D NULL)
+
+> +		return;
+> +
+> +	g_drivers =3D g_slist_remove(g_drivers, (void *)d);
+> +}
+> +
+
+<snip>
+
+> +struct ofono_text_telephony *ofono_text_telephony_create(struct ofono_mo=
 dem *modem,
->>        int i;
->>        GSList *l;
->>        struct ofono_atom *devinfo_atom;
->> +     ofono_bool_t state;
->>      =
+> +							unsigned int vendor,
+> +							const char *driver,
+> +							void *data)
+> +{
+> +	struct ofono_text_telephony *tt;
+> +	GSList *l;
 
-> Please rename this variable to 'val' or 'value'
->
->    =
+Please add a newline here
 
->>        ofono_dbus_dict_append(dict, "Online", DBUS_TYPE_BOOLEAN,
->>                                &modem->online);
->> @@ -569,6 +696,10 @@ void __ofono_modem_append_properties(struct ofono_m=
-odem *modem,
->>        ofono_dbus_dict_append(dict, "Powered", DBUS_TYPE_BOOLEAN,
->>                                &modem->powered);
->>
->> +     state =3D ofono_modem_get_emergency_mode(modem);
->> +     ofono_dbus_dict_append(dict, "EmergencyMode",
->>      =
+> +	if (!driver)
+> +		return NULL;
+> +
+> +	tt =3D g_try_new0(struct ofono_text_telephony, 1);
+> +	if (!tt)
+> +		return NULL;
+> +
+> +	tt->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_TEXT_TELEPHO=
+NY,
+> +						text_telephony_remove, tt);
+> +
+> +	tt->powered =3D -1;
 
-> And 'Emergency' here
->
->    =
+I think it is safe to default this to 0 (off).
 
->> +                             DBUS_TYPE_BOOLEAN,&state);
->> +
->>        devinfo_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_D=
-EVINFO);
->>
->>        /* We cheat a little here and don't check the registered status */
->> @@ -647,6 +778,9 @@ static int set_powered(struct ofono_modem *modem, of=
-ono_bool_t powered)
->>        if (modem->powered_pending =3D=3D powered)
->>                return -EALREADY;
->>
->> +     if (modem->emergency_mode)
->>      =
+> +
+> +	for (l =3D g_drivers; l; l =3D l->next) {
+> +		const struct ofono_text_telephony_driver *drv =3D l->data;
+> +
+> +		if (g_strcmp0(drv->name, driver) !=3D 0)
+> +			continue;
+> +
+> +		if (drv->probe(tt, vendor, data) < 0)
+> +			continue;
+> +
+> +		tt->driver =3D drv;
+> +		break;
+> +	}
+> +
+> +	return tt;
+> +}
+> +
 
-> I really would prefer modem->emergency>  0 here
->
->    =
-
->> +             return -EINVAL;
->> +
->>      =
-
-> If we introduce a new ofono error, then returning something like EPERM
-> or EACCESS for the case where emergency mode is active might be a good id=
-ea.
->
->    =
-
->>        /* Remove the atoms even if the driver is no longer available */
->>        if (powered =3D=3D FALSE)
->>                modem_change_state(modem, MODEM_STATE_POWER_OFF);
->> diff --git a/src/ofono.h b/src/ofono.h
->> index 01cd6c0..ac56a85 100644
->> --- a/src/ofono.h
->> +++ b/src/ofono.h
->> @@ -185,6 +185,10 @@ unsigned int __ofono_modem_add_online_watch(struct =
-ofono_modem *modem,
->>   void __ofono_modem_remove_online_watch(struct ofono_modem *modem,
->>                unsigned int id);
->>
->> +ofono_bool_t ofono_modem_get_emergency_mode(struct ofono_modem *modem);
->> +void ofono_modem_inc_emergency_mode(struct ofono_modem *modem);
->> +void ofono_modem_dec_emergency_mode(struct ofono_modem *modem);
->> +
->>   #include<ofono/call-barring.h>
->>
->>   gboolean __ofono_call_barring_is_busy(struct ofono_call_barring *cb);
->>      =
-
-> Otherwise this one looks good to me.
->    =
-
-I made changes based on your comments and I am going to
-resend the patch.
-
-> Regards,
-> -Denis
->    =
+Otherwise, looks good.
 
 Regards,
-Andras
+-Denis
 
---===============4838053605237818065==--
+--===============0043893971764328453==--
 
