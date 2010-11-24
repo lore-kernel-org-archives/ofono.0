@@ -1,28 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============6597541095459952839=="
+Content-Type: multipart/mixed; boundary="===============2703389173343567374=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: Property signal fix for data and fax call forwarding
-Date: Wed, 24 Nov 2010 01:57:32 -0800
-Message-ID: <1290592653-21828-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] call-forwarding: skip property change data and fax
+Date: Wed, 24 Nov 2010 01:57:33 -0800
+Message-ID: <1290592653-21828-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1290592653-21828-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6597541095459952839==
+--===============2703389173343567374==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+---
+ src/call-forwarding.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
 
-Hi,
+diff --git a/src/call-forwarding.c b/src/call-forwarding.c
+index 715ce02..ce03c40 100644
+--- a/src/call-forwarding.c
++++ b/src/call-forwarding.c
+@@ -285,6 +285,13 @@ static void set_new_cond_list(struct ofono_call_forwar=
+ding *cf,
+ 	for (o =3D old; o; o =3D o->next) {
+ 		oc =3D o->data;
+ =
 
- Data and Fax call forwarding is not supported in oFono. Currently, oFono t=
-riggers the property change only for voice call even when the Data/Fax call=
- forwarding is active.
-In one particular case, the Data and Fax property change gets triggered. Th=
-is patch handles that particular case as well.
++		/*
++		 * For now we only support Voice, although Fax & all Data
++		 * basic services are applicable as well.
++		 */
++		if (oc->cls > BEARER_CLASS_VOICE)
++			continue;
++
+ 		snprintf(attr, sizeof(attr), "%s%s",
+ 			bearer_class_to_string(oc->cls), cf_type_lut[type]);
+ =
 
-Regards,
-Jeevaka
+-- =
 
---===============6597541095459952839==--
+1.7.0.4
+
+
+--===============2703389173343567374==--
 
