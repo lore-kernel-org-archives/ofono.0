@@ -1,31 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============5701854203479668864=="
+Content-Type: multipart/mixed; boundary="===============9048432441917956458=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Add voice call boolean property for MO/MT distinction
-Date: Wed, 24 Nov 2010 15:31:43 -0600
-Message-ID: <4CED843F.8040306@gmail.com>
-In-Reply-To: <1290611117-14026-1-git-send-email-remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH] Doc Update voicecallmanager-api.txt
+Date: Wed, 24 Nov 2010 15:39:52 -0600
+Message-ID: <4CED8628.50400@gmail.com>
+In-Reply-To: <1290610571-17684-1-git-send-email-ext-arun.1.ravindran@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5701854203479668864==
+--===============9048432441917956458==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi R=C3=A9mi,
+Hi Arun,
 
-> +		boolean Originated [readonly]
-> +
-> +			Indicates whether the call was mobile-originated
-> +			(true) or mobile-terminated (false).
-> +
+On 11/24/2010 08:56 AM, ext-arun.1.ravindran(a)nokia.com wrote:
+> From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
+> =
 
-What use case are you trying to enable with this API?  I don't see how
-this could be useful for the UI...
+> ---
+>  doc/voicecallmanager-api.txt |    9 ++++++++-
+>  1 files changed, 8 insertions(+), 1 deletions(-)
+> =
+
+
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============5701854203479668864==--
+--===============9048432441917956458==--
 
