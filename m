@@ -1,379 +1,351 @@
-Content-Type: multipart/mixed; boundary="===============0043893971764328453=="
+Content-Type: multipart/mixed; boundary="===============2384054770727675819=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 4/7] text-telephony: implement interface/atom
-Date: Wed, 24 Nov 2010 09:58:29 -0600
-Message-ID: <4CED3625.3020409@gmail.com>
-In-Reply-To: <1290535458-18786-5-git-send-email-lucas.demarchi@profusion.mobi>
+From: Andras Domokos <andras.domokos@nokia.com>
+Subject: Re: [RFC PATCH 4/4] voicecall: add emergency call handling
+Date: Wed, 24 Nov 2010 18:09:09 +0200
+Message-ID: <4CED38A5.9090205@nokia.com>
+In-Reply-To: <4CEB829A.7000408@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0043893971764328453==
+--===============2384054770727675819==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+Hi Denis,
 
-On 11/23/2010 12:04 PM, Lucas De Marchi wrote:
-> ---
->  Makefile.am          |    2 +-
->  src/ofono.h          |    2 +
->  src/text-telephony.c |  341 ++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  3 files changed, 344 insertions(+), 1 deletions(-)
->  create mode 100644 src/text-telephony.c
-> =
+On 11/23/2010 11:00 AM, ext Denis Kenzior wrote:
+> Hi Andras,
+>
+> On 11/15/2010 10:58 AM, Andras Domokos wrote:
+>    =
 
-> diff --git a/Makefile.am b/Makefile.am
-> index fb075a0..ee1313d 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -319,7 +319,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sou=
-rces) src/ofono.ver \
->  			src/radio-settings.c src/stkutil.h src/stkutil.c \
->  			src/nettime.c src/stkagent.c src/stkagent.h \
->  			src/simfs.c src/simfs.h src/audio-settings.c \
-> -			src/smsagent.c src/smsagent.h
-> +			src/smsagent.c src/smsagent.h src/text-telephony.c
->  =
+>> ---
+>>   src/voicecall.c |  111 +++++++++++++++++++++++++++++++++++++++++++++++=
++++++++-
+>>   1 files changed, 110 insertions(+), 1 deletions(-)
+>>
+>> diff --git a/src/voicecall.c b/src/voicecall.c
+>> index 3af614b..066cdb9 100644
+>> --- a/src/voicecall.c
+>> +++ b/src/voicecall.c
+>> @@ -52,6 +52,7 @@ struct ofono_voicecall {
+>>        struct ofono_sim *sim;
+>>        unsigned int sim_watch;
+>>        unsigned int sim_state_watch;
+>> +     unsigned int modem_online_watch;
+>>        const struct ofono_voicecall_driver *driver;
+>>        void *driver_data;
+>>        struct ofono_atom *atom;
+>> @@ -133,6 +134,22 @@ static void add_to_en_list(GSList **l, const char *=
+*list)
+>>                *l =3D g_slist_prepend(*l, g_strdup(list[i++]));
+>>   }
+>>
+>> +static gint number_compare(gconstpointer a, gconstpointer b)
+>> +{
+>> +     const char *s1 =3D a, *s2 =3D b;
+>> +     return strcmp(s1, s2);
+>> +}
+>> +
+>> +static ofono_bool_t emergency_number(struct ofono_voicecall *vc,
+>> +                                     const char *number)
+>> +{
+>> +     if (!number)
+>>      =
 
->  src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LI=
-BS@ -ldl
->  =
+> Just nit picking here, but in general we really prefer this to be
+> written like this:
+>
+> if (number =3D=3D NULL)
+>
+> This is much easier to read when you don't know if number is a string or
+> an integer.  Yes I know we're not always consistent about doing this,
+> particularly in voicecall.c.
+>
+>    =
 
-> diff --git a/src/ofono.h b/src/ofono.h
-> index d1a4bdc..42736bb 100644
-> --- a/src/ofono.h
-> +++ b/src/ofono.h
-> @@ -125,6 +125,7 @@ enum ofono_atom_type {
->  	OFONO_ATOM_TYPE_AUDIO_SETTINGS =3D 19,
->  	OFONO_ATOM_TYPE_STK =3D 20,
->  	OFONO_ATOM_TYPE_NETTIME =3D 21,
-> +	OFONO_ATOM_TYPE_TEXT_TELEPHONY =3D 22,
->  };
->  =
+>> +             return FALSE;
+>> +
+>> +     return g_slist_find_custom(vc->en_list,
+>> +                             number, number_compare) ? TRUE : FALSE;
+>> +}
+>> +
+>>   static const char *disconnect_reason_to_string(enum ofono_disconnect_r=
+eason r)
+>>   {
+>>        switch (r) {
+>> @@ -1125,6 +1142,7 @@ static struct voicecall *dial_handle_result(struct=
+ ofono_voicecall *vc,
+>>   static void manager_dial_callback(const struct ofono_error *error, voi=
+d *data)
+>>   {
+>>        struct ofono_voicecall *vc =3D data;
+>> +     struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+>>        DBusMessage *reply;
+>>        const char *number;
+>>        gboolean need_to_emit;
+>> @@ -1143,8 +1161,12 @@ static void manager_dial_callback(const struct of=
+ono_error *error, void *data)
+>>
+>>                dbus_message_append_args(reply, DBUS_TYPE_OBJECT_PATH,&pa=
+th,
+>>                                                DBUS_TYPE_INVALID);
+>> -     } else
+>> +     } else {
+>> +             if (emergency_number(vc, number))
+>> +                     ofono_modem_dec_emergency_mode(modem);
+>> +
+>>                reply =3D __ofono_error_failed(vc->pending);
+>> +     }
+>>
+>>        __ofono_dbus_pending_reply(&vc->pending, reply);
+>>
+>> @@ -1156,6 +1178,7 @@ static DBusMessage *manager_dial(DBusConnection *c=
+onn,
+>>                                        DBusMessage *msg, void *data)
+>>   {
+>>        struct ofono_voicecall *vc =3D data;
+>> +     struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+>>        const char *number;
+>>        struct ofono_phone_number ph;
+>>        const char *clirstr;
+>> @@ -1195,6 +1218,15 @@ static DBusMessage *manager_dial(DBusConnection *=
+conn,
+>>
+>>        string_to_phone_number(number,&ph);
+>>
+>> +     if (emergency_number(vc, number)) {
+>> +             ofono_bool_t online =3D ofono_modem_get_online(modem);
+>> +
+>> +             ofono_modem_inc_emergency_mode(modem);
+>> +
+>> +             if (!online)
+>>      =
 
->  enum ofono_atom_watch_condition {
-> @@ -205,6 +206,7 @@ gboolean __ofono_call_settings_is_busy(struct ofono_c=
-all_settings *cs);
->  #include <ofono/gprs-context.h>
->  #include <ofono/radio-settings.h>
->  #include <ofono/audio-settings.h>
-> +#include <ofono/text-telephony.h>
->  =
+> Do me a favor and change this to:
+> if (online =3D=3D FALSE)
+>
+>    =
 
->  #include <ofono/voicecall.h>
->  =
+>> +                     return NULL;
+>> +     }
+>> +
+>>        vc->driver->dial(vc,&ph, clir, OFONO_CUG_OPTION_DEFAULT,
+>>                                manager_dial_callback, vc);
+>>
+>> @@ -1748,6 +1780,7 @@ void ofono_voicecall_disconnected(struct ofono_voi=
+cecall *vc, int id,
+>>                                const struct ofono_error *error)
+>>   {
+>>        struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+>> +     const char *number;
+>>        GSList *l;
+>>        struct voicecall *call;
+>>        time_t ts;
+>> @@ -1767,6 +1800,7 @@ void ofono_voicecall_disconnected(struct ofono_voi=
+cecall *vc, int id,
+>>        }
+>>
+>>        call =3D l->data;
+>> +     number =3D phone_number_to_string(&call->call->phone_number);
+>>
+>>        ts =3D time(NULL);
+>>        prev_status =3D call->call->status;
+>> @@ -1805,6 +1839,9 @@ void ofono_voicecall_disconnected(struct ofono_voi=
+cecall *vc, int id,
+>>
+>>        voicecalls_emit_call_removed(vc, call);
+>>
+>> +     if (emergency_number(vc, number))
+>> +             ofono_modem_dec_emergency_mode(modem);
+>> +
+>>        voicecall_dbus_unregister(vc, call);
+>>
+>>        vc->call_list =3D g_slist_remove(vc->call_list, call);
+>> @@ -2067,6 +2104,7 @@ static void voicecall_unregister(struct ofono_atom=
+ *atom)
+>>   static void voicecall_remove(struct ofono_atom *atom)
+>>   {
+>>        struct ofono_voicecall *vc =3D __ofono_atom_get_data(atom);
+>> +     struct ofono_modem *modem =3D __ofono_atom_get_modem(atom);
+>>
+>>        DBG("atom: %p", atom);
+>>
+>> @@ -2108,6 +2146,12 @@ static void voicecall_remove(struct ofono_atom *a=
+tom)
+>>                g_queue_free(vc->toneq);
+>>        }
+>>
+>> +     if (vc->modem_online_watch) {
+>> +             __ofono_modem_remove_online_watch(modem,
+>> +                                             vc->modem_online_watch);
+>> +             vc->modem_online_watch =3D 0;
+>> +     }
+>> +
+>>        g_free(vc);
+>>   }
+>>
+>> @@ -2205,6 +2249,7 @@ static void sim_watch(struct ofono_atom *atom,
+>>   static void dial_request_cb(const struct ofono_error *error, void *dat=
+a)
+>>   {
+>>        struct ofono_voicecall *vc =3D data;
+>> +     struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+>>        gboolean need_to_emit;
+>>        struct voicecall *v;
+>>
+>> @@ -2214,6 +2259,9 @@ static void dial_request_cb(const struct ofono_err=
+or *error, void *data)
+>>
+>>        if (v =3D=3D NULL) {
+>>                dial_request_finish(vc);
+>>      =
 
-> diff --git a/src/text-telephony.c b/src/text-telephony.c
-> new file mode 100644
-> index 0000000..df87378
-> --- /dev/null
-> +++ b/src/text-telephony.c
-> @@ -0,0 +1,341 @@
-> +/*
-> + *
-> + *  oFono - Open Source Telephony
-> + *
-> + *  Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
-> + *  Copyright (C) 2010  Intel Corporation. All rights reserved.
-> + *
-> + *  This program is free software; you can redistribute it and/or modify
-> + *  it under the terms of the GNU General Public License version 2 as
-> + *  published by the Free Software Foundation.
-> + *
-> + *  This program is distributed in the hope that it will be useful,
-> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + *  GNU General Public License for more details.
-> + *
-> + *  You should have received a copy of the GNU General Public License
-> + *  along with this program; if not, write to the Free Software
-> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
-1  USA
-> + *
-> + */
-> +
-> +#ifdef HAVE_CONFIG_H
-> +#include <config.h>
-> +#endif
-> +
-> +#include <string.h>
-> +#include <stdio.h>
-> +#include <errno.h>
-> +
-> +#include <glib.h>
-> +#include <gdbus.h>
-> +
-> +#include "ofono.h"
-> +#include "common.h"
-> +
-> +#define TEXT_TELEPHONY_FLAG_CACHED 0x1
-> +
-> +static GSList *g_drivers =3D NULL;
-> +
-> +struct ofono_text_telephony {
-> +	DBusMessage *pending;
-> +	int flags;
-> +	ofono_bool_t powered;
-> +	ofono_bool_t powered_pending;
-> +	const struct ofono_text_telephony_driver *driver;
-> +	void *driver_data;
-> +	struct ofono_atom *atom;
-> +};
-> +
-> +static DBusMessage *tt_get_properties_reply(DBusMessage *msg,
-> +						struct ofono_text_telephony *tt)
-> +{
-> +	DBusMessage *reply;
-> +	DBusMessageIter iter;
-> +	DBusMessageIter dict;
-> +	dbus_bool_t value;
-> +
-> +	reply =3D dbus_message_new_method_return(msg);
-> +	if (!reply)
-> +		return NULL;
-> +
-> +	dbus_message_iter_init_append(reply, &iter);
-> +	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-> +					OFONO_PROPERTIES_ARRAY_SIGNATURE,
-> +					&dict);
-> +
-> +	value =3D tt->powered;
-> +	ofono_dbus_dict_append(&dict, "Powered", DBUS_TYPE_BOOLEAN, &value);
+> Please add an empty line here based on item M1.
+>
+>    =
 
-As mentioned previously, please use "Enabled" here.
+>> +             if (emergency_number(vc,
+>> +                             phone_number_to_string(&vc->dial_req->ph)))
+>> +                     ofono_modem_dec_emergency_mode(modem);
+>>                return;
+>>        }
+>>
+>> @@ -2237,6 +2285,53 @@ static void dial_request_cb(const struct ofono_er=
+ror *error, void *data)
+>>                voicecalls_emit_call_added(vc, v);
+>>   }
+>>
+>> +static void modem_online_watch(ofono_bool_t online, void *data)
+>> +{
+>> +     struct ofono_voicecall *vc =3D data;
+>> +     struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+>> +     DBusMessage *reply;
+>> +     const char *number;
+>> +     struct ofono_phone_number ph;
+>> +     const char *clirstr;
+>> +     enum ofono_clir_option clir;
+>> +
+>> +     if (ofono_modem_get_emergency_mode(modem) !=3D TRUE)
+>> +             return;
+>> +
+>> +     if (vc->dial_req)
+>> +             vc->driver->dial(vc,&vc->dial_req->ph,
+>> +                                     OFONO_CLIR_OPTION_DEFAULT,
+>> +                                     OFONO_CUG_OPTION_DEFAULT,
+>> +                                     dial_request_cb, vc);
+>> +
+>> +     if (!vc->pending)
+>>      =
 
-> +	dbus_message_iter_close_container(&iter, &dict);
-> +
-> +	return reply;
-> +}
-> +
-> +static void tt_set_powered(struct ofono_text_telephony *tt,
-> +					ofono_bool_t enable)
-> +{
-> +	DBusConnection *conn =3D ofono_dbus_get_connection();
-> +	const char *path =3D __ofono_atom_get_path(tt->atom);
-> +	dbus_bool_t value =3D enable;
-> +
-> +	if (tt->powered =3D=3D enable)
-> +		return;
-> +
-> +	ofono_dbus_signal_property_changed(conn, path,
-> +						OFONO_TEXT_TELEPHONY_INTERFACE,
-> +						"Powered",
-> +						DBUS_TYPE_BOOLEAN, &value);
-> +	tt->powered =3D enable;
-> +}
-> +
-> +static void tt_set_powered_callback(const struct ofono_error *error,
-> +						void *data)
-> +{
-> +	struct ofono_text_telephony *tt =3D data;
-> +	DBusMessage *reply;
-> +
-> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-> +		DBG("Error setting powered property");
-> +
-> +		tt->powered_pending =3D tt->powered;
-> +
-> +		reply =3D __ofono_error_failed(tt->pending);
-> +		__ofono_dbus_pending_reply(&tt->pending, reply);
-> +
-> +		return;
-> +	}
-> +
-> +	reply =3D dbus_message_new_method_return(tt->pending);
-> +	__ofono_dbus_pending_reply(&tt->pending, reply);
-> +
-> +	tt_set_powered(tt, tt->powered_pending);
-> +}
-> +
-> +static void tt_send_properties_reply(struct ofono_text_telephony *tt)
-> +{
-> +	DBusMessage *reply;
-> +
-> +	tt->flags |=3D TEXT_TELEPHONY_FLAG_CACHED;
-> +
-> +	reply =3D tt_get_properties_reply(tt->pending, tt);
-> +	__ofono_dbus_pending_reply(&tt->pending, reply);
+> if (vc->pending =3D=3D NULL) here please
+>
+>    =
 
-I actually prefer to fold this function into powered_callback
+>> +             return;
+>> +
+>> +     if (strcmp(dbus_message_get_member(vc->pending), "Dial"))
+>> +             return;
+>> +
+>> +     if (dbus_message_get_args(vc->pending, NULL, DBUS_TYPE_STRING,&num=
+ber,
+>> +                                     DBUS_TYPE_STRING,&clirstr,
+>> +                                     DBUS_TYPE_INVALID) =3D=3D FALSE)
+>> +             return;
+>> +
+>> +     if (!emergency_number(vc, number))
+>>      =
 
-> +}
-> +
-> +static void tt_query_powered_callback(const struct ofono_error *error,
-> +						ofono_bool_t enable, void *data)
-> +{
-> +	struct ofono_text_telephony *tt =3D data;
-> +
-> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-> +		DBusMessage *reply;
-> +
-> +		ofono_debug("Error during powered query");
-> +
-> +		reply =3D __ofono_error_failed(tt->pending);
-> +		__ofono_dbus_pending_reply(&tt->pending, reply);
-> +
-> +		return;
-> +	}
-> +
-> +	tt_set_powered(tt, enable);
-> +	tt_send_properties_reply(tt);
+> Please do emergency_number() =3D=3D FALSE here
+>
+>    =
 
-The oFono convention is to reply to the pending D-Bus method call and
-then signal the property changed signals.
+>> +             return;
+>> +
+>> +     if (!online) {
+>>      =
 
-> +}
-> +
-> +static DBusMessage *tt_get_properties(DBusConnection *conn,
-> +						DBusMessage *msg, void *data)
-> +{
-> +	struct ofono_text_telephony *tt =3D data;
-> +
-> +	if (tt->flags & TEXT_TELEPHONY_FLAG_CACHED)
-> +		return tt_get_properties_reply(msg, tt);
-> +
-> +	if (tt->pending)
-> +		return __ofono_error_busy(msg);
-> +
-> +	tt->pending =3D dbus_message_ref(msg);
-> +	tt->driver->query_tty(tt, tt_query_powered_callback, tt);
-> +
-> +	return NULL;
-> +}
-> +
-> +static DBusMessage *tt_set_property(DBusConnection *conn, DBusMessage *m=
-sg,
-> +					void *data)
-> +{
-> +	struct ofono_text_telephony *tt =3D data;
-> +	DBusMessageIter iter;
-> +	DBusMessageIter var;
-> +	const char *property;
-> +
-> +	if (tt->pending)
-> +		return __ofono_error_busy(msg);
-> +
-> +	if (!dbus_message_iter_init(msg, &iter))
-> +		return __ofono_error_invalid_args(msg);
-> +
-> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
-> +		return __ofono_error_invalid_args(msg);
-> +
-> +	dbus_message_iter_get_basic(&iter, &property);
-> +	dbus_message_iter_next(&iter);
-> +
-> +	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
-> +		return __ofono_error_invalid_args(msg);
-> +
-> +	dbus_message_iter_recurse(&iter, &var);
-> +
-> +	if (g_strcmp0(property, "Powered") =3D=3D 0) {
-> +		dbus_bool_t value;
-> +		int target;
-> +
-> +		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
-> +			return __ofono_error_invalid_args(msg);
-> +
-> +		dbus_message_iter_get_basic(&var, &value);
-> +		target =3D value;
-> +
-> +		if (tt->powered =3D=3D target)
-> +			return dbus_message_new_method_return(msg);
-> +
-> +		tt->pending =3D dbus_message_ref(msg);
-> +		tt->powered_pending =3D target;
-> +
-> +		tt->driver->set_tty(tt, target,
-> +					tt_set_powered_callback, tt);
-> +		return NULL;
-> +	}
-> +
-> +	return __ofono_error_invalid_args(msg);
-> +}
+> And online =3D=3D FALSE here
+>
+>    =
 
-<snip>
+>> +             reply =3D __ofono_error_failed(vc->pending);
+>> +             __ofono_dbus_pending_reply(&vc->pending, reply);
+>> +             ofono_modem_dec_emergency_mode(modem);
+>> +             return;
+>> +     }
+>> +
+>> +     clir_string_to_clir(clirstr,&clir);
+>> +     string_to_phone_number(number,&ph);
+>> +
+>> +     vc->driver->dial(vc,&ph, clir, OFONO_CUG_OPTION_DEFAULT,
+>> +                             manager_dial_callback, vc);
+>> +}
+>> +
+>>   void ofono_voicecall_register(struct ofono_voicecall *vc)
+>>   {
+>>        DBusConnection *conn =3D ofono_dbus_get_connection();
+>> @@ -2255,6 +2350,9 @@ void ofono_voicecall_register(struct ofono_voiceca=
+ll *vc)
+>>        }
+>>
+>>        ofono_modem_add_interface(modem, OFONO_VOICECALL_MANAGER_INTERFAC=
+E);
+>> +     vc->modem_online_watch =3D __ofono_modem_add_online_watch(modem,
+>> +                                                     modem_online_watch,
+>> +                                                     vc, NULL);
+>>
+>>        /*
+>>         * Start out with the 22.101 mandated numbers, if we have a SIM a=
+nd
+>> @@ -2331,6 +2429,17 @@ ofono_bool_t __ofono_voicecall_is_busy(struct ofo=
+no_voicecall *vc,
+>>
+>>   static void dial_request(struct ofono_voicecall *vc)
+>>   {
+>> +     struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
+>> +
+>> +     if (emergency_number(vc, phone_number_to_string(&vc->dial_req->ph)=
+)) {
+>> +             ofono_bool_t online =3D ofono_modem_get_online(modem);
+>> +
+>> +             ofono_modem_inc_emergency_mode(modem);
+>> +
+>> +             if (!online)
+>>      =
 
-> +int ofono_text_telephony_driver_register(const struct ofono_text_telepho=
-ny_driver *d)
-> +{
-> +	DBG("driver: %p, name: %s", d, d->name);
-> +
-> +	if (!d || !d->probe)
-> +		return -EINVAL;
-> +
-> +	g_drivers =3D g_slist_prepend(g_drivers, (void *)d);
-> +
-> +	return 0;
-> +}
-> +
-> +void ofono_text_telephony_driver_unregister(const struct ofono_text_tele=
-phony_driver *d)
-> +{
-> +	DBG("driver: %p, name: %s", d, d->name);
-> +
-> +	if (!d)
+> And online =3D=3D FALSE here
+>
+>    =
 
-The preferred style is to compare to NULL, e.g. if (d =3D=3D NULL)
+>> +                     return;
+>> +     }
+>> +
+>>        vc->driver->dial(vc,&vc->dial_req->ph, OFONO_CLIR_OPTION_DEFAULT,
+>>                                OFONO_CUG_OPTION_DEFAULT, dial_request_cb=
+, vc);
+>>   }
+>>      =
 
-> +		return;
-> +
-> +	g_drivers =3D g_slist_remove(g_drivers, (void *)d);
-> +}
-> +
+> Otherwise, looks good to me.
+>    =
 
-<snip>
+Thanks for the comments, I am going to resend the patch with
+the changes I made based on your comments.
+> Have you figured out how to support the E911 call-back requirements?
+>    =
 
-> +struct ofono_text_telephony *ofono_text_telephony_create(struct ofono_mo=
-dem *modem,
-> +							unsigned int vendor,
-> +							const char *driver,
-> +							void *data)
-> +{
-> +	struct ofono_text_telephony *tt;
-> +	GSList *l;
+This is something that still needs to be figured out and can
+be added in a separate patch.
 
-Please add a newline here
-
-> +	if (!driver)
-> +		return NULL;
-> +
-> +	tt =3D g_try_new0(struct ofono_text_telephony, 1);
-> +	if (!tt)
-> +		return NULL;
-> +
-> +	tt->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_TEXT_TELEPHO=
-NY,
-> +						text_telephony_remove, tt);
-> +
-> +	tt->powered =3D -1;
-
-I think it is safe to default this to 0 (off).
-
-> +
-> +	for (l =3D g_drivers; l; l =3D l->next) {
-> +		const struct ofono_text_telephony_driver *drv =3D l->data;
-> +
-> +		if (g_strcmp0(drv->name, driver) !=3D 0)
-> +			continue;
-> +
-> +		if (drv->probe(tt, vendor, data) < 0)
-> +			continue;
-> +
-> +		tt->driver =3D drv;
-> +		break;
-> +	}
-> +
-> +	return tt;
-> +}
-> +
-
-Otherwise, looks good.
+> Regards,
+> -Denis
+>    =
 
 Regards,
--Denis
+Andras
 
---===============0043893971764328453==--
+--===============2384054770727675819==--
 
