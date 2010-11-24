@@ -1,49 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============5329431657154004631=="
+Content-Type: multipart/mixed; boundary="===============1287587268876545962=="
 MIME-Version: 1.0
-From: ext-arun.1.ravindran@nokia.com
-Subject: [PATCH] Doc Update voicecallmanager-api.txt
-Date: Wed, 24 Nov 2010 16:56:11 +0200
-Message-ID: <1290610571-17684-1-git-send-email-ext-arun.1.ravindran@nokia.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH] Add voice call boolean property for MO/MT distinction
+Date: Wed, 24 Nov 2010 17:05:17 +0200
+Message-ID: <1290611117-14026-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5329431657154004631==
+--===============1287587268876545962==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
-
 ---
- doc/voicecallmanager-api.txt |    9 ++++++++-
- 1 files changed, 8 insertions(+), 1 deletions(-)
+ doc/voicecall-api.txt |    5 +++++
+ src/voicecall.c       |    6 +++++-
+ 2 files changed, 10 insertions(+), 1 deletions(-)
 
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index d960f3c..a4048d2 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -5,7 +5,14 @@ Service		org.ofono
- Interface	org.ofono.VoiceCallManager
- Object path	[variable prefix]/{modem0,modem1,...}
+diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
+index f0ba316..f3cad7c 100644
+--- a/doc/voicecall-api.txt
++++ b/doc/voicecall-api.txt
+@@ -87,6 +87,11 @@ Properties	string LineIdentification [readonly]
+ 			"override category" option was not provisioned for
+ 			the current subscriber.
  =
 
--Methods		array{object,dict} GetCalls()
-+Methods		dict GetProperties()
++		boolean Originated [readonly]
 +
-+			Returns properties for the VoiceCallManager Interface.
-+			See the properties section for available properties.
++			Indicates whether the call was mobile-originated
++			(true) or mobile-terminated (false).
 +
-+			Possible Errors: [service].Error.InvalidArguments
-+
-+		array{object,dict} GetCalls()
+ 		boolean Multiparty [readonly]
  =
 
- 			Get an array of call object paths and properties
- 			that represents the currently present calls.
+ 			Contains the indication if the voice call is part
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 52baec3..045b492 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -322,7 +322,7 @@ static void append_voicecall_properties(struct voicecal=
+l *v,
+ 	const char *status;
+ 	const char *callerid;
+ 	const char *timestr;
+-	ofono_bool_t mpty;
++	ofono_bool_t mpty, originated;
+ =
+
+ 	status =3D call_status_to_string(call->status);
+ 	callerid =3D phone_number_to_string(&call->phone_number);
+@@ -342,6 +342,10 @@ static void append_voicecall_properties(struct voiceca=
+ll *v,
+ 					&timestr);
+ 	}
+ =
+
++	originated =3D call->direction =3D=3D CALL_DIRECTION_MOBILE_ORIGINATED;
++	ofono_dbus_dict_append(dict, "Originated", DBUS_TYPE_BOOLEAN,
++				&originated);
++
+ 	if (g_slist_find_custom(v->vc->multiparty_list,
+ 				GINT_TO_POINTER(call->id),
+ 				call_compare_by_id))
 -- =
 
-1.7.0.4
+1.7.1
 
 
---===============5329431657154004631==--
+--===============1287587268876545962==--
 
