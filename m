@@ -1,61 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============8041426618599040939=="
+Content-Type: multipart/mixed; boundary="===============1739091758821651818=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] isi: Fix issue in call forwarding erase response
-Date: Wed, 24 Nov 2010 02:10:54 -0800
-Message-ID: <1290593454-22149-2-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1290593454-22149-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: [PATCH] TODO: Add a new task for CELL_DCH state indication
+Date: Wed, 24 Nov 2010 14:50:59 +0200
+Message-ID: <1290603059-5556-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8041426618599040939==
+--===============1739091758821651818==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/isimodem/call-forwarding.c |   20 ++++++++++++++------
- 1 files changed, 14 insertions(+), 6 deletions(-)
+ TODO |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/isimodem/call-forwarding.c b/drivers/isimodem/call-for=
-warding.c
-index 1448451..c364bdf 100644
---- a/drivers/isimodem/call-forwarding.c
-+++ b/drivers/isimodem/call-forwarding.c
-@@ -98,12 +98,20 @@ static gboolean decode_gsm_forwarding_info(const void *=
-restrict data,
- 			uint8_t _ton;
- 			char *_number =3D NULL;
- =
-
--			if (!g_isi_sb_iter_get_byte(&iter, &_status, 3)
--				|| !g_isi_sb_iter_get_byte(&iter, &_ton, 4)
--				|| !g_isi_sb_iter_get_byte(&iter, &_norply, 5)
--				|| !g_isi_sb_iter_get_byte(&iter, &_numlen, 7)
--				|| !g_isi_sb_iter_get_alpha_tag(&iter, &_number,
--					_numlen * 2, 10))
-+			if (status && !g_isi_sb_iter_get_byte(&iter, &_status, 3))
-+				return FALSE;
+diff --git a/TODO b/TODO
+index c484871..5806ef0 100644
+--- a/TODO
++++ b/TODO
+@@ -507,3 +507,13 @@ Miscellaneous
+   Priority: Medium
+   Complexity: C2
+   Owner: Sjur Br=EF=BF=BD=EF=BF=BDndeland <sjur.brandeland@stericsson.co=
+m>
 +
-+			if (ton && !g_isi_sb_iter_get_byte(&iter, &_ton, 4))
-+				return FALSE;
++- Add CELL_DCH state indication support.  Add a new optional property to t=
+he
++  RadioSettings atom for indicating radio bearer idle/active status.  This
++  feature is useful for many types of power management schemes that schedu=
+le
++  non-realtime operations over the UMTS radio interface to when the interf=
+ace is
++  active for other purposes as well, i.e., in CELL_DCH state.
 +
-+			if (norply && !g_isi_sb_iter_get_byte(&iter, &_norply, 5))
-+				return FALSE;
-+
-+			if (number && !g_isi_sb_iter_get_byte(&iter, &_numlen, 7))
-+				return FALSE;
-+
-+			if (number && !g_isi_sb_iter_get_alpha_tag(&iter,
-+						&_number, _numlen * 2, 10))
- 				return FALSE;
- =
-
- 			if (status)
++  Priority: Medium
++  Complexity: C4
++  Owner: Aki Niemi <aki.niemi@nokia.com>
 -- =
 
-1.7.0.4
+1.7.1
 
 
---===============8041426618599040939==--
+--===============1739091758821651818==--
 
