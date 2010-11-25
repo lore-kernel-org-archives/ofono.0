@@ -1,53 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5999635117456588261=="
+Content-Type: multipart/mixed; boundary="===============1413785238087933256=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [RERESEND] [PATCH 2/2] Update the network documentation
-Date: Thu, 25 Nov 2010 09:57:23 +0200
-Message-ID: <201011250957.23896.remi.denis-courmont@nokia.com>
-In-Reply-To: <4CEC35E3.8010601@gmail.com>
+From: Johan Hedberg <johan.hedberg@gmail.com>
+Subject: Re: [PATCH] Add voice call boolean property for MO/MT distinction
+Date: Thu, 25 Nov 2010 10:23:10 +0200
+Message-ID: <20101125082310.GA17294@jh-x301>
+In-Reply-To: <201011250940.42941.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5999635117456588261==
+--===============1413785238087933256==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tuesday 23 November 2010 23:45:07 ext Denis Kenzior, you wrote:
-> On 11/23/2010 01:20 PM, Aki Niemi wrote:
-> > Hi,
+Hi,
+
+On Thu, Nov 25, 2010, R=C3=A9mi Denis-Courmont wrote:
+> > > +		boolean Originated [readonly]
+> > > +
+> > > +			Indicates whether the call was mobile-originated
+> > > +			(true) or mobile-terminated (false).
+> > > +
 > > =
 
-> > 2010/11/23 Denis Kenzior <denkenz@gmail.com>:
-> >> In fact we were planning to report the current bearer on the
-> >> ConnectionManager interface once we figured out the vendor commands th=
-at
-> >> can actually report this information.
-> > =
-
-> > Do you mean HSDPA/HSUPA channel allocations, or the tech reported by
-> > CGREG? Because these can differ. For example, a Finnish operator's
-> > cells will not indicate HS*PA support, but HSDPA channel will
-> > nevertheless get allocated when data is moving. This is why for
-> > instance the N900 will show a 3G icon when idle, but switch to 3.5G
-> > when actively receiving data.
+> > What use case are you trying to enable with this API?  I don't see how
+> > this could be useful for the UI...
 > =
 
-> I mean the actual bearer being used.  The 27.007 equivalent would be
-> +CPSB, not what is reported by +CGREG.
+> This becomes a problem if we have more than one application "managing" vo=
+ice =
 
-I think we need both. I assume we should have two properties in the =
+> calls. And I expect that will _be_ the most common case. You have the mai=
+n =
 
-ConnectionManager, one for each.
+> call UI, but you also have the Bluetooth headset/carkit, the USB AT comma=
+nds =
 
-But then it is questionable why the NetworkRegistration should exhibit =
+> port, and possibly some third party call applications.
 
-anything other than 'gsm', 'umts' and 'lte' (and whatever-CDMA).
+Right. At least for HFP the call direction needs to be in the AT+CLCC
+reply. I.e. if the bluetoothd ofono telephony driver is used and
+bluetoothd starts after one or more calls are already in progress
+bluetoothd wouldn't have seen the call setup process and therefore not
+know the direction of the call (without this property).
 
--- =
+Johan
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============5999635117456588261==--
+--===============1413785238087933256==--
 
