@@ -1,58 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============8051871726142238947=="
+Content-Type: multipart/mixed; boundary="===============1908836357343388625=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 5/5] Add script to enable/disable text-telephony support
-Date: Thu, 25 Nov 2010 15:42:00 -0200
-Message-ID: <1290706920-24740-5-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1290706920-24740-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH 1/5] Add ofono_modem_reset()
+Date: Thu, 25 Nov 2010 17:02:16 -0200
+Message-ID: <1290711740-27886-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8051871726142238947==
+--===============1908836357343388625==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Some modems can screw up everything and then we will need to do a silent
+reset of the modem. This patch take the modem back to the OFFLINE state.
 ---
- test/set-tty |   25 +++++++++++++++++++++++++
- 1 files changed, 25 insertions(+), 0 deletions(-)
- create mode 100755 test/set-tty
+ include/modem.h |    2 ++
+ src/modem.c     |   15 +++++++++++++++
+ 2 files changed, 17 insertions(+), 0 deletions(-)
 
-diff --git a/test/set-tty b/test/set-tty
-new file mode 100755
-index 0000000..67876af
---- /dev/null
-+++ b/test/set-tty
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
+diff --git a/include/modem.h b/include/modem.h
+index 7b13ee0..a92eb88 100644
+--- a/include/modem.h
++++ b/include/modem.h
+@@ -46,6 +46,8 @@ int ofono_modem_register(struct ofono_modem *modem);
+ ofono_bool_t ofono_modem_is_registered(struct ofono_modem *modem);
+ void ofono_modem_remove(struct ofono_modem *modem);
+ =
+
++void ofono_modem_reset(struct ofono_modem *modem);
 +
-+import dbus
-+import sys
+ void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool_t power=
+ed);
+ ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem);
+ =
+
+diff --git a/src/modem.c b/src/modem.c
+index f032d93..6233944 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -1615,6 +1615,21 @@ void ofono_modem_remove(struct ofono_modem *modem)
+ 	g_free(modem);
+ }
+ =
+
++void ofono_modem_reset(struct ofono_modem *modem)
++{
++	int err;
 +
-+bus =3D dbus.SystemBus()
++	DBG("%p", modem);
 +
-+if len(sys.argv) =3D=3D 3:
-+	path =3D sys.argv[1]
-+	enable =3D int(sys.argv[2])
-+elif len(sys.argv) =3D=3D 2:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+	enable =3D int(sys.argv[1])
-+else:
-+	print "%s [PATH] {0|1}" % (sys.argv[0])
-+	exit(1)
++	ofono_modem_set_powered(modem, FALSE);
 +
-+print "Setting TTY for modem %s..." % path
-+texttelephony =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.TextTelephony')
++	err =3D set_powered(modem, TRUE);
++	if (err =3D=3D -EINPROGRESS)
++		return;
 +
-+texttelephony.SetProperty("Enabled", dbus.Boolean(enable));
++	modem_change_state(modem, MODEM_STATE_PRE_SIM);
++}
++
+ int ofono_modem_driver_register(const struct ofono_modem_driver *d)
+ {
+ 	DBG("driver: %p, name: %s", d, d->name);
 -- =
 
 1.7.3.2
 
 
---===============8051871726142238947==--
+--===============1908836357343388625==--
 
