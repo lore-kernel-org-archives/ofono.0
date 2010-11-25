@@ -1,51 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============4607213709402643521=="
+Content-Type: multipart/mixed; boundary="===============5999635117456588261=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH] Add voice call boolean property for MO/MT distinction
-Date: Thu, 25 Nov 2010 09:40:42 +0200
-Message-ID: <201011250940.42941.remi.denis-courmont@nokia.com>
-In-Reply-To: <4CED843F.8040306@gmail.com>
+Subject: Re: [RERESEND] [PATCH 2/2] Update the network documentation
+Date: Thu, 25 Nov 2010 09:57:23 +0200
+Message-ID: <201011250957.23896.remi.denis-courmont@nokia.com>
+In-Reply-To: <4CEC35E3.8010601@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4607213709402643521==
+--===============5999635117456588261==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wednesday 24 November 2010 23:31:43 ext Denis Kenzior, you wrote:
-> Hi R=C3=A9mi,
+On Tuesday 23 November 2010 23:45:07 ext Denis Kenzior, you wrote:
+> On 11/23/2010 01:20 PM, Aki Niemi wrote:
+> > Hi,
+> > =
+
+> > 2010/11/23 Denis Kenzior <denkenz@gmail.com>:
+> >> In fact we were planning to report the current bearer on the
+> >> ConnectionManager interface once we figured out the vendor commands th=
+at
+> >> can actually report this information.
+> > =
+
+> > Do you mean HSDPA/HSUPA channel allocations, or the tech reported by
+> > CGREG? Because these can differ. For example, a Finnish operator's
+> > cells will not indicate HS*PA support, but HSDPA channel will
+> > nevertheless get allocated when data is moving. This is why for
+> > instance the N900 will show a 3G icon when idle, but switch to 3.5G
+> > when actively receiving data.
 > =
 
-> > +		boolean Originated [readonly]
-> > +
-> > +			Indicates whether the call was mobile-originated
-> > +			(true) or mobile-terminated (false).
-> > +
-> =
+> I mean the actual bearer being used.  The 27.007 equivalent would be
+> +CPSB, not what is reported by +CGREG.
 
-> What use case are you trying to enable with this API?  I don't see how
-> this could be useful for the UI...
+I think we need both. I assume we should have two properties in the =
 
-This becomes a problem if we have more than one application "managing" voic=
-e =
+ConnectionManager, one for each.
 
-calls. And I expect that will _be_ the most common case. You have the main =
+But then it is questionable why the NetworkRegistration should exhibit =
 
-call UI, but you also have the Bluetooth headset/carkit, the USB AT command=
-s =
-
-port, and possibly some third party call applications.
-
-Generally speaking, I don't see the point in oFono hiding obvious stuff tha=
-t it =
-
-knows about.
+anything other than 'gsm', 'umts' and 'lte' (and whatever-CDMA).
 
 -- =
 
 R=C3=A9mi Denis-Courmont
 Nokia Devices R&D, Maemo Software, Helsinki
 
---===============4607213709402643521==--
+--===============5999635117456588261==--
 
