@@ -1,76 +1,123 @@
-Content-Type: multipart/mixed; boundary="===============8677293821588089861=="
+Content-Type: multipart/mixed; boundary="===============7245313003525743823=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: [PATCH] stkutil: Use sms_dcs_decode to retrieve the STK character set.
-Date: Thu, 25 Nov 2010 16:15:04 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D4018813547D20B@irsmsx501.ger.corp.intel.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH 1/5] text-telephony: add public header
+Date: Thu, 25 Nov 2010 15:41:56 -0200
+Message-ID: <1290706920-24740-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8677293821588089861==
+--===============7245313003525743823==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Guillaume Lucas <guillaumex.lucas@intel.com>
-
 ---
- src/stkutil.c |   12 ++++++++----
- 1 files changed, 8 insertions(+), 4 deletions(-)
+ Makefile.am   |    3 +-
+ include/ctm.h |   71 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 73 insertions(+), 1 deletions(-)
+ create mode 100644 include/ctm.h
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index 377ceff..78efbf0 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -77,9 +77,13 @@ struct gsm_sms_tpdu {
- static char *decode_text(unsigned char dcs, int len, const unsigned char *=
-data)
- {
- 	char *utf8;
-+	enum sms_charset charset;
+diff --git a/Makefile.am b/Makefile.am
+index f841b4c..2615be7 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -13,7 +13,8 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
+e/history.h \
+ 			include/cbs.h include/call-volume.h \
+ 			include/gprs.h include/gprs-context.h \
+ 			include/radio-settings.h include/stk.h \
+-			include/audio-settings.h include/nettime.h
++			include/audio-settings.h include/nettime.h \
++			include/ctm.h
  =
 
--	switch (dcs) {
--	case 0x00:
-+	if (!sms_dcs_decode(dcs, NULL, &charset, NULL, NULL))
-+		return NULL;
+ nodist_include_HEADERS =3D include/version.h
+ =
+
+diff --git a/include/ctm.h b/include/ctm.h
+new file mode 100644
+index 0000000..4b07192
+--- /dev/null
++++ b/include/ctm.h
+@@ -0,0 +1,71 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
++ *  Copyright (C) 2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+	switch (charset) {
-+	case SMS_CHARSET_7BIT:
- 	{
- 		long written;
- 		unsigned long max_to_unpack =3D len * 8 / 7;
-@@ -94,10 +98,10 @@ static char *decode_text(unsigned char dcs, int len, co=
-nst unsigned char *data)
- 		g_free(unpacked);
- 		break;
- 	}
--	case 0x04:
-+	case SMS_CHARSET_8BIT:
- 		utf8 =3D convert_gsm_to_utf8(data, len, NULL, NULL, 0);
- 		break;
--	case 0x08:
-+	case SMS_CHARSET_UCS2:
- 		utf8 =3D g_convert((const gchar *) data, len,
- 					"UTF-8//TRANSLIT", "UCS-2BE",
- 					NULL, NULL, NULL);
++#ifndef __OFONO_CTM_H
++#define __OFONO_CTM_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include <ofono/types.h>
++
++struct ofono_ctm;
++
++typedef void (*ofono_ctm_set_cb_t)(const struct ofono_error *error,
++					void *data);
++typedef void (*ofono_ctm_query_cb_t)(const struct ofono_error *error,
++					ofono_bool_t enable, void *data);
++
++struct ofono_ctm_driver {
++	const char *name;
++	int (*probe)(struct ofono_ctm *tt, unsigned int vendor,
++			void *data);
++	void (*remove)(struct ofono_ctm *tt);
++	void (*query_tty)(struct ofono_ctm *tt,
++				ofono_ctm_query_cb_t cb,
++				void *data);
++	void (*set_tty)(struct ofono_ctm *tt,
++				int enable,
++				ofono_ctm_set_cb_t cb,
++				void *data);
++};
++
++int ofono_ctm_driver_register(const struct ofono_ctm_driver *d);
++void ofono_ctm_driver_unregister(const struct ofono_ctm_driver *d);
++
++struct ofono_ctm *ofono_ctm_create(struct ofono_modem *modem,
++					unsigned int vendor,
++					const char *driver,
++					void *data);
++
++void ofono_ctm_register(struct ofono_ctm *tt);
++void ofono_ctm_remove(struct ofono_ctm *tt);
++
++void ofono_ctm_set_data(struct ofono_ctm *tt, void *data);
++void *ofono_ctm_get_data(struct ofono_ctm *tt);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __OFONO_TEXT_TELEPHONY_H */
 -- =
 
-1.7.0.4
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+1.7.3.2
 
 
---===============8677293821588089861==--
+--===============7245313003525743823==--
 
