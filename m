@@ -1,152 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============2311188564557458068=="
+Content-Type: multipart/mixed; boundary="===============1465254490150626478=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 3/5] modem: add support to restore state when resetting the
- modem
-Date: Thu, 25 Nov 2010 17:02:18 -0200
-Message-ID: <1290711740-27886-3-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1290711740-27886-2-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 5/5] Add test script for the Lockdown property
+Date: Thu, 25 Nov 2010 17:02:20 -0200
+Message-ID: <1290711740-27886-5-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1290711740-27886-4-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2311188564557458068==
+--===============1465254490150626478==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/modem.c |   70 +++++++++++++++++++++++++++++++++----------------------=
----
- 1 files changed, 40 insertions(+), 30 deletions(-)
+ test/lockdown-modem |   25 +++++++++++++++++++++++++
+ 1 files changed, 25 insertions(+), 0 deletions(-)
+ create mode 100755 test/lockdown-modem
 
-diff --git a/src/modem.c b/src/modem.c
-index 6233944..1828a3b 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -70,6 +70,7 @@ struct ofono_modem {
- 	guint			interface_update;
- 	ofono_bool_t		powered;
- 	ofono_bool_t		powered_pending;
-+	ofono_bool_t		get_online;
- 	guint			timeout;
- 	ofono_bool_t		online;
- 	struct ofono_watchlist	*online_watches;
-@@ -434,30 +435,6 @@ static void modem_change_state(struct ofono_modem *mod=
-em,
- 	}
- }
- =
-
--static void sim_state_watch(enum ofono_sim_state new_state, void *user)
--{
--	struct ofono_modem *modem =3D user;
--
--	switch (new_state) {
--	case OFONO_SIM_STATE_NOT_PRESENT:
--		modem_change_state(modem, MODEM_STATE_PRE_SIM);
--		break;
--	case OFONO_SIM_STATE_INSERTED:
--		break;
--	case OFONO_SIM_STATE_READY:
--		modem_change_state(modem, MODEM_STATE_OFFLINE);
--
--		/*
--		 * If we don't have the set_online method, also proceed
--		 * straight to the online state
--		 */
--		if (modem->driver->set_online =3D=3D NULL)
--			modem_change_state(modem, MODEM_STATE_ONLINE);
--
--		break;
--	}
--}
--
- unsigned int __ofono_modem_add_online_watch(struct ofono_modem *modem,
- 					ofono_modem_online_notify_func notify,
- 					void *data, ofono_destroy_func destroy)
-@@ -488,16 +465,18 @@ static void online_cb(const struct ofono_error *error=
-, void *data)
- 	DBusMessage *reply;
- =
-
- 	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
--			modem->modem_state =3D=3D MODEM_STATE_OFFLINE)
-+			modem->modem_state =3D=3D MODEM_STATE_OFFLINE) {
-+		modem_change_state(modem, MODEM_STATE_ONLINE);
+diff --git a/test/lockdown-modem b/test/lockdown-modem
+new file mode 100755
+index 0000000..5d98154
+--- /dev/null
++++ b/test/lockdown-modem
+@@ -0,0 +1,25 @@
++#!/usr/bin/python
 +
-+		if (!modem->pending)
-+			return;
++import dbus
++import sys
 +
- 		reply =3D dbus_message_new_method_return(modem->pending);
--	else
-+	} else {
- 		reply =3D __ofono_error_failed(modem->pending);
-+	}
- =
-
- 	__ofono_dbus_pending_reply(&modem->pending, reply);
--
--	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
--			modem->modem_state =3D=3D MODEM_STATE_OFFLINE)
--		modem_change_state(modem, MODEM_STATE_ONLINE);
- }
- =
-
- static void offline_cb(const struct ofono_error *error, void *data)
-@@ -517,6 +496,34 @@ static void offline_cb(const struct ofono_error *error=
-, void *data)
- 		modem_change_state(modem, MODEM_STATE_OFFLINE);
- }
- =
-
-+static void sim_state_watch(enum ofono_sim_state new_state, void *user)
-+{
-+	struct ofono_modem *modem =3D user;
++bus =3D dbus.SystemBus()
 +
-+	switch (new_state) {
-+	case OFONO_SIM_STATE_NOT_PRESENT:
-+		modem_change_state(modem, MODEM_STATE_PRE_SIM);
-+		break;
-+	case OFONO_SIM_STATE_INSERTED:
-+		break;
-+	case OFONO_SIM_STATE_READY:
-+		modem_change_state(modem, MODEM_STATE_OFFLINE);
++if len(sys.argv) =3D=3D 2:
++	path =3D sys.argv[1]
++else:
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++			'org.ofono.Manager')
++	modems =3D manager.GetModems()
++	path =3D modems[0][0]
 +
-+		/*
-+		 * If we don't have the set_online method, also proceed
-+		 * straight to the online state
-+		 */
-+		if (modem->driver->set_online =3D=3D NULL)
-+			modem_change_state(modem, MODEM_STATE_ONLINE);
-+		else if (modem->get_online)
-+			modem->driver->set_online(modem, 1, online_cb, modem);
++print "Locking and disconnecting modem %s..." % path
++modem =3D dbus.Interface(bus.get_object('org.ofono', path),
++						'org.ofono.Modem')
 +
-+		modem->get_online =3D FALSE;
++modem.SetProperty("Lockdown", dbus.Boolean(1))
 +
-+		break;
-+	}
-+}
++print "press ENTER to unlock the modem %s" % path
++sys.stdin.readline()
 +
- static DBusMessage *set_property_online(struct ofono_modem *modem,
- 					DBusMessage *msg,
- 					DBusMessageIter *var)
-@@ -1621,6 +1628,9 @@ void ofono_modem_reset(struct ofono_modem *modem)
- =
-
- 	DBG("%p", modem);
- =
-
-+	if (modem->modem_state =3D=3D MODEM_STATE_ONLINE)
-+		modem->get_online =3D TRUE;
-+
- 	ofono_modem_set_powered(modem, FALSE);
- =
-
- 	err =3D set_powered(modem, TRUE);
++modem.SetProperty("Lockdown", dbus.Boolean(0))
 -- =
 
 1.7.3.2
 
 
---===============2311188564557458068==--
+--===============1465254490150626478==--
 
