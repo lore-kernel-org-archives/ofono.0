@@ -1,42 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============1811426949088793248=="
+Content-Type: multipart/mixed; boundary="===============5127947341860445408=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 1/6] Distinguish HSDPA, HSUPA or both as access technologies
-Date: Thu, 25 Nov 2010 17:14:33 +0200
-Message-ID: <1290698078-18803-1-git-send-email-remi.denis-courmont@nokia.com>
+Subject: [PATCH 3/6] Update documentation for GPRS technology
+Date: Thu, 25 Nov 2010 17:14:35 +0200
+Message-ID: <1290698078-18803-3-git-send-email-remi.denis-courmont@nokia.com>
 In-Reply-To: <201011251714.19241.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1811426949088793248==
+--===============5127947341860445408==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/common.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ doc/connman-api.txt |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-diff --git a/src/common.c b/src/common.c
-index f32153c..1088b5d 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -661,9 +661,9 @@ const char *registration_tech_to_string(int tech)
- 	case ACCESS_TECHNOLOGY_GSM_EGPRS:
- 		return "edge";
- 	case ACCESS_TECHNOLOGY_UTRAN_HSDPA:
--		return "hspa";
-+		return "hsdpa";
- 	case ACCESS_TECHNOLOGY_UTRAN_HSUPA:
--		return "hspa";
-+		return "hsupa";
- 	case ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA:
- 		return "hspa";
- 	case ACCESS_TECHNOLOGY_EUTRAN:
+diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+index 22e02e5..b13efd1 100644
+--- a/doc/connman-api.txt
++++ b/doc/connman-api.txt
+@@ -77,6 +77,14 @@ Properties	boolean Attached [readonly]
+ 			be available, e.g. receiving SMS over packet radio
+ 			or network initiated PDP activation.
+ =
+
++		string Technology [readonly, optional]
++
++			Contains the data technology as reported by the
++			GPRS service registration (if known).
++
++			Possible values are the same as for the Technology
++			property the NetworkRegistration object.
++
+ 		boolean Suspended [readonly, optional]
+ =
+
+ 			Contains whether the GPRS service is suspended.
 -- =
 
 1.7.1
 
 
---===============1811426949088793248==--
+--===============5127947341860445408==--
 
