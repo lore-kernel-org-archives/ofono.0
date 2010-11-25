@@ -1,29 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============2847113261148102905=="
+Content-Type: multipart/mixed; boundary="===============8050375592658451636=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: RE: How to get the OMA DRM right object file coming from WAP Push?
-Date: Thu, 25 Nov 2010 11:07:05 +0200
-Message-ID: <1290676025.5365.24.camel@tucson>
-In-Reply-To: <749B9D3DBF0F054390025D9EAFF47F223023B247@shsmsx501.ccr.corp.intel.com>
+Date: Thu, 25 Nov 2010 10:40:33 +0100
+Message-ID: <1290678033.4795.1.camel@aeonflux>
+In-Reply-To: <1290676025.5365.24.camel@tucson>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2847113261148102905==
+--===============8050375592658451636==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 2010-11-25 at 14:15 +0800, ext Lin, Mengdong wrote:
+Hi Aki,
 
-> Can the two methods help me to handle files from WAP  push?
+> > Can the two methods help me to handle files from WAP  push?
+> =
 
-Yes. You need to implement the PushNotificationAgent interface, and
-register this object with oFono using the RegisterAgent() method.
+> Yes. You need to implement the PushNotificationAgent interface, and
+> register this object with oFono using the RegisterAgent() method.
 
-Cheers,
-Aki
+there is actually a test/test-push-notification Python example in the
+code base that shows how this works.
+
+Regards
+
+Marcel
 
 
 
---===============2847113261148102905==--
+--===============8050375592658451636==--
 
