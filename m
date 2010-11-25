@@ -1,77 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============2303174621961084194=="
+Content-Type: multipart/mixed; boundary="===============8193322532364203565=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 3/3] test-stk: Add provide local info
-Date: Thu, 25 Nov 2010 20:29:02 +0800
-Message-ID: <1290688142-14726-4-git-send-email-yang.gu@intel.com>
-In-Reply-To: <1290688142-14726-1-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 0/3] Patch Description
+Date: Thu, 25 Nov 2010 20:28:59 +0800
+Message-ID: <1290688142-14726-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2303174621961084194==
+--===============8193322532364203565==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- test/test-stk-menu |   36 ++++++++++++++++++++++++++++++++++++
- 1 files changed, 36 insertions(+), 0 deletions(-)
+This series of patch is to add provide local info support by requesting the=
+ terminal to send time and language info. Please comment on the following a=
+spects as I'm not sure after reading the spec:
+1. Timezone may be a number in the range -47 through +48. In struct sms_sct=
+s, timezone is defined as gint8, thus 0xFF should shand for -1, which is a =
+valid input. Thus I think build_dataobj_datetime_timezone() in src/stkutil.=
+c is not correct. But I'm still not sure what value should be passed to oFo=
+no when timezone is absent. =
 
-diff --git a/test/test-stk-menu b/test/test-stk-menu
-index 916a527..db3f8b7 100755
---- a/test/test-stk-menu
-+++ b/test/test-stk-menu
-@@ -134,6 +134,42 @@ class StkAgent(dbus.service.Object):
- 			return False
- =
+2. DBUS_TYPE_BYTE represents an 8-bit unsigned integer, and D-Bus doesn't h=
+ave a type related to 8-bit signed integer. So what's the best way to repre=
+sent a timezone? =
 
- 	@dbus.service.method("org.ofono.SimToolkitAgent",
-+				in_signature=3D"", out_signature=3D"iyyyyyi")
-+	def RequestTime(self):
-+		print "Time should be in format: year, month, day, hour, minute, second[=
-, timezone]"
-+		userin =3D raw_input("Enter Time (t, b, time):")
-+
-+		if userin =3D=3D 'b':
-+			raise GoBack("User wishes to go back");
-+		elif userin =3D=3D 't':
-+			raise EndSession("User wishes to terminate session");
-+		else:
-+			time =3D userin.split(',')
-+
-+			if len(time) !=3D 6 and len(time) !=3D 7:
-+				raise GoBack("The input time is invalid");
-+
-+			if len(time) =3D=3D 6:
-+				timezone =3D -48;
-+			else:
-+				timezone =3D int(time[6])
-+
-+			return int(time[0]), int(time[1]), int(time[2]), int(time[3]), int(time=
-[4]), int(time[5]), timezone
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+				in_signature=3D"", out_signature=3D"s")
-+	def RequestLanguage(self):
-+		print "Follow ISO 639-1 to input language, that is, a pair of alpha-nume=
-ric characters"
-+		userin =3D raw_input("Enter Language (t, b):")
-+
-+		if userin =3D=3D 'b':
-+			raise GoBack("User wishes to go back");
-+		elif userin =3D=3D 't':
-+			raise EndSession("User wishes to terminate session");
-+		else:
-+			return userin
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
- 					in_signature=3D"", out_signature=3D"")
- 	def Cancel(self):
- 		print "Cancel"
+3. Only one byte is used to represent the year. Is the following logic corr=
+ect to get the year with one byte?
+if (year_dbus >=3D 2000)
+	year =3D year_dbus - 2000;
+else
+	year =3D year_dbus - 1900; =
+
+
+Yang Gu (3):
+  network: Use bit as size instead of byte
+  stk: Handle provide local info proactive command
+  test-stk: Add provide local info
+
+ src/network.c      |    4 +-
+ src/smsutil.c      |    6 +-
+ src/stk.c          |  113 ++++++++++++++++++++++++++++++++++++++
+ src/stkagent.c     |  153 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/stkagent.h     |   14 +++++
+ src/stkutil.c      |    2 +-
+ test/test-stk-menu |   36 ++++++++++++
+ 7 files changed, 322 insertions(+), 6 deletions(-)
+
 -- =
 
 1.7.2.3
 
 
---===============2303174621961084194==--
+--===============8193322532364203565==--
 
