@@ -1,71 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============1908836357343388625=="
+Content-Type: multipart/mixed; boundary="===============1193830521196654831=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 1/5] Add ofono_modem_reset()
-Date: Thu, 25 Nov 2010 17:02:16 -0200
-Message-ID: <1290711740-27886-1-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 2/5] phonesim: Add modem reset trigger
+Date: Thu, 25 Nov 2010 17:02:17 -0200
+Message-ID: <1290711740-27886-2-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1290711740-27886-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1908836357343388625==
+--===============1193830521196654831==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Some modems can screw up everything and then we will need to do a silent
-reset of the modem. This patch take the modem back to the OFFLINE state.
 ---
- include/modem.h |    2 ++
- src/modem.c     |   15 +++++++++++++++
- 2 files changed, 17 insertions(+), 0 deletions(-)
+ plugins/phonesim.c |   27 +++++++++++++++++++++++++++
+ 1 files changed, 27 insertions(+), 0 deletions(-)
 
-diff --git a/include/modem.h b/include/modem.h
-index 7b13ee0..a92eb88 100644
---- a/include/modem.h
-+++ b/include/modem.h
-@@ -46,6 +46,8 @@ int ofono_modem_register(struct ofono_modem *modem);
- ofono_bool_t ofono_modem_is_registered(struct ofono_modem *modem);
- void ofono_modem_remove(struct ofono_modem *modem);
- =
-
-+void ofono_modem_reset(struct ofono_modem *modem);
-+
- void ofono_modem_set_powered(struct ofono_modem *modem, ofono_bool_t power=
-ed);
- ofono_bool_t ofono_modem_get_powered(struct ofono_modem *modem);
- =
-
-diff --git a/src/modem.c b/src/modem.c
-index f032d93..6233944 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -1615,6 +1615,21 @@ void ofono_modem_remove(struct ofono_modem *modem)
- 	g_free(modem);
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index d2faf42..14dae47 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -237,6 +237,30 @@ static void cfun_set_on_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	ofono_modem_set_powered(modem, ok);
  }
  =
 
-+void ofono_modem_reset(struct ofono_modem *modem)
++static gboolean phonesim_reset(void *user_data)
 +{
-+	int err;
++	struct ofono_modem *modem =3D user_data;
++	struct phonesim_data *data =3D ofono_modem_get_data(modem);
 +
-+	DBG("%p", modem);
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
 +
-+	ofono_modem_set_powered(modem, FALSE);
++	if (data->mux) {
++		g_at_mux_shutdown(data->mux);
++		g_at_mux_unref(data->mux);
++		data->mux =3D NULL;
++	}
 +
-+	err =3D set_powered(modem, TRUE);
-+	if (err =3D=3D -EINPROGRESS)
-+		return;
++	ofono_modem_reset(modem);
 +
-+	modem_change_state(modem, MODEM_STATE_PRE_SIM);
++	return FALSE;
 +}
 +
- int ofono_modem_driver_register(const struct ofono_modem_driver *d)
++static void crst_notify(GAtResult *result, gpointer user_data)
++{
++	g_idle_add(phonesim_reset, user_data);
++}
++
+ static void phonesim_disconnected(gpointer user_data)
  {
- 	DBG("driver: %p, name: %s", d, d->name);
+ 	struct ofono_modem *modem =3D user_data;
+@@ -389,6 +413,9 @@ static int phonesim_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(data->chat, "AT+CSCS=3D\"GSM\"", none_prefix,
+ 			NULL, NULL, NULL);
+ =
+
++	g_at_chat_register(data->chat, "+CRST:",
++				crst_notify, FALSE, modem, NULL);
++
+ 	return 0;
+ }
+ =
+
 -- =
 
 1.7.3.2
 
 
---===============1908836357343388625==--
+--===============1193830521196654831==--
 
