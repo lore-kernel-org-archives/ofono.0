@@ -1,276 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============8800062067032206018=="
+Content-Type: multipart/mixed; boundary="===============6378225681399201761=="
 MIME-Version: 1.0
-From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 3/3] sms: restore pending tx messages from backup
-Date: Wed, 24 Nov 2010 14:53:22 -0800
-Message-ID: <1290639202-12221-4-git-send-email-kristen@linux.intel.com>
-In-Reply-To: <1290639202-12221-1-git-send-email-kristen@linux.intel.com>
+From: Lin, Mengdong <mengdong.lin@intel.com>
+Subject: How to get the OMA DRM right object file coming from WAP Push?
+Date: Thu, 25 Nov 2010 13:41:53 +0800
+Message-ID: <749B9D3DBF0F054390025D9EAFF47F223023B1F9@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8800062067032206018==
+--===============6378225681399201761==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/ofono.h   |    1 +
- src/sms.c     |   38 +++++++++++++++++++
- src/smsutil.c |  116 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/smsutil.h |    6 +++
- 4 files changed, 161 insertions(+), 0 deletions(-)
+OMA DRM 1.0 use WAP Push to send a right object file to the device.
+The Push Application ID is
+- URN: x-wap-application:drm.ua
+- Number: 0x08
 
-diff --git a/src/ofono.h b/src/ofono.h
-index d1a4bdc..4777f70 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -241,6 +241,7 @@ enum ofono_sms_submit_flag {
- 	OFONO_SMS_SUBMIT_FLAG_RECORD_HISTORY =3D	0x2,
- 	OFONO_SMS_SUBMIT_FLAG_RETRY =3D		0x4,
- 	OFONO_SMS_SUBMIT_FLAG_EXPOSE_DBUS =3D	0x8,
-+	OFONO_SMS_SUBMIT_FLAG_REUSE_UUID =3D	0x10,
- };
- =
+How can I get the right object file from oFono?
 
- typedef void (*ofono_sms_txq_submit_cb_t)(gboolean ok, void *data);
-diff --git a/src/sms.c b/src/sms.c
-index f987946..be710b1 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -1814,6 +1814,40 @@ static void bearer_init_callback(const struct ofono_=
-error *error, void *data)
- 		ofono_error("Error bootstrapping SMS Bearer Preference");
- }
- =
-
-+static void sms_restore_tx_queue(struct ofono_sms *sms)
-+{
-+	GQueue *backupq;
-+	unsigned int flags;
-+	struct txq_backup_entry *entry;
-+	struct ofono_uuid ofono_uuid;
-+
-+	DBG("");
-+
-+	flags =3D OFONO_SMS_SUBMIT_FLAG_RECORD_HISTORY;
-+	flags |=3D OFONO_SMS_SUBMIT_FLAG_RETRY;
-+	flags |=3D OFONO_SMS_SUBMIT_FLAG_REUSE_UUID;
-+
-+	if (sms->use_delivery_reports)
-+		flags |=3D OFONO_SMS_SUBMIT_FLAG_REQUEST_SR;
-+
-+	backupq =3D sms_tx_queue_load(sms->imsi);
-+
-+	while ((entry =3D g_queue_pop_head(backupq))) {
-+		decode_hex_own_buf(entry->uuid, -1, NULL, 0, ofono_uuid.uuid);
-+
-+		__ofono_sms_txq_submit(sms, entry->msg_list, flags,
-+					&ofono_uuid, NULL, NULL);
-+
-+		g_slist_foreach(entry->msg_list, (GFunc)g_free, NULL);
-+		g_slist_free(entry->msg_list);
-+
-+		g_free(entry->uuid);
-+		g_free(entry);
-+	}
-+
-+	g_queue_free(backupq);
-+}
-+
- /*
-  * Indicate oFono that a SMS driver is ready for operation
-  *
-@@ -1877,6 +1911,7 @@ void ofono_sms_register(struct ofono_sms *sms)
- 	if (sms->driver->bearer_set)
- 		sms->driver->bearer_set(sms, sms->bearer,
- 						bearer_init_callback, sms);
-+	sms_restore_tx_queue(sms);
- =
-
- 	sms->text_handlers =3D __ofono_watchlist_new(g_free);
- 	sms->datagram_handlers =3D __ofono_watchlist_new(g_free);
-@@ -1918,6 +1953,9 @@ int __ofono_sms_txq_submit(struct ofono_sms *sms, GSL=
-ist *list,
- 	if (entry =3D=3D NULL)
- 		return -ENOMEM;
- =
-
-+	if (flags & OFONO_SMS_SUBMIT_FLAG_REUSE_UUID)
-+		memcpy(&entry->uuid, uuid, sizeof(*uuid));
-+
- 	if (flags & OFONO_SMS_SUBMIT_FLAG_EXPOSE_DBUS) {
- 		m =3D message_create(&entry->uuid);
- 		if (m =3D=3D NULL)
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 7a6b70a..188b96e 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -2309,6 +2309,15 @@ static gboolean sms_deserialize(const unsigned char =
-*buf,
- 	return sms_decode(buf + 1, len - 1, FALSE, buf[0], sms);
- }
- =
-
-+static gboolean sms_deserialize_outgoing(const unsigned char *buf,
-+		struct sms *sms, int len)
-+{
-+	if (len < 1)
-+		return FALSE;
-+
-+	return sms_decode(buf + 1, len - 1, TRUE, buf[0], sms);
-+}
-+
- static gboolean sms_assembly_extract_address(const char *straddr,
- 						struct sms_address *out)
- {
-@@ -3129,6 +3138,113 @@ void status_report_assembly_expire(struct status_re=
-port_assembly *assembly,
- 	}
- }
- =
-
-+/*
-+ * Each directory contains a file per pdu.
-+ */
-+static GSList *sms_tx_load(const char *imsi, const struct dirent *dir)
-+{
-+	GSList *list =3D NULL;
-+	struct dirent **pdus;
-+	char *path;
-+	int len, i, r;
-+	unsigned char buf[177];
-+	struct sms s;
-+
-+	if (dir->d_type !=3D DT_DIR)
-+		return NULL;
-+
-+	path =3D g_strdup_printf(SMS_TX_BACKUP_PATH "/%s",
-+			imsi, dir->d_name);
-+
-+	len =3D scandir(path, &pdus, NULL, versionsort);
-+	g_free(path);
-+
-+	if (len < 0)
-+		return NULL;
-+
-+	for (i =3D 0; i < len; i++) {
-+		if (pdus[i]->d_type !=3D DT_REG)
-+			continue;
-+
-+		if ((strcmp(dir->d_name, ".") =3D=3D 0) ||
-+				(strcmp(dir->d_name, "..") =3D=3D 0))
-+			continue;
-+
-+		r =3D read_file(buf, sizeof(buf), SMS_TX_BACKUP_PATH "/%s/%s",
-+				imsi, dir->d_name, pdus[i]->d_name);
-+		if (r < 0)
-+			continue;
-+
-+		if (sms_deserialize_outgoing(buf, &s, r) =3D=3D FALSE)
-+			continue;
-+
-+		list =3D g_slist_prepend(list, g_memdup(&s, sizeof(s)));
-+	}
-+
-+	for (i =3D 0; i < len; i++)
-+		g_free(pdus[i]);
-+
-+	g_free(pdus);
-+
-+	return g_slist_reverse(list);
-+}
-+
-+/*
-+ * populate the queue with tx_backup_entry from stored backup
-+ * data.
-+ */
-+GQueue *sms_tx_queue_load(const char *imsi)
-+{
-+	char *path;
-+	struct dirent **entries;
-+	int len;
-+	GSList *msg_list;
-+	char *uuid;
-+	GQueue *retq;
-+
-+	retq =3D g_queue_new();
-+	if (retq =3D=3D NULL)
-+		return NULL;
-+
-+	if (imsi) {
-+		/* Restore state from backup */
-+		path =3D g_strdup_printf(SMS_TX_BACKUP_PATH, imsi);
-+		len =3D scandir(path, &entries, NULL, versionsort);
-+		g_free(path);
-+
-+		if (len < 0)
-+			return retq;
-+
-+		while (len--) {
-+			struct txq_backup_entry *entry;
-+
-+			struct dirent *dir =3D entries[len];
-+
-+			msg_list =3D sms_tx_load(imsi, dir);
-+
-+			sscanf(dir->d_name, "%*u-%as", &uuid);
-+
-+			g_free(entries[len]);
-+
-+			if (g_slist_length(msg_list) =3D=3D 0)
-+				continue;
-+
-+			entry =3D g_try_new0(struct txq_backup_entry, 1);
-+			if (entry =3D=3D NULL)
-+				continue;
-+
-+			entry->msg_list =3D msg_list;
-+			entry->uuid =3D uuid;
-+
-+			g_queue_push_head(retq, entry);
-+		}
-+
-+		g_free(entries);
-+	}
-+
-+	return retq;
-+}
-+
- gboolean sms_tx_store(const char *imsi, unsigned long id, const char *uuid,
- 			struct sms *s, guint8 seq)
- {
-diff --git a/src/smsutil.h b/src/smsutil.h
-index 2e2bae6..8d579a7 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -407,6 +407,11 @@ struct cbs_topic_range {
- 	unsigned short max;
- };
- =
-
-+struct txq_backup_entry {
-+	GSList *msg_list;
-+	char *uuid;
-+};
-+
- static inline gboolean is_bit_set(unsigned char oct, int bit)
- {
- 	int mask =3D 0x1 << bit;
-@@ -522,6 +527,7 @@ void sms_tx_backup_remove(const char *imsi, unsigned lo=
-ng id, const char *uuid,
- 				guint8 seq);
- void sms_tx_backup_destroy(const char *imsi, unsigned long id,
- 				const char *uuid);
-+GQueue *sms_tx_queue_load(const char *imsi);
- =
-
- GSList *sms_text_prepare(const char *to, const char *utf8, guint16 ref,
- 				gboolean use_16bit,
--- =
-
-1.7.2.3
+Many thanks!
+Amanda
 
 
---===============8800062067032206018==--
+--===============6378225681399201761==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
+
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
+dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEgbmFtZT1HZW5lcmF0b3Ig
+Y29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTIgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+Cjwh
+LS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseTpTaW1T
+dW47CglwYW5vc2UtMToyIDEgNiAwIDMgMSAxIDEgMSAxO30KQGZvbnQtZmFjZQoJe2ZvbnQtZmFt
+aWx5OiJDYW1icmlhIE1hdGgiOwoJcGFub3NlLTE6MiA0IDUgMyA1IDQgNiAzIDIgNDt9CkBmb250
+LWZhY2UKCXtmb250LWZhbWlseTpDYWxpYnJpOwoJcGFub3NlLTE6MiAxNSA1IDIgMiAyIDQgMyAy
+IDQ7fQpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6U2ltU3VuOwoJcGFub3NlLTE6MiAxIDYgMCAz
+IDEgMSAxIDEgMTt9CiAvKiBTdHlsZSBEZWZpbml0aW9ucyAqLwogcC5Nc29Ob3JtYWwsIGxpLk1z
+b05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowY207CgltYXJnaW4tYm90dG9tOi4wMDAx
+cHQ7Cgl0ZXh0LWFsaWduOmp1c3RpZnk7Cgl0ZXh0LWp1c3RpZnk6aW50ZXItaWRlb2dyYXBoOwoJ
+Zm9udC1zaXplOjEwLjVwdDsKCWZvbnQtZmFtaWx5OiJDYWxpYnJpIiwic2Fucy1zZXJpZiI7fQph
+OmxpbmssIHNwYW4uTXNvSHlwZXJsaW5rCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6
+Ymx1ZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQphOnZpc2l0ZWQsIHNwYW4uTXNvSHlw
+ZXJsaW5rRm9sbG93ZWQKCXttc28tc3R5bGUtcHJpb3JpdHk6OTk7Cgljb2xvcjpwdXJwbGU7Cgl0
+ZXh0LWRlY29yYXRpb246dW5kZXJsaW5lO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28tc3R5bGUt
+dHlwZTpwZXJzb25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5zLXNlcmlm
+IjsKCWNvbG9yOndpbmRvd3RleHQ7fQouTXNvQ2hwRGVmYXVsdAoJe21zby1zdHlsZS10eXBlOmV4
+cG9ydC1vbmx5O30KIC8qIFBhZ2UgRGVmaW5pdGlvbnMgKi8KIEBwYWdlIFdvcmRTZWN0aW9uMQoJ
+e3NpemU6NjEyLjBwdCA3OTIuMHB0OwoJbWFyZ2luOjcyLjBwdCA5MC4wcHQgNzIuMHB0IDkwLjBw
+dDt9CmRpdi5Xb3JkU2VjdGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9Ci0tPgo8L3N0eWxlPgo8
+IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlZGVmYXVsdHMgdjpleHQ9ImVkaXQiIHNw
+aWRtYXg9IjEwMjYiIC8+CjwveG1sPjwhW2VuZGlmXS0tPjwhLS1baWYgZ3RlIG1zbyA5XT48eG1s
+PgogPG86c2hhcGVsYXlvdXQgdjpleHQ9ImVkaXQiPgogIDxvOmlkbWFwIHY6ZXh0PSJlZGl0IiBk
+YXRhPSIxIiAvPgogPC9vOnNoYXBlbGF5b3V0PjwveG1sPjwhW2VuZGlmXS0tPgo8L2hlYWQ+Cgo8
+Ym9keSBsYW5nPVpILUNOIGxpbms9Ymx1ZSB2bGluaz1wdXJwbGUgc3R5bGU9J3RleHQtanVzdGlm
+eS10cmltOnB1bmN0dWF0aW9uJz4KCjxkaXYgY2xhc3M9V29yZFNlY3Rpb24xPgoKPHAgY2xhc3M9
+TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+T01BIERSTSAxLjAgdXNlIFdBUCBQdXNoIHRvIHNl
+bmQgYSByaWdodApvYmplY3QgZmlsZSB0byB0aGUgZGV2aWNlLiA8bzpwPjwvbzpwPjwvc3Bhbj48
+L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5UaGUgUHVzaCBBcHBsaWNh
+dGlvbiBJRCBpczxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3Bh
+biBsYW5nPUVOLVVTPi0gVVJOOiB4LXdhcC1hcHBsaWNhdGlvbjpkcm0udWE8bzpwPjwvbzpwPjwv
+c3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz4tIE51bWJlcjog
+MHgwODxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5n
+PUVOLVVTPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48
+c3BhbiBsYW5nPUVOLVVTPkhvdyBjYW4gSSBnZXQgdGhlIHJpZ2h0IG9iamVjdCBmaWxlIGZyb20K
+b0Zvbm8/PG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
+bmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFs
+PjxzcGFuIGxhbmc9RU4tVVM+TWFueSB0aGFua3MhPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAg
+Y2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+QW1hbmRhPG86cD48L286cD48L3NwYW4+
+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286
+cD48L3NwYW4+PC9wPgoKPC9kaXY+Cgo8L2JvZHk+Cgo8L2h0bWw+Cg==
+
+--===============6378225681399201761==--
 
