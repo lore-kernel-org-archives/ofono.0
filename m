@@ -1,109 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============7110841051508266383=="
+Content-Type: multipart/mixed; boundary="===============5677674973455761373=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 5/6] Core support for packet switched bearer reporting
-Date: Thu, 25 Nov 2010 17:17:16 +0200
-Message-ID: <201011251717.16976.remi.denis-courmont@nokia.com>
-In-Reply-To: <1290698078-18803-5-git-send-email-remi.denis-courmont@nokia.com>
+From: Rajesh.Nagaiah@elektrobit.com
+Subject: RE: CDMA Support
+Date: Thu, 25 Nov 2010 08:06:27 -0800
+Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702CCBC1F@usrdes03.ebgroup.elektrobit.com>
+In-Reply-To: <4CEBBF7B.8090307@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7110841051508266383==
+--===============5677674973455761373==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hmm, noticed I forgot to declare the new function, which makes the patch ki=
-nda =
+Hi Denis,
+ =
 
-useless.
+> The proposal covers the basics of voice calls, data =
 
-On Thursday 25 November 2010 17:14:37 Denis-Courmont Remi (Nokia-MS/Helsink=
-i), =
+> connections, messaging and network registration details.  The =
 
-you wrote:
-> ---
->  src/gprs.c |   32 ++++++++++++++++++++++++++++++++
->  1 files changed, 32 insertions(+), 0 deletions(-)
-> =
+> documentation can be found under:
+> doc/cdma-network-api.txt
+> doc/cdma-voicecall-manager-api.txt
 
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 3b0733e..0226985 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -107,6 +107,7 @@ struct context_settings {
-> =
+Initially we discussed not to use voicecall manager for cdma, =
 
->  struct pri_context {
->  	ofono_bool_t active;
-> +	int bearer;
->  	enum ofono_gprs_context_type type;
->  	char name[MAX_CONTEXT_NAME_LENGTH + 1];
->  	char message_proxy[MAX_MESSAGE_PROXY_LENGTH + 1];
-> @@ -596,6 +597,13 @@ static void append_context_properties(struct
-> pri_context *ctx, value =3D ctx->active;
->  	ofono_dbus_dict_append(dict, "Active", DBUS_TYPE_BOOLEAN, &value);
-> =
+rather only voicecall itself as we are going to have only =
 
-> +	if (ctx->active) {
-> +		const char *bearer =3D packet_bearer_to_string(ctx->bearer);
-> +
-> +		ofono_dbus_dict_append(dict, "Bearer",
-> +					DBUS_TYPE_STRING, &bearer);
-> +	}
-> +
->  	ofono_dbus_dict_append(dict, "Type", DBUS_TYPE_STRING, &type);
-> =
+one call at the UE level ?
 
->  	ofono_dbus_dict_append(dict, "Protocol", DBUS_TYPE_STRING, &proto);
-> @@ -1591,6 +1599,7 @@ static struct pri_context *add_context(struct
-> ofono_gprs *gprs, return NULL;
->  	}
-> =
+BR,
+Rajesh
 
-> +	context->bearer =3D -1;
->  	context->id =3D id;
-> =
-
->  	DBG("Registering new context");
-> @@ -2001,6 +2010,29 @@ void ofono_gprs_add_context(struct ofono_gprs *gpr=
-s,
->  	__ofono_atom_register(gc->atom, gprs_context_unregister);
->  }
-> =
-
-> +void ofono_gprs_context_bearer_notify(struct ofono_gprs_context *gc, int
-> cid, +					int bearer)
-> +{
-> +	DBusConnection *conn =3D ofono_dbus_get_connection();
-> +	GSList *l;
-> +	const char *value =3D packet_bearer_to_string(bearer);
-> +
-> +	for (l =3D gc->gprs->contexts; l; l =3D l->next) {
-> +		struct pri_context *ctx =3D l->data;
-> +
-> +		if (ctx->context.cid !=3D cid)
-> +			continue;
-> +
-> +		if (ctx->bearer =3D=3D bearer)
-> +			continue;
-> +
-> +		ctx->bearer =3D bearer;
-> +		ofono_dbus_signal_property_changed(conn, ctx->path,
-> +					OFONO_CONNECTION_CONTEXT_INTERFACE,
-> +					"Bearer", DBUS_TYPE_STRING, &value);
-> +	}
-> +}
-> +
->  void ofono_gprs_context_deactivated(struct ofono_gprs_context *gc,
->  					unsigned int cid)
->  {
-
-
--- =
-
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============7110841051508266383==--
+--===============5677674973455761373==--
 
