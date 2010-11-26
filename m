@@ -1,50 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8049232922151942105=="
+Content-Type: multipart/mixed; boundary="===============6349991763240860418=="
 MIME-Version: 1.0
-From: Alexander Kanavin <alexander.kanavin@nokia.com>
-Subject: [ANNOUNCE] introducing oFono Qt bindings
-Date: Fri, 26 Nov 2010 16:55:00 +0200
-Message-ID: <4CEFCA44.7030209@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] call-volume: Minor coding style fix
+Date: Fri, 26 Nov 2010 06:57:45 -0800
+Message-ID: <1290783465-5541-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8049232922151942105==
+--===============6349991763240860418==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ src/call-volume.c |    1 -
+ 1 files changed, 0 insertions(+), 1 deletions(-)
 
-oFono Qt bindings is a Qt library that provides a directly-mapped API to =
+diff --git a/src/call-volume.c b/src/call-volume.c
+index dd1be92..0accdf2 100644
+--- a/src/call-volume.c
++++ b/src/call-volume.c
+@@ -114,7 +114,6 @@ static DBusMessage *cv_get_properties(DBusConnection *c=
+onn,
+ 	dbus_bool_t muted;
+ =
 
-oFono. It's licensed under LGPL 2.1 and available at
+ 	reply =3D dbus_message_new_method_return(msg);
+-
+ 	if (!reply)
+ 		return NULL;
+ =
 
-http://meego.gitorious.org/meego-cellular/ofono-qt
+-- =
 
-The library was written by me and Jukka Saunamaki with some input from =
-
-Aki Niemi. It will be used by QtMobility for telephony access on =
-
-Linux-based platforms.
-
-Some features:
-- it's possible to choose a modem manually or automatically; more =
-
-fine-tuned modem selection policies could be added
-- all operations that can take significant time are asynchronous
-- there is a test suite to catch API breaks
-
-The bindings should be available in MeeGo shortly.
-
-Note that meego-handset-ux also has a project called ofono-qt, but that =
-
-is a quick and unmaintained hack for the dialer. We have agreed with =
-
-Intel that they would adapt the dialer to use our library and contribute =
-
-to it.
+1.7.0.4
 
 
-Alex
-
---===============8049232922151942105==--
+--===============6349991763240860418==--
 
