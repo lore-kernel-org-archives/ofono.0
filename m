@@ -1,91 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============8154718786775091849=="
+Content-Type: multipart/mixed; boundary="===============1549030457582537272=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCHv4] voicecall: fix dial result handling
-Date: Fri, 26 Nov 2010 17:14:49 +0200
-Message-ID: <1290784489-20426-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Marko.Ovaska@nokia.com
+Subject: RE: [PATCH] doc: Add Location Services API
+Date: Fri, 26 Nov 2010 16:29:47 +0100
+Message-ID: <B737AE8337D70F47B693AC85FA440B08328D7512B8@NOK-EUMSG-02.mgdnok.nokia.com>
+In-Reply-To: <129600E5E5FB004392DDC3FB599660D70104DAF2A3@irsmsx504.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8154718786775091849==
+--===============1549030457582537272==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
-
-The existing call will be automatically put on hold if there is an
-existing active call when dialing. On some modems the dial request
-returns only after the dialed call is active and the existing call has
-been put on hold.
-
-However, on isimodem driver the dial request returns immediately before
-the existing call has changed its status. With isimodem driver the
-dial_handle_result() selected the existing call from the list when it
-should have created a new one.
-
-The dial result handling now guards againt returning a previously dialed
-active call as result.
----
- src/voicecall.c |   19 ++++++++++++++++---
- 1 files changed, 16 insertions(+), 3 deletions(-)
-
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 52baec3..d03ac2e 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -68,6 +68,7 @@ struct voicecall {
- 	char *message;
- 	uint8_t icon_id;
- 	gboolean untracked;
-+	gboolean dial_result_handled;
- };
- =
-
- struct dial_request {
-@@ -1096,9 +1097,18 @@ static struct voicecall *dial_handle_result(struct o=
-fono_voicecall *vc,
- 		v =3D l->data;
- =
-
- 		if (v->call->status =3D=3D CALL_STATUS_DIALING ||
--				v->call->status =3D=3D CALL_STATUS_ALERTING ||
--				v->call->status =3D=3D CALL_STATUS_ACTIVE)
--			return v;
-+				v->call->status =3D=3D CALL_STATUS_ALERTING)
-+			goto handled;
-+
-+		/*
-+		 * Dial request may return before existing active call
-+		 * is put on hold or after dialed call has got active
-+		 */
-+		if (v->call->status =3D=3D CALL_STATUS_ACTIVE &&
-+				v->call->direction =3D=3D
-+				CALL_DIRECTION_MOBILE_ORIGINATED &&
-+				!v->dial_result_handled)
-+			goto handled;
- 	}
- =
-
- 	call =3D synthesize_outgoing_call(vc, number);
-@@ -1119,6 +1129,9 @@ static struct voicecall *dial_handle_result(struct of=
-ono_voicecall *vc,
- =
-
- 	*need_to_emit =3D TRUE;
- =
-
-+handled:
-+	v->dial_result_handled =3D TRUE;
-+
- 	return v;
- }
- =
-
--- =
-
-1.7.1
 
 
---===============8154718786775091849==--
+: Behalf Of Marko.Ovaska(a)nokia.com
+: >Sent: Monday, November 22, 2010 10:01 AM
+--
+: > I'm proposing that either we have
+: > a) fully opaque 'raw' 3GPP defined frames between modem and Linux
+: > b) or well defined D-BUS API for LCS commands, but keeping the
+: assistance payload in 'raw' format
+
+
+Checked the 27.007 and Sjur's proposal: XML format after, for example +CPOS=
+ command, is above a) option with XML formatted payload.
+
+I'll rephrase the ASN.1 formatted opaque option as a2). =
+
+
+Rationale is that position engine in Linux user space or GPS chip must do A=
+SN.1 processing in handset: Positioning engine uses both OMA specified SUPL=
+ server and LCS server in cellular network. Adding new format to cellular n=
+etwork LCS server messages increases work into modem and positioning engine.
+
+Then the ASN.1 formatted interface
+void SendPositioningControl(string xml_element)
+becomes
+
+void SendPositioningControl(string asn1_element)
+
+and text refers to RRLP format in TS 44.031 and RRC in TS 25.331.
+
+
+
+
+: For the option b, I would tend to not support you. I just recheck the
+: 23.032 (Universal GeoGraphical Area Description), and the number of
+: ways to express a position with velocity and uncertainty may not make
+: the API simple.
+: Just have a look for instance the +CMOLR's XML DTD location_parameters.
+: :)
+
+Payload gets complicated, I agree. Following the generic oFono interface de=
+finitions...
+
+   Marko
+
+
+
+--===============1549030457582537272==--
 
