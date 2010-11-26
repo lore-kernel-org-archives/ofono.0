@@ -1,51 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8349314632667513647=="
+Content-Type: multipart/mixed; boundary="===============7676294214511609226=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [RFC 6/7] phonesim: Move call forwarding to post sim
-Date: Thu, 25 Nov 2010 22:23:36 -0800
-Message-ID: <1290752617-19024-7-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [RFC 7/7] doc: Add new property to call forwarding
+Date: Thu, 25 Nov 2010 22:23:37 -0800
+Message-ID: <1290752617-19024-8-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1290752617-19024-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8349314632667513647==
+--===============7676294214511609226==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/phonesim.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+ doc/call-forwarding-api.txt |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index d2faf42..e29d04d 100644
---- a/plugins/phonesim.c
-+++ b/plugins/phonesim.c
-@@ -470,6 +470,8 @@ static void phonesim_post_sim(struct ofono_modem *modem)
- 	if (!data->calypso)
- 		ofono_stk_create(modem, OFONO_VENDOR_PHONESIM,
- 					"atmodem", data->chat);
+diff --git a/doc/call-forwarding-api.txt b/doc/call-forwarding-api.txt
+index 067531a..5dfb48e 100644
+--- a/doc/call-forwarding-api.txt
++++ b/doc/call-forwarding-api.txt
+@@ -57,3 +57,8 @@ Properties	string VoiceUnconditional [readwrite]
+ =
+
+ 			Contains the value of the voice "Not Reachable" call
+ 			forwarding rule.
 +
-+	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
- }
- =
-
- static void phonesim_post_online(struct ofono_modem *modem)
-@@ -482,7 +484,6 @@ static void phonesim_post_online(struct ofono_modem *mo=
-dem)
- 	DBG("%p", modem);
- =
-
- 	ofono_ussd_create(modem, 0, "atmodem", data->chat);
--	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
- 	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
- =
-
- 	if (data->calypso)
++		boolean VoiceUnconditionalStatus [readonly]
++
++			Boolean representing the voice unconditional call
++			forwarding rule status.
 -- =
 
 1.7.0.4
 
 
---===============8349314632667513647==--
+--===============7676294214511609226==--
 
