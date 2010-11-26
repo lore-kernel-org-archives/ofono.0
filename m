@@ -1,54 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============2591726533212279009=="
+Content-Type: multipart/mixed; boundary="===============8049232922151942105=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] audio-settings: Remove unwanted check
-Date: Fri, 26 Nov 2010 04:27:42 -0800
-Message-ID: <1290774462-22195-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Alexander Kanavin <alexander.kanavin@nokia.com>
+Subject: [ANNOUNCE] introducing oFono Qt bindings
+Date: Fri, 26 Nov 2010 16:55:00 +0200
+Message-ID: <4CEFCA44.7030209@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2591726533212279009==
+--===============8049232922151942105==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/audio-settings.c |    5 +----
- 1 files changed, 1 insertions(+), 4 deletions(-)
+Hi,
 
-diff --git a/src/audio-settings.c b/src/audio-settings.c
-index bf00c54..ed3e7d1 100644
---- a/src/audio-settings.c
-+++ b/src/audio-settings.c
-@@ -132,7 +132,7 @@ int ofono_audio_settings_driver_register(const struct o=
-fono_audio_settings_drive
- {
- 	DBG("driver: %p, name: %s", d, d->name);
- =
+oFono Qt bindings is a Qt library that provides a directly-mapped API to =
 
--	if (!d || !d->probe)
-+	if (!d->probe)
- 		return -EINVAL;
- =
+oFono. It's licensed under LGPL 2.1 and available at
 
- 	g_drivers =3D g_slist_prepend(g_drivers, (void *) d);
-@@ -144,9 +144,6 @@ void ofono_audio_settings_driver_unregister(const struc=
-t ofono_audio_settings_dr
- {
- 	DBG("driver: %p, name: %s", d, d->name);
- =
+http://meego.gitorious.org/meego-cellular/ofono-qt
 
--	if (!d)
--		return;
--
- 	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
- }
- =
+The library was written by me and Jukka Saunamaki with some input from =
 
--- =
+Aki Niemi. It will be used by QtMobility for telephony access on =
 
-1.7.0.4
+Linux-based platforms.
+
+Some features:
+- it's possible to choose a modem manually or automatically; more =
+
+fine-tuned modem selection policies could be added
+- all operations that can take significant time are asynchronous
+- there is a test suite to catch API breaks
+
+The bindings should be available in MeeGo shortly.
+
+Note that meego-handset-ux also has a project called ofono-qt, but that =
+
+is a quick and unmaintained hack for the dialer. We have agreed with =
+
+Intel that they would adapt the dialer to use our library and contribute =
+
+to it.
 
 
---===============2591726533212279009==--
+Alex
+
+--===============8049232922151942105==--
 
