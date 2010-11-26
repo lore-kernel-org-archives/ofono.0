@@ -1,85 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============2978555779072815390=="
+Content-Type: multipart/mixed; boundary="===============5387162138015487002=="
 MIME-Version: 1.0
-From: ext-arun.1.ravindran@nokia.com
-Subject: doc: cdma-voicecall-manager-api.txt
-Date: Fri, 26 Nov 2010 11:54:01 +0200
-Message-ID: <1290765242-30673-1-git-send-email-ext-arun.1.ravindran@nokia.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH] Add voice call boolean property for MO/MT distinction
+Date: Fri, 26 Nov 2010 14:06:04 +0200
+Message-ID: <201011261406.04832.remi.denis-courmont@nokia.com>
+In-Reply-To: <20101125082310.GA17294@jh-x301>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2978555779072815390==
+--===============5387162138015487002==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+On Thursday 25 November 2010 10:23:10 ext Johan Hedberg, you wrote:
+> > This becomes a problem if we have more than one application "managing"
+> > voice calls. And I expect that will _be_ the most common case. You have
+> > the main call UI, but you also have the Bluetooth headset/carkit, the
+> > USB AT commands port, and possibly some third party call applications.
+> =
 
-Hi,
+> Right. At least for HFP the call direction needs to be in the AT+CLCC
+> reply. I.e. if the bluetoothd ofono telephony driver is used and
+> bluetoothd starts after one or more calls are already in progress
+> bluetoothd wouldn't have seen the call setup process and therefore not
+> know the direction of the call (without this property).
 
-The CDMA voice call manager interface is missing the line identification an=
-d start time property.
-The MO and MT calls will have LineIdentification, which should be set to em=
-pty when the call loses the LineIdentification. We will emit the property c=
-hange whenever there is a flash sent.
+Yeah. For USB CDC ACM gadget functionality, there is basically the same =
 
-Example cases:
-1) Outgoing call to number "123"
-    LineIdentification  =3D "123"
-2) Incoming Call from Number "234"
-    LineIdentification =3D "234"
-3) a) Outgoing call to number "123"
-    LineIdentification  =3D "123"
-   b) Flash to number "345"
-    LineIdentification  =3D ""
-4) a) Incoming call from number "234"
-    LineIdentification  =3D "234"
-   b) Flash to number "345"
-    LineIdentification  =3D ""
-5) a) Outgoing call to number "123"
-    LineIdentification  =3D "123"
-   b) Flash with empty string
-    LineIdentification  =3D ""
-6) a) Incoming call from number "123"
-    LineIdentification  =3D "123"
-   b) Flash with empty string
-    LineIdentification  =3D ""
+problem. Because oFono assumes it has full control over the modem, most =
 
-Similarly for StartTime, for a normal outgoing and Incoming call, we have S=
-tartTime values. But the issue is with Flash with String, where we cannot h=
-ave the Call start time for the number which is sent as flash string. =
+cellular commands have to go through the oFono D-Bus API.
 
-If a UI needs to show the call time for the flashed number, it cannot be de=
-cided by oFono.
+However, a number of other commands talk to completely different stuff, =
 
-Example cases:
-1) Outgoing call to number "123"
-    StartTime  =3D xxxxx
-2) Incoming call from number "123"
-    StartTime  =3D xxxxx
-3) a) Outgoing call to number "123"
-    StartTime  =3D xxxxx
-   b) Flash to number "234"
-    No separate StartTime for "234" , and no property change emitted.
-4) a) Incoming call from number "123"
-    StartTime  =3D xxxxx
-   b)  Flash to number "234"
-    No separate StartTime for "234"  and no property change emitted.
+including but not limited to:
+* AT+CBC et al deals with energy management, which is proprietary in Nokia'=
+s =
 
-We also need a SetProperty() API.
+case and hence cannot be reached from GPL'd oFono.
+* AT+CKPD, AT+CTSA and friends use either Linux uinput driver or perhaps to =
 
-void SetProperty(string property, variant value)
+the windowing framework (X11, Wayland?).
+* AT+CBKLT is hooked to the screensaver whatever takes care of it.
+* AT+CPBR and friends is hooked to the phonebook, which is Qt-based, and =
 
-                         Changes the value of the specified property. Only
-                         properties that are listed as readwrite are
-                         changeable. On success a PropertyChanged signal
-                         will be emitted.
+therefore inadequate inside oFono.
+* At Nokia, we also have some non-standard commands for internal use.
+* Some operators require some funky AT commands of their own. It might not =
+be =
 
-                         Possible Errors: [service].Error.InvalidArguments
-                                          [service].Error.DoesNotExist
+possible to open-source them, even if we want to.
 
-The following patch adds the above changes to document.
+I would like to emphasize that, even if many of those commands are mostly i=
+f =
 
-Regards
-Arun
+not only used in testing, they may still need to cooperate with oFono and/o=
+r =
 
---===============2978555779072815390==--
+to be present in the end-user devices. Besides, duplicating the implementat=
+ion =
+
+effort inside and outside oFono would be a waste of time.
+
+All in all, implementing the AT commands DCE emulator inside oFono is not a =
+
+realistic option. That is not to say that it must be closed-source, at leas=
+t =
+
+not most parts of it, but it's going to (have to) talk D-Bus to oFono.
+
+-- =
+
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
+
+--===============5387162138015487002==--
 
