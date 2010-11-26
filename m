@@ -1,64 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============1549030457582537272=="
+Content-Type: multipart/mixed; boundary="===============1716359208659076832=="
 MIME-Version: 1.0
-From: Marko.Ovaska@nokia.com
-Subject: RE: [PATCH] doc: Add Location Services API
-Date: Fri, 26 Nov 2010 16:29:47 +0100
-Message-ID: <B737AE8337D70F47B693AC85FA440B08328D7512B8@NOK-EUMSG-02.mgdnok.nokia.com>
-In-Reply-To: <129600E5E5FB004392DDC3FB599660D70104DAF2A3@irsmsx504.ger.corp.intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH] doc: Add Location Services API
+Date: Fri, 26 Nov 2010 18:11:59 +0200
+Message-ID: <201011261811.59836.remi.denis-courmont@nokia.com>
+In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C90157D0B124@orsmsx508.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1549030457582537272==
+--===============1716359208659076832==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+On Saturday 20 November 2010 03:01:03 ext Bastian, Waldo, you wrote:
+> Conformance testing per 3GPP 34.109s5.4.1.3 requires that
+> RESET UE POSITIONING STORED INFO is handled.
+> Similar for 3GPP RESET MS POSITIONING STORED INFO per 3GPP 44.014s12.
+> =
 
+> As far as I can see there is no provision for that in commands / XML
+> defined by 27.007.
+> =
 
-: Behalf Of Marko.Ovaska(a)nokia.com
-: >Sent: Monday, November 22, 2010 10:01 AM
---
-: > I'm proposing that either we have
-: > a) fully opaque 'raw' 3GPP defined frames between modem and Linux
-: > b) or well defined D-BUS API for LCS commands, but keeping the
-: assistance payload in 'raw' format
+> Would it make sense to add a ResetStoredInfo signal to the DBUS API for
+> implementation in a modem specific way?
 
+Yes. There are no standard commands for that and it is very much needed for =
 
-Checked the 27.007 and Sjur's proposal: XML format after, for example +CPOS=
- command, is above a) option with XML formatted payload.
+conformance testing.
 
-I'll rephrase the ASN.1 formatted opaque option as a2). =
+However, I would have thought that this was an issue between the automatic =
 
+test equipment and the (Linux) positioning engine. In this case, what busin=
+ess =
 
-Rationale is that position engine in Linux user space or GPS chip must do A=
-SN.1 processing in handset: Positioning engine uses both OMA specified SUPL=
- server and LCS server in cellular network. Adding new format to cellular n=
-etwork LCS server messages increases work into modem and positioning engine.
+does oFono and the modem have there? Do some modems also cache some GPS-
+related data?
 
-Then the ASN.1 formatted interface
-void SendPositioningControl(string xml_element)
-becomes
+-- =
 
-void SendPositioningControl(string asn1_element)
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-and text refers to RRLP format in TS 44.031 and RRC in TS 25.331.
-
-
-
-
-: For the option b, I would tend to not support you. I just recheck the
-: 23.032 (Universal GeoGraphical Area Description), and the number of
-: ways to express a position with velocity and uncertainty may not make
-: the API simple.
-: Just have a look for instance the +CMOLR's XML DTD location_parameters.
-: :)
-
-Payload gets complicated, I agree. Following the generic oFono interface de=
-finitions...
-
-   Marko
-
-
-
---===============1549030457582537272==--
+--===============1716359208659076832==--
 
