@@ -1,28 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============6096997453657952793=="
+Content-Type: multipart/mixed; boundary="===============4042585196924691478=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [RFC 4/7] isigen: Move call forwarding to post sim
-Date: Thu, 25 Nov 2010 22:23:34 -0800
-Message-ID: <1290752617-19024-5-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [RFC 5/7] plugins/n900: Move call forwarding to post sim
+Date: Thu, 25 Nov 2010 22:23:35 -0800
+Message-ID: <1290752617-19024-6-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1290752617-19024-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6096997453657952793==
+--===============4042585196924691478==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/isigen.c |    2 +-
+ plugins/n900.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/plugins/isigen.c b/plugins/isigen.c
-index fad4e20..f75ec0a 100644
---- a/plugins/isigen.c
-+++ b/plugins/isigen.c
-@@ -402,6 +402,7 @@ static void isigen_post_sim(struct ofono_modem *modem)
- 	DBG("(%p) with %s", modem, isi->ifname);
+diff --git a/plugins/n900.c b/plugins/n900.c
+index a9e6b59..3f6aa39 100644
+--- a/plugins/n900.c
++++ b/plugins/n900.c
+@@ -491,6 +491,7 @@ static void n900_post_sim(struct ofono_modem *modem)
+ 	DBG("");
  =
 
  	ofono_phonebook_create(isi->modem, 0, "isimodem", isi->idx);
@@ -30,9 +30,8 @@ index fad4e20..f75ec0a 100644
  }
  =
 
- static void isigen_post_online(struct ofono_modem *modem)
-@@ -418,7 +419,6 @@ static void isigen_post_online(struct ofono_modem *mode=
-m)
+ static void n900_post_online(struct ofono_modem *modem)
+@@ -506,7 +507,6 @@ static void n900_post_online(struct ofono_modem *modem)
  	ofono_cbs_create(isi->modem, 0, "isimodem", isi->idx);
  	ofono_ssn_create(isi->modem, 0, "isimodem", isi->idx);
  	ofono_ussd_create(isi->modem, 0, "isimodem", isi->idx);
@@ -45,5 +44,5 @@ m)
 1.7.0.4
 
 
---===============6096997453657952793==--
+--===============4042585196924691478==--
 
