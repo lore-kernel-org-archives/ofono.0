@@ -1,56 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============6787421363149288883=="
+Content-Type: multipart/mixed; boundary="===============7288922334927159930=="
 MIME-Version: 1.0
-From: Johan Hedberg <johan.hedberg@gmail.com>
-Subject: Re: [PATCH] Add voice call boolean property for MO/MT distinction
-Date: Fri, 26 Nov 2010 10:21:08 +0200
-Message-ID: <20101126082108.GA6043@jh-x301>
-In-Reply-To: <4CEEF676.3020902@gmail.com>
+From: ext-arun.1.ravindran@nokia.com
+Subject: [PATCH] doc: cdma-voicecall-manager-api.txt
+Date: Fri, 26 Nov 2010 11:54:02 +0200
+Message-ID: <1290765242-30673-2-git-send-email-ext-arun.1.ravindran@nokia.com>
+In-Reply-To: <1290765242-30673-1-git-send-email-ext-arun.1.ravindran@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6787421363149288883==
+--===============7288922334927159930==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
 
-On Thu, Nov 25, 2010, Denis Kenzior wrote:
-> > Right. At least for HFP the call direction needs to be in the AT+CLCC
-> > reply. I.e. if the bluetoothd ofono telephony driver is used and
-> > bluetoothd starts after one or more calls are already in progress
-> > bluetoothd wouldn't have seen the call setup process and therefore not
-> > know the direction of the call (without this property).
-> =
+---
+ doc/cdma-voicecall-manager-api.txt |   30 ++++++++++++++++++++++++++++++
+ 1 files changed, 30 insertions(+), 0 deletions(-)
 
-> I really don't view +CLCC emulation outside oFono as a valid use case.
-> We already have a task to implement HFP AG role inside oFono, and
-> especially with CDMA on the horizon this is the only way to go.
-> =
+diff --git a/doc/cdma-voicecall-manager-api.txt b/doc/cdma-voicecall-manage=
+r-api.txt
+index b457af7..958402f 100644
+--- a/doc/cdma-voicecall-manager-api.txt
++++ b/doc/cdma-voicecall-manager-api.txt
+@@ -35,6 +35,16 @@ Methods		dict GetProperties()
+ 			'*', '#', 'A', 'B', 'C', 'D'.  The last four are
+ 			typically not used in normal circumstances.
+ =
 
-> So unless there are more convincing arguments, I'm against this API
-> change.  I really suggest that instead of doing this outside oFono,
-> someone picks up the AT modem emulator work and continue where Zhenhua
-> left off.
++		void SetProperty(string property, variant value)
++
++			Changes the value of the specified property. Only
++			properties that are listed as readwrite are
++			changeable. On success a PropertyChanged signal
++			will be emitted.
++
++			Possible Errors: [service].Error.InvalidArguments
++					 [service].Error.DoesNotExist
++
+ Signals		PropertyChanged(string property, variant value)
+ =
 
-Picking up the AT modem emulator work is definitely something that
-should happen. I also want to see that. However, wanting to accelarate
-that work forward is imho the wrong reason reject this API. The BlueZ
-ofono telephony driver is something that exists over a year now and
-it'll continue to be partially broken wrt. +CLCC as long as there's a
-requirement to "see" the call state changes in order to know the call
-direction. Just yesterday we merged an optimization which initializes
-the driver only when Bluetooth gets powered on and this further
-increases the likelyhood of an ongoing call when the initialization
-happens.
+ 			Signal is emitted whenever a property has changed.
+@@ -81,3 +91,23 @@ Properties	string State [readonly]
+ 			currently supported values are:
+ 				"short",
+ 				"long"
++
++		string LineIdentification [readonly]
++
++			Contains the Line Identification information returned
++			by the network, if present. For incoming calls this is
++			effectively the CLIP. For outgoing calls this attribute
++			will hold the dialed number.
++
++			Please note that after sending flash this property
++			will be empty.
++
++		string StartTime [readonly, optional]
++
++			Contains the starting time of the call.  The time is
++			stamped when the call enters the "active" state.
++			Client applications can use this to infer somewhat
++			reliable call duration information.
++
++			Please note that after sending Flash, there will not be
++			any StartTime property change for the Flash string/number.
+-- =
 
-Another argument in favor of this API is that without it the D-Bus API
-is in a way incomplete. You have a piece of state information that's
-available by observing the state changes but not for a entity that jumps
-into the game after the changes have happened. It's a bit like having an
-API with a StateChanged signal but without a GetState method.
+1.7.0.4
 
-Johan
 
---===============6787421363149288883==--
+--===============7288922334927159930==--
 
