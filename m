@@ -1,64 +1,149 @@
-Content-Type: multipart/mixed; boundary="===============1299054765890883776=="
+Content-Type: multipart/mixed; boundary="===============9174154661383333064=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH] doc: Add Location Services API
-Date: Fri, 26 Nov 2010 18:20:39 +0200
-Message-ID: <201011261820.39167.remi.denis-courmont@nokia.com>
-In-Reply-To: <129600E5E5FB004392DDC3FB599660D70104DAF2A3@irsmsx504.ger.corp.intel.com>
+From: Pekka.Pessi@nokia.com
+Subject: [isi-voicecall-fix PATCHv4 3/4] isi/voicecall: avoid side-effects of
+ release
+Date: Fri, 26 Nov 2010 19:28:24 +0200
+Message-ID: <1290792505-29825-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1290792505-29825-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1299054765890883776==
+--===============9174154661383333064==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tuesday 23 November 2010 01:16:00 ext Joly, Frederic, you wrote:
-> I just recheck the 23.032 (Universal GeoGraphical Area Description), and =
-the
-> number of ways to express a position with velocity and uncertainty may not
-> make the API simple. Just have a look for instance the +CMOLR's XML DTD
-> location_parameters. :) Moreover, GPS vendors and other positioning
-> professionals would find more logical to propose to use the WGS 84 datum
-> for instance which is widely used and leave the burden to map the position
-> to 3GPP style...
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-I am afraid with enough time and products, we will find all possible =
+If a call was held automatically when an another call was dialed or
+answered, it gets retrieved when the other call is released unless
+auto change features is explicitly disabled.
 
-combinations:
-- modems that only talk 27.007 XML,
-- modems that only talk raw binary,
-- modems that support both,
-- hopeless modems that do none.
+Drop cause_type parameter because it is never used.
 
-Furthermore, the data flow can go in both directions:
-AT+CPOS is engine->oFono->modem, AT+CPOSR is modem->oFono->engine.
+Use cause code for busy when releasing incoming or waiting calls.
+---
+ drivers/isimodem/voicecall.c |   32 ++++++++++++++++----------------
+ 1 files changed, 16 insertions(+), 16 deletions(-)
 
-I would think that oFono needs to hide the differences between modems, whic=
-h =
+diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+index cc2a829..8dcd3c5 100644
+--- a/drivers/isimodem/voicecall.c
++++ b/drivers/isimodem/voicecall.c
+@@ -699,12 +699,13 @@ static gboolean isi_call_answer_resp(GIsiClient *clie=
+nt,
+ =
 
-mean it will need to convert in some cases. Thus oFono would need to be abl=
-e =
+ static struct isi_call_req_context *
+ isi_call_release_req(struct ofono_voicecall *ovc,
+-			uint8_t call_id, enum call_cause_type cause_type,
+-			uint8_t cause, ofono_voicecall_cb_t cb, void *data)
++			uint8_t call_id, uint8_t cause,
++			ofono_voicecall_cb_t cb, void *data)
+ {
+ 	uint8_t const req[] =3D {
+-		CALL_RELEASE_REQ, call_id, 1,
+-		CALL_CAUSE, 4, cause_type, cause,
++		CALL_RELEASE_REQ, call_id, 2,
++		CALL_CAUSE, 4, CALL_CAUSE_TYPE_CLIENT, cause,
++		CALL_STATE_AUTO_CHANGE, 4, 0, 0
+ 	};
+ 	size_t rlen =3D sizeof req;
+ =
 
-to convert both ways in any case, right? This is going to be painful. The =
+@@ -1008,7 +1009,8 @@ static void isi_hangup_current(struct ofono_voicecall=
+ *ovc,
+ 	 * active calls or calls in progress.
+ 	 */
+ 	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
+-	int id =3D 0;
++	int id;
++	uint8_t cause =3D CALL_CAUSE_RELEASE_BY_USER;
+ =
 
-alternative consists of providing a *leaky* abstraction where oFono only =
+ 	for (id =3D 1; id <=3D 7; id++) {
+ 		if (ivc->calls[id].call_id & CALL_ID_WAITING)
+@@ -1018,11 +1020,14 @@ static void isi_hangup_current(struct ofono_voiceca=
+ll *ovc,
+ =
 
-returns and accepts the format(s) that the modem understands.
+ 		switch (ivc->calls[id].status) {
+ 		case CALL_STATUS_CREATE:
++		case CALL_STATUS_MT_ALERTING:
++		case CALL_STATUS_ANSWERED:
++			goto release_by_id;
++
+ 		case CALL_STATUS_COMING:
+ 		case CALL_STATUS_PROCEEDING:
+ 		case CALL_STATUS_MO_ALERTING:
+-		case CALL_STATUS_MT_ALERTING:
+-		case CALL_STATUS_ANSWERED:
++			cause =3D CALL_CAUSE_BUSY_USER_REQUEST;
+ 			goto release_by_id;
+ 		}
+ 	}
+@@ -1030,15 +1035,14 @@ static void isi_hangup_current(struct ofono_voiceca=
+ll *ovc,
+ 	id =3D CALL_ID_ACTIVE;
+ =
 
-With that in mind, I tend to agree that binary seems like a nicer abstracti=
-on =
+ release_by_id:
+-	isi_call_release_req(ovc, id, CALL_CAUSE_TYPE_CLIENT,
+-				CALL_CAUSE_RELEASE_BY_USER, cb, data);
++	isi_call_release_req(ovc, id, cause, cb, data);
+ }
+ =
 
-for the positioning engine to use than XML. But if oFono has to implement =
+ static void isi_release_all_held(struct ofono_voicecall *ovc,
+ 				ofono_voicecall_cb_t cb, void *data)
+ {
+ 	/* AT+CHLD=3D0 (w/out incoming calls) */
+-	isi_call_release_req(ovc, CALL_ID_HOLD, CALL_CAUSE_TYPE_CLIENT,
++	isi_call_release_req(ovc, CALL_ID_HOLD,
+ 				CALL_CAUSE_RELEASE_BY_USER, cb, data);
+ }
+ =
 
-conversion in both direction, it might be that we can provide both formats =
+@@ -1047,8 +1051,7 @@ static void isi_set_udub(struct ofono_voicecall *ovc,
+ {
+ 	/* Release waiting calls */
+ 	isi_call_release_req(ovc, CALL_ID_WAITING,
+-		CALL_CAUSE_TYPE_CLIENT, CALL_CAUSE_BUSY_USER_REQUEST,
+-		cb, data);
++				CALL_CAUSE_BUSY_USER_REQUEST, cb, data);
+ }
+ =
 
-over D-Bus?
+ static void isi_retrieve(struct ofono_voicecall *ovc,
+@@ -1079,7 +1082,6 @@ static void isi_release_all_active(struct ofono_voice=
+call *ovc,
+ 		struct isi_call_req_context *irc;
+ =
 
+ 		irc =3D isi_call_release_req(ovc, CALL_ID_ACTIVE,
+-						CALL_CAUSE_TYPE_CLIENT,
+ 						CALL_CAUSE_RELEASE_BY_USER,
+ 						cb, data);
+ =
+
+@@ -1176,9 +1178,7 @@ static void isi_release_specific(struct ofono_voiceca=
+ll *ovc, int id,
+ 			break;
+ 		}
+ =
+
+-		isi_call_release_req(ovc, id,
+-					CALL_CAUSE_TYPE_CLIENT, cause,
+-					cb, data);
++		isi_call_release_req(ovc, id, cause, cb, data);
+ 	} else
+ 		CALLBACK_WITH_FAILURE(cb, data);
+ }
 -- =
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
+1.7.1
 
---===============1299054765890883776==--
+
+--===============9174154661383333064==--
 
