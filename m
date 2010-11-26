@@ -1,65 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============6665191632171138168=="
+Content-Type: multipart/mixed; boundary="===============8154718786775091849=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] call-volume: Fix dbus error message type
-Date: Fri, 26 Nov 2010 06:59:32 -0800
-Message-ID: <1290783572-5623-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCHv4] voicecall: fix dial result handling
+Date: Fri, 26 Nov 2010 17:14:49 +0200
+Message-ID: <1290784489-20426-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6665191632171138168==
+--===============8154718786775091849==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
+
+The existing call will be automatically put on hold if there is an
+existing active call when dialing. On some modems the dial request
+returns only after the dialed call is active and the existing call has
+been put on hold.
+
+However, on isimodem driver the dial request returns immediately before
+the existing call has changed its status. With isimodem driver the
+dial_handle_result() selected the existing call from the list when it
+should have created a new one.
+
+The dial result handling now guards againt returning a previously dialed
+active call as result.
 ---
- src/call-volume.c |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+ src/voicecall.c |   19 ++++++++++++++++---
+ 1 files changed, 16 insertions(+), 3 deletions(-)
 
-diff --git a/src/call-volume.c b/src/call-volume.c
-index dd1be92..3c172ce 100644
---- a/src/call-volume.c
-+++ b/src/call-volume.c
-@@ -238,7 +238,7 @@ static DBusMessage *cv_set_property(DBusConnection *con=
-n, DBusMessage *msg,
- 		unsigned char percent;
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 52baec3..d03ac2e 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -68,6 +68,7 @@ struct voicecall {
+ 	char *message;
+ 	uint8_t icon_id;
+ 	gboolean untracked;
++	gboolean dial_result_handled;
+ };
  =
 
- 		if (!cv->driver->speaker_volume)
--			return __ofono_error_not_supported(msg);
-+			return __ofono_error_not_implemented(msg);
+ struct dial_request {
+@@ -1096,9 +1097,18 @@ static struct voicecall *dial_handle_result(struct o=
+fono_voicecall *vc,
+ 		v =3D l->data;
  =
 
- 		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BYTE)
- 			return __ofono_error_invalid_args(msg);
-@@ -260,7 +260,7 @@ static DBusMessage *cv_set_property(DBusConnection *con=
-n, DBusMessage *msg,
- 		unsigned char percent;
+ 		if (v->call->status =3D=3D CALL_STATUS_DIALING ||
+-				v->call->status =3D=3D CALL_STATUS_ALERTING ||
+-				v->call->status =3D=3D CALL_STATUS_ACTIVE)
+-			return v;
++				v->call->status =3D=3D CALL_STATUS_ALERTING)
++			goto handled;
++
++		/*
++		 * Dial request may return before existing active call
++		 * is put on hold or after dialed call has got active
++		 */
++		if (v->call->status =3D=3D CALL_STATUS_ACTIVE &&
++				v->call->direction =3D=3D
++				CALL_DIRECTION_MOBILE_ORIGINATED &&
++				!v->dial_result_handled)
++			goto handled;
+ 	}
  =
 
- 		if (!cv->driver->microphone_volume)
--			return __ofono_error_not_supported(msg);
-+			return __ofono_error_not_implemented(msg);
+ 	call =3D synthesize_outgoing_call(vc, number);
+@@ -1119,6 +1129,9 @@ static struct voicecall *dial_handle_result(struct of=
+ono_voicecall *vc,
  =
 
- 		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BYTE)
- 			return __ofono_error_invalid_args(msg);
-@@ -282,7 +282,7 @@ static DBusMessage *cv_set_property(DBusConnection *con=
-n, DBusMessage *msg,
- 		dbus_bool_t muted;
+ 	*need_to_emit =3D TRUE;
  =
 
- 		if (!cv->driver->mute)
--			return __ofono_error_not_supported(msg);
-+			return __ofono_error_not_implemented(msg);
++handled:
++	v->dial_result_handled =3D TRUE;
++
+ 	return v;
+ }
  =
 
- 		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
- 			return __ofono_error_invalid_args(msg);
 -- =
 
-1.7.0.4
+1.7.1
 
 
---===============6665191632171138168==--
+--===============8154718786775091849==--
 
