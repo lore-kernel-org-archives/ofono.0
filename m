@@ -1,85 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============3878044127332998480=="
+Content-Type: multipart/mixed; boundary="===============6670325639495045811=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] gisi: use strerror_r() instead of strerror()
-Date: Fri, 26 Nov 2010 15:07:29 -0600
-Message-ID: <4CF02191.8000806@gmail.com>
-In-Reply-To: <1290682265-11373-3-git-send-email-remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 2/3] Use %m instead of strerror() in syslog messages
+Date: Fri, 26 Nov 2010 15:12:09 -0600
+Message-ID: <4CF022A9.2070104@gmail.com>
+In-Reply-To: <1290682265-11373-2-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3878044127332998480==
+--===============6670325639495045811==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
-
 On 11/25/2010 04:51 AM, R=C3=A9mi Denis-Courmont wrote:
-> ---
->  gisi/netlink.c |    8 ++++++--
->  gisi/server.c  |   11 ++++++++---
->  2 files changed, 14 insertions(+), 5 deletions(-)
+> strerror() is not thread-safe, nor in the glibc implementation,
+> nor in the POSIX specification. In my experience, it will infrequently
+> crash when another thread uses locale data in any way, including
+> string formatting and such...
 > =
 
-> diff --git a/gisi/netlink.c b/gisi/netlink.c
-> index 44a4a8d..dcc322c 100644
-> --- a/gisi/netlink.c
-> +++ b/gisi/netlink.c
-> @@ -240,8 +240,12 @@ static gboolean g_pn_nl_process(GIOChannel *channel,=
- GIOCondition cond,
->  		case NLMSG_ERROR: {
->  			struct nlmsgerr *err =3D NLMSG_DATA(nlh);
->  			if (err->error)
-> -				g_printerr("Netlink error: %s",
-> -						strerror(-err->error));
-> +			{
-> +				char msg[256];
-> +
-> +				strerror_r(-err->error, msg, sizeof(msg));
-> +				g_printerr("Netlink error: %s", msg);
-> +			}
+> Since the Huawei driver uses thread, we might as well avoid strerror().
+> ---
+>  drivers/isimodem/sim.c |    3 ++-
+>  plugins/hfp.c          |    4 ++--
+>  plugins/isigen.c       |   13 ++++++++-----
+>  plugins/n900.c         |   14 +++++++-------
+>  plugins/nokia-gpio.c   |   29 +++++++++++++++++------------
+>  5 files changed, 36 insertions(+), 27 deletions(-)
+> =
 
-So my question is why we're using g_printerr in the first place inside a
-library.  Perhaps an approach similar to g_at_chat_set_debug is in order?
 
->  			return TRUE;
->  		}
->  		case RTM_NEWADDR:
-> diff --git a/gisi/server.c b/gisi/server.c
-> index 159bb2d..df2e4eb 100644
-> --- a/gisi/server.c
-> +++ b/gisi/server.c
-> @@ -157,7 +157,10 @@ g_isi_server_add_name(GIsiServer *self)
->  		return;
->  =
+Since we do not use threads, do you still want this patch?  If you do,
+can you please break this up into two patches, one for drivers/isimodem
+and one for plugins?  We prefer patches to be split by directory.
 
->  	if (ioctl(self->fd, SIOCPNGETOBJECT, &object) < 0) {
-> -		g_warning("%s: %s", "ioctl(SIOCPNGETOBJECT)", strerror(errno));
-> +		char msg[256];
-> +
-> +		strerror_r(errno, msg, sizeof(msg));
-> +		g_warning("%s: %s", "ioctl(SIOCPNGETOBJECT)", msg);
->  	} else {
->  		struct sockaddr_pn spn =3D {
->  			.spn_family =3D PF_PHONET,
-> @@ -173,8 +176,10 @@ g_isi_server_add_name(GIsiServer *self)
->  =
+<snip>
 
->  		if (sendto(self->fd, req, sizeof(req), 0,
->  				(void *)&spn, sizeof(spn)) !=3D sizeof(req)) {
-> -			g_warning("%s: %s", "sendto(PN_NAMESERVICE)",
-> -				  strerror(errno));
-> +			char msg[256];
-> +
-> +			strerror_r(errno, msg, sizeof(msg));
-> +			g_warning("%s: %s", "sendto(PN_NAMESERVICE)", msg);
->  		}
+> @@ -765,7 +767,10 @@ int gpio_probe(GIsiModem *idx, unsigned addr, gpio_f=
+inished_cb_t cb, void *data)
+>  	if (addr) {
+>  		error =3D g_pn_netlink_set_address(idx, addr);
+>  		if (error && error !=3D -EEXIST)
+> -			DBG("g_pn_netlink_set_address: %s", strerror(-error));
+> +		{
+> +			errno =3D -error;
+> +			DBG("g_pn_netlink_set_address: %m");
+> +		}
 >  	}
->  }
+>  =
+
+>  	return 0;
+
+You might also want to fix the style violation above, the opening brace
+should be on the same line as the if statement.
 
 Regards,
 -Denis
 
---===============3878044127332998480==--
+--===============6670325639495045811==--
 
