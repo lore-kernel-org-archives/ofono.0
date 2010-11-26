@@ -1,66 +1,123 @@
-Content-Type: multipart/mixed; boundary="===============7434093039888995233=="
+Content-Type: multipart/mixed; boundary="===============3266423063076700275=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/3] Patch Description
-Date: Fri, 26 Nov 2010 14:44:08 -0600
-Message-ID: <4CF01C18.8070403@gmail.com>
-In-Reply-To: <AANLkTikms4W-RTsmWuE9z1h1nRDC9-70+d9Y0j_nZ+Y2@mail.gmail.com>
+Subject: Re: [PATCH 2/3] stk: Handle provide local info proactive command
+Date: Fri, 26 Nov 2010 14:49:21 -0600
+Message-ID: <4CF01D51.4050102@gmail.com>
+In-Reply-To: <1290688142-14726-3-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7434093039888995233==
+--===============3266423063076700275==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Yang,
 
-On 11/25/2010 05:25 PM, andrzej zaborowski wrote:
-> Hi Yang,
+On 11/25/2010 06:29 AM, Yang Gu wrote:
+> ---
+>  src/smsutil.c  |    6 +-
+
+Please send patches against smsutil separately.
+
+>  src/stk.c      |  113 +++++++++++++++++++++++++++++++++++++++++
+>  src/stkagent.c |  153 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  src/stkagent.h |   14 +++++
+>  src/stkutil.c  |    2 +-
+
+Same goes for stkutil
+
+>  5 files changed, 284 insertions(+), 4 deletions(-)
 > =
 
-> On 25 November 2010 13:28, Yang Gu <yang.gu@intel.com> wrote:
->> This series of patch is to add provide local info support by requesting =
-the terminal to send time and language info. Please comment on the followin=
-g aspects as I'm not sure after reading the spec:
->> 1. Timezone may be a number in the range -47 through +48. In struct sms_=
-scts, timezone is defined as gint8, thus 0xFF should shand for -1, which is=
- a valid input. Thus I think build_dataobj_datetime_timezone() in src/stkut=
-il.c is not correct. But I'm still not sure what value should be passed to =
-oFono when timezone is absent.
-> =
+> diff --git a/src/smsutil.c b/src/smsutil.c
+> index e6dbf5f..5394817 100644
+> --- a/src/smsutil.c
+> +++ b/src/smsutil.c
+> @@ -324,10 +324,10 @@ gboolean sms_encode_scts(const struct sms_scts *in,=
+ unsigned char *pdu,
+>  	if (in->year > 99)
+>  		return FALSE;
+>  =
 
-> I think you're right that build_dataobj_datetime_timezone() is wrong.
-> Also note that sms_decode_scts() and sms_encode_scts() only allow the
-> range -47 to 47, 48 would return an error.  I'm not sure what the
-> unknown time zone should be represented as, here are some options:
-> =
+> -	if (in->month > 12)
+> +	if (in->month > 12 || in->month =3D=3D 0)
+>  		return FALSE;
+>  =
 
-> * 0 (same as no offset)
-> * 0xff because there's currently no GMT-00:15 time zone on earth
-> (http://en.wikipedia.org/wiki/List_of_time_zones_by_country)
-> * 0x80 (a currently unused value could be #defined as unknown time zone)
-> * the struct could be extended with a .has_tz boolean.
+> -	if (in->day > 31)
+> +	if (in->day > 31 || in->day =3D=3D 0)
+>  		return FALSE;
+>  =
 
-The has_tz variable gets my vote.  The rest looks ugly, and I don't
-really see +48 as a valid value.
+>  	if (in->hour > 23)
+> @@ -339,7 +339,7 @@ gboolean sms_encode_scts(const struct sms_scts *in, u=
+nsigned char *pdu,
+>  	if (in->second > 59)
+>  		return FALSE;
+>  =
 
-> =
+> -	if ((in->timezone > 12*4-1) || (in->timezone < -(12*4-1)))
+> +	if ((in->timezone > 12*4) || (in->timezone < -(12*4-1)))
 
->> 2. DBUS_TYPE_BYTE represents an 8-bit unsigned integer, and D-Bus doesn'=
-t have a type related to 8-bit signed integer. So what's the best way to re=
-present a timezone?
-> =
+Err, why would +48 be valid?
 
-> Maybe instead of asking D-bus, ofono should use tzset() to retrieve
-> the time zone information and use localtime() for the other fields?
+<snip>
 
-That is my preference as well.  Perhaps one can use the tm_gmtoff value
-from struct tm to figure out the timezone.  See sms_scts_to_time for
-more details.
+> diff --git a/src/stkagent.c b/src/stkagent.c
+> index 5cf83e4..78620d5 100644
+> --- a/src/stkagent.c
+> +++ b/src/stkagent.c
+> @@ -956,3 +956,156 @@ int stk_agent_loop_tone(struct stk_agent *agent, co=
+nst char *text,
+>  =
+
+>  	return 0;
+>  }
+> +int stk_agent_request_time(struct stk_agent *agent, stk_agent_time_cb cb,
+> +				void *user_data, ofono_destroy_func destroy,
+> +				int timeout)
+
+So I really don't think we need an agent for this one.  Just having
+oFono grab the time and return the info should be enough.
+
+
+<snip>
+
+> +int stk_agent_request_lang(struct stk_agent *agent, stk_agent_string_cb =
+cb,
+> +				void *user_data, ofono_destroy_func destroy,
+> +				int timeout)
+> +{
+
+I'm not an expert on i18n, but this seems to be something oFono can
+handle internally.  Perhaps querying the LANG environment variable or
+something?
+
+<snip>
+
+> diff --git a/src/stkutil.c b/src/stkutil.c
+> index 377ceff..48ce93b 100644
+> --- a/src/stkutil.c
+> +++ b/src/stkutil.c
+> @@ -4553,7 +4553,7 @@ static gboolean build_dataobj_datetime_timezone(str=
+uct stk_tlv_builder *tlv,
+>  		return TRUE;
+>  =
+
+>  	/* Time zone information is optional */
+> -	if (scts->timezone =3D=3D (gint8) 0xff) {
+> +	if (scts->timezone =3D=3D -48) {
+>  		memcpy(&timestamp, scts, sizeof(timestamp));
+>  		timestamp.timezone =3D 0;
+>  		if (sms_encode_scts(&timestamp, value, &offset) !=3D TRUE)
+
+As mentioned previously, my vote is for has_tz here.
 
 Regards,
 -Denis
 
---===============7434093039888995233==--
+--===============3266423063076700275==--
 
