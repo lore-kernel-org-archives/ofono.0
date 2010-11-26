@@ -1,35 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============0360121454209736302=="
+Content-Type: multipart/mixed; boundary="===============1606076778742109033=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] call-volume: Remove extra line at EOF
-Date: Fri, 26 Nov 2010 12:59:38 -0800
-Message-ID: <1290805178-5904-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] call-volume: Remove extra line at EOF
+Date: Fri, 26 Nov 2010 15:01:16 -0600
+Message-ID: <4CF0201C.4040006@gmail.com>
+In-Reply-To: <1290805178-5904-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0360121454209736302==
+--===============1606076778742109033==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/call-volume.c |    1 -
- 1 files changed, 0 insertions(+), 1 deletions(-)
+Hi Jeevaka,
 
-diff --git a/src/call-volume.c b/src/call-volume.c
-index 3c172ce..6411467 100644
---- a/src/call-volume.c
-+++ b/src/call-volume.c
-@@ -430,4 +430,3 @@ void *ofono_call_volume_get_data(struct ofono_call_volu=
-me *cv)
- {
- 	return cv->driver_data;
- }
--
--- =
-
-1.7.0.4
+On 11/26/2010 02:59 PM, Jeevaka Badrappan wrote:
+> ---
+>  src/call-volume.c |    1 -
+>  1 files changed, 0 insertions(+), 1 deletions(-)
+> =
 
 
---===============0360121454209736302==--
+Patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============1606076778742109033==--
 
