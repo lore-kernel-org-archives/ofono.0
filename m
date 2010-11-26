@@ -1,205 +1,272 @@
-Content-Type: multipart/mixed; boundary="===============2209382194291063357=="
+Content-Type: multipart/mixed; boundary="===============7506131488776217550=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [isi-voicecall-fix PATCHv4 4/4] isi/voicecall: fix handling of
- waiting calls
-Date: Fri, 26 Nov 2010 19:28:25 +0200
-Message-ID: <1290792505-29825-4-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1290792505-29825-3-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 4/5] phonesim: implement text-telephony atom
+Date: Fri, 26 Nov 2010 13:17:21 -0600
+Message-ID: <4CF007C1.1000404@gmail.com>
+In-Reply-To: <1290706920-24740-4-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2209382194291063357==
+--===============7506131488776217550==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Lucas,
 
-Also, do not retrieve calls after isi_release_all_active() because
-retrieving is now only an unwanted side-effect .
----
- drivers/isimodem/voicecall.c |  114 ++++++++++++++++++++------------------=
----
- 1 files changed, 56 insertions(+), 58 deletions(-)
+On 11/25/2010 11:41 AM, Lucas De Marchi wrote:
+> ---
+>  plugins/phonesim.c |  148 ++++++++++++++++++++++++++++++++++++++++++++++=
+++++--
+>  1 files changed, 144 insertions(+), 4 deletions(-)
+> =
 
-diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index 8dcd3c5..78d3d91 100644
---- a/drivers/isimodem/voicecall.c
-+++ b/drivers/isimodem/voicecall.c
-@@ -1060,65 +1060,59 @@ static void isi_retrieve(struct ofono_voicecall *ov=
-c,
- 	isi_call_control_req(ovc, CALL_ID_HOLD, CALL_OP_RETRIEVE, 0, cb, data);
- }
- =
+> diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+> index d2faf42..ec06741 100644
+> --- a/plugins/phonesim.c
+> +++ b/plugins/phonesim.c
+> @@ -46,6 +46,7 @@
+>  #include <ofono/call-settings.h>
+>  #include <ofono/call-volume.h>
+>  #include <ofono/cbs.h>
+> +#include <ofono/ctm.h>
+>  #include <ofono/devinfo.h>
+>  #include <ofono/message-waiting.h>
+>  #include <ofono/netreg.h>
+> @@ -64,6 +65,7 @@
+>  #include <drivers/atmodem/atutil.h>
+>  =
 
--static isi_call_req_step isi_wait_and_answer, isi_wait_and_retrieve;
-+static void isi_wait_and_answer(struct isi_call_req_context *irc,
-+				int id, int status)
-+{
-+	DBG("irc=3D%p id=3D%d status=3D%d", (void *)irc, id, status);
-+
-+	if (id !=3D irc->id)
-+		return;
-+
-+	switch (status) {
-+	case CALL_STATUS_MT_ALERTING:
-+		isi_call_answer_req(irc->ovc, irc->id, irc->cb, irc->data);
-+		isi_ctx_free(irc);
-+		break;
-+
-+	default:
-+		isi_ctx_return_failure(irc);
-+		break;
-+	}
-+}
- =
+>  static const char *none_prefix[] =3D { NULL };
+> +static const char *ptty_prefix[] =3D { "+PTTY:", NULL };
+>  static int next_iface =3D 0;
+>  =
 
- static void isi_release_all_active(struct ofono_voicecall *ovc,
- 					ofono_voicecall_cb_t cb, void *data)
- {
- 	/* AT+CHLD=3D1 */
- 	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
--	int id =3D 0, waiting =3D 0, active =3D 0, hold =3D 0;
-+	struct isi_call_req_context *irc;
-+	int id;
-+	int waiting_id =3D 0;
-+	int active =3D 0;
- =
+>  struct phonesim_data {
+> @@ -78,6 +80,11 @@ struct gprs_context_data {
+>  	char *interface;
+>  };
+>  =
 
- 	for (id =3D 1; id <=3D 7; id++) {
- 		if (ivc->calls[id].call_id & CALL_ID_WAITING)
--			waiting++;
--		if (ivc->calls[id].call_id & CALL_ID_HOLD)
--			hold++;
-+			waiting_id =3D id;
-+
- 		if (ivc->calls[id].call_id & CALL_ID_ACTIVE)
- 			active++;
- 	}
- =
+> +struct text_telephony_data {
+> +	GAtChat *chat;
+> +	char *interface;
 
--	if (active) {
--		struct isi_call_req_context *irc;
--
--		irc =3D isi_call_release_req(ovc, CALL_ID_ACTIVE,
--						CALL_CAUSE_RELEASE_BY_USER,
--						cb, data);
--
--		if (irc =3D=3D NULL)
--			;
--		else if (waiting)
--			isi_ctx_queue(irc, isi_wait_and_answer, 0);
--		else if (hold)
--			isi_ctx_queue(irc, isi_wait_and_retrieve, 0);
--	} else
-+	if (!active) {
- 		CALLBACK_WITH_FAILURE(cb, data);
--}
--
--static void isi_wait_and_answer(struct isi_call_req_context *irc,
--				int id, int status)
--{
--	DBG("irc=3D%p id=3D%d status=3D%d", (void *)irc, id, status);
--
--	switch (status) {
--	case CALL_STATUS_TERMINATED:
--		isi_answer(irc->ovc, irc->cb, irc->data);
--		isi_ctx_free(irc);
--		break;
-+		return;
- 	}
--}
- =
+You actually do not need the interface string.  That is only used by the
+gprs context to return a dummy name to oFono core.  For CTM you can get
+away without having the text_telephony_data structure completely.
+Simply use GAtChat as the data.
 
--static void isi_wait_and_retrieve(struct isi_call_req_context *irc,
--					int id, int status)
--{
--	DBG("irc=3D%p id=3D%u status=3D%u", (void *)irc, id, status);
-+	irc =3D isi_call_release_req(ovc, CALL_ID_ACTIVE,
-+					CALL_CAUSE_RELEASE_BY_USER,
-+					cb, data);
-+	if (irc =3D=3D NULL)
-+		return;
- =
+> +};
+> +
+>  static void at_cgact_up_cb(gboolean ok, GAtResult *result, gpointer user=
+_data)
+>  {
+>  	struct cb_data *cbd =3D user_data;
+> @@ -190,12 +197,140 @@ static void phonesim_context_remove(struct ofono_g=
+prs_context *gc)
+>  	g_free(gcd);
+>  }
+>  =
 
--	switch (status) {
--	case CALL_STATUS_TERMINATED:
--		isi_retrieve(irc->ovc, irc->cb, irc->data);
--		isi_ctx_free(irc);
--		break;
--	}
-+	if (waiting_id)
-+		isi_ctx_queue(irc, isi_wait_and_answer, waiting_id);
-+
-+	/* Retrieving held calls is currently a unwanted side-effect */
- }
- =
+> +static int phonesim_tty_probe(struct ofono_ctm *tt,
+> +				unsigned int vendor, void *data)
+> +{
+> +	GAtChat *chat =3D data;
+> +	struct text_telephony_data *ttd;
+> +
+> +	ttd =3D g_try_new0(struct text_telephony_data, 1);
+> +	if (!ttd)
+> +		return -ENOMEM;
+> +
+> +	ttd->chat =3D g_at_chat_clone(chat);
+> +	ttd->interface =3D g_strdup_printf("dummy%d", next_iface++);
+> +
+> +	ofono_ctm_set_data(tt, ttd);
+> +	ofono_ctm_register(tt);
 
- static void isi_hold_all_active(struct ofono_voicecall *ovc,
-@@ -1126,34 +1120,38 @@ static void isi_hold_all_active(struct ofono_voicec=
-all *ovc,
- {
- 	/* AT+CHLD=3D2 */
- 	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
--	int id =3D 0, op =3D 0, waiting =3D 0, active =3D 0, hold =3D 0;
-+	int id;
-+	int waiting =3D 0;
-+	int active =3D 0;
-+	int hold =3D 0;
-+	int op;
- =
+In general it is not safe to register the atom before returning from
+probe.  Some atoms will run initialization operations on the driver once
+register is called.  Since probe has not returned, the driver is still
+NULL.  See how some of the other drivers handle this.
 
- 	for (id =3D 1; id <=3D 7; id++) {
- 		if (ivc->calls[id].call_id & CALL_ID_WAITING)
- 			waiting++;
--		if (ivc->calls[id].call_id & CALL_ID_HOLD)
-+		else if (ivc->calls[id].call_id & CALL_ID_HOLD)
- 			hold++;
--		if (ivc->calls[id].call_id & CALL_ID_ACTIVE)
-+		else if (ivc->calls[id].call_id & CALL_ID_ACTIVE)
- 			active++;
- 	}
- =
+> +
+> +	return 0;
+> +}
+> +
+> +static void phonesim_tty_remove(struct ofono_ctm *tt)
+> +{
+> +	struct text_telephony_data *ttd =3D ofono_ctm_get_data(tt);
+> +
+> +	DBG("");
+> +
+> +	ofono_ctm_set_data(tt, NULL);
+> +
+> +	g_at_chat_unref(ttd->chat);
+> +	g_free(ttd->interface);
+> +
+> +	g_free(ttd);
+> +}
+> +
+> +static void tty_query_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
+> +{
+> +	struct cb_data *cbd =3D user_data;
+> +	struct ofono_error error;
+> +	GAtResultIter iter;
+> +	ofono_ctm_query_cb_t cb =3D cbd->cb;
+> +	int value;
+> +
+> +	decode_at_error(&error, g_at_result_final_response(result));
+> +
+> +	if (!ok) {
+> +		cb(&error, -1, cbd->data);
+> +		return;
+> +	}
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (g_at_result_iter_next(&iter, "+PTTY:") =3D=3D FALSE)
+> +		goto error;
+> +
+> +	if (g_at_result_iter_next_number(&iter, &value) =3D=3D FALSE)
+> +		goto error;
+> +
+> +	cb(&error, value, cbd->data);
+> +
+> +	return;
+> +
+> +error:
+> +
+> +	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+> +}
+> +
+> +static void phonesim_tty_query(struct ofono_ctm *tt,
+> +				ofono_ctm_query_cb_t cb, void *data)
+> +{
+> +	struct text_telephony_data *ttd =3D ofono_ctm_get_data(tt);
+> +	struct cb_data *cbd =3D cb_data_new(cb, data);
+> +
+> +	DBG("");
+> +
+> +	if (!cbd)
+> +		goto error;
+> +
+> +	if (g_at_chat_send(ttd->chat, "AT+PTTY?", ptty_prefix,
+> +				tty_query_cb, cbd, g_free) > 0)
+> +		return;
+> +
+> +error:
+> +	g_free(cbd);
+> +
+> +	CALLBACK_WITH_FAILURE(cb, 0, data);
+> +}
+> +
+> +static void tty_set_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
+> +{
+> +	struct cb_data *cbd =3D user_data;
+> +	ofono_ctm_set_cb_t cb =3D cbd->cb;
+> +	struct ofono_error error;
+> +
+> +	decode_at_error(&error, g_at_result_final_response(result));
+> +	cb(&error, cbd->data);
+> +}
+> +
+> +static void phonesim_tty_set(struct ofono_ctm *tt, int enable,
+> +				ofono_ctm_set_cb_t cb, void *data)
+> +{
+> +	struct text_telephony_data *ttd =3D ofono_ctm_get_data(tt);
+> +	struct cb_data *cbd =3D cb_data_new(cb, data);
+> +	char buf[12];
 
- 	if (waiting) {
- 		isi_call_answer_req(ovc, CALL_ID_WAITING, cb, data);
--	} else if (hold) {
--		if (active) {
-+		return;
-+	}
-+
-+	if (active) {
-+		if (hold)
- 			op =3D CALL_OP_SWAP;
--			id =3D CALL_ID_ACTIVE;
--		} else {
--			op =3D CALL_OP_RETRIEVE;
--			id =3D CALL_ID_HOLD;
--		}
--		isi_call_control_req(ovc, id, op, 0, cb, data);
--	} else if (active) {
--		id =3D CALL_ID_ACTIVE, op =3D CALL_OP_HOLD;
--		isi_call_control_req(ovc, id, op, 0, cb, data);
--	} else {
-+		else
-+			op =3D CALL_OP_HOLD;
-+
-+		isi_call_control_req(ovc, CALL_ID_ACTIVE, op, 0, cb, data);
-+
-+	} else if (hold)
-+		isi_retrieve(ovc, cb, data);
-+	else
- 		CALLBACK_WITH_FAILURE(cb, data);
--	}
- }
- =
+Please give a bit more room for error in the buffer, if someone tweaks
+this we can get into buffer overrun situation.
 
- static void isi_release_specific(struct ofono_voicecall *ovc, int id,
--- =
+> +
+> +	DBG("");
+> +
+> +	if (!cbd)
+> +		goto error;
+> +
+> +	enable =3D !!enable;
 
-1.7.1
+As mentioned on IRC, this is not really necessary
 
+> +	snprintf(buf, sizeof(buf), "AT+PTTY=3D%d", enable);
+> +
+> +	if (g_at_chat_send(ttd->chat, buf, none_prefix,
+> +					tty_set_cb, cbd, g_free) > 0)
+> +		return;
+> +
+> +error:
+> +	CALLBACK_WITH_FAILURE(cb, data);
+> +	g_free(cbd);
+> +}
+> +
+>  static struct ofono_gprs_context_driver context_driver =3D {
+> +	.name                   =3D "phonesim",
+> +	.probe                  =3D phonesim_context_probe,
+> +	.remove                 =3D phonesim_context_remove,
+> +	.activate_primary       =3D phonesim_activate_primary,
+> +	.deactivate_primary     =3D phonesim_deactivate_primary,
+> +};
+> +
+> +static struct ofono_ctm_driver tty_driver =3D {
+>  	.name			=3D "phonesim",
+> -	.probe			=3D phonesim_context_probe,
+> -	.remove			=3D phonesim_context_remove,
+> -	.activate_primary	=3D phonesim_activate_primary,
+> -	.deactivate_primary	=3D phonesim_deactivate_primary,
+> +	.probe			=3D phonesim_tty_probe,
+> +	.remove			=3D phonesim_tty_remove,
+> +	.query_tty		=3D phonesim_tty_query,
+> +	.set_tty		=3D phonesim_tty_set,
+>  };
+>  =
 
---===============2209382194291063357==--
+>  static int phonesim_probe(struct ofono_modem *modem)
+> @@ -465,6 +600,7 @@ static void phonesim_post_sim(struct ofono_modem *mod=
+em)
+>  =
+
+>  	DBG("%p", modem);
+>  =
+
+> +	ofono_ctm_create(modem, 0, "phonesim", data->chat);
+>  	ofono_phonebook_create(modem, 0, "atmodem", data->chat);
+>  =
+
+>  	if (!data->calypso)
+> @@ -630,6 +766,8 @@ static int phonesim_init(void)
+>  =
+
+>  	ofono_gprs_context_driver_register(&context_driver);
+>  =
+
+> +	ofono_ctm_driver_register(&tty_driver);
+> +
+>  	parse_config(CONFIGDIR "/phonesim.conf");
+>  =
+
+>  	return 0;
+> @@ -648,6 +786,8 @@ static void phonesim_exit(void)
+>  	g_slist_free(modem_list);
+>  	modem_list =3D NULL;
+>  =
+
+> +	ofono_ctm_driver_unregister(&tty_driver);
+> +
+>  	ofono_gprs_context_driver_unregister(&context_driver);
+>  =
+
+>  	ofono_modem_driver_unregister(&phonesim_driver);
+
+Otherwise, looks good.
+
+Regards,
+-Denis
+
+--===============7506131488776217550==--
 
