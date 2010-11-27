@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3951459626783648727=="
+Content-Type: multipart/mixed; boundary="===============1477815217183043386=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 3/9] unit: explicitly compare pointers to NULL
-Date: Sat, 27 Nov 2010 13:38:59 -0200
-Message-ID: <1290872345-15698-4-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 4/9] gisi: explicitly compare pointers to NULL
+Date: Sat, 27 Nov 2010 13:39:00 -0200
+Message-ID: <1290872345-15698-5-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1290872345-15698-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3951459626783648727==
+--===============1477815217183043386==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -25,71 +25,340 @@ expression *E;
 + E =3D=3D NULL
 // </smpl>
 ---
- unit/test-caif.c    |    2 +-
- unit/test-mux.c     |    2 +-
- unit/test-simutil.c |    4 ++--
- 3 files changed, 4 insertions(+), 4 deletions(-)
+ gisi/client.c |   46 +++++++++++++++++++++++-----------------------
+ gisi/iter.c   |    2 +-
+ gisi/server.c |    6 +++---
+ gisi/verify.c |    4 ++--
+ 4 files changed, 29 insertions(+), 29 deletions(-)
 
-diff --git a/unit/test-caif.c b/unit/test-caif.c
-index 51e29bc..2c63d4c 100644
---- a/unit/test-caif.c
-+++ b/unit/test-caif.c
-@@ -124,7 +124,7 @@ static void test_connect(gboolean use_socket)
+diff --git a/gisi/client.c b/gisi/client.c
+index 8e41331..8c0cc72 100644
+--- a/gisi/client.c
++++ b/gisi/client.c
+@@ -133,7 +133,7 @@ GIsiClient *g_isi_client_create(GIsiModem *modem, uint8=
+_t resource)
+ 	GIOChannel *channel;
  =
 
- 	g_io_channel_unref(io);
- =
-
--	if (!chat) {
-+	if (chat =3D=3D NULL) {
- 		g_printerr("Chat creation failed\n");
- 		return;
+ 	client  =3D g_try_new0(GIsiClient, 1);
+-	if (!client) {
++	if (client =3D=3D NULL) {
+ 		errno =3D ENOMEM;
+ 		return NULL;
  	}
-diff --git a/unit/test-mux.c b/unit/test-mux.c
-index e80b47c..d0e2d32 100644
---- a/unit/test-mux.c
-+++ b/unit/test-mux.c
-@@ -201,7 +201,7 @@ static void test_mux(void)
+@@ -152,7 +152,7 @@ GIsiClient *g_isi_client_create(GIsiModem *modem, uint8=
+_t resource)
+ 	client->inds.subs =3D NULL;
  =
 
- 	g_io_channel_unref(io);
- =
-
--	if (!chat) {
-+	if (chat =3D=3D NULL) {
- 		g_printerr("Chat creation failed\n");
- 		return;
+ 	channel =3D phonet_new(modem, resource);
+-	if (!channel) {
++	if (channel =3D=3D NULL) {
+ 		g_free(client);
+ 		return NULL;
  	}
-diff --git a/unit/test-simutil.c b/unit/test-simutil.c
-index 7aa09b4..155cddd 100644
---- a/unit/test-simutil.c
-+++ b/unit/test-simutil.c
-@@ -372,7 +372,7 @@ static void test_eons()
- 	sim_eons_optimize(eons_info);
+@@ -173,7 +173,7 @@ GIsiClient *g_isi_client_create(GIsiModem *modem, uint8=
+_t resource)
+  */
+ void g_isi_version_set(GIsiClient *client, int major, int minor)
+ {
+-	if (!client)
++	if (client =3D=3D NULL)
+ 		return;
  =
 
- 	op_info =3D sim_eons_lookup(eons_info, "246", "82");
--	g_assert(!op_info);
-+	g_assert(op_info =3D=3D NULL);
- 	op_info =3D sim_eons_lookup(eons_info, "246", "81");
- 	g_assert(op_info);
+ 	client->version.major =3D major;
+@@ -210,7 +210,7 @@ int g_isi_version_minor(GIsiClient *client)
+  */
+ void g_isi_server_object_set(GIsiClient *client, uint16_t obj)
+ {
+-	if (!client)
++	if (client =3D=3D NULL)
+ 		return;
  =
 
-@@ -391,7 +391,7 @@ static void test_ef_db()
- 	g_assert(info);
+ 	client->server_obj =3D obj;
+@@ -247,7 +247,7 @@ uint8_t g_isi_client_resource(GIsiClient *client)
+ void g_isi_client_set_debug(GIsiClient *client, GIsiDebugFunc func,
+ 				void *opaque)
+ {
+-	if (!client)
++	if (client =3D=3D NULL)
+ 		return;
  =
 
- 	info =3D sim_ef_db_lookup(0x6FB1);
--	g_assert(!info);
-+	g_assert(info =3D=3D NULL);
+ 	client->debug_func =3D func;
+@@ -258,7 +258,7 @@ static void g_isi_cleanup_req(void *data)
+ {
+ 	GIsiRequest *req =3D data;
  =
 
- 	info =3D sim_ef_db_lookup(0x2F05);
- 	g_assert(info);
+-	if (!req)
++	if (req =3D=3D NULL)
+ 		return;
+ =
+
+ 	/* Finalize any pending requests */
+@@ -280,7 +280,7 @@ static void g_isi_cleanup_ind(void *data)
+ {
+ 	GIsiIndication *ind =3D data;
+ =
+
+-	if (!ind)
++	if (ind =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_free(ind);
+@@ -292,7 +292,7 @@ static void g_isi_cleanup_ind(void *data)
+  */
+ void g_isi_client_destroy(GIsiClient *client)
+ {
+-	if (!client)
++	if (client =3D=3D NULL)
+ 		return;
+ =
+
+ 	tdestroy(client->reqs.pending, g_isi_cleanup_req);
+@@ -458,7 +458,7 @@ GIsiRequest *g_isi_vsendto(GIsiClient *client,
+ 	GIsiRequest *req =3D NULL;
+ 	GIsiRequest **old;
+ =
+
+-	if (!client) {
++	if (client =3D=3D NULL) {
+ 		errno =3D EINVAL;
+ 		return NULL;
+ 	}
+@@ -467,7 +467,7 @@ GIsiRequest *g_isi_vsendto(GIsiClient *client,
+ =
+
+ 	if (cb) {
+ 		req =3D g_try_new0(GIsiRequest, 1);
+-		if (!req) {
++		if (req =3D=3D NULL) {
+ 			errno =3D ENOMEM;
+ 			return NULL;
+ 		}
+@@ -479,7 +479,7 @@ GIsiRequest *g_isi_vsendto(GIsiClient *client,
+ 		req->notify =3D notify;
+ =
+
+ 		old =3D tsearch(req, &client->reqs.pending, g_isi_cmp);
+-		if (!old) {
++		if (old =3D=3D NULL) {
+ 			errno =3D ENOMEM;
+ 			goto error;
+ 		}
+@@ -563,7 +563,7 @@ GIsiRequest *g_isi_vsend(GIsiClient *client,
+ 		.spn_family =3D AF_PHONET,
+ 	};
+ =
+
+-	if (!client) {
++	if (client =3D=3D NULL) {
+ 		errno =3D EINVAL;
+ 		return NULL;
+ 	}
+@@ -581,7 +581,7 @@ GIsiRequest *g_isi_vsend(GIsiClient *client,
+  */
+ void g_isi_request_cancel(GIsiRequest *req)
+ {
+-	if (!req)
++	if (req =3D=3D NULL)
+ 		return;
+ =
+
+ 	if (req->timeout > 0)
+@@ -629,7 +629,7 @@ int g_isi_commit_subscriptions(GIsiClient *client)
+ 		0,
+ 	};
+ =
+
+-	if (!client)
++	if (client =3D=3D NULL)
+ 		return -EINVAL;
+ =
+
+ 	if (!client->inds.source) {
+@@ -637,7 +637,7 @@ int g_isi_commit_subscriptions(GIsiClient *client)
+ 			return 0;
+ =
+
+ 		channel =3D phonet_new(client->modem, PN_COMMGR);
+-		if (!channel)
++		if (channel =3D=3D NULL)
+ 			return -errno;
+ =
+
+ 		client->inds.fd =3D g_io_channel_unix_get_fd(channel);
+@@ -681,13 +681,13 @@ int g_isi_add_subscription(GIsiClient *client, uint8_=
+t res, uint8_t type,
+ 		return -EINVAL;
+ =
+
+ 	ind =3D g_try_new0(GIsiIndication, 1);
+-	if (!ind)
++	if (ind =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	ind->type =3D (res << 8) | type;
+ =
+
+ 	old =3D tsearch(ind, &client->inds.subs, g_isi_cmp);
+-	if (!old) {
++	if (old =3D=3D NULL) {
+ 		g_free(ind);
+ 		return -ENOMEM;
+ 	}
+@@ -724,7 +724,7 @@ int g_isi_subscribe(GIsiClient *client, uint8_t type,
+ {
+ 	int ret;
+ =
+
+-	if (!client)
++	if (client =3D=3D NULL)
+ 		return -EINVAL;
+ =
+
+ 	ret =3D g_isi_add_subscription(client, client->resource, type, cb, data);
+@@ -748,11 +748,11 @@ void g_isi_remove_subscription(GIsiClient *client, ui=
+nt8_t res, uint8_t type)
+ 	GIsiIndication *ind;
+ 	unsigned int id =3D (res << 8) | type;
+ =
+
+-	if (!client)
++	if (client =3D=3D NULL)
+ 		return;
+ =
+
+ 	ret =3D tfind(&id, &client->inds.subs, g_isi_cmp);
+-	if (!ret)
++	if (ret =3D=3D NULL)
+ 		return;
+ =
+
+ 	ind =3D *(GIsiIndication **)ret;
+@@ -770,7 +770,7 @@ void g_isi_remove_subscription(GIsiClient *client, uint=
+8_t res, uint8_t type)
+  */
+ void g_isi_unsubscribe(GIsiClient *client, uint8_t type)
+ {
+-	if (!client)
++	if (client =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_isi_remove_subscription(client, client->resource, type);
+@@ -786,7 +786,7 @@ static void g_isi_dispatch_indication(GIsiClient *clien=
+t, uint8_t res,
+ 	unsigned type =3D (res << 8) | msg[0];
+ =
+
+ 	ret =3D tfind(&type, &client->inds.subs, g_isi_cmp);
+-	if (!ret)
++	if (ret =3D=3D NULL)
+ 		return;
+ =
+
+ 	ind =3D *(GIsiIndication **)ret;
+@@ -804,7 +804,7 @@ static void g_isi_dispatch_response(GIsiClient *client,=
+ uint8_t res,
+ 	unsigned id =3D msg[0];
+ =
+
+ 	ret =3D tfind(&id, &client->reqs.pending, g_isi_cmp);
+-	if (!ret) {
++	if (ret =3D=3D NULL) {
+ 		/* This could either be an unsolicited response, which
+ 		 * we will ignore, or an incoming request, which we
+ 		 * handle just like an incoming indication */
+diff --git a/gisi/iter.c b/gisi/iter.c
+index e5c2893..3eef8dd 100644
+--- a/gisi/iter.c
++++ b/gisi/iter.c
+@@ -72,7 +72,7 @@ void g_isi_sb_iter_init(GIsiSubBlockIter *iter, const voi=
+d *restrict data,
+ =
+
+ gboolean g_isi_sb_iter_is_valid(const GIsiSubBlockIter *iter)
+ {
+-	if (!iter)
++	if (iter =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	if (iter->sub_blocks =3D=3D 0)
+diff --git a/gisi/server.c b/gisi/server.c
+index 159bb2d..3d96e2d 100644
+--- a/gisi/server.c
++++ b/gisi/server.c
+@@ -125,7 +125,7 @@ uint8_t g_isi_server_resource(GIsiServer *server)
+ void g_isi_server_set_debug(GIsiServer *server, GIsiDebugFunc func,
+ 				void *opaque)
+ {
+-	if (!server)
++	if (server =3D=3D NULL)
+ 		return;
+ =
+
+ 	server->debug_func =3D func;
+@@ -138,7 +138,7 @@ void g_isi_server_set_debug(GIsiServer *server, GIsiDeb=
+ugFunc func,
+  */
+ void g_isi_server_destroy(GIsiServer *server)
+ {
+-	if (!server)
++	if (server =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_source_remove(server->source);
+@@ -153,7 +153,7 @@ g_isi_server_add_name(GIsiServer *self)
+ {
+ 	uint16_t object =3D 0;
+ =
+
+-	if (!self)
++	if (self =3D=3D NULL)
+ 		return;
+ =
+
+ 	if (ioctl(self->fd, SIOCPNGETOBJECT, &object) < 0) {
+diff --git a/gisi/verify.c b/gisi/verify.c
+index 05746fa..cb669f9 100644
+--- a/gisi/verify.c
++++ b/gisi/verify.c
+@@ -135,7 +135,7 @@ GIsiRequest *g_isi_verify(GIsiClient *client, GIsiVerif=
+yFunc func,
+ 	data->resource =3D g_isi_client_resource(client);
+ =
+
+ 	req =3D send_version_query(client, verify_cb, data);
+-	if (!req)
++	if (req =3D=3D NULL)
+ 		g_free(data);
+ =
+
+ 	return req;
+@@ -159,7 +159,7 @@ GIsiRequest *g_isi_verify_resource(GIsiClient *client, =
+uint8_t resource,
+ 	data->resource =3D resource;
+ =
+
+ 	req =3D send_version_query(client, verify_cb, data);
+-	if (!req)
++	if (req =3D=3D NULL)
+ 		g_free(data);
+ =
+
+ 	return req;
 -- =
 
 1.7.3.2
 
 
---===============3951459626783648727==--
+--===============1477815217183043386==--
 
