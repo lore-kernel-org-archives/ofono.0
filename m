@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3212430373938398843=="
+Content-Type: multipart/mixed; boundary="===============6762287481727599542=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 3/9] unit: explicitly compare pointers to NULL
-Date: Sat, 27 Nov 2010 17:38:57 -0200
-Message-ID: <1290886743-24561-3-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 5/9] examples: explicitly compare pointers to NULL
+Date: Sat, 27 Nov 2010 17:38:59 -0200
+Message-ID: <1290886743-24561-5-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1290886743-24561-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3212430373938398843==
+--===============6762287481727599542==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -25,71 +25,29 @@ expression *E;
 + E =3D=3D NULL
 // </smpl>
 ---
- unit/test-caif.c    |    2 +-
- unit/test-mux.c     |    2 +-
- unit/test-simutil.c |    4 ++--
- 3 files changed, 4 insertions(+), 4 deletions(-)
+ examples/nettime.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/unit/test-caif.c b/unit/test-caif.c
-index 51e29bc..2c63d4c 100644
---- a/unit/test-caif.c
-+++ b/unit/test-caif.c
-@@ -124,7 +124,7 @@ static void test_connect(gboolean use_socket)
- =
-
- 	g_io_channel_unref(io);
- =
-
--	if (!chat) {
-+	if (chat =3D=3D NULL) {
- 		g_printerr("Chat creation failed\n");
+diff --git a/examples/nettime.c b/examples/nettime.c
+index 60045be..3843ce2 100644
+--- a/examples/nettime.c
++++ b/examples/nettime.c
+@@ -50,7 +50,7 @@ static void example_nettime_remove(struct ofono_nettime_c=
+ontext *context)
+ static void example_nettime_info_received(struct ofono_nettime_context *co=
+ntext,
+ 						struct ofono_network_time *info)
+ {
+-	if (!info)
++	if (info =3D=3D NULL)
  		return;
- 	}
-diff --git a/unit/test-mux.c b/unit/test-mux.c
-index e80b47c..d0e2d32 100644
---- a/unit/test-mux.c
-+++ b/unit/test-mux.c
-@@ -201,7 +201,7 @@ static void test_mux(void)
  =
 
- 	g_io_channel_unref(io);
- =
-
--	if (!chat) {
-+	if (chat =3D=3D NULL) {
- 		g_printerr("Chat creation failed\n");
- 		return;
- 	}
-diff --git a/unit/test-simutil.c b/unit/test-simutil.c
-index 7aa09b4..155cddd 100644
---- a/unit/test-simutil.c
-+++ b/unit/test-simutil.c
-@@ -372,7 +372,7 @@ static void test_eons()
- 	sim_eons_optimize(eons_info);
- =
-
- 	op_info =3D sim_eons_lookup(eons_info, "246", "82");
--	g_assert(!op_info);
-+	g_assert(op_info =3D=3D NULL);
- 	op_info =3D sim_eons_lookup(eons_info, "246", "81");
- 	g_assert(op_info);
- =
-
-@@ -391,7 +391,7 @@ static void test_ef_db()
- 	g_assert(info);
- =
-
- 	info =3D sim_ef_db_lookup(0x6FB1);
--	g_assert(!info);
-+	g_assert(info =3D=3D NULL);
- =
-
- 	info =3D sim_ef_db_lookup(0x2F05);
- 	g_assert(info);
+ 	ofono_debug("Received a network time notification on modem: %p",
 -- =
 
 1.7.3.2
 
 
---===============3212430373938398843==--
+--===============6762287481727599542==--
 
