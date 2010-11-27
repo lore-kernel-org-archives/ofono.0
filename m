@@ -1,47 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============5666206557652062655=="
+Content-Type: multipart/mixed; boundary="===============0123552345675777704=="
 MIME-Version: 1.0
-From: Rajesh.Nagaiah@elektrobit.com
-Subject: RE: [PATCH 1/9] coding-style: add rule about checking NULL pointer
-Date: Sat, 27 Nov 2010 07:57:47 -0800
-Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702CCBC85@usrdes03.ebgroup.elektrobit.com>
-In-Reply-To: <1290872345-15698-2-git-send-email-lucas.demarchi@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC 1/7] simutil: Add EFcfis and EFcphs-cff file Ids
+Date: Sat, 27 Nov 2010 11:50:33 -0600
+Message-ID: <4CF144E9.6030305@gmail.com>
+In-Reply-To: <1290752617-19024-2-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5666206557652062655==
+--===============0123552345675777704==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas
-  =
+Hi Jeevaka,
 
-> +M13: Check for pointer being NULL
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +When checking if a pointer or a return value is NULL, explicitly =
+On 11/26/2010 12:23 AM, Jeevaka Badrappan wrote:
+> ---
+>  src/simutil.h |    2 ++
+>  1 files changed, 2 insertions(+), 0 deletions(-)
+> =
 
-> +compare to NULL rather than use the shorter check with "!" operator.
-> +
-> +Example:
-> +1)
-> +array =3D g_try_new0(int, 20);
-> +if (!array)	// Wrong
-> +	return;
-> +
-> +2)
-> +if (!g_at_chat_get_slave(chat))	// Wrong
-> +	return -EINVAL;
-> +
-> +3)
-> +array =3D g_try_new0(int, 20);
-> +if (!array)	// Correct
 
-Shouldn't be if (array =3D=3D NULL) // Correct :)?
+Patch has been applied, thanks.
 
-BR,
-Rajesh
+Regards,
+-Denis
 
---===============5666206557652062655==--
+--===============0123552345675777704==--
 
