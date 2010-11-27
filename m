@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8157614531524714443=="
+Content-Type: multipart/mixed; boundary="===============1211734797430865356=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 7/9] gdbus: explicitly compare pointers to NULL
-Date: Sat, 27 Nov 2010 13:39:03 -0200
-Message-ID: <1290872345-15698-8-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 8/9] plugins: explicitly compare pointers to NULL
+Date: Sat, 27 Nov 2010 13:39:04 -0200
+Message-ID: <1290872345-15698-9-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1290872345-15698-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8157614531524714443==
+--===============1211734797430865356==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -25,272 +25,1288 @@ expression *E;
 + E =3D=3D NULL
 // </smpl>
 ---
- gdbus/object.c |   24 ++++++++++++------------
- gdbus/polkit.c |    2 +-
- gdbus/watch.c  |   21 ++++++++++-----------
- 3 files changed, 23 insertions(+), 24 deletions(-)
+ plugins/bluetooth.c       |    6 +++---
+ plugins/calypso.c         |    4 ++--
+ plugins/hfp.c             |   20 ++++++++++----------
+ plugins/hso.c             |   12 ++++++------
+ plugins/huawei.c          |   10 +++++-----
+ plugins/ifx.c             |   24 ++++++++++++------------
+ plugins/isigen.c          |   10 +++++-----
+ plugins/mbm.c             |   12 ++++++------
+ plugins/n900.c            |    6 +++---
+ plugins/nokia-gpio.c      |    6 +++---
+ plugins/nokia.c           |   10 +++++-----
+ plugins/novatel.c         |   22 +++++++++++-----------
+ plugins/palmpre.c         |   10 +++++-----
+ plugins/phonesim.c        |   22 +++++++++++-----------
+ plugins/smart-messaging.c |    4 ++--
+ plugins/ste.c             |   12 ++++++------
+ plugins/udev.c            |    4 ++--
+ plugins/wavecom.c         |    8 ++++----
+ plugins/zte.c             |   12 ++++++------
+ 19 files changed, 107 insertions(+), 107 deletions(-)
 
-diff --git a/gdbus/object.c b/gdbus/object.c
-index cc3c5da..d881c58 100644
---- a/gdbus/object.c
-+++ b/gdbus/object.c
-@@ -201,12 +201,12 @@ static DBusMessage *introspect(DBusConnection *connec=
-tion,
- 		return NULL;
- 	}
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index 8e79b2e..602c6da 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -77,7 +77,7 @@ int bluetooth_send_with_reply(const char *path, const cha=
+r *interface,
  =
 
--	if (!data->introspect)
-+	if (data->introspect =3D=3D NULL)
- 		generate_introspection_xml(connection, data,
- 						dbus_message_get_path(message));
- =
-
- 	reply =3D dbus_message_new_method_return(message);
--	if (!reply)
-+	if (reply =3D=3D NULL)
- 		return NULL;
- =
-
- 	dbus_message_append_args(reply, DBUS_TYPE_STRING, &data->introspect,
-@@ -405,7 +405,7 @@ static struct interface_data *find_interface(GSList *in=
-terfaces,
- {
- 	GSList *list;
- =
-
--	if (!name)
-+	if (name =3D=3D NULL)
- 		return NULL;
- =
-
- 	for (list =3D interfaces; list; list =3D list->next) {
-@@ -428,7 +428,7 @@ static DBusHandlerResult generic_message(DBusConnection=
- *connection,
- 	interface =3D dbus_message_get_interface(message);
- =
-
- 	iface =3D find_interface(data->interfaces, interface);
--	if (!iface)
-+	if (iface =3D=3D NULL)
- 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
- =
-
- 	for (method =3D iface->methods; method &&
-@@ -464,7 +464,7 @@ static void invalidate_parent_data(DBusConnection *conn=
-, const char *child_path)
- =
-
- 	parent_path =3D g_strdup(child_path);
- 	slash =3D strrchr(parent_path, '/');
--	if (!slash)
-+	if (slash =3D=3D NULL)
- 		goto done;
- =
-
- 	if (slash =3D=3D parent_path && parent_path[1] !=3D '\0')
-@@ -481,7 +481,7 @@ static void invalidate_parent_data(DBusConnection *conn=
-, const char *child_path)
- 		goto done;
- 	}
- =
-
--	if (!data)
-+	if (data =3D=3D NULL)
- 		goto done;
- =
-
- 	g_free(data->introspect);
-@@ -554,7 +554,7 @@ static gboolean remove_interface(struct generic_data *d=
-ata, const char *name)
- 	struct interface_data *iface;
- =
-
- 	iface =3D find_interface(data->interfaces, name);
--	if (!iface)
-+	if (iface =3D=3D NULL)
- 		return FALSE;
- =
-
- 	data->interfaces =3D g_slist_remove(data->interfaces, iface);
-@@ -601,14 +601,14 @@ static gboolean check_signal(DBusConnection *conn, co=
-nst char *path,
- =
-
- 	*args =3D NULL;
- 	if (!dbus_connection_get_object_path_data(conn, path,
--					(void *) &data) || !data) {
-+					(void *) &data) || data =3D=3D NULL) {
- 		error("dbus_connection_emit_signal: path %s isn't registered",
- 				path);
- 		return FALSE;
- 	}
- =
-
- 	iface =3D find_interface(data->interfaces, interface);
--	if (!iface) {
-+	if (iface =3D=3D NULL) {
- 		error("dbus_connection_emit_signal: %s does not implement %s",
- 				path, interface);
- 		return FALSE;
-@@ -621,7 +621,7 @@ static gboolean check_signal(DBusConnection *conn, cons=
-t char *path,
- 		}
- 	}
- =
-
--	if (!*args) {
-+	if (*args =3D=3D NULL) {
- 		error("No signal named %s on interface %s", name, interface);
- 		return FALSE;
- 	}
-@@ -644,7 +644,7 @@ static dbus_bool_t emit_signal_valist(DBusConnection *c=
-onn,
- 		return FALSE;
- =
-
- 	signal =3D dbus_message_new_signal(path, interface, name);
--	if (!signal) {
-+	if (signal =3D=3D NULL) {
- 		error("Unable to allocate new %s.%s signal", interface,  name);
- 		return FALSE;
- 	}
-@@ -702,7 +702,7 @@ gboolean g_dbus_unregister_interface(DBusConnection *co=
-nnection,
- {
- 	struct generic_data *data =3D NULL;
- =
-
--	if (!path)
-+	if (path =3D=3D NULL)
- 		return FALSE;
- =
-
- 	if (dbus_connection_get_object_path_data(connection, path,
-diff --git a/gdbus/polkit.c b/gdbus/polkit.c
-index ed876ca..aef5075 100644
---- a/gdbus/polkit.c
-+++ b/gdbus/polkit.c
-@@ -163,7 +163,7 @@ int polkit_check_authorization(DBusConnection *conn,
- =
-
- 	msg =3D dbus_message_new_method_call(AUTHORITY_DBUS, AUTHORITY_PATH,
- 				AUTHORITY_INTF, "CheckAuthorization");
+ 	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, path,
+ 						interface, method);
 -	if (!msg) {
 +	if (msg =3D=3D NULL) {
- 		dbus_free(data);
+ 		ofono_error("Unable to allocate new D-Bus %s message", method);
+ 		err =3D -ENOMEM;
+ 		goto fail;
+@@ -271,7 +271,7 @@ static void device_properties_cb(DBusPendingCall *call,=
+ gpointer user_data)
+ =
+
+ 	if ((have_uuid & HFP_AG) && device_addr && adapter_addr) {
+ 		profile =3D g_hash_table_lookup(uuid_hash, HFP_AG_UUID);
+-		if (!profile || !profile->create)
++		if (profile =3D=3D NULL || profile->create =3D=3D NULL)
+ 			goto done;
+ =
+
+ 		profile->create(path, device_addr, adapter_addr, alias);
+@@ -493,7 +493,7 @@ static void bluetooth_remove_all_modem(gpointer key, gp=
+ointer value,
+ =
+
+ static void bluetooth_disconnect(DBusConnection *connection, void *user_da=
+ta)
+ {
+-	if (!uuid_hash)
++	if (uuid_hash =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_hash_table_foreach(uuid_hash, bluetooth_remove_all_modem, NULL);
+diff --git a/plugins/calypso.c b/plugins/calypso.c
+index f787c7b..0e29256 100644
+--- a/plugins/calypso.c
++++ b/plugins/calypso.c
+@@ -170,7 +170,7 @@ static void simind_notify(GAtResult *result, gpointer u=
+ser_data)
+ 	struct calypso_data *data =3D ofono_modem_get_data(modem);
+ 	GAtResultIter iter;
+ =
+
+-	if (!data->sim)
++	if (data->sim =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_at_result_iter_init(&iter, result);
+@@ -257,7 +257,7 @@ static void mux_setup(GAtMux *mux, gpointer user_data)
+ =
+
+ 	DBG("%p", mux);
+ =
+
+-	if (!mux) {
++	if (mux =3D=3D NULL) {
+ 		ofono_modem_set_powered(modem, FALSE);
+ 		return;
+ 	}
+diff --git a/plugins/hfp.c b/plugins/hfp.c
+index 0a19dac..d8d30b0 100644
+--- a/plugins/hfp.c
++++ b/plugins/hfp.c
+@@ -76,7 +76,7 @@ static void clear_data(struct ofono_modem *modem)
+ {
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
+ =
+
+-	if (!data->chat)
++	if (data->chat =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_at_chat_unref(data->chat);
+@@ -323,7 +323,7 @@ static int service_level_connection(struct ofono_modem =
+*modem, int fd)
+ 	char buf[64];
+ =
+
+ 	io =3D g_io_channel_unix_new(fd);
+-	if (!io) {
++	if (io =3D=3D NULL) {
+ 		ofono_error("Service level connection failed: %s (%d)",
+ 			strerror(errno), errno);
+ 		return -EIO;
+@@ -334,7 +334,7 @@ static int service_level_connection(struct ofono_modem =
+*modem, int fd)
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(io);
+ =
+
+-	if (!chat)
++	if (chat =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	g_at_chat_set_disconnect_function(chat, hfp_disconnected_cb, modem);
+@@ -415,7 +415,7 @@ static int hfp_create_modem(const char *device, const c=
+har *dev_addr,
+ 		return -ENOMEM;
+ =
+
+ 	data =3D g_try_new0(struct hfp_data, 1);
+-	if (!data)
++	if (data =3D=3D NULL)
+ 		goto free;
+ =
+
+ 	data->hf_features |=3D HF_FEATURE_3WAY;
+@@ -465,11 +465,11 @@ static void hfp_set_alias(const char *device, const c=
+har *alias)
+ {
+ 	struct ofono_modem *modem;
+ =
+
+-	if (!device || !alias)
++	if (device =3D=3D NULL || alias =3D=3D NULL)
+ 		return;
+ =
+
+ 	modem =3D	g_hash_table_lookup(modem_hash, device);
+-	if (!modem)
++	if (modem =3D=3D NULL)
+ 		return;
+ =
+
+ 	ofono_modem_set_name(modem, alias);
+@@ -485,7 +485,7 @@ static int hfp_register_ofono_handsfree(struct ofono_mo=
+dem *modem)
+ =
+
+ 	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, data->handsfree_path,
+ 				BLUEZ_GATEWAY_INTERFACE, "RegisterAgent");
+-	if (!msg)
++	if (msg =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	dbus_message_append_args(msg, DBUS_TYPE_OBJECT_PATH, &obj_path,
+@@ -505,7 +505,7 @@ static int hfp_unregister_ofono_handsfree(struct ofono_=
+modem *modem)
+ =
+
+ 	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, data->handsfree_path,
+ 				BLUEZ_GATEWAY_INTERFACE, "UnregisterAgent");
+-	if (!msg)
++	if (msg =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	dbus_message_append_args(msg, DBUS_TYPE_OBJECT_PATH, &obj_path,
+@@ -520,7 +520,7 @@ static int hfp_probe(struct ofono_modem *modem)
+ 	const char *obj_path =3D ofono_modem_get_path(modem);
+ 	struct hfp_data *data =3D ofono_modem_get_data(modem);
+ =
+
+-	if (!data)
++	if (data =3D=3D NULL)
+ 		return -EINVAL;
+ =
+
+ 	g_dbus_register_interface(connection, obj_path, HFP_AGENT_INTERFACE,
+@@ -573,7 +573,7 @@ static void hfp_connect_reply(DBusPendingCall *call, gp=
+ointer user_data)
+ 		msg =3D dbus_message_new_method_call(BLUEZ_SERVICE,
+ 				data->handsfree_path,
+ 				BLUEZ_GATEWAY_INTERFACE, "Disconnect");
+-		if (!msg)
++		if (msg =3D=3D NULL)
+ 			ofono_error("Disconnect failed");
+ 		else
+ 			g_dbus_send_message(connection, msg);
+diff --git a/plugins/hso.c b/plugins/hso.c
+index 055c63b..e01ee87 100644
+--- a/plugins/hso.c
++++ b/plugins/hso.c
+@@ -63,7 +63,7 @@ static int hso_probe(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data =3D g_try_new0(struct hso_data, 1);
+-	if (!data)
++	if (data =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	ofono_modem_set_data(modem, data);
+@@ -124,7 +124,7 @@ static GAtChat *create_port(const char *device)
+ 	GAtChat *chat;
+ =
+
+ 	channel =3D g_at_tty_open(device, NULL);
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	syntax =3D g_at_syntax_new_gsm_permissive();
+@@ -132,7 +132,7 @@ static GAtChat *create_port(const char *device)
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+ =
+
+-	if (!chat)
++	if (chat =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	return chat;
+@@ -149,7 +149,7 @@ static int hso_enable(struct ofono_modem *modem)
+ 	control =3D ofono_modem_get_string(modem, "ControlPort");
+ 	app =3D ofono_modem_get_string(modem, "ApplicationPort");
+ =
+
+-	if (!app || !control)
++	if (app =3D=3D NULL || control =3D=3D NULL)
+ 		return -EINVAL;
+ =
+
+ 	data->control =3D create_port(control);
+@@ -201,7 +201,7 @@ static int hso_disable(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	if (!data->control)
++	if (data->control =3D=3D NULL)
+ 		return 0;
+ =
+
+ 	g_at_chat_cancel_all(data->control);
+@@ -237,7 +237,7 @@ static void hso_set_online(struct ofono_modem *modem, o=
+fono_bool_t online,
+ =
+
+ 	DBG("modem %p %s", modem, online ? "online" : "offline");
+ =
+
+-	if (!cbd)
++	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index e40a0ac..25dfaca 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -93,7 +93,7 @@ static int huawei_probe(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data =3D g_try_new0(struct huawei_data, 1);
+-	if (!data)
++	if (data =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	ofono_modem_set_data(modem, data);
+@@ -392,7 +392,7 @@ static GAtChat *create_port(const char *device)
+ 	GAtChat *chat;
+ =
+
+ 	channel =3D g_at_tty_open(device, NULL);
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	syntax =3D g_at_syntax_new_gsm_permissive();
+@@ -400,7 +400,7 @@ static GAtChat *create_port(const char *device)
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+ =
+
+-	if (!chat)
++	if (chat =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	return chat;
+@@ -533,7 +533,7 @@ static int huawei_disable(struct ofono_modem *modem)
+ 		data->modem =3D NULL;
+ 	}
+ =
+
+-	if (!data->pcui)
++	if (data->pcui =3D=3D NULL)
+ 		return 0;
+ =
+
+ 	g_at_chat_cancel_all(data->pcui);
+@@ -565,7 +565,7 @@ static void huawei_set_online(struct ofono_modem *modem=
+, ofono_bool_t online,
+ =
+
+ 	DBG("modem %p %s", modem, online ? "online" : "offline");
+ =
+
+-	if (!cbd)
++	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
+diff --git a/plugins/ifx.c b/plugins/ifx.c
+index 037273a..2f4c65b 100644
+--- a/plugins/ifx.c
++++ b/plugins/ifx.c
+@@ -115,7 +115,7 @@ static int ifx_probe(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data =3D g_try_new0(struct ifx_data, 1);
+-	if (!data)
++	if (data =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	data->mux_ldisc =3D -1;
+@@ -145,7 +145,7 @@ static void xsim_notify(GAtResult *result, gpointer use=
+r_data)
+ 	GAtResultIter iter;
+ 	int state;
+ =
+
+-	if (!data->sim)
++	if (data->sim =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_at_result_iter_init(&iter, result);
+@@ -197,7 +197,7 @@ static void shutdown_device(struct ifx_data *data)
+ 	}
+ =
+
+ 	for (i =3D 0; i < NUM_DLC; i++) {
+-		if (!data->dlcs[i])
++		if (data->dlcs[i] =3D=3D NULL)
+ 			continue;
+ =
+
+ 		g_at_chat_unref(data->dlcs[i]);
+@@ -239,7 +239,7 @@ static GAtChat *create_chat(GIOChannel *channel, struct=
+ ofono_modem *modem,
+ 	GAtSyntax *syntax;
+ 	GAtChat *chat;
+ =
+
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	syntax =3D g_at_syntax_new_gsmv1();
+@@ -247,7 +247,7 @@ static GAtChat *create_chat(GIOChannel *channel, struct=
+ ofono_modem *modem,
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+ =
+
+-	if (!chat)
++	if (chat =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	if (getenv("OFONO_AT_DEBUG"))
+@@ -408,7 +408,7 @@ static gboolean dlc_ready_check(gpointer user_data)
+ 		GIOChannel *channel =3D g_at_tty_open(dlc_nodes[i], NULL);
+ =
+
+ 		data->dlcs[i] =3D create_chat(channel, modem, dlc_prefixes[i]);
+-		if (!data->dlcs[i]) {
++		if (data->dlcs[i] =3D=3D NULL) {
+ 			ofono_error("Failed to open %s", dlc_nodes[i]);
+ 			goto error;
+ 		}
+@@ -445,7 +445,7 @@ static void setup_internal_mux(struct ofono_modem *mode=
+m)
+ 	g_io_channel_set_buffered(data->device, FALSE);
+ =
+
+ 	data->mux =3D g_at_mux_new_gsm0710_basic(data->device, data->frame_size);
+-	if (!data->mux)
++	if (data->mux =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	if (getenv("OFONO_MUX_DEBUG"))
+@@ -457,7 +457,7 @@ static void setup_internal_mux(struct ofono_modem *mode=
+m)
+ 		GIOChannel *channel =3D g_at_mux_create_channel(data->mux);
+ =
+
+ 		data->dlcs[i] =3D create_chat(channel, modem, dlc_prefixes[i]);
+-		if (!data->dlcs[i]) {
++		if (data->dlcs[i] =3D=3D NULL) {
+ 			ofono_error("Failed to create channel");
+ 			goto error;
+ 		}
+@@ -580,14 +580,14 @@ static int ifx_enable(struct ofono_modem *modem)
+ 	}
+ =
+
+ 	data->device =3D g_at_tty_open(device, NULL);
+-	if (!data->device)
++	if (data->device =3D=3D NULL)
+                 return -EIO;
+ =
+
+ 	syntax =3D g_at_syntax_new_gsmv1();
+ 	chat =3D g_at_chat_new(data->device, syntax);
+ 	g_at_syntax_unref(syntax);
+ =
+
+-	if (!chat) {
++	if (chat =3D=3D NULL) {
+ 		g_io_channel_unref(data->device);
+                 return -EIO;
+ 	}
+@@ -667,7 +667,7 @@ static void ifx_set_online(struct ofono_modem *modem, o=
+fono_bool_t online,
+ =
+
+ 	DBG("%p %s", modem, online ? "online" : "offline");
+ =
+
+-	if (!cbd)
++	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	if (g_at_chat_send(data->dlcs[AUX_DLC], command, NULL,
+@@ -736,7 +736,7 @@ static void ifx_post_online(struct ofono_modem *modem)
+ =
+
+ 	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_IFX,
+ 					"atmodem", data->dlcs[NETREG_DLC]);
+-	if (!gprs)
++	if (gprs =3D=3D NULL)
+ 		return;
+ =
+
+ 	if (data->mux_ldisc < 0) {
+diff --git a/plugins/isigen.c b/plugins/isigen.c
+index 3384e9f..028f1b2 100644
+--- a/plugins/isigen.c
++++ b/plugins/isigen.c
+@@ -282,7 +282,7 @@ static int isigen_probe(struct ofono_modem *modem)
+ 	}
+ =
+
+ 	link =3D g_pn_netlink_start(idx, phonet_status_cb, modem);
+-	if (!link) {
++	if (link =3D=3D NULL) {
+ 		DBG("%s: %s", ifname, strerror(errno));
+ 		return -errno;
+ 	}
+@@ -315,7 +315,7 @@ static void isigen_remove(struct ofono_modem *modem)
+ {
+ 	struct isi_data *isi =3D ofono_modem_get_data(modem);
+ =
+
+-	if (!isi)
++	if (isi =3D=3D NULL)
+ 		return;
+ =
+
+ 	ofono_modem_set_data(modem, NULL);
+@@ -370,7 +370,7 @@ static void isigen_online(struct ofono_modem *modem, of=
+ono_bool_t online,
+ =
+
+ 	DBG("(%p) with %s", modem, isi->ifname);
+ =
+
+-	if (!cbd)
++	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	isi->online =3D online;
+@@ -425,13 +425,13 @@ static void isigen_post_online(struct ofono_modem *mo=
+dem)
+ 	ofono_radio_settings_create(isi->modem, 0, "isimodem", isi->idx);
+ =
+
+ 	gprs =3D ofono_gprs_create(isi->modem, 0, "isimodem", isi->idx);
+-	if (!gprs)
++	if (gprs =3D=3D NULL)
+ 		return;
+ =
+
+ 	for (i =3D 0; i < ISI_DEFAULT_PDPS; i++) {
+ 		gc =3D ofono_gprs_context_create(isi->modem, 0,
+ 						"isimodem", isi->idx);
+-		if (!gc) {
++		if (gc =3D=3D NULL) {
+ 			DBG("Failed to add context %d", i);
+ 			break;
+ 		}
+diff --git a/plugins/mbm.c b/plugins/mbm.c
+index 35b85ea..62e3ae1 100644
+--- a/plugins/mbm.c
++++ b/plugins/mbm.c
+@@ -77,7 +77,7 @@ static int mbm_probe(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data =3D g_try_new0(struct mbm_data, 1);
+-	if (!data)
++	if (data =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	ofono_modem_set_data(modem, data);
+@@ -283,7 +283,7 @@ static GAtChat *create_port(const char *device)
+ 	GAtChat *chat;
+ =
+
+ 	channel =3D g_at_tty_open(device, NULL);
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	syntax =3D g_at_syntax_new_gsm_permissive();
+@@ -291,7 +291,7 @@ static GAtChat *create_port(const char *device)
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+ =
+
+-	if (!chat)
++	if (chat =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	return chat;
+@@ -430,7 +430,7 @@ static int mbm_disable(struct ofono_modem *modem)
+ 		data->reopen_source =3D 0;
+ 	}
+ =
+
+-	if (!data->modem_port)
++	if (data->modem_port =3D=3D NULL)
+ 		return 0;
+ =
+
+ 	g_at_chat_cancel_all(data->modem_port);
+@@ -462,7 +462,7 @@ static void mbm_set_online(struct ofono_modem *modem, o=
+fono_bool_t online,
+ =
+
+ 	DBG("modem %p %s", modem, online ? "online" : "offline");
+ =
+
+-	if (!cbd)
++	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
+@@ -523,7 +523,7 @@ static void mbm_post_online(struct ofono_modem *modem)
+ =
+
+ 	data->gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
+ 					"atmodem", data->modem_port);
+-	if (!data->gprs)
++	if (data->gprs =3D=3D NULL)
+ 		return;
+ =
+
+ 	gc =3D ofono_gprs_context_create(modem, 0,
+diff --git a/plugins/n900.c b/plugins/n900.c
+index a9e6b59..7619821 100644
+--- a/plugins/n900.c
++++ b/plugins/n900.c
+@@ -398,7 +398,7 @@ static int n900_probe(struct ofono_modem *modem)
+ 	DBG("(%p) with %s", modem, ifname);
+ =
+
+ 	idx =3D g_isi_modem_by_name(ifname);
+-	if (!idx) {
++	if (idx =3D=3D NULL) {
+ 		DBG("Interface=3D%s: %s", ifname, strerror(errno));
+ 		return -errno;
+ 	}
+@@ -409,7 +409,7 @@ static int n900_probe(struct ofono_modem *modem)
+ 	}
+ =
+
+ 	isi =3D g_new0(struct isi_data, 1);
+-	if (!isi) {
++	if (isi =3D=3D NULL) {
+ 		gpio_remove(modem);
  		return -ENOMEM;
  	}
-diff --git a/gdbus/watch.c b/gdbus/watch.c
-index c0dcc93..e7c203a 100644
---- a/gdbus/watch.c
-+++ b/gdbus/watch.c
-@@ -204,8 +204,7 @@ static struct filter_data *filter_data_get(DBusConnecti=
-on *connection,
- 	struct filter_data *data;
- 	const char *name =3D NULL, *owner =3D NULL;
+@@ -451,7 +451,7 @@ static void n900_set_online(struct ofono_modem *modem,
  =
 
--	if (!filter_data_find(connection, NULL, NULL, NULL, NULL, NULL,
--				NULL)) {
-+	if (filter_data_find(connection, NULL, NULL, NULL, NULL, NULL, NULL) =3D=
-=3D NULL) {
- 		if (!dbus_connection_add_filter(connection,
- 					message_filter, NULL, NULL)) {
- 			error("dbus_connection_add_filter() failed");
-@@ -382,7 +381,7 @@ static gboolean filter_data_remove_callback(struct filt=
-er_data *data,
- 	/* Remove filter if there are no listeners left for the connection */
- 	data =3D filter_data_find(connection, NULL, NULL, NULL, NULL, NULL,
- 					NULL);
--	if (!data)
-+	if (data =3D=3D NULL)
- 		dbus_connection_remove_filter(connection, message_filter,
- 						NULL);
+ 	DBG("(%p) with %s", modem, isi->ifname);
  =
 
-@@ -480,7 +479,7 @@ static DBusHandlerResult service_filter(DBusConnection =
-*connection,
+-	if (!cbd)
++	if (cbd =3D=3D NULL)
+ 		goto error;
  =
 
- 		/* Only auto remove if it is a bus name watch */
- 		if (data->argument[0] =3D=3D ':' &&
--				(!cb->conn_func || !cb->disc_func)) {
-+				(cb->conn_func =3D=3D NULL || cb->disc_func =3D=3D NULL)) {
- 			filter_data_remove_callback(data, cb);
- 			continue;
- 		}
-@@ -517,7 +516,7 @@ static DBusHandlerResult message_filter(DBusConnection =
-*connection,
- 	/* Sender is always bus name */
- 	data =3D filter_data_find(connection, NULL, sender, path, iface, member,
- 					arg);
--	if (!data) {
-+	if (data =3D=3D NULL) {
- 		error("Got %s.%s signal which has no listeners", iface, member);
- 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+ 	if (isi->power_state !=3D POWER_STATE_ON)
+diff --git a/plugins/nokia-gpio.c b/plugins/nokia-gpio.c
+index f3b9460..db0aa39 100644
+--- a/plugins/nokia-gpio.c
++++ b/plugins/nokia-gpio.c
+@@ -155,7 +155,7 @@ static int file_write(char const *filename, char const =
+*output)
+ 	FILE *f;
+ =
+
+ 	f =3D fopen(filename, "r+");
+-	if (!f) {
++	if (f =3D=3D NULL) {
+ 		DBG("%s: %s (%d)", filename, strerror(errno), errno);
+ 		return -1;
  	}
-@@ -543,7 +542,7 @@ static DBusHandlerResult message_filter(DBusConnection =
-*connection,
- 	/* Remove filter if there no listener left for the connection */
- 	data =3D filter_data_find(connection, NULL, NULL, NULL, NULL, NULL,
- 					NULL);
+@@ -709,7 +709,7 @@ int gpio_probe(GIsiModem *idx, unsigned addr, gpio_fini=
+shed_cb_t cb, void *data)
+ {
+ 	int error;
+ =
+
+-	if (!cb) {
++	if (cb =3D=3D NULL) {
+ 		DBG("gpio: No callback given");
+ 		return -(errno =3D EFAULT);
+ 	}
+@@ -754,7 +754,7 @@ int gpio_probe(GIsiModem *idx, unsigned addr, gpio_fini=
+shed_cb_t cb, void *data)
+ 		self.rapu =3D RAPU_TYPE_2;
+ =
+
+ 	self.link =3D g_pn_netlink_start(idx, phonet_status_cb, NULL);
+-	if (!self.link) {
++	if (self.link =3D=3D NULL) {
+ 		memset(&self, 0, sizeof self);
+ 		return -errno;
+ 	}
+diff --git a/plugins/nokia.c b/plugins/nokia.c
+index bb8e2f3..6f85794 100644
+--- a/plugins/nokia.c
++++ b/plugins/nokia.c
+@@ -62,7 +62,7 @@ static int nokia_probe(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data =3D g_try_new0(struct nokia_data, 1);
 -	if (!data)
 +	if (data =3D=3D NULL)
- 		dbus_connection_remove_filter(connection, message_filter,
- 						NULL);
+ 		return -ENOMEM;
  =
 
-@@ -658,18 +657,18 @@ guint g_dbus_add_service_watch(DBusConnection *connec=
-tion, const char *name,
- 	struct filter_data *data;
- 	struct filter_callback *cb;
+ 	ofono_modem_set_data(modem, data);
+@@ -106,7 +106,7 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	DBG("%s %s", key, device);
  =
 
--	if (!name)
-+	if (name =3D=3D NULL)
+ 	channel =3D g_at_tty_open(device, NULL);
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	syntax =3D g_at_syntax_new_gsm_permissive();
+@@ -114,7 +114,7 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+ =
+
+-	if (!chat)
++	if (chat =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	if (getenv("OFONO_AT_DEBUG"))
+@@ -137,7 +137,7 @@ static void nokia_disconnect(gpointer user_data)
+ 	data->modem =3D NULL;
+ =
+
+ 	data->modem =3D open_device(modem, "Modem", "Modem: ");
+-	if (!data->modem)
++	if (data->modem =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_at_chat_set_disconnect_function(data->modem,
+@@ -216,7 +216,7 @@ static int nokia_disable(struct ofono_modem *modem)
+ 		data->modem =3D NULL;
+ 	}
+ =
+
+-	if (!data->control)
++	if (data->control =3D=3D NULL)
  		return 0;
  =
 
- 	data =3D filter_data_get(connection, service_filter, NULL, NULL,
- 				DBUS_INTERFACE_DBUS, "NameOwnerChanged",
- 				name);
+ 	g_at_chat_cancel_all(data->control);
+diff --git a/plugins/novatel.c b/plugins/novatel.c
+index 4a3802e..578cec1 100644
+--- a/plugins/novatel.c
++++ b/plugins/novatel.c
+@@ -66,7 +66,7 @@ static int novatel_probe(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data =3D g_try_new0(struct novatel_data, 1);
 -	if (!data)
 +	if (data =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	ofono_modem_set_data(modem, data);
+@@ -102,11 +102,11 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	const char *device;
+ =
+
+ 	device =3D ofono_modem_get_string(modem, key);
+-	if (!device)
++	if (device =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	channel =3D g_at_tty_open(device, NULL);
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	syntax =3D g_at_syntax_new_gsm_permissive();
+@@ -114,7 +114,7 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+ =
+
+-	if (!chat)
++	if (chat =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	if (getenv("OFONO_AT_DEBUG"))
+@@ -146,7 +146,7 @@ static void nwdmat_action(gboolean ok, GAtResult *resul=
+t, gpointer user_data)
+ 	data->dmat_mode =3D 1;
+ =
+
+ 	data->secondary =3D open_device(modem, "SecondaryDevice", "Control: ");
+-	if (!data->secondary)
++	if (data->secondary =3D=3D NULL)
+ 		goto done;
+ =
+
+ 	g_at_chat_send(data->secondary, "ATE0 +CMEE=3D1", none_prefix,
+@@ -208,7 +208,7 @@ static void novatel_disconnect(gpointer user_data)
+ 	data->primary =3D NULL;
+ =
+
+ 	data->primary =3D open_device(modem, "PrimaryDevice", "Modem: ");
+-	if (!data->primary)
++	if (data->primary =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_at_chat_set_disconnect_function(data->primary,
+@@ -230,7 +230,7 @@ static int novatel_enable(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data->primary =3D open_device(modem, "PrimaryDevice", "Modem: ");
+-	if (!data->primary)
++	if (data->primary =3D=3D NULL)
+ 		return -EIO;
+ =
+
+ 	g_at_chat_set_disconnect_function(data->primary,
+@@ -266,7 +266,7 @@ static int novatel_disable(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	if (!data->primary)
++	if (data->primary =3D=3D NULL)
  		return 0;
  =
 
- 	cb =3D filter_data_add_callback(data, connect, disconnect, NULL, NULL,
- 					user_data);
--	if (!cb)
-+	if (cb =3D=3D NULL)
- 		return 0;
+ 	if (data->secondary) {
+@@ -310,7 +310,7 @@ static void novatel_set_online(struct ofono_modem *mode=
+m, ofono_bool_t online,
  =
 
- 	if (connect)
-@@ -697,12 +696,12 @@ guint g_dbus_add_signal_watch(DBusConnection *connect=
-ion,
+ 	DBG("modem %p %s", modem, online ? "online" : "offline");
  =
 
- 	data =3D filter_data_get(connection, signal_filter, sender, path,
- 				interface, member, NULL);
+-	if (!cbd || !chat)
++	if (cbd =3D=3D NULL || chat =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
+@@ -329,7 +329,7 @@ static void novatel_pre_sim(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	if (!data->secondary) {
++	if (data->secondary =3D=3D NULL) {
+ 		ofono_devinfo_create(modem, 0, "atmodem", data->primary);
+ 		sim =3D ofono_sim_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
+ 						"atmodem", data->primary);
+@@ -349,7 +349,7 @@ static void novatel_post_online(struct ofono_modem *mod=
+em)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	if (!data->secondary) {
++	if (data->secondary =3D=3D NULL) {
+ 		ofono_netreg_create(modem, OFONO_VENDOR_NOVATEL, "atmodem",
+ 							data->primary);
+ =
+
+diff --git a/plugins/palmpre.c b/plugins/palmpre.c
+index 1714863..9555871 100644
+--- a/plugins/palmpre.c
++++ b/plugins/palmpre.c
+@@ -57,7 +57,7 @@ static int palmpre_probe(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data =3D g_try_new0(struct palmpre_data, 1);
 -	if (!data)
 +	if (data =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	ofono_modem_set_data(modem, data);
+@@ -104,11 +104,11 @@ static int palmpre_enable(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	device =3D ofono_modem_get_string(modem, "Device");
+-	if (!device)
++	if (device =3D=3D NULL)
+ 		device =3D "/dev/modem0";
+ =
+
+ 	options =3D g_hash_table_new(g_str_hash, g_str_equal);
+-	if (!options)
++	if (options =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	g_hash_table_insert(options, "Baud", "115200");
+@@ -116,7 +116,7 @@ static int palmpre_enable(struct ofono_modem *modem)
+ 	io =3D g_at_tty_open(device, options);
+ 	g_hash_table_destroy(options);
+ =
+
+-	if (!io)
++	if (io =3D=3D NULL)
+ 		return -EIO;
+ =
+
+ 	syntax =3D g_at_syntax_new_gsm_permissive();
+@@ -124,7 +124,7 @@ static int palmpre_enable(struct ofono_modem *modem)
+ 	g_io_channel_unref(io);
+ 	g_at_syntax_unref(syntax);
+ =
+
+-	if (!data->chat)
++	if (data->chat =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	if (getenv("OFONO_AT_DEBUG"))
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index d2faf42..0552b50 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -141,7 +141,7 @@ static void phonesim_deactivate_primary(struct ofono_gp=
+rs_context *gc,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	char buf[128];
+ =
+
+-	if (!cbd)
++	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	cbd->user =3D gc;
+@@ -165,7 +165,7 @@ static int phonesim_context_probe(struct ofono_gprs_con=
+text *gc,
+ 	struct gprs_context_data *gcd;
+ =
+
+ 	gcd =3D g_try_new0(struct gprs_context_data, 1);
+-	if (!gcd)
++	if (gcd =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	gcd->chat =3D g_at_chat_clone(chat);
+@@ -205,7 +205,7 @@ static int phonesim_probe(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data =3D g_try_new0(struct phonesim_data, 1);
+-	if (!data)
++	if (data =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	ofono_modem_set_data(modem, data);
+@@ -265,7 +265,7 @@ static void mux_setup(GAtMux *mux, gpointer user_data)
+ =
+
+ 	DBG("%p", mux);
+ =
+
+-	if (!mux) {
++	if (mux =3D=3D NULL) {
+ 		ofono_modem_set_powered(modem, FALSE);
+ 		return;
+ 	}
+@@ -311,7 +311,7 @@ static int phonesim_enable(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	address =3D ofono_modem_get_string(modem, "Address");
+-	if (!address)
++	if (address =3D=3D NULL)
+ 		return -EINVAL;
+ =
+
+ 	port =3D ofono_modem_get_integer(modem, "Port");
+@@ -342,7 +342,7 @@ static int phonesim_enable(struct ofono_modem *modem)
+ 	}
+ =
+
+ 	io =3D g_io_channel_unix_new(sk);
+-	if (!io) {
++	if (io =3D=3D NULL) {
+ 		close(sk);
+ 		return -ENOMEM;
+ 	}
+@@ -357,7 +357,7 @@ static int phonesim_enable(struct ofono_modem *modem)
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(io);
+ =
+
+-	if (!data->chat)
++	if (data->chat =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	if (getenv("OFONO_AT_DEBUG"))
+@@ -538,18 +538,18 @@ static struct ofono_modem *create_modem(GKeyFile *key=
+file, const char *group)
+ 	DBG("group %s", group);
+ =
+
+ 	modem =3D ofono_modem_create(group, "phonesim");
+-	if (!modem)
++	if (modem =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	value =3D g_key_file_get_string(keyfile, group, "Address", NULL);
+-	if (!value)
++	if (value =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	ofono_modem_set_string(modem, "Address", value);
+ 	g_free(value);
+ =
+
+ 	value =3D g_key_file_get_string(keyfile, group, "Port", NULL);
+-	if (!value)
++	if (value =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	ofono_modem_set_integer(modem, "Port", atoi(value));
+@@ -606,7 +606,7 @@ static void parse_config(const char *filename)
+ 		struct ofono_modem *modem;
+ =
+
+ 		modem =3D create_modem(keyfile, modems[i]);
+-		if (!modem)
++		if (modem =3D=3D NULL)
+ 			continue;
+ =
+
+ 		modem_list =3D g_slist_prepend(modem_list, modem);
+diff --git a/plugins/smart-messaging.c b/plugins/smart-messaging.c
+index e943796..e7889f2 100644
+--- a/plugins/smart-messaging.c
++++ b/plugins/smart-messaging.c
+@@ -207,7 +207,7 @@ static DBusMessage *smart_messaging_send_vcard(DBusConn=
+ection *conn,
+ 	msg_list =3D sms_datagram_prepare(to, bytes, len, ref, use_16bit_ref,
+ 						0, VCARD_DST_PORT, TRUE, FALSE);
+ =
+
+-	if (!msg_list)
++	if (msg_list =3D=3D NULL)
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+ 	flags =3D OFONO_SMS_SUBMIT_FLAG_RETRY | OFONO_SMS_SUBMIT_FLAG_EXPOSE_DBUS;
+@@ -250,7 +250,7 @@ static DBusMessage *smart_messaging_send_vcal(DBusConne=
+ction *conn,
+ 	msg_list =3D sms_datagram_prepare(to, bytes, len, ref, use_16bit_ref,
+ 						0, VCAL_DST_PORT, TRUE, FALSE);
+ =
+
+-	if (!msg_list)
++	if (msg_list =3D=3D NULL)
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+ 	flags =3D OFONO_SMS_SUBMIT_FLAG_RETRY | OFONO_SMS_SUBMIT_FLAG_EXPOSE_DBUS;
+diff --git a/plugins/ste.c b/plugins/ste.c
+index 508ad58..ecdc326 100644
+--- a/plugins/ste.c
++++ b/plugins/ste.c
+@@ -80,7 +80,7 @@ static int ste_probe(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data =3D g_try_new0(struct ste_data, 1);
+-	if (!data)
++	if (data =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	ofono_modem_set_data(modem, data);
+@@ -173,7 +173,7 @@ static int ste_enable(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	device =3D ofono_modem_get_string(modem, "Device");
+-	if (!device) {
++	if (device =3D=3D NULL) {
+ 		struct sockaddr_caif addr;
+ 		int err;
+ 		const char *interface;
+@@ -221,7 +221,7 @@ static int ste_enable(struct ofono_modem *modem)
+ 	}
+ =
+
+ 	channel =3D g_io_channel_unix_new(fd);
+-	if (!channel)  {
++	if (channel =3D=3D NULL)  {
+ 		close(fd);
+ 		return -EIO;
+ 	}
+@@ -233,7 +233,7 @@ static int ste_enable(struct ofono_modem *modem)
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+ =
+
+-	if (!data->chat)
++	if (data->chat =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	if (getenv("OFONO_AT_DEBUG"))
+@@ -266,7 +266,7 @@ static int ste_disable(struct ofono_modem *modem)
+ =
+
+ 	DBG("%p", modem);
+ =
+
+-	if (!data->chat)
++	if (data->chat =3D=3D NULL)
  		return 0;
  =
 
- 	cb =3D filter_data_add_callback(data, NULL, NULL, function, destroy,
- 					user_data);
--	if (!cb)
-+	if (cb =3D=3D NULL)
+ 	g_at_chat_cancel_all(data->chat);
+@@ -298,7 +298,7 @@ static void ste_set_online(struct ofono_modem *modem, o=
+fono_bool_t online,
+ =
+
+ 	DBG("modem %p %s", modem, online ? "online" : "offline");
+ =
+
+-	if (!cbd)
++	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 737a637..255755e 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -555,7 +555,7 @@ static void remove_modem(struct udev_device *udev_devic=
+e)
+ 	DBG("%s", curpath);
+ =
+
+ 	devpath =3D g_hash_table_lookup(devpath_list, curpath);
+-	if (!devpath)
++	if (devpath =3D=3D NULL)
+ 		return;
+ =
+
+ 	modem =3D find_modem(devpath);
+@@ -681,7 +681,7 @@ static int udev_init(void)
+ {
+ 	devpath_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+ 						g_free, g_free);
+-	if (!devpath_list) {
++	if (devpath_list =3D=3D NULL) {
+ 		ofono_error("Failed to create udev path list");
+ 		return -ENOMEM;
+ 	}
+diff --git a/plugins/wavecom.c b/plugins/wavecom.c
+index 73fa502..cb55f85 100644
+--- a/plugins/wavecom.c
++++ b/plugins/wavecom.c
+@@ -78,12 +78,12 @@ static int wavecom_enable(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	device =3D ofono_modem_get_string(modem, "Device");
+-	if (!device)
++	if (device =3D=3D NULL)
+ 		return -EINVAL;
+ =
+
+ 	options =3D g_hash_table_new(g_str_hash, g_str_equal);
+ =
+
+-	if (!options)
++	if (options =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	g_hash_table_insert(options, "Baud", "115200");
+@@ -95,7 +95,7 @@ static int wavecom_enable(struct ofono_modem *modem)
+ =
+
+ 	g_hash_table_destroy(options);
+ =
+
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return -EIO;
+ =
+
+ 	/*
+@@ -108,7 +108,7 @@ static int wavecom_enable(struct ofono_modem *modem)
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+ =
+
+-	if (!chat)
++	if (chat =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	if (getenv("OFONO_AT_DEBUG"))
+diff --git a/plugins/zte.c b/plugins/zte.c
+index 83602eb..82f322a 100644
+--- a/plugins/zte.c
++++ b/plugins/zte.c
+@@ -64,7 +64,7 @@ static int zte_probe(struct ofono_modem *modem)
+ 	DBG("%p", modem);
+ =
+
+ 	data =3D g_try_new0(struct zte_data, 1);
+-	if (!data)
++	if (data =3D=3D NULL)
+ 		return -ENOMEM;
+ =
+
+ 	ofono_modem_set_data(modem, data);
+@@ -108,7 +108,7 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	DBG("%s %s", key, device);
+ =
+
+ 	channel =3D g_at_tty_open(device, NULL);
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	syntax =3D g_at_syntax_new_gsm_permissive();
+@@ -116,7 +116,7 @@ static GAtChat *open_device(struct ofono_modem *modem,
+ 	g_at_syntax_unref(syntax);
+ 	g_io_channel_unref(channel);
+ =
+
+-	if (!chat)
++	if (chat =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	if (getenv("OFONO_AT_DEBUG"))
+@@ -138,7 +138,7 @@ static void zte_disconnect(gpointer user_data)
+ 	data->modem =3D NULL;
+ =
+
+ 	data->modem =3D open_device(modem, "Modem", "Modem: ");
+-	if (!data->modem)
++	if (data->modem =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_at_chat_set_disconnect_function(data->modem,
+@@ -218,7 +218,7 @@ static int zte_disable(struct ofono_modem *modem)
+ 		data->modem =3D NULL;
+ 	}
+ =
+
+-	if (!data->aux)
++	if (data->aux =3D=3D NULL)
  		return 0;
  =
 
- 	if (data->name !=3D NULL && data->name_watch =3D=3D 0)
+ 	g_at_chat_cancel_all(data->aux);
+@@ -250,7 +250,7 @@ static void zte_set_online(struct ofono_modem *modem, o=
+fono_bool_t online,
+ =
+
+ 	DBG("modem %p %s", modem, online ? "online" : "offline");
+ =
+
+-	if (!cbd || !chat)
++	if (cbd =3D=3D NULL || chat =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	if (g_at_chat_send(chat, command, NULL, set_online_cb, cbd, g_free))
 -- =
 
 1.7.3.2
 
 
---===============8157614531524714443==--
+--===============1211734797430865356==--
 
