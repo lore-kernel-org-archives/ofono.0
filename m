@@ -1,67 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============5469093198879411915=="
+Content-Type: multipart/mixed; boundary="===============8377066378909724688=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 2/2] TODO: Mark CTM task as done
-Date: Sat, 27 Nov 2010 17:22:55 -0200
-Message-ID: <1290885775-23243-2-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <4CF14741.8060906@gmail.com>
+Subject: [PATCH 1/9] coding-style: add rule about checking NULL pointer
+Date: Sat, 27 Nov 2010 17:38:55 -0200
+Message-ID: <1290886743-24561-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5469093198879411915==
+--===============8377066378909724688==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- TODO             |   11 -----------
- doc/features.txt |    7 +++++++
- 2 files changed, 7 insertions(+), 11 deletions(-)
+ doc/coding-style.txt |   21 +++++++++++++++++++++
+ 1 files changed, 21 insertions(+), 0 deletions(-)
 
-diff --git a/TODO b/TODO
-index c484871..4443ac1 100644
---- a/TODO
-+++ b/TODO
-@@ -479,17 +479,6 @@ Miscellaneous
-   Complexity: C2
-   Owner: Gustavo F Padovan <padovan@profusion.mobi>
+diff --git a/doc/coding-style.txt b/doc/coding-style.txt
+index eccdacc..9dfdc09 100644
+--- a/doc/coding-style.txt
++++ b/doc/coding-style.txt
+@@ -209,6 +209,27 @@ However if the enum comes from an external header file=
+ outside ofono
+ we cannot make any assumption of how the enum is defined and this
+ rule might not apply.
  =
 
--- TTY (hearing impaired) support.  Add a new oFono atom type that will ena=
-ble
--  the user to enable or disable the TTY support on the modem.  Support for
--  automatic detection of TTY (signaled by the driver) is also desired.
--
--  This feature is not discussed in 27.007, thus manufacturer specific comm=
-ands
--  are required.
--
--  Priority: High
--  Complexity: C1
--  Owner: Lucas De Marchi <lucas.demarchi@profusion.mobi>
--
- - Add support for GPS power control atom.  Many modem manufacturers provide
-   a GPS unit with their modem hardware.  This unit can be turned on or off
-   and frequently takes over one of the tty ports that the modem provides.
-diff --git a/doc/features.txt b/doc/features.txt
-index 06f5203..ef20cf2 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -216,3 +216,10 @@ Radio settings
-   cellular modem to conserve power when the end user is not actively
-   using the device but some networking applications are online using
-   packet data.
++M13: Check for pointer being NULL
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D
 +
-+Text Telephony
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++When checking if a pointer or a return value is NULL, explicitly compare to
++NULL rather than use the shorter check with "!" operator.
 +
-+- TTY (hearing impaired) support, also known as Cellular Text Modem (CTM).
-+  In case it's supported by the modem, oFono allows the user to enabled
-+  or disable it through the TextTelephony interface.
++Example:
++1)
++array =3D g_try_new0(int, 20);
++if (!array)	// Wrong
++	return;
++
++2)
++if (!g_at_chat_get_slave(chat))	// Wrong
++	return -EINVAL;
++
++3)
++array =3D g_try_new0(int, 20);
++if (array =3D=3D NULL)	// Correct
++	return;
++
+ O1: Shorten the name
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ Better to use abbreviation, rather than full name, to name a variable,
 -- =
 
 1.7.3.2
 
 
---===============5469093198879411915==--
+--===============8377066378909724688==--
 
