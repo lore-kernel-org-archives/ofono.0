@@ -1,31 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============0013028627559063469=="
+Content-Type: multipart/mixed; boundary="===============9212549325608820013=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] call-volume: Minor coding style fix
-Date: Fri, 26 Nov 2010 15:24:26 -0600
-Message-ID: <4CF0258A.7070308@gmail.com>
-In-Reply-To: <1290806466-6776-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH] Add support for TTY query
+Date: Fri, 26 Nov 2010 22:06:16 -0200
+Message-ID: <1290816376-16041-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0013028627559063469==
+--===============9212549325608820013==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+---
+ src/default.xml |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
-On 11/26/2010 03:21 PM, Jeevaka Badrappan wrote:
-> ---
->  src/call-volume.c |    3 +--
->  1 files changed, 1 insertions(+), 2 deletions(-)
-> =
+diff --git a/src/default.xml b/src/default.xml
+index ab1ed06..0fd0182 100644
+--- a/src/default.xml
++++ b/src/default.xml
+@@ -3222,6 +3222,12 @@ OK</response>
+ </chat>
+ =
+
+ <chat>
++    <!-- Query supported TTY values -->
++    <command>AT+PTTY=3D?</command>
++    <response>+PTTY: (0-1)\n\nOK</response>
++</chat>
++
++<chat>
+     <!-- Set TTY (hearing impaired) set -->
+     <command>AT+PTTY=3D*</command>
+     <response>OK</response>
+-- =
+
+1.7.3.2
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============0013028627559063469==--
+--===============9212549325608820013==--
 
