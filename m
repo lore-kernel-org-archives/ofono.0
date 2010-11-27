@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4072582194054175955=="
+Content-Type: multipart/mixed; boundary="===============5626475345448317983=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 5/9] examples: explicitly compare pointers to NULL
-Date: Sat, 27 Nov 2010 13:39:01 -0200
-Message-ID: <1290872345-15698-6-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 6/9] gatchat: explicitly compare pointers to NULL
+Date: Sat, 27 Nov 2010 13:39:02 -0200
+Message-ID: <1290872345-15698-7-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1290872345-15698-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4072582194054175955==
+--===============5626475345448317983==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -25,29 +25,1078 @@ expression *E;
 + E =3D=3D NULL
 // </smpl>
 ---
- examples/nettime.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ gatchat/gatchat.c     |   46 +++++++++++++++++++++++-----------------------
+ gatchat/gathdlc.c     |    8 ++++----
+ gatchat/gatio.c       |    4 ++--
+ gatchat/gatmux.c      |    6 +++---
+ gatchat/gatppp.c      |    4 ++--
+ gatchat/gatresult.c   |   44 ++++++++++++++++++++++----------------------
+ gatchat/gatserver.c   |   16 ++++++++--------
+ gatchat/gatutil.c     |    6 +++---
+ gatchat/gsmdial.c     |    2 +-
+ gatchat/ppp_auth.c    |    6 +++---
+ gatchat/ppp_cp.c      |    4 ++--
+ gatchat/ppp_ipcp.c    |    4 ++--
+ gatchat/ppp_lcp.c     |    6 +++---
+ gatchat/ringbuffer.c  |   14 +++++++-------
+ gatchat/test-qcdm.c   |    6 +++---
+ gatchat/test-server.c |   18 +++++++++---------
+ 16 files changed, 97 insertions(+), 97 deletions(-)
 
-diff --git a/examples/nettime.c b/examples/nettime.c
-index 60045be..3843ce2 100644
---- a/examples/nettime.c
-+++ b/examples/nettime.c
-@@ -50,7 +50,7 @@ static void example_nettime_remove(struct ofono_nettime_c=
-ontext *context)
- static void example_nettime_info_received(struct ofono_nettime_context *co=
-ntext,
- 						struct ofono_network_time *info)
- {
--	if (!info)
-+	if (info =3D=3D NULL)
+diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
+index 218f592..a486f40 100644
+--- a/gatchat/gatchat.c
++++ b/gatchat/gatchat.c
+@@ -253,12 +253,12 @@ static struct at_command *at_command_create(guint gid=
+, const char *cmd,
+ 	}
+ =
+
+ 	c =3D g_try_new0(struct at_command, 1);
+-	if (!c)
++	if (c =3D=3D NULL)
+ 		return 0;
+ =
+
+ 	len =3D strlen(cmd);
+ 	c->cmd =3D g_try_new(char, len + 2);
+-	if (!c->cmd) {
++	if (c->cmd =3D=3D NULL) {
+ 		g_free(c);
+ 		return 0;
+ 	}
+@@ -408,7 +408,7 @@ static gboolean at_chat_match_notify(struct at_chat *ch=
+at, char *line)
+ 			return TRUE;
+ 		}
+ =
+
+-		if (!result.lines)
++		if (result.lines =3D=3D NULL)
+ 			result.lines =3D g_slist_prepend(NULL, line);
+ =
+
+ 		g_slist_foreach(notify->nodes, at_notify_call_callback,
+@@ -434,7 +434,7 @@ static void at_chat_finish_command(struct at_chat *p, g=
+boolean ok, char *final)
+ 	GSList *response_lines;
+ =
+
+ 	/* Cannot happen, but lets be paranoid */
+-	if (!cmd)
++	if (cmd =3D=3D NULL)
  		return;
  =
 
- 	ofono_debug("Received a network time notification on modem: %p",
+ 	p->cmd_bytes_written =3D 0;
+@@ -567,7 +567,7 @@ static void have_line(struct at_chat *p, char *str)
+ 	/* We're not going to copy terminal <CR><LF> */
+ 	struct at_command *cmd;
+ =
+
+-	if (!str)
++	if (str =3D=3D NULL)
+ 		return;
+ =
+
+ 	/* Check for echo, this should not happen, but lets be paranoid */
+@@ -638,7 +638,7 @@ static void have_pdu(struct at_chat *p, char *pdu)
+ 	GAtResult result;
+ 	gboolean listing_pdu =3D FALSE;
+ =
+
+-	if (!pdu)
++	if (pdu =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	result.lines =3D g_slist_prepend(NULL, p->pdu_notify);
+@@ -703,7 +703,7 @@ static char *extract_line(struct at_chat *p, struct rin=
+g_buffer *rbuf)
+ 	}
+ =
+
+ 	line =3D g_try_new(char, line_length + 1);
+-	if (!line) {
++	if (line =3D=3D NULL) {
+ 		ring_buffer_drain(rbuf, p->read_so_far);
+ 		return NULL;
+ 	}
+@@ -803,7 +803,7 @@ static gboolean wakeup_no_response(gpointer user_data)
+ 	cmd =3D at_command_create(0, chat->wakeup, none_prefix, FALSE,
+ 				NULL, wakeup_cb, chat, NULL, TRUE);
+ =
+
+-	if (!cmd) {
++	if (cmd =3D=3D NULL) {
+ 		chat->timeout_source =3D 0;
+ 		return FALSE;
+ 	}
+@@ -842,7 +842,7 @@ static gboolean can_write_data(gpointer data)
+ 		return FALSE;
+ =
+
+ 	if (chat->wakeup) {
+-		if (!chat->wakeup_timer) {
++		if (chat->wakeup_timer =3D=3D NULL) {
+ 			wakeup_first =3D TRUE;
+ 			chat->wakeup_timer =3D g_timer_new();
+ =
+
+@@ -855,7 +855,7 @@ static gboolean can_write_data(gpointer data)
+ 		cmd =3D at_command_create(0, chat->wakeup, none_prefix, FALSE,
+ 					NULL, wakeup_cb, chat, NULL, TRUE);
+ =
+
+-		if (!cmd)
++		if (cmd =3D=3D NULL)
+ 			return FALSE;
+ =
+
+ 		g_queue_push_head(chat->command_queue, cmd);
+@@ -1006,7 +1006,7 @@ static guint at_chat_send_common(struct at_chat *chat=
+, guint gid,
+ 	c =3D at_command_create(gid, cmd, prefix_list, expect_pdu, listing, func,
+ 				user_data, notify, FALSE);
+ =
+
+-	if (!c)
++	if (c =3D=3D NULL)
+ 		return 0;
+ =
+
+ 	c->id =3D chat->next_cmd_id++;
+@@ -1028,11 +1028,11 @@ static struct at_notify *at_notify_create(struct at=
+_chat *chat,
+ =
+
+ 	key =3D g_strdup(prefix);
+ =
+
+-	if (!key)
++	if (key =3D=3D NULL)
+ 		return 0;
+ =
+
+ 	notify =3D g_try_new0(struct at_notify, 1);
+-	if (!notify) {
++	if (notify =3D=3D NULL) {
+ 		g_free(key);
+ 		return 0;
+ 	}
+@@ -1055,7 +1055,7 @@ static gboolean at_chat_cancel(struct at_chat *chat, =
+guint group, guint id)
+ 	l =3D g_queue_find_custom(chat->command_queue, GUINT_TO_POINTER(id),
+ 				at_command_compare_by_id);
+ =
+
+-	if (!l)
++	if (l =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	c =3D l->data;
+@@ -1124,14 +1124,14 @@ static guint at_chat_register(struct at_chat *chat,=
+ guint group,
+ =
+
+ 	notify =3D g_hash_table_lookup(chat->notify_list, prefix);
+ =
+
+-	if (!notify)
++	if (notify =3D=3D NULL)
+ 		notify =3D at_notify_create(chat, prefix, expect_pdu);
+ =
+
+-	if (!notify || notify->pdu !=3D expect_pdu)
++	if (notify =3D=3D NULL || notify->pdu !=3D expect_pdu)
+ 		return 0;
+ =
+
+ 	node =3D g_try_new0(struct at_notify_node, 1);
+-	if (!node)
++	if (node =3D=3D NULL)
+ 		return 0;
+ =
+
+ 	node->id =3D chat->next_notify_id++;
+@@ -1165,7 +1165,7 @@ static gboolean at_chat_unregister(struct at_chat *ch=
+at, gboolean mark_only,
+ 		l =3D g_slist_find_custom(notify->nodes, GUINT_TO_POINTER(id),
+ 					at_notify_node_compare_by_id);
+ =
+
+-		if (!l)
++		if (l =3D=3D NULL)
+ 			continue;
+ =
+
+ 		node =3D l->data;
+@@ -1206,14 +1206,14 @@ static struct at_chat *create_chat(GIOChannel *chan=
+nel, GIOFlags flags,
+ {
+ 	struct at_chat *chat;
+ =
+
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	if (!syntax)
++	if (syntax =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	chat =3D g_try_new0(struct at_chat, 1);
+-	if (!chat)
++	if (chat =3D=3D NULL)
+ 		return chat;
+ =
+
+ 	chat->ref_count =3D 1;
+@@ -1226,14 +1226,14 @@ static struct at_chat *create_chat(GIOChannel *chan=
+nel, GIOFlags flags,
+ 	else
+ 		chat->io =3D g_at_io_new_blocking(channel);
+ =
+
+-	if (!chat->io)
++	if (chat->io =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	g_at_io_set_disconnect_function(chat->io, io_disconnect, chat);
+ =
+
+ 	chat->command_queue =3D g_queue_new();
+ =
+
+-	if (!chat->command_queue)
++	if (chat->command_queue =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	chat->notify_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+diff --git a/gatchat/gathdlc.c b/gatchat/gathdlc.c
+index 37f014a..dd11043 100644
+--- a/gatchat/gathdlc.c
++++ b/gatchat/gathdlc.c
+@@ -256,7 +256,7 @@ GAtHDLC *g_at_hdlc_new(GIOChannel *channel)
+ =
+
+ GAtHDLC *g_at_hdlc_ref(GAtHDLC *hdlc)
+ {
+-	if (!hdlc)
++	if (hdlc =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	g_atomic_int_inc(&hdlc->ref_count);
+@@ -266,7 +266,7 @@ GAtHDLC *g_at_hdlc_ref(GAtHDLC *hdlc)
+ =
+
+ void g_at_hdlc_unref(GAtHDLC *hdlc)
+ {
+-	if (!hdlc)
++	if (hdlc =3D=3D NULL)
+ 		return;
+ =
+
+ 	if (g_atomic_int_dec_and_test(&hdlc->ref_count) =3D=3D FALSE)
+@@ -291,7 +291,7 @@ void g_at_hdlc_unref(GAtHDLC *hdlc)
+ =
+
+ void g_at_hdlc_set_debug(GAtHDLC *hdlc, GAtDebugFunc func, gpointer user_d=
+ata)
+ {
+-	if (!hdlc)
++	if (hdlc =3D=3D NULL)
+ 		return;
+ =
+
+ 	hdlc->debugf =3D func;
+@@ -301,7 +301,7 @@ void g_at_hdlc_set_debug(GAtHDLC *hdlc, GAtDebugFunc fu=
+nc, gpointer user_data)
+ void g_at_hdlc_set_receive(GAtHDLC *hdlc, GAtReceiveFunc func,
+ 							gpointer user_data)
+ {
+-	if (!hdlc)
++	if (hdlc =3D=3D NULL)
+ 		return;
+ =
+
+ 	hdlc->receive_func =3D func;
+diff --git a/gatchat/gatio.c b/gatchat/gatio.c
+index a9faba5..b65be86 100644
+--- a/gatchat/gatio.c
++++ b/gatchat/gatio.c
+@@ -177,11 +177,11 @@ static GAtIO *create_io(GIOChannel *channel, GIOFlags=
+ flags)
+ {
+ 	GAtIO *io;
+ =
+
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	io =3D g_try_new0(GAtIO, 1);
+-	if (!io)
++	if (io =3D=3D NULL)
+ 		return io;
+ =
+
+ 	io->ref_count =3D 1;
+diff --git a/gatchat/gatmux.c b/gatchat/gatmux.c
+index fb912e6..9aed987 100644
+--- a/gatchat/gatmux.c
++++ b/gatchat/gatmux.c
+@@ -414,7 +414,7 @@ static gboolean watch_dispatch(GSource *source, GSource=
+Func callback,
+ 	GAtMuxWatch *watch =3D (GAtMuxWatch *) source;
+ 	GAtMuxChannel *channel =3D (GAtMuxChannel *) watch->channel;
+ =
+
+-	if (!func)
++	if (func =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	return func(watch->channel, channel->condition & watch->condition,
+@@ -554,11 +554,11 @@ GAtMux *g_at_mux_new(GIOChannel *channel, const GAtMu=
+xDriver *driver)
+ {
+ 	GAtMux *mux;
+ =
+
+-	if (!channel)
++	if (channel =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	mux =3D g_try_new0(GAtMux, 1);
+-	if (!mux)
++	if (mux =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	mux->ref_count =3D 1;
+diff --git a/gatchat/gatppp.c b/gatchat/gatppp.c
+index 5e875b8..87cb46b 100644
+--- a/gatchat/gatppp.c
++++ b/gatchat/gatppp.c
+@@ -78,7 +78,7 @@ struct _GAtPPP {
+ =
+
+ void ppp_debug(GAtPPP *ppp, const char *str)
+ {
+-	if (!ppp || !ppp->debugf)
++	if (ppp =3D=3D NULL || !ppp->debugf)
+ 		return;
+ =
+
+ 	ppp->debugf(str, ppp->debug_data);
+@@ -490,7 +490,7 @@ static GAtPPP *ppp_init_common(GAtHDLC *hdlc, gboolean =
+is_server, guint32 ip)
+ 	GAtPPP *ppp;
+ =
+
+ 	ppp =3D g_try_malloc0(sizeof(GAtPPP));
+-	if (!ppp)
++	if (ppp =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	ppp->hdlc =3D g_at_hdlc_ref(hdlc);
+diff --git a/gatchat/gatresult.c b/gatchat/gatresult.c
+index cd7ec71..8a6dfae 100644
+--- a/gatchat/gatresult.c
++++ b/gatchat/gatresult.c
+@@ -81,10 +81,10 @@ const char *g_at_result_iter_raw_line(GAtResultIter *it=
+er)
+ {
+ 	const char *line;
+ =
+
+-	if (!iter)
++	if (iter =3D=3D NULL)
+ 		return NULL;
+ =
+
+-	if (!iter->l)
++	if (iter->l =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	line =3D iter->l->data;
+@@ -113,10 +113,10 @@ gboolean g_at_result_iter_next_unquoted_string(GAtRes=
+ultIter *iter,
+ 	unsigned int len;
+ 	char *line;
+ =
+
+-	if (!iter)
++	if (iter =3D=3D NULL)
+ 		return FALSE;
+ =
+
+-	if (!iter->l)
++	if (iter->l =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	line =3D iter->l->data;
+@@ -157,10 +157,10 @@ gboolean g_at_result_iter_next_string(GAtResultIter *=
+iter, const char **str)
+ 	unsigned int len;
+ 	char *line;
+ =
+
+-	if (!iter)
++	if (iter =3D=3D NULL)
+ 		return FALSE;
+ =
+
+-	if (!iter->l)
++	if (iter->l =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	line =3D iter->l->data;
+@@ -209,10 +209,10 @@ gboolean g_at_result_iter_next_hexstring(GAtResultIte=
+r *iter,
+ 	char *line;
+ 	char *bufpos;
+ =
+
+-	if (!iter)
++	if (iter =3D=3D NULL)
+ 		return FALSE;
+ =
+
+-	if (!iter->l)
++	if (iter->l =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	line =3D iter->l->data;
+@@ -264,10 +264,10 @@ gboolean g_at_result_iter_next_number(GAtResultIter *=
+iter, gint *number)
+ 	int value =3D 0;
+ 	char *line;
+ =
+
+-	if (!iter)
++	if (iter =3D=3D NULL)
+ 		return FALSE;
+ =
+
+-	if (!iter->l)
++	if (iter->l =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	line =3D iter->l->data;
+@@ -301,10 +301,10 @@ gboolean g_at_result_iter_next_range(GAtResultIter *i=
+ter, gint *min, gint *max)
+ 	int high =3D 0;
+ 	char *line;
+ =
+
+-	if (!iter)
++	if (iter =3D=3D NULL)
+ 		return FALSE;
+ =
+
+-	if (!iter->l)
++	if (iter->l =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	line =3D iter->l->data;
+@@ -391,10 +391,10 @@ gboolean g_at_result_iter_skip_next(GAtResultIter *it=
+er)
+ 	unsigned int skipped_to;
+ 	char *line;
+ =
+
+-	if (!iter)
++	if (iter =3D=3D NULL)
+ 		return FALSE;
+ =
+
+-	if (!iter->l)
++	if (iter->l =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	line =3D iter->l->data;
+@@ -414,10 +414,10 @@ gboolean g_at_result_iter_open_list(GAtResultIter *it=
+er)
+ 	char *line;
+ 	unsigned int len;
+ =
+
+-	if (!iter)
++	if (iter =3D=3D NULL)
+ 		return FALSE;
+ =
+
+-	if (!iter->l)
++	if (iter->l =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	line =3D iter->l->data;
+@@ -443,10 +443,10 @@ gboolean g_at_result_iter_close_list(GAtResultIter *i=
+ter)
+ 	char *line;
+ 	unsigned int len;
+ =
+
+-	if (!iter)
++	if (iter =3D=3D NULL)
+ 		return FALSE;
+ =
+
+-	if (!iter->l)
++	if (iter->l =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	line =3D iter->l->data;
+@@ -467,7 +467,7 @@ gboolean g_at_result_iter_close_list(GAtResultIter *ite=
+r)
+ =
+
+ const char *g_at_result_final_response(GAtResult *result)
+ {
+-	if (!result)
++	if (result =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	return result->final_or_pdu;
+@@ -475,7 +475,7 @@ const char *g_at_result_final_response(GAtResult *resul=
+t)
+ =
+
+ const char *g_at_result_pdu(GAtResult *result)
+ {
+-	if (!result)
++	if (result =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	return result->final_or_pdu;
+@@ -483,10 +483,10 @@ const char *g_at_result_pdu(GAtResult *result)
+ =
+
+ gint g_at_result_num_response_lines(GAtResult *result)
+ {
+-	if (!result)
++	if (result =3D=3D NULL)
+ 		return 0;
+ =
+
+-	if (!result->lines)
++	if (result->lines =3D=3D NULL)
+ 		return 0;
+ =
+
+ 	return g_slist_length(result->lines);
+diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
+index 49e0de4..11eaac6 100644
+--- a/gatchat/gatserver.c
++++ b/gatchat/gatserver.c
+@@ -128,7 +128,7 @@ static struct ring_buffer *allocate_next(GAtServer *ser=
+ver)
+ {
+ 	struct ring_buffer *buf =3D ring_buffer_new(BUF_SIZE);
+ =
+
+-	if (!buf)
++	if (buf =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	g_queue_push_tail(server->write_queue, buf);
+@@ -812,7 +812,7 @@ static char *extract_line(GAtServer *p, struct ring_buf=
+fer *rbuf)
+ 	line_length -=3D 3;
+ =
+
+ 	line =3D g_try_new(char, line_length + 1);
+-	if (!line) {
++	if (line =3D=3D NULL) {
+ 		ring_buffer_drain(rbuf, p->read_so_far);
+ 		return NULL;
+ 	}
+@@ -1066,11 +1066,11 @@ GAtServer *g_at_server_new(GIOChannel *io)
+ {
+ 	GAtServer *server;
+ =
+
+-	if (!io)
++	if (io =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	server =3D g_try_new0(GAtServer, 1);
+-	if (!server)
++	if (server =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	server->ref_count =3D 1;
+@@ -1089,7 +1089,7 @@ GAtServer *g_at_server_new(GIOChannel *io)
+ 	if (!server->write_queue)
+ 		goto error;
+ =
+
+-	if (!allocate_next(server))
++	if (allocate_next(server) =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	server->max_read_attempts =3D 3;
+@@ -1207,7 +1207,7 @@ void g_at_server_unref(GAtServer *server)
+ =
+
+ gboolean g_at_server_shutdown(GAtServer *server)
+ {
+-	if (!server)
++	if (server =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	/* Don't trigger user disconnect on shutdown */
+@@ -1259,7 +1259,7 @@ gboolean g_at_server_register(GAtServer *server, char=
+ *prefix,
+ 		return FALSE;
+ =
+
+ 	node =3D g_try_new0(struct at_command, 1);
+-	if (!node)
++	if (node =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	node->notify =3D notify;
+@@ -1282,7 +1282,7 @@ gboolean g_at_server_unregister(GAtServer *server, co=
+nst char *prefix)
+ 		return FALSE;
+ =
+
+ 	node =3D g_hash_table_lookup(server->command_list, prefix);
+-	if (!node)
++	if (node =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	g_hash_table_remove(server->command_list, prefix);
+diff --git a/gatchat/gatutil.c b/gatchat/gatutil.c
+index 827dc60..393d94c 100644
+--- a/gatchat/gatutil.c
++++ b/gatchat/gatutil.c
+@@ -42,7 +42,7 @@ void g_at_util_debug_chat(gboolean in, const char *str, g=
+size len,
+ 	gsize ctrlz_size =3D strlen(ctrlz);
+ 	gsize i;
+ =
+
+-	if (!debugf || !len)
++	if (debugf =3D=3D NULL || !len)
+ 		return;
+ =
+
+ 	for (i =3D 0; i < len; i++) {
+@@ -116,11 +116,11 @@ void g_at_util_debug_dump(gboolean in, const unsigned=
+ char *buf, gsize len,
+ 	GString *str;
+ 	gsize i;
+ =
+
+-	if (!debugf || !len)
++	if (debugf =3D=3D NULL || !len)
+ 		return;
+ =
+
+ 	str =3D g_string_sized_new(1 + (len * 2));
+-	if (!str)
++	if (str =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_string_append_c(str, type);
+diff --git a/gatchat/gsmdial.c b/gatchat/gsmdial.c
+index 57d0d9e..22ff2ff 100644
+--- a/gatchat/gsmdial.c
++++ b/gatchat/gsmdial.c
+@@ -303,7 +303,7 @@ static void connect_cb(gboolean ok, GAtResult *result, =
+gpointer user_data)
+ =
+
+ 	/* open ppp */
+ 	ppp =3D g_at_ppp_new_from_io(io);
+-	if (!ppp) {
++	if (ppp =3D=3D NULL) {
+ 		g_print("Unable to create PPP object\n");
+ 		exit(1);
+ 	}
+diff --git a/gatchat/ppp_auth.c b/gatchat/ppp_auth.c
+index d26b764..fca873c 100644
+--- a/gatchat/ppp_auth.c
++++ b/gatchat/ppp_auth.c
+@@ -66,7 +66,7 @@ static void chap_process_challenge(struct ppp_chap *chap,=
+ const guint8 *packet)
+ =
+
+ 	/* create a checksum over id, secret, and challenge */
+ 	checksum =3D g_checksum_new(chap->method);
+-	if (!checksum)
++	if (checksum =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_checksum_update(checksum, &header->identifier, 1);
+@@ -84,7 +84,7 @@ static void chap_process_challenge(struct ppp_chap *chap,=
+ const guint8 *packet)
+ 	digest_len =3D g_checksum_type_get_length(chap->method);
+ 	response_length =3D digest_len + sizeof(*header) + 1;
+ 	ppp_packet =3D ppp_packet_new(response_length, CHAP_PROTOCOL);
+-	if (!ppp_packet)
++	if (ppp_packet =3D=3D NULL)
+ 		goto challenge_out;
+ =
+
+ 	response =3D (struct chap_header *) &ppp_packet->info;
+@@ -144,7 +144,7 @@ struct ppp_chap *ppp_chap_new(GAtPPP *ppp, guint8 metho=
+d)
+ 		return NULL;
+ =
+
+ 	chap =3D g_try_new0(struct ppp_chap, 1);
+-	if (!chap)
++	if (chap =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	chap->ppp =3D ppp;
+diff --git a/gatchat/ppp_cp.c b/gatchat/ppp_cp.c
+index f6220d2..31ea05a 100644
+--- a/gatchat/ppp_cp.c
++++ b/gatchat/ppp_cp.c
+@@ -205,7 +205,7 @@ static struct pppcp_packet *pppcp_packet_new(struct ppp=
+cp_data *data,
+ 	guint16 packet_length =3D bufferlen + sizeof(*packet);
+ =
+
+ 	ppp_packet =3D ppp_packet_new(packet_length, data->driver->proto);
+-	if (!ppp_packet)
++	if (ppp_packet =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	/* advance past protocol to add CP header information */
+@@ -1002,7 +1002,7 @@ struct pppcp_data *pppcp_new(GAtPPP *ppp, const struc=
+t pppcp_proto *proto,
+ 	struct pppcp_data *data;
+ =
+
+ 	data =3D g_try_malloc0(sizeof(struct pppcp_data));
+-	if (!data)
++	if (data =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	if (dormant)
+diff --git a/gatchat/ppp_ipcp.c b/gatchat/ppp_ipcp.c
+index 3aa9eec..3e4f73b 100644
+--- a/gatchat/ppp_ipcp.c
++++ b/gatchat/ppp_ipcp.c
+@@ -471,7 +471,7 @@ struct pppcp_data *ipcp_new(GAtPPP *ppp, gboolean is_se=
+rver, guint32 ip)
+ 	struct pppcp_data *pppcp;
+ =
+
+ 	ipcp =3D g_try_new0(struct ipcp_data, 1);
+-	if (!ipcp)
++	if (ipcp =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	/*
+@@ -481,7 +481,7 @@ struct pppcp_data *ipcp_new(GAtPPP *ppp, gboolean is_se=
+rver, guint32 ip)
+ 	 * as rejects.
+ 	 */
+ 	pppcp =3D pppcp_new(ppp, &ipcp_proto, FALSE, MAX_IPCP_FAILURE);
+-	if (!pppcp) {
++	if (pppcp =3D=3D NULL) {
+ 		g_printerr("Failed to allocate PPPCP struct\n");
+ 		g_free(ipcp);
+ 		return NULL;
+diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+index 5838ebd..3a80a62 100644
+--- a/gatchat/ppp_lcp.c
++++ b/gatchat/ppp_lcp.c
+@@ -225,7 +225,7 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppcp,
+ 			 */
+ =
+
+ 			option =3D g_try_malloc0(5);
+-			if (!option)
++			if (option =3D=3D NULL)
+ 				return RCR_REJECT;
+ =
+
+ 			option[0] =3D AUTH_PROTO;
+@@ -310,11 +310,11 @@ struct pppcp_data *lcp_new(GAtPPP *ppp, gboolean is_s=
+erver)
+ 	struct lcp_data *lcp;
+ =
+
+ 	lcp =3D g_try_new0(struct lcp_data, 1);
+-	if (!lcp)
++	if (lcp =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	pppcp =3D pppcp_new(ppp, &lcp_proto, is_server, 0);
+-	if (!pppcp) {
++	if (pppcp =3D=3D NULL) {
+ 		g_free(lcp);
+ 		return NULL;
+ 	}
+diff --git a/gatchat/ringbuffer.c b/gatchat/ringbuffer.c
+index 5e9b634..becd3f8 100644
+--- a/gatchat/ringbuffer.c
++++ b/gatchat/ringbuffer.c
+@@ -51,11 +51,11 @@ struct ring_buffer *ring_buffer_new(unsigned int size)
+ 		return NULL;
+ =
+
+ 	buffer =3D g_try_new(struct ring_buffer, 1);
+-	if (!buffer)
++	if (buffer =3D=3D NULL)
+ 		return NULL;
+ =
+
+ 	buffer->buffer =3D g_try_new(unsigned char, real_size);
+-	if (!buffer->buffer) {
++	if (buffer->buffer =3D=3D NULL) {
+ 		g_free(buffer);
+ 		return NULL;
+ 	}
+@@ -164,7 +164,7 @@ unsigned char *ring_buffer_read_ptr(struct ring_buffer =
+*buf,
+ =
+
+ int ring_buffer_len(struct ring_buffer *buf)
+ {
+-	if (!buf)
++	if (buf =3D=3D NULL)
+ 		return -1;
+ =
+
+ 	return buf->in - buf->out;
+@@ -172,7 +172,7 @@ int ring_buffer_len(struct ring_buffer *buf)
+ =
+
+ void ring_buffer_reset(struct ring_buffer *buf)
+ {
+-	if (!buf)
++	if (buf =3D=3D NULL)
+ 		return;
+ =
+
+ 	buf->in =3D 0;
+@@ -181,7 +181,7 @@ void ring_buffer_reset(struct ring_buffer *buf)
+ =
+
+ int ring_buffer_avail(struct ring_buffer *buf)
+ {
+-	if (!buf)
++	if (buf =3D=3D NULL)
+ 		return -1;
+ =
+
+ 	return buf->size - buf->in + buf->out;
+@@ -189,7 +189,7 @@ int ring_buffer_avail(struct ring_buffer *buf)
+ =
+
+ int ring_buffer_capacity(struct ring_buffer *buf)
+ {
+-	if (!buf)
++	if (buf =3D=3D NULL)
+ 		return -1;
+ =
+
+ 	return buf->size;
+@@ -197,7 +197,7 @@ int ring_buffer_capacity(struct ring_buffer *buf)
+ =
+
+ void ring_buffer_free(struct ring_buffer *buf)
+ {
+-	if (!buf)
++	if (buf =3D=3D NULL)
+ 		return;
+ =
+
+ 	g_free(buf->buffer);
+diff --git a/gatchat/test-qcdm.c b/gatchat/test-qcdm.c
+index c8a3174..a15ea9c 100644
+--- a/gatchat/test-qcdm.c
++++ b/gatchat/test-qcdm.c
+@@ -161,13 +161,13 @@ int main(int argc, char **argv)
+ =
+
+ 	g_option_context_free(context);
+ =
+
+-	if (!option_device)
++	if (option_device =3D=3D NULL)
+ 		option_device =3D g_strdup("/dev/ttyUSB1");
+ =
+
+ 	g_print("Device: %s\n", option_device);
+ =
+
+ 	channel =3D g_at_tty_open(option_device, NULL);
+-	if (!channel) {
++	if (channel =3D=3D NULL) {
+ 		g_printerr("Failed to open QCDM device\n");
+ 		return 1;
+ 	}
+@@ -178,7 +178,7 @@ int main(int argc, char **argv)
+ =
+
+ 	g_io_channel_unref(channel);
+ =
+
+-	if (!hdlc)
++	if (hdlc =3D=3D NULL)
+ 		return 1;
+ =
+
+ 	if (option_debug =3D=3D TRUE)
+diff --git a/gatchat/test-server.c b/gatchat/test-server.c
+index c405f41..cb451e9 100644
+--- a/gatchat/test-server.c
++++ b/gatchat/test-server.c
+@@ -793,7 +793,7 @@ static void dial_cb(GAtServerRequestType type, GAtResul=
+t *cmd, gpointer user)
+ 		goto error;
+ =
+
+ 	dial_str =3D g_at_result_iter_raw_line(&iter);
+-	if (!dial_str)
++	if (dial_str =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	g_print("dial call %s\n", dial_str);
+@@ -861,7 +861,7 @@ static gboolean create_tty(const char *modem_path)
+ 	char pty_name[256];
+ 	GIOChannel *server_io;
+ =
+
+-	if (!modem_path)
++	if (modem_path =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	if (openpty(&master, &slave, pty_name, NULL, NULL) < 0)
+@@ -874,7 +874,7 @@ static gboolean create_tty(const char *modem_path)
+ 	server_io =3D g_io_channel_unix_new(master);
+ =
+
+ 	server =3D g_at_server_new(server_io);
+-	if (!server) {
++	if (server =3D=3D NULL) {
+ 		g_io_channel_shutdown(server_io, FALSE, NULL);
+ 		g_io_channel_unref(server_io);
+ =
+
+@@ -907,7 +907,7 @@ static gboolean on_socket_connected(GIOChannel *chan, G=
+IOCondition cond,
+ 	server =3D g_at_server_new(client_io);
+ 	g_io_channel_unref(client_io);
+ =
+
+-	if (!server)
++	if (server =3D=3D NULL)
+ 		goto error;
+ =
+
+ 	add_handler(server);
+@@ -946,7 +946,7 @@ static struct sock_server *socket_common(int sk, struct=
+ sockaddr *addr,
+ 	}
+ =
+
+ 	sock =3D g_try_new0(struct sock_server, 1);
+-	if (!sock)
++	if (sock =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	sock->server_sock =3D sk;
+@@ -961,7 +961,7 @@ static gboolean create_tcp(const char *modem_path, int =
+port)
+ 	struct sock_server *server;
+ 	GIOChannel *server_io;
+ =
+
+-	if (!modem_path)
++	if (modem_path =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	sk =3D socket(PF_INET, SOCK_STREAM, 0);
+@@ -978,7 +978,7 @@ static gboolean create_tcp(const char *modem_path, int =
+port)
+ 	addr.sin_port =3D htons(port);
+ =
+
+ 	server =3D socket_common(sk, (struct sockaddr *) &addr, modem_path);
+-	if (!server)
++	if (server =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	g_print("new tcp is created at tcp port %d\n", port);
+@@ -1004,7 +1004,7 @@ static gboolean create_unix(const char *modem_path, c=
+onst char *sock_path)
+ 	struct sock_server *server;
+ 	GIOChannel *server_io;
+ =
+
+-	if (!modem_path)
++	if (modem_path =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	sk =3D socket(AF_UNIX, SOCK_STREAM, 0);
+@@ -1024,7 +1024,7 @@ static gboolean create_unix(const char *modem_path, c=
+onst char *sock_path)
+ 	unlink(addr.sun_path);
+ =
+
+ 	server =3D socket_common(sk, (struct sockaddr *) &addr, modem_path);
+-	if (!server)
++	if (server =3D=3D NULL)
+ 		return FALSE;
+ =
+
+ 	g_print("new unix socket is created at %s\n", sock_path);
 -- =
 
 1.7.3.2
 
 
---===============4072582194054175955==--
+--===============5626475345448317983==--
 
