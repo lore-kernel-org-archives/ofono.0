@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6238970321861489225=="
+Content-Type: multipart/mixed; boundary="===============8002750698666690681=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/9] unit: explicitly compare pointers to NULL
-Date: Mon, 29 Nov 2010 14:49:06 -0600
-Message-ID: <4CF411C2.3010207@gmail.com>
-In-Reply-To: <1290886743-24561-3-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 4/9] gisi: explicitly compare pointers to NULL
+Date: Mon, 29 Nov 2010 14:49:29 -0600
+Message-ID: <4CF411D9.1080004@gmail.com>
+In-Reply-To: <1290886743-24561-4-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6238970321861489225==
+--===============8002750698666690681==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -30,15 +30,18 @@ On 11/27/2010 01:38 PM, Lucas De Marchi wrote:
 > + E =3D=3D NULL
 > // </smpl>
 > ---
->  unit/test-caif.c    |    2 +-
->  unit/test-mux.c     |    2 +-
->  unit/test-simutil.c |    4 ++--
->  3 files changed, 4 insertions(+), 4 deletions(-)
+>  gisi/client.c |   46 +++++++++++++++++++++++-----------------------
+>  gisi/iter.c   |    2 +-
+>  gisi/server.c |    6 +++---
+>  gisi/verify.c |    4 ++--
+>  4 files changed, 29 insertions(+), 29 deletions(-)
+> =
+
 
 Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============6238970321861489225==--
+--===============8002750698666690681==--
 
