@@ -1,45 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============3990126621753048780=="
+Content-Type: multipart/mixed; boundary="===============1377901499344512394=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH] Mark ofono/*.h symbolink links as built sources
-Date: Mon, 29 Nov 2010 16:36:35 +0200
-Message-ID: <201011291636.35689.remi.denis-courmont@nokia.com>
-In-Reply-To: <1291022295.4795.13.camel@aeonflux>
+From: Sjur BRENDELAND <sjur.brandeland@stericsson.com>
+Subject: ConnectionContext creation for LTE PDN Connection.
+Date: Mon, 29 Nov 2010 15:46:43 +0100
+Message-ID: <81C3A93C17462B4BBD7E272753C10579194E651E30@EXDCVYMBSTM005.EQ1STM.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3990126621753048780==
+--===============1377901499344512394==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Monday 29 November 2010 11:18:15 ext Marcel Holtmann, you wrote:
-> Hi Remi,
-> =
+Hi all,
 
-> > This forces automake/make to build them first if needed (as before).
-> > But it avoids marking every single header as a dependency of every
-> > single object. Thus we do not need a bogus full rebuild of the tree
-> > everytime a header is added.
-> =
+We have started to investigate LTE impact on oFono, =
 
-> I had this before, but it caused problems with make distcheck. So you
-> have double checked that this still works?
+specifically how to integrate LTE and initial PDN connection,
+and we have some questions regarding this.
 
-Yes, I get that:
+This raises some questions about the handling of
+ConnectionContexts.
 
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-ofono-0.36 archives ready for distribution: =
+When a terminal attach to LTE network it would
+normally do an implicit context activation request
+associated to attach request (+CGATT=3D1).
+When the context activation is completed this will
+result in an event notifying about the activated PDN
+connection according to
+27.007 10.1.19 Packet Domain event reporting +CGEREP.
 
-ofono-0.36.tar.gz
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++CGEV: ME PDN ACT <cid>
 
--- =
+At this point we have a "connection context" in the modem.
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
+The question is then, how should we model this in oFono?
+Should we assume/require that a Connection Context
+already is created by ConnMan and pre-exists in =
 
---===============3990126621753048780==--
+oFono (possibly with a flag indicating that this
+represents the initial PDN, or perhaps just taking
+the "internet" ConnectionContext)?
+Or should oFono automatically create a Connection Context?
+
+Furthermore, should oFono automatically proceed and
+set Active=3Dtrue, bind the connection to a network interface
+and set network interface in state UP, or should the
+ConnectionContext initially set Active=3Dfalse, =
+
+waiting for ConnMan to activate it?
+
+
+Regards,
+Sjur
+
+--===============1377901499344512394==--
 
