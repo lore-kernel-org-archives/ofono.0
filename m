@@ -1,70 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============8388474865663470043=="
+Content-Type: multipart/mixed; boundary="===============6403301273731867929=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] stk: Handle provide local info proactive command
-Date: Mon, 29 Nov 2010 07:47:26 -0600
-Message-ID: <4CF3AEEE.6090808@gmail.com>
-In-Reply-To: <CE761E84DADF2947A4AF22FB8D97A473306DF4B0@shsmsx501.ccr.corp.intel.com>
+Subject: Re: [PATCH 1/5] text-telephony: add public header
+Date: Mon, 29 Nov 2010 07:53:17 -0600
+Message-ID: <4CF3B04D.4080704@gmail.com>
+In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C90157E6BCB6@orsmsx508.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8388474865663470043==
+--===============6403301273731867929==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
+Hi Waldo,
 
-On 11/28/2010 08:47 PM, Gu, Yang wrote:
-> Hi Denis,
-> =
-
->>> diff --git a/src/smsutil.c b/src/smsutil.c
->>> index e6dbf5f..5394817 100644
->>> --- a/src/smsutil.c
->>> +++ b/src/smsutil.c
->>> @@ -324,10 +324,10 @@ gboolean sms_encode_scts(const struct sms_scts *i=
-n,
->> unsigned char *pdu,
->>>  	if (in->year > 99)
->>>  		return FALSE;
->>>
->>> -	if (in->month > 12)
->>> +	if (in->month > 12 || in->month =3D=3D 0)
->>>  		return FALSE;
->>>
->>> -	if (in->day > 31)
->>> +	if (in->day > 31 || in->day =3D=3D 0)
->>>  		return FALSE;
->>>
->>>  	if (in->hour > 23)
->>> @@ -339,7 +339,7 @@ gboolean sms_encode_scts(const struct sms_scts *in,
->> unsigned char *pdu,
->>>  	if (in->second > 59)
->>>  		return FALSE;
->>>
->>> -	if ((in->timezone > 12*4-1) || (in->timezone < -(12*4-1)))
->>> +	if ((in->timezone > 12*4) || (in->timezone < -(12*4-1)))
+On 11/27/2010 03:04 PM, Bastian, Waldo wrote:
+>>> +	void (*remove)(struct ofono_ctm *tt);
+>>> +	void (*query_tty)(struct ofono_ctm *tt,
+>>> +				ofono_ctm_query_cb_t cb,
+>>> +				void *data);
+>>> +	void (*set_tty)(struct ofono_ctm *tt,
+>>> +				int enable,
 >>
->> Err, why would +48 be valid?
+>> I also changed this to ofono_bool_t enable
 > =
 
-> I think all the timezone should be a circle (24 hours). If it can't be -4=
-8, it needs to contain +48. =
+> Fyi, I noticed that radio-settings.h has this as an int as well:
+> =
 
-> Also please see 9.2.6.9 in http://gsm-history.org/fileadmin/user_upload/K=
-ey_SMS_Documents/GSM_Rec_03.40_v_2.2.0.pdf, which says "The Time Zone may b=
-e a number in the range -47 to +48".
+> 67         void (*set_fast_dormancy)(struct ofono_radio_settings *rs,
+> 68                                 int enable,
+> 69                                 ofono_radio_settings_fast_dormancy_set=
+_cb_t,
+> 70                                 void *data);
+> =
+
+> The query callback otoh uses ofono_bool_t.
 > =
 
 
-Ok, fair enough.  Though do note that the timezone field must account
-for daylight savings time.  So in theory GMT+14 and GMT-12 are valid
-timezone values as well.  See
-http://en.wikipedia.org/wiki/List_of_time_zones_by_UTC_offset
+Thanks for pointing this out.  It has now been fixed.
 
 Regards,
 -Denis
 
---===============8388474865663470043==--
+--===============6403301273731867929==--
 
