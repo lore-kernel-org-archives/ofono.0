@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6445189654362015254=="
+Content-Type: multipart/mixed; boundary="===============8222751723373915766=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 7/9] gdbus: explicitly compare pointers to NULL
-Date: Mon, 29 Nov 2010 14:50:58 -0600
-Message-ID: <4CF41232.60104@gmail.com>
-In-Reply-To: <1290886743-24561-7-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 8/9] plugins: explicitly compare pointers to NULL
+Date: Mon, 29 Nov 2010 14:51:17 -0600
+Message-ID: <4CF41245.5040008@gmail.com>
+In-Reply-To: <1290886743-24561-8-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6445189654362015254==
+--===============8222751723373915766==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -30,17 +30,31 @@ On 11/27/2010 01:39 PM, Lucas De Marchi wrote:
 > + E =3D=3D NULL
 > // </smpl>
 > ---
->  gdbus/object.c |   24 ++++++++++++------------
->  gdbus/polkit.c |    2 +-
->  gdbus/watch.c  |   21 ++++++++++-----------
->  3 files changed, 23 insertions(+), 24 deletions(-)
-> =
+>  plugins/bluetooth.c       |    6 +++---
+>  plugins/calypso.c         |    4 ++--
+>  plugins/hfp.c             |   20 ++++++++++----------
+>  plugins/hso.c             |   12 ++++++------
+>  plugins/huawei.c          |   10 +++++-----
+>  plugins/ifx.c             |   24 ++++++++++++------------
+>  plugins/isigen.c          |   10 +++++-----
+>  plugins/mbm.c             |   12 ++++++------
+>  plugins/n900.c            |    6 +++---
+>  plugins/nokia-gpio.c      |    6 +++---
+>  plugins/nokia.c           |   10 +++++-----
+>  plugins/novatel.c         |   22 +++++++++++-----------
+>  plugins/palmpre.c         |   10 +++++-----
+>  plugins/phonesim.c        |   22 +++++++++++-----------
+>  plugins/smart-messaging.c |    4 ++--
+>  plugins/ste.c             |   12 ++++++------
+>  plugins/udev.c            |    4 ++--
+>  plugins/wavecom.c         |    8 ++++----
+>  plugins/zte.c             |   12 ++++++------
+>  19 files changed, 107 insertions(+), 107 deletions(-)
 
-
-I let Marcel apply this one since it touches multiple projects.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============6445189654362015254==--
+--===============8222751723373915766==--
 
