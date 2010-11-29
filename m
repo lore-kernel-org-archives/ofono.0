@@ -1,58 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1377901499344512394=="
+Content-Type: multipart/mixed; boundary="===============2144453634069170098=="
 MIME-Version: 1.0
-From: Sjur BRENDELAND <sjur.brandeland@stericsson.com>
-Subject: ConnectionContext creation for LTE PDN Connection.
-Date: Mon, 29 Nov 2010 15:46:43 +0100
-Message-ID: <81C3A93C17462B4BBD7E272753C10579194E651E30@EXDCVYMBSTM005.EQ1STM.local>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] sim: fix issue in triggering EFest read
+Date: Mon, 29 Nov 2010 06:50:47 -0800
+Message-ID: <1291042247-27477-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1377901499344512394==
+--===============2144453634069170098==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+---
+ src/sim.c |    6 +++++-
+ 1 files changed, 5 insertions(+), 1 deletions(-)
 
-We have started to investigate LTE impact on oFono, =
+diff --git a/src/sim.c b/src/sim.c
+index e5e304c..5a84833 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -1445,7 +1445,11 @@ static void sim_efust_read_cb(int ok, int length, in=
+t record,
+ 	 * must be present if EFfdn or EFbdn are present
+ 	 */
+ 	if (sim_ust_is_available(sim->efust, sim->efust_length,
+-				SIM_UST_SERVICE_ENABLED_SERVICE_TABLE)) {
++				SIM_UST_SERVICE_ENABLED_SERVICE_TABLE) ||
++			sim_ust_is_available(sim->efust, sim->efust_length,
++				SIM_UST_SERVICE_FDN) ||
++			sim_ust_is_available(sim->efust, sim->efust_length,
++				SIM_UST_SERVICE_BDN)) {
+ 		ofono_sim_read(sim, SIM_EFEST_FILEID,
+ 				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 				sim_efest_read_cb, sim);
+-- =
 
-specifically how to integrate LTE and initial PDN connection,
-and we have some questions regarding this.
-
-This raises some questions about the handling of
-ConnectionContexts.
-
-When a terminal attach to LTE network it would
-normally do an implicit context activation request
-associated to attach request (+CGATT=3D1).
-When the context activation is completed this will
-result in an event notifying about the activated PDN
-connection according to
-27.007 10.1.19 Packet Domain event reporting +CGEREP.
-
-+CGEV: ME PDN ACT <cid>
-
-At this point we have a "connection context" in the modem.
-
-The question is then, how should we model this in oFono?
-Should we assume/require that a Connection Context
-already is created by ConnMan and pre-exists in =
-
-oFono (possibly with a flag indicating that this
-represents the initial PDN, or perhaps just taking
-the "internet" ConnectionContext)?
-Or should oFono automatically create a Connection Context?
-
-Furthermore, should oFono automatically proceed and
-set Active=3Dtrue, bind the connection to a network interface
-and set network interface in state UP, or should the
-ConnectionContext initially set Active=3Dfalse, =
-
-waiting for ConnMan to activate it?
+1.7.0.4
 
 
-Regards,
-Sjur
-
---===============1377901499344512394==--
+--===============2144453634069170098==--
 
