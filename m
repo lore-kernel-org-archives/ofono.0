@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============8222751723373915766=="
+Content-Type: multipart/mixed; boundary="===============2693878118163558041=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 8/9] plugins: explicitly compare pointers to NULL
-Date: Mon, 29 Nov 2010 14:51:17 -0600
-Message-ID: <4CF41245.5040008@gmail.com>
-In-Reply-To: <1290886743-24561-8-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 9/9] core: explicitly compare pointers to NULL
+Date: Mon, 29 Nov 2010 14:52:01 -0600
+Message-ID: <4CF41271.1040504@gmail.com>
+In-Reply-To: <1290886743-24561-9-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8222751723373915766==
+--===============2693878118163558041==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -30,31 +30,47 @@ On 11/27/2010 01:39 PM, Lucas De Marchi wrote:
 > + E =3D=3D NULL
 > // </smpl>
 > ---
->  plugins/bluetooth.c       |    6 +++---
->  plugins/calypso.c         |    4 ++--
->  plugins/hfp.c             |   20 ++++++++++----------
->  plugins/hso.c             |   12 ++++++------
->  plugins/huawei.c          |   10 +++++-----
->  plugins/ifx.c             |   24 ++++++++++++------------
->  plugins/isigen.c          |   10 +++++-----
->  plugins/mbm.c             |   12 ++++++------
->  plugins/n900.c            |    6 +++---
->  plugins/nokia-gpio.c      |    6 +++---
->  plugins/nokia.c           |   10 +++++-----
->  plugins/novatel.c         |   22 +++++++++++-----------
->  plugins/palmpre.c         |   10 +++++-----
->  plugins/phonesim.c        |   22 +++++++++++-----------
->  plugins/smart-messaging.c |    4 ++--
->  plugins/ste.c             |   12 ++++++------
->  plugins/udev.c            |    4 ++--
->  plugins/wavecom.c         |    8 ++++----
->  plugins/zte.c             |   12 ++++++------
->  19 files changed, 107 insertions(+), 107 deletions(-)
+>  src/audio-settings.c  |   12 ++++----
+>  src/call-barring.c    |   18 ++++++------
+>  src/call-forwarding.c |   20 +++++++-------
+>  src/call-meter.c      |   26 +++++++++---------
+>  src/call-settings.c   |   26 +++++++++---------
+>  src/call-volume.c     |    6 ++--
+>  src/cbs.c             |   16 +++++-----
+>  src/common.c          |    2 +-
+>  src/dbus.c            |    8 +++---
+>  src/gprs.c            |   28 ++++++++++----------
+>  src/history.c         |    2 +-
+>  src/main.c            |    2 +-
+>  src/message-waiting.c |    4 +-
+>  src/modem.c           |   14 +++++-----
+>  src/nettime.c         |    2 +-
+>  src/network.c         |   28 ++++++++++----------
+>  src/phonebook.c       |   10 +++---
+>  src/plugin.c          |    2 +-
+>  src/radio-settings.c  |   20 +++++++-------
+>  src/sim.c             |   16 +++++-----
+>  src/simfs.c           |   28 ++++++++++----------
+>  src/simutil.c         |   16 +++++-----
+>  src/sms.c             |   40 ++++++++++++++--------------
+>  src/smsagent.c        |   12 ++++----
+>  src/smsutil.c         |   34 ++++++++++++------------
+>  src/stk.c             |   62 +++++++++++++++++++++---------------------
+>  src/stkagent.c        |    2 +-
+>  src/stkutil.c         |    4 +-
+>  src/ussd.c            |   46 ++++++++++++++++----------------
+>  src/util.c            |   14 +++++-----
+>  src/voicecall.c       |   70 ++++++++++++++++++++++++-------------------=
+-----
+>  31 files changed, 295 insertions(+), 295 deletions(-)
+> =
 
-Patch has been applied, thanks.
+
+I applied this patch but broke it up into several for the core files I
+really want to track separately.  Thanks for doing all this.
 
 Regards,
 -Denis
 
---===============8222751723373915766==--
+--===============2693878118163558041==--
 
