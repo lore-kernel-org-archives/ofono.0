@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2629967910084942940=="
+Content-Type: multipart/mixed; boundary="===============6445189654362015254=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 6/9] gatchat: explicitly compare pointers to NULL
-Date: Mon, 29 Nov 2010 14:50:17 -0600
-Message-ID: <4CF41209.9040603@gmail.com>
-In-Reply-To: <1290886743-24561-6-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 7/9] gdbus: explicitly compare pointers to NULL
+Date: Mon, 29 Nov 2010 14:50:58 -0600
+Message-ID: <4CF41232.60104@gmail.com>
+In-Reply-To: <1290886743-24561-7-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2629967910084942940==
+--===============6445189654362015254==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -30,31 +30,17 @@ On 11/27/2010 01:39 PM, Lucas De Marchi wrote:
 > + E =3D=3D NULL
 > // </smpl>
 > ---
->  gatchat/gatchat.c     |   46 +++++++++++++++++++++++--------------------=
----
->  gatchat/gathdlc.c     |    8 ++++----
->  gatchat/gatio.c       |    4 ++--
->  gatchat/gatmux.c      |    6 +++---
->  gatchat/gatppp.c      |    4 ++--
->  gatchat/gatresult.c   |   44 ++++++++++++++++++++++----------------------
->  gatchat/gatserver.c   |   16 ++++++++--------
->  gatchat/gatutil.c     |    6 +++---
->  gatchat/gsmdial.c     |    2 +-
->  gatchat/ppp_auth.c    |    6 +++---
->  gatchat/ppp_cp.c      |    4 ++--
->  gatchat/ppp_ipcp.c    |    4 ++--
->  gatchat/ppp_lcp.c     |    6 +++---
->  gatchat/ringbuffer.c  |   14 +++++++-------
->  gatchat/test-qcdm.c   |    6 +++---
->  gatchat/test-server.c |   18 +++++++++---------
->  16 files changed, 97 insertions(+), 97 deletions(-)
+>  gdbus/object.c |   24 ++++++++++++------------
+>  gdbus/polkit.c |    2 +-
+>  gdbus/watch.c  |   21 ++++++++++-----------
+>  3 files changed, 23 insertions(+), 24 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+I let Marcel apply this one since it touches multiple projects.
 
 Regards,
 -Denis
 
---===============2629967910084942940==--
+--===============6445189654362015254==--
 
