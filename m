@@ -1,53 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6141626904259292985=="
+Content-Type: multipart/mixed; boundary="===============6452170877631796004=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 2/3] Use %m instead of strerror() in syslog messages
-Date: Mon, 29 Nov 2010 10:11:10 +0200
-Message-ID: <201011291011.10503.remi.denis-courmont@nokia.com>
-In-Reply-To: <4CF022A9.2070104@gmail.com>
+Subject: [PATCH] configure: do not hard-code the C run-time library name
+Date: Mon, 29 Nov 2010 10:29:02 +0200
+Message-ID: <1291019342-20747-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6141626904259292985==
+--===============6452170877631796004==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Friday 26 November 2010 23:12:09 ext Denis Kenzior, you wrote:
-> On 11/25/2010 04:51 AM, R=C3=A9mi Denis-Courmont wrote:
-> > strerror() is not thread-safe, nor in the glibc implementation,
-> > nor in the POSIX specification. In my experience, it will infrequently
-> > crash when another thread uses locale data in any way, including
-> > string formatting and such...
-> > =
+Since oFono does (obviously) not use -nostdlib, this only broke support
+for alternative C run-times.
+---
+ configure.ac |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-> > Since the Huawei driver uses thread, we might as well avoid strerror().
-> > ---
-> > =
+diff --git a/configure.ac b/configure.ac
+index 7f7a935..0c1986a 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -61,7 +61,7 @@ AC_ARG_ENABLE(pie, AC_HELP_STRING([--enable-pie],
+ AC_ARG_ENABLE(threads, AC_HELP_STRING([--enable-threads],
+ 		[enable threading support]), [enable_threads=3D${enableval}])
+ =
 
-> >  drivers/isimodem/sim.c |    3 ++-
-> >  plugins/hfp.c          |    4 ++--
-> >  plugins/isigen.c       |   13 ++++++++-----
-> >  plugins/n900.c         |   14 +++++++-------
-> >  plugins/nokia-gpio.c   |   29 +++++++++++++++++------------
-> >  5 files changed, 36 insertions(+), 27 deletions(-)
-> =
+-AC_CHECK_LIB(c, signalfd, dummy=3Dyes,
++AC_CHECK_FUNC(signalfd, dummy=3Dyes,
+ 			AC_MSG_ERROR(signalfd support is required))
+ =
 
-> Since we do not use threads, do you still want this patch?  If you do,
-> can you please break this up into two patches, one for drivers/isimodem
-> and one for plugins?  We prefer patches to be split by directory.
-
-Why do we initialize glib and dbus with thread support? If the plan is to =
-
-smoothen the hypothetical use of threads in the future, then this patch sho=
-uld =
-
-probably go in as well?
-
+ AC_CHECK_LIB(dl, dlopen, dummy=3Dyes,
 -- =
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
+1.7.1
 
---===============6141626904259292985==--
+
+--===============6452170877631796004==--
 
