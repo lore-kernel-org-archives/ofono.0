@@ -1,48 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============7084013207466984573=="
+Content-Type: multipart/mixed; boundary="===============8388474865663470043=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 4/7] plugins/n900: Move call forwarding to post sim
-Date: Mon, 29 Nov 2010 02:38:00 -0800
-Message-ID: <1291027083-19231-5-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1291027083-19231-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/3] stk: Handle provide local info proactive command
+Date: Mon, 29 Nov 2010 07:47:26 -0600
+Message-ID: <4CF3AEEE.6090808@gmail.com>
+In-Reply-To: <CE761E84DADF2947A4AF22FB8D97A473306DF4B0@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7084013207466984573==
+--===============8388474865663470043==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/n900.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi Yang,
 
-diff --git a/plugins/n900.c b/plugins/n900.c
-index a9e6b59..3f6aa39 100644
---- a/plugins/n900.c
-+++ b/plugins/n900.c
-@@ -491,6 +491,7 @@ static void n900_post_sim(struct ofono_modem *modem)
- 	DBG("");
- =
+On 11/28/2010 08:47 PM, Gu, Yang wrote:
+> Hi Denis,
+> =
 
- 	ofono_phonebook_create(isi->modem, 0, "isimodem", isi->idx);
-+	ofono_call_forwarding_create(isi->modem, 0, "isimodem", isi->idx);
- }
- =
+>>> diff --git a/src/smsutil.c b/src/smsutil.c
+>>> index e6dbf5f..5394817 100644
+>>> --- a/src/smsutil.c
+>>> +++ b/src/smsutil.c
+>>> @@ -324,10 +324,10 @@ gboolean sms_encode_scts(const struct sms_scts *i=
+n,
+>> unsigned char *pdu,
+>>>  	if (in->year > 99)
+>>>  		return FALSE;
+>>>
+>>> -	if (in->month > 12)
+>>> +	if (in->month > 12 || in->month =3D=3D 0)
+>>>  		return FALSE;
+>>>
+>>> -	if (in->day > 31)
+>>> +	if (in->day > 31 || in->day =3D=3D 0)
+>>>  		return FALSE;
+>>>
+>>>  	if (in->hour > 23)
+>>> @@ -339,7 +339,7 @@ gboolean sms_encode_scts(const struct sms_scts *in,
+>> unsigned char *pdu,
+>>>  	if (in->second > 59)
+>>>  		return FALSE;
+>>>
+>>> -	if ((in->timezone > 12*4-1) || (in->timezone < -(12*4-1)))
+>>> +	if ((in->timezone > 12*4) || (in->timezone < -(12*4-1)))
+>>
+>> Err, why would +48 be valid?
+> =
 
- static void n900_post_online(struct ofono_modem *modem)
-@@ -506,7 +507,6 @@ static void n900_post_online(struct ofono_modem *modem)
- 	ofono_cbs_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ssn_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ussd_create(isi->modem, 0, "isimodem", isi->idx);
--	ofono_call_forwarding_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_settings_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_barring_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_meter_create(isi->modem, 0, "isimodem", isi->idx);
--- =
+> I think all the timezone should be a circle (24 hours). If it can't be -4=
+8, it needs to contain +48. =
 
-1.7.0.4
+> Also please see 9.2.6.9 in http://gsm-history.org/fileadmin/user_upload/K=
+ey_SMS_Documents/GSM_Rec_03.40_v_2.2.0.pdf, which says "The Time Zone may b=
+e a number in the range -47 to +48".
+> =
 
 
---===============7084013207466984573==--
+Ok, fair enough.  Though do note that the timezone field must account
+for daylight savings time.  So in theory GMT+14 and GMT-12 are valid
+timezone values as well.  See
+http://en.wikipedia.org/wiki/List_of_time_zones_by_UTC_offset
+
+Regards,
+-Denis
+
+--===============8388474865663470043==--
 
