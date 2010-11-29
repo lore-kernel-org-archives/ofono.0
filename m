@@ -1,49 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6403301273731867929=="
+Content-Type: multipart/mixed; boundary="===============3990126621753048780=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/5] text-telephony: add public header
-Date: Mon, 29 Nov 2010 07:53:17 -0600
-Message-ID: <4CF3B04D.4080704@gmail.com>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C90157E6BCB6@orsmsx508.amr.corp.intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH] Mark ofono/*.h symbolink links as built sources
+Date: Mon, 29 Nov 2010 16:36:35 +0200
+Message-ID: <201011291636.35689.remi.denis-courmont@nokia.com>
+In-Reply-To: <1291022295.4795.13.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6403301273731867929==
+--===============3990126621753048780==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
-
-On 11/27/2010 03:04 PM, Bastian, Waldo wrote:
->>> +	void (*remove)(struct ofono_ctm *tt);
->>> +	void (*query_tty)(struct ofono_ctm *tt,
->>> +				ofono_ctm_query_cb_t cb,
->>> +				void *data);
->>> +	void (*set_tty)(struct ofono_ctm *tt,
->>> +				int enable,
->>
->> I also changed this to ofono_bool_t enable
+On Monday 29 November 2010 11:18:15 ext Marcel Holtmann, you wrote:
+> Hi Remi,
 > =
 
-> Fyi, I noticed that radio-settings.h has this as an int as well:
+> > This forces automake/make to build them first if needed (as before).
+> > But it avoids marking every single header as a dependency of every
+> > single object. Thus we do not need a bogus full rebuild of the tree
+> > everytime a header is added.
 > =
 
-> 67         void (*set_fast_dormancy)(struct ofono_radio_settings *rs,
-> 68                                 int enable,
-> 69                                 ofono_radio_settings_fast_dormancy_set=
-_cb_t,
-> 70                                 void *data);
-> =
+> I had this before, but it caused problems with make distcheck. So you
+> have double checked that this still works?
 
-> The query callback otoh uses ofono_bool_t.
-> =
+Yes, I get that:
 
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ofono-0.36 archives ready for distribution: =
 
-Thanks for pointing this out.  It has now been fixed.
+ofono-0.36.tar.gz
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 
-Regards,
--Denis
+-- =
 
---===============6403301273731867929==--
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
+
+--===============3990126621753048780==--
 
