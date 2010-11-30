@@ -1,44 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============8040424846721082516=="
+Content-Type: multipart/mixed; boundary="===============3158508468444964351=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: ConnectionContext creation for LTE PDN Connection.
-Date: Tue, 30 Nov 2010 12:26:15 +0100
-Message-ID: <AANLkTimqaKh56fb1AsKLt-LX7f7-4cWvfUtj2hNGNxXC@mail.gmail.com>
-In-Reply-To: <1291045108.4795.29.camel@aeonflux>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] Add voice call boolean property for MO/MT distinction
+Date: Tue, 30 Nov 2010 12:39:16 +0100
+Message-ID: <1291117156.4795.40.camel@aeonflux>
+In-Reply-To: <AANLkTim0Z-oPp3MRgf5jx15pt3+kFRtU=UmJkcuNGD08@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8040424846721082516==
+--===============3158508468444964351==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Aki,
 
-Marcel Holtmann wrote:
->> > Or should oFono automatically create a Connection Context?
->> >
->> > Furthermore, should oFono automatically proceed and
->> > set Active=3Dtrue, bind the connection to a network interface
->> > and set network interface in state UP,
->>
->> Definitely not. This would interfere with any other existing IP connecti=
-on, say
->> WiFi.
->
-> why would bringing an interface up interfere? We are doing this right
-> now. Just the IP assignment is done by ConnMan, but the interface
-> up/down status is controlled by oFono or even BlueZ in case of
-> Bluetooth.
+> > I am getting a bit sick of this secrecy. oFono is for all intense and
+> > purposes open source. So if you want a proper discussion here then
+> > please list the AT command in question.
+> =
 
-So does this imply that you think oFono should set Active=3Dtrue and
-and bring up the interface as soon as the Initial PDN  is avilable?
+> So this patch seems to be to enable reporting call direction as part
+> of reporting call status using AT+CLCC.  It is needed by HFP as well
+> as a conformance suite for USB ACM that R=C3=A9mi is working on.
 
-What about the ConnectionContext, should oFono automatically create a
-new one if needed?
+as I said before, someone has to do the due diligence and start listing
+all required AT commands for conformance testing. I want to see the full
+picture and not some random patches here and there.
 
-Regards,
-Sjur
+I am still not convinced that these details should be exposed via D-Bus
+APIs at all. Using the internal AT emulator would be a way better fit.
 
---===============8040424846721082516==--
+So can you guys come up with a detailed list of AT commands for this? I
+want to have this documented. Then we can have a proper discussion since
+this is not getting anywhere.
+
+Regards
+
+Marcel
+
+
+
+--===============3158508468444964351==--
 
