@@ -1,47 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8522465821660471682=="
+Content-Type: multipart/mixed; boundary="===============8673957634159310356=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [PATCH 3/3] stk: Handle provide local info proactive command
-Date: Tue, 30 Nov 2010 22:43:23 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802C4036D@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <1291113890-24465-3-git-send-email-yang.gu@intel.com>
+From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
+Subject: [PATCH] HACKING: Add ofono.conf file copy command required
+Date: Tue, 30 Nov 2010 18:56:23 -0300
+Message-ID: <20101130215623.GA22264@rafazurita.homelinux.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8522465821660471682==
+--===============8673957634159310356==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+
+Add ofono.conf copy command required for oFono core daemon to work.
+
+---
+ HACKING |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
+
+diff --git a/HACKING b/HACKING
+index e825185..e632279 100644
+--- a/HACKING
++++ b/HACKING
+@@ -76,6 +76,9 @@ use the plugins directly from within the repository. This=
+ removes the need
+ to use "make install" when testing "ofonod". The "bootstrap-configure"
+ automatically includes this option.
  =
 
-Hi Yang,
++  Copy configuration file which specifies the required security policies
++    # sudo cp ./src/ofono.conf /etc/dbus-1/system.d/
++
+   Run daemon in foreground with debugging
+     # sudo ./src/ofonod -n -d 'plugins/*'
+=20
 
->  =
-
-> +static void get_time(struct stk_response *rsp) {
-> +	time_t now;
-> +	struct tm *t;
-> +
-> +	time(&now);
-> +	t =3D localtime(&now);
-> +
-> +	rsp->result.type =3D STK_RESULT_TYPE_SUCCESS;
-> +
-> +	if (t->tm_year > 100)
-> +		rsp->provide_local_info.datetime.year =3D =
-
-> t->tm_year - 100;
-> +	else
-> +		rsp->provide_local_info.datetime.year =3D t->tm_year;
-> +
-
-Incase of error, localtime shall return a null pointer. I think its
-better to add the NULL check. =
-
-
-Regards,
-Jeevaka
-
---===============8522465821660471682==--
+--===============8673957634159310356==--
 
