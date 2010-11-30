@@ -1,55 +1,153 @@
-Content-Type: multipart/mixed; boundary="===============5961567644527491895=="
+Content-Type: multipart/mixed; boundary="===============4143666292621177374=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [PATCH] stk: Add busy error for the display text command
-Date: Tue, 30 Nov 2010 11:24:16 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802C402B0@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D4018813547D902@irsmsx501.ger.corp.intel.com>
+From: Yang Gu <yang.gu@intel.com>
+Subject: [PATCH] Simulate provide local info command in sim app
+Date: Tue, 30 Nov 2010 18:43:43 +0800
+Message-ID: <1291113823-22575-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5961567644527491895==
+--===============4143666292621177374==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+---
+ src/simapplication.cpp |   68 ++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/simapplication.h   |    2 +
+ 2 files changed, 70 insertions(+), 0 deletions(-)
+
+diff --git a/src/simapplication.cpp b/src/simapplication.cpp
+index 05ae21f..bc96a8c 100644
+--- a/src/simapplication.cpp
++++ b/src/simapplication.cpp
+@@ -288,6 +288,7 @@ const QString DemoSimApplication::getName()
+ #define MainMenu_SendUSSD   13
+ #define MainMenu_SendSMS    14
+ #define MainMenu_Polling    15
++#define MainMenu_LocalInfo  16
  =
 
-Hi Guillaume,
+ #define SportsMenu_Chess        1
+ #define SportsMenu_Painting     2
+@@ -346,6 +347,9 @@ const QString DemoSimApplication::getName()
+ #define SendUSSD_Error      4
+ #define SendUSSD_Main       5
+ =
 
-> > =
++#define LocalInfoMenu_Time  1
++#define LocalInfoMenu_Lang  2
++
+ enum SendSMSMenuItems {
+ 	SendSMS_Unpacked =3D 1,
+ 	SendSMS_Packed,
+@@ -426,6 +430,10 @@ void DemoSimApplication::mainMenu()
+     item.setLabel( "SIM Polling" );
+     items +=3D item;
+ =
 
-> > Denis on IRC also wondered if this response should be =
++    item.setIdentifier( MainMenu_LocalInfo );
++    item.setLabel( "Provide Local Information" );
++    items +=3D item;
++
+     cmd.setMenuItems( items );
+ =
 
-> allowed when the =
+     command( cmd, 0, 0 );
+@@ -550,6 +558,12 @@ void DemoSimApplication::mainMenuSelection( int id )
+         }
+         break;
+ =
 
-> > message is flagged urgent.
-> > =
++        case MainMenu_LocalInfo:
++        {
++            sendLocalInfoMenu();
++        }
++        break;
++
+         default:
+         {
+             // Don't know what this item is, so just re-display the main m=
+enu.
+@@ -2044,3 +2058,57 @@ void DemoSimApplication::pollingMenuResp( const QSim=
+TerminalResponse& resp )
+         break;
+     }
+ }
++
++void DemoSimApplication::sendLocalInfoMenu()
++{
++    QSimCommand cmd;
++    QSimMenuItem item;
++    QList<QSimMenuItem> items;
++
++    cmd.setType( QSimCommand::SelectItem );
++    cmd.setTitle( "Provide Local Information" );
++
++    item.setIdentifier( LocalInfoMenu_Time );
++    item.setLabel( "Date, time and time zone" );
++    items +=3D item;
++
++    item.setIdentifier( LocalInfoMenu_Lang );
++    item.setLabel( "Language setting" );
++    items +=3D item;
++
++    cmd.setMenuItems( items );
++
++    command( cmd, this, SLOT(localInfoMenu(QSimTerminalResponse)) );
++}
++
++void DemoSimApplication::localInfoMenu( const QSimTerminalResponse& resp )
++{
++    QSimCommand cmd;
++
++    if ( resp.result() =3D=3D QSimTerminalResponse::Success ) {
++        switch ( resp.menuItem() ) {
++
++            case LocalInfoMenu_Time:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x03 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            case LocalInfoMenu_Lang:
++            {
++                cmd.setType( QSimCommand::ProvideLocalInformation );
++                cmd.setQualifier( 0x04 );
++                command( cmd, this, SLOT(sendLocalInfoMenu()) );
++            }
++            break;
++
++            default:
++                endSession();
++                break;
++        }
++    } else {
++        endSession();
++    }
++}
+\ No newline at end of file
+diff --git a/src/simapplication.h b/src/simapplication.h
+index 4a2430f..6f90a1f 100644
+--- a/src/simapplication.h
++++ b/src/simapplication.h
+@@ -119,6 +119,8 @@ protected slots:
+     void smsSetTextResp( const QSimTerminalResponse& resp );
+     void sendPollingMenu();
+     void pollingMenuResp( const QSimTerminalResponse& resp );
++    void sendLocalInfoMenu();
++    void localInfoMenu ( const QSimTerminalResponse& resp );
+ =
 
-> =
+ private:
+     int sticksLeft;
+-- =
 
-> According to the spec I think no, this type of response is =
-
-> not allowed when the message is fluffed urgent.
-> =
+1.7.2.3
 
 
-As per the ETSI TS 102 223 V9.0.0 section 6.4.1, "screen is busy"
-applies to high priority text as well. If urgent refers to =
-
-higher priority text which is the case, then I think "screen busy" is
-possible. Find below the information from specification.
-
-"High priority text shall be displayed on the screen immediately, except
-if there is a conflict of priority level of alerting
-such as incoming calls or a low battery warning. In that situation, the
-resolution is left to the terminal. If the command is
-rejected in spite of the high priority, the terminal shall inform the
-UICC using TERMINAL RESPONSE (terminal
-currently unable to process command - screen is busy)."
-
-Regards,
-Jeevaka
-
---===============5961567644527491895==--
+--===============4143666292621177374==--
 
