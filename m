@@ -1,80 +1,307 @@
-Content-Type: multipart/mixed; boundary="===============1869915082349031528=="
+Content-Type: multipart/mixed; boundary="===============0440255324798552870=="
 MIME-Version: 1.0
-From: Marko.Ovaska@nokia.com
-Subject: RE: [RFC] AGPS Support
-Date: Tue, 30 Nov 2010 18:17:12 +0100
-Message-ID: <B737AE8337D70F47B693AC85FA440B08328D7519BE@NOK-EUMSG-02.mgdnok.nokia.com>
-In-Reply-To: <129600E5E5FB004392DDC3FB599660D70104DAF2A2@irsmsx504.ger.corp.intel.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH 1/2] huaweimodem: Add support for radio settings
+Date: Tue, 30 Nov 2010 16:25:05 -0200
+Message-ID: <1291141506-25024-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1869915082349031528==
+--===============0440255324798552870==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Marcel Holtmann <marcel.holtmann@intel.com>
 
+---
+ Makefile.am                          |    3 +-
+ drivers/huaweimodem/huaweimodem.c    |    2 +
+ drivers/huaweimodem/huaweimodem.h    |    3 +
+ drivers/huaweimodem/radio-settings.c |  212 ++++++++++++++++++++++++++++++=
+++++
+ 4 files changed, 219 insertions(+), 1 deletions(-)
+ create mode 100644 drivers/huaweimodem/radio-settings.c
 
-: -----Original Message-----
-: Behalf Of ext Joly, Frederic
-
-: > -----Original Message-----
-: > From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On B=
-ehalf Of Marcel Holtmann
-: > Sent: Wednesday, November 03, 2010 11:40 AM
---
-: > Or do we expect oFono core to do something with this data? I am under
-: > the impression that oFono core is just a pipe here.
-
-
-I would not expect oFono core to do anything with assistance data, last I l=
-ooked oFono does not have positioning engine that needs helper data to enha=
-nce fix time. =
-
-
-Positioning engine, whether in Linux or in GPR chip, interfaces user plane =
-A-GPS OMA SUPL servers and control plane A-GPS (plus 3GPP commands) to cell=
-ular network residing servers. Both interfaces, in the end, point to 3GPP T=
-S's with ASN.1 BER encoded content for assistance data. Control plane or us=
-er plane A-GPS servers do not do XML formats. Only 27.007 introduces format=
- conversion.
-So raw pipe, as Sjur proposed, but with ASN.1 formatted payload without pay=
-load conversions in modem NOR in Linux side (oFono core, modem plugin or po=
-sitioning engine) to XML.
-
-
+diff --git a/Makefile.am b/Makefile.am
+index a4c47e8..5d39c23 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -180,7 +180,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/huaweimodem/huaweimodem.c \
+ 			drivers/huaweimodem/voicecall.c \
+ 			drivers/huaweimodem/audio-settings.c \
+-			drivers/huaweimodem/gprs-context.c
++			drivers/huaweimodem/gprs-context.c \
++			drivers/huaweimodem/radio-settings.c
  =
 
-: > And in conclusion we have XML and ASN.1 adding some overhead to the
-: > actual data that is encoded. None of them is coming for free.
-: =
-
-: > If we wanna look at this not from the 27.007 standard angle, then we
-: > have to look at what the users of this D-Bus are talking and what
-: would
-: > be easiest for them.
-
-OMA SUPL specifications point to 3GPP 44.031 and TS 25.331. The common nomi=
-nator for positioning engines is OMA and non-27.007 TS's use of ASN.1 forma=
-tted data. TS 27.007 from positioning user view is the odd standard. =
-
-
+ builtin_modules +=3D calypsomodem
+ builtin_sources +=3D drivers/atmodem/atutil.h \
+diff --git a/drivers/huaweimodem/huaweimodem.c b/drivers/huaweimodem/huawei=
+modem.c
+index c8b6522..8097a9c 100644
+--- a/drivers/huaweimodem/huaweimodem.c
++++ b/drivers/huaweimodem/huaweimodem.c
+@@ -36,6 +36,7 @@ static int huaweimodem_init(void)
+ {
+ 	huawei_voicecall_init();
+ 	huawei_audio_settings_init();
++	huawei_radio_settings_init();
+ 	huawei_gprs_context_init();
  =
 
-: As of today, I'm suspicious about proposing the XML format as the only
-: ofono solution.
-: Do we have commitments from GPS vendors or positioning framework
-: vendors or telephone integrators that they are going to use the XML
-: format?
-: Does STE GPS framework supports these XML formats?
+ 	return 0;
+@@ -44,6 +45,7 @@ static int huaweimodem_init(void)
+ static void huaweimodem_exit(void)
+ {
+ 	huawei_gprs_context_exit();
++	huawei_radio_settings_exit();
+ 	huawei_audio_settings_exit();
+ 	huawei_voicecall_exit();
+ }
+diff --git a/drivers/huaweimodem/huaweimodem.h b/drivers/huaweimodem/huawei=
+modem.h
+index 03d52ef..596aa08 100644
+--- a/drivers/huaweimodem/huaweimodem.h
++++ b/drivers/huaweimodem/huaweimodem.h
+@@ -27,5 +27,8 @@ extern void huawei_voicecall_exit();
+ extern void huawei_audio_settings_init();
+ extern void huawei_audio_settings_exit();
+ =
 
-As above, positioning engine has to be ASN.1 capable when user plane A-GPS =
-is used. Products over different mobile platforms do user plane A-GPS, cont=
-rol plane with AT interface introduced XML just adds overhead.
++extern void huawei_radio_settings_init();
++extern void huawei_radio_settings_exit();
++
+ extern void huawei_gprs_context_init();
+ extern void huawei_gprs_context_exit();
+diff --git a/drivers/huaweimodem/radio-settings.c b/drivers/huaweimodem/rad=
+io-settings.c
+new file mode 100644
+index 0000000..7f0b223
+--- /dev/null
++++ b/drivers/huaweimodem/radio-settings.c
+@@ -0,0 +1,212 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <errno.h>
++
++#include <glib.h>
++
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/radio-settings.h>
++
++#include "gatchat.h"
++#include "gatresult.h"
++
++#include "huaweimodem.h"
++
++static const char *none_prefix[] =3D { NULL };
++static const char *xrat_prefix[] =3D { "^SYSCFG:", NULL };
++
++struct radio_settings_data {
++	GAtChat *chat;
++};
++
++static void xrat_query_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_radio_settings_rat_mode_query_cb_t cb =3D cbd->cb;
++	enum ofono_radio_access_mode mode;
++	struct ofono_error error;
++	GAtResultIter iter;
++	int value;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		cb(&error, -1, cbd->data);
++		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	if (g_at_result_iter_next(&iter, "^SYSCFG:") =3D=3D FALSE)
++		goto error;
++
++	if (g_at_result_iter_next_number(&iter, &value) =3D=3D FALSE)
++		goto error;
++
++	switch (value) {
++	case 2:
++		mode =3D OFONO_RADIO_ACCESS_MODE_ANY;
++		break;
++	case 13:
++		mode =3D OFONO_RADIO_ACCESS_MODE_GSM;
++		break;
++	case 14:
++		mode =3D OFONO_RADIO_ACCESS_MODE_UMTS;
++		break;
++	default:
++		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++		return;
++	}
++
++	cb(&error, mode, cbd->data);
++
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++}
++
++static void huawei_query_rat_mode(struct ofono_radio_settings *rs,
++				ofono_radio_settings_rat_mode_query_cb_t cb,
++				void *data)
++{
++	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	if (g_at_chat_send(rsd->chat, "AT^SYSCFG?", xrat_prefix,
++					xrat_query_cb, cbd, g_free) =3D=3D 0) {
++		CALLBACK_WITH_FAILURE(cb, -1, data);
++		g_free(cbd);
++	}
++}
++
++static void xrat_modify_cb(gboolean ok, GAtResult *result, gpointer user_d=
+ata)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_radio_settings_rat_mode_set_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++}
++
++static void huawei_set_rat_mode(struct ofono_radio_settings *rs,
++				enum ofono_radio_access_mode mode,
++				ofono_radio_settings_rat_mode_set_cb_t cb,
++				void *data)
++{
++	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[40];
++	int value =3D 2;
++
++	switch (mode) {
++	case OFONO_RADIO_ACCESS_MODE_ANY:
++		value =3D 2;
++		break;
++	case OFONO_RADIO_ACCESS_MODE_GSM:
++		value =3D 13;
++		break;
++	case OFONO_RADIO_ACCESS_MODE_UMTS:
++		value =3D 14;
++		break;
++	case OFONO_RADIO_ACCESS_MODE_LTE:
++		goto error;
++	}
++
++	snprintf(buf, sizeof(buf), "AT^SYSCFG=3D%u,0,3FFFFFFF,2,4", value);
++
++	if (g_at_chat_send(rsd->chat, buf, none_prefix,
++					xrat_modify_cb, cbd, g_free) > 0)
++		return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
++static void xrat_support_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
++{
++	struct ofono_radio_settings *rs =3D user_data;
++
++	if (!ok)
++		return;
++
++	ofono_radio_settings_register(rs);
++}
++
++static int huawei_radio_settings_probe(struct ofono_radio_settings *rs,
++					unsigned int vendor, void *data)
++{
++	GAtChat *chat =3D data;
++	struct radio_settings_data *rsd;
++
++	rsd =3D g_try_new0(struct radio_settings_data, 1);
++	if (rsd =3D=3D NULL)
++		return -ENOMEM;
++
++	rsd->chat =3D g_at_chat_clone(chat);
++
++	ofono_radio_settings_set_data(rs, rsd);
++
++	g_at_chat_send(rsd->chat, "AT^SYSCFG=3D?", xrat_prefix,
++					xrat_support_cb, rs, NULL);
++
++	return 0;
++}
++
++static void huawei_radio_settings_remove(struct ofono_radio_settings *rs)
++{
++	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
++
++	ofono_radio_settings_set_data(rs, NULL);
++
++	g_at_chat_unref(rsd->chat);
++	g_free(rsd);
++}
++
++static struct ofono_radio_settings_driver driver =3D {
++	.name			=3D "huaweimodem",
++	.probe			=3D huawei_radio_settings_probe,
++	.remove			=3D huawei_radio_settings_remove,
++	.query_rat_mode		=3D huawei_query_rat_mode,
++	.set_rat_mode		=3D huawei_set_rat_mode
++};
++
++void huawei_radio_settings_init()
++{
++	ofono_radio_settings_driver_register(&driver);
++}
++
++void huawei_radio_settings_exit()
++{
++	ofono_radio_settings_driver_unregister(&driver);
++}
+-- =
 
-  Marko
+1.7.3.2
 
 
-
---===============1869915082349031528==--
+--===============0440255324798552870==--
 
