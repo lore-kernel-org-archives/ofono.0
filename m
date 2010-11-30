@@ -1,43 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============0814189377654395162=="
+Content-Type: multipart/mixed; boundary="===============4812454875219116024=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: ConnectionContext creation for LTE PDN Connection.
-Date: Tue, 30 Nov 2010 11:59:49 +0100
-Message-ID: <1291114789.4795.35.camel@aeonflux>
-In-Reply-To: <1291104513.14343.11.camel@Nokia-N900-51-1>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH] Add voice call boolean property for MO/MT distinction
+Date: Tue, 30 Nov 2010 13:24:39 +0200
+Message-ID: <AANLkTim0Z-oPp3MRgf5jx15pt3+kFRtU=UmJkcuNGD08@mail.gmail.com>
+In-Reply-To: <1291114683.4795.33.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0814189377654395162==
+--===============4812454875219116024==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi Marcel,
 
-as I mentioned before, please do NOT break threading.
+2010/11/30 Marcel Holtmann <marcel@holtmann.org>:
+> I am getting a bit sick of this secrecy. oFono is for all intense and
+> purposes open source. So if you want a proper discussion here then
+> please list the AT command in question.
 
-> > why would bringing an interface up interfere? We are doing this right
-> > now. Just the IP assignment is done by ConnMan, but the interface
-> > up/down status is controlled by oFono or even BlueZ in case of
-> > Bluetooth.
-> =
+So this patch seems to be to enable reporting call direction as part
+of reporting call status using AT+CLCC.  It is needed by HFP as well
+as a conformance suite for USB ACM that R=C3=A9mi is working on.
 
-> Logically whoever sets the IP parameters should bring the interface admin=
-istratively up. This is layer 3.
-> =
+In addition, I think it is good API design to provide call direction
+as a property via a GetProperties() call, as it is already available
+by witnessing call progress in the State property.  A user restarting
+in the middle of an ongoing call will otherwise miss this state
+information.
 
-> oFono does layer 2. It should either create/remove the interface and/or p=
-lay with the dormant and/or carrier flags.
+So technically, this patch should go in, especially given it is a
+property without which these two users of oFono won't work properly.
 
-If you think we should change the current behavior, then please send
-patches for oFono and BlueZ and also ConnMan to fix this.
+Cheers,
+Aki
 
-Regards
-
-Marcel
-
-
-
---===============0814189377654395162==--
+--===============4812454875219116024==--
 
