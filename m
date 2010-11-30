@@ -1,46 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============0620136162431777817=="
+Content-Type: multipart/mixed; boundary="===============1869915082349031528=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] stk: Add busy error for the display text command
-Date: Tue, 30 Nov 2010 08:22:50 -0600
-Message-ID: <4CF508BA.8010809@gmail.com>
-In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D4018813547DA8B@irsmsx501.ger.corp.intel.com>
+From: Marko.Ovaska@nokia.com
+Subject: RE: [RFC] AGPS Support
+Date: Tue, 30 Nov 2010 18:17:12 +0100
+Message-ID: <B737AE8337D70F47B693AC85FA440B08328D7519BE@NOK-EUMSG-02.mgdnok.nokia.com>
+In-Reply-To: <129600E5E5FB004392DDC3FB599660D70104DAF2A2@irsmsx504.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0620136162431777817==
+--===============1869915082349031528==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Guillaume,
-
-On 11/30/2010 07:21 AM, Lucas, GuillaumeX wrote:
-> From: Guillaume Lucas <guillaumex.lucas@intel.com>
-> =
-
-> According to the sequence 1.2 of the ETSI TS 102 384 a busy
-> screen error should be returns for the display text proactive
-> command when the ME is not able to display the text.
-> ---
->  doc/stk-api.txt |    1 +
->  src/stk.c       |   15 +++++++++++++++
->  src/stkagent.c  |   12 ++++++++++--
->  src/stkagent.h  |    1 +
->  4 files changed, 27 insertions(+), 2 deletions(-)
-> =
 
 
-Patch has been applied, however I fixed one minor booboo for you:
+: -----Original Message-----
+: Behalf Of ext Joly, Frederic
 
-Applying: stk: Add busy error for the display text command
-/home/denkenz/ofono-master/.git/rebase-apply/patch:113: trailing whitespace.
-			ALLOWED_ERROR_GO_BACK | ALLOWED_ERROR_TERMINATE |
-fatal: 1 line adds whitespace errors.
-Patch failed at 0001 stk: Add busy error for the display text command
+: > -----Original Message-----
+: > From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On B=
+ehalf Of Marcel Holtmann
+: > Sent: Wednesday, November 03, 2010 11:40 AM
+--
+: > Or do we expect oFono core to do something with this data? I am under
+: > the impression that oFono core is just a pipe here.
 
-Regards,
--Denis
 
---===============0620136162431777817==--
+I would not expect oFono core to do anything with assistance data, last I l=
+ooked oFono does not have positioning engine that needs helper data to enha=
+nce fix time. =
+
+
+Positioning engine, whether in Linux or in GPR chip, interfaces user plane =
+A-GPS OMA SUPL servers and control plane A-GPS (plus 3GPP commands) to cell=
+ular network residing servers. Both interfaces, in the end, point to 3GPP T=
+S's with ASN.1 BER encoded content for assistance data. Control plane or us=
+er plane A-GPS servers do not do XML formats. Only 27.007 introduces format=
+ conversion.
+So raw pipe, as Sjur proposed, but with ASN.1 formatted payload without pay=
+load conversions in modem NOR in Linux side (oFono core, modem plugin or po=
+sitioning engine) to XML.
+
+
+ =
+
+: > And in conclusion we have XML and ASN.1 adding some overhead to the
+: > actual data that is encoded. None of them is coming for free.
+: =
+
+: > If we wanna look at this not from the 27.007 standard angle, then we
+: > have to look at what the users of this D-Bus are talking and what
+: would
+: > be easiest for them.
+
+OMA SUPL specifications point to 3GPP 44.031 and TS 25.331. The common nomi=
+nator for positioning engines is OMA and non-27.007 TS's use of ASN.1 forma=
+tted data. TS 27.007 from positioning user view is the odd standard. =
+
+
+ =
+
+: As of today, I'm suspicious about proposing the XML format as the only
+: ofono solution.
+: Do we have commitments from GPS vendors or positioning framework
+: vendors or telephone integrators that they are going to use the XML
+: format?
+: Does STE GPS framework supports these XML formats?
+
+As above, positioning engine has to be ASN.1 capable when user plane A-GPS =
+is used. Products over different mobile platforms do user plane A-GPS, cont=
+rol plane with AT interface introduced XML just adds overhead.
+
+  Marko
+
+
+
+--===============1869915082349031528==--
 
