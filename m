@@ -1,131 +1,135 @@
-Content-Type: multipart/mixed; boundary="===============8881814809456992214=="
+Content-Type: multipart/mixed; boundary="===============2751145456575211068=="
 MIME-Version: 1.0
 From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH 2/3] Make timezone an optional field
-Date: Tue, 30 Nov 2010 18:44:49 +0800
-Message-ID: <1291113890-24465-2-git-send-email-yang.gu@intel.com>
+Subject: [PATCH 3/3] stk: Handle provide local info proactive command
+Date: Tue, 30 Nov 2010 18:44:50 +0800
+Message-ID: <1291113890-24465-3-git-send-email-yang.gu@intel.com>
 In-Reply-To: <1291113890-24465-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8881814809456992214==
+--===============2751145456575211068==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/smsutil.c |   11 ++++++++++-
- src/smsutil.h |    1 +
- src/stkutil.c |   13 ++-----------
- 3 files changed, 13 insertions(+), 12 deletions(-)
+ src/stk.c |   77 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 77 insertions(+), 0 deletions(-)
 
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 644e3e0..20af30a 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -346,7 +346,8 @@ gboolean sms_encode_scts(const struct sms_scts *in, uns=
-igned char *pdu,
- 	if (in->second > 59)
- 		return FALSE;
+diff --git a/src/stk.c b/src/stk.c
+index a4abb7d..08353f2 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -26,6 +26,7 @@
+ #define _GNU_SOURCE
+ #include <string.h>
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <stdint.h>
  =
 
--	if ((in->timezone > MAX_TIMEZONE) || (in->timezone < MIN_TIMEZONE))
-+	if ((in->timezone > MAX_TIMEZONE || in->timezone < MIN_TIMEZONE) &&
-+			in->has_timezone =3D=3D TRUE)
- 		return FALSE;
- =
-
- 	pdu =3D pdu + *offset;
-@@ -358,6 +359,11 @@ gboolean sms_encode_scts(const struct sms_scts *in, un=
-signed char *pdu,
- 	pdu[4] =3D ((in->minute / 10) & 0x0f) | (((in->minute % 10) & 0x0f) << 4);
- 	pdu[5] =3D ((in->second / 10) & 0x0f) | (((in->second % 10) & 0x0f) << 4);
- =
-
-+	if (in->has_timezone =3D=3D FALSE) {
-+		pdu[6] =3D 0xff;
-+		goto out;
-+	}
-+
- 	timezone =3D abs(in->timezone);
- =
-
- 	pdu[6] =3D ((timezone / 10) & 0x07) | (((timezone % 10) & 0x0f) << 4);
-@@ -365,6 +371,7 @@ gboolean sms_encode_scts(const struct sms_scts *in, uns=
-igned char *pdu,
- 	if (in->timezone < 0)
- 		pdu[6] |=3D 0x8;
- =
-
-+out:
- 	*offset +=3D 7;
- =
-
- 	return TRUE;
-@@ -436,6 +443,8 @@ gboolean sms_decode_scts(const unsigned char *pdu, int =
-len,
- 	if ((out->timezone > MAX_TIMEZONE) || (out->timezone < MIN_TIMEZONE))
- 		return FALSE;
- =
-
-+	out->has_timezone =3D TRUE;
-+
+ #include <glib.h>
+@@ -1995,6 +1996,77 @@ static gboolean handle_command_refresh(const struct =
+stk_command *cmd,
  	return TRUE;
  }
  =
 
-diff --git a/src/smsutil.h b/src/smsutil.h
-index 4b05313..4b6159f 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -223,6 +223,7 @@ struct sms_scts {
- 	guint8 hour;
- 	guint8 minute;
- 	guint8 second;
-+	gboolean has_timezone;
- 	gint8 timezone;
- };
- =
-
-diff --git a/src/stkutil.c b/src/stkutil.c
-index a211462..01a0021 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -4548,7 +4548,6 @@ static gboolean build_dataobj_datetime_timezone(struc=
-t stk_tlv_builder *tlv,
- 						const void *data, gboolean cr)
- {
- 	const struct sms_scts *scts =3D data;
--	struct sms_scts timestamp;
- 	unsigned char value[7];
- 	int offset =3D 0;
- 	unsigned char tag =3D STK_DATA_OBJECT_TYPE_DATETIME_TIMEZONE;
-@@ -4556,16 +4555,8 @@ static gboolean build_dataobj_datetime_timezone(stru=
-ct stk_tlv_builder *tlv,
- 	if (scts->month =3D=3D 0 && scts->day =3D=3D 0)
- 		return TRUE;
- =
-
--	/* Time zone information is optional */
--	if (scts->timezone =3D=3D (gint8) 0xff) {
--		memcpy(&timestamp, scts, sizeof(timestamp));
--		timestamp.timezone =3D 0;
--		if (sms_encode_scts(&timestamp, value, &offset) !=3D TRUE)
--			return FALSE;
--		value[6] =3D 0xff;
--	} else
--		if (sms_encode_scts(scts, value, &offset) !=3D TRUE)
--			return FALSE;
-+	if (sms_encode_scts(scts, value, &offset) !=3D TRUE)
++static void get_time(struct stk_response *rsp)
++{
++	time_t now;
++	struct tm *t;
++
++	time(&now);
++	t =3D localtime(&now);
++
++	rsp->result.type =3D STK_RESULT_TYPE_SUCCESS;
++
++	if (t->tm_year > 100)
++		rsp->provide_local_info.datetime.year =3D t->tm_year - 100;
++	else
++		rsp->provide_local_info.datetime.year =3D t->tm_year;
++
++	rsp->provide_local_info.datetime.month =3D t->tm_mon + 1;
++	rsp->provide_local_info.datetime.day =3D t->tm_mday;
++	rsp->provide_local_info.datetime.hour =3D t->tm_hour;
++	rsp->provide_local_info.datetime.minute =3D t->tm_min;
++	rsp->provide_local_info.datetime.second =3D t->tm_sec;
++	rsp->provide_local_info.datetime.timezone =3D t->tm_gmtoff / 900;
++	rsp->provide_local_info.datetime.has_timezone =3D TRUE;
++
++	return;
++}
++
++static void get_lang(struct stk_response *rsp, struct ofono_stk *stk)
++{
++	char *l;
++	char lang[3];
++	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
++
++	l =3D getenv("LANG");
++	if (l =3D=3D NULL) {
++		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
++		goto out;
++	}
++
++	memcpy(lang, l, 2);
++	lang[2] =3D '\0';
++
++	rsp->result.type =3D STK_RESULT_TYPE_SUCCESS;
++	rsp->provide_local_info.language =3D lang;
++
++out:
++	if (stk_respond(stk, rsp, stk_command_cb))
++		stk_command_cb(&failure, stk);
++}
++
++static gboolean handle_command_provide_local_info(const struct stk_command=
+ *cmd,
++				struct stk_response *rsp, struct ofono_stk *stk)
++{
++	switch (cmd->qualifier) {
++	case 3:
++		DBG("Date, time and time zone");
++		get_time(rsp);
++		return TRUE;
++
++	case 4:
++		DBG("Language setting");
++		get_lang(rsp, stk);
 +		return FALSE;
++
++	default:
++		ofono_info("Unsupported Provide Local Info qualifier: %d",
++				cmd->qualifier);
++		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
++		return TRUE;
++	}
++}
++
+ static void send_dtmf_cancel(struct ofono_stk *stk)
+ {
+ 	struct ofono_voicecall *vc =3D NULL;
+@@ -2427,6 +2499,11 @@ void ofono_stk_proactive_command_notify(struct ofono=
+_stk *stk,
+ 							&rsp, stk);
+ 		break;
  =
 
- 	return stk_tlv_builder_open_container(tlv, cr, tag, FALSE) &&
- 		stk_tlv_builder_append_bytes(tlv, value, 7) &&
++	case STK_COMMAND_TYPE_PROVIDE_LOCAL_INFO:
++		respond =3D handle_command_provide_local_info(stk->pending_cmd,
++								&rsp, stk);
++		break;
++
+ 	case STK_COMMAND_TYPE_SEND_DTMF:
+ 		respond =3D handle_command_send_dtmf(stk->pending_cmd,
+ 							&rsp, stk);
 -- =
 
 1.7.2.3
 
 
---===============8881814809456992214==--
+--===============2751145456575211068==--
 
