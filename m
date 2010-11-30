@@ -1,39 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5328136291738994898=="
+Content-Type: multipart/mixed; boundary="===============0620136162431777817=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Need clarification in querying the pin status
-Date: Tue, 30 Nov 2010 07:34:33 -0600
-Message-ID: <4CF4FD69.1020405@gmail.com>
-In-Reply-To: <AANLkTi=Vdw-LKPpYTSf6dcB7WOm_H5q2chiv13hhfq6N@mail.gmail.com>
+Subject: Re: [PATCH] stk: Add busy error for the display text command
+Date: Tue, 30 Nov 2010 08:22:50 -0600
+Message-ID: <4CF508BA.8010809@gmail.com>
+In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D4018813547DA8B@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5328136291738994898==
+--===============0620136162431777817==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sankar,
+Hi Guillaume,
 
->     This is actually a bug in oFono, somehow we missed the fact that
->     ChangePin with the wrong PIN will decrease the retry counts.  The core
->     needs to be fixed to query the current PIN state and reset the state =
-to
->     pre-sim if the retry limit is reached.
+On 11/30/2010 07:21 AM, Lucas, GuillaumeX wrote:
+> From: Guillaume Lucas <guillaumex.lucas@intel.com>
 > =
 
+> According to the sequence 1.2 of the ETSI TS 102 384 a busy
+> screen error should be returns for the display text proactive
+> command when the ME is not able to display the text.
+> ---
+>  doc/stk-api.txt |    1 +
+>  src/stk.c       |   15 +++++++++++++++
+>  src/stkagent.c  |   12 ++++++++++--
+>  src/stkagent.h  |    1 +
+>  4 files changed, 27 insertions(+), 2 deletions(-)
 > =
 
-> Can you please let us know if this is already addressed or this will be
-> addressed in future.
-> =
 
+Patch has been applied, however I fixed one minor booboo for you:
 
-This task is still pending, see the last task in the SIM / SIM File
-System section of the TODO list.
+Applying: stk: Add busy error for the display text command
+/home/denkenz/ofono-master/.git/rebase-apply/patch:113: trailing whitespace.
+			ALLOWED_ERROR_GO_BACK | ALLOWED_ERROR_TERMINATE |
+fatal: 1 line adds whitespace errors.
+Patch failed at 0001 stk: Add busy error for the display text command
 
 Regards,
 -Denis
 
---===============5328136291738994898==--
+--===============0620136162431777817==--
 
