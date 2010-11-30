@@ -1,50 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============5061176881027564932=="
+Content-Type: multipart/mixed; boundary="===============2534079818176206529=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 2/2] huawei: Add support for radio settings
-Date: Tue, 30 Nov 2010 16:25:06 -0200
-Message-ID: <1291141506-25024-2-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 1/2] huaweimodem: Add support for radio settings
+Date: Tue, 30 Nov 2010 16:35:29 -0200
+Message-ID: <AANLkTikL7mFngYAauci24LyMf=6RJjt9r--77wjNTmry@mail.gmail.com>
 In-Reply-To: <1291141506-25024-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5061176881027564932==
+--===============2534079818176206529==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/huawei.c |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+On Tue, Nov 30, 2010 at 4:25 PM, Lucas De Marchi
+<lucas.demarchi@profusion.mobi> wrote:
+> diff --git a/drivers/huaweimodem/radio-settings.c b/drivers/huaweimodem/r=
+adio-settings.c
+> new file mode 100644
+> index 0000000..7f0b223
+> --- /dev/null
+> +++ b/drivers/huaweimodem/radio-settings.c
+> @@ -0,0 +1,212 @@
+> +/*
+> + *
+> + * =C2=A0oFono - Open Source Telephony
+> + *
+> + * =C2=A0Copyright (C) 2010 =C2=A0Intel Corporation. All rights reserved.
+> + *
+> + * =C2=A0This program is free software; you can redistribute it and/or m=
+odify
+> + * =C2=A0it under the terms of the GNU General Public License version 2 =
+as
+> + * =C2=A0published by the Free Software Foundation.
+> + *
+> + * =C2=A0This program is distributed in the hope that it will be useful,
+> + * =C2=A0but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + * =C2=A0MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. =C2=A0See =
+the
+> + * =C2=A0GNU General Public License for more details.
+> + *
+> + * =C2=A0You should have received a copy of the GNU General Public Licen=
+se
+> + * =C2=A0along with this program; if not, write to the Free Software
+> + * =C2=A0Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA =C2=
+=A002110-1301 =C2=A0USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#define _GNU_SOURCE
+> +#include <string.h>
+> +#include <stdlib.h>
+> +#include <stdio.h>
+> +#include <errno.h>
+> +
+> +#include <glib.h>
+> +
+> +#include <ofono/log.h>
+> +#include <ofono/modem.h>
+> +#include <ofono/radio-settings.h>
+> +
+> +#include "gatchat.h"
+> +#include "gatresult.h"
+> +
+> +#include "huaweimodem.h"
+> +
+> +static const char *none_prefix[] =3D { NULL };
+> +static const char *xrat_prefix[] =3D { "^SYSCFG:", NULL };
+> +
+> +struct radio_settings_data {
+> + =C2=A0 =C2=A0 =C2=A0 GAtChat *chat;
+> +};
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 25dfaca..3c58c7f 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -43,6 +43,7 @@
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
- #include <ofono/audio-settings.h>
-+#include <ofono/radio-settings.h>
- #include <ofono/voicecall.h>
- #include <ofono/call-forwarding.h>
- #include <ofono/call-settings.h>
-@@ -629,6 +630,9 @@ static void huawei_post_online(struct ofono_modem *mode=
-m)
- 	ofono_ussd_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
- 						"atmodem", data->pcui);
- =
-
-+	ofono_radio_settings_create(modem, OFONO_VENDOR_HUAWEI, "huaweimodem",
-+								data->pcui);
-+
- 	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
- 			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
- 		data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->pcui);
--- =
-
-1.7.3.2
+I left chat inside a radio_settings_data struct because I plan to
+extend it in a follow up patch, when this one is accepted and I finish
+my tests with Frequency Band Selection.
 
 
---===============5061176881027564932==--
+Marcel, sorry... I've made a "git commit -c" in one commit of yours
+(to re-use the commit message), so this actually came with your name.
+
+I'll send again this patch
+
+
+
+regards,
+
+Lucas De Marchi
+
+--===============2534079818176206529==--
 
