@@ -1,28 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3942501465742694114=="
+Content-Type: multipart/mixed; boundary="===============9116672825985121244=="
 MIME-Version: 1.0
-From: Daniel Wagner <wagi@monom.org>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: [PATCH] HACKING: Add ofono.conf file copy command required
-Date: Wed, 01 Dec 2010 10:55:58 +0100
-Message-ID: <20101201095558.GA7170@candlejack.bmw-carit.intra>
-In-Reply-To: <20101130215623.GA22264@rafazurita.homelinux.net>
+Date: Wed, 01 Dec 2010 11:20:29 +0100
+Message-ID: <1291198829.4795.89.camel@aeonflux>
+In-Reply-To: <20101201095558.GA7170@candlejack.bmw-carit.intra>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3942501465742694114==
+--===============9116672825985121244==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> +  Copy configuration file which specifies the required security policies
-> +    # sudo cp ./src/ofono.conf /etc/dbus-1/system.d/
-> +
+Hi Daniel,
 
-Considered to add this too?
+> > +  Copy configuration file which specifies the required security polici=
+es
+> > +    # sudo cp ./src/ofono.conf /etc/dbus-1/system.d/
+> > +
+> =
 
-sudo killall -HUP dbus-daemon
+> Considered to add this too?
+> =
+
+> sudo killall -HUP dbus-daemon
+
+that is actually a bad idea. I would not recommend it. The dbus-daemon
+should be built with inotify support and if not, then reboot of the
+system is a better idea.
+
+Regards
+
+Marcel
 
 
-daniel
 
---===============3942501465742694114==--
+--===============9116672825985121244==--
 
