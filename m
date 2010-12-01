@@ -1,40 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============9116672825985121244=="
+Content-Type: multipart/mixed; boundary="===============1967082548347283221=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] HACKING: Add ofono.conf file copy command required
-Date: Wed, 01 Dec 2010 11:20:29 +0100
-Message-ID: <1291198829.4795.89.camel@aeonflux>
-In-Reply-To: <20101201095558.GA7170@candlejack.bmw-carit.intra>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [RFC PATCH 0/3] radio-settings: add frequency band selection
+Date: Wed, 01 Dec 2010 10:10:16 -0200
+Message-ID: <1291205419-2659-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9116672825985121244==
+--===============1967082548347283221==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Daniel,
+This series add frequency band selection feature in radio settings. The API
+separates the GSM from the UMTS bands, although this is the same "property"=
+ in
+modem I know to have this feature (huawei). The idea here is to be able to =
+set
+the frequency and it will be applied by the driver only when it actually ma=
+kes
+sense according to the mode selected.
 
-> > +  Copy configuration file which specifies the required security polici=
-es
-> > +    # sudo cp ./src/ofono.conf /etc/dbus-1/system.d/
-> > +
-> =
+So, we just pass both GSM and UMTS bands to the driver that has to choose t=
+he
+right time to send the commands to the modem.
 
-> Considered to add this too?
-> =
+According to http://en.wikipedia.org/wiki/GSM_frequency_bands and
+http://en.wikipedia.org/wiki/UMTS_frequency_bands, GSM and UMTS can use 14
+bands each. However, very few are actually used in today modems, so I've ju=
+st
+added the important ones. Once new bands are used, it'll be very easy to ex=
+tend
+radio-settigs to cope with them.
 
-> sudo killall -HUP dbus-daemon
+I plan to support frequency band selection in huawei modem, once this series
+and the previous one about adding radio-settings atom to huawei are accepte=
+d.
 
-that is actually a bad idea. I would not recommend it. The dbus-daemon
-should be built with inotify support and if not, then reboot of the
-system is a better idea.
+Lucas De Marchi (3):
+  radio-settings: add frequency band selection methods
+  radio-settings: add frequency band selection properties
+  doc: document frequency band selection
 
-Regards
+ doc/radio-settings-api.txt |   43 ++++++++
+ include/radio-settings.h   |   33 ++++++
+ src/radio-settings.c       |  250 ++++++++++++++++++++++++++++++++++++++++=
++++-
+ 3 files changed, 324 insertions(+), 2 deletions(-)
 
-Marcel
+-- =
+
+1.7.3.2
 
 
-
---===============9116672825985121244==--
+--===============1967082548347283221==--
 
