@@ -1,67 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============5192788244255848668=="
+Content-Type: multipart/mixed; boundary="===============2216099779367324927=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] TODO: Mark Language Notification task as done
-Date: Wed, 01 Dec 2010 11:47:21 -0800
-Message-ID: <1291232841-16341-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Rajesh.Nagaiah@elektrobit.com
+Subject: RE: [RFC PATCH 1/3] radio-settings: add frequency band selection
+ methods
+Date: Wed, 01 Dec 2010 14:24:30 -0800
+Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702D3A719@usrdes03.ebgroup.elektrobit.com>
+In-Reply-To: <1291205419-2659-2-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5192788244255848668==
+--===============2216099779367324927==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO             |    6 ------
- doc/features.txt |    4 ++++
- 2 files changed, 4 insertions(+), 6 deletions(-)
-
-diff --git a/TODO b/TODO
-index a421a99..f64b122 100644
---- a/TODO
-+++ b/TODO
-@@ -359,12 +359,6 @@ Sim Toolkit
-   Priority: High
-   Complexity: C8
- =
-
--- Support Language Notification proactive command.
--
--  Priority: Medium
--  Complexity: C1
--  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
--
- - Support Provide Local Information.  Whenever oFono receives a Provide Lo=
-cal
-   Information proactive command, it should check the type of the informati=
-on
-   requested.  If the information is about the time/date or the language of=
- the
-diff --git a/doc/features.txt b/doc/features.txt
-index ef20cf2..bd73e2e 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -95,6 +95,10 @@ Supported Proactive Commands:
- =
-
-   NOTE: This command can also be handled by the modem.
- =
-
-+- Language Notification proactive command. Whenever oFono receives a Langu=
-age
-+  Notification proactive command, it prints the language code and sends
-+  terminal response to the SIM immediately.
-+
- - Sim icon support.  oFono supports icons that are stored on the SIM.  If =
-the
-   SIM notifies oFono that an icon is available for a particular proactive
-   command, oFono passes this information to the UI.  The UI is able to obt=
-ain
--- =
-
-1.7.0.4
+Hi Lucas, =
 
 
---===============5192788244255848668==--
+> +enum ofono_radio_band_gsm {
+> +	OFONO_RADIO_BAND_GSM_ANY	=3D 0,
+> +	OFONO_RADIO_BAND_GSM_850	=3D 1,
+> +	OFONO_RADIO_BAND_GSM_900P	=3D 2,
+> +	OFONO_RADIO_BAND_GSM_900E	=3D 3,
+> +	OFONO_RADIO_BAND_GSM_1800	=3D 4,
+> +	OFONO_RADIO_BAND_GSM_1900	=3D 5,
+> +};
+> +
+> +enum ofono_radio_band_umts {
+> +	OFONO_RADIO_BAND_UMTS_ANY	=3D 0,
+> +	OFONO_RADIO_BAND_UMTS_850	=3D 1,
+> +	OFONO_RADIO_BAND_UMTS_900	=3D 2,
+> +	OFONO_RADIO_BAND_UMTS_1700AWS	=3D 3,
+> +	OFONO_RADIO_BAND_UMTS_1900	=3D 4,
+> +	OFONO_RADIO_BAND_UMTS_2100	=3D 5,
+> +};
+
+A minor coding style comment. Accodring to code style M11: Naming of
+enums,
+If the enum contents have values (e.g. from specification) then the
+above =
+
+formatting you have used is OK. But as these values are not defined as
+such
+in the specification as such, then it should be,
+
+ enum ofono_radio_band_gsm {
+	OFONO_RADIO_BAND_GSM_ANY,
+	OFONO_RADIO_BAND_GSM_850,
+	OFONO_RADIO_BAND_GSM_900P,
+	OFONO_RADIO_BAND_GSM_900E,
+	OFONO_RADIO_BAND_GSM_1800,
+	OFONO_RADIO_BAND_GSM_1900,
+ };
+
+ enum ofono_radio_band_umts {
+	OFONO_RADIO_BAND_UMTS_ANY,
+	OFONO_RADIO_BAND_UMTS_850,
+	OFONO_RADIO_BAND_UMTS_900,
+	OFONO_RADIO_BAND_UMTS_1700AWS,
+	OFONO_RADIO_BAND_UMTS_19004,
+	OFONO_RADIO_BAND_UMTS_21005,
+ };
+
+BR,
+Rajesh
+
+--===============2216099779367324927==--
 
