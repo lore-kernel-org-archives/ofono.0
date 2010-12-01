@@ -1,24 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============4992450367545379528=="
+Content-Type: multipart/mixed; boundary="===============3942501465742694114=="
 MIME-Version: 1.0
-From: Claudio Degioanni <claudio.degioanni@zirak.it>
-Subject: DUN Client Support
-Date: Wed, 01 Dec 2010 08:35:42 +0000
-Message-ID: <4CF608D8.7090804@zirak.it>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH] HACKING: Add ofono.conf file copy command required
+Date: Wed, 01 Dec 2010 10:55:58 +0100
+Message-ID: <20101201095558.GA7170@candlejack.bmw-carit.intra>
+In-Reply-To: <20101130215623.GA22264@rafazurita.homelinux.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4992450367545379528==
+--===============3942501465742694114==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-  Hi all,
+> +  Copy configuration file which specifies the required security policies
+> +    # sudo cp ./src/ofono.conf /etc/dbus-1/system.d/
+> +
 
-I have a question about ofono current release. It supports the DUN profile
-passing throw bluez dbus ?
+Considered to add this too?
 
-thank you
-Claudio
+sudo killall -HUP dbus-daemon
 
---===============4992450367545379528==--
+
+daniel
+
+--===============3942501465742694114==--
 
