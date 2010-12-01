@@ -1,33 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============2852967452773997379=="
+Content-Type: multipart/mixed; boundary="===============5192788244255848668=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [ofono] vendor code
-Date: Wed, 01 Dec 2010 19:52:06 +0200
-Message-ID: <AANLkTikSUHqoMmuFjojAoFhvbKbZxf-Uw4omLV83REpD@mail.gmail.com>
-In-Reply-To: <AANLkTimd=Q+4pwJAuBMtePYGOg6dCPU13THrp1_yA+EX@mail.gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] TODO: Mark Language Notification task as done
+Date: Wed, 01 Dec 2010 11:47:21 -0800
+Message-ID: <1291232841-16341-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2852967452773997379==
+--===============5192788244255848668==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tonny,
+---
+ TODO             |    6 ------
+ doc/features.txt |    4 ++++
+ 2 files changed, 4 insertions(+), 6 deletions(-)
 
-> Any possibility that this is a race condition? =C2=A0Just while ofono
-> sending AT+CGREG? to poll the CGREG state, modem already sent out
-> unsolicited CGREG? =C2=A0I saw at_util_parse_reg() also tries to skip
-> unsolicited CREG/CGREG, so it looks like this is valid concern?
+diff --git a/TODO b/TODO
+index a421a99..f64b122 100644
+--- a/TODO
++++ b/TODO
+@@ -359,12 +359,6 @@ Sim Toolkit
+   Priority: High
+   Complexity: C8
+ =
 
-This definitely looks like glare to me, the modem sends unsolicited
-response and then response to AT+CGREG?, and at_util_parse_reg() gets
-very confused.
+-- Support Language Notification proactive command.
+-
+-  Priority: Medium
+-  Complexity: C1
+-  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+-
+ - Support Provide Local Information.  Whenever oFono receives a Provide Lo=
+cal
+   Information proactive command, it should check the type of the informati=
+on
+   requested.  If the information is about the time/date or the language of=
+ the
+diff --git a/doc/features.txt b/doc/features.txt
+index ef20cf2..bd73e2e 100644
+--- a/doc/features.txt
++++ b/doc/features.txt
+@@ -95,6 +95,10 @@ Supported Proactive Commands:
+ =
 
---Pekka
+   NOTE: This command can also be handled by the modem.
+ =
 
---
-Pekka.Pessi mail at nokia.com
++- Language Notification proactive command. Whenever oFono receives a Langu=
+age
++  Notification proactive command, it prints the language code and sends
++  terminal response to the SIM immediately.
++
+ - Sim icon support.  oFono supports icons that are stored on the SIM.  If =
+the
+   SIM notifies oFono that an icon is available for a particular proactive
+   command, oFono passes this information to the UI.  The UI is able to obt=
+ain
+-- =
 
---===============2852967452773997379==--
+1.7.0.4
+
+
+--===============5192788244255848668==--
 
