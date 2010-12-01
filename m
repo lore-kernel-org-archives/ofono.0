@@ -1,57 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============1967082548347283221=="
+Content-Type: multipart/mixed; boundary="===============7442292134769837437=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [RFC PATCH 0/3] radio-settings: add frequency band selection
-Date: Wed, 01 Dec 2010 10:10:16 -0200
-Message-ID: <1291205419-2659-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [RFC PATCH 1/3] radio-settings: add frequency band selection methods
+Date: Wed, 01 Dec 2010 10:10:17 -0200
+Message-ID: <1291205419-2659-2-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1291205419-2659-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1967082548347283221==
+--===============7442292134769837437==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This series add frequency band selection feature in radio settings. The API
-separates the GSM from the UMTS bands, although this is the same "property"=
- in
-modem I know to have this feature (huawei). The idea here is to be able to =
-set
-the frequency and it will be applied by the driver only when it actually ma=
-kes
-sense according to the mode selected.
+---
+ include/radio-settings.h |   33 +++++++++++++++++++++++++++++++++
+ 1 files changed, 33 insertions(+), 0 deletions(-)
 
-So, we just pass both GSM and UMTS bands to the driver that has to choose t=
-he
-right time to send the commands to the modem.
+diff --git a/include/radio-settings.h b/include/radio-settings.h
+index 45e88e7..e839231 100644
+--- a/include/radio-settings.h
++++ b/include/radio-settings.h
+@@ -35,6 +35,24 @@ enum ofono_radio_access_mode {
+ 	OFONO_RADIO_ACCESS_MODE_LTE	=3D 3,
+ };
+ =
 
-According to http://en.wikipedia.org/wiki/GSM_frequency_bands and
-http://en.wikipedia.org/wiki/UMTS_frequency_bands, GSM and UMTS can use 14
-bands each. However, very few are actually used in today modems, so I've ju=
-st
-added the important ones. Once new bands are used, it'll be very easy to ex=
-tend
-radio-settigs to cope with them.
++enum ofono_radio_band_gsm {
++	OFONO_RADIO_BAND_GSM_ANY	=3D 0,
++	OFONO_RADIO_BAND_GSM_850	=3D 1,
++	OFONO_RADIO_BAND_GSM_900P	=3D 2,
++	OFONO_RADIO_BAND_GSM_900E	=3D 3,
++	OFONO_RADIO_BAND_GSM_1800	=3D 4,
++	OFONO_RADIO_BAND_GSM_1900	=3D 5,
++};
++
++enum ofono_radio_band_umts {
++	OFONO_RADIO_BAND_UMTS_ANY	=3D 0,
++	OFONO_RADIO_BAND_UMTS_850	=3D 1,
++	OFONO_RADIO_BAND_UMTS_900	=3D 2,
++	OFONO_RADIO_BAND_UMTS_1700AWS	=3D 3,
++	OFONO_RADIO_BAND_UMTS_1900	=3D 4,
++	OFONO_RADIO_BAND_UMTS_2100	=3D 5,
++};
++
+ struct ofono_radio_settings;
+ =
 
-I plan to support frequency band selection in huawei modem, once this series
-and the previous one about adding radio-settings atom to huawei are accepte=
-d.
+ typedef void (*ofono_radio_settings_rat_mode_set_cb_t)(const struct ofono_=
+error *error,
+@@ -43,6 +61,13 @@ typedef void (*ofono_radio_settings_rat_mode_query_cb_t)=
+(const struct ofono_erro
+ 						enum ofono_radio_access_mode mode,
+ 						void *data);
+ =
 
-Lucas De Marchi (3):
-  radio-settings: add frequency band selection methods
-  radio-settings: add frequency band selection properties
-  doc: document frequency band selection
-
- doc/radio-settings-api.txt |   43 ++++++++
- include/radio-settings.h   |   33 ++++++
- src/radio-settings.c       |  250 ++++++++++++++++++++++++++++++++++++++++=
-+++-
- 3 files changed, 324 insertions(+), 2 deletions(-)
-
++typedef void (*ofono_radio_settings_band_set_cb_t)(const struct ofono_erro=
+r *error,
++							void *data);
++typedef void (*ofono_radio_settings_band_query_cb_t)(const struct ofono_er=
+ror *error,
++						enum ofono_radio_band_gsm band_gsm,
++						enum ofono_radio_band_umts band_umts,
++						void *data);
++
+ typedef void (*ofono_radio_settings_fast_dormancy_set_cb_t)(const struct o=
+fono_error *error,
+ 							void *data);
+ typedef void (*ofono_radio_settings_fast_dormancy_query_cb_t)(const struct=
+ ofono_error *error,
+@@ -61,6 +86,14 @@ struct ofono_radio_settings_driver {
+ 				enum ofono_radio_access_mode mode,
+ 				ofono_radio_settings_rat_mode_set_cb_t cb,
+ 				void *data);
++	void (*query_band)(struct ofono_radio_settings *rs,
++				ofono_radio_settings_band_query_cb_t cb,
++				void *data);
++	void (*set_band)(struct ofono_radio_settings *rs,
++				enum ofono_radio_band_gsm band_gsm,
++				enum ofono_radio_band_umts band_umts,
++				ofono_radio_settings_band_set_cb_t cb,
++				void *data);
+ 	void (*query_fast_dormancy)(struct ofono_radio_settings *rs,
+ 			ofono_radio_settings_fast_dormancy_query_cb_t cb,
+ 			void *data);
 -- =
 
 1.7.3.2
 
 
---===============1967082548347283221==--
+--===============7442292134769837437==--
 
