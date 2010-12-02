@@ -1,103 +1,173 @@
-Content-Type: multipart/mixed; boundary="===============2799300984988552437=="
+Content-Type: multipart/mixed; boundary="===============7409389991130988170=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH] TODO: Add CDMA Voicecall Support Tasks
-Date: Thu, 02 Dec 2010 14:55:21 -0800
-Message-ID: <1291330521-20747-1-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: [PATCH 1/5] cdma-voicecall: Add CDMA MO Call Support
+Date: Thu, 02 Dec 2010 15:31:21 -0800
+Message-ID: <1291332685-18740-2-git-send-email-dara.spieker-doyle@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2799300984988552437==
+--===============7409389991130988170==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- TODO |   58 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 58 insertions(+), 0 deletions(-)
+ Makefile.am              |    2 +-
+ include/cdma-voicecall.h |   82 ++++++++++++++++++++++++++++++++++++++++++=
+++++
+ include/dbus.h           |    3 ++
+ include/types.h          |    8 ++++
+ 4 files changed, 94 insertions(+), 1 deletions(-)
+ create mode 100644 include/cdma-voicecall.h
 
-diff --git a/TODO b/TODO
-index a421a99..3007620 100644
---- a/TODO
-+++ b/TODO
-@@ -496,3 +496,61 @@ Miscellaneous
-   Priority: Medium
-   Complexity: C2
-   Owner: Sjur Br=EF=BF=BD=EF=BF=BDndeland <sjur.brandeland@stericsson.co=
-m>
+diff --git a/Makefile.am b/Makefile.am
+index a4c47e8..aea3fd3 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -14,7 +14,7 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
+e/history.h \
+ 			include/gprs.h include/gprs-context.h \
+ 			include/radio-settings.h include/stk.h \
+ 			include/audio-settings.h include/nettime.h \
+-			include/ctm.h
++			include/ctm.h include/cdma-voicecall.h
+ =
+
+ nodist_include_HEADERS =3D include/version.h
+ =
+
+diff --git a/include/cdma-voicecall.h b/include/cdma-voicecall.h
+new file mode 100644
+index 0000000..d5ef3c5
+--- /dev/null
++++ b/include/cdma-voicecall.h
+@@ -0,0 +1,82 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 Nokia Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+CDMA Voicecall
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++#ifndef __OFONO_CDMA_VOICECALL_H
++#define __OFONO_CDMA_VOICECALL_H
 +
-+- Add support for Mobile Originated and Mobile Terminated Voice Call over
-+  a CDMA network. This includes management of call state and providing
-+  appropriate values for the LineIdentification in each case.
++#ifdef __cplusplus
++extern "C" {
++#endif
 +
-+  Priority: High
-+  Complexity: C2
-+  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
++#include <ofono/types.h>
 +
-+- Add support for Three-Way Calling over a CDMA network. Three-Way Calling
-+  provides the subscriber with the capability to add a third party to an
-+  established two-party call, so that all three parties may communicate in=
- a
-+  three-way call.
++struct ofono_cdma_voicecall_manager;
 +
-+  In CDMA mode, the originating subscriber of a current conversation can
-+  request for a third party to be added to a conversation by sending a Fla=
-sh
-+  With Information Message (FWIM) with dialed digits to the network. Upon
-+  setting up a two-way conversation with the added party, the originating
-+  subscriber can request to establish a three-way conversation by sending
-+  another Flash With Information Message. Upon receiving the second Flash =
-With
-+  Information Message, the MSC reconnects the original party to the
-+  conversation thus completing the setup of a three-way conversation.
++typedef void (*ofono_cdma_voicecall_cb_t)(const struct ofono_error *error,
++					void *data);
 +
-+  CDMA Three-Way Calling is described by Figure B-5 in 3GPP2 C.S0005-E Ver=
-sion
-+  2.0.
++/* Voice call related functionality, including AT+CDV, AT+CHV */
++struct ofono_cdma_voicecall_manager_driver {
++	const char *name;
++	int (*probe)(struct ofono_cdma_voicecall_manager *vc,
++			unsigned int vendor, void *data);
++	void (*remove)(struct ofono_cdma_voicecall_manager *vc);
 +
-+  Priority: High
-+  Complexity: C2
-+  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
++	void (*dial)(struct ofono_cdma_voicecall_manager *vc,
++			const struct ofono_cdma_phone_number *number,
++			ofono_cdma_voicecall_cb_t cb, void *data);
 +
-+- Add support for Call Waiting over a CDMA network. Call Waiting (CW) prov=
-ides
-+  notification of an incoming call to an originating subscriber, while the
-+  subscriber's call is in the 2-way state. Subsequently, the originating
-+  subscriber can either answer or ignore the incoming call. If the origina=
-ting
-+  subscriber answers the second call, it may alternate between the two cal=
-ls.
++	/* Hangs up active, dialing, alerting or incoming calls */
++	void (*hangup)(struct ofono_cdma_voicecall_manager *vc,
++			ofono_cdma_voicecall_cb_t cb, void *data);
 +
-+  In CDMA mode, the originating subscriber of a current conversation will
-+  receive either a Flash With Information Message or an Alert With Informa=
-tion
-+  Message from the network if there is an additional mobile terminated voi=
-ce
-+  call incoming. The originating subscriber can change conversation partie=
-s by
-+  sending a Flash With Information Message to the network and the MSC will
-+  toggle the speech path between the two conversations.
++};
 +
-+  CDMA Call Waiting is described by Figure B-6 in 3GPP2 C.S0005-E Version
-+  2.0.
++void ofono_cdma_voicecall_manager_disconnected(
++			struct ofono_cdma_voicecall_manager *vc,
++			enum ofono_disconnect_reason reason,
++			const struct ofono_error *error);
 +
-+  Priority: High
-+  Complexity: C2
-+  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
++int ofono_cdma_voicecall_manager_driver_register(
++			const struct ofono_cdma_voicecall_manager_driver *d);
++void ofono_cdma_voicecall_manager_driver_unregister(
++			const struct ofono_cdma_voicecall_manager_driver *d);
 +
-+- Support sending DTMF tones over CDMA network.
++struct ofono_cdma_voicecall_manager *ofono_cdma_voicecall_manager_create(
++					struct ofono_modem *modem,
++					unsigned int vendor,
++					const char *driver, void *data);
 +
-+  Priority: High
-+  Complexity: C2
-+  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
++void ofono_cdma_voicecall_manager_register(
++			struct ofono_cdma_voicecall_manager *vc);
++void ofono_cdma_voicecall_manager_remove(
++			struct ofono_cdma_voicecall_manager *vc);
++
++void ofono_cdma_voicecall_manager_set_data(
++			struct ofono_cdma_voicecall_manager *vc, void *data);
++void *ofono_cdma_voicecall_manager_get_data(
++			struct ofono_cdma_voicecall_manager *vc);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __OFONO_CDMA_VOICECALL_H */
+diff --git a/include/dbus.h b/include/dbus.h
+index 9e29afb..ad84ca9 100644
+--- a/include/dbus.h
++++ b/include/dbus.h
+@@ -55,6 +55,9 @@ extern "C" {
+ #define OFONO_STK_INTERFACE OFONO_SERVICE ".SimToolkit"
+ #define OFONO_SIM_APP_INTERFACE OFONO_SERVICE ".SimToolkitAgent"
+ =
+
++/*CDMA Interfaces*/
++#define OFONO_CDMA_VOICECALL_MANAGER_INTERFACE "org.ofono.cdma.VoiceCallMa=
+nager"
++
+ /* Essentially a{sv} */
+ #define OFONO_PROPERTIES_ARRAY_SIGNATURE DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STR=
+ING \
+ 					DBUS_TYPE_STRING_AS_STRING \
+diff --git a/include/types.h b/include/types.h
+index ba2481f..1ebedc6 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -83,6 +83,14 @@ struct ofono_phone_number {
+ 	int type;
+ };
+ =
+
++/* Length of NUM_FIELDS in 3GPP2 C.S0005-E v2.0*/
++#define OFONO_MAX_CDMA_PHONE_NUMBER_LENGTH 256
++
++struct ofono_cdma_phone_number {
++	/*char maps to max size of CHARi (8 bit) in 3GPP2 C.S0005-E v2.0*/
++	char number[OFONO_MAX_CDMA_PHONE_NUMBER_LENGTH];
++};
++
+ struct ofono_call {
+ 	unsigned int id;
+ 	int type;
 -- =
 
 1.7.0.4
 
 
---===============2799300984988552437==--
+--===============7409389991130988170==--
 
