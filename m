@@ -1,40 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============0696781172214061975=="
+Content-Type: multipart/mixed; boundary="===============4005971227915902172=="
 MIME-Version: 1.0
-From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH] gprs: Fix for gprs context conversion
-Date: Thu, 02 Dec 2010 09:19:00 +0200
-Message-ID: <1291274340-28556-1-git-send-email-antti.paila@nokia.com>
+From: Zhigang Li <zhigang.li@intel.com>
+Subject: [PATCH] To fix the test agent quit issue when execute play-tone
+ command of stk
+Date: Thu, 02 Dec 2010 17:29:22 +0800
+Message-ID: <1291282162-6970-1-git-send-email-zhigang.li@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0696781172214061975==
+--===============4005971227915902172==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/gprs.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ test/test-stk-menu |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 610f3b2..58166f8 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -175,7 +175,7 @@ static gboolean gprs_context_string_to_type(const char =
-*str,
- 		return TRUE;
- 	} else if (g_str_equal(str, "ims")) {
- 		*out =3D OFONO_GPRS_CONTEXT_TYPE_IMS;
--		return FALSE;
-+		return TRUE;
- 	}
+diff --git a/test/test-stk-menu b/test/test-stk-menu
+index 916a527..456a522 100755
+--- a/test/test-stk-menu
++++ b/test/test-stk-menu
+@@ -138,6 +138,18 @@ class StkAgent(dbus.service.Object):
+ 	def Cancel(self):
+ 		print "Cancel"
  =
 
- 	return FALSE;
++	@dbus.service.method("org.ofono.SimToolkitAgent",
++					in_signature=3D"ssy", out_signature=3D"")
++
++	def PlayTone(self, tone, text, icon):
++		print "playtone is %s" % (tone)
++
++        @dbus.service.method("org.ofono.SimToolkitAgent",
++                                in_signature=3D"ssy", out_signature=3D"")
++
++        def LoopTone(self, tone, text, icon):
++                print "the loop tone is %s" % (tone)
++
+ if __name__ =3D=3D '__main__':
+ 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
+ =
+
 -- =
 
-1.7.1
+1.6.5.2
 
 
---===============0696781172214061975==--
+--===============4005971227915902172==--
 
