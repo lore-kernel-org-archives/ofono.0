@@ -1,31 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============5586382955869042793=="
+Content-Type: multipart/mixed; boundary="===============3164055978299392966=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] smsutil: Fix issue in mwi dcs decoding
-Date: Thu, 02 Dec 2010 08:09:52 -0600
-Message-ID: <4CF7A8B0.7030402@gmail.com>
-In-Reply-To: <1291283007-17973-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: Re: [PATCH] HACKING: add guidelines to patch submission
+Date: Thu, 02 Dec 2010 08:10:56 -0600
+Message-ID: <4CF7A8F0.5020301@gmail.com>
+In-Reply-To: <1291218404-3661-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5586382955869042793==
+--===============3164055978299392966==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Lucas,
 
-On 12/02/2010 03:43 AM, Jeevaka Badrappan wrote:
+On 12/01/2010 09:46 AM, Lucas De Marchi wrote:
 > ---
->  src/smsutil.c |    7 ++++++-
->  1 files changed, 6 insertions(+), 1 deletions(-)
+>  HACKING |   19 +++++++++++++++++++
+>  1 files changed, 19 insertions(+), 0 deletions(-)
 > =
 
 
-Yes, good catch.  Patch has been applied, thanks.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============5586382955869042793==--
+--===============3164055978299392966==--
 
