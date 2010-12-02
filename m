@@ -1,41 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============5689411076010940284=="
+Content-Type: multipart/mixed; boundary="===============2748960190827314697=="
 MIME-Version: 1.0
-From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 3/3] isimodem: context activation might follow attach
-Date: Thu, 02 Dec 2010 18:16:22 +0200
-Message-ID: <1291306582-19024-4-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1291306582-19024-1-git-send-email-mika.liljeberg@nokia.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH] TODO: Add onwer to CNAP task
+Date: Thu, 02 Dec 2010 15:14:43 -0200
+Message-ID: <1291310083-12940-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5689411076010940284==
+--===============2748960190827314697==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/isimodem/gprs.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ TODO |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/isimodem/gprs.c b/drivers/isimodem/gprs.c
-index 3c9facd..deffb1a 100644
---- a/drivers/isimodem/gprs.c
-+++ b/drivers/isimodem/gprs.c
-@@ -259,7 +259,7 @@ static GIsiRequest *attach_request_send(GIsiClient *cli=
-ent, void *data)
- {
- 	const unsigned char msg[] =3D {
- 		GPDS_ATTACH_REQ,
--		GPDS_FOLLOW_OFF
-+		GPDS_FOLLOW_ON
- 	};
+diff --git a/TODO b/TODO
+index a421a99..edf9841 100644
+--- a/TODO
++++ b/TODO
+@@ -249,6 +249,7 @@ Supplementary Services
  =
 
- 	return g_isi_send(client, msg, sizeof(msg), GPDS_TIMEOUT,
+   Priority: Low
+   Complexity: C2
++  Owner: Gustavo F Padovan <padovan@profusion.mobi>
+ =
+
+ - User to User Signaling (UUS) support
+ =
+
 -- =
 
-1.7.1
+1.7.3.2
 
 
---===============5689411076010940284==--
+--===============2748960190827314697==--
 
