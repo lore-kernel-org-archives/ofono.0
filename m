@@ -1,47 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============0448079247792070609=="
+Content-Type: multipart/mixed; boundary="===============7043058101298743707=="
 MIME-Version: 1.0
-From: Tonny Tzeng <tonny.tzeng@gmail.com>
-Subject: [PATCH] Skip unsolicited CREG/CGREG correctly
-Date: Thu, 02 Dec 2010 22:23:08 +0800
-Message-ID: <1291299788.2038.2.camel@Twins.TonnyLab.net>
+From: Mika Liljeberg <mika.liljeberg@nokia.com>
+Subject: [PATCH 2/3] gprs: update documentation
+Date: Thu, 02 Dec 2010 18:16:21 +0200
+Message-ID: <1291306582-19024-3-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1291306582-19024-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0448079247792070609==
+--===============7043058101298743707==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch skip unsolicited CREG/CGREG correctly.
-
-Signed-off-by: Tonny Tzeng <tonny.tzeng@gmail.com>
 ---
- drivers/atmodem/atutil.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+ doc/connman-api.txt |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-index b6f0d92..2ca7b44 100644
---- a/drivers/atmodem/atutil.c
-+++ b/drivers/atmodem/atutil.c
-@@ -244,8 +244,9 @@ gboolean at_util_parse_reg(GAtResult *result, const
-char *prefix,
- 			continue;
+diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+index 22e02e5..e53032c 100644
+--- a/doc/connman-api.txt
++++ b/doc/connman-api.txt
+@@ -142,6 +142,9 @@ Properties	boolean Active [readwrite]
+ 			Holds whether the context is activated.  This value
+ 			can be set to activate / deactivate the context.
  =
 
- 		/* Some firmware will report bogus lac/ci when unregistered */
-+		/* in this case, we should skip it                          */
- 		if (s !=3D 1 && s !=3D 5)
--			goto out;
-+			continue;
++			Activating a context will automatically trigger the
++			GPRS attach procedure if necessary.
++
+ 		string AccessPointName [readwrite]
  =
 
- 		switch (vendor) {
- 		case OFONO_VENDOR_HUAWEI:
+ 			Holds the name of the access point.  This is
 -- =
 
-1.7.2.2
+1.7.1
 
 
-
---===============0448079247792070609==--
+--===============7043058101298743707==--
 
