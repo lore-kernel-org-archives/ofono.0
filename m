@@ -1,40 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============2748960190827314697=="
+Content-Type: multipart/mixed; boundary="===============0551068485299749364=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH] TODO: Add onwer to CNAP task
-Date: Thu, 02 Dec 2010 15:14:43 -0200
-Message-ID: <1291310083-12940-1-git-send-email-padovan@profusion.mobi>
+From: Claudio Degioanni <claudio.degioanni@zirak.it>
+Subject: DUN Client Support
+Date: Thu, 02 Dec 2010 19:16:47 +0100
+Message-ID: <4CF7E28F.3030202@zirak.it>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2748960190827314697==
+--===============0551068485299749364==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+Hi all,
 
-diff --git a/TODO b/TODO
-index a421a99..edf9841 100644
---- a/TODO
-+++ b/TODO
-@@ -249,6 +249,7 @@ Supplementary Services
- =
+I have a question about ofono current release. It supports the DUN profile
+passing throw bluez dbus ?
 
-   Priority: Low
-   Complexity: C2
-+  Owner: Gustavo F Padovan <padovan@profusion.mobi>
- =
-
- - User to User Signaling (UUS) support
- =
-
--- =
-
-1.7.3.2
+thank you
+Claudio
 
 
---===============2748960190827314697==--
+--===============0551068485299749364==--
 
