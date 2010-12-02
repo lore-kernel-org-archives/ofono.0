@@ -1,51 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============4005971227915902172=="
+Content-Type: multipart/mixed; boundary="===============5527677359855951204=="
 MIME-Version: 1.0
-From: Zhigang Li <zhigang.li@intel.com>
-Subject: [PATCH] To fix the test agent quit issue when execute play-tone
- command of stk
-Date: Thu, 02 Dec 2010 17:29:22 +0800
-Message-ID: <1291282162-6970-1-git-send-email-zhigang.li@intel.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] smsutil: Fix issue in mwi dcs decoding
+Date: Thu, 02 Dec 2010 01:43:27 -0800
+Message-ID: <1291283007-17973-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4005971227915902172==
+--===============5527677359855951204==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/test-stk-menu |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
+ src/smsutil.c |    7 ++++++-
+ 1 files changed, 6 insertions(+), 1 deletions(-)
 
-diff --git a/test/test-stk-menu b/test/test-stk-menu
-index 916a527..456a522 100755
---- a/test/test-stk-menu
-+++ b/test/test-stk-menu
-@@ -138,6 +138,18 @@ class StkAgent(dbus.service.Object):
- 	def Cancel(self):
- 		print "Cancel"
+diff --git a/src/smsutil.c b/src/smsutil.c
+index b06e9bf..ccd30f6 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -219,7 +219,12 @@ gboolean sms_mwi_dcs_decode(guint8 dcs, enum sms_mwi_t=
+ype *type,
+ 	else
+ 		dis =3D FALSE;
  =
 
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+					in_signature=3D"ssy", out_signature=3D"")
-+
-+	def PlayTone(self, tone, text, icon):
-+		print "playtone is %s" % (tone)
-+
-+        @dbus.service.method("org.ofono.SimToolkitAgent",
-+                                in_signature=3D"ssy", out_signature=3D"")
-+
-+        def LoopTone(self, tone, text, icon):
-+                print "the loop tone is %s" % (tone)
-+
- if __name__ =3D=3D '__main__':
- 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
- =
-
+-	if (upper =3D=3D 3)
++	/*
++	 * As per 3GPP TS 23.038 specification, if bits 7..4 set to 1110,
++	 * text included in the user data is coded in the uncompresssed
++	 * UCS2 character set.
++	 */
++	if (upper =3D=3D 2)
+ 		ch =3D SMS_CHARSET_UCS2;
+ 	else
+ 		ch =3D SMS_CHARSET_7BIT;
 -- =
 
-1.6.5.2
+1.7.0.4
 
 
---===============4005971227915902172==--
+--===============5527677359855951204==--
 
