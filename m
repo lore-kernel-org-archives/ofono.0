@@ -1,63 +1,103 @@
-Content-Type: multipart/mixed; boundary="===============8660459274572424014=="
+Content-Type: multipart/mixed; boundary="===============2799300984988552437=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Skip unsolicited CREG/CGREG correctly
-Date: Thu, 02 Dec 2010 15:22:21 -0600
-Message-ID: <4CF80E0D.6010901@gmail.com>
-In-Reply-To: <1291299788.2038.2.camel@Twins.TonnyLab.net>
+From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+Subject: [PATCH] TODO: Add CDMA Voicecall Support Tasks
+Date: Thu, 02 Dec 2010 14:55:21 -0800
+Message-ID: <1291330521-20747-1-git-send-email-dara.spieker-doyle@nokia.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8660459274572424014==
+--===============2799300984988552437==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tonny,
+---
+ TODO |   58 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 58 insertions(+), 0 deletions(-)
 
-On 12/02/2010 08:23 AM, Tonny Tzeng wrote:
-> This patch skip unsolicited CREG/CGREG correctly.
-> =
+diff --git a/TODO b/TODO
+index a421a99..3007620 100644
+--- a/TODO
++++ b/TODO
+@@ -496,3 +496,61 @@ Miscellaneous
+   Priority: Medium
+   Complexity: C2
+   Owner: Sjur Br=EF=BF=BD=EF=BF=BDndeland <sjur.brandeland@stericsson.co=
+m>
++
++CDMA Voicecall
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++- Add support for Mobile Originated and Mobile Terminated Voice Call over
++  a CDMA network. This includes management of call state and providing
++  appropriate values for the LineIdentification in each case.
++
++  Priority: High
++  Complexity: C2
++  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
++
++- Add support for Three-Way Calling over a CDMA network. Three-Way Calling
++  provides the subscriber with the capability to add a third party to an
++  established two-party call, so that all three parties may communicate in=
+ a
++  three-way call.
++
++  In CDMA mode, the originating subscriber of a current conversation can
++  request for a third party to be added to a conversation by sending a Fla=
+sh
++  With Information Message (FWIM) with dialed digits to the network. Upon
++  setting up a two-way conversation with the added party, the originating
++  subscriber can request to establish a three-way conversation by sending
++  another Flash With Information Message. Upon receiving the second Flash =
+With
++  Information Message, the MSC reconnects the original party to the
++  conversation thus completing the setup of a three-way conversation.
++
++  CDMA Three-Way Calling is described by Figure B-5 in 3GPP2 C.S0005-E Ver=
+sion
++  2.0.
++
++  Priority: High
++  Complexity: C2
++  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
++
++- Add support for Call Waiting over a CDMA network. Call Waiting (CW) prov=
+ides
++  notification of an incoming call to an originating subscriber, while the
++  subscriber's call is in the 2-way state. Subsequently, the originating
++  subscriber can either answer or ignore the incoming call. If the origina=
+ting
++  subscriber answers the second call, it may alternate between the two cal=
+ls.
++
++  In CDMA mode, the originating subscriber of a current conversation will
++  receive either a Flash With Information Message or an Alert With Informa=
+tion
++  Message from the network if there is an additional mobile terminated voi=
+ce
++  call incoming. The originating subscriber can change conversation partie=
+s by
++  sending a Flash With Information Message to the network and the MSC will
++  toggle the speech path between the two conversations.
++
++  CDMA Call Waiting is described by Figure B-6 in 3GPP2 C.S0005-E Version
++  2.0.
++
++  Priority: High
++  Complexity: C2
++  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
++
++- Support sending DTMF tones over CDMA network.
++
++  Priority: High
++  Complexity: C2
++  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+-- =
 
-> Signed-off-by: Tonny Tzeng <tonny.tzeng@gmail.com>
+1.7.0.4
 
-Please don't use Signed-off-by
 
-> ---
->  drivers/atmodem/atutil.c |    3 ++-
->  1 files changed, 2 insertions(+), 1 deletions(-)
-> =
-
-> diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
-> index b6f0d92..2ca7b44 100644
-> --- a/drivers/atmodem/atutil.c
-> +++ b/drivers/atmodem/atutil.c
-> @@ -244,8 +244,9 @@ gboolean at_util_parse_reg(GAtResult *result, const
-> char *prefix,
->  			continue;
->  =
-
->  		/* Some firmware will report bogus lac/ci when unregistered */
-> +		/* in this case, we should skip it                          */
->  		if (s !=3D 1 && s !=3D 5)
-> -			goto out;
-> +			continue;
-
-And this fix is wrong.  what this is doing is skipping the parsing of
-the lac/ci values if we're not registered / roaming.  Using continue
-here will cause the parser to fail for those cases.
-
-What you probably meant was continuing if the status was not between 1
-and 5.  But even that won't really help you if an lac of 1..5 is
-encountered ;)
-
->  =
-
->  		switch (vendor) {
->  		case OFONO_VENDOR_HUAWEI:
-
-Regards,
--Denis
-
---===============8660459274572424014==--
+--===============2799300984988552437==--
 
