@@ -1,54 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============8348975520323990856=="
+Content-Type: multipart/mixed; boundary="===============8181673277762649275=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] coding-style M14: parenthesis around sizeof arg
-Date: Fri, 03 Dec 2010 11:05:28 +0200
-Message-ID: <1291367128-21358-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Tonny Tzeng <tonny.tzeng@gmail.com>
+Subject: Re: [PATCH] Skip unsolicited CREG/CGREG correctly
+Date: Fri, 03 Dec 2010 17:34:07 +0800
+Message-ID: <AANLkTimat+w4-U-aoTRpZmdfu0zt0BQ4vWX31zfoKKef@mail.gmail.com>
+In-Reply-To: <4CF80E0D.6010901@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8348975520323990856==
+--===============8181673277762649275==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Denis,
 
----
- doc/coding-style.txt |   14 ++++++++++++++
- 1 files changed, 14 insertions(+), 0 deletions(-)
+Thanks for reviewing.
 
-diff --git a/doc/coding-style.txt b/doc/coding-style.txt
-index 9dfdc09..9d7131d 100644
---- a/doc/coding-style.txt
-+++ b/doc/coding-style.txt
-@@ -230,6 +230,20 @@ array =3D g_try_new0(int, 20);
- if (array =3D=3D NULL)	// Correct
- 	return;
- =
+On Fri, Dec 3, 2010 at 5:22 AM, Denis Kenzior <denkenz@gmail.com> wrote:
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* Some firmware will r=
+eport bogus lac/ci when unregistered */
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 /* in this case, we should s=
+kip it =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0*/
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (s !=3D 1 && s !=3D =
+5)
+>> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+goto out;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+continue;
+>
+> And this fix is wrong. =C2=A0what this is doing is skipping the parsing of
+> the lac/ci values if we're not registered / roaming. =C2=A0Using continue
+> here will cause the parser to fail for those cases.
 
-+
-+M14: Always use parenthesis with sizeof
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+The expression argument to the sizeof operator should always be in
-+parenthesis, too.
-+
-+Example:
-+1)
-+memset(stuff, 0, sizeof(*stuff));
-+
-+2)
-+memset(stuff, 0, sizeof *stuff); // Wrong
-+
-+
- O1: Shorten the name
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- Better to use abbreviation, rather than full name, to name a variable,
--- =
+But if we jump to label 'out', this routine will return the wrong
+status code parsed from a unsolicited CREG/CGREG.  For example, in my
+case, the real status value goes to the mode argument, and the status
+argument got lac value.
 
-1.7.1
+Since huawei modems send these strings without quotes, I think we need
+different logic to parse these values, for example, we may need a new
+function for testing whether there are more codes left?
 
+> What you probably meant was continuing if the status was not between 1
+> and 5. =C2=A0But even that won't really help you if an lac of 1..5 is
+> encountered ;)
 
---===============8348975520323990856==--
+Yes, you got my point, I will propose another way to avoid this.  Thanks.
+
+Best Regards,
+Tonny
+
+--===============8181673277762649275==--
 
