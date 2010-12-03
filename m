@@ -1,91 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============2673867746416791645=="
+Content-Type: multipart/mixed; boundary="===============5994272329608506365=="
 MIME-Version: 1.0
-From: Marit Henriksen <maritsofie.henriksen8@gmail.com>
-Subject: [PATCH] network: query signal strength when status changes to
- registered or roaming.
-Date: Fri, 03 Dec 2010 16:00:41 +0100
-Message-ID: <1291388441-16730-1-git-send-email-maritsofie.henriksen8@gmail.com>
+From: Tonny Tzeng <tonny.tzeng@gmail.com>
+Subject: [PATCH v2] Skip unsolicied CREG/CGREG correctly while checking GPRS
+ attach status
+Date: Fri, 03 Dec 2010 23:20:12 +0800
+Message-ID: <1291389612.2043.25.camel@Twins.TonnyLab.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2673867746416791645==
+--===============5994272329608506365==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Marit Henriksen <marit.henriksen@stericsson.com>
+This patch is to skip unsolicited CGREG while checking the GPRS attach
+status, especially for Huawei modem which sends lac and ci strings in
+unquoted format, and casues at_util_parse_reg() return lac value as
+status.
 
-Signal strength is set to -1 whenever registration status changes
-and differs from registered or roaming. When registration status
-changes again to registered or roaming, the signal strength needs to
-be updated, so add query towards driver to get it.
 ---
- src/network.c |   29 ++++++++++++++++-------------
- 1 files changed, 16 insertions(+), 13 deletions(-)
+ drivers/atmodem/atutil.c |   12 ++++++++----
+ gatchat/gatresult.c      |    5 +++++
+ gatchat/gatresult.h      |    1 +
+ 3 files changed, 14 insertions(+), 4 deletions(-)
 
-diff --git a/src/network.c b/src/network.c
-index d5b42a1..80fa83d 100644
---- a/src/network.c
-+++ b/src/network.c
-@@ -1296,6 +1296,19 @@ emit:
- 	notify_status_watches(netreg);
+diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
+index b6f0d92..c190aa2 100644
+--- a/drivers/atmodem/atutil.c
++++ b/drivers/atmodem/atutil.c
+@@ -243,13 +243,11 @@ gboolean at_util_parse_reg(GAtResult *result,
+const char *prefix,
+ 		if (g_at_result_iter_next_number(&iter, &s) =3D=3D FALSE)
+ 			continue;
+ =
+
+-		/* Some firmware will report bogus lac/ci when unregistered */
+-		if (s !=3D 1 && s !=3D 5)
+-			goto out;
+-
+ 		switch (vendor) {
+ 		case OFONO_VENDOR_HUAWEI:
+ 		case OFONO_VENDOR_NOVATEL:
++			if (g_at_result_iter_eol(&iter))
++				continue;
+ 			r =3D g_at_result_iter_next_unquoted_string(&iter, &str);
+ =
+
+ 			if (r =3D=3D TRUE)
+@@ -257,6 +255,8 @@ gboolean at_util_parse_reg(GAtResult *result, const
+char *prefix,
+ 			else
+ 				goto out;
+ =
+
++			if (g_at_result_iter_eol(&iter))
++				continue;
+ 			r =3D g_at_result_iter_next_unquoted_string(&iter, &str);
+ =
+
+ 			if (r =3D=3D TRUE)
+@@ -266,11 +266,15 @@ gboolean at_util_parse_reg(GAtResult *result,
+const char *prefix,
+ =
+
+ 			break;
+ 		default:
++			if (g_at_result_iter_eol(&iter))
++				continue;
+ 			if (g_at_result_iter_next_string(&iter, &str) =3D=3D TRUE)
+ 				l =3D strtol(str, NULL, 16);
+ 			else
+ 				goto out;
+ =
+
++			if (g_at_result_iter_eol(&iter))
++				continue;
+ 			if (g_at_result_iter_next_string(&iter, &str) =3D=3D TRUE)
+ 				c =3D strtol(str, NULL, 16);
+ 			else
+diff --git a/gatchat/gatresult.c b/gatchat/gatresult.c
+index 8a6dfae..c919305 100644
+--- a/gatchat/gatresult.c
++++ b/gatchat/gatresult.c
+@@ -39,6 +39,11 @@ void g_at_result_iter_init(GAtResultIter *iter,
+GAtResult *result)
+ 	iter->line_pos =3D 0;
  }
  =
 
-+static void signal_strength_callback(const struct ofono_error *error,
-+					int strength, void *data)
++gboolean g_at_result_iter_eol(GAtResultIter *iter)
 +{
-+	struct ofono_netreg *netreg =3D data;
-+
-+	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+		DBG("Error during signal strength query");
-+		return;
-+	}
-+
-+	ofono_netreg_strength_notify(netreg, strength);
++	return iter->line_pos >=3D strlen(iter->l->data);
 +}
 +
- void ofono_netreg_status_notify(struct ofono_netreg *netreg, int status,
- 			int lac, int ci, int tech)
+ gboolean g_at_result_iter_next(GAtResultIter *iter, const char *prefix)
  {
-@@ -1319,6 +1332,9 @@ void ofono_netreg_status_notify(struct ofono_netreg *=
-netreg, int status,
- 		if (netreg->driver->current_operator)
- 			netreg->driver->current_operator(netreg,
- 					current_operator_callback, netreg);
-+		if (netreg->driver->strength)
-+			netreg->driver->strength(netreg,
-+					signal_strength_callback, netreg);
- 	} else {
- 		struct ofono_error error;
+ 	char *line;
+diff --git a/gatchat/gatresult.h b/gatchat/gatresult.h
+index a74741f..33c0b2c 100644
+--- a/gatchat/gatresult.h
++++ b/gatchat/gatresult.h
+@@ -46,6 +46,7 @@ struct _GAtResultIter {
+ typedef struct _GAtResultIter GAtResultIter;
  =
 
-@@ -1345,19 +1361,6 @@ void ofono_netreg_time_notify(struct ofono_netreg *n=
-etreg,
- 	__ofono_nettime_info_received(modem, info);
- }
+ void g_at_result_iter_init(GAtResultIter *iter, GAtResult *result);
++gboolean g_at_result_iter_eol(GAtResultIter *iter);
  =
 
--static void signal_strength_callback(const struct ofono_error *error,
--					int strength, void *data)
--{
--	struct ofono_netreg *netreg =3D data;
--
--	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
--		DBG("Error during signal strength query");
--		return;
--	}
--
--	ofono_netreg_strength_notify(netreg, strength);
--}
--
- static void init_registration_status(const struct ofono_error *error,
- 					int status, int lac, int ci, int tech,
- 					void *data)
+ gboolean g_at_result_iter_next(GAtResultIter *iter, const char
+*prefix);
+ gboolean g_at_result_iter_open_list(GAtResultIter *iter);
 -- =
 
-1.7.1
+1.7.2.2
 
 
---===============2673867746416791645==--
+
+--===============5994272329608506365==--
 
