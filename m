@@ -1,40 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============1497311641692934758=="
+Content-Type: multipart/mixed; boundary="===============6806052284134683929=="
 MIME-Version: 1.0
-From: Rajesh.Nagaiah@elektrobit.com
-Subject: RE: [PATCH 2/5] cdma-voicecall: Add CDMA MO Call Support
-Date: Thu, 02 Dec 2010 16:30:15 -0800
-Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702D3AA1A@usrdes03.ebgroup.elektrobit.com>
-In-Reply-To: <1291332685-18740-3-git-send-email-dara.spieker-doyle@nokia.com>
+From: John.Mathew@elektrobit.com
+Subject: RE: [PATCH] voicecall: Add EmergencyCall property.
+Date: Fri, 03 Dec 2010 10:00:36 +0200
+Message-ID: <FE1DB9979BF5A743BEB836613423CAD8012C9C95@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <1289494917.3266.64.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1497311641692934758==
+--===============6806052284134683929==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dara, =
+Hi Marcel, =
 
-  =
 
-> +enum cdma_call_status {
-> +	CDMA_CALL_STATUS_ACTIVE =3D 0,
-> +	CDMA_CALL_STATUS_DIALING =3D 1,
-> +	CDMA_CALL_STATUS_ALERTING =3D 2,
-> +	CDMA_CALL_STATUS_INCOMING =3D 4,
+>
+>> This was a question open for discussion. What would be the =
 
-Should be 3 ?
+>appropriate property name?
+>
+>As per my understanding, this property is only to provide the =
 
-> +	CDMA_CALL_STATUS_DISCONNECTED
-> +};
+>Emergency call indication to the application side, so that =
 
-We can use the existing gsm call status itself ?
-Just that we wont use the HELD and WAITING status
-in CDMA.
+>applications can display a different UI compared to the normal =
 
-BR,
-Rajesh
-=20
+>UI. In this case, I think the property name "Emergency" is enough. =
 
---===============1497311641692934758==--
+>
+>Since this is a property for the call, the following fits as =
+
+>well. We can remove the existing multiparty property and add =
+
+>it to the new property.
+>
+>string Type [readonly]
+>       Contains the Type of the current call.
+>
+>       The Values can be:
+>               "Normal"
+>               "Emergency"
+>		   "Data"
+>	         "Multiparty"	=
+
+>
+>Let me know your opinion on this.
+> =
+
+                         =
+
+Any comments?
+
+
+--===============6806052284134683929==--
 
