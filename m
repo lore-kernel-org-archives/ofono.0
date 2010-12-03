@@ -1,62 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============4871901683198908555=="
+Content-Type: multipart/mixed; boundary="===============6061490994208608975=="
 MIME-Version: 1.0
-From: Tonny Tzeng <tonny.tzeng@gmail.com>
-Subject: [PATCH] Specify vendor ID for Huawei modem while creating GPRS context
-Date: Fri, 03 Dec 2010 23:22:52 +0800
-Message-ID: <1291389772.2043.27.camel@Twins.TonnyLab.net>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] TODO: Add task for NITZ name support in netreg
+Date: Fri, 03 Dec 2010 12:43:49 -0600
+Message-ID: <4CF93A65.3070804@gmail.com>
+In-Reply-To: <1291384929-352-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4871901683198908555==
+--===============6061490994208608975==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/huawei.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+Hi Aki,
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 25dfaca..32cf70d 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -454,7 +454,7 @@ static void huawei_disconnect(gpointer user_data)
- 			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
- 		ofono_info("Reopened GPRS context channel");
- =
+On 12/03/2010 08:02 AM, Aki Niemi wrote:
+> ---
+>  TODO |   10 ++++++++++
+>  1 files changed, 10 insertions(+), 0 deletions(-)
+> =
 
--		data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
-+		data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
-"atmodem",
- 								data->modem);
- =
-
- 		if (data->gprs && data->gc)
-@@ -631,12 +631,12 @@ static void huawei_post_online(struct ofono_modem
-*modem)
- =
-
- 	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
- 			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
--		data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->pcui);
-+		data->gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
-data->pcui);
- 		if (data->ndis =3D=3D TRUE)
--			data->gc =3D ofono_gprs_context_create(modem, 0,
-+			data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
- 						"huaweimodem", data->pcui);
- 		else
--			data->gc =3D ofono_gprs_context_create(modem, 0,
-+			data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
- 						"atmodem", data->modem);
- =
-
- 		if (data->gprs && data->gc)
--- =
-
-1.7.2.2
+> diff --git a/TODO b/TODO
+> index 6cf7202..457c9a1 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -497,3 +497,13 @@ Miscellaneous
+>    Priority: Medium
+>    Complexity: C2
+>    Owner: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+> +
+> +- Add NITZ name support to the network registration atom.  One of the ma=
+ny
+> +  inputs to the final display name on the UI is a name given in a NITZ
+> +  indication from the network.  This task adds a notify function to the =
+network
+> +  registration atom, and modifies the logic in get_operator_display_name=
+() to
+> +  use the NITZ name if available.
+> +
+> +  Priority: Medium
+> +  Complexity: C1
+> +  Owner: Aki Niemi <aki.niemi@nokia.com>
+> =
 
 
+Out of curiosity, how do you plan to support this on AT modems?  I have
+yet to see any AT modem report the NITZ network name via a proprietary
+command.
 
---===============4871901683198908555==--
+Besides, all AT modems report the NITZ name via COPS.  So in effect
+oFono already fulfills this task...
+
+Regards,
+-Denis
+
+--===============6061490994208608975==--
 
