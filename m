@@ -1,57 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============6152550979356938214=="
+Content-Type: multipart/mixed; boundary="===============1249188143627360093=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [RESEND] [PATCH] Mark ofono/*.h symbolink links as built sources
-Date: Fri, 03 Dec 2010 21:36:22 +0200
-Message-ID: <1291404982-13459-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+Subject: RE: [PATCH 2/5] cdma-voicecall: Add CDMA MO Call Support
+Date: Fri, 03 Dec 2010 13:20:31 -0800
+Message-ID: <1291411231.6615.207.camel@dardoyle-desktop>
+In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702D3AA1A@usrdes03.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6152550979356938214==
+--===============1249188143627360093==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This forces automake/make to build them first if needed (as before).
-But it avoids marking every single header as a dependency of every
-single object. Thus we do not need a bogus full rebuild of the tree
-everytime a header is added.
----
- Makefile.am |    5 ++---
- 1 files changed, 2 insertions(+), 3 deletions(-)
+Hi Rajesh
 
-diff --git a/Makefile.am b/Makefile.am
-index a4c47e8..ee7949d 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -326,7 +326,8 @@ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBU=
-S_LIBS@ @CAPNG_LIBS@ -ldl
- src_ofonod_LDFLAGS =3D -Wl,--export-dynamic \
- 				-Wl,--version-script=3D$(srcdir)/src/ofono.ver
+On Fri, 2010-12-03 at 01:30 +0100, ext Rajesh.Nagaiah(a)elektrobit.com
+wrote:
+
+> > +enum cdma_call_status {
+> > +	CDMA_CALL_STATUS_ACTIVE =3D 0,
+> > +	CDMA_CALL_STATUS_DIALING =3D 1,
+> > +	CDMA_CALL_STATUS_ALERTING =3D 2,
+> > +	CDMA_CALL_STATUS_INCOMING =3D 4,
+> =
+
+> Should be 3 ?
+
+Yes indeed. I will fix this, thank you for catching it.
  =
 
--CLEANFILES =3D src/builtin.h $(local_headers) $(rules_DATA)
-+BUILT_SOURCES =3D $(local_headers)
-+CLEANFILES =3D src/builtin.h $(BUILT_SOURCES) $(rules_DATA)
- =
+> > +	CDMA_CALL_STATUS_DISCONNECTED
+> > +};
+> =
 
- plugindir =3D $(libdir)/ofono/plugins
- =
+> We can use the existing gsm call status itself ?
+> Just that we wont use the HELD and WAITING status
+> in CDMA.
 
-@@ -512,8 +513,6 @@ src/builtin.h: src/genbuiltin $(builtin_sources)
- plugins/%.rules:
- 	$(AM_V_GEN)cp $(srcdir)/$(subst 97-,,$@) $@
- =
+In this early phase of CDMA support in oFono, we would like to evolve it
+in its own right for a while, per the offline conversation from the
+MeeGo Conference in Dublin. On a case by case basis, for items of large
+architectural impact, we intend to evaluate potential re-use upfront.
+The plan is to allow smaller items like this for now, until the related
+feature has matured sufficiently that they can be re-factored correctly
+if applicable.
 
--$(src_ofonod_OBJECTS) $(unit_objects): $(local_headers)
--
- include/ofono/version.h: include/version.h
- 	$(AM_V_at)$(MKDIR_P) include/ofono
- 	$(AM_V_GEN)$(LN_S) $(abs_top_builddir)/$< $@
--- =
-
-1.7.1
+Cheers
+Dara
 
 
---===============6152550979356938214==--
+--===============1249188143627360093==--
 
