@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6061490994208608975=="
+Content-Type: multipart/mixed; boundary="===============4957904943243221802=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO: Add task for NITZ name support in netreg
-Date: Fri, 03 Dec 2010 12:43:49 -0600
-Message-ID: <4CF93A65.3070804@gmail.com>
-In-Reply-To: <1291384929-352-1-git-send-email-aki.niemi@nokia.com>
+Subject: Re: [PATCH] TODO: Add task for GSMA name list support
+Date: Fri, 03 Dec 2010 12:48:48 -0600
+Message-ID: <4CF93B90.3070705@gmail.com>
+In-Reply-To: <1291384946-417-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6061490994208608975==
+--===============4957904943243221802==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,43 +17,40 @@ Hi Aki,
 
 On 12/03/2010 08:02 AM, Aki Niemi wrote:
 > ---
->  TODO |   10 ++++++++++
->  1 files changed, 10 insertions(+), 0 deletions(-)
+>  TODO |    9 +++++++++
+>  1 files changed, 9 insertions(+), 0 deletions(-)
 > =
 
 > diff --git a/TODO b/TODO
-> index 6cf7202..457c9a1 100644
+> index 457c9a1..b63b834 100644
 > --- a/TODO
 > +++ b/TODO
-> @@ -497,3 +497,13 @@ Miscellaneous
+> @@ -507,3 +507,12 @@ Miscellaneous
 >    Priority: Medium
->    Complexity: C2
->    Owner: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+>    Complexity: C1
+>    Owner: Aki Niemi <aki.niemi@nokia.com>
 > +
-> +- Add NITZ name support to the network registration atom.  One of the ma=
-ny
-> +  inputs to the final display name on the UI is a name given in a NITZ
-> +  indication from the network.  This task adds a notify function to the =
-network
-> +  registration atom, and modifies the logic in get_operator_display_name=
-() to
-> +  use the NITZ name if available.
+> +- Add GSM Association (GSMA) name list support.  The GSMA publishes peri=
+odically
+> +  a spread sheet including all of the world's mobile operators and their=
+ so
+> +  called hard coded names.  This task adds machinery to use that list as=
+ basis
+> +  of a database that the network registration atom uses in its display n=
+ame
+> +  logic.
 > +
-> +  Priority: Medium
-> +  Complexity: C1
-> +  Owner: Aki Niemi <aki.niemi@nokia.com>
-> =
+> +  Priority: Low
+> +  Complexity: C2
 
+Can you modify the description to mention that oFono should no longer
+request alphanumeric name from the modem and rely on the MCC and MNC of
+the operator only?
 
-Out of curiosity, how do you plan to support this on AT modems?  I have
-yet to see any AT modem report the NITZ network name via a proprietary
-command.
-
-Besides, all AT modems report the NITZ name via COPS.  So in effect
-oFono already fulfills this task...
+This task also depends on the NITZ task btw.
 
 Regards,
 -Denis
 
---===============6061490994208608975==--
+--===============4957904943243221802==--
 
