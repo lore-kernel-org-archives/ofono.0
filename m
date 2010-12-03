@@ -1,74 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============7610585092397518819=="
+Content-Type: multipart/mixed; boundary="===============2348126972075088659=="
 MIME-Version: 1.0
-From: Rajesh.Nagaiah@elektrobit.com
-Subject: RE: [PATCH 2/5] cdma-voicecall: Add CDMA MO Call Support
-Date: Fri, 03 Dec 2010 13:34:26 -0800
-Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702D3ABEC@usrdes03.ebgroup.elektrobit.com>
-In-Reply-To: <1291411231.6615.207.camel@dardoyle-desktop>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: Re: [PATCH -v3 1/5] modem: only unref pending if it is a powered
+ pending
+Date: Fri, 03 Dec 2010 19:37:04 -0200
+Message-ID: <20101203213704.GA4432@vigoh>
+In-Reply-To: <1291402377-9211-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7610585092397518819==
+--===============2348126972075088659==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+* Gustavo F. Padovan <padovan@profusion.mobi> [2010-12-03 16:52:53 -0200]:
 
-Hi Dara,
-
-> -----Original Message-----
-> From: ofono-bounces(a)ofono.org =
-
-> [mailto:ofono-bounces(a)ofono.org] On Behalf Of Dara Spieker-Doyle
-> Sent: 03 December 2010 13:21
- =
-
-> > > +enum cdma_call_status {
-> > > +	CDMA_CALL_STATUS_ACTIVE =3D 0,
-> > > +	CDMA_CALL_STATUS_DIALING =3D 1,
-> > > +	CDMA_CALL_STATUS_ALERTING =3D 2,
-> > > +	CDMA_CALL_STATUS_INCOMING =3D 4,
-> > =
-
-> > Should be 3 ?
+> ---
+>  src/modem.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
 > =
 
-> Yes indeed. I will fix this, thank you for catching it.
+> diff --git a/src/modem.c b/src/modem.c
+> index 52e647b..d6ab316 100644
+> --- a/src/modem.c
+> +++ b/src/modem.c
+> @@ -804,7 +804,7 @@ void ofono_modem_set_powered(struct ofono_modem *mode=
+m, ofono_bool_t powered)
+>  		modem->timeout =3D 0;
+>  	}
 >  =
 
-> > > +	CDMA_CALL_STATUS_DISCONNECTED
-> > > +};
-> > =
+> -	if (modem->pending !=3D NULL) {
+> +	if (modem->powered_pending !=3D powered && modem->pending !=3D NULL) {
 
-> > We can use the existing gsm call status itself ?
-> > Just that we wont use the HELD and WAITING status in CDMA.
-> =
+This one is wrong, I'll resend it. It should be modem->powered instead of
+powered.
 
-> In this early phase of CDMA support in oFono, we would like =
+-- =
 
-> to evolve it in its own right for a while, per the offline =
+Gustavo F. Padovan
+http://profusion.mobi
 
-> conversation from the MeeGo Conference in Dublin. On a case =
-
-> by case basis, for items of large architectural impact, we =
-
-> intend to evaluate potential re-use upfront.
-> The plan is to allow smaller items like this for now, until =
-
-> the related feature has matured sufficiently that they can be =
-
-> re-factored correctly if applicable.
- =
-
-I agree with the fact that we should evolve it in its own right.
-But with these kind of straight forward cases, where the GSM values
-are a superset of the CDMA values and these value definitions being
-internal to ofono, we should try to to reuse the values rather than
-creating new ones exclusive for CDMA.
-Thats my view, Denis/Marcel any comments ?
-
-BR,
-Rajesh
-
---===============7610585092397518819==--
+--===============2348126972075088659==--
 
