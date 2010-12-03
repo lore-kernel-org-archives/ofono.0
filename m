@@ -1,31 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============0855811284814720550=="
+Content-Type: multipart/mixed; boundary="===============7071049241088648729=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: [PATCH] coding-style M14: parenthesis around sizeof arg
-Date: Fri, 03 Dec 2010 14:59:07 +0200
-Message-ID: <1291381147.2502.76.camel@tucson>
-In-Reply-To: <1291367128-21358-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [fix-isi-voicecall PATCHv5 0/4] Call state fixes
+Date: Fri, 03 Dec 2010 14:59:46 +0200
+Message-ID: <1291381186.2502.77.camel@tucson>
+In-Reply-To: <1291365050-19739-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0855811284814720550==
+--===============7071049241088648729==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, 2010-12-03 at 11:05 +0200, ext Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+On Fri, 2010-12-03 at 10:30 +0200, ext Pekka.Pessi(a)nokia.com wrote:
+> Hi all,
 > =
 
-> ---
->  doc/coding-style.txt |   14 ++++++++++++++
->  1 files changed, 14 insertions(+), 0 deletions(-)
+> Here are the isi voicecall patches again, rebased with the NULL fixes.
 
-Pushed, thanks.
+Pushed the lot, thanks.
+
+Are these fixes now also in the refactored gisi tree? ;)
 
 Cheers,
 Aki
 
 
---===============0855811284814720550==--
+--===============7071049241088648729==--
 
