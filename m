@@ -1,48 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============4829006753846207750=="
+Content-Type: multipart/mixed; boundary="===============8694717070792121109=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv4] voicecall: fix dial result handling
-Date: Fri, 03 Dec 2010 13:23:16 -0600
-Message-ID: <4CF943A4.60707@gmail.com>
-In-Reply-To: <1290784489-20426-1-git-send-email-Pekka.Pessi@nokia.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH 2/2] drivers: use %m instead of strerror()
+Date: Fri, 03 Dec 2010 21:35:48 +0200
+Message-ID: <1291404948-13335-2-git-send-email-remi.denis-courmont@nokia.com>
+In-Reply-To: <1291404948-13335-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4829006753846207750==
+--===============8694717070792121109==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+---
+ drivers/isimodem/sim.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-On 11/26/2010 09:14 AM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+diff --git a/drivers/isimodem/sim.c b/drivers/isimodem/sim.c
+index b79c52a..0b3d2ae 100644
+--- a/drivers/isimodem/sim.c
++++ b/drivers/isimodem/sim.c
+@@ -428,7 +428,8 @@ static void sim_reachable_cb(GIsiClient *client, gboole=
+an alive,
+ 	struct ofono_sim *sim =3D opaque;
+ =
 
-> The existing call will be automatically put on hold if there is an
-> existing active call when dialing. On some modems the dial request
-> returns only after the dialed call is active and the existing call has
-> been put on hold.
-> =
+ 	if (!alive) {
+-		DBG("SIM client: %s", strerror(-g_isi_client_error(client)));
++		errno =3D -g_isi_client_error(client);
++		DBG("SIM client: %m");
+ 		ofono_sim_remove(sim);
+ 		return;
+ 	}
+-- =
 
-> However, on isimodem driver the dial request returns immediately before
-> the existing call has changed its status. With isimodem driver the
-> dial_handle_result() selected the existing call from the list when it
-> should have created a new one.
-> =
-
-> The dial result handling now guards againt returning a previously dialed
-> active call as result.
-> ---
->  src/voicecall.c |   19 ++++++++++++++++---
->  1 files changed, 16 insertions(+), 3 deletions(-)
-> =
+1.7.1
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============4829006753846207750==--
+--===============8694717070792121109==--
 
