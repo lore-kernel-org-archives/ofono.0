@@ -1,60 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============0096904906016902126=="
+Content-Type: multipart/mixed; boundary="===============2252904219190618405=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH -v3 3/5] Add ofono_modem_reset()
-Date: Fri, 03 Dec 2010 16:52:55 -0200
-Message-ID: <1291402377-9211-3-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1291402377-9211-2-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH -v3 4/5] phonesim: Add modem reset trigger
+Date: Fri, 03 Dec 2010 16:52:56 -0200
+Message-ID: <1291402377-9211-4-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1291402377-9211-3-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0096904906016902126==
+--===============2252904219190618405==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Some modems can screw up everything and then we will need to do a silent
-reset of the modem. This patch take the modem back to the OFFLINE state.
 ---
- src/modem.c |   20 ++++++++++++++++++++
- 1 files changed, 20 insertions(+), 0 deletions(-)
+ plugins/phonesim.c |   27 +++++++++++++++++++++++++++
+ 1 files changed, 27 insertions(+), 0 deletions(-)
 
-diff --git a/src/modem.c b/src/modem.c
-index d6ab316..3126af1 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -1615,6 +1615,26 @@ void ofono_modem_remove(struct ofono_modem *modem)
- 	g_free(modem);
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index 6b483ff..c7ef0d7 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -374,6 +374,30 @@ static void cfun_set_on_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	ofono_modem_set_powered(modem, ok);
  }
  =
 
-+void ofono_modem_reset(struct ofono_modem *modem)
++static gboolean phonesim_reset(void *user_data)
 +{
-+	int err;
++	struct ofono_modem *modem =3D user_data;
++	struct phonesim_data *data =3D ofono_modem_get_data(modem);
 +
-+	DBG("%p", modem);
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
 +
-+	if (modem->pending) {
-+		DBusMessage *reply =3D __ofono_error_failed(modem->pending);
-+		__ofono_dbus_pending_reply(&modem->pending, reply);
++	if (data->mux) {
++		g_at_mux_shutdown(data->mux);
++		g_at_mux_unref(data->mux);
++		data->mux =3D NULL;
 +	}
 +
-+	ofono_modem_set_powered(modem, FALSE);
++	ofono_modem_reset(modem);
 +
-+	err =3D set_powered(modem, TRUE);
-+	if (err =3D=3D -EINPROGRESS)
-+		return;
-+
-+	modem_change_state(modem, MODEM_STATE_PRE_SIM);
++	return FALSE;
 +}
 +
- int ofono_modem_driver_register(const struct ofono_modem_driver *d)
++static void crst_notify(GAtResult *result, gpointer user_data)
++{
++	g_idle_add(phonesim_reset, user_data);
++}
++
+ static void phonesim_disconnected(gpointer user_data)
  {
- 	DBG("driver: %p, name: %s", d, d->name);
+ 	struct ofono_modem *modem =3D user_data;
+@@ -526,6 +550,9 @@ static int phonesim_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(data->chat, "AT+CSCS=3D\"GSM\"", none_prefix,
+ 			NULL, NULL, NULL);
+ =
+
++	g_at_chat_register(data->chat, "+CRST:",
++				crst_notify, FALSE, modem, NULL);
++
+ 	return 0;
+ }
+ =
+
 -- =
 
 1.7.3.2
 
 
---===============0096904906016902126==--
+--===============2252904219190618405==--
 
