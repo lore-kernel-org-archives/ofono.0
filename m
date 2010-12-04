@@ -1,74 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============5709258172989399139=="
+Content-Type: multipart/mixed; boundary="===============9088396183779468924=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 2/2] modem: Add test script for the Lockdown property
-Date: Fri, 03 Dec 2010 19:59:50 -0200
-Message-ID: <1291413590-22873-2-git-send-email-padovan@profusion.mobi>
-In-Reply-To: <1291413590-22873-1-git-send-email-padovan@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/3] plugins: Implementation of Network Time plugin
+Date: Sat, 04 Dec 2010 01:02:56 +0100
+Message-ID: <1291420976.4795.113.camel@aeonflux>
+In-Reply-To: <AANLkTim7GyxfbDttWSuUraSDdRXgcWKT-Fq3odZ1C1EN@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5709258172989399139==
+--===============9088396183779468924==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am         |    3 ++-
- test/lockdown-modem |   25 +++++++++++++++++++++++++
- 2 files changed, 27 insertions(+), 1 deletions(-)
- create mode 100755 test/lockdown-modem
+Hi Aki,
 
-diff --git a/Makefile.am b/Makefile.am
-index a4c47e8..5414cc3 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -421,7 +421,8 @@ test_scripts =3D test/backtrace \
- 		test/test-push-notification \
- 		test/test-smart-messaging \
- 		test/send-vcard \
--		test/set-tty
-+		test/set-tty \
-+		test/lockdown-modem
- =
+> The only thing I would change here are the names. It's customary to
+> avoid repeating the interface name in the signal or method, but of
+> course the problem here is then what to call these. Maybe just Get()
+> and Changed()? ;-)
+> =
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/lockdown-modem b/test/lockdown-modem
-new file mode 100755
-index 0000000..5d98154
---- /dev/null
-+++ b/test/lockdown-modem
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 2:
-+	path =3D sys.argv[1]
-+else:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+			'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+
-+print "Locking and disconnecting modem %s..." % path
-+modem =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.Modem')
-+
-+modem.SetProperty("Lockdown", dbus.Boolean(1))
-+
-+print "press ENTER to unlock the modem %s" % path
-+sys.stdin.readline()
-+
-+modem.SetProperty("Lockdown", dbus.Boolean(0))
--- =
+> Oh, and you probably should have included a short description of what
+> this plugin is for (I forgot to mention this before).
+> =
 
-1.7.3.2
+> The thinking behind this plugin is that timed in MeeGo wants to get
+> the information, and a D-Bus API is a fine way to accomplish this.
+
+where is this timed running? I prefer the plugin just send a D-Bus
+message to the timed directly instead of a Get/Changed API kind of
+thing.
+
+Doing it this way looks highly complicated to me and doesn't serve any
+purpose if timed and ofonod are both using the D-Bus system bus.
+
+Regards
+
+Marcel
 
 
---===============5709258172989399139==--
+
+--===============9088396183779468924==--
 
