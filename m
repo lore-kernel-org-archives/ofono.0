@@ -1,39 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============9088396183779468924=="
+Content-Type: multipart/mixed; boundary="===============9209744353539242616=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/3] plugins: Implementation of Network Time plugin
-Date: Sat, 04 Dec 2010 01:02:56 +0100
-Message-ID: <1291420976.4795.113.camel@aeonflux>
-In-Reply-To: <AANLkTim7GyxfbDttWSuUraSDdRXgcWKT-Fq3odZ1C1EN@mail.gmail.com>
+Subject: Re: [RESEND] [PATCH] Mark ofono/*.h symbolink links as built sources
+Date: Sat, 04 Dec 2010 01:06:06 +0100
+Message-ID: <1291421166.4795.115.camel@aeonflux>
+In-Reply-To: <1291404982-13459-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9088396183779468924==
+--===============9209744353539242616==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi Remi,
 
-> The only thing I would change here are the names. It's customary to
-> avoid repeating the interface name in the signal or method, but of
-> course the problem here is then what to call these. Maybe just Get()
-> and Changed()? ;-)
+> This forces automake/make to build them first if needed (as before).
+> But it avoids marking every single header as a dependency of every
+> single object. Thus we do not need a bogus full rebuild of the tree
+> everytime a header is added.
+
+I have run some tests on this and seems fine to me.
+
+> ---
+>  Makefile.am |    5 ++---
+>  1 files changed, 2 insertions(+), 3 deletions(-)
 > =
 
-> Oh, and you probably should have included a short description of what
-> this plugin is for (I forgot to mention this before).
-> =
+> diff --git a/Makefile.am b/Makefile.am
+> index a4c47e8..ee7949d 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -326,7 +326,8 @@ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @D=
+BUS_LIBS@ @CAPNG_LIBS@ -ldl
+>  src_ofonod_LDFLAGS =3D -Wl,--export-dynamic \
+>  				-Wl,--version-script=3D$(srcdir)/src/ofono.ver
+>  =
 
-> The thinking behind this plugin is that timed in MeeGo wants to get
-> the information, and a D-Bus API is a fine way to accomplish this.
+> -CLEANFILES =3D src/builtin.h $(local_headers) $(rules_DATA)
+> +BUILT_SOURCES =3D $(local_headers)
+> +CLEANFILES =3D src/builtin.h $(BUILT_SOURCES) $(rules_DATA)
 
-where is this timed running? I prefer the plugin just send a D-Bus
-message to the timed directly instead of a Get/Changed API kind of
-thing.
-
-Doing it this way looks highly complicated to me and doesn't serve any
-purpose if timed and ofonod are both using the D-Bus system bus.
+But can you please add an empty line between these two variable
+assignments. Just for consistency with the rest of the Makefile.am code.
 
 Regards
 
@@ -41,5 +50,5 @@ Marcel
 
 
 
---===============9088396183779468924==--
+--===============9209744353539242616==--
 
