@@ -1,58 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============2642360338279237661=="
+Content-Type: multipart/mixed; boundary="===============7800278943557530090=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH] Mark ofono/*.h symbolink links as built sources
-Date: Mon, 06 Dec 2010 17:49:56 +0200
-Message-ID: <1291650596-5554-1-git-send-email-remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 1/3] plugins: Implementation of Network Time plugin
+Date: Mon, 06 Dec 2010 18:33:45 +0200
+Message-ID: <201012061833.45629.remi.denis-courmont@nokia.com>
+In-Reply-To: <1291420976.4795.113.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2642360338279237661==
+--===============7800278943557530090==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This forces automake/make to build them first if needed (as before).
-But it avoids marking every single header as a dependency of every
-single object. Thus we do not need a bogus full rebuild of the tree
-everytime a header is added.
----
- Makefile.am |    6 +++---
- 1 files changed, 3 insertions(+), 3 deletions(-)
+On Saturday 04 December 2010 02:02:56 ext Marcel Holtmann, you wrote:
+> Hi Aki,
+> =
 
-diff --git a/Makefile.am b/Makefile.am
-index a4c47e8..cdb3166 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -326,7 +326,9 @@ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBU=
-S_LIBS@ @CAPNG_LIBS@ -ldl
- src_ofonod_LDFLAGS =3D -Wl,--export-dynamic \
- 				-Wl,--version-script=3D$(srcdir)/src/ofono.ver
- =
+> > The only thing I would change here are the names. It's customary to
+> > avoid repeating the interface name in the signal or method, but of
+> > course the problem here is then what to call these. Maybe just Get()
+> > and Changed()? ;-)
+> > =
 
--CLEANFILES =3D src/builtin.h $(local_headers) $(rules_DATA)
-+BUILT_SOURCES =3D $(local_headers)
-+
-+CLEANFILES =3D src/builtin.h $(BUILT_SOURCES) $(rules_DATA)
- =
+> > Oh, and you probably should have included a short description of what
+> > this plugin is for (I forgot to mention this before).
+> > =
 
- plugindir =3D $(libdir)/ofono/plugins
- =
+> > The thinking behind this plugin is that timed in MeeGo wants to get
+> > the information, and a D-Bus API is a fine way to accomplish this.
+> =
 
-@@ -512,8 +514,6 @@ src/builtin.h: src/genbuiltin $(builtin_sources)
- plugins/%.rules:
- 	$(AM_V_GEN)cp $(srcdir)/$(subst 97-,,$@) $@
- =
+> where is this timed running? I prefer the plugin just send a D-Bus
+> message to the timed directly instead of a Get/Changed API kind of
+> thing.
 
--$(src_ofonod_OBJECTS) $(unit_objects): $(local_headers)
--
- include/ofono/version.h: include/version.h
- 	$(AM_V_at)$(MKDIR_P) include/ofono
- 	$(AM_V_GEN)$(LN_S) $(abs_top_builddir)/$< $@
+AFAIK, Get/Changed is the simplest functional way to avoid races, where say =
+
+oFono would receive the time before timed can process it. The getter also =
+
+enables implementing trivial a tool =C3=A0 la ntpdate.
+
 -- =
 
-1.7.1
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-
---===============2642360338279237661==--
+--===============7800278943557530090==--
 
