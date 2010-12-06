@@ -1,33 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4012462504706336639=="
+Content-Type: multipart/mixed; boundary="===============4502756655752453319=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: Fix issues in ofono_sim_get_phase and its usage
-Date: Mon, 06 Dec 2010 10:39:15 -0800
-Message-ID: <1291660757-6684-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 1/2] sim: fix minor issue in ofono_sim_get_phase
+Date: Mon, 06 Dec 2010 10:39:16 -0800
+Message-ID: <1291660757-6684-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1291660757-6684-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4012462504706336639==
+--===============4502756655752453319==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ src/sim.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
- Following patch adds the missing OFONO_SIM_PHASE_UNKNOWN check in some
-of the functions which uses ofono_sim_get_phase. Also fixed the issue
-in ofono_get_sim_phase when the passed sim paramter is NULL. =
-
+diff --git a/src/sim.c b/src/sim.c
+index c523982..6217a25 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -1914,7 +1914,7 @@ const char *ofono_sim_get_imsi(struct ofono_sim *sim)
+ enum ofono_sim_phase ofono_sim_get_phase(struct ofono_sim *sim)
+ {
+ 	if (sim =3D=3D NULL)
+-		return 0;
++		return OFONO_SIM_PHASE_UNKNOWN;
  =
 
-Jeevaka Badrappan (2):
-  sim: fix minor issue in ofono_sim_get_phase
-  simfs: Add unknown sim phase check
+ 	return sim->phase;
+ }
+-- =
 
- src/sim.c   |    2 +-
- src/simfs.c |    9 ++++++++-
- 2 files changed, 9 insertions(+), 2 deletions(-)
+1.7.0.4
 
 
---===============4012462504706336639==--
+--===============4502756655752453319==--
 
