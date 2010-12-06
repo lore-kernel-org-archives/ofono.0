@@ -1,90 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8648127597038880561=="
+Content-Type: multipart/mixed; boundary="===============3070074789833238723=="
 MIME-Version: 1.0
-From: Torgny Johansson <torgny.johansson@ericsson.com>
-Subject: [PATCH] Additional vid/pids to udev rules file
-Date: Mon, 06 Dec 2010 14:17:19 +0100
-Message-ID: <1291641439-20664-1-git-send-email-torgny.johansson@ericsson.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: [PATCH 4/4] TODO: Marking the Barred Dialing task as done
+Date: Mon, 06 Dec 2010 15:22:27 +0200
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802C40B22@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <AANLkTimTu-kcCJRucVUfnZvLbZxsXB=6v6A+M_yFfmWk@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8648127597038880561==
+--===============3070074789833238723==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/ofono.rules |   15 +++++++++++++++
- 1 files changed, 15 insertions(+), 0 deletions(-)
+Hi Sankar,
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index da8a8ef..b9cd486 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -390,6 +390,9 @@ ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"104=
-9", ENV{OFONO_DRIVER}=3D"mbm"
- ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"190a", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"1909", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- =
+> Is there a way for the clients to enable or disable the Fixed
+Dialling? I assume they should be able to do this by using the dbus
+calls, "LockPin/UnlockPin".  Is there a =
 
-+# Ericsson F3307 R2
-+ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"1914", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+
- # Ericsson F5521gw
- ATTRS{idVendor}=3D=3D"0bdb", ATTRS{idProduct}=3D=3D"190d", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- =
+> way to store the FDN numbers in the sim card? How does ofono validate
+the request to be passed to the network when FDN is enabled? Looks like
+as per the current =
 
-@@ -407,6 +410,9 @@ ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"818=
-4", ENV{OFONO_DRIVER}=3D"mbm"
- ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"818b", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"818c", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- =
-
-+# Dell 5550
-+ATTRS{idVendor}=3D=3D"413c", ATTRS{idProduct}=3D=3D"818d", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+
- # HP hs2330 Mobile Broadband Module
- ATTRS{idVendor}=3D=3D"03f0", ATTRS{idProduct}=3D=3D"271d", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- =
-
-@@ -426,6 +432,15 @@ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"13=
-0b", ENV{OFONO_DRIVER}=3D"mbm"
- ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"130c", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"1311", ENV{OFONO_DRIVE=
-R}=3D"mbm"
- =
-
-+# Toshiba F3307 R2
-+ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"1315", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"1316", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"1317", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+
-+# Toshiba F5521gw
-+ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"1313", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"1314", ENV{OFONO_DRIVE=
-R}=3D"mbm"
-+
- # Nokia Internet Stick CS-10
- ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"060e", ENV{OFONO_DRIVE=
-R}=3D"nokia"
- =
-
--- =
-
-1.7.1
+> implementation of FDN, only emergency calls are allowed. But as per
+the 3GPP standards, calls shall be allowed to any number (irrespective
+of emergency no) that is part of > the FDN list.  =
 
 
---===============8648127597038880561==--
+Currently, there is no way to enable or disable fixed dialling or Barred
+Dialling using oFono. If my assumption is correct, there is no plans to
+add support.(Denis/Marcel can confirm this). oFono doesn't support
+storing any numbers in the SIM storage(EFadn, EFfdn or EFbdn). Agreed as
+per the specification calls shall be allowed to any number that is part
+of the FDN list. But its been agreed that oFono will enter presim state
+when FDN or BDN service is enabled in which state only emergency calls
+are allowed.
+
+> If the modem remains in PRESIM State, how does the mobile receive the
+Incoming Calls or SMS? As per my understanding FDN applies in the uplink
+and not in the downlink.  =
+
+> Please clarify if my understanding is wrong.
+
+Yes, your understanding is correct. FDN applies to the Mobile originated
+calls, SMS etc.
+
+Regards,
+Jeevaka
+
+--===============3070074789833238723==--
 
