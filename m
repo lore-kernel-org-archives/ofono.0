@@ -1,48 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============5789013129796468976=="
+Content-Type: multipart/mixed; boundary="===============2615548481585409811=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 4/7] plugins/n900: Move call forwarding to post sim
-Date: Tue, 07 Dec 2010 12:37:44 -0800
-Message-ID: <1291754267-26025-5-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 7/7] TODO: Marking the Read/Write EFcfis task as done
+Date: Tue, 07 Dec 2010 12:37:47 -0800
+Message-ID: <1291754267-26025-8-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1291754267-26025-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5789013129796468976==
+--===============2615548481585409811==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/n900.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ TODO             |    9 ---------
+ doc/features.txt |    5 +++++
+ 2 files changed, 5 insertions(+), 9 deletions(-)
 
-diff --git a/plugins/n900.c b/plugins/n900.c
-index 7619821..9b16f4d 100644
---- a/plugins/n900.c
-+++ b/plugins/n900.c
-@@ -491,6 +491,7 @@ static void n900_post_sim(struct ofono_modem *modem)
- 	DBG("");
+diff --git a/TODO b/TODO
+index 5d0a9f9..d74ab50 100644
+--- a/TODO
++++ b/TODO
+@@ -92,15 +92,6 @@ SMS
+ SIM / SIM File system
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
  =
 
- 	ofono_phonebook_create(isi->modem, 0, "isimodem", isi->idx);
-+	ofono_call_forwarding_create(isi->modem, 0, "isimodem", isi->idx);
- }
+-- Read / Write EFcfis.  Call forwarding settings can be bootstrapped on the
+-  SIM for faster notification of the user that call forwarding is active.
+-  These settings are stored in EFcfis.  oFono should read these settings a=
+nd
+-  update the call forwarding atom appropriately.
+-
+-  Priority: Low
+-  Complexity: C2
+-  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+-
+ - SIM Call History plugin.  New UICCs support four new SIM elementary files
+   for storing call history information on the SIM: EFici, EFict, EFoci, EF=
+oct.
+   A plugin should be developed for oFono that will write to these files.
+diff --git a/doc/features.txt b/doc/features.txt
+index ef20cf2..ef3a73c 100644
+--- a/doc/features.txt
++++ b/doc/features.txt
+@@ -209,6 +209,11 @@ SIM
+   oFono halts the SIM initialization procedure and the modem remains in the
+   PRESIM state.  In this state oFono will only allow emergency calls.
  =
 
- static void n900_post_online(struct ofono_modem *modem)
-@@ -506,7 +507,6 @@ static void n900_post_online(struct ofono_modem *modem)
- 	ofono_cbs_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ssn_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ussd_create(isi->modem, 0, "isimodem", isi->idx);
--	ofono_call_forwarding_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_settings_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_barring_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_meter_create(isi->modem, 0, "isimodem", isi->idx);
++- Read / Write EFcfis / EFcphs-cff.  oFono reads EFcfis/EFcphs-cff SIM fil=
+es
++  to check if VoiceUnconditional call forwarding rule is enabled.  If enab=
+led,
++  ForwardingFlagOnSim will be set and VoiceUnconditional may contain the
++  "forwarded to" number if the number is available.
++
+ Radio settings
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ =
+
 -- =
 
 1.7.0.4
 
 
---===============5789013129796468976==--
+--===============2615548481585409811==--
 
