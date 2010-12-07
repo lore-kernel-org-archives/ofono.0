@@ -1,46 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============4770357413327084109=="
+Content-Type: multipart/mixed; boundary="===============2655505359525913972=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO: add owner to 'SIM PIN retry counter' task
-Date: Mon, 06 Dec 2010 20:51:15 -0600
-Message-ID: <4CFDA123.2040102@gmail.com>
-In-Reply-To: <1291294006-7587-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH] voicecall: Add EmergencyCall property.
+Date: Mon, 06 Dec 2010 20:55:08 -0600
+Message-ID: <4CFDA20C.9020808@gmail.com>
+In-Reply-To: <FE1DB9979BF5A743BEB836613423CAD8012C9C95@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4770357413327084109==
+--===============2655505359525913972==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+Hi John,
 
-On 12/02/2010 06:46 AM, Lucas De Marchi wrote:
-> ---
->  TODO |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
+On 12/03/2010 02:00 AM, John.Mathew(a)elektrobit.com wrote:
+> Hi Marcel, =
+
 > =
 
-> diff --git a/TODO b/TODO
-> index a421a99..878b0ab 100644
-> --- a/TODO
-> +++ b/TODO
-> @@ -114,6 +114,7 @@ SIM / SIM File system
->  =
+>>
+>>> This was a question open for discussion. What would be the =
 
->    Priority: Low
->    Complexity: C2
-> +  Owner: Lucas De Marchi <lucas.demarchi@profusion.mobi>
->  =
+>> appropriate property name?
+>>
+>> As per my understanding, this property is only to provide the =
 
->  - Add support for SIM 'ready' notifications from the driver to the core.=
-  Most
->    modem manufacturers initialize the SIM (e.g. cache SIM file system, STK
+>> Emergency call indication to the application side, so that =
 
-Thanks for taking up this task.  Patch has been applied.
+>> applications can display a different UI compared to the normal =
+
+>> UI. In this case, I think the property name "Emergency" is enough. =
+
+>>
+>> Since this is a property for the call, the following fits as =
+
+>> well. We can remove the existing multiparty property and add =
+
+>> it to the new property.
+>>
+>> string Type [readonly]
+>>       Contains the Type of the current call.
+>>
+>>       The Values can be:
+>>               "Normal"
+>>               "Emergency"
+>> 		   "Data"
+>> 	         "Multiparty"	=
+
+>>
+>> Let me know your opinion on this.
+>>
+>                          =
+
+> Any comments?
+> =
+
+
+We're not going to support data calls, not by re-using the Voicecall
+interface anyway.  So I still prefer the original proposal of using
+boolean Emergency property here.
 
 Regards,
 -Denis
 
---===============4770357413327084109==--
+--===============2655505359525913972==--
 
