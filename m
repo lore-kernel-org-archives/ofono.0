@@ -1,70 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============2615548481585409811=="
+Content-Type: multipart/mixed; boundary="===============8849198156667363913=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 7/7] TODO: Marking the Read/Write EFcfis task as done
-Date: Tue, 07 Dec 2010 12:37:47 -0800
-Message-ID: <1291754267-26025-8-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1291754267-26025-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: [PATCH] stkutil: fix crash issue cause by null length of text
+ string
+Date: Tue, 07 Dec 2010 23:55:46 +0200
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802C40DAC@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D40188136D95B11@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2615548481585409811==
+--===============8849198156667363913==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO             |    9 ---------
- doc/features.txt |    5 +++++
- 2 files changed, 5 insertions(+), 9 deletions(-)
 
-diff --git a/TODO b/TODO
-index 5d0a9f9..d74ab50 100644
---- a/TODO
-+++ b/TODO
-@@ -92,15 +92,6 @@ SMS
- SIM / SIM File system
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+Hi Guillaume,
  =
 
--- Read / Write EFcfis.  Call forwarding settings can be bootstrapped on the
--  SIM for faster notification of the user that call forwarding is active.
--  These settings are stored in EFcfis.  oFono should read these settings a=
-nd
--  update the call forwarding atom appropriately.
--
--  Priority: Low
--  Complexity: C2
--  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
--
- - SIM Call History plugin.  New UICCs support four new SIM elementary files
-   for storing call history information on the SIM: EFici, EFict, EFoci, EF=
-oct.
-   A plugin should be developed for oFono that will write to these files.
-diff --git a/doc/features.txt b/doc/features.txt
-index ef20cf2..ef3a73c 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -209,6 +209,11 @@ SIM
-   oFono halts the SIM initialization procedure and the modem remains in the
-   PRESIM state.  In this state oFono will only allow emergency calls.
- =
+> =
 
-+- Read / Write EFcfis / EFcphs-cff.  oFono reads EFcfis/EFcphs-cff SIM fil=
-es
-+  to check if VoiceUnconditional call forwarding rule is enabled.  If enab=
-led,
-+  ForwardingFlagOnSim will be set and VoiceUnconditional may contain the
-+  "forwarded to" number if the number is available.
-+
- Radio settings
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
+> According to 3GPP TS 31.124 a null length for the text string =
 
--- =
+> should be allowed. An empty string must be returned to the =
 
-1.7.0.4
+> user in this case.
+> ---
+>  src/stkutil.c |    6 ++++--
+>  1 files changed, 4 insertions(+), 2 deletions(-)
+> =
 
 
---===============2615548481585409811==--
+Agree. As per the 3GPP TS 31.124 null text string will be indicated with
+length 0.
+So, in first place if (text =3D=3D NULL) check in handle_command_get_input, =
+
+handle_command_get_inkey has to be removed. Removing this check will
+result
+in crash due to the fact that we are not handling this case properly
+neither
+in parse_dataobj_text nor in corresponding stkagent functions.
+
+There are 2ways to solve this issue:
+
+First option - Fix provided in the function parse_dataobj_text( e.g.
+*text =3D "")
+Second option - In all the stk_agent_ function which has this text
+string we =
+
+                need to check for NULL and assign it to empty string if
+it is NULL.
+      =
+
+First option seems to be right and also better one.
+
+In both the cases, if (text =3D=3D NULL) check in handle_command_get_inkey,
+handle_command_get_input etc needs to be removed.
+
+Regards,
+Jeevaka
+
+--===============8849198156667363913==--
 
