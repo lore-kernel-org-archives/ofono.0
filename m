@@ -1,47 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============0847492835901827638=="
+Content-Type: multipart/mixed; boundary="===============6478002875124774036=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/5] Call Counters (2nd)
-Date: Tue, 07 Dec 2010 12:33:09 -0600
-Message-ID: <4CFE7DE5.4090709@gmail.com>
-In-Reply-To: <AANLkTim07pnimBQFXt8z43ewjPOW9GSobv8yTLJyfGmR@mail.gmail.com>
+Subject: Re: [PATCH 1/7] call-forwarding: Read/Write cfis/cphs-cff
+Date: Tue, 07 Dec 2010 12:41:37 -0600
+Message-ID: <4CFE7FE1.2000707@gmail.com>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802C40D5C@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0847492835901827638==
+--===============6478002875124774036==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi Jeevaka,
 
-On 12/07/2010 06:57 AM, Aki Niemi wrote:
-> Hi Andras,
+On 12/07/2010 07:59 AM, Jeevaka.Badrappan(a)elektrobit.com wrote:
+> Hi Denis,
+>  =
+
+>>> +	ofono_bool_t online;
+>>
+>> Why do you need to track this variable?  Can't you simply =
+
+>> call ofono_modem_get_online()?
+>>
 > =
 
-> 2010/11/22 Andras Domokos <Andras.Domokos@nokia.com>:
->> Here a proposal for call counters implementation for keeping track
->> of the total incoming and outgoing call duration counters. Each
->> established call instance is contributing to either of the call
->> duration counters. The 2 counters are updated periodically when
->> there is an established call and the information is stored in
->> a file. The bookkeeping of the call duration counters are per IMSI
->> number.
->> The implementation makes use of the history framework which had to be
->> expanded with a function for marking the beginning of a voice call.
->> There is a D-Bus interface to call counters for reading and clearing
->> the counters.
-> =
-
-> This set looks good to me, and I believe you fixed the issues from
-> previous review comments. Denis, are you ok with this?
+> This way calling of ofono_modem_get_online for each get or set request
+> can be avoided.
 > =
 
 
-I'm still catching up, let me take another look.
+Sure, but it is doubtful you really need to 'optimize' those cases.  The
+code is way cleaner without it in my opinion.
 
 Regards,
 -Denis
 
---===============0847492835901827638==--
+--===============6478002875124774036==--
 
