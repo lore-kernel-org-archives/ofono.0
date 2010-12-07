@@ -1,49 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============6723770803964864297=="
+Content-Type: multipart/mixed; boundary="===============0476360189635605741=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 3/7] isigen: Move call forwarding to post sim
-Date: Tue, 07 Dec 2010 12:37:43 -0800
-Message-ID: <1291754267-26025-4-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 6/7] doc: Add new property to call forwarding
+Date: Tue, 07 Dec 2010 12:37:46 -0800
+Message-ID: <1291754267-26025-7-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1291754267-26025-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6723770803964864297==
+--===============0476360189635605741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/isigen.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ doc/call-forwarding-api.txt |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/isigen.c b/plugins/isigen.c
-index 028f1b2..b7b7ab5 100644
---- a/plugins/isigen.c
-+++ b/plugins/isigen.c
-@@ -402,6 +402,7 @@ static void isigen_post_sim(struct ofono_modem *modem)
- 	DBG("(%p) with %s", modem, isi->ifname);
+diff --git a/doc/call-forwarding-api.txt b/doc/call-forwarding-api.txt
+index 067531a..e8b4b9f 100644
+--- a/doc/call-forwarding-api.txt
++++ b/doc/call-forwarding-api.txt
+@@ -57,3 +57,8 @@ Properties	string VoiceUnconditional [readwrite]
  =
 
- 	ofono_phonebook_create(isi->modem, 0, "isimodem", isi->idx);
-+	ofono_call_forwarding_create(isi->modem, 0, "isimodem", isi->idx);
- }
- =
-
- static void isigen_post_online(struct ofono_modem *modem)
-@@ -418,7 +419,6 @@ static void isigen_post_online(struct ofono_modem *mode=
-m)
- 	ofono_cbs_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ssn_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ussd_create(isi->modem, 0, "isimodem", isi->idx);
--	ofono_call_forwarding_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_settings_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_barring_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_meter_create(isi->modem, 0, "isimodem", isi->idx);
+ 			Contains the value of the voice "Not Reachable" call
+ 			forwarding rule.
++
++		boolean ForwardingFlagOnSim [readonly]
++
++			Boolean representing the voice unconditional call
++			forwarding rule status.
 -- =
 
 1.7.0.4
 
 
---===============6723770803964864297==--
+--===============0476360189635605741==--
 
