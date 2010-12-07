@@ -1,69 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============2655505359525913972=="
+Content-Type: multipart/mixed; boundary="===============5392653257981388451=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] voicecall: Add EmergencyCall property.
-Date: Mon, 06 Dec 2010 20:55:08 -0600
-Message-ID: <4CFDA20C.9020808@gmail.com>
-In-Reply-To: <FE1DB9979BF5A743BEB836613423CAD8012C9C95@fioues07.ebgroup.elektrobit.com>
+Subject: Re: [PATCH] modem: only unref pending if it is a powered pending
+Date: Mon, 06 Dec 2010 20:57:27 -0600
+Message-ID: <4CFDA297.4080005@gmail.com>
+In-Reply-To: <1291412422-16976-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2655505359525913972==
+--===============5392653257981388451==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi John,
+Hi Gustavo,
 
-On 12/03/2010 02:00 AM, John.Mathew(a)elektrobit.com wrote:
-> Hi Marcel, =
-
+On 12/03/2010 03:40 PM, Gustavo F. Padovan wrote:
+> ---
+>  src/modem.c |    3 ++-
+>  1 files changed, 2 insertions(+), 1 deletions(-)
 > =
 
->>
->>> This was a question open for discussion. What would be the =
+> diff --git a/src/modem.c b/src/modem.c
+> index 52e647b..ae427b3 100644
+> --- a/src/modem.c
+> +++ b/src/modem.c
+> @@ -804,7 +804,8 @@ void ofono_modem_set_powered(struct ofono_modem *mode=
+m, ofono_bool_t powered)
+>  		modem->timeout =3D 0;
+>  	}
+>  =
 
->> appropriate property name?
->>
->> As per my understanding, this property is only to provide the =
+> -	if (modem->pending !=3D NULL) {
+> +	if (modem->powered_pending !=3D modem->powered &&
+> +						modem->pending !=3D NULL) {
+>  		DBusMessage *reply;
+>  =
 
->> Emergency call indication to the application side, so that =
+>  		if (powered =3D=3D modem->powered_pending)
 
->> applications can display a different UI compared to the normal =
-
->> UI. In this case, I think the property name "Emergency" is enough. =
-
->>
->> Since this is a property for the call, the following fits as =
-
->> well. We can remove the existing multiparty property and add =
-
->> it to the new property.
->>
->> string Type [readonly]
->>       Contains the Type of the current call.
->>
->>       The Values can be:
->>               "Normal"
->>               "Emergency"
->> 		   "Data"
->> 	         "Multiparty"	=
-
->>
->> Let me know your opinion on this.
->>
->                          =
-
-> Any comments?
-> =
-
-
-We're not going to support data calls, not by re-using the Voicecall
-interface anyway.  So I still prefer the original proposal of using
-boolean Emergency property here.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============2655505359525913972==--
+--===============5392653257981388451==--
 
