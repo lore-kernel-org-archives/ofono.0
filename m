@@ -1,76 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7805490837806117975=="
+Content-Type: multipart/mixed; boundary="===============0173925159150317187=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: [PATCH] stkutil: fix crash issue cause by null length of text string
-Date: Tue, 07 Dec 2010 10:58:47 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D40188136D95B11@irsmsx501.ger.corp.intel.com>
+From: Antti Paila <antti.paila@nokia.com>
+Subject: Re: [PATCH 1/3] plugins: Implementation of Network Time plugin
+Date: Tue, 07 Dec 2010 13:00:09 +0200
+Message-ID: <1291719609.3613.48.camel@apaila-ThinkPad-T410>
+In-Reply-To: <1291712317.4795.131.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7805490837806117975==
+--===============0173925159150317187==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Guillaume Lucas <guillaumex.lucas@intel.com>
+Hi Marcel,
 
-According to 3GPP TS 31.124 a null length for the text string
-should be allowed. An empty string must be returned to the
-user in this case.
----
- src/stkutil.c |    6 ++++--
- 1 files changed, 4 insertions(+), 2 deletions(-)
+> I have seen a bunch of devices where we have not a proper clock value to
+> begin with. And in that case there is nothing really useful we can do
+> with it, except just set the system clock right away.
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index a211462..cab22f4 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -562,7 +562,7 @@ static gboolean parse_dataobj_text(struct comprehension=
-_tlv_iter *iter,
- {
- 	char **text =3D user;
- 	unsigned int len =3D comprehension_tlv_iter_get_length(iter);
--	const unsigned char *data =3D comprehension_tlv_iter_get_data(iter);
-+	const unsigned char *data;
- 	char *utf8;
- =
+We are not using any absolute time value from any clock, but instead we
+use relative elapsed time from monotonic clock. The reference point is
+the monotonic clock time, when the network time indication arrived to
+modem. I believe every device that takes ofono into use have a monotonic
+time source.
 
- 	/* DCS followed by some text, cannot be 1 */
-@@ -570,10 +570,12 @@ static gboolean parse_dataobj_text(struct comprehensi=
-on_tlv_iter *iter,
- 		return FALSE;
- =
+> So the other problem with the timestamp and NITZ and the time daemon not
+> running is that we have no idea what happens in between. While this
+> might be short time and could potentially work, I still don't see this
+> as a good solution at all.
 
- 	if (len =3D=3D 0) {
--		*text =3D NULL;
-+		*text =3D g_try_malloc0(1);
- 		return TRUE;
- 	}
- =
-
-+	data =3D comprehension_tlv_iter_get_data(iter);
-+
- 	utf8 =3D decode_text(data[0], len - 1, data + 1);
- =
-
- 	if (utf8 =3D=3D NULL)
--- =
-
-1.7.0.4
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+That is why the nettime plugin implements both notification signal and a
+polling method call. If timed is running it will receive the DBUS
+notification about the network time. Otherwise timed can poll the time
+from ofono as it becomes active. One should also notice that the NITZ
+feature is optional both from terminal and network point of view, so
+anything too fatal should not happen even if timed is not up when
+nettime indication is sent. =
 
 
---===============7805490837806117975==--
+> Right now, I still think that either we set the system clock right away
+> if no time daemon is running and if time daemon is running, then we send
+> a D-Bus method to that time daemon. And we can easily track this D-Bus
+> name owner notifications.
+
+Architecturally I prefer that the system time is altered by one entity
+alone, being timed. As we can have many modems active simultaneously, I
+would not like if they all are allowed to directly alter the system
+time. Timed should have a way to decide what is the proper time.
+
+-Antti =
+
+
+
+
+--===============0173925159150317187==--
 
