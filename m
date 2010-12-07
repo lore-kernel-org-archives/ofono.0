@@ -1,72 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============2354994010266457790=="
+Content-Type: multipart/mixed; boundary="===============7805490837806117975=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Specify vendor ID for Huawei modem while creating GPRS
- context
-Date: Tue, 07 Dec 2010 11:29:52 +0100
-Message-ID: <1291717792.4795.135.camel@aeonflux>
-In-Reply-To: <1291389772.2043.27.camel@Twins.TonnyLab.net>
+From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
+Subject: [PATCH] stkutil: fix crash issue cause by null length of text string
+Date: Tue, 07 Dec 2010 10:58:47 +0000
+Message-ID: <9F3EABD6E3419B4C81F34EAABB4D40188136D95B11@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2354994010266457790==
+--===============7805490837806117975==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tonny,
+From: Guillaume Lucas <guillaumex.lucas@intel.com>
 
->  plugins/huawei.c |    8 ++++----
->  1 files changed, 4 insertions(+), 4 deletions(-)
-> =
+According to 3GPP TS 31.124 a null length for the text string
+should be allowed. An empty string must be returned to the
+user in this case.
+---
+ src/stkutil.c |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
 
-> diff --git a/plugins/huawei.c b/plugins/huawei.c
-> index 25dfaca..32cf70d 100644
-> --- a/plugins/huawei.c
-> +++ b/plugins/huawei.c
-> @@ -454,7 +454,7 @@ static void huawei_disconnect(gpointer user_data)
->  			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
->  		ofono_info("Reopened GPRS context channel");
->  =
+diff --git a/src/stkutil.c b/src/stkutil.c
+index a211462..cab22f4 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -562,7 +562,7 @@ static gboolean parse_dataobj_text(struct comprehension=
+_tlv_iter *iter,
+ {
+ 	char **text =3D user;
+ 	unsigned int len =3D comprehension_tlv_iter_get_length(iter);
+-	const unsigned char *data =3D comprehension_tlv_iter_get_data(iter);
++	const unsigned char *data;
+ 	char *utf8;
+ =
 
-> -		data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
-> +		data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
-> "atmodem",
->  								data->modem);
+ 	/* DCS followed by some text, cannot be 1 */
+@@ -570,10 +570,12 @@ static gboolean parse_dataobj_text(struct comprehensi=
+on_tlv_iter *iter,
+ 		return FALSE;
+ =
 
-this not doing anything. Behavior is still the same.
+ 	if (len =3D=3D 0) {
+-		*text =3D NULL;
++		*text =3D g_try_malloc0(1);
+ 		return TRUE;
+ 	}
+ =
 
->  		if (data->gprs && data->gc)
-> @@ -631,12 +631,12 @@ static void huawei_post_online(struct ofono_modem
-> *modem)
->  =
++	data =3D comprehension_tlv_iter_get_data(iter);
++
+ 	utf8 =3D decode_text(data[0], len - 1, data + 1);
+ =
 
->  	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
->  			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
-> -		data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->pcui);
-> +		data->gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
-> data->pcui);
->  		if (data->ndis =3D=3D TRUE)
-> -			data->gc =3D ofono_gprs_context_create(modem, 0,
-> +			data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
->  						"huaweimodem", data->pcui);
+ 	if (utf8 =3D=3D NULL)
+-- =
 
-This one makes no sense. It is Huawei specific already.
+1.7.0.4
 
->  		else
-> -			data->gc =3D ofono_gprs_context_create(modem, 0,
-> +			data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
->  						"atmodem", data->modem);
->  =
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-This is also not doing anything either actually.
-
-Regards
-
-Marcel
-
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
 
---===============2354994010266457790==--
+--===============7805490837806117975==--
 
