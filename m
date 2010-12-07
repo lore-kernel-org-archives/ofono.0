@@ -1,104 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============6177343874749886376=="
+Content-Type: multipart/mixed; boundary="===============0049524745749756066=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] sms: restore pending tx messages from backup
-Date: Mon, 06 Dec 2010 20:43:49 -0600
-Message-ID: <4CFD9F65.6030104@gmail.com>
-In-Reply-To: <1290639202-12221-4-git-send-email-kristen@linux.intel.com>
+Subject: Re: [PATCH] gatchat: fix canceling in progress commands
+Date: Mon, 06 Dec 2010 20:49:30 -0600
+Message-ID: <4CFDA0BA.1080202@gmail.com>
+In-Reply-To: <1291320822-10879-1-git-send-email-vinicius.gomes@openbossa.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6177343874749886376==
+--===============0049524745749756066==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kristen,
+Hi Vinicius,
 
-On 11/24/2010 04:53 PM, Kristen Carlson Accardi wrote:
+On 12/02/2010 02:13 PM, Vinicius Costa Gomes wrote:
+> As g_queue_peek_head() returns the node data field, we have to compare
+> it against the actual command, not against the pointer to the queue node.
 > ---
->  src/ofono.h   |    1 +
->  src/sms.c     |   38 +++++++++++++++++++
->  src/smsutil.c |  116 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/smsutil.h |    6 +++
->  4 files changed, 161 insertions(+), 0 deletions(-)
+>  gatchat/gatchat.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
 > =
 
-> diff --git a/src/ofono.h b/src/ofono.h
-> index d1a4bdc..4777f70 100644
-> --- a/src/ofono.h
-> +++ b/src/ofono.h
-> @@ -241,6 +241,7 @@ enum ofono_sms_submit_flag {
->  	OFONO_SMS_SUBMIT_FLAG_RECORD_HISTORY =3D	0x2,
->  	OFONO_SMS_SUBMIT_FLAG_RETRY =3D		0x4,
->  	OFONO_SMS_SUBMIT_FLAG_EXPOSE_DBUS =3D	0x8,
-> +	OFONO_SMS_SUBMIT_FLAG_REUSE_UUID =3D	0x10,
->  };
+> diff --git a/gatchat/gatchat.c b/gatchat/gatchat.c
+> index d82a02e..96da657 100644
+> --- a/gatchat/gatchat.c
+> +++ b/gatchat/gatchat.c
+> @@ -1060,7 +1060,7 @@ static gboolean at_chat_cancel(struct at_chat *chat=
+, guint group, guint id)
+>  	if (c->gid !=3D group)
+>  		return FALSE;
 >  =
 
->  typedef void (*ofono_sms_txq_submit_cb_t)(gboolean ok, void *data);
-> diff --git a/src/sms.c b/src/sms.c
-> index f987946..be710b1 100644
-> --- a/src/sms.c
-> +++ b/src/sms.c
-> @@ -1814,6 +1814,40 @@ static void bearer_init_callback(const struct ofon=
-o_error *error, void *data)
->  		ofono_error("Error bootstrapping SMS Bearer Preference");
->  }
->  =
+> -	if (l =3D=3D g_queue_peek_head(chat->command_queue) &&
+> +	if (c =3D=3D g_queue_peek_head(chat->command_queue) &&
+>  			chat->cmd_bytes_written > 0) {
+>  		/* We can't actually remove it since it is most likely
+>  		 * already in progress, just null out the callback
 
-> +static void sms_restore_tx_queue(struct ofono_sms *sms)
-> +{
-> +	GQueue *backupq;
-> +	unsigned int flags;
-> +	struct txq_backup_entry *entry;
-> +	struct ofono_uuid ofono_uuid;
-> +
-> +	DBG("");
-> +
-> +	flags =3D OFONO_SMS_SUBMIT_FLAG_RECORD_HISTORY;
-> +	flags |=3D OFONO_SMS_SUBMIT_FLAG_RETRY;
-> +	flags |=3D OFONO_SMS_SUBMIT_FLAG_REUSE_UUID;
-> +
-> +	if (sms->use_delivery_reports)
-> +		flags |=3D OFONO_SMS_SUBMIT_FLAG_REQUEST_SR;
-
-As I mentioned before, you should be restoring this information.
-Assuming that it is the same for all messages on the tx queue is a
-really bad idea.
-
-> +
-> +	backupq =3D sms_tx_queue_load(sms->imsi);
-> +
-> +	while ((entry =3D g_queue_pop_head(backupq))) {
-> +		decode_hex_own_buf(entry->uuid, -1, NULL, 0, ofono_uuid.uuid);
-> +
-> +		__ofono_sms_txq_submit(sms, entry->msg_list, flags,
-> +					&ofono_uuid, NULL, NULL);
-
-Using sms_txq_submit is a bad idea.  This one will re-calculate the UUID
-which gets tossed out later.  I suggest creating the tx_queue entries 'raw'.
-
-> +
-> +		g_slist_foreach(entry->msg_list, (GFunc)g_free, NULL);
-> +		g_slist_free(entry->msg_list);
-> +
-> +		g_free(entry->uuid);
-> +		g_free(entry);
-> +	}
-> +
-> +	g_queue_free(backupq);
-> +}
-> +
->  /*
->   * Indicate oFono that a SMS driver is ready for operation
->   *
-
-<snip>
+Good catch, patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============6177343874749886376==--
+--===============0049524745749756066==--
 
