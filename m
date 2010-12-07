@@ -1,94 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============6539432419648164602=="
+Content-Type: multipart/mixed; boundary="===============6722284060821230393=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/5] cdma-voicecall: Add CDMA MO Call Support
-Date: Mon, 06 Dec 2010 21:16:30 -0600
-Message-ID: <4CFDA70E.2050103@gmail.com>
-In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702D3ABEC@usrdes03.ebgroup.elektrobit.com>
+Subject: Re: [PATCH] Specify vendor ID for Huawei modem while creating GPRS
+ context
+Date: Mon, 06 Dec 2010 21:21:22 -0600
+Message-ID: <4CFDA832.9090309@gmail.com>
+In-Reply-To: <1291389772.2043.27.camel@Twins.TonnyLab.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6539432419648164602==
+--===============6722284060821230393==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rajesh,
+Hi Tonny,
 
-On 12/03/2010 03:34 PM, Rajesh.Nagaiah(a)elektrobit.com wrote:
+On 12/03/2010 09:22 AM, Tonny Tzeng wrote:
+> ---
+>  plugins/huawei.c |    8 ++++----
+>  1 files changed, 4 insertions(+), 4 deletions(-)
 > =
 
-> Hi Dara,
-> =
-
->> -----Original Message-----
->> From: ofono-bounces(a)ofono.org =
-
->> [mailto:ofono-bounces(a)ofono.org] On Behalf Of Dara Spieker-Doyle
->> Sent: 03 December 2010 13:21
+> diff --git a/plugins/huawei.c b/plugins/huawei.c
+> index 25dfaca..32cf70d 100644
+> --- a/plugins/huawei.c
+> +++ b/plugins/huawei.c
+> @@ -454,7 +454,7 @@ static void huawei_disconnect(gpointer user_data)
+>  			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
+>  		ofono_info("Reopened GPRS context channel");
 >  =
 
->>>> +enum cdma_call_status {
->>>> +	CDMA_CALL_STATUS_ACTIVE =3D 0,
->>>> +	CDMA_CALL_STATUS_DIALING =3D 1,
->>>> +	CDMA_CALL_STATUS_ALERTING =3D 2,
->>>> +	CDMA_CALL_STATUS_INCOMING =3D 4,
->>>
->>> Should be 3 ?
->>
->> Yes indeed. I will fix this, thank you for catching it.
->>  =
+> -		data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem",
+> +		data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
+> "atmodem",
+>  								data->modem);
 
->>>> +	CDMA_CALL_STATUS_DISCONNECTED
->>>> +};
->>>
->>> We can use the existing gsm call status itself ?
->>> Just that we wont use the HELD and WAITING status in CDMA.
->>
->> In this early phase of CDMA support in oFono, we would like =
+There's no need to pass the vendor flag here.  The atmodem gprs_context
+driver does not have any vendor handling code inside it.
 
->> to evolve it in its own right for a while, per the offline =
-
->> conversation from the MeeGo Conference in Dublin. On a case =
-
->> by case basis, for items of large architectural impact, we =
-
->> intend to evaluate potential re-use upfront.
->> The plan is to allow smaller items like this for now, until =
-
->> the related feature has matured sufficiently that they can be =
-
->> re-factored correctly if applicable.
 >  =
 
-> I agree with the fact that we should evolve it in its own right.
-> But with these kind of straight forward cases, where the GSM values
-> are a superset of the CDMA values and these value definitions being
-> internal to ofono, we should try to to reuse the values rather than
-> creating new ones exclusive for CDMA.
-> Thats my view, Denis/Marcel any comments ?
-> =
+>  		if (data->gprs && data->gc)
+> @@ -631,12 +631,12 @@ static void huawei_post_online(struct ofono_modem
+> *modem)
+>  =
 
+>  	if (data->sim_state =3D=3D HUAWEI_SIM_STATE_VALID ||
+>  			data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_CS) {
+> -		data->gprs =3D ofono_gprs_create(modem, 0, "atmodem", data->pcui);
+> +		data->gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_HUAWEI, "atmodem",
+> data->pcui);
+>  		if (data->ndis =3D=3D TRUE)
+> -			data->gc =3D ofono_gprs_context_create(modem, 0,
+> +			data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
+>  						"huaweimodem", data->pcui);
 
-So the general rule of thumb has been to use an int when a spec clearly
-defines the meaning of the said int.  E.g. call status int values have
-very clear meaning from 27.007.  If no such clear definition exists,
-then an enum should be used.
+Same comment as above
 
-So the question here becomes whether the CDMA modems all re-use the GSM
-meanings / values for these states or not?  If they do, then re-using
-the GSM enum values makes sense.
+>  		else
+> -			data->gc =3D ofono_gprs_context_create(modem, 0,
+> +			data->gc =3D ofono_gprs_context_create(modem, OFONO_VENDOR_HUAWEI,
+>  						"atmodem", data->modem);
 
-If not, then using an enum defined in include/cdma-voicecall.h would be
-better.  One major benefit of defining a dedicated enum for CDMA is the
-compiler checking that all enum values are being handled.  If you re-use
-the GSM version you would have to resort to using default statements.
-This causes you to lose that extra compiler sanity checking, not to
-mention is against rule M12 of the coding style.  And yes I know we're
-not always consistent with this one ;)
+ditto.
+
+>  =
+
+>  		if (data->gprs && data->gc)
 
 Regards,
 -Denis
 
---===============6539432419648164602==--
+--===============6722284060821230393==--
 
