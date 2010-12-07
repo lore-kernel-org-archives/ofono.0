@@ -1,35 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============7211687463098677613=="
+Content-Type: multipart/mixed; boundary="===============1271138600220115877=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [PATCH 1/7] call-forwarding: Read/Write cfis/cphs-cff
-Date: Tue, 07 Dec 2010 15:59:07 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802C40D5C@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <4CF94048.4000005@gmail.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 1/3] plugins: Implementation of Network Time plugin
+Date: Tue, 07 Dec 2010 18:05:45 +0200
+Message-ID: <201012071805.45804.remi.denis-courmont@nokia.com>
+In-Reply-To: <1291712317.4795.131.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7211687463098677613==
+--===============1271138600220115877==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
- =
+On Tuesday 07 December 2010 10:58:37 ext Marcel Holtmann, you wrote:
+> I have seen a bunch of devices where we have not a proper clock value to
+> begin with. And in that case there is nothing really useful we can do
+> with it, except just set the system clock right away.
 
-> > +	ofono_bool_t online;
-> =
+Are you kidding me? You claim devices have no working hardware timer? And y=
+ou =
 
-> Why do you need to track this variable?  Can't you simply =
+use them? Come on.
 
-> call ofono_modem_get_online()?
-> =
+-- =
 
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-This way calling of ofono_modem_get_online for each get or set request
-can be avoided.
-
-Regards,
-Jeevaka
-
---===============7211687463098677613==--
+--===============1271138600220115877==--
 
