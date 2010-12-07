@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4577861825583904299=="
+Content-Type: multipart/mixed; boundary="===============6177343874749886376=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] sms: store pending tx pdus on disk
-Date: Mon, 06 Dec 2010 20:38:58 -0600
-Message-ID: <4CFD9E42.3050109@gmail.com>
-In-Reply-To: <1290639202-12221-2-git-send-email-kristen@linux.intel.com>
+Subject: Re: [PATCH 3/3] sms: restore pending tx messages from backup
+Date: Mon, 06 Dec 2010 20:43:49 -0600
+Message-ID: <4CFD9F65.6030104@gmail.com>
+In-Reply-To: <1290639202-12221-4-git-send-email-kristen@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4577861825583904299==
+--===============6177343874749886376==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,166 +17,88 @@ Hi Kristen,
 
 On 11/24/2010 04:53 PM, Kristen Carlson Accardi wrote:
 > ---
->  src/sms.c     |   17 +++++++++++++++++
->  src/smsutil.c |   26 ++++++++++++++++++++++++++
->  src/smsutil.h |    3 +++
->  3 files changed, 46 insertions(+), 0 deletions(-)
+>  src/ofono.h   |    1 +
+>  src/sms.c     |   38 +++++++++++++++++++
+>  src/smsutil.c |  116 +++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  src/smsutil.h |    6 +++
+>  4 files changed, 161 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/src/sms.c b/src/sms.c
-> index 12988c8..6eab0fa 100644
-> --- a/src/sms.c
-> +++ b/src/sms.c
-> @@ -52,6 +52,8 @@ static gboolean tx_next(gpointer user_data);
->  =
-
->  static GSList *g_drivers =3D NULL;
->  =
-
-> +static unsigned long tx_counter =3D 0;
-> +
-
-I think that using a static variable for this is a bad idea.  You
-probably want to add this to the sim atom itself.  More on this a bit later.
-
->  enum message_state {
->  	MESSAGE_STATE_PENDING =3D		0,
->  	MESSAGE_STATE_SENT,
-> @@ -111,6 +113,7 @@ struct tx_queue_entry {
->  	ofono_sms_txq_submit_cb_t cb;
->  	void *data;
->  	ofono_destroy_func destroy;
-> +	int id;
-
-Is there a reason for the type of id and the type of tx_counter to be
-different?
-
+> diff --git a/src/ofono.h b/src/ofono.h
+> index d1a4bdc..4777f70 100644
+> --- a/src/ofono.h
+> +++ b/src/ofono.h
+> @@ -241,6 +241,7 @@ enum ofono_sms_submit_flag {
+>  	OFONO_SMS_SUBMIT_FLAG_RECORD_HISTORY =3D	0x2,
+>  	OFONO_SMS_SUBMIT_FLAG_RETRY =3D		0x4,
+>  	OFONO_SMS_SUBMIT_FLAG_EXPOSE_DBUS =3D	0x8,
+> +	OFONO_SMS_SUBMIT_FLAG_REUSE_UUID =3D	0x10,
 >  };
 >  =
 
->  static gboolean uuid_equal(gconstpointer v1, gconstpointer v2)
-> @@ -1899,6 +1902,8 @@ int __ofono_sms_txq_submit(struct ofono_sms *sms, G=
-SList *list,
->  {
->  	struct message *m =3D NULL;
->  	struct tx_queue_entry *entry;
-> +	int i;
-> +	GSList *l;
->  =
-
->  	entry =3D tx_queue_entry_new(list, flags);
->  	if (entry =3D=3D NULL)
-> @@ -1923,6 +1928,8 @@ int __ofono_sms_txq_submit(struct ofono_sms *sms, G=
-SList *list,
->  			sms->ref =3D sms->ref + 1;
->  	}
->  =
-
-> +	entry->id =3D tx_counter++;
-> +
->  	g_queue_push_tail(sms->txq, entry);
->  =
-
->  	if (g_queue_get_length(sms->txq) =3D=3D 1)
-> @@ -1931,6 +1938,16 @@ int __ofono_sms_txq_submit(struct ofono_sms *sms, =
-GSList *list,
->  	if (uuid)
->  		memcpy(uuid, &entry->uuid, sizeof(*uuid));
->  =
-
-> +	i =3D 0;
-> +
-> +	for (l =3D list; l; l =3D l->next) {
-
-I'd really prefer i =3D 0, l =3D list here
-
-> +		struct sms *s =3D l->data;
-> +		sms_tx_store(sms->imsi, entry->id,
-> +				ofono_uuid_to_str(&entry->uuid),
-> +				s, i);
-> +		i++;
-> +	}
-> +
->  	if (cb)
->  		cb(sms, &entry->uuid, data);
->  =
-
-> diff --git a/src/smsutil.c b/src/smsutil.c
-> index e6dbf5f..4904419 100644
-> --- a/src/smsutil.c
-> +++ b/src/smsutil.c
-> @@ -48,6 +48,10 @@
->  #define SMS_SR_BACKUP_PATH STORAGEDIR "/%s/sms_sr"
->  #define SMS_SR_BACKUP_PATH_FILE SMS_SR_BACKUP_PATH "/%s-%s"
->  =
-
-> +#define SMS_TX_BACKUP_PATH STORAGEDIR "/%s/tx_queue"
-> +#define SMS_TX_BACKUP_PATH_DIR SMS_TX_BACKUP_PATH "/%lu-%s"
-> +#define SMS_TX_BACKUP_PATH_FILE SMS_TX_BACKUP_PATH_DIR "/%03i"
-> +
->  #define SMS_ADDR_FMT "%24[0-9A-F]"
->  #define SMS_MSGID_FMT "%40[0-9A-F]"
->  =
-
-> @@ -3125,6 +3129,28 @@ void status_report_assembly_expire(struct status_r=
-eport_assembly *assembly,
->  	}
+>  typedef void (*ofono_sms_txq_submit_cb_t)(gboolean ok, void *data);
+> diff --git a/src/sms.c b/src/sms.c
+> index f987946..be710b1 100644
+> --- a/src/sms.c
+> +++ b/src/sms.c
+> @@ -1814,6 +1814,40 @@ static void bearer_init_callback(const struct ofon=
+o_error *error, void *data)
+>  		ofono_error("Error bootstrapping SMS Bearer Preference");
 >  }
 >  =
 
-> +gboolean sms_tx_store(const char *imsi, unsigned long id, const char *uu=
-id,
-> +			struct sms *s, guint8 seq)
+> +static void sms_restore_tx_queue(struct ofono_sms *sms)
 > +{
-> +	int len;
-> +	unsigned char buf[177];
+> +	GQueue *backupq;
+> +	unsigned int flags;
+> +	struct txq_backup_entry *entry;
+> +	struct ofono_uuid ofono_uuid;
 > +
-> +	if (!imsi)
-> +		return FALSE;
+> +	DBG("");
 > +
-> +	len =3D sms_serialize(buf, s);
+> +	flags =3D OFONO_SMS_SUBMIT_FLAG_RECORD_HISTORY;
+> +	flags |=3D OFONO_SMS_SUBMIT_FLAG_RETRY;
+> +	flags |=3D OFONO_SMS_SUBMIT_FLAG_REUSE_UUID;
 > +
-> +	/*
-> +	 * file name is: imsi/order in tx_queue-uuid/order of pdus
-> +	 */
-> +	if (write_file(buf, len, SMS_BACKUP_MODE,
-> +				SMS_TX_BACKUP_PATH_FILE, imsi, id, uuid,
-> +				seq) !=3D len)
-> +		return FALSE;
-> +
+> +	if (sms->use_delivery_reports)
+> +		flags |=3D OFONO_SMS_SUBMIT_FLAG_REQUEST_SR;
 
-And where are you taking care of storing the other needed information?
-e.g. the tx_queue entry flags, retry count, etc?
+As I mentioned before, you should be restoring this information.
+Assuming that it is the same for all messages on the tx queue is a
+really bad idea.
 
-> +	return TRUE;
+> +
+> +	backupq =3D sms_tx_queue_load(sms->imsi);
+> +
+> +	while ((entry =3D g_queue_pop_head(backupq))) {
+> +		decode_hex_own_buf(entry->uuid, -1, NULL, 0, ofono_uuid.uuid);
+> +
+> +		__ofono_sms_txq_submit(sms, entry->msg_list, flags,
+> +					&ofono_uuid, NULL, NULL);
+
+Using sms_txq_submit is a bad idea.  This one will re-calculate the UUID
+which gets tossed out later.  I suggest creating the tx_queue entries 'raw'.
+
+> +
+> +		g_slist_foreach(entry->msg_list, (GFunc)g_free, NULL);
+> +		g_slist_free(entry->msg_list);
+> +
+> +		g_free(entry->uuid);
+> +		g_free(entry);
+> +	}
+> +
+> +	g_queue_free(backupq);
 > +}
 > +
->  static inline GSList *sms_list_append(GSList *l, const struct sms *in)
->  {
->  	struct sms *sms;
-> diff --git a/src/smsutil.h b/src/smsutil.h
-> index 4b05313..5279489 100644
-> --- a/src/smsutil.h
-> +++ b/src/smsutil.h
-> @@ -516,6 +516,9 @@ void status_report_assembly_add_fragment(struct statu=
-s_report_assembly
->  void status_report_assembly_expire(struct status_report_assembly *assemb=
-ly,
->  					time_t before);
->  =
+>  /*
+>   * Indicate oFono that a SMS driver is ready for operation
+>   *
 
-> +gboolean sms_tx_store(const char *imsi, unsigned long id, const char *uu=
-id,
-> +				struct sms *s, guint8 seq);
-> +
->  GSList *sms_text_prepare(const char *to, const char *utf8, guint16 ref,
->  				gboolean use_16bit,
->  				gboolean use_delivery_reports);
-
-Otherwise I'm happy with this one.
+<snip>
 
 Regards,
 -Denis
 
---===============4577861825583904299==--
+--===============6177343874749886376==--
 
