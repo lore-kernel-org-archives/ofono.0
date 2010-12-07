@@ -1,77 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============5534630634412313203=="
+Content-Type: multipart/mixed; boundary="===============0805094278155186881=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH -v3 5/5] modem: add support to restore state when
- resetting the modem
-Date: Mon, 06 Dec 2010 21:48:48 -0600
-Message-ID: <4CFDAEA0.6000408@gmail.com>
-In-Reply-To: <1291402377-9211-5-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH 1/3] smsutil: Change the range of time zone
+Date: Tue, 07 Dec 2010 07:39:55 -0600
+Message-ID: <4CFE392B.80009@gmail.com>
+In-Reply-To: <1291113890-24465-1-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5534630634412313203==
+--===============0805094278155186881==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Yang,
 
-> @@ -488,16 +465,22 @@ static void online_cb(const struct ofono_error *err=
-or, void *data)
->  	DBusMessage *reply;
->  =
+On 11/30/2010 04:44 AM, Yang Gu wrote:
+> ---
+>  src/smsutil.c |   11 +++++++++--
+>  1 files changed, 9 insertions(+), 2 deletions(-)
+> =
 
->  	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
-> -			modem->modem_state =3D=3D MODEM_STATE_OFFLINE)
-> +			modem->modem_state =3D=3D MODEM_STATE_OFFLINE) {
-> +		modem_change_state(modem, MODEM_STATE_ONLINE);
 
-This actually breaks the (yet unwritten) rule to try to return from the
-method call before signaling the property changed.
-
-Can you leave this be and add something like:
-
-if (modem->pending =3D=3D NULL)
-	goto out;
-
-or something prior to this if condition?
-
-> +
-> +		if (!modem->pending)
-> +			return;
-> +
-
-Then you can omit this
-
->  		reply =3D dbus_message_new_method_return(modem->pending);
-> -	else
-> +	} else {
-> +
-> +		if (!modem->pending)
-> +			return;
-> +
-
-And this
-
->  		reply =3D __ofono_error_failed(modem->pending);
-> +	}
->  =
-
->  	__ofono_dbus_pending_reply(&modem->pending, reply);
-
-And just add a label here...
-
-> -
-> -	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
-> -			modem->modem_state =3D=3D MODEM_STATE_OFFLINE)
-> -		modem_change_state(modem, MODEM_STATE_ONLINE);
->  }
->  =
-
->  static void offline_cb(const struct ofono_error *error, void *data)
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============5534630634412313203==--
+--===============0805094278155186881==--
 
