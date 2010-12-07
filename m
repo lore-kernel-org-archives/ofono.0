@@ -1,40 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============0476360189635605741=="
+Content-Type: multipart/mixed; boundary="===============4043311486712613574=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 6/7] doc: Add new property to call forwarding
-Date: Tue, 07 Dec 2010 12:37:46 -0800
-Message-ID: <1291754267-26025-7-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 5/7] phonesim: Move call forwarding to post sim
+Date: Tue, 07 Dec 2010 12:37:45 -0800
+Message-ID: <1291754267-26025-6-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1291754267-26025-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0476360189635605741==
+--===============4043311486712613574==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/call-forwarding-api.txt |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ plugins/phonesim.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/doc/call-forwarding-api.txt b/doc/call-forwarding-api.txt
-index 067531a..e8b4b9f 100644
---- a/doc/call-forwarding-api.txt
-+++ b/doc/call-forwarding-api.txt
-@@ -57,3 +57,8 @@ Properties	string VoiceUnconditional [readwrite]
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index c7ef0d7..b4795f2 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -635,6 +635,8 @@ static void phonesim_post_sim(struct ofono_modem *modem)
+ 	if (!data->calypso)
+ 		ofono_stk_create(modem, OFONO_VENDOR_PHONESIM,
+ 					"atmodem", data->chat);
++
++	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
+ }
  =
 
- 			Contains the value of the voice "Not Reachable" call
- 			forwarding rule.
-+
-+		boolean ForwardingFlagOnSim [readonly]
-+
-+			Boolean representing the voice unconditional call
-+			forwarding rule status.
+ static void phonesim_post_online(struct ofono_modem *modem)
+@@ -647,7 +649,6 @@ static void phonesim_post_online(struct ofono_modem *mo=
+dem)
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_ussd_create(modem, 0, "atmodem", data->chat);
+-	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
+ 	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
+ =
+
+ 	if (data->calypso)
 -- =
 
 1.7.0.4
 
 
---===============0476360189635605741==--
+--===============4043311486712613574==--
 
