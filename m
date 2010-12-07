@@ -1,62 +1,164 @@
-Content-Type: multipart/mixed; boundary="===============8215730523299777341=="
+Content-Type: multipart/mixed; boundary="===============1543234865305892356=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 1/3] plugins: Implementation of Network Time plugin
-Date: Tue, 07 Dec 2010 18:12:27 +0200
-Message-ID: <201012071812.27110.remi.denis-courmont@nokia.com>
-In-Reply-To: <AANLkTimqcKbRrhthsa_PpgU2Gmhd+HRSS0qubTdAPB40@mail.gmail.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [RFC PATCH 2/4] modem: add EmergencyMode property
+Date: Tue, 07 Dec 2010 18:33:45 +0200
+Message-ID: <AANLkTinLasRE-FfDkRqwFFW5fpCedKVh2iiuzy1BwyDz@mail.gmail.com>
+In-Reply-To: <4CF942DE.4010004@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8215730523299777341==
+--===============1543234865305892356==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tuesday 07 December 2010 09:51:57 ext Aki Niemi, you wrote:
-> > Passing the time over D-Bus may cause extra drift/imprecision than we
-> > already have. I wonder if it would make sense to provide not just the
-> > current time but both:
-> > - the current time for trivial programs, and
-> > - the system boot time (i.e. nw_time - received) for smarter programs;
-> >  this value cannot drift.
-> =
+Hi Denis and Andras,
 
-> I remember we had similar argument in the past with the timed folks,
-> which actually resulted in a much more convoluted API... I'm still not
-> convinced time drift is a problem, since NITZ itself is accurate to
-> the second.
+2010/12/3 Denis Kenzior <denkenz@gmail.com>:
+> <snip>
+>> +static void modem_change_online(struct ofono_modem *modem,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 enum modem_state new_state)
+>> +{
+>> + =C2=A0 =C2=A0 DBusConnection *conn =3D ofono_dbus_get_connection();
+>> + =C2=A0 =C2=A0 enum modem_state old_state =3D modem->modem_state;
+>> + =C2=A0 =C2=A0 ofono_bool_t new_online =3D new_state =3D=3D MODEM_STATE=
+_ONLINE;
 
-> However, thinking about this, I actually don't see any value in
-> providing a human readable time over D-Bus. No application should
-> directly ask oFono for time, this is why timed is there to begin with.
-> =
+I'd define a new enum modem_state for emergency mode, MODEM_STATE_EMERGENCY.
 
-> So sending a plain time_t over D-Bus is actually sufficient. This
-> leaves us with having to send timestamps over D-Bus, which is ugly.
-> Can you explain how you see clock drift a problem here exactly?
+>> + =C2=A0 =C2=A0 DBG("old state: %d, new state: %d", old_state, new_state=
+);
+>> +
+>> + =C2=A0 =C2=A0 if (new_online =3D=3D modem->online)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
+>
+> You check for online not being equal here
+>
+>> +
+>> + =C2=A0 =C2=A0 modem->modem_state =3D new_state;
+>> + =C2=A0 =C2=A0 modem->online =3D new_online;
+>> +
+>> + =C2=A0 =C2=A0 ofono_dbus_signal_property_changed(conn, modem->path,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 OFONO_MODEM_INTERFA=
+CE, "Online",
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBUS_TYPE_BOOLEAN, =
+&modem->online);
+>> +
+>> + =C2=A0 =C2=A0 notify_online_watches(modem);
+>> +}
+>> +
+>> +static void emergency_online_cb(const struct ofono_error *error, void *=
+data)
+>> +{
+>> + =C2=A0 =C2=A0 struct ofono_modem *modem =3D data;
+>> +
+>> + =C2=A0 =C2=A0 DBG("modem: %p", modem);
+>> +
+>> + =C2=A0 =C2=A0 if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+modem->modem_state !=3D MODEM_STATE_ONLINE)
+>
+> And perform essentially the same check here... =C2=A0Seems wasteful
+>
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 modem_change_online(modem, M=
+ODEM_STATE_ONLINE);
+>> +}
+>> +
+>> +static void emergency_offline_cb(const struct ofono_error *error, void =
+*data)
+>> +{
+>> + =C2=A0 =C2=A0 struct ofono_modem *modem =3D data;
+>> + =C2=A0 =C2=A0 DBusConnection *conn =3D ofono_dbus_get_connection();
+>> + =C2=A0 =C2=A0 const char *path =3D ofono_modem_get_path(modem);
+>> + =C2=A0 =C2=A0 gboolean state =3D FALSE;
+>> +
+>> + =C2=A0 =C2=A0 DBG("modem: %p", modem);
+>> +
+>> + =C2=A0 =C2=A0 if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR &&
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+modem->modem_state =3D=3D MODEM_STATE_ONLINE)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 modem_change_online(modem, m=
+odem->modem_state_pre_emergency);
+>
+> Same comment as above
+>
+>> +
+>> + =C2=A0 =C2=A0 modem->emergency--;
+>> +
+>> + =C2=A0 =C2=A0 ofono_dbus_signal_property_changed(conn, path,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 OFONO_MODEM_INTERFA=
+CE,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "Emergency",
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBUS_TYPE_BOOLEAN,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &state);
+>> +}
+>> +
+>> +void ofono_modem_inc_emergency(struct ofono_modem *modem)
+>> +{
+>> + =C2=A0 =C2=A0 DBusConnection *conn =3D ofono_dbus_get_connection();
+>> + =C2=A0 =C2=A0 const char *path =3D ofono_modem_get_path(modem);
+>> + =C2=A0 =C2=A0 gboolean state =3D TRUE;
+>> +
+>> + =C2=A0 =C2=A0 DBG("modem: %p", modem);
+>> +
+>> + =C2=A0 =C2=A0 modem->emergency++;
+>> + =C2=A0 =C2=A0 if (modem->emergency > 1)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
+>> +
+>> + =C2=A0 =C2=A0 ofono_dbus_signal_property_changed(conn, path,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 OFONO_MODEM_INTERFACE,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 "Emergency",
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 DBUS_TYPE_BOOLEAN,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 &state);
+>> +
+>> + =C2=A0 =C2=A0 modem->modem_state_pre_emergency =3D modem->modem_state;
+>> +
+>> + =C2=A0 =C2=A0 if (modem->modem_state =3D=3D MODEM_STATE_ONLINE)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
+>
+> So my only major concern left is here actually. =C2=A0If we activate an
+> emergency call and a set_property(Online, blah) is active, we get into
+> some funny race conditions. =C2=A0I mentioned these to Pekka on IRC. =C2=
+=A0But
+> basically the worst one is if we have an Online=3DFalse operation pending.
+> =C2=A0In this case your call proceeds, but then gets terminated shortly
+> thereafter by the offline procedure ;)
 
-More than one second delay over D-Bus is not unheard of, especially on mobi=
-le =
+That is a tricky problem. I'd say the most straightforward way is to
+return an error if there is a pending operation and push these
+problems up the stack. In any case dialer has to retry ecall if user
+tries to make the emergency call just after or before moving device to
+offline / removing SIM card / etc. However, I'm not sure if we can
+propagate the error in all cases where ofono_modem_inc_emergency()
+gets called.
 
-devices. I don't see the point of sending _both_ the reception timestamp an=
-d =
-
-the original NITZ value, but I do see the point in sending a value who =
-
-transmission is not time-sensitive.
-
-And even if drift were not a problem, it's best to have an API that does =
-
-fundamentally not suffer from the problem. Otherwise, you will need to just=
-ify =
-
-every second month why drift is a negligible issue.
+In order to manage the worst case in best possible manner, I'd check
+for set_online in progress here. Return FALSE from
+ofono_modem_get_online() immediately after the set_online(FALSE) call
+is made. Also, check the emergency state again in after set_online
+callback response. The online/offline watches should be called before
+the set_online() call. (I have no idea what we will do should
+set_online(FALSE) fail)?
 
 -- =
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
+Pekka.Pessi mail at nokia.com
 
---===============8215730523299777341==--
+--===============1543234865305892356==--
 
