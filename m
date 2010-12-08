@@ -1,53 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============7147333282425741654=="
+Content-Type: multipart/mixed; boundary="===============7278627218168140741=="
 MIME-Version: 1.0
-From: Kai.Vehmanen@nokia.com
-Subject: RE: [PATCH 0/5] Call Counters (2nd)
-Date: Wed, 08 Dec 2010 22:02:31 +0100
-Message-ID: <725063E4C37388418CDDC5A2C287906A20D08A19F8@NOK-EUMSG-03.mgdnok.nokia.com>
-In-Reply-To: <1291824722.4795.188.camel@aeonflux>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH] smsutil: do not hardcode TP-ValidityPeriod
+Date: Wed, 08 Dec 2010 23:57:01 +0200
+Message-ID: <1291845421-1898-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7147333282425741654==
+--===============7278627218168140741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-On 08 Dec 2010, Marcel Holtmann wrote:
-> So I am actually thinking that doing that inside PulseAudio is a lot
-> more efficient solution.
-> =
+---
+ src/smsutil.c |    6 ++----
+ 1 files changed, 2 insertions(+), 4 deletions(-)
 
-> The idea is that PA already runs in the user session and has to monitor
-> the uplink/downlink state (and additionally could monitor call states
-> as well if needed). So it knows when a call is active and it is active
-> anyway doing the audio processing. So it could just then go ahead and
-> write your call accounting into Tracker.
+diff --git a/src/smsutil.c b/src/smsutil.c
+index f4eee24..59faaf7 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -3162,11 +3162,10 @@ GSList *sms_datagram_prepare(const char *to,
+ 	memset(&template, 0, sizeof(struct sms));
+ 	template.type =3D SMS_TYPE_SUBMIT;
+ 	template.submit.rd =3D FALSE;
+-	template.submit.vpf =3D SMS_VALIDITY_PERIOD_FORMAT_RELATIVE;
++	template.submit.vpf =3D SMS_VALIDITY_PERIOD_FORMAT_ABSENT;
+ 	template.submit.rp =3D FALSE;
+ 	template.submit.srr =3D use_delivery_reports;
+ 	template.submit.mr =3D 0;
+-	template.submit.vp.relative =3D 0xA7; /* 24 Hours */
+ 	template.submit.dcs =3D 0x04; /* Class Unspecified, 8 Bit */
+ 	template.submit.udhi =3D TRUE;
+ 	sms_address_from_string(&template.submit.daddr, to);
+@@ -3288,11 +3287,10 @@ GSList *sms_text_prepare(const char *to, const char=
+ *utf8, guint16 ref,
+ 	memset(&template, 0, sizeof(struct sms));
+ 	template.type =3D SMS_TYPE_SUBMIT;
+ 	template.submit.rd =3D FALSE;
+-	template.submit.vpf =3D SMS_VALIDITY_PERIOD_FORMAT_RELATIVE;
++	template.submit.vpf =3D SMS_VALIDITY_PERIOD_FORMAT_ABSENT;
+ 	template.submit.rp =3D FALSE;
+ 	template.submit.srr =3D use_delivery_reports;
+ 	template.submit.mr =3D 0;
+-	template.submit.vp.relative =3D 0xA7; /* 24 Hours */
+ 	sms_address_from_string(&template.submit.daddr, to);
+ =
 
-Pulseaudio (or the meego PA modules for voice) isn't really an option =
-
-for at least the following reasons:
- - lots of modems still handle all audio and PA will know nothing
-   about calls at all with these modems
- - PA does not really care about individual calls, but whether =
-
-   the audio traffic channel is connected or not
-	- multi-call cases, cases were traffic channel is reconnected =
-
-        mid-call, etc, etc, PA simply does not know enough (and should
-        not)
-
-I guess this could be done in higher layers on top of oFono (telepathy-ring,
-dialer app, policy framework, etc), but I don't really know enough about
-the call timer stuff to comment on the pro/cons of this.
-
-br,
+ 	/* UDHI, UDL, UD and DCS actually depend on what we have in the text */
 -- =
 
-Kai Vehmanen
+1.7.1
 
 
---===============7147333282425741654==--
+--===============7278627218168140741==--
 
