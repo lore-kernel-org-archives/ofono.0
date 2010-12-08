@@ -1,58 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============8626541885899084828=="
+Content-Type: multipart/mixed; boundary="===============8449934024662177024=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 0/5] Call Counters (2nd)
-Date: Wed, 08 Dec 2010 11:34:40 +0200
-Message-ID: <AANLkTinYryk1jdhdVRXh1RXn5CvwrD_A8y2GPBcP0ZsK@mail.gmail.com>
-In-Reply-To: <1291798984.4795.146.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 2/4] modem: add EmergencyMode property
+Date: Wed, 08 Dec 2010 04:55:21 -0600
+Message-ID: <4CFF6419.3090402@gmail.com>
+In-Reply-To: <AANLkTinLasRE-FfDkRqwFFW5fpCedKVh2iiuzy1BwyDz@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8626541885899084828==
+--===============8449934024662177024==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Pekka,
 
-2010/12/8 Marcel Holtmann <marcel@holtmann.org>:
-> so Denis and I talked about this a little bit and I am not fine with
-> this at all.
+>> So my only major concern left is here actually.  If we activate an
+>> emergency call and a set_property(Online, blah) is active, we get into
+>> some funny race conditions.  I mentioned these to Pekka on IRC.  But
+>> basically the worst one is if we have an Online=3DFalse operation pendin=
+g.
+>>  In this case your call proceeds, but then gets terminated shortly
+>> thereafter by the offline procedure ;)
+> =
 
-Next time, can you invite me to join your little talk?
+> That is a tricky problem. I'd say the most straightforward way is to
+> return an error if there is a pending operation and push these
+> problems up the stack. In any case dialer has to retry ecall if user
+> tries to make the emergency call just after or before moving device to
+> offline / removing SIM card / etc. However, I'm not sure if we can
+> propagate the error in all cases where ofono_modem_inc_emergency()
+> gets called.
 
-> Lets take this one step and please explain to me what your requirements
-> and objectives are. I also wanna see a top to bottom from UI down to the
-> modem usage of this API.
+There's really no way for the voicecall atom to know that a modem is
+undergoing an online / offline transition..
 
-We need a UI showing total MO and MT call times. They also need to be
-able to be reset, if the user so wishes. The data needs to be
-reasonably reliable.
+> =
 
-> and consuming heavy IO with writing this information to disk. In
-> addition to that there is no clear UI usage for the getter API.
+> In order to manage the worst case in best possible manner, I'd check
+> for set_online in progress here. Return FALSE from
+> ofono_modem_get_online() immediately after the set_online(FALSE) call
+> is made. Also, check the emergency state again in after set_online
+> callback response. The online/offline watches should be called before
+> the set_online() call. (I have no idea what we will do should
+> set_online(FALSE) fail)?
+> =
 
-What do you mean? Do you mean your iPhone has no such UI?
 
-The reason these are not properties is just because it makes no sense
-to update the counters "live". The UI can poll if it so wishes, but
-the poll interval is not something we want to decide.
+So my thinking was essentially along the same lines.  We can check
+whether an Online change operation is in progress by peeking at the
+pending D-Bus message.  If we're going online, then not triggering
+another set_online call and waiting for the online_cb should be sufficient.
 
-> What are the granularity there. What is the expected user experience
-> with this API. I don't see any clear usage model here.
->
-> In addition to that, what is the problem with just updating the stats
-> after the call has ended?
+If we're going offline, then returning FALSE from ofono_modem_get_online
+and re-checking the emergency counter in the offline_cb seems like the
+way to go.
 
-Because if your battery runs out in the middle of a 4 hour conference
-call, your timers are not updated and become worthless. Obviously,
-this is a compromise between how reliable the counters are and how
-many wakeups and IO we can bear.
+I'd like to take care of this completely inside oFono and not bother the
+dialer with these details.  Thoughts?
 
-Andras has some data on what reasonable reliability here means.
+Regards,
+-Denis
 
-Cheers,
-Aki
 
---===============8626541885899084828==--
+--===============8449934024662177024==--
 
