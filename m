@@ -1,152 +1,331 @@
-Content-Type: multipart/mixed; boundary="===============7458403198525988704=="
+Content-Type: multipart/mixed; boundary="===============6444742299768760126=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/5] Call Counters (2nd)
-Date: Wed, 08 Dec 2010 17:12:02 +0100
-Message-ID: <1291824722.4795.188.camel@aeonflux>
-In-Reply-To: <4CFFABDE.2010102@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] huaweimodem: Add support for radio settings
+Date: Wed, 08 Dec 2010 10:17:34 -0600
+Message-ID: <4CFFAF9E.8040602@gmail.com>
+In-Reply-To: <1291142496-26103-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7458403198525988704==
+--===============6444742299768760126==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras,
+Hi Lucas,
 
-> >>> Lets take this one step and please explain to me what your requiremen=
-ts
-> >>> and objectives are. I also wanna see a top to bottom from UI down to =
-the
-> >>> modem usage of this API.
-> >>>        =
+On 11/30/2010 12:41 PM, Lucas De Marchi wrote:
+> ---
+>  Makefile.am                          |    3 +-
+>  drivers/huaweimodem/huaweimodem.c    |    2 +
+>  drivers/huaweimodem/huaweimodem.h    |    3 +
+>  drivers/huaweimodem/radio-settings.c |  212 ++++++++++++++++++++++++++++=
+++++++
+>  4 files changed, 219 insertions(+), 1 deletions(-)
+>  create mode 100644 drivers/huaweimodem/radio-settings.c
+> =
 
-> >> We need a UI showing total MO and MT call times. They also need to be
-> >> able to be reset, if the user so wishes. The data needs to be
-> >> reasonably reliable.
-> >>      =
+> diff --git a/Makefile.am b/Makefile.am
+> index a4c47e8..5d39c23 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -180,7 +180,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
+>  			drivers/huaweimodem/huaweimodem.c \
+>  			drivers/huaweimodem/voicecall.c \
+>  			drivers/huaweimodem/audio-settings.c \
+> -			drivers/huaweimodem/gprs-context.c
+> +			drivers/huaweimodem/gprs-context.c \
+> +			drivers/huaweimodem/radio-settings.c
+>  =
 
-> > Fair enough, but when I look at such a feature as a whole, then my
-> > question is when does it need to be shown? What is your user interaction
-> > requirement with this data?
-> >
-> > Andras, please explain what reasonable reliable means.
-> >
-> >    =
+>  builtin_modules +=3D calypsomodem
+>  builtin_sources +=3D drivers/atmodem/atutil.h \
+> diff --git a/drivers/huaweimodem/huaweimodem.c b/drivers/huaweimodem/huaw=
+eimodem.c
+> index c8b6522..8097a9c 100644
+> --- a/drivers/huaweimodem/huaweimodem.c
+> +++ b/drivers/huaweimodem/huaweimodem.c
+> @@ -36,6 +36,7 @@ static int huaweimodem_init(void)
+>  {
+>  	huawei_voicecall_init();
+>  	huawei_audio_settings_init();
+> +	huawei_radio_settings_init();
+>  	huawei_gprs_context_init();
+>  =
 
-> The call counters are shown to the user when he or she opens up
-> an application/applet whatever UI component that is meant for
-> showing this information.
+>  	return 0;
+> @@ -44,6 +45,7 @@ static int huaweimodem_init(void)
+>  static void huaweimodem_exit(void)
+>  {
+>  	huawei_gprs_context_exit();
+> +	huawei_radio_settings_exit();
+>  	huawei_audio_settings_exit();
+>  	huawei_voicecall_exit();
+>  }
+> diff --git a/drivers/huaweimodem/huaweimodem.h b/drivers/huaweimodem/huaw=
+eimodem.h
+> index 03d52ef..596aa08 100644
+> --- a/drivers/huaweimodem/huaweimodem.h
+> +++ b/drivers/huaweimodem/huaweimodem.h
+> @@ -27,5 +27,8 @@ extern void huawei_voicecall_exit();
+>  extern void huawei_audio_settings_init();
+>  extern void huawei_audio_settings_exit();
+>  =
 
-do we have a clear use case requirement from an UI point of view on how
-this is expected to be working.
+> +extern void huawei_radio_settings_init();
+> +extern void huawei_radio_settings_exit();
+> +
+>  extern void huawei_gprs_context_init();
+>  extern void huawei_gprs_context_exit();
+> diff --git a/drivers/huaweimodem/radio-settings.c b/drivers/huaweimodem/r=
+adio-settings.c
+> new file mode 100644
+> index 0000000..7f0b223
+> --- /dev/null
+> +++ b/drivers/huaweimodem/radio-settings.c
+> @@ -0,0 +1,212 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2010  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#define _GNU_SOURCE
+> +#include <string.h>
+> +#include <stdlib.h>
+> +#include <stdio.h>
+> +#include <errno.h>
+> +
+> +#include <glib.h>
+> +
+> +#include <ofono/log.h>
+> +#include <ofono/modem.h>
+> +#include <ofono/radio-settings.h>
+> +
+> +#include "gatchat.h"
+> +#include "gatresult.h"
+> +
+> +#include "huaweimodem.h"
+> +
+> +static const char *none_prefix[] =3D { NULL };
+> +static const char *xrat_prefix[] =3D { "^SYSCFG:", NULL };
+> +
+> +struct radio_settings_data {
+> +	GAtChat *chat;
+> +};
+> +
+> +static void xrat_query_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
 
-I checked with my iPhone and how it does it. Basically it just updates
-after the call and only after you re-entered that menu.
+Why is this named xrat query?
 
-So here again, do we have a requirement to make this realtime or not.
-And I mean that from an user interaction point of view.
+> +{
+> +	struct cb_data *cbd =3D user_data;
+> +	ofono_radio_settings_rat_mode_query_cb_t cb =3D cbd->cb;
+> +	enum ofono_radio_access_mode mode;
+> +	struct ofono_error error;
+> +	GAtResultIter iter;
+> +	int value;
+> +
+> +	decode_at_error(&error, g_at_result_final_response(result));
+> +
+> +	if (!ok) {
+> +		cb(&error, -1, cbd->data);
+> +		return;
+> +	}
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	if (g_at_result_iter_next(&iter, "^SYSCFG:") =3D=3D FALSE)
+> +		goto error;
+> +
+> +	if (g_at_result_iter_next_number(&iter, &value) =3D=3D FALSE)
+> +		goto error;
+> +
+> +	switch (value) {
+> +	case 2:
+> +		mode =3D OFONO_RADIO_ACCESS_MODE_ANY;
+> +		break;
+> +	case 13:
+> +		mode =3D OFONO_RADIO_ACCESS_MODE_GSM;
+> +		break;
+> +	case 14:
+> +		mode =3D OFONO_RADIO_ACCESS_MODE_UMTS;
+> +		break;
+> +	default:
+> +		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+> +		return;
+> +	}
+> +
+> +	cb(&error, mode, cbd->data);
+> +
+> +	return;
+> +
+> +error:
+> +	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+> +}
+> +
+> +static void huawei_query_rat_mode(struct ofono_radio_settings *rs,
+> +				ofono_radio_settings_rat_mode_query_cb_t cb,
+> +				void *data)
+> +{
+> +	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
+> +	struct cb_data *cbd =3D cb_data_new(cb, data);
+> +
+> +	if (g_at_chat_send(rsd->chat, "AT^SYSCFG?", xrat_prefix,
+> +					xrat_query_cb, cbd, g_free) =3D=3D 0) {
 
-> Coming to the reliability part, saving the call counters information
-> often enough, gives us sort of hard guarantee that whatever happens
-> with any subsystem, be that SW or HW, the call counters will stay enough
-> accurate. Syncing to the permanent storage, based on our product
-> requirements, should take place in fact every 5 sec, or could be
-> configurable.
+And xrat_query here too?
 
-Writing and syncing something to disk every 5 seconds costs us IO. Is
-this really a sacrifice that is acceptable.
+> +		CALLBACK_WITH_FAILURE(cb, -1, data);
+> +		g_free(cbd);
+> +	}
+> +}
+> +
+> +static void xrat_modify_cb(gboolean ok, GAtResult *result, gpointer user=
+_data)
 
-> There might be some liability issues if for some reason the counters would
-> "loose" time, the user my blame the phone manufacturer for the extra
-> expenses incurred by inaccurate counters.
+xrat_modify?
 
-To be honest the counters can not be considered accurate anyway. Only
-the billing system has the final say.
+> +{
+> +	struct cb_data *cbd =3D user_data;
+> +	ofono_radio_settings_rat_mode_set_cb_t cb =3D cbd->cb;
+> +	struct ofono_error error;
+> +
+> +	decode_at_error(&error, g_at_result_final_response(result));
+> +	cb(&error, cbd->data);
+> +}
+> +
+> +static void huawei_set_rat_mode(struct ofono_radio_settings *rs,
+> +				enum ofono_radio_access_mode mode,
+> +				ofono_radio_settings_rat_mode_set_cb_t cb,
+> +				void *data)
+> +{
+> +	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
+> +	struct cb_data *cbd =3D cb_data_new(cb, data);
+> +	char buf[40];
+> +	int value =3D 2;
+> +
+> +	switch (mode) {
+> +	case OFONO_RADIO_ACCESS_MODE_ANY:
+> +		value =3D 2;
+> +		break;
+> +	case OFONO_RADIO_ACCESS_MODE_GSM:
+> +		value =3D 13;
+> +		break;
+> +	case OFONO_RADIO_ACCESS_MODE_UMTS:
+> +		value =3D 14;
+> +		break;
+> +	case OFONO_RADIO_ACCESS_MODE_LTE:
+> +		goto error;
+> +	}
+> +
+> +	snprintf(buf, sizeof(buf), "AT^SYSCFG=3D%u,0,3FFFFFFF,2,4", value);
 
-> >>> and consuming heavy IO with writing this information to disk. In
-> >>> addition to that there is no clear UI usage for the getter API.
-> >>>        =
+These values don't seem to be correct.  At least not after taking a peek
+at some of our competitors ;)
 
-> >> What do you mean? Do you mean your iPhone has no such UI?
-> >>      =
+> +
+> +	if (g_at_chat_send(rsd->chat, buf, none_prefix,
+> +					xrat_modify_cb, cbd, g_free) > 0)
 
-> > I have actually tested this with an iPhone and it has such an UI
-> > element, but it is not realtime. It gets updated after the call has been
-> > completed.
-> >
-> > So why can't we just update/reset this in Tracker via the history plugin
-> > in a general way. I am failing to see the need for this inside oFono. It
-> > seems to me that doing this within the scope of the Tracker integration
-> > is a lot cleaner and better for CPU and IO usage.
-> >    =
+xrat_modify again here
 
-> We can discuss the place of the call counters plugin, but I think using t=
-he
-> ofono history framework is a reasonable choice, with the note that the it
-> needs to be expanded with a history function called in the beginning
-> of a call.
-> The call counters plugin could be an optionally compiled/included (dynami=
-c)
-> plugin or "downgraded" to experimental status.
+> +		return;
+> +
+> +error:
+> +	CALLBACK_WITH_FAILURE(cb, data);
+> +	g_free(cbd);
+> +}
+> +
+> +static void xrat_support_cb(gboolean ok, GAtResult *result, gpointer use=
+r_data)
+> +{
 
-So I am actually thinking that doing that inside PulseAudio is a lot
-more efficient solution.
+xrat_support?
 
-The idea is that PA already runs in the user session and has to monitor
-the uplink/downlink state (and additionally could monitor call states as
-well if needed). So it knows when a call is active and it is active
-anyway doing the audio processing. So it could just then go ahead and
-write your call accounting into Tracker.
+> +	struct ofono_radio_settings *rs =3D user_data;
+> +
+> +	if (!ok)
+> +		return;
+> +
+> +	ofono_radio_settings_register(rs);
+> +}
+> +
+> +static int huawei_radio_settings_probe(struct ofono_radio_settings *rs,
+> +					unsigned int vendor, void *data)
+> +{
+> +	GAtChat *chat =3D data;
+> +	struct radio_settings_data *rsd;
+> +
+> +	rsd =3D g_try_new0(struct radio_settings_data, 1);
+> +	if (rsd =3D=3D NULL)
+> +		return -ENOMEM;
+> +
+> +	rsd->chat =3D g_at_chat_clone(chat);
+> +
+> +	ofono_radio_settings_set_data(rs, rsd);
+> +
+> +	g_at_chat_send(rsd->chat, "AT^SYSCFG=3D?", xrat_prefix,
 
-Would such an architecture work for you guys?
+xrat_prefix?
 
-> >> The reason these are not properties is just because it makes no sense
-> >> to update the counters "live". The UI can poll if it so wishes, but
-> >> the poll interval is not something we want to decide.
-> >>
-> >>      =
+> +					xrat_support_cb, rs, NULL);
+> +
+> +	return 0;
+> +}
+> +
+> +static void huawei_radio_settings_remove(struct ofono_radio_settings *rs)
+> +{
+> +	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
+> +
+> +	ofono_radio_settings_set_data(rs, NULL);
+> +
+> +	g_at_chat_unref(rsd->chat);
+> +	g_free(rsd);
+> +}
+> +
+> +static struct ofono_radio_settings_driver driver =3D {
+> +	.name			=3D "huaweimodem",
+> +	.probe			=3D huawei_radio_settings_probe,
+> +	.remove			=3D huawei_radio_settings_remove,
+> +	.query_rat_mode		=3D huawei_query_rat_mode,
+> +	.set_rat_mode		=3D huawei_set_rat_mode
+> +};
+> +
+> +void huawei_radio_settings_init()
+> +{
+> +	ofono_radio_settings_driver_register(&driver);
+> +}
+> +
+> +void huawei_radio_settings_exit()
+> +{
+> +	ofono_radio_settings_driver_unregister(&driver);
+> +}
 
-> >>> What are the granularity there. What is the expected user experience
-> >>> with this API. I don't see any clear usage model here.
-> >>>
-> >>> In addition to that, what is the problem with just updating the stats
-> >>> after the call has ended?
-> >>>        =
+Regards,
+-Denis
 
-> >> Because if your battery runs out in the middle of a 4 hour conference
-> >> call, your timers are not updated and become worthless. Obviously,
-> >> this is a compromise between how reliable the counters are and how
-> >> many wakeups and IO we can bear.
-> >>      =
-
-> > I think this is not a good idea to have oFono handles this. Why can't
-> > the system daemon just shutdown all calls when the battery reaches
-> > critical limit.
-> >    =
-
-> > You will never fully run down the battery anyway. One of the system
-> > health components in the system will prevent it and then can cleanly
-> > shutdown oFono and thus all calls. The only case where the system could
-> > potentially misfunction in this area would be an emergency call. But
-> > that is a total different use case anyway.
-> >    =
-
-> It was already pointed out by Mika Liljeberg there could be cases when we
-> might not get the chance to sync our data. We need to be prepared to cope
-> with such cases as well (syncing the data often "enough").
-
-Are these cases are really real life problems. For example with devices
-moving toward hotswap SIM cards, the exchange of battery and
-accidentally (or on purpose) removal seems to become more and more
-unrealistic.
-
-Regards
-
-Marcel
-
-
-
---===============7458403198525988704==--
+--===============6444742299768760126==--
 
