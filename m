@@ -1,67 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============8449934024662177024=="
+Content-Type: multipart/mixed; boundary="===============1529586602571075467=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 2/4] modem: add EmergencyMode property
-Date: Wed, 08 Dec 2010 04:55:21 -0600
-Message-ID: <4CFF6419.3090402@gmail.com>
-In-Reply-To: <AANLkTinLasRE-FfDkRqwFFW5fpCedKVh2iiuzy1BwyDz@mail.gmail.com>
+Subject: Re: [PATCH 1/3] sms: store pending tx pdus on disk
+Date: Wed, 08 Dec 2010 05:01:22 -0600
+Message-ID: <4CFF6582.6000300@gmail.com>
+In-Reply-To: <20101207145758.26059ea5@kcaccard-MOBL3>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8449934024662177024==
+--===============1529586602571075467==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
-
->> So my only major concern left is here actually.  If we activate an
->> emergency call and a set_property(Online, blah) is active, we get into
->> some funny race conditions.  I mentioned these to Pekka on IRC.  But
->> basically the worst one is if we have an Online=3DFalse operation pendin=
-g.
->>  In this case your call proceeds, but then gets terminated shortly
->> thereafter by the offline procedure ;)
+On 12/07/2010 04:57 PM, Kristen Carlson Accardi wrote:
+> On Mon, 06 Dec 2010 20:38:58 -0600
+> Denis Kenzior <denkenz@gmail.com> wrote:
 > =
 
-> That is a tricky problem. I'd say the most straightforward way is to
-> return an error if there is a pending operation and push these
-> problems up the stack. In any case dialer has to retry ecall if user
-> tries to make the emergency call just after or before moving device to
-> offline / removing SIM card / etc. However, I'm not sure if we can
-> propagate the error in all cases where ofono_modem_inc_emergency()
-> gets called.
-
-There's really no way for the voicecall atom to know that a modem is
-undergoing an online / offline transition..
-
+> <snip>
 > =
 
-> In order to manage the worst case in best possible manner, I'd check
-> for set_online in progress here. Return FALSE from
-> ofono_modem_get_online() immediately after the set_online(FALSE) call
-> is made. Also, check the emergency state again in after set_online
-> callback response. The online/offline watches should be called before
-> the set_online() call. (I have no idea what we will do should
-> set_online(FALSE) fail)?
+>>> +	/*
+>>> +	 * file name is: imsi/order in tx_queue-uuid/order of pdus
+>>> +	 */
+>>> +	if (write_file(buf, len, SMS_BACKUP_MODE,
+>>> +				SMS_TX_BACKUP_PATH_FILE, imsi, id, uuid,
+>>> +				seq) !=3D len)
+>>> +		return FALSE;
+>>> +
+>>
+>> And where are you taking care of storing the other needed information?
+>> e.g. the tx_queue entry flags, retry count, etc?
 > =
 
+> I can easily add the flags and retry count.  As far as the "etc"
+> that you mention, the only other information I see would be
+> entry->cb and entry->data, which I was thinking might have to
+> get lost.  I am not sure how to persist that information on
+> disk - do you have any suggestions?
 
-So my thinking was essentially along the same lines.  We can check
-whether an Online change operation is in progress by peeking at the
-pending D-Bus message.  If we're going online, then not triggering
-another set_online call and waiting for the online_cb should be sufficient.
-
-If we're going offline, then returning FALSE from ofono_modem_get_online
-and re-checking the emergency counter in the offline_cb seems like the
-way to go.
-
-I'd like to take care of this completely inside oFono and not bother the
-dialer with these details.  Thoughts?
+There's really no way to persist these, so losing them is fine for now.
+ The only entity who makes use of the callback is the stk atom, and
+those sms messages should not be serialized to disk.  e.g. we should not
+try to persist messages that do not have at least the
+OFONO_SMS_SUBMIT_FLAG_EXPOSE_DBUS set.
 
 Regards,
 -Denis
 
-
---===============8449934024662177024==--
+--===============1529586602571075467==--
 
