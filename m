@@ -1,47 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============5522699321390507971=="
+Content-Type: multipart/mixed; boundary="===============7147333282425741654=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO: Add onwer to 'GPS power control atom' task
-Date: Wed, 08 Dec 2010 11:42:41 -0600
-Message-ID: <4CFFC391.3090905@gmail.com>
-In-Reply-To: <20101202192247.GA2924@rafazurita.homelinux.net>
+From: Kai.Vehmanen@nokia.com
+Subject: RE: [PATCH 0/5] Call Counters (2nd)
+Date: Wed, 08 Dec 2010 22:02:31 +0100
+Message-ID: <725063E4C37388418CDDC5A2C287906A20D08A19F8@NOK-EUMSG-03.mgdnok.nokia.com>
+In-Reply-To: <1291824722.4795.188.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5522699321390507971==
+--===============7147333282425741654==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rafael,
+Hi,
 
-On 12/02/2010 01:22 PM, Rafael Ignacio Zurita wrote:
+On 08 Dec 2010, Marcel Holtmann wrote:
+> So I am actually thinking that doing that inside PulseAudio is a lot
+> more efficient solution.
 > =
 
-> ---
->  TODO |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
-> =
+> The idea is that PA already runs in the user session and has to monitor
+> the uplink/downlink state (and additionally could monitor call states
+> as well if needed). So it knows when a call is active and it is active
+> anyway doing the audio processing. So it could just then go ahead and
+> write your call accounting into Tracker.
 
-> diff --git a/TODO b/TODO
-> index a421a99..a365d38 100644
-> --- a/TODO
-> +++ b/TODO
-> @@ -488,6 +488,7 @@ Miscellaneous
->  =
+Pulseaudio (or the meego PA modules for voice) isn't really an option =
 
->    Priority: Low
->    Complexity: C4
-> +  Owner: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
->  =
+for at least the following reasons:
+ - lots of modems still handle all audio and PA will know nothing
+   about calls at all with these modems
+ - PA does not really care about individual calls, but whether =
 
->  - Add Location Service API for providing basic E911 suport.
->    This will be based on the 27.007 defined AT commands using
+   the audio traffic channel is connected or not
+	- multi-call cases, cases were traffic channel is reconnected =
 
-Thanks for taking up this task.  Patch has been applied.
+        mid-call, etc, etc, PA simply does not know enough (and should
+        not)
 
-Regards,
--Denis
+I guess this could be done in higher layers on top of oFono (telepathy-ring,
+dialer app, policy framework, etc), but I don't really know enough about
+the call timer stuff to comment on the pro/cons of this.
 
---===============5522699321390507971==--
+br,
+-- =
+
+Kai Vehmanen
+
+
+--===============7147333282425741654==--
 
