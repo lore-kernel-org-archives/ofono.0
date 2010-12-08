@@ -1,106 +1,137 @@
-Content-Type: multipart/mixed; boundary="===============1766081039112368313=="
+Content-Type: multipart/mixed; boundary="===============4930186622463629021=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 3/4] isimodem2.5: Changes to add isimodem2.5
-Date: Wed, 08 Dec 2010 10:30:04 +0100
-Message-ID: <1291800604.4795.151.camel@aeonflux>
-In-Reply-To: <1291797294-20554-1-git-send-email-jessica.j.nilsson@stericsson.com>
+Subject: Re: [PATCH 1/4] gisi: Changes to prepare for isimodem2.5
+Date: Wed, 08 Dec 2010 10:31:35 +0100
+Message-ID: <1291800695.4795.153.camel@aeonflux>
+In-Reply-To: <1291797255-20472-1-git-send-email-jessica.j.nilsson@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1766081039112368313==
+--===============4930186622463629021==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jessica,
 
-> Updates in Makefile.am - adding of isimodem2.5
-> Adding of drivers/isimodem2.5/ files to fully listed functionality.
+> This set of patches introduces the isimodem2.5.
 > =
 
-> Regards,
-> Jessica Nilsson
+> WG2.5 (isimodem2.5) Supported features list:
 > =
 
-> ---
->  Makefile.am                                |   36 +-
->  drivers/isimodem2.5/call-barring.c         |  503 ++
->  drivers/isimodem2.5/call-forwarding.c      |  613 +++
->  drivers/isimodem2.5/call-settings.c        | 1093 +++++
->  drivers/isimodem2.5/call.h                 |  237 +
->  drivers/isimodem2.5/cbs.c                  |  433 ++
->  drivers/isimodem2.5/checkpatch.pl          | 2789 ++++++++++++
->  drivers/isimodem2.5/debug.c                |  694 +++
->  drivers/isimodem2.5/debug.h                |   66 +
->  drivers/isimodem2.5/devinfo.c              |  246 +
->  drivers/isimodem2.5/gpds-context.c         |  788 ++++
->  drivers/isimodem2.5/gpds.c                 |  395 ++
->  drivers/isimodem2.5/gpds.h                 |  295 ++
->  drivers/isimodem2.5/gss.h                  |   84 +
->  drivers/isimodem2.5/info.h                 |   53 +
->  drivers/isimodem2.5/isimodem.c             |  534 +++
->  drivers/isimodem2.5/isimodem.h             |   69 +
->  drivers/isimodem2.5/isiutil.h              |   64 +
->  drivers/isimodem2.5/mce.h                  |   65 +
->  drivers/isimodem2.5/network-registration.c | 1158 +++++
->  drivers/isimodem2.5/network.h              |  257 ++
->  drivers/isimodem2.5/phonebook.c            | 1320 ++++++
->  drivers/isimodem2.5/radio-settings.c       |  313 ++
->  drivers/isimodem2.5/simu_resps.h           | 6800 ++++++++++++++++++++++=
-++++++
->  drivers/isimodem2.5/sms.c                  |  869 ++++
->  drivers/isimodem2.5/sms.h                  |  188 +
->  drivers/isimodem2.5/ss.h                   |  174 +
->  drivers/isimodem2.5/ssn.c                  |  456 ++
->  drivers/isimodem2.5/timeout.h              |   33 +
->  drivers/isimodem2.5/uicc.c                 | 3316 ++++++++++++++
->  drivers/isimodem2.5/uicc.h                 |  253 ++
->  drivers/isimodem2.5/uicc_interface.h       |   40 +
->  drivers/isimodem2.5/ussd.c                 |  341 ++
->  drivers/isimodem2.5/voicecall.c            | 1555 +++++++
->  34 files changed, 26128 insertions(+), 2 deletions(-)
->  create mode 100644 drivers/isimodem2.5/call-barring.c
->  create mode 100644 drivers/isimodem2.5/call-forwarding.c
->  create mode 100644 drivers/isimodem2.5/call-settings.c
->  create mode 100644 drivers/isimodem2.5/call.h
->  create mode 100644 drivers/isimodem2.5/cbs.c
->  create mode 100755 drivers/isimodem2.5/checkpatch.pl
->  create mode 100644 drivers/isimodem2.5/debug.c
->  create mode 100644 drivers/isimodem2.5/debug.h
->  create mode 100644 drivers/isimodem2.5/devinfo.c
->  create mode 100644 drivers/isimodem2.5/gpds-context.c
->  create mode 100644 drivers/isimodem2.5/gpds.c
->  create mode 100644 drivers/isimodem2.5/gpds.h
->  create mode 100644 drivers/isimodem2.5/gss.h
->  create mode 100644 drivers/isimodem2.5/info.h
->  create mode 100644 drivers/isimodem2.5/isimodem.c
->  create mode 100644 drivers/isimodem2.5/isimodem.h
->  create mode 100644 drivers/isimodem2.5/isiutil.h
->  create mode 100644 drivers/isimodem2.5/mce.h
->  create mode 100644 drivers/isimodem2.5/network-registration.c
->  create mode 100644 drivers/isimodem2.5/network.h
->  create mode 100644 drivers/isimodem2.5/phonebook.c
->  create mode 100644 drivers/isimodem2.5/radio-settings.c
->  create mode 100644 drivers/isimodem2.5/simu_resps.h
->  create mode 100644 drivers/isimodem2.5/sms.c
->  create mode 100644 drivers/isimodem2.5/sms.h
->  create mode 100644 drivers/isimodem2.5/ss.h
->  create mode 100644 drivers/isimodem2.5/ssn.c
->  create mode 100644 drivers/isimodem2.5/timeout.h
->  create mode 100644 drivers/isimodem2.5/uicc.c
->  create mode 100644 drivers/isimodem2.5/uicc.h
->  create mode 100644 drivers/isimodem2.5/uicc_interface.h
->  create mode 100644 drivers/isimodem2.5/ussd.c
->  create mode 100644 drivers/isimodem2.5/voicecall.c
+> General:
+> Online / Offline mode (RF on/off)
+> =
 
-this is not gonna work this way. No one can review such a massive patch.
-Actually Evolution even refused to format this for me.
+> Voice call:
+> MO/MT call
+> Multiparty call (max 7 calls)
+> Transfer call
+> Swap calls
+> Hold calls
+> Hang up all
+> Hang up specific call
+> Disconnect reason (Network/local/remote)
+> Send DTMF tones
+> =
 
-So please split this into one patch per atom driver.
+> PS data:
+> Primary PDP context (IPv4 only)
+> APN: User name and password supported
+> Attach mode: Manual (Automatic works as well, but not activated)
+> Data flow control not activated (Not supported by Kernel)
+> =
 
-In addition, I don't a point in a filename. So isimodem25 or isimodem2
-or something like that please. I am open for proposals.
+> SMS:
+> Send and receieve SMS
+> Concatenated messages supported (up to 255 messages)
+> Class 0
+> Delivery reports
+> Read / Write SMSC to SIM card
+> Bearer settings supported (CS or PS)
+> =
+
+> Supplementary Services:
+> Call Barring
+>      VoiceOutgoing
+>      VoiceIncoming
+> Call Settings
+>      CalledLineRestriction
+>      HideCallerId
+>      CallingLinePresentation
+>      CalledLinePresentation
+>      VoiceCallWaiting
+>      CallingLineRestriction
+> Call Forwarding
+>      Voice Not Reachable
+>      Voice Busy
+>      Voice No Reply
+>      Voice Unconditional
+> USSD
+>      MO USSD
+>      MT USSD NOT SUPPORTED
+> SSN
+> =
+
+> CS Network:
+> Network registration
+> Scanning available networks
+> Selecting automatically and manually the target network
+> Changing RAT between GSM/UMTS/ANY
+> Registration status: Cell ID, LAC, MNC, Current Technology (GSM, UMTS, =
+
+> EDGE, HSDPA, HSUPA, HSDPA&HSUPA)
+> Deregister
+> RSSI (%)
+> =
+
+> SIM:
+> Read IMSI
+> MSISDN (Subscriber numbers)
+> SDN (Service Dialing Numbers)
+> PIN/PIN2/PUK/PUK2 supported (reset/change/lock)
+> Read file info from SIM
+> Read FIle (Transparent, Linear & Cyclic) * Some functionalities flagged =
+
+> out as ofono core is not using these
+> Write File (Transparent, Linear & Cyclic) * Some functionalities flagged =
+
+> out as ofono core is not using these
+> MCC & MNC
+> CardIdentifier
+> PreferredLanguages
+> =
+
+> Export contacts(SIM phonebook):
+> SIM and USIM cards supported
+> Name
+> Number (extension record supported)
+> Additional number
+> Email
+> No limitiation in amount of records read from SIM
+> =
+
+> CBS:
+> CBS reception in GSM
+> Subscribe Topics in range or specific value
+> =
+
+> Phone Info:
+> Revision of the modem SW
+> IMEI
+> =
+
+> This specific patch contains updates in Makefile.am, configure.ac and gis=
+i to prepare the addition of isimodem2.5
+> Added 2 new files to gisi pipe_wg25.c and pipe_wg25.h, isimodem2.5 pipe i=
+mplementation due to pipe handler not on modem side.
+
+this needs to be split into separate patches and the commit message
+needs to be a bit cleaner.
+
+Also is this in sync with the GISI re-write Aki is doing?
 
 Regards
 
@@ -108,5 +139,5 @@ Marcel
 
 
 
---===============1766081039112368313==--
+--===============4930186622463629021==--
 
