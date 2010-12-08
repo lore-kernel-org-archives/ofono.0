@@ -1,45 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============8934972925583848886=="
+Content-Type: multipart/mixed; boundary="===============8104197373822788995=="
 MIME-Version: 1.0
-From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
-Subject: Re: [PATCH 3/4] isimodem2.5: Changes to add isimodem2.5
-Date: Wed, 08 Dec 2010 14:25:33 +0100
-Message-ID: <4CFF874D.8080706@stericsson.com>
-In-Reply-To: <1291800604.4795.151.camel@aeonflux>
+From: Mika.Liljeberg@nokia.com
+Subject: RE: [PATCH 0/5] Call Counters (2nd)
+Date: Wed, 08 Dec 2010 13:28:16 +0000
+Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC02FA7E@008-AM1MPN1-007.mgdnok.nokia.com>
+In-Reply-To: <1291812092.4795.165.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8934972925583848886==
+--===============8104197373822788995==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi,
 
-thanks for your input.
+> > Because if your battery runs out in the middle of a 4 hour =
 
->
-> this is not gonna work this way. No one can review such a massive patch.
-> Actually Evolution even refused to format this for me.
->    =
+> conference
+> > call, your timers are not updated and become worthless. Obviously,
+> > this is a compromise between how reliable the counters are and how
+> > many wakeups and IO we can bear.
+> =
 
-:-)
-Right you are, it's huge
+> I think this is not a good idea to have oFono handles this. Why can't
+> the system daemon just shutdown all calls when the battery reaches
+> critical limit.
+> =
 
-> So please split this into one patch per atom driver.
->    =
+> You will never fully run down the battery anyway. One of the system
+> health components in the system will prevent it and then can cleanly
+> shutdown oFono and thus all calls. The only case where the =
 
-We are starting to look at this split up.
-Do you have any other suggestions?
+> system could
+> potentially misfunction in this area would be an emergency call. But
+> that is a total different use case anyway.
 
-> In addition, I don't a point in a filename. So isimodem25 or isimodem2
-> or something like that please. I am open for proposals.
->    =
+There are other ways in which the device might reset without warning:
+- hardware glitch triggering an involuntary reset
+- software glitch triggering an involuntary reset
+- device drops and battery connection is momentarily broken when it hits th=
+e ground
+- user rips out the battery in mid-use
 
-Let's go for isimodem25
+While periodically syncing call and data counters to permanent memory is by=
+ no means appealing, we have certain accuracy requirements for the stored c=
+ounters. The only way those requirements can be met is by syncing the count=
+ers to storage at reasonable intervals. Whether this should be part of oFon=
+o is a matter for discussion, I guess, but at minimum we need to have the e=
+nablers to do this.
 
-Best Regards,
-Jessica Nilsson
+	MikaL
 
-
---===============8934972925583848886==--
+--===============8104197373822788995==--
 
