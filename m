@@ -1,34 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============0788810028511349589=="
+Content-Type: multipart/mixed; boundary="===============2765756484732569549=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 3/4] isimodem2.5: Changes to add isimodem2.5
-Date: Wed, 08 Dec 2010 13:42:05 +0000
-Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC02FAE3@008-AM1MPN1-007.mgdnok.nokia.com>
-In-Reply-To: <4CFF874D.8080706@stericsson.com>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: Re: [PATCH 1/4] gisi: Changes to prepare for isimodem2.5
+Date: Wed, 08 Dec 2010 16:32:31 +0200
+Message-ID: <1291818751.25976.173.camel@tucson>
+In-Reply-To: <4CFF8586.1060000@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0788810028511349589==
+--===============2765756484732569549==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, =
+Hi,
+
+On Wed, 2010-12-08 at 14:17 +0100, ext Jessica Nilsson wrote:
+> > Also is this in sync with the GISI re-write Aki is doing?
+> thank you for your comments.
+> We are studying what Aki is doing and are in contact with him and will =
+
+> get back to this.
+
+One item I can see is missing is the ability to set the remote spn_dev
+and spn_obj for GIsiPipe and GIsiModem. For the N900 modem, these both
+default to zero, but are something different for the STE modem.
+
+We should simply create new constructors that let these be set to
+non-zero values.
+
+Cheers,
+Aki
 
 
-> > In addition, I don't a point in a filename. So isimodem25 =
-
-> or isimodem2
-> > or something like that please. I am open for proposals.
-> >    =
-
-> Let's go for isimodem25
-
-Quite a bit of the code is practically a copy-paste from the isimodem drive=
-r. Have you looked into the possibility of supporting both ISI interface ve=
-rsions in the same driver, or at least sharing some of the atom drivers?
-
-	MikaL
-
---===============0788810028511349589==--
+--===============2765756484732569549==--
 
