@@ -1,26 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============5259200360357771740=="
+Content-Type: multipart/mixed; boundary="===============0719322149729464510=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Simulate provide local info command in sim app
-Date: Wed, 08 Dec 2010 08:04:40 -0600
-Message-ID: <4CFF9078.2070805@gmail.com>
-In-Reply-To: <1291792707-4988-1-git-send-email-yang.gu@intel.com>
+Subject: Re: [PATCH 2/3] Make timezone an optional field
+Date: Wed, 08 Dec 2010 08:05:11 -0600
+Message-ID: <4CFF9097.7050802@gmail.com>
+In-Reply-To: <1291113890-24465-2-git-send-email-yang.gu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5259200360357771740==
+--===============0719322149729464510==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Yang,
 
-On 12/08/2010 01:18 AM, Yang Gu wrote:
+On 11/30/2010 04:44 AM, Yang Gu wrote:
 > ---
->  src/simapplication.cpp |   68 ++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/simapplication.h   |    2 +
->  2 files changed, 70 insertions(+), 0 deletions(-)
+>  src/smsutil.c |   11 ++++++++++-
+>  src/smsutil.h |    1 +
+>  src/stkutil.c |   13 ++-----------
+>  3 files changed, 13 insertions(+), 12 deletions(-)
 > =
 
 
@@ -29,5 +29,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============5259200360357771740==--
+--===============0719322149729464510==--
 
