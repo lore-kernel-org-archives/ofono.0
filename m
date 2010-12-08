@@ -1,32 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============3660752058418707782=="
+Content-Type: multipart/mixed; boundary="===============0788810028511349589=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/3] stk: Handle provide local info proactive command
-Date: Wed, 08 Dec 2010 08:05:53 -0600
-Message-ID: <4CFF90C1.20808@gmail.com>
-In-Reply-To: <1291113890-24465-3-git-send-email-yang.gu@intel.com>
+From: Mika.Liljeberg@nokia.com
+Subject: RE: [PATCH 3/4] isimodem2.5: Changes to add isimodem2.5
+Date: Wed, 08 Dec 2010 13:42:05 +0000
+Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC02FAE3@008-AM1MPN1-007.mgdnok.nokia.com>
+In-Reply-To: <4CFF874D.8080706@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3660752058418707782==
+--===============0788810028511349589==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Yang,
-
-On 11/30/2010 04:44 AM, Yang Gu wrote:
-> ---
->  src/stk.c |   77 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 77 insertions(+), 0 deletions(-)
-> =
+Hi, =
 
 
-Patch has been applied, thanks.
+> > In addition, I don't a point in a filename. So isimodem25 =
 
-Regards,
--Denis
+> or isimodem2
+> > or something like that please. I am open for proposals.
+> >    =
 
---===============3660752058418707782==--
+> Let's go for isimodem25
+
+Quite a bit of the code is practically a copy-paste from the isimodem drive=
+r. Have you looked into the possibility of supporting both ISI interface ve=
+rsions in the same driver, or at least sharing some of the atom drivers?
+
+	MikaL
+
+--===============0788810028511349589==--
 
