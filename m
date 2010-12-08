@@ -1,72 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============3239174006148729300=="
+Content-Type: multipart/mixed; boundary="===============6858875682907529848=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: [PATCH] stk: fix issue to avoid null pointer for alpha_id
-Date: Wed, 08 Dec 2010 12:33:32 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D40188136D95EB8@irsmsx501.ger.corp.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 0/5] Call Counters (2nd)
+Date: Wed, 08 Dec 2010 13:41:32 +0100
+Message-ID: <1291812092.4795.165.camel@aeonflux>
+In-Reply-To: <AANLkTinYryk1jdhdVRXh1RXn5CvwrD_A8y2GPBcP0ZsK@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3239174006148729300==
+--===============6858875682907529848==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Guillaume Lucas <guillaumex.lucas@intel.com>
+Hi Aki,
 
-If a SET UP CALL proactive command with no alpha identifier
-occurs, the alpha_id pointer will be set to NULL. This will
-generate a crash in the stkagent with dbus function. To avoid
-this we use an empty string if the alpha identifier is not
-present in the command.
----
- src/stk.c |   13 ++++++-------
- 1 files changed, 6 insertions(+), 7 deletions(-)
+> > so Denis and I talked about this a little bit and I am not fine with
+> > this at all.
+> =
 
-diff --git a/src/stk.c b/src/stk.c
-index 7b39f7e..8c7cb8a 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1755,13 +1755,12 @@ static gboolean handle_command_set_up_call(const st=
-ruct stk_command *cmd,
- 		return TRUE;
- 	}
- =
+> Next time, can you invite me to join your little talk?
 
--	if (sc->alpha_id_usr_cfm) {
--		alpha_id =3D dbus_apply_text_attributes(sc->alpha_id_usr_cfm,
--							&sc->text_attr_usr_cfm);
--		if (alpha_id =3D=3D NULL) {
--			rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
--			return TRUE;
--		}
-+	alpha_id =3D dbus_apply_text_attributes(sc->alpha_id_usr_cfm ?
-+						sc->alpha_id_usr_cfm : "",
-+						&sc->text_attr_usr_cfm);
-+	if (alpha_id =3D=3D NULL) {
-+		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
-+		return TRUE;
- 	}
- =
+because you are not sitting next to me right now ;)
 
- 	err =3D stk_agent_confirm_call(stk->current_agent, alpha_id,
--- =
+> > Lets take this one step and please explain to me what your requirements
+> > and objectives are. I also wanna see a top to bottom from UI down to the
+> > modem usage of this API.
+> =
 
-1.7.0.4
+> We need a UI showing total MO and MT call times. They also need to be
+> able to be reset, if the user so wishes. The data needs to be
+> reasonably reliable.
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+Fair enough, but when I look at such a feature as a whole, then my
+question is when does it need to be shown? What is your user interaction
+requirement with this data?
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+Andras, please explain what reasonable reliable means.
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+> > and consuming heavy IO with writing this information to disk. In
+> > addition to that there is no clear UI usage for the getter API.
+> =
+
+> What do you mean? Do you mean your iPhone has no such UI?
+
+I have actually tested this with an iPhone and it has such an UI
+element, but it is not realtime. It gets updated after the call has been
+completed.
+
+So why can't we just update/reset this in Tracker via the history plugin
+in a general way. I am failing to see the need for this inside oFono. It
+seems to me that doing this within the scope of the Tracker integration
+is a lot cleaner and better for CPU and IO usage.
+
+> The reason these are not properties is just because it makes no sense
+> to update the counters "live". The UI can poll if it so wishes, but
+> the poll interval is not something we want to decide.
+> =
+
+> > What are the granularity there. What is the expected user experience
+> > with this API. I don't see any clear usage model here.
+> >
+> > In addition to that, what is the problem with just updating the stats
+> > after the call has ended?
+> =
+
+> Because if your battery runs out in the middle of a 4 hour conference
+> call, your timers are not updated and become worthless. Obviously,
+> this is a compromise between how reliable the counters are and how
+> many wakeups and IO we can bear.
+
+I think this is not a good idea to have oFono handles this. Why can't
+the system daemon just shutdown all calls when the battery reaches
+critical limit.
+
+You will never fully run down the battery anyway. One of the system
+health components in the system will prevent it and then can cleanly
+shutdown oFono and thus all calls. The only case where the system could
+potentially misfunction in this area would be an emergency call. But
+that is a total different use case anyway.
+
+Regards
+
+Marcel
 
 
---===============3239174006148729300==--
+
+--===============6858875682907529848==--
 
