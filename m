@@ -1,143 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============4930186622463629021=="
+Content-Type: multipart/mixed; boundary="===============8626541885899084828=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/4] gisi: Changes to prepare for isimodem2.5
-Date: Wed, 08 Dec 2010 10:31:35 +0100
-Message-ID: <1291800695.4795.153.camel@aeonflux>
-In-Reply-To: <1291797255-20472-1-git-send-email-jessica.j.nilsson@stericsson.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 0/5] Call Counters (2nd)
+Date: Wed, 08 Dec 2010 11:34:40 +0200
+Message-ID: <AANLkTinYryk1jdhdVRXh1RXn5CvwrD_A8y2GPBcP0ZsK@mail.gmail.com>
+In-Reply-To: <1291798984.4795.146.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4930186622463629021==
+--===============8626541885899084828==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jessica,
+Hi Marcel,
 
-> This set of patches introduces the isimodem2.5.
-> =
+2010/12/8 Marcel Holtmann <marcel@holtmann.org>:
+> so Denis and I talked about this a little bit and I am not fine with
+> this at all.
 
-> WG2.5 (isimodem2.5) Supported features list:
-> =
+Next time, can you invite me to join your little talk?
 
-> General:
-> Online / Offline mode (RF on/off)
-> =
+> Lets take this one step and please explain to me what your requirements
+> and objectives are. I also wanna see a top to bottom from UI down to the
+> modem usage of this API.
 
-> Voice call:
-> MO/MT call
-> Multiparty call (max 7 calls)
-> Transfer call
-> Swap calls
-> Hold calls
-> Hang up all
-> Hang up specific call
-> Disconnect reason (Network/local/remote)
-> Send DTMF tones
-> =
+We need a UI showing total MO and MT call times. They also need to be
+able to be reset, if the user so wishes. The data needs to be
+reasonably reliable.
 
-> PS data:
-> Primary PDP context (IPv4 only)
-> APN: User name and password supported
-> Attach mode: Manual (Automatic works as well, but not activated)
-> Data flow control not activated (Not supported by Kernel)
-> =
+> and consuming heavy IO with writing this information to disk. In
+> addition to that there is no clear UI usage for the getter API.
 
-> SMS:
-> Send and receieve SMS
-> Concatenated messages supported (up to 255 messages)
-> Class 0
-> Delivery reports
-> Read / Write SMSC to SIM card
-> Bearer settings supported (CS or PS)
-> =
+What do you mean? Do you mean your iPhone has no such UI?
 
-> Supplementary Services:
-> Call Barring
->      VoiceOutgoing
->      VoiceIncoming
-> Call Settings
->      CalledLineRestriction
->      HideCallerId
->      CallingLinePresentation
->      CalledLinePresentation
->      VoiceCallWaiting
->      CallingLineRestriction
-> Call Forwarding
->      Voice Not Reachable
->      Voice Busy
->      Voice No Reply
->      Voice Unconditional
-> USSD
->      MO USSD
->      MT USSD NOT SUPPORTED
-> SSN
-> =
+The reason these are not properties is just because it makes no sense
+to update the counters "live". The UI can poll if it so wishes, but
+the poll interval is not something we want to decide.
 
-> CS Network:
-> Network registration
-> Scanning available networks
-> Selecting automatically and manually the target network
-> Changing RAT between GSM/UMTS/ANY
-> Registration status: Cell ID, LAC, MNC, Current Technology (GSM, UMTS, =
+> What are the granularity there. What is the expected user experience
+> with this API. I don't see any clear usage model here.
+>
+> In addition to that, what is the problem with just updating the stats
+> after the call has ended?
 
-> EDGE, HSDPA, HSUPA, HSDPA&HSUPA)
-> Deregister
-> RSSI (%)
-> =
+Because if your battery runs out in the middle of a 4 hour conference
+call, your timers are not updated and become worthless. Obviously,
+this is a compromise between how reliable the counters are and how
+many wakeups and IO we can bear.
 
-> SIM:
-> Read IMSI
-> MSISDN (Subscriber numbers)
-> SDN (Service Dialing Numbers)
-> PIN/PIN2/PUK/PUK2 supported (reset/change/lock)
-> Read file info from SIM
-> Read FIle (Transparent, Linear & Cyclic) * Some functionalities flagged =
+Andras has some data on what reasonable reliability here means.
 
-> out as ofono core is not using these
-> Write File (Transparent, Linear & Cyclic) * Some functionalities flagged =
+Cheers,
+Aki
 
-> out as ofono core is not using these
-> MCC & MNC
-> CardIdentifier
-> PreferredLanguages
-> =
-
-> Export contacts(SIM phonebook):
-> SIM and USIM cards supported
-> Name
-> Number (extension record supported)
-> Additional number
-> Email
-> No limitiation in amount of records read from SIM
-> =
-
-> CBS:
-> CBS reception in GSM
-> Subscribe Topics in range or specific value
-> =
-
-> Phone Info:
-> Revision of the modem SW
-> IMEI
-> =
-
-> This specific patch contains updates in Makefile.am, configure.ac and gis=
-i to prepare the addition of isimodem2.5
-> Added 2 new files to gisi pipe_wg25.c and pipe_wg25.h, isimodem2.5 pipe i=
-mplementation due to pipe handler not on modem side.
-
-this needs to be split into separate patches and the commit message
-needs to be a bit cleaner.
-
-Also is this in sync with the GISI re-write Aki is doing?
-
-Regards
-
-Marcel
-
-
-
---===============4930186622463629021==--
+--===============8626541885899084828==--
 
