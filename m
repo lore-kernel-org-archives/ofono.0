@@ -1,147 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============2463657685400317826=="
+Content-Type: multipart/mixed; boundary="===============4774062743362330402=="
 MIME-Version: 1.0
-From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
-Subject: [PATCH 4/4] scripts: Added init.rc script
-Date: Wed, 08 Dec 2010 09:35:29 +0100
-Message-ID: <1291797329-20592-1-git-send-email-jessica.j.nilsson@stericsson.com>
+From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
+Subject: RE: [PATCH] stkutil: fix crash issue cause by null length of text
+ string
+Date: Wed, 08 Dec 2010 08:37:19 +0000
+Message-ID: <9F3EABD6E3419B4C81F34EAABB4D40188136D95D4B@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <AANLkTikwmCamhNXwtZyRhqMp94gx-2zzQnB7M+xrR07=@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2463657685400317826==
+--===============4774062743362330402==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Updates in Makefile.am and the adding of an init file.
+Hi
+
+> =
+
+> On 7 December 2010 22:55,  <Jeevaka.Badrappan@elektrobit.com> wrote:
+> > Hi Guillaume,
+> >
+> >>
+> >> According to 3GPP TS 31.124 a null length for the text string
+> >> should be allowed. An empty string must be returned to the
+> >> user in this case.
+> >> ---
+> >> =C2=A0src/stkutil.c | =C2=A0 =C2=A06 ++++--
+> >> =C2=A01 files changed, 4 insertions(+), 2 deletions(-)
+> >>
+> >
+> > Agree. As per the 3GPP TS 31.124 null text string will be indicated
+> with
+> > length 0.
+> > So, in first place if (text =3D=3D NULL) check in
+> handle_command_get_input,
+> > handle_command_get_inkey has to be removed. Removing this check will
+> > result
+> > in crash due to the fact that we are not handling this case properly
+> > neither
+> > in parse_dataobj_text nor in corresponding stkagent functions.
+> >
+> > There are 2ways to solve this issue:
+> >
+> > First option - Fix provided in the function parse_dataobj_text( e.g.
+> > *text =3D "")
+> > Second option - In all the stk_agent_ function which has this text
+> > string we
+> > =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0need to check fo=
+r NULL and assign it to empty string
+> if
+> > it is NULL.
+> >
+> > First option seems to be right and also better one.
+> =
+
+
+Agree. It's why I've did this one :)
+I'll be more explicit in the description for my future patches. Especially =
+for crash issue.
 
 Regards,
-Jessica Nilsson
+Guillaume
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
----
- Makefile.am    |   10 +++++++
- scripts/ofonod |   79 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 89 insertions(+), 0 deletions(-)
- create mode 100755 scripts/ofonod
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-diff --git a/Makefile.am b/Makefile.am
-index a5c89f2..0e6b761 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -82,6 +82,10 @@ gatchat_sources =3D gatchat/gatchat.h gatchat/gatchat.c \
- =
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
- udev_files =3D plugins/ofono.rules
- =
-
-+if ISIMODEM25
-+init_files =3D scripts/ofonod
-+endif
-+
- if UDEV
- builtin_modules +=3D udev
- builtin_sources +=3D plugins/udev.c
-@@ -562,3 +566,9 @@ include/ofono/%.h: include/%.h
- =
-
- clean-local:
- 	@$(RM) -rf include/ofono
-+
-+if ISIMODEM25
-+init-scripts:
-+	$(AM_V_at)$(MKDIR_P) $(sysconfdir)/rc.d/init.d
-+	@install -m 755 $(init_files) $(sysconfdir)/rc.d/init.d/ofonod
-+endif
-diff --git a/scripts/ofonod b/scripts/ofonod
-new file mode 100755
-index 0000000..6f568e8
---- /dev/null
-+++ b/scripts/ofonod
-@@ -0,0 +1,79 @@
-+#!/bin/sh
-+
-+# Init file for ofono daemon
-+
-+### BEGIN INIT INFO
-+# Provides: ofonod
-+# Required-Start: $local_fs cops msa
-+# Required-Stop:
-+# Default-Start:  2 3 4 5
-+# Default-Stop: 0 1 6
-+# chkconfig: 2345 99 01
-+# Short-Description: start and stop ofono
-+# Description: ofono
-+# Modem middleware for accessing the modem
-+# through phonet sockets.
-+### END INIT INFO
-+
-+progname=3Dofonod
-+execname=3D/usr/sbin/$progname
-+lockfile=3D/var/lock/subsys/$progname
-+options=3D""
-+
-+# Sanity check
-+[ -x $execname ] || exit 5
-+
-+# Source function library.
-+. /etc/init.d/functions
-+
-+RETVAL=3D0
-+
-+start() {
-+
-+        echo -n "Starting $progname: "
-+        /sbin/ifconfig shrm0 up
-+        daemon $execname $options
-+        RETVAL=3D$?
-+        [ $RETVAL -eq 0 ] && touch $lockfile
-+        echo
-+        return $RETVAL
-+}
-+
-+stop() {
-+        echo -n "Stopping $progname: "
-+        killproc $progname
-+        RETVAL=3D$?
-+        echo
-+        [ $RETVAL -eq 0 ] && rm -f $lockfile
-+        return $RETVAL
-+}
-+
-+case "$1" in
-+  start)
-+        start
-+        ;;
-+  stop)
-+        stop
-+        ;;
-+  reload)
-+  ;;
-+  restart|force-reload)
-+        stop
-+        start
-+        ;;
-+  status)
-+        status $progname
-+        RETVAL=3D$?
-+        ;;
-+  try-restart)
-+        if [ -f $lockfile ]; then
-+            stop
-+            start
-+        fi
-+        ;;
-+  *)
-+        echo $"Usage: $0 {start|stop|restart|try-restart|reload|force-relo=
-ad|status}"
-+        RETVAL=3D$?
-+esac
-+
-+exit $RETVAL
--- =
-
-1.7.3.2
-
-
---===============2463657685400317826==--
+--===============4774062743362330402==--
 
