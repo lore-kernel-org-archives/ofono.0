@@ -1,153 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============7624757899686206849=="
+Content-Type: multipart/mixed; boundary="===============6161442487326491549=="
 MIME-Version: 1.0
-From: Yang Gu <yang.gu@intel.com>
-Subject: [PATCH] Simulate provide local info command in sim app
-Date: Wed, 08 Dec 2010 15:18:27 +0800
-Message-ID: <1291792707-4988-1-git-send-email-yang.gu@intel.com>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: Re: [PATCH 1/3] plugins: Implementation of Network Time plugin
+Date: Wed, 08 Dec 2010 10:13:45 +0200
+Message-ID: <1291796025.25976.62.camel@tucson>
+In-Reply-To: <201012071812.27110.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7624757899686206849==
+--===============6161442487326491549==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/simapplication.cpp |   68 ++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/simapplication.h   |    2 +
- 2 files changed, 70 insertions(+), 0 deletions(-)
+Hi R=C3=A9mi,
 
-diff --git a/src/simapplication.cpp b/src/simapplication.cpp
-index 62bbe9d..388b2ce 100644
---- a/src/simapplication.cpp
-+++ b/src/simapplication.cpp
-@@ -290,6 +290,7 @@ const QString DemoSimApplication::getName()
- #define MainMenu_Polling    15
- #define MainMenu_Timers     16
- #define MainMenu_Refresh    17
-+#define MainMenu_LocalInfo  18
- =
+On Tue, 2010-12-07 at 18:12 +0200, ext R=C3=A9mi Denis-Courmont wrote:
+> More than one second delay over D-Bus is not unheard of, especially on mo=
+bile =
 
- #define SportsMenu_Chess        1
- #define SportsMenu_Painting     2
-@@ -348,6 +349,9 @@ const QString DemoSimApplication::getName()
- #define SendUSSD_Error      4
- #define SendUSSD_Main       5
- =
+> devices. I don't see the point of sending _both_ the reception timestamp =
+and =
 
-+#define LocalInfoMenu_Time  1
-+#define LocalInfoMenu_Lang  2
-+
- enum SendSMSMenuItems {
- 	SendSMS_Unpacked =3D 1,
- 	SendSMS_Packed,
-@@ -443,6 +447,10 @@ void DemoSimApplication::mainMenu()
-     item.setLabel( "SIM Refresh" );
-     items +=3D item;
- =
+> the original NITZ value, but I do see the point in sending a value who =
 
-+    item.setIdentifier( MainMenu_LocalInfo );
-+    item.setLabel( "Provide Local Information" );
-+    items +=3D item;
-+
-     cmd.setMenuItems( items );
- =
+> transmission is not time-sensitive.
 
-     command( cmd, 0, 0 );
-@@ -579,6 +587,12 @@ void DemoSimApplication::mainMenuSelection( int id )
-         }
-         break;
- =
+Over a second round trip delay? We're running the D-Bus daemon behind a
+GPRS link these days are we? ;)
 
-+        case MainMenu_LocalInfo:
-+        {
-+            sendLocalInfoMenu();
-+        }
-+        break;
-+
-         default:
-         {
-             // Don't know what this item is, so just re-display the main m=
-enu.
-@@ -2319,3 +2333,57 @@ void DemoSimApplication::refreshMenuResp( const QSim=
-TerminalResponse& resp )
- =
+> And even if drift were not a problem, it's best to have an API that does =
 
-     command( cmd, this, SLOT(endSession()) );
- }
-+
-+void DemoSimApplication::sendLocalInfoMenu()
-+{
-+    QSimCommand cmd;
-+    QSimMenuItem item;
-+    QList<QSimMenuItem> items;
-+
-+    cmd.setType( QSimCommand::SelectItem );
-+    cmd.setTitle( "Provide Local Information" );
-+
-+    item.setIdentifier( LocalInfoMenu_Time );
-+    item.setLabel( "Date, time and time zone" );
-+    items +=3D item;
-+
-+    item.setIdentifier( LocalInfoMenu_Lang );
-+    item.setLabel( "Language setting" );
-+    items +=3D item;
-+
-+    cmd.setMenuItems( items );
-+
-+    command( cmd, this, SLOT(localInfoMenu(QSimTerminalResponse)) );
-+}
-+
-+void DemoSimApplication::localInfoMenu( const QSimTerminalResponse& resp )
-+{
-+    QSimCommand cmd;
-+
-+    if ( resp.result() =3D=3D QSimTerminalResponse::Success ) {
-+        switch ( resp.menuItem() ) {
-+
-+            case LocalInfoMenu_Time:
-+            {
-+                cmd.setType( QSimCommand::ProvideLocalInformation );
-+                cmd.setQualifier( 0x03 );
-+                command( cmd, this, SLOT(sendLocalInfoMenu()) );
-+            }
-+            break;
-+
-+            case LocalInfoMenu_Lang:
-+            {
-+                cmd.setType( QSimCommand::ProvideLocalInformation );
-+                cmd.setQualifier( 0x04 );
-+                command( cmd, this, SLOT(sendLocalInfoMenu()) );
-+            }
-+            break;
-+
-+            default:
-+                endSession();
-+                break;
-+        }
-+    } else {
-+        endSession();
-+    }
-+}
-diff --git a/src/simapplication.h b/src/simapplication.h
-index df36bbb..45cfa84 100644
---- a/src/simapplication.h
-+++ b/src/simapplication.h
-@@ -126,6 +126,8 @@ protected slots:
-     void timersCmdResp( const QSimTerminalResponse& resp );
-     void sendRefreshMenu();
-     void refreshMenuResp( const QSimTerminalResponse& resp );
-+    void sendLocalInfoMenu();
-+    void localInfoMenu( const QSimTerminalResponse& resp );
- =
+> fundamentally not suffer from the problem. Otherwise, you will need to ju=
+stify =
 
- private:
-     int sticksLeft;
--- =
+> every second month why drift is a negligible issue.
 
-1.7.2.3
+It's still a constant imprecision caused by D-Bus latency (round-trip in
+the case timed used the getter), so I wouldn't call it "drift".
+
+That said, I get your point, and providing a value estimating the device
+boot-time, rooted in the system monotonic clock is indeed a good
+approach.
+
++1
+
+Cheers,
+Aki
 
 
---===============7624757899686206849==--
+
+
+
+--===============6161442487326491549==--
 
