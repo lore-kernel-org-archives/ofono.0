@@ -1,41 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============1551841017280138354=="
+Content-Type: multipart/mixed; boundary="===============2029490956020299176=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/3] Attach GPRS on demand
-Date: Thu, 09 Dec 2010 02:02:18 -0600
-Message-ID: <4D008D0A.3090904@gmail.com>
-In-Reply-To: <1291306582-19024-1-git-send-email-mika.liljeberg@nokia.com>
+Subject: Re: [PATCH] TODO: Add CDMA Voicecall Support Tasks
+Date: Thu, 09 Dec 2010 02:04:50 -0600
+Message-ID: <4D008DA2.60100@gmail.com>
+In-Reply-To: <1291330521-20747-1-git-send-email-dara.spieker-doyle@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1551841017280138354==
+--===============2029490956020299176==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+Hi Dara,
 
-On 12/02/2010 10:16 AM, Mika Liljeberg wrote:
-> Hi All,
-> =
-
-> Currently, if GPRS service is detached for whatever reason, the only way
-> to get PS services back is to set the Powered property to FALSE and back
-> to TRUE.
-> =
-
-> With these patches, GPRS context activation will cause oFono to
-> automatically attempt GPRS attach if the modem is presently detached.
+On 12/02/2010 04:55 PM, Dara Spieker-Doyle wrote:
+> ---
+>  TODO |   58 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 files changed, 58 insertions(+), 0 deletions(-)
 > =
 
 
-Before I look at these patches: Have you considered fixing the attach
-behavior instead?  It seems like the approach you're proposing is
-essentially hitting oFono over the head because it isn't doing what you
-want...
+Patch looks good to me, however it does not apply:
+
+fatal: cannot convert from unknown-8bit to UTF-8
 
 Regards,
 -Denis
 
---===============1551841017280138354==--
+--===============2029490956020299176==--
 
