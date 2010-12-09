@@ -1,56 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============5666401398541826163=="
+Content-Type: multipart/mixed; boundary="===============8935902577176816495=="
 MIME-Version: 1.0
-From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
-Subject: Re: [PATCH 2/4]simutil: Changes to prepare for isimodem2.5
-Date: Thu, 09 Dec 2010 09:59:02 +0100
-Message-ID: <4D009A56.7090104@stericsson.com>
-In-Reply-To: <1291822212.4795.177.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 0/3] Attach GPRS on demand
+Date: Thu, 09 Dec 2010 03:22:09 -0600
+Message-ID: <4D009FC1.2050909@gmail.com>
+In-Reply-To: <CB0EE8641411214CBAFF8AEBB26ABCEC03000F@008-AM1MPN1-007.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5666401398541826163==
+--===============8935902577176816495==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
-> please write a proper commit message here. The subject is not acceptable
-> since it misleads what this patch is doing.
->    =
+Hi Mika,
 
->> +#include "types.h"
->> +
->>      =
+On 12/09/2010 02:12 AM, Mika.Liljeberg(a)nokia.com wrote:
+> Hi Denis,
+> =
 
-> What is this include for? Please remove it.
->    =
+>>> With these patches, GPRS context activation will cause oFono to
+>>> automatically attempt GPRS attach if the modem is presently =
 
-> So please be consistent with lower-case hex encoding. So 0x6f07 etc.
-  Ok, fix commit message, remove unnecessary include and use lower case. =
+>> detached.
+>>>
+>>
+>> Before I look at these patches: Have you considered fixing the attach
+>> behavior instead?
+> =
 
-Will do.
-
-> And while at it, you could be the one that makes this enum finally
-> compliant to our coding style. This is one of our old left-overs that we
-> have get fixed. We just never got around to it. Are you up for such a
-> task?
->    =
-
-Sure, I'll take this. This is just the simutil.h we are talking about, =
-
-not the simutil.c as well?
-
-> So you could just fix the coding style in one patch, fix the sorting in
-> another and then add the new values.
->    =
-
-3 patches to be sent in, and the last one to have the new values (with =
-
-proper prefixes), I'll see to it.
-
-Best Regards,
-Jessica
+> I'm not quite sure what you mean here. There are many different cases, wh=
+ere the network can detach a UE from GPRS service. See possible detach caus=
+es in 24.008. Currently, oFono does not recover at all. Trying to figure ou=
+t when GPRS is again available can get pretty complicated and the different=
+ detach causes require different handling. IMO, the simplest approach by fa=
+r is to retry GPRS attach when someone actually needs a PDP context. =
 
 
---===============5666401398541826163==--
+So here's the problem, ConnMan is in charge of activating the context on
+Meego.  ConnMan activates the context once we're attached.  So how do
+you expect your 'on-demand' re-attach to work exactly?
+
+Besides, 24.008 cause codes give us plenty of hints of whether / when to
+re-attach, and only a few of them require 'special' handling.
+
+I still think that we should come up with some strategy to re-attach
+automatically when detached by the network.
+
+Regards,
+-Denis
+
+--===============8935902577176816495==--
 
