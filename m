@@ -1,60 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============8417871384291961327=="
+Content-Type: multipart/mixed; boundary="===============1581149611718591515=="
 MIME-Version: 1.0
-From: Kai.Vehmanen@nokia.com
-Subject: RE: [PATCH 0/5] Call Counters (2nd)
-Date: Thu, 09 Dec 2010 13:25:43 +0100
-Message-ID: <725063E4C37388418CDDC5A2C287906A20D08A1C75@NOK-EUMSG-03.mgdnok.nokia.com>
-In-Reply-To: <1291847731.4795.204.camel@aeonflux>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: [PATCH 0/3] Attach GPRS on demand
+Date: Thu, 09 Dec 2010 14:40:40 +0200
+Message-ID: <878vzz3yrb.fsf@potku.valot.fi>
+In-Reply-To: <CB0EE8641411214CBAFF8AEBB26ABCEC03025C@008-AM1MPN1-007.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8417871384291961327==
+--===============1581149611718591515==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+<Mika.Liljeberg@nokia.com> writes:
 
-On 09 Dec 2010, Marcel Holtmann wrote:
->>  - lots of modems still handle all audio and PA will know nothing
->>    about calls at all with these modems
-> =
+>> Besides, ConnMan doesn't really work this way. Maybe in the future
+>> with the session API it would be able to, but not at the moment. I'll
+>> let Marcel explain this more if he wants too..
+>
+> Admittedly, I haven't really looked at ConnMan. My assumption, though,
+> is that a PDP context is not activated by default when ConnMan starts
+> up. I.e., someone has to request the internet connectivity. Is that
+> correct?
 
-> actually Denis raised the same question, but then again this is for a
-> product specific requirement. And for that product we know that PA will
-> do the audio processing.
+Connman services have autoconnect property which control if the
+connection is automatically created or not.
 
-not really. We need modem adaptation for call counters and need
-an API that works with all modems. And I'd assume other handset
-vendors need such an API as well (either in oFono or somewhere else).
+> Activating a context by default would be very bad for power
+> consumption and standby times, unless both the handset and the network
+> support CPC. =
 
-> Important for me is to weight the extra costs of IO and CPU consumption
-> when doing this inside oFono. And since ofonod itself would actually
-> not wake up during a phone call, I think this is not a good fit.
 
-I share the concern for the IO/CPU cost, but I don't think it
-matters much in which daemon this is done. Especially if some slack is =
+If I plugin a usb modem on my laptop, I really want to connect it
+automatically.
 
-allowed for the timers (which should be the case), ofonod will be scheduled =
+> The decision should be up to the user.
 
-when the CPU is anyways woken up (e.g. modem/audio interrupts wake up =
+And with the autoconnect property the user can control this.
 
-pulseaudio). So the big cost of bringing CPU, memories et al online are =
-
-already taken at this point, and the additional cost of running ofonod =
-
-for a while is minimal (compared to waking up some non-realtime thread of =
-
-pulseaudio, or some other component, to do the same).
-
-But yeah, there is a IO/CPU cost in any case, I agree about that.
- =
-
-Br,
 -- =
 
-Kai Vehmanen
+Kalle Valo
 
-
---===============8417871384291961327==--
+--===============1581149611718591515==--
 
