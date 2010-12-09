@@ -1,47 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============4236333092876161186=="
+Content-Type: multipart/mixed; boundary="===============5416454755385782691=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: CAIF Protocol : oFono
-Date: Thu, 09 Dec 2010 19:40:47 +0100
-Message-ID: <AANLkTikQRfQZw-YHTvVXJYb2Pr48dDjqXMWP16=d5krV@mail.gmail.com>
-In-Reply-To: <COL106-W1298F464B5B44AC6F140ABF62D0@phx.gbl>
+From: Kai.Vehmanen@nokia.com
+Subject: RE: [PATCH 0/5] Call Counters (2nd)
+Date: Thu, 09 Dec 2010 20:52:22 +0100
+Message-ID: <725063E4C37388418CDDC5A2C287906A20D08A1DCE@NOK-EUMSG-03.mgdnok.nokia.com>
+In-Reply-To: <1291918228.30085.2.camel@aeonflux.mpl.access-company.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4236333092876161186==
+--===============5416454755385782691==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Krishna,
+Hello Marcel, =
 
-> We understand that CAIF is coming as kernel driver in linux 2.6.36. We are
-> trying to write some test application which will
-> make use of CAIF kernel driver to interact with ST-Ericsson Modem.
+
+On 09 Dec 2010, Marcel Holtmann wrote:
+>> I share the concern for the IO/CPU cost, but I don't think it
+>> matters much in which daemon this is done. Especially if some slack
+>> is> allowed for the timers (which should be the case), ofonod will be
+>> scheduled when the CPU is anyways woken up (e.g. modem/audio interrupts =
+
+>> wake up pulseaudio). =
+
 >
-> When we connect any modem how OFono recognizes it? Is it based on rule
-> mentioned in "97-ofono.rules"? or will it consider modem.conf file?
+> this is not really true. We can not wakeup ofonod every single second.
+> You might wanna start running powertop.
 
-modem.conf support was removed from oFono a while ago. I have sent patches
-and discussed solutions for startup on this list. In a smartphone
-configuration STE will use a
-"modem init daemon" to control start/stop/restart of the modem, so our prop=
-osal
-is that the STE plugin uses the DBUS API from this daemon to recognice
-the STE modem.
-Alternatively we could use udev rules and subscribe to CAIF interface
-state changes.
-I'm still waiting for review comments or feedback for my patches in
-this area (since 17. Nov).
+uhm, but I'm not claiming that. I was just stating that moving =
 
-> Please suggest us about the right kernel version we need to deal with in
-> order to get complete CAIF implementation.
+the timers to e.g. pulseaudio in this case won't save much if =
 
-CAIF was introduced in linux kernel 2.6.35, so 2.6.35 or later would
-do for serial communication.
+anything (the CPU will be woken up anyways, and the cost between =
 
-Regards,
-Sjur
+scheduling ofonod or a thread from PA, has really no difference
+to overall consumption.. the CPU is woken up anyways and roughly
+the same code to handle the timer is run).
 
---===============4236333092876161186==--
+So whether this code is in oFono or elsewhere, does not matter
+much (to overall power consumption). The main question is of course =
+
+how often the counters are synced.
+
+Personally I think the every-10sec interval is too short.
+It's also highly system specific when wakeups start to get =
+
+too costly, so picking up one value seems difficult.
+
+br,
+-- =
+
+Kai Vehmanen
+
+
+--===============5416454755385782691==--
 
