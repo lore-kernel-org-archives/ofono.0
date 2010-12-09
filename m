@@ -1,101 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============6359528507981415454=="
+Content-Type: multipart/mixed; boundary="===============3111186506308109310=="
 MIME-Version: 1.0
-From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
-Subject: Re: [PATCH 3/4] isimodem2.5: Changes to add isimodem2.5
-Date: Thu, 09 Dec 2010 12:36:19 +0100
-Message-ID: <4D00BF33.1050801@stericsson.com>
-In-Reply-To: <AANLkTinXYaMie6MrsK6gWyfwtYAeN6d46-iy1j-Px3pY@mail.gmail.com>
+From: Mika.Liljeberg@nokia.com
+Subject: RE: [PATCH 0/3] Attach GPRS on demand
+Date: Thu, 09 Dec 2010 11:41:46 +0000
+Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC03025C@008-AM1MPN1-007.mgdnok.nokia.com>
+In-Reply-To: <4D00AB70.10701@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6359528507981415454==
+--===============3111186506308109310==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
-> The CBS topics set is simply not implemented in the current cbs
-> driver. I suggest you create a patch for adding that into the current
-> driver.
->
->    =
+Hi Denis,
 
+> > ConnMan really should not care whether we are attached or =
 
-> And same for the clear_topics callback.
-Yes, I  might be able to do that. I can not test it though, I haven't =
+> not. Why do you need a trigger in ConnMan, anyway? As far as =
 
-got any isimodem HW.
-I assume you mean submitting a patch to the isimodem for this?
+> I can see, a GPRS connection should only be activated if some =
 
-> This has no business being in the isimodem driver. I suppose it was
-> included by mistake.
->    =
+> client of ConnMan requests it.
+> =
 
-Yes, sorry.
->
-> So the IMEI is not stored on the modem at all. This obviously needs a
-> quirk, but I wonder if it would be cleaner to handle this in the modem
-> plugin. See for example how GPIO lines are handled in the n900 driver.
->
->    =
+> Actually it should care.  We do safe-guard against attaching while
+> roaming...
 
-Right, we will look into that and probably get back to you on this with =
+I don't think so. Preventing GPRS attach and GPRS context activation during=
+ roaming can be done based on network registation status. Besides, oFono pr=
+obably should be the component to enforce it, so that the feature cannot be=
+ easily bypassed.
 
-questions.
+> Besides, ConnMan doesn't really work this way.  Maybe in the =
 
+> future with
+> the session API it would be able to, but not at the moment.  I'll let
+> Marcel explain this more if he wants too..
 
-> Is there actually anything different here, except for the name change?
-> It's using a forked version of GIsiPipe, but I'm pretty sure we can
-> just add the missing bits into the existing GIsiPipe class.
->    =
+Admittedly, I haven't really looked at ConnMan. My assumption, though, is t=
+hat a PDP context is not activated by default when ConnMan starts up. I.e.,=
+ someone has to request the internet connectivity. Is that correct? Activat=
+ing a context by default would be very bad for power consumption and standb=
+y times, unless both the handset and the network support CPC. The decision =
+should be up to the user.
 
-Yes, that could be a solution.
-> Just adding the decoding for NET_MODEM_ subblocks here would be
-> enough. In fact, these subblocks look almost identical to the existing
-> NET_ subblocks, so adding just extra case statements with the new
-> codepoints would probably work, too.
->    =
+> >> Besides, 24.008 cause codes give us plenty of hints of =
 
-That would certainly look neater.  :-)
+> >> whether / when to
+> >> re-attach, and only a few of them require 'special' handling.
+> >>
+> >> I still think that we should come up with some strategy to =
 
-> I think this is a bad idea. I know you're using NET_CS_CONTROL_REQ
-> here to implement the unregister callback, but the this is basically
-> just wrapping existing PN_MTC functionality. In general, ISI modems
-> don't seem to understand what a deregister even means.
->
-> In fact, even the D-Bus method seems of little value, and I would
-> remove it altogether. In any case, leaving this unimplemented is my
-> preference.
->    =
+> re-attach
+> >> automatically when detached by the network.
+> > =
 
-Ok, we can see if this works for us, but you are probably right.
+> > Even if you can come up with an algorithm, testing it is =
 
-> This is different from the current netreg driver. However, it's easy
-> enough to alternate, see below.
->    =
+> very very challenging. There are plenty of differences in =
 
-> I would suggest probing for both PN_NETWORK and PN_MODEM_NETWORK here.
-> Then which ever answers first gets used. After we know with which
-> resource we're working with, overloading a few of the ISI messages is
-> enough to make this driver work with both versions of modems.
->    =
+> operator networks and it is very difficult to cover all =
 
+> cases. Making sure that the algorithm works requires =
 
-Seems pretty straighforward.
+> extensive IOT and Field testing. We really don't want a case, =
 
-> I didn't go through all of the patch, but from what I can see, we can
-> pretty well fold the WG2.5 modem support into the existing drivers.
->    =
+> where oFono fails to re-attach for whatever reason. We also =
 
-We'll get back to you on that when we have had another look at this and =
+> don't want the case where oFono has not yet attempted to =
 
-your other suggestions.
+> re-attach (e.g. on a timer) and a PDP context activation =
 
-Thanks for your comments.  :-)
+> fails, even though GPRS would actually be available.
+> > =
 
+> > For the above reasons, retrying attach on PDP context =
 
-Best Regards,
-Jessica
+> activation makes sense as a safe-guard, regardless of whether =
 
---===============6359528507981415454==--
+> we have a re-attach algorithm or not. We use on-demand attach =
+
+> in pretty much all our products (except for certain operator =
+
+> specific variants) precisely because it is certain to work. =
+
+> No funny business. If there is GPRS service, you get a =
+
+> connection. It is also an approach that should work with any =
+
+> AT modem as well.
+> > =
+
+> =
+
+> You might be right, but I'd really like to see whether the re-attach
+> algorithm would be good enough first...
+
+But what re-attach algorithm? I sure don't have one up my sleeve...
+
+As I said, extensive IOT and field testing (with mobility) is necessary in =
+order to see how the prospective algorithm works in practise. Even then, yo=
+u can't possibly cover all the angles. In practise, you end up discovering =
+the rest of the glitches when the first products are already out there. Tha=
+t is a very expensive road indeed for a feature that is a bit dubious to be=
+gin with.
+
+Why are we attaching to GPRS by default, anyway?
+
+That said, various operators tend to have different requirements on this. S=
+ome want autoattach, some want on-demand attach, and some want a UI for cha=
+nging the mode. In practise we will probably need at least a variation poin=
+t on this and possibly a setting to change the behaviour. I'd propose start=
+ing by adding the on-demand attach code, to make sure that GPRS at least wo=
+rks in all cases.
+
+	MikaL
+
+--===============3111186506308109310==--
 
