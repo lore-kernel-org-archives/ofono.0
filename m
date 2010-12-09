@@ -1,197 +1,311 @@
-Content-Type: multipart/mixed; boundary="===============3202348813043696548=="
+Content-Type: multipart/mixed; boundary="===============7252978574808035558=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: [RFC PATCH] stk: add support of next action for menu
-Date: Thu, 09 Dec 2010 13:00:49 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D40188136D961EA@irsmsx501.ger.corp.intel.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH 2/6] huaweimodem: Add support for radio settings
+Date: Thu, 09 Dec 2010 14:43:36 -0200
+Message-ID: <1291913020-3103-2-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1291913020-3103-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3202348813043696548==
+--===============7252978574808035558==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Guillaume Lucas <guillaumex.lucas@intel.com>
-
-According to the 3GPP 31.124 the support of next action
-in SIM toolkit menus is mandatory.
 ---
- doc/stk-api.txt    |    5 +++--
- src/stk.c          |    6 ++++++
- src/stkagent.c     |    6 ++++--
- src/stkagent.h     |    1 +
- test/test-stk-menu |    6 +++---
- 5 files changed, 17 insertions(+), 7 deletions(-)
+ Makefile.am                          |    3 +-
+ drivers/huaweimodem/huaweimodem.c    |    2 +
+ drivers/huaweimodem/huaweimodem.h    |    3 +
+ drivers/huaweimodem/radio-settings.c |  218 ++++++++++++++++++++++++++++++=
+++++
+ 4 files changed, 225 insertions(+), 1 deletions(-)
+ create mode 100644 drivers/huaweimodem/radio-settings.c
 
-diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-index 79daee6..f5bcae4 100644
---- a/doc/stk-api.txt
-+++ b/doc/stk-api.txt
-@@ -66,13 +66,14 @@ Properties	string IdleModeText [readonly]
- 			Contains the identifier of the icon accompanying
- 			the idle mode text.
+diff --git a/Makefile.am b/Makefile.am
+index 881204a..1768c57 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -180,7 +180,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
+ 			drivers/huaweimodem/huaweimodem.c \
+ 			drivers/huaweimodem/voicecall.c \
+ 			drivers/huaweimodem/audio-settings.c \
+-			drivers/huaweimodem/gprs-context.c
++			drivers/huaweimodem/gprs-context.c \
++			drivers/huaweimodem/radio-settings.c
  =
 
--		array{struct{string, byte}} MainMenu [readonly]
-+		array{struct{string, byte, byte}} MainMenu [readonly]
- =
-
- 			Contains the items that make up the main menu.  This
- 			is populated by the SIM when it sends the Setup Menu
- 			Proactive Command.  The main menu is always available,
- 			but its contents can be changed at any time.  Each
--			item contains the item label and icon identifier.
-+			item contains the item label, the icon identifier and
-+			the next action identifier.
- =
-
- 		string MainMenuTitle [readonly]
- =
-
-diff --git a/src/stk.c b/src/stk.c
-index 7b39f7e..086b540 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -320,6 +320,7 @@ static struct stk_menu *stk_menu_create(const char *tit=
-le,
- 		const struct stk_icon_id *icon, GSList *items,
- 		const struct stk_item_text_attribute_list *item_attrs,
- 		const struct stk_item_icon_id_list *item_icon_ids,
-+		const struct stk_items_next_action_indicator *next_act,
- 		int default_id, gboolean soft_key, gboolean has_help)
+ builtin_modules +=3D calypsomodem
+ builtin_sources +=3D drivers/atmodem/atutil.h \
+diff --git a/drivers/huaweimodem/huaweimodem.c b/drivers/huaweimodem/huawei=
+modem.c
+index c8b6522..8097a9c 100644
+--- a/drivers/huaweimodem/huaweimodem.c
++++ b/drivers/huaweimodem/huaweimodem.c
+@@ -36,6 +36,7 @@ static int huaweimodem_init(void)
  {
- 	unsigned int len =3D g_slist_length(items);
-@@ -374,6 +375,9 @@ static struct stk_menu *stk_menu_create(const char *tit=
-le,
- 		if (item_icon_ids && item_icon_ids->len)
- 			ret->items[i].icon_id =3D item_icon_ids->list[i];
+ 	huawei_voicecall_init();
+ 	huawei_audio_settings_init();
++	huawei_radio_settings_init();
+ 	huawei_gprs_context_init();
  =
 
-+		if (next_act && next_act->len)
-+			ret->items[i].next_act =3D next_act->list[i];
+ 	return 0;
+@@ -44,6 +45,7 @@ static int huaweimodem_init(void)
+ static void huaweimodem_exit(void)
+ {
+ 	huawei_gprs_context_exit();
++	huawei_radio_settings_exit();
+ 	huawei_audio_settings_exit();
+ 	huawei_voicecall_exit();
+ }
+diff --git a/drivers/huaweimodem/huaweimodem.h b/drivers/huaweimodem/huawei=
+modem.h
+index 03d52ef..596aa08 100644
+--- a/drivers/huaweimodem/huaweimodem.h
++++ b/drivers/huaweimodem/huaweimodem.h
+@@ -27,5 +27,8 @@ extern void huawei_voicecall_exit();
+ extern void huawei_audio_settings_init();
+ extern void huawei_audio_settings_exit();
+ =
+
++extern void huawei_radio_settings_init();
++extern void huawei_radio_settings_exit();
 +
- 		if (item->id =3D=3D default_id)
- 			ret->default_item =3D i;
- 	}
-@@ -393,6 +397,7 @@ static struct stk_menu *stk_menu_create_from_set_up_men=
-u(
- 				cmd->setup_menu.items,
- 				&cmd->setup_menu.item_text_attr_list,
- 				&cmd->setup_menu.item_icon_id_list,
-+				&cmd->setup_menu.next_act,
- 				0, soft_key, has_help);
- }
- =
-
-@@ -408,6 +413,7 @@ static struct stk_menu *stk_menu_create_from_select_ite=
-m(
- 				cmd->select_item.items,
- 				&cmd->select_item.item_text_attr_list,
- 				&cmd->select_item.item_icon_id_list,
-+				&cmd->select_item.next_act,
- 				cmd->select_item.item_id, soft_key, has_help);
- }
- =
-
-diff --git a/src/stkagent.c b/src/stkagent.c
-index e1a6f48..5175776 100644
---- a/src/stkagent.c
-+++ b/src/stkagent.c
-@@ -246,7 +246,7 @@ static void append_menu_items(DBusMessageIter *iter,
- 	DBusMessageIter array, entry;
- =
-
- 	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY,
--						"(sy)", &array);
-+						"(syy)", &array);
- =
-
- 	while (item && item->text) {
- 		dbus_message_iter_open_container(&array, DBUS_TYPE_STRUCT,
-@@ -256,6 +256,8 @@ static void append_menu_items(DBusMessageIter *iter,
- 						&item->text);
- 		dbus_message_iter_append_basic(&entry, DBUS_TYPE_BYTE,
- 						&item->icon_id);
-+		dbus_message_iter_append_basic(&entry, DBUS_TYPE_BYTE,
-+						&item->next_act);
- =
-
- 		dbus_message_iter_close_container(&array, &entry);
- 		item++;
-@@ -270,7 +272,7 @@ void append_menu_items_variant(DBusMessageIter *iter,
- 	DBusMessageIter variant;
- =
-
- 	dbus_message_iter_open_container(iter, DBUS_TYPE_VARIANT,
--						"a(sy)", &variant);
-+						"a(syy)", &variant);
- =
-
- 	append_menu_items(&variant, items);
- =
-
-diff --git a/src/stkagent.h b/src/stkagent.h
-index 517bcfe..938b2f8 100644
---- a/src/stkagent.h
-+++ b/src/stkagent.h
-@@ -33,6 +33,7 @@ struct stk_menu_item {
- 	char *text;
- 	uint8_t icon_id;
- 	uint8_t item_id;
-+	uint8_t next_act;
- };
- =
-
- struct stk_menu {
-diff --git a/test/test-stk-menu b/test/test-stk-menu
-index 94d2d6b..32976a5 100755
---- a/test/test-stk-menu
-+++ b/test/test-stk-menu
-@@ -27,12 +27,12 @@ class StkAgent(dbus.service.Object):
- 			mainloop.quit()
- =
-
- 	@dbus.service.method("org.ofono.SimToolkitAgent",
--				in_signature=3D"sya(sy)n", out_signature=3D"y")
-+				in_signature=3D"sya(syy)n", out_signature=3D"y")
- 	def RequestSelection(self, title, icon, items, default):
- 		print "Title: (%s)" % (title)
- 		index =3D 0;
- 		for item in items:
--			print "%d. %s" % (index, item[0])
-+			print "%d. %s (%d, %d)" % (index, item[0], item[1], item[2])
- 			index +=3D 1
- =
-
- 		print "\nDefault: %d" % (default)
-@@ -175,7 +175,7 @@ if __name__ =3D=3D '__main__':
- 		print "Items:"
- 		index =3D 0
- 		for item in properties["MainMenu"]:
--			print "%d. %s" % (index, item[0])
-+			print "%d. %s (%d, %d)" % (index, item[0], item[1], item[2])
- 			index +=3D 1
- =
-
- 	path =3D "/test/agent"
+ extern void huawei_gprs_context_init();
+ extern void huawei_gprs_context_exit();
+diff --git a/drivers/huaweimodem/radio-settings.c b/drivers/huaweimodem/rad=
+io-settings.c
+new file mode 100644
+index 0000000..30961da
+--- /dev/null
++++ b/drivers/huaweimodem/radio-settings.c
+@@ -0,0 +1,218 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010  Intel Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <errno.h>
++
++#include <glib.h>
++
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/radio-settings.h>
++
++#include "gatchat.h"
++#include "gatresult.h"
++
++#include "huaweimodem.h"
++
++static const char *none_prefix[] =3D { NULL };
++static const char *syscfg_prefix[] =3D { "^SYSCFG:", NULL };
++
++struct radio_settings_data {
++	GAtChat *chat;
++};
++
++static void syscfg_query_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_radio_settings_rat_mode_query_cb_t cb =3D cbd->cb;
++	enum ofono_radio_access_mode mode;
++	struct ofono_error error;
++	GAtResultIter iter;
++	int value;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok) {
++		cb(&error, -1, cbd->data);
++		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	if (g_at_result_iter_next(&iter, "^SYSCFG:") =3D=3D FALSE)
++		goto error;
++
++	if (g_at_result_iter_next_number(&iter, &value) =3D=3D FALSE)
++		goto error;
++
++	switch (value) {
++	case 2:
++		mode =3D OFONO_RADIO_ACCESS_MODE_ANY;
++		break;
++	case 13:
++		mode =3D OFONO_RADIO_ACCESS_MODE_GSM;
++		break;
++	case 14:
++		mode =3D OFONO_RADIO_ACCESS_MODE_UMTS;
++		break;
++	default:
++		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++		return;
++	}
++
++	cb(&error, mode, cbd->data);
++
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++}
++
++static void huawei_query_rat_mode(struct ofono_radio_settings *rs,
++			ofono_radio_settings_rat_mode_query_cb_t cb, void *data)
++{
++	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++
++	if (g_at_chat_send(rsd->chat, "AT^SYSCFG?", syscfg_prefix,
++					syscfg_query_cb, cbd, g_free) =3D=3D 0) {
++		CALLBACK_WITH_FAILURE(cb, -1, data);
++		g_free(cbd);
++	}
++}
++
++static void syscfg_modify_cb(gboolean ok, GAtResult *result, gpointer user=
+_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_radio_settings_rat_mode_set_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++	cb(&error, cbd->data);
++}
++
++static void huawei_set_rat_mode(struct ofono_radio_settings *rs,
++				enum ofono_radio_access_mode mode,
++				ofono_radio_settings_rat_mode_set_cb_t cb,
++				void *data)
++{
++	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[40];
++	unsigned int value =3D 2, acq_order =3D 0;
++
++	switch (mode) {
++	case OFONO_RADIO_ACCESS_MODE_ANY:
++		value =3D 2;
++		acq_order =3D 0;
++		break;
++	case OFONO_RADIO_ACCESS_MODE_GSM:
++		value =3D 13;
++		acq_order =3D 1;
++		break;
++	case OFONO_RADIO_ACCESS_MODE_UMTS:
++		value =3D 14;
++		acq_order =3D 2;
++		break;
++	case OFONO_RADIO_ACCESS_MODE_LTE:
++		goto error;
++	}
++
++	snprintf(buf, sizeof(buf), "AT^SYSCFG=3D%u,%u,3FFFFFFF,2,4",
++			value, acq_order);
++
++	if (g_at_chat_send(rsd->chat, buf, none_prefix,
++					syscfg_modify_cb, cbd, g_free) > 0)
++		return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, data);
++	g_free(cbd);
++}
++
++static void syscfg_support_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct ofono_radio_settings *rs =3D user_data;
++
++	if (!ok) {
++		ofono_radio_settings_remove(rs);
++		return;
++	}
++
++	ofono_radio_settings_register(rs);
++}
++
++static int huawei_radio_settings_probe(struct ofono_radio_settings *rs,
++					unsigned int vendor, void *data)
++{
++	GAtChat *chat =3D data;
++	struct radio_settings_data *rsd;
++
++	rsd =3D g_try_new0(struct radio_settings_data, 1);
++	if (rsd =3D=3D NULL)
++		return -ENOMEM;
++
++	rsd->chat =3D g_at_chat_clone(chat);
++
++	ofono_radio_settings_set_data(rs, rsd);
++
++	g_at_chat_send(rsd->chat, "AT^SYSCFG=3D?", syscfg_prefix,
++					syscfg_support_cb, rs, NULL);
++
++	return 0;
++}
++
++static void huawei_radio_settings_remove(struct ofono_radio_settings *rs)
++{
++	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
++
++	ofono_radio_settings_set_data(rs, NULL);
++
++	g_at_chat_unref(rsd->chat);
++	g_free(rsd);
++}
++
++static struct ofono_radio_settings_driver driver =3D {
++	.name			=3D "huaweimodem",
++	.probe			=3D huawei_radio_settings_probe,
++	.remove			=3D huawei_radio_settings_remove,
++	.query_rat_mode		=3D huawei_query_rat_mode,
++	.set_rat_mode		=3D huawei_set_rat_mode,
++};
++
++void huawei_radio_settings_init()
++{
++	ofono_radio_settings_driver_register(&driver);
++}
++
++void huawei_radio_settings_exit()
++{
++	ofono_radio_settings_driver_unregister(&driver);
++}
 -- =
 
-1.7.0.4
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+1.7.3.3
 
 
---===============3202348813043696548==--
+--===============7252978574808035558==--
 
