@@ -1,107 +1,178 @@
-Content-Type: multipart/mixed; boundary="===============4890983951327626821=="
+Content-Type: multipart/mixed; boundary="===============8795495818374060187=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 1/6] test: add scripts for setting frequency band
-Date: Thu, 09 Dec 2010 14:43:35 -0200
-Message-ID: <1291913020-3103-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 4/6] huaweimodem: cache mode in radio settings
+Date: Thu, 09 Dec 2010 14:43:38 -0200
+Message-ID: <1291913020-3103-4-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1291913020-3103-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4890983951327626821==
+--===============8795495818374060187==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Save the current and pending modes in radio_settings_data, so we can
+access them later. This patch also splits the parsing of ^SYSCFG
+response from the callback call. Then, it's possible to have more
+properties that use the same command as is the case of frequency band
+selection.
 ---
- Makefile.am        |    4 +++-
- test/set-gsm-band  |   25 +++++++++++++++++++++++++
- test/set-umts-band |   25 +++++++++++++++++++++++++
- 3 files changed, 53 insertions(+), 1 deletions(-)
- create mode 100755 test/set-gsm-band
- create mode 100755 test/set-umts-band
+ drivers/huaweimodem/radio-settings.c |   68 ++++++++++++++++++++++--------=
+----
+ 1 files changed, 44 insertions(+), 24 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index cdb3166..881204a 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -423,7 +423,9 @@ test_scripts =3D test/backtrace \
- 		test/test-push-notification \
- 		test/test-smart-messaging \
- 		test/send-vcard \
--		test/set-tty
-+		test/set-tty \
-+		test/set-gsm-band \
-+		test/set-umts-band
+diff --git a/drivers/huaweimodem/radio-settings.c b/drivers/huaweimodem/rad=
+io-settings.c
+index 30961da..38c0f3d 100644
+--- a/drivers/huaweimodem/radio-settings.c
++++ b/drivers/huaweimodem/radio-settings.c
+@@ -45,53 +45,64 @@ static const char *syscfg_prefix[] =3D { "^SYSCFG:", NU=
+LL };
  =
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/set-gsm-band b/test/set-gsm-band
-new file mode 100755
-index 0000000..9586d81
---- /dev/null
-+++ b/test/set-gsm-band
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
+ struct radio_settings_data {
+ 	GAtChat *chat;
++	enum ofono_radio_access_mode mode;
++	struct {
++		enum ofono_radio_access_mode mode;
++	} pending;
+ };
+ =
+
+-static void syscfg_query_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
++static ofono_bool_t syscfg_query_parse(struct radio_settings_data *rsd,
++					GAtResult *result)
+ {
+-	struct cb_data *cbd =3D user_data;
+-	ofono_radio_settings_rat_mode_query_cb_t cb =3D cbd->cb;
+-	enum ofono_radio_access_mode mode;
+-	struct ofono_error error;
+ 	GAtResultIter iter;
+ 	int value;
+ =
+
+-	decode_at_error(&error, g_at_result_final_response(result));
+-
+-	if (!ok) {
+-		cb(&error, -1, cbd->data);
+-		return;
+-	}
+-
+ 	g_at_result_iter_init(&iter, result);
+ =
+
+ 	if (g_at_result_iter_next(&iter, "^SYSCFG:") =3D=3D FALSE)
+-		goto error;
++		return FALSE;
+ =
+
+ 	if (g_at_result_iter_next_number(&iter, &value) =3D=3D FALSE)
+-		goto error;
++		return FALSE;
+ =
+
+ 	switch (value) {
+ 	case 2:
+-		mode =3D OFONO_RADIO_ACCESS_MODE_ANY;
++		rsd->mode =3D OFONO_RADIO_ACCESS_MODE_ANY;
+ 		break;
+ 	case 13:
+-		mode =3D OFONO_RADIO_ACCESS_MODE_GSM;
++		rsd->mode =3D OFONO_RADIO_ACCESS_MODE_GSM;
+ 		break;
+ 	case 14:
+-		mode =3D OFONO_RADIO_ACCESS_MODE_UMTS;
++		rsd->mode =3D OFONO_RADIO_ACCESS_MODE_UMTS;
+ 		break;
+ 	default:
+-		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
+-		return;
++		return FALSE;
+ 	}
+ =
+
+-	cb(&error, mode, cbd->data);
++	return TRUE;
++}
 +
-+import dbus
-+import sys
++static void huawei_query_rat_mode_cb(gboolean ok, GAtResult *result,
++					gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_radio_settings_rat_mode_query_cb_t cb =3D cbd->cb;
++	struct radio_settings_data *rsd =3D cbd->user;
++	struct ofono_error error;
+ =
+
+-	return;
++	decode_at_error(&error, g_at_result_final_response(result));
+ =
+
+-error:
+-	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++	if (!ok) {
++		cb(&error, -1, cbd->data);
++		return;
++	}
 +
-+bus =3D dbus.SystemBus()
++	if (!syscfg_query_parse(rsd, result)) {
++		CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
++		return;
++	}
 +
-+if len(sys.argv) =3D=3D 3:
-+	path =3D sys.argv[1]
-+	band =3D sys.argv[2]
-+elif len(sys.argv) =3D=3D 2:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+	band =3D sys.argv[1]
-+else:
-+	print "%s [PATH] band" % (sys.argv[0])
-+	exit(1)
++	cb(&error, rsd->mode, cbd->data);
+ }
+ =
+
+ static void huawei_query_rat_mode(struct ofono_radio_settings *rs,
+@@ -100,8 +111,10 @@ static void huawei_query_rat_mode(struct ofono_radio_s=
+ettings *rs,
+ 	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ =
+
++	cbd->user =3D rsd;
 +
-+print "Setting gsm band for modem %s..." % path
-+radiosettings =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.RadioSettings')
+ 	if (g_at_chat_send(rsd->chat, "AT^SYSCFG?", syscfg_prefix,
+-					syscfg_query_cb, cbd, g_free) =3D=3D 0) {
++				huawei_query_rat_mode_cb, cbd, g_free) =3D=3D 0) {
+ 		CALLBACK_WITH_FAILURE(cb, -1, data);
+ 		g_free(cbd);
+ 	}
+@@ -111,8 +124,12 @@ static void syscfg_modify_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+ {
+ 	struct cb_data *cbd =3D user_data;
+ 	ofono_radio_settings_rat_mode_set_cb_t cb =3D cbd->cb;
++	struct radio_settings_data *rsd =3D cbd->user;
+ 	struct ofono_error error;
+ =
+
++	if (ok)
++		rsd->mode =3D rsd->pending.mode;
 +
-+radiosettings.SetProperty("GsmBand", band);
-diff --git a/test/set-umts-band b/test/set-umts-band
-new file mode 100755
-index 0000000..510a40b
---- /dev/null
-+++ b/test/set-umts-band
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
+ 	decode_at_error(&error, g_at_result_final_response(result));
+ 	cb(&error, cbd->data);
+ }
+@@ -147,6 +164,9 @@ static void huawei_set_rat_mode(struct ofono_radio_sett=
+ings *rs,
+ 	snprintf(buf, sizeof(buf), "AT^SYSCFG=3D%u,%u,3FFFFFFF,2,4",
+ 			value, acq_order);
+ =
+
++	rsd->pending.mode =3D mode;
++	cbd->user =3D rsd;
 +
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 3:
-+	path =3D sys.argv[1]
-+	band =3D sys.argv[2]
-+elif len(sys.argv) =3D=3D 2:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+	band =3D sys.argv[1]
-+else:
-+	print "%s [PATH] band" % (sys.argv[0])
-+	exit(1)
-+
-+print "Setting umts band for modem %s..." % path
-+radiosettings =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.RadioSettings')
-+
-+radiosettings.SetProperty("UmtsBand", band);
+ 	if (g_at_chat_send(rsd->chat, buf, none_prefix,
+ 					syscfg_modify_cb, cbd, g_free) > 0)
+ 		return;
 -- =
 
 1.7.3.3
 
 
---===============4890983951327626821==--
+--===============8795495818374060187==--
 
