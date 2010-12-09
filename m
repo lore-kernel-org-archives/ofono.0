@@ -1,446 +1,198 @@
-Content-Type: multipart/mixed; boundary="===============5054509693562300901=="
+Content-Type: multipart/mixed; boundary="===============2864574223570764821=="
 MIME-Version: 1.0
 From: Lei Yu <lei.2.yu@nokia.com>
-Subject: [PATCH 4/5] cdmaphonesim: Add CDMA SMS Support
-Date: Wed, 08 Dec 2010 16:35:50 -0800
-Message-ID: <1291854951-2378-5-git-send-email-lei.2.yu@nokia.com>
+Subject: [PATCH 5/5] test: Add CDMA SMS unit test code
+Date: Wed, 08 Dec 2010 16:35:51 -0800
+Message-ID: <1291854951-2378-6-git-send-email-lei.2.yu@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5054509693562300901==
+--===============2864574223570764821==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am               |    9 ++
- configure.ac              |    6 +
- plugins/cdmaphonesim.c    |  344 +++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am         |    6 ++-
+ unit/test-cdmasms.c |  134 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- plugins/cdmaphonesim.conf |   14 ++
- 4 files changed, 373 insertions(+), 0 deletions(-)
- create mode 100644 plugins/cdmaphonesim.c
- create mode 100644 plugins/cdmaphonesim.conf
+ 2 files changed, 139 insertions(+), 1 deletions(-)
+ create mode 100644 unit/test-cdmasms.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 400d4c0..44a6395 100644
+index 44a6395..4a91993 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -249,6 +249,15 @@ builtin_sources +=3D drivers/cdma-atmodem/atmodem.h \
- 			drivers/cdma-atmodem/sms.c
- endif
+@@ -458,7 +458,7 @@ dist_man_MANS =3D doc/ofonod.8
+ noinst_PROGRAMS =3D unit/test-common unit/test-util unit/test-idmap \
+ 					unit/test-sms unit/test-simutil \
+ 					unit/test-mux unit/test-caif \
+-					unit/test-stkutil
++					unit/test-stkutil unit/test-cdmasms
  =
 
-+if CDMAPHONESIM
-+builtin_modules +=3D cdmaphonesim
-+builtin_sources +=3D plugins/cdmaphonesim.c
-+
-+if DATAFILES
-+conf_DATA +=3D plugins/cdmaphonesim.conf
-+endif
-+endif
-+
- builtin_modules +=3D g1
- builtin_sources +=3D plugins/g1.c
+ unit_objects =3D
  =
 
-diff --git a/configure.ac b/configure.ac
-index abbd8cc..a85344f 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -171,6 +171,12 @@ AC_ARG_ENABLE(cdmaatmodem, AC_HELP_STRING([--disable-c=
-dma-atmodem],
- 					[enable_cdma_atmodem=3D${enableval}])
- AM_CONDITIONAL(CDMA_ATMODEM, test "${enable_cdma_atmodem}" !=3D "no")
+@@ -478,6 +478,10 @@ unit_test_sms_SOURCES =3D unit/test-sms.c src/util.c s=
+rc/smsutil.c src/storage.c
+ unit_test_sms_LDADD =3D @GLIB_LIBS@
+ unit_objects +=3D $(unit_test_sms_OBJECTS)
  =
 
-+AC_ARG_ENABLE(cdmaphonesim, AC_HELP_STRING([--disable-cdma-phonesim],
-+				[disable CDMA Phone simulator support]),
-+					[enable_cdma_phonesim=3D${enableval}])
-+AM_CONDITIONAL(CDMAPHONESIM, test "${enable_cdma-phonesim}" !=3D "no" &&
-+					test "${enable_cdma_atmodem}" !=3D "no")
++unit_test_cdmasms_SOURCES =3D unit/test-cdmasms.c src/cdma-smsutil.c
++unit_test_cdmasms_LDADD =3D @GLIB_LIBS@
++unit_objects +=3D $(unit_test_cdmasms_OBJECTS)
 +
- AC_ARG_ENABLE(isimodem, AC_HELP_STRING([--disable-isimodem],
- 				[disable PhoNet/ISI modem support]),
- 					[enable_isimodem=3D${enableval}])
-diff --git a/plugins/cdmaphonesim.c b/plugins/cdmaphonesim.c
+ unit_test_simutil_SOURCES =3D unit/test-simutil.c src/util.c \
+ 				src/simutil.c src/smsutil.c src/storage.c
+ unit_test_simutil_LDADD =3D @GLIB_LIBS@
+diff --git a/unit/test-cdmasms.c b/unit/test-cdmasms.c
 new file mode 100644
-index 0000000..566f82b
+index 0000000..9aabd2b
 --- /dev/null
-+++ b/plugins/cdmaphonesim.c
-@@ -0,0 +1,344 @@
++++ b/unit/test-cdmasms.c
+@@ -0,0 +1,134 @@
 +/*
-+ * This file is part of oFono - Open Source Telephony
++ * oFono - Open Source Telephony
 + *
-+ * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
++ * Copyright (C) 2010 Nokia Corporation.  All rights reserved.
 + *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU General Public License
-+ * version 2 as published by the Free Software Foundation.
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
 + *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * General Public License for more details.
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
 + *
 + * You should have received a copy of the GNU General Public License
 + * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-+ * 02110-1301 USA
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  =
+USA
 + *
 + */
-+
 +
 +#ifdef HAVE_CONFIG_H
 +#include <config.h>
 +#endif
 +
-+#include <errno.h>
-+#include <unistd.h>
-+#include <stdlib.h>
 +#include <string.h>
-+#include <sys/socket.h>
-+#include <netinet/in.h>
-+#include <arpa/inet.h>
 +
 +#include <glib.h>
-+#include <gatmux.h>
-+#include <gatchat.h>
 +
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/cdma-sms.h>
++#include "cdma-smsutil.h"
 +
-+#include <drivers/cdma-atmodem/atutil.h>
-+
-+struct cdmaphonesim_data {
-+	GAtChat *chat;
-+};
-+
-+static int cdmaphonesim_probe(struct ofono_modem *modem)
++static void cdmasms_receive_test1()
 +{
-+	struct cdmaphonesim_data *data;
++	gboolean ret;
++	struct cdma_sms s;
++	char *addr;
++	char *message;
 +
-+	DBG("%p", modem);
++    /*
++		0x00,  :P2P
++		0x00, 0x02, 0x10, 0x02, :Teleservice Id
++		0x02, 0x05, 0x01, 0xC4, 0x8D, 0x15, 0x9C, :Orig Addr
++		0x08, 0x0D, :Bearer Data
++			0x00, 0x03, 0x1B, 0xEE, 0xF0, 0x01, :Message Id
++			0x06, 0x10, 0x2C, 0x8C, 0xBB, 0x36, 0x6F :User Data
++	*/
++	guint8 mt_sms_pdu[] =3D {
++		0x00, 0x00, 0x02, 0x10, 0x02, 0x02, 0x05, 0x01, 0xC4, 0x8D, 0x15,
++		0x9C, 0x08, 0x0D, 0x00, 0x03, 0x1B, 0xEE, 0xF0, 0x01, 0x06, 0x10,
++		0x2C, 0x8C, 0xBB, 0x36, 0x6F
++	};
 +
-+	data =3D g_try_new0(struct cdmaphonesim_data, 1);
-+	if (data =3D=3D NULL)
-+		return -ENOMEM;
++	memset(&s, 0, sizeof(struct cdma_sms));
 +
-+	ofono_modem_set_data(modem, data);
++	/* Decode the incoming SMS TPDU */
++	ret =3D cdmasms_decode(mt_sms_pdu, sizeof(mt_sms_pdu), &s);
 +
-+	return 0;
++	g_assert(ret =3D=3D TRUE);
++
++	/* Verify message type is Point to Point */
++	g_assert(s.type =3D=3D CDMASMS_P2P);
++
++	/* Verify teleservice id is WMT */
++	g_assert(s.p2p_msg.teleservice_id =3D=3D TELESERVICE_WMT);
++
++	addr =3D cdmasms_address_to_string(&s.p2p_msg.oaddr);
++	g_assert(strcmp(addr, "1234567") =3D=3D 0);
++
++	message =3D cdmasms_decode_text(&s.p2p_msg.bearer_data.ud);
++	g_assert(strcmp(message, "Hello") =3D=3D 0);
++
++	return;
 +}
 +
-+static void cdmaphonesim_remove(struct ofono_modem *modem)
++static void cdmasms_receive_test2()
 +{
-+	struct cdmaphonesim_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	g_free(data);
-+	ofono_modem_set_data(modem, NULL);
-+}
-+
-+static void cdmaphonesim_debug(const char *str, void *user_data)
-+{
-+	ofono_info("%s", str);
-+}
-+
-+static void cfun_set_on_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+
-+	DBG("");
-+
-+	ofono_modem_set_powered(modem, ok);
-+}
-+
-+static void cdmaphonesim_disconnected(gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct cdmaphonesim_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("");
-+
-+	ofono_modem_set_powered(modem, FALSE);
-+
-+	g_at_chat_unref(data->chat);
-+	data->chat =3D NULL;
-+}
-+
-+static int cdmaphonesim_enable(struct ofono_modem *modem)
-+{
-+	struct cdmaphonesim_data *data =3D ofono_modem_get_data(modem);
-+	GIOChannel *io;
-+	GAtSyntax *syntax;
-+	struct sockaddr_in addr;
-+	const char *address;
-+	int sk, err, port;
-+
-+	DBG("%p", modem);
-+
-+	address =3D ofono_modem_get_string(modem, "Address");
-+	if (address =3D=3D NULL)
-+		return -EINVAL;
-+
-+	port =3D ofono_modem_get_integer(modem, "Port");
-+	if (port < 0)
-+		return -EINVAL;
-+
-+	sk =3D socket(PF_INET, SOCK_STREAM, 0);
-+	if (sk < 0)
-+		return -EINVAL;
-+
-+	memset(&addr, 0, sizeof(addr));
-+	addr.sin_family =3D AF_INET;
-+	addr.sin_addr.s_addr =3D inet_addr(address);
-+	addr.sin_port =3D htons(port);
-+
-+	err =3D connect(sk, (struct sockaddr *) &addr, sizeof(addr));
-+	if (err < 0) {
-+		close(sk);
-+		return err;
-+	}
-+
-+	io =3D g_io_channel_unix_new(sk);
-+	if (io =3D=3D NULL) {
-+		close(sk);
-+		return -ENOMEM;
-+	}
-+
-+	syntax =3D g_at_syntax_new_gsmv1();
-+
-+	data->chat =3D g_at_chat_new(io, syntax);
-+
-+	g_at_syntax_unref(syntax);
-+	g_io_channel_unref(io);
-+
-+	if (data->chat =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(data->chat, cdmaphonesim_debug, NULL);
-+
-+	g_at_chat_set_disconnect_function(data->chat,
-+					cdmaphonesim_disconnected, modem);
-+
-+	g_at_chat_send(data->chat, "AT+CFUN=3D1", NULL,
-+					cfun_set_on_cb, modem, NULL);
-+
-+	return -EINPROGRESS;
-+}
-+
-+static int cdmaphonesim_disable(struct ofono_modem *modem)
-+{
-+	struct cdmaphonesim_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	g_at_chat_unref(data->chat);
-+	data->chat =3D NULL;
-+
-+	return 0;
-+}
-+
-+static void cdmaphonesim_pre_sim(struct ofono_modem *modem)
-+{
-+	DBG("%p", modem);
-+}
-+
-+static void set_online_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_modem_online_cb_t callback =3D cbd->cb;
-+	struct ofono_error error;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	callback(&error, cbd->data);
-+}
-+
-+static void cdmaphonesim_set_online(struct ofono_modem *modem,
-+									ofono_bool_t online,
-+									ofono_modem_online_cb_t cb,
-+									void *user_data)
-+{
-+	struct cdmaphonesim_data *data =3D ofono_modem_get_data(modem);
-+	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+	char const *command =3D online ? "AT+CFUN=3D1" : "AT+CFUN=3D4";
-+
-+	DBG("modem %p %s", modem, online ? "online" : "offline");
-+
-+	if (cbd =3D=3D NULL)
-+		goto error;
-+
-+	if (g_at_chat_send(data->chat, command, NULL,
-+				set_online_cb, cbd, g_free))
-+		return;
-+
-+error:
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+}
-+
-+static void cdmaphonesim_post_online(struct ofono_modem *modem)
-+{
-+	struct cdmaphonesim_data *data =3D ofono_modem_get_data(modem);
-+
-+    ofono_cdmasms_create(modem, 0, "cdma-atmodem", data->chat);
-+}
-+
-+static struct ofono_modem_driver cdmaphonesim_driver =3D {
-+	.name		=3D "cdmaphonesim",
-+	.probe		=3D cdmaphonesim_probe,
-+	.remove		=3D cdmaphonesim_remove,
-+	.enable		=3D cdmaphonesim_enable,
-+	.disable	=3D cdmaphonesim_disable,
-+	.pre_sim	=3D cdmaphonesim_pre_sim,
-+	.set_online	=3D cdmaphonesim_set_online,
-+	.post_online	=3D cdmaphonesim_post_online,
-+};
-+
-+static struct ofono_modem *create_modem(GKeyFile *keyfile, const char *gro=
-up)
-+{
-+	struct ofono_modem *modem;
-+	char *value;
-+
-+	DBG("group %s", group);
-+
-+	modem =3D ofono_modem_create(group, "cdmaphonesim");
-+	if (modem =3D=3D NULL)
-+		return NULL;
-+
-+	value =3D g_key_file_get_string(keyfile, group, "Address", NULL);
-+	if (value =3D=3D NULL)
-+		goto error;
-+
-+	ofono_modem_set_string(modem, "Address", value);
-+	g_free(value);
-+
-+	value =3D g_key_file_get_string(keyfile, group, "Port", NULL);
-+	if (value =3D=3D NULL)
-+		goto error;
-+
-+	ofono_modem_set_integer(modem, "Port", atoi(value));
-+	g_free(value);
-+
-+	value =3D g_key_file_get_string(keyfile, group, "Modem", NULL);
-+	if (value !=3D NULL) {
-+		ofono_modem_set_string(modem, "Modem", value);
-+		g_free(value);
-+	}
-+
-+	value =3D g_key_file_get_string(keyfile, group, "Multiplexer", NULL);
-+	if (value !=3D NULL) {
-+		ofono_modem_set_string(modem, "Multiplexer", value);
-+		g_free(value);
-+	}
-+
-+	DBG("%p", modem);
-+
-+	return modem;
-+
-+error:
-+	ofono_error("Missing address or port setting for %s", group);
-+
-+	ofono_modem_remove(modem);
-+
-+	return NULL;
-+}
-+
-+static GSList *modem_list;
-+
-+static void parse_config(const char *filename)
-+{
-+	GKeyFile *keyfile;
-+	GError *err =3D NULL;
-+	char **modems;
-+	int i;
-+
-+	DBG("filename %s", filename);
-+
-+	keyfile =3D g_key_file_new();
-+
-+	g_key_file_set_list_separator(keyfile, ',');
-+
-+	if (!g_key_file_load_from_file(keyfile, filename, 0, &err)) {
-+		ofono_warn("Reading of %s failed: %s", filename, err->message);
-+		g_error_free(err);
-+		goto done;
-+	}
-+
-+	modems =3D g_key_file_get_groups(keyfile, NULL);
-+
-+	for (i =3D 0; modems[i]; i++) {
-+		struct ofono_modem *modem;
-+
-+		modem =3D create_modem(keyfile, modems[i]);
-+		if (modem =3D=3D NULL)
-+			continue;
-+
-+		modem_list =3D g_slist_prepend(modem_list, modem);
-+
-+		ofono_modem_register(modem);
-+	}
-+
-+	g_strfreev(modems);
-+
-+done:
-+	g_key_file_free(keyfile);
++	gboolean ret;
++	struct cdma_sms s;
++	char *addr;
++	char *message;
++
++	/*
++		0x00, :Point-to-Point
++		0x00, 0x02, 0x10, 0x02, :Teleservie ID
++		0x02, 0x07, 0x02, 0xA1, 0x62, 0x51, 0x55, 0xA6, 0x40, :Orig Address
++		0x08, 0x18, :Bearer Data
++		0x00, 0x03, 0x10, 0x00, 0x40, :Message Identifier
++		0x01, 0x06, 0x10, 0x25, 0x4C, 0xBC, 0xFA, 0x00, :User Data
++		0x03, 0x06, 0x03, 0x08, 0x20, 0x13, 0x43, 0x12, :MC Time Stamp
++		0x0D, 0x01, 0x01 :Language Indicator
++	*/
++	guint8 mt_sms_pdu[] =3D {
++		0x00, 0x00, 0x02, 0x10, 0x02, 0x02, 0x07, 0x02, 0xA1, 0x62, 0x51,
++		0x55, 0xA6, 0x40, 0x08, 0x18, 0x00, 0x03, 0x10, 0x00, 0x40, 0x01,
++		0x06, 0x10, 0x25, 0x4C, 0xBC, 0xFA, 0x00, 0x03, 0x06, 0x03, 0x08,
++		0x20, 0x13, 0x43, 0x12, 0x0D, 0x01, 0x01
++	};
++
++	memset(&s, 0, sizeof(struct cdma_sms));
++
++	/* Decode the incoming SMS TPDU */
++	ret =3D cdmasms_decode(mt_sms_pdu, sizeof(mt_sms_pdu), &s);
++
++	g_assert(ret =3D=3D TRUE);
++
++	/* Verify message type is Point to Point */
++	g_assert(s.type =3D=3D CDMASMS_P2P);
++
++	/* Verify teleservice id is WMT */
++	g_assert(s.p2p_msg.teleservice_id =3D=3D TELESERVICE_WMT);
++
++	addr =3D cdmasms_address_to_string(&s.p2p_msg.oaddr);
++	g_assert(strcmp(addr, "8589455699") =3D=3D 0);
++
++	message =3D cdmasms_decode_text(&s.p2p_msg.bearer_data.ud);
++	g_assert(s.p2p_msg.bearer_data.ud.num_fields =3D=3D 4);
++	g_assert(strcmp(message, "Test") =3D=3D 0);
++
++	return;
 +}
 +
 +
-+static int cdmaphonesim_init(void)
++int main(int argc, char **argv)
 +{
-+	int err;
++	g_test_init(&argc, &argv, NULL);
 +
-+	err =3D ofono_modem_driver_register(&cdmaphonesim_driver);
-+	if (err < 0)
-+		return err;
++	g_test_add_func("/test-cdmasms/Test Simple Msg Receive 1",
++			cdmasms_receive_test1);
 +
-+	parse_config(CONFIGDIR "/cdmaphonesim.conf");
-+	return 0;
++	g_test_add_func("/test-cdmasms/Test Simple Msg Receive 2",
++			cdmasms_receive_test2);
++
++	return g_test_run();
 +}
-+
-+static void cdmaphonesim_exit(void)
-+{
-+	ofono_modem_driver_unregister(&cdmaphonesim_driver);
-+}
-+
-+OFONO_PLUGIN_DEFINE(cdmaphonesim, "CDMA PhoneSIM driver", VERSION,
-+	OFONO_PLUGIN_PRIORITY_DEFAULT, cdmaphonesim_init, cdmaphonesim_exit)
-diff --git a/plugins/cdmaphonesim.conf b/plugins/cdmaphonesim.conf
-new file mode 100644
-index 0000000..9b8bdac
---- /dev/null
-+++ b/plugins/cdmaphonesim.conf
-@@ -0,0 +1,14 @@
-+# This is a sample file for the cdmaphonesim configuration
-+#
-+# It should be installed in your oFono system directory,
-+# e.g. /etc/ofono/cdmaphonesim.conf
-+#
-+# Each group is parsed as a modem device
-+#
-+# Each group shall@least define the address and port
-+#   Address =3D <valid IPv4 address format>
-+#   Port =3D <valid TCP port>
-+
-+#[cdmaphonesim]
-+#Address=3D127.0.0.1
-+#Port=3D12345
 -- =
 
 1.7.0.4
 
 
---===============5054509693562300901==--
+--===============2864574223570764821==--
 
