@@ -1,48 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============1376558290834551035=="
+Content-Type: multipart/mixed; boundary="===============3589549666857259132=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 4/7] plugins/n900: Move call forwarding to post sim
-Date: Thu, 09 Dec 2010 09:43:58 -0800
-Message-ID: <1291916641-531-5-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 2/7] ifx: Move call forwarding to post sim
+Date: Thu, 09 Dec 2010 09:43:56 -0800
+Message-ID: <1291916641-531-3-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1291916641-531-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1376558290834551035==
+--===============3589549666857259132==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/n900.c |    2 +-
+ plugins/ifx.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/plugins/n900.c b/plugins/n900.c
-index 7619821..9b16f4d 100644
---- a/plugins/n900.c
-+++ b/plugins/n900.c
-@@ -491,6 +491,7 @@ static void n900_post_sim(struct ofono_modem *modem)
- 	DBG("");
- =
-
- 	ofono_phonebook_create(isi->modem, 0, "isimodem", isi->idx);
-+	ofono_call_forwarding_create(isi->modem, 0, "isimodem", isi->idx);
+diff --git a/plugins/ifx.c b/plugins/ifx.c
+index 2f4c65b..48c985c 100644
+--- a/plugins/ifx.c
++++ b/plugins/ifx.c
+@@ -703,6 +703,7 @@ static void ifx_post_sim(struct ofono_modem *modem)
+ 	ofono_stk_create(modem, 0, "ifxmodem", data->dlcs[AUX_DLC]);
+ 	ofono_phonebook_create(modem, OFONO_VENDOR_IFX,
+ 					"atmodem", data->dlcs[AUX_DLC]);
++	ofono_call_forwarding_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
  }
  =
 
- static void n900_post_online(struct ofono_modem *modem)
-@@ -506,7 +507,6 @@ static void n900_post_online(struct ofono_modem *modem)
- 	ofono_cbs_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ssn_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ussd_create(isi->modem, 0, "isimodem", isi->idx);
--	ofono_call_forwarding_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_settings_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_barring_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_meter_create(isi->modem, 0, "isimodem", isi->idx);
+ static void ifx_post_online(struct ofono_modem *modem)
+@@ -724,7 +725,6 @@ static void ifx_post_online(struct ofono_modem *modem)
+ 	ofono_ussd_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+ =
+
+ 	ofono_ssn_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+-	ofono_call_forwarding_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+ 	ofono_call_settings_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+ 	ofono_call_meter_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+ 	ofono_call_barring_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
 -- =
 
 1.7.0.4
 
 
---===============1376558290834551035==--
+--===============3589549666857259132==--
 
