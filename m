@@ -1,40 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============4448118206576288146=="
+Content-Type: multipart/mixed; boundary="===============5666401398541826163=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/5] cdmagen: Add CDMA MO Call Support
-Date: Thu, 09 Dec 2010 02:46:26 -0600
-Message-ID: <4D009762.5070201@gmail.com>
-In-Reply-To: <1291332685-18740-5-git-send-email-dara.spieker-doyle@nokia.com>
+From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
+Subject: Re: [PATCH 2/4]simutil: Changes to prepare for isimodem2.5
+Date: Thu, 09 Dec 2010 09:59:02 +0100
+Message-ID: <4D009A56.7090104@stericsson.com>
+In-Reply-To: <1291822212.4795.177.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4448118206576288146==
+--===============5666401398541826163==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dara,
+Hi Marcel,
+> please write a proper commit message here. The subject is not acceptable
+> since it misleads what this patch is doing.
+>    =
 
-On 12/02/2010 05:31 PM, Dara Spieker-Doyle wrote:
-> ---
->  Makefile.am         |    3 +
->  plugins/cdmagen.c   |  276 +++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  plugins/ofono.rules |    4 +
+>> +#include "types.h"
+>> +
+>>      =
 
-I'd really prefer ofono.rules chunk to be in a separate patch
+> What is this include for? Please remove it.
+>    =
 
->  plugins/udev.c      |   21 ++++
+> So please be consistent with lower-case hex encoding. So 0x6f07 etc.
+  Ok, fix commit message, remove unnecessary include and use lower case. =
 
-And the changes to udev to be in a separate patch as well.
+Will do.
 
->  4 files changed, 304 insertions(+), 0 deletions(-)
->  create mode 100644 plugins/cdmagen.c
-> =
+> And while at it, you could be the one that makes this enum finally
+> compliant to our coding style. This is one of our old left-overs that we
+> have get fixed. We just never got around to it. Are you up for such a
+> task?
+>    =
+
+Sure, I'll take this. This is just the simutil.h we are talking about, =
+
+not the simutil.c as well?
+
+> So you could just fix the coding style in one patch, fix the sorting in
+> another and then add the new values.
+>    =
+
+3 patches to be sent in, and the last one to have the new values (with =
+
+proper prefixes), I'll see to it.
+
+Best Regards,
+Jessica
 
 
-Regards,
--Denis
-
---===============4448118206576288146==--
+--===============5666401398541826163==--
 
