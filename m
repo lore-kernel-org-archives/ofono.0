@@ -1,36 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============0838342012663391349=="
+Content-Type: multipart/mixed; boundary="===============8417871384291961327=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 0/3] Attach GPRS on demand
-Date: Thu, 09 Dec 2010 11:49:25 +0000
-Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC03027A@008-AM1MPN1-007.mgdnok.nokia.com>
-In-Reply-To: <1291890453.4795.213.camel@aeonflux>
+From: Kai.Vehmanen@nokia.com
+Subject: RE: [PATCH 0/5] Call Counters (2nd)
+Date: Thu, 09 Dec 2010 13:25:43 +0100
+Message-ID: <725063E4C37388418CDDC5A2C287906A20D08A1C75@NOK-EUMSG-03.mgdnok.nokia.com>
+In-Reply-To: <1291847731.4795.204.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0838342012663391349==
+--===============8417871384291961327==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel, =
+Hi,
 
+On 09 Dec 2010, Marcel Holtmann wrote:
+>>  - lots of modems still handle all audio and PA will know nothing
+>>    about calls at all with these modems
+> =
 
-> so what about the cases when roaming is allowed or not? These needs to
-> be taken into account and that is oFono's job. That is the reason why
-> ConnMan follows the attach state. Since we don't wanna activate a
-> context when roaming and data roaming is not allowed.
+> actually Denis raised the same question, but then again this is for a
+> product specific requirement. And for that product we know that PA will
+> do the audio processing.
 
-Ok, I see the concern. I'd propose making GPRS availability a separate prop=
-erty from GPRS attach status. Availability can be decided on registration s=
-tatus alone (i.e., does the network advertise GPRS and does the roaming che=
-ck allow GPRS). Both GPRS attach and PDP context activation can in any case=
- fail for transient reasons, so ConnMan needs to have some logic to retry c=
-ontext activation.
+not really. We need modem adaptation for call counters and need
+an API that works with all modems. And I'd assume other handset
+vendors need such an API as well (either in oFono or somewhere else).
+
+> Important for me is to weight the extra costs of IO and CPU consumption
+> when doing this inside oFono. And since ofonod itself would actually
+> not wake up during a phone call, I think this is not a good fit.
+
+I share the concern for the IO/CPU cost, but I don't think it
+matters much in which daemon this is done. Especially if some slack is =
+
+allowed for the timers (which should be the case), ofonod will be scheduled =
+
+when the CPU is anyways woken up (e.g. modem/audio interrupts wake up =
+
+pulseaudio). So the big cost of bringing CPU, memories et al online are =
+
+already taken at this point, and the additional cost of running ofonod =
+
+for a while is minimal (compared to waking up some non-realtime thread of =
+
+pulseaudio, or some other component, to do the same).
+
+But yeah, there is a IO/CPU cost in any case, I agree about that.
+ =
 
 Br,
+-- =
 
-	MikaL
+Kai Vehmanen
 
---===============0838342012663391349==--
+
+--===============8417871384291961327==--
 
