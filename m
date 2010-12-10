@@ -1,256 +1,184 @@
-Content-Type: multipart/mixed; boundary="===============9127534877777952047=="
+Content-Type: multipart/mixed; boundary="===============3998629007397978505=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 3/5][RfC] sim: Implement file watching and basic refresh.
-Date: Fri, 10 Dec 2010 14:59:22 +0100
-Message-ID: <1291989564-28694-3-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 4/5][RfC] sim: Watch files we keep in memory.
+Date: Fri, 10 Dec 2010 14:59:23 +0100
+Message-ID: <1291989564-28694-4-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1291989564-28694-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9127534877777952047==
+--===============3998629007397978505==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+These are dummy watches on files who's state is kept in memory, just
+to ensure that on a refresh affecting any of those files ofono
+re-reads them from SIM.  The flow of the code in sim.c has become
+a little complicated, maybe watches should be automatically set for
+files that are being read and removed when the sim state changes to
+a lower state or atom is removed, for example, but this wouldn't be
+flexible enough for some of the corner cases.
 ---
- src/ofono.h |    4 ++
- src/sim.c   |  175 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 179 insertions(+), 0 deletions(-)
+ src/sim.c |   47 ++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 46 insertions(+), 1 deletions(-)
 
-diff --git a/src/ofono.h b/src/ofono.h
-index 792134b..6c660b6 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -296,6 +296,10 @@ ofono_bool_t __ofono_sim_service_available(struct ofon=
-o_sim *sim,
- 						int ust_service,
- 						int sst_service);
- =
-
-+void __ofono_sim_refresh(struct ofono_sim *sim, GSList *file_list,
-+				ofono_bool_t full_file_change,
-+				ofono_bool_t naa_init);
-+
- #include <ofono/stk.h>
- =
-
- typedef void (*__ofono_sms_sim_download_cb_t)(ofono_bool_t ok,
 diff --git a/src/sim.c b/src/sim.c
-index c523982..da098b7 100644
+index da098b7..2368b3d 100644
 --- a/src/sim.c
 +++ b/src/sim.c
-@@ -92,6 +92,7 @@ struct ofono_sim {
- 	struct ofono_watchlist *state_watches;
- =
-
- 	struct sim_fs *simfs;
-+	GSList *fs_watches;
- =
-
- 	unsigned char *iidf_image;
- =
-
-@@ -113,6 +114,13 @@ struct service_number {
- 	struct ofono_phone_number ph;
- };
- =
-
-+struct fs_watch {
-+	int id;
-+	enum ofono_sim_state reset_state;
-+	ofono_sim_file_notify_t notify;
-+	void *notify_data;
-+};
-+
- static const char *const passwd_name[] =3D {
- 	[OFONO_SIM_PASSWORD_NONE] =3D "none",
- 	[OFONO_SIM_PASSWORD_SIM_PIN] =3D "pin",
-@@ -2172,6 +2180,12 @@ static void sim_remove(struct ofono_atom *atom)
- 		sim->simfs =3D NULL;
- 	}
- =
-
-+	if (sim->fs_watches !=3D NULL) {
-+		g_slist_foreach(sim->fs_watches, (GFunc) g_free, NULL);
-+		g_slist_free(sim->fs_watches);
-+		sim->fs_watches =3D NULL;
-+	}
-+
- 	g_free(sim);
- }
- =
-
-@@ -2253,3 +2267,164 @@ void *ofono_sim_get_data(struct ofono_sim *sim)
+@@ -1192,15 +1192,28 @@ static void sim_ready(enum ofono_sim_state new_stat=
+e, void *user)
  {
- 	return sim->driver_data;
+ 	struct ofono_sim *sim =3D user;
+ =
+
+-	if (new_state !=3D OFONO_SIM_STATE_READY)
++	if (new_state !=3D OFONO_SIM_STATE_READY) {
++		ofono_sim_remove_file_watch(sim, SIM_EFMSISDN_FILEID,
++						NULL, sim);
++		ofono_sim_remove_file_watch(sim, SIM_EFSDN_FILEID, NULL, sim);
++		ofono_sim_remove_file_watch(sim, SIM_EFIMG_FILEID, NULL, sim);
++
+ 		return;
++	}
+ =
+
+ 	sim_own_numbers_update(sim);
++	ofono_sim_add_file_watch(sim, SIM_EFMSISDN_FILEID,
++					OFONO_SIM_STATE_READY, NULL, sim);
+ =
+
+ 	ofono_sim_read(sim, SIM_EFSDN_FILEID, OFONO_SIM_FILE_STRUCTURE_FIXED,
+ 			sim_sdn_read_cb, sim);
++	ofono_sim_add_file_watch(sim, SIM_EFSDN_FILEID,
++					OFONO_SIM_STATE_READY, NULL, sim);
++
+ 	ofono_sim_read(sim, SIM_EFIMG_FILEID, OFONO_SIM_FILE_STRUCTURE_FIXED,
+ 			sim_efimg_read_cb, sim);
++	ofono_sim_add_file_watch(sim, SIM_EFIMG_FILEID,
++					OFONO_SIM_STATE_READY, NULL, sim);
  }
+ =
+
+ static void sim_imsi_cb(const struct ofono_error *error, const char *imsi,
+@@ -1464,6 +1477,9 @@ static void sim_efust_read_cb(int ok, int length, int=
+ record,
+ 		ofono_sim_read(sim, SIM_EFEST_FILEID,
+ 				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 				sim_efest_read_cb, sim);
++		ofono_sim_add_file_watch(sim, SIM_EFEST_FILEID,
++						OFONO_SIM_STATE_INSERTED,
++						NULL, sim);
+ =
+
+ 		return;
+ 	}
+@@ -1525,6 +1541,9 @@ static void sim_efphase_read_cb(int ok, int length, i=
+nt record,
+ 		ofono_sim_read(sim, SIM_EFUST_FILEID,
+ 				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 				sim_efust_read_cb, sim);
++		ofono_sim_add_file_watch(sim, SIM_EFUST_FILEID,
++						OFONO_SIM_STATE_INSERTED,
++						NULL, sim);
+ =
+
+ 		return;
+ 	}
+@@ -1547,6 +1566,8 @@ static void sim_efphase_read_cb(int ok, int length, i=
+nt record,
+ 	ofono_sim_read(sim, SIM_EFSST_FILEID,
+ 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 			sim_efsst_read_cb, sim);
++	ofono_sim_add_file_watch(sim, SIM_EFSST_FILEID,
++					OFONO_SIM_STATE_INSERTED, NULL, sim);
+ }
+ =
+
+ static void sim_initialize_after_pin(struct ofono_sim *sim)
+@@ -1554,10 +1575,14 @@ static void sim_initialize_after_pin(struct ofono_s=
+im *sim)
+ 	ofono_sim_read(sim, SIM_EFPHASE_FILEID,
+ 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 			sim_efphase_read_cb, sim);
++	ofono_sim_add_file_watch(sim, SIM_EFPHASE_FILEID,
++					OFONO_SIM_STATE_INSERTED, NULL, sim);
+ =
+
+ 	ofono_sim_read(sim, SIM_EFAD_FILEID,
+ 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 			sim_ad_read_cb, sim);
++	ofono_sim_add_file_watch(sim, SIM_EFAD_FILEID,
++					OFONO_SIM_STATE_INSERTED, NULL, sim);
+ =
+
+ 	/*
+ 	 * Read CPHS-support bits, this is still part of the SIM
+@@ -1566,6 +1591,8 @@ static void sim_initialize_after_pin(struct ofono_sim=
+ *sim)
+ 	ofono_sim_read(sim, SIM_EF_CPHS_INFORMATION_FILEID,
+ 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 			sim_cphs_information_read_cb, sim);
++	ofono_sim_add_file_watch(sim, SIM_EF_CPHS_INFORMATION_FILEID,
++					OFONO_SIM_STATE_INSERTED, NULL, sim);
+ }
+ =
+
+ static void sim_pin_query_cb(const struct ofono_error *error,
+@@ -1856,6 +1883,8 @@ static void sim_initialize(struct ofono_sim *sim)
+ 	ofono_sim_read(sim, SIM_EF_ICCID_FILEID,
+ 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 			sim_iccid_read_cb, sim);
++	ofono_sim_add_file_watch(sim, SIM_EF_ICCID_FILEID,
++					OFONO_SIM_STATE_INSERTED, NULL, sim);
+ =
+
+ 	/* EFecc is read by the voicecall atom */
+ =
+
+@@ -1870,9 +1899,14 @@ static void sim_initialize(struct ofono_sim *sim)
+ 	ofono_sim_read(sim, SIM_EFLI_FILEID,
+ 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 			sim_efli_read_cb, sim);
++	ofono_sim_add_file_watch(sim, SIM_EFLI_FILEID,
++					OFONO_SIM_STATE_INSERTED, NULL, sim);
 +
-+static gint fs_watch_compare_by_id(gconstpointer a, gconstpointer b)
-+{
-+	const struct fs_watch *w =3D a;
-+	const int *id =3D b;
+ 	ofono_sim_read(sim, SIM_EFPL_FILEID,
+ 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+ 			sim_efpl_read_cb, sim);
++	ofono_sim_add_file_watch(sim, SIM_EFPL_FILEID,
++					OFONO_SIM_STATE_INSERTED, NULL, sim);
+ }
+ =
+
+ int ofono_sim_read_bytes(struct ofono_sim *sim, int id,
+@@ -2037,6 +2071,17 @@ static void sim_free_state(struct ofono_sim *sim)
+ =
+
+ 	sim->fixed_dialing =3D FALSE;
+ 	sim->barred_dialing =3D FALSE;
 +
-+	return w->id - *id;
-+}
-+
-+int ofono_sim_add_file_watch(struct ofono_sim *sim, int id,
-+			enum ofono_sim_state reset_state,
-+			ofono_sim_file_notify_t notify, void *userdata)
-+{
-+	struct fs_watch *item;
-+
-+	DBG("%p", sim);
-+
-+	if (sim =3D=3D NULL)
-+		return 0;
-+
-+	if (notify =3D=3D NULL)
-+		return 0;
-+
-+	/* Currently there's no need for multiple watches per file */
-+	if (g_slist_find_custom(sim->fs_watches, &id, fs_watch_compare_by_id))
-+		return -EEXIST;
-+
-+	item =3D g_new0(struct fs_watch, 1);
-+
-+	item->id =3D id;
-+	item->notify =3D notify;
-+	item->notify_data =3D userdata;
-+	item->reset_state =3D reset_state;
-+
-+	sim->fs_watches =3D g_slist_prepend(sim->fs_watches, item);
-+
-+	return id;
-+}
-+
-+void ofono_sim_remove_file_watch(struct ofono_sim *sim, int id,
-+			ofono_sim_file_notify_t notify, void *userdata)
-+{
-+	GSList *item =3D g_slist_find_custom(sim->fs_watches,
-+						&id, fs_watch_compare_by_id);
-+	if (!item)
-+		return;
-+
-+	g_free(item->data);
-+	sim->fs_watches =3D g_slist_remove(sim->fs_watches, item->data);
-+}
-+
-+void __ofono_sim_refresh(struct ofono_sim *sim, GSList *file_list,
-+			ofono_bool_t full_file_change, ofono_bool_t naa_init)
-+{
-+	GSList *l;
-+	enum sim_reset_state {
-+		RESET_STATE_NOT_PRESENT	=3D OFONO_SIM_STATE_NOT_PRESENT,
-+		RESET_STATE_INSERTED	=3D OFONO_SIM_STATE_INSERTED,
-+		RESET_STATE_READY	=3D OFONO_SIM_STATE_READY,
-+		RESET_STATE_NONE,
-+	} reset_state =3D RESET_STATE_NONE;
-+
-+	/* Flush cached content for affected files */
-+	if (full_file_change)
-+		sim_fs_cache_flush(sim->simfs, 0);
-+	else
-+		for (l =3D file_list; l; l =3D l->next) {
-+			struct stk_file *file =3D l->data;
-+			int id =3D (file->file[file->len - 2] << 8) |
-+				(file->file[file->len - 1] << 0);
-+
-+			sim_fs_cache_flush(sim->simfs, id);
-+		}
-+
-+	if (naa_init)
-+		reset_state =3D RESET_STATE_INSERTED;
-+
-+	/*
-+	 * Check if we have file change handlers for all of the affected
-+	 * files.  If not, we will fall back to re-initialising the
-+	 * application which ensures that all files are re-read.
-+	 */
-+	for (l =3D sim->fs_watches; l; l =3D l->next) {
-+		struct fs_watch *w =3D l->data;
-+
-+		if (full_file_change) {
-+			if (w->notify)
-+				continue;
-+
-+			if (w->reset_state < reset_state)
-+				reset_state =3D reset_state;
-+
-+			continue;
-+		}
-+
-+		for (l =3D file_list; l; l =3D l->next) {
-+			struct stk_file *file =3D l->data;
-+			int id =3D (file->file[file->len - 2] << 8) |
-+				(file->file[file->len - 1] << 0);
-+
-+			if (id !=3D w->id)
-+				continue;
-+
-+			if (w->notify)
-+				break;
-+
-+			if (w->reset_state < reset_state)
-+				reset_state =3D reset_state;
-+
-+			break;
-+		}
-+	}
-+
-+	/*
-+	 * Notify the subscribers of files that have changed unless we
-+	 * have determined that a re-initialisation is necessary and
-+	 * will trigger re-reading of those files anyway.
-+	 */
-+	for (l =3D sim->fs_watches; l; l =3D l->next) {
-+		struct fs_watch *w =3D l->data;
-+
-+		if (full_file_change) {
-+			if (w->reset_state < reset_state)
-+				w->notify(w->id, w->notify_data);
-+
-+			continue;
-+		}
-+
-+		for (l =3D file_list; l; l =3D l->next) {
-+			struct stk_file *file =3D l->data;
-+			int id =3D (file->file[file->len - 2] << 8) |
-+				(file->file[file->len - 1] << 0);
-+
-+			if (id !=3D w->id)
-+				continue;
-+
-+			if (w->reset_state < reset_state)
-+				w->notify(w->id, w->notify_data);
-+
-+			break;
-+		}
-+	}
-+
-+	switch (reset_state) {
-+	case RESET_STATE_NOT_PRESENT:
-+		ofono_sim_inserted_notify(sim, FALSE);
-+		ofono_sim_inserted_notify(sim, TRUE);
-+		break;
-+	case RESET_STATE_INSERTED:
-+		sim_free_state(sim);
-+		sim->state =3D OFONO_SIM_STATE_INSERTED;
-+		sim_initialize(sim);
-+		break;
-+	case RESET_STATE_READY:
-+		sim->state =3D OFONO_SIM_STATE_INSERTED;
-+		sim_set_ready(sim);
-+		break;
-+	case RESET_STATE_NONE:
-+		break;
-+	}
-+}
++	ofono_sim_remove_file_watch(sim, SIM_EFUST_FILEID, NULL, sim);
++	ofono_sim_remove_file_watch(sim, SIM_EFEST_FILEID, NULL, sim);
++	ofono_sim_remove_file_watch(sim, SIM_EFSST_FILEID, NULL, sim);
++	ofono_sim_remove_file_watch(sim, SIM_EFPHASE_FILEID, NULL, sim);
++	ofono_sim_remove_file_watch(sim, SIM_EFAD_FILEID, NULL, sim);
++	ofono_sim_remove_file_watch(sim, SIM_EF_CPHS_INFORMATION_FILEID,
++					NULL, sim);
++	ofono_sim_remove_file_watch(sim, SIM_EF_ICCID_FILEID, NULL, sim);
++	ofono_sim_remove_file_watch(sim, SIM_EFLI_FILEID, NULL, sim);
++	ofono_sim_remove_file_watch(sim, SIM_EFPL_FILEID, NULL, sim);
+ }
+ =
+
+ void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inserte=
+d)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============9127534877777952047==--
+--===============3998629007397978505==--
 
