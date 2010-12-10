@@ -1,33 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============8131265772655597995=="
+Content-Type: multipart/mixed; boundary="===============5944935050563895341=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] ifx: adding Infineon modem self test
-Date: Fri, 10 Dec 2010 16:33:18 +0100
-Message-ID: <1291995198.30085.17.camel@aeonflux.mpl.access-company.com>
-In-Reply-To: <1291976804-8739-1-git-send-email-robertino.benis@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] stkutil: fix crash issue cause by null length of text
+ string
+Date: Fri, 10 Dec 2010 10:48:14 -0600
+Message-ID: <4D0259CE.1000804@gmail.com>
+In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D40188136D95B11@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8131265772655597995==
+--===============5944935050563895341==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Robertino,
+Hi Guillaume,
 
-> Adding Infineon modem selftest to the plugin. It executes couple of AT
-> commands, and based on the responses,  it continues with ifx modem
-> enabling or powers the modem down.
+On 12/07/2010 04:58 AM, Lucas, GuillaumeX wrote:
+> From: Guillaume Lucas <guillaumex.lucas@intel.com>
+> =
 
-didn't we conclude that the modem should do all these by itself? My
-understanding is that the modem executes these. And not that we have to
-trigger them.
+> According to 3GPP TS 31.124 a null length for the text string
+> should be allowed. An empty string must be returned to the
+> user in this case.
+> ---
+>  src/stkutil.c |    6 ++++--
+>  1 files changed, 4 insertions(+), 2 deletions(-)
+> =
 
-Regards
 
-Marcel
+Patch has been applied, but please re-run the unit tests when you change
+stkutil.  You actually broke a few ;)
 
+Regards,
+-Denis
 
-
---===============8131265772655597995==--
+--===============5944935050563895341==--
 
