@@ -1,40 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============3324908919280723840=="
+Content-Type: multipart/mixed; boundary="===============5973923622954558383=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 6/7] doc: Add new property to call forwarding
-Date: Fri, 10 Dec 2010 10:56:48 -0800
-Message-ID: <1292007409-15069-7-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 7/7] TODO: Marking the Read/Write EFcfis task as done
+Date: Fri, 10 Dec 2010 10:56:49 -0800
+Message-ID: <1292007409-15069-8-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1292007409-15069-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3324908919280723840==
+--===============5973923622954558383==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/call-forwarding-api.txt |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ TODO             |    9 ---------
+ doc/features.txt |    5 +++++
+ 2 files changed, 5 insertions(+), 9 deletions(-)
 
-diff --git a/doc/call-forwarding-api.txt b/doc/call-forwarding-api.txt
-index 067531a..e8b4b9f 100644
---- a/doc/call-forwarding-api.txt
-+++ b/doc/call-forwarding-api.txt
-@@ -57,3 +57,8 @@ Properties	string VoiceUnconditional [readwrite]
+diff --git a/TODO b/TODO
+index 8d771d6..45c3577 100644
+--- a/TODO
++++ b/TODO
+@@ -92,15 +92,6 @@ SMS
+ SIM / SIM File system
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
  =
 
- 			Contains the value of the voice "Not Reachable" call
- 			forwarding rule.
+-- Read / Write EFcfis.  Call forwarding settings can be bootstrapped on the
+-  SIM for faster notification of the user that call forwarding is active.
+-  These settings are stored in EFcfis.  oFono should read these settings a=
+nd
+-  update the call forwarding atom appropriately.
+-
+-  Priority: Low
+-  Complexity: C2
+-  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+-
+ - SIM Call History plugin.  New UICCs support four new SIM elementary files
+   for storing call history information on the SIM: EFici, EFict, EFoci, EF=
+oct.
+   A plugin should be developed for oFono that will write to these files.
+diff --git a/doc/features.txt b/doc/features.txt
+index 950ec9a..6850d0b 100644
+--- a/doc/features.txt
++++ b/doc/features.txt
+@@ -222,6 +222,11 @@ SIM
+   oFono halts the SIM initialization procedure and the modem remains in the
+   PRESIM state.  In this state oFono will only allow emergency calls.
+ =
+
++- Read / Write EFcfis / EFcphs-cff.  oFono reads EFcfis/EFcphs-cff SIM fil=
+es
++  to check if VoiceUnconditional call forwarding rule is enabled.  If enab=
+led,
++  ForwardingFlagOnSim will be set and VoiceUnconditional may contain the
++  "forwarded to" number if the number is available.
 +
-+		boolean ForwardingFlagOnSim [readonly]
-+
-+			Boolean representing the voice unconditional call
-+			forwarding rule status.
+ Radio settings
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ =
+
 -- =
 
 1.7.0.4
 
 
---===============3324908919280723840==--
+--===============5973923622954558383==--
 
