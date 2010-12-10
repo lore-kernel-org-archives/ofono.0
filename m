@@ -1,70 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============5973923622954558383=="
+Content-Type: multipart/mixed; boundary="===============1723080237816978830=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 7/7] TODO: Marking the Read/Write EFcfis task as done
-Date: Fri, 10 Dec 2010 10:56:49 -0800
-Message-ID: <1292007409-15069-8-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1292007409-15069-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 01/14] test: fix bug in test-ss-control-cs
+Date: Fri, 10 Dec 2010 12:56:53 -0600
+Message-ID: <4D0277F5.60903@gmail.com>
+In-Reply-To: <1291666362-19128-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5973923622954558383==
+--===============1723080237816978830==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO             |    9 ---------
- doc/features.txt |    5 +++++
- 2 files changed, 5 insertions(+), 9 deletions(-)
+Hi Gustavo,
 
-diff --git a/TODO b/TODO
-index 8d771d6..45c3577 100644
---- a/TODO
-+++ b/TODO
-@@ -92,15 +92,6 @@ SMS
- SIM / SIM File system
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
-
--- Read / Write EFcfis.  Call forwarding settings can be bootstrapped on the
--  SIM for faster notification of the user that call forwarding is active.
--  These settings are stored in EFcfis.  oFono should read these settings a=
-nd
--  update the call forwarding atom appropriately.
--
--  Priority: Low
--  Complexity: C2
--  Owner: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
--
- - SIM Call History plugin.  New UICCs support four new SIM elementary files
-   for storing call history information on the SIM: EFici, EFict, EFoci, EF=
-oct.
-   A plugin should be developed for oFono that will write to these files.
-diff --git a/doc/features.txt b/doc/features.txt
-index 950ec9a..6850d0b 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -222,6 +222,11 @@ SIM
-   oFono halts the SIM initialization procedure and the modem remains in the
-   PRESIM state.  In this state oFono will only allow emergency calls.
- =
-
-+- Read / Write EFcfis / EFcphs-cff.  oFono reads EFcfis/EFcphs-cff SIM fil=
-es
-+  to check if VoiceUnconditional call forwarding rule is enabled.  If enab=
-led,
-+  ForwardingFlagOnSim will be set and VoiceUnconditional may contain the
-+  "forwarded to" number if the number is available.
-+
- Radio settings
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
-
--- =
-
-1.7.0.4
+On 12/06/2010 02:12 PM, Gustavo F. Padovan wrote:
+> ---
+>  test/test-ss-control-cs |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> =
 
 
---===============5973923622954558383==--
+Patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============1723080237816978830==--
 
