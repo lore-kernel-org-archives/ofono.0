@@ -1,116 +1,178 @@
-Content-Type: multipart/mixed; boundary="===============5353769830640791462=="
+Content-Type: multipart/mixed; boundary="===============5064555558227232308=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [PATCH 0/3] Attach GPRS on demand
-Date: Fri, 10 Dec 2010 09:27:13 +0000
-Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC030998@008-AM1MPN1-007.mgdnok.nokia.com>
-In-Reply-To: <1291890453.4795.213.camel@aeonflux>
+From: Robertino Benis <robertino.benis@intel.com>
+Subject: [PATCH] ifx: adding Infineon modem self test
+Date: Fri, 10 Dec 2010 02:26:44 -0800
+Message-ID: <1291976804-8739-1-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5353769830640791462==
+--===============5064555558227232308==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi,
 
-I somehow missed your other comments on this mail. More responses below.
+Adding Infineon modem selftest to the plugin. It executes couple of AT
+commands, and based on the responses,  it continues with ifx modem
+enabling or powers the modem down.
 
-> > Even if you can come up with an algorithm, testing it is =
+Thanks,
+-- r.
 
-> very very challenging. There are plenty of differences in =
+---
+ plugins/ifx.c |   98 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+---
+ 1 files changed, 92 insertions(+), 6 deletions(-)
 
-> operator networks and it is very difficult to cover all =
+diff --git a/plugins/ifx.c b/plugins/ifx.c
+index 2f4c65b..fcc57c0 100644
+--- a/plugins/ifx.c
++++ b/plugins/ifx.c
+@@ -80,6 +80,12 @@ static const char *dlc_nodes[NUM_DLC] =3D { "/dev/ttyGSM=
+1", "/dev/ttyGSM2",
+ =
 
-> cases. Making sure that the algorithm works requires =
+ static const char *none_prefix[] =3D { NULL };
+ static const char *xdrv_prefix[] =3D { "+XDRV:", NULL };
++static const char *empty_prefix[] =3D { "", NULL };
++
++static const char *modem_self_tests[][2] =3D {
++			{ "RTC Test", "at(a)rtc:rtc_gti_test_verify_32khz()" },
++			{ "Version Info Test", "at(a)vers:device_version_id()" },
++			{ NULL, NULL } };
+ =
 
-> extensive IOT and Field testing. We really don't want a case, =
+ struct ifx_data {
+ 	GIOChannel *device;
+@@ -99,6 +105,8 @@ struct ifx_data {
+ 	int audio_loopback;
+ 	struct ofono_sim *sim;
+ 	gboolean have_sim;
++	guint self_test_timeout;
++	int self_test_idx;
+ };
+ =
 
-> where oFono fails to re-attach for whatever reason. We also =
+ static void ifx_debug(const char *str, void *user_data)
+@@ -545,6 +553,82 @@ static gboolean mux_timeout_cb(gpointer user_data)
+ 	return FALSE;
+ }
+ =
 
-> don't want the case where oFono has not yet attempted to =
++static gboolean self_test_timeout_cb(gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct ifx_data *data =3D ofono_modem_get_data(modem);
++
++	ofono_error("Timeout with modem self_test");
++	g_source_remove(data->self_test_timeout);
++	data->self_test_timeout =3D 0;
++
++	shutdown_device(data);
++	ofono_modem_set_powered(modem, FALSE);
++	return FALSE;
++}
++
++static void ifx_self_test_get_device_resp(GAtResult *result, int test_id)
++{
++	GAtResultIter iter;
++	const char *str;
++
++	ofono_info("Modem Response: %s",
++				modem_self_tests[test_id][0]);
++
++	g_at_result_iter_init(&iter, result);
++
++	while (g_at_result_iter_next(&iter, NULL)) {
++
++		if (g_at_result_iter_next_string(&iter, &str))
++			ofono_info("Modem Response: %s", str);
++	}
++}
++
++static void ifx_self_test_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct ifx_data *data =3D ofono_modem_get_data(modem);
++
++	if (ok) {
++
++		if (data->self_test_timeout > 0) {
++			g_source_remove(data->self_test_timeout);
++			data->self_test_timeout =3D 0;
++		}
++
++		ifx_self_test_get_device_resp(result, data->self_test_idx);
++		data->self_test_idx++;
++
++		if (modem_self_tests[data->self_test_idx][1] !=3D NULL) {
++
++			g_at_chat_send(data->dlcs[AUX_DLC],
++				modem_self_tests[data->self_test_idx][1],
++				empty_prefix, ifx_self_test_cb, modem, NULL);
++
++			data->self_test_timeout =3D g_timeout_add_seconds(10,
++					self_test_timeout_cb, modem);
++			return;
++
++		} else {
++
++			/* Enable  MUX Channels */
++			data->frame_size =3D 1509;
++			g_at_chat_send(data->dlcs[AUX_DLC],
++					"AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
++					mux_setup_cb, modem, NULL);
++
++			data->mux_init_timeout =3D g_timeout_add_seconds(5,
++					mux_timeout_cb,	modem);
++			return;
++		}
++	}
++
++	ofono_error("Modem %s: FAIL", modem_self_tests[data->self_test_idx][0]);
++	shutdown_device(data);
++	ofono_modem_set_powered(modem, FALSE);
++}
++
+ static int ifx_enable(struct ofono_modem *modem)
+ {
+ 	struct ifx_data *data =3D ofono_modem_get_data(modem);
+@@ -598,15 +682,17 @@ static int ifx_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(chat, "ATE0 +CMEE=3D1", NULL,
+ 					NULL, NULL, NULL);
+ =
 
-> re-attach (e.g. on a timer) and a PDP context activation =
+-	data->frame_size =3D 1509;
++	/* Execute Modem Self tests */
+ =
 
-> fails, even though GPRS would actually be available.
-> =
+-	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
+-					mux_setup_cb, modem, NULL);
++	data->dlcs[AUX_DLC] =3D chat;
++	data->self_test_idx =3D 0;
+ =
 
-> I don't think such an algorithm is hard. Either we are forbidden, then
-> we wait until we switch to a new cell.
+-	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
+-								modem);
++	g_at_chat_send(data->dlcs[AUX_DLC],
++		modem_self_tests[data->self_test_idx][1],
++		empty_prefix, ifx_self_test_cb, modem, NULL);
+ =
 
-Mostly that would be just a waste of power. Some of the errors are PLMN or =
-LA specific, so retrying at cell change would be redundant. A proper retry =
-strategy would have to be based on the detach reason and any subsequent att=
-ach failure causes. In general, activating the RF all the time, when no-one=
- has even requested a PDP context is simply bad idea. There are better uses=
- for the battery power.
+-	data->dlcs[AUX_DLC] =3D chat;
++	data->self_test_timeout =3D g_timeout_add_seconds(10,
++				self_test_timeout_cb,	modem);
+ =
 
-And yes, coming up with an algorithm (whatever it is) is probably easy enou=
-gh. Making sure it works with all the networks and modems out there is the =
-hard part.
+ 	return -EINPROGRESS;
+ }
+-- =
 
-> Otherwise we will just retry to attach.
+1.7.0.4
 
-That's also tricky. What do you do if the attach attempt fails? Retry again=
-? How often? Use some kind of backoff?
 
-> > For the above reasons, retrying attach on PDP context =
-
-> activation makes sense as a safe-guard, regardless of whether =
-
-> we have a re-attach algorithm or not. We use on-demand attach =
-
-> in pretty much all our products (except for certain operator =
-
-> specific variants) precisely because it is certain to work. =
-
-> No funny business. If there is GPRS service, you get a =
-
-> connection. It is also an approach that should work with any =
-
-> AT modem as well.
-> =
-
-> This is really not ConnMan's problem and I don't wanna make =
-
-> it ConnMan's
-> problem.
-> I am really against just pushing this problem off to someone else.
-
-No-one is proposing to. You're actually making this ConnMan's problem by mo=
-nitoring the GPRS attach status. If ConnMan needs a trigger, it should be b=
-ased on network registration status alone.
-
-> And
-> in ConnMan we have even less information to decide what happens when
-> context activation fails.
-
-Unfortunately, oFono cannot hide context activation failures from ConnMan. =
-ConnMan will just have to cope, regardless of what we do with attach.
-
-> The algorithm to handle such rare error
-> conditions smoothly becomes more complicated than making this easier.
-
-As far as I can see, the approach I'm proposing is simpler than the one you=
- and Denis are proposing.
-
-> So I agree with Denis that we need to fix this inside oFono =
-
-> and just try
-> to intelligently re-attach.
-
-As I already explained to Denis, it's not really a choise between one or th=
-e other. Some opearators require autoattach, some require on-demand attach =
-and some require a UI to change the mode. All of these should be supported.=
- So, by all means develop a re-attach algorith. It won't be easy to maturiz=
-e, though. Using context activation requests as a triggers to retry attach =
-simply makes a lot of sense as a safe-guard, even if we're in autoattach mo=
-de. If anything, it removes one potential failure case.
-
-Br,
-
-	MikaL
-
---===============5353769830640791462==--
+--===============5064555558227232308==--
 
