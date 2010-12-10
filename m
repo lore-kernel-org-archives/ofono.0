@@ -1,71 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============4177078388899846040=="
+Content-Type: multipart/mixed; boundary="===============1898259869096063839=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/5] Call Counters (2nd)
-Date: Fri, 10 Dec 2010 19:34:47 +0100
-Message-ID: <1292006087.30085.25.camel@aeonflux.mpl.access-company.com>
-In-Reply-To: <201012101957.51512.remi.denis-courmont@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: Read/Write EFcfis/EFcphs-cff files-v4
+Date: Fri, 10 Dec 2010 10:56:42 -0800
+Message-ID: <1292007409-15069-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4177078388899846040==
+--===============1898259869096063839==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi,
 
-> > > Personally I think the every-10sec interval is too short.
-> > > It's also highly system specific when wakeups start to get
-> > > too costly, so picking up one value seems difficult.
-> > =
+This patch reads and writes the call forwarding unconditional status
+from and to the SIM depending on the SIM file availability. New property
+needs to be added due to the fact that number won't be available from the
+cphs-cff file.
 
-> > My take here is that a granularity of 1 minute is enough.
-> =
+Incase of SIM, EFcphs-cff file holds call forwarding status and it is
+represented as a flag. In case of USIM(EFcfis), we have the status flag
+and also number.So, adding new property for status and using the existing
+VoiceUnconditional with number will work for both SIM and USIM cases.
 
-> There are definitely call fares with sub-minute granularity. The minute i=
-s =
+Other option is to have 2 properties, "VoiceUnconditional" and "Number". =
 
-> definitely INSUFFICIENT.
+"VoiceUnconditional" will have the status of the call forwarding( "enabled",
+"disabled") whereas the "Number" property will have the call forwared numbe=
+r.
 
-let me repeat my question here. Does this suppose to be represent spent
-time on calls (what I called talk time) or actual billing minutes.
+offline-online state transitions results in caching the call forwaring stat=
+us
+every time. To avoid this, call forwarding atom is moved to the post sim and
+its moved also due to the fact that call forwarding status doesn't change i=
+n roaming.
 
-If we talk about correct billing minutes then you are just opening
-pandora's box. Since we don't know the billing. And difference between
-air time, incoming/outgoing calls, multiparty calls, hold calls etc. and
-their billing schemes make this just insane.
+Regards,
+Jeevaka
 
-So what is the actual requirement here. So far ever single answer was
-not satisfying. And that is why I proposed to just make this count the
-talk time.
+Jeevaka Badrappan (7):
+  call-forwarding: Read/Write cfis/cphs-cff
+  ifx: Move call forwarding to post sim
+  isigen: Move call forwarding to post sim
+  plugins/n900: Move call forwarding to post sim
+  phonesim: Move call forwarding to post sim
+  doc: Add new property to call forwarding
+  TODO: Marking the Read/Write EFcfis task as done
 
-> > Doing this every 10 seconds and displaying it on a per second level
-> > sounds insane to me.
-> =
-
-> So I made a lengthy call to my mum this morning, using a desk phone. And =
-it =
-
-> was showing minute:second, not just minutes. I have never seen a phone th=
-at =
-
-> does not show seconds and it would look pretty dumb to me.
-
-You do realize that this is NOT the feature we are talking about here.
-
-The actual display of the duration of a call is pretty simple and
-currently easy to handle inside the UI. And that can be done up to the
-millisecond display if you or your UI designer wants it.
-
-The proposed call counters here are long term counters showing your
-overall time. So showing minutes seems to be precise enough.
-
-Regards
-
-Marcel
+ TODO                        |    9 --
+ doc/call-forwarding-api.txt |    5 +
+ doc/features.txt            |    5 +
+ plugins/ifx.c               |    2 +-
+ plugins/isigen.c            |    2 +-
+ plugins/n900.c              |    2 +-
+ plugins/phonesim.c          |    3 +-
+ src/call-forwarding.c       |  246 +++++++++++++++++++++++++++++++++++++++=
++++-
+ 8 files changed, 260 insertions(+), 14 deletions(-)
 
 
-
---===============4177078388899846040==--
+--===============1898259869096063839==--
 
