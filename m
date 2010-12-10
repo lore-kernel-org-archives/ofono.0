@@ -1,102 +1,105 @@
-Content-Type: multipart/mixed; boundary="===============4090146496088725779=="
+Content-Type: multipart/mixed; boundary="===============0297767891596021644=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v2] TODO: Add CDMA Voicecall Support Tasks
-Date: Fri, 10 Dec 2010 15:42:52 -0800
-Message-ID: <1292024572-12102-1-git-send-email-dara.spieker-doyle@nokia.com>
-In-Reply-To: <y>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 0/5] Call Counters (2nd)
+Date: Sat, 11 Dec 2010 01:57:04 +0200
+Message-ID: <201012110157.04661.remi.denis-courmont@nokia.com>
+In-Reply-To: <1292006087.30085.25.camel@aeonflux.mpl.access-company.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4090146496088725779==
+--===============0297767891596021644==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |   58 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 58 insertions(+), 0 deletions(-)
+On Friday 10 December 2010 20:34:47 ext Marcel Holtmann, you wrote:
+> Hi Remi,
+> =
 
-diff --git a/TODO b/TODO
-index 8d771d6..cbcdac5 100644
---- a/TODO
-+++ b/TODO
-@@ -484,3 +484,61 @@ Miscellaneous
-   Priority: Medium
-   Complexity: C2
-   Owner: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
-+
-+CDMA Voicecall
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+- Add support for Mobile Originated and Mobile Terminated Voice Call over
-+  a CDMA network. This includes management of call state and providing
-+  appropriate values for the LineIdentification in each case.
-+
-+  Priority: High
-+  Complexity: C2
-+  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-+
-+- Add support for Three-Way Calling over a CDMA network. Three-Way Calling
-+  provides the subscriber with the capability to add a third party to an
-+  established two-party call, so that all three parties may communicate in=
- a
-+  three-way call.
-+
-+  In CDMA mode, the originating subscriber of a current conversation can
-+  request for a third party to be added to a conversation by sending a Fla=
-sh
-+  With Information Message (FWIM) with dialed digits to the network. Upon
-+  setting up a two-way conversation with the added party, the originating
-+  subscriber can request to establish a three-way conversation by sending
-+  another Flash With Information Message. Upon receiving the second Flash =
-With
-+  Information Message, the MSC reconnects the original party to the
-+  conversation thus completing the setup of a three-way conversation.
-+
-+  CDMA Three-Way Calling is described by Figure B-5 in 3GPP2 C.S0005-E Ver=
-sion
-+  2.0.
-+
-+  Priority: High
-+  Complexity: C2
-+  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-+
-+- Add support for Call Waiting over a CDMA network. Call Waiting (CW) prov=
-ides
-+  notification of an incoming call to an originating subscriber, while the
-+  subscriber's call is in the 2-way state. Subsequently, the originating
-+  subscriber can either answer or ignore the incoming call. If the origina=
-ting
-+  subscriber answers the second call, it may alternate between the two cal=
-ls.
-+
-+  In CDMA mode, the originating subscriber of a current conversation will
-+  receive either a Flash With Information Message or an Alert With Informa=
-tion
-+  Message from the network if there is an additional mobile terminated voi=
-ce
-+  call incoming. The originating subscriber can change conversation partie=
-s by
-+  sending a Flash With Information Message to the network and the MSC will
-+  toggle the speech path between the two conversations.
-+
-+  CDMA Call Waiting is described by Figure B-6 in 3GPP2 C.S0005-E Version
-+  2.0.
-+
-+  Priority: High
-+  Complexity: C2
-+  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-+
-+- Support sending DTMF tones over CDMA network.
-+
-+  Priority: High
-+  Complexity: C2
-+  Owner: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+> > > > Personally I think the every-10sec interval is too short.
+> > > > It's also highly system specific when wakeups start to get
+> > > > too costly, so picking up one value seems difficult.
+> > > =
+
+> > > My take here is that a granularity of 1 minute is enough.
+> > =
+
+> > There are definitely call fares with sub-minute granularity. The minute
+> > is definitely INSUFFICIENT.
+> =
+
+> let me repeat my question here. Does this suppose to be represent spent
+> time on calls (what I called talk time) or actual billing minutes.
+
+As said earlier, this is about the talk time. The scenario is a user ejects =
+
+the battery during an already long-standing call or gets the device to cras=
+h =
+
+or reset, gets billed, and comes and complain to its operator that (s)he ge=
+ts =
+
+overcharged. The counters will be much more wrong if we do not flush them t=
+o =
+
+disk frequently.
+
+We do not need to "implement" the billing policy for that. This is only abo=
+ut =
+
+the total talk time.
+
+> If we talk about correct billing minutes then you are just opening
+> pandora's box. Since we don't know the billing. And difference between
+> air time, incoming/outgoing calls, multiparty calls, hold calls etc. and
+> their billing schemes make this just insane.
+
+Sure. We don't wants this.
+
+> So what is the actual requirement here. So far ever single answer was
+> not satisfying. And that is why I proposed to just make this count the
+> talk time.
+
+The requirement is that the user cannot deduct (much) talk time from the ca=
+ll =
+
+counters.
+
+> > > Doing this every 10 seconds and displaying it on a per second level
+> > > sounds insane to me.
+> > =
+
+> > So I made a lengthy call to my mum this morning, using a desk phone. And
+> > it was showing minute:second, not just minutes. I have never seen a
+> > phone that does not show seconds and it would look pretty dumb to me.
+> =
+
+> You do realize that this is NOT the feature we are talking about here.
+> =
+
+> The actual display of the duration of a call is pretty simple and
+> currently easy to handle inside the UI. And that can be done up to the
+> millisecond display if you or your UI designer wants it.
+> =
+
+> The proposed call counters here are long term counters showing your
+> overall time. So showing minutes seems to be precise enough.
+
+Showing minutes, as in flushing the counters every 60 seconds might work, b=
+ut =
+
+I'd rather make this a configurable knob.
+
+That said, I do believe the stored value has to be more precise than minute=
+s. =
+
+Otherwise per call "error" may add up far too quickly.
+
 -- =
 
-1.7.0.4
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-
---===============4090146496088725779==--
+--===============0297767891596021644==--
 
