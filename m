@@ -1,52 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============2449631280613625446=="
+Content-Type: multipart/mixed; boundary="===============6446961198897127331=="
 MIME-Version: 1.0
 From: F. Gau <fgau@pyneo.org>
-Subject: [PATCH 1/2] set huawei em770 modem device to 01 to free up 00
-Date: Fri, 10 Dec 2010 19:25:17 +0100
-Message-ID: <1292005517-19049-1-git-send-email-fgau@pyneo.org>
+Subject: [PATCH 2/2] fake a sim-inserted status
+Date: Fri, 10 Dec 2010 19:28:12 +0100
+Message-ID: <1292005692-19615-1-git-send-email-fgau@pyneo.org>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2449631280613625446==
+--===============6446961198897127331==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: M. Dietrich <mdt@emdete.de>
 
-	device 00 is ppp capable while 01 is not. 01 does everything
-	else fine so ofono works with it flawlessly.
+	while the sim detection does not work this patch at least allows to use
+	those modems. until someone has the time to work out a correct solution
+	this is a usefull workaround.
 ---
- plugins/ofono.rules |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ plugins/huawei.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index da8a8ef..9369566 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -30,7 +30,7 @@ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1401"=
-, ENV{OFONO_IFACE_NUM}=3D=3D"02", E
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1402", ENV{OFONO_IFACE=
-_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1402", ENV{OFONO_IFACE=
-_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index 25dfaca..df506d3 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -586,6 +586,7 @@ static void huawei_pre_sim(struct ofono_modem *modem)
+ 	ofono_devinfo_create(modem, 0, "atmodem", data->pcui);
+ 	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
+ 					"atmodem", data->pcui);
++	ofono_sim_inserted_notify(data->sim, TRUE);
  =
 
--ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_IFACE=
-_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
-+ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_IFACE=
-_NUM}=3D=3D"01", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_IFACE=
-_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_HUAWE=
-I_VOICE}=3D"1"
- =
-
+ 	data->sim_poll_count =3D 0;
+ 	query_sim_state(modem);
 -- =
 
 1.7.2.3
 
 
 
---===============2449631280613625446==--
+--===============6446961198897127331==--
 
