@@ -1,64 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============1898259869096063839=="
+Content-Type: multipart/mixed; boundary="===============8900452180009539547=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: Read/Write EFcfis/EFcphs-cff files-v4
-Date: Fri, 10 Dec 2010 10:56:42 -0800
-Message-ID: <1292007409-15069-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 2/7] ifx: Move call forwarding to post sim
+Date: Fri, 10 Dec 2010 10:56:44 -0800
+Message-ID: <1292007409-15069-3-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1292007409-15069-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1898259869096063839==
+--===============8900452180009539547==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ plugins/ifx.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-This patch reads and writes the call forwarding unconditional status
-from and to the SIM depending on the SIM file availability. New property
-needs to be added due to the fact that number won't be available from the
-cphs-cff file.
+diff --git a/plugins/ifx.c b/plugins/ifx.c
+index 2f4c65b..48c985c 100644
+--- a/plugins/ifx.c
++++ b/plugins/ifx.c
+@@ -703,6 +703,7 @@ static void ifx_post_sim(struct ofono_modem *modem)
+ 	ofono_stk_create(modem, 0, "ifxmodem", data->dlcs[AUX_DLC]);
+ 	ofono_phonebook_create(modem, OFONO_VENDOR_IFX,
+ 					"atmodem", data->dlcs[AUX_DLC]);
++	ofono_call_forwarding_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+ }
+ =
 
-Incase of SIM, EFcphs-cff file holds call forwarding status and it is
-represented as a flag. In case of USIM(EFcfis), we have the status flag
-and also number.So, adding new property for status and using the existing
-VoiceUnconditional with number will work for both SIM and USIM cases.
+ static void ifx_post_online(struct ofono_modem *modem)
+@@ -724,7 +725,6 @@ static void ifx_post_online(struct ofono_modem *modem)
+ 	ofono_ussd_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+ =
 
-Other option is to have 2 properties, "VoiceUnconditional" and "Number". =
+ 	ofono_ssn_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+-	ofono_call_forwarding_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+ 	ofono_call_settings_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+ 	ofono_call_meter_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+ 	ofono_call_barring_create(modem, 0, "atmodem", data->dlcs[AUX_DLC]);
+-- =
 
-"VoiceUnconditional" will have the status of the call forwarding( "enabled",
-"disabled") whereas the "Number" property will have the call forwared numbe=
-r.
-
-offline-online state transitions results in caching the call forwaring stat=
-us
-every time. To avoid this, call forwarding atom is moved to the post sim and
-its moved also due to the fact that call forwarding status doesn't change i=
-n roaming.
-
-Regards,
-Jeevaka
-
-Jeevaka Badrappan (7):
-  call-forwarding: Read/Write cfis/cphs-cff
-  ifx: Move call forwarding to post sim
-  isigen: Move call forwarding to post sim
-  plugins/n900: Move call forwarding to post sim
-  phonesim: Move call forwarding to post sim
-  doc: Add new property to call forwarding
-  TODO: Marking the Read/Write EFcfis task as done
-
- TODO                        |    9 --
- doc/call-forwarding-api.txt |    5 +
- doc/features.txt            |    5 +
- plugins/ifx.c               |    2 +-
- plugins/isigen.c            |    2 +-
- plugins/n900.c              |    2 +-
- plugins/phonesim.c          |    3 +-
- src/call-forwarding.c       |  246 +++++++++++++++++++++++++++++++++++++++=
-+++-
- 8 files changed, 260 insertions(+), 14 deletions(-)
+1.7.0.4
 
 
---===============1898259869096063839==--
+--===============8900452180009539547==--
 
