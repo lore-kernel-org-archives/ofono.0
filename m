@@ -1,48 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============3352662242749082891=="
+Content-Type: multipart/mixed; boundary="===============7234931722250336471=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 4/7] plugins/n900: Move call forwarding to post sim
-Date: Fri, 10 Dec 2010 10:56:46 -0800
-Message-ID: <1292007409-15069-5-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 5/7] phonesim: Move call forwarding to post sim
+Date: Fri, 10 Dec 2010 10:56:47 -0800
+Message-ID: <1292007409-15069-6-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1292007409-15069-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3352662242749082891==
+--===============7234931722250336471==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/n900.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ plugins/phonesim.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/plugins/n900.c b/plugins/n900.c
-index 7619821..9b16f4d 100644
---- a/plugins/n900.c
-+++ b/plugins/n900.c
-@@ -491,6 +491,7 @@ static void n900_post_sim(struct ofono_modem *modem)
- 	DBG("");
- =
-
- 	ofono_phonebook_create(isi->modem, 0, "isimodem", isi->idx);
-+	ofono_call_forwarding_create(isi->modem, 0, "isimodem", isi->idx);
+diff --git a/plugins/phonesim.c b/plugins/phonesim.c
+index c7ef0d7..b4795f2 100644
+--- a/plugins/phonesim.c
++++ b/plugins/phonesim.c
+@@ -635,6 +635,8 @@ static void phonesim_post_sim(struct ofono_modem *modem)
+ 	if (!data->calypso)
+ 		ofono_stk_create(modem, OFONO_VENDOR_PHONESIM,
+ 					"atmodem", data->chat);
++
++	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
  }
  =
 
- static void n900_post_online(struct ofono_modem *modem)
-@@ -506,7 +507,6 @@ static void n900_post_online(struct ofono_modem *modem)
- 	ofono_cbs_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ssn_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_ussd_create(isi->modem, 0, "isimodem", isi->idx);
--	ofono_call_forwarding_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_settings_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_barring_create(isi->modem, 0, "isimodem", isi->idx);
- 	ofono_call_meter_create(isi->modem, 0, "isimodem", isi->idx);
+ static void phonesim_post_online(struct ofono_modem *modem)
+@@ -647,7 +649,6 @@ static void phonesim_post_online(struct ofono_modem *mo=
+dem)
+ 	DBG("%p", modem);
+ =
+
+ 	ofono_ussd_create(modem, 0, "atmodem", data->chat);
+-	ofono_call_forwarding_create(modem, 0, "atmodem", data->chat);
+ 	ofono_call_settings_create(modem, 0, "atmodem", data->chat);
+ =
+
+ 	if (data->calypso)
 -- =
 
 1.7.0.4
 
 
---===============3352662242749082891==--
+--===============7234931722250336471==--
 
