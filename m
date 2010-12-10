@@ -1,66 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============1113617832091432848=="
+Content-Type: multipart/mixed; boundary="===============0947408102673091104=="
 MIME-Version: 1.0
 From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH 2/4 v2] plugins: Enabling nettime plugin in Makefile.am
-Date: Fri, 10 Dec 2010 09:53:56 +0200
-Message-ID: <1291967638-12371-3-git-send-email-antti.paila@nokia.com>
+Subject: [PATCH 4/4 v2] plugins: Documentation for nettime plugin
+Date: Fri, 10 Dec 2010 09:53:58 +0200
+Message-ID: <1291967638-12371-5-git-send-email-antti.paila@nokia.com>
 In-Reply-To: <1291967638-12371-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1113617832091432848==
+--===============0947408102673091104==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am |   10 ++++++++--
- 1 files changed, 8 insertions(+), 2 deletions(-)
+ doc/network-time-api.txt |   31 +++++++++++++++++++++++++++++++
+ 1 files changed, 31 insertions(+), 0 deletions(-)
+ create mode 100644 doc/network-time-api.txt
 
-diff --git a/Makefile.am b/Makefile.am
-index cdb3166..70162ec 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -296,6 +296,9 @@ builtin_modules +=3D example_nettime
- builtin_sources +=3D examples/nettime.c
- endif
- =
-
-+builtin_modules +=3D nettime
-+builtin_sources +=3D plugins/nettime.c
+diff --git a/doc/network-time-api.txt b/doc/network-time-api.txt
+new file mode 100644
+index 0000000..cb2b9d7
+--- /dev/null
++++ b/doc/network-time-api.txt
+@@ -0,0 +1,31 @@
++Network time hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 +
- builtin_modules +=3D smart_messaging
- builtin_sources +=3D plugins/smart-messaging.c
- =
++Service		org.ofono
++Interface	org.ofono.NetworkTime
++Object path	[variable prefix]/{modem0,modem1,...}
++
++Methods		dict GetNetworkTime()
++
++			Returns the network indicated time for the modem object.
++			See the properties section for the content of the dict.
++
++Signals		NetworkTimeChanged(dict)
++
++			This signal indicates the reception of network time.
++			See the properties section for the content of the dict.
++
++Properties	int64 UTC [readonly, optional]
++
++			Network time in seconds from epoch normalized to =
 
-@@ -358,7 +361,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt \
- 			doc/message-api.txt doc/message-waiting-api.txt \
- 			doc/phonebook-api.txt doc/radio-settings-api.txt \
- 			doc/sim-api.txt doc/stk-api.txt \
--			doc/audio-settings-api.txt doc/text-telephony-api.txt
-+			doc/audio-settings-api.txt doc/text-telephony-api.txt \
-+			doc/network-time-api.txt
- =
++			indication arrival timestamp. Reveicing entity obtains =
 
- =
-
- test_scripts =3D test/backtrace \
-@@ -423,7 +427,9 @@ test_scripts =3D test/backtrace \
- 		test/test-push-notification \
- 		test/test-smart-messaging \
- 		test/send-vcard \
--		test/set-tty
-+		test/set-tty \
-+		test/test-nettime \
-+		test/get-nettime
- =
-
- if TEST
- testdir =3D $(pkglibdir)/test
++			real time by adding the current time from monotonic
++			clock e.g. clock_gettime(CLOCK_MONOTONIC,...).
++
++		int32 Timezone [readonly]
++
++			Current timezone offset in seconds from UTC.
++
++		uint32 DST [readonly]
++
++			Current daylight saving setting in hours.
+\ No newline at end of file
 -- =
 
 1.7.1
 
 
---===============1113617832091432848==--
+--===============0947408102673091104==--
 
