@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============2336327815273409543=="
+Content-Type: multipart/mixed; boundary="===============0484271507304999593=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 02/14] atmodem: use macros for CLIP validity
-Date: Fri, 10 Dec 2010 12:59:56 -0600
-Message-ID: <4D0278AC.6070204@gmail.com>
-In-Reply-To: <1291666362-19128-2-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH 04/14] TODO: Add onwer to CNAP task
+Date: Fri, 10 Dec 2010 13:01:50 -0600
+Message-ID: <4D02791E.8010302@gmail.com>
+In-Reply-To: <1291666362-19128-4-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2336327815273409543==
+--===============0484271507304999593==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,15 +17,15 @@ Hi Gustavo,
 
 On 12/06/2010 02:12 PM, Gustavo F. Padovan wrote:
 > ---
->  drivers/atmodem/voicecall.c |    6 ++++--
->  1 files changed, 4 insertions(+), 2 deletions(-)
+>  TODO |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+Patch seems to be no longer necessary.
 
 Regards,
 -Denis
 
---===============2336327815273409543==--
+--===============0484271507304999593==--
 
