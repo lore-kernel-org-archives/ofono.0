@@ -1,128 +1,337 @@
-Content-Type: multipart/mixed; boundary="===============5002806752795218179=="
+Content-Type: multipart/mixed; boundary="===============6065644007982287955=="
 MIME-Version: 1.0
 From: Kristen Carlson Accardi <kristen@linux.intel.com>
-Subject: [PATCH 2/3 v2] sms: delete sent sms messages from backup
-Date: Fri, 10 Dec 2010 16:16:58 -0800
-Message-ID: <1292026618-16816-1-git-send-email-kristen@linux.intel.com>
-In-Reply-To: <4CFD9C64.2030609@gmail.com>
+Subject: [PATCH 3/3 v2] sms: restore pending tx messages from backup
+Date: Fri, 10 Dec 2010 16:17:41 -0800
+Message-ID: <1292026661-16858-1-git-send-email-kristen@linux.intel.com>
+In-Reply-To: <4CFD9F65.6030104@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5002806752795218179==
+--===============6065644007982287955==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/sms.c     |    7 +++++++
- src/smsutil.c |   45 +++++++++++++++++++++++++++++++++++++++++++++
- src/smsutil.h |    5 +++++
- 3 files changed, 57 insertions(+), 0 deletions(-)
+ src/ofono.h   |    1 +
+ src/sms.c     |   75 ++++++++++++++++++++++++++++++
+ src/smsutil.c |  143 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/smsutil.h |    8 +++
+ 4 files changed, 227 insertions(+), 0 deletions(-)
 
+diff --git a/src/ofono.h b/src/ofono.h
+index 792134b..c8e6cf0 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -243,6 +243,7 @@ enum ofono_sms_submit_flag {
+ 	OFONO_SMS_SUBMIT_FLAG_RECORD_HISTORY =3D	0x2,
+ 	OFONO_SMS_SUBMIT_FLAG_RETRY =3D		0x4,
+ 	OFONO_SMS_SUBMIT_FLAG_EXPOSE_DBUS =3D	0x8,
++	OFONO_SMS_SUBMIT_FLAG_REUSE_UUID =3D	0x10,
+ };
+ =
+
+ typedef void (*ofono_sms_txq_submit_cb_t)(gboolean ok, void *data);
 diff --git a/src/sms.c b/src/sms.c
-index e5e06db..dd4d27c 100644
+index dd4d27c..42ca034 100644
 --- a/src/sms.c
 +++ b/src/sms.c
-@@ -766,6 +766,10 @@ static void tx_finished(const struct ofono_error *erro=
-r, int mr, void *data)
- 		goto next_q;
+@@ -929,6 +929,9 @@ static struct tx_queue_entry *tx_queue_entry_new(GSList=
+ *msg_list,
+ 				pdu->pdu_len, pdu->tpdu_len);
  	}
  =
 
-+	sms_tx_backup_remove(sms->imsi, entry->id, entry->flags,
-+				ofono_uuid_to_str(&entry->uuid),
-+				entry->cur_pdu);
++	if (flags & OFONO_SMS_SUBMIT_FLAG_REUSE_UUID)
++		return entry;
 +
- 	entry->cur_pdu +=3D 1;
- 	entry->retry =3D 0;
+ 	if (sms_uuid_from_pdus(entry->pdus, entry->num_pdus, &entry->uuid))
+ 		return entry;
  =
 
-@@ -810,6 +814,9 @@ next_q:
- 		message_set_state(sms, &entry->uuid, ms);
- 	}
- =
-
-+	sms_tx_backup_free(sms->imsi, entry->id, entry->flags,
-+			ofono_uuid_to_str(&entry->uuid));
-+
- 	tx_queue_entry_destroy(entry);
- =
-
- 	if (g_queue_peek_head(sms->txq)) {
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 9c6596f..09da657 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -3169,6 +3169,51 @@ gboolean sms_tx_store(const char *imsi, unsigned lon=
-g id, unsigned long flags,
- 	return TRUE;
+@@ -1808,6 +1811,77 @@ static void bearer_init_callback(const struct ofono_=
+error *error, void *data)
+ 		ofono_error("Error bootstrapping SMS Bearer Preference");
  }
  =
 
-+void sms_tx_backup_free(const char *imsi, unsigned long id,
-+				unsigned long flags, const char *uuid)
++static void sms_restore_tx_queue(struct ofono_sms *sms)
++{
++	GQueue *backupq;
++	struct txq_backup_entry *backup_entry;
++	struct ofono_uuid ofono_uuid;
++
++	DBG("");
++
++	backupq =3D sms_tx_queue_load(sms->imsi);
++
++	while ((backup_entry =3D g_queue_pop_head(backupq))) {
++		struct message *m;
++		struct tx_queue_entry *txq_entry;
++
++		decode_hex_own_buf(backup_entry->uuid, -1, NULL, 0,
++					ofono_uuid.uuid);
++
++		backup_entry->flags |=3D OFONO_SMS_SUBMIT_FLAG_REUSE_UUID;
++
++		txq_entry =3D tx_queue_entry_new(backup_entry->msg_list,
++						backup_entry->flags);
++
++		if (txq_entry =3D=3D NULL)
++			goto loop_out;
++
++		txq_entry->flags &=3D ~OFONO_SMS_SUBMIT_FLAG_REUSE_UUID;
++
++		memcpy(&txq_entry->uuid, &ofono_uuid, sizeof(ofono_uuid));
++
++		m =3D message_create(&txq_entry->uuid);
++
++		if (m =3D=3D NULL) {
++			tx_queue_entry_destroy(txq_entry);
++			goto loop_out;
++		}
++
++		if (message_dbus_register(sms, m) =3D=3D FALSE) {
++			tx_queue_entry_destroy(txq_entry);
++			goto loop_out;
++		}
++
++		g_hash_table_insert(sms->messages, &m->uuid, m);
++		m->entry =3D txq_entry;
++
++		if (backup_entry->msg_list->next !=3D NULL) {
++			if (sms->ref =3D=3D 65536)
++				sms->ref =3D 1;
++			else
++				sms->ref =3D sms->ref + 1;
++		}
++
++		txq_entry->id =3D sms->tx_counter++;
++
++		g_queue_push_tail(sms->txq, txq_entry);
++
++		if (g_queue_get_length(sms->txq) =3D=3D 1)
++			sms->tx_source =3D g_timeout_add(0, tx_next, sms);
++
++		if (backup_entry->flags & OFONO_SMS_SUBMIT_FLAG_EXPOSE_DBUS)
++			emit_message_added(sms, m);
++loop_out:
++		g_slist_foreach(backup_entry->msg_list, (GFunc)g_free, NULL);
++		g_slist_free(backup_entry->msg_list);
++
++		g_free(backup_entry->uuid);
++		g_free(backup_entry);
++	}
++
++	g_queue_free(backupq);
++}
++
+ /*
+  * Indicate oFono that a SMS driver is ready for operation
+  *
+@@ -1871,6 +1945,7 @@ void ofono_sms_register(struct ofono_sms *sms)
+ 	if (sms->driver->bearer_set)
+ 		sms->driver->bearer_set(sms, sms->bearer,
+ 						bearer_init_callback, sms);
++	sms_restore_tx_queue(sms);
+ =
+
+ 	sms->text_handlers =3D __ofono_watchlist_new(g_free);
+ 	sms->datagram_handlers =3D __ofono_watchlist_new(g_free);
+diff --git a/src/smsutil.c b/src/smsutil.c
+index 09da657..3d33a54 100644
+--- a/src/smsutil.c
++++ b/src/smsutil.c
+@@ -2327,6 +2327,15 @@ static gboolean sms_deserialize(const unsigned char =
+*buf,
+ 	return sms_decode(buf + 1, len - 1, FALSE, buf[0], sms);
+ }
+ =
+
++static gboolean sms_deserialize_outgoing(const unsigned char *buf,
++		struct sms *sms, int len)
++{
++	if (len < 1)
++		return FALSE;
++
++	return sms_decode(buf + 1, len - 1, TRUE, buf[0], sms);
++}
++
+ static gboolean sms_assembly_extract_address(const char *straddr,
+ 						struct sms_address *out)
+ {
+@@ -3147,6 +3156,140 @@ void status_report_assembly_expire(struct status_re=
+port_assembly *assembly,
+ 	}
+ }
+ =
+
++/*
++ * Each directory contains a file per pdu.
++ */
++static GSList *sms_tx_load(const char *imsi, const struct dirent *dir)
++{
++	GSList *list =3D NULL;
++	struct dirent **pdus;
++	char *path;
++	int len, i, r;
++	unsigned char buf[177];
++	struct sms s;
++
++	if (dir->d_type !=3D DT_DIR)
++		return NULL;
++
++	path =3D g_strdup_printf(SMS_TX_BACKUP_PATH "/%s",
++			imsi, dir->d_name);
++
++	len =3D scandir(path, &pdus, NULL, versionsort);
++	g_free(path);
++
++	if (len < 0)
++		return NULL;
++
++	for (i =3D 0; i < len; i++) {
++		if (pdus[i]->d_type !=3D DT_REG)
++			continue;
++
++		if ((strcmp(dir->d_name, ".") =3D=3D 0) ||
++				(strcmp(dir->d_name, "..") =3D=3D 0))
++			continue;
++
++		r =3D read_file(buf, sizeof(buf), SMS_TX_BACKUP_PATH "/%s/%s",
++				imsi, dir->d_name, pdus[i]->d_name);
++		if (r < 0)
++			continue;
++
++		if (sms_deserialize_outgoing(buf, &s, r) =3D=3D FALSE)
++			continue;
++
++		list =3D g_slist_prepend(list, g_memdup(&s, sizeof(s)));
++	}
++
++	for (i =3D 0; i < len; i++)
++		g_free(pdus[i]);
++
++	g_free(pdus);
++
++	return g_slist_reverse(list);
++}
++
++/*
++ * populate the queue with tx_backup_entry from stored backup
++ * data.
++ */
++GQueue *sms_tx_queue_load(const char *imsi)
 +{
 +	char *path;
 +	struct dirent **entries;
 +	int len;
++	GSList *msg_list;
++	char *uuid;
++	GQueue *retq;
++	unsigned long flags;
++	unsigned long i;
 +
-+	path =3D g_strdup_printf(SMS_TX_BACKUP_PATH_DIR,
-+					imsi, id, flags, uuid);
++	retq =3D g_queue_new();
++	if (retq =3D=3D NULL)
++		return NULL;
 +
-+	len =3D scandir(path, &entries, NULL, versionsort);
++	if (imsi) {
++		/* Restore state from backup */
++		path =3D g_strdup_printf(SMS_TX_BACKUP_PATH, imsi);
++		len =3D scandir(path, &entries, NULL, versionsort);
 +
-+	if (len < 0)
-+		return;
++		if (len < 0) {
++			g_free(path);
++			return retq;
++		}
 +
-+	while (len--) {
-+		struct dirent *dir =3D entries[len];
-+		char *file =3D g_strdup_printf("%s/%s", path, dir->d_name);
++		while (len--) {
++			struct txq_backup_entry *entry;
++			char *oldpath;
++			struct dirent *dir =3D entries[len];
 +
-+		unlink(file);
++			msg_list =3D sms_tx_load(imsi, dir);
 +
-+		g_free(file);
-+		g_free(entries[len]);
++			if (g_slist_length(msg_list) =3D=3D 0) {
++				g_free(entries[len]);
++				continue;
++			}
++
++			sscanf(dir->d_name, "%*u-%lu-%as", &flags, &uuid);
++
++			oldpath =3D g_strdup_printf("%s/%s", path, dir->d_name);
++
++			g_free(entries[len]);
++
++			entry =3D g_try_new0(struct txq_backup_entry, 1);
++			if (entry =3D=3D NULL) {
++				g_free(oldpath);
++				continue;
++			}
++
++			entry->msg_list =3D msg_list;
++			entry->uuid =3D uuid;
++			entry->flags =3D flags;
++			entry->oldpath =3D oldpath;
++
++			g_queue_push_head(retq, entry);
++		}
++
++		g_free(path);
++		g_free(entries);
 +	}
 +
-+	g_free(entries);
++	/* rename directory to reflect new position in queue */
++	for (i =3D 0; i < g_queue_get_length(retq); i++) {
++		char *newpath;
++		struct txq_backup_entry *entry =3D g_queue_peek_nth(retq, i);
 +
-+	rmdir(path);
++		newpath =3D g_strdup_printf(SMS_TX_BACKUP_PATH_DIR,
++                                                        imsi, i, entry->fl=
+ags,
++							entry->uuid);
 +
-+	g_free(path);
++		rename(entry->oldpath, newpath);
++
++		g_free(newpath);
++		g_free(entry->oldpath);
++	}
++
++	return retq;
 +}
 +
-+void sms_tx_backup_remove(const char *imsi, unsigned long id,
-+				unsigned long flags, const char *uuid,
-+				guint8 seq)
-+{
-+	char *path;
-+
-+	path =3D g_strdup_printf(SMS_TX_BACKUP_PATH_FILE,
-+					imsi, id, flags, uuid, seq);
-+	unlink(path);
-+
-+	g_free(path);
-+}
-+
- static inline GSList *sms_list_append(GSList *l, const struct sms *in)
- {
- 	struct sms *sms;
-diff --git a/src/smsutil.h b/src/smsutil.h
-index 46084ab..fa4e453 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -519,6 +519,11 @@ void status_report_assembly_expire(struct status_repor=
-t_assembly *assembly,
- =
-
  gboolean sms_tx_store(const char *imsi, unsigned long id, unsigned long fl=
 ags,
- 				const char *uuid, struct sms *s, guint8 seq);
-+void sms_tx_backup_remove(const char *imsi, unsigned long id,
-+				unsigned long flags, const char *uuid,
-+				guint8 seq);
-+void sms_tx_backup_free(const char *imsi, unsigned long id,
-+				unsigned long flags, const char *uuid);
+ 			const char *uuid, struct sms *s, guint8 seq)
+ {
+diff --git a/src/smsutil.h b/src/smsutil.h
+index fa4e453..38d8dc9 100644
+--- a/src/smsutil.h
++++ b/src/smsutil.h
+@@ -408,6 +408,13 @@ struct cbs_topic_range {
+ 	unsigned short max;
+ };
+ =
+
++struct txq_backup_entry {
++	GSList *msg_list;
++	char *uuid;
++	unsigned long flags;
++	char *oldpath;
++};
++
+ static inline gboolean is_bit_set(unsigned char oct, int bit)
+ {
+ 	int mask =3D 0x1 << bit;
+@@ -524,6 +531,7 @@ void sms_tx_backup_remove(const char *imsi, unsigned lo=
+ng id,
+ 				guint8 seq);
+ void sms_tx_backup_free(const char *imsi, unsigned long id,
+ 				unsigned long flags, const char *uuid);
++GQueue *sms_tx_queue_load(const char *imsi);
  =
 
  GSList *sms_text_prepare(const char *to, const char *utf8, guint16 ref,
@@ -132,5 +341,5 @@ ags,
 1.7.2.3
 
 
---===============5002806752795218179==--
+--===============6065644007982287955==--
 
