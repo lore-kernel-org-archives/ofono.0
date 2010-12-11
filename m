@@ -1,141 +1,102 @@
-Content-Type: multipart/mixed; boundary="===============5756022419960011856=="
+Content-Type: multipart/mixed; boundary="===============1527638474475764338=="
 MIME-Version: 1.0
 From: Tonny Tzeng <tonny.tzeng@gmail.com>
-Subject: Re: [PATCH v2] Skip unsolicied CREG/CGREG correctly while checking
- GPRS attach status
-Date: Sat, 11 Dec 2010 22:09:03 +0800
-Message-ID: <AANLkTimrnKDQTyN8DudYiBVpc51Ca2S2nbEu_JuHVz6j@mail.gmail.com>
-In-Reply-To: <4CFDACEE.9080807@gmail.com>
+Subject: Re: [PATCH] Specify vendor ID for Huawei modem while creating GPRS
+ context
+Date: Sat, 11 Dec 2010 22:48:29 +0800
+Message-ID: <AANLkTikX7KpnQfPKv88NSG3Yt0LXAzYkPr=eE6S2k40X@mail.gmail.com>
+In-Reply-To: <4CFDA832.9090309@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5756022419960011856==
+--===============1527638474475764338==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Denis,
+
+On Tue, Dec 7, 2010 at 11:21 AM, Denis Kenzior <denkenz@gmail.com> wrote:
 >
-> > diff --git a/gatchat/gatresult.c b/gatchat/gatresult.c
-> > index 8a6dfae..c919305 100644
-> > --- a/gatchat/gatresult.c
-> > +++ b/gatchat/gatresult.c
-> > @@ -39,6 +39,11 @@ void g_at_result_iter_init(GAtResultIter *iter,
-> > GAtResult *result)
-> >       iter->line_pos =3D 0;
-> >  }
+> > diff --git a/plugins/huawei.c b/plugins/huawei.c
+> > index 25dfaca..32cf70d 100644
+> > --- a/plugins/huawei.c
+> > +++ b/plugins/huawei.c
+> > @@ -454,7 +454,7 @@ static void huawei_disconnect(gpointer user_data)
+> >                       data->sim_state =3D=3D HUAWEI_SIM_STATE_INVALID_C=
+S) {
+> >               ofono_info("Reopened GPRS context channel");
 > >
-> > +gboolean g_at_result_iter_eol(GAtResultIter *iter)
-> > +{
-> > +     return iter->line_pos >=3D strlen(iter->l->data);
-> > +}
-> > +
->
-> And I pretty much don't see the need for this.  It doesn't really help
-> you here.
-
-
-No, this function can help to ignore unsolicited response properly.
-I think the difference between solicited and unsolicited CGREG is the number
-of parameters after +CGREG:, so it would be nice if we have a utility
-function to know we are at the end of AT return string.
-
-This is what we want to parse the state info from the solicited response:
-+CGREG: <n>, <state>, <lac>, <ci>
-but in a race condition, we received this unsolicited response from Huawei
-modem:
-+CGREG: <state>, <lac>, <ci>
-
-In your proposed patch, it bypass the unsolicited response only if the 2nd
-number after +CGREG: is not single digit, however if the lac is single
-digit, we will still get the wrong state number.
-
-So I still believe we should check whether we are at the end of the return
-string before parsing the unquoted lac and ci.  If we are at the end of the
-string, then this is a unsolicited code and we should ignore it.  How do you
-think?
-
-
-> >  gboolean g_at_result_iter_next(GAtResultIter *iter, const char *prefix)
-> >  {
-> >       char *line;
-> > diff --git a/gatchat/gatresult.h b/gatchat/gatresult.h
-> > index a74741f..33c0b2c 100644
-> > --- a/gatchat/gatresult.h
-> > +++ b/gatchat/gatresult.h
-> > @@ -46,6 +46,7 @@ struct _GAtResultIter {
-> >  typedef struct _GAtResultIter GAtResultIter;
+> > -             data->gc =3D ofono_gprs_context_create(modem, 0, "atmodem=
+",
+> > +             data->gc =3D ofono_gprs_context_create(modem,
+> OFONO_VENDOR_HUAWEI,
+> > "atmodem",
 > >
-> >  void g_at_result_iter_init(GAtResultIter *iter, GAtResult *result);
-> > +gboolean g_at_result_iter_eol(GAtResultIter *iter);
-> >
-> >  gboolean g_at_result_iter_next(GAtResultIter *iter, const char
-> > *prefix);
-> >  gboolean g_at_result_iter_open_list(GAtResultIter *iter);
+> data->modem);
 >
-> Anyhow, can you please try the attached patch and see if it solves your
-> problems.
->
-> Regards,
-> -Denis
+> There's no need to pass the vendor flag here.  The atmodem gprs_context
+> driver does not have any vendor handling code inside it.
 >
 
---===============5756022419960011856==
+But it seems to me the gprs context will be pass to modem plugins, so we
+need to set the vendor code for Huawei modems, because it sends unquoted
+strings.
+
+For example, please correct me if wrong, when the network registration
+status changed, ofono will invoke modem's set_attached() to handle the modem
+attach/detach.  Then, in gprs_attach_callback() in src/gprs.c, it will
+invokes modem's attached_status() to check the modem state, which has vendor
+dependent code in it.  Most importantly, after ofono sending AT+CGREG? to
+query the solicited response, the at_cgreg_cb() requires the correct vendor
+ ID so that at_util_parse_reg() knows whether the lac and ci are quoted
+strings or not?  Did I misunderstand?  Thanks.
+
+Best Regards,
+Tonny
+
+--===============1527638474475764338==
 Content-Type: text/html
 MIME-Version: 1.0
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="attachment.html"
 
-PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIg
-c3R5bGU9Im1hcmdpbjowIDAgMCAuOGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRp
-bmctbGVmdDoxZXg7Ij48ZGl2IGNsYXNzPSJpbSI+Jmd0OyBkaWZmIC0tZ2l0IGEvZ2F0Y2hhdC9n
-YXRyZXN1bHQuYyBiL2dhdGNoYXQvZ2F0cmVzdWx0LmM8YnI+CiZndDsgaW5kZXggOGE2ZGZhZS4u
-YzkxOTMwNSAxMDA2NDQ8YnI+CiZndDsgLS0tIGEvZ2F0Y2hhdC9nYXRyZXN1bHQuYzxicj4KJmd0
-OyArKysgYi9nYXRjaGF0L2dhdHJlc3VsdC5jPGJyPgomZ3Q7IEBAIC0zOSw2ICszOSwxMSBAQCB2
-b2lkIGdfYXRfcmVzdWx0X2l0ZXJfaW5pdChHQXRSZXN1bHRJdGVyICppdGVyLDxicj4KJmd0OyBH
-QXRSZXN1bHQgKnJlc3VsdCk8YnI+CiZndDsgoCCgIKAgaXRlci0mZ3Q7bGluZV9wb3MgPSAwOzxi
-cj4KJmd0OyCgfTxicj4KJmd0Ozxicj4KJmd0OyArZ2Jvb2xlYW4gZ19hdF9yZXN1bHRfaXRlcl9l
-b2woR0F0UmVzdWx0SXRlciAqaXRlcik8YnI+CiZndDsgK3s8YnI+CiZndDsgKyCgIKAgcmV0dXJu
-IGl0ZXItJmd0O2xpbmVfcG9zICZndDs9IHN0cmxlbihpdGVyLSZndDtsLSZndDtkYXRhKTs8YnI+
-CiZndDsgK308YnI+CiZndDsgKzxicj4KPGJyPgo8L2Rpdj5BbmQgSSBwcmV0dHkgbXVjaCBkb24m
-IzM5O3Qgc2VlIHRoZSBuZWVkIGZvciB0aGlzLiCgSXQgZG9lc24mIzM5O3QgcmVhbGx5IGhlbHA8
-YnI+CnlvdSBoZXJlLjwvYmxvY2txdW90ZT48ZGl2Pjxicj48L2Rpdj48ZGl2Pk5vLCB0aGlzIGZ1
-bmN0aW9uIGNhbiBoZWxwIHRvIGlnbm9yZSB1bnNvbGljaXRlZCByZXNwb25zZSBwcm9wZXJseS48
-L2Rpdj48ZGl2PkkgdGhpbmsgdGhlIGRpZmZlcmVuY2UgYmV0d2VlbiBzb2xpY2l0ZWQgYW5kIHVu
-c29saWNpdGVkIENHUkVHIGlzIHRoZSBudW1iZXIgb2YgcGFyYW1ldGVycyBhZnRlciArQ0dSRUc6
-LCBzbyBpdCB3b3VsZCBiZSBuaWNlIGlmIHdlIGhhdmUgYSB1dGlsaXR5IGZ1bmN0aW9uIHRvIGtu
-b3cgd2UgYXJlIGF0IHRoZSBlbmQgb2YgQVQgcmV0dXJuIHN0cmluZy48L2Rpdj4KPGRpdj48YnI+
-PC9kaXY+PGRpdj5UaGlzIGlzIHdoYXQgd2Ugd2FudCB0byBwYXJzZSB0aGUgc3RhdGUgaW5mbyBm
-cm9tIHRoZSBzb2xpY2l0ZWQgcmVzcG9uc2U6PC9kaXY+PGRpdj4rQ0dSRUc6ICZsdDtuJmd0Oywg
-Jmx0O3N0YXRlJmd0OywgJmx0O2xhYyZndDssICZsdDtjaSZndDs8L2Rpdj48ZGl2PmJ1dCBpbiBh
-IHJhY2UgY29uZGl0aW9uLCB3ZSByZWNlaXZlZCB0aGlzIHVuc29saWNpdGVkIHJlc3BvbnNlIGZy
-b20gSHVhd2VpIG1vZGVtOjwvZGl2Pgo8ZGl2PitDR1JFRzogJmx0O3N0YXRlJmd0OywgJmx0O2xh
-YyZndDssICZsdDtjaSZndDs8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PkluIHlvdXIgcHJvcG9z
-ZWQgcGF0Y2gsIGl0IGJ5cGFzcyB0aGUgdW5zb2xpY2l0ZWQgcmVzcG9uc2Ugb25seaBpZiB0aGUg
-Mm5kIG51bWJlciBhZnRlciArQ0dSRUc6IGlzIG5vdCBzaW5nbGUgZGlnaXQsIGhvd2V2ZXIgaWYg
-dGhlIGxhYyBpcyBzaW5nbGUgZGlnaXQsIHdlIHdpbGwgc3RpbGwgZ2V0IHRoZSB3cm9uZyBzdGF0
-ZSBudW1iZXIuPC9kaXY+CjxkaXY+PGJyPjwvZGl2PjxkaXY+U28gSSBzdGlsbCBiZWxpZXZlIHdl
-IHNob3VsZCBjaGVjayB3aGV0aGVyIHdlIGFyZSBhdCB0aGUgZW5kIG9mIHRoZSByZXR1cm4gc3Ry
-aW5nIGJlZm9yZSBwYXJzaW5nIHRoZSB1bnF1b3RlZCBsYWMgYW5kIGNpLiCgSWYgd2UgYXJlIGF0
-IHRoZSBlbmQgb2YgdGhlIHN0cmluZywgdGhlbiB0aGlzIGlzIGEgdW5zb2xpY2l0ZWQgY29kZSBh
-bmQgd2Ugc2hvdWxkIGlnbm9yZSBpdC4goEhvdyBkbyB5b3UgdGhpbms/PC9kaXY+CjxkaXY+oDwv
-ZGl2PjxibG9ja3F1b3RlIGNsYXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjowIDAgMCAu
-OGV4O2JvcmRlci1sZWZ0OjFweCAjY2NjIHNvbGlkO3BhZGRpbmctbGVmdDoxZXg7Ij48ZGl2IGNs
-YXNzPSJpbSI+CiZndDsgoGdib29sZWFuIGdfYXRfcmVzdWx0X2l0ZXJfbmV4dChHQXRSZXN1bHRJ
-dGVyICppdGVyLCBjb25zdCBjaGFyICpwcmVmaXgpPGJyPgomZ3Q7IKB7PGJyPgomZ3Q7IKAgoCCg
-IGNoYXIgKmxpbmU7PGJyPgomZ3Q7IGRpZmYgLS1naXQgYS9nYXRjaGF0L2dhdHJlc3VsdC5oIGIv
-Z2F0Y2hhdC9nYXRyZXN1bHQuaDxicj4KJmd0OyBpbmRleCBhNzQ3NDFmLi4zM2MwYjJjIDEwMDY0
-NDxicj4KJmd0OyAtLS0gYS9nYXRjaGF0L2dhdHJlc3VsdC5oPGJyPgomZ3Q7ICsrKyBiL2dhdGNo
-YXQvZ2F0cmVzdWx0Lmg8YnI+CiZndDsgQEAgLTQ2LDYgKzQ2LDcgQEAgc3RydWN0IF9HQXRSZXN1
-bHRJdGVyIHs8YnI+CiZndDsgoHR5cGVkZWYgc3RydWN0IF9HQXRSZXN1bHRJdGVyIEdBdFJlc3Vs
-dEl0ZXI7PGJyPgomZ3Q7PGJyPgomZ3Q7IKB2b2lkIGdfYXRfcmVzdWx0X2l0ZXJfaW5pdChHQXRS
-ZXN1bHRJdGVyICppdGVyLCBHQXRSZXN1bHQgKnJlc3VsdCk7PGJyPgomZ3Q7ICtnYm9vbGVhbiBn
-X2F0X3Jlc3VsdF9pdGVyX2VvbChHQXRSZXN1bHRJdGVyICppdGVyKTs8YnI+CiZndDs8YnI+CiZn
-dDsgoGdib29sZWFuIGdfYXRfcmVzdWx0X2l0ZXJfbmV4dChHQXRSZXN1bHRJdGVyICppdGVyLCBj
-b25zdCBjaGFyPGJyPgomZ3Q7ICpwcmVmaXgpOzxicj4KJmd0OyCgZ2Jvb2xlYW4gZ19hdF9yZXN1
-bHRfaXRlcl9vcGVuX2xpc3QoR0F0UmVzdWx0SXRlciAqaXRlcik7PGJyPgo8YnI+CjwvZGl2PkFu
-eWhvdywgY2FuIHlvdSBwbGVhc2UgdHJ5IHRoZSBhdHRhY2hlZCBwYXRjaCBhbmQgc2VlIGlmIGl0
-IHNvbHZlcyB5b3VyPGJyPgpwcm9ibGVtcy48YnI+Cjxicj4KUmVnYXJkcyw8YnI+Cjxmb250IGNv
-bG9yPSIjODg4ODg4Ij4tRGVuaXM8YnI+CjwvZm9udD48L2Jsb2NrcXVvdGU+PC9kaXY+PGJyPgo=
+SGkgRGVuaXMsPGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+T24gVHVlLCBEZWMgNywg
+MjAxMCBhdCAxMToyMSBBTSwgRGVuaXMgS2VuemlvciA8c3BhbiBkaXI9Imx0ciI+Jmx0OzxhIGhy
+ZWY9Im1haWx0bzpkZW5rZW56QGdtYWlsLmNvbSI+ZGVua2VuekBnbWFpbC5jb208L2E+Jmd0Ozwv
+c3Bhbj4gd3JvdGU6PGJsb2NrcXVvdGUgY2xhc3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2lu
+OjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleDsi
+Pgo8ZGl2IGNsYXNzPSJpbSI+CiZndDsgZGlmZiAtLWdpdCBhL3BsdWdpbnMvaHVhd2VpLmMgYi9w
+bHVnaW5zL2h1YXdlaS5jPGJyPgomZ3Q7IGluZGV4IDI1ZGZhY2EuLjMyY2Y3MGQgMTAwNjQ0PGJy
+PgomZ3Q7IC0tLSBhL3BsdWdpbnMvaHVhd2VpLmM8YnI+CiZndDsgKysrIGIvcGx1Z2lucy9odWF3
+ZWkuYzxicj4KJmd0OyBAQCAtNDU0LDcgKzQ1NCw3IEBAIHN0YXRpYyB2b2lkIGh1YXdlaV9kaXNj
+b25uZWN0KGdwb2ludGVyIHVzZXJfZGF0YSk8YnI+CiZndDsgoCCgIKAgoCCgIKAgoCCgIKAgoCCg
+IGRhdGEtJmd0O3NpbV9zdGF0ZSA9PSBIVUFXRUlfU0lNX1NUQVRFX0lOVkFMSURfQ1MpIHs8YnI+
+CiZndDsgoCCgIKAgoCCgIKAgoCBvZm9ub19pbmZvKCZxdW90O1Jlb3BlbmVkIEdQUlMgY29udGV4
+dCBjaGFubmVsJnF1b3Q7KTs8YnI+CiZndDs8YnI+CiZndDsgLSCgIKAgoCCgIKAgoCBkYXRhLSZn
+dDtnYyA9IG9mb25vX2dwcnNfY29udGV4dF9jcmVhdGUobW9kZW0sIDAsICZxdW90O2F0bW9kZW0m
+cXVvdDssPGJyPgomZ3Q7ICsgoCCgIKAgoCCgIKAgZGF0YS0mZ3Q7Z2MgPSBvZm9ub19ncHJzX2Nv
+bnRleHRfY3JlYXRlKG1vZGVtLCBPRk9OT19WRU5ET1JfSFVBV0VJLDxicj4KJmd0OyAmcXVvdDth
+dG1vZGVtJnF1b3Q7LDxicj4KJmd0OyCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAg
+oCCgIKAgoCCgIKAgoCCgIKAgoCCgIKAgoCCgIGRhdGEtJmd0O21vZGVtKTs8YnI+Cjxicj4KPC9k
+aXY+VGhlcmUmIzM5O3Mgbm8gbmVlZCB0byBwYXNzIHRoZSB2ZW5kb3IgZmxhZyBoZXJlLiCgVGhl
+IGF0bW9kZW0gZ3Byc19jb250ZXh0PGJyPgpkcml2ZXIgZG9lcyBub3QgaGF2ZSBhbnkgdmVuZG9y
+IGhhbmRsaW5nIGNvZGUgaW5zaWRlIGl0Ljxicj48L2Jsb2NrcXVvdGU+PGRpdj48YnI+PC9kaXY+
+PGRpdj5CdXQgaXQgc2VlbXMgdG8gbWUgdGhlIGdwcnMgY29udGV4dCB3aWxsIGJlIHBhc3MgdG8g
+bW9kZW0gcGx1Z2lucywgc28gd2UgbmVlZCB0byBzZXQgdGhlIHZlbmRvciBjb2RlIGZvciBIdWF3
+ZWkgbW9kZW1zLCBiZWNhdXNlIGl0IHNlbmRzIHVucXVvdGVkIHN0cmluZ3MuPC9kaXY+CjxkaXY+
+PGJyPjwvZGl2PjxkaXY+Rm9yIGV4YW1wbGUsIHBsZWFzZSBjb3JyZWN0IG1lIGlmIHdyb25nLCB3
+aGVuIHRoZSBuZXR3b3JrIHJlZ2lzdHJhdGlvbiBzdGF0dXMgY2hhbmdlZCwgb2Zvbm8gd2lsbCBp
+bnZva2UgbW9kZW0mIzM5O3Mgc2V0X2F0dGFjaGVkKCkgdG8gaGFuZGxlIHRoZSBtb2RlbSBhdHRh
+Y2gvZGV0YWNoLiCgVGhlbiwgaW4gZ3Byc19hdHRhY2hfY2FsbGJhY2soKSBpbiBzcmMvZ3Bycy5j
+LCBpdCB3aWxsIGludm9rZXMgbW9kZW0mIzM5O3MgYXR0YWNoZWRfc3RhdHVzKCkgdG8gY2hlY2sg
+dGhlIG1vZGVtIHN0YXRlLCB3aGljaCBoYXMgdmVuZG9yIGRlcGVuZGVudCBjb2RlIGluIGl0LiCg
+TW9zdCBpbXBvcnRhbnRseSwgYWZ0ZXIgb2Zvbm8gc2VuZGluZyBBVCtDR1JFRz8gdG8gcXVlcnkg
+dGhlIHNvbGljaXRlZCByZXNwb25zZSwgdGhlIGF0X2NncmVnX2NiKCkgcmVxdWlyZXMgdGhlIGNv
+cnJlY3QgdmVuZG9yIKBJRCBzbyB0aGF0IGF0X3V0aWxfcGFyc2VfcmVnKCkga25vd3Mgd2hldGhl
+ciB0aGUgbGFjIGFuZCBjaSBhcmUgcXVvdGVkIHN0cmluZ3Mgb3Igbm90PyCgRGlkIEkgbWlzdW5k
+ZXJzdGFuZD8goFRoYW5rcy48L2Rpdj4KPGRpdj48YnI+PC9kaXY+PGRpdj5CZXN0IFJlZ2FyZHMs
+PC9kaXY+PGRpdj5Ub25ueTwvZGl2PjwvZGl2Pgo=
 
---===============5756022419960011856==--
+--===============1527638474475764338==--
 
