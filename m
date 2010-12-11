@@ -1,48 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============1823730251394710997=="
+Content-Type: multipart/mixed; boundary="===============0175979316122487128=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] Skip unsolicied CREG/CGREG correctly while checking
- GPRS attach status
-Date: Sat, 11 Dec 2010 08:52:13 -0600
-Message-ID: <4D03901D.9060105@gmail.com>
-In-Reply-To: <AANLkTimrnKDQTyN8DudYiBVpc51Ca2S2nbEu_JuHVz6j@mail.gmail.com>
+Subject: Re: [PATCH] Specify vendor ID for Huawei modem while creating GPRS
+ context
+Date: Sat, 11 Dec 2010 08:55:00 -0600
+Message-ID: <4D0390C4.4010908@gmail.com>
+In-Reply-To: <AANLkTikX7KpnQfPKv88NSG3Yt0LXAzYkPr=eE6S2k40X@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1823730251394710997==
+--===============0175979316122487128==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Tonny,
 
-> In your proposed patch, it bypass the unsolicited response only if the
-> 2nd number after +CGREG: is not single digit, however if the lac is
-> single digit, we will still get the wrong state number.
+> But it seems to me the gprs context will be pass to modem plugins, so we
+> need to set the vendor code for Huawei modems, because it sends unquoted
+> strings.
 
-The lac is given as a 2 byte number and should always be printed as four
-hexadecimal letters.  If this is not the case, then you should have a
-serious talk with your vendor.
+No, you don't.  You are confusing gprs atom and the gprs-context atom.
+Grep for VENDOR in drivers/atmodem/gprs-context.c if you do not believe
+me.  There is no vendor specific code in the atmodem gprs-context driver.
 
 > =
 
-> So I still believe we should check whether we are at the end of the
-> return string before parsing the unquoted lac and ci.  If we are at the
-> end of the string, then this is a unsolicited code and we should ignore
-> it.  How do you think?
->  =
+> For example, please correct me if wrong, when the network registration
+> status changed, ofono will invoke modem's set_attached() to handle the
+> modem attach/detach.  Then, in gprs_attach_callback() in src/gprs.c, it
+> will invokes modem's attached_status() to check the modem state, which
+> has vendor dependent code in it.  Most importantly, after ofono sending
+> AT+CGREG? to query the solicited response, the at_cgreg_cb() requires
+> the correct vendor  ID so that at_util_parse_reg() knows whether the lac
+> and ci are quoted strings or not?  Did I misunderstand?  Thanks.
 
-
-I'm against this, if you really want to guard against this, then use the
-approach similar to comprehension_tlv_iter_copy in src/simutil.[ch].
-You can use that to 'peek' ahead and figure out whether the response
-contains 3 or 4 elements.
-
-But again, you would not be having this issue in the first place if your
-vendor followed standards ;)
+As I mentioned before, this is needed for the gprs atom driver which
+handles the CGREG parsing.  Not for gprs-context driver.
 
 Regards,
 -Denis
 
---===============1823730251394710997==--
+--===============0175979316122487128==--
 
