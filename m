@@ -1,50 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============8070272069547781430=="
+Content-Type: multipart/mixed; boundary="===============2965513330678300156=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] Specify vendor ID for Huawei modem while creating GPRS
- context
-Date: Sat, 11 Dec 2010 11:40:31 -0600
-Message-ID: <4D03B78F.1090206@gmail.com>
-In-Reply-To: <AANLkTikBCc8+4BpCu7=Dmi8BBDgDn9_ThvDzfKa5JTbo@mail.gmail.com>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: [PATCH] ifx: adding Infineon modem self test
+Date: Sat, 11 Dec 2010 14:51:09 -0800
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C90159DEB23A@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <1291995198.30085.17.camel@aeonflux.mpl.access-company.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8070272069547781430==
+--===============2965513330678300156==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Tonny,
-
-On 12/11/2010 10:37 AM, Tonny Tzeng wrote:
-> Hi Denis,
+> > Adding Infineon modem selftest to the plugin. It executes couple of AT
+> > commands, and based on the responses,  it continues with ifx modem
+> > enabling or powers the modem down.
 > =
 
->     No, you don't.  You are confusing gprs atom and the gprs-context atom.
->     Grep for VENDOR in drivers/atmodem/gprs-context.c if you do not belie=
-ve
->     me.  There is no vendor specific code in the atmodem gprs-context
->     driver.
-> =
+> didn't we conclude that the modem should do all these by itself? My
+> understanding is that the modem executes these. And not that we have to
+> trigger them.
 
-> =
+The conclusion was that these two test commands should be issued from the A=
+P to ensure that the modem is functioning properly.
 
-> Yes, my bad, I misunderstood the program flow...
-> So, is huawei_post_online() in plugins/huawei.c the right place to pass
-> the vendor ID while calling to ofono_gprs_create()?
+Cheers,
+Waldo
 
-Yes, I fixed this now as well.
 
-> =
-
-> Together with the patch to fix parsing of unquoted CGREG, now I can get
-> the CGREG status correctly from the Huawei modem.  :)  Thanks!
-
-My earlier patch has been applied, so please test the upstream version
-and report back any problems.
-
-Regards,
--Denis
-
---===============8070272069547781430==--
+--===============2965513330678300156==--
 
