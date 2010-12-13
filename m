@@ -1,86 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============0072466285592627969=="
+Content-Type: multipart/mixed; boundary="===============8821609953880147540=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: RE: [RFC PATCH] stk: add support of next action for menu
-Date: Mon, 13 Dec 2010 09:01:36 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D40188136D96688@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <4D025C8B.1000707@gmail.com>
+From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+Subject: Re: [PATCH 3/5] cdma-atmodem: Add CDMA MO Call Support
+Date: Mon, 13 Dec 2010 12:53:22 -0800
+Message-ID: <1292273602.11965.46.camel@dardoyle-desktop>
+In-Reply-To: <1292017318.4927.67.camel@dardoyle-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0072466285592627969==
+--===============8821609953880147540==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Denis
 
-> -----Original Message-----
-> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
-> Sent: Friday, December 10, 2010 6:00 PM
-> To: ofono(a)ofono.org
-> Cc: Lucas, GuillaumeX
-> Subject: Re: [RFC PATCH] stk: add support of next action for menu
+On Fri, 2010-12-10 at 22:41 +0100, Spieker-Doyle Dara
+(Nokia-MS/SanDiego) wrote:
+> Hi Denis
 > =
 
-> Hi Guillaume,
+> On Thu, 2010-12-09 at 09:43 +0100, ext Denis Kenzior wrote:
 > =
 
-> On 12/09/2010 07:00 AM, Lucas, GuillaumeX wrote:
-> > From: Guillaume Lucas <guillaumex.lucas@intel.com>
-> >
-> > According to the 3GPP 31.124 the support of next action
-> > in SIM toolkit menus is mandatory.
-> > ---
-> >  doc/stk-api.txt    |    5 +++--
-> >  src/stk.c          |    6 ++++++
-> >  src/stkagent.c     |    6 ++++--
-> >  src/stkagent.h     |    1 +
-> >  test/test-stk-menu |    6 +++---
-> >  5 files changed, 17 insertions(+), 7 deletions(-)
-> >
-> > diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-> > index 79daee6..f5bcae4 100644
-> > --- a/doc/stk-api.txt
-> > +++ b/doc/stk-api.txt
-> > @@ -66,13 +66,14 @@ Properties	string IdleModeText [readonly]
-> >  			Contains the identifier of the icon accompanying
-> >  			the idle mode text.
-> >
-> > -		array{struct{string, byte}} MainMenu [readonly]
-> > +		array{struct{string, byte, byte}} MainMenu [readonly]
+> > =
+
+> > >  drivers/cdma-atmodem/atutil.c    |   45 +++++++++
+> > >  drivers/cdma-atmodem/atutil.h    |   65 +++++++++++++
+> > =
+
+> > Are these verbatim copies of atmodem/atutil.[ch]?  If so, then there's
+> > no reason why you can't re-use those.  No need to copy them.
 > =
 
-> Can you tell me exactly what this can be used for?  What is the usecase
-> for the application to know this information?
+> No, they are not verbatim copies as e.g. error decoding is different.
+> Would you prefer we clarify this by renaming the files cdmautil.(ch)?
 > =
 
+On second thoughts, I agree for this patch - I will correct this and
+re-use the drivers/atmodem/atutil.[ch].
+Additionally, for future feature support, I do envisage some delta with
+various AT utilities for CDMA. For example, with our current hardware,
+the AT return string can have a different format from the GSM AT command
+standard. =
 
-The next action is an indicator added for each item of a STK menu. It is to=
- allow the terminal to indicate to the user the consequences of performing =
-the selection of an item. I confess that I've never seen use of this option=
- in a real STK application yet.
+Do you have any particular preference in such cases as to whether we
+modify the e.g. gatchat sources directly to support this or whether we
+create CDMA specific functions within the cdma-atmodem driver?
 
-According to the applicability table (chapter 3.4) of the SATK conformance =
-specification (3GPP TS 31.124) the support of the next action indicator is =
-mandatory. Chapters 27.22.4.8.3 and 27.22.4.9.2 are the ones relative to th=
-e test of this feature.
-
-Regards,
-Guillaume
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+Thank you
+Dara
 
 
---===============0072466285592627969==--
+
+--===============8821609953880147540==--
 
