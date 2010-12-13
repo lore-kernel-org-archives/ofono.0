@@ -1,60 +1,217 @@
-Content-Type: multipart/mixed; boundary="===============7577023047258126732=="
+Content-Type: multipart/mixed; boundary="===============3285049432577123222=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH] ifx: adding Infineon modem self test
-Date: Mon, 13 Dec 2010 03:29:45 +0100
-Message-ID: <1292207385.30085.64.camel@aeonflux.mpl.access-company.com>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C90159DEB2FF@orsmsx508.amr.corp.intel.com>
+Subject: Re: [PATCH] ifx: adding Infineon modem self test
+Date: Mon, 13 Dec 2010 03:47:42 +0100
+Message-ID: <1292208462.30085.81.camel@aeonflux.mpl.access-company.com>
+In-Reply-To: <1291976804-8739-1-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7577023047258126732==
+--===============3285049432577123222==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
+Hi Robertino,
+ =
 
-> > > The conclusion was that these two test commands should be issued from=
- the AP to ensure that the modem is functioning properly.
-> > =
+>  static const char *none_prefix[] =3D { NULL };
+>  static const char *xdrv_prefix[] =3D { "+XDRV:", NULL };
+> +static const char *empty_prefix[] =3D { "", NULL };
 
-> > I am not aware of the conclusion. My understanding is still that the
-> > modem firmware is suppose to do its selftests all by itself.
-> =
+this is essentially to just passing NULL as argument. What are you
+trying to achieve here?
 
-> It does not.
+> +static const char *modem_self_tests[][2] =3D {
+> +			{ "RTC Test", "at(a)rtc:rtc_gti_test_verify_32khz()" },
+> +			{ "Version Info Test", "at(a)vers:device_version_id()" },
+> +			{ NULL, NULL } };
 
-this is really new to me. Last time this has been talked about, that was
-different.
+The coding style is broken here. Please check the oFono source code for
+example on how to format these type of array correctly.
 
-> > So what is the reasoning behind doing these selftests from the host.
-> =
+In addition the string array is wrong. It should be a struct array. The
+magic of [1] and [2] for picking the command or the text string is not
+intuitive and leads to unreadable code.
 
-> It makes it easier for the host to record diagnostics / error codes this =
-way. At the moment this is limited to recording it in the log file, as oFon=
-o doesn't provide a good way for reporting back error conditions when power=
-ing up a modem fails.
+>  struct ifx_data {
+>  	GIOChannel *device;
+> @@ -99,6 +105,8 @@ struct ifx_data {
+>  	int audio_loopback;
+>  	struct ofono_sim *sim;
+>  	gboolean have_sim;
+> +	guint self_test_timeout;
+> +	int self_test_idx;
+>  };
+>  =
 
-There is nothing more that you can provide to the host anyway. Just
-having one AT command to read the selftest log from the modem would have
-been just fine. Right now I am not seeing any advantage why the host
-should execute selftests.
+>  static void ifx_debug(const char *str, void *user_data)
+> @@ -545,6 +553,82 @@ static gboolean mux_timeout_cb(gpointer user_data)
+>  	return FALSE;
+>  }
+>  =
 
-And essentially this really only makes sense once the oFono core can
-mark a modem as broken and then just not even try to re-enable it.
+> +static gboolean self_test_timeout_cb(gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct ifx_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	ofono_error("Timeout with modem self_test");
 
-We don't even have a state for this since it was never a requirement to
-have such a state. While Lockdown comes pretty close, it is semantically
-something totally different.
+You need an extra empty line here. The error is logically separated.
 
-There is also the other thing, that we have no numbers on the expected
-execution time of these selftests. This needs to be documented inside
-the code. Otherwise this gets out of control.
+> +	g_source_remove(data->self_test_timeout);
 
-And just to make this clear. These are run on every oFono modem enabling
-execution. This is different from just on initial modem power on. Are
-you okay with the impact on modem enabling time?
+You can not remove a source in its own callback. Have you tested this
+code path actually?
+
+> +	data->self_test_timeout =3D 0;
+> +
+> +	shutdown_device(data);
+
+You can not use shutdown_device here since the multiplexer is not ready
+yet. If you decide the execute the selftests before bringing up the
+multiplexer then this is a different error path.
+
+You need to cleanup data->dlcs[AUX_DLC] and data->device in this failure
+case.
+
+> +	ofono_modem_set_powered(modem, FALSE);
+
+This needs an extra empty before the return statement.
+
+> +	return FALSE;
+> +}
+> +
+> +static void ifx_self_test_get_device_resp(GAtResult *result, int test_id)
+> +{
+
+The function is just wrong in conjunction with your array approach.
+
+> +	GAtResultIter iter;
+> +	const char *str;
+> +
+> +	ofono_info("Modem Response: %s",
+> +				modem_self_tests[test_id][0]);
+
+Can you give an example on a positive and negative selftest response
+here. I don't wanna spam the logs with details if everything is fine.
+
+This should use ofono_error and that only in case of an error.
+
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	while (g_at_result_iter_next(&iter, NULL)) {
+> +
+> +		if (g_at_result_iter_next_string(&iter, &str))
+> +			ofono_info("Modem Response: %s", str);
+> +	}
+
+What is this while loop actually doing? How does a response look like.
+
+> +}
+> +
+> +static void ifx_self_test_cb(gboolean ok, GAtResult *result,
+> +				gpointer user_data)
+> +{
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct ifx_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	if (ok) {
+
+This needs to be a if (!ok) here actually and then leaving this function
+with a simple error case.
+
+Having the positive handling nested is not a good idea and we don't
+really do it that way.
+
+> +
+> +		if (data->self_test_timeout > 0) {
+> +			g_source_remove(data->self_test_timeout);
+> +			data->self_test_timeout =3D 0;
+> +		}
+> +
+> +		ifx_self_test_get_device_resp(result, data->self_test_idx);
+> +		data->self_test_idx++;
+> +
+> +		if (modem_self_tests[data->self_test_idx][1] !=3D NULL) {
+> +
+
+No empty line here.
+
+> +			g_at_chat_send(data->dlcs[AUX_DLC],
+> +				modem_self_tests[data->self_test_idx][1],
+> +				empty_prefix, ifx_self_test_cb, modem, NULL);
+> +
+> +			data->self_test_timeout =3D g_timeout_add_seconds(10,
+> +					self_test_timeout_cb, modem);
+> +			return;
+
+No empty line here, but this is not needed in case of (!ok) anyway.
+
+> +		} else {
+> +
+
+No empty line here either.
+
+> +			/* Enable  MUX Channels */
+> +			data->frame_size =3D 1509;
+> +			g_at_chat_send(data->dlcs[AUX_DLC],
+> +					"AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
+> +					mux_setup_cb, modem, NULL);
+> +
+> +			data->mux_init_timeout =3D g_timeout_add_seconds(5,
+> +					mux_timeout_cb,	modem);
+> +			return;
+> +		}
+> +	}
+
+With proper if (error) { ... ; return; } coding style this function
+becomes a lot more readable.
+
+> +
+> +	ofono_error("Modem %s: FAIL", modem_self_tests[data->self_test_idx][0]);
+> +	shutdown_device(data);
+
+Again here, the shutdown_device call can not be used since the
+multiplexer is not yet brought up.
+
+> +	ofono_modem_set_powered(modem, FALSE);
+> +}
+> +
+>  static int ifx_enable(struct ofono_modem *modem)
+>  {
+>  	struct ifx_data *data =3D ofono_modem_get_data(modem);
+> @@ -598,15 +682,17 @@ static int ifx_enable(struct ofono_modem *modem)
+>  	g_at_chat_send(chat, "ATE0 +CMEE=3D1", NULL,
+>  					NULL, NULL, NULL);
+
+Now here is the question if we wanna execute ATE0 first or run the
+selftests first?
+
+> -	data->frame_size =3D 1509;
+> +	/* Execute Modem Self tests */
+>  =
+
+> -	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
+> -					mux_setup_cb, modem, NULL);
+> +	data->dlcs[AUX_DLC] =3D chat;
+> +	data->self_test_idx =3D 0;
+>  =
+
+> -	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
+> -								modem);
+> +	g_at_chat_send(data->dlcs[AUX_DLC],
+> +		modem_self_tests[data->self_test_idx][1],
+> +		empty_prefix, ifx_self_test_cb, modem, NULL);
+>  =
+
+> -	data->dlcs[AUX_DLC] =3D chat;
+> +	data->self_test_timeout =3D g_timeout_add_seconds(10,
+> +				self_test_timeout_cb,	modem);
+
+Where does these 10 seconds come from?
 
 Regards
 
@@ -62,5 +219,5 @@ Marcel
 
 
 
---===============7577023047258126732==--
+--===============3285049432577123222==--
 
