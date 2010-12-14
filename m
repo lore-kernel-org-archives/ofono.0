@@ -1,57 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============8821609953880147540=="
+Content-Type: multipart/mixed; boundary="===============7354730504245274179=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: Re: [PATCH 3/5] cdma-atmodem: Add CDMA MO Call Support
-Date: Mon, 13 Dec 2010 12:53:22 -0800
-Message-ID: <1292273602.11965.46.camel@dardoyle-desktop>
-In-Reply-To: <1292017318.4927.67.camel@dardoyle-desktop>
+From: Cahill, Ben M <ben.m.cahill@intel.com>
+Subject: Something wrong with PushNotification interface?
+Date: Tue, 14 Dec 2010 08:16:35 -0800
+Message-ID: <02B3067C068D0549A8CCFCB17D4D318BD26CCBA5@orsmsx502.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8821609953880147540==
+--===============7354730504245274179==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis
+Trying to send DBUS message to ofono's PushNotification interface is appare=
+ntly crashing the DBUS connection for me.  Even when trying to send message=
+ from d-feet, d-feet (the app itself) shuts down instantly.  Can't find any=
+ error message anywhere (not even from DBG statements that I added to ofono=
+'s push_notification_register_agent() function ... message apparently doesn=
+'t get that far).
 
-On Fri, 2010-12-10 at 22:41 +0100, Spieker-Doyle Dara
-(Nokia-MS/SanDiego) wrote:
-> Hi Denis
-> =
+Anyone else see the same thing?
 
-> On Thu, 2010-12-09 at 09:43 +0100, ext Denis Kenzior wrote:
-> =
+I've seen in DBUS spec that DBUS should silently close the connection if sp=
+ec or protocol gets violated; wondering if this is happening?
 
-> > =
-
-> > >  drivers/cdma-atmodem/atutil.c    |   45 +++++++++
-> > >  drivers/cdma-atmodem/atutil.h    |   65 +++++++++++++
-> > =
-
-> > Are these verbatim copies of atmodem/atutil.[ch]?  If so, then there's
-> > no reason why you can't re-use those.  No need to copy them.
-> =
-
-> No, they are not verbatim copies as e.g. error decoding is different.
-> Would you prefer we clarify this by renaming the files cdmautil.(ch)?
-> =
-
-On second thoughts, I agree for this patch - I will correct this and
-re-use the drivers/atmodem/atutil.[ch].
-Additionally, for future feature support, I do envisage some delta with
-various AT utilities for CDMA. For example, with our current hardware,
-the AT return string can have a different format from the GSM AT command
-standard. =
-
-Do you have any particular preference in such cases as to whether we
-modify the e.g. gatchat sources directly to support this or whether we
-create CDMA specific functions within the cdma-atmodem driver?
-
-Thank you
-Dara
+I'm no DBUS expert, and have spent a couple days trying to chase this down.=
+  :-(
 
 
+Here's what I do to reproduce the problem (using phonesim):
 
---===============8821609953880147540==--
+# ofonod -n -d '*'
+$ src/phonesim -p 12345 -gui src/default.xml
+# d-feet
+	Click on "org.ofono" in left window
+	navigate to /phonesim/org.ofono.Modem/Methods
+	SetProperty "Powered", True
+	SetProperty "Online", True
+
+(so far, so good)
+
+	Click again on "org.ofono" in left window to refresh object path tree
+	navigate to /phonesim/Interfaces/org.ofono.PushNotification/Methods
+	double-click "RegisterAgent"
+	RegisterAgent "/org.xyz/PushNotificationAgent"
+
+(d-feet GUI disappears, and new command line prompt appears)
+(if I were using the daemon I'm developing, it would report "System bus has=
+ disconnected" and exit)
+
+Any ideas?
+
+-- Ben --
+
+
+=09
+--===============7354730504245274179==--
 
