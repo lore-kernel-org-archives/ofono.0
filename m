@@ -1,400 +1,459 @@
-Content-Type: multipart/mixed; boundary="===============9089052534584056047=="
+Content-Type: multipart/mixed; boundary="===============5869406450333233630=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCHv2] plugin: Add ste modem initd integration
-Date: Wed, 15 Dec 2010 22:49:26 +0100
-Message-ID: <1292449768-6060-1-git-send-email-sjurbren@gmail.com>
+Subject: [PATCHv2 1/2] stemodem: Create network interfaces statically
+Date: Wed, 15 Dec 2010 22:49:27 +0100
+Message-ID: <1292449768-6060-2-git-send-email-sjurbren@gmail.com>
+In-Reply-To: <1292449768-6060-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9089052534584056047==
+--===============5869406450333233630==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
-This patch introduces auto discovery of ST-Ericsson modems.
-ST-Ericsson modems (M5XX, M57XX, M7XX, M74XX) are managed by a
-Modem Init Daemon responsible for start, power cycles,
-flashing etc. This STE plugin monitors the modem state exposed
-from the Modem Init Damon's Dbus API. When the modem is in state
-"on" the STE modem is created and registered. Multiple modem
-instances, and reset handling is supported.
----
 Changes:
-- Support for multiple STE modems.
-- Better naming of STE modem instances, using received dbus path.
-- CAIF Link layer to use for AT channels specified pr modem instance.
-- Added support for reset.
+o Restructure code so interfaces are created statically when probe is calle=
+d,
+  instead of creating interfaces dynamically at activation.
+o Changed debug messages.
+o Removed some of the unnecessary initializations at declaration.
+o No longer reporting "default gateway" for PtP IP Interface.
+o Bugfix: Handle network initiated deactivation.
+---
+ drivers/stemodem/gprs-context.c |  149 +++++++++++++++++++++--------------=
+---
+ 1 files changed, 82 insertions(+), 67 deletions(-)
 
- Makefile.am      |    5 +
- configure.ac     |    6 +
- plugins/stemid.c |  310 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 321 insertions(+), 0 deletions(-)
- create mode 100644 plugins/stemid.c
-
-diff --git a/Makefile.am b/Makefile.am
-index 12b3c33..98096ae 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -82,6 +82,11 @@ gatchat_sources =3D gatchat/gatchat.h gatchat/gatchat.c \
- =
-
- udev_files =3D plugins/ofono.rules
- =
-
-+if STE_MODEM_INITD
-+builtin_modules +=3D stemid
-+builtin_sources +=3D plugins/stemid.c
-+endif
-+
- if UDEV
- builtin_modules +=3D udev
- builtin_sources +=3D plugins/udev.c
-diff --git a/configure.ac b/configure.ac
-index 5c18f68..f733fc4 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -177,6 +177,12 @@ AC_ARG_ENABLE(datafiles, AC_HELP_STRING([--disable-dat=
-afiles],
- =
-
- AM_CONDITIONAL(DATAFILES, test "${enable_datafiles}" !=3D "no")
- =
-
-+AC_ARG_ENABLE(ste_modem_initd, AC_HELP_STRING([--disable-ste-modem-initd],
-+			[disable auto discovery of STE modem using modem init daemon]),
-+					[enable_ste_modem_initd=3D${enableval}])
-+
-+AM_CONDITIONAL(STE_MODEM_INITD, test "${enable_ste_modem_initd}" !=3D "no")
-+
- if (test "${prefix}" =3D "NONE"); then
- 	dnl no prefix and no localstatedir, so default to /var
- 	if (test "$localstatedir" =3D '${prefix}/var'); then
-diff --git a/plugins/stemid.c b/plugins/stemid.c
-new file mode 100644
-index 0000000..9f5da22
---- /dev/null
-+++ b/plugins/stemid.c
-@@ -0,0 +1,310 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010 ST-Ericsson AB.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
+diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
+t.c
+index faa3124..7bdcdb8 100644
+--- a/drivers/stemodem/gprs-context.c
++++ b/drivers/stemodem/gprs-context.c
+@@ -28,6 +28,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include <stdio.h>
 +#include <errno.h>
-+#include <string.h>
-+#include <net/if.h>
+ =
+
+ #include <glib.h>
+ =
+
+@@ -65,10 +66,18 @@ struct gprs_context_data {
+ };
+ =
+
+ struct conn_info {
++	/*
++	 * cid is allocated in oFono Core and is identifying
++	 * the Account. cid =3D 0 indicates that it is currently unused.
++	 */
+ 	unsigned int cid;
+-	unsigned int device;
++	/* Id used by CAIF and EPPSD to identify the CAIF channel*/
+ 	unsigned int channel_id;
+-	char interface[10];
++	/* Linux Interface Id */
++	unsigned int ifindex;
++	/* Linux Interface name */
++	char interface[IF_NAMESIZE];
++	gboolean created;
+ };
+ =
+
+ struct eppsd_response {
+@@ -76,7 +85,6 @@ struct eppsd_response {
+ 	char ip_address[IP_ADDR_LEN];
+ 	char subnet_mask[IP_ADDR_LEN];
+ 	char mtu[IP_ADDR_LEN];
+-	char default_gateway[IP_ADDR_LEN];
+ 	char dns_server1[IP_ADDR_LEN];
+ 	char dns_server2[IP_ADDR_LEN];
+ 	char p_cscf_server[IP_ADDR_LEN];
+@@ -96,8 +104,6 @@ static void start_element_handler(GMarkupParseContext *c=
+ontext,
+ 		rsp->current =3D rsp->subnet_mask;
+ 	else if (!strcmp(element_name, "mtu"))
+ 		rsp->current =3D rsp->mtu;
+-	else if (!strcmp(element_name, "default_gateway"))
+-		rsp->current =3D rsp->default_gateway;
+ 	else if (!strcmp(element_name, "dns_server") &&
+ 					rsp->dns_server1[0] =3D=3D '\0')
+ 		rsp->current =3D rsp->dns_server1;
+@@ -123,7 +129,7 @@ static void text_handler(GMarkupParseContext *context,
+ =
+
+ 	if (rsp->current) {
+ 		strncpy(rsp->current, text, IP_ADDR_LEN);
+-		rsp->current[IP_ADDR_LEN] =3D 0;
++		rsp->current[IP_ADDR_LEN] =3D '\0';
+ 	}
+ }
+ =
+
+@@ -153,8 +159,7 @@ static gint conn_compare_by_cid(gconstpointer a, gconst=
+pointer b)
+ 	return 0;
+ }
+ =
+
+-static struct conn_info *conn_info_create(unsigned int device,
+-						unsigned int channel_id)
++static struct conn_info *conn_info_create(unsigned int channel_id)
+ {
+ 	struct conn_info *connection =3D g_try_new0(struct conn_info, 1);
+ =
+
+@@ -162,7 +167,6 @@ static struct conn_info *conn_info_create(unsigned int =
+device,
+ 		return NULL;
+ =
+
+ 	connection->cid =3D 0;
+-	connection->device =3D device;
+ 	connection->channel_id =3D channel_id;
+ =
+
+ 	return connection;
+@@ -171,7 +175,7 @@ static struct conn_info *conn_info_create(unsigned int =
+device,
+ /*
+  * Creates a new IP interface for CAIF.
+  */
+-static gboolean caif_if_create(const char *interface, unsigned int connid)
++static gboolean caif_if_create(struct conn_info *conn)
+ {
+ 	return FALSE;
+ }
+@@ -179,9 +183,8 @@ static gboolean caif_if_create(const char *interface, u=
+nsigned int connid)
+ /*
+  * Removes IP interface for CAIF.
+  */
+-static gboolean caif_if_remove(const char *interface, unsigned int connid)
++static void caif_if_remove(struct conn_info *conn)
+ {
+-	return FALSE;
+ }
+ =
+
+ static void ste_eppsd_down_cb(gboolean ok, GAtResult *result,
+@@ -210,21 +213,13 @@ static void ste_eppsd_down_cb(gboolean ok, GAtResult =
+*result,
+ 		DBG("Did not find data (used caif device) for"
+ 					"connection with cid; %d",
+ 					gcd->active_context);
+-		goto error;
++		CALLBACK_WITH_FAILURE(cb, cbd->data);
++		return;
+ 	}
+ =
+
+ 	conn =3D l->data;
+-
+-	if (!caif_if_remove(conn->interface, conn->channel_id)) {
+-		DBG("Failed to remove caif interface %s.",
+-				conn->interface);
+-	}
+-
+ 	conn->cid =3D 0;
+-	return;
+-
+-error:
+-	CALLBACK_WITH_FAILURE(cb, cbd->data);
++	CALLBACK_WITH_SUCCESS(cb, cbd->data);
+ }
+ =
+
+ static void ste_eppsd_up_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+@@ -233,7 +228,7 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *res=
+ult, gpointer user_data)
+ 	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
+ 	struct ofono_gprs_context *gc =3D cbd->user;
+ 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+-	struct conn_info *conn =3D NULL;
++	struct conn_info *conn;
+ 	GAtResultIter iter;
+ 	GSList *l;
+ 	int i;
+@@ -241,17 +236,15 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+ 	const char *res_string;
+ 	const char *dns[MAX_DNS + 1];
+ 	struct eppsd_response rsp;
+-	GMarkupParseContext *context =3D NULL;
++	GMarkupParseContext *context;
+ =
+
+ 	l =3D g_slist_find_custom(g_caif_devices,
+ 				GUINT_TO_POINTER(gcd->active_context),
+ 				conn_compare_by_cid);
+ =
+
+ 	if (l =3D=3D NULL) {
+-		DBG("Did not find data (device and channel id)"
+-					"for connection with cid; %d",
+-					gcd->active_context);
+-		goto error;
++		DBG("CAIF Device gone missing (cid:%d)", gcd->active_context);
++		goto error_no_device;
+ 	}
+ =
+
+ 	conn =3D l->data;
+@@ -291,31 +284,21 @@ static void ste_eppsd_up_cb(gboolean ok, GAtResult *r=
+esult, gpointer user_data)
+ 	dns[1] =3D rsp.dns_server2;
+ 	dns[2] =3D NULL;
+ =
+
+-	sprintf(conn->interface, "caif%u", conn->device);
+-
+-	if (!caif_if_create(conn->interface, conn->channel_id)) {
+-		ofono_error("Failed to create caif interface %s.",
+-				conn->interface);
+-		CALLBACK_WITH_SUCCESS(cb, NULL, FALSE, rsp.ip_address,
+-				rsp.subnet_mask, rsp.default_gateway,
++	CALLBACK_WITH_SUCCESS(cb, conn->interface, TRUE, rsp.ip_address,
++				rsp.subnet_mask, NULL,
+ 				dns, cbd->data);
+-	} else {
+-		CALLBACK_WITH_SUCCESS(cb, conn->interface,
+-				FALSE, rsp.ip_address, rsp.subnet_mask,
+-				rsp.default_gateway, dns, cbd->data);
+-	}
+-
+ 	return;
+ =
+
+ error:
+-	DBG("ste_eppsd_up_cb error");
+-
+ 	if (context)
+ 		g_markup_parse_context_free(context);
+ =
+
+ 	if (conn)
+ 		conn->cid =3D 0;
+ =
+
++error_no_device:
++	DBG("ste_eppsd_up_cb error");
++	gcd->active_context =3D 0;
+ 	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
+ }
+ =
+
+@@ -325,44 +308,45 @@ static void ste_cgdcont_cb(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
+ 	struct ofono_gprs_context *gc =3D cbd->user;
+ 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+-	struct cb_data *ncbd =3D NULL;
++	struct cb_data *ncbd;
+ 	char buf[128];
+ 	struct conn_info *conn;
+ 	GSList *l;
+ =
+
++	l =3D g_slist_find_custom(g_caif_devices,
++				GUINT_TO_POINTER(gcd->active_context),
++				conn_compare_by_cid);
 +
-+#include <glib.h>
++	if (!l) {
++		DBG("CAIF Device gone missing (cid:%d)", gcd->active_context);
++		goto error_no_device;
++	}
 +
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/dbus.h>
++	conn =3D l->data;
 +
-+/*
-+ * ST-Ericsson's Modem Init Daemon is used for controling the modem power
-+ * cycles and provides a dbus API for modem state and properties.
-+ */
-+#define MID_SERVICE		"com.stericsson.modeminit"
-+#define MID_INTERFACE		MID_SERVICE ".Modem"
+ 	if (!ok) {
+ 		struct ofono_error error;
+ =
+
++		conn->cid =3D 0;
+ 		gcd->active_context =3D 0;
+ 		decode_at_error(&error, g_at_result_final_response(result));
+ 		cb(&error, NULL, 0, NULL, NULL, NULL, NULL, cbd->data);
+ 		return;
+ 	}
+ =
+
+-	ncbd =3D g_memdup(cbd, sizeof(struct cb_data));
+-
+-	l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(0),
+-				conn_compare_by_cid);
+-
+-	if (l =3D=3D NULL) {
+-		DBG("at_cgdcont_cb, no more available devices");
+-		goto error;
+-	}
+-
+-	conn =3D l->data;
+-	conn->cid =3D gcd->active_context;
+ 	snprintf(buf, sizeof(buf), "AT*EPPSD=3D1,%u,%u",
+ 			conn->channel_id, conn->cid);
++	ncbd =3D g_memdup(cbd, sizeof(struct cb_data));
+ =
+
+ 	if (g_at_chat_send(gcd->chat, buf, NULL,
+ 				ste_eppsd_up_cb, ncbd, g_free) > 0)
+ 		return;
+ =
+
+-error:
+ 	g_free(ncbd);
++	conn->cid =3D 0;
+ =
+
++error_no_device:
+ 	gcd->active_context =3D 0;
+-
+ 	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL,
+ 				NULL, NULL, cbd->data);
+ }
+@@ -375,13 +359,32 @@ static void ste_gprs_activate_primary(struct ofono_gp=
+rs_context *gc,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	char buf[AUTH_BUF_LENGTH];
+ 	int len;
++	GSList *l;
++	struct conn_info *conn;
+ =
+
+ 	if (cbd =3D=3D NULL)
+-		goto error;
++		goto error_no_device;
+ =
+
+ 	gcd->active_context =3D ctx->cid;
+ 	cbd->user =3D gc;
+ =
+
++	/* Find free connection with cid zero */
++	l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(0),
++				conn_compare_by_cid);
 +
-+/* The signal StateChange sends the modem state.*/
-+#define STATUS_CHANGED		"StateChange"
++	if (!l) {
++		DBG("No more available CAIF devices");
++		goto error_no_device;
++	}
 +
-+#define MID_ACTION_ON		"on"		/* Modem is on */
-+#define MID_ACTION_RESET	"dumping"	/* Modem is resetting */
-+#define MID_ACTION_UNKNOWN	"unknown"	/* Don't care */
++	conn =3D l->data;
++	conn->cid =3D ctx->cid;
 +
-+/* ResetState requests resending of StateChange. */
-+#define MID_RESEND_STATE	"ResendState"
-+
-+/* GetCaifIfName requests the CAIF Interface Name. */
-+#define MID_GET_CAIFIF		"GetCaifIfName"
-+
-+#define TIMEOUT		5000
-+#define STE_DRIVER_NAME	"ste"
-+#define STE_INTERFACE_PROPERTY	"Interface"
-+
-+enum ste_state {
-+	STE_PENDING,    /* Waiting for caifif and "on" notification */
-+	STE_PENDING_IF, /* Waiting for caifif, already got "on" */
-+	STE_REGISTERED, /* Modem is registered */
-+	STE_RESETTING   /* Modem is resetting */
-+};
-+
-+struct ste_modem {
-+	char *path;
-+	struct ofono_modem *modem;
-+	enum ste_state state;
-+	gboolean got_caifif;
-+	gboolean pending_call;
-+};
-+
-+static GHashTable *modem_list;
-+static guint mid_api_watch;
-+static guint mid_state_watch;
-+static DBusConnection *connection;
-+
-+static void get_caifif_reply(DBusPendingCall *call, void *user_data)
-+{
-+	DBusMessage *reply;
-+	char *ifname;
-+	struct ste_modem *stemodem =3D user_data;
-+
-+	stemodem->pending_call =3D FALSE;
-+	stemodem->got_caifif =3D TRUE;
-+	reply =3D dbus_pending_call_steal_reply(call);
-+
-+	if (dbus_message_is_error(reply, DBUS_ERROR_SERVICE_UNKNOWN)) {
-+		ofono_error("STE Modem Init Daemon: unavailable");
++	if (!conn->created) {
++		DBG("CAIF interface not created (rtnl error?)");
 +		goto error;
 +	}
 +
-+	if (dbus_message_get_args(reply, NULL, DBUS_TYPE_STRING, &ifname,
-+					DBUS_TYPE_INVALID) =3D=3D FALSE) {
-+		ofono_error("STE Modem Init Daemon: bad signature for %s",
-+				MID_GET_CAIFIF);
-+		goto error;
-+	}
+ 	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
+ =
+
+ 	if (ctx->apn)
+@@ -405,6 +408,9 @@ static void ste_gprs_activate_primary(struct ofono_gprs=
+_context *gc,
+ 	return;
+ =
+
+ error:
++	conn->cid =3D 0;
 +
-+	if (strlen(ifname) > IF_NAMESIZE) {
-+		ofono_error("STE Modem Init Daemon: %s bad response %s\n",
-+				MID_GET_CAIFIF, ifname);
-+		goto error;
-+	}
-+
-+	if (ifname !=3D NULL) {
-+		DBG("STE Modem '%s' uses CAIF interface '%s'\n", stemodem->path,
-+			ifname);
-+		ofono_modem_set_string(stemodem->modem, STE_INTERFACE_PROPERTY,
-+			ifname);
-+	}
-+
-+error:
-+	if (stemodem->state =3D=3D STE_PENDING_IF) {
-+		DBG("Register STE modem %s", stemodem->path);
-+		ofono_modem_register(stemodem->modem);
-+		stemodem->state =3D STE_REGISTERED;
-+	}
-+
-+	dbus_message_unref(reply);
-+}
-+
-+static void get_caif_interface(const char *path, struct ste_modem *stemode=
-m)
-+{
-+	DBusMessage *message;
-+	DBusPendingCall *call;
-+
-+	stemodem->pending_call =3D TRUE;
-+	message =3D dbus_message_new_method_call(MID_SERVICE, path,
-+					MID_INTERFACE, MID_GET_CAIFIF);
-+
-+	if (!message) {
-+		ofono_error("Unable to allocate new D-Bus message");
-+		goto error;
-+	}
-+
-+	dbus_message_set_auto_start(message, FALSE);
-+
-+	if (dbus_connection_send_with_reply(connection, message,
-+						&call, TIMEOUT) =3D=3D FALSE) {
-+		ofono_error("Sending D-Bus message failed");
-+		stemodem->got_caifif =3D TRUE;
-+		goto error;
-+	}
-+
-+	if (call =3D=3D NULL) {
-+		DBG("D-Bus connection not available");
-+		stemodem->got_caifif =3D TRUE;
-+		goto error;
-+	}
-+
-+	dbus_pending_call_set_notify(call, get_caifif_reply, stemodem, NULL);
-+	dbus_pending_call_unref(call);
-+
-+error:
-+	dbus_message_unref(message);
-+}
-+
-+static void handle_stemodem(const char *action, const char *path)
-+{
-+	struct ste_modem *stemodem =3D g_hash_table_lookup(modem_list, path);
-+
-+	if (stemodem =3D=3D NULL) {
-+		DBG("created STE modem %s", path);
-+		stemodem =3D g_try_new0(struct ste_modem, 1);
-+		if (stemodem =3D=3D NULL)
-+			return;
-+
-+		/* remove '/' from path to create a leagal modem name */
-+		stemodem->modem =3D ofono_modem_create(path+1, STE_DRIVER_NAME);
-+		if (stemodem->modem =3D=3D NULL) {
-+			ofono_error("STE Modem Init: Bad path: '%s'\n", path);
-+			g_free(stemodem);
-+			return;
++error_no_device:
+ 	gcd->active_context =3D 0;
+ 	g_free(cbd);
+ =
+
+@@ -431,8 +437,8 @@ static void ste_gprs_deactivate_primary(struct ofono_gp=
+rs_context *gc,
+ 				conn_compare_by_cid);
+ =
+
+ 	if (l =3D=3D NULL) {
+-		DBG("at_gprs_deactivate_primary, did not find"
+-			"data (channel id) for connection with cid; %d", id);
++		DBG("did not find data (channel id) "
++				"for connection with cid; %d", id);
+ 		goto error;
+ 	}
+ =
+
+@@ -446,7 +452,6 @@ static void ste_gprs_deactivate_primary(struct ofono_gp=
+rs_context *gc,
+ =
+
+ error:
+ 	g_free(cbd);
+-
+ 	CALLBACK_WITH_FAILURE(cb, data);
+ }
+ =
+
+@@ -457,6 +462,7 @@ static void ste_cgact_read_cb(gboolean ok, GAtResult *r=
+esult,
+ 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+ 	gint cid, state;
+ 	GAtResultIter iter;
++	GSList *l;
+ =
+
+ 	if (!ok)
+ 		return;
+@@ -480,7 +486,13 @@ static void ste_cgact_read_cb(gboolean ok, GAtResult *=
+result,
+ 		ofono_gprs_context_deactivated(gc, gcd->active_context);
+ 		gcd->active_context =3D 0;
+ =
+
+-		break;
++		/* Mark interface as unused */
++		l =3D g_slist_find_custom(g_caif_devices, GUINT_TO_POINTER(cid),
++				conn_compare_by_cid);
++		if (l !=3D NULL) {
++			struct conn_info *conn =3D l->data;
++			conn->cid =3D 0;
 +		}
-+
-+		stemodem->path =3D g_strdup(path);
-+		stemodem->state =3D STE_PENDING;
-+		g_hash_table_insert(modem_list, stemodem->path, stemodem);
-+	}
-+
-+	if (!stemodem->got_caifif) {
-+		DBG("request caif interface %s", path);
-+		get_caif_interface(path, stemodem);
-+		stemodem->state =3D STE_PENDING;
-+	}
-+
-+	switch (stemodem->state) {
-+	case STE_PENDING:
-+		if (g_strcmp0(action, MID_ACTION_ON) !=3D 0)
-+			break;
-+		if (stemodem->got_caifif) {
-+			DBG("register STE modem %s", path);
-+			ofono_modem_register(stemodem->modem);
-+			stemodem->state =3D STE_REGISTERED;
-+		} else
-+			stemodem->state =3D STE_PENDING_IF;
-+		break;
-+	case STE_PENDING_IF:
-+		break;
-+	case STE_REGISTERED:
-+		if (g_strcmp0(action, MID_ACTION_RESET) =3D=3D 0) {
-+			DBG("reset ongoing %s", path);
-+			/* NOTE: Should we set powered =3D FALSE here? */
-+			stemodem->state =3D STE_RESETTING;
-+		} else if (g_strcmp0(action, MID_ACTION_ON) !=3D 0) {
-+			DBG("STE modem unregistering %s %s", path, action);
-+			g_hash_table_remove(modem_list, path);
-+		}
-+
-+		break;
-+	case STE_RESETTING:
-+		if (g_strcmp0(action, MID_ACTION_ON) =3D=3D 0) {
-+			DBG("STE modem reset complete %s", path);
-+			if (ofono_modem_get_powered(stemodem->modem))
-+				ofono_modem_reset(stemodem->modem);
-+		} else if (g_strcmp0(action, MID_ACTION_RESET) !=3D 0) {
-+			DBG("STE modem unregistering %s %s", path, action);
-+			g_hash_table_remove(modem_list, path);
-+		}
-+
-+		break;
-+	}
-+}
-+
-+static gboolean mid_signal_status_change(DBusConnection *connection,
-+					DBusMessage *message, void *user_data)
-+{
-+	const char *state;
-+	const char *path =3D dbus_message_get_path(message);
-+
-+	if (dbus_message_get_args(message, NULL, DBUS_TYPE_STRING, &state,
-+					DBUS_TYPE_INVALID) =3D=3D FALSE) {
-+		ofono_error("STE Modem Init Daemon: invalid signal signature");
-+		return FALSE;
-+	}
-+
-+	if (g_strcmp0(path, "/") =3D=3D 0)
-+		return TRUE;
-+
-+	handle_stemodem(state, path);
-+	return TRUE;
-+}
-+
-+static void mid_connect(DBusConnection *connection, void *user_data)
-+{
-+	DBusMessage *message;
-+
-+	mid_state_watch =3D g_dbus_add_signal_watch(connection, NULL, NULL,
-+						MID_INTERFACE,
-+						STATUS_CHANGED,
-+						mid_signal_status_change,
-+						NULL, NULL);
-+
-+	message =3D dbus_message_new_method_call(MID_SERVICE, "/",
-+					MID_INTERFACE, MID_RESEND_STATE);
-+	if (!message) {
-+		ofono_error("Unable to allocate new D-Bus message");
-+		goto error;
-+	}
-+
-+	if (dbus_connection_send(connection, message, NULL) =3D=3D FALSE)
-+		ofono_error("Sending D-Bus message failed");
-+
-+error:
-+	dbus_message_unref(message);
-+}
-+
-+static void mid_disconnect(DBusConnection *connection, void *user_data)
-+{
-+	g_hash_table_remove_all(modem_list);
-+	g_dbus_remove_watch(connection, mid_state_watch);
-+}
-+
-+static void destroy_stemodem(gpointer data)
-+{
-+	struct ste_modem *stemodem =3D data;
-+
-+	ofono_modem_remove(stemodem->modem);
-+	g_free(stemodem->path);
-+	g_free(stemodem);
-+}
-+
-+static int stemid_init()
-+{
-+	connection =3D ofono_dbus_get_connection();
-+	if (connection =3D=3D NULL)
-+		return -EIO;
-+
-+	modem_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
-+						NULL, destroy_stemodem);
-+	mid_api_watch =3D g_dbus_add_service_watch(connection, MID_SERVICE,
-+				mid_connect, mid_disconnect, NULL, NULL);
-+	return 0;
-+}
-+
-+static void stemid_exit()
-+{
-+	DBusConnection *connection =3D ofono_dbus_get_connection();
-+
-+	g_hash_table_destroy(modem_list);
-+	g_dbus_remove_watch(connection, mid_api_watch);
-+}
-+
-+OFONO_PLUGIN_DEFINE(stemid, "STE Modem Init Daemon dbus api", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT, stemid_init, stemid_exit)
+ 	}
+ }
+ =
+
+@@ -524,9 +536,11 @@ static int ste_gprs_context_probe(struct ofono_gprs_co=
+ntext *gc,
+ 	ofono_gprs_context_set_data(gc, gcd);
+ =
+
+ 	for (i =3D 0; i < MAX_CAIF_DEVICES; i++) {
+-		ci =3D conn_info_create(i, i+1);
+-		if (ci)
+-			g_caif_devices =3D g_slist_append(g_caif_devices, ci);
++		ci =3D conn_info_create(i+1);
++		if (!ci)
++			return -ENOMEM;
++		caif_if_create(ci);
++		g_caif_devices =3D g_slist_append(g_caif_devices, ci);
+ 	}
+ =
+
+ 	return 0;
+@@ -536,6 +550,7 @@ static void ste_gprs_context_remove(struct ofono_gprs_c=
+ontext *gc)
+ {
+ 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
+ =
+
++	g_slist_foreach(g_caif_devices, (GFunc) caif_if_remove, NULL);
+ 	g_slist_foreach(g_caif_devices, (GFunc) g_free, NULL);
+ 	g_slist_free(g_caif_devices);
+ 	g_caif_devices =3D NULL;
 -- =
 
 1.7.0.4
 
 
---===============9089052534584056047==--
+--===============5869406450333233630==--
 
