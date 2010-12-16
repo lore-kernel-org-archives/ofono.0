@@ -1,66 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============7115055998107889299=="
+Content-Type: multipart/mixed; boundary="===============7477117117801584891=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCH] test: test case for changing Call Barring password
-Date: Thu, 16 Dec 2010 14:12:55 +0100
-Message-ID: <1292505175-23135-1-git-send-email-sjurbren@gmail.com>
+From: Marit Henriksen <maritsofie.henriksen8@gmail.com>
+Subject: [PATCH] stemodem: Fix for MT call not working when caller id is
+ hidden.
+Date: Thu, 16 Dec 2010 14:56:31 +0100
+Message-ID: <1292507791-23495-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7115055998107889299==
+--===============7477117117801584891==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
+From: Marit Henriksen <marit.henriksen@stericsson.com>
 
+In *ECAV, the number will not be included if caller id is hidden.
+Set it to an empty string in that case.
 ---
- test/test-call-barring |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
+ drivers/stemodem/voicecall.c |   10 +++++++---
+ 1 files changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/test/test-call-barring b/test/test-call-barring
-index 5385a10..0756011 100755
---- a/test/test-call-barring
-+++ b/test/test-call-barring
-@@ -14,6 +14,7 @@ def property_changed(name, value):
- def print_useage(s):
- 	print "Usage: %s <property> <newvalue> <password>" % (s)
- 	print "Usage: %s disableall <password>" % (s)
-+	print "Usage: %s passwd <old_password> <new_password>" % (s)
- 	sys.exit(1);
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index b9d91d2..d900666 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -442,10 +442,14 @@ static void ecav_notify(GAtResult *result, gpointer u=
+ser_data)
+ 	if (status =3D=3D CALL_STATUS_DIALING ||
+ 			status =3D=3D CALL_STATUS_WAITING ||
+ 			status =3D=3D CALL_STATUS_INCOMING) {
++		/*
++		* If caller uses hidden id, the number and
++		* number type might not be present. Don't
++		* look for type if number is not present.
++		*/
+ 		if (!g_at_result_iter_next_string(&iter, &num))
+-			return;
+-
+-		if (!g_at_result_iter_next_number(&iter, &num_type))
++			num =3D "";
++		else if (!g_at_result_iter_next_number(&iter, &num_type))
+ 			return;
+ 	}
  =
 
- if __name__ =3D=3D "__main__":
-@@ -22,6 +23,9 @@ if __name__ =3D=3D "__main__":
- =
-
- 	if (sys.argv[1] =3D=3D 'disableall'):
- 		pin =3D sys.argv[2]
-+	elif (sys.argv[1] =3D=3D 'passwd'):
-+		old_password =3D sys.argv[2]
-+		new_password =3D sys.argv[3]
- 	else:
- 		if (len(sys.argv) !=3D 4):
- 			print_useage(sys.argv[0])
-@@ -59,6 +63,14 @@ if __name__ =3D=3D "__main__":
- 		except dbus.DBusException, e:
- 			print "Unable to Disable All barrings: ", e
- 			sys.exit(1)
-+	elif (sys.argv[1] =3D=3D 'passwd'):
-+		try:
-+			cb.ChangePassword(old_password, new_password)
-+		except dbus.DBusException, e:
-+			print "Unable to change password: ", e
-+			sys.exit(1)
-+		print "Password changed"
-+		sys.exit(0)
- 	else:
- 		try:
- 			cb.SetProperty(property, newvalue, pin)
 -- =
 
-1.7.0.4
+1.7.1
 
 
---===============7115055998107889299==--
+--===============7477117117801584891==--
 
