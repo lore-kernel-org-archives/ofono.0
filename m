@@ -1,898 +1,350 @@
-Content-Type: multipart/mixed; boundary="===============8120561969252681414=="
+Content-Type: multipart/mixed; boundary="===============5085354966922892762=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [sim-ready PATCHv3 3/3] isimodem/sim: added PIN and SIM state handling
-Date: Thu, 16 Dec 2010 21:57:46 +0200
-Message-ID: <1292529466-19284-4-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1292529466-19284-3-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [sim-ready PATCHv3 2/3] atmodem/sim: use ofono_sim_ready_notify
+Date: Thu, 16 Dec 2010 21:57:45 +0200
+Message-ID: <1292529466-19284-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1292529466-19284-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8120561969252681414==
+--===============5085354966922892762==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Using ofono_sim_ready_notify()
+Schedule a call to ofono_sim_ready_notify after pin code query returns
+SIM READY.
+
+Vendor quirks:
+- IFX: register unsolicated +XSIM result code
+- MBM: register unsolicated *EPEV result code
 ---
- drivers/isimodem/debug.c |   32 +++
- drivers/isimodem/debug.h |    3 +
- drivers/isimodem/sim.c   |  537 ++++++++++++++++++++++++++++++++++++++++++=
-+---
- drivers/isimodem/sim.h   |   50 +++++-
- 4 files changed, 588 insertions(+), 34 deletions(-)
+ drivers/atmodem/sim.c |  166 ++++++++++++++++++++++++++++++++++-----------=
+---
+ 1 files changed, 117 insertions(+), 49 deletions(-)
 
-diff --git a/drivers/isimodem/debug.c b/drivers/isimodem/debug.c
-index c724b41..b77a64e 100644
---- a/drivers/isimodem/debug.c
-+++ b/drivers/isimodem/debug.c
-@@ -48,6 +48,7 @@ const char *pn_resource_name(int value)
- 		_(PN_CALL);
- 		_(PN_SMS);
- 		_(PN_SIM);
-+		_(PN_SECURITY);
- 		_(PN_MTC);
- 		_(PN_GSS);
- 		_(PN_GPDS);
-@@ -377,18 +378,43 @@ const char *sim_message_id_name(enum sim_message_id v=
-alue)
- 		_(SIM_IMSI_RESP_READ_IMSI);
- 		_(SIM_SERV_PROV_NAME_REQ);
- 		_(SIM_SERV_PROV_NAME_RESP);
-+		_(SIM_DYNAMIC_FLAGS_REQ);
-+		_(SIM_DYNAMIC_FLAGS_RESP);
- 		_(SIM_READ_FIELD_REQ);
- 		_(SIM_READ_FIELD_RESP);
- 		_(SIM_SMS_REQ);
- 		_(SIM_SMS_RESP);
-+		_(SIM_STATUS_REQ);
-+		_(SIM_STATUS_RESP);
- 		_(SIM_PB_REQ_SIM_PB_READ);
- 		_(SIM_PB_RESP_SIM_PB_READ);
-+		_(SIM_SERVER_READY_IND);
- 		_(SIM_IND);
- 		_(SIM_COMMON_MESSAGE);
- 	}
-+
- 	return "SIM_<UNKNOWN>";
- }
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 1653ede..2d8ca8c 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -44,10 +44,14 @@
+ #define EF_STATUS_INVALIDATED 0
+ #define EF_STATUS_VALID 1
  =
 
-+const char *sec_message_id_name(enum sec_message_id value)
-+{
-+	switch (value) {
-+		_(SEC_CODE_STATE_REQ);
-+		_(SEC_CODE_STATE_OK_RESP);
-+		_(SEC_CODE_STATE_FAIL_RESP);
-+		_(SEC_CODE_CHANGE_REQ);
-+		_(SEC_CODE_CHANGE_OK_RESP);
-+		_(SEC_CODE_CHANGE_FAIL_RESP);
-+		_(SEC_CODE_VERIFY_REQ);
-+		_(SEC_CODE_VERIFY_OK_RESP);
-+		_(SEC_CODE_VERIFY_FAIL_RESP);
-+		_(SEC_STATE_REQ);
-+		_(SEC_STATE_RESP);
-+	}
++#define READY_TIMEOUT		5000
 +
-+	return "SEC_<UNKNOWN>";
-+}
-+
- const char *sim_subblock_name(enum sim_subblock value)
- {
- 	switch (value) {
-@@ -1069,6 +1095,12 @@ void sim_debug(const void *restrict buf, size_t len,=
- void *data)
- 	hex_dump(sim_message_id_name(m[0]), m, len);
- }
- =
-
-+void sec_debug(const void *restrict buf, size_t len, void *data)
-+{
-+	const uint8_t *m =3D buf;
-+	hex_dump(sec_message_id_name(m[0]), m, len);
-+}
-+
- void info_debug(const void *restrict buf, size_t len, void *data)
- {
- 	const uint8_t *m =3D buf;
-diff --git a/drivers/isimodem/debug.h b/drivers/isimodem/debug.h
-index dbdc4de..0127010 100644
---- a/drivers/isimodem/debug.h
-+++ b/drivers/isimodem/debug.h
-@@ -49,6 +49,8 @@ const char *sim_isi_cause_name(enum sim_isi_cause value);
- const char *sim_message_id_name(enum sim_message_id value);
- const char *sim_subblock_name(enum sim_subblock value);
- =
-
-+const char *sec_message_id_name(enum sec_message_id value);
-+
- const char *info_isi_cause_name(enum info_isi_cause value);
- const char *info_message_id_name(enum info_message_id value);
- const char *info_subblock_name(enum info_subblock value);
-@@ -78,6 +80,7 @@ void ss_debug(const void *restrict buf, size_t len, void =
-*data);
- void mtc_debug(const void *restrict buf, size_t len, void *data);
- void sms_debug(const void *restrict buf, size_t len, void *data);
- void sim_debug(const void *restrict buf, size_t len, void *data);
-+void sec_debug(const void *restrict buf, size_t len, void *data);
- void info_debug(const void *restrict buf, size_t len, void *data);
- void call_debug(const void *restrict buf, size_t len, void *data);
- void net_debug(const void *restrict buf, size_t len, void *data);
-diff --git a/drivers/isimodem/sim.c b/drivers/isimodem/sim.c
-index b79c52a..f16cb75 100644
---- a/drivers/isimodem/sim.c
-+++ b/drivers/isimodem/sim.c
-@@ -45,7 +45,10 @@
- =
-
  struct sim_data {
- 	GIsiClient *client;
--	gboolean registered;
-+	GIsiClient *sec_client;
-+	enum ofono_sim_password_type passwd_state;
+ 	GAtChat *chat;
+ 	unsigned int vendor;
+ 	guint ready_id;
++	guint ready_source;
 +	ofono_bool_t ready;
-+	ofono_bool_t notify_ready;
  };
  =
 
- struct file_info {
-@@ -355,50 +358,325 @@ error:
- 	g_free(cbd);
- }
+ static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
+@@ -456,10 +460,55 @@ static struct {
+ 	{ OFONO_SIM_PASSWORD_PHCORP_PUK,	"PH-CORP PUK"	},
+ };
  =
 
--static void isi_sim_register(struct ofono_sim *sim)
-+static void isi_query_passwd_state(struct ofono_sim *sim,
-+					ofono_sim_passwd_cb_t cb, void *data)
- {
- 	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	enum ofono_sim_password_type passwd_state =3D sd->passwd_state;
- =
-
--	if (!sd->registered) {
--		sd->registered =3D TRUE;
--		ofono_sim_register(sim);
--		ofono_sim_inserted_notify(sim, TRUE);
-+	DBG("passwd_state %u", passwd_state);
++static void ready_unregister_and_notify(struct ofono_sim *sim)
++{
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
 +
-+	sd->notify_ready =3D TRUE;
++	DBG("");
 +
-+	if (passwd_state =3D=3D OFONO_SIM_PASSWORD_INVALID) {
-+		CALLBACK_WITH_FAILURE(cb, -1, data);
++	if (sd->ready_source > 0) {
++		g_source_remove(sd->ready_source);
++		sd->ready_source =3D 0;
++	}
++
++	ofono_sim_ready_notify(sim);
++}
++
++static gboolean ready_timeout(gpointer user_data)
++{
++	struct ofono_sim *sim =3D user_data;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++
++	DBG("");
++
++	sd->ready_source =3D 0;
++
++	ofono_sim_ready_notify(sim);
++
++	return FALSE;
++}
++
++static void at_wait_for_ready(struct ofono_sim *sim)
++{
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++	guint timeout;
++
++	if (sd->ready_source > 0)
 +		return;
- 	}
 +
-+	CALLBACK_WITH_SUCCESS(cb, passwd_state, data);
++	if (!sd->ready && sd->ready_id > 0)
++		timeout =3D READY_TIMEOUT;
++	else
++		timeout =3D 0;
 +
-+	if (sd->ready)
-+		ofono_sim_ready_notify(sim);
- }
- =
-
--static gboolean read_hplmn_resp_cb(GIsiClient *client,
-+static gboolean sec_code_verify_resp(GIsiClient *client,
- 					const void *restrict data, size_t len,
- 					uint16_t object, void *opaque)
++	sd->ready_source =3D g_timeout_add(timeout, ready_timeout, sim);
++}
++
+ static void at_cpin_cb(gboolean ok, GAtResult *result, gpointer user_data)
  {
- 	const unsigned char *msg =3D data;
--	struct ofono_sim *sim =3D opaque;
-+	struct isi_cb_data *cbd =3D opaque;
-+	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
+ 	struct cb_data *cbd =3D user_data;
+-	struct sim_data *sd =3D ofono_sim_get_data(cbd->user);
 +	struct ofono_sim *sim =3D cbd->user;
 +	struct sim_data *sd =3D ofono_sim_get_data(sim);
- =
-
--	if (!msg) {
--		DBG("ISI client error: %d", g_isi_client_error(client));
-+	DBG("");
-+
-+	if (len >=3D 1 && msg[0] =3D=3D SEC_CODE_VERIFY_OK_RESP) {
-+		sd->passwd_state =3D OFONO_SIM_PASSWORD_NONE;
-+		CALLBACK_WITH_SUCCESS(cb, cbd->data);
- 		return TRUE;
- 	}
- =
-
--	if (len < 3 || msg[0] !=3D SIM_NETWORK_INFO_RESP || msg[1] !=3D READ_HPLM=
-N)
--		return FALSE;
-+	if (len >=3D 2 && msg[0] =3D=3D SEC_CODE_VERIFY_FAIL_RESP &&
-+			msg[1] =3D=3D SEC_CAUSE_CODE_BLOCKED)
-+		sd->passwd_state =3D OFONO_SIM_PASSWORD_SIM_PUK;
-+
-+	DBG("verify failure %s", !msg ? "(timeout)" : "");
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+	return TRUE;
-+}
-+
-+static void isi_send_passwd(struct ofono_sim *sim, const char *passwd,
-+				ofono_sim_lock_unlock_cb_t cb, void *data)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	struct isi_cb_data *cbd =3D isi_cb_data_new(sim, cb, data);
-+	unsigned char msg[2 + SEC_CODE_MAX_LENGTH + 1] =3D {
-+		SEC_CODE_VERIFY_REQ,
-+		SEC_CODE_PIN,
-+	};
-+	int len =3D 2 + strlen(passwd) + 1;
-+
-+	DBG("");
-+
-+	if (!cbd)
-+		goto error;
-+
-+	strcpy((char *) msg + 2, passwd);
-+
-+	if (g_isi_send(sd->sec_client, msg, len, SIM_TIMEOUT,
-+				sec_code_verify_resp, cbd, g_free))
-+		return;
-+
-+error:
-+	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void isi_reset_passwd(struct ofono_sim *sim,
-+				const char *puk, const char *passwd,
-+				ofono_sim_lock_unlock_cb_t cb, void *data)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	struct isi_cb_data *cbd =3D isi_cb_data_new(sim, cb, data);
-+	enum ofono_sim_password_type passwd_type =3D OFONO_SIM_PASSWORD_SIM_PIN;
-+	unsigned char msg[2 + 2 * (SEC_CODE_MAX_LENGTH + 1)] =3D {
-+		SEC_CODE_VERIFY_REQ,
-+	};
-+
-+	DBG("");
-+
-+	if (!cbd)
-+		goto error;
-+
-+	if (passwd_type =3D=3D OFONO_SIM_PASSWORD_SIM_PIN)
-+		msg[1] =3D SEC_CODE_PIN;
-+	else if (passwd_type =3D=3D OFONO_SIM_PASSWORD_SIM_PIN2)
-+		msg[1] =3D SEC_CODE_PIN2;
-+	else
-+		goto error;
-+
-+	strcpy((char *) &msg[2], puk);
-+	strcpy((char *) &msg[2 + SEC_CODE_MAX_LENGTH + 1], passwd);
-+
-+	if (g_isi_send(sd->sec_client, msg, sizeof(msg), SIM_TIMEOUT,
-+				sec_code_verify_resp, cbd, g_free))
-+		return;
-+
-+error:
-+	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
- =
-
--	if (msg[2] !=3D SIM_SERV_NOTREADY)
--		isi_sim_register(sim);
-+
-+/* ISI callback: Enable/disable PIN */
-+static gboolean pin_enable_resp_cb(GIsiClient *client,
-+				const void *restrict data,
-+				size_t len, uint16_t object, void *opaque)
-+{
-+	const unsigned char *msg =3D data;
-+	struct isi_cb_data *cbd =3D opaque;
-+	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
-+
-+	DBG("");
-+
-+	if (len < 1 || msg[0] !=3D SEC_CODE_STATE_OK_RESP)
-+		CALLBACK_WITH_FAILURE(cb, cbd->data);
-+	else
-+		CALLBACK_WITH_SUCCESS(cb, cbd->data);
- =
-
- 	return TRUE;
- }
- =
-
-+static void isi_lock(struct ofono_sim *sim,
-+		enum ofono_sim_password_type passwd_type,
-+		int enable, const char *passwd,
-+		ofono_sim_lock_unlock_cb_t cb, void *data)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	struct isi_cb_data *cbd =3D isi_cb_data_new(sim, cb, data);
-+	unsigned char msg[3 + SEC_CODE_MAX_LENGTH + 1] =3D {
-+		SEC_CODE_STATE_REQ,
-+	};
-+
-+	if (!cbd)
-+		goto error;
-+
-+	DBG("enable %d pintype %d pass %s", enable, passwd_type, passwd);
- =
-
--static void isi_read_hplmn(struct ofono_sim *sim)
-+	if (passwd_type =3D=3D OFONO_SIM_PASSWORD_SIM_PIN)
-+		msg[1] =3D SEC_CODE_PIN;
-+	else if (passwd_type =3D=3D OFONO_SIM_PASSWORD_SIM_PIN2)
-+		msg[1] =3D SEC_CODE_PIN2;
-+	else
-+		goto error;
-+
-+	if (enable)
-+		msg[2] =3D SEC_CODE_ENABLE;
-+	else
-+		msg[2] =3D SEC_CODE_DISABLE;
-+
-+	strcpy((char *) &msg[3], passwd);
-+
-+	if (g_isi_send(sd->sec_client, msg, sizeof(msg), SIM_TIMEOUT,
-+				pin_enable_resp_cb, cbd, g_free))
-+		return;
-+
-+error:
-+	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+
-+
-+/* ISI callback: PIN state (enabled/disabled) query */
-+static gboolean sec_code_change_resp(GIsiClient *client,
-+					const void *restrict data, size_t len,
-+					uint16_t object, void *opaque)
-+{
-+	const unsigned char *msg =3D data;
-+	struct isi_cb_data *cbd =3D opaque;
-+	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
-+
-+	if (len < 1)
-+		goto failure;
-+
-+	if (msg[0] !=3D SEC_CODE_CHANGE_OK_RESP) {
-+		if (msg[0] =3D=3D SEC_CODE_CHANGE_FAIL_RESP && len >=3D 2)
-+			DBG("SEC_CODE_CHANGE_FAIL_RESP(cause=3D%02x)", msg[1]);
-+
-+		goto failure;
-+	}
-+
-+	CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+	return TRUE;
-+
-+failure:
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
-+	return TRUE;
-+}
-+
-+
-+static void isi_change_passwd(struct ofono_sim *sim,
-+				enum ofono_sim_password_type passwd_type,
-+				const char *old, const char *new,
-+				ofono_sim_lock_unlock_cb_t cb, void *data)
- {
- 	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	struct isi_cb_data *cbd =3D isi_cb_data_new(sim, cb, data);
-+	unsigned char msg[2 + 2 * (SEC_CODE_MAX_LENGTH + 1)] =3D {
-+		SEC_CODE_CHANGE_REQ,
-+	};
- =
-
--	const unsigned char req[] =3D {
--		SIM_NETWORK_INFO_REQ,
--		READ_HPLMN, 0
-+	DBG("passwd_type %d", passwd_type);
-+
-+	if (!cbd)
-+		goto error;
-+
-+	if (passwd_type =3D=3D OFONO_SIM_PASSWORD_SIM_PIN)
-+		msg[1] =3D SEC_CODE_PIN;
-+	else if (passwd_type =3D=3D OFONO_SIM_PASSWORD_SIM_PIN2)
-+		msg[1] =3D SEC_CODE_PIN2;
-+	else
-+		goto error;
-+
-+	strcpy((char *) &msg[2], old);
-+	strcpy((char *) &msg[2 + SEC_CODE_MAX_LENGTH + 1], new);
-+
-+	if (g_isi_send(sd->sec_client, msg, sizeof(msg), SIM_TIMEOUT,
-+				sec_code_change_resp, cbd, g_free))
-+		return;
-+
-+error:
-+	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+
-+/* ISI callback: PIN state (enabled/disabled) query */
-+static gboolean sec_code_state_resp_cb(GIsiClient *client,
-+					const void *restrict data, size_t len,
-+					uint16_t object, void *opaque)
-+{
-+	const unsigned char *msg =3D data;
-+	struct isi_cb_data *cbd =3D opaque;
-+	ofono_sim_locked_cb_t cb =3D cbd->cb;
-+	int locked;
-+
-+	if (msg =3D=3D NULL || len < 4)
-+		goto failure;
-+
-+	if (msg[0] !=3D SEC_CODE_STATE_OK_RESP)
-+		goto failure;
-+
-+	DBG("sec state: %02x", msg[1]);
-+
-+	switch (msg[1]) {
-+	case SEC_CODE_ENABLE:
-+		locked =3D 1;
-+		break;
-+	case SEC_CODE_DISABLE:
-+		locked =3D 0;
-+		break;
-+	default:
-+		goto failure;
-+	}
-+
-+	CALLBACK_WITH_SUCCESS(cb, locked, cbd->data);
-+	return TRUE;
-+
-+failure:
-+	CALLBACK_WITH_FAILURE(cb, -1, cbd->data);
-+	return TRUE;
-+}
-+
-+static void isi_query_locked(struct ofono_sim *sim,
-+				enum ofono_sim_password_type passwd_type,
-+				ofono_sim_locked_cb_t cb, void *data)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	struct isi_cb_data *cbd =3D isi_cb_data_new(sim, cb, data);
-+
-+	unsigned char msg[] =3D {
-+		SEC_CODE_STATE_REQ,
-+		0,
-+		SEC_CODE_STATE_QUERY
- 	};
- =
-
--	g_isi_request_make(sd->client, req, sizeof(req), SIM_TIMEOUT,
--				read_hplmn_resp_cb, sim);
-+	DBG("");
-+
-+	if (!cbd)
-+		goto error;
-+
-+	if (passwd_type =3D=3D OFONO_SIM_PASSWORD_SIM_PIN)
-+		msg[1] =3D SEC_CODE_PIN;
-+	else if (passwd_type =3D=3D OFONO_SIM_PASSWORD_SIM_PIN2)
-+		msg[1] =3D SEC_CODE_PIN2;
-+	else
-+		goto error;
-+
-+	if (g_isi_send(sd->sec_client, msg, sizeof(msg),
-+			SIM_TIMEOUT, sec_code_state_resp_cb, cbd, g_free))
-+		return;
-+
-+error:
-+	g_free(cbd);
-+	CALLBACK_WITH_FAILURE(cb, -1, data);
-+}
-+
-+static void sim_set_passwd_state(struct ofono_sim *sim,
-+					enum ofono_sim_password_type pin_type)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+
-+	sd->passwd_state =3D pin_type;
-+
-+	if (pin_type !=3D OFONO_SIM_PASSWORD_NONE) {
-+		sd->ready =3D FALSE;
-+		sd->notify_ready =3D FALSE;
-+	}
-+
-+	ofono_sim_inserted_notify(sim, pin_type !=3D OFONO_SIM_PASSWORD_INVALID);
- }
- =
-
- static void sim_ind_cb(GIsiClient *client,
-@@ -406,22 +684,185 @@ static void sim_ind_cb(GIsiClient *client,
- 			uint16_t object, void *opaque)
- {
- 	struct ofono_sim *sim =3D opaque;
-+	const unsigned char *msg =3D data;
-+	uint8_t service;
-+	uint8_t status;
-+
-+	DBG("");
-+	if (!msg || len < 5 ||
-+		(msg[0] !=3D SIM_IND && msg[0] !=3D SIM_SERVER_READY_IND))
-+		return;
-+
-+	service =3D msg[1];
-+	status =3D msg[2];
-+
-+	if (status =3D=3D SIM_SERV_PIN_VERIFY_REQUIRED && service =3D=3D SIM_ST_P=
-IN)
-+		sim_set_passwd_state(sim, OFONO_SIM_PASSWORD_SIM_PIN);
-+	else if (status =3D=3D SIM_SERV_SIM_BLOCKED)
-+		sim_set_passwd_state(sim, OFONO_SIM_PASSWORD_SIM_PUK);
-+	else if (status =3D=3D SIM_SERV_INIT_OK && service =3D=3D SIM_ST_INFO)
-+		sim_set_passwd_state(sim, OFONO_SIM_PASSWORD_NONE);
-+	else if (status =3D=3D SIM_SERV_SIM_DISCONNECTED)
-+		sim_set_passwd_state(sim, OFONO_SIM_PASSWORD_INVALID);
-+}
-+
-+static void sim_server_ready_ind_cb(GIsiClient *client,
-+					const void *restrict data, size_t len,
-+					uint16_t object, void *opaque)
-+{
-+	struct ofono_sim *sim =3D opaque;
- 	struct sim_data *sd =3D ofono_sim_get_data(sim);
- 	const unsigned char *msg =3D data;
- =
-
--	if (sd->registered)
-+	DBG("");
-+
-+	if (!msg || len < 5 || msg[0] !=3D SIM_SERVER_READY_IND)
+ 	GAtResultIter iter;
+ 	ofono_sim_passwd_cb_t cb =3D cbd->cb;
+ 	struct ofono_error error;
+@@ -506,6 +555,11 @@ static void at_cpin_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
  		return;
+ 	}
  =
 
-+	sd->ready =3D TRUE;
++	if (pin_type =3D=3D OFONO_SIM_PASSWORD_NONE)
++		at_wait_for_ready(sim);
++	else
++		sd->ready =3D FALSE;
 +
-+	if (sd->notify_ready)
-+		ofono_sim_ready_notify(sim);
-+}
-+
-+static gboolean isi_sim_read_dyn_flags_resp(GIsiClient *client,
-+				const void *restrict data, size_t len,
-+				uint16_t object, void *opaque)
-+{
-+	const unsigned char *msg =3D data;
-+	struct ofono_sim *sim =3D opaque;
+ 	DBG("crsm_pin_cb: %s", pin_required);
+ =
+
+ 	cb(&error, pin_type, cbd->data);
+@@ -534,13 +588,13 @@ error:
+ =
+
+ static void at_xsim_notify(GAtResult *result, gpointer user_data)
+ {
+-	struct cb_data *cbd =3D user_data;
+-	struct sim_data *sd =3D cbd->user;
+-	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
+-	struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_NO_ERROR };
++	struct ofono_sim *sim =3D user_data;
 +	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+
-+	if (!msg)
-+		return TRUE;
-+
-+	if (len < 2 || msg[0] !=3D SIM_DYNAMIC_FLAGS_RESP)
-+		return FALSE;
-+
-+	if (msg[1] !=3D READ_DYN_FLAGS || msg[2] =3D=3D SIM_SERV_NOTREADY)
-+		return TRUE;
-+
-+	sd->ready =3D TRUE;
-+
-+	if (sd->notify_ready)
-+		ofono_sim_ready_notify(sim);
-+
-+	return TRUE;
-+}
-+
-+static void isi_sim_read_dyn_flags_req(struct ofono_sim *sim)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+
-+	unsigned char req[] =3D {
-+		SIM_DYNAMIC_FLAGS_REQ,
-+		READ_DYN_FLAGS,
-+		0
-+	};
-+
-+	g_isi_send(sd->client, req, sizeof(req), SIM_TIMEOUT,
-+			isi_sim_read_dyn_flags_resp, sim, NULL);
-+}
-+
-+static gboolean sec_state_resp_cb(GIsiClient *client,
-+				const void *restrict data, size_t len,
-+				uint16_t object, void *opaque)
-+{
-+	const unsigned char *msg =3D data;
-+	struct ofono_sim *sim =3D opaque;
-+
+ 	GAtResultIter iter;
+ 	int state;
+ =
+
 +	DBG("");
 +
-+	if (!msg) {
-+		DBG("ISI client error: %d", g_isi_client_error(client));
-+		return TRUE;
-+	}
-+
-+	if (len < 2 || msg[0] !=3D SEC_STATE_RESP)
-+		return FALSE;
-+
- 	switch (msg[1]) {
--	case SIM_ST_PIN:
--		isi_sim_register(sim);
-+	case SEC_STARTUP_OK:
-+		DBG("SEC_STARTUP_OK");
-+		sim_set_passwd_state(sim, OFONO_SIM_PASSWORD_NONE);
-+		/* Check if SIM server is already ready */
-+		isi_sim_read_dyn_flags_req(sim);
- 		break;
--	case SIM_ST_INFO:
--		isi_read_hplmn(sim);
-+
-+	case SEC_CAUSE_PIN_REQUIRED:
-+		DBG("SEC_CAUSE_PIN_REQUIRED");
-+		sim_set_passwd_state(sim, OFONO_SIM_PASSWORD_SIM_PIN);
-+		break;
-+
-+	case SEC_CAUSE_PUK_REQUIRED:
-+		DBG("SEC_CAUSE_PUK_REQUIRED");
-+		sim_set_passwd_state(sim, OFONO_SIM_PASSWORD_SIM_PIN);
-+		break;
-+
-+	case SEC_CAUSE_NO_SIM:
-+		DBG("SEC_CAUSE_NO_SIM");
-+		break;
-+
-+	case SEC_CAUSE_INVALID_SIM:
-+		DBG("SEC_CAUSE_INVALID_SIM");
-+		break;
-+
-+	case SEC_CAUSE_SIM_REJECTED:
-+		DBG("SEC_CAUSE_SIM_REJECTED");
-+		break;
-+
-+	default:
- 		break;
+ 	g_at_result_iter_init(&iter, result);
+ =
+
+ 	if (!g_at_result_iter_next(&iter, "+XSIM:"))
+@@ -557,65 +611,40 @@ static void at_xsim_notify(GAtResult *result, gpointe=
+r user_data)
+ 		return;
  	}
-+
-+	return TRUE;
+ =
+
+-	cb(&error, cbd->data);
++	sd->ready =3D TRUE;
+ =
+
+-	g_at_chat_unregister(sd->chat, sd->ready_id);
+-	sd->ready_id =3D 0;
++	if (sd->ready_source > 0)
++		ready_unregister_and_notify(sim);
  }
  =
 
-+static void isi_sec_state_req(struct ofono_sim *sim)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+
-+	unsigned char req[] =3D {
-+		SEC_STATE_REQ,
-+		0,
-+		0
-+	};
-+
-+	g_isi_send(sd->sec_client, req, sizeof(req), SIM_TIMEOUT,
-+			sec_state_resp_cb, sim, NULL);
-+}
-+
-+static gboolean sim_status_resp_cb(GIsiClient *client,
-+					const void *restrict data, size_t len,
-+					uint16_t object, void *opaque)
-+{
-+	const unsigned char *msg =3D data;
-+	struct ofono_sim *sim =3D opaque;
-+
-+	if (!msg || len < 3)
-+		return TRUE;
-+
-+	if (msg[0] =3D=3D SIM_STATUS_RESP && msg[1] =3D=3D SIM_ST_CARD_STATUS &&
-+			msg[2] !=3D SIM_SERV_SIM_DISCONNECTED)
-+		/* We probably have a SIM. Now get PIN/PUK status  */
-+		isi_sec_state_req(sim);
-+
-+	return TRUE;
-+}
-+
-+static void isi_sim_status_req(struct ofono_sim *sim)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+	const unsigned char req[] =3D {
-+		SIM_STATUS_REQ,
-+		SIM_ST_CARD_STATUS
-+	};
-+
-+	g_isi_send(sd->client, req, sizeof(req), SIM_TIMEOUT,
-+			sim_status_resp_cb, sim, NULL);
-+}
-+
-+
- static void sim_reachable_cb(GIsiClient *client, gboolean alive,
- 				uint16_t object, void *opaque)
+ static void at_epev_notify(GAtResult *result, gpointer user_data)
  {
-@@ -439,33 +880,56 @@ static void sim_reachable_cb(GIsiClient *client, gboo=
-lean alive,
- 		g_isi_version_minor(client));
+-	struct cb_data *cbd =3D user_data;
+-	struct sim_data *sd =3D cbd->user;
+-	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
+-	struct ofono_error error =3D { .type =3D OFONO_ERROR_TYPE_NO_ERROR };
++	struct ofono_sim *sim =3D user_data;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
  =
 
- 	g_isi_subscribe(client, SIM_IND, sim_ind_cb, opaque);
-+	g_isi_subscribe(client, SIM_SERVER_READY_IND,
-+			sim_server_ready_ind_cb, opaque);
- =
-
--	/* Check if SIM is ready. */
--	isi_read_hplmn(sim);
-+	ofono_sim_register(sim);
+-	cb(&error, cbd->data);
++	DBG("");
 +
-+	/* Check if we have a SIM */
-+	isi_sim_status_req(sim);
++	sd->ready =3D TRUE;
+ =
+
+-	g_at_chat_unregister(sd->chat, sd->ready_id);
+-	sd->ready_id =3D 0;
++	if (sd->ready_source > 0)
++		ready_unregister_and_notify(sim);
  }
  =
 
- static int isi_sim_probe(struct ofono_sim *sim, unsigned int vendor,
- 				void *user)
+ static void at_pin_send_cb(gboolean ok, GAtResult *result,
+ 				gpointer user_data)
  {
- 	GIsiModem *idx =3D user;
--	struct sim_data *sd =3D g_try_new0(struct sim_data, 1);
-+	struct sim_data *sd;
-+	GIsiClient *client =3D NULL;
-+	GIsiClient *sec_client =3D NULL;
- 	const char *debug =3D getenv("OFONO_ISI_DEBUG");
+ 	struct cb_data *cbd =3D user_data;
+-	struct sim_data *sd =3D cbd->user;
++	struct ofono_sim *sim =3D cbd->user;
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
+ 	ofono_sim_lock_unlock_cb_t cb =3D cbd->cb;
+ 	struct ofono_error error;
  =
 
-+	sd =3D g_try_new0(struct sim_data, 1);
- 	if (sd =3D=3D NULL)
--		return -ENOMEM;
-+		goto error;
+-	decode_at_error(&error, g_at_result_final_response(result));
+-
+-	if (!ok)
+-		goto done;
++	if (ok && sd->ready_id)
++		at_wait_for_ready(sim);
  =
 
--	sd->client =3D g_isi_client_create(idx, PN_SIM);
--	if (sd->client =3D=3D NULL)
--		return -ENOMEM;
-+	client =3D g_isi_client_create(idx, PN_SIM);
-+	if (client =3D=3D NULL)
-+		goto error;
+-	switch (sd->vendor) {
+-	case OFONO_VENDOR_IFX:
+-		/*
+-		 * On the IFX modem, AT+CPIN? can return READY too
+-		 * early and so use +XSIM notification to detect
+-		 * the ready state of the SIM.
+-		 */
+-		sd->ready_id =3D g_at_chat_register(sd->chat, "+XSIM",
+-							at_xsim_notify,
+-							FALSE, cbd, g_free);
+-		return;
+-	case OFONO_VENDOR_MBM:
+-		/*
+-		 * On the MBM modem, AT+CPIN? keeps returning SIM PIN
+-		 * for a moment after successful AT+CPIN=3D"..", but then
+-		 * sends *EPEV when that changes.
+-		 */
+-		sd->ready_id =3D g_at_chat_register(sd->chat, "*EPEV",
+-							at_epev_notify,
+-							FALSE, cbd, g_free);
+-		return;
+-	}
++	decode_at_error(&error, g_at_result_final_response(result));
+ =
+
+-done:
+ 	cb(&error, cbd->data);
+-
+-	g_free(cbd);
+ }
+ =
+
+ static void at_pin_send(struct ofono_sim *sim, const char *passwd,
+@@ -629,12 +658,14 @@ static void at_pin_send(struct ofono_sim *sim, const =
+char *passwd,
+ 	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
+
+-	cbd->user =3D sd;
++	cbd->user =3D sim;
 +
-+	sec_client =3D g_isi_client_create(idx, PN_SECURITY);
-+	if (sec_client =3D=3D NULL)
-+		goto error;
++	sd->ready =3D FALSE;
+ =
+
+ 	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\"", passwd);
+ =
+
+ 	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
+-				at_pin_send_cb, cbd, NULL);
++				at_pin_send_cb, cbd, g_free);
+ =
+
+ 	memset(buf, 0, sizeof(buf));
+ =
+
+@@ -659,12 +690,14 @@ static void at_pin_send_puk(struct ofono_sim *sim, co=
+nst char *puk,
+ 	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
+
+-	cbd->user =3D sd;
++	cbd->user =3D sim;
 +
-+	sd->client =3D client;
-+	sd->sec_client =3D sec_client;
-+	sd->passwd_state =3D OFONO_SIM_PASSWORD_INVALID;
++	sd->ready =3D FALSE;
+ =
+
+ 	snprintf(buf, sizeof(buf), "AT+CPIN=3D\"%s\",\"%s\"", puk, passwd);
+ =
+
+ 	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
+-				at_pin_send_cb, cbd, NULL);
++				at_pin_send_cb, cbd, g_free);
+ =
+
+ 	memset(buf, 0, sizeof(buf));
+ =
+
+@@ -836,6 +869,35 @@ static gboolean at_sim_register(gpointer user)
+ 	return FALSE;
+ }
+ =
+
++static void at_register_ready(struct ofono_sim *sim)
++{
++	struct sim_data *sd =3D ofono_sim_get_data(sim);
++
++	switch (sd->vendor) {
++	case OFONO_VENDOR_IFX:
++		/*
++		 * On the IFX modem, AT+CPIN? can return READY too
++		 * early and so use +XSIM notification to detect
++		 * the ready state of the SIM.
++		 */
++		sd->ready_id =3D g_at_chat_register(sd->chat, "+XSIM",
++							at_xsim_notify,
++							FALSE, sim, NULL);
++		break;
++
++	case OFONO_VENDOR_MBM:
++		/*
++		 * On the MBM modem, AT+CPIN? keeps returning SIM PIN
++		 * for a moment after successful AT+CPIN=3D"..", but then
++		 * sends *EPEV when that changes.
++		 */
++		sd->ready_id =3D g_at_chat_register(sd->chat, "*EPEV",
++							at_epev_notify,
++							FALSE, sim, NULL);
++		break;
++	}
++}
++
+ static int at_sim_probe(struct ofono_sim *sim, unsigned int vendor,
+ 				void *data)
+ {
+@@ -858,6 +920,9 @@ static int at_sim_probe(struct ofono_sim *sim, unsigned=
+ int vendor,
+ 	}
  =
 
  	ofono_sim_set_data(sim, sd);
- =
-
--	if (debug && (strcmp(debug, "all") =3D=3D 0 || strcmp(debug, "sim") =3D=
-=3D 0))
-+	if (debug !=3D NULL && (!strcmp(debug, "all") || !strcmp(debug, "sim"))) {
- 		g_isi_client_set_debug(sd->client, sim_debug, NULL);
-+		g_isi_client_set_debug(sd->sec_client, sec_debug, NULL);
-+	}
- =
-
- 	g_isi_verify(sd->client, sim_reachable_cb, sim);
++
++	at_register_ready(sim);
++
+ 	g_idle_add(at_sim_register, sim);
  =
 
  	return 0;
-+
-+error:
-+	g_isi_client_destroy(client);
-+	g_isi_client_destroy(sec_client);
-+
-+	return -ENOMEM;
- }
- =
-
- static void isi_sim_remove(struct ofono_sim *sim)
-@@ -477,6 +941,7 @@ static void isi_sim_remove(struct ofono_sim *sim)
+@@ -869,6 +934,9 @@ static void at_sim_remove(struct ofono_sim *sim)
  =
 
  	ofono_sim_set_data(sim, NULL);
- 	g_isi_client_destroy(data->client);
-+	g_isi_client_destroy(data->sec_client);
- 	g_free(data);
+ =
+
++	if (sd->ready_source > 0)
++		g_source_remove(sd->ready_source);
++
+ 	g_at_chat_unref(sd->chat);
+ 	g_free(sd);
  }
- =
-
-@@ -492,6 +957,12 @@ static struct ofono_sim_driver driver =3D {
- 	.write_file_linear	=3D isi_write_file_linear,
- 	.write_file_cyclic	=3D isi_write_file_cyclic,
- 	.read_imsi		=3D isi_read_imsi,
-+	.query_passwd_state	=3D isi_query_passwd_state,
-+	.send_passwd		=3D isi_send_passwd,
-+	.reset_passwd		=3D isi_reset_passwd,
-+	.lock			=3D isi_lock,
-+	.change_passwd		=3D isi_change_passwd,
-+	.query_locked		=3D isi_query_locked,
- };
- =
-
- void isi_sim_init()
-diff --git a/drivers/isimodem/sim.h b/drivers/isimodem/sim.h
-index f1d9f47..f416666 100644
---- a/drivers/isimodem/sim.h
-+++ b/drivers/isimodem/sim.h
-@@ -27,9 +27,12 @@ extern "C" {
- #endif
- =
-
- #define PN_SIM			0x09
-+#define PN_SECURITY             0x08
- #define SIM_TIMEOUT		5
- #define SIM_MAX_IMSI_LENGTH	15
- =
-
-+#define SEC_CODE_MAX_LENGTH	0x0A
-+
- enum sim_isi_cause {
- 	SIM_SERV_NOT_AVAIL =3D 0x00,
- 	SIM_SERV_OK =3D 0x01,
-@@ -131,29 +134,74 @@ enum sim_message_id {
- 	SIM_IMSI_RESP_READ_IMSI =3D 0x1E,
- 	SIM_SERV_PROV_NAME_REQ =3D 0x21,
- 	SIM_SERV_PROV_NAME_RESP =3D 0x22,
-+	SIM_DYNAMIC_FLAGS_REQ =3D 0x29,
-+	SIM_DYNAMIC_FLAGS_RESP =3D 0x2A,
- 	SIM_READ_FIELD_REQ =3D 0xBA,
- 	SIM_READ_FIELD_RESP =3D 0xBB,
- 	SIM_SMS_REQ =3D 0xBC,
- 	SIM_SMS_RESP =3D 0xBD,
-+	SIM_STATUS_REQ =3D 0xC0,
-+	SIM_STATUS_RESP =3D 0xC1,
- 	SIM_PB_REQ_SIM_PB_READ =3D 0xDC,
- 	SIM_PB_RESP_SIM_PB_READ =3D 0xDD,
-+	SIM_SERVER_READY_IND =3D 0xED,
- 	SIM_IND =3D 0xEF,
- 	SIM_COMMON_MESSAGE =3D 0xF0
- };
- =
-
- enum sim_service_type {
-+	SIM_ST_CARD_STATUS =3D 0x00,
- 	SIM_ST_PIN =3D 0x01,
- 	SIM_ST_ALL_SERVICES =3D 0x05,
- 	SIM_ST_INFO =3D 0x0D,
--	SIM_ST_READ_SERV_PROV_NAME =3D 0x2C,
- 	SIM_PB_READ =3D 0x0F,
-+	SIM_ST_READ_SERV_PROV_NAME =3D 0x2C,
- 	READ_IMSI =3D 0x2D,
- 	READ_HPLMN =3D 0x2F,
-+	READ_DYN_FLAGS =3D 0x35,
- 	READ_PARAMETER =3D 0x52,
- 	UPDATE_PARAMETER =3D 0x53,
- 	ICC =3D 0x66,
- };
- =
-
-+enum sec_message_id {
-+	SEC_CODE_STATE_REQ =3D 0x01,
-+	SEC_CODE_STATE_OK_RESP =3D 0x02,
-+	SEC_CODE_STATE_FAIL_RESP =3D 0x03,
-+	SEC_CODE_CHANGE_REQ =3D 0x04,
-+	SEC_CODE_CHANGE_OK_RESP =3D 0x05,
-+	SEC_CODE_CHANGE_FAIL_RESP =3D 0x06,
-+	SEC_CODE_VERIFY_REQ =3D 0x07,
-+	SEC_CODE_VERIFY_OK_RESP =3D 0x08,
-+	SEC_CODE_VERIFY_FAIL_RESP =3D 0x09,
-+	SEC_STATE_REQ =3D 0x11,
-+	SEC_STATE_RESP =3D 0x12,
-+};
-+
-+enum sec_code_id_info {
-+	SEC_CODE_PIN =3D 0x02,
-+	SEC_CODE_PUK =3D 0x03,
-+	SEC_CODE_PIN2 =3D 0x04,
-+	SEC_CODE_PUK2 =3D 0x05,
-+};
-+
-+enum sec_code_state_info {
-+	SEC_CODE_DISABLE =3D 0x00,
-+	SEC_CODE_ENABLE =3D 0x01,
-+	SEC_CODE_STATE_QUERY =3D 0x04,
-+};
-+
-+enum sec_state_cause_info {
-+	SEC_CAUSE_PIN_REQUIRED =3D 0x02,
-+	SEC_CAUSE_PUK_REQUIRED =3D 0x03,
-+	SEC_STARTUP_OK =3D 0x05,
-+	SEC_STARTUP_ONGOING =3D 0x07,
-+	SEC_CAUSE_CODE_BLOCKED =3D 0x08,
-+	SEC_CAUSE_NO_SIM =3D 0x16,
-+	SEC_CAUSE_SIM_REJECTED =3D 0x1A,
-+	SEC_CAUSE_INVALID_SIM =3D 0x1E,
-+};
-+
- #ifdef __cplusplus
- };
- #endif
 -- =
 
 1.7.1
 
 
---===============8120561969252681414==--
+--===============5085354966922892762==--
 
