@@ -1,19 +1,19 @@
-Content-Type: multipart/mixed; boundary="===============5833976230976589260=="
+Content-Type: multipart/mixed; boundary="===============3033436497870074749=="
 MIME-Version: 1.0
-From: Neil Jerram <neil@ossau.uklinux.net>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Voice call audio routing
-Date: Thu, 16 Dec 2010 02:15:37 +0000
-Message-ID: <871v5icvjq.fsf@ossau.uklinux.net>
+Date: Thu, 16 Dec 2010 11:49:46 +0100
+Message-ID: <1292496586.30085.87.camel@aeonflux.mpl.access-company.com>
 In-Reply-To: <AANLkTimupnMBwpoZAM1+mmTPaojOewv4+mJTCYeiWJzt@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5833976230976589260==
+--===============3033436497870074749==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Nicola Mfb <nicola.mfb@gmail.com> writes:
+Hi Niko,
 
 > While testing an e169 huawei card I was able to make voice calls and
 > hear something with aplay and /dev/ttyUSB1.
@@ -23,13 +23,14 @@ Nicola Mfb <nicola.mfb@gmail.com> writes:
 > correct is there a reference project (may be not depending deeply on
 > meego) that abstracts that task in an extensible/pluggable way?
 
-Have you read "design.txt" in telepathy-ring's repository?  I think it
-touches on this subject.  From my limited (so far) understanding of that
-file, I think you are right that ofono does not manage the audio routing
-itself.
+check tools/huawei-audio.c for a really simple example of the audio
+processing.
 
-Regards,
-          Neil
+Regards
 
---===============5833976230976589260==--
+Marcel
+
+
+
+--===============3033436497870074749==--
 
