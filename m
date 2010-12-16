@@ -1,282 +1,541 @@
-Content-Type: multipart/mixed; boundary="===============4705554936437223632=="
+Content-Type: multipart/mixed; boundary="===============4932876326478763553=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: [PATCH] test: add a script for STK conformance tests
-Date: Thu, 16 Dec 2010 16:04:12 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D40188136EF0453@irsmsx501.ger.corp.intel.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH] use ofono_error instead of DBG for errors
+Date: Thu, 16 Dec 2010 16:04:39 -0200
+Message-ID: <1292522679-15454-1-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <AANLkTik3a8najrFujpVnKEEg33j-3Tbi680Eej7yL+-n@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4705554936437223632==
+--===============4932876326478763553==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Guillaume Lucas <guillaumex.lucas@intel.com>
-
-To be able to run STK conformance tests at ofono
-level, we need to have a STK agent registered. The
-test-stk-conformance script provided here do that.
-This script is for conformance so all the data input
-of the agent are displayed to be able to check them.
-The existing test-stk-menu is usable only when there
-is a STK menu provided by the (U)SIM card.
 ---
- test/test-stk-conformance |  226 +++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 226 insertions(+), 0 deletions(-)
- create mode 100755 test/test-stk-conformance
+ src/call-barring.c    |    6 +++---
+ src/call-forwarding.c |    8 ++++----
+ src/call-meter.c      |    6 +++---
+ src/call-settings.c   |   14 +++++++-------
+ src/cbs.c             |    2 +-
+ src/ctm.c             |    4 ++--
+ src/gprs.c            |    6 +++---
+ src/network.c         |    8 ++++----
+ src/radio-settings.c  |   12 ++++++------
+ src/sms.c             |    4 ++--
+ src/ussd.c            |    2 +-
+ src/voicecall.c       |    6 +++---
+ 12 files changed, 39 insertions(+), 39 deletions(-)
 
-diff --git a/test/test-stk-conformance b/test/test-stk-conformance
-new file mode 100755
-index 0000000..bb28e40
---- /dev/null
-+++ b/test/test-stk-conformance
-@@ -0,0 +1,226 @@
-+#!/usr/bin/python
-+
-+import gobject
-+
-+import sys
-+import dbus
-+import dbus.service
-+import dbus.mainloop.glib
-+import os
-+
-+class GoBack(dbus.DBusException):
-+	_dbus_error_name =3D "org.ofono.Error.GoBack"
-+
-+class EndSession(dbus.DBusException):
-+	_dbus_error_name =3D "org.ofono.Error.EndSession"
-+
-+class Busy(dbus.DBusException):
-+	_dbus_error_name =3D "org.ofono.Error.Busy"
-+
-+class StkAgent(dbus.service.Object):
-+	exit_on_release =3D True
-+
-+	def set_exit_on_release(self, exit_on_release):
-+		self.exit_on_release =3D exit_on_release
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+					in_signature=3D"", out_signature=3D"")
-+	def Release(self):
-+		print "Release"
-+		if self.exit_on_release:
-+			mainloop.quit()
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+				in_signature=3D"sya(sy)n", out_signature=3D"y")
-+	def RequestSelection(self, title, icon, items, default):
-+		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
-+		index =3D 0;
-+		for item in items:
-+			print "%d. %s (icon: %d)" % (index, item[0], item[1])
-+			index +=3D 1
-+
-+		print "\nDefault: %d" % (default)
-+		select =3D raw_input("Enter Selection (t, b):")
-+
-+		if select =3D=3D 'b':
-+			raise GoBack("User wishes to go back")
-+		elif select =3D=3D 't':
-+			raise EndSession("User wishes to terminate session")
-+		else:
-+			return int(select);
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+					in_signature=3D"syb", out_signature=3D"")
-+	def DisplayText(self, title, icon, urgent):
-+		print "DisplayText (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
-+		print "Urgent: (%d)" % (urgent)
-+		userin =3D raw_input("Press return to clear ('t' terminates, "
-+								"'b' goest back, 'n' busy):")
-+
-+		if userin =3D=3D 'b':
-+			raise GoBack("User wishes to go back")
-+		elif userin =3D=3D 't':
-+			raise EndSession("User wishes to terminate session")
-+		elif userin =3D=3D 'n':
-+			raise Busy("User wishes to simulate busy screen")
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+				in_signature=3D"sysyyb", out_signature=3D"s")
-+	def RequestInput(self, title, icon, default, min_chars, max_chars,
-+				hide_typing):
-+		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
-+		print "Default: (%s)" % (default)
-+		print "Hide typing: (%s)" % (hide_typing)
-+		print "Enter characters, min: %d, max: %d:" % (min_chars,
-+								max_chars)
-+		userin =3D raw_input("")
-+
-+		return userin
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+				in_signature=3D"sysyyb", out_signature=3D"s")
-+	def RequestDigits(self, title, icon, default, min_chars, max_chars,
-+				hide_typing):
-+		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
-+		print "Default: (%s)" % (default)
-+		print "Hide typing: (%s)" % (hide_typing)
-+		print "Enter digits, min: %d, max: %d:" % (min_chars,
-+								max_chars)
-+		userin =3D raw_input("'t' terminates, 'b' goes back:");
-+
-+		if userin =3D=3D 'b':
-+			raise GoBack("User wishes to go back")
-+		elif userin =3D=3D 't':
-+			raise EndSession("User wishes to terminate session")
-+		else:
-+			return userin
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+				in_signature=3D"sy", out_signature=3D"s")
-+	def RequestKey(self, title, icon):
-+		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
-+		key =3D raw_input("Enter Key (t, b):")
-+
-+		if key =3D=3D 'b':
-+			raise GoBack("User wishes to go back");
-+		elif key =3D=3D 't':
-+			raise EndSession("User wishes to terminate session");
-+		else:
-+			return key
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+				in_signature=3D"sy", out_signature=3D"s")
-+	def RequestDigit(self, title, icon):
-+		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
-+		key =3D raw_input("Enter Digit (t, b):")
-+
-+		if key =3D=3D 'b':
-+			raise GoBack("User wishes to go back");
-+		elif key =3D=3D 't':
-+			raise EndSession("User wishes to terminate session");
-+		else:
-+			return key
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+				in_signature=3D"sy", out_signature=3D"b")
-+	def RequestConfirmation(self, title, icon):
-+		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
-+		key =3D raw_input("Enter Confirmation (t, b, y, n):")
-+
-+		if key =3D=3D 'b':
-+			raise GoBack("User wishes to go back");
-+		elif key =3D=3D 't':
-+			raise EndSession("User wishes to terminate session");
-+		elif key =3D=3D 'y':
-+			return True
-+		else:
-+			return False
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+				in_signature=3D"sy", out_signature=3D"b")
-+	def ConfirmCallSetup(self, info, icon):
-+		print "Information: (%s)" % (info)
-+		print "Icon: (%d)" % (icon)
-+		key =3D raw_input("Enter Confirmation (t, y, n):")
-+
-+		if key =3D=3D 't':
-+			raise EndSession("User wishes to terminate session");
-+		elif key =3D=3D 'y':
-+			return True
-+		else:
-+			return False
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+					in_signature=3D"ssy", out_signature=3D"")
-+	def PlayTone(self, tone, title, icon):
-+		print "PlayTone: (%s, %s, %d)" % (tone, title, icon)
-+		userin =3D raw_input("Press enter to end playing (t):")
-+
-+		if userin =3D=3D 't':
-+			raise EndSession("User wishes to terminate session")
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+					in_signature=3D"ssy", out_signature=3D"")
-+	def LoopTone(self, tone, title, icon):
-+		print "LoopTone: (%s, %s, %d)" % (tone, title, icon)
-+		userin =3D raw_input("Press enter to end playing (t):")
-+
-+		if userin =3D=3D 't':
-+			raise EndSession("User wishes to terminate session")
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+					in_signature=3D"", out_signature=3D"")
-+	def Cancel(self):
-+		print "Cancel"
-+
-+def property_changed(name, value):
-+	print "SimToolkit property: '%s' changed to '%s'" % (name, value)
-+
-+def stdin_handler(fd, condition):
-+	s =3D os.read(fd.fileno(), 160).rstrip()
-+
-+	if s =3D=3D 't':
-+		stk.UnregisterAgent(path)
-+		mainloop.quit()
-+
-+	return True
-+
-+if __name__ =3D=3D '__main__':
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+
-+	bus =3D dbus.SystemBus()
-+	manager =3D dbus.Interface(bus.get_object("org.ofono", "/"),
-+							"org.ofono.Manager")
-+
-+	modems =3D manager.GetModems()
-+
-+	for path, properties in modems:
-+		if "org.ofono.SimToolkit" not in properties["Interfaces"]:
-+			continue
-+
-+		stk =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.SimToolkit')
-+
-+	stk.connect_to_signal("PropertyChanged", property_changed)
-+
-+	properties =3D stk.GetProperties()
-+
-+	path =3D "/test/agent"
-+	agent =3D StkAgent(bus, path)
-+
-+	stk.RegisterAgent(path)
-+
-+	gobject.io_add_watch(sys.stdin, gobject.IO_IN, stdin_handler)
-+
-+	print "STK Agent is now registered"
-+	print "Use t + <return> to quit the program when there is no session on g=
-oing"
-+
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
+diff --git a/src/call-barring.c b/src/call-barring.c
+index bb15530..95f489e 100644
+--- a/src/call-barring.c
++++ b/src/call-barring.c
+@@ -327,7 +327,7 @@ static void cb_ss_set_lock_callback(const struct ofono_=
+error *error,
+ 	struct ofono_call_barring *cb =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Enabling/disabling Call Barring via SS failed");
++		ofono_error("Enabling/disabling Call Barring via SS failed");
+ 		__ofono_dbus_pending_reply(&cb->pending,
+ 					__ofono_error_failed(cb->pending));
+ 		return;
+@@ -733,7 +733,7 @@ static void set_lock_callback(const struct ofono_error =
+*error, void *data)
+ 	struct ofono_call_barring *cb =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Enabling/disabling a lock failed");
++		ofono_error("Enabling/disabling a lock failed");
+ 		__ofono_dbus_pending_reply(&cb->pending,
+ 					__ofono_error_failed(cb->pending));
+ 		return;
+@@ -883,7 +883,7 @@ static void disable_all_callback(const struct ofono_err=
+or *error, void *data)
+ 	struct ofono_call_barring *cb =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Disabling all barring failed");
++		ofono_error("Disabling all barring failed");
+ 		__ofono_dbus_pending_reply(&cb->pending,
+ 					__ofono_error_failed(cb->pending));
+ 		return;
+diff --git a/src/call-forwarding.c b/src/call-forwarding.c
+index bb8aa37..9a2fd85 100644
+--- a/src/call-forwarding.c
++++ b/src/call-forwarding.c
+@@ -549,7 +549,7 @@ static void set_property_callback(const struct ofono_er=
+ror *error, void *data)
+ 	struct ofono_call_forwarding *cf =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error occurred during set/erasure");
++		ofono_error("Error occurred during set/erasure");
+ 		__ofono_dbus_pending_reply(&cf->pending,
+ 					__ofono_error_failed(cf->pending));
+ 		return;
+@@ -674,7 +674,7 @@ static void disable_conditional_callback(const struct o=
+fono_error *error,
+ 	struct ofono_call_forwarding *cf =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error occurred during conditional erasure");
++		ofono_error("Error occurred during conditional erasure");
+ =
+
+ 		__ofono_dbus_pending_reply(&cf->pending,
+ 					__ofono_error_failed(cf->pending));
+@@ -692,7 +692,7 @@ static void disable_all_callback(const struct ofono_err=
+or *error, void *data)
+ 	struct ofono_call_forwarding *cf =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error occurred during erasure of all");
++		ofono_error("Error occurred during erasure of all");
+ =
+
+ 		__ofono_dbus_pending_reply(&cf->pending,
+ 					__ofono_error_failed(cf->pending));
+@@ -877,7 +877,7 @@ static void cf_ss_control_callback(const struct ofono_e=
+rror *error, void *data)
+ 	struct ofono_call_forwarding *cf =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error occurred during cf ss control set/erasure");
++		ofono_error("Error occurred during cf ss control set/erasure");
+ =
+
+ 		__ofono_dbus_pending_reply(&cf->pending,
+ 					__ofono_error_failed(cf->pending));
+diff --git a/src/call-meter.c b/src/call-meter.c
+index ac3ae6b..8a45d15 100644
+--- a/src/call-meter.c
++++ b/src/call-meter.c
+@@ -336,7 +336,7 @@ static void set_acm_max_callback(const struct ofono_err=
+or *error, void *data)
+ 	struct ofono_call_meter *cm =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Setting acm_max failed");
++		ofono_error("Setting acm_max failed");
+ 		__ofono_dbus_pending_reply(&cm->pending,
+ 					__ofono_error_failed(cm->pending));
+ 		return;
+@@ -397,7 +397,7 @@ static void set_puct_callback(const struct ofono_error =
+*error, void *data)
+ 	struct ofono_call_meter *cm =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("setting puct failed");
++		ofono_error("setting puct failed");
+ 		__ofono_dbus_pending_reply(&cm->pending,
+ 					__ofono_error_failed(cm->pending));
+ 		return;
+@@ -594,7 +594,7 @@ static void acm_reset_callback(const struct ofono_error=
+ *error, void *data)
+ 	struct ofono_call_meter *cm =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("reseting acm failed");
++		ofono_error("reseting acm failed");
+ 		__ofono_dbus_pending_reply(&cm->pending,
+ 					__ofono_error_failed(cm->pending));
+ 		return;
+diff --git a/src/call-settings.c b/src/call-settings.c
+index 49a7fb0..6ed85a1 100644
+--- a/src/call-settings.c
++++ b/src/call-settings.c
+@@ -372,7 +372,7 @@ static void cw_ss_query_callback(const struct ofono_err=
+or *error, int status,
+ 	struct ofono_call_settings *cs =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("setting CW via SS failed");
++		ofono_error("setting CW via SS failed");
+ =
+
+ 		cs->flags &=3D ~CALL_SETTINGS_FLAG_CACHED;
+ 		__ofono_dbus_pending_reply(&cs->pending,
+@@ -391,7 +391,7 @@ static void cw_ss_set_callback(const struct ofono_error=
+ *error, void *data)
+ 	struct ofono_call_settings *cs =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("setting CW via SS failed");
++		ofono_error("setting CW via SS failed");
+ 		__ofono_dbus_pending_reply(&cs->pending,
+ 					__ofono_error_failed(cs->pending));
+ =
+
+@@ -528,7 +528,7 @@ static void clip_colp_colr_ss_query_cb(const struct ofo=
+no_error *error,
+ 	const char *value;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error occurred during ss control query");
++		ofono_error("Error occurred during ss control query");
+ 		__ofono_dbus_pending_reply(&cs->pending,
+ 					__ofono_error_failed(cs->pending));
+ =
+
+@@ -628,7 +628,7 @@ static void clir_ss_query_callback(const struct ofono_e=
+rror *error,
+ 	const char *value;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("setting clir via SS failed");
++		ofono_error("setting clir via SS failed");
+ 		__ofono_dbus_pending_reply(&cs->pending,
+ 					__ofono_error_failed(cs->pending));
+ =
+
+@@ -676,7 +676,7 @@ static void clir_ss_set_callback(const struct ofono_err=
+or *error, void *data)
+ 	struct ofono_call_settings *cs =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("setting clir via SS failed");
++		ofono_error("setting clir via SS failed");
+ 		__ofono_dbus_pending_reply(&cs->pending,
+ 					__ofono_error_failed(cs->pending));
+ =
+
+@@ -1007,7 +1007,7 @@ static void clir_set_callback(const struct ofono_erro=
+r *error, void *data)
+ 	struct ofono_call_settings *cs =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("setting clir failed");
++		ofono_error("setting clir failed");
+ 		__ofono_dbus_pending_reply(&cs->pending,
+ 					__ofono_error_failed(cs->pending));
+ =
+
+@@ -1069,7 +1069,7 @@ static void cw_set_callback(const struct ofono_error =
+*error, void *data)
+ 	struct ofono_call_settings *cs =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error occurred during CW set");
++		ofono_error("Error occurred during CW set");
+ =
+
+ 		__ofono_dbus_pending_reply(&cs->pending,
+ 					__ofono_error_failed(cs->pending));
+diff --git a/src/cbs.c b/src/cbs.c
+index 8e4afc1..2694f56 100644
+--- a/src/cbs.c
++++ b/src/cbs.c
+@@ -344,7 +344,7 @@ static void cbs_set_topics_cb(const struct ofono_error =
+*error, void *data)
+ 		g_slist_free(cbs->new_topics);
+ 		cbs->new_topics =3D NULL;
+ =
+
+-		DBG("Setting Cell Broadcast topics failed");
++		ofono_error("Setting Cell Broadcast topics failed");
+ 		__ofono_dbus_pending_reply(&cbs->pending,
+ 					__ofono_error_failed(cbs->pending));
+ 		return;
+diff --git a/src/ctm.c b/src/ctm.c
+index 1df34c2..2c82c2e 100644
+--- a/src/ctm.c
++++ b/src/ctm.c
+@@ -90,7 +90,7 @@ static void ctm_set_enabled_callback(const struct ofono_e=
+rror *error,
+ 	DBusMessage *reply;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error setting ctm enabled property");
++		ofono_error("Error setting ctm enabled property");
+ =
+
+ 		reply =3D __ofono_error_failed(ctm->pending);
+ 		__ofono_dbus_pending_reply(&ctm->pending, reply);
+@@ -116,7 +116,7 @@ static void ctm_query_enabled_callback(const struct ofo=
+no_error *error,
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+ 		DBusMessage *reply;
+ =
+
+-		DBG("Error during ctm enabled query");
++		ofono_error("Error during ctm enabled query");
+ =
+
+ 		reply =3D __ofono_error_failed(ctm->pending);
+ 		__ofono_dbus_pending_reply(&ctm->pending, reply);
+diff --git a/src/gprs.c b/src/gprs.c
+index 58166f8..d767db9 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -661,7 +661,7 @@ static void pri_activate_callback(const struct ofono_er=
+ror *error,
+ 	DBG("%p %s", ctx, interface);
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Activating context failed with error: %s",
++		ofono_error("Activating context failed with error: %s",
+ 				telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&ctx->pending,
+ 					__ofono_error_failed(ctx->pending));
+@@ -699,7 +699,7 @@ static void pri_deactivate_callback(const struct ofono_=
+error *error, void *data)
+ 	dbus_bool_t value;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Deactivating context failed with error: %s",
++		ofono_error("Deactivating context failed with error: %s",
+ 				telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&ctx->pending,
+ 					__ofono_error_failed(ctx->pending));
+@@ -1657,7 +1657,7 @@ static void gprs_deactivate_for_remove(const struct o=
+fono_error *error,
+ 	const char *atompath;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Removing context failed with error: %s",
++		ofono_error("Removing context failed with error: %s",
+ 				telephony_error_to_str(error));
+ =
+
+ 		__ofono_dbus_pending_reply(&gprs->pending,
+diff --git a/src/network.c b/src/network.c
+index 95af5d4..2529819 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -181,7 +181,7 @@ static void registration_status_callback(const struct o=
+fono_error *error,
+ 	struct ofono_netreg *netreg =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error during registration status query");
++		ofono_error("Error during registration status query");
+ 		return;
+ 	}
+ =
+
+@@ -1214,7 +1214,7 @@ static void current_operator_callback(const struct of=
+ono_error *error,
+ 		current =3D NULL;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error during current operator");
++		ofono_error("Error during current operator");
+ 		return;
+ 	}
+ =
+
+@@ -1352,7 +1352,7 @@ static void signal_strength_callback(const struct ofo=
+no_error *error,
+ 	struct ofono_netreg *netreg =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error during signal strength query");
++		ofono_error("Error during signal strength query");
+ 		return;
+ 	}
+ =
+
+@@ -1366,7 +1366,7 @@ static void init_registration_status(const struct ofo=
+no_error *error,
+ 	struct ofono_netreg *netreg =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error during registration status query");
++		ofono_error("Error during registration status query");
+ 		return;
+ 	}
+ =
+
+diff --git a/src/radio-settings.c b/src/radio-settings.c
+index 7a1f34b..bfc8f9b 100644
+--- a/src/radio-settings.c
++++ b/src/radio-settings.c
+@@ -251,7 +251,7 @@ static void radio_fast_dormancy_set_callback(const stru=
+ct ofono_error *error,
+ 	DBusMessage *reply;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error setting fast dormancy");
++		ofono_error("Error setting fast dormancy");
+ =
+
+ 		rs->fast_dormancy_pending =3D rs->fast_dormancy;
+ =
+
+@@ -304,7 +304,7 @@ static void radio_band_set_callback(const struct ofono_=
+error *error,
+ 	DBusMessage *reply;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error setting radio frequency band");
++		ofono_error("Error setting radio frequency band");
+ =
+
+ 		rs->pending_band_gsm =3D rs->band_gsm;
+ 		rs->pending_band_umts =3D rs->band_umts;
+@@ -348,7 +348,7 @@ static void radio_mode_set_callback(const struct ofono_=
+error *error, void *data)
+ 	DBusMessage *reply;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error setting radio access mode");
++		ofono_error("Error setting radio access mode");
+ =
+
+ 		rs->pending_mode =3D rs->mode;
+ =
+
+@@ -381,7 +381,7 @@ static void radio_fast_dormancy_query_callback(const st=
+ruct ofono_error *error,
+ 	DBusMessage *reply;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error during fast dormancy query");
++		ofono_error("Error during fast dormancy query");
+ =
+
+ 		reply =3D __ofono_error_failed(rs->pending);
+ 		__ofono_dbus_pending_reply(&rs->pending, reply);
+@@ -413,7 +413,7 @@ static void radio_band_query_callback(const struct ofon=
+o_error *error,
+ 	DBusMessage *reply;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error during radio frequency band query");
++		ofono_error("Error during radio frequency band query");
+ =
+
+ 		reply =3D __ofono_error_failed(rs->pending);
+ 		__ofono_dbus_pending_reply(&rs->pending, reply);
+@@ -446,7 +446,7 @@ static void radio_rat_mode_query_callback(const struct =
+ofono_error *error,
+ 	DBusMessage *reply;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error during radio access mode query");
++		ofono_error("Error during radio access mode query");
+ =
+
+ 		reply =3D __ofono_error_failed(rs->pending);
+ 		__ofono_dbus_pending_reply(&rs->pending, reply);
+diff --git a/src/sms.c b/src/sms.c
+index 163eab0..d77948c 100644
+--- a/src/sms.c
++++ b/src/sms.c
+@@ -576,7 +576,7 @@ static void bearer_set_callback(const struct ofono_erro=
+r *error, void *data)
+ 	struct ofono_sms *sms =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Setting Bearer failed");
++		ofono_error("Setting Bearer failed");
+ 		__ofono_dbus_pending_reply(&sms->pending,
+ 					__ofono_error_failed(sms->pending));
+ 		return;
+@@ -611,7 +611,7 @@ static void sca_set_callback(const struct ofono_error *=
+error, void *data)
+ 	struct ofono_sms *sms =3D data;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Setting SCA failed");
++		ofono_error("Setting SCA failed");
+ 		__ofono_dbus_pending_reply(&sms->pending,
+ 					__ofono_error_failed(sms->pending));
+ 		return;
+diff --git a/src/ussd.c b/src/ussd.c
+index e0c89cd..97502b2 100644
+--- a/src/ussd.c
++++ b/src/ussd.c
+@@ -656,7 +656,7 @@ static void ussd_cancel_callback(const struct ofono_err=
+or *error, void *data)
+ 	DBusMessage *reply;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("ussd cancel failed with error: %s",
++		ofono_error("ussd cancel failed with error: %s",
+ 				telephony_error_to_str(error));
+ =
+
+ 		reply =3D __ofono_error_failed(ussd->cancel);
+diff --git a/src/voicecall.c b/src/voicecall.c
+index dbf3e9a..d7aef46 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -1079,7 +1079,7 @@ static struct voicecall *dial_handle_result(struct of=
+ono_voicecall *vc,
+ 	*need_to_emit =3D FALSE;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Dial callback returned error: %s",
++		ofono_error("Dial callback returned error: %s",
+ 			telephony_error_to_str(error));
+ =
+
+ 		return NULL;
+@@ -1398,7 +1398,7 @@ static void private_chat_callback(const struct ofono_=
+error *error, void *data)
+ 	GSList *old;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("command failed with error: %s",
++		ofono_error("command failed with error: %s",
+ 				telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&vc->pending,
+ 					__ofono_error_failed(vc->pending));
+@@ -1498,7 +1498,7 @@ static void multiparty_create_callback(const struct o=
+fono_error *error,
+ 	GSList *old;
+ =
+
+ 	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("command failed with error: %s",
++		ofono_error("command failed with error: %s",
+ 				telephony_error_to_str(error));
+ 		__ofono_dbus_pending_reply(&vc->pending,
+ 					__ofono_error_failed(vc->pending));
 -- =
 
-1.7.0.4
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+1.7.3.2
 
 
---===============4705554936437223632==--
+--===============4932876326478763553==--
 
