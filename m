@@ -1,96 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============5888549418713293286=="
+Content-Type: multipart/mixed; boundary="===============1530267850029479931=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: Re: [PATCH] zte: poll sim before sim_inserted_notify
-Date: Thu, 16 Dec 2010 16:45:05 -0200
-Message-ID: <20101216184505.GD5927@vigoh>
-In-Reply-To: <1292524599-17114-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH] network: query signal strength when status changes to
+ registered or roaming.
+Date: Thu, 16 Dec 2010 16:52:19 -0200
+Message-ID: <20101216185219.GE5927@vigoh>
+In-Reply-To: <1291388441-16730-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5888549418713293286==
+--===============1530267850029479931==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Marit,
 
-* Pekka.Pessi(a)nokia.com <Pekka.Pessi@nokia.com> [2010-12-16 20:36:39 +0=
-200]:
+Your commit subject is too big, you should not use more than 72 characters
+there. Ideally you should not use more than 50, but up to 72 is still ok.
+Leave the additional info to the commit message.
 
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+* Marit Henriksen <maritsofie.henriksen8@gmail.com> [2010-12-03 16:00:41 =
++0100]:
+
+> From: Marit Henriksen <marit.henriksen@stericsson.com>
 > =
 
-> Ensure that SIM is ready before calling ofono_sim_inserted_notify().
+> Signal strength is set to -1 whenever registration status changes
+> and differs from registered or roaming. When registration status
+> changes again to registered or roaming, the signal strength needs to
+> be updated, so add query towards driver to get it.
 > ---
->  plugins/zte.c |   57 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-+-----
->  1 files changed, 52 insertions(+), 5 deletions(-)
+>  src/network.c |   29 ++++++++++++++++-------------
+>  1 files changed, 16 insertions(+), 13 deletions(-)
 > =
 
-> diff --git a/plugins/zte.c b/plugins/zte.c
-> index 82f322a..50f6280 100644
-> --- a/plugins/zte.c
-> +++ b/plugins/zte.c
-> @@ -55,6 +55,9 @@ struct zte_data {
->  	GAtChat *aux;
->  	struct ofono_gprs *gprs;
->  	struct ofono_gprs_context *gc;
-> +	struct ofono_sim *sim;
-> +	guint poll_source;
-> +	guint poll_count;
->  };
->  =
-
->  static int zte_probe(struct ofono_modem *modem)
-> @@ -221,6 +224,13 @@ static int zte_disable(struct ofono_modem *modem)
->  	if (data->aux =3D=3D NULL)
->  		return 0;
->  =
-
-> +	data->sim =3D NULL;
-> +
-> +	if (data->poll_source) {
-> +		g_source_remove(data->poll_source);
-> +		data->poll_source =3D 0;
-> +	}
-> +
->  	g_at_chat_cancel_all(data->aux);
->  	g_at_chat_unregister_all(data->aux);
->  	g_at_chat_send(data->aux, "AT+CFUN=3D0", none_prefix,
-> @@ -262,19 +272,56 @@ error:
->  	CALLBACK_WITH_FAILURE(cb, cbd->data);
+> diff --git a/src/network.c b/src/network.c
+> index d5b42a1..80fa83d 100644
+> --- a/src/network.c
+> +++ b/src/network.c
+> @@ -1296,6 +1296,19 @@ emit:
+>  	notify_status_watches(netreg);
 >  }
 >  =
 
-> +static gboolean poll_sim(gpointer user_data);
-
-Why not moving the whole function to here instead adding a its declaration
-here.
-
-> +
-> +static void sim_poll_result(gboolean ok, GAtResult *result, gpointer use=
-r_data)
+> +static void signal_strength_callback(const struct ofono_error *error,
+> +					int strength, void *data)
 > +{
-> +	struct ofono_modem *modem =3D user_data;
-> +	struct zte_data *data =3D ofono_modem_get_data(modem);
+> +	struct ofono_netreg *netreg =3D data;
 > +
-> +	DBG("%p", modem);
-> +
-> +	if (ok) {
-> +		ofono_sim_inserted_notify(data->sim, ok);
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> +		DBG("Error during signal strength query");
 > +		return;
 > +	}
 > +
-> +	if (++data->poll_count > 5)
-> +		/* Give up after 5 seconds - there is probably no SIM */
+> +	ofono_netreg_strength_notify(netreg, strength);
+> +}
+> +
+>  void ofono_netreg_status_notify(struct ofono_netreg *netreg, int status,
+>  			int lac, int ci, int tech)
+>  {
+> @@ -1319,6 +1332,9 @@ void ofono_netreg_status_notify(struct ofono_netreg=
+ *netreg, int status,
+>  		if (netreg->driver->current_operator)
+>  			netreg->driver->current_operator(netreg,
+>  					current_operator_callback, netreg);
+> +		if (netreg->driver->strength)
+> +			netreg->driver->strength(netreg,
+> +					signal_strength_callback, netreg);
+>  	} else {
+>  		struct ofono_error error;
+>  =
 
-s/seconds/times/ ?
+> @@ -1345,19 +1361,6 @@ void ofono_netreg_time_notify(struct ofono_netreg =
+*netreg,
+>  	__ofono_nettime_info_received(modem, info);
+>  }
+>  =
+
+> -static void signal_strength_callback(const struct ofono_error *error,
+> -					int strength, void *data)
+> -{
+> -	struct ofono_netreg *netreg =3D data;
+> -
+> -	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> -		DBG("Error during signal strength query");
+> -		return;
+> -	}
+> -
+> -	ofono_netreg_strength_notify(netreg, strength);
+> -}
+> -
+>  static void init_registration_status(const struct ofono_error *error,
+>  					int status, int lac, int ci, int tech,
+>  					void *data)
+
+Otherwise patch looks good.
 
 -- =
 
 Gustavo F. Padovan
 http://profusion.mobi
 
---===============5888549418713293286==--
+--===============1530267850029479931==--
 
