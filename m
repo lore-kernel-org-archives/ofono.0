@@ -1,65 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============8004111311189760439=="
+Content-Type: multipart/mixed; boundary="===============0749742507998662015=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v2 6/9] cdmagen: Add CDMA MO Call Support
-Date: Fri, 17 Dec 2010 15:11:18 -0800
-Message-ID: <1292627481-9109-7-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: [PATCH v2 5/9] cdmamodem: Add CDMA MO Call Support
+Date: Fri, 17 Dec 2010 15:11:17 -0800
+Message-ID: <1292627481-9109-6-git-send-email-dara.spieker-doyle@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8004111311189760439==
+--===============0749742507998662015==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am       |    3 +
- plugins/cdmagen.c |  274 +++++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am                   |    7 ++
+ configure.ac                  |    5 +
+ drivers/cdmamodem/cdmamodem.c |   48 ++++++++++
+ drivers/cdmamodem/cdmamodem.h |   25 ++++++
+ drivers/cdmamodem/voicecall.c |  190 +++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 277 insertions(+), 0 deletions(-)
- create mode 100644 plugins/cdmagen.c
+ 5 files changed, 275 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/cdmamodem/cdmamodem.c
+ create mode 100644 drivers/cdmamodem/cdmamodem.h
+ create mode 100644 drivers/cdmamodem/voicecall.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 50e893f..9949bcc 100644
+index 40ff52d..50e893f 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -293,6 +293,9 @@ builtin_sources +=3D plugins/ste.c
- =
-
- builtin_modules +=3D caif
- builtin_sources +=3D plugins/caif.c
-+
-+builtin_modules +=3D cdmagen
-+builtin_sources +=3D plugins/cdmagen.c
+@@ -242,6 +242,13 @@ conf_DATA +=3D plugins/phonesim.conf
+ endif
  endif
  =
 
- if MAINTAINER_MODE
-diff --git a/plugins/cdmagen.c b/plugins/cdmagen.c
++if CDMA_ATMODEM
++builtin_modules +=3D cdma_atmodem
++builtin_sources +=3D drivers/cdmamodem/cdmamodem.h \
++			drivers/cdmamodem/cdmamodem.c \
++			drivers/cdmamodem/voicecall.c
++endif
++
+ builtin_modules +=3D g1
+ builtin_sources +=3D plugins/g1.c
+ =
+
+diff --git a/configure.ac b/configure.ac
+index 5c18f68..9cc0689 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -160,6 +160,11 @@ AC_ARG_ENABLE(atmodem, AC_HELP_STRING([--disable-atmod=
+em],
+ 					[enable_atmodem=3D${enableval}])
+ AM_CONDITIONAL(ATMODEM, test "${enable_atmodem}" !=3D "no")
+ =
+
++AC_ARG_ENABLE(cdmaatmodem, AC_HELP_STRING([--disable-cdmamodem],
++				[disable CDMA AT modem support]),
++					[enable_cdma_atmodem=3D${enableval}])
++AM_CONDITIONAL(CDMA_ATMODEM, test "${enable_cdma_atmodem}" !=3D "no")
++
+ AC_ARG_ENABLE(phonesim, AC_HELP_STRING([--disable-phonesim],
+ 				[disable Phone simulator support]),
+ 					[enable_phonesim=3D${enableval}])
+diff --git a/drivers/cdmamodem/cdmamodem.c b/drivers/cdmamodem/cdmamodem.c
 new file mode 100644
-index 0000000..4ec4614
+index 0000000..20e6d96
 --- /dev/null
-+++ b/plugins/cdmagen.c
-@@ -0,0 +1,274 @@
++++ b/drivers/cdmamodem/cdmamodem.c
+@@ -0,0 +1,48 @@
 +/*
-+ * This file is part of oFono - Open Source Telephony
 + *
-+ * Copyright (C) 2010 Nokia Corporation. All rights reserved.
++ *  oFono - Open Source Telephony
 + *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU General Public License
-+ * version 2 as published by the Free Software Foundation.
++ *  Copyright (C) 2010 Nokia Corporation. All rights reserved.
 + *
-+ * This program is distributed in the hope that it will be useful, but
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+ * General Public License for more details.
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
 + *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-+ * 02110-1301 USA
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
 + *
 + */
 +
@@ -67,260 +95,263 @@ index 0000000..4ec4614
 +#include <config.h>
 +#endif
 +
-+#include <stdlib.h>
-+#include <errno.h>
-+#include <termios.h>
-+#include <string.h>
-+#include <unistd.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+
 +#include <glib.h>
 +#include <gatchat.h>
-+#include <gattty.h>
 +
 +#define OFONO_API_SUBJECT_TO_CHANGE
 +#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
++#include <ofono/types.h>
 +
-+#include <ofono/cdma-voicecall.h>
++#include "cdmamodem.h"
++
++static int cdma_atmodem_init(void)
++{
++	cdma_at_voicecall_init();
++
++	return 0;
++}
++
++static void cdma_atmodem_exit(void)
++{
++	cdma_at_voicecall_exit();
++}
++
++OFONO_PLUGIN_DEFINE(cdma_atmodem, "CDMA AT modem driver", VERSION,
++	OFONO_PLUGIN_PRIORITY_DEFAULT, cdma_atmodem_init, cdma_atmodem_exit)
+diff --git a/drivers/cdmamodem/cdmamodem.h b/drivers/cdmamodem/cdmamodem.h
+new file mode 100644
+index 0000000..a5991cf
+--- /dev/null
++++ b/drivers/cdmamodem/cdmamodem.h
+@@ -0,0 +1,25 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 Nokia Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
 +#include <drivers/atmodem/atutil.h>
 +
-+#include "common.h"
++extern void cdma_at_voicecall_init();
++extern void cdma_at_voicecall_exit();
+diff --git a/drivers/cdmamodem/voicecall.c b/drivers/cdmamodem/voicecall.c
+new file mode 100644
+index 0000000..f9955d6
+--- /dev/null
++++ b/drivers/cdmamodem/voicecall.c
+@@ -0,0 +1,190 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010 Nokia Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
-+struct cdmagen_data {
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#define _GNU_SOURCE
++#include <string.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <errno.h>
++
++#include <glib.h>
++
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <ofono/cdma-voicecall.h>
++
++#include "gatchat.h"
++#include "gatresult.h"
++
++#include "cdmamodem.h"
++
++static const char *none_prefix[] =3D { NULL };
++
++struct voicecall_driver {
++	struct ofono_cdma_voicecall_manager *vc;
++	unsigned int local_release;
 +	GAtChat *chat;
-+	ofono_bool_t online;
-+	ofono_bool_t registration_status;
++	unsigned int vendor;
 +};
 +
-+static void cdmagen_debug(const char *str, void *data)
-+{
-+	const char *prefix =3D data;
++struct change_state_req {
++	struct ofono_cdma_voicecall_manager *vc;
++	ofono_cdma_voicecall_cb_t cb;
++	void *data;
++};
 +
-+	ofono_info("%s%s", prefix, str);
++static void at_dial_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_cdma_voicecall_cb_t cb =3D cbd->cb;
++	struct ofono_error error;
++
++	decode_at_error(&error, g_at_result_final_response(result));
++
++	if (!ok)
++		goto out;
++
++out:
++	cb(&error, cbd->data);
 +}
 +
-+static int cdmagen_probe(struct ofono_modem *modem)
++static void at_dial(struct ofono_cdma_voicecall_manager *vc,
++				const struct ofono_cdma_phone_number *ph,
++				ofono_cdma_voicecall_cb_t cb, void *data)
 +{
-+	struct cdmagen_data *data;
-+
-+	DBG("%p", modem);
-+
-+	data =3D g_try_new0(struct cdmagen_data, 1);
-+	if (data =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	ofono_modem_set_data(modem, data);
-+
-+	return 0;
-+}
-+
-+static void cdmagen_remove(struct ofono_modem *modem)
-+{
-+	struct cdmagen_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	ofono_modem_set_data(modem, NULL);
-+
-+	if (data->chat)
-+		g_at_chat_unref(data->chat);
-+
-+	g_free(data);
-+}
-+
-+static GAtChat *create_port(const char *device)
-+{
-+	GAtSyntax *syntax;
-+	GIOChannel *channel;
-+	GAtChat *chat;
-+
-+	channel =3D g_at_tty_open(device, NULL);
-+	if (channel =3D=3D NULL)
-+		return NULL;
-+
-+	syntax =3D g_at_syntax_new_gsmv1();
-+
-+	chat =3D g_at_chat_new(channel, syntax);
-+	g_at_syntax_unref(syntax);
-+	g_io_channel_unref(channel);
-+
-+	if (chat =3D=3D NULL)
-+		return NULL;
-+
-+	return chat;
-+}
-+
-+static GAtChat *open_device(struct ofono_modem *modem,
-+				const char *key, char *debug)
-+{
-+	const char *device;
-+	GAtChat *chat;
-+
-+	device =3D ofono_modem_get_string(modem, key);
-+	if (device =3D=3D NULL)
-+		return NULL;
-+
-+	DBG("%s %s", key, device);
-+
-+	chat =3D create_port(device);
-+	if (chat =3D=3D NULL)
-+		return NULL;
-+
-+	g_at_chat_add_terminator(chat, "COMMAND NOT SUPPORT", -1, FALSE);
-+
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(chat, cdmagen_debug, debug);
-+
-+	return chat;
-+}
-+
-+static void cdmagen_disconnect(gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct cdmagen_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	g_at_chat_unref(data->chat);
-+	data->chat =3D NULL;
-+
-+	data->chat =3D open_device(modem, "Device", "CDMA Device: ");
-+	if (data->chat =3D=3D NULL)
-+		return;
-+
-+	g_at_chat_set_disconnect_function(data->chat,
-+			cdmagen_disconnect, modem);
-+}
-+
-+/* power up hardware */
-+static int cdmagen_enable(struct ofono_modem *modem)
-+{
-+	struct cdmagen_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	ofono_modem_set_boolean(modem, "no_sim_required", TRUE);
-+
-+	data->chat =3D open_device(modem, "Device", "CDMA Device: ");
-+	if (data->chat =3D=3D NULL)
-+		return -EINVAL;
-+
-+	g_at_chat_set_disconnect_function(data->chat,
-+			cdmagen_disconnect, modem);
-+
-+	if (getenv("OFONO_AT_DEBUG"))
-+		g_at_chat_set_debug(data->chat, cdmagen_debug,
-+				"CDMA Generic: ");
-+
-+	return 0;
-+}
-+
-+static int cdmagen_disable(struct ofono_modem *modem)
-+{
-+	struct cdmagen_data *data =3D ofono_modem_get_data(modem);
-+
-+	DBG("%p", modem);
-+
-+	if (data->chat) {
-+		g_at_chat_cancel_all(data->chat);
-+		g_at_chat_unregister_all(data->chat);
-+		g_at_chat_unref(data->chat);
-+		data->chat =3D NULL;
-+	}
-+
-+	return 0;
-+}
-+
-+static void cdmagen_pre_sim(struct ofono_modem *modem)
-+{
-+	struct cdmagen_data *data =3D ofono_modem_get_data(modem);
-+
-+	ofono_cdma_voicecall_manager_create(modem, 0, "cdmamodem",
-+				data->chat);
-+}
-+
-+static void cdmagen_post_sim(struct ofono_modem *modem)
-+{
-+}
-+
-+static gboolean cdmagen_set_online_cb(gpointer cb_data)
-+{
-+	struct cb_data *cbd =3D cb_data;
-+	ofono_modem_online_cb_t cb =3D cbd->cb;
-+
-+	CALLBACK_WITH_SUCCESS(cb, cbd->data);
-+
-+	g_free(cbd);
-+
-+	/* do not call again */
-+	return FALSE;
-+}
-+
-+static void cdmagen_set_online(struct ofono_modem *modem, ofono_bool_t onl=
-ine,
-+				ofono_modem_online_cb_t cb, void *user_data)
-+{
-+	struct cdmagen_data *data =3D ofono_modem_get_data(modem);
-+	struct cb_data *cbd =3D cb_data_new(cb, user_data);
-+
-+	DBG("modem %p %s", modem, online ? "online" : "offline");
++	struct voicecall_driver *vd =3D ofono_cdma_voicecall_manager_get_data(vc);
++	struct cb_data *cbd =3D cb_data_new(cb, data);
++	char buf[256];
 +
 +	if (cbd =3D=3D NULL)
 +		goto error;
 +
-+	data->online =3D online;
++	cbd->user =3D vc;
 +
-+	if (online)
-+		data->registration_status =3D
-+		    NETWORK_REGISTRATION_STATUS_REGISTERED;
++	snprintf(buf, sizeof(buf), "AT+CDV=3D%s", ph->number);
 +
-+	cdmagen_set_online_cb(cbd);
-+	return;
++	if (g_at_chat_send(vd->chat, buf, none_prefix,
++				at_dial_cb, cbd, g_free) > 0)
++		return;
 +
 +error:
 +	g_free(cbd);
 +
-+	CALLBACK_WITH_FAILURE(cb, cbd->data);
++	CALLBACK_WITH_FAILURE(cb, data);
 +}
 +
-+static void cdmagen_post_online(struct ofono_modem *modem)
++static void at_template(const char *cmd,
++				struct ofono_cdma_voicecall_manager *vc,
++				GAtResultFunc result_cb,
++				ofono_cdma_voicecall_cb_t cb, void *data)
 +{
-+	DBG("%p", modem);
++	struct voicecall_driver *vd =3D ofono_cdma_voicecall_manager_get_data(vc);
++	struct change_state_req *req =3D g_try_new0(struct change_state_req, 1);
++
++	if (req =3D=3D NULL)
++		goto error;
++
++	req->vc =3D vc;
++	req->cb =3D cb;
++	req->data =3D data;
++
++	if (g_at_chat_send(vd->chat, cmd, none_prefix,
++				result_cb, req, g_free) > 0)
++		return;
++
++error:
++	g_free(req);
++
++	CALLBACK_WITH_FAILURE(cb, data);
 +}
 +
-+static struct ofono_modem_driver cdmagen_driver =3D {
-+	.name			=3D "cdmagen",
-+	.probe			=3D cdmagen_probe,
-+	.remove			=3D cdmagen_remove,
-+	.enable			=3D cdmagen_enable,
-+	.disable		=3D cdmagen_disable,
-+	.pre_sim		=3D cdmagen_pre_sim,
-+	.post_sim		=3D cdmagen_post_sim,
-+	.set_online		=3D cdmagen_set_online,
-+	.post_online	=3D cdmagen_post_online,
++static void at_hangup_cb(gboolean ok, GAtResult *result, gpointer user_dat=
+a)
++{
++	struct change_state_req *req =3D user_data;
++
++	if (!ok) {
++		ofono_error("hangup failed.");
++		return;
++	}
++
++	ofono_cdma_voicecall_manager_disconnected(req->vc,
++				OFONO_DISCONNECT_REASON_LOCAL_HANGUP, NULL);
++		CALLBACK_WITH_SUCCESS(req->cb, req->data);
++}
++
++static void at_hangup(struct ofono_cdma_voicecall_manager *vc,
++			ofono_cdma_voicecall_cb_t cb, void *data)
++{
++	/* Hangup active call */
++	at_template("AT+CHV", vc, at_hangup_cb, cb, data);
++}
++
++static int at_voicecall_probe(struct ofono_cdma_voicecall_manager *vc,
++		unsigned int vendor, void *data)
++{
++	GAtChat *chat =3D data;
++	struct voicecall_driver *vd;
++
++	vd =3D g_try_new0(struct voicecall_driver, 1);
++	if (vd =3D=3D NULL)
++		return -ENOMEM;
++
++	vd->chat =3D g_at_chat_clone(chat);
++	vd->vendor =3D vendor;
++
++	ofono_cdma_voicecall_manager_set_data(vc, vd);
++
++	ofono_cdma_voicecall_manager_register(vc);
++
++	return 0;
++}
++
++static void at_voicecall_remove(struct ofono_cdma_voicecall_manager *vc)
++{
++	struct voicecall_driver *vd =3D ofono_cdma_voicecall_manager_get_data(vc);
++
++	ofono_cdma_voicecall_manager_set_data(vc, NULL);
++
++	g_at_chat_unref(vd->chat);
++	g_free(vd);
++}
++
++static struct ofono_cdma_voicecall_driver driver =3D {
++	.name			=3D "cdmamodem",
++	.probe			=3D at_voicecall_probe,
++	.remove			=3D at_voicecall_remove,
++	.dial			=3D at_dial,
++	.hangup			=3D at_hangup,
 +};
 +
-+static int cdmagen_init(void)
++void cdma_at_voicecall_init()
 +{
-+	return ofono_modem_driver_register(&cdmagen_driver);
++	ofono_cdma_voicecall_driver_register(&driver);
 +}
 +
-+static void cdmagen_exit(void)
++void cdma_at_voicecall_exit()
 +{
-+	ofono_modem_driver_unregister(&cdmagen_driver);
++	ofono_cdma_voicecall_driver_unregister(&driver);
 +}
-+
-+OFONO_PLUGIN_DEFINE(cdmagen, "Generic CDMA AT Modem", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT,
-+			cdmagen_init, cdmagen_exit)
 -- =
 
 1.7.0.4
 
 
---===============8004111311189760439==--
+--===============0749742507998662015==--
 
