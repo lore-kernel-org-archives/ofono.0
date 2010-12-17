@@ -1,44 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============5895076960460086073=="
+Content-Type: multipart/mixed; boundary="===============4942051492300537044=="
 MIME-Version: 1.0
-From: Tikander Petteri <petteri.tikander@ixonos.com>
-Subject: TODO: Network updating the emergency number list
-Date: Fri, 17 Dec 2010 11:10:39 +0200
-Message-ID: <1292577039.29886.56.camel@r82e1wc.ixonos.local>
+From: Marit Henriksen <maritsofie.henriksen8@gmail.com>
+Subject: [PATCHv2] network: query signal strength
+Date: Fri, 17 Dec 2010 10:46:04 +0100
+Message-ID: <1292579164-24372-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5895076960460086073==
+--===============4942051492300537044==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+From: Marit Henriksen <marit.henriksen@stericsson.com>
 
-I have investigated a little bit dynamic updating of emergency numbers
-by network. So I suggest, I'll register new notification-handler for
-'+CEN'-report in voicecall-driver. And naturally give those new
-emergency-numbers for voicecall-atom to be analyzed.
+Signal strength is set to -1 whenever registration status changes
+and differs from registered or roaming. When registration status
+changes again to registered or roaming, the signal strength needs to
+be updated, added query towards driver to get it.
+---
+ src/network.c |   28 ++++++++++++++++------------
+ 1 files changed, 16 insertions(+), 12 deletions(-)
 
-First version of network-ECC handling will enable +CEN-reporting
-statically in driver-probing. Then it listens '+CEN'-reports and after
-receiving new numbers compares those numbers with already stored numbers
-(SIM/default ECC's) and sends property-changed signal for same old good
-EmergencyNumbers-property, if new emergency numbers have been received
-from the network.
+diff --git a/src/network.c b/src/network.c
+index d203bee..50539a2 100644
+--- a/src/network.c
++++ b/src/network.c
+@@ -1296,6 +1296,19 @@ emit:
+ 	notify_status_watches(netreg);
+ }
+ =
 
-According to TS.27007 network emergency numbers are not necessarily
-received from the same operator as currently registered, so this should
-probably also be considered in the future.
++static void signal_strength_callback(const struct ofono_error *error,
++					int strength, void *data)
++{
++	struct ofono_netreg *netreg =3D data;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		DBG("Error during signal strength query");
++		return;
++	}
++
++	ofono_netreg_strength_notify(netreg, strength);
++}
++
+ void ofono_netreg_status_notify(struct ofono_netreg *netreg, int status,
+ 			int lac, int ci, int tech)
+ {
+@@ -1319,6 +1332,9 @@ void ofono_netreg_status_notify(struct ofono_netreg *=
+netreg, int status,
+ 		if (netreg->driver->current_operator)
+ 			netreg->driver->current_operator(netreg,
+ 					current_operator_callback, netreg);
++		if (netreg->driver->strength)
++			netreg->driver->strength(netreg,
++					signal_strength_callback, netreg);
+ 	} else {
+ 		struct ofono_error error;
+ =
 
-My test-modem doesn't actually support '+CEN'-reports, but I can update
-a little bit Phonesim for simulating of testing the unsolicited network
-emergency-numbers.
+@@ -1345,18 +1361,6 @@ void ofono_netreg_time_notify(struct ofono_netreg *n=
+etreg,
+ 	__ofono_nettime_info_received(modem, info);
+ }
+ =
 
-Br, Petteri
+-static void signal_strength_callback(const struct ofono_error *error,
+-					int strength, void *data)
+-{
+-	struct ofono_netreg *netreg =3D data;
+-
+-	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+-		DBG("Error during signal strength query");
+-		return;
+-	}
+-
+-	ofono_netreg_strength_notify(netreg, strength);
+-}
+ =
 
--- See us at Mobile World Congress, 14-17 February 2011, in Barcelona, Spai=
-n. Visit the Ixonos booth Hall 1, # 1E19.
+ static void init_registration_status(const struct ofono_error *error,
+ 					int status, int lac, int ci, int tech,
+-- =
+
+1.7.1
 
 
---===============5895076960460086073==--
+--===============4942051492300537044==--
 
