@@ -1,48 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============0092084738967567371=="
+Content-Type: multipart/mixed; boundary="===============5144406601347626456=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v2 7/9] ofono-rules: Add cdmagen device
-Date: Fri, 17 Dec 2010 15:11:19 -0800
-Message-ID: <1292627481-9109-8-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: [PATCH v2 8/9] udev: Add cdmagen
+Date: Fri, 17 Dec 2010 15:11:20 -0800
+Message-ID: <1292627481-9109-9-git-send-email-dara.spieker-doyle@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0092084738967567371==
+--===============5144406601347626456==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/ofono.rules |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ plugins/udev.c |   21 +++++++++++++++++++++
+ 1 files changed, 21 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index da8a8ef..34698f0 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -429,6 +429,10 @@ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"13=
-11", ENV{OFONO_DRIVER}=3D"mbm"
- # Nokia Internet Stick CS-10
- ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"060e", ENV{OFONO_DRIVE=
-R}=3D"nokia"
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 255755e..e9541ac 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -449,6 +449,25 @@ static void add_isi(struct ofono_modem *modem,
+ 	ofono_modem_register(modem);
+ }
  =
 
-+# Nokia CDMA Device
-+ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"023e", ENV{OFONO_DRIVE=
-R}=3D"cdmagen"
-+ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b6", ENV{OFONO_DRIVE=
-R}=3D"cdmagen"
++static void add_cdmagen(struct ofono_modem *modem,
++					struct udev_device *udev_device)
++{
++	const char *devnode;
++	int registered;
 +
- # Nokia Internet Stick CS-17
- ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"0623", ENV{OFONO_DRIVE=
-R}=3D"nokia"
++	DBG("modem %p", modem);
++
++	devnode =3D udev_device_get_devnode(udev_device);
++
++	registered =3D ofono_modem_get_integer(modem, "Registered");
++	if (registered !=3D 0)
++		return;
++
++	ofono_modem_set_string(modem, "Device", devnode);
++	ofono_modem_set_integer(modem, "Registered", 1);
++	ofono_modem_register(modem);
++}
++
+ static void add_modem(struct udev_device *udev_device)
+ {
+ 	struct ofono_modem *modem;
+@@ -533,6 +552,8 @@ done:
+ 		add_isi(modem, udev_device);
+ 	else if (g_strcmp0(driver, "n900") =3D=3D 0)
+ 		add_isi(modem, udev_device);
++	else if (g_strcmp0(driver, "cdmagen") =3D=3D 0)
++		add_cdmagen(modem, udev_device);
+ }
  =
 
+ static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
+_data)
 -- =
 
 1.7.0.4
 
 
---===============0092084738967567371==--
+--===============5144406601347626456==--
 
