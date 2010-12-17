@@ -1,35 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============2300576041278258329=="
+Content-Type: multipart/mixed; boundary="===============8160786232248187303=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] voicecall: Add emergency property
-Date: Fri, 17 Dec 2010 11:10:32 -0600
-Message-ID: <4D0B9988.50402@gmail.com>
-In-Reply-To: <1291724443-1851-1-git-send-email-john.mathew@elektrobit.com>
+From: Rajesh.Nagaiah@elektrobit.com
+Subject: RE: TODO: Network updating the emergency number list
+Date: Fri, 17 Dec 2010 12:29:56 -0800
+Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702DE3898@usrdes03.ebgroup.elektrobit.com>
+In-Reply-To: <4D0B9353.5060509@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2300576041278258329==
+--===============8160786232248187303==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi John,
+Hi Denis,
+ =
 
-On 12/07/2010 06:20 AM, John Mathew wrote:
-> ---
->  doc/voicecall-api.txt |    5 +++++
->  src/voicecall.c       |   37 +++++++++++++++++++++++++++++++++++++
->  2 files changed, 42 insertions(+), 0 deletions(-)
+> Hi Petteri,
 > =
 
+> On 12/17/2010 03:10 AM, Tikander Petteri wrote:
+> > Hi,
 
-I applied this patch but broke it up into two.  One for the doc changes
-and one for voicecall atom changes.
+> > According to TS.27007 network emergency numbers are not necessarily =
 
-I've also updated the features document and the TODO list for you ;)
+> > received from the same operator as currently registered, so this =
 
-Regards,
--Denis
+> > should probably also be considered in the future.
+> > =
 
---===============2300576041278258329==--
+> =
+
+> Can you do me a favor and investigate what oFono's behavior =
+
+> should be if we receive emergency numbers that are not =
+
+> relevant to the currently registered PLMN?  We should also =
+
+> update the task description with the above.
+
+The ECC list downloaded from the network are country specific ones, =
+
+so this ECC list usually can be notified by any available network not =
+
+necessarily by the serving network. The ECC list thats downloaded from =
+
+the serving network has to be reset when the phone registers in another =
+
+network with a different MCC ( not MNC ), as this ECC list is country =
+
+specific not operator specific.
+
+BR,
+Rajesh
+
+--===============8160786232248187303==--
 
