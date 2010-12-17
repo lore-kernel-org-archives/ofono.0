@@ -1,42 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============2449453096951479696=="
+Content-Type: multipart/mixed; boundary="===============4584261045127626577=="
 MIME-Version: 1.0
-From: Petteri Tikander <petteri.tikander@ixonos.com>
-Subject: [RFC PATCH] TODO: add owner to 'Network updating the emergency
- number' task
-Date: Fri, 17 Dec 2010 11:56:27 +0200
-Message-ID: <1292579787-25717-1-git-send-email-petteri.tikander@ixonos.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [PATCH] smsutil: do not hardcode TP-ValidityPeriod
+Date: Fri, 17 Dec 2010 15:29:51 +0200
+Message-ID: <AANLkTi=145vZAoZwZjJYoZY9mc0_aabmYJywCTjZw0_N@mail.gmail.com>
+In-Reply-To: <4D0AB4F0.1040801@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2449453096951479696==
+--===============4584261045127626577==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+Hi Denis,
 
-diff --git a/TODO b/TODO
-index a3f7379..21fc723 100644
---- a/TODO
-+++ b/TODO
-@@ -410,6 +410,7 @@ Emergency Calls
+2010/12/17 Denis Kenzior <denkenz@gmail.com>:
+> Can I get a bit more of an explanation from you as to why the 'absent'
+> validity period is better than hardcoding this to 24 hours?
 
-   Priority: High
-   Complexity: C2
-+  Owner: Petteri Tikander <petteri.tikander@ixonos.com>
+If there is an explicit validity period, it overrides the default
+validity period set by operator. I'd rather let operator-set default
+validity period.
 
- - Extend the voicecall interface with a property indicating whether this c=
-all
-   is an emergency call (essentially the CLI matches one of the numbers on =
-the
---
-1.7.0.4
+-- =
 
--- See us at Mobile World Congress, 14-17 February 2011, in Barcelona, Spai=
-n. Visit the Ixonos booth Hall 1, # 1E19.
+Pekka.Pessi mail at nokia.com
 
-
---===============2449453096951479696==--
+--===============4584261045127626577==--
 
