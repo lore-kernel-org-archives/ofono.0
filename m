@@ -1,68 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5144406601347626456=="
+Content-Type: multipart/mixed; boundary="===============1338921491453775936=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v2 8/9] udev: Add cdmagen
-Date: Fri, 17 Dec 2010 15:11:20 -0800
-Message-ID: <1292627481-9109-9-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: [PATCH v2 2/9] types: Add CDMA Phone Number
+Date: Fri, 17 Dec 2010 15:11:14 -0800
+Message-ID: <1292627481-9109-3-git-send-email-dara.spieker-doyle@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5144406601347626456==
+--===============1338921491453775936==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/udev.c |   21 +++++++++++++++++++++
- 1 files changed, 21 insertions(+), 0 deletions(-)
+ include/types.h |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 255755e..e9541ac 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -449,6 +449,25 @@ static void add_isi(struct ofono_modem *modem,
- 	ofono_modem_register(modem);
- }
+diff --git a/include/types.h b/include/types.h
+index de15437..a394775 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -84,6 +84,14 @@ struct ofono_phone_number {
+ 	int type;
+ };
  =
 
-+static void add_cdmagen(struct ofono_modem *modem,
-+					struct udev_device *udev_device)
-+{
-+	const char *devnode;
-+	int registered;
++/* Length of NUM_FIELDS in 3GPP2 C.S0005-E v2.0*/
++#define OFONO_CDMA_MAX_PHONE_NUMBER_LENGTH 256
 +
-+	DBG("modem %p", modem);
++struct ofono_cdma_phone_number {
++	/*char maps to max size of CHARi (8 bit) in 3GPP2 C.S0005-E v2.0*/
++	char number[OFONO_CDMA_MAX_PHONE_NUMBER_LENGTH];
++};
 +
-+	devnode =3D udev_device_get_devnode(udev_device);
-+
-+	registered =3D ofono_modem_get_integer(modem, "Registered");
-+	if (registered !=3D 0)
-+		return;
-+
-+	ofono_modem_set_string(modem, "Device", devnode);
-+	ofono_modem_set_integer(modem, "Registered", 1);
-+	ofono_modem_register(modem);
-+}
-+
- static void add_modem(struct udev_device *udev_device)
- {
- 	struct ofono_modem *modem;
-@@ -533,6 +552,8 @@ done:
- 		add_isi(modem, udev_device);
- 	else if (g_strcmp0(driver, "n900") =3D=3D 0)
- 		add_isi(modem, udev_device);
-+	else if (g_strcmp0(driver, "cdmagen") =3D=3D 0)
-+		add_cdmagen(modem, udev_device);
- }
- =
-
- static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
-_data)
+ struct ofono_call {
+ 	unsigned int id;
+ 	int type;
 -- =
 
 1.7.0.4
 
 
---===============5144406601347626456==--
+--===============1338921491453775936==--
 
