@@ -1,35 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============6599013976017053789=="
+Content-Type: multipart/mixed; boundary="===============4066707820733300729=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] Add support to CNAP ss command
-Date: Thu, 16 Dec 2010 18:50:11 -0600
-Message-ID: <4D0AB3C3.70305@gmail.com>
-In-Reply-To: <1291746792-8061-2-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH] TODO: add blacklisting
+Date: Thu, 16 Dec 2010 18:53:41 -0600
+Message-ID: <4D0AB495.7030600@gmail.com>
+In-Reply-To: <1291366927-21145-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6599013976017053789==
+--===============4066707820733300729==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Pekka,
 
-On 12/07/2010 12:33 PM, Gustavo F. Padovan wrote:
-> ---
->  src/simapplication.cpp |   80 ++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/simapplication.h   |    2 +
->  2 files changed, 82 insertions(+), 0 deletions(-)
+On 12/03/2010 03:02 AM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
 > =
 
+> ---
+>  TODO |    8 ++++++++
+>  1 files changed, 8 insertions(+), 0 deletions(-)
 
-Patch has been applied, thanks.  However, I removed Activation /
-Deactivation menus from a later patch.  These are actually not supported
-for CNAP/CLIP/COLR/COLP anyway.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============6599013976017053789==--
+--===============4066707820733300729==--
 
