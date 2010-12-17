@@ -1,74 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============0749742507998662015=="
+Content-Type: multipart/mixed; boundary="===============4259747982205832868=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v2 5/9] cdmamodem: Add CDMA MO Call Support
-Date: Fri, 17 Dec 2010 15:11:17 -0800
-Message-ID: <1292627481-9109-6-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: [PATCH v2 4/9] cdma-voicecall: Add CDMA MO Call Support
+Date: Fri, 17 Dec 2010 15:11:16 -0800
+Message-ID: <1292627481-9109-5-git-send-email-dara.spieker-doyle@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0749742507998662015==
+--===============4259747982205832868==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am                   |    7 ++
- configure.ac                  |    5 +
- drivers/cdmamodem/cdmamodem.c |   48 ++++++++++
- drivers/cdmamodem/cdmamodem.h |   25 ++++++
- drivers/cdmamodem/voicecall.c |  190 +++++++++++++++++++++++++++++++++++++=
+ Makefile.am          |    3 +-
+ src/cdma-voicecall.c |  444 ++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 5 files changed, 275 insertions(+), 0 deletions(-)
- create mode 100644 drivers/cdmamodem/cdmamodem.c
- create mode 100644 drivers/cdmamodem/cdmamodem.h
- create mode 100644 drivers/cdmamodem/voicecall.c
+ src/common.c         |   41 +++++
+ src/common.h         |    6 +
+ src/ofono.h          |    3 +
+ 5 files changed, 496 insertions(+), 1 deletions(-)
+ create mode 100644 src/cdma-voicecall.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 40ff52d..50e893f 100644
+index 1270be5..40ff52d 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -242,6 +242,13 @@ conf_DATA +=3D plugins/phonesim.conf
- endif
- endif
+@@ -319,7 +319,8 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
+es) src/ofono.ver \
+ 			src/radio-settings.c src/stkutil.h src/stkutil.c \
+ 			src/nettime.c src/stkagent.c src/stkagent.h \
+ 			src/simfs.c src/simfs.h src/audio-settings.c \
+-			src/smsagent.c src/smsagent.h src/ctm.c
++			src/smsagent.c src/smsagent.h src/ctm.c \
++			src/cdma-voicecall.c
  =
 
-+if CDMA_ATMODEM
-+builtin_modules +=3D cdma_atmodem
-+builtin_sources +=3D drivers/cdmamodem/cdmamodem.h \
-+			drivers/cdmamodem/cdmamodem.c \
-+			drivers/cdmamodem/voicecall.c
-+endif
-+
- builtin_modules +=3D g1
- builtin_sources +=3D plugins/g1.c
+ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
+@ -ldl
  =
 
-diff --git a/configure.ac b/configure.ac
-index 5c18f68..9cc0689 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -160,6 +160,11 @@ AC_ARG_ENABLE(atmodem, AC_HELP_STRING([--disable-atmod=
-em],
- 					[enable_atmodem=3D${enableval}])
- AM_CONDITIONAL(ATMODEM, test "${enable_atmodem}" !=3D "no")
- =
-
-+AC_ARG_ENABLE(cdmaatmodem, AC_HELP_STRING([--disable-cdmamodem],
-+				[disable CDMA AT modem support]),
-+					[enable_cdma_atmodem=3D${enableval}])
-+AM_CONDITIONAL(CDMA_ATMODEM, test "${enable_cdma_atmodem}" !=3D "no")
-+
- AC_ARG_ENABLE(phonesim, AC_HELP_STRING([--disable-phonesim],
- 				[disable Phone simulator support]),
- 					[enable_phonesim=3D${enableval}])
-diff --git a/drivers/cdmamodem/cdmamodem.c b/drivers/cdmamodem/cdmamodem.c
+diff --git a/src/cdma-voicecall.c b/src/cdma-voicecall.c
 new file mode 100644
-index 0000000..20e6d96
+index 0000000..7baaff3
 --- /dev/null
-+++ b/drivers/cdmamodem/cdmamodem.c
-@@ -0,0 +1,48 @@
++++ b/src/cdma-voicecall.c
+@@ -0,0 +1,444 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -95,263 +73,538 @@ index 0000000..20e6d96
 +#include <config.h>
 +#endif
 +
-+#include <glib.h>
-+#include <gatchat.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/types.h>
-+
-+#include "cdmamodem.h"
-+
-+static int cdma_atmodem_init(void)
-+{
-+	cdma_at_voicecall_init();
-+
-+	return 0;
-+}
-+
-+static void cdma_atmodem_exit(void)
-+{
-+	cdma_at_voicecall_exit();
-+}
-+
-+OFONO_PLUGIN_DEFINE(cdma_atmodem, "CDMA AT modem driver", VERSION,
-+	OFONO_PLUGIN_PRIORITY_DEFAULT, cdma_atmodem_init, cdma_atmodem_exit)
-diff --git a/drivers/cdmamodem/cdmamodem.h b/drivers/cdmamodem/cdmamodem.h
-new file mode 100644
-index 0000000..a5991cf
---- /dev/null
-+++ b/drivers/cdmamodem/cdmamodem.h
-@@ -0,0 +1,25 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010 Nokia Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#include <drivers/atmodem/atutil.h>
-+
-+extern void cdma_at_voicecall_init();
-+extern void cdma_at_voicecall_exit();
-diff --git a/drivers/cdmamodem/voicecall.c b/drivers/cdmamodem/voicecall.c
-new file mode 100644
-index 0000000..f9955d6
---- /dev/null
-+++ b/drivers/cdmamodem/voicecall.c
-@@ -0,0 +1,190 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010 Nokia Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#define _GNU_SOURCE
 +#include <string.h>
-+#include <stdlib.h>
 +#include <stdio.h>
++#include <time.h>
 +#include <errno.h>
++#include <stdint.h>
 +
 +#include <glib.h>
++#include <gdbus.h>
 +
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/cdma-voicecall.h>
++#include "ofono.h"
 +
-+#include "gatchat.h"
-+#include "gatresult.h"
++#include "common.h"
 +
-+#include "cdmamodem.h"
++static GSList *g_drivers;
 +
-+static const char *none_prefix[] =3D { NULL };
-+
-+struct voicecall_driver {
-+	struct ofono_cdma_voicecall_manager *vc;
-+	unsigned int local_release;
-+	GAtChat *chat;
-+	unsigned int vendor;
++struct ofono_cdma_voicecall_manager {
++	struct ofono_cdma_phone_number phone_number;
++	int direction;
++	enum cdma_call_status status;
++	time_t start_time;
++	DBusMessage *pending;
++	const struct ofono_cdma_voicecall_driver *driver;
++	void *driver_data;
++	struct ofono_atom *atom;
 +};
 +
-+struct change_state_req {
-+	struct ofono_cdma_voicecall_manager *vc;
-+	ofono_cdma_voicecall_cb_t cb;
-+	void *data;
-+};
++static void generic_callback(const struct ofono_error *error, void *data);
 +
-+static void at_dial_cb(gboolean ok, GAtResult *result, gpointer user_data)
++static const char *disconnect_reason_to_string(enum ofono_disconnect_reaso=
+n r)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_cdma_voicecall_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+
-+	decode_at_error(&error, g_at_result_final_response(result));
-+
-+	if (!ok)
-+		goto out;
-+
-+out:
-+	cb(&error, cbd->data);
++	switch (r) {
++	case OFONO_DISCONNECT_REASON_LOCAL_HANGUP:
++		return "local";
++	case OFONO_DISCONNECT_REASON_REMOTE_HANGUP:
++		return "remote";
++	default:
++		return "network";
++	}
 +}
 +
-+static void at_dial(struct ofono_cdma_voicecall_manager *vc,
-+				const struct ofono_cdma_phone_number *ph,
-+				ofono_cdma_voicecall_cb_t cb, void *data)
++static const char *cdma_call_status_to_string(enum cdma_call_status status)
 +{
-+	struct voicecall_driver *vd =3D ofono_cdma_voicecall_manager_get_data(vc);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char buf[256];
++	switch (status) {
++	case CDMA_CALL_STATUS_ACTIVE:
++		return "active";
++	case CDMA_CALL_STATUS_DIALING:
++		return "dialing";
++	case CDMA_CALL_STATUS_ALERTING:
++		return "alerting";
++	case CDMA_CALL_STATUS_INCOMING:
++		return "incoming";
++	default:
++		return "disconnected";
++	}
++}
 +
-+	if (cbd =3D=3D NULL)
-+		goto error;
++static const char *time_to_str(const time_t *t)
++{
++	static char buf[128];
++	struct tm tm;
 +
-+	cbd->user =3D vc;
++	strftime(buf, 127, "%Y-%m-%dT%H:%M:%S%z", localtime_r(t, &tm));
++	buf[127] =3D '\0';
 +
-+	snprintf(buf, sizeof(buf), "AT+CDV=3D%s", ph->number);
++	return buf;
++}
 +
-+	if (g_at_chat_send(vd->chat, buf, none_prefix,
-+				at_dial_cb, cbd, g_free) > 0)
++static void append_voicecall_properties(struct ofono_cdma_voicecall_manage=
+r *v,
++					DBusMessageIter *dict)
++{
++	const char *status;
++	const char *lineid;
++	const char *timestr;
++
++	status =3D cdma_call_status_to_string(v->status);
++	lineid =3D cdma_phone_number_to_string(&v->phone_number);
++
++	ofono_dbus_dict_append(dict, "State", DBUS_TYPE_STRING, &status);
++
++	ofono_dbus_dict_append(dict, "LineIdentification",
++				DBUS_TYPE_STRING, &lineid);
++
++	if (v->status =3D=3D CDMA_CALL_STATUS_ACTIVE) {
++		timestr =3D time_to_str(&v->start_time);
++
++		ofono_dbus_dict_append(dict, "StartTime", DBUS_TYPE_STRING,
++					&timestr);
++	}
++}
++
++static DBusMessage *voicecall_manager_get_properties(DBusConnection *conn,
++						DBusMessage *msg, void *data)
++{
++	struct ofono_cdma_voicecall_manager *v =3D data;
++	DBusMessage *reply;
++	DBusMessageIter iter;
++	DBusMessageIter dict;
++
++	reply =3D dbus_message_new_method_return(msg);
++
++	if (reply =3D=3D NULL)
++		return NULL;
++
++	dbus_message_iter_init_append(reply, &iter);
++
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					OFONO_PROPERTIES_ARRAY_SIGNATURE,
++					&dict);
++	append_voicecall_properties(v, &dict);
++	dbus_message_iter_close_container(&iter, &dict);
++
++	return reply;
++}
++
++static const char *voicecall_build_path(struct ofono_cdma_voicecall_manage=
+r *vc)
++{
++	static char path[256];
++
++	snprintf(path, sizeof(path), "%s/voicecall",
++			__ofono_atom_get_path(vc->atom));
++
++	return path;
++}
++
++static void voicecall_emit_disconnect_reason(
++		struct ofono_cdma_voicecall_manager *vc,
++		enum ofono_disconnect_reason reason)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path;
++	const char *reason_str;
++
++	reason_str =3D disconnect_reason_to_string(reason);
++	path =3D voicecall_build_path(vc);
++
++	g_dbus_emit_signal(conn, path, OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
++				"DisconnectReason",
++				DBUS_TYPE_STRING, &reason_str,
++				DBUS_TYPE_INVALID);
++}
++
++static void voicecall_set_call_status(struct ofono_cdma_voicecall_manager =
+*vc,
++		enum cdma_call_status status)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path;
++	const char *status_str;
++	enum cdma_call_status old_status;
++
++	if (vc->status =3D=3D status)
 +		return;
 +
-+error:
-+	g_free(cbd);
++	old_status =3D vc->status;
 +
-+	CALLBACK_WITH_FAILURE(cb, data);
++	vc->status =3D status;
++
++	status_str =3D cdma_call_status_to_string(status);
++	path =3D voicecall_build_path(vc);
++
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
++					"State", DBUS_TYPE_STRING,
++					&status_str);
++
++	if (status =3D=3D CDMA_CALL_STATUS_ACTIVE &&
++			old_status =3D=3D CDMA_CALL_STATUS_DIALING) {
++		const char *timestr;
++
++		vc->start_time =3D time(NULL);
++		timestr =3D time_to_str(&vc->start_time);
++
++		ofono_dbus_signal_property_changed(conn, path,
++					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
++					"StartTime", DBUS_TYPE_STRING,
++					&timestr);
++	}
 +}
 +
-+static void at_template(const char *cmd,
-+				struct ofono_cdma_voicecall_manager *vc,
-+				GAtResultFunc result_cb,
-+				ofono_cdma_voicecall_cb_t cb, void *data)
++static void voicecall_set_call_lineid(struct ofono_cdma_voicecall_manager =
+*v)
 +{
-+	struct voicecall_driver *vd =3D ofono_cdma_voicecall_manager_get_data(vc);
-+	struct change_state_req *req =3D g_try_new0(struct change_state_req, 1);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path;
++	const char *lineid_str;
 +
-+	if (req =3D=3D NULL)
-+		goto error;
++	path =3D voicecall_build_path(v);
 +
-+	req->vc =3D vc;
-+	req->cb =3D cb;
-+	req->data =3D data;
++	/* For MO calls, LineID is the dialed phone number */
++	lineid_str =3D cdma_phone_number_to_string(&v->phone_number);
 +
-+	if (g_at_chat_send(vd->chat, cmd, none_prefix,
-+				result_cb, req, g_free) > 0)
-+		return;
-+
-+error:
-+	g_free(req);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
++					"LineIdentification",
++					DBUS_TYPE_STRING, &lineid_str);
 +}
 +
-+static void at_hangup_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
++static void manager_dial_callback(const struct ofono_error *error, void *d=
+ata)
 +{
-+	struct change_state_req *req =3D user_data;
++	struct ofono_cdma_voicecall_manager *vc =3D data;
++	DBusMessage *reply;
 +
-+	if (!ok) {
-+		ofono_error("hangup failed.");
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		reply =3D __ofono_error_failed(vc->pending);
++		__ofono_dbus_pending_reply(&vc->pending, reply);
++
 +		return;
 +	}
 +
-+	ofono_cdma_voicecall_manager_disconnected(req->vc,
-+				OFONO_DISCONNECT_REASON_LOCAL_HANGUP, NULL);
-+		CALLBACK_WITH_SUCCESS(req->cb, req->data);
++	voicecall_set_call_lineid(vc);
++	vc->direction =3D CALL_DIRECTION_MOBILE_ORIGINATED;
++	voicecall_set_call_status(vc, CDMA_CALL_STATUS_DIALING);
++
++	reply =3D dbus_message_new_method_return(vc->pending);
++	__ofono_dbus_pending_reply(&vc->pending, reply);
 +}
 +
-+static void at_hangup(struct ofono_cdma_voicecall_manager *vc,
-+			ofono_cdma_voicecall_cb_t cb, void *data)
++static DBusMessage *voicecall_manager_dial(DBusConnection *conn,
++					DBusMessage *msg, void *data)
 +{
-+	/* Hangup active call */
-+	at_template("AT+CHV", vc, at_hangup_cb, cb, data);
++	struct ofono_cdma_voicecall_manager *vc =3D data;
++	const char *number;
++
++	if (vc->pending)
++		return __ofono_error_busy(msg);
++
++	if (vc->status !=3D CDMA_CALL_STATUS_DISCONNECTED)
++		return __ofono_error_failed(msg);
++
++	if (dbus_message_get_args(msg, NULL, DBUS_TYPE_STRING, &number,
++					DBUS_TYPE_INVALID) =3D=3D FALSE)
++		return __ofono_error_invalid_args(msg);
++
++	if (!valid_cdma_phone_number_format(number))
++		return __ofono_error_invalid_format(msg);
++
++	if (vc->driver->dial =3D=3D NULL)
++		return __ofono_error_not_implemented(msg);
++
++	vc->pending =3D dbus_message_ref(msg);
++
++	string_to_cdma_phone_number(number, &vc->phone_number);
++	vc->driver->dial(vc, &vc->phone_number, manager_dial_callback, vc);
++
++	return NULL;
 +}
 +
-+static int at_voicecall_probe(struct ofono_cdma_voicecall_manager *vc,
-+		unsigned int vendor, void *data)
++static DBusMessage *voicecall_manager_hangup(DBusConnection *conn,
++					DBusMessage *msg, void *data)
 +{
-+	GAtChat *chat =3D data;
-+	struct voicecall_driver *vd;
++	struct ofono_cdma_voicecall_manager *vc =3D data;
 +
-+	vd =3D g_try_new0(struct voicecall_driver, 1);
-+	if (vd =3D=3D NULL)
-+		return -ENOMEM;
++	if (vc->pending)
++		return __ofono_error_busy(msg);
 +
-+	vd->chat =3D g_at_chat_clone(chat);
-+	vd->vendor =3D vendor;
++	if (vc->driver->hangup =3D=3D NULL)
++		return __ofono_error_not_implemented(msg);
 +
-+	ofono_cdma_voicecall_manager_set_data(vc, vd);
++	if (vc->status =3D=3D CDMA_CALL_STATUS_DISCONNECTED)
++		return __ofono_error_failed(msg);
 +
-+	ofono_cdma_voicecall_manager_register(vc);
++	vc->pending =3D dbus_message_ref(msg);
++
++	vc->driver->hangup(vc, generic_callback, vc);
++
++	return NULL;
++}
++
++static GDBusMethodTable manager_methods[] =3D {
++	{ "GetProperties",    "",    "a{sv}",
++					voicecall_manager_get_properties },
++	{ "Dial",             "ss",  "o",        voicecall_manager_dial,
++						G_DBUS_METHOD_FLAG_ASYNC },
++	{ "Hangup",           "",    "",         voicecall_manager_hangup,
++						G_DBUS_METHOD_FLAG_ASYNC },
++	{ }
++};
++
++static GDBusSignalTable manager_signals[] =3D {
++	{ "PropertyChanged",	"sv" },
++	{ "DisconnectReason",	"s" },
++	{ }
++};
++
++void ofono_cdma_voicecall_manager_disconnected(
++					struct ofono_cdma_voicecall_manager *vc,
++					enum ofono_disconnect_reason reason,
++					const struct ofono_error *error)
++{
++	DBG("Got disconnection event for reason: %d", reason);
++
++	if (reason !=3D OFONO_DISCONNECT_REASON_UNKNOWN)
++		voicecall_emit_disconnect_reason(vc, reason);
++
++	voicecall_set_call_status(vc, CDMA_CALL_STATUS_DISCONNECTED);
++}
++
++static void generic_callback(const struct ofono_error *error, void *data)
++{
++	struct ofono_cdma_voicecall_manager *vc =3D data;
++	DBusMessage *reply;
++
++	if (error->type =3D=3D OFONO_ERROR_TYPE_NO_ERROR)
++		reply =3D dbus_message_new_method_return(vc->pending);
++	else
++		reply =3D __ofono_error_failed(vc->pending);
++
++	__ofono_dbus_pending_reply(&vc->pending, reply);
++}
++
++int ofono_cdma_voicecall_driver_register(
++		const struct ofono_cdma_voicecall_driver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
++
++	if (d->probe =3D=3D NULL)
++		return -EINVAL;
++
++	g_drivers =3D g_slist_prepend(g_drivers, (void *)d);
 +
 +	return 0;
 +}
 +
-+static void at_voicecall_remove(struct ofono_cdma_voicecall_manager *vc)
++void ofono_cdma_voicecall_driver_unregister(
++		const struct ofono_cdma_voicecall_driver *d)
 +{
-+	struct voicecall_driver *vd =3D ofono_cdma_voicecall_manager_get_data(vc);
++	DBG("driver: %p, name: %s", d, d->name);
 +
-+	ofono_cdma_voicecall_manager_set_data(vc, NULL);
-+
-+	g_at_chat_unref(vd->chat);
-+	g_free(vd);
++	g_drivers =3D g_slist_remove(g_drivers, (void *)d);
 +}
 +
-+static struct ofono_cdma_voicecall_driver driver =3D {
-+	.name			=3D "cdmamodem",
-+	.probe			=3D at_voicecall_probe,
-+	.remove			=3D at_voicecall_remove,
-+	.dial			=3D at_dial,
-+	.hangup			=3D at_hangup,
-+};
-+
-+void cdma_at_voicecall_init()
++static void voicecall_manager_remove(struct ofono_atom *atom)
 +{
-+	ofono_cdma_voicecall_driver_register(&driver);
++	struct ofono_cdma_voicecall_manager *vc =3D __ofono_atom_get_data(atom);
++
++	DBG("atom: %p", atom);
++
++	if (vc =3D=3D NULL)
++		return;
++
++	if (vc->driver && vc->driver->remove)
++		vc->driver->remove(vc);
++
++	g_free(vc);
 +}
 +
-+void cdma_at_voicecall_exit()
++struct ofono_cdma_voicecall_manager *ofono_cdma_voicecall_manager_create(
++						struct ofono_modem *modem,
++						unsigned int vendor,
++						const char *driver,
++						void *data)
 +{
-+	ofono_cdma_voicecall_driver_unregister(&driver);
++	struct ofono_cdma_voicecall_manager *vc;
++	GSList *l;
++
++	if (driver =3D=3D NULL)
++		return NULL;
++
++	vc =3D g_try_new0(struct ofono_cdma_voicecall_manager, 1);
++	if (vc =3D=3D NULL)
++		return NULL;
++
++	vc->status =3D CDMA_CALL_STATUS_DISCONNECTED;
++
++	vc->atom =3D __ofono_modem_add_atom(modem,
++			OFONO_ATOM_TYPE_CDMA_VOICECALL_MANAGER,
++			voicecall_manager_remove, vc);
++
++	for (l =3D g_drivers; l; l =3D l->next) {
++		const struct ofono_cdma_voicecall_driver *drv =3D l->data;
++
++		if (g_strcmp0(drv->name, driver))
++			continue;
++
++		if (drv->probe(vc, vendor, data) < 0)
++			continue;
++
++		vc->driver =3D drv;
++		break;
++	}
++
++	return vc;
 +}
++
++void ofono_cdma_voicecall_manager_register(
++				struct ofono_cdma_voicecall_manager *vc)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
++	const char *path =3D __ofono_atom_get_path(vc->atom);
++
++	if (!g_dbus_register_interface(conn, path,
++					OFONO_CDMA_VOICECALL_MANAGER_INTERFACE,
++					manager_methods, manager_signals, NULL,
++					vc, NULL)) {
++		ofono_error("Could not create %s interface",
++				OFONO_CDMA_VOICECALL_MANAGER_INTERFACE);
++		return;
++	}
++
++	ofono_modem_add_interface(modem,
++			OFONO_CDMA_VOICECALL_MANAGER_INTERFACE);
++}
++
++void ofono_cdma_voicecall_manager_remove(
++			struct ofono_cdma_voicecall_manager *vc)
++{
++	__ofono_atom_free(vc->atom);
++}
++
++void ofono_cdma_voicecall_manager_set_data(
++			struct ofono_cdma_voicecall_manager *vc, void *data)
++{
++	vc->driver_data =3D data;
++}
++
++void *ofono_cdma_voicecall_manager_get_data(
++			struct ofono_cdma_voicecall_manager *vc)
++{
++	return vc->driver_data;
++}
+diff --git a/src/common.c b/src/common.c
+index 5154b8d..168964e 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -262,6 +262,30 @@ gboolean valid_phone_number_format(const char *number)
+ 	return TRUE;
+ }
+ =
+
++gboolean valid_cdma_phone_number_format(const char *number)
++{
++	int len =3D strlen(number);
++	int i;
++
++	if (!len)
++		return FALSE;
++
++	if (len > OFONO_CDMA_MAX_PHONE_NUMBER_LENGTH)
++		return FALSE;
++
++	for (i =3D 0; i < len; i++) {
++		if (number[i] >=3D '0' && number[i] <=3D '9')
++			continue;
++
++		if (number[i] =3D=3D '*' || number[i] =3D=3D '#')
++			continue;
++
++		return FALSE;
++	}
++
++	return TRUE;
++}
++
+ const char *telephony_error_to_str(const struct ofono_error *error)
+ {
+ 	struct error_entry *e;
+@@ -405,6 +429,23 @@ void string_to_phone_number(const char *str, struct of=
+ono_phone_number *ph)
+ 	}
+ }
+ =
+
++const char *cdma_phone_number_to_string(
++			const struct ofono_cdma_phone_number *ph)
++{
++	static char buffer[OFONO_CDMA_MAX_PHONE_NUMBER_LENGTH + 1];
++
++	strncpy(buffer, ph->number, OFONO_CDMA_MAX_PHONE_NUMBER_LENGTH);
++	buffer[OFONO_CDMA_MAX_PHONE_NUMBER_LENGTH] =3D '\0';
++
++	return buffer;
++}
++
++void string_to_cdma_phone_number(const char *str,
++			struct ofono_cdma_phone_number *ph)
++{
++	strcpy(ph->number, str);
++}
++
+ gboolean valid_ussd_string(const char *str, gboolean call_in_progress)
+ {
+ 	int len =3D strlen(str);
+diff --git a/src/common.h b/src/common.h
+index c8e7070..64f297e 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -135,6 +135,12 @@ gboolean valid_phone_number_format(const char *number);
+ const char *phone_number_to_string(const struct ofono_phone_number *ph);
+ void string_to_phone_number(const char *str, struct ofono_phone_number *ph=
+);
+ =
+
++gboolean valid_cdma_phone_number_format(const char *number);
++const char *cdma_phone_number_to_string(
++				const struct ofono_cdma_phone_number *ph);
++void string_to_cdma_phone_number(const char *str,
++				struct ofono_cdma_phone_number *ph);
++
+ int mmi_service_code_to_bearer_class(int code);
+ =
+
+ gboolean valid_ussd_string(const char *str, gboolean call_in_progress);
+diff --git a/src/ofono.h b/src/ofono.h
+index 792134b..cab70cd 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -126,6 +126,7 @@ enum ofono_atom_type {
+ 	OFONO_ATOM_TYPE_STK =3D 20,
+ 	OFONO_ATOM_TYPE_NETTIME =3D 21,
+ 	OFONO_ATOM_TYPE_CTM =3D 22,
++	OFONO_ATOM_TYPE_CDMA_VOICECALL_MANAGER =3D 23,
+ };
+ =
+
+ enum ofono_atom_watch_condition {
+@@ -415,3 +416,5 @@ void __ofono_nettime_probe_drivers(struct ofono_modem *=
+modem);
+ =
+
+ void __ofono_nettime_info_received(struct ofono_modem *modem,
+ 					struct ofono_network_time *info);
++
++#include <ofono/cdma-voicecall.h>
 -- =
 
 1.7.0.4
 
 
---===============0749742507998662015==--
+--===============4259747982205832868==--
 
