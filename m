@@ -1,40 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============2419992067437232664=="
+Content-Type: multipart/mixed; boundary="===============2569473854337545406=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] smsutil: do not hardcode TP-ValidityPeriod
-Date: Fri, 17 Dec 2010 09:22:34 -0600
-Message-ID: <4D0B803A.2080404@gmail.com>
-In-Reply-To: <AANLkTi=145vZAoZwZjJYoZY9mc0_aabmYJywCTjZw0_N@mail.gmail.com>
+Subject: Re: [PATCH] test: add a script for STK conformance tests
+Date: Fri, 17 Dec 2010 09:32:00 -0600
+Message-ID: <4D0B8270.9020003@gmail.com>
+In-Reply-To: <9F3EABD6E3419B4C81F34EAABB4D40188136EF0453@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2419992067437232664==
+--===============2569473854337545406==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Guillaume,
 
-On 12/17/2010 07:29 AM, Pekka Pessi wrote:
-> Hi Denis,
+On 12/16/2010 10:04 AM, Lucas, GuillaumeX wrote:
+> From: Guillaume Lucas <guillaumex.lucas@intel.com>
 > =
 
-> 2010/12/17 Denis Kenzior <denkenz@gmail.com>:
->> Can I get a bit more of an explanation from you as to why the 'absent'
->> validity period is better than hardcoding this to 24 hours?
+> To be able to run STK conformance tests at ofono
+> level, we need to have a STK agent registered. The
+> test-stk-conformance script provided here do that.
+> This script is for conformance so all the data input
+> of the agent are displayed to be able to check them.
+> The existing test-stk-menu is usable only when there
+> is a STK menu provided by the (U)SIM card.
+> ---
+>  test/test-stk-conformance |  226 +++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 226 insertions(+), 0 deletions(-)
+>  create mode 100755 test/test-stk-conformance
 > =
 
-> If there is an explicit validity period, it overrides the default
-> validity period set by operator. I'd rather let operator-set default
-> validity period.
-> =
 
+I really don't like the amount of code copying going on here.  Have you
+considered extending the current test-stk-menu with the ability to run
+as the 'default' agent instead?  Maybe via a command line option?
 
-Sounds good.  Can you resend this patch with the description stating the
-above?
-
-Thanks,
+Regards,
 -Denis
 
---===============2419992067437232664==--
+--===============2569473854337545406==--
 
