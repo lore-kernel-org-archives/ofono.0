@@ -1,44 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============8976405554374829782=="
+Content-Type: multipart/mixed; boundary="===============6812771474969158511=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH] Mark CNAP task as done
-Date: Fri, 17 Dec 2010 14:54:18 -0200
-Message-ID: <1292604858-21143-1-git-send-email-padovan@profusion.mobi>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: TODO: Network updating the emergency number list
+Date: Fri, 17 Dec 2010 09:02:38 -0800
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9015A247234@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <1292577039.29886.56.camel@r82e1wc.ixonos.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8976405554374829782==
+--===============6812771474969158511==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- TODO |    6 ------
- 1 files changed, 0 insertions(+), 6 deletions(-)
+> Hi,
+> =
 
-diff --git a/TODO b/TODO
-index a3f7379..4c3506e 100644
---- a/TODO
-+++ b/TODO
-@@ -246,12 +246,6 @@ Supplementary Services
-   Priority: Low
-   Complexity: C8
- =
+> I have investigated a little bit dynamic updating of emergency numbers
+> by network. So I suggest, I'll register new notification-handler for
+> '+CEN'-report in voicecall-driver. And naturally give those new
+> emergency-numbers for voicecall-atom to be analyzed.
 
--- Calling Name Presentation (CNAP) support
--
--  Priority: Low
--  Complexity: C2
--  Owner: Gustavo F Padovan <padovan@profusion.mobi>
--
- - User to User Signaling (UUS) support
- =
+The modem will typically already analyze the new emergency-numbers, filter =
+out the ones that are not applicable and merge the numbers from the various=
+ sources in the right priority. Some modems are able to communicate the res=
+ulting effective list of emergency-numbers, in which case the voicecall-ato=
+m should just use the list of emergency numbers reported by the modem witho=
+ut doing any additional merging/analyzing.
 
-   Priority: Low
--- =
+This also eliminates room for error if the algorithm that the ofono voiceca=
+ll atom uses differs for some reason from the algorithm used by the modem.
 
-1.7.3.2
+For modems that aren't able to communicate their effective list of emergenc=
+y numbers ofono would still need to create such list by itself as it does n=
+ow.
 
+Cheers,
+Waldo
 
---===============8976405554374829782==--
+--===============6812771474969158511==--
 
