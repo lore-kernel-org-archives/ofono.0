@@ -1,32 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0606049584562477614=="
+Content-Type: multipart/mixed; boundary="===============8976405554374829782=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH] TODO: add owner to 'Network updating the emergency
- number' task
-Date: Fri, 17 Dec 2010 10:45:33 -0600
-Message-ID: <4D0B93AD.1040806@gmail.com>
-In-Reply-To: <1292579787-25717-1-git-send-email-petteri.tikander@ixonos.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH] Mark CNAP task as done
+Date: Fri, 17 Dec 2010 14:54:18 -0200
+Message-ID: <1292604858-21143-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0606049584562477614==
+--===============8976405554374829782==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Petteri,
+---
+ TODO |    6 ------
+ 1 files changed, 0 insertions(+), 6 deletions(-)
 
-On 12/17/2010 03:56 AM, Petteri Tikander wrote:
-> ---
->  TODO |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
-> =
+diff --git a/TODO b/TODO
+index a3f7379..4c3506e 100644
+--- a/TODO
++++ b/TODO
+@@ -246,12 +246,6 @@ Supplementary Services
+   Priority: Low
+   Complexity: C8
+ =
+
+-- Calling Name Presentation (CNAP) support
+-
+-  Priority: Low
+-  Complexity: C2
+-  Owner: Gustavo F Padovan <padovan@profusion.mobi>
+-
+ - User to User Signaling (UUS) support
+ =
+
+   Priority: Low
+-- =
+
+1.7.3.2
 
 
-Patch has been applied.  Thanks for taking up this task.
-
-Regards,
--Denis
-
---===============0606049584562477614==--
+--===============8976405554374829782==--
 
