@@ -1,54 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============8352369202130576574=="
+Content-Type: multipart/mixed; boundary="===============0803803005444941846=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v2 7/9] ofono-rules: Add cdmagen device
-Date: Sat, 18 Dec 2010 19:31:05 +0100
-Message-ID: <1292697065.2658.14.camel@aeonflux>
-In-Reply-To: <1292627481-9109-8-git-send-email-dara.spieker-doyle@nokia.com>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: [PATCH v2] ifx: Adding modem selftest to Infineon modem
+Date: Sat, 18 Dec 2010 11:58:41 -0800
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9015A2476B7@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <1292696739.2658.10.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8352369202130576574==
+--===============0803803005444941846==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dara,
+> > @@ -80,6 +82,18 @@ static const char *dlc_nodes[NUM_DLC] =3D { "/dev/tt=
+yGSM1", "/dev/ttyGSM2",
+> >  =
 
->  plugins/ofono.rules |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
+> >  static const char *none_prefix[] =3D { NULL };
+> >  static const char *xdrv_prefix[] =3D { "+XDRV:", NULL };
+> > +static const char *empty_prefix[] =3D { "", NULL };
 > =
 
-> diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-> index da8a8ef..34698f0 100644
-> --- a/plugins/ofono.rules
-> +++ b/plugins/ofono.rules
-> @@ -429,6 +429,10 @@ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"=
-1311", ENV{OFONO_DRIVER}=3D"mbm"
->  # Nokia Internet Stick CS-10
->  ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"060e", ENV{OFONO_DRI=
-VER}=3D"nokia"
->  =
+> This is still wrong. See my comment from the original email. I am not
+> sure you really know what { "", NULL } means.
 
-> +# Nokia CDMA Device
-> +ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"023e", ENV{OFONO_DRI=
-VER}=3D"cdmagen"
-> +ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b6", ENV{OFONO_DRI=
-VER}=3D"cdmagen"
-> +
+The response doesn't really have a proper prefix (see example below), this =
+way the entire response ends up in the callback. Is there a better way? Giv=
+en that there aren't any URC registered yet, it will not interfere with any=
+ other response. It's obviously not a good idea to use it once the modem is=
+ powered up.
 
-since this is Nokia specific device, then using nokiacdma would be a
-better name. Or using OFONO_DRIVER=3Dnokia NOKIA_MODE=3Dcdma and sharing the
-driver might be useful.
+at(a)vers:device_version_id()
+CHIP ID =3D XXX
+FLASH TYPE =3D YYY
+FLASH ID =3D 0x898881
+SmartiUE2 =3D 37664
+RF PMU =3D 10548
+PA PMU =3D 40244
+RF ASM =3D 0
+FEM PA =3D 21812
+OK
 
-It really all depends how much they have in common. So what kind of
-hardware is this actually? A phone or a real USB dongle?
+Cheers,
+Waldo
 
-Regards
-
-Marcel
-
-
-
---===============8352369202130576574==--
+--===============0803803005444941846==--
 
