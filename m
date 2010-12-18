@@ -1,35 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============8897808986663231840=="
+Content-Type: multipart/mixed; boundary="===============8352369202130576574=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v2 8/9] udev: Add cdmagen
-Date: Sat, 18 Dec 2010 19:29:27 +0100
-Message-ID: <1292696967.2658.12.camel@aeonflux>
-In-Reply-To: <1292627481-9109-9-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: Re: [PATCH v2 7/9] ofono-rules: Add cdmagen device
+Date: Sat, 18 Dec 2010 19:31:05 +0100
+Message-ID: <1292697065.2658.14.camel@aeonflux>
+In-Reply-To: <1292627481-9109-8-git-send-email-dara.spieker-doyle@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8897808986663231840==
+--===============8352369202130576574==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Dara,
 
->  	struct ofono_modem *modem;
-> @@ -533,6 +552,8 @@ done:
->  		add_isi(modem, udev_device);
->  	else if (g_strcmp0(driver, "n900") =3D=3D 0)
->  		add_isi(modem, udev_device);
-> +	else if (g_strcmp0(driver, "cdmagen") =3D=3D 0)
-> +		add_cdmagen(modem, udev_device);
->  }
+>  plugins/ofono.rules |    4 ++++
+>  1 files changed, 4 insertions(+), 0 deletions(-)
+> =
 
-this is actually wrong. The generic drivers running against phonesim
-should not be done via udev. We did remove atgen for a reason actually
-since it was not really useful.
+> diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+> index da8a8ef..34698f0 100644
+> --- a/plugins/ofono.rules
+> +++ b/plugins/ofono.rules
+> @@ -429,6 +429,10 @@ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D"=
+1311", ENV{OFONO_DRIVER}=3D"mbm"
+>  # Nokia Internet Stick CS-10
+>  ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"060e", ENV{OFONO_DRI=
+VER}=3D"nokia"
+>  =
 
-Even the isigen driver needs to be renamed into isiusb or usbpn in the
-long term.
+> +# Nokia CDMA Device
+> +ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"023e", ENV{OFONO_DRI=
+VER}=3D"cdmagen"
+> +ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b6", ENV{OFONO_DRI=
+VER}=3D"cdmagen"
+> +
+
+since this is Nokia specific device, then using nokiacdma would be a
+better name. Or using OFONO_DRIVER=3Dnokia NOKIA_MODE=3Dcdma and sharing the
+driver might be useful.
+
+It really all depends how much they have in common. So what kind of
+hardware is this actually? A phone or a real USB dongle?
 
 Regards
 
@@ -37,5 +50,5 @@ Marcel
 
 
 
---===============8897808986663231840==--
+--===============8352369202130576574==--
 
