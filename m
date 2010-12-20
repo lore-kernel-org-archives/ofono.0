@@ -1,69 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============8744571942519862513=="
+Content-Type: multipart/mixed; boundary="===============6592030702679819382=="
 MIME-Version: 1.0
-From: Lei Yu <lei.2.yu@nokia.com>
-Subject: Re: [PATCH 4/5] cdmaphonesim: Add CDMA SMS Support
-Date: Mon, 20 Dec 2010 13:53:07 -0800
-Message-ID: <4D0FD043.90003@nokia.com>
-In-Reply-To: <4D0FBFAC.1010701@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 3/9] cdma-voicecall: Add CDMA MO Call Support
+Date: Mon, 20 Dec 2010 15:48:16 -0600
+Message-ID: <4D0FCF20.5050806@gmail.com>
+In-Reply-To: <4D0FCEF0.8000501@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8744571942519862513==
+--===============6592030702679819382==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Dara,
 
-On 12/20/2010 12:42 PM, ext Denis Kenzior wrote:
-> Hi Lei,
->
-> On 12/08/2010 06:35 PM, Lei Yu wrote:
->> ---
->>   Makefile.am               |    9 ++
->>   configure.ac              |    6 +
->>   plugins/cdmaphonesim.c    |  344 +++++++++++++++++++++++++++++++++++++=
-++++++++
->>   plugins/cdmaphonesim.conf |   14 ++
->>   4 files changed, 373 insertions(+), 0 deletions(-)
->>   create mode 100644 plugins/cdmaphonesim.c
->>   create mode 100644 plugins/cdmaphonesim.conf
+>>> +
+>>> +struct ofono_cdma_voicecall_manager;
 >>
->
-> Have you considered adding a CDMA/GSM selector to phonesim.conf instead?
->   So e.g. a new configuration key called 'Type' where type can be 'gsm'
-> or 'cdma'.
->
-> That way you can share much of the phonesim plugin plumbing and only
-> populate the atoms differently...
->
+>> Please call this ofono_cdma_voicecall.
+> This is actually our preference as well as there is no multicall in
+> CDMA, just the single voicecall. To that end, does it not make sense to
+> also rename the interface "Voicecall" rather than "VoiceCallManager"?
 
-We thought about this briefly but decided not pursuing that path at this =
+This comment was based mostly on the naming of the current gsm voicecall
+atom (e.g. ofono_voicecall, not ofono_voicecall_manager)
 
-stage of CDMA development mainly due to following reasons: a). We think =
-
-it may make more sense to let CDMA development evolving a bit more on =
-
-its own and then evaluate to see for which part it makes sense
-to merge. We are afraid merging too early will make the phonesim.c code =
-
-looking ugly with a lot of if/else down the road. We are planning to =
-
-evaluate things like this when we have at least a few CDMA atoms =
-
-implemented. b). We definitely would like to cause as little disruption =
-
-to GSM as possible at this stage of CDMA development.
-
-I am definitely looking forward to hearing more from you and other =
-
-people and open for any changes.
-
-> Regards,
-> -Denis
+For the interface name I suggest we stick to .cdma.VoiceCallManager for
+now to be consistent with the GSM naming.  However, I'm open to changing
+this one in the future.
 
 Regards,
-Lei
+-Denis
 
---===============8744571942519862513==--
+--===============6592030702679819382==--
 
