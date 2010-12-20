@@ -1,39 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============6877738314337707265=="
+Content-Type: multipart/mixed; boundary="===============8744571942519862513=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: Re: [PATCH v2 4/9] cdma-voicecall: Add CDMA MO Call Support
-Date: Mon, 20 Dec 2010 13:47:43 -0800
-Message-ID: <4D0FCEFF.2090607@nokia.com>
-In-Reply-To: <4D0FC43D.6070503@gmail.com>
+From: Lei Yu <lei.2.yu@nokia.com>
+Subject: Re: [PATCH 4/5] cdmaphonesim: Add CDMA SMS Support
+Date: Mon, 20 Dec 2010 13:53:07 -0800
+Message-ID: <4D0FD043.90003@nokia.com>
+In-Reply-To: <4D0FBFAC.1010701@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6877738314337707265==
+--===============8744571942519862513==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis
+Hi Denis,
 
-On 12/20/2010 01:01 PM, ext Denis Kenzior wrote:
-
->> +
->> +static const char *voicecall_build_path(struct ofono_cdma_voicecall_man=
-ager *vc)
->> +{
->> +     static char path[256];
->> +
->> +     snprintf(path, sizeof(path), "%s/voicecall",
->> +                     __ofono_atom_get_path(vc->atom));
+On 12/20/2010 12:42 PM, ext Denis Kenzior wrote:
+> Hi Lei,
 >
-> I'm still confused what this is for?  The CDMA voicecall proposal does
-> not have leaf objects...
-Sorry yes, this is the same oversight as before. I will fix this and =
+> On 12/08/2010 06:35 PM, Lei Yu wrote:
+>> ---
+>>   Makefile.am               |    9 ++
+>>   configure.ac              |    6 +
+>>   plugins/cdmaphonesim.c    |  344 +++++++++++++++++++++++++++++++++++++=
+++++++++
+>>   plugins/cdmaphonesim.conf |   14 ++
+>>   4 files changed, 373 insertions(+), 0 deletions(-)
+>>   create mode 100644 plugins/cdmaphonesim.c
+>>   create mode 100644 plugins/cdmaphonesim.conf
+>>
+>
+> Have you considered adding a CDMA/GSM selector to phonesim.conf instead?
+>   So e.g. a new configuration key called 'Type' where type can be 'gsm'
+> or 'cdma'.
+>
+> That way you can share much of the phonesim plugin plumbing and only
+> populate the atoms differently...
+>
 
-remove these path references.
+We thought about this briefly but decided not pursuing that path at this =
 
-Thanks
-Dara
+stage of CDMA development mainly due to following reasons: a). We think =
 
---===============6877738314337707265==--
+it may make more sense to let CDMA development evolving a bit more on =
+
+its own and then evaluate to see for which part it makes sense
+to merge. We are afraid merging too early will make the phonesim.c code =
+
+looking ugly with a lot of if/else down the road. We are planning to =
+
+evaluate things like this when we have at least a few CDMA atoms =
+
+implemented. b). We definitely would like to cause as little disruption =
+
+to GSM as possible at this stage of CDMA development.
+
+I am definitely looking forward to hearing more from you and other =
+
+people and open for any changes.
+
+> Regards,
+> -Denis
+
+Regards,
+Lei
+
+--===============8744571942519862513==--
 
