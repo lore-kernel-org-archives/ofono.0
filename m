@@ -1,54 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============2586384144260607222=="
+Content-Type: multipart/mixed; boundary="===============2752205935109152360=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] fake a sim-inserted status
-Date: Mon, 20 Dec 2010 15:31:07 -0600
-Message-ID: <4D0FCB1B.50808@gmail.com>
-In-Reply-To: <1292005692-19615-1-git-send-email-fgau@pyneo.org>
+From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+Subject: Re: [PATCH v2 3/9] cdma-voicecall: Add CDMA MO Call Support
+Date: Mon, 20 Dec 2010 13:47:28 -0800
+Message-ID: <4D0FCEF0.8000501@nokia.com>
+In-Reply-To: <4D0FC19B.6080908@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2586384144260607222==
+--===============2752205935109152360==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis
 
-On 12/10/2010 12:28 PM, F. Gau wrote:
-> From: M. Dietrich <mdt@emdete.de>
-> =
+Thank you for reviewing these patches. I will submit new versions for =
 
-> 	while the sim detection does not work this patch at least allows to use
-> 	those modems. until someone has the time to work out a correct solution
-> 	this is a usefull workaround.
-> ---
->  plugins/huawei.c |    1 +
->  1 files changed, 1 insertions(+), 0 deletions(-)
-> =
+your comments, please see any open points inline.
 
-> diff --git a/plugins/huawei.c b/plugins/huawei.c
-> index 25dfaca..df506d3 100644
-> --- a/plugins/huawei.c
-> +++ b/plugins/huawei.c
-> @@ -586,6 +586,7 @@ static void huawei_pre_sim(struct ofono_modem *modem)
->  	ofono_devinfo_create(modem, 0, "atmodem", data->pcui);
->  	data->sim =3D ofono_sim_create(modem, OFONO_VENDOR_QUALCOMM_MSM,
->  					"atmodem", data->pcui);
-> +	ofono_sim_inserted_notify(data->sim, TRUE);
->  =
+On 12/20/2010 12:50 PM, ext Denis Kenzior wrote:
 
->  	data->sim_poll_count =3D 0;
->  	query_sim_state(modem);
+>> + */
+>> +
+>> +#ifndef __OFONO_CDMA_VOICECALL_H
+>> +#define __OFONO_CDMA_VOICECALL_H
+>> +
+>> +#ifdef __cplusplus
+>> +extern "C" {
+>> +#endif
+>> +
+>> +#include<ofono/types.h>
+>> +
+>> +struct ofono_cdma_voicecall_manager;
+>
+> Please call this ofono_cdma_voicecall.
+This is actually our preference as well as there is no multicall in =
 
-I don't want to completely bypass the sim inserted logic (which seems to
-work on other Huawei models) for the sake of EM770.
+CDMA, just the single voicecall. To that end, does it not make sense to =
 
-So I really prefer that we do this a bit smarter.  Even simple model to
-behavior matching would be acceptable...
+also rename the interface "Voicecall" rather than "VoiceCallManager"?
 
-Regards,
--Denis
+Cheers
+Dara
 
---===============2586384144260607222==--
+--===============2752205935109152360==--
 
