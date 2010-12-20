@@ -1,42 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============4371619441772108105=="
+Content-Type: multipart/mixed; boundary="===============7208988694157648723=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 1/2] huawei: cancel poll timeout when going to a valid state
-Date: Mon, 20 Dec 2010 19:51:08 -0200
-Message-ID: <1292881869-13246-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: oFono release plan?
+Date: Mon, 20 Dec 2010 15:53:57 -0600
+Message-ID: <4D0FD075.6060800@gmail.com>
+In-Reply-To: <81C3A93C17462B4BBD7E272753C105791951F158E6@EXDCVYMBSTM005.EQ1STM.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4371619441772108105==
+--===============7208988694157648723==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/huawei.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+Hi Sjur,
 
-diff --git a/plugins/huawei.c b/plugins/huawei.c
-index 0c8d8c0..bff1343 100644
---- a/plugins/huawei.c
-+++ b/plugins/huawei.c
-@@ -205,6 +205,11 @@ static gboolean notify_sim_state(struct ofono_modem *m=
-odem,
- 	case HUAWEI_SIM_STATE_INVALID_CS:
- 	case HUAWEI_SIM_STATE_INVALID_PS:
- 	case HUAWEI_SIM_STATE_INVALID_PS_AND_CS:
-+		if (data->sim_poll_timeout) {
-+			g_source_remove(data->sim_poll_timeout);
-+			data->sim_poll_timeout =3D 0;
-+		}
-+
- 		/*
- 		 * In the "warm start" case the modem skips
- 		 * HUAWEI_SIM_STATE_INVALID_OR_LOCKED altogether, so need
--- =
+On 12/17/2010 10:21 AM, Sjur BRENDELAND wrote:
+> Hi Denis and Marcel.
+> =
 
-1.7.3.4
+> Do you have a release plan defined for oFono? =
+
+> When will you release oFono 1.0?
+> =
 
 
---===============4371619441772108105==--
+We do not have a concrete plan as of yet.  For the most part we were
+quite happy with the current set of oFono APIs, however with LTE support
+on the horizon we might have to revisit some of them.
+
+Regards,
+-Denis
+
+--===============7208988694157648723==--
 
