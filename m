@@ -1,32 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============6405606543121652152=="
+Content-Type: multipart/mixed; boundary="===============5968557908694482862=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/5] cdma-sms: Add CDMA SMS Support
-Date: Mon, 20 Dec 2010 14:36:15 -0600
-Message-ID: <4D0FBE3F.7050109@gmail.com>
-In-Reply-To: <1291854951-2378-3-git-send-email-lei.2.yu@nokia.com>
+Subject: Re: [PATCH 3/5] cdma-atmodem: Add CDMA SMS Support
+Date: Mon, 20 Dec 2010 14:39:38 -0600
+Message-ID: <4D0FBF0A.1080100@gmail.com>
+In-Reply-To: <1291854951-2378-4-git-send-email-lei.2.yu@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6405606543121652152==
+--===============5968557908694482862==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 On 12/08/2010 06:35 PM, Lei Yu wrote:
 > ---
->  Makefile.am        |    3 +-
->  src/cdma-sms.c     |  342 ++++++++++++++++++++++++++++++++++++++
->  src/cdma-smsutil.c |  467 ++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/cdma-smsutil.h |  264 +++++++++++++++++++++++++++++
+>  Makefile.am                    |    7 ++
+>  configure.ac                   |    5 ++
+>  drivers/cdma-atmodem/atmodem.c |   47 ++++++++++++
+>  drivers/cdma-atmodem/atmodem.h |   23 ++++++
 
-Please break this up into two patches, one for atom implementation
-(along with ofono.h change from Patch 1) and the utilities in a separate
-patch.  Otherwise it becomes a wee bit too big to handle ;)
+You need to synchronize with Dara on this one.  Both of you are sending
+the same stub implementation.  I suggest submitting this as a separate
+patch.  And please name it cdmamodem/cdmamodem.c & .h.  Dara has this
+right actually.
+
+>  drivers/cdma-atmodem/atutil.c  |   45 ++++++++++++
+>  drivers/cdma-atmodem/atutil.h  |   64 +++++++++++++++++
+
+As I mentioned before, please use the atutil.[ch] from atmodem directly.
+ No need to create a new set of these...
+
+>  drivers/cdma-atmodem/sms.c     |  151 ++++++++++++++++++++++++++++++++++=
+++++++
+
+And this one should be in a separate patch ;)
 
 Regards,
 -Denis
 
---===============6405606543121652152==--
+--===============5968557908694482862==--
 
