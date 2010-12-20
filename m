@@ -1,36 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============7208988694157648723=="
+Content-Type: multipart/mixed; boundary="===============6927565710329978910=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: oFono release plan?
-Date: Mon, 20 Dec 2010 15:53:57 -0600
-Message-ID: <4D0FD075.6060800@gmail.com>
-In-Reply-To: <81C3A93C17462B4BBD7E272753C105791951F158E6@EXDCVYMBSTM005.EQ1STM.local>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH 1/4] sim: add method to query SIM Retry Counter
+Date: Mon, 20 Dec 2010 19:56:35 -0200
+Message-ID: <1292882198-13736-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7208988694157648723==
+--===============6927565710329978910==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+---
+ include/sim.h |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-On 12/17/2010 10:21 AM, Sjur BRENDELAND wrote:
-> Hi Denis and Marcel.
-> =
+diff --git a/include/sim.h b/include/sim.h
+index 7860e24..50529bb 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -108,6 +108,9 @@ typedef void (*ofono_sim_passwd_cb_t)(const struct ofon=
+o_error *error,
+ 					enum ofono_sim_password_type type,
+ 					void *data);
+ =
 
-> Do you have a release plan defined for oFono? =
++typedef void (*ofono_sim_retry_counter_cb_t)(const struct ofono_error *err=
+or,
++					int retry_counter, void *data);
++
+ typedef void (*ofono_sim_lock_unlock_cb_t)(const struct ofono_error *error,
+ 					void *data);
+ =
 
-> When will you release oFono 1.0?
-> =
+@@ -144,6 +147,8 @@ struct ofono_sim_driver {
+ 			ofono_sim_passwd_cb_t cb, void *data);
+ 	void (*send_passwd)(struct ofono_sim *sim, const char *passwd,
+ 			ofono_sim_lock_unlock_cb_t cb, void *data);
++	void (*query_retry_counter)(struct ofono_sim *sim,
++			ofono_sim_retry_counter_cb_t cb, void *data);
+ 	void (*reset_passwd)(struct ofono_sim *sim, const char *puk,
+ 			const char *passwd,
+ 			ofono_sim_lock_unlock_cb_t cb, void *data);
+-- =
+
+1.7.3.4
 
 
-We do not have a concrete plan as of yet.  For the most part we were
-quite happy with the current set of oFono APIs, however with LTE support
-on the horizon we might have to revisit some of them.
-
-Regards,
--Denis
-
---===============7208988694157648723==--
+--===============6927565710329978910==--
 
