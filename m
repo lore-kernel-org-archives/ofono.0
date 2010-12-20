@@ -1,49 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============8037359683305353878=="
+Content-Type: multipart/mixed; boundary="===============8896684459478394761=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: Re: [PATCH v2 8/9] udev: Add cdmagen
-Date: Mon, 20 Dec 2010 10:31:00 -0800
-Message-ID: <4D0FA0E4.8030207@nokia.com>
-In-Reply-To: <1292696967.2658.12.camel@aeonflux>
+Subject: Re: [PATCH v2 7/9] ofono-rules: Add cdmagen device
+Date: Mon, 20 Dec 2010 10:31:55 -0800
+Message-ID: <4D0FA11B.3090808@nokia.com>
+In-Reply-To: <1292697065.2658.14.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8037359683305353878==
+--===============8896684459478394761==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Marcel
 
-Thank you for reviewing these patches
-
-On 12/18/2010 10:29 AM, ext Marcel Holtmann wrote:
+On 12/18/2010 10:31 AM, ext Marcel Holtmann wrote:
 > Hi Dara,
 >
->>   	struct ofono_modem *modem;
->> @@ -533,6 +552,8 @@ done:
->>   		add_isi(modem, udev_device);
->>   	else if (g_strcmp0(driver, "n900") =3D=3D 0)
->>   		add_isi(modem, udev_device);
->> +	else if (g_strcmp0(driver, "cdmagen") =3D=3D 0)
->> +		add_cdmagen(modem, udev_device);
->>   }
+>>   plugins/ofono.rules |    4 ++++
+>>   1 files changed, 4 insertions(+), 0 deletions(-)
+>>
+>> diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+>> index da8a8ef..34698f0 100644
+>> --- a/plugins/ofono.rules
+>> +++ b/plugins/ofono.rules
+>> @@ -429,6 +429,10 @@ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D=
+"1311", ENV{OFONO_DRIVER}=3D"mbm"
+>>   # Nokia Internet Stick CS-10
+>>   ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"060e", ENV{OFONO_D=
+RIVER}=3D"nokia"
+>>
+>> +# Nokia CDMA Device
+>> +ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"023e", ENV{OFONO_DR=
+IVER}=3D"cdmagen"
+>> +ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b6", ENV{OFONO_DR=
+IVER}=3D"cdmagen"
+>> +
 >
-> this is actually wrong. The generic drivers running against phonesim
-> should not be done via udev. We did remove atgen for a reason actually
-> since it was not really useful.
+> since this is Nokia specific device, then using nokiacdma would be a
+> better name. Or using OFONO_DRIVER=3Dnokia NOKIA_MODE=3Dcdma and sharing =
+the
+> driver might be useful.
+>
+> It really all depends how much they have in common.
 
-Actually, this driver is not for running against phonesim at all. This =
+Nothing. All Nokia CDMA devices actually contain Qualcomm modems, so =
 
-plugin is intended for use against the majority of CDMA AT Modem devices =
+perhaps a better name may be along the lines of "msmcdmamodem" for CDMA =
 
-(phones and usb sticks) connected in a tethered mode.
-Please see the other email thread in this series ([Patch v2 7/9]) for =
+AT modem devices in a tethered mode?
 
-alternative name suggestion to clarify this.
+So what kind of
+> hardware is this actually? A phone or a real USB dongle?
+>
+It is a phone.
 
-Thanks
+Cheers
 Dara
 
---===============8037359683305353878==--
+--===============8896684459478394761==--
 
