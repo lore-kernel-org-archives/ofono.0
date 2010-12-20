@@ -1,72 +1,184 @@
-Content-Type: multipart/mixed; boundary="===============2565872738398723487=="
+Content-Type: multipart/mixed; boundary="===============4074525801783761772=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] phonesim: Add cfis and cphs file
-Date: Mon, 20 Dec 2010 11:49:01 -0800
-Message-ID: <1292874541-10288-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/5] cdma-sms: Add CDMA SMS Support
+Date: Mon, 20 Dec 2010 14:31:09 -0600
+Message-ID: <4D0FBD0D.6010605@gmail.com>
+In-Reply-To: <1291854951-2378-2-git-send-email-lei.2.yu@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2565872738398723487==
+--===============4074525801783761772==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/default.xml       |    8 ++++++++
- src/simfilesystem.cpp |    1 +
- 2 files changed, 9 insertions(+), 0 deletions(-)
+Hi Lei,
 
-diff --git a/src/default.xml b/src/default.xml
-index 54c7191..4491705 100644
---- a/src/default.xml
-+++ b/src/default.xml
-@@ -3352,6 +3352,10 @@ OK</response>
-     00 32 00 32 FF FF FF FF FF FF FF FF FF FF FF FF
- </file>
- =
+On 12/08/2010 06:35 PM, Lei Yu wrote:
+> ---
+>  Makefile.am        |    2 +-
+>  include/cdma-sms.h |   69 ++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  include/dbus.h     |    4 +++
+>  src/ofono.h        |    2 +
 
-+<file name=3D"EFcfis" recordsize=3D"16">
-+    01 1E FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-+</file>
-+
- <!-- Record 1
-      Length of alpha identifier: 32 chars
-      Alpha Identifier: "ABC"
-@@ -3491,6 +3495,10 @@ OK</response>
-     02 3C 03 00
- </file>
- =
+Can you do me a favor and split this up into two patches? One for dbus.h
+and one for cdma-sms.h.  You can lump the ofono.h changes with your atom
+implementation in src/
 
-+<file name=3D"EFcphs_cff">
-+    55 55
-+</file>
-+
- <file name=3D"EFcphs_mbdn" recordsize=3D"48">
-     FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-     FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
-diff --git a/src/simfilesystem.cpp b/src/simfilesystem.cpp
-index 6e05039..5312a82 100644
---- a/src/simfilesystem.cpp
-+++ b/src/simfilesystem.cpp
-@@ -118,6 +118,7 @@ static SimFileInfo const knownFiles[] =3D
-     {"4F05",        "5F50",     "EFimg5",      0x14ff44,  FILE_TYPE_TRANSP=
-ARENT},
- =
+>  4 files changed, 76 insertions(+), 1 deletions(-)
+>  create mode 100644 include/cdma-sms.h
+> =
 
-     // CPHS 4.2
-+    {"6F13",        "7F20",     "EFcphs_cff",  0x11ff44,  FILE_TYPE_TRANSP=
-ARENT},
-     {"6F16",        "7F20",     "EFcphs_info", 0x14ff44,  FILE_TYPE_TRANSP=
-ARENT},
-     {"6F17",        "7F20",     "EFcphs_mbdn", 0x11ff44,  FILE_TYPE_LINEAR=
-_FIXED},
-     {"6F11",        "7F20",     "EFcphs_mwis", 0x11ff44,  FILE_TYPE_TRANSP=
-ARENT},
--- =
+> diff --git a/Makefile.am b/Makefile.am
+> index cdb3166..13cbc37 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -14,7 +14,7 @@ include_HEADERS =3D include/log.h include/plugin.h incl=
+ude/history.h \
+>  			include/gprs.h include/gprs-context.h \
+>  			include/radio-settings.h include/stk.h \
+>  			include/audio-settings.h include/nettime.h \
+> -			include/ctm.h
+> +			include/ctm.h include/cdma-sms.h
+>  =
 
-1.7.0.4
+>  nodist_include_HEADERS =3D include/version.h
+>  =
 
+> diff --git a/include/cdma-sms.h b/include/cdma-sms.h
+> new file mode 100644
+> index 0000000..2e7834d
+> --- /dev/null
+> +++ b/include/cdma-sms.h
+> @@ -0,0 +1,69 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2010  Nokia Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifndef __OFONO_CDMASMS_H
+> +#define __OFONO_CDMASMS_H
 
---===============2565872738398723487==--
+I suggest using the prefix OFONO_CDMA_
+
+> +
+> +#ifdef __cplusplus
+> +extern "C" {
+> +#endif
+> +
+> +#include <ofono/types.h>
+> +
+> +struct ofono_cdmasms;
+
+So this would become ofono_cdma_sms...
+
+> +
+> +typedef void (*ofono_cdmasms_submit_cb_t)(const struct ofono_error *erro=
+r,
+> +				void *data);
+> +
+> +struct ofono_cdmasms_driver {
+> +	const char *name;
+> +	int (*probe)(struct ofono_cdmasms *cdmasms, unsigned int vendor,
+> +			void *data);
+> +	void (*remove)(struct ofono_cdmasms *cdmasms);
+> +	void (*submit)(struct ofono_cdmasms *cdmasms, unsigned char *tpdu,
+> +			int tpdu_len, ofono_cdmasms_submit_cb_t cb, void *data);
+> +};
+> +
+> +void ofono_cdmasms_deliver_notify(struct ofono_cdmasms *cdmasms,
+> +				unsigned char *pdu, int tpdu_len);
+> +
+> +int ofono_cdmasms_driver_register(const struct ofono_cdmasms_driver *d);
+> +void ofono_cdmasms_driver_unregister(const struct ofono_cdmasms_driver *=
+d);
+> +
+> +struct ofono_cdmasms *ofono_cdmasms_create(struct ofono_modem *modem,
+> +					unsigned int vendor,
+> +					const char *driver, void *data);
+> +
+> +void ofono_cdmasms_register(struct ofono_cdmasms *cdmasms);
+> +void ofono_cdmasms_remove(struct ofono_cdmasms *cdmasms);
+> +
+> +void ofono_cdmasms_set_data(struct ofono_cdmasms *cdmasms, void *data);
+> +void *ofono_cdmasms_get_data(struct ofono_cdmasms *cdmasms);
+> +
+> +struct ofono_atom *ofono_cdmasms_get_atom(struct ofono_cdmasms *cdmasms);
+> +
+
+Why do you need this one?  I don't see it being used anywhere
+
+> +const char *ofono_cdmasms_get_path(struct ofono_cdmasms *cdmasms);
+
+And this one?  Perhaps replacing this by a static function or even
+calling ofono_atom_get_path() is sufficient.
+
+> +
+> +#ifdef __cplusplus
+> +}
+> +#endif
+> +
+> +#endif /* __OFONO_CDMASMS_H */
+> diff --git a/include/dbus.h b/include/dbus.h
+> index 9e29afb..0587e16 100644
+> --- a/include/dbus.h
+> +++ b/include/dbus.h
+> @@ -55,6 +55,10 @@ extern "C" {
+>  #define OFONO_STK_INTERFACE OFONO_SERVICE ".SimToolkit"
+>  #define OFONO_SIM_APP_INTERFACE OFONO_SERVICE ".SimToolkitAgent"
+>  =
+
+> +/* CDMA Interfaces */
+> +#define OFONO_CDMA_MESSAGE_MANAGER_INTERFACE "org.ofono.cdma.MessageMana=
+ger"
+> +
+> +
+
+Why two empty lines?
+
+>  /* Essentially a{sv} */
+>  #define OFONO_PROPERTIES_ARRAY_SIGNATURE DBUS_DICT_ENTRY_BEGIN_CHAR_AS_S=
+TRING \
+>  					DBUS_TYPE_STRING_AS_STRING \
+> diff --git a/src/ofono.h b/src/ofono.h
+> index 792134b..9eb58fa 100644
+> --- a/src/ofono.h
+> +++ b/src/ofono.h
+> @@ -126,6 +126,8 @@ enum ofono_atom_type {
+>  	OFONO_ATOM_TYPE_STK =3D 20,
+>  	OFONO_ATOM_TYPE_NETTIME =3D 21,
+>  	OFONO_ATOM_TYPE_CTM =3D 22,
+> +	OFONO_ATOM_TYPE_CDMA_VOICECALL_MANAGER =3D 23,
+
+This does not seem related...
+
+> +	OFONO_ATOM_TYPE_CDMA_MESSAGE_MANAGER =3D 24,
+>  };
+>  =
+
+>  enum ofono_atom_watch_condition {
+
+Regards,
+-Denis
+
+--===============4074525801783761772==--
 
