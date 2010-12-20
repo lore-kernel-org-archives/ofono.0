@@ -1,45 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============6718716191661015248=="
+Content-Type: multipart/mixed; boundary="===============6775090240684490274=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] ifx: Adding modem selftest to Infineon modem
-Date: Sat, 18 Dec 2010 14:48:52 -0600
-Message-ID: <4D0D1E34.8000703@gmail.com>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C9015A2476B7@orsmsx508.amr.corp.intel.com>
+From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
+Subject: RE: [PATCH] test: add a script for STK conformance tests
+Date: Mon, 20 Dec 2010 08:40:14 +0000
+Message-ID: <9F3EABD6E3419B4C81F34EAABB4D40188136EF07A6@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <4D0B8270.9020003@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6718716191661015248==
+--===============6775090240684490274==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
+Hi Denis,
 
-On 12/18/2010 01:58 PM, Bastian, Waldo wrote:
->>> @@ -80,6 +82,18 @@ static const char *dlc_nodes[NUM_DLC] =3D { "/dev/tt=
-yGSM1", "/dev/ttyGSM2",
->>>  =
-
->>>  static const char *none_prefix[] =3D { NULL };
->>>  static const char *xdrv_prefix[] =3D { "+XDRV:", NULL };
->>> +static const char *empty_prefix[] =3D { "", NULL };
->>
->> This is still wrong. See my comment from the original email. I am not
->> sure you really know what { "", NULL } means.
+> -----Original Message-----
+> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
+> Sent: Friday, December 17, 2010 4:32 PM
+> To: ofono(a)ofono.org
+> Cc: Lucas, GuillaumeX
+> Subject: Re: [PATCH] test: add a script for STK conformance tests
 > =
 
-> The response doesn't really have a proper prefix (see example below), thi=
-s way the entire response ends up in the callback. Is there a better way? G=
-iven that there aren't any URC registered yet, it will not interfere with a=
-ny other response. It's obviously not a good idea to use it once the modem =
-is powered up.
+> Hi Guillaume,
+> =
+
+> On 12/16/2010 10:04 AM, Lucas, GuillaumeX wrote:
+> > From: Guillaume Lucas <guillaumex.lucas@intel.com>
+> >
+> > To be able to run STK conformance tests at ofono
+> > level, we need to have a STK agent registered. The
+> > test-stk-conformance script provided here do that.
+> > This script is for conformance so all the data input
+> > of the agent are displayed to be able to check them.
+> > The existing test-stk-menu is usable only when there
+> > is a STK menu provided by the (U)SIM card.
+> > ---
+> >  test/test-stk-conformance |  226
+> +++++++++++++++++++++++++++++++++++++++++++++
+> >  1 files changed, 226 insertions(+), 0 deletions(-)
+> >  create mode 100755 test/test-stk-conformance
+> >
+> =
+
+> I really don't like the amount of code copying going on here.  Have you
+> considered extending the current test-stk-menu with the ability to run
+> as the 'default' agent instead?  Maybe via a command line option?
 > =
 
 
-Then simply passing NULL instead of empty_prefix is sufficient.
+You're right, it will be probably better to extend the current stk test scr=
+ipt.
+I'll review my changes in this way.
 
 Regards,
--Denis
+Guillaume
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
---===============6718716191661015248==--
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============6775090240684490274==--
 
