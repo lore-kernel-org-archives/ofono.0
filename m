@@ -1,63 +1,72 @@
-Content-Type: multipart/mixed; boundary="===============8896684459478394761=="
+Content-Type: multipart/mixed; boundary="===============2565872738398723487=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: Re: [PATCH v2 7/9] ofono-rules: Add cdmagen device
-Date: Mon, 20 Dec 2010 10:31:55 -0800
-Message-ID: <4D0FA11B.3090808@nokia.com>
-In-Reply-To: <1292697065.2658.14.camel@aeonflux>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] phonesim: Add cfis and cphs file
+Date: Mon, 20 Dec 2010 11:49:01 -0800
+Message-ID: <1292874541-10288-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8896684459478394761==
+--===============2565872738398723487==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel
+---
+ src/default.xml       |    8 ++++++++
+ src/simfilesystem.cpp |    1 +
+ 2 files changed, 9 insertions(+), 0 deletions(-)
 
-On 12/18/2010 10:31 AM, ext Marcel Holtmann wrote:
-> Hi Dara,
->
->>   plugins/ofono.rules |    4 ++++
->>   1 files changed, 4 insertions(+), 0 deletions(-)
->>
->> diff --git a/plugins/ofono.rules b/plugins/ofono.rules
->> index da8a8ef..34698f0 100644
->> --- a/plugins/ofono.rules
->> +++ b/plugins/ofono.rules
->> @@ -429,6 +429,10 @@ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=3D=
-"1311", ENV{OFONO_DRIVER}=3D"mbm"
->>   # Nokia Internet Stick CS-10
->>   ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"060e", ENV{OFONO_D=
-RIVER}=3D"nokia"
->>
->> +# Nokia CDMA Device
->> +ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"023e", ENV{OFONO_DR=
-IVER}=3D"cdmagen"
->> +ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b6", ENV{OFONO_DR=
-IVER}=3D"cdmagen"
->> +
->
-> since this is Nokia specific device, then using nokiacdma would be a
-> better name. Or using OFONO_DRIVER=3Dnokia NOKIA_MODE=3Dcdma and sharing =
-the
-> driver might be useful.
->
-> It really all depends how much they have in common.
+diff --git a/src/default.xml b/src/default.xml
+index 54c7191..4491705 100644
+--- a/src/default.xml
++++ b/src/default.xml
+@@ -3352,6 +3352,10 @@ OK</response>
+     00 32 00 32 FF FF FF FF FF FF FF FF FF FF FF FF
+ </file>
+ =
 
-Nothing. All Nokia CDMA devices actually contain Qualcomm modems, so =
++<file name=3D"EFcfis" recordsize=3D"16">
++    01 1E FF FF FF FF FF FF FF FF FF FF FF FF FF FF
++</file>
++
+ <!-- Record 1
+      Length of alpha identifier: 32 chars
+      Alpha Identifier: "ABC"
+@@ -3491,6 +3495,10 @@ OK</response>
+     02 3C 03 00
+ </file>
+ =
 
-perhaps a better name may be along the lines of "msmcdmamodem" for CDMA =
++<file name=3D"EFcphs_cff">
++    55 55
++</file>
++
+ <file name=3D"EFcphs_mbdn" recordsize=3D"48">
+     FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+     FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+diff --git a/src/simfilesystem.cpp b/src/simfilesystem.cpp
+index 6e05039..5312a82 100644
+--- a/src/simfilesystem.cpp
++++ b/src/simfilesystem.cpp
+@@ -118,6 +118,7 @@ static SimFileInfo const knownFiles[] =3D
+     {"4F05",        "5F50",     "EFimg5",      0x14ff44,  FILE_TYPE_TRANSP=
+ARENT},
+ =
 
-AT modem devices in a tethered mode?
+     // CPHS 4.2
++    {"6F13",        "7F20",     "EFcphs_cff",  0x11ff44,  FILE_TYPE_TRANSP=
+ARENT},
+     {"6F16",        "7F20",     "EFcphs_info", 0x14ff44,  FILE_TYPE_TRANSP=
+ARENT},
+     {"6F17",        "7F20",     "EFcphs_mbdn", 0x11ff44,  FILE_TYPE_LINEAR=
+_FIXED},
+     {"6F11",        "7F20",     "EFcphs_mwis", 0x11ff44,  FILE_TYPE_TRANSP=
+ARENT},
+-- =
 
-So what kind of
-> hardware is this actually? A phone or a real USB dongle?
->
-It is a phone.
+1.7.0.4
 
-Cheers
-Dara
 
---===============8896684459478394761==--
+--===============2565872738398723487==--
 
