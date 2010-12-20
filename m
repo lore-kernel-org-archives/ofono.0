@@ -1,107 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============1748045504546712912=="
+Content-Type: multipart/mixed; boundary="===============2331498988834267048=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 1/2] stk: Send the AlphaId's to agent.
-Date: Mon, 20 Dec 2010 13:52:31 +0100
-Message-ID: <1292849553-4823-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH] sim: Set valid number length in empty EFmsisdn records.
+Date: Mon, 20 Dec 2010 13:52:33 +0100
+Message-ID: <1292849553-4823-3-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1292849553-4823-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1748045504546712912==
+--===============2331498988834267048==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Valid number length range is 1 - 10 bytes, other values, such as 0xff,
+could potentially crash external parsers.
 ---
- src/stk.c      |    9 +++++++--
- src/stkagent.c |   31 +++++++++++++++++++++++++++++++
- src/stkagent.h |    3 +++
- 3 files changed, 41 insertions(+), 2 deletions(-)
+ src/sim.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/src/stk.c b/src/stk.c
-index 076acc4..67cb759 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -472,12 +472,17 @@ static void stk_alpha_id_set(struct ofono_stk *stk,
- 		const char *text, const struct stk_text_attribute *attr,
- 		const struct stk_icon_id *icon)
- {
--	/* TODO */
-+	char *alpha =3D dbus_apply_text_attributes(text, attr);
-+
-+	if (alpha || icon)
-+		stk_agent_display_alpha_id(stk->current_agent, alpha, icon);
-+
-+	g_free(alpha);
- }
+diff --git a/src/sim.c b/src/sim.c
+index 9263e75..b98c4b2 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -437,6 +437,8 @@ static gboolean set_own_numbers(struct ofono_sim *sim,
+ 			new_numbers =3D new_numbers->next;
+ 		} else {
+ 			memset(efmsisdn, 0xff, sim->efmsisdn_length);
++			/* Set number length */
++			efmsisdn[sim->efmsisdn_length - 14] =3D 1;
+ 		}
  =
 
- static void stk_alpha_id_unset(struct ofono_stk *stk)
- {
--	/* TODO */
-+	stk_agent_request_cancel(stk->current_agent);
- }
- =
-
- static int duration_to_msecs(const struct stk_duration *duration)
-diff --git a/src/stkagent.c b/src/stkagent.c
-index e1a6f48..2c43053 100644
---- a/src/stkagent.c
-+++ b/src/stkagent.c
-@@ -964,3 +964,34 @@ int stk_agent_loop_tone(struct stk_agent *agent, const=
- char *text,
- =
-
- 	return 0;
- }
-+
-+static void alpha_id_cb(DBusPendingCall *call, void *data)
-+{
-+	stk_agent_request_end(data);
-+}
-+
-+int stk_agent_display_alpha_id(struct stk_agent *agent, const char *text,
-+				const struct stk_icon_id *icon)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+
-+	agent->msg =3D dbus_message_new_method_call(agent->bus, agent->path,
-+							OFONO_SIM_APP_INTERFACE,
-+							"DisplayAlphaId");
-+	if (agent->msg =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	dbus_message_append_args(agent->msg,
-+					DBUS_TYPE_STRING, &text,
-+					DBUS_TYPE_BYTE, &icon->id,
-+					DBUS_TYPE_INVALID);
-+
-+	if (dbus_connection_send_with_reply(conn, agent->msg, &agent->call,
-+						0) =3D=3D FALSE ||
-+			agent->call =3D=3D NULL)
-+		return -EIO;
-+
-+	dbus_pending_call_set_notify(agent->call, alpha_id_cb, agent, NULL);
-+
-+	return 0;
-+}
-diff --git a/src/stkagent.h b/src/stkagent.h
-index 517bcfe..00bacc2 100644
---- a/src/stkagent.h
-+++ b/src/stkagent.h
-@@ -137,3 +137,6 @@ int stk_agent_loop_tone(struct stk_agent *agent, const =
-char *text,
- =
-
- void append_menu_items_variant(DBusMessageIter *iter,
- 				const struct stk_menu_item *items);
-+
-+int stk_agent_display_alpha_id(struct stk_agent *agent, const char *text,
-+				const struct stk_icon_id *icon);
+ 		if (ofono_sim_write(req->sim, SIM_EFMSISDN_FILEID,
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============1748045504546712912==--
+--===============2331498988834267048==--
 
