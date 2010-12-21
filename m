@@ -1,49 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============6590186832363238676=="
+Content-Type: multipart/mixed; boundary="===============9190202567038037077=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/4 v2] Network Time plugin
-Date: Tue, 21 Dec 2010 06:17:44 -0800
-Message-ID: <1292941064.2658.29.camel@aeonflux>
-In-Reply-To: <1292916842.10058.5.camel@apaila-ThinkPad-T410>
+Subject: Re: [PATCH v2 7/9] ofono-rules: Add cdmagen device
+Date: Tue, 21 Dec 2010 06:23:22 -0800
+Message-ID: <1292941402.2658.33.camel@aeonflux>
+In-Reply-To: <4D0FA11B.3090808@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6590186832363238676==
+--===============9190202567038037077==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antti,
+Hi Dara,
 
-please do not top-post on this mailing list.
+> >>   plugins/ofono.rules |    4 ++++
+> >>   1 files changed, 4 insertions(+), 0 deletions(-)
+> >>
+> >> diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+> >> index da8a8ef..34698f0 100644
+> >> --- a/plugins/ofono.rules
+> >> +++ b/plugins/ofono.rules
+> >> @@ -429,6 +429,10 @@ ATTRS{idVendor}=3D=3D"0930", ATTRS{idProduct}=3D=
+=3D"1311", ENV{OFONO_DRIVER}=3D"mbm"
+> >>   # Nokia Internet Stick CS-10
+> >>   ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"060e", ENV{OFONO=
+_DRIVER}=3D"nokia"
+> >>
+> >> +# Nokia CDMA Device
+> >> +ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"023e", ENV{OFONO_=
+DRIVER}=3D"cdmagen"
+> >> +ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b6", ENV{OFONO_=
+DRIVER}=3D"cdmagen"
+> >> +
+> >
+> > since this is Nokia specific device, then using nokiacdma would be a
+> > better name. Or using OFONO_DRIVER=3Dnokia NOKIA_MODE=3Dcdma and sharin=
+g the
+> > driver might be useful.
+> >
+> > It really all depends how much they have in common.
+> =
 
-> Could someone review this patch. It has been waiting for review a while
-> now. Thanks.
+> Nothing. All Nokia CDMA devices actually contain Qualcomm modems, so =
 
-<snip>
+> perhaps a better name may be along the lines of "msmcdmamodem" for CDMA =
 
-> > This series of patches introduces the network time part of the NITZ fea=
-ture =
+> AT modem devices in a tethered mode?
+> =
 
-> >  as outlined in 3GPP spec 22.042. The Network Time plugin has two DBUS =
+> So what kind of
+> > hardware is this actually? A phone or a real USB dongle?
+> >
+> It is a phone.
 
-> >  interfaces for client applications: notification signal and polling me=
-thod =
+so calling this driver "nokiacdma" sounds a bit better to me. It makes
+it clear that the device is from Nokia. If you wanna shotcut it into
+"nokcdma" then that is also fine with me, but it should reflect what it
+is.
 
-> >  call. The time information consists of three dictionary entries: 1) ti=
-me and =
-
-> >  date in seconds from epoch (renormalized to time indicatation arrival =
-time);
-> >  2) daylight saving time; 3) timezone.
-
-I am still saying that the plugin should monitor the presence of timed
-and then just send a D-Bus message to timed. That saves us the problem
-with the timestamping. And in case timed is not running it should just
-set the current time directly.
-
-I really prefer that we don't hand out timestamps over the D-Bus API.
-That seems wrong to me.
+Even the Nokia datacard contains a Qualcomm modem btw. It is just GSM
+instead of CDMA. So it is not that far away from the phone in tethered
+mode than you think. If you wanna go with the NOKIA_MODE=3Dgsm|cdma, then
+I would be fine with it as well.
 
 Regards
 
@@ -51,5 +71,5 @@ Marcel
 
 
 
---===============6590186832363238676==--
+--===============9190202567038037077==--
 
