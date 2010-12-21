@@ -1,33 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============7739884465332933127=="
+Content-Type: multipart/mixed; boundary="===============2985996978614263605=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 0/4 v2] Network Time plugin
-Date: Tue, 21 Dec 2010 19:04:30 +0200
-Message-ID: <AANLkTimezzoEsBCz_bcw5S0G9Ay6jjVZMFrTFYRNn12n@mail.gmail.com>
-In-Reply-To: <1292948715.2658.58.camel@aeonflux>
+From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+Subject: Re: [PATCH v2 7/9] ofono-rules: Add cdmagen device
+Date: Tue, 21 Dec 2010 09:47:17 -0800
+Message-ID: <4D10E825.8070005@nokia.com>
+In-Reply-To: <1292941402.2658.33.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7739884465332933127==
+--===============2985996978614263605==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Marcel
 
-2010/12/21 Marcel Holtmann <marcel@holtmann.org>:
-> true, but as long as you guys are proposing an official org.ofono API it
-> has to fit in a general context of oFono.
+On 12/21/2010 06:23 AM, ext Marcel Holtmann wrote:
 
-We can stuff this under meego.com instead, no problem.
+>
+> so calling this driver "nokiacdma" sounds a bit better to me. It makes
+> it clear that the device is from Nokia. If you wanna shotcut it into
+> "nokcdma" then that is also fine with me, but it should reflect what it
+> is.
+>
+  Ok, I see. I'll rename to nokiacdma and submit new versions.
 
-> So that got fixed. Is this really enough for you guys to just normalize
-> the value that you are getting?
+Thank you
+Dara
 
-Yes.
-
-Cheers,
-Aki
-
---===============7739884465332933127==--
+--===============2985996978614263605==--
 
