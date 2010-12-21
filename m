@@ -1,41 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============5706062647572859823=="
+Content-Type: multipart/mixed; boundary="===============8651580622031513534=="
 MIME-Version: 1.0
 From: Neil Jerram <neil@ossau.uklinux.net>
-Subject: Re: [PATCH] udev: Fix warning in compilation
-Date: Tue, 21 Dec 2010 11:56:06 +0000
-Message-ID: <87fwtr9w6h.fsf@ossau.uklinux.net>
-In-Reply-To: <1292922199-20434-1-git-send-email-antti.paila@nokia.com>
+Subject: Re: PATCH: Enable udev-based autodetection of calypso modem on
+ Freerunner
+Date: Tue, 21 Dec 2010 12:01:00 +0000
+Message-ID: <87bp4f9vyb.fsf@ossau.uklinux.net>
+In-Reply-To: <4D0FE94B.1010502@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5706062647572859823==
+--===============8651580622031513534==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Antti Paila <antti.paila@nokia.com> writes:
+Denis Kenzior <denkenz@gmail.com> writes:
 
-> ---
->  plugins/udev.c |    1 -
->  1 files changed, 0 insertions(+), 1 deletions(-)
->
-> diff --git a/plugins/udev.c b/plugins/udev.c
-> index 837ee9c..3ca6af0 100644
-> --- a/plugins/udev.c
-> +++ b/plugins/udev.c
-> @@ -452,7 +452,6 @@ static void add_isi(struct ofono_modem *modem,
->  static void add_calypso(struct ofono_modem *modem,
->  					struct udev_device *udev_device)
->  {
-> -	struct udev_list_entry *entry;
->  	const char *devnode;
->  =
+> We prefer if you use git send-email to format the patch for
+> submission.
 
->  	DBG("modem %p", modem);
+Sure, I will do that in future.  Thanks for looking at the patch anyway.
 
-My apologies for putting that warning in.  Thanks for fixing it.
+> I think the better way would be to drop a udev rule directly into
+> /etc/udev.d or similar.  The rule should be as simple as:
+> KERNEL=3D=3D"ttySAC0", ENV{OFONO_DRIVER}=3D"calypso"
 
-     Neil
+Do you mean in another file than 97-ofono.rules?
 
---===============5706062647572859823==--
+> Let me know if this works for you and I can add a comment in the calypso
+> plugin.
+
+Will do.  Thanks again,
+
+    Neil
+
+--===============8651580622031513534==--
 
