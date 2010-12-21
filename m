@@ -1,279 +1,143 @@
-Content-Type: multipart/mixed; boundary="===============5736831277191213377=="
+Content-Type: multipart/mixed; boundary="===============6509796743463366560=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v3, Part1,
- 4/5] cdmamodem: Add CDMA voicecall driver support for MO Call
-Date: Mon, 20 Dec 2010 17:36:36 -0800
-Message-ID: <1292895397-11573-5-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: [PATCH v3, Part1, 5/5] test: Add CDMA MO Call Support
+Date: Mon, 20 Dec 2010 17:36:37 -0800
+Message-ID: <1292895397-11573-6-git-send-email-dara.spieker-doyle@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5736831277191213377==
+--===============6509796743463366560==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am                   |    3 +-
- drivers/cdmamodem/cdmamodem.c |    3 +
- drivers/cdmamodem/cdmamodem.h |    3 +
- drivers/cdmamodem/voicecall.c |  190 +++++++++++++++++++++++++++++++++++++=
-++++
- 4 files changed, 198 insertions(+), 1 deletions(-)
- create mode 100644 drivers/cdmamodem/voicecall.c
+ Makefile.am           |    5 ++++-
+ test/cdma-dial-number |   24 ++++++++++++++++++++++++
+ test/cdma-hangup      |   20 ++++++++++++++++++++
+ test/cdma-list-call   |   30 ++++++++++++++++++++++++++++++
+ 4 files changed, 78 insertions(+), 1 deletions(-)
+ create mode 100755 test/cdma-dial-number
+ create mode 100755 test/cdma-hangup
+ create mode 100755 test/cdma-list-call
 
 diff --git a/Makefile.am b/Makefile.am
-index 861237c..50e893f 100644
+index 50e893f..32ded3d 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -245,7 +245,8 @@ endif
- if CDMA_ATMODEM
- builtin_modules +=3D cdma_atmodem
- builtin_sources +=3D drivers/cdmamodem/cdmamodem.h \
--			drivers/cdmamodem/cdmamodem.c
-+			drivers/cdmamodem/cdmamodem.c \
-+			drivers/cdmamodem/voicecall.c
- endif
+@@ -431,7 +431,10 @@ test_scripts =3D test/backtrace \
+ 		test/test-push-notification \
+ 		test/test-smart-messaging \
+ 		test/send-vcard \
+-		test/set-tty
++		test/set-tty \
++		test/cdma-list-call \
++		test/cdma-dial-number \
++		test/cdma-hangup
  =
 
- builtin_modules +=3D g1
-diff --git a/drivers/cdmamodem/cdmamodem.c b/drivers/cdmamodem/cdmamodem.c
-index 25bd0f3..20e6d96 100644
---- a/drivers/cdmamodem/cdmamodem.c
-+++ b/drivers/cdmamodem/cdmamodem.c
-@@ -34,11 +34,14 @@
- =
-
- static int cdma_atmodem_init(void)
- {
-+	cdma_at_voicecall_init();
-+
- 	return 0;
- }
- =
-
- static void cdma_atmodem_exit(void)
- {
-+	cdma_at_voicecall_exit();
- }
- =
-
- OFONO_PLUGIN_DEFINE(cdma_atmodem, "CDMA AT modem driver", VERSION,
-diff --git a/drivers/cdmamodem/cdmamodem.h b/drivers/cdmamodem/cdmamodem.h
-index 114d1fd..a5991cf 100644
---- a/drivers/cdmamodem/cdmamodem.h
-+++ b/drivers/cdmamodem/cdmamodem.h
-@@ -20,3 +20,6 @@
-  */
- =
-
- #include <drivers/atmodem/atutil.h>
-+
-+extern void cdma_at_voicecall_init();
-+extern void cdma_at_voicecall_exit();
-diff --git a/drivers/cdmamodem/voicecall.c b/drivers/cdmamodem/voicecall.c
-new file mode 100644
-index 0000000..e0a62f5
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/test/cdma-dial-number b/test/cdma-dial-number
+new file mode 100755
+index 0000000..948d32d
 --- /dev/null
-+++ b/drivers/cdmamodem/voicecall.c
-@@ -0,0 +1,190 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010 Nokia Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
++++ b/test/cdma-dial-number
+@@ -0,0 +1,24 @@
++#!/usr/bin/python
 +
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
++import sys
++import dbus
 +
-+#define _GNU_SOURCE
-+#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <errno.h>
++bus =3D dbus.SystemBus()
 +
-+#include <glib.h>
++manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++						'org.ofono.Manager')
 +
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/cdma-voicecall.h>
++if len(sys.argv) > 2:
++	path =3D sys.argv[1]
++	number =3D sys.argv[2]
++else:
++	modems =3D manager.GetModems()
++	path, properties =3D modems[0]
++	number =3D sys.argv[1]
 +
-+#include "gatchat.h"
-+#include "gatresult.h"
++print "Using modem %s" % path
 +
-+#include "cdmamodem.h"
++manager =3D dbus.Interface(bus.get_object('org.ofono', path),
++						'org.ofono.cdma.VoiceCallManager')
 +
-+static const char *none_prefix[] =3D { NULL };
++manager.Dial(number)
+\ No newline at end of file
+diff --git a/test/cdma-hangup b/test/cdma-hangup
+new file mode 100755
+index 0000000..f8e631e
+--- /dev/null
++++ b/test/cdma-hangup
+@@ -0,0 +1,20 @@
++#!/usr/bin/python
 +
-+struct voicecall_driver {
-+	struct ofono_cdma_voicecall *vc;
-+	unsigned int local_release;
-+	GAtChat *chat;
-+	unsigned int vendor;
-+};
++import sys
++import dbus
 +
-+struct change_state_req {
-+	struct ofono_cdma_voicecall *vc;
-+	ofono_cdma_voicecall_cb_t cb;
-+	void *data;
-+};
++bus =3D dbus.SystemBus()
 +
-+static void at_dial_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_cdma_voicecall_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
++manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++						'org.ofono.Manager')
 +
-+	decode_at_error(&error, g_at_result_final_response(result));
++if len(sys.argv) > 2:
++	path =3D sys.argv[1]
++else:
++	modems =3D manager.GetModems()
++	path, properties =3D modems[0]
 +
-+	if (!ok)
-+		goto out;
++manager =3D dbus.Interface(bus.get_object('org.ofono', path),
++						'org.ofono.cdma.VoiceCallManager')
 +
-+out:
-+	cb(&error, cbd->data);
-+}
++manager.Hangup()
+diff --git a/test/cdma-list-call b/test/cdma-list-call
+new file mode 100755
+index 0000000..9f9fdbc
+--- /dev/null
++++ b/test/cdma-list-call
+@@ -0,0 +1,30 @@
++#!/usr/bin/python
 +
-+static void at_dial(struct ofono_cdma_voicecall *vc,
-+				const struct ofono_cdma_phone_number *ph,
-+				ofono_cdma_voicecall_cb_t cb, void *data)
-+{
-+	struct voicecall_driver *vd =3D ofono_cdma_voicecall_get_data(vc);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+	char buf[256];
++import dbus
 +
-+	if (cbd =3D=3D NULL)
-+		goto error;
++bus =3D dbus.SystemBus()
 +
-+	cbd->user =3D vc;
++manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++						'org.ofono.Manager')
 +
-+	snprintf(buf, sizeof(buf), "AT+CDV=3D%s", ph->number);
++modems =3D manager.GetModems()
 +
-+	if (g_at_chat_send(vd->chat, buf, none_prefix,
-+				at_dial_cb, cbd, g_free) > 0)
-+		return;
++for path, properties in modems:
++	print "[ %s ]" % (path)
 +
-+error:
-+	g_free(cbd);
++	if "org.ofono.cdma.VoiceCallManager" not in properties["Interfaces"]:
++		continue
 +
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
++	mgr =3D dbus.Interface(bus.get_object('org.ofono', path),
++					'org.ofono.cdma.VoiceCallManager')
 +
-+static void at_template(const char *cmd,
-+				struct ofono_cdma_voicecall *vc,
-+				GAtResultFunc result_cb,
-+				ofono_cdma_voicecall_cb_t cb, void *data)
-+{
-+	struct voicecall_driver *vd =3D ofono_cdma_voicecall_get_data(vc);
-+	struct change_state_req *req =3D g_try_new0(struct change_state_req, 1);
++	properties =3D mgr.GetProperties()
 +
-+	if (req =3D=3D NULL)
-+		goto error;
-+
-+	req->vc =3D vc;
-+	req->cb =3D cb;
-+	req->data =3D data;
-+
-+	if (g_at_chat_send(vd->chat, cmd, none_prefix,
-+				result_cb, req, g_free) > 0)
-+		return;
-+
-+error:
-+	g_free(req);
-+
-+	CALLBACK_WITH_FAILURE(cb, data);
-+}
-+
-+static void at_hangup_cb(gboolean ok, GAtResult *result, gpointer user_dat=
-a)
-+{
-+	struct change_state_req *req =3D user_data;
-+
-+	if (!ok) {
-+		ofono_error("hangup failed.");
-+		return;
-+	}
-+
-+	ofono_cdma_voicecall_disconnected(req->vc,
-+				OFONO_DISCONNECT_REASON_LOCAL_HANGUP, NULL);
-+		CALLBACK_WITH_SUCCESS(req->cb, req->data);
-+}
-+
-+static void at_hangup(struct ofono_cdma_voicecall *vc,
-+			ofono_cdma_voicecall_cb_t cb, void *data)
-+{
-+	/* Hangup active call */
-+	at_template("AT+CHV", vc, at_hangup_cb, cb, data);
-+}
-+
-+static int at_voicecall_probe(struct ofono_cdma_voicecall *vc,
-+		unsigned int vendor, void *data)
-+{
-+	GAtChat *chat =3D data;
-+	struct voicecall_driver *vd;
-+
-+	vd =3D g_try_new0(struct voicecall_driver, 1);
-+	if (vd =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	vd->chat =3D g_at_chat_clone(chat);
-+	vd->vendor =3D vendor;
-+
-+	ofono_cdma_voicecall_set_data(vc, vd);
-+
-+	ofono_cdma_voicecall_register(vc);
-+
-+	return 0;
-+}
-+
-+static void at_voicecall_remove(struct ofono_cdma_voicecall *vc)
-+{
-+	struct voicecall_driver *vd =3D ofono_cdma_voicecall_get_data(vc);
-+
-+	ofono_cdma_voicecall_set_data(vc, NULL);
-+
-+	g_at_chat_unref(vd->chat);
-+	g_free(vd);
-+}
-+
-+static struct ofono_cdma_voicecall_driver driver =3D {
-+	.name			=3D "cdmamodem",
-+	.probe			=3D at_voicecall_probe,
-+	.remove			=3D at_voicecall_remove,
-+	.dial			=3D at_dial,
-+	.hangup			=3D at_hangup,
-+};
-+
-+void cdma_at_voicecall_init()
-+{
-+	ofono_cdma_voicecall_driver_register(&driver);
-+}
-+
-+void cdma_at_voicecall_exit()
-+{
-+	ofono_cdma_voicecall_driver_unregister(&driver);
-+}
++	for key in properties.keys():
++		if key in ["Interfaces", "Features"]:
++			val =3D ""
++			for i in properties[key]:
++				val +=3D i + " "
++		else:
++			val =3D str(properties[key])
++		print "    %s =3D %s" % (key, val)
+\ No newline at end of file
 -- =
 
 1.7.0.4
 
 
---===============5736831277191213377==--
+--===============6509796743463366560==--
 
