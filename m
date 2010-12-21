@@ -1,38 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============8651580622031513534=="
+Content-Type: multipart/mixed; boundary="===============0836476894350981442=="
 MIME-Version: 1.0
-From: Neil Jerram <neil@ossau.uklinux.net>
-Subject: Re: PATCH: Enable udev-based autodetection of calypso modem on
- Freerunner
-Date: Tue, 21 Dec 2010 12:01:00 +0000
-Message-ID: <87bp4f9vyb.fsf@ossau.uklinux.net>
-In-Reply-To: <4D0FE94B.1010502@gmail.com>
+From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
+Subject: [PATCH] TODO: Add onwer to 'Long phone numbers' task
+Date: Tue, 21 Dec 2010 09:49:09 -0300
+Message-ID: <1292935749-31308-1-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8651580622031513534==
+--===============0836476894350981442==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Denis Kenzior <denkenz@gmail.com> writes:
+---
+ TODO |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-> We prefer if you use git send-email to format the patch for
-> submission.
+diff --git a/TODO b/TODO
+index ee32e34..f2779fb 100644
+--- a/TODO
++++ b/TODO
+@@ -249,6 +249,7 @@ Voicecall
+ =
 
-Sure, I will do that in future.  Thanks for looking at the patch anyway.
+   Priority: Medium
+   Complexity: C2
++  Owner: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
+ =
 
-> I think the better way would be to drop a udev rule directly into
-> /etc/udev.d or similar.  The rule should be as simple as:
-> KERNEL=3D=3D"ttySAC0", ENV{OFONO_DRIVER}=3D"calypso"
+ - Dial strings. Include CLIR prefixes and 2nd stage dial strings in the
+   DialString call property. Add dialstring accessor method to C API.
+-- =
 
-Do you mean in another file than 97-ofono.rules?
+1.7.2.3
 
-> Let me know if this works for you and I can add a comment in the calypso
-> plugin.
 
-Will do.  Thanks again,
-
-    Neil
-
---===============8651580622031513534==--
+--===============0836476894350981442==--
 
