@@ -1,32 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============2985996978614263605=="
+Content-Type: multipart/mixed; boundary="===============1082363678933591268=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: Re: [PATCH v2 7/9] ofono-rules: Add cdmagen device
-Date: Tue, 21 Dec 2010 09:47:17 -0800
-Message-ID: <4D10E825.8070005@nokia.com>
-In-Reply-To: <1292941402.2658.33.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: PATCH: Enable udev-based autodetection of calypso modem on
+ Freerunner
+Date: Tue, 21 Dec 2010 12:01:16 -0600
+Message-ID: <4D10EB6C.8010503@gmail.com>
+In-Reply-To: <87bp4f9vyb.fsf@ossau.uklinux.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2985996978614263605==
+--===============1082363678933591268==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel
+Hi Neil,
 
-On 12/21/2010 06:23 AM, ext Marcel Holtmann wrote:
+>> I think the better way would be to drop a udev rule directly into
+>> /etc/udev.d or similar.  The rule should be as simple as:
+>> KERNEL=3D=3D"ttySAC0", ENV{OFONO_DRIVER}=3D"calypso"
+> =
 
->
-> so calling this driver "nokiacdma" sounds a bit better to me. It makes
-> it clear that the device is from Nokia. If you wanna shotcut it into
-> "nokcdma" then that is also fine with me, but it should reflect what it
-> is.
->
-  Ok, I see. I'll rename to nokiacdma and submit new versions.
+> Do you mean in another file than 97-ofono.rules?
 
-Thank you
-Dara
+Yep.
 
---===============2985996978614263605==--
+Regards,
+-Denis
+
+--===============1082363678933591268==--
 
