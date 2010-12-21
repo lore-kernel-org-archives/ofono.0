@@ -1,77 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0161034802758429910=="
+Content-Type: multipart/mixed; boundary="===============0215162314000075104=="
 MIME-Version: 1.0
-From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-Subject: [PATCH] test: Add script to turn ON/OFF GPS
-Date: Tue, 21 Dec 2010 11:13:12 -0300
-Message-ID: <1292940792-6503-1-git-send-email-rafael.zurita@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: oFono release plan?
+Date: Tue, 21 Dec 2010 06:14:09 -0800
+Message-ID: <1292940849.2658.26.camel@aeonflux>
+In-Reply-To: <4D0FD075.6060800@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0161034802758429910==
+--===============0215162314000075104==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am  |    3 ++-
- test/set-gps |   29 +++++++++++++++++++++++++++++
- 2 files changed, 31 insertions(+), 1 deletions(-)
- create mode 100644 test/set-gps
+Hi Sjur,
 
-diff --git a/Makefile.am b/Makefile.am
-index 12b3c33..cf678ec 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -423,7 +423,8 @@ test_scripts =3D test/backtrace \
- 		test/test-push-notification \
- 		test/test-smart-messaging \
- 		test/send-vcard \
--		test/set-tty
-+		test/set-tty \
-+		test/set-gps
- =
+> > Do you have a release plan defined for oFono? =
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/set-gps b/test/set-gps
-new file mode 100644
-index 0000000..5e38cae
---- /dev/null
-+++ b/test/set-gps
-@@ -0,0 +1,29 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 3:
-+	path =3D sys.argv[1]
-+	power =3D int(sys.argv[2])
-+elif len(sys.argv) =3D=3D 2:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+	power =3D int(sys.argv[1])
-+else:
-+	print "%s [PATH] {0|1}" % (sys.argv[0])
-+	exit(1)
-+
-+if power > 0:
-+	print "Turning ON GPS for modem %s..." % path
-+else:
-+	print "Turning OFF GPS for modem %s..." % path
-+
-+gps =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.Gps')
-+
-+gps.SetProperty("Powered", dbus.Boolean(power));
--- =
+> > When will you release oFono 1.0?
+> > =
 
-1.7.2.3
+> =
+
+> We do not have a concrete plan as of yet.  For the most part we were
+> quite happy with the current set of oFono APIs, however with LTE support
+> on the horizon we might have to revisit some of them.
+
+the upcoming LTE support holds us a little bit back. So Denis and I are
+a bit careful about calling it 1.0 just yet.
+
+In general the rule was to go for 1.0, when the D-Bus API seemed to be
+working out nicely. For most atoms we have that right now and I am
+pretty happy with the current API. It might need one additional in depth
+review, but changes would be absolutely minor (besides LTE of course).
+
+And then we wanted to get at least one GCF pre-certification result
+before calling it 1.0 for real.
+
+Regards
+
+Marcel
 
 
---===============0161034802758429910==--
+
+--===============0215162314000075104==--
 
