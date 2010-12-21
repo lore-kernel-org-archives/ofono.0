@@ -1,41 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============0215162314000075104=="
+Content-Type: multipart/mixed; boundary="===============6590186832363238676=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: oFono release plan?
-Date: Tue, 21 Dec 2010 06:14:09 -0800
-Message-ID: <1292940849.2658.26.camel@aeonflux>
-In-Reply-To: <4D0FD075.6060800@gmail.com>
+Subject: Re: [PATCH 0/4 v2] Network Time plugin
+Date: Tue, 21 Dec 2010 06:17:44 -0800
+Message-ID: <1292941064.2658.29.camel@aeonflux>
+In-Reply-To: <1292916842.10058.5.camel@apaila-ThinkPad-T410>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0215162314000075104==
+--===============6590186832363238676==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Hi Antti,
 
-> > Do you have a release plan defined for oFono? =
+please do not top-post on this mailing list.
 
-> > When will you release oFono 1.0?
-> > =
+> Could someone review this patch. It has been waiting for review a while
+> now. Thanks.
 
-> =
+<snip>
 
-> We do not have a concrete plan as of yet.  For the most part we were
-> quite happy with the current set of oFono APIs, however with LTE support
-> on the horizon we might have to revisit some of them.
+> > This series of patches introduces the network time part of the NITZ fea=
+ture =
 
-the upcoming LTE support holds us a little bit back. So Denis and I are
-a bit careful about calling it 1.0 just yet.
+> >  as outlined in 3GPP spec 22.042. The Network Time plugin has two DBUS =
 
-In general the rule was to go for 1.0, when the D-Bus API seemed to be
-working out nicely. For most atoms we have that right now and I am
-pretty happy with the current API. It might need one additional in depth
-review, but changes would be absolutely minor (besides LTE of course).
+> >  interfaces for client applications: notification signal and polling me=
+thod =
 
-And then we wanted to get at least one GCF pre-certification result
-before calling it 1.0 for real.
+> >  call. The time information consists of three dictionary entries: 1) ti=
+me and =
+
+> >  date in seconds from epoch (renormalized to time indicatation arrival =
+time);
+> >  2) daylight saving time; 3) timezone.
+
+I am still saying that the plugin should monitor the presence of timed
+and then just send a D-Bus message to timed. That saves us the problem
+with the timestamping. And in case timed is not running it should just
+set the current time directly.
+
+I really prefer that we don't hand out timestamps over the D-Bus API.
+That seems wrong to me.
 
 Regards
 
@@ -43,5 +51,5 @@ Marcel
 
 
 
---===============0215162314000075104==--
+--===============6590186832363238676==--
 
