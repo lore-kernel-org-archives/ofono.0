@@ -1,49 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============6399271094509438594=="
+Content-Type: multipart/mixed; boundary="===============4936013569992784051=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v3, Part2, 0/3] Add nokiacdma plugin and CDMA MO Call support
-Date: Tue, 21 Dec 2010 11:23:27 -0800
-Message-ID: <1292959410-6566-1-git-send-email-dara.spieker-doyle@nokia.com>
-In-Reply-To: <y>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: PATCH: Enable udev-based autodetection of calypso modem on
+ Freerunner
+Date: Tue, 21 Dec 2010 13:18:05 -0600
+Message-ID: <4D10FD6D.20804@gmail.com>
+In-Reply-To: <1292958354.2658.61.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6399271094509438594==
+--===============4936013569992784051==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This series of patches is the second part of the split of the version 2 ser=
-ies,
-concerning the changes needed to provide foundation support for the nokiacd=
-ma
-device plugin and the adding the cdma-voicecall atom. This is needed for
-testing the changes in the first part of the series, for providing the =
+Hi Marcel,
 
-foundation cdmamodem driver and simple CDMA MO Call support with hardware.
+On 12/21/2010 01:05 PM, Marcel Holtmann wrote:
+> Hi Denis,
+> =
 
-These patches have been tested against the Nokia 7205 CDMA device in a teth=
-ered
-mode.
+>>> We could document this as Freerunner specific notes to point people into
+>>> the right direction. And we should maybe to the same for IFX since that
+>>> is currently only documented in the GIT commit logs.
+>>
+>> Documentation inside the individual modem driver is the way to go.  And
+>> IFX isn't even documented in git commit logs.  I looked ;)
+> =
 
-Limitations
------------
-The Nokia 7205 device does not support an AT interface for reporting request
-responses, such as the call status and remote/network disconnect reasons, so
-these are currently untested.
+> commit 3443a7a177fbaca24c84658968aff0a55db8a51d
+> Author: Marcel Holtmann <marcel@holtmann.org>
+> Date:   Sat Sep 18 22:08:41 2010 +0900
+> =
 
-Dara Spieker-Doyle (3):
-  nokiacdma: Add plugin and CDMA MO Call Support
-  ofono-rules: Add nokiacdma device
-  udev: Add nokiacdma device
+>     udev: Add support for IFX device detection
+>     =
 
- Makefile.am                   |   20 ++-
- plugins/nokiacdma.c           |  275 ++++++++++++++++++++++++++
- plugins/ofono.rules           |    4 +
- plugins/udev.c                |   21 ++
- 4 files changed, 303 insertions(+), 0 deletions(-)
- create mode 100644 plugins/nokiacdma.c
+>     The IFX device detection is pretty static, but instead of using
+>     a static configuration file it is important to know when the device
+>     node is actually present. For this udev is perfect. Adding a simple
+>     udev rule is all that it takes:
+>     =
 
+>     KERNEL=3D=3D"ttyIFX[0-9]*", ENV{OFONO_DRIVER}=3D"ifx"
+>     =
 
---===============6399271094509438594==--
+>     With this rule for every TTY with the kernel name like ttyIFX0, a new
+>     modem will be added and the IFX modem plugin driver requested for it.
+> =
+
+> this is not enough?
+
+Then I didn't look far back enough (or I'm simply blind).  But I still
+prefer this to be inside the driver or HACKING.calypso for easier access.
+
+Regards,
+-Denis
+
+--===============4936013569992784051==--
 
