@@ -1,79 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============8950174497670318400=="
+Content-Type: multipart/mixed; boundary="===============2173147125958700769=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH 2/2] huawei: fix SIM state notification when locked
-Date: Tue, 21 Dec 2010 17:19:37 -0200
-Message-ID: <AANLkTikWxKSr2F8ejvcCL6jNoKr_rpyeNRHq9kxiGCDp@mail.gmail.com>
-In-Reply-To: <1292881869-13246-2-git-send-email-lucas.demarchi@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: PATCH: Enable udev-based autodetection of calypso modem on
+ Freerunner
+Date: Tue, 21 Dec 2010 11:22:39 -0800
+Message-ID: <1292959359.2658.63.camel@aeonflux>
+In-Reply-To: <4D10FD6D.20804@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8950174497670318400==
+--===============2173147125958700769==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, Dec 20, 2010 at 7:51 PM, Lucas De Marchi
-<lucas.demarchi@profusion.mobi> wrote:
-> When SIM is locked, huawei modem does not send any notification about
-> SIM state change because it does not differentiate 'invalid' from
-> 'locked'.
->
-> In order to be able to unlock the sim, this patch forces a notification
-> of a valid state after a timeout.
-> ---
-> =C2=A0plugins/huawei.c | =C2=A0 40 ++++++++++++++++++++++++++++++++++++++=
-++
-> =C2=A01 files changed, 40 insertions(+), 0 deletions(-)
->
-> diff --git a/plugins/huawei.c b/plugins/huawei.c
-> index bff1343..7934956 100644
-> --- a/plugins/huawei.c
-> +++ b/plugins/huawei.c
-> @@ -56,6 +56,7 @@
-> =C2=A0#include <drivers/atmodem/vendor.h>
->
-> =C2=A0static const char *none_prefix[] =3D { NULL };
-> +static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
-> =C2=A0static const char *sysinfo_prefix[] =3D { "^SYSINFO:", NULL };
-> =C2=A0static const char *ussdmode_prefix[] =3D { "^USSDMODE:", NULL };
-> =C2=A0static const char *cvoice_prefix[] =3D { "^CVOICE:", NULL };
-> @@ -226,6 +227,41 @@ static gboolean notify_sim_state(struct ofono_modem =
-*modem,
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0return FALSE;
-> =C2=A0}
->
-> +static void cpin_cb(gboolean ok, GAtResult *result, gpointer user_data)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 struct ofono_modem *modem =3D user_data;
-> + =C2=A0 =C2=A0 =C2=A0 const char *value;
-> + =C2=A0 =C2=A0 =C2=A0 GAtResultIter iter;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (!ok)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 g_at_result_iter_init(&iter, result);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (!g_at_result_iter_next(&iter, "+CPIN:"))
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (!g_at_result_iter_next_unquoted_string(&iter, =
-&value))
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 /* Force notification of SIM ready because it's in=
- a locked state */
-> + =C2=A0 =C2=A0 =C2=A0 if (g_str_has_prefix(value, "SIM"))
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 notify_sim_state(modem=
-, HUAWEI_SIM_STATE_VALID);
-> +}
+Hi Denis,
 
-As I talked to Denis through IRC, this can be simplified. We can cheat
-here, not doing all this parsing and only relying on "ok" value. I
-tested it with Huawei E220. I'll send  another patch.
+> >>> We could document this as Freerunner specific notes to point people i=
+nto
+> >>> the right direction. And we should maybe to the same for IFX since th=
+at
+> >>> is currently only documented in the GIT commit logs.
+> >>
+> >> Documentation inside the individual modem driver is the way to go.  And
+> >> IFX isn't even documented in git commit logs.  I looked ;)
+> > =
+
+> > commit 3443a7a177fbaca24c84658968aff0a55db8a51d
+> > Author: Marcel Holtmann <marcel@holtmann.org>
+> > Date:   Sat Sep 18 22:08:41 2010 +0900
+> > =
+
+> >     udev: Add support for IFX device detection
+> >     =
+
+> >     The IFX device detection is pretty static, but instead of using
+> >     a static configuration file it is important to know when the device
+> >     node is actually present. For this udev is perfect. Adding a simple
+> >     udev rule is all that it takes:
+> >     =
+
+> >     KERNEL=3D=3D"ttyIFX[0-9]*", ENV{OFONO_DRIVER}=3D"ifx"
+> >     =
+
+> >     With this rule for every TTY with the kernel name like ttyIFX0, a n=
+ew
+> >     modem will be added and the IFX modem plugin driver requested for i=
+t.
+> > =
+
+> > this is not enough?
+> =
+
+> Then I didn't look far back enough (or I'm simply blind).  But I still
+> prefer this to be inside the driver or HACKING.calypso for easier access.
+
+I am with you that this needs to be documented better than GIT commit
+logs.
+
+However I do prefer doc/calypso-modem.txt and doc/ifx-modem.txt though
+since I don't wanna clutter the root directory.
+
+Regards
+
+Marcel
 
 
-Lucas De Marchi
 
---===============8950174497670318400==--
+--===============2173147125958700769==--
 
