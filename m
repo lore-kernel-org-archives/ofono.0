@@ -1,62 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5199497551480868880=="
+Content-Type: multipart/mixed; boundary="===============0205975006988947521=="
 MIME-Version: 1.0
 From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [RFC PATCH 2/4] sim: add ofono_sim_get_mnc_length
-Date: Tue, 21 Dec 2010 11:01:17 +0200
-Message-ID: <1292922079-24711-3-git-send-email-jukka.saunamaki@nokia.com>
+Subject: [RFC PATCH 4/4] operator-settings: Example GPRS context settings file
+Date: Tue, 21 Dec 2010 11:01:19 +0200
+Message-ID: <1292922079-24711-5-git-send-email-jukka.saunamaki@nokia.com>
 In-Reply-To: <1292922079-24711-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5199497551480868880==
+--===============0205975006988947521==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/sim.h |    1 +
- src/sim.c     |    8 ++++++++
- 2 files changed, 9 insertions(+), 0 deletions(-)
+ examples/example-operator-settings.csv |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
+ create mode 100644 examples/example-operator-settings.csv
 
-diff --git a/include/sim.h b/include/sim.h
-index 7860e24..3d0c6b7 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -173,6 +173,7 @@ void ofono_sim_set_data(struct ofono_sim *sim, void *da=
-ta);
- void *ofono_sim_get_data(struct ofono_sim *sim);
- =
-
- const char *ofono_sim_get_imsi(struct ofono_sim *sim);
-+int ofono_sim_get_mnc_length(struct ofono_sim *sim);
- enum ofono_sim_phase ofono_sim_get_phase(struct ofono_sim *sim);
- =
-
- enum ofono_sim_cphs_phase ofono_sim_get_cphs_phase(struct ofono_sim *sim);
-diff --git a/src/sim.c b/src/sim.c
-index 6217a25..4cfce4a 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -1911,6 +1911,14 @@ const char *ofono_sim_get_imsi(struct ofono_sim *sim)
- 	return sim->imsi;
- }
- =
-
-+int ofono_sim_get_mnc_length(struct ofono_sim *sim)
-+{
-+	if (sim =3D=3D NULL)
-+		return 0;
-+
-+	return sim->mnc_length;
-+}
-+
- enum ofono_sim_phase ofono_sim_get_phase(struct ofono_sim *sim)
- {
- 	if (sim =3D=3D NULL)
+diff --git a/examples/example-operator-settings.csv b/examples/example-oper=
+ator-settings.csv
+new file mode 100644
+index 0000000..7493894
+--- /dev/null
++++ b/examples/example-operator-settings.csv
+@@ -0,0 +1,9 @@
++# Example GPRS access point settings
++# Format: (type=3DINTERNET|MMS protocol=3Dipv4|ipv6)
++# MCC,MNC,SPN,type,UI name, APN, username, password, protocol, proxy IP ad=
+dress, proxy port, MMS server URL
++#
++001,01,TEST,INTERNET,Network Tester GPRS,internet,,,,,,
++246,81,oFono,INTERNET,Phonesim Internet-GPRS,internet.apn,,,ipv4,,,
++246,81,oFono,MMS,Phonesim MMS-GPRS,mms.apn,mmsuser,mmspass,ipv4,10.10.10.1=
+0,8080,http://192.168.0.111:8002
++888,009,Example,INTERNET,Example Operator Internet,internet
++888,009,Example,MMS,Example Operator MMS,mms,,,ipv4,10.11.12.13,8081,http:=
+//mms.example.com:8000
 -- =
 
 1.7.1
 
 
---===============5199497551480868880==--
+--===============0205975006988947521==--
 
