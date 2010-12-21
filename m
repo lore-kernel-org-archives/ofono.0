@@ -1,59 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============3362036152761164028=="
+Content-Type: multipart/mixed; boundary="===============2665872216241365462=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 2/2] doc: Describe DisplayActionInformation().
-Date: Tue, 21 Dec 2010 10:34:44 +0100
-Message-ID: <1292924084-6929-2-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1292924084-6929-1-git-send-email-andrew.zaborowski@intel.com>
+From: Neil Jerram <neil@ossau.uklinux.net>
+Subject: Re: PATCH: Enable udev-based autodetection of calypso modem on
+ Freerunner
+Date: Tue, 21 Dec 2010 21:34:09 +0000
+Message-ID: <871v5aajzi.fsf@ossau.uklinux.net>
+In-Reply-To: <4D110110.1070104@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3362036152761164028==
+--===============2665872216241365462==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/stk-api.txt |   12 ++++++++++--
- 1 files changed, 10 insertions(+), 2 deletions(-)
+Denis Kenzior <denkenz@gmail.com> writes:
 
-diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-index 79daee6..80d3ed6 100644
---- a/doc/stk-api.txt
-+++ b/doc/stk-api.txt
-@@ -249,12 +249,20 @@ Methods		byte RequestSelection(string title, byte ico=
-n_id,
- =
+> Hi Marcel,
+>
+>>> Then I didn't look far back enough (or I'm simply blind).  But I still
+>>> prefer this to be inside the driver or HACKING.calypso for easier acces=
+s.
+>> =
 
- 			Possible Errors: [service].Error.SimToolkit.EndSession
- =
+>> I am with you that this needs to be documented better than GIT commit
+>> logs.
+>> =
 
-+		void DisplayActionInformation(string text, byte icon_id)
-+
-+			Supplies a text string and/or icon concerning the
-+			current activity in the terminal and UICC.  The
-+			text should be displayed to the user on screen
-+			until the call is canceled using Cancel().  This
-+			method should not return.
-+
- 		void Cancel()
- =
+>> However I do prefer doc/calypso-modem.txt and doc/ifx-modem.txt though
+>> since I don't wanna clutter the root directory.
+>> =
 
- 			Asks the agent to cancel any ongoing operation in
- 			progress.  This is usually either because the agent
--			is taking too long to respond or the Sim Application
--			has terminated the session.
-+			is taking too long to respond, the Sim Application
-+			has terminated the session or a task has finished.
- =
+>
+> Sounds good to me.
 
- 		void Release()
- =
+Cool.  Once I've worked out the simplest udev rule for calypso, I'll
+submit a patch to create doc/calypso-modem.txt to document that.
 
--- =
+(I don't yet understand why it makes sense for calypso to be handled
+differently from other cases in plugins/ofono.rules, but I'm happy to
+trust that there is a good reason for this.)
 
-1.7.1.86.g0e460.dirty
+Regards,
+       Neil
 
-
---===============3362036152761164028==--
+--===============2665872216241365462==--
 
