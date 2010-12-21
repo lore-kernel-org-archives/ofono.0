@@ -1,49 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============3326386798818386030=="
+Content-Type: multipart/mixed; boundary="===============1296020990235184932=="
 MIME-Version: 1.0
-From: WuYongbo <wilbur.unail@gmail.com>
-Subject: How can I get the log of ofonod on N900 with meego trunk image?
-Date: Wed, 22 Dec 2010 00:35:06 +0800
-Message-ID: <AANLkTimXAghFYnhmTB10T0boMXghPCH0CVbCcN0+WiRa@mail.gmail.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 0/4 v2] Network Time plugin
+Date: Tue, 21 Dec 2010 18:39:43 +0200
+Message-ID: <201012211839.43637.remi.denis-courmont@nokia.com>
+In-Reply-To: <AANLkTimQrZf18yYMcwUiYV1Akr+rBChX_tatW9CKajhB@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3326386798818386030==
+--===============1296020990235184932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Sorry for the wrong tile in my previous mail.
+On Tuesday 21 December 2010 17:54:53 ext Aki Niemi, you wrote:
+>  It might make sense in some platforms,
+> especially those that don't have a working monotonic clock...
 
+That's a stupid requirement. Without a working clock, you can't get things =
 
-How can I get the log of ofonod on N900 with meego trunk image?
-I tried modifying the /etc/rc.sysinit as following:
+like poll(), select() or nanosleep() to work. So glib won't work and so oFo=
+no =
 
-*if [ -x "/usr/sbin/bluetoothd" ] ; then*
-*             /usr/sbin/ofonod -nd  >> /var/log/ofonod.log 2>&1*
-*fi*
+won't work either.
 
-it does not work, even /var/log/ofonod.log is not created.
+That use case is just FUD.
 
---===============3326386798818386030==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+-- =
 
-PHNwYW4gY2xhc3M9IkFwcGxlLXN0eWxlLXNwYW4iIHN0eWxlPSJmb250LWZhbWlseTogYXJpYWws
-IHNhbnMtc2VyaWY7IGZvbnQtc2l6ZTogOS4wMjc3OHB4OyBib3JkZXItY29sbGFwc2U6IGNvbGxh
-cHNlOyBjb2xvcjogcmdiKDUxLCA1MSwgNTEpOyAiPjxkaXY+U29ycnkgZm9yIHRoZSB3cm9uZyB0
-aWxlIGluIG15IHByZXZpb3VzIG1haWwuPC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj48YnI+Cjwv
-ZGl2PjxkaXY+SG93IGNhbiBJIGdldCB0aGUgbG9nIG9mIG9mb25vZCBvbiBOOTAwIHdpdGggbWVl
-Z28gdHJ1bmsgaW1hZ2U/PC9kaXY+PGRpdj5JIHRyaWVkIG1vZGlmeWluZyB0aGUgL2V0Yy9yYy5z
-eXNpbml0IGFzIGZvbGxvd2luZzo8L2Rpdj48ZGl2Pjxicj48L2Rpdj48ZGl2PjxpPjxmb250IGNv
-bG9yPSIjRkYwMDAwIj5pZiBbIC14ICZxdW90Oy91c3Ivc2Jpbi9ibHVldG9vdGhkJnF1b3Q7IF0g
-OyB0aGVuPC9mb250PjwvaT48L2Rpdj4KPGRpdj48aT48Zm9udCBjb2xvcj0iI0ZGMDAwMCI+oKAg
-oCCgIKAgoCCgIC91c3Ivc2Jpbi9vZm9ub2QgLW5kIKAmZ3Q7Jmd0OyAvdmFyL2xvZy9vZm9ub2Qu
-bG9nIDImZ3Q7JmFtcDsxPC9mb250PjwvaT48L2Rpdj48ZGl2PjxpPjxmb250IGNvbG9yPSIjRkYw
-MDAwIj5maTwvZm9udD48L2k+PC9kaXY+PGRpdj48YnI+PC9kaXY+PGRpdj5pdCBkb2VzIG5vdCB3
-b3JrLCBldmVuIC92YXIvbG9nL29mb25vZC5sb2cgaXMgbm90IGNyZWF0ZWQuPC9kaXY+Cjwvc3Bh
-bj4K
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
---===============3326386798818386030==--
+--===============1296020990235184932==--
 
