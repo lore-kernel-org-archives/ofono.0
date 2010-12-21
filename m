@@ -1,34 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============2037122716466917117=="
+Content-Type: multipart/mixed; boundary="===============0520612395794739771=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCHv2 1/2] stemodem: Create network interfaces statically
-Date: Tue, 21 Dec 2010 06:38:39 -0800
-Message-ID: <1292942319.2658.45.camel@aeonflux>
-In-Reply-To: <1292449768-6060-2-git-send-email-sjurbren@gmail.com>
+Subject: Re: [PATCHv2 2/2] stemodem: Use RTNL to create network interfaces.
+Date: Tue, 21 Dec 2010 06:38:55 -0800
+Message-ID: <1292942335.2658.46.camel@aeonflux>
+In-Reply-To: <1292449768-6060-3-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2037122716466917117==
+--===============0520612395794739771==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Sjur,
 
-> Changes:
-> o Restructure code so interfaces are created statically when probe is cal=
-led,
->   instead of creating interfaces dynamically at activation.
-> o Changed debug messages.
-> o Removed some of the unnecessary initializations at declaration.
-> o No longer reporting "default gateway" for PtP IP Interface.
-> o Bugfix: Handle network initiated deactivation.
-> ---
->  drivers/stemodem/gprs-context.c |  149 +++++++++++++++++++++------------=
+>  drivers/stemodem/gprs-context.c |   43 ++++++++++++++++++++++++++++++++-=
 -----
->  1 files changed, 82 insertions(+), 67 deletions(-)
+>  1 files changed, 36 insertions(+), 7 deletions(-)
 
-looks good to me now. Patch has been applied.
+patch has been applied.
 
 Regards
 
@@ -36,5 +27,5 @@ Marcel
 
 
 
---===============2037122716466917117==--
+--===============0520612395794739771==--
 
