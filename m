@@ -1,252 +1,241 @@
-Content-Type: multipart/mixed; boundary="===============2898976099741555875=="
+Content-Type: multipart/mixed; boundary="===============2184112886234251394=="
 MIME-Version: 1.0
-From: Lucas, GuillaumeX <guillaumex.lucas@intel.com>
-Subject: [PATCH] test-stk: update STK test script for conformance
-Date: Tue, 21 Dec 2010 14:24:56 +0000
-Message-ID: <9F3EABD6E3419B4C81F34EAABB4D40188136F59D21@irsmsx501.ger.corp.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCHv2] plugin: Add ste modem initd integration
+Date: Tue, 21 Dec 2010 06:36:29 -0800
+Message-ID: <1292942189.2658.44.camel@aeonflux>
+In-Reply-To: <1292449768-6060-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2898976099741555875==
+--===============2184112886234251394==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Guillaume Lucas <guillaumex.lucas@intel.com>
+Hi Sjur,
 
-Update the STK test script to be able to use it for
-conformance test. Using 'agent' as parameter the
-script will now register a STK agent to be able to
-handle unsolicited proactive command. Without any
-parameter or with 'menu' the script will try to
-display the STK main menu of the (U)SIM.
----
- test/test-stk-menu |  101 +++++++++++++++++++++++++++++++++++++++---------=
-----
- 1 files changed, 76 insertions(+), 25 deletions(-)
+> This patch introduces auto discovery of ST-Ericsson modems.
+> ST-Ericsson modems (M5XX, M57XX, M7XX, M74XX) are managed by a
+> Modem Init Daemon responsible for start, power cycles,
+> flashing etc. This STE plugin monitors the modem state exposed
+> from the Modem Init Damon's Dbus API. When the modem is in state
+> "on" the STE modem is created and registered. Multiple modem
+> instances, and reset handling is supported.
 
-diff --git a/test/test-stk-menu b/test/test-stk-menu
-index 94d2d6b..b396452 100755
---- a/test/test-stk-menu
-+++ b/test/test-stk-menu
-@@ -13,6 +13,9 @@ class GoBack(dbus.DBusException):
- class EndSession(dbus.DBusException):
- 	_dbus_error_name =3D "org.ofono.Error.EndSession"
- =
+I don't really like on how STE, ST and TI do abbreviations these days.
 
-+class Busy(dbus.DBusException):
-+	_dbus_error_name =3D "org.ofono.Error.Busy"
-+
- class StkAgent(dbus.service.Object):
- 	exit_on_release =3D True
- =
+It is MID for modem init daemon, it is UIM for user init manager, KIM
+for kernel init manager and TI calls a shared transport ST. This will
+end up in a massive confusion at some point ;)
 
-@@ -30,9 +33,10 @@ class StkAgent(dbus.service.Object):
- 				in_signature=3D"sya(sy)n", out_signature=3D"y")
- 	def RequestSelection(self, title, icon, items, default):
- 		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
- 		index =3D 0;
- 		for item in items:
--			print "%d. %s" % (index, item[0])
-+			print "%d. %s (icon: %d)" % (index, item[0], item[1])
- 			index +=3D 1
- =
+> ---
+> Changes:
+> - Support for multiple STE modems.
+> - Better naming of STE modem instances, using received dbus path.
+> - CAIF Link layer to use for AT channels specified pr modem instance.
+> - Added support for reset.
+> =
 
- 		print "\nDefault: %d" % (default)
-@@ -48,14 +52,27 @@ class StkAgent(dbus.service.Object):
- 	@dbus.service.method("org.ofono.SimToolkitAgent",
- 					in_signature=3D"syb", out_signature=3D"")
- 	def DisplayText(self, title, icon, urgent):
--		print "DisplayText (%s, %s)" % (title, urgent)
-+		print "DisplayText (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
-+		print "Urgent: (%d)" % (urgent)
-+		key =3D raw_input("Press return to clear ('t' terminates, "
-+								"'b' goest back, 'n' busy):")
-+
-+		if key =3D=3D 'b':
-+			raise GoBack("User wishes to go back")
-+		elif key =3D=3D 't':
-+			raise EndSession("User wishes to terminate session")
-+		elif key =3D=3D 'n':
-+			raise Busy("User wishes to simulate busy screen")
- =
+>  Makefile.am      |    5 +
+>  configure.ac     |    6 +
+>  plugins/stemid.c |  310 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  3 files changed, 321 insertions(+), 0 deletions(-)
+>  create mode 100644 plugins/stemid.c
 
- 	@dbus.service.method("org.ofono.SimToolkitAgent",
- 				in_signature=3D"sysyyb", out_signature=3D"s")
- 	def RequestInput(self, title, icon, default, min_chars, max_chars,
- 				hide_typing):
- 		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
- 		print "Default: (%s)" % (default)
-+		print "Hide typing: (%s)" % (hide_typing)
- 		print "Enter characters, min: %d, max: %d:" % (min_chars,
- 								max_chars)
- 		userin =3D raw_input("");
-@@ -67,7 +84,9 @@ class StkAgent(dbus.service.Object):
- 	def RequestDigits(self, title, icon, default, min_chars, max_chars,
- 				hide_typing):
- 		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
- 		print "Default: (%s)" % (default)
-+		print "Hide typing: (%s)" % (hide_typing)
- 		print "Enter digits, min: %d, max: %d:" % (min_chars,
- 								max_chars)
- 		userin =3D raw_input("'t' terminates, 'b' goes back:");
-@@ -83,6 +102,7 @@ class StkAgent(dbus.service.Object):
- 				in_signature=3D"sy", out_signature=3D"s")
- 	def RequestKey(self, title, icon):
- 		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
- 		key =3D raw_input("Enter Key (t, b):")
- =
+Can we just call this something like stemgr for STE Manager or STE Init
+Manager. The MID part is just confusing.
 
- 		if key =3D=3D 'b':
-@@ -96,6 +116,7 @@ class StkAgent(dbus.service.Object):
- 				in_signature=3D"sy", out_signature=3D"s")
- 	def RequestDigit(self, title, icon):
- 		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
- 		key =3D raw_input("Enter Digit (t, b):")
- =
+> diff --git a/Makefile.am b/Makefile.am
+> index 12b3c33..98096ae 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -82,6 +82,11 @@ gatchat_sources =3D gatchat/gatchat.h gatchat/gatchat.=
+c \
+>  =
 
- 		if key =3D=3D 'b':
-@@ -109,6 +130,7 @@ class StkAgent(dbus.service.Object):
- 				in_signature=3D"sy", out_signature=3D"b")
- 	def RequestConfirmation(self, title, icon):
- 		print "Title: (%s)" % (title)
-+		print "Icon: (%d)" % (icon)
- 		key =3D raw_input("Enter Confirmation (t, b, y, n):")
- =
+>  udev_files =3D plugins/ofono.rules
+>  =
 
- 		if key =3D=3D 'b':
-@@ -124,6 +146,7 @@ class StkAgent(dbus.service.Object):
- 				in_signature=3D"sy", out_signature=3D"b")
- 	def ConfirmCallSetup(self, info, icon):
- 		print "Information: (%s)" % (info)
-+		print "Icon: (%d)" % (icon)
- 		key =3D raw_input("Enter Confirmation (t, y, n):")
- =
+> +if STE_MODEM_INITD
+> +builtin_modules +=3D stemid
+> +builtin_sources +=3D plugins/stemid.c
+> +endif
+> +
+>  if UDEV
+>  builtin_modules +=3D udev
+>  builtin_sources +=3D plugins/udev.c
+> diff --git a/configure.ac b/configure.ac
+> index 5c18f68..f733fc4 100644
+> --- a/configure.ac
+> +++ b/configure.ac
+> @@ -177,6 +177,12 @@ AC_ARG_ENABLE(datafiles, AC_HELP_STRING([--disable-d=
+atafiles],
+>  =
 
- 		if key =3D=3D 't':
-@@ -141,14 +164,30 @@ class StkAgent(dbus.service.Object):
- 	@dbus.service.method("org.ofono.SimToolkitAgent",
- 					in_signature=3D"ssy", out_signature=3D"")
- 	def PlayTone(self, tone, text, icon):
--		print "playtone is %s" % (tone)
-+		print "PlayTone: %s" % (tone)
-+		print "Text: %s" % (text)
-+		print "Icon: %d" % (icon)
-+
-+	@dbus.service.method("org.ofono.SimToolkitAgent",
-+					in_signature=3D"ssy", out_signature=3D"")
-+	def LoopTone(self, tone, text, icon):
-+		print "LoopTone: %s" % (tone)
-+		print "Text: %s" % (text)
-+		print "Icon: %d" % (icon)
-+		key =3D raw_input("Press return to end before timeout (t):")
- =
+>  AM_CONDITIONAL(DATAFILES, test "${enable_datafiles}" !=3D "no")
+>  =
 
--        @dbus.service.method("org.ofono.SimToolkitAgent",
--                                in_signature=3D"ssy", out_signature=3D"")
--        def LoopTone(self, tone, text, icon):
--                print "the loop tone is %s" % (tone)
-+		if key =3D=3D 't':
-+			raise EndSession("User wishes to terminate session");
-+
-+def property_changed(name, value):
-+	print "SimToolKit property: %s changed to '%s'" % (name, value)
- =
+> +AC_ARG_ENABLE(ste_modem_initd, AC_HELP_STRING([--disable-ste-modem-initd=
+],
+> +			[disable auto discovery of STE modem using modem init daemon]),
+> +					[enable_ste_modem_initd=3D${enableval}])
+> +
+> +AM_CONDITIONAL(STE_MODEM_INITD, test "${enable_ste_modem_initd}" !=3D "n=
+o")
+> +
 
- if __name__ =3D=3D '__main__':
-+	if len(sys.argv) =3D=3D 2:
-+		mode =3D sys.argv[1]
-+	else:
-+		mode =3D 'menu'
-+
- 	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
- =
+Don't bother with this and just always compile this in. For now that is
+fine and in case we start with more fine grained control here, I will do
+that on modem technology based and not on plugins.
 
- 	bus =3D dbus.SystemBus()
-@@ -164,26 +203,38 @@ if __name__ =3D=3D '__main__':
- 		stk =3D dbus.Interface(bus.get_object('org.ofono', path),
- 					'org.ofono.SimToolkit')
- =
+Right now we do atmodem and isimodem. If we feel like it is needed, we
+would do stemodem, but right now, I don't see it.
 
--	properties =3D stk.GetProperties()
-+	stk.connect_to_signal("PropertyChanged", property_changed)
- =
+>  if (test "${prefix}" =3D "NONE"); then
+>  	dnl no prefix and no localstatedir, so default to /var
+>  	if (test "$localstatedir" =3D '${prefix}/var'); then
+> diff --git a/plugins/stemid.c b/plugins/stemid.c
+> new file mode 100644
+> index 0000000..9f5da22
+> --- /dev/null
+> +++ b/plugins/stemid.c
+> @@ -0,0 +1,310 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2010 ST-Ericsson AB.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#include <errno.h>
+> +#include <string.h>
+> +#include <net/if.h>
+> +
+> +#include <glib.h>
+> +
+> +#define OFONO_API_SUBJECT_TO_CHANGE
+> +#include <ofono/plugin.h>
+> +#include <ofono/log.h>
+> +#include <ofono/modem.h>
+> +#include <ofono/dbus.h>
+> +
+> +/*
+> + * ST-Ericsson's Modem Init Daemon is used for controling the modem power
+> + * cycles and provides a dbus API for modem state and properties.
+> + */
+> +#define MID_SERVICE		"com.stericsson.modeminit"
+> +#define MID_INTERFACE		MID_SERVICE ".Modem"
+> +
+> +/* The signal StateChange sends the modem state.*/
+> +#define STATUS_CHANGED		"StateChange"
+> +
+> +#define MID_ACTION_ON		"on"		/* Modem is on */
+> +#define MID_ACTION_RESET	"dumping"	/* Modem is resetting */
+> +#define MID_ACTION_UNKNOWN	"unknown"	/* Don't care */
+> +
+> +/* ResetState requests resending of StateChange. */
+> +#define MID_RESEND_STATE	"ResendState"
 
--	if "MainMenuTitle" in properties:
--		print "Main Menu:"
--		print "%s" % (properties["MainMenuTitle"])
--		print "\n"
--
--	if "MainMenu" in properties:
--		print "Items:"
--		index =3D 0
--		for item in properties["MainMenu"]:
--			print "%d. %s" % (index, item[0])
--			index +=3D 1
--
--	path =3D "/test/agent"
--	agent =3D StkAgent(bus, path)
-+	properties =3D stk.GetProperties()
- =
+This is a bad D-Bus API btw. Using a D-Bus method to trigger signal
+sending. You will wake up any listener for that signal. What is wrong
+with just having a GetState?
 
--	select =3D int(raw_input("Enter Selection: "))
--	stk.SelectItem(select, path)
--	print "Agent registered for session"
-+	if mode =3D=3D 'menu':
-+		if "MainMenuTitle" in properties:
-+			print "Main Menu:"
-+			print "%s" % (properties["MainMenuTitle"])
-+			print "\n"
-+
-+		if "MainMenu" in properties:
-+			print "Items:"
-+			index =3D 0
-+			for item in properties["MainMenu"]:
-+				print "%d. %s" % (index, item[0])
-+				index +=3D 1
-+
-+		path =3D "/test/agent"
-+		agent =3D StkAgent(bus, path)
-+
-+		select =3D int(raw_input("Enter Selection: "))
-+		stk.SelectItem(select, path)
-+	elif mode =3D=3D 'agent':
-+		path =3D "/test/agent"
-+		agent =3D StkAgent(bus, path)
-+
-+		stk.RegisterAgent(path)
-+
-+		print "Agent registered for session - Wait SIM ToolKit command..."
-+	else:
-+		print "%s [menu|agent]" % (sys.argv[0])
-+		exit(0)
- =
+> +/* GetCaifIfName requests the CAIF Interface Name. */
+> +#define MID_GET_CAIFIF		"GetCaifIfName"
+> +
+> +#define TIMEOUT		5000
+> +#define STE_DRIVER_NAME	"ste"
 
- 	mainloop =3D gobject.MainLoop()
- 	mainloop.run()
--- =
+I don't think you should be doing the naming like this. Don't you have a
+proper serial number? If not, then use at least
 
-1.7.0.4
+> +#define STE_INTERFACE_PROPERTY	"Interface"
 
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+One time it is a property, and then you have a method call? What is it
+now?
 
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
+> +enum ste_state {
+> +	STE_PENDING,    /* Waiting for caifif and "on" notification */
+> +	STE_PENDING_IF, /* Waiting for caifif, already got "on" */
+> +	STE_REGISTERED, /* Modem is registered */
+> +	STE_RESETTING   /* Modem is resetting */
+> +};
+> +
+> +struct ste_modem {
+> +	char *path;
+> +	struct ofono_modem *modem;
+> +	enum ste_state state;
+> +	gboolean got_caifif;
+> +	gboolean pending_call;
+> +};
+> +
+> +static GHashTable *modem_list;
+> +static guint mid_api_watch;
+> +static guint mid_state_watch;
+> +static DBusConnection *connection;
 
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+<snip>
+
+I have not looked at anything in between just yet.
+
+> +static int stemid_init()
+> +{
+> +	connection =3D ofono_dbus_get_connection();
+> +	if (connection =3D=3D NULL)
+> +		return -EIO;
+
+Don't bother with the check here. It will not fail. It if fails, you
+have a seriously other problem.
+
+> +	modem_list =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+> +						NULL, destroy_stemodem);
+> +	mid_api_watch =3D g_dbus_add_service_watch(connection, MID_SERVICE,
+> +				mid_connect, mid_disconnect, NULL, NULL);
+> +	return 0;
+> +}
+> +
+> +static void stemid_exit()
+> +{
+> +	DBusConnection *connection =3D ofono_dbus_get_connection();
+
+Why not use the global one you stored. Why call the function again?
+
+> +
+> +	g_hash_table_destroy(modem_list);
+> +	g_dbus_remove_watch(connection, mid_api_watch);
+> +}
+> +
+> +OFONO_PLUGIN_DEFINE(stemid, "STE Modem Init Daemon dbus api", VERSION,
+> +			OFONO_PLUGIN_PRIORITY_DEFAULT, stemid_init, stemid_exit)
+
+The plugin description is wrong. You are not providing a D-Bus API here.
+
+Regards
+
+Marcel
 
 
---===============2898976099741555875==--
+
+--===============2184112886234251394==--
 
