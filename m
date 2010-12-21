@@ -1,48 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============2665872216241365462=="
+Content-Type: multipart/mixed; boundary="===============1530588817023133347=="
 MIME-Version: 1.0
-From: Neil Jerram <neil@ossau.uklinux.net>
-Subject: Re: PATCH: Enable udev-based autodetection of calypso modem on
- Freerunner
-Date: Tue, 21 Dec 2010 21:34:09 +0000
-Message-ID: <871v5aajzi.fsf@ossau.uklinux.net>
-In-Reply-To: <4D110110.1070104@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] phonesim: Add cfis and cphs file
+Date: Tue, 21 Dec 2010 15:51:27 -0600
+Message-ID: <4D11215F.70807@gmail.com>
+In-Reply-To: <1292874541-10288-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2665872216241365462==
+--===============1530588817023133347==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Denis Kenzior <denkenz@gmail.com> writes:
+Hi Jeevaka,
 
-> Hi Marcel,
->
->>> Then I didn't look far back enough (or I'm simply blind).  But I still
->>> prefer this to be inside the driver or HACKING.calypso for easier acces=
-s.
->> =
+On 12/20/2010 01:49 PM, Jeevaka Badrappan wrote:
+> ---
+>  src/default.xml       |    8 ++++++++
+>  src/simfilesystem.cpp |    1 +
+>  2 files changed, 9 insertions(+), 0 deletions(-)
+> =
 
->> I am with you that this needs to be documented better than GIT commit
->> logs.
->> =
 
->> However I do prefer doc/calypso-modem.txt and doc/ifx-modem.txt though
->> since I don't wanna clutter the root directory.
->> =
-
->
-> Sounds good to me.
-
-Cool.  Once I've worked out the simplest udev rule for calypso, I'll
-submit a patch to create doc/calypso-modem.txt to document that.
-
-(I don't yet understand why it makes sense for calypso to be handled
-differently from other cases in plugins/ofono.rules, but I'm happy to
-trust that there is a good reason for this.)
+Patch has been applied, thanks.
 
 Regards,
-       Neil
+-Denis
 
---===============2665872216241365462==--
+--===============1530588817023133347==--
 
