@@ -1,100 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============1410064795006350828=="
+Content-Type: multipart/mixed; boundary="===============2869526129924317024=="
 MIME-Version: 1.0
 From: Lei Yu <lei.2.yu@nokia.com>
-Subject: [PATCH v2, 5/7] cdmamodem: Add CDMA SMS driver support
-Date: Tue, 21 Dec 2010 16:02:27 -0800
-Message-ID: <1292976149-15598-6-git-send-email-lei.2.yu@nokia.com>
+Subject: [PATCH v2, 6/7] test: Add CDMA SMS Support
+Date: Tue, 21 Dec 2010 16:02:28 -0800
+Message-ID: <1292976149-15598-7-git-send-email-lei.2.yu@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1410064795006350828==
+--===============2869526129924317024==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am                   |    3 +-
- drivers/cdmamodem/cdmamodem.c |    2 +
- drivers/cdmamodem/cdmamodem.h |    3 +
- drivers/cdmamodem/sms.c       |  153 +++++++++++++++++++++++++++++++++++++=
+ Makefile.am         |    6 ++-
+ unit/test-cdmasms.c |  137 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 4 files changed, 160 insertions(+), 1 deletions(-)
- create mode 100644 drivers/cdmamodem/sms.c
+ 2 files changed, 142 insertions(+), 1 deletions(-)
+ create mode 100644 unit/test-cdmasms.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 69ee02d..3035b69 100644
+index 3035b69..771f57d 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -245,7 +245,8 @@ endif
- if CDMA_ATMODEM
- builtin_modules +=3D cdma_atmodem
- builtin_sources +=3D drivers/cdmamodem/cdmamodem.h \
--			drivers/cdmamodem/cdmamodem.c
-+			drivers/cdmamodem/cdmamodem.c \
-+			drivers/cdmamodem/sms.c
- endif
+@@ -449,7 +449,7 @@ dist_man_MANS =3D doc/ofonod.8
+ noinst_PROGRAMS =3D unit/test-common unit/test-util unit/test-idmap \
+ 					unit/test-sms unit/test-simutil \
+ 					unit/test-mux unit/test-caif \
+-					unit/test-stkutil
++					unit/test-stkutil unit/test-cdmasms
  =
 
- builtin_modules +=3D g1
-diff --git a/drivers/cdmamodem/cdmamodem.c b/drivers/cdmamodem/cdmamodem.c
-index 25bd0f3..34829e1 100644
---- a/drivers/cdmamodem/cdmamodem.c
-+++ b/drivers/cdmamodem/cdmamodem.c
-@@ -34,11 +34,13 @@
+ unit_objects =3D
  =
 
- static int cdma_atmodem_init(void)
- {
-+	cdma_at_sms_init();
- 	return 0;
- }
+@@ -469,6 +469,10 @@ unit_test_sms_SOURCES =3D unit/test-sms.c src/util.c s=
+rc/smsutil.c src/storage.c
+ unit_test_sms_LDADD =3D @GLIB_LIBS@
+ unit_objects +=3D $(unit_test_sms_OBJECTS)
  =
 
- static void cdma_atmodem_exit(void)
- {
-+	cdma_at_sms_exit();
- }
- =
-
- OFONO_PLUGIN_DEFINE(cdma_atmodem, "CDMA AT modem driver", VERSION,
-diff --git a/drivers/cdmamodem/cdmamodem.h b/drivers/cdmamodem/cdmamodem.h
-index 114d1fd..6f1c915 100644
---- a/drivers/cdmamodem/cdmamodem.h
-+++ b/drivers/cdmamodem/cdmamodem.h
-@@ -20,3 +20,6 @@
-  */
- =
-
- #include <drivers/atmodem/atutil.h>
++unit_test_cdmasms_SOURCES =3D unit/test-cdmasms.c src/cdma-smsutil.c
++unit_test_cdmasms_LDADD =3D @GLIB_LIBS@
++unit_objects +=3D $(unit_test_cdmasms_OBJECTS)
 +
-+extern void cdma_at_sms_init();
-+extern void cdma_at_sms_exit();
-diff --git a/drivers/cdmamodem/sms.c b/drivers/cdmamodem/sms.c
+ unit_test_simutil_SOURCES =3D unit/test-simutil.c src/util.c \
+ 				src/simutil.c src/smsutil.c src/storage.c
+ unit_test_simutil_LDADD =3D @GLIB_LIBS@
+diff --git a/unit/test-cdmasms.c b/unit/test-cdmasms.c
 new file mode 100644
-index 0000000..de90224
+index 0000000..7dac360
 --- /dev/null
-+++ b/drivers/cdmamodem/sms.c
-@@ -0,0 +1,153 @@
++++ b/unit/test-cdmasms.c
+@@ -0,0 +1,137 @@
 +/*
++ * oFono - Open Source Telephony
 + *
-+ *  oFono - Open Source Telephony
++ * Copyright (C) 2010 Nokia Corporation.  All rights reserved.
 + *
-+ *  Copyright (C) 2010  Nokia Corporation. All rights reserved.
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
 + *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
 + *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 + *
 + */
 +
@@ -102,138 +79,122 @@ index 0000000..de90224
 +#include <config.h>
 +#endif
 +
-+#define _GNU_SOURCE
 +#include <string.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <errno.h>
 +
 +#include <glib.h>
 +
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/cdma-sms.h>
-+#include "util.h"
++#include "cdma-smsutil.h"
 +
-+#include "gatchat.h"
-+#include "gatresult.h"
-+
-+#include "cdmamodem.h"
-+
-+struct cdma_sms_data {
-+	unsigned int vendor;
-+	GAtChat *chat;
-+};
-+
-+static gboolean at_parse_pdu_common(GAtResult *result,
-+					const char *prefix,
-+					const char **pdu,
-+					int *pdulen)
++static void cdma_sms_receive_test1()
 +{
-+	GAtResultIter iter;
++	gboolean ret;
++	struct cdma_sms s;
++	char *addr;
++	char *message;
 +
-+	g_at_result_iter_init(&iter, result);
++	/*
++	 * 0x00,  :P2P
++	 * 0x00, 0x02, 0x10, 0x02, :Teleservice Id
++	 * 0x02, 0x05, 0x01, 0xC4, 0x8D, 0x15, 0x9C, :Orig Addr
++	 * 0x08, 0x0D, :Bearer Data
++	 *   0x00, 0x03, 0x1B, 0xEE, 0xF0, 0x01, :Message Id
++	 *   0x06, 0x10, 0x2C, 0x8C, 0xBB, 0x36, 0x6F :User Data
++	*/
++	guint8 mt_cdma_sms_pdu[] =3D {
++		0x00, 0x00, 0x02, 0x10, 0x02, 0x02, 0x05,
++		0x01, 0xC4, 0x8D, 0x15, 0x9C, 0x08, 0x0D,
++		0x00, 0x03, 0x1B, 0xEE, 0xF0, 0x01, 0x06,
++		0x10, 0x2C, 0x8C, 0xBB, 0x36, 0x6F
++	};
 +
-+	if (!g_at_result_iter_next(&iter, prefix))
-+		return FALSE;
++	memset(&s, 0, sizeof(struct cdma_sms));
 +
-+	if (!strcmp(prefix, "+CMT:") && !g_at_result_iter_skip_next(&iter))
-+		return FALSE;
++	/* Decode the incoming CDMA SMS TPDU */
++	ret =3D cdma_sms_decode(mt_cdma_sms_pdu, sizeof(mt_cdma_sms_pdu), &s);
 +
-+	if (!g_at_result_iter_next_number(&iter, pdulen))
-+		return FALSE;
++	g_assert(ret =3D=3D TRUE);
 +
-+	*pdu =3D g_at_result_pdu(result);
++	/* Verify message type is Point to Point */
++	g_assert(s.type =3D=3D CDMA_SMS_P2P);
 +
-+	return TRUE;
++	/* Verify teleservice id is WMT */
++	g_assert(s.p2p_msg.teleservice_id =3D=3D TELESERVICE_WMT);
++
++	addr =3D cdma_sms_address_to_string(&s.p2p_msg.oaddr);
++	g_assert(strcmp(addr, "1234567") =3D=3D 0);
++
++	message =3D cdma_sms_decode_text(&s.p2p_msg.bearer_data.ud);
++	g_assert(strcmp(message, "Hello") =3D=3D 0);
++
++	return;
 +}
 +
-+static void at_cmt_notify(GAtResult *result, gpointer user_data)
++static void cdma_sms_receive_test2()
 +{
-+	struct ofono_cdma_sms *cdma_sms =3D user_data;
-+	const char *hexpdu;
-+	long pdu_len;
-+	int tpdu_len;
-+	unsigned char pdu[256];
++	gboolean ret;
++	struct cdma_sms s;
++	char *addr;
++	char *message;
 +
-+	if (!at_parse_pdu_common(result, "+CMT:", &hexpdu, &tpdu_len)) {
-+		ofono_error("Unable to parse CMT notification");
-+		return;
-+	}
++	/*
++	 * 0x00, :Point-to-Point
++	 * 0x00, 0x02, 0x10, 0x02, :Teleservie ID
++	 * 0x02, 0x07, 0x02, 0xA1, 0x62, 0x51, 0x55, 0xA6, 0x40, :Orig Address
++	 * 0x08, 0x18, :Bearer Data
++	 *   0x00, 0x03, 0x10, 0x00, 0x40, :Message Identifier
++	 *   0x01, 0x06, 0x10, 0x25, 0x4C, 0xBC, 0xFA, 0x00, :User Data
++	 *   0x03, 0x06, 0x03, 0x08, 0x20, 0x13, 0x43, 0x12, :MC Time Stamp
++	 *   0x0D, 0x01, 0x01 :Language Indicator
++	*/
++	guint8 mt_cdma_sms_pdu[] =3D {
++		0x00, 0x00, 0x02, 0x10, 0x02, 0x02,
++		0x07, 0x02, 0xA1, 0x62, 0x51, 0x55,
++		0xA6, 0x40, 0x08, 0x18, 0x00, 0x03,
++		0x10, 0x00, 0x40, 0x01, 0x06, 0x10,
++		0x25, 0x4C, 0xBC, 0xFA, 0x00, 0x03,
++		0x06, 0x03, 0x08, 0x20, 0x13, 0x43,
++		0x12, 0x0D, 0x01, 0x01
++	};
 +
-+	if (strlen(hexpdu) > sizeof(pdu) * 2) {
-+		ofono_error("Bad PDU length in CMT notification");
-+		return;
-+	}
++	memset(&s, 0, sizeof(struct cdma_sms));
 +
-+	DBG("Got new SMS Deliver PDU via CMT: %s, %d", hexpdu, tpdu_len);
++	/* Decode the incoming CDMA SMS TPDU */
++	ret =3D cdma_sms_decode(mt_cdma_sms_pdu, sizeof(mt_cdma_sms_pdu), &s);
 +
-+	decode_hex_own_buf(hexpdu, -1, &pdu_len, 0, pdu);
-+	ofono_cdma_sms_deliver_notify(cdma_sms, pdu, pdu_len);
++	g_assert(ret =3D=3D TRUE);
++
++	/* Verify message type is Point to Point */
++	g_assert(s.type =3D=3D CDMA_SMS_P2P);
++
++	/* Verify teleservice id is WMT */
++	g_assert(s.p2p_msg.teleservice_id =3D=3D TELESERVICE_WMT);
++
++	addr =3D cdma_sms_address_to_string(&s.p2p_msg.oaddr);
++	g_assert(strcmp(addr, "8589455699") =3D=3D 0);
++
++	message =3D cdma_sms_decode_text(&s.p2p_msg.bearer_data.ud);
++	g_assert(s.p2p_msg.bearer_data.ud.num_fields =3D=3D 4);
++	g_assert(strcmp(message, "Test") =3D=3D 0);
++
++	return;
 +}
 +
-+static void at_sms_initialized(struct ofono_cdma_sms *cdma_sms)
++int main(int argc, char **argv)
 +{
-+	struct cdma_sms_data *data =3D ofono_cdma_sms_get_data(cdma_sms);
++	g_test_init(&argc, &argv, NULL);
 +
-+	g_at_chat_register(data->chat, "+CMT:",
-+				at_cmt_notify, TRUE, cdma_sms, NULL);
++	g_test_add_func("/test-cdmasms/Test Simple Msg Receive 1",
++			cdma_sms_receive_test1);
 +
-+	ofono_cdma_sms_register(cdma_sms);
-+}
++	g_test_add_func("/test-cdmasms/Test Simple Msg Receive 2",
++			cdma_sms_receive_test2);
 +
-+static int at_sms_probe(struct ofono_cdma_sms *cdma_sms,
-+				unsigned int vendor, void *user)
-+{
-+	GAtChat *chat =3D user;
-+	struct cdma_sms_data *data;
-+
-+	data =3D g_new0(struct cdma_sms_data, 1);
-+	if (data =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	data->chat =3D g_at_chat_clone(chat);
-+	if (data->chat =3D=3D NULL)
-+		return -ENOMEM;
-+
-+	data->vendor =3D vendor;
-+
-+	ofono_cdma_sms_set_data(cdma_sms, data);
-+
-+	at_sms_initialized(cdma_sms);
-+
-+	return 0;
-+}
-+
-+static void at_sms_remove(struct ofono_cdma_sms *cdma_sms)
-+{
-+	struct cdma_sms_data *data =3D ofono_cdma_sms_get_data(cdma_sms);
-+
-+	ofono_cdma_sms_set_data(cdma_sms, NULL);
-+
-+	g_at_chat_unref(data->chat);
-+	g_free(data);
-+}
-+
-+static struct ofono_cdma_sms_driver driver =3D {
-+	.name		=3D "cdmamodem",
-+	.probe		=3D at_sms_probe,
-+	.remove		=3D at_sms_remove,
-+};
-+
-+void cdma_at_sms_init()
-+{
-+	ofono_cdma_sms_driver_register(&driver);
-+}
-+
-+void cdma_at_sms_exit()
-+{
-+	ofono_cdma_sms_driver_unregister(&driver);
++	return g_test_run();
 +}
 -- =
 
 1.7.0.4
 
 
---===============1410064795006350828==--
+--===============2869526129924317024==--
 
