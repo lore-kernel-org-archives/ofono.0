@@ -1,36 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============7139082794032876779=="
+Content-Type: multipart/mixed; boundary="===============5830887836432491129=="
 MIME-Version: 1.0
 From: Oskari Timperi <oskari.timperi@ixonos.com>
-Subject: [PATCHv2 2/3] Add TC65 to Makefile.am
-Date: Wed, 22 Dec 2010 13:13:01 +0200
-Message-ID: <1293016382-4607-3-git-send-email-oskari.timperi@ixonos.com>
-In-Reply-To: <1293016382-4607-2-git-send-email-oskari.timperi@ixonos.com>
+Subject: [PATCHv2 3/3] udev initialization for TC65
+Date: Wed, 22 Dec 2010 13:13:02 +0200
+Message-ID: <1293016382-4607-4-git-send-email-oskari.timperi@ixonos.com>
+In-Reply-To: <1293016382-4607-3-git-send-email-oskari.timperi@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7139082794032876779==
+--===============5830887836432491129==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ plugins/udev.c |   15 +++++++++++++++
+ 1 files changed, 15 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 4a919ab..1670de9 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -287,6 +287,9 @@ builtin_sources +=3D plugins/ste.c
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 3ca6af0..e384583 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -462,6 +462,19 @@ static void add_calypso(struct ofono_modem *modem,
+        ofono_modem_register(modem);
+ }
 
- builtin_modules +=3D caif
- builtin_sources +=3D plugins/caif.c
++static void add_tc65(struct ofono_modem *modem,
++                                       struct udev_device *udev_device)
++{
++       const char *devnode;
 +
-+builtin_modules +=3D tc65
-+builtin_sources +=3D plugins/tc65.c
- endif
++       DBG("modem %p", modem);
++
++       devnode =3D udev_device_get_devnode(udev_device);
++       ofono_modem_set_string(modem, "Device", devnode);
++
++       ofono_modem_register(modem);
++}
++
+ static void add_modem(struct udev_device *udev_device)
+ {
+        struct ofono_modem *modem;
+@@ -548,6 +561,8 @@ done:
+                add_isi(modem, udev_device);
+        else if (g_strcmp0(driver, "calypso") =3D=3D 0)
+                add_calypso(modem, udev_device);
++       else if (g_strcmp0(driver, "tc65") =3D=3D 0)
++               add_tc65(modem, udev_device);
+ }
 
- if MAINTAINER_MODE
+ static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
+_data)
 --
 1.6.3.3
 
@@ -38,5 +58,5 @@ index 4a919ab..1670de9 100644
 n. Visit the Ixonos booth Hall 1, # 1E19.
 
 
---===============7139082794032876779==--
+--===============5830887836432491129==--
 
