@@ -1,62 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============5830887836432491129=="
+Content-Type: multipart/mixed; boundary="===============6928995645328345121=="
 MIME-Version: 1.0
-From: Oskari Timperi <oskari.timperi@ixonos.com>
-Subject: [PATCHv2 3/3] udev initialization for TC65
-Date: Wed, 22 Dec 2010 13:13:02 +0200
-Message-ID: <1293016382-4607-4-git-send-email-oskari.timperi@ixonos.com>
-In-Reply-To: <1293016382-4607-3-git-send-email-oskari.timperi@ixonos.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: PATCH: Enable udev-based autodetection of calypso modem on
+ Freerunner
+Date: Wed, 22 Dec 2010 05:37:09 -0800
+Message-ID: <1293025029.2658.70.camel@aeonflux>
+In-Reply-To: <871v5aajzi.fsf@ossau.uklinux.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5830887836432491129==
+--===============6928995645328345121==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/udev.c |   15 +++++++++++++++
- 1 files changed, 15 insertions(+), 0 deletions(-)
+Hi Neil,
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 3ca6af0..e384583 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -462,6 +462,19 @@ static void add_calypso(struct ofono_modem *modem,
-        ofono_modem_register(modem);
- }
+> >>> Then I didn't look far back enough (or I'm simply blind).  But I still
+> >>> prefer this to be inside the driver or HACKING.calypso for easier acc=
+ess.
+> >> =
 
-+static void add_tc65(struct ofono_modem *modem,
-+                                       struct udev_device *udev_device)
-+{
-+       const char *devnode;
-+
-+       DBG("modem %p", modem);
-+
-+       devnode =3D udev_device_get_devnode(udev_device);
-+       ofono_modem_set_string(modem, "Device", devnode);
-+
-+       ofono_modem_register(modem);
-+}
-+
- static void add_modem(struct udev_device *udev_device)
- {
-        struct ofono_modem *modem;
-@@ -548,6 +561,8 @@ done:
-                add_isi(modem, udev_device);
-        else if (g_strcmp0(driver, "calypso") =3D=3D 0)
-                add_calypso(modem, udev_device);
-+       else if (g_strcmp0(driver, "tc65") =3D=3D 0)
-+               add_tc65(modem, udev_device);
- }
+> >> I am with you that this needs to be documented better than GIT commit
+> >> logs.
+> >> =
 
- static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
-_data)
---
-1.6.3.3
+> >> However I do prefer doc/calypso-modem.txt and doc/ifx-modem.txt though
+> >> since I don't wanna clutter the root directory.
+> >> =
 
--- See us at Mobile World Congress, 14-17 February 2011, in Barcelona, Spai=
-n. Visit the Ixonos booth Hall 1, # 1E19.
+> >
+> > Sounds good to me.
+> =
+
+> Cool.  Once I've worked out the simplest udev rule for calypso, I'll
+> submit a patch to create doc/calypso-modem.txt to document that.
+> =
+
+> (I don't yet understand why it makes sense for calypso to be handled
+> differently from other cases in plugins/ofono.rules, but I'm happy to
+> trust that there is a good reason for this.)
+
+the other cases come from an unique vendor and product ID. The Calypso
+and also IFX modems are based on device nodes. These are not unique.
+They are platform specific. Not all platform will have a Calypso modem
+behind /dev/ttySAC0 for example.
+
+Regards
+
+Marcel
 
 
---===============5830887836432491129==--
+
+--===============6928995645328345121==--
 
