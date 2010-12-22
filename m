@@ -1,55 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8751364130404283890=="
+Content-Type: multipart/mixed; boundary="===============4401827792116260874=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: Failed to create CAIF socket for AT
-Date: Wed, 22 Dec 2010 00:22:11 +0100
-Message-ID: <AANLkTimAQbJFh91BMLQHUN1o4sJcQqmuhkgGz6Z+EZ-S@mail.gmail.com>
-In-Reply-To: <COL106-W31BF5D57E4F7B7C4D521C9F61A0@phx.gbl>
+From: Lei Yu <lei.2.yu@nokia.com>
+Subject: [PATCH v2, 1/7] dbus: Add CDMA SMS Interface
+Date: Tue, 21 Dec 2010 16:02:23 -0800
+Message-ID: <1292976149-15598-2-git-send-email-lei.2.yu@nokia.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8751364130404283890==
+--===============4401827792116260874==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kris,
+---
+ include/dbus.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-> I am trying to understand CAIF protocol implementation in OFono.=C2=A0 I =
-am
-> getting "Failed to create CAIF socket for AT" when i am trying to enable =
-my
-> modem.
+diff --git a/include/dbus.h b/include/dbus.h
+index c527515..12768f6 100644
+--- a/include/dbus.h
++++ b/include/dbus.h
+@@ -57,6 +57,7 @@ extern "C" {
+ =
 
-Maybe the easies way to check if you have CAIF running is to try out
-unit/test-caif.
-It will try to open a CAIF Socket to the modem and send an AT command.
+ /* CDMA Interfaces */
+ #define OFONO_CDMA_VOICECALL_MANAGER_INTERFACE "org.ofono.cdma.VoiceCallMa=
+nager"
++#define OFONO_CDMA_MESSAGE_MANAGER_INTERFACE "org.ofono.cdma.MessageManage=
+r"
+ =
+
+ /* Essentially a{sv} */
+ #define OFONO_PROPERTIES_ARRAY_SIGNATURE DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STR=
+ING \
+-- =
+
+1.7.0.4
 
 
-You need to do the following to get the CAIF serial interface up:
-
-1) Run a user space program to configure your serial cable and insert
-the CAIF line discipline.
-(You'll find a really old sample of ldiscd.c here:
-http://patchwork.ozlabs.org/patch/34179/ perhaps
-you could get this to work? Please ignore all the other stuff in this
-patch, it is completely obsolete).
-Please note that you have to run as root in order to install the ldisc.
-
-2) If this is succesfull you will get a new network interface called
-"cf<ttyname>" representing
-the CAIF Link Layer. You need to set this interface in state "up"
-(e.g. sudo ifconfig cf<ttyname> up).
-
-You should now be able to connect CAIF sockets, and run unit/test-caif.
-
-If Marcel accepts the patch I send for plugin/stemgr.c then this is
-the best way to start
-the STE modem. I will post a python-script simulating the Modem Init
-Daemon when the stemgr is accepted.
-
-Regards,
-Sjur
-
---===============8751364130404283890==--
+--===============4401827792116260874==--
 
