@@ -1,52 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============7495336912167023719=="
+Content-Type: multipart/mixed; boundary="===============1129036347061433773=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH 3/4] doc: detail PinRetries property
-Date: Wed, 22 Dec 2010 16:54:22 -0200
-Message-ID: <AANLkTi=7pveKexb8tpqJ2f3hWUFYdZvL9L+Tq1FFH9fF@mail.gmail.com>
-In-Reply-To: <AANLkTik8MdXWCzokoHfo4PvC2kA0HEf0rBLfMXcrgKM2@mail.gmail.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: [PATCH] TODO: add owner to the DUN server task
+Date: Wed, 22 Dec 2010 17:06:57 -0200
+Message-ID: <1293044818-25198-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7495336912167023719==
+--===============1129036347061433773==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ TODO |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-On Tue, Dec 21, 2010 at 5:48 AM, Sankar <gsankar.gs@gmail.com> wrote:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 byte PinRetries [read=
-only]
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 Contains the retry counter for the current
->> required
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 pin. This counter is tipically decremented
->> whenever a
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 call to EnterPin() fails.
->> +
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 E.g.: if PinRequired is equal "puk", this property
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 contains the number of times EnterPin can be
->> called
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 with a wrong puk.
->
-> Does this property also mention how many retries are possible when the us=
-er
-> enters a wrong PUK for unblocking the sim pin.
+diff --git a/TODO b/TODO
+index ee32e34..39f3af8 100644
+--- a/TODO
++++ b/TODO
+@@ -132,10 +132,11 @@ Modem Emulator
+   Complexity: C1
+ =
 
-Interesting, but it was not what I had in mint. If we want this
-behavior, we might have to return all the counters instead of only
-one. Then, what would be the user interface?
+ - Support DUN emulator. Implement the Bluetooth DUN profile with only mand=
+atory
+-  AT command support.
++  AT command support. Implement USB DUN as well.
+ =
 
-regards,
+   Complexity: C4
+   Priority: Medium
++  Owner: Gustavo F Padovan <padovan@profusion.mobi>
+ =
 
-Lucas De Marchi
+   Depends: PPP Server mode
+ =
 
---===============7495336912167023719==--
+-- =
+
+1.7.3.4
+
+
+--===============1129036347061433773==--
 
