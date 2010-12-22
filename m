@@ -1,92 +1,111 @@
-Content-Type: multipart/mixed; boundary="===============0294675295077590376=="
+Content-Type: multipart/mixed; boundary="===============0145319889804420435=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 6/8] plugins: add gps atom to mbm
-Date: Wed, 22 Dec 2010 15:58:53 -0600
-Message-ID: <4D12749D.3090103@gmail.com>
-In-Reply-To: <1292531423-22316-7-git-send-email-rafael.zurita@profusion.mobi>
+Subject: Re: [PATCH 8/8] gps: add documentation
+Date: Wed, 22 Dec 2010 16:02:16 -0600
+Message-ID: <4D127568.1090101@gmail.com>
+In-Reply-To: <1292531423-22316-9-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0294675295077590376==
+--===============0145319889804420435==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Rafael,
 
+On 12/16/2010 02:30 PM, Rafael Ignacio Zurita wrote:
+> ---
+>  Makefile.am     |    3 ++-
+>  doc/gps-api.txt |   41 +++++++++++++++++++++++++++++++++++++++++
+>  2 files changed, 43 insertions(+), 1 deletions(-)
+>  create mode 100644 doc/gps-api.txt
+> =
+
+> diff --git a/Makefile.am b/Makefile.am
+> index 4b8cb51..a8ad097 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -359,7 +359,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt do=
+c/release-faq.txt \
+>  			doc/message-api.txt doc/message-waiting-api.txt \
+>  			doc/phonebook-api.txt doc/radio-settings-api.txt \
+>  			doc/sim-api.txt doc/stk-api.txt \
+> -			doc/audio-settings-api.txt doc/text-telephony-api.txt
+> +			doc/audio-settings-api.txt doc/text-telephony-api.txt \
+> +			doc/gps-api.txt
 >  =
 
-> -	if (modem_dev =3D=3D NULL || data_dev =3D=3D NULL)
-> +	if (modem_dev =3D=3D NULL || data_dev =3D=3D NULL || gps_dev =3D=3D NUL=
-L)
->  		return -EINVAL;
-
-I don't think that failing because the gps device isn't set is such a
-good idea.  There might be mbm cards without a gps node.  Let udev
-autodetection handle this part.
-
 >  =
 
->  	data->modem_port =3D create_port(modem_dev);
-> @@ -383,6 +389,20 @@ static int mbm_enable(struct ofono_modem *modem)
->  	if (getenv("OFONO_AT_DEBUG"))
->  		g_at_chat_set_debug(data->data_port, mbm_debug, "Data: ");
->  =
-
-> +	data->gps_port =3D create_port(gps_dev);
-> +	if (data->gps_port =3D=3D NULL) {
-> +		g_at_chat_unref(data->data_port);
-> +		data->data_port =3D NULL;
+>  test_scripts =3D test/backtrace \
+> diff --git a/doc/gps-api.txt b/doc/gps-api.txt
+> new file mode 100644
+> index 0000000..e9238a8
+> --- /dev/null
+> +++ b/doc/gps-api.txt
+> @@ -0,0 +1,41 @@
+> +GPS hierarchy
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 > +
-> +		g_at_chat_unref(data->modem_port);
-> +		data->modem_port =3D NULL;
+> +Service		org.ofono
+> +Interface	org.ofono.Gps
+
+As mentioned previously, lets make the Interface
+org.ofono.LocationReporting.
+
+> +Object path	[variable prefix]/{modem0,modem1,...}
 > +
-> +		return -EIO;
-> +	}
-
-So from what I understand we have to send AT*E2GPSNPD to the GPS port in
-order to turn it from a regular AT command port into a GPS port.  At
-this point this port is no longer usable for AT commands.  Right?
-
+> +Methods		dict GetProperties()
 > +
-> +	if (getenv("OFONO_AT_DEBUG"))
-> +		g_at_chat_set_debug(data->gps_port, mbm_debug, "GPS: ");
+> +			Returns all Gps properties. See the
+> +			properties section for available properties.
 > +
->  	g_at_chat_set_disconnect_function(data->data_port,
->  						mbm_disconnect, modem);
->  =
-
-> @@ -415,6 +435,9 @@ static void cfun_disable(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
->  	g_at_chat_unref(data->data_port);
->  	data->data_port =3D NULL;
->  =
-
-> +	g_at_chat_unref(data->gps_port);
-> +	data->gps_port =3D NULL;
+> +			Possible Errors: [service].Error.InProgress
+> +					 [service].Error.Failed
 > +
->  	if (ok)
->  		ofono_modem_set_powered(modem, FALSE);
->  }
-> @@ -541,6 +564,9 @@ static void mbm_post_online(struct ofono_modem *modem)
->  					OFONO_GPRS_CONTEXT_TYPE_MMS);
->  		ofono_gprs_add_context(data->gprs, data->gc);
->  	}
+> +		void SetProperty(string name, variant value)
 > +
-> +	data->gps =3D ofono_gps_create(modem, 0,
-> +					"mbmmodem", data->gps_port);
+> +			Changes the value of the specified property. Only
+> +			properties that are listed as read-write are
+> +			changeable. On success a PropertyChanged signal
+> +			will be emitted.
+> +
+> +			Possible Errors: [service].Error.InvalidArguments
+> +					 [service].Error.InProgress
+> +					 [service].Error.Failed
+> +
+> +Signals		PropertyChanged(string property, variant value)
+> +
+> +			This signal indicates a changed value of the given
+> +			property.
+> +
+> +Properties	boolean	Powered [readwrite]
+> +
+> +			This property will power or disable the GPS feature in
+> +			the modem.
+> +
+> +			Many modem manufacturers provide a GPS unit with their
+> +			modem hardware. This unit can be turned on or off and
+> +			frequently takes over one of the tty ports that the
+> +			modem provides.
+> +
 
-If my previous comment is correct, then the gps driver should be running
-on the dev port, not on the gps port.
+I think we need two additional properties here:
 
->  }
->  =
+string Device [readonly]
+	The device which can be used to obtain the location information
 
->  static struct ofono_modem_driver mbm_driver =3D {
+string Type [readonly]
+	The type of the device (e.g. nmea)
+
+One thing we can do here is stuff them inside a Settings dictionary
+property that is emitted once Powered=3DTrue.  This is similar to how
+org.ofono.ConnectionContext is implemented.
 
 Regards,
 -Denis
 
---===============0294675295077590376==--
+--===============0145319889804420435==--
 
