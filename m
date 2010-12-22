@@ -1,151 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============9177364826006001976=="
+Content-Type: multipart/mixed; boundary="===============6020201236425018058=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: Re: [PATCH 1/2] modem: add Lockdown property to Modem interface
-Date: Wed, 22 Dec 2010 16:19:41 -0200
-Message-ID: <20101222181941.GA16612@vigoh>
-In-Reply-To: <4D0C0709.9050305@gmail.com>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: Re: [RFC PATCH 1/5 v2] cell-info: Atom for ECID info of neighb cells
+Date: Wed, 22 Dec 2010 20:45:05 +0200
+Message-ID: <1293043505.3120.1421.camel@tucson>
+In-Reply-To: <1293010539-9524-2-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9177364826006001976==
+--===============6020201236425018058==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Antti,
 
-* Denis Kenzior <denkenz@gmail.com> [2010-12-17 18:57:45 -0600]:
-
-> Hi Gustavo,
+On Wed, 2010-12-22 at 11:35 +0200, ext Antti Paila wrote:
+> ---
+>  src/cell-info.c |  484 +++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 484 insertions(+), 0 deletions(-)
+>  create mode 100644 src/cell-info.c
 > =
 
-> On 12/03/2010 03:59 PM, Gustavo F. Padovan wrote:
-> > Setting Lockdown to TRUE means power down the modem and hold a lock that
-> > only permits the lock's owner power up the modem back. When released
-> > it restores the last state of the modem before holding the lock.
-> > ---
-> >  doc/modem-api.txt |    9 ++++
-> >  src/modem.c       |  129 +++++++++++++++++++++++++++++++++++++++++++++=
-++++++++
-> >  2 files changed, 138 insertions(+), 0 deletions(-)
-> =
+> diff --git a/src/cell-info.c b/src/cell-info.c
+> new file mode 100644
+> index 0000000..2289ce1
+> --- /dev/null
+> +++ b/src/cell-info.c
+> @@ -0,0 +1,484 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
 
-> Can you break this up into two patches, one for doc and one for src?
-> =
+Use Nokia copyright statement here.
 
-> > =
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
+> +
+> +#ifdef HAVE_CONFIG_H
+> +#include <config.h>
+> +#endif
+> +
+> +#include <string.h>
+> +#include <stdio.h>
+> +#include <errno.h>
+> +
+> +#include <glib.h>
+> +#include <gdbus.h>
+> +#include <sys/time.h>
+> +
+> +#include "ofono.h"
+> +
+> +#include "common.h"
+> +#include "util.h"
+> +#include "ofono/cell-info.h"
 
-> > diff --git a/doc/modem-api.txt b/doc/modem-api.txt
-> > index b92e53c..45043b0 100644
-> > --- a/doc/modem-api.txt
-> > +++ b/doc/modem-api.txt
-> > @@ -37,6 +37,15 @@ Properties	boolean Powered [readwrite]
-> >  			Boolean representing the rf state of the modem.
-> >  			Online is false in flight mode.
-> >  =
+This can't be the first patch in the set since the file included here is
+only added in the second patch.
 
-> > +		boolean Lockdown [readwrite]
-> > +
-> > +			Boolean representing the lock state of the modem.
-> > +			Setting it to true, makes the calling application hold
-> > +			the modem lock and power it down. Setting to false
-> > +			makes the it release the modem lock. Only the
-> > +			application that holds the lock can power up the modem.
-> > +			If the the application exits Lockdown is set to false.
-> > +
-> >  		boolean Emergency [readonly, optional, experimental]
-> >  =
+Cheers,
+Aki
 
-> >  			Boolean representing the emergency mode of the
-> > diff --git a/src/modem.c b/src/modem.c
-> > index b334b58..a9a6e87 100644
-> > --- a/src/modem.c
-> > +++ b/src/modem.c
-> > @@ -71,6 +71,9 @@ struct ofono_modem {
-> >  	ofono_bool_t		powered;
-> >  	ofono_bool_t		powered_pending;
-> >  	ofono_bool_t		get_online;
-> > +	ofono_bool_t		lockdown;
-> > +	char			*lock_owner;
-> > +	guint			lock_watch;
-> >  	guint			timeout;
-> >  	ofono_bool_t		online;
-> >  	struct ofono_watchlist	*online_watches;
-> > @@ -583,6 +586,9 @@ void __ofono_modem_append_properties(struct ofono_m=
-odem *modem,
-> >  	ofono_dbus_dict_append(dict, "Powered", DBUS_TYPE_BOOLEAN,
-> >  				&modem->powered);
-> >  =
 
-> > +	ofono_dbus_dict_append(dict, "Lockdown", DBUS_TYPE_BOOLEAN,
-> > +				&modem->lockdown);
-> > +
-> >  	devinfo_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_DEVIN=
-FO);
-> >  =
-
-> >  	/* We cheat a little here and don't check the registered status */
-> > @@ -686,6 +692,16 @@ static int set_powered(struct ofono_modem *modem, =
-ofono_bool_t powered)
-> >  	return err;
-> >  }
-> >  =
-
-> > +static void lockdown_remove(struct ofono_modem *modem)
-> > +{
-> > +	DBusConnection *conn =3Dofono_dbus_get_connection();
-> > +
-> > +	g_free(modem->lock_owner);
-> > +	g_dbus_remove_watch(conn, modem->lock_watch);
-> > +	modem->lock_watch =3D 0;
-> > +	modem->lockdown =3D FALSE;
-> > +}
-> > +
-> >  static gboolean set_powered_timeout(gpointer user)
-> >  {
-> >  	struct ofono_modem *modem =3D user;
-> > @@ -712,11 +728,107 @@ static gboolean set_powered_timeout(gpointer use=
-r)
-> >  =
-
-> >  		reply =3D __ofono_error_timed_out(modem->pending);
-> >  		__ofono_dbus_pending_reply(&modem->pending, reply);
-> > +
-> > +		if (modem->lockdown)
-> > +			lockdown_remove(modem);
-> >  	}
-> >  =
-
-> >  	return FALSE;
-> >  }
-> >  =
-
-> > +static void lockdown_disconnect(DBusConnection *conn, void *user_data)
-> > +{
-> > +	struct ofono_modem *modem =3D user_data;
-> > +
-> > +	DBG("");
-> > +
-> > +	g_free(modem->lock_owner);
-> > +
-> > +	modem->lockdown =3D FALSE;
-> > +
-> > +	ofono_dbus_signal_property_changed(conn, modem->path,
-> > +					OFONO_MODEM_INTERFACE,
-> > +					"Lockdown", DBUS_TYPE_BOOLEAN,
-> > +					&modem->lockdown);
-> =
-
-> Should you also be removing the lock_watch here?  Since the lock_watch
-> is no longer relevant and you'll be leaking it otherwise.
-
-gdbus remove the watch for us in this case. So no leak here.
-
--- =
-
-Gustavo F. Padovan
-http://profusion.mobi
-
---===============9177364826006001976==--
+--===============6020201236425018058==--
 
