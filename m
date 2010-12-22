@@ -1,34 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============3705985458243621493=="
+Content-Type: multipart/mixed; boundary="===============6725175541319132209=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [RFC] Refactoring ISI modem support
-Date: Wed, 22 Dec 2010 18:01:15 +0200
-Message-ID: <AANLkTimSSWMCzrmu3WsroPuzL2U=03wMW3G-hLgZ18YY@mail.gmail.com>
-In-Reply-To: <AANLkTikzdhi9H7qKJf=riBudUH+-fWqPU7xwjA81DXoM@mail.gmail.com>
+From: Lei Yu <lei.2.yu@nokia.com>
+Subject: Re: [PATCH v2, 7/7] cdmaphonesim: Add CDMA SMS Support
+Date: Wed, 22 Dec 2010 08:14:05 -0800
+Message-ID: <4D1223CD.20709@nokia.com>
+In-Reply-To: <1293025302.2658.74.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3705985458243621493==
+--===============6725175541319132209==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi All,
+Hi Marcel,
 
-2010/11/15 Aki Niemi <aki@protocolpolice.com>:
-> I've been working on improving the ISI modem support in oFono, mostly
-> concentrating on the gisi library, but also on tweaking the drivers
-> and plugins. You can follow the progress of this 'gisi' branch here:
+On 12/22/2010 05:41 AM, ext Marcel Holtmann wrote:
+> Hi Lei,
+>
+>>   Makefile.am               |   10 ++
+>>   plugins/cdmaphonesim.c    |  328 +++++++++++++++++++++++++++++++++++++=
+++++++++
+>>   plugins/cdmaphonesim.conf |   14 ++
+>>   3 files changed, 352 insertions(+), 0 deletions(-)
+>>   create mode 100644 plugins/cdmaphonesim.c
+>>   create mode 100644 plugins/cdmaphonesim.conf
+>
+> do we really want to do it this way? I am not so sure that this is the
+> best way.
+>
+> I would prefer to just have one /etc/ofono/phonesim.conf configuration
+> file. And maybe we need to start splitting phonesim plugin into a view
+> pieces and move it to its own directory. It then could also contain its
+> own atom driver implementations there.
+>
+> So my main concern here is really that phonesim support is just for
+> engineering. It has nothing to do with real production hardware. And I
+> don't wanna clutter the source or its installation with it.
 
-This branch has now been rebased and pushed to master. These patches
-have gone through quite extensive testing, but especially MeeGo N900
-folks are invited to test it some more still as bugs may have crept
-in.
+I do see your points. I agree having one phonesim.conf instead of =
 
-Note: isigen has been renamed isiusb, so mind the different modem path.
+creating a separate installation/configuration file for cdmaphonesim.
+In terms of whether having seperate cdmaphonesim plugin from phonesim, =
 
-Cheers,
-Aki
+Denis and myself has discussed in the mailing list, please see:
+    http://lists.ofono.org/pipermail/ofono/2010-December/006629.html
+To re-cap some of the points and what we have agreed in previous discussion:
+    The benefit of having separate cdmaphonesim plugin is to not clutter =
 
---===============3705985458243621493==--
+existing GSM based phonesim plugin with a lot of if/else to cover CDMA =
+
+and let CDMA evolve on its own path for a while, at least having most of
+the atoms supported, we can then evaluate how much commonality we have =
+
+and whether it makes sense to merge cdmaphonesim.c with phonesim.c.
+    Another benefit or point we have considered is to cause as little =
+
+disruption to GSM side as possible.
+
+Thus, I would propose followings:
+     a). Remove cdmaphonesim.conf and add one additional entry within =
+
+phonesim.conf to support cdmaphonesim plugin.
+     b). Keep cdmaphonesim.c and phonesim.c separated and let CDMA =
+
+evolving on its own for now.
+
+Looking forward to hearing you, Denis and other people's oppinions on =
+
+this topic.
+
+>
+> Regards
+>
+> Marcel
+>
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+
+Regards,
+Lei
+
+--===============6725175541319132209==--
 
