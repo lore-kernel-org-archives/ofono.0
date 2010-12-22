@@ -1,27 +1,20 @@
-Content-Type: multipart/mixed; boundary="===============0454685484485716258=="
+Content-Type: multipart/mixed; boundary="===============7941641435160562438=="
 MIME-Version: 1.0
-From: antti.paila@nokia.com
-Subject: RE: [RFC PATCH 2/4] cell-info: Header file for cell-info atom
-Date: Wed, 22 Dec 2010 07:41:37 +0000
-Message-ID: <4FC3F10CC1AA4D4C997A651B961B375C0769DDEC@008-AM1MPN1-026.mgdnok.nokia.com>
+From: Antti Paila <antti.paila@nokia.com>
+Subject: [RFC PATCH 0/5 v2] Atom for Neighbour Cell Info
+Date: Wed, 22 Dec 2010 11:35:34 +0200
+Message-ID: <1293010539-9524-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0454685484485716258==
+--===============7941641435160562438==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+ This series of patches implements an interface for client
+ application to fetch the ECID information of neighbouring
+ cells using DBUS.
 
-> Shouldn't ofono_cell_info_results be defined here and included as an
-> argument for
-> ofono_cell_info_query_cb_t ?
-
-Indeed that would make more sense. Now the ofono_cell_info_results is insid=
-e the ofono_cell_info, but of course if there are multiple requests sent to=
- a modem the latter one will overwrite the former one.
-
--Antti
-
---===============0454685484485716258==--
+--===============7941641435160562438==--
 
