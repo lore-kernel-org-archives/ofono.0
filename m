@@ -1,101 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============2258259348963297911=="
+Content-Type: multipart/mixed; boundary="===============7686523062550314198=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH] coding-style: mention preferred line wrap
-Date: Thu, 23 Dec 2010 11:02:56 -0200
-Message-ID: <1293109376-11634-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: oFono release plan?
+Date: Thu, 23 Dec 2010 06:59:15 -0800
+Message-ID: <1293116355.9439.15.camel@aeonflux>
+In-Reply-To: <1293101796.3120.1547.camel@tucson>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2258259348963297911==
+--===============7686523062550314198==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/coding-style.txt |   43 +++++++++++++++++++++++++++++++++++++++----
- 1 files changed, 39 insertions(+), 4 deletions(-)
+Hi Aki,
 
-diff --git a/doc/coding-style.txt b/doc/coding-style.txt
-index 9d7131d..c267b6b 100644
---- a/doc/coding-style.txt
-+++ b/doc/coding-style.txt
-@@ -75,10 +75,11 @@ Example:
- a + b;  // correct
- =
+> >         - SIM authentication API (EAP-SIM, EAP-AKA, IMS and GBA)
+> > Can you please add more light on what is supported. I could not find
+> > this info in the todo list. =
 
- =
+> =
 
--M4: Long condition
--=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
--If your condition in if, while, for statement is too long to fit in one li=
-ne,
--the new line needs to be indented not aligned with the body.
-+M4: Wrap long lines
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+If your condition in if, while, for statement or a function declaration is=
- too
-+long to fit in one line, the new line needs to be indented not aligned wit=
-h the
-+body.
- =
+> In short, we need to expose certain security services offered by the SIM
+> card that utilize the crypto algorithms on the card. This is used for
+> instance in voice over LTE authentication procedures. Probably needs to
+> be added to the TODO.
 
- Example:
- 1)
-@@ -91,6 +92,40 @@ if (call->status =3D=3D CALL_STATUS_ACTIVE ||
- 		call->status =3D=3D CALL_STATUS_HELD) {  // correct
- 	ofono_dbus_dict_append();
- =
+right now Andrew is looking into the SIM application discovery with AT
+command modems. Once we have that, we can look into what is needed for
+using the EAP methods and add details TODO items.
 
-+3)
-+gboolean sim_ust_is_available(unsigned char *service_ust, unsigned char le=
-n,
-+	num sim_ust_service index) // wrong
-+{
-+	int a;
-+	...
-+}
-+
-+4)
-+gboolean sim_ust_is_available(unsigned char *service_ust, unsigned char le=
-n,
-+					enum sim_ust_service index) // correct
-+{
-+	int a;
-+	...
-+}
-+
-+If the line being wrapped is a function call or function declaration, the
-+preferred style is to indent at least past the opening parenthesis. Indent=
-ing
-+further is acceptable as well (as long as you don't hit the 80 character
-+limit).
-+
-+If this is not possible due to hitting the 80 character limit, then indent=
-ing
-+as far as possible to the right without hitting the limit is preferred.
-+
-+Example:
-+
-+1)
-+gboolean sim_ust_is_available(unsigned char *service_ust, unsigned char le=
-n,
-+		enum sim_ust_service index); // worse
-+
-+2)
-+gboolean sim_ust_is_available(unsigned char *service_ust, unsigned char le=
-n,
-+						enum sim_ust_service index); // better
-+
- =
+Just adding a simple TODO item entry that we split out later into more
+detailed once would be fine with me.
 
- M5: Git commit message 50/72 formatting
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
--- =
+In theory we want an interface that suits all SIM authentication needs.
+Besides IMS, the second big user will be WISPr 2.0 for WiFi hotspots.
 
-1.7.3.4
+Regards
+
+Marcel
 
 
---===============2258259348963297911==--
+
+--===============7686523062550314198==--
 
