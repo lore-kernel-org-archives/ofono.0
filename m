@@ -1,73 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============5589546348566069425=="
+Content-Type: multipart/mixed; boundary="===============0381381827146277005=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [RFC PATCH 2/5 v2] cell-info: Header file for cell-info atom
-Date: Thu, 23 Dec 2010 07:02:14 -0800
-Message-ID: <1293116534.9439.18.camel@aeonflux>
-In-Reply-To: <1293088442.22770.53.camel@apaila-ThinkPad-T410>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH] gisi: fix use of unitialised variable.
+Date: Thu, 23 Dec 2010 05:39:39 +0100
+Message-ID: <1293079181-13648-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5589546348566069425==
+--===============0381381827146277005==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antti,
+Set no msg.version if it's not available.
+---
+ gisi/modem.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-> > > ---
-> > >  include/cell-info.h |  133 =
+diff --git a/gisi/modem.c b/gisi/modem.c
+index ff06cf2..9fb4d34 100644
+--- a/gisi/modem.c
++++ b/gisi/modem.c
+@@ -293,7 +293,6 @@ static gboolean isi_callback(GIOChannel *channel, GIOCo=
+ndition cond,
+ 		msg.error =3D 0;
+ 		msg.data =3D buf;
+ 		msg.len =3D len;
+-		msg.version =3D &mux->version;
+ =
 
-> > > +++++++++++++++++++++++++++++++++++++++++++++++++++
-> > >  1 files changed, 133 insertions(+), 0 deletions(-)  create mode =
+ 		if (modem->trace !=3D NULL)
+ 			modem->trace(&msg, NULL);
+@@ -311,6 +310,8 @@ static gboolean isi_callback(GIOChannel *channel, GIOCo=
+ndition cond,
+ 			return TRUE;
+ 		}
+ =
 
-> > > 100644 include/cell-info.h
-> > > =
++		msg.version =3D &mux->version;
++
+ 		if (g_isi_msg_id(&msg) =3D=3D COMMON_MESSAGE)
+ 			common_message_decode(mux, &msg);
+ =
 
-> > > diff --git a/include/cell-info.h b/include/cell-info.h new file mode =
+-- =
 
-> > > 100644 index 0000000..3941e69
-> > > --- /dev/null
-> > > +++ b/include/cell-info.h
-> > > @@ -0,0 +1,133 @@
-> > > +/*
-> > >  ...
-> > >  ...
-> > >  ...
-> > > +struct ofono_cell_info_driver {
-> > > +	const char *name;
-> > > +	int (*probe)(struct ofono_cell_info *ci,
-> > > +			unsigned int vendor,
-> > > +			void *data);
-> > > +	void (*remove)(struct ofono_cell_info *ci);
-> > > +	void (*query)(struct ofono_cell_info *ci,
-> > > +			ofono_cell_info_query_cb_t,
-> > > +			void *data);
-> > > +};
-> > > +
-> > =
-
-> > To be aligning with the other header files, do we need to add one 'cb' =
-after 'ofono_cell_info_query_cb_t' here?
-> =
-
-> This seems to be a matter with no clear convention. In "sms.h" and
-> "netreg.h" some callbacks have 'cb' and some not. I agree that if within
-> a function's parameter list some parameters have name declared, so
-> should all have.
-
-we are trying to be consistent, but some of these slipped through in the
-initial development phase of oFono.
-
-Once we find them, we document them in doc/coding-style.txt and then
-slowly start fixing these up. This is an ongoing process and pretty hard
-if your codebase reaches over 100k lines of code.
-
-Regards
-
-Marcel
+1.7.1.86.g0e460.dirty
 
 
-
---===============5589546348566069425==--
+--===============0381381827146277005==--
 
