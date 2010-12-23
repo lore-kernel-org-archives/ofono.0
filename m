@@ -1,162 +1,222 @@
-Content-Type: multipart/mixed; boundary="===============3603600200092610473=="
+Content-Type: multipart/mixed; boundary="===============4846546080975888297=="
 MIME-Version: 1.0
-From: Robertino Benis <robertino.benis@intel.com>
-Subject: [PATCH v3] ifx: Adding modem selftest for Infineon modem
-Date: Thu, 23 Dec 2010 14:47:07 -0800
-Message-ID: <1293144427-12296-1-git-send-email-robertino.benis@intel.com>
+From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+Subject: Re: [PATCH v3, Part1,
+ 4/5] cdmamodem: Add CDMA voicecall driver support for MO Call
+Date: Thu, 23 Dec 2010 15:36:55 -0800
+Message-ID: <4D13DD17.8050302@nokia.com>
+In-Reply-To: <4D12A562.5020603@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3603600200092610473==
+--===============4846546080975888297==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+Hi Denis
 
-This is another attempt to submit a patch that triggers Infineon
-modem selftest during ofono boot. Patch addresses issues raised
-by Marcel from the previous submissions.
+Thank you for reviewing these.
 
-Thank you,
--- r.
+On 12/22/2010 05:26 PM, ext Denis Kenzior wrote:
+> Hi Dara,
+>
+> <snip>
+>
+>> +
+>> +struct voicecall_driver {
+>> +	struct ofono_cdma_voicecall *vc;
+>> +	unsigned int local_release;
+>
+> What is the use of these two variables?
+>
+>> +	GAtChat *chat;
+>> +	unsigned int vendor;
+>> +};
+>> +
+>> +struct change_state_req {
+>> +	struct ofono_cdma_voicecall *vc;
+>> +	ofono_cdma_voicecall_cb_t cb;
+>> +	void *data;
+>> +};
+>
+> is cb_data not good enough for some reason? :)
+>
+>> +
+>> +static void at_dial_cb(gboolean ok, GAtResult *result, gpointer user_da=
+ta)
+>> +{
+>> +	struct cb_data *cbd =3D user_data;
+>> +	ofono_cdma_voicecall_cb_t cb =3D cbd->cb;
+>> +	struct ofono_error error;
+>> +
+>> +	decode_at_error(&error, g_at_result_final_response(result));
+>> +
+>> +	if (!ok)
+>> +		goto out;
+>
+> This if statement serves no purpose
+>
+>> +
+>> +out:
+>
+> And neither does the label
+>
+>> +	cb(&error, cbd->data);
+>> +}
+>> +
+>> +static void at_dial(struct ofono_cdma_voicecall *vc,
+>> +				const struct ofono_cdma_phone_number *ph,
+>> +				ofono_cdma_voicecall_cb_t cb, void *data)
+>> +{
+>> +	struct voicecall_driver *vd =3D ofono_cdma_voicecall_get_data(vc);
+>> +	struct cb_data *cbd =3D cb_data_new(cb, data);
+>> +	char buf[256];
+>> +
+>> +	if (cbd =3D=3D NULL)
+>> +		goto error;
+>> +
+>> +	cbd->user =3D vc;
+>
+> Why are you assigning cbd->user and never making use of it?
 
----
- plugins/ifx.c |   76 +++++++++++++++++++++++++++++++++++++++++++++++++----=
----
- 1 files changed, 66 insertions(+), 10 deletions(-)
+For all of your above comments, yes they shouldn't be there - I will =
 
-diff --git a/plugins/ifx.c b/plugins/ifx.c
-index c0a69c2..e0eb982 100644
---- a/plugins/ifx.c
-+++ b/plugins/ifx.c
-@@ -71,6 +71,8 @@
- #define GPRS3_DLC   4
- #define AUX_DLC     5
- =
+clean these up.
+>
+>> +
+>> +	snprintf(buf, sizeof(buf), "AT+CDV=3D%s", ph->number);
+>> +
+>> +	if (g_at_chat_send(vd->chat, buf, none_prefix,
+>> +				at_dial_cb, cbd, g_free)>  0)
+>> +		return;
+>> +
+>> +error:
+>> +	g_free(cbd);
+>> +
+>> +	CALLBACK_WITH_FAILURE(cb, data);
+>> +}
+>> +
+>> +static void at_template(const char *cmd,
+>> +				struct ofono_cdma_voicecall *vc,
+>> +				GAtResultFunc result_cb,
+>> +				ofono_cdma_voicecall_cb_t cb, void *data)
+>> +{
+>> +	struct voicecall_driver *vd =3D ofono_cdma_voicecall_get_data(vc);
+>> +	struct change_state_req *req =3D g_try_new0(struct change_state_req, 1=
+);
+>> +
+>> +	if (req =3D=3D NULL)
+>> +		goto error;
+>> +
+>> +	req->vc =3D vc;
+>> +	req->cb =3D cb;
+>> +	req->data =3D data;
+>> +
+>> +	if (g_at_chat_send(vd->chat, cmd, none_prefix,
+>> +				result_cb, req, g_free)>  0)
+>> +		return;
+>> +
+>> +error:
+>> +	g_free(req);
+>> +
+>> +	CALLBACK_WITH_FAILURE(cb, data);
+>> +}
+>> +
+>> +static void at_hangup_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+>> +{
+>> +	struct change_state_req *req =3D user_data;
+>> +
+>> +	if (!ok) {
+>> +		ofono_error("hangup failed.");
+>> +		return;
+>
+> Please don't do this.  If the hangup fails you never return from the
+> operation and will cause the cdma-voicecall atom to stall forever.
+> decoding the error and calling the callback is good enough.
 
-+#define IFX_SELF_TESTS_TIMEOUT	10
-+
- static char *dlc_prefixes[NUM_DLC] =3D { "Voice: ", "Net: ", "GPRS1: ",
- 					"GPRS2: ", "GPRS3: ", "Aux: " };
- =
+Thanks for spotting this, I will fix it.
+>
+>> +	}
+>> +
+>> +	ofono_cdma_voicecall_disconnected(req->vc,
+>> +				OFONO_DISCONNECT_REASON_LOCAL_HANGUP, NULL);
+>
+> Fair enough, but this should really come via a modem unsolicited
+> notification.
 
-@@ -81,6 +83,16 @@ static const char *dlc_nodes[NUM_DLC] =3D { "/dev/ttyGSM=
-1", "/dev/ttyGSM2",
- static const char *none_prefix[] =3D { NULL };
- static const char *xdrv_prefix[] =3D { "+XDRV:", NULL };
- =
+Agreed, I can either mark it with a TODO to make this clear or remove =
 
-+static struct {
-+	char *test_desc;
-+	char *at_cmd;
-+} const mst[] =3D {
-+	{ "AT Command Test", "ATE0 +CMEE=3D1" }, /* set echo & error reporting */
-+	{ "RTC GTI Test", "at(a)rtc:rtc_gti_test_verify_32khz()" },
-+	{ "Device Version Test", "at(a)vers:device_version_id()" },
-+	{ NULL, NULL }
-+};
-+
- struct ifx_data {
- 	GIOChannel *device;
- 	GAtMux *mux;
-@@ -99,6 +111,7 @@ struct ifx_data {
- 	int audio_loopback;
- 	struct ofono_sim *sim;
- 	gboolean have_sim;
-+	int self_test_idx;
- };
- =
+the disconnect reason support altogether.
+>
+>> +		CALLBACK_WITH_SUCCESS(req->cb, req->data);
+>
+> This is not necessary if you call the callback up above.  And why the
+> different indentation?
+>
+>> +}
+>> +
+>> +static void at_hangup(struct ofono_cdma_voicecall *vc,
+>> +			ofono_cdma_voicecall_cb_t cb, void *data)
+>> +{
+>> +	/* Hangup active call */
+>> +	at_template("AT+CHV", vc, at_hangup_cb, cb, data);
+>> +}
+>> +
+>> +static int at_voicecall_probe(struct ofono_cdma_voicecall *vc,
+>> +		unsigned int vendor, void *data)
+>> +{
+>> +	GAtChat *chat =3D data;
+>> +	struct voicecall_driver *vd;
+>> +
+>> +	vd =3D g_try_new0(struct voicecall_driver, 1);
+>> +	if (vd =3D=3D NULL)
+>> +		return -ENOMEM;
+>> +
+>> +	vd->chat =3D g_at_chat_clone(chat);
+>> +	vd->vendor =3D vendor;
+>> +
+>> +	ofono_cdma_voicecall_set_data(vc, vd);
+>> +
+>> +	ofono_cdma_voicecall_register(vc);
+>> +
+>> +	return 0;
+>> +}
+>> +
+>> +static void at_voicecall_remove(struct ofono_cdma_voicecall *vc)
+>> +{
+>> +	struct voicecall_driver *vd =3D ofono_cdma_voicecall_get_data(vc);
+>> +
+>> +	ofono_cdma_voicecall_set_data(vc, NULL);
+>> +
+>> +	g_at_chat_unref(vd->chat);
+>> +	g_free(vd);
+>> +}
+>> +
+>> +static struct ofono_cdma_voicecall_driver driver =3D {
+>> +	.name			=3D "cdmamodem",
+>> +	.probe			=3D at_voicecall_probe,
+>> +	.remove			=3D at_voicecall_remove,
+>> +	.dial			=3D at_dial,
+>> +	.hangup			=3D at_hangup,
+>> +};
+>> +
+>> +void cdma_at_voicecall_init()
+>> +{
+>> +	ofono_cdma_voicecall_driver_register(&driver);
+>> +}
+>> +
+>> +void cdma_at_voicecall_exit()
+>> +{
+>> +	ofono_cdma_voicecall_driver_unregister(&driver);
+>> +}
+>
+> Regards,
+> -Denis
 
- static void ifx_debug(const char *str, void *user_data)
-@@ -545,6 +558,52 @@ static gboolean mux_timeout_cb(gpointer user_data)
- 	return FALSE;
- }
- =
+Thanks
+Dara
 
-+static void ifx_self_test_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct ifx_data *data =3D ofono_modem_get_data(modem);
-+
-+	if (data->mux_init_timeout > 0) {
-+		g_source_remove(data->mux_init_timeout);
-+		data->mux_init_timeout =3D 0;
-+	}
-+
-+	if (!ok) {
-+		ofono_error("Modem %s: FAIL",
-+			mst[data->self_test_idx].test_desc);
-+		g_at_chat_unref(data->dlcs[AUX_DLC]);
-+		data->dlcs[AUX_DLC] =3D NULL;
-+
-+		g_io_channel_unref(data->device);
-+		data->device =3D NULL;
-+
-+		ofono_modem_set_powered(modem, FALSE);
-+
-+		return;
-+	}
-+
-+	data->self_test_idx++;
-+
-+	if (mst[data->self_test_idx].at_cmd !=3D NULL) {
-+		g_at_chat_send(data->dlcs[AUX_DLC],
-+			mst[data->self_test_idx].at_cmd,
-+			NULL, ifx_self_test_cb, modem, NULL);
-+
-+		data->mux_init_timeout =3D g_timeout_add_seconds(
-+			IFX_SELF_TESTS_TIMEOUT, mux_timeout_cb, modem);
-+
-+	} else {	/* Enable  MUX Channels */
-+		data->frame_size =3D 1509;
-+		g_at_chat_send(data->dlcs[AUX_DLC],
-+				"AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
-+				mux_setup_cb, modem, NULL);
-+
-+		data->mux_init_timeout =3D g_timeout_add_seconds(5,
-+				mux_timeout_cb,	modem);
-+	}
-+}
-+
- static int ifx_enable(struct ofono_modem *modem)
- {
- 	struct ifx_data *data =3D ofono_modem_get_data(modem);
-@@ -595,18 +654,15 @@ static int ifx_enable(struct ofono_modem *modem)
- 	if (getenv("OFONO_AT_DEBUG"))
- 		g_at_chat_set_debug(chat, ifx_debug, "Master: ");
- =
-
--	g_at_chat_send(chat, "ATE0 +CMEE=3D1", NULL,
--					NULL, NULL, NULL);
--
--	data->frame_size =3D 1509;
--
--	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
--					mux_setup_cb, modem, NULL);
-+	/* Execute Modem Self tests */
-+	data->dlcs[AUX_DLC] =3D chat;
-+	data->self_test_idx =3D 0;
- =
-
--	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
--								modem);
-+	g_at_chat_send(data->dlcs[AUX_DLC], mst[data->self_test_idx].at_cmd,
-+		NULL, ifx_self_test_cb, modem, NULL);
- =
-
--	data->dlcs[AUX_DLC] =3D chat;
-+	data->mux_init_timeout =3D g_timeout_add_seconds(
-+		IFX_SELF_TESTS_TIMEOUT, mux_timeout_cb,	modem);
- =
-
- 	return -EINPROGRESS;
- }
--- =
-
-1.7.0.4
-
-
---===============3603600200092610473==--
+--===============4846546080975888297==--
 
