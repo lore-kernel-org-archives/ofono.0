@@ -1,25 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============8758323739758860026=="
+Content-Type: multipart/mixed; boundary="===============6472246978764434710=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] TODO: Mark Lockdown task as done
-Date: Wed, 22 Dec 2010 18:43:25 -0600
-Message-ID: <4D129B2D.4000506@gmail.com>
-In-Reply-To: <1293049099-25619-1-git-send-email-padovan@profusion.mobi>
+Subject: Re: [PATCH] TODO: Add CDMA network and voicecall tasks
+Date: Wed, 22 Dec 2010 18:43:45 -0600
+Message-ID: <4D129B41.3080007@gmail.com>
+In-Reply-To: <1293048729-17393-1-git-send-email-dara.spieker-doyle@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8758323739758860026==
+--===============6472246978764434710==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Gustavo,
+Hi Dara,
 
-On 12/22/2010 02:18 PM, Gustavo F. Padovan wrote:
+On 12/22/2010 02:12 PM, Dara Spieker-Doyle wrote:
+> Also updates the task ownership fields to be consistent
+> with the tasks that are actually currently active.
 > ---
->  TODO             |   12 ------------
->  doc/features.txt |    4 ++++
->  2 files changed, 4 insertions(+), 12 deletions(-)
+>  TODO |   66 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++---
+>  1 files changed, 63 insertions(+), 3 deletions(-)
 > =
 
 
@@ -28,5 +30,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============8758323739758860026==--
+--===============6472246978764434710==--
 
