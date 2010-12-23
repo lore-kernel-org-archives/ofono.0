@@ -1,161 +1,169 @@
-Content-Type: multipart/mixed; boundary="===============3366592943629969338=="
+Content-Type: multipart/mixed; boundary="===============4862531050619153477=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: Re: [PATCH v3, Part1, 5/5] test: Add CDMA MO Call Support
-Date: Thu, 23 Dec 2010 15:37:46 -0800
-Message-ID: <4D13DD4A.9080607@nokia.com>
-In-Reply-To: <4D12A674.8060107@gmail.com>
+Subject: Re: [PATCH v3, Part2,
+ 1/3] nokiacdma: Add plugin and CDMA MO Call Support
+Date: Thu, 23 Dec 2010 15:41:44 -0800
+Message-ID: <4D13DE38.8010501@nokia.com>
+In-Reply-To: <4D12B479.4020401@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3366592943629969338==
+--===============4862531050619153477==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis
 
-On 12/22/2010 05:31 PM, ext Denis Kenzior wrote:
+On 12/22/2010 06:31 PM, ext Denis Kenzior wrote:
 > Hi Dara,
 >
-> On 12/20/2010 07:36 PM, Dara Spieker-Doyle wrote:
->> ---
->>   Makefile.am           |    5 ++++-
->>   test/cdma-dial-number |   24 ++++++++++++++++++++++++
->>   test/cdma-hangup      |   20 ++++++++++++++++++++
->>   test/cdma-list-call   |   30 ++++++++++++++++++++++++++++++
->>   4 files changed, 78 insertions(+), 1 deletions(-)
->>   create mode 100755 test/cdma-dial-number
->>   create mode 100755 test/cdma-hangup
->>   create mode 100755 test/cdma-list-call
->>
+> <snip>
 >
-> Patch looks fine but does not apply cleanly without patch 4.  Can you
-> also fix these:
+>> +struct nokiacdma_data {
+>> +	GAtChat *chat;
+>> +	ofono_bool_t online;
+>> +	ofono_bool_t registration_status;
 >
->> diff --git a/Makefile.am b/Makefile.am
->> index 50e893f..32ded3d 100644
->> --- a/Makefile.am
->> +++ b/Makefile.am
->> @@ -431,7 +431,10 @@ test_scripts =3D test/backtrace \
->>   		test/test-push-notification \
->>   		test/test-smart-messaging \
->>   		test/send-vcard \
->> -		test/set-tty
->> +		test/set-tty \
->> +		test/cdma-list-call \
->> +		test/cdma-dial-number \
->> +		test/cdma-hangup
->>
->>   if TEST
->>   testdir =3D $(pkglibdir)/test
->> diff --git a/test/cdma-dial-number b/test/cdma-dial-number
->> new file mode 100755
->> index 0000000..948d32d
->> --- /dev/null
->> +++ b/test/cdma-dial-number
->> @@ -0,0 +1,24 @@
->> +#!/usr/bin/python
->> +
->> +import sys
->> +import dbus
->> +
->> +bus =3D dbus.SystemBus()
->> +
->> +manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
->> +						'org.ofono.Manager')
->> +
->> +if len(sys.argv)>  2:
->> +	path =3D sys.argv[1]
->> +	number =3D sys.argv[2]
->> +else:
->> +	modems =3D manager.GetModems()
->> +	path, properties =3D modems[0]
->> +	number =3D sys.argv[1]
->> +
->> +print "Using modem %s" % path
->> +
->> +manager =3D dbus.Interface(bus.get_object('org.ofono', path),
->> +						'org.ofono.cdma.VoiceCallManager')
->> +
->> +manager.Dial(number)
->> \ No newline at end of file
+> What is the purpose of the above two variables?
 >
-> ^^^^^
+> <snip>
 >
->> diff --git a/test/cdma-hangup b/test/cdma-hangup
->> new file mode 100755
->> index 0000000..f8e631e
->> --- /dev/null
->> +++ b/test/cdma-hangup
->> @@ -0,0 +1,20 @@
->> +#!/usr/bin/python
+>> +static void nokiacdma_disconnect(gpointer user_data)
+>> +{
+>> +	struct ofono_modem *modem =3D user_data;
+>> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
 >> +
->> +import sys
->> +import dbus
+>> +	DBG("%p", modem);
 >> +
->> +bus =3D dbus.SystemBus()
+>> +	g_at_chat_unref(data->chat);
+>> +	data->chat =3D NULL;
 >> +
->> +manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
->> +						'org.ofono.Manager')
+>> +	data->chat =3D open_device(modem, "Device", "CDMA Device: ");
+>> +	if (data->chat =3D=3D NULL)
+>> +		return;
 >> +
->> +if len(sys.argv)>  2:
->> +	path =3D sys.argv[1]
->> +else:
->> +	modems =3D manager.GetModems()
->> +	path, properties =3D modems[0]
->> +
->> +manager =3D dbus.Interface(bus.get_object('org.ofono', path),
->> +						'org.ofono.cdma.VoiceCallManager')
->> +
->> +manager.Hangup()
->> diff --git a/test/cdma-list-call b/test/cdma-list-call
->> new file mode 100755
->> index 0000000..9f9fdbc
->> --- /dev/null
->> +++ b/test/cdma-list-call
->> @@ -0,0 +1,30 @@
->> +#!/usr/bin/python
->> +
->> +import dbus
->> +
->> +bus =3D dbus.SystemBus()
->> +
->> +manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
->> +						'org.ofono.Manager')
->> +
->> +modems =3D manager.GetModems()
->> +
->> +for path, properties in modems:
->> +	print "[ %s ]" % (path)
->> +
->> +	if "org.ofono.cdma.VoiceCallManager" not in properties["Interfaces"]:
->> +		continue
->> +
->> +	mgr =3D dbus.Interface(bus.get_object('org.ofono', path),
->> +					'org.ofono.cdma.VoiceCallManager')
->> +
->> +	properties =3D mgr.GetProperties()
->> +
->> +	for key in properties.keys():
->> +		if key in ["Interfaces", "Features"]:
->> +			val =3D ""
->> +			for i in properties[key]:
->> +				val +=3D i + " "
->> +		else:
->> +			val =3D str(properties[key])
->> +		print "    %s =3D %s" % (key, val)
->> \ No newline at end of file
+>> +	g_at_chat_set_disconnect_function(data->chat,
+>> +			nokiacdma_disconnect, modem);
+>> +}
 >
-> and ^^^^^^
+> What are you trying to accomplish in this one?  on the huawei driver
+> this is used to re-open the tty because it is HUP-ed when the ppp
+> session ends (their way of signaling NO CARRIER).  However, I don't see
+> you doing PPP yet, so I'm not so sure of the purpose here?
+>
+>> +
+>> +/* power up hardware */
+>> +static int nokiacdma_enable(struct ofono_modem *modem)
+>> +{
+>> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
+>> +
+>> +	DBG("%p", modem);
+>> +
+>> +	ofono_modem_set_boolean(modem, "no_sim_required", TRUE);
+>> +
+>> +	data->chat =3D open_device(modem, "Device", "CDMA Device: ");
+>> +	if (data->chat =3D=3D NULL)
+>> +		return -EINVAL;
+>> +
+>> +	g_at_chat_set_disconnect_function(data->chat,
+>> +			nokiacdma_disconnect, modem);
+>> +
+>> +	if (getenv("OFONO_AT_DEBUG"))
+>> +		g_at_chat_set_debug(data->chat, nokiacdma_debug,
+>> +				"CDMA Generic: ");
+>> +
+>> +	return 0;
+>> +}
+>> +
+>> +static int nokiacdma_disable(struct ofono_modem *modem)
+>> +{
+>> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
+>> +
+>> +	DBG("%p", modem);
+>> +
+>> +	if (data->chat) {
+>> +		g_at_chat_cancel_all(data->chat);
+>> +		g_at_chat_unregister_all(data->chat);
+>> +		g_at_chat_unref(data->chat);
+>> +		data->chat =3D NULL;
+>> +	}
+>> +
+>> +	return 0;
+>
+> So enable and disable just open up the ports?
+>
+>> +}
+>> +
+>> +static void nokiacdma_pre_sim(struct ofono_modem *modem)
+>> +{
+>> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
+>> +
+>> +	ofono_cdma_voicecall_create(modem, 0, "cdmamodem",
+>> +				data->chat);
+>> +}
+>> +
+>> +static void nokiacdma_post_sim(struct ofono_modem *modem)
+>> +{
+>> +}
+>> +
+>> +static gboolean nokiacdma_set_online_cb(gpointer cb_data)
+>> +{
+>> +	struct cb_data *cbd =3D cb_data;
+>> +	ofono_modem_online_cb_t cb =3D cbd->cb;
+>> +
+>> +	CALLBACK_WITH_SUCCESS(cb, cbd->data);
+>> +
+>> +	g_free(cbd);
+>> +
+>> +	/* do not call again */
+>> +	return FALSE;
+>> +}
+>> +
+>> +static void nokiacdma_set_online(struct ofono_modem *modem, ofono_bool_=
+t online,
+>> +				ofono_modem_online_cb_t cb, void *user_data)
+>> +{
+>> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
+>> +	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+>> +
+>> +	DBG("modem %p %s", modem, online ? "online" : "offline");
+>> +
+>> +	if (cbd =3D=3D NULL)
+>> +		goto error;
+>> +
+>> +	data->online =3D online;
+>> +
+>> +	/* TODO: Fix this when network registration implemented */
+>> +	if (online)
+>> +		data->registration_status =3D
+>> +		    NETWORK_REGISTRATION_STATUS_REGISTERED;
+>> +
+>> +	nokiacdma_set_online_cb(cbd);
+>> +	return;
+>> +
+>> +error:
+>> +	g_free(cbd);
+>> +
+>> +	CALLBACK_WITH_FAILURE(cb, cbd->data);
+>> +}
+>
+> I'm lost here.  What are you trying to accomplish?
+>
+> <snip>
 >
 > Regards,
 > -Denis
 
-Yes I'll clean these up with the new version
+Apologies for the confusion, all these are relics of integration with =
+
+other experimental work and are not relevant to the MO Call feature =
+
+submission. I'll clean this up and send new versions.
 
 Thank you
 Dara
 
---===============3366592943629969338==--
+--===============4862531050619153477==--
 
