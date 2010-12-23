@@ -1,76 +1,157 @@
-Content-Type: multipart/mixed; boundary="===============7577024497781305106=="
+Content-Type: multipart/mixed; boundary="===============4752695232866985520=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3, Part2, 3/3] udev: Add nokiacdma device
-Date: Wed, 22 Dec 2010 20:23:39 -0600
-Message-ID: <4D12B2AB.2000000@gmail.com>
-In-Reply-To: <1292959410-6566-4-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: Re: [PATCH v3, Part2,
+ 1/3] nokiacdma: Add plugin and CDMA MO Call Support
+Date: Wed, 22 Dec 2010 20:31:21 -0600
+Message-ID: <4D12B479.4020401@gmail.com>
+In-Reply-To: <1292959410-6566-2-git-send-email-dara.spieker-doyle@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7577024497781305106==
+--===============4752695232866985520==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Dara,
 
-On 12/21/2010 01:23 PM, Dara Spieker-Doyle wrote:
-> ---
->  plugins/udev.c |   21 +++++++++++++++++++++
->  1 files changed, 21 insertions(+), 0 deletions(-)
-> =
+<snip>
 
-> diff --git a/plugins/udev.c b/plugins/udev.c
-> index 255755e..9447e5c 100644
-> --- a/plugins/udev.c
-> +++ b/plugins/udev.c
-> @@ -449,6 +449,25 @@ static void add_isi(struct ofono_modem *modem,
->  	ofono_modem_register(modem);
->  }
->  =
+> +struct nokiacdma_data {
+> +	GAtChat *chat;
+> +	ofono_bool_t online;
+> +	ofono_bool_t registration_status;
 
-> +static void add_nokiacdma(struct ofono_modem *modem,
-> +					struct udev_device *udev_device)
+What is the purpose of the above two variables?
+
+<snip>
+
+> +static void nokiacdma_disconnect(gpointer user_data)
 > +{
-> +	const char *devnode;
-> +	int registered;
+> +	struct ofono_modem *modem =3D user_data;
+> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
 > +
-> +	DBG("modem %p", modem);
+> +	DBG("%p", modem);
 > +
-> +	devnode =3D udev_device_get_devnode(udev_device);
+> +	g_at_chat_unref(data->chat);
+> +	data->chat =3D NULL;
 > +
-> +	registered =3D ofono_modem_get_integer(modem, "Registered");
-> +	if (registered !=3D 0)
+> +	data->chat =3D open_device(modem, "Device", "CDMA Device: ");
+> +	if (data->chat =3D=3D NULL)
 > +		return;
 > +
-> +	ofono_modem_set_string(modem, "Device", devnode);
-> +	ofono_modem_set_integer(modem, "Registered", 1);
-> +	ofono_modem_register(modem);
+> +	g_at_chat_set_disconnect_function(data->chat,
+> +			nokiacdma_disconnect, modem);
+> +}
 
-This looks a little fishy to me.  How many ttys are created when this
-device is plugged in?  Is it really just one or are you relying on luck
-to select the right tty?
+What are you trying to accomplish in this one?  on the huawei driver
+this is used to re-open the tty because it is HUP-ed when the ppp
+session ends (their way of signaling NO CARRIER).  However, I don't see
+you doing PPP yet, so I'm not so sure of the purpose here?
+
+> +
+> +/* power up hardware */
+> +static int nokiacdma_enable(struct ofono_modem *modem)
+> +{
+> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("%p", modem);
+> +
+> +	ofono_modem_set_boolean(modem, "no_sim_required", TRUE);
+> +
+> +	data->chat =3D open_device(modem, "Device", "CDMA Device: ");
+> +	if (data->chat =3D=3D NULL)
+> +		return -EINVAL;
+> +
+> +	g_at_chat_set_disconnect_function(data->chat,
+> +			nokiacdma_disconnect, modem);
+> +
+> +	if (getenv("OFONO_AT_DEBUG"))
+> +		g_at_chat_set_debug(data->chat, nokiacdma_debug,
+> +				"CDMA Generic: ");
+> +
+> +	return 0;
+> +}
+> +
+> +static int nokiacdma_disable(struct ofono_modem *modem)
+> +{
+> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	DBG("%p", modem);
+> +
+> +	if (data->chat) {
+> +		g_at_chat_cancel_all(data->chat);
+> +		g_at_chat_unregister_all(data->chat);
+> +		g_at_chat_unref(data->chat);
+> +		data->chat =3D NULL;
+> +	}
+> +
+> +	return 0;
+
+So enable and disable just open up the ports?
 
 > +}
 > +
->  static void add_modem(struct udev_device *udev_device)
->  {
->  	struct ofono_modem *modem;
-> @@ -533,6 +552,8 @@ done:
->  		add_isi(modem, udev_device);
->  	else if (g_strcmp0(driver, "n900") =3D=3D 0)
->  		add_isi(modem, udev_device);
-> +	else if (g_strcmp0(driver, "nokiacdma") =3D=3D 0)
-> +		add_nokiacdma(modem, udev_device);
->  }
->  =
+> +static void nokiacdma_pre_sim(struct ofono_modem *modem)
+> +{
+> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
+> +
+> +	ofono_cdma_voicecall_create(modem, 0, "cdmamodem",
+> +				data->chat);
+> +}
+> +
+> +static void nokiacdma_post_sim(struct ofono_modem *modem)
+> +{
+> +}
+> +
+> +static gboolean nokiacdma_set_online_cb(gpointer cb_data)
+> +{
+> +	struct cb_data *cbd =3D cb_data;
+> +	ofono_modem_online_cb_t cb =3D cbd->cb;
+> +
+> +	CALLBACK_WITH_SUCCESS(cb, cbd->data);
+> +
+> +	g_free(cbd);
+> +
+> +	/* do not call again */
+> +	return FALSE;
+> +}
+> +
+> +static void nokiacdma_set_online(struct ofono_modem *modem, ofono_bool_t=
+ online,
+> +				ofono_modem_online_cb_t cb, void *user_data)
+> +{
+> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
+> +	struct cb_data *cbd =3D cb_data_new(cb, user_data);
+> +
+> +	DBG("modem %p %s", modem, online ? "online" : "offline");
+> +
+> +	if (cbd =3D=3D NULL)
+> +		goto error;
+> +
+> +	data->online =3D online;
+> +
+> +	/* TODO: Fix this when network registration implemented */
+> +	if (online)
+> +		data->registration_status =3D
+> +		    NETWORK_REGISTRATION_STATUS_REGISTERED;
+> +
+> +	nokiacdma_set_online_cb(cbd);
+> +	return;
+> +
+> +error:
+> +	g_free(cbd);
+> +
+> +	CALLBACK_WITH_FAILURE(cb, cbd->data);
+> +}
 
->  static gboolean devpath_remove(gpointer key, gpointer value, gpointer us=
-er_data)
+I'm lost here.  What are you trying to accomplish?
+
+<snip>
 
 Regards,
 -Denis
 
---===============7577024497781305106==--
+--===============4752695232866985520==--
 
