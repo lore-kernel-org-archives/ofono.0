@@ -1,111 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============0145319889804420435=="
+Content-Type: multipart/mixed; boundary="===============4080953917253216969=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 8/8] gps: add documentation
-Date: Wed, 22 Dec 2010 16:02:16 -0600
-Message-ID: <4D127568.1090101@gmail.com>
-In-Reply-To: <1292531423-22316-9-git-send-email-rafael.zurita@profusion.mobi>
+Subject: Re: [PATCH 3/4] doc: detail PinRetries property
+Date: Wed, 22 Dec 2010 18:40:48 -0600
+Message-ID: <4D129A90.4000103@gmail.com>
+In-Reply-To: <AANLkTi=7pveKexb8tpqJ2f3hWUFYdZvL9L+Tq1FFH9fF@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0145319889804420435==
+--===============4080953917253216969==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rafael,
+Hi Lucas,
 
-On 12/16/2010 02:30 PM, Rafael Ignacio Zurita wrote:
-> ---
->  Makefile.am     |    3 ++-
->  doc/gps-api.txt |   41 +++++++++++++++++++++++++++++++++++++++++
->  2 files changed, 43 insertions(+), 1 deletions(-)
->  create mode 100644 doc/gps-api.txt
+On 12/22/2010 12:54 PM, Lucas De Marchi wrote:
+> Hi,
 > =
 
-> diff --git a/Makefile.am b/Makefile.am
-> index 4b8cb51..a8ad097 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -359,7 +359,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt do=
-c/release-faq.txt \
->  			doc/message-api.txt doc/message-waiting-api.txt \
->  			doc/phonebook-api.txt doc/radio-settings-api.txt \
->  			doc/sim-api.txt doc/stk-api.txt \
-> -			doc/audio-settings-api.txt doc/text-telephony-api.txt
-> +			doc/audio-settings-api.txt doc/text-telephony-api.txt \
-> +			doc/gps-api.txt
->  =
+> On Tue, Dec 21, 2010 at 5:48 AM, Sankar <gsankar.gs@gmail.com> wrote:
+>>> +               byte PinRetries [readonly]
+>>> +
+>>> +                       Contains the retry counter for the current
+>>> required
+>>> +                       pin. This counter is tipically decremented
+>>> whenever a
+>>> +                       call to EnterPin() fails.
+>>> +
+>>> +                       E.g.: if PinRequired is equal "puk", this prope=
+rty
+>>> +                       contains the number of times EnterPin can be
+>>> called
+>>> +                       with a wrong puk.
+>>
+>> Does this property also mention how many retries are possible when the u=
+ser
+>> enters a wrong PUK for unblocking the sim pin.
+> =
 
->  =
+> Interesting, but it was not what I had in mint. If we want this
+> behavior, we might have to return all the counters instead of only
+> one. Then, what would be the user interface?
+> =
 
->  test_scripts =3D test/backtrace \
-> diff --git a/doc/gps-api.txt b/doc/gps-api.txt
-> new file mode 100644
-> index 0000000..e9238a8
-> --- /dev/null
-> +++ b/doc/gps-api.txt
-> @@ -0,0 +1,41 @@
-> +GPS hierarchy
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +Service		org.ofono
-> +Interface	org.ofono.Gps
 
-As mentioned previously, lets make the Interface
-org.ofono.LocationReporting.
+This brings up an interesting point.  So here are the possible usecases:
 
-> +Object path	[variable prefix]/{modem0,modem1,...}
-> +
-> +Methods		dict GetProperties()
-> +
-> +			Returns all Gps properties. See the
-> +			properties section for available properties.
-> +
-> +			Possible Errors: [service].Error.InProgress
-> +					 [service].Error.Failed
-> +
-> +		void SetProperty(string name, variant value)
-> +
-> +			Changes the value of the specified property. Only
-> +			properties that are listed as read-write are
-> +			changeable. On success a PropertyChanged signal
-> +			will be emitted.
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +					 [service].Error.InProgress
-> +					 [service].Error.Failed
-> +
-> +Signals		PropertyChanged(string property, variant value)
-> +
-> +			This signal indicates a changed value of the given
-> +			property.
-> +
-> +Properties	boolean	Powered [readwrite]
-> +
-> +			This property will power or disable the GPS feature in
-> +			the modem.
-> +
-> +			Many modem manufacturers provide a GPS unit with their
-> +			modem hardware. This unit can be turned on or off and
-> +			frequently takes over one of the tty ports that the
-> +			modem provides.
-> +
+The SIM is PIN locked and asks the user to enter a PIN.  The number of
+tries remaining is shown to the user.  The pin is entered by using EnterPin.
 
-I think we need two additional properties here:
+The user has tried to use 'EnterPin' with the wrong code too many times
+and the SIM PUK is now required.  The number of tries remaining should
+be shown to the user.  The PUK and the new PIN is entered by using
+ResetPin.  I believe the original question was about this case.
 
-string Device [readonly]
-	The device which can be used to obtain the location information
+The user has entered the PIN correctly and the phone is initialized.  In
+theory the PinRetries can be applicable here as well:
 
-string Type [readonly]
-	The type of the device (e.g. nmea)
+The user wants to unblock the PIN from being asked on the next sim
+initialization.  He uses UnlockPin to do so.  The number of retries
+remaining could be shown to the user.
 
-One thing we can do here is stuff them inside a Settings dictionary
-property that is emitted once Powered=3DTrue.  This is similar to how
-org.ofono.ConnectionContext is implemented.
+The user wants to change his PIN from one to another.  He uses ChangePin
+to do so.  The number of retries remaining could be shown to the user.
+
+The user wants to make sure the PIN is asked on the next sim
+initialization.  He uses LockPin to do so.  The number of retries
+remaining should be could to the user.
+
+The first two usecases are already nicely by your proposal, but the
+others are not.  The question is, does anyone consider showing the
+number of retries in the last three usecases important?
 
 Regards,
 -Denis
 
---===============0145319889804420435==--
+--===============4080953917253216969==--
 
