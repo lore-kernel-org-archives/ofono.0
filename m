@@ -1,222 +1,161 @@
-Content-Type: multipart/mixed; boundary="===============4846546080975888297=="
+Content-Type: multipart/mixed; boundary="===============3366592943629969338=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: Re: [PATCH v3, Part1,
- 4/5] cdmamodem: Add CDMA voicecall driver support for MO Call
-Date: Thu, 23 Dec 2010 15:36:55 -0800
-Message-ID: <4D13DD17.8050302@nokia.com>
-In-Reply-To: <4D12A562.5020603@gmail.com>
+Subject: Re: [PATCH v3, Part1, 5/5] test: Add CDMA MO Call Support
+Date: Thu, 23 Dec 2010 15:37:46 -0800
+Message-ID: <4D13DD4A.9080607@nokia.com>
+In-Reply-To: <4D12A674.8060107@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4846546080975888297==
+--===============3366592943629969338==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis
 
-Thank you for reviewing these.
-
-On 12/22/2010 05:26 PM, ext Denis Kenzior wrote:
+On 12/22/2010 05:31 PM, ext Denis Kenzior wrote:
 > Hi Dara,
 >
-> <snip>
+> On 12/20/2010 07:36 PM, Dara Spieker-Doyle wrote:
+>> ---
+>>   Makefile.am           |    5 ++++-
+>>   test/cdma-dial-number |   24 ++++++++++++++++++++++++
+>>   test/cdma-hangup      |   20 ++++++++++++++++++++
+>>   test/cdma-list-call   |   30 ++++++++++++++++++++++++++++++
+>>   4 files changed, 78 insertions(+), 1 deletions(-)
+>>   create mode 100755 test/cdma-dial-number
+>>   create mode 100755 test/cdma-hangup
+>>   create mode 100755 test/cdma-list-call
+>>
 >
->> +
->> +struct voicecall_driver {
->> +	struct ofono_cdma_voicecall *vc;
->> +	unsigned int local_release;
+> Patch looks fine but does not apply cleanly without patch 4.  Can you
+> also fix these:
 >
-> What is the use of these two variables?
+>> diff --git a/Makefile.am b/Makefile.am
+>> index 50e893f..32ded3d 100644
+>> --- a/Makefile.am
+>> +++ b/Makefile.am
+>> @@ -431,7 +431,10 @@ test_scripts =3D test/backtrace \
+>>   		test/test-push-notification \
+>>   		test/test-smart-messaging \
+>>   		test/send-vcard \
+>> -		test/set-tty
+>> +		test/set-tty \
+>> +		test/cdma-list-call \
+>> +		test/cdma-dial-number \
+>> +		test/cdma-hangup
+>>
+>>   if TEST
+>>   testdir =3D $(pkglibdir)/test
+>> diff --git a/test/cdma-dial-number b/test/cdma-dial-number
+>> new file mode 100755
+>> index 0000000..948d32d
+>> --- /dev/null
+>> +++ b/test/cdma-dial-number
+>> @@ -0,0 +1,24 @@
+>> +#!/usr/bin/python
+>> +
+>> +import sys
+>> +import dbus
+>> +
+>> +bus =3D dbus.SystemBus()
+>> +
+>> +manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
+>> +						'org.ofono.Manager')
+>> +
+>> +if len(sys.argv)>  2:
+>> +	path =3D sys.argv[1]
+>> +	number =3D sys.argv[2]
+>> +else:
+>> +	modems =3D manager.GetModems()
+>> +	path, properties =3D modems[0]
+>> +	number =3D sys.argv[1]
+>> +
+>> +print "Using modem %s" % path
+>> +
+>> +manager =3D dbus.Interface(bus.get_object('org.ofono', path),
+>> +						'org.ofono.cdma.VoiceCallManager')
+>> +
+>> +manager.Dial(number)
+>> \ No newline at end of file
 >
->> +	GAtChat *chat;
->> +	unsigned int vendor;
->> +};
->> +
->> +struct change_state_req {
->> +	struct ofono_cdma_voicecall *vc;
->> +	ofono_cdma_voicecall_cb_t cb;
->> +	void *data;
->> +};
+> ^^^^^
 >
-> is cb_data not good enough for some reason? :)
+>> diff --git a/test/cdma-hangup b/test/cdma-hangup
+>> new file mode 100755
+>> index 0000000..f8e631e
+>> --- /dev/null
+>> +++ b/test/cdma-hangup
+>> @@ -0,0 +1,20 @@
+>> +#!/usr/bin/python
+>> +
+>> +import sys
+>> +import dbus
+>> +
+>> +bus =3D dbus.SystemBus()
+>> +
+>> +manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
+>> +						'org.ofono.Manager')
+>> +
+>> +if len(sys.argv)>  2:
+>> +	path =3D sys.argv[1]
+>> +else:
+>> +	modems =3D manager.GetModems()
+>> +	path, properties =3D modems[0]
+>> +
+>> +manager =3D dbus.Interface(bus.get_object('org.ofono', path),
+>> +						'org.ofono.cdma.VoiceCallManager')
+>> +
+>> +manager.Hangup()
+>> diff --git a/test/cdma-list-call b/test/cdma-list-call
+>> new file mode 100755
+>> index 0000000..9f9fdbc
+>> --- /dev/null
+>> +++ b/test/cdma-list-call
+>> @@ -0,0 +1,30 @@
+>> +#!/usr/bin/python
+>> +
+>> +import dbus
+>> +
+>> +bus =3D dbus.SystemBus()
+>> +
+>> +manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
+>> +						'org.ofono.Manager')
+>> +
+>> +modems =3D manager.GetModems()
+>> +
+>> +for path, properties in modems:
+>> +	print "[ %s ]" % (path)
+>> +
+>> +	if "org.ofono.cdma.VoiceCallManager" not in properties["Interfaces"]:
+>> +		continue
+>> +
+>> +	mgr =3D dbus.Interface(bus.get_object('org.ofono', path),
+>> +					'org.ofono.cdma.VoiceCallManager')
+>> +
+>> +	properties =3D mgr.GetProperties()
+>> +
+>> +	for key in properties.keys():
+>> +		if key in ["Interfaces", "Features"]:
+>> +			val =3D ""
+>> +			for i in properties[key]:
+>> +				val +=3D i + " "
+>> +		else:
+>> +			val =3D str(properties[key])
+>> +		print "    %s =3D %s" % (key, val)
+>> \ No newline at end of file
 >
->> +
->> +static void at_dial_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
->> +{
->> +	struct cb_data *cbd =3D user_data;
->> +	ofono_cdma_voicecall_cb_t cb =3D cbd->cb;
->> +	struct ofono_error error;
->> +
->> +	decode_at_error(&error, g_at_result_final_response(result));
->> +
->> +	if (!ok)
->> +		goto out;
->
-> This if statement serves no purpose
->
->> +
->> +out:
->
-> And neither does the label
->
->> +	cb(&error, cbd->data);
->> +}
->> +
->> +static void at_dial(struct ofono_cdma_voicecall *vc,
->> +				const struct ofono_cdma_phone_number *ph,
->> +				ofono_cdma_voicecall_cb_t cb, void *data)
->> +{
->> +	struct voicecall_driver *vd =3D ofono_cdma_voicecall_get_data(vc);
->> +	struct cb_data *cbd =3D cb_data_new(cb, data);
->> +	char buf[256];
->> +
->> +	if (cbd =3D=3D NULL)
->> +		goto error;
->> +
->> +	cbd->user =3D vc;
->
-> Why are you assigning cbd->user and never making use of it?
-
-For all of your above comments, yes they shouldn't be there - I will =
-
-clean these up.
->
->> +
->> +	snprintf(buf, sizeof(buf), "AT+CDV=3D%s", ph->number);
->> +
->> +	if (g_at_chat_send(vd->chat, buf, none_prefix,
->> +				at_dial_cb, cbd, g_free)>  0)
->> +		return;
->> +
->> +error:
->> +	g_free(cbd);
->> +
->> +	CALLBACK_WITH_FAILURE(cb, data);
->> +}
->> +
->> +static void at_template(const char *cmd,
->> +				struct ofono_cdma_voicecall *vc,
->> +				GAtResultFunc result_cb,
->> +				ofono_cdma_voicecall_cb_t cb, void *data)
->> +{
->> +	struct voicecall_driver *vd =3D ofono_cdma_voicecall_get_data(vc);
->> +	struct change_state_req *req =3D g_try_new0(struct change_state_req, 1=
-);
->> +
->> +	if (req =3D=3D NULL)
->> +		goto error;
->> +
->> +	req->vc =3D vc;
->> +	req->cb =3D cb;
->> +	req->data =3D data;
->> +
->> +	if (g_at_chat_send(vd->chat, cmd, none_prefix,
->> +				result_cb, req, g_free)>  0)
->> +		return;
->> +
->> +error:
->> +	g_free(req);
->> +
->> +	CALLBACK_WITH_FAILURE(cb, data);
->> +}
->> +
->> +static void at_hangup_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
->> +{
->> +	struct change_state_req *req =3D user_data;
->> +
->> +	if (!ok) {
->> +		ofono_error("hangup failed.");
->> +		return;
->
-> Please don't do this.  If the hangup fails you never return from the
-> operation and will cause the cdma-voicecall atom to stall forever.
-> decoding the error and calling the callback is good enough.
-
-Thanks for spotting this, I will fix it.
->
->> +	}
->> +
->> +	ofono_cdma_voicecall_disconnected(req->vc,
->> +				OFONO_DISCONNECT_REASON_LOCAL_HANGUP, NULL);
->
-> Fair enough, but this should really come via a modem unsolicited
-> notification.
-
-Agreed, I can either mark it with a TODO to make this clear or remove =
-
-the disconnect reason support altogether.
->
->> +		CALLBACK_WITH_SUCCESS(req->cb, req->data);
->
-> This is not necessary if you call the callback up above.  And why the
-> different indentation?
->
->> +}
->> +
->> +static void at_hangup(struct ofono_cdma_voicecall *vc,
->> +			ofono_cdma_voicecall_cb_t cb, void *data)
->> +{
->> +	/* Hangup active call */
->> +	at_template("AT+CHV", vc, at_hangup_cb, cb, data);
->> +}
->> +
->> +static int at_voicecall_probe(struct ofono_cdma_voicecall *vc,
->> +		unsigned int vendor, void *data)
->> +{
->> +	GAtChat *chat =3D data;
->> +	struct voicecall_driver *vd;
->> +
->> +	vd =3D g_try_new0(struct voicecall_driver, 1);
->> +	if (vd =3D=3D NULL)
->> +		return -ENOMEM;
->> +
->> +	vd->chat =3D g_at_chat_clone(chat);
->> +	vd->vendor =3D vendor;
->> +
->> +	ofono_cdma_voicecall_set_data(vc, vd);
->> +
->> +	ofono_cdma_voicecall_register(vc);
->> +
->> +	return 0;
->> +}
->> +
->> +static void at_voicecall_remove(struct ofono_cdma_voicecall *vc)
->> +{
->> +	struct voicecall_driver *vd =3D ofono_cdma_voicecall_get_data(vc);
->> +
->> +	ofono_cdma_voicecall_set_data(vc, NULL);
->> +
->> +	g_at_chat_unref(vd->chat);
->> +	g_free(vd);
->> +}
->> +
->> +static struct ofono_cdma_voicecall_driver driver =3D {
->> +	.name			=3D "cdmamodem",
->> +	.probe			=3D at_voicecall_probe,
->> +	.remove			=3D at_voicecall_remove,
->> +	.dial			=3D at_dial,
->> +	.hangup			=3D at_hangup,
->> +};
->> +
->> +void cdma_at_voicecall_init()
->> +{
->> +	ofono_cdma_voicecall_driver_register(&driver);
->> +}
->> +
->> +void cdma_at_voicecall_exit()
->> +{
->> +	ofono_cdma_voicecall_driver_unregister(&driver);
->> +}
+> and ^^^^^^
 >
 > Regards,
 > -Denis
 
-Thanks
+Yes I'll clean these up with the new version
+
+Thank you
 Dara
 
---===============4846546080975888297==--
+--===============3366592943629969338==--
 
