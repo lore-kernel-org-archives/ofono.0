@@ -1,32 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============8765137796496256919=="
+Content-Type: multipart/mixed; boundary="===============6505301180775362961=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] huaweimodem: add frequency band selection support
-Date: Thu, 23 Dec 2010 18:49:01 -0600
-Message-ID: <4D13EDFD.2020402@gmail.com>
-In-Reply-To: <1293103080-8895-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 2/2] Mark 'Frequency Band Selection' task as done
+Date: Thu, 23 Dec 2010 18:49:20 -0600
+Message-ID: <4D13EE10.6040906@gmail.com>
+In-Reply-To: <1293103080-8895-2-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8765137796496256919==
+--===============6505301180775362961==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Lucas,
 
-On 12/23/2010 05:17 AM, Lucas De Marchi wrote:
+On 12/23/2010 05:18 AM, Lucas De Marchi wrote:
 > ---
->  drivers/huaweimodem/radio-settings.c |  206 ++++++++++++++++++++++++++++=
-+++++-
->  1 files changed, 200 insertions(+), 6 deletions(-)
+>  TODO             |   10 ----------
+>  doc/features.txt |    3 +++
+>  2 files changed, 3 insertions(+), 10 deletions(-)
 > =
 
 
-Patch has been applied.  I added a few minor style fixes afterward.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============8765137796496256919==--
+--===============6505301180775362961==--
 
