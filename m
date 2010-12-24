@@ -1,32 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6505301180775362961=="
+Content-Type: multipart/mixed; boundary="===============3502588497623718538=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] Mark 'Frequency Band Selection' task as done
-Date: Thu, 23 Dec 2010 18:49:20 -0600
-Message-ID: <4D13EE10.6040906@gmail.com>
-In-Reply-To: <1293103080-8895-2-git-send-email-lucas.demarchi@profusion.mobi>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: [RFC PATCH 2/5 v2] cell-info: Header file for cell-info atom
+Date: Fri, 24 Dec 2010 10:54:45 -0800
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9015A323449@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <1293010539-9524-3-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6505301180775362961==
+--===============3502588497623718538==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+> +struct gsm {
+> +	int lac;
+> +	int ci;
+> +	int ta;
+> +	int no_cells;
+> +	struct geran_neigh_cell{
+> +		int arfcn;
+> +		int bsic;
+> +		int rxlev;
+> +
+> +	} nmr[OFONO_MAX_NMR_COUNT];
+> +};
 
-On 12/23/2010 05:18 AM, Lucas De Marchi wrote:
-> ---
->  TODO             |   10 ----------
->  doc/features.txt |    3 +++
->  2 files changed, 3 insertions(+), 10 deletions(-)
-> =
+What about the frequency of the serving cell? I was under the impression th=
+at
+there was a need for that one as well.
+
+Even though the serving cell may be included already in the nmr, do you see=
+ a need =
+
+to explicitly provide the arfcn, bsic and rxlev of the serving cell as well?
+
+What about LAC and CI for the neighbouring cells?
+
+Cheers,
+Waldo
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============6505301180775362961==--
+--===============3502588497623718538==--
 
