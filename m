@@ -1,31 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============7465580982771684545=="
+Content-Type: multipart/mixed; boundary="===============5246282093986853908=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] doc: Describe DisplayActionInformation().
-Date: Thu, 23 Dec 2010 18:35:44 -0600
-Message-ID: <4D13EAE0.6050109@gmail.com>
-In-Reply-To: <1292924084-6929-2-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH] coding-style: mention preferred line wrap
+Date: Thu, 23 Dec 2010 18:38:58 -0600
+Message-ID: <4D13EBA2.4050108@gmail.com>
+In-Reply-To: <1293109376-11634-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7465580982771684545==
+--===============5246282093986853908==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Lucas,
 
-On 12/21/2010 03:34 AM, Andrzej Zaborowski wrote:
+On 12/23/2010 07:02 AM, Lucas De Marchi wrote:
 > ---
->  doc/stk-api.txt |   12 ++++++++++--
->  1 files changed, 10 insertions(+), 2 deletions(-)
+>  doc/coding-style.txt |   43 +++++++++++++++++++++++++++++++++++++++----
+>  1 files changed, 39 insertions(+), 4 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+Thanks for doing this one.  Patch has been applied.
 
 Regards,
 -Denis
 
---===============7465580982771684545==--
+--===============5246282093986853908==--
 
