@@ -1,40 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============3020102567493016888=="
+Content-Type: multipart/mixed; boundary="===============8075401421596788035=="
 MIME-Version: 1.0
-From: Michael 'Mickey' Lauer <mickey@vanille-media.de>
-Subject: Using the N900 modem via USB
-Date: Sat, 25 Dec 2010 18:18:15 +0000
-Message-ID: <1293301087.5809.3.camel@opal>
+From: Antti Paila <antti.paila@nokia.com>
+Subject: RE: [RFC PATCH 2/5 v2] cell-info: Header file for cell-info atom
+Date: Sun, 26 Dec 2010 15:57:43 +0200
+Message-ID: <1293371863.2368.36.camel@apaila-ThinkPad-T410>
+In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C9015A323449@orsmsx508.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3020102567493016888==
+--===============8075401421596788035==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
+Hi Waldo,
 
-we're trying to develop a 3rd party software that
-runs on the N900 and talks to the modem. To make
-developing more efficient, we try to forward the
-modem via USB and develop on a PC. For some reason
-we can't seem to get the phonet0 -> upnlink0 forwarding
-to work.
+On Fri, 2010-12-24 at 10:54 -0800, ext Bastian, Waldo wrote:
+> > +struct gsm {
+> > +	int lac;
+> > +	int ci;
+> > +	int ta;
+> > +	int no_cells;
+> > +	struct geran_neigh_cell{
+> > +		int arfcn;
+> > +		int bsic;
+> > +		int rxlev;
+> > +
+> > +	} nmr[OFONO_MAX_NMR_COUNT];
+> > +};
+> =
 
-tcpdump shows our request packets sent from the PC
-arriving on upnlink0, but nothing responds. Apparantly
-there is a missing link that connects phonet0 to upnlink0.
+> What about the frequency of the serving cell? I was under the impression =
+that
+> there was a need for that one as well.
+> =
 
-The software works fine directly on the device, however
-it would be helpful to get forwarding work as well.
-Note that running Maemo the forwarding works. What
-are we missing?
+> Even though the serving cell may be included already in the nmr, do you s=
+ee a need =
 
-Thanks,
+> to explicitly provide the arfcn, bsic and rxlev of the serving cell as we=
+ll?
 
-M. Lauer.
+Serving cell frequency is, or should be, included in the nmr list in the
+arfcn variable. I believe the arfcn, bsic and rxlev are needed for all
+cells since this information is used for location determination.
+
+> What about LAC and CI for the neighbouring cells?
+
+As far as I know, the neighbor cell info in the above-mentioned form is
+used for location specific purposes. Hence, bsic suffices to identify
+base station and rxlev gives the unscaled distance from it.
+
+If there is a reason for including LAC and CI for neighboring cells, we
+can add them to the list. In that case we should probably modify the
+DBUS method list to include one method for requesting location data and
+another method for general identity data.
+
+Best Regards,
+  Antti =
 
 
 
---===============3020102567493016888==--
+--===============8075401421596788035==--
 
