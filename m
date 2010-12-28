@@ -1,63 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============3622961717806553668=="
+Content-Type: multipart/mixed; boundary="===============5627623330696804478=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] doc: New file about using the calypso modem
-Date: Tue, 28 Dec 2010 09:01:20 -0800
-Message-ID: <1293555680.9439.63.camel@aeonflux>
-In-Reply-To: <1293539145-32734-1-git-send-email-neil@ossau.uklinux.net>
+Subject: Re: [PATCH 5/5] cell-info: Documentation
+Date: Tue, 28 Dec 2010 09:13:54 -0800
+Message-ID: <1293556434.9439.70.camel@aeonflux>
+In-Reply-To: <1293542847-24248-6-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3622961717806553668==
+--===============5627623330696804478==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Neil,
+Hi Antti,
 
->  doc/calypso-modem.txt |   22 ++++++++++++++++++++++
->  1 files changed, 22 insertions(+), 0 deletions(-)
->  create mode 100644 doc/calypso-modem.txt
+>  doc/cell-info.txt |  124 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 124 insertions(+), 0 deletions(-)
+>  create mode 100644 doc/cell-info.txt
 > =
 
-> diff --git a/doc/calypso-modem.txt b/doc/calypso-modem.txt
+> diff --git a/doc/cell-info.txt b/doc/cell-info.txt
 > new file mode 100644
-> index 0000000..ea3e0bb
+> index 0000000..b288e69
 > --- /dev/null
-> +++ b/doc/calypso-modem.txt
-> @@ -0,0 +1,22 @@
-> +Calypso modem usage
+> +++ b/doc/cell-info.txt
+> @@ -0,0 +1,124 @@
+> +Cell Info hierarchy
 > +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 > +
-> +On the Openmoko Freerunner phone, the Calypso modem is presented by
-> +the kernel as serial device /dev/ttySAC0.  To allow Ofono to
+> +Service		org.ofono
+> +Interface	org.ofono.CellInfo
+> +Object path	[variable prefix]/{modem0,modem1,...}
+> +
+> +Methods 	a{sv}aa{sv} GetNeighborCellInfo()
+> +
+> +			Calling this procedure returns properties of serving
+> +			and neighbouring cells in GSM or WCDMA networks. This
+> +			information can be used to determine current location
+> +			using triangulation over neighbouring cell tower
+> +			locations and estimated distances.
+> +
+> +			The return value consists of two parts: 1) dictionary
+> +			of common information about network and serving cell 2)
+> +			array of dictionaries containing measurement results
+> +			of neighbouring cells. The contents of the dictionaries
+> +			follow the specification OMA-TS-ULP-V2_0-20100816-C for
+> +			user plane Location and is described in properties
+> +			section.
+> +
+> +		a{sv} GetProperties
+> +
+> +			Calling this procedure returns properties of serving
+> +			cell in GSM or WCDMA networks. Effectively the data
+> +			returned is the part 1 of the data returned by
+> +			GetNeighborCellInfo.
 
-it is spelled oFono.
+why do we bother here with two methods calls. What is the use of getting
+only half of the information. You are making the same call to the
+hardware, so why not return the same information.
 
-> +autodetect and use this, a simple udev rule is needed:
-> +
-> +KERNEL=3D=3D"ttySAC0", ENV{OFONO_DRIVER}=3D"calypso"
-> +
-> +You can put this in any file in /lib/udev/rules.d.  A logical choice
-> +is the "55-openmoko-gta01-gta02.rules" file, if it exists in your
-> +Freerunner distribution.
-> +
-> +With this rule in place:
-> +
-> +- ofono will detect the Calypso modem when it starts up, and the
+The method name org.ofono.CellInfo.GetNeighborCellInfo is also not
+really good. I duplicates the CellInfo information. So I would just have
+called this GetNeighbors.
 
-Same here. It is oFono.
+What is the reason behind a{sv}aa{sv} here? Wouldn't it be simpler to
+just go with aa{sv} and declare that the first dict is always the
+current serving cell? Are the information from the current cell really
+that different than from the neighbors?
 
-> +  `list-modems' test script will show this, but will not power it up
-> +
-> +- the `enable-modem' test script can be used to power it up
-> +
-> +- a subsequent `list-modems' will show lots of information, including
-> +  network registration.
-
-Since we had this discussion on IRC. Has this rule been proven to do the
-right thing? Even in case of the weird renaming of the original serial
-port?
+One other think that I don't really like with the GetProperties part is
+that we could expect a PropertiesChanged signal. However that is not
+really going to happen since the query should only be done on demand. So
+I would prefer if we then don't have properties at all in this case.
 
 Regards
 
@@ -65,5 +81,5 @@ Marcel
 
 
 
---===============3622961717806553668==--
+--===============5627623330696804478==--
 
