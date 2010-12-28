@@ -1,57 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0173154990885999737=="
+Content-Type: multipart/mixed; boundary="===============1215233223373746196=="
 MIME-Version: 1.0
-From: krishna k <id_kishore@live.in>
-Subject: Failed to create CAIF socket for AT
-Date: Tue, 28 Dec 2010 12:13:02 +0530
-Message-ID: <COL106-W63065D4F52154926C524C6F6010@phx.gbl>
+From: Wei, Jun <jun.wei@intel.com>
+Subject: RE: [RFC PATCH 1/5 v2] cell-info: Atom for ECID info of neighb cells
+Date: Tue, 28 Dec 2010 18:00:22 +0800
+Message-ID: <1A42CE6F5F474C41B63392A5F80372B231CD1334@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1293010539-9524-2-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0173154990885999737==
+--===============1215233223373746196==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Antti,
+
+>+static GSList *g_drivers =3D NULL;
+>+
+>+static GDBusMethodTable ci_methods[] =3D {
+>+	{ "GetProperties",	"",	"a{sv}aa{sv}",	ci_get_cells },
+>+	{ }
++};
++
+
+Do we need to add 'G_DBUS_METHOD_FLAG_ASYNC' after ci_get_cells? =
 
 
 
+>+static DBusMessage *ci_get_cells(DBusConnection *conn, DBusMessage *msg,
+>+					void *data)
+>+{
+>+	struct ofono_cell_info *ci =3D data;
+>+	DBG("");
+>+
+>+	ci->pending =3D dbus_message_ref(msg);
+>+	ci->driver->query(ci, ofono_cell_info_query_cb, ci->driver_data);
 
-Hi Sjur,
-
-Thanks a ton for your support.
-
-By tweaking add_modem() function in udev.c lead to success of modem enumrat=
-ion properly and we are able to perform all basic operations like dirty =
-
-call making, sms-sending, sms-receive, etc... =
+The 3rd parameter should be 'ci' instead of 'ci->driver_data', right?
 
 
-We are using oFono-0.36 with Linux-2.6.36-rc1 kernel.
-
-Really thanks for your time.
 
 Regards,
---Kris
- 		 	   		 =20
+Wei, Jun =E9=9F=A6=E5=B3=BB
+Email: jun.wei(a)intel.com
 
---===============0173154990885999737==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWw+CjxoZWFkPgo8c3R5bGU+PCEtLQouaG1tZXNzYWdlIFAKewptYXJnaW46MHB4OwpwYWRk
-aW5nOjBweAp9CmJvZHkuaG1tZXNzYWdlCnsKZm9udC1zaXplOiAxMHB0Owpmb250LWZhbWlseTpU
-YWhvbWEKfQotLT48L3N0eWxlPgo8L2hlYWQ+Cjxib2R5IGNsYXNzPSdobW1lc3NhZ2UnPgoKCjxz
-dHlsZT48IS0tCi5obW1lc3NhZ2UgUAp7Cm1hcmdpbjowcHg7CnBhZGRpbmc6MHB4Cn0KYm9keS5o
-bW1lc3NhZ2UKewpmb250LXNpemU6IDEwcHQ7CmZvbnQtZmFtaWx5OlRhaG9tYQp9Ci0tPjwvc3R5
-bGU+CjxwcmU+SGkgU2p1ciw8YnI+PGJyPlRoYW5rcyBhIHRvbiBmb3IgeW91ciBzdXBwb3J0Ljxi
-cj48YnI+QnkgdHdlYWtpbmcgYWRkX21vZGVtKCkgZnVuY3Rpb24gaW4gdWRldi5jIGxlYWQgdG8g
-c3VjY2VzcyBvZiBtb2RlbSBlbnVtcmF0aW9uIHByb3Blcmx5IGFuZCB3ZSBhcmUgYWJsZSB0byBw
-ZXJmb3JtIGFsbCBiYXNpYyBvcGVyYXRpb25zIGxpa2UgZGlydHkgPGJyPmNhbGwgbWFraW5nLCBz
-bXMtc2VuZGluZywgc21zLXJlY2VpdmUsIGV0Yy4uLiA8YnI+PGJyPldlIGFyZSB1c2luZyBvRm9u
-by0wLjM2IHdpdGggTGludXgtMi42LjM2LXJjMSBrZXJuZWwuPGJyPjxicj5SZWFsbHkgdGhhbmtz
-IGZvciB5b3VyIHRpbWUuPGJyPjxicj5SZWdhcmRzLDxicj4tLUtyaXM8YnI+PC9wcmU+IAkJIAkg
-ICAJCSAgPC9ib2R5Pgo8L2h0bWw+
---===============0173154990885999737==--
+--===============1215233223373746196==--
 
