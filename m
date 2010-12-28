@@ -1,164 +1,158 @@
-Content-Type: multipart/mixed; boundary="===============8233383605931856831=="
+Content-Type: multipart/mixed; boundary="===============6251017572276748861=="
 MIME-Version: 1.0
 From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH 1/5] cell-info: Header file for cell info atom
-Date: Tue, 28 Dec 2010 15:27:23 +0200
-Message-ID: <1293542847-24248-2-git-send-email-antti.paila@nokia.com>
+Subject: [PATCH 5/5] cell-info: Documentation
+Date: Tue, 28 Dec 2010 15:27:27 +0200
+Message-ID: <1293542847-24248-6-git-send-email-antti.paila@nokia.com>
 In-Reply-To: <1293542847-24248-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8233383605931856831==
+--===============6251017572276748861==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/cell-info.h |  128 +++++++++++++++++++++++++++++++++++++++++++++++=
+ doc/cell-info.txt |  124 +++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 128 insertions(+), 0 deletions(-)
- create mode 100644 include/cell-info.h
+ 1 files changed, 124 insertions(+), 0 deletions(-)
+ create mode 100644 doc/cell-info.txt
 
-diff --git a/include/cell-info.h b/include/cell-info.h
+diff --git a/doc/cell-info.txt b/doc/cell-info.txt
 new file mode 100644
-index 0000000..2b75819
+index 0000000..b288e69
 --- /dev/null
-+++ b/include/cell-info.h
-@@ -0,0 +1,128 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+#ifndef __OFONO_CELL_INFO_H
-+#define __OFONO_CELL_INFO_H
++++ b/doc/cell-info.txt
+@@ -0,0 +1,124 @@
++Cell Info hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 +
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
++Service		org.ofono
++Interface	org.ofono.CellInfo
++Object path	[variable prefix]/{modem0,modem1,...}
 +
-+#include <ofono/types.h>
-+#include <stdint.h>
++Methods 	a{sv}aa{sv} GetNeighborCellInfo()
 +
-+struct ofono_cell_info;
++			Calling this procedure returns properties of serving
++			and neighbouring cells in GSM or WCDMA networks. This
++			information can be used to determine current location
++			using triangulation over neighbouring cell tower
++			locations and estimated distances.
 +
++			The return value consists of two parts: 1) dictionary
++			of common information about network and serving cell 2)
++			array of dictionaries containing measurement results
++			of neighbouring cells. The contents of the dictionaries
++			follow the specification OMA-TS-ULP-V2_0-20100816-C for
++			user plane Location and is described in properties
++			section.
 +
-+#define OFONO_CI_FIELD_TA_UNDEFINED 0xFF
-+#define OFONO_CI_FIELD_UCID_UNDEFINED 0xFFFFFFFF
-+#define OFONO_CI_FIELD_ECN0_UNDEFINED 0xFF
-+#define OFONO_CI_FIELD_RSCP_UNDEFINED -127
-+#define OFONO_CI_FIELD_PATHLOSS_UNDEFINED 0xFF
-+#define OFONO_CI_FIELD_FREQ_UNDEFINED 0xFFFF
++		a{sv} GetProperties
 +
-+#define OFONO_MAX_NMR_COUNT 15
-+#define OFONO_MAX_MEASURED_CELL_COUNT 32
-+#define OFONO_MAX_MEAS_RES_LIST_COUNT 8
++			Calling this procedure returns properties of serving
++			cell in GSM or WCDMA networks. Effectively the data
++			returned is the part 1 of the data returned by
++			GetNeighborCellInfo.
 +
-+enum ofono_cell_type {
-+	OFONO_CELL_TYPE_GERAN,
-+	OFONO_CELL_TYPE_UTRAN_FDD
-+};
++Properties
 +
-+struct geran {
-+	uint16_t lac;
-+	uint16_t ci;
-+	uint8_t  ta;
-+	uint8_t  no_cells;
-+	struct geran_neigh_cell {
-+		uint16_t arfcn;
-+		uint8_t bsic;
-+		uint8_t rxlev;
-+	} nmr[OFONO_MAX_NMR_COUNT];
-+};
++a{sv]		string Type
 +
-+struct cell_measured_results {
-+	uint32_t ucid;
-+	uint16_t sc;
-+	uint8_t ecn0;
-+	int8_t rscp;
-+	uint8_t pathloss;
-+};
++		Radio access network type of neighbor cell information.
 +
-+struct measured_results_list {
-+	uint16_t dl_freq;
-+	uint16_t ul_freq;
-+	uint8_t  rssi;
-+	uint8_t  no_cells;
-+	struct cell_measured_results cmr[OFONO_MAX_MEASURED_CELL_COUNT];
-+};
++		The possible values are:
++			"geran"	Measurement results are for the GSM EDGE Radio
++				Access Network.
++			"utran"	Measurement results are for UMTS Radio Access
++				Network.
 +
-+struct utran {
-+	uint32_t ucid;
-+	uint16_t dl_freq;
-+	uint16_t ul_freq;
-+	uint16_t sc;
-+	uint8_t  no_freq;
-+	struct measured_results_list mrl[OFONO_MAX_MEAS_RES_LIST_COUNT];
-+};
++		uint16 MobileCountryCode
++			Mobile Country Code of serving cell. Possible values:
++			Values: 0...999"
 +
-+struct ofono_cell_info_results {
-+	enum ofono_cell_type rat;
-+	uint16_t mcc;
-+	uint16_t mnc;
-+	union {
-+		struct geran geran;
-+		struct utran utran;
-+	};
-+};
++		uint16 MobileNetworkCode
++			Mobile Network Code of serving cell.
++			Values: 0...999"
++
++		uint16 LocationAreaCode [GERAN]
++			Location area code of serving cell.
++			Values: 0...65535
++
++		uint16 CellId [GERAN]
++			Cell Id of serving cell.
++			Values: 0...65535
++
++		byte TimingAdvance [GERAN, optional]
++			Timing advance.
++			Values: 0...63
++
++		uint32 UniqueCellId [UTRA-FDD]
++			Serving WCDMA unique cell ID.
++			Values: 0...268435455
++
++		uint16 ScramblingCode [UTRA-FDD]
++			Primary scrambling code.
++			Values: 0...511
++
++		uint16 UARFCN-DL [UTRA-FDD]
++			Downlink UTRA Absolute Radio Frequency Channel Number
++			of serving cell.
++			Values: 0...16383
++
++		uint16 UARFCN-UL [UTRA-FDD, optional]
++			Uplink UTRA Absolute Radio Frequency Channel Number.
++			Values: 0...16383
 +
 +
-+typedef void (*ofono_cell_info_query_cb_t)(const struct ofono_error *error,
-+		struct ofono_cell_info_results *results, void *data);
++aa{sv}		uint16 AbsoluteRadioFrequencyChannelNumber [GERAN]
++			Absolute radio frequency channel number.
++			 Values: 0...1023
 +
-+struct ofono_cell_info_driver {
-+	const char *name;
-+	int (*probe)(struct ofono_cell_info *ci,
-+			unsigned int vendor,
-+			void *data);
-+	void (*remove)(struct ofono_cell_info *ci);
-+	void (*query)(struct ofono_cell_info *ci,
-+			ofono_cell_info_query_cb_t cb,
-+			void *data);
-+};
++		byte BaseStationIdentityCode [GERAN]
++			Base station identity code.
++			Values: 0...63.
 +
-+struct ofono_cell_info *ofono_cell_info_create(struct ofono_modem *modem,
-+					unsigned int vendor,
-+					const char *driver,
-+					void *data);
++		byte RXLEV [GERAN]
++			Measured power of the channel.
++			Values: 0...63
 +
-+void ofono_cell_info_register(struct ofono_cell_info *ci);
-+void ofono_cell_info_remove(struct ofono_cell_info *ci);
-+int ofono_cell_info_driver_register(struct ofono_cell_info_driver *driver);
-+void ofono_cell_info_driver_unregister(struct ofono_cell_info_driver *driv=
-er);
-+void *ofono_cell_info_get_data(struct ofono_cell_info *ci);
-+void ofono_cell_info_set_data(struct ofono_cell_info *ci, void *cid);
++		byte ReceivedSignalStrengthIndicator [UTRA-FDD]
++			RX power level.
++			Values: 0...127
 +
-+#ifdef __cplusplus
-+}
-+#endif
++		uint16 UARFCN-DL [UTRA-FDD]
++			Downlink UARFCN.
++			Values: 0...16383
 +
-+#endif /* __OFONO_CELL_INFO_H */
++		uint16 UARFCN-UL [UTRA-FDD, optional]
++			Uplink UARFCN.
++			Values: 0...16383
++
++		uint16 ScramblingCode [UTRA-FDD]
++			Primary scrambling code.
++			Values: 0...511
++
++		uint32 UniqueCellId [UTRA-FDD, optional]
++			Unique cell ID.
++			Values: 0...268435455
++
++		byte CPICH-ECN0 [UTRA-FDD, optional]
++			 Common pilot channel RX energy per chip over noise
++			 density in dB.
++			 Values: 0...63
++
++		int16 CPICH-RSCP [UTRA-FDD, optional]
++			Common pilot channel RX carrier power in dBm
++			Values: -4...127
++
++		byte Pathloss [UTRA-FDD, optional]
++			Measured path loss in dB.
++			Values: 46...173
 -- =
 
 1.7.1
 
 
---===============8233383605931856831==--
+--===============6251017572276748861==--
 
