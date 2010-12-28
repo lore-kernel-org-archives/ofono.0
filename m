@@ -1,42 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============8674598112905483059=="
+Content-Type: multipart/mixed; boundary="===============2128424542834754070=="
 MIME-Version: 1.0
-From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH] doc: Fix wording.
-Date: Tue, 28 Dec 2010 10:17:59 +0100
-Message-ID: <1293527879-3369-6-git-send-email-andrew.zaborowski@intel.com>
-In-Reply-To: <1293527879-3369-1-git-send-email-andrew.zaborowski@intel.com>
+From: Neil Jerram <neil@ossau.uklinux.net>
+Subject: Re: [PATCH] doc: New file about using the calypso modem
+Date: Tue, 28 Dec 2010 20:29:17 +0000
+Message-ID: <87ei91hc9u.fsf@ossau.uklinux.net>
+In-Reply-To: <1293555680.9439.63.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8674598112905483059==
+--===============2128424542834754070==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/sim-api.txt |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Marcel Holtmann <marcel@holtmann.org> writes:
 
-diff --git a/doc/sim-api.txt b/doc/sim-api.txt
-index d4d2b1b..89c321e 100644
---- a/doc/sim-api.txt
-+++ b/doc/sim-api.txt
-@@ -44,7 +44,7 @@ Methods		dict GetProperties()
- =
+> Hi Neil,
 
- 			Obtain the icon given by id.  Only ids greater than 1
- 			are valid.  XPM format is currently used to return the
--			icon format.
-+			icon data.
- =
+Hi Marcel,
 
- Signals		PropertyChanged(string name, variant value)
- =
+> it is spelled oFono.
 
--- =
+Sorry, will fix in the next version of this patch.  (All occurrences.)
 
-1.7.1.86.g0e460.dirty
+> Since we had this discussion on IRC. Has this rule been proven to do the
+> right thing?
+
+Well I've certainly tested that it works for me, yes - on the 2.6.34
+kernel, which is the newest working kernel for the Freerunner.
+
+> Even in case of the weird renaming of the original serial
+> port?
+
+I'm not sure what you mean here.  If you're thinking of the difference
+between "/devices/platform/s3c2440-uart.0/tty/ttySAC0" and
+"/dev/ttySAC0": my understanding is that the 2.6.34 kernel decides on
+the ttySAC0 name itself, and hence this name isn't a result of any udev
+renaming.  Does that help at all>?
+
+     Neil
 
 
---===============8674598112905483059==--
+--===============2128424542834754070==--
 
