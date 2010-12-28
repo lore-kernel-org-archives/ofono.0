@@ -1,63 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============4697199447892685800=="
+Content-Type: multipart/mixed; boundary="===============8920693698991024176=="
 MIME-Version: 1.0
-From: Antti Paila <antti.paila@nokia.com>
-Subject: RE: [RFC PATCH 1/5 v2] cell-info: Atom for ECID info of neighb cells
-Date: Tue, 28 Dec 2010 14:12:21 +0200
-Message-ID: <1293538341.2803.7.camel@apaila-ThinkPad-T410>
-In-Reply-To: <1A42CE6F5F474C41B63392A5F80372B231CD1334@shsmsx501.ccr.corp.intel.com>
+From: Neil Jerram <neil@ossau.uklinux.net>
+Subject: [PATCH] doc: New file about using the calypso modem
+Date: Tue, 28 Dec 2010 12:25:45 +0000
+Message-ID: <1293539145-32734-1-git-send-email-neil@ossau.uklinux.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4697199447892685800==
+--===============8920693698991024176==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jun,
+---
+ doc/calypso-modem.txt |   22 ++++++++++++++++++++++
+ 1 files changed, 22 insertions(+), 0 deletions(-)
+ create mode 100644 doc/calypso-modem.txt
 
-On Tue, 2010-12-28 at 18:00 +0800, ext Wei, Jun wrote:
-> Hi Antti,
-> =
+diff --git a/doc/calypso-modem.txt b/doc/calypso-modem.txt
+new file mode 100644
+index 0000000..ea3e0bb
+--- /dev/null
++++ b/doc/calypso-modem.txt
+@@ -0,0 +1,22 @@
++Calypso modem usage
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++On the Openmoko Freerunner phone, the Calypso modem is presented by
++the kernel as serial device /dev/ttySAC0.  To allow Ofono to
++autodetect and use this, a simple udev rule is needed:
++
++KERNEL=3D=3D"ttySAC0", ENV{OFONO_DRIVER}=3D"calypso"
++
++You can put this in any file in /lib/udev/rules.d.  A logical choice
++is the "55-openmoko-gta01-gta02.rules" file, if it exists in your
++Freerunner distribution.
++
++With this rule in place:
++
++- ofono will detect the Calypso modem when it starts up, and the
++  `list-modems' test script will show this, but will not power it up
++
++- the `enable-modem' test script can be used to power it up
++
++- a subsequent `list-modems' will show lots of information, including
++  network registration.
+-- =
 
-> >+static GSList *g_drivers =3D NULL;
-> >+
-> >+static GDBusMethodTable ci_methods[] =3D {
-> >+	{ "GetProperties",	"",	"a{sv}aa{sv}",	ci_get_cells },
-> >+	{ }
-> +};
-> +
-> =
-
-> Do we need to add 'G_DBUS_METHOD_FLAG_ASYNC' after ci_get_cells? =
-
-
-Yes, we need. Already noticed it myself while testing :). I'll post the
-next version of the patch soon which contains all sort of fixes plus
-refactoring. =
-
-
-> =
-
-> >+static DBusMessage *ci_get_cells(DBusConnection *conn, DBusMessage *msg,
-> >+					void *data)
-> >+{
-> >+	struct ofono_cell_info *ci =3D data;
-> >+	DBG("");
-> >+
-> >+	ci->pending =3D dbus_message_ref(msg);
-> >+	ci->driver->query(ci, ofono_cell_info_query_cb, ci->driver_data);
-> =
-
-> The 3rd parameter should be 'ci' instead of 'ci->driver_data', right?
-
-Well, the first parameter is already 'ci', so maybe repetition is not
-needed. The third parameter is kind of useless here anyway.
-
-Thanks for the comments.
-
-Best Regards,
-  Antti
+1.7.1
 
 
---===============4697199447892685800==--
+--===============8920693698991024176==--
 
