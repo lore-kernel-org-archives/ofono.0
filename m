@@ -1,270 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============4154633029962240293=="
+Content-Type: multipart/mixed; boundary="===============4619484758584054321=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 4/5] sim: Watch files that ofono keeps in memory.
-Date: Tue, 28 Dec 2010 10:17:57 +0100
-Message-ID: <1293527879-3369-4-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 5/5][RfC] stk: Partially handle Refresh command.
+Date: Tue, 28 Dec 2010 10:17:58 +0100
+Message-ID: <1293527879-3369-5-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1293527879-3369-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4154633029962240293==
+--===============4619484758584054321==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-These are dummy watches on files who's state is kept in memory, just
-to ensure that on a refresh affecting any of those files ofono
-re-reads them from SIM.  Only EFmsisdn and EFsdn changes are handled
-without changing sim state right now.
+Only the four "NAA initialisation" modes are handled at the moment.
 ---
- src/sim.c |   90 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+--
- 1 files changed, 87 insertions(+), 3 deletions(-)
+ src/stk.c |   65 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 65 insertions(+), 0 deletions(-)
 
-diff --git a/src/sim.c b/src/sim.c
-index 3f79c6a..8f69b4c 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -890,6 +890,8 @@ static void sim_get_image(struct ofono_sim *sim, unsign=
-ed char id,
- 	/* read the image data */
- 	ofono_sim_read_bytes(sim, iidf_id, iidf_offset, iidf_len,
- 				sim_iidf_read_cb, sim);
-+	ofono_sim_add_file_watch(sim, iidf_id,
-+					OFONO_SIM_STATE_READY, NULL, sim);
+diff --git a/src/stk.c b/src/stk.c
+index 9dcbda6..e30f600 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -1951,10 +1951,22 @@ static gboolean handle_command_send_ussd(const stru=
+ct stk_command *cmd,
+ 	return FALSE;
  }
  =
 
- static DBusMessage *sim_get_icon(DBusConnection *conn,
-@@ -1127,11 +1129,12 @@ out:
- check:
- 	/* All records retrieved */
- 	if (sim->service_numbers) {
--		char **service_numbers;
--
- 		sim->service_numbers =3D g_slist_reverse(sim->service_numbers);
- 		sim->sdn_ready =3D TRUE;
-+	}
- =
-
-+	if (sim->sdn_ready) {
-+		char **service_numbers;
- 		service_numbers =3D get_service_numbers(sim->service_numbers);
- =
-
- 		ofono_dbus_signal_dict_property_changed(conn, path,
-@@ -1143,12 +1146,34 @@ check:
- 	}
- }
- =
-
-+static void sim_service_numbers_changed(int id, void *userdata)
++static void free_idle_mode_text(struct ofono_stk *stk)
 +{
-+	struct ofono_sim *sim =3D userdata;
++	g_free(stk->idle_mode_text);
++	stk->idle_mode_text =3D NULL;
 +
-+	if (sim->service_numbers) {
-+		g_slist_foreach(sim->service_numbers,
-+				(GFunc)service_number_free, NULL);
-+		g_slist_free(sim->service_numbers);
-+		sim->service_numbers =3D NULL;
-+	}
-+
-+	ofono_sim_read(sim, SIM_EFSDN_FILEID, OFONO_SIM_FILE_STRUCTURE_FIXED,
-+			sim_sdn_read_cb, sim);
++	memset(&stk->idle_mode_icon, 0, sizeof(stk->idle_mode_icon));
 +}
 +
- static void sim_own_numbers_update(struct ofono_sim *sim)
+ static gboolean handle_command_refresh(const struct stk_command *cmd,
+ 					struct stk_response *rsp,
+ 					struct ofono_stk *stk)
  {
- 	ofono_sim_read(sim, SIM_EFMSISDN_FILEID, OFONO_SIM_FILE_STRUCTURE_FIXED,
- 			sim_msisdn_read_cb, sim);
- }
++	struct ofono_error failure =3D { .type =3D OFONO_ERROR_TYPE_FAILURE };
++	struct ofono_sim *sim =3D NULL;
++	struct ofono_atom *sim_atom;
++	int err;
+ 	GSList *l;
  =
 
-+static void sim_own_numbers_changed(int id, void *userdata)
-+{
-+	struct ofono_sim *sim =3D userdata;
+ 	DBG("");
+@@ -2008,6 +2020,59 @@ static gboolean handle_command_refresh(const struct =
+stk_command *cmd,
+ 					cmd->refresh.icon_id.qualifier);
+ 	DBG("Alpha ID: %s", cmd->refresh.alpha_id);
+ =
+
++	sim_atom =3D __ofono_modem_find_atom(__ofono_atom_get_modem(stk->atom),
++						OFONO_ATOM_TYPE_SIM);
++	if (sim_atom)
++		sim =3D __ofono_atom_get_data(sim_atom);
 +
-+	sim_own_numbers_update(sim);
-+}
++	if (sim =3D=3D NULL) {
++		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
++		return TRUE;
++	}
 +
- static void sim_efimg_read_cb(int ok, int length, int record,
- 				const unsigned char *data,
- 				int record_length, void *userdata)
-@@ -1193,16 +1218,42 @@ static void sim_efimg_read_cb(int ok, int length, i=
-nt record,
- static void sim_ready(enum ofono_sim_state new_state, void *user)
- {
- 	struct ofono_sim *sim =3D user;
-+	int i, iidf_id;
++	if (cmd->qualifier < 4) {
++		int qualifier =3D stk->pending_cmd->qualifier;
++		GSList *file_list =3D stk->pending_cmd->refresh.file_list;
 +
-+	if (new_state !=3D OFONO_SIM_STATE_READY) {
-+		ofono_sim_remove_file_watch(sim, SIM_EFMSISDN_FILEID,
-+						NULL, sim);
-+		ofono_sim_remove_file_watch(sim, SIM_EFSDN_FILEID, NULL, sim);
-+		ofono_sim_remove_file_watch(sim, SIM_EFIMG_FILEID, NULL, sim);
++		/* Don't free the list yet */
++		stk->pending_cmd->refresh.file_list =3D NULL;
 +
-+		if (sim->efimg =3D=3D NULL)
-+			return;
++		/*
++		 * Queue the TERMINAL RESPONSE before triggering potential
++		 * file accesses.
++		 */
++		err =3D stk_respond(stk, rsp, stk_command_cb);
++		if (err)
++			stk_command_cb(&failure, stk);
 +
-+		for (i =3D sim->efimg_length / 9 - 1; i >=3D 0; i--) {
-+			iidf_id =3D (sim->efimg[i * 9 + 3] << 8) |
-+				sim->efimg[i * 9 + 4];
++		/* TODO: use the alphaId / icon */
++		/* TODO: if AID is supplied, check its value */
++		/* TODO: possibly check if a D-bus call is pending or
++		 * an STK session ongoing. */
 +
-+			ofono_sim_remove_file_watch(sim, iidf_id, NULL, sim);
++		/* TODO: free some elements of the atom state */
++
++		switch (qualifier) {
++		case 0:
++			free_idle_mode_text(stk);
++			__ofono_sim_refresh(sim, file_list, TRUE, TRUE);
++			break;
++		case 1:
++			__ofono_sim_refresh(sim, file_list, FALSE, FALSE);
++			break;
++		case 2:
++		case 3:
++			free_idle_mode_text(stk);
++			__ofono_sim_refresh(sim, file_list, FALSE, TRUE);
++			break;
 +		}
- =
-
--	if (new_state !=3D OFONO_SIM_STATE_READY)
- 		return;
++
++		g_slist_foreach(file_list, (GFunc) g_free, NULL);
++		g_slist_free(file_list);
++
++		return FALSE;
 +	}
- =
-
- 	sim_own_numbers_update(sim);
-+	ofono_sim_add_file_watch(sim, SIM_EFMSISDN_FILEID,
-+					OFONO_SIM_STATE_READY,
-+					sim_own_numbers_changed, sim);
- =
-
- 	ofono_sim_read(sim, SIM_EFSDN_FILEID, OFONO_SIM_FILE_STRUCTURE_FIXED,
- 			sim_sdn_read_cb, sim);
-+	ofono_sim_add_file_watch(sim, SIM_EFSDN_FILEID,
-+					OFONO_SIM_STATE_READY,
-+					sim_service_numbers_changed, sim);
 +
- 	ofono_sim_read(sim, SIM_EFIMG_FILEID, OFONO_SIM_FILE_STRUCTURE_FIXED,
- 			sim_efimg_read_cb, sim);
-+	ofono_sim_add_file_watch(sim, SIM_EFIMG_FILEID,
-+					OFONO_SIM_STATE_READY, NULL, sim);
+ 	rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
+ 	return TRUE;
  }
- =
-
- static void sim_imsi_cb(const struct ofono_error *error, const char *imsi,
-@@ -1466,6 +1517,9 @@ static void sim_efust_read_cb(int ok, int length, int=
- record,
- 		ofono_sim_read(sim, SIM_EFEST_FILEID,
- 				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 				sim_efest_read_cb, sim);
-+		ofono_sim_add_file_watch(sim, SIM_EFEST_FILEID,
-+						OFONO_SIM_STATE_INSERTED,
-+						NULL, sim);
- =
-
- 		return;
- 	}
-@@ -1527,6 +1581,9 @@ static void sim_efphase_read_cb(int ok, int length, i=
-nt record,
- 		ofono_sim_read(sim, SIM_EFUST_FILEID,
- 				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 				sim_efust_read_cb, sim);
-+		ofono_sim_add_file_watch(sim, SIM_EFUST_FILEID,
-+						OFONO_SIM_STATE_INSERTED,
-+						NULL, sim);
- =
-
- 		return;
- 	}
-@@ -1549,6 +1606,8 @@ static void sim_efphase_read_cb(int ok, int length, i=
-nt record,
- 	ofono_sim_read(sim, SIM_EFSST_FILEID,
- 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 			sim_efsst_read_cb, sim);
-+	ofono_sim_add_file_watch(sim, SIM_EFSST_FILEID,
-+					OFONO_SIM_STATE_INSERTED, NULL, sim);
- }
- =
-
- static void sim_initialize_after_pin(struct ofono_sim *sim)
-@@ -1556,10 +1615,14 @@ static void sim_initialize_after_pin(struct ofono_s=
-im *sim)
- 	ofono_sim_read(sim, SIM_EFPHASE_FILEID,
- 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 			sim_efphase_read_cb, sim);
-+	ofono_sim_add_file_watch(sim, SIM_EFPHASE_FILEID,
-+					OFONO_SIM_STATE_INSERTED, NULL, sim);
- =
-
- 	ofono_sim_read(sim, SIM_EFAD_FILEID,
- 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 			sim_ad_read_cb, sim);
-+	ofono_sim_add_file_watch(sim, SIM_EFAD_FILEID,
-+					OFONO_SIM_STATE_INSERTED, NULL, sim);
- =
-
- 	/*
- 	 * Read CPHS-support bits, this is still part of the SIM
-@@ -1568,6 +1631,8 @@ static void sim_initialize_after_pin(struct ofono_sim=
- *sim)
- 	ofono_sim_read(sim, SIM_EF_CPHS_INFORMATION_FILEID,
- 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 			sim_cphs_information_read_cb, sim);
-+	ofono_sim_add_file_watch(sim, SIM_EF_CPHS_INFORMATION_FILEID,
-+					OFONO_SIM_STATE_INSERTED, NULL, sim);
- }
- =
-
- static void sim_pin_query_cb(const struct ofono_error *error,
-@@ -1858,6 +1923,8 @@ static void sim_initialize(struct ofono_sim *sim)
- 	ofono_sim_read(sim, SIM_EF_ICCID_FILEID,
- 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 			sim_iccid_read_cb, sim);
-+	ofono_sim_add_file_watch(sim, SIM_EF_ICCID_FILEID,
-+					OFONO_SIM_STATE_INSERTED, NULL, sim);
- =
-
- 	/* EFecc is read by the voicecall atom */
- =
-
-@@ -1872,9 +1939,14 @@ static void sim_initialize(struct ofono_sim *sim)
- 	ofono_sim_read(sim, SIM_EFLI_FILEID,
- 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 			sim_efli_read_cb, sim);
-+	ofono_sim_add_file_watch(sim, SIM_EFLI_FILEID,
-+					OFONO_SIM_STATE_INSERTED, NULL, sim);
-+
- 	ofono_sim_read(sim, SIM_EFPL_FILEID,
- 			OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
- 			sim_efpl_read_cb, sim);
-+	ofono_sim_add_file_watch(sim, SIM_EFPL_FILEID,
-+					OFONO_SIM_STATE_INSERTED, NULL, sim);
- }
- =
-
- int ofono_sim_read_bytes(struct ofono_sim *sim, int id,
-@@ -1995,6 +2067,7 @@ static void sim_free_state(struct ofono_sim *sim)
- 				(GFunc)service_number_free, NULL);
- 		g_slist_free(sim->service_numbers);
- 		sim->service_numbers =3D NULL;
-+		sim->sdn_ready =3D FALSE;
- 	}
- =
-
- 	if (sim->efli) {
-@@ -2039,6 +2112,17 @@ static void sim_free_state(struct ofono_sim *sim)
- =
-
- 	sim->fixed_dialing =3D FALSE;
- 	sim->barred_dialing =3D FALSE;
-+
-+	ofono_sim_remove_file_watch(sim, SIM_EFUST_FILEID, NULL, sim);
-+	ofono_sim_remove_file_watch(sim, SIM_EFEST_FILEID, NULL, sim);
-+	ofono_sim_remove_file_watch(sim, SIM_EFSST_FILEID, NULL, sim);
-+	ofono_sim_remove_file_watch(sim, SIM_EFPHASE_FILEID, NULL, sim);
-+	ofono_sim_remove_file_watch(sim, SIM_EFAD_FILEID, NULL, sim);
-+	ofono_sim_remove_file_watch(sim, SIM_EF_CPHS_INFORMATION_FILEID,
-+					NULL, sim);
-+	ofono_sim_remove_file_watch(sim, SIM_EF_ICCID_FILEID, NULL, sim);
-+	ofono_sim_remove_file_watch(sim, SIM_EFLI_FILEID, NULL, sim);
-+	ofono_sim_remove_file_watch(sim, SIM_EFPL_FILEID, NULL, sim);
- }
- =
-
- void ofono_sim_inserted_notify(struct ofono_sim *sim, ofono_bool_t inserte=
-d)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============4154633029962240293==--
+--===============4619484758584054321==--
 
