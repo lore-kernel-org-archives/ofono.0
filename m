@@ -1,101 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============8481516942548061445=="
+Content-Type: multipart/mixed; boundary="===============1397842865424074414=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@nokia.com>
-Subject: [PATCH 4/9] SMS history plugin test script.
-Date: Wed, 29 Dec 2010 14:51:20 +0200
-Message-ID: <1293627085-24428-5-git-send-email-oleg.zhurakivskyy@nokia.com>
+Subject: [PATCH 5/9] oFono smsagent enhancements to permit more flexible
+ parameter set to be dispatched.
+Date: Wed, 29 Dec 2010 14:51:21 +0200
+Message-ID: <1293627085-24428-6-git-send-email-oleg.zhurakivskyy@nokia.com>
 In-Reply-To: <1293627085-24428-1-git-send-email-oleg.zhurakivskyy@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8481516942548061445==
+--===============1397842865424074414==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/test-messaging-agent |   67 +++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 67 insertions(+), 0 deletions(-)
- create mode 100644 test/test-messaging-agent
+ src/smsagent.c |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/test/test-messaging-agent b/test/test-messaging-agent
-new file mode 100644
-index 0000000..85d07f2
---- /dev/null
-+++ b/test/test-messaging-agent
-@@ -0,0 +1,67 @@
-+#!/usr/bin/python
+diff --git a/src/smsagent.c b/src/smsagent.c
+index 9d6f21d..12f6da3 100644
+--- a/src/smsagent.c
++++ b/src/smsagent.c
+@@ -255,6 +255,8 @@ int sms_agent_dispatch_datagram(struct sms_agent *agent=
+, const char *method,
+ 				const struct tm *local_sent_time,
+ 				const unsigned char *content, unsigned int len,
+ 				sms_agent_dispatch_cb cb, void *user_data,
++				sms_agent_dict_append_cb dict_cb,
++				void *dict_cb_data,
+ 				ofono_destroy_func destroy)
+ {
+ 	struct sms_agent_request *req;
+@@ -299,6 +301,9 @@ int sms_agent_dispatch_datagram(struct sms_agent *agent=
+, const char *method,
+ =
+
+ 	ofono_dbus_dict_append(&dict, "Sender", DBUS_TYPE_STRING, &from);
+ =
+
++	if (dict_cb)
++		dict_cb(&dict, dict_cb_data);
 +
-+import gobject
-+import sys
-+import dbus
-+import dbus.service
-+import dbus.mainloop.glib
-+
-+def message_print(method, data, props):
-+	string =3D ""
-+	for byte in data:
-+		string +=3D str(byte)
-+	print "%s" % method
-+	print "%-15s%s" % ("Text", string)
-+	for key in props.keys():
-+		print "%-15s%s" % (key, props[key])
-+
-+class MessagingAgent(dbus.service.Object):
-+	@dbus.service.method("org.ofono.MessagingAgent",
-+					in_signature=3D"", out_signature=3D"")
-+	def Release(self):
-+		print "Release"
-+		mainloop.quit()
-+
-+	@dbus.service.method("org.ofono.MessagingAgent",
-+				in_signature=3D"aya{sv}", out_signature=3D"")
-+	def MessageReceived(self, data, props):
-+		message_print("MessageReceived", data, props)
-+
-+	@dbus.service.method("org.ofono.MessagingAgent",
-+				in_signature=3D"aya{sv}", out_signature=3D"")
-+	def MessageSendPending(self, data, props):
-+		message_print("MessageSendPending", data, props)
-+
-+	@dbus.service.method("org.ofono.MessagingAgent",
-+				in_signature=3D"aya{sv}", out_signature=3D"")
-+	def MessageSendStatus(self, data, props):
-+		message_print("MessageSendStatus", data, props)
-+
-+if __name__ =3D=3D '__main__':
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+
-+	bus =3D dbus.SystemBus()
-+
-+	manager =3D dbus.Interface(bus.get_object("org.ofono", "/"),
-+						"org.ofono.Manager")
-+	modems =3D manager.GetModems()
-+
-+	for path, properties in modems:
-+		if "org.ofono.Messaging" not in properties["Interfaces"]:
-+			continue
-+
-+		pn =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.Messaging')
-+
-+	path =3D "/test/agent"
-+	agent =3D MessagingAgent(bus, path)
-+	pn.AgentRegister(path)
-+	print "MessagingAgent registered"
-+
-+	mainloop =3D gobject.MainLoop()
-+
-+	try:
-+		mainloop.run()
-+	except KeyboardInterrupt:
-+		pn.AgentUnregister(path)
-+		mainloop.run()
+ 	dbus_message_iter_close_container(&iter, &dict);
+ =
+
+ 	if (!dbus_connection_send_with_reply(conn, req->msg, &req->call, -1)) {
 -- =
 
 1.7.1
 
 
---===============8481516942548061445==--
+--===============1397842865424074414==--
 
