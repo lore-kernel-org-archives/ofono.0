@@ -1,35 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============4332498661337490896=="
+Content-Type: multipart/mixed; boundary="===============4991486703802691958=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 1/4] call-settings: fix getting CNAP property
-Date: Wed, 29 Dec 2010 00:40:59 -0200
-Message-ID: <1293590462-3516-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 3/4] doc: rename CalledLine* properties
+Date: Wed, 29 Dec 2010 00:41:01 -0200
+Message-ID: <1293590462-3516-3-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1293590462-3516-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4332498661337490896==
+--===============4991486703802691958==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/call-settings.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ doc/call-settings-api.txt         |    4 ++--
+ doc/supplementaryservices-api.txt |    4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/src/call-settings.c b/src/call-settings.c
-index b6c3924..aea4991 100644
---- a/src/call-settings.c
-+++ b/src/call-settings.c
-@@ -870,7 +870,7 @@ static DBusMessage *generate_get_properties_reply(struc=
-t ofono_call_settings *cs
- 	ofono_dbus_dict_append(&dict, "CallingLinePresentation",
- 				DBUS_TYPE_STRING, &str);
+diff --git a/doc/call-settings-api.txt b/doc/call-settings-api.txt
+index a454621..b6dc1cc 100644
+--- a/doc/call-settings-api.txt
++++ b/doc/call-settings-api.txt
+@@ -42,7 +42,7 @@ Properties	string CallingLinePresentation [readonly]
+ 				"enabled",
+ 				"unknown"
  =
 
--	str =3D cnap_status_to_string(cs->clip);
-+	str =3D cnap_status_to_string(cs->cnap);
- 	ofono_dbus_dict_append(&dict, "CallingNamePresentation",
- 				DBUS_TYPE_STRING, &str);
+-		string CalledLinePresentation [readonly]
++		string ConnectedLinePresentation [readonly]
+ =
+
+ 			Contains the value of the connected line identification
+ 			presentation property.  The value indicates the state
+@@ -54,7 +54,7 @@ Properties	string CallingLinePresentation [readonly]
+ 				"enabled",
+ 				"unknown"
+ =
+
+-		string CalledLineRestriction [readonly]
++		string ConnectedLineRestriction [readonly]
+ =
+
+ 			Contains the value of the connected line identification
+ 			restriction property. The value indicates the state of
+diff --git a/doc/supplementaryservices-api.txt b/doc/supplementaryservices-=
+api.txt
+index 0857412..820cce1 100644
+--- a/doc/supplementaryservices-api.txt
++++ b/doc/supplementaryservices-api.txt
+@@ -89,9 +89,9 @@ The first return argument and the corresponding second re=
+turn argument are:
+ 					dict cf_dict)
+ 	"CallWaiting"			(string ss_op, dict cw_dict)
+ 	"CallingLinePresentation"	(string ss_op, string status)
+-	"CalledLinePresentation"	(string ss_op, string status)
++	"ConnectedLinePresentation"	(string ss_op, string status)
+ 	"CallingLineRestriction"	(string ss_op, string clir_status)
+-	"CalledLineRestriction"		(string ss_op, string status)
++	"ConnectedLineRestriction"	(string ss_op, string status)
+ =
+
+ ss_op contains the supplementary service operation:
  =
 
 -- =
@@ -37,5 +69,5 @@ t ofono_call_settings *cs
 1.7.3.4
 
 
---===============4332498661337490896==--
+--===============4991486703802691958==--
 
