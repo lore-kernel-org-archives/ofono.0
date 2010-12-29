@@ -1,55 +1,83 @@
-Content-Type: multipart/mixed; boundary="===============1397842865424074414=="
+Content-Type: multipart/mixed; boundary="===============2991863181853501307=="
 MIME-Version: 1.0
 From: Oleg Zhurakivskyy <oleg.zhurakivskyy@nokia.com>
-Subject: [PATCH 5/9] oFono smsagent enhancements to permit more flexible
- parameter set to be dispatched.
-Date: Wed, 29 Dec 2010 14:51:21 +0200
-Message-ID: <1293627085-24428-6-git-send-email-oleg.zhurakivskyy@nokia.com>
+Subject: [PATCH 3/9] SMS history plugin documentation.
+Date: Wed, 29 Dec 2010 14:51:19 +0200
+Message-ID: <1293627085-24428-4-git-send-email-oleg.zhurakivskyy@nokia.com>
 In-Reply-To: <1293627085-24428-1-git-send-email-oleg.zhurakivskyy@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1397842865424074414==
+--===============2991863181853501307==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/smsagent.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ doc/messaging-agent-api.txt |   49 +++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 49 insertions(+), 0 deletions(-)
+ create mode 100644 doc/messaging-agent-api.txt
 
-diff --git a/src/smsagent.c b/src/smsagent.c
-index 9d6f21d..12f6da3 100644
---- a/src/smsagent.c
-+++ b/src/smsagent.c
-@@ -255,6 +255,8 @@ int sms_agent_dispatch_datagram(struct sms_agent *agent=
-, const char *method,
- 				const struct tm *local_sent_time,
- 				const unsigned char *content, unsigned int len,
- 				sms_agent_dispatch_cb cb, void *user_data,
-+				sms_agent_dict_append_cb dict_cb,
-+				void *dict_cb_data,
- 				ofono_destroy_func destroy)
- {
- 	struct sms_agent_request *req;
-@@ -299,6 +301,9 @@ int sms_agent_dispatch_datagram(struct sms_agent *agent=
-, const char *method,
- =
-
- 	ofono_dbus_dict_append(&dict, "Sender", DBUS_TYPE_STRING, &from);
- =
-
-+	if (dict_cb)
-+		dict_cb(&dict, dict_cb_data);
+diff --git a/doc/messaging-agent-api.txt b/doc/messaging-agent-api.txt
+new file mode 100644
+index 0000000..956ec55
+--- /dev/null
++++ b/doc/messaging-agent-api.txt
+@@ -0,0 +1,49 @@
++Messaging hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 +
- 	dbus_message_iter_close_container(&iter, &dict);
- =
-
- 	if (!dbus_connection_send_with_reply(conn, req->msg, &req->call, -1)) {
++Service		org.ofono
++Interface	org.ofono.Messaging
++Object path	[variable prefix]/{modem0,modem1,...}
++
++Methods		void AgentRegister(object path)
++
++			Registers an agent which will be notified on SMS events.
++
++		void AgentUnregister(object path)
++
++			Unregisters an agent.
++
++MessagingAgent Hierarchy [experimental]
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		unique name
++Interface	org.ofono.MessagingAgent
++Object path	freely definable
++
++Methods		void MessageReceived(array{byte} appointment, dict info)
++
++			Requests the agent to process incoming SMS.
++			The info dictionary contains 'Sender',
++			'LocalSentTime', 'SentTime' and 'UUID' properties.
++
++		void MessageSendPending(array{byte} card, dict info)
++
++			Requests the agent to process outgoing SMS.
++
++			The info dictionary contains 'Sender',
++			'LocalSentTime', 'SentTime' and 'UUID' properties.
++
++		void MessageSendStatus(array{byte} card, dict info)
++
++			Requests the agent to process an outgoing SMS
++			send status notification.
++
++			The info dictionary contains 'Sender',
++			'LocalSentTime', 'SentTime', 'UUID' and 'Status'
++			properties.
++
++		void Release()
++
++			Agent is being released, possibly because of oFono
++			terminating, SMS agent interface is being torn down
++			or modem off.  No UnregisterAgent call is needed.
 -- =
 
 1.7.1
 
 
---===============1397842865424074414==--
+--===============2991863181853501307==--
 
