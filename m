@@ -1,38 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============4348492718502514755=="
+Content-Type: multipart/mixed; boundary="===============9090774571884349182=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC 2/2] stk: add missing text and icon case handling
-Date: Thu, 30 Dec 2010 11:10:10 -0600
-Message-ID: <4D1CBCF2.3040101@gmail.com>
-In-Reply-To: <1293628600-8684-3-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: Re: [PATCH] doc: Fix wording.
+Date: Thu, 30 Dec 2010 11:11:12 -0600
+Message-ID: <4D1CBD30.8080100@gmail.com>
+In-Reply-To: <1293527879-3369-6-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4348492718502514755==
+--===============9090774571884349182==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Andrew,
 
-On 12/29/2010 07:16 AM, Jeevaka Badrappan wrote:
-> As per the ETSI TS 102 223 section 6.5.4,
-> If the terminal receives an icon, and either
-> an empty or no alpha identifier/text string
-> is given by the UICC, than the terminal shall
-> reject the command with general result
-> "Command data not understood by terminal".
+On 12/28/2010 03:17 AM, Andrzej Zaborowski wrote:
 > ---
->  src/stk.c |  114 ++++++++++++++++++++++++++++++++++++++++++-------------=
-------
->  1 files changed, 79 insertions(+), 35 deletions(-)
+>  doc/sim-api.txt |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
 > =
 
 
-I thought the agreement was to do such checking in stkutil.c?
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============4348492718502514755==--
+--===============9090774571884349182==--
 
