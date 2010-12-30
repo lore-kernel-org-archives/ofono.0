@@ -1,37 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============5110056555083849189=="
+Content-Type: multipart/mixed; boundary="===============8458516679493099993=="
 MIME-Version: 1.0
-From: Wei, Jun <jun.wei@intel.com>
-Subject: RE: [PATCH 1/5] cell-info: Header file for cell info atom
-Date: Thu, 30 Dec 2010 17:33:50 +0800
-Message-ID: <1A42CE6F5F474C41B63392A5F80372B231CD1B72@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <1293542847-24248-2-git-send-email-antti.paila@nokia.com>
+From: Petteri Tikander <petteri.tikander@ixonos.com>
+Subject: unsolicited multiline result
+Date: Thu, 30 Dec 2010 18:55:54 +0200
+Message-ID: <1293728155-1781-1-git-send-email-petteri.tikander@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5110056555083849189==
+--===============8458516679493099993==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antti,
 
->+struct ofono_cell_info_results {
->+	enum ofono_cell_type rat;
->+	uint16_t mcc;
->+	uint16_t mnc;
->+	union {
->+		struct geran geran;
->+		struct utran utran;
->+	};
->+};
+This patch is for handling multiline unsolicited result-codes.
+So state-machine used for handling result-bytes (gsmv1_feed) is set to the =
+multiline-response
+state. Otherwise next lines from the result-buffer are not handled correctl=
+y,
+and response-handling will get stuck.
 
-Is there such a case that modem reports a GERAN serving cell info together =
-with some UTRAN neighbouring cell infos?
+In the other hand, this correction keeps result-handling still unchanged.
+So single line is notified to the upper level (atoms) at a time, not all li=
+nes of the result.
+For instance: network-emergency numbers cannot be collect to the one single=
+ notification yet.
+-- See us at Mobile World Congress, 14-17 February 2011, in Barcelona, Spai=
+n. Visit the Ixonos booth Hall 1, # 1E19.
 
 
-Regards,
-Wei, Jun =E9=9F=A6=E5=B3=BB
-Email: jun.wei(a)intel.com =20
-
---===============5110056555083849189==--
+--===============8458516679493099993==--
 
