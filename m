@@ -1,31 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============8795246910415359668=="
+Content-Type: multipart/mixed; boundary="===============4348492718502514755=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv3 0/2] Support for Cinterion TC65
-Date: Thu, 30 Dec 2010 11:07:55 -0600
-Message-ID: <4D1CBC6B.7000508@gmail.com>
-In-Reply-To: <1293616510-18042-1-git-send-email-oskari.timperi@ixonos.com>
+Subject: Re: [RFC 2/2] stk: add missing text and icon case handling
+Date: Thu, 30 Dec 2010 11:10:10 -0600
+Message-ID: <4D1CBCF2.3040101@gmail.com>
+In-Reply-To: <1293628600-8684-3-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8795246910415359668==
+--===============4348492718502514755==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oskari,
+Hi Jeevaka,
 
-On 12/29/2010 03:55 AM, Oskari Timperi wrote:
-> These patches add initial support for Cinterion TC65 modem.
+On 12/29/2010 07:16 AM, Jeevaka Badrappan wrote:
+> As per the ETSI TS 102 223 section 6.5.4,
+> If the terminal receives an icon, and either
+> an empty or no alpha identifier/text string
+> is given by the UICC, than the terminal shall
+> reject the command with general result
+> "Command data not understood by terminal".
+> ---
+>  src/stk.c |  114 ++++++++++++++++++++++++++++++++++++++++++-------------=
+------
+>  1 files changed, 79 insertions(+), 35 deletions(-)
 > =
 
 
-Both patches look good, but the indentation is still using spaces and
-not tabs.  Is your mailer playing dirty tricks with your patches by any
-chance?
+I thought the agreement was to do such checking in stkutil.c?
 
 Regards,
 -Denis
 
---===============8795246910415359668==--
+--===============4348492718502514755==--
 
