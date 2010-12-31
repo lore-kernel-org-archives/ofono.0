@@ -1,54 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============9126606146246287033=="
+Content-Type: multipart/mixed; boundary="===============4026112090557471903=="
 MIME-Version: 1.0
-From: Neil Jerram <neil@ossau.uklinux.net>
-Subject: [PATCH] doc: New file about using the calypso modem
-Date: Fri, 31 Dec 2010 10:50:59 +0000
-Message-ID: <1293792659-27522-1-git-send-email-neil@ossau.uklinux.net>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 0/3] Add null text/alpha identifier and icon check handling
+Date: Fri, 31 Dec 2010 14:30:44 +0200
+Message-ID: <1293798647-4256-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9126606146246287033==
+--===============4026112090557471903==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/calypso-modem.txt |   22 ++++++++++++++++++++++
- 1 files changed, 22 insertions(+), 0 deletions(-)
- create mode 100644 doc/calypso-modem.txt
+Hi,
 
-diff --git a/doc/calypso-modem.txt b/doc/calypso-modem.txt
-new file mode 100644
-index 0000000..8e1eb22
---- /dev/null
-+++ b/doc/calypso-modem.txt
-@@ -0,0 +1,22 @@
-+Calypso modem usage
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+On the Openmoko Freerunner phone, the Calypso modem is presented by
-+the kernel as serial device /dev/ttySAC0.  To allow oFono to
-+autodetect and use this, a simple udev rule is needed:
-+
-+KERNEL=3D=3D"ttySAC0", ENV{OFONO_DRIVER}=3D"calypso"
-+
-+You can put this in any file in /lib/udev/rules.d.  A logical choice
-+is the "55-openmoko-gta01-gta02.rules" file, if it exists in your
-+Freerunner distribution.
-+
-+With this rule in place:
-+
-+- oFono will detect the Calypso modem when it starts up, and the
-+  `list-modems' test script will show this, but will not power it up
-+
-+- the `enable-modem' test script can be used to power it up
-+
-+- a subsequent `list-modems' will show lots of information, including
-+  network registration.
--- =
+Following patch adds the missing "text/alpha identifier and icon" check
+handling.
 
-1.7.1
+As per the ETSI 102 223 section 6.8, Text string is only required in respon=
+se
+to a GetInkey or GetInput proactive command. So, there is no need to add any
+specific handling for null or empty strings cases.
+
+As per the ETSI TS 102 223 section 6.5.4, "If the terminal receives an =
+
+icon, and either an empty or no alpha identifier/text string is given
+by the UICC, than the terminal shall reject the command with general"
+result "Command data not understood by terminal"."
+
+Regards,
+Jeevaka
+
+Jeevaka Badrappan (3):
+  stkutil: Allocate for empty string in text dataobj
+  stkutil: add missing text and icon check
+  unit: add error status support for failure cases
+
+ src/stkutil.c       |  189 ++++++++++++++++++++++++++++++++++++++++++++++-=
+----
+ unit/test-stkutil.c |   12 ++-
+ 2 files changed, 180 insertions(+), 21 deletions(-)
 
 
---===============9126606146246287033==--
+--===============4026112090557471903==--
 
