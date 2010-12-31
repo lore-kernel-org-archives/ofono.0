@@ -1,32 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============0279724133392759739=="
+Content-Type: multipart/mixed; boundary="===============4082546396178496622=="
 MIME-Version: 1.0
-From: Neil Jerram <neil@ossau.uklinux.net>
-Subject: Re: [PATCH] doc: New file about using the calypso modem
-Date: Fri, 31 Dec 2010 19:53:08 +0000
-Message-ID: <87vd294t3v.fsf@ossau.uklinux.net>
-In-Reply-To: <1293819488.9439.106.camel@aeonflux>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] doc: Include doc/calypso-modem.txt in distribution
+Date: Fri, 31 Dec 2010 15:36:49 -0800
+Message-ID: <1293838609.9439.109.camel@aeonflux>
+In-Reply-To: <1293825047-30346-1-git-send-email-neil@ossau.uklinux.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0279724133392759739==
+--===============4082546396178496622==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Marcel Holtmann <marcel@holtmann.org> writes:
+Hi Neil,
 
-> Hi Neil,
->
->>  doc/calypso-modem.txt |   22 ++++++++++++++++++++++
->>  1 files changed, 22 insertions(+), 0 deletions(-)
->>  create mode 100644 doc/calypso-modem.txt
->
-> patch has been applied, but you might also wanna add this to Makefile.am
-> so it becomes part of the tarballs.
+>  Makefile.am |    3 ++-
+>  1 files changed, 2 insertions(+), 1 deletions(-)
 
-Thanks, good point, I've sent another patch to do that.
+patch has been applied. Thanks.
 
-      Neil
+Regards
 
---===============0279724133392759739==--
+Marcel
+
+
+
+--===============4082546396178496622==--
 
