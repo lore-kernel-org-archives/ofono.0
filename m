@@ -1,46 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============4026112090557471903=="
+Content-Type: multipart/mixed; boundary="===============8445575001215422323=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 0/3] Add null text/alpha identifier and icon check handling
-Date: Fri, 31 Dec 2010 14:30:44 +0200
-Message-ID: <1293798647-4256-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 1/3] stkutil: Allocate for empty string in text dataobj
+Date: Fri, 31 Dec 2010 14:30:45 +0200
+Message-ID: <1293798647-4256-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1293798647-4256-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4026112090557471903==
+--===============8445575001215422323==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ src/stkutil.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-Following patch adds the missing "text/alpha identifier and icon" check
-handling.
+diff --git a/src/stkutil.c b/src/stkutil.c
+index ab33c7d..8aee8f7 100644
+--- a/src/stkutil.c
++++ b/src/stkutil.c
+@@ -565,7 +565,7 @@ static gboolean parse_dataobj_text(struct comprehension=
+_tlv_iter *iter,
+ 	const unsigned char *data;
+ 	char *utf8;
+ =
 
-As per the ETSI 102 223 section 6.8, Text string is only required in respon=
-se
-to a GetInkey or GetInput proactive command. So, there is no need to add any
-specific handling for null or empty strings cases.
+-	if (len =3D=3D 0) {
++	if (len <=3D 1) {
+ 		*text =3D g_try_malloc0(1);
+ 		return TRUE;
+ 	}
+-- =
 
-As per the ETSI TS 102 223 section 6.5.4, "If the terminal receives an =
-
-icon, and either an empty or no alpha identifier/text string is given
-by the UICC, than the terminal shall reject the command with general"
-result "Command data not understood by terminal"."
-
-Regards,
-Jeevaka
-
-Jeevaka Badrappan (3):
-  stkutil: Allocate for empty string in text dataobj
-  stkutil: add missing text and icon check
-  unit: add error status support for failure cases
-
- src/stkutil.c       |  189 ++++++++++++++++++++++++++++++++++++++++++++++-=
-----
- unit/test-stkutil.c |   12 ++-
- 2 files changed, 180 insertions(+), 21 deletions(-)
+1.7.0.4
 
 
---===============4026112090557471903==--
+--===============8445575001215422323==--
 
