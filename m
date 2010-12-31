@@ -1,97 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============6824182372415125871=="
+Content-Type: multipart/mixed; boundary="===============6790174057722784214=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 3/3] unit: add error status support for failure cases
-Date: Fri, 31 Dec 2010 14:30:47 +0200
-Message-ID: <1293798647-4256-4-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1293798647-4256-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Tikander Petteri <petteri.tikander@ixonos.com>
+Subject: Re: unsolicited multiline result
+Date: Fri, 31 Dec 2010 19:07:49 +0200
+Message-ID: <1293815269.17038.106.camel@r82e1wc.ixonos.local>
+In-Reply-To: <4D1CD4AD.8040503@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6824182372415125871==
+--===============6790174057722784214==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- unit/test-stkutil.c |   12 ++++++++----
- 1 files changed, 8 insertions(+), 4 deletions(-)
+Hi Denis,
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index 185dfdd..f1cad78 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -13999,6 +13999,7 @@ struct setup_idle_mode_text_test {
- 	struct stk_text_attribute text_attr;
- 	struct stk_frame_id frame_id;
- 	char *html;
-+	enum stk_command_parse_result status;
- };
- =
+On Thu, 2010-12-30 at 12:51 -0600, Denis Kenzior wrote:
 
- static unsigned char setup_idle_mode_text_111[] =3D { 0xD0, 0x1A, 0x81, 0x=
-03,
-@@ -14415,7 +14416,8 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_241 =3D {
- 	.icon_id =3D {
- 		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
- 		.id =3D 0x01
--	}
-+	},
-+	.status =3D STK_PARSE_RESULT_DATA_NOT_UNDERSTOOD
- };
- =
-
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_311 =3D {
-@@ -14742,7 +14744,7 @@ static void test_setup_idle_mode_text(gconstpointer=
- data)
- 	command =3D stk_command_new_from_pdu(test->pdu, test->pdu_len);
- =
-
- 	g_assert(command);
--	g_assert(command->status =3D=3D STK_PARSE_RESULT_OK);
-+	g_assert(command->status =3D=3D test->status);
- =
-
- 	g_assert(command->number =3D=3D 1);
- 	g_assert(command->type =3D=3D STK_COMMAND_TYPE_SETUP_IDLE_MODE_TEXT);
-@@ -14772,6 +14774,7 @@ struct run_at_command_test {
- 	struct stk_icon_id icon_id;
- 	struct stk_text_attribute text_attr;
- 	struct stk_frame_id frame_id;
-+	enum stk_command_parse_result status;
- };
- =
-
- static unsigned char run_at_command_111[] =3D { 0xD0, 0x12, 0x81, 0x03, 0x=
-01,
-@@ -15193,7 +15196,8 @@ static struct run_at_command_test run_at_command_da=
-ta_251 =3D {
- 	.icon_id =3D {
- 		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
- 		.id =3D 0x01
--	}
-+	},
-+	.status =3D STK_PARSE_RESULT_DATA_NOT_UNDERSTOOD
- };
- =
-
- static struct run_at_command_test run_at_command_data_311 =3D {
-@@ -15500,7 +15504,7 @@ static void test_run_at_command(gconstpointer data)
- 	command =3D stk_command_new_from_pdu(test->pdu, test->pdu_len);
- =
-
- 	g_assert(command);
--	g_assert(command->status =3D=3D STK_PARSE_RESULT_OK);
-+	g_assert(command->status =3D=3D test->status);
- =
-
- 	g_assert(command->number =3D=3D 1);
- 	g_assert(command->type =3D=3D STK_COMMAND_TYPE_RUN_AT_COMMAND);
--- =
-
-1.7.0.4
+> I know what you mean, however last I checked there's no such thing as
+> multi-line unsolicited results.  Are you trying to invent something new
+> here?  Or is there a modem that might be implementing this already?
+> =
 
 
---===============6824182372415125871==--
+Yep. There isn't mentioning about this kind of term as multi-line
+unsolicited result-code. I just called those result-codes separated by
+CR/LFs to multiline results (but naturally meaning multiply result
+codes), so I had no intention to invent something new. Sorry for that,
+it was probably confusing.
+
+> However, I'm now starting to question how the spec writers ever intended
+> the implementation of unsolicited +CEN reporting to work on the
+> application side.  Not to mention other similar ones like +CPOSR.  =
+
+
+Thanks.
+
+> When
+> the string / update is broken up over multiple unsolicited result codes
+> the application has no idea when the update has finished.
+> =
+
+
+That's true. There is no terminator ('OK' etc) in the end of the
+unsolicited response for insuring that all the data has been received. =
+
+
+> What is particularly challenging in the +CEN case is the fact that it
+> uses two different prefixes for such unsolicited reporting.
+> This makes it impossible to reliably update the emergency call list,
+> obtain CPOSR information, etc.
+> =
+
+
+I was provisionally thinking to handle single result-codes one by one,
+so notify single ECC-value to the atom. But it's not a nice solution,
+because the whole ECC-list (if more than one emergency numbers are
+received) is not send to the atom at the same time (not an nice solution
+for instance for +CPOSR either, I believe). Well, the result code with
+the another prefix (+CEN1) then will also be sent separately, which as
+such isn't a problem. But probably two separated notify-functions for
+'+CEN1' and '+CEN2' should be implemented.
+
+Br, =
+
+Petteri
+
+
+
+
+--===============6790174057722784214==--
 
