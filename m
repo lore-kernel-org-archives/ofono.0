@@ -1,66 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============4755491622875720506=="
+Content-Type: multipart/mixed; boundary="===============9126606146246287033=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: unsolicited multiline result
-Date: Thu, 30 Dec 2010 12:51:25 -0600
-Message-ID: <4D1CD4AD.8040503@gmail.com>
-In-Reply-To: <1293731547.17038.35.camel@r82e1wc.ixonos.local>
+From: Neil Jerram <neil@ossau.uklinux.net>
+Subject: [PATCH] doc: New file about using the calypso modem
+Date: Fri, 31 Dec 2010 10:50:59 +0000
+Message-ID: <1293792659-27522-1-git-send-email-neil@ossau.uklinux.net>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4755491622875720506==
+--===============9126606146246287033==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Petteri,
+---
+ doc/calypso-modem.txt |   22 ++++++++++++++++++++++
+ 1 files changed, 22 insertions(+), 0 deletions(-)
+ create mode 100644 doc/calypso-modem.txt
 
-Remember, no top-posting on this list ;)
+diff --git a/doc/calypso-modem.txt b/doc/calypso-modem.txt
+new file mode 100644
+index 0000000..8e1eb22
+--- /dev/null
++++ b/doc/calypso-modem.txt
+@@ -0,0 +1,22 @@
++Calypso modem usage
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++On the Openmoko Freerunner phone, the Calypso modem is presented by
++the kernel as serial device /dev/ttySAC0.  To allow oFono to
++autodetect and use this, a simple udev rule is needed:
++
++KERNEL=3D=3D"ttySAC0", ENV{OFONO_DRIVER}=3D"calypso"
++
++You can put this in any file in /lib/udev/rules.d.  A logical choice
++is the "55-openmoko-gta01-gta02.rules" file, if it exists in your
++Freerunner distribution.
++
++With this rule in place:
++
++- oFono will detect the Calypso modem when it starts up, and the
++  `list-modems' test script will show this, but will not power it up
++
++- the `enable-modem' test script can be used to power it up
++
++- a subsequent `list-modems' will show lots of information, including
++  network registration.
+-- =
 
-On 12/30/2010 11:52 AM, Tikander Petteri wrote:
-> Hi Denis,
-> =
-
-> Actually I meant with multiline unsolicited results the same thing, as
-> you mentioned below:
-> =
-
-> +prefix: result data 1 <CRLF>
-> +prefix: result data 2 <CRLF>
-> ...
-> =
+1.7.1
 
 
-I know what you mean, however last I checked there's no such thing as
-multi-line unsolicited results.  Are you trying to invent something new
-here?  Or is there a modem that might be implementing this already?
-
-> And my problem originally was, that although the result-handler handled
-> the first line correctly, the next lines where missed.
-> So when looking state-machine gsmv1_feed() in gatsyntax.c:
-
-Of course, because unsolicited results are assumed to be prefixed and
-suffixed by a CRLF.  When you do something like:
-
-<cr><lf>+CUNSOLICITED<cr><lf>+CUNSOLICITED<cr><lf> the parser gets
-understandably confused.
-
-However, I'm now starting to question how the spec writers ever intended
-the implementation of unsolicited +CEN reporting to work on the
-application side.  Not to mention other similar ones like +CPOSR.  When
-the string / update is broken up over multiple unsolicited result codes
-the application has no idea when the update has finished.
-
-What is particularly challenging in the +CEN case is the fact that it
-uses two different prefixes for such unsolicited reporting.
-This makes it impossible to reliably update the emergency call list,
-obtain CPOSR information, etc.
-
-Since these features are relatively recent, maybe people who are
-implementing these features in real modem firmware can chime in here.
-
-Regards,
--Denis
-
---===============4755491622875720506==--
+--===============9126606146246287033==--
 
