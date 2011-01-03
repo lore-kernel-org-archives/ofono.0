@@ -1,62 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============2475151982152771057=="
+Content-Type: multipart/mixed; boundary="===============4635844887443575716=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [RFC PATCHv2 1/4] Automatic provisioning of GPRS context settings
-Date: Mon, 03 Jan 2011 15:38:22 +0200
-Message-ID: <1294061902.2077.51.camel@jsaunama-desktop>
-In-Reply-To: <87hbdqxlk2.fsf@potku.valot.fi>
+From: Pekka.Pessi@nokia.com
+Subject: [RFC sim-authenticate PATCH 1/3] TODO: add SIM authentication
+Date: Mon, 03 Jan 2011 16:58:19 +0200
+Message-ID: <1294066701-27298-2-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1294066701-27298-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2475151982152771057==
+--===============4635844887443575716==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-> > Well, my intention was to make format simple and fast to parse, but
-> > still be extensible enough, which I think my proposed format fulfills. =
+---
+ TODO |    6 ++++++
+ 1 files changed, 6 insertions(+), 0 deletions(-)
 
-> >
-> > These <access>-elements contain just data needed for GPRS context
-> > settings (as attributes), and if there is need for any other operator
-> > specific provisioning information, you can always add separate elements,
-> > this is still proper XML.
-> =
-
-> But IMHO it is really ugly and not a properly designed XML.
-
-Well, to me it looks simple, compact and clean, and most certainly
-provides all necessary extensibility any XML format provides.  =
-
-
-> Again, why not use mobile-broadband-provider-info DTD? If there's somethi=
-ng
-> missing, I'm sure maintainers are willing to extend it. No need to
-> reinvent the wheel.
-
-In this format biggest thing that I see missing is type of access point
-("internet","mms","lte"), protocol (for IPv6) and mms-server (or
-"homepage"). And I assume <name> of <provider> could be interpreted as
-SPN for provisioning.
-
-The good point of using mobile-broadband-provider-info is that it would
-indeed provide existing database for testing purposes. For product
-creation, manufacturers will anyway create their own databases, and
-there the format does not matter much.
-
-The problem using this format is, as I mentioned, more complex parsing. =
-
-And also do we want to bind oFono into some externally defined data
-format?
-
---Jukka
+diff --git a/TODO b/TODO
+index 12f313b..8cd5ada 100644
+--- a/TODO
++++ b/TODO
+@@ -105,6 +105,12 @@ SIM / SIM File system
+   Complexity: C1
+   Owner: Marit Henriksen <marit.henriksen@stericsson.com>
  =
 
++- Support SIM authentication: EAP-SIM, EAP-AKA, IMS-AKA and GBA.
++
++  Priority: Medium
++  Complexity: C2
++  Owner: Pekka Pessi <pekka.pessi@nokia.com>
++
+ Modem Emulator
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ =
+
+-- =
+
+1.7.1
 
 
-
-
---===============2475151982152771057==--
+--===============4635844887443575716==--
 
