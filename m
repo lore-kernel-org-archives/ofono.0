@@ -1,48 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============1126967785026268721=="
+Content-Type: multipart/mixed; boundary="===============6624209642752847591=="
 MIME-Version: 1.0
-From: Awad, Majid <majid.awad@intel.com>
-Subject: RE: HTML problem in http://ofono.org/community
-Date: Mon, 03 Jan 2011 12:36:18 -0800
-Message-ID: <D59FC7BDB2BB4A498BE65E78F59E7676B93517E0@orsmsx503.amr.corp.intel.com>
-In-Reply-To: <87d3oexjng.fsf@potku.valot.fi>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [RFC PATCHv2 1/4] sim: add ofono_sim_get_mnc_length
+Date: Mon, 03 Jan 2011 12:37:03 -0800
+Message-ID: <1294087023.5852.16.camel@aeonflux>
+In-Reply-To: <1294039912-6008-2-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1126967785026268721==
+--===============6624209642752847591==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-It's fixed now.
+Hi Jukka,
 
-Thanks,
-majid
+>  include/sim.h |    1 +
+>  src/sim.c     |    8 ++++++++
+>  2 files changed, 9 insertions(+), 0 deletions(-)
+> =
 
------Original Message-----
-From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
-f Of Kalle Valo
-Sent: Monday, January 03, 2011 4:21 AM
-To: ofono(a)ofono.org
-Subject: HTML problem in http://ofono.org/community
+> diff --git a/include/sim.h b/include/sim.h
+> index 7860e24..3d0c6b7 100644
+> --- a/include/sim.h
+> +++ b/include/sim.h
+> @@ -173,6 +173,7 @@ void ofono_sim_set_data(struct ofono_sim *sim, void *=
+data);
+>  void *ofono_sim_get_data(struct ofono_sim *sim);
+>  =
 
-Hi,
+>  const char *ofono_sim_get_imsi(struct ofono_sim *sim);
+> +int ofono_sim_get_mnc_length(struct ofono_sim *sim);
 
-I noticed that http://ofono.org/community has invalid HTML because
-both chrome and firefox show some html code:
+actually that value is an unsigned char.
 
-*<a href=3D"http://lists.ofono.org/listinfo/ofono" title=3D"Subscribe">Subs=
-cribe</a> to the oFono developer mailing list.  =
+Regards
 
-*Post a message to all the list members by sending an email to
- ofono(a)ofono.org
+Marcel
 
--- =
 
-Kalle Valo
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-http://lists.ofono.org/listinfo/ofono
 
---===============1126967785026268721==--
+--===============6624209642752847591==--
 
