@@ -1,72 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============6119770257486305496=="
+Content-Type: multipart/mixed; boundary="===============1126967785026268721=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC PATCHv2 1/4] Automatic provisioning of GPRS context settings
-Date: Mon, 03 Jan 2011 12:34:55 -0800
-Message-ID: <1294086895.5852.15.camel@aeonflux>
-In-Reply-To: <1294061902.2077.51.camel@jsaunama-desktop>
+From: Awad, Majid <majid.awad@intel.com>
+Subject: RE: HTML problem in http://ofono.org/community
+Date: Mon, 03 Jan 2011 12:36:18 -0800
+Message-ID: <D59FC7BDB2BB4A498BE65E78F59E7676B93517E0@orsmsx503.amr.corp.intel.com>
+In-Reply-To: <87d3oexjng.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6119770257486305496==
+--===============1126967785026268721==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+It's fixed now.
 
-> > > Well, my intention was to make format simple and fast to parse, but
-> > > still be extensible enough, which I think my proposed format fulfills=
-. =
+Thanks,
+majid
 
-> > >
-> > > These <access>-elements contain just data needed for GPRS context
-> > > settings (as attributes), and if there is need for any other operator
-> > > specific provisioning information, you can always add separate elemen=
-ts,
-> > > this is still proper XML.
-> > =
+-----Original Message-----
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of Kalle Valo
+Sent: Monday, January 03, 2011 4:21 AM
+To: ofono(a)ofono.org
+Subject: HTML problem in http://ofono.org/community
 
-> > But IMHO it is really ugly and not a properly designed XML.
-> =
+Hi,
 
-> Well, to me it looks simple, compact and clean, and most certainly
-> provides all necessary extensibility any XML format provides.  =
+I noticed that http://ofono.org/community has invalid HTML because
+both chrome and firefox show some html code:
 
-> =
+*<a href=3D"http://lists.ofono.org/listinfo/ofono" title=3D"Subscribe">Subs=
+cribe</a> to the oFono developer mailing list.  =
 
-> > Again, why not use mobile-broadband-provider-info DTD? If there's somet=
-hing
-> > missing, I'm sure maintainers are willing to extend it. No need to
-> > reinvent the wheel.
-> =
+*Post a message to all the list members by sending an email to
+ ofono(a)ofono.org
 
-> In this format biggest thing that I see missing is type of access point
-> ("internet","mms","lte"), protocol (for IPv6) and mms-server (or
-> "homepage"). And I assume <name> of <provider> could be interpreted as
-> SPN for provisioning.
-> =
+-- =
 
-> The good point of using mobile-broadband-provider-info is that it would
-> indeed provide existing database for testing purposes. For product
-> creation, manufacturers will anyway create their own databases, and
-> there the format does not matter much.
+Kalle Valo
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
 
-I think we need something in between both formats.
-
-The mobile-broadband-provider-info is too much and too complex from my
-point of view. It contains too much details that are not really helping
-us if you wanna do provisioning. We need to automate this and can not
-really ask the user.
-
-On the other hand, I would prefer a little bit more XML style nesting or
-we just use key files right away.
-
-Regards
-
-Marcel
-
-
-
---===============6119770257486305496==--
+--===============1126967785026268721==--
 
