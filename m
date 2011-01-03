@@ -1,117 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============2703643429502009250=="
+Content-Type: multipart/mixed; boundary="===============5515083532617252447=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
 Subject: Re: [PATCHv2] plugin: Add ste modem initd integration
-Date: Mon, 03 Jan 2011 13:55:16 -0800
-Message-ID: <1294091716.5852.32.camel@aeonflux>
-In-Reply-To: <AANLkTi=NHj7dk2ZT6Wve-WMyftbQZPGRwg==Lq5kAm54@mail.gmail.com>
+Date: Mon, 03 Jan 2011 23:30:28 +0100
+Message-ID: <AANLkTi=4GrWaC7OiYEyM=4C=C3NYn0Vob70-CMmnUvWj@mail.gmail.com>
+In-Reply-To: <1294091716.5852.32.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2703643429502009250==
+--===============5515083532617252447==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Hi Marcel,
 
-> > is this the full API or only part of it. If it is just a part of it,
-> > please send the full API for the daemon. Just looking at this piece, I
-> > am not really thinking that this is a good API. It is actually pretty
-> > much broken :(
-> =
+>> Signals       StateChange(string State)
+>>
+>>                       The modems state sent from when
+>>                       a modem state change occurs. State is the only
+>>                       dynamic property in this Interface.
+>
+>I would personally just go straight for PropertyChanged signal here and
+>not bother with StateChanged. It is actually "...Changed" since at that
+>time the state has already changed ;)
 
-> Ok, here's an updated version of the Modem Init Daemon DBus API.
-> I hope this is aligned with what we discussed on the IRC.
-> =
+OK, I'll look into this. I thought StateChange was the only dynamic paramet=
+er,
+but I might have been wrong here (see below).
 
-> STE Modem Init Deamon Manager
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> =
+> You also need the following signals:
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0ModemAdded(object, dict)
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0ModemRemoved(object)
 
-> Service	com.stericsson.modeminit
-> Interface	com.stericsson.modeminit.Manager
-> Object path	/
-> =
+I think I'd rather add this when I see a use case for it. The Modem
+Init Deamon would need to
+know what GPIOs are associated with what modems, and what CAIF
+interfaces to use etc.
+This information is not dynamic, at least not at the moment. So
+ModemAdded and ModemRemoved
+will not happen in the current implementation, all the modems will be
+known when the Manager
+interface becomes available.
 
-> Methods	array{object,dict} GetModems()
-> =
+...
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 string CaifAtInterface =
+[readonly]
+>>
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 CAIF Link Layer interface to be used for
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 AT channels for a modem.
+>
+> I would really just call this "Interface" to make it simpler. Don't
+> think that you are expecting more than just CAIF interface here anyway.
 
-> 			Get array of STE Modem objects and their state and
-> 			properties (out signature 'a(oa{sv})').
-> =
+OK, Fair enough.
 
-> 			The method should only be call once per application.
-> 			Further changes shall be monitored via StateChange
-> 			signals.
+> And in addition if we can have the modem serial number here as "Serial"
+> as well would be good. Even it is is not right away available, you can
+> signal a change via PropertyChanged signal.
+>
+> That way we can construct a proper modem object path inside oFono. I
+> really rather use the serial number and only fallback to the interface
+> name.
+>
 
-You also need the following signals:
+OK, a Serial property is doable, but I think this is only available
+after state "on" (ready)
+has been reached. The drawback is that my assumption of State being the only
+dynamic property wrong.
+Crap you were right - I might need to add a PropertyChanged signal.
 
-	ModemAdded(object, dict)
+Regards,
+Sjur
 
-	ModemRemoved(object)
-
-> STE Modem
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> Service	com.stericsson.modeminit
-> Interface	com.stericsson.modeminit.Modem
-> Object path	variable
-> =
-
-> Signals	StateChange(string State)
-> =
-
-> 			The modems state sent from when
-> 			a modem state change occurs. State is the only
-> 			dynamic property in this Interface.
-
-I would personally just go straight for PropertyChanged signal here and
-not bother with StateChanged. It is actually "...Changed" since at that
-time the state has already changed ;)
-
-> Properties	string State [readonly]
-> =
-
-> 			The modems state is dynamic can can have the following
-> 			values:
-> 			"booting"   Modem is powered up (flashed version)
-> 				    or Modem is powered up and firmware upload
-> 				    is completed. (flashless version)
-> 			"upgrading" Firmware upgrade on going
-> 				    or Flashing manager under execution -
-> 				    modem in service mode.
-> 			"on"     Modem has booted and is ready for use.
-> 				    This implies that all AT channels are
-> 				    available, the modem might be in
-> 				    e.g. flight mode.
-> 			"dumping"  Modem has crashed and dump is ongoing
-> 			"off"       Modem is powered off.
-
-I personally would call it "ready" instead of "on" since the modem is
-actually on, it is just not ready yet.
-
-> 		string CaifAtInterface [readonly]
-> =
-
-> 			CAIF Link Layer interface to be used for
-> 			AT channels for a modem.
-
-I would really just call this "Interface" to make it simpler. Don't
-think that you are expecting more than just CAIF interface here anyway.
-
-And in addition if we can have the modem serial number here as "Serial"
-as well would be good. Even it is is not right away available, you can
-signal a change via PropertyChanged signal.
-
-That way we can construct a proper modem object path inside oFono. I
-really rather use the serial number and only fallback to the interface
-name.
-
-Regards
-
-Marcel
-
-
-
---===============2703643429502009250==--
+--===============5515083532617252447==--
 
