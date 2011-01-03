@@ -1,35 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8244547440113411023=="
+Content-Type: multipart/mixed; boundary="===============1450456100569649912=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 0/1] Add null text string case to phonesim
-Date: Mon, 03 Jan 2011 01:43:09 -0800
-Message-ID: <1294047790-2465-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [RFC 0/5] Add few conformance test cases to phonesim
+Date: Mon, 03 Jan 2011 12:09:19 +0200
+Message-ID: <1294049364-6621-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8244547440113411023==
+--===============1450456100569649912==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi,
 
- Null text string object is text string with len =3D 0 whereas empty text
-string is text string with len =3D 1 but no value for text string. =
+ Following set of patches adds Display Text, Get Inkey, Get Input and =
 
-Handling procedure remains the same for both cases. Following patch
-adds the null text string case as well to the phonesim.
+MoreTime conformance test cases as specificed in ETSI TS 102 384 to
+phonesim. Logging of the result in a file can be done but it is not
+part of this patch.
 
 Regards,
 Jeevaka
- =
 
-Jeevaka Badrappan (1):
-  phonesim: add null text string case
+badrjee (5):
+  phonesim: Add conformance test to main menu
+  phonesim: Add DisplayText conformance test cases
+  phonesim: Add GetInkey conformance test cases
+  phonesim: Add GetInput conformance test cases
+  phonesim: Add MoreTime conformance test case
 
- src/qsimcommand.cpp |   10 ++++++++--
- 1 files changed, 8 insertions(+), 2 deletions(-)
+ src/simapplication.cpp | 1734 ++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/simapplication.h   |   21 +
+ 2 files changed, 1755 insertions(+), 0 deletions(-)
 
 
---===============8244547440113411023==--
+--===============1450456100569649912==--
 
