@@ -1,49 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============4879509273827502071=="
+Content-Type: multipart/mixed; boundary="===============2475151982152771057=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
 Subject: Re: [RFC PATCHv2 1/4] Automatic provisioning of GPRS context settings
-Date: Mon, 03 Jan 2011 15:32:02 +0200
-Message-ID: <1294061522.3120.1589.camel@tucson>
+Date: Mon, 03 Jan 2011 15:38:22 +0200
+Message-ID: <1294061902.2077.51.camel@jsaunama-desktop>
 In-Reply-To: <87hbdqxlk2.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4879509273827502071==
+--===============2475151982152771057==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+Hello
 
-On Mon, 2011-01-03 at 13:40 +0200, ext Kalle Valo wrote:
-> If you want to use XML, why not do it properly? XML parsing can't be
-> that performance critical. And if it is (to my great surprise), then XML
-> is not the correct choise for this.
+> > Well, my intention was to make format simple and fast to parse, but
+> > still be extensible enough, which I think my proposed format fulfills. =
 
-Many experts would claim proper use of XML means avoiding DTD like the
-plague. ;)
+> >
+> > These <access>-elements contain just data needed for GPRS context
+> > settings (as attributes), and if there is need for any other operator
+> > specific provisioning information, you can always add separate elements,
+> > this is still proper XML.
+> =
+
+> But IMHO it is really ugly and not a properly designed XML.
+
+Well, to me it looks simple, compact and clean, and most certainly
+provides all necessary extensibility any XML format provides.  =
+
 
 > Again, why not use mobile-broadband-provider-info DTD? If there's somethi=
 ng
 > missing, I'm sure maintainers are willing to extend it. No need to
 > reinvent the wheel.
 
-That is a slippery slope. Attempting to standardize here is likely to
-make things more complicated in the long run. This is after all an oFono
-internal data format that really should avoid any hard dependencies to
-external projects.
+In this format biggest thing that I see missing is type of access point
+("internet","mms","lte"), protocol (for IPv6) and mms-server (or
+"homepage"). And I assume <name> of <provider> could be interpreted as
+SPN for provisioning.
 
-We are likely to add things like MMS access point information. Is that
-relevant for mobile-broadband-provider-info?
+The good point of using mobile-broadband-provider-info is that it would
+indeed provide existing database for testing purposes. For product
+creation, manufacturers will anyway create their own databases, and
+there the format does not matter much.
 
-Thinking about this more, maybe the best approach is to go with whatever
-fits oFono best, keep it private, and come up with the suitable style
-sheet magic to be able to reuse the database from m-b-p-info if
-necessary.
+The problem using this format is, as I mentioned, more complex parsing. =
 
-Cheers,
-Aki
+And also do we want to bind oFono into some externally defined data
+format?
+
+--Jukka
+ =
 
 
---===============4879509273827502071==--
+
+
+
+--===============2475151982152771057==--
 
