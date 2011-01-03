@@ -1,29 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============5395955777556912014=="
+Content-Type: multipart/mixed; boundary="===============8144190944074952492=="
 MIME-Version: 1.0
-From: Debayan Banerjee <debayanin@gmail.com>
-Subject: CDMA progress?
-Date: Mon, 03 Jan 2011 15:02:01 +0530
-Message-ID: <AANLkTi=oCgofqt-BnbPnY5vQE8eJPmdsmu1wQ2nHYbCb@mail.gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 1/1] phonesim: add null text string case
+Date: Mon, 03 Jan 2011 01:43:10 -0800
+Message-ID: <1294047790-2465-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1294047790-2465-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5395955777556912014==
+--===============8144190944074952492==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ src/qsimcommand.cpp |   10 ++++++++--
+ 1 files changed, 8 insertions(+), 2 deletions(-)
 
-i saw recently that work is being done towards supporting CDMA
-devices. Here in India we use the TATA photon brand USB dongle a lot.
-The devices are generally Huawei AC1261 and AC1260. Has anyone worked
-in the direction of adding support for this. This will potentially
-make the MeeGo Netbook UX immensely usable in India atleast.
-
+diff --git a/src/qsimcommand.cpp b/src/qsimcommand.cpp
+index f12b8ac..1af2b76 100644
+--- a/src/qsimcommand.cpp
++++ b/src/qsimcommand.cpp
+@@ -2813,12 +2813,18 @@ void _qtopiaphone_writeTextString( QByteArray& bina=
+ry, const QString& str,
+ void _qtopiaphone_writeTextString( QByteArray& binary, const QString& str,
+                                    QSimCommand::ToPduOptions options, int =
+tag )
+ {
+-    if ( str.isEmpty() && ( options & QSimCommand::EncodeEmptyStrings ) =
+=3D=3D 0 ) {
+-        // Special form for zero-length strings.
++    if ( str.isNull() ) {
+         binary +=3D (char)tag;
+         binary +=3D (char)0x00;
+         return;
+     }
++    if ( str.isEmpty() && ( options & QSimCommand::EncodeEmptyStrings ) =
+=3D=3D 0 ) {
++        // Special form for empty strings.
++        binary +=3D (char)tag;
++        binary +=3D (char)0x01;
++        binary +=3D (char)options;
++        return;
++    }
+     int schemeMask =3D ((tag & 0xFF00) >> 8);     // For USSD string outpu=
+t.
+     if ( ( options & QSimCommand::UCS2Strings ) =3D=3D 0 ) {
+         QTextCodec *gsm =3D QAtUtils::codec( "gsm-noloss" );
 -- =
 
-Debayan Banerjee
-Software Engineer
+1.7.0.4
 
---===============5395955777556912014==--
+
+--===============8144190944074952492==--
 
