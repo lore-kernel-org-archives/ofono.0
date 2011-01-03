@@ -1,69 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============3959321131397908072=="
+Content-Type: multipart/mixed; boundary="===============6411054797460655119=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC sim-authenticate PATCH 2/3] Added
- doc/sim-authentication-api.txt.
-Date: Mon, 03 Jan 2011 12:22:23 -0800
-Message-ID: <1294086143.5852.4.camel@aeonflux>
-In-Reply-To: <1294066701-27298-3-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCHv2] stemodem: Fix for MT call not working when caller id is
+ hidden.
+Date: Mon, 03 Jan 2011 12:24:54 -0800
+Message-ID: <1294086294.5852.7.camel@aeonflux>
+In-Reply-To: <1294059582-1801-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3959321131397908072==
+--===============6411054797460655119==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Marit,
 
-> The EAP applications on SIM should be handled separately. The
-> EapSimAuthenticate and EapAkaAuthenticate do not require a special EAP
-> application on SIM, but they use ordinary cellular authentication.
+> In *ECAV, the number will not be included if caller id is hidden.
+> Set it to an empty string in that case, and set number type to
+> 128, unknown number type.
 > ---
->  doc/sim-authentication-api.txt |   66 ++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 66 insertions(+), 0 deletions(-)
->  create mode 100644 doc/sim-authentication-api.txt
+>  drivers/stemodem/voicecall.c |   16 +++++++++++-----
+>  1 files changed, 11 insertions(+), 5 deletions(-)
 > =
 
-> diff --git a/doc/sim-authentication-api.txt b/doc/sim-authentication-api.=
-txt
-> new file mode 100644
-> index 0000000..9a033bf
-> --- /dev/null
-> +++ b/doc/sim-authentication-api.txt
-> @@ -0,0 +1,66 @@
-> +SimAuthentication hierarchy
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D
-> +
-> +Service		org.ofono
-> +Interface	org.ofono.SimAuthentication
-> +Object path	[variable prefix]/{modem0,modem1,...}
-> +
-> +Methods		byte{array} EapSimAuthenticate(array{byte} rand)
-> +
-> +			Executes the SIM authentication algorithm for
-> +			RFC 4186 EAP SIM authentication method.
-> +
-> +			The input parameter is RAND, a 16-byte array.
-> +			In case of successful authentication operation
-> +			the SRES parameter is returned as a 4-byte array.
-> +
-> +			Possible Errors: [service].Error.InvalidArguments
-> +				 	 [service].Error.NotImplemented
-> +
-> +		dict EapAkaAuthenticate(array{byte} rand, array{byte} autn)
+> diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+> index bf68f52..4964fb7 100644
+> --- a/drivers/stemodem/voicecall.c
+> +++ b/drivers/stemodem/voicecall.c
+> @@ -1,4 +1,4 @@
+> -/*
+> +e/*
+>   *
+>   *  oFono - Open Source Telephony
+>   *
+> @@ -442,10 +442,16 @@ static void ecav_notify(GAtResult *result, gpointer=
+ user_data)
+>  	if (status =3D=3D CALL_STATUS_DIALING ||
+>  			status =3D=3D CALL_STATUS_WAITING ||
+>  			status =3D=3D CALL_STATUS_INCOMING) {
+> -		if (!g_at_result_iter_next_string(&iter, &num))
+> -			return;
+> -
+> -		if (!g_at_result_iter_next_number(&iter, &num_type))
+> +		/*
+> +		* If caller uses hidden id, the number and
+> +		* number type might not be present. Don't
+> +		* look for type if number is not present.
+> +		*/
 
-so I would rather have an interface where you can discover the supported
-authentication applications on the SIM card and then have one interface
-to execute them.
+please fix the comment according coding style. See M2.
 
-The application using this interface needs somehow to know what methods
-are available and not do some try and error execution.
+> +		if (!g_at_result_iter_next_string(&iter, &num)) {
+> +			num=3D"";
 
-The EAP SIM is a subset of any proper AKA mechanism, but that should be
-fine as well. Just having an empty AUTN array seems fine to me.
+This needs to be num =3D ""; btw.
+
+> +			num_type =3D 128;
+> +		}
+> +		else if (!g_at_result_iter_next_number(&iter, &num_type))
+>  			return;
+
+And the else here should be on the same line as with the }.
 
 Regards
 
@@ -71,5 +69,5 @@ Marcel
 
 
 
---===============3959321131397908072==--
+--===============6411054797460655119==--
 
