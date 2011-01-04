@@ -1,57 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============0626358082772390626=="
+Content-Type: multipart/mixed; boundary="===============0431478129124334642=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH v2 0/4] Query retry counters
-Date: Tue, 04 Jan 2011 12:24:46 -0200
-Message-ID: <AANLkTinMDnLciUOxRG_pbA4=KyH6B1C780BBnj9=2z_5@mail.gmail.com>
-In-Reply-To: <AANLkTin0pt7fjJCWnH+ggyihC7PMTnDbAowoRLxy7mNY@mail.gmail.com>
+From: Antti Paila <antti.paila@nokia.com>
+Subject: [PATCH 1/5 v2] Cell-info: CellInfo DBUS interface definition
+Date: Tue, 04 Jan 2011 16:36:55 +0200
+Message-ID: <1294151819-3300-2-git-send-email-antti.paila@nokia.com>
+In-Reply-To: <1294151819-3300-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0626358082772390626==
+--===============0431478129124334642==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sankar
+---
+ include/dbus.h |    1 +
+ src/ofono.h    |    1 +
+ 2 files changed, 2 insertions(+), 0 deletions(-)
 
-Em 04/01/2011 11:20, "Sankar" <gsankar.gs@gmail.com> escreveu:
-> On Tue, Jan 4, 2011 at 6:36 PM, Lucas De Marchi <lucas.demarchi@profusi=
-on.mobi> wrote:
->>
->> Here is the second implementation for the retry counter task. The differ=
-ence
->> from the previous approach is that now a dict with all the available ret=
-ry
->> counters is returned. This way is possible to query the retry counter ev=
-en when
->> PinRequired =3D=3D None, what allows us to properly handle calls to Ente=
-rPin(),
->> LockPin(), UnlockPin() and so on.
->>
->> The dict has the form { pin =3D 3, puk =3D 10, ... }. The driver impleme=
-ntation for
->> huawei modem is done using its proprietary command, which returns 4 coun=
-ters:
->>
->> {SimManager} [/huawei0] Retries =3D { pin2 =3D 3, puk2 =3D 10, pin =3D 3=
-, puk =3D 10 }
->
->
-> How this information is retrieved at the oFono core. Is your solution to =
-maintain a counter or read the value from the sim elementary files?
+diff --git a/include/dbus.h b/include/dbus.h
+index c527515..98839cc 100644
+--- a/include/dbus.h
++++ b/include/dbus.h
+@@ -45,6 +45,7 @@ extern "C" {
+ #define OFONO_MESSAGE_WAITING_INTERFACE "org.ofono.MessageWaiting"
+ #define OFONO_NETWORK_REGISTRATION_INTERFACE "org.ofono.NetworkRegistratio=
+n"
+ #define OFONO_NETWORK_OPERATOR_INTERFACE "org.ofono.NetworkOperator"
++#define OFONO_CELL_INFO_INTERFACE "org.ofono.CellInfo"
+ #define OFONO_PHONEBOOK_INTERFACE "org.ofono.Phonebook"
+ #define OFONO_RADIO_SETTINGS_INTERFACE "org.ofono.RadioSettings"
+ #define OFONO_AUDIO_SETTINGS_INTERFACE "org.ofono.AudioSettings"
+diff --git a/src/ofono.h b/src/ofono.h
+index cab70cd..820e3a3 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -127,6 +127,7 @@ enum ofono_atom_type {
+ 	OFONO_ATOM_TYPE_NETTIME =3D 21,
+ 	OFONO_ATOM_TYPE_CTM =3D 22,
+ 	OFONO_ATOM_TYPE_CDMA_VOICECALL_MANAGER =3D 23,
++	OFONO_ATOM_TYPE_CELL_INFO =3D 24,
+ };
+ =
 
-Each vendor has proprietary commands to read these counters. For
-example, on huawei you can get the retry counters by sending
-"AT^CPIN?". Last version of 27.007 included an AT command for that
-(+CPINR), so it's possible to have a generic implementation for
-atmodem. However I don't know what vendors already support it.
+ enum ofono_atom_watch_condition {
+-- =
+
+1.7.1
 
 
-
-regards,
-
-Lucas De Marchi
-
---===============0626358082772390626==--
+--===============0431478129124334642==--
 
