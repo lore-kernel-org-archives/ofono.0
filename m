@@ -1,56 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============5662817384156474321=="
+Content-Type: multipart/mixed; boundary="===============5073844466158580003=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [RFC PATCHv2 1/4] Automatic provisioning of GPRS context settings
-Date: Tue, 04 Jan 2011 09:13:43 +0200
-Message-ID: <1294125223.8212.59.camel@jsaunama-desktop>
-In-Reply-To: <1294095828.5852.54.camel@aeonflux>
+From: Marit Henriksen <maritsofie.henriksen8@gmail.com>
+Subject: [PATCHv3] stemodem: Fix for MT call not working when caller id is
+ hidden.
+Date: Tue, 04 Jan 2011 08:55:36 +0100
+Message-ID: <1294127736-3068-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5662817384156474321==
+--===============5073844466158580003==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Marcel,
+From: Marit Henriksen <marit.henriksen@stericsson.com>
 
-On Mon, 2011-01-03 at 15:03 -0800, ext Marcel Holtmann wrote:
-> thinking about this a bit more and with the background that there is
-> already an existing public database, we might should just enable a
-> provision driver inside the oFono core.
-> =
+In *ECAV, the number will not be included if caller id is hidden.
+Set it to an empty string in that case, and set number type to
+128, unknown number type.
+---
+ drivers/stemodem/voicecall.c |   15 ++++++++++-----
+ 1 files changed, 10 insertions(+), 5 deletions(-)
 
-> Meaning that we can have multiple implementations of different databases
-> with just different priorities. Each nicely separated in their own
-> plugin and we don't bother the oFono core with where to get the data
-> from. So my idea would be that the oFono core just asks to provision a
-> new context. If a plugin feels responsible, then it does so. If not then
-> it stays empty.
->
-> Running oFono on the desktop/netbook etc. it makes sense to use the
-> current mobile broadband provider database. However on a phone that is a
-> not so good database. And for you guys it would also be possible to
-> continue using a CSV based format.
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index bf68f52..7f0a19f 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -1,4 +1,4 @@
+-/*
++e/*
+  *
+  *  oFono - Open Source Telephony
+  *
+@@ -442,10 +442,15 @@ static void ecav_notify(GAtResult *result, gpointer u=
+ser_data)
+ 	if (status =3D=3D CALL_STATUS_DIALING ||
+ 			status =3D=3D CALL_STATUS_WAITING ||
+ 			status =3D=3D CALL_STATUS_INCOMING) {
+-		if (!g_at_result_iter_next_string(&iter, &num))
+-			return;
+-
+-		if (!g_at_result_iter_next_number(&iter, &num_type))
++		/*
++		 * If caller uses hidden id, the number and
++		 * number type might not be present. Don't
++		 * look for type if number is not present.
++		 */
++		if (!g_at_result_iter_next_string(&iter, &num)) {
++			num =3D "";
++			num_type =3D 128;
++		} else if (!g_at_result_iter_next_number(&iter, &num_type))
+ 			return;
+ 	}
+ =
 
-This sounds very good to me. Making provisioning modular makes a lot of
-sense.
+-- =
 
-But I am not yet very familiar with oFono plugin architecture. Is there
-some pattern in oFono code I could follow when implementing this, or
-could you or someone provide some skeleton code how this should go?
-
-In my patch (3/4) for gprs.c, I call get_operator_settings() (in
-operator-settings.c), which returns list of gprs_access_settings, that
-are then created as contexts. I assume now this  get_operator_settings()
-would somehow call registered provisioning modules, that similarly would
-return list of gprs_access_settings? Or should these plugins directly
-call some new gprs atom interface to create the contexts?
-
---Jukka
+1.7.1
 
 
-
-
---===============5662817384156474321==--
+--===============5073844466158580003==--
 
