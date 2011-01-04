@@ -1,34 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============4403593613630080371=="
+Content-Type: multipart/mixed; boundary="===============0444492492583794980=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2, 2/7] cdma-sms: Add CDMA SMS Support
-Date: Tue, 04 Jan 2011 13:51:05 -0600
-Message-ID: <4D237A29.7080406@gmail.com>
-In-Reply-To: <1292976149-15598-3-git-send-email-lei.2.yu@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] dbus: fix appending on dict for types other than string
+Date: Tue, 04 Jan 2011 12:11:22 -0800
+Message-ID: <1294171882.5852.105.camel@aeonflux>
+In-Reply-To: <AANLkTinbUGoqCPTAhgEGcP2DNJayFYhaOy5sShJ8gDpm@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4403593613630080371==
+--===============0444492492583794980==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lei,
+Hi Lucas,
 
-On 12/21/2010 06:02 PM, Lei Yu wrote:
-> ---
->  Makefile.am        |    2 +-
->  include/cdma-sms.h |   67 ++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  2 files changed, 68 insertions(+), 1 deletions(-)
->  create mode 100644 include/cdma-sms.h
+> > the append_basic D-Bus function works fine on **char and *uint8. So
+> > either a pointer to a string (*char) or pointer to a byte (uint8.
+> >
+> > You differentiate between pointer to a string and pointer to a byte in
+> > that function. So it is different since normally it is the caller that
+> > has to give the right pointer in the first place.
 > =
 
+> Yeah, true... But if we don't differentiate the types here I'd need to
+> cast an uint8 to void* that is not even allowed by our warning flags
 
-Patch looks good to me, but no longer applies.  Please resubmit this one.
+as I said, I am fine with checking the type, but I would like to see a
+comment in the code why we differentiate in this case.
 
-Regards,
--Denis
+Regards
 
---===============4403593613630080371==--
+Marcel
+
+
+
+--===============0444492492583794980==--
 
