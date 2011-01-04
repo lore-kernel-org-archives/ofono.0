@@ -1,62 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============1953158164604779126=="
+Content-Type: multipart/mixed; boundary="===============9145779752323211527=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 1/1] Distinguish HSDPA, HSUPA or both as access technologies
-Date: Tue, 04 Jan 2011 18:18:41 +0200
-Message-ID: <1294157921-23657-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 2/3] stkutil: add missing text and icon check
+Date: Tue, 04 Jan 2011 10:43:33 -0600
+Message-ID: <4D234E35.8070109@gmail.com>
+In-Reply-To: <1293798647-4256-3-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1953158164604779126==
+--===============9145779752323211527==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/network-api.txt |    5 +++--
- src/common.c        |    4 ++--
- 2 files changed, 5 insertions(+), 4 deletions(-)
+Hi Jeevaka,
 
-diff --git a/doc/network-api.txt b/doc/network-api.txt
-index 4616542..28304e3 100644
---- a/doc/network-api.txt
-+++ b/doc/network-api.txt
-@@ -125,8 +125,9 @@ Properties	string Mode [readonly]
- =
+On 12/31/2010 06:30 AM, Jeevaka Badrappan wrote:
+> As per the ETSI TS 102 223 section 6.5.4,
+> If the terminalreceives an icon, and
+> either an empty or no alpha identifier/text
+> string is given by the UICC, than the terminal
+> shall reject the command with general result
+> "Command data not understood by terminal".
+> ---
+>  src/stkutil.c |  187 +++++++++++++++++++++++++++++++++++++++++++++++++++=
++-----
+>  1 files changed, 171 insertions(+), 16 deletions(-)
+> =
 
- 			Contains the technology of the current network.
- =
+> diff --git a/src/stkutil.c b/src/stkutil.c
+> index 8aee8f7..28d0a86 100644
+> --- a/src/stkutil.c
+> +++ b/src/stkutil.c
+> @@ -74,6 +74,14 @@ struct gsm_sms_tpdu {
+>  	unsigned char tpdu[184];
+>  };
+>  =
 
--			The possible values are: "gsm", "edge", "umts", "hspa",
--							"lte"
-+			The possible values are: "gsm", "edge", "umts",
-+			"hsdpa", "hsupa", "hspa" (meaning both hsdpa and hsupa)
-+			and "lte"
- =
+> +static gboolean check_text_and_icon( const char *in, const unsigned char=
+ icon_id)
 
- 			TODO: Values for CDMA and EVDO based networks.
- =
+Why is there a space before const char?
 
-diff --git a/src/common.c b/src/common.c
-index 4d93488..d4e567b 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -702,9 +702,9 @@ const char *registration_tech_to_string(int tech)
- 	case ACCESS_TECHNOLOGY_GSM_EGPRS:
- 		return "edge";
- 	case ACCESS_TECHNOLOGY_UTRAN_HSDPA:
--		return "hspa";
-+		return "hsdpa";
- 	case ACCESS_TECHNOLOGY_UTRAN_HSUPA:
--		return "hspa";
-+		return "hsupa";
- 	case ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA:
- 		return "hspa";
- 	case ACCESS_TECHNOLOGY_EUTRAN:
--- =
+> +{
+> +	if ((in =3D=3D NULL || strlen(in) < 1) && icon_id !=3D 0)
 
-1.7.1
+Can in ever be null?  And I'd also prefer not using strlen(in) but using
+in[0] =3D=3D '\0'.
+
+> +		return FALSE;
+> +
+> +	return TRUE;
+> +}
+> +
+>  static char *decode_text(unsigned char dcs, int len, const unsigned char=
+ *data)
+>  {
+>  	char *utf8;
+> @@ -2383,6 +2391,7 @@ static enum stk_command_parse_result parse_display_=
+text(
+>  					struct comprehension_tlv_iter *iter)
+>  {
+>  	struct stk_command_display_text *obj =3D &command->display_text;
+> +	enum stk_command_parse_result result;
+>  =
+
+>  	if (command->src !=3D STK_DEVICE_IDENTITY_TYPE_UICC)
+>  		return STK_PARSE_RESULT_DATA_NOT_UNDERSTOOD;
+> @@ -2392,7 +2401,7 @@ static enum stk_command_parse_result parse_display_=
+text(
+>  =
+
+>  	command->destructor =3D destroy_display_text;
+>  =
+
+> -	return parse_dataobj(iter, STK_DATA_OBJECT_TYPE_TEXT,
+> +	result =3D parse_dataobj(iter, STK_DATA_OBJECT_TYPE_TEXT,
+>  				DATAOBJ_FLAG_MANDATORY | DATAOBJ_FLAG_MINIMUM,
+>  				&obj->text,
+>  				STK_DATA_OBJECT_TYPE_ICON_ID, 0,
+> @@ -2406,6 +2415,14 @@ static enum stk_command_parse_result parse_display=
+_text(
+>  				STK_DATA_OBJECT_TYPE_FRAME_ID, 0,
+>  				&obj->frame_id,
+>  				STK_DATA_OBJECT_TYPE_INVALID);
+> +
+> +	if (result !=3D STK_PARSE_RESULT_OK)
+> +		return result;
+> +
+> +	if (check_text_and_icon(obj->text, obj->icon_id.id) =3D=3D FALSE)
+> +		result =3D STK_PARSE_RESULT_DATA_NOT_UNDERSTOOD;
+> +
+> +	return result;
+>  }
+>  =
 
 
---===============1953158164604779126==--
+Since the following code is repeated ad-naseum, I'd like to see this as
+a macro.  See e.g. CALLBACK_END macro in src/stkagent.c
+
+Regards,
+-Denis
+
+--===============9145779752323211527==--
 
