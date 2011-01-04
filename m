@@ -1,50 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============6648867815169054702=="
+Content-Type: multipart/mixed; boundary="===============6157736020772486852=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 2/4] sim: query remaining pin retries
-Date: Tue, 04 Jan 2011 11:29:37 -0600
-Message-ID: <4D235901.60808@gmail.com>
-In-Reply-To: <AANLkTimmSTmbY-GyBPa_hisU7E59_6S9r+ZP5JE9wLY3@mail.gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] dbus: fix appending on dict for types other than string
+Date: Tue, 04 Jan 2011 09:31:13 -0800
+Message-ID: <1294162273.5852.100.camel@aeonflux>
+In-Reply-To: <1294145763-30703-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6648867815169054702==
+--===============6157736020772486852==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Lucas,
 
-On 01/04/2011 11:26 AM, Lucas De Marchi wrote:
-> Hi Denis,
+> According to dbus documentation, dbus_message_iter_append_basic()
+> expects a "const char**" if type is string and a simple pointer for
+> other types. Since we a iterating an array, the value passed is already
+> a pointer.
+> ---
+>  src/dbus.c |    9 +++++++--
+>  1 files changed, 7 insertions(+), 2 deletions(-)
 > =
 
-> On Tue, Jan 4, 2011 at 3:13 PM, Denis Kenzior <denkenz@gmail.com> wrote:
->> Hi Lucas,
->>
->> On 01/04/2011 07:06 AM, Lucas De Marchi wrote:
->>> @@ -62,6 +62,8 @@ struct ofono_sim {
->>>       enum ofono_sim_password_type pin_type;
->>>       gboolean locked_pins[OFONO_SIM_PASSWORD_SIM_PUK]; /* Number of PI=
-Ns */
->>>
->>> +     GSList *pin_retries;
->>> +
->>
->> Are you forgetting to free the pin_retries array when the sim is removed
->> or the sim atom is destroyed?
->>
-> =
+> diff --git a/src/dbus.c b/src/dbus.c
+> index c24615f..292f11a 100644
+> --- a/src/dbus.c
+> +++ b/src/dbus.c
+> @@ -139,8 +139,13 @@ static void append_dict_variant(DBusMessageIter *ite=
+r, int type, void *val)
+>  =
 
-> Yes, I forgot. Since I cannot have G* types on headers, I'll store a
-> ofono_sim_pin_retry **retries here and convert the code so the list
-> will not be necessary. Is this ok?
+>  		dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING,
+>  						&(val_array[i + 0]));
+> -		dbus_message_iter_append_basic(&entry, type,
+> -						&(val_array[i + 1]));
+> +		if (type =3D=3D DBUS_TYPE_STRING) {
+> +			dbus_message_iter_append_basic(&entry, type,
+> +							&(val_array[i + 1]));
+> +		} else {
+> +			dbus_message_iter_append_basic(&entry, type,
+> +							val_array[i + 1]);
+> +		}
 
-Should be fine.  See how it works out.  Just remember that the drivers
-are free to return arrays on the stack, so you cannot assume ownership.
+this does looks a bit hackish. Can you put it into context please. It
+might be that our call chain is wrong.
 
-Regards,
--Denis
+Regards
 
---===============6648867815169054702==--
+Marcel
+
+
+
+--===============6157736020772486852==--
 
