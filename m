@@ -1,156 +1,126 @@
-Content-Type: multipart/mixed; boundary="===============3406725981913137565=="
+Content-Type: multipart/mixed; boundary="===============7260116995584845464=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/4 v2] Network Time plugin
-Date: Tue, 04 Jan 2011 01:41:17 -0800
-Message-ID: <1294134077.5852.91.camel@aeonflux>
-In-Reply-To: <201101041054.34324.remi.denis-courmont@nokia.com>
+Subject: Re: [PATCHv2] plugin: Add ste modem initd integration
+Date: Tue, 04 Jan 2011 01:49:24 -0800
+Message-ID: <1294134564.5852.96.camel@aeonflux>
+In-Reply-To: <AANLkTinFfW79MZ=-z0qxpXmJ=T+cxo_oERAzX9FKyZPb@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3406725981913137565==
+--===============7260116995584845464==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi Sjur,
 
-> > > > So the idea of having an oFono D-Bus API to export time information=
- is
-> > > > just wrong from my point of view. The plugin inside oFono should te=
-ll
-> > > > the time daemon about this.
-> > > =
+> > what about potential USB based CAIF devices?
+> Good question, but in a Bridge Setup for a phone this will not really
+> be devices that come and go.
+> I belive it will still be a fixed HW setup where the Modem Init Daemon
+> will have static knowledge of the
+> USB modems. But I'll discuss this with my coleagues tomorrow.
+> In case of true USB dongles the modem should look pretty much
+> identical to MBM USB dongles.
 
-> > > That would be race-prone by design. For all we know, the time daemon
-> > > might be started after oFono (or restarted). It's pretty basic design=
- to
-> > > have a getter and a change signal for any kind of value.
-> > =
+I personally would prefer that USB devices just expose CAIF directly.
+The whole handling of multiple hardcoded TTY and network interface is
+only sub-optimal.
 
-> > there is no race here. The timed plugin inside oFono can just keep the
-> > time and only send it out when timed starts. You can easily monitor
-> > deamons lifetime with D-Bus.
+I know it is kinda nice to use standard USB class drivers, but the
+flexibility that CAIF actually gives you goes away.
+
+From my point of view, it should be similar to Phonet/ISI over USB. At
+least on Linux we have a CAIF subsystem ;)
+
+> >I would just ask to send the property changed signal for the serial
+> >number before sending the signal for on/ready.
+> It will require a re-design of the state machine in the Modem Init Daemon,
+> but I'll check into this tomorrow.
 > =
 
-> You just said that you did not want oFono to keep the time reference valu=
-e. =
-
-> This is self-contradictory. Now you admit that oFono does need to keep it.
-
-I said that 3-4 emails early already. It is either that or you just go
-ahead and set the system if timed is not running.
-
-> But then it is far simpler to have a D-Bus getter and a D-Bus signal by a=
-ny =
-
-> sane measure of complexity.
-
-So you did consider the complexity on both sides, ofonod and timed? And
-not just looked at one side of picture?
-
-> > > Besides, I find hard-coding The One time daemon in the oFono plugin
-> > > rather silly. It's really nothing but an arbitrary design limitation
-> > > that would be overcome with a clean D-Bus API like we proposed several
-> > > times.
-> > =
-
-> > It is a plugin that monitors the existence of such a daemon. So we can
-> > have multiple plugins for each daemon. And we can even have them all
-> > active at the same time. So where do you see a problem here?
+> Here is the latest version of the Dbus API:
 > =
 
-> So that is far more complicated, inextensible and it consumes more CPU (m=
-ore =
+> STE Modem Init Deamon Manager
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D
+> Service		com.stericsson.modeminit
+> Interface	com.stericsson.modeminit.ModemManager
 
-> D-Bus interactions). This makes absolutely no sense.
+Just call it com.stericsson.modeminit.Manager. That gives you the chance
+to also include other methods/signals later on if needed.
 
-Are you kidding me here? Where is the more D-Bus interaction going to
-happen. It would be nice if you actually start counting both sides of
-the equation here.
-
-So you really want timed to monitor the oFono manager interface with
-their modems and then the method calls and signals from the time
-interface. Please count again what consumes more D-Bus interactions.
-
-> > > > And not the time daemon go out and bother
-> > > > with additional sources etc.
-> > > =
-
-> > > Last time I checked, NTP clients "go out and bother" to ask the
-> > > configured NTP server, not the other way around. I fail to see reason
-> > > why oFono should work the other way around. I do see several reasons =
-why
-> > > it should not.
-> > =
-
-> > You need to tell NTP client (or the ntpd running) the time servers to
-> > use. Check how we do that in ConnMan. we tell ntpd about time servers
-> > and not the other way around.
+> Object path	/
 > =
 
-> That's the point: the one who wants to learn the time (the NTP client, or=
- the =
-
-> time daemon) is the one ASKING for it from the one who knows (the NTP ser=
-ver =
-
-> or oFono). The other direction is just totally backward design.
-
-Who is telling NTP client where the servers are? Or is the NTP client
-just going out fishing for NTP servers.
-
-Maybe we should just turn ofonod into an NTP time source and then let
-ntpd just always use that one. Problem solved and nicely integrated with
-the desktop world as well.
-
-> > > > And if you take the normalized time based on a monotonic clock, suc=
-h a
-> > > > plugin that just send a D-Bus message to a time daemon is actually a
-> > > > lot simpler than exposing a full blown D-Bus interface.
-> > > =
-
-> > > It's very marginally simpler: one signal against one signal plus one
-> > > getter that will share much marshalling code with the signal. But tha=
-t's
-> > > irrelevant. It actually works. The sole signal design is broken.
-> > =
-
-> > I was talking about a method call to timed and not a signal.
+> Methods		array{object,dict} GetModems()
 > =
 
-> It's largelly irrelevant. There's no functional difference between a meth=
-od =
-
-> call without response and a signal.
-
-There is a big difference when you look at potential wakeups of other
-processes. A method call is always directed, a signal is broadcasted.
-
-> > > > So the plugin just has to store the normalized time in memory. And =
-if a
-> > > > time daemon is present, then send out an update if needed, otherwise
-> > > > don't bother.
+> 			Get array of STE Modem objects and their state and
+> 			properties (out signature 'a(oa{sv})').
 > =
 
-> > > Oh? That would actualy be far more complicated, as the plugin would t=
-hen
-> > > need to track down the presence of the time daemon. I see some
-> > > contradiction here.
-> > =
-
-> > And that is a problem with D-Bus how? With g_dbus_add_service_watch this
-> > is dead simple actually. Simpler than providing a D-Bus interface.
+> 			The method should only be call once per application.
+> 			Further changes shall be monitored via StateChange
+> 			signals.
 > =
 
-> I never said this was not feasible. I said this was more complicated and =
+> STE Modem
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D
+> Service		com.stericsson.modeminit
+> Interface	com.stericsson.modeminit.Modem
+> Object path	variable
+> =
 
-> disingenuous.
+> Signals		PropertyChanged(string property, variant value)
+> =
 
-I actually said that it is a lot simpler. If you don't believe me, why
-don't you just code both versions of the plugin and then compare them.
+> 			This signal indicates a changed value of the given
+> 			property.
+> =
 
-And it is also a lot simpler for timed to integrate with this.
+> Properties	string State [readonly]
+> =
+
+> 			The modems state is dynamic can can have the following
+> 			values:
+> 			"booting"   Modem is powered up (flashed version)
+> 				    or Modem is powered up and firmware upload
+> 				    is completed. (flashless version)
+> 			"upgrading" Firmware upgrade on going
+> 				    or Flashing manager under execution -
+> 				    modem in service mode.
+> 			"on"	    Modem has booted and is ready for use.
+> 				    This implies that all AT channels are
+> 				    available, the modem might be in
+> 				    e.g. flight mode.
+> 				    NOTE: Consider change name to "ready"
+> =
+
+> 			"dumping"  Modem has crashed and dump is ongoing
+> 			"off"	    Modem is powered off.
+> =
+
+> 		string AtInterface[readonly]
+> =
+
+> 			CAIF Link Layer interface to be used for
+> 			AT channels for a modem.
+
+Why is there an "At" in here? I know that mainly only AT command
+channels will be used, but the CAIF interface can be also used to
+request debug channels and other things. So I would just call it
+Interface only to say what's the interface name is to bind to.
+
+> 		string Serial[optional,readonly]
+> =
+
+> 			Serial Number or IMEI for the Modem. The Serial will
+> 			not be available until the modem can open an AT channel.
+
+Otherwise, this looks a lot simpler and cleaner.
 
 Regards
 
@@ -158,5 +128,5 @@ Marcel
 
 
 
---===============3406725981913137565==--
+--===============7260116995584845464==--
 
