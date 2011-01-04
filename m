@@ -1,69 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============3032102091631240541=="
+Content-Type: multipart/mixed; boundary="===============2298439069781899418=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] dbus: fix appending on dict for types other than string
-Date: Tue, 04 Jan 2011 10:56:13 -0800
-Message-ID: <1294167373.5852.104.camel@aeonflux>
-In-Reply-To: <AANLkTimLCUKC_+_qsHbs5-C9WVbEPax=D1KR2qEoUw2j@mail.gmail.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: [PATCHv4 0/1] STE Modem Init Daemon integration
+Date: Tue, 04 Jan 2011 20:07:38 +0100
+Message-ID: <1294168059-8839-1-git-send-email-sjurbren@gmail.com>
+In-Reply-To: <1294134564.5852.96.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3032102091631240541==
+--===============2298439069781899418==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
-> >> >>
-> >> >>            dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING,
-> >> >>                                            &(val_array[i + 0]));
-> >> >> -          dbus_message_iter_append_basic(&entry, type,
-> >> >> -                                          &(val_array[i + 1]));
-> >> >> +          if (type =3D=3D DBUS_TYPE_STRING) {
-> >> >> +                  dbus_message_iter_append_basic(&entry, type,
-> >> >> +                                                  &(val_array[i + =
-1]));
-> >> >> +          } else {
-> >> >> +                  dbus_message_iter_append_basic(&entry, type,
-> >> >> +                                                  val_array[i + 1]=
-);
-> >> >> +          }
-> >> >
-> >> > this does looks a bit hackish. Can you put it into context please. It
-> >> > might be that our call chain is wrong.
-> >> >
-> >>
-> >> We only ever needed (and thus ever added) support for string:string
-> >> dicts.  E.g. ones that could be g_strfreev-ed.  No other dicts were
-> >> supported by this function.
-> >
-> > so it is the g_strfreev part that makes this hackish. Fine by me then,
-> > but we might need to comment on why string arrays in this case are
-> > special.
-> =
+This is the latest version of the Modem Init Daemon API.
 
-> I don't think so. You use g_strfreev if you are using { string, string
-> } dict to free all strings. Why is this hackish?
-> =
+STE Modem Init Deamon Manager
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D
 
-> Even if we had another interface that didn't required the g_strfreev,
-> the issue with calling dbus_message_iter_append_basic() would not
-> change once we continue using a void** to store pointers to different
-> types at the same time..
+Service		com.stericsson.modeminit
+Interface	com.stericsson.modeminit.Manager
+Object path	/
 
-the append_basic D-Bus function works fine on **char and *uint8. So
-either a pointer to a string (*char) or pointer to a byte (uint8.
+Methods		array{object,dict} GetModems()
 
-You differentiate between pointer to a string and pointer to a byte in
-that function. So it is different since normally it is the caller that
-has to give the right pointer in the first place.
+			Get array of STE Modem objects and their state and
+			properties (out signature 'a(oa{sv})').
 
-Regards
+			The method should only be call once per application.
+			Further changes shall be monitored via StateChange
+			signals.
 
-Marcel
+STE Modem
+=3D=3D=3D=3D=3D=3D=3D=3D=3D
+Service		com.stericsson.modeminit
+Interface	com.stericsson.modeminit.Modem
+Object path	variable
+
+Signals		PropertyChanged(string property, variant value)
+
+			This signal indicates a changed value of the given
+			property.
+
+Properties	string State [readonly]
+
+			The modems state is dynamic can can have the following
+			values:
+			"booting"   Modem is powered up (flashed version)
+				    or Modem is powered up and firmware upload
+				    is completed. (flashless version)
+			"upgrading" Firmware upgrade on going
+				    or Flashing manager under execution -
+				    modem in service mode.
+			"ready"	    Modem has booted and is ready for use.
+				    This implies that all AT channels are
+				    available, the modem might be in
+				    e.g. flight mode.
+
+			"dumping"  Modem has crashed and dump is ongoing
+			"off"	    Modem is powered off.
+
+		string Interface[readonly]
+
+			CAIF Link Layer interface to be used for
+			CAIF channels for a modem.
+
+		string Serial[optional,readonly]
+
+			Serial Number or IMEI for the Modem. The Serial will
+			not be available until the modem can open an AT channel.
 
 
+Sjur Br=C3=A6ndeland (1):
+  plugin: Add ste modem initd integration
 
---===============3032102091631240541==--
+ Makefile.am      |    4 +
+ plugins/stemgr.c |  345 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 349 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/stemgr.c
+
+
+--===============2298439069781899418==--
 
