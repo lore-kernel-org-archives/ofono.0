@@ -1,66 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============5388613183895094026=="
+Content-Type: multipart/mixed; boundary="===============8496370252497509479=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [RFC PATCHv2 1/4] Automatic provisioning of GPRS context settings
-Date: Tue, 04 Jan 2011 10:42:27 +0200
-Message-ID: <1294130547.8212.82.camel@jsaunama-desktop>
-In-Reply-To: <1294128305.5852.72.camel@aeonflux>
+From: Marit Henriksen <maritsofie.henriksen8@gmail.com>
+Subject: [PATCHv4] stemodem: Fix for MT call not working when caller id is
+ hidden.
+Date: Tue, 04 Jan 2011 09:42:04 +0100
+Message-ID: <1294130524-3515-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5388613183895094026==
+--===============8496370252497509479==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Marcel,
+From: Marit Henriksen <marit.henriksen@stericsson.com>
 
-> the oFono plugins work like kernel modules. They are pretty much
-> generic. Inside the init function you can a driver register function and
-> inside the exit function, you call the driver unregister function.
+In *ECAV, the number will not be included if caller id is hidden.
+Set it to an empty string in that case, and set number type to
+128, unknown number type.
+---
+ drivers/stemodem/voicecall.c |   13 +++++++++----
+ 1 files changed, 9 insertions(+), 4 deletions(-)
 
-Right, that seems clear enough.
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index bf68f52..99383cf 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -442,10 +442,15 @@ static void ecav_notify(GAtResult *result, gpointer u=
+ser_data)
+ 	if (status =3D=3D CALL_STATUS_DIALING ||
+ 			status =3D=3D CALL_STATUS_WAITING ||
+ 			status =3D=3D CALL_STATUS_INCOMING) {
+-		if (!g_at_result_iter_next_string(&iter, &num))
+-			return;
+-
+-		if (!g_at_result_iter_next_number(&iter, &num_type))
++		/*
++		 * If caller uses hidden id, the number and
++		 * number type might not be present. Don't
++		 * look for type if number is not present.
++		 */
++		if (!g_at_result_iter_next_string(&iter, &num)) {
++			num =3D "";
++			num_type =3D 128;
++		} else if (!g_at_result_iter_next_number(&iter, &num_type))
+ 			return;
+ 	}
+ =
 
-> static int setup_context(struct ofono_gprs_primary_context *context)
-> {
-> 	...
-> =
+-- =
 
-> 	return 0;
-> }
-> =
-
-> static const ofono_gprs_provision_driver driver {
-> 	.name =3D	"test",
-> 	.setup_context =3D setup_context,
-> };
-
-I guess that current struct ofono_gprs_primary_context* is not enough
-for provisioning data, it is missing at least name, MMS proxy and server
-information. Should those (and whatever might be needed in future) be
-added into that struct, or should we define some =
-
-struct ofono_gprs_provisioning_data {
-	struct ofono_gprs_primary_context pri;
-	char name[MAX_CONTEXT_NAME_LENGTH + 1];
-	char message_proxy[MAX_MESSAGE_PROXY_LENGTH + 1];
-	char message_center[MAX_MESSAGE_CENTER_LENGTH + 1];	=
-
-}
-struct pri_context in gprs.c contains everything, but has extra
-gprs-internal stuff.  =
-
-
-Also setup_context() needs ofono_gprs_context_type as in-parameter.
-
-
-And a question about the priorities, if there is more than one
-provisioning plugin: would plugins be called in priority order, and
-after first returns something, rest would not be called?
-
---Jukka
+1.7.1
 
 
-
---===============5388613183895094026==--
+--===============8496370252497509479==--
 
