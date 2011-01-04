@@ -1,154 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============5449782303871414221=="
+Content-Type: multipart/mixed; boundary="===============2524560029437107382=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v3 4/4] atmodem: implement query for remaining pin retries
-Date: Tue, 04 Jan 2011 20:22:59 -0200
-Message-ID: <1294179779-4013-5-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1294179779-4013-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Sullivan, Terrance <Terrance.Sullivan@windriver.com>
+Subject: RE: CDMA progress?
+Date: Tue, 04 Jan 2011 22:41:58 +0000
+Message-ID: <B79FBA42FB1F254B87C0F024D44814E802B182@ALA-MBB.corp.ad.wrs.com>
+In-Reply-To: <4D236F02.5080605@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5449782303871414221==
+--===============2524560029437107382==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Implement query method for the remaining pin retries on huawei modem.
----
- drivers/atmodem/sim.c |   90 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 90 insertions(+), 0 deletions(-)
+Thanks Lei for your quick response..
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 1653ede..98fb195 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -44,6 +44,8 @@
- #define EF_STATUS_INVALIDATED 0
- #define EF_STATUS_VALID 1
- =
+-----On 01/04/2011 01:56 PM Lei Yu wrote-----
+> Glad to hear that you have found a modem that supports SMS rx/tx in PDU f=
+ormat. Could you pls share more detailed info on that? > We would like to e=
+valuate if we can use that as our hardware test platform. Also, looking for=
+ward to seeing your contributions > to CDMA support in oFono. The more the =
+merrier.
 
-+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
-+
- struct sim_data {
- 	GAtChat *chat;
- 	unsigned int vendor;
-@@ -52,6 +54,7 @@ struct sim_data {
- =
+While we now have this Qualcomm device network operational running Meego 1.=
+1 with a modified oFono 0.34 branch, we are continuing with its development=
+ and merging in more recent oFono changesets into our internal builds. Cons=
+equently, we can provide some test feedback but as yet this device is not c=
+ommercially available at present. As a result, there are limitations on spe=
+cific details that we can provide, for example, proprietary vs. the device'=
+s standardized CDMA/GSM command interfaces. However, we will attempt to pro=
+vide the details you require around our most recent SMS-PDU implementation =
+when we send out our API reference shortly..
 
- static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
- static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
-+static const char *xcpin_prefix[] =3D { "^CPIN:", NULL };
- static const char *clck_prefix[] =3D { "+CLCK:", NULL };
- static const char *none_prefix[] =3D { NULL };
- =
+That said I can think of several aspects to help address the above and that=
+ we may want to discuss here, namely:
 
-@@ -456,6 +459,92 @@ static struct {
- 	{ OFONO_SIM_PASSWORD_PHCORP_PUK,	"PH-CORP PUK"	},
- };
- =
+1) Since this device has dual radios operating in active/standby mode, the =
+use of distinct virtual TTYs for serperate GSM & CDMA signalling that are t=
+hen multiplexed into a common physical interface and
 
-+static void at_xcpin_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_sim_pin_retries_cb_t cb =3D cbd->cb;
-+	const char *final =3D g_at_result_final_response(result);
-+	GAtResultIter iter;
-+	struct ofono_error error;
-+	int retries[OFONO_SIM_PASSWORD_INVALID];
-+	size_t i;
-+	static enum ofono_sim_password_type _password_types[] =3D {
-+		OFONO_SIM_PASSWORD_SIM_PUK,
-+		OFONO_SIM_PASSWORD_SIM_PIN,
-+		OFONO_SIM_PASSWORD_SIM_PUK2,
-+		OFONO_SIM_PASSWORD_SIM_PIN2,
-+	};
-+
-+	decode_at_error(&error, final);
-+
-+	if (!ok) {
-+		cb(&error, NULL, cbd->data);
-+		return;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "^CPIN:"))
-+		goto error;
-+
-+	/* Skip status since we are not interested in this */
-+	if (!g_at_result_iter_skip_next(&iter))
-+		goto error;
-+
-+	/* Skip "overall counter" since we'll grab each one individually */
-+	if (!g_at_result_iter_skip_next(&iter))
-+		goto error;
-+
-+	memset(retries, -1, sizeof(retries));
-+
-+	for (i =3D 0; i < ARRAY_SIZE(_password_types); i++) {
-+		int val;
-+
-+		if (!g_at_result_iter_next_number(&iter, &val))
-+			goto error;
-+
-+		retries[_password_types[i]]=3D val;
-+
-+		DBG("retry counter id=3D%d, val=3D%d", _password_types[i],
-+						retries[_password_types[i]]);
-+	}
-+
-+	cb(&error, retries, cbd->data);
-+
-+	return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
-+}
-+
-+static void at_pin_retries_query(struct ofono_sim *sim,
-+				ofono_sim_pin_retries_cb_t cb, void *data)
-+{
-+	struct sim_data *sd =3D ofono_sim_get_data(sim);
-+
-+	DBG("");
-+
-+	if (sd->vendor =3D=3D OFONO_VENDOR_QUALCOMM_MSM) {
-+		struct cb_data *cbd =3D cb_data_new(cb, data);
-+
-+		if (cbd =3D=3D NULL) {
-+			CALLBACK_WITH_FAILURE(cb, NULL, data);
-+
-+			return;
-+		}
-+
-+		if (g_at_chat_send(sd->chat, "AT^CPIN?", xcpin_prefix,
-+					at_xcpin_cb, cbd, g_free) > 0)
-+			return;
-+
-+		g_free(cbd);
-+
-+		CALLBACK_WITH_FAILURE(cb, NULL, data);
-+	}
-+
-+	CALLBACK_WITH_SUCCESS(cb, NULL, data);
-+}
-+
- static void at_cpin_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
- 	struct cb_data *cbd =3D user_data;
-@@ -886,6 +975,7 @@ static struct ofono_sim_driver driver =3D {
- 	.write_file_cyclic	=3D at_sim_update_cyclic,
- 	.read_imsi		=3D at_read_imsi,
- 	.query_passwd_state	=3D at_pin_query,
-+	.query_pin_retries	=3D at_pin_retries_query,
- 	.send_passwd		=3D at_pin_send,
- 	.reset_passwd		=3D at_pin_send_puk,
- 	.lock			=3D at_pin_enable,
--- =
+2) A "shim" layer within this common physical interface which allows propri=
+etary commands to be "externalize" where appropriate while also correctly p=
+ropagating dual-mode baseband/radio state back to the oFono stack.
 
-1.7.3.4
+While these aspects are obviously driver specific we think they are interes=
+ting to start with as they represent various trends moving forward and we w=
+ould value getting people's input..
+
+Regards and I look forward to your response..
+Terry
 
 
---===============5449782303871414221==--
+
+--===============2524560029437107382==--
 
