@@ -1,60 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============7724157390199376829=="
+Content-Type: multipart/mixed; boundary="===============0402229376847970673=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC PATCHv2 1/4] Automatic provisioning of GPRS context settings
-Date: Tue, 04 Jan 2011 00:30:52 -0800
-Message-ID: <1294129852.5852.76.camel@aeonflux>
-In-Reply-To: <87k4ilnkkq.fsf@potku.valot.fi>
+From: Marit Sofie Henriksen <maritsofie.henriksen8@gmail.com>
+Subject: Re: [PATCHv3] stemodem: Fix for MT call not working when caller id is
+ hidden.
+Date: Tue, 04 Jan 2011 09:37:49 +0100
+Message-ID: <AANLkTim=e=CiTz_q-nO80kXxRvPTdVDZPjOUG-n-t70a@mail.gmail.com>
+In-Reply-To: <1294128377.5852.73.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7724157390199376829==
+--===============0402229376847970673==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Kalle,
+2011/1/4 Marcel Holtmann <marcel@holtmann.org>
 
-> > thinking about this a bit more and with the background that there is
-> > already an existing public database, we might should just enable a
-> > provision driver inside the oFono core.
+> Hi Marit,
+>
+> > In *ECAV, the number will not be included if caller id is hidden.
+> > Set it to an empty string in that case, and set number type to
+> > 128, unknown number type.
+> > ---
+> >  drivers/stemodem/voicecall.c |   15 ++++++++++-----
+> >  1 files changed, 10 insertions(+), 5 deletions(-)
 > >
-> > Meaning that we can have multiple implementations of different databases
-> > with just different priorities. Each nicely separated in their own
-> > plugin and we don't bother the oFono core with where to get the data
-> > from. So my idea would be that the oFono core just asks to provision a
-> > new context. If a plugin feels responsible, then it does so. If not then
-> > it stays empty.
-> =
-
-> I like the idea. Simple to implement and we get maximum extensibility.
-> =
-
-> Are you willing to take a plugin into ofono git which would use
-> mobile-broadband-provider-info database? Or should people maintain the pl=
-ugins
-> out of tree?
-
-in general I would accept any of such plugins into the tree. However we
-need to be a bit careful with the priority. And of course they need to
-have some sort of usage.
-
-What I expect to see in long term is that we have two or three different
-formats. And they just differ because of the different vertical targets.
-
-> For me the best would be to have all plugins in ofono tree and
-> enable/disable them with configure switches.
-
-I wanna use priorities and smart detection to use them. Nothing for the
-user to configure. Just installing some extra packages should active its
-usage. And yes, I want to make it possible to build all plugins at all
-time.
+> > diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+> > index bf68f52..7f0a19f 100644
+> > --- a/drivers/stemodem/voicecall.c
+> > +++ b/drivers/stemodem/voicecall.c
+> > @@ -1,4 +1,4 @@
+> > -/*
+> > +e/*
+>
+> What is this ;)
+>
+> Hmm, certainly something that shouldn't have been there... :( I'll send a
+new version. Thank's for your patience, and the reviews.
+br Marit
 
 Regards
+>
+> Marcel
+>
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
-Marcel
+--===============0402229376847970673==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
+PGJyPjxicj48ZGl2IGNsYXNzPSJnbWFpbF9xdW90ZSI+MjAxMS8xLzQgTWFyY2VsIEhvbHRtYW5u
+IDxzcGFuIGRpcj0ibHRyIj4mbHQ7PGEgaHJlZj0ibWFpbHRvOm1hcmNlbEBob2x0bWFubi5vcmci
+Pm1hcmNlbEBob2x0bWFubi5vcmc8L2E+Jmd0Ozwvc3Bhbj48YnI+PGJsb2NrcXVvdGUgY2xhc3M9
+ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOiAwcHQgMHB0IDBwdCAwLjhleDsgYm9yZGVyLWxl
+ZnQ6IDFweCBzb2xpZCByZ2IoMjA0LCAyMDQsIDIwNCk7IHBhZGRpbmctbGVmdDogMWV4OyI+Ckhp
+IE1hcml0LDxicj4KPGRpdiBjbGFzcz0iaW0iPjxicj4KJmd0OyBJbiAqRUNBViwgdGhlIG51bWJl
+ciB3aWxsIG5vdCBiZSBpbmNsdWRlZCBpZiBjYWxsZXIgaWQgaXMgaGlkZGVuLjxicj4KJmd0OyBT
+ZXQgaXQgdG8gYW4gZW1wdHkgc3RyaW5nIGluIHRoYXQgY2FzZSwgYW5kIHNldCBudW1iZXIgdHlw
+ZSB0bzxicj4KJmd0OyAxMjgsIHVua25vd24gbnVtYmVyIHR5cGUuPGJyPgomZ3Q7IC0tLTxicj4K
+Jmd0OyCgZHJpdmVycy9zdGVtb2RlbS92b2ljZWNhbGwuYyB8IKAgMTUgKysrKysrKysrKy0tLS0t
+PGJyPgomZ3Q7IKAxIGZpbGVzIGNoYW5nZWQsIDEwIGluc2VydGlvbnMoKyksIDUgZGVsZXRpb25z
+KC0pPGJyPgomZ3Q7PGJyPgomZ3Q7IGRpZmYgLS1naXQgYS9kcml2ZXJzL3N0ZW1vZGVtL3ZvaWNl
+Y2FsbC5jIGIvZHJpdmVycy9zdGVtb2RlbS92b2ljZWNhbGwuYzxicj4KJmd0OyBpbmRleCBiZjY4
+ZjUyLi43ZjBhMTlmIDEwMDY0NDxicj4KJmd0OyAtLS0gYS9kcml2ZXJzL3N0ZW1vZGVtL3ZvaWNl
+Y2FsbC5jPGJyPgomZ3Q7ICsrKyBiL2RyaXZlcnMvc3RlbW9kZW0vdm9pY2VjYWxsLmM8YnI+CiZn
+dDsgQEAgLTEsNCArMSw0IEBAPGJyPgomZ3Q7IC0vKjxicj4KJmd0OyArZS8qPGJyPgo8YnI+Cjwv
+ZGl2PldoYXQgaXMgdGhpcyA7KTxicj4KPGJyPjwvYmxvY2txdW90ZT48ZGl2PkhtbSwgY2VydGFp
+bmx5IHNvbWV0aGluZyB0aGF0IHNob3VsZG4mIzM5O3QgaGF2ZSBiZWVuIHRoZXJlLi4uIDooIEkm
+IzM5O2xsIHNlbmQgYSBuZXcgdmVyc2lvbi4gVGhhbmsmIzM5O3MgZm9yIHlvdXIgcGF0aWVuY2Us
+IGFuZCB0aGUgcmV2aWV3cy48YnI+YnIgTWFyaXQ8YnI+PGJyPjwvZGl2PjxibG9ja3F1b3RlIGNs
+YXNzPSJnbWFpbF9xdW90ZSIgc3R5bGU9Im1hcmdpbjogMHB0IDBwdCAwcHQgMC44ZXg7IGJvcmRl
+ci1sZWZ0OiAxcHggc29saWQgcmdiKDIwNCwgMjA0LCAyMDQpOyBwYWRkaW5nLWxlZnQ6IDFleDsi
+PgoKUmVnYXJkczxicj4KPGJyPgpNYXJjZWw8YnI+Cjxicj4KPGJyPgpfX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXzxicj4Kb2Zvbm8gbWFpbGluZyBsaXN0PGJy
+Pgo8YSBocmVmPSJtYWlsdG86b2Zvbm9Ab2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5vcmc8L2E+PGJy
+Pgo8YSBocmVmPSJodHRwOi8vbGlzdHMub2Zvbm8ub3JnL2xpc3RpbmZvL29mb25vIiB0YXJnZXQ9
+Il9ibGFuayI+aHR0cDovL2xpc3RzLm9mb25vLm9yZy9saXN0aW5mby9vZm9ubzwvYT48YnI+Cjwv
+YmxvY2txdW90ZT48L2Rpdj48YnI+Cg==
 
-
---===============7724157390199376829==--
+--===============0402229376847970673==--
 
