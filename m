@@ -1,67 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============5412092572515588819=="
+Content-Type: multipart/mixed; boundary="===============3032102091631240541=="
 MIME-Version: 1.0
-From: Lei Yu <lei.2.yu@nokia.com>
-Subject: Re: CDMA progress?
-Date: Tue, 04 Jan 2011 11:03:30 -0800
-Message-ID: <4D236F02.5080605@nokia.com>
-In-Reply-To: <B79FBA42FB1F254B87C0F024D44814E802A90B@ALA-MBB.corp.ad.wrs.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] dbus: fix appending on dict for types other than string
+Date: Tue, 04 Jan 2011 10:56:13 -0800
+Message-ID: <1294167373.5852.104.camel@aeonflux>
+In-Reply-To: <AANLkTimLCUKC_+_qsHbs5-C9WVbEPax=D1KR2qEoUw2j@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5412092572515588819==
+--===============3032102091631240541==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, Terry,
+Hi Lucas,
 
-On 01/04/2011 10:40 AM, ext Sullivan, Terrance wrote:
-> Hi Lei,
->
-> -----On 01/03/2011 10:55 AM Lei Yu wrote-----
->
->> On 01/03/2011 01:32 AM, ext Debayan Banerjee wrote:
->>> i saw recently that work is being done towards supporting CDMA
->>> devices. Here in India we use the TATA photon brand USB dongle a lot.
->>> The devices are generally Huawei AC1261 and AC1260. Has anyone worked
->>> in the direction of adding support for this. This will potentially
->>> make the MeeGo Netbook UX immensely usable in India atleast.
->>
->> Yes, we are actively working on adding CDMA support into ofono.
->> Currently, the devices we used for testing are two Nokia CDMA devices
->> listed in our contributions. We do not have plan to support other
->> CDMA devices yet but if the two USB dongles you mentioned offered more
->> functionalities (e.g., sending/receive SMS in PDU format), we would like
->> to look into that. Could you please send us the API reference manual for
->> the two USB dongles?
->
-> We here at WindRiver have been working on a dual-mode modem (GSM/CDMA via
-> active standby) which also handles SMS rx/tx in PDU format and that we
-> would also like to contribute to oFono. Similarly, we'll be making an API
-> reference for this modem available here shortly, as we would like to disc=
-uss
-> aspects of its operation so it's a good fit with oFono..
->
-> Regards
-> Terry
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+> >> >>
+> >> >>            dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING,
+> >> >>                                            &(val_array[i + 0]));
+> >> >> -          dbus_message_iter_append_basic(&entry, type,
+> >> >> -                                          &(val_array[i + 1]));
+> >> >> +          if (type =3D=3D DBUS_TYPE_STRING) {
+> >> >> +                  dbus_message_iter_append_basic(&entry, type,
+> >> >> +                                                  &(val_array[i + =
+1]));
+> >> >> +          } else {
+> >> >> +                  dbus_message_iter_append_basic(&entry, type,
+> >> >> +                                                  val_array[i + 1]=
+);
+> >> >> +          }
+> >> >
+> >> > this does looks a bit hackish. Can you put it into context please. It
+> >> > might be that our call chain is wrong.
+> >> >
+> >>
+> >> We only ever needed (and thus ever added) support for string:string
+> >> dicts.  E.g. ones that could be g_strfreev-ed.  No other dicts were
+> >> supported by this function.
+> >
+> > so it is the g_strfreev part that makes this hackish. Fine by me then,
+> > but we might need to comment on why string arrays in this case are
+> > special.
+> =
 
-Glad to hear that you have found a modem that supports SMS rx/tx in PDU =
+> I don't think so. You use g_strfreev if you are using { string, string
+> } dict to free all strings. Why is this hackish?
+> =
 
-format. Could you pls share more detailed info on that? We would like to =
+> Even if we had another interface that didn't required the g_strfreev,
+> the issue with calling dbus_message_iter_append_basic() would not
+> change once we continue using a void** to store pointers to different
+> types at the same time..
 
-evaluate if we can use that as our hardware test platform. Also, looking =
+the append_basic D-Bus function works fine on **char and *uint8. So
+either a pointer to a string (*char) or pointer to a byte (uint8.
 
-forward to seeing your contributions to CDMA support in oFono. The more =
-
-the merrier.
+You differentiate between pointer to a string and pointer to a byte in
+that function. So it is different since normally it is the caller that
+has to give the right pointer in the first place.
 
 Regards
-Lei
+
+Marcel
 
 
---===============5412092572515588819==--
+
+--===============3032102091631240541==--
 
