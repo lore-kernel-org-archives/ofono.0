@@ -1,56 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============2524560029437107382=="
+Content-Type: multipart/mixed; boundary="===============7902231762242306460=="
 MIME-Version: 1.0
-From: Sullivan, Terrance <Terrance.Sullivan@windriver.com>
-Subject: RE: CDMA progress?
-Date: Tue, 04 Jan 2011 22:41:58 +0000
-Message-ID: <B79FBA42FB1F254B87C0F024D44814E802B182@ALA-MBB.corp.ad.wrs.com>
-In-Reply-To: <4D236F02.5080605@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 0/3] Add null text/alpha identifier and icon check handling
+Date: Tue, 04 Jan 2011 14:42:00 -0800
+Message-ID: <1294180923-12241-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2524560029437107382==
+--===============7902231762242306460==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Thanks Lei for your quick response..
+Hi,
 
------On 01/04/2011 01:56 PM Lei Yu wrote-----
-> Glad to hear that you have found a modem that supports SMS rx/tx in PDU f=
-ormat. Could you pls share more detailed info on that? > We would like to e=
-valuate if we can use that as our hardware test platform. Also, looking for=
-ward to seeing your contributions > to CDMA support in oFono. The more the =
-merrier.
+Following patch adds the missing "text/alpha identifier and icon"
+check handling.
 
-While we now have this Qualcomm device network operational running Meego 1.=
-1 with a modified oFono 0.34 branch, we are continuing with its development=
- and merging in more recent oFono changesets into our internal builds. Cons=
-equently, we can provide some test feedback but as yet this device is not c=
-ommercially available at present. As a result, there are limitations on spe=
-cific details that we can provide, for example, proprietary vs. the device'=
-s standardized CDMA/GSM command interfaces. However, we will attempt to pro=
-vide the details you require around our most recent SMS-PDU implementation =
-when we send out our API reference shortly..
+As per the ETSI 102 223 section 6.8, Text string is only required in
+response to a GetInkey or GetInput proactive command. So, there is no
+need to add any specific handling for null or empty strings cases.
 
-That said I can think of several aspects to help address the above and that=
- we may want to discuss here, namely:
+As per the ETSI TS 102 223 section 6.5.4, "If the terminal receives an
+icon, and either an empty or no alpha identifier/text string is given
+by the UICC, than the terminal shall reject the command with general"
+result "Command data not understood by terminal"."
 
-1) Since this device has dual radios operating in active/standby mode, the =
-use of distinct virtual TTYs for serperate GSM & CDMA signalling that are t=
-hen multiplexed into a common physical interface and
+Regards,
+Jeevaka
 
-2) A "shim" layer within this common physical interface which allows propri=
-etary commands to be "externalize" where appropriate while also correctly p=
-ropagating dual-mode baseband/radio state back to the oFono stack.
+Jeevaka Badrappan (3):
+  stkutil: Allocate for empty string in text dataobj
+  stkutil: add missing text and icon check
+  unit: add error status support for failure cases
 
-While these aspects are obviously driver specific we think they are interes=
-ting to start with as they represent various trends moving forward and we w=
-ould value getting people's input..
-
-Regards and I look forward to your response..
-Terry
+ src/stkutil.c       |  122 ++++++++++++++++++++++++++++++++++++++++++++---=
+----
+ unit/test-stkutil.c |   12 +++--
+ 2 files changed, 114 insertions(+), 20 deletions(-)
 
 
-
---===============2524560029437107382==--
+--===============7902231762242306460==--
 
