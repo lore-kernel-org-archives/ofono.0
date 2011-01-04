@@ -1,95 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============3778954023575261629=="
+Content-Type: multipart/mixed; boundary="===============6502280168784889541=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [PATCHv2] plugin: Add ste modem initd integration
-Date: Tue, 04 Jan 2011 00:12:38 +0100
-Message-ID: <AANLkTinFfW79MZ=-z0qxpXmJ=T+cxo_oERAzX9FKyZPb@mail.gmail.com>
-In-Reply-To: <1294095276.5852.48.camel@aeonflux>
+From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+Subject: Re: [PATCH v3, Part2, 3/3] udev: Add nokiacdma device
+Date: Mon, 03 Jan 2011 17:49:53 -0800
+Message-ID: <4D227CC1.8000507@nokia.com>
+In-Reply-To: <4D12B2AB.2000000@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3778954023575261629==
+--===============6502280168784889541==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Denis
 
-> what about potential USB based CAIF devices?
-Good question, but in a Bridge Setup for a phone this will not really
-be devices that come and go.
-I belive it will still be a fixed HW setup where the Modem Init Daemon
-will have static knowledge of the
-USB modems. But I'll discuss this with my coleagues tomorrow.
-In case of true USB dongles the modem should look pretty much
-identical to MBM USB dongles.
+On 12/22/2010 06:23 PM, ext Denis Kenzior wrote:
+> Hi Dara,
+>
+> On 12/21/2010 01:23 PM, Dara Spieker-Doyle wrote:
+>> ---
+>>   plugins/udev.c |   21 +++++++++++++++++++++
+>>   1 files changed, 21 insertions(+), 0 deletions(-)
+>>
+>> diff --git a/plugins/udev.c b/plugins/udev.c
+>> index 255755e..9447e5c 100644
+>> --- a/plugins/udev.c
+>> +++ b/plugins/udev.c
+>> @@ -449,6 +449,25 @@ static void add_isi(struct ofono_modem *modem,
+>>   	ofono_modem_register(modem);
+>>   }
+>>
+>> +static void add_nokiacdma(struct ofono_modem *modem,
+>> +					struct udev_device *udev_device)
+>> +{
+>> +	const char *devnode;
+>> +	int registered;
+>> +
+>> +	DBG("modem %p", modem);
+>> +
+>> +	devnode =3D udev_device_get_devnode(udev_device);
+>> +
+>> +	registered =3D ofono_modem_get_integer(modem, "Registered");
+>> +	if (registered !=3D 0)
+>> +		return;
+>> +
+>> +	ofono_modem_set_string(modem, "Device", devnode);
+>> +	ofono_modem_set_integer(modem, "Registered", 1);
+>> +	ofono_modem_register(modem);
+>
+> This looks a little fishy to me.  How many ttys are created when this
+> device is plugged in?  Is it really just one or are you relying on luck
+> to select the right tty?
+>
+When the current nokiacdma (Nokia 7205) device is plugged in there is =
 
->I would just ask to send the property changed signal for the serial
->number before sending the signal for on/ready.
-It will require a re-design of the state machine in the Modem Init Daemon,
-but I'll check into this tomorrow.
+only one TTY created.
 
-Here is the latest version of the Dbus API:
+Thanks
+Dara
 
-STE Modem Init Deamon Manager
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D
-Service		com.stericsson.modeminit
-Interface	com.stericsson.modeminit.ModemManager
-Object path	/
-
-Methods		array{object,dict} GetModems()
-
-			Get array of STE Modem objects and their state and
-			properties (out signature 'a(oa{sv})').
-
-			The method should only be call once per application.
-			Further changes shall be monitored via StateChange
-			signals.
-
-STE Modem
-=3D=3D=3D=3D=3D=3D=3D=3D=3D
-Service		com.stericsson.modeminit
-Interface	com.stericsson.modeminit.Modem
-Object path	variable
-
-Signals		PropertyChanged(string property, variant value)
-
-			This signal indicates a changed value of the given
-			property.
-
-Properties	string State [readonly]
-
-			The modems state is dynamic can can have the following
-			values:
-			"booting"   Modem is powered up (flashed version)
-				    or Modem is powered up and firmware upload
-				    is completed. (flashless version)
-			"upgrading" Firmware upgrade on going
-				    or Flashing manager under execution -
-				    modem in service mode.
-			"on"	    Modem has booted and is ready for use.
-				    This implies that all AT channels are
-				    available, the modem might be in
-				    e.g. flight mode.
-				    NOTE: Consider change name to "ready"
-
-			"dumping"  Modem has crashed and dump is ongoing
-			"off"	    Modem is powered off.
-
-		string AtInterface[readonly]
-
-			CAIF Link Layer interface to be used for
-			AT channels for a modem.
-
-		string Serial[optional,readonly]
-
-			Serial Number or IMEI for the Modem. The Serial will
-			not be available until the modem can open an AT channel.
-
-
-Regards,
-Sjur
-
---===============3778954023575261629==--
+--===============6502280168784889541==--
 
