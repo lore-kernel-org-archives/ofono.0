@@ -1,51 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============4914715613981125591=="
+Content-Type: multipart/mixed; boundary="===============5097218399020361838=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v2 0/4] Query retry counters
-Date: Tue, 04 Jan 2011 11:06:15 -0200
-Message-ID: <1294146379-30854-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH v2 1/4] include: add method to query pin Retries
+Date: Tue, 04 Jan 2011 11:06:16 -0200
+Message-ID: <1294146379-30854-2-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1294146379-30854-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4914715613981125591==
+--===============5097218399020361838==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Here is the second implementation for the retry counter task. The difference
-from the previous approach is that now a dict with all the available retry
-counters is returned. This way is possible to query the retry counter even =
-when
-PinRequired =3D=3D None, what allows us to properly handle calls to EnterPi=
-n(),
-LockPin(), UnlockPin() and so on.
+---
+ include/sim.h |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
 
-The dict has the form { pin =3D 3, puk =3D 10, ... }. The driver implementa=
-tion for
-huawei modem is done using its proprietary command, which returns 4 counter=
-s:
+diff --git a/include/sim.h b/include/sim.h
+index 7860e24..bf4aaf9 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -77,6 +77,11 @@ enum ofono_sim_state {
+ 	OFONO_SIM_STATE_READY,
+ };
+ =
 
-{SimManager} [/huawei0] Retries =3D { pin2 =3D 3, puk2 =3D 10, pin =3D 3, p=
-uk =3D 10 }
++struct ofono_sim_pin_retry {
++	enum ofono_sim_password_type id;
++	int val;
++};
++
+ typedef void (*ofono_sim_file_info_cb_t)(const struct ofono_error *error,
+ 					int filelength,
+ 					enum ofono_sim_file_structure structure,
+@@ -108,6 +113,10 @@ typedef void (*ofono_sim_passwd_cb_t)(const struct ofo=
+no_error *error,
+ 					enum ofono_sim_password_type type,
+ 					void *data);
+ =
 
-Lucas De Marchi (4):
-  include: add method to query pin Retries
-  sim: query remaining pin retries
-  doc: detail Retries property
-  atmodem: implement query for remaining pin retries
++typedef void (*ofono_sim_pin_retries_cb_t)(const struct ofono_error *error,
++						GSList *pin_retries,
++						void *data);
++
+ typedef void (*ofono_sim_lock_unlock_cb_t)(const struct ofono_error *error,
+ 					void *data);
+ =
 
- doc/sim-api.txt       |   12 ++++++
- drivers/atmodem/sim.c |   99 +++++++++++++++++++++++++++++++++++++++++++++=
-++
- include/sim.h         |   11 +++++
- src/sim.c             |  102 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 4 files changed, 224 insertions(+), 0 deletions(-)
-
+@@ -144,6 +153,8 @@ struct ofono_sim_driver {
+ 			ofono_sim_passwd_cb_t cb, void *data);
+ 	void (*send_passwd)(struct ofono_sim *sim, const char *passwd,
+ 			ofono_sim_lock_unlock_cb_t cb, void *data);
++	void (*query_pin_retries)(struct ofono_sim *sim,
++				ofono_sim_pin_retries_cb_t cb, void *data);
+ 	void (*reset_passwd)(struct ofono_sim *sim, const char *puk,
+ 			const char *passwd,
+ 			ofono_sim_lock_unlock_cb_t cb, void *data);
 -- =
 
 1.7.3.4
 
 
---===============4914715613981125591==--
+--===============5097218399020361838==--
 
