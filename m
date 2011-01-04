@@ -1,63 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============8598804867792490766=="
+Content-Type: multipart/mixed; boundary="===============5662817384156474321=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v4, 5/5] udev: Add nokiacdma device
-Date: Mon, 03 Jan 2011 17:50:17 -0800
-Message-ID: <1294105817-23397-6-git-send-email-dara.spieker-doyle@nokia.com>
-In-Reply-To: <y>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+Subject: Re: [RFC PATCHv2 1/4] Automatic provisioning of GPRS context settings
+Date: Tue, 04 Jan 2011 09:13:43 +0200
+Message-ID: <1294125223.8212.59.camel@jsaunama-desktop>
+In-Reply-To: <1294095828.5852.54.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8598804867792490766==
+--===============5662817384156474321==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/udev.c |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
+Hello Marcel,
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 6a59b06..12402eb 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -462,6 +462,20 @@ static void add_calypso(struct ofono_modem *modem,
- 	ofono_modem_register(modem);
- }
- =
+On Mon, 2011-01-03 at 15:03 -0800, ext Marcel Holtmann wrote:
+> thinking about this a bit more and with the background that there is
+> already an existing public database, we might should just enable a
+> provision driver inside the oFono core.
+> =
 
-+static void add_nokiacdma(struct ofono_modem *modem,
-+					struct udev_device *udev_device)
-+{
-+	const char *devnode;
-+
-+	DBG("modem %p", modem);
-+
-+	devnode =3D udev_device_get_devnode(udev_device);
-+
-+	ofono_modem_set_string(modem, "Device", devnode);
-+	ofono_modem_set_integer(modem, "Registered", 1);
-+	ofono_modem_register(modem);
-+}
-+
- static void add_modem(struct udev_device *udev_device)
- {
- 	struct ofono_modem *modem;
-@@ -548,6 +562,8 @@ done:
- 		add_isi(modem, udev_device);
- 	else if (g_strcmp0(driver, "calypso") =3D=3D 0)
- 		add_calypso(modem, udev_device);
-+	else if (g_strcmp0(driver, "nokiacdma") =3D=3D 0)
-+		add_nokiacdma(modem, udev_device);
- }
- =
+> Meaning that we can have multiple implementations of different databases
+> with just different priorities. Each nicely separated in their own
+> plugin and we don't bother the oFono core with where to get the data
+> from. So my idea would be that the oFono core just asks to provision a
+> new context. If a plugin feels responsible, then it does so. If not then
+> it stays empty.
+>
+> Running oFono on the desktop/netbook etc. it makes sense to use the
+> current mobile broadband provider database. However on a phone that is a
+> not so good database. And for you guys it would also be possible to
+> continue using a CSV based format.
 
- static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
-_data)
--- =
+This sounds very good to me. Making provisioning modular makes a lot of
+sense.
 
-1.7.0.4
+But I am not yet very familiar with oFono plugin architecture. Is there
+some pattern in oFono code I could follow when implementing this, or
+could you or someone provide some skeleton code how this should go?
+
+In my patch (3/4) for gprs.c, I call get_operator_settings() (in
+operator-settings.c), which returns list of gprs_access_settings, that
+are then created as contexts. I assume now this  get_operator_settings()
+would somehow call registered provisioning modules, that similarly would
+return list of gprs_access_settings? Or should these plugins directly
+call some new gprs atom interface to create the contexts?
+
+--Jukka
 
 
---===============8598804867792490766==--
+
+
+--===============5662817384156474321==--
 
