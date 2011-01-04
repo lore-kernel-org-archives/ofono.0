@@ -1,34 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============8922515415953962861=="
+Content-Type: multipart/mixed; boundary="===============6142295182527053372=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH] dbus: fix appending on dict for types other than string
-Date: Tue, 04 Jan 2011 17:46:15 -0200
-Message-ID: <AANLkTinbUGoqCPTAhgEGcP2DNJayFYhaOy5sShJ8gDpm@mail.gmail.com>
-In-Reply-To: <1294167373.5852.104.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2, 1/7] dbus: Add CDMA SMS Interface
+Date: Tue, 04 Jan 2011 13:49:48 -0600
+Message-ID: <4D2379DC.7090706@gmail.com>
+In-Reply-To: <1292976149-15598-2-git-send-email-lei.2.yu@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8922515415953962861==
+--===============6142295182527053372==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi, Marcel
+Hi Lei,
 
-On Tue, Jan 4, 2011 at 4:56 PM, Marcel Holtmann <marcel@holtmann.org> wro=
-te:
-> the append_basic D-Bus function works fine on **char and *uint8. So
-> either a pointer to a string (*char) or pointer to a byte (uint8.
->
-> You differentiate between pointer to a string and pointer to a byte in
-> that function. So it is different since normally it is the caller that
-> has to give the right pointer in the first place.
-
-Yeah, true... But if we don't differentiate the types here I'd need to
-cast an uint8 to void* that is not even allowed by our warning flags
+On 12/21/2010 06:02 PM, Lei Yu wrote:
+> ---
+>  include/dbus.h |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
+> =
 
 
-Lucas De Marchi
+Patch has been applied, thanks.
 
---===============8922515415953962861==--
+Regards,
+-Denis
+
+--===============6142295182527053372==--
 
