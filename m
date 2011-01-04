@@ -1,44 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============6959218671271881357=="
+Content-Type: multipart/mixed; boundary="===============0554939764814089446=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCHv3] stemodem: Fix for MT call not working when caller id is
- hidden.
-Date: Tue, 04 Jan 2011 00:06:17 -0800
-Message-ID: <1294128377.5852.73.camel@aeonflux>
-In-Reply-To: <1294127736-3068-1-git-send-email-maritsofie.henriksen8@gmail.com>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: HTML problem in http://ofono.org/community
+Date: Tue, 04 Jan 2011 10:16:31 +0200
+Message-ID: <87oc7xnkww.fsf@potku.valot.fi>
+In-Reply-To: <D59FC7BDB2BB4A498BE65E78F59E7676B93517E0@orsmsx503.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6959218671271881357==
+--===============0554939764814089446==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marit,
+"Awad, Majid" <majid.awad@intel.com> writes:
 
-> In *ECAV, the number will not be included if caller id is hidden.
-> Set it to an empty string in that case, and set number type to
-> 128, unknown number type.
-> ---
->  drivers/stemodem/voicecall.c |   15 ++++++++++-----
->  1 files changed, 10 insertions(+), 5 deletions(-)
-> =
+> It's fixed now.
 
-> diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
-> index bf68f52..7f0a19f 100644
-> --- a/drivers/stemodem/voicecall.c
-> +++ b/drivers/stemodem/voicecall.c
-> @@ -1,4 +1,4 @@
-> -/*
-> +e/*
+Thank you for fixing it.
 
-What is this ;)
+-- =
 
-Regards
+Kalle Valo
 
-Marcel
-
-
-
---===============6959218671271881357==--
+--===============0554939764814089446==--
 
