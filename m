@@ -1,97 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============1032902527387932105=="
+Content-Type: multipart/mixed; boundary="===============3344065893101952172=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 3/3] unit: add error status support for failure cases
-Date: Tue, 04 Jan 2011 14:42:03 -0800
-Message-ID: <1294180923-12241-4-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1294180923-12241-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Lei Yu <lei.2.yu@nokia.com>
+Subject: [PATCH v3 2/7] cdma-sms: Add CDMA SMS Support
+Date: Tue, 04 Jan 2011 15:00:50 -0800
+Message-ID: <1294182050-5526-1-git-send-email-lei.2.yu@nokia.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1032902527387932105==
+--===============3344065893101952172==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- unit/test-stkutil.c |   12 ++++++++----
- 1 files changed, 8 insertions(+), 4 deletions(-)
+ Makefile.am        |    3 +-
+ include/cdma-sms.h |   67 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 69 insertions(+), 1 deletions(-)
+ create mode 100644 include/cdma-sms.h
 
-diff --git a/unit/test-stkutil.c b/unit/test-stkutil.c
-index 185dfdd..f1cad78 100644
---- a/unit/test-stkutil.c
-+++ b/unit/test-stkutil.c
-@@ -13999,6 +13999,7 @@ struct setup_idle_mode_text_test {
- 	struct stk_text_attribute text_attr;
- 	struct stk_frame_id frame_id;
- 	char *html;
-+	enum stk_command_parse_result status;
- };
+diff --git a/Makefile.am b/Makefile.am
+index 8a8555d..5028f4f 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -14,7 +14,8 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
+e/history.h \
+ 			include/gprs.h include/gprs-context.h \
+ 			include/radio-settings.h include/stk.h \
+ 			include/audio-settings.h include/nettime.h \
+-			include/ctm.h include/cdma-voicecall.h
++			include/ctm.h include/cdma-voicecall.h \
++			include/cdma-sms.h
  =
 
- static unsigned char setup_idle_mode_text_111[] =3D { 0xD0, 0x1A, 0x81, 0x=
-03,
-@@ -14415,7 +14416,8 @@ static struct setup_idle_mode_text_test setup_idle_=
-mode_text_data_241 =3D {
- 	.icon_id =3D {
- 		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
- 		.id =3D 0x01
--	}
-+	},
-+	.status =3D STK_PARSE_RESULT_DATA_NOT_UNDERSTOOD
- };
+ nodist_include_HEADERS =3D include/version.h
  =
 
- static struct setup_idle_mode_text_test setup_idle_mode_text_data_311 =3D {
-@@ -14742,7 +14744,7 @@ static void test_setup_idle_mode_text(gconstpointer=
- data)
- 	command =3D stk_command_new_from_pdu(test->pdu, test->pdu_len);
- =
-
- 	g_assert(command);
--	g_assert(command->status =3D=3D STK_PARSE_RESULT_OK);
-+	g_assert(command->status =3D=3D test->status);
- =
-
- 	g_assert(command->number =3D=3D 1);
- 	g_assert(command->type =3D=3D STK_COMMAND_TYPE_SETUP_IDLE_MODE_TEXT);
-@@ -14772,6 +14774,7 @@ struct run_at_command_test {
- 	struct stk_icon_id icon_id;
- 	struct stk_text_attribute text_attr;
- 	struct stk_frame_id frame_id;
-+	enum stk_command_parse_result status;
- };
- =
-
- static unsigned char run_at_command_111[] =3D { 0xD0, 0x12, 0x81, 0x03, 0x=
-01,
-@@ -15193,7 +15196,8 @@ static struct run_at_command_test run_at_command_da=
-ta_251 =3D {
- 	.icon_id =3D {
- 		.qualifier =3D STK_ICON_QUALIFIER_TYPE_NON_SELF_EXPLANATORY,
- 		.id =3D 0x01
--	}
-+	},
-+	.status =3D STK_PARSE_RESULT_DATA_NOT_UNDERSTOOD
- };
- =
-
- static struct run_at_command_test run_at_command_data_311 =3D {
-@@ -15500,7 +15504,7 @@ static void test_run_at_command(gconstpointer data)
- 	command =3D stk_command_new_from_pdu(test->pdu, test->pdu_len);
- =
-
- 	g_assert(command);
--	g_assert(command->status =3D=3D STK_PARSE_RESULT_OK);
-+	g_assert(command->status =3D=3D test->status);
- =
-
- 	g_assert(command->number =3D=3D 1);
- 	g_assert(command->type =3D=3D STK_COMMAND_TYPE_RUN_AT_COMMAND);
+diff --git a/include/cdma-sms.h b/include/cdma-sms.h
+new file mode 100644
+index 0000000..90d8803
+--- /dev/null
++++ b/include/cdma-sms.h
+@@ -0,0 +1,67 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010-2011  Nokia Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifndef __OFONO_CDMA_SMS_H
++#define __OFONO_CDMA_SMS_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include <ofono/types.h>
++
++struct ofono_cdma_sms;
++
++typedef void (*ofono_cdma_sms_submit_cb_t)(const struct ofono_error *error,
++						void *data);
++
++struct ofono_cdma_sms_driver {
++	const char *name;
++	int (*probe)(struct ofono_cdma_sms *cdma_sms, unsigned int vendor,
++			void *data);
++	void (*remove)(struct ofono_cdma_sms *cdma_sms);
++	void (*submit)(struct ofono_cdma_sms *cdma_sms, unsigned char *tpdu,
++			int tpdu_len, ofono_cdma_sms_submit_cb_t cb,
++			void *data);
++};
++
++void ofono_cdma_sms_deliver_notify(struct ofono_cdma_sms *cdma_sms,
++					unsigned char *pdu, int tpdu_len);
++
++int ofono_cdma_sms_driver_register(const struct ofono_cdma_sms_driver *d);
++void ofono_cdma_sms_driver_unregister(const struct ofono_cdma_sms_driver *=
+d);
++
++struct ofono_cdma_sms *ofono_cdma_sms_create(struct ofono_modem *modem,
++						unsigned int vendor,
++						const char *driver,
++						void *data);
++
++void ofono_cdma_sms_register(struct ofono_cdma_sms *cdma_sms);
++void ofono_cdma_sms_remove(struct ofono_cdma_sms *cdma_sms);
++
++void ofono_cdma_sms_set_data(struct ofono_cdma_sms *cdma_sms, void *data);
++void *ofono_cdma_sms_get_data(struct ofono_cdma_sms *cdma_sms);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __OFONO_CDMA_SMS_H */
 -- =
 
 1.7.0.4
 
 
---===============1032902527387932105==--
+--===============3344065893101952172==--
 
