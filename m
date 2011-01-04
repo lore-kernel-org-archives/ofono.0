@@ -1,64 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============6502280168784889541=="
+Content-Type: multipart/mixed; boundary="===============0593931817214946587=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: Re: [PATCH v3, Part2, 3/3] udev: Add nokiacdma device
-Date: Mon, 03 Jan 2011 17:49:53 -0800
-Message-ID: <4D227CC1.8000507@nokia.com>
-In-Reply-To: <4D12B2AB.2000000@gmail.com>
+Subject: [PATCH v4, 0/5] Add nokiacdma plugin and CDMA MO Call support
+Date: Mon, 03 Jan 2011 17:50:12 -0800
+Message-ID: <1294105817-23397-1-git-send-email-dara.spieker-doyle@nokia.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6502280168784889541==
+--===============0593931817214946587==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis
+This series of patches is version 4 of foundation support for the nokiacdma
+device plugin and the cdma-voicecall atom. This is needed for
+testing the changes in the first part of the series, for providing the
+foundation cdmamodem driver and simple CDMA MO Call support with hardware.
 
-On 12/22/2010 06:23 PM, ext Denis Kenzior wrote:
-> Hi Dara,
->
-> On 12/21/2010 01:23 PM, Dara Spieker-Doyle wrote:
->> ---
->>   plugins/udev.c |   21 +++++++++++++++++++++
->>   1 files changed, 21 insertions(+), 0 deletions(-)
->>
->> diff --git a/plugins/udev.c b/plugins/udev.c
->> index 255755e..9447e5c 100644
->> --- a/plugins/udev.c
->> +++ b/plugins/udev.c
->> @@ -449,6 +449,25 @@ static void add_isi(struct ofono_modem *modem,
->>   	ofono_modem_register(modem);
->>   }
->>
->> +static void add_nokiacdma(struct ofono_modem *modem,
->> +					struct udev_device *udev_device)
->> +{
->> +	const char *devnode;
->> +	int registered;
->> +
->> +	DBG("modem %p", modem);
->> +
->> +	devnode =3D udev_device_get_devnode(udev_device);
->> +
->> +	registered =3D ofono_modem_get_integer(modem, "Registered");
->> +	if (registered !=3D 0)
->> +		return;
->> +
->> +	ofono_modem_set_string(modem, "Device", devnode);
->> +	ofono_modem_set_integer(modem, "Registered", 1);
->> +	ofono_modem_register(modem);
->
-> This looks a little fishy to me.  How many ttys are created when this
-> device is plugged in?  Is it really just one or are you relying on luck
-> to select the right tty?
->
-When the current nokiacdma (Nokia 7205) device is plugged in there is =
+These patches have been tested against the Nokia 7205 CDMA device in a teth=
+ered
+mode.
 
-only one TTY created.
+Limitations
+-----------
+The Nokia 7205 device does not support an AT interface for reporting request
+responses, such as the call status and remote/network disconnect reasons, so
+these are currently untested.
 
-Thanks
-Dara
+Dara Spieker-Doyle (5):
+  cdmamodem: Add CDMA MO Call support
+  test: Add CDMA MO Call Support
+  nokiacdma: Add plugin and CDMA MO Call Support
+  ofono-rules: Add nokiacdma device
+  udev: Add nokiacdma device
 
---===============6502280168784889541==--
+ Makefile.am                   |   11 ++-
+ drivers/cdmamodem/cdmamodem.c |    3 +
+ drivers/cdmamodem/cdmamodem.h |    3 +
+ drivers/cdmamodem/voicecall.c |  160 +++++++++++++++++++++++++++++++++
+ plugins/nokiacdma.c           |  198 +++++++++++++++++++++++++++++++++++++=
+++++
+ plugins/ofono.rules           |    4 +
+ plugins/udev.c                |   16 ++++
+ test/cdma-dial-number         |   24 +++++
+ test/cdma-hangup              |   20 ++++
+ test/cdma-list-call           |   30 ++++++
+ 10 files changed, 467 insertions(+), 2 deletions(-)
+ create mode 100644 drivers/cdmamodem/voicecall.c
+ create mode 100644 plugins/nokiacdma.c
+ create mode 100755 test/cdma-dial-number
+ create mode 100755 test/cdma-hangup
+ create mode 100755 test/cdma-list-call
+
+
+--===============0593931817214946587==--
 
