@@ -1,45 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============4895077833013789673=="
+Content-Type: multipart/mixed; boundary="===============2837319921963816880=="
 MIME-Version: 1.0
-From: Lei Yu <lei.2.yu@nokia.com>
-Subject: Re: [PATCH v2, 6/7] test: Add CDMA SMS Support
-Date: Wed, 05 Jan 2011 09:57:00 -0800
-Message-ID: <4D24B0EC.3070302@nokia.com>
-In-Reply-To: <4D23903B.2030109@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2, 5/7] cdmamodem: Add CDMA SMS driver support
+Date: Wed, 05 Jan 2011 11:52:29 -0600
+Message-ID: <4D24AFDD.7040505@gmail.com>
+In-Reply-To: <4D24B038.2040200@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4895077833013789673==
+--===============2837319921963816880==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Lei,
 
-On 01/04/2011 01:25 PM, ext Denis Kenzior wrote:
-> Hi Lei,
->
-> On 12/21/2010 06:02 PM, Lei Yu wrote:
->> ---
->>   Makefile.am         |    6 ++-
->>   unit/test-cdmasms.c |  137 +++++++++++++++++++++++++++++++++++++++++++=
-++++++++
->>   2 files changed, 142 insertions(+), 1 deletions(-)
->>   create mode 100644 unit/test-cdmasms.c
+>>> +
+>>> +    data->vendor =3D vendor;
+>>> +
+>>> +    ofono_cdma_sms_set_data(cdma_sms, data);
+>>> +
+>>> +    at_sms_initialized(cdma_sms);
 >>
->
-> This one looks fine but have you considered using g_test_add_data_func
-> instead of g_test_add_func?  That makes it much easier to add new tests...
->
+>> Currently it is not possible to call the register method from within
+>> probe.  So you need to either use g_idle_add or run an AT command before
+>> registering the cdma_sms atom.  See how other drivers do this.
+>>
+> =
 
-No, have not looked g_test_add_data_func. Will look into that and =
+> Will fix. Could you pls explain why it is not possible to do this sync
+> way but have to force this into async? I have tested and it worked. Or
+> this is just a general architecture rule between atom and driver?
+> =
 
-re-submit patch or ask questions. :-)
 
-> Regards,
-> -Denis
+This is a general rule.  The core atom implementation reserves the right
+to start calling driver functions as soon as the atom is registered.  If
+the atom is registered within probe, then atom driver is still NULL.
+This results in a crash.
 
 Regards,
--Lei
+-Denis
 
---===============4895077833013789673==--
+--===============2837319921963816880==--
 
