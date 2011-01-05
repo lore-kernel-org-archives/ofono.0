@@ -1,39 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============2053259835443401966=="
+Content-Type: multipart/mixed; boundary="===============7548206198801415400=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v3 0/4] Query retry counters
-Date: Wed, 05 Jan 2011 15:20:36 -0200
-Message-ID: <1294248040-14342-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH v3 1/4] include: add method to query pin Retries
+Date: Wed, 05 Jan 2011 15:20:37 -0200
+Message-ID: <1294248040-14342-2-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1294248040-14342-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2053259835443401966==
+--===============7548206198801415400==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Difference from previous version is that now the pin_retries field is no mo=
-re a
-GSList because it's not allowed to be on public header files. So, it's now
-passed from drivers to core and stored there as an array of ints.
+---
+ include/sim.h |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-Lucas De Marchi (4):
-  include: add method to query pin Retries
-  sim: query remaining pin retries
-  doc: detail Retries property
-  atmodem: implement query for remaining pin retries
+diff --git a/include/sim.h b/include/sim.h
+index 7860e24..830322a 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -108,6 +108,9 @@ typedef void (*ofono_sim_passwd_cb_t)(const struct ofon=
+o_error *error,
+ 					enum ofono_sim_password_type type,
+ 					void *data);
+ =
 
- doc/sim-api.txt       |   12 ++++++
- drivers/atmodem/sim.c |   90 +++++++++++++++++++++++++++++++++++++++++++++
- include/sim.h         |    5 +++
- src/sim.c             |   97 +++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 4 files changed, 204 insertions(+), 0 deletions(-)
++typedef void (*ofono_sim_pin_retries_cb_t)(const struct ofono_error *error,
++			int retries[OFONO_SIM_PASSWORD_INVALID], void *data);
++
+ typedef void (*ofono_sim_lock_unlock_cb_t)(const struct ofono_error *error,
+ 					void *data);
+ =
 
+@@ -144,6 +147,8 @@ struct ofono_sim_driver {
+ 			ofono_sim_passwd_cb_t cb, void *data);
+ 	void (*send_passwd)(struct ofono_sim *sim, const char *passwd,
+ 			ofono_sim_lock_unlock_cb_t cb, void *data);
++	void (*query_pin_retries)(struct ofono_sim *sim,
++				ofono_sim_pin_retries_cb_t cb, void *data);
+ 	void (*reset_passwd)(struct ofono_sim *sim, const char *puk,
+ 			const char *passwd,
+ 			ofono_sim_lock_unlock_cb_t cb, void *data);
 -- =
 
 1.7.3.4
 
 
---===============2053259835443401966==--
+--===============7548206198801415400==--
 
