@@ -1,33 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============5665476464298207465=="
+Content-Type: multipart/mixed; boundary="===============4411780975300401556=="
 MIME-Version: 1.0
-From: Rajesh.Nagaiah@elektrobit.com
-Subject: RE: [PATCH v3 2/7] cdma-sms: Add CDMA SMS Support
-Date: Wed, 05 Jan 2011 11:17:12 -0800
-Message-ID: <C681C76E0D5F1E4BB01DE79E0A80EEC702E6576B@usrdes03.ebgroup.elektrobit.com>
-In-Reply-To: <1294182050-5526-1-git-send-email-lei.2.yu@nokia.com>
+From: Robertino Benis <robertino.benis@intel.com>
+Subject: Re: [PATCH v3] ifx: Adding modem selftest for Infineon modem
+Date: Wed, 05 Jan 2011 12:13:00 -0800
+Message-ID: <1294258380.1946.3.camel@airyz-ub910.intel.com>
+In-Reply-To: <1293144427-12296-1-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5665476464298207465==
+--===============4411780975300401556==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lei,
- =
+Hi guys,
 
-> +void ofono_cdma_sms_deliver_notify(struct ofono_cdma_sms *cdma_sms,
-> +					unsigned char *pdu, int
-tpdu_len);
+> This is another attempt to submit a patch that triggers Infineon
+> modem selftest during ofono boot. Patch addresses issues raised
+> by Marcel from the previous submissions.
 
-As there is no SC number in CDMA, the whole PDU is the actual TPDU as
-well.
-So either we should call pdu/pdu_len or tpdu/tpdu_len. Having
-pdu/tpdu_len
-might be mistaken.
+>  plugins/ifx.c |   76 +++++++++++++++++++++++++++++++++++++++++++++++++--=
+-----
+>  1 files changed, 66 insertions(+), 10 deletions(-)
 
-BR,
-Rajesh
+How did this submission (email from 12/23/2010) for modem self test look
+like? Any closer to acceptance? We tested this code on couple of devices
+and with different modems, with and without error condition on boot.
 
---===============5665476464298207465==--
+Thanks,
+-- r. =
+
+
+
+--===============4411780975300401556==--
 
