@@ -1,90 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============3660099910306143392=="
+Content-Type: multipart/mixed; boundary="===============9179827421527951773=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 0/4 v2] Network Time plugin
-Date: Wed, 05 Jan 2011 10:29:40 +0200
-Message-ID: <201101051029.40894.remi.denis-courmont@nokia.com>
-In-Reply-To: <1294177770.5852.109.camel@aeonflux>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCHv2] network: query signal strength
+Date: Wed, 05 Jan 2011 11:08:12 +0200
+Message-ID: <AANLkTikxRG7QNtbDbDyofL-ouC1J8eq9=av=W2+O7516@mail.gmail.com>
+In-Reply-To: <1292579164-24372-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3660099910306143392==
+--===============9179827421527951773==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tuesday 04 January 2011 23:49:30 ext Marcel Holtmann, you wrote:
-> Hi Aki,
-> =
+Hi Marit,
 
-> > > > But then it is far simpler to have a D-Bus getter and a D-Bus signal
-> > > > by any sane measure of complexity.
-> > > =
+2010/12/17 Marit Henriksen <maritsofie.henriksen8@gmail.com>:
+> From: Marit Henriksen <marit.henriksen@stericsson.com>
+>
+> Signal strength is set to -1 whenever registration status changes
+> and differs from registered or roaming. When registration status
+> changes again to registered or roaming, the signal strength needs to
+> be updated, added query towards driver to get it.
 
-> > > So you did consider the complexity on both sides, ofonod and timed? A=
-nd
-> > > not just looked at one side of picture?
-> > =
+Typically the modem updates signal strength along with registration
+status.  What are you trying to achieve here?  Is this to avoid
+problems caused by reordering, i.e., ofono_netreg_strength_notify()
+getting called before ofono_netreg_status_notify()?
 
-> > Timed also needs to follow the registration status, namely the MNC/MCC
-> > of the registered network.  This information it needs to be able to find
-> > the correct timezone, as the UTC offset alone only indicates the
-> > geographic longitude for the timezone.
-> > =
+<snip>
 
-> > Factor that in to the equation, and timed already needs to enumerate
-> > available modems, call GetProperties, and listen to the
-> > NetworkRegistration interface's PropertyChanged signals.
-> > =
+> @@ -1319,6 +1332,9 @@ void ofono_netreg_status_notify(struct ofono_netreg=
+ *netreg, int status,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0if (netreg->driver=
+->current_operator)
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0netreg->driver->current_operator(netreg,
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0current_o=
+perator_callback, netreg);
 
-> > However, if we refactor the time plugin to also send the MNC/MCC pair --
-> > or better yet, the ISO country code based on MCC or even the actual
-> > timezone from matching zone.tab entry -- then following netreg is no
-> > longer needed.
-> > =
+Add extra line feed here.
 
-> > *Then* I agree a method call is actually a lot simpler from timed point
-> > of view; all it needs to do is implement a single method on some
-> > org.ofono.NetworkTimeConsumer interface and not worry about enumerating
-> > modems via ModemManager or listening on any signals.
-> =
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (netreg->driver->st=
+rength)
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 netreg->driver->strength(netreg,
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 signal_stren=
+gth_callback, netreg);
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0} else {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0struct ofono_error=
+ error;
+>
 
-> we are doing the country alpha2 matching to MCC already in ConnMan for
-> the WiFi regulatory enforcement update. I am not sure that I wanna copy
-> these tables around all the time.
+Cheers,
+Aki
 
-Mapping MCC should be in oFono if only so not every oFono-using application=
-s =
-
-reinvents the same table. This is perhaps not so relevant for network time, =
-
-but I think oFono should provide the country code for network registration =
-and =
-
-for the SIM card. As an example, this can be used to guess the default loca=
-le =
-
-settings when the SIM is first inserted into a device.
-
-In the case of network time, we really want to map the (MCC, UTC offset, DS=
-T) =
-
-tuple to a time zone. We do not necessarily have to use any ISO code.
-
-There are some ambiguities though, for instance Honolulu and Unalaska have =
-the =
-
-same offset to UTC (in winter), same country code but are in different time =
-
-zones. Note that this is the only case I know, and it only affects under 10=
-,000 =
-
-people.
-
--- =
-
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============3660099910306143392==--
+--===============9179827421527951773==--
 
