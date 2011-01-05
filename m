@@ -1,34 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============4556757259921620726=="
+Content-Type: multipart/mixed; boundary="===============0710859120467922997=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH v3 4/4] atmodem: implement query for remaining pin retries
-Date: Wed, 05 Jan 2011 15:23:51 -0200
-Message-ID: <AANLkTin39oG7WheYHw-OuziP+M4XpLMg-9BNwnBxD1FE@mail.gmail.com>
-In-Reply-To: <1294179779-4013-5-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH] dbus: fix appending on dict for types other than string
+Date: Wed, 05 Jan 2011 15:25:06 -0200
+Message-ID: <1294248306-14413-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4556757259921620726==
+--===============0710859120467922997==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+According to dbus documentation, dbus_message_iter_append_basic()
+expects a "const char**" if type is string and a simple pointer for
+other types. Since we a iterating an array, the value passed is already
+a pointer.
+---
+ src/dbus.c |   20 ++++++++++++++++++--
+ 1 files changed, 18 insertions(+), 2 deletions(-)
 
-On Tue, Jan 4, 2011 at 8:22 PM, Lucas De Marchi
-<lucas.demarchi@profusion.mobi> wrote:
-> Implement query method for the remaining pin retries on huawei modem.
-> ---
-> =C2=A0drivers/atmodem/sim.c | =C2=A0 90 +++++++++++++++++++++++++++++++++=
-++++++++++++++++
-> =C2=A01 files changed, 90 insertions(+), 0 deletions(-)
->
+diff --git a/src/dbus.c b/src/dbus.c
+index c24615f..b719217 100644
+--- a/src/dbus.c
++++ b/src/dbus.c
+@@ -139,8 +139,24 @@ static void append_dict_variant(DBusMessageIter *iter,=
+ int type, void *val)
+ =
 
-I don't know what's happening. Here it shows me as sent as well as the
-other 4 patches. Maybe the mailing-list silently filtered it?
+ 		dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING,
+ 						&(val_array[i + 0]));
+-		dbus_message_iter_append_basic(&entry, type,
+-						&(val_array[i + 1]));
++
++		/*
++		 * D-Bus expects a char** or uint8* depending on the type
++		 * given. Since we are dealing with an array through a void**
++		 * (and thus val_array[i] is a pointer) we need to
++		 * differentiate DBUS_TYPE_STRING from the others. The other
++		 * option would be the user to pass the exact type to this
++		 * function, instead of a pointer to it. However in this case
++		 * a cast from type to void* would be needed, which is not
++		 * good.
++		 */
++		if (type =3D=3D DBUS_TYPE_STRING) {
++			dbus_message_iter_append_basic(&entry, type,
++							&(val_array[i + 1]));
++		} else {
++			dbus_message_iter_append_basic(&entry, type,
++							val_array[i + 1]);
++		}
+ =
 
-regards,
-Lucas De Marchi
+ 		dbus_message_iter_close_container(&array, &entry);
+ 	}
+-- =
 
---===============4556757259921620726==--
+1.7.3.4
+
+
+--===============0710859120467922997==--
 
