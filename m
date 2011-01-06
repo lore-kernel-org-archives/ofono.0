@@ -1,37 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============4376564671435909248=="
+Content-Type: multipart/mixed; boundary="===============5052362085463941220=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [RFC PATCH] gprs: add function to handle activated context
-Date: Thu, 06 Jan 2011 13:02:33 +0100
-Message-ID: <AANLkTimxkKAjcEdS9hGLECWEaW4o+ygPU3RCikFpcK0i@mail.gmail.com>
-In-Reply-To: <8281606748F03E4390BB98A3F47F2E948A9C123E86@irsmsx501.ger.corp.intel.com>
+From: Wei, Jun <jun.wei@intel.com>
+Subject: RE: [PATCH 3/5 v2] Cell-info: Atom for obtaining ECID info of cells
+Date: Thu, 06 Jan 2011 20:35:36 +0800
+Message-ID: <1A42CE6F5F474C41B63392A5F80372B231D84E3F@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1294151819-3300-4-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4376564671435909248==
+--===============5052362085463941220==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Redouane,
-...
-> +static void gprs_cid_take(struct ofono_gprs *gprs, unsigned int id)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 idmap_take(gprs->cid_map, id);
-> +}
-> +
-How do we assure that this CID is not already in use?
-I think the M7400 is going to use CID=3D0 and M700 uses CID=3D1.
-Perhaps we should make sure CID=3D0 is a legal value and reserve CID 0
-and 1 at start up.
+Hi Antti, =
 
-There is probably other ways of handling this as well, but I think any
-other solution
-would end up with race conditions, as context could be initiated from
-two sources.
+
+>-----Original Message-----
+>Subject: [PATCH 3/5 v2] Cell-info: Atom for obtaining ECID info of cells
+>
+>+static int append_utra_neigh_cell_data(DBusMessageIter *iter,
+>+		struct cell_measured_results *cmr)
+>+{
+>
+>
+>+
+>+		if (cmr->rscp !=3D OFONO_CI_FIELD_RSCP_UNDEFINED)
+>+			ofono_dbus_dict_append(iter,
+>+					"CPICH-RSCP",
+>+					DBUS_TYPE_INT16,
+>+					&cmr->rscp);
+>+
+
+The type for RSCP should be "DBUS_TYPE_BYTE"
+
+
 
 Regards,
-Sjur
 
---===============4376564671435909248==--
+Wei, Jun
+Jun.wei(a)intel.com
+
+
+--===============5052362085463941220==--
 
