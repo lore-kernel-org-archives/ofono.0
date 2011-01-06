@@ -1,44 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============3884104329320756712=="
+Content-Type: multipart/mixed; boundary="===============4376564671435909248=="
 MIME-Version: 1.0
-From: martin.xu@intel.com
-Subject: [PATCH] Fix compile warning at MeeGo The gcc version is MeeGo 4.5.1
-Date: Thu, 06 Jan 2011 18:33:26 +0800
-Message-ID: <1294310006-14285-1-git-send-email-martin.xu@intel.com>
-In-Reply-To: <martin.xu@intel.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: Re: [RFC PATCH] gprs: add function to handle activated context
+Date: Thu, 06 Jan 2011 13:02:33 +0100
+Message-ID: <AANLkTimxkKAjcEdS9hGLECWEaW4o+ygPU3RCikFpcK0i@mail.gmail.com>
+In-Reply-To: <8281606748F03E4390BB98A3F47F2E948A9C123E86@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3884104329320756712==
+--===============4376564671435909248==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Martin Xu <martin.xu@intel.com>
+Hi Redouane,
+...
+> +static void gprs_cid_take(struct ofono_gprs *gprs, unsigned int id)
+> +{
+> + =C2=A0 =C2=A0 =C2=A0 idmap_take(gprs->cid_map, id);
+> +}
+> +
+How do we assure that this CID is not already in use?
+I think the M7400 is going to use CID=3D0 and M700 uses CID=3D1.
+Perhaps we should make sure CID=3D0 is a legal value and reserve CID 0
+and 1 at start up.
 
----
- src/call-forwarding.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+There is probably other ways of handling this as well, but I think any
+other solution
+would end up with race conditions, as context could be initiated from
+two sources.
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 512f223..36ba4f1 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -246,7 +246,7 @@ static gboolean is_cfu_enabled(struct ofono_call_forwar=
-ding *cf,
- static void sim_set_cf_indicator(struct ofono_call_forwarding *cf)
- {
- 	gboolean cfu_voice;
--	struct ofono_call_forwarding_condition *cond;
-+	struct ofono_call_forwarding_condition *cond =3D NULL;
- =
+Regards,
+Sjur
 
- 	cfu_voice =3D is_cfu_enabled(cf, &cond);
- =
-
--- =
-
-1.7.2.2
-
-
---===============3884104329320756712==--
+--===============4376564671435909248==--
 
