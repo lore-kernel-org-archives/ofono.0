@@ -1,43 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============1113651502834034688=="
+Content-Type: multipart/mixed; boundary="===============7980608692739753167=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH] gprs: add function to handle activated context
-Date: Wed, 05 Jan 2011 18:17:09 -0600
-Message-ID: <4D250A05.8020405@gmail.com>
-In-Reply-To: <1294272721.2521.34.camel@aeonflux>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] dbus: fix appending on dict for types other than string
+Date: Wed, 05 Jan 2011 16:20:25 -0800
+Message-ID: <1294273225.2521.35.camel@aeonflux>
+In-Reply-To: <1294248306-14413-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1113651502834034688==
+--===============7980608692739753167==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Lucas,
 
-> =
+> According to dbus documentation, dbus_message_iter_append_basic()
+> expects a "const char**" if type is string and a simple pointer for
+> other types. Since we a iterating an array, the value passed is already
+> a pointer.
+> ---
+>  src/dbus.c |   20 ++++++++++++++++++--
+>  1 files changed, 18 insertions(+), 2 deletions(-)
 
->> If such context is not found create a new one with "Internet" type.
-> =
+patch has been applied. Thanks.
 
-> I don't really agree that we should create a context if no match is
-> found. I think the better sensible strategy is to hold this information
-> internally and only map it to a context once the user or provisioning
-> creates it.
+Regards
 
-From what I understood it should be quite safe to assume it is an
-internet context.  All IMS contexts will have a well-known APN and the
-only other one that would make sense for the network to activate
-automatically would be the internet one.
+Marcel
 
-Perhaps this is the missing piece in the description? The fact that
-either the IMS or an Internet context is created.
 
-I also don't like the temporary approach, since if we roam off LTE we
-still need a way to deactivate this context.
 
-Regards,
--Denis
-
---===============1113651502834034688==--
+--===============7980608692739753167==--
 
