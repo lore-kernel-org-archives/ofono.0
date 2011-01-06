@@ -1,134 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============3330378253489111747=="
+Content-Type: multipart/mixed; boundary="===============1906757311734958261=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2, 3/7] cdma-sms: Add CDMA SMS Support
-Date: Thu, 06 Jan 2011 14:23:06 -0600
-Message-ID: <4D2624AA.6020205@gmail.com>
-In-Reply-To: <4D24AEB9.4060800@nokia.com>
+From: Bastian, Waldo <waldo.bastian@intel.com>
+Subject: RE: [PATCH v3] ifx: Adding modem selftest for Infineon modem
+Date: Thu, 06 Jan 2011 14:18:46 -0800
+Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9015A52CE50@orsmsx508.amr.corp.intel.com>
+In-Reply-To: <1294264068.2521.12.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3330378253489111747==
+--===============1906757311734958261==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lei,
+> >  plugins/ifx.c |   76 +++++++++++++++++++++++++++++++++++++++++++++++++=
+-------
+> >  1 files changed, 66 insertions(+), 10 deletions(-)
+> > =
 
->> So it looks to me like this function takes arbitrary bit fields from a
->> stream.  Is this a 'peculiarity' of the address field or will this be
->> used elsewhere?
->>
-> Yes, your interpretation of the function is correct.
+> > diff --git a/plugins/ifx.c b/plugins/ifx.c
+> > index c0a69c2..e0eb982 100644
+> > --- a/plugins/ifx.c
+> > +++ b/plugins/ifx.c
+> > @@ -71,6 +71,8 @@
+> >  #define GPRS3_DLC   4
+> >  #define AUX_DLC     5
+> >  =
+
+> > +#define IFX_SELF_TESTS_TIMEOUT	10
+> > +
 > =
 
-> Actually, cross CDMA SMS spec (and also other CDMA protocol specs), a
-> lot of the message (parameter and etc) structures are defined just as
-> 'peculiar' as Address field. For example: User Data (section 4.5.2 of
-> C.S0015-B), Call Back Number (can be considered same as address).
-> =
+> I asked this 3 times now, where is this magic value of 10 seconds coming
+> from. What is the average expected execution time of each test?
 
-> Essentially, CDMA SMS specs defines structures as bit streams and a
-> field can start at any offset within the bit stream. Even worse,
-> depending on the values of the previous fields, a field can start at
-> different locations within a bit stream for the different instances of
-> the same type of the message.
-> =
+Typical response times are much less than 0.5 sec. 10 seconds is considered
+much longer than any normal response time. =
 
 
-Yes, some really smart engineers must have designed this spec ;)
+> > +static struct {
+> > +	char *test_desc;
+> > +	char *at_cmd;
+> > +} const mst[] =3D {
+> > +	{ "AT Command Test", "ATE0 +CMEE=3D1" }, /* set echo & error reportin=
+g */
+>
+> I really don't like to put ATE0 into this. It is not a selftest or test
+> command.
 
->> This looks like a really inefficient function to call for every field,
->> so it might makes things easier if the offsets were simply hardcoded...
->>
-> =
+It acts as a selftest command because if the modem fails to come out of res=
+et
+and/or start the AT command parser you will never get an OK back on it. In =
+the =
 
-> The main reason I do this way is that I feel there will be more chances
-> to make mistake if the 'shift', 'bit-wise and', bit-wise or' operation
-> is carried out when decoding each field separately. It will be cleaner
-> to have this generic function and decoding of each field will just care
-> about size of the field and start offset of the field into the stream.
-> =
+error reporting we would like to be able to distinguish between the AT comm=
+and
+parser not working at all and any subsequent test command failing.
 
+> > +	{ "RTC GTI Test", "at(a)rtc:rtc_gti_test_verify_32khz()" },
+> > +	{ "Device Version Test", "at(a)vers:device_version_id()" },
+> > +	{ NULL, NULL }
+> > +};
+>
+> And I like to still see an answer why we have to trigger selftests here.
 
-I'm unconvinced.  The first thing I question is why you bother decoding
-up to 32 bits at once in a loop.  The max size of the field I've seen so
-far is 16 bits and even that is not common.  Decoding as 8 bits and
-bitwise ORing in the appropriate place might be way simpler (and faster).
+To make sure the modem is properly functioning.
 
-> Efficiency-wise, I see worst case a few extra machine instructions will
-> be used in comparing to 'manually' decoding at each place.
+> Can we just not have one AT command to check the modem health and be
+> done with it?
 
-Efficiency wise this is actually pretty bad compared to a tight loop.
-Especially for things like user-data which is just 8 bits but
-bit-shifted a random amount.
+The IFX modem we are targetting implements this with two AT commands.
 
-We're talking about potentially 250+ functions calls per sms segment...
- Since the function is fairly large, not sure if it can even be inlined
-successfully.  We are targeting embedded devices here, right? ;)
+> Another question that I did ask is to see some sample results from these
+> test cases in failure and success case.
 
-Can you try substituting a macro / inline function that can extrat a max
-of 8 bits from a bitstream instead?  I believe such an operation would
-be easily inlined, would not require branching and still keep most of
-the advantages you list out above...
+Robertino?
 
->> Explicit casts should be avoided
-> =
+> Do we actually care about test
+> description here at all or can we just drop it?
 
-> Will fix. Could you pls also educate me the rationales behind this rule?
-> =
+If you prefer cryptic messages then the AT command itself can act as the de=
+scription.
+Is that preferred?
 
+> This is rather pointless. We are not starting a timeout for every single
+> command. The mux_timeout handling was designed for spawning the overall
+> setup process and not just one command.
 
-Two reasons: It looks ugly; and
+The design documentation wasn't clear on that point. The name mux_timeout
+suggested that the timeout only applied to the mux, maybe it should be rena=
+med to
+setup_timeout to better describe the design intention?
 
-When I'm reviewing code, every time there's an explicit cast my alarm
-bells go off.  It could mean that one:
-	a. Didn't think through one's data structures / code (e.g. const /
-non-const, enum vs int, etc).  The compiler's job is to point out such
-possibilities in order for them to be fixed appropriately.  Often
-casting is just an attempt to hide these warning signs.
-	b. is doing something really evil without fully thinking it through.
-See point a.
-	c. Doing something really evil for a good reason, but it is so tricky
-it needs special attention. This last one should be pretty rare ;)
-
->> Have you looked at how STK pdus are decoded in stkutil.c,
->> parse_dataobj() in particular.  Looking at the basic code structure so
->> far, that design pattern could be (or not) a really nice fit here and
->> save you some kLoC in the future.
->>
-> =
-
-> Looked at it. I am assuming that the design pattern you are referring to
-> is that we can create an array of structure where decoding function for
-> a parameter record can be stored thus, this part of the code will be
-> reduced to something like: parsing the type and invoke the decoding
-> function (dataobj_handler as in stkutil.c) as in the array of the
-> function handlers.
-> =
-
-> I don't see this approach and the approach I described above are really
-> not much differences since the logics below are nothing but a big
-> switch-case state which will be required even with function handler
-> array approach anyway.
-> =
-
-> The only simplification I can see below is to somehow to put
-> set_bitmap() into one place. This will reduce ~30 LOC.
-> =
+Regardless, having a timeout for each command is conceptually cleaner as yo=
+u will
+know for sure which command is responsible for exceeding the timeout. =
 
 
-There's more to it than that.  You also get automatic checking of the
-presence of the mandatory fields which you do not do right now and will
-repeat at least twice.  You also don't need to code the same exact loop
-multiple times.
+Does oFono require the more ambiguous solution with a single timeout?
 
-That reminds me, it might be useful to have a proper iterator for
-subparameter data.  E.g. similar to simple_tlv_iter.  It should make
-things way easier to read for the uninitiated.
+> I am fine with using the established mutliplexer timeout handling here,
+> but essentially this is not a SELF_TESTS timeout. This is overall setup
+> timeout. So can we please get the naming right here. I really dislike
+> code where function names and constants are not named properly. This
+> causes major confusion later on.
 
-Regards,
--Denis
+In the patch it is the timeout for the first self test command.
+I understand you are thinking about a potential future patch in which it wo=
+uld be
+used as the overall setup timeout, I agree that in that case the name shoul=
+d be
+changed accordingly as well, yes.
 
---===============3330378253489111747==--
+Cheers,
+Waldo
+
+
+--===============1906757311734958261==--
 
