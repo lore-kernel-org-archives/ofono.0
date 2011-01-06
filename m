@@ -1,71 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============9121935075992553482=="
+Content-Type: multipart/mixed; boundary="===============1929400143905013596=="
 MIME-Version: 1.0
-From: Lei Yu <lei.2.yu@nokia.com>
-Subject: Re: [PATCH v3 7/7] cdmaphonesim: Add CDMA SMS Support
-Date: Thu, 06 Jan 2011 09:47:38 -0800
-Message-ID: <4D26003A.2040907@nokia.com>
-In-Reply-To: <4D24B2EC.1000907@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] Fix compile warning at MeeGo The gcc version is MeeGo
+ 4.5.1
+Date: Thu, 06 Jan 2011 09:44:47 -0800
+Message-ID: <1294335887.2501.7.camel@aeonflux>
+In-Reply-To: <1294310006-14285-1-git-send-email-martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9121935075992553482==
+--===============1929400143905013596==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Martin,
 
-On 01/05/2011 10:05 AM, ext Denis Kenzior wrote:
+>  src/call-forwarding.c |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
+> =
 
->>>
->>> If we have both phonesim and cdmaphonesim plugins active, we need to
->>> make sure they don't interfere with each other.  Perhaps adding a
->>> Type=3Dcdma and having cdmaphonesim look for that Type tag and ignore t=
-he
->>> rest would be a good idea?
->>>
->> I am a bit lost about the Type attribute. cdmaphonesim is currently
->> defined as a separate plugin and by the time cdmaphonesim's
->> parse_config() is invoked, it already knows that it is cdma. Thus, I
->> don't see why needing another flag indicating this. When you say ignore
->> the rest, could you pls be more specific about what to ignore and what's
->> the intention of doing that? Sorry, still learning... :-)
->>
->
-> So correct me if I'm wrong, but there's a race between cdmaphonesim and
-> phonesim plugins:
->
-> if phonesim starts first it reads phonesim.conf and creates both
-> phonesim and cdmaphonesim modems.  When cdmaphonesim starts, it tries to
-> create the modems again, but fails.  Similar situation vice-versa.
->
-> This is why I'm suggesting the Type attribute.  Maybe I'm blind and this
-> race does not happen?
->
+> diff --git a/src/call-forwarding.c b/src/call-forwarding.c
+> index 512f223..36ba4f1 100644
+> --- a/src/call-forwarding.c
+> +++ b/src/call-forwarding.c
+> @@ -246,7 +246,7 @@ static gboolean is_cfu_enabled(struct ofono_call_forw=
+arding *cf,
+>  static void sim_set_cf_indicator(struct ofono_call_forwarding *cf)
+>  {
+>  	gboolean cfu_voice;
+> -	struct ofono_call_forwarding_condition *cond;
+> +	struct ofono_call_forwarding_condition *cond =3D NULL;
+>  =
 
-Now, I understand your point. I checked the log, in my setup, =
+>  	cfu_voice =3D is_cfu_enabled(cf, &cond);
 
-cdmaphonsim will run first and it will create cdmaphonsim plugin. Next, =
+I really hate trying to fix compiler warnings like this.
 
-phonesim will run and try to create cdmaphonsim plugin with wrong type: =
+        /*
+         * For now we only support Voice, although Fax & all Data
+         * basic services are applicable as well.
+         */
+        for (; l; l =3D l->next) {
+                cond =3D l->data;
 
-"phonesim" but failed. I.e., we are lucky to have cdmaphonsim run first.
+                if (cond->cls > BEARER_CLASS_VOICE)
+                        continue;
 
-So, the way to fix this is to add a Type=3Dcdma flag under [cdmaphonsim] =
+                if (out)
+                        *out =3D cond;
 
-and let cdmaphonsim.c only create modem if type is set to cdma. In =
+                return TRUE;
+        }
 
-addition to this, we also need to modify phonesim.c to ignore any modem =
+        return FALSE;
 
-group that has type set to cdma.
+So this is clearly a false positive. The only why this would fail is
+when l->data is NULL, but even then cond is initialized properly.
 
-Could you pls clarify whether above solution will work?
+Regards
 
-> Regards,
-> -Denis
+Marcel
 
-Regards,
-Lei
 
---===============9121935075992553482==--
+
+--===============1929400143905013596==--
 
