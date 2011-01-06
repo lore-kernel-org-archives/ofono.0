@@ -1,227 +1,134 @@
-Content-Type: multipart/mixed; boundary="===============4716721904909808391=="
+Content-Type: multipart/mixed; boundary="===============3330378253489111747=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 2/2] stk: make use of ADD_ERROR_RESULT macro
-Date: Thu, 06 Jan 2011 11:41:08 -0800
-Message-ID: <1294342868-15945-3-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1294342868-15945-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2, 3/7] cdma-sms: Add CDMA SMS Support
+Date: Thu, 06 Jan 2011 14:23:06 -0600
+Message-ID: <4D2624AA.6020205@gmail.com>
+In-Reply-To: <4D24AEB9.4060800@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4716721904909808391==
+--===============3330378253489111747==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/stk.c |   69 ++++++++++++++++++++++++++-------------------------------=
----
- 1 files changed, 30 insertions(+), 39 deletions(-)
+Hi Lei,
 
-diff --git a/src/stk.c b/src/stk.c
-index a00190d..b20ea1c 100644
---- a/src/stk.c
-+++ b/src/stk.c
-@@ -1269,9 +1269,8 @@ static void display_text_cb(enum stk_agent_result res=
-ult, void *user_data)
- =
+>> So it looks to me like this function takes arbitrary bit fields from a
+>> stream.  Is this a 'peculiarity' of the address field or will this be
+>> used elsewhere?
+>>
+> Yes, your interpretation of the function is correct.
+> =
 
- 	case STK_AGENT_RESULT_BUSY:
- 		memset(&rsp, 0, sizeof(rsp));
--		rsp.result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
--		rsp.result.additional_len =3D sizeof(screen_busy_result);
--		rsp.result.additional =3D screen_busy_result;
-+		ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					screen_busy_result);
- 		if (stk_respond(stk, &rsp, stk_command_cb))
- 			stk_command_cb(&error, stk);
- 		break;
-@@ -1608,9 +1607,9 @@ static void call_setup_connected(struct ofono_call *c=
-all, void *data)
- 	if (call =3D=3D NULL || call->status =3D=3D CALL_STATUS_DISCONNECTED) {
- 		memset(&rsp, 0, sizeof(rsp));
- =
+> Actually, cross CDMA SMS spec (and also other CDMA protocol specs), a
+> lot of the message (parameter and etc) structures are defined just as
+> 'peculiar' as Address field. For example: User Data (section 4.5.2 of
+> C.S0015-B), Call Back Number (can be considered same as address).
+> =
 
--		rsp.result.type =3D STK_RESULT_TYPE_NETWORK_UNAVAILABLE;
--		rsp.result.additional_len =3D sizeof(facility_rejected_result);
--		rsp.result.additional =3D facility_rejected_result;
-+		ADD_ERROR_RESULT(rsp.result,
-+					STK_RESULT_TYPE_NETWORK_UNAVAILABLE,
-+					facility_rejected_result);
- =
-
- 		if (stk_respond(stk, &rsp, stk_command_cb))
- 			stk_command_cb(&error, stk);
-@@ -1709,9 +1708,8 @@ static void confirm_call_cb(enum stk_agent_result res=
-ult, gboolean confirm,
- 	if (err =3D=3D -EBUSY) {
- 		memset(&rsp, 0, sizeof(rsp));
- =
-
--		rsp.result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
--		rsp.result.additional_len =3D sizeof(busy_on_call_result);
--		rsp.result.additional =3D busy_on_call_result;
-+		ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					busy_on_call_result);
- =
-
- 		if (stk_respond(stk, &rsp, stk_command_cb))
- 			stk_command_cb(&error, stk);
-@@ -1727,9 +1725,8 @@ static void confirm_call_cb(enum stk_agent_result res=
-ult, gboolean confirm,
- =
-
- 	memset(&rsp, 0, sizeof(rsp));
- =
-
--	rsp.result.type =3D STK_RESULT_TYPE_NETWORK_UNAVAILABLE;
--	rsp.result.additional_len =3D sizeof(no_cause_result);
--	rsp.result.additional =3D no_cause_result;
-+	ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_NETWORK_UNAVAILABLE,
-+				no_cause_result);
- =
-
- 	if (stk_respond(stk, &rsp, stk_command_cb))
- 		stk_command_cb(&error, stk);
-@@ -1772,9 +1769,8 @@ static gboolean handle_command_set_up_call(const stru=
-ct stk_command *cmd,
- 	}
- =
-
- 	if (__ofono_voicecall_is_busy(vc, qualifier >> 1)) {
--		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
--		rsp->result.additional_len =3D sizeof(busy_on_call_result);
--		rsp->result.additional =3D busy_on_call_result;
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					busy_on_call_result);
- 		return TRUE;
- 	}
- =
-
-@@ -1872,9 +1868,8 @@ static void send_ussd_callback(int error, int dcs, co=
-nst unsigned char *msg,
- 		break;
- =
-
- 	default:
--		rsp.result.type =3D STK_RESULT_TYPE_USSD_RETURN_ERROR;
--		rsp.result.additional_len =3D sizeof(no_cause);
--		rsp.result.additional =3D no_cause;
-+		ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_USSD_RETURN_ERROR,
-+					no_cause);
- =
-
- 		if (stk_respond(stk, &rsp, stk_command_cb))
- 			stk_command_cb(&failure, stk);
-@@ -1899,9 +1894,9 @@ static gboolean handle_command_send_ussd(const struct=
- stk_command *cmd,
- 		struct ofono_call_forwarding *cf =3D __ofono_atom_get_data(atom);
- =
-
- 		if (__ofono_call_forwarding_is_busy(cf)) {
--			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
--			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
--			rsp->result.additional =3D busy_on_ss_result;
-+			ADD_ERROR_RESULT(rsp->result,
-+						STK_RESULT_TYPE_TERMINAL_BUSY,
-+						busy_on_ss_result);
- 			return TRUE;
- 		}
- 	}
-@@ -1911,9 +1906,9 @@ static gboolean handle_command_send_ussd(const struct=
- stk_command *cmd,
- 		struct ofono_call_barring *cb =3D __ofono_atom_get_data(atom);
- =
-
- 		if (__ofono_call_barring_is_busy(cb)) {
--			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
--			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
--			rsp->result.additional =3D busy_on_ss_result;
-+			ADD_ERROR_RESULT(rsp->result,
-+						STK_RESULT_TYPE_TERMINAL_BUSY,
-+						busy_on_ss_result);
- 			return TRUE;
- 		}
- 	}
-@@ -1923,9 +1918,9 @@ static gboolean handle_command_send_ussd(const struct=
- stk_command *cmd,
- 		struct ofono_call_settings *cs =3D __ofono_atom_get_data(atom);
- =
-
- 		if (__ofono_call_settings_is_busy(cs)) {
--			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
--			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
--			rsp->result.additional =3D busy_on_ss_result;
-+			ADD_ERROR_RESULT(rsp->result,
-+						STK_RESULT_TYPE_TERMINAL_BUSY,
-+						busy_on_ss_result);
- 			return TRUE;
- 		}
- 	}
-@@ -1938,9 +1933,8 @@ static gboolean handle_command_send_ussd(const struct=
- stk_command *cmd,
- =
-
- 	ussd =3D __ofono_atom_get_data(atom);
- 	if (__ofono_ussd_is_busy(ussd)) {
--		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
--		rsp->result.additional_len =3D sizeof(busy_on_ussd_result);
--		rsp->result.additional =3D busy_on_ussd_result;
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					busy_on_ussd_result);
- 		return TRUE;
- 	}
- =
-
-@@ -1961,9 +1955,8 @@ static gboolean handle_command_send_ussd(const struct=
- stk_command *cmd,
- 	}
- =
-
- 	if (err =3D=3D -EBUSY) {
--		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
--		rsp->result.additional_len =3D sizeof(busy_on_ussd_result);
--		rsp->result.additional =3D busy_on_ussd_result;
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					busy_on_ussd_result);
- 		return TRUE;
- 	}
- =
-
-@@ -2140,9 +2133,8 @@ static void dtmf_sent_cb(int error, void *user_data)
- =
-
- 		memset(&rsp, 0, sizeof(rsp));
- =
-
--		rsp.result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
--		rsp.result.additional_len =3D sizeof(not_in_speech_call_result);
--		rsp.result.additional =3D not_in_speech_call_result;
-+		ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					not_in_speech_call_result);
- =
-
- 		if (stk_respond(stk, &rsp, stk_command_cb))
- 			stk_command_cb(&failure, stk);
-@@ -2204,9 +2196,8 @@ static gboolean handle_command_send_dtmf(const struct=
- stk_command *cmd,
- 	}
- =
-
- 	if (err =3D=3D -ENOENT) {
--		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
--		rsp->result.additional_len =3D sizeof(not_in_speech_call_result);
--		rsp->result.additional =3D not_in_speech_call_result;
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					not_in_speech_call_result);
- 		return TRUE;
- 	}
- =
-
--- =
-
-1.7.0.4
+> Essentially, CDMA SMS specs defines structures as bit streams and a
+> field can start at any offset within the bit stream. Even worse,
+> depending on the values of the previous fields, a field can start at
+> different locations within a bit stream for the different instances of
+> the same type of the message.
+> =
 
 
---===============4716721904909808391==--
+Yes, some really smart engineers must have designed this spec ;)
+
+>> This looks like a really inefficient function to call for every field,
+>> so it might makes things easier if the offsets were simply hardcoded...
+>>
+> =
+
+> The main reason I do this way is that I feel there will be more chances
+> to make mistake if the 'shift', 'bit-wise and', bit-wise or' operation
+> is carried out when decoding each field separately. It will be cleaner
+> to have this generic function and decoding of each field will just care
+> about size of the field and start offset of the field into the stream.
+> =
+
+
+I'm unconvinced.  The first thing I question is why you bother decoding
+up to 32 bits at once in a loop.  The max size of the field I've seen so
+far is 16 bits and even that is not common.  Decoding as 8 bits and
+bitwise ORing in the appropriate place might be way simpler (and faster).
+
+> Efficiency-wise, I see worst case a few extra machine instructions will
+> be used in comparing to 'manually' decoding at each place.
+
+Efficiency wise this is actually pretty bad compared to a tight loop.
+Especially for things like user-data which is just 8 bits but
+bit-shifted a random amount.
+
+We're talking about potentially 250+ functions calls per sms segment...
+ Since the function is fairly large, not sure if it can even be inlined
+successfully.  We are targeting embedded devices here, right? ;)
+
+Can you try substituting a macro / inline function that can extrat a max
+of 8 bits from a bitstream instead?  I believe such an operation would
+be easily inlined, would not require branching and still keep most of
+the advantages you list out above...
+
+>> Explicit casts should be avoided
+> =
+
+> Will fix. Could you pls also educate me the rationales behind this rule?
+> =
+
+
+Two reasons: It looks ugly; and
+
+When I'm reviewing code, every time there's an explicit cast my alarm
+bells go off.  It could mean that one:
+	a. Didn't think through one's data structures / code (e.g. const /
+non-const, enum vs int, etc).  The compiler's job is to point out such
+possibilities in order for them to be fixed appropriately.  Often
+casting is just an attempt to hide these warning signs.
+	b. is doing something really evil without fully thinking it through.
+See point a.
+	c. Doing something really evil for a good reason, but it is so tricky
+it needs special attention. This last one should be pretty rare ;)
+
+>> Have you looked at how STK pdus are decoded in stkutil.c,
+>> parse_dataobj() in particular.  Looking at the basic code structure so
+>> far, that design pattern could be (or not) a really nice fit here and
+>> save you some kLoC in the future.
+>>
+> =
+
+> Looked at it. I am assuming that the design pattern you are referring to
+> is that we can create an array of structure where decoding function for
+> a parameter record can be stored thus, this part of the code will be
+> reduced to something like: parsing the type and invoke the decoding
+> function (dataobj_handler as in stkutil.c) as in the array of the
+> function handlers.
+> =
+
+> I don't see this approach and the approach I described above are really
+> not much differences since the logics below are nothing but a big
+> switch-case state which will be required even with function handler
+> array approach anyway.
+> =
+
+> The only simplification I can see below is to somehow to put
+> set_bitmap() into one place. This will reduce ~30 LOC.
+> =
+
+
+There's more to it than that.  You also get automatic checking of the
+presence of the mandatory fields which you do not do right now and will
+repeat at least twice.  You also don't need to code the same exact loop
+multiple times.
+
+That reminds me, it might be useful to have a proper iterator for
+subparameter data.  E.g. similar to simple_tlv_iter.  It should make
+things way easier to read for the uninitiated.
+
+Regards,
+-Denis
+
+--===============3330378253489111747==--
 
