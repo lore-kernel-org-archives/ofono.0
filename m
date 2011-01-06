@@ -1,44 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============8199611699210627822=="
+Content-Type: multipart/mixed; boundary="===============8525730991736406776=="
 MIME-Version: 1.0
-From: martin.xu@intel.com
-Subject: [PATCH] Fix compile warning at MeeGo The gcc version is MeeGo 4.5.1
-Date: Thu, 06 Jan 2011 17:46:11 +0800
-Message-ID: <1294307171-13485-1-git-send-email-martin.xu@intel.com>
-In-Reply-To: <martin.xu@intel.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: Re: [PATCH] Fix compile warning at MeeGo The gcc version is MeeGo
+ 4.5.1
+Date: Thu, 06 Jan 2011 10:49:26 +0100
+Message-ID: <AANLkTinL86h6Rn3sL-3VvLm73HWkLvHqW0o6VQPw4K+9@mail.gmail.com>
+In-Reply-To: <1294307171-13485-1-git-send-email-martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8199611699210627822==
+--===============8525730991736406776==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: blutolan <blutolan@blutolan-desktop.(none)>
+Hi Martin.
 
----
- src/call-forwarding.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+On Thu, Jan 6, 2011 at 10:46 AM,  <martin.xu@intel.com> wrote:
+> From: blutolan <blutolan@blutolan-desktop.(none)>
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 512f223..36ba4f1 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -246,7 +246,7 @@ static gboolean is_cfu_enabled(struct ofono_call_forwar=
-ding *cf,
- static void sim_set_cf_indicator(struct ofono_call_forwarding *cf)
- {
- 	gboolean cfu_voice;
--	struct ofono_call_forwarding_condition *cond;
-+	struct ofono_call_forwarding_condition *cond =3D NULL;
- =
+Your git-config is wrong, you need to set name and email right in your
+git-config before committing.
 
- 	cfu_voice =3D is_cfu_enabled(cf, &cond);
- =
+Regards,
+Sjur
 
--- =
-
-1.7.2.2
-
-
---===============8199611699210627822==--
+--===============8525730991736406776==--
 
