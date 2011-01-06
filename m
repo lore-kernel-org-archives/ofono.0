@@ -1,180 +1,219 @@
-Content-Type: multipart/mixed; boundary="===============5724825882088912650=="
+Content-Type: multipart/mixed; boundary="===============4716721904909808391=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 1/2] stk: add additional info for terminal busy result
-Date: Thu, 06 Jan 2011 11:41:07 -0800
-Message-ID: <1294342868-15945-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 2/2] stk: make use of ADD_ERROR_RESULT macro
+Date: Thu, 06 Jan 2011 11:41:08 -0800
+Message-ID: <1294342868-15945-3-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1294342868-15945-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5724825882088912650==
+--===============4716721904909808391==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-As per the ETSI TS 102 223 specification 8.12.2, it is
-mandatory to provide additional information for the
-general result "ME currently unable to process command".
 ---
- src/stk.c |   45 +++++++++++++++++++++++++++++++++++++--------
- 1 files changed, 37 insertions(+), 8 deletions(-)
+ src/stk.c |   69 ++++++++++++++++++++++++++-------------------------------=
+---
+ 1 files changed, 30 insertions(+), 39 deletions(-)
 
 diff --git a/src/stk.c b/src/stk.c
-index bec46ea..a00190d 100644
+index a00190d..b20ea1c 100644
 --- a/src/stk.c
 +++ b/src/stk.c
-@@ -99,6 +99,11 @@ struct extern_req {
- static void envelope_queue_run(struct ofono_stk *stk);
- static void timers_update(struct ofono_stk *stk);
+@@ -1269,9 +1269,8 @@ static void display_text_cb(enum stk_agent_result res=
+ult, void *user_data)
  =
 
-+#define ADD_ERROR_RESULT(result, error, addn_info)		\
-+		result.type =3D error;				\
-+		result.additional_len =3D sizeof(addn_info);	\
-+		result.additional =3D addn_info;			\
-+
- static int stk_respond(struct ofono_stk *stk, struct stk_response *rsp,
- 			ofono_stk_generic_cb_t cb)
- {
-@@ -857,7 +862,10 @@ static gboolean handle_command_send_sms(const struct s=
-tk_command *cmd,
- 	msg_list.next =3D NULL;
+ 	case STK_AGENT_RESULT_BUSY:
+ 		memset(&rsp, 0, sizeof(rsp));
+-		rsp.result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
+-		rsp.result.additional_len =3D sizeof(screen_busy_result);
+-		rsp.result.additional =3D screen_busy_result;
++		ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_TERMINAL_BUSY,
++					screen_busy_result);
+ 		if (stk_respond(stk, &rsp, stk_command_cb))
+ 			stk_command_cb(&error, stk);
+ 		break;
+@@ -1608,9 +1607,9 @@ static void call_setup_connected(struct ofono_call *c=
+all, void *data)
+ 	if (call =3D=3D NULL || call->status =3D=3D CALL_STATUS_DISCONNECTED) {
+ 		memset(&rsp, 0, sizeof(rsp));
  =
 
- 	if (__ofono_sms_txq_submit(sms, &msg_list, 0, &uuid, NULL, NULL) < 0) {
--		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		unsigned char no_cause_result[] =3D { 0x00 };
-+
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					no_cause_result);
- 		return TRUE;
- 	}
+-		rsp.result.type =3D STK_RESULT_TYPE_NETWORK_UNAVAILABLE;
+-		rsp.result.additional_len =3D sizeof(facility_rejected_result);
+-		rsp.result.additional =3D facility_rejected_result;
++		ADD_ERROR_RESULT(rsp.result,
++					STK_RESULT_TYPE_NETWORK_UNAVAILABLE,
++					facility_rejected_result);
  =
 
-@@ -1183,9 +1191,12 @@ static gboolean handle_command_select_item(const str=
-uct stk_command *cmd,
- 					request_selection_cb, stk,
- 					request_selection_destroy,
- 					stk->timeout * 1000) < 0) {
-+		unsigned char no_cause_result[] =3D { 0x00 };
-+
- 		request_selection_destroy(stk);
+ 		if (stk_respond(stk, &rsp, stk_command_cb))
+ 			stk_command_cb(&error, stk);
+@@ -1709,9 +1708,8 @@ static void confirm_call_cb(enum stk_agent_result res=
+ult, gboolean confirm,
+ 	if (err =3D=3D -EBUSY) {
+ 		memset(&rsp, 0, sizeof(rsp));
  =
 
--		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					no_cause_result);
- 		return TRUE;
- 	}
+-		rsp.result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
+-		rsp.result.additional_len =3D sizeof(busy_on_call_result);
+-		rsp.result.additional =3D busy_on_call_result;
++		ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_TERMINAL_BUSY,
++					busy_on_call_result);
  =
 
-@@ -1301,7 +1312,10 @@ static gboolean handle_command_display_text(const st=
-ruct stk_command *cmd,
+ 		if (stk_respond(stk, &rsp, stk_command_cb))
+ 			stk_command_cb(&error, stk);
+@@ -1727,9 +1725,8 @@ static void confirm_call_cb(enum stk_agent_result res=
+ult, gboolean confirm,
  =
 
- 	/* We most likely got an out of memory error, tell SIM to retry */
- 	if (err < 0) {
--		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		unsigned char no_cause_result[] =3D { 0x00 };
-+
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					no_cause_result);
- 		return TRUE;
- 	}
+ 	memset(&rsp, 0, sizeof(rsp));
  =
 
-@@ -1475,11 +1489,14 @@ static gboolean handle_command_get_inkey(const stru=
-ct stk_command *cmd,
- 	g_free(text);
+-	rsp.result.type =3D STK_RESULT_TYPE_NETWORK_UNAVAILABLE;
+-	rsp.result.additional_len =3D sizeof(no_cause_result);
+-	rsp.result.additional =3D no_cause_result;
++	ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_NETWORK_UNAVAILABLE,
++				no_cause_result);
  =
 
- 	if (err < 0) {
-+		unsigned char no_cause_result[] =3D { 0x00 };
-+
- 		/*
- 		 * We most likely got an out of memory error, tell SIM
- 		 * to retry
- 		 */
--		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					no_cause_result);
- 		return TRUE;
- 	}
- =
-
-@@ -1564,11 +1581,14 @@ static gboolean handle_command_get_input(const stru=
-ct stk_command *cmd,
- 	g_free(text);
- =
-
- 	if (err < 0) {
-+		unsigned char no_cause_result[] =3D { 0x00 };
-+
- 		/*
- 		 * We most likely got an out of memory error, tell SIM
- 		 * to retry
- 		 */
--		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					no_cause_result);
- 		return TRUE;
- 	}
- =
-
-@@ -1772,11 +1792,14 @@ static gboolean handle_command_set_up_call(const st=
-ruct stk_command *cmd,
- 	g_free(alpha_id);
- =
-
- 	if (err < 0) {
-+		unsigned char no_cause_result[] =3D { 0x00 };
-+
- 		/*
- 		 * We most likely got an out of memory error, tell SIM
- 		 * to retry
- 		 */
--		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
-+		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					no_cause_result);
- 		return TRUE;
- 	}
- =
-
-@@ -2193,11 +2216,14 @@ static gboolean handle_command_send_dtmf(const stru=
+ 	if (stk_respond(stk, &rsp, stk_command_cb))
+ 		stk_command_cb(&error, stk);
+@@ -1772,9 +1769,8 @@ static gboolean handle_command_set_up_call(const stru=
 ct stk_command *cmd,
  	}
  =
 
- 	if (err < 0) {
-+		unsigned char no_cause_result[] =3D { 0x00 };
-+
- 		/*
- 		 * We most likely got an out of memory error, tell SIM
- 		 * to retry
- 		 */
+ 	if (__ofono_voicecall_is_busy(vc, qualifier >> 1)) {
 -		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
+-		rsp->result.additional_len =3D sizeof(busy_on_call_result);
+-		rsp->result.additional =3D busy_on_call_result;
 +		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					no_cause_result);
++					busy_on_call_result);
  		return TRUE;
  	}
  =
 
-@@ -2329,11 +2355,14 @@ static gboolean handle_command_play_tone(const stru=
-ct stk_command *cmd,
- 	g_free(text);
+@@ -1872,9 +1868,8 @@ static void send_ussd_callback(int error, int dcs, co=
+nst unsigned char *msg,
+ 		break;
  =
 
- 	if (err < 0) {
-+		unsigned char no_cause_result[] =3D { 0x00 };
-+
- 		/*
- 		 * We most likely got an out of memory error, tell SIM
- 		 * to retry
- 		 */
+ 	default:
+-		rsp.result.type =3D STK_RESULT_TYPE_USSD_RETURN_ERROR;
+-		rsp.result.additional_len =3D sizeof(no_cause);
+-		rsp.result.additional =3D no_cause;
++		ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_USSD_RETURN_ERROR,
++					no_cause);
+ =
+
+ 		if (stk_respond(stk, &rsp, stk_command_cb))
+ 			stk_command_cb(&failure, stk);
+@@ -1899,9 +1894,9 @@ static gboolean handle_command_send_ussd(const struct=
+ stk_command *cmd,
+ 		struct ofono_call_forwarding *cf =3D __ofono_atom_get_data(atom);
+ =
+
+ 		if (__ofono_call_forwarding_is_busy(cf)) {
+-			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
+-			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
+-			rsp->result.additional =3D busy_on_ss_result;
++			ADD_ERROR_RESULT(rsp->result,
++						STK_RESULT_TYPE_TERMINAL_BUSY,
++						busy_on_ss_result);
+ 			return TRUE;
+ 		}
+ 	}
+@@ -1911,9 +1906,9 @@ static gboolean handle_command_send_ussd(const struct=
+ stk_command *cmd,
+ 		struct ofono_call_barring *cb =3D __ofono_atom_get_data(atom);
+ =
+
+ 		if (__ofono_call_barring_is_busy(cb)) {
+-			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
+-			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
+-			rsp->result.additional =3D busy_on_ss_result;
++			ADD_ERROR_RESULT(rsp->result,
++						STK_RESULT_TYPE_TERMINAL_BUSY,
++						busy_on_ss_result);
+ 			return TRUE;
+ 		}
+ 	}
+@@ -1923,9 +1918,9 @@ static gboolean handle_command_send_ussd(const struct=
+ stk_command *cmd,
+ 		struct ofono_call_settings *cs =3D __ofono_atom_get_data(atom);
+ =
+
+ 		if (__ofono_call_settings_is_busy(cs)) {
+-			rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
+-			rsp->result.additional_len =3D sizeof(busy_on_ss_result);
+-			rsp->result.additional =3D busy_on_ss_result;
++			ADD_ERROR_RESULT(rsp->result,
++						STK_RESULT_TYPE_TERMINAL_BUSY,
++						busy_on_ss_result);
+ 			return TRUE;
+ 		}
+ 	}
+@@ -1938,9 +1933,8 @@ static gboolean handle_command_send_ussd(const struct=
+ stk_command *cmd,
+ =
+
+ 	ussd =3D __ofono_atom_get_data(atom);
+ 	if (__ofono_ussd_is_busy(ussd)) {
 -		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
+-		rsp->result.additional_len =3D sizeof(busy_on_ussd_result);
+-		rsp->result.additional =3D busy_on_ussd_result;
 +		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-+					no_cause_result);
++					busy_on_ussd_result);
+ 		return TRUE;
+ 	}
+ =
+
+@@ -1961,9 +1955,8 @@ static gboolean handle_command_send_ussd(const struct=
+ stk_command *cmd,
+ 	}
+ =
+
+ 	if (err =3D=3D -EBUSY) {
+-		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
+-		rsp->result.additional_len =3D sizeof(busy_on_ussd_result);
+-		rsp->result.additional =3D busy_on_ussd_result;
++		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
++					busy_on_ussd_result);
+ 		return TRUE;
+ 	}
+ =
+
+@@ -2140,9 +2133,8 @@ static void dtmf_sent_cb(int error, void *user_data)
+ =
+
+ 		memset(&rsp, 0, sizeof(rsp));
+ =
+
+-		rsp.result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
+-		rsp.result.additional_len =3D sizeof(not_in_speech_call_result);
+-		rsp.result.additional =3D not_in_speech_call_result;
++		ADD_ERROR_RESULT(rsp.result, STK_RESULT_TYPE_TERMINAL_BUSY,
++					not_in_speech_call_result);
+ =
+
+ 		if (stk_respond(stk, &rsp, stk_command_cb))
+ 			stk_command_cb(&failure, stk);
+@@ -2204,9 +2196,8 @@ static gboolean handle_command_send_dtmf(const struct=
+ stk_command *cmd,
+ 	}
+ =
+
+ 	if (err =3D=3D -ENOENT) {
+-		rsp->result.type =3D STK_RESULT_TYPE_TERMINAL_BUSY;
+-		rsp->result.additional_len =3D sizeof(not_in_speech_call_result);
+-		rsp->result.additional =3D not_in_speech_call_result;
++		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
++					not_in_speech_call_result);
  		return TRUE;
  	}
  =
@@ -184,5 +223,5 @@ ct stk_command *cmd,
 1.7.0.4
 
 
---===============5724825882088912650==--
+--===============4716721904909808391==--
 
