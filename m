@@ -1,88 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============2695404353919370649=="
+Content-Type: multipart/mixed; boundary="===============7313679742996612751=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH] gprs: add function to handle activated context
-Date: Fri, 07 Jan 2011 15:01:31 -0600
-Message-ID: <4D277F2B.8070102@gmail.com>
-In-Reply-To: <129600E5E5FB004392DDC3FB599660D70106E1003E@irsmsx504.ger.corp.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 0/4 v2] Network Time plugin
+Date: Fri, 07 Jan 2011 13:05:31 -0800
+Message-ID: <1294434331.2501.25.camel@aeonflux>
+In-Reply-To: <1294396338.2602.20.camel@apaila-ThinkPad-T410>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2695404353919370649==
+--===============7313679742996612751==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fred,
+Hi Antti,
 
->>> The collision can only occur if the +CGDCONT (or +CGDSCONT) command  fr=
-om Ofono is sent at the same time as PDP >>context activation URC from the =
-modem, and both use the same CID.
->>>
->>> But in that case, the modem should not reply "OK" to the PDP context co=
-nfiguration command, but "ERROR".
->>> And Ofono should not consider that the PDP configuration command as suc=
-cessful.
->>> Moreover, the "OK" for the context configuration and the context activa=
-tion URC are sent of the same control
->>> channel so they cannot be sent in parallel but only in sequence.
->>>
->>> Sjur, is that a correct assumption?
->>
->> Yes, this sounds about right.
->> But I think Denis' proposal for using ofono_gprs_set_cid_range(gprs,
->> <min>, <max>) pretty much solves this issue,
->> We can use this to reserve the CID used for Initial PDN, and void this
->> race condition.
-> I have to admit that I'm not yet fully comfortable with the solution prop=
-osed by Denis. =
+> > > > > But then it is far simpler to have a D-Bus getter and a D-Bus sig=
+nal by any =
 
-> At least as long as we want to keep a on 1:1 mapping between the Ofono CI=
-D and the AT CID.
-> If I have understood correctly, the Ofono Core is "chosing" a CID =
+> > > > > sane measure of complexity.
+> > > > =
 
-> and the modem plugin is trying to use the same CID on the AT interface. =
+> > > > So you did consider the complexity on both sides, ofonod and timed?=
+ And
+> > > > not just looked at one side of picture?
+> > > =
 
-> The way to resolve the race condition as proposed by Denis is to "reserve=
-" a range of CIDs
->  for the modem and another range for ofono.
-> =
+> > > Timed also needs to follow the registration status, namely the MNC/MCC
+> > > of the registered network.  This information it needs to be able to f=
+ind
+> > > the correct timezone, as the UTC offset alone only indicates the
+> > > geographic longitude for the timezone.
+> > > =
 
-> My concern is that I don't know if this will work for all the modem imple=
-mentations.
-> My understanding is that an AT+CGDCONT=3D? should return you the list of =
-supported CID =
+> > > Factor that in to the equation, and timed already needs to enumerate
+> > > available modems, call GetProperties, and listen to the
+> > > NetworkRegistration interface's PropertyChanged signals.
+> > > =
 
-> and not the list of CID that the user/Ofono can use. =
+> > > However, if we refactor the time plugin to also send the MNC/MCC pair=
+ --
+> > > or better yet, the ISO country code based on MCC or even the actual
+> > > timezone from matching zone.tab entry -- then following netreg is no
+> > > longer needed.
+> > > =
+
+> > > *Then* I agree a method call is actually a lot simpler from timed poi=
+nt
+> > > of view; all it needs to do is implement a single method on some
+> > > org.ofono.NetworkTimeConsumer interface and not worry about enumerati=
+ng
+> > > modems via ModemManager or listening on any signals.
+> > =
+
+> > we are doing the country alpha2 matching to MCC already in ConnMan for
+> > the WiFi regulatory enforcement update. I am not sure that I wanna copy
+> > these tables around all the time.
+> > =
+
+> > So the struct ofono_nettime_context has already a reference to struct
+> > ofono_modem, so why not add a reference to the struct ofono_netreg and
+> > then you have the MCC/MNC details available inside the plugin.
+
+one additional comment here about getting the MCC and MNC (or other atom
+details). You can use __ofono_modem_find_atom() to get the netreg atom
+from the modem pointer. This means that any nettime plugin already has
+all the needed information available.
+
+> If I would like to do conversion from mcc to alpha2 in ofono, what would
+> be your suggestion for doing this. I noticed that in connman you have
+> mcc.h that contains the mapping array, but in ofono we don't have such
+> an array. As a temporary solution, would it be feasible to just import
+> the mcc.h to ofono until a more generic solution is implemented?
+
+I don't even like the fact that we imported it in ConnMan. That might
+have been a mistake actually. I really prefer to have that on the
+filesystem and we just mmap() it. And it is up to the distribution to
+provide such a file.
+
+We do a similar thing with OUI for BlueZ, so that is clearly the better
+approach here.
+
+Regards
+
+Marcel
 
 
-It is up to the driver to set the ranges appropriately based upon its
-much more intimate knowledge of the modem firmware.  The drivers that do
-not support LTE / network activated contexts can ignore this magic.
 
-> =
-
-> Considering that from a modem standpoint the CID race condition can be re=
-solved, =
-
-> some modem implementation may not have reserved a range of CID for their =
-own purpose,
-> or may not provide a mechanism to reserve a range of CID.
-> =
-
-
-If the CGDCONT race is guaranteed to be solved by the modem
-manufacturers, great.  Unfortunately that is not the only race present.
- Hint: The gatchat implementation uses non-blocking IO, select and a
-command queue.  So it is fully possible for oFono to reserve a CID, send
-out a driver activation request, but receive a network initiated context
-activation / default bearer activation before the CGDCONT was even sent.
-
-Having cid ranges that do not overlap seems the safest approach to me
-right now.  Unless someone has a better idea...
-
-Regards,
--Denis
-
---===============2695404353919370649==--
+--===============7313679742996612751==--
 
