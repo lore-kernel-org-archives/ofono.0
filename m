@@ -1,83 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============2505820261485662441=="
+Content-Type: multipart/mixed; boundary="===============0050987882494723526=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH] Fix compile warning at MeeGo The gcc version is MeeGo
- 4.5.1
-Date: Thu, 06 Jan 2011 19:28:30 -0800
-Message-ID: <1294370910.2501.16.camel@aeonflux>
-In-Reply-To: <FC2FB65B4D919844ADE4BE3C2BB739AD34CC43F8@shsmsx501.ccr.corp.intel.com>
+From: Antti Paila <antti.paila@nokia.com>
+Subject: RE: [PATCH 3/5 v2] Cell-info: Atom for obtaining ECID info of cells
+Date: Fri, 07 Jan 2011 08:46:22 +0200
+Message-ID: <1294382782.2602.13.camel@apaila-ThinkPad-T410>
+In-Reply-To: <1A42CE6F5F474C41B63392A5F80372B231D84E3F@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2505820261485662441==
+--===============0050987882494723526==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi Jun,
 
-> > >  src/call-forwarding.c |    2 +-
-> > >  1 files changed, 1 insertions(+), 1 deletions(-)
-> > >
-> > > diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-> > > index 512f223..36ba4f1 100644
-> > > --- a/src/call-forwarding.c
-> > > +++ b/src/call-forwarding.c
-> > > @@ -246,7 +246,7 @@ static gboolean is_cfu_enabled(struct
-> > ofono_call_forwarding *cf,
-> > >  static void sim_set_cf_indicator(struct ofono_call_forwarding *cf)
-> > >  {
-> > >  	gboolean cfu_voice;
-> > > -	struct ofono_call_forwarding_condition *cond;
-> > > +	struct ofono_call_forwarding_condition *cond =3D NULL;
-> > >
-> > >  	cfu_voice =3D is_cfu_enabled(cf, &cond);
-> > =
+On Thu, 2011-01-06 at 20:35 +0800, ext Wei, Jun wrote:
+> Hi Antti, =
 
-> > I really hate trying to fix compiler warnings like this.
-> > =
+> =
 
-> >         /*
-> >          * For now we only support Voice, although Fax & all Data
-> >          * basic services are applicable as well.
-> >          */
-> >         for (; l; l =3D l->next) {
-> >                 cond =3D l->data;
-> > =
+> >-----Original Message-----
+> >Subject: [PATCH 3/5 v2] Cell-info: Atom for obtaining ECID info of cells
+> >
+> >+static int append_utra_neigh_cell_data(DBusMessageIter *iter,
+> >+		struct cell_measured_results *cmr)
+> >+{
+> >
+> >
+> >+
+> >+		if (cmr->rscp !=3D OFONO_CI_FIELD_RSCP_UNDEFINED)
+> >+			ofono_dbus_dict_append(iter,
+> >+					"CPICH-RSCP",
+> >+					DBUS_TYPE_INT16,
+> >+					&cmr->rscp);
+> >+
+> =
 
-> >                 if (cond->cls > BEARER_CLASS_VOICE)
-> >                         continue;
-> > =
-
-> >                 if (out)
-> >                         *out =3D cond;
-> > =
-
-> >                 return TRUE;
-> >         }
-> > =
-
-> >         return FALSE;
-> > =
-
-> > So this is clearly a false positive. The only why this would fail is
-> This is not a false positive, it is quite possible not to reach the "for(=
-;;)" branch, and uninitialized the *cond.
-> I have added
-> *out =3D NULL;
-> Out of the branch, and found that the warning gone.
-> So here I think gcc is right, and we need the patch.
-
-it is a false positive.
-
-The only caller that uses the cond value is sim_set_cf_indicator. And it
-only uses conf if the return value is TRUE. So where can this go wrong?
-
-Regards
-
-Marcel
+> The type for RSCP should be "DBUS_TYPE_BYTE"
 
 
+RSCP may obtain negative values whereas DBUS_TYPE_BYTE is a
+type code marking an 8-bit _unsigned_ integer.
 
---===============2505820261485662441==--
+-Antti
+
+
+--===============0050987882494723526==--
 
