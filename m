@@ -1,36 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============6520719585188470411=="
+Content-Type: multipart/mixed; boundary="===============5539909188020902373=="
 MIME-Version: 1.0
-From: Xu, Martin <martin.xu@intel.com>
-Subject: RE: [PATCH] Fix compile warning at MeeGo The gcc version is MeeGo
- 4.5.1
-Date: Fri, 07 Jan 2011 14:52:11 +0800
-Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD34CC46AC@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <1294370910.2501.16.camel@aeonflux>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [RFC PATCH] gprs: add function to handle activated context
+Date: Fri, 07 Jan 2011 10:50:03 +0200
+Message-ID: <201101071050.03794.remi.denis-courmont@nokia.com>
+In-Reply-To: <1294272721.2521.34.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6520719585188470411==
+--===============5539909188020902373==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel:
-> it is a false positive.
+On Thursday 06 January 2011 02:12:01 ext Marcel Holtmann, you wrote:
+> > If such context is not found create a new one with "Internet" type.
 > =
 
-> The only caller that uses the cond value is sim_set_cf_indicator. And it
-> only uses conf if the return value is TRUE. So where can this go wrong?
-You are right.
-I will ask MeeGo tool chain guy to resolve it.
-> Marcel
-> =
+> I don't really agree that we should create a context if no match is
+> found. I think the better sensible strategy is to hold this information
+> internally and only map it to a context once the user or provisioning
+> creates it.
 
-> =
+Indeed. Alternatively, we could have a dedicated type, e.g. "Unknown". Usin=
+g =
 
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
+the Internet type is only likely to confuse the connection manager.
 
---===============6520719585188470411==--
+-- =
+
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
+
+--===============5539909188020902373==--
 
