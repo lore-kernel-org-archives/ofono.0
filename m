@@ -1,119 +1,97 @@
-Content-Type: multipart/mixed; boundary="===============8915889933944176498=="
+Content-Type: multipart/mixed; boundary="===============7129556664100376695=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/4] atmodem: packet switch bearer support
-Date: Fri, 07 Jan 2011 10:27:38 -0600
-Message-ID: <4D273EFA.3020202@gmail.com>
-In-Reply-To: <1294416127-22432-4-git-send-email-remi.denis-courmont@nokia.com>
+From: Joly, Frederic <frederic.joly@intel.com>
+Subject: RE: [RFC PATCH] gprs: add function to handle activated context
+Date: Fri, 07 Jan 2011 17:52:26 +0000
+Message-ID: <129600E5E5FB004392DDC3FB599660D70106E1003E@irsmsx504.ger.corp.intel.com>
+In-Reply-To: <AANLkTimj=RQA1W1FsmcLceRN4ZvsFURqo2AyH02=bwdy@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8915889933944176498==
+--===============7129556664100376695==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi R=C3=A9mi,
+Hi Sjur,
 
-On 01/07/2011 10:02 AM, R=C3=A9mi Denis-Courmont wrote:
-> ---
->  drivers/atmodem/gprs.c |   50 ++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  1 files changed, 50 insertions(+), 0 deletions(-)
-> =
+>-----Original Message-----
+>From: Sjur Br=C3=A6ndeland [mailto:sjurbren(a)gmail.com] =
 
-> diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-> index a38c6b4..1d4a8bf 100644
-> --- a/drivers/atmodem/gprs.c
-> +++ b/drivers/atmodem/gprs.c
-> @@ -200,6 +200,54 @@ static void xdatastat_notify(GAtResult *result, gpoi=
-nter user_data)
->  	}
->  }
->  =
+>Sent: Friday, January 07, 2011 4:39 PM
+>To: ofono(a)ofono.org; Joly, Frederic
+>Subject: Re: [RFC PATCH] gprs: add function to handle activated context
+>
+>Hi Fred,
+>
+>Frederic wrote:
+>>The collision can only occur if the +CGDCONT (or +CGDSCONT) command =C2=
+=A0from Ofono is sent at the same time as PDP >>context activation URC from=
+ the modem, and both use the same CID.
+>>
+>> But in that case, the modem should not reply "OK" to the PDP context con=
+figuration command, but "ERROR".
+>> And Ofono should not consider that the PDP configuration command as succ=
+essful.
+>> Moreover, the "OK" for the context configuration and the context activat=
+ion URC are sent of the same control
+>> channel so they cannot be sent in parallel but only in sequence.
+>>
+>> Sjur, is that a correct assumption?
+>
+>Yes, this sounds about right.
+>But I think Denis' proposal for using ofono_gprs_set_cid_range(gprs,
+> <min>, <max>) pretty much solves this issue,
+> We can use this to reserve the CID used for Initial PDN, and void this
+> race condition.
+I have to admit that I'm not yet fully comfortable with the solution propos=
+ed by Denis. =
 
-> +static void cpsb_notify(GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_gprs *gprs =3D user_data;
-> +	GAtResultIter iter;
-> +	gint cid, bearer;
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +	if (!g_at_result_iter_next(&iter, "+CPSB:"))
-> +		return;
+At least as long as we want to keep a on 1:1 mapping between the Ofono CID =
+and the AT CID.
+If I have understood correctly, the Ofono Core is "chosing" a CID =
 
-doc/coding-style.txt Rule M1
+and the modem plugin is trying to use the same CID on the AT interface. =
 
-> +	if (!g_at_result_iter_next_number(&iter, &cid))
-> +		return;
+The way to resolve the race condition as proposed by Denis is to "reserve" =
+a range of CIDs
+ for the modem and another range for ofono.
 
-doc/coding-style.txt Rule M1
+My concern is that I don't know if this will work for all the modem impleme=
+ntations.
+My understanding is that an AT+CGDCONT=3D? should return you the list of su=
+pported CID =
 
-> +	if (!g_at_result_iter_next_number(&iter, &bearer))
-> +		return;
-> +
-> +	ofono_gprs_bearer_notify(gprs, cid, bearer);
-> +}
-> +
-> +static void cpsb_cb(gboolean ok, GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_gprs *gprs =3D user_data;
-> +	GAtResultIter iter;
-> +	gint cid, bearer;
-> +
-> +	if (!ok)
-> +		return;
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +	if (!g_at_result_iter_next(&iter, "+CPSB:"))
-> +		return;
+and not the list of CID that the user/Ofono can use. =
 
-doc/coding-style.txt Rule M1
 
-> +
-> +	g_at_result_iter_next_number(&iter, NULL);
-> +	while (g_at_result_iter_next_number(&iter, &cid) &&
-> +			g_at_result_iter_next_number(&iter, &bearer))
-> +		ofono_gprs_bearer_notify(gprs, cid, bearer);
+Considering that from a modem standpoint the CID race condition can be reso=
+lved, =
 
-doc/coding-style.txt Rule M1
+some modem implementation may not have reserved a range of CID for their ow=
+n purpose,
+or may not provide a mechanism to reserve a range of CID.
 
-> +}
-> +
-> +static void cpsb_set_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-> +{
-> +	struct ofono_gprs *gprs =3D user_data;
-> +	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-> +
-> +	if (!ok)
-> +		return;
-> +
-> +	g_at_chat_register(gd->chat, "+CPSB:", cpsb_notify, FALSE, gprs, NULL);
-> +	g_at_chat_send(gd->chat, "AT+CPSB?", none_prefix, cpsb_cb, gprs, NULL);
+Maybe members of the list could comment on this?
 
-Why do you bother running CPSB query?  No context is active at this point.
+Thanks,
 
-> +}
-> +
->  static void gprs_initialized(gboolean ok, GAtResult *result, gpointer us=
-er_data)
->  {
->  	struct ofono_gprs *gprs =3D user_data;
-> @@ -208,6 +256,8 @@ static void gprs_initialized(gboolean ok, GAtResult *=
-result, gpointer user_data)
->  	g_at_chat_register(gd->chat, "+CGEV:", cgev_notify, FALSE, gprs, NULL);
->  	g_at_chat_register(gd->chat, "+CGREG:", cgreg_notify,
->  					FALSE, gprs, NULL);
-> +	g_at_chat_send(gd->chat, "AT+CPSB=3D1", none_prefix,
-> +		cpsb_set_cb, gprs, NULL);
->  =
+Fred =
 
->  	switch (gd->vendor) {
->  	case OFONO_VENDOR_IFX:
+ =
 
-Regards,
--Denis
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
---===============8915889933944176498==--
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+--===============7129556664100376695==--
 
