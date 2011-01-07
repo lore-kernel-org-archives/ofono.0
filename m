@@ -1,120 +1,80 @@
-Content-Type: multipart/mixed; boundary="===============1906757311734958261=="
+Content-Type: multipart/mixed; boundary="===============8125240332463079178=="
 MIME-Version: 1.0
-From: Bastian, Waldo <waldo.bastian@intel.com>
+From: Robertino Benis <robertino.benis@intel.com>
 Subject: RE: [PATCH v3] ifx: Adding modem selftest for Infineon modem
-Date: Thu, 06 Jan 2011 14:18:46 -0800
-Message-ID: <97D5E1BB8FC13D4EA3B34BAE8E6898C9015A52CE50@orsmsx508.amr.corp.intel.com>
-In-Reply-To: <1294264068.2521.12.camel@aeonflux>
+Date: Thu, 06 Jan 2011 17:42:12 -0800
+Message-ID: <1294364532.1848.5.camel@airyz-ub910.intel.com>
+In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C9015A52CE50@orsmsx508.amr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1906757311734958261==
+--===============8125240332463079178==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-> >  plugins/ifx.c |   76 +++++++++++++++++++++++++++++++++++++++++++++++++=
--------
-> >  1 files changed, 66 insertions(+), 10 deletions(-)
-> > =
+Hi,
 
-> > diff --git a/plugins/ifx.c b/plugins/ifx.c
-> > index c0a69c2..e0eb982 100644
-> > --- a/plugins/ifx.c
-> > +++ b/plugins/ifx.c
-> > @@ -71,6 +71,8 @@
-> >  #define GPRS3_DLC   4
-> >  #define AUX_DLC     5
-> >  =
-
-> > +#define IFX_SELF_TESTS_TIMEOUT	10
-> > +
+> The IFX modem we are targetting implements this with two AT commands.
 > =
 
-> I asked this 3 times now, where is this magic value of 10 seconds coming
-> from. What is the average expected execution time of each test?
+> > Another question that I did ask is to see some sample results from these
+> > test cases in failure and success case.
+> =
 
-Typical response times are much less than 0.5 sec. 10 seconds is considered
-much longer than any normal response time. =
+> Robertino?
 
+I think you meant except form the log, such as this:
 
-> > +static struct {
-> > +	char *test_desc;
-> > +	char *at_cmd;
-> > +} const mst[] =3D {
-> > +	{ "AT Command Test", "ATE0 +CMEE=3D1" }, /* set echo & error reportin=
-g */
->
-> I really don't like to put ATE0 into this. It is not a selftest or test
-> command.
-
-It acts as a selftest command because if the modem fails to come out of res=
-et
-and/or start the AT command parser you will never get an OK back on it. In =
-the =
-
-error reporting we would like to be able to distinguish between the AT comm=
-and
-parser not working at all and any subsequent test command failing.
-
-> > +	{ "RTC GTI Test", "at(a)rtc:rtc_gti_test_verify_32khz()" },
-> > +	{ "Device Version Test", "at(a)vers:device_version_id()" },
-> > +	{ NULL, NULL }
-> > +};
->
-> And I like to still see an answer why we have to trigger selftests here.
-
-To make sure the modem is properly functioning.
-
-> Can we just not have one AT command to check the modem health and be
-> done with it?
-
-The IFX modem we are targetting implements this with two AT commands.
-
-> Another question that I did ask is to see some sample results from these
-> test cases in failure and success case.
-
-Robertino?
-
-> Do we actually care about test
-> description here at all or can we just drop it?
-
-If you prefer cryptic messages then the AT command itself can act as the de=
-scription.
-Is that preferred?
-
-> This is rather pointless. We are not starting a timeout for every single
-> command. The mux_timeout handling was designed for spawning the overall
-> setup process and not just one command.
-
-The design documentation wasn't clear on that point. The name mux_timeout
-suggested that the timeout only applied to the mux, maybe it should be rena=
-med to
-setup_timeout to better describe the design intention?
-
-Regardless, having a timeout for each command is conceptually cleaner as yo=
-u will
-know for sure which command is responsible for exceeding the timeout. =
+ofonod[1342]: Using multiplexer line discipline 29
+ofonod[1342]: Master: > ATE0 +CMEE=3D1\r
+ofonod[1342]: Master: < ATE0 +CMEE=3D1\r
+ofonod[1342]: Master: < \r\nOK\r\n
+ofonod[1342]: Master: > at(a)rtc:rtc_gti_test_verify_32khz()\r
+ofonod[1342]: Master: < \r\n
+ofonod[1342]: Master: < Verification passed\r\nOK\r\n     =
 
 
-Does oFono require the more ambiguous solution with a single timeout?
+ofonod[1342]: Master: > at(a)vers:device_version_id()\r
+ofonod[1342]: Master: < \r\n
+ofonod[1342]: Master: < \r\nCHIP ID =3D XG626 ES2\r\nFLASH TYPE =3D
+NumonyxM18 NOR\r\nFLASH ID =3D 0x898881\r\nSmartiUE2 =3D 37664\r\nRF PMU =
+=3D
+10548\r\nPA PMU =3D 40244\r\nRF ASM =3D 0\r\nFEM PA =3D 21812\r\nOK\r\n  =
 
-> I am fine with using the established mutliplexer timeout handling here,
-> but essentially this is not a SELF_TESTS timeout. This is overall setup
-> timeout. So can we please get the naming right here. I really dislike
-> code where function names and constants are not named properly. This
-> causes major confusion later on.
 
-In the patch it is the timeout for the first self test command.
-I understand you are thinking about a potential future patch in which it wo=
+
+
+Simulated Self test Failure
+
+ofonod[1260]: Using multiplexer line discipline 29
+ofonod[1260]: Master: > ATE0 +CMEE=3D1\r
+ofonod[1260]: Master: < ATE0 +CMEE=3D1\r
+ofonod[1260]: Master: < \r\nOK\r\n
+ofonod[1260]: Master: > at(a)rtc:rtc_gti_test_verify_32khz()\r
+ofonod[1260]: Master: < \r\n
+ofonod[1260]: Master: < Verification passed\r\nOK\r\n
+ofonod[1260]: Master: > at(a)vers:device_version_id\r
+ofonod[1260]: Master: < \r\nERROR\r\n                =
+
+ofonod[1260]: Modem Device Version Test: FAIL        =
+
+
+
+> In the patch it is the timeout for the first self test command.
+> I understand you are thinking about a potential future patch in which it =
+would be
+> used as the overall setup timeout, I agree that in that case the name sho=
 uld be
-used as the overall setup timeout, I agree that in that case the name shoul=
-d be
-changed accordingly as well, yes.
+> changed accordingly as well, yes.
 
-Cheers,
-Waldo
+Do you think we should use overall setup timeout? =
 
 
---===============1906757311734958261==--
+Thanks,
+-- r.
+
+
+
+--===============8125240332463079178==--
 
