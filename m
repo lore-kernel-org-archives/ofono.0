@@ -1,110 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============7215363708943706318=="
+Content-Type: multipart/mixed; boundary="===============9048113384482406168=="
 MIME-Version: 1.0
-From: Joly, Frederic <frederic.joly@intel.com>
-Subject: RE: [RFC PATCH] gprs: add function to handle activated context
-Date: Fri, 07 Jan 2011 15:45:21 +0000
-Message-ID: <129600E5E5FB004392DDC3FB599660D70106E0FFC1@irsmsx504.ger.corp.intel.com>
-In-Reply-To: <201101071052.19202.remi.denis-courmont@nokia.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH 1/4] Define packet switched bearers
+Date: Fri, 07 Jan 2011 18:02:04 +0200
+Message-ID: <1294416127-22432-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7215363708943706318==
+--===============9048113384482406168==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+---
+ src/common.c |   14 ++++++++++++++
+ src/common.h |   13 +++++++++++++
+ 2 files changed, 27 insertions(+), 0 deletions(-)
 
-
------Original Message-----
-From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
-f Of R=C3=A9mi Denis-Courmont
-Sent: Friday, January 07, 2011 9:52 AM
-To: ofono(a)ofono.org
-Subject: Re: [RFC PATCH] gprs: add function to handle activated context
-
-On Thursday 06 January 2011 02:17:09 ext Denis Kenzior, you wrote:
->> >> If such context is not found create a new one with "Internet" type.
->> > =
-
->> > I don't really agree that we should create a context if no match is
->> > found. I think the better sensible strategy is to hold this information
->> > internally and only map it to a context once the user or provisioning
->> > creates it.
->> =
-
->> From what I understood it should be quite safe to assume it is an
->> internet context.  All IMS contexts will have a well-known APN and the
->> only other one that would make sense for the network to activate
->> automatically would be the internet one.
->> =
-
->> Perhaps this is the missing piece in the description? The fact that
->> either the IMS or an Internet context is created.
->
->It could be MMS(/WAP) or it could be some private corporate VPN. Or it cou=
-ld =
-
->even be some other silliness from some operator(s). I have seen such thing=
-, =
-
->but I am unsure I can talk freely about the details :-(
->
->I would definitely advise against marking unknown context as Internets.
-
-This makes sense.
-
-In the case this context is resulting from a PDN connectivity Request piggy=
-backed on an Attach Request, should we assume that that this initial contex=
-t could be an MMS or a private corporate VPN related context?
-My assumption would be that in this particular case that the context is an =
-"internet" or an "IMS" context.
-
-The reception of an MMS "push" over SMS on the circuit switched  domain cou=
-ld provoke the attach, but I would guess in this case that:
-a second context initiated by the UE is used specifically for the MMS
-or
-the PDN connectivity request includes a MMS APN with an ESM information tra=
-nsfer flag to transfer securely the "login and password"  required to downl=
-oad the MMS.  =
-
-
-I can also hardly imagine that an initial bearer context being a "VPN" spec=
-ific bearer.
-
-But, maybe I'm wrong.
-
-BR,
-
-Fred  =
-
-
-
-
-
-
+diff --git a/src/common.c b/src/common.c
+index d4e567b..6664007 100644
+--- a/src/common.c
++++ b/src/common.c
+@@ -714,6 +714,20 @@ const char *registration_tech_to_string(int tech)
+ 	}
+ }
  =
 
++const char *packet_bearer_to_string(int bearer)
++{
++	static const char list[][6] =3D {
++		"none",
++		"gsm", "edge",
++		"umts", "hsupa", "hsdpa", "hspa",
++		"lte",
++	};
++
++	if (((unsigned)bearer) < sizeof (list) / sizeof (list[0]))
++		return list[bearer];
++	return "unknown";
++}
++
+ gboolean is_valid_apn(const char *apn)
+ {
+ 	int i;
+diff --git a/src/common.h b/src/common.h
+index 64f297e..d11cd8e 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -87,6 +87,18 @@ enum bearer_class {
+ 	BEARER_CLASS_PAD =3D 128
+ };
+ =
+
++/* 27.007 Section 7.29 */
++enum packet_bearer {
++	PACKET_BEARER_NONE =3D 0,
++	PACKET_BEARER_GPRS =3D 1,
++	PACKET_BEARER_EDGE =3D 2,
++	PACKET_BEARER_UMTS =3D 3,
++	PACKET_BEARER_HSUPA =3D 4,
++	PACKET_BEARER_HSDPA =3D 5,
++	PACKET_BEARER_HSUPA_HSDPA =3D 6,
++	PACKET_BEARER_LTE =3D 7,
++};
++
+ /* 22.030 Section 6.5.2 */
+ enum ss_control_type {
+ 	SS_CONTROL_TYPE_ACTIVATION,
+@@ -158,5 +170,6 @@ gboolean is_valid_pin(const char *pin, enum pin_type ty=
+pe);
+ =
+
+ const char *registration_status_to_string(int status);
+ const char *registration_tech_to_string(int tech);
++const char *packet_bearer_to_string(int bearer);
+ =
+
+ gboolean is_valid_apn(const char *apn);
 -- =
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-_______________________________________________
-ofono mailing list
-ofono(a)ofono.org
-http://lists.ofono.org/listinfo/ofono
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
+1.7.1
 
 
---===============7215363708943706318==--
+--===============9048113384482406168==--
 
