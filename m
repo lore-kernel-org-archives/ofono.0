@@ -1,80 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============8125240332463079178=="
+Content-Type: multipart/mixed; boundary="===============5297508240071300291=="
 MIME-Version: 1.0
-From: Robertino Benis <robertino.benis@intel.com>
-Subject: RE: [PATCH v3] ifx: Adding modem selftest for Infineon modem
-Date: Thu, 06 Jan 2011 17:42:12 -0800
-Message-ID: <1294364532.1848.5.camel@airyz-ub910.intel.com>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C9015A52CE50@orsmsx508.amr.corp.intel.com>
+From: Xu, Martin <martin.xu@intel.com>
+Subject: RE: [PATCH] Fix compile warning at MeeGo The gcc version is MeeGo
+ 4.5.1
+Date: Fri, 07 Jan 2011 10:53:25 +0800
+Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD34CC43F8@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1294335887.2501.7.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8125240332463079178==
+--===============5297508240071300291==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-
-> The IFX modem we are targetting implements this with two AT commands.
+> -----Original Message-----
+> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Beh=
+alf
+> Of Marcel Holtmann
+> Sent: Friday, January 07, 2011 1:45 AM
+> To: ofono(a)ofono.org
+> Subject: Re: [PATCH] Fix compile warning at MeeGo The gcc version is MeeGo
+> 4.5.1
 > =
 
-> > Another question that I did ask is to see some sample results from these
-> > test cases in failure and success case.
+> Hi Martin,
 > =
 
-> Robertino?
+> >  src/call-forwarding.c |    2 +-
+> >  1 files changed, 1 insertions(+), 1 deletions(-)
+> >
+> > diff --git a/src/call-forwarding.c b/src/call-forwarding.c
+> > index 512f223..36ba4f1 100644
+> > --- a/src/call-forwarding.c
+> > +++ b/src/call-forwarding.c
+> > @@ -246,7 +246,7 @@ static gboolean is_cfu_enabled(struct
+> ofono_call_forwarding *cf,
+> >  static void sim_set_cf_indicator(struct ofono_call_forwarding *cf)
+> >  {
+> >  	gboolean cfu_voice;
+> > -	struct ofono_call_forwarding_condition *cond;
+> > +	struct ofono_call_forwarding_condition *cond =3D NULL;
+> >
+> >  	cfu_voice =3D is_cfu_enabled(cf, &cond);
+> =
 
-I think you meant except form the log, such as this:
+> I really hate trying to fix compiler warnings like this.
+> =
 
-ofonod[1342]: Using multiplexer line discipline 29
-ofonod[1342]: Master: > ATE0 +CMEE=3D1\r
-ofonod[1342]: Master: < ATE0 +CMEE=3D1\r
-ofonod[1342]: Master: < \r\nOK\r\n
-ofonod[1342]: Master: > at(a)rtc:rtc_gti_test_verify_32khz()\r
-ofonod[1342]: Master: < \r\n
-ofonod[1342]: Master: < Verification passed\r\nOK\r\n     =
+>         /*
+>          * For now we only support Voice, although Fax & all Data
+>          * basic services are applicable as well.
+>          */
+>         for (; l; l =3D l->next) {
+>                 cond =3D l->data;
+> =
 
+>                 if (cond->cls > BEARER_CLASS_VOICE)
+>                         continue;
+> =
 
-ofonod[1342]: Master: > at(a)vers:device_version_id()\r
-ofonod[1342]: Master: < \r\n
-ofonod[1342]: Master: < \r\nCHIP ID =3D XG626 ES2\r\nFLASH TYPE =3D
-NumonyxM18 NOR\r\nFLASH ID =3D 0x898881\r\nSmartiUE2 =3D 37664\r\nRF PMU =
-=3D
-10548\r\nPA PMU =3D 40244\r\nRF ASM =3D 0\r\nFEM PA =3D 21812\r\nOK\r\n  =
+>                 if (out)
+>                         *out =3D cond;
+> =
 
+>                 return TRUE;
+>         }
+> =
 
+>         return FALSE;
+> =
 
+> So this is clearly a false positive. The only why this would fail is
+This is not a false positive, it is quite possible not to reach the "for(;;=
+)" branch, and uninitialized the *cond.
+I have added
+*out =3D NULL;
+Out of the branch, and found that the warning gone.
+So here I think gcc is right, and we need the patch.
 
-Simulated Self test Failure
+> when l->data is NULL, but even then cond is initialized properly.
+> =
 
-ofonod[1260]: Using multiplexer line discipline 29
-ofonod[1260]: Master: > ATE0 +CMEE=3D1\r
-ofonod[1260]: Master: < ATE0 +CMEE=3D1\r
-ofonod[1260]: Master: < \r\nOK\r\n
-ofonod[1260]: Master: > at(a)rtc:rtc_gti_test_verify_32khz()\r
-ofonod[1260]: Master: < \r\n
-ofonod[1260]: Master: < Verification passed\r\nOK\r\n
-ofonod[1260]: Master: > at(a)vers:device_version_id\r
-ofonod[1260]: Master: < \r\nERROR\r\n                =
+> Regards
+> =
 
-ofonod[1260]: Modem Device Version Test: FAIL        =
+> Marcel
+> =
 
+> =
 
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
-> In the patch it is the timeout for the first self test command.
-> I understand you are thinking about a potential future patch in which it =
-would be
-> used as the overall setup timeout, I agree that in that case the name sho=
-uld be
-> changed accordingly as well, yes.
-
-Do you think we should use overall setup timeout? =
-
-
-Thanks,
--- r.
-
-
-
---===============8125240332463079178==--
+--===============5297508240071300291==--
 
