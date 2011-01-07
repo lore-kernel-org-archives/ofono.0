@@ -1,50 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============0050987882494723526=="
+Content-Type: multipart/mixed; boundary="===============6520719585188470411=="
 MIME-Version: 1.0
-From: Antti Paila <antti.paila@nokia.com>
-Subject: RE: [PATCH 3/5 v2] Cell-info: Atom for obtaining ECID info of cells
-Date: Fri, 07 Jan 2011 08:46:22 +0200
-Message-ID: <1294382782.2602.13.camel@apaila-ThinkPad-T410>
-In-Reply-To: <1A42CE6F5F474C41B63392A5F80372B231D84E3F@shsmsx501.ccr.corp.intel.com>
+From: Xu, Martin <martin.xu@intel.com>
+Subject: RE: [PATCH] Fix compile warning at MeeGo The gcc version is MeeGo
+ 4.5.1
+Date: Fri, 07 Jan 2011 14:52:11 +0800
+Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD34CC46AC@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1294370910.2501.16.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0050987882494723526==
+--===============6520719585188470411==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jun,
+Hi Marcel:
+> it is a false positive.
+> =
 
-On Thu, 2011-01-06 at 20:35 +0800, ext Wei, Jun wrote:
-> Hi Antti, =
+> The only caller that uses the cond value is sim_set_cf_indicator. And it
+> only uses conf if the return value is TRUE. So where can this go wrong?
+You are right.
+I will ask MeeGo tool chain guy to resolve it.
+> Marcel
+> =
 
 > =
 
-> >-----Original Message-----
-> >Subject: [PATCH 3/5 v2] Cell-info: Atom for obtaining ECID info of cells
-> >
-> >+static int append_utra_neigh_cell_data(DBusMessageIter *iter,
-> >+		struct cell_measured_results *cmr)
-> >+{
-> >
-> >
-> >+
-> >+		if (cmr->rscp !=3D OFONO_CI_FIELD_RSCP_UNDEFINED)
-> >+			ofono_dbus_dict_append(iter,
-> >+					"CPICH-RSCP",
-> >+					DBUS_TYPE_INT16,
-> >+					&cmr->rscp);
-> >+
-> =
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
-> The type for RSCP should be "DBUS_TYPE_BYTE"
-
-
-RSCP may obtain negative values whereas DBUS_TYPE_BYTE is a
-type code marking an 8-bit _unsigned_ integer.
-
--Antti
-
-
---===============0050987882494723526==--
+--===============6520719585188470411==--
 
