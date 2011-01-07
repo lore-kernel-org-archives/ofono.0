@@ -1,43 +1,110 @@
-Content-Type: multipart/mixed; boundary="===============8415911171840452930=="
+Content-Type: multipart/mixed; boundary="===============7215363708943706318=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [RFC PATCH] gprs: add function to handle activated context
-Date: Fri, 07 Jan 2011 16:38:59 +0100
-Message-ID: <AANLkTimj=RQA1W1FsmcLceRN4ZvsFURqo2AyH02=bwdy@mail.gmail.com>
-In-Reply-To: <129600E5E5FB004392DDC3FB599660D70106E0FF83@irsmsx504.ger.corp.intel.com>
+From: Joly, Frederic <frederic.joly@intel.com>
+Subject: RE: [RFC PATCH] gprs: add function to handle activated context
+Date: Fri, 07 Jan 2011 15:45:21 +0000
+Message-ID: <129600E5E5FB004392DDC3FB599660D70106E0FFC1@irsmsx504.ger.corp.intel.com>
+In-Reply-To: <201101071052.19202.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8415911171840452930==
+--===============7215363708943706318==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fred,
 
-Frederic wrote:
-> The collision can only occur if the +CGDCONT (or +CGDSCONT) command =C2=
-=A0from Ofono is sent at the same time as PDP context activation URC from t=
-he modem, and both use the same CID.
+
+-----Original Message-----
+From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On Behal=
+f Of R=C3=A9mi Denis-Courmont
+Sent: Friday, January 07, 2011 9:52 AM
+To: ofono(a)ofono.org
+Subject: Re: [RFC PATCH] gprs: add function to handle activated context
+
+On Thursday 06 January 2011 02:17:09 ext Denis Kenzior, you wrote:
+>> >> If such context is not found create a new one with "Internet" type.
+>> > =
+
+>> > I don't really agree that we should create a context if no match is
+>> > found. I think the better sensible strategy is to hold this information
+>> > internally and only map it to a context once the user or provisioning
+>> > creates it.
+>> =
+
+>> From what I understood it should be quite safe to assume it is an
+>> internet context.  All IMS contexts will have a well-known APN and the
+>> only other one that would make sense for the network to activate
+>> automatically would be the internet one.
+>> =
+
+>> Perhaps this is the missing piece in the description? The fact that
+>> either the IMS or an Internet context is created.
 >
-> But in that case, the modem should not reply "OK" to the PDP context conf=
-iguration command, but "ERROR".
-> And Ofono should not consider that the PDP configuration command as succe=
-ssful.
-> Moreover, the "OK" for the context configuration and the context activati=
-on URC are sent of the same control channel so they cannot be sent in paral=
-lel but only in sequence.
+>It could be MMS(/WAP) or it could be some private corporate VPN. Or it cou=
+ld =
+
+>even be some other silliness from some operator(s). I have seen such thing=
+, =
+
+>but I am unsure I can talk freely about the details :-(
 >
-> Sjur, is that a correct assumption?
+>I would definitely advise against marking unknown context as Internets.
 
-Yes, this sounds about right.
-But I think Denis' proposal for using ofono_gprs_set_cid_range(gprs,
-<min>, <max>) pretty much solves this issue,
-We can use this to reserve the CID used for Initial PDN, and void this
-race condition.
+This makes sense.
 
-Regards,
-Sjur
+In the case this context is resulting from a PDN connectivity Request piggy=
+backed on an Attach Request, should we assume that that this initial contex=
+t could be an MMS or a private corporate VPN related context?
+My assumption would be that in this particular case that the context is an =
+"internet" or an "IMS" context.
 
---===============8415911171840452930==--
+The reception of an MMS "push" over SMS on the circuit switched  domain cou=
+ld provoke the attach, but I would guess in this case that:
+a second context initiated by the UE is used specifically for the MMS
+or
+the PDN connectivity request includes a MMS APN with an ESM information tra=
+nsfer flag to transfer securely the "login and password"  required to downl=
+oad the MMS.  =
+
+
+I can also hardly imagine that an initial bearer context being a "VPN" spec=
+ific bearer.
+
+But, maybe I'm wrong.
+
+BR,
+
+Fred  =
+
+
+
+
+
+
+ =
+
+-- =
+
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============7215363708943706318==--
 
