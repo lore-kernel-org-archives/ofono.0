@@ -1,391 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============6718999842792666750=="
+Content-Type: multipart/mixed; boundary="===============4912541129339267299=="
 MIME-Version: 1.0
-From: Lei Yu <lei.2.yu@nokia.com>
-Subject: Re: [PATCH v2, 3/7] cdma-sms: Add CDMA SMS Support
-Date: Fri, 07 Jan 2011 15:47:48 -0800
-Message-ID: <4D27A624.7060401@nokia.com>
-In-Reply-To: <C681C76E0D5F1E4BB01DE79E0A80EEC702E65825@usrdes03.ebgroup.elektrobit.com>
+From: Wei, Jun <jun.wei@intel.com>
+Subject: [PATCH v2 0/4] Add support of Neighbor cell info inside ifxmodem
+ driver and plugin
+Date: Sun, 09 Jan 2011 22:02:56 +0800
+Message-ID: <1A42CE6F5F474C41B63392A5F80372B231DCEE42@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <1294490366-26454-1-git-send-email-jun.wei@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6718999842792666750==
+--===============4912541129339267299==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rajesh,
+From: Wei, Jun =
 
-On 01/05/2011 02:34 PM, ext Rajesh.Nagaiah(a)elektrobit.com wrote:
-> HI Lei,
->
-> My comments inline
->
->> +
->> +/* 3GPP2 C.S0015-B v2.0, Table 3.4-1 */ enum cdma_sms_tp_msg_type {
->> +     CDMA_SMS_P2P =3D          0,
->> +     CDMA_SMS_BCAST =3D        1,
->> +     CDMA_SMS_ACK =3D          2
->> +};
->
-> 1.Coding style M11 not followed.
-> If enum type name is cdma_sms_tp_msg_type, then enum content
-> should be for eg, CDMA_SMS_TP_MSG_TYPE_XXX.
+Sent: Saturday, January 08, 2011 8:39 PM
+To: ofono(a)ofono.org
+Cc: Wei, Jun
+Subject: [PATCH v2 0/4] Add support of Neighbor cell info inside ifxmodem d=
+river and plugin
 
-Will fix.
+From: Jun Wei <jun.wei@intel.com>
 
-> 2. During initial discussions with Denis, he suggested to use
-> SMS_CDMA_XXX instead of CDMA_SMS_XXX. If he is OK with CDMA_SMS_XXX
-> usage I am OK with it as well.
->
+Hello,
 
-Checked with Denis, will stick with CDMA_SMS_XXX.
+These are the v2 patches for support of Neighbor cell info inside Infineon =
+modem driver and plugin, they are updated as per patches that Antti submit =
+on 01/06/2010.
 
->> +/* 3GPP2 X.S0004-550-E, Section 2.256 */
->
-> As 3GPP2 X.S0004-550-E v4.0 Section 2.256 lists all the Teleservice
-> types, but we are listing here only the supported teleservice types.
-> So should we mention something like this ?
->
-> /* 3GPP2 X.S0004-550-E v4.0 Section 2.256.
-> Only supported by 3GPP2 C.S0015-B v2.0 Section 3.4.3.1 listed */
->
+Jun Wei (1):
+   Add support of Neighbor Cell Info inside Infineon modem driver and plugin
 
-Will fix.
+   drivers/ifxmodem/cell-info.c | 506 +++++++++++++++++++++++++++++++++++++=
++++++
+   drivers/ifxmodem/ifxmodem.c  |   2 ++
+   drivers/ifxmodem/ifxmodem.h  |   3 +++
+   plugin/ifx.c                 |   2 ++
+   Makefile.am                  |   3 ++-
 
->> enum cdma_sms_teleservice_id {
->> +     TELESERVICE_CMT91 =3D     4096,
->> +     TELESERVICE_WPT =3D       4097,
->> +     TELESERVICE_WMT =3D       4098,
->> +     TELESERVICE_VMN =3D       4099,
->> +     TELESERVICE_WAP =3D       4100,
->> +     TELESERVICE_WEMT =3D      4101,
->> +     TELESERVICE_SCPT =3D      4102,
->> +     TELESERVICE_CATPT =3D     4103
->> +};
->
-> 1. Coding style M11 not followed.
-> Enum content should be CDMA_SMS_TELESERVICE_ID_XXX
->
+Thank you!
 
-Will fix.
-
-> 2. There is no coding style of the values assigned, but
-> for such big numbers I think Hex represenation would be
-> better.
->
-
-I would prefer sticking with the value defined in the spec which is =
-
-non-hex. Easier for reader to verify.
-
->> +/* 3GPP2 C.S0005-E v2.0 Table 2.7.1.3.2.4-2 */ enum
->> +cdma_sms_digi_number_type {
->> +     CDMA_SMS_NUM_TYPE_UNKNOWN =3D                     0,
->> +     CDMA_SMS_NUM_TYPE_INTERNATIONAL_NUMBER =3D        1,
->> +     CDMA_SMS_NUM_TYPE_NATIONAL_NUMBER =3D             2,
->> +     CDMA_SMS_NUM_TYPE_NETWORK_SPECIFIC_NUMBER =3D     3,
->> +     CDMA_SMS_NUM_TYPE_SUBSCRIBER_NUMBER =3D           4,
->> +     /* Reserved 5 */
->> +     CDMA_SMS_NUM_TYPE_ABBREVIATED_NUMBER =3D          6
->> +     /* Reserved 7 */
->> +};
->
-> 1.Coding style M11 not followed.
-
-Will fix.
-
-> 2. _NUMBER suffix is not required.
-
-Will fix.
-
-> 3. Reserved values are defined in other enum declarations.
-> So to be inline with rest of ofono code we should define those
-> here as well
->
-
-Will follow rest ofono.
-
->> +/* 3GPP2 C.S0015-B v2.0 Table 3.4.3.3-1 */ enum
->> +cdma_sms_data_network_number_type {
->> +     CDMA_SMS_NETWORK_NUM_TYPE_UNKNOWN =3D             0,
->> +     CDMA_SMS_NETWORK_TYPE_INTERNET_PROTOCOL =3D       1,
->> +     CDMA_SMS_NETWORK_TYPE_INTERNET_EMAIL_ADDRESS =3D  2,
->> +     /* All Other Values Reserved */
->> +};
->
-> 1.Coding style M11 not followed.
-
-Will fix.
-
-> 2. Also some has CDMA_SMS_NETWORK_NUM_TYPE_XXX
-> and some has CDMA_SMS_NETWORK_TYPE_XXX ?
-
-Will fix.
-
-> 3. Why do we need to have seperate cdma_sms_digi_number_type and
-> cdma_sms_data_network_number_type. Rather we can merge both of
-> it into one single enum cdma_sms_number_type, as we already know
-> whether its digit mode or number mode in seperate parameters.
-> For eg:
-> /* 3GPP2 C.S0005-E v2.0 Table 2.7.1.3.2.4-2 */
->     and 3GPP2 C.S0015-B v2.0 Table 3.4.3.3-1 */
-> enum cdma_sms_number_type {
->          CDMA_SMS_NUMBER_TYPE_UNKNOWN =3D 0,
->          CDMA_SMS_NUMBER_TYPE_INTERNATIONAL_OR_IP =3D 1,
->          CDMA_SMS_NUMBER_TYPE_NATIONAL_OR_INTERNET_EMAIL =3D 2,
->          CDMA_SMS_NUMBER_TYPE_NETWORK_SPECIFIC =3D 3,
->          CDMA_SMS_NUMBER_TYPE_SUBSCRIBER =3D 4,
->          CDMA_SMS_NUMBER_TYPE_RESERVED_5 =3D 5,
->          CDMA_SMS_NUMBER_TYPE_ABBREVIATED =3D 6
->          CDMA_SMS_NUMBER_TYPE_RESERVED =3D 7,
-> };
->
->
-
-Having two separate enums, each matching with one table in the standard =
-
-will be much cleaner. Otherwise, it will be hard for reader to check =
-
-where those number from.
-
->> +/* 3GPP2 C.S0015-B v2.0 Table 4.5.1-1 */ enum cdma_sms_msg_type {
->> +     CDMA_SMS_RESERVED =3D     0,
->> +     CDMA_SMS_DELIVER =3D      1,
->> +     CDMA_SMS_SUBMIT =3D       2,
->> +     CDMA_SMS_CANCEL =3D       3,
->> +     CDMA_SMS_DELIVER_ACK =3D  4,
->> +     CDMA_SMS_USER_ACK =3D     5,
->> +     CDMA_SMS_READ_ACK =3D     6,
->> +};
->
-> 1. Coding style M11 not followed.
->     It should be for eg, CDMA_SMS_MSG_TYPE_XXX
-
-Will fix.
-
-> 2. Why Deliver report and Submit report definitions missing ?
->     Even though we dont support that feature yet in this patch,
->     the definitions should be there.
->
-> For eg:
-> /* 3GPP2 C.S0015-B v2.0 Table 4.5.1-1 */
-> enum cdma_sms_msg_type {
->          CDMA_SMS_MSG_TYPE_RESERVED =3D 0,
->          CDMA_SMS_MSG_TYPE_DELIVER =3D 1,
->          CDMA_SMS_MSG_TYPE_SUBMIT =3D 2,
->          CDMA_SMS_MSG_TYPE_CANCEL =3D 3,
->          CDMA_SMS_MSG_TYPE_DELIVER_ACK =3D 4,
->          CDMA_SMS_MSG_TYPE_USER_ACK =3D 5,
->          CDMA_SMS_MSG_TYPE_READ_ACK =3D 6,
->          CDMA_SMS_MSG_TYPE_DELIVER_REPORT =3D 7,
->          CDMA_SMS_MSG_TYPE_SUBMIT_REPORT =3D 8
-> };
->
-
-Will fix.
-
->> +/* C.R1001-G_v1.0 Table 9.1-1 */
->> +enum cdma_sms_message_encoding {
->> +     MSG_ENCODING_OCTET =3D                    0,
->> +     MSG_ENCODING_EXTENDED_PROTOCOL_MSG =3D    1,
->> +     MSG_ENCODING_7BIT_ASCII =3D               2,
->> +     MSG_ENCODING_IA5 =3D                      3,
->> +     MSG_ENCODING_UNICODE =3D                  4,
->> +     MSG_ENCODING_SHIFT_JIS =3D                5,
->> +     MSG_ENCODING_KOREAN =3D                   6,
->> +     MSG_ENCODING_LATIN_HEBREW =3D             7,
->> +     MSG_ENCODING_LATIN =3D                    8,
->> +     MSG_ENCODING_GSM_7BIT =3D                 9,
->> +     MSG_ENCODING_GSM_DATA_CODING =3D          10
->> +};
->
-> 1. Coding style M11 not followed.
-> For eg:
-> /* 3GPP2 C.R1001-G v1.0 Table 9.1-1 */
-> enum cdma_sms_encoding_type {
->          CDMA_SMS_ENCODING_TYPE_OCTECT_UNSPECIFIED =3D 0x0,
->          CDMA_SMS_ENCODING_TYPE_EXTENDED_PROTOCOL_MESSAGE =3D 0x1,
->          CDMA_SMS_ENCODING_TYPE_7BIT_ASCII =3D 0x2,
->          CDMA_SMS_ENCODING_TYPE_IA5 =3D 0x3,
->          CDMA_SMS_ENCODING_TYPE_UNICODE =3D 0x4,
->          CDMA_SMS_ENCODING_TYPE_SHIFT_JIS =3D 0x5,
->          CDMA_SMS_ENCODING_TYPE_KOREAN =3D 0x6,
->          CDMA_SMS_ENCODING_TYPE_LATIN_HEBREW =3D 0x7,
->          CDMA_SMS_ENCODING_TYPE_LATIN =3D 0x8,
->          CDMA_SMS_ENCODING_TYPE_7BIT_GSM =3D 0x9,
->          CDMA_SMS_ENCODING_TYPE_GSM_DCS =3D 0xA
-> };
-
-Will fix.
-
->
->> +/* 3GPP2 C.S0015-B v2.0 Table 3.4.3-1 */ enum cdma_sms_param_id {
->> +     CDMA_SMS_PARAM_ID_TELESERVICE_IDENTIFIER  =3D     0x00,
->> +     CDMA_SMS_PARAM_ID_SERVICE_CATEGORY =3D            0x01,
->> +     CDMA_SMS_PARAM_ID_ORIGINATING_ADDRESS =3D         0x02,
->> +     CDMA_SMS_PARAM_ID_ORIGINATING_SUBADDRESS =3D      0x03,
->> +     CDMA_SMS_PARAM_ID_DESTINATION_ADDRESS =3D         0x04,
->> +     CDMA_SMS_PARAM_ID_DESTINATION_SUBADDRESS =3D      0x05,
->> +     CDMA_SMS_PARAM_ID_BEARER_REPLY_OPTION =3D         0x06,
->> +     CDMA_SMS_PARAM_ID_CAUSE_CODE =3D                  0x07,
->> +     CDMA_SMS_PARAM_ID_BEARER_DATA =3D                 0x08
->> +};
->
-> Some enum values are in plain numbering, some are in hex.
-> We should rather follow only hex.
->
-
-Will fix.
-
->> +/* 3GPP2 C.R1001-G Table 9.3.1-1 */
->> +enum cdma_sms_service_category {
->> +     SERVICE_CAT_EMERGENCY_BROADCAST =3D               1,
->> +     SERVICE_CAT_ADMINISTRATIVE =3D                    2,
->> +     SERVICE_CAT_MAINTENANCE =3D                       3,
->> +     SERVICE_CAT_GENERALNEWSLOCAL =3D                  4,
->> +     SERVICE_CAT_GENERALNEWSREGIONAL =3D               5,
->> +     SERVICE_CAT_GENERALNEWSNATIONAL =3D               6,
->> +     SERVICE_CAT_GENERALNEWSINTERNATIONAL =3D          7,
->> +     SERVICE_CAT_BUSINESSFINALNEWSLOCAL =3D            8,
->> +     SERVICE_CAT_BUSINESSFINALNEWSREGIONAL =3D         9,
->> +     SERVICE_CAT_BUSINESSFINALNEWSNATIONAL =3D         10,
->> +     SERVICE_CAT_BUSINESSFINALNEWSINTNL =3D            11,
->> +     SERVICE_CAT_SPORTSNEWSLOCAL =3D                   12,
->> +     SERVICE_CAT_SPORTSNEWSREGIONAL =3D                13,
->> +     SERVICE_CAT_SPORTSNEWSNATIONAL =3D                14,
->> +     SERVICE_CAT_SPORTSNEWSINTERNATIONAL =3D           15,
->> +     SERVICE_CAT_ENTERTAINMENTNEWSLOCAL =3D            16,
->> +     SERVICE_CAT_ENTERTAINMENTNEWSREGIONAL =3D         17,
->> +     SERVICE_CAT_ENTERTAINMENTNEWSNATIONAL =3D         18,
->> +     SERVICE_CAT_ENTERTAINMENTNEWSINTERNATIONAL =3D    19,
->> +     SERVICE_CAT_ENTERTAINMENTNEWSLOCALWEATHER =3D     20,
->> +     SERVICE_CAT_AREATRAFFICREPORTS =3D                21,
->> +     SERVICE_CAT_LOCALAIRTPORTFLIGHTSCHEDULES =3D      22,
->> +     SERVICE_CAT_RESTURANTS =3D                        23,
->> +     SERVICE_CAT_LODGINGS =3D                          24,
->> +     SERVICE_CAT_RETAILDIRECTORYADVERTISEMENTS =3D     25,
->> +     SERVICE_CAT_ADVERTISEMENTS =3D                    26,
->> +     SERVICE_CAT_STOCKQUOTES =3D                       27,
->> +     SERVICE_CAT_EMPLOYMENTOPPORTUNITIES =3D           28,
->> +     SERVICE_CAT_MEDICALHEALTHHOSPITALS =3D            29,
->> +     SERVICE_CAT_TECHNOLOGYNEWS =3D                    30,
->> +     SERVICE_CAT_MULTICATEGORY =3D                     31,
->> +     SERVICE_CAT_CAPT =3D                              32
->> +};
->
-> 1. Coding style M11 not followed.
-
-Will fix,
-
-> 2. In SERVICE_CAT_XXX  the XXX part is completely unreadable.
->     for eg:
->     change _ENTERTAINMENTNEWSLOCALWEATHER
->     to     _ENTERTAINMENT_NEWS_LOCAL_WEATHER
-
-Will Fix.
-
-> 3. CMAS Broadcast Service Category Assignments definitions are missing
-> Include the following as well:
->          CDMA_SMS_SERVICE_CATEGORY_PRESIDENTIAL_LEVEL_ALERT =3D 0x1000,
->          CDMA_SMS_SERVICE_CATEGORY_EXTREME_THREAT_TO_LIFE_AND_PROPERTY =
-=3D
-> 0x1001,
->          CDMA_SMS_SERVICE_CATEGORY_SEVERE_THREAT_TO_LIFE_AND_PROPERTY =3D
-> 0x1002,
->          CDMA_SMS_SERVICE_CATEGORY_AMBER_CHILD_ABDUCTION_EMERGENCY =3D
-> 0x1003,
->          CDMA_SMS_SERVICE_CATEGORY_CMAS_TEST_MESSAGE =3D 0x1004
->
-
-Will fix.
-
->> +enum cdma_sms_digit_mode {
->> +     DTMF_4_BIT =3D    0,
->> +     CODE_8_BIT =3D    1
->> +};
->
-> 1. Coding style M11 not followed.
-
-Will fix.
-
-> 2. CODE_8_BIT sounds odd, ASCII gives more meaning to it.
-
-Will change to 8_BIT_ASCII since ASCII can also be 7-Bit.
-
-> 3. 3GPP2 reference missing.
->
-> change to:
-> /* 3GPP2 C.S0015-B v2.0 Section 3.4.3.3 */
-> enum cdma_sms_digit_mode_type {
->          CDMA_SMS_DIGIT_MODE_TYPE_4BIT_DTMF =3D 0x0,
->          CDMA_SMS_DIGIT_MODE_TYPE_8BIT_ASCII =3D 0x1
-> };
->
-> For digit mode type its defined as enum, but no enum defintion
-> for number mode type.
->
-> So add,
->
-> /* 3GPP2 C.S0015-B v2.0 Section 3.4.3.3 */
-> enum cdma_sms_number_mode_type {
->          CDMA_SMS_NUMBER_MODE_TYPE_NON_DATA_NETWORK_ADDRESS =3D 0x0,
->          CDMA_SMS_NUMBER_MODE_TYPE_DATA_NETWORK_ADDRESS =3D 0x1
-> };
->
-
-Will fix.
-
->> +
->> +/* 3GPP2 C.S0015-B v2.0 Section 3.4.3.3 */ struct cdma_sms_address {
->> +     enum cdma_sms_digit_mode digit_mode;
->> +     guint8 number_mode;
->> +     guint8 number_type;
->> +     enum cdma_sms_numbering_plan number_plan;
->> +     guint8 num_fields;
->> +     char address[256];
->> +};
->
-> 1.Some members are defined as enums, some as guint8 eventhough they have
-> corresponding enum defintions. This will lead to explicit casts in the
-> code later. So we should chnage that.
-
-Will fix.
-
-> 2. How did we get 256 as max address length ?
-> Also avoid using magic numbers, rather declare them as constants.
->
-
-The max of 256 is because num_field is only 8-bits. I see existing ofono =
-
-code using hard coded numbers all over the places, Any rule for that? =
-
-Will define constant.
-
->> +/* 3GPP2 C.S0015-B v2.0 Section 4.5.2 */ struct cdma_sms_ud {
->> +     enum cdma_sms_message_encoding msg_encoding;
->> +     guint8  num_fields;
->> +     guint8  chari[512];
->> +};
->
-> 1. Again how did we get 512 as max UD length ?
-> Also avoid using magic numbers, rather declare them as constants.
->
-
-chari in UD can be maximum of 512-bytes long. num_fields is max of 256 =
-
-and each chari is max of 2 bytes. Again, existing ofono using hard coded =
-
-values. I will define constant.
-
-> BR,
-> Rajesh
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
-
-regards,
-Lei
-
---===============6718999842792666750==--
+--===============4912541129339267299==--
 
