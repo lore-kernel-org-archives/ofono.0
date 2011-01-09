@@ -1,50 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============3123086433712310963=="
+Content-Type: multipart/mixed; boundary="===============1242726952758390805=="
 MIME-Version: 1.0
-From: Wei, Jun <jun.wei@intel.com>
-Subject: [PATCH v2 4/4] Cell-info: New file included in compilation
-Date: Sun, 09 Jan 2011 22:06:23 +0800
-Message-ID: <1A42CE6F5F474C41B63392A5F80372B231DCEE46@shsmsx501.ccr.corp.intel.com>
-In-Reply-To: <1294490472-26637-1-git-send-email-jun.wei@intel.com>
+From: oskari.timperi@ixonos.com
+Subject: [PATCHv4 0/2] Support for Cinterion TC65
+Date: Mon, 10 Jan 2011 01:44:46 +0200
+Message-ID: <1294616688-17246-1-git-send-email-oskari.timperi@ixonos.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3123086433712310963==
+--===============1242726952758390805==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Wei, Jun =
+From: Oskari Timperi <oskari.timperi@iki.fi>
 
-Sent: Saturday, January 08, 2011 8:41 PM
-To: ofono(a)ofono.org
-Cc: Wei, Jun
-Subject: [PATCH v2 4/4] Cell-info: New file included in compilation
+These patches add initial support for Cinterion TC65 modem.
 
-From: Jun Wei <jun.wei@intel.com>
+Hopefully no-one is messing with my tabs so that these are in
+good order. :-)
 
----
- Makefile.am |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+Oskari Timperi (2):
+  Add plugin for Cinterion TC65 modem
+  udev: Handle TC65 modem
 
-diff --git a/Makefile.am b/Makefile.am
-index 679e4bf..2393c53 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -222,7 +222,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/ifxmodem/audio-settings.c \
- 			drivers/ifxmodem/radio-settings.c \
- 			drivers/ifxmodem/gprs-context.c \
--			drivers/ifxmodem/stk.c
-+			drivers/ifxmodem/stk.c \
-+			drivers/ifxmodem/cell-info.c
- =
-
- builtin_modules +=3D stemodem
- builtin_sources +=3D drivers/atmodem/atutil.h \
--- =
-
-1.7.2.3
+ Makefile.am    |    3 +
+ plugins/tc65.c |  265 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ plugins/udev.c |   15 +++
+ 3 files changed, 283 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/tc65.c
 
 
---===============3123086433712310963==--
+--===============1242726952758390805==--
 
