@@ -1,104 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============5318133088180049158=="
+Content-Type: multipart/mixed; boundary="===============4595421666844202716=="
 MIME-Version: 1.0
-From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: [PATCH] test: add disable-call-forwarding
-Date: Mon, 10 Jan 2011 14:06:22 +0200
-Message-ID: <1294661182-31036-1-git-send-email-jarko.poutiainen@tieto.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 3/4] Bearer documentation
+Date: Mon, 10 Jan 2011 14:41:23 +0200
+Message-ID: <201101101441.23644.remi.denis-courmont@nokia.com>
+In-Reply-To: <4D273DFD.7020408@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5318133088180049158==
+--===============4595421666844202716==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am                  |    3 +-
- test/disable-call-forwarding |   55 ++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 57 insertions(+), 1 deletions(-)
- create mode 100755 test/disable-call-forwarding
+On Friday 07 January 2011 18:23:25 ext Denis Kenzior, you wrote:
+> Hi R=C3=A9mi,
+> =
 
-diff --git a/Makefile.am b/Makefile.am
-index 8ad01cd..7908467 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -440,7 +440,8 @@ test_scripts =3D test/backtrace \
- 		test/set-tty \
- 		test/set-gsm-band \
- 		test/set-umts-band \
--		test/lockdown-modem
-+		test/lockdown-modem \
-+		test/disable-call-forwarding
- =
+> On 01/07/2011 10:02 AM, R=C3=A9mi Denis-Courmont wrote:
+> > ---
+> > =
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/disable-call-forwarding b/test/disable-call-forwarding
-new file mode 100755
-index 0000000..3c51d06
---- /dev/null
-+++ b/test/disable-call-forwarding
-@@ -0,0 +1,55 @@
-+#!/usr/bin/python
-+
-+import sys
-+import gobject
-+
-+import dbus
-+import dbus.mainloop.glib
-+
-+def property_changed(property, value):
-+
-+	if len(value.__str__()) > 0:
-+		print "CallForwarding property %s changed to %s" % (property, value)
-+	else:
-+		print "CallForwarding property %s changed to disabled" % (property)
-+
-+	if canexit:
-+		mainloop.quit();
-+
-+if __name__ =3D=3D "__main__":
-+
-+	if len(sys.argv) < 2:
-+		print "Usage: %s <type>" % (sys.argv[0])
-+		print "Type can be: all, conditional"
-+		sys.exit(1)
-+
-+	canexit =3D False
-+
-+	type =3D sys.argv[1]
-+
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+
-+	bus =3D dbus.SystemBus()
-+
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+							'org.ofono.Manager')
-+
-+	modems =3D manager.GetModems()
-+
-+	cf =3D dbus.Interface(bus.get_object('org.ofono', modems[0][0]),
-+				'org.ofono.CallForwarding')
-+
-+	cf.connect_to_signal("PropertyChanged", property_changed)
-+
-+	try:
-+		cf.DisableAll(type, timeout =3D 100)
-+	except dbus.DBusException, e:
-+		print "Unable to DisableAll", e
-+		sys.exit(1);
-+
-+	print "DisableAll successful"
-+
-+	canexit =3D True
-+
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
+> >  doc/connman-api.txt |   10 ++++++++++
+> >  1 files changed, 10 insertions(+), 0 deletions(-)
+> > =
+
+> > diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+> > index b13efd1..18185d7 100644
+> > --- a/doc/connman-api.txt
+> > +++ b/doc/connman-api.txt
+> > @@ -150,6 +150,16 @@ Properties	boolean Active [readwrite]
+> > =
+
+> >  			Holds whether the context is activated.  This value
+> >  			can be set to activate / deactivate the context.
+> > =
+
+> > +		string Bearer [readonly, optional]
+> > +
+> > +			Contains the current packet switched bearer of the
+> > +			connection context.
+> > +
+> > +			Possible values are the same as for the Technology
+> > +			property the NetworkRegistration object, plus
+> > +			"none" if no data activity is ongoing, or "unknown"
+> > +			if not known.
+> > +
+> =
+
+> Please remove this "unknown" bit.  The property is already optional, so
+> if it is never reported by the driver we shouldn't report it up, even if
+> the context is active.
+
+That would not work. We need some default value otherwise we cannot signal =
+the =
+
+change from known to unknown, at least not with the oFono property change =
+
+interface.
+
 -- =
 
-1.7.0.4
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-
---===============5318133088180049158==--
+--===============4595421666844202716==--
 
