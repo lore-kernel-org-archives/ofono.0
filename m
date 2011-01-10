@@ -1,48 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============3177665304150080592=="
+Content-Type: multipart/mixed; boundary="===============4330095816141092301=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [RFC 4/4] doc: Describe LaunchBrowser method
-Date: Mon, 10 Jan 2011 11:43:43 +0200
-Message-ID: <1294652623-17287-5-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1294652623-17287-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: martin.xu@intel.com
+Subject: [PATCH 0/2] fix ACCM handle issue for Huawei EM770W modem
+Date: Mon, 10 Jan 2011 18:40:15 +0800
+Message-ID: <1294656017-825-1-git-send-email-martin.xu@intel.com>
+In-Reply-To: <martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3177665304150080592==
+--===============4330095816141092301==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/stk-api.txt |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+From: Martin Xu <martin.xu@intel.com>
 
-diff --git a/doc/stk-api.txt b/doc/stk-api.txt
-index 425ee23..347e39d 100644
---- a/doc/stk-api.txt
-+++ b/doc/stk-api.txt
-@@ -257,6 +257,14 @@ Methods		byte RequestSelection(string title, byte icon=
-_id,
- 			until the call is canceled using Cancel().  This
- 			method should not return.
- =
+  [PATCH 1/2] PPP: Fix Trasmit ACCM and Receive ACCM setting error
+  according to RFC 1662 section 7.2, looks like oFono has set receive
+  and transmit ACCM wrongly.
+  normally the two ACCM are both set as 0x00000000, and the issue will
+  not be found. Once the they are different, oFono will run to error.
 
-+		boolean LaunchBrowser() (string information, byte icon_id,
-+						string url)
-+
-+			Asks the agent to request user to confirm launch
-+			browser. If confirmed, then the agent should send
-+			confirmation message to oFono and then should open
-+			the launch browser with the given url.
-+
- 		void Cancel() [noreply]
- =
+  [PATCH 2/2] Inform Huawei modem using ACCM 0xffffffff to trasmit package.=
+    =
 
- 			Asks the agent to cancel any ongoing operation in
+  Using my Huawei modem (EM770W) if set ACCM as 0x00000000, the RXJ- =
+
+  event will happend, and PPP link down, when IP package is transmited
+  for a while. If I set ACCM as 0xffffffff, the RXJ- event never happen,
+  and the modem can work quite stable.
+  I tested the modem at China Unicom networks.
+  Not sure whether the issue is specific to specific modem. If it is the ca=
+se,
+  ofono may let user to set the ACCM to specific modem.
+
+ gatchat/ppp_lcp.c |   15 ++++++++++++---
+ 1 files changed, 12 insertions(+), 3 deletions(-)
+
 -- =
 
-1.7.0.4
+1.7.2.2
 
 
---===============3177665304150080592==--
+--===============4330095816141092301==--
 
