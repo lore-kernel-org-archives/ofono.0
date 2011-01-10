@@ -1,140 +1,105 @@
-Content-Type: multipart/mixed; boundary="===============5368656255790554598=="
+Content-Type: multipart/mixed; boundary="===============5521417215157288594=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 08/10] Core support for packet switched bearer reporting
-Date: Mon, 10 Jan 2011 15:15:23 +0200
-Message-ID: <1294665325-11937-8-git-send-email-remi.denis-courmont@nokia.com>
+Subject: [PATCH 10/10] atmodem: packet switch bearer support
+Date: Mon, 10 Jan 2011 15:15:25 +0200
+Message-ID: <1294665325-11937-10-git-send-email-remi.denis-courmont@nokia.com>
 In-Reply-To: <201101101515.04596.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5368656255790554598==
+--===============5521417215157288594==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/gprs.c |   38 ++++++++++++++++++++++++++++++++++++++
- 1 files changed, 38 insertions(+), 0 deletions(-)
+ drivers/atmodem/gprs.c |   55 ++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 55 insertions(+), 0 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 9949210..9107a72 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -107,6 +107,7 @@ struct context_settings {
- =
-
- struct pri_context {
- 	ofono_bool_t active;
-+	int bearer;
- 	enum ofono_gprs_context_type type;
- 	char name[MAX_CONTEXT_NAME_LENGTH + 1];
- 	char message_proxy[MAX_MESSAGE_PROXY_LENGTH + 1];
-@@ -596,6 +597,13 @@ static void append_context_properties(struct pri_conte=
-xt *ctx,
- 	value =3D ctx->active;
- 	ofono_dbus_dict_append(dict, "Active", DBUS_TYPE_BOOLEAN, &value);
- =
-
-+	if (ctx->active) {
-+		const char *bearer =3D packet_bearer_to_string(ctx->bearer);
-+
-+		ofono_dbus_dict_append(dict, "Bearer",
-+					DBUS_TYPE_STRING, &bearer);
-+	}
-+
- 	ofono_dbus_dict_append(dict, "Type", DBUS_TYPE_STRING, &type);
- =
-
- 	ofono_dbus_dict_append(dict, "Protocol", DBUS_TYPE_STRING, &proto);
-@@ -710,6 +718,7 @@ static void pri_deactivate_callback(const struct ofono_=
-error *error, void *data)
- 	gprs_cid_release(ctx->gprs, ctx->context.cid);
- 	ctx->context.cid =3D 0;
- 	ctx->active =3D FALSE;
-+	ctx->bearer =3D -1;
- 	ctx->context_driver->inuse =3D FALSE;
- 	ctx->context_driver =3D NULL;
- =
-
-@@ -1308,6 +1317,7 @@ static void gprs_attached_update(struct ofono_gprs *g=
-prs)
- 			gprs_cid_release(gprs, ctx->context.cid);
- 			ctx->context.cid =3D 0;
- 			ctx->active =3D FALSE;
-+			ctx->bearer =3D -1;
- 			ctx->context_driver->inuse =3D FALSE;
- 			ctx->context_driver =3D NULL;
- =
-
-@@ -1591,6 +1601,7 @@ static struct pri_context *add_context(struct ofono_g=
-prs *gprs,
- 		return NULL;
+diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
+index a38c6b4..4ae1b57 100644
+--- a/drivers/atmodem/gprs.c
++++ b/drivers/atmodem/gprs.c
+@@ -200,6 +200,59 @@ static void xdatastat_notify(GAtResult *result, gpoint=
+er user_data)
  	}
- =
-
-+	context->bearer =3D -1;
- 	context->id =3D id;
- =
-
- 	DBG("Registering new context");
-@@ -1783,6 +1794,7 @@ static void gprs_deactivate_for_all(const struct ofon=
-o_error *error,
- =
-
- 	gprs_cid_release(gprs, ctx->context.cid);
- 	ctx->active =3D FALSE;
-+	ctx->bearer =3D -1;
- 	ctx->context.cid =3D 0;
- 	ctx->context_driver->inuse =3D FALSE;
- 	ctx->context_driver =3D NULL;
-@@ -2001,6 +2013,31 @@ void ofono_gprs_add_context(struct ofono_gprs *gprs,
- 	__ofono_atom_register(gc->atom, gprs_context_unregister);
  }
  =
 
-+void ofono_gprs_bearer_notify(struct ofono_gprs *gprs,
-+				unsigned int cid, int bearer)
++static void cpsb_notify(GAtResult *result, gpointer user_data)
 +{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	GSList *l;
++	struct ofono_gprs *gprs =3D user_data;
++	GAtResultIter iter;
++	gint cid, bearer;
 +
-+	for (l =3D gprs->contexts; l; l =3D l->next) {
-+		struct pri_context *ctx =3D l->data;
-+		const char *value;
++	g_at_result_iter_init(&iter, result);
 +
-+		if (ctx->context.cid !=3D cid)
-+			continue;
++	if (!g_at_result_iter_next(&iter, "+CPSB:"))
++		return;
 +
-+		if (ctx->bearer =3D=3D bearer)
-+			break;
++	if (!g_at_result_iter_next_number(&iter, &cid))
++		return;
 +
-+		value =3D packet_bearer_to_string(bearer);
++	if (!g_at_result_iter_next_number(&iter, &bearer))
++		return;
 +
-+		ctx->bearer =3D bearer;
-+		ofono_dbus_signal_property_changed(conn, ctx->path,
-+					OFONO_CONNECTION_CONTEXT_INTERFACE,
-+					"Bearer", DBUS_TYPE_STRING, &value);
-+	}
++	ofono_gprs_bearer_notify(gprs, cid, bearer);
 +}
 +
- void ofono_gprs_context_deactivated(struct ofono_gprs_context *gc,
- 					unsigned int cid)
++static void cpsb_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_gprs *gprs =3D user_data;
++	GAtResultIter iter;
++	gint cid, bearer;
++
++	if (!ok)
++		return;
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "+CPSB:"))
++		return;
++
++	g_at_result_iter_next_number(&iter, NULL);
++
++	while (g_at_result_iter_next_number(&iter, &cid) &&
++			g_at_result_iter_next_number(&iter, &bearer))
++		ofono_gprs_bearer_notify(gprs, cid, bearer);
++}
++
++static void cpsb_set_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct ofono_gprs *gprs =3D user_data;
++	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
++
++	if (!ok)
++		return;
++
++	g_at_chat_register(gd->chat, "+CPSB:", cpsb_notify, FALSE, gprs, NULL);
++	g_at_chat_send(gd->chat, "AT+CPSB?", none_prefix, cpsb_cb, gprs, NULL);
++}
++
+ static void gprs_initialized(gboolean ok, GAtResult *result, gpointer user=
+_data)
  {
-@@ -2024,6 +2061,7 @@ void ofono_gprs_context_deactivated(struct ofono_gprs=
-_context *gc,
- 		gprs_cid_release(ctx->gprs, ctx->context.cid);
- 		ctx->context.cid =3D 0;
- 		ctx->active =3D FALSE;
-+		ctx->bearer =3D -1;
- 		ctx->context_driver->inuse =3D FALSE;
- 		ctx->context_driver =3D NULL;
+ 	struct ofono_gprs *gprs =3D user_data;
+@@ -208,6 +261,8 @@ static void gprs_initialized(gboolean ok, GAtResult *re=
+sult, gpointer user_data)
+ 	g_at_chat_register(gd->chat, "+CGEV:", cgev_notify, FALSE, gprs, NULL);
+ 	g_at_chat_register(gd->chat, "+CGREG:", cgreg_notify,
+ 					FALSE, gprs, NULL);
++	g_at_chat_send(gd->chat, "AT+CPSB=3D1", none_prefix,
++		cpsb_set_cb, gprs, NULL);
  =
 
+ 	switch (gd->vendor) {
+ 	case OFONO_VENDOR_IFX:
 -- =
 
 1.7.1
 
 
---===============5368656255790554598==--
+--===============5521417215157288594==--
 
