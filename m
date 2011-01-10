@@ -1,68 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============4595421666844202716=="
+Content-Type: multipart/mixed; boundary="===============1883062511817359482=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 3/4] Bearer documentation
-Date: Mon, 10 Jan 2011 14:41:23 +0200
-Message-ID: <201101101441.23644.remi.denis-courmont@nokia.com>
-In-Reply-To: <4D273DFD.7020408@gmail.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 2/2] Inform Huawei modem using ACCM 0xffffffff to trasmit
+ package. Using my Huawei modem (EM770W) if set ACCM as 0x00000000,
+ the RXJ- event will happend, and PPP link down,
+ when IP package transmit for a while. After I set ACCM as 0xffffff
+Date: Mon, 10 Jan 2011 11:10:02 -0200
+Message-ID: <AANLkTimc9f-JFkA1p02YAhjyd9iv4EW8wRd24fiH_nnr@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4595421666844202716==
+--===============1883062511817359482==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Friday 07 January 2011 18:23:25 ext Denis Kenzior, you wrote:
-> Hi R=C3=A9mi,
-> =
+Hi Martin
 
-> On 01/07/2011 10:02 AM, R=C3=A9mi Denis-Courmont wrote:
-> > ---
-> > =
+On Mon, Jan 10, 2011 at 8:40 AM,  <martin.xu@intel.com> wrote:
+> From: Martin Xu <martin.xu@intel.com>
 
-> >  doc/connman-api.txt |   10 ++++++++++
-> >  1 files changed, 10 insertions(+), 0 deletions(-)
-> > =
+The subject of this email is very very long. When using git-send-email
+/ git-format-patch you should put the "title" of the patch (in this
+case the subject of the email) on first line + one blank line + the
+description of the patch.
 
-> > diff --git a/doc/connman-api.txt b/doc/connman-api.txt
-> > index b13efd1..18185d7 100644
-> > --- a/doc/connman-api.txt
-> > +++ b/doc/connman-api.txt
-> > @@ -150,6 +150,16 @@ Properties	boolean Active [readwrite]
-> > =
+Please, refer to rule M5 of doc/coding-style.
 
-> >  			Holds whether the context is activated.  This value
-> >  			can be set to activate / deactivate the context.
-> > =
 
-> > +		string Bearer [readonly, optional]
-> > +
-> > +			Contains the current packet switched bearer of the
-> > +			connection context.
-> > +
-> > +			Possible values are the same as for the Technology
-> > +			property the NetworkRegistration object, plus
-> > +			"none" if no data activity is ongoing, or "unknown"
-> > +			if not known.
-> > +
-> =
 
-> Please remove this "unknown" bit.  The property is already optional, so
-> if it is never reported by the driver we shouldn't report it up, even if
-> the context is active.
+Lucas De Marchi
 
-That would not work. We need some default value otherwise we cannot signal =
-the =
-
-change from known to unknown, at least not with the oFono property change =
-
-interface.
-
--- =
-
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============4595421666844202716==--
+--===============1883062511817359482==--
 
