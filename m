@@ -1,58 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============3361839472975880388=="
+Content-Type: multipart/mixed; boundary="===============0414058768732907607=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v3 0/6] Query retry counters
-Date: Mon, 10 Jan 2011 15:43:31 -0600
-Message-ID: <4D2B7D83.3060304@gmail.com>
-In-Reply-To: <1294693351-25475-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH v3 6/6] atmodem: implement query for remaining pin retries
+Date: Mon, 10 Jan 2011 15:44:14 -0600
+Message-ID: <4D2B7DAE.5020505@gmail.com>
+In-Reply-To: <1294693351-25475-7-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3361839472975880388==
+--===============0414058768732907607==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Lucas,
 
-On 01/10/2011 03:02 PM, Lucas De Marchi wrote:
-> Diff from previous version:
->  - memset(retries, -1, sizeof(retries)) works, but it's just because of l=
-uck in
->    2's complement logic. Use a loop instead.
->  - "^CPIN" command is exclusive to HUAWEI. So change "xcpin" prefix to
->    "huawei_cpin" and passs OFONO_VENDOR_HUAWEI quirk on sim creation. Thi=
-s change
->    needed 2 more patches (the first ones) in order to make it work.
->  - space cleanup
->  - use memcmp to compare the pin_retries array instead of a loop
-> =
+> +static void at_pin_retries_query(struct ofono_sim *sim,
+> +				ofono_sim_pin_retries_cb_t cb, void *data)
+> +{
+> +	struct sim_data *sd =3D ofono_sim_get_data(sim);
+> +
+> +	DBG("");
+> +
+> +	if (sd->vendor =3D=3D OFONO_VENDOR_HUAWEI) {
+> +		struct cb_data *cbd =3D cb_data_new(cb, data);
+> +
+> +		if (cbd =3D=3D NULL) {
+> +			CALLBACK_WITH_FAILURE(cb, NULL, data);
+> +
+> +			return;
+> +		}
+> +
+> +		if (g_at_chat_send(sd->chat, "AT^CPIN?", huawei_cpin_prefix,
+> +					huawei_cpin_cb, cbd, g_free) > 0)
+> +			return;
+> +
+> +		g_free(cbd);
+> +
+> +		CALLBACK_WITH_FAILURE(cb, NULL, data);
+> +	}
+> +
+> +	CALLBACK_WITH_SUCCESS(cb, NULL, data);
 
-> Lucas De Marchi (6):
->   atmodem: check for VENDOR_HUAWEI on sim atom
->   huawei: use VENDOR_HUAWEI quirk on sim creation
->   include: add method to query pin Retries
->   sim: query remaining pin retries
->   doc: detail Retries property
->   atmodem: implement query for remaining pin retries
-> =
+I believe this will cause the core to segfault when running on
+non-huawei devices.
 
->  doc/sim-api.txt       |   12 ++++++
->  drivers/atmodem/sim.c |   95 +++++++++++++++++++++++++++++++++++++++++++=
-+++++-
->  include/sim.h         |    5 +++
->  plugins/huawei.c      |    2 +-
->  src/sim.c             |   90 +++++++++++++++++++++++++++++++++++++++++++=
-+++
->  5 files changed, 202 insertions(+), 2 deletions(-)
-> =
-
-
-I have applied the first 5 patches in this series.  See my comments for
-the last patch.
+> +}
 
 Regards,
 -Denis
 
---===============3361839472975880388==--
+--===============0414058768732907607==--
 
