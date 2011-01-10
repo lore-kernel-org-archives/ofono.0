@@ -1,49 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============7298121086274616826=="
+Content-Type: multipart/mixed; boundary="===============0634254428659577732=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 09/10] Bearer documentation
-Date: Mon, 10 Jan 2011 15:15:24 +0200
-Message-ID: <1294665325-11937-9-git-send-email-remi.denis-courmont@nokia.com>
-In-Reply-To: <201101101515.04596.remi.denis-courmont@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [RFC 0/5] Add support for TextTelephony call notifications
+Date: Mon, 10 Jan 2011 16:01:27 +0200
+Message-ID: <1294668092-27896-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7298121086274616826==
+--===============0634254428659577732==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/connman-api.txt |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/doc/connman-api.txt b/doc/connman-api.txt
-index b13efd1..18185d7 100644
---- a/doc/connman-api.txt
-+++ b/doc/connman-api.txt
-@@ -150,6 +150,16 @@ Properties	boolean Active [readwrite]
- 			Holds whether the context is activated.  This value
- 			can be set to activate / deactivate the context.
- =
+  This is a proposal for adding TextTelephony notifications to the =
 
-+		string Bearer [readonly, optional]
-+
-+			Contains the current packet switched bearer of the
-+			connection context.
-+
-+			Possible values are the same as for the Technology
-+			property the NetworkRegistration object, plus
-+			"none" if no data activity is ongoing, or "unknown"
-+			if not known.
-+
- 		string AccessPointName [readwrite]
- =
+core and ifxmodem.
 
- 			Holds the name of the access point.  This is
--- =
+Regards,
+Jeevaka
 
-1.7.1
+Jeevaka Badrappan (5):
+  types: add tty flag to ofono_call
+  voicecall: Add tty property support
+  voicecall: Add ofono_voicecall_tty_notify api
+  ifxmodem: Add support for tty call notifications
+  doc: Describe TextTelephony property
+
+ doc/voicecall-api.txt        |    7 +++++++
+ drivers/ifxmodem/voicecall.c |   36 +++++++++++++++++++++++++++++++-----
+ include/types.h              |    1 +
+ include/voicecall.h          |    2 ++
+ src/voicecall.c              |   32 ++++++++++++++++++++++++++++++++
+ 5 files changed, 73 insertions(+), 5 deletions(-)
 
 
---===============7298121086274616826==--
+--===============0634254428659577732==--
 
