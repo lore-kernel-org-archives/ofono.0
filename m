@@ -1,44 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============4338208362358559731=="
+Content-Type: multipart/mixed; boundary="===============8868953016413726649=="
 MIME-Version: 1.0
-From: Lasse.Kunnasluoto@tieto.com
-Subject: [PATCH] gprs: Fixing mem leak
-Date: Mon, 10 Jan 2011 09:08:54 +0200
-Message-ID: <3A42A4F4F2ABA44EBD5853ED09926647124764804B@EXMB02.eu.tieto.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 0/4 v2] Network Time plugin
+Date: Mon, 10 Jan 2011 10:01:57 +0200
+Message-ID: <201101101001.57882.remi.denis-courmont@nokia.com>
+In-Reply-To: <1294434331.2501.25.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4338208362358559731==
+--===============8868953016413726649==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/gprs.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
+On Friday 07 January 2011 23:05:31 ext Marcel Holtmann, you wrote:
+> I don't even like the fact that we imported it in ConnMan. That might
+> have been a mistake actually. I really prefer to have that on the
+> filesystem and we just mmap() it. And it is up to the distribution to
+> provide such a file.
+> =
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 58166f8..aeb505f 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -1152,8 +1152,10 @@ static struct pri_context *pri_context_create(struct=
- ofono_gprs *gprs,
- =
+> We do a similar thing with OUI for BlueZ, so that is clearly the better
+> approach here.
 
- 	if (name =3D=3D NULL) {
- 		name =3D gprs_context_default_name(type);
--		if (name =3D=3D NULL)
-+		if (name =3D=3D NULL) {
-+			g_free(context);
- 			return NULL;
-+		}
- 	}
- =
+So I guess there are two different things here:
+- whether oFono should parse that file,
+- whether oFono should ship that file.
 
- 	context->gprs =3D gprs;
+I guess you're arguing that oFono shouldn't ship the file, but it could sti=
+ll =
+
+parse it from a known location.
+
 -- =
 
-1.7.0.4
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-
---===============4338208362358559731==--
+--===============8868953016413726649==--
 
