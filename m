@@ -1,52 +1,255 @@
-Content-Type: multipart/mixed; boundary="===============7759287445416396556=="
+Content-Type: multipart/mixed; boundary="===============2189270969179391047=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 3/4] Bearer documentation
-Date: Mon, 10 Jan 2011 18:34:54 +0200
-Message-ID: <201101101834.55049.remi.denis-courmont@nokia.com>
-In-Reply-To: <4D2B3375.1080907@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v3 2/4] sim: query remaining pin retries
+Date: Mon, 10 Jan 2011 13:38:29 -0600
+Message-ID: <4D2B6035.4000808@gmail.com>
+In-Reply-To: <1294248040-14342-3-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7759287445416396556==
+--===============2189270969179391047==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Monday 10 January 2011 18:27:33 ext Denis Kenzior, you wrote:
-> Hi R=C3=A9mi,
+Hi Lucas,
+
+On 01/05/2011 11:20 AM, Lucas De Marchi wrote:
+> Check the remaining pin retries after each operation that might have
+> changed it, i.e. locking, unlocking, reseting or changing pin.
+> ---
+>  src/sim.c |   97 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  1 files changed, 97 insertions(+), 0 deletions(-)
 > =
 
-> On 01/10/2011 05:21 AM, R=C3=A9mi Denis-Courmont wrote:
-> > On Friday 07 January 2011 18:23:25 ext Denis Kenzior, you wrote:
-> >> The other question I have is whether we should report this at the
-> >> context level or at the ConnectionManager level.  Can different contex=
-ts
-> >> truly have different bearers?
-> > =
+> diff --git a/src/sim.c b/src/sim.c
+> index 335f611..5374da1 100644
+> --- a/src/sim.c
+> +++ b/src/sim.c
+> @@ -62,6 +62,8 @@ struct ofono_sim {
+>  	enum ofono_sim_password_type pin_type;
+>  	gboolean locked_pins[OFONO_SIM_PASSWORD_SIM_PUK]; /* Number of PINs */
+>  =
 
-> > At least for 3G with HS*PA, I believe we can. In my understanding, HSPA
-> > channels are allocated per contexts. Correct me if I'm wrong.
-> =
+> +	int pin_retries[OFONO_SIM_PASSWORD_INVALID];
+> +
+>  	enum ofono_sim_phase phase;
+>  	unsigned char mnc_length;
+>  	enum ofono_sim_cphs_phase cphs_phase;
+> @@ -248,6 +250,33 @@ static char **get_locked_pins(struct ofono_sim *sim)
+>  	return ret;
+>  }
+>  =
 
-> I don't know, to me it would not make sense to allocate different
-> bearers per context, but I'm not an RF engineer.  Do note that at least
-> several vendors provide extension commands that report the global active
-> bearer, not per context.  For instance, see the Ericsson *CPSB command...
+> +static void **get_pin_retries(struct ofono_sim *sim)
+> +{
+> +	int i, nelem;
+> +	void **ret;
+> +
+> +	for (i =3D 1, nelem =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++) {
+> +		if (sim->pin_retries[i] =3D=3D -1)
+> +			continue;
+> +
+> +		nelem+=3D1;
+> +	}
+> +
+> +	ret =3D g_new0(void *, nelem * 2 + 1);
+> +
+> +	nelem =3D 0;
+> +
+> +	for (i =3D 1; i < OFONO_SIM_PASSWORD_INVALID; i++) {
+> +		if (sim->pin_retries[i] =3D=3D -1)
+> +			continue;
+> +
+> +		ret[nelem++] =3D (void *)(sim_passwd_name(i));
 
-The UI wants to show a single icon for the number of "G's". I would assume =
+Do you really need parentheses around the sim_passwd_name call?  Also,
+you need a space after the cast.  e.g. (void *) sim_passwd_name(i);
 
-that's meant to address this use case. Then you don't need to iterate over =
-all =
+> +		ret[nelem++] =3D &sim->pin_retries[i];
+> +	}
+> +
+> +	return ret;
+> +}
+> +
+>  static char **get_service_numbers(GSList *service_numbers)
+>  {
+>  	int nelem;
+> @@ -287,6 +316,7 @@ static DBusMessage *sim_get_properties(DBusConnection=
+ *conn,
+>  	char **service_numbers;
+>  	char **locked_pins;
+>  	const char *pin_name;
+> +	void **pin_retries;
+>  	dbus_bool_t present =3D sim->state !=3D OFONO_SIM_STATE_NOT_PRESENT;
+>  	dbus_bool_t fdn;
+>  	dbus_bool_t bdn;
+> @@ -369,12 +399,63 @@ static DBusMessage *sim_get_properties(DBusConnecti=
+on *conn,
+>  				DBUS_TYPE_STRING,
+>  				(void *) &pin_name);
+>  =
 
-contexts, especially those not allocated through that this particular AT =
+> +	pin_retries =3D get_pin_retries(sim);
+> +
 
-serial port.
+We're not always consistent, but I prefer to logically group operations
+together.  So there should be no empty lines between pin_retries,
+ofono_dbus_dict_append_dict and g_free.
 
--- =
+> +	ofono_dbus_dict_append_dict(&dict, "Retries", DBUS_TYPE_BYTE,
+> +								&pin_retries);
+> +
+> +	g_free(pin_retries);
+> +
+>  done:
+>  	dbus_message_iter_close_container(&iter, &dict);
+>  =
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
+>  	return reply;
+>  }
+>  =
 
---===============7759287445416396556==--
+> +static void sim_pin_retries_query_cb(const struct ofono_error *error,
+> +					int retries[OFONO_SIM_PASSWORD_INVALID],
+> +					void *data)
+> +{
+> +	struct ofono_sim *sim =3D data;
+> +	DBusConnection *conn =3D ofono_dbus_get_connection();
+> +	const char *path =3D __ofono_atom_get_path(sim->atom);
+> +	int i;
+> +	void **pin_retries;
+> +
+> +	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+> +		ofono_error("Querying remaining pin retries failed");
+> +
+> +		return;
+> +	}
+> +
+> +	for (i =3D 1; i < OFONO_SIM_PASSWORD_INVALID; i++) {
+> +		if (retries[i] !=3D sim->pin_retries[i])
+> +			break;
+> +	}
+> +
+> +	if (i =3D=3D OFONO_SIM_PASSWORD_INVALID)
+> +		return;
+> +
+
+I think the above for and if statements can be easily handled by using
+memcmp.
+
+> +	memcpy(sim->pin_retries, retries, sizeof(sim->pin_retries));
+> +
+> +	pin_retries =3D get_pin_retries(sim);
+> +
+> +	ofono_dbus_signal_dict_property_changed(conn, path,
+> +					OFONO_SIM_MANAGER_INTERFACE, "Retries",
+> +					DBUS_TYPE_BYTE,	&pin_retries);
+> +
+> +	g_free(pin_retries);
+
+Same comment as above about grouping.
+
+> +}
+> +
+> +static void sim_pin_retries_check(struct ofono_sim *sim)
+> +{
+> +	if (sim->driver->query_pin_retries =3D=3D NULL)
+> +		return;
+> +
+> +	sim->driver->query_pin_retries(sim, sim_pin_retries_query_cb, sim);
+> +}
+> +
+> +
+>  static void msisdn_set_done(struct msisdn_set_request *req)
+>  {
+>  	DBusMessage *reply;
+> @@ -549,6 +630,8 @@ static void sim_locked_cb(struct ofono_sim *sim, gboo=
+lean locked)
+>  						"LockedPins", DBUS_TYPE_STRING,
+>  						&locked_pins);
+>  	g_strfreev(locked_pins);
+> +
+> +	sim_pin_retries_check(sim);
+>  }
+>  =
+
+>  static void sim_unlock_cb(const struct ofono_error *error, void *data)
+> @@ -557,7 +640,10 @@ static void sim_unlock_cb(const struct ofono_error *=
+error, void *data)
+>  =
+
+>  	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+>  		DBusMessage *reply =3D __ofono_error_failed(sim->pending);
+> +
+>  		__ofono_dbus_pending_reply(&sim->pending, reply);
+> +		sim_pin_retries_check(sim);
+> +
+>  		return;
+>  	}
+>  =
+
+> @@ -570,7 +656,10 @@ static void sim_lock_cb(const struct ofono_error *er=
+ror, void *data)
+>  =
+
+>  	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+>  		DBusMessage *reply =3D __ofono_error_failed(sim->pending);
+> +
+>  		__ofono_dbus_pending_reply(&sim->pending, reply);
+> +		sim_pin_retries_check(sim);
+> +
+>  		return;
+>  	}
+>  =
+
+> @@ -639,11 +728,16 @@ static void sim_change_pin_cb(const struct ofono_er=
+ror *error, void *data)
+>  	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
+>  		__ofono_dbus_pending_reply(&sim->pending,
+>  				__ofono_error_failed(sim->pending));
+> +
+> +		sim_pin_retries_check(sim);
+> +
+>  		return;
+>  	}
+>  =
+
+>  	__ofono_dbus_pending_reply(&sim->pending,
+>  				dbus_message_new_method_return(sim->pending));
+> +
+> +	sim_pin_retries_check(sim);
+>  }
+>  =
+
+>  static DBusMessage *sim_change_pin(DBusConnection *conn, DBusMessage *ms=
+g,
+> @@ -1594,6 +1688,8 @@ static void sim_pin_query_cb(const struct ofono_err=
+or *error,
+>  						&pin_name);
+>  	}
+>  =
+
+> +	sim_pin_retries_check(sim);
+> +
+>  checkdone:
+>  	if (pin_type =3D=3D OFONO_SIM_PASSWORD_NONE)
+>  		sim_initialize_after_pin(sim);
+> @@ -2196,6 +2292,7 @@ struct ofono_sim *ofono_sim_create(struct ofono_mod=
+em *modem,
+>  	sim->phase =3D OFONO_SIM_PHASE_UNKNOWN;
+>  	sim->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_SIM,
+>  						sim_remove, sim);
+> +	memset(sim->pin_retries, -1, sizeof(sim->pin_retries));
+>  =
+
+>  	for (l =3D g_drivers; l; l =3D l->next) {
+>  		const struct ofono_sim_driver *drv =3D l->data;
+
+Regards,
+-Denis
+
+--===============2189270969179391047==--
 
