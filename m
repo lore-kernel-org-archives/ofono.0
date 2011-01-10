@@ -1,34 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============6605768096865708138=="
+Content-Type: multipart/mixed; boundary="===============3361839472975880388=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCHv4 2/2] udev: Handle TC65 modem
-Date: Mon, 10 Jan 2011 15:18:17 -0600
-Message-ID: <4D2B7799.8090403@gmail.com>
-In-Reply-To: <1294616688-17246-3-git-send-email-oskari.timperi@ixonos.com>
+Subject: Re: [PATCH v3 0/6] Query retry counters
+Date: Mon, 10 Jan 2011 15:43:31 -0600
+Message-ID: <4D2B7D83.3060304@gmail.com>
+In-Reply-To: <1294693351-25475-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6605768096865708138==
+--===============3361839472975880388==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oskari,
+Hi Lucas,
 
-On 01/09/2011 05:44 PM, oskari.timperi(a)ixonos.com wrote:
-> From: Oskari Timperi <oskari.timperi@iki.fi>
+On 01/10/2011 03:02 PM, Lucas De Marchi wrote:
+> Diff from previous version:
+>  - memset(retries, -1, sizeof(retries)) works, but it's just because of l=
+uck in
+>    2's complement logic. Use a loop instead.
+>  - "^CPIN" command is exclusive to HUAWEI. So change "xcpin" prefix to
+>    "huawei_cpin" and passs OFONO_VENDOR_HUAWEI quirk on sim creation. Thi=
+s change
+>    needed 2 more patches (the first ones) in order to make it work.
+>  - space cleanup
+>  - use memcmp to compare the pin_retries array instead of a loop
 > =
 
-> ---
->  plugins/udev.c |   15 +++++++++++++++
->  1 files changed, 15 insertions(+), 0 deletions(-)
+> Lucas De Marchi (6):
+>   atmodem: check for VENDOR_HUAWEI on sim atom
+>   huawei: use VENDOR_HUAWEI quirk on sim creation
+>   include: add method to query pin Retries
+>   sim: query remaining pin retries
+>   doc: detail Retries property
+>   atmodem: implement query for remaining pin retries
+> =
+
+>  doc/sim-api.txt       |   12 ++++++
+>  drivers/atmodem/sim.c |   95 +++++++++++++++++++++++++++++++++++++++++++=
++++++-
+>  include/sim.h         |    5 +++
+>  plugins/huawei.c      |    2 +-
+>  src/sim.c             |   90 +++++++++++++++++++++++++++++++++++++++++++=
++++
+>  5 files changed, 202 insertions(+), 2 deletions(-)
 > =
 
 
-Patch has been applied, thanks.
+I have applied the first 5 patches in this series.  See my comments for
+the last patch.
 
 Regards,
 -Denis
 
---===============6605768096865708138==--
+--===============3361839472975880388==--
 
