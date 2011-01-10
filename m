@@ -1,49 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============1303144303969658466=="
+Content-Type: multipart/mixed; boundary="===============9113690127099685337=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 1/1] Add voice call boolean property for MO/MT distinction
-Date: Mon, 10 Jan 2011 17:20:13 +0200
-Message-ID: <AANLkTim0s1MiQvaQkg7-5-RLBQ7NWAkgK=oXzj_38+ZF@mail.gmail.com>
-In-Reply-To: <1294157851-23271-1-git-send-email-remi.denis-courmont@nokia.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH 2/2] Document voicecall direction
+Date: Mon, 10 Jan 2011 17:26:20 +0200
+Message-ID: <1294673180-12845-2-git-send-email-remi.denis-courmont@nokia.com>
+In-Reply-To: <1294673180-12845-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1303144303969658466==
+--===============9113690127099685337==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi R=C3=A9mi,
+---
+ doc/voicecall-api.txt |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-2011/1/4 R=C3=A9mi Denis-Courmont <remi.denis-courmont@nokia.com>:
-> ---
-> =C2=A0doc/voicecall-api.txt | =C2=A0 =C2=A05 +++++
-> =C2=A0src/voicecall.c =C2=A0 =C2=A0 =C2=A0 | =C2=A0 =C2=A06 +++++-
-> =C2=A02 files changed, 10 insertions(+), 1 deletions(-)
->
-> diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-> index 4f38e6a..682b46b 100644
-> --- a/doc/voicecall-api.txt
-> +++ b/doc/voicecall-api.txt
-> @@ -92,6 +92,11 @@ Properties =C2=A0 string LineIdentification [readonly]
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0Contains the Name Identification information returned
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0by the network, if present.
->
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 boolean Originated [re=
-adonly]
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 Indicates whether the call was mobile-originated
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 (true) or mobile-terminated (false).
-> +
+diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
+index 4f38e6a..682b46b 100644
+--- a/doc/voicecall-api.txt
++++ b/doc/voicecall-api.txt
+@@ -92,6 +92,11 @@ Properties	string LineIdentification [readonly]
+ 			Contains the Name Identification information returned
+ 			by the network, if present.
+ =
 
-This (still) looks good to me. I think it makes the API complete.
++		boolean Originated [readonly]
++
++			Indicates whether the call was mobile-originated
++			(true) or mobile-terminated (false).
++
+ 		boolean Multiparty [readonly]
+ =
 
-Cheers,
-Aki
+ 			Contains the indication if the voice call is part
+-- =
 
---===============1303144303969658466==--
+1.7.1
+
+
+--===============9113690127099685337==--
 
