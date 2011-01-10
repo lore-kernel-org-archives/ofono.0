@@ -1,50 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============7404899781033045240=="
+Content-Type: multipart/mixed; boundary="===============8525206825162711221=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 1/1] Add voice call boolean property for MO/MT distinction
-Date: Mon, 10 Jan 2011 17:28:43 +0200
-Message-ID: <201101101728.44150.remi.denis-courmont@nokia.com>
-In-Reply-To: <AANLkTim0s1MiQvaQkg7-5-RLBQ7NWAkgK=oXzj_38+ZF@mail.gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 1/2] ctm: add ofono_ctm_get_modem interface
+Date: Mon, 10 Jan 2011 17:54:59 +0200
+Message-ID: <1294674900-10256-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1294674900-10256-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7404899781033045240==
+--===============8525206825162711221==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Monday 10 January 2011 17:20:13 ext Aki Niemi, you wrote:
-> 2011/1/4 R=C3=A9mi Denis-Courmont <remi.denis-courmont@nokia.com>:
-> > ---
-> >  doc/voicecall-api.txt |    5 +++++
-> >  src/voicecall.c       |    6 +++++-
-> >  2 files changed, 10 insertions(+), 1 deletions(-)
-> > =
+---
+ include/ctm.h |    2 ++
+ src/ctm.c     |    5 +++++
+ 2 files changed, 7 insertions(+), 0 deletions(-)
 
-> > diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-> > index 4f38e6a..682b46b 100644
-> > --- a/doc/voicecall-api.txt
-> > +++ b/doc/voicecall-api.txt
-> > @@ -92,6 +92,11 @@ Properties   string LineIdentification [readonly]
-> >                        Contains the Name Identification information
-> > returned by the network, if present.
-> > =
+diff --git a/include/ctm.h b/include/ctm.h
+index 5305469..71e3d61 100644
+--- a/include/ctm.h
++++ b/include/ctm.h
+@@ -59,6 +59,8 @@ void ofono_ctm_remove(struct ofono_ctm *ctm);
+ void ofono_ctm_set_data(struct ofono_ctm *ctm, void *data);
+ void *ofono_ctm_get_data(struct ofono_ctm *ctm);
+ =
 
-> > +               boolean Originated [readonly]
-> > +
-> > +                       Indicates whether the call was mobile-originated
-> > +                       (true) or mobile-terminated (false).
-> > +
-> =
-
-> This (still) looks good to me. I think it makes the API complete.
-
-I resent it with the doc/ and src/ stuff split anyway.
-
++struct ofono_modem *ofono_ctm_get_modem(struct ofono_ctm *ctm);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/src/ctm.c b/src/ctm.c
+index 1df34c2..389bb8e 100644
+--- a/src/ctm.c
++++ b/src/ctm.c
+@@ -330,3 +330,8 @@ void *ofono_ctm_get_data(struct ofono_ctm *ctm)
+ {
+ 	return ctm->driver_data;
+ }
++
++struct ofono_modem *ofono_ctm_get_modem(struct ofono_ctm *ctm)
++{
++	return __ofono_atom_get_modem(ctm->atom);
++}
+\ No newline at end of file
 -- =
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
+1.7.0.4
 
---===============7404899781033045240==--
+
+--===============8525206825162711221==--
 
