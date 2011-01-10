@@ -1,46 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============6379377874464910707=="
+Content-Type: multipart/mixed; boundary="===============6515968128408366759=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v3 1/6] atmodem: check for VENDOR_HUAWEI on sim atom
-Date: Mon, 10 Jan 2011 19:02:26 -0200
-Message-ID: <1294693351-25475-2-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH v3 3/6] include: add method to query pin Retries
+Date: Mon, 10 Jan 2011 19:02:28 -0200
+Message-ID: <1294693351-25475-4-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1294693351-25475-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6379377874464910707==
+--===============6515968128408366759==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/sim.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
+ include/sim.h |    5 +++++
+ 1 files changed, 5 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 1653ede..33f756d 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -143,8 +143,10 @@ static void at_sim_read_info(struct ofono_sim *sim, in=
-t fileid,
+diff --git a/include/sim.h b/include/sim.h
+index 7860e24..830322a 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -108,6 +108,9 @@ typedef void (*ofono_sim_passwd_cb_t)(const struct ofon=
+o_error *error,
+ 					enum ofono_sim_password_type type,
+ 					void *data);
  =
 
- 	snprintf(buf, sizeof(buf), "AT+CRSM=3D192,%i", fileid);
++typedef void (*ofono_sim_pin_retries_cb_t)(const struct ofono_error *error,
++			int retries[OFONO_SIM_PASSWORD_INVALID], void *data);
++
+ typedef void (*ofono_sim_lock_unlock_cb_t)(const struct ofono_error *error,
+ 					void *data);
  =
 
--	if (sd->vendor =3D=3D OFONO_VENDOR_QUALCOMM_MSM)
-+	if (sd->vendor =3D=3D OFONO_VENDOR_QUALCOMM_MSM ||
-+					sd->vendor =3D=3D OFONO_VENDOR_HUAWEI) {
- 		strcat(buf, ",0,0,255"); /* Maximum possible length */
-+	}
- =
-
- 	if (g_at_chat_send(sd->chat, buf, crsm_prefix,
- 				at_crsm_info_cb, cbd, g_free) > 0)
+@@ -144,6 +147,8 @@ struct ofono_sim_driver {
+ 			ofono_sim_passwd_cb_t cb, void *data);
+ 	void (*send_passwd)(struct ofono_sim *sim, const char *passwd,
+ 			ofono_sim_lock_unlock_cb_t cb, void *data);
++	void (*query_pin_retries)(struct ofono_sim *sim,
++				ofono_sim_pin_retries_cb_t cb, void *data);
+ 	void (*reset_passwd)(struct ofono_sim *sim, const char *puk,
+ 			const char *passwd,
+ 			ofono_sim_lock_unlock_cb_t cb, void *data);
 -- =
 
 1.7.3.5
 
 
---===============6379377874464910707==--
+--===============6515968128408366759==--
 
