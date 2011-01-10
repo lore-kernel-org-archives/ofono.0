@@ -1,68 +1,180 @@
-Content-Type: multipart/mixed; boundary="===============3620687264413105679=="
+Content-Type: multipart/mixed; boundary="===============5659572174976403064=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 2/2] TODO: mark 'SIM PIN retry counter' task as done
-Date: Mon, 10 Jan 2011 19:59:54 -0200
-Message-ID: <1294696794-28903-2-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1294696794-28903-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 1/5] sim: Cache flushing functions.
+Date: Mon, 10 Jan 2011 12:01:31 +0100
+Message-ID: <1294657295-14041-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3620687264413105679==
+--===============5659572174976403064==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- TODO             |    8 --------
- doc/features.txt |    5 +++++
- 2 files changed, 5 insertions(+), 8 deletions(-)
+ src/sim.c   |   23 ++++++++++++++++++++
+ src/simfs.c |   68 ++++++++++++++++++++++++++++++++++++++++++++-----------=
+---
+ src/simfs.h |    5 ++++
+ 3 files changed, 79 insertions(+), 17 deletions(-)
 
-diff --git a/TODO b/TODO
-index 12f313b..495d539 100644
---- a/TODO
-+++ b/TODO
-@@ -72,14 +72,6 @@ SIM / SIM File system
-   Priority: Low
-   Complexity: C2
- =
-
--- Support proprietary extensions for SIM PIN retry counter.  Most vendors
--  provide an extension commands to obtain such a retry counter for PINs and
--  PUKs.  Need to enable this as a property in oFono.
--
--  Priority: Low
--  Complexity: C2
--  Owner: Lucas De Marchi <lucas.demarchi@profusion.mobi>
--
- - Add support for SIM 'ready' notifications from the driver to the core.  =
-Most
-   modem manufacturers initialize the SIM (e.g. cache SIM file system, STK
-   initialization, etc) internally before allowing the telephony stack to
-diff --git a/doc/features.txt b/doc/features.txt
-index a9fdb86..0a3357f 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -256,6 +256,11 @@ SIM
-   ForwardingFlagOnSim will be set and VoiceUnconditional may contain the
-   "forwarded to" number if the number is available.
- =
-
-+- Support SIM retry counters. oFono exports all the retry counters availab=
-le on
-+  SIM, e.g., PIN, PIN2, PUK and PUK2. Whenever an action changes them, a s=
-ignal
-+  is sent with the updated values, so user can keep track of how many times
-+  he/she can still give a wrong pin before the SIM locking down.
+diff --git a/src/sim.c b/src/sim.c
+index 335f611..27ff572 100644
+--- a/src/sim.c
++++ b/src/sim.c
+@@ -2255,3 +2255,26 @@ void *ofono_sim_get_data(struct ofono_sim *sim)
+ {
+ 	return sim->driver_data;
+ }
 +
- Radio settings
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++static void sim_file_changed_flush(struct ofono_sim *sim, int id)
++{
++	int i, imgid;
++
++	if (id =3D=3D SIM_EFIMG_FILEID)
++		/* All cached images become invalid */
++		sim_fs_image_cache_flush(sim->simfs);
++	else if (sim->efimg)
++		/*
++		 * Data and CLUT for image instances stored in the changed
++		 * file need to be re-read.
++		 */
++		for (i =3D sim->efimg_length / 9 - 1; i >=3D 0; i--) {
++			imgid =3D (sim->efimg[i * 9 + 3] << 8) |
++				sim->efimg[i * 9 + 4];
++
++			if (imgid =3D=3D id)
++				sim_fs_image_cache_flush_file(sim->simfs, i);
++		}
++
++	sim_fs_cache_flush_file(sim->simfs, id);
++}
+diff --git a/src/simfs.c b/src/simfs.c
+index 617af14..b77e1dc 100644
+--- a/src/simfs.c
++++ b/src/simfs.c
+@@ -907,9 +907,6 @@ void sim_fs_check_version(struct sim_fs *fs)
+ 	const char *imsi =3D ofono_sim_get_imsi(fs->sim);
+ 	enum ofono_sim_phase phase =3D ofono_sim_get_phase(fs->sim);
+ 	unsigned char version;
+-	struct dirent **entries;
+-	int len;
+-	char *path;
  =
 
+ 	if (imsi =3D=3D NULL || phase =3D=3D OFONO_SIM_PHASE_UNKNOWN)
+ 		return;
+@@ -918,10 +915,20 @@ void sim_fs_check_version(struct sim_fs *fs)
+ 		if (version =3D=3D SIM_FS_VERSION)
+ 			return;
+ =
+
+-	path =3D g_strdup_printf(SIM_CACHE_BASEPATH, imsi, phase);
++	sim_fs_cache_flush(fs);
++
++	version =3D SIM_FS_VERSION;
++	write_file(&version, 1, SIM_CACHE_MODE, SIM_CACHE_VERSION, imsi, phase);
++}
++
++void sim_fs_cache_flush(struct sim_fs *fs)
++{
++	const char *imsi =3D ofono_sim_get_imsi(fs->sim);
++	enum ofono_sim_phase phase =3D ofono_sim_get_phase(fs->sim);
++	char *path =3D g_strdup_printf(SIM_CACHE_BASEPATH, imsi, phase);
++	struct dirent **entries;
++	int len =3D scandir(path, &entries, NULL, alphasort);
+ =
+
+-	ofono_info("Detected old simfs version in %s, removing", path);
+-	len =3D scandir(path, &entries, NULL, alphasort);
+ 	g_free(path);
+ =
+
+ 	if (len > 0) {
+@@ -934,20 +941,47 @@ void sim_fs_check_version(struct sim_fs *fs)
+ 		g_free(entries);
+ 	}
+ =
+
+-	path =3D g_strdup_printf(SIM_IMAGE_CACHE_BASEPATH, imsi, phase);
+-	len =3D scandir(path, &entries, NULL, alphasort);
++	sim_fs_image_cache_flush(fs);
++}
++
++void sim_fs_cache_flush_file(struct sim_fs *fs, int id)
++{
++	const char *imsi =3D ofono_sim_get_imsi(fs->sim);
++	enum ofono_sim_phase phase =3D ofono_sim_get_phase(fs->sim);
++	char *path =3D g_strdup_printf(SIM_CACHE_PATH, imsi, phase, id);
++
++	remove(path);
+ 	g_free(path);
++}
+ =
+
+-	if (len > 0) {
+-		/* Remove everything */
+-		while (len--) {
+-			remove_imagefile(imsi, phase, entries[len]);
+-			g_free(entries[len]);
+-		}
++void sim_fs_image_cache_flush(struct sim_fs *fs)
++{
++	const char *imsi =3D ofono_sim_get_imsi(fs->sim);
++	enum ofono_sim_phase phase =3D ofono_sim_get_phase(fs->sim);
++	char *path =3D g_strdup_printf(SIM_IMAGE_CACHE_BASEPATH, imsi, phase);
++	struct dirent **entries;
++	int len =3D scandir(path, &entries, NULL, alphasort);
+ =
+
+-		g_free(entries);
++	g_free(path);
++
++	if (len <=3D 0)
++		return;
++
++	/* Remove everything */
++	while (len--) {
++		remove_imagefile(imsi, phase, entries[len]);
++		g_free(entries[len]);
+ 	}
+ =
+
+-	version =3D SIM_FS_VERSION;
+-	write_file(&version, 1, SIM_CACHE_MODE, SIM_CACHE_VERSION, imsi, phase);
++	g_free(entries);
++}
++
++void sim_fs_image_cache_flush_file(struct sim_fs *fs, int id)
++{
++	const char *imsi =3D ofono_sim_get_imsi(fs->sim);
++	enum ofono_sim_phase phase =3D ofono_sim_get_phase(fs->sim);
++	char *path =3D g_strdup_printf(SIM_IMAGE_CACHE_PATH, imsi, phase, id);
++
++	remove(path);
++	g_free(path);
+ }
+diff --git a/src/simfs.h b/src/simfs.h
+index ef962db..8c6f761 100644
+--- a/src/simfs.h
++++ b/src/simfs.h
+@@ -47,4 +47,9 @@ char *sim_fs_get_cached_image(struct sim_fs *fs, int id);
+ =
+
+ void sim_fs_cache_image(struct sim_fs *fs, const char *image, int id);
+ =
+
++void sim_fs_cache_flush(struct sim_fs *fs);
++void sim_fs_cache_flush_file(struct sim_fs *fs, int id);
++void sim_fs_image_cache_flush(struct sim_fs *fs);
++void sim_fs_image_cache_flush_file(struct sim_fs *fs, int id);
++
+ void sim_fs_free(struct sim_fs *fs);
 -- =
 
-1.7.3.5
+1.7.1.86.g0e460.dirty
 
 
---===============3620687264413105679==--
+--===============5659572174976403064==--
 
