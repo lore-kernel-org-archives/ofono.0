@@ -1,62 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============5474962376055809903=="
+Content-Type: multipart/mixed; boundary="===============7347850346444155953=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [RFC PATCH 3/4] sim: add ofono_sim_get_mnc_length
-Date: Mon, 10 Jan 2011 15:11:11 +0200
-Message-ID: <1294665072-13630-4-git-send-email-jukka.saunamaki@nokia.com>
-In-Reply-To: <1294665072-13630-1-git-send-email-jukka.saunamaki@nokia.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH 0/10] Packet switched data technology
+Date: Mon, 10 Jan 2011 15:15:04 +0200
+Message-ID: <201101101515.04596.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5474962376055809903==
+--===============7347850346444155953==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/sim.h |    1 +
- src/sim.c     |    8 ++++++++
- 2 files changed, 9 insertions(+), 0 deletions(-)
+	Hello,
 
-diff --git a/include/sim.h b/include/sim.h
-index 7860e24..9b21f2e 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -173,6 +173,7 @@ void ofono_sim_set_data(struct ofono_sim *sim, void *da=
-ta);
- void *ofono_sim_get_data(struct ofono_sim *sim);
- =
+This merges my three different patch sets around data technology. This expo=
+ses =
 
- const char *ofono_sim_get_imsi(struct ofono_sim *sim);
-+unsigned int ofono_sim_get_mnc_length(struct ofono_sim *sim);
- enum ofono_sim_phase ofono_sim_get_phase(struct ofono_sim *sim);
- =
+both the technology supported by the network, and the one actually in use b=
+y =
 
- enum ofono_sim_cphs_phase ofono_sim_get_cphs_phase(struct ofono_sim *sim);
-diff --git a/src/sim.c b/src/sim.c
-index 335f611..e9b1688 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -1913,6 +1913,14 @@ const char *ofono_sim_get_imsi(struct ofono_sim *sim)
- 	return sim->imsi;
- }
- =
+the device. I have seen "conflicting" requirements where some people want t=
+o =
 
-+unsigned int ofono_sim_get_mnc_length(struct ofono_sim *sim)
-+{
-+	if (sim =3D=3D NULL)
-+		return 0;
-+
-+	return sim->mnc_length;
-+}
-+
- enum ofono_sim_phase ofono_sim_get_phase(struct ofono_sim *sim)
- {
- 	if (sim =3D=3D NULL)
+follow one and some want to follow the other. So lets provide both.
+
+This should address most earlier comments.
+
+
 -- =
 
-1.7.1
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-
---===============5474962376055809903==--
+--===============7347850346444155953==--
 
