@@ -1,105 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4548181675233160897=="
+Content-Type: multipart/mixed; boundary="===============4838387250739137353=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 11/11] atmodem: packet switch bearer support
-Date: Tue, 11 Jan 2011 16:08:39 +0200
-Message-ID: <1294754919-9687-11-git-send-email-remi.denis-courmont@nokia.com>
-In-Reply-To: <1294754919-9687-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH] sim: check if lock is locked after code changing attempt
+Date: Tue, 11 Jan 2011 12:08:54 -0200
+Message-ID: <AANLkTikr1d0b4X=7SjozExp-ftsumQWcBTnDh61EJW5M@mail.gmail.com>
+In-Reply-To: <20A4FB08D632914F9C09B9F05CBDF258192D753024@EXMB02.eu.tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4548181675233160897==
+--===============4838387250739137353==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/gprs.c |   55 ++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 55 insertions(+), 0 deletions(-)
+Hi Jussi
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index a38c6b4..4ae1b57 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -200,6 +200,59 @@ static void xdatastat_notify(GAtResult *result, gpoint=
-er user_data)
- 	}
- }
- =
+On Tue, Jan 11, 2011 at 10:17 AM,  <Jussi.Kangas@tieto.com> wrote:
+> Hi,
+>
+> This is fix to Marit Henriksen's TODO item "Check SIM pin status if sim_c=
+hange_pin fails". I've discussed with Marit and it's ok for her if I fix th=
+e issue. Problem here is that issue could perhaps also be fixed with retry =
+counter solution introduced by Lucas De Marchi couple of tasks ago. That wo=
+uld seem however require some extra implementation in ste modem ( at least =
+I was not able get the ofono show correct values without extra modification=
+s ) and I think that isimodems don't have that sort of retry counter at all=
+. Because of that and since I had this solution already implemented I propo=
+se it to be added as well.
+>
 
-+static void cpsb_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	GAtResultIter iter;
-+	gint cid, bearer;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CPSB:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &cid))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &bearer))
-+		return;
-+
-+	ofono_gprs_bearer_notify(gprs, cid, bearer);
-+}
-+
-+static void cpsb_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	GAtResultIter iter;
-+	gint cid, bearer;
-+
-+	if (!ok)
-+		return;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CPSB:"))
-+		return;
-+
-+	g_at_result_iter_next_number(&iter, NULL);
-+
-+	while (g_at_result_iter_next_number(&iter, &cid) &&
-+			g_at_result_iter_next_number(&iter, &bearer))
-+		ofono_gprs_bearer_notify(gprs, cid, bearer);
-+}
-+
-+static void cpsb_set_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-+
-+	if (!ok)
-+		return;
-+
-+	g_at_chat_register(gd->chat, "+CPSB:", cpsb_notify, FALSE, gprs, NULL);
-+	g_at_chat_send(gd->chat, "AT+CPSB?", none_prefix, cpsb_cb, gprs, NULL);
-+}
-+
- static void gprs_initialized(gboolean ok, GAtResult *result, gpointer user=
-_data)
- {
- 	struct ofono_gprs *gprs =3D user_data;
-@@ -208,6 +261,8 @@ static void gprs_initialized(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	g_at_chat_register(gd->chat, "+CGEV:", cgev_notify, FALSE, gprs, NULL);
- 	g_at_chat_register(gd->chat, "+CGREG:", cgreg_notify,
- 					FALSE, gprs, NULL);
-+	g_at_chat_send(gd->chat, "AT+CPSB=3D1", none_prefix,
-+		cpsb_set_cb, gprs, NULL);
- =
+I failed to understand why you are hard-coding this and why you'd like
+to use retry counters. Can't you just check the pin state by calling
+sim_pin_check()?
 
- 	switch (gd->vendor) {
- 	case OFONO_VENDOR_IFX:
--- =
-
-1.7.1
+Moreover, this is not really implementing what the TODO item says.
 
 
---===============4548181675233160897==--
+regards,
+Lucas De Marchi
+
+--===============4838387250739137353==--
 
