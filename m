@@ -1,53 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============1836684740862175277=="
+Content-Type: multipart/mixed; boundary="===============7201373903805806599=="
 MIME-Version: 1.0
 From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-Subject: [PATCH v2 5/9] mbmmodem: add gps atom
-Date: Tue, 11 Jan 2011 00:23:54 -0300
-Message-ID: <1294716238-21218-6-git-send-email-rafael.zurita@profusion.mobi>
+Subject: [PATCH v2 4/9] gps: implement interface/atom
+Date: Tue, 11 Jan 2011 00:23:53 -0300
+Message-ID: <1294716238-21218-5-git-send-email-rafael.zurita@profusion.mobi>
 In-Reply-To: <1294716238-21218-1-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1836684740862175277==
+--===============7201373903805806599==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am                 |    3 +-
- drivers/mbmmodem/gps.c      |  229 +++++++++++++++++++++++++++++++++++++++=
+ Makefile.am |    2 +-
+ src/gps.c   |  389 +++++++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- drivers/mbmmodem/mbmmodem.c |    2 +
- drivers/mbmmodem/mbmmodem.h |    3 +
- 4 files changed, 236 insertions(+), 1 deletions(-)
- create mode 100644 drivers/mbmmodem/gps.c
+ src/ofono.h |    2 +
+ 3 files changed, 392 insertions(+), 1 deletions(-)
+ create mode 100644 src/gps.c
 
 diff --git a/Makefile.am b/Makefile.am
-index d5029d5..a41b629 100644
+index 70e65f0..d5029d5 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -205,7 +205,8 @@ builtin_sources +=3D drivers/atmodem/atutil.h \
- 			drivers/mbmmodem/mbmmodem.h \
- 			drivers/mbmmodem/mbmmodem.c \
- 			drivers/mbmmodem/gprs-context.c \
--			drivers/mbmmodem/stk.c
-+			drivers/mbmmodem/stk.c \
-+			drivers/mbmmodem/gps.c
+@@ -334,7 +334,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
+es) src/ofono.ver \
+ 			src/nettime.c src/stkagent.c src/stkagent.h \
+ 			src/simfs.c src/simfs.h src/audio-settings.c \
+ 			src/smsagent.c src/smsagent.h src/ctm.c \
+-			src/cdma-voicecall.c
++			src/cdma-voicecall.c src/gps.c
  =
 
- builtin_modules +=3D hsomodem
- builtin_sources +=3D drivers/atmodem/atutil.h \
-diff --git a/drivers/mbmmodem/gps.c b/drivers/mbmmodem/gps.c
+ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
+@ -ldl
+ =
+
+diff --git a/src/gps.c b/src/gps.c
 new file mode 100644
-index 0000000..0495642
+index 0000000..fde2703
 --- /dev/null
-+++ b/drivers/mbmmodem/gps.c
-@@ -0,0 +1,229 @@
++++ b/src/gps.c
+@@ -0,0 +1,389 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
 + *
-+ *  Copyright (C) 2008-2010  Intel Corporation. All rights reserved.
++ *  Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies).
++ *  Copyright (C) 2010  Intel Corporation. All rights reserved.
 + *  Copyright (C) 2010 ProFUSION embedded systems.
 + *
 + *  This program is free software; you can redistribute it and/or modify
@@ -70,246 +72,398 @@ index 0000000..0495642
 +#include <config.h>
 +#endif
 +
-+#define _GNU_SOURCE
 +#include <string.h>
-+#include <stdlib.h>
 +#include <stdio.h>
 +#include <errno.h>
 +
 +#include <glib.h>
++#include <gdbus.h>
 +
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <ofono/gps.h>
++#include "ofono.h"
++#include "common.h"
 +
-+#include "gatchat.h"
-+#include "gatresult.h"
-+#include "gattty.h"
++static GSList *g_drivers =3D NULL;
 +
-+#include "mbmmodem.h"
-+
-+static const char *none_prefix[] =3D { NULL };
-+static const char *e2gpsctl_prefix[] =3D { "*E2GPSCTL:", NULL };
-+
-+struct gps_data {
-+	GAtChat *chat;
++struct gps_settings {
++	enum ofono_gps_device_type type;
++	char *device;
 +};
 +
-+struct e2gpsnpd_data {
-+	GIOChannel *channel;
-+	GAtChat *chat;
++struct ofono_gps {
++	DBusMessage *pending;
++	ofono_bool_t powered;
++	const struct ofono_gps_driver *driver;
++	void *driver_data;
++	struct ofono_atom *atom;
++	struct gps_settings settings;
 +};
 +
-+static void mbm_e2gpsctl_disable_cb(gboolean ok, GAtResult *result,
-+							gpointer user_data)
++static const char *gps_settings_type_to_string(enum ofono_gps_device_type =
+type)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_gps_disable_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
++	switch (type) {
++	case OFONO_GPS_DEVICE_TYPE_NMEA:
++		return "nmea";
++	};
 +
-+	decode_at_error(&error, g_at_result_final_response(result));
-+	cb(&error, cbd->data);
++	return NULL;
 +}
 +
-+static void mbm_gps_disable(struct ofono_gps *g,
-+				ofono_gps_disable_cb_t cb,
-+				void *data)
++static char **gps_get_settings(struct gps_settings *settings)
 +{
-+	struct gps_data *gd =3D ofono_gps_get_data(g);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
++	const char *typec =3D "Type";
++	const char *devicec =3D "Device";
++	char **ret;
 +
-+	if (g_at_chat_send(gd->chat, "AT*E2GPSCTL=3D0,5,1", none_prefix,
-+				mbm_e2gpsctl_disable_cb, cbd, g_free) > 0)
-+		return;
++	ret =3D g_new0(char *, 5);
 +
-+	/* error */
-+	CALLBACK_WITH_FAILURE(cb, data);
-+	g_free(cbd);
++	ret[0] =3D g_strdup(typec);
++	ret[1] =3D g_strdup(gps_settings_type_to_string(settings->type));
++
++	ret[2] =3D g_strdup(devicec);
++	ret[3] =3D g_strdup(settings->device);
++
++	return ret;
 +}
 +
-+static void mbm_gps_send_e2gpsnpd_cb(gboolean ok, GAtResult *result,
-+							gpointer user_data)
-+{
-+	struct e2gpsnpd_data *e2d =3D user_data;
++static DBusMessage *gps_get_properties(DBusConnection *conn,
++						DBusMessage *msg, void *data)
 +
-+	g_io_channel_unref(e2d->channel);
-+	g_at_chat_unref(e2d->chat);
++{
++	struct ofono_gps *gps =3D data;
++	DBusMessage *reply;
++	DBusMessageIter iter;
++	DBusMessageIter dict;
++	dbus_bool_t value;
++	void **settings_properties;
++
++	reply =3D dbus_message_new_method_return(msg);
++	if (reply =3D=3D NULL)
++		return NULL;
++
++	dbus_message_iter_init_append(reply, &iter);
++	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
++					OFONO_PROPERTIES_ARRAY_SIGNATURE,
++					&dict);
++
++	value =3D gps->powered;
++	ofono_dbus_dict_append(&dict, "Powered", DBUS_TYPE_BOOLEAN, &value);
++
++	settings_properties =3D (void *)gps_get_settings(&gps->settings);
++	ofono_dbus_dict_append_dict(&dict, "Settings", DBUS_TYPE_STRING,
++							 &settings_properties);
++	g_free(settings_properties);
++
++	dbus_message_iter_close_container(&iter, &dict);
++
++	return reply;
 +}
 +
-+static void mbm_gps_send_e2gpsnpd(const char *gps_dev)
++static void gps_signal_powered(struct ofono_gps *gps)
 +{
-+	GAtSyntax *syntax;
-+	struct e2gpsnpd_data *e2d;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(gps->atom);
++	ofono_bool_t value =3D gps->powered;
 +
-+	e2d =3D g_try_new0(struct e2gpsnpd_data, 1);
-+	if (e2d =3D=3D NULL)
-+		return;
-+
-+	e2d->channel =3D g_at_tty_open(gps_dev, NULL);
-+	if (e2d->channel =3D=3D NULL)
-+		return;
-+
-+	syntax =3D g_at_syntax_new_gsm_permissive();
-+	e2d->chat =3D g_at_chat_new(e2d->channel, syntax);
-+	g_at_syntax_unref(syntax);
-+
-+	if (e2d->chat =3D=3D NULL)
-+		return;
-+
-+	if (g_at_chat_send(e2d->chat, "AT*E2GPSNPD", none_prefix,
-+				 mbm_gps_send_e2gpsnpd_cb, e2d, g_free) > 0)
-+		return;
-+
-+	g_io_channel_unref(e2d->channel);
-+	g_at_chat_unref(e2d->chat);
-+	g_free(e2d);
++	ofono_dbus_signal_property_changed(conn, path,
++					OFONO_LOCATION_REPORTING_INTERFACE,
++					"Powered",
++					DBUS_TYPE_BOOLEAN, &value);
 +}
 +
-+static void mbm_e2gpsctl_enable_cb(gboolean ok, GAtResult *result,
-+							 gpointer user_data)
++static void gps_signal_settings(struct ofono_gps *gps)
 +{
-+	struct cb_data *cbd =3D user_data;
-+	struct ofono_gps *gps =3D cbd->user;
-+	ofono_gps_enable_cb_t cb =3D cbd->cb;
-+	struct ofono_modem *modem;
-+	const char *gps_dev;
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	const char *path =3D __ofono_atom_get_path(gps->atom);
++	void **settings_properties;
 +
-+	if (!ok) {
-+		struct ofono_error error;
++	settings_properties =3D (void *)gps_get_settings(&gps->settings);
++	ofono_dbus_signal_dict_property_changed(conn, path,
++					OFONO_LOCATION_REPORTING_INTERFACE,
++					"Settings", DBUS_TYPE_STRING,
++					&settings_properties);
++	g_free(settings_properties);
++}
 +
-+		decode_at_error(&error, g_at_result_final_response(result));
-+		cb(&error, OFONO_GPS_DEVICE_TYPE_NMEA, NULL, cbd->data);
++static void gps_update_settings(struct ofono_gps *gps,
++						enum ofono_gps_device_type type,
++						const char *dev)
++{
++	gps->settings.type =3D type;
++	gps->settings.device =3D g_strdup(dev);
++
++	gps_signal_settings(gps);
++}
++
++static void gps_enable_callback(const struct ofono_error *error,
++					enum ofono_gps_device_type type,
++					const char *device,
++					void *data)
++{
++	struct ofono_gps *gps =3D data;
++	DBusMessage *reply;
++
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		ofono_error("Powering ON gps failed");
++
++		reply =3D __ofono_error_failed(gps->pending);
++		__ofono_dbus_pending_reply(&gps->pending, reply);
++
 +		return;
 +	}
 +
-+	modem =3D ofono_gps_get_modem(gps);
-+	gps_dev =3D ofono_modem_get_string(modem, "GPSDevice");
++	gps->powered =3D TRUE;
 +
-+	/* NMEA stream is sent to gps_dev */
-+	mbm_gps_send_e2gpsnpd(gps_dev);
++	reply =3D dbus_message_new_method_return(gps->pending);
++	__ofono_dbus_pending_reply(&gps->pending, reply);
 +
-+	CALLBACK_WITH_SUCCESS(cb, OFONO_GPS_DEVICE_TYPE_NMEA, gps_dev,
-+								cbd->data);
++	gps_update_settings(gps, type, device);
++	gps_signal_powered(gps);
 +}
 +
-+static void mbm_gps_enable(struct ofono_gps *g,
-+				ofono_gps_enable_cb_t cb,
-+				void *data)
++static void gps_disable_callback(const struct ofono_error *error,
++						void *data)
 +{
-+	struct gps_data *gd =3D ofono_gps_get_data(g);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
++	struct ofono_gps *gps =3D data;
++	DBusMessage *reply;
 +
-+	if (cbd =3D=3D NULL)
-+		goto error;
++	if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
++		ofono_error("Powering OFF gps failed");
 +
-+	cbd->user =3D g;
++		reply =3D __ofono_error_failed(gps->pending);
++		__ofono_dbus_pending_reply(&gps->pending, reply);
 +
-+	if (g_at_chat_send(gd->chat, "AT*E2GPSCTL=3D1,5,1", none_prefix,
-+				mbm_e2gpsctl_enable_cb, cbd, g_free) > 0)
-+		return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, OFONO_GPS_DEVICE_TYPE_NMEA, NULL, data);
-+	g_free(cbd);
-+}
-+
-+static void mbm_gps_support_cb(gboolean ok, GAtResult *result,
-+							gpointer user_data)
-+{
-+	struct ofono_gps *gps =3D user_data;
-+
-+	if (!ok) {
-+		ofono_gps_remove(gps);
 +		return;
 +	}
 +
-+	ofono_gps_register(gps);
++	gps->powered =3D FALSE;
++
++	reply =3D dbus_message_new_method_return(gps->pending);
++	__ofono_dbus_pending_reply(&gps->pending, reply);
++
++	if (gps->settings.device !=3D NULL) {
++		g_free(gps->settings.device);
++		gps->settings.device =3D NULL;
++	}
++
++	gps_signal_powered(gps);
 +}
 +
-+static int mbm_gps_probe(struct ofono_gps *g,
-+					unsigned int vendor, void *data)
++static DBusMessage *gps_set_property(DBusConnection *conn, DBusMessage *ms=
+g,
++					void *data)
 +{
-+	GAtChat *chat =3D data;
-+	struct gps_data *gd;
++	struct ofono_gps *gps =3D data;
++	DBusMessageIter iter;
++	DBusMessageIter var;
++	const char *property;
 +
-+	gd =3D g_try_new0(struct gps_data, 1);
-+	if (gd =3D=3D NULL)
-+		return -ENOMEM;
++	if (gps->pending)
++		return __ofono_error_busy(msg);
 +
-+	gd->chat =3D g_at_chat_clone(chat);
++	if (!dbus_message_iter_init(msg, &iter))
++		return __ofono_error_invalid_args(msg);
 +
-+	ofono_gps_set_data(g, gd);
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_STRING)
++		return __ofono_error_invalid_args(msg);
 +
-+	g_at_chat_send(gd->chat, "AT*E2GPSCTL=3D?", e2gpsctl_prefix,
-+					mbm_gps_support_cb, g, NULL);
++	dbus_message_iter_get_basic(&iter, &property);
++	dbus_message_iter_next(&iter);
++
++	if (dbus_message_iter_get_arg_type(&iter) !=3D DBUS_TYPE_VARIANT)
++		return __ofono_error_invalid_args(msg);
++
++	dbus_message_iter_recurse(&iter, &var);
++
++	if (g_strcmp0(property, "Powered") =3D=3D 0) {
++		dbus_bool_t value;
++		int target;
++
++		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_BOOLEAN)
++			return __ofono_error_invalid_args(msg);
++
++		dbus_message_iter_get_basic(&var, &value);
++		target =3D value;
++
++		if (gps->powered =3D=3D target)
++			return dbus_message_new_method_return(msg);
++
++		gps->pending =3D dbus_message_ref(msg);
++
++		if (value =3D=3D TRUE)
++			gps->driver->enable(gps, gps_enable_callback, gps);
++		else
++			gps->driver->disable(gps, gps_disable_callback, gps);
++
++		return NULL;
++	}
++
++	return __ofono_error_invalid_args(msg);
++}
++
++static GDBusMethodTable gps_methods[] =3D {
++	{ "GetProperties",  "",    "a{sv}",  gps_get_properties,
++						G_DBUS_METHOD_FLAG_ASYNC },
++	{ "SetProperty",    "sv",  "",       gps_set_property,
++						G_DBUS_METHOD_FLAG_ASYNC },
++	{ }
++};
++
++static GDBusSignalTable gps_signals[] =3D {
++	{ "PropertyChanged",	"sv" },
++	{ }
++};
++
++int ofono_gps_driver_register(const struct ofono_gps_driver *d)
++{
++	DBG("driver: %p, name: %s", d, d->name);
++
++	if (d =3D=3D NULL || d->probe =3D=3D NULL)
++		return -EINVAL;
++
++	g_drivers =3D g_slist_prepend(g_drivers, (void *) d);
 +
 +	return 0;
 +}
 +
-+static void mbm_gps_remove(struct ofono_gps *g)
++void ofono_gps_driver_unregister(const struct ofono_gps_driver *d)
 +{
-+	struct gps_data *gd =3D ofono_gps_get_data(g);
++	DBG("driver: %p, name: %s", d, d->name);
 +
-+	ofono_gps_set_data(g, NULL);
++	if (d =3D=3D NULL)
++		return;
 +
-+	g_at_chat_unref(gd->chat);
-+	g_free(gd);
++	g_drivers =3D g_slist_remove(g_drivers, (void *) d);
 +}
 +
-+static struct ofono_gps_driver driver =3D {
-+	.name			=3D "mbmmodem",
-+	.probe			=3D mbm_gps_probe,
-+	.remove			=3D mbm_gps_remove,
-+	.enable			=3D mbm_gps_enable,
-+	.disable		=3D mbm_gps_disable,
-+};
-+
-+void mbm_gps_init()
++struct ofono_modem *ofono_gps_get_modem(struct ofono_gps *g)
 +{
-+	ofono_gps_driver_register(&driver);
++	return __ofono_atom_get_modem(g->atom);
 +}
 +
-+void mbm_gps_exit()
++static void gps_unregister(struct ofono_atom *atom)
 +{
-+	ofono_gps_driver_unregister(&driver);
-+}
-diff --git a/drivers/mbmmodem/mbmmodem.c b/drivers/mbmmodem/mbmmodem.c
-index 03b61b3..ea56cd4 100644
---- a/drivers/mbmmodem/mbmmodem.c
-+++ b/drivers/mbmmodem/mbmmodem.c
-@@ -36,12 +36,14 @@ static int mbmmodem_init(void)
- {
- 	mbm_gprs_context_init();
- 	mbm_stk_init();
-+	mbm_gps_init();
- =
-
- 	return 0;
- }
- =
-
- static void mbmmodem_exit(void)
- {
-+	mbm_gps_exit();
- 	mbm_stk_exit();
- 	mbm_gprs_context_exit();
- }
-diff --git a/drivers/mbmmodem/mbmmodem.h b/drivers/mbmmodem/mbmmodem.h
-index 65786d7..d1e96fa 100644
---- a/drivers/mbmmodem/mbmmodem.h
-+++ b/drivers/mbmmodem/mbmmodem.h
-@@ -26,3 +26,6 @@ extern void mbm_gprs_context_exit();
- =
-
- extern void mbm_stk_init();
- extern void mbm_stk_exit();
++	struct ofono_gps *gps =3D __ofono_atom_get_data(atom);
++	const char *path =3D __ofono_atom_get_path(gps->atom);
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(gps->atom);
 +
-+extern void mbm_gps_init();
-+extern void mbm_gps_exit();
++	ofono_modem_remove_interface(modem, OFONO_LOCATION_REPORTING_INTERFACE);
++	g_dbus_unregister_interface(conn, path,
++					OFONO_LOCATION_REPORTING_INTERFACE);
++}
++
++static void gps_remove(struct ofono_atom *atom)
++{
++	struct ofono_gps *gps =3D __ofono_atom_get_data(atom);
++
++	DBG("atom: %p", atom);
++
++	if (gps =3D=3D NULL)
++		return;
++
++	if (gps->driver && gps->driver->remove)
++		gps->driver->remove(gps);
++
++	g_free(gps);
++}
++
++struct ofono_gps *ofono_gps_create(struct ofono_modem *modem,
++					 unsigned int vendor,
++					 const char *driver, void *data)
++{
++	struct ofono_gps *gps;
++	GSList *l;
++
++	if (driver =3D=3D NULL)
++		return NULL;
++
++	gps =3D g_try_new0(struct ofono_gps, 1);
++	if (gps =3D=3D NULL)
++		return NULL;
++
++	gps->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_GPS,
++						gps_remove, gps);
++
++	for (l =3D g_drivers; l; l =3D l->next) {
++		const struct ofono_gps_driver *drv =3D l->data;
++
++		if (g_strcmp0(drv->name, driver) !=3D 0)
++			continue;
++
++		if (drv->probe(gps, vendor, data) < 0)
++			continue;
++
++		gps->driver =3D drv;
++		break;
++	}
++
++	return gps;
++}
++
++void ofono_gps_register(struct ofono_gps *gps)
++{
++	DBusConnection *conn =3D ofono_dbus_get_connection();
++	struct ofono_modem *modem =3D __ofono_atom_get_modem(gps->atom);
++	const char *path =3D __ofono_atom_get_path(gps->atom);
++
++	if (!g_dbus_register_interface(conn, path,
++					OFONO_LOCATION_REPORTING_INTERFACE,
++					gps_methods, gps_signals, NULL, gps,
++					NULL)) {
++		ofono_error("Could not create %s interface",
++					OFONO_LOCATION_REPORTING_INTERFACE);
++
++		return;
++	}
++
++	ofono_modem_add_interface(modem, OFONO_LOCATION_REPORTING_INTERFACE);
++	__ofono_atom_register(gps->atom, gps_unregister);
++}
++
++void ofono_gps_remove(struct ofono_gps *gps)
++{
++	__ofono_atom_free(gps->atom);
++}
++
++void ofono_gps_set_data(struct ofono_gps *gps,
++					void *data)
++{
++	gps->driver_data =3D data;
++}
++
++void *ofono_gps_get_data(struct ofono_gps *gps)
++{
++	return gps->driver_data;
++}
+diff --git a/src/ofono.h b/src/ofono.h
+index cab70cd..e60140f 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -127,6 +127,7 @@ enum ofono_atom_type {
+ 	OFONO_ATOM_TYPE_NETTIME =3D 21,
+ 	OFONO_ATOM_TYPE_CTM =3D 22,
+ 	OFONO_ATOM_TYPE_CDMA_VOICECALL_MANAGER =3D 23,
++	OFONO_ATOM_TYPE_GPS =3D 24,
+ };
+ =
+
+ enum ofono_atom_watch_condition {
+@@ -208,6 +209,7 @@ gboolean __ofono_call_settings_is_busy(struct ofono_cal=
+l_settings *cs);
+ #include <ofono/radio-settings.h>
+ #include <ofono/audio-settings.h>
+ #include <ofono/ctm.h>
++#include <ofono/gps.h>
+ =
+
+ #include <ofono/voicecall.h>
+ =
+
 -- =
 
 1.7.2.3
 
 
---===============1836684740862175277==--
+--===============7201373903805806599==--
 
