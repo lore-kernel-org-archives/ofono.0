@@ -1,44 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============6756370128275450551=="
+Content-Type: multipart/mixed; boundary="===============6851107512265942722=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v5, 4/5] ofono-rules: Add nokiacdma device
-Date: Mon, 10 Jan 2011 17:45:31 -0800
-Message-ID: <1294710332-6028-5-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: [PATCH v5, 5/5] udev: Add nokiacdma device
+Date: Mon, 10 Jan 2011 17:45:32 -0800
+Message-ID: <1294710332-6028-6-git-send-email-dara.spieker-doyle@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6756370128275450551==
+--===============6851107512265942722==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/ofono.rules |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ plugins/udev.c |   15 +++++++++++++++
+ 1 files changed, 15 insertions(+), 0 deletions(-)
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index d1d18b2..fe62db0 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -438,4 +438,8 @@ ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"060=
-e", ENV{OFONO_DRIVER}=3D"nokia"
- # Nokia Internet Stick CS-17
- ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"0623", ENV{OFONO_DRIVE=
-R}=3D"nokia"
+diff --git a/plugins/udev.c b/plugins/udev.c
+index e502669..58308e3 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -507,6 +507,19 @@ static void add_tc65(struct ofono_modem *modem,
+ 	ofono_modem_register(modem);
+ }
  =
 
-+# Nokia CDMA Device
-+ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"023e", ENV{OFONO_DRIVE=
-R}=3D"nokiacdma"
-+ATTRS{idVendor}=3D=3D"0421", ATTRS{idProduct}=3D=3D"00b6", ENV{OFONO_DRIVE=
-R}=3D"nokiacdma"
++static void add_nokiacdma(struct ofono_modem *modem,
++					struct udev_device *udev_device)
++{
++	const char *devnode;
 +
- LABEL=3D"ofono_end"
++	DBG("modem %p", modem);
++
++	devnode =3D udev_device_get_devnode(udev_device);
++	ofono_modem_set_string(modem, "Device", devnode);
++
++	ofono_modem_register(modem);
++}
++
+ static void add_modem(struct udev_device *udev_device)
+ {
+ 	struct ofono_modem *modem;
+@@ -597,6 +610,8 @@ done:
+ 		add_calypso(modem, udev_device);
+ 	else if (g_strcmp0(driver, "tc65") =3D=3D 0)
+ 		add_tc65(modem, udev_device);
++	else if (g_strcmp0(driver, "nokiacdma") =3D=3D 0)
++		add_nokiacdma(modem, udev_device);
+ }
+ =
+
+ static gboolean devpath_remove(gpointer key, gpointer value, gpointer user=
+_data)
 -- =
 
 1.7.0.4
 
 
---===============6756370128275450551==--
+--===============6851107512265942722==--
 
