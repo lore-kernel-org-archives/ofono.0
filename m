@@ -1,25 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============6928382658933198014=="
+Content-Type: multipart/mixed; boundary="===============0882666598835630451=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [PATCHv6] plugin: Add ste modem initd integration
-Date: Tue, 11 Jan 2011 23:41:27 +0100
-Message-ID: <AANLkTin=74NiounN0b4EcWTBzzg43XE+Oq=aoYwsS8L6@mail.gmail.com>
-In-Reply-To: <1294785336.3873.40.camel@aeonflux>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] coding-style: Use void if function has no parameters
+Date: Tue, 11 Jan 2011 14:48:40 -0800
+Message-ID: <1294786120.3873.41.camel@aeonflux>
+In-Reply-To: <1294785570-2901-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6928382658933198014==
+--===============0882666598835630451==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel.
-> you are out of luck today ;)
+Hi Sjur,
 
-Darn, I forgot to pull. Hang on I'll be back shortly....
+>  doc/coding-style.txt |   15 +++++++++++++++
+>  1 files changed, 15 insertions(+), 0 deletions(-)
 
-Regards,
-Sjur
+patch has been applied. Thanks.
 
---===============6928382658933198014==--
+Regards
+
+Marcel
+
+
+
+--===============0882666598835630451==--
 
