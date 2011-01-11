@@ -1,143 +1,222 @@
-Content-Type: multipart/mixed; boundary="===============0500391634252262706=="
+Content-Type: multipart/mixed; boundary="===============8639026273293894879=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v5, 2/5] test: Add CDMA MO Call Support
-Date: Mon, 10 Jan 2011 17:45:29 -0800
-Message-ID: <1294710332-6028-3-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: [PATCH v5, 3/5] nokiacdma: Add plugin and CDMA MO Call Support
+Date: Mon, 10 Jan 2011 17:45:30 -0800
+Message-ID: <1294710332-6028-4-git-send-email-dara.spieker-doyle@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0500391634252262706==
+--===============8639026273293894879==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am           |    5 ++++-
- test/cdma-dial-number |   25 +++++++++++++++++++++++++
- test/cdma-hangup      |   20 ++++++++++++++++++++
- test/cdma-list-call   |   31 +++++++++++++++++++++++++++++++
- 4 files changed, 80 insertions(+), 1 deletions(-)
- create mode 100755 test/cdma-dial-number
- create mode 100755 test/cdma-hangup
- create mode 100755 test/cdma-list-call
+ Makefile.am         |    3 +
+ plugins/nokiacdma.c |  171 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 174 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/nokiacdma.c
 
 diff --git a/Makefile.am b/Makefile.am
-index 5f54efe..7bced88 100644
+index 7bced88..5c9445f 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -445,7 +445,10 @@ test_scripts =3D test/backtrace \
- 		test/set-tty \
- 		test/set-gsm-band \
- 		test/set-umts-band \
--		test/lockdown-modem
-+		test/lockdown-modem \
-+		test/cdma-list-call \
-+		test/cdma-dial-number \
-+		test/cdma-hangup
+@@ -302,6 +302,9 @@ builtin_sources +=3D plugins/caif.c
  =
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/cdma-dial-number b/test/cdma-dial-number
-new file mode 100755
-index 0000000..0b3693e
+ builtin_modules +=3D tc65
+ builtin_sources +=3D plugins/tc65.c
++
++builtin_modules +=3D nokiacdma
++builtin_sources +=3D plugins/nokiacdma.c
+ endif
+ =
+
+ if MAINTAINER_MODE
+diff --git a/plugins/nokiacdma.c b/plugins/nokiacdma.c
+new file mode 100644
+index 0000000..4b11f9d
 --- /dev/null
-+++ b/test/cdma-dial-number
-@@ -0,0 +1,25 @@
-+#!/usr/bin/python
++++ b/plugins/nokiacdma.c
+@@ -0,0 +1,171 @@
++/*
++ * This file is part of oFono - Open Source Telephony
++ *
++ * Copyright (C) 2010 Nokia Corporation. All rights reserved.
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * version 2 as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
++ * 02110-1301 USA
++ *
++ */
 +
-+import sys
-+import dbus
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
 +
-+bus =3D dbus.SystemBus()
++#include <stdlib.h>
++#include <errno.h>
++#include <termios.h>
++#include <string.h>
++#include <unistd.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
 +
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
++#include <glib.h>
++#include <gatchat.h>
++#include <gattty.h>
 +
-+if len(sys.argv) > 2:
-+	path =3D sys.argv[1]
-+	number =3D sys.argv[2]
-+else:
-+	modems =3D manager.GetModems()
-+	path, properties =3D modems[0]
-+	number =3D sys.argv[1]
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
 +
-+print "Using modem %s" % path
++#include <drivers/atmodem/atutil.h>
++#include <ofono/cdma-voicecall.h>
 +
-+manager =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.cdma.VoiceCallManager')
++#include "common.h"
 +
-+manager.Dial(number)
++struct nokiacdma_data {
++	GAtChat *chat;
++};
 +
-diff --git a/test/cdma-hangup b/test/cdma-hangup
-new file mode 100755
-index 0000000..f8e631e
---- /dev/null
-+++ b/test/cdma-hangup
-@@ -0,0 +1,20 @@
-+#!/usr/bin/python
++static void nokiacdma_debug(const char *str, void *data)
++{
++	const char *prefix =3D data;
 +
-+import sys
-+import dbus
++	ofono_info("%s%s", prefix, str);
++}
 +
-+bus =3D dbus.SystemBus()
++static int nokiacdma_probe(struct ofono_modem *modem)
++{
++	struct nokiacdma_data *data;
 +
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
++	DBG("%p", modem);
 +
-+if len(sys.argv) > 2:
-+	path =3D sys.argv[1]
-+else:
-+	modems =3D manager.GetModems()
-+	path, properties =3D modems[0]
++	data =3D g_try_new0(struct nokiacdma_data, 1);
++	if (data =3D=3D NULL)
++		return -ENOMEM;
 +
-+manager =3D dbus.Interface(bus.get_object('org.ofono', path),
-+						'org.ofono.cdma.VoiceCallManager')
++	ofono_modem_set_data(modem, data);
 +
-+manager.Hangup()
-diff --git a/test/cdma-list-call b/test/cdma-list-call
-new file mode 100755
-index 0000000..8a2e04e
---- /dev/null
-+++ b/test/cdma-list-call
-@@ -0,0 +1,31 @@
-+#!/usr/bin/python
++	return 0;
++}
 +
-+import dbus
++static void nokiacdma_remove(struct ofono_modem *modem)
++{
++	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
 +
-+bus =3D dbus.SystemBus()
++	DBG("%p", modem);
 +
-+manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+						'org.ofono.Manager')
++	ofono_modem_set_data(modem, NULL);
 +
-+modems =3D manager.GetModems()
++	g_at_chat_unref(data->chat);
 +
-+for path, properties in modems:
-+	print "[ %s ]" % (path)
++	g_free(data);
++}
 +
-+	if "org.ofono.cdma.VoiceCallManager" not in properties["Interfaces"]:
-+		continue
++static int nokiacdma_enable(struct ofono_modem *modem)
++{
++	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
++	GAtSyntax *syntax;
++	GIOChannel *channel;
++	const char *device;
 +
-+	mgr =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.cdma.VoiceCallManager')
++	device =3D ofono_modem_get_string(modem, "Device");
++	if (device =3D=3D NULL)
++		return -EINVAL;
 +
-+	properties =3D mgr.GetProperties()
++	channel =3D g_at_tty_open(device, NULL);
++	if (channel =3D=3D NULL)
++		return -EIO;
 +
-+	for key in properties.keys():
-+		if key in ["Interfaces", "Features"]:
-+			val =3D ""
-+			for i in properties[key]:
-+				val +=3D i + " "
-+		else:
-+			val =3D str(properties[key])
-+		print "    %s =3D %s" % (key, val)
++	/* TODO: Will need a CDMA AT syntax parser later. Using GSM V1 for now. */
++	syntax =3D g_at_syntax_new_gsmv1();
 +
++	data->chat =3D g_at_chat_new(channel, syntax);
++	g_at_syntax_unref(syntax);
++	g_io_channel_unref(channel);
++
++	if (data->chat =3D=3D NULL)
++		return -ENOMEM;
++
++	if (getenv("OFONO_AT_DEBUG"))
++		g_at_chat_set_debug(data->chat, nokiacdma_debug,
++					"CDMA Device: ");
++
++	return 0;
++}
++
++static int nokiacdma_disable(struct ofono_modem *modem)
++{
++	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
++
++	DBG("%p", modem);
++
++	g_at_chat_unref(data->chat);
++	data->chat =3D NULL;
++
++	return 0;
++}
++
++static void nokiacdma_pre_sim(struct ofono_modem *modem)
++{
++	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
++
++	ofono_cdma_voicecall_create(modem, 0, "cdmamodem", data->chat);
++}
++
++static void nokiacdma_post_sim(struct ofono_modem *modem)
++{
++}
++
++static void nokiacdma_post_online(struct ofono_modem *modem)
++{
++	DBG("%p", modem);
++}
++
++static struct ofono_modem_driver nokiacdma_driver =3D {
++	.name			=3D "nokiacdma",
++	.probe			=3D nokiacdma_probe,
++	.remove			=3D nokiacdma_remove,
++	.enable			=3D nokiacdma_enable,
++	.disable		=3D nokiacdma_disable,
++	.pre_sim		=3D nokiacdma_pre_sim,
++	.post_sim		=3D nokiacdma_post_sim,
++	.post_online		=3D nokiacdma_post_online,
++};
++
++static int nokiacdma_init(void)
++{
++	return ofono_modem_driver_register(&nokiacdma_driver);
++}
++
++static void nokiacdma_exit(void)
++{
++	ofono_modem_driver_unregister(&nokiacdma_driver);
++}
++
++OFONO_PLUGIN_DEFINE(nokiacdma, "Generic CDMA AT Modem", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT,
++			nokiacdma_init, nokiacdma_exit)
 -- =
 
 1.7.0.4
 
 
---===============0500391634252262706==--
+--===============8639026273293894879==--
 
