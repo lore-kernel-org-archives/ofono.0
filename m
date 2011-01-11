@@ -1,65 +1,25 @@
-Content-Type: multipart/mixed; boundary="===============0376509377301400177=="
+Content-Type: multipart/mixed; boundary="===============6928382658933198014=="
 MIME-Version: 1.0
 From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: [PATCH] coding-style: Use void if function has no parameters
-Date: Tue, 11 Jan 2011 23:39:30 +0100
-Message-ID: <1294785570-2901-1-git-send-email-sjurbren@gmail.com>
-In-Reply-To: <4D2CD1FE.4070601@gmail.com>
+Subject: Re: [PATCHv6] plugin: Add ste modem initd integration
+Date: Tue, 11 Jan 2011 23:41:27 +0100
+Message-ID: <AANLkTin=74NiounN0b4EcWTBzzg43XE+Oq=aoYwsS8L6@mail.gmail.com>
+In-Reply-To: <1294785336.3873.40.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0376509377301400177==
+--===============6928382658933198014==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+Hi Marcel.
+> you are out of luck today ;)
 
----
-Marcel, Denis,
-
-Here is the patch, please apply it if you agree. I'm easy :-)
+Darn, I forgot to pull. Hang on I'll be back shortly....
 
 Regards,
 Sjur
 
- doc/coding-style.txt |   15 +++++++++++++++
- 1 files changed, 15 insertions(+), 0 deletions(-)
-
-diff --git a/doc/coding-style.txt b/doc/coding-style.txt
-index 3bee240..40bb36b 100644
---- a/doc/coding-style.txt
-+++ b/doc/coding-style.txt
-@@ -279,6 +279,21 @@ memset(stuff, 0, sizeof(*stuff));
- memset(stuff, 0, sizeof *stuff); // Wrong
- =
-
- =
-
-+M15: Use void if function has no parameters
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+A function with no parameters must use void in the parameter list.
-+
-+Example:
-+1)
-+void foo(void)
-+{
-+}
-+
-+2)
-+void foo()	// Wrong
-+{
-+}
-+
- O1: Shorten the name
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- Better to use abbreviation, rather than full name, to name a variable,
--- =
-
-1.7.0.4
-
-
---===============0376509377301400177==--
+--===============6928382658933198014==--
 
