@@ -1,59 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5917828544121499703=="
+Content-Type: multipart/mixed; boundary="===============4994150059644386647=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 3/4] Bearer documentation
-Date: Mon, 10 Jan 2011 16:26:23 -0800
-Message-ID: <1294705583.3873.3.camel@aeonflux>
-In-Reply-To: <201101101834.55049.remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 05/10] Update documentation for GPRS technology
+Date: Mon, 10 Jan 2011 16:31:00 -0800
+Message-ID: <1294705860.3873.4.camel@aeonflux>
+In-Reply-To: <1294665325-11937-5-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5917828544121499703==
+--===============4994150059644386647==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Remi,
 
-> > > On Friday 07 January 2011 18:23:25 ext Denis Kenzior, you wrote:
-> > >> The other question I have is whether we should report this at the
-> > >> context level or at the ConnectionManager level.  Can different cont=
-exts
-> > >> truly have different bearers?
-> > > =
-
-> > > At least for 3G with HS*PA, I believe we can. In my understanding, HS=
-PA
-> > > channels are allocated per contexts. Correct me if I'm wrong.
-> > =
-
-> > I don't know, to me it would not make sense to allocate different
-> > bearers per context, but I'm not an RF engineer.  Do note that at least
-> > several vendors provide extension commands that report the global active
-> > bearer, not per context.  For instance, see the Ericsson *CPSB command.=
-..
+>  doc/connman-api.txt |    8 ++++++++
+>  1 files changed, 8 insertions(+), 0 deletions(-)
 > =
 
-> The UI wants to show a single icon for the number of "G's". I would assum=
-e =
+> diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+> index 22e02e5..b13efd1 100644
+> --- a/doc/connman-api.txt
+> +++ b/doc/connman-api.txt
+> @@ -77,6 +77,14 @@ Properties	boolean Attached [readonly]
+>  			be available, e.g. receiving SMS over packet radio
+>  			or network initiated PDP activation.
+>  =
 
-> that's meant to address this use case. Then you don't need to iterate ove=
-r all =
+> +		string Technology [readonly, optional]
+> +
+> +			Contains the data technology as reported by the
+> +			GPRS service registration (if known).
+> +
+> +			Possible values are the same as for the Technology
+> +			property the NetworkRegistration object.
+> +
 
-> contexts, especially those not allocated through that this particular AT =
-
-> serial port.
-
-I am confused by your answer.
-
-So from what I understand so far it is that with AT modems the bearer
-information is a per context information. So the real question is if
-this is just an AT command thing of how they defined it or if it can be
-really independent.
-
-As Denis said, the vendor commands indicate that it is a global bearer
-information. If one context is on HSPA, then others will be as well. So
-how does ISI provide this information? Is it globally or per context?
+we used to have this value and then we removed it since it ended up
+being not useful. So why do you wanna bring it back?
 
 Regards
 
@@ -61,5 +46,5 @@ Marcel
 
 
 
---===============5917828544121499703==--
+--===============4994150059644386647==--
 
