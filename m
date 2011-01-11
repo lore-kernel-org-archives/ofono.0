@@ -1,54 +1,105 @@
-Content-Type: multipart/mixed; boundary="===============7795722615608351989=="
+Content-Type: multipart/mixed; boundary="===============4237758202598306664=="
 MIME-Version: 1.0
 From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-Subject: [PATCH v2 7/9] plugins/udev.c: add gps comparison for add_mbm
- registered modem
-Date: Tue, 11 Jan 2011 00:23:56 -0300
-Message-ID: <1294716238-21218-8-git-send-email-rafael.zurita@profusion.mobi>
+Subject: [PATCH v2 9/9] gps: add documentation
+Date: Tue, 11 Jan 2011 00:23:58 -0300
+Message-ID: <1294716238-21218-10-git-send-email-rafael.zurita@profusion.mobi>
 In-Reply-To: <1294716238-21218-1-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7795722615608351989==
+--===============4237758202598306664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/udev.c |    5 +++--
- 1 files changed, 3 insertions(+), 2 deletions(-)
+ Makefile.am     |    2 +-
+ doc/gps-api.txt |   54 +++++++++++++++++++++++++++++++++++++++++++++++++++=
++++
+ 2 files changed, 55 insertions(+), 1 deletions(-)
+ create mode 100644 doc/gps-api.txt
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index e502669..4c928ab 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -105,7 +105,7 @@ static void add_mbm(struct ofono_modem *modem,
- 					struct udev_device *udev_device)
- {
- 	const char *desc, *devnode;
--	const char *device, *data, *network;
-+	const char *device, *data, *network, *gps;
- 	int registered;
+diff --git a/Makefile.am b/Makefile.am
+index 3352f24..0b748ed 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -376,7 +376,7 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
+release-faq.txt \
+ 			doc/phonebook-api.txt doc/radio-settings-api.txt \
+ 			doc/sim-api.txt doc/stk-api.txt \
+ 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
+-			doc/calypso-modem.txt
++			doc/calypso-modem.txt doc/gps-api.txt
  =
 
- 	desc =3D udev_device_get_sysattr_value(udev_device, "device/interface");
-@@ -152,8 +152,9 @@ static void add_mbm(struct ofono_modem *modem,
- 	device  =3D ofono_modem_get_string(modem, MODEM_DEVICE);
- 	data =3D ofono_modem_get_string(modem, DATA_DEVICE);
- 	network =3D ofono_modem_get_string(modem, NETWORK_INTERFACE);
-+	gps =3D ofono_modem_get_string(modem, GPS_DEVICE);
  =
 
--	if (device !=3D NULL && data !=3D NULL && network !=3D NULL) {
-+	if (device !=3D NULL && data !=3D NULL && network !=3D NULL && gps !=3D N=
-ULL) {
- 		ofono_modem_set_integer(modem, "Registered", 1);
- 		ofono_modem_register(modem);
- 	}
+ test_scripts =3D test/backtrace \
+diff --git a/doc/gps-api.txt b/doc/gps-api.txt
+new file mode 100644
+index 0000000..9cf9792
+--- /dev/null
++++ b/doc/gps-api.txt
+@@ -0,0 +1,54 @@
++Location Reporting hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		org.ofono
++Interface	org.ofono.LocationReporting
++Object path	[variable prefix]/{modem0,modem1,...}
++
++Methods		dict GetProperties()
++
++			Returns all Gps properties. See the
++			properties section for available properties.
++
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.Failed
++
++		void SetProperty(string name, variant value)
++
++			Changes the value of the specified property. Only
++			properties that are listed as read-write are
++			changeable. On success a PropertyChanged signal
++			will be emitted.
++
++			Possible Errors: [service].Error.InvalidArguments
++					 [service].Error.InProgress
++					 [service].Error.Failed
++
++Signals		PropertyChanged(string property, variant value)
++
++			This signal indicates a changed value of the given
++			property.
++
++Properties	boolean	Powered [readwrite]
++
++			This property will power or disable the GPS feature in
++			the modem.
++
++			Many modem manufacturers provide a GPS unit with their
++			modem hardware. This unit can be turned on or off and
++			frequently takes over one of the tty ports that the
++			modem provides.
++
++		dict Settings [readonly]
++
++			Holds the location information settings
++
++			string Device [readonly]
++
++				Holds the device from which the location
++				information can be obtained (e.g. "/dev/ttyACM2")
++
++			string Type [readonly]
++
++				Holds the type of the device (e.g. "nmea")
++
 -- =
 
 1.7.2.3
 
 
---===============7795722615608351989==--
+--===============4237758202598306664==--
 
