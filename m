@@ -1,82 +1,161 @@
-Content-Type: multipart/mixed; boundary="===============4624243787406137753=="
+Content-Type: multipart/mixed; boundary="===============4259727170981374647=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] Inform Huawei modem using ACCM 0xffffffff to trasmit
- package. Using my Huawei modem (EM770W) if set ACCM as 0x00000000,
- the RXJ- event will happend, and PPP link down,
- when IP package transmit for a while. After I set ACCM as 0xffffffff,
- the RXJ- event never happen,
- and the modem can work quite stable. I tested the modem at China Unicom
- networks.
-Date: Tue, 11 Jan 2011 11:11:05 -0600
-Message-ID: <4D2C8F29.70604@gmail.com>
-In-Reply-To: <1294656017-825-3-git-send-email-martin.xu@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [BUG] [MBM] mbm_disconnect(..) and reopen_callback(..) gives
+ oFono seg fault
+Date: Tue, 11 Jan 2011 10:13:51 -0800
+Message-ID: <1294769631.3873.28.camel@aeonflux>
+In-Reply-To: <3ED83A9DB3B6D94CA68BF7C03F2981D35318CA3C39@EXDCVYMBSTM006.EQ1STM.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4624243787406137753==
+--===============4259727170981374647==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi Tomasz,
 
-On 01/10/2011 04:40 AM, martin.xu(a)intel.com wrote:
-> From: Martin Xu <martin.xu@intel.com>
 > =
 
-> ---
->  gatchat/ppp_lcp.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
+> I am using MBM modem in oFono and I have run into a problem with
 > =
 
+> reopen_callback(..) function.
+> =
 
-Can you please fix up your subject?  It is simply too long.  Make the
-subject short and use the description field to describe the rest.
+> I think you might be interested in looking into this as an author
+> =
 
-Do you have (or can you generate) a pppdump of this happening?  What
-protocol is RXJ- happening on?  Does LCP layer accept our ACCM of 0 and
-then later sends an RXJ-?
+> of the code.
+> =
 
-> diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-> index bc97257..181bc14 100644
-> --- a/gatchat/ppp_lcp.c
-> +++ b/gatchat/ppp_lcp.c
-> @@ -106,7 +106,7 @@ static void lcp_generate_config_options(struct lcp_da=
-ta *lcp)
->  static void lcp_reset_config_options(struct lcp_data *lcp)
->  {
->  	lcp->req_options =3D REQ_OPTION_ACCM;
-> -	lcp->accm =3D 0;
-> +	lcp->accm =3D ~0U;
 >  =
 
+> =
 
-Strictly speaking, RFC 1662 says this about the default ACCM:
+> The situation is as follow:
+> =
 
-"For other types of links, the default value is 0, since there is
-      no need for mapping."
+>  =
 
-In theory we fall into the 'other type' category.
+> =
 
->  	lcp_generate_config_options(lcp);
->  }
-> @@ -153,7 +153,7 @@ static void lcp_rca(struct pppcp_data *pppcp, const s=
-truct pppcp_packet *packet)
->  		 * The Configuration Option is used to inform the peer which control
->  		 * characters MUST remain mapped when the peer sends them.
->  		 */
-> -			ppp_set_recv_accm(pppcp_get_ppp(pppcp), 0);
-> +			ppp_set_recv_accm(pppcp_get_ppp(pppcp), ~0U);
+> 1. connect modem to USB port
+> =
 
-See my comment for the previous patch.  This part should not be needed.
+> 2. Power the modem up: Modem.SetProperty( Powered =3D True )
+> =
 
->  			break;
->  		default:
->  			break;
+> 2a. oFono is in the middle of enabling process
+> =
 
-Regards,
--Denis
+> 3. disconnect modem from USB port
+> =
 
---===============4624243787406137753==--
+> 2b. oFono is still in the middle of enabling process, and modem is not
+> marked
+> =
+
+>     as enabled
+> =
+
+> 4. mbm_disconnect(..) is called, gprs atom removed,
+> reopen_callback(..) is set
+> =
+
+>    to be called in 1 second delay with data->reopen_source timer
+> =
+
+> 5. mbm_remove(..) is called, notice that at this point the
+> mbm_disable(..)
+> =
+
+>    function call is not called as modem is not enabled yet, and the =
+
+> =
+
+>    reopen_callback 1 second timer is still running.
+> =
+
+> 6. timer expiries and as a result reopen_callback(..) is called. At
+> this
+> =
+
+>    point modem is already removed and function accesses an already =
+
+> =
+
+>    freed memory
+> =
+
+> 7. oFono crashes with segmentation fault
+> =
+
+>  =
+
+> =
+
+> Normally reopen_callback timer would be removed in mbm_disable(..)
+> called
+> =
+
+> if enabling process has finished.
+> =
+
+>  =
+
+> =
+
+> The easy solution is to add removal of reopen_callback timer in
+> mbm_remove(..)
+> =
+
+> but I can imagine a race condition then. It might happen that during
+> heavy load
+> =
+
+> time between mbm_disconnect(..) and mbm_disable(..) or mbm_remove(..)
+> can
+> =
+
+> be longer than 1 second resulting in call to reopen_callback(..)
+> during hardware
+> =
+
+> disconnection process. Though I am not sure what can happen here, if
+> this will
+> =
+
+> result in segmentation fault or it would just execute without any side
+> effects.
+> =
+
+>  =
+
+> =
+
+> I have also noticed that other vendors don=E2=80=99t go with delayed
+> =
+
+> reopen_collback(..) at all. They usually try to reopen directly
+> =
+
+> in mbm_disconnect(..).
+
+so the disconnect is called when the modem hangsup the TTY. And that
+happens when closing a PPP session. In case of MBM that is only used for
+MMS context setups.
+
+So just removing the time from disable callback should be just fine.
+Care to send a patch for it?
+
+Regards
+
+Marcel
+
+
+
+
+--===============4259727170981374647==--
 
