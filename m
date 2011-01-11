@@ -1,74 +1,63 @@
-Content-Type: multipart/mixed; boundary="===============6328803704645104722=="
+Content-Type: multipart/mixed; boundary="===============5142249474324954807=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 02/10] Distinguish HSDPA,
- HSUPA or both as access technologies
-Date: Tue, 11 Jan 2011 10:54:33 +0200
-Message-ID: <201101111054.34118.remi.denis-courmont@nokia.com>
-In-Reply-To: <1294706366.3873.8.camel@aeonflux>
+Subject: Re: [PATCH 05/10] Update documentation for GPRS technology
+Date: Tue, 11 Jan 2011 10:57:47 +0200
+Message-ID: <201101111057.47545.remi.denis-courmont@nokia.com>
+In-Reply-To: <1294705860.3873.4.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6328803704645104722==
+--===============5142249474324954807==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tuesday 11 January 2011 02:39:26 ext Marcel Holtmann, you wrote:
+On Tuesday 11 January 2011 02:31:00 ext Marcel Holtmann, you wrote:
 > Hi Remi,
 > =
 
-> >  src/common.c |    4 ++--
-> >  1 files changed, 2 insertions(+), 2 deletions(-)
+> >  doc/connman-api.txt |    8 ++++++++
+> >  1 files changed, 8 insertions(+), 0 deletions(-)
 > > =
 
-> > diff --git a/src/common.c b/src/common.c
-> > index 4d93488..d4e567b 100644
-> > --- a/src/common.c
-> > +++ b/src/common.c
-> > @@ -702,9 +702,9 @@ const char *registration_tech_to_string(int tech)
+> > diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+> > index 22e02e5..b13efd1 100644
+> > --- a/doc/connman-api.txt
+> > +++ b/doc/connman-api.txt
+> > @@ -77,6 +77,14 @@ Properties	boolean Attached [readonly]
 > > =
 
-> >  	case ACCESS_TECHNOLOGY_GSM_EGPRS:
-> >  		return "edge";
-> >  	=
-
-> >  	case ACCESS_TECHNOLOGY_UTRAN_HSDPA:
-> > -		return "hspa";
-> > +		return "hsdpa";
+> >  			be available, e.g. receiving SMS over packet radio
+> >  			or network initiated PDP activation.
 > > =
 
-> >  	case ACCESS_TECHNOLOGY_UTRAN_HSUPA:
-> > -		return "hspa";
-> > +		return "hsupa";
-> > =
+> > +		string Technology [readonly, optional]
+> > +
+> > +			Contains the data technology as reported by the
+> > +			GPRS service registration (if known).
+> > +
+> > +			Possible values are the same as for the Technology
+> > +			property the NetworkRegistration object.
+> > +
+> =
 
-> >  	case ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA:
-> >  		return "hspa";
-> >  	=
+> we used to have this value and then we removed it since it ended up
+> being not useful. So why do you wanna bring it back?
 
-> >  	case ACCESS_TECHNOLOGY_EUTRAN:
-> what happens here on the CS interface. Will we ever see anything else
-> than UMTS indication on CS and the extra ones are purely for PS or how
-> is this expected?
+The network registration only ever tells 2G/3G/4G. We need something to tel=
+l =
 
-Yeah, that's how I interpret CREG and CGREG. But ultimately, it depends how =
+about EDGE or HS*PA. We cannot rely (only) on the CPSB bearer as it is only =
 
-the modem vendors interpret it, not how I interpret it...
+defined when there is an active context. Technology is set whenever we are =
 
-> The second question is why do we bother with the difference between
-> uplink and downlink speed. The user just cares about HSxPA in general
-> and that is why these three have been combined.
-
-I have seen requirements to distinguish them. If you don't care and only wa=
-nt =
-
-to show 3.5G for all of them, it's still easy to match hs.?pa
+registered to the GPRS service.
 
 -- =
 
 R=C3=A9mi Denis-Courmont
 Nokia Devices R&D, Maemo Software, Helsinki
 
---===============6328803704645104722==--
+--===============5142249474324954807==--
 
