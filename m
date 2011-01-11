@@ -1,78 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============7356363915109287765=="
+Content-Type: multipart/mixed; boundary="===============5280458434828145131=="
 MIME-Version: 1.0
-From: Kai.Vehmanen@nokia.com
-Subject: RE: Discussion on CTM enhancement
-Date: Tue, 11 Jan 2011 22:30:44 +0000
-Message-ID: <C50CA21D80D6B74F80FB941E215DF4140D3D68@008-AM1MPN1-002.mgdnok.nokia.com>
-In-Reply-To: <1294178578.5852.115.camel@aeonflux>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCHv6] plugin: Add ste modem initd integration
+Date: Tue, 11 Jan 2011 14:35:36 -0800
+Message-ID: <1294785336.3873.40.camel@aeonflux>
+In-Reply-To: <1294784698-2272-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7356363915109287765==
+--===============5280458434828145131==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Sjur,
 
-On 05 Jan 2011, Marcel Holtmann wrote:
->> our case, we are receiving unsolicited AT commands "CTM CALL" when the
->> remote party has accepted the call as a TTY enabled device and "NO CTM
->> CALL" when the remote has accepted the call but his device is not TTY
->> enabled.
-> =
+> This patch introduces auto discovery of ST-Ericsson modems.
+> ST-Ericsson modems (M57XX, M7XX, M74XX) are managed by a
+> Modem Init Daemon responsible for start, power cycles,
+> flashing etc. This STE plugin monitors the modem state exposed
+> from the Modem Init Damon's Dbus API. When the modem is in state
+> "on" the STE modem is created and registered. Muliple modem
+> instances, and reset handling is supported.
+> ---
+>  Makefile.am      |    3 +
+>  plugins/stemgr.c |  390 ++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  2 files changed, 393 insertions(+), 0 deletions(-)
+>  create mode 100644 plugins/stemgr.c
 
-> I think we need a property inside the voice call that indicates that
-> this is a TTY call. You have played with TTY hardware which I have not.
+you are out of luck today ;)
 
-yes, but we need to be clear on semantics. So specifically, =
+Applying: plugin: Add ste modem initd integration
+error: Makefile.am: does not match index
+Patch failed at 0001 plugin: Add ste modem initd integration
 
-I'm assuming "TTY call" here would mean that MS has indicated CTM =
+Regards
 
-support in its bearer capability flags (24.008). This is sent when =
-
-establishing calls, and is sent both for MO&MT calls. This is
-common to all modems supporting CTM.
-
-> So we might need to figure what the UI requirement for TTY really is.
-> This is still pretty much unclear to me how this all needs to be
-> indicated to the actual impaired user. Any experts here?
-
-Not an expert either, but as nobody else seems to be commenting, =
-
-I'll give it a go. ;) For really high-level explanation, see:
-http://www.nokiaaccessibility.com/textphones.html
-
-So the configuration is fairly static. User needs to select =
-
-TTY mode in device settings _and_ connect the textphone. Only
-if these conditions are met, should the CTM flag be set for
-established calls.
-
-So basicly just having org.ofono.TextTelephony.Enabled (controlling
-whether CTM is enabled or not for any created calls) is enough
-for a basic implementation.
-
-If I've understood correctly, ifxmodem allows additionally
-to enable CTM when a) you get a MT call with CTM flag
-set, and b) org.ofono.TextTelephony.Enabled=3D=3DFALSE is before =
-
-the call. So if this is exposed as a voicecall property, UI can =
-
-notify the user to connect the textphone (in case TTY is enabled
-in device settings). But I'm guessing a bit here, so Fred and =
-
-others, please correct any mistakes in this.
-
-PS This is not to be confused what actually happens on the traffic
-   channel. There's also inband negotiation specified for CTM =
-
-   (in 26.226), but AFAIK nobody is proposing to expose any =
-
-   of this via oFono (and if it was, this would be highly modem
-   specific as the CTM codec is not necessarily even implemented
-   in the modem).
+Marcel
 
 
---===============7356363915109287765==--
+
+--===============5280458434828145131==--
 
