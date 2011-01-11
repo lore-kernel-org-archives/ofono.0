@@ -1,43 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============4838387250739137353=="
+Content-Type: multipart/mixed; boundary="===============0740231030059757241=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH] sim: check if lock is locked after code changing attempt
-Date: Tue, 11 Jan 2011 12:08:54 -0200
-Message-ID: <AANLkTikr1d0b4X=7SjozExp-ftsumQWcBTnDh61EJW5M@mail.gmail.com>
-In-Reply-To: <20A4FB08D632914F9C09B9F05CBDF258192D753024@EXMB02.eu.tieto.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 0/6] Add conformance sim application
+Date: Tue, 11 Jan 2011 16:16:04 +0200
+Message-ID: <1294755370-12442-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4838387250739137353==
+--===============0740231030059757241==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jussi
+Hi,
 
-On Tue, Jan 11, 2011 at 10:17 AM,  <Jussi.Kangas@tieto.com> wrote:
-> Hi,
->
-> This is fix to Marit Henriksen's TODO item "Check SIM pin status if sim_c=
-hange_pin fails". I've discussed with Marit and it's ok for her if I fix th=
-e issue. Problem here is that issue could perhaps also be fixed with retry =
-counter solution introduced by Lucas De Marchi couple of tasks ago. That wo=
-uld seem however require some extra implementation in ste modem ( at least =
-I was not able get the ofono show correct values without extra modification=
-s ) and I think that isimodems don't have that sort of retry counter at all=
-. Because of that and since I had this solution already implemented I propo=
-se it to be added as well.
->
+ Following set of patches adds the ui support for selecting
+sim applications and also adds conformance sim application.
+DisplayText, Get Inkey, Get Input and MoreTime test cases
+are added to the conformance sim application. Logging of the
+result in a file can be done but it is not part of this patch.
 
-I failed to understand why you are hard-coding this and why you'd like
-to use retry counters. Can't you just check the pin state by calling
-sim_pin_check()?
+Regards,
+Jeevaka
 
-Moreover, this is not really implementing what the TODO item says.
+Jeevaka Badrappan (6):
+  phonesim: add ui support for sim app selection
+  phonesim: Add conformance sim application
+  phonesim: Add DisplayText test cases
+  phonesim: Add Get Inkey test cases
+  phonesim: Add Get Input test cases
+  phonesim: Add MoreTime test case
+
+ Makefile.am                       |    3 +-
+ src/conformancesimapplication.cpp | 1732 +++++++++++++++++++++++++++++++++=
+++++
+ src/control.cpp                   |    5 +-
+ src/controlbase.ui                |   10 +-
+ src/hardwaremanipulator.cpp       |   19 +-
+ src/hardwaremanipulator.h         |    4 +-
+ src/phonesim.cpp                  |   28 +-
+ src/phonesim.h                    |    4 +
+ src/simapplication.h              |   33 +
+ 9 files changed, 1808 insertions(+), 30 deletions(-)
+ create mode 100644 src/conformancesimapplication.cpp
 
 
-regards,
-Lucas De Marchi
-
---===============4838387250739137353==--
+--===============0740231030059757241==--
 
