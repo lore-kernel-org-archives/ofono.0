@@ -1,82 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============7603062527746693051=="
+Content-Type: multipart/mixed; boundary="===============3287979859640370266=="
 MIME-Version: 1.0
-From: Soum, RedouaneX <redouanex.soum@intel.com>
-Subject: RE: [RFC PATCH] gprs: add function to handle activated context
-Date: Tue, 11 Jan 2011 12:46:34 +0000
-Message-ID: <8281606748F03E4390BB98A3F47F2E948A9C1245D9@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <4D277F2B.8070102@gmail.com>
+From: Kai.Vehmanen@nokia.com
+Subject: RE: [PATCH 1/2] Expose voice call direction synchronously
+Date: Tue, 11 Jan 2011 12:47:00 +0000
+Message-ID: <C50CA21D80D6B74F80FB941E215DF4140D3601@008-AM1MPN1-002.mgdnok.nokia.com>
+In-Reply-To: <1294673180-12845-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7603062527746693051==
+--===============3287979859640370266==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
-> > Considering that from a modem standpoint the CID race condition can
-> be resolved,
-> > some modem implementation may not have reserved a range of CID for
-> their own purpose,
-> > or may not provide a mechanism to reserve a range of CID.
-> >
-> =
+On 10 Jan 2010, R=C3=A9mi Denis-Courmont wrote:
+> Currently, the call direction can only be inferred from the signals.
+> This adds a property to keep it visible also from GetCalls().
 
-> If the CGDCONT race is guaranteed to be solved by the modem =
+just adding one more do { ++votes; } while(0) for this.
+telepathy-ring needs this as well when it is (re)started and there
+are existing calls: =
 
-> manufacturers, great.  Unfortunately that is not the only race present.
->  Hint: The gatchat implementation uses non-blocking IO, select and a =
-
-> command queue.  So it is fully possible for oFono to reserve a CID, =
-
-> send out a driver activation request, but receive a network initiated =
-
-> context activation / default bearer activation before the CGDCONT was =
-
-> even sent.
-> =
-
-> Having cid ranges that do not overlap seems the safest approach to me =
-
-> right now.  Unless someone has a better idea...
-> =
+https://bugs.freedesktop.org/show_bug.cgi?id=3D32990
 
 
-I think we have two cases :
-1- CGDCONT=3DX,... is sent to the modem (ERROR response) before we get "+CG=
-EV: ME PDN ACT X"
-2- CGDCONT=3DX,... is sent to the modem (ERROR response) after we get "+CGE=
-V: ME PDN ACT X"
-
-For the first case the CID will be released inside oFono core before we get=
- "+CGEV" event : No problem =
-
-For the second case the CID will be released inside oFono after we get "+CG=
-EV" event , but we are sure it'll be released : No problem
-
-But regardless the solution we choose either the CID sent by the driver sho=
-uld be free or the CID sent by the driver should be outside the range, in b=
-oth solutions the submitted patch should be ok.
-Could you confirm ?
-
-Regarding Context type maybe we can keep Internet today and see how far we =
-can get ?
-
-Regards,
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============7603062527746693051==--
+--===============3287979859640370266==--
 
