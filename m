@@ -1,131 +1,82 @@
-Content-Type: multipart/mixed; boundary="===============2430189775842444723=="
+Content-Type: multipart/mixed; boundary="===============7603062527746693051=="
 MIME-Version: 1.0
-From: Jussi.Kangas@tieto.com
-Subject: [PATCH] sim: check if lock is locked after code changing attempt
-Date: Tue, 11 Jan 2011 14:17:13 +0200
-Message-ID: <20A4FB08D632914F9C09B9F05CBDF258192D753024@EXMB02.eu.tieto.com>
+From: Soum, RedouaneX <redouanex.soum@intel.com>
+Subject: RE: [RFC PATCH] gprs: add function to handle activated context
+Date: Tue, 11 Jan 2011 12:46:34 +0000
+Message-ID: <8281606748F03E4390BB98A3F47F2E948A9C1245D9@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <4D277F2B.8070102@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2430189775842444723==
+--===============7603062527746693051==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Denis,
 
-This is fix to Marit Henriksen's TODO item "Check SIM pin status if sim_cha=
-nge_pin fails". I've discussed with Marit and it's ok for her if I fix the =
-issue. Problem here is that issue could perhaps also be fixed with retry co=
-unter solution introduced by Lucas De Marchi couple of tasks ago. That woul=
-d seem however require some extra implementation in ste modem ( at least I =
-was not able get the ofono show correct values without extra modifications =
-) and I think that isimodems don't have that sort of retry counter at all. =
-Because of that and since I had this solution already implemented I propose=
- it to be added as well. =
+> > Considering that from a modem standpoint the CID race condition can
+> be resolved,
+> > some modem implementation may not have reserved a range of CID for
+> their own purpose,
+> > or may not provide a mechanism to reserve a range of CID.
+> >
+> =
 
+> If the CGDCONT race is guaranteed to be solved by the modem =
 
-Br,
--Jussi
+> manufacturers, great.  Unfortunately that is not the only race present.
+>  Hint: The gatchat implementation uses non-blocking IO, select and a =
 
----
- src/sim.c |   54 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 54 insertions(+), 0 deletions(-)
+> command queue.  So it is fully possible for oFono to reserve a CID, =
 
-diff --git a/src/sim.c b/src/sim.c
-index d627647..789ddde 100644
---- a/src/sim.c
-+++ b/src/sim.c
-@@ -712,8 +712,60 @@ static DBusMessage *sim_unlock_pin(DBusConnection *con=
-n, DBusMessage *msg,
- static void sim_change_pin_cb(const struct ofono_error *error, void *data)
- {
-     struct ofono_sim *sim =3D data;
-+    DBusConnection *conn =3D ofono_dbus_get_connection();
-+    const char *path =3D __ofono_atom_get_path(sim->atom);
-+    struct ofono_modem *modem =3D __ofono_atom_get_modem(sim->atom);
-+    const char *pin_name;
- =
+> send out a driver activation request, but receive a network initiated =
 
-     if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-+        if (error->error =3D=3D 12) {
-+            sim->locked_pins[sim->pin_type] =3D TRUE;
-+            switch (sim->pin_type) {
-+            case OFONO_SIM_PASSWORD_SIM_PIN:
-+                sim->pin_type =3D OFONO_SIM_PASSWORD_SIM_PUK;
-+                pin_name =3D sim_passwd_name(
-+                    OFONO_SIM_PASSWORD_SIM_PUK);
-+                break;
-+            case OFONO_SIM_PASSWORD_PHFSIM_PIN:
-+                sim->pin_type =3D OFONO_SIM_PASSWORD_PHFSIM_PUK;
-+                pin_name =3D sim_passwd_name(
-+                    OFONO_SIM_PASSWORD_PHFSIM_PUK);
-+                break;
-+            case OFONO_SIM_PASSWORD_PHCORP_PIN:
-+                sim->pin_type =3D OFONO_SIM_PASSWORD_PHCORP_PUK;
-+                pin_name =3D sim_passwd_name(
-+                    OFONO_SIM_PASSWORD_PHCORP_PUK);
-+                break;
-+            case OFONO_SIM_PASSWORD_PHNET_PIN:
-+                sim->pin_type =3D OFONO_SIM_PASSWORD_PHNET_PUK;
-+                pin_name =3D sim_passwd_name(
-+                        OFONO_SIM_PASSWORD_PHNET_PUK);
-+            case OFONO_SIM_PASSWORD_PHNETSUB_PIN:
-+                sim->pin_type =3D OFONO_SIM_PASSWORD_PHNETSUB_PUK;
-+                pin_name =3D sim_passwd_name(
-+                    OFONO_SIM_PASSWORD_PHNETSUB_PUK);
-+                break;
-+            case OFONO_SIM_PASSWORD_PHSP_PIN:
-+                sim->pin_type =3D OFONO_SIM_PASSWORD_PHSP_PUK;
-+                pin_name =3D sim_passwd_name(
-+                    OFONO_SIM_PASSWORD_PHSP_PUK);
-+                break;
-+            case OFONO_SIM_PASSWORD_SIM_PIN2:
-+                sim->pin_type =3D OFONO_SIM_PASSWORD_SIM_PUK2;
-+                pin_name =3D sim_passwd_name(
-+                    OFONO_SIM_PASSWORD_SIM_PUK2);
-+                break;
-+            default:
-+                break;
-+            }
-+            ofono_dbus_signal_property_changed(conn, path,
-+                OFONO_SIM_MANAGER_INTERFACE,
-+                "PinRequired", DBUS_TYPE_STRING,
-+                &pin_name);
-+
-+            if (sim->pin_type !=3D OFONO_SIM_PASSWORD_SIM_PUK2)
-+                ofono_modem_reset(modem);
-+        }
-         __ofono_dbus_pending_reply(&sim->pending,
-                 __ofono_error_failed(sim->pending));
- =
+> context activation / default bearer activation before the CGDCONT was =
 
-@@ -722,6 +774,7 @@ static void sim_change_pin_cb(const struct ofono_error =
-*error, void *data)
-         return;
-     }
- =
+> even sent.
+> =
 
-+    sim->pin_type =3D OFONO_SIM_PASSWORD_NONE;
-     __ofono_dbus_pending_reply(&sim->pending,
-                 dbus_message_new_method_return(sim->pending));
- =
+> Having cid ranges that do not overlap seems the safest approach to me =
 
-@@ -764,6 +817,7 @@ static DBusMessage *sim_change_pin(DBusConnection *conn=
-, DBusMessage *msg,
-         return dbus_message_new_method_return(msg);
- =
-
-     sim->pending =3D dbus_message_ref(msg);
-+    sim->pin_type =3D type;
-     sim->driver->change_passwd(sim, type, old, new,
-                     sim_change_pin_cb, sim);
- =
-
--- =
-
-1.7.1
+> right now.  Unless someone has a better idea...
+> =
 
 
---===============2430189775842444723==--
+I think we have two cases :
+1- CGDCONT=3DX,... is sent to the modem (ERROR response) before we get "+CG=
+EV: ME PDN ACT X"
+2- CGDCONT=3DX,... is sent to the modem (ERROR response) after we get "+CGE=
+V: ME PDN ACT X"
+
+For the first case the CID will be released inside oFono core before we get=
+ "+CGEV" event : No problem =
+
+For the second case the CID will be released inside oFono after we get "+CG=
+EV" event , but we are sure it'll be released : No problem
+
+But regardless the solution we choose either the CID sent by the driver sho=
+uld be free or the CID sent by the driver should be outside the range, in b=
+oth solutions the submitted patch should be ok.
+Could you confirm ?
+
+Regarding Context type maybe we can keep Internet today and see how far we =
+can get ?
+
+Regards,
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============7603062527746693051==--
 
