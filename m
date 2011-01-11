@@ -1,63 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============5142249474324954807=="
+Content-Type: multipart/mixed; boundary="===============5461570335966208450=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 05/10] Update documentation for GPRS technology
-Date: Tue, 11 Jan 2011 10:57:47 +0200
-Message-ID: <201101111057.47545.remi.denis-courmont@nokia.com>
-In-Reply-To: <1294705860.3873.4.camel@aeonflux>
+From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
+Subject: Ofono CF states not always correct
+Date: Tue, 11 Jan 2011 12:00:42 +0200
+Message-ID: <4D2C2A4A.80604@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5142249474324954807==
+--===============5461570335966208450==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tuesday 11 January 2011 02:31:00 ext Marcel Holtmann, you wrote:
-> Hi Remi,
-> =
+Hello,
 
-> >  doc/connman-api.txt |    8 ++++++++
-> >  1 files changed, 8 insertions(+), 0 deletions(-)
-> > =
+I have been trying out and going through the code concerning Call Forwardin=
+g and I found out that if you enable for example CF VoiceBusy and then CF V=
+oiceUnconditional, the VoiceBusy is still according to ofono enabled. This =
+of course as such isn't so bad but by using org.ofono.SupplementaryServices=
+ to query the CF states ofono gives different response i.e. now only the Vo=
+iceUnconditional is enabled and then I can disable only the VoiceUnconditio=
+nal by using the org.ofono.SupplementaryServices and when doing so I found =
+out that now ofono thinks that no CF is enabled even though VoiceBusy is ac=
+tually active.
 
-> > diff --git a/doc/connman-api.txt b/doc/connman-api.txt
-> > index 22e02e5..b13efd1 100644
-> > --- a/doc/connman-api.txt
-> > +++ b/doc/connman-api.txt
-> > @@ -77,6 +77,14 @@ Properties	boolean Attached [readonly]
-> > =
+Now to fix this there exists multiple solutions I believe, here's some that=
+ I came up.
+1:Ofono could send query to modem/network for all the CF values when ever v=
+oice unconditional value is changed. The good side in this is that ofono wo=
+uld definetly be up to date.
 
-> >  			be available, e.g. receiving SMS over packet radio
-> >  			or network initiated PDP activation.
-> > =
+2:Have separate status value internally and change that accordingly. E.g<pr=
+operty>  <number to>  <status>  and return<number to>  to client when<statu=
+s>  =3D=3D 1. Change any conditional<status>  to 0 if unconditional<status>=
+  =3D=3D 1 without touching the<number to>  field and when unconditional<st=
+atus>  is changed to 0 change all conditional<status>  to 1 if respecting<n=
+umber to>  exists. This would of course be much faster however I'm not sure=
+ how tedious this would be to implement.
 
-> > +		string Technology [readonly, optional]
-> > +
-> > +			Contains the data technology as reported by the
-> > +			GPRS service registration (if known).
-> > +
-> > +			Possible values are the same as for the Technology
-> > +			property the NetworkRegistration object.
-> > +
-> =
+3:Whenever unconditional value is changed, empty the internal "CF cache" i.=
+e. remove all the conditional values all together or set "cache flag" to 0 =
+and thus forcing the query to be made to modem/network.This should be as go=
+od as option 1 except the queries are made only when client needs it. Altho=
+ugh the assumption is that client queries the properties after changing the=
+m(otherwise the client remains in wrong state). So depending on how the cli=
+ent's been implemented might result on system level to same behavior as opt=
+ion 1.
 
-> we used to have this value and then we removed it since it ended up
-> being not useful. So why do you wanna bring it back?
+As I said these are what quickly came to my mind so there might be other so=
+lutions as well. So the reason for this posting is to raise discussion on w=
+hat would be the correct way to fix this?
 
-The network registration only ever tells 2G/3G/4G. We need something to tel=
-l =
+-Jarko-
 
-about EDGE or HS*PA. We cannot rely (only) on the CPSB bearer as it is only =
 
-defined when there is an active context. Technology is set whenever we are =
-
-registered to the GPRS service.
-
--- =
-
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============5142249474324954807==--
+--===============5461570335966208450==--
 
