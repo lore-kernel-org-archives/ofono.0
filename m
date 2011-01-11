@@ -1,32 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============9161405181237052542=="
+Content-Type: multipart/mixed; boundary="===============6328803704645104722=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: Re: [PATCH 3/4] Bearer documentation
-Date: Tue, 11 Jan 2011 09:53:34 +0200
-Message-ID: <1294732414.5651.1131.camel@tucson>
-In-Reply-To: <1294705583.3873.3.camel@aeonflux>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 02/10] Distinguish HSDPA,
+ HSUPA or both as access technologies
+Date: Tue, 11 Jan 2011 10:54:33 +0200
+Message-ID: <201101111054.34118.remi.denis-courmont@nokia.com>
+In-Reply-To: <1294706366.3873.8.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9161405181237052542==
+--===============6328803704645104722==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+On Tuesday 11 January 2011 02:39:26 ext Marcel Holtmann, you wrote:
+> Hi Remi,
+> =
 
-On Mon, 2011-01-10 at 16:26 -0800, ext Marcel Holtmann wrote:
-> As Denis said, the vendor commands indicate that it is a global bearer
-> information. If one context is on HSPA, then others will be as well. So
-> how does ISI provide this information? Is it globally or per context?
+> >  src/common.c |    4 ++--
+> >  1 files changed, 2 insertions(+), 2 deletions(-)
+> > =
 
-I doubt contexts can even be on different bearers. At least on ISI, the
-indication for HS*PA channel allocations is global, and so is cell
-supported technologies.
+> > diff --git a/src/common.c b/src/common.c
+> > index 4d93488..d4e567b 100644
+> > --- a/src/common.c
+> > +++ b/src/common.c
+> > @@ -702,9 +702,9 @@ const char *registration_tech_to_string(int tech)
+> > =
 
-Cheers,
-Aki
+> >  	case ACCESS_TECHNOLOGY_GSM_EGPRS:
+> >  		return "edge";
+> >  	=
 
+> >  	case ACCESS_TECHNOLOGY_UTRAN_HSDPA:
+> > -		return "hspa";
+> > +		return "hsdpa";
+> > =
 
---===============9161405181237052542==--
+> >  	case ACCESS_TECHNOLOGY_UTRAN_HSUPA:
+> > -		return "hspa";
+> > +		return "hsupa";
+> > =
+
+> >  	case ACCESS_TECHNOLOGY_UTRAN_HSDPA_HSUPA:
+> >  		return "hspa";
+> >  	=
+
+> >  	case ACCESS_TECHNOLOGY_EUTRAN:
+> what happens here on the CS interface. Will we ever see anything else
+> than UMTS indication on CS and the extra ones are purely for PS or how
+> is this expected?
+
+Yeah, that's how I interpret CREG and CGREG. But ultimately, it depends how =
+
+the modem vendors interpret it, not how I interpret it...
+
+> The second question is why do we bother with the difference between
+> uplink and downlink speed. The user just cares about HSxPA in general
+> and that is why these three have been combined.
+
+I have seen requirements to distinguish them. If you don't care and only wa=
+nt =
+
+to show 3.5G for all of them, it's still easy to match hs.?pa
+
+-- =
+
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
+
+--===============6328803704645104722==--
 
