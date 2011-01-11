@@ -1,69 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============1729308787173053017=="
+Content-Type: multipart/mixed; boundary="===============5694215787628623967=="
 MIME-Version: 1.0
-From: Kai.Vehmanen@nokia.com
-Subject: RE: Discussion on CTM enhancement 
-Date: Tue, 11 Jan 2011 21:26:25 +0000
-Message-ID: <C50CA21D80D6B74F80FB941E215DF4140D3CCF@008-AM1MPN1-002.mgdnok.nokia.com>
-In-Reply-To: <8250E4885F9967469CAC3FB5CBA2CE69934E645C02@irsmsx501.ger.corp.intel.com>
+From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+Subject: [PATCH 0/3] Add CDMA devinfo support
+Date: Tue, 11 Jan 2011 13:44:58 -0800
+Message-ID: <1294782301-8592-1-git-send-email-dara.spieker-doyle@nokia.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1729308787173053017==
+--===============5694215787628623967==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+This series of patches provide CDMA AT support device info. It re-uses the =
+GSM
+atom interface and provides cdmamodem driver support, moving common utiliti=
+es
+to atutil.[ch] for sharing with the atmodem driver.
 
-On 22 Dec 2010, Predon, Frederic wrote:
-> 1) First, it might a good proposal to merge the TextTelephony and the
-> AudioSettings atoms. Enabling and disabling CTM on a platform require
-> to configure the audio settings on the modem side (audio routing
-> parameters changes). Today, in my patches, I have nearly the same code
+HW support for testing is implemented in the nokiacdma plugin.
 
-this area is slightly confusing as there are many atoms related
-to calls (e.g org.ofono.CallVolume, AudioSettings, CallSettings).
+These patches have been tested against the Nokia 7205 CDMA device in a teth=
+ered
+mode.
 
-The AudioSettings is AFAIK meant for modems where the audio is =
+Limitations
+-----------
+Patches 2/3 and 3/3 are dependent on acceptance of the CDMA MO Voicecall v5
+patch series.
 
-routed to/from the host (e.g. N900/isimodem or ifxmodem), and to
-me it would be a good idea to keep it clean (only features that affect
-modems of this type). =
+Dara Spieker-Doyle (3):
+  atmodem: Share common devinfo utilities
+  cdmamodem: Add CDMA devinfo support
+  nokiacdma: Add CDMA devinfo support
 
-
-Controlling TTY/CTM applies to all kinds of modems, independently
-of how they manage (or don't manage audio), so that to me hints
-that the TextTelephony should be a separate atom.
-
-Of course if the CTM implementation needs cooperation with =
-
-the host audio stack (in case host is involved in the audio path), =
-
-then CTM support will impact other atoms as well (AudioSettings in
-case of ifxmodem).
-
-> 2) Secondly, I think that 2 properties can be added in the
-> TextTelephony atom and/or the AudioSetting atom (or the "merged" atom
-> described in 1). The first property is when the device receives an
-> incoming CTM call. Even if the type is still a voice call, upper layers
-
-Now continuing the above reasoning, I'd say this should go to =
-
-TextTelephony as modems not implementing AudioSettings can
-still implement this, and this property is useful to show in the UI
-despite the audio implementation details.
-
-But as the ifxmodem interface is per-call (I guess this maps to the CTM
-bearer capability flag in SETUP and its replies), this could
-perhaps be a property of org.ofono.VoiceCall as well.
-
-> The second property is for MO calls. Remote user can accept the call as
-> a TTY enable device or not. This is supported by the standard. In our
-
-So same for this (either to TextTelephony, or perhaps also a property of =
-
-voicecalls).
+ Makefile.am                   |    3 +-
+ drivers/atmodem/atutil.c      |   56 ++++++++++++++
+ drivers/atmodem/atutil.h      |    2 +
+ drivers/atmodem/devinfo.c     |   59 +-------------
+ drivers/cdmamodem/cdmamodem.c |    2 +
+ drivers/cdmamodem/cdmamodem.h |    2 +
+ drivers/cdmamodem/devinfo.c   |  169 +++++++++++++++++++++++++++++++++++++=
+++++
+ plugins/nokiacdma.c           |    2 +
+ 8 files changed, 239 insertions(+), 56 deletions(-)
+ create mode 100644 drivers/cdmamodem/devinfo.c
 
 
---===============1729308787173053017==--
+--===============5694215787628623967==--
 
