@@ -1,45 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============5280458434828145131=="
+Content-Type: multipart/mixed; boundary="===============0376509377301400177=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCHv6] plugin: Add ste modem initd integration
-Date: Tue, 11 Jan 2011 14:35:36 -0800
-Message-ID: <1294785336.3873.40.camel@aeonflux>
-In-Reply-To: <1294784698-2272-1-git-send-email-sjurbren@gmail.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: [PATCH] coding-style: Use void if function has no parameters
+Date: Tue, 11 Jan 2011 23:39:30 +0100
+Message-ID: <1294785570-2901-1-git-send-email-sjurbren@gmail.com>
+In-Reply-To: <4D2CD1FE.4070601@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5280458434828145131==
+--===============0376509377301400177==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
-> This patch introduces auto discovery of ST-Ericsson modems.
-> ST-Ericsson modems (M57XX, M7XX, M74XX) are managed by a
-> Modem Init Daemon responsible for start, power cycles,
-> flashing etc. This STE plugin monitors the modem state exposed
-> from the Modem Init Damon's Dbus API. When the modem is in state
-> "on" the STE modem is created and registered. Muliple modem
-> instances, and reset handling is supported.
-> ---
->  Makefile.am      |    3 +
->  plugins/stemgr.c |  390 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  2 files changed, 393 insertions(+), 0 deletions(-)
->  create mode 100644 plugins/stemgr.c
+---
+Marcel, Denis,
 
-you are out of luck today ;)
+Here is the patch, please apply it if you agree. I'm easy :-)
 
-Applying: plugin: Add ste modem initd integration
-error: Makefile.am: does not match index
-Patch failed at 0001 plugin: Add ste modem initd integration
+Regards,
+Sjur
 
-Regards
+ doc/coding-style.txt |   15 +++++++++++++++
+ 1 files changed, 15 insertions(+), 0 deletions(-)
 
-Marcel
+diff --git a/doc/coding-style.txt b/doc/coding-style.txt
+index 3bee240..40bb36b 100644
+--- a/doc/coding-style.txt
++++ b/doc/coding-style.txt
+@@ -279,6 +279,21 @@ memset(stuff, 0, sizeof(*stuff));
+ memset(stuff, 0, sizeof *stuff); // Wrong
+ =
+
+ =
+
++M15: Use void if function has no parameters
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++A function with no parameters must use void in the parameter list.
++
++Example:
++1)
++void foo(void)
++{
++}
++
++2)
++void foo()	// Wrong
++{
++}
++
+ O1: Shorten the name
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ Better to use abbreviation, rather than full name, to name a variable,
+-- =
+
+1.7.0.4
 
 
-
---===============5280458434828145131==--
+--===============0376509377301400177==--
 
