@@ -1,76 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============8640679223195793872=="
+Content-Type: multipart/mixed; boundary="===============1664678474980970011=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [PATCHv5] plugin: Add ste modem initd integration
-Date: Tue, 11 Jan 2011 18:06:43 +0100
-Message-ID: <AANLkTi=u1D3jbA7s8BsToGC7qHRjHO-cFpLn+9xdATRm@mail.gmail.com>
-In-Reply-To: <1294707482.3873.17.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] PPP: Fix Transmit ACCM and Receive ACCM setting error
+Date: Tue, 11 Jan 2011 11:06:58 -0600
+Message-ID: <4D2C8E32.2070609@gmail.com>
+In-Reply-To: <1294656017-825-2-git-send-email-martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8640679223195793872==
+--===============1664678474980970011==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel.
+Hi Martin,
 
->> +static void get_modems()
->> +{
->
-> so these are declared as get_modems(void) btw. The compiler should have
-> warned you about this.
+On 01/10/2011 04:40 AM, martin.xu(a)intel.com wrote:
+> From: Martin Xu <martin.xu@intel.com>
+> =
 
-I don't get a compiler warning for this one, not even with -Wall
--Wextra -Wpedantic on GCC 4.4.3.
-But a new rule in the coding-style should perhaps be added, e.g:
+> ---
+>  gatchat/ppp_lcp.c |   13 +++++++++++--
+>  1 files changed, 11 insertions(+), 2 deletions(-)
 
-M15: Use void if function has no parameters
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-A function with no parameters must use void in the parameter list.
-Example:
-1)
-void foo(void)
-{
-}
+Can you write a better description of this patch?  The subject is not
+enough...
 
-2)
-void foo()	// Wrong
-{
-}
+> =
 
-...
->> +static void mgr_disconnect(DBusConnection *connection, void *user_data)
->> +{
->> + =C2=A0 =C2=A0 g_hash_table_remove_all(modem_list);
->> + =C2=A0 =C2=A0 g_dbus_remove_watch(connection, property_changed_watch);
->> +}
->> +
-....
->> +static void stemgr_exit()
->> +{
->> + =C2=A0 =C2=A0 g_hash_table_destroy(modem_list);
->> + =C2=A0 =C2=A0 g_dbus_remove_watch(connection, modem_daemon_watch);
->> + =C2=A0 =C2=A0 g_dbus_remove_watch(connection, property_changed_watch);
->
-> This is not right. You need to remove the property_changed_watch in the
-> disconnect callback. Otherwise if your daemon restarts twice you
-> actually have two watches.
-It's already present in mgr_disconnect, did you miss that?
+> diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+> index 3a80a62..bc97257 100644
+> --- a/gatchat/ppp_lcp.c
+> +++ b/gatchat/ppp_lcp.c
+> @@ -149,7 +149,11 @@ static void lcp_rca(struct pppcp_data *pppcp, const =
+struct pppcp_packet *packet)
+>  	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
+>  		switch (ppp_option_iter_get_type(&iter)) {
+>  		case ACCM:
+> -			ppp_set_xmit_accm(pppcp_get_ppp(pppcp), 0);
+> +		/* RFC1662 Section 7.1
+> +		 * The Configuration Option is used to inform the peer which control
+> +		 * characters MUST remain mapped when the peer sends them.
+> +		 */
+> +			ppp_set_recv_accm(pppcp_get_ppp(pppcp), 0);
+>  			break;
 
-In the previous review 2011/1/5 you said:
-> +static void stemgr_exit()
-> +{
->The only thing you missed here is to remove the property changed watch
->in case it was registered (aka the init daemon started).
+Hah, so I actually managed to mix up the xmit and recv accms :P
 
-Anyway, I think the watch handing in the latest patch is correct,
-we need to do remove_watch for property_changed_watch
-in both stemgr_exit and in stemgr_disconnect.
+Can you please align the comment with the code and follow item M2 from
+doc/coding-style.txt?
+
+Currently we always request 0 as the peer's xmit ACCM, so the present
+code should work either way.  However, it might be safer to use the recv
+ACCM that was eventually accepted by the peer.  This would also make
+chunk 2 of patch 2 unnecessary.
+
+>  		default:
+>  			break;
+> @@ -263,7 +267,12 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pp=
+pcp,
+>  	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
+>  		switch (ppp_option_iter_get_type(&iter)) {
+>  		case ACCM:
+> -			ppp_set_recv_accm(ppp,
+> +		/* RFC1662 Section 7.1
+> +		 * The Configuration Option is used to inform the peer which control
+> +		 * characters MUST remain mapped when the peer sends them.
+> +		 */
+
+Same comment as above about the comment formatting
+
+> +
+
+Please remove this empty line
+
+> +			ppp_set_xmit_accm(ppp,
+>  				get_host_long(ppp_option_iter_get_data(&iter)));
+>  			break;
+>  		case AUTH_PROTO:
 
 Regards,
-Sjur
+-Denis
 
---===============8640679223195793872==--
+--===============1664678474980970011==--
 
