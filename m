@@ -1,42 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============0650210525472739161=="
+Content-Type: multipart/mixed; boundary="===============2390575199519875468=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC PATCH 3/4] sim: add ofono_sim_get_mnc_length
-Date: Mon, 10 Jan 2011 16:40:42 -0800
-Message-ID: <1294706442.3873.9.camel@aeonflux>
-In-Reply-To: <1294665072-13630-4-git-send-email-jukka.saunamaki@nokia.com>
+Subject: Re: [PATCH 06/10] Define packet switched bearers
+Date: Mon, 10 Jan 2011 16:42:58 -0800
+Message-ID: <1294706578.3873.11.camel@aeonflux>
+In-Reply-To: <1294665325-11937-6-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0650210525472739161==
+--===============2390575199519875468==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+Hi Remi,
 
->  include/sim.h |    1 +
->  src/sim.c     |    8 ++++++++
->  2 files changed, 9 insertions(+), 0 deletions(-)
+>  src/common.c |   15 +++++++++++++++
+>  src/common.h |   13 +++++++++++++
+>  2 files changed, 28 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/include/sim.h b/include/sim.h
-> index 7860e24..9b21f2e 100644
-> --- a/include/sim.h
-> +++ b/include/sim.h
-> @@ -173,6 +173,7 @@ void ofono_sim_set_data(struct ofono_sim *sim, void *=
-data);
->  void *ofono_sim_get_data(struct ofono_sim *sim);
+> diff --git a/src/common.c b/src/common.c
+> index d4e567b..595bc53 100644
+> --- a/src/common.c
+> +++ b/src/common.c
+> @@ -714,6 +714,21 @@ const char *registration_tech_to_string(int tech)
+>  	}
+>  }
 >  =
 
->  const char *ofono_sim_get_imsi(struct ofono_sim *sim);
-> +unsigned int ofono_sim_get_mnc_length(struct ofono_sim *sim);
+> +const char *packet_bearer_to_string(int bearer)
+> +{
+> +	static const char list[][6] =3D {
+> +		"none",
+> +		"gsm", "edge",
+> +		"umts", "hsupa", "hsdpa", "hspa",
+> +		"lte",
+> +	};
+> +
+> +	if (((unsigned)bearer) < sizeof (list) / sizeof (list[0]))
+> +		return list[bearer];
+> +
+> +	return "unknown";
+> +}
 
-so here is now the question. Do we wanna make this simple and do it like
-this or just provide functions to the MCC and MNC like we do inside the
-network registration interface?
-
-Denis, any favorites?
+since every other piece inside oFono uses a switch statement for this,
+please do the same. And since packet bearer is an enum, please use that
+enum as well. If we ever add an additional value, then the compiler will
+tell us to adapt this code.
 
 Regards
 
@@ -44,5 +55,5 @@ Marcel
 
 
 
---===============0650210525472739161==--
+--===============2390575199519875468==--
 
