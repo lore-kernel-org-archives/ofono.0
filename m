@@ -1,82 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============8174192379036211230=="
+Content-Type: multipart/mixed; boundary="===============5917828544121499703=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: Re: [PATCH v4, 3/5] nokiacdma: Add plugin and CDMA MO Call Support
-Date: Mon, 10 Jan 2011 15:12:33 -0800
-Message-ID: <4D2B9261.8010501@nokia.com>
-In-Reply-To: <4D2B8A90.3040309@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 3/4] Bearer documentation
+Date: Mon, 10 Jan 2011 16:26:23 -0800
+Message-ID: <1294705583.3873.3.camel@aeonflux>
+In-Reply-To: <201101101834.55049.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8174192379036211230==
+--===============5917828544121499703==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis
+Hi Remi,
 
-On 01/10/2011 02:39 PM, ext Denis Kenzior wrote:
-> Hi Dara,
->
->> +static void nokiacdma_remove(struct ofono_modem *modem)
->> +{
->> +	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
->> +
->> +	DBG("%p", modem);
->> +
->> +	ofono_modem_set_data(modem, NULL);
->> +
->> +	if (data->chat)
->> +		g_at_chat_unref(data->chat);
->
-> Feel free to skip the NULL check, g_at_chat_unref handles this just fine.
->
+> > > On Friday 07 January 2011 18:23:25 ext Denis Kenzior, you wrote:
+> > >> The other question I have is whether we should report this at the
+> > >> context level or at the ConnectionManager level.  Can different cont=
+exts
+> > >> truly have different bearers?
+> > > =
 
-I'll remove this
+> > > At least for 3G with HS*PA, I believe we can. In my understanding, HS=
+PA
+> > > channels are allocated per contexts. Correct me if I'm wrong.
+> > =
 
->> +
->> +	g_free(data);
->> +}
->> +
->
-> <snip>
->
->> +static gboolean nokiacdma_set_online_cb(gpointer cb_data)
->> +{
->> +	struct cb_data *cbd =3D cb_data;
->> +	ofono_modem_online_cb_t cb =3D cbd->cb;
->> +
->> +	CALLBACK_WITH_SUCCESS(cb, cbd->data);
->> +
->> +	g_free(cbd);
->> +
->> +	/* do not call again */
->> +	return FALSE;
->> +}
->> +
->> +static void nokiacdma_set_online(struct ofono_modem *modem,
->> +				ofono_bool_t online,
->> +				ofono_modem_online_cb_t cb, void *user_data)
->> +{
->> +	struct cb_data *cbd =3D cb_data_new(cb, user_data);
->> +
->> +	DBG("modem %p %s", modem, online ? "online" : "offline");
->> +
->> +	/* TODO: Add implementation to control modem online status */
->> +	g_idle_add(nokiacdma_set_online_cb, cbd);
->> +}
->> +
->
-> I'm really lost in the above two functions.  If you don't have an
-> implementation, you can just skip it.  oFono should do the right thing
-> and automatically bring devices up into online state if set_online is
-> missing.
->
+> > I don't know, to me it would not make sense to allocate different
+> > bearers per context, but I'm not an RF engineer.  Do note that at least
+> > several vendors provide extension commands that report the global active
+> > bearer, not per context.  For instance, see the Ericsson *CPSB command.=
+..
+> =
 
-OK - we'll skip it as discussed and I'll include this in the patch rebase.
+> The UI wants to show a single icon for the number of "G's". I would assum=
+e =
 
-Thank you
-Dara
+> that's meant to address this use case. Then you don't need to iterate ove=
+r all =
 
---===============8174192379036211230==--
+> contexts, especially those not allocated through that this particular AT =
+
+> serial port.
+
+I am confused by your answer.
+
+So from what I understand so far it is that with AT modems the bearer
+information is a per context information. So the real question is if
+this is just an AT command thing of how they defined it or if it can be
+really independent.
+
+As Denis said, the vendor commands indicate that it is a global bearer
+information. If one context is on HSPA, then others will be as well. So
+how does ISI provide this information? Is it globally or per context?
+
+Regards
+
+Marcel
+
+
+
+--===============5917828544121499703==--
 
