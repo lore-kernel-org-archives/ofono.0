@@ -1,132 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============9063802170149358137=="
+Content-Type: multipart/mixed; boundary="===============2886950291376467801=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 00/16] M15 coding style fixes
-Date: Wed, 12 Jan 2011 12:52:02 +0200
-Message-ID: <1294829538-3893-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 04/16] mbmmodem: M15 coding style fix
+Date: Wed, 12 Jan 2011 12:52:06 +0200
+Message-ID: <1294829538-3893-5-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1294829538-3893-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9063802170149358137==
+--===============2886950291376467801==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-
- Coding style fix patches for the whole oFono tree.
-
-Regards,
-Jeevaka
-
-Jeevaka Badrappan (16):
-  smsutil: M15 coding style fix
-  core: M15 coding style fix
-  include: M15 coding style fix
-  mbmmodem: M15 coding style fix
-  hfpmodem: M15 coding style fix
-  huaweimodem: M15 coding style fix
-  stemodem: M15 coding style fix
-  calypsomodem: M15 coding style fix
-  ifxmodem: M15 coding style fix
-  hsomodem: M15 coding style fix
-  nwmodem: M15 coding style fix
-  isimodem: M15 coding style fix
-  atmodem: M15 coding style fix
-  plugins: M15 coding style fix
-  unit: M15 coding style fix
-  gatchat: M15 coding styles fixes
-
- drivers/atmodem/atmodem.h               |   68 +++++++++++++++------------=
 ---
- drivers/atmodem/call-barring.c          |    4 +-
- drivers/atmodem/call-forwarding.c       |    4 +-
- drivers/atmodem/call-meter.c            |    4 +-
- drivers/atmodem/call-settings.c         |    4 +-
- drivers/atmodem/call-volume.c           |    4 +-
- drivers/atmodem/cbs.c                   |    4 +-
- drivers/atmodem/gprs-context.c          |    4 +-
- drivers/atmodem/gprs.c                  |    4 +-
- drivers/atmodem/network-registration.c  |    4 +-
- drivers/atmodem/phonebook.c             |    6 +-
- drivers/atmodem/sim.c                   |    4 +-
- drivers/atmodem/sms.c                   |    4 +-
- drivers/atmodem/ssn.c                   |    4 +-
- drivers/atmodem/stk.c                   |    4 +-
- drivers/atmodem/ussd.c                  |    4 +-
- drivers/atmodem/voicecall.c             |    4 +-
- drivers/calypsomodem/calypsomodem.h     |    8 ++--
- drivers/calypsomodem/stk.c              |    4 +-
- drivers/calypsomodem/voicecall.c        |    4 +-
- drivers/hfpmodem/call-volume.c          |    4 +-
- drivers/hfpmodem/hfpmodem.h             |   12 +++---
- drivers/hfpmodem/network-registration.c |    4 +-
- drivers/hfpmodem/voicecall.c            |    4 +-
- drivers/hsomodem/gprs-context.c         |    4 +-
- drivers/hsomodem/hsomodem.h             |    8 ++--
- drivers/hsomodem/radio-settings.c       |    4 +-
- drivers/huaweimodem/audio-settings.c    |    4 +-
- drivers/huaweimodem/gprs-context.c      |    4 +-
- drivers/huaweimodem/huaweimodem.h       |   16 ++++----
- drivers/huaweimodem/radio-settings.c    |    4 +-
- drivers/huaweimodem/voicecall.c         |    4 +-
- drivers/ifxmodem/audio-settings.c       |    4 +-
- drivers/ifxmodem/gprs-context.c         |    4 +-
- drivers/ifxmodem/ifxmodem.h             |   20 +++++-----
- drivers/ifxmodem/radio-settings.c       |    4 +-
- drivers/ifxmodem/stk.c                  |    4 +-
- drivers/ifxmodem/voicecall.c            |    4 +-
- drivers/isimodem/audio-settings.c       |    4 +-
- drivers/isimodem/call-barring.c         |    4 +-
- drivers/isimodem/call-forwarding.c      |    4 +-
- drivers/isimodem/call-meter.c           |    4 +-
- drivers/isimodem/call-settings.c        |    4 +-
- drivers/isimodem/cbs.c                  |    4 +-
- drivers/isimodem/devinfo.c              |    4 +-
- drivers/isimodem/gprs-context.c         |    4 +-
- drivers/isimodem/isimodem.h             |   68 +++++++++++++++------------=
----
- drivers/isimodem/network-registration.c |    4 +-
- drivers/isimodem/phonebook.c            |    4 +-
- drivers/isimodem/radio-settings.c       |    4 +-
- drivers/isimodem/sim.c                  |    4 +-
- drivers/isimodem/sms.c                  |    4 +-
- drivers/isimodem/ssn.c                  |    4 +-
- drivers/isimodem/ussd.c                 |    4 +-
- drivers/isimodem/voicecall.c            |    4 +-
- drivers/mbmmodem/gprs-context.c         |    4 +-
- drivers/mbmmodem/mbmmodem.h             |    8 ++--
- drivers/mbmmodem/stk.c                  |    4 +-
- drivers/nwmodem/nwmodem.h               |    4 +-
- drivers/nwmodem/radio-settings.c        |    4 +-
- drivers/stemodem/gprs-context.c         |    4 +-
- drivers/stemodem/radio-settings.c       |    4 +-
- drivers/stemodem/stemodem.h             |   12 +++---
- drivers/stemodem/voicecall.c            |    4 +-
- gatchat/gatsyntax.c                     |    4 +-
- gatchat/gatsyntax.h                     |    4 +-
- gatchat/gsmdial.c                       |    4 +-
- gatchat/test-server.c                   |    4 +-
- include/dbus.h                          |    2 +-
- plugins/bluetooth.h                     |    2 +-
- plugins/hfp.c                           |    6 +-
- plugins/push-notification.c             |    4 +-
- plugins/smart-messaging.c               |    4 +-
- src/dbus.c                              |    2 +-
- src/main.c                              |    2 +-
- src/manager.c                           |    4 +-
- src/modem.c                             |    6 +-
- src/ofono.h                             |   12 +++---
- src/smsutil.c                           |    2 +-
- src/smsutil.h                           |    2 +-
- unit/test-common.c                      |    6 +-
- unit/test-idmap.c                       |    4 +-
- unit/test-mux.c                         |    8 ++--
- unit/test-simutil.c                     |   14 +++---
- unit/test-sms.c                         |   26 ++++++------
- unit/test-util.c                        |   20 +++++-----
- 86 files changed, 292 insertions(+), 292 deletions(-)
+ drivers/mbmmodem/gprs-context.c |    4 ++--
+ drivers/mbmmodem/mbmmodem.h     |    8 ++++----
+ drivers/mbmmodem/stk.c          |    4 ++--
+ 3 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/mbmmodem/gprs-context.c b/drivers/mbmmodem/gprs-contex=
+t.c
+index 0a1ca2c..b9b4574 100644
+--- a/drivers/mbmmodem/gprs-context.c
++++ b/drivers/mbmmodem/gprs-context.c
+@@ -514,12 +514,12 @@ static struct ofono_gprs_context_driver driver =3D {
+ 	.deactivate_primary	=3D mbm_gprs_deactivate_primary,
+ };
+ =
+
+-void mbm_gprs_context_init()
++void mbm_gprs_context_init(void)
+ {
+ 	ofono_gprs_context_driver_register(&driver);
+ }
+ =
+
+-void mbm_gprs_context_exit()
++void mbm_gprs_context_exit(void)
+ {
+ 	ofono_gprs_context_driver_unregister(&driver);
+ }
+diff --git a/drivers/mbmmodem/mbmmodem.h b/drivers/mbmmodem/mbmmodem.h
+index 65786d7..4c6f263 100644
+--- a/drivers/mbmmodem/mbmmodem.h
++++ b/drivers/mbmmodem/mbmmodem.h
+@@ -21,8 +21,8 @@
+ =
+
+ #include <drivers/atmodem/atutil.h>
+ =
+
+-extern void mbm_gprs_context_init();
+-extern void mbm_gprs_context_exit();
++extern void mbm_gprs_context_init(void);
++extern void mbm_gprs_context_exit(void);
+ =
+
+-extern void mbm_stk_init();
+-extern void mbm_stk_exit();
++extern void mbm_stk_init(void);
++extern void mbm_stk_exit(void);
+diff --git a/drivers/mbmmodem/stk.c b/drivers/mbmmodem/stk.c
+index 81c36db..d0a9f3b 100644
+--- a/drivers/mbmmodem/stk.c
++++ b/drivers/mbmmodem/stk.c
+@@ -270,12 +270,12 @@ static struct ofono_stk_driver driver =3D {
+ 	.terminal_response	=3D mbm_stk_terminal_response,
+ };
+ =
+
+-void mbm_stk_init()
++void mbm_stk_init(void)
+ {
+ 	ofono_stk_driver_register(&driver);
+ }
+ =
+
+-void mbm_stk_exit()
++void mbm_stk_exit(void)
+ {
+ 	ofono_stk_driver_unregister(&driver);
+ }
+-- =
+
+1.7.0.4
 
 
---===============9063802170149358137==--
+--===============2886950291376467801==--
 
