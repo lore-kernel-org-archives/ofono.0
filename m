@@ -1,26 +1,26 @@
-Content-Type: multipart/mixed; boundary="===============8846595290488714728=="
+Content-Type: multipart/mixed; boundary="===============0992375364501366436=="
 MIME-Version: 1.0
 From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: [PATCH] test: add set-call-forwarding
-Date: Wed, 12 Jan 2011 11:14:39 +0200
-Message-ID: <1294823679-2530-1-git-send-email-jarko.poutiainen@tieto.com>
+Subject: [PATCH] test: add disable-call-forwarding
+Date: Wed, 12 Jan 2011 11:42:00 +0200
+Message-ID: <1294825320-2928-1-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8846595290488714728==
+--===============0992375364501366436==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am              |    3 +-
- test/set-call-forwarding |   64 ++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am                  |    3 +-
+ test/disable-call-forwarding |   53 ++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 66 insertions(+), 1 deletions(-)
- create mode 100755 test/set-call-forwarding
+ 2 files changed, 55 insertions(+), 1 deletions(-)
+ create mode 100755 test/disable-call-forwarding
 
 diff --git a/Makefile.am b/Makefile.am
-index 4dec90a..ead154d 100644
+index 4dec90a..2df0fbd 100644
 --- a/Makefile.am
 +++ b/Makefile.am
 @@ -449,7 +449,8 @@ test_scripts =3D test/backtrace \
@@ -29,17 +29,17 @@ index 4dec90a..ead154d 100644
  		test/set-umts-band \
 -		test/lockdown-modem
 +		test/lockdown-modem \
-+		test/set-call-forwarding
++		test/disable-call-forwarding
  =
 
  if TEST
  testdir =3D $(pkglibdir)/test
-diff --git a/test/set-call-forwarding b/test/set-call-forwarding
+diff --git a/test/disable-call-forwarding b/test/disable-call-forwarding
 new file mode 100755
-index 0000000..159a27c
+index 0000000..ca0ba90
 --- /dev/null
-+++ b/test/set-call-forwarding
-@@ -0,0 +1,64 @@
++++ b/test/disable-call-forwarding
+@@ -0,0 +1,53 @@
 +#!/usr/bin/python
 +
 +import sys
@@ -58,17 +58,14 @@ index 0000000..159a27c
 +		mainloop.quit();
 +
 +if __name__ =3D=3D "__main__":
-+	if len(sys.argv) < 3:
-+		print "Usage: %s <property> <value>" % (sys.argv[0])
-+		print "Properties can be: VoiceUnconditional, VoiceBusy,"
-+		print "	VoiceNoReply, VoiceNoReplyTimeout, VoiceNotReachable"
-+		print "Value: number to or the timeout"
++	if len(sys.argv) < 2:
++		print "Usage: %s <type>" % (sys.argv[0])
++		print "Type can be: all, conditional"
 +		sys.exit(1)
 +
-+	property =3D sys.argv[1]
-+	value =3D sys.argv[2]
-+
 +	canexit =3D False
++
++	type =3D sys.argv[1]
 +
 +	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
 +
@@ -84,21 +81,13 @@ index 0000000..159a27c
 +
 +	cf.connect_to_signal("PropertyChanged", property_changed)
 +
-+	if (property =3D=3D "VoiceNoReplyTimeout"):
-+		try:
-+			cf.SetProperty(property, dbus.UInt16(value),
-+							timeout =3D 100)
-+		except dbus.DBusException, e:
-+			print "Unable SetProperty", e
-+			sys.exit(1);
-+	else:
-+		try:
-+			cf.SetProperty(property, value, timeout =3D 100)
-+		except dbus.DBusException, e:
-+			print "Unable SetProperty", e
-+			sys.exit(1);
++	try:
++		cf.DisableAll(type, timeout =3D 100)
++	except dbus.DBusException, e:
++		print "Unable to DisableAll", e
++		sys.exit(1);
 +
-+	print "Set Property successfull"
++	print "DisableAll successful"
 +
 +	canexit =3D True
 +
@@ -109,5 +98,5 @@ index 0000000..159a27c
 1.7.0.4
 
 
---===============8846595290488714728==--
+--===============0992375364501366436==--
 
