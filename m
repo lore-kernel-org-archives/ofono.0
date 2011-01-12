@@ -1,46 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============6214733856097086737=="
+Content-Type: multipart/mixed; boundary="===============8291330468219987535=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [RFC 3/5] voicecall: Add ofono_voicecall_tty_notify api
-Date: Wed, 12 Jan 2011 18:42:25 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802D59EA2@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <1294849744.3873.89.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 1/4] Added GPRS context provisioning driver API sources
+Date: Wed, 12 Jan 2011 10:43:30 -0600
+Message-ID: <4D2DDA32.8090907@gmail.com>
+In-Reply-To: <1294814638.3873.69.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6214733856097086737==
+--===============8291330468219987535==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Marcel,
 
-ofono-bounces(a)ofono.org wrote:
->> Main reason for separate notification function is to avoid going
->> through all the cases handled inside voicecall_notify. TTY field in
->> ofono_call is basically for the GetProperties.
+>> +
+>> +/*
+>> + * Callback from provisioning plugin.
+>> + * settings: list of struct ofono_gprs_provisioning_data
+>> + *
+>> + * It is responsibility of callback function to free settings-list
+>> + * settings-list elements must be freed with ofono_gprs_provisioning_da=
+ta_free()
+>> + */
+>> +typedef void (*ofono_gprs_provision_cb_t)(GSList *settings, void *userd=
+ata);
+>> +
+>> +struct ofono_gprs_provision_driver {
+>> +	const char *name;
+>> +	int priority;
+>> +	void (*get_settings) (struct ofono_modem *modem,
+>> +				ofono_gprs_provision_cb_t cb,
+>> +				void *userdata);
+>> +};
 > =
 
-> I see. So here is the main question that comes from this now.
-> This seems to be a bit IFX specific driven API. I still have
-> no idea why they can not just indicate this via +CRING and
-> have to use CTM CALL for it.
+> So here is something we need to talk about. The nettime plugin
+> infrastructure using a "pseudo" atom. So do we wanna do the same here or
+> do we wanna change the nettime atom to something simple like this.
 > =
 
-> Are we expecting that all modems will just establish a normal
-> voice call and only later on signal that it is a TTY call?
-> Any input from different vendors other than IFX. What about STE, ISI?
+> I like to have consistency here. Aki, Denis, thoughts?
+> =
 
-This notification is to inform the ME that the call is accepted as a TTY
-call
-on the remote side.
+
+The nettime and history plugins can create their own D-Bus interfaces.
+Hence the need for probe and remove.  Since the provisioning driver
+might want to pre-parse its database, I believe it should follow the
+same approach...
 
 Regards,
-Jeevaka
+-Denis
 
-
-
-
-
---===============6214733856097086737==--
+--===============8291330468219987535==--
 
