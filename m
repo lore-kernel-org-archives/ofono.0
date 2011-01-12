@@ -1,144 +1,111 @@
-Content-Type: multipart/mixed; boundary="===============7275961215702276992=="
+Content-Type: multipart/mixed; boundary="===============4002258695383041043=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 06/16] huaweimodem: M15 coding style fix
-Date: Wed, 12 Jan 2011 12:52:08 +0200
-Message-ID: <1294829538-3893-7-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 05/16] hfpmodem: M15 coding style fix
+Date: Wed, 12 Jan 2011 12:52:07 +0200
+Message-ID: <1294829538-3893-6-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1294829538-3893-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7275961215702276992==
+--===============4002258695383041043==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/huaweimodem/audio-settings.c |    4 ++--
- drivers/huaweimodem/gprs-context.c   |    4 ++--
- drivers/huaweimodem/huaweimodem.h    |   16 ++++++++--------
- drivers/huaweimodem/radio-settings.c |    4 ++--
- drivers/huaweimodem/voicecall.c      |    4 ++--
- 5 files changed, 16 insertions(+), 16 deletions(-)
+ drivers/hfpmodem/call-volume.c          |    4 ++--
+ drivers/hfpmodem/hfpmodem.h             |   12 ++++++------
+ drivers/hfpmodem/network-registration.c |    4 ++--
+ drivers/hfpmodem/voicecall.c            |    4 ++--
+ 4 files changed, 12 insertions(+), 12 deletions(-)
 
-diff --git a/drivers/huaweimodem/audio-settings.c b/drivers/huaweimodem/aud=
-io-settings.c
-index 305776f..46d4e44 100644
---- a/drivers/huaweimodem/audio-settings.c
-+++ b/drivers/huaweimodem/audio-settings.c
-@@ -119,12 +119,12 @@ static struct ofono_audio_settings_driver driver =3D {
- 	.remove		=3D huawei_audio_settings_remove,
+diff --git a/drivers/hfpmodem/call-volume.c b/drivers/hfpmodem/call-volume.c
+index f985175..19f57c4 100644
+--- a/drivers/hfpmodem/call-volume.c
++++ b/drivers/hfpmodem/call-volume.c
+@@ -226,12 +226,12 @@ static struct ofono_call_volume_driver driver =3D {
+ 	.mute			=3D NULL,
  };
  =
 
--void huawei_audio_settings_init()
-+void huawei_audio_settings_init(void)
+-void hfp_call_volume_init()
++void hfp_call_volume_init(void)
  {
- 	ofono_audio_settings_driver_register(&driver);
+ 	ofono_call_volume_driver_register(&driver);
  }
  =
 
--void huawei_audio_settings_exit()
-+void huawei_audio_settings_exit(void)
+-void hfp_call_volume_exit()
++void hfp_call_volume_exit(void)
  {
- 	ofono_audio_settings_driver_unregister(&driver);
+ 	ofono_call_volume_driver_unregister(&driver);
  }
-diff --git a/drivers/huaweimodem/gprs-context.c b/drivers/huaweimodem/gprs-=
-context.c
-index ef3d93c..30f423b 100644
---- a/drivers/huaweimodem/gprs-context.c
-+++ b/drivers/huaweimodem/gprs-context.c
-@@ -406,12 +406,12 @@ static struct ofono_gprs_context_driver driver =3D {
- 	.deactivate_primary	=3D huawei_gprs_deactivate_primary,
+diff --git a/drivers/hfpmodem/hfpmodem.h b/drivers/hfpmodem/hfpmodem.h
+index bf5d563..fca1a9b 100644
+--- a/drivers/hfpmodem/hfpmodem.h
++++ b/drivers/hfpmodem/hfpmodem.h
+@@ -72,11 +72,11 @@ struct hfp_data {
+ 	gboolean agent_registered;
  };
  =
 
--void huawei_gprs_context_init()
-+void huawei_gprs_context_init(void)
- {
- 	ofono_gprs_context_driver_register(&driver);
- }
+-extern void hfp_netreg_init();
+-extern void hfp_netreg_exit();
++extern void hfp_netreg_init(void);
++extern void hfp_netreg_exit(void);
  =
 
--void huawei_gprs_context_exit()
-+void huawei_gprs_context_exit(void)
- {
- 	ofono_gprs_context_driver_unregister(&driver);
- }
-diff --git a/drivers/huaweimodem/huaweimodem.h b/drivers/huaweimodem/huawei=
-modem.h
-index 596aa08..f8323e3 100644
---- a/drivers/huaweimodem/huaweimodem.h
-+++ b/drivers/huaweimodem/huaweimodem.h
-@@ -21,14 +21,14 @@
+-extern void hfp_call_volume_init();
+-extern void hfp_call_volume_exit();
++extern void hfp_call_volume_init(void);
++extern void hfp_call_volume_exit(void);
  =
 
- #include <drivers/atmodem/atutil.h>
- =
-
--extern void huawei_voicecall_init();
--extern void huawei_voicecall_exit();
-+extern void huawei_voicecall_init(void);
-+extern void huawei_voicecall_exit(void);
- =
-
--extern void huawei_audio_settings_init();
--extern void huawei_audio_settings_exit();
-+extern void huawei_audio_settings_init(void);
-+extern void huawei_audio_settings_exit(void);
- =
-
--extern void huawei_radio_settings_init();
--extern void huawei_radio_settings_exit();
-+extern void huawei_radio_settings_init(void);
-+extern void huawei_radio_settings_exit(void);
- =
-
--extern void huawei_gprs_context_init();
--extern void huawei_gprs_context_exit();
-+extern void huawei_gprs_context_init(void);
-+extern void huawei_gprs_context_exit(void);
-diff --git a/drivers/huaweimodem/radio-settings.c b/drivers/huaweimodem/rad=
-io-settings.c
-index bece2cd..68112fe 100644
---- a/drivers/huaweimodem/radio-settings.c
-+++ b/drivers/huaweimodem/radio-settings.c
-@@ -404,12 +404,12 @@ static struct ofono_radio_settings_driver driver =3D {
- 	.set_band               =3D huawei_set_band,
+-extern void hfp_voicecall_init();
+-extern void hfp_voicecall_exit();
++extern void hfp_voicecall_init(void);
++extern void hfp_voicecall_exit(void);
+diff --git a/drivers/hfpmodem/network-registration.c b/drivers/hfpmodem/net=
+work-registration.c
+index 03ddc7b..273490e 100644
+--- a/drivers/hfpmodem/network-registration.c
++++ b/drivers/hfpmodem/network-registration.c
+@@ -348,12 +348,12 @@ static struct ofono_netreg_driver driver =3D {
+ 	.strength			=3D hfp_signal_strength,
  };
  =
 
--void huawei_radio_settings_init()
-+void huawei_radio_settings_init(void)
+-void hfp_netreg_init()
++void hfp_netreg_init(void)
  {
- 	ofono_radio_settings_driver_register(&driver);
+ 	ofono_netreg_driver_register(&driver);
  }
  =
 
--void huawei_radio_settings_exit()
-+void huawei_radio_settings_exit(void)
+-void hfp_netreg_exit()
++void hfp_netreg_exit(void)
  {
- 	ofono_radio_settings_driver_unregister(&driver);
+ 	ofono_netreg_driver_unregister(&driver);
  }
-diff --git a/drivers/huaweimodem/voicecall.c b/drivers/huaweimodem/voicecal=
-l.c
-index ff08124..0c0aaa1 100644
---- a/drivers/huaweimodem/voicecall.c
-+++ b/drivers/huaweimodem/voicecall.c
-@@ -508,12 +508,12 @@ static struct ofono_voicecall_driver driver =3D {
- 	.release_specific	=3D huawei_release_specific,
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index 53ca4bd..4c8ee37 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -1174,12 +1174,12 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.send_tones		=3D hfp_send_dtmf
  };
  =
 
--void huawei_voicecall_init()
-+void huawei_voicecall_init(void)
+-void hfp_voicecall_init()
++void hfp_voicecall_init(void)
  {
  	ofono_voicecall_driver_register(&driver);
  }
  =
 
--void huawei_voicecall_exit()
-+void huawei_voicecall_exit(void)
+-void hfp_voicecall_exit()
++void hfp_voicecall_exit(void)
  {
  	ofono_voicecall_driver_unregister(&driver);
  }
@@ -147,5 +114,5 @@ index ff08124..0c0aaa1 100644
 1.7.0.4
 
 
---===============7275961215702276992==--
+--===============4002258695383041043==--
 
