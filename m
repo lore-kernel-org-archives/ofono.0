@@ -1,551 +1,169 @@
-Content-Type: multipart/mixed; boundary="===============4719959768351527916=="
+Content-Type: multipart/mixed; boundary="===============2957072381774871019=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@intel.com>
-Subject: [PATCH 03/21] bluetooth: Add bluetooth server support for DUN
-Date: Wed, 12 Jan 2011 18:15:46 +0100
-Message-ID: <1294852564-1258-4-git-send-email-frederic.dalleau@intel.com>
+Subject: [PATCH 05/21] dun_gw: Add DUN server plugin for oFono
+Date: Wed, 12 Jan 2011 18:15:48 +0100
+Message-ID: <1294852564-1258-6-git-send-email-frederic.dalleau@intel.com>
 In-Reply-To: <1294852564-1258-1-git-send-email-frederic.dalleau@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4719959768351527916==
+--===============2957072381774871019==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
 
-It watches Bluetooth adapter property changes and addes DUN record to
-listen DUN client connection request.
+DUN server is probed when modem state changes to online. It registers
+DUN record to Bluetooth adapter and wait for incoming DUN connection.
 ---
- plugins/bluetooth.c |  379 +++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am      |    3 +
+ plugins/dun_gw.c |  115 ++++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- plugins/bluetooth.h |   15 ++
- 2 files changed, 394 insertions(+), 0 deletions(-)
+ 2 files changed, 118 insertions(+), 0 deletions(-)
+ create mode 100644 plugins/dun_gw.c
 
-diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index fe1eaa9..c20728e 100644
---- a/plugins/bluetooth.c
-+++ b/plugins/bluetooth.c
-@@ -35,13 +35,72 @@
+diff --git a/Makefile.am b/Makefile.am
+index 5dcf253..58bf6c4 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -291,6 +291,9 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blueto=
+oth.h
+ builtin_modules +=3D hfp
+ builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
  =
 
- #include <ofono/dbus.h>
++builtin_modules +=3D dun_gw
++builtin_sources +=3D $(btio_sources) plugins/dun_gw.c plugins/bluetooth.h
++
+ builtin_modules +=3D palmpre
+ builtin_sources +=3D plugins/palmpre.c
  =
 
-+#include <btio.h>
- #include "bluetooth.h"
- =
-
- static DBusConnection *connection;
- static GHashTable *uuid_hash =3D NULL;
- static GHashTable *adapter_address_hash =3D NULL;
-+static GSList *server_list =3D NULL;
- static gint ref_count;
- =
-
-+static const gchar *dun_record =3D "<?xml version=3D\"1.0\" encoding=3D\"U=
-TF-8\" ?>	\
-+<record>									\
-+  <attribute id=3D\"0x0001\">							\
-+    <sequence>									\
-+      <uuid value=3D\"0x1103\"/>							\
-+    </sequence>									\
-+  </attribute>									\
-+										\
-+  <attribute id=3D\"0x0004\">							\
-+    <sequence>									\
-+      <sequence>								\
-+        <uuid value=3D\"0x0100\"/>						\
-+      </sequence>								\
-+      <sequence>								\
-+        <uuid value=3D\"0x0003\"/>						\
-+        <uint8 value=3D\"%u\" name=3D\"channel\"/>					\
-+      </sequence>								\
-+      <sequence>								\
-+        <uuid value=3D\"0x0008\"/>						\
-+      </sequence>								\
-+    </sequence>									\
-+  </attribute>									\
-+										\
-+  <attribute id=3D\"0x0009\">							\
-+    <sequence>									\
-+      <sequence>								\
-+        <uuid value=3D\"0x1103\"/>						\
-+        <uint16 value=3D\"0x0100\" name=3D\"version\"/>				\
-+      </sequence>								\
-+    </sequence>									\
-+  </attribute>									\
-+										\
-+  <attribute id=3D\"0x0100\">							\
-+    <text value=3D\"%s\" name=3D\"name\"/>						\
-+  </attribute>									\
-+</record>";
-+
-+#define TIMEOUT (60*1000) /* Timeout for user response (miliseconds) */
-+
-+struct client {
-+	GIOChannel	*io;
-+	guint		watch;
-+};
-+
-+struct server {
-+	guint16		service;
-+	gchar		*name;
-+	guint8		channel;
-+	GIOChannel	*io;
-+	gchar		*adapter;
-+	guint		handle;
-+	ConnectFunc	connect_cb;
-+	gpointer	user_data;
-+
-+	struct client	client;
-+};
-+
- void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
- 				char *buf, int size)
- {
-@@ -371,6 +430,253 @@ static gboolean property_changed(DBusConnection *conn=
-ection, DBusMessage *msg,
- 	return TRUE;
- }
- =
-
-+static void disconnect(struct server *server)
-+{
-+	struct client *client =3D &server->client;
-+
-+	if (!client->io)
-+		return;
-+
-+	g_io_channel_unref(client->io);
-+	client->io =3D NULL;
-+
-+	if (client->watch > 0) {
-+		g_source_remove(client->watch);
-+		client->watch =3D 0;
-+	}
-+
-+	return;
-+}
-+
-+static void server_stop(gpointer data, gpointer user_data)
-+{
-+	struct server *server =3D data;
-+
-+	disconnect(server);
-+
-+	if (server->handle) {
-+		DBusMessage *msg;
-+
-+		msg =3D dbus_message_new_method_call(BLUEZ_SERVICE,
-+						server->adapter,
-+						BLUEZ_SERVICE_INTERFACE,
-+						"RemoveRecord");
-+		dbus_message_append_args(msg, DBUS_TYPE_UINT32, &server->handle,
-+						DBUS_TYPE_INVALID);
-+		g_dbus_send_message(connection, msg);
-+
-+		server->handle =3D 0;
-+	}
-+
-+	if (server->io) {
-+		g_io_channel_shutdown(server->io, TRUE, NULL);
-+		g_io_channel_unref(server->io);
-+		server->io =3D NULL;
-+	}
-+
-+	g_free(server->adapter);
-+	server->adapter =3D NULL;
-+}
-+
-+static gboolean client_event(GIOChannel *chan, GIOCondition cond, gpointer=
- data)
-+{
-+	struct server *server =3D data;
-+
-+	disconnect(server);
-+
-+	return FALSE;
-+}
-+
-+static void cancel_authorization(struct server *server)
-+{
-+	DBusMessage *msg;
-+
-+	if (!server->adapter)
-+		return;
-+
-+	msg =3D dbus_message_new_method_call(BLUEZ_SERVICE, server->adapter,
-+						BLUEZ_SERVICE_INTERFACE,
-+						"CancelAuthorization");
-+
-+	g_dbus_send_message(connection, msg);
-+}
-+
-+static void auth_cb(DBusPendingCall *call, gpointer user_data)
-+{
-+	struct server *server =3D user_data;
-+	struct client *client =3D &server->client;
-+	GIOChannel *io =3D client->io;
-+	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
-+	DBusError derr;
-+	GError *err =3D NULL;
-+
-+	dbus_error_init(&derr);
-+
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+		ofono_error("RequestAuthorization error: %s, %s",
-+				derr.name, derr.message);
-+
-+		if (dbus_error_has_name(&derr, DBUS_ERROR_NO_REPLY))
-+			cancel_authorization(server);
-+
-+		dbus_error_free(&derr);
-+		goto failed;
-+	}
-+
-+	ofono_info("RequestAuthorization succeeded");
-+
-+	if (!bt_io_accept(io, server->connect_cb, server->user_data,
-+						NULL, &err)) {
-+		ofono_error("%s", err->message);
-+		g_error_free(err);
-+		goto failed;
-+	}
-+
-+	g_source_remove(client->watch);
-+
-+	client->watch =3D g_io_add_watch(client->io,
-+					G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-+					client_event, server);
-+
-+	dbus_message_unref(reply);
-+
-+	return;
-+
-+failed:
-+	dbus_message_unref(reply);
-+	disconnect(server);
-+}
-+
-+static gboolean auth_watch(GIOChannel *io, GIOCondition cond,
-+						gpointer user_data)
-+{
-+	struct server *server =3D user_data;
-+
-+	cancel_authorization(server);
-+	disconnect(server);
-+
-+	return FALSE;
-+}
-+
-+static void confirm_event(GIOChannel *io, gpointer user_data)
-+{
-+	struct server *server =3D user_data;
-+	struct client *client =3D &server->client;
-+	GError *err =3D NULL;
-+	char address[18];
-+	const char *addr;
-+	guint8 channel;
-+	int ret;
-+
-+	if (client->io) {
-+		ofono_error("Rejecting connection since one client already \
-+				connected");
-+		return;
-+	}
-+
-+	bt_io_get(io, BT_IO_RFCOMM, &err, BT_IO_OPT_DEST, address,
-+					BT_IO_OPT_CHANNEL, &channel,
-+					BT_IO_OPT_INVALID);
-+	if (err) {
-+		ofono_error("%s", err->message);
-+		g_error_free(err);
-+		return;
-+	}
-+
-+	ofono_info("New connection from: %s, channel %u", address, channel);
-+
-+	addr =3D address;
-+	ret =3D bluetooth_send_with_reply(server->adapter,
-+					BLUEZ_SERVICE_INTERFACE,
-+					"RequestAuthorization",
-+					auth_cb, server, NULL, TIMEOUT,
-+					DBUS_TYPE_STRING, &addr,
-+					DBUS_TYPE_UINT32, &server->handle,
-+					DBUS_TYPE_INVALID);
-+	if (ret < 0) {
-+		ofono_error("Request Bluetooth authorization failed");
-+		return;
-+	}
-+
-+	ofono_info("RequestAuthorization(%s, 0x%x)", address, server->handle);
-+
-+	client->io =3D g_io_channel_ref(io);
-+	client->watch =3D g_io_add_watch(io, G_IO_HUP | G_IO_ERR | G_IO_NVAL,
-+					auth_watch, server);
-+
-+	return;
-+}
-+
-+static void add_record_cb(DBusPendingCall *call, gpointer user_data)
-+{
-+	struct server *server =3D user_data;
-+	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
-+	DBusError derr;
-+	guint32 handle;
-+
-+	dbus_error_init(&derr);
-+
-+	if (dbus_set_error_from_message(&derr, reply)) {
-+		ofono_error("Replied with an error: %s, %s",
-+					derr.name, derr.message);
-+		dbus_error_free(&derr);
-+		server_stop(server, NULL);
-+		goto done;
-+	}
-+
-+	dbus_message_get_args(reply, NULL, DBUS_TYPE_UINT32, &handle,
-+					DBUS_TYPE_INVALID);
-+	server->handle =3D handle;
-+
-+	ofono_info("Registered: %s, handle: 0x%x", server->name, handle);
-+
-+done:
-+	dbus_message_unref(reply);
-+}
-+
-+static void server_start(gpointer data, gpointer user_data)
-+{
-+	struct server *server =3D data;
-+	gchar *path =3D user_data;
-+	GError *err =3D NULL;
-+	gchar *xml;
-+
-+	if (server->handle !=3D 0)
-+		return;
-+
-+	if (server->service !=3D DUN_GW)
-+		goto failed;
-+
-+	server->io =3D bt_io_listen(BT_IO_RFCOMM, NULL, confirm_event,
-+					server, NULL, &err,
-+					BT_IO_OPT_CHANNEL, server->channel,
-+					BT_IO_OPT_SEC_LEVEL, BT_IO_SEC_MEDIUM,
-+					BT_IO_OPT_INVALID);
-+	if (!server->io) {
-+		ofono_error("Bluetooth %s register failed: %s",
-+					server->name, err->message);
-+		g_error_free(err);
-+		goto failed;
-+	}
-+
-+	server->adapter =3D g_strdup(path);
-+
-+	xml =3D g_markup_printf_escaped(dun_record, server->channel,
-+					server->name);
-+
-+	bluetooth_send_with_reply(path, BLUEZ_SERVICE_INTERFACE, "AddRecord",
-+					add_record_cb, server, NULL, -1,
-+					DBUS_TYPE_STRING, &xml,
-+					DBUS_TYPE_INVALID);
-+
-+	g_free(xml);
-+
-+	return;
-+
-+failed:
-+	server_stop(server, NULL);
-+}
-+
- static void adapter_properties_cb(DBusPendingCall *call, gpointer user_dat=
-a)
- {
- 	const char *path =3D user_data;
-@@ -395,6 +701,9 @@ static void adapter_properties_cb(DBusPendingCall *call=
-, gpointer user_data)
- 	g_hash_table_insert(adapter_address_hash,
- 				g_strdup(path), g_strdup(addr));
- =
-
-+	if (server_list)
-+		g_slist_foreach(server_list, server_start, (gpointer)path);
-+
- 	for (l =3D device_list; l; l =3D l->next) {
- 		const char *device =3D l->data;
- =
-
-@@ -429,11 +738,26 @@ static gboolean adapter_removed(DBusConnection *conne=
-ction,
- 				DBusMessage *message, void *user_data)
- {
- 	const char *path;
-+	GSList *l;
- =
-
- 	if (dbus_message_get_args(message, NULL, DBUS_TYPE_OBJECT_PATH, &path,
- 				DBUS_TYPE_INVALID) =3D=3D TRUE)
- 		g_hash_table_remove(adapter_address_hash, path);
- =
-
-+	for (l =3D server_list; l; l =3D l->next) {
-+		struct server *server =3D l->data;
-+
-+		if (!server->adapter)
-+			continue;
-+
-+		if (!g_str_equal(path, server->adapter))
-+			continue;
-+
-+		/* Don't remove handle if the adapter has been removed */
-+		server->handle =3D 0;
-+		server_stop(server, NULL);
-+	}
-+
- 	return TRUE;
- }
- =
-
-@@ -565,6 +889,7 @@ static int bluetooth_ref()
- static void bluetooth_unref()
- {
- 	gboolean is_zero;
-+	GSList *l;
- =
-
- 	is_zero =3D g_atomic_int_dec_and_test(&ref_count);
- =
-
-@@ -581,6 +906,20 @@ static void bluetooth_unref()
- =
-
- 	if (adapter_address_hash)
- 		g_hash_table_destroy(adapter_address_hash);
-+
-+	if (server_list =3D=3D NULL)
-+		return;
-+
-+	for (l =3D server_list; l; l =3D l->next) {
-+		struct server *server =3D l->data;
-+
-+		server_stop(server, NULL);
-+		g_free(server->name);
-+		g_free(server);
-+	}
-+
-+	g_slist_free(server_list);
-+	server_list =3D NULL;
- }
- =
-
- int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
-ofile)
-@@ -605,5 +944,45 @@ void bluetooth_unregister_uuid(const char *uuid)
- 	bluetooth_unref();
- }
- =
-
-+struct server *bluetooth_register_server(guint16 service, char *name,
-+						guint8 channel, ConnectFunc cb,
-+						gpointer user_data)
-+{
-+	struct server *server;
-+	int err =3D bluetooth_ref();
-+
-+	if (err !=3D 0)
-+		return NULL;
-+
-+	server =3D g_try_new0(struct server, 1);
-+	if (!server)
-+		return NULL;
-+
-+	server->service =3D service;
-+	server->name =3D g_strdup(name);
-+	server->channel =3D channel;
-+	server->connect_cb =3D cb;
-+	server->user_data =3D user_data;
-+
-+	server_list =3D g_slist_prepend(server_list, server);
-+
-+	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
-+					manager_properties_cb, NULL, NULL, -1,
-+					DBUS_TYPE_INVALID);
-+
-+	return server;
-+}
-+
-+void bluetooth_unregister_server(struct server *server)
-+{
-+	server_list =3D g_slist_remove(server_list, server);
-+
-+	server_stop(server, NULL);
-+	g_free(server->name);
-+	g_free(server);
-+
-+	bluetooth_unref();
-+}
-+
- OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
- 			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index f187529..945da6a 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -3,6 +3,7 @@
-  *  oFono - Open Source Telephony
-  *
-  *  Copyright (C) 2010 Gustavo F. Padovan <gustavo@padovan.org>
+diff --git a/plugins/dun_gw.c b/plugins/dun_gw.c
+new file mode 100644
+index 0000000..803ae32
+--- /dev/null
++++ b/plugins/dun_gw.c
+@@ -0,0 +1,115 @@
++/*
++ *  oFono - Open Source Telephony
++ *
 + *  Copyright (C) 2010  Intel Corporation. All rights reserved.
-  *
-  *  This program is free software; you can redistribute it and/or modify
-  *  it under the terms of the GNU General Public License version 2 as
-@@ -23,6 +24,7 @@
- #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
- #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
- #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-+#define	BLUEZ_SERVICE_INTERFACE		BLUEZ_SERVICE ".Service"
- =
-
- #define DBUS_TIMEOUT 15
- =
-
-@@ -31,6 +33,9 @@
- /* Profiles bitfield */
- #define HFP_AG 0x01
- =
-
-+/* Service bitfield */
-+#define DUN_GW 0x01
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
 +
- struct bluetooth_profile {
- 	const char *name;
- 	int (*create)(const char *device, const char *dev_addr,
-@@ -39,10 +44,20 @@ struct bluetooth_profile {
- 	void (*set_alias)(const char *device, const char *);
- };
- =
-
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++#include <stdio.h>
++#include <string.h>
++#include <errno.h>
++#include <glib.h>
++#include <ofono.h>
 +
-+typedef void (*ConnectFunc)(GIOChannel *io, GError *err, gpointer user_dat=
-a);
++#define OFONO_API_SUBJECT_TO_CHANGE
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/modem.h>
++#include <gdbus.h>
 +
-+struct server;
++#include "bluetooth.h"
 +
- int bluetooth_register_uuid(const char *uuid,
- 				struct bluetooth_profile *profile);
- void bluetooth_unregister_uuid(const char *uuid);
- =
-
-+struct server *bluetooth_register_server(guint16 service, char *name,
-+						guint8 channel, ConnectFunc cb,
-+						gpointer user_data);
-+void bluetooth_unregister_server(struct server *server);
++#define DUN_GW_CHANNEL	1
 +
- void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
- 							char *buf, int size);
- =
-
++static struct server *server;
++
++static void dun_gw_connect_cb(GIOChannel *io, GError *err, gpointer user_d=
+ata)
++{
++	struct ofono_emulator *emulator =3D user_data;
++
++	DBG("");
++
++	if (err) {
++		DBG("%s", err->message);
++		goto failed;
++	}
++
++	if (ofono_emulator_enable(emulator, io) < 0)
++		goto failed;
++
++	return;
++
++failed:
++	g_io_channel_shutdown(io, TRUE, NULL);
++	ofono_emulator_remove(emulator);
++	bluetooth_unregister_server(server);
++	server =3D NULL;
++}
++
++static int dun_gw_probe(struct ofono_emulator *emulator,
++				struct ofono_modem *modem)
++{
++	struct ofono_atom *gprs;
++
++	if (server)
++		return -1;
++
++	DBG("");
++
++	gprs =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_GPRS);
++	/* Make sure the modem has GPRS atom */
++	if (!gprs)
++		return -1;
++
++	server =3D bluetooth_register_server(DUN_GW, "Dial-Up Networking",
++				DUN_GW_CHANNEL, dun_gw_connect_cb, emulator);
++
++	return 0;
++}
++
++static void dun_gw_remove()
++{
++	if (server =3D=3D NULL)
++		return;
++
++	DBG("");
++
++	bluetooth_unregister_server(server);
++	server =3D NULL;
++}
++
++static struct ofono_emulator_driver emulator_driver =3D {
++	.name =3D "Dial-Up Networking",
++	.type =3D OFONO_ATOM_TYPE_EMULATOR_DUN,
++	.probe =3D dun_gw_probe,
++	.remove =3D dun_gw_remove,
++};
++
++static int dun_gw_init()
++{
++	return ofono_emulator_driver_register(&emulator_driver);
++}
++
++static void dun_gw_exit()
++{
++	ofono_emulator_driver_unregister(&emulator_driver);
++}
++
++OFONO_PLUGIN_DEFINE(dun_gw, "Dial-up Networking Profile Plugins", VERSION,
++			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_gw_init, dun_gw_exit)
 -- =
 
 1.7.1
@@ -563,5 +181,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============4719959768351527916==--
+--===============2957072381774871019==--
 
