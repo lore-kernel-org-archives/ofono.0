@@ -1,111 +1,114 @@
-Content-Type: multipart/mixed; boundary="===============4002258695383041043=="
+Content-Type: multipart/mixed; boundary="===============3221727311639281308=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 05/16] hfpmodem: M15 coding style fix
-Date: Wed, 12 Jan 2011 12:52:07 +0200
-Message-ID: <1294829538-3893-6-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 07/16] stemodem: M15 coding style fix
+Date: Wed, 12 Jan 2011 12:52:09 +0200
+Message-ID: <1294829538-3893-8-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1294829538-3893-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4002258695383041043==
+--===============3221727311639281308==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/hfpmodem/call-volume.c          |    4 ++--
- drivers/hfpmodem/hfpmodem.h             |   12 ++++++------
- drivers/hfpmodem/network-registration.c |    4 ++--
- drivers/hfpmodem/voicecall.c            |    4 ++--
+ drivers/stemodem/gprs-context.c   |    4 ++--
+ drivers/stemodem/radio-settings.c |    4 ++--
+ drivers/stemodem/stemodem.h       |   12 ++++++------
+ drivers/stemodem/voicecall.c      |    4 ++--
  4 files changed, 12 insertions(+), 12 deletions(-)
 
-diff --git a/drivers/hfpmodem/call-volume.c b/drivers/hfpmodem/call-volume.c
-index f985175..19f57c4 100644
---- a/drivers/hfpmodem/call-volume.c
-+++ b/drivers/hfpmodem/call-volume.c
-@@ -226,12 +226,12 @@ static struct ofono_call_volume_driver driver =3D {
- 	.mute			=3D NULL,
+diff --git a/drivers/stemodem/gprs-context.c b/drivers/stemodem/gprs-contex=
+t.c
+index 1762fb3..4325628 100644
+--- a/drivers/stemodem/gprs-context.c
++++ b/drivers/stemodem/gprs-context.c
+@@ -596,13 +596,13 @@ static struct ofono_gprs_context_driver driver =3D {
+ 	.deactivate_primary	=3D ste_gprs_deactivate_primary,
  };
  =
 
--void hfp_call_volume_init()
-+void hfp_call_volume_init(void)
+-void ste_gprs_context_init()
++void ste_gprs_context_init(void)
  {
- 	ofono_call_volume_driver_register(&driver);
+ 	caif_rtnl_init();
+ 	ofono_gprs_context_driver_register(&driver);
  }
  =
 
--void hfp_call_volume_exit()
-+void hfp_call_volume_exit(void)
+-void ste_gprs_context_exit()
++void ste_gprs_context_exit(void)
  {
- 	ofono_call_volume_driver_unregister(&driver);
- }
-diff --git a/drivers/hfpmodem/hfpmodem.h b/drivers/hfpmodem/hfpmodem.h
-index bf5d563..fca1a9b 100644
---- a/drivers/hfpmodem/hfpmodem.h
-+++ b/drivers/hfpmodem/hfpmodem.h
-@@ -72,11 +72,11 @@ struct hfp_data {
- 	gboolean agent_registered;
+ 	ofono_gprs_context_driver_unregister(&driver);
+ 	caif_rtnl_exit();
+diff --git a/drivers/stemodem/radio-settings.c b/drivers/stemodem/radio-set=
+tings.c
+index e65baf4..5b50126 100644
+--- a/drivers/stemodem/radio-settings.c
++++ b/drivers/stemodem/radio-settings.c
+@@ -220,12 +220,12 @@ static struct ofono_radio_settings_driver driver =3D {
+ 	.set_rat_mode	=3D ste_set_rat_mode
  };
  =
 
--extern void hfp_netreg_init();
--extern void hfp_netreg_exit();
-+extern void hfp_netreg_init(void);
-+extern void hfp_netreg_exit(void);
- =
-
--extern void hfp_call_volume_init();
--extern void hfp_call_volume_exit();
-+extern void hfp_call_volume_init(void);
-+extern void hfp_call_volume_exit(void);
- =
-
--extern void hfp_voicecall_init();
--extern void hfp_voicecall_exit();
-+extern void hfp_voicecall_init(void);
-+extern void hfp_voicecall_exit(void);
-diff --git a/drivers/hfpmodem/network-registration.c b/drivers/hfpmodem/net=
-work-registration.c
-index 03ddc7b..273490e 100644
---- a/drivers/hfpmodem/network-registration.c
-+++ b/drivers/hfpmodem/network-registration.c
-@@ -348,12 +348,12 @@ static struct ofono_netreg_driver driver =3D {
- 	.strength			=3D hfp_signal_strength,
- };
- =
-
--void hfp_netreg_init()
-+void hfp_netreg_init(void)
+-void ste_radio_settings_init()
++void ste_radio_settings_init(void)
  {
- 	ofono_netreg_driver_register(&driver);
+ 	ofono_radio_settings_driver_register(&driver);
  }
  =
 
--void hfp_netreg_exit()
-+void hfp_netreg_exit(void)
+-void ste_radio_settings_exit()
++void ste_radio_settings_exit(void)
  {
- 	ofono_netreg_driver_unregister(&driver);
+ 	ofono_radio_settings_driver_unregister(&driver);
  }
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index 53ca4bd..4c8ee37 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -1174,12 +1174,12 @@ static struct ofono_voicecall_driver driver =3D {
- 	.send_tones		=3D hfp_send_dtmf
+diff --git a/drivers/stemodem/stemodem.h b/drivers/stemodem/stemodem.h
+index b1691a2..f522ecd 100644
+--- a/drivers/stemodem/stemodem.h
++++ b/drivers/stemodem/stemodem.h
+@@ -22,11 +22,11 @@
+ =
+
+ #include <drivers/atmodem/atutil.h>
+ =
+
+-extern void ste_gprs_context_init();
+-extern void ste_gprs_context_exit();
++extern void ste_gprs_context_init(void);
++extern void ste_gprs_context_exit(void);
+ =
+
+-extern void ste_voicecall_init();
+-extern void ste_voicecall_exit();
++extern void ste_voicecall_init(void);
++extern void ste_voicecall_exit(void);
+ =
+
+-extern void ste_radio_settings_init();
+-extern void ste_radio_settings_exit();
++extern void ste_radio_settings_init(void);
++extern void ste_radio_settings_exit(void);
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index 99383cf..8f3533d 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -597,12 +597,12 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.send_tones		=3D ste_send_dtmf
  };
  =
 
--void hfp_voicecall_init()
-+void hfp_voicecall_init(void)
+-void ste_voicecall_init()
++void ste_voicecall_init(void)
  {
  	ofono_voicecall_driver_register(&driver);
  }
  =
 
--void hfp_voicecall_exit()
-+void hfp_voicecall_exit(void)
+-void ste_voicecall_exit()
++void ste_voicecall_exit(void)
  {
  	ofono_voicecall_driver_unregister(&driver);
  }
@@ -114,5 +117,5 @@ index 53ca4bd..4c8ee37 100644
 1.7.0.4
 
 
---===============4002258695383041043==--
+--===============3221727311639281308==--
 
