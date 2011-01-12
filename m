@@ -1,65 +1,73 @@
-Content-Type: multipart/mixed; boundary="===============4174542287846733638=="
+Content-Type: multipart/mixed; boundary="===============6794440576379143665=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [RFC PATCH 2/4] gprs: add automatic context settings provisioning
-Date: Wed, 12 Jan 2011 09:26:53 +0200
-Message-ID: <1294817213.24900.10.camel@jsaunama-desktop>
-In-Reply-To: <1294815077.3873.75.camel@aeonflux>
+From: Jussi.Kangas@tieto.com
+Subject: RE: [PATCH] sim: check if lock is locked after code changing attempt
+Date: Wed, 12 Jan 2011 09:39:21 +0200
+Message-ID: <20A4FB08D632914F9C09B9F05CBDF258192D753286@EXMB02.eu.tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4174542287846733638==
+--===============6794440576379143665==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Marcel,
+Hi Lucas,
 
-On Tue, 2011-01-11 at 22:51 -0800, ext Marcel Holtmann wrote:
-> >  =
-
-> > -void ofono_gprs_register(struct ofono_gprs *gprs)
-> > +static void ofono_gprs_finish_register(struct ofono_gprs *gprs)
-> >  {
-> >  	DBusConnection *conn =3D ofono_dbus_get_connection();
-> >  	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
-> >  	const char *path =3D __ofono_atom_get_path(gprs->atom);
-> >  	struct ofono_atom *netreg_atom;
-> > -	struct ofono_atom *sim_atom;
-> > +
-> > +	if (gprs->contexts =3D=3D NULL) /* Automatic provisioning failed */
-> > +		add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
+On Tue, 2011-01-11 at 16:08 +0200, Lucas De Marchi wrote:
+> Hi Jussi
 > =
 
-> so I see a potential race here between the UI trying to provision and us
-> trying to provision.
+> On Tue, Jan 11, 2011 at 10:17 AM,  <Jussi.Kangas@tieto.com> wrote:
+> > Hi,
+> >
+> > This is fix to Marit Henriksen's TODO item "Check SIM pin status if sim=
+_change_pin fails". I've discussed with Marit and it's ok for her if I fix =
+the issue. Problem here is that issue could perhaps also be fixed with retr=
+y counter solution introduced by Lucas De Marchi couple of tasks ago. That =
+would seem however require some extra implementation in ste modem ( at leas=
+t I was not able get the ofono show correct values without extra modificati=
+ons ) and I think that isimodems don't have that sort of retry counter at a=
+ll. Because of that and since I had this solution already implemented I pro=
+pose it to be added as well.
+> >
 > =
 
-> We don't wanna end up with duplicated contexts here. Any ideas on how we
-> could prevent that nicely? Or should we just fail any attempts to create
-> new contexts if provisioning is still ongoing?
+> I failed to understand why you are hard-coding this and why you'd like
+> to use retry counters. Can't you just check the pin state by calling
+> sim_pin_check()?
+> =
 
-Code continues there with:
-	if (!g_dbus_register_interface(conn, path,
-					OFONO_CONNECTION_MANAGER_INTERFACE,
-					manager_methods, manager_signals, NULL,
-					gprs, NULL)) {
-		ofono_error("Could not create %s interface",
-				OFONO_CONNECTION_MANAGER_INTERFACE);
+> Moreover, this is not really implementing what the TODO item says.
+> =
 
-		return;
-	}
+> =
 
-	ofono_modem_add_interface(modem,
-				OFONO_CONNECTION_MANAGER_INTERFACE);
+> regards,
+> Lucas De Marchi
 
-Patch rearranges the initial context creation and interface
-registration, so there is no DBUS interface for UI to use until
-provisioning is ready. Or have misunderstood something?
-
---Jukka
+Marit already proposed sim_pin_check approach 2010/11/2. Denis Kenzior
+thought that initializing sim interface would not be a good idea. See
+mail "Re: [Patch] sim: Check SIM pin status after changing pin" from
+Friday 5th in November 2010. =
 
 
+True, fix proposal does not do exactly what TODO item says. It trusts to
+returned error value instead of going to check the sim state once more.
+In my testings this value has been trustable so far and there has not
+been reason to go check the state. Of course I've tested only with one
+modem so this might not be a universal truth.
 
---===============4174542287846733638==--
+I don't particularly wish to use the retry counters. I was just thinking th=
+at same
+information ( PUK required ) could be deduced by counting the retries. =
+
+
+Br,
+-Jussi
+
+
+
+
+--===============6794440576379143665==--
 
