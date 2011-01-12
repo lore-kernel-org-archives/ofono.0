@@ -1,43 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============7869490275331605656=="
+Content-Type: multipart/mixed; boundary="===============4923659031733727338=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [PATCH] isimodem: fix return from call control requests
-Date: Wed, 12 Jan 2011 17:16:28 +0200
-Message-ID: <1294845388-13084-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] sim: check if lock is locked after code changing attempt
+Date: Wed, 12 Jan 2011 09:35:51 -0600
+Message-ID: <4D2DCA57.4080206@gmail.com>
+In-Reply-To: <20A4FB08D632914F9C09B9F05CBDF258192D753286@EXMB02.eu.tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7869490275331605656==
+--===============4923659031733727338==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Jussi,
 
----
- drivers/isimodem/voicecall.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
-
-diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
-index c19e64d..6f866a5 100644
---- a/drivers/isimodem/voicecall.c
-+++ b/drivers/isimodem/voicecall.c
-@@ -795,7 +795,7 @@ static void isi_call_control_resp(const GIsiMessage *ms=
-g, void *data)
- 	}
- =
-
- 	if (cause =3D=3D CALL_CAUSE_NO_CAUSE) {
--		isi_ctx_return_failure(irc);
-+		isi_ctx_return_success(irc);
- 		return;
- 	}
- =
-
--- =
-
-1.7.1
+> I don't particularly wish to use the retry counters. I was just thinking =
+that same
+> information ( PUK required ) could be deduced by counting the retries. =
 
 
---===============7869490275331605656==--
+To my knowledge you cannot.  Correct me if I'm wrong, but the retry
+counters are stored on the SIM and the SIM can be removed, and later
+re-inserted.  You would not know how the counters have been affected.
+
+Regards,
+-Denis
+
+--===============4923659031733727338==--
 
