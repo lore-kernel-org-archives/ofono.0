@@ -1,54 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============2062948078179488575=="
+Content-Type: multipart/mixed; boundary="===============1718433555209461939=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
-Date: Wed, 12 Jan 2011 10:46:46 -0600
-Message-ID: <4D2DDAF6.5050600@gmail.com>
-In-Reply-To: <1294818062.24900.21.camel@jsaunama-desktop>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: RE: [RFC 3/5] voicecall: Add ofono_voicecall_tty_notify api
+Date: Wed, 12 Jan 2011 08:48:46 -0800
+Message-ID: <1294850926.3873.101.camel@aeonflux>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802D59EA2@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2062948078179488575==
+--===============1718433555209461939==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+Hi Jeevaka,
 
-On 01/12/2011 01:41 AM, Jukka Saunamaki wrote:
-> Hello
+> >> Main reason for separate notification function is to avoid going
+> >> through all the cases handled inside voicecall_notify. TTY field in
+> >> ofono_call is basically for the GetProperties.
+> > =
+
+> > I see. So here is the main question that comes from this now.
+> > This seems to be a bit IFX specific driven API. I still have
+> > no idea why they can not just indicate this via +CRING and
+> > have to use CTM CALL for it.
+> > =
+
+> > Are we expecting that all modems will just establish a normal
+> > voice call and only later on signal that it is a TTY call?
+> > Any input from different vendors other than IFX. What about STE, ISI?
 > =
 
-> On Tue, 2011-01-11 at 22:48 -0800, ext Marcel Holtmann wrote:
->>> +	if (sim !=3D NULL) {
->>> +		ofono_sim_read(sim, SIM_EFSPN_FILEID,
->>> +				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
->>> +				sim_spn_read_cb, req);
->>> +		return;
->>> +	}
->>
->> Should this not be provided somehow by the SIM atom?
->>
->> Denis, any idea why we are not keeping this information available?
->>
-> =
+> This notification is to inform the ME that the call is accepted as a TTY
+> call
+> on the remote side.
 
-> I would guess there was no need for it, since netreg was the only user
-> for EFSPN data.
-> =
+I see. Using a +X... IFX style notification would have been much nicer,
+but so be it. The question still remains if all other modems do it
+similar.
 
-> I though of patching the SIM atom to read this during some phase of SIM
-> initialization, but was not sure exactly when, and what kind of
-> interface (syncronous, asyncronous?) to provide.
-> =
+Btw. can you provide the mailing list with an example OFONO_AT_DEBUG=3D1
+trace for a TTY call on IFX. I really like to see one of these.
+
+Denis, do you want an extra voicecall_tty_notify() callback or just have
+it go through the voicecall_notify() one?
+
+Regards
+
+Marcel
 
 
-You're correct that netreg is the only consumer.  There was no need for
-anyone else to see this information.  However, this begs the question,
-why do you need the SPN data?
 
-Regards,
--Denis
-
---===============2062948078179488575==--
+--===============1718433555209461939==--
 
