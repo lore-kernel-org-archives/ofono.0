@@ -1,460 +1,268 @@
-Content-Type: multipart/mixed; boundary="===============8814238292504400437=="
+Content-Type: multipart/mixed; boundary="===============3770900874586535946=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 15/16] unit: M15 coding style fix
-Date: Wed, 12 Jan 2011 12:52:17 +0200
-Message-ID: <1294829538-3893-16-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1294829538-3893-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH] Add CDIP support
+Date: Wed, 12 Jan 2011 09:07:12 -0200
+Message-ID: <1294830432-6618-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8814238292504400437==
+--===============3770900874586535946==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+With CDIP phonesim can tell the Called Line Identification within the
+RING comand according to 27.007 section 7.9.
 ---
- unit/test-common.c  |    6 +++---
- unit/test-idmap.c   |    4 ++--
- unit/test-mux.c     |    8 ++++----
- unit/test-simutil.c |   14 +++++++-------
- unit/test-sms.c     |   26 +++++++++++++-------------
- unit/test-util.c    |   20 ++++++++++----------
- 6 files changed, 39 insertions(+), 39 deletions(-)
+ src/callmanager.cpp       |   21 +++++++++++++++------
+ src/callmanager.h         |    8 +++++---
+ src/control.cpp           |    8 ++++++--
+ src/control.h             |    2 +-
+ src/default.xml           |   19 +++++++++++++++++++
+ src/hardwaremanipulator.h |    2 +-
+ src/phonesim.cpp          |    4 ++--
+ 7 files changed, 49 insertions(+), 15 deletions(-)
 
-diff --git a/unit/test-common.c b/unit/test-common.c
-index baed178..0ade9a0 100644
---- a/unit/test-common.c
-+++ b/unit/test-common.c
-@@ -56,7 +56,7 @@ static const char *invalid_strings[] =3D {
- 	NULL
- };
+diff --git a/src/callmanager.cpp b/src/callmanager.cpp
+index d746333..be17b83 100644
+--- a/src/callmanager.cpp
++++ b/src/callmanager.cpp
+@@ -326,6 +326,11 @@ void CallManager::emitRing(const CallInfo &info)
+         else
+             str +=3D "\\n\\n+CLIP: " + QAtUtils::encodeNumber( info.number=
+ ) + ",,,,0";
  =
 
--static void test_invalid()
-+static void test_invalid(void)
- {
- 	char *sc;
- 	char *sia;
-@@ -107,7 +107,7 @@ static const char *valid_strings[] =3D {
- 	NULL
- };
- =
-
--static void test_valid()
-+static void test_valid(void)
- {
- 	char *sc;
- 	char *sia;
-@@ -158,7 +158,7 @@ static const char *invalid_apns[] =3D {
- 	NULL
- };
- =
-
--static void test_apn()
-+static void test_apn(void)
- {
- 	int i;
- 	gboolean res;
-diff --git a/unit/test-idmap.c b/unit/test-idmap.c
-index bf428f8..17e767c 100644
---- a/unit/test-idmap.c
-+++ b/unit/test-idmap.c
-@@ -27,7 +27,7 @@
- =
-
- #include "idmap.h"
- =
-
--static void test_alloc()
-+static void test_alloc(void)
- {
- 	struct idmap *idmap;
- 	unsigned int bit;
-@@ -65,7 +65,7 @@ static void test_alloc()
- 	idmap_free(idmap);
++        if (info.calledNumber.isNull())
++            ;
++        else
++            str +=3D "\\n\\n+CDIP: " + QAtUtils::encodeNumber( info.called=
+Number ) + ",,,";
++
+         if (info.name.isNull())
+             ;
+ 	else if (info.name.isEmpty())
+@@ -338,7 +343,8 @@ void CallManager::emitRing(const CallInfo &info)
  }
  =
 
--static void test_alloc_next()
-+static void test_alloc_next(void)
+ void CallManager::startIncomingCall( const QString& number,
+-				const QString& name, bool dialBack )
++                                     const QString& calledNumber,
++                                     const QString& name, bool dialBack )
  {
- 	struct idmap *idmap;
- 	unsigned int bit;
-diff --git a/unit/test-mux.c b/unit/test-mux.c
-index d0e2d32..2efa49d 100644
---- a/unit/test-mux.c
-+++ b/unit/test-mux.c
-@@ -280,7 +280,7 @@ static const guint8 basic_long_frame_result[] =3D
- 	0x78, 0x9A, 0xBC, 0xDE, 0xF0, 0x88, 0xF9
- };
- =
-
--static void test_fill_basic()
-+static void test_fill_basic(void)
- {
- 	guint8 control_frame[6];
- 	guint8 data_frame[128];
-@@ -327,7 +327,7 @@ static const guint8 advanced_quoted_data_result[] =3D
- 	{ 0x7E, 0x07, 0xEF, 0x12, 0x34, 0x56, 0x7D, 0x5E, 0x78,
- 		0x7D, 0x5D, 0x05, 0x7E };
- =
-
--static void test_fill_advanced()
-+static void test_fill_advanced(void)
- {
- 	guint8 control_frame[8];
- 	guint8 data_frame[128];
-@@ -368,7 +368,7 @@ static int basic_frame_size =3D 7;
- =
-
- static const guint8 basic_output[] =3D { 0x12, 0x34, 0x56 };
- =
-
--static void test_extract_basic()
-+static void test_extract_basic(void)
- {
- 	int total =3D 0;
- 	int nread;
-@@ -467,7 +467,7 @@ static int advanced_frame_size =3D 6;
- =
-
- static const guint8 advanced_output[] =3D { 0x12, 0x34, 0x56 };
- =
-
--static void test_extract_advanced()
-+static void test_extract_advanced(void)
- {
- 	int total =3D 0;
- 	int nread;
-diff --git a/unit/test-simutil.c b/unit/test-simutil.c
-index 155cddd..7cb5c10 100644
---- a/unit/test-simutil.c
-+++ b/unit/test-simutil.c
-@@ -80,12 +80,12 @@ static void test_buffer(const unsigned char *buf, size_=
-t size)
- 	g_assert(ber_tlv_iter_next(&iter) =3D=3D FALSE);
+     // Bail out if there is already an incoming call.
+     if ( idForIncoming() >=3D 0 ) {
+@@ -356,6 +362,7 @@ void CallManager::startIncomingCall( const QString& num=
+ber,
+         info.state =3D CallState_Incoming;
+     }
+     info.number =3D number;
++    info.calledNumber =3D calledNumber;
+     info.incoming =3D true;
+     info.dialBack =3D dialBack;
+     info.name =3D name;
+@@ -371,9 +378,11 @@ void CallManager::startIncomingCall( const QString& nu=
+mber,
+     ringTimer->start(2000);
  }
  =
 
--static void test_ber_tlv_iter()
-+static void test_ber_tlv_iter(void)
+-void CallManager::startIncomingCall( const QString& number , const QString=
+& name )
++void CallManager::startIncomingCall( const QString& number,
++                                     const QString& calledNumber,
++                                     const QString& name )
  {
- 	test_buffer(valid_mms_params, sizeof(valid_mms_params));
+-    startIncomingCall( number, name, false );
++    startIncomingCall( number, calledNumber, name, false );
  }
  =
 
--static void test_ber_tlv_builder_mms()
-+static void test_ber_tlv_builder_mms(void)
+ void CallManager::hangupAll()
+@@ -702,18 +711,18 @@ void CallManager::dialingToAlerting()
+ =
+
+ void CallManager::dialBack()
  {
- 	struct ber_tlv_iter top_iter, nested_iter;
- 	struct ber_tlv_builder top_builder, nested_builder;
-@@ -128,7 +128,7 @@ static void test_ber_tlv_builder_mms()
- 	test_buffer(pdu, pdulen);
+-    startIncomingCall( "1234567", "Alice", true );
++    startIncomingCall( "1234567", "7654321", "Alice", true );
  }
  =
 
--static void test_ber_tlv_builder_efpnn()
-+static void test_ber_tlv_builder_efpnn(void)
+ void CallManager::dialBackWithHangup5()
  {
- 	struct sim_eons *eons_info;
- 	unsigned char efpnn0[64], efpnn1[64];
-@@ -188,7 +188,7 @@ static void test_ber_tlv_builder_efpnn()
- 	sim_eons_free(eons_info);
+-    startIncomingCall( "1234567", "Bob", true );
++    startIncomingCall( "1234567", "7654321", "Bob", true );
+     hangupTimer->start( 5000 );
  }
  =
 
--static void test_ber_tlv_builder_3g_status()
-+static void test_ber_tlv_builder_3g_status(void)
+ void CallManager::dialBackWithHangup4()
  {
- 	unsigned char buf[512];
- 	struct ber_tlv_builder top_builder, nested_builder;
-@@ -351,7 +351,7 @@ const unsigned char valid_efpnn[][28] =3D {
- 	  0x53, 0x68, 0x6F, 0x72, 0x74, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, }
- };
- =
-
--static void test_eons()
-+static void test_eons(void)
- {
- 	const struct sim_eons_operator_info *op_info;
- 	struct sim_eons *eons_info;
-@@ -383,7 +383,7 @@ static void test_eons()
- 	sim_eons_free(eons_info);
+-    startIncomingCall( "1234567", "Mallory", true );
++    startIncomingCall( "1234567", "7654321", "Mallory", true );
+     hangupTimer->start( 4000 );
  }
  =
 
--static void test_ef_db()
-+static void test_ef_db(void)
- {
- 	struct sim_ef_info *info;
+diff --git a/src/callmanager.h b/src/callmanager.h
+index f29bdce..90cb9bd 100644
+--- a/src/callmanager.h
++++ b/src/callmanager.h
+@@ -39,6 +39,7 @@ struct CallInfo
+     int         id;
+     CallState   state;
+     QString     number;
++    QString     calledNumber;
+     bool        incoming;
+     bool        dialBack;
+     QString     name;
+@@ -94,9 +95,10 @@ public:
  =
 
-@@ -405,7 +405,7 @@ static const char *binary_ef =3D "62178202412183022F058=
-A01058B032F060F8002000A"
- static const char *record_ef =3D "62198205422100200483026F408A01058B036F06=
-07"
- 				"800200808800";
+ public slots:
+     // Start an incoming call simulation.
+-    void startIncomingCall( const QString& number, const QString& name,
+-						bool dialBack );
+-    void startIncomingCall( const QString& number, const QString& name );
++    void startIncomingCall( const QString& number, const QString& calledNu=
+mber,
++                                const QString& name, bool dialBack );
++    void startIncomingCall( const QString& number, const QString& calledNu=
+mber,
++                                const QString& name );
  =
 
--static void test_3g_status_data()
-+static void test_3g_status_data(void)
+ signals:
+     // Send a response to a command.
+diff --git a/src/control.cpp b/src/control.cpp
+index 68c5584..b70de30 100644
+--- a/src/control.cpp
++++ b/src/control.cpp
+@@ -119,7 +119,7 @@ Control::Control(const QString& ruleFile, SimRules *sr,=
+ QObject *parent)
+         << SIGNAL(command(QString))
+         << SIGNAL(variableChanged(QString,QString))
+         << SIGNAL(switchTo(QString))
+-        << SIGNAL(startIncomingCall(QString, QString));
++        << SIGNAL(startIncomingCall(QString, QString, QString));
+ =
+
+     foreach (QByteArray sig, proxySignals)
+         connect(widget, sig, this, sig);
+@@ -282,15 +282,19 @@ void ControlWidget::sendSMSDatagram()
+ void ControlWidget::sendCall()
  {
- 	unsigned char *response;
- 	long len;
-diff --git a/unit/test-sms.c b/unit/test-sms.c
-index 134a4b1..abaed35 100644
---- a/unit/test-sms.c
-+++ b/unit/test-sms.c
-@@ -143,7 +143,7 @@ static void dump_details(struct sms *sms)
- 	}
+     QString number;
++    QString calledNumber;
+     QString name;
+ =
+
+     if (ui->cbCaller->isChecked())
+         number =3D ui->leCaller->text();
+ =
+
++    if (ui->cbCalledLine->isChecked())
++        calledNumber =3D ui->leCalledLine->text();
++
+     if (ui->cbCallerName->isChecked())
+         name =3D ui->leCallerName->text();
+ =
+
+-    emit startIncomingCall( number, name );
++    emit startIncomingCall( number, calledNumber, name );
  }
  =
 
--static void test_simple_deliver()
-+static void test_simple_deliver(void)
- {
- 	struct sms sms;
- 	unsigned char *decoded_pdu;
-@@ -214,7 +214,7 @@ static void test_simple_deliver()
- 	g_free(utf8);
- }
+ void ControlWidget::handleFromData( const QString& cmd )
+diff --git a/src/control.h b/src/control.h
+index 767baa3..2c14863 100644
+--- a/src/control.h
++++ b/src/control.h
+@@ -101,7 +101,7 @@ signals:
+     void command(const QString &);
+     void variableChanged(const QString &, const QString &);
+     void switchTo(const QString &);
+-    void startIncomingCall(const QString &, const QString &);
++    void startIncomingCall(const QString &, const QString &, const QString=
+ &);
  =
 
--static void test_alnum_sender()
-+static void test_alnum_sender(void)
- {
- 	struct sms sms;
- 	unsigned char *decoded_pdu;
-@@ -285,7 +285,7 @@ static void test_alnum_sender()
- 	g_free(utf8);
- }
+ protected:
+     void closeEvent(QCloseEvent *event);
+diff --git a/src/default.xml b/src/default.xml
+index 4491705..14796d2 100644
+--- a/src/default.xml
++++ b/src/default.xml
+@@ -1373,6 +1373,25 @@
+ </chat>
  =
 
--static void test_deliver_encode()
-+static void test_deliver_encode(void)
- {
- 	struct sms sms;
- 	unsigned char *decoded_pdu;
-@@ -361,7 +361,7 @@ static void test_deliver_encode()
- 	g_free(encoded_pdu);
- }
+ <chat>
++    <!-- Query called line identifier presentation mode -->
++    <command>AT+CDIP?</command>
++    <response>+CDIP: ${DIP},1\n\nOK</response>
++</chat>
++
++<chat>
++    <!-- Query supported called line identifier presentation modes -->
++    <command>AT+CDIP=3D?</command>
++    <response>+CDIP: (0,1)\n\nOK</response>
++</chat>
++
++<chat>
++    <!-- Set called line identifier presentation mode -->
++    <command>AT+CDIP=3D*</command>
++    <response>OK</response>
++    <set name=3D"DIP" value=3D"*"/>
++</chat>
++
++<chat>
+     <!-- Query calling line identifier presentation mode -->
+     <command>AT+CNAP?</command>
+     <response>+CNAP: ${NAP},1\n\nOK</response>
+diff --git a/src/hardwaremanipulator.h b/src/hardwaremanipulator.h
+index d8ab11e..2176900 100644
+--- a/src/hardwaremanipulator.h
++++ b/src/hardwaremanipulator.h
+@@ -55,7 +55,7 @@ signals:
+     void command(const QString &cmd);
+     void variableChanged(const QString &n, const QString &v);
+     void switchTo(const QString &cmd);
+-    void startIncomingCall(const QString &number, const QString &name);
++    void startIncomingCall(const QString &number, const QString &called_nu=
+mber, const QString &name);
  =
 
--static void test_simple_submit()
-+static void test_simple_submit(void)
- {
- 	struct sms sms;
- 	unsigned char *decoded_pdu;
-@@ -427,7 +427,7 @@ static void test_simple_submit()
- 	g_free(utf8);
- }
+ protected:
+     virtual QString constructCBMessage(const QString &messageCode, int geo=
+graphicalScope, const QString &updateNumber, const QString &channel,
+diff --git a/src/phonesim.cpp b/src/phonesim.cpp
+index 8ca5b23..a51e591 100644
+--- a/src/phonesim.cpp
++++ b/src/phonesim.cpp
+@@ -526,8 +526,8 @@ SimRules::SimRules( int fd, QObject *p,  const QString&=
+ filename, HardwareManipu
+              this, SLOT(dialCheck(QString,bool&)) );
  =
 
--static void test_submit_encode()
-+static void test_submit_encode(void)
- {
- 	struct sms sms;
- 	unsigned char *decoded_pdu;
-@@ -931,7 +931,7 @@ static const char *assembly_pdu3 =3D "038121F3400481555=
-50119906041001222044A0500"
- 					"00431044B043B0020043D04300433002E";
- static int assembly_pdu_len3 =3D 89;
+     if ( machine ) {
+-        connect( machine, SIGNAL(startIncomingCall(QString,QString)),
+-                 _callManager, SLOT(startIncomingCall(QString,QString)) );
++        connect( machine, SIGNAL(startIncomingCall(QString,QString,QString=
+)),
++                 _callManager, SLOT(startIncomingCall(QString,QString,QStr=
+ing)) );
+     }
  =
 
--static void test_assembly()
-+static void test_assembly(void)
- {
- 	unsigned char pdu[176];
- 	long pdu_len;
-@@ -1018,7 +1018,7 @@ static const char *expected_no_fragmentation_7bit =3D=
- "079153485002020911000C915"
- 			"348870420140000A71154747A0E4ACF41F4F29C9E769F4121";
- static const char *sc_addr =3D "+358405202090";
- static const char *da_addr =3D "+358478400241";
--static void test_prepare_7bit()
-+static void test_prepare_7bit(void)
- {
- 	GSList *r;
- 	struct sms *sms;
-@@ -1205,7 +1205,7 @@ static void test_limit(gunichar uni, int target_size,=
- gboolean use_16bit)
- 	g_free(utf8);
- }
- =
-
--static void test_prepare_limits()
-+static void test_prepare_limits(void)
- {
- 	gunichar ascii =3D 0x41;
- 	gunichar ucs2 =3D 0x416;
-@@ -1236,7 +1236,7 @@ static const char *cbs2 =3D "0110003201114679785E9637=
-1A8D46A3D168341A8D46A3D1683"
- 	"41A8D46A3D168341A8D46A3D168341A8D46A3D168341A8D46A3D168341A8D46A3D168"
- 	"341A8D46A3D168341A8D46A3D168341A8D46A3D168341A8D46A3D100";
- =
-
--static void test_cbs_encode_decode()
-+static void test_cbs_encode_decode(void)
- {
- 	unsigned char *decoded_pdu;
- 	long pdu_len;
-@@ -1301,7 +1301,7 @@ static void test_cbs_encode_decode()
- 	g_free(encoded_pdu);
- }
- =
-
--static void test_cbs_assembly()
-+static void test_cbs_assembly(void)
- {
- 	unsigned char *decoded_pdu;
- 	long pdu_len;
-@@ -1389,7 +1389,7 @@ static void test_cbs_assembly()
- 	cbs_assembly_free(assembly);
- }
- =
-
--static void test_serialize_assembly()
-+static void test_serialize_assembly(void)
- {
- 	unsigned char pdu[176];
- 	long pdu_len;
-@@ -1447,7 +1447,7 @@ static const char *ranges[] =3D { "1-5, 2, 3, 600, 56=
-9-900, 999",
- static const char *inv_ranges[] =3D { "1-5, 3333", "1-5, afbcd", "1-5, 3-5=
-,,",
- 					"1-5, 3-5, c", NULL };
- =
-
--static void test_range_minimizer()
-+static void test_range_minimizer(void)
- {
- 	int i =3D 0;
- =
-
-@@ -1480,7 +1480,7 @@ static void test_range_minimizer()
- 	}
- }
- =
-
--static void test_sr_assembly()
-+static void test_sr_assembly(void)
- {
- 	const char *sr_pdu1 =3D "06040D91945152991136F00160124130340A0160124130"
- 				"940A00";
-diff --git a/unit/test-util.c b/unit/test-util.c
-index 057bb76..c0d0bf1 100644
---- a/unit/test-util.c
-+++ b/unit/test-util.c
-@@ -341,7 +341,7 @@ unsigned short gsm_turkish_to_unicode_map[] =3D
- 	((c) < 0x80 ? 1 : \
- 	 ((c) < 0x800 ? 2 : 3))
- =
-
--static void test_invalid()
-+static void test_invalid(void)
- {
- 	long nwritten;
- 	long nread;
-@@ -382,7 +382,7 @@ static void test_invalid()
- 	g_assert(nread =3D=3D 0);
- }
- =
-
--static void test_valid()
-+static void test_valid(void)
- {
- 	long nwritten;
- 	long nread;
-@@ -444,7 +444,7 @@ static void test_valid()
- 	}
- }
- =
-
--static void test_valid_turkish()
-+static void test_valid_turkish(void)
- {
- 	long nwritten;
- 	long nread;
-@@ -515,7 +515,7 @@ static const char expected[] =3D "It is easy to read te=
-xt messages via AT "
- 				"commands.";
- static int reported_text_size =3D 49;
- =
-
--static void test_decode_encode()
-+static void test_decode_encode(void)
- {
- 	const char *sms =3D hex_packed;
- 	unsigned char *decoded, *packed;
-@@ -614,7 +614,7 @@ static void test_decode_encode()
- 	g_free(hex_packed);
- }
- =
-
--static void test_pack_size()
-+static void test_pack_size(void)
- {
- 	unsigned char c1[] =3D { 'a' };
- 	unsigned char c2[] =3D { 'a', 'b' };
-@@ -676,7 +676,7 @@ static void test_pack_size()
- 	g_free(packed);
- }
- =
-
--static void test_cr_handling()
-+static void test_cr_handling(void)
- {
- 	unsigned char c7[] =3D { 'a', 'b', 'c', 'd', 'e', 'f', 'g' };
- 	unsigned char c7_expected[] =3D { 'a', 'b', 'c', 'd', 'e', 'f', 'g',
-@@ -739,7 +739,7 @@ static void test_cr_handling()
- 	g_free(packed);
- }
- =
-
--static void test_sms_handling()
-+static void test_sms_handling(void)
- {
- 	unsigned char c7[] =3D { 'a', 'b', 'c', 'd', 'e', 'f', 'g' };
- =
-
-@@ -780,7 +780,7 @@ static void test_sms_handling()
- 	g_free(packed);
- }
- =
-
--static void test_offset_handling()
-+static void test_offset_handling(void)
- {
- 	unsigned char c7[] =3D { 'a', 'b', 'c', 'd', 'e', 'f', 'g' };
- 	unsigned char c8[] =3D { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
-@@ -880,7 +880,7 @@ static unsigned char sim_82_1[] =3D { 0x82, 0x05, 0x04,=
- 0x00, 0x2D, 0xB3, 0xB4,
- static unsigned char sim_82_2[] =3D { 0x82, 0x05, 0xD8, 0x00, 0x2D, 0xB3, =
-0xB4,
- 					0x2D, 0x31 };
- =
-
--static void test_sim()
-+static void test_sim(void)
- {
- 	char *utf8;
- =
-
-@@ -930,7 +930,7 @@ static void test_sim()
- 	g_assert(utf8 =3D=3D NULL);
- }
- =
-
--static void test_unicode_to_gsm()
-+static void test_unicode_to_gsm(void)
- {
- 	long nwritten;
- 	long nread;
+     connect(this,SIGNAL(readyRead()),
 -- =
 
-1.7.0.4
+1.7.3.5
 
 
---===============8814238292504400437==--
+--===============3770900874586535946==--
 
