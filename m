@@ -1,54 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============7836583778576465134=="
+Content-Type: multipart/mixed; boundary="===============1263766403661008879=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC 5/5] doc: Describe TextTelephony property
-Date: Tue, 11 Jan 2011 22:00:55 -0800
-Message-ID: <1294812055.3873.51.camel@aeonflux>
-In-Reply-To: <1294668092-27896-6-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: Re: [RFC 3/5] voicecall: Add ofono_voicecall_tty_notify api
+Date: Tue, 11 Jan 2011 22:03:34 -0800
+Message-ID: <1294812214.3873.52.camel@aeonflux>
+In-Reply-To: <1294668092-27896-4-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7836583778576465134==
+--===============1263766403661008879==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jeevaka,
 
->  doc/voicecall-api.txt |    7 +++++++
->  1 files changed, 7 insertions(+), 0 deletions(-)
+>  include/voicecall.h |    2 ++
+>  src/voicecall.c     |   12 ++++++++++++
+>  2 files changed, 14 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-> index 4f38e6a..8df8fd2 100644
-> --- a/doc/voicecall-api.txt
-> +++ b/doc/voicecall-api.txt
-> @@ -100,6 +100,13 @@ Properties	string LineIdentification [readonly]
->  			Notifications if a call becomes part or leaves a
->  			multipart call are sent.
->  =
+> diff --git a/include/voicecall.h b/include/voicecall.h
+> index e37d73b..6f1bdd2 100644
+> --- a/include/voicecall.h
+> +++ b/include/voicecall.h
+> @@ -144,6 +144,8 @@ void ofono_voicecall_notify(struct ofono_voicecall *v=
+c,
+>  void ofono_voicecall_disconnected(struct ofono_voicecall *vc, int id,
+>  				enum ofono_disconnect_reason reason,
+>  				const struct ofono_error *error);
+> +void ofono_voicecall_tty_notify(struct ofono_voicecall *vc,
+> +				const struct ofono_call *call);
 
-> +		boolean TextTelephony [readonly]
-> +
-> +			Contains the indication if the voice call is a
-> +			text telephony call or not.
-> +
-> +			Notifications if a call is a text telephony call.
-> +
->  		string State [readonly]
->  =
+what is the advantage of having this separate and not part of the
+regular voicecall_notify and just extending struct ofono_call with a
+field for TTY?
 
->  			Contains the state of the current call.  The state
-
-I am fine with actually.
-
-Denis, any objections?
-
-regards
+Regards
 
 Marcel
 
 
 
---===============7836583778576465134==--
+--===============1263766403661008879==--
 
