@@ -1,51 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============2441870882139862753=="
+Content-Type: multipart/mixed; boundary="===============8990870638794681251=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
-Subject: [PATCH] TODO: set owner of Support HFP AG emulator task
-Date: Wed, 12 Jan 2011 16:41:30 +0100
-Message-ID: <1294846890-5745-1-git-send-email-frederic.danis@linux.intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Update interface with variable port numbers?
+Date: Wed, 12 Jan 2011 07:57:51 -0800
+Message-ID: <1294847871.3873.76.camel@aeonflux>
+In-Reply-To: <4D2D5F61.5040404@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2441870882139862753==
+--===============8990870638794681251==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Frederic Danis <frederic.danis@linux.intel.com>
+Hi Jessica,
 
----
- TODO |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+> we could probably use an update in the push_notification_register_agent
+> in plugins/push-notification.c so that it would be possible to specify =
 
-diff --git a/TODO b/TODO
-index 495d539..28a6c32 100644
---- a/TODO
-+++ b/TODO
-@@ -106,6 +106,7 @@ Modem Emulator
- =
+> port numbers instead of them being hardcoded with
+> =
 
-   Complexity: C4
-   Priority: Medium
-+  Owner: Fr=C3=A9d=C3=A9ric Danis <frederic.danis@linux.intel.com>
- =
+> #define WAP_PUSH_SRC_PORT 9200
+> #define WAP_PUSH_DST_PORT 2948
+> =
 
- - Support extensions to HFP AG emulator.  Some carkits support additional
-   AT command extensions to the Bluetooth HFP AG standard.  Refer to CE4A
-@@ -116,6 +117,7 @@ Modem Emulator
-   Complexity: C4
-   Priority: Medium
-   Depends: HFP AG emulator
-+  Owner: Fr=C3=A9d=C3=A9ric Dalleau <frederic.dalleau@linux.intel.com>
- =
+> We would like to be able to use the
+> oma-ilp		7276/tcp    OMA Internal Location Protocol
+> =
 
- - Support HSP AG.  Similar to HFP AG emulator but implements the much redu=
-ced
-   Bluetooth HSP AG profile.
--- =
+> specified on
+> http://www.iana.org/assignments/port-numbers
+> =
 
-1.7.1
+> This could also be used for other WAP based services.
+> =
+
+> Is this something that you would agree would be useful and we could add =
+
+> to the TODO list?
+
+what is the content of these messages? For WAP Push it is clearly
+defined. Are these also WAP Push PDUs?
+
+Regards
+
+Marcel
 
 
---===============2441870882139862753==--
+
+--===============8990870638794681251==--
 
