@@ -1,171 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============2267603121398166601=="
+Content-Type: multipart/mixed; boundary="===============0796012773631818330=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@intel.com>
-Subject: [PATCH 07/21] emulator: Add status watches for ofono emulator
-Date: Wed, 12 Jan 2011 18:15:50 +0100
-Message-ID: <1294852564-1258-8-git-send-email-frederic.dalleau@intel.com>
+Subject: [PATCH 06/21] gprs: Rename status_watch to netreg_status_watch
+Date: Wed, 12 Jan 2011 18:15:49 +0100
+Message-ID: <1294852564-1258-7-git-send-email-frederic.dalleau@intel.com>
 In-Reply-To: <1294852564-1258-1-git-send-email-frederic.dalleau@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2267603121398166601==
+--===============0796012773631818330==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
 
-The status watches monitor the emulator activities. Other atoms like
-gprs, netreg could register notification to watch emulator status
-changes.
+To be more precise and avoid name conflict with dun_status_watch.
 ---
- include/emulator.h |    6 +++++
- src/emulator.c     |   54 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/ofono.h        |   11 ++++++++++
- 3 files changed, 71 insertions(+), 0 deletions(-)
+ src/gprs.c |   15 ++++++++-------
+ 1 files changed, 8 insertions(+), 7 deletions(-)
 
-diff --git a/include/emulator.h b/include/emulator.h
-index 2691928..99ae218 100644
---- a/include/emulator.h
-+++ b/include/emulator.h
-@@ -30,6 +30,12 @@ extern "C" {
- =
-
- struct ofono_emulator;
- =
-
-+enum ofono_emulator_status {
-+	OFONO_EMULATOR_STATUS_IDLE =3D 0,
-+	OFONO_EMULATOR_STATUS_CREATE,
-+	OFONO_EMULATOR_STATUS_DESTROY,
-+};
-+
- struct ofono_emulator_driver {
- 	const char *name;
- 	enum ofono_atom_type type;
-diff --git a/src/emulator.c b/src/emulator.c
-index 1ede79a..c68dbf8 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -39,6 +39,8 @@ struct ofono_emulator {
- 	unsigned int id;
- 	GAtServer *server;
- 	struct ofono_emulator_driver *driver;
-+	enum ofono_emulator_status status;
-+	struct ofono_watchlist *status_watches;
- };
- =
-
- static GSList *emulator_drivers =3D NULL;
-@@ -80,6 +82,20 @@ static void ofono_emulator_release_id(int id)
- 	ofono_emulator_ids &=3D ~(0x1 << id);
- }
- =
-
-+static void notify_status_watches(struct ofono_emulator *e, void *data)
-+{
-+	struct ofono_watchlist_item *item;
-+	ofono_emulator_status_notify_cb_t notify;
-+	GSList *l;
-+
-+	for (l =3D e->status_watches->items; l; l =3D l->next) {
-+		item =3D l->data;
-+		notify =3D item->notify;
-+
-+		notify(e, e->status, data, item->notify_data);
-+	}
-+}
-+
- int ofono_emulator_enable(struct ofono_emulator *e, GIOChannel *channel)
- {
- 	if (channel =3D=3D NULL)
-@@ -116,6 +132,11 @@ static void emulator_remove(struct ofono_atom *atom)
- 	if (e->server)
- 		emulator_disable(e);
- =
-
-+	e->status =3D OFONO_EMULATOR_STATUS_DESTROY;
-+	notify_status_watches(e, NULL);
-+
-+	__ofono_watchlist_free(e->status_watches);
-+
- 	ofono_emulator_release_id(e->id);
- =
-
- 	if (e->driver->remove)
-@@ -125,6 +146,37 @@ static void emulator_remove(struct ofono_atom *atom)
- 	e =3D NULL;
- }
- =
-
-+unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *e,
-+				ofono_emulator_status_notify_cb_t notify,
-+				void *data, ofono_destroy_func destroy)
-+{
-+	struct ofono_watchlist_item *item;
-+
-+	DBG("%p", e);
-+
-+	if (e =3D=3D NULL)
-+		return 0;
-+
-+	if (notify =3D=3D NULL)
-+		return 0;
-+
-+	item =3D g_new0(struct ofono_watchlist_item, 1);
-+
-+	item->notify =3D notify;
-+	item->destroy =3D destroy;
-+	item->notify_data =3D data;
-+
-+	return __ofono_watchlist_add_item(e->status_watches, item);
-+}
-+
-+gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
-+						unsigned int id)
-+{
-+	DBG("%p", e);
-+
-+	return __ofono_watchlist_remove_item(e->status_watches, id);
-+}
-+
- struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
- 					struct ofono_emulator_driver *driver)
- {
-@@ -148,6 +200,8 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
-no_modem *modem,
+diff --git a/src/gprs.c b/src/gprs.c
+index 0e86bdf..4cb5eaf 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -74,7 +74,7 @@ struct ofono_gprs {
+ 	int netreg_status;
+ 	struct ofono_netreg *netreg;
+ 	unsigned int netreg_watch;
+-	unsigned int status_watch;
++	unsigned int netreg_status_watch;
+ 	GKeyFile *settings;
+ 	char *imsi;
+ 	DBusMessage *pending;
+@@ -2164,10 +2164,10 @@ static void gprs_unregister(struct ofono_atom *atom)
  	}
  =
 
- 	e->id =3D ofono_emulator_next_id();
-+	e->status_watches =3D __ofono_watchlist_new(g_free);
-+	e->status =3D OFONO_EMULATOR_STATUS_CREATE;
+ 	if (gprs->netreg_watch) {
+-		if (gprs->status_watch) {
++		if (gprs->netreg_status_watch) {
+ 			__ofono_netreg_remove_status_watch(gprs->netreg,
+-							gprs->status_watch);
+-			gprs->status_watch =3D 0;
++						gprs->netreg_status_watch);
++			gprs->netreg_status_watch =3D 0;
+ 		}
  =
 
- 	return e;
+ 		__ofono_modem_remove_atom_watch(modem, gprs->netreg_watch);
+@@ -2250,15 +2250,16 @@ static void netreg_watch(struct ofono_atom *atom,
+ 	struct ofono_gprs *gprs =3D data;
+ =
+
+ 	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
+-		gprs->status_watch =3D 0;
++		gprs->netreg_status_watch =3D 0;
+ 		gprs->netreg =3D NULL;
+ 		return;
+ 	}
+ =
+
+ 	gprs->netreg =3D __ofono_atom_get_data(atom);
+ 	gprs->netreg_status =3D ofono_netreg_get_status(gprs->netreg);
+-	gprs->status_watch =3D __ofono_netreg_add_status_watch(gprs->netreg,
+-					netreg_status_changed, gprs, NULL);
++	gprs->netreg_status_watch =3D __ofono_netreg_add_status_watch(
++					gprs->netreg, netreg_status_changed,
++					gprs, NULL);
+ =
+
+ 	gprs_netreg_update(gprs);
  }
-diff --git a/src/ofono.h b/src/ofono.h
-index 64ea625..247152b 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -423,3 +423,14 @@ void __ofono_nettime_info_received(struct ofono_modem =
-*modem,
- #include <ofono/emulator.h>
- =
-
- void __ofono_emulator_probe_drivers(struct ofono_modem *modem);
-+
-+typedef void (*ofono_emulator_status_notify_cb_t)(struct ofono_emulator *e,
-+					enum ofono_emulator_status status,
-+					void *data, void *user_data);
-+
-+unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *e,
-+				ofono_emulator_status_notify_cb_t notify,
-+				void *data, ofono_destroy_func destroy);
-+
-+gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
-+						unsigned int id);
 -- =
 
 1.7.1
@@ -183,5 +89,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============2267603121398166601==--
+--===============0796012773631818330==--
 
