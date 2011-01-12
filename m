@@ -1,49 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============1718433555209461939=="
+Content-Type: multipart/mixed; boundary="===============2204200995972815282=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [RFC 3/5] voicecall: Add ofono_voicecall_tty_notify api
-Date: Wed, 12 Jan 2011 08:48:46 -0800
-Message-ID: <1294850926.3873.101.camel@aeonflux>
-In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802D59EA2@fioues07.ebgroup.elektrobit.com>
+Subject: RE: [PATCH 2/2] ifxmodem: add enable/disable ctm support
+Date: Wed, 12 Jan 2011 08:55:48 -0800
+Message-ID: <1294851348.3873.105.camel@aeonflux>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802D59E62@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1718433555209461939==
+--===============2204200995972815282==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jeevaka,
 
-> >> Main reason for separate notification function is to avoid going
-> >> through all the cases handled inside voicecall_notify. TTY field in
-> >> ofono_call is basically for the GetProperties.
-> > =
+> > Now this is something I don't like at all. It is copied code from the
+> > modem plugin. =
 
-> > I see. So here is the main question that comes from this now.
-> > This seems to be a bit IFX specific driven API. I still have
-> > no idea why they can not just indicate this via +CRING and
-> > have to use CTM CALL for it.
-> > =
-
-> > Are we expecting that all modems will just establish a normal
-> > voice call and only later on signal that it is a TTY call?
-> > Any input from different vendors other than IFX. What about STE, ISI?
 > =
 
-> This notification is to inform the ME that the call is accepted as a TTY
-> call
-> on the remote side.
+> Its the same audio configuration code except that there is a new
+> parameter added
+> at the end of the parameter list for TTY case.
 
-I see. Using a +X... IFX style notification would have been much nicer,
-but so be it. The question still remains if all other modems do it
-similar.
+I really hate duplicating magic numbers in two places. Can we do this
+without +XDRV for now and put a /* TODO mark */ in the code. I do need
+to think about this audio settings handling a bit more.
 
-Btw. can you provide the mailing list with an example OFONO_AT_DEBUG=3D1
-trace for a TTY call on IFX. I really like to see one of these.
+So you might have to keep the +XDRV local in your code for testing, but
+I'd rather get the other TTY logic in place and worry about the audio
+stuff in a second round of patches.
 
-Denis, do you want an extra voicecall_tty_notify() callback or just have
-it go through the voicecall_notify() one?
+> > Also if this is required, we might need to figure out a
+> > complete different way of handling this. We can't have this
+> > in two places since that means a full disconnect. Maybe
+> > putting this into the audio settings atom might be better.
+> > However before we can do anything, I have to understand the
+> > semantics behind XDRV, normal voice calls and TTY calls.
+> > =
+
+> =
+
+> Correct me if I'm wrong. If we move this to the audio settings atom,
+> then I'm
+> afraid that it will end up in used by only ifx modem. =
+
+
+I am not following. This whole stuff is IFX specific. So yes, it will
+only be used by IFX. All other vendors have to do their own stuff.
 
 Regards
 
@@ -51,5 +56,5 @@ Marcel
 
 
 
---===============1718433555209461939==--
+--===============2204200995972815282==--
 
