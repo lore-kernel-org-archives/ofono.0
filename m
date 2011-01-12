@@ -1,211 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============3196301927430211899=="
+Content-Type: multipart/mixed; boundary="===============7480162550886063741=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@intel.com>
-Subject: [PATCH 21/21] emulator: Watch netreg status changes
-Date: Wed, 12 Jan 2011 18:16:04 +0100
-Message-ID: <1294852564-1258-22-git-send-email-frederic.dalleau@intel.com>
-In-Reply-To: <1294852564-1258-1-git-send-email-frederic.dalleau@intel.com>
+From: Tomasz Gregorek <tomasz.gregorek@gmail.com>
+Subject: Re: [PATCH] plugins-mbm: Combining mbm_disable and reopen_callback
+Date: Wed, 12 Jan 2011 18:26:27 +0100
+Message-ID: <AANLkTim3ZMKZWDhLk5iWdObiQTBgJZXbTUKos=ZXB+Ym@mail.gmail.com>
+In-Reply-To: <1294848806.3873.81.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3196301927430211899==
+--===============7480162550886063741==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+Hi Marcel
+I already had my solution in head and misunderstood you. I will correct and
+retest it.
+Br
+Tomasz
 
-Watch netreg status update to notify DUN client, such as +CREG
-unsolicited result.
----
- src/emulator.c |  106 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 106 insertions(+), 0 deletions(-)
+2011/1/12 Marcel Holtmann <marcel@holtmann.org>
 
-diff --git a/src/emulator.c b/src/emulator.c
-index 7701510..3444461 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -56,6 +56,9 @@ struct modem_settings {
- 	int cops;
- 	int attached;
- 	int gprs_status;
-+	int netreg_status;
-+	int netreg_lac;
-+	int netreg_ci;
- };
- =
+> Hi Tomasz,
+>
+> > Combining mbm_disable and reopen_callback into one and removing 1 second
+> > delay between them to avoid call to reopen_callback after modem being
+> > disconnected.
+>
+> have you actually tested this? This will not work since you can not
+> reopen the TTY right away. You need that delay in between.
+>
+> From my previous email, I remember saying that the right fix would be to
+> disarm the timer within disable. Why are we not doing that?
+>
+> Regards
+>
+> Marcel
+>
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
- struct ofono_emulator {
-@@ -72,6 +75,9 @@ struct ofono_emulator {
- 	struct ofono_gprs *gprs;
- 	unsigned int gprs_watch;
- 	unsigned int gprs_status_watch;
-+	struct ofono_netreg *netreg;
-+	unsigned int netreg_watch;
-+	unsigned int netreg_status_watch;
- };
- =
+--===============7480162550886063741==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
- static GSList *emulator_drivers =3D NULL;
-@@ -265,12 +271,19 @@ static void creg_cb(GAtServerRequestType type, GAtRes=
-ult *result,
- 					gpointer user_data)
- {
- 	struct ofono_emulator *e =3D user_data;
-+	char buf[256];
- =
+SGkgTWFyY2VsPGJyPkkgYWxyZWFkeSBoYWQgbXkgc29sdXRpb24gaW4gaGVhZCBhbmQgbWlzdW5k
+ZXJzdG9vZCB5b3UuIEkgd2lsbCBjb3JyZWN0IGFuZCByZXRlc3QgaXQuPGJyPkJyPGJyPlRvbWFz
+ejxicj48YnI+PGRpdiBjbGFzcz0iZ21haWxfcXVvdGUiPjIwMTEvMS8xMiBNYXJjZWwgSG9sdG1h
+bm4gPHNwYW4gZGlyPSJsdHIiPiZsdDs8YSBocmVmPSJtYWlsdG86bWFyY2VsQGhvbHRtYW5uLm9y
+ZyI+bWFyY2VsQGhvbHRtYW5uLm9yZzwvYT4mZ3Q7PC9zcGFuPjxicj4KPGJsb2NrcXVvdGUgY2xh
+c3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4
+ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleDsiPkhpIFRvbWFzeiw8YnI+CjxkaXYgY2xhc3M9
+ImltIj48YnI+CiZndDsgQ29tYmluaW5nIG1ibV9kaXNhYmxlIGFuZCByZW9wZW5fY2FsbGJhY2sg
+aW50byBvbmUgYW5kIHJlbW92aW5nIDEgc2Vjb25kPGJyPgomZ3Q7IGRlbGF5IGJldHdlZW4gdGhl
+bSB0byBhdm9pZCBjYWxsIHRvIHJlb3Blbl9jYWxsYmFjayBhZnRlciBtb2RlbSBiZWluZzxicj4K
+Jmd0OyBkaXNjb25uZWN0ZWQuPGJyPgo8YnI+CjwvZGl2PmhhdmUgeW91IGFjdHVhbGx5IHRlc3Rl
+ZCB0aGlzPyBUaGlzIHdpbGwgbm90IHdvcmsgc2luY2UgeW91IGNhbiBub3Q8YnI+CnJlb3BlbiB0
+aGUgVFRZIHJpZ2h0IGF3YXkuIFlvdSBuZWVkIHRoYXQgZGVsYXkgaW4gYmV0d2Vlbi48YnI+Cjxi
+cj4KPkZyb20gbXkgcHJldmlvdXMgZW1haWwsIEkgcmVtZW1iZXIgc2F5aW5nIHRoYXQgdGhlIHJp
+Z2h0IGZpeCB3b3VsZCBiZSB0bzxicj4KZGlzYXJtIHRoZSB0aW1lciB3aXRoaW4gZGlzYWJsZS4g
+V2h5IGFyZSB3ZSBub3QgZG9pbmcgdGhhdD88YnI+Cjxicj4KUmVnYXJkczxicj4KPGJyPgpNYXJj
+ZWw8YnI+Cjxicj4KPGJyPgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fXzxicj4Kb2Zvbm8gbWFpbGluZyBsaXN0PGJyPgo8YSBocmVmPSJtYWlsdG86b2Zvbm9A
+b2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5vcmc8L2E+PGJyPgo8YSBocmVmPSJodHRwOi8vbGlzdHMu
+b2Zvbm8ub3JnL2xpc3RpbmZvL29mb25vIiB0YXJnZXQ9Il9ibGFuayI+aHR0cDovL2xpc3RzLm9m
+b25vLm9yZy9saXN0aW5mby9vZm9ubzwvYT48YnI+CjwvYmxvY2txdW90ZT48L2Rpdj48YnI+Cg==
 
- 	switch (type) {
- 	case G_AT_SERVER_REQUEST_TYPE_SUPPORT:
- 		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
- 		break;
- 	case G_AT_SERVER_REQUEST_TYPE_QUERY:
-+		snprintf(buf, sizeof(buf), "+CREG: %d, %x, %x, %x",
-+						e->settings.creg,
-+						e->settings.netreg_status,
-+						e->settings.netreg_lac,
-+						e->settings.netreg_ci);
-+		ofono_emulator_send_info(e, buf, TRUE);
- 		ofono_emulator_send_final(e, G_AT_SERVER_RESULT_OK);
- 		break;
- 	case G_AT_SERVER_REQUEST_TYPE_SET:
-@@ -790,6 +803,86 @@ static void add_gprs_watches(struct ofono_emulator *e)
- 				OFONO_ATOM_WATCH_CONDITION_REGISTERED, e);
- }
- =
-
-+static void emulator_netreg_update(struct ofono_emulator *e)
-+{
-+	GAtServer *server =3D e->server;
-+	char buf[256];
-+
-+	switch (e->settings.creg) {
-+	case 0:
-+		break;
-+	case 1:
-+		snprintf(buf, sizeof(buf), "+CREG: %d",
-+						e->settings.netreg_status);
-+		g_at_server_send_unsolicited(server, buf);
-+		break;
-+	case 2:
-+		snprintf(buf, sizeof(buf), "+CREG: %d, %x, %x",
-+						e->settings.netreg_status,
-+						e->settings.netreg_lac,
-+						e->settings.netreg_ci);
-+		g_at_server_send_unsolicited(server, buf);
-+		break;
-+	default:
-+		break;
-+	}
-+}
-+
-+static void netreg_status_changed(int status, int lac, int ci, int tech,
-+					const char *mcc, const char *mnc,
-+					void *data)
-+{
-+	struct ofono_emulator *e =3D data;
-+
-+	DBG("%d %d %d", status, lac, ci);
-+
-+	e->settings.netreg_status =3D status;
-+	e->settings.netreg_lac =3D lac;
-+	e->settings.netreg_ci =3D ci;
-+
-+	emulator_netreg_update(e);
-+}
-+
-+static void netreg_watch(struct ofono_atom *atom,
-+				enum ofono_atom_watch_condition cond,
-+				void *data)
-+{
-+	struct ofono_emulator *e =3D data;
-+	struct ofono_netreg *netreg;
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		e->netreg_status_watch =3D 0;
-+		e->netreg =3D NULL;
-+		return;
-+	}
-+
-+	netreg =3D __ofono_atom_get_data(atom);
-+	e->netreg =3D netreg;
-+	e->settings.netreg_status =3D ofono_netreg_get_status(netreg);
-+	e->settings.netreg_lac =3D ofono_netreg_get_location(netreg);
-+	e->settings.netreg_ci =3D ofono_netreg_get_cellid(netreg);
-+	e->netreg_status_watch =3D __ofono_netreg_add_status_watch(e->netreg,
-+					netreg_status_changed, e, NULL);
-+
-+	emulator_netreg_update(e);
-+}
-+
-+static void add_netreg_watches(struct ofono_emulator *e)
-+{
-+	struct ofono_modem *modem =3D e->modem;
-+	struct ofono_atom *netreg_atom;
-+
-+	e->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
-+					OFONO_ATOM_TYPE_NETREG,
-+					netreg_watch, e, NULL);
-+
-+	netreg_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_NETREG);
-+
-+	if (netreg_atom && __ofono_atom_get_registered(netreg_atom))
-+		netreg_watch(netreg_atom,
-+				OFONO_ATOM_WATCH_CONDITION_REGISTERED, e);
-+}
-+
- int ofono_emulator_enable(struct ofono_emulator *e, GIOChannel *channel)
- {
- 	if (channel =3D=3D NULL)
-@@ -815,6 +908,7 @@ int ofono_emulator_enable(struct ofono_emulator *e, GIO=
-Channel *channel)
- 	g_at_server_register(e->server, "+CGDCONT", cgdcont_cb, e, NULL);
- =
-
- 	add_gprs_watches(e);
-+	add_netreg_watches(e);
- =
-
- 	return 0;
- }
-@@ -855,6 +949,18 @@ static void emulator_remove(struct ofono_atom *atom)
- 		e->gprs =3D NULL;
- 	}
- =
-
-+	if (e->netreg_watch) {
-+		if (e->netreg_status_watch) {
-+			__ofono_netreg_remove_status_watch(e->netreg,
-+						e->netreg_status_watch);
-+			e->netreg_status_watch =3D 0;
-+		}
-+
-+		__ofono_modem_remove_atom_watch(e->modem, e->netreg_watch);
-+		e->netreg_watch =3D 0;
-+		e->netreg =3D NULL;
-+	}
-+
- 	e->status =3D OFONO_EMULATOR_STATUS_DESTROY;
- 	notify_status_watches(e, NULL);
- =
-
--- =
-
-1.7.1
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============3196301927430211899==--
+--===============7480162550886063741==--
 
