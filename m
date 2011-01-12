@@ -1,46 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============0013309599601759162=="
+Content-Type: multipart/mixed; boundary="===============3292558167654275799=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
-Date: Wed, 12 Jan 2011 09:41:02 +0200
-Message-ID: <1294818062.24900.21.camel@jsaunama-desktop>
-In-Reply-To: <1294814934.3873.73.camel@aeonflux>
+From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
+Subject: Update interface with variable port numbers?
+Date: Wed, 12 Jan 2011 08:59:29 +0100
+Message-ID: <4D2D5F61.5040404@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0013309599601759162==
+--===============3292558167654275799==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello
+Hi,
 
-On Tue, 2011-01-11 at 22:48 -0800, ext Marcel Holtmann wrote:
-> > +	if (sim !=3D NULL) {
-> > +		ofono_sim_read(sim, SIM_EFSPN_FILEID,
-> > +				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
-> > +				sim_spn_read_cb, req);
-> > +		return;
-> > +	}
-> =
+we could probably use an update in the push_notification_register_agent
+in plugins/push-notification.c so that it would be possible to specify =
 
-> Should this not be provided somehow by the SIM atom?
-> =
+port numbers instead of them being hardcoded with
 
-> Denis, any idea why we are not keeping this information available?
-> =
+#define WAP_PUSH_SRC_PORT 9200
+#define WAP_PUSH_DST_PORT 2948
 
+We would like to be able to use the
+oma-ilp		7276/tcp    OMA Internal Location Protocol
 
-I would guess there was no need for it, since netreg was the only user
-for EFSPN data.
+specified on
+http://www.iana.org/assignments/port-numbers
 
-I though of patching the SIM atom to read this during some phase of SIM
-initialization, but was not sure exactly when, and what kind of
-interface (syncronous, asyncronous?) to provide.
+This could also be used for other WAP based services.
 
---Jukka
+Is this something that you would agree would be useful and we could add =
+
+to the TODO list?
+
+Best Regards,
+Jessica Nilsson
 
 
-
---===============0013309599601759162==--
+--===============3292558167654275799==--
 
