@@ -1,112 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============1729664837597932162=="
+Content-Type: multipart/mixed; boundary="===============0712254000421071390=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
+From: andrzej zaborowski <balrogg@gmail.com>
 Subject: Re: [RFC 2/4] stk: Handle Launch Browser proactive command
-Date: Wed, 12 Jan 2011 16:31:48 -0600
-Message-ID: <4D2E2BD4.9050303@gmail.com>
-In-Reply-To: <1294652623-17287-3-git-send-email-jeevaka.badrappan@elektrobit.com>
+Date: Wed, 12 Jan 2011 23:45:53 +0100
+Message-ID: <AANLkTikjKnoR7di__8BKW-VCGBU5WrkCLYCcsqn3pF4y@mail.gmail.com>
+In-Reply-To: <4D2E2BD4.9050303@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1729664837597932162==
+--===============0712254000421071390==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi,
 
-> +static gboolean handle_command_launch_browser(const struct stk_command *=
-cmd,
-> +						struct stk_response *rsp,
-> +						struct ofono_stk *stk)
-> +{
-> +	const struct stk_command_launch_browser *lb =3D &cmd->launch_browser;
-> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(stk->atom);
-> +	static unsigned char no_cause[] =3D { 0x00 };
-> +	static unsigned char no_service[] =3D { 0x04 };
-> +	struct ofono_atom *netreg_atom;
-> +	struct ofono_netreg *netreg;
-> +	int qualifier =3D cmd->qualifier;
-> +	char *alpha_id;
-> +	int err;
-> +	int status;
-> +
-> +	if (qualifier > 3 || qualifier =3D=3D 1) {
-> +		rsp->result.type =3D STK_RESULT_TYPE_COMMAND_NOT_UNDERSTOOD;
-> +		return TRUE;
-> +	}
-> +
-> +	if ( lb->browser_id > 4) {
-> +		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
-> +		return TRUE;
-> +	}
-> +
-> +	if (ofono_modem_get_online(modem) =3D=3D FALSE) {
-> +		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-> +					no_service);
-> +		return TRUE;
-> +	}
-> +
-> +	netreg_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_NETREG);
-> +	if (netreg_atom =3D=3D NULL) {
-> +		rsp->result.type =3D STK_RESULT_TYPE_NOT_CAPABLE;
-> +		return TRUE;
-> +	}
-> +
-> +	netreg =3D __ofono_atom_get_data(netreg_atom);
-> +	status =3D __ofono_netreg_registration_status(netreg);
-> +
-> +	if (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
-> +			status !=3D NETWORK_REGISTRATION_STATUS_ROAMING) {
-> +		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-> +					no_service);
-> +		return TRUE;
-> +	}
-> +
+On 12 January 2011 23:31, Denis Kenzior <denkenz@gmail.com> wrote:
+>> +static gboolean handle_command_launch_browser(const struct stk_command =
+*cmd,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 struct stk_response *rsp,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 struct ofono_stk *stk)
+>> +{
+>> + =C2=A0 =C2=A0 const struct stk_command_launch_browser *lb =3D &cmd->la=
+unch_browser;
+>> + =C2=A0 =C2=A0 struct ofono_modem *modem =3D __ofono_atom_get_modem(stk=
+->atom);
+>> + =C2=A0 =C2=A0 static unsigned char no_cause[] =3D { 0x00 };
+>> + =C2=A0 =C2=A0 static unsigned char no_service[] =3D { 0x04 };
+>> + =C2=A0 =C2=A0 struct ofono_atom *netreg_atom;
+>> + =C2=A0 =C2=A0 struct ofono_netreg *netreg;
+>> + =C2=A0 =C2=A0 int qualifier =3D cmd->qualifier;
+>> + =C2=A0 =C2=A0 char *alpha_id;
+>> + =C2=A0 =C2=A0 int err;
+>> + =C2=A0 =C2=A0 int status;
+>> +
+>> + =C2=A0 =C2=A0 if (qualifier > 3 || qualifier =3D=3D 1) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 rsp->result.type =3D STK_RES=
+ULT_TYPE_COMMAND_NOT_UNDERSTOOD;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return TRUE;
+>> + =C2=A0 =C2=A0 }
+>> +
+>> + =C2=A0 =C2=A0 if ( lb->browser_id > 4) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 rsp->result.type =3D STK_RES=
+ULT_TYPE_DATA_NOT_UNDERSTOOD;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return TRUE;
+>> + =C2=A0 =C2=A0 }
+>> +
+>> + =C2=A0 =C2=A0 if (ofono_modem_get_online(modem) =3D=3D FALSE) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ADD_ERROR_RESULT(rsp->result=
+, STK_RESULT_TYPE_TERMINAL_BUSY,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 no_service);
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return TRUE;
+>> + =C2=A0 =C2=A0 }
+>> +
+>> + =C2=A0 =C2=A0 netreg_atom =3D __ofono_modem_find_atom(modem, OFONO_ATO=
+M_TYPE_NETREG);
+>> + =C2=A0 =C2=A0 if (netreg_atom =3D=3D NULL) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 rsp->result.type =3D STK_RES=
+ULT_TYPE_NOT_CAPABLE;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return TRUE;
+>> + =C2=A0 =C2=A0 }
+>> +
+>> + =C2=A0 =C2=A0 netreg =3D __ofono_atom_get_data(netreg_atom);
+>> + =C2=A0 =C2=A0 status =3D __ofono_netreg_registration_status(netreg);
+>> +
+>> + =C2=A0 =C2=A0 if (status !=3D NETWORK_REGISTRATION_STATUS_REGISTERED &&
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+status !=3D NETWORK_REGISTRATION_STATUS_ROAMING) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ADD_ERROR_RESULT(rsp->result=
+, STK_RESULT_TYPE_TERMINAL_BUSY,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 no_service);
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return TRUE;
+>> + =C2=A0 =C2=A0 }
+>> +
+>
+> So a question about this. =C2=A0Why are we checking the netreg atom?
+> Shouldn't we be checking the gprs atom's attached property? =C2=A0But this
+> brings up an even more interesting question, do we even need to assume
+> that we have to be attached to the cellular network to perform these
+> operations? =C2=A0We could in theory go over wifi.
 
-So a question about this.  Why are we checking the netreg atom?
-Shouldn't we be checking the gprs atom's attached property?  But this
-brings up an even more interesting question, do we even need to assume
-that we have to be attached to the cellular network to perform these
-operations?  We could in theory go over wifi.
+I agree that the modem online property is unrelated to this.  Also the
+card may in theory specify a URL that designates a local file or
+something on a local network, not the internet.
 
-Thoughts?
+Best regards
 
-> +	alpha_id =3D dbus_apply_text_attributes(lb->alpha_id ? lb->alpha_id : "=
-",
-> +							&lb->text_attr);
-> +	if (alpha_id =3D=3D NULL) {
-> +		rsp->result.type =3D STK_RESULT_TYPE_DATA_NOT_UNDERSTOOD;
-> +		return TRUE;
-> +	}
-> +
-> +	err =3D stk_agent_launch_browser(stk->current_agent, alpha_id,
-> +					lb->icon_id.id, lb->url,
-> +					confirm_launch_browser_cb,
-> +					stk, NULL, stk->timeout * 1000);
-> +	g_free(alpha_id);
-> +
-> +	if (err < 0) {
-> +		/*
-> +		 * We most likely got an out of memory error, tell SIM
-> +		 * to retry
-> +		 */
-> +		ADD_ERROR_RESULT(rsp->result, STK_RESULT_TYPE_TERMINAL_BUSY,
-> +					no_cause);
-> +		return TRUE;
-> +	}
-> +
-> +	stk->respond_on_exit =3D TRUE;
-> +	stk->cancel_cmd =3D stk_request_cancel;
-> +
-> +	return FALSE;
-> +}
-> +
-
-Rest seems reasonable to me.
-
-Regards,
--Denis
-
---===============1729664837597932162==--
+--===============0712254000421071390==--
 
