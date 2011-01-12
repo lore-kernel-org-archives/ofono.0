@@ -1,24 +1,29 @@
-Content-Type: multipart/mixed; boundary="===============1254639127470778559=="
+Content-Type: multipart/mixed; boundary="===============8032848212319242841=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] TODO: set owner of Support HFP AG emulator task
-Date: Wed, 12 Jan 2011 08:11:09 -0800
-Message-ID: <1294848669.3873.79.camel@aeonflux>
-In-Reply-To: <1294846890-5745-1-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH] plugins-mbm: Combining mbm_disable and reopen_callback
+Date: Wed, 12 Jan 2011 08:13:26 -0800
+Message-ID: <1294848806.3873.81.camel@aeonflux>
+In-Reply-To: <1294839942-9071-1-git-send-email-tomasz.gregorek@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1254639127470778559==
+--===============8032848212319242841==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fred,
+Hi Tomasz,
 
->  TODO |    2 ++
->  1 files changed, 2 insertions(+), 0 deletions(-)
+> Combining mbm_disable and reopen_callback into one and removing 1 second
+> delay between them to avoid call to reopen_callback after modem being
+> disconnected.
 
-welcome on board. Patch has been applied.
+have you actually tested this? This will not work since you can not
+reopen the TTY right away. You need that delay in between.
+
+From my previous email, I remember saying that the right fix would be to
+disarm the timer within disable. Why are we not doing that?
 
 Regards
 
@@ -26,5 +31,5 @@ Marcel
 
 
 
---===============1254639127470778559==--
+--===============8032848212319242841==--
 
