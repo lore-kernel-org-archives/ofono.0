@@ -1,31 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============4923659031733727338=="
+Content-Type: multipart/mixed; boundary="===============2441870882139862753=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] sim: check if lock is locked after code changing attempt
-Date: Wed, 12 Jan 2011 09:35:51 -0600
-Message-ID: <4D2DCA57.4080206@gmail.com>
-In-Reply-To: <20A4FB08D632914F9C09B9F05CBDF258192D753286@EXMB02.eu.tieto.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH] TODO: set owner of Support HFP AG emulator task
+Date: Wed, 12 Jan 2011 16:41:30 +0100
+Message-ID: <1294846890-5745-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4923659031733727338==
+--===============2441870882139862753==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jussi,
+From: Frederic Danis <frederic.danis@linux.intel.com>
 
-> I don't particularly wish to use the retry counters. I was just thinking =
-that same
-> information ( PUK required ) could be deduced by counting the retries. =
+---
+ TODO |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/TODO b/TODO
+index 495d539..28a6c32 100644
+--- a/TODO
++++ b/TODO
+@@ -106,6 +106,7 @@ Modem Emulator
+ =
+
+   Complexity: C4
+   Priority: Medium
++  Owner: Fr=C3=A9d=C3=A9ric Danis <frederic.danis@linux.intel.com>
+ =
+
+ - Support extensions to HFP AG emulator.  Some carkits support additional
+   AT command extensions to the Bluetooth HFP AG standard.  Refer to CE4A
+@@ -116,6 +117,7 @@ Modem Emulator
+   Complexity: C4
+   Priority: Medium
+   Depends: HFP AG emulator
++  Owner: Fr=C3=A9d=C3=A9ric Dalleau <frederic.dalleau@linux.intel.com>
+ =
+
+ - Support HSP AG.  Similar to HFP AG emulator but implements the much redu=
+ced
+   Bluetooth HSP AG profile.
+-- =
+
+1.7.1
 
 
-To my knowledge you cannot.  Correct me if I'm wrong, but the retry
-counters are stored on the SIM and the SIM can be removed, and later
-re-inserted.  You would not know how the counters have been affected.
-
-Regards,
--Denis
-
---===============4923659031733727338==--
+--===============2441870882139862753==--
 
