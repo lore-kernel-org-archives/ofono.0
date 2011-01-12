@@ -1,45 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============1509253786836497485=="
+Content-Type: multipart/mixed; boundary="===============7836583778576465134=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/2] ctm: add ofono_ctm_get_modem interface
-Date: Tue, 11 Jan 2011 21:59:41 -0800
-Message-ID: <1294811981.3873.50.camel@aeonflux>
-In-Reply-To: <1294674900-10256-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: Re: [RFC 5/5] doc: Describe TextTelephony property
+Date: Tue, 11 Jan 2011 22:00:55 -0800
+Message-ID: <1294812055.3873.51.camel@aeonflux>
+In-Reply-To: <1294668092-27896-6-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1509253786836497485==
+--===============7836583778576465134==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jeevaka,
 
->  include/ctm.h |    2 ++
->  src/ctm.c     |    5 +++++
->  2 files changed, 7 insertions(+), 0 deletions(-)
+>  doc/voicecall-api.txt |    7 +++++++
+>  1 files changed, 7 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/include/ctm.h b/include/ctm.h
-> index 5305469..71e3d61 100644
-> --- a/include/ctm.h
-> +++ b/include/ctm.h
-> @@ -59,6 +59,8 @@ void ofono_ctm_remove(struct ofono_ctm *ctm);
->  void ofono_ctm_set_data(struct ofono_ctm *ctm, void *data);
->  void *ofono_ctm_get_data(struct ofono_ctm *ctm);
+> diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
+> index 4f38e6a..8df8fd2 100644
+> --- a/doc/voicecall-api.txt
+> +++ b/doc/voicecall-api.txt
+> @@ -100,6 +100,13 @@ Properties	string LineIdentification [readonly]
+>  			Notifications if a call becomes part or leaves a
+>  			multipart call are sent.
 >  =
 
-> +struct ofono_modem *ofono_ctm_get_modem(struct ofono_ctm *ctm);
+> +		boolean TextTelephony [readonly]
 > +
+> +			Contains the indication if the voice call is a
+> +			text telephony call or not.
+> +
+> +			Notifications if a call is a text telephony call.
+> +
+>  		string State [readonly]
+>  =
 
-in principle this is fine, but I wait for the result of the audio
-discussion to see if we really need this.
+>  			Contains the state of the current call.  The state
 
-Regards
+I am fine with actually.
+
+Denis, any objections?
+
+regards
 
 Marcel
 
 
 
---===============1509253786836497485==--
+--===============7836583778576465134==--
 
