@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6710905689441672747=="
+Content-Type: multipart/mixed; boundary="===============5121662084152734241=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC 1/4] network: __ofono_netreg_registration_status internal api
-Date: Wed, 12 Jan 2011 16:20:50 -0600
-Message-ID: <4D2E2942.6050906@gmail.com>
-In-Reply-To: <1294652623-17287-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: Re: [RFC 4/4] doc: Describe LaunchBrowser method
+Date: Wed, 12 Jan 2011 16:26:40 -0600
+Message-ID: <4D2E2AA0.3070707@gmail.com>
+In-Reply-To: <1294652623-17287-5-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6710905689441672747==
+--===============5121662084152734241==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,54 +17,38 @@ Hi Jeevaka,
 
 On 01/10/2011 03:43 AM, Jeevaka Badrappan wrote:
 > ---
->  src/network.c |    8 ++++++++
->  src/ofono.h   |    2 ++
->  2 files changed, 10 insertions(+), 0 deletions(-)
+>  doc/stk-api.txt |    8 ++++++++
+>  1 files changed, 8 insertions(+), 0 deletions(-)
 > =
 
-> diff --git a/src/network.c b/src/network.c
-> index eb0f797..640391d 100644
-> --- a/src/network.c
-> +++ b/src/network.c
-> @@ -1864,3 +1864,11 @@ void *ofono_netreg_get_data(struct ofono_netreg *n=
-etreg)
->  {
->  	return netreg->driver_data;
->  }
-> +
-> +int __ofono_netreg_registration_status(struct ofono_netreg *netreg)
-> +{
-> +	if (netreg =3D=3D NULL)
-> +		return NETWORK_REGISTRATION_STATUS_UNKNOWN;
-> +
-
-For internal API I suggest skipping the NULL check.  I'd rather see us
-crash early.
-
-> +	return netreg->status;
-> +}
-> diff --git a/src/ofono.h b/src/ofono.h
-> index cab70cd..91f737f 100644
-> --- a/src/ofono.h
-> +++ b/src/ofono.h
-> @@ -375,6 +375,8 @@ gboolean __ofono_netreg_remove_status_watch(struct of=
-ono_netreg *netreg,
->  void __ofono_netreg_set_base_station_name(struct ofono_netreg *netreg,
->  						const char *name);
+> diff --git a/doc/stk-api.txt b/doc/stk-api.txt
+> index 425ee23..347e39d 100644
+> --- a/doc/stk-api.txt
+> +++ b/doc/stk-api.txt
+> @@ -257,6 +257,14 @@ Methods		byte RequestSelection(string title, byte ic=
+on_id,
+>  			until the call is canceled using Cancel().  This
+>  			method should not return.
 >  =
 
-> +int __ofono_netreg_registration_status(struct ofono_netreg *netreg);
+> +		boolean LaunchBrowser() (string information, byte icon_id,
+> +						string url)
+> +
+> +			Asks the agent to request user to confirm launch
+> +			browser. If confirmed, then the agent should send
+> +			confirmation message to oFono and then should open
+> +			the launch browser with the given url.
 > +
 
-Please name this __ofono_netreg_get_registration_status
+Let us call this ConfirmLaunchBrowser
 
->  #include <ofono/history.h>
+>  		void Cancel() [noreply]
 >  =
 
->  void __ofono_history_probe_drivers(struct ofono_modem *modem);
+>  			Asks the agent to cancel any ongoing operation in
 
 Regards,
 -Denis
 
---===============6710905689441672747==--
+--===============5121662084152734241==--
 
