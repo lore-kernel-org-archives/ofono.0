@@ -1,53 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============0675322259430351719=="
+Content-Type: multipart/mixed; boundary="===============5277695023817875968=="
 MIME-Version: 1.0
 From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH 1/5 v3] Cell-info: CellInfo DBUS interface definition
-Date: Wed, 12 Jan 2011 14:05:15 +0200
-Message-ID: <1294833919-1510-2-git-send-email-antti.paila@nokia.com>
+Subject: [PATCH 4/5 v3] Cell-info: New files included in compilation
+Date: Wed, 12 Jan 2011 14:05:18 +0200
+Message-ID: <1294833919-1510-5-git-send-email-antti.paila@nokia.com>
 In-Reply-To: <1294833919-1510-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0675322259430351719==
+--===============5277695023817875968==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- include/dbus.h |    1 +
- src/ofono.h    |    1 +
- 2 files changed, 2 insertions(+), 0 deletions(-)
+ Makefile.am |    8 +++++---
+ 1 files changed, 5 insertions(+), 3 deletions(-)
 
-diff --git a/include/dbus.h b/include/dbus.h
-index 12768f6..f2e18bf 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -45,6 +45,7 @@ extern "C" {
- #define OFONO_MESSAGE_WAITING_INTERFACE "org.ofono.MessageWaiting"
- #define OFONO_NETWORK_REGISTRATION_INTERFACE "org.ofono.NetworkRegistratio=
-n"
- #define OFONO_NETWORK_OPERATOR_INTERFACE "org.ofono.NetworkOperator"
-+#define OFONO_CELL_INFO_INTERFACE "org.ofono.CellInfo"
- #define OFONO_PHONEBOOK_INTERFACE "org.ofono.Phonebook"
- #define OFONO_RADIO_SETTINGS_INTERFACE "org.ofono.RadioSettings"
- #define OFONO_AUDIO_SETTINGS_INTERFACE "org.ofono.AudioSettings"
-diff --git a/src/ofono.h b/src/ofono.h
-index cab70cd..820e3a3 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -127,6 +127,7 @@ enum ofono_atom_type {
- 	OFONO_ATOM_TYPE_NETTIME =3D 21,
- 	OFONO_ATOM_TYPE_CTM =3D 22,
- 	OFONO_ATOM_TYPE_CDMA_VOICECALL_MANAGER =3D 23,
-+	OFONO_ATOM_TYPE_CELL_INFO =3D 24,
- };
+diff --git a/Makefile.am b/Makefile.am
+index 4dec90a..096450f 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -15,7 +15,8 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
+e/history.h \
+ 			include/radio-settings.h include/stk.h \
+ 			include/audio-settings.h include/nettime.h \
+ 			include/ctm.h include/cdma-voicecall.h \
+-			include/cdma-sms.h
++			include/cdma-sms.h \
++			include/cell-info.h
  =
 
- enum ofono_atom_watch_condition {
+ nodist_include_HEADERS =3D include/version.h
+ =
+
+@@ -340,7 +341,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
+es) src/ofono.ver \
+ 			src/nettime.c src/stkagent.c src/stkagent.h \
+ 			src/simfs.c src/simfs.h src/audio-settings.c \
+ 			src/smsagent.c src/smsagent.h src/ctm.c \
+-			src/cdma-voicecall.c
++			src/cdma-voicecall.c src/cell-info.c
+ =
+
+ src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
+@ -ldl
+ =
+
+@@ -381,7 +382,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
+release-faq.txt \
+ 			doc/phonebook-api.txt doc/radio-settings-api.txt \
+ 			doc/sim-api.txt doc/stk-api.txt \
+ 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
+-			doc/calypso-modem.txt
++			doc/calypso-modem.txt \
++			doc/cell-info.txt
+ =
+
+ =
+
+ test_scripts =3D test/backtrace \
 -- =
 
 1.7.1
 
 
---===============0675322259430351719==--
+--===============5277695023817875968==--
 
