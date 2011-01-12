@@ -1,110 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============7167838434044543937=="
+Content-Type: multipart/mixed; boundary="===============6055244965864296415=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@intel.com>
-Subject: [PATCH 09/21] emulator: Add APIs to send GAtServer result
-Date: Wed, 12 Jan 2011 18:15:52 +0100
-Message-ID: <1294852564-1258-10-git-send-email-frederic.dalleau@intel.com>
+Subject: [PATCH 11/21] gprs: Make gprs_proto_to/from_string non-static
+Date: Wed, 12 Jan 2011 18:15:54 +0100
+Message-ID: <1294852564-1258-12-git-send-email-frederic.dalleau@intel.com>
 In-Reply-To: <1294852564-1258-1-git-send-email-frederic.dalleau@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7167838434044543937==
+--===============6055244965864296415==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
 
-Defines APIs to send final/intermediate/unsolicited result to DUN
-client.
- Please enter the commit message for your changes. Lines starting
+So DUN server could share gprs_proto_to_string and
+gprs_proto_from_string.
 ---
- include/emulator.h |    2 ++
- src/emulator.c     |   28 ++++++++++++++++++++++++++++
- src/ofono.h        |   15 +++++++++++++++
- 3 files changed, 45 insertions(+), 0 deletions(-)
+ include/gprs-context.h |    4 ++++
+ src/gprs.c             |    4 ++--
+ 2 files changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/include/emulator.h b/include/emulator.h
-index 99ae218..0d5568c 100644
---- a/include/emulator.h
-+++ b/include/emulator.h
-@@ -36,6 +36,8 @@ enum ofono_emulator_status {
- 	OFONO_EMULATOR_STATUS_DESTROY,
- };
+diff --git a/include/gprs-context.h b/include/gprs-context.h
+index c29c0dc..19c1b98 100644
+--- a/include/gprs-context.h
++++ b/include/gprs-context.h
+@@ -95,6 +95,10 @@ struct ofono_modem *ofono_gprs_context_get_modem(struct =
+ofono_gprs_context *gc);
+ void ofono_gprs_context_set_type(struct ofono_gprs_context *gc,
+ 					enum ofono_gprs_context_type type);
  =
 
-+enum _GAtServerResult;
++gboolean gprs_proto_from_string(const char *str, enum ofono_gprs_proto *pr=
+oto);
 +
- struct ofono_emulator_driver {
- 	const char *name;
- 	enum ofono_atom_type type;
-diff --git a/src/emulator.c b/src/emulator.c
-index c68dbf8..455af11 100644
---- a/src/emulator.c
-+++ b/src/emulator.c
-@@ -82,6 +82,34 @@ static void ofono_emulator_release_id(int id)
- 	ofono_emulator_ids &=3D ~(0x1 << id);
++const char *gprs_proto_to_string(enum ofono_gprs_proto proto);
++
+ #ifdef __cplusplus
+ }
+ #endif
+diff --git a/src/gprs.c b/src/gprs.c
+index c7793ea..9e8fae3 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -184,7 +184,7 @@ static gboolean gprs_context_string_to_type(const char =
+*str,
+ 	return FALSE;
  }
  =
 
-+void ofono_emulator_send_final(struct ofono_emulator *e, GAtServerResult r=
-esult)
-+{
-+	g_at_server_send_final(e->server, result);
-+}
-+
-+void ofono_emulator_send_ext_final(struct ofono_emulator *e, const char *r=
-esult)
-+{
-+	g_at_server_send_ext_final(e->server, result);
-+}
-+
-+void ofono_emulator_send_intermediate(struct ofono_emulator *e,
-+						const char *result)
-+{
-+	g_at_server_send_intermediate(e->server, result);
-+}
-+
-+void ofono_emulator_send_unsolicited(struct ofono_emulator *e,
-+						const char *result)
-+{
-+	g_at_server_send_unsolicited(e->server, result);
-+}
-+
-+void ofono_emulator_send_info(struct ofono_emulator *e, const char *line,
-+						gboolean last)
-+{
-+	g_at_server_send_info(e->server, line, last);
-+}
-+
- static void notify_status_watches(struct ofono_emulator *e, void *data)
+-static const char *gprs_proto_to_string(enum ofono_gprs_proto proto)
++const char *gprs_proto_to_string(enum ofono_gprs_proto proto)
  {
- 	struct ofono_watchlist_item *item;
-diff --git a/src/ofono.h b/src/ofono.h
-index 247152b..4c11e1f 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -434,3 +434,18 @@ unsigned int __ofono_emulator_add_status_watch(struct =
-ofono_emulator *e,
+ 	switch (proto) {
+ 	case OFONO_GPRS_PROTO_IP:
+@@ -196,7 +196,7 @@ static const char *gprs_proto_to_string(enum ofono_gprs=
+_proto proto)
+ 	return NULL;
+ }
  =
 
- gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
- 						unsigned int id);
-+
-+void ofono_emulator_send_final(struct ofono_emulator *e,
-+					enum _GAtServerResult result);
-+
-+void ofono_emulator_send_ext_final(struct ofono_emulator *e,
-+					const char *result);
-+
-+void ofono_emulator_send_intermediate(struct ofono_emulator *e,
-+					const char *result);
-+
-+void ofono_emulator_send_unsolicited(struct ofono_emulator *e,
-+					const char *result);
-+
-+void ofono_emulator_send_info(struct ofono_emulator *e, const char *line,
-+					gboolean last);
+-static gboolean gprs_proto_from_string(const char *str,
++gboolean gprs_proto_from_string(const char *str,
+ 					enum ofono_gprs_proto *proto)
+ {
+ 	if (g_str_equal(str, "ip")) {
 -- =
 
 1.7.1
@@ -122,5 +83,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============7167838434044543937==--
+--===============6055244965864296415==--
 
