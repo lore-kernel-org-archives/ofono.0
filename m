@@ -1,57 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============8291330468219987535=="
+Content-Type: multipart/mixed; boundary="===============2062948078179488575=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 1/4] Added GPRS context provisioning driver API sources
-Date: Wed, 12 Jan 2011 10:43:30 -0600
-Message-ID: <4D2DDA32.8090907@gmail.com>
-In-Reply-To: <1294814638.3873.69.camel@aeonflux>
+Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
+Date: Wed, 12 Jan 2011 10:46:46 -0600
+Message-ID: <4D2DDAF6.5050600@gmail.com>
+In-Reply-To: <1294818062.24900.21.camel@jsaunama-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8291330468219987535==
+--===============2062948078179488575==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Jukka,
 
->> +
->> +/*
->> + * Callback from provisioning plugin.
->> + * settings: list of struct ofono_gprs_provisioning_data
->> + *
->> + * It is responsibility of callback function to free settings-list
->> + * settings-list elements must be freed with ofono_gprs_provisioning_da=
-ta_free()
->> + */
->> +typedef void (*ofono_gprs_provision_cb_t)(GSList *settings, void *userd=
-ata);
->> +
->> +struct ofono_gprs_provision_driver {
->> +	const char *name;
->> +	int priority;
->> +	void (*get_settings) (struct ofono_modem *modem,
->> +				ofono_gprs_provision_cb_t cb,
->> +				void *userdata);
->> +};
+On 01/12/2011 01:41 AM, Jukka Saunamaki wrote:
+> Hello
 > =
 
-> So here is something we need to talk about. The nettime plugin
-> infrastructure using a "pseudo" atom. So do we wanna do the same here or
-> do we wanna change the nettime atom to something simple like this.
+> On Tue, 2011-01-11 at 22:48 -0800, ext Marcel Holtmann wrote:
+>>> +	if (sim !=3D NULL) {
+>>> +		ofono_sim_read(sim, SIM_EFSPN_FILEID,
+>>> +				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+>>> +				sim_spn_read_cb, req);
+>>> +		return;
+>>> +	}
+>>
+>> Should this not be provided somehow by the SIM atom?
+>>
+>> Denis, any idea why we are not keeping this information available?
+>>
 > =
 
-> I like to have consistency here. Aki, Denis, thoughts?
+> I would guess there was no need for it, since netreg was the only user
+> for EFSPN data.
+> =
+
+> I though of patching the SIM atom to read this during some phase of SIM
+> initialization, but was not sure exactly when, and what kind of
+> interface (syncronous, asyncronous?) to provide.
 > =
 
 
-The nettime and history plugins can create their own D-Bus interfaces.
-Hence the need for probe and remove.  Since the provisioning driver
-might want to pre-parse its database, I believe it should follow the
-same approach...
+You're correct that netreg is the only consumer.  There was no need for
+anyone else to see this information.  However, this begs the question,
+why do you need the SPN data?
 
 Regards,
 -Denis
 
---===============8291330468219987535==--
+--===============2062948078179488575==--
 
