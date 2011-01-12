@@ -1,56 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============2658353209453707982=="
+Content-Type: multipart/mixed; boundary="===============5823969672754077242=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [RFC 3/5] voicecall: Add ofono_voicecall_tty_notify api
-Date: Wed, 12 Jan 2011 10:27:24 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802D59DA8@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <1294812214.3873.52.camel@aeonflux>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: [PATCH] TODO: Add task for main.conf
+Date: Wed, 12 Jan 2011 10:40:21 +0200
+Message-ID: <1294821621-24363-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2658353209453707982==
+--===============5823969672754077242==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+---
+ TODO |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-ofono-bounces(a)ofono.org wrote:
-> Hi Jeevaka,
-> =
+diff --git a/TODO b/TODO
+index 757c587..4faee16 100644
+--- a/TODO
++++ b/TODO
+@@ -396,6 +396,14 @@ Miscellaneous
+   Complexity: C2
+   Owner: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+ =
 
->>  include/voicecall.h |    2 ++
->>  src/voicecall.c     |   12 ++++++++++++
->>  2 files changed, 14 insertions(+), 0 deletions(-)
->> =
++- Add support for main.conf.  This task will add support for general
++  as well as per-atom configuration options that are read and parsed
++  at startup from a configuration file under /etc/ofono.
++
++  Priority: Medium
++  Complexity: C1
++  Owner: Aki Niemi <aki.niemi@nokia.com>
++
+ CDMA Voicecall
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ =
 
->> diff --git a/include/voicecall.h b/include/voicecall.h index
->> e37d73b..6f1bdd2 100644 --- a/include/voicecall.h
->> +++ b/include/voicecall.h
->> @@ -144,6 +144,8 @@ void ofono_voicecall_notify(struct
->> ofono_voicecall *vc,  void ofono_voicecall_disconnected(struct
->>  				ofono_voicecall *vc, int id, enum
-ofono_disconnect_reason
->>  				reason, const struct ofono_error
-*error);
->> +void ofono_voicecall_tty_notify(struct ofono_voicecall *vc,
->> +				const struct ofono_call *call);
-> =
+-- =
 
-> what is the advantage of having this separate and not part of
-> the regular voicecall_notify and just extending struct
-> ofono_call with a field for TTY?
-> =
+1.7.1
 
 
-Main reason for separate notification function is to avoid going through
-all
-the cases handled inside voicecall_notify. TTY field in ofono_call is
-basically
-for the GetProperties.
-
-Regards,
-Jeevaka =20
-
---===============2658353209453707982==--
+--===============5823969672754077242==--
 
