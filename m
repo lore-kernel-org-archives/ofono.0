@@ -1,53 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============8990870638794681251=="
+Content-Type: multipart/mixed; boundary="===============4502213657935861771=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: Update interface with variable port numbers?
-Date: Wed, 12 Jan 2011 07:57:51 -0800
-Message-ID: <1294847871.3873.76.camel@aeonflux>
-In-Reply-To: <4D2D5F61.5040404@stericsson.com>
+From: Gustavo F. Padovan <padovan@profusion.mobi>
+Subject: Re: [PATCH] TODO: set owner of Support HFP AG emulator task
+Date: Wed, 12 Jan 2011 14:02:02 -0200
+Message-ID: <20110112160202.GA2442@vigoh>
+In-Reply-To: <1294846890-5745-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8990870638794681251==
+--===============4502213657935861771==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jessica,
+Hi Fr=C3=A9d=C3=A9ric,
 
-> we could probably use an update in the push_notification_register_agent
-> in plugins/push-notification.c so that it would be possible to specify =
+* Fr=C3=A9d=C3=A9ric Danis <frederic.danis@linux.intel.com> [2011-01-12 1=
+6:41:30 +0100]:
 
-> port numbers instead of them being hardcoded with
+> From: Frederic Danis <frederic.danis@linux.intel.com>
 > =
 
-> #define WAP_PUSH_SRC_PORT 9200
-> #define WAP_PUSH_DST_PORT 2948
+> ---
+>  TODO |    2 ++
+>  1 files changed, 2 insertions(+), 0 deletions(-)
 > =
 
-> We would like to be able to use the
-> oma-ilp		7276/tcp    OMA Internal Location Protocol
-> =
+> diff --git a/TODO b/TODO
+> index 495d539..28a6c32 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -106,6 +106,7 @@ Modem Emulator
+>  =
 
-> specified on
-> http://www.iana.org/assignments/port-numbers
-> =
+>    Complexity: C4
+>    Priority: Medium
+> +  Owner: Fr??d??ric Danis <frederic.danis@linux.intel.com>
 
-> This could also be used for other WAP based services.
-> =
+Is it just for me, or do we have a encoding problem here?
 
-> Is this something that you would agree would be useful and we could add =
+-- =
 
-> to the TODO list?
+Gustavo F. Padovan
+http://profusion.mobi
 
-what is the content of these messages? For WAP Push it is clearly
-defined. Are these also WAP Push PDUs?
-
-Regards
-
-Marcel
-
-
-
---===============8990870638794681251==--
+--===============4502213657935861771==--
 
