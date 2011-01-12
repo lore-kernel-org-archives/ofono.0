@@ -1,55 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============8743115758451966001=="
+Content-Type: multipart/mixed; boundary="===============4222109678414616660=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 05/10] Update documentation for GPRS technology
-Date: Wed, 12 Jan 2011 08:32:22 -0800
-Message-ID: <1294849942.3873.92.camel@aeonflux>
-In-Reply-To: <201101111057.47545.remi.denis-courmont@nokia.com>
+Subject: Re: [RFC PATCH 2/4] gprs: add automatic context settings provisioning
+Date: Wed, 12 Jan 2011 08:37:56 -0800
+Message-ID: <1294850276.3873.95.camel@aeonflux>
+In-Reply-To: <1294817213.24900.10.camel@jsaunama-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8743115758451966001==
+--===============4222109678414616660==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi Jukka,
 
-> > > +		string Technology [readonly, optional]
+> > > -void ofono_gprs_register(struct ofono_gprs *gprs)
+> > > +static void ofono_gprs_finish_register(struct ofono_gprs *gprs)
+> > >  {
+> > >  	DBusConnection *conn =3D ofono_dbus_get_connection();
+> > >  	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
+> > >  	const char *path =3D __ofono_atom_get_path(gprs->atom);
+> > >  	struct ofono_atom *netreg_atom;
+> > > -	struct ofono_atom *sim_atom;
 > > > +
-> > > +			Contains the data technology as reported by the
-> > > +			GPRS service registration (if known).
-> > > +
-> > > +			Possible values are the same as for the Technology
-> > > +			property the NetworkRegistration object.
-> > > +
+> > > +	if (gprs->contexts =3D=3D NULL) /* Automatic provisioning failed */
+> > > +		add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
 > > =
 
-> > we used to have this value and then we removed it since it ended up
-> > being not useful. So why do you wanna bring it back?
+> > so I see a potential race here between the UI trying to provision and us
+> > trying to provision.
+> > =
+
+> > We don't wanna end up with duplicated contexts here. Any ideas on how we
+> > could prevent that nicely? Or should we just fail any attempts to create
+> > new contexts if provisioning is still ongoing?
 > =
 
-> The network registration only ever tells 2G/3G/4G. We need something to t=
-ell =
+> Code continues there with:
+> 	if (!g_dbus_register_interface(conn, path,
+> 					OFONO_CONNECTION_MANAGER_INTERFACE,
+> 					manager_methods, manager_signals, NULL,
+> 					gprs, NULL)) {
+> 		ofono_error("Could not create %s interface",
+> 				OFONO_CONNECTION_MANAGER_INTERFACE);
+> =
 
-> about EDGE or HS*PA. We cannot rely (only) on the CPSB bearer as it is on=
-ly =
+> 		return;
+> 	}
+> =
 
-> defined when there is an active context. Technology is set whenever we ar=
-e =
+> 	ofono_modem_add_interface(modem,
+> 				OFONO_CONNECTION_MANAGER_INTERFACE);
+> =
 
-> registered to the GPRS service.
+> Patch rearranges the initial context creation and interface
+> registration, so there is no DBUS interface for UI to use until
+> provisioning is ready. Or have misunderstood something?
 
-as I said, we took the Technology field from the Connection Manager
-since it was just duplication.
+it could we well that I got lost in the re-arranged code ;)
 
-So why are we not feeding the CPSB bearer information into the Network
-Registration and have it just update from GSM -> EDGE and UMTS -> HSPA
-accordingly.
-
-I think that the UI should only require to monitor one location for this
-information to display them. And if it jumps from 3.5G to 3G and back
-depending if a GPRS context is active or not. That is fine with me.
+If we wait with the Connection Manager interface registration until we
+ran through all provision drivers, that seems fine. So no concerns from
+my part then on the potential race conditions with the UI.
 
 Regards
 
@@ -57,5 +70,5 @@ Marcel
 
 
 
---===============8743115758451966001==--
+--===============4222109678414616660==--
 
