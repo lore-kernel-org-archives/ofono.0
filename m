@@ -1,154 +1,203 @@
-Content-Type: multipart/mixed; boundary="===============8208661485649119019=="
+Content-Type: multipart/mixed; boundary="===============5119648273601475932=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH v3] ifx: Adding modem selftest for Infineon modem
-Date: Tue, 11 Jan 2011 22:27:33 -0800
-Message-ID: <1294813653.3873.62.camel@aeonflux>
-In-Reply-To: <97D5E1BB8FC13D4EA3B34BAE8E6898C9015A52CE50@orsmsx508.amr.corp.intel.com>
+Subject: Re: [RFC PATCH 1/4] Added GPRS context provisioning driver API sources
+Date: Tue, 11 Jan 2011 22:43:58 -0800
+Message-ID: <1294814638.3873.69.camel@aeonflux>
+In-Reply-To: <1294665072-13630-2-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8208661485649119019==
+--===============5119648273601475932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Waldo,
+Hi Jukka,
 
-> > I asked this 3 times now, where is this magic value of 10 seconds coming
-> > from. What is the average expected execution time of each test?
-> =
+> +#ifndef __OFONO_GPRS_PROVISION_H
+> +#define __OFONO_GPRS_PROVISION_H
+> +
+> +#ifdef __cplusplus
+> +extern "C" {
+> +#endif
+> +
+> +#include "gprs-context.h"
+> +
+> +struct ofono_gprs_provisioning_data {
+> +	enum ofono_gprs_context_type type;
+> +	enum ofono_gprs_proto proto;
+> +	gchar *name;
+> +	gchar *apn;
+> +	gchar *username;
+> +	gchar *password;
+> +	gchar *message_proxy;
+> +	gchar *message_center;
+> +};
 
-> Typical response times are much less than 0.5 sec. 10 seconds is consider=
-ed
-> much longer than any normal response time. =
+don't bother with gchar *. Just use char * here. The gchar is
+essentially bad idea. We only use it a few rare occasions or when it got
+missed in a review.
 
+> +
+> +/*
+> + * Callback from provisioning plugin.
+> + * settings: list of struct ofono_gprs_provisioning_data
+> + *
+> + * It is responsibility of callback function to free settings-list
+> + * settings-list elements must be freed with ofono_gprs_provisioning_dat=
+a_free()
+> + */
+> +typedef void (*ofono_gprs_provision_cb_t)(GSList *settings, void *userda=
+ta);
+> +
+> +struct ofono_gprs_provision_driver {
+> +	const char *name;
+> +	int priority;
+> +	void (*get_settings) (struct ofono_modem *modem,
+> +				ofono_gprs_provision_cb_t cb,
+> +				void *userdata);
+> +};
 
-that was the answer what I was looking for. Thanks.
+So here is something we need to talk about. The nettime plugin
+infrastructure using a "pseudo" atom. So do we wanna do the same here or
+do we wanna change the nettime atom to something simple like this.
 
-> > > +static struct {
-> > > +	char *test_desc;
-> > > +	char *at_cmd;
-> > > +} const mst[] =3D {
-> > > +	{ "AT Command Test", "ATE0 +CMEE=3D1" }, /* set echo & error report=
-ing */
-> >
-> > I really don't like to put ATE0 into this. It is not a selftest or test
-> > command.
-> =
+I like to have consistency here. Aki, Denis, thoughts?
 
-> It acts as a selftest command because if the modem fails to come out of r=
-eset
-> and/or start the AT command parser you will never get an OK back on it. I=
-n the =
+> +struct gprs_provisioning_request {
+> +	GSList *current_driver;
+> +	struct ofono_modem *modem;
+> +	ofono_gprs_provision_cb_t cb;
+> +	void *userdata;
 
-> error reporting we would like to be able to distinguish between the AT co=
-mmand
-> parser not working at all and any subsequent test command failing.
+The sort of general style is to call this user_data.
 
-since we don't report any of these errors other than the logs this not
-really helping you. I'd rather have the failing AT command in the log
-than some text reference that you have to track down with the source
-code to figure out what it means.
+> +};
+> +
+> +static GSList *gprs_provision_drivers =3D NULL;
+> +
+> +
 
-> > > +	{ "RTC GTI Test", "at(a)rtc:rtc_gti_test_verify_32khz()" },
-> > > +	{ "Device Version Test", "at(a)vers:device_version_id()" },
-> > > +	{ NULL, NULL }
-> > > +};
-> >
-> > And I like to still see an answer why we have to trigger selftests here.
-> =
+We also normally don't do double empty lines.
 
-> To make sure the modem is properly functioning.
-> =
+> +void ofono_gprs_provisioning_data_free(struct ofono_gprs_provisioning_da=
+ta *data)
+> +{
+> +	if (data =3D=3D NULL)
+> +		return;
+> +
+> +	g_free(data->name);
+> +	g_free(data->apn);
+> +	g_free(data->username);
+> +	g_free(data->password);
+> +	g_free(data->message_proxy);
+> +	g_free(data->message_center);
+> +	g_free(data);
+> +}
+> +
+> +
+> +static void settings_cb(GSList *settings, void *userdata)
+> +{
 
-> > Can we just not have one AT command to check the modem health and be
-> > done with it?
-> =
+Same here, please use user_data.
 
-> The IFX modem we are targetting implements this with two AT commands.
+> +	GSList *d;
+> +	struct gprs_provisioning_request *req =3D userdata;
 
-And that could have been changed to one command just giving a proper
-result status on the modem health. That would have made sense to me.
-Instead we are using some random commands to do this.
+And as another general rule, the variable that have an assignment like
+the user_data come first.
 
-> > Another question that I did ask is to see some sample results from these
-> > test cases in failure and success case.
-> =
+> +
+> +	if (settings !=3D NULL)
+> +		DBG("Provisioning plugin returned settings for %d contexts",
+> +			g_slist_length(settings));
+> +	else
+> +		DBG("Provisioning plugin returned no settings");
+> +
+> +	d =3D req->current_driver->next;
+> +	if (settings =3D=3D NULL && d !=3D NULL) {
+> +		/* No success from this driver, try next */
+> +		const struct ofono_gprs_provision_driver *driver =3D d->data;
+> +		req->current_driver =3D d;
+> +		DBG("Calling provisioning plugin '%s'", driver->name);
+> +		driver->get_settings(req->modem, settings_cb, req);
+> +		return;
+> +	}
+> +
+> +	req->cb(settings, req->userdata);
+> +	g_free(req);
+> +}
+> +
+> +
 
-> Robertino?
-> =
+Same here for the double empty lines. Please fix them all.
 
-> > Do we actually care about test
-> > description here at all or can we just drop it?
-> =
+> +void ofono_gprs_provision_get_settings(struct ofono_modem *modem,
+> +					ofono_gprs_provision_cb_t cb,
+> +					void *userdata)
+> +{
+> +	struct gprs_provisioning_request *req;
+> +	const struct ofono_gprs_provision_driver *driver;
+> +
+> +	if (gprs_provision_drivers =3D=3D 0)
 
-> If you prefer cryptic messages then the AT command itself can act as the =
-description.
-> Is that preferred?
+This needs to be a =3D=3D NULL.
 
-It is all cryptic at this point. As I said, a proper AT command to get
-the result of the selftest sequence with proper result, that would be
-not cryptic. This whole effort in trying to do selftest this way is not
-how I would have this done.
+> +		goto error;
+> +
+> +	req =3D g_try_new0(struct gprs_provisioning_request, 1);
+> +	if (req =3D=3D NULL)
+> +		goto error;
+> +
+> +	req->modem =3D modem;
+> +	req->cb =3D cb;
+> +	req->userdata =3D userdata;
+> +	req->current_driver =3D gprs_provision_drivers;
+> +
+> +	driver =3D gprs_provision_drivers->data;
+> +	DBG("Calling provisioning plugin '%s'", driver->name);
 
-> > This is rather pointless. We are not starting a timeout for every single
-> > command. The mux_timeout handling was designed for spawning the overall
-> > setup process and not just one command.
-> =
+Normally we put empty lines on top and below the DBG statement. Just to
+make the stand out a bit.
 
-> The design documentation wasn't clear on that point. The name mux_timeout
-> suggested that the timeout only applied to the mux, maybe it should be re=
-named to
-> setup_timeout to better describe the design intention?
-> =
+Also in this case we might can remove some of the debug statements once
+the code has been tested.
 
-> Regardless, having a timeout for each command is conceptually cleaner as =
-you will
-> know for sure which command is responsible for exceeding the timeout. =
-
-> =
-
-> Does oFono require the more ambiguous solution with a single timeout?
-
-oFono does not require this, but it is also not helping you. If I read
-your response right, then the selftest execution time is less than a
-second anyway and thus it will return with either an error or with OK.
-So the timeout comes from a modem not responding and that makes really
-no difference with command causes this.
-
-That's why I asked where these magic timeout values came from. I needed
-to understand what are possible implications.
-
-So with this in mind, just using the global mux setup timeout like we do
-right now is fine. Individual timeouts are not buying you anything
-additional.
-
-> > I am fine with using the established mutliplexer timeout handling here,
-> > but essentially this is not a SELF_TESTS timeout. This is overall setup
-> > timeout. So can we please get the naming right here. I really dislike
-> > code where function names and constants are not named properly. This
-> > causes major confusion later on.
-> =
-
-> In the patch it is the timeout for the first self test command.
-> I understand you are thinking about a potential future patch in which it =
-would be
-> used as the overall setup timeout, I agree that in that case the name sho=
-uld be
-> changed accordingly as well, yes.
-
-Yep, that is how I want this done. It is way cleaner and since we don't
-get any useful information out of the selftest anyway, that is good
-enough.
-
-Robertino, also the array of commands is rather pointless here. You can
-just use g_at_chat_send in a row and have the callbacks you cancel all
-remaining commands. That way the code becomes even more cleaner and we
-don't have to bother with maintaining a command array.
-
-Leave the ATE0.. command as it is. The only way that one fails if we run
-into a timeout. And that works fine right now. So that is good enough.
+> +	driver->get_settings(modem, settings_cb, req);
+> +	return;
+> +
+> +error:
+> +	cb(NULL, userdata);
+> +}
+> +
+> +static gint compare_priority(gconstpointer a, gconstpointer b)
+> +{
+> +	const struct ofono_gprs_provision_driver *plugin1 =3D a;
+> +	const struct ofono_gprs_provision_driver *plugin2 =3D b;
+> +
+> +	return plugin2->priority - plugin1->priority;
+> +}
+> +
+> +int ofono_gprs_provision_driver_register(const struct ofono_gprs_provisi=
+on_driver *driver)
+> +{
+> +	DBG("driver: %p name: %s", driver, driver->name);
+> +
+> +	gprs_provision_drivers =3D g_slist_insert_sorted(gprs_provision_drivers,
+> +							(void *) driver,
+> +							compare_priority);
+> +	return 0;
+> +}
+> +
+> +void ofono_gprs_provision_driver_unregister(const struct ofono_gprs_prov=
+ision_driver *driver)
+> +{
+> +	DBG("driver: %p name: %s", driver, driver->name);
+> +
+> +	gprs_provision_drivers =3D g_slist_remove(gprs_provision_drivers, drive=
+r);
+> +}
 
 Regards
 
@@ -156,5 +205,5 @@ Marcel
 
 
 
---===============8208661485649119019==--
+--===============5119648273601475932==--
 
