@@ -1,62 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============7432495336981652932=="
+Content-Type: multipart/mixed; boundary="===============4174542287846733638=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
 Subject: Re: [RFC PATCH 2/4] gprs: add automatic context settings provisioning
-Date: Tue, 11 Jan 2011 22:51:17 -0800
-Message-ID: <1294815077.3873.75.camel@aeonflux>
-In-Reply-To: <1294665072-13630-3-git-send-email-jukka.saunamaki@nokia.com>
+Date: Wed, 12 Jan 2011 09:26:53 +0200
+Message-ID: <1294817213.24900.10.camel@jsaunama-desktop>
+In-Reply-To: <1294815077.3873.75.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7432495336981652932==
+--===============4174542287846733638==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+Hello Marcel,
 
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 58166f8..7d188a3 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -43,6 +43,7 @@
->  #include "common.h"
->  #include "storage.h"
->  #include "idmap.h"
-> +#include "gprs-provision.h"
->  =
+On Tue, 2011-01-11 at 22:51 -0800, ext Marcel Holtmann wrote:
+> >  =
 
->  #define GPRS_FLAG_ATTACHING 0x1
->  #define GPRS_FLAG_RECHECK 0x2
-> @@ -2454,13 +2455,15 @@ remove:
->  		storage_sync(imsi, SETTINGS_STORE, gprs->settings);
->  }
->  =
+> > -void ofono_gprs_register(struct ofono_gprs *gprs)
+> > +static void ofono_gprs_finish_register(struct ofono_gprs *gprs)
+> >  {
+> >  	DBusConnection *conn =3D ofono_dbus_get_connection();
+> >  	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
+> >  	const char *path =3D __ofono_atom_get_path(gprs->atom);
+> >  	struct ofono_atom *netreg_atom;
+> > -	struct ofono_atom *sim_atom;
+> > +
+> > +	if (gprs->contexts =3D=3D NULL) /* Automatic provisioning failed */
+> > +		add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
+> =
 
-> -void ofono_gprs_register(struct ofono_gprs *gprs)
-> +static void ofono_gprs_finish_register(struct ofono_gprs *gprs)
->  {
->  	DBusConnection *conn =3D ofono_dbus_get_connection();
->  	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
->  	const char *path =3D __ofono_atom_get_path(gprs->atom);
->  	struct ofono_atom *netreg_atom;
-> -	struct ofono_atom *sim_atom;
-> +
-> +	if (gprs->contexts =3D=3D NULL) /* Automatic provisioning failed */
-> +		add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
+> so I see a potential race here between the UI trying to provision and us
+> trying to provision.
+> =
 
-so I see a potential race here between the UI trying to provision and us
-trying to provision.
+> We don't wanna end up with duplicated contexts here. Any ideas on how we
+> could prevent that nicely? Or should we just fail any attempts to create
+> new contexts if provisioning is still ongoing?
 
-We don't wanna end up with duplicated contexts here. Any ideas on how we
-could prevent that nicely? Or should we just fail any attempts to create
-new contexts if provisioning is still ongoing?
+Code continues there with:
+	if (!g_dbus_register_interface(conn, path,
+					OFONO_CONNECTION_MANAGER_INTERFACE,
+					manager_methods, manager_signals, NULL,
+					gprs, NULL)) {
+		ofono_error("Could not create %s interface",
+				OFONO_CONNECTION_MANAGER_INTERFACE);
 
-Regards
+		return;
+	}
 
-Marcel
+	ofono_modem_add_interface(modem,
+				OFONO_CONNECTION_MANAGER_INTERFACE);
+
+Patch rearranges the initial context creation and interface
+registration, so there is no DBUS interface for UI to use until
+provisioning is ready. Or have misunderstood something?
+
+--Jukka
 
 
 
---===============7432495336981652932==--
+--===============4174542287846733638==--
 
