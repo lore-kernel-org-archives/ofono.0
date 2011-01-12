@@ -1,46 +1,113 @@
-Content-Type: multipart/mixed; boundary="===============5823969672754077242=="
+Content-Type: multipart/mixed; boundary="===============8846595290488714728=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH] TODO: Add task for main.conf
-Date: Wed, 12 Jan 2011 10:40:21 +0200
-Message-ID: <1294821621-24363-1-git-send-email-aki.niemi@nokia.com>
+From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
+Subject: [PATCH] test: add set-call-forwarding
+Date: Wed, 12 Jan 2011 11:14:39 +0200
+Message-ID: <1294823679-2530-1-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5823969672754077242==
+--===============8846595290488714728==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- TODO |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+ Makefile.am              |    3 +-
+ test/set-call-forwarding |   64 ++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 66 insertions(+), 1 deletions(-)
+ create mode 100755 test/set-call-forwarding
 
-diff --git a/TODO b/TODO
-index 757c587..4faee16 100644
---- a/TODO
-+++ b/TODO
-@@ -396,6 +396,14 @@ Miscellaneous
-   Complexity: C2
-   Owner: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
+diff --git a/Makefile.am b/Makefile.am
+index 4dec90a..ead154d 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -449,7 +449,8 @@ test_scripts =3D test/backtrace \
+ 		test/set-tty \
+ 		test/set-gsm-band \
+ 		test/set-umts-band \
+-		test/lockdown-modem
++		test/lockdown-modem \
++		test/set-call-forwarding
  =
 
-+- Add support for main.conf.  This task will add support for general
-+  as well as per-atom configuration options that are read and parsed
-+  at startup from a configuration file under /etc/ofono.
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/test/set-call-forwarding b/test/set-call-forwarding
+new file mode 100755
+index 0000000..159a27c
+--- /dev/null
++++ b/test/set-call-forwarding
+@@ -0,0 +1,64 @@
++#!/usr/bin/python
 +
-+  Priority: Medium
-+  Complexity: C1
-+  Owner: Aki Niemi <aki.niemi@nokia.com>
++import sys
++import gobject
 +
- CDMA Voicecall
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
-
++import dbus
++import dbus.mainloop.glib
++
++def property_changed(property, value):
++	if len(value.__str__()) > 0:
++		print "CF property %s changed to %s" % (property, value)
++	else:
++		print "CF property %s changed to disabled" % (property)
++
++	if canexit:
++		mainloop.quit();
++
++if __name__ =3D=3D "__main__":
++	if len(sys.argv) < 3:
++		print "Usage: %s <property> <value>" % (sys.argv[0])
++		print "Properties can be: VoiceUnconditional, VoiceBusy,"
++		print "	VoiceNoReply, VoiceNoReplyTimeout, VoiceNotReachable"
++		print "Value: number to or the timeout"
++		sys.exit(1)
++
++	property =3D sys.argv[1]
++	value =3D sys.argv[2]
++
++	canexit =3D False
++
++	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
++
++	bus =3D dbus.SystemBus()
++
++	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
++							'org.ofono.Manager')
++
++	modems =3D manager.GetModems()
++
++	cf =3D dbus.Interface(bus.get_object('org.ofono', modems[0][0]),
++				'org.ofono.CallForwarding')
++
++	cf.connect_to_signal("PropertyChanged", property_changed)
++
++	if (property =3D=3D "VoiceNoReplyTimeout"):
++		try:
++			cf.SetProperty(property, dbus.UInt16(value),
++							timeout =3D 100)
++		except dbus.DBusException, e:
++			print "Unable SetProperty", e
++			sys.exit(1);
++	else:
++		try:
++			cf.SetProperty(property, value, timeout =3D 100)
++		except dbus.DBusException, e:
++			print "Unable SetProperty", e
++			sys.exit(1);
++
++	print "Set Property successfull"
++
++	canexit =3D True
++
++	mainloop =3D gobject.MainLoop()
++	mainloop.run()
 -- =
 
-1.7.1
+1.7.0.4
 
 
---===============5823969672754077242==--
+--===============8846595290488714728==--
 
