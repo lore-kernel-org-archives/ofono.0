@@ -1,156 +1,151 @@
-Content-Type: multipart/mixed; boundary="===============0154764013309665916=="
+Content-Type: multipart/mixed; boundary="===============7275961215702276992=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 02/16] core: M15 coding style fix
-Date: Wed, 12 Jan 2011 12:52:04 +0200
-Message-ID: <1294829538-3893-3-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 06/16] huaweimodem: M15 coding style fix
+Date: Wed, 12 Jan 2011 12:52:08 +0200
+Message-ID: <1294829538-3893-7-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1294829538-3893-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0154764013309665916==
+--===============7275961215702276992==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/dbus.c    |    2 +-
- src/main.c    |    2 +-
- src/manager.c |    4 ++--
- src/modem.c   |    6 +++---
- src/ofono.h   |   12 ++++++------
- 5 files changed, 13 insertions(+), 13 deletions(-)
+ drivers/huaweimodem/audio-settings.c |    4 ++--
+ drivers/huaweimodem/gprs-context.c   |    4 ++--
+ drivers/huaweimodem/huaweimodem.h    |   16 ++++++++--------
+ drivers/huaweimodem/radio-settings.c |    4 ++--
+ drivers/huaweimodem/voicecall.c      |    4 ++--
+ 5 files changed, 16 insertions(+), 16 deletions(-)
 
-diff --git a/src/dbus.c b/src/dbus.c
-index b719217..01d43cf 100644
---- a/src/dbus.c
-+++ b/src/dbus.c
-@@ -415,7 +415,7 @@ gboolean __ofono_dbus_valid_object_path(const char *pat=
-h)
- 	return TRUE;
- }
- =
-
--DBusConnection *ofono_dbus_get_connection()
-+DBusConnection *ofono_dbus_get_connection(void)
- {
- 	return g_connection;
- }
-diff --git a/src/main.c b/src/main.c
-index 87fb0ab..3db8819 100644
---- a/src/main.c
-+++ b/src/main.c
-@@ -42,7 +42,7 @@
- =
-
- static GMainLoop *event_loop;
- =
-
--void __ofono_exit()
-+void __ofono_exit(void)
- {
- 	g_main_loop_quit(event_loop);
- }
-diff --git a/src/manager.c b/src/manager.c
-index 0649bcc..7075909 100644
---- a/src/manager.c
-+++ b/src/manager.c
-@@ -91,7 +91,7 @@ static GDBusSignalTable manager_signals[] =3D {
- 	{ }
+diff --git a/drivers/huaweimodem/audio-settings.c b/drivers/huaweimodem/aud=
+io-settings.c
+index 305776f..46d4e44 100644
+--- a/drivers/huaweimodem/audio-settings.c
++++ b/drivers/huaweimodem/audio-settings.c
+@@ -119,12 +119,12 @@ static struct ofono_audio_settings_driver driver =3D {
+ 	.remove		=3D huawei_audio_settings_remove,
  };
  =
 
--int __ofono_manager_init()
-+int __ofono_manager_init(void)
+-void huawei_audio_settings_init()
++void huawei_audio_settings_init(void)
  {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	gboolean ret;
-@@ -107,7 +107,7 @@ int __ofono_manager_init()
- 	return 0;
+ 	ofono_audio_settings_driver_register(&driver);
  }
  =
 
--void __ofono_manager_cleanup()
-+void __ofono_manager_cleanup(void)
+-void huawei_audio_settings_exit()
++void huawei_audio_settings_exit(void)
  {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
+ 	ofono_audio_settings_driver_unregister(&driver);
+ }
+diff --git a/drivers/huaweimodem/gprs-context.c b/drivers/huaweimodem/gprs-=
+context.c
+index ef3d93c..30f423b 100644
+--- a/drivers/huaweimodem/gprs-context.c
++++ b/drivers/huaweimodem/gprs-context.c
+@@ -406,12 +406,12 @@ static struct ofono_gprs_context_driver driver =3D {
+ 	.deactivate_primary	=3D huawei_gprs_deactivate_primary,
+ };
  =
 
-diff --git a/src/modem.c b/src/modem.c
-index 953d6c3..981aabc 100644
---- a/src/modem.c
-+++ b/src/modem.c
-@@ -1560,12 +1560,12 @@ static void sim_watch(struct ofono_atom *atom,
- 							modem, NULL);
+-void huawei_gprs_context_init()
++void huawei_gprs_context_init(void)
+ {
+ 	ofono_gprs_context_driver_register(&driver);
  }
  =
 
--void __ofono_modemwatch_init()
-+void __ofono_modemwatch_init(void)
+-void huawei_gprs_context_exit()
++void huawei_gprs_context_exit(void)
  {
- 	g_modemwatches =3D __ofono_watchlist_new(g_free);
+ 	ofono_gprs_context_driver_unregister(&driver);
+ }
+diff --git a/drivers/huaweimodem/huaweimodem.h b/drivers/huaweimodem/huawei=
+modem.h
+index 596aa08..f8323e3 100644
+--- a/drivers/huaweimodem/huaweimodem.h
++++ b/drivers/huaweimodem/huaweimodem.h
+@@ -21,14 +21,14 @@
+ =
+
+ #include <drivers/atmodem/atutil.h>
+ =
+
+-extern void huawei_voicecall_init();
+-extern void huawei_voicecall_exit();
++extern void huawei_voicecall_init(void);
++extern void huawei_voicecall_exit(void);
+ =
+
+-extern void huawei_audio_settings_init();
+-extern void huawei_audio_settings_exit();
++extern void huawei_audio_settings_init(void);
++extern void huawei_audio_settings_exit(void);
+ =
+
+-extern void huawei_radio_settings_init();
+-extern void huawei_radio_settings_exit();
++extern void huawei_radio_settings_init(void);
++extern void huawei_radio_settings_exit(void);
+ =
+
+-extern void huawei_gprs_context_init();
+-extern void huawei_gprs_context_exit();
++extern void huawei_gprs_context_init(void);
++extern void huawei_gprs_context_exit(void);
+diff --git a/drivers/huaweimodem/radio-settings.c b/drivers/huaweimodem/rad=
+io-settings.c
+index bece2cd..68112fe 100644
+--- a/drivers/huaweimodem/radio-settings.c
++++ b/drivers/huaweimodem/radio-settings.c
+@@ -404,12 +404,12 @@ static struct ofono_radio_settings_driver driver =3D {
+ 	.set_band               =3D huawei_set_band,
+ };
+ =
+
+-void huawei_radio_settings_init()
++void huawei_radio_settings_init(void)
+ {
+ 	ofono_radio_settings_driver_register(&driver);
  }
  =
 
--void __ofono_modemwatch_cleanup()
-+void __ofono_modemwatch_cleanup(void)
+-void huawei_radio_settings_exit()
++void huawei_radio_settings_exit(void)
  {
- 	__ofono_watchlist_free(g_modemwatches);
+ 	ofono_radio_settings_driver_unregister(&driver);
  }
-@@ -1850,7 +1850,7 @@ void ofono_modem_driver_unregister(const struct ofono=
-_modem_driver *d)
- 	}
- }
+diff --git a/drivers/huaweimodem/voicecall.c b/drivers/huaweimodem/voicecal=
+l.c
+index ff08124..0c0aaa1 100644
+--- a/drivers/huaweimodem/voicecall.c
++++ b/drivers/huaweimodem/voicecall.c
+@@ -508,12 +508,12 @@ static struct ofono_voicecall_driver driver =3D {
+ 	.release_specific	=3D huawei_release_specific,
+ };
  =
 
--void __ofono_modem_shutdown()
-+void __ofono_modem_shutdown(void)
+-void huawei_voicecall_init()
++void huawei_voicecall_init(void)
  {
- 	struct ofono_modem *modem;
- 	GSList *l;
-diff --git a/src/ofono.h b/src/ofono.h
-index cab70cd..77567c2 100644
---- a/src/ofono.h
-+++ b/src/ofono.h
-@@ -25,12 +25,12 @@
+ 	ofono_voicecall_driver_register(&driver);
+ }
  =
 
- #include <ofono/types.h>
- =
-
--void __ofono_exit();
-+void __ofono_exit(void);
- =
-
--int __ofono_manager_init();
--void __ofono_manager_cleanup();
-+int __ofono_manager_init(void);
-+void __ofono_manager_cleanup(void);
- =
-
--void __ofono_modem_shutdown();
-+void __ofono_modem_shutdown(void);
- =
-
- #include <ofono/log.h>
- =
-
-@@ -174,8 +174,8 @@ void __ofono_atom_free(struct ofono_atom *atom);
- =
-
- typedef void (*ofono_modemwatch_cb_t)(struct ofono_modem *modem,
- 					gboolean added, void *data);
--void __ofono_modemwatch_init();
--void __ofono_modemwatch_cleanup();
-+void __ofono_modemwatch_init(void);
-+void __ofono_modemwatch_cleanup(void);
- unsigned int __ofono_modemwatch_add(ofono_modemwatch_cb_t cb, void *user,
- 					ofono_destroy_func destroy);
- gboolean __ofono_modemwatch_remove(unsigned int id);
+-void huawei_voicecall_exit()
++void huawei_voicecall_exit(void)
+ {
+ 	ofono_voicecall_driver_unregister(&driver);
+ }
 -- =
 
 1.7.0.4
 
 
---===============0154764013309665916==--
+--===============7275961215702276992==--
 
