@@ -1,203 +1,143 @@
-Content-Type: multipart/mixed; boundary="===============5119648273601475932=="
+Content-Type: multipart/mixed; boundary="===============8578303327343371011=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC PATCH 1/4] Added GPRS context provisioning driver API sources
-Date: Tue, 11 Jan 2011 22:43:58 -0800
-Message-ID: <1294814638.3873.69.camel@aeonflux>
-In-Reply-To: <1294665072-13630-2-git-send-email-jukka.saunamaki@nokia.com>
+Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
+Date: Tue, 11 Jan 2011 22:48:54 -0800
+Message-ID: <1294814934.3873.73.camel@aeonflux>
+In-Reply-To: <1294665072-13630-5-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5119648273601475932==
+--===============8578303327343371011==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Jukka,
 
-> +#ifndef __OFONO_GPRS_PROVISION_H
-> +#define __OFONO_GPRS_PROVISION_H
-> +
-> +#ifdef __cplusplus
-> +extern "C" {
-> +#endif
-> +
-> +#include "gprs-context.h"
-> +
-> +struct ofono_gprs_provisioning_data {
-> +	enum ofono_gprs_context_type type;
-> +	enum ofono_gprs_proto proto;
-> +	gchar *name;
-> +	gchar *apn;
-> +	gchar *username;
-> +	gchar *password;
-> +	gchar *message_proxy;
-> +	gchar *message_center;
-> +};
+>  Makefile.am          |    3 +
+>  examples/provision.c |  198 ++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  2 files changed, 201 insertions(+), 0 deletions(-)
+>  create mode 100644 examples/provision.c
+> =
 
-don't bother with gchar *. Just use char * here. The gchar is
-essentially bad idea. We only use it a few rare occasions or when it got
-missed in a review.
+> diff --git a/Makefile.am b/Makefile.am
+> index 0f330a7..d57509d 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -305,6 +305,9 @@ builtin_sources +=3D examples/history.c
+>  =
 
+>  builtin_modules +=3D example_nettime
+>  builtin_sources +=3D examples/nettime.c
 > +
-> +/*
-> + * Callback from provisioning plugin.
-> + * settings: list of struct ofono_gprs_provisioning_data
-> + *
-> + * It is responsibility of callback function to free settings-list
-> + * settings-list elements must be freed with ofono_gprs_provisioning_dat=
-a_free()
-> + */
-> +typedef void (*ofono_gprs_provision_cb_t)(GSList *settings, void *userda=
-ta);
-> +
-> +struct ofono_gprs_provision_driver {
-> +	const char *name;
-> +	int priority;
-> +	void (*get_settings) (struct ofono_modem *modem,
-> +				ofono_gprs_provision_cb_t cb,
-> +				void *userdata);
-> +};
+> +builtin_modules +=3D example_gprs_provision
+> +builtin_sources +=3D examples/provision.c
+>  endif
 
-So here is something we need to talk about. The nettime plugin
-infrastructure using a "pseudo" atom. So do we wanna do the same here or
-do we wanna change the nettime atom to something simple like this.
+I like to have these match. So just call it example_provision.
 
-I like to have consistency here. Aki, Denis, thoughts?
-
-> +struct gprs_provisioning_request {
-> +	GSList *current_driver;
+> +struct provisioning_request {
 > +	struct ofono_modem *modem;
 > +	ofono_gprs_provision_cb_t cb;
 > +	void *userdata;
 
-The sort of general style is to call this user_data.
+Same as I mentioned in the other patch. Please use user_data.
 
 > +};
 > +
-> +static GSList *gprs_provision_drivers =3D NULL;
-> +
-> +
-
-We also normally don't do double empty lines.
-
-> +void ofono_gprs_provisioning_data_free(struct ofono_gprs_provisioning_da=
-ta *data)
+> +static void sim_spn_read_cb(int ok, int length, int record,
+> +				const unsigned char *data,
+> +				int record_length, void *userdata)
 > +{
-> +	if (data =3D=3D NULL)
-> +		return;
+> +	struct provisioning_request *req =3D userdata;
+> +	char *spn =3D NULL;
 > +
-> +	g_free(data->name);
-> +	g_free(data->apn);
-> +	g_free(data->username);
-> +	g_free(data->password);
-> +	g_free(data->message_proxy);
-> +	g_free(data->message_center);
-> +	g_free(data);
-> +}
+> +	struct ofono_atom *sim_atom;
+> +	struct ofono_sim *sim;
+> +	const char *imsi;
 > +
+> +	unsigned char mnc_length;
+> +	char mcc[OFONO_MAX_MCC_LENGTH + 1];
+> +	char mnc[OFONO_MAX_MNC_LENGTH + 1];
 > +
-> +static void settings_cb(GSList *settings, void *userdata)
-> +{
-
-Same here, please use user_data.
-
-> +	GSList *d;
-> +	struct gprs_provisioning_request *req =3D userdata;
-
-And as another general rule, the variable that have an assignment like
-the user_data come first.
-
+> +	GSList *settings =3D NULL;
+> +	struct ofono_gprs_provisioning_data *entry;
 > +
-> +	if (settings !=3D NULL)
-> +		DBG("Provisioning plugin returned settings for %d contexts",
-> +			g_slist_length(settings));
-> +	else
-> +		DBG("Provisioning plugin returned no settings");
+> +	sim_atom =3D __ofono_modem_find_atom(req->modem, OFONO_ATOM_TYPE_SIM);
 > +
-> +	d =3D req->current_driver->next;
-> +	if (settings =3D=3D NULL && d !=3D NULL) {
-> +		/* No success from this driver, try next */
-> +		const struct ofono_gprs_provision_driver *driver =3D d->data;
-> +		req->current_driver =3D d;
-> +		DBG("Calling provisioning plugin '%s'", driver->name);
-> +		driver->get_settings(req->modem, settings_cb, req);
-> +		return;
+> +	if (sim_atom =3D=3D NULL) {
+> +		ofono_debug("No SIM atom");
+> +		goto finish;
 > +	}
 > +
-> +	req->cb(settings, req->userdata);
-> +	g_free(req);
-> +}
+> +	sim =3D __ofono_atom_get_data(sim_atom);
+> +	imsi =3D ofono_sim_get_imsi(sim);
+> +	if (imsi =3D=3D NULL) {
+> +		ofono_debug("No IMSI available");
+> +		goto finish;
+> +	}
 > +
+> +	mnc_length =3D ofono_sim_get_mnc_length(sim);
+> +	if (mnc_length =3D=3D 0) {
+> +		ofono_debug("No MNC length available");
+> +		goto finish;
+> +	}
 > +
+> +	strncpy(mcc, imsi, OFONO_MAX_MCC_LENGTH);
+> +	mcc[OFONO_MAX_MCC_LENGTH] =3D '\0';
+> +	strncpy(mnc, imsi + OFONO_MAX_MCC_LENGTH, mnc_length);
+> +	mnc[mnc_length] =3D '\0';
+> +
+> +	if (ok)
+> +		spn =3D sim_string_to_utf8(data + 1, length - 1);
+> +
+> +	ofono_debug("Finding settings for MCC %s, MNC %s, SPN '%s'",
+> +			mcc, mnc, spn);
+> +
+> +	if (spn =3D=3D NULL || strcmp(spn, "oFono") !=3D 0)
+> +		goto finish;
 
-Same here for the double empty lines. Please fix them all.
+I think we need to also take some MCC and MNC into account. People will
+be by accident compiling this plugin and I wanna make sure nothing bad
+gets provisioned ;)
 
-> +void ofono_gprs_provision_get_settings(struct ofono_modem *modem,
-> +					ofono_gprs_provision_cb_t cb,
-> +					void *userdata)
+> +static void example_gprs_provision_get_settings(
+> +	struct ofono_modem *modem,
+> +	ofono_gprs_provision_cb_t cb,
+> +	void *userdata)
 > +{
-> +	struct gprs_provisioning_request *req;
-> +	const struct ofono_gprs_provision_driver *driver;
+> +	struct provisioning_request *req;
+> +	struct ofono_atom *sim_atom;
+> +	struct ofono_sim *sim =3D NULL;
 > +
-> +	if (gprs_provision_drivers =3D=3D 0)
-
-This needs to be a =3D=3D NULL.
-
-> +		goto error;
+> +	ofono_debug("Provisioning...");
 > +
-> +	req =3D g_try_new0(struct gprs_provisioning_request, 1);
+> +	req =3D g_try_new0(struct provisioning_request, 1);
 > +	if (req =3D=3D NULL)
 > +		goto error;
 > +
 > +	req->modem =3D modem;
 > +	req->cb =3D cb;
 > +	req->userdata =3D userdata;
-> +	req->current_driver =3D gprs_provision_drivers;
 > +
-> +	driver =3D gprs_provision_drivers->data;
-> +	DBG("Calling provisioning plugin '%s'", driver->name);
+> +	/* Start SPN query from SIM */
+> +	sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
+> +
+> +	if (sim_atom !=3D NULL)
+> +		sim =3D __ofono_atom_get_data(sim_atom);
+> +
+> +	if (sim !=3D NULL) {
+> +		ofono_sim_read(sim, SIM_EFSPN_FILEID,
+> +				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
+> +				sim_spn_read_cb, req);
+> +		return;
+> +	}
 
-Normally we put empty lines on top and below the DBG statement. Just to
-make the stand out a bit.
+Should this not be provided somehow by the SIM atom?
 
-Also in this case we might can remove some of the debug statements once
-the code has been tested.
-
-> +	driver->get_settings(modem, settings_cb, req);
-> +	return;
-> +
-> +error:
-> +	cb(NULL, userdata);
-> +}
-> +
-> +static gint compare_priority(gconstpointer a, gconstpointer b)
-> +{
-> +	const struct ofono_gprs_provision_driver *plugin1 =3D a;
-> +	const struct ofono_gprs_provision_driver *plugin2 =3D b;
-> +
-> +	return plugin2->priority - plugin1->priority;
-> +}
-> +
-> +int ofono_gprs_provision_driver_register(const struct ofono_gprs_provisi=
-on_driver *driver)
-> +{
-> +	DBG("driver: %p name: %s", driver, driver->name);
-> +
-> +	gprs_provision_drivers =3D g_slist_insert_sorted(gprs_provision_drivers,
-> +							(void *) driver,
-> +							compare_priority);
-> +	return 0;
-> +}
-> +
-> +void ofono_gprs_provision_driver_unregister(const struct ofono_gprs_prov=
-ision_driver *driver)
-> +{
-> +	DBG("driver: %p name: %s", driver, driver->name);
-> +
-> +	gprs_provision_drivers =3D g_slist_remove(gprs_provision_drivers, drive=
-r);
-> +}
+Denis, any idea why we are not keeping this information available?
 
 Regards
 
@@ -205,5 +145,5 @@ Marcel
 
 
 
---===============5119648273601475932==--
+--===============8578303327343371011==--
 
