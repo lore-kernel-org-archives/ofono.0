@@ -1,69 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============5277695023817875968=="
+Content-Type: multipart/mixed; boundary="===============1119377227299702575=="
 MIME-Version: 1.0
 From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH 4/5 v3] Cell-info: New files included in compilation
-Date: Wed, 12 Jan 2011 14:05:18 +0200
-Message-ID: <1294833919-1510-5-git-send-email-antti.paila@nokia.com>
-In-Reply-To: <1294833919-1510-1-git-send-email-antti.paila@nokia.com>
+Subject: [PATCH 0/5 v3] Neighbor Cell Info Atom
+Date: Wed, 12 Jan 2011 14:05:14 +0200
+Message-ID: <1294833919-1510-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5277695023817875968==
+--===============1119377227299702575==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am |    8 +++++---
- 1 files changed, 5 insertions(+), 3 deletions(-)
+ This series of patches implements an interface for client
+ applications to fetch the ECID information of neighboring
+ cells using DBUS. Since the 1st version the DBUS api has
+ been refactored to use new naming for method and to use
+ flat data format for the cell information. Also, the
+ internal datatypes have been optimized. Since the 2nd
+ version MNC and MCC are converted to strings and CPICH-RSCP
+ re-typed.
 
-diff --git a/Makefile.am b/Makefile.am
-index 4dec90a..096450f 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -15,7 +15,8 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
-e/history.h \
- 			include/radio-settings.h include/stk.h \
- 			include/audio-settings.h include/nettime.h \
- 			include/ctm.h include/cdma-voicecall.h \
--			include/cdma-sms.h
-+			include/cdma-sms.h \
-+			include/cell-info.h
- =
+Antti Paila (5):
+  Cell-info: CellInfo DBUS interface definition
+  Cell-info: Header file for Neighbor cell info
+  Cell-info: Atom for obtaining ECID info of cells
+  Cell-info: New files included in compilation
+  Cell-info: Documentation
 
- nodist_include_HEADERS =3D include/version.h
- =
-
-@@ -340,7 +341,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
-es) src/ofono.ver \
- 			src/nettime.c src/stkagent.c src/stkagent.h \
- 			src/simfs.c src/simfs.h src/audio-settings.c \
- 			src/smsagent.c src/smsagent.h src/ctm.c \
--			src/cdma-voicecall.c
-+			src/cdma-voicecall.c src/cell-info.c
- =
-
- src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
-@ -ldl
- =
-
-@@ -381,7 +382,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
-release-faq.txt \
- 			doc/phonebook-api.txt doc/radio-settings-api.txt \
- 			doc/sim-api.txt doc/stk-api.txt \
- 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
--			doc/calypso-modem.txt
-+			doc/calypso-modem.txt \
-+			doc/cell-info.txt
- =
-
- =
-
- test_scripts =3D test/backtrace \
--- =
-
-1.7.1
+ Makefile.am         |    8 +-
+ doc/cell-info.txt   |  121 +++++++++++++
+ include/cell-info.h |  128 ++++++++++++++
+ include/dbus.h      |    1 +
+ src/cell-info.c     |  485 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/ofono.h         |    1 +
+ 6 files changed, 741 insertions(+), 3 deletions(-)
+ create mode 100644 doc/cell-info.txt
+ create mode 100644 include/cell-info.h
+ create mode 100644 src/cell-info.c
 
 
---===============5277695023817875968==--
+--===============1119377227299702575==--
 
