@@ -1,102 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============0992375364501366436=="
+Content-Type: multipart/mixed; boundary="===============4537864399890925407=="
 MIME-Version: 1.0
-From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: [PATCH] test: add disable-call-forwarding
-Date: Wed, 12 Jan 2011 11:42:00 +0200
-Message-ID: <1294825320-2928-1-git-send-email-jarko.poutiainen@tieto.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH] sim: check if lock is locked after code changing attempt
+Date: Wed, 12 Jan 2011 08:11:44 -0200
+Message-ID: <AANLkTi=NkjiVvuvFM2TPqVC6iyqQ9Gt=kRaxy+c7e7hU@mail.gmail.com>
+In-Reply-To: <20A4FB08D632914F9C09B9F05CBDF258192D753286@EXMB02.eu.tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0992375364501366436==
+--===============4537864399890925407==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am                  |    3 +-
- test/disable-call-forwarding |   53 ++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 55 insertions(+), 1 deletions(-)
- create mode 100755 test/disable-call-forwarding
+Hi Jussi,
 
-diff --git a/Makefile.am b/Makefile.am
-index 4dec90a..2df0fbd 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -449,7 +449,8 @@ test_scripts =3D test/backtrace \
- 		test/set-tty \
- 		test/set-gsm-band \
- 		test/set-umts-band \
--		test/lockdown-modem
-+		test/lockdown-modem \
-+		test/disable-call-forwarding
- =
+On Wed, Jan 12, 2011 at 5:39 AM,  <Jussi.Kangas@tieto.com> wrote:
+> Hi Lucas,
+>
+> On Tue, 2011-01-11 at 16:08 +0200, Lucas De Marchi wrote:
+>> Hi Jussi
+>>
+>> On Tue, Jan 11, 2011 at 10:17 AM, =C2=A0<Jussi.Kangas@tieto.com> wrote:
+>> > Hi,
+>> >
+>> > This is fix to Marit Henriksen's TODO item "Check SIM pin status if si=
+m_change_pin fails". I've discussed with Marit and it's ok for her if I fix=
+ the issue. Problem here is that issue could perhaps also be fixed with ret=
+ry counter solution introduced by Lucas De Marchi couple of tasks ago. That=
+ would seem however require some extra implementation in ste modem ( at lea=
+st I was not able get the ofono show correct values without extra modificat=
+ions ) and I think that isimodems don't have that sort of retry counter at =
+all. Because of that and since I had this solution already implemented I pr=
+opose it to be added as well.
+>> >
+>>
+>> I failed to understand why you are hard-coding this and why you'd like
+>> to use retry counters. Can't you just check the pin state by calling
+>> sim_pin_check()?
+>>
+>> Moreover, this is not really implementing what the TODO item says.
+>>
+>>
+>> regards,
+>> Lucas De Marchi
+>
+> Marit already proposed sim_pin_check approach 2010/11/2. Denis Kenzior
+> thought that initializing sim interface would not be a good idea. See
+> mail "Re: [Patch] sim: Check SIM pin status after changing pin" from
+> Friday 5th in November 2010.
+>
+> True, fix proposal does not do exactly what TODO item says. It trusts to
+> returned error value instead of going to check the sim state once more.
+> In my testings this value has been trustable so far and there has not
+> been reason to go check the state. Of course I've tested only with one
+> modem so this might not be a universal truth.
+>
+> I don't particularly wish to use the retry counters. I was just thinking =
+that same
+> information ( PUK required ) could be deduced by counting the retries.
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/disable-call-forwarding b/test/disable-call-forwarding
-new file mode 100755
-index 0000000..ca0ba90
---- /dev/null
-+++ b/test/disable-call-forwarding
-@@ -0,0 +1,53 @@
-+#!/usr/bin/python
-+
-+import sys
-+import gobject
-+
-+import dbus
-+import dbus.mainloop.glib
-+
-+def property_changed(property, value):
-+	if len(value.__str__()) > 0:
-+		print "CF property %s changed to %s" % (property, value)
-+	else:
-+		print "CF property %s changed to disabled" % (property)
-+
-+	if canexit:
-+		mainloop.quit();
-+
-+if __name__ =3D=3D "__main__":
-+	if len(sys.argv) < 2:
-+		print "Usage: %s <type>" % (sys.argv[0])
-+		print "Type can be: all, conditional"
-+		sys.exit(1)
-+
-+	canexit =3D False
-+
-+	type =3D sys.argv[1]
-+
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+
-+	bus =3D dbus.SystemBus()
-+
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+							'org.ofono.Manager')
-+
-+	modems =3D manager.GetModems()
-+
-+	cf =3D dbus.Interface(bus.get_object('org.ofono', modems[0][0]),
-+				'org.ofono.CallForwarding')
-+
-+	cf.connect_to_signal("PropertyChanged", property_changed)
-+
-+	try:
-+		cf.DisableAll(type, timeout =3D 100)
-+	except dbus.DBusException, e:
-+		print "Unable to DisableAll", e
-+		sys.exit(1);
-+
-+	print "DisableAll successful"
-+
-+	canexit =3D True
-+
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
--- =
-
-1.7.0.4
+IMO you should try querying the pin state on failure as Denis and I
+suggested rather than using retry counters and/or hard-coding this
+here. You might do this without re-initializing the sim interface.
+Then Denis' worries in
+http://www.mail-archive.com/ofono(a)ofono.org/msg05294.html are gone.
 
 
---===============0992375364501366436==--
+
+Lucas De Marchi
+
+--===============4537864399890925407==--
 
