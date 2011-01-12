@@ -1,24 +1,24 @@
-Content-Type: multipart/mixed; boundary="===============0579844619421346437=="
+Content-Type: multipart/mixed; boundary="===============1254639127470778559=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] isimodem: fix return from call control requests
-Date: Wed, 12 Jan 2011 08:09:33 -0800
-Message-ID: <1294848573.3873.78.camel@aeonflux>
-In-Reply-To: <1294845388-13084-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH] TODO: set owner of Support HFP AG emulator task
+Date: Wed, 12 Jan 2011 08:11:09 -0800
+Message-ID: <1294848669.3873.79.camel@aeonflux>
+In-Reply-To: <1294846890-5745-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0579844619421346437==
+--===============1254639127470778559==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Fred,
 
->  drivers/isimodem/voicecall.c |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
+>  TODO |    2 ++
+>  1 files changed, 2 insertions(+), 0 deletions(-)
 
-patch has been applied. Thanks.
+welcome on board. Patch has been applied.
 
 Regards
 
@@ -26,5 +26,5 @@ Marcel
 
 
 
---===============0579844619421346437==--
+--===============1254639127470778559==--
 
