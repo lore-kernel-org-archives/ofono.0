@@ -1,56 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============7408950761839807218=="
+Content-Type: multipart/mixed; boundary="===============2189612533134343522=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [sim-auth RFCv2 3/4] Add GBA documents to doc/standards.txt
-Date: Thu, 13 Jan 2011 01:08:21 +0200
-Message-ID: <1294873702-10316-4-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1294873702-10316-3-git-send-email-Pekka.Pessi@nokia.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 1/2] Add sim driver call for applications discovery.
+Date: Wed, 12 Jan 2011 13:12:44 +0100
+Message-ID: <1294834365-11029-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7408950761839807218==
+--===============2189612533134343522==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
-
 ---
- doc/standards.txt |   13 +++++++++++++
- 1 files changed, 13 insertions(+), 0 deletions(-)
+ include/sim.h |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
 
-diff --git a/doc/standards.txt b/doc/standards.txt
-index 2b85cb0..e8ec19f 100644
---- a/doc/standards.txt
-+++ b/doc/standards.txt
-@@ -55,6 +55,19 @@ Describes 3GPP specific aspects of Card Application Tool=
-kit (CAT) / STK.
- Describes the testing parameters and test cases for 31.111.
+diff --git a/include/sim.h b/include/sim.h
+index aab981c..e4176e3 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -77,6 +77,12 @@ enum ofono_sim_state {
+ 	OFONO_SIM_STATE_READY,
+ };
  =
 
++struct ofono_sim_app_record {
++	unsigned char aid[16];
++	unsigned int aid_len;
++	char *label;
++};
++
+ typedef void (*ofono_sim_file_info_cb_t)(const struct ofono_error *error,
+ 					int filelength,
+ 					enum ofono_sim_file_structure structure,
+@@ -114,6 +120,9 @@ typedef void (*ofono_sim_lock_unlock_cb_t)(const struct=
+ ofono_error *error,
+ typedef void (*ofono_sim_locked_cb_t)(const struct ofono_error *error,
+ 					int locked, void *data);
  =
 
-+Security Specifications
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++typedef void (*ofono_sim_apps_cb_t)(const struct ofono_error *error,
++					GSList *apps, void *data);
 +
-+- 33.220  Generic bootstrapping architecture (GBA)
-+
-+Describes the generic bootstrapping architecture used to leverage
-+SIM-based authentication.
-+
-+- 24.109  Bootstrapping interface (Ub) and NAF interface (Ua)
-+
-+Describes how the GBA authentication is used with, e.g., HTTP.
-+
-+
- 3GPP Specific Services
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ typedef void (*ofono_sim_file_notify_t)(int id, void *userdata);
  =
 
+ struct ofono_sim_driver {
+@@ -159,6 +168,8 @@ struct ofono_sim_driver {
+ 	void (*query_locked)(struct ofono_sim *sim,
+ 			enum ofono_sim_password_type type,
+ 			ofono_sim_locked_cb_t cb, void *data);
++	void (*list_apps)(struct ofono_sim *sim, ofono_sim_apps_cb_t cb,
++			void *data);
+ };
+ =
+
+ int ofono_sim_driver_register(const struct ofono_sim_driver *d);
 -- =
 
-1.7.1
+1.7.1.86.g0e460.dirty
 
 
---===============7408950761839807218==--
+--===============2189612533134343522==--
 
