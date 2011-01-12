@@ -1,169 +1,171 @@
-Content-Type: multipart/mixed; boundary="===============2957072381774871019=="
+Content-Type: multipart/mixed; boundary="===============2267603121398166601=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@intel.com>
-Subject: [PATCH 05/21] dun_gw: Add DUN server plugin for oFono
-Date: Wed, 12 Jan 2011 18:15:48 +0100
-Message-ID: <1294852564-1258-6-git-send-email-frederic.dalleau@intel.com>
+Subject: [PATCH 07/21] emulator: Add status watches for ofono emulator
+Date: Wed, 12 Jan 2011 18:15:50 +0100
+Message-ID: <1294852564-1258-8-git-send-email-frederic.dalleau@intel.com>
 In-Reply-To: <1294852564-1258-1-git-send-email-frederic.dalleau@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2957072381774871019==
+--===============2267603121398166601==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Zhenhua Zhang <zhenhua.zhang@intel.com>
 
-DUN server is probed when modem state changes to online. It registers
-DUN record to Bluetooth adapter and wait for incoming DUN connection.
+The status watches monitor the emulator activities. Other atoms like
+gprs, netreg could register notification to watch emulator status
+changes.
 ---
- Makefile.am      |    3 +
- plugins/dun_gw.c |  115 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+ include/emulator.h |    6 +++++
+ src/emulator.c     |   54 ++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 118 insertions(+), 0 deletions(-)
- create mode 100644 plugins/dun_gw.c
+ src/ofono.h        |   11 ++++++++++
+ 3 files changed, 71 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 5dcf253..58bf6c4 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -291,6 +291,9 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blueto=
-oth.h
- builtin_modules +=3D hfp
- builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
+diff --git a/include/emulator.h b/include/emulator.h
+index 2691928..99ae218 100644
+--- a/include/emulator.h
++++ b/include/emulator.h
+@@ -30,6 +30,12 @@ extern "C" {
  =
 
-+builtin_modules +=3D dun_gw
-+builtin_sources +=3D $(btio_sources) plugins/dun_gw.c plugins/bluetooth.h
-+
- builtin_modules +=3D palmpre
- builtin_sources +=3D plugins/palmpre.c
+ struct ofono_emulator;
  =
 
-diff --git a/plugins/dun_gw.c b/plugins/dun_gw.c
-new file mode 100644
-index 0000000..803ae32
---- /dev/null
-+++ b/plugins/dun_gw.c
-@@ -0,0 +1,115 @@
-+/*
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2010  Intel Corporation. All rights reserved.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+#include <stdio.h>
-+#include <string.h>
-+#include <errno.h>
-+#include <glib.h>
-+#include <ofono.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+#include <ofono/plugin.h>
-+#include <ofono/log.h>
-+#include <ofono/modem.h>
-+#include <gdbus.h>
-+
-+#include "bluetooth.h"
-+
-+#define DUN_GW_CHANNEL	1
-+
-+static struct server *server;
-+
-+static void dun_gw_connect_cb(GIOChannel *io, GError *err, gpointer user_d=
-ata)
-+{
-+	struct ofono_emulator *emulator =3D user_data;
-+
-+	DBG("");
-+
-+	if (err) {
-+		DBG("%s", err->message);
-+		goto failed;
-+	}
-+
-+	if (ofono_emulator_enable(emulator, io) < 0)
-+		goto failed;
-+
-+	return;
-+
-+failed:
-+	g_io_channel_shutdown(io, TRUE, NULL);
-+	ofono_emulator_remove(emulator);
-+	bluetooth_unregister_server(server);
-+	server =3D NULL;
-+}
-+
-+static int dun_gw_probe(struct ofono_emulator *emulator,
-+				struct ofono_modem *modem)
-+{
-+	struct ofono_atom *gprs;
-+
-+	if (server)
-+		return -1;
-+
-+	DBG("");
-+
-+	gprs =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_GPRS);
-+	/* Make sure the modem has GPRS atom */
-+	if (!gprs)
-+		return -1;
-+
-+	server =3D bluetooth_register_server(DUN_GW, "Dial-Up Networking",
-+				DUN_GW_CHANNEL, dun_gw_connect_cb, emulator);
-+
-+	return 0;
-+}
-+
-+static void dun_gw_remove()
-+{
-+	if (server =3D=3D NULL)
-+		return;
-+
-+	DBG("");
-+
-+	bluetooth_unregister_server(server);
-+	server =3D NULL;
-+}
-+
-+static struct ofono_emulator_driver emulator_driver =3D {
-+	.name =3D "Dial-Up Networking",
-+	.type =3D OFONO_ATOM_TYPE_EMULATOR_DUN,
-+	.probe =3D dun_gw_probe,
-+	.remove =3D dun_gw_remove,
++enum ofono_emulator_status {
++	OFONO_EMULATOR_STATUS_IDLE =3D 0,
++	OFONO_EMULATOR_STATUS_CREATE,
++	OFONO_EMULATOR_STATUS_DESTROY,
 +};
 +
-+static int dun_gw_init()
+ struct ofono_emulator_driver {
+ 	const char *name;
+ 	enum ofono_atom_type type;
+diff --git a/src/emulator.c b/src/emulator.c
+index 1ede79a..c68dbf8 100644
+--- a/src/emulator.c
++++ b/src/emulator.c
+@@ -39,6 +39,8 @@ struct ofono_emulator {
+ 	unsigned int id;
+ 	GAtServer *server;
+ 	struct ofono_emulator_driver *driver;
++	enum ofono_emulator_status status;
++	struct ofono_watchlist *status_watches;
+ };
+ =
+
+ static GSList *emulator_drivers =3D NULL;
+@@ -80,6 +82,20 @@ static void ofono_emulator_release_id(int id)
+ 	ofono_emulator_ids &=3D ~(0x1 << id);
+ }
+ =
+
++static void notify_status_watches(struct ofono_emulator *e, void *data)
 +{
-+	return ofono_emulator_driver_register(&emulator_driver);
++	struct ofono_watchlist_item *item;
++	ofono_emulator_status_notify_cb_t notify;
++	GSList *l;
++
++	for (l =3D e->status_watches->items; l; l =3D l->next) {
++		item =3D l->data;
++		notify =3D item->notify;
++
++		notify(e, e->status, data, item->notify_data);
++	}
 +}
 +
-+static void dun_gw_exit()
+ int ofono_emulator_enable(struct ofono_emulator *e, GIOChannel *channel)
+ {
+ 	if (channel =3D=3D NULL)
+@@ -116,6 +132,11 @@ static void emulator_remove(struct ofono_atom *atom)
+ 	if (e->server)
+ 		emulator_disable(e);
+ =
+
++	e->status =3D OFONO_EMULATOR_STATUS_DESTROY;
++	notify_status_watches(e, NULL);
++
++	__ofono_watchlist_free(e->status_watches);
++
+ 	ofono_emulator_release_id(e->id);
+ =
+
+ 	if (e->driver->remove)
+@@ -125,6 +146,37 @@ static void emulator_remove(struct ofono_atom *atom)
+ 	e =3D NULL;
+ }
+ =
+
++unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *e,
++				ofono_emulator_status_notify_cb_t notify,
++				void *data, ofono_destroy_func destroy)
 +{
-+	ofono_emulator_driver_unregister(&emulator_driver);
++	struct ofono_watchlist_item *item;
++
++	DBG("%p", e);
++
++	if (e =3D=3D NULL)
++		return 0;
++
++	if (notify =3D=3D NULL)
++		return 0;
++
++	item =3D g_new0(struct ofono_watchlist_item, 1);
++
++	item->notify =3D notify;
++	item->destroy =3D destroy;
++	item->notify_data =3D data;
++
++	return __ofono_watchlist_add_item(e->status_watches, item);
 +}
 +
-+OFONO_PLUGIN_DEFINE(dun_gw, "Dial-up Networking Profile Plugins", VERSION,
-+			OFONO_PLUGIN_PRIORITY_DEFAULT, dun_gw_init, dun_gw_exit)
++gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
++						unsigned int id)
++{
++	DBG("%p", e);
++
++	return __ofono_watchlist_remove_item(e->status_watches, id);
++}
++
+ struct ofono_emulator *ofono_emulator_create(struct ofono_modem *modem,
+ 					struct ofono_emulator_driver *driver)
+ {
+@@ -148,6 +200,8 @@ struct ofono_emulator *ofono_emulator_create(struct ofo=
+no_modem *modem,
+ 	}
+ =
+
+ 	e->id =3D ofono_emulator_next_id();
++	e->status_watches =3D __ofono_watchlist_new(g_free);
++	e->status =3D OFONO_EMULATOR_STATUS_CREATE;
+ =
+
+ 	return e;
+ }
+diff --git a/src/ofono.h b/src/ofono.h
+index 64ea625..247152b 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -423,3 +423,14 @@ void __ofono_nettime_info_received(struct ofono_modem =
+*modem,
+ #include <ofono/emulator.h>
+ =
+
+ void __ofono_emulator_probe_drivers(struct ofono_modem *modem);
++
++typedef void (*ofono_emulator_status_notify_cb_t)(struct ofono_emulator *e,
++					enum ofono_emulator_status status,
++					void *data, void *user_data);
++
++unsigned int __ofono_emulator_add_status_watch(struct ofono_emulator *e,
++				ofono_emulator_status_notify_cb_t notify,
++				void *data, ofono_destroy_func destroy);
++
++gboolean __ofono_emulator_remove_status_watch(struct ofono_emulator *e,
++						unsigned int id);
 -- =
 
 1.7.1
@@ -181,5 +183,5 @@ the sole use of the intended recipient(s). Any review or distribution
 by others is strictly prohibited. If you are not the intended
 recipient, please contact the sender and delete all copies.
 
---===============2957072381774871019==--
+--===============2267603121398166601==--
 
