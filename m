@@ -1,51 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============7602983386737942410=="
+Content-Type: multipart/mixed; boundary="===============8449810028244959233=="
 MIME-Version: 1.0
-From: yanni <neelslotter@vodamail.co.za>
-Subject: Making voice call with Huawei E272 USB Modem
-Date: Thu, 13 Jan 2011 17:43:01 +0200
-Message-ID: <1294933381.8421.13.camel@yanni-laptop>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
+Date: Thu, 13 Jan 2011 09:57:58 -0600
+Message-ID: <4D2F2106.5010807@gmail.com>
+In-Reply-To: <1294900572.18783.21.camel@jsaunama-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7602983386737942410==
+--===============8449810028244959233==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi
+Hi Jukka,
 
-I've managed to send SMSs and perform USSD etc. with ofono and the E272.
+On 01/13/2011 12:36 AM, Jukka Saunamaki wrote:
+> Hello
+> =
 
-However, I'm unable to make a voice call with ofono.  I can make voice
-call with python&pyserial.
+> On Wed, 2011-01-12 at 10:46 -0600, Denis Kenzior wrote:
+>>> ...SIM EF-SPN... =
 
-Any pointers in right direction will be appreciated
+>>
+>> You're correct that netreg is the only consumer.  There was no need for
+>> anyone else to see this information.  However, this begs the question,
+>> why do you need the SPN data?
+> =
 
-#output from list-modem testscrip
-./list-modems =
+> Some virtual operators are using the same MCC/MNC as their host, or some
+> operators have several different trade names, and these can have
+> different access settings (at least different UI visible name). =
 
-[ /huawei0 ]
-    Features =3D sms gprs cbs net rat sim =
+> SPN in SIM typically tells these cases apart. This is why I included
+> reading SPN to that example provisioning.
 
-    Powered =3D 1
-    Lockdown =3D 0
-    Interfaces =3D org.ofono.SmartMessaging org.ofono.PushNotification
-org.ofono.MessageManager org.ofono.ConnectionManager
-org.ofono.CellBroadcast org.ofono.NetworkRegistration
-org.ofono.SupplementaryServices org.ofono.Phonebook
-org.ofono.RadioSettings org.ofono.SimManager =
+Do you have specific examples?  To my knowledge the MVNOs should be
+provisioning the SIM with a different MNC from the host but the network
+used (and thus the network's MCC/MNC) are their host's.
 
-    Online =3D 1
-    Model =3D E272
-    Manufacturer =3D huawei
-    Serial =3D 357865013196535
-##
-Ciao
-Neels
+> =
 
+> All provisioning plugins might not care about SPN (e.g. the previously
+> discussed one using mobile-broadband-provider-info?), so I would suggest
+> not creating specific SIM API yet. Of cause it can be added later, if so
+> wished.
 
+You might be able to get away with reading of EFspn just because it is
+cached nicely on disk.  But you will have to carefully consider your
+plugin design if you wish to do so to avoid any race conditions and be
+able to properly clean up.
 
+Regards,
+-Denis
 
-
---===============7602983386737942410==--
+--===============8449810028244959233==--
 
