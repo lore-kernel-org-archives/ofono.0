@@ -1,55 +1,151 @@
-Content-Type: multipart/mixed; boundary="===============1870093818525579892=="
+Content-Type: multipart/mixed; boundary="===============0083865779012508098=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH] TODO: Add task for adding EFcsp support
-Date: Thu, 13 Jan 2011 23:28:50 +0200
-Message-ID: <1294954130-9885-1-git-send-email-aki.niemi@nokia.com>
+From: Faiyaz Baxamusa <faiyaz.baxamusa@nokia.com>
+Subject: Re: [PATCH 2/3] include: Introduce message
+Date: Thu, 13 Jan 2011 14:40:27 -0800
+Message-ID: <4D2F7F5B.9050508@nokia.com>
+In-Reply-To: <4D2F3FB0.1000505@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1870093818525579892==
+--===============0083865779012508098==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This task will add support for CPHS Customer Service Profile (CSP),
-and specifically for the CSP PLMN mode bit therein.
----
- TODO |   13 +++++++++++++
- 1 files changed, 13 insertions(+), 0 deletions(-)
+Hi Denis:
 
-diff --git a/TODO b/TODO
-index 6ad972e..1c0392f 100644
---- a/TODO
-+++ b/TODO
-@@ -97,6 +97,19 @@ SIM / SIM File system
-   Complexity: C1
-   Owner: Marit Henriksen <marit.henriksen@stericsson.com>
- =
+On 01/13/2011 10:08 AM, ext Denis Kenzior wrote:
+> Hi Faiyaz,
+>
+> On 01/06/2011 01:50 PM, Faiyaz Baxamusa wrote:
+>> ---
+>>   Makefile.am       |    2 +-
+>>   include/message.h |   67 +++++++++++++++++++++++++++++++++++++++++++++=
+++++++++
+>>   2 files changed, 68 insertions(+), 1 deletions(-)
+>>   create mode 100644 include/message.h
+>
+> This is not an atom, it is an implementation detail inside the core.  So
+> please don't put this into include/ (this is where the public API, for
+> e.g. plugins and drivers goes)
+>
+> Moving this inside src/message.h is the way to go.
 
-+- Add support for CPHS Customer Service Profile (CSP).  This task adds sup=
-port
-+  for reading the EFcsp file and in particular, interpreting the PLMN mode=
- bit
-+  within the 'Value Added Services' service group.
-+
-+  Based on the PLMN mode value, manual network selection needs to either be
-+  enabled or disabled in the netreg atom.  Also to accommodate this, there
-+  probably needs to be a new 'forced' mode to indicate that manual network
-+  selection is disabled.
-+
-+  Priority: Medium
-+  Complexity: C1
-+  Owner: Aki Niemi <aki.niemi@nokia.com>
-+
- Modem Emulator
- =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
- =
+Will move the file to src/message.h
 
--- =
+>
+>>
+>> diff --git a/Makefile.am b/Makefile.am
+>> index 14f53ef..8b19eef 100644
+>> --- a/Makefile.am
+>> +++ b/Makefile.am
+>> @@ -15,7 +15,7 @@ include_HEADERS =3D include/log.h include/plugin.h inc=
+lude/history.h \
+>>   			include/radio-settings.h include/stk.h \
+>>   			include/audio-settings.h include/nettime.h \
+>>   			include/ctm.h include/cdma-voicecall.h \
+>> -			include/cdma-sms.h
+>> +			include/cdma-sms.h include/message.h
+>>
+>>   nodist_include_HEADERS =3D include/version.h
+>>
+>> diff --git a/include/message.h b/include/message.h
+>> new file mode 100644
+>> index 0000000..7c60390
+>> --- /dev/null
+>> +++ b/include/message.h
+>> @@ -0,0 +1,67 @@
+>> +/*
+>> + *
+>> + *  oFono - Open Source Telephony
+>> + *
+>> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+>> + *
+>> + *  This program is free software; you can redistribute it and/or modify
+>> + *  it under the terms of the GNU General Public License version 2 as
+>> + *  published by the Free Software Foundation.
+>> + *
+>> + *  This program is distributed in the hope that it will be useful,
+>> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+>> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>> + *  GNU General Public License for more details.
+>> + *
+>> + *  You should have received a copy of the GNU General Public License
+>> + *  along with this program; if not, write to the Free Software
+>> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-13=
+01  USA
+>> + *
+>> + */
+>> +
+>> +#ifndef __OFONO_MESSAGE_H
+>> +#define __OFONO_MESSAGE_H
+>> +
+>> +#ifdef __cplusplus
+>> +extern "C" {
+>> +#endif
+>> +
+>> +#include<ofono/types.h>
+>> +
+>> +enum message_state {
+>> +	MESSAGE_STATE_PENDING,
+>> +	MESSAGE_STATE_SENT,
+>> +	MESSAGE_STATE_FAILED
+>> +};
+>> +
+>> +struct message;
+>> +
+>> +struct message *ofono_message_create(const struct ofono_uuid *uuid,
+>> +								void *data);
+>
+> Please use message_set_data to be symmetrical with the rest of the codeba=
+se.
 
-1.7.1
+Sure will initialize "data" param using message_set_data.
+>
+>> +
+>> +gboolean ofono_message_dbus_register(const char *atompath, struct messa=
+ge *m);
+>> +void ofono_message_dbus_unregister(const char *atompath, struct message=
+ *m);
+>> +
+>> +const struct ofono_uuid *ofono_message_get_uuid(const struct message *m=
+);
+>> +
+>> +void ofono_message_set_state(const char *atompath, struct message *m,
+>> +						enum message_state new_state);
+>> +
+>> +void ofono_message_append_properties(struct message *m, DBusMessageIter=
+ *dict);
+>> +
+>> +void ofono_emit_message_added(const char *atompath, const char *interfa=
+ce,
+>> +							struct message *m);
+>> +
+>> +void ofono_emit_message_removed(const char *atompath, const char *inter=
+face,
+>> +							struct message *m);
+>> +
+>> +void *ofono_message_get_data(struct message *m);
+>> +
+>> +const char *ofono_message_path_from_uuid(const char *atompath,
+>> +						const struct ofono_uuid *uuid);
+>> +
+>
+> Since this is not public API please don't use the ofono_ prefix for
+> this.  Using e.g. message_emit_removed, message_append_properties, etc
+> is good enough.
+
+Will rename all the functions to message_XXX.
+
+Thank you
+Faiyaz
 
 
---===============1870093818525579892==--
+>
+> Regards,
+> -Denis
+
+
+--===============0083865779012508098==--
 
