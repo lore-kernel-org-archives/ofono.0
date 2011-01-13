@@ -1,41 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============7703578551282562678=="
+Content-Type: multipart/mixed; boundary="===============5868324477828599331=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 00/21] Resubmit Zhenhua Zhang work on DUN server with btio
-Date: Thu, 13 Jan 2011 16:20:05 +0200
-Message-ID: <201101131620.05403.remi.denis-courmont@nokia.com>
-In-Reply-To: <4D2F070A.6000504@intel.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH v3 0/2] Add ifx support for enable/disable tty
+Date: Thu, 13 Jan 2011 16:31:20 +0200
+Message-ID: <1294929082-19792-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7703578551282562678==
+--===============5868324477828599331==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thursday 13 January 2011 16:07:06 ext Fr=C3=A9d=C3=A9ric Dalleau, you wr=
-ote:
-> On 01/13/2011 01:17 PM, R=C3=A9mi Denis-Courmont wrote:
-> > HSPA category certification is achieved with PPP over USB and using the
-> > "final user" software. So we are talking about bandwidth in the 10 Mb/s
-> > order
-> =
+Hi,
 
-> This is another story. The patch uses the oFono ppp layer. This is the
-> author's choice and I respect this choice.
-> =
+ Following patch adds the ifxmodem support for enabling/disabling tty mode.
 
-> Why do you think it cannot handle your requirements?
+Regards,
+Jeevaka
 
-I don't know if it can. I am only pointing out that we are not talking abou=
-t =
+Jeevaka Badrappan (2):
+  ifxmodem: add enable/disable ctm support
+  plugins: add ctm create to ifx plugin
 
-orders of magnitude higher bandwidth than V90 which you invoked.
+ Makefile.am                 |    3 +-
+ drivers/ifxmodem/ctm.c      |  194 +++++++++++++++++++++++++++++++++++++++=
+++++
+ drivers/ifxmodem/ifxmodem.c |    2 +
+ drivers/ifxmodem/ifxmodem.h |    3 +
+ plugins/ifx.c               |    2 +
+ 5 files changed, 203 insertions(+), 1 deletions(-)
+ create mode 100644 drivers/ifxmodem/ctm.c
 
--- =
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============7703578551282562678==--
+--===============5868324477828599331==--
 
