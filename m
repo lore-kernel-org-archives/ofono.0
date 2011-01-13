@@ -1,42 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============3731182452215201971=="
+Content-Type: multipart/mixed; boundary="===============6184565265706115561=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH v2, 0/2] Add CDMA devinfo support
-Date: Thu, 13 Jan 2011 12:52:14 -0800
-Message-ID: <1294951936-23868-1-git-send-email-dara.spieker-doyle@nokia.com>
+Subject: [PATCH] cdmamodem: M15 Coding style fix
+Date: Thu, 13 Jan 2011 13:02:53 -0800
+Message-ID: <1294952573-4633-1-git-send-email-dara.spieker-doyle@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3731182452215201971==
+--===============6184565265706115561==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is v2 of the series of patches to provide CDMA AT support device info.
-It re-uses the GSM atom interface and provides cdmamodem driver support, mo=
-ving
-common utilities to atutil.[ch] for sharing with the atmodem driver.
+---
+ drivers/cdmamodem/cdmamodem.h |    4 ++--
+ drivers/cdmamodem/voicecall.c |    4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
-HW support for testing is implemented in the nokiacdma plugin.
+diff --git a/drivers/cdmamodem/cdmamodem.h b/drivers/cdmamodem/cdmamodem.h
+index b085541..5011ade 100644
+--- a/drivers/cdmamodem/cdmamodem.h
++++ b/drivers/cdmamodem/cdmamodem.h
+@@ -21,5 +21,5 @@
+ =
 
-These patches have been tested against the Nokia 7205 CDMA device in a teth=
-ered
-mode.
+ #include <drivers/atmodem/atutil.h>
+ =
 
-Dara Spieker-Doyle (2):
-  cdmamodem: Add CDMA devinfo support
-  nokiacdma: Add CDMA devinfo support
+-extern void cdma_voicecall_init();
+-extern void cdma_voicecall_exit();
++extern void cdma_voicecall_init(void);
++extern void cdma_voicecall_exit(void);
+diff --git a/drivers/cdmamodem/voicecall.c b/drivers/cdmamodem/voicecall.c
+index 5b4f3cc..a0fa79f 100644
+--- a/drivers/cdmamodem/voicecall.c
++++ b/drivers/cdmamodem/voicecall.c
+@@ -147,12 +147,12 @@ static struct ofono_cdma_voicecall_driver driver =3D {
+ 	.hangup			=3D cdma_hangup,
+ };
+ =
 
- Makefile.am                   |    3 +-
- drivers/cdmamodem/cdmamodem.c |    2 +
- drivers/cdmamodem/cdmamodem.h |    2 +
- drivers/cdmamodem/devinfo.c   |  188 +++++++++++++++++++++++++++++++++++++=
-++++
- plugins/nokiacdma.c           |    2 +
- 5 files changed, 196 insertions(+), 1 deletions(-)
- create mode 100644 drivers/cdmamodem/devinfo.c
+-void cdma_voicecall_init()
++void cdma_voicecall_init(void)
+ {
+ 	ofono_cdma_voicecall_driver_register(&driver);
+ }
+ =
+
+-void cdma_voicecall_exit()
++void cdma_voicecall_exit(void)
+ {
+ 	ofono_cdma_voicecall_driver_unregister(&driver);
+ }
+-- =
+
+1.7.0.4
 
 
---===============3731182452215201971==--
+--===============6184565265706115561==--
 
