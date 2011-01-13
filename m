@@ -1,229 +1,218 @@
-Content-Type: multipart/mixed; boundary="===============2147688004098278176=="
+Content-Type: multipart/mixed; boundary="===============8848950687463860167=="
 MIME-Version: 1.0
-From: Jussi.Kangas@tieto.com
-Subject: RE: [PATCH] sim: check if lock is locked after code changing attempt
-Date: Thu, 13 Jan 2011 10:34:23 +0200
-Message-ID: <20A4FB08D632914F9C09B9F05CBDF258192DAA2580@EXMB02.eu.tieto.com>
-In-Reply-To: <4D2D3722.6030803@gmail.com>
+From: Pargada, Carlos <carlos.pargada@intel.com>
+Subject: Segmentation fault on Downlink data transfer
+Date: Thu, 13 Jan 2011 08:58:33 +0000
+Message-ID: <2A84145621092446B6659B8A0F28E26F470064499D@irsmsx501.ger.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2147688004098278176==
+--===============8848950687463860167==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis, =
+Hi Marcel and Denis
+
+There is an issue on downlink data transfer on ifx modem.
+
+Basically, during a data transfer after PDP context activation (long data t=
+ransfer 5MB), a segmentation fault  error could occurs at any time (even it=
+ is not systematic).
+ GLib-CRITICAL **: g_io_channel_write_chars: assertion `channel !=3D NULL' =
+failed
+
+Root cause of this issue is a ring buffer overflow (in gatio received data =
+function). The overflow is detected and the DLC3 source context is destroye=
+d in dispatch source function. After that the disconnect handler is called =
+and try to destroyed the same context.
+
+So on this issue there is 2 points:
+
+1-      Management of the buffer overflow
+
+2-      Buffer overflow cause
+
+For the 1st point, I'm not sure that disconnect DLC channel is the solution=
+ in case of buffer overflow. I believe that is better to discard ongoing pa=
+cket in the buffer. TCP could survived to packet loss and retransmit the pa=
+ckets. Throughput go down but the data pipe is not broken for the applicati=
+on.
+
+For the 2nd point, ring buffer overflow happened because data is not consum=
+e in this buffer. This is a flow control problem. I suspect that for some r=
+eason the consumer is blocked (not schedule) during some time.
+Ring buffer size is set to 4096 bytes. I realize some test with a ring buff=
+er increase to 131072 bytes and I can get long file downlink transfer. Prob=
+ably this size is too much high and  this size  buffer need to be tune.
+
+Could you please give me feedback for this 2 points?
+
+This issue is very similar to bug  track in: http://bugs.meego.com/show_bug=
+.cgi?id=3D11700
 
 
-On Wed, 2011-01-12 at 07:07 +0200, Denis Kenzior wrote:
-> Hi Jussi,
-> =
+Regards
 
-> On 01/11/2011 06:17 AM, Jussi.Kangas(a)tieto.com wrote:
-> > Hi,
-> > =
-
-> > This is fix to Marit Henriksen's TODO item "Check SIM pin status if sim=
-_change_pin fails". I've discussed with Marit and it's ok for her if I fix =
-the issue. Problem here is that issue could perhaps also be fixed with retr=
-y counter solution introduced by Lucas De Marchi couple of tasks ago. That =
-would seem however require some extra implementation in ste modem ( at leas=
-t I was not able get the ofono show correct values without extra modificati=
-ons ) and I think that isimodems don't have that sort of retry counter at a=
-ll. Because of that and since I had this solution already implemented I pro=
-pose it to be added as well. =
-
-> > =
-
-> > Br,
-> > -Jussi
-> > =
-
-> > ---
-> >  src/sim.c |   54 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-> >  1 files changed, 54 insertions(+), 0 deletions(-)
-> > =
-
-> =
-
-> First, please fix your authorship information.  See the AUTHORS file =
-
-> to see what we expect.  Also, please make sure that you're using tabs =
-
-> for indentation and following the relevant coding style.  See the =
-
-> Submitting Patches section in the HACKING document in oFono git as =
-
-> well as doc/coding-style.txt.
-
-I think whole this chapter should be translated as "Do not use Outlook".
-I asked around little bit and best guess seems to be that you are using som=
-ething that takes authorship information from mail address. Also since the =
-patch passes the checkpatch here with no problems whatsoever I guess Outloo=
-k ruined the patch. Fine, I'll try Evolution next. If possible, I would lik=
-e to avoid using the git send-email. I prefer tools with GUI. =
+Carlos
 
 
-> =
-
-> > diff --git a/src/sim.c b/src/sim.c
-> > index d627647..789ddde 100644
-> > --- a/src/sim.c
-> > +++ b/src/sim.c
-> > @@ -712,8 +712,60 @@ static DBusMessage =
-
-> > *sim_unlock_pin(DBusConnection *conn, DBusMessage *msg,  static void =
-
-> > sim_change_pin_cb(const struct ofono_error *error, void *data)  {
-> =
-
-> So my first concern is that whatever you do here also has to work for =
-
-> LockPin and UnlockPin.
-
-I'm not after total solution here. I would like to implement this so that f=
-irst the ChangePin starts working, i.e fullfill the existing TODO task firs=
-t. Reasoning here is that I thought it would be easier to get the fixes in =
-if I keep them small. If u mean that stuff inside (error->error =3D 12) con=
-dition should be as separate function to be usable for LockPin and UnlockPi=
-n, I agree. I was just thinking that separation could be done when fix is e=
-xtended to LockPin and UnlockPin. =
 
 
-> =
-
-> >      struct ofono_sim *sim =3D data;
-> > +    DBusConnection *conn =3D ofono_dbus_get_connection();
-> > +    const char *path =3D __ofono_atom_get_path(sim->atom);
-> > +    struct ofono_modem *modem =3D __ofono_atom_get_modem(sim->atom);
-> > +    const char *pin_name;
-> >  =
-
-> >      if (error->type !=3D OFONO_ERROR_TYPE_NO_ERROR) {
-> > +        if (error->error =3D=3D 12) {
-> > +            sim->locked_pins[sim->pin_type] =3D TRUE;
-> > +            switch (sim->pin_type) {
-> > +            case OFONO_SIM_PASSWORD_SIM_PIN:
-> > +                sim->pin_type =3D OFONO_SIM_PASSWORD_SIM_PUK;
-> > +                pin_name =3D sim_passwd_name(
-> > +                    OFONO_SIM_PASSWORD_SIM_PUK);
-> > +                break;
-> > +            case OFONO_SIM_PASSWORD_PHFSIM_PIN:
-> > +                sim->pin_type =3D OFONO_SIM_PASSWORD_PHFSIM_PUK;
-> > +                pin_name =3D sim_passwd_name(
-> > +                    OFONO_SIM_PASSWORD_PHFSIM_PUK);
-> > +                break;
-> > +            case OFONO_SIM_PASSWORD_PHCORP_PIN:
-> > +                sim->pin_type =3D OFONO_SIM_PASSWORD_PHCORP_PUK;
-> > +                pin_name =3D sim_passwd_name(
-> > +                    OFONO_SIM_PASSWORD_PHCORP_PUK);
-> > +                break;
-> > +            case OFONO_SIM_PASSWORD_PHNET_PIN:
-> > +                sim->pin_type =3D OFONO_SIM_PASSWORD_PHNET_PUK;
-> > +                pin_name =3D sim_passwd_name(
-> > +                        OFONO_SIM_PASSWORD_PHNET_PUK);
-> > +            case OFONO_SIM_PASSWORD_PHNETSUB_PIN:
-> > +                sim->pin_type =3D OFONO_SIM_PASSWORD_PHNETSUB_PUK;
-> > +                pin_name =3D sim_passwd_name(
-> > +                    OFONO_SIM_PASSWORD_PHNETSUB_PUK);
-> > +                break;
-> > +            case OFONO_SIM_PASSWORD_PHSP_PIN:
-> > +                sim->pin_type =3D OFONO_SIM_PASSWORD_PHSP_PUK;
-> > +                pin_name =3D sim_passwd_name(
-> > +                    OFONO_SIM_PASSWORD_PHSP_PUK);
-> > +                break;
-> > +            case OFONO_SIM_PASSWORD_SIM_PIN2:
-> > +                sim->pin_type =3D OFONO_SIM_PASSWORD_SIM_PUK2;
-> > +                pin_name =3D sim_passwd_name(
-> > +                    OFONO_SIM_PASSWORD_SIM_PUK2);
-> > +                break;
-> > +            default:
-> > +                break;
-> > +            }
-> > +            ofono_dbus_signal_property_changed(conn, path,
-> > +                OFONO_SIM_MANAGER_INTERFACE,
-> > +                "PinRequired", DBUS_TYPE_STRING,
-> > +                &pin_name);
-> =
-
-> Have you considered querying the PIN state on a failure instead?  If =
-
-> the lock/unlock/change pin operation fails, then re-query the current PIN.
-> If the CPIN is no longer returning READY and we're in a state =
-
-> OFONO_SIM_STATE_READY, then tear us back down to an earlier state.
-
-Yes, I have. As I answered to Lucas already at least with the modem I'm usi=
-ng the return value I get seems to be trustable and there is no point to go=
- querying the information I already know. Also there could be other reasons=
- why sim state is not ready ( small chance of course ) so to satisfy my ped=
-ant nature I would have to either check the return value anyways or use som=
-e other means to get the reason why the sim is not ready in order to be 100=
- % sure that PUK is required. At least Lucas seemed to favor query approach=
-. I guess that has to mean that return value is not trustable with all mode=
-ms. I can change this if required. =
 
 
-> =
-
-> > +
-> > +            if (sim->pin_type !=3D OFONO_SIM_PASSWORD_SIM_PUK2)
-> =
-
-> What is the reason for excepting PUK2 here?  Should we be also =
-
-> proceeding to the SIM_READY state on SIM initialization if PUK2 is =
-
-> required as well?
-
-PUK2 locking does not force modem to drop from network. There is no reason =
-to go pre_sim state. In matter of fact I'm using SIM with PIN2 blocked here=
- all the time since I don't know how to get the code. =
 
 
-> =
 
-> > +                ofono_modem_reset(modem);
-> > +        }
-> =
 
-> This seems a bit drastic, but fair enough...
-> =
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-> >          __ofono_dbus_pending_reply(&sim->pending,
-> >                  __ofono_error_failed(sim->pending));
-> >  =
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
 
-> > @@ -722,6 +774,7 @@ static void sim_change_pin_cb(const struct ofono_er=
-ror *error, void *data)
-> >          return;
-> >      }
-> >  =
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
-> > +    sim->pin_type =3D OFONO_SIM_PASSWORD_NONE;
-> >      __ofono_dbus_pending_reply(&sim->pending,
-> >                  dbus_message_new_method_return(sim->pending));
-> >  =
+--===============8848950687463860167==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> > @@ -764,6 +817,7 @@ static DBusMessage *sim_change_pin(DBusConnection *=
-conn, DBusMessage *msg,
-> >          return dbus_message_new_method_return(msg);
-> >  =
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
+dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEgbmFtZT1HZW5lcmF0b3Ig
+Y29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTIgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+Cjwh
+LS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQ2Ft
+YnJpYSBNYXRoIjsKCXBhbm9zZS0xOjIgNCA1IDMgNSA0IDYgMyAyIDQ7fQpAZm9udC1mYWNlCgl7
+Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KIC8q
+IFN0eWxlIERlZmluaXRpb25zICovCiBwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNv
+Tm9ybWFsCgl7bWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZTox
+MS4wcHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFu
+Lk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0
+LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxv
+d2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0
+aW9uOnVuZGVybGluZTt9CnAuTXNvTGlzdFBhcmFncmFwaCwgbGkuTXNvTGlzdFBhcmFncmFwaCwg
+ZGl2Lk1zb0xpc3RQYXJhZ3JhcGgKCXttc28tc3R5bGUtcHJpb3JpdHk6MzQ7CgltYXJnaW4tdG9w
+OjBjbTsKCW1hcmdpbi1yaWdodDowY207CgltYXJnaW4tYm90dG9tOjBjbTsKCW1hcmdpbi1sZWZ0
+OjM2LjBwdDsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250
+LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28t
+c3R5bGUtdHlwZTpwZXJzb25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5z
+LXNlcmlmIjsKCWNvbG9yOndpbmRvd3RleHQ7fQouTXNvQ2hwRGVmYXVsdAoJe21zby1zdHlsZS10
+eXBlOmV4cG9ydC1vbmx5O30KQHBhZ2UgV29yZFNlY3Rpb24xCgl7c2l6ZTo2MTIuMHB0IDc5Mi4w
+cHQ7CgltYXJnaW46NzAuODVwdCA3MC44NXB0IDcwLjg1cHQgNzAuODVwdDt9CmRpdi5Xb3JkU2Vj
+dGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9CiAvKiBMaXN0IERlZmluaXRpb25zICovCiBAbGlz
+dCBsMAoJe21zby1saXN0LWlkOjg4NjcyMTY1NjsKCW1zby1saXN0LXR5cGU6aHlicmlkOwoJbXNv
+LWxpc3QtdGVtcGxhdGUtaWRzOjE1OTMyMTY3ODAgLTEyMTg0MjU5NzQgNjc4OTUzMjEgNjc4OTUz
+MjMgNjc4OTUzMTEgNjc4OTUzMjEgNjc4OTUzMjMgNjc4OTUzMTEgNjc4OTUzMjEgNjc4OTUzMjM7
+fQpAbGlzdCBsMDpsZXZlbDEKCXttc28tbGV2ZWwtdGV4dDolMS07Cgltc28tbGV2ZWwtdGFiLXN0
+b3A6bm9uZTsKCW1zby1sZXZlbC1udW1iZXItcG9zaXRpb246bGVmdDsKCW1hcmdpbi1sZWZ0OjUz
+LjI1cHQ7Cgl0ZXh0LWluZGVudDotMTguMHB0O30Kb2wKCXttYXJnaW4tYm90dG9tOjBjbTt9CnVs
+Cgl7bWFyZ2luLWJvdHRvbTowY207fQotLT4KPC9zdHlsZT4KPCEtLVtpZiBndGUgbXNvIDldPjx4
+bWw+CiA8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3ht
+bD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlbGF5b3V0IHY6
+ZXh0PSJlZGl0Ij4KICA8bzppZG1hcCB2OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KIDwvbzpzaGFw
+ZWxheW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgoKPGJvZHkgbGFuZz1GUiBsaW5rPWJs
+dWUgdmxpbms9cHVycGxlPgoKPGRpdiBjbGFzcz1Xb3JkU2VjdGlvbjE+Cgo8cCBjbGFzcz1Nc29O
+b3JtYWw+SGkgTWFyY2VsIGFuZCBEZW5pczxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9y
+bWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9
+RU4tVVM+VGhlcmUgaXMgYW4gaXNzdWUgb24gZG93bmxpbmsgZGF0YSB0cmFuc2ZlcgpvbiBpZngg
+bW9kZW0uPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
+bmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFs
+PjxzcGFuIGxhbmc9RU4tVVM+QmFzaWNhbGx5LCBkdXJpbmcgYSBkYXRhIHRyYW5zZmVyIGFmdGVy
+IFBEUApjb250ZXh0IGFjdGl2YXRpb24gKGxvbmcgZGF0YSB0cmFuc2ZlciA1TUIpLCBhIHNlZ21l
+bnRhdGlvbiBmYXVsdCAmbmJzcDtlcnJvcgpjb3VsZCBvY2N1cnMgYXQgYW55IHRpbWUgKGV2ZW4g
+aXQgaXMgbm90IHN5c3RlbWF0aWMpLjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1z
+b05vcm1hbCBzdHlsZT0ndGV4dC1pbmRlbnQ6MzUuNHB0Jz48c3BhbiBsYW5nPUVOLVVTPiZuYnNw
+O0dMaWItQ1JJVElDQUwKKio6IGdfaW9fY2hhbm5lbF93cml0ZV9jaGFyczogYXNzZXJ0aW9uIGBj
+aGFubmVsICE9IE5VTEwnIGZhaWxlZDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1z
+b05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4KCjxw
+IGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPlJvb3QgY2F1c2Ugb2YgdGhpcyBpc3N1
+ZSBpcyBhIHJpbmcgYnVmZmVyCm92ZXJmbG93IChpbiBnYXRpbyByZWNlaXZlZCBkYXRhIGZ1bmN0
+aW9uKS4gVGhlIG92ZXJmbG93IGlzIGRldGVjdGVkIGFuZCB0aGUKRExDMyBzb3VyY2UgY29udGV4
+dCBpcyBkZXN0cm95ZWQgaW4gZGlzcGF0Y2ggc291cmNlIGZ1bmN0aW9uLiBBZnRlciB0aGF0IHRo
+ZQpkaXNjb25uZWN0IGhhbmRsZXIgaXMgY2FsbGVkIGFuZCB0cnkgdG8gZGVzdHJveWVkIHRoZSBz
+YW1lIGNvbnRleHQuPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxz
+cGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNv
+Tm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+U28gb24gdGhpcyBpc3N1ZSB0aGVyZSBpcyAyIHBvaW50
+czo8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29MaXN0UGFyYWdyYXBoIHN0eWxl
+PSdtYXJnaW4tbGVmdDo1My4yNXB0O3RleHQtaW5kZW50Oi0xOC4wcHQ7Cm1zby1saXN0OmwwIGxl
+dmVsMSBsZm8xJz48IVtpZiAhc3VwcG9ydExpc3RzXT48c3BhbiBsYW5nPUVOLVVTPjxzcGFuCnN0
+eWxlPSdtc28tbGlzdDpJZ25vcmUnPjEtPHNwYW4gc3R5bGU9J2ZvbnQ6Ny4wcHQgIlRpbWVzIE5l
+dyBSb21hbiInPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOwo8L3NwYW4+PC9zcGFuPjwv
+c3Bhbj48IVtlbmRpZl0+PHNwYW4gbGFuZz1FTi1VUz5NYW5hZ2VtZW50IG9mIHRoZSBidWZmZXIK
+b3ZlcmZsb3c8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29MaXN0UGFyYWdyYXBo
+IHN0eWxlPSdtYXJnaW4tbGVmdDo1My4yNXB0O3RleHQtaW5kZW50Oi0xOC4wcHQ7Cm1zby1saXN0
+OmwwIGxldmVsMSBsZm8xJz48IVtpZiAhc3VwcG9ydExpc3RzXT48c3BhbiBsYW5nPUVOLVVTPjxz
+cGFuCnN0eWxlPSdtc28tbGlzdDpJZ25vcmUnPjItPHNwYW4gc3R5bGU9J2ZvbnQ6Ny4wcHQgIlRp
+bWVzIE5ldyBSb21hbiInPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOwo8L3NwYW4+PC9z
+cGFuPjwvc3Bhbj48IVtlbmRpZl0+PHNwYW4gbGFuZz1FTi1VUz5CdWZmZXIgb3ZlcmZsb3cgY2F1
+c2U8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1F
+Ti1VUz4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgPG86cD48L286cD48L3NwYW4+
+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+Rm9yIHRoZSAxPHN1cD5z
+dDwvc3VwPiBwb2ludCwgSSYjODIxNzttIG5vdApzdXJlIHRoYXQgZGlzY29ubmVjdCBETEMgY2hh
+bm5lbCBpcyB0aGUgc29sdXRpb24gaW4gY2FzZSBvZiBidWZmZXIgb3ZlcmZsb3cuIEkgYmVsaWV2
+ZQp0aGF0IGlzIGJldHRlciB0byBkaXNjYXJkIG9uZ29pbmcgcGFja2V0IGluIHRoZSBidWZmZXIu
+IFRDUCBjb3VsZCBzdXJ2aXZlZCB0bwpwYWNrZXQgbG9zcyBhbmQgcmV0cmFuc21pdCB0aGUgcGFj
+a2V0cy4gVGhyb3VnaHB1dCBnbyBkb3duIGJ1dCB0aGUgZGF0YSBwaXBlIGlzCm5vdCBicm9rZW4g
+Zm9yIHRoZSBhcHBsaWNhdGlvbi48bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29O
+b3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBj
+bGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5Gb3IgdGhlIDI8c3VwPm5kPC9zdXA+IHBv
+aW50LCByaW5nIGJ1ZmZlciBvdmVyZmxvdwpoYXBwZW5lZCBiZWNhdXNlIGRhdGEgaXMgbm90IGNv
+bnN1bWUgaW4gdGhpcyBidWZmZXIuIFRoaXMgaXMgYSBmbG93IGNvbnRyb2wKcHJvYmxlbS4gSSBz
+dXNwZWN0IHRoYXQgZm9yIHNvbWUgcmVhc29uIHRoZSBjb25zdW1lciBpcyBibG9ja2VkIChub3Qg
+c2NoZWR1bGUpIGR1cmluZwpzb21lIHRpbWUuPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xh
+c3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+UmluZyBidWZmZXIgc2l6ZSBpcyBzZXQgdG8g
+NDA5NiBieXRlcy4gSQpyZWFsaXplIHNvbWUgdGVzdCB3aXRoIGEgcmluZyBidWZmZXIgaW5jcmVh
+c2UgdG8gMTMxMDcyIGJ5dGVzIGFuZCBJIGNhbiBnZXQKbG9uZyBmaWxlIGRvd25saW5rIHRyYW5z
+ZmVyLiBQcm9iYWJseSB0aGlzIHNpemUgaXMgdG9vIG11Y2ggaGlnaCBhbmQgJm5ic3A7dGhpcwpz
+aXplJm5ic3A7IGJ1ZmZlciBuZWVkIHRvIGJlIHR1bmUuPG86cD48L286cD48L3NwYW4+PC9wPgoK
+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3Nw
+YW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+Q291bGQgeW91IHBs
+ZWFzZSBnaXZlIG1lIGZlZWRiYWNrIGZvciB0aGlzCjIgcG9pbnRzPzxvOnA+PC9vOnA+PC9zcGFu
+PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9v
+OnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPlRoaXMg
+aXNzdWUgaXMgdmVyeSBzaW1pbGFyIHRvIGJ1ZyAmbmJzcDt0cmFjawppbjogPGEgaHJlZj0iaHR0
+cDovL2J1Z3MubWVlZ28uY29tL3Nob3dfYnVnLmNnaT9pZD0xMTcwMCI+aHR0cDovL2J1Z3MubWVl
+Z28uY29tL3Nob3dfYnVnLmNnaT9pZD0xMTcwMDwvYT48bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8
+cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bh
+bj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwv
+bzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5SZWdh
+cmRzPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9
+RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxz
+cGFuIGxhbmc9RU4tVVM+Q2FybG9zPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNv
+Tm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAg
+Y2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+
+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286
+cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4m
+bmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4t
+VVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFu
+IGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9y
+bWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xh
+c3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9w
+PgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48
+L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJz
+cDs8L286cD48L3NwYW4+PC9wPgoKPC9kaXY+Cgo8Zm9udCBmYWNlPSJtb25vc3BhY2UiPi0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLTxicj4KSW50ZWwgQ29ycG9yYXRpb24gU0FTIChGcmVuY2ggc2ltcGxpZmllZCBqb2lu
+dCBzdG9jayBjb21wYW55KTxicj4KUmVnaXN0ZXJlZCBoZWFkcXVhcnRlcnM6ICJMZXMgTW9udGFs
+ZXRzIi0gMiwgcnVlIGRlIFBhcmlzLCA8YnI+CjkyMTk2IE1ldWRvbiBDZWRleCwgRnJhbmNlPGJy
+PgpSZWdpc3RyYXRpb24gTnVtYmVyOiZuYnNwOyAzMDIgNDU2IDE5OSBSLkMuUy4gTkFOVEVSUkU8
+YnI+CkNhcGl0YWw6IDQsNTcyLDAwMCBFdXJvczxicj4KPGJyPgpUaGlzIGUtbWFpbCBhbmQgYW55
+IGF0dGFjaG1lbnRzIG1heSBjb250YWluIGNvbmZpZGVudGlhbCBtYXRlcmlhbCBmb3I8YnI+CnRo
+ZSBzb2xlIHVzZSBvZiB0aGUgaW50ZW5kZWQgcmVjaXBpZW50KHMpLiBBbnkgcmV2aWV3IG9yIGRp
+c3RyaWJ1dGlvbjxicj4KYnkgb3RoZXJzIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElmIHlvdSBh
+cmUgbm90IHRoZSBpbnRlbmRlZDxicj4KcmVjaXBpZW50LCBwbGVhc2UgY29udGFjdCB0aGUgc2Vu
+ZGVyIGFuZCBkZWxldGUgYWxsIGNvcGllcy48L2ZvbnQ+PC9ib2R5PgoKPC9odG1sPgo=
 
-> >      sim->pending =3D dbus_message_ref(msg);
-> > +    sim->pin_type =3D type;
-> >      sim->driver->change_passwd(sim, type, old, new,
-> >                      sim_change_pin_cb, sim);
-> >  =
-
-> =
-
-> Regards,
-> -Denis
-
-Br,
--Jussi
-
---===============2147688004098278176==--
+--===============8848950687463860167==--
 
