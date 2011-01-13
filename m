@@ -1,90 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============8892144142036538936=="
+Content-Type: multipart/mixed; boundary="===============0229614369093341627=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 4/6] Core support for packet switched bearer reporting
-Date: Thu, 13 Jan 2011 12:49:39 +0200
-Message-ID: <1294915781-8330-4-git-send-email-remi.denis-courmont@nokia.com>
+Subject: [PATCH 5/6] GPRS: document bearer property
+Date: Thu, 13 Jan 2011 12:49:40 +0200
+Message-ID: <1294915781-8330-5-git-send-email-remi.denis-courmont@nokia.com>
 In-Reply-To: <1294915781-8330-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8892144142036538936==
+--===============0229614369093341627==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/gprs.c |   27 +++++++++++++++++++++++++++
- 1 files changed, 27 insertions(+), 0 deletions(-)
+ doc/connman-api.txt |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 0e86bdf..7ef81d5 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -67,6 +67,7 @@ struct ofono_gprs {
- 	ofono_bool_t suspended;
- 	int status;
- 	int flags;
-+	int bearer;
- 	guint suspend_timeout;
- 	struct idmap *pid_map;
- 	unsigned int last_context_id;
-@@ -1319,6 +1320,8 @@ static void gprs_attached_update(struct ofono_gprs *g=
-prs)
- 					OFONO_CONNECTION_CONTEXT_INTERFACE,
- 					"Active", DBUS_TYPE_BOOLEAN, &value);
- 		}
-+
-+		gprs->bearer =3D -1;
- 	}
+diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+index 22e02e5..13f622c 100644
+--- a/doc/connman-api.txt
++++ b/doc/connman-api.txt
+@@ -77,6 +77,16 @@ Properties	boolean Attached [readonly]
+ 			be available, e.g. receiving SMS over packet radio
+ 			or network initiated PDP activation.
  =
 
- 	path =3D __ofono_atom_get_path(gprs->atom);
-@@ -1433,6 +1436,13 @@ static DBusMessage *gprs_get_properties(DBusConnecti=
-on *conn,
- 	value =3D gprs->attached;
- 	ofono_dbus_dict_append(&dict, "Attached", DBUS_TYPE_BOOLEAN, &value);
++		string Bearer [readonly, optional]
++
++			Contains the data bearer technology as reported by the
++			GPRS service registration (if known).
++
++			Possible values are:
++			"gsm", "edge", "umts", "hsdpa", "hsupa",
++			"hspa" (HSDPA and HSUPA at the same time) and
++			"lte"
++
+ 		boolean Suspended [readonly, optional]
  =
 
-+	if (gprs->bearer !=3D -1) {
-+		const char *bearer =3D packet_bearer_to_string(gprs->bearer);
-+
-+		ofono_dbus_dict_append(&dict, "Bearer",
-+					DBUS_TYPE_STRING, &bearer);
-+	}
-+
- 	value =3D gprs->roaming_allowed;
- 	ofono_dbus_dict_append(&dict, "RoamingAllowed",
- 				DBUS_TYPE_BOOLEAN, &value);
-@@ -1979,6 +1989,23 @@ void ofono_gprs_add_context(struct ofono_gprs *gprs,
- 	__ofono_atom_register(gc->atom, gprs_context_unregister);
- }
- =
-
-+void ofono_gprs_bearer_notify(struct ofono_gprs *gprs, int bearer)
-+{
-+	DBusConnection *conn =3D ofono_dbus_get_connection();
-+	const char *path;
-+	const char *value;
-+
-+	if (gprs->bearer =3D=3D bearer)
-+		return;
-+
-+	gprs->bearer =3D bearer;
-+	path =3D __ofono_atom_get_path(gprs->atom);
-+	value =3D packet_bearer_to_string(bearer);
-+	ofono_dbus_signal_property_changed(conn, path,
-+					OFONO_CONNECTION_CONTEXT_INTERFACE,
-+					"Bearer", DBUS_TYPE_STRING, &value);
-+}
-+
- void ofono_gprs_context_deactivated(struct ofono_gprs_context *gc,
- 					unsigned int cid)
- {
+ 			Contains whether the GPRS service is suspended.
 -- =
 
 1.7.1
 
 
---===============8892144142036538936==--
+--===============0229614369093341627==--
 
