@@ -1,58 +1,140 @@
-Content-Type: multipart/mixed; boundary="===============2795227655944428669=="
+Content-Type: multipart/mixed; boundary="===============7665089090377142994=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2 3/9] gps: add public header
-Date: Thu, 13 Jan 2011 11:33:22 -0600
-Message-ID: <4D2F3762.3030604@gmail.com>
-In-Reply-To: <1294716238-21218-4-git-send-email-rafael.zurita@profusion.mobi>
+Subject: Re: [PATCH 1/3] doc: Add message state API
+Date: Thu, 13 Jan 2011 12:04:17 -0600
+Message-ID: <4D2F3EA1.7020407@gmail.com>
+In-Reply-To: <1294343455-29551-2-git-send-email-faiyaz.baxamusa@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2795227655944428669==
+--===============7665089090377142994==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rafael,
+Hi Faiyaz,
 
-> +
-> +#include <ofono/types.h>
-> +
-> +struct ofono_gps;
-> +
-> +enum ofono_gps_device_type {
-> +	OFONO_GPS_DEVICE_TYPE_NMEA =3D 0,
-> +};
-> +
-> +typedef void (*ofono_gps_enable_cb_t)(const struct ofono_error *error,
-> +					enum ofono_gps_device_type type,
-> +					const char *device,
-> +					void *data);
+On 01/06/2011 01:50 PM, Faiyaz Baxamusa wrote:
+> ---
+>  Makefile.am               |    2 +-
+>  doc/cdma-message-api.txt  |    5 +++++
+>  doc/message-api.txt       |   24 +-----------------------
 
-This function's signature would be modified to receive an int fd instead
-of type and device.
+Please rename this file into doc/messagemanager-api.txt
 
-> +typedef void (*ofono_gps_disable_cb_t)(const struct ofono_error *error,
-> +								void *data);
+>  doc/message-state-api.txt |   27 +++++++++++++++++++++++++++
+
+And this one can be message-api.txt
+
+>  4 files changed, 34 insertions(+), 24 deletions(-)
+>  create mode 100644 doc/message-state-api.txt
+> =
+
+> diff --git a/Makefile.am b/Makefile.am
+> index 09dc9ad..14f53ef 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -369,7 +369,7 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt do=
+c/release-faq.txt \
+>  			doc/phonebook-api.txt doc/radio-settings-api.txt \
+>  			doc/sim-api.txt doc/stk-api.txt \
+>  			doc/audio-settings-api.txt doc/text-telephony-api.txt \
+> -			doc/calypso-modem.txt
+> +			doc/calypso-modem.txt doc/message-state-api.txt
+>  =
+
+>  =
+
+>  test_scripts =3D test/backtrace \
+> diff --git a/doc/cdma-message-api.txt b/doc/cdma-message-api.txt
+> index 8e6b9ea..c3d03f8 100644
+> --- a/doc/cdma-message-api.txt
+> +++ b/doc/cdma-message-api.txt
+> @@ -110,3 +110,8 @@ Properties	boolean UseDeliveryAcknowledgement
+>  			The call back number for the user.  If the number is
+>  			empty, then the optional field is not included
+>  			in the encoded PDU.
 > +
-> +struct ofono_gps_driver {
-> +	const char *name;
-
-This structure should contain enum ofono_gps_device_type type member.
-
-> +	int (*probe)(struct ofono_gps *gps, unsigned int vendor, void *data);
-> +	void (*remove)(struct ofono_gps *gps);
-> +	void (*enable)(struct ofono_gps *gps,
-> +					ofono_gps_enable_cb_t cb, void *data);
-> +	void (*disable)(struct ofono_gps *gps,
-> +					ofono_gps_disable_cb_t cb, void *data);
-> +};
+> +Message hierarchy
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 > +
+> +Please refer to message-state-api.txt
 
-The rest is left more or less as is.
+Please get rid of this chunk.
+
+> diff --git a/doc/message-api.txt b/doc/message-api.txt
+> index f7ab22a..e6c8522 100644
+> --- a/doc/message-api.txt
+> +++ b/doc/message-api.txt
+> @@ -90,26 +90,4 @@ Properties	string ServiceCenterAddress
+>  Message hierarchy
+>  =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>  =
+
+> -Service		org.ofono
+> -Interface	org.ofono.Message
+> -Object path	[variable prefix]/{modem0,modem1,...}/{message_01,...}
+> -
+> -Methods		dict GetProperties()
+> -
+> -			Returns properties for the message object. See
+> -			the properties section for available properties.
+> -
+> -			Possible Errors: [service].Error.InvalidArguments
+> -
+> -Signals		PropertyChanged(string name, variant value)
+> -
+> -			This signal indicates a changed value of the given
+> -			property.
+> -
+> -Properties	string State
+> -
+> -			Contains the state of the message object.  Possible
+> -			values are:
+> -				"pending",
+> -				"sent",
+> -				"failed"
+> +Please refer to message-state-api.txt
+> diff --git a/doc/message-state-api.txt b/doc/message-state-api.txt
+> new file mode 100644
+> index 0000000..edd0cbf
+> --- /dev/null
+> +++ b/doc/message-state-api.txt
+> @@ -0,0 +1,27 @@
+> +Message hierarchy
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +Service		org.ofono
+> +Interface	org.ofono.Message
+> +Object path	[variable prefix]/{modem0,modem1,...}/{message_01,...}
+> +
+> +Methods		dict GetProperties()
+> +
+> +			Returns properties for the message object. See
+> +			the properties section for available properties.
+> +
+> +			Possible Errors: [service].Error.InvalidArguments
+> +
+> +Signals		PropertyChanged(string name, variant value)
+> +
+> +			This signal indicates a changed value of the given
+> +			property.
+> +
+> +Properties	string State
+> +
+> +			Contains the state of the message object.  Possible
+> +			values are:
+> +				"pending",
+> +				"sent",
+> +				"failed"
+> +				"invalid"
+
+Please get rid of this invalid state.
 
 Regards,
 -Denis
 
---===============2795227655944428669==--
+
+--===============7665089090377142994==--
 
