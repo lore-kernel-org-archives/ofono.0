@@ -1,67 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============2095414483872199405=="
+Content-Type: multipart/mixed; boundary="===============5521766742674649113=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] cdmamodem: Add CDMA devinfo support
-Date: Thu, 13 Jan 2011 00:03:45 -0600
-Message-ID: <4D2E95C1.40209@gmail.com>
-In-Reply-To: <1294782301-8592-3-git-send-email-dara.spieker-doyle@nokia.com>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
+Date: Thu, 13 Jan 2011 08:36:12 +0200
+Message-ID: <1294900572.18783.21.camel@jsaunama-desktop>
+In-Reply-To: <4D2DDAF6.5050600@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2095414483872199405==
+--===============5521766742674649113==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dara,
+Hello
 
-On 01/11/2011 03:45 PM, Dara Spieker-Doyle wrote:
-> ---
->  Makefile.am                   |    3 +-
->  drivers/cdmamodem/cdmamodem.c |    2 +
->  drivers/cdmamodem/cdmamodem.h |    2 +
->  drivers/cdmamodem/devinfo.c   |  169 +++++++++++++++++++++++++++++++++++=
-++++++
->  4 files changed, 175 insertions(+), 1 deletions(-)
->  create mode 100644 drivers/cdmamodem/devinfo.c
+On Wed, 2011-01-12 at 10:46 -0600, Denis Kenzior wrote:
+> > ...SIM EF-SPN... =
+
 > =
 
+> You're correct that netreg is the only consumer.  There was no need for
+> anyone else to see this information.  However, this begs the question,
+> why do you need the SPN data?
 
-Can you please rebase and resubmit this patch?  Further comments below:
+Some virtual operators are using the same MCC/MNC as their host, or some
+operators have several different trade names, and these can have
+different access settings (at least different UI visible name). =
 
-> diff --git a/drivers/cdmamodem/cdmamodem.h b/drivers/cdmamodem/cdmamodem.h
-> index a5991cf..ef4fad3 100644
-> --- a/drivers/cdmamodem/cdmamodem.h
-> +++ b/drivers/cdmamodem/cdmamodem.h
-> @@ -23,3 +23,5 @@
->  =
+SPN in SIM typically tells these cases apart. This is why I included
+reading SPN to that example provisioning.
 
->  extern void cdma_at_voicecall_init();
->  extern void cdma_at_voicecall_exit();
-> +extern void cdma_at_devinfo_init();
-> +extern void cdma_at_devinfo_exit();
+All provisioning plugins might not care about SPN (e.g. the previously
+discussed one using mobile-broadband-provider-info?), so I would suggest
+not creating specific SIM API yet. Of cause it can be added later, if so
+wished.
 
-Please name this cdma_devinfo_init/exit
+--Jukka
 
 
-<snip>
 
-> +static struct ofono_devinfo_driver driver =3D {
-> +	.name 			=3D "cdmamodem",
-> +	.probe	 		=3D cdma_at_devinfo_probe,
-> +	.remove			=3D cdma_at_devinfo_remove,
-> +	.query_manufacturer	=3D cdma_at_query_manufacturer,
-> +	.query_model		=3D cdma_at_query_model,
-> +	.query_revision		=3D cdma_at_query_revision,
-> +	.query_serial		=3D cdma_at_query_serial
-
-Please drop the 'at' from these.  Use cdma_devinfo_probe, etc.
-
-> +};
-> +
-
-Regards,
--Denis
-
---===============2095414483872199405==--
+--===============5521766742674649113==--
 
