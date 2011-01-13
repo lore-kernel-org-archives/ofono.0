@@ -1,40 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============6509085919788334043=="
+Content-Type: multipart/mixed; boundary="===============8086180428134854746=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/6] Add conformance sim application
-Date: Wed, 12 Jan 2011 17:27:25 -0600
-Message-ID: <4D2E38DD.4090402@gmail.com>
-In-Reply-To: <1294755370-12442-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH] test: show CalledLinePresentation property
+Date: Wed, 12 Jan 2011 23:00:01 -0200
+Message-ID: <1294880401-3398-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6509085919788334043==
+--===============8086180428134854746==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+---
+ test/test-call-settings |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-On 01/11/2011 08:16 AM, Jeevaka Badrappan wrote:
-> Hi,
-> =
+diff --git a/test/test-call-settings b/test/test-call-settings
+index 3258da7..f49ad0b 100755
+--- a/test/test-call-settings
++++ b/test/test-call-settings
+@@ -48,6 +48,8 @@ if __name__ =3D=3D "__main__":
+ 		(properties['CallingLineRestriction'])
+ 	print "Network Status of Calling Line Presentation: %s" %\
+ 		(properties['CallingLinePresentation'])
++	print "Network Status of Called Line Presentation: %s" %\
++		(properties['CalledLinePresentation'])
+ 	print "Network Status of Connected Line Presentation: %s" %\
+ 		(properties['ConnectedLinePresentation'])
+ 	print "Hide my Caller Id: %s" % (properties['HideCallerId'])
+-- =
 
->  Following set of patches adds the ui support for selecting
-> sim applications and also adds conformance sim application.
-> DisplayText, Get Inkey, Get Input and MoreTime test cases
-> are added to the conformance sim application. Logging of the
-> result in a file can be done but it is not part of this patch.
-> =
-
-> Regards,
-> Jeevaka
-> =
+1.7.3.5
 
 
-Looks good to me, all 6 patches have been applied.
-
-Regards,
--Denis
-
---===============6509085919788334043==--
+--===============8086180428134854746==--
 
