@@ -1,48 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============3322342654142887814=="
+Content-Type: multipart/mixed; boundary="===============6732662816969834535=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH] sim: check if lock is locked after code changing attempt
-Date: Thu, 13 Jan 2011 11:35:06 -0200
-Message-ID: <AANLkTi=fiXMQnegj1+o3z8o9KjuBBzzcaxsjCCajX+V+@mail.gmail.com>
-In-Reply-To: <20A4FB08D632914F9C09B9F05CBDF258192DAA2580@EXMB02.eu.tieto.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@intel.com>
+Subject: Re: [PATCH 00/21] Resubmit Zhenhua Zhang work on DUN server with btio
+Date: Thu, 13 Jan 2011 15:07:06 +0100
+Message-ID: <4D2F070A.6000504@intel.com>
+In-Reply-To: <201101131417.35023.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3322342654142887814==
+--===============6732662816969834535==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Ho Jussi
+On 01/13/2011 01:17 PM, R=C3=A9mi Denis-Courmont wrote:
 
-On Thu, Jan 13, 2011 at 6:34 AM,  <Jussi.Kangas@tieto.com> wrote:
-> On Wed, 2011-01-12 at 07:07 +0200, Denis Kenzior wrote:
->> First, please fix your authorship information. =C2=A0See the AUTHORS file
->> to see what we expect. =C2=A0Also, please make sure that you're using ta=
-bs
->> for indentation and following the relevant coding style. =C2=A0See the
->> Submitting Patches section in the HACKING document in oFono git as
->> well as doc/coding-style.txt.
->
-> I think whole this chapter should be translated as "Do not use Outlook".
-> I asked around little bit and best guess seems to be that you are using s=
-omething that takes authorship information from mail
+> HSPA category certification is achieved with PPP over USB and using the "=
+final
+> user" software. So we are talking about bandwidth in the 10 Mb/s order
 
-This is `git am'
+This is another story. The patch uses the oFono ppp layer. This is the =
 
-> address. Also since the patch passes the checkpatch here with no problems=
- whatsoever I guess Outlook ruined the patch. Fine, > I'll try Evolution ne=
-xt. If possible, I would like to avoid using the git send-email. I prefer t=
-ools with GUI.
+author's choice and I respect this choice.
 
-You can use whatever client you want to write email. But for sending
-patches, git send-email is the best one since you won't need to copy
-and paste, nor attach anything. Give it a try and you'll regret not
-using it first.
+Why do you think it cannot handle your requirements?
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
 
-
-Lucas De Marchi
-
---===============3322342654142887814==--
+--===============6732662816969834535==--
 
