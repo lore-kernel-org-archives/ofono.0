@@ -1,56 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============6863151736328732566=="
+Content-Type: multipart/mixed; boundary="===============5612569824012797176=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 00/21] Resubmit Zhenhua Zhang work on DUN server with btio
-Date: Thu, 13 Jan 2011 11:18:44 +0200
-Message-ID: <201101131118.44693.remi.denis-courmont@nokia.com>
-In-Reply-To: <1294852564-1258-1-git-send-email-frederic.dalleau@intel.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: [RFC 3/5] voicecall: Add ofono_voicecall_tty_notify api
+Date: Thu, 13 Jan 2011 11:43:34 +0200
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802D59FD7@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <C50CA21D80D6B74F80FB941E215DF4140D4EDD@008-AM1MPN1-002.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6863151736328732566==
+--===============5612569824012797176==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wednesday 12 January 2011 19:15:43 ext Fr=C3=A9d=C3=A9ric Dalleau, you w=
-rote:
-> This is rebased as of head of today
+Hi Kai Vehmanen,
 
-This seems quite useless work to me.
+ofono-bounces(a)ofono.org wrote:
 
-There are a number of AT commands that are required but really do not belon=
-g =
+> not later, but as part of standard call setup. E.g. on ISI,
+> CTM is a property of a voice call. And this makes sense as
+> TTY calls _are_ essentially voice calls, with just a bit
+> indicating to the network that the voice circuit should be
+> free of any transcoder/audioprocessing/etc that is not
+> compatible with CTM. And this is negotiated as part of
+> standard call setup (same way as supported codecs).
+> =
 
-in oFono. Consider for example AT+CKPD/AT+CTSA/AT+CMEC input emulation and =
 
-AT+CBC* battery notifications. Those things have nothing to do with Cellula=
-r =
+I agree but ofono_voicecall_tty_notify is to inform the
+ME(MO originated ME) that the call is accepted as a TTY call on
+the remote side. =
 
-other than the C in the command prefix.  Then we have commands that are rel=
-ated =
 
-to cellular functionality but higher-level than oFono, like AT+CPB* for =
+Regards,
+Jeevaka
 
-phonebook.
-
-Now, I recognize this patch only attempts to provide BT DUN profile, not th=
-e =
-
-whole 27.007 set. But doing that in userspace in oFono is probably the slow=
-est =
-
-and most inefficient approach to the problem. And MeeGo will have to solve =
-the =
-
-more general problem in any case, if MeeGo cellular devices are to be =
-
-certified.
-
--- =
-
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============6863151736328732566==--
+--===============5612569824012797176==--
 
