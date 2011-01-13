@@ -1,155 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============6747431641678425301=="
+Content-Type: multipart/mixed; boundary="===============1870093818525579892=="
 MIME-Version: 1.0
-From: Faiyaz Baxamusa <faiyaz.baxamusa@nokia.com>
-Subject: Re: [PATCH 1/3] doc: Add message state API
-Date: Thu, 13 Jan 2011 13:56:48 -0800
-Message-ID: <4D2F7520.5000609@nokia.com>
-In-Reply-To: <4D2F3EA1.7020407@gmail.com>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: [PATCH] TODO: Add task for adding EFcsp support
+Date: Thu, 13 Jan 2011 23:28:50 +0200
+Message-ID: <1294954130-9885-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6747431641678425301==
+--===============1870093818525579892==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+This task will add support for CPHS Customer Service Profile (CSP),
+and specifically for the CSP PLMN mode bit therein.
+---
+ TODO |   13 +++++++++++++
+ 1 files changed, 13 insertions(+), 0 deletions(-)
 
-On 01/13/2011 10:04 AM, ext Denis Kenzior wrote:
-> Hi Faiyaz,
->
-> On 01/06/2011 01:50 PM, Faiyaz Baxamusa wrote:
->> ---
->>   Makefile.am               |    2 +-
->>   doc/cdma-message-api.txt  |    5 +++++
->>   doc/message-api.txt       |   24 +-----------------------
->
-> Please rename this file into doc/messagemanager-api.txt
+diff --git a/TODO b/TODO
+index 6ad972e..1c0392f 100644
+--- a/TODO
++++ b/TODO
+@@ -97,6 +97,19 @@ SIM / SIM File system
+   Complexity: C1
+   Owner: Marit Henriksen <marit.henriksen@stericsson.com>
+ =
 
-I will rename current doc/message-api.txt to
-doc/messagemanager-api.txt file and also rename doc/cdma-message-api.txt =
++- Add support for CPHS Customer Service Profile (CSP).  This task adds sup=
+port
++  for reading the EFcsp file and in particular, interpreting the PLMN mode=
+ bit
++  within the 'Value Added Services' service group.
++
++  Based on the PLMN mode value, manual network selection needs to either be
++  enabled or disabled in the netreg atom.  Also to accommodate this, there
++  probably needs to be a new 'forced' mode to indicate that manual network
++  selection is disabled.
++
++  Priority: Medium
++  Complexity: C1
++  Owner: Aki Niemi <aki.niemi@nokia.com>
++
+ Modem Emulator
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ =
 
-to doc/cdma-messagemanager-api.txt
+-- =
 
->
->>   doc/message-state-api.txt |   27 +++++++++++++++++++++++++++
->
-> And this one can be message-api.txt
-
-I will rename the new file to doc/message-api.txt
-
->
->>   4 files changed, 34 insertions(+), 24 deletions(-)
->>   create mode 100644 doc/message-state-api.txt
->>
->> diff --git a/Makefile.am b/Makefile.am
->> index 09dc9ad..14f53ef 100644
->> --- a/Makefile.am
->> +++ b/Makefile.am
->> @@ -369,7 +369,7 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt d=
-oc/release-faq.txt \
->>   			doc/phonebook-api.txt doc/radio-settings-api.txt \
->>   			doc/sim-api.txt doc/stk-api.txt \
->>   			doc/audio-settings-api.txt doc/text-telephony-api.txt \
->> -			doc/calypso-modem.txt
->> +			doc/calypso-modem.txt doc/message-state-api.txt
->>
->>
->>   test_scripts =3D test/backtrace \
->> diff --git a/doc/cdma-message-api.txt b/doc/cdma-message-api.txt
->> index 8e6b9ea..c3d03f8 100644
->> --- a/doc/cdma-message-api.txt
->> +++ b/doc/cdma-message-api.txt
->> @@ -110,3 +110,8 @@ Properties	boolean UseDeliveryAcknowledgement
->>   			The call back number for the user.  If the number is
->>   			empty, then the optional field is not included
->>   			in the encoded PDU.
->> +
->> +Message hierarchy
->> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->> +
->> +Please refer to message-state-api.txt
->
-> Please get rid of this chunk.
->
-
-Sure.
-
->> diff --git a/doc/message-api.txt b/doc/message-api.txt
->> index f7ab22a..e6c8522 100644
->> --- a/doc/message-api.txt
->> +++ b/doc/message-api.txt
->> @@ -90,26 +90,4 @@ Properties	string ServiceCenterAddress
->>   Message hierarchy
->>   =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->>
->> -Service		org.ofono
->> -Interface	org.ofono.Message
->> -Object path	[variable prefix]/{modem0,modem1,...}/{message_01,...}
->> -
->> -Methods		dict GetProperties()
->> -
->> -			Returns properties for the message object. See
->> -			the properties section for available properties.
->> -
->> -			Possible Errors: [service].Error.InvalidArguments
->> -
->> -Signals		PropertyChanged(string name, variant value)
->> -
->> -			This signal indicates a changed value of the given
->> -			property.
->> -
->> -Properties	string State
->> -
->> -			Contains the state of the message object.  Possible
->> -			values are:
->> -				"pending",
->> -				"sent",
->> -				"failed"
->> +Please refer to message-state-api.txt
->> diff --git a/doc/message-state-api.txt b/doc/message-state-api.txt
->> new file mode 100644
->> index 0000000..edd0cbf
->> --- /dev/null
->> +++ b/doc/message-state-api.txt
->> @@ -0,0 +1,27 @@
->> +Message hierarchy
->> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->> +
->> +Service		org.ofono
->> +Interface	org.ofono.Message
->> +Object path	[variable prefix]/{modem0,modem1,...}/{message_01,...}
->> +
->> +Methods		dict GetProperties()
->> +
->> +			Returns properties for the message object. See
->> +			the properties section for available properties.
->> +
->> +			Possible Errors: [service].Error.InvalidArguments
->> +
->> +Signals		PropertyChanged(string name, variant value)
->> +
->> +			This signal indicates a changed value of the given
->> +			property.
->> +
->> +Properties	string State
->> +
->> +			Contains the state of the message object.  Possible
->> +			values are:
->> +				"pending",
->> +				"sent",
->> +				"failed"
->> +				"invalid"
->
-> Please get rid of this invalid state.
->
-
-Sure, will remove "invalid"
-
-> Regards,
-> -Denis
->
+1.7.1
 
 
---===============6747431641678425301==--
+--===============1870093818525579892==--
 
