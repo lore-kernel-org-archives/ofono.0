@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============7665089090377142994=="
+Content-Type: multipart/mixed; boundary="===============1961312318270503428=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] doc: Add message state API
-Date: Thu, 13 Jan 2011 12:04:17 -0600
-Message-ID: <4D2F3EA1.7020407@gmail.com>
-In-Reply-To: <1294343455-29551-2-git-send-email-faiyaz.baxamusa@nokia.com>
+Subject: Re: [PATCH 2/3] include: Introduce message
+Date: Thu, 13 Jan 2011 12:08:48 -0600
+Message-ID: <4D2F3FB0.1000505@gmail.com>
+In-Reply-To: <1294343455-29551-3-git-send-email-faiyaz.baxamusa@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7665089090377142994==
+--===============1961312318270503428==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,124 +17,120 @@ Hi Faiyaz,
 
 On 01/06/2011 01:50 PM, Faiyaz Baxamusa wrote:
 > ---
->  Makefile.am               |    2 +-
->  doc/cdma-message-api.txt  |    5 +++++
->  doc/message-api.txt       |   24 +-----------------------
+>  Makefile.am       |    2 +-
+>  include/message.h |   67 +++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  2 files changed, 68 insertions(+), 1 deletions(-)
+>  create mode 100644 include/message.h
 
-Please rename this file into doc/messagemanager-api.txt
+This is not an atom, it is an implementation detail inside the core.  So
+please don't put this into include/ (this is where the public API, for
+e.g. plugins and drivers goes)
 
->  doc/message-state-api.txt |   27 +++++++++++++++++++++++++++
+Moving this inside src/message.h is the way to go.
 
-And this one can be message-api.txt
-
->  4 files changed, 34 insertions(+), 24 deletions(-)
->  create mode 100644 doc/message-state-api.txt
 > =
 
 > diff --git a/Makefile.am b/Makefile.am
-> index 09dc9ad..14f53ef 100644
+> index 14f53ef..8b19eef 100644
 > --- a/Makefile.am
 > +++ b/Makefile.am
-> @@ -369,7 +369,7 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt do=
-c/release-faq.txt \
->  			doc/phonebook-api.txt doc/radio-settings-api.txt \
->  			doc/sim-api.txt doc/stk-api.txt \
->  			doc/audio-settings-api.txt doc/text-telephony-api.txt \
-> -			doc/calypso-modem.txt
-> +			doc/calypso-modem.txt doc/message-state-api.txt
+> @@ -15,7 +15,7 @@ include_HEADERS =3D include/log.h include/plugin.h incl=
+ude/history.h \
+>  			include/radio-settings.h include/stk.h \
+>  			include/audio-settings.h include/nettime.h \
+>  			include/ctm.h include/cdma-voicecall.h \
+> -			include/cdma-sms.h
+> +			include/cdma-sms.h include/message.h
 >  =
 
+>  nodist_include_HEADERS =3D include/version.h
 >  =
 
->  test_scripts =3D test/backtrace \
-> diff --git a/doc/cdma-message-api.txt b/doc/cdma-message-api.txt
-> index 8e6b9ea..c3d03f8 100644
-> --- a/doc/cdma-message-api.txt
-> +++ b/doc/cdma-message-api.txt
-> @@ -110,3 +110,8 @@ Properties	boolean UseDeliveryAcknowledgement
->  			The call back number for the user.  If the number is
->  			empty, then the optional field is not included
->  			in the encoded PDU.
-> +
-> +Message hierarchy
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +Please refer to message-state-api.txt
-
-Please get rid of this chunk.
-
-> diff --git a/doc/message-api.txt b/doc/message-api.txt
-> index f7ab22a..e6c8522 100644
-> --- a/doc/message-api.txt
-> +++ b/doc/message-api.txt
-> @@ -90,26 +90,4 @@ Properties	string ServiceCenterAddress
->  Message hierarchy
->  =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
->  =
-
-> -Service		org.ofono
-> -Interface	org.ofono.Message
-> -Object path	[variable prefix]/{modem0,modem1,...}/{message_01,...}
-> -
-> -Methods		dict GetProperties()
-> -
-> -			Returns properties for the message object. See
-> -			the properties section for available properties.
-> -
-> -			Possible Errors: [service].Error.InvalidArguments
-> -
-> -Signals		PropertyChanged(string name, variant value)
-> -
-> -			This signal indicates a changed value of the given
-> -			property.
-> -
-> -Properties	string State
-> -
-> -			Contains the state of the message object.  Possible
-> -			values are:
-> -				"pending",
-> -				"sent",
-> -				"failed"
-> +Please refer to message-state-api.txt
-> diff --git a/doc/message-state-api.txt b/doc/message-state-api.txt
+> diff --git a/include/message.h b/include/message.h
 > new file mode 100644
-> index 0000000..edd0cbf
+> index 0000000..7c60390
 > --- /dev/null
-> +++ b/doc/message-state-api.txt
-> @@ -0,0 +1,27 @@
-> +Message hierarchy
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +++ b/include/message.h
+> @@ -0,0 +1,67 @@
+> +/*
+> + *
+> + *  oFono - Open Source Telephony
+> + *
+> + *  Copyright (C) 2008-2011  Intel Corporation. All rights reserved.
+> + *
+> + *  This program is free software; you can redistribute it and/or modify
+> + *  it under the terms of the GNU General Public License version 2 as
+> + *  published by the Free Software Foundation.
+> + *
+> + *  This program is distributed in the hope that it will be useful,
+> + *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+> + *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+> + *  GNU General Public License for more details.
+> + *
+> + *  You should have received a copy of the GNU General Public License
+> + *  along with this program; if not, write to the Free Software
+> + *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-130=
+1  USA
+> + *
+> + */
 > +
-> +Service		org.ofono
-> +Interface	org.ofono.Message
-> +Object path	[variable prefix]/{modem0,modem1,...}/{message_01,...}
+> +#ifndef __OFONO_MESSAGE_H
+> +#define __OFONO_MESSAGE_H
 > +
-> +Methods		dict GetProperties()
+> +#ifdef __cplusplus
+> +extern "C" {
+> +#endif
 > +
-> +			Returns properties for the message object. See
-> +			the properties section for available properties.
+> +#include <ofono/types.h>
 > +
-> +			Possible Errors: [service].Error.InvalidArguments
+> +enum message_state {
+> +	MESSAGE_STATE_PENDING,
+> +	MESSAGE_STATE_SENT,
+> +	MESSAGE_STATE_FAILED
+> +};
 > +
-> +Signals		PropertyChanged(string name, variant value)
+> +struct message;
 > +
-> +			This signal indicates a changed value of the given
-> +			property.
-> +
-> +Properties	string State
-> +
-> +			Contains the state of the message object.  Possible
-> +			values are:
-> +				"pending",
-> +				"sent",
-> +				"failed"
-> +				"invalid"
+> +struct message *ofono_message_create(const struct ofono_uuid *uuid,
+> +								void *data);
 
-Please get rid of this invalid state.
+Please use message_set_data to be symmetrical with the rest of the codebase.
+
+> +
+> +gboolean ofono_message_dbus_register(const char *atompath, struct messag=
+e *m);
+> +void ofono_message_dbus_unregister(const char *atompath, struct message =
+*m);
+> +
+> +const struct ofono_uuid *ofono_message_get_uuid(const struct message *m);
+> +
+> +void ofono_message_set_state(const char *atompath, struct message *m,
+> +						enum message_state new_state);
+> +
+> +void ofono_message_append_properties(struct message *m, DBusMessageIter =
+*dict);
+> +
+> +void ofono_emit_message_added(const char *atompath, const char *interfac=
+e,
+> +							struct message *m);
+> +
+> +void ofono_emit_message_removed(const char *atompath, const char *interf=
+ace,
+> +							struct message *m);
+> +
+> +void *ofono_message_get_data(struct message *m);
+> +
+> +const char *ofono_message_path_from_uuid(const char *atompath,
+> +						const struct ofono_uuid *uuid);
+> +
+
+Since this is not public API please don't use the ofono_ prefix for
+this.  Using e.g. message_emit_removed, message_append_properties, etc
+is good enough.
 
 Regards,
 -Denis
 
-
---===============7665089090377142994==--
+--===============1961312318270503428==--
 
