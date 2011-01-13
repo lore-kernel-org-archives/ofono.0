@@ -1,47 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============6993162175813270918=="
+Content-Type: multipart/mixed; boundary="===============3179548659121971445=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC 2/4] stk: Handle Launch Browser proactive command
-Date: Thu, 13 Jan 2011 10:35:46 -0600
-Message-ID: <4D2F29E2.403@gmail.com>
-In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802D5A07B@fioues07.ebgroup.elektrobit.com>
+Subject: Re: [PATCH 1/2] Add sim driver call for applications discovery.
+Date: Thu, 13 Jan 2011 10:39:09 -0600
+Message-ID: <4D2F2AAD.8030208@gmail.com>
+In-Reply-To: <1294834365-11029-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6993162175813270918==
+--===============3179548659121971445==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Andrew,
 
-On 01/13/2011 08:56 AM, Jeevaka.Badrappan(a)elektrobit.com wrote:
-> Hi,
+On 01/12/2011 06:12 AM, Andrzej Zaborowski wrote:
+> ---
+>  include/sim.h |   11 +++++++++++
+>  1 files changed, 11 insertions(+), 0 deletions(-)
 > =
 
->>>
->>> So a question about this.  Why are we checking the netreg atom?
->>> Shouldn't we be checking the gprs atom's attached property?  But this
->>> brings up an even more interesting question, do we even need to
->>> assume that we have to be attached to the cellular network to
->>> perform these operations?  We could in theory go over wifi.
->>
->> I agree that the modem online property is unrelated to this.
->> Also the card may in theory specify a URL that designates a
->> local file or something on a local network, not the internet.
->>
-> =
+> diff --git a/include/sim.h b/include/sim.h
+> index aab981c..e4176e3 100644
+> --- a/include/sim.h
+> +++ b/include/sim.h
+> @@ -77,6 +77,12 @@ enum ofono_sim_state {
+>  	OFONO_SIM_STATE_READY,
+>  };
+>  =
 
-> Agree. It can be anything not only cellular network. Do we need
-> to check the bearer parameters in that case or can I just remove the
-> current check code?
+> +struct ofono_sim_app_record {
+> +	unsigned char aid[16];
+> +	unsigned int aid_len;
+> +	char *label;
+> +};
+> +
+>  typedef void (*ofono_sim_file_info_cb_t)(const struct ofono_error *error,
+>  					int filelength,
+>  					enum ofono_sim_file_structure structure,
+> @@ -114,6 +120,9 @@ typedef void (*ofono_sim_lock_unlock_cb_t)(const stru=
+ct ofono_error *error,
+>  typedef void (*ofono_sim_locked_cb_t)(const struct ofono_error *error,
+>  					int locked, void *data);
+>  =
 
-Good point on the bearer parameters.  My take is that we should either
-ignore the bearer parameters or return not-capable if they're set.
-Otherwise removing the current checks in the code seems reasonable to me.
+> +typedef void (*ofono_sim_apps_cb_t)(const struct ofono_error *error,
+> +					GSList *apps, void *data);
+> +
+
+Please remember that we do not use G* types in the ofono public API.
+
+>  typedef void (*ofono_sim_file_notify_t)(int id, void *userdata);
+>  =
+
+>  struct ofono_sim_driver {
+> @@ -159,6 +168,8 @@ struct ofono_sim_driver {
+>  	void (*query_locked)(struct ofono_sim *sim,
+>  			enum ofono_sim_password_type type,
+>  			ofono_sim_locked_cb_t cb, void *data);
+> +	void (*list_apps)(struct ofono_sim *sim, ofono_sim_apps_cb_t cb,
+> +			void *data);
+>  };
+
+Do you think this belongs on a separate atom?  E.g. something like
+Pekka's SimAuthentication ?
+
+>  =
+
+>  int ofono_sim_driver_register(const struct ofono_sim_driver *d);
 
 Regards,
 -Denis
 
---===============6993162175813270918==--
+--===============3179548659121971445==--
 
