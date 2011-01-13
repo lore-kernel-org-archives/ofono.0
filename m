@@ -1,43 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============7883421067113061360=="
+Content-Type: multipart/mixed; boundary="===============7870525596731939779=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH 8/9] doc: add CalledLinePresentation property to
- CallSettings
-Date: Thu, 13 Jan 2011 15:09:22 -0200
-Message-ID: <AANLkTimBgcxwOns3LBSFTBXKHV-XmKDpwSMYyjOfUisz@mail.gmail.com>
-In-Reply-To: <1294831667-7447-9-git-send-email-lucas.demarchi@profusion.mobi>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH v2 1/9] gps: define new dbus interface
+Date: Thu, 13 Jan 2011 11:11:14 -0600
+Message-ID: <4D2F3232.3070401@gmail.com>
+In-Reply-To: <1294716238-21218-2-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7883421067113061360==
+--===============7870525596731939779==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Jan 12, 2011 at 9:27 AM, Lucas De Marchi
-<lucas.demarchi@profusion.mobi> wrote:
+Hi Rafael,
+
+On 01/10/2011 09:23 PM, Rafael Ignacio Zurita wrote:
 > ---
-> =C2=A0doc/call-settings-api.txt | =C2=A0 15 +++++++++++++++
-> =C2=A01 files changed, 15 insertions(+), 0 deletions(-)
->
-> diff --git a/doc/call-settings-api.txt b/doc/call-settings-api.txt
-> index b6dc1cc..44e0dbb 100644
-> --- a/doc/call-settings-api.txt
-> +++ b/doc/call-settings-api.txt
-> @@ -30,6 +30,21 @@ Properties =C2=A0 string CallingLinePresentation [read=
-only]
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0"enabled",
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0"unknown"
->
-> +Properties =C2=A0 =C2=A0 string CalledLinePresentation [readonly]
-
-hunmn... This "Properties" shouldn't be here
+>  include/dbus.h |    1 +
+>  1 files changed, 1 insertions(+), 0 deletions(-)
+> =
 
 
+Patch has been applied, thanks.
 
-Lucas De Marchi
+Regards,
+-Denis
 
---===============7883421067113061360==--
+--===============7870525596731939779==--
 
