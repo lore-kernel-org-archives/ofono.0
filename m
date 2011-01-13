@@ -1,59 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============1013907054973194401=="
+Content-Type: multipart/mixed; boundary="===============9214865521124039996=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Dalleau <frederic.dalleau@intel.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
 Subject: Re: [PATCH 00/21] Resubmit Zhenhua Zhang work on DUN server with btio
-Date: Thu, 13 Jan 2011 13:01:16 +0100
-Message-ID: <4D2EE98C.9070304@intel.com>
-In-Reply-To: <201101131118.44693.remi.denis-courmont@nokia.com>
+Date: Thu, 13 Jan 2011 14:17:34 +0200
+Message-ID: <201101131417.35023.remi.denis-courmont@nokia.com>
+In-Reply-To: <4D2EE98C.9070304@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1013907054973194401==
+--===============9214865521124039996==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 01/13/2011 10:18 AM, R=C3=A9mi Denis-Courmont wrote:
+On Thursday 13 January 2011 14:01:16 ext Fr=C3=A9d=C3=A9ric Dalleau, you wr=
+ote:
+> On 01/13/2011 10:18 AM, R=C3=A9mi Denis-Courmont wrote:
+> > This seems quite useless work to me.
+> =
 
-> This seems quite useless work to me.
+> This patch has been on the list for some time now. Why didn't you
+> express your concern before that?
 
-This patch has been on the list for some time now. Why didn't you =
+I did point out limitations on some earlier occasion.
 
-express your concern before that?
+I also pointed out the problem to Aki and Marcel privately a long time ago.
 
-> There are a number of AT commands that are required but really do not bel=
-ong
-> in oFono...
+> >  But doing that in userspace in oFono is probably the slowest
+> > and most inefficient approach to the problem.
+> =
 
-For sure nobody wants oFono depend on everything in the world. But at =
+> Nowadays, relaying a gprs connection at 56k doesn't need to be done in a
+> kernel module.
 
-some point, one component will need to do the final job of handling the =
+HSPA category certification is achieved with PPP over USB and using the "fi=
+nal =
 
-AT command. Whether it is oFono or something else I personally don't =
+user" software. So we are talking about bandwidth in the 10 Mb/s order of =
 
-bother. Having it inside oFono through the plugin mechanism will avoid =
+magnitude on contemporary products.
 
-some additional layer of IPC.
+-- =
 
->  But doing that in userspace in oFono is probably the slowest
-> and most inefficient approach to the problem.
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-Nowadays, relaying a gprs connection at 56k doesn't need to be done in a =
-
-kernel module.
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============1013907054973194401==--
+--===============9214865521124039996==--
 
