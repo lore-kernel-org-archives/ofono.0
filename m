@@ -1,68 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============1654800490885006672=="
+Content-Type: multipart/mixed; boundary="===============7568938260033809001=="
 MIME-Version: 1.0
 From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH 5/5 v3] nettime: Mock Timed for testing
-Date: Thu, 13 Jan 2011 11:49:35 +0200
-Message-ID: <1294912175-12026-6-git-send-email-antti.paila@nokia.com>
+Subject: [PATCH 3/5 v3] nettime: DBUS and compilation configuration
+Date: Thu, 13 Jan 2011 11:49:33 +0200
+Message-ID: <1294912175-12026-4-git-send-email-antti.paila@nokia.com>
 In-Reply-To: <1294912175-12026-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1654800490885006672==
+--===============7568938260033809001==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- test/test-nettime |   35 +++++++++++++++++++++++++++++++++++
- 1 files changed, 35 insertions(+), 0 deletions(-)
- create mode 100755 test/test-nettime
+ Makefile.am    |    9 +++++++--
+ src/ofono.conf |    2 ++
+ 2 files changed, 9 insertions(+), 2 deletions(-)
 
-diff --git a/test/test-nettime b/test/test-nettime
-new file mode 100755
-index 0000000..c215902
---- /dev/null
-+++ b/test/test-nettime
-@@ -0,0 +1,35 @@
-+#!/usr/bin/python
+diff --git a/Makefile.am b/Makefile.am
+index a68fc36..4e30cc9 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -321,6 +321,9 @@ builtin_modules +=3D example_nettime
+ builtin_sources +=3D examples/nettime.c
+ endif
+ =
+
++builtin_modules +=3D nettime
++builtin_sources +=3D plugins/nettime.c
 +
-+import gobject
-+import dbus
-+import sys
-+import time
-+import dbus.service
-+import dbus.mainloop.glib
-+
-+
-+class NetworkTime(dbus.service.Object):
-+	def __init__(self):
-+		busName =3D dbus.service.BusName('com.meego.time',
-+					bus =3D dbus.SystemBus())
-+		dbus.service.Object.__init__(self, busName, '/com/meego/time')
-+	@dbus.service.method(dbus_interface=3D"org.ofono.NetworkTime",
-+					in_signature=3D"a{sv}", out_signature=3D"")
-+	def Notify(self, arg):
-+		print arg
-+		print
-+		print "Time from mobile: %d" % arg["UTC"]
-+		print "DST: %d" % arg["DST"]
-+		print "Timezone: %d" % arg["Timezone"]
-+		print "MNC: %s" % arg["MobileNetworkCode"]
-+		print "MCC: %s" % arg["MobileCountryCode"]
-+
-+if __name__ =3D=3D '__main__':
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+	agent =3D NetworkTime()
-+
-+	mainloop =3D gobject.MainLoop()
-+	mainloop.run()
-+
-+
-+
+ builtin_modules +=3D smart_messaging
+ builtin_sources +=3D plugins/smart-messaging.c
+ =
+
+@@ -386,7 +389,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
+release-faq.txt \
+ 			doc/phonebook-api.txt doc/radio-settings-api.txt \
+ 			doc/sim-api.txt doc/stk-api.txt \
+ 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
+-			doc/calypso-modem.txt
++			doc/calypso-modem.txt \
++			doc/network-time-api.txt
+ =
+
+ =
+
+ test_scripts =3D test/backtrace \
+@@ -455,7 +459,8 @@ test_scripts =3D test/backtrace \
+ 		test/set-gsm-band \
+ 		test/set-umts-band \
+ 		test/lockdown-modem \
+-		test/set-call-forwarding
++		test/set-call-forwarding \
++		test/test-nettime
+ =
+
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/src/ofono.conf b/src/ofono.conf
+index 0dfa038..c7b2e79 100644
+--- a/src/ofono.conf
++++ b/src/ofono.conf
+@@ -9,10 +9,12 @@
+ =
+
+   <policy user=3D"root">
+     <allow own=3D"org.ofono"/>
++    <allow own=3D"com.meego"/>
+     <allow send_destination=3D"org.ofono"/>
+     <allow send_interface=3D"org.ofono.SimToolkitAgent"/>
+     <allow send_interface=3D"org.ofono.PushNotificationAgent"/>
+     <allow send_interface=3D"org.ofono.SmartMessagingAgent"/>
++    <allow send_interface=3D"org.ofono.NetworkTime"/>
+   </policy>
+ =
+
+   <policy at_console=3D"true">
 -- =
 
 1.7.1
 
 
---===============1654800490885006672==--
+--===============7568938260033809001==--
 
