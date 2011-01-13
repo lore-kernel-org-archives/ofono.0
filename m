@@ -1,37 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============3914808418362554613=="
+Content-Type: multipart/mixed; boundary="===============4709550160944860077=="
 MIME-Version: 1.0
-From: Kalle Valo <kalle.valo@canonical.com>
-Subject: Re: [RFC PATCHv2 1/4] Automatic provisioning of GPRS context settings
-Date: Fri, 14 Jan 2011 00:41:57 +0200
-Message-ID: <877he8qvd6.fsf@potku.valot.fi>
-In-Reply-To: <1294707578.3873.18.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 02/21] bluetooth: Add Btio library for DUN
+Date: Thu, 13 Jan 2011 17:31:33 -0600
+Message-ID: <4D2F8B55.7050705@gmail.com>
+In-Reply-To: <1294852564-1258-3-git-send-email-frederic.dalleau@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3914808418362554613==
+--===============4709550160944860077==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Marcel Holtmann <marcel@holtmann.org> writes:
+Hi Fr=C3=A9d=C3=A9ric,
 
-> Hi Kalle,
+On 01/12/2011 11:15 AM, Fr=C3=A9d=C3=A9ric Dalleau wrote:
+> From: Zhenhua Zhang <zhenhua.zhang@intel.com>
+> =
 
-Hi Marcel,
+> Btio library is the low level socket API for BT RFCOMM connection. We
+> share the same library among BlueZ, Obex and oFono. So make sure you
+> synchronize to other two projects when you make changes to btio.[ch].
+> ---
+>  Makefile.am  |    8 +-
+>  btio/btio.c  | 1299 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++++
+>  btio/btio.h  |   97 +++++
+>  configure.ac |    5 +
+>  4 files changed, 1407 insertions(+), 2 deletions(-)
+>  create mode 100644 btio/btio.c
+>  create mode 100644 btio/btio.h
+> =
 
->> Even better, maybe just a bit trickier to implement. But at least
->> mobile-broadband-provider-info already supports pkgconfig so the
->> location of the xml should be easy to detect automatically during
->> configure.
->
-> so I assume you take yo the task to add support for it once we have the
-> rest of framework merged.
 
-Sure. But I can't promise when I get the task finished :)
+This patch has been applied, thanks.
 
--- =
+Regards,
+-Denis
 
-Kalle Valo
-
---===============3914808418362554613==--
+--===============4709550160944860077==--
 
