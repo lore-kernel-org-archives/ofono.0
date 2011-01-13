@@ -1,61 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============0340078905060183332=="
+Content-Type: multipart/mixed; boundary="===============7739771689747173798=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC 5/5] doc: Describe TextTelephony property
-Date: Wed, 12 Jan 2011 23:20:41 -0600
-Message-ID: <4D2E8BA9.4070809@gmail.com>
-In-Reply-To: <1294812055.3873.51.camel@aeonflux>
+Subject: Re: [RFC 4/5] ifxmodem: Add support for tty call notifications
+Date: Wed, 12 Jan 2011 23:23:03 -0600
+Message-ID: <4D2E8C37.60001@gmail.com>
+In-Reply-To: <1294668092-27896-5-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0340078905060183332==
+--===============7739771689747173798==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Jeevaka,
 
-On 01/12/2011 12:00 AM, Marcel Holtmann wrote:
-> Hi Jeevaka,
-> =
+> +static void ctm_notify(GAtResult *result, gpointer user_data)
+> +{
+> +	struct ofono_voicecall *vc =3D user_data;
+> +	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+> +	GSList *l;
+> +	struct ofono_call *call;
+> +
+> +	l =3D g_slist_find_custom(vd->calls, GINT_TO_POINTER(0),
+> +				at_util_call_compare_by_status);
 
->>  doc/voicecall-api.txt |    7 +++++++
->>  1 files changed, 7 insertions(+), 0 deletions(-)
->>
->> diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
->> index 4f38e6a..8df8fd2 100644
->> --- a/doc/voicecall-api.txt
->> +++ b/doc/voicecall-api.txt
->> @@ -100,6 +100,13 @@ Properties	string LineIdentification [readonly]
->>  			Notifications if a call becomes part or leaves a
->>  			multipart call are sent.
->>  =
+So here we find the first call in the active state.  This is not
+necessarily guaranteed to be the only active call.  Ideally this
+notification should also provide the call id.
 
->> +		boolean TextTelephony [readonly]
->> +
->> +			Contains the indication if the voice call is a
->> +			text telephony call or not.
->> +
->> +			Notifications if a call is a text telephony call.
->> +
->>  		string State [readonly]
->>  =
+So the question is, is this safe enough and not subject to race conditions?
 
->>  			Contains the state of the current call.  The state
-> =
-
-> I am fine with actually.
-> =
-
-> Denis, any objections?
-> =
-
-
-Based on what I have heard so far, this seems fine.  However see my
-concern in my reply to the IFX driver patch.
+> +	if (l =3D=3D NULL) {
+> +		ofono_error("CTM for unknown call");
+> +		return;
+> +	}
+> +
+> +	call =3D l->data;
+> +
+> +	ofono_voicecall_tty_notify(vc, call);
+> +}
+> +
 
 Regards,
 -Denis
 
---===============0340078905060183332==--
+--===============7739771689747173798==--
 
