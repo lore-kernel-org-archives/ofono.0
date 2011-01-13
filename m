@@ -1,110 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============8544700261824025498=="
+Content-Type: multipart/mixed; boundary="===============0353994339199681112=="
 MIME-Version: 1.0
 From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: Re: [PATCH v5, 2/5] test: Add CDMA MO Call Support
-Date: Thu, 13 Jan 2011 10:18:58 -0800
-Message-ID: <4D2F4212.5050705@nokia.com>
-In-Reply-To: <4D2E8CD8.4080201@gmail.com>
+Subject: Re: [PATCH 2/3] cdmamodem: Add CDMA devinfo support
+Date: Thu, 13 Jan 2011 10:20:39 -0800
+Message-ID: <4D2F4277.8030700@nokia.com>
+In-Reply-To: <4D2E95C1.40209@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8544700261824025498==
+--===============0353994339199681112==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Denis
 
-On 01/12/2011 09:25 PM, ext Denis Kenzior wrote:
+On 01/12/2011 10:03 PM, ext Denis Kenzior wrote:
 > Hi Dara,
 >
-> On 01/10/2011 07:45 PM, Dara Spieker-Doyle wrote:
+> On 01/11/2011 03:45 PM, Dara Spieker-Doyle wrote:
 >> ---
->>   Makefile.am           |    5 ++++-
->>   test/cdma-dial-number |   25 +++++++++++++++++++++++++
->>   test/cdma-hangup      |   20 ++++++++++++++++++++
->>   test/cdma-list-call   |   31 +++++++++++++++++++++++++++++++
->>   4 files changed, 80 insertions(+), 1 deletions(-)
->>   create mode 100755 test/cdma-dial-number
->>   create mode 100755 test/cdma-hangup
->>   create mode 100755 test/cdma-list-call
+>>   Makefile.am                   |    3 +-
+>>   drivers/cdmamodem/cdmamodem.c |    2 +
+>>   drivers/cdmamodem/cdmamodem.h |    2 +
+>>   drivers/cdmamodem/devinfo.c   |  169 +++++++++++++++++++++++++++++++++=
+++++++++
+>>   4 files changed, 175 insertions(+), 1 deletions(-)
+>>   create mode 100644 drivers/cdmamodem/devinfo.c
+>>
 >
-> This patch does not apply:
+> Can you please rebase and resubmit this patch?  Further comments below:
 >
-> Applying: test: Add CDMA MO Call Support
-> error: patch failed: Makefile.am:445
-> error: Makefile.am: patch does not apply
-> /home/denkenz/ofono-master/.git/rebase-apply/patch:32: new blank line at
-> EOF.
-> +
-> /home/denkenz/ofono-master/.git/rebase-apply/patch:89: new blank line at
-> EOF.
-> +
-> Patch failed at 0001 test: Add CDMA MO Call Support
-> When you have resolved this problem run "git am --resolved".
-> If you would prefer to skip this patch, instead run "git am --skip".
-> To restore the original branch and stop patching run "git am --abort".
+>> diff --git a/drivers/cdmamodem/cdmamodem.h b/drivers/cdmamodem/cdmamodem=
+.h
+>> index a5991cf..ef4fad3 100644
+>> --- a/drivers/cdmamodem/cdmamodem.h
+>> +++ b/drivers/cdmamodem/cdmamodem.h
+>> @@ -23,3 +23,5 @@
+>>
+>>   extern void cdma_at_voicecall_init();
+>>   extern void cdma_at_voicecall_exit();
+>> +extern void cdma_at_devinfo_init();
+>> +extern void cdma_at_devinfo_exit();
 >
-> Also:
+> Please name this cdma_devinfo_init/exit
+>
 >
 > <snip>
 >
->>
->> diff --git a/test/cdma-list-call b/test/cdma-list-call
->> new file mode 100755
->> index 0000000..8a2e04e
->> --- /dev/null
->> +++ b/test/cdma-list-call
->> @@ -0,0 +1,31 @@
->> +#!/usr/bin/python
->> +
->> +import dbus
->> +
->> +bus =3D dbus.SystemBus()
->> +
->> +manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
->> +						'org.ofono.Manager')
->> +
->> +modems =3D manager.GetModems()
->> +
->> +for path, properties in modems:
->> +	print "[ %s ]" % (path)
->> +
->> +	if "org.ofono.cdma.VoiceCallManager" not in properties["Interfaces"]:
->> +		continue
->> +
->> +	mgr =3D dbus.Interface(bus.get_object('org.ofono', path),
->> +					'org.ofono.cdma.VoiceCallManager')
->> +
->> +	properties =3D mgr.GetProperties()
->> +
->> +	for key in properties.keys():
->> +		if key in ["Interfaces", "Features"]:
->> +			val =3D ""
->> +			for i in properties[key]:
->> +				val +=3D i + " "
+>> +static struct ofono_devinfo_driver driver =3D {
+>> +	.name 			=3D "cdmamodem",
+>> +	.probe	 		=3D cdma_at_devinfo_probe,
+>> +	.remove			=3D cdma_at_devinfo_remove,
+>> +	.query_manufacturer	=3D cdma_at_query_manufacturer,
+>> +	.query_model		=3D cdma_at_query_model,
+>> +	.query_revision		=3D cdma_at_query_revision,
+>> +	.query_serial		=3D cdma_at_query_serial
 >
-> You might want to remove this if statement.  There are no Interfaces or
-> Features properties in cdma.VoiceCallManager
+> Please drop the 'at' from these.  Use cdma_devinfo_probe, etc.
 >
->> +		else:
->> +			val =3D str(properties[key])
->> +		print "    %s =3D %s" % (key, val)
+>> +};
 >> +
 >
 > Regards,
 > -Denis
 
-Thank you, yes I'll fix this up and resubmit. The info re: naming style =
+Yes, I will fix up and resubmit today.
 
-of the atom methods has been passed on to the other guys too to include =
-
-in future/current CDMA patches.
-
-Cheers
+Thank you
 Dara
 
 
 
---===============8544700261824025498==--
+--===============0353994339199681112==--
 
