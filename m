@@ -1,37 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============5868324477828599331=="
+Content-Type: multipart/mixed; boundary="===============8040884944491673638=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH v3 0/2] Add ifx support for enable/disable tty
-Date: Thu, 13 Jan 2011 16:31:20 +0200
-Message-ID: <1294929082-19792-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH v3 2/2] plugins: add ctm create to ifx plugin
+Date: Thu, 13 Jan 2011 16:31:22 +0200
+Message-ID: <1294929082-19792-3-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1294929082-19792-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5868324477828599331==
+--===============8040884944491673638==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ plugins/ifx.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
- Following patch adds the ifxmodem support for enabling/disabling tty mode.
+diff --git a/plugins/ifx.c b/plugins/ifx.c
+index c0a69c2..08b0001 100644
+--- a/plugins/ifx.c
++++ b/plugins/ifx.c
+@@ -57,6 +57,7 @@
+ #include <ofono/radio-settings.h>
+ #include <ofono/audio-settings.h>
+ #include <ofono/stk.h>
++#include <ofono/ctm.h>
+ #include <ofono/log.h>
+ =
 
-Regards,
-Jeevaka
+ #include <drivers/atmodem/atutil.h>
+@@ -700,6 +701,7 @@ static void ifx_post_sim(struct ofono_modem *modem)
+ =
 
-Jeevaka Badrappan (2):
-  ifxmodem: add enable/disable ctm support
-  plugins: add ctm create to ifx plugin
+ 	DBG("%p", modem);
+ =
 
- Makefile.am                 |    3 +-
- drivers/ifxmodem/ctm.c      |  194 +++++++++++++++++++++++++++++++++++++++=
-++++
- drivers/ifxmodem/ifxmodem.c |    2 +
- drivers/ifxmodem/ifxmodem.h |    3 +
- plugins/ifx.c               |    2 +
- 5 files changed, 203 insertions(+), 1 deletions(-)
- create mode 100644 drivers/ifxmodem/ctm.c
++	ofono_ctm_create(modem, 0, "ifxmodem", data->dlcs[AUX_DLC]);
+ 	ofono_stk_create(modem, 0, "ifxmodem", data->dlcs[AUX_DLC]);
+ 	ofono_phonebook_create(modem, OFONO_VENDOR_IFX,
+ 					"atmodem", data->dlcs[AUX_DLC]);
+-- =
+
+1.7.0.4
 
 
---===============5868324477828599331==--
+--===============8040884944491673638==--
 
