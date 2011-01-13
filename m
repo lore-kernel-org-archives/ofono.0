@@ -1,49 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============9214865521124039996=="
+Content-Type: multipart/mixed; boundary="===============8395344664502667652=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 00/21] Resubmit Zhenhua Zhang work on DUN server with btio
-Date: Thu, 13 Jan 2011 14:17:34 +0200
-Message-ID: <201101131417.35023.remi.denis-courmont@nokia.com>
-In-Reply-To: <4D2EE98C.9070304@intel.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 1/5 v3] nettime: Header file for nettime plugins
+Date: Thu, 13 Jan 2011 14:58:45 +0200
+Message-ID: <AANLkTiniPX-g-f1R99d0S8yVbvmv_+CqvVDW9PL3oufS@mail.gmail.com>
+In-Reply-To: <1294912175-12026-2-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9214865521124039996==
+--===============8395344664502667652==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thursday 13 January 2011 14:01:16 ext Fr=C3=A9d=C3=A9ric Dalleau, you wr=
-ote:
-> On 01/13/2011 10:18 AM, R=C3=A9mi Denis-Courmont wrote:
-> > This seems quite useless work to me.
-> =
+Hi Antti,
 
-> This patch has been on the list for some time now. Why didn't you
-> express your concern before that?
+2011/1/13 Antti Paila <antti.paila@nokia.com>:
+> ---
+> =C2=A0include/nettime.h | =C2=A0 =C2=A04 ++++
+> =C2=A01 files changed, 4 insertions(+), 0 deletions(-)
+>
+> diff --git a/include/nettime.h b/include/nettime.h
+> index 0f23cc7..2f73e1a 100644
+> --- a/include/nettime.h
+> +++ b/include/nettime.h
+> @@ -31,6 +31,10 @@ struct ofono_network_time;
+> =C2=A0struct ofono_nettime_context {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct ofono_nettime_driver *driver;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0struct ofono_modem *modem;
+> + =C2=A0 =C2=A0 =C2=A0 unsigned int timed_watch;
+> + =C2=A0 =C2=A0 =C2=A0 gboolean timed_present;
+> + =C2=A0 =C2=A0 =C2=A0 struct ofono_netreg *netreg;
+> + =C2=A0 =C2=A0 =C2=A0 unsigned int netreg_st_watch;
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0void *data;
 
-I did point out limitations on some earlier occasion.
+Why are these added to the context as opposed to the plugin's user data?
 
-I also pointed out the problem to Aki and Marcel privately a long time ago.
+Cheers,
+Aki
 
-> >  But doing that in userspace in oFono is probably the slowest
-> > and most inefficient approach to the problem.
-> =
-
-> Nowadays, relaying a gprs connection at 56k doesn't need to be done in a
-> kernel module.
-
-HSPA category certification is achieved with PPP over USB and using the "fi=
-nal =
-
-user" software. So we are talking about bandwidth in the 10 Mb/s order of =
-
-magnitude on contemporary products.
-
--- =
-
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============9214865521124039996==--
+--===============8395344664502667652==--
 
