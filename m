@@ -1,218 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============8848950687463860167=="
+Content-Type: multipart/mixed; boundary="===============9159677687142796710=="
 MIME-Version: 1.0
-From: Pargada, Carlos <carlos.pargada@intel.com>
-Subject: Segmentation fault on Downlink data transfer
-Date: Thu, 13 Jan 2011 08:58:33 +0000
-Message-ID: <2A84145621092446B6659B8A0F28E26F470064499D@irsmsx501.ger.corp.intel.com>
+From: Kai.Vehmanen@nokia.com
+Subject: RE: [RFC 3/5] voicecall: Add ofono_voicecall_tty_notify api
+Date: Thu, 13 Jan 2011 09:15:30 +0000
+Message-ID: <C50CA21D80D6B74F80FB941E215DF4140D4EDD@008-AM1MPN1-002.mgdnok.nokia.com>
+In-Reply-To: <1294849744.3873.89.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8848950687463860167==
+--===============9159677687142796710==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel and Denis
+Hello Marcel,
 
-There is an issue on downlink data transfer on ifx modem.
+On 12 Jan 2011, Marcel Holtmann wrote:
+> Are we expecting that all modems will just establish a normal voice
+> call
+> and only later on signal that it is a TTY call? Any input from
+> different
+> vendors other than IFX. What about STE, ISI?
 
-Basically, during a data transfer after PDP context activation (long data t=
-ransfer 5MB), a segmentation fault  error could occurs at any time (even it=
- is not systematic).
- GLib-CRITICAL **: g_io_channel_write_chars: assertion `channel !=3D NULL' =
-failed
+not later, but as part of standard call setup. E.g. on ISI, CTM is =
 
-Root cause of this issue is a ring buffer overflow (in gatio received data =
-function). The overflow is detected and the DLC3 source context is destroye=
-d in dispatch source function. After that the disconnect handler is called =
-and try to destroyed the same context.
+a property of a voice call. And this makes sense as TTY calls _are_ =
 
-So on this issue there is 2 points:
+essentially voice calls, with just a bit indicating to the network that =
 
-1-      Management of the buffer overflow
+the voice circuit should be free of any transcoder/audioprocessing/etc =
 
-2-      Buffer overflow cause
+that is not compatible with CTM. And this is negotiated as part of standard =
 
-For the 1st point, I'm not sure that disconnect DLC channel is the solution=
- in case of buffer overflow. I believe that is better to discard ongoing pa=
-cket in the buffer. TCP could survived to packet loss and retransmit the pa=
-ckets. Throughput go down but the data pipe is not broken for the applicati=
-on.
+call setup (same way as supported codecs).
 
-For the 2nd point, ring buffer overflow happened because data is not consum=
-e in this buffer. This is a flow control problem. I suspect that for some r=
-eason the consumer is blocked (not schedule) during some time.
-Ring buffer size is set to 4096 bytes. I realize some test with a ring buff=
-er increase to 131072 bytes and I can get long file downlink transfer. Prob=
-ably this size is too much high and  this size  buffer need to be tune.
+My understanding so far has been that TextTelephony.Enabled=3DTRUE =
 
-Could you please give me feedback for this 2 points?
+means that the CTM bit is set in all subsequent MO calls, and
+it is set by default when answering to MT calls. And the one special =
 
-This issue is very similar to bug  track in: http://bugs.meego.com/show_bug=
-.cgi?id=3D11700
+case is receiving a CTM-enabled call when TTY is not enabled (in oFono). =
+
+In this case it should be possible to enable TTY (for at least that
+call) and respond to the call (and ifxmodem seems to provide support =
+
+for this scenario).
+
+This should be standard stuff to all modems as this is a heavily =
+
+regulated feature.
 
 
-Regards
-
-Carlos
-
-
-
-
-
-
-
-
-
-
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
---===============8848950687463860167==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
-
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+Cgo8aGVhZD4KPG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29u
-dGVudD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj4KPG1ldGEgbmFtZT1HZW5lcmF0b3Ig
-Y29udGVudD0iTWljcm9zb2Z0IFdvcmQgMTIgKGZpbHRlcmVkIG1lZGl1bSkiPgo8c3R5bGU+Cjwh
-LS0KIC8qIEZvbnQgRGVmaW5pdGlvbnMgKi8KIEBmb250LWZhY2UKCXtmb250LWZhbWlseToiQ2Ft
-YnJpYSBNYXRoIjsKCXBhbm9zZS0xOjIgNCA1IDMgNSA0IDYgMyAyIDQ7fQpAZm9udC1mYWNlCgl7
-Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBhbm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KIC8q
-IFN0eWxlIERlZmluaXRpb25zICovCiBwLk1zb05vcm1hbCwgbGkuTXNvTm9ybWFsLCBkaXYuTXNv
-Tm9ybWFsCgl7bWFyZ2luOjBjbTsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZTox
-MS4wcHQ7Cglmb250LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30KYTpsaW5rLCBzcGFu
-Lk1zb0h5cGVybGluawoJe21zby1zdHlsZS1wcmlvcml0eTo5OTsKCWNvbG9yOmJsdWU7Cgl0ZXh0
-LWRlY29yYXRpb246dW5kZXJsaW5lO30KYTp2aXNpdGVkLCBzcGFuLk1zb0h5cGVybGlua0ZvbGxv
-d2VkCgl7bXNvLXN0eWxlLXByaW9yaXR5Ojk5OwoJY29sb3I6cHVycGxlOwoJdGV4dC1kZWNvcmF0
-aW9uOnVuZGVybGluZTt9CnAuTXNvTGlzdFBhcmFncmFwaCwgbGkuTXNvTGlzdFBhcmFncmFwaCwg
-ZGl2Lk1zb0xpc3RQYXJhZ3JhcGgKCXttc28tc3R5bGUtcHJpb3JpdHk6MzQ7CgltYXJnaW4tdG9w
-OjBjbTsKCW1hcmdpbi1yaWdodDowY207CgltYXJnaW4tYm90dG9tOjBjbTsKCW1hcmdpbi1sZWZ0
-OjM2LjBwdDsKCW1hcmdpbi1ib3R0b206LjAwMDFwdDsKCWZvbnQtc2l6ZToxMS4wcHQ7Cglmb250
-LWZhbWlseToiQ2FsaWJyaSIsInNhbnMtc2VyaWYiO30Kc3Bhbi5FbWFpbFN0eWxlMTcKCXttc28t
-c3R5bGUtdHlwZTpwZXJzb25hbC1jb21wb3NlOwoJZm9udC1mYW1pbHk6IkNhbGlicmkiLCJzYW5z
-LXNlcmlmIjsKCWNvbG9yOndpbmRvd3RleHQ7fQouTXNvQ2hwRGVmYXVsdAoJe21zby1zdHlsZS10
-eXBlOmV4cG9ydC1vbmx5O30KQHBhZ2UgV29yZFNlY3Rpb24xCgl7c2l6ZTo2MTIuMHB0IDc5Mi4w
-cHQ7CgltYXJnaW46NzAuODVwdCA3MC44NXB0IDcwLjg1cHQgNzAuODVwdDt9CmRpdi5Xb3JkU2Vj
-dGlvbjEKCXtwYWdlOldvcmRTZWN0aW9uMTt9CiAvKiBMaXN0IERlZmluaXRpb25zICovCiBAbGlz
-dCBsMAoJe21zby1saXN0LWlkOjg4NjcyMTY1NjsKCW1zby1saXN0LXR5cGU6aHlicmlkOwoJbXNv
-LWxpc3QtdGVtcGxhdGUtaWRzOjE1OTMyMTY3ODAgLTEyMTg0MjU5NzQgNjc4OTUzMjEgNjc4OTUz
-MjMgNjc4OTUzMTEgNjc4OTUzMjEgNjc4OTUzMjMgNjc4OTUzMTEgNjc4OTUzMjEgNjc4OTUzMjM7
-fQpAbGlzdCBsMDpsZXZlbDEKCXttc28tbGV2ZWwtdGV4dDolMS07Cgltc28tbGV2ZWwtdGFiLXN0
-b3A6bm9uZTsKCW1zby1sZXZlbC1udW1iZXItcG9zaXRpb246bGVmdDsKCW1hcmdpbi1sZWZ0OjUz
-LjI1cHQ7Cgl0ZXh0LWluZGVudDotMTguMHB0O30Kb2wKCXttYXJnaW4tYm90dG9tOjBjbTt9CnVs
-Cgl7bWFyZ2luLWJvdHRvbTowY207fQotLT4KPC9zdHlsZT4KPCEtLVtpZiBndGUgbXNvIDldPjx4
-bWw+CiA8bzpzaGFwZWRlZmF1bHRzIHY6ZXh0PSJlZGl0IiBzcGlkbWF4PSIxMDI2IiAvPgo8L3ht
-bD48IVtlbmRpZl0tLT48IS0tW2lmIGd0ZSBtc28gOV0+PHhtbD4KIDxvOnNoYXBlbGF5b3V0IHY6
-ZXh0PSJlZGl0Ij4KICA8bzppZG1hcCB2OmV4dD0iZWRpdCIgZGF0YT0iMSIgLz4KIDwvbzpzaGFw
-ZWxheW91dD48L3htbD48IVtlbmRpZl0tLT4KPC9oZWFkPgoKPGJvZHkgbGFuZz1GUiBsaW5rPWJs
-dWUgdmxpbms9cHVycGxlPgoKPGRpdiBjbGFzcz1Xb3JkU2VjdGlvbjE+Cgo8cCBjbGFzcz1Nc29O
-b3JtYWw+SGkgTWFyY2VsIGFuZCBEZW5pczxvOnA+PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9y
-bWFsPjxvOnA+Jm5ic3A7PC9vOnA+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9
-RU4tVVM+VGhlcmUgaXMgYW4gaXNzdWUgb24gZG93bmxpbmsgZGF0YSB0cmFuc2ZlcgpvbiBpZngg
-bW9kZW0uPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxh
-bmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFs
-PjxzcGFuIGxhbmc9RU4tVVM+QmFzaWNhbGx5LCBkdXJpbmcgYSBkYXRhIHRyYW5zZmVyIGFmdGVy
-IFBEUApjb250ZXh0IGFjdGl2YXRpb24gKGxvbmcgZGF0YSB0cmFuc2ZlciA1TUIpLCBhIHNlZ21l
-bnRhdGlvbiBmYXVsdCAmbmJzcDtlcnJvcgpjb3VsZCBvY2N1cnMgYXQgYW55IHRpbWUgKGV2ZW4g
-aXQgaXMgbm90IHN5c3RlbWF0aWMpLjxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1z
-b05vcm1hbCBzdHlsZT0ndGV4dC1pbmRlbnQ6MzUuNHB0Jz48c3BhbiBsYW5nPUVOLVVTPiZuYnNw
-O0dMaWItQ1JJVElDQUwKKio6IGdfaW9fY2hhbm5lbF93cml0ZV9jaGFyczogYXNzZXJ0aW9uIGBj
-aGFubmVsICE9IE5VTEwnIGZhaWxlZDxvOnA+PC9vOnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1z
-b05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD4KCjxw
-IGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPlJvb3QgY2F1c2Ugb2YgdGhpcyBpc3N1
-ZSBpcyBhIHJpbmcgYnVmZmVyCm92ZXJmbG93IChpbiBnYXRpbyByZWNlaXZlZCBkYXRhIGZ1bmN0
-aW9uKS4gVGhlIG92ZXJmbG93IGlzIGRldGVjdGVkIGFuZCB0aGUKRExDMyBzb3VyY2UgY29udGV4
-dCBpcyBkZXN0cm95ZWQgaW4gZGlzcGF0Y2ggc291cmNlIGZ1bmN0aW9uLiBBZnRlciB0aGF0IHRo
-ZQpkaXNjb25uZWN0IGhhbmRsZXIgaXMgY2FsbGVkIGFuZCB0cnkgdG8gZGVzdHJveWVkIHRoZSBz
-YW1lIGNvbnRleHQuPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxz
-cGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNv
-Tm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+U28gb24gdGhpcyBpc3N1ZSB0aGVyZSBpcyAyIHBvaW50
-czo8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29MaXN0UGFyYWdyYXBoIHN0eWxl
-PSdtYXJnaW4tbGVmdDo1My4yNXB0O3RleHQtaW5kZW50Oi0xOC4wcHQ7Cm1zby1saXN0OmwwIGxl
-dmVsMSBsZm8xJz48IVtpZiAhc3VwcG9ydExpc3RzXT48c3BhbiBsYW5nPUVOLVVTPjxzcGFuCnN0
-eWxlPSdtc28tbGlzdDpJZ25vcmUnPjEtPHNwYW4gc3R5bGU9J2ZvbnQ6Ny4wcHQgIlRpbWVzIE5l
-dyBSb21hbiInPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOwo8L3NwYW4+PC9zcGFuPjwv
-c3Bhbj48IVtlbmRpZl0+PHNwYW4gbGFuZz1FTi1VUz5NYW5hZ2VtZW50IG9mIHRoZSBidWZmZXIK
-b3ZlcmZsb3c8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29MaXN0UGFyYWdyYXBo
-IHN0eWxlPSdtYXJnaW4tbGVmdDo1My4yNXB0O3RleHQtaW5kZW50Oi0xOC4wcHQ7Cm1zby1saXN0
-OmwwIGxldmVsMSBsZm8xJz48IVtpZiAhc3VwcG9ydExpc3RzXT48c3BhbiBsYW5nPUVOLVVTPjxz
-cGFuCnN0eWxlPSdtc28tbGlzdDpJZ25vcmUnPjItPHNwYW4gc3R5bGU9J2ZvbnQ6Ny4wcHQgIlRp
-bWVzIE5ldyBSb21hbiInPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOwo8L3NwYW4+PC9z
-cGFuPjwvc3Bhbj48IVtlbmRpZl0+PHNwYW4gbGFuZz1FTi1VUz5CdWZmZXIgb3ZlcmZsb3cgY2F1
-c2U8bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1F
-Ti1VUz4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
-cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgPG86cD48L286cD48L3NwYW4+
-PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+Rm9yIHRoZSAxPHN1cD5z
-dDwvc3VwPiBwb2ludCwgSSYjODIxNzttIG5vdApzdXJlIHRoYXQgZGlzY29ubmVjdCBETEMgY2hh
-bm5lbCBpcyB0aGUgc29sdXRpb24gaW4gY2FzZSBvZiBidWZmZXIgb3ZlcmZsb3cuIEkgYmVsaWV2
-ZQp0aGF0IGlzIGJldHRlciB0byBkaXNjYXJkIG9uZ29pbmcgcGFja2V0IGluIHRoZSBidWZmZXIu
-IFRDUCBjb3VsZCBzdXJ2aXZlZCB0bwpwYWNrZXQgbG9zcyBhbmQgcmV0cmFuc21pdCB0aGUgcGFj
-a2V0cy4gVGhyb3VnaHB1dCBnbyBkb3duIGJ1dCB0aGUgZGF0YSBwaXBlIGlzCm5vdCBicm9rZW4g
-Zm9yIHRoZSBhcHBsaWNhdGlvbi48bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29O
-b3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+Cgo8cCBj
-bGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5Gb3IgdGhlIDI8c3VwPm5kPC9zdXA+IHBv
-aW50LCByaW5nIGJ1ZmZlciBvdmVyZmxvdwpoYXBwZW5lZCBiZWNhdXNlIGRhdGEgaXMgbm90IGNv
-bnN1bWUgaW4gdGhpcyBidWZmZXIuIFRoaXMgaXMgYSBmbG93IGNvbnRyb2wKcHJvYmxlbS4gSSBz
-dXNwZWN0IHRoYXQgZm9yIHNvbWUgcmVhc29uIHRoZSBjb25zdW1lciBpcyBibG9ja2VkIChub3Qg
-c2NoZWR1bGUpIGR1cmluZwpzb21lIHRpbWUuPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xh
-c3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+UmluZyBidWZmZXIgc2l6ZSBpcyBzZXQgdG8g
-NDA5NiBieXRlcy4gSQpyZWFsaXplIHNvbWUgdGVzdCB3aXRoIGEgcmluZyBidWZmZXIgaW5jcmVh
-c2UgdG8gMTMxMDcyIGJ5dGVzIGFuZCBJIGNhbiBnZXQKbG9uZyBmaWxlIGRvd25saW5rIHRyYW5z
-ZmVyLiBQcm9iYWJseSB0aGlzIHNpemUgaXMgdG9vIG11Y2ggaGlnaCBhbmQgJm5ic3A7dGhpcwpz
-aXplJm5ic3A7IGJ1ZmZlciBuZWVkIHRvIGJlIHR1bmUuPG86cD48L286cD48L3NwYW4+PC9wPgoK
-PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3Nw
-YW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+Q291bGQgeW91IHBs
-ZWFzZSBnaXZlIG1lIGZlZWRiYWNrIGZvciB0aGlzCjIgcG9pbnRzPzxvOnA+PC9vOnA+PC9zcGFu
-PjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9v
-OnA+PC9zcGFuPjwvcD4KCjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPlRoaXMg
-aXNzdWUgaXMgdmVyeSBzaW1pbGFyIHRvIGJ1ZyAmbmJzcDt0cmFjawppbjogPGEgaHJlZj0iaHR0
-cDovL2J1Z3MubWVlZ28uY29tL3Nob3dfYnVnLmNnaT9pZD0xMTcwMCI+aHR0cDovL2J1Z3MubWVl
-Z28uY29tL3Nob3dfYnVnLmNnaT9pZD0xMTcwMDwvYT48bzpwPjwvbzpwPjwvc3Bhbj48L3A+Cgo8
-cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bh
-bj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwv
-bzpwPjwvc3Bhbj48L3A+Cgo8cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5SZWdh
-cmRzPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9
-RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxz
-cGFuIGxhbmc9RU4tVVM+Q2FybG9zPG86cD48L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNv
-Tm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAg
-Y2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+
-PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286
-cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4m
-bmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4t
-VVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFu
-IGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9y
-bWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9wPgoKPHAgY2xh
-c3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48L3NwYW4+PC9w
-PgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJzcDs8L286cD48
-L3NwYW4+PC9wPgoKPHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+PG86cD4mbmJz
-cDs8L286cD48L3NwYW4+PC9wPgoKPC9kaXY+Cgo8Zm9udCBmYWNlPSJtb25vc3BhY2UiPi0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLTxicj4KSW50ZWwgQ29ycG9yYXRpb24gU0FTIChGcmVuY2ggc2ltcGxpZmllZCBqb2lu
-dCBzdG9jayBjb21wYW55KTxicj4KUmVnaXN0ZXJlZCBoZWFkcXVhcnRlcnM6ICJMZXMgTW9udGFs
-ZXRzIi0gMiwgcnVlIGRlIFBhcmlzLCA8YnI+CjkyMTk2IE1ldWRvbiBDZWRleCwgRnJhbmNlPGJy
-PgpSZWdpc3RyYXRpb24gTnVtYmVyOiZuYnNwOyAzMDIgNDU2IDE5OSBSLkMuUy4gTkFOVEVSUkU8
-YnI+CkNhcGl0YWw6IDQsNTcyLDAwMCBFdXJvczxicj4KPGJyPgpUaGlzIGUtbWFpbCBhbmQgYW55
-IGF0dGFjaG1lbnRzIG1heSBjb250YWluIGNvbmZpZGVudGlhbCBtYXRlcmlhbCBmb3I8YnI+CnRo
-ZSBzb2xlIHVzZSBvZiB0aGUgaW50ZW5kZWQgcmVjaXBpZW50KHMpLiBBbnkgcmV2aWV3IG9yIGRp
-c3RyaWJ1dGlvbjxicj4KYnkgb3RoZXJzIGlzIHN0cmljdGx5IHByb2hpYml0ZWQuIElmIHlvdSBh
-cmUgbm90IHRoZSBpbnRlbmRlZDxicj4KcmVjaXBpZW50LCBwbGVhc2UgY29udGFjdCB0aGUgc2Vu
-ZGVyIGFuZCBkZWxldGUgYWxsIGNvcGllcy48L2ZvbnQ+PC9ib2R5PgoKPC9odG1sPgo=
-
---===============8848950687463860167==--
+--===============9159677687142796710==--
 
