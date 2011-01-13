@@ -1,42 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============8273128694941252901=="
+Content-Type: multipart/mixed; boundary="===============7602983386737942410=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [RFC 2/4] stk: Handle Launch Browser proactive command
-Date: Thu, 13 Jan 2011 16:56:56 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802D5A07B@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <AANLkTikjKnoR7di__8BKW-VCGBU5WrkCLYCcsqn3pF4y@mail.gmail.com>
+From: yanni <neelslotter@vodamail.co.za>
+Subject: Making voice call with Huawei E272 USB Modem
+Date: Thu, 13 Jan 2011 17:43:01 +0200
+Message-ID: <1294933381.8421.13.camel@yanni-laptop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8273128694941252901==
+--===============7602983386737942410==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi
 
->> =
+I've managed to send SMSs and perform USSD etc. with ofono and the E272.
 
->> So a question about this. =C2=A0Why are we checking the netreg atom?
->> Shouldn't we be checking the gprs atom's attached property? =C2=A0But th=
-is
->> brings up an even more interesting question, do we even need to
->> assume that we have to be attached to the cellular network to
->> perform these operations? =C2=A0We could in theory go over wifi.
-> =
+However, I'm unable to make a voice call with ofono.  I can make voice
+call with python&pyserial.
 
-> I agree that the modem online property is unrelated to this.
-> Also the card may in theory specify a URL that designates a
-> local file or something on a local network, not the internet.
-> =
+Any pointers in right direction will be appreciated
+
+#output from list-modem testscrip
+./list-modems =
+
+[ /huawei0 ]
+    Features =3D sms gprs cbs net rat sim =
+
+    Powered =3D 1
+    Lockdown =3D 0
+    Interfaces =3D org.ofono.SmartMessaging org.ofono.PushNotification
+org.ofono.MessageManager org.ofono.ConnectionManager
+org.ofono.CellBroadcast org.ofono.NetworkRegistration
+org.ofono.SupplementaryServices org.ofono.Phonebook
+org.ofono.RadioSettings org.ofono.SimManager =
+
+    Online =3D 1
+    Model =3D E272
+    Manufacturer =3D huawei
+    Serial =3D 357865013196535
+##
+Ciao
+Neels
 
 
-Agree. It can be anything not only cellular network. Do we need
-to check the bearer parameters in that case or can I just remove the
-current check code?
 
-Regards,
-Jeevaka
 
---===============8273128694941252901==--
+
+--===============7602983386737942410==--
 
