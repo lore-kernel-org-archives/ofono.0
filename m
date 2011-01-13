@@ -1,80 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============5738470515718605360=="
+Content-Type: multipart/mixed; boundary="===============3322342654142887814=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 1/1] ifxmodem: change AT command for enabling SATK
-Date: Thu, 13 Jan 2011 15:27:27 +0200
-Message-ID: <1294925247-5144-2-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1294925247-5144-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH] sim: check if lock is locked after code changing attempt
+Date: Thu, 13 Jan 2011 11:35:06 -0200
+Message-ID: <AANLkTi=fiXMQnegj1+o3z8o9KjuBBzzcaxsjCCajX+V+@mail.gmail.com>
+In-Reply-To: <20A4FB08D632914F9C09B9F05CBDF258192DAA2580@EXMB02.eu.tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5738470515718605360==
+--===============3322342654142887814==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/ifxmodem/stk.c |   11 +++++------
- 1 files changed, 5 insertions(+), 6 deletions(-)
+Ho Jussi
 
-diff --git a/drivers/ifxmodem/stk.c b/drivers/ifxmodem/stk.c
-index 1a1805c..5951149 100644
---- a/drivers/ifxmodem/stk.c
-+++ b/drivers/ifxmodem/stk.c
-@@ -46,7 +46,7 @@ struct stk_data {
- =
+On Thu, Jan 13, 2011 at 6:34 AM,  <Jussi.Kangas@tieto.com> wrote:
+> On Wed, 2011-01-12 at 07:07 +0200, Denis Kenzior wrote:
+>> First, please fix your authorship information. =C2=A0See the AUTHORS file
+>> to see what we expect. =C2=A0Also, please make sure that you're using ta=
+bs
+>> for indentation and following the relevant coding style. =C2=A0See the
+>> Submitting Patches section in the HACKING document in oFono git as
+>> well as doc/coding-style.txt.
+>
+> I think whole this chapter should be translated as "Do not use Outlook".
+> I asked around little bit and best guess seems to be that you are using s=
+omething that takes authorship information from mail
 
- static const char *none_prefix[] =3D { NULL };
- static const char *sate_prefix[] =3D { "+SATE:", NULL };
--static const char *cfun_prefix[] =3D { "+CFUN:", NULL };
-+static const char *xsatk_prefix[] =3D { "+XSATK:", NULL };
- =
+This is `git am'
 
- static void sate_cb(gboolean ok, GAtResult *result, gpointer user_data)
- {
-@@ -244,7 +244,7 @@ static void satf_notify(GAtResult *result, gpointer use=
-r_data)
- 		ofono_stk_proactive_session_end_notify(stk);
- }
- =
+> address. Also since the patch passes the checkpatch here with no problems=
+ whatsoever I guess Outlook ruined the patch. Fine, > I'll try Evolution ne=
+xt. If possible, I would like to avoid using the git send-email. I prefer t=
+ools with GUI.
 
--static void cfun_support_cb(gboolean ok, GAtResult *result,
-+static void xsatk_support_cb(gboolean ok, GAtResult *result,
- 						gpointer user_data)
- {
- 	struct ofono_stk *stk =3D user_data;
-@@ -259,8 +259,7 @@ static void cfun_support_cb(gboolean ok, GAtResult *res=
-ult,
- 	g_at_chat_register(sd->chat, "+SATN:", satn_notify, FALSE, stk, NULL);
- 	g_at_chat_register(sd->chat, "+SATF:", satf_notify, FALSE, stk, NULL);
- =
-
--	g_at_chat_send(sd->chat, "AT+CFUN=3D6", none_prefix,
--						NULL, NULL, NULL);
-+	g_at_chat_send(sd->chat, "AT+XSATK=3D1,1", none_prefix, NULL, NULL, NULL);
- =
-
- 	ofono_stk_register(stk);
- }
-@@ -280,8 +279,8 @@ static int ifx_stk_probe(struct ofono_stk *stk, unsigne=
-d int vendor, void *data)
- =
-
- 	ofono_stk_set_data(stk, sd);
- =
-
--	g_at_chat_send(sd->chat, "AT+CFUN=3D?", cfun_prefix,
--					cfun_support_cb, stk, NULL);
-+	g_at_chat_send(sd->chat, "AT+XSATK=3D?", xsatk_prefix, xsatk_support_cb,
-+			stk, NULL);
- =
-
- 	return 0;
- }
--- =
-
-1.7.0.4
+You can use whatever client you want to write email. But for sending
+patches, git send-email is the best one since you won't need to copy
+and paste, nor attach anything. Give it a try and you'll regret not
+using it first.
 
 
---===============5738470515718605360==--
+
+Lucas De Marchi
+
+--===============3322342654142887814==--
 
