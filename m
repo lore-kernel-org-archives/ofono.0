@@ -1,30 +1,32 @@
-Content-Type: multipart/mixed; boundary="===============6613674075894556976=="
+Content-Type: multipart/mixed; boundary="===============0943924143432286398=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/2] plugins-mbm: Remove data->reopen_source timer before
- setting up new one
-Date: Fri, 14 Jan 2011 14:41:32 +0100
-Message-ID: <1295012492.3873.137.camel@aeonflux>
-In-Reply-To: <1295012115-11605-1-git-send-email-tomasz.gregorek@gmail.com>
+Subject: Re: [PATCH 1/2] plugins-mbm: Adding timer removal to mbm_remove()
+Date: Fri, 14 Jan 2011 14:41:33 +0100
+Message-ID: <1295012493.3873.139.camel@aeonflux>
+In-Reply-To: <1295012088-11579-1-git-send-email-tomasz.gregorek@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6613674075894556976==
+--===============0943924143432286398==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Tomasz,
 
-> Check if there is a timer running already and remove it before
-> creating a new one. This will prevent calling reopen_callback() more
-> than if mbm_disconnect() is called more than once.
+> In case the modem is disconnected during enabling process, mbm_disconnect=
+()
+> will set up data->reopen_source timer. This timer needs to be
+> removed in mbm_remove() to stop execution of reopen_callback() after
+> hardware disconnection.
 > ---
->  plugins/mbm.c |    3 +++
->  1 files changed, 3 insertions(+), 0 deletions(-)
+>  plugins/mbm.c |    5 +++++
+>  1 files changed, 5 insertions(+), 0 deletions(-)
 
-patch has been applied, but same comment about the prefix applies here
-as well.
+patch has been applied. However as general rule for prefix of patches to
+the plugin director we just use the plugin name. So in your case mbm:
+would be correct. I fixed this up for you.
 
 Regards
 
@@ -32,5 +34,5 @@ Marcel
 
 
 
---===============6613674075894556976==--
+--===============0943924143432286398==--
 
