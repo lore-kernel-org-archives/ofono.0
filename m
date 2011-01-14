@@ -1,37 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============9089931045337611106=="
+Content-Type: multipart/mixed; boundary="===============0354421128556480438=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
-Date: Fri, 14 Jan 2011 12:46:47 +0200
-Message-ID: <1295002007.2109.3.camel@jsaunama-desktop>
-In-Reply-To: <1295001427.3873.118.camel@aeonflux>
+From: Helen Clemson <clemson.helen@gmail.com>
+Subject: [PATCH v2 1/2] stemodem: Incorrect string length in dtmf buf.
+Date: Fri, 14 Jan 2011 12:13:19 +0100
+Message-ID: <1295003599-11050-1-git-send-email-clemson.helen@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9089931045337611106==
+--===============0354421128556480438==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi ,
+From: Helen Clemson <helen.clemson@stericsson.com>
 
-> > I was not sure if all MVNOs have their own MNC, but in any case some
-> > operators use different trade names. Off the top of my hat I know our
-> > local Finnish operators Elisa and Sonera use trade names like Kolumbus
-> > and TeleFinland, and their name shown in UI needs to be correct.
-> =
+Strlen includes a NULL character.
+---
+ drivers/stemodem/voicecall.c |    6 ++----
+ 1 files changed, 2 insertions(+), 4 deletions(-)
 
-> what does the name showing in the UI has to do with the provision data
-> for the GPRS contexts? I am missing your point here.
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index 6f948f7..423f63e 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -375,16 +375,14 @@ static void ste_send_dtmf(struct ofono_voicecall *vc,=
+ const char *dtmf,
+ {
+ 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+-	int len =3D strlen(dtmf);
+ 	int s;
+ 	char *buf;
+ =
 
-Isn't the 'name' property of a context shown in some UI (when user
-selects connection to open)?
-And there might be cases where other context settings like APN is
-different with different trade names.
+ 	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
 
---Jukka
+-	/* strlen("AT+VTS=3D) =3D 7 */
+-	buf =3D g_try_new(char, len + 7);
+-
++	/* strlen("AT+VTS=3D) =3D 7 + NULL */
++	buf =3D g_try_new(char, strlen(dtmf) + 8);
+ 	if (buf =3D=3D NULL)
+ 		goto error;
+ =
+
+-- =
+
+1.7.1
 
 
-
---===============9089931045337611106==--
+--===============0354421128556480438==--
 
