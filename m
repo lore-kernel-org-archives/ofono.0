@@ -1,44 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============2803092592451317679=="
+Content-Type: multipart/mixed; boundary="===============3021899788971855063=="
 MIME-Version: 1.0
-From: Kai.Vehmanen@nokia.com
-Subject: RE: [PATCH v3 2/2] plugins: add ctm create to ifx plugin
-Date: Fri, 14 Jan 2011 11:30:56 +0000
-Message-ID: <C50CA21D80D6B74F80FB941E215DF4140E09CB@008-AM1MPN1-001.mgdnok.nokia.com>
-In-Reply-To: <1294964100.3873.109.camel@aeonflux>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: Band selection issue
+Date: Fri, 14 Jan 2011 10:25:40 -0200
+Message-ID: <AANLkTinbsGva8zkS87uKJM_8JJT_UzkbGmOE=tHSPiSt@mail.gmail.com>
+In-Reply-To: <B32E3D5F1713054290B4FF257B89C51A29868DC23D@shsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2803092592451317679==
+--===============3021899788971855063==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Zhigang
 
-On 14 Jan 2011, Marcel Holtmann wrote:
->>  #include <drivers/atmodem/atutil.h>
->> @@ -700,6 +701,7 @@ static void ifx_post_sim(struct ofono_modem
->*modem)
->>
->>  	DBG("%p", modem);
->>
->> +	ofono_ctm_create(modem, 0, "ifxmodem", data->dlcs[AUX_DLC]);
-> =
+On Fri, Jan 14, 2011 at 4:30 AM, Li, Zhigang <zhigang.li@intel.com> wrote:
+> Hi,
+> With HuaWei Em77W and Em1152 modems, I only can set band once in tow mode=
+ms; it always return the call back error, with debugging, it seems was mode=
+ms self issue.
+> Does it known issue?
 
-> so no emergency calls with CTM are possible? Or do we have to
-> potentially also handle that?
+No, I've never experienced this
 
-a very good point! So yes, TTY-enabled emergency calls are definitely
-needed. And in fact, that's probably one of the _most_ important
-use-cases for TTY there is (as you cannot send an SMS to the emergency =
+> Could you list which Hua wei modem are you using for debugging?
 
-center [1]).
+I used a Huawei E220 to develop the frequency band selection feature.
 
-[1] well, actually there are specs for this, and even trials, but =
-
-    it'll take ages before this gets widely deployed
+Could you enable debug and paste the output somewhere?
 
 
 
---===============2803092592451317679==--
+regards,
+Lucas De Marchi
+
+--===============3021899788971855063==--
 
