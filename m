@@ -1,71 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============5492460268599900130=="
+Content-Type: multipart/mixed; boundary="===============4428623849969698382=="
 MIME-Version: 1.0
-From: Olivier Guiter <olivier.guiter@linux.intel.com>
-Subject: [PATCH] gatserver: Add ATS6 command handler#2 - blank line removed,
- - keep int type because prototyping issue.
-Date: Fri, 14 Jan 2011 15:42:22 +0100
-Message-ID: <1295016142-22748-1-git-send-email-olivier.guiter@linux.intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
+Date: Fri, 14 Jan 2011 09:07:07 -0600
+Message-ID: <4D30669B.9080403@gmail.com>
+In-Reply-To: <1294987983.29263.24.camel@jsaunama-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5492460268599900130==
+--===============4428623849969698382==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- gatchat/gatserver.c |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+Hi Jukka,
 
-diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
-index 11eaac6..5c309f1 100644
---- a/gatchat/gatserver.c
-+++ b/gatchat/gatserver.c
-@@ -83,6 +83,7 @@ struct v250_settings {
- 	char s3;			/* set by S3=3D<val> */
- 	char s4;			/* set by S4=3D<val> */
- 	char s5;			/* set by S5=3D<val> */
-+	int s6;				/* set by S6=3D<val> */
- 	gboolean echo;			/* set by E<val> */
- 	gboolean quiet;			/* set by Q<val> */
- 	gboolean is_v1;			/* set by V<val>, v0 or v1 */
-@@ -426,6 +427,13 @@ static void at_c108_cb(GAtServerRequestType type, GAtR=
-esult *result,
- 	at_template_cb(type, result, server, &server->v250.c108, "&D", 0, 2, 2);
- }
- =
+On 01/14/2011 12:53 AM, Jukka Saunamaki wrote:
+> Hello Denis,
+> =
 
-+static void at_s6_cb(GAtServerRequestType type, GAtResult *result,
-+			gpointer user_data)
-+{
-+	GAtServer *server =3D user_data;
-+	at_template_cb(type, result, server, &server->v250.s6, "S6", 0, 255, 2);
-+}
-+
- static inline gboolean is_extended_command_prefix(const char c)
- {
- 	switch (c) {
-@@ -1031,6 +1039,7 @@ static void v250_settings_create(struct v250_settings=
- *v250)
- 	v250->s3 =3D '\r';
- 	v250->s4 =3D '\n';
- 	v250->s5 =3D '\b';
-+	v250->s6 =3D 2;
- 	v250->echo =3D TRUE;
- 	v250->quiet =3D FALSE;
- 	v250->is_v1 =3D TRUE;
-@@ -1054,6 +1063,7 @@ static void basic_command_register(GAtServer *server)
- 	g_at_server_register(server, "S3", at_s3_cb, server, NULL);
- 	g_at_server_register(server, "S4", at_s4_cb, server, NULL);
- 	g_at_server_register(server, "S5", at_s5_cb, server, NULL);
-+	g_at_server_register(server, "S6", at_s6_cb, server, NULL);
- 	g_at_server_register(server, "E", at_e_cb, server, NULL);
- 	g_at_server_register(server, "Q", at_q_cb, server, NULL);
- 	g_at_server_register(server, "V", at_v_cb, server, NULL);
--- =
+> On Thu, 2011-01-13 at 09:57 -0600, Denis Kenzior wrote:
+>>> Some virtual operators are using the same MCC/MNC as their host, or some
+>>> operators have several different trade names, and these can have
+>>> different access settings (at least different UI visible name). =
 
-1.7.1
+>>> SPN in SIM typically tells these cases apart. This is why I included
+>>> reading SPN to that example provisioning.
+>>
+>> Do you have specific examples?  To my knowledge the MVNOs should be
+>> provisioning the SIM with a different MNC from the host but the network
+>> used (and thus the network's MCC/MNC) are their host's.
+> =
+
+> I was not sure if all MVNOs have their own MNC, but in any case some
+> operators use different trade names. Off the top of my hat I know our
+> local Finnish operators Elisa and Sonera use trade names like Kolumbus
+> and TeleFinland, and their name shown in UI needs to be correct.
+> =
 
 
---===============5492460268599900130==--
+Being shown on the UI is a bit different from needing this information
+to provision.  oFono already takes care of reading EFspn in the netreg
+atom and figuring out the proper display name.
+
+If you can rely on just the MCC/MNC of the SIM/IMSI for provisioning
+information, that would greatly simplify your database and your plugin
+implementation.
+
+So I suggest you double check the need of EFspn first.
+
+Regards,
+-Denis
+
+--===============4428623849969698382==--
 
