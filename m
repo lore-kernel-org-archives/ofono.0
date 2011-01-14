@@ -1,54 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============3354368704480470413=="
+Content-Type: multipart/mixed; boundary="===============6554369575255232338=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH] doc: add CalledLinePresentation property to CallSettings
-Date: Fri, 14 Jan 2011 11:47:14 -0200
-Message-ID: <1295012834-5691-1-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <AANLkTimBgcxwOns3LBSFTBXKHV-XmKDpwSMYyjOfUisz@mail.gmail.com>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
+Date: Fri, 14 Jan 2011 15:58:50 +0200
+Message-ID: <1295013530.2109.10.camel@jsaunama-desktop>
+In-Reply-To: <1295012686.3873.141.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3354368704480470413==
+--===============6554369575255232338==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/call-settings-api.txt |   15 +++++++++++++++
- 1 files changed, 15 insertions(+), 0 deletions(-)
+Hi
 
-diff --git a/doc/call-settings-api.txt b/doc/call-settings-api.txt
-index b6dc1cc..46a1059 100644
---- a/doc/call-settings-api.txt
-+++ b/doc/call-settings-api.txt
-@@ -30,6 +30,21 @@ Properties	string CallingLinePresentation [readonly]
- 				"enabled",
- 				"unknown"
- =
+On Fri, 2011-01-14 at 14:44 +0100, ext Marcel Holtmann wrote:
+> Hi Jukka,
+> =
 
-+		string CalledLinePresentation [readonly]
-+
-+			Contains the value of the called line identification
-+			presentation property.  The value indicates the state
-+			of the CDIP supplementary service in the network.  If
-+			enabled, when receiving a call the network will provide
-+			the identification dialed to makee this call.  This is
-+			useful when subscriber can be registered with more than
-+			one identification.
-+
-+			Possible values are:
-+				"disabled",
-+				"enabled",
-+				"unknown"
-+
- 		string CallingNamePresentation [readonly]
- =
+> > > > I was not sure if all MVNOs have their own MNC, but in any case some
+> > > > operators use different trade names. Off the top of my hat I know o=
+ur
+> > > > local Finnish operators Elisa and Sonera use trade names like Kolum=
+bus
+> > > > and TeleFinland, and their name shown in UI needs to be correct.
+> > > =
 
- 			Contains the value of the calling name identification
--- =
+> > > what does the name showing in the UI has to do with the provision data
+> > > for the GPRS contexts? I am missing your point here.
+> > =
 
-1.7.3.5
+> > Isn't the 'name' property of a context shown in some UI (when user
+> > selects connection to open)?
+> =
+
+> so you wanna use the SPN to set the nice friendly name of the Context.
+> So far we just defaulted to "Internet" and "MMS" and did not bother any
+> further.
+
+Yes, that is how our previous UIs have done it, and I guess our UX
+designers like it in the future too.
+
+> For example ConnMan actually takes that information from the network
+> registration and not from the context.
+>
+> > And there might be cases where other context settings like APN is
+> > different with different trade names.
+> =
+
+> Is that really the case? Can this be used reliably?
+
+Quick look at our operator database does indeed confirm that, there are
+cases where different SPN maps to different APN.
+
+--Jukka
 
 
---===============3354368704480470413==--
+
+--===============6554369575255232338==--
 
