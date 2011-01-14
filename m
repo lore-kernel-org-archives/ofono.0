@@ -1,45 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============8284984183755243991=="
+Content-Type: multipart/mixed; boundary="===============8154731558591955408=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 0/3] LaunchBrowser Proactive command Support
-Date: Fri, 14 Jan 2011 11:38:52 +0200
-Message-ID: <1294997935-21814-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Helen Clemson <clemson.helen@gmail.com>
+Subject: [PATCH] stemodem: Incorrect string length in dtmf buf.
+Date: Fri, 14 Jan 2011 11:04:05 +0100
+Message-ID: <1294999445-10274-1-git-send-email-clemson.helen@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8284984183755243991==
+--===============8154731558591955408==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+From: Helen Clemson <helen.clemson@stericsson.com>
 
-  Following set of patches adds the basic support for LaunchBrowser
-proactive command to ofono.
+Strlen includes a NULL character. This change affects both stemodem and hfp=
+modem.
+---
+ drivers/hfpmodem/voicecall.c |    4 ++--
+ drivers/stemodem/voicecall.c |    5 ++---
+ 2 files changed, 4 insertions(+), 5 deletions(-)
 
- When a LaunchBrowser proactive command is received, oFono will inform the
-agent to LaunchBrowser with the specified URL. If confirmed by user, agent
-should launch the browser with the specified URL. This patch doesn't handle
-the qualifier, Network Access Name, User Name, password and bearer informat=
-ion
-which can be part of the LaunchBrowser proactive command.
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index 4c8ee37..1aefc53 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -590,8 +590,8 @@ static void hfp_send_dtmf(struct ofono_voicecall *vc, c=
+onst char *dtmf,
+ 	req->data =3D data;
+ 	req->affected_types =3D 0;
+ =
 
-Regards,
-Jeevaka
+-	/* strlen("AT+VTS=3D") =3D 7 */
+-	buf =3D g_try_new(char, strlen(dtmf) + 7);
++	/* strlen("AT+VTS=3D) =3D 7 + NULL */
++	buf =3D g_try_new(char, strlen(dtmf) + 8);
+ =
 
-Jeevaka Badrappan (3):
-  stk: Handle Launch Browser proactive command
-  test: Add support for launch browser command
-  doc: Describe ConfirmLaunchBrowser method
+ 	if (buf =3D=3D NULL)
+ 		goto error;
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index 8f3533d..ea3d48f 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -375,15 +375,14 @@ static void ste_send_dtmf(struct ofono_voicecall *vc,=
+ const char *dtmf,
+ {
+ 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+-	int len =3D strlen(dtmf);
+ 	int s;
+ 	char *buf;
+ =
 
- doc/stk-api.txt    |    8 +++++
- src/stk.c          |   90 ++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/stkagent.c     |   68 +++++++++++++++++++++++++++++++++++++++
- src/stkagent.h     |    7 ++++
- test/test-stk-menu |   13 +++++++
- 5 files changed, 186 insertions(+), 0 deletions(-)
+ 	if (cbd =3D=3D NULL)
+ 		goto error;
+ =
+
+-	/* strlen("AT+VTS=3D) =3D 7 */
+-	buf =3D g_try_new(char, len + 7);
++	/* strlen("AT+VTS=3D) =3D 7 + NULL */
++	buf =3D g_try_new(char, strlen(dtmf) + 8);
+ =
+
+ 	if (buf =3D=3D NULL)
+ 		goto error;
+-- =
+
+1.7.1
 
 
---===============8284984183755243991==--
+--===============8154731558591955408==--
 
