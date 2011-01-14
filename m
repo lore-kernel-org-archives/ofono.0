@@ -1,50 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============4105680238503635057=="
+Content-Type: multipart/mixed; boundary="===============6240010981603049881=="
 MIME-Version: 1.0
 From: Tomasz Gregorek <tomasz.gregorek@gmail.com>
-Subject: [PATCH 1/2] plugins-mbm: Adding timer removal to mbm_remove()
-Date: Fri, 14 Jan 2011 14:34:48 +0100
-Message-ID: <1295012088-11579-1-git-send-email-tomasz.gregorek@gmail.com>
+Subject: [PATCH 2/2] plugins-mbm: Remove data->reopen_source timer before
+ setting up new one
+Date: Fri, 14 Jan 2011 14:35:15 +0100
+Message-ID: <1295012115-11605-1-git-send-email-tomasz.gregorek@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4105680238503635057==
+--===============6240010981603049881==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Tomasz Gregorek <tomasz.gregorek@stericsson.com>
 
-In case the modem is disconnected during enabling process, mbm_disconnect()
-will set up data->reopen_source timer. This timer needs to be
-removed in mbm_remove() to stop execution of reopen_callback() after
-hardware disconnection.
+Check if there is a timer running already and remove it before
+creating a new one. This will prevent calling reopen_callback() more
+than if mbm_disconnect() is called more than once.
 ---
- plugins/mbm.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ plugins/mbm.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
 diff --git a/plugins/mbm.c b/plugins/mbm.c
-index dca9bd8..38583ac 100644
+index 38583ac..4048f6a 100644
 --- a/plugins/mbm.c
 +++ b/plugins/mbm.c
-@@ -91,6 +91,11 @@ static void mbm_remove(struct ofono_modem *modem)
+@@ -351,6 +351,9 @@ static void mbm_disconnect(gpointer user_data)
+ 	data->data_port =3D NULL;
  =
 
- 	DBG("%p", modem);
- =
-
-+	if (data->reopen_source > 0) {
+ 	/* Waiting for the +CGEV: ME DEACT might also work */
++	if (data->reopen_source > 0)
 +		g_source_remove(data->reopen_source);
-+		data->reopen_source =3D 0;
-+	}
 +
- 	ofono_modem_set_data(modem, NULL);
+ 	data->reopen_source =3D g_timeout_add_seconds(1, reopen_callback, modem);
+ }
  =
 
- 	g_at_chat_unref(data->data_port);
 -- =
 
 1.7.1
 
 
---===============4105680238503635057==--
+--===============6240010981603049881==--
 
