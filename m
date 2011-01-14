@@ -1,80 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============7604394145439028780=="
+Content-Type: multipart/mixed; boundary="===============4703453845642025757=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Ofono CF states not always correct
-Date: Fri, 14 Jan 2011 09:59:50 -0600
-Message-ID: <4D3072F6.60403@gmail.com>
-In-Reply-To: <4D304D91.50409@tieto.com>
+From: Tikander Petteri <petteri.tikander@ixonos.com>
+Subject: Re: unsolicited multiline result
+Date: Fri, 14 Jan 2011 20:33:08 +0200
+Message-ID: <1295029988.23336.355.camel@r82e1wc.ixonos.local>
+In-Reply-To: <1293815269.17038.106.camel@r82e1wc.ixonos.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7604394145439028780==
+--===============4703453845642025757==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jarko,
+Hi Denis,
 
-On 01/14/2011 07:20 AM, Jarko Poutiainen wrote:
-> Hi Denis,
+On Fri, 2010-12-31 at 19:07 +0200, Tikander Petteri wrote:
+
+> > However, I'm now starting to question how the spec writers ever intended
+> > the implementation of unsolicited +CEN reporting to work on the
+> > application side.  Not to mention other similar ones like +CPOSR.  =
+
 > =
 
-> On 01/11/2011 05:16 PM, Denis Kenzior wrote:
->> Hi Jarko,
->>
->> So quickly looking at 22.082, for example 1.6.82.2:
->>
->> "If Call forwarding on mobile subscriber busy is active, activation of
->> Call forwarding unconditional will be accepted. Call forwarding on
->> mobile subscriber busy will be quiescent during the active period of
->> Call forwarding unconditional.  If Call forwarding unconditional is
->> subsequently deactivated, Call forwarding on mobile subscriber busy
->> becomes operative again (unless the interaction with another
->> supplementary service requests that it remains quiescent)."
->>
->> To me it sounds like oFono is doing exactly the right thing.  Are you
->> sure your modem is behaving properly?
->>
->> Regards,
->> -Denis
-> =
-
-> It seems that I explained this poorly. So modem is behaving as you
-> quoted but ofono is not. I can for example get ofono in a state where
-> ofono replies that no CF is active even though one of them is.
-> =
-
-> e.g. when I do following:
-> ./list-modems
-> ./test-ussd '**61*+358401234567*11#'
-> ./list-modems
-> ./test-ussd '**21*+358401234567*11#'
-> ./list-modems
-> Now ofono claims that both are active
-> ./test-ussd '*#002#'
-> ./list-modems
-> Now ofono correctly states that only VoiceUnconditional is active
-
-Both are active and the modem should be reporting both.  At least that
-is how I understood the specifications.
-
-> ./test-ussd '##21#'
-> ./list-modems
-> Now ofono claims that no call forwarding is set active when VoiceNoReply
-> in fact is.
-> ./test-ussd '*#002#'
-> ./list-modems
-> Now ofono correctly states that VoiceNoReply is active
-> =
-
-> Does this make this any clearer?
+> Thanks.
 > =
 
 
-A bit, but having the AT command logs would help greatly.
+Have you got some explanation from the standard writers, what was the
+idea for these multiple unsolicited codes to be encoded in the way,
+TS.27007 says?
 
-Regards,
--Denis
+> > When
+> > the string / update is broken up over multiple unsolicited result codes
+> > the application has no idea when the update has finished.
+> > =
 
---===============7604394145439028780==--
+> =
+
+> That's true. There is no terminator ('OK' etc) in the end of the
+> unsolicited response for insuring that all the data has been received. =
+
+> =
+
+
+One solution (nasty one) popped in my mind, if no indication of the last
+result-code is received: usage of timer. So, after receiving some bytes
+of the unsolicited message, possible remaining bytes could be monitored
+by starting some timer for a while. If after timeout I/O-buffer is
+empty, then hopefully the result is ready. But naturally this makes the
+result-handling a little bit lazy, because the result is not sent to the
+upper level immediately...
+
+> > What is particularly challenging in the +CEN case is the fact that it
+> > uses two different prefixes for such unsolicited reporting.
+> > This makes it impossible to reliably update the emergency call list,
+> > obtain CPOSR information, etc.
+> > =
+
+> =
+
+
+I noticed in the oFono-mailing list some earlier discussion of the plans
+for taking care of Location service API (as well as TODO-task marked to
+be done). Is it still a valid case, so is it planned to be implemented?
+
+Thanks!
+
+Br, Petteri
+
+
+
+--===============4703453845642025757==--
 
