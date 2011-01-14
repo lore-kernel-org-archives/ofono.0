@@ -1,63 +1,90 @@
-Content-Type: multipart/mixed; boundary="===============4971664987223849675=="
+Content-Type: multipart/mixed; boundary="===============8910540800781379882=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH] cdmamodem: fix to follow oFono probe rules
-Date: Fri, 14 Jan 2011 12:25:52 -0800
-Message-ID: <1295036752-23114-1-git-send-email-dara.spieker-doyle@nokia.com>
-In-Reply-To: <y>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: unsolicited multiline result
+Date: Fri, 14 Jan 2011 14:22:16 -0600
+Message-ID: <4D30B078.3030207@gmail.com>
+In-Reply-To: <1295029988.23336.355.camel@r82e1wc.ixonos.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4971664987223849675==
+--===============8910540800781379882==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Not allowed to call register directly from probe, use g_idle_add
-instead for now
----
- drivers/cdmamodem/voicecall.c |   12 ++++++++++--
- 1 files changed, 10 insertions(+), 2 deletions(-)
+Hi Petteri,
 
-diff --git a/drivers/cdmamodem/voicecall.c b/drivers/cdmamodem/voicecall.c
-index a0fa79f..94ec74b 100644
---- a/drivers/cdmamodem/voicecall.c
-+++ b/drivers/cdmamodem/voicecall.c
-@@ -109,6 +109,15 @@ static void cdma_hangup(struct ofono_cdma_voicecall *v=
-c,
- 	cdma_template("AT+CHV", vc, cdma_hangup_cb, cb, data);
- }
- =
+On 01/14/2011 12:33 PM, Tikander Petteri wrote:
+> Hi Denis,
+> =
 
-+static gboolean cdma_voicecall_initialized(gpointer user_data)
-+{
-+	struct ofono_cdma_voicecall *vc =3D user_data;
-+
-+	ofono_cdma_voicecall_register(vc);
-+
-+	return FALSE;
-+}
-+
- static int cdma_voicecall_probe(struct ofono_cdma_voicecall *vc,
- 					unsigned int vendor, void *data)
- {
-@@ -123,8 +132,7 @@ static int cdma_voicecall_probe(struct ofono_cdma_voice=
-call *vc,
- 	vd->vendor =3D vendor;
- =
+> On Fri, 2010-12-31 at 19:07 +0200, Tikander Petteri wrote:
+> =
 
- 	ofono_cdma_voicecall_set_data(vc, vd);
--
--	ofono_cdma_voicecall_register(vc);
-+	g_idle_add(cdma_voicecall_initialized, vc);
- =
+>>> However, I'm now starting to question how the spec writers ever intended
+>>> the implementation of unsolicited +CEN reporting to work on the
+>>> application side.  Not to mention other similar ones like +CPOSR.  =
 
- 	return 0;
- }
--- =
+>>
+>> Thanks.
+>>
+> =
 
-1.7.0.4
+> Have you got some explanation from the standard writers, what was the
+> idea for these multiple unsolicited codes to be encoded in the way,
+> TS.27007 says?
+
+Not yet.
+
+> =
+
+>>> When
+>>> the string / update is broken up over multiple unsolicited result codes
+>>> the application has no idea when the update has finished.
+>>>
+>>
+>> That's true. There is no terminator ('OK' etc) in the end of the
+>> unsolicited response for insuring that all the data has been received. =
+
+>>
+> =
+
+> One solution (nasty one) popped in my mind, if no indication of the last
+> result-code is received: usage of timer. So, after receiving some bytes
+> of the unsolicited message, possible remaining bytes could be monitored
+> by starting some timer for a while. If after timeout I/O-buffer is
+> empty, then hopefully the result is ready. But naturally this makes the
+> result-handling a little bit lazy, because the result is not sent to the
+> upper level immediately...
+> =
 
 
---===============4971664987223849675==--
+The timer is the only solution I have thought of as well.  I do not see
+any other way.  However, this solution is not really guaranteed to
+always work as expected.  e.g. due to OS load conditions, other timing
+quirks, etc.
+
+So I'd rather not use it unless there's absolutely no other alternative.
+
+>>> What is particularly challenging in the +CEN case is the fact that it
+>>> uses two different prefixes for such unsolicited reporting.
+>>> This makes it impossible to reliably update the emergency call list,
+>>> obtain CPOSR information, etc.
+>>>
+>>
+> =
+
+> I noticed in the oFono-mailing list some earlier discussion of the plans
+> for taking care of Location service API (as well as TODO-task marked to
+> be done). Is it still a valid case, so is it planned to be implemented?
+> =
+
+
+I believe so, perhaps one of the STE guys can comment more.
+
+Regards,
+-Denis
+
+--===============8910540800781379882==--
 
