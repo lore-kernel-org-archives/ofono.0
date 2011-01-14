@@ -1,51 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============3498647392252739521=="
+Content-Type: multipart/mixed; boundary="===============7014758703166975661=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 3/5 v3] nettime: DBUS and compilation configuration
-Date: Fri, 14 Jan 2011 01:22:59 +0100
-Message-ID: <1294964579.3873.113.camel@aeonflux>
-In-Reply-To: <1294912175-12026-4-git-send-email-antti.paila@nokia.com>
+From: Li, Zhigang <zhigang.li@intel.com>
+Subject: RE: Making voice call with Huawei E272 USB Modem
+Date: Fri, 14 Jan 2011 12:52:24 +0800
+Message-ID: <B32E3D5F1713054290B4FF257B89C51A29868DC07E@shsmsx502.ccr.corp.intel.com>
+In-Reply-To: <1294933381.8421.13.camel@yanni-laptop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3498647392252739521==
+--===============7014758703166975661==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antti,
+>
+>#output from list-modem testscrip
+>./list-modems
+>[ /huawei0 ]
+>    Features =3D sms gprs cbs net rat sim
 
->  Makefile.am    |    9 +++++++--
->  src/ofono.conf |    2 ++
->  2 files changed, 9 insertions(+), 2 deletions(-)
-
-<snip>
- =
-
->    <policy user=3D"root">
->      <allow own=3D"org.ofono"/>
-> +    <allow own=3D"com.meego"/>
->      <allow send_destination=3D"org.ofono"/>
->      <allow send_interface=3D"org.ofono.SimToolkitAgent"/>
->      <allow send_interface=3D"org.ofono.PushNotificationAgent"/>
->      <allow send_interface=3D"org.ofono.SmartMessagingAgent"/>
-> +    <allow send_interface=3D"org.ofono.NetworkTime"/>
->    </policy>
->  =
-
->    <policy at_console=3D"true">
-
-I am now lost in what you are trying to achieve here. I thought we
-agreed that we send a D-Bus method to timed. For that you neither have
-to have a well known name nor have a D-Bus interface present.
-
-And surely ofonod will not claim com.meego as service name.
-
-Regards
-
-Marcel
+There was no voicecall manager interface at all, it mean your modem did not=
+ support voice call.
 
 
+>    Powered =3D 1
+>    Lockdown =3D 0
+>    Interfaces =3D org.ofono.SmartMessaging org.ofono.PushNotification
+>org.ofono.MessageManager org.ofono.ConnectionManager
+>org.ofono.CellBroadcast org.ofono.NetworkRegistration
+>org.ofono.SupplementaryServices org.ofono.Phonebook
+>org.ofono.RadioSettings org.ofono.SimManager
+>    Online =3D 1
+>    Model =3D E272
+>    Manufacturer =3D huawei
+>    Serial =3D 357865013196535
 
---===============3498647392252739521==--
+B,R
+Zhigang
+
+
+--===============7014758703166975661==--
 
