@@ -1,38 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============6274113763681003424=="
+Content-Type: multipart/mixed; boundary="===============9134426536410098909=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] gatserver: Add ATS6 command handler#2 - blank line
- removed, - keep int type because prototyping issue.
-Date: Sat, 15 Jan 2011 02:25:59 +0100
-Message-ID: <1295054759.3873.152.camel@aeonflux>
-In-Reply-To: <1295016142-22748-1-git-send-email-olivier.guiter@linux.intel.com>
+Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
+Date: Sat, 15 Jan 2011 02:30:10 +0100
+Message-ID: <1295055010.3873.155.camel@aeonflux>
+In-Reply-To: <201101141642.01738.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6274113763681003424==
+--===============9134426536410098909==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Olivier,
+Hi Remi,
 
->  gatchat/gatserver.c |   10 ++++++++++
->  1 files changed, 10 insertions(+), 0 deletions(-)
+> > > Yes, that is how our previous UIs have done it, and I guess our UX
+> > > designers like it in the future too.
+> > =
 
-so I have the problem now that if I just use "git am" to apply your
-patch, the commit message seen in "git log" looks wrong. Check for
-yourself what happens here. It is the best way to see how git handles
-these.
+> > I would advise the UI against using the name from the context
+> > information and better using the one from the network registration
+> > instead.
+> =
 
-If you have a second version of the patch modify the Subject line to say
-[PATCH v2].
+> Well that would make sense... Therefore the operators don't do it ;-)
+> =
 
-Check the M5 coding style rule for commit messages. You need a clear
-subject and short subject. If you have more details put them into a
-commit body part.
+> For instance my provider shows as "Elisa" in the network registration but=
+ the =
 
-For the change log or notes to the reviewer (which should not be part of
-the commit message), you need to put them between --- and the diffstat.
+> access points are expected to be shown as "Elisa Internet" and "Elisa MMS=
+ WAP" =
+
+> if I recall correctly.
+> =
+
+> It only makes sense to have this data in the provisioning plugin. It woul=
+d be =
+
+> silly to have to provision just the names in a different component.
+
+just to make this clear, oFono takes care of potential operator renames
+and displays them accordingly, but the provision names would stay the
+same.
+
+So if Elisa renames themselves into "Gwendula", the context names would
+still say "Elisa Internet" etc. Has anybody thought about this part?
 
 Regards
 
@@ -40,5 +54,5 @@ Marcel
 
 
 
---===============6274113763681003424==--
+--===============9134426536410098909==--
 
