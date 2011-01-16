@@ -1,58 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============9134426536410098909=="
+Content-Type: multipart/mixed; boundary="===============7272863564378926173=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
-Date: Sat, 15 Jan 2011 02:30:10 +0100
-Message-ID: <1295055010.3873.155.camel@aeonflux>
-In-Reply-To: <201101141642.01738.remi.denis-courmont@nokia.com>
+From: George Matveev <george@matveev.se>
+Subject: [RFC] "magic" numbers (145,129)
+Date: Sun, 16 Jan 2011 19:39:17 +0100
+Message-ID: <453fcdb2b40bbc8f6628d8912df89588.squirrel@squirrel-webmail.surftown.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9134426536410098909==
+--===============7272863564378926173==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi,
 
-> > > Yes, that is how our previous UIs have done it, and I guess our UX
-> > > designers like it in the future too.
-> > =
+this is proposal for a patch series which would replace
+"magic" numbers 145 and 129 with well defined enumeration.
 
-> > I would advise the UI against using the name from the context
-> > information and better using the one from the network registration
-> > instead.
-> =
+Currently we have the following (eliminating sms and CAIF related code):
 
-> Well that would make sense... Therefore the operators don't do it ;-)
-> =
+geo(a)fermat:/home/work/ofono/ofono$ grep -nr 145 drivers src|grep -v
+sms|grep -v CAIF
+drivers/huaweimodem/voicecall.c:123:	if (ph->type =3D=3D 145)
+drivers/stemodem/voicecall.c:195:	if (ph->type =3D=3D 145)
+drivers/atmodem/voicecall.c:374:	if (ph->type =3D=3D 145)
+drivers/calypsomodem/voicecall.c:88:	if (ph->type =3D=3D 145)
+drivers/hfpmodem/voicecall.c:369:	if (ph->type =3D=3D 145)
+drivers/ifxmodem/voicecall.c:313:	if (ph->type =3D=3D 145)
+src/phonebook.c:41:#define TYPE_INTERNATIONAL 145
+src/common.c:74:	{ 145,	"Message class not supported" },
+src/common.c:408:	if (ph->type =3D=3D 145 && (strlen(ph->number) > 0) &&
+src/common.c:425:		ph->type =3D 145;	/* International */
+geo(a)fermat:/home/work/ofono/ofono$
 
-> For instance my provider shows as "Elisa" in the network registration but=
- the =
+Even though TYPE_INTERNATIONAL is defined it is used only once:
 
-> access points are expected to be shown as "Elisa Internet" and "Elisa MMS=
- WAP" =
+geo(a)fermat:/home/work/ofono/ofono$ grep -nr _INTERNATIONAL .|grep -v SMS
+./src/phonebook.c:41:#define TYPE_INTERNATIONAL 145
+./src/phonebook.c:179:	if ((type =3D=3D TYPE_INTERNATIONAL) && (number[0] !=
+=3D
+'+'))
+geo(a)fermat:/home/work/ofono/ofono$
 
-> if I recall correctly.
-> =
+And for "magic" number 129 we have:
 
-> It only makes sense to have this data in the provisioning plugin. It woul=
-d be =
-
-> silly to have to provision just the names in a different component.
-
-just to make this clear, oFono takes care of potential operator renames
-and displays them accordingly, but the provision names would stay the
-same.
-
-So if Elisa renames themselves into "Gwendula", the context names would
-still say "Elisa Internet" etc. Has anybody thought about this part?
-
-Regards
-
-Marcel
+geo(a)fermat:/home/work/ofono/ofono$ grep -nr 129 drivers src|grep -v
+sms|grep -v CAIF
+drivers/atmodem/call-forwarding.c:92:		list[num].phone_number.type =3D 129;
+drivers/atmodem/atutil.c:115:		int number_type =3D 129;
+drivers/atmodem/ssn.c:72:	ph.type =3D 129;
+drivers/calypsomodem/voicecall.c:298:		type =3D 129;
+src/call-forwarding.c:794:		ph.type =3D 129;
+src/common.c:70:	{ 129,	"Short message type 0 not supported" },
+src/common.c:428:		ph->type =3D 129;	/* Local */
+geo(a)fermat:/home/work/ofono/ofono$
 
 
+So if we introduce enum phone_number_type in src/common.h
+similar to sms_number_type defined in smsutils.h:
 
---===============9134426536410098909==--
+enum phone_number_type {
+	PHONE_NUMBER_TYPE_LOCAL =3D 0,
+	PHONE_NUMBER_TYPE_INTER =3D 1
+};
+
+and use it consistently with phone type then we may avoid magic numbers
+and need to guess what they mean.
+
+Also if we do so there will be no need to include any new headers in
+voicecall.c files in case of
+stemodem and hfpmodem drivers. Only voicecall.c for atmodem, calypsomodem,
+and ifxmodem drivers will have to include common.h.
+
+If project maintainers agree that such patch (series) might make oFono
+code more structured
+and easier to understand (no need to comment on each line) I'll submit a
+patch series shortly.
+
+Best regards,
+George Matveev
+
+
+
+
+
+
+
+
+--===============7272863564378926173==--
 
