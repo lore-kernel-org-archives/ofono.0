@@ -1,42 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============4871371311123561027=="
+Content-Type: multipart/mixed; boundary="===============6383456609409624414=="
 MIME-Version: 1.0
 From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-Subject: [RFC PATCH 0/3] Long phone numbers
-Date: Mon, 17 Jan 2011 11:59:25 -0300
-Message-ID: <1295276368-32233-1-git-send-email-rafael.zurita@profusion.mobi>
+Subject: [RFC PATCH 3/3] smart-messaging: Adapt to use new validation function
+Date: Mon, 17 Jan 2011 11:59:28 -0300
+Message-ID: <1295276368-32233-4-git-send-email-rafael.zurita@profusion.mobi>
+In-Reply-To: <1295276368-32233-1-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4871371311123561027==
+--===============6383456609409624414==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This is a proposal for the "long phone number" task (80 digits max length).
-It changes OFONO_MAX_PHONE_NUMBER_LENGTH and splits
-common:valid_phone_number_format(), to make sure long numbers are handled
-appropriately for functions that need manage shorter numbers, like
-numbers written to the SIM, or sms SCA.
-
-Rafael Ignacio Zurita (3):
-  types: change OFONO_MAX_PHONE_NUMBER_LENGTH value to 80
-  common: split valid_phone_number_format and adapt atoms
-  smart-messaging: Adapt to use new number format validation function
-
- include/types.h           |    2 +-
+---
  plugins/smart-messaging.c |    4 ++--
- src/call-forwarding.c     |    4 ++++
- src/common.c              |   20 ++++++++++++++++++--
- src/common.h              |    2 ++
- src/message-waiting.c     |   14 ++++++++++++++
- src/sim.c                 |    2 +-
- src/sms.c                 |    5 +++--
- 8 files changed, 45 insertions(+), 8 deletions(-)
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
+diff --git a/plugins/smart-messaging.c b/plugins/smart-messaging.c
+index 40af89f..5b77263 100644
+--- a/plugins/smart-messaging.c
++++ b/plugins/smart-messaging.c
+@@ -200,7 +200,7 @@ static DBusMessage *smart_messaging_send_vcard(DBusConn=
+ection *conn,
+ 					&bytes, &len, DBUS_TYPE_INVALID))
+ 		return __ofono_error_invalid_args(msg);
+ =
+
+-	if (valid_phone_number_format(to) =3D=3D FALSE)
++	if (valid_short_phone_number_format(to) =3D=3D FALSE)
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+ 	ref =3D __ofono_sms_get_next_ref(sm->sms);
+@@ -243,7 +243,7 @@ static DBusMessage *smart_messaging_send_vcal(DBusConne=
+ction *conn,
+ 					&bytes, &len, DBUS_TYPE_INVALID))
+ 		return __ofono_error_invalid_args(msg);
+ =
+
+-	if (valid_phone_number_format(to) =3D=3D FALSE)
++	if (valid_short_phone_number_format(to) =3D=3D FALSE)
+ 		return __ofono_error_invalid_format(msg);
+ =
+
+ 	ref =3D __ofono_sms_get_next_ref(sm->sms);
 -- =
 
 1.7.2.3
 
 
---===============4871371311123561027==--
+--===============6383456609409624414==--
 
