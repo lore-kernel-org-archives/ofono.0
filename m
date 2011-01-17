@@ -1,39 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============0618722382143477378=="
+Content-Type: multipart/mixed; boundary="===============5694708645878524637=="
 MIME-Version: 1.0
 From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [RFC PATCH 0/3] Long phone numbers
-Date: Mon, 17 Jan 2011 23:18:51 +0200
-Message-ID: <AANLkTi=ZBdVALq+n4EOBMh-nMN2zkMbrzqOFvOor0ZhQ@mail.gmail.com>
-In-Reply-To: <1295276368-32233-1-git-send-email-rafael.zurita@profusion.mobi>
+Subject: Re: [RFC PATCH] gprs: add function to handle activated context
+Date: Tue, 18 Jan 2011 00:39:20 +0200
+Message-ID: <AANLkTimLmnoJcTUyVw1+BWoU8ex9+hjtRsD2PWO0uiuy@mail.gmail.com>
+In-Reply-To: <AANLkTik_iqS0+hwV5OyaENQ40mY16n3-wWEVLV2XLVU7@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0618722382143477378==
+--===============5694708645878524637==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rafael,
+Hi Sjur,
 
-2011/1/17 Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>:
-> This is a proposal for the "long phone number" task (80 digits max length=
-).
-> It changes OFONO_MAX_PHONE_NUMBER_LENGTH and splits
-> common:valid_phone_number_format(), to make sure long numbers are handled
-> appropriately for functions that need manage shorter numbers, like
-> numbers written to the SIM, or sms SCA.
+2011/1/17 Sjur Br=C3=A6ndeland <sjurbren@gmail.com>:
+>> The 27.007 for release 9 (from version 9.3.0 onwards) says:
+>>
+>> NOTE 1: The <cid>s for network-initiated PDP contexts will have values
+>> outside the ranges indicated for the
+>> <cid> in the test form of the commands +CGDCONT and +CGDSCONT.
+>>
+>> The change was proposed by STE last February.
+>>
+>> This has some ramifications on how we use the CIDs within driver/core.
+>
+> I'm not sure we have any problems with Network Initiated Connection in oF=
+ono,
+> unless someone is planning to add support for Network Initiated
+> Primary Contexts / PDN Connections.
 
-Perhaps a validator and type for long phone numbers is better than for
-short numbers? I guess long numbers are mostly used when reporting an
-outgoing call back to oFono.
+AFAIK the initial LTE default bearer context can be network-initiated,
+and the CID 0 falls outside the range from +CGDCONT.
 
-BTW, with call forwarding you could have numbers up to 16 digits or if
-longForwardedToNumber is supported (by modem and both home and visited
-networks) even 28 digits. See TS 29.002 for merry details.
+> If we need to expose information about the Network Initiated Dedicated Be=
+arers,
+> I don't think we should model this as separate Connection-Contexts (with =
+CID),
+> but rather as a dictionary within the primary context object containing
+> the necessary information about the QoS available.
+>
+> I guess we need to hear from IMS-folks the minimum information they
+> need about the QoS, and provide just that information.
+
+Uh, on one hand, the IMS Signaling flag for signaling. For
+audio/video, we need QCI, a GBR rate, and TFT.
 
 -- =
 
 Pekka.Pessi mail at nokia.com
 
---===============0618722382143477378==--
+--===============5694708645878524637==--
 
