@@ -1,38 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6634368281079118616=="
+Content-Type: multipart/mixed; boundary="===============2674299893195635445=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 1/1] doc: missing space
-Date: Mon, 17 Jan 2011 12:11:40 +0200
-Message-ID: <1295259100-4511-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: Band selection issue
+Date: Mon, 17 Jan 2011 08:25:56 -0200
+Message-ID: <AANLkTimv00Y2R+g4WkCq9oNBscpBu4secNJY_Ah5rzsq@mail.gmail.com>
+In-Reply-To: <B32E3D5F1713054290B4FF257B89C51A29869CE509@shsmsx502.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6634368281079118616==
+--===============2674299893195635445==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/network-api.txt |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi Zhigang
 
-diff --git a/doc/network-api.txt b/doc/network-api.txt
-index 3a53da9..c252988 100644
---- a/doc/network-api.txt
-+++ b/doc/network-api.txt
-@@ -80,7 +80,7 @@ Properties	string Mode [readonly]
- 				"manual"   Network operator is selected
- 				           manually. If the operator is
- 				           currently not selected, registration
--				           is notattempted
-+				           is not attempted
- 				"off"      Unregisters from currently selected
- 				           network, if any, and does not
- 				           attempt to register again.
--- =
+On Mon, Jan 17, 2011 at 6:31 AM, Li, Zhigang <zhigang.li@intel.com> wrote:
+> Hi Lucas
+>
+> The issue was unstable modem. I tried the 1552 modem again, now it works =
+fine with 2G/3G Band, as the limitation of PCS network, did not test the PC=
+S band.
+>
+> With Emw770, it doesn't work yet, should be modem self issue.
+>
+>>Could you enable debug and paste the output somewhere?
+> .......
+> .......
+> ofonod[28247]: src/gprs.c:ofono_gprs_status_notify() /huawei2 status 2
+> ofonod[28247]: PCUI: < \r\n^BOOT:20294258,0,0,0,29\r\n
+> ofonod[28247]: PCUI: > AT^SYSCFG=3D16,3,2a0380,2,4\r
 
-1.7.1
+What frequency are you trying to set? Could you verify if it works by
+setting both GSM and UMTS frequencies to 'any' ?
+It might be a problem that this modem does not accept several
+frequencies together (currently we keep the GSM and UMTS values by
+making an OR and passing to modem)
 
 
---===============6634368281079118616==--
+regards,
+Lucas De Marchi
+
+--===============2674299893195635445==--
 
