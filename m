@@ -1,70 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============5021228810725728503=="
+Content-Type: multipart/mixed; boundary="===============7966368841022189360=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [RFC PATCH 4/4] Dummy example GPRS context provisioning driver
-Date: Mon, 17 Jan 2011 08:20:44 +0200
-Message-ID: <1295245244.2153.13.camel@jsaunama-desktop>
-In-Reply-To: <1295055010.3873.155.camel@aeonflux>
+From: Antti Paila <antti.paila@nokia.com>
+Subject: Re: [PATCH 3/5 v3] nettime: DBUS and compilation configuration
+Date: Mon, 17 Jan 2011 10:17:35 +0200
+Message-ID: <1295252255.3202.15.camel@apaila-ThinkPad-T410>
+In-Reply-To: <1294964579.3873.113.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5021228810725728503==
+--===============7966368841022189360==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello
+Hi Marcel,
 
-On Sat, 2011-01-15 at 02:30 +0100, Marcel Holtmann wrote:
-> > > I would advise the UI against using the name from the context
-> > > information and better using the one from the network registration
-> > > instead.
-> > =
-
-> > Well that would make sense... Therefore the operators don't do it ;-)
-> > =
-
-> > For instance my provider shows as "Elisa" in the network registration b=
-ut the =
-
-> > access points are expected to be shown as "Elisa Internet" and "Elisa M=
-MS WAP" =
-
-> > if I recall correctly.
-> > =
-
-> > It only makes sense to have this data in the provisioning plugin. It wo=
-uld be =
-
-> > silly to have to provision just the names in a different component.
+On Fri, 2011-01-14 at 01:22 +0100, ext Marcel Holtmann wrote:
+> Hi Antti,
 > =
 
-> just to make this clear, oFono takes care of potential operator renames
-> and displays them accordingly, but the provision names would stay the
-> same.
+> >  Makefile.am    |    9 +++++++--
+> >  src/ofono.conf |    2 ++
+> >  2 files changed, 9 insertions(+), 2 deletions(-)
 > =
 
-> So if Elisa renames themselves into "Gwendula", the context names would
-> still say "Elisa Internet" etc. Has anybody thought about this part?
+> <snip>
+>  =
 
-Well, there is always OMA Client Provisioning for that purpose.
+> >    <policy user=3D"root">
+> >      <allow own=3D"org.ofono"/>
+> > +    <allow own=3D"com.meego"/>
+> >      <allow send_destination=3D"org.ofono"/>
+> >      <allow send_interface=3D"org.ofono.SimToolkitAgent"/>
+> >      <allow send_interface=3D"org.ofono.PushNotificationAgent"/>
+> >      <allow send_interface=3D"org.ofono.SmartMessagingAgent"/>
+> > +    <allow send_interface=3D"org.ofono.NetworkTime"/>
+> >    </policy>
+> >  =
 
-However, I would leave this question to UX designers and someone that
-actually knows operator requirements regarding which name (network
-provided or provisioning/gprs-context name) to show for Internet access
-selection.
-Also, by the way, when roaming, network name is different from normal
-home name, and this may or may not be desirable for internet access
-name...
+> >    <policy at_console=3D"true">
+> =
 
-In any case, regarding the original issue if reading SPN is really
-needed for provisioning, the answer is still yes. There are cases where
-different SPN means different gprs context settings (other than 'Name'
-too).
+> I am now lost in what you are trying to achieve here. I thought we
+> agreed that we send a D-Bus method to timed. For that you neither have
+> to have a well known name nor have a D-Bus interface present.
 
---Jukka
+Are you referring to line
+'<allow send_interface=3D"org.ofono.NetworkTime"/>'?
+This is the interface timed is supposed to implement in order for oFono
+to call its Notify method. How else would you do it? =
 
 
 
---===============5021228810725728503==--
+> And surely ofonod will not claim com.meego as service name.
+
+Yes, sure. That was just left behind from testing, since the mock timed
+script needed this for D-Bus access. I'll remove it.
+
+Best Regards,
+  Antti
+
+
+--===============7966368841022189360==--
 
