@@ -1,65 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============7966368841022189360=="
+Content-Type: multipart/mixed; boundary="===============8554627505083459241=="
 MIME-Version: 1.0
-From: Antti Paila <antti.paila@nokia.com>
-Subject: Re: [PATCH 3/5 v3] nettime: DBUS and compilation configuration
-Date: Mon, 17 Jan 2011 10:17:35 +0200
-Message-ID: <1295252255.3202.15.camel@apaila-ThinkPad-T410>
-In-Reply-To: <1294964579.3873.113.camel@aeonflux>
+From: Li, Zhigang <zhigang.li@intel.com>
+Subject: RE: Band selection issue
+Date: Mon, 17 Jan 2011 16:31:00 +0800
+Message-ID: <B32E3D5F1713054290B4FF257B89C51A29869CE509@shsmsx502.ccr.corp.intel.com>
+In-Reply-To: <AANLkTinbsGva8zkS87uKJM_8JJT_UzkbGmOE=tHSPiSt@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7966368841022189360==
+--===============8554627505083459241==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Lucas
 
-On Fri, 2011-01-14 at 01:22 +0100, ext Marcel Holtmann wrote:
-> Hi Antti,
-> =
+The issue was unstable modem. I tried the 1552 modem again, now it works fi=
+ne with 2G/3G Band, as the limitation of PCS network, did not test the PCS =
+band.
 
-> >  Makefile.am    |    9 +++++++--
-> >  src/ofono.conf |    2 ++
-> >  2 files changed, 9 insertions(+), 2 deletions(-)
-> =
+With Emw770, it doesn't work yet, should be modem self issue.
 
-> <snip>
->  =
+>Could you enable debug and paste the output somewhere?
+.......
+.......
+ofonod[28247]: src/gprs.c:ofono_gprs_status_notify() /huawei2 status 2
+ofonod[28247]: PCUI: < \r\n^BOOT:20294258,0,0,0,29\r\n
+ofonod[28247]: PCUI: > AT^SYSCFG=3D16,3,2a0380,2,4\r
+ofonod[28247]: PCUI: < \r\nERROR\r\n
+ofonod[28247]: src/radio-settings.c:radio_band_set_callback() Error setting=
+ radio frequency band
+ofonod[28247]: PCUI: > AT^SYSCFG=3D16,3,2a0380,2,4\r
+ofonod[28247]: PCUI: < \r\nERROR\r\n
+ofonod[28247]: src/radio-settings.c:radio_band_set_callback() Error setting=
+ radio frequency band
+ofonod[28247]: PCUI: > AT^SYSCFG=3D16,3,2a0380,2,4\r
+ofonod[28247]: PCUI: < \r\nERROR\r\n
+ofonod[28247]: src/radio-settings.c:radio_band_set_callback() Error setting=
+ radio frequency band
+^[[Aofonod[28247]: PCUI: < \r\n^BOOT:20294258,0,0,0,29\r\n
+ofonod[28247]: PCUI: > AT^SYSCFG=3D16,3,20100,2,4\r
+ofonod[28247]: PCUI: < \r\nERROR\r\n
+ofonod[28247]: src/radio-settings.c:radio_band_set_callback() Error setting=
+ radio frequency band
+ofonod[28247]: PCUI: < \r\n^BOOT:20294258,0,0,0,29\r\n
+ofonod[28247]: PCUI: > AT^SYSCFG=3D16,3,20100,2,4\r
+ofonod[28247]: PCUI: < \r\nERROR\r\n
+ofonod[28247]: src/radio-settings.c:radio_band_set_callback() Error setting=
+ radio frequency band
 
-> >    <policy user=3D"root">
-> >      <allow own=3D"org.ofono"/>
-> > +    <allow own=3D"com.meego"/>
-> >      <allow send_destination=3D"org.ofono"/>
-> >      <allow send_interface=3D"org.ofono.SimToolkitAgent"/>
-> >      <allow send_interface=3D"org.ofono.PushNotificationAgent"/>
-> >      <allow send_interface=3D"org.ofono.SmartMessagingAgent"/>
-> > +    <allow send_interface=3D"org.ofono.NetworkTime"/>
-> >    </policy>
-> >  =
-
-> >    <policy at_console=3D"true">
-> =
-
-> I am now lost in what you are trying to achieve here. I thought we
-> agreed that we send a D-Bus method to timed. For that you neither have
-> to have a well known name nor have a D-Bus interface present.
-
-Are you referring to line
-'<allow send_interface=3D"org.ofono.NetworkTime"/>'?
-This is the interface timed is supposed to implement in order for oFono
-to call its Notify method. How else would you do it? =
-
-
-
-> And surely ofonod will not claim com.meego as service name.
-
-Yes, sure. That was just left behind from testing, since the mock timed
-script needed this for D-Bus access. I'll remove it.
-
-Best Regards,
-  Antti
+Thanks
+Zhigang
 
 
---===============7966368841022189360==--
+--===============8554627505083459241==--
 
