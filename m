@@ -1,45 +1,71 @@
-Content-Type: multipart/mixed; boundary="===============2674299893195635445=="
+Content-Type: multipart/mixed; boundary="===============8045543577216627309=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: Band selection issue
-Date: Mon, 17 Jan 2011 08:25:56 -0200
-Message-ID: <AANLkTimv00Y2R+g4WkCq9oNBscpBu4secNJY_Ah5rzsq@mail.gmail.com>
-In-Reply-To: <B32E3D5F1713054290B4FF257B89C51A29869CE509@shsmsx502.ccr.corp.intel.com>
+From: Olivier Guiter <olivier.guiter@linux.intel.com>
+Subject: [PATCH v3] gatserver: ATS6 command handler added
+Date: Mon, 17 Jan 2011 12:18:58 +0100
+Message-ID: <1295263138-13265-1-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2674299893195635445==
+--===============8045543577216627309==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Zhigang
+Use integer to be compliant with existing function prototypes.
+---
+ gatchat/gatserver.c |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
-On Mon, Jan 17, 2011 at 6:31 AM, Li, Zhigang <zhigang.li@intel.com> wrote:
-> Hi Lucas
->
-> The issue was unstable modem. I tried the 1552 modem again, now it works =
-fine with 2G/3G Band, as the limitation of PCS network, did not test the PC=
-S band.
->
-> With Emw770, it doesn't work yet, should be modem self issue.
->
->>Could you enable debug and paste the output somewhere?
-> .......
-> .......
-> ofonod[28247]: src/gprs.c:ofono_gprs_status_notify() /huawei2 status 2
-> ofonod[28247]: PCUI: < \r\n^BOOT:20294258,0,0,0,29\r\n
-> ofonod[28247]: PCUI: > AT^SYSCFG=3D16,3,2a0380,2,4\r
+diff --git a/gatchat/gatserver.c b/gatchat/gatserver.c
+index 11eaac6..be9f79a 100644
+--- a/gatchat/gatserver.c
++++ b/gatchat/gatserver.c
+@@ -83,6 +83,7 @@ struct v250_settings {
+ 	char s3;			/* set by S3=3D<val> */
+ 	char s4;			/* set by S4=3D<val> */
+ 	char s5;			/* set by S5=3D<val> */
++	int s6;				/* set by S6=3D<val> */
+ 	gboolean echo;			/* set by E<val> */
+ 	gboolean quiet;			/* set by Q<val> */
+ 	gboolean is_v1;			/* set by V<val>, v0 or v1 */
+@@ -412,6 +413,13 @@ static void at_x_cb(GAtServerRequestType type, GAtResu=
+lt *result,
+ 			"X", 0, 4, 4);
+ }
+ =
 
-What frequency are you trying to set? Could you verify if it works by
-setting both GSM and UMTS frequencies to 'any' ?
-It might be a problem that this modem does not accept several
-frequencies together (currently we keep the GSM and UMTS values by
-making an OR and passing to modem)
++static void at_s6_cb(GAtServerRequestType type, GAtResult *result,
++			gpointer user_data)
++{
++	GAtServer *server =3D user_data;
++	at_template_cb(type, result, server, &server->v250.s6, "S6", 0, 1, 1);
++}
++
+ static void at_c109_cb(GAtServerRequestType type, GAtResult *result,
+ 			gpointer user_data)
+ {
+@@ -1031,6 +1039,7 @@ static void v250_settings_create(struct v250_settings=
+ *v250)
+ 	v250->s3 =3D '\r';
+ 	v250->s4 =3D '\n';
+ 	v250->s5 =3D '\b';
++	v250->s6 =3D 2;
+ 	v250->echo =3D TRUE;
+ 	v250->quiet =3D FALSE;
+ 	v250->is_v1 =3D TRUE;
+@@ -1058,6 +1067,7 @@ static void basic_command_register(GAtServer *server)
+ 	g_at_server_register(server, "Q", at_q_cb, server, NULL);
+ 	g_at_server_register(server, "V", at_v_cb, server, NULL);
+ 	g_at_server_register(server, "X", at_x_cb, server, NULL);
++	g_at_server_register(server, "S6", at_s6_cb, server, NULL);
+ 	g_at_server_register(server, "&C", at_c109_cb, server, NULL);
+ 	g_at_server_register(server, "&D", at_c108_cb, server, NULL);
+ }
+-- =
+
+1.7.1
 
 
-regards,
-Lucas De Marchi
-
---===============2674299893195635445==--
+--===============8045543577216627309==--
 
