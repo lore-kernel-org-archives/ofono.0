@@ -1,39 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6288815650051724817=="
+Content-Type: multipart/mixed; boundary="===============8852907995753356006=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [PATCH 1/2] Add sim driver call for applications discovery.
-Date: Mon, 17 Jan 2011 16:42:24 +0200
-Message-ID: <AANLkTim0HRN9t740=Jig2U6RVgAj0PsYudSK=tnh+yY3@mail.gmail.com>
-In-Reply-To: <4D2F2AAD.8030208@gmail.com>
+From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
+Subject: [RFC PATCH 1/3] types: change OFONO_MAX_PHONE_NUMBER_LENGTH value to
+ 80
+Date: Mon, 17 Jan 2011 11:59:26 -0300
+Message-ID: <1295276368-32233-2-git-send-email-rafael.zurita@profusion.mobi>
+In-Reply-To: <1295276368-32233-1-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6288815650051724817==
+--===============8852907995753356006==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis and Andrzej,
+---
+ include/types.h |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-2011/1/13 Denis Kenzior <denkenz@gmail.com>:
->> + =C2=A0 =C2=A0 void (*list_apps)(struct ofono_sim *sim, ofono_sim_apps_=
-cb_t cb,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-void *data);
->> =C2=A0};
->
-> Do you think this belongs on a separate atom? =C2=A0E.g. something like
-> Pekka's SimAuthentication ?
+diff --git a/include/types.h b/include/types.h
+index 1b95eaa..e4951e4 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -76,7 +76,7 @@ struct ofono_error {
+ 	int error;
+ };
+ =
 
-I think the applications here are things like USIM and ISIMs. For
-authentication, we need the list of applications in order to find out
-that there is USIM (so we can use AKA), and if there are ISIMs, which
-one to use. (That is my understanding, but I'm no smart card
-expert...).
+-#define OFONO_MAX_PHONE_NUMBER_LENGTH 20
++#define OFONO_MAX_PHONE_NUMBER_LENGTH 80
+ #define OFONO_MAX_CALLER_NAME_LENGTH 80
+ =
 
+ struct ofono_phone_number {
 -- =
 
-Pekka.Pessi mail at nokia.com
+1.7.2.3
 
---===============6288815650051724817==--
+
+--===============8852907995753356006==--
 
