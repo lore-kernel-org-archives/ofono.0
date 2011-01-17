@@ -1,38 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============3088128009061904889=="
+Content-Type: multipart/mixed; boundary="===============1432600918660275565=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/5 v3] nettime: DBUS and compilation configuration
-Date: Mon, 17 Jan 2011 12:37:04 -0600
-Message-ID: <4D348C50.4070409@gmail.com>
-In-Reply-To: <CB0EE8641411214CBAFF8AEBB26ABCEC18BCEA@008-AM1MPN1-006.mgdnok.nokia.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: Re: [RFC PATCH] gprs: add function to handle activated context
+Date: Mon, 17 Jan 2011 19:39:13 +0100
+Message-ID: <AANLkTik_iqS0+hwV5OyaENQ40mY16n3-wWEVLV2XLVU7@mail.gmail.com>
+In-Reply-To: <AANLkTi=AOhqrCET83GrJ3pYHdZOSfkmEGV-qQMJyCbRS@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3088128009061904889==
+--===============1432600918660275565==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+Hi,
 
-> So these are redundant, unless the whole thing is rewritten as:
-> =
+Pekka Pessi <ppessi@gmail.com> wrote:
+> The 27.007 for release 9 (from version 9.3.0 onwards) says:
+>
+> NOTE 1: The <cid>s for network-initiated PDP contexts will have values
+> outside the ranges indicated for the
+> <cid> in the test form of the commands +CGDCONT and +CGDSCONT.
+>
+> The change was proposed by STE last February.
+>
+> This has some ramifications on how we use the CIDs within driver/core.
 
-> 	<allow send_destination=3D"org.ofono" send_interface=3D"org.ofono.SimToo=
-lkitAgent"/>
-> 	<allow send_destination=3D"org.ofono" send_interface=3D"org.ofono.PushNo=
-tificationAgent"/>
-> 	<allow send_destination=3D"org.ofono" send_interface=3D"org.ofono.SmartM=
-essagingAgent"/>
-> =
+I'm not sure we have any problems with Network Initiated Connection in oFon=
+o,
+unless someone is planning to add support for Network Initiated
+Primary Contexts /
+PDN Connections. Because the Network Initiated Contexts we are dealing with
+will be Secondary PDP Contexts / Dedicated Bearers.
 
+If we need to expose information about the Network Initiated Dedicated Bear=
+ers,
+I don't think we should model this as separate Connection-Contexts (with CI=
+D),
+but rather as a dictionary within the primary context object containing
+the necessary information about the QoS available.
 
-The agents are registered by the application, not ofono.  So the
-destination is in fact not org.ofono but a system bus connection owned
-by the application.  Hence the need to punch holes here.
+I guess we need to hear from IMS-folks the minimum information they
+need about the QoS, and provide just that information.
 
 Regards,
--Denis
+Sjur
 
---===============3088128009061904889==--
+--===============1432600918660275565==--
 
