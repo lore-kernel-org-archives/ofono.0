@@ -1,52 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============6705264588414321340=="
+Content-Type: multipart/mixed; boundary="===============6288815650051724817=="
 MIME-Version: 1.0
 From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [RFC PATCH] gprs: add function to handle activated context
-Date: Mon, 17 Jan 2011 16:21:42 +0200
-Message-ID: <AANLkTi=AOhqrCET83GrJ3pYHdZOSfkmEGV-qQMJyCbRS@mail.gmail.com>
-In-Reply-To: <4D277F2B.8070102@gmail.com>
+Subject: Re: [PATCH 1/2] Add sim driver call for applications discovery.
+Date: Mon, 17 Jan 2011 16:42:24 +0200
+Message-ID: <AANLkTim0HRN9t740=Jig2U6RVgAj0PsYudSK=tnh+yY3@mail.gmail.com>
+In-Reply-To: <4D2F2AAD.8030208@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6705264588414321340==
+--===============6288815650051724817==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+Hi Denis and Andrzej,
 
-2011/1/7 Denis Kenzior <denkenz@gmail.com>:
->> Considering that from a modem standpoint the CID race condition can be r=
-esolved,
->> some modem implementation may not have reserved a range of CID for their=
- own purpose,
->> or may not provide a mechanism to reserve a range of CID.
+2011/1/13 Denis Kenzior <denkenz@gmail.com>:
+>> + =C2=A0 =C2=A0 void (*list_apps)(struct ofono_sim *sim, ofono_sim_apps_=
+cb_t cb,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+void *data);
+>> =C2=A0};
 >
-> If the CGDCONT race is guaranteed to be solved by the modem
-> manufacturers, great. =C2=A0Unfortunately that is not the only race prese=
-nt.
-> =C2=A0Hint: The gatchat implementation uses non-blocking IO, select and a
-> command queue. =C2=A0So it is fully possible for oFono to reserve a CID, =
-send
-> out a driver activation request, but receive a network initiated context
-> activation / default bearer activation before the CGDCONT was even sent.
->
-> Having cid ranges that do not overlap seems the safest approach to me
-> right now. =C2=A0Unless someone has a better idea...
+> Do you think this belongs on a separate atom? =C2=A0E.g. something like
+> Pekka's SimAuthentication ?
 
-The 27.007 for release 9 (from version 9.3.0 onwards) says:
-
-NOTE 1: The <cid>s for network-initiated PDP contexts will have values
-outside the ranges indicated for the
-<cid> in the test form of the commands +CGDCONT and +CGDSCONT.
-
-The change was proposed by STE last February.
-
-This has some ramifications on how we use the CIDs within driver/core.
+I think the applications here are things like USIM and ISIMs. For
+authentication, we need the list of applications in order to find out
+that there is USIM (so we can use AKA), and if there are ISIMs, which
+one to use. (That is my understanding, but I'm no smart card
+expert...).
 
 -- =
 
 Pekka.Pessi mail at nokia.com
 
---===============6705264588414321340==--
+--===============6288815650051724817==--
 
