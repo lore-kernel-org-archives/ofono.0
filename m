@@ -1,53 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============1077659475395542736=="
+Content-Type: multipart/mixed; boundary="===============3481192713719808657=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] atmodem: fix signal strength issue with ifx
-Date: Tue, 18 Jan 2011 16:05:51 +0100
-Message-ID: <1295363151.3873.203.camel@aeonflux>
-In-Reply-To: <1295362831-23684-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
+Subject: Re: [PATCH] ste: Use UTF-8 as a default character set
+Date: Tue, 18 Jan 2011 17:10:23 +0200
+Message-ID: <1295363423.10484.78.camel@lkunnasl-desktop>
+In-Reply-To: <1295361134.3873.183.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1077659475395542736==
+--===============3481192713719808657==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+Hi Marcel,
 
->  drivers/atmodem/network-registration.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
+On Tue, 2011-01-18 at 16:32 +0200, Marcel Holtmann wrote:
+> Hi Lasse,
 > =
 
-> diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/net=
-work-registration.c
-> index 0c77ba8..e11c974 100644
-> --- a/drivers/atmodem/network-registration.c
-> +++ b/drivers/atmodem/network-registration.c
-> @@ -662,13 +662,13 @@ static void ifx_xciev_notify(GAtResult *result, gpo=
-inter user_data)
->  		return;
->  =
+> >  plugins/ste.c |    2 +-
+> >  1 files changed, 1 insertions(+), 1 deletions(-)
+> > =
 
->  	if (ind =3D=3D 0)
-> -		strength =3D 0;
-> +		strength =3D -1;
->  	else if (ind =3D=3D 7)
->  		strength =3D 100;
->  	else
->  		strength =3D (ind * 15);
->  =
+> > diff --git a/plugins/ste.c b/plugins/ste.c
+> > index 7bb7232..cc01f7b 100644
+> > --- a/plugins/ste.c
+> > +++ b/plugins/ste.c
+> > @@ -247,7 +247,7 @@ static int ste_enable(struct ofono_modem *modem)
+> >  		return -EIO;
+> >  =
 
-> -	ofono_netreg_strength_notify(netreg, ind);
-> +	ofono_netreg_strength_notify(netreg, strength);
+> >  	data->chat =3D g_at_chat_new_blocking(channel, syntax);
+> > -	g_at_chat_send(data->chat, "AT&F E0 V1 X4 &C1 +CMEE=3D1",
+> > +	g_at_chat_send(data->chat, "AT&F E0 V1 X4 &C1 +CMEE=3D1;+CSCS=3D\"UTF=
+-8\"",
+> >  			NULL, NULL, NULL, NULL);
+> =
 
-good catch. I really screwed this one up. Patch has been applied.
+> is it guaranteed that every single STE modem supports UTF-8 character
+> set?
+> =
 
-Regards
+Based on information I have, yes, every single ste modem support UTF-8.
 
-Marcel
+> I would rather see a new command checking for supported character sets
+> and then picking the default. And intermixing with ATE is not really
+> clean from my perspective.
+You want this to be changed accordingly? I tried to to follow minimalism
+in this simple change and not to introduce new functions. If command
+fails for some reason, modem uses its default value, which is IRA. It
+could be on a separate line, but still I would not add a call back for
+it, nothing to do if the command fails. I prefer the patch I sent, but
+you can decide =
+
+
+> =
+
+> Regards
+> =
+
+> Marcel
+> =
+
+> =
+
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
 
 
 
---===============1077659475395542736==--
+--===============3481192713719808657==--
 
