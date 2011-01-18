@@ -1,62 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0884682938148741854=="
+Content-Type: multipart/mixed; boundary="===============0316979732364953983=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH 1/5] simutil: Add EFcsp file and service group IDs
-Date: Tue, 18 Jan 2011 15:19:03 +0200
-Message-ID: <1295356747-29758-2-git-send-email-aki.niemi@nokia.com>
-In-Reply-To: <1295356747-29758-1-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCH 0/5] Implement CPHS CSP support
+Date: Tue, 18 Jan 2011 15:19:02 +0200
+Message-ID: <1295356747-29758-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0884682938148741854==
+--===============0316979732364953983==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- src/simutil.h |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
+Hi All,
 
-diff --git a/src/simutil.h b/src/simutil.h
-index 7e386fa..61440a5 100644
---- a/src/simutil.h
-+++ b/src/simutil.h
-@@ -26,6 +26,7 @@ enum sim_fileid {
- 	SIM_EFLI_FILEID =3D			0x6F05,
- 	SIM_EF_CPHS_MWIS_FILEID =3D		0x6F11,
- 	SIM_EF_CPHS_CFF_FILEID =3D		0x6F13,
-+	SIM_EF_CPHS_CSP_FILEID =3D		0x6F15,
- 	SIM_EF_CPHS_INFORMATION_FILEID =3D	0x6F16,
- 	SIM_EF_CPHS_MBDN_FILEID =3D		0x6F17,
- 	SIM_EFUST_FILEID =3D			0x6F38,
-@@ -223,6 +224,21 @@ enum sim_sst_service {
- 	SIM_SST_SERVICE_PROVIDER_DISPLAY_INFO =3D		55
- };
- =
+This patch set implements support for the PLMN mode bit found in the
+CPHS EFcsp file. Based on the PLMN mode setting, the netreg atom
+enables or disables manual network registration.
 
-+/* CPHS 4.2, Section B4.7 CSP Service Group Codes */
-+enum sim_csp_entry {
-+	SIM_CSP_ENTRY_CALL_OFFERING =3D		0x01,
-+	SIM_CSP_ENTRY_CALL_RESTRICTION =3D	0x02,
-+	SIM_CSP_ENTRY_OTHER_SUPP_SERVICES =3D	0x03,
-+	SIM_CSP_ENTRY_CALL_COMPLETION =3D		0x04,
-+	SIM_CSP_ENTRY_TELESERVICES =3D		0x05,
-+	SIM_CSP_ENTRY_CPHS_TELESERVICES =3D	0x06,
-+	SIM_CSP_ENTRY_CPHS_FEATURES =3D		0x07,
-+	SIM_CSP_ENTRY_NUMBER_IDENTIFICATION =3D	0x08,
-+	SIM_CSP_ENTRY_PHASE_2GPLUS_SERVICES =3D	0x09,
-+	SIM_CSP_ENTRY_VALUE_ADDED_SERVICES =3D	0xC0,
-+	SIM_CSP_ENTRY_INFORMATION_NUMBERS =3D	0xD5,
-+};
-+
- #define SIM_EFSPN_DC_HOME_PLMN_BIT 0x1
- #define SIM_EFSPN_DC_ROAMING_SPN_BIT 0x2
- =
+There is a new Mode property value of 'forced-auto' for indicating the
+case when manual selection is disabled. Any attempt to manually
+Register() will also fail with an error.
 
--- =
+In addition, we add a short description of the CPHS spec in
+doc/standards.txt. Unfortunately that spec is not publically
+available, although people may have luck finding an unofficial version
+online with the help of a search engine. ;)
 
-1.7.1
+Aki Niemi (5):
+  simutil: Add EFcsp file and service group IDs
+  netreg: Add CPHS CSP PLMN mode implementation
+  doc: Add documentation for 'forced-mode'
+  doc: Add short mention of CPHS under standards
+  TODO: Remove completed CPHS CSP task
+
+ TODO                |   13 --------
+ doc/network-api.txt |   24 ++++++++------
+ doc/standards.txt   |    9 +++++
+ src/network.c       |   85 +++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ src/simutil.h       |   16 +++++++++
+ 5 files changed, 123 insertions(+), 24 deletions(-)
 
 
---===============0884682938148741854==--
+
+--===============0316979732364953983==--
 
