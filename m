@@ -1,52 +1,98 @@
-Content-Type: multipart/mixed; boundary="===============2477359594292158063=="
+Content-Type: multipart/mixed; boundary="===============5450935798283959696=="
 MIME-Version: 1.0
-From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-Subject: Re: [RFC PATCH 0/3] Long phone numbers
-Date: Tue, 18 Jan 2011 06:39:09 -0300
-Message-ID: <20110118093908.GA20108@nodo3>
-In-Reply-To: <AANLkTi=ZBdVALq+n4EOBMh-nMN2zkMbrzqOFvOor0ZhQ@mail.gmail.com>
+From: Olivier Guiter <olivier.guiter@linux.intel.com>
+Subject: [PATCH] [PATCH v2] doc: Add Bluetooth Dial-up Networking Profile specs
+Date: Tue, 18 Jan 2011 10:44:29 +0100
+Message-ID: <1295343869-29114-1-git-send-email-olivier.guiter@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2477359594292158063==
+--===============5450935798283959696==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, Jan 17, 2011 at 11:18:51PM +0200, Pekka Pessi wrote:
-> Hi Rafael,
-> =
+---
+ doc/bluetooth-cmd-set.txt |   45 +++++++++++++++++++++++++++++++++++++++++=
+++++
+ doc/standards.txt         |    4 ++++
+ 2 files changed, 49 insertions(+), 0 deletions(-)
+ create mode 100644 doc/bluetooth-cmd-set.txt
 
-> 2011/1/17 Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>:
-> > This is a proposal for the "long phone number" task (80 digits max leng=
-th).
-> > It changes OFONO_MAX_PHONE_NUMBER_LENGTH and splits
-> > common:valid_phone_number_format(), to make sure long numbers are handl=
-ed
-> > appropriately for functions that need manage shorter numbers, like
-> > numbers written to the SIM, or sms SCA.
-> =
+diff --git a/doc/bluetooth-cmd-set.txt b/doc/bluetooth-cmd-set.txt
+new file mode 100644
+index 0000000..a7a1df3
+--- /dev/null
++++ b/doc/bluetooth-cmd-set.txt
+@@ -0,0 +1,45 @@
++This document specifies the AT command set used in the bluetooth ofono plu=
+gins.
++
++Bluetooth Dial-up Networking Profile Features Description
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D
++(Ref. document: Dial-up Networking Profile - Bluetooth specification versi=
+on 1.1 - 22 February 2001)
++
++- AT COMMAND SET USED:
++Commands:
++	&C	Circuit 109 (DCD) Control
++	&D	Circuit 108 (DTR) Response
++	&F	Set to Factory Defined Configuration
++	+GCAP	Request Complete Capabilities List
++	+GMI	Request Manufacturer Identification
++	+GMM	Read Model Identification
++	+GMR	Read Revision Identification
++	A	Answer Incoming Call
++	D	Dial
++	E	Command Echo
++	H	Hang Up
++	L	Monitor Speaker Loudness
++	M	Monitor Speaker Control
++	O	Return to Online Data Mode
++	P	Select Pulse Dialling
++	Q	Result Code Suppression
++	S0	Automatic Answer Control
++	S10	Automatic Disconnect Delay Control
++	S3	Command Line Termination Character
++	S4	Response Formatting Character
++	S5	Command Line Editing Character (BACKSPACE)
++	S6	Blind Dial Delay Control
++	S7	Connection Completion Timeout
++	S8	Comma Dial Modifier Delay Control
++	T	Select Tone Dialling
++	V	DCE Response Format
++	X	Call Progress Monitoring Control
++	Z	Reset to Default Configuration
++Result codes:
++	OK		Acknowledge execution of a command
++	CONNECT		Connection has been established
++	RING		The DCE has detected an incoming call signal from network
++	NO CARRIER	The connection has been terminated, or attempt to establish
++			a connection failed
++	ERROR		Error
++	NO DIALTONE	No dial-tone detected
++	BUSY		Busy signal detected
+diff --git a/doc/standards.txt b/doc/standards.txt
+index 2b85cb0..16f8912 100644
+--- a/doc/standards.txt
++++ b/doc/standards.txt
+@@ -166,3 +166,7 @@ Describes the general background and assumption of wire=
+less features.
+ 	Capability: Network Perspective
+ - S.R0006-808:	Wireless Features Description: Circuit Switched Call Preced=
+ence Over
+ 	CDMA Packet Data Session
++
++Bluetooth Specifications
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++- Dial-up Networking Profile - Bluetooth specification version 1.1 - 22 Fe=
+bruary 2001
+-- =
 
-> Perhaps a validator and type for long phone numbers is better than for
-> short numbers? I guess long numbers are mostly used when reporting an
-> outgoing call back to oFono.
+1.7.1
 
-No completely sure if it is better. Maybe it is the same?. With a new
-type for long number we will have modifications on other parts of the code
-which use OFONO_MAX_PHONE_NUMBER_LENGTH. The first idea could be simpler
-because we just have one type and would check for the format and length on =
-the
-proper places.
- =
 
-> BTW, with call forwarding you could have numbers up to 16 digits or if
-> longForwardedToNumber is supported (by modem and both home and visited
-> networks) even 28 digits. See TS 29.002 for merry details.
-
-Thanks for that. I am checking, and going to add an extra validator
-surely.
-
-Rafael Zurita
-
---===============2477359594292158063==--
+--===============5450935798283959696==--
 
