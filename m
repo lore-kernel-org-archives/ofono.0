@@ -1,60 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============6937027131758377352=="
+Content-Type: multipart/mixed; boundary="===============0884682938148741854=="
 MIME-Version: 1.0
-From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
-Subject: Re: [PATCH 1/2] atmodem: move USSD quirk to probe and use it also for
- STE modems
-Date: Tue, 18 Jan 2011 15:17:59 +0200
-Message-ID: <1295356679.10484.62.camel@lkunnasl-desktop>
-In-Reply-To: <4D346712.80109@gmail.com>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: [PATCH 1/5] simutil: Add EFcsp file and service group IDs
+Date: Tue, 18 Jan 2011 15:19:03 +0200
+Message-ID: <1295356747-29758-2-git-send-email-aki.niemi@nokia.com>
+In-Reply-To: <1295356747-29758-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6937027131758377352==
+--===============0884682938148741854==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ src/simutil.h |   16 ++++++++++++++++
+ 1 files changed, 16 insertions(+), 0 deletions(-)
 
-On Mon, 2011-01-17 at 17:58 +0200, Denis Kenzior wrote:
-> Hi Lasse,
-> =
+diff --git a/src/simutil.h b/src/simutil.h
+index 7e386fa..61440a5 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -26,6 +26,7 @@ enum sim_fileid {
+ 	SIM_EFLI_FILEID =3D			0x6F05,
+ 	SIM_EF_CPHS_MWIS_FILEID =3D		0x6F11,
+ 	SIM_EF_CPHS_CFF_FILEID =3D		0x6F13,
++	SIM_EF_CPHS_CSP_FILEID =3D		0x6F15,
+ 	SIM_EF_CPHS_INFORMATION_FILEID =3D	0x6F16,
+ 	SIM_EF_CPHS_MBDN_FILEID =3D		0x6F17,
+ 	SIM_EFUST_FILEID =3D			0x6F38,
+@@ -223,6 +224,21 @@ enum sim_sst_service {
+ 	SIM_SST_SERVICE_PROVIDER_DISPLAY_INFO =3D		55
+ };
+ =
 
-> On 01/17/2011 02:42 AM, Lasse Kunnasluoto wrote:
-> > Hi Marcel,
-> > =
++/* CPHS 4.2, Section B4.7 CSP Service Group Codes */
++enum sim_csp_entry {
++	SIM_CSP_ENTRY_CALL_OFFERING =3D		0x01,
++	SIM_CSP_ENTRY_CALL_RESTRICTION =3D	0x02,
++	SIM_CSP_ENTRY_OTHER_SUPP_SERVICES =3D	0x03,
++	SIM_CSP_ENTRY_CALL_COMPLETION =3D		0x04,
++	SIM_CSP_ENTRY_TELESERVICES =3D		0x05,
++	SIM_CSP_ENTRY_CPHS_TELESERVICES =3D	0x06,
++	SIM_CSP_ENTRY_CPHS_FEATURES =3D		0x07,
++	SIM_CSP_ENTRY_NUMBER_IDENTIFICATION =3D	0x08,
++	SIM_CSP_ENTRY_PHASE_2GPLUS_SERVICES =3D	0x09,
++	SIM_CSP_ENTRY_VALUE_ADDED_SERVICES =3D	0xC0,
++	SIM_CSP_ENTRY_INFORMATION_NUMBERS =3D	0xD5,
++};
++
+ #define SIM_EFSPN_DC_HOME_PLMN_BIT 0x1
+ #define SIM_EFSPN_DC_ROAMING_SPN_BIT 0x2
+ =
 
-> Supporting IRA character set is not really an option since IRA and GSM
-> 7bit have disjoint sets of characters.  The best you can really do is:
-> =
+-- =
 
-> - If your modem supports UTF8, then set that for all multiplexer
-> channels in the modem driver.
-Yes, it supports UTF8. I'll send a new patch for this. Thanks.
-
-> - Otherwise set the character set to GSM and do your best to put ussd
-> and phonebook on separate multiplexer channels.  That is of course
-> assuming that the CSCS setting is handled per channel.
-> =
-
-> > =
-
-> >> The best is if the STE modem would provide access to the USSD in PDU
-> >> mode and we can then decode it properly. Using text mode for USSD is n=
-ot
-> >> the best idea actually. Same as text mode for SMS is utterly broken ;)
-> > Don't know if this is possible.
-> =
-
-> USSD PDU mode is the ideal solution.  If this is not available, then you
-> will have to jump through all kinds of hoops to get this done properly.
-> =
-
-> Regards,
-> -Denis
-
--Lasse
+1.7.1
 
 
---===============6937027131758377352==--
+--===============0884682938148741854==--
 
