@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5454632334947874125=="
+Content-Type: multipart/mixed; boundary="===============0049648739275366477=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 3/5] doc: Add documentation for 'forced-mode'
-Date: Tue, 18 Jan 2011 15:28:11 +0100
-Message-ID: <1295360891.3873.179.camel@aeonflux>
-In-Reply-To: <1295356747-29758-4-git-send-email-aki.niemi@nokia.com>
+Subject: Re: [PATCH 2/5] netreg: Add CPHS CSP PLMN mode implementation
+Date: Tue, 18 Jan 2011 15:29:08 +0100
+Message-ID: <1295360948.3873.180.camel@aeonflux>
+In-Reply-To: <1295356747-29758-3-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5454632334947874125==
+--===============0049648739275366477==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,16 +17,14 @@ Hi Aki,
 
 <snip>
 
-> +				"auto"         Network registration is performed
-> +				               automatically.
-> +				"forced-auto"  Network registration is performed
-> +					       automatically while manual
-> +				               selection is disabled.
+> +	if (netreg->settings) {
+> +		g_key_file_set_boolean(netreg->settings, SETTINGS_GROUP,
+> +					"ForcedAuto", netreg->forced_auto);
+> +		storage_sync(netreg->imsi, SETTINGS_STORE, netreg->settings);
+> +	}
 
-we need to discuss this a little bit. I am not sure using a mode of
-forced auto is the best choice here.
-
-Maybe an extra property like "ManualAllowed" would be better. Thoughts?
+why are we bothering to store this value? Would it not be better to
+re-read when bringing up the modem?
 
 Regards
 
@@ -34,5 +32,5 @@ Marcel
 
 
 
---===============5454632334947874125==--
+--===============0049648739275366477==--
 
