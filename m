@@ -1,51 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============1557388640807144479=="
+Content-Type: multipart/mixed; boundary="===============0984069224229171814=="
 MIME-Version: 1.0
 From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [PATCH 3/8] gprs-provision: add driver API sources
-Date: Tue, 18 Jan 2011 10:09:27 +0200
-Message-ID: <1295338172-12773-4-git-send-email-jukka.saunamaki@nokia.com>
+Subject: [PATCH 1/8] gprs-provision: add driver API header
+Date: Tue, 18 Jan 2011 10:09:25 +0200
+Message-ID: <1295338172-12773-2-git-send-email-jukka.saunamaki@nokia.com>
 In-Reply-To: <1295338172-12773-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1557388640807144479==
+--===============0984069224229171814==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am          |    2 +-
- src/gprs-provision.c |  236 ++++++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am              |    2 +-
+ include/gprs-provision.h |   80 ++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 237 insertions(+), 1 deletions(-)
- create mode 100644 src/gprs-provision.c
+ 2 files changed, 81 insertions(+), 1 deletions(-)
+ create mode 100644 include/gprs-provision.h
 
 diff --git a/Makefile.am b/Makefile.am
-index 22ec95d..e792851 100644
+index da59be7..22ec95d 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -354,7 +354,7 @@ src_ofonod_SOURCES =3D $(gdbus_sources) $(builtin_sourc=
-es) src/ofono.ver \
- 			src/nettime.c src/stkagent.c src/stkagent.h \
- 			src/simfs.c src/simfs.h src/audio-settings.c \
- 			src/smsagent.c src/smsagent.h src/ctm.c \
--			src/cdma-voicecall.c
-+			src/cdma-voicecall.c src/gprs-provision.c
+@@ -15,7 +15,7 @@ include_HEADERS =3D include/log.h include/plugin.h includ=
+e/history.h \
+ 			include/radio-settings.h include/stk.h \
+ 			include/audio-settings.h include/nettime.h \
+ 			include/ctm.h include/cdma-voicecall.h \
+-			include/cdma-sms.h
++			include/cdma-sms.h include/gprs-provision.h
  =
 
- src_ofonod_LDADD =3D $(builtin_libadd) @GLIB_LIBS@ @DBUS_LIBS@ @CAPNG_LIBS=
-@ -ldl
+ nodist_include_HEADERS =3D include/version.h
  =
 
-diff --git a/src/gprs-provision.c b/src/gprs-provision.c
+diff --git a/include/gprs-provision.h b/include/gprs-provision.h
 new file mode 100644
-index 0000000..1690bc7
+index 0000000..70152b4
 --- /dev/null
-+++ b/src/gprs-provision.c
-@@ -0,0 +1,236 @@
++++ b/include/gprs-provision.h
+@@ -0,0 +1,80 @@
 +/*
 + *
-+ *  oFono - Open Source Telephony
++ *  oFono - Open Telephony stack for Linux
 + *
 + *  Copyright (C) 2011  Nokia Corporation and/or its subsidiary(-ies).
 + *
@@ -65,226 +64,72 @@ index 0000000..1690bc7
 + *
 + */
 +
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
++#ifndef __OFONO_GPRS_PROVISION_H
++#define __OFONO_GPRS_PROVISION_H
++
++#ifdef __cplusplus
++extern "C" {
 +#endif
 +
-+#include <stdlib.h>
-+#include <glib.h>
++#include "gprs-context.h"
 +
-+#include "ofono.h"
-+#include "gprs-provision.h"
-+
-+static GSList *g_drivers =3D NULL;
-+static GSList *provision_requests =3D NULL;
-+
-+struct gprs_provision_request {
-+	GSList *drivers; /* Provisioning drivers to be called */
++struct ofono_gprs_provision_context {
++	struct ofono_gprs_provision_driver *driver;
 +	struct ofono_modem *modem;
-+	ofono_gprs_provision_cb_t cb;
-+	void *user_data;
++	void *data;
 +};
 +
-+static void settings_cb(GSList *settings, void *user_data);
-+
-+static struct ofono_gprs_provision_context *gprs_provision_context_create(
-+			struct ofono_modem *modem,
-+			struct ofono_gprs_provision_driver *driver)
-+{
-+	struct ofono_gprs_provision_context *context;
-+
-+	if (driver->probe =3D=3D NULL)
-+		return NULL;
-+
-+	context =3D g_try_new0(struct ofono_gprs_provision_context, 1);
-+
-+	if (context =3D=3D NULL)
-+		return NULL;
-+
-+	context->driver =3D driver;
-+	context->modem =3D modem;
-+
-+	if (driver->probe(context) < 0) {
-+		g_free(context);
-+		return NULL;
-+	}
-+
-+	return context;
-+}
-+
-+static void clean_active_requests(gpointer data, gpointer user_data)
-+{
-+	struct gprs_provision_request *req =3D data;
-+	struct ofono_gprs_provision_context *context =3D user_data;
-+
-+	req->drivers =3D g_slist_remove(req->drivers, context);
-+}
-+
-+static void context_remove(struct ofono_atom *atom)
-+{
-+	struct ofono_gprs_provision_context *context =3D
-+		__ofono_atom_get_data(atom);
-+
-+	g_slist_foreach(provision_requests, clean_active_requests, context);
-+
-+	if (context->driver->remove)
-+		context->driver->remove(context);
-+
-+	g_free(context);
-+}
-+
-+void __ofono_gprs_provision_probe_drivers(struct ofono_modem *modem)
-+{
-+	struct ofono_gprs_provision_driver *driver;
-+	struct ofono_gprs_provision_context *context;
-+	GSList *l;
-+
-+	for (l =3D g_drivers; l; l =3D l->next) {
-+		driver =3D l->data;
-+
-+		context =3D gprs_provision_context_create(modem, driver);
-+		if (context =3D=3D NULL)
-+			continue;
-+
-+		__ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_GPRS_PROVISION,
-+						context_remove, context);
-+	}
-+}
-+
-+void ofono_gprs_provision_data_free(struct ofono_gprs_provision_data *data)
-+{
-+	if (data =3D=3D NULL)
-+		return;
-+
-+	free(data->name);
-+	free(data->apn);
-+	free(data->username);
-+	free(data->password);
-+	free(data->message_proxy);
-+	free(data->message_center);
-+	g_free(data);
-+}
++struct ofono_gprs_provision_data {
++	enum ofono_gprs_context_type type;
++	enum ofono_gprs_proto proto;
++	char *name;
++	char *apn;
++	char *username;
++	char *password;
++	char *message_proxy;
++	char *message_center;
++};
 +
 +/*
-+ * Calls next driver that has callable get_settings()
-+ * Returns TRUE if a driver was called.
++ * Callback from provisioning plugin.
++ * settings: list of struct ofono_gprs_provision_data
++ *
++ * It is responsibility of callback function to free settings-list
++ * settings-list elements must be freed with ofono_gprs_provision_data_fre=
+e()
 + */
-+static gboolean call_driver_get_settings(struct gprs_provision_request *re=
-q,
-+						ofono_gprs_provision_cb_t cb)
-+{
-+	struct ofono_gprs_provision_context *context;
++typedef void (*ofono_gprs_provision_cb_t)(GSList *settings, void *userdata=
+);
 +
-+	if (req->drivers =3D=3D NULL)
-+		return FALSE;
++struct ofono_gprs_provision_driver {
++	const char *name;
++	int priority;
++	int (*probe)(struct ofono_gprs_provision_context *context);
++	void (*remove)(struct ofono_gprs_provision_context *context);
++	void (*get_settings) (struct ofono_gprs_provision_context *context,
++				ofono_gprs_provision_cb_t cb,
++				void *user_data);
++};
 +
-+	do {
-+		context =3D req->drivers->data;
-+		req->drivers =3D g_slist_delete_link(req->drivers, req->drivers);
-+
-+		if (context->driver->get_settings !=3D NULL) {
-+			DBG("Calling provisioning plugin '%s'",
-+				context->driver->name);
-+
-+			provision_requests =3D g_slist_append(provision_requests,
-+								req);
-+			context->driver->get_settings(context, cb, req);
-+			return TRUE;
-+		}
-+
-+	} while (req->drivers !=3D NULL);
-+
-+	return FALSE;
-+}
-+
-+static void settings_cb(GSList *settings, void *user_data)
-+{
-+	struct gprs_provision_request *req =3D user_data;
-+
-+	provision_requests =3D g_slist_remove(provision_requests, req);
-+	if (settings =3D=3D NULL) {
-+		DBG("Provisioning plugin returned no settings");
-+
-+		/* No success from this driver, try next */
-+		if (call_driver_get_settings(req, settings_cb) =3D=3D TRUE)
-+			return;
-+	} else
-+		DBG("Provisioning plugin returned settings for %d contexts",
-+			g_slist_length(settings));
-+
-+	req->cb(settings, req->user_data);
-+	g_slist_free(req->drivers);
-+	g_free(req);
-+}
-+
-+static void prepend_provision_driver(struct ofono_atom *atom, void *data)
-+{
-+	struct ofono_gprs_provision_context *context =3D
-+		__ofono_atom_get_data(atom);
-+	GSList **drivers =3D data;
-+
-+	*drivers =3D g_slist_prepend(*drivers, context);
-+}
-+
-+void __ofono_gprs_provision_get_settings(struct ofono_modem *modem,
-+						ofono_gprs_provision_cb_t cb,
-+						void *user_data)
-+{
-+	struct gprs_provision_request *req;
-+
-+	req =3D g_try_new0(struct gprs_provision_request, 1);
-+	if (req =3D=3D NULL)
-+		goto error;
-+
-+	req->modem =3D modem;
-+	req->cb =3D cb;
-+	req->user_data =3D user_data;
-+
-+	__ofono_modem_foreach_atom(modem, OFONO_ATOM_TYPE_GPRS_PROVISION,
-+					prepend_provision_driver,
-+					&req->drivers);
-+
-+	if (call_driver_get_settings(req, settings_cb) =3D=3D TRUE)
-+		return;
-+
-+	DBG("No callable GPRS provision drivers");
-+
-+	g_slist_free(req->drivers);
-+
-+error:
-+	g_free(req);
-+	cb(NULL, user_data);
-+}
-+
-+static gint compare_priority(gconstpointer a, gconstpointer b)
-+{
-+	const struct ofono_gprs_provision_driver *plugin1 =3D a;
-+	const struct ofono_gprs_provision_driver *plugin2 =3D b;
-+
-+	return plugin2->priority - plugin1->priority;
-+}
-+
++/* For provisioning drivers/plugins */
 +int ofono_gprs_provision_driver_register(
-+			const struct ofono_gprs_provision_driver *driver)
-+{
-+	DBG("driver: %p name: %s", driver, driver->name);
-+
-+	g_drivers =3D g_slist_insert_sorted(g_drivers, (void *) driver,
-+						compare_priority);
-+	return 0;
-+}
-+
++			const struct ofono_gprs_provision_driver *driver);
 +void ofono_gprs_provision_driver_unregister(
-+			const struct ofono_gprs_provision_driver *driver)
-+{
-+	DBG("driver: %p name: %s", driver, driver->name);
++			const struct ofono_gprs_provision_driver *driver);
 +
-+	g_drivers =3D g_slist_remove(g_drivers, driver);
++/* For gprs */
++void ofono_gprs_provision_data_free(struct ofono_gprs_provision_data *data=
+);
++
++#ifdef __cplusplus
 +}
++#endif
++
++#endif /* __OFONO_GPRS_PROVISION_H */
 -- =
 
 1.7.1
 
 
---===============1557388640807144479==--
+--===============0984069224229171814==--
 
