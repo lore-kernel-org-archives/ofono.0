@@ -1,41 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============6371102747000679755=="
+Content-Type: multipart/mixed; boundary="===============8643814429726870867=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] atmodem: coding style fix
-Date: Tue, 18 Jan 2011 16:45:06 +0200
-Message-ID: <1295361906-22559-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/8] gprs-provision: add driver API header
+Date: Tue, 18 Jan 2011 15:48:35 +0100
+Message-ID: <1295362115.3873.190.camel@aeonflux>
+In-Reply-To: <1295338172-12773-2-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6371102747000679755==
+--===============8643814429726870867==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/sim.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi Jukka,
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index c5f4a44..8d89d53 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -508,7 +508,7 @@ static void huawei_cpin_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
- 		if (!g_at_result_iter_next_number(&iter, &val))
- 			goto error;
- =
+<snip>
 
--		retries[password_types[i]]=3D val;
-+		retries[password_types[i]] =3D val;
- =
+> +/*
+> + * Callback from provisioning plugin.
+> + * settings: list of struct ofono_gprs_provision_data
+> + *
+> + * It is responsibility of callback function to free settings-list
+> + * settings-list elements must be freed with ofono_gprs_provision_data_f=
+ree()
+> + */
+> +typedef void (*ofono_gprs_provision_cb_t)(GSList *settings, void *userda=
+ta);
 
- 		DBG("retry counter id=3D%d, val=3D%d", password_types[i],
- 						retries[password_types[i]]);
--- =
+so our general rule is no GLib types in oFono public APIs.
 
-1.7.0.4
+> +struct ofono_gprs_provision_driver {
+> +	const char *name;
+> +	int priority;
+> +	int (*probe)(struct ofono_gprs_provision_context *context);
+> +	void (*remove)(struct ofono_gprs_provision_context *context);
+> +	void (*get_settings) (struct ofono_gprs_provision_context *context,
+
+No space between (get_settings) and (struct please.
+
+> +				ofono_gprs_provision_cb_t cb,
+> +				void *user_data);
+> +};
+> +
+> +/* For provisioning drivers/plugins */
+> +int ofono_gprs_provision_driver_register(
+> +			const struct ofono_gprs_provision_driver *driver);
+> +void ofono_gprs_provision_driver_unregister(
+> +			const struct ofono_gprs_provision_driver *driver);
+> +
+> +/* For gprs */
+> +void ofono_gprs_provision_data_free(struct ofono_gprs_provision_data *da=
+ta);
+
+This sounds more like an __ofono_* internal API kind of thing.
+
+Regards
+
+Marcel
 
 
---===============6371102747000679755==--
+
+--===============8643814429726870867==--
 
