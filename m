@@ -1,52 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============2690778749493939808=="
+Content-Type: multipart/mixed; boundary="===============9166320539140230020=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 3/5] doc: Add documentation for 'forced-mode'
-Date: Tue, 18 Jan 2011 15:03:02 -0600
-Message-ID: <4D360006.1040506@gmail.com>
-In-Reply-To: <1295382667.3873.227.camel@aeonflux>
+Date: Tue, 18 Jan 2011 15:03:41 -0600
+Message-ID: <4D36002D.2080409@gmail.com>
+In-Reply-To: <AANLkTi=tE+scJG8r4Qn6BuB3To-2o_MtDDaXBGX2faxM@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2690778749493939808==
+--===============9166320539140230020==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Aki,
 
->> The reason I ended up extending the Mode property was that once
->> forced_auto is true, no other Mode than auto is anyway possible. So in
->> a sense it is another type of Mode, which isn't to say a separate
->> property wouldn't work equally well.
->>
->> I'm really open to either option. The way the code is written makes it
->> very easy to just expose this as a separate property.
+On 01/18/2011 02:35 PM, Aki Niemi wrote:
+> Hi Marcel,
 > =
 
-> the extra "forced-auto" mode feels kinda forced into this property. So
-> that is my main concern here.
+> 2011/1/18 Marcel Holtmann <marcel@holtmann.org>:
+>> And while thinking about this, now I have another question. If this flag
+>> is set on the SIM card, are you allowed to deregister from the network?
 > =
 
-> However on the other hand the Mode property is actually read-only. If it
-> would be a user changeable property then it would be pretty clear that
-> we do not wanna intermix this here.
-> =
-
-> With this in mind, it might be just fine here from a UI interaction flow
-> point of view.
-> =
-
-> Denis, what is your take on this?
+> I suppose so. However, you know how I feel about Deregister() to begin
+> with. I think with the Online property, it simply serves no purpose.
+> Or is there an actual use case for intentionally leaving RF active
+> while in limited service only?
 > =
 
 
-I'm fine with forced-auto, but we might want to add a new error type to
-ofono.h (maybe something like ManualRegistrationNotAllowed) and return
-that error when trying to use Scan or NetworkOperator.Register.
+I'm fine removing this one as well.
 
 Regards,
 -Denis
 
---===============2690778749493939808==--
+--===============9166320539140230020==--
 
