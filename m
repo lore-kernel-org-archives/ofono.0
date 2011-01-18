@@ -1,44 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0641822182552495097=="
+Content-Type: multipart/mixed; boundary="===============8667699042470575873=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 2/5] netreg: Add CPHS CSP PLMN mode implementation
-Date: Tue, 18 Jan 2011 20:44:25 +0200
-Message-ID: <AANLkTinjgScOv8sEkzWCsmoa1spQfPJpw+G9x5npPULc@mail.gmail.com>
-In-Reply-To: <1295360948.3873.180.camel@aeonflux>
+Date: Tue, 18 Jan 2011 12:51:57 -0600
+Message-ID: <4D35E14D.9060404@gmail.com>
+In-Reply-To: <AANLkTinjgScOv8sEkzWCsmoa1spQfPJpw+G9x5npPULc@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0641822182552495097==
+--===============8667699042470575873==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Aki,
 
-2011/1/18 Marcel Holtmann <marcel@holtmann.org>:
->> + =C2=A0 =C2=A0 if (netreg->settings) {
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_key_file_set_boolean(netre=
-g->settings, SETTINGS_GROUP,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "ForcedAuto", netre=
-g->forced_auto);
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 storage_sync(netreg->imsi, S=
-ETTINGS_STORE, netreg->settings);
->> + =C2=A0 =C2=A0 }
->
-> why are we bothering to store this value? Would it not be better to
-> re-read when bringing up the modem?
+On 01/18/2011 12:44 PM, Aki Niemi wrote:
+> Hi Marcel,
+> =
 
-We read the value always, yes, but storing the last known value rids
-us of a superfluous PropertyChanged signal in the case when last value
-of forced_auto was true, and after reading is still true. This is
-because forced_auto is by default set to false.
+> 2011/1/18 Marcel Holtmann <marcel@holtmann.org>:
+>>> +     if (netreg->settings) {
+>>> +             g_key_file_set_boolean(netreg->settings, SETTINGS_GROUP,
+>>> +                                     "ForcedAuto", netreg->forced_auto=
+);
+>>> +             storage_sync(netreg->imsi, SETTINGS_STORE, netreg->settin=
+gs);
+>>> +     }
+>>
+>> why are we bothering to store this value? Would it not be better to
+>> re-read when bringing up the modem?
+> =
 
-I went back and forth with this myself as well, so perhaps it's not
-worth the trouble.
+> We read the value always, yes, but storing the last known value rids
+> us of a superfluous PropertyChanged signal in the case when last value
+> of forced_auto was true, and after reading is still true. This is
+> because forced_auto is by default set to false.
 
-Cheers,
-Aki
+Do you mean across atom instantiations here?  If so there are plenty of
+other attributes that get emitted in a similar fashion, so my vote is to
+just emit the signal.  Or are you worried about something else?
 
---===============0641822182552495097==--
+Regards,
+-Denis
+
+--===============8667699042470575873==--
 
