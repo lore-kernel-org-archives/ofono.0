@@ -1,31 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============7229993021149626724=="
+Content-Type: multipart/mixed; boundary="===============6756395644322209702=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH] TODO: Add task for adding EFcsp support
-Date: Tue, 18 Jan 2011 09:36:54 +0200
-Message-ID: <AANLkTinedJKTx5DouMrSi+W7-4dNGCjRq7j_baWhQtLh@mail.gmail.com>
-In-Reply-To: <1294954130-9885-1-git-send-email-aki.niemi@nokia.com>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+Subject: [gprs-provision PATCHv4 0/8] plugin API for provisioning of GPRS
+ context settings
+Date: Tue, 18 Jan 2011 10:09:24 +0200
+Message-ID: <1295338172-12773-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7229993021149626724==
+--===============6756395644322209702==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hello
 
-2011/1/13 Aki Niemi <aki.niemi@nokia.com>:
-> This task will add support for CPHS Customer Service Profile (CSP),
-> and specifically for the CSP PLMN mode bit therein.
-> ---
-> =C2=A0TODO | =C2=A0 13 +++++++++++++
-> =C2=A01 files changed, 13 insertions(+), 0 deletions(-)
+Here is a new patchset about implementing automatic provisioning of GPRS co=
+ntext settings. ("Internet Access Provider database" TODO item).
 
-Unless there are objections, I will push this.
+Compared to last one, this makes gprs-provision a "pseudo" atom similar to =
+nettime. And possible races caused by a removed gprs-atom, while it is runn=
+ing asyncronous provisioning, should hopefully be fixed now.
 
-Cheers,
-Aki
+Provisioning data for gprs contexts is returned by gprs-provisioning plugin=
+s/drivers. Different kind of provisioning modules may be created for differ=
+ent platforms or use cases.
+It is up to the module what settings database it uses, and how many, and wh=
+at type of contexts (with settings) it returns.
+Several plugins may be loaded in oFono, and they will be called in priority=
+ order until first plugin returns non-empty result.
 
---===============7229993021149626724==--
+Provisioning modules are called in case there are no previously configured =
+contexts found during gprs atom registration.
+ =
+
+These patches add new gprs-provision.[hc] API for provisioning plugins to r=
+egister into, and __ofono_gprs_provision_get_settings for gprs.c to call wh=
+en needed.
+gprs.c is modified to use provisioning if reading existing context settings=
+ fails.
+
+A dummy example provisioning plugin is included. In case it is called when =
+using phonesim with default.xml configuration, the plugin returns dummy set=
+tings for two contexts, one type Internet and one type MMS. =
+
+
+Patches also add new functions ofono_sim_get_mcc/mnc to SIM atom API (typic=
+ally needed by provisioning plugins).
+
+--Jukka Saunam=C3=A4ki
+
+Jukka Saunamaki (8):
+      gprs-provision: add driver API header
+      gprs-provision: add new atom type
+      gprs-provision: add driver API sources
+      gprs-provision: probe gprs_provision drivers
+      gprs: add gprs context provisioning
+      sim: getters for mcc and mnc definition
+      sim: getters for mcc and mnc implementation
+      gprs-provision: add example context provisioning driver
+
+ Makefile.am              |    7 +-
+ examples/provision.c     |  206 ++++++++++++++++++++++++++++++++++++++++
+ include/gprs-provision.h |   80 ++++++++++++++++
+ include/sim.h            |    2 +
+ src/gprs-provision.c     |  236 ++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/gprs.c               |  147 ++++++++++++++++++++++++++---
+ src/modem.c              |    1 +
+ src/ofono.h              |    9 ++
+ src/sim.c                |   50 ++++++----
+ 9 files changed, 703 insertions(+), 35 deletions(-)
+ create mode 100644 examples/provision.c
+ create mode 100644 include/gprs-provision.h
+ create mode 100644 src/gprs-provision.c
+
+
+
+--===============6756395644322209702==--
 
