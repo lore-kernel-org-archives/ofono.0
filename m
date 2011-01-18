@@ -1,51 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============2997898136766689134=="
+Content-Type: multipart/mixed; boundary="===============6371102747000679755=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 7/8] sim: getters for mcc and mnc implementation
-Date: Tue, 18 Jan 2011 15:44:52 +0100
-Message-ID: <1295361892.3873.187.camel@aeonflux>
-In-Reply-To: <1295338172-12773-8-git-send-email-jukka.saunamaki@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] atmodem: coding style fix
+Date: Tue, 18 Jan 2011 16:45:06 +0200
+Message-ID: <1295361906-22559-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2997898136766689134==
+--===============6371102747000679755==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+---
+ drivers/atmodem/sim.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
->  src/sim.c |   50 +++++++++++++++++++++++++++++++-------------------
->  1 files changed, 31 insertions(+), 19 deletions(-)
-> =
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index c5f4a44..8d89d53 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -508,7 +508,7 @@ static void huawei_cpin_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ 		if (!g_at_result_iter_next_number(&iter, &val))
+ 			goto error;
+ =
 
-> diff --git a/src/sim.c b/src/sim.c
-> index d627647..86c3f13 100644
-> --- a/src/sim.c
-> +++ b/src/sim.c
-> @@ -78,6 +78,8 @@ struct ofono_sim {
->  	gboolean barred_dialing;
->  =
+-		retries[password_types[i]]=3D val;
++		retries[password_types[i]] =3D val;
+ =
 
->  	char *imsi;
-> +	char mcc[OFONO_MAX_MCC_LENGTH + 1];
-> +	char mnc[OFONO_MAX_MNC_LENGTH + 1];
+ 		DBG("retry counter id=3D%d, val=3D%d", password_types[i],
+ 						retries[password_types[i]]);
+-- =
 
-so I would split this a little bit.
-
-1) refactor src/sim.c to store mcc and mnc.
-2) add header definitions
-3) add getters implementation.
-
-And send these separately. No need to make them part of the provision
-patch set. I know that you need them for that, but they are not really
-required and could be reviewed and applied quicker.
-
-Regards
-
-Marcel
+1.7.0.4
 
 
-
---===============2997898136766689134==--
+--===============6371102747000679755==--
 
