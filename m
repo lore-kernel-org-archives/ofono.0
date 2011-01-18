@@ -1,104 +1,93 @@
-Content-Type: multipart/mixed; boundary="===============1933237342048371755=="
+Content-Type: multipart/mixed; boundary="===============2012990478652580163=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/5] simutil: SIM applications directory decoding utils.
-Date: Tue, 18 Jan 2011 13:22:29 -0600
-Message-ID: <4D35E875.6080500@gmail.com>
-In-Reply-To: <1295285934-9306-2-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 5/5] atmodem: sim-auth atom driver.
+Date: Tue, 18 Jan 2011 13:30:28 -0600
+Message-ID: <4D35EA54.9030902@gmail.com>
+In-Reply-To: <1295285934-9306-5-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1933237342048371755==
+--===============2012990478652580163==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Andrew,
 
-On 01/17/2011 11:38 AM, Andrzej Zaborowski wrote:
-> ---
->  src/simutil.c |   57 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/simutil.h |    2 ++
->  2 files changed, 59 insertions(+), 0 deletions(-)
-> =
-
-> diff --git a/src/simutil.c b/src/simutil.c
-> index 8abf3d5..b3e2f52 100644
-> --- a/src/simutil.c
-> +++ b/src/simutil.c
-> @@ -1465,3 +1465,60 @@ gboolean sim_sst_is_active(unsigned char *efsst, u=
-nsigned char len,
->  =
-
->  	return (efsst[index / 4] >> (((index % 4) * 2) + 1)) & 1;
->  }
-> +
-> +GSList *sim_parse_app_template_entries(const unsigned char *buffer, int =
-len)
+> +static void at_discover_apps_cb(gboolean ok, GAtResult *result,
+> +				gpointer user_data)
 > +{
-> +	GSList *ret =3D NULL;
-> +	const unsigned char *dataobj;
-> +	int dataobj_len;
+> +	struct cb_data *cbd =3D user_data;
+> +	GAtResultIter iter;
+> +	ofono_sim_list_apps_cb_t cb =3D cbd->cb;
+> +	struct ofono_error error;
+> +	GSList *list =3D NULL, *i;
+> +	struct ofono_sim_app_record *buffer;
+> +	int j, n;
 > +
-> +	/* Find all the application entries */
-> +	while ((dataobj =3D ber_tlv_find_by_tag(buffer, 0x61, len,
-> +						&dataobj_len)) !=3D NULL) {
-> +		struct ofono_sim_app_record app;
-> +		const unsigned char *aid, *label;
-> +		int label_len;
+> +	decode_at_error(&error, g_at_result_final_response(result));
 > +
-> +		/* Find the aid (mandatory) */
-> +		aid =3D ber_tlv_find_by_tag(dataobj, 0x4f, dataobj_len,
-> +						&app.aid_len);
-> +		if (!aid || app.aid_len < 0x01 || app.aid_len > 0x10)
+> +	if (!ok) {
+> +		cb(&error, NULL, 0, cbd->data);
+> +		return;
+> +	}
+> +
+> +	g_at_result_iter_init(&iter, result);
+> +
+> +	while (g_at_result_iter_next(&iter, "+CUAD:")) {
+> +		const guint8 *obj_str;
+> +		gint len;
+> +
+> +		if (!g_at_result_iter_next_hexstring(&iter, &obj_str, &len))
 > +			goto error;
 > +
-> +		memcpy(app.aid, aid, app.aid_len);
+> +		i =3D sim_parse_app_template_entries(obj_str, len);
+> +		if (i =3D=3D NULL)
+> +			goto error;
 > +
-> +		/* Find the label (optional) */
-> +		label =3D ber_tlv_find_by_tag(dataobj, 0x50, dataobj_len,
-> +						&label_len);
-> +		if (label) {
-> +			/*
-> +			 * Label field uses the extra complicated
-> +			 * encoding in 102.221 Annex A
-> +			 */
-> +			app.label =3D sim_string_to_utf8(label, label_len);
-> +
-> +			if (app.label =3D=3D NULL)
-> +				goto error;
-> +		} else
-> +			app.label =3D NULL;
-> +
-> +		ret =3D g_slist_prepend(ret, g_memdup(&app, sizeof(app)));
-> +
-> +		len -=3D (dataobj - buffer) + dataobj_len;
-> +		buffer =3D dataobj + dataobj_len;
+> +		list =3D g_slist_concat(i, list);
 > +	}
 > +
-> +	return ret;
+
+Since we potentially multiple results, what do you think of using an
+approach similar to how phonebook works.  E.g. a simple:
+
+typedef void (*ofono_sim_auth_cb_t)(const struct ofono_error *error,
+                                        void *data);
+
+and ofono_sim_auth_app_record(struct ofono_sim_auth *sa, unsigned char
+*record, int len);
+
+This would work nicely even for drivers using CRSM I think...
+
+> +	n =3D g_slist_length(list);
+> +	buffer =3D g_new(struct ofono_sim_app_record, n);
+> +
+> +	for (i =3D list, j =3D n - 1; i !=3D NULL; i =3D i->next, i--)
+> +		memcpy(&buffer[j], i->data, sizeof(*buffer));
+> +
+> +	cb(&error, buffer, n, cbd->data);
+> +
+> +	g_free(buffer);
+> +	goto done;
 > +
 > +error:
-> +	while (ret) {
-> +		GSList *t =3D ret;
+> +	CALLBACK_WITH_FAILURE(cb, NULL, 0, cbd->data);
 > +
-> +		g_free(((struct ofono_sim_app_record *) ret->data)->label);
-
-Is there a memory leak here?  I don't believe you are freeing the
-ofono_sim_app_record structure itself.  This might be the opportunity to
-get rid of that nasty cast as well ;)
-
+> +done:
+> +	while (list) {
+> +		i =3D list;
+> +		list =3D list->next;
 > +
-> +		ret =3D ret->next;
-> +		g_slist_free_1(t);
+> +		g_free(((struct ofono_sim_app_record *) i->data)->label);
+> +		g_free(i->data);
+> +		g_slist_free_1(i);
 > +	}
-> +
-> +	return NULL;
 > +}
 
 Regards,
 -Denis
 
---===============1933237342048371755==--
+--===============2012990478652580163==--
 
