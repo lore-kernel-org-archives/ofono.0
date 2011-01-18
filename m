@@ -1,71 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============2582063535396417256=="
+Content-Type: multipart/mixed; boundary="===============6988356220184941872=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH 3/5] doc: Add documentation for 'forced-mode'
-Date: Tue, 18 Jan 2011 15:19:05 +0200
-Message-ID: <1295356747-29758-4-git-send-email-aki.niemi@nokia.com>
-In-Reply-To: <1295356747-29758-1-git-send-email-aki.niemi@nokia.com>
+From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
+Subject: [PATCH] ste: Use UTF-8 as a default character set
+Date: Tue, 18 Jan 2011 15:38:24 +0200
+Message-ID: <1295357904-16620-1-git-send-email-lasse.kunnasluoto@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2582063535396417256==
+--===============6988356220184941872==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/network-api.txt |   24 ++++++++++++++----------
- 1 files changed, 14 insertions(+), 10 deletions(-)
+ plugins/ste.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/doc/network-api.txt b/doc/network-api.txt
-index c252988..c46e81b 100644
---- a/doc/network-api.txt
-+++ b/doc/network-api.txt
-@@ -75,21 +75,25 @@ Properties	string Mode [readonly]
- 			method of an operator is called.
+diff --git a/plugins/ste.c b/plugins/ste.c
+index 7bb7232..cc01f7b 100644
+--- a/plugins/ste.c
++++ b/plugins/ste.c
+@@ -247,7 +247,7 @@ static int ste_enable(struct ofono_modem *modem)
+ 		return -EIO;
  =
 
- 			The possible values are:
--				"auto"     Network registration is performed
--				           automatically.
--				"manual"   Network operator is selected
--				           manually. If the operator is
--				           currently not selected, registration
--				           is not attempted
--				"off"      Unregisters from currently selected
--				           network, if any, and does not
--				           attempt to register again.
-+				"auto"         Network registration is performed
-+				               automatically.
-+				"forced-auto"  Network registration is performed
-+					       automatically while manual
-+				               selection is disabled.
-+				"manual"       Network operator is selected
-+				               manually. If the operator is
-+				               currently not selected,
-+				               registration is not attempted.
-+				"off"          Unregisters from currently
-+				               selected network, if any, and
-+				               does not attempt to register
-+				               again.
+ 	data->chat =3D g_at_chat_new_blocking(channel, syntax);
+-	g_at_chat_send(data->chat, "AT&F E0 V1 X4 &C1 +CMEE=3D1",
++	g_at_chat_send(data->chat, "AT&F E0 V1 X4 &C1 +CMEE=3D1;+CSCS=3D\"UTF-8\"=
+",
+ 			NULL, NULL, NULL, NULL);
  =
 
- 		string Status [readonly]
- =
-
- 			The current registration status of a modem.
- =
-
--			The possible values are: =
-
-+			The possible values are:
- 				"unregistered"  Not registered to any network
- 				"registered"    Registered to home network
- 				"searching"     Not registered, but searching
+ 	g_io_channel_unref(channel);
 -- =
 
-1.7.1
+1.7.0.4
 
 
---===============2582063535396417256==--
+--===============6988356220184941872==--
 
