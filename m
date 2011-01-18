@@ -1,42 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============3315047358196368494=="
+Content-Type: multipart/mixed; boundary="===============3282447970626801978=="
 MIME-Version: 1.0
-From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
-Subject: [PATCH v2] ste: Use UTF-8 as a default character set
-Date: Tue, 18 Jan 2011 17:45:44 +0200
-Message-ID: <1295365544-21812-1-git-send-email-lasse.kunnasluoto@tieto.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/2] simutil: M9, M11, Minor style fixes and indentation
+Date: Tue, 18 Jan 2011 09:50:27 -0600
+Message-ID: <4D35B6C3.5050104@gmail.com>
+In-Reply-To: <1295353930-25914-1-git-send-email-jessica.j.nilsson@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3315047358196368494==
+--===============3282447970626801978==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/ste.c |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+Hi Jessica,
 
-diff --git a/plugins/ste.c b/plugins/ste.c
-index 7bb7232..44cfc14 100644
---- a/plugins/ste.c
-+++ b/plugins/ste.c
-@@ -250,6 +250,10 @@ static int ste_enable(struct ofono_modem *modem)
- 	g_at_chat_send(data->chat, "AT&F E0 V1 X4 &C1 +CMEE=3D1",
- 			NULL, NULL, NULL, NULL);
- =
-
-+	/* All STE modems support UTF-8 */
-+	g_at_chat_send(data->chat, "AT+CSCS=3D\"UTF-8\"", NULL, NULL, NULL,
-+			NULL);
-+
- 	g_io_channel_unref(channel);
- 	g_at_syntax_unref(syntax);
- =
-
--- =
-
-1.7.0.4
+On 01/18/2011 06:32 AM, Jessica Nilsson wrote:
+> ---
+>  src/simutil.h |   68 ++++++++++++++++++++++++++++-----------------------=
+-----
+>  1 files changed, 34 insertions(+), 34 deletions(-)
+> =
 
 
---===============3315047358196368494==--
+This patch has been applied, but I had to merge it with some code
+cleanups that were made in the meantime.
+
+Regards,
+-Denis
+
+--===============3282447970626801978==--
 
