@@ -1,31 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============0601182494733242124=="
+Content-Type: multipart/mixed; boundary="===============6147379764907955226=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: Ofono CF states not always correct
-Date: Tue, 18 Jan 2011 23:32:53 +0200
-Message-ID: <AANLkTinAG0XXmRQXTMuH-ES6VZ7YatP6r_UenLBEfERg@mail.gmail.com>
-In-Reply-To: <4D3604FB.3010101@gmail.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [gisi-notify-fix PATCHv2 1/2] gisi: simplify pending management
+Date: Tue, 18 Jan 2011 23:37:46 +0200
+Message-ID: <AANLkTinDENxNkojU_3vkUBv7=ye_xqaUtHswQ=jFzDCp@mail.gmail.com>
+In-Reply-To: <1295386029-32624-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0601182494733242124==
+--===============6147379764907955226==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Pekka,
 
-2011/1/18 Denis Kenzior <denkenz@gmail.com>:
-> I think we can track the cached flag for conditional CFs independently
-> from CFU. =C2=A0The question is really whether the networks allow us to
-> modify conditional CFs when CFU is active. =C2=A0In my testing the answer=
- is No.
+2011/1/18  <Pekka.Pessi@nokia.com>:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
+>
+> Client or server mark their pending objects with
+> the function g_isi_pending_set_owner().
+>
+> When client or server get destroyed or reset the pending objects are
+> removed with the function g_isi_remove_pending_by_owner(). As a client
+> or server always uses only a particular resource, all the pending
+> objects are conveniently stored into a single list.
+> ---
+> =C2=A0gisi/client.c | =C2=A0199 ++++++++++-------------------------------=
+----------------
+> =C2=A0gisi/modem.c =C2=A0| =C2=A0 63 ++++++++++++++++++
+> =C2=A0gisi/modem.h =C2=A0| =C2=A0 =C2=A05 +-
+> =C2=A0gisi/server.c | =C2=A0 73 ++-------------------
+> =C2=A04 files changed, 107 insertions(+), 233 deletions(-)
 
-You can erase (##67#) or deactivate (#67#) them.
+Pushed, thanks!
 
--- =
+Cheers,
+Aki
 
-Pekka.Pessi mail at nokia.com
-
---===============0601182494733242124==--
+--===============6147379764907955226==--
 
