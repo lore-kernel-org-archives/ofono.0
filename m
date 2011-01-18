@@ -1,83 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============7364489528703551003=="
+Content-Type: multipart/mixed; boundary="===============0603266256269446883=="
 MIME-Version: 1.0
-From: Olivier Guiter <olivier.guiter@linux.intel.com>
-Subject: [PATCHv3 2/2] doc: Add AT command set for Dialup Networking
-Date: Tue, 18 Jan 2011 15:59:07 +0100
-Message-ID: <1295362747-779-3-git-send-email-olivier.guiter@linux.intel.com>
-In-Reply-To: <1295362747-779-1-git-send-email-olivier.guiter@linux.intel.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] atmodem: fix signal strength issue with ifx
+Date: Tue, 18 Jan 2011 17:00:31 +0200
+Message-ID: <1295362831-23684-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7364489528703551003==
+--===============0603266256269446883==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/dialup-command-set.txt |   45 ++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 45 insertions(+), 0 deletions(-)
- create mode 100644 doc/dialup-command-set.txt
+ drivers/atmodem/network-registration.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/doc/dialup-command-set.txt b/doc/dialup-command-set.txt
-new file mode 100644
-index 0000000..a7a1df3
---- /dev/null
-+++ b/doc/dialup-command-set.txt
-@@ -0,0 +1,45 @@
-+This document specifies the AT command set used in the bluetooth ofono plu=
-gins.
-+
-+Bluetooth Dial-up Networking Profile Features Description
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D
-+(Ref. document: Dial-up Networking Profile - Bluetooth specification versi=
-on 1.1 - 22 February 2001)
-+
-+- AT COMMAND SET USED:
-+Commands:
-+	&C	Circuit 109 (DCD) Control
-+	&D	Circuit 108 (DTR) Response
-+	&F	Set to Factory Defined Configuration
-+	+GCAP	Request Complete Capabilities List
-+	+GMI	Request Manufacturer Identification
-+	+GMM	Read Model Identification
-+	+GMR	Read Revision Identification
-+	A	Answer Incoming Call
-+	D	Dial
-+	E	Command Echo
-+	H	Hang Up
-+	L	Monitor Speaker Loudness
-+	M	Monitor Speaker Control
-+	O	Return to Online Data Mode
-+	P	Select Pulse Dialling
-+	Q	Result Code Suppression
-+	S0	Automatic Answer Control
-+	S10	Automatic Disconnect Delay Control
-+	S3	Command Line Termination Character
-+	S4	Response Formatting Character
-+	S5	Command Line Editing Character (BACKSPACE)
-+	S6	Blind Dial Delay Control
-+	S7	Connection Completion Timeout
-+	S8	Comma Dial Modifier Delay Control
-+	T	Select Tone Dialling
-+	V	DCE Response Format
-+	X	Call Progress Monitoring Control
-+	Z	Reset to Default Configuration
-+Result codes:
-+	OK		Acknowledge execution of a command
-+	CONNECT		Connection has been established
-+	RING		The DCE has detected an incoming call signal from network
-+	NO CARRIER	The connection has been terminated, or attempt to establish
-+			a connection failed
-+	ERROR		Error
-+	NO DIALTONE	No dial-tone detected
-+	BUSY		Busy signal detected
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index 0c77ba8..e11c974 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -662,13 +662,13 @@ static void ifx_xciev_notify(GAtResult *result, gpoin=
+ter user_data)
+ 		return;
+ =
+
+ 	if (ind =3D=3D 0)
+-		strength =3D 0;
++		strength =3D -1;
+ 	else if (ind =3D=3D 7)
+ 		strength =3D 100;
+ 	else
+ 		strength =3D (ind * 15);
+ =
+
+-	ofono_netreg_strength_notify(netreg, ind);
++	ofono_netreg_strength_notify(netreg, strength);
+ }
+ =
+
+ static void ciev_notify(GAtResult *result, gpointer user_data)
 -- =
 
-1.7.1
+1.7.0.4
 
 
---===============7364489528703551003==--
+--===============0603266256269446883==--
 
