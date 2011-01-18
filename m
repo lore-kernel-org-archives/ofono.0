@@ -1,210 +1,127 @@
-Content-Type: multipart/mixed; boundary="===============4302483100825490707=="
+Content-Type: multipart/mixed; boundary="===============6543562097545330152=="
 MIME-Version: 1.0
-From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
-Subject: Re: Ofono CF states not always correct
-Date: Tue, 18 Jan 2011 14:21:25 +0200
-Message-ID: <1295353285.23534.227.camel@poutijar-desktop>
-In-Reply-To: <4D3072F6.60403@gmail.com>
+From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
+Subject: [PATCH 1/2] simutil: M9, M11, Minor style fixes and indentation
+Date: Tue, 18 Jan 2011 13:32:10 +0100
+Message-ID: <1295353930-25914-1-git-send-email-jessica.j.nilsson@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4302483100825490707==
+--===============6543562097545330152==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ src/simutil.h |   68 ++++++++++++++++++++++++++++-------------------------=
+---
+ 1 files changed, 34 insertions(+), 34 deletions(-)
 
-On Fri, 2011-01-14 at 17:59 +0200, Denis Kenzior wrote:
-> Hi Jarko,
-> =
+diff --git a/src/simutil.h b/src/simutil.h
+index ad84907..cda9d55 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -19,36 +19,39 @@
+  *
+  */
+ =
 
-> Both are active and the modem should be reporting both.  At least that
-> is how I understood the specifications.
-> =
++#define SIM_EFSPN_DC_HOME_PLMN_BIT 0x1
++#define SIM_EFSPN_DC_ROAMING_SPN_BIT 0x2
++
+ enum sim_fileid {
+-	SIM_EFPL_FILEID =3D 0x2f05,
+-	SIM_EF_ICCID_FILEID =3D 0x2fe2,
+-	SIM_EFIMG_FILEID =3D 0x4F20,
+-	SIM_EFLI_FILEID =3D 0x6f05,
+-	SIM_EF_CPHS_MWIS_FILEID =3D 0x6f11,
+-	SIM_EF_CPHS_CFF_FILEID =3D 0x6f13,
+-	SIM_EF_CPHS_INFORMATION_FILEID =3D 0x6f16,
+-	SIM_EF_CPHS_MBDN_FILEID =3D 0x6f17,
+-	SIM_EFUST_FILEID =3D 0x6f38,
+-	SIM_EFSST_FILEID =3D 0x6f38, /* same as EFust */
+-	SIM_EFMSISDN_FILEID =3D 0x6f40,
+-	SIM_EFSPN_FILEID =3D 0x6f46,
+-	SIM_EFSDN_FILEID =3D 0x6f49,
+-	SIM_EFBDN_FILEID =3D 0x6f4d,
+-	SIM_EFADN_FILEID =3D 0x6f3a,
+-	SIM_EFEST_FILEID =3D 0x6f56,
+-	SIM_EFAD_FILEID =3D 0x6fad,
+-	SIM_EFPHASE_FILEID =3D 0x6fae,
+-	SIM_EFPNN_FILEID =3D 0x6fc5,
+-	SIM_EFOPL_FILEID =3D 0x6fc6,
+-	SIM_EFMBDN_FILEID =3D 0x6fc7,
+-	SIM_EFMBI_FILEID =3D 0x6fc9,
+-	SIM_EFMWIS_FILEID =3D 0x6fca,
+-	SIM_EFCFIS_FILEID =3D 0x6fcb,
+-	SIM_EFSPDI_FILEID =3D 0x6fcd,
+-	SIM_EFECC_FILEID =3D 0x6fb7,
+-	SIM_EFCBMIR_FILEID =3D 0x6f50,
+-	SIM_EFCBMI_FILEID =3D 0x6f45,
+-	SIM_EFCBMID_FILEID =3D 0x6f48,
++	SIM_EFPL_FILEID =3D			0x2f05,
++	SIM_EF_ICCID_FILEID =3D			0x2fe2,
++	SIM_EFIMG_FILEID =3D			0x4f20,
++	SIM_EFLI_FILEID =3D			0x6f05,
++	SIM_EF_CPHS_MWIS_FILEID =3D		0x6f11,
++	SIM_EF_CPHS_CFF_FILEID =3D		0x6f13,
++	SIM_EF_CPHS_INFORMATION_FILEID =3D	0x6f16,
++	SIM_EF_CPHS_MBDN_FILEID =3D		0x6f17,
++	SIM_EFUST_FILEID =3D			0x6f38,
++	SIM_EFSST_FILEID =3D			0x6f38, /* same as EFust */
++	SIM_EFMSISDN_FILEID =3D			0x6f40,
++	SIM_EFSPN_FILEID =3D			0x6f46,
++	SIM_EFSDN_FILEID =3D			0x6f49,
++	SIM_EFBDN_FILEID =3D			0x6f4d,
++	SIM_EFADN_FILEID =3D			0x6f3a,
++	SIM_EFEST_FILEID =3D			0x6f56,
++	SIM_EFAD_FILEID =3D			0x6fad,
++	SIM_EFPHASE_FILEID =3D			0x6fae,
++	SIM_EFPNN_FILEID =3D			0x6fc5,
++	SIM_EFOPL_FILEID =3D			0x6fc6,
++	SIM_EFMBDN_FILEID =3D			0x6fc7,
++	SIM_EFMBI_FILEID =3D			0x6fc9,
++	SIM_EFMWIS_FILEID =3D			0x6fca,
++	SIM_EFCFIS_FILEID =3D			0x6fcb,
++	SIM_EFSPDI_FILEID =3D			0x6fcd,
++	SIM_EFECC_FILEID =3D			0x6fb7,
++	SIM_EFCBMIR_FILEID =3D			0x6f50,
++	SIM_EFCBMI_FILEID =3D			0x6f45,
++	SIM_EFCBMID_FILEID =3D			0x6f48,
+ };
+ =
 
-Well that is a bit debatable. As 27.007 states:
-command:
-+CCFC=3D<reason>,<mode>[,<number>[,<type>[,<class>[,<subaddr>[,<satype>[,<t=
-ime>]]]]]]
+ /* 51.011 Section 9.3 */
+@@ -223,9 +226,6 @@ enum sim_sst_service {
+ 	SIM_SST_SERVICE_PROVIDER_DISPLAY_INFO =3D		55
+ };
+ =
 
-<reason>: integer type
-0 unconditional
-1 mobile busy
-2 no reply
-3 not reachable
-4 all call forwarding (refer 3GPP TS 22.030 [19])
-5 all conditional call forwarding (refer 3GPP TS 22.030 [19])
+-#define SIM_EFSPN_DC_HOME_PLMN_BIT 0x1
+-#define SIM_EFSPN_DC_ROAMING_SPN_BIT 0x2
+-
+ enum ber_tlv_data_type {
+ 	BER_TLV_DATA_TYPE_UNIVERSAL =3D		0,
+ 	BER_TLV_DATA_TYPE_APPLICATION =3D		1,
+@@ -347,8 +347,8 @@ void ber_tlv_iter_init(struct ber_tlv_iter *iter, const=
+ unsigned char *pdu,
+ unsigned int ber_tlv_iter_get_tag(struct ber_tlv_iter *iter);
+ =
 
-<mode>: integer type
-0 disable
-1 enable
-2 query status
-3 registration
-4 erasure
+ enum ber_tlv_data_type ber_tlv_iter_get_class(struct ber_tlv_iter *iter);
+-enum ber_tlv_data_encoding_type
+-	ber_tlv_iter_get_encoding(struct ber_tlv_iter *iter);
++enum ber_tlv_data_encoding_type ber_tlv_iter_get_encoding(
++						struct ber_tlv_iter *iter);
+ =
 
-response when<mode>=3D2 and command successfull:
-+CCFC:<status>,<class1>[,<number>,<type>[,<subaddr>,<satype>[,<time>]]][<CR=
-><LF>+CCFC: <status>,<class2>[,<number>,<type>[,<subaddr>,<satype>[,<time>]=
-]][...]]
+ /*
+  * This will return the short tag along with class and encoding informatio=
+n.
+-- =
 
-<status>: integer type
-0 not active
-1 active
-
-So actually they aren't both "active" at same time as the logs show but
-personally I don't really care as long as the results are consistent
-regardless which API you use which is not the case at the moment as
-querying through org.ofono.CallForwarding can give you different result
-than using org.ofono.SupplementaryServices.
-
-> A bit, but having the AT command logs would help greatly.
-
-Well hopefully these will help. I have numbered each step and copied
-corresponding logs after it. list-modems doesn't cause AT queries to
-modem(except on a very first time which I have already done) so I have
-copied what it prints regarding CF. It's a bit long though so sorry
-about that.
-
-#1: ./list-modems
-    [ org.ofono.CallForwarding ]
-        ForwardingFlagOnSim =3D 0
-        VoiceNoReplyTimeout =3D 20
-        VoiceNotReachable =3D =
-
-        VoiceBusy =3D =
-
-        VoiceNoReply =3D =
-
-        VoiceUnconditional =3D =
-
-
-#2: ./test-ussd '**61*+358401234567*11#'
-ofonod[30925]: Default: > AT+CCFC=3D2,3,"358401234567",145,1,,,20\r
-ofonod[30925]: Default: < \r\nOK\r\n
-ofonod[30925]: Default: > AT+CCFC=3D2,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 1,1,"0401234567",129,"",,20\r\n\r
-\nOK\r\n
-
-#3: ./list-modems
-    [ org.ofono.CallForwarding ]
-        ForwardingFlagOnSim =3D 0
-        VoiceNoReplyTimeout =3D 20
-        VoiceNotReachable =3D =
-
-        VoiceBusy =3D =
-
-        VoiceNoReply =3D 0401234567
-        VoiceUnconditional =3D =
-
-
-#4: ./test-ussd '**21*+358401234567*11#'
-ofonod[30925]: Default: > AT+CCFC=3D0,3,"358401234567",145,1\r
-ofonod[30925]: Default: < \r\nOK\r\n
-ofonod[30925]: Default: > AT+CCFC=3D0,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 1,1,"0401234567",129\r\n\r\nOK\r\n
-
-#5: ./list-modems
-    [ org.ofono.CallForwarding ]
-        ForwardingFlagOnSim =3D 1
-        VoiceNoReplyTimeout =3D 20
-        VoiceNotReachable =3D =
-
-        VoiceBusy =3D =
-
-        VoiceNoReply =3D 0401234567
-        VoiceUnconditional =3D 0401234567
-
-#6: ./test-ussd '*#002#'
-ofonod[30925]: Default: > AT+CCFC=3D0,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 1,1,"0401234567",129\r\n\r\nOK\r\n
-ofonod[30925]: Default: > AT+CCFC=3D1,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 0,1\r\n+CCFC: 0,4\r\n+CCFC: 0,16\r
-\n
-ofonod[30925]: Default: < +CCFC: 0,32\r\n+CCFC: 0,64\r\n
-ofonod[30925]: Default: < +CCFC: 0,128\r\n\r\nOK\r\n
-ofonod[30925]: Default: > AT+CCFC=3D2,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 0,1\r\n+CCFC: 0,4\r\n
-ofonod[30925]: Default: < +CCFC: 0,16\r\n+CCFC: 0,32\r\n
-ofonod[30925]: Default: < +CCFC: 0,64\r\n+CCFC: 0,128\r\n
-ofonod[30925]: Default: < \r\nOK\r\n
-ofonod[30925]: Default: > AT+CCFC=3D3,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 0,1\r\n+CCFC: 0,4\r\n
-ofonod[30925]: Default: < +CCFC: 0,16\r\n+CCFC: 0,32\r\n+CCFC: 0,64\r\n
-ofonod[30925]: Default: < +CCFC: 0,128\r\n\r\nOK\r\n
-
-#7: ./list-modems
-    [ org.ofono.CallForwarding ]
-        ForwardingFlagOnSim =3D 1
-        VoiceNoReplyTimeout =3D 20
-        VoiceNotReachable =3D =
-
-        VoiceBusy =3D =
-
-        VoiceNoReply =3D =
-
-        VoiceUnconditional =3D 0401234567
-
-#8: ./test-ussd '##21#'
-ofonod[30925]: Default: > AT+CCFC=3D0,4\r
-ofonod[30925]: Default: < \r\nOK\r\n
-ofonod[30925]: Default: > AT+CCFC=3D0,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 0,1\r\n
-ofonod[30925]: Default: < +CCFC: 0,4\r\n+CCFC: 0,16\r\n+CCFC: 0,32\r\n
-ofonod[30925]: Default: < +CCFC: 0,64\r\n+CCFC: 0,128\r\n
-ofonod[30925]: Default: < \r\nOK\r\n
-
-#9: ./list-modems
-    [ org.ofono.CallForwarding ]
-        ForwardingFlagOnSim =3D 0
-        VoiceNoReplyTimeout =3D 20
-        VoiceNotReachable =3D =
-
-        VoiceBusy =3D =
-
-        VoiceNoReply =3D =
-
-        VoiceUnconditional =3D =
+1.7.3.2
 
 
-#10: ./test-ussd '*#002#'
-ofonod[30925]: Default: > AT+CCFC=3D0,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 0,1\r\n+CCFC: 0,4\r\n+CCFC: 0,16\r
-\n
-ofonod[30925]: Default: < +CCFC: 0,32\r\n+CCFC: 0,64\r\n
-ofonod[30925]: Default: < +CCFC: 0,128\r\n\r\nOK\r\n
-ofonod[30925]: Default: > AT+CCFC=3D1,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 0,1\r\n+CCFC: 0,4\r\n
-ofonod[30925]: Default: < +CCFC: 0,16\r\n+CCFC: 0,32\r\n+CCFC: 0,64\r\n
-ofonod[30925]: Default: < +CCFC: 0,128\r\n\r\nOK\r\n
-ofonod[30925]: Default: > AT+CCFC=3D2,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 1,1,"0401234567",129,"",,20\r\n\r
-\nOK\r\n
-ofonod[30925]: Default: > AT+CCFC=3D3,2\r
-ofonod[30925]: Default: < \r\n+CCFC: 0,1\r\n
-ofonod[30925]: Default: < +CCFC: 0,4\r\n+CCFC: 0,16\r\n
-ofonod[30925]: Default: < +CCFC: 0,32\r\n+CCFC: 0,64\r\n
-ofonod[30925]: Default: < +CCFC: 0,128\r\n\r\nOK\r\n
-
-#11: ./list-modems
-    [ org.ofono.CallForwarding ]
-        ForwardingFlagOnSim =3D 0
-        VoiceNoReplyTimeout =3D 20
-        VoiceNotReachable =3D =
-
-        VoiceBusy =3D =
-
-        VoiceNoReply =3D 0401234567
-        VoiceUnconditional =3D =
-
-
-So as can be seen the result changes between #5 and #7 although nothing
-has been changed. What's more concerning is that@#9 ofono claims that
-no CF is active but as can be seen in #11 actually VoiceNoReply no
-longer is "quiescent" but "active".
-
--Jarko-
-
-
---===============4302483100825490707==--
+--===============6543562097545330152==--
 
