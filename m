@@ -1,52 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============1611499268948294625=="
+Content-Type: multipart/mixed; boundary="===============1838109329870933660=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 3/5] doc: Add documentation for 'forced-mode'
-Date: Tue, 18 Jan 2011 21:02:22 +0200
-Message-ID: <AANLkTi=iRmh+ihG+9OHyx8p95v19tAAwE3sWOsnkTNBZ@mail.gmail.com>
-In-Reply-To: <1295360891.3873.179.camel@aeonflux>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/5] Add SIM authentication atom's driver definitions.
+Date: Tue, 18 Jan 2011 13:21:30 -0600
+Message-ID: <4D35E83A.3030104@gmail.com>
+In-Reply-To: <1295285934-9306-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1611499268948294625==
+--===============1838109329870933660==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Andrew,
 
-2011/1/18 Marcel Holtmann <marcel@holtmann.org>:
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 "auto" =C2=A0 =C2=A0 =C2=A0 =C2=A0 Network regi=
-stration is performed
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0automatically.
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 "forced-auto" =C2=A0Network registration is per=
-formed
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0automatically while manual
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0selection is disabled.
->
-> we need to discuss this a little bit. I am not sure using a mode of
-> forced auto is the best choice here.
->
-> Maybe an extra property like "ManualAllowed" would be better. Thoughts?
+> +typedef void (*ofono_sim_list_apps_cb_t)(const struct ofono_error *error,
+> +					struct ofono_sim_app_record *list,
+> +					int count, void *data);
 
-The reason I ended up extending the Mode property was that once
-forced_auto is true, no other Mode than auto is anyway possible. So in
-a sense it is another type of Mode, which isn't to say a separate
-property wouldn't work equally well.
+So I've been thinking about this one.  Was there a reason why you want
+to pass the parsed list out of the driver instead of just returning the
+hex_decoded CUAD response and length?
 
-I'm really open to either option. The way the code is written makes it
-very easy to just expose this as a separate property.
+If we do that then:
 
-Cheers,
-Aki
+> +struct ofono_sim_app_record {
+> +	unsigned char aid[16];
+> +	int aid_len;
+> +	char *label;
+> +};
 
---===============1611499268948294625==--
+Can be easily hidden inside simutil.h and not exposed to the outside world.
+
+Regards,
+-Denis
+
+--===============1838109329870933660==--
 
