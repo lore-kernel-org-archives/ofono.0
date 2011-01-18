@@ -1,39 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============1412900417690909510=="
+Content-Type: multipart/mixed; boundary="===============2690778749493939808=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [gisi-notify-fix PATCH 2/4] gisi: simplify handling of pending
-Date: Tue, 18 Jan 2011 22:54:44 +0200
-Message-ID: <AANLkTinbdMDzXFO_vUh-ycE+ttabHRGwEhyVNcsmbCEE@mail.gmail.com>
-In-Reply-To: <AANLkTim9SW4=yLM3v_hzo9oMLZ1Yh6fvFq6b9-u7r4xq@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 3/5] doc: Add documentation for 'forced-mode'
+Date: Tue, 18 Jan 2011 15:03:02 -0600
+Message-ID: <4D360006.1040506@gmail.com>
+In-Reply-To: <1295382667.3873.227.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1412900417690909510==
+--===============2690778749493939808==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Marcel,
 
-2011/1/18 Aki Niemi <aki@protocolpolice.com>:
->> -void g_isi_pending_remove(GIsiPending *operation);
->> +void g_isi_pending_own(GIsiPending *op, gpointer owner);
->> +void g_isi_remove_all_my_pending(GIsiModem *modem, uint8_t resource,
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 gpointer own=
-er);
->
-> Overall, I like the idea.
->
-> But how about naming these a bit better? Something like
-> g_isi_pending_set_owner() and g_isi_pending_remove_by_owner()?
+>> The reason I ended up extending the Mode property was that once
+>> forced_auto is true, no other Mode than auto is anyway possible. So in
+>> a sense it is another type of Mode, which isn't to say a separate
+>> property wouldn't work equally well.
+>>
+>> I'm really open to either option. The way the code is written makes it
+>> very easy to just expose this as a separate property.
+> =
 
-Sounds better. I'll do that, and I think I also leave the
-g_isi_pending_remove() as an added bonus. Just in case.
+> the extra "forced-auto" mode feels kinda forced into this property. So
+> that is my main concern here.
+> =
 
--- =
+> However on the other hand the Mode property is actually read-only. If it
+> would be a user changeable property then it would be pretty clear that
+> we do not wanna intermix this here.
+> =
 
-Pekka.Pessi mail at nokia.com
+> With this in mind, it might be just fine here from a UI interaction flow
+> point of view.
+> =
 
---===============1412900417690909510==--
+> Denis, what is your take on this?
+> =
+
+
+I'm fine with forced-auto, but we might want to add a new error type to
+ofono.h (maybe something like ManualRegistrationNotAllowed) and return
+that error when trying to use Scan or NetworkOperator.Register.
+
+Regards,
+-Denis
+
+--===============2690778749493939808==--
 
