@@ -1,44 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============2755272517814934081=="
+Content-Type: multipart/mixed; boundary="===============5645749502229036701=="
 MIME-Version: 1.0
 From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [gisi-notify-fix PATCH 2/4] gisi: simplify handling of pending
-Date: Tue, 18 Jan 2011 22:31:12 +0200
-Message-ID: <AANLkTim9SW4=yLM3v_hzo9oMLZ1Yh6fvFq6b9-u7r4xq@mail.gmail.com>
-In-Reply-To: <1294860252-29570-3-git-send-email-Pekka.Pessi@nokia.com>
+Subject: Re: [PATCH 3/5] doc: Add documentation for 'forced-mode'
+Date: Tue, 18 Jan 2011 22:35:56 +0200
+Message-ID: <AANLkTi=tE+scJG8r4Qn6BuB3To-2o_MtDDaXBGX2faxM@mail.gmail.com>
+In-Reply-To: <1295382667.3873.227.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2755272517814934081==
+--===============5645749502229036701==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Marcel,
 
-2011/1/12  <Pekka.Pessi@nokia.com>:
-> diff --git a/gisi/modem.h b/gisi/modem.h
-> index fff1338..91fe3d0 100644
-> --- a/gisi/modem.h
-> +++ b/gisi/modem.h
-> @@ -109,7 +109,9 @@ int g_isi_response_vsend(GIsiModem *modem, const GIsi=
-Message *req,
->
-> =C2=A0GIsiPending *g_isi_pending_from_msg(const GIsiMessage *msg);
->
-> -void g_isi_pending_remove(GIsiPending *operation);
-> +void g_isi_pending_own(GIsiPending *op, gpointer owner);
-> +void g_isi_remove_all_my_pending(GIsiModem *modem, uint8_t resource,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 gpointer own=
-er);
+2011/1/18 Marcel Holtmann <marcel@holtmann.org>:
+> And while thinking about this, now I have another question. If this flag
+> is set on the SIM card, are you allowed to deregister from the network?
 
-Overall, I like the idea.
+I suppose so. However, you know how I feel about Deregister() to begin
+with. I think with the Online property, it simply serves no purpose.
+Or is there an actual use case for intentionally leaving RF active
+while in limited service only?
 
-But how about naming these a bit better? Something like
-g_isi_pending_set_owner() and g_isi_pending_remove_by_owner()?
+For sure, you're allowed to take the device offline.
 
 Cheers,
 Aki
 
---===============2755272517814934081==--
+--===============5645749502229036701==--
 
