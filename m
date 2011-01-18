@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3282447970626801978=="
+Content-Type: multipart/mixed; boundary="===============1152364456135072167=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] simutil: M9, M11, Minor style fixes and indentation
-Date: Tue, 18 Jan 2011 09:50:27 -0600
-Message-ID: <4D35B6C3.5050104@gmail.com>
-In-Reply-To: <1295353930-25914-1-git-send-email-jessica.j.nilsson@stericsson.com>
+Subject: Re: [PATCH 2/2] simutil: sim_fileid sorted in numerical order
+Date: Tue, 18 Jan 2011 09:52:20 -0600
+Message-ID: <4D35B734.6080408@gmail.com>
+In-Reply-To: <1295353958-25964-1-git-send-email-jessica.j.nilsson@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3282447970626801978==
+--===============1152364456135072167==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,17 +17,15 @@ Hi Jessica,
 
 On 01/18/2011 06:32 AM, Jessica Nilsson wrote:
 > ---
->  src/simutil.h |   68 ++++++++++++++++++++++++++++-----------------------=
------
->  1 files changed, 34 insertions(+), 34 deletions(-)
+>  src/simutil.h |   10 +++++-----
+>  1 files changed, 5 insertions(+), 5 deletions(-)
 > =
 
 
-This patch has been applied, but I had to merge it with some code
-cleanups that were made in the meantime.
+This patch no longer applied, so I pushed my own version of the fix.
 
 Regards,
 -Denis
 
---===============3282447970626801978==--
+--===============1152364456135072167==--
 
