@@ -1,35 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============8045438158091814983=="
+Content-Type: multipart/mixed; boundary="===============3635107037452031220=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 3/5] doc: Add documentation for 'forced-mode'
-Date: Wed, 19 Jan 2011 15:00:00 +0200
-Message-ID: <AANLkTinZiVpbQguAegPA=Q+oEW=8mvA8TApq8a5LqHkc@mail.gmail.com>
-In-Reply-To: <4D360006.1040506@gmail.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH 2/2] Allow distcheck to work without bluetooth
+Date: Wed, 19 Jan 2011 12:31:05 +0200
+Message-ID: <1295433065-26502-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8045438158091814983==
+--===============3635107037452031220==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+---
+ Makefile.am |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-2011/1/18 Denis Kenzior <denkenz@gmail.com>:
-> I'm fine with forced-auto, but we might want to add a new error type to
-> ofono.h (maybe something like ManualRegistrationNotAllowed) and return
-> that error when trying to use Scan or NetworkOperator.Register.
+diff --git a/Makefile.am b/Makefile.am
+index c1c34ca..e93076a 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -550,6 +550,9 @@ gatchat_test_qcdm_LDADD =3D @GLIB_LIBS@
+ =
 
-I was reusing the __ofono_error_access_denied(), which I think came
-with the lockdown feature.
->
-> Regards,
-> -Denis
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+ =
 
---===============8045438158091814983==--
+ DISTCHECK_CONFIGURE_FLAGS =3D --disable-datafiles
++if !BLUETOOTH
++DISTCHECK_CONFIGURE_FLAGS +=3D --disable-bluetooth
++endif
+ =
+
+ MAINTAINERCLEANFILES =3D Makefile.in \
+ 	aclocal.m4 configure config.h.in config.sub config.guess \
+-- =
+
+1.7.1
+
+
+--===============3635107037452031220==--
 
