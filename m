@@ -1,45 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6814566565470710498=="
+Content-Type: multipart/mixed; boundary="===============1164893752906218748=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 3/5 v3] nettime: DBUS and compilation configuration
-Date: Wed, 19 Jan 2011 10:10:24 +0200
-Message-ID: <AANLkTikP7ksrzzUWs6pFuXVW_1X1q32zBaW8Q91-LQi4@mail.gmail.com>
-In-Reply-To: <1295362758.3873.200.camel@aeonflux>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+Subject: [PATCH 2/3] sim: getters for mcc and mnc definition
+Date: Wed, 19 Jan 2011 09:21:27 +0200
+Message-ID: <1295421688-19291-3-git-send-email-jukka.saunamaki@nokia.com>
+In-Reply-To: <1295421688-19291-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6814566565470710498==
+--===============1164893752906218748==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+---
+ include/sim.h |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-2011/1/18 Marcel Holtmann <marcel@holtmann.org>:
-> please don't implement org.ofono interface in timed. Just implement a
-> timed specific (com.nokia.time) interface and punch the whole for that
-> in the timed D-Bus policy.
+diff --git a/include/sim.h b/include/sim.h
+index 830322a..81df60e 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -178,6 +178,8 @@ void ofono_sim_set_data(struct ofono_sim *sim, void *da=
+ta);
+ void *ofono_sim_get_data(struct ofono_sim *sim);
+ =
 
-I think there is some disconnect here. The intention is to implement a
-similar agent interface as PushNotification and SmartMessaging already
-do, with the exception that the one and only agent is known beforehand
-and "hard-coded" to the plugin.
+ const char *ofono_sim_get_imsi(struct ofono_sim *sim);
++const char *ofono_sim_get_mcc(struct ofono_sim *sim);
++const char *ofono_sim_get_mnc(struct ofono_sim *sim);
+ enum ofono_sim_phase ofono_sim_get_phase(struct ofono_sim *sim);
+ =
 
-This is a generic interface that some other time information sink
-could also implement, so it makes sense to have it in the org.ofono
-namespace. Regardless of which namespace we use, though, it is oFono
-that will be calling methods on this interface, and thus it needs to
-have this interface opened in its D-Bus config.
+ enum ofono_sim_cphs_phase ofono_sim_get_cphs_phase(struct ofono_sim *sim);
+-- =
 
-> The plugin is timed specific since it monitors com.nokia.time and thus
-> should also target a timed specific API. Not a generic oFono API
-> description.
+1.7.1
 
-This is really just another agent API in oFono, just one with a
-build-time registration mechanism for agents.
 
-Cheers,
-Aki
-
---===============6814566565470710498==--
+--===============1164893752906218748==--
 
