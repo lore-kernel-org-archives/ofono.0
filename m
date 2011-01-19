@@ -1,27 +1,24 @@
-Content-Type: multipart/mixed; boundary="===============7469472167145170746=="
+Content-Type: multipart/mixed; boundary="===============3380356322018356292=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] huawei: do not query sim state on pre_sim
-Date: Wed, 19 Jan 2011 15:40:25 +0100
-Message-ID: <1295448025.3873.247.camel@aeonflux>
-In-Reply-To: <1295447681-8193-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH 1/3] TODO: add SIM authentication API
+Date: Wed, 19 Jan 2011 15:42:04 +0100
+Message-ID: <1295448124.3873.248.camel@aeonflux>
+In-Reply-To: <1295446753-14394-1-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7469472167145170746==
+--===============3380356322018356292==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+Hi Pekka,
 
-> Sim state is already known after modem is enabled and there's no need to
-> query it again. Before this patch, query_sim_state() was called upon
-> huawei_enable() and huawei_pre_sim(). Both functions might call
-> notify_sim_state() with a valid state. Hence we could eventually end up
-> sending AT+CFUN=3D5 command twice.
+>  TODO |    7 +++++++
+>  1 files changed, 7 insertions(+), 0 deletions(-)
 
-patch has been applied. Thanks.
+all three patches have been applied.
 
 Regards
 
@@ -29,5 +26,5 @@ Marcel
 
 
 
---===============7469472167145170746==--
+--===============3380356322018356292==--
 
