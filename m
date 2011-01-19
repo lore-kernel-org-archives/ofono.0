@@ -1,31 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============3814023714265056964=="
+Content-Type: multipart/mixed; boundary="===============2931408749180241496=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] doc: use right description for CallSettings
-Date: Tue, 18 Jan 2011 20:06:18 -0600
-Message-ID: <4D36471A.9060800@gmail.com>
-In-Reply-To: <1295396089-12631-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: Re: [sim-auth RFCv2 1/4] TODO: add SIM authentication
+Date: Tue, 18 Jan 2011 21:27:56 -0600
+Message-ID: <4D365A3C.3010205@gmail.com>
+In-Reply-To: <1294873702-10316-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3814023714265056964==
+--===============2931408749180241496==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+Hi Pekka,
 
-On 01/18/2011 06:14 PM, Lucas De Marchi wrote:
-> ---
->  doc/features.txt |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
+> +- Support SIM authentication: SIM, AKA, and GBA suites.
+> +
+> +  Priority: Medium
+> +  Complexity: C3
 
+Please don't invent new complexity levels.  We explicitly use an
+exponential system, so it is either a C2 or a C4, there's no inbetween ;)
 
-Patch has been applied, thanks.
+> +  Owner: Pekka Pessi <pekka.pessi@nokia.com>
+> +
+>  Modem Emulator
+>  =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>  =
+
 
 Regards,
 -Denis
 
---===============3814023714265056964==--
+--===============2931408749180241496==--
 
