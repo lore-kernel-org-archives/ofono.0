@@ -1,58 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============9144968234173452526=="
+Content-Type: multipart/mixed; boundary="===============8992417858585440772=="
 MIME-Version: 1.0
-From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH 5/6] doc: Remove deregister method documentation
-Date: Wed, 19 Jan 2011 23:53:54 +0200
-Message-ID: <1295474035-7142-6-git-send-email-aki.niemi@nokia.com>
-In-Reply-To: <1295474035-7142-1-git-send-email-aki.niemi@nokia.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 2/6] Define packet switched bearers
+Date: Thu, 20 Jan 2011 00:23:04 +0200
+Message-ID: <AANLkTi=oTBytjGcpGdTDJnsZOGzf1uEXcYEQ11CVm-O3@mail.gmail.com>
+In-Reply-To: <1295428765-8683-2-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9144968234173452526==
+--===============8992417858585440772==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/network-api.txt |    9 ---------
- 1 files changed, 0 insertions(+), 9 deletions(-)
+Hi R=C3=A9mi,
 
-diff --git a/doc/network-api.txt b/doc/network-api.txt
-index 3e705e6..75187cd 100644
---- a/doc/network-api.txt
-+++ b/doc/network-api.txt
-@@ -30,12 +30,6 @@ Methods		dict GetProperties()
- =
+2011/1/19 R=C3=A9mi Denis-Courmont <remi.denis-courmont@nokia.com>:
+> ---
+> =C2=A0src/common.c | =C2=A0 23 +++++++++++++++++++++++
+> =C2=A0src/common.h | =C2=A0 13 +++++++++++++
+> =C2=A02 files changed, 36 insertions(+), 0 deletions(-)
+>
+> diff --git a/src/common.c b/src/common.c
+> index d4e567b..2dd0da0 100644
+> --- a/src/common.c
+> +++ b/src/common.c
 
- 			Possible Errors: [service].Error.InvalidArguments
- =
+snip.
 
--		void Deregister()
--
--			Completely unregisters from the network
--
--			Possible Errors: [service].Error.InvalidArguments
--
- 		array{object,dict} GetOperators()
- =
+> +/* 27.007 Section 7.29 */
+> +enum packet_bearer {
+> + =C2=A0 =C2=A0 =C2=A0 PACKET_BEARER_NONE =3D 0,
+> + =C2=A0 =C2=A0 =C2=A0 PACKET_BEARER_GPRS =3D 1,
+> + =C2=A0 =C2=A0 =C2=A0 PACKET_BEARER_EGPRS =3D 2,
+> + =C2=A0 =C2=A0 =C2=A0 PACKET_BEARER_UMTS =3D 3,
+> + =C2=A0 =C2=A0 =C2=A0 PACKET_BEARER_HSUPA =3D 4,
+> + =C2=A0 =C2=A0 =C2=A0 PACKET_BEARER_HSDPA =3D 5,
+> + =C2=A0 =C2=A0 =C2=A0 PACKET_BEARER_HSUPA_HSDPA =3D 6,
+> + =C2=A0 =C2=A0 =C2=A0 PACKET_BEARER_EPS =3D 7,
+> +};
 
- 			Retrieve array of operator object and properties.
-@@ -81,9 +75,6 @@ Properties	string Mode [readonly]
- 				           manually. If the operator is
- 				           currently not selected, registration
- 				           is not attempted
--				"off"      Unregisters from currently selected
--				           network, if any, and does not
--				           attempt to register again.
- =
+These need to be right-aligned with tabs. See coding-style, M12.
 
- 		string Status [readonly]
- =
+Cheers,
+Aki
 
--- =
-
-1.7.1
-
-
---===============9144968234173452526==--
+--===============8992417858585440772==--
 
