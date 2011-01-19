@@ -1,79 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============5769131958040900434=="
+Content-Type: multipart/mixed; boundary="===============6177485821968929260=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC PATCH 0/3] Long phone numbers
-Date: Tue, 18 Jan 2011 22:27:24 -0600
-Message-ID: <4D36682C.8040009@gmail.com>
-In-Reply-To: <20110118093908.GA20108@nodo3>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 2/6] Define packet switched bearers
+Date: Wed, 19 Jan 2011 06:18:09 +0100
+Message-ID: <1295414289.3873.237.camel@aeonflux>
+In-Reply-To: <1294915781-8330-2-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5769131958040900434==
+--===============6177485821968929260==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rafael,
+Hi Remi,
 
-On 01/18/2011 03:39 AM, Rafael Ignacio Zurita wrote:
-> On Mon, Jan 17, 2011 at 11:18:51PM +0200, Pekka Pessi wrote:
->> Hi Rafael,
->>
->> 2011/1/17 Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>:
->>> This is a proposal for the "long phone number" task (80 digits max leng=
-th).
->>> It changes OFONO_MAX_PHONE_NUMBER_LENGTH and splits
->>> common:valid_phone_number_format(), to make sure long numbers are handl=
-ed
->>> appropriately for functions that need manage shorter numbers, like
->>> numbers written to the SIM, or sms SCA.
->>
->> Perhaps a validator and type for long phone numbers is better than for
->> short numbers? I guess long numbers are mostly used when reporting an
->> outgoing call back to oFono.
+>  src/common.c |   24 ++++++++++++++++++++++++
+>  src/common.h |   13 +++++++++++++
+>  2 files changed, 37 insertions(+), 0 deletions(-)
 > =
 
-> No completely sure if it is better. Maybe it is the same?. With a new
-> type for long number we will have modifications on other parts of the code
-> which use OFONO_MAX_PHONE_NUMBER_LENGTH. The first idea could be simpler
-> because we just have one type and would check for the format and length o=
-n the
-> proper places.
-
-So I actually agree with Pekka on this one, validating the long phone
-number might actually be a bit easier.  Basically the long phone number
-only happens when we place an outgoing call.
-
-For the rest we can keep the limit to 20.
-
-However, do note that this function is being (ab)used for:
-- Checking valid destination for an SMS (20 chars max)
-- Checking valid phone number to be written to SIM (currently no
-extension records, so 20 chars max)
-- Checking valid phone number to be sent to ATD (80 chars max)
-- Checking valid phone number to be uses for deflection (? chars max)
-
-Perhaps we should use an enumeration of the type of number we want,
-similar to how is_valid_pin is implemented.
-
+> diff --git a/src/common.c b/src/common.c
+> index d4e567b..c58ed5c 100644
+> --- a/src/common.c
+> +++ b/src/common.c
+> @@ -714,6 +714,30 @@ const char *registration_tech_to_string(int tech)
+>  	}
+>  }
 >  =
 
->> BTW, with call forwarding you could have numbers up to 16 digits or if
->> longForwardedToNumber is supported (by modem and both home and visited
->> networks) even 28 digits. See TS 29.002 for merry details.
-> =
+> +const char *packet_bearer_to_string(int bearer)
+> +{
+> +	switch (bearer) {
+> +	case PACKET_BEARER_NONE:
+> +		return "none";
+> +	case PACKET_BEARER_GPRS:
+> +		return "gprs";
+> +	case PACKET_BEARER_EGPRS:
+> +		return "egprs";
+> +	case PACKET_BEARER_UMTS:
+> +		return "umts";
+> +	case PACKET_BEARER_HSUPA:
+> +		return "hsupa";
+> +	case PACKET_BEARER_HSDPA:
+> +		return "hsdpa";
+> +	case PACKET_BEARER_HSUPA_HSDPA:
+> +		return "hspa";
+> +	case PACKET_BEARER_EPS:
+> +		return "eps";
+> +	default:
+> +		return "";
+> +	}
+> +}
 
-> Thanks for that. I am checking, and going to add an extra validator
-> surely.
-> =
+these don't match the documentation. Use "edge" and "lte" for them.
+
+And please don't use a default switch label. Just return "" at the end
+of the function.
+
+Regards
+
+Marcel
 
 
-This might be a good idea, but keep in mind that if we set a long number
-into CFU, we might not be able to support writing it out to the SIM's
-EFcfis record.  So 20 characters might be all you have anyway.
 
-Regards,
--Denis
-
---===============5769131958040900434==--
+--===============6177485821968929260==--
 
