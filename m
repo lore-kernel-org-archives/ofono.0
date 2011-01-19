@@ -1,42 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1164893752906218748=="
+Content-Type: multipart/mixed; boundary="===============2084871608309791993=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [PATCH 2/3] sim: getters for mcc and mnc definition
-Date: Wed, 19 Jan 2011 09:21:27 +0200
-Message-ID: <1295421688-19291-3-git-send-email-jukka.saunamaki@nokia.com>
-In-Reply-To: <1295421688-19291-1-git-send-email-jukka.saunamaki@nokia.com>
+From: Jussi Kangas <jussi.kangas@tieto.com>
+Subject: Ofono has too tight limits for SIM lock code lengths
+Date: Wed, 19 Jan 2011 11:04:44 +0200
+Message-ID: <1295427884.3171.0.camel@jussi-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1164893752906218748==
+--===============2084871608309791993==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/sim.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/include/sim.h b/include/sim.h
-index 830322a..81df60e 100644
---- a/include/sim.h
-+++ b/include/sim.h
-@@ -178,6 +178,8 @@ void ofono_sim_set_data(struct ofono_sim *sim, void *da=
-ta);
- void *ofono_sim_get_data(struct ofono_sim *sim);
- =
+I've been testing SIM locks with Ofono and it looks to me that method
+is_valid_pin in src/common.c has somewhat too tight rules for PIN
+lenghts. SIM or subsidy lock codes can be longer than 8 digits (as
+dictated in 22.022 chapter 14)
 
- const char *ofono_sim_get_imsi(struct ofono_sim *sim);
-+const char *ofono_sim_get_mcc(struct ofono_sim *sim);
-+const char *ofono_sim_get_mnc(struct ofono_sim *sim);
- enum ofono_sim_phase ofono_sim_get_phase(struct ofono_sim *sim);
- =
+There are several ways to fix this. My current favourite is changing the
+is_valid_pin so that it takes the actual return value of
+sim_string_to_passwd instead of pin_type enumaration as parameter and
+checks with 16-digit limit the SIM locks.
 
- enum ofono_sim_cphs_phase ofono_sim_get_cphs_phase(struct ofono_sim *sim);
--- =
-
-1.7.1
+Other option that comes to my mind would be separate a valid check
+method for SIM locks. =
 
 
---===============1164893752906218748==--
+As third option I suggest adding fifth value to pin_type enumeration and
+give that as a parameter for is_valid_pin to make it use different
+limits. It would require more specific code type recognition in calling
+function though. =
+
+
+Opinions? Other ideas?
+
+Br, =
+
+-Jussi =
+
+
+
+--===============2084871608309791993==--
 
