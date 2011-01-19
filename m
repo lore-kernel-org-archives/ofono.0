@@ -1,81 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============0145352906786151240=="
+Content-Type: multipart/mixed; boundary="===============7069802953743161266=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 4/4] atmodem: sim-auth atom driver.
-Date: Wed, 19 Jan 2011 09:07:58 +0100
-Message-ID: <1295424478-12049-6-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 2/4] Add SIM authentication atom's driver definitions.
+Date: Wed, 19 Jan 2011 09:07:56 +0100
+Message-ID: <1295424478-12049-4-git-send-email-andrew.zaborowski@intel.com>
 In-Reply-To: <1295424478-12049-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0145352906786151240==
+--===============7069802953743161266==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Structures and function declarations for the SIM authentication
+atom as proposed by Pekka Pessi, with just one method at the
+moment.
 ---
- Makefile.am                |    3 +-
- drivers/atmodem/atmodem.c  |    2 +
- drivers/atmodem/atmodem.h  |    3 +
- drivers/atmodem/sim-auth.c |  162 ++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am        |    2 +-
+ include/sim-auth.h |   64 ++++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 4 files changed, 169 insertions(+), 1 deletions(-)
- create mode 100644 drivers/atmodem/sim-auth.c
+ 2 files changed, 65 insertions(+), 1 deletions(-)
+ create mode 100644 include/sim-auth.h
 
 diff --git a/Makefile.am b/Makefile.am
-index 10892a6..9c8083b 100644
+index c1c34ca..7ea1b2d 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -169,7 +169,8 @@ builtin_sources +=3D $(gatchat_sources) \
- 				drivers/atmodem/atutil.h \
- 				drivers/atmodem/atutil.c \
- 				drivers/atmodem/gprs.c \
--				drivers/atmodem/gprs-context.c
-+				drivers/atmodem/gprs-context.c \
-+				drivers/atmodem/sim-auth.c
+@@ -13,7 +13,7 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
+lude/history.h \
+ 			include/radio-settings.h include/stk.h \
+ 			include/audio-settings.h include/nettime.h \
+ 			include/ctm.h include/cdma-voicecall.h \
+-			include/cdma-sms.h
++			include/cdma-sms.h include/sim-auth.h
  =
 
- builtin_modules +=3D nwmodem
- builtin_sources +=3D drivers/atmodem/atutil.h \
-diff --git a/drivers/atmodem/atmodem.c b/drivers/atmodem/atmodem.c
-index c88f6b2..e140281 100644
---- a/drivers/atmodem/atmodem.c
-+++ b/drivers/atmodem/atmodem.c
-@@ -51,12 +51,14 @@ static int atmodem_init(void)
- 	at_call_volume_init();
- 	at_gprs_init();
- 	at_gprs_context_init();
-+	at_sim_auth_init();
+ nodist_pkginclude_HEADERS =3D include/version.h
  =
 
- 	return 0;
- }
- =
-
- static void atmodem_exit(void)
- {
-+	at_sim_auth_exit();
- 	at_stk_exit();
- 	at_sim_exit();
- 	at_sms_exit();
-diff --git a/drivers/atmodem/atmodem.h b/drivers/atmodem/atmodem.h
-index c7f0eed..1b7cf67 100644
---- a/drivers/atmodem/atmodem.h
-+++ b/drivers/atmodem/atmodem.h
-@@ -71,3 +71,6 @@ extern void at_gprs_exit(void);
- =
-
- extern void at_gprs_context_init(void);
- extern void at_gprs_context_exit(void);
-+
-+extern void at_sim_auth_init(void);
-+extern void at_sim_auth_exit(void);
-diff --git a/drivers/atmodem/sim-auth.c b/drivers/atmodem/sim-auth.c
+diff --git a/include/sim-auth.h b/include/sim-auth.h
 new file mode 100644
-index 0000000..6e255d6
+index 0000000..0a62adc
 --- /dev/null
-+++ b/drivers/atmodem/sim-auth.c
-@@ -0,0 +1,162 @@
++++ b/include/sim-auth.h
+@@ -0,0 +1,64 @@
 +/*
 + *
 + *  oFono - Open Source Telephony
@@ -98,152 +67,54 @@ index 0000000..6e255d6
 + *
 + */
 +
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
++#ifndef __OFONO_SIM_AUTH_H
++#define __OFONO_SIM_AUTH_H
++
++#ifdef __cplusplus
++extern "C" {
 +#endif
 +
-+#define _GNU_SOURCE
-+#include <string.h>
++#include <ofono/types.h>
 +
-+#include <glib.h>
++struct ofono_sim_auth;
 +
-+#include <ofono/modem.h>
-+#include <ofono/sim-auth.h>
++typedef void (*ofono_sim_list_apps_cb_t)(const struct ofono_error *error,
++					const unsigned char *dataobj,
++					int len, void *data);
 +
-+#include "gatchat.h"
-+#include "gatresult.h"
-+#include "simutil.h"
-+#include "vendor.h"
++struct ofono_sim_auth_driver {
++	const char *name;
++	int (*probe)(struct ofono_sim_auth *sa, unsigned int vendor,
++			void *data);
++	void (*remove)(struct ofono_sim_auth *sa);
 +
-+#include "atmodem.h"
-+
-+struct sim_auth_data {
-+	GAtChat *chat;
-+	unsigned int vendor;
++	void (*list_apps)(struct ofono_sim_auth *sa,
++				ofono_sim_list_apps_cb_t cb, void *data);
 +};
 +
-+static const char *cuad_prefix[] =3D { "+CUAD:", NULL };
++int ofono_sim_auth_driver_register(const struct ofono_sim_auth_driver *d);
++void ofono_sim_auth_driver_unregister(const struct ofono_sim_auth_driver *=
+d);
 +
-+static void at_discover_apps_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	GAtResultIter iter;
-+	ofono_sim_list_apps_cb_t cb =3D cbd->cb;
-+	struct ofono_error error;
-+	const unsigned char *dataobj;
-+	gint linelen;
-+	unsigned char *buffer;
-+	int len;
++struct ofono_sim_auth *ofono_sim_auth_create(struct ofono_modem *modem,
++						unsigned int vendor,
++						const char *driver, void *data);
 +
-+	decode_at_error(&error, g_at_result_final_response(result));
++void ofono_sim_auth_register(struct ofono_sim_auth *sa);
++void ofono_sim_auth_remove(struct ofono_sim_auth *sa);
 +
-+	if (!ok) {
-+		cb(&error, NULL, 0, cbd->data);
-+		return;
-+	}
++void ofono_sim_auth_set_data(struct ofono_sim_auth *sa, void *data);
++void *ofono_sim_auth_get_data(struct ofono_sim_auth *sa);
 +
-+	g_at_result_iter_init(&iter, result);
-+
-+	len =3D 0;
-+	while (g_at_result_iter_next(&iter, "+CUAD:")) {
-+		if (!g_at_result_iter_next_hexstring(&iter, NULL, &linelen))
-+			goto error;
-+
-+		len +=3D linelen;
-+	}
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	buffer =3D g_malloc(len);
-+	len =3D 0;
-+	while (g_at_result_iter_next(&iter, "+CUAD:")) {
-+		g_at_result_iter_next_hexstring(&iter, &dataobj, &linelen);
-+		memcpy(buffer + len, dataobj, linelen);
-+		len +=3D linelen;
-+	}
-+
-+	cb(&error, buffer, len, cbd->data);
-+
-+	g_free(buffer);
-+	return;
-+
-+error:
-+	CALLBACK_WITH_FAILURE(cb, NULL, 0, cbd->data);
++#ifdef __cplusplus
 +}
++#endif
 +
-+static void at_discover_apps(struct ofono_sim_auth *sa,
-+				ofono_sim_list_apps_cb_t cb,
-+				void *data)
-+{
-+	struct sim_auth_data *sad =3D ofono_sim_auth_get_data(sa);
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
-+
-+	if (cbd && g_at_chat_send(sad->chat, "AT+CUAD", cuad_prefix,
-+					at_discover_apps_cb, cbd, g_free) > 0)
-+		return;
-+
-+	g_free(cbd);
-+
-+	CALLBACK_WITH_FAILURE(cb, NULL, 0, data);
-+}
-+
-+static gboolean at_sim_auth_register(gpointer user)
-+{
-+	struct ofono_sim_auth *sa =3D user;
-+
-+	ofono_sim_auth_register(sa);
-+
-+	return FALSE;
-+}
-+
-+static int at_sim_auth_probe(struct ofono_sim_auth *sa, unsigned int vendo=
-r,
-+				void *data)
-+{
-+	GAtChat *chat =3D data;
-+	struct sim_auth_data *sad;
-+
-+	sad =3D g_new0(struct sim_auth_data, 1);
-+	sad->chat =3D g_at_chat_clone(chat);
-+	sad->vendor =3D vendor;
-+
-+	ofono_sim_auth_set_data(sa, sad);
-+	g_idle_add(at_sim_auth_register, sa);
-+
-+	return 0;
-+}
-+
-+static void at_sim_auth_remove(struct ofono_sim_auth *sa)
-+{
-+	struct sim_auth_data *sad =3D ofono_sim_auth_get_data(sa);
-+
-+	ofono_sim_auth_set_data(sa, NULL);
-+
-+	g_at_chat_unref(sad->chat);
-+	g_free(sad);
-+}
-+
-+static struct ofono_sim_auth_driver driver =3D {
-+	.name		=3D "atmodem",
-+	.probe		=3D at_sim_auth_probe,
-+	.remove		=3D at_sim_auth_remove,
-+	.list_apps	=3D at_discover_apps,
-+};
-+
-+void at_sim_auth_init(void)
-+{
-+	ofono_sim_auth_driver_register(&driver);
-+}
-+
-+void at_sim_auth_exit(void)
-+{
-+	ofono_sim_auth_driver_unregister(&driver);
-+}
++#endif /* __OFONO_SIM_AUTH_H */
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============0145352906786151240==--
+--===============7069802953743161266==--
 
