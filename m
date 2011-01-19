@@ -1,49 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============5037138014043947325=="
+Content-Type: multipart/mixed; boundary="===============4401123680966964558=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 5/6] GPRS: document bearer property
-Date: Wed, 19 Jan 2011 11:19:24 +0200
-Message-ID: <1295428765-8683-5-git-send-email-remi.denis-courmont@nokia.com>
-In-Reply-To: <1295428765-8683-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Rolf Offermanns <roffermanns@sysgo.com>
+Subject: DUN client questions
+Date: Wed, 19 Jan 2011 11:00:05 +0100
+Message-ID: <4D36B625.6000009@sysgo.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5037138014043947325==
+--===============4401123680966964558==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/connman-api.txt |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
+Hi All,
 
-diff --git a/doc/connman-api.txt b/doc/connman-api.txt
-index 22e02e5..13f622c 100644
---- a/doc/connman-api.txt
-+++ b/doc/connman-api.txt
-@@ -77,6 +77,16 @@ Properties	boolean Attached [readonly]
- 			be available, e.g. receiving SMS over packet radio
- 			or network initiated PDP activation.
- =
+I have applied Gustavos patches from 09/11/2010 to the current git
+version of ofono and besides a problem with the cid range (min =3D max =3D
+2, but my mobile (Nokia N82) only has one context) I was able to get a
+connection until the point where the ip and the dns addresses where
+written to the log file. So far so good (I guess).
 
-+		string Bearer [readonly, optional]
-+
-+			Contains the data bearer technology as reported by the
-+			GPRS service registration (if known).
-+
-+			Possible values are:
-+			"gsm", "edge", "umts", "hsdpa", "hsupa",
-+			"hspa" (HSDPA and HSUPA at the same time) and
-+			"lte"
-+
- 		boolean Suspended [readonly, optional]
- =
-
- 			Contains whether the GPRS service is suspended.
--- =
-
-1.7.1
+I am not too far into the code right know, so the following questions
+maybe stupid. Please bear with me, I appreciate any help.
 
 
---===============5037138014043947325==--
+I am using MeeGo 1.1 with updated ofono, connman and carrick packages
+(all from git).
+
+Here is what I did to get the DUN connection up:
+
+1. Connect the mobile using the bluetooth applet in MeeGo
+   -> The modem was recognized as DUN capable and shows up in the
+      "list-modems" output from ofonos test script as "/dun/xxx_yyy"
+2. Then using the ofono test scripts: enable_modem,
+create-internet-context, activate-context
+
+Questions:
+- How to proceed from here. What is missing to have the context show up
+in the meego-network-panel?
+
+- From my understanding a DUN modem looks very much like the USB 3G
+modem. The AT commands look similar (if not identical). Why is it
+necessary to have another modem type for this? Can't the atmodem driver
+be used for DUN, too?
+
+Thanks,
+Rolf
+
+--===============4401123680966964558==--
 
