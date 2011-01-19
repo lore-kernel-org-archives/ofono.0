@@ -1,42 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============3635107037452031220=="
+Content-Type: multipart/mixed; boundary="===============1587442702267110932=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 2/2] Allow distcheck to work without bluetooth
-Date: Wed, 19 Jan 2011 12:31:05 +0200
-Message-ID: <1295433065-26502-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH] huawei: do not set timer more than once
+Date: Wed, 19 Jan 2011 11:07:43 -0200
+Message-ID: <1295442463-7151-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3635107037452031220==
+--===============1587442702267110932==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+If a "^SYSINFO" arrives after the timer for query_sim_locked() has been
+set up, it'd would set a new timer, signaling a sim state change more
+than once.
 ---
- Makefile.am |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ plugins/huawei.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index c1c34ca..e93076a 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -550,6 +550,9 @@ gatchat_test_qcdm_LDADD =3D @GLIB_LIBS@
- =
-
- =
-
- DISTCHECK_CONFIGURE_FLAGS =3D --disable-datafiles
-+if !BLUETOOTH
-+DISTCHECK_CONFIGURE_FLAGS +=3D --disable-bluetooth
-+endif
- =
-
- MAINTAINERCLEANFILES =3D Makefile.in \
- 	aclocal.m4 configure config.h.in config.sub config.guess \
+diff --git a/plugins/huawei.c b/plugins/huawei.c
+index d6a9d68..b4b7436 100644
+--- a/plugins/huawei.c
++++ b/plugins/huawei.c
+@@ -289,7 +289,8 @@ static void sysinfo_cb(gboolean ok, GAtResult *result, =
+gpointer user_data)
+ 		data->sim_poll_timeout =3D g_timeout_add_seconds(2,
+ 								query_sim_state,
+ 								modem);
+-	} else if (sim_state =3D=3D	HUAWEI_SIM_STATE_INVALID_OR_LOCKED) {
++	} else if (sim_state =3D=3D	HUAWEI_SIM_STATE_INVALID_OR_LOCKED &&
++						!data->sim_poll_timeout) {
+ 		data->sim_poll_timeout =3D g_timeout_add_seconds(2,
+ 								query_sim_locked,
+ 								modem);
 -- =
 
-1.7.1
+1.7.3.5
 
 
---===============3635107037452031220==--
+--===============1587442702267110932==--
 
