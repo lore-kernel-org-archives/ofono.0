@@ -1,67 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============7955289030429718815=="
+Content-Type: multipart/mixed; boundary="===============2328189460453776700=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH 3/6] atmodem: Remove deregister implementation
-Date: Wed, 19 Jan 2011 23:53:52 +0200
-Message-ID: <1295474035-7142-4-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCH 6/6] test: Remove deregister support from test script
+Date: Wed, 19 Jan 2011 23:53:55 +0200
+Message-ID: <1295474035-7142-7-git-send-email-aki.niemi@nokia.com>
 In-Reply-To: <1295474035-7142-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7955289030429718815==
+--===============2328189460453776700==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/network-registration.c |   20 --------------------
- 1 files changed, 0 insertions(+), 20 deletions(-)
+ test/test-network-registration |    6 +-----
+ 1 files changed, 1 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index e11c974..4b8cc34 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -557,25 +557,6 @@ error:
- 	CALLBACK_WITH_FAILURE(cb, data);
- }
+diff --git a/test/test-network-registration b/test/test-network-registration
+index a8bd141..0c25885 100755
+--- a/test/test-network-registration
++++ b/test/test-network-registration
+@@ -18,8 +18,6 @@ if __name__ =3D=3D "__main__":
+ 			(sys.argv[0])
+ 		print "Usage: %s default - Register to default PLMN" %\
+ 			(sys.argv[0])
+-		print "Usage: %s unregister - Unregister from all PLMNs" %\
+-			(sys.argv[0])
+ 		sys.exit(1)
  =
 
--static void at_deregister(struct ofono_netreg *netreg,
--				ofono_netreg_register_cb_t cb, void *data)
--{
--	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
--	struct cb_data *cbd =3D cb_data_new(cb, data);
--
--	if (cbd =3D=3D NULL)
--		goto error;
--
--	if (g_at_chat_send(nd->chat, "AT+COPS=3D2", none_prefix,
--				register_cb, cbd, g_free) > 0)
--		return;
--
--error:
--	g_free(cbd);
--
--	CALLBACK_WITH_FAILURE(cb, data);
--}
--
- static void csq_notify(GAtResult *result, gpointer user_data)
- {
- 	struct ofono_netreg *netreg =3D user_data;
-@@ -1342,7 +1323,6 @@ static struct ofono_netreg_driver driver =3D {
- 	.list_operators			=3D at_list_operators,
- 	.register_auto			=3D at_register_auto,
- 	.register_manual		=3D at_register_manual,
--	.deregister			=3D at_deregister,
- 	.strength			=3D at_signal_strength,
- };
+ 	canexit =3D False
+@@ -53,14 +51,12 @@ if __name__ =3D=3D "__main__":
+ 	try:
+ 		if sys.argv[1] =3D=3D 'default':
+ 			netreg.Register()
+-		elif sys.argv[1] =3D=3D 'unregister':
+-			netreg.Deregister()
+ 		else:
+ 			obj =3D bus.get_object('org.ofono', sys.argv[1]);
+ 			op =3D dbus.Interface(obj, 'org.ofono.NetworkOperator')
+ 			op.Register()
+ 	except dbus.DBusException, e:
+-		print "Unable to register/deregister: ", e
++		print "Unable to register: ", e
+ 		sys.exit(1)
  =
 
+ 	canexit =3D True
 -- =
 
 1.7.1
 
 
---===============7955289030429718815==--
+--===============2328189460453776700==--
 
