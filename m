@@ -1,68 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============6177485821968929260=="
+Content-Type: multipart/mixed; boundary="===============0849716190855433834=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/6] Define packet switched bearers
-Date: Wed, 19 Jan 2011 06:18:09 +0100
-Message-ID: <1295414289.3873.237.camel@aeonflux>
-In-Reply-To: <1294915781-8330-2-git-send-email-remi.denis-courmont@nokia.com>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+Subject: Re: [PATCH 1/8] gprs-provision: add driver API header
+Date: Wed, 19 Jan 2011 07:58:55 +0200
+Message-ID: <1295416735.17394.4.camel@jsaunama-desktop>
+In-Reply-To: <1295362115.3873.190.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6177485821968929260==
+--===============0849716190855433834==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi Marcel,
 
->  src/common.c |   24 ++++++++++++++++++++++++
->  src/common.h |   13 +++++++++++++
->  2 files changed, 37 insertions(+), 0 deletions(-)
+> > +/*
+> > + * Callback from provisioning plugin.
+> > + * settings: list of struct ofono_gprs_provision_data
+> > + *
+> > + * It is responsibility of callback function to free settings-list
+> > + * settings-list elements must be freed with ofono_gprs_provision_data=
+_free()
+> > + */
+> > +typedef void (*ofono_gprs_provision_cb_t)(GSList *settings, void *user=
+data);
 > =
 
-> diff --git a/src/common.c b/src/common.c
-> index d4e567b..c58ed5c 100644
-> --- a/src/common.c
-> +++ b/src/common.c
-> @@ -714,6 +714,30 @@ const char *registration_tech_to_string(int tech)
->  	}
->  }
->  =
+> so our general rule is no GLib types in oFono public APIs.
 
-> +const char *packet_bearer_to_string(int bearer)
-> +{
-> +	switch (bearer) {
-> +	case PACKET_BEARER_NONE:
-> +		return "none";
-> +	case PACKET_BEARER_GPRS:
-> +		return "gprs";
-> +	case PACKET_BEARER_EGPRS:
-> +		return "egprs";
-> +	case PACKET_BEARER_UMTS:
-> +		return "umts";
-> +	case PACKET_BEARER_HSUPA:
-> +		return "hsupa";
-> +	case PACKET_BEARER_HSDPA:
-> +		return "hsdpa";
-> +	case PACKET_BEARER_HSUPA_HSDPA:
-> +		return "hspa";
-> +	case PACKET_BEARER_EPS:
-> +		return "eps";
-> +	default:
-> +		return "";
-> +	}
-> +}
+OK. Do you have any preferences for the best type here? Linked list of
+'struct ofono_gprs_provision_data's, array of structs + count, array of
+pointers (+count)?
 
-these don't match the documentation. Use "edge" and "lte" for them.
-
-And please don't use a default switch label. Just return "" at the end
-of the function.
-
-Regards
-
-Marcel
+--Jukka
 
 
 
---===============6177485821968929260==--
+--===============0849716190855433834==--
 
