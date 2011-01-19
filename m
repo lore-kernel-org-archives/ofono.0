@@ -1,45 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============2380614987310127814=="
+Content-Type: multipart/mixed; boundary="===============2822750496512286537=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 2/2] Allow distcheck to work without bluetooth
-Date: Wed, 19 Jan 2011 15:29:34 +0200
-Message-ID: <201101191529.34193.remi.denis-courmont@nokia.com>
-In-Reply-To: <1295443258.3873.243.camel@aeonflux>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH] huawei: do not set timer more than once
+Date: Wed, 19 Jan 2011 11:31:55 -0200
+Message-ID: <AANLkTimf_E5JN2g9g=1-EZkQQgjLQRc6kcE-CWjmQhaT@mail.gmail.com>
+In-Reply-To: <1295443323.3873.244.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2380614987310127814==
+--===============2822750496512286537==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Wednesday 19 January 2011 15:20:58 ext Marcel Holtmann, you wrote:
-> > diff --git a/Makefile.am b/Makefile.am
-> > index c1c34ca..e93076a 100644
-> > --- a/Makefile.am
-> > +++ b/Makefile.am
-> > @@ -550,6 +550,9 @@ gatchat_test_qcdm_LDADD =3D @GLIB_LIBS@
-> > =
+On Wed, Jan 19, 2011 at 11:22 AM, Marcel Holtmann <marcel@holtmann.org> w=
+rote:
+> Hi Lucas,
+>
+>> If a "^SYSINFO" arrives after the timer for query_sim_locked() has been
+>> set up, it'd would set a new timer, signaling a sim state change more
+>> than once.
+>> ---
+>> =C2=A0plugins/huawei.c | =C2=A0 =C2=A03 ++-
+>> =C2=A01 files changed, 2 insertions(+), 1 deletions(-)
+>
+> patch looks fine to me and so I applied it.
 
-> >  DISTCHECK_CONFIGURE_FLAGS =3D --disable-datafiles
-> > =
+This fix the double AT+CPIN? command. There's still an issue with a
+double AT+CFUN=3D5 that I'm tracking down. I'll send a patch for this
+later.
 
-> > +if !BLUETOOTH
-> > +DISTCHECK_CONFIGURE_FLAGS +=3D --disable-bluetooth
-> > +endif
-> =
 
-> this patch makes no sense to me. I am not going to apply it. Using make
-> distcheck works nicely on my system where I build the releases.
+regards,
+Lucas De Marchi
 
-I am not trying to steal your release privilege. I am trying to be able to =
-
-test my changes to Makefiles or whatever.
-
--- =
-
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============2380614987310127814==--
+--===============2822750496512286537==--
 
