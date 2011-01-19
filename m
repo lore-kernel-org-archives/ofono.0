@@ -1,197 +1,264 @@
-Content-Type: multipart/mixed; boundary="===============5526836329454339128=="
+Content-Type: multipart/mixed; boundary="===============2946325473212085477=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH v4 1/1] atmodem: add ifx support for pin retry count
-Date: Wed, 19 Jan 2011 10:34:53 -0800
-Message-ID: <1295462093-9537-2-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1295462093-9537-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Robertino Benis <robertino.benis@intel.com>
+Subject: [PATCH v4] ifx: Adding modem selftest for Infineon modem
+Date: Wed, 19 Jan 2011 10:38:57 -0800
+Message-ID: <1295462337-12110-1-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5526836329454339128==
+--===============2946325473212085477==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/sim.c |   96 +++++++++++++++++++++++++++++++++++----------=
-----
- 1 files changed, 69 insertions(+), 27 deletions(-)
+Hi all,
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index 8d89d53..7617d99 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -56,6 +56,7 @@ static const char *crsm_prefix[] =3D { "+CRSM:", NULL };
- static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
- static const char *clck_prefix[] =3D { "+CLCK:", NULL };
- static const char *huawei_cpin_prefix[] =3D { "^CPIN:", NULL };
-+static const char *xpincnt_prefix[] =3D { "+XPINCNT:", NULL };
- static const char *none_prefix[] =3D { NULL };
+This patch summarize changes that triggers Infineon
+modem selftest during ofono boot. Patch addresses
+issues raised by Marcel from the privious submissions.
+
+Thank you,
+-- r.
+
+---
+ plugins/ifx.c |  130 ++++++++++++++++++++++++++++++++++++++++++++++++-----=
+---
+ 1 files changed, 111 insertions(+), 19 deletions(-)
+
+diff --git a/plugins/ifx.c b/plugins/ifx.c
+index 0d31167..8726da1 100644
+--- a/plugins/ifx.c
++++ b/plugins/ifx.c
+@@ -72,6 +72,8 @@
+ #define GPRS3_DLC   4
+ #define AUX_DLC     5
  =
 
- static void at_crsm_info_cb(gboolean ok, GAtResult *result, gpointer user_=
-data)
-@@ -463,6 +464,22 @@ static struct {
- 	{ OFONO_SIM_PASSWORD_PHCORP_PUK,	"PH-CORP PUK"	},
++#define IFX_SETUP_TIMEOUT	10
++
+ static char *dlc_prefixes[NUM_DLC] =3D { "Voice: ", "Net: ", "GPRS1: ",
+ 					"GPRS2: ", "GPRS3: ", "Aux: " };
+ =
+
+@@ -89,7 +91,7 @@ struct ifx_data {
+ 	guint dlc_poll_count;
+ 	guint dlc_poll_source;
+ 	guint dlc_init_source;
+-	guint mux_init_timeout;
++	guint cmd_setup_timeout;
+ 	guint frame_size;
+ 	int mux_ldisc;
+ 	int saved_ldisc;
+@@ -100,6 +102,9 @@ struct ifx_data {
+ 	int audio_loopback;
+ 	struct ofono_sim *sim;
+ 	gboolean have_sim;
++	gboolean rtc_gti_selftest_timeout;
++	gboolean dev_ver_selftest_timeout;
++	gboolean mux_setup_timeout;
  };
  =
 
-+#define BUILD_PIN_RETRIES_ARRAY(passwd_types, passwd_types_cnt, retry)	\
-+	for (i =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++)		\
-+		retry[i] =3D -1;						\
-+									\
-+	for (i =3D 0; i < passwd_types_cnt; i++) {			\
-+		int val;						\
-+									\
-+		if (!g_at_result_iter_next_number(&iter, &val))		\
-+			goto error;					\
-+									\
-+		retry[passwd_types[i]] =3D val;				\
-+									\
-+		DBG("retry counter id=3D%d, val=3D%d", passwd_types[i],	\
-+					retry[passwd_types[i]]);	\
-+	}								\
-+
- static void huawei_cpin_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
+ static void ifx_debug(const char *str, void *user_data)
+@@ -434,10 +439,17 @@ error:
+ static void setup_internal_mux(struct ofono_modem *modem)
  {
- 	struct cb_data *cbd =3D user_data;
-@@ -499,21 +516,48 @@ static void huawei_cpin_cb(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	if (!g_at_result_iter_skip_next(&iter))
- 		goto error;
- =
-
--	for (i =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++)
--		retries[i] =3D -1;
-+	BUILD_PIN_RETRIES_ARRAY(password_types, ARRAY_SIZE(password_types),
-+				retries);
- =
-
--	for (i =3D 0; i < ARRAY_SIZE(password_types); i++) {
--		int val;
-+	cb(&error, retries, cbd->data);
- =
-
--		if (!g_at_result_iter_next_number(&iter, &val))
--			goto error;
-+	return;
- =
-
--		retries[password_types[i]] =3D val;
-+error:
-+	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
-+}
- =
-
--		DBG("retry counter id=3D%d, val=3D%d", password_types[i],
--						retries[password_types[i]]);
-+static void xpincnt_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct cb_data *cbd =3D user_data;
-+	ofono_sim_pin_retries_cb_t cb =3D cbd->cb;
-+	const char *final =3D g_at_result_final_response(result);
-+	GAtResultIter iter;
-+	struct ofono_error error;
-+	int retries[OFONO_SIM_PASSWORD_INVALID];
-+	size_t i;
-+	static enum ofono_sim_password_type password_types[] =3D {
-+		OFONO_SIM_PASSWORD_SIM_PIN,
-+		OFONO_SIM_PASSWORD_SIM_PIN2,
-+		OFONO_SIM_PASSWORD_SIM_PUK,
-+		OFONO_SIM_PASSWORD_SIM_PUK2,
-+	};
-+
-+	decode_at_error(&error, final);
-+
-+	if (!ok) {
-+		cb(&error, NULL, cbd->data);
-+		return;
- 	}
- =
-
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+XPINCNT:"))
-+		goto error;
-+
-+	BUILD_PIN_RETRIES_ARRAY(password_types, ARRAY_SIZE(password_types),
-+				retries);
-+
- 	cb(&error, retries, cbd->data);
- =
-
- 	return;
-@@ -523,39 +567,37 @@ error:
- }
- =
-
- static void at_pin_retries_query(struct ofono_sim *sim,
--				ofono_sim_pin_retries_cb_t cb, void *data)
-+					ofono_sim_pin_retries_cb_t cb,
-+					void *data)
- {
- 	struct sim_data *sd =3D ofono_sim_get_data(sim);
--	struct cb_data *cbd;
--	int retries[OFONO_SIM_PASSWORD_INVALID];
--	int i;
-+	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	struct ifx_data *data =3D ofono_modem_get_data(modem);
++	GIOFlags flags;
+ 	int i;
  =
 
  	DBG("");
  =
 
--	switch (sd->vendor) {
--	case OFONO_VENDOR_HUAWEI:
--		cbd =3D cb_data_new(cb, data);
-+	if (cbd =3D=3D NULL)
-+		goto error;
++	flags =3D g_io_channel_get_flags(data->device) | G_IO_FLAG_NONBLOCK;
++	g_io_channel_set_flags(data->device, flags, NULL);
++
++	g_io_channel_set_encoding(data->device, NULL, NULL);
++	g_io_channel_set_buffered(data->device, FALSE);
++
+ 	data->mux =3D g_at_mux_new_gsm0710_basic(data->device, data->frame_size);
+ 	if (data->mux =3D=3D NULL)
+ 		goto error;
+@@ -474,14 +486,17 @@ static void mux_setup_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+ 	int fd;
  =
 
--		if (cbd =3D=3D NULL) {
--			CALLBACK_WITH_FAILURE(cb, NULL, data);
-+	switch (sd->vendor) {
-+	case OFONO_VENDOR_IFX:
-+		if (g_at_chat_send(sd->chat, "AT+XPINCNT", xpincnt_prefix,
-+					xpincnt_cb, cbd, g_free) > 0)
- 			return;
--		}
+ 	DBG("");
++	data->mux_setup_timeout =3D FALSE;
  =
 
-+		break;
-+	case OFONO_VENDOR_HUAWEI:
- 		if (g_at_chat_send(sd->chat, "AT^CPIN?", huawei_cpin_prefix,
- 					huawei_cpin_cb, cbd, g_free) > 0)
- 			return;
+-	if (data->mux_init_timeout > 0) {
+-		g_source_remove(data->mux_init_timeout);
+-		data->mux_init_timeout =3D 0;
++	if (data->cmd_setup_timeout > 0) {
++		g_source_remove(data->cmd_setup_timeout);
++		data->cmd_setup_timeout =3D 0;
+ 	}
  =
 
--		g_free(cbd);
--
--		CALLBACK_WITH_FAILURE(cb, NULL, data);
-+	default:
- 		break;
+-	g_at_chat_unref(data->dlcs[AUX_DLC]);
+-	data->dlcs[AUX_DLC] =3D NULL;
++	if (data->dlcs[AUX_DLC]) {
++		g_at_chat_unref(data->dlcs[AUX_DLC]);
++		data->dlcs[AUX_DLC] =3D NULL;
 +	}
  =
 
--	default:
--		for(i =3D 0; i < OFONO_SIM_PASSWORD_INVALID; i++)
--			retries[i] =3D -1;
-+error:
-+	g_free(cbd);
- =
-
--		CALLBACK_WITH_SUCCESS(cb, retries, data);
--	}
-+	CALLBACK_WITH_FAILURE(cb, NULL, data);
+ 	if (!ok)
+ 		goto error;
+@@ -519,26 +534,91 @@ error:
+ 	ofono_modem_set_powered(modem, FALSE);
  }
  =
 
- static void at_cpin_cb(gboolean ok, GAtResult *result, gpointer user_data)
+-static gboolean mux_timeout_cb(gpointer user_data)
++static gboolean cmd_setup_timeout_cb(gpointer user_data)
+ {
+ 	struct ofono_modem *modem =3D user_data;
+ 	struct ifx_data *data =3D ofono_modem_get_data(modem);
+ =
+
+-	ofono_error("Timeout with multiplexer setup");
++	if (data->rtc_gti_selftest_timeout)
++		ofono_error("ERROR:IFX Selftest"
++			"at(a)rtc:rtc_gti_test_verify_32khz()-TIMEOUT");
+ =
+
+-	data->mux_init_timeout =3D 0;
++	if (data->dev_ver_selftest_timeout)
++		ofono_error("ERROR:IFX Selftest"
++			"at(a)vers:device_version_id()-TIMEOUT");
+ =
+
+-	g_at_chat_unref(data->dlcs[AUX_DLC]);
+-	data->dlcs[AUX_DLC] =3D NULL;
++	if (data->mux_setup_timeout)
++		ofono_error("ERROR:IFX Mux setup-TIMEOUT");
+ =
+
+-	g_io_channel_unref(data->device);
+-	data->device =3D NULL;
++	data->cmd_setup_timeout =3D 0;
++
++	if (data->dlcs[AUX_DLC]) {
++		g_at_chat_unref(data->dlcs[AUX_DLC]);
++		data->dlcs[AUX_DLC] =3D NULL;
++	}
++
++	if (data->device) {
++		g_io_channel_unref(data->device);
++		data->device =3D NULL;
++	}
+ =
+
+ 	ofono_modem_set_powered(modem, FALSE);
+ =
+
+ 	return FALSE;
+ }
+ =
+
++static void dev_ver_selftest_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct ifx_data *data =3D ofono_modem_get_data(modem);
++
++	data->dev_ver_selftest_timeout =3D FALSE;
++
++	if (!ok) {
++		ofono_error("ERROR:IFX Selftest at(a)vers:device_version_id()"
++			"-FAILED");
++
++		if (data->dlcs[AUX_DLC]) {
++			g_at_chat_unref(data->dlcs[AUX_DLC]);
++			data->dlcs[AUX_DLC] =3D NULL;
++		}
++
++		if (data->device) {
++			g_io_channel_unref(data->device);
++			data->device =3D NULL;
++		}
++
++		ofono_modem_set_powered(modem, FALSE);
++	}
++}
++
++static void rtc_gti_selftest_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct ifx_data *data =3D ofono_modem_get_data(modem);
++
++	data->rtc_gti_selftest_timeout =3D FALSE;
++
++	if (!ok) {
++		ofono_error("ERROR:IFX Selftest"
++			"at(a)rtc:rtc_gti_test_verify_32khz()-FAILED");
++
++		if (data->dlcs[AUX_DLC]) {
++			g_at_chat_unref(data->dlcs[AUX_DLC]);
++			data->dlcs[AUX_DLC] =3D NULL;
++		}
++
++		if (data->device) {
++			g_io_channel_unref(data->device);
++			data->device =3D NULL;
++		}
++
++		ofono_modem_set_powered(modem, FALSE);
++	}
++}
++
+ static int ifx_enable(struct ofono_modem *modem)
+ {
+ 	struct ifx_data *data =3D ofono_modem_get_data(modem);
+@@ -592,15 +672,27 @@ static int ifx_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(chat, "ATE0 +CMEE=3D1", NULL,
+ 					NULL, NULL, NULL);
+ =
+
+-	data->frame_size =3D 1509;
++	/* Execute Modem Self tests */
++	data->dlcs[AUX_DLC] =3D chat;
+ =
+
+-	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
+-					mux_setup_cb, modem, NULL);
++	g_at_chat_send(data->dlcs[AUX_DLC],
++		"at(a)rtc:rtc_gti_test_verify_32khz()",
++		NULL, rtc_gti_selftest_cb, modem, NULL);
++	data->rtc_gti_selftest_timeout =3D TRUE;
+ =
+
+-	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
+-								modem);
++	g_at_chat_send(data->dlcs[AUX_DLC], "at(a)vers:device_version_id()",
++		NULL, dev_ver_selftest_cb, modem, NULL);
++	data->dev_ver_selftest_timeout =3D TRUE;
+ =
+
+-	data->dlcs[AUX_DLC] =3D chat;
++	/* Enable  MUX Channels */
++	data->frame_size =3D 1509;
++	g_at_chat_send(data->dlcs[AUX_DLC],
++			"AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
++			mux_setup_cb, modem, NULL);
++	data->mux_setup_timeout =3D TRUE;
++
++	data->cmd_setup_timeout =3D g_timeout_add_seconds(
++		IFX_SETUP_TIMEOUT, cmd_setup_timeout_cb, modem);
+ =
+
+ 	return -EINPROGRESS;
+ }
 -- =
 
 1.7.0.4
 
 
---===============5526836329454339128==--
+--===============2946325473212085477==--
 
