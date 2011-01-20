@@ -1,59 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============4899112680242142596=="
+Content-Type: multipart/mixed; boundary="===============4811854312487540179=="
 MIME-Version: 1.0
 From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 5/6] GPRS: document bearer property
-Date: Thu, 20 Jan 2011 10:26:14 +0200
-Message-ID: <201101201026.14790.remi.denis-courmont@nokia.com>
-In-Reply-To: <AANLkTintNFsNHsBRxc=W=vAVW0knZ-4wSj_YKS0hAjwd@mail.gmail.com>
+Subject: [PATCH 0/6] Packet bearers (version 6)
+Date: Thu, 20 Jan 2011 10:37:31 +0200
+Message-ID: <201101201037.31234.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4899112680242142596==
+--===============4811854312487540179==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thursday 20 January 2011 10:06:50 ext Aki Niemi, you wrote:
-> Hi R=C3=A9mi,
-> =
+This series adds support for current packet switched bearers in the connect=
+ion =
 
-> 2011/1/19 R=C3=A9mi Denis-Courmont <remi.denis-courmont@nokia.com>:
-> > ---
-> >  doc/connman-api.txt |   10 ++++++++++
-> >  1 files changed, 10 insertions(+), 0 deletions(-)
-> > =
+manager.
 
-> > diff --git a/doc/connman-api.txt b/doc/connman-api.txt
-> > index 22e02e5..13f622c 100644
-> > --- a/doc/connman-api.txt
-> > +++ b/doc/connman-api.txt
-> > @@ -77,6 +77,16 @@ Properties   boolean Attached [readonly]
-> >                        be available, e.g. receiving SMS over packet rad=
-io
-> >                        or network initiated PDP activation.
-> > =
-
-> > +               string Bearer [readonly, optional]
-> > +
-> > +                       Contains the data bearer technology as reported
-> > by the +                       GPRS service registration (if known).
-> > +
-> > +                       Possible values are:
-> > +                       "gsm", "edge", "umts", "hsdpa", "hsupa",
-> > +                       "hspa" (HSDPA and HSUPA at the same time) and
-> > +                       "lte"
-> > +
-> =
-
-> Should this also report 'none'? At least CPSB can report that a
-> context is idle, i.e., no bearer associated with it.
-
-Right.
+ doc/connman-api.txt    |   10 ++++++++++
+ drivers/atmodem/gprs.c |   33 +++++++++++++++++++++++++++++++++
+ include/gprs.h         |    1 +
+ src/common.c           |   27 +++++++++++++++++++++++++--
+ src/common.h           |   13 +++++++++++++
+ src/gprs.c             |   27 +++++++++++++++++++++++++++
+ 6 files changed, 109 insertions(+), 2 deletions(-)
 
 -- =
 
 R=C3=A9mi Denis-Courmont
 Nokia Devices R&D, Maemo Software, Helsinki
 
---===============4899112680242142596==--
+--===============4811854312487540179==--
 
