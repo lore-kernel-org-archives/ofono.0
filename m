@@ -1,39 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============3851025635810653916=="
+Content-Type: multipart/mixed; boundary="===============0808722537770188173=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [RFC 1/1] doc: Add modem technology type property
-Date: Thu, 20 Jan 2011 14:17:42 -0800
-Message-ID: <4D38B486.5020802@nokia.com>
-In-Reply-To: <1295561149.3873.302.camel@aeonflux>
+Date: Thu, 20 Jan 2011 16:22:57 -0600
+Message-ID: <4D38B5C1.9060509@gmail.com>
+In-Reply-To: <4D38B486.5020802@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3851025635810653916==
+--===============0808722537770188173==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel
+Hi Dara,
 
-On 01/20/2011 02:05 PM, ext Marcel Holtmann wrote:
+On 01/20/2011 04:17 PM, Dara Spieker-Doyle wrote:
+> Hi Marcel
+> =
 
->>>
->> Thanks - sounds good to me. I'll prepare a patch to reflect this for
->> gsm/cdma types and assume the hfp type extension is future work.
->
-> not really. Actually HFP support is part of oFono already.
->
+> On 01/20/2011 02:05 PM, ext Marcel Holtmann wrote:
+> =
 
-Sorry - I meant "hfp" as an extension to the Type property in =
+>>>>
+>>> Thanks - sounds good to me. I'll prepare a patch to reflect this for
+>>> gsm/cdma types and assume the hfp type extension is future work.
+>>
+>> not really. Actually HFP support is part of oFono already.
+>>
+> =
 
-modem-api.txt rather than an extension to oFono itself :). Did you want =
+> Sorry - I meant "hfp" as an extension to the Type property in
+> modem-api.txt rather than an extension to oFono itself :). Did you want
+> to add it separately or as part of this?
+> =
 
-to add it separately or as part of this?
+> FYI: The patch is going to just cover the interface documentation for now.
+> =
 
-FYI: The patch is going to just cover the interface documentation for now.
 
-Cheers
-Dara
+Just mention "hfp" as a possible value.
 
---===============3851025635810653916==--
+Regards,
+-Denis
+
+--===============0808722537770188173==--
 
