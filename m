@@ -1,53 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============4089251638658091969=="
+Content-Type: multipart/mixed; boundary="===============8985181057078608891=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC 1/1] doc: Add modem technology type property
-Date: Thu, 20 Jan 2011 22:34:34 +0100
-Message-ID: <1295559274.3873.299.camel@aeonflux>
-In-Reply-To: <1295557724-10185-2-git-send-email-dara.spieker-doyle@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/6] gprs-provision: add driver API header
+Date: Thu, 20 Jan 2011 15:51:34 -0600
+Message-ID: <4D38AE66.8030805@gmail.com>
+In-Reply-To: <1295529099-21082-2-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4089251638658091969==
+--===============8985181057078608891==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Dara,
+Hi Jukka,
 
->  doc/modem-api.txt |   11 +++++++++++
->  1 files changed, 11 insertions(+), 0 deletions(-)
-> =
-
-> diff --git a/doc/modem-api.txt b/doc/modem-api.txt
-> index 45043b0..fe03833 100644
-> --- a/doc/modem-api.txt
-> +++ b/doc/modem-api.txt
-> @@ -82,6 +82,17 @@ Properties	boolean Powered [readwrite]
->  =
-
->  			This is usually obtained by using the +CGSN AT command.
->  =
-
-> +		string TechnologyType [readonly, optional, experimental]
+> +/*
+> + * Callback from provisioning plugin.
+> + */
+> +typedef void (*ofono_gprs_provision_cb_t)(
+> +			const struct ofono_gprs_provision_data settings[],
+> +			int count, void *user_data);
 > +
-> +			String representing the technology type of the current
-> +			modem device.
-> +
-> +			The possible values are:
-> +				"gsm" 	The 3GPP family of technologies
-> +					including gsm, edge, umts, hspa, lte.
-> +				"cdma"  The 3GPP2 family of technologies
-> +					including cdma 1x, evdo.
+> +struct ofono_gprs_provision_driver {
+> +	const char *name;
+> +	int priority;
+> +	int (*probe)(struct ofono_gprs_provision_context *context);
+> +	void (*remove)(struct ofono_gprs_provision_context *context);
+> +	void (*get_settings)(struct ofono_gprs_provision_context *context,
+> +				ofono_gprs_provision_cb_t cb,
+> +				void *user_data);
+> +};
 
-I would just call this property "Type" and then we can also have a value
-for "hfp" in case it is a Bluetooth HFP modem.
+So I don't really see the point in an asynchronous provisioning driver.
+ If you want to do this over D-Bus or something then you might as well
+provision via the ConnectionManager interface.  The other problem with
+being async is that is nearly impossible to support multiple
+provisioning plugins properly.  I'd rather not deal with the race
+conditions.
 
-Regards
+If we can't make the lookup fast enough to be done synchronously, then I
+think we should give up.
 
-Marcel
+I also don't see the point of instantiating these per modem.  The API
+already has all the information it needs in the get_settings call.  So
+having the plugin allocate its data in the plugin init function and free
+it there seems enough to me.
 
+Regards,
+-Denis
 
-
---===============4089251638658091969==--
+--===============8985181057078608891==--
 
