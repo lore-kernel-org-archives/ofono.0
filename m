@@ -1,52 +1,58 @@
-Content-Type: multipart/mixed; boundary="===============3154889636912144402=="
+Content-Type: multipart/mixed; boundary="===============6389994700794377555=="
 MIME-Version: 1.0
-From: martin.xu@intel.com
-Subject: [PATCH 3/3] Huawei: set Huawei EM770W modem device to 00
-Date: Thu, 20 Jan 2011 13:45:54 +0800
-Message-ID: <1295502354-19270-3-git-send-email-martin.xu@intel.com>
-In-Reply-To: <1295502354-19270-2-git-send-email-martin.xu@intel.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 5/6] GPRS: document bearer property
+Date: Thu, 20 Jan 2011 10:06:50 +0200
+Message-ID: <AANLkTintNFsNHsBRxc=W=vAVW0knZ-4wSj_YKS0hAjwd@mail.gmail.com>
+In-Reply-To: <1295428765-8683-5-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3154889636912144402==
+--===============6389994700794377555==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Martin Xu <martin.xu@intel.com>
+Hi R=C3=A9mi,
 
-Device 00 is ppp port. Setting it as 01, my Huawei EM770W modem PPP
-connection can't work
----
- plugins/ofono.rules |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+2011/1/19 R=C3=A9mi Denis-Courmont <remi.denis-courmont@nokia.com>:
+> ---
+> =C2=A0doc/connman-api.txt | =C2=A0 10 ++++++++++
+> =C2=A01 files changed, 10 insertions(+), 0 deletions(-)
+>
+> diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+> index 22e02e5..13f622c 100644
+> --- a/doc/connman-api.txt
+> +++ b/doc/connman-api.txt
+> @@ -77,6 +77,16 @@ Properties =C2=A0 boolean Attached [readonly]
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0be available, e.g. receiving SMS over packet radio
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0or network initiated PDP activation.
+>
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 string Bearer [readonl=
+y, optional]
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 Contains the data bearer technology as reported by the
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 GPRS service registration (if known).
+> +
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 Possible values are:
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 "gsm", "edge", "umts", "hsdpa", "hsupa",
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 "hspa" (HSDPA and HSUPA at the same time) and
+> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 "lte"
+> +
 
-diff --git a/plugins/ofono.rules b/plugins/ofono.rules
-index 111f071..7dec243 100644
---- a/plugins/ofono.rules
-+++ b/plugins/ofono.rules
-@@ -37,7 +37,7 @@ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1401"=
-, ENV{OFONO_IFACE_NUM}=3D=3D"02", E
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1402", ENV{OFONO_IFACE=
-_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1402", ENV{OFONO_IFACE=
-_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
- =
+Should this also report 'none'? At least CPSB can report that a
+context is idle, i.e., no bearer associated with it.
 
--ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_IFACE=
-_NUM}=3D=3D"01", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
-+ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_IFACE=
-_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_IFACE=
-_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
- ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_HUAWE=
-I_VOICE}=3D"1"
- =
+Cheers,
+Aki
 
--- =
-
-1.6.1.3
-
-
---===============3154889636912144402==--
+--===============6389994700794377555==--
 
