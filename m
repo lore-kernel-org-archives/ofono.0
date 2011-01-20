@@ -1,67 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8150399144114350491=="
+Content-Type: multipart/mixed; boundary="===============8430348122031945537=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 2/2] Allow distcheck to work without bluetooth
-Date: Thu, 20 Jan 2011 11:52:27 +0200
-Message-ID: <201101201152.27117.remi.denis-courmont@nokia.com>
-In-Reply-To: <1295515892.3873.257.camel@aeonflux>
+From: Kalle Valo <kalle.valo@canonical.com>
+Subject: Re: DUN client questions
+Date: Thu, 20 Jan 2011 12:08:46 +0200
+Message-ID: <87tyh3sx8x.fsf@potku.valot.fi>
+In-Reply-To: <4D36B625.6000009@sysgo.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8150399144114350491==
+--===============8430348122031945537==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Thursday 20 January 2011 11:31:32 ext Marcel Holtmann, you wrote:
-> Hi Remi,
-> =
+Hi Rolf,
 
-> > > > > > diff --git a/Makefile.am b/Makefile.am
-> > > > > > index c1c34ca..e93076a 100644
-> > > > > > --- a/Makefile.am
-> > > > > > +++ b/Makefile.am
-> > > > > > @@ -550,6 +550,9 @@ gatchat_test_qcdm_LDADD =3D @GLIB_LIBS@
-> > > > > > =
+Rolf Offermanns <roffermanns@sysgo.com> writes:
 
-> > > > > >  DISTCHECK_CONFIGURE_FLAGS =3D --disable-datafiles
-> > > > > > =
+> Here is what I did to get the DUN connection up:
+>
+> 1. Connect the mobile using the bluetooth applet in MeeGo
+>    -> The modem was recognized as DUN capable and shows up in the
+>       "list-modems" output from ofonos test script as "/dun/xxx_yyy"
+> 2. Then using the ofono test scripts: enable_modem,
+> create-internet-context, activate-context
 
-> > > > > > +if !BLUETOOTH
-> > > > > > +DISTCHECK_CONFIGURE_FLAGS +=3D --disable-bluetooth
-> > > > > > +endif
-> > > > > =
+connman should enable modem and all the magic needed to set it up, you
+should not need to run ofono test scripts.
 
-> > > > > this patch makes no sense to me. I am not going to apply it. Using
-> > > > > make distcheck works nicely on my system where I build the
-> > > > > releases.
-> > > > =
+> Questions:
+> - How to proceed from here. What is missing to have the context show up
+> in the meego-network-panel?
 
-> > > > I am not trying to steal your release privilege. I am trying to be
-> > > > able to test my changes to Makefiles or whatever.
-> > > =
-
-> > > you could just install libbluetooth and this would be fine. I like to
-> > > run make distcheck with everything enabled all the time. That is the
-> > > only way to ensure that it does build properly.
-> > =
-
-> > Fair enough, but does disabling data files not defeat the purpose?
-> =
-
-> these are just configuration files and not code.
-
-Yeah? distcheck is about checking that all *files* are declared properly in=
- the =
-
-Makefiles, and installation/uninstallation is clean.
-
-If you merely want to check compilation, check is more than enough.
+It seems that somehow connman doesn't detect the modem. Once connman
+detects it, I would assume UI would show it as well.
 
 -- =
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
+Kalle Valo
 
---===============8150399144114350491==--
+--===============8430348122031945537==--
 
