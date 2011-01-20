@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============2223267744227511756=="
+Content-Type: multipart/mixed; boundary="===============6148684783767675098=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/2] simutil: SIM applications directory decoding utils.
-Date: Thu, 20 Jan 2011 11:24:19 -0600
-Message-ID: <4D386FC3.1070703@gmail.com>
-In-Reply-To: <1295424478-12049-2-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 2/2] unit: Add a test for applications directory decoding
+ utility.
+Date: Thu, 20 Jan 2011 11:24:34 -0600
+Message-ID: <4D386FD2.4030904@gmail.com>
+In-Reply-To: <1295424478-12049-3-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2223267744227511756==
+--===============6148684783767675098==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -17,27 +18,15 @@ Hi Andrew,
 
 On 01/19/2011 02:07 AM, Andrzej Zaborowski wrote:
 > ---
->  src/simutil.c |   57 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  src/simutil.h |    8 ++++++++
->  2 files changed, 65 insertions(+), 0 deletions(-)
+>  unit/test-simutil.c |   32 ++++++++++++++++++++++++++++++++
+>  1 files changed, 32 insertions(+), 0 deletions(-)
 > =
 
 
-Patch has been applied with one minor amend on my part:
-
-> +struct ofono_sim_app_record {
-> +	unsigned char aid[16];
-> +	int aid_len;
-> +	char *label;
-> +};
-> +
-
-The struct name was changed to sim_app_record since it is not part of
-the ofono public / private API.
+Patch has been applied, thanks.
 
 Regards,
 -Denis
 
---===============2223267744227511756==--
+--===============6148684783767675098==--
 
