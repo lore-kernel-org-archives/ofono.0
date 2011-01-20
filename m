@@ -1,73 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============7971616068322044991=="
+Content-Type: multipart/mixed; boundary="===============2765931041184688787=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Fix IFX large file Downlink data transer
-Date: Thu, 20 Jan 2011 11:43:00 +0100
-Message-ID: <1295520180.3873.272.camel@aeonflux>
-In-Reply-To: <2A84145621092446B6659B8A0F28E26F47006AA770@irsmsx501.ger.corp.intel.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [RFC] TODO: Move signal strength property to separate Agent API.
+Date: Thu, 20 Jan 2011 12:44:17 +0200
+Message-ID: <AANLkTim8A3zFQEu+3O0p+Q5V_YBy38hPNXKApjR1cQUp@mail.gmail.com>
+In-Reply-To: <1295519732.3873.269.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7971616068322044991==
+--===============2765931041184688787==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Carlos,
+Hi Marcel,
 
-please prefix the patch with gatchat: <short description>
+2011/1/20 Marcel Holtmann <marcel@holtmann.org>:
+> I don't think is needed. You do not get woken up until you tell D-Bus to
+> wake you up on that PropertyChanged signal. You can even match the first
+> parameter of that signal if you desire.
 
-And while you are fixing a IFX issue, that should be only mentioned in
-the body here. Along with a more detailed explanation what and why.
+I think this is still a worthy optimization, because this way not even
+oFono will wake up unnecessarily.
 
-This is especially important for things like buffer sizes etc., but in a
-few weeks nobody remembers why we did it.
+> What we might should ensure is that we delay the signal reporting from
+> the modem. In case it wants to play ping-pong between two values. We
+> have done that for ConnMan in the past since WiFi signals are also kinda
+> flaky and made the UI go nuts.
 
-> -              io->buf =3D ring_buffer_new(4096);
-> =
+Personally, I would just move to reporting the strength value in 0...5
+bars. Most UIs I've seen report bars in their UIs, and this way these
+clients will get woken up much more infrequently.
 
-> +             io->buf =3D ring_buffer_new(8192);
+In addition if percentage is really required, we could offer that as a
+separate signal, but to instruct to use with caution. Or put it in a
+plugin. :)
 
-Something scrambled your tabs vs spaces. Might have been our Exchange
-server again. Just point to linux.intel.com as SMTP if in doubt.
+Cheers,
+Aki
 
->                 if (!io->buf)
-> =
+> Regards
+>
+> Marcel
+>
+>
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
->                                goto error;
-> =
-
-> @@ -288,7 +288,7 @@ gboolean g_at_io_set_write_handler(GAtIO *io,
-> GAtIOWriteFunc write_handler,
-> =
-
->  =
-
-> =
-
->                 if (io->use_write_watch =3D=3D TRUE)
-> =
-
->                                io->write_watch =3D
-> g_io_add_watch_full(io->channel,
-> =
-
-> -
-> G_PRIORITY_DEFAULT,
-> =
-
-> +
-> G_PRIORITY_HIGH,
-
-Same here. This locks like the server mangled with your email or your
-editor did.
-
-Regards
-
-Marcel
-
-
-
-
---===============7971616068322044991==--
+--===============2765931041184688787==--
 
