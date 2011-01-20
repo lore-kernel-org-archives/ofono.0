@@ -1,52 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============6716582441007505652=="
+Content-Type: multipart/mixed; boundary="===============0449748723263244388=="
 MIME-Version: 1.0
-From: christian.lam@nokia.com
-Subject: [PATCH v2] TODO: add CDMA Connection Manager tasks
-Date: Thu, 20 Jan 2011 11:24:33 -0800
-Message-ID: <1295551473-11228-1-git-send-email-christian.lam@nokia.com>
+From: Faiyaz Baxamusa <faiyaz.baxamusa@nokia.com>
+Subject: [PATCHv3 0/2] Make message state feature independent of the stack
+Date: Thu, 20 Jan 2011 13:42:35 -0800
+Message-ID: <1295559757-22144-1-git-send-email-faiyaz.baxamusa@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6716582441007505652==
+--===============0449748723263244388==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Christian Lam <christian.lam@nokia.com>
+This set of patches enable the "org.ofono.Message" interface code to be
+independent of the protocol stack. This will enable both GSM and CDMA SMS s=
+tack
+to reuse the interface code.
 
----
- TODO |   15 +++++++++++++++
- 1 files changed, 15 insertions(+), 0 deletions(-)
+The changes have been tested with phonesim using send-sms script.
 
-diff --git a/TODO b/TODO
-index a36e9ed..41f1f7f 100644
---- a/TODO
-+++ b/TODO
-@@ -640,3 +640,18 @@ CDMA NETWORK ACQUISITION
- =
+Faiyaz Baxamusa (2):
+  doc: Add messagemanager-api and change message-api
+  sms: Introduce message code independent of protocol stack
 
-   Priority: Medium
-   Complexity: C2
-+
-+CDMA Connection Manager
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+- Support Packet Data Service over CDMA (1xRTT and 1xEV-DO) systems. This
-+  includes Mobile Originated connection and disconnection features.
-+
-+  Priority: Medium
-+  Complexity: C4
-+
-+- Support Network Initiated disconnection of Packet Data Service over CDMA
-+  (1xRTT and 1xEV-DO) systems.
-+
-+  Priority: Medium
-+  Complexity: C2
--- =
-
-1.7.0.4
+ Makefile.am                                        |    7 +-
+ ...message-api.txt =3D> cdma-messagemanager-api.txt} |    0
+ doc/message-api.txt                                |   89 -------
+ doc/messagemanager-api.txt                         |   88 +++++++
+ src/message.c                                      |  228 ++++++++++++++++=
+++
+ src/message.h                                      |   54 +++++
+ src/sms.c                                          |  247 +++-------------=
+----
+ 7 files changed, 402 insertions(+), 311 deletions(-)
+ rename doc/{cdma-message-api.txt =3D> cdma-messagemanager-api.txt} (100%)
+ create mode 100644 doc/messagemanager-api.txt
+ create mode 100644 src/message.c
+ create mode 100644 src/message.h
 
 
---===============6716582441007505652==--
+--===============0449748723263244388==--
 
