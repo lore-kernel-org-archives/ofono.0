@@ -1,82 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============0579365710264842175=="
+Content-Type: multipart/mixed; boundary="===============7429940136054091341=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 6/6] atmodem: packet switch bearer support
-Date: Thu, 20 Jan 2011 10:37:52 +0200
-Message-ID: <1295512672-4891-6-git-send-email-remi.denis-courmont@nokia.com>
-In-Reply-To: <201101201037.31234.remi.denis-courmont@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 2/2] Allow distcheck to work without bluetooth
+Date: Thu, 20 Jan 2011 10:31:32 +0100
+Message-ID: <1295515892.3873.257.camel@aeonflux>
+In-Reply-To: <201101201025.47411.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0579365710264842175==
+--===============7429940136054091341==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/atmodem/gprs.c |   33 +++++++++++++++++++++++++++++++++
- 1 files changed, 33 insertions(+), 0 deletions(-)
+Hi Remi,
 
-diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-index defb154..daa3933 100644
---- a/drivers/atmodem/gprs.c
-+++ b/drivers/atmodem/gprs.c
-@@ -200,6 +200,37 @@ static void xdatastat_notify(GAtResult *result, gpoint=
-er user_data)
- 	}
- }
- =
+> > > > > diff --git a/Makefile.am b/Makefile.am
+> > > > > index c1c34ca..e93076a 100644
+> > > > > --- a/Makefile.am
+> > > > > +++ b/Makefile.am
+> > > > > @@ -550,6 +550,9 @@ gatchat_test_qcdm_LDADD =3D @GLIB_LIBS@
+> > > > > =
 
-+static void cpsb_notify(GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	GAtResultIter iter;
-+	gint bearer;
-+
-+	g_at_result_iter_init(&iter, result);
-+
-+	if (!g_at_result_iter_next(&iter, "+CPSB:"))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, NULL))
-+		return;
-+
-+	if (!g_at_result_iter_next_number(&iter, &bearer))
-+		return;
-+
-+	ofono_gprs_bearer_notify(gprs, bearer);
-+}
-+
-+static void cpsb_set_cb(gboolean ok, GAtResult *result, gpointer user_data)
-+{
-+	struct ofono_gprs *gprs =3D user_data;
-+	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-+
-+	if (!ok)
-+		return;
-+
-+	g_at_chat_register(gd->chat, "+CPSB:", cpsb_notify, FALSE, gprs, NULL);
-+}
-+
- static void gprs_initialized(gboolean ok, GAtResult *result, gpointer user=
-_data)
- {
- 	struct ofono_gprs *gprs =3D user_data;
-@@ -208,6 +239,8 @@ static void gprs_initialized(gboolean ok, GAtResult *re=
-sult, gpointer user_data)
- 	g_at_chat_register(gd->chat, "+CGEV:", cgev_notify, FALSE, gprs, NULL);
- 	g_at_chat_register(gd->chat, "+CGREG:", cgreg_notify,
- 					FALSE, gprs, NULL);
-+	g_at_chat_send(gd->chat, "AT+CPSB=3D1", none_prefix,
-+		cpsb_set_cb, gprs, NULL);
- =
+> > > > >  DISTCHECK_CONFIGURE_FLAGS =3D --disable-datafiles
+> > > > > =
 
- 	switch (gd->vendor) {
- 	case OFONO_VENDOR_IFX:
--- =
+> > > > > +if !BLUETOOTH
+> > > > > +DISTCHECK_CONFIGURE_FLAGS +=3D --disable-bluetooth
+> > > > > +endif
+> > > > =
 
-1.7.1
+> > > > this patch makes no sense to me. I am not going to apply it. Using =
+make
+> > > > distcheck works nicely on my system where I build the releases.
+> > > =
+
+> > > I am not trying to steal your release privilege. I am trying to be ab=
+le
+> > > to test my changes to Makefiles or whatever.
+> > =
+
+> > you could just install libbluetooth and this would be fine. I like to
+> > run make distcheck with everything enabled all the time. That is the
+> > only way to ensure that it does build properly.
+> =
+
+> Fair enough, but does disabling data files not defeat the purpose?
+
+these are just configuration files and not code.
+
+Regards
+
+Marcel
 
 
---===============0579365710264842175==--
+
+--===============7429940136054091341==--
 
