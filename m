@@ -1,52 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============6536985889341280297=="
+Content-Type: multipart/mixed; boundary="===============8203320127986350597=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH]] gatchat: improve large file Downlink data transfer
-Date: Thu, 20 Jan 2011 13:03:21 +0100
-Message-ID: <1295525001.3873.291.camel@aeonflux>
-In-Reply-To: <2A84145621092446B6659B8A0F28E26F47006AA7B7@irsmsx501.ger.corp.intel.com>
+From: Tomasz Gregorek <tomasz.gregorek@gmail.com>
+Subject: [PATCH] gprs: mark context driver as not used when removing active
+ context
+Date: Thu, 20 Jan 2011 13:16:59 +0100
+Message-ID: <1295525819-14905-1-git-send-email-tomasz.gregorek@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6536985889341280297==
+--===============8203320127986350597==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Carlos,
+From: Tomasz Gregorek <tomasz.gregorek@stericsson.com>
 
-please don't use our Exchange servers. They do make me mad :(
+---
+ src/gprs.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-The email From: field should be first name first. Problem with Exchange
-is that it ends like this: Pargada, Carlos <carlos.pargada@intel.com>
+diff --git a/src/gprs.c b/src/gprs.c
+index 7ef81d5..0661f74 100644
+--- a/src/gprs.c
++++ b/src/gprs.c
+@@ -1679,6 +1679,8 @@ static void gprs_deactivate_for_remove(const struct o=
+fono_error *error,
+ =
 
-Have a proper .gitconfig and use linux.intel.com as SMTP server and
-really all your problem will go away. It is magic ;)
+ 	gprs_cid_release(gprs, ctx->context.cid);
+ 	ctx->context.cid =3D 0;
++	ctx->context_driver->inuse =3D FALSE;
++	ctx->context_driver =3D NULL;
+ =
 
-> Fix large file Downlink data transfer on IFX modem.
->   Increase buffer size of ring buffer to support close received Packets f=
-rom the Modem
->   Set highest priority for write data on tun device
+ 	if (gprs->settings) {
+ 		g_key_file_remove_group(gprs->settings, ctx->key, NULL);
+-- =
 
-Watch out of ]] on your subject line.
-
-Please keep the subject short and the commit message at max 72 chars per
-line.
-
-If you wanna know what happens, save this email, use "git am" and then
-view the result with "git log"
-
-> ---
->  gatchat/gatio.c |    4 ++--
->  1 files changed, 2 insertions(+), 2 deletions(-)
-
-I fixed it all up for you and the patch has been applied now.
-
-Regards
-
-Marcel
+1.7.1
 
 
-
---===============6536985889341280297==--
+--===============8203320127986350597==--
 
