@@ -1,68 +1,146 @@
-Content-Type: multipart/mixed; boundary="===============4774397970433399837=="
+Content-Type: multipart/mixed; boundary="===============3156456742575050077=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC] TODO: Move signal strength property to separate Agent API.
-Date: Thu, 20 Jan 2011 12:03:32 +0100
-Message-ID: <1295521412.3873.278.camel@aeonflux>
-In-Reply-To: <AANLkTim8A3zFQEu+3O0p+Q5V_YBy38hPNXKApjR1cQUp@mail.gmail.com>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH v4] bluetooth: Add reference count for bluetooth utils
+Date: Thu, 20 Jan 2011 12:10:12 +0100
+Message-ID: <1295521812-29426-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4774397970433399837==
+--===============3156456742575050077==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Add bluetooth_ref()/bluetooth_unref() to support reference count in
+bluetooth utils.
+---
+ plugins/bluetooth.c |   51 ++++++++++++++++++++++++++++++++---------------=
+----
+ 1 files changed, 32 insertions(+), 19 deletions(-)
 
-> > I don't think is needed. You do not get woken up until you tell D-Bus to
-> > wake you up on that PropertyChanged signal. You can even match the first
-> > parameter of that signal if you desire.
-> =
+diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+index 602c6da..93dd7a1 100644
+--- a/plugins/bluetooth.c
++++ b/plugins/bluetooth.c
+@@ -40,6 +40,7 @@
+ static DBusConnection *connection;
+ static GHashTable *uuid_hash =3D NULL;
+ static GHashTable *adapter_address_hash =3D NULL;
++static gint bluetooth_refcount;
+ =
 
-> I think this is still a worthy optimization, because this way not even
-> oFono will wake up unnecessarily.
+ void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
+ 				char *buf, int size)
+@@ -504,12 +505,10 @@ static guint adapter_added_watch;
+ static guint adapter_removed_watch;
+ static guint property_watch;
+ =
 
-if you followed the discussion between Kristen and myself on IRC about
-how stupid some modem are, then I worry seriously how good we can get
-here.
+-int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
+ofile)
++static void bluetooth_ref(void)
+ {
+-	int err;
+-
+-	if (uuid_hash)
+-		goto done;
++	if (bluetooth_refcount > 0)
++		goto increment;
+ =
 
-That said, I am open for suggestions here, but they need to be backed up
-by what certain modems can do for us in this area. And then we have to
-also look at the screwed up hardware.
+ 	connection =3D ofono_dbus_get_connection();
+ =
 
-> > What we might should ensure is that we delay the signal reporting from
-> > the modem. In case it wants to play ping-pong between two values. We
-> > have done that for ConnMan in the past since WiFi signals are also kinda
-> > flaky and made the UI go nuts.
-> =
+@@ -533,7 +532,6 @@ int bluetooth_register_uuid(const char *uuid, struct bl=
+uetooth_profile *profile)
+ =
 
-> Personally, I would just move to reporting the strength value in 0...5
-> bars. Most UIs I've seen report bars in their UIs, and this way these
-> clients will get woken up much more infrequently.
-> =
+ 	if (bluetooth_watch =3D=3D 0 || adapter_added_watch =3D=3D 0 ||
+ 			adapter_removed_watch =3D=3D 0 || property_watch =3D=3D 0) {
+-		err =3D -EIO;
+ 		goto remove;
+ 	}
+ =
 
-> In addition if percentage is really required, we could offer that as a
-> separate signal, but to instruct to use with caution. Or put it in a
-> plugin. :)
+@@ -543,28 +541,21 @@ int bluetooth_register_uuid(const char *uuid, struct =
+bluetooth_profile *profile)
+ 	adapter_address_hash =3D g_hash_table_new_full(g_str_hash, g_str_equal,
+ 						g_free, g_free);
+ =
 
-To be honest, I have no idea if percentage is the best thing. We just
-picked it initially to have something.
+-done:
+-	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
+-
+-	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
+-				manager_properties_cb, NULL, NULL, -1,
+-				DBUS_TYPE_INVALID);
++increment:
++	g_atomic_int_inc(&bluetooth_refcount);
+ =
 
-My take here is that you either have no signal, bad signal and a good
-signal. Everything else is just fake for the human brain that tries to
-associate anything with the bars it sees. Lets face it unless you deal
-with dB directly you have no proper relation on what this visual aid
-means in reality.
+-	return 0;
++	return;
+ =
 
-If we go back in the good old days, then we had 4 bars, then it became 7
-in some Nokia phones, now it is 5. What is common, what makes sense?
+ remove:
+ 	g_dbus_remove_watch(connection, bluetooth_watch);
+ 	g_dbus_remove_watch(connection, adapter_added_watch);
+ 	g_dbus_remove_watch(connection, adapter_removed_watch);
+ 	g_dbus_remove_watch(connection, property_watch);
+-	return err;
+ }
+ =
 
-Regards
+-void bluetooth_unregister_uuid(const char *uuid)
++static void bluetooth_unref(void)
+ {
+-	g_hash_table_remove(uuid_hash, uuid);
+-
+-	if (g_hash_table_size(uuid_hash))
++	if (g_atomic_int_dec_and_test(&bluetooth_refcount) =3D=3D FALSE)
+ 		return;
+ =
 
-Marcel
+ 	g_dbus_remove_watch(connection, bluetooth_watch);
+@@ -574,7 +565,29 @@ void bluetooth_unregister_uuid(const char *uuid)
+ =
+
+ 	g_hash_table_destroy(uuid_hash);
+ 	g_hash_table_destroy(adapter_address_hash);
+-	uuid_hash =3D NULL;
++}
++
++int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *pr=
+ofile)
++{
++	bluetooth_ref();
++
++	if (bluetooth_refcount =3D=3D 0)
++		return -EIO;
++
++	g_hash_table_insert(uuid_hash, g_strdup(uuid), profile);
++
++	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
++				manager_properties_cb, NULL, NULL, -1,
++				DBUS_TYPE_INVALID);
++
++	return 0;
++}
++
++void bluetooth_unregister_uuid(const char *uuid)
++{
++	g_hash_table_remove(uuid_hash, uuid);
++
++	bluetooth_unref();
+ }
+ =
+
+ OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
+-- =
+
+1.7.1
 
 
-
---===============4774397970433399837==--
+--===============3156456742575050077==--
 
