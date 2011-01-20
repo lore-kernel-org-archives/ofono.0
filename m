@@ -1,34 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============3753093468858362814=="
+Content-Type: multipart/mixed; boundary="===============4111674075183304367=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH v2] TODO: add CDMA Connection Manager tasks
-Date: Thu, 20 Jan 2011 15:02:57 -0600
-Message-ID: <4D38A301.5090407@gmail.com>
-In-Reply-To: <1295551473-11228-1-git-send-email-christian.lam@nokia.com>
+From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
+Subject: [RFC 1/1] doc: Add modem technology type property
+Date: Thu, 20 Jan 2011 13:08:44 -0800
+Message-ID: <1295557724-10185-2-git-send-email-dara.spieker-doyle@nokia.com>
+In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3753093468858362814==
+--===============4111674075183304367==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Christian,
+---
+ doc/modem-api.txt |   11 +++++++++++
+ 1 files changed, 11 insertions(+), 0 deletions(-)
 
-On 01/20/2011 01:24 PM, christian.lam(a)nokia.com wrote:
-> From: Christian Lam <christian.lam@nokia.com>
-> =
+diff --git a/doc/modem-api.txt b/doc/modem-api.txt
+index 45043b0..fe03833 100644
+--- a/doc/modem-api.txt
++++ b/doc/modem-api.txt
+@@ -82,6 +82,17 @@ Properties	boolean Powered [readwrite]
+ =
 
-> ---
->  TODO |   15 +++++++++++++++
->  1 files changed, 15 insertions(+), 0 deletions(-)
-> =
+ 			This is usually obtained by using the +CGSN AT command.
+ =
+
++		string TechnologyType [readonly, optional, experimental]
++
++			String representing the technology type of the current
++			modem device.
++
++			The possible values are:
++				"gsm" 	The 3GPP family of technologies
++					including gsm, edge, umts, hspa, lte.
++				"cdma"  The 3GPP2 family of technologies
++					including cdma 1x, evdo.
++
+ 		array{string} Features [readonly]
+ =
+
+ 			List of currently enabled features. It uses simple
+-- =
+
+1.7.0.4
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============3753093468858362814==--
+--===============4111674075183304367==--
 
