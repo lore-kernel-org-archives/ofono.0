@@ -1,50 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============0468215309491796362=="
+Content-Type: multipart/mixed; boundary="===============5554872518362643871=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: oFono exits on new voicecall with disconnected system bus
-Date: Thu, 20 Jan 2011 15:55:51 +0100
-Message-ID: <1295535351.3873.294.camel@aeonflux>
-In-Reply-To: <AANLkTimkw+axiW_5=FiiTeu0AS2C0M74kroGui789mWs@mail.gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/6] netreg: Deprecate the deregister method
+Date: Thu, 20 Jan 2011 09:57:52 -0600
+Message-ID: <4D385B80.2010304@gmail.com>
+In-Reply-To: <1295474035-7142-2-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0468215309491796362==
+--===============5554872518362643871==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nicola,
+Hi Aki,
 
-> that's happen with oFono 0.38 on freerunner with debian sid on the
-> first incoming/outgoing call:
-> =
+> @@ -1795,14 +1768,8 @@ static void netreg_load_settings(struct ofono_netr=
+eg *netreg)
+>  =
 
-> ofonod[6232]: drivers/calypsomodem/voicecall.c:cpi_notify() id:1,
-> msgtype:0, direction:1, mode:0
-> ofonod[6232]: drivers/calypsomodem/voicecall.c:cpi_notify() Len > 0
-> ofonod[6232]: drivers/calypsomodem/voicecall.c:cpi_notify() type obtained
-> ofonod[6232]: drivers/calypsomodem/voicecall.c:cpi_notify()
-> num:+xxxxxxxxxxxx, type:145
-> ofonod[6232]: drivers/calypsomodem/voicecall.c:cpi_notify() cause:892800,=
- line:0
-> ofonod[6232]: src/voicecall.c:ofono_voicecall_notify() Got a voicecall
-> event, status: 4, id: 1, number: +xxxxxxxxxxx
-> ofonod[6232]: src/voicecall.c:ofono_voicecall_notify() Did not find a
-> call with id: 1
-> ofonod[6232]: System bus has disconnected!
+>  	netreg->imsi =3D g_strdup(imsi);
+>  =
 
-this happens if something in a D-Bus message is corrupted and the D-Bus
-daemon complains. The result is that it kicks us off the bus.
-
-You need to track down which D-Bus API call causes this. Wild assumption
-is that it is either a wrong message parameter or an invalid object
-path.
-
-Regards
-
-Marcel
+> -	mode =3D g_key_file_get_integer(netreg->settings, SETTINGS_GROUP,
+> -					"Mode", NULL);
+> -
+> -	if (mode >=3D 0 && mode <=3D 2)
+> -		netreg->mode =3D mode;
+> -
+> -	g_key_file_set_integer(netreg->settings, SETTINGS_GROUP,
+> -				"Mode", netreg->mode);
+> +	netreg->mode =3D g_key_file_get_integer(netreg->settings, SETTINGS_GROU=
+P,
+> +						"Mode", NULL);
+>  }
+>  =
 
 
+I dropped this chunk and amended your patch to stipulate mode 0 and 1
+only.  This was a sanity check that no-one is messing with our settings
+file.
 
---===============0468215309491796362==--
+>  void ofono_netreg_register(struct ofono_netreg *netreg)
+
+Regards,
+-Denis
+
+--===============5554872518362643871==--
 
