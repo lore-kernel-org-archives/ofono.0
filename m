@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============4756651186688297007=="
+Content-Type: multipart/mixed; boundary="===============3726689911729697506=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] PPP: Fix transmit ACCM and receive ACCM setting issue
-Date: Thu, 20 Jan 2011 13:08:46 -0600
-Message-ID: <4D38883E.6000606@gmail.com>
-In-Reply-To: <1295502354-19270-1-git-send-email-martin.xu@intel.com>
+Subject: Re: [PATCH 2/3] Use default ACCM (0xffffffff) to trasmit package
+Date: Thu, 20 Jan 2011 13:10:47 -0600
+Message-ID: <4D3888B7.9020606@gmail.com>
+In-Reply-To: <1295502354-19270-2-git-send-email-martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4756651186688297007==
+--===============3726689911729697506==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -19,37 +19,48 @@ On 01/19/2011 11:45 PM, martin.xu(a)intel.com wrote:
 > From: Martin Xu <martin.xu@intel.com>
 > =
 
-> Tramsmit ACCM and receive ACCM is mixed up.
-> According to RFC1662 Section 7.1, ACCM Configuration Option is
-> used to inform the peer which control characters MUST remain
-> mapped when the peer sends them.
+> Using my Huawei EM770W modem, if set ACCM as 0x00000000, RXJ-
+> event breaks PPP link, after IP package transmit for a while.
+> Using default ACCM, the issue can be fixed.
+> I tested it at China Unicom networks.
+
+Does the Huawei NAK our ACCM by any chance?
+
 > ---
->  gatchat/ppp_lcp.c |   16 ++++++++++++++--
->  1 files changed, 14 insertions(+), 2 deletions(-)
+>  gatchat/ppp_lcp.c |    9 ++++++---
+>  1 files changed, 6 insertions(+), 3 deletions(-)
 > =
 
 > diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-> index 3a80a62..cc3e231 100644
+> index cc3e231..2264731 100644
 > --- a/gatchat/ppp_lcp.c
 > +++ b/gatchat/ppp_lcp.c
-> @@ -149,7 +149,13 @@ static void lcp_rca(struct pppcp_data *pppcp, const =
+> @@ -105,8 +105,7 @@ static void lcp_generate_config_options(struct lcp_da=
+ta *lcp)
+>  =
+
+>  static void lcp_reset_config_options(struct lcp_data *lcp)
+>  {
+> -	lcp->req_options =3D REQ_OPTION_ACCM;
+> -	lcp->accm =3D 0;
+> +	/* Using the default ACCM */
+>  =
+
+>  	lcp_generate_config_options(lcp);
+>  }
+> @@ -155,7 +154,11 @@ static void lcp_rca(struct pppcp_data *pppcp, const =
 struct pppcp_packet *packet)
->  	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
->  		switch (ppp_option_iter_get_type(&iter)) {
->  		case ACCM:
-> -			ppp_set_xmit_accm(pppcp_get_ppp(pppcp), 0);
+>  			 * which control characters MUST remain mapped when
+>  			 * the peer sends them.
+>  			 */
+> -			ppp_set_recv_accm(pppcp_get_ppp(pppcp), 0);
+> +
 > +			/*
-> +			 * RFC1662 Section 7.1
-> +			 * The Configuration Option is used to inform the peer
-> +			 * which control characters MUST remain mapped when
-> +			 * the peer sends them.
+> +			 * Using the default ACCM
+> +			 * ppp_set_recv_accm(pppcp_get_ppp(pppcp), ~0U);
 > +			 */
-> +			ppp_set_recv_accm(pppcp_get_ppp(pppcp), 0);
 
-You still forgot to apply my earlier comment.  The recv ACCM should be
-set to what is acked by the peer.  e.g.:
-
-ppp_set_recv_accm(pppcp, get_host_long());
+If you follow my advice for path 1, then this chunk isn't necessary.
 
 >  			break;
 >  		default:
@@ -58,5 +69,5 @@ ppp_set_recv_accm(pppcp, get_host_long());
 Regards,
 -Denis
 
---===============4756651186688297007==--
+--===============3726689911729697506==--
 
