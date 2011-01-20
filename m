@@ -1,69 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============6193397304742346264=="
+Content-Type: multipart/mixed; boundary="===============1170154170759075880=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 6/6] atmodem: packet switch bearer support
-Date: Thu, 20 Jan 2011 12:17:16 +0100
-Message-ID: <1295522236.3873.283.camel@aeonflux>
-In-Reply-To: <1295512672-4891-6-git-send-email-remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 3/5 v3] nettime: DBUS and compilation configuration
+Date: Thu, 20 Jan 2011 12:19:51 +0100
+Message-ID: <1295522391.3873.285.camel@aeonflux>
+In-Reply-To: <AANLkTikP7ksrzzUWs6pFuXVW_1X1q32zBaW8Q91-LQi4@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6193397304742346264==
+--===============1170154170759075880==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi Aki,
 
->  drivers/atmodem/gprs.c |   33 +++++++++++++++++++++++++++++++++
->  1 files changed, 33 insertions(+), 0 deletions(-)
+> > please don't implement org.ofono interface in timed. Just implement a
+> > timed specific (com.nokia.time) interface and punch the whole for that
+> > in the timed D-Bus policy.
+> =
 
-I did apply this patch, but I fixed it up later ...
+> I think there is some disconnect here. The intention is to implement a
+> similar agent interface as PushNotification and SmartMessaging already
+> do, with the exception that the one and only agent is known beforehand
+> and "hard-coded" to the plugin.
 
-> diff --git a/drivers/atmodem/gprs.c b/drivers/atmodem/gprs.c
-> index defb154..daa3933 100644
-> --- a/drivers/atmodem/gprs.c
-> +++ b/drivers/atmodem/gprs.c
-> @@ -200,6 +200,37 @@ static void xdatastat_notify(GAtResult *result, gpoi=
-nter user_data)
->  	}
->  }
->  =
+that is not what I said and that is clearly not the intent here.
 
-> +static void cpsb_notify(GAtResult *result, gpointer user_data)
-> +{
-> +	struct ofono_gprs *gprs =3D user_data;
-> +	GAtResultIter iter;
-> +	gint bearer;
-> +
-> +	g_at_result_iter_init(&iter, result);
-> +
-> +	if (!g_at_result_iter_next(&iter, "+CPSB:"))
-> +		return;
-> +
-> +	if (!g_at_result_iter_next_number(&iter, NULL))
-> +		return;
-> +
-> +	if (!g_at_result_iter_next_number(&iter, &bearer))
-> +		return;
-> +
-> +	ofono_gprs_bearer_notify(gprs, bearer);
-> +}
-> +
-> +static void cpsb_set_cb(gboolean ok, GAtResult *result, gpointer user_da=
-ta)
-> +{
-> +	struct ofono_gprs *gprs =3D user_data;
-> +	struct gprs_data *gd =3D ofono_gprs_get_data(gprs);
-> +
-> +	if (!ok)
-> +		return;
-> +
-> +	g_at_chat_register(gd->chat, "+CPSB:", cpsb_notify, FALSE, gprs, NULL);
-> +}
+> This is a generic interface that some other time information sink
+> could also implement, so it makes sense to have it in the org.ofono
+> namespace. Regardless of which namespace we use, though, it is oFono
+> that will be calling methods on this interface, and thus it needs to
+> have this interface opened in its D-Bus config.
 
-... since we normally don't bother with this kind of conditional
-registration for notifications. We just register them.
+They will be always specific to the target daemon and that is fine. This
+is not up to oFono to define and that is point here.
+
+> > The plugin is timed specific since it monitors com.nokia.time and thus
+> > should also target a timed specific API. Not a generic oFono API
+> > description.
+> =
+
+> This is really just another agent API in oFono, just one with a
+> build-time registration mechanism for agents.
+
+It is not. This is timed exposing an API to get notifications from a
+cellular stack and then a timed specific plugin inside oFono. It has
+nothing to do with an oFono defined D-Bus API.
 
 Regards
 
@@ -71,5 +54,5 @@ Marcel
 
 
 
---===============6193397304742346264==--
+--===============1170154170759075880==--
 
