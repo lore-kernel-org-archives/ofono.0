@@ -1,36 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============1434644019583127253=="
+Content-Type: multipart/mixed; boundary="===============0876505411387742780=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
 Subject: Re: [PATCH 4/4] atmodem: sim-auth atom driver.
-Date: Thu, 20 Jan 2011 11:25:43 -0600
-Message-ID: <4D387017.9080206@gmail.com>
-In-Reply-To: <1295424478-12049-6-git-send-email-andrew.zaborowski@intel.com>
+Date: Thu, 20 Jan 2011 11:30:02 -0600
+Message-ID: <4D38711A.6040608@gmail.com>
+In-Reply-To: <B668883EB5DD7144ADFC248A72176EA802DA0746@fioues07.ebgroup.elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1434644019583127253==
+--===============0876505411387742780==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Jeevaka,
 
-On 01/19/2011 02:07 AM, Andrzej Zaborowski wrote:
-> ---
->  Makefile.am                |    3 +-
->  drivers/atmodem/atmodem.c  |    2 +
->  drivers/atmodem/atmodem.h  |    3 +
->  drivers/atmodem/sim-auth.c |  162 ++++++++++++++++++++++++++++++++++++++=
-++++++
->  4 files changed, 169 insertions(+), 1 deletions(-)
->  create mode 100644 drivers/atmodem/sim-auth.c
+>> +	buffer =3D g_malloc(len);
+> =
+
+> missing check for buffer memory allocation failure =
+
 > =
 
 
-Patch has been applied, thanks.
+Actually he's using g_malloc, so the application will simply abort.
+
+>> +	sad =3D g_new0(struct sim_auth_data, 1);
+> =
+
+> missing check for "sad" memory allocation failure =
+
+
+Same here.
+
+My view is that checking mallocs of small structures is pretty much
+pointless on Linux.
 
 Regards,
 -Denis
 
---===============1434644019583127253==--
+--===============0876505411387742780==--
 
