@@ -1,45 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============4678340840223501641=="
+Content-Type: multipart/mixed; boundary="===============7038071013724064133=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [sim-auth PATCH 0/5] SIM Authentication D-Bus API
-Date: Thu, 20 Jan 2011 18:53:17 +0200
-Message-ID: <1295542402-26857-1-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [sim-auth PATCH 5/5] Add doc/gba-authentication.txt to dist
+Date: Thu, 20 Jan 2011 18:53:22 +0200
+Message-ID: <1295542402-26857-6-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1295542402-26857-5-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4678340840223501641==
+--===============7038071013724064133==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-Hi all,
+---
+ Makefile.am |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-Here is my proposed SIM authentication API, marked as experimental.
+diff --git a/Makefile.am b/Makefile.am
+index 65b488a..462b05f 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -396,8 +396,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
+release-faq.txt \
+ 			doc/sim-api.txt doc/stk-api.txt \
+ 			doc/sim-authentication-api.txt \
+ 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
+-			doc/calypso-modem.txt
+-
++			doc/calypso-modem.txt \
++			doc/gba-authentication.txt
+ =
 
-First two patches are hopefully easy to swallow. The uglier GBA_U part
-and some generic GBA blather can be found in last three patches.
+ test_scripts =3D test/backtrace \
+ 		test/create-internet-context \
+-- =
 
-Unfortunately the IMS support requires GBA_U.
-
---Pekka
-
-Pekka Pessi (5):
-  Add doc/sim-authentication-api.txt
-  Add doc/sim-authentication-api.txt to dist
-  Add GBA_U to SIM authentication API
-  Add doc/gba-authentication.txt
-  Add doc/gba-authentication.txt to dist
-
- Makefile.am                    |    5 +-
- doc/gba-authentication.txt     |   70 ++++++++++++++++
- doc/sim-authentication-api.txt |  171 ++++++++++++++++++++++++++++++++++++=
-++++
- 3 files changed, 244 insertions(+), 2 deletions(-)
- create mode 100644 doc/gba-authentication.txt
- create mode 100644 doc/sim-authentication-api.txt
+1.7.1
 
 
---===============4678340840223501641==--
+--===============7038071013724064133==--
 
