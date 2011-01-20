@@ -1,68 +1,52 @@
-Content-Type: multipart/mixed; boundary="===============0890894482810548594=="
+Content-Type: multipart/mixed; boundary="===============3154889636912144402=="
 MIME-Version: 1.0
 From: martin.xu@intel.com
-Subject: [PATCH 1/3] PPP: Fix transmit ACCM and receive ACCM setting issue
-Date: Thu, 20 Jan 2011 13:45:52 +0800
-Message-ID: <1295502354-19270-1-git-send-email-martin.xu@intel.com>
-In-Reply-To: <martin.xu@intel.com>
+Subject: [PATCH 3/3] Huawei: set Huawei EM770W modem device to 00
+Date: Thu, 20 Jan 2011 13:45:54 +0800
+Message-ID: <1295502354-19270-3-git-send-email-martin.xu@intel.com>
+In-Reply-To: <1295502354-19270-2-git-send-email-martin.xu@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0890894482810548594==
+--===============3154889636912144402==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Martin Xu <martin.xu@intel.com>
 
-Tramsmit ACCM and receive ACCM is mixed up.
-According to RFC1662 Section 7.1, ACCM Configuration Option is
-used to inform the peer which control characters MUST remain
-mapped when the peer sends them.
+Device 00 is ppp port. Setting it as 01, my Huawei EM770W modem PPP
+connection can't work
 ---
- gatchat/ppp_lcp.c |   16 ++++++++++++++--
- 1 files changed, 14 insertions(+), 2 deletions(-)
+ plugins/ofono.rules |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
-index 3a80a62..cc3e231 100644
---- a/gatchat/ppp_lcp.c
-+++ b/gatchat/ppp_lcp.c
-@@ -149,7 +149,13 @@ static void lcp_rca(struct pppcp_data *pppcp, const st=
-ruct pppcp_packet *packet)
- 	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
- 		switch (ppp_option_iter_get_type(&iter)) {
- 		case ACCM:
--			ppp_set_xmit_accm(pppcp_get_ppp(pppcp), 0);
-+			/*
-+			 * RFC1662 Section 7.1
-+			 * The Configuration Option is used to inform the peer
-+			 * which control characters MUST remain mapped when
-+			 * the peer sends them.
-+			 */
-+			ppp_set_recv_accm(pppcp_get_ppp(pppcp), 0);
- 			break;
- 		default:
- 			break;
-@@ -263,7 +269,13 @@ static enum rcr_result lcp_rcr(struct pppcp_data *pppc=
-p,
- 	while (ppp_option_iter_next(&iter) =3D=3D TRUE) {
- 		switch (ppp_option_iter_get_type(&iter)) {
- 		case ACCM:
--			ppp_set_recv_accm(ppp,
-+			/*
-+			 * RFC1662 Section 7.1
-+			 * The Configuration Option is used to inform the peer
-+			 * which control characters MUST remain mapped when
-+			 * the peer sends them.
-+			 */
-+			ppp_set_xmit_accm(ppp,
- 				get_host_long(ppp_option_iter_get_data(&iter)));
- 			break;
- 		case AUTH_PROTO:
+diff --git a/plugins/ofono.rules b/plugins/ofono.rules
+index 111f071..7dec243 100644
+--- a/plugins/ofono.rules
++++ b/plugins/ofono.rules
+@@ -37,7 +37,7 @@ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1401"=
+, ENV{OFONO_IFACE_NUM}=3D=3D"02", E
+ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1402", ENV{OFONO_IFACE=
+_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
+ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1402", ENV{OFONO_IFACE=
+_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
+ =
+
+-ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_IFACE=
+_NUM}=3D=3D"01", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
++ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_IFACE=
+_NUM}=3D=3D"00", ENV{OFONO_HUAWEI_TYPE}=3D"Modem"
+ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_IFACE=
+_NUM}=3D=3D"02", ENV{OFONO_HUAWEI_TYPE}=3D"Pcui"
+ ATTRS{idVendor}=3D=3D"12d1", ATTRS{idProduct}=3D=3D"1404", ENV{OFONO_HUAWE=
+I_VOICE}=3D"1"
+ =
+
 -- =
 
 1.6.1.3
 
 
---===============0890894482810548594==--
+--===============3154889636912144402==--
 
