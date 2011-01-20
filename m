@@ -1,60 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============8929443241522331583=="
+Content-Type: multipart/mixed; boundary="===============7409035805621037959=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH v2 1/2] stkutil: add check for qualifier and browser id
-Date: Thu, 20 Jan 2011 14:52:55 +0200
-Message-ID: <1295527976-15816-2-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1295527976-15816-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH v2 0/2] LaunchBrowser Proactive command Support
+Date: Thu, 20 Jan 2011 14:52:54 +0200
+Message-ID: <1295527976-15816-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8929443241522331583==
+--===============7409035805621037959==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Checks the valid qualifier and browser id values
-applicable for launch browser proactive command
----
- src/stkutil.c |    9 ++++++++-
- 1 files changed, 8 insertions(+), 1 deletions(-)
+Hi,
 
-diff --git a/src/stkutil.c b/src/stkutil.c
-index b7f03e2..abd1c99 100644
---- a/src/stkutil.c
-+++ b/src/stkutil.c
-@@ -1187,7 +1187,11 @@ static gboolean parse_dataobj_browser_id(struct comp=
-rehension_tlv_iter *iter,
- 						void *user)
- {
- 	unsigned char *byte =3D user;
--	return parse_dataobj_common_byte(iter, byte);
-+
-+	if (parse_dataobj_common_byte(iter, byte) =3D=3D FALSE || *byte > 4)
-+		return FALSE;
-+
-+	return TRUE;
- }
- =
+  Following set of patches adds the basic support for LaunchBrowser
+proactive command to ofono.
 
- /* Defined in TS 102.223 Section 8.48 */
-@@ -3229,6 +3233,9 @@ static enum stk_command_parse_result parse_launch_bro=
-wser(
- {
- 	struct stk_command_launch_browser *obj =3D &command->launch_browser;
- =
+ When a LaunchBrowser proactive command is received, oFono will inform the
+agent to LaunchBrowser with the specified URL. If confirmed by user, agent
+should launch the browser with the specified URL. This patch doesn't handle
+the qualifier, Network Access Name, User Name, password and bearer informat=
+ion
+which can be part of the LaunchBrowser proactive command.
 
-+	if (command->qualifier > 3 || command->qualifier =3D=3D 1)
-+		return STK_PARSE_RESULT_DATA_NOT_UNDERSTOOD;
-+
- 	if (command->src !=3D STK_DEVICE_IDENTITY_TYPE_UICC)
- 		return STK_PARSE_RESULT_DATA_NOT_UNDERSTOOD;
- =
+Regards,
+Jeevaka
 
--- =
+Jeevaka Badrappan (2):
+  stkutil: add check for qualifier and browser id
+  stk: Handle Launch Browser proactive command
 
-1.7.0.4
+ src/stk.c      |   79 ++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/stkagent.c |   68 ++++++++++++++++++++++++++++++++++++++++++++++++
+ src/stkagent.h |    7 +++++
+ src/stkutil.c  |    9 +++++-
+ 4 files changed, 162 insertions(+), 1 deletions(-)
 
 
---===============8929443241522331583==--
+--===============7409035805621037959==--
 
