@@ -1,49 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============2468653676382899669=="
+Content-Type: multipart/mixed; boundary="===============7540576139933364648=="
 MIME-Version: 1.0
-From: Rolf Offermanns <roffermanns@sysgo.com>
-Subject: Re: DUN client questions
-Date: Thu, 20 Jan 2011 11:48:32 +0100
-Message-ID: <4D381300.1030405@sysgo.com>
-In-Reply-To: <87tyh3sx8x.fsf@potku.valot.fi>
+From: Aki Niemi <aki.niemi@nokia.com>
+Subject: [PATCH] core: Always return success to a no-op
+Date: Thu, 20 Jan 2011 12:55:13 +0200
+Message-ID: <1295520913-17243-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2468653676382899669==
+--===============7540576139933364648==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On 01/20/2011 11:08 AM, Kalle Valo wrote:
-> Hi Rolf,
-> =
+A SetProperty that doesn't actually change the Online property's state
+when no change to that state is pending, should not fail. It should
+always succeed regardless of the current modem state.
+---
+ src/modem.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-> Rolf Offermanns <roffermanns-uSbOeAmDUekAvxtiuMwx3w@public.gmane.org> w=
-rites:
-> =
+diff --git a/src/modem.c b/src/modem.c
+index f587766..e966a6e 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -580,15 +580,15 @@ static DBusMessage *set_property_online(struct ofono_=
+modem *modem,
+ 	if (modem->pending !=3D NULL)
+ 		return __ofono_error_busy(msg);
+ =
 
->> Here is what I did to get the DUN connection up:
->>
->> 1. Connect the mobile using the bluetooth applet in MeeGo
->>    -> The modem was recognized as DUN capable and shows up in the
->>       "list-modems" output from ofonos test script as "/dun/xxx_yyy"
->> 2. Then using the ofono test scripts: enable_modem,
->> create-internet-context, activate-context
-> =
++	if (modem->online =3D=3D online)
++		return dbus_message_new_method_return(msg);
++
+ 	if (driver->set_online =3D=3D NULL)
+ 		return __ofono_error_not_implemented(msg);
+ =
 
-> connman should enable modem and all the magic needed to set it up, you
-> should not need to run ofono test scripts.
+ 	if (modem->modem_state < MODEM_STATE_OFFLINE)
+ 		return __ofono_error_not_available(msg);
+ =
 
-It seems there is more involved with cellular connections. Detecting the
-modem in ofono is not enough to get it detected in connman.
+-	if (modem->online =3D=3D online)
+-		return dbus_message_new_method_return(msg);
+-
+ 	modem->pending =3D dbus_message_ref(msg);
+ =
 
-I have a USB 3G modem, too. It does not show up in Connman when I plug
-it in. After some time the modem registers to a network and only then it
-gets listed in the meego-network-panel.
+ 	driver->set_online(modem, online,
+-- =
 
-I think something along "register to a network and send notification
-about this" is missing in the dunmodem driver.
+1.7.1
 
--Rolf
 
---===============2468653676382899669==--
+--===============7540576139933364648==--
 
