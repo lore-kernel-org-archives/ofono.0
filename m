@@ -1,78 +1,126 @@
-Content-Type: multipart/mixed; boundary="===============2574342601652166367=="
+Content-Type: multipart/mixed; boundary="===============5853753523997326175=="
 MIME-Version: 1.0
 From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [gprs-provision PATCHv5 0/6] Plugin API for provisioning of GPRS
- context setting
-Date: Thu, 20 Jan 2011 15:11:33 +0200
-Message-ID: <1295529099-21082-1-git-send-email-jukka.saunamaki@nokia.com>
+Subject: [PATCH 1/6] gprs-provision: add driver API header
+Date: Thu, 20 Jan 2011 15:11:34 +0200
+Message-ID: <1295529099-21082-2-git-send-email-jukka.saunamaki@nokia.com>
+In-Reply-To: <1295529099-21082-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2574342601652166367==
+--===============5853753523997326175==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello
+---
+ Makefile.am              |    2 +-
+ include/gprs-provision.h |   74 ++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 75 insertions(+), 1 deletions(-)
+ create mode 100644 include/gprs-provision.h
 
-And again, here is a new patchset about implementing automatic provisioning=
- of GPRS context settings.
-
-Since last time, driver API should be cleaner now. Some whitespace issues f=
-ixed, and probably some new ones introduced :)
-
-Example driver patch requires ofono_sim_get_mcc/mnc in SIM atom API patches=
-, that I mailed earlier.
-
-[copy from earlier mail]
-Provisioning data for gprs contexts is returned by gprs-provisioning plugin=
-s/drivers. Different kind of provisioning modules may be created for differ=
-ent platforms or use cases.
-It is up to the module what settings database it uses, and how many, and wh=
-at type of contexts (with settings) it returns.
-Several plugins may be loaded in oFono, and they will be called in priority=
- order until first plugin returns non-empty result.
-
-Provisioning modules are called in case there are no previously configured =
-contexts found during gprs atom registration.
+diff --git a/Makefile.am b/Makefile.am
+index c1c34ca..7a03f08 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -13,7 +13,7 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
+lude/history.h \
+ 			include/radio-settings.h include/stk.h \
+ 			include/audio-settings.h include/nettime.h \
+ 			include/ctm.h include/cdma-voicecall.h \
+-			include/cdma-sms.h
++			include/cdma-sms.h include/gprs-provision.h
  =
 
-These patches add new gprs-provision.[hc] API for provisioning plugins to r=
-egister into, and __ofono_gprs_provision_get_settings for gprs.c to call wh=
-en needed.
-gprs.c is modified to use provisioning if reading existing context settings=
- fails.
+ nodist_pkginclude_HEADERS =3D include/version.h
+ =
 
-A dummy example provisioning plugin is included. In case it is called when =
-using phonesim with default.xml configuration, the plugin returns dummy set=
-tings for two contexts, one type Internet and one type MMS. =
+diff --git a/include/gprs-provision.h b/include/gprs-provision.h
+new file mode 100644
+index 0000000..cc751d2
+--- /dev/null
++++ b/include/gprs-provision.h
+@@ -0,0 +1,74 @@
++/*
++ *
++ *  oFono - Open Telephony stack for Linux
++ *
++ *  Copyright (C) 2011  Nokia Corporation and/or its subsidiary(-ies).
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifndef __OFONO_GPRS_PROVISION_H
++#define __OFONO_GPRS_PROVISION_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include "gprs-context.h"
++
++struct ofono_gprs_provision_context {
++	struct ofono_gprs_provision_driver *driver;
++	struct ofono_modem *modem;
++	void *data;
++};
++
++struct ofono_gprs_provision_data {
++	enum ofono_gprs_context_type type;
++	enum ofono_gprs_proto proto;
++	char *name;
++	char *apn;
++	char *username;
++	char *password;
++	char *message_proxy;
++	char *message_center;
++};
++
++/*
++ * Callback from provisioning plugin.
++ */
++typedef void (*ofono_gprs_provision_cb_t)(
++			const struct ofono_gprs_provision_data settings[],
++			int count, void *user_data);
++
++struct ofono_gprs_provision_driver {
++	const char *name;
++	int priority;
++	int (*probe)(struct ofono_gprs_provision_context *context);
++	void (*remove)(struct ofono_gprs_provision_context *context);
++	void (*get_settings)(struct ofono_gprs_provision_context *context,
++				ofono_gprs_provision_cb_t cb,
++				void *user_data);
++};
++
++int ofono_gprs_provision_driver_register(
++			const struct ofono_gprs_provision_driver *driver);
++void ofono_gprs_provision_driver_unregister(
++			const struct ofono_gprs_provision_driver *driver);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __OFONO_GPRS_PROVISION_H */
+-- =
+
+1.7.1
 
 
---Jukka Saunam=C3=A4ki
-
-
-Jukka Saunamaki (6):
-      gprs-provision: add driver API header
-      ofono.h: add new atom type for gprs-provision
-      gprs-provision: add driver API sources
-      modem: probe gprs_provision drivers
-      gprs: add gprs context provisioning
-      gprs-provision: add example context provisioning driver
-
- Makefile.am              |    7 +-
- examples/provision.c     |  221 ++++++++++++++++++++++++++++++++++++++++++=
-++++
- include/gprs-provision.h |   74 +++++++++++++++
- src/gprs-provision.c     |  219 ++++++++++++++++++++++++++++++++++++++++++=
-+++
- src/gprs.c               |  147 ++++++++++++++++++++++++++++---
- src/modem.c              |    1 +
- src/ofono.h              |    8 ++
- 7 files changed, 661 insertions(+), 16 deletions(-)
- create mode 100644 examples/provision.c
- create mode 100644 include/gprs-provision.h
- create mode 100644 src/gprs-provision.c
-
-
---===============2574342601652166367==--
+--===============5853753523997326175==--
 
