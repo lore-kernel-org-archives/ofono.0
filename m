@@ -1,58 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============6389994700794377555=="
+Content-Type: multipart/mixed; boundary="===============1859938780423325427=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 5/6] GPRS: document bearer property
-Date: Thu, 20 Jan 2011 10:06:50 +0200
-Message-ID: <AANLkTintNFsNHsBRxc=W=vAVW0knZ-4wSj_YKS0hAjwd@mail.gmail.com>
-In-Reply-To: <1295428765-8683-5-git-send-email-remi.denis-courmont@nokia.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 2/2] Allow distcheck to work without bluetooth
+Date: Thu, 20 Jan 2011 10:25:47 +0200
+Message-ID: <201101201025.47411.remi.denis-courmont@nokia.com>
+In-Reply-To: <1295447768.3873.246.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6389994700794377555==
+--===============1859938780423325427==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi R=C3=A9mi,
+On Wednesday 19 January 2011 16:36:08 ext Marcel Holtmann, you wrote:
+> Hi Remi,
+> =
 
-2011/1/19 R=C3=A9mi Denis-Courmont <remi.denis-courmont@nokia.com>:
-> ---
-> =C2=A0doc/connman-api.txt | =C2=A0 10 ++++++++++
-> =C2=A01 files changed, 10 insertions(+), 0 deletions(-)
->
-> diff --git a/doc/connman-api.txt b/doc/connman-api.txt
-> index 22e02e5..13f622c 100644
-> --- a/doc/connman-api.txt
-> +++ b/doc/connman-api.txt
-> @@ -77,6 +77,16 @@ Properties =C2=A0 boolean Attached [readonly]
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0be available, e.g. receiving SMS over packet radio
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0or network initiated PDP activation.
->
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 string Bearer [readonl=
-y, optional]
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 Contains the data bearer technology as reported by the
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 GPRS service registration (if known).
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 Possible values are:
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 "gsm", "edge", "umts", "hsdpa", "hsupa",
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 "hspa" (HSDPA and HSUPA at the same time) and
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 "lte"
-> +
+> > > > diff --git a/Makefile.am b/Makefile.am
+> > > > index c1c34ca..e93076a 100644
+> > > > --- a/Makefile.am
+> > > > +++ b/Makefile.am
+> > > > @@ -550,6 +550,9 @@ gatchat_test_qcdm_LDADD =3D @GLIB_LIBS@
+> > > > =
 
-Should this also report 'none'? At least CPSB can report that a
-context is idle, i.e., no bearer associated with it.
+> > > >  DISTCHECK_CONFIGURE_FLAGS =3D --disable-datafiles
+> > > > =
 
-Cheers,
-Aki
+> > > > +if !BLUETOOTH
+> > > > +DISTCHECK_CONFIGURE_FLAGS +=3D --disable-bluetooth
+> > > > +endif
+> > > =
 
---===============6389994700794377555==--
+> > > this patch makes no sense to me. I am not going to apply it. Using ma=
+ke
+> > > distcheck works nicely on my system where I build the releases.
+> > =
+
+> > I am not trying to steal your release privilege. I am trying to be able
+> > to test my changes to Makefiles or whatever.
+> =
+
+> you could just install libbluetooth and this would be fine. I like to
+> run make distcheck with everything enabled all the time. That is the
+> only way to ensure that it does build properly.
+
+Fair enough, but does disabling data files not defeat the purpose?
+
+
+-- =
+
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
+
+--===============1859938780423325427==--
 
