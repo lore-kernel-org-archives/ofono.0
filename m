@@ -1,242 +1,276 @@
-Content-Type: multipart/mixed; boundary="===============8401087448659793041=="
+Content-Type: multipart/mixed; boundary="===============2285215873063747657=="
 MIME-Version: 1.0
 From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [PATCH 5/6] gprs: add gprs context provisioning
-Date: Thu, 20 Jan 2011 15:11:38 +0200
-Message-ID: <1295529099-21082-6-git-send-email-jukka.saunamaki@nokia.com>
+Subject: [PATCH 6/6] gprs-provision: add example context provisioning driver
+Date: Thu, 20 Jan 2011 15:11:39 +0200
+Message-ID: <1295529099-21082-7-git-send-email-jukka.saunamaki@nokia.com>
 In-Reply-To: <1295529099-21082-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8401087448659793041==
+--===============2285215873063747657==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/gprs.c |  147 ++++++++++++++++++++++++++++++++++++++++++++++++++++++--=
-----
- 1 files changed, 133 insertions(+), 14 deletions(-)
+ Makefile.am          |    3 +
+ examples/provision.c |  221 ++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 224 insertions(+), 0 deletions(-)
+ create mode 100644 examples/provision.c
 
-diff --git a/src/gprs.c b/src/gprs.c
-index 7ef81d5..06f6555 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -43,6 +43,7 @@
- #include "common.h"
- #include "storage.h"
- #include "idmap.h"
-+#include "gprs-provision.h"
+diff --git a/Makefile.am b/Makefile.am
+index 97480d5..7a87aee 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -327,6 +327,9 @@ builtin_sources +=3D examples/history.c
  =
 
- #define GPRS_FLAG_ATTACHING 0x1
- #define GPRS_FLAG_RECHECK 0x2
-@@ -83,6 +84,7 @@ struct ofono_gprs {
- 	const struct ofono_gprs_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-+	struct provision_request *provision;
- };
+ builtin_modules +=3D example_nettime
+ builtin_sources +=3D examples/nettime.c
++
++builtin_modules +=3D example_provision
++builtin_sources +=3D examples/provision.c
+ endif
  =
 
- struct ofono_gprs_context {
-@@ -123,6 +125,10 @@ struct pri_context {
- 	struct ofono_gprs *gprs;
- };
- =
-
-+struct provision_request {
-+	struct ofono_gprs *gprs;
+ builtin_modules +=3D smart_messaging
+diff --git a/examples/provision.c b/examples/provision.c
+new file mode 100644
+index 0000000..d84c4ba
+--- /dev/null
++++ b/examples/provision.c
+@@ -0,0 +1,221 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2011  Nokia Corporation and/or its subsidiary(-ies).
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
++#include <string.h>
++#include <glib.h>
++
++#define OFONO_API_SUBJECT_TO_CHANGE
++
++#include <ofono/modem.h>
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++#include <ofono/gprs-provision.h>
++#include <ofono/types.h>
++
++#include "ofono.h"
++#include "common.h"
++#include "sim.h"
++#include "simutil.h"
++#include "util.h"
++
++struct provisioning_request {
++	struct ofono_modem *modem;
++	ofono_gprs_provision_cb_t cb;
++	void *user_data;
 +};
 +
- static void gprs_netreg_update(struct ofono_gprs *gprs);
- static void gprs_deactivate_next(struct ofono_gprs *gprs);
- =
-
-@@ -2230,6 +2236,9 @@ static void gprs_remove(struct ofono_atom *atom)
- 	if (gprs->driver && gprs->driver->remove)
- 		gprs->driver->remove(gprs);
- =
-
-+	if (gprs->provision !=3D NULL)
-+		gprs->provision->gprs =3D NULL;
-+
- 	g_free(gprs);
- }
- =
-
-@@ -2483,13 +2492,15 @@ remove:
- 		storage_sync(imsi, SETTINGS_STORE, gprs->settings);
- }
- =
-
--void ofono_gprs_register(struct ofono_gprs *gprs)
-+static void ofono_gprs_finish_register(struct ofono_gprs *gprs)
- {
- 	DBusConnection *conn =3D ofono_dbus_get_connection();
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
- 	const char *path =3D __ofono_atom_get_path(gprs->atom);
- 	struct ofono_atom *netreg_atom;
--	struct ofono_atom *sim_atom;
-+
-+	if (gprs->contexts =3D=3D NULL) /* Automatic provisioning failed */
-+		add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
- =
-
- 	if (!g_dbus_register_interface(conn, path,
- 					OFONO_CONNECTION_MANAGER_INTERFACE,
-@@ -2504,18 +2515,6 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
- 	ofono_modem_add_interface(modem,
- 				OFONO_CONNECTION_MANAGER_INTERFACE);
- =
-
--	sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
--
--	if (sim_atom) {
--		struct ofono_sim *sim =3D __ofono_atom_get_data(sim_atom);
--		const char *imsi =3D ofono_sim_get_imsi(sim);
--
--		gprs_load_settings(gprs, imsi);
--	}
--
--	if (gprs->contexts =3D=3D NULL)
--		add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
--
- 	gprs->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
- 					OFONO_ATOM_TYPE_NETREG,
- 					netreg_watch, gprs, NULL);
-@@ -2529,6 +2528,126 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
- 	__ofono_atom_register(gprs->atom, gprs_unregister);
- }
- =
-
-+static void provision_context(const struct ofono_gprs_provision_data *ap,
-+				struct ofono_gprs *gprs)
++static int example_provision_probe(struct ofono_gprs_provision_context *co=
+ntext)
 +{
-+	unsigned int id;
-+	struct pri_context *context =3D NULL;
-+
-+	/* Sanity check */
-+	if (ap =3D=3D NULL || ap->name =3D=3D NULL)
-+		return;
-+
-+	if (gprs->last_context_id)
-+		id =3D idmap_alloc_next(gprs->pid_map, gprs->last_context_id);
-+	else
-+		id =3D idmap_alloc(gprs->pid_map);
-+
-+	if (id > idmap_get_max(gprs->pid_map))
-+		return;
-+
-+	context =3D pri_context_create(gprs, ap->name, ap->type);
-+	DBG("%s context%d '%s' %s", gprs_context_default_name(ap->type),
-+		id, ap->name, context ? "created" : "creation failed");
-+
-+	if (context =3D=3D NULL)
-+		return;
-+
-+	context->id =3D id;
-+
-+	if (ap->username !=3D NULL)
-+		strncpy(context->context.username, ap->username,
-+			OFONO_GPRS_MAX_USERNAME_LENGTH);
-+
-+	if (ap->password !=3D NULL)
-+		strncpy(context->context.password, ap->password,
-+			OFONO_GPRS_MAX_PASSWORD_LENGTH);
-+
-+	if (ap->apn !=3D NULL)
-+		strncpy(context->context.apn, ap->apn,
-+			OFONO_GPRS_MAX_APN_LENGTH);
-+
-+	context->context.proto =3D ap->proto;
-+
-+	if (ap->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS &&
-+			ap->message_proxy !=3D NULL)
-+		strncpy(context->message_proxy, ap->message_proxy,
-+			MAX_MESSAGE_PROXY_LENGTH);
-+
-+	if (ap->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS &&
-+			ap->message_center !=3D NULL)
-+		strncpy(context->message_center, ap->message_center,
-+			MAX_MESSAGE_CENTER_LENGTH);
-+
-+	if (context_dbus_register(context) =3D=3D TRUE) {
-+		gprs->last_context_id =3D id;
-+		gprs->contexts =3D g_slist_append(gprs->contexts, context);
-+		write_context_settings(gprs, context);
-+
-+		if (context->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS) {
-+			g_key_file_set_string(gprs->settings, context->key,
-+						"MessageProxy",
-+						context->message_proxy);
-+			g_key_file_set_string(gprs->settings, context->key,
-+						"MessageCenter",
-+						context->message_center);
-+		}
-+
-+		storage_sync(gprs->imsi, SETTINGS_STORE, gprs->settings);
-+	}
++	ofono_debug("Example GPRS context provisioning Probe for modem: %p",
++			context->modem);
++	return 0;
 +}
 +
-+
-+static void provision_cb(const struct ofono_gprs_provision_data settings[],
-+				int count, void *user_data)
++static void example_provision_remove(
++		struct ofono_gprs_provision_context *context)
 +{
-+	struct provision_request *req =3D user_data;
-+	struct ofono_gprs *gprs =3D req->gprs;
++	ofono_debug("Example GPRS context provisioning Remove for modem: %p",
++			context->modem);
++}
 +
-+	if (gprs !=3D NULL) {
-+		int i;
-+		gprs->provision =3D NULL;
++static void provision_settings_free(struct ofono_gprs_provision_data *sett=
+ings,
++					int count)
++{
++	int i;
 +
-+		for (i =3D 0; i < count; i++)
-+			provision_context(&settings[i], gprs);
-+
-+		ofono_gprs_finish_register(gprs);
++	for (i =3D 0; i < count; i++) {
++		g_free(settings[i].name);
++		g_free(settings[i].apn);
++		g_free(settings[i].username);
++		g_free(settings[i].password);
++		g_free(settings[i].message_proxy);
++		g_free(settings[i].message_center);
 +	}
 +
++	g_free(settings);
++}
++
++/* Example settings for phonesim */
++static void example_settings(const char *mcc, const char *mnc, const char =
+*spn,
++				struct ofono_gprs_provision_data **settings,
++				int *count)
++{
++	*count =3D 0;
++	*settings =3D NULL;
++
++	ofono_debug("Finding settings for MCC %s, MNC %s, SPN '%s'",
++			mcc, mnc, spn);
++
++	if (strcmp(mcc, "246") !=3D 0 || strcmp(mnc, "81") !=3D 0 ||
++			spn =3D=3D NULL || strcmp(spn, "oFono") !=3D 0)
++		return;
++
++	ofono_debug("Creating example settings for phonesim");
++
++	*settings =3D g_try_new0(struct ofono_gprs_provision_data, 2);
++	if (*settings =3D=3D NULL)
++		return;
++
++	*count =3D 2;
++
++	/* Internet context settings */
++	(*settings)[0].proto =3D OFONO_GPRS_PROTO_IP;
++	(*settings)[0].type =3D OFONO_GPRS_CONTEXT_TYPE_INTERNET;
++	(*settings)[0].name =3D g_strdup("Phonesim Internet");
++	(*settings)[0].apn =3D g_strdup("internetapn");
++
++	/* MMS context settings */
++	(*settings)[1].proto =3D OFONO_GPRS_PROTO_IP;
++	(*settings)[1].type =3D OFONO_GPRS_CONTEXT_TYPE_MMS;
++	(*settings)[1].name =3D g_strdup("Phonesim MMS");
++	(*settings)[1].apn =3D g_strdup("mmsapn");
++	(*settings)[1].username =3D g_strdup("mmsuser");
++	(*settings)[1].password =3D g_strdup("mmspass");
++	(*settings)[1].message_proxy =3D g_strdup("10.11.12.13:8080");
++	(*settings)[1].message_center =3D g_strdup("http://mms.example.com:8000");
++}
++
++static void sim_spn_read_cb(int ok, int length, int record,
++				const unsigned char *data,
++				int record_length, void *user_data)
++{
++	struct provisioning_request *req =3D user_data;
++
++	struct ofono_atom *sim_atom;
++	struct ofono_sim *sim;
++	const char *mcc;
++	const char *mnc;
++	char *spn =3D NULL;
++	struct ofono_gprs_provision_data *settings =3D NULL;
++	int count =3D 0;
++
++	sim_atom =3D __ofono_modem_find_atom(req->modem, OFONO_ATOM_TYPE_SIM);
++	if (sim_atom =3D=3D NULL) {
++		ofono_debug("No SIM atom");
++		goto finish;
++	}
++
++	sim =3D __ofono_atom_get_data(sim_atom);
++	mcc =3D ofono_sim_get_mcc(sim);
++	mnc =3D ofono_sim_get_mnc(sim);
++	if (mcc =3D=3D NULL || strlen(mcc) =3D=3D 0 ||
++			mnc =3D=3D NULL || strlen(mnc) =3D=3D 0) {
++		ofono_debug("No MCC/MNC available");
++		goto finish;
++	}
++
++	if (ok)
++		spn =3D sim_string_to_utf8(data + 1, length - 1);
++
++	example_settings(mcc, mnc, spn, &settings, &count);
++
++finish:
++	g_free(spn);
++	req->cb(settings, count, req->user_data);
++	provision_settings_free(settings, count);
 +	g_free(req);
 +}
 +
-+void ofono_gprs_register(struct ofono_gprs *gprs)
++static void example_provision_get_settings(
++		struct ofono_gprs_provision_context *driver_context,
++		ofono_gprs_provision_cb_t cb,
++		void *user_data)
 +{
-+	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
++	struct provisioning_request *req;
 +	struct ofono_atom *sim_atom;
++	struct ofono_sim *sim =3D NULL;
 +
-+	sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
++	if (cb =3D=3D NULL)
++		return;
 +
-+	if (sim_atom !=3D NULL) {
-+		struct ofono_sim *sim =3D __ofono_atom_get_data(sim_atom);
-+		const char *imsi =3D ofono_sim_get_imsi(sim);
++	ofono_debug("Provisioning...");
 +
-+		gprs_load_settings(gprs, imsi);
++	req =3D g_try_new0(struct provisioning_request, 1);
++	if (req =3D=3D NULL)
++		goto error;
++
++	req->modem =3D driver_context->modem;
++	req->cb =3D cb;
++	req->user_data =3D user_data;
++
++	/* Start SPN query from SIM */
++	sim_atom =3D __ofono_modem_find_atom(req->modem, OFONO_ATOM_TYPE_SIM);
++	if (sim_atom !=3D NULL)
++		sim =3D __ofono_atom_get_data(sim_atom);
++
++	if (sim !=3D NULL) {
++		ofono_sim_read(sim, SIM_EFSPN_FILEID,
++				OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
++				sim_spn_read_cb, req);
++		return;
 +	}
 +
-+	if (gprs->contexts =3D=3D NULL) {
-+		/* Start settings provisioning */
-+		struct provision_request *req;
-+
-+		req =3D g_try_new0(struct provision_request, 1);
-+		if (req !=3D NULL) {
-+			req->gprs =3D gprs;
-+			gprs->provision =3D req;
-+			__ofono_gprs_provision_get_settings(modem, provision_cb,
-+								req);
-+			return;
-+		}
-+	}
-+
-+	ofono_gprs_finish_register(gprs);
++error:
++	cb(NULL, 0, user_data);
++	g_free(req);
 +}
 +
- void ofono_gprs_remove(struct ofono_gprs *gprs)
- {
- 	__ofono_atom_free(gprs->atom);
++static struct ofono_gprs_provision_driver example_driver =3D {
++	.name		=3D "Example GPRS context provisioning",
++	.priority       =3D OFONO_PLUGIN_PRIORITY_LOW,
++	.probe		=3D example_provision_probe,
++	.remove		=3D example_provision_remove,
++	.get_settings	=3D example_provision_get_settings,
++};
++
++static int example_provision_init(void)
++{
++	return ofono_gprs_provision_driver_register(&example_driver);
++}
++
++static void example_provision_exit(void)
++{
++	ofono_gprs_provision_driver_unregister(&example_driver);
++}
++
++OFONO_PLUGIN_DEFINE(example_provision, "Example Provisioning Plugin",
++			VERSION, OFONO_PLUGIN_PRIORITY_DEFAULT,
++			example_provision_init,
++			example_provision_exit)
 -- =
 
 1.7.1
 
 
---===============8401087448659793041==--
+--===============2285215873063747657==--
 
