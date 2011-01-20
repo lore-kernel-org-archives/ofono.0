@@ -1,87 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============1606966660773454306=="
+Content-Type: multipart/mixed; boundary="===============0227033167940465229=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v3] bluetooth: Add reference count for bluetooth utils
-Date: Thu, 20 Jan 2011 11:16:32 +0100
-Message-ID: <1295518592.3873.266.camel@aeonflux>
-In-Reply-To: <1295435871-3462-1-git-send-email-frederic.danis@linux.intel.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: [RFC] TODO: Move signal strength property to separate Agent API.
+Date: Thu, 20 Jan 2011 11:24:14 +0100
+Message-ID: <1295519054-2162-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1606966660773454306==
+--===============0227033167940465229==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Fred,
+From: Sjur Br=C3=A6ndeland <sjur.brandeland@stericsson.com>
 
-> diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-> index 602c6da..8202381 100644
-> --- a/plugins/bluetooth.c
-> +++ b/plugins/bluetooth.c
-> @@ -40,6 +40,7 @@
->  static DBusConnection *connection;
->  static GHashTable *uuid_hash =3D NULL;
->  static GHashTable *adapter_address_hash =3D NULL;
-> +static gint ref_count;
+---
+I think we should consider changing the way we handle
+signal strength in oFono.
 
-you need a better name for this. This is too generic. Maybe using
-bluetooth_refcount is better.
-
->  void bluetooth_create_path(const char *dev_addr, const char *adapter_add=
-r,
->  				char *buf, int size)
-> @@ -504,12 +505,12 @@ static guint adapter_added_watch;
->  static guint adapter_removed_watch;
->  static guint property_watch;
->  =
-
-> -int bluetooth_register_uuid(const char *uuid, struct bluetooth_profile *=
-profile)
-> +static int bluetooth_ref(void)
->  {
->  	int err;
->  =
-
-> -	if (uuid_hash)
-> -		goto done;
-> +	if (ref_count > 0)
-> +		return 0;
-
-This is pretty much wrong. A reference count can't work this way. You
-need to track the number of times this has been taken.
-
-	g_atomic_int_inc(&bluetooth_refcount);
-
-	if (bluetooth_refcount > 1)
-		return 0;
-
-In addition, I think the return value is pointless, just make sure to
-decrease the reference count in an error case.
-
-> +static void bluetooth_unref(void)
->  {
-> -	g_hash_table_remove(uuid_hash, uuid);
-> +	gboolean is_zero;
-> +
-> +	is_zero =3D g_atomic_int_dec_and_test(&ref_count);
->  =
-
-> -	if (g_hash_table_size(uuid_hash))
-> +	if (is_zero =3D=3D FALSE)
->  		return;
-
-I know that we have it like this in GAtChat, but just do the check right
-away is fine.
-
-	if (g_atomic_int_dec_and_test(&bluetooth_refcount) =3D=3D FALSE)
-		return;
-
-Regards
-
-Marcel
+In the past I have seen very frequent signal strength
+reports from the modem under certain network conditions.
+I think we can improve the power consumption by changing
+the design here. I know other Radio Interfaces are subscribing
+to changes in power modes and turns off the signal strength
+reporting when screen is turned off. =
 
 
+An Agent API for for Signal Strength would allow oFono to
+subscribe to modem signal strength updates only when an Agent is
+registered, and applications should register on the Agent API only
+when the signal-strength information is really needed. =
 
---===============1606966660773454306==--
+
+Regards,
+Sjur
+
+ TODO |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
+
+diff --git a/TODO b/TODO
+index a36e9ed..50561a8 100644
+--- a/TODO
++++ b/TODO
+@@ -434,6 +434,14 @@ Miscellaneous
+   Complexity: C1
+   Owner: Aki Niemi <aki.niemi@nokia.com>
+ =
+
++- Move the Property "Strength" in NetworkRegistration into an Agent
++  API in order to avoid frequent wakeup due to signal strength updates
++  from the modem. With an Agent API the application can register for updat=
+es
++  if the strength bars are visible, and unregister when applicable (before
++  going into low-power mode).
++  Priority: Medium
++  Complexity: C1
++
+ CDMA Voicecall
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+ =
+
+-- =
+
+1.7.0.4
+
+
+--===============0227033167940465229==--
 
