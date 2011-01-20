@@ -1,54 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============2765931041184688787=="
+Content-Type: multipart/mixed; boundary="===============2468653676382899669=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [RFC] TODO: Move signal strength property to separate Agent API.
-Date: Thu, 20 Jan 2011 12:44:17 +0200
-Message-ID: <AANLkTim8A3zFQEu+3O0p+Q5V_YBy38hPNXKApjR1cQUp@mail.gmail.com>
-In-Reply-To: <1295519732.3873.269.camel@aeonflux>
+From: Rolf Offermanns <roffermanns@sysgo.com>
+Subject: Re: DUN client questions
+Date: Thu, 20 Jan 2011 11:48:32 +0100
+Message-ID: <4D381300.1030405@sysgo.com>
+In-Reply-To: <87tyh3sx8x.fsf@potku.valot.fi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2765931041184688787==
+--===============2468653676382899669==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+On 01/20/2011 11:08 AM, Kalle Valo wrote:
+> Hi Rolf,
+> =
 
-2011/1/20 Marcel Holtmann <marcel@holtmann.org>:
-> I don't think is needed. You do not get woken up until you tell D-Bus to
-> wake you up on that PropertyChanged signal. You can even match the first
-> parameter of that signal if you desire.
+> Rolf Offermanns <roffermanns-uSbOeAmDUekAvxtiuMwx3w@public.gmane.org> w=
+rites:
+> =
 
-I think this is still a worthy optimization, because this way not even
-oFono will wake up unnecessarily.
+>> Here is what I did to get the DUN connection up:
+>>
+>> 1. Connect the mobile using the bluetooth applet in MeeGo
+>>    -> The modem was recognized as DUN capable and shows up in the
+>>       "list-modems" output from ofonos test script as "/dun/xxx_yyy"
+>> 2. Then using the ofono test scripts: enable_modem,
+>> create-internet-context, activate-context
+> =
 
-> What we might should ensure is that we delay the signal reporting from
-> the modem. In case it wants to play ping-pong between two values. We
-> have done that for ConnMan in the past since WiFi signals are also kinda
-> flaky and made the UI go nuts.
+> connman should enable modem and all the magic needed to set it up, you
+> should not need to run ofono test scripts.
 
-Personally, I would just move to reporting the strength value in 0...5
-bars. Most UIs I've seen report bars in their UIs, and this way these
-clients will get woken up much more infrequently.
+It seems there is more involved with cellular connections. Detecting the
+modem in ofono is not enough to get it detected in connman.
 
-In addition if percentage is really required, we could offer that as a
-separate signal, but to instruct to use with caution. Or put it in a
-plugin. :)
+I have a USB 3G modem, too. It does not show up in Connman when I plug
+it in. After some time the modem registers to a network and only then it
+gets listed in the meego-network-panel.
 
-Cheers,
-Aki
+I think something along "register to a network and send notification
+about this" is missing in the dunmodem driver.
 
-> Regards
->
-> Marcel
->
->
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
+-Rolf
 
---===============2765931041184688787==--
+--===============2468653676382899669==--
 
