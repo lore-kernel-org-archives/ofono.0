@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============5602299631625284698=="
+Content-Type: multipart/mixed; boundary="===============3805129135186063040=="
 MIME-Version: 1.0
 From: Pekka.Pessi@nokia.com
-Subject: [sim-auth PATCH 4/5] Add doc/gba-authentication.txt
-Date: Thu, 20 Jan 2011 18:53:21 +0200
-Message-ID: <1295542402-26857-5-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1295542402-26857-4-git-send-email-Pekka.Pessi@nokia.com>
+Subject: [sim-auth PATCH 3/5] Add GBA_U to SIM authentication API
+Date: Thu, 20 Jan 2011 18:53:20 +0200
+Message-ID: <1295542402-26857-4-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1295542402-26857-3-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5602299631625284698==
+--===============3805129135186063040==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,91 +16,131 @@ Content-Transfer-Encoding: quoted-printable
 From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
 ---
- doc/gba-authentication.txt |   70 ++++++++++++++++++++++++++++++++++++++++=
+ doc/sim-authentication-api.txt |   90 ++++++++++++++++++++++++++++++++++++=
 ++++
- 1 files changed, 70 insertions(+), 0 deletions(-)
- create mode 100644 doc/gba-authentication.txt
+ 1 files changed, 90 insertions(+), 0 deletions(-)
 
-diff --git a/doc/gba-authentication.txt b/doc/gba-authentication.txt
-new file mode 100644
-index 0000000..4c88ace
---- /dev/null
-+++ b/doc/gba-authentication.txt
-@@ -0,0 +1,70 @@
-+GBA Authentication
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+diff --git a/doc/sim-authentication-api.txt b/doc/sim-authentication-api.txt
+index 27090e7..2db80bb 100644
+--- a/doc/sim-authentication-api.txt
++++ b/doc/sim-authentication-api.txt
+@@ -29,6 +29,7 @@ Properties	array{string} Suites [readonly]
+ =
+
+ 			"SIM" - SIM authentication
+ 			"AKA" - AKA authentication
++			"GBA_U" - UICC-based GBA authentication
+ =
+
+ SIM Authentication Suite
+ ------------------------
+@@ -36,6 +37,11 @@ SIM Authentication Suite
+ 		SIM authentication (A8) can be used to implement EAP SIM
+ 		or 2G GBA authentication.
+ =
+
++		The input dictionary must contain following input
++		parameters:
 +
-+		GBA authentication uses SIM card to establish a unique
-+		identity and a shared secret for a network service.  The
-+		shared secret is computed from the domain name of the
-+		service and a special boostrap key, Ks.
++			byte{array} "RAND" - RAND parameter
 +
-+		GBA is used to authenticate the mobile with the IMS XCAP
-+		servers.
+ 		In case of successful SIM authentication the returned
+ 		dictionary contains following items:
+ =
+
+@@ -79,3 +85,87 @@ AKA Authentication Suite
+ 			byte{array} "AUTS" - AKA AUTS parameter
+ =
+
+ 		All the AKA parameters and keys are 16-byte arrays.
 +
-+		The mobile obtains the bootstrap key and a temporary
-+		identity used with network services from a special
-+		boostraps bootstrap server, BSF.  Mobile authenticates
-+		itself with BSF using AKA authentication and the BSF
-+		returns it the identity to use with network services
-+		(known as NAF). The bootstrap key is formed from the AKA
-+		authentication results, too.
++GBA_U Suite
++-----------
 +
-+		In the initial phase the client will send its user
-+		identity, the IP Multimedia Private Identity (IMPI) to
-+		the BSF server. The BSF server fetches an AKA challenge
-+		from operator's subscriber database along with correct
-+		response: RAND, AUTN, XRES, CK and IK.  Server returns
-+		the AKA challenge RAND and AUTN to mobile.
++		GBA_U is a GBA variant used if USIM or ISIM application
++		supports it.
 +
-+		The client uses SIM to calculate the AKA RES, CK and IK
-+		from the challenge, and uses RES to generate AKA Digest
-+		credentials sent back to the bootstrap server.
++		The GBA_U authentication suite has three different
++		operations:
 +
-+		The bootstrapping server verifies the response using
-+		XRES, and if accepted, it will return an XML document
-+		containing the bootstrapping transaction identifier
-+		(B-TID) and the lifetime of the KS_NAF keys.
++		- bootstrapping (AKA authentication with BSF)
++		- update (storing result from BSF to SIM)
++		- NAF key derivation
 +
-+		The CK and IK parameters from AKA authentication are
-+		used for Ks.  The Ks can now be used to derive unique
-+		key for each NSF service.
++		The GBA suite recognizes the operations based on the
++		input parameters.
 +
-+		For further reference on GBA, see 3GPP TS 33.220
-+		and 3GPP TS 24.109.
++GBA Bootstrapping
 +
-+GBA Variants
-+------------
++		The GBA bootstrapping authentication is done after
++		receiving AKA challenge from bootstrap server (BSF).
++		After successful authentication, SIM will store the RAND
++		and the Ks for further use.
 +
-+		There are three different GBA variants: 2G GBA, GBA_ME
-+		and GBA_U. The variant is selected based on SIM card
-+		capabilities.The 2G GBA is used if there is no 3G USIM
-+		available. The GBA_ME is used if there is USIM or ISIM
-+		application on SIM card (also known as UICC), but there
-+		is no support for GBA service.
++		The input dictionary for the GBA bootstrapping must
++		contain following parameters:
 +
-+		In the GBA_ME variant the Ks key is stored outside SIM
-+		card. It is implemented using ordinary AKA
-+		authentication.
++			byte{array} "RAND" - AKA RAND parameter
 +
-+		In the 2G variant, there is no AKA authentication, but
-+		it is rather simulated using 2G A8 SIM authentication
-+		algorithm. The 2G variant is described in the 3GPP
-+		33.220 Annex I.
++			byte{array} "AUTN" - AKA AUTN parameter
 +
-+		The UICC-based GBA variant, GBA_U, keeps the Ks key
-+		stored on the SIM card (UICC) and lets the SIM card
-+		calculate the NAF keys.
++		In case of successful initial GBA bootstrapping the
++		returned dictionary contains following items:
 +
-+		Note that the device cannot downgrade the protocol:
-+		subscriber database has recorded if the SIM card
-+		supports GBA_U andthe information is included in the AKA
-+		challenge. The SIM card will reject a GBA_U-related AKA
-+		challenge if it is used with ordinary AKA service.
++			byte{array} "RES" - AKA RES parameter
++
++		In case of unsuccessful bootstrapping the returned
++		dictionary contains following item:
++
++			byte{array} "AUTS" - AKA AUTS parameter
++
++GBA Update
++
++		If the bootstrap operation is successful, the "btid" and
++		"lifetime" parameters received from bootstrap server
++		should be stored on the SIM card. The "btid" parameter
++		will be used as user identity with NAF servers.
++
++		The input dictionary for GBA update must contain
++		following parameters:
++
++			string "btid" - B-TID parameter
++			string "lifetime" - expected lifetime of Ks key
++
++		In case of successful update, an empty dictionary is
++		returned.
++
++NAF Key Derivation
++
++		The NAF key is used to authenticate mobile with a server
++		using GBA.
++
++		The input dictionary for NAF key derivation must contain
++		the following parameters:
++
++			string "name" - NAF domain name
++
++			byte{array} "protocol" - security protocol identifier
++
++		The security protocol identifier is usually a 5 byte
++		array. It indicates the protocol used between the mobile
++		device (UE) and the network server (NAF).  See 3GPP TS
++		33.220 Annex H for protocol identifiers.
++
++		In case of successful NAF key derivation the returned
++		dictionary contains following item:
++
++			byte{array} "KS-NAF" - KS_ext_NAF key
++
++		The KS-NAF is a 32-byte array.
++
++		The applications running on SIM can use GBA_U to derive
++		so called KS_int_NAF keys, however, they are not
++		accessible outside SIM card.
 -- =
 
 1.7.1
 
 
---===============5602299631625284698==--
+--===============3805129135186063040==--
 
