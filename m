@@ -1,37 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============5619548415341170203=="
+Content-Type: multipart/mixed; boundary="===============7892824602174365310=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 1/3] PPP: Fix transmit ACCM and receive ACCM setting issue
-Date: Fri, 21 Jan 2011 14:10:08 -0600
-Message-ID: <4D39E820.7060802@gmail.com>
-In-Reply-To: <FC2FB65B4D919844ADE4BE3C2BB739AD34F6CD39@shsmsx501.ccr.corp.intel.com>
+Subject: Re: [PATCH] doc: Add modem Type property
+Date: Fri, 21 Jan 2011 14:15:46 -0600
+Message-ID: <4D39E972.5060305@gmail.com>
+In-Reply-To: <1295563737-11115-1-git-send-email-dara.spieker-doyle@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5619548415341170203==
+--===============7892824602174365310==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Martin,
+Hi Dara,
 
->> You still forgot to apply my earlier comment.  The recv ACCM should be
->> set to what is acked by the peer.  e.g.:
-> That is not this patch want to resolve. This patch is just used to fix th=
-e mixing up of setting recv ACCM and transit ACCM, And fix Huawei modem iss=
-ue.
+On 01/20/2011 04:48 PM, Dara Spieker-Doyle wrote:
+> Add support for providing the type of the attached modem device
+> including GSM (3GPP), CDMA (3GPP2) and Bluetooth HFP.
+> ---
+>  doc/modem-api.txt |   13 +++++++++++++
+>  1 files changed, 13 insertions(+), 0 deletions(-)
 > =
 
-> 1. Currently, it is just ACKed by peer. You know It is called at lcp_rca,=
- and here the code always use ACCM as 0x0. So that is just the acked ACCM.
+> diff --git a/doc/modem-api.txt b/doc/modem-api.txt
+> index 45043b0..fe806c8 100644
+> --- a/doc/modem-api.txt
+> +++ b/doc/modem-api.txt
+> @@ -82,6 +82,19 @@ Properties	boolean Powered [readwrite]
+>  =
 
-Then please send a 2nd patch that just sets the recv ACCM to the one
-acked by the peer if you want to be pedantic.  But changing the chunk
-once, then changing it in the second chunk to some other value will only
-serve to confuse me or anyone who reviews your patch submissions.
+>  			This is usually obtained by using the +CGSN AT command.
+>  =
+
+> +		string Type [readonly, optional, experimental]
+> +
+> +			String representing the type of the modem device.
+> +
+> +			The possible values are:
+> +				"gsm" 	Modem supports one or more of the 3GPP
+> +					family of technologies including GSM,
+> +					EDGE, UMTS, HSPA, LTE.
+> +				"cdma"  Modem supports one or more of the 3GPP2
+> +					family of technologies including CDMA 1x,
+> +					EVDO.
+> +				"hfp"	Bluetooth hands-free profile (HFP) modem
+> +
+
+So one pointed question:
+
+How are we planning to support dual-mode devices with this property?  I
+believe during the CDMA workshop we decided that the clients should
+simply look at the set of interfaces, not a semi-static property...
 
 Regards,
 -Denis
 
---===============5619548415341170203==--
+--===============7892824602174365310==--
 
