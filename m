@@ -1,60 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============0909960099107626650=="
+Content-Type: multipart/mixed; boundary="===============8823085956955204121=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: oFono exits on new voicecall with disconnected system bus
-Date: Fri, 21 Jan 2011 13:10:51 +0100
-Message-ID: <1295611851.3873.306.camel@aeonflux>
-In-Reply-To: <AANLkTinuBhsEv3yduBfU6S58F-q9pddVVQrizn4KEKKA@mail.gmail.com>
+From: Pekka.Pessi@nokia.com
+Subject: [PATCH 3/3] doc: fix a kill-yank error
+Date: Fri, 21 Jan 2011 14:44:06 +0200
+Message-ID: <1295613846-19309-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1295613846-19309-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0909960099107626650==
+--===============8823085956955204121==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Nicola,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-> >> It seems that in src/voicecall.c/append_voicecall_properties "name"
-> >> points to garbage as commenting the line:
-> >> ofono_dbus_dict_append(dict, "Name", DBUS_TYPE_STRING, &name);
-> >> fixes the problem.
-> >
-> > can you print the content of name and call->name fields as part of a
-> > debug statement. I like to see what is in there.
-> >
-> > At least the pointer should be valid since it pointers to call->name
-> > array. Maybe the content is just not UTF-8 string.
-> =
+---
+ doc/smartmessaging-api.txt |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-> =
+diff --git a/doc/smartmessaging-api.txt b/doc/smartmessaging-api.txt
+index 36065b4..637a5ef 100644
+--- a/doc/smartmessaging-api.txt
++++ b/doc/smartmessaging-api.txt
+@@ -50,7 +50,7 @@ Methods		void ReceiveAppointment(array{byte} appointment,=
+ dict info)
+ 		void ReceiveBusinessCard(array{byte} card, dict info)
+ =
 
->         ofono_dbus_dict_append(dict, "LineIdentification",
->                                 DBUS_TYPE_STRING, &callerid);
-> =
+ 			Requests the agent to process a new SMS that has
+-			arrived containing a vCalendar object.  The info
++			arrived containing a vCard object.  The info
+ 			dictionary contains 'Sender', 'LocalSentTime' and
+ 			'SentTime' properties.
+ =
 
->         DBG("name %s call->name %s", name, call->name);
->         ofono_dbus_dict_append(dict, "Name", DBUS_TYPE_STRING, &name);
-> =
+-- =
 
-> =
-
-> ofonod[5771]: src/voicecall.c:ofono_voicecall_notify() Did not find a
-> call with id: 1
-> ofonod[5771]: src/voicecall.c:append_voicecall_properties() name =EF=BF=
-=BD=EF=BF=BD+@
-> call->name =EF=BF=BD=EF=BF=BD+@
-> ofonod[5771]: System bus has disconnected!
-
-I think that I found the problem. Pushed a patch for it. Please re-test
-if this helps. The Calypso driver was using stack memory for the call
-object.
-
-Regards
-
-Marcel
+1.7.1
 
 
-
---===============0909960099107626650==--
+--===============8823085956955204121==--
 
