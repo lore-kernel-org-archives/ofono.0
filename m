@@ -1,30 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============0302849680221022447=="
+Content-Type: multipart/mixed; boundary="===============5334297988299301998=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 3/3] doc: fix a kill-yank error
-Date: Fri, 21 Jan 2011 13:56:56 +0100
-Message-ID: <1295614616.3873.307.camel@aeonflux>
-In-Reply-To: <1295613846-19309-3-git-send-email-Pekka.Pessi@nokia.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH] isimodem: fix issue with user busy release
+Date: Fri, 21 Jan 2011 15:19:06 +0200
+Message-ID: <AANLkTi=SLmwcr6__BTwrPy4Wx0MmzF=GdEBFD4TJYYLO@mail.gmail.com>
+In-Reply-To: <1295598270-13244-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0302849680221022447==
+--===============5334297988299301998==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi Jeevaka,
 
->  doc/smartmessaging-api.txt |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
+2011/1/21 Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>:
+> when the user rejects the incoming call, hangup_active
+> will get called on the driver side whereas when the user
+> rejects the waiting call, set_udub will get called on the
+> driver side.
+> ---
+> =C2=A0drivers/isimodem/voicecall.c | =C2=A0 13 +++++++++----
+> =C2=A01 files changed, 9 insertions(+), 4 deletions(-)
 
-patch has been applied. Thanks.
+Patch has been pushed, thanks!
 
-Regards
+Cheers,
+Aki
 
-Marcel
-
-
-
---===============0302849680221022447==--
+--===============5334297988299301998==--
 
