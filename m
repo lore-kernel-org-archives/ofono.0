@@ -1,43 +1,74 @@
-Content-Type: multipart/mixed; boundary="===============3803119820625761824=="
+Content-Type: multipart/mixed; boundary="===============2403756167979320281=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 4/4] atmodem: sim-auth atom driver.
-Date: Fri, 21 Jan 2011 11:25:19 -0600
-Message-ID: <4D39C17F.9050409@gmail.com>
-In-Reply-To: <AANLkTi=J+3mGKBz3RrveP7t3Lcz3jhCL009TAxE-1_wv@mail.gmail.com>
+From: yanni <neelslotter@vodamail.co.za>
+Subject: test script to establish 3G connection
+Date: Fri, 21 Jan 2011 19:27:07 +0200
+Message-ID: <1295630827.2272.4.camel@yanni-laptop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3803119820625761824==
+--===============2403756167979320281==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Hi All,
 
-On 01/21/2011 11:07 AM, Pekka Pessi wrote:
-> Hi Denis,
-> =
+I'm looking for an example how to active 3G connection(ppp) with Huawei
+E180.
+not sure if these step's should work:
+1)/ofono-0.39/test# ./enable-modem =
 
-> 2011/1/20 Denis Kenzior <denkenz@gmail.com>:
->> My view is that checking mallocs of small structures is pretty much
->> pointless on Linux.
-> =
+Connecting modem /huawei0...
+2)/ofono-0.39/test# ./online-modem =
 
-> =
+Setting modem /huawei0 online...
+3)/ofono-0.39/test# ./list-modems =
 
-> The glib functions that ofono uses extensively don't do any malloc
-> checking, and it makes checking on the  ofono side bit pointless. If
-> malloc fails, ofono will crash. If it has not get killed by oom
-> police.
-> =
+[ /huawei0 ]
+    Features =3D sms gprs cbs net rat sim =
+
+    Powered =3D 1
+    Lockdown =3D 0
+    Interfaces =3D org.ofono.SmartMessaging org.ofono.PushNotification
+org.ofono.MessageManager org.ofono.ConnectionManager
+org.ofono.CellBroadcast org.ofono.NetworkRegistration
+org.ofono.SupplementaryServices org.ofono.Phonebook
+org.ofono.RadioSettings org.ofono.SimManager =
+
+    Online =3D 1
+4)./create-internet-context internet
+5)./list-contexts
+[ /huawei0 ]./list-contexts
+[ /huawei0 ]
+    [ /huawei0/context1 ]
+        Username =3D =
+
+        Protocol =3D ip
+        Name =3D Internet
+        Settings =3D { }
+        Active =3D 0
+        AccessPointName =3D internet
+        Password =3D =
+
+        Type =3D internet
+6)./process-context-settings , no output
+    [ /huawei0/context1 ]
+        Username =3D =
+
+        Protocol =3D ip
+        Name =3D Internet
+        Settings =3D { }
+        Active =3D 0
+        AccessPointName =3D internet
+        Password =3D =
+
+        Type =3D internet
+./process-context-settings "Receive no output here??...."
+
+Thanks =
 
 
-Well the g_try_ series do allow you to recover from a bad malloc, which
-is what we generally use.
 
-Regards,
--Denis
-
---===============3803119820625761824==--
+--===============2403756167979320281==--
 
