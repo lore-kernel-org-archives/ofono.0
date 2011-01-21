@@ -1,25 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============2679886307989194791=="
+Content-Type: multipart/mixed; boundary="===============2318117341981079471=="
 MIME-Version: 1.0
-From: =?unknown-8bit?b?0JLRj9GH0LXRgdC70LDQsiDQmtGA0L7Rgg==?= <krot@intes.od.ua>
-Subject: Problem configuring Longsung U6300
-Date: Fri, 21 Jan 2011 18:26:56 +0200
-Message-ID: <4D39B3D0.2050806@intes.od.ua>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [PATCH 4/4] atmodem: sim-auth atom driver.
+Date: Fri, 21 Jan 2011 19:07:43 +0200
+Message-ID: <AANLkTi=J+3mGKBz3RrveP7t3Lcz3jhCL009TAxE-1_wv@mail.gmail.com>
+In-Reply-To: <4D38711A.6040608@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2679886307989194791==
+--===============2318117341981079471==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello, all.
-I have a little question - which driver should I use for modem Longsung
-U6300 based on Qualcomm MSM6290? I know that Huawei uses qualcomm chips,
-so I tried to add udev rule like for huawei modem, but it did not work.
-list-modes shows modem (online=3D0, powered=3D0, lockdown=3D0), but
-enable-modem fails  with timeout exception. vendorId - 1c9e, productId -
-9603.
-Could you help me, please?
+Hi Denis,
 
---===============2679886307989194791==--
+2011/1/20 Denis Kenzior <denkenz@gmail.com>:
+> My view is that checking mallocs of small structures is pretty much
+> pointless on Linux.
+
+
+The glib functions that ofono uses extensively don't do any malloc
+checking, and it makes checking on the  ofono side bit pointless. If
+malloc fails, ofono will crash. If it has not get killed by oom
+police.
+
+-- =
+
+Pekka.Pessi mail at nokia.com
+
+--===============2318117341981079471==--
 
