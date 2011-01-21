@@ -1,51 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============6179812313073991696=="
+Content-Type: multipart/mixed; boundary="===============5619548415341170203=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/3] Use default ACCM (0xffffffff) to trasmit package
-Date: Fri, 21 Jan 2011 14:07:18 -0600
-Message-ID: <4D39E776.6030307@gmail.com>
-In-Reply-To: <FC2FB65B4D919844ADE4BE3C2BB739AD34F6CD0C@shsmsx501.ccr.corp.intel.com>
+Subject: Re: [PATCH 1/3] PPP: Fix transmit ACCM and receive ACCM setting issue
+Date: Fri, 21 Jan 2011 14:10:08 -0600
+Message-ID: <4D39E820.7060802@gmail.com>
+In-Reply-To: <FC2FB65B4D919844ADE4BE3C2BB739AD34F6CD39@shsmsx501.ccr.corp.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6179812313073991696==
+--===============5619548415341170203==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Martin,
 
-On 01/20/2011 07:51 PM, Xu, Martin wrote:
->> -----Original Message-----
->> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
->> Sent: Friday, January 21, 2011 3:11 AM
->> To: ofono(a)ofono.org
->> Cc: Xu, Martin
->> Subject: Re: [PATCH 2/3] Use default ACCM (0xffffffff) to trasmit package
->>
->> Hi Martin,
->>
->> On 01/19/2011 11:45 PM, martin.xu(a)intel.com wrote:
->>> From: Martin Xu <martin.xu@intel.com>
->>>
->>> Using my Huawei EM770W modem, if set ACCM as 0x00000000, RXJ-
->>> event breaks PPP link, after IP package transmit for a while.
->>> Using default ACCM, the issue can be fixed.
->>> I tested it at China Unicom networks.
->>
->> Does the Huawei NAK our ACCM by any chance?
-> The modem can accept our 0x0 ACCM. But with the ACCM, PPP does not work.
-> If there is not any issue at the modem firmware, can we understand it as:
-> Modem can transmit ACCM with 0x0, but we have no capability to receive it=
-, so we can't ask modem transmit as 0x0 ACCM?
+>> You still forgot to apply my earlier comment.  The recv ACCM should be
+>> set to what is acked by the peer.  e.g.:
+> That is not this patch want to resolve. This patch is just used to fix th=
+e mixing up of setting recv ACCM and transit ACCM, And fix Huawei modem iss=
+ue.
 > =
 
+> 1. Currently, it is just ACKed by peer. You know It is called at lcp_rca,=
+ and here the code always use ACCM as 0x0. So that is just the acked ACCM.
 
-We should be able to receive ACCM of 0 just fine.  I double checked the
-code, but maybe you want to put a pair of eyeballs on it as well.
+Then please send a 2nd patch that just sets the recv ACCM to the one
+acked by the peer if you want to be pedantic.  But changing the chunk
+once, then changing it in the second chunk to some other value will only
+serve to confuse me or anyone who reviews your patch submissions.
 
 Regards,
 -Denis
 
---===============6179812313073991696==--
+--===============5619548415341170203==--
 
