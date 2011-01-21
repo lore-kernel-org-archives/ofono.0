@@ -1,57 +1,75 @@
-Content-Type: multipart/mixed; boundary="===============2775252142187515959=="
+Content-Type: multipart/mixed; boundary="===============2854832879900539505=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [PATCH 1/6] gprs-provision: add driver API header
-Date: Fri, 21 Jan 2011 09:39:18 +0200
-Message-ID: <1295595558.21986.35.camel@jsaunama-desktop>
-In-Reply-To: <4D38AE66.8030805@gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] isimodem: fix issue with user busy release
+Date: Fri, 21 Jan 2011 10:24:30 +0200
+Message-ID: <1295598270-13244-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2775252142187515959==
+--===============2854832879900539505==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi
+when the user rejects the incoming call, hangup_active
+will get called on the driver side whereas when the user
+rejects the waiting call, set_udub will get called on the
+driver side.
+---
+ drivers/isimodem/voicecall.c |   13 +++++++++----
+ 1 files changed, 9 insertions(+), 4 deletions(-)
 
-On Thu, 2011-01-20 at 15:51 -0600, Denis Kenzior wrote:
-> So I don't really see the point in an asynchronous provisioning driver.
->  If you want to do this over D-Bus or something then you might as well
-> provision via the ConnectionManager interface.  The other problem with
-> being async is that is nearly impossible to support multiple
-> provisioning plugins properly.  I'd rather not deal with the race
-> conditions.
-> =
+diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+index e5842aa..9aa9454 100644
+--- a/drivers/isimodem/voicecall.c
++++ b/drivers/isimodem/voicecall.c
+@@ -973,6 +973,7 @@ static void isi_hangup_current(struct ofono_voicecall *=
+ovc,
+ 	 */
+ 	struct isi_voicecall *ivc =3D ofono_voicecall_get_data(ovc);
+ 	int id =3D 0;
++	uint8_t cause =3D CALL_CAUSE_RELEASE_BY_USER;
+ =
 
-> If we can't make the lookup fast enough to be done synchronously, then I
-> think we should give up.
+ 	for (id =3D 1; id <=3D 7; id++) {
+ 		if (ivc->calls[id].call_id & CALL_ID_WAITING)
+@@ -983,19 +984,23 @@ static void isi_hangup_current(struct ofono_voicecall=
+ *ovc,
+ 		switch (ivc->calls[id].status) {
+ 		case CALL_STATUS_CREATE:
+ 		case CALL_STATUS_COMING:
+-		case CALL_STATUS_PROCEEDING:
+ 		case CALL_STATUS_MO_ALERTING:
+-		case CALL_STATUS_MT_ALERTING:
+ 		case CALL_STATUS_ANSWERED:
+ 			goto release_by_id;
++		case CALL_STATUS_MT_ALERTING:
++			cause =3D CALL_CAUSE_BUSY_USER_REQUEST;
++			goto release_by_id;
++		case CALL_STATUS_PROCEEDING:
++			if (ivc->calls[id].mode_info & CALL_MODE_ORIGINATOR)
++				cause =3D CALL_CAUSE_BUSY_USER_REQUEST;
++			goto release_by_id;
+ 		}
+ 	}
+ =
 
-The reason for asyncronous API is still that SPN value reading from SIM.
-Is there any way to make sure it is available synchronously when
-provisioning is run?
-And what do you mean with it being impossible to support multiple
-provisioning plugins properly? Plugins are run one after another until
-first returns something.
-Race conditions I tried to address in gprs, so if gprs atom goes away
-while provisioning is running nothing bad should happen. But sure, there
-might something else, and hopefully someone could point them.
+ 	id =3D CALL_ID_ACTIVE;
+ =
 
-Of cause there is always the possibility to do all this provisioning
-stuff outside of oFono, especially if we add SPN property to SIM API.
+ release_by_id:
+-	isi_call_release_req(ovc, id, CALL_CAUSE_TYPE_CLIENT,
+-				CALL_CAUSE_RELEASE_BY_USER, cb, data);
++	isi_call_release_req(ovc, id, CALL_CAUSE_TYPE_CLIENT, cause, cb, data);
+ }
+ =
 
-> I also don't see the point of instantiating these per modem.  The API
-> already has all the information it needs in the get_settings call.  So
-> having the plugin allocate its data in the plugin init function and free
-> it there seems enough to me.
+ static void isi_release_all_held(struct ofono_voicecall *ovc,
+-- =
 
-This I agree, earlier patches did it that way. I only changed this since
-Marcel wished that all this kind of driver interfaces (like nettime)
-would look similar. Or did I misunderstand that?
-
---Jukka
+1.7.0.4
 
 
-
---===============2775252142187515959==--
+--===============2854832879900539505==--
 
