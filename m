@@ -1,69 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============5419890772048069813=="
+Content-Type: multipart/mixed; boundary="===============3435246471478132831=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: SAT support in oFono
-Date: Fri, 21 Jan 2011 11:12:20 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802DA0839@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <3A42A4F4F2ABA44EBD5853ED099266471247BFC116@EXMB02.eu.tieto.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: oFono exits on new voicecall with disconnected system bus
+Date: Fri, 21 Jan 2011 11:29:03 +0100
+Message-ID: <1295605743.3873.304.camel@aeonflux>
+In-Reply-To: <AANLkTinOHgArHXeEtVgq23X+XYF0daQ=u62SnMtbMOYO@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5419890772048069813==
+--===============3435246471478132831==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lasse,
+Hi Nicola,
 
-ofono-bounces(a)ofono.org wrote:
-> Hi
+> >> ofonod[6232]: src/voicecall.c:ofono_voicecall_notify() Did not find a
+> >> call with id: 1
+> >> ofonod[6232]: System bus has disconnected!
+> >
+> > this happens if something in a D-Bus message is corrupted and the D-Bus
+> > daemon complains. The result is that it kicks us off the bus.
+> >
+> > You need to track down which D-Bus API call causes this. Wild assumption
+> > is that it is either a wrong message parameter or an invalid object
+> > path.
 > =
 
-> I am checking what is the level of SAT/STK support in ofono
-> and have a couple of questions. The current implementation
-> contains support for basic STK commands, like menus, inputs,
-> calls, sms and so on. In TODO, there is only REFRESH command
-> on the list.
-> =
+> It seems that in src/voicecall.c/append_voicecall_properties "name"
+> points to garbage as commenting the line:
+> ofono_dbus_dict_append(dict, "Name", DBUS_TYPE_STRING, &name);
+> fixes the problem.
 
-> Is there plans or ideas to extend the support in oFono Core
-> with more complex STK features like (3GPP TS 31.111):
-> - Call control by USIM
-> - MO SMS Control by USIM
+can you print the content of name and call->name fields as part of a
+debug statement. I like to see what is in there.
 
-Most of the modems support call control, MO SMS control on the firmware
-side itself.
-Open for adding support in ofono.
+At least the pointer should be valid since it pointers to call->name
+array. Maybe the content is just not UTF-8 string.
 
-> - BIP (Bearer independent protocol), including commands like
-> OPEN CHANNEL, CLOSE CHANNEL, SEND/RECEIVE DATA
+Regards
 
-Inorder to support class e fully, changes are required in connman and
-ofono.
-Since class e is an optional one, I dont think we need to support this
-inorder to get GCF certified.
-
-for your question, is there any plan to support this in oFono core, =
-
-I would leave it to Denis, Andre and Marcel to comment on this.
-
-> - Extend support in PROVIDE LOCAL INFO
-
-Same here, don't need to support this inorder to get GCF certified. =
+Marcel
 
 
-> - EVENT DOWNLOAD / SET UP EVENT LIST
->
 
-Most of the modem firwares support the event download of MT CALL,
-connected, disconnected etc. Its been
-discussed in irc, that there is no plans to add support for
-UserActivity,
-IdleScreen available events. Denis can confirm this.
-
-Regards,
-Jeevaka
-
-
---===============5419890772048069813==--
+--===============3435246471478132831==--
 
