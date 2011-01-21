@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============6401434892758086414=="
+Content-Type: multipart/mixed; boundary="===============4201073272338896083=="
 MIME-Version: 1.0
 From: christian.lam@nokia.com
-Subject: [PATCH 1/7] dbus: add CDMA Connection Manager interface
-Date: Fri, 21 Jan 2011 15:06:44 -0800
-Message-ID: <1295651210-22922-2-git-send-email-christian.lam@nokia.com>
+Subject: [PATCH 4/7] nokiacdma: add CDMA Connection Manager support
+Date: Fri, 21 Jan 2011 15:06:47 -0800
+Message-ID: <1295651210-22922-5-git-send-email-christian.lam@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6401434892758086414==
+--===============4201073272338896083==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,30 +16,41 @@ Content-Transfer-Encoding: quoted-printable
 From: Christian Lam <christian.lam@nokia.com>
 
 ---
- include/dbus.h |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ plugins/nokiacdma.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-diff --git a/include/dbus.h b/include/dbus.h
-index 83a0590..6f436ca 100644
---- a/include/dbus.h
-+++ b/include/dbus.h
-@@ -59,6 +59,7 @@ extern "C" {
- /* CDMA Interfaces */
- #define OFONO_CDMA_VOICECALL_MANAGER_INTERFACE "org.ofono.cdma.VoiceCallMa=
-nager"
- #define OFONO_CDMA_MESSAGE_MANAGER_INTERFACE "org.ofono.cdma.MessageManage=
-r"
-+#define OFONO_CDMA_CONNECTION_MANAGER_INTERFACE "org.ofono.cdma.Connection=
-Manager"
+diff --git a/plugins/nokiacdma.c b/plugins/nokiacdma.c
+index 7bd224d..808341c 100644
+--- a/plugins/nokiacdma.c
++++ b/plugins/nokiacdma.c
+@@ -44,6 +44,7 @@
+ #include <drivers/atmodem/atutil.h>
+ #include <ofono/cdma-voicecall.h>
+ #include <ofono/devinfo.h>
++#include <ofono/cdma-connman.h>
  =
 
- /* Essentially a{sv} */
- #define OFONO_PROPERTIES_ARRAY_SIGNATURE DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STR=
-ING \
+ #include "common.h"
+ =
+
+@@ -147,7 +148,10 @@ static void nokiacdma_post_sim(struct ofono_modem *mod=
+em)
+ =
+
+ static void nokiacdma_post_online(struct ofono_modem *modem)
+ {
++	struct nokiacdma_data *data =3D ofono_modem_get_data(modem);
++
+ 	DBG("%p", modem);
++	ofono_cdma_connman_create(modem, 0, "cdmamodem", data->chat);
+ }
+ =
+
+ static struct ofono_modem_driver nokiacdma_driver =3D {
 -- =
 
 1.7.0.4
 
 
---===============6401434892758086414==--
+--===============4201073272338896083==--
 
