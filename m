@@ -1,37 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============1728300790798101489=="
+Content-Type: multipart/mixed; boundary="===============7986823870110089130=="
 MIME-Version: 1.0
-From: Lasse.Kunnasluoto@tieto.com
-Subject: SAT support in oFono
-Date: Fri, 21 Jan 2011 10:44:07 +0200
-Message-ID: <3A42A4F4F2ABA44EBD5853ED099266471247BFC116@EXMB02.eu.tieto.com>
+From: Nicola Mfb <nicola.mfb@gmail.com>
+Subject: Re: oFono exits on new voicecall with disconnected system bus
+Date: Fri, 21 Jan 2011 10:04:54 +0100
+Message-ID: <AANLkTinOHgArHXeEtVgq23X+XYF0daQ=u62SnMtbMOYO@mail.gmail.com>
+In-Reply-To: <1295535351.3873.294.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1728300790798101489==
+--===============7986823870110089130==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi
+On Thu, Jan 20, 2011 at 3:55 PM, Marcel Holtmann <marcel@holtmann.org> wr=
+ote:
 
-I am checking what is the level of SAT/STK support in ofono and have a coup=
-le of questions. The current implementation contains support for basic STK =
-commands, like menus, inputs, calls, sms and so on. In TODO, there is only =
-REFRESH command on the list.
+> Hi Nicola,
 
-Is there plans or ideas to extend the support in oFono Core with more compl=
-ex STK features like (3GPP TS 31.111):
-- Call control by USIM
-- MO SMS Control by USIM
-- BIP (Bearer independent protocol), including commands like OPEN CHANNEL, =
-CLOSE CHANNEL, SEND/RECEIVE DATA
-- Extend support in PROVIDE LOCAL INFO
-- EVENT DOWNLOAD / SET UP EVENT LIST
+Hi Marcel,
 
-Or is some of these assumed to be handled in modem or driver side?
+[...]
 
-BR,
--Lasse
+>> ofonod[6232]: src/voicecall.c:ofono_voicecall_notify() Did not find a
+>> call with id: 1
+>> ofonod[6232]: System bus has disconnected!
+>
+> this happens if something in a D-Bus message is corrupted and the D-Bus
+> daemon complains. The result is that it kicks us off the bus.
+>
+> You need to track down which D-Bus API call causes this. Wild assumption
+> is that it is either a wrong message parameter or an invalid object
+> path.
 
---===============1728300790798101489==--
+It seems that in src/voicecall.c/append_voicecall_properties "name"
+points to garbage as commenting the line:
+ofono_dbus_dict_append(dict, "Name", DBUS_TYPE_STRING, &name);
+fixes the problem.
+
+Regards
+
+     Niko
+
+--===============7986823870110089130==--
 
