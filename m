@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============3667740854851793038=="
+Content-Type: multipart/mixed; boundary="===============8508422231670895097=="
 MIME-Version: 1.0
 From: christian.lam@nokia.com
-Subject: [PATCH 6/7] test: add CDMA Connection Manager support scripts
-Date: Fri, 21 Jan 2011 15:06:49 -0800
-Message-ID: <1295651210-22922-7-git-send-email-christian.lam@nokia.com>
+Subject: [PATCH 7/7] test: add Settings dict parsing for CDMA ConnMan
+Date: Fri, 21 Jan 2011 15:06:50 -0800
+Message-ID: <1295651210-22922-8-git-send-email-christian.lam@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3667740854851793038==
+--===============8508422231670895097==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,68 +16,34 @@ Content-Transfer-Encoding: quoted-printable
 From: Christian Lam <christian.lam@nokia.com>
 
 ---
- test/disable-cdma-connman |   20 ++++++++++++++++++++
- test/enable-cdma-connman  |   20 ++++++++++++++++++++
- 2 files changed, 40 insertions(+), 0 deletions(-)
- create mode 100755 test/disable-cdma-connman
- create mode 100755 test/enable-cdma-connman
+ test/list-modems |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
-diff --git a/test/disable-cdma-connman b/test/disable-cdma-connman
-new file mode 100755
-index 0000000..a1c9568
---- /dev/null
-+++ b/test/disable-cdma-connman
-@@ -0,0 +1,20 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 2:
-+	path =3D sys.argv[1]
-+else:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+			'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+
-+print "Disconnecting CDMA Packet Data Service on modem %s..." % path
-+cm =3D dbus.Interface(bus.get_object('org.ofono', path),
-+		'org.ofono.cdma.ConnectionManager')
-+
-+cm.SetProperty("Powered", dbus.Boolean(0))
-diff --git a/test/enable-cdma-connman b/test/enable-cdma-connman
-new file mode 100755
-index 0000000..699240d
---- /dev/null
-+++ b/test/enable-cdma-connman
-@@ -0,0 +1,20 @@
-+#!/usr/bin/python
-+
-+import dbus
-+import sys
-+
-+bus =3D dbus.SystemBus()
-+
-+if len(sys.argv) =3D=3D 2:
-+	path =3D sys.argv[1]
-+else:
-+	manager =3D dbus.Interface(bus.get_object('org.ofono', '/'),
-+			'org.ofono.Manager')
-+	modems =3D manager.GetModems()
-+	path =3D modems[0][0]
-+
-+print "Connecting CDMA Packet Data Service on modem %s..." % path
-+cm =3D dbus.Interface(bus.get_object('org.ofono', path),
-+		'org.ofono.cdma.ConnectionManager')
-+
-+cm.SetProperty("Powered", dbus.Boolean(1))
+diff --git a/test/list-modems b/test/list-modems
+index 249ae15..662a3c7 100755
+--- a/test/list-modems
++++ b/test/list-modems
+@@ -62,6 +62,16 @@ for path, properties in modems:
+ 				for i in properties[key]:
+ 					val +=3D  "[" + i + " =3D "
+ 					val +=3D str(int(properties[key][i])) + "] "
++			elif key in ["Settings"]:
++				val =3D "{"
++				for i in properties[key].keys():
++					val +=3D " " + i + "=3D"
++					if i in ["DomainNameServers"]:
++						for n in properties[key][i]:
++							val +=3D n + ","
++					else:
++						val +=3D properties[key][i]
++				val +=3D " }"
+ 			else:
+ 				val =3D str(properties[key])
+ 			print "        %s =3D %s" % (key, val)
 -- =
 
 1.7.0.4
 
 
---===============3667740854851793038==--
+--===============8508422231670895097==--
 
