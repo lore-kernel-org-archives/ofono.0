@@ -1,55 +1,88 @@
-Content-Type: multipart/mixed; boundary="===============4981492767593204773=="
+Content-Type: multipart/mixed; boundary="===============6476290350361319606=="
 MIME-Version: 1.0
-From: Dara Spieker-Doyle <dara.spieker-doyle@nokia.com>
-Subject: [PATCH] doc: Add modem Type property
-Date: Thu, 20 Jan 2011 14:48:57 -0800
-Message-ID: <1295563737-11115-1-git-send-email-dara.spieker-doyle@nokia.com>
-In-Reply-To: <y>
+From: Xu, Martin <martin.xu@intel.com>
+Subject: RE: [PATCH 2/3] Use default ACCM (0xffffffff) to trasmit package
+Date: Fri, 21 Jan 2011 09:51:46 +0800
+Message-ID: <FC2FB65B4D919844ADE4BE3C2BB739AD34F6CD0C@shsmsx501.ccr.corp.intel.com>
+In-Reply-To: <4D3888B7.9020606@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4981492767593204773==
+--===============6476290350361319606==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Add support for providing the type of the attached modem device
-including GSM (3GPP), CDMA (3GPP2) and Bluetooth HFP.
----
- doc/modem-api.txt |   13 +++++++++++++
- 1 files changed, 13 insertions(+), 0 deletions(-)
+> -----Original Message-----
+> From: Denis Kenzior [mailto:denkenz(a)gmail.com]
+> Sent: Friday, January 21, 2011 3:11 AM
+> To: ofono(a)ofono.org
+> Cc: Xu, Martin
+> Subject: Re: [PATCH 2/3] Use default ACCM (0xffffffff) to trasmit package
+> =
 
-diff --git a/doc/modem-api.txt b/doc/modem-api.txt
-index 45043b0..fe806c8 100644
---- a/doc/modem-api.txt
-+++ b/doc/modem-api.txt
-@@ -82,6 +82,19 @@ Properties	boolean Powered [readwrite]
- =
+> Hi Martin,
+> =
 
- 			This is usually obtained by using the +CGSN AT command.
- =
+> On 01/19/2011 11:45 PM, martin.xu(a)intel.com wrote:
+> > From: Martin Xu <martin.xu@intel.com>
+> >
+> > Using my Huawei EM770W modem, if set ACCM as 0x00000000, RXJ-
+> > event breaks PPP link, after IP package transmit for a while.
+> > Using default ACCM, the issue can be fixed.
+> > I tested it at China Unicom networks.
+> =
 
-+		string Type [readonly, optional, experimental]
-+
-+			String representing the type of the modem device.
-+
-+			The possible values are:
-+				"gsm" 	Modem supports one or more of the 3GPP
-+					family of technologies including GSM,
-+					EDGE, UMTS, HSPA, LTE.
-+				"cdma"  Modem supports one or more of the 3GPP2
-+					family of technologies including CDMA 1x,
-+					EVDO.
-+				"hfp"	Bluetooth hands-free profile (HFP) modem
-+
- 		array{string} Features [readonly]
- =
+> Does the Huawei NAK our ACCM by any chance?
+The modem can accept our 0x0 ACCM. But with the ACCM, PPP does not work.
+If there is not any issue at the modem firmware, can we understand it as:
+Modem can transmit ACCM with 0x0, but we have no capability to receive it, =
+so we can't ask modem transmit as 0x0 ACCM?
 
- 			List of currently enabled features. It uses simple
--- =
+> =
 
-1.7.0.4
+> > ---
+> >  gatchat/ppp_lcp.c |    9 ++++++---
+> >  1 files changed, 6 insertions(+), 3 deletions(-)
+> >
+> > diff --git a/gatchat/ppp_lcp.c b/gatchat/ppp_lcp.c
+> > index cc3e231..2264731 100644
+> > --- a/gatchat/ppp_lcp.c
+> > +++ b/gatchat/ppp_lcp.c
+> > @@ -105,8 +105,7 @@ static void lcp_generate_config_options(struct
+> lcp_data *lcp)
+> >
+> >  static void lcp_reset_config_options(struct lcp_data *lcp)
+> >  {
+> > -	lcp->req_options =3D REQ_OPTION_ACCM;
+> > -	lcp->accm =3D 0;
+> > +	/* Using the default ACCM */
+> >
+> >  	lcp_generate_config_options(lcp);
+> >  }
+> > @@ -155,7 +154,11 @@ static void lcp_rca(struct pppcp_data *pppcp, const
+> struct pppcp_packet *packet)
+> >  			 * which control characters MUST remain mapped when
+> >  			 * the peer sends them.
+> >  			 */
+> > -			ppp_set_recv_accm(pppcp_get_ppp(pppcp), 0);
+> > +
+> > +			/*
+> > +			 * Using the default ACCM
+> > +			 * ppp_set_recv_accm(pppcp_get_ppp(pppcp), ~0U);
+> > +			 */
+> =
 
+> If you follow my advice for path 1, then this chunk isn't necessary.
+> =
 
---===============4981492767593204773==--
+> >  			break;
+> >  		default:
+> >  			break;
+> =
+
+> Regards,
+> -Denis
+
+--===============6476290350361319606==--
 
