@@ -1,64 +1,134 @@
-Content-Type: multipart/mixed; boundary="===============5081275466894167502=="
+Content-Type: multipart/mixed; boundary="===============3633608578359492616=="
 MIME-Version: 1.0
 From: christian.lam@nokia.com
-Subject: [PATCH 0/7] Add CDMA Connection Manager support
-Date: Fri, 21 Jan 2011 15:06:43 -0800
-Message-ID: <1295651210-22922-1-git-send-email-christian.lam@nokia.com>
+Subject: [PATCH 2/7] cdma-connman: add CDMA Connection Manager support
+Date: Fri, 21 Jan 2011 15:06:45 -0800
+Message-ID: <1295651210-22922-3-git-send-email-christian.lam@nokia.com>
 In-Reply-To: <y>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5081275466894167502==
+--===============3633608578359492616==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 From: Christian Lam <christian.lam@nokia.com>
 
-This series of patches provides the support for the CDMA Connection
-Manager, cdma-connman, atom. This includes Mobile Originated connection
-and disconnection features of Packet Data Service over CDMA
-(1xRTT and 1xEV-DO) systems. This implementation do not yet handle the
-CDMA Network Registration which is future work.
-
-These patches have been tested against the Nokia 7705 CDMA device in a
-tethered mode.
-
-Limitations
------------
-The Nokia 7705 device does not support an AT interface for reporting request
-responses, such as the remote/network disconnect reasons, so these are
-currently untested.
-
-Christian Lam (7):
-  dbus: add CDMA Connection Manager interface
-  cdma-connman: add CDMA Connection Manager support
-  src: add CDMA Connection Manager support
-  nokiacdma: add CDMA Connection Manager support
-  cdmamodem: add CDMA Connection Manager support
-  test: add CDMA Connection Manager support scripts
-  test: add Settings dict parsing for CDMA ConnMan
-
- Makefile.am                   |    9 +-
- drivers/cdmamodem/cdmamodem.c |    4 +-
- drivers/cdmamodem/cdmamodem.h |    4 +-
- drivers/cdmamodem/connman.c   |  283 ++++++++++++++++++++
- include/cdma-connman.h        |   79 ++++++
- include/dbus.h                |    1 +
- plugins/nokiacdma.c           |    4 +
- src/cdma-connman.c            |  571 +++++++++++++++++++++++++++++++++++++=
+---
+ Makefile.am            |    3 +-
+ include/cdma-connman.h |   79 ++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- src/ofono.h                   |    2 +
- test/disable-cdma-connman     |   20 ++
- test/enable-cdma-connman      |   20 ++
- test/list-modems              |   10 +
- 12 files changed, 1002 insertions(+), 5 deletions(-)
- create mode 100644 drivers/cdmamodem/connman.c
+ 2 files changed, 81 insertions(+), 1 deletions(-)
  create mode 100644 include/cdma-connman.h
- create mode 100644 src/cdma-connman.c
- create mode 100755 test/disable-cdma-connman
- create mode 100755 test/enable-cdma-connman
+
+diff --git a/Makefile.am b/Makefile.am
+index 9933e32..c4f5983 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -13,7 +13,8 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
+lude/history.h \
+ 			include/radio-settings.h include/stk.h \
+ 			include/audio-settings.h include/nettime.h \
+ 			include/ctm.h include/cdma-voicecall.h \
+-			include/cdma-sms.h include/sim-auth.h
++			include/cdma-sms.h include/sim-auth.h \
++			include/cdma-connman.h
+ =
+
+ nodist_pkginclude_HEADERS =3D include/version.h
+ =
+
+diff --git a/include/cdma-connman.h b/include/cdma-connman.h
+new file mode 100644
+index 0000000..22252e0
+--- /dev/null
++++ b/include/cdma-connman.h
+@@ -0,0 +1,79 @@
++/*
++ *
++ *  oFono - Open Source Telephony
++ *
++ *  Copyright (C) 2010-2011 Nokia Corporation. All rights reserved.
++ *
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the GNU General Public License version 2 as
++ *  published by the Free Software Foundation.
++ *
++ *  This program is distributed in the hope that it will be useful,
++ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *  GNU General Public License for more details.
++ *
++ *  You should have received a copy of the GNU General Public License
++ *  along with this program; if not, write to the Free Software
++ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
+ USA
++ *
++ */
++
++#ifndef __OFONO_CDMA_CONNMAN_H
++#define __OFONO_CDMA_CONNMAN_H
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include <ofono/types.h>
++
++struct ofono_cdma_connman;
++
++typedef void (*ofono_cdma_connman_cb_t)(const struct ofono_error *error,
++						void *data);
++typedef void (*ofono_cdma_connman_up_cb_t)(const struct ofono_error *error,
++						const char *interface,
++						ofono_bool_t static_ip,
++						const char *address,
++						const char *netmask,
++						const char *gw,
++						const char **dns,
++						void *data);
++
++struct ofono_cdma_connman_driver {
++	const char *name;
++	int (*probe)(struct ofono_cdma_connman *cm, unsigned int vendor,
++						void *data);
++	void (*remove)(struct ofono_cdma_connman *cm);
++	void (*activate)(struct ofono_cdma_connman *cm,
++						ofono_cdma_connman_up_cb_t cb,
++						void *data);
++	void (*deactivate)(struct ofono_cdma_connman *cm,
++						ofono_cdma_connman_cb_t cb,
++						void *data);
++};
++
++int ofono_cdma_connman_driver_register(
++				const struct ofono_cdma_connman_driver *d);
++void ofono_cdma_connman_driver_unregister(
++				const struct ofono_cdma_connman_driver *d);
++
++struct ofono_cdma_connman *ofono_cdma_connman_create(
++						struct ofono_modem *modem,
++						unsigned int vendor,
++						const char *driver,
++						void *data);
++
++void ofono_cdma_connman_register(struct ofono_cdma_connman *cm);
++void ofono_cdma_connman_remove(struct ofono_cdma_connman *cm);
++
++void ofono_cdma_connman_set_data(struct ofono_cdma_connman *cm,
++						void *data);
++void *ofono_cdma_connman_get_data(struct ofono_cdma_connman *cm);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* __OFONO_CDMA_CONNMAN_H */
+-- =
+
+1.7.0.4
 
 
---===============5081275466894167502==--
+--===============3633608578359492616==--
 
