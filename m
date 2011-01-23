@@ -1,44 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============8406455499369106321=="
+Content-Type: multipart/mixed; boundary="===============8865819365846143754=="
 MIME-Version: 1.0
 From: George Matveev <george@matveev.se>
-Subject: [PATCH 3/7] huaweimodem: Phone type defined using enum
- called_number_type
-Date: Sun, 23 Jan 2011 11:16:32 +0100
-Message-ID: <1295777796-19978-4-git-send-email-george@matveev.se>
+Subject: [PATCH 4/7] hfpmodem: Phone type defined using enum called_number_type
+Date: Sun, 23 Jan 2011 11:16:33 +0100
+Message-ID: <1295777796-19978-5-git-send-email-george@matveev.se>
 In-Reply-To: <1295777796-19978-1-git-send-email-george@matveev.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8406455499369106321==
+--===============8865819365846143754==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/huaweimodem/voicecall.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
+ drivers/hfpmodem/voicecall.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/huaweimodem/voicecall.c b/drivers/huaweimodem/voicecal=
-l.c
-index 0c0aaa1..598a26e 100644
---- a/drivers/huaweimodem/voicecall.c
-+++ b/drivers/huaweimodem/voicecall.c
-@@ -37,6 +37,7 @@
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index d4d370e..9481545 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -366,7 +366,7 @@ static void hfp_dial(struct ofono_voicecall *vc,
+ 		goto error;
  =
 
- #include "gatchat.h"
- #include "gatresult.h"
-+#include "common.h"
- =
-
- #include "huaweimodem.h"
- =
-
-@@ -120,7 +121,7 @@ static void huawei_dial(struct ofono_voicecall *vc,
- {
- 	char buf[256];
- =
-
+ 	cbd->user =3D vc;
 -	if (ph->type =3D=3D 145)
 +	if (ph->type =3D=3D CALLED_NUMBER_TYPE_INTERNATIONAL)
  		snprintf(buf, sizeof(buf), "ATD+%s", ph->number);
@@ -49,5 +36,5 @@ index 0c0aaa1..598a26e 100644
 1.5.6.5
 
 
---===============8406455499369106321==--
+--===============8865819365846143754==--
 
