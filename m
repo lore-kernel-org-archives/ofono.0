@@ -1,130 +1,124 @@
-Content-Type: multipart/mixed; boundary="===============3842978371148819869=="
+Content-Type: multipart/mixed; boundary="===============1377799751754491225=="
 MIME-Version: 1.0
 From: George Matveev <george@matveev.se>
-Subject: [PATCH 1/7] src: Introduced enum called_number_type
-Date: Sun, 23 Jan 2011 11:16:30 +0100
-Message-ID: <1295777796-19978-2-git-send-email-george@matveev.se>
+Subject: [PATCH 2/7] atmodem: Phone type defined using enum called_number_type
+Date: Sun, 23 Jan 2011 11:16:31 +0100
+Message-ID: <1295777796-19978-3-git-send-email-george@matveev.se>
 In-Reply-To: <1295777796-19978-1-git-send-email-george@matveev.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3842978371148819869==
+--===============1377799751754491225==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Based on 24.008 section 10.5.4.7 enum called_number_type
-is to be used when phone number type is required.
 ---
- src/call-forwarding.c |    2 +-
- src/common.c          |    8 ++++----
- src/common.h          |   10 ++++++++++
- src/phonebook.c       |    3 +--
- 4 files changed, 16 insertions(+), 7 deletions(-)
+ drivers/atmodem/atutil.c          |    3 ++-
+ drivers/atmodem/call-forwarding.c |    3 ++-
+ drivers/atmodem/ssn.c             |    3 ++-
+ drivers/atmodem/voicecall.c       |    2 +-
+ 4 files changed, 7 insertions(+), 4 deletions(-)
 
-diff --git a/src/call-forwarding.c b/src/call-forwarding.c
-index 512f223..b9e6633 100644
---- a/src/call-forwarding.c
-+++ b/src/call-forwarding.c
-@@ -791,7 +791,7 @@ static DBusMessage *cf_set_property(DBusConnection *con=
-n, DBusMessage *msg,
- 		int timeout;
+diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
+index a55b3f5..8c24e72 100644
+--- a/drivers/atmodem/atutil.c
++++ b/drivers/atmodem/atutil.c
+@@ -34,6 +34,7 @@
  =
 
- 		ph.number[0] =3D '\0';
--		ph.type =3D 129;
-+		ph.type =3D CALLED_NUMBER_TYPE_UNKNOWN;
+ #include "atutil.h"
+ #include "vendor.h"
++#include "common.h"
  =
 
- 		if (dbus_message_iter_get_arg_type(&var) !=3D DBUS_TYPE_STRING)
- 			return __ofono_error_invalid_args(msg);
-diff --git a/src/common.c b/src/common.c
-index 4d93488..44bc925 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -405,8 +405,8 @@ const char *phone_number_to_string(const struct ofono_p=
-hone_number *ph)
+ void decode_at_error(struct ofono_error *error, const char *final)
  {
- 	static char buffer[64];
+@@ -112,7 +113,7 @@ GSList *at_util_parse_clcc(GAtResult *result)
  =
 
--	if (ph->type =3D=3D 145 && (strlen(ph->number) > 0) &&
--			ph->number[0] !=3D '+') {
-+	if (ph->type =3D=3D CALLED_NUMBER_TYPE_INTERNATIONAL &&
-+		(strlen(ph->number) > 0) && ph->number[0] !=3D '+') {
- 		buffer[0] =3D '+';
- 		strncpy(buffer + 1, ph->number, 62);
- 		buffer[63] =3D '\0';
-@@ -422,10 +422,10 @@ void string_to_phone_number(const char *str, struct o=
-fono_phone_number *ph)
- {
- 	if (str[0] =3D=3D '+') {
- 		strcpy(ph->number, str+1);
--		ph->type =3D 145;	/* International */
-+		ph->type =3D CALLED_NUMBER_TYPE_INTERNATIONAL;
- 	} else {
- 		strcpy(ph->number, str);
--		ph->type =3D 129;	/* Local */
-+		ph->type =3D CALLED_NUMBER_TYPE_UNKNOWN;
- 	}
- }
+ 	while (g_at_result_iter_next(&iter, "+CLCC:")) {
+ 		const char *str =3D "";
+-		int number_type =3D 129;
++		int number_type =3D CALLED_NUMBER_TYPE_UNKNOWN;
  =
 
-diff --git a/src/common.h b/src/common.h
-index 5edff49..a019231 100644
---- a/src/common.h
-+++ b/src/common.h
-@@ -135,6 +135,16 @@ enum context_status {
- 	CONTEXT_STATUS_ACTIVATED =3D 1,
- };
+ 		if (!g_at_result_iter_next_number(&iter, &id))
+ 			continue;
+diff --git a/drivers/atmodem/call-forwarding.c b/drivers/atmodem/call-forwa=
+rding.c
+index f11a68e..bd091ad 100644
+--- a/drivers/atmodem/call-forwarding.c
++++ b/drivers/atmodem/call-forwarding.c
+@@ -38,6 +38,7 @@
+ #include "gatresult.h"
  =
 
-+/* 24.008 Section 10.5.4.7 Called party BCD number */
-+enum called_number_type {
-+	CALLED_NUMBER_TYPE_UNKNOWN =3D 0,
-+	CALLED_NUMBER_TYPE_INTERNATIONAL =3D 1,
-+	CALLED_NUMBER_TYPE_NATIONAL =3D 2,
-+	CALLED_NUMBER_TYPE_NETWORK_SPECIFIC =3D 3,
-+	CALLED_NUMBER_TYPE_DEDICATED_ACCESS =3D 4,
-+	CALLED_NUMBER_TYPE_RESERVED =3D 7
-+};
-+
- const char *telephony_error_to_str(const struct ofono_error *error);
+ #include "atmodem.h"
++#include "common.h"
  =
 
- gboolean valid_phone_number_format(const char *number);
-diff --git a/src/phonebook.c b/src/phonebook.c
-index e388ac1..cf33e00 100644
---- a/src/phonebook.c
-+++ b/src/phonebook.c
-@@ -38,7 +38,6 @@
- #include "common.h"
+ static const char *none_prefix[] =3D { NULL };
+ static const char *ccfc_prefix[] =3D { "+CCFC:", NULL };
+@@ -89,7 +90,7 @@ static void ccfc_query_cb(gboolean ok, GAtResult *result,=
+ gpointer user_data)
+ 		g_at_result_iter_next_number(&iter, &(list[num].cls));
  =
 
- #define LEN_MAX 128
--#define TYPE_INTERNATIONAL 145
+ 		list[num].phone_number.number[0] =3D '\0';
+-		list[num].phone_number.type =3D 129;
++		list[num].phone_number.type =3D CALLED_NUMBER_TYPE_UNKNOWN;
+ 		list[num].time =3D 20;
  =
 
- #define PHONEBOOK_FLAG_CACHED 0x1
+ 		if (!g_at_result_iter_next_string(&iter, &str))
+diff --git a/drivers/atmodem/ssn.c b/drivers/atmodem/ssn.c
+index b7a9df4..8ede79b 100644
+--- a/drivers/atmodem/ssn.c
++++ b/drivers/atmodem/ssn.c
+@@ -36,6 +36,7 @@
+ #include "gatresult.h"
  =
 
-@@ -176,7 +175,7 @@ static void vcard_printf_number(GString *vcards, const =
-char *number, int type,
- 		break;
- 	}
+ #include "atmodem.h"
++#include "common.h"
  =
 
--	if ((type =3D=3D TYPE_INTERNATIONAL) && (number[0] !=3D '+'))
-+	if ((type =3D=3D CALLED_NUMBER_TYPE_INTERNATIONAL) && (number[0] !=3D '+'=
-))
- 		intl =3D "+";
+ static const char *none_prefix[] =3D { NULL };
  =
 
- 	snprintf(buf, sizeof(buf), "TEL;TYPE=3D\%s%s:\%s\%s", pref,
+@@ -69,7 +70,7 @@ static void cssu_notify(GAtResult *result, gpointer user_=
+data)
+ 	struct ofono_phone_number ph;
+ =
+
+ 	ph.number[0] =3D '\0';
+-	ph.type =3D 129;
++	ph.type =3D CALLED_NUMBER_TYPE_UNKNOWN;
+ =
+
+ 	g_at_result_iter_init(&iter, result);
+ =
+
+diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
+index 9e56999..75a53ab 100644
+--- a/drivers/atmodem/voicecall.c
++++ b/drivers/atmodem/voicecall.c
+@@ -379,7 +379,7 @@ static void at_dial(struct ofono_voicecall *vc,
+ =
+
+ 	cbd->user =3D vc;
+ =
+
+-	if (ph->type =3D=3D 145)
++	if (ph->type =3D=3D CALLED_NUMBER_TYPE_INTERNATIONAL)
+ 		snprintf(buf, sizeof(buf), "ATD+%s", ph->number);
+ 	else
+ 		snprintf(buf, sizeof(buf), "ATD%s", ph->number);
 -- =
 
 1.5.6.5
 
 
---===============3842978371148819869==--
+--===============1377799751754491225==--
 
