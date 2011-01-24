@@ -1,44 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============4561200407866091178=="
+Content-Type: multipart/mixed; boundary="===============2578188463517098859=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: SAT support in oFono
-Date: Mon, 24 Jan 2011 13:17:17 +0200
-Message-ID: <1295867837.2182.54.camel@jsaunama-desktop>
-In-Reply-To: <1295866144.2676.15.camel@aeonflux>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH 1/3] Use pkglibdir where applicable
+Date: Mon, 24 Jan 2011 14:50:37 +0200
+Message-ID: <1295873437-5859-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4561200407866091178==
+--===============2578188463517098859==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello
+---
+ Makefile.am |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-> > > > - BIP (Bearer independent protocol), including commands like OPEN C=
-HANNEL, CLOSE CHANNEL, SEND/RECEIVE DATA
-> > BIP is on many operators' wish list of supported SAT features. Even it
-> > is optional in 3GPP, some market areas will probably require BIP. I
-> > don't have an example to give right now.
-> =
+diff --git a/Makefile.am b/Makefile.am
+index 9933e32..f941a19 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -366,7 +366,7 @@ BUILT_SOURCES =3D $(local_headers)
+ =
 
-> I think the important phrase is "wish list". So far nobody could really
-> showed me the exact use case for BIP. I am actually really interested in
-> understanding what the operators wanna use it for. I prefer to have hard
-> facts here and not just "wish list" and "probably". If this is not a
-> requirement for certification and the operator is not actually using
-> such a feature at all, then why bother. Feel free to convince me
-> otherwise here.
+ CLEANFILES =3D src/builtin.h $(BUILT_SOURCES) $(rules_DATA)
+ =
 
-Sorry, still quite anecdotal, but I heard about a case related to RFC
-payment system, where operator wants to use BIP for loading payment
-application into SIM (I guess SMS-PP-data-download was not good enough
-for that). Also, at least some NFC plans use Smart Card Web Server
-(SCWS), that needs at least part of BIP.
+-plugindir =3D $(libdir)/ofono/plugins
++plugindir =3D $(pkglibdir)/plugins
+ =
 
---Jukka
+ if MAINTAINER_MODE
+ build_plugindir =3D $(abs_top_srcdir)/plugins/.libs
+-- =
 
+1.7.1
 
 
---===============4561200407866091178==--
+--===============2578188463517098859==--
 
