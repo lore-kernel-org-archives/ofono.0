@@ -1,45 +1,96 @@
-Content-Type: multipart/mixed; boundary="===============3991800076809664770=="
+Content-Type: multipart/mixed; boundary="===============3662920272068483038=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: SAT support in oFono
-Date: Mon, 24 Jan 2011 11:53:59 +0100
-Message-ID: <1295866439.2676.19.camel@aeonflux>
-In-Reply-To: <AANLkTim6d_4eHggK7JHO3hjG-uTu-UUbL4cU11VPrtHt@mail.gmail.com>
+Subject: Re: ppp problem
+Date: Mon, 24 Jan 2011 11:56:17 +0100
+Message-ID: <1295866577.2676.21.camel@aeonflux>
+In-Reply-To: <a08dc9.a078.12db705a4b0.Coremail.hyqzyf@163.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3991800076809664770==
+--===============3662920272068483038==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi,
 
-> >> Let us set aside the the merits of the use cases for these features for
-> >> the moment ;)  Implementing Call control by USIM is fairly
-> >> straightforward to do in the core.  However, no modem manufacturer
-> >> currently allows us to have full control over this feature.  It is
-> >> implemented in the firmware and every vendor does this differently.  So
-> >> for now support of this feature is in the realm of the modem driver.
-> >>
-> > okay, so assuming this is how it is going stay. Even modem handles
-> > these, ofono should deliver possible AlphaId SIM may give in a response
-> > to call control envelope. I did not see if this is implemented. Or is it
-> > dropped since it is not tested in GCF..
+> I have got a problem about 3G connectrion from ofono, does anyone have
+> idea to resolve it? =
+
+> The  modem is huawei EM560. =
+
 > =
 
-> I think enabling these types of modems would require the stk driver
-> API be able to give a bit of context to a proactive command. For
-> example, indicating that a send SMS proactive command is for
-> information purposes only, and that the SMS has been sent by the
-> modem.
+> Here is the log:
+> =
 
-we have this kind of information coming from most modems. Question is
-just what to do with it. If the modem already send the SMS for example,
-then why bother the host CPU with that kind of information.
+> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
+> Path
+> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
+> Registered
+> ofonod[940]:
+> plugins/udev.c:add_modem() /devices/pci0000:00/0000:00:00.7/usb1/1-1/1-1.=
+2/1-1.2:2.1/tty/ttyACM0 (huawei)
+> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
+> ModemRegistered
+> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
+> PcuiRegistered
+> ofonod[940]: plugins/udev.c:add_huawei() add_huaweiingggggggggg by hyq
+> ofonod[940]: plugins/udev.c:add_huawei() name =3DOFONO_HUAWEI_TYPE by
+> hyq
+> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
+> Modem
+> ofonod[940]: src/modem.c:set_modem_property() m odem 0x8d49058
+> property ModemRegistered
+> ofonod[940]: plugins/udev.c:add_huawei() after ofono_modem_register by
+> hyq ppp=3D1 pcui=3D0
+> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
+> Path
+> ofonod[940]:
+> plugins/udev.c:add_modem() /devices/pci0000:00/0000:00:00.7/usb1/1-1/1-1.=
+2/1-1.2:2.3/tty/ttyACM1 (huawei)
+> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
+> ModemRegistered
+> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
+> PcuiRegistered
+> ofonod[940]: plugins/udev.c:add_huawei() add_huaweiingggggggggg by hyq
+> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
+> HasVoice
+> ofonod[940]: plugins/udev.c:add_huawei() after ofono_modem_register by
+> hyq ppp=3D1 pcui=3D0
+> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
+> Path
+> ofonod[940]:
+> plugins/udev.c:add_modem() /devices/pci0000:00/0000:00:00.7/usb1/1-1/1-1.=
+2/1-1.2:2.7/tty/ttyACM2 (huawei)
+> ofonod[940]: src/modem.c:g et_modem_property() modem 0x8d49058
+> property ModemRegistered
+> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
+> PcuiRegistered
+> ofonod[940]: plugins/udev.c:add_huawei() name =3DOFONO_HUAWEI_TYPE by
+> hyq
+> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
+> Pcui
+> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
+> PcuiRegistered
+> =
 
-You can check ofono_stk_proactive_command_handled_notify() for example
-which does this right now.
+> [root(a)localhost test]# ./activate-context =
+
+> Entering new phase: 1
+> Entering new phase: 3
+> Entering new phase: 4
+> ofonod[815]: drivers/atmodem/gprs-context.c:ppp_connect() =
+
+> ofonod[815]: IP: 0.0.0.0
+> ofonod[815]: DNS: 0.0.0.0, 0.0.0.0
+> ofonod[815]: src/gprs.c:pri_activate_callback() 0xa063660 ppp0
+
+no idea what goes wrong here, but the network or your modem firmware
+basically tells you that the IP address is not set.
+
+Run with OFONO_PPP_DEBUG=3D1 and see if it gives you more details.
 
 Regards
 
@@ -47,5 +98,5 @@ Marcel
 
 
 
---===============3991800076809664770==--
+--===============3662920272068483038==--
 
