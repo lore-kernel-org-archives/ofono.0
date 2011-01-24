@@ -1,39 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============4902211870485047756=="
+Content-Type: multipart/mixed; boundary="===============4843095136711661491=="
 MIME-Version: 1.0
 From: Aki Niemi <aki@protocolpolice.com>
 Subject: Re: [PATCH 1/6] gprs-provision: add driver API header
-Date: Mon, 24 Jan 2011 12:16:17 +0200
-Message-ID: <AANLkTin89+SgEqw1PsPnvw2ASyNTORB23uMX6CcC91np@mail.gmail.com>
-In-Reply-To: <1295853054.2182.43.camel@jsaunama-desktop>
+Date: Mon, 24 Jan 2011 12:38:14 +0200
+Message-ID: <AANLkTinvcCf5qTReNBa=7Zo+fuzgFNsh8UjzERPb84k4@mail.gmail.com>
+In-Reply-To: <4D39C5F8.4040004@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4902211870485047756==
+--===============4843095136711661491==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+Hi Denis,
 
-2011/1/24 Jukka Saunamaki <jukka.saunamaki@nokia.com>:
-> Then how about something like this: Lets make provisioning API
-> synchronous (so that plugins do not need to care about SIM or other
-> safety).
-> In stead, if in gprs atom ofono_gprs_register() we notice the need for
-> provisioning, =C2=A0ofono_sim_read(SPN) is called there. All issues would=
- be
-> localised there. Provisioning modules would be called with MCC,MNC,SPN
-> as parameters.
+2011/1/21 Denis Kenzior <denkenz@gmail.com>:
+> How exactly are you guaranteeing that 'nothing bad should happen'?
+> There is no cancellation mechanism that I see. =C2=A0Not to mention that =
+the
+> current ofono_sim_read API is not even safe either. =C2=A0For exactly the
+> same reasons.
 
-I think this is a better approach. It would reduce the role of the
-provisioning plugins to database abstraction only, which is
-essentially what they are.
+This is a problem with all users of ofono_sim_read() at the moment. I
+suppose if the atoms get removed at different times, it may happen
+that after the gprs atom is gone, the SIM atom is still calling its
+read callback.
 
-I think the provisioning atom/plugins also should not be modem
-specific, but just created once for all modems to use.
+Seems like we need some sort of cancellation API to ofono_sim_read(),
+or use Jukka's approach of a request object, perhaps with a
+GDestroyNotify parameter, or simply change the way atoms are created
+and removed so that this could be handled inside the SIM atom.
 
 Cheers,
 Aki
 
---===============4902211870485047756==--
+--===============4843095136711661491==--
 
