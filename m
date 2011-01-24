@@ -1,26 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============0544889253289819710=="
+Content-Type: multipart/mixed; boundary="===============0247434316199800869=="
 MIME-Version: 1.0
-From: oleg.zhurakivskyy@nokia.com
-Subject: SMS agent interface
-Date: Mon, 24 Jan 2011 13:31:32 +0000
-Message-ID: <CBAD88B23448774582E4323588D6B5D205F3357B@008-AM1MPN1-007.mgdnok.nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/3] Use pkglibdir where applicable
+Date: Mon, 24 Jan 2011 14:39:33 +0100
+Message-ID: <1295876373.2676.25.camel@aeonflux>
+In-Reply-To: <1295873437-5859-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0544889253289819710==
+--===============0247434316199800869==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Hi Remi,
 
-Hello,
+>  Makefile.am |    2 +-
+>  1 files changed, 1 insertions(+), 1 deletions(-)
 
-If you aren't too busy, could you please check and comment on SMS agent int=
-erface? (the patches were sent on December 29th, maybe they were just misse=
-d somehow). Thanks!
+patch has been applied. Thanks.
 
-Regards,
-Oleg
+Regards
 
---===============0544889253289819710==--
+Marcel
+
+
+
+--===============0247434316199800869==--
 
