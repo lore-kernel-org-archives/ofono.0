@@ -1,69 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============7574351664118609813=="
+Content-Type: multipart/mixed; boundary="===============6917058443890868479=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [PATCH 1/6] gprs-provision: add driver API header
-Date: Mon, 24 Jan 2011 09:10:54 +0200
-Message-ID: <1295853054.2182.43.camel@jsaunama-desktop>
-In-Reply-To: <4D39C5F8.4040004@gmail.com>
+From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
+Subject: Re: SAT support in oFono
+Date: Mon, 24 Jan 2011 09:15:11 +0200
+Message-ID: <1295853311.26199.41.camel@lkunnasl-desktop>
+In-Reply-To: <4D39B0A2.8060204@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7574351664118609813==
+--===============6917058443890868479==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi all,
 
-On Fri, 2011-01-21 at 11:44 -0600, Denis Kenzior wrote:
-> > The reason for asyncronous API is still that SPN value reading from SIM.
-> > Is there any way to make sure it is available synchronously when
-> > provisioning is run?
+On Fri, 2011-01-21 at 18:13 +0200, Denis Kenzior wrote:
+> Hi Lasse,
 > =
 
-> Not really. So you're introducing a boatload of extra complexity just
-> because of the need for EFspn?  Are you 100% sure that you really need
-> this?  Can some of these corner cases be covered differently?
+> On 01/21/2011 02:44 AM, Lasse.Kunnasluoto(a)tieto.com wrote:
+> > Hi
+> > =
 
-As I have said, there are MVNOs (I checked, all of them do not have
-their own MNC) and operator brand names that use different APN settings
-from their host operator. To tell these cases apart in provisioning, we
-need SPN. =
+> > I am checking what is the level of SAT/STK support in ofono and have a =
+couple of questions. The current implementation contains support for basic =
+STK commands, like menus, inputs, calls, sms and so on. In TODO, there is o=
+nly REFRESH command on the list.
+> > =
 
-
-> > And what do you mean with it being impossible to support multiple
-> > provisioning plugins properly? Plugins are run one after another until
-> > first returns something.
-> > Race conditions I tried to address in gprs, so if gprs atom goes away
-> > while provisioning is running nothing bad should happen. But sure, there
-> > might something else, and hopefully someone could point them.
+> > Is there plans or ideas to extend the support in oFono Core with more c=
+omplex STK features like (3GPP TS 31.111):
+> > - Call control by USIM
+> > - MO SMS Control by USIM
 > =
 
-> How exactly are you guaranteeing that 'nothing bad should happen'?
-> There is no cancellation mechanism that I see.  Not to mention that the
-> current ofono_sim_read API is not even safe either.  For exactly the
-> same reasons.
+> Let us set aside the the merits of the use cases for these features for
+> the moment ;)  Implementing Call control by USIM is fairly
+> straightforward to do in the core.  However, no modem manufacturer
+> currently allows us to have full control over this feature.  It is
+> implemented in the firmware and every vendor does this differently.  So
+> for now support of this feature is in the realm of the modem driver.
+> =
 
-No, I am not so familiar with the whole code that I could guarantee
-that. So, I am asking for help there.
+okay, so assuming this is how it is going stay. Even modem handles
+these, ofono should deliver possible AlphaId SIM may give in a response
+to call control envelope. I did not see if this is implemented. Or is it
+dropped since it is not tested in GCF..
 
-You say ofono_sim_read is not safe, but in what sense? Is it possible
-that it never calls the callback?
+> > - BIP (Bearer independent protocol), including commands like OPEN CHANN=
+EL, CLOSE CHANNEL, SEND/RECEIVE DATA
+BIP is on many operators' wish list of supported SAT features. Even it
+is optional in 3GPP, some market areas will probably require BIP. I
+don't have an example to give right now.
+> =
 
-Then how about something like this: Lets make provisioning API
-synchronous (so that plugins do not need to care about SIM or other
-safety).
-In stead, if in gprs atom ofono_gprs_register() we notice the need for
-provisioning,  ofono_sim_read(SPN) is called there. All issues would be
-localised there. Provisioning modules would be called with MCC,MNC,SPN
-as parameters. =
+> Please feel free to add a new TODO item adding these features and send
+> us patches :)
+> =
+
+> > - Extend support in PROVIDE LOCAL INFO
+> =
+
+> What support are you looking for?  Most of the information that is asked
+> by provide local info is implemented in the modem firmware.  We have
+> only included support for items which are not covered by the firmware.
+> =
+
+If aiming GCF approval support should contain: IMEI, location info,
+network measurements&BCCH channel list, timing advance, access
+technology, IMEISV, Inter-frequency UTRAN measurements. As you said
+these are often handled by modem, but isn't possible that modem can be
+configured in a way it leaves the full control of SAT to the host?
+Although certain AT command based modems would require proprietary
+commands to fetch all the needed information. So in that sense it is
+more logical for modem to handle these commands what requires low level
+interfaces.
+
+> > - EVENT DOWNLOAD / SET UP EVENT LIST
+> > =
+
+> =
+
+> Again, which ones are you looking for?  oFono explicitly ignores the
+> following two events as these make no sense in the smartphone context:
+> =
+
+> - Idle Screen Available
+> - User Activity
+> =
+
+It looks like  Idle Screen Available and User Activity & User Activity
+are mandatory features in 3GPP TS 31.124, chapter 3.4 Applicability
+table. Rest of the sub-features are listed there. =
 
 
-Any other solutions, anyone?
+BR,
+-Lasse
 
---Jukka
+> Regards,
+> -Denis
 
 
 
---===============7574351664118609813==--
+--===============6917058443890868479==--
 
