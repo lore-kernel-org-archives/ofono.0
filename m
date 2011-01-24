@@ -1,102 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============3662920272068483038=="
+Content-Type: multipart/mixed; boundary="===============0054524766363886230=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: ppp problem
-Date: Mon, 24 Jan 2011 11:56:17 +0100
-Message-ID: <1295866577.2676.21.camel@aeonflux>
-In-Reply-To: <a08dc9.a078.12db705a4b0.Coremail.hyqzyf@163.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH 1/2] Expose voice call direction synchronously (fix MeeGo
+ #12717)
+Date: Mon, 24 Jan 2011 13:02:02 +0200
+Message-ID: <1295866923-3924-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3662920272068483038==
+--===============0054524766363886230==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Currently, the call direction can only be inferred from the signals.
+This adds a property to keep it visible also from GetCalls().
+---
+ src/voicecall.c |    6 +++++-
+ 1 files changed, 5 insertions(+), 1 deletions(-)
 
-> I have got a problem about 3G connectrion from ofono, does anyone have
-> idea to resolve it? =
+diff --git a/src/voicecall.c b/src/voicecall.c
+index 7e2b3f0..d454d9d 100644
+--- a/src/voicecall.c
++++ b/src/voicecall.c
+@@ -352,7 +352,7 @@ static void append_voicecall_properties(struct voicecal=
+l *v,
+ 	const char *callerid;
+ 	const char *timestr;
+ 	const char *name;
+-	ofono_bool_t mpty;
++	ofono_bool_t mpty, originated;
+ 	dbus_bool_t emergency_call;
+ =
 
-> The  modem is huawei EM560. =
+ 	status =3D call_status_to_string(call->status);
+@@ -391,6 +391,10 @@ static void append_voicecall_properties(struct voiceca=
+ll *v,
+ 					&timestr);
+ 	}
+ =
 
-> =
++	originated =3D call->direction =3D=3D CALL_DIRECTION_MOBILE_ORIGINATED;
++	ofono_dbus_dict_append(dict, "Originated", DBUS_TYPE_BOOLEAN,
++				&originated);
++
+ 	if (g_slist_find_custom(v->vc->multiparty_list,
+ 				GINT_TO_POINTER(call->id), call_compare_by_id))
+ 		mpty =3D TRUE;
+-- =
 
-> Here is the log:
-> =
-
-> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
-> Path
-> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
-> Registered
-> ofonod[940]:
-> plugins/udev.c:add_modem() /devices/pci0000:00/0000:00:00.7/usb1/1-1/1-1.=
-2/1-1.2:2.1/tty/ttyACM0 (huawei)
-> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
-> ModemRegistered
-> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
-> PcuiRegistered
-> ofonod[940]: plugins/udev.c:add_huawei() add_huaweiingggggggggg by hyq
-> ofonod[940]: plugins/udev.c:add_huawei() name =3DOFONO_HUAWEI_TYPE by
-> hyq
-> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
-> Modem
-> ofonod[940]: src/modem.c:set_modem_property() m odem 0x8d49058
-> property ModemRegistered
-> ofonod[940]: plugins/udev.c:add_huawei() after ofono_modem_register by
-> hyq ppp=3D1 pcui=3D0
-> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
-> Path
-> ofonod[940]:
-> plugins/udev.c:add_modem() /devices/pci0000:00/0000:00:00.7/usb1/1-1/1-1.=
-2/1-1.2:2.3/tty/ttyACM1 (huawei)
-> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
-> ModemRegistered
-> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
-> PcuiRegistered
-> ofonod[940]: plugins/udev.c:add_huawei() add_huaweiingggggggggg by hyq
-> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
-> HasVoice
-> ofonod[940]: plugins/udev.c:add_huawei() after ofono_modem_register by
-> hyq ppp=3D1 pcui=3D0
-> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
-> Path
-> ofonod[940]:
-> plugins/udev.c:add_modem() /devices/pci0000:00/0000:00:00.7/usb1/1-1/1-1.=
-2/1-1.2:2.7/tty/ttyACM2 (huawei)
-> ofonod[940]: src/modem.c:g et_modem_property() modem 0x8d49058
-> property ModemRegistered
-> ofonod[940]: src/modem.c:get_modem_property() modem 0x8d49058 property
-> PcuiRegistered
-> ofonod[940]: plugins/udev.c:add_huawei() name =3DOFONO_HUAWEI_TYPE by
-> hyq
-> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
-> Pcui
-> ofonod[940]: src/modem.c:set_modem_property() modem 0x8d49058 property
-> PcuiRegistered
-> =
-
-> [root(a)localhost test]# ./activate-context =
-
-> Entering new phase: 1
-> Entering new phase: 3
-> Entering new phase: 4
-> ofonod[815]: drivers/atmodem/gprs-context.c:ppp_connect() =
-
-> ofonod[815]: IP: 0.0.0.0
-> ofonod[815]: DNS: 0.0.0.0, 0.0.0.0
-> ofonod[815]: src/gprs.c:pri_activate_callback() 0xa063660 ppp0
-
-no idea what goes wrong here, but the network or your modem firmware
-basically tells you that the IP address is not set.
-
-Run with OFONO_PPP_DEBUG=3D1 and see if it gives you more details.
-
-Regards
-
-Marcel
+1.7.1
 
 
-
---===============3662920272068483038==--
+--===============0054524766363886230==--
 
