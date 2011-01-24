@@ -1,42 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============5904008683162946999=="
+Content-Type: multipart/mixed; boundary="===============4592452686035565586=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v5] ifx: Adding modem selftest for Infineon modem
-Date: Mon, 24 Jan 2011 18:47:37 +0100
-Message-ID: <1295891257.1520.6.camel@aeonflux>
-In-Reply-To: <1295891096-8258-1-git-send-email-robertino.benis@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/7] src: Introduced enum called_number_type
+Date: Mon, 24 Jan 2011 16:19:09 -0600
+Message-ID: <4D3DFADD.1090905@gmail.com>
+In-Reply-To: <1295777796-19978-2-git-send-email-george@matveev.se>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5904008683162946999==
+--===============4592452686035565586==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Robertino,
+Hi George,
 
-> Infineon modem selftest, during ifx_enable().
-> Two steps trigger, with timeout. In case one
-> fails, modem will not power up.
-
-<snip>
- =
-
-> +	flags =3D g_io_channel_get_flags(data->device) | G_IO_FLAG_NONBLOCK;
-> +	g_io_channel_set_flags(data->device, flags, NULL);
-> +
-> +	g_io_channel_set_encoding(data->device, NULL, NULL);
-> +	g_io_channel_set_buffered(data->device, FALSE);
+> +/* 24.008 Section 10.5.4.7 Called party BCD number */
+> +enum called_number_type {
+> +	CALLED_NUMBER_TYPE_UNKNOWN =3D 0,
+> +	CALLED_NUMBER_TYPE_INTERNATIONAL =3D 1,
+> +	CALLED_NUMBER_TYPE_NATIONAL =3D 2,
+> +	CALLED_NUMBER_TYPE_NETWORK_SPECIFIC =3D 3,
+> +	CALLED_NUMBER_TYPE_DEDICATED_ACCESS =3D 4,
+> +	CALLED_NUMBER_TYPE_RESERVED =3D 7
+> +};
 > +
 
-have you actually tested this patch. Your re-base of the patch is wrong
-again. It will not work like this.
+This isn't going to work.  Your patches basically break all voice call
+drivers that we have.  I refer you to stemodem ecav_notify function or
+the calypsomodem cpi parser.  The number type is not handled properly there.
 
-Regards
+27.007 uses three main ton/npi combinations:
 
-Marcel
+unknown / unknown (128)
+unknown / isdn (129)
+international / isdn (145)
 
+If you want to be pedantic, then define an enum something like this:
 
+enum number_type {
+	NUMBER_TYPE_UNKNOWN,
+	NUMBER_TYPE_UNKNOWN_ISDN,
+	NUMBER_TYPE_INTERNATIONAL_ISDN,
+};
 
---===============5904008683162946999==--
+And just handle these three appropriately.
+
+Alternatively decompose the value into the appropriate bit-fields and
+compare the bit-field values.  E.g. bits 1..4 -> npi.  Bits 5..7 -> ton
+and define enums for them appropriately.  This will still be a messier
+solution than assigning the values 128/129 (in fact 27.007 recommends
+assigning these values anyway).
+
+Regards,
+-Denis
+
+--===============4592452686035565586==--
 
