@@ -1,42 +1,116 @@
-Content-Type: multipart/mixed; boundary="===============5436885192774575373=="
+Content-Type: multipart/mixed; boundary="===============0989032473499556876=="
 MIME-Version: 1.0
-From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
-Subject: Re: isimodem2.5 submit plan
-Date: Tue, 25 Jan 2011 13:03:08 +0100
-Message-ID: <4D3EBBFC.3050900@stericsson.com>
-In-Reply-To: <1295956296.1520.21.camel@aeonflux>
+From: Tomasz GREGOREK <tomasz.gregorek@stericsson.com>
+Subject: voicecall: behavior of ReleaseAndAnswere with held calls?
+Date: Tue, 25 Jan 2011 13:07:37 +0100
+Message-ID: <3ED83A9DB3B6D94CA68BF7C03F2981D3531AD94119@EXDCVYMBSTM006.EQ1STM.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5436885192774575373==
+--===============0989032473499556876==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi
 
+I have a question about behavior of ReleaseAndAnswere().
+If I am right, this function implements +CHLD=3D1 at command. Spec 22.030 s=
+ays
 
-> so I remember that the agreement was to just quirk the isimodem support
-> to also support the new code. Is that still the case or what is the
-> exact plan here?
+Entering 1 followed by SEND     -              Releases all active calls (i=
+f any exist)
+                                and accepts the other (held or waiting) cal=
+l.
 
-Yes, that is basically the plan.
-We just wanted you to get a heads-up on what we are planning and what =
+oFono is failing on this command when there are held and
+active calls as there is only check if waiting call exists in
+manager_release_and_answere().
 
-patches are to come.
+Shouldn't ReleaseAndAnswere() release the active call and bring back the he=
+ld
+one in such situation?
 
->
-> I am actually lost in what these means. I most certainly makes sense to
-> you, but I can not make any out of it ;)
->
-> So why don't you just start sending your initial patches and then we
-> see.
+There also could be a little more description of behavior for a case when w=
+e have
+held and waiting calls saying that the waiting call will be answered and th=
+at held
+won't be released.
 
+Best regards
+Tomasz Gregorek
 
-Right, we will start doing just that.
+--===============0989032473499556876==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-Best Regards,
-Jessica
-
---===============5436885192774575373==--
+PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
+bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
+YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
+cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
+VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
+dD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj48bWV0YSBuYW1lPUdlbmVyYXRvciBjb250
+ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+PHN0eWxlPjwhLS0KLyog
+Rm9udCBEZWZpbml0aW9ucyAqLwpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBh
+bm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KcC5N
+c29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowY207CgltYXJn
+aW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6IkNhbGli
+cmkiLCJzYW5zLXNlcmlmIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBlcmxpbmsKCXttc28tc3R5bGUt
+cHJpb3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CmE6
+dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe21zby1zdHlsZS1wcmlvcml0eTo5
+OTsKCWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpzcGFuLkVtYWls
+U3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7Cglmb250LWZhbWlseToi
+Q2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4dDt9Ci5Nc29DaHBEZWZhdWx0
+Cgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXpl
+OjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdpbjo3MC44NXB0IDcwLjg1cHQgNzAuODVwdCA3MC44NXB0
+O30KZGl2LldvcmRTZWN0aW9uMQoJe3BhZ2U6V29yZFNlY3Rpb24xO30KLS0+PC9zdHlsZT48IS0t
+W2lmIGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1h
+eD0iMTAyNiIgLz4KPC94bWw+PCFbZW5kaWZdLS0+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+Cjxv
+OnNoYXBlbGF5b3V0IHY6ZXh0PSJlZGl0Ij4KPG86aWRtYXAgdjpleHQ9ImVkaXQiIGRhdGE9IjEi
+IC8+CjwvbzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0tLT48L2hlYWQ+PGJvZHkgbGFuZz1O
+Ty1CT0sgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT48ZGl2IGNsYXNzPVdvcmRTZWN0aW9uMT48cCBj
+bGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5IaTxvOnA+PC9vOnA+PC9zcGFuPjwvcD48
+cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bh
+bj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+SSBoYXZlIGEgcXVlc3Rp
+b24gYWJvdXQgYmVoYXZpb3Igb2YgUmVsZWFzZUFuZEFuc3dlcmUoKS48bzpwPjwvbzpwPjwvc3Bh
+bj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+SWYgSSBhbSByaWdodCwg
+dGhpcyBmdW5jdGlvbiBpbXBsZW1lbnRzICtDSExEPTEgYXQgY29tbWFuZC4gU3BlYyAyMi4wMzAg
+c2F5czxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1F
+Ti1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFu
+IGxhbmc9RU4tVVM+RW50ZXJpbmcgMSBmb2xsb3dlZCBieSBTRU5EJm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7IC0mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgUmVsZWFzZXMgYWxsIGFjdGl2ZSBjYWxscyAo
+aWYgYW55IGV4aXN0KSA8bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxz
+cGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7YW5kIGFjY2VwdHMgdGhlIG90aGVy
+IChoZWxkIG9yIHdhaXRpbmcpIGNhbGwuPG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1z
+b05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD48cCBj
+bGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5vRm9ubyBpcyBmYWlsaW5nIG9uIHRoaXMg
+Y29tbWFuZCB3aGVuIHRoZXJlIGFyZSBoZWxkIGFuZDxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBj
+bGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5hY3RpdmUgY2FsbHMgYXMgdGhlcmUgaXMg
+b25seSBjaGVjayBpZiB3YWl0aW5nIGNhbGwgZXhpc3RzIGluPG86cD48L286cD48L3NwYW4+PC9w
+PjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPm1hbmFnZXJfcmVsZWFzZV9hbmRf
+YW5zd2VyZSgpLjxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4g
+bGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFs
+PjxzcGFuIGxhbmc9RU4tVVM+U2hvdWxkbiYjODIxNzt0IFJlbGVhc2VBbmRBbnN3ZXJlKCkgcmVs
+ZWFzZSB0aGUgYWN0aXZlIGNhbGwgYW5kIGJyaW5nIGJhY2sgdGhlIGhlbGQ8bzpwPjwvbzpwPjwv
+c3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+b25lIGluIHN1Y2gg
+c2l0dWF0aW9uPzxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4g
+bGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFs
+PjxzcGFuIGxhbmc9RU4tVVM+VGhlcmUgYWxzbyBjb3VsZCBiZSBhIGxpdHRsZSBtb3JlIGRlc2Ny
+aXB0aW9uIG9mIGJlaGF2aW9yIGZvciBhIGNhc2Ugd2hlbiB3ZSBoYXZlPG86cD48L286cD48L3Nw
+YW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPmhlbGQgYW5kIHdhaXRp
+bmcgY2FsbHMgc2F5aW5nIHRoYXQgdGhlIHdhaXRpbmcgY2FsbCB3aWxsIGJlIGFuc3dlcmVkIGFu
+ZCB0aGF0IGhlbGQgPG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3Bh
+biBsYW5nPUVOLVVTPndvbiYjODIxNzt0IGJlIHJlbGVhc2VkLjxvOnA+PC9vOnA+PC9zcGFuPjwv
+cD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwv
+c3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+QmVzdCByZWdhcmRz
+PG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVT
+PlRvbWFzeiBHcmVnb3JlazxvOnA+PC9vOnA+PC9zcGFuPjwvcD48L2Rpdj48L2JvZHk+PC9odG1s
+Pg==
+--===============0989032473499556876==--
 
