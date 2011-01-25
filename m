@@ -1,92 +1,87 @@
-Content-Type: multipart/mixed; boundary="===============5350036078033786029=="
+Content-Type: multipart/mixed; boundary="===============3042957029246873520=="
 MIME-Version: 1.0
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: Re: [PATCH 00/21] Resubmit Zhenhua Zhang work on DUN server with btio
-Date: Tue, 25 Jan 2011 17:07:05 -0200
-Message-ID: <20110125190705.GC2205@joana>
-In-Reply-To: <1294852564-1258-1-git-send-email-frederic.dalleau@intel.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] sim: check if lock is locked after code input attempt
+Date: Tue, 25 Jan 2011 14:09:25 -0600
+Message-ID: <4D3F2DF5.7060408@gmail.com>
+In-Reply-To: <1295969667.21031.209.camel@jussi-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5350036078033786029==
+--===============3042957029246873520==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi all,
+Hi Jussi,
 
-* Fr=C3=A9d=C3=A9ric Dalleau <frederic.dalleau@intel.com> [2011-01-12 18:=
-15:43 +0100]:
-
-> This is rebased as of head of today
+On 01/25/2011 09:34 AM, Jussi Kangas wrote:
 > =
 
-> Zhenhua Zhang (21):
->   bluetooth: Add reference count for bluetooth utils
->   bluetooth: Add Btio library for DUN
->   bluetooth: Add bluetooth server support for DUN
->   emulator: Add emulator atom in oFono
->   dun_gw: Add DUN server plugin for oFono
->   gprs: Rename status_watch to netreg_status_watch
->   emulator: Add status watches for ofono emulator
->   emulator: Add emulator status watches in gprs atom
->   emulator: Add APIs to send GAtServer result
->   emulator: Implement dialing up for DUN
->   gprs: Make gprs_proto_to/from_string non-static
->   gprs: ignore the case of proto str when comparing
->   emulator: Register mandatory AT command handlers
->   gprs: Refactor to share remove_context method
->   gprs: Add DUN +CGATT support in gprs atom
->   gprs: Add DUN +CGDCONT support in gprs atom
->   gprs: Add DUN server GPRS connect support
->   gprs: Add status watch functions
->   gprs: Add gprs_get_status
->   emulator: Watch GPRS status changes
->   emulator: Watch netreg status changes
+> Hi, Denis.
 > =
 
->  Makefile.am            |   15 +-
->  btio/btio.c            | 1299 ++++++++++++++++++++++++++++++++++++++++++=
-++++++
->  btio/btio.h            |   97 ++++
->  configure.ac           |    5 +
->  include/emulator.h     |   94 ++++
->  include/gprs-context.h |    4 +
->  include/gprs.h         |   11 +
->  plugins/bluetooth.c    |  441 ++++++++++++++++-
->  plugins/bluetooth.h    |   15 +
->  plugins/dun_gw.c       |  115 +++++
->  src/emulator.c         | 1072 +++++++++++++++++++++++++++++++++++++++
->  src/gprs.c             |  500 +++++++++++++++++--
->  src/modem.c            |    1 +
->  src/ofono.h            |   31 ++
->  14 files changed, 3636 insertions(+), 64 deletions(-)
->  create mode 100644 btio/btio.c
->  create mode 100644 btio/btio.h
->  create mode 100644 include/emulator.h
->  create mode 100644 plugins/dun_gw.c
->  create mode 100644 src/emulator.c
+>> So I'm mostly happy with this approach except that ofono_modem_reset is
+>> too big of a hammer to use here.  We need something that drops us back
+>> to pre-sim state without having to re-power on the device (which is what
+>> reset does).
+>>
+>> Can you try using sim_inserted / sim_removed or maybe even be smarter
+>> and do 90% of what sim removal does but without affecting information
+>> which is already read.  So things like EFiccid, EFpl/EFlp, EFecc, etc.
+>>
+>> Regards,
+>> -Denis
+> =
 
-So I took this patches as a base to finish the DUN implementation on oFono.
-The DUN Server is now working, it accepts a ATD*99 from the client and start
-the PPP negotiation, then create the ppp interface to flow the internet
-connection to the client. Code is here:
+> Dropping back to pre_sim is easy if I just call modem_change_state
+> directly and not through ofono_modem_reset. Problem with that approach
+> is how to come back to online state after PUK has been given without
+> effort from client. Calling of ofono_modem_set_powered from
+> ofono_modem_reset enables the situation where Ofono comes back online by
+> itself after unblocking the pin. =
 
-git://git.profusion.mobi/users/padovan/ofono.git dun
+> =
 
-This not rebased upstream because I didn't touch the bluetooth patches yet,
-mostly due the fact that Fr=C3=A9d=C3=A9ric Danis is working on them.
+> Original solution made by Marit did pretty much what u sound to be
+> looking for now. In original solution ofono get's network "denied" state
+> but all the APIs stay up since modem does not go to PRE_SIM state. But
+> if client goes and tries to retrieve something from network or sim it
+> get's error. And when PUK was given system went back online nicely and
+> without any extra pushing from client side. =
 
-The next step is to implement the packet forwarding to the ppp interface
-inside ConnMan, you can follow the discussion and implementation in the
-ConnMan mailing list.
+> =
 
-http://www.mail-archive.com/connman(a)connman.net/msg03092.html
+> So why PRE_SIM state? I suppose you are worried that user goes under
+> different cell or network during denied state and ofono does not read
+> all changed information? Or ofono client reads some cached information
+> totally unaware that it's not online anymore? I haven't gone walking
+> around with this thing to see how well it get's the new info when it
+> returns from denied state to online in different network or cell so
+> there might something.
 
--- =
+My main concern here is that we do not expose functionality that is
+actually not available.  That confuses the applications.  It might also
+be that your SIM PUK state is semi-permanent (e.g. you don't know the
+PUK, and being on hold with your operator makes you shudder)
 
-Gustavo F. Padovan
-http://profusion.mobi
+So we should simply remove all the atoms that are not relevant and
+'forget' all the information that is not available if the SIM PIN is not
+known.
 
---===============5350036078033786029==--
+> =
+
+> Playing with sim inserted sim removed states is plain wrong to me: What
+> we have here has nothing to do with sim's presence. I have to
+> investigate the sim remove functionality more before I can say for sure
+> if there is something that could be reused. =
+
+
+I agree that sim_inserted is not quite the right approach.  Re-using
+parts of it would definitely be the right direction.
+
+Regards,
+-Denis
+
+--===============3042957029246873520==--
 
