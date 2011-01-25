@@ -1,78 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============5775258159708303821=="
+Content-Type: multipart/mixed; boundary="===============1707888960071774002=="
 MIME-Version: 1.0
-From: Jussi Kangas <jussi.kangas@tieto.com>
-Subject: Re: [PATCH] sim: check if lock is locked after code input attempt
-Date: Tue, 25 Jan 2011 17:34:27 +0200
-Message-ID: <1295969667.21031.209.camel@jussi-desktop>
-In-Reply-To: <4D3DFE0F.3070607@gmail.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: ANNOUNCE: Telepathy-Ring 2.1.2
+Date: Tue, 25 Jan 2011 17:52:48 +0200
+Message-ID: <AANLkTi=Vq30xsiK6HeU5QCaxcRpmiuhJm3=HgE1C=-A4@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5775258159708303821==
+--===============1707888960071774002==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+Telepathy-Ring 2.1.2 ("I do love maps! I have quite a collection of
+them") is now
+available for download from:
 
-Hi, Denis.
+http://telepathy.freedesktop.org/releases/telepathy-ring/telepathy-ring-2.1=
+.2.tar.gz
 
-> So I'm mostly happy with this approach except that ofono_modem_reset is
-> too big of a hammer to use here.  We need something that drops us back
-> to pre-sim state without having to re-power on the device (which is what
-> reset does).
-> =
+md5sum: 519011d5666930b1636edfc0a717f664  telepathy-ring-2.1.2.tar.gz
+sha1sum: 0a46c19c3d6937181dc5e6caeff34a77fb1694ad  telepathy-ring-2.1.2.tar=
+.gz
 
-> Can you try using sim_inserted / sim_removed or maybe even be smarter
-> and do 90% of what sim removal does but without affecting information
-> which is already read.  So things like EFiccid, EFpl/EFlp, EFecc, etc.
-> =
+What is it?
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 
-> Regards,
-> -Denis
+Telepathy-Ring a 3GPP (GSM and 3G UMTS) connection manager for
+Telepathy framework using oFono. It supports voice calls and
+short messages.
 
-Dropping back to pre_sim is easy if I just call modem_change_state
-directly and not through ofono_modem_reset. Problem with that approach
-is how to come back to online state after PUK has been given without
-effort from client. Calling of ofono_modem_set_powered from
-ofono_modem_reset enables the situation where Ofono comes back online by
-itself after unblocking the pin. =
+What's New?
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
 
+Fix emitting Closed and ChannelClosed signals
 
-Original solution made by Marit did pretty much what u sound to be
-looking for now. In original solution ofono get's network "denied" state
-but all the APIs stay up since modem does not go to PRE_SIM state. But
-if client goes and tries to retrieve something from network or sim it
-get's error. And when PUK was given system went back online nicely and
-without any extra pushing from client side. =
+Implement Channel.Interface.SMS
 
+Improved conferencing support.
 
-So why PRE_SIM state? I suppose you are worried that user goes under
-different cell or network during denied state and ofono does not read
-all changed information? Or ofono client reads some cached information
-totally unaware that it's not online anymore? I haven't gone walking
-around with this thing to see how well it get's the new info when it
-returns from denied state to online in different network or cell so
-there might something.
+Fix BMC#12873: implement Telepathy Hold model properly with oFono
 
-Playing with sim inserted sim removed states is plain wrong to me: What
-we have here has nothing to do with sim's presence. I have to
-investigate the sim remove functionality more before I can say for sure
-if there is something that could be reused. =
+-- =
 
+Pekka.Pessi mail at nokia.com
 
-Br,
--Jussi
-
-
-
-   =
-
-
-
-
-
-
-
-
---===============5775258159708303821==--
+--===============1707888960071774002==--
 
