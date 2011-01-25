@@ -1,325 +1,120 @@
-Content-Type: multipart/mixed; boundary="===============4619983679845794013=="
+Content-Type: multipart/mixed; boundary="===============3087460652769785193=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 3/4] gprs: add gprs context provisioning
-Date: Tue, 25 Jan 2011 15:08:38 -0600
-Message-ID: <4D3F3BD6.9010207@gmail.com>
-In-Reply-To: <1295957714-21053-4-git-send-email-jukka.saunamaki@nokia.com>
+From: Tomasz Gregorek <tomasz.gregorek@gmail.com>
+Subject: Re: voicecall: behavior of ReleaseAndAnswere with held calls?
+Date: Tue, 25 Jan 2011 22:43:04 +0100
+Message-ID: <AANLkTi=9=p6+nxrpJra0R=FMCCXaCdyLt9iaZSLmjAFg@mail.gmail.com>
+In-Reply-To: <4D3F34A2.1070805@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4619983679845794013==
+--===============3087460652769785193==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+Hi Denis
 
-On 01/25/2011 06:15 AM, Jukka Saunamaki wrote:
-> ---
->  src/gprs.c |  172 ++++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++----
->  1 files changed, 162 insertions(+), 10 deletions(-)
-> =
+2011/1/25 Denis Kenzior <denkenz@gmail.com>
 
-> diff --git a/src/gprs.c b/src/gprs.c
-> index 92d0b1a..3e281e5 100644
-> --- a/src/gprs.c
-> +++ b/src/gprs.c
-> @@ -44,6 +44,11 @@
->  #include "storage.h"
->  #include "idmap.h"
->  =
+> Hi Tomasz,
+>
+> > Shouldn=E2=80=99t ReleaseAndAnswere() release the active call and bring=
+ back the
+> > held one in such situation?
+> >
+>
+> You shouldn't be using ReleaseAndAnswer in this case, instead you should
+> use SwapCalls.  SwapCalls has the added benefit of allowing swapping of
+> held and active calls even if there is a call waiting (if your modem
+> hardware supports this.)
+>
 
-> +#include "sim.h"
-> +#include "simutil.h"
-> +#include "util.h"
-> +#include "gprs-provision.h"
-> +
+SwapCalls wont release active call. This would be a case when we finished
+active call and we want to disconnect and get back to the held one.
+Though this can also be done with Release on active call followed
+by SwapCalls.
 
-At least gprs-provision and sim.h should not be needed here as they
-should be included in ofono.h.
+>
+> > There also could be a little more description of behavior for a case
+> > when we have held and waiting calls saying that the waiting call will be
+> answered and
+> > that held won=E2=80=99t be released.
+> >
+>
+> The documentation says: "Releases currently active call and answers the
+> currently waiting call".
+>
+> Is this not enough? Can you suggest better wording?
+>
 
->  #define GPRS_FLAG_ATTACHING 0x1
->  #define GPRS_FLAG_RECHECK 0x2
->  =
+If we are not touching held calls with this function than it is enough.
+I would only add "if any exist" as this function works when there are held
+and waiting calls.
 
-> @@ -95,6 +100,7 @@ struct ofono_gprs {
->  	const struct ofono_gprs_driver *driver;
->  	void *driver_data;
->  	struct ofono_atom *atom;
-> +	struct spn_read_request *reading_spn;
+"Releases currently active call if any exists, and answers the
+currently waiting call."
 
-Please remov this for now, we need a general solution to making
-ofono_sim_read/write safer.
 
->  };
->  =
+>
+> Regards,
+> -Denis
+> _______________________________________________
+> ofono mailing list
+> ofono(a)ofono.org
+> http://lists.ofono.org/listinfo/ofono
+>
 
->  struct ofono_gprs_context {
-> @@ -135,6 +141,12 @@ struct pri_context {
->  	struct ofono_gprs *gprs;
->  };
->  =
+Best regards
+Tomasz
 
-> +struct spn_read_request {
-> +	struct ofono_gprs *gprs;
-> +	char mcc[OFONO_MAX_MCC_LENGTH + 1];
-> +	char mnc[OFONO_MAX_MNC_LENGTH + 1];
-> +};
-> +
->  static void gprs_netreg_update(struct ofono_gprs *gprs);
->  static void gprs_deactivate_next(struct ofono_gprs *gprs);
->  =
+--===============3087460652769785193==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
-> @@ -2251,10 +2263,15 @@ static void gprs_unregister(struct ofono_atom *at=
-om)
->  		gprs->netreg =3D NULL;
->  	}
->  =
+SGkgRGVuaXM8YnI+PGJyPjxkaXYgY2xhc3M9ImdtYWlsX3F1b3RlIj4yMDExLzEvMjUgRGVuaXMg
+S2VuemlvciA8c3BhbiBkaXI9Imx0ciI+Jmx0OzxhIGhyZWY9Im1haWx0bzpkZW5rZW56QGdtYWls
+LmNvbSI+ZGVua2VuekBnbWFpbC5jb208L2E+Jmd0Ozwvc3Bhbj48YnI+PGJsb2NrcXVvdGUgY2xh
+c3M9ImdtYWlsX3F1b3RlIiBzdHlsZT0ibWFyZ2luOjAgMCAwIC44ZXg7Ym9yZGVyLWxlZnQ6MXB4
+ICNjY2Mgc29saWQ7cGFkZGluZy1sZWZ0OjFleDsiPgpIaSBUb21hc3osPGJyPgo8ZGl2IGNsYXNz
+PSJpbSI+PGJyPgomZ3Q7IFNob3VsZG6SdCBSZWxlYXNlQW5kQW5zd2VyZSgpIHJlbGVhc2UgdGhl
+IGFjdGl2ZSBjYWxsIGFuZCBicmluZyBiYWNrIHRoZTxicj4KJmd0OyBoZWxkIG9uZSBpbiBzdWNo
+IHNpdHVhdGlvbj88YnI+CiZndDs8YnI+Cjxicj4KPC9kaXY+WW91IHNob3VsZG4mIzM5O3QgYmUg
+dXNpbmcgUmVsZWFzZUFuZEFuc3dlciBpbiB0aGlzIGNhc2UsIGluc3RlYWQgeW91IHNob3VsZDxi
+cj4KdXNlIFN3YXBDYWxscy4goFN3YXBDYWxscyBoYXMgdGhlIGFkZGVkIGJlbmVmaXQgb2YgYWxs
+b3dpbmcgc3dhcHBpbmcgb2Y8YnI+CmhlbGQgYW5kIGFjdGl2ZSBjYWxscyBldmVuIGlmIHRoZXJl
+IGlzIGEgY2FsbCB3YWl0aW5nIChpZiB5b3VyIG1vZGVtPGJyPgpoYXJkd2FyZSBzdXBwb3J0cyB0
+aGlzLik8YnI+PC9ibG9ja3F1b3RlPjxkaXY+PGJyPlN3YXBDYWxscyB3b250IHJlbGVhc2UgYWN0
+aXZlIGNhbGwuIFRoaXMgd291bGQgYmUgYSBjYXNlIHdoZW4gd2UgZmluaXNoZWQ8YnI+YWN0aXZl
+IGNhbGwgYW5kIHdlIHdhbnQgdG8gZGlzY29ubmVjdCBhbmQgZ2V0IGJhY2sgdG8gdGhlIGhlbGQg
+b25lLjxicj5UaG91Z2ggdGhpcyBjYW4gYWxzbyBiZSBkb25lIHdpdGggUmVsZWFzZSBvbiBhY3Rp
+dmUgY2FsbCBmb2xsb3dlZDxicj4KYnkgU3dhcENhbGxzLjxicj48L2Rpdj48ZGl2Pjxicj48L2Rp
+dj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxfcXVvdGUiIHN0eWxlPSJtYXJnaW46IDBwdCAwcHQg
+MHB0IDAuOGV4OyBib3JkZXItbGVmdDogMXB4IHNvbGlkIHJnYigyMDQsIDIwNCwgMjA0KTsgcGFk
+ZGluZy1sZWZ0OiAxZXg7Ij48ZGl2IGNsYXNzPSJpbSI+CiZndDs8YnI+CiZndDsgVGhlcmUgYWxz
+byBjb3VsZCBiZSBhIGxpdHRsZSBtb3JlIGRlc2NyaXB0aW9uIG9mIGJlaGF2aW9yIGZvciBhIGNh
+c2U8YnI+CiZndDsgd2hlbiB3ZSBoYXZlIGhlbGQgYW5kIHdhaXRpbmcgY2FsbHMgc2F5aW5nIHRo
+YXQgdGhlIHdhaXRpbmcgY2FsbCB3aWxsIGJlIGFuc3dlcmVkIGFuZDxicj4KJmd0OyB0aGF0IGhl
+bGQgd29uknQgYmUgcmVsZWFzZWQuPGJyPgomZ3Q7PGJyPgo8YnI+CjwvZGl2PlRoZSBkb2N1bWVu
+dGF0aW9uIHNheXM6ICZxdW90O1JlbGVhc2VzIGN1cnJlbnRseSBhY3RpdmUgY2FsbCBhbmQgYW5z
+d2VycyB0aGU8YnI+CmN1cnJlbnRseSB3YWl0aW5nIGNhbGwmcXVvdDsuPGJyPgo8YnI+CklzIHRo
+aXMgbm90IGVub3VnaD8gQ2FuIHlvdSBzdWdnZXN0IGJldHRlciB3b3JkaW5nPzxicj48L2Jsb2Nr
+cXVvdGU+PGRpdj48YnI+SWYgd2UgYXJlIG5vdCB0b3VjaGluZyBoZWxkIGNhbGxzIHdpdGggdGhp
+cyBmdW5jdGlvbiB0aGFuIGl0IGlzIGVub3VnaC48YnI+SSB3b3VsZCBvbmx5IGFkZCAmcXVvdDtp
+ZiBhbnkgZXhpc3QmcXVvdDsgYXMgdGhpcyBmdW5jdGlvbiB3b3JrcyB3aGVuIHRoZXJlIGFyZSBo
+ZWxkPGJyPgphbmQgd2FpdGluZyBjYWxscy48YnI+PGJyPiZxdW90O1JlbGVhc2VzIGN1cnJlbnRs
+eSBhY3RpdmUgY2FsbCBpZiBhbnkgZXhpc3RzLCBhbmQgYW5zd2VycyB0aGU8YnI+CmN1cnJlbnRs
+eSB3YWl0aW5nIGNhbGwuJnF1b3Q7PGJyPqA8L2Rpdj48YmxvY2txdW90ZSBjbGFzcz0iZ21haWxf
+cXVvdGUiIHN0eWxlPSJtYXJnaW46IDBwdCAwcHQgMHB0IDAuOGV4OyBib3JkZXItbGVmdDogMXB4
+IHNvbGlkIHJnYigyMDQsIDIwNCwgMjA0KTsgcGFkZGluZy1sZWZ0OiAxZXg7Ij4KPGJyPgpSZWdh
+cmRzLDxicj4KLURlbmlzPGJyPgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fXzxicj4Kb2Zvbm8gbWFpbGluZyBsaXN0PGJyPgo8YSBocmVmPSJtYWlsdG86b2Zv
+bm9Ab2Zvbm8ub3JnIj5vZm9ub0BvZm9uby5vcmc8L2E+PGJyPgo8YSBocmVmPSJodHRwOi8vbGlz
+dHMub2Zvbm8ub3JnL2xpc3RpbmZvL29mb25vIiB0YXJnZXQ9Il9ibGFuayI+aHR0cDovL2xpc3Rz
+Lm9mb25vLm9yZy9saXN0aW5mby9vZm9ubzwvYT48YnI+CjwvYmxvY2txdW90ZT48L2Rpdj48YnI+
+QmVzdCByZWdhcmRzPGJyPlRvbWFzejxicj4K
 
-> -	ofono_modem_remove_interface(modem,
-> +	if (gprs->reading_spn =3D=3D NULL) {
-> +		ofono_modem_remove_interface(modem,
->  					OFONO_CONNECTION_MANAGER_INTERFACE);
-> -	g_dbus_unregister_interface(conn, path,
-> +		g_dbus_unregister_interface(conn, path,
->  					OFONO_CONNECTION_MANAGER_INTERFACE);
-> +	} else {
-> +		gprs->reading_spn->gprs =3D NULL;
-> +		gprs->reading_spn =3D NULL;
-> +	}
-
-Please don't be too smart here, unregister is only called if the atom is
-registered in the first place.  See below for more on this.
-
->  }
->  =
-
->  static void gprs_remove(struct ofono_atom *atom)
-> @@ -2279,6 +2296,9 @@ static void gprs_remove(struct ofono_atom *atom)
->  	if (gprs->driver && gprs->driver->remove)
->  		gprs->driver->remove(gprs);
->  =
-
-> +	if (gprs->reading_spn !=3D NULL)
-> +		gprs->reading_spn->gprs =3D NULL;
-> +
->  	g_free(gprs);
->  }
->  =
-
-> @@ -2531,13 +2551,14 @@ remove:
->  		storage_sync(imsi, SETTINGS_STORE, gprs->settings);
->  }
->  =
-
-> -void ofono_gprs_register(struct ofono_gprs *gprs)
-> +static void ofono_gprs_finish_register(struct ofono_gprs *gprs)
->  {
->  	DBusConnection *conn =3D ofono_dbus_get_connection();
->  	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
->  	const char *path =3D __ofono_atom_get_path(gprs->atom);
-> -	struct ofono_atom *netreg_atom;
-> -	struct ofono_atom *sim_atom;
-> +
-> +	if (gprs->contexts =3D=3D NULL) /* Automatic provisioning failed */
-> +		add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
->  =
-
->  	if (!g_dbus_register_interface(conn, path,
->  					OFONO_CONNECTION_MANAGER_INTERFACE,
-> @@ -2546,24 +2567,134 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
->  		ofono_error("Could not create %s interface",
->  				OFONO_CONNECTION_MANAGER_INTERFACE);
->  =
-
-> +		gprs_unregister(gprs->atom);
->  		return;
->  	}
->  =
-
->  	ofono_modem_add_interface(modem,
->  				OFONO_CONNECTION_MANAGER_INTERFACE);
-> +}
-> +
-> +static void provision_context(const struct ofono_gprs_provision_data *ap,
-> +				struct ofono_gprs *gprs)
-> +{
-> +	unsigned int id;
-> +	struct pri_context *context =3D NULL;
-> +
-> +	/* Sanity check */
-> +	if (ap =3D=3D NULL || ap->name =3D=3D NULL)
-> +		return;
-> +
-> +	if (gprs->last_context_id)
-> +		id =3D idmap_alloc_next(gprs->pid_map, gprs->last_context_id);
-> +	else
-> +		id =3D idmap_alloc(gprs->pid_map);
-> +
-> +	if (id > idmap_get_max(gprs->pid_map))
-> +		return;
-> +
-> +	context =3D pri_context_create(gprs, ap->name, ap->type);
-> +	DBG("%s context%d '%s' %s", gprs_context_default_name(ap->type),
-> +		id, ap->name, context ? "created" : "creation failed");
-> +
-> +	if (context =3D=3D NULL)
-> +		return;
-> +
-> +	context->id =3D id;
-> +
-> +	if (ap->username !=3D NULL)
-> +		strncpy(context->context.username, ap->username,
-> +			OFONO_GPRS_MAX_USERNAME_LENGTH);
-> +
-> +	if (ap->password !=3D NULL)
-> +		strncpy(context->context.password, ap->password,
-> +			OFONO_GPRS_MAX_PASSWORD_LENGTH);
-> +
-> +	if (ap->apn !=3D NULL)
-> +		strncpy(context->context.apn, ap->apn,
-> +			OFONO_GPRS_MAX_APN_LENGTH);
-> +
-> +	context->context.proto =3D ap->proto;
-> +
-> +	if (ap->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS &&
-> +			ap->message_proxy !=3D NULL)
-> +		strncpy(context->message_proxy, ap->message_proxy,
-> +			MAX_MESSAGE_PROXY_LENGTH);
-> +
-> +	if (ap->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS &&
-> +			ap->message_center !=3D NULL)
-> +		strncpy(context->message_center, ap->message_center,
-> +			MAX_MESSAGE_CENTER_LENGTH);
-> +
-> +	if (context_dbus_register(context) =3D=3D TRUE) {
-> +		gprs->last_context_id =3D id;
-> +		gprs->contexts =3D g_slist_append(gprs->contexts, context);
-> +		write_context_settings(gprs, context);
-> +
-> +		if (context->type =3D=3D OFONO_GPRS_CONTEXT_TYPE_MMS) {
-> +			g_key_file_set_string(gprs->settings, context->key,
-> +						"MessageProxy",
-> +						context->message_proxy);
-> +			g_key_file_set_string(gprs->settings, context->key,
-> +						"MessageCenter",
-> +						context->message_center);
-> +		}
-> +
-> +		storage_sync(gprs->imsi, SETTINGS_STORE, gprs->settings);
-> +	}
-> +}
-> +
-> +static void sim_spn_read_cb(int ok, int length, int record,
-> +				const unsigned char *data,
-> +				int record_length, void *user_data)
-> +{
-> +	struct spn_read_request *req =3D user_data;
-> +	struct ofono_gprs *gprs =3D req->gprs;
-> +	char *spn =3D NULL;
-> +	struct ofono_gprs_provision_data *settings =3D NULL;
-> +	int count =3D 0;
-> +	int i;
-> +
-> +	if (gprs =3D=3D NULL)
-> +		goto out;
-> +
-> +	gprs->reading_spn =3D NULL;
-> +
-> +	if (ok)
-> +		spn =3D sim_string_to_utf8(data + 1, length - 1);
-> +
-> +	__ofono_gprs_provision_get_settings(req->mcc, req->mnc, spn,
-> +						&settings, &count);
-> +
-> +	if (count > 0)
-> +		DBG("Provisioning %d contexts", count);
-> +
-> +	for (i =3D 0; i < count; i++)
-> +		provision_context(&settings[i], gprs);
-> +
-> +	provision_settings_free(settings, count);
-> +	ofono_gprs_finish_register(gprs);
-> +out:
-> +	g_free(req);
-> +}
-> +
-
-I'm still not happy that we're reading SPN twice, once here and once in
-netreg.
-
-> +void ofono_gprs_register(struct ofono_gprs *gprs)
-> +{
-> +	struct ofono_modem *modem =3D __ofono_atom_get_modem(gprs->atom);
-> +	struct ofono_atom *sim_atom;
-> +	struct ofono_sim *sim =3D NULL;
-> +	struct ofono_atom *netreg_atom;
->  =
-
->  	sim_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
->  =
-
->  	if (sim_atom) {
-> -		struct ofono_sim *sim =3D __ofono_atom_get_data(sim_atom);
-> -		const char *imsi =3D ofono_sim_get_imsi(sim);
-> +		const char *imsi;
->  =
-
-> +		sim =3D __ofono_atom_get_data(sim_atom);
-> +		imsi =3D ofono_sim_get_imsi(sim);
->  		gprs_load_settings(gprs, imsi);
->  	}
->  =
-
-> -	if (gprs->contexts =3D=3D NULL)
-> -		add_context(gprs, NULL, OFONO_GPRS_CONTEXT_TYPE_INTERNET);
-> -
->  	gprs->netreg_watch =3D __ofono_modem_add_atom_watch(modem,
->  					OFONO_ATOM_TYPE_NETREG,
->  					netreg_watch, gprs, NULL);
-> @@ -2575,6 +2706,27 @@ void ofono_gprs_register(struct ofono_gprs *gprs)
->  				OFONO_ATOM_WATCH_CONDITION_REGISTERED, gprs);
->  =
-
->  	__ofono_atom_register(gprs->atom, gprs_unregister);
-
-If you're going to provision the contexts then don't register the atom
-yet.  Registering implies it is fully 'ready' including exposing the
-D-Bus interface.
-
-> +
-> +	if (gprs->contexts =3D=3D NULL && sim !=3D NULL) {
-> +		/* Start reading spn for provisioning */
-> +		struct spn_read_request *req;
-> +
-> +		DBG("start reading EF-SPN");
-> +
-> +		req =3D g_try_new0(struct spn_read_request, 1);
-> +		if (req !=3D NULL) {
-> +			req->gprs =3D gprs;
-> +			gprs->reading_spn =3D req;
-> +			strcpy(req->mcc, ofono_sim_get_mcc(sim));
-> +			strcpy(req->mnc, ofono_sim_get_mnc(sim));
-> +			if (ofono_sim_read(sim, SIM_EFSPN_FILEID,
-> +					OFONO_SIM_FILE_STRUCTURE_TRANSPARENT,
-> +					sim_spn_read_cb, req) >=3D 0)
-> +				return;
-
-Coding style M1
-
-> +		}
-> +	}
-> +
-> +	ofono_gprs_finish_register(gprs);
->  }
->  =
-
->  void ofono_gprs_remove(struct ofono_gprs *gprs)
-
-Regards,
--Denis
-
---===============4619983679845794013==--
+--===============3087460652769785193==--
 
