@@ -1,100 +1,78 @@
-Content-Type: multipart/mixed; boundary="===============8767885147146779449=="
+Content-Type: multipart/mixed; boundary="===============5775258159708303821=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH] Don't use c++ keyword in public header files
-Date: Tue, 25 Jan 2011 13:11:05 -0200
-Message-ID: <AANLkTi=DcdFHC1yUE16-gVvXzU9nz-rhdeErq3TwvwqQ@mail.gmail.com>
-In-Reply-To: <1295967523.1520.51.camel@aeonflux>
+From: Jussi Kangas <jussi.kangas@tieto.com>
+Subject: Re: [PATCH] sim: check if lock is locked after code input attempt
+Date: Tue, 25 Jan 2011 17:34:27 +0200
+Message-ID: <1295969667.21031.209.camel@jussi-desktop>
+In-Reply-To: <4D3DFE0F.3070607@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8767885147146779449==
+--===============5775258159708303821==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Jan 25, 2011 at 12:58 PM, Marcel Holtmann <marcel@holtmann.org> w=
-rote:
-> Hi Lucas,
->
->> >> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 const char *old, const char *new,
->> >> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 const char *p_old, const char *p_new,
->> >> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 ofono_sim_lock_unlock_cb_t cb, void *data);
->> >> =C2=A0 =C2=A0 =C2=A0 void (*lock)(struct ofono_sim *sim, enum ofono_s=
-im_password_type type,
->> >> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- =C2=A0 int enable, const char *passwd,
->> >
->> > why is this exactly a problem?
->>
->> I did it only because the file contains this:
->>
->> #ifdef __cplusplus
->> extern "C" {
->> #endif
->>
->>
->> So I thought someone might want to write a plugin in C++ or something
->> that includes sim.h
->
-> and at that point you told the compiler that it is C code and not C++
-> and it should be just fine.
 
-This only works for the link phase, because of the name mangling in C++.
+Hi, Denis.
 
-> I think it will compile just fine. Try to test it ;)
+> So I'm mostly happy with this approach except that ofono_modem_reset is
+> too big of a hammer to use here.  We need something that drops us back
+> to pre-sim state without having to re-power on the device (which is what
+> reset does).
+> =
 
-It doesn't. Example:
+> Can you try using sim_inserted / sim_removed or maybe even be smarter
+> and do 90% of what sim removal does but without affecting information
+> which is already read.  So things like EFiccid, EFpl/EFlp, EFecc, etc.
+> =
 
-c.h
----
-#ifdef __cplusplus
-extern "C" {
-#endif
+> Regards,
+> -Denis
 
-int func(int *old, int *new);
+Dropping back to pre_sim is easy if I just call modem_change_state
+directly and not through ofono_modem_reset. Problem with that approach
+is how to come back to online state after PUK has been given without
+effort from client. Calling of ofono_modem_set_powered from
+ofono_modem_reset enables the situation where Ofono comes back online by
+itself after unblocking the pin. =
 
 
-#ifdef __cplusplus
-}
-#endif
-
----
-
-cpp.cpp
----
-#include <iostream>
-#include "c.h"
-
-using namespace std;
+Original solution made by Marit did pretty much what u sound to be
+looking for now. In original solution ofono get's network "denied" state
+but all the APIs stay up since modem does not go to PRE_SIM state. But
+if client goes and tries to retrieve something from network or sim it
+get's error. And when PUK was given system went back online nicely and
+without any extra pushing from client side. =
 
 
-int main(int argc, char *argv[])
-{
-    int a =3D 2;
-    int b =3D 3;
+So why PRE_SIM state? I suppose you are worried that user goes under
+different cell or network during denied state and ofono does not read
+all changed information? Or ofono client reads some cached information
+totally unaware that it's not online anymore? I haven't gone walking
+around with this thing to see how well it get's the new info when it
+returns from denied state to online in different network or cell so
+there might something.
+
+Playing with sim inserted sim removed states is plain wrong to me: What
+we have here has nothing to do with sim's presence. I have to
+investigate the sim remove functionality more before I can say for sure
+if there is something that could be reused. =
 
 
-    cout << "Isso =C3=A9 um teste\n";
-
-    return func(&a, &b);
-}
-
----
-
-$ g++ -c -o cpp.o cpp.cpp
-In file included from cpp.cpp:2:0:
-c.h:5:25: error: expected =E2=80=98,=E2=80=99 or =E2=80=98...=E2=80=99 befo=
-re =E2=80=98new=E2=80=99
+Br,
+-Jussi
 
 
 
-regards
+   =
 
-Lucas De Marchi
 
---===============8767885147146779449==--
+
+
+
+
+
+
+--===============5775258159708303821==--
 
