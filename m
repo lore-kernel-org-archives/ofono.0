@@ -1,47 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5585625098756308566=="
+Content-Type: multipart/mixed; boundary="===============8460079976346888114=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/1 v2] simutil: EF Fileid additions USIM and SIM Phonebook
-Date: Tue, 25 Jan 2011 14:26:38 +0100
-Message-ID: <1295961998.1520.47.camel@aeonflux>
-In-Reply-To: <1295961085-30391-1-git-send-email-jessica.j.nilsson@stericsson.com>
+From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
+Subject: [PATCH 0/2] Long phone numbers
+Date: Tue, 25 Jan 2011 11:02:36 -0300
+Message-ID: <1295964158-19223-1-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5585625098756308566==
+--===============8460079976346888114==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jessica,
+This set of patches extends OFONO_MAX_PHONE_NUMBER_LENGTH, splits
+common:valid_phone_number_format(), and adapts voicecall to valid
+the 80 character limit for outgoing calls.
 
-> Also, adding some general fileids for building paths
-> =
+Rafael Ignacio Zurita (2):
+  types: change OFONO_MAX_PHONE_NUMBER_LENGTH value to 80
+  common: split valid_phone_number_format and adapt voicecall
 
-> ---
-> =
+ include/types.h |    2 +-
+ src/common.c    |   20 ++++++++++++++++++--
+ src/common.h    |    2 ++
+ src/voicecall.c |    2 +-
+ 4 files changed, 22 insertions(+), 4 deletions(-)
 
-> Needed for isimodem2.5 patches planned to follow shortly.
-> =
+-- =
 
-> =
-
-> Best Regards,
-> Jessica
-> =
-
-> =
-
->  src/simutil.h |   12 ++++++++++++
->  1 files changed, 12 insertions(+), 0 deletions(-)
-
-patch has been applied. Thanks.
-
-Regards
-
-Marcel
+1.7.2.3
 
 
-
---===============5585625098756308566==--
+--===============8460079976346888114==--
 
