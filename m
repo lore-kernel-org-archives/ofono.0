@@ -1,47 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============1011898786258177731=="
+Content-Type: multipart/mixed; boundary="===============2274626584557849923=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [gprs-provision RFCPATCHv6 0/4] Plugin API for provisioning of
- GPRS context settings
-Date: Tue, 25 Jan 2011 13:28:42 +0100
-Message-ID: <1295958522.1520.40.camel@aeonflux>
-In-Reply-To: <1295957714-21053-1-git-send-email-jukka.saunamaki@nokia.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 1/1] isimodem: Adding version isimodem and isimodem2.5
+Date: Tue, 25 Jan 2011 14:39:39 +0200
+Message-ID: <AANLkTik7d2_wahOGoEb3fSGbgfJw1vLfbyrbKeH7wofR@mail.gmail.com>
+In-Reply-To: <1295958228.1520.36.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1011898786258177731==
+--===============2274626584557849923==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+Hi,
 
-> Another patchset about automatic provisioning of GPRS context settings.
-> =
+2011/1/25 Marcel Holtmann <marcel@holtmann.org>:
+>> +enum isi_version {
+>> + =C2=A0 =C2=A0 ISI_20 =3D 0,
+>> + =C2=A0 =C2=A0 ISI_25 =3D 1
+>> +};
+>> +
+>
+> If we follow the same layout as with all other modem drivers, then the
+> *modem.h should only contain the prototypes for the init callbacks.
+>
+>> =C2=A0extern struct ofono_modem *isi_modem_by_interface(char const *ifna=
+me);
+>
+> This one already violates this one and might need to be cleaned up.
+>
+> The ISI modem is special since it really only has two users anyway in
+> the end, but maybe drivers/isimodem/version.h analog to vendor.h from
+> atmodem might be a good idea.
+>
+> Aki, what is your preference here?
 
-> This time, provisioning driver API is synchronous, and __ofono_gprs_provi=
-sion_get_settings includes MCC,MNC and SPN as in parameters. =
+I don't think there is a need for this, as ISI itself already provides
+both ISI version (which we have available always via the
+g_isi_client_verify() call), and in many cases also the resource ID as
+means to find the correct quirk to use.
 
-> Per modem probing and all related complexity was removed, since there was=
- really no need for it. =
+Of course, I could be convinced otherwise, but not without seeing
+actual patches. It might become extremely ugly with using ISI version
+and the resource ID, and using something like vendor.h might then make
+sense.
 
-> =
+But remember that we also have the isiusb plugin, and I would like it
+to keep working with *any* isimodem out there.
 
-> It is now the gprs-atom that queries SPN from SIM before calling provisio=
-ning. Cases when gprs-atom is unregistered or removed while SPN query is in=
- progress, should be handled gracefully (unlike e.g. in netreg atom...)
+Cheers,
+Aki
 
-I think that our only leftover is how we handle the SPN detail.
-
-Denis, what is your preference here? My take would be that we store it
-inside network registration and provide it to external modules. I don't
-see a point in reading it twice.
-
-Regards
-
-Marcel
-
-
-
---===============1011898786258177731==--
+--===============2274626584557849923==--
 
