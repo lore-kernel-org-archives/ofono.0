@@ -1,68 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============6851199293880977583=="
+Content-Type: multipart/mixed; boundary="===============2298222586248063801=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: voicecall: behavior of ReleaseAndAnswere with held calls?
-Date: Tue, 25 Jan 2011 17:32:18 -0600
-Message-ID: <4D3F5D82.4060101@gmail.com>
-In-Reply-To: <AANLkTinwec10=fv5sHM4+VeBEcJnQXMAtQva5FPBCV0E@mail.gmail.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH] call-settings: use enum values
+Date: Tue, 25 Jan 2011 21:46:08 -0200
+Message-ID: <1295999168-1168-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6851199293880977583==
+--===============2298222586248063801==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
->     Yep, Hangup or HangupMultiparty then SwapCalls.  If you feel that a
->     single operation to accomplish hangup + swap is required we can
->     certainly consider it.  For now it didn't pass our API is Minimal +
->     Complete test.  Perhaps ReleaseAndSwap()...?
-> =
+Use the enum values defined for CLIP, CNAP, CLIR, COLP and COLR.
+---
+ src/call-settings.c |   16 ++++++++--------
+ 1 files changed, 8 insertions(+), 8 deletions(-)
 
-> =
+diff --git a/src/call-settings.c b/src/call-settings.c
+index 109f130..8dd2564 100644
+--- a/src/call-settings.c
++++ b/src/call-settings.c
+@@ -1179,11 +1179,11 @@ static DBusMessage *set_clir(DBusMessage *msg, stru=
+ct ofono_call_settings *cs,
+ 		return __ofono_error_not_implemented(msg);
+ =
 
-> I would go with easy solution by just changing src/voicecall.c line 1418
-> =
+ 	if (!strcmp(setting, "default"))
+-		clir =3D 0;
++		clir =3D CLIR_STATUS_NOT_PROVISIONED;
+ 	else if (!strcmp(setting, "enabled"))
+-		clir =3D 1;
++		clir =3D CLIR_STATUS_PROVISIONED_PERMANENT;
+ 	else if (!strcmp(setting, "disabled"))
+-		clir =3D 2;
++		clir =3D CLIR_STATUS_UNKNOWN;
+ =
 
-> static DBusMessage *manager_release_and_answer(DBusConnection *conn,
->                         DBusMessage *msg, void *data)
-> {
-> ...
-> =
+ 	if (clir =3D=3D -1)
+ 		return __ofono_error_invalid_format(msg);
+@@ -1411,11 +1411,11 @@ struct ofono_call_settings *ofono_call_settings_cre=
+ate(struct ofono_modem *modem
+ 		return NULL;
+ =
 
-> 1418:
-> -    if (!voicecalls_have_waiting(vc))
-> +    if (!voicecalls_have_waiting(vc) &&
+ 	/* Set all the settings to unknown state */
+-	cs->clip =3D 2;
+-	cs->cnap =3D 2;
+-	cs->clir =3D 2;
+-	cs->colp =3D 2;
+-	cs->colr =3D 2;
++	cs->clip =3D CLIP_STATUS_UNKNOWN;
++	cs->cnap =3D CNAP_STATUS_UNKNOWN;
++	cs->clir =3D CLIR_STATUS_UNKNOWN;
++	cs->colp =3D COLP_STATUS_UNKNOWN;
++	cs->colr =3D COLR_STATUS_UNKNOWN;
+ 	cs->atom =3D __ofono_modem_add_atom(modem, OFONO_ATOM_TYPE_CALL_SETTINGS,
+ 						call_settings_remove, cs);
+ =
 
-I guess you mean || here.
+-- =
 
-> !voicecalls_have_with_status(vc, CALL_STATUS_HELD))
->         return __ofono_error_failed(msg);
-> =
-
-> ...
->     vc->driver->release_all_active(vc, generic_callback, vc);
-> =
-
->     return NULL;
-> }
-> =
-
-> This would give ReleaseAndAnswer full functionality of +CHLD=3D1.
-> =
-
-> (sorry for pseudo-patch, working temporary on windows machine)
->  =
-
-> =
+1.7.3.5
 
 
-Anyhow, I don't agree, we want the API to reflect what is going to
-happen.  The various scenarios involving CHLD are pretty bizarre and
-hard to explain to a developer who hasn't learned 22.030 by heart.
-
-Regards,
--Denis
-
---===============6851199293880977583==--
+--===============2298222586248063801==--
 
