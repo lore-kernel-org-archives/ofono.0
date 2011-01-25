@@ -1,50 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============1305887692013378958=="
+Content-Type: multipart/mixed; boundary="===============5436885192774575373=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Don't use c++ keyword in public header files
-Date: Tue, 25 Jan 2011 12:54:24 +0100
-Message-ID: <1295956464.1520.24.camel@aeonflux>
-In-Reply-To: <1295956032-27028-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
+Subject: Re: isimodem2.5 submit plan
+Date: Tue, 25 Jan 2011 13:03:08 +0100
+Message-ID: <4D3EBBFC.3050900@stericsson.com>
+In-Reply-To: <1295956296.1520.21.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1305887692013378958==
+--===============5436885192774575373==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
-
->  include/sim.h |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
-
-> diff --git a/include/sim.h b/include/sim.h
-> index 81df60e..6e93769 100644
-> --- a/include/sim.h
-> +++ b/include/sim.h
-> @@ -154,7 +154,7 @@ struct ofono_sim_driver {
->  			ofono_sim_lock_unlock_cb_t cb, void *data);
->  	void (*change_passwd)(struct ofono_sim *sim,
->  			enum ofono_sim_password_type type,
-> -			const char *old, const char *new,
-> +			const char *p_old, const char *p_new,
->  			ofono_sim_lock_unlock_cb_t cb, void *data);
->  	void (*lock)(struct ofono_sim *sim, enum ofono_sim_password_type type,
->  			int enable, const char *passwd,
-
-why is this exactly a problem?
-
-And if you really wanna do that, then please not something cryptic like
-p_new. Names like new_passwd or new_pw are way more descriptive.
-
-Another possibility is using the combination current + passwd.
-
-Regards
-
-Marcel
+Hi Marcel,
 
 
+> so I remember that the agreement was to just quirk the isimodem support
+> to also support the new code. Is that still the case or what is the
+> exact plan here?
 
---===============1305887692013378958==--
+Yes, that is basically the plan.
+We just wanted you to get a heads-up on what we are planning and what =
+
+patches are to come.
+
+>
+> I am actually lost in what these means. I most certainly makes sense to
+> you, but I can not make any out of it ;)
+>
+> So why don't you just start sending your initial patches and then we
+> see.
+
+
+Right, we will start doing just that.
+
+Best Regards,
+Jessica
+
+--===============5436885192774575373==--
 
