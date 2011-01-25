@@ -1,34 +1,79 @@
-Content-Type: multipart/mixed; boundary="===============3311475316927879977=="
+Content-Type: multipart/mixed; boundary="===============7203539038905115205=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/1] isimodem: Adding version isimodem and isimodem2.5
-Date: Tue, 25 Jan 2011 13:53:53 +0100
-Message-ID: <1295960033.1520.44.camel@aeonflux>
-In-Reply-To: <AANLkTinMa747DMt3pJ3cL3H59_uqpqoSYhJWqEyy_9GD@mail.gmail.com>
+From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
+Subject: [PATCH 1/1 v2] simutil: EF Fileid additions USIM and SIM Phonebook
+Date: Tue, 25 Jan 2011 14:11:25 +0100
+Message-ID: <1295961085-30391-1-git-send-email-jessica.j.nilsson@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3311475316927879977==
+--===============7203539038905115205==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Also, adding some general fileids for building paths
 
-> > So this clearly then is not suppose to be in isimodem.h and while at it,
-> > someone might wanna cleanup isi_modem_by_interface and move it to a
-> > better location.
-> =
+---
 
-> Done. Moved it to /dev/null. ;-)
-
-no kidding. Good one :)
-
-Regards
-
-Marcel
+Needed for isimodem2.5 patches planned to follow shortly.
 
 
+Best Regards,
+Jessica
 
---===============3311475316927879977==--
+
+ src/simutil.h |   12 ++++++++++++
+ 1 files changed, 12 insertions(+), 0 deletions(-)
+
+diff --git a/src/simutil.h b/src/simutil.h
+index 95bc18f..463540b 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -25,8 +25,16 @@
+ enum sim_fileid {
+ 	SIM_EFPL_FILEID =3D			0x2F05,
+ 	SIM_EF_ICCID_FILEID =3D			0x2FE2,
++	SIM_MF_FILEID =3D				0x3F00,
+ 	SIM_EFIMG_FILEID =3D			0x4F20,
++	SIM_EFPSC_FILEID =3D			0x4F22,
++	SIM_EFCC_FILEID =3D			0x4F23,
++	SIM_EFPUID_FILEID =3D			0x4F24,
++	SIM_EFPBR_FILEID =3D			0x4F30,
++	SIM_DFPHONEBOOK_FILEID =3D		0x5F3A,
++	SIM_DFMULTIMEDIA_FILEID =3D		0x5F3B,
+ 	SIM_EFLI_FILEID =3D			0x6F05,
++	SIM_EFIMSI_FILEID =3D			0x6F07,
+ 	SIM_EF_CPHS_MWIS_FILEID =3D		0x6F11,
+ 	SIM_EF_CPHS_CFF_FILEID =3D		0x6F13,
+ 	SIM_EF_CPHS_INFORMATION_FILEID =3D	0x6F16,
+@@ -35,10 +43,12 @@ enum sim_fileid {
+ 	SIM_EFSST_FILEID =3D			0x6F38, /* same as EFust */
+ 	SIM_EFADN_FILEID =3D			0x6F3A,
+ 	SIM_EFMSISDN_FILEID =3D			0x6F40,
++	SIM_EFSMSP_FILEID =3D			0x6F42,
+ 	SIM_EFCBMI_FILEID =3D			0x6F45,
+ 	SIM_EFSPN_FILEID =3D			0x6F46,
+ 	SIM_EFCBMID_FILEID =3D			0x6F48,
+ 	SIM_EFSDN_FILEID =3D			0x6F49,
++	SIM_EFEXT1_FILEID =3D			0x6F4A,
+ 	SIM_EFBDN_FILEID =3D			0x6F4D,
+ 	SIM_EFCBMIR_FILEID =3D			0x6F50,
+ 	SIM_EFEST_FILEID =3D			0x6F56,
+@@ -52,6 +62,8 @@ enum sim_fileid {
+ 	SIM_EFMWIS_FILEID =3D			0x6FCA,
+ 	SIM_EFCFIS_FILEID =3D			0x6FCB,
+ 	SIM_EFSPDI_FILEID =3D			0x6FCD,
++	SIM_DFTELECOM_FILEID =3D			0x7F10,
++	SIM_DFGSM_FILEID =3D			0x7F20,
+ };
+ =
+
+ /* 51.011 Section 9.3 */
+-- =
+
+1.7.3.2
+
+
+--===============7203539038905115205==--
 
