@@ -1,116 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============0989032473499556876=="
+Content-Type: multipart/mixed; boundary="===============2571544158938314952=="
 MIME-Version: 1.0
-From: Tomasz GREGOREK <tomasz.gregorek@stericsson.com>
-Subject: voicecall: behavior of ReleaseAndAnswere with held calls?
-Date: Tue, 25 Jan 2011 13:07:37 +0100
-Message-ID: <3ED83A9DB3B6D94CA68BF7C03F2981D3531AD94119@EXDCVYMBSTM006.EQ1STM.local>
+From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
+Subject: [PATCH 1/1] simutil: EF Fileid additions USIM and SIM Phonebook
+ isimodem2.5
+Date: Tue, 25 Jan 2011 13:09:32 +0100
+Message-ID: <1295957372-28677-1-git-send-email-jessica.j.nilsson@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0989032473499556876==
+--===============2571544158938314952==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi
+Adding EF Fileids for USIM and SIM Phonebook.
+Also, adding some general fileids for building paths.
 
-I have a question about behavior of ReleaseAndAnswere().
-If I am right, this function implements +CHLD=3D1 at command. Spec 22.030 s=
-ays
+Needed for isimodem2.5 patches planned to follow shortly.
 
-Entering 1 followed by SEND     -              Releases all active calls (i=
-f any exist)
-                                and accepts the other (held or waiting) cal=
-l.
 
-oFono is failing on this command when there are held and
-active calls as there is only check if waiting call exists in
-manager_release_and_answere().
+Best Regards,
+Jessica
 
-Shouldn't ReleaseAndAnswere() release the active call and bring back the he=
-ld
-one in such situation?
 
-There also could be a little more description of behavior for a case when w=
-e have
-held and waiting calls saying that the waiting call will be answered and th=
-at held
-won't be released.
+---
+ src/simutil.h |   13 +++++++++++++
+ 1 files changed, 13 insertions(+), 0 deletions(-)
 
-Best regards
-Tomasz Gregorek
+diff --git a/src/simutil.h b/src/simutil.h
+index 95bc18f..17a9f30 100644
+--- a/src/simutil.h
++++ b/src/simutil.h
+@@ -25,8 +25,16 @@
+ enum sim_fileid {
+ 	SIM_EFPL_FILEID =3D			0x2F05,
+ 	SIM_EF_ICCID_FILEID =3D			0x2FE2,
++	SIM_MF_FILEID =3D				0x3F00,
+ 	SIM_EFIMG_FILEID =3D			0x4F20,
++	SIM_EFPSC_FILEID =3D			0x4F22,
++	SIM_EFCC_FILEID =3D			0x4F23,
++	SIM_EFPUID_FILEID =3D			0x4F24,
++	SIM_EFPBR_FILEID =3D			0x4F30,
++	SIM_DFPHONEBOOK_FILEID =3D		0x5F3A,
++	SIM_DFMULTIMEDIA_FILEID =3D		0x5F3B,
+ 	SIM_EFLI_FILEID =3D			0x6F05,
++	SIM_EFIMSI_FILEID =3D			0x6F07,
+ 	SIM_EF_CPHS_MWIS_FILEID =3D		0x6F11,
+ 	SIM_EF_CPHS_CFF_FILEID =3D		0x6F13,
+ 	SIM_EF_CPHS_INFORMATION_FILEID =3D	0x6F16,
+@@ -35,10 +43,12 @@ enum sim_fileid {
+ 	SIM_EFSST_FILEID =3D			0x6F38, /* same as EFust */
+ 	SIM_EFADN_FILEID =3D			0x6F3A,
+ 	SIM_EFMSISDN_FILEID =3D			0x6F40,
++	SIM_EFSMSP_FILEID =3D			0x6F42,
+ 	SIM_EFCBMI_FILEID =3D			0x6F45,
+ 	SIM_EFSPN_FILEID =3D			0x6F46,
+ 	SIM_EFCBMID_FILEID =3D			0x6F48,
+ 	SIM_EFSDN_FILEID =3D			0x6F49,
++	SIM_EFEXT1_FILEID =3D			0x6F4A,
+ 	SIM_EFBDN_FILEID =3D			0x6F4D,
+ 	SIM_EFCBMIR_FILEID =3D			0x6F50,
+ 	SIM_EFEST_FILEID =3D			0x6F56,
+@@ -52,6 +62,9 @@ enum sim_fileid {
+ 	SIM_EFMWIS_FILEID =3D			0x6FCA,
+ 	SIM_EFCFIS_FILEID =3D			0x6FCB,
+ 	SIM_EFSPDI_FILEID =3D			0x6FCD,
++	SIM_DFTELECOM_FILEID =3D			0x7F10,
++	SIM_DFGSM_FILEID =3D			0x7F20,
++
+ };
+ =
 
---===============0989032473499556876==
-Content-Type: text/html
-MIME-Version: 1.0
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="attachment.html"
+ /* 51.011 Section 9.3 */
+-- =
 
-PGh0bWwgeG1sbnM6dj0idXJuOnNjaGVtYXMtbWljcm9zb2Z0LWNvbTp2bWwiIHhtbG5zOm89InVy
-bjpzY2hlbWFzLW1pY3Jvc29mdC1jb206b2ZmaWNlOm9mZmljZSIgeG1sbnM6dz0idXJuOnNjaGVt
-YXMtbWljcm9zb2Z0LWNvbTpvZmZpY2U6d29yZCIgeG1sbnM6bT0iaHR0cDovL3NjaGVtYXMubWlj
-cm9zb2Z0LmNvbS9vZmZpY2UvMjAwNC8xMi9vbW1sIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv
-VFIvUkVDLWh0bWw0MCI+PGhlYWQ+PG1ldGEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
-dD0idGV4dC9odG1sOyBjaGFyc2V0PXVzLWFzY2lpIj48bWV0YSBuYW1lPUdlbmVyYXRvciBjb250
-ZW50PSJNaWNyb3NvZnQgV29yZCAxMiAoZmlsdGVyZWQgbWVkaXVtKSI+PHN0eWxlPjwhLS0KLyog
-Rm9udCBEZWZpbml0aW9ucyAqLwpAZm9udC1mYWNlCgl7Zm9udC1mYW1pbHk6Q2FsaWJyaTsKCXBh
-bm9zZS0xOjIgMTUgNSAyIDIgMiA0IDMgMiA0O30KLyogU3R5bGUgRGVmaW5pdGlvbnMgKi8KcC5N
-c29Ob3JtYWwsIGxpLk1zb05vcm1hbCwgZGl2Lk1zb05vcm1hbAoJe21hcmdpbjowY207CgltYXJn
-aW4tYm90dG9tOi4wMDAxcHQ7Cglmb250LXNpemU6MTEuMHB0OwoJZm9udC1mYW1pbHk6IkNhbGli
-cmkiLCJzYW5zLXNlcmlmIjt9CmE6bGluaywgc3Bhbi5Nc29IeXBlcmxpbmsKCXttc28tc3R5bGUt
-cHJpb3JpdHk6OTk7Cgljb2xvcjpibHVlOwoJdGV4dC1kZWNvcmF0aW9uOnVuZGVybGluZTt9CmE6
-dmlzaXRlZCwgc3Bhbi5Nc29IeXBlcmxpbmtGb2xsb3dlZAoJe21zby1zdHlsZS1wcmlvcml0eTo5
-OTsKCWNvbG9yOnB1cnBsZTsKCXRleHQtZGVjb3JhdGlvbjp1bmRlcmxpbmU7fQpzcGFuLkVtYWls
-U3R5bGUxNwoJe21zby1zdHlsZS10eXBlOnBlcnNvbmFsLWNvbXBvc2U7Cglmb250LWZhbWlseToi
-Q2FsaWJyaSIsInNhbnMtc2VyaWYiOwoJY29sb3I6d2luZG93dGV4dDt9Ci5Nc29DaHBEZWZhdWx0
-Cgl7bXNvLXN0eWxlLXR5cGU6ZXhwb3J0LW9ubHk7fQpAcGFnZSBXb3JkU2VjdGlvbjEKCXtzaXpl
-OjYxMi4wcHQgNzkyLjBwdDsKCW1hcmdpbjo3MC44NXB0IDcwLjg1cHQgNzAuODVwdCA3MC44NXB0
-O30KZGl2LldvcmRTZWN0aW9uMQoJe3BhZ2U6V29yZFNlY3Rpb24xO30KLS0+PC9zdHlsZT48IS0t
-W2lmIGd0ZSBtc28gOV0+PHhtbD4KPG86c2hhcGVkZWZhdWx0cyB2OmV4dD0iZWRpdCIgc3BpZG1h
-eD0iMTAyNiIgLz4KPC94bWw+PCFbZW5kaWZdLS0+PCEtLVtpZiBndGUgbXNvIDldPjx4bWw+Cjxv
-OnNoYXBlbGF5b3V0IHY6ZXh0PSJlZGl0Ij4KPG86aWRtYXAgdjpleHQ9ImVkaXQiIGRhdGE9IjEi
-IC8+CjwvbzpzaGFwZWxheW91dD48L3htbD48IVtlbmRpZl0tLT48L2hlYWQ+PGJvZHkgbGFuZz1O
-Ty1CT0sgbGluaz1ibHVlIHZsaW5rPXB1cnBsZT48ZGl2IGNsYXNzPVdvcmRTZWN0aW9uMT48cCBj
-bGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5IaTxvOnA+PC9vOnA+PC9zcGFuPjwvcD48
-cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bh
-bj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+SSBoYXZlIGEgcXVlc3Rp
-b24gYWJvdXQgYmVoYXZpb3Igb2YgUmVsZWFzZUFuZEFuc3dlcmUoKS48bzpwPjwvbzpwPjwvc3Bh
-bj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+SWYgSSBhbSByaWdodCwg
-dGhpcyBmdW5jdGlvbiBpbXBsZW1lbnRzICtDSExEPTEgYXQgY29tbWFuZC4gU3BlYyAyMi4wMzAg
-c2F5czxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1F
-Ti1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFu
-IGxhbmc9RU4tVVM+RW50ZXJpbmcgMSBmb2xsb3dlZCBieSBTRU5EJm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7IC0mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
-bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgUmVsZWFzZXMgYWxsIGFjdGl2ZSBjYWxscyAo
-aWYgYW55IGV4aXN0KSA8bzpwPjwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxz
-cGFuIGxhbmc9RU4tVVM+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5i
-c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
-Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7YW5kIGFjY2VwdHMgdGhlIG90aGVy
-IChoZWxkIG9yIHdhaXRpbmcpIGNhbGwuPG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1z
-b05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPjxvOnA+Jm5ic3A7PC9vOnA+PC9zcGFuPjwvcD48cCBj
-bGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5vRm9ubyBpcyBmYWlsaW5nIG9uIHRoaXMg
-Y29tbWFuZCB3aGVuIHRoZXJlIGFyZSBoZWxkIGFuZDxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBj
-bGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz5hY3RpdmUgY2FsbHMgYXMgdGhlcmUgaXMg
-b25seSBjaGVjayBpZiB3YWl0aW5nIGNhbGwgZXhpc3RzIGluPG86cD48L286cD48L3NwYW4+PC9w
-PjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPm1hbmFnZXJfcmVsZWFzZV9hbmRf
-YW5zd2VyZSgpLjxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4g
-bGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFs
-PjxzcGFuIGxhbmc9RU4tVVM+U2hvdWxkbiYjODIxNzt0IFJlbGVhc2VBbmRBbnN3ZXJlKCkgcmVs
-ZWFzZSB0aGUgYWN0aXZlIGNhbGwgYW5kIGJyaW5nIGJhY2sgdGhlIGhlbGQ8bzpwPjwvbzpwPjwv
-c3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+b25lIGluIHN1Y2gg
-c2l0dWF0aW9uPzxvOnA+PC9vOnA+PC9zcGFuPjwvcD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4g
-bGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwvc3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFs
-PjxzcGFuIGxhbmc9RU4tVVM+VGhlcmUgYWxzbyBjb3VsZCBiZSBhIGxpdHRsZSBtb3JlIGRlc2Ny
-aXB0aW9uIG9mIGJlaGF2aW9yIGZvciBhIGNhc2Ugd2hlbiB3ZSBoYXZlPG86cD48L286cD48L3Nw
-YW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVTPmhlbGQgYW5kIHdhaXRp
-bmcgY2FsbHMgc2F5aW5nIHRoYXQgdGhlIHdhaXRpbmcgY2FsbCB3aWxsIGJlIGFuc3dlcmVkIGFu
-ZCB0aGF0IGhlbGQgPG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3Bh
-biBsYW5nPUVOLVVTPndvbiYjODIxNzt0IGJlIHJlbGVhc2VkLjxvOnA+PC9vOnA+PC9zcGFuPjwv
-cD48cCBjbGFzcz1Nc29Ob3JtYWw+PHNwYW4gbGFuZz1FTi1VUz48bzpwPiZuYnNwOzwvbzpwPjwv
-c3Bhbj48L3A+PHAgY2xhc3M9TXNvTm9ybWFsPjxzcGFuIGxhbmc9RU4tVVM+QmVzdCByZWdhcmRz
-PG86cD48L286cD48L3NwYW4+PC9wPjxwIGNsYXNzPU1zb05vcm1hbD48c3BhbiBsYW5nPUVOLVVT
-PlRvbWFzeiBHcmVnb3JlazxvOnA+PC9vOnA+PC9zcGFuPjwvcD48L2Rpdj48L2JvZHk+PC9odG1s
-Pg==
---===============0989032473499556876==--
+1.7.3.2
+
+
+--===============2571544158938314952==--
 
