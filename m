@@ -1,79 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============7203539038905115205=="
+Content-Type: multipart/mixed; boundary="===============0346266132396462720=="
 MIME-Version: 1.0
 From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
-Subject: [PATCH 1/1 v2] simutil: EF Fileid additions USIM and SIM Phonebook
-Date: Tue, 25 Jan 2011 14:11:25 +0100
-Message-ID: <1295961085-30391-1-git-send-email-jessica.j.nilsson@stericsson.com>
+Subject: Re: [PATCH 1/1] isimodem: Adding version isimodem and isimodem2.5
+Date: Tue, 25 Jan 2011 14:20:01 +0100
+Message-ID: <4D3ECE01.7070309@stericsson.com>
+In-Reply-To: <AANLkTik7d2_wahOGoEb3fSGbgfJw1vLfbyrbKeH7wofR@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7203539038905115205==
+--===============0346266132396462720==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Also, adding some general fileids for building paths
+Hi,
 
----
+On 01/25/2011 01:39 PM, Aki Niemi wrote:
 
-Needed for isimodem2.5 patches planned to follow shortly.
+> I don't think there is a need for this, as ISI itself already provides
+> both ISI version (which we have available always via the
+> g_isi_client_verify() call), and in many cases also the resource ID as
+> means to find the correct quirk to use.
+>
+> Of course, I could be convinced otherwise, but not without seeing
+> actual patches. It might become extremely ugly with using ISI version
+> and the resource ID, and using something like vendor.h might then make
+> sense.
+>
 
+
+Ok, understood. We will see what we can do.
 
 Best Regards,
 Jessica
 
-
- src/simutil.h |   12 ++++++++++++
- 1 files changed, 12 insertions(+), 0 deletions(-)
-
-diff --git a/src/simutil.h b/src/simutil.h
-index 95bc18f..463540b 100644
---- a/src/simutil.h
-+++ b/src/simutil.h
-@@ -25,8 +25,16 @@
- enum sim_fileid {
- 	SIM_EFPL_FILEID =3D			0x2F05,
- 	SIM_EF_ICCID_FILEID =3D			0x2FE2,
-+	SIM_MF_FILEID =3D				0x3F00,
- 	SIM_EFIMG_FILEID =3D			0x4F20,
-+	SIM_EFPSC_FILEID =3D			0x4F22,
-+	SIM_EFCC_FILEID =3D			0x4F23,
-+	SIM_EFPUID_FILEID =3D			0x4F24,
-+	SIM_EFPBR_FILEID =3D			0x4F30,
-+	SIM_DFPHONEBOOK_FILEID =3D		0x5F3A,
-+	SIM_DFMULTIMEDIA_FILEID =3D		0x5F3B,
- 	SIM_EFLI_FILEID =3D			0x6F05,
-+	SIM_EFIMSI_FILEID =3D			0x6F07,
- 	SIM_EF_CPHS_MWIS_FILEID =3D		0x6F11,
- 	SIM_EF_CPHS_CFF_FILEID =3D		0x6F13,
- 	SIM_EF_CPHS_INFORMATION_FILEID =3D	0x6F16,
-@@ -35,10 +43,12 @@ enum sim_fileid {
- 	SIM_EFSST_FILEID =3D			0x6F38, /* same as EFust */
- 	SIM_EFADN_FILEID =3D			0x6F3A,
- 	SIM_EFMSISDN_FILEID =3D			0x6F40,
-+	SIM_EFSMSP_FILEID =3D			0x6F42,
- 	SIM_EFCBMI_FILEID =3D			0x6F45,
- 	SIM_EFSPN_FILEID =3D			0x6F46,
- 	SIM_EFCBMID_FILEID =3D			0x6F48,
- 	SIM_EFSDN_FILEID =3D			0x6F49,
-+	SIM_EFEXT1_FILEID =3D			0x6F4A,
- 	SIM_EFBDN_FILEID =3D			0x6F4D,
- 	SIM_EFCBMIR_FILEID =3D			0x6F50,
- 	SIM_EFEST_FILEID =3D			0x6F56,
-@@ -52,6 +62,8 @@ enum sim_fileid {
- 	SIM_EFMWIS_FILEID =3D			0x6FCA,
- 	SIM_EFCFIS_FILEID =3D			0x6FCB,
- 	SIM_EFSPDI_FILEID =3D			0x6FCD,
-+	SIM_DFTELECOM_FILEID =3D			0x7F10,
-+	SIM_DFGSM_FILEID =3D			0x7F20,
- };
- =
-
- /* 51.011 Section 9.3 */
--- =
-
-1.7.3.2
-
-
---===============7203539038905115205==--
+--===============0346266132396462720==--
 
