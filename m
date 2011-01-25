@@ -1,38 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============0346266132396462720=="
+Content-Type: multipart/mixed; boundary="===============5585625098756308566=="
 MIME-Version: 1.0
-From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
-Subject: Re: [PATCH 1/1] isimodem: Adding version isimodem and isimodem2.5
-Date: Tue, 25 Jan 2011 14:20:01 +0100
-Message-ID: <4D3ECE01.7070309@stericsson.com>
-In-Reply-To: <AANLkTik7d2_wahOGoEb3fSGbgfJw1vLfbyrbKeH7wofR@mail.gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/1 v2] simutil: EF Fileid additions USIM and SIM Phonebook
+Date: Tue, 25 Jan 2011 14:26:38 +0100
+Message-ID: <1295961998.1520.47.camel@aeonflux>
+In-Reply-To: <1295961085-30391-1-git-send-email-jessica.j.nilsson@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0346266132396462720==
+--===============5585625098756308566==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+Hi Jessica,
 
-On 01/25/2011 01:39 PM, Aki Niemi wrote:
+> Also, adding some general fileids for building paths
+> =
 
-> I don't think there is a need for this, as ISI itself already provides
-> both ISI version (which we have available always via the
-> g_isi_client_verify() call), and in many cases also the resource ID as
-> means to find the correct quirk to use.
->
-> Of course, I could be convinced otherwise, but not without seeing
-> actual patches. It might become extremely ugly with using ISI version
-> and the resource ID, and using something like vendor.h might then make
-> sense.
->
+> ---
+> =
+
+> Needed for isimodem2.5 patches planned to follow shortly.
+> =
+
+> =
+
+> Best Regards,
+> Jessica
+> =
+
+> =
+
+>  src/simutil.h |   12 ++++++++++++
+>  1 files changed, 12 insertions(+), 0 deletions(-)
+
+patch has been applied. Thanks.
+
+Regards
+
+Marcel
 
 
-Ok, understood. We will see what we can do.
 
-Best Regards,
-Jessica
-
---===============0346266132396462720==--
+--===============5585625098756308566==--
 
