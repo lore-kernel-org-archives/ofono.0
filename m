@@ -1,44 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============1550882258768055277=="
+Content-Type: multipart/mixed; boundary="===============5736784460929052663=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 0/3] Persist TX SMS messages
-Date: Tue, 25 Jan 2011 10:47:12 -0200
-Message-ID: <1295959635-4987-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+Subject: Re: [gprs-provision RFCPATCHv6 0/4] Plugin API for provisioning of
+ GPRS context settings
+Date: Tue, 25 Jan 2011 14:47:44 +0200
+Message-ID: <1295959664.6035.14.camel@jsaunama-desktop>
+In-Reply-To: <1295958522.1520.40.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1550882258768055277==
+--===============5736784460929052663==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-This patch series is a re-sending of a previous series sent by Kristen Carl=
-son
-Accardi. What I did was some cleanups, style changes, ported it to the new =
-sms
-API and fixed some leaks (hopefully I didn't introduce more).
+Hi
 
-Marcel/Denis, I don't know if letting "Based on patch from" is the right
-approach. Feel free to change the author of the commits if you think this m=
-ore
-appropriate.
+On Tue, 2011-01-25 at 13:28 +0100, ext Marcel Holtmann wrote:
+> I think that our only leftover is how we handle the SPN detail.
+> =
 
-Lucas De Marchi (3):
-  sms: store pending tx pdus on disk
-  sms: delete sent sms messages from backup
-  sms: restore pending tx messages from backup
+> Denis, what is your preference here? My take would be that we store it
+> inside network registration and provide it to external modules. I don't
+> see a point in reading it twice.
 
- src/ofono.h   |    1 +
- src/sms.c     |  107 +++++++++++++++++++++++++++
- src/smsutil.c |  223 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- src/smsutil.h |   16 ++++
- 4 files changed, 347 insertions(+), 0 deletions(-)
+New SPN specific API in SIM atom? Asynchronous with callback, but SIM
+would need to read it only once.
+Unless there is some simple way to start reading it right after SIM is
+ready/unlocked and netreg and gprs are registered only after SPN read
+returns?
 
--- =
-
-1.7.3.5
+--Jukka
 
 
---===============1550882258768055277==--
+
+
+
+--===============5736784460929052663==--
 
