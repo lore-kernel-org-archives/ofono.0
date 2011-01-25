@@ -1,41 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============7937950647627556839=="
+Content-Type: multipart/mixed; boundary="===============4711350970248364209=="
 MIME-Version: 1.0
-From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-Subject: [PATCH 1/2] types: extend OFONO_MAX_PHONE_NUMBER_LENGTH
-Date: Tue, 25 Jan 2011 11:02:37 -0300
-Message-ID: <1295964158-19223-2-git-send-email-rafael.zurita@profusion.mobi>
-In-Reply-To: <1295964158-19223-1-git-send-email-rafael.zurita@profusion.mobi>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH] Don't use c++ keyword in public header files
+Date: Tue, 25 Jan 2011 12:42:56 -0200
+Message-ID: <AANLkTi=sGNer4hcBGvMLSdYpMsj_y98cK517N2r+S9Dz@mail.gmail.com>
+In-Reply-To: <1295956464.1520.24.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7937950647627556839==
+--===============4711350970248364209==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/types.h |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Hi Marcel
 
-diff --git a/include/types.h b/include/types.h
-index 7963e0f..71d0988 100644
---- a/include/types.h
-+++ b/include/types.h
-@@ -76,7 +76,7 @@ struct ofono_error {
- 	int error;
- };
- =
+On Tue, Jan 25, 2011 at 9:54 AM, Marcel Holtmann <marcel@holtmann.org> wr=
+ote:
+>> - =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+const char *old, const char *new,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+const char *p_old, const char *p_new,
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 ofono_sim_lock_unlock_cb_t cb, void *data);
+>> =C2=A0 =C2=A0 =C2=A0 void (*lock)(struct ofono_sim *sim, enum ofono_sim_=
+password_type type,
+>> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 int enable, const char *passwd,
+>
+> why is this exactly a problem?
 
--#define OFONO_MAX_PHONE_NUMBER_LENGTH 20
-+#define OFONO_MAX_PHONE_NUMBER_LENGTH 80
- #define OFONO_MAX_CALLER_NAME_LENGTH 80
- =
+I did it only because the file contains this:
 
- struct ofono_phone_number {
--- =
-
-1.7.2.3
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
---===============7937950647627556839==--
+So I thought someone might want to write a plugin in C++ or something
+that includes sim.h
+
+> And if you really wanna do that, then please not something cryptic like
+
+No, I don't want. If nobody will use C++, I'm fine the way it is. Then
+we might want to remove that ifdef, because it will not compile
+anyway.
+
+
+
+regards,
+
+Lucas De Marchi
+
+--===============4711350970248364209==--
 
