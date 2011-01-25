@@ -1,43 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============6483451444948425596=="
+Content-Type: multipart/mixed; boundary="===============4077434001711197425=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/2] Long phone numbers
-Date: Tue, 25 Jan 2011 14:13:27 -0600
-Message-ID: <4D3F2EE7.7030809@gmail.com>
-In-Reply-To: <1295964158-19223-1-git-send-email-rafael.zurita@profusion.mobi>
+Subject: Re: voicecall: behavior of ReleaseAndAnswere with held calls?
+Date: Tue, 25 Jan 2011 14:37:54 -0600
+Message-ID: <4D3F34A2.1070805@gmail.com>
+In-Reply-To: <3ED83A9DB3B6D94CA68BF7C03F2981D3531AD94119@EXDCVYMBSTM006.EQ1STM.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6483451444948425596==
+--===============4077434001711197425==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Rafael,
+Hi Tomasz,
 
-On 01/25/2011 08:02 AM, Rafael Ignacio Zurita wrote:
-> This set of patches extends OFONO_MAX_PHONE_NUMBER_LENGTH, splits
-> common:valid_phone_number_format(), and adapts voicecall to valid
-> the 80 character limit for outgoing calls.
+> Shouldn=E2=80=99t ReleaseAndAnswere() release the active call and bring b=
+ack the
+> held one in such situation?
+>
+
+You shouldn't be using ReleaseAndAnswer in this case, instead you should
+use SwapCalls.  SwapCalls has the added benefit of allowing swapping of
+held and active calls even if there is a call waiting (if your modem
+hardware supports this.)
+
 > =
 
-> Rafael Ignacio Zurita (2):
->   types: change OFONO_MAX_PHONE_NUMBER_LENGTH value to 80
->   common: split valid_phone_number_format and adapt voicecall
-> =
-
->  include/types.h |    2 +-
->  src/common.c    |   20 ++++++++++++++++++--
->  src/common.h    |    2 ++
->  src/voicecall.c |    2 +-
->  4 files changed, 22 insertions(+), 4 deletions(-)
+> There also could be a little more description of behavior for a case
+> when we have held and waiting calls saying that the waiting call will be =
+answered and
+> that held won=E2=80=99t be released.
 > =
 
 
-Both patches have been applied, thanks.
+The documentation says: "Releases currently active call and answers the
+currently waiting call".
+
+Is this not enough? Can you suggest better wording?
 
 Regards,
 -Denis
 
---===============6483451444948425596==--
+--===============4077434001711197425==--
 
