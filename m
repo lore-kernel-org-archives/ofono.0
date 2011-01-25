@@ -1,150 +1,105 @@
-Content-Type: multipart/mixed; boundary="===============8214826149489483343=="
+Content-Type: multipart/mixed; boundary="===============8234625529462366252=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [PATCH 4/4] gprs-provision: add example context provisioning driver
-Date: Tue, 25 Jan 2011 14:15:14 +0200
-Message-ID: <1295957714-21053-5-git-send-email-jukka.saunamaki@nokia.com>
-In-Reply-To: <1295957714-21053-1-git-send-email-jukka.saunamaki@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/1] simutil: EF Fileid additions USIM and SIM Phonebook
+ isimodem2.5
+Date: Tue, 25 Jan 2011 13:20:08 +0100
+Message-ID: <1295958008.1520.33.camel@aeonflux>
+In-Reply-To: <1295957372-28677-1-git-send-email-jessica.j.nilsson@stericsson.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8214826149489483343==
+--===============8234625529462366252==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am          |    3 ++
- examples/provision.c |   97 ++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 100 insertions(+), 0 deletions(-)
- create mode 100644 examples/provision.c
+Hi Jessica,
 
-diff --git a/Makefile.am b/Makefile.am
-index 9c4f383..c70dcbf 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -329,6 +329,9 @@ builtin_sources +=3D examples/history.c
- =
+> Adding EF Fileids for USIM and SIM Phonebook.
+> Also, adding some general fileids for building paths.
+> =
 
- builtin_modules +=3D example_nettime
- builtin_sources +=3D examples/nettime.c
-+
-+builtin_modules +=3D example_provision
-+builtin_sources +=3D examples/provision.c
- endif
- =
+> Needed for isimodem2.5 patches planned to follow shortly.
+> =
 
- builtin_modules +=3D smart_messaging
-diff --git a/examples/provision.c b/examples/provision.c
-new file mode 100644
-index 0000000..5a6103b
---- /dev/null
-+++ b/examples/provision.c
-@@ -0,0 +1,97 @@
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) 2011  Nokia Corporation and/or its subsidiary(-ies).
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+#ifdef HAVE_CONFIG_H
-+#include <config.h>
-+#endif
-+
-+#include <string.h>
-+#include <glib.h>
-+
-+#define OFONO_API_SUBJECT_TO_CHANGE
-+
-+#include <ofono/modem.h>
-+#include <ofono/gprs-provision.h>
-+#include <ofono/types.h>
-+
-+#include "ofono.h"
-+
-+static void example_provision_get_settings(const char *mcc, const char *mn=
-c,
-+				const char *spn,
-+				struct ofono_gprs_provision_data **settings,
-+				int *count)
-+{
-+	ofono_debug("Provisioning...");
-+	*count =3D 0;
-+	*settings =3D NULL;
-+
-+	ofono_debug("Finding settings for MCC %s, MNC %s, SPN '%s'",
-+			mcc, mnc, spn);
-+
-+	if (strcmp(mcc, "246") !=3D 0 || strcmp(mnc, "81") !=3D 0 ||
-+			spn =3D=3D NULL || strcmp(spn, "oFono") !=3D 0)
-+		return;
-+
-+	ofono_debug("Creating example settings for phonesim");
-+
-+	*settings =3D g_try_new0(struct ofono_gprs_provision_data, 2);
-+	if (*settings =3D=3D NULL)
-+		return;
-+
-+	*count =3D 2;
-+
-+	/* Internet context settings */
-+	(*settings)[0].proto =3D OFONO_GPRS_PROTO_IP;
-+	(*settings)[0].type =3D OFONO_GPRS_CONTEXT_TYPE_INTERNET;
-+	(*settings)[0].name =3D g_strdup("Phonesim Internet");
-+	(*settings)[0].apn =3D g_strdup("internetapn");
-+
-+	/* MMS context settings */
-+	(*settings)[1].proto =3D OFONO_GPRS_PROTO_IP;
-+	(*settings)[1].type =3D OFONO_GPRS_CONTEXT_TYPE_MMS;
-+	(*settings)[1].name =3D g_strdup("Phonesim MMS");
-+	(*settings)[1].apn =3D g_strdup("mmsapn");
-+	(*settings)[1].username =3D g_strdup("mmsuser");
-+	(*settings)[1].password =3D g_strdup("mmspass");
-+	(*settings)[1].message_proxy =3D g_strdup("10.11.12.13:8080");
-+	(*settings)[1].message_center =3D g_strdup("http://mms.example.com:8000");
-+}
-+
-+static struct ofono_gprs_provision_driver example_driver =3D {
-+	.name		=3D "Example GPRS context provisioning",
-+	.priority       =3D OFONO_PLUGIN_PRIORITY_LOW,
-+	.get_settings	=3D example_provision_get_settings,
-+};
-+
-+static int example_provision_init(void)
-+{
-+	return ofono_gprs_provision_driver_register(&example_driver);
-+}
-+
-+static void example_provision_exit(void)
-+{
-+	ofono_gprs_provision_driver_unregister(&example_driver);
-+}
-+
-+OFONO_PLUGIN_DEFINE(example_provision, "Example Provisioning Plugin",
-+			VERSION, OFONO_PLUGIN_PRIORITY_DEFAULT,
-+			example_provision_init,
-+			example_provision_exit)
--- =
+> =
 
-1.7.1
+> Best Regards,
+> Jessica
+
+as an exercise, please save this email and then run "git am" and "git
+log" afterwards ;)
+
+So you need to keep the body part of the email without things like
+standard conversation phrases. Since we need to clean them up manually
+after applying the patch.
+
+> ---
+
+Extra comments that are for the reviewer and not the git commit message
+have to go here.
+
+So I would put the comment here for isimodem2.5 and not in the subject
+or the body message since it is only vague related to isimodem2.5 in the
+end.
+
+>  src/simutil.h |   13 +++++++++++++
+>  1 files changed, 13 insertions(+), 0 deletions(-)
+> =
+
+> diff --git a/src/simutil.h b/src/simutil.h
+> index 95bc18f..17a9f30 100644
+> --- a/src/simutil.h
+> +++ b/src/simutil.h
+> @@ -25,8 +25,16 @@
+>  enum sim_fileid {
+>  	SIM_EFPL_FILEID =3D			0x2F05,
+>  	SIM_EF_ICCID_FILEID =3D			0x2FE2,
+> +	SIM_MF_FILEID =3D				0x3F00,
+>  	SIM_EFIMG_FILEID =3D			0x4F20,
+> +	SIM_EFPSC_FILEID =3D			0x4F22,
+> +	SIM_EFCC_FILEID =3D			0x4F23,
+> +	SIM_EFPUID_FILEID =3D			0x4F24,
+> +	SIM_EFPBR_FILEID =3D			0x4F30,
+> +	SIM_DFPHONEBOOK_FILEID =3D		0x5F3A,
+> +	SIM_DFMULTIMEDIA_FILEID =3D		0x5F3B,
+>  	SIM_EFLI_FILEID =3D			0x6F05,
+> +	SIM_EFIMSI_FILEID =3D			0x6F07,
+>  	SIM_EF_CPHS_MWIS_FILEID =3D		0x6F11,
+>  	SIM_EF_CPHS_CFF_FILEID =3D		0x6F13,
+>  	SIM_EF_CPHS_INFORMATION_FILEID =3D	0x6F16,
+> @@ -35,10 +43,12 @@ enum sim_fileid {
+>  	SIM_EFSST_FILEID =3D			0x6F38, /* same as EFust */
+>  	SIM_EFADN_FILEID =3D			0x6F3A,
+>  	SIM_EFMSISDN_FILEID =3D			0x6F40,
+> +	SIM_EFSMSP_FILEID =3D			0x6F42,
+>  	SIM_EFCBMI_FILEID =3D			0x6F45,
+>  	SIM_EFSPN_FILEID =3D			0x6F46,
+>  	SIM_EFCBMID_FILEID =3D			0x6F48,
+>  	SIM_EFSDN_FILEID =3D			0x6F49,
+> +	SIM_EFEXT1_FILEID =3D			0x6F4A,
+>  	SIM_EFBDN_FILEID =3D			0x6F4D,
+>  	SIM_EFCBMIR_FILEID =3D			0x6F50,
+>  	SIM_EFEST_FILEID =3D			0x6F56,
+> @@ -52,6 +62,9 @@ enum sim_fileid {
+>  	SIM_EFMWIS_FILEID =3D			0x6FCA,
+>  	SIM_EFCFIS_FILEID =3D			0x6FCB,
+>  	SIM_EFSPDI_FILEID =3D			0x6FCD,
+> +	SIM_DFTELECOM_FILEID =3D			0x7F10,
+> +	SIM_DFGSM_FILEID =3D			0x7F20,
+> +
+
+Scrap the extra empty line here.
+>  };
+>  =
 
 
---===============8214826149489483343==--
+Regards
+
+Marcel
+
+
+
+--===============8234625529462366252==--
 
