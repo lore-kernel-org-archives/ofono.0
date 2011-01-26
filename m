@@ -1,48 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============8624587641050777218=="
+Content-Type: multipart/mixed; boundary="===============4985826056165552377=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [gprs-provision PATCHv7 0/5] Plugin API for provisioning of GPRS
- context settings
-Date: Wed, 26 Jan 2011 14:56:41 -0600
-Message-ID: <4D408A89.4070506@gmail.com>
-In-Reply-To: <1296045255-29890-1-git-send-email-jukka.saunamaki@nokia.com>
+Subject: Re: [PATCH v3] stk: Fix issue in stk_alpha_id_set
+Date: Wed, 26 Jan 2011 15:26:22 -0600
+Message-ID: <4D40917E.8090103@gmail.com>
+In-Reply-To: <1296072911-3301-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8624587641050777218==
+--===============4985826056165552377==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+Hi Jeevaka,
 
-On 01/26/2011 06:34 AM, Jukka Saunamaki wrote:
-> Hello
-> =
-
-> And again a patchset about automatic provisioning of GPRS context setting=
-s.
-> =
-
-> Since the safe reading of EF-SPN turned out to be impossible until genera=
-l solution is implemented, I must temporary give up my insistence on it.
-> =
-
-> So the following provisioning driver API must be considered as provisiona=
-l. =
-
-> When proper solution for SPN comes up, we should redesign the API. Withou=
-t SPN, correct settings cannot be provisioned for all service providers, bu=
-t at least for now most cases should work with just the MCC and MNC values =
-provided with this API.
+On 01/26/2011 02:15 PM, Jeevaka Badrappan wrote:
+> Fixes the crash seen with the null alpha identifier.
+> Also removed the icon check as icon will always be a valid pointer.
+> ---
+>  src/stk.c |    7 ++++++-
+>  1 files changed, 6 insertions(+), 1 deletions(-)
 > =
 
 
-I've applied all of your patches but have refactored them heavily
-afterward.  Let me know if I broke anything.
+Applied with a slightly modified commit description.
 
 Regards,
 -Denis
 
---===============8624587641050777218==--
+--===============4985826056165552377==--
 
