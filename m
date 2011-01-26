@@ -1,66 +1,99 @@
-Content-Type: multipart/mixed; boundary="===============3363971481996914780=="
+Content-Type: multipart/mixed; boundary="===============7959674773145947053=="
 MIME-Version: 1.0
 From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-Subject: [PATCH v3 4/7] plugins: add gps atom to mbm
-Date: Wed, 26 Jan 2011 12:32:51 -0300
-Message-ID: <1296055974-9640-5-git-send-email-rafael.zurita@profusion.mobi>
+Subject: [PATCH v3 6/7] gps: add test script
+Date: Wed, 26 Jan 2011 12:32:53 -0300
+Message-ID: <1296055974-9640-7-git-send-email-rafael.zurita@profusion.mobi>
 In-Reply-To: <1296055974-9640-1-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3363971481996914780==
+--===============7959674773145947053==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/mbm.c |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+ Makefile.am                  |    3 +-
+ test/test-location-reporting |   49 ++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 51 insertions(+), 1 deletions(-)
+ create mode 100755 test/test-location-reporting
 
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 4048f6a..3732735 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -45,6 +45,7 @@
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
- #include <ofono/log.h>
-+#include <ofono/gps.h>
+diff --git a/Makefile.am b/Makefile.am
+index 4c00f16..49bf8f3 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -472,7 +472,8 @@ test_scripts =3D test/backtrace \
+ 		test/cdma-list-call \
+ 		test/cdma-dial-number \
+ 		test/cdma-hangup \
+-		test/disable-call-forwarding
++		test/disable-call-forwarding \
++		test/test-location-reporting
  =
 
- #include <drivers/atmodem/atutil.h>
- #include <drivers/atmodem/vendor.h>
-@@ -66,6 +67,7 @@ struct mbm_data {
- 	gboolean have_sim;
- 	struct ofono_gprs *gprs;
- 	struct ofono_gprs_context *gc;
-+	struct ofono_gps *gps;
- 	guint reopen_source;
- 	enum mbm_variant variant;
- };
-@@ -510,9 +512,15 @@ static void mbm_post_online(struct ofono_modem *modem)
- {
- 	struct mbm_data *data =3D ofono_modem_get_data(modem);
- 	struct ofono_gprs_context *gc;
-+	const char *gps_dev;
- =
-
- 	DBG("%p", modem);
- =
-
-+	gps_dev =3D ofono_modem_get_string(modem, "GPSDevice");
-+	if (gps_dev)
-+		data->gps =3D ofono_gps_create(modem, 0,
-+					"mbmmodem", data->modem_port);
+ if TEST
+ testdir =3D $(pkglibdir)/test
+diff --git a/test/test-location-reporting b/test/test-location-reporting
+new file mode 100755
+index 0000000..fe478c6
+--- /dev/null
++++ b/test/test-location-reporting
+@@ -0,0 +1,49 @@
++#!/usr/bin/python
 +
- 	ofono_netreg_create(modem, OFONO_VENDOR_MBM,
- 					"atmodem", data->modem_port);
- =
-
++import gobject
++
++import sys
++import dbus
++import dbus.service
++import dbus.mainloop.glib
++
++class LocationReportingAgent(dbus.service.Object):
++	@dbus.service.method("org.ofono.LocationReportingAgent",
++					in_signature=3D"", out_signature=3D"")
++	def Release(self):
++		print "Release"
++		mainloop.quit()
++
++	@dbus.service.method("org.ofono.LocationReportingAgent",
++				in_signature=3D"i", out_signature=3D"")
++	def ReceiveGpsFileDescriptor(self, fd):
++		print "FD: %d" % (fd, )
++
++if __name__ =3D=3D '__main__':
++	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
++
++	bus =3D dbus.SystemBus()
++	manager =3D dbus.Interface(bus.get_object("org.ofono", "/"),
++							"org.ofono.Manager")
++
++	modems =3D manager.GetModems()
++
++	for path, properties in modems:
++		if "org.ofono.LocationReporting" not in properties["Interfaces"]:
++			continue
++
++		pn =3D dbus.Interface(bus.get_object('org.ofono', path),
++					'org.ofono.LocationReporting')
++
++	path =3D "/test/agent"
++	agent =3D LocationReportingAgent(bus, path)
++	pn.RegisterAgent(path)
++	print "Agent registered"
++
++	mainloop =3D gobject.MainLoop()
++
++	try:
++		mainloop.run()
++	except KeyboardInterrupt:
++		pn.UnregisterAgent(path)
++		mainloop.run()
 -- =
 
 1.7.2.3
 
 
---===============3363971481996914780==--
+--===============7959674773145947053==--
 
