@@ -1,51 +1,128 @@
-Content-Type: multipart/mixed; boundary="===============7182311346262691892=="
+Content-Type: multipart/mixed; boundary="===============8718344484857932864=="
 MIME-Version: 1.0
-From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 2/2] atmodem: rename parameter according to header
-Date: Wed, 26 Jan 2011 14:17:01 -0200
-Message-ID: <1296058621-10400-2-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1296058621-10400-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Mika Liljeberg <mika.liljeberg@nokia.com>
+Subject: [RFC 1/5] gprs: Update documentation for IPv6
+Date: Wed, 26 Jan 2011 18:22:46 +0200
+Message-ID: <1296058970-11815-2-git-send-email-mika.liljeberg@nokia.com>
+In-Reply-To: <1296058970-11815-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7182311346262691892==
+--===============8718344484857932864==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/sim.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ doc/connman-api.txt |   48 +++++++++++++++++++++++++++++++++++++++++++-----
+ 1 files changed, 43 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-index a9352d8..372d985 100644
---- a/drivers/atmodem/sim.c
-+++ b/drivers/atmodem/sim.c
-@@ -881,7 +881,7 @@ error:
+diff --git a/doc/connman-api.txt b/doc/connman-api.txt
+index 22c59dc..b885725 100644
+--- a/doc/connman-api.txt
++++ b/doc/connman-api.txt
+@@ -152,6 +152,15 @@ Properties	boolean Active [readwrite]
+ 			Holds whether the context is activated.  This value
+ 			can be set to activate / deactivate the context.
  =
 
- static void at_change_passwd(struct ofono_sim *sim,
- 			enum ofono_sim_password_type passwd_type,
--			const char *old, const char *new,
-+			const char *old_passwd, const char *new_passwd,
- 			ofono_sim_lock_unlock_cb_t cb, void *data)
- {
- 	struct sim_data *sd =3D ofono_sim_get_data(sim);
-@@ -898,7 +898,7 @@ static void at_change_passwd(struct ofono_sim *sim,
- 		goto error;
++			When the "Protocol" property is set to "ipv4v6",
++			oFono will first try to activate a combined "ipv4v6"
++			context (3GPP rel 8). Based on the result, oFono may
++			fall back to an IPv4 only or an IPv6 only context, or
++			activate separate IPv4 and IPv6 contexts under the
++			hood. The Protocol attribute is updated accordingly.
++			The "Settings" and "IPv6Settings" attributes will only
++			appear if the contained network settings are valid.
++
+ 		string AccessPointName [readwrite]
  =
 
- 	snprintf(buf, sizeof(buf), "AT+CPWD=3D\"%s\",\"%s\",\"%s\"",
--			at_clck_cpwd_fac[passwd_type], old, new);
-+			at_clck_cpwd_fac[passwd_type], old_passwd, new_passwd);
+ 			Holds the name of the access point.  This is
+@@ -182,7 +191,7 @@ Properties	boolean Active [readwrite]
+ 		string Protocol [readwrite]
  =
 
- 	ret =3D g_at_chat_send(sd->chat, buf, none_prefix,
- 				at_lock_unlock_cb, cbd, g_free);
+ 			Holds the protocol for this context.  Valid values
+-			are: "ip" and "ipv6".
++			are: "ip", "ipv6" and "ipv4v6".
+ =
+
+ 		string Name [readwrite]
+ =
+
+@@ -196,8 +205,13 @@ Properties	boolean Active [readwrite]
+ =
+
+ 			string Interface [readonly, optional]
+ =
+
+-				Holds the interface of the network interface
+-				used by this context (e.g. "ppp0" "usb0")
++				Holds the name of the IPv4 network interface
++				used by this context (e.g. "ppp0" "usb0").
++
++				For combined IPv4v6 context (3GPP rel 8) the
++				same network interface may be used for both
++				IPv4 and IPv6. IPv4 and IPv6 may also be
++				offered via separate network interfaces.
+ =
+
+ 			string Method [readonly, optional]
+ =
+
+@@ -215,8 +229,8 @@ Properties	boolean Active [readwrite]
+ =
+
+ 			array{string} DomainNameServers [readonly, optional]
+ =
+
+-				Holds the list of domain name servers for this
+-				context.
++				Holds the list of domain name servers accessible
++				via this network interface.
+ =
+
+ 			string Gateway [readonly, optional]
+ =
+
+@@ -242,6 +256,30 @@ Properties	boolean Active [readwrite]
+ 				via this proxy.  All other values are left
+ 				out in this case.
+ =
+
++		dict IPv6Settings [readonly, optional]
++
++			Holds all the IPv6 network settings.
++
++			string Interface [readonly, optional]
++
++				Holds the name of the IPv6 network interface
++				used by this context (e.g. "ppp0" "usb0").
++
++				For combined IPv4v6 context (3GPP rel 8) the
++				same network interface may be used for both
++				IPv4 and IPv6. IPv4 and IPv6 may also be
++				offered via separate network interfaces.
++
++			string LinkLocal [readonly, optional]
++
++				Holds the IPv6 link local address for this
++				context.
++
++			array{string} DomainNameServers [readonly, optional]
++
++				Holds the list of domain name servers accessible
++				via this network interface.
++
+ 		string MessageProxy [readwrite, MMS only]
+ =
+
+ 			Holds the MMS Proxy setting.
 -- =
 
-1.7.3.5
+1.7.1
 
 
---===============7182311346262691892==--
+--===============8718344484857932864==--
 
