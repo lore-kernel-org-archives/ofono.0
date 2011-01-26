@@ -1,54 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============5329951038162764856=="
+Content-Type: multipart/mixed; boundary="===============6959432930953180970=="
 MIME-Version: 1.0
-From: Simon LETHBRIDGE <simon.lethbridge@stericsson.com>
-Subject: RE: [RFCv2] doc: Assisted Satellite Navigation API and Agent API
-Date: Wed, 26 Jan 2011 15:52:57 +0100
-Message-ID: <B4268AAFAFA3E244B5B0641D5914917048CAFD0262@EXDCVYMBSTM006.EQ1STM.local>
-In-Reply-To: <4CF4FAC9.5080200@gmail.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: Bug tracking for oFono
+Date: Wed, 26 Jan 2011 16:00:23 +0100
+Message-ID: <1296054023.1520.135.camel@aeonflux>
+In-Reply-To: <AANLkTiks2AzM91nThkMwESef-4Wx7rEz2iWiYOkaA_Gm@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5329951038162764856==
+--===============6959432930953180970==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis
+Hi Sjur,
 
-Sorry that it has taken so long for me to reply.
-
-> > +AssistedSatelliteNavigation hierarchy
-> > +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> I notice that there has been a couple of bug reports sent on this list la=
+tely,
+> and usually the response is "care to send a patch for it?".
 > =
 
-> What do you think of naming this AssistedNavigation?  I think the
-> current name might be a bit too long.
+> oFono homepage states: "A bug tracking system is in the process of
+> being set up."
+> What is the status of this?
 > =
 
-That is a possibility.  The terminology used in the 3GGP specs is Global Sa=
-tellite Navigation System (GNSS) for the technology.  The terms "Position M=
-easurement Procedure" and "Assistance Data Delivery Procedure" are used in =
-RRLP, for the procedures. I have some concern
-that it may be difficult to relate the oFono terminology to that used in th=
-e 3GPP standards.
+> It seems to be possible to submit bugs on oFono via MeeGo Bugzilla
+> (http://bugs.meego.com/enter_bug.cgi), is this a possible way forward?
 
-There are other positioning technologies such as EOTD and OTDOA that are no=
-t satellite based, although hopefully it would be obvious that these would =
-be handled entirely in the modem.
+I have not heard anything different so far. So you can enter bugs for
+oFono in the MeeGo Bugzilla. If nobody complains, then that is the right
+thing to do ;)
 
-My preference for a short name would be GNSS, since this term is used exten=
-sively in the 3gpp recommendations, although it has the disadvantage of bei=
-ng an abbreviation. If "Assisted Satellite Navigation" is too long then I s=
-uppose "Global Satellite Navigation System" would be too long too.
+Regards
 
-Generic terms like "Positioning" would be problematic since the supplementa=
-ry service positioning procedures like MOLR (Mobile Originated Location Req=
-uest) are not covered by this API.
+Marcel
 
-Regards,
 
-Simon
 
---===============5329951038162764856==--
+--===============6959432930953180970==--
 
