@@ -1,51 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============5511101031527779376=="
+Content-Type: multipart/mixed; boundary="===============3724639644261073003=="
 MIME-Version: 1.0
 From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [PATCH 1/5] gprs-provision: add driver API header
-Date: Wed, 26 Jan 2011 14:34:11 +0200
-Message-ID: <1296045255-29890-2-git-send-email-jukka.saunamaki@nokia.com>
+Subject: [PATCH 5/5] gprs-provision: add example context provisioning driver
+Date: Wed, 26 Jan 2011 14:34:15 +0200
+Message-ID: <1296045255-29890-6-git-send-email-jukka.saunamaki@nokia.com>
 In-Reply-To: <1296045255-29890-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5511101031527779376==
+--===============3724639644261073003==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am              |    3 +-
- include/gprs-provision.h |   59 ++++++++++++++++++++++++++++++++++++++++++=
+ Makefile.am          |    3 ++
+ examples/provision.c |   95 ++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- 2 files changed, 61 insertions(+), 1 deletions(-)
- create mode 100644 include/gprs-provision.h
+ 2 files changed, 98 insertions(+), 0 deletions(-)
+ create mode 100644 examples/provision.c
 
 diff --git a/Makefile.am b/Makefile.am
-index f941a19..f543135 100644
+index 9c4f383..c70dcbf 100644
 --- a/Makefile.am
 +++ b/Makefile.am
-@@ -13,7 +13,8 @@ pkginclude_HEADERS =3D include/log.h include/plugin.h inc=
-lude/history.h \
- 			include/radio-settings.h include/stk.h \
- 			include/audio-settings.h include/nettime.h \
- 			include/ctm.h include/cdma-voicecall.h \
--			include/cdma-sms.h include/sim-auth.h
-+			include/cdma-sms.h include/sim-auth.h \
-+			include/gprs-provision.h
+@@ -329,6 +329,9 @@ builtin_sources +=3D examples/history.c
  =
 
- nodist_pkginclude_HEADERS =3D include/version.h
+ builtin_modules +=3D example_nettime
+ builtin_sources +=3D examples/nettime.c
++
++builtin_modules +=3D example_provision
++builtin_sources +=3D examples/provision.c
+ endif
  =
 
-diff --git a/include/gprs-provision.h b/include/gprs-provision.h
+ builtin_modules +=3D smart_messaging
+diff --git a/examples/provision.c b/examples/provision.c
 new file mode 100644
-index 0000000..efde892
+index 0000000..80688a4
 --- /dev/null
-+++ b/include/gprs-provision.h
-@@ -0,0 +1,59 @@
++++ b/examples/provision.c
+@@ -0,0 +1,95 @@
 +/*
 + *
-+ *  oFono - Open Telephony stack for Linux
++ *  oFono - Open Source Telephony
 + *
 + *  Copyright (C) 2011  Nokia Corporation and/or its subsidiary(-ies).
 + *
@@ -65,48 +64,85 @@ index 0000000..efde892
 + *
 + */
 +
-+#ifndef __OFONO_GPRS_PROVISION_H
-+#define __OFONO_GPRS_PROVISION_H
-+
-+#ifdef __cplusplus
-+extern "C" {
++#ifdef HAVE_CONFIG_H
++#include <config.h>
 +#endif
 +
-+#include "gprs-context.h"
++#include <string.h>
++#include <glib.h>
 +
-+struct ofono_gprs_provision_data {
-+	enum ofono_gprs_context_type type;
-+	enum ofono_gprs_proto proto;
-+	char *name;
-+	char *apn;
-+	char *username;
-+	char *password;
-+	char *message_proxy;
-+	char *message_center;
-+};
++#define OFONO_API_SUBJECT_TO_CHANGE
 +
-+struct ofono_gprs_provision_driver {
-+	const char *name;
-+	int priority;
-+	void (*get_settings)(const char *mcc, const char *mnc,
++#include <ofono/modem.h>
++#include <ofono/gprs-provision.h>
++#include <ofono/types.h>
++#include <ofono/plugin.h>
++#include <ofono/log.h>
++
++static void example_provision_get_settings(const char *mcc, const char *mn=
+c,
 +				struct ofono_gprs_provision_data **settings,
-+				int *count);
++				int *count)
++{
++	ofono_debug("Provisioning...");
++	*count =3D 0;
++	*settings =3D NULL;
++
++	ofono_debug("Finding settings for MCC %s, MNC %s",
++			mcc, mnc);
++
++	if (strcmp(mcc, "246") !=3D 0 || strcmp(mnc, "81") !=3D 0)
++		return;
++
++	ofono_debug("Creating example settings for phonesim");
++
++	*settings =3D g_try_new0(struct ofono_gprs_provision_data, 2);
++	if (*settings =3D=3D NULL)
++		return;
++
++	*count =3D 2;
++
++	/* Internet context settings */
++	(*settings)[0].proto =3D OFONO_GPRS_PROTO_IP;
++	(*settings)[0].type =3D OFONO_GPRS_CONTEXT_TYPE_INTERNET;
++	(*settings)[0].name =3D g_strdup("Phonesim Internet");
++	(*settings)[0].apn =3D g_strdup("internetapn");
++
++	/* MMS context settings */
++	(*settings)[1].proto =3D OFONO_GPRS_PROTO_IP;
++	(*settings)[1].type =3D OFONO_GPRS_CONTEXT_TYPE_MMS;
++	(*settings)[1].name =3D g_strdup("Phonesim MMS");
++	(*settings)[1].apn =3D g_strdup("mmsapn");
++	(*settings)[1].username =3D g_strdup("mmsuser");
++	(*settings)[1].password =3D g_strdup("mmspass");
++	(*settings)[1].message_proxy =3D g_strdup("10.11.12.13:8080");
++	(*settings)[1].message_center =3D g_strdup("http://mms.example.com:8000");
++}
++
++static struct ofono_gprs_provision_driver example_driver =3D {
++	.name		=3D "Example GPRS context provisioning",
++	.priority       =3D OFONO_PLUGIN_PRIORITY_LOW,
++	.get_settings	=3D example_provision_get_settings,
 +};
 +
-+int ofono_gprs_provision_driver_register(
-+			const struct ofono_gprs_provision_driver *driver);
-+void ofono_gprs_provision_driver_unregister(
-+			const struct ofono_gprs_provision_driver *driver);
-+
-+#ifdef __cplusplus
++static int example_provision_init(void)
++{
++	return ofono_gprs_provision_driver_register(&example_driver);
 +}
-+#endif
 +
-+#endif /* __OFONO_GPRS_PROVISION_H */
++static void example_provision_exit(void)
++{
++	ofono_gprs_provision_driver_unregister(&example_driver);
++}
++
++OFONO_PLUGIN_DEFINE(example_provision, "Example Provisioning Plugin",
++			VERSION, OFONO_PLUGIN_PRIORITY_DEFAULT,
++			example_provision_init,
++			example_provision_exit)
 -- =
 
 1.7.1
 
 
---===============5511101031527779376==--
+--===============3724639644261073003==--
 
