@@ -1,71 +1,61 @@
-Content-Type: multipart/mixed; boundary="===============4035954811165022444=="
+Content-Type: multipart/mixed; boundary="===============5927382029757042897=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/4] netreg: Add CPHS CSP PLMN mode implementation
-Date: Wed, 26 Jan 2011 12:12:44 +0100
-Message-ID: <1296040364.1520.116.camel@aeonflux>
-In-Reply-To: <AANLkTikGYBZBqo5czuDORzRxOraAJo6c811RrFMs+sAA@mail.gmail.com>
+Subject: Re: [gprs-provision RFCPATCHv6 0/4] Plugin API for provisioning of
+ GPRS context settings
+Date: Wed, 26 Jan 2011 12:18:44 +0100
+Message-ID: <1296040724.1520.121.camel@aeonflux>
+In-Reply-To: <AANLkTinWmPRj2J6RPVs__7pm-d9yxO17erggMjm1kY9r@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4035954811165022444==
+--===============5927382029757042897==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Aki,
 
-> >> -static const char *registration_mode_to_string(int mode)
-> >> +static const char *registration_mode_to_string(int mode, gboolean for=
-ced_auto)
-> >>  {
-> >> +     if (forced_auto)
-> >> +             return "auto-only";
-> >> +
+> > lets get this merged without support for SPN for now. We can easily add
+> > this later. So please fix Denis' comments and re-submit this without the
+> > SPN change.
 > >
-> > I see the benefit of keeping this in this function, but I would not have
-> > done it like this actually. I would have kept it next to the function
-> > needing that string and let it do the auto-only check by itself.
+> > Andrew is currently looking into fixing the SIM reading race. Once that
+> > is done we can tackle the SPN part. Feel free to add a TODO item for
+> > adding access to SPN information.
 > =
 
-> That is how I originally had it, but this ends up being a bit less
-> code. Also, I'd like to localize all of these constant strings into a
-> single function and not sprinkle them across the code.
+> By SIM race do you mean an atom getting removed while it has a pending
+> ofono_sim_read?
 
-so I am counting two callers to registration_mode_to_string.
+exactly that one. See discussion on IRC.
 
-> > Another possibility might be to convert this into
-> >
-> >        get_registration_mode_string(struct ofono_netreg *netreg)
-> >
-> > Since I am not mistaken, then the netreg->mode is always set before you
-> > are calling this, right?
+> > Right now I think we need to do that in the SIM atom, store it, and then
+> > provide it for netreg and other plugins that might want it. However we
+> > might need to discuss this a bit further.
 > =
 
-> No, you call it with the new value. The function will then compare the
-> old and the new, and based on this decide on sending a
-> PropertyChanged.
+> I think this is actually easy to fix internally to the sim atom. The
+> first ofono_sim_read() to EFspn would initiate an async read, and any
+> call to ofono_sim_read() after the fact would pend on that single read
+> results, or return immediately with cached results if available.
 
-In the current code base it is always checked and set before:
+<snip>
 
-        if (netreg->mode =3D=3D mode)
-                return;
+I let Andrew to comment on this. He is already looking into this.
 
-        netreg->mode =3D mode;
+> So I don't see the point in removing the SPN code from provisioning
+> right now. It is a necessary part of the solution, so at least we need
+> to keep the task open as long as SPN is not in.
 
-	...
+The SPN is not required by provisioning itself. It is required by the
+provisioning plugins. That is why I said we should put a new item in the
+TODO list to track it.
 
-	strmode =3D registration_mode_to_string(mode);
-
-Just on a different thought here. The NETWORK_REGISTRATION_MODE_* is
-local to src/network.c. We could just add the AUTO_ONLY mode there.
-
-The only downside I is see the already nasty init_registration_status
-check, but that might be acceptable compared to crippling the string
-conversion function.
-
-However at least the check would be clearly to just checking mode and
-not mode + forced_mode.
+Or maybe just storing SPN in the SIM atom with a proper API for plugins
+and netreg to access it. However I do wanna decouple this from this set
+of patches now. Otherwise we are turning in circles and not getting
+anywhere. Same as we decoupled the SIM MCC/MNC getter patches.
 
 Regards
 
@@ -73,5 +63,5 @@ Marcel
 
 
 
---===============4035954811165022444==--
+--===============5927382029757042897==--
 
