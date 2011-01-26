@@ -1,79 +1,77 @@
-Content-Type: multipart/mixed; boundary="===============6345240694615062133=="
+Content-Type: multipart/mixed; boundary="===============4035954811165022444=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH 1/2] Use dist_ prefix as applicable
-Date: Wed, 26 Jan 2011 13:09:31 +0200
-Message-ID: <1296040172-19180-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 2/4] netreg: Add CPHS CSP PLMN mode implementation
+Date: Wed, 26 Jan 2011 12:12:44 +0100
+Message-ID: <1296040364.1520.116.camel@aeonflux>
+In-Reply-To: <AANLkTikGYBZBqo5czuDORzRxOraAJo6c811RrFMs+sAA@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6345240694615062133==
+--===============4035954811165022444==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am |   11 ++++-------
- 1 files changed, 4 insertions(+), 7 deletions(-)
+Hi Aki,
 
-diff --git a/Makefile.am b/Makefile.am
-index f941a19..71365d7 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -25,7 +25,7 @@ local_headers =3D $(foreach file,$(pkginclude_HEADERS) \
- if DATAFILES
- dbusconfdir =3D @DBUS_CONFDIR@
- =
+> >> -static const char *registration_mode_to_string(int mode)
+> >> +static const char *registration_mode_to_string(int mode, gboolean for=
+ced_auto)
+> >>  {
+> >> +     if (forced_auto)
+> >> +             return "auto-only";
+> >> +
+> >
+> > I see the benefit of keeping this in this function, but I would not have
+> > done it like this actually. I would have kept it next to the function
+> > needing that string and let it do the auto-only check by itself.
+> =
 
--dbusconf_DATA =3D src/ofono.conf
-+dist_dbusconf_DATA =3D src/ofono.conf
- =
+> That is how I originally had it, but this ends up being a bit less
+> code. Also, I'd like to localize all of these constant strings into a
+> single function and not sprinkle them across the code.
 
- if SYSTEMD
- systemdunitdir =3D @SYSTEMD_UNITDIR@
-@@ -35,7 +35,7 @@ endif
- =
+so I am counting two callers to registration_mode_to_string.
 
- confdir =3D $(sysconfdir)/ofono
- =
+> > Another possibility might be to convert this into
+> >
+> >        get_registration_mode_string(struct ofono_netreg *netreg)
+> >
+> > Since I am not mistaken, then the netreg->mode is always set before you
+> > are calling this, right?
+> =
 
--conf_DATA =3D
-+dist_conf_DATA =3D
- =
+> No, you call it with the new value. The function will then compare the
+> old and the new, and based on this decide on sending a
+> PropertyChanged.
 
- statedir =3D $(localstatedir)/lib/ofono
- =
+In the current code base it is always checked and set before:
 
-@@ -244,7 +244,7 @@ builtin_modules +=3D phonesim
- builtin_sources +=3D plugins/phonesim.c
- =
+        if (netreg->mode =3D=3D mode)
+                return;
 
- if DATAFILES
--conf_DATA +=3D plugins/phonesim.conf
-+dist_conf_DATA +=3D plugins/phonesim.conf
- endif
- endif
- =
+        netreg->mode =3D mode;
 
-@@ -477,10 +477,7 @@ testdir =3D $(pkglibdir)/test
- test_SCRIPTS =3D $(test_scripts)
- endif
- =
+	...
 
--conf_files =3D src/ofono.conf plugins/phonesim.conf
--
--EXTRA_DIST =3D src/genbuiltin $(conf_files) $(udev_files) \
--					$(doc_files) $(test_scripts)
-+EXTRA_DIST =3D src/genbuiltin $(udev_files) $(doc_files) $(test_scripts)
- =
+	strmode =3D registration_mode_to_string(mode);
 
- dist_man_MANS =3D doc/ofonod.8
- =
+Just on a different thought here. The NETWORK_REGISTRATION_MODE_* is
+local to src/network.c. We could just add the AUTO_ONLY mode there.
 
--- =
+The only downside I is see the already nasty init_registration_status
+check, but that might be acceptable compared to crippling the string
+conversion function.
 
-1.7.1
+However at least the check would be clearly to just checking mode and
+not mode + forced_mode.
+
+Regards
+
+Marcel
 
 
---===============6345240694615062133==--
+
+--===============4035954811165022444==--
 
