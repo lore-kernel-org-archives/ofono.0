@@ -1,49 +1,30 @@
-Content-Type: multipart/mixed; boundary="===============1983558316857419137=="
+Content-Type: multipart/mixed; boundary="===============5465749395448936554=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
+From: Aki Niemi <aki@protocolpolice.com>
 Subject: Re: [PATCH 2/4] netreg: Add CPHS CSP PLMN mode implementation
-Date: Wed, 26 Jan 2011 12:48:25 +0100
-Message-ID: <1296042505.1520.130.camel@aeonflux>
-In-Reply-To: <AANLkTinrU2Mxym1=HrEqGmrSP6Lqn98Cs8aQ=taeRfQi@mail.gmail.com>
+Date: Wed, 26 Jan 2011 13:51:59 +0200
+Message-ID: <AANLkTim7=7xybJvSSPpsLA9-fpcXuF4HaHN9m+nZ65TP@mail.gmail.com>
+In-Reply-To: <1296042505.1520.130.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1983558316857419137==
+--===============5465749395448936554==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi Marcel,
 
-> > Just on a different thought here. The NETWORK_REGISTRATION_MODE_* is
-> > local to src/network.c. We could just add the AUTO_ONLY mode there.
-> >
-> > The only downside I is see the already nasty init_registration_status
-> > check, but that might be acceptable compared to crippling the string
-> > conversion function.
-> >
-> > However at least the check would be clearly to just checking mode and
-> > not mode + forced_mode.
-> =
+2011/1/26 Marcel Holtmann <marcel@holtmann.org>:
+> can you have a stab at this and check how a patch would look like if we
+> just add another mode. If I am not mistaken we only have the extra code
+> in the init_registration_status. I could be wrong here since I have not
+> looked through that code in a long time.
 
-> I thought about this, but then we'd need more logic to when the user
-> calls NetworkRegistration.Register() for automatic mode. That
-> obviously can't change the mode. But perhaps this is now more
-> manageable, since we got rid of Deregister(), which means there is
-> just this one case to worry about.
+Sure thing.
 
-can you have a stab at this and check how a patch would look like if we
-just add another mode. If I am not mistaken we only have the extra code
-in the init_registration_status. I could be wrong here since I have not
-looked through that code in a long time.
+Cheers,
+Aki
 
-Denis, any comments?
-
-Regards
-
-Marcel
-
-
-
---===============1983558316857419137==--
+--===============5465749395448936554==--
 
