@@ -1,27 +1,46 @@
-Content-Type: multipart/mixed; boundary="===============5901765482853267400=="
+Content-Type: multipart/mixed; boundary="===============2338235262002304645=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 0/4] Add support for CPHS customer service profile
-Date: Wed, 26 Jan 2011 10:50:56 +0100
-Message-ID: <1296035456.1520.96.camel@aeonflux>
-In-Reply-To: <1296033569-26774-1-git-send-email-aki.niemi@nokia.com>
+Subject: Re: [gprs-provision RFCPATCHv6 0/4] Plugin API for provisioning of
+ GPRS context settings
+Date: Wed, 26 Jan 2011 10:57:01 +0100
+Message-ID: <1296035821.1520.100.camel@aeonflux>
+In-Reply-To: <1295959664.6035.14.camel@jsaunama-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5901765482853267400==
+--===============2338235262002304645==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi Jukka,
 
-> This series adds support for CPHS CSP PLMN mode into the netreg atom.
+> > I think that our only leftover is how we handle the SPN detail.
+> > =
 
-one open question here is still if we also have to disallow scanning
-when this is set?
+> > Denis, what is your preference here? My take would be that we store it
+> > inside network registration and provide it to external modules. I don't
+> > see a point in reading it twice.
+> =
 
-So we might wanna update the Scan() and Register() method with the
-proper error codes and put a note in there for mode =3D "auto-only".
+> New SPN specific API in SIM atom? Asynchronous with callback, but SIM
+> would need to read it only once.
+> Unless there is some simple way to start reading it right after SIM is
+> ready/unlocked and netreg and gprs are registered only after SPN read
+> returns?
+
+lets get this merged without support for SPN for now. We can easily add
+this later. So please fix Denis' comments and re-submit this without the
+SPN change.
+
+Andrew is currently looking into fixing the SIM reading race. Once that
+is done we can tackle the SPN part. Feel free to add a TODO item for
+adding access to SPN information.
+
+Right now I think we need to do that in the SIM atom, store it, and then
+provide it for netreg and other plugins that might want it. However we
+might need to discuss this a bit further.
 
 Regards
 
@@ -29,5 +48,5 @@ Marcel
 
 
 
---===============5901765482853267400==--
+--===============2338235262002304645==--
 
