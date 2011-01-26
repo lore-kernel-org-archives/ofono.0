@@ -1,14 +1,15 @@
-Content-Type: multipart/mixed; boundary="===============6231009660933566716=="
+Content-Type: multipart/mixed; boundary="===============3603525260670676736=="
 MIME-Version: 1.0
 From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 0/4] Add support for CPHS customer service profile
-Date: Wed, 26 Jan 2011 12:34:22 +0200
-Message-ID: <AANLkTikjEDQNLxFR3=fCBk_OYd0Eic64a_JcFHVUDGmU@mail.gmail.com>
-In-Reply-To: <1296037726.1520.110.camel@aeonflux>
+Subject: Re: [gprs-provision RFCPATCHv6 0/4] Plugin API for provisioning of
+ GPRS context settings
+Date: Wed, 26 Jan 2011 12:43:43 +0200
+Message-ID: <AANLkTinWmPRj2J6RPVs__7pm-d9yxO17erggMjm1kY9r@mail.gmail.com>
+In-Reply-To: <1296035821.1520.100.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6231009660933566716==
+--===============3603525260670676736==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,28 +17,44 @@ Content-Transfer-Encoding: quoted-printable
 Hi Marcel,
 
 2011/1/26 Marcel Holtmann <marcel@holtmann.org>:
->> > one open question here is still if we also have to disallow scanning
->> > when this is set?
->> >
->> > So we might wanna update the Scan() and Register() method with the
->> > proper error codes and put a note in there for mode =3D "auto-only".
->>
->> Good point, it's also missing from the Scan() implementation. I meant
->> to add it for but forgot. I'll send a v2 shortly.
->>
->> The other open item was whether to create a new error code for this or
->> reuse the existing access denied error (my preference).
+> lets get this merged without support for SPN for now. We can easily add
+> this later. So please fix Denis' comments and re-submit this without the
+> SPN change.
 >
-> good question. I can see the benefit of having a proper error code, but
-> I have no preference here right now.
+> Andrew is currently looking into fixing the SIM reading race. Once that
+> is done we can tackle the SPN part. Feel free to add a TODO item for
+> adding access to SPN information.
 
-I really would prefer to use the existing one, which I think came with
-the lockdown property. It fits the bill here as well, and since access
-denied won't ever occur for these methods for any other reason, the
-code will look exactly the same on the client side.
+By SIM race do you mean an atom getting removed while it has a pending
+ofono_sim_read?
+
+> Right now I think we need to do that in the SIM atom, store it, and then
+> provide it for netreg and other plugins that might want it. However we
+> might need to discuss this a bit further.
+
+I think this is actually easy to fix internally to the sim atom. The
+first ofono_sim_read() to EFspn would initiate an async read, and any
+call to ofono_sim_read() after the fact would pend on that single read
+results, or return immediately with cached results if available.
+
+There is still the SIM race problem, but I would really rather solve
+that problem by always having all atoms created and removed in the
+same callbacks, without returning to mainloop.
+Whether atoms register any D-Bus API in certain modem states is then a
+different matter.
+
+But the lifetime of all atoms should be the same, and then the SIM
+race is again a local matter to the SIM atom to fix. E.g., cancelling
+any pending reads it has on the SIM when it gets removed. Simply
+removing the driver should take care of this, in fact (at least
+isimodem should handle such a thing gracefully).
+
+So I don't see the point in removing the SPN code from provisioning
+right now. It is a necessary part of the solution, so at least we need
+to keep the task open as long as SPN is not in.
 
 Cheers,
 Aki
 
---===============6231009660933566716==--
+--===============3603525260670676736==--
 
