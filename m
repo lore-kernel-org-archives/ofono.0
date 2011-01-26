@@ -1,35 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============5757519963793003750=="
+Content-Type: multipart/mixed; boundary="===============4748400235102944369=="
 MIME-Version: 1.0
 From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [gprs-provision PATCHv7 0/5] Plugin API for provisioning of GPRS
- context settings
-Date: Wed, 26 Jan 2011 14:34:10 +0200
-Message-ID: <1296045255-29890-1-git-send-email-jukka.saunamaki@nokia.com>
+Subject: [PATCH 2/5] ofono.h: add gprs-provision
+Date: Wed, 26 Jan 2011 14:34:12 +0200
+Message-ID: <1296045255-29890-3-git-send-email-jukka.saunamaki@nokia.com>
+In-Reply-To: <1296045255-29890-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5757519963793003750==
+--===============4748400235102944369==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello
+---
+ src/ofono.h |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
 
-And again a patchset about automatic provisioning of GPRS context settings.
+diff --git a/src/ofono.h b/src/ofono.h
+index e48dbf6..056c7f1 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -420,3 +420,12 @@ void __ofono_nettime_info_received(struct ofono_modem =
+*modem,
+ =
 
-Since the safe reading of EF-SPN turned out to be impossible until general =
-solution is implemented, I must temporary give up my insistence on it.
+ #include <ofono/cdma-voicecall.h>
+ #include <ofono/sim-auth.h>
++
++#include <ofono/gprs-provision.h>
++void __ofono_gprs_provision_get_settings(const char *mcc, const char *mnc,
++			struct ofono_gprs_provision_data **settings,
++			int *count);
++void __ofono_gprs_provision_free_settings(
++				struct ofono_gprs_provision_data *settings,
++				int count);
++
+-- =
 
-So the following provisioning driver API must be considered as provisional. =
-
-When proper solution for SPN comes up, we should redesign the API. Without =
-SPN, correct settings cannot be provisioned for all service providers, but =
-at least for now most cases should work with just the MCC and MNC values pr=
-ovided with this API.
+1.7.1
 
 
---Jukka
-
-
---===============5757519963793003750==--
+--===============4748400235102944369==--
 
