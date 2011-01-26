@@ -1,99 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============7959674773145947053=="
+Content-Type: multipart/mixed; boundary="===============1458885787038356514=="
 MIME-Version: 1.0
 From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-Subject: [PATCH v3 6/7] gps: add test script
-Date: Wed, 26 Jan 2011 12:32:53 -0300
-Message-ID: <1296055974-9640-7-git-send-email-rafael.zurita@profusion.mobi>
+Subject: [PATCH v3 5/7] plugins/udev.c: add gps comparison for add_mbm
+ registered modem
+Date: Wed, 26 Jan 2011 12:32:52 -0300
+Message-ID: <1296055974-9640-6-git-send-email-rafael.zurita@profusion.mobi>
 In-Reply-To: <1296055974-9640-1-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7959674773145947053==
+--===============1458885787038356514==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- Makefile.am                  |    3 +-
- test/test-location-reporting |   49 ++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 51 insertions(+), 1 deletions(-)
- create mode 100755 test/test-location-reporting
+ plugins/udev.c |    5 +++--
+ 1 files changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index 4c00f16..49bf8f3 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -472,7 +472,8 @@ test_scripts =3D test/backtrace \
- 		test/cdma-list-call \
- 		test/cdma-dial-number \
- 		test/cdma-hangup \
--		test/disable-call-forwarding
-+		test/disable-call-forwarding \
-+		test/test-location-reporting
+diff --git a/plugins/udev.c b/plugins/udev.c
+index 202b225..ca09a30 100644
+--- a/plugins/udev.c
++++ b/plugins/udev.c
+@@ -105,7 +105,7 @@ static void add_mbm(struct ofono_modem *modem,
+ 					struct udev_device *udev_device)
+ {
+ 	const char *desc, *devnode;
+-	const char *device, *data, *network;
++	const char *device, *data, *network, *gps;
+ 	int registered;
  =
 
- if TEST
- testdir =3D $(pkglibdir)/test
-diff --git a/test/test-location-reporting b/test/test-location-reporting
-new file mode 100755
-index 0000000..fe478c6
---- /dev/null
-+++ b/test/test-location-reporting
-@@ -0,0 +1,49 @@
-+#!/usr/bin/python
-+
-+import gobject
-+
-+import sys
-+import dbus
-+import dbus.service
-+import dbus.mainloop.glib
-+
-+class LocationReportingAgent(dbus.service.Object):
-+	@dbus.service.method("org.ofono.LocationReportingAgent",
-+					in_signature=3D"", out_signature=3D"")
-+	def Release(self):
-+		print "Release"
-+		mainloop.quit()
-+
-+	@dbus.service.method("org.ofono.LocationReportingAgent",
-+				in_signature=3D"i", out_signature=3D"")
-+	def ReceiveGpsFileDescriptor(self, fd):
-+		print "FD: %d" % (fd, )
-+
-+if __name__ =3D=3D '__main__':
-+	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
-+
-+	bus =3D dbus.SystemBus()
-+	manager =3D dbus.Interface(bus.get_object("org.ofono", "/"),
-+							"org.ofono.Manager")
-+
-+	modems =3D manager.GetModems()
-+
-+	for path, properties in modems:
-+		if "org.ofono.LocationReporting" not in properties["Interfaces"]:
-+			continue
-+
-+		pn =3D dbus.Interface(bus.get_object('org.ofono', path),
-+					'org.ofono.LocationReporting')
-+
-+	path =3D "/test/agent"
-+	agent =3D LocationReportingAgent(bus, path)
-+	pn.RegisterAgent(path)
-+	print "Agent registered"
-+
-+	mainloop =3D gobject.MainLoop()
-+
-+	try:
-+		mainloop.run()
-+	except KeyboardInterrupt:
-+		pn.UnregisterAgent(path)
-+		mainloop.run()
+ 	desc =3D udev_device_get_sysattr_value(udev_device, "device/interface");
+@@ -152,8 +152,9 @@ static void add_mbm(struct ofono_modem *modem,
+ 	device  =3D ofono_modem_get_string(modem, MODEM_DEVICE);
+ 	data =3D ofono_modem_get_string(modem, DATA_DEVICE);
+ 	network =3D ofono_modem_get_string(modem, NETWORK_INTERFACE);
++	gps =3D ofono_modem_get_string(modem, GPS_DEVICE);
+ =
+
+-	if (device !=3D NULL && data !=3D NULL && network !=3D NULL) {
++	if (device !=3D NULL && data !=3D NULL && network !=3D NULL && gps !=3D N=
+ULL) {
+ 		ofono_modem_set_integer(modem, "Registered", 1);
+ 		ofono_modem_register(modem);
+ 	}
 -- =
 
 1.7.2.3
 
 
---===============7959674773145947053==--
+--===============1458885787038356514==--
 
