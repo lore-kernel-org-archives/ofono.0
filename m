@@ -1,60 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============3603525260670676736=="
+Content-Type: multipart/mixed; boundary="===============4568859822915514647=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [gprs-provision RFCPATCHv6 0/4] Plugin API for provisioning of
- GPRS context settings
-Date: Wed, 26 Jan 2011 12:43:43 +0200
-Message-ID: <AANLkTinWmPRj2J6RPVs__7pm-d9yxO17erggMjm1kY9r@mail.gmail.com>
-In-Reply-To: <1296035821.1520.100.camel@aeonflux>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH 2/2] Support for pkg-config
+Date: Wed, 26 Jan 2011 13:09:32 +0200
+Message-ID: <1296040172-19180-2-git-send-email-remi.denis-courmont@nokia.com>
+In-Reply-To: <1296040172-19180-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3603525260670676736==
+--===============4568859822915514647==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+---
+ .gitignore   |    1 +
+ Makefile.am  |    3 +++
+ configure.ac |    2 +-
+ ofono.pc.in  |   10 ++++++++++
+ 4 files changed, 15 insertions(+), 1 deletions(-)
+ create mode 100644 ofono.pc.in
 
-2011/1/26 Marcel Holtmann <marcel@holtmann.org>:
-> lets get this merged without support for SPN for now. We can easily add
-> this later. So please fix Denis' comments and re-submit this without the
-> SPN change.
->
-> Andrew is currently looking into fixing the SIM reading race. Once that
-> is done we can tackle the SPN part. Feel free to add a TODO item for
-> adding access to SPN information.
+diff --git a/.gitignore b/.gitignore
+index 7cfb1d9..59308be 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -20,6 +20,7 @@ install-sh
+ libtool
+ ltmain.sh
+ missing
++ofono.pc
+ stamp-h1
+ autom4te.cache
+ =
 
-By SIM race do you mean an atom getting removed while it has a pending
-ofono_sim_read?
+diff --git a/Makefile.am b/Makefile.am
+index 71365d7..3b29d19 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -21,6 +21,9 @@ local_headers =3D $(foreach file,$(pkginclude_HEADERS) \
+ 				$(nodist_pkginclude_HEADERS), \
+ 					include/ofono/$(notdir $(file)))
+ =
 
-> Right now I think we need to do that in the SIM atom, store it, and then
-> provide it for netreg and other plugins that might want it. However we
-> might need to discuss this a bit further.
++pkgconfigdir =3D $(libdir)/pkgconfig
++pkgconfig_DATA =3D ofono.pc
++
+ =
 
-I think this is actually easy to fix internally to the sim atom. The
-first ofono_sim_read() to EFspn would initiate an async read, and any
-call to ofono_sim_read() after the fact would pend on that single read
-results, or return immediately with cached results if available.
+ if DATAFILES
+ dbusconfdir =3D @DBUS_CONFDIR@
+diff --git a/configure.ac b/configure.ac
+index b034ff0..d26b64f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -226,4 +226,4 @@ fi
+ AC_DEFINE_UNQUOTED(CONFIGDIR, "${configdir}",
+ 			[Directory for the configuration files])
+ =
 
-There is still the SIM race problem, but I would really rather solve
-that problem by always having all atoms created and removed in the
-same callbacks, without returning to mainloop.
-Whether atoms register any D-Bus API in certain modem states is then a
-different matter.
+-AC_OUTPUT(Makefile include/version.h src/ofono.service)
++AC_OUTPUT(Makefile include/version.h src/ofono.service ofono.pc)
+diff --git a/ofono.pc.in b/ofono.pc.in
+new file mode 100644
+index 0000000..19f12e6
+--- /dev/null
++++ b/ofono.pc.in
+@@ -0,0 +1,10 @@
++prefix=3D@prefix@
++exec_prefix=3D@exec_prefix@
++libdir=3D@libdir@
++plugindir=3D${libdir}/@PACKAGE@/plugins
++includedir=3D@includedir@
++
++Name: oFono
++Description: oFono - Open Source Telephony
++Version: @VERSION@
++Cflags: -I${includedir}
+-- =
 
-But the lifetime of all atoms should be the same, and then the SIM
-race is again a local matter to the SIM atom to fix. E.g., cancelling
-any pending reads it has on the SIM when it gets removed. Simply
-removing the driver should take care of this, in fact (at least
-isimodem should handle such a thing gracefully).
+1.7.1
 
-So I don't see the point in removing the SPN code from provisioning
-right now. It is a necessary part of the solution, so at least we need
-to keep the task open as long as SPN is not in.
 
-Cheers,
-Aki
-
---===============3603525260670676736==--
+--===============4568859822915514647==--
 
