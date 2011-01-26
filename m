@@ -1,72 +1,50 @@
-Content-Type: multipart/mixed; boundary="===============7204138520513223287=="
+Content-Type: multipart/mixed; boundary="===============0408842529817246346=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: Ofono CF states not always correct
-Date: Wed, 26 Jan 2011 13:10:10 -0600
-Message-ID: <4D407192.8040303@gmail.com>
-In-Reply-To: <1296033282.2720.23.camel@poutijar-desktop>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH v2] stk: Fix issue in stk_alpha_id_set
+Date: Wed, 26 Jan 2011 11:48:55 -0800
+Message-ID: <1296071335-2592-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7204138520513223287==
+--===============0408842529817246346==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jarko,
+Fixes the crash seen with the null alpha identifier.
+Also removed the icon check as icon will always be a valid pointer.
+---
+ src/stk.c |   11 ++++++++---
+ 1 files changed, 8 insertions(+), 3 deletions(-)
 
-On 01/26/2011 03:14 AM, Jarko Poutiainen wrote:
-> Hi Denis,
-> =
+diff --git a/src/stk.c b/src/stk.c
+index 29d2087..8ae3346 100644
+--- a/src/stk.c
++++ b/src/stk.c
+@@ -477,9 +477,14 @@ static void stk_alpha_id_set(struct ofono_stk *stk,
+ 		const char *text, const struct stk_text_attribute *attr,
+ 		const struct stk_icon_id *icon)
+ {
+-	char *alpha =3D dbus_apply_text_attributes(text, attr);
++	char *alpha =3D dbus_apply_text_attributes(text ? text : "", attr);
+ =
 
-> First sorry for slow reply.
-> =
+-	if (alpha || icon)
++	/*
++	 * Currently, we are treating null data object(len =3D 0, no value part)
++	 * and no alpha identifier cases equally. This has to be changed once
++	 * better idea is found out.
++	 */
++	if (alpha !=3D NULL)
+ 		stk_agent_display_action_info(stk->current_agent, alpha, icon);
+ =
 
-> On Tue, 2011-01-18 at 23:50 +0200, Denis Kenzior wrote:
->>
->> So my thinking is that we should:
->> - Not update conditional cfs when cfu is active (whether via
->> GetProperties or mmi)
->> - only clear the conditional cache flag if a conditional operation is
->> attempted and succeeds while cfu is active
->> - Report conditional cfs as empty when CFU is active (and emit signals
->> appropriately when cfu is activated / deactivated)
->> - Don't bother running conditional cf queries via GetProperties if cfu
->> is active
->>
->> Do you see any issues with this?  I'm really trying to minimize the
->> number of queries we have to do in the most common case (which is
->> activating / deactivating cfu via settings)
-> =
+ 	g_free(alpha);
+-- =
 
-> So:
-> - Check if CFU is active and if so return empty string to any
-> conditional query regardless of the the actual state and regardless of
-> the used API.
-> - If CFU not active return the state of queried conditional
-> - If CFU active and there's an attempt to activate/deactivate
-> conditional make the operation to modem/network and return possible
-> error code but do not update conditional state in ofono OR if the
-> attempt is successful then clear the conditional cache flag.
-> =
-
-> did I get this right?
-> =
+1.7.0.4
 
 
-Yep, sounds right.
-
-> and to your earlier question regarding if I could make the patch
-> unfortunately I don't think I have got the time at the moment so should
-> I maybe make a TODO out of this so that it won't be forgotten?
-> =
-
-
-That works.  Or alternatively file a bug in Meego bugzilla, but since
-this is a major change it probably belongs in the TODO.
-
-Regards,
--Denis
-
---===============7204138520513223287==--
+--===============0408842529817246346==--
 
