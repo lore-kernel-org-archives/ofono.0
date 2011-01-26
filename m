@@ -1,46 +1,54 @@
-Content-Type: multipart/mixed; boundary="===============2338235262002304645=="
+Content-Type: multipart/mixed; boundary="===============8377974639356234813=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [gprs-provision RFCPATCHv6 0/4] Plugin API for provisioning of
- GPRS context settings
-Date: Wed, 26 Jan 2011 10:57:01 +0100
-Message-ID: <1296035821.1520.100.camel@aeonflux>
-In-Reply-To: <1295959664.6035.14.camel@jsaunama-desktop>
+Subject: Re: [PATCH] Don't use c++ keyword in public header files
+Date: Wed, 26 Jan 2011 10:58:45 +0100
+Message-ID: <1296035925.1520.102.camel@aeonflux>
+In-Reply-To: <AANLkTi=DcdFHC1yUE16-gVvXzU9nz-rhdeErq3TwvwqQ@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2338235262002304645==
+--===============8377974639356234813==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jukka,
+Hi Lucas,
 
-> > I think that our only leftover is how we handle the SPN detail.
-> > =
-
-> > Denis, what is your preference here? My take would be that we store it
-> > inside network registration and provide it to external modules. I don't
-> > see a point in reading it twice.
+> >> >> -                     const char *old, const char *new,
+> >> >> +                     const char *p_old, const char *p_new,
+> >> >>                       ofono_sim_lock_unlock_cb_t cb, void *data);
+> >> >>       void (*lock)(struct ofono_sim *sim, enum ofono_sim_password_t=
+ype type,
+> >> >>                       int enable, const char *passwd,
+> >> >
+> >> > why is this exactly a problem?
+> >>
+> >> I did it only because the file contains this:
+> >>
+> >> #ifdef __cplusplus
+> >> extern "C" {
+> >> #endif
+> >>
+> >>
+> >> So I thought someone might want to write a plugin in C++ or something
+> >> that includes sim.h
+> >
+> > and at that point you told the compiler that it is C code and not C++
+> > and it should be just fine.
 > =
 
-> New SPN specific API in SIM atom? Asynchronous with callback, but SIM
-> would need to read it only once.
-> Unless there is some simple way to start reading it right after SIM is
-> ready/unlocked and netreg and gprs are registered only after SPN read
-> returns?
+> This only works for the link phase, because of the name mangling in C++.
+> =
 
-lets get this merged without support for SPN for now. We can easily add
-this later. So please fix Denis' comments and re-submit this without the
-SPN change.
+> > I think it will compile just fine. Try to test it ;)
+> =
 
-Andrew is currently looking into fixing the SIM reading race. Once that
-is done we can tackle the SPN part. Feel free to add a TODO item for
-adding access to SPN information.
+> It doesn't. Example:
 
-Right now I think we need to do that in the SIM atom, store it, and then
-provide it for netreg and other plugins that might want it. However we
-might need to discuss this a bit further.
+fair enough. Send a patch that uses one of the other proposed names. And
+you might wanna update the atmodem and isimodem driver as well to just
+be consistent.
 
 Regards
 
@@ -48,5 +56,5 @@ Marcel
 
 
 
---===============2338235262002304645==--
+--===============8377974639356234813==--
 
