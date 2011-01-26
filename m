@@ -1,32 +1,66 @@
-Content-Type: multipart/mixed; boundary="===============2719100988419113112=="
+Content-Type: multipart/mixed; boundary="===============0642579737476127518=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] call-settings: use enum values
-Date: Tue, 25 Jan 2011 23:33:47 -0600
-Message-ID: <4D3FB23B.6030804@gmail.com>
-In-Reply-To: <1295999168-1168-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: [PATCH] modem: do not allow more than one client to lock down
+Date: Wed, 26 Jan 2011 09:33:57 +0200
+Message-ID: <1296027237-2532-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2719100988419113112==
+--===============0642579737476127518==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+---
+ src/modem.c |   13 ++++++-------
+ 1 files changed, 6 insertions(+), 7 deletions(-)
 
-On 01/25/2011 05:46 PM, Lucas De Marchi wrote:
-> Use the enum values defined for CLIP, CNAP, CLIR, COLP and COLR.
-> ---
->  src/call-settings.c |   16 ++++++++--------
->  1 files changed, 8 insertions(+), 8 deletions(-)
-> =
+diff --git a/src/modem.c b/src/modem.c
+index 553549e..a92107e 100644
+--- a/src/modem.c
++++ b/src/modem.c
+@@ -805,11 +805,14 @@ static DBusMessage *set_property_lockdown(struct ofon=
+o_modem *modem,
+ 	if (modem->pending !=3D NULL)
+ 		return __ofono_error_busy(msg);
+ =
+
++	caller =3D dbus_message_get_sender(msg);
++
++	if (modem->lockdown && g_strcmp0(caller, modem->lock_owner))
++		return __ofono_error_access_denied(msg);
++
+ 	if (modem->lockdown =3D=3D lockdown)
+ 		return dbus_message_new_method_return(msg);
+ =
+
+-	caller =3D dbus_message_get_sender(msg);
+-
+ 	if (lockdown) {
+ 		dbus_bool_t powered;
+ =
+
+@@ -847,12 +850,8 @@ static DBusMessage *set_property_lockdown(struct ofono=
+_modem *modem,
+ 					OFONO_MODEM_INTERFACE,
+ 					"Powered", DBUS_TYPE_BOOLEAN,
+ 					&powered);
+-	} else {
+-		if (g_strcmp0(caller, modem->lock_owner))
+-			return __ofono_error_access_denied(msg);
+-
++	} else
+ 		lockdown_remove(modem);
+-	}
+ =
+
+ done:
+ 	g_dbus_send_reply(conn, msg, DBUS_TYPE_INVALID);
+-- =
+
+1.7.1
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============2719100988419113112==--
+--===============0642579737476127518==--
 
