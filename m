@@ -1,26 +1,36 @@
-Content-Type: multipart/mixed; boundary="===============6188846674119783315=="
+Content-Type: multipart/mixed; boundary="===============7153262999871373225=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: SMS agent interface
-Date: Wed, 26 Jan 2011 11:25:24 +0100
-Message-ID: <1296037524.1520.108.camel@aeonflux>
-In-Reply-To: <CBAD88B23448774582E4323588D6B5D205F3357B@008-AM1MPN1-007.mgdnok.nokia.com>
+Subject: Re: [PATCH 0/4] Add support for CPHS customer service profile
+Date: Wed, 26 Jan 2011 11:28:46 +0100
+Message-ID: <1296037726.1520.110.camel@aeonflux>
+In-Reply-To: <AANLkTinYA0a=N3mcyT3dkzF8Uu2c2J-NiZh6nk6Js70U@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6188846674119783315==
+--===============7153262999871373225==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oleg,
+Hi Aki,
 
-> If you aren't too busy, could you please check and comment on SMS agent i=
-nterface? (the patches were sent on December 29th, maybe they were just mis=
-sed somehow). Thanks!
+> > one open question here is still if we also have to disallow scanning
+> > when this is set?
+> >
+> > So we might wanna update the Scan() and Register() method with the
+> > proper error codes and put a note in there for mode =3D "auto-only".
+> =
 
-I think these got lost during the Christmas/New Years break. Can you
-please re-base them against the current HEAD and re-submit. Thanks.
+> Good point, it's also missing from the Scan() implementation. I meant
+> to add it for but forgot. I'll send a v2 shortly.
+> =
+
+> The other open item was whether to create a new error code for this or
+> reuse the existing access denied error (my preference).
+
+good question. I can see the benefit of having a proper error code, but
+I have no preference here right now.
 
 Regards
 
@@ -28,5 +38,5 @@ Marcel
 
 
 
---===============6188846674119783315==--
+--===============7153262999871373225==--
 
