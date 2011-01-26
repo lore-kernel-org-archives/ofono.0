@@ -1,105 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============9027233369102177055=="
+Content-Type: multipart/mixed; boundary="===============4239887555350636487=="
 MIME-Version: 1.0
-From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-Subject: [PATCH v3 7/7] gps: add documentation
-Date: Wed, 26 Jan 2011 12:32:54 -0300
-Message-ID: <1296055974-9640-8-git-send-email-rafael.zurita@profusion.mobi>
-In-Reply-To: <1296055974-9640-1-git-send-email-rafael.zurita@profusion.mobi>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: [PATCH] Don't use c++ keyword in public header files
+Date: Wed, 26 Jan 2011 14:15:41 -0200
+Message-ID: <AANLkTi=pfa4T9UYQh_GMoRTVoB-6nwkv34PkdRj3QmPX@mail.gmail.com>
+In-Reply-To: <1296035925.1520.102.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9027233369102177055==
+--===============4239887555350636487==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- Makefile.am                  |    3 +-
- doc/gps-api.txt              |   49 ++++++++++++++++++++++++++++++++++++++=
-++++
- 2 files changed, 51 insertions(+), 1 deletions(-)
- create mode 100644 doc/gps-api.txt
- mode change 100755 =3D> 100644 test/test-location-reporting
+Hi Marcel
 
-diff --git a/Makefile.am b/Makefile.am
-index 49bf8f3..2ebf9e6 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -399,7 +399,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
-release-faq.txt \
- 			doc/phonebook-api.txt doc/radio-settings-api.txt \
- 			doc/sim-api.txt doc/stk-api.txt \
- 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
--			doc/calypso-modem.txt doc/message-api.txt
-+			doc/calypso-modem.txt doc/message-api.txt \
-+			doc/gps-api.txt
- =
+On Wed, Jan 26, 2011 at 7:58 AM, Marcel Holtmann <marcel@holtmann.org> wr=
+ote:
+>> It doesn't. Example:
+>
+> fair enough. Send a patch that uses one of the other proposed names. And
+> you might wanna update the atmodem and isimodem driver as well to just
+> be consistent.
+>
 
- =
+Only atmodem implements the change_passwd method:
 
- test_scripts =3D test/backtrace \
-diff --git a/doc/gps-api.txt b/doc/gps-api.txt
-new file mode 100644
-index 0000000..85b0669
---- /dev/null
-+++ b/doc/gps-api.txt
-@@ -0,0 +1,49 @@
-+Location Reporting hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Service		org.ofono
-+Interface	org.ofono.LocationReporting
-+Object path	[variable prefix]/{modem0,modem1,...}
-+
-+Methods		dict GetProperties()
-+
-+			Returns all Gps properties. See the
-+			properties section for available properties.
-+
-+			Possible Errors: [service].Error.InProgress
-+					 [service].Error.Failed
-+
-+		void RegisterAgent(object path)
-+
-+			Registers an agent which will be called with the
-+			gps file descriptor.
-+
-+		void UnregisterAgent(object path)
-+
-+			Unregisters an agent.
-+
-+Properties	string Type [readonly]
-+
-+			Holds the type of the device (e.g. "nmea")
-+
-+LocationReportingAgent Hierarchy [experimental]
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+
-+Service		unique name
-+Interface	org.ofono.LocationReportingAgent
-+Object path	freely definable
-+
-+Methods		void ReceiveGpsFileDescriptor(int32 fd)
-+
-+			Supplies the current gps device open file
-+			descriptor. The file descriptor should be used by
-+			the external client to receive the NMEA data.
-+
-+			Possible Errors: None
-+
-+		void Release() [noreply]
-+
-+			Agent is being released, possibly because of oFono
-+			terminating, Location Reporting interface is being
-+			torn down or modem off.  No UnregisterAgent call is
-+			needed.
-diff --git a/test/test-location-reporting b/test/test-location-reporting
-old mode 100755
-new mode 100644
--- =
-
-1.7.2.3
+$ grep -RIn change_passwd drivers/*
+drivers/atmodem/sim.c:882:static void at_change_passwd(struct ofono_sim *si=
+m,
+drivers/atmodem/sim.c:1038:	.change_passwd		=3D at_change_passwd,
 
 
---===============9027233369102177055==--
+I'm going to change it too.
+
+
+regards,
+
+Lucas De Marchi
+
+--===============4239887555350636487==--
 
