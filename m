@@ -1,120 +1,60 @@
-Content-Type: multipart/mixed; boundary="===============8046066946977879576=="
+Content-Type: multipart/mixed; boundary="===============5274867048251962723=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/2] Support for pkg-config
-Date: Wed, 26 Jan 2011 12:27:23 +0100
-Message-ID: <1296041243.1520.128.camel@aeonflux>
-In-Reply-To: <1296040172-19180-2-git-send-email-remi.denis-courmont@nokia.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 2/4] netreg: Add CPHS CSP PLMN mode implementation
+Date: Wed, 26 Jan 2011 13:45:16 +0200
+Message-ID: <AANLkTinrU2Mxym1=HrEqGmrSP6Lqn98Cs8aQ=taeRfQi@mail.gmail.com>
+In-Reply-To: <1296040364.1520.116.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8046066946977879576==
+--===============5274867048251962723==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi Marcel,
 
->  .gitignore   |    1 +
->  Makefile.am  |    3 +++
->  configure.ac |    2 +-
->  ofono.pc.in  |   10 ++++++++++
->  4 files changed, 15 insertions(+), 1 deletions(-)
->  create mode 100644 ofono.pc.in
-> =
+2011/1/26 Marcel Holtmann <marcel@holtmann.org>:
+>> That is how I originally had it, but this ends up being a bit less
+>> code. Also, I'd like to localize all of these constant strings into a
+>> single function and not sprinkle them across the code.
+>
+> so I am counting two callers to registration_mode_to_string.
 
-> diff --git a/.gitignore b/.gitignore
-> index 7cfb1d9..59308be 100644
-> --- a/.gitignore
-> +++ b/.gitignore
-> @@ -20,6 +20,7 @@ install-sh
->  libtool
->  ltmain.sh
->  missing
-> +ofono.pc
->  stamp-h1
->  autom4te.cache
+Yup, that's two times "auto-only". ;)
 
-please put ofono.pc on top of include/ofono line.
- =
+> In the current code base it is always checked and set before:
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0if (netreg->mode =3D=3D mode)
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0return;
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0netreg->mode =3D mode;
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0...
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0strmode =3D registration_mode_to_string(mode);
 
-> diff --git a/Makefile.am b/Makefile.am
-> index 71365d7..3b29d19 100644
-> --- a/Makefile.am
-> +++ b/Makefile.am
-> @@ -21,6 +21,9 @@ local_headers =3D $(foreach file,$(pkginclude_HEADERS) \
->  				$(nodist_pkginclude_HEADERS), \
->  					include/ofono/$(notdir $(file)))
->  =
+Ah, right. I was thinking one call up the stack.
 
-> +pkgconfigdir =3D $(libdir)/pkgconfig
-> +pkgconfig_DATA =3D ofono.pc
-> +
->  =
+> Just on a different thought here. The NETWORK_REGISTRATION_MODE_* is
+> local to src/network.c. We could just add the AUTO_ONLY mode there.
+>
+> The only downside I is see the already nasty init_registration_status
+> check, but that might be acceptable compared to crippling the string
+> conversion function.
+>
+> However at least the check would be clearly to just checking mode and
+> not mode + forced_mode.
 
->  if DATAFILES
->  dbusconfdir =3D @DBUS_CONFDIR@
-> diff --git a/configure.ac b/configure.ac
-> index b034ff0..d26b64f 100644
-> --- a/configure.ac
-> +++ b/configure.ac
-> @@ -226,4 +226,4 @@ fi
->  AC_DEFINE_UNQUOTED(CONFIGDIR, "${configdir}",
->  			[Directory for the configuration files])
->  =
+I thought about this, but then we'd need more logic to when the user
+calls NetworkRegistration.Register() for automatic mode. That
+obviously can't change the mode. But perhaps this is now more
+manageable, since we got rid of Deregister(), which means there is
+just this one case to worry about.
 
-> -AC_OUTPUT(Makefile include/version.h src/ofono.service)
-> +AC_OUTPUT(Makefile include/version.h src/ofono.service ofono.pc)
-> diff --git a/ofono.pc.in b/ofono.pc.in
-> new file mode 100644
-> index 0000000..19f12e6
-> --- /dev/null
-> +++ b/ofono.pc.in
-> @@ -0,0 +1,10 @@
-> +prefix=3D@prefix@
-> +exec_prefix=3D@exec_prefix@
-> +libdir=3D@libdir@
-> +plugindir=3D${libdir}/@PACKAGE@/plugins
+Cheers,
+Aki
 
-Please remove plugindir in a separate paragraph.
-
-> +includedir=3D@includedir@
-> +
-> +Name: oFono
-
-This needs to be all lowercase. So just ofono.
-
-> +Description: oFono - Open Source Telephony
-> +Version: @VERSION@
-
-You are missing the Libs: and Requires: line here.
-
-> +Cflags: -I${includedir}
-
-Something like this should do it:
-
-prefix=3D@prefix@
-exec_prefix=3D@exec_prefix@
-libdir=3D@libdir@
-includedir=3D@includedir@
- =
-
-plugindir=3D${libdir}/@PACKAGE@/plugins
-
-Name: @PACKAGE@
-Description: oFono - Open Source Telephony
-Requires: glib-2.0 dbus-1
-Version: @VERSION@
-Libs: -module -avoid-version -export-symbols-regex @PACKAGE(a)_plugin_desc
-Cflags: -I${includedir}
-
-Otherwise you are a bit out of luck when building external plugins.
-
-Regards
-
-Marcel
-
-
-
---===============8046066946977879576==--
+--===============5274867048251962723==--
 
