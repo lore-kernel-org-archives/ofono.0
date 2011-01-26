@@ -1,30 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============5465749395448936554=="
+Content-Type: multipart/mixed; boundary="===============5757519963793003750=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 2/4] netreg: Add CPHS CSP PLMN mode implementation
-Date: Wed, 26 Jan 2011 13:51:59 +0200
-Message-ID: <AANLkTim7=7xybJvSSPpsLA9-fpcXuF4HaHN9m+nZ65TP@mail.gmail.com>
-In-Reply-To: <1296042505.1520.130.camel@aeonflux>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+Subject: [gprs-provision PATCHv7 0/5] Plugin API for provisioning of GPRS
+ context settings
+Date: Wed, 26 Jan 2011 14:34:10 +0200
+Message-ID: <1296045255-29890-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5465749395448936554==
+--===============5757519963793003750==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hello
 
-2011/1/26 Marcel Holtmann <marcel@holtmann.org>:
-> can you have a stab at this and check how a patch would look like if we
-> just add another mode. If I am not mistaken we only have the extra code
-> in the init_registration_status. I could be wrong here since I have not
-> looked through that code in a long time.
+And again a patchset about automatic provisioning of GPRS context settings.
 
-Sure thing.
+Since the safe reading of EF-SPN turned out to be impossible until general =
+solution is implemented, I must temporary give up my insistence on it.
 
-Cheers,
-Aki
+So the following provisioning driver API must be considered as provisional. =
 
---===============5465749395448936554==--
+When proper solution for SPN comes up, we should redesign the API. Without =
+SPN, correct settings cannot be provisioned for all service providers, but =
+at least for now most cases should work with just the MCC and MNC values pr=
+ovided with this API.
+
+
+--Jukka
+
+
+--===============5757519963793003750==--
 
