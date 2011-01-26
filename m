@@ -1,60 +1,35 @@
-Content-Type: multipart/mixed; boundary="===============8377974639356234813=="
+Content-Type: multipart/mixed; boundary="===============5891392397793015587=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Don't use c++ keyword in public header files
-Date: Wed, 26 Jan 2011 10:58:45 +0100
-Message-ID: <1296035925.1520.102.camel@aeonflux>
-In-Reply-To: <AANLkTi=DcdFHC1yUE16-gVvXzU9nz-rhdeErq3TwvwqQ@mail.gmail.com>
+From: Aki Niemi <aki@protocolpolice.com>
+Subject: Re: [PATCH 0/4] Add support for CPHS customer service profile
+Date: Wed, 26 Jan 2011 12:17:01 +0200
+Message-ID: <AANLkTinYA0a=N3mcyT3dkzF8Uu2c2J-NiZh6nk6Js70U@mail.gmail.com>
+In-Reply-To: <1296035456.1520.96.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8377974639356234813==
+--===============5891392397793015587==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+Hi Marcel,
 
-> >> >> -                     const char *old, const char *new,
-> >> >> +                     const char *p_old, const char *p_new,
-> >> >>                       ofono_sim_lock_unlock_cb_t cb, void *data);
-> >> >>       void (*lock)(struct ofono_sim *sim, enum ofono_sim_password_t=
-ype type,
-> >> >>                       int enable, const char *passwd,
-> >> >
-> >> > why is this exactly a problem?
-> >>
-> >> I did it only because the file contains this:
-> >>
-> >> #ifdef __cplusplus
-> >> extern "C" {
-> >> #endif
-> >>
-> >>
-> >> So I thought someone might want to write a plugin in C++ or something
-> >> that includes sim.h
-> >
-> > and at that point you told the compiler that it is C code and not C++
-> > and it should be just fine.
-> =
+2011/1/26 Marcel Holtmann <marcel@holtmann.org>:
+> one open question here is still if we also have to disallow scanning
+> when this is set?
+>
+> So we might wanna update the Scan() and Register() method with the
+> proper error codes and put a note in there for mode =3D "auto-only".
 
-> This only works for the link phase, because of the name mangling in C++.
-> =
+Good point, it's also missing from the Scan() implementation. I meant
+to add it for but forgot. I'll send a v2 shortly.
 
-> > I think it will compile just fine. Try to test it ;)
-> =
+The other open item was whether to create a new error code for this or
+reuse the existing access denied error (my preference).
 
-> It doesn't. Example:
+Cheers,
+Aki
 
-fair enough. Send a patch that uses one of the other proposed names. And
-you might wanna update the atmodem and isimodem driver as well to just
-be consistent.
-
-Regards
-
-Marcel
-
-
-
---===============8377974639356234813==--
+--===============5891392397793015587==--
 
