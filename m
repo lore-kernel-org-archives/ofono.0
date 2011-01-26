@@ -1,61 +1,64 @@
-Content-Type: multipart/mixed; boundary="===============5534186778434898622=="
+Content-Type: multipart/mixed; boundary="===============4969829733799525133=="
 MIME-Version: 1.0
 From: Aki Niemi <aki.niemi@nokia.com>
-Subject: [PATCH 1/4] simutil: Add EFcsp file and service group IDs
-Date: Wed, 26 Jan 2011 11:19:26 +0200
-Message-ID: <1296033569-26774-2-git-send-email-aki.niemi@nokia.com>
+Subject: [PATCH 3/4] doc: Add documentation for 'auto-only' mode
+Date: Wed, 26 Jan 2011 11:19:28 +0200
+Message-ID: <1296033569-26774-4-git-send-email-aki.niemi@nokia.com>
 In-Reply-To: <1296033569-26774-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5534186778434898622==
+--===============4969829733799525133==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/simutil.h |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
+ doc/network-api.txt |   17 ++++++++++-------
+ 1 files changed, 10 insertions(+), 7 deletions(-)
 
-diff --git a/src/simutil.h b/src/simutil.h
-index 463540b..a5a683b 100644
---- a/src/simutil.h
-+++ b/src/simutil.h
-@@ -37,6 +37,7 @@ enum sim_fileid {
- 	SIM_EFIMSI_FILEID =3D			0x6F07,
- 	SIM_EF_CPHS_MWIS_FILEID =3D		0x6F11,
- 	SIM_EF_CPHS_CFF_FILEID =3D		0x6F13,
-+	SIM_EF_CPHS_CSP_FILEID =3D		0x6F15,
- 	SIM_EF_CPHS_INFORMATION_FILEID =3D	0x6F16,
- 	SIM_EF_CPHS_MBDN_FILEID =3D		0x6F17,
- 	SIM_EFUST_FILEID =3D			0x6F38,
-@@ -238,6 +239,21 @@ enum sim_sst_service {
- 	SIM_SST_SERVICE_PROVIDER_DISPLAY_INFO =3D		55
- };
+diff --git a/doc/network-api.txt b/doc/network-api.txt
+index 75187cd..2f13a9c 100644
+--- a/doc/network-api.txt
++++ b/doc/network-api.txt
+@@ -69,18 +69,21 @@ Properties	string Mode [readonly]
+ 			method of an operator is called.
  =
 
-+/* CPHS 4.2, Section B4.7 CSP Service Group Codes */
-+enum sim_csp_entry {
-+	SIM_CSP_ENTRY_CALL_OFFERING =3D		0x01,
-+	SIM_CSP_ENTRY_CALL_RESTRICTION =3D	0x02,
-+	SIM_CSP_ENTRY_OTHER_SUPP_SERVICES =3D	0x03,
-+	SIM_CSP_ENTRY_CALL_COMPLETION =3D		0x04,
-+	SIM_CSP_ENTRY_TELESERVICES =3D		0x05,
-+	SIM_CSP_ENTRY_CPHS_TELESERVICES =3D	0x06,
-+	SIM_CSP_ENTRY_CPHS_FEATURES =3D		0x07,
-+	SIM_CSP_ENTRY_NUMBER_IDENTIFICATION =3D	0x08,
-+	SIM_CSP_ENTRY_PHASE_2GPLUS_SERVICES =3D	0x09,
-+	SIM_CSP_ENTRY_VALUE_ADDED_SERVICES =3D	0xC0,
-+	SIM_CSP_ENTRY_INFORMATION_NUMBERS =3D	0xD5,
-+};
-+
- enum ber_tlv_data_type {
- 	BER_TLV_DATA_TYPE_UNIVERSAL =3D		0,
- 	BER_TLV_DATA_TYPE_APPLICATION =3D		1,
+ 			The possible values are:
+-				"auto"     Network registration is performed
+-				           automatically.
+-				"manual"   Network operator is selected
+-				           manually. If the operator is
+-				           currently not selected, registration
+-				           is not attempted
++				"auto"       Network registration is performed
++				             automatically.
++				"auto-only"  Network registration is performed
++					     automatically, and manual
++				             selection is disabled.
++				"manual"     Network operator is selected
++				             manually. If the operator is
++				             currently not selected,
++				             registration is not attempted.
+ =
+
+ 		string Status [readonly]
+ =
+
+ 			The current registration status of a modem.
+ =
+
+-			The possible values are: =
+
++			The possible values are:
+ 				"unregistered"  Not registered to any network
+ 				"registered"    Registered to home network
+ 				"searching"     Not registered, but searching
 -- =
 
 1.7.1
 
 
---===============5534186778434898622==--
+--===============4969829733799525133==--
 
