@@ -1,43 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============4239887555350636487=="
+Content-Type: multipart/mixed; boundary="===============1287534812530529860=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH] Don't use c++ keyword in public header files
-Date: Wed, 26 Jan 2011 14:15:41 -0200
-Message-ID: <AANLkTi=pfa4T9UYQh_GMoRTVoB-6nwkv34PkdRj3QmPX@mail.gmail.com>
-In-Reply-To: <1296035925.1520.102.camel@aeonflux>
+Subject: [PATCH 1/2] include: don't use c++ keyword in public header
+Date: Wed, 26 Jan 2011 14:17:00 -0200
+Message-ID: <1296058621-10400-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4239887555350636487==
+--===============1287534812530529860==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel
+---
+ include/sim.h |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-On Wed, Jan 26, 2011 at 7:58 AM, Marcel Holtmann <marcel@holtmann.org> wr=
-ote:
->> It doesn't. Example:
->
-> fair enough. Send a patch that uses one of the other proposed names. And
-> you might wanna update the atmodem and isimodem driver as well to just
-> be consistent.
->
+diff --git a/include/sim.h b/include/sim.h
+index 81df60e..5e3ba5b 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -154,7 +154,7 @@ struct ofono_sim_driver {
+ 			ofono_sim_lock_unlock_cb_t cb, void *data);
+ 	void (*change_passwd)(struct ofono_sim *sim,
+ 			enum ofono_sim_password_type type,
+-			const char *old, const char *new,
++			const char *old_passwd, const char *new_passwd,
+ 			ofono_sim_lock_unlock_cb_t cb, void *data);
+ 	void (*lock)(struct ofono_sim *sim, enum ofono_sim_password_type type,
+ 			int enable, const char *passwd,
+-- =
 
-Only atmodem implements the change_passwd method:
-
-$ grep -RIn change_passwd drivers/*
-drivers/atmodem/sim.c:882:static void at_change_passwd(struct ofono_sim *si=
-m,
-drivers/atmodem/sim.c:1038:	.change_passwd		=3D at_change_passwd,
-
-
-I'm going to change it too.
+1.7.3.5
 
 
-regards,
-
-Lucas De Marchi
-
---===============4239887555350636487==--
+--===============1287534812530529860==--
 
