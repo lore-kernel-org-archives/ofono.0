@@ -1,14 +1,14 @@
-Content-Type: multipart/mixed; boundary="===============1296295213049982966=="
+Content-Type: multipart/mixed; boundary="===============6231009660933566716=="
 MIME-Version: 1.0
 From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 2/4] netreg: Add CPHS CSP PLMN mode implementation
-Date: Wed, 26 Jan 2011 12:32:07 +0200
-Message-ID: <AANLkTikGYBZBqo5czuDORzRxOraAJo6c811RrFMs+sAA@mail.gmail.com>
-In-Reply-To: <1296035236.1520.93.camel@aeonflux>
+Subject: Re: [PATCH 0/4] Add support for CPHS customer service profile
+Date: Wed, 26 Jan 2011 12:34:22 +0200
+Message-ID: <AANLkTikjEDQNLxFR3=fCBk_OYd0Eic64a_JcFHVUDGmU@mail.gmail.com>
+In-Reply-To: <1296037726.1520.110.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1296295213049982966==
+--===============6231009660933566716==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -16,51 +16,28 @@ Content-Transfer-Encoding: quoted-printable
 Hi Marcel,
 
 2011/1/26 Marcel Holtmann <marcel@holtmann.org>:
->> diff --git a/src/network.c b/src/network.c
->> index b5450ee..64734d0 100644
->> --- a/src/network.c
->> +++ b/src/network.c
->> @@ -64,6 +64,7 @@ struct ofono_netreg {
->> =C2=A0 =C2=A0 =C2=A0 int cellid;
->> =C2=A0 =C2=A0 =C2=A0 int technology;
->> =C2=A0 =C2=A0 =C2=A0 int mode;
->> + =C2=A0 =C2=A0 gboolean forced_auto;
+>> > one open question here is still if we also have to disallow scanning
+>> > when this is set?
+>> >
+>> > So we might wanna update the Scan() and Register() method with the
+>> > proper error codes and put a note in there for mode =3D "auto-only".
+>>
+>> Good point, it's also missing from the Scan() implementation. I meant
+>> to add it for but forgot. I'll send a v2 shortly.
+>>
+>> The other open item was whether to create a new error code for this or
+>> reuse the existing access denied error (my preference).
 >
-> do we wanna keep it named forced_auto and not better keep this in sync
-> with auto_only as we use in the D-Bus API. Or if manual_disabled.
+> good question. I can see the benefit of having a proper error code, but
+> I have no preference here right now.
 
-I can rename this auto_only.
-
->> -static const char *registration_mode_to_string(int mode)
->> +static const char *registration_mode_to_string(int mode, gboolean force=
-d_auto)
->> =C2=A0{
->> + =C2=A0 =C2=A0 if (forced_auto)
->> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return "auto-only";
->> +
->
-> I see the benefit of keeping this in this function, but I would not have
-> done it like this actually. I would have kept it next to the function
-> needing that string and let it do the auto-only check by itself.
-
-That is how I originally had it, but this ends up being a bit less
-code. Also, I'd like to localize all of these constant strings into a
-single function and not sprinkle them across the code.
-
-> Another possibility might be to convert this into
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0get_registration_mode_string(struct ofono_netr=
-eg *netreg)
->
-> Since I am not mistaken, then the netreg->mode is always set before you
-> are calling this, right?
-
-No, you call it with the new value. The function will then compare the
-old and the new, and based on this decide on sending a
-PropertyChanged.
+I really would prefer to use the existing one, which I think came with
+the lockdown property. It fits the bill here as well, and since access
+denied won't ever occur for these methods for any other reason, the
+code will look exactly the same on the client side.
 
 Cheers,
 Aki
 
---===============1296295213049982966==--
+--===============6231009660933566716==--
 
