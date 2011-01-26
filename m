@@ -1,128 +1,69 @@
-Content-Type: multipart/mixed; boundary="===============4215365509990910895=="
+Content-Type: multipart/mixed; boundary="===============1242981858492141214=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [RFC 2/5] gprs: driver interface changes for IPv6
-Date: Wed, 26 Jan 2011 18:22:47 +0200
-Message-ID: <1296058970-11815-3-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1296058970-11815-1-git-send-email-mika.liljeberg@nokia.com>
+Subject: RFC: IPv6 support
+Date: Wed, 26 Jan 2011 18:22:45 +0200
+Message-ID: <1296058970-11815-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4215365509990910895==
+--===============1242981858492141214==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/gprs-context.h |   41 +++++++++++++++++++++++++++++++++++++++++
- src/gprs.c             |    2 ++
- 2 files changed, 43 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/include/gprs-context.h b/include/gprs-context.h
-index c29c0dc..eee8e18 100644
---- a/include/gprs-context.h
-+++ b/include/gprs-context.h
-@@ -37,6 +37,7 @@ struct ofono_gprs_context;
- enum ofono_gprs_proto {
- 	OFONO_GPRS_PROTO_IP =3D 0,
- 	OFONO_GPRS_PROTO_IPV6,
-+	OFONO_GPRS_PROTO_IPV4V6,
- };
- =
+Here's an initial set of IPv6 patches for review. Please don't apply
+anything yet, as these are not final. I've left in some shim code which
+allows compilation with existing modem drivers. Also, I have not yet
+tried to exterminate coding style issues.
 
- enum ofono_gprs_context_type {
-@@ -47,6 +48,14 @@ enum ofono_gprs_context_type {
- 	OFONO_GPRS_CONTEXT_TYPE_IMS,
- };
- =
+I'd like feedback on the following issues:
 
-+enum ofono_gprs_addrconf_method {
-+	OFONO_GPRS_ADDRCONF_NONE,
-+	OFONO_GPRS_ADDRCONF_STATIC,
-+	OFONO_GPRS_ADDRCONF_DHCP,
-+	OFONO_GPRS_ADDRCONF_STATELESS,
-+	OFONO_GPRS_ADDRCONF_DHCPV6,
-+};
-+
- struct ofono_gprs_primary_context {
- 	unsigned int cid;
- 	int direction;
-@@ -56,6 +65,26 @@ struct ofono_gprs_primary_context {
- 	enum ofono_gprs_proto proto;
- };
- =
+1) connman API: A combined ipv4v6 context type has been added as well
+as properties for IPv6 network configuration. The combined ipv4v6 context
+falls back on separate IPv4 and IPv6 bearers under the hood, in case the
+modem or the network does not support 3GPP rel 8.
 
-+void ofono_gprs_context_set_ip_interface(struct ofono_gprs_context *gc,
-+					const char *interface);
-+void ofono_gprs_context_set_ip_addrconf(struct ofono_gprs_context *gc,
-+					enum ofono_gprs_addrconf_method method);
-+void ofono_gprs_context_set_ip_address(struct ofono_gprs_context *gc,
-+					const char *address);
-+void ofono_gprs_context_set_ip_netmask(struct ofono_gprs_context *gc,
-+					const char *netmask);
-+void ofono_gprs_context_set_ip_gateway(struct ofono_gprs_context *gc,
-+					const char *netmask);
-+void ofono_gprs_context_set_ip_dns_servers(struct ofono_gprs_context *gc,
-+						const char **dns);
-+
-+void ofono_gprs_context_set_ipv6_interface(struct ofono_gprs_context *gc,
-+					const char *interface);
-+void ofono_gprs_context_set_ipv6_address(struct ofono_gprs_context *gc,
-+						const char *address);
-+void ofono_gprs_context_set_ipv6_dns_servers(struct ofono_gprs_context *gc,
-+						const char **dns);
-+
- typedef void (*ofono_gprs_context_cb_t)(const struct ofono_error *error,
- 					void *data);
- typedef void (*ofono_gprs_context_up_cb_t)(const struct ofono_error *error,
-@@ -63,6 +92,10 @@ typedef void (*ofono_gprs_context_up_cb_t)(const struct =
-ofono_error *error,
- 				const char *address, const char *netmask,
- 				const char *gw, const char **dns, void *data);
- =
+IPv6 address configuration is minimal. Basically, only network interface na=
+me,
+IPv6 link-local address and DNS server addresses are exposed. IPv6 stateless
+address autoconfiguration method should be used for interface configuration.
+I'd like some feedback on modems that provide a virtual ethernet interface.
+Will the above suffice?
 
-+typedef void (*ofono_gprs_context_activate_cb_t)(const struct ofono_error =
-*error,
-+					ofono_bool_t single_bearers,
-+					void *data);
-+
- struct ofono_gprs_context_driver {
- 	const char *name;
- 	int (*probe)(struct ofono_gprs_context *gc, unsigned int vendor,
-@@ -71,6 +104,14 @@ struct ofono_gprs_context_driver {
- 	void (*activate_primary)(struct ofono_gprs_context *gc,
- 				const struct ofono_gprs_primary_context *ctx,
- 				ofono_gprs_context_up_cb_t cb, void *data);
-+	void (*activate_primary_new)(struct ofono_gprs_context *gc,
-+					unsigned int id,
-+					const char *apn,
-+					enum ofono_gprs_proto proto,
-+					const char *username,
-+					const char *password,
-+					ofono_gprs_context_activate_cb_t cb,
-+					void *data);
- 	void (*deactivate_primary)(struct ofono_gprs_context *gc,
- 					unsigned int id,
- 					ofono_gprs_context_cb_t cb, void *data);
-diff --git a/src/gprs.c b/src/gprs.c
-index 92d0b1a..37e7aee 100644
---- a/src/gprs.c
-+++ b/src/gprs.c
-@@ -224,6 +224,8 @@ static const char *gprs_proto_to_string(enum ofono_gprs=
-_proto proto)
- 		return "ip";
- 	case OFONO_GPRS_PROTO_IPV6:
- 		return "ipv6";
-+	case OFONO_GPRS_PROTO_IPV4V6:
-+		return "ipv4v6";
- 	};
- =
+2) driver API: The activate_primary_new() method will replace the
+activate_primary() method in the final patches. The callback no longer
+passes every address configuration setting as argument. Instead, I've
+defined a set of ofono_gprs_context_set_xyz() methods to convey context
+settings to the core. The reason is that most of the settings are
+optional. E.g., with a combined IPv4v6 context we might actually end up
+with IPv4 or IPv6 only, instead of both, so both sets of configuration
+parameters are optional. Things like IP netmask and gateway for static
+network configuration, P-CSCF address, DNS servers, QoS parameters,
+are also optional, depending on driver and context type. This way, any
+changes are less likely to break the driver interface.
 
- 	return NULL;
--- =
+3) implementation in general: Unfortunately, the core patch is fairly big
+even though I tried to not change things unnecessarily. The combined ipv4v6
+context type made it necessary to rearrange quite a few things. The
+pri_context structure now owns one or more context drivers (aka bearers),
+each of which has it's own set of IPv4 and IPv6 settings when active.
 
-1.7.1
+Currently, the isimodem driver has been updated to work with IPv6, so N900
+over USB can be used for testing. Other modem drivers should work ok with
+IPv4.
 
+Br,
 
---===============4215365509990910895==--
+	MikaL
+
+[RFC 1/5] gprs: Update documentation for IPv6
+[RFC 2/5] gprs: driver interface changes for IPv6
+[RFC 3/5] gprs: core support for IPv6
+[RFC 4/5] test: modify test scripts for IPv6
+[RFC 5/5] isimodem: IPv6 support
+
+--===============1242981858492141214==--
 
