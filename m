@@ -1,54 +1,105 @@
-Content-Type: multipart/mixed; boundary="===============1458885787038356514=="
+Content-Type: multipart/mixed; boundary="===============9027233369102177055=="
 MIME-Version: 1.0
 From: Rafael Ignacio Zurita <rafael.zurita@profusion.mobi>
-Subject: [PATCH v3 5/7] plugins/udev.c: add gps comparison for add_mbm
- registered modem
-Date: Wed, 26 Jan 2011 12:32:52 -0300
-Message-ID: <1296055974-9640-6-git-send-email-rafael.zurita@profusion.mobi>
+Subject: [PATCH v3 7/7] gps: add documentation
+Date: Wed, 26 Jan 2011 12:32:54 -0300
+Message-ID: <1296055974-9640-8-git-send-email-rafael.zurita@profusion.mobi>
 In-Reply-To: <1296055974-9640-1-git-send-email-rafael.zurita@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1458885787038356514==
+--===============9027233369102177055==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/udev.c |    5 +++--
- 1 files changed, 3 insertions(+), 2 deletions(-)
+ Makefile.am                  |    3 +-
+ doc/gps-api.txt              |   49 ++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 51 insertions(+), 1 deletions(-)
+ create mode 100644 doc/gps-api.txt
+ mode change 100755 =3D> 100644 test/test-location-reporting
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 202b225..ca09a30 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -105,7 +105,7 @@ static void add_mbm(struct ofono_modem *modem,
- 					struct udev_device *udev_device)
- {
- 	const char *desc, *devnode;
--	const char *device, *data, *network;
-+	const char *device, *data, *network, *gps;
- 	int registered;
+diff --git a/Makefile.am b/Makefile.am
+index 49bf8f3..2ebf9e6 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -399,7 +399,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
+release-faq.txt \
+ 			doc/phonebook-api.txt doc/radio-settings-api.txt \
+ 			doc/sim-api.txt doc/stk-api.txt \
+ 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
+-			doc/calypso-modem.txt doc/message-api.txt
++			doc/calypso-modem.txt doc/message-api.txt \
++			doc/gps-api.txt
  =
 
- 	desc =3D udev_device_get_sysattr_value(udev_device, "device/interface");
-@@ -152,8 +152,9 @@ static void add_mbm(struct ofono_modem *modem,
- 	device  =3D ofono_modem_get_string(modem, MODEM_DEVICE);
- 	data =3D ofono_modem_get_string(modem, DATA_DEVICE);
- 	network =3D ofono_modem_get_string(modem, NETWORK_INTERFACE);
-+	gps =3D ofono_modem_get_string(modem, GPS_DEVICE);
  =
 
--	if (device !=3D NULL && data !=3D NULL && network !=3D NULL) {
-+	if (device !=3D NULL && data !=3D NULL && network !=3D NULL && gps !=3D N=
-ULL) {
- 		ofono_modem_set_integer(modem, "Registered", 1);
- 		ofono_modem_register(modem);
- 	}
+ test_scripts =3D test/backtrace \
+diff --git a/doc/gps-api.txt b/doc/gps-api.txt
+new file mode 100644
+index 0000000..85b0669
+--- /dev/null
++++ b/doc/gps-api.txt
+@@ -0,0 +1,49 @@
++Location Reporting hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		org.ofono
++Interface	org.ofono.LocationReporting
++Object path	[variable prefix]/{modem0,modem1,...}
++
++Methods		dict GetProperties()
++
++			Returns all Gps properties. See the
++			properties section for available properties.
++
++			Possible Errors: [service].Error.InProgress
++					 [service].Error.Failed
++
++		void RegisterAgent(object path)
++
++			Registers an agent which will be called with the
++			gps file descriptor.
++
++		void UnregisterAgent(object path)
++
++			Unregisters an agent.
++
++Properties	string Type [readonly]
++
++			Holds the type of the device (e.g. "nmea")
++
++LocationReportingAgent Hierarchy [experimental]
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		unique name
++Interface	org.ofono.LocationReportingAgent
++Object path	freely definable
++
++Methods		void ReceiveGpsFileDescriptor(int32 fd)
++
++			Supplies the current gps device open file
++			descriptor. The file descriptor should be used by
++			the external client to receive the NMEA data.
++
++			Possible Errors: None
++
++		void Release() [noreply]
++
++			Agent is being released, possibly because of oFono
++			terminating, Location Reporting interface is being
++			torn down or modem off.  No UnregisterAgent call is
++			needed.
+diff --git a/test/test-location-reporting b/test/test-location-reporting
+old mode 100755
+new mode 100644
 -- =
 
 1.7.2.3
 
 
---===============1458885787038356514==--
+--===============9027233369102177055==--
 
