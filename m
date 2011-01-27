@@ -1,59 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============0315613778641303538=="
+Content-Type: multipart/mixed; boundary="===============0283225327724750599=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 6/9] oFono smsagent enhancements to permit more flexible
- parameter set to be dispatched.
-Date: Thu, 27 Jan 2011 14:18:22 +0100
-Message-ID: <1296134302.1520.154.camel@aeonflux>
-In-Reply-To: <1293627085-24428-7-git-send-email-oleg.zhurakivskyy@nokia.com>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+Subject: [PATCH 0/3] EF-SPN API to sim-atom
+Date: Thu, 27 Jan 2011 15:22:14 +0200
+Message-ID: <1296134537-16133-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0315613778641303538==
+--===============0283225327724750599==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oleg,
+Hello
 
->  src/smsagent.h |    4 ++++
->  1 files changed, 4 insertions(+), 0 deletions(-)
-> =
+Here is an asynchronous implementation of SIM Service Provider Name (EF-SPN=
+) getter API.
+The trick is to delay setting sim ready until spn reading is finished.
 
-> diff --git a/src/smsagent.h b/src/smsagent.h
-> index 39513d6..348d36d 100644
-> --- a/src/smsagent.h
-> +++ b/src/smsagent.h
-> @@ -31,6 +31,8 @@ typedef void (*sms_agent_dispatch_cb)(struct sms_agent =
-*agent,
->  					enum sms_agent_result result,
->  					void *data);
->  =
+Patch to use the new API in netreg is included.
 
-> +typedef void (*sms_agent_dict_append_cb)(DBusMessageIter *dict, void *pa=
-ram);
-> +
->  struct sms_agent *sms_agent_new(const char *interface,
->  					const char *service, const char *path);
->  =
+--Jukka
 
-> @@ -49,4 +51,6 @@ int sms_agent_dispatch_datagram(struct sms_agent *agent=
-, const char *method,
->  				const struct tm *local_sent_time,
->  				const unsigned char *content, unsigned int len,
->  				sms_agent_dispatch_cb cb, void *user_data,
-> +				sms_agent_dict_append_cb dict_cb,
-> +				void *dict_cb_data,
->  				ofono_destroy_func destroy);
+Jukka Saunamaki (3):
+      sim: add ofono_sim_get_spn API header
+      sim: add ofono_sim_get_spn API implementation
+      netreg: use ofono_sim_get_spn()
 
-I have a bunch of comments for the other patches, but what is this
-about? I don't see any need to it.
-
-Regards
-
-Marcel
+ include/sim.h |    2 +
+ src/network.c |   46 +++++------------------------------
+ src/sim.c     |   73 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
++++-
+ 3 files changed, 81 insertions(+), 40 deletions(-)
 
 
-
---===============0315613778641303538==--
+--===============0283225327724750599==--
 
