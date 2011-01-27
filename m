@@ -1,156 +1,62 @@
-Content-Type: multipart/mixed; boundary="===============6139246216354713082=="
+Content-Type: multipart/mixed; boundary="===============4742652458145594499=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v2 1/3] sms: store pending tx pdus on disk
-Date: Thu, 27 Jan 2011 16:43:01 -0200
-Message-ID: <1296153783-2633-2-git-send-email-lucas.demarchi@profusion.mobi>
-In-Reply-To: <1296153783-2633-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH] build: Do not fail when systemd is not installed
+Date: Thu, 27 Jan 2011 17:28:34 -0200
+Message-ID: <1296156514-18685-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6139246216354713082==
+--===============4742652458145594499==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Based on patch from Kristen Carlson Accardi <kristen@linux.intel.com>
+Use --with-systemdsystemunitdir instead of --enabled-systemd so it's
+possible to enable systemd even if systemd is not installed.
 ---
- src/sms.c     |   21 +++++++++++++++++++++
- src/smsutil.c |   28 ++++++++++++++++++++++++++++
- src/smsutil.h |    4 ++++
- 3 files changed, 53 insertions(+), 0 deletions(-)
+ configure.ac |   18 +++++++-----------
+ 1 files changed, 7 insertions(+), 11 deletions(-)
 
-diff --git a/src/sms.c b/src/sms.c
-index 7224bdf..87283d3 100644
---- a/src/sms.c
-+++ b/src/sms.c
-@@ -65,6 +65,7 @@ struct ofono_sms {
- 	struct sms_assembly *assembly;
- 	guint ref;
- 	GQueue *txq;
-+	unsigned long tx_counter;
- 	guint tx_source;
- 	struct ofono_message_waiting *mw;
- 	unsigned int mw_watch;
-@@ -103,6 +104,7 @@ struct tx_queue_entry {
- 	ofono_sms_txq_submit_cb_t cb;
- 	void *data;
- 	ofono_destroy_func destroy;
-+	unsigned long id;
- };
+diff --git a/configure.ac b/configure.ac
+index b034ff0..20a1fc6 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -112,18 +112,14 @@ else
+ fi
+ AC_SUBST(DBUS_DATADIR)
  =
 
- static gboolean uuid_equal(gconstpointer v1, gconstpointer v2)
-@@ -1814,6 +1816,8 @@ int __ofono_sms_txq_submit(struct ofono_sms *sms, GSL=
-ist *list,
- 			sms->ref =3D sms->ref + 1;
- 	}
+-AC_ARG_ENABLE(systemd, AC_HELP_STRING([--enable-systemd],
+-		[enable systemd support]), [enable_systemd=3D${enableval}])
+-if (test "${enable_systemd}" =3D "yes"); then
+-	PKG_CHECK_MODULES(SYSTEMD, systemd, dummy=3Dyes,
+-				AC_MSG_ERROR(systemd is required))
+-	SYSTEMD_UNITDIR=3D"`$PKG_CONFIG --variable=3Dsystemdsystemunitdir systemd=
+`"
+-	if (test -z "${SYSTEM_UNITDIR}"); then
+-		SYSTEMD_UNITDIR=3D"/lib/systemd/system"
+-	fi
+-	AC_SUBST(SYSTEMD_UNITDIR)
++AC_ARG_WITH([systemdsystemunitdir],
++	AS_HELP_STRING([--with-systemdsystemunitdir=3DPATH],
++		       [path to systemd service directory]),
++	[], [with_systemdsystemunitdir=3D$($PKG_CONFIG --variable=3Dsystemdsystem=
+unitdir systemd)])
++if test "x$with_systemdsystemunitdir" !=3D xno; then
++    AC_SUBST([SYSTEMD_UNITDIR], [$with_systemdsystemunitdir])
+ fi
+-AM_CONDITIONAL(SYSTEMD, test "${enable_systemd}" =3D "yes")
++AM_CONDITIONAL(SYSTEMD, [test -n "$with_systemdsystemunitdir" -a "x$with_s=
+ystemdsystemunitdir" !=3D xno ])
  =
 
-+	entry->id =3D sms->tx_counter++;
-+
- 	g_queue_push_tail(sms->txq, entry);
- =
-
- 	if (sms->registered && g_queue_get_length(sms->txq) =3D=3D 1)
-@@ -1822,6 +1826,23 @@ int __ofono_sms_txq_submit(struct ofono_sms *sms, GS=
-List *list,
- 	if (uuid)
- 		memcpy(uuid, &entry->uuid, sizeof(*uuid));
- =
-
-+	if (flags & OFONO_SMS_SUBMIT_FLAG_EXPOSE_DBUS) {
-+		const char *uuid_str;
-+		unsigned char i;
-+
-+		uuid_str =3D ofono_uuid_to_str(&entry->uuid);
-+
-+		for (i =3D 0; i < entry->num_pdus; i++) {
-+			struct pending_pdu *pdu;
-+
-+			pdu =3D &entry->pdus[i];
-+
-+			sms_tx_backup_store(sms->imsi, entry->id, entry->flags,
-+						uuid_str, i, pdu->pdu,
-+						pdu->pdu_len, pdu->tpdu_len);
-+		}
-+	}
-+
- 	if (cb)
- 		cb(sms, &entry->uuid, data);
- =
-
-diff --git a/src/smsutil.c b/src/smsutil.c
-index 3a54fe6..54a2b9f 100644
---- a/src/smsutil.c
-+++ b/src/smsutil.c
-@@ -48,6 +48,10 @@
- #define SMS_SR_BACKUP_PATH STORAGEDIR "/%s/sms_sr"
- #define SMS_SR_BACKUP_PATH_FILE SMS_SR_BACKUP_PATH "/%s-%s"
- =
-
-+#define SMS_TX_BACKUP_PATH STORAGEDIR "/%s/tx_queue"
-+#define SMS_TX_BACKUP_PATH_DIR SMS_TX_BACKUP_PATH "/%lu-%lu-%s"
-+#define SMS_TX_BACKUP_PATH_FILE SMS_TX_BACKUP_PATH_DIR "/%03i"
-+
- #define SMS_ADDR_FMT "%24[0-9A-F]"
- #define SMS_MSGID_FMT "%40[0-9A-F]"
- =
-
-@@ -3143,6 +3147,30 @@ void status_report_assembly_expire(struct status_rep=
-ort_assembly *assembly,
- 	}
- }
- =
-
-+gboolean sms_tx_backup_store(const char *imsi, unsigned long id,
-+			unsigned long flags, const char *uuid, guint8 seq,
-+			const unsigned char *pdu, int pdu_len, int tpdu_len)
-+{
-+	unsigned char buf[177];
-+	int len;
-+
-+	if (!imsi)
-+		return FALSE;
-+
-+	memcpy(buf + 1, pdu, pdu_len);
-+	buf[0] =3D tpdu_len;
-+	len =3D pdu_len + 1;
-+
-+	/*
-+	 * file name is: imsi/tx_queue/order-flags-uuid/pdu
-+	 */
-+	if (write_file(buf, len, SMS_BACKUP_MODE, SMS_TX_BACKUP_PATH_FILE,
-+					imsi, id, flags, uuid, seq) !=3D len)
-+		return FALSE;
-+
-+	return TRUE;
-+}
-+
- static inline GSList *sms_list_append(GSList *l, const struct sms *in)
- {
- 	struct sms *sms;
-diff --git a/src/smsutil.h b/src/smsutil.h
-index dd65884..0594195 100644
---- a/src/smsutil.h
-+++ b/src/smsutil.h
-@@ -517,6 +517,10 @@ void status_report_assembly_add_fragment(struct status=
-_report_assembly
- void status_report_assembly_expire(struct status_report_assembly *assembly,
- 					time_t before);
- =
-
-+gboolean sms_tx_backup_store(const char *imsi, unsigned long id,
-+			unsigned long flags, const char *uuid, guint8 seq,
-+			const unsigned char *pdu, int pdu_len, int tpdu_len);
-+
- GSList *sms_text_prepare(const char *to, const char *utf8, guint16 ref,
- 				gboolean use_16bit,
- 				gboolean use_delivery_reports);
+ AC_ARG_ENABLE(capng, AC_HELP_STRING([--enable-capng],
+ 		[enable capabilities support]), [enable_capng=3D${enableval}])
 -- =
 
 1.7.3.5
 
 
---===============6139246216354713082==--
+--===============4742652458145594499==--
 
