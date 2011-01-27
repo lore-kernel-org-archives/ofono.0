@@ -1,40 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0580736466122678457=="
+Content-Type: multipart/mixed; boundary="===============0391204955680286960=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/4] bluetooth: only use bluetooth_refcount in
- bluetooth_ref/bluetooth_unref
-Date: Thu, 27 Jan 2011 16:12:04 +0100
-Message-ID: <1296141124.1520.157.camel@aeonflux>
-In-Reply-To: <1296140740-11486-2-git-send-email-frederic.danis@linux.intel.com>
+Subject: Re: [PATCH 2/4] bluetooth: use GSList instead of GHashTable to store
+ adapter path/address
+Date: Thu, 27 Jan 2011 16:13:30 +0100
+Message-ID: <1296141210.1520.158.camel@aeonflux>
+In-Reply-To: <1296140740-11486-3-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0580736466122678457==
+--===============0391204955680286960==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Fred,
 
->  plugins/bluetooth.c |   14 +++++++++-----
->  1 files changed, 9 insertions(+), 5 deletions(-)
+>  plugins/bluetooth.c |   86 +++++++++++++++++++++++++++++++++++++++++++--=
+-----
+>  1 files changed, 74 insertions(+), 12 deletions(-)
 > =
 
 > diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-> index 93dd7a1..e59bd31 100644
+> index e59bd31..4da662a 100644
 > --- a/plugins/bluetooth.c
 > +++ b/plugins/bluetooth.c
-> @@ -505,7 +505,7 @@ static guint adapter_added_watch;
->  static guint adapter_removed_watch;
->  static guint property_watch;
+> @@ -39,9 +39,14 @@
 >  =
 
-> -static void bluetooth_ref(void)
-> +static int bluetooth_ref(void)
->  {
+>  static DBusConnection *connection;
+>  static GHashTable *uuid_hash =3D NULL;
+> -static GHashTable *adapter_address_hash =3D NULL;
+> +static GSList *adapter_list =3D NULL;
+>  static gint bluetooth_refcount;
+>  =
 
-why are we now reverting something back that we already applied
-upstream. Something is wrong here.
+> +struct adapter_address {
+> +	char *adapter;
+> +	char *address;
+> +};
+> +
+
+why are we doing this exactly with a list now instead of a hash table. I
+don't see the point here.
 
 Regards
 
@@ -42,5 +50,5 @@ Marcel
 
 
 
---===============0580736466122678457==--
+--===============0391204955680286960==--
 
