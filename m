@@ -1,230 +1,121 @@
-Content-Type: multipart/mixed; boundary="===============8686837470456230962=="
+Content-Type: multipart/mixed; boundary="===============2706786839126668415=="
 MIME-Version: 1.0
-From: Soum, RedouaneX <redouanex.soum@intel.com>
-Subject: RE: [RFC] doc: Proposal for LTE/IMS API.
-Date: Thu, 27 Jan 2011 17:53:32 +0000
-Message-ID: <8281606748F03E4390BB98A3F47F2E948A9C997E3A@irsmsx501.ger.corp.intel.com>
-In-Reply-To: <AANLkTi==Pz3ObYKNwSF3NA_xp0Pp6C=5sgchKMfM7O0h@mail.gmail.com>
+From: Pekka.Pessi@nokia.com
+Subject: [sim-auth PATCHv2 3/3] Add doc/gba-authentication.txt
+Date: Thu, 27 Jan 2011 20:06:12 +0200
+Message-ID: <1296151572-3721-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1296151572-3721-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8686837470456230962==
+--===============2706786839126668415==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka, Sjur,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-> I think we need these in ConnectionContext, or perhaps a separate
-> DedicatedContext interface would be better. The structure of QoS TFT
-> =
+---
+ Makefile.am                |    4 +-
+ doc/gba-authentication.txt |   67 ++++++++++++++++++++++++++++++++++++++++=
+++++
+ 2 files changed, 69 insertions(+), 2 deletions(-)
+ create mode 100644 doc/gba-authentication.txt
 
-> Also the PcscfAddresses should be part of the Settings  or Settings6
-> in ConnectionContext.
-> =
+diff --git a/Makefile.am b/Makefile.am
+index 65b488a..462b05f 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -396,8 +396,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
+release-faq.txt \
+ 			doc/sim-api.txt doc/stk-api.txt \
+ 			doc/sim-authentication-api.txt \
+ 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
+-			doc/calypso-modem.txt
+-
++			doc/calypso-modem.txt \
++			doc/gba-authentication.txt
+ =
 
+ test_scripts =3D test/backtrace \
+ 		test/create-internet-context \
+diff --git a/doc/gba-authentication.txt b/doc/gba-authentication.txt
+new file mode 100644
+index 0000000..e233b1c
+--- /dev/null
++++ b/doc/gba-authentication.txt
+@@ -0,0 +1,67 @@
++GBA Authentication
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++	GBA authentication uses SIM card to establish a unique identity
++	and a shared secret for a network service. The shared secret is
++	computed from the domain name of the service and a special
++	boostrap key, Ks.
++
++	GBA is used to authenticate the mobile with the IMS XCAP
++	servers.
++
++	The mobile obtains the bootstrap key and a temporary identity
++	used with network services from a special boostraps bootstrap
++	server, BSF. Mobile authenticates itself with BSF using AKA
++	authentication and the BSF returns it the identity to use with
++	network services (known as NAF). The bootstrap key is formed
++	from the AKA authentication results, too.
++
++	In the initial phase the client will send its user identity, the
++	IP Multimedia Private Identity (IMPI) to the BSF server. The BSF
++	server fetches an AKA challenge from operator's subscriber
++	database along with correct response: RAND, AUTN, XRES, CK and
++	IK. Server returns the AKA challenge RAND and AUTN to mobile.
++
++	The client uses SIM to calculate the AKA RES, CK and IK from the
++	challenge, and uses RES to generate AKA Digest credentials sent
++	back to the bootstrap server.
++
++	The bootstrapping server verifies the response using XRES, and
++	if accepted, it will return an XML document containing the
++	bootstrapping transaction identifier (B-TID) and the lifetime of
++	the KS_NAF keys.
++
++	The CK and IK parameters from AKA authentication are used for
++	Ks. The Ks can now be used to derive unique key for each NSF
++	service.
++
++	For further reference on GBA, see 3GPP TS 33.220 and 3GPP TS
++	24.109.
++
++
++GBA Variants
++------------
++
++	There are three different GBA variants: 2G GBA, GBA_ME and
++	GBA_U. The variant is selected based on SIM card
++	capabilities.The 2G GBA is used if there is no 3G USIM
++	available. The GBA_ME is used if there is USIM or ISIM
++	application on SIM card (also known as UICC), but there is no
++	support for GBA service.
++
++	In the GBA_ME variant the Ks key is stored outside SIM card. It
++	is implemented using ordinary AKA authentication.
++
++	In the 2G variant, there is no AKA authentication, but it is
++	rather simulated using 2G A8 SIM authentication algorithm. The
++	2G variant is described in the 3GPP 33.220 Annex I.
++
++	The UICC-based GBA variant, GBA_U, keeps the Ks key stored on
++	the SIM card (UICC) and lets the SIM card calculate the NAF
++	keys.
++
++	Note that the device cannot downgrade the protocol: subscriber
++	database has recorded if the SIM card supports GBA_U and the
++	information is included in the AKA challenge. The SIM card will
++	reject a GBA_U-related AKA challenge if it is used with ordinary
++	AKA service.
+-- =
 
-I prepared a patched in this way sometimes ago for the Dedicated Bearers ma=
-ybe it can help :
-
---
-*** ofono-0.36/doc/connman-api.txt	2010-10-31 17:48:50.000000000 +0100
---- ofono-patched/doc/connman-api.txt	2010-12-09 17:44:32.694063480 +0100
-***************
-*** 132,141 ****
---- 132,163 ----
-  					 [service].Error.NotAttached
-  					 [service].Error.AttachInProgress
-  =
-
-+ 		array{object,dict} GetSecondarys()
-+ =
-
-+ 			Get array of secondary context objects and properties.
-+ =
-
-+ 			The method should only be call once per application.
-+ 			Further changes shall be monitored via SecondaryAdded
-+ 			SecondaryRemoved signals.
-+ =
-
-+ =
-
-  Signals		PropertyChanged(string property, variant value)
-  =
-
-  			This signal indicates a changed value of the given
-  			property.
-+ 			=
-
-+ 		SecondaryAdded(object path, dict properties)
-+ =
-
-+ 			Signal that gets emitted when a new secondary context has
-+ 			been created.  It contains the secondary context object path
-+ 			and its properties.
-+ =
-
-+ 		SecondaryRemoved(object path)
-+ =
-
-+ 			Signal that gets emitted when a secondary context has been
-+ 			removed.  The object path of the secondary context is only
-+ 			included for reference.  Its properties are no
-+ 			longer accessible at this point.
-  =
-
-  Properties	boolean Active [readwrite]
-  =
-
-***************
-*** 239,241 ****
---- 261,350 ----
-  		string MessageCenter [readwrite, MMS only]
-  =
-
-  			Holds the MMSC setting.
-+ 			=
-
-+ 			=
-
-+ 			=
-
-+ 			=
-
-+ Connection Secondary Context hierarchy
-+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+ Service		org.ofono
-+ Interface	org.ofono.SecondaryConnectionContext
-+ Object path	/modemX/contextX/secondaryY
-+ =
-
-+ =
-
-+ Methods 	void Close()
-+ 			Deactivate secondary context (dedicated bearer in LTE)
-+ 			=
-
-+ 		array{object,dict} GetTFTs()
-+ =
-
-+ 			Get array of TFT objects and properties.
-+ =
-
-+ 			The method should only be call once per application.
-+ 			Further changes shall be monitored via TFTAdded
-+ 			TFTRemoved signals.
-+ =
-
-+ Signals		TFTAdded(object path, dict properties)
-+ =
-
-+ 			Signal that gets emitted when a new context has
-+ 			been created.  It contains the context object path
-+ 			and its properties.
-+ =
-
-+ 		TFTRemoved(object path)
-+ =
-
-+ 			Signal that gets emitted when a context has been
-+ 			removed.  The object path of the context is only
-+ 			included for reference.  Its properties are no
-+ 			longer accessible at this point.			=
-
-+ =
-
-+ TFT hierarchy
-+ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-+ Service		org.ofono
-+ Interface	org.ofono.TFT
-+ Object path	/modemX/contextX/secondaryY/TFTZ
-+ =
-
-+ Methods		dict GetProperties()
-+ 			Returns all properties for the context object.
-+ =
-
-+ 			Possible Errors: [service].Error.InvalidArguments
-+ =
-
-+ 		void SetProperty(string property, variant value)
-+ =
-
-+ 			Sets the property to a desired value
-+ =
-
-+ 			Possible Errors: [service].Error.InvalidArguments
-+ 					 [service].Error.InvalidFormat
-+ 					 [service].Error.Failed
-+ 					 =
-
-+ 		object GetSecondaryContext()
-+ 			=
-
-+ 			Returns the related Secondary(dedicated) context
-+ 				=
-
-+ =
-
-+ Signals		PropertyChanged(string property, variant value)
-+ =
-
-+ 			This signal indicates a changed value of the given
-+ 			property.
-+ =
-
-+ Properties  string DestinationAddress [read]
-+ =
-
-+ 			Holds the destination Address
-+ =
-
-+ 		string SubnetMask [read]
-+ 		=
-
-+ 			Holds the SbunetMask
-+ =
-
-+ 		integer DestinationPortRangeStart [read]
-+ 		=
-
-+ 			Holds the destination port range start
-+ 		=
-
-+ 		integer DestinationPortRangeEnd [read]
-+ 		=
-
-+ 			Holds the destination port range end
-+ 		=
-
-+ 		integer SourcePortRangeStart [read]
-+ 		=
-
-+ 			Holds the source port range start
-+ 			=
-
-+ 		integer SourcePortRangeEnd [read]
-+ 		=
-
-+ 			Holds the source port range end
+1.7.1
 
 
-Regards,
-Redouane.
----------------------------------------------------------------------
-Intel Corporation SAS (French simplified joint stock company)
-Registered headquarters: "Les Montalets"- 2, rue de Paris, =
-
-92196 Meudon Cedex, France
-Registration Number:  302 456 199 R.C.S. NANTERRE
-Capital: 4,572,000 Euros
-
-This e-mail and any attachments may contain confidential material for
-the sole use of the intended recipient(s). Any review or distribution
-by others is strictly prohibited. If you are not the intended
-recipient, please contact the sender and delete all copies.
-
-
---===============8686837470456230962==--
+--===============2706786839126668415==--
 
