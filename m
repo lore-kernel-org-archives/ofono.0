@@ -1,58 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============6720787200154760819=="
+Content-Type: multipart/mixed; boundary="===============0108580029255313738=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [RFC] voicecallmanager-api: call related SS signals (proposal)
-Date: Thu, 27 Jan 2011 14:07:37 +0100
-Message-ID: <1296133657.1520.145.camel@aeonflux>
-In-Reply-To: <e514ceea10c7e8eb0f8d556e9764ea4e0c9abe04.1296122953.git.Andras.Domokos@nokia.com>
+Subject: Re: Ofono has too tight limits for SIM lock code lengths
+Date: Thu, 27 Jan 2011 14:09:27 +0100
+Message-ID: <1296133767.1520.147.camel@aeonflux>
+In-Reply-To: <1296132771-17621-1-git-send-email-jussi.kangas@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6720787200154760819==
+--===============0108580029255313738==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras,
-
-> Here is a proposal for expanding VoiceCallManager's DBus interface with =
-
-> call related Supplementary Services signals.
-> The implementation would be based on the functionality provided by the SSN
-> atom (handling the CSSU codes). =
-
-> =
+Hi Jussi,
 
 > ---
->  doc/voicecallmanager-api.txt |   54 ++++++++++++++++++++++++++++++++++++=
-+++++-
->  1 files changed, 53 insertions(+), 1 deletions(-)
+>  include/sim.h      |    1 +
+>  src/call-barring.c |   14 ++++++++------
+>  src/call-meter.c   |    4 ++--
+>  src/common.c       |   29 ++++++++++++++++++++++++-----
+>  src/common.h       |   11 +++--------
+>  src/ofono.h        |    3 +++
+>  src/sim.c          |   13 +++++++------
+>  7 files changed, 48 insertions(+), 27 deletions(-)
 > =
 
-> diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-> index 2bf9ded..5212eac 100644
-> --- a/doc/voicecallmanager-api.txt
-> +++ b/doc/voicecallmanager-api.txt
-> @@ -123,7 +123,59 @@ Methods		dict GetProperties()
->  			'*', '#', 'A', 'B', 'C', 'D'.  The last four are
->  			typically not used in normal circumstances.
->  =
+> diff --git a/include/sim.h b/include/sim.h
+> index 5e3ba5b..ee63d74 100644
+> --- a/include/sim.h
+> +++ b/include/sim.h
+> @@ -54,6 +54,7 @@ enum ofono_sim_password_type {
+>  	OFONO_SIM_PASSWORD_PHNETSUB_PUK,
+>  	OFONO_SIM_PASSWORD_PHSP_PUK,
+>  	OFONO_SIM_PASSWORD_PHCORP_PUK,
+> +	OFONO_PASSWORD_PIN_TYPE_NET,
+>  	OFONO_SIM_PASSWORD_INVALID,
+>  };
 
-> -Signals		CallAdded(object path, dict properties)
-> +Signals		CallForwarded(object path)
-> +
-> +			Signal sent during call setup when the incoming call is
-> +			a forwarded call. The signal contains the object path of
-> +			the call in cause.
-
-I don't like this even a single bit. We changed the voice call API
-exactly this way to avoid any potential race conditions between calls
-and their properties. So please leave this as CallAdded() with the
-object path and its properties.
-
-Also having to watch more than three signals for call handling is a bit
-overboard. This will cause a lot of extra traffic during setup towards
-the D-Bus daemon. Pretty much a bad idea.
+so every single enum has kept some sort of proper namespacing. And I
+would really prefer to not break this for ofono_sim_password_type.
 
 Regards
 
@@ -60,5 +47,5 @@ Marcel
 
 
 
---===============6720787200154760819==--
+--===============0108580029255313738==--
 
