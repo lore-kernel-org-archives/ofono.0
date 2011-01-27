@@ -1,67 +1,230 @@
-Content-Type: multipart/mixed; boundary="===============3549534867530765370=="
+Content-Type: multipart/mixed; boundary="===============8686837470456230962=="
 MIME-Version: 1.0
-From: Pekka Pessi <ppessi@gmail.com>
-Subject: Re: [RFC] doc: Proposal for LTE/IMS API.
-Date: Thu, 27 Jan 2011 19:55:09 +0200
-Message-ID: <AANLkTindjyjcBd5Ya1xZwv+zrgqpCoEpNFBJWfiH3zm3@mail.gmail.com>
-In-Reply-To: <AANLkTin9R_F-H9xn2nHCrfpx_B1T608_EMDeJ2TbXYOv@mail.gmail.com>
+From: Soum, RedouaneX <redouanex.soum@intel.com>
+Subject: RE: [RFC] doc: Proposal for LTE/IMS API.
+Date: Thu, 27 Jan 2011 17:53:32 +0000
+Message-ID: <8281606748F03E4390BB98A3F47F2E948A9C997E3A@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <AANLkTi==Pz3ObYKNwSF3NA_xp0Pp6C=5sgchKMfM7O0h@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3549534867530765370==
+--===============8686837470456230962==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Sjur,
+Hi Pekka, Sjur,
 
-2011/1/27 Sjur Br=C3=A6ndeland <sjurbren@gmail.com>:
->> I think we need these in ConnectionContext, or perhaps a separate
->> DedicatedContext interface would be better.
->
-> Yes, as I mentioned earlier I considered this as well. But do you see oth=
-er
-> scenarios than IMS where the NW will set up Dedicated Bearers?
+> I think we need these in ConnectionContext, or perhaps a separate
+> DedicatedContext interface would be better. The structure of QoS TFT
+> =
 
-I have no idea. On the other hand, there should be a straightforward
-way to correlate these and the context that uses them; retrieving them
-from the context is such a straightforward way.
+> Also the PcscfAddresses should be part of the Settings  or Settings6
+> in ConnectionContext.
+> =
 
->> Also the PcscfAddresses should be part of the Settings =C2=A0or Settings6
->> in ConnectionContext.
->
-> Do you think we will ever have more than one IMS ConnectionContext pr SIM?
-> If not not we could probably keep the PcscfAddresses in this IMS API =C2=
-=A0(see
-> object-path proposal below).
 
-Unfortunately, yes.
+I prepared a patched in this way sometimes ago for the Dedicated Bearers ma=
+ybe it can help :
 
->>> - The UE-Mode of operation, is primarily triggered by IMS application
->>> =C2=A0registering to the RadioStack that it has registered on Voice and=
-/or
->>> =C2=A0SMS by setting the properties ImsVoiceRegistered or ImsSmsRegiste=
-red.
->>>
->>> - SIM identities used for IMS registration such as: PrivateImsIdentity,
->>> =C2=A0PublicImsIdentity, HomeDomainName.
->>
->> These should be available from separate interface/object, one for each I=
-SIM.
->
-> I guess if you have more than one SIM, you would in fact have two
-> modem instances
-> and two instance of this API. In the next patch I should probably use
-> [{modem1},{modem2}...] as the
-> object-path of this IMS object.
+--
+*** ofono-0.36/doc/connman-api.txt	2010-10-31 17:48:50.000000000 +0100
+--- ofono-patched/doc/connman-api.txt	2010-12-09 17:44:32.694063480 +0100
+***************
+*** 132,141 ****
+--- 132,163 ----
+  					 [service].Error.NotAttached
+  					 [service].Error.AttachInProgress
+  =
 
-ISIM is an application on SIM card (also known as UICC). There can be
-multiple ISIMs on a single card but only a single USIM (3G SIM
-application) or 2G SIM application.
++ 		array{object,dict} GetSecondarys()
++ =
 
--- =
++ 			Get array of secondary context objects and properties.
++ =
 
-Pekka.Pessi mail at nokia.com
++ 			The method should only be call once per application.
++ 			Further changes shall be monitored via SecondaryAdded
++ 			SecondaryRemoved signals.
++ =
 
---===============3549534867530765370==--
++ =
+
+  Signals		PropertyChanged(string property, variant value)
+  =
+
+  			This signal indicates a changed value of the given
+  			property.
++ 			=
+
++ 		SecondaryAdded(object path, dict properties)
++ =
+
++ 			Signal that gets emitted when a new secondary context has
++ 			been created.  It contains the secondary context object path
++ 			and its properties.
++ =
+
++ 		SecondaryRemoved(object path)
++ =
+
++ 			Signal that gets emitted when a secondary context has been
++ 			removed.  The object path of the secondary context is only
++ 			included for reference.  Its properties are no
++ 			longer accessible at this point.
+  =
+
+  Properties	boolean Active [readwrite]
+  =
+
+***************
+*** 239,241 ****
+--- 261,350 ----
+  		string MessageCenter [readwrite, MMS only]
+  =
+
+  			Holds the MMSC setting.
++ 			=
+
++ 			=
+
++ 			=
+
++ 			=
+
++ Connection Secondary Context hierarchy
++ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++ Service		org.ofono
++ Interface	org.ofono.SecondaryConnectionContext
++ Object path	/modemX/contextX/secondaryY
++ =
+
++ =
+
++ Methods 	void Close()
++ 			Deactivate secondary context (dedicated bearer in LTE)
++ 			=
+
++ 		array{object,dict} GetTFTs()
++ =
+
++ 			Get array of TFT objects and properties.
++ =
+
++ 			The method should only be call once per application.
++ 			Further changes shall be monitored via TFTAdded
++ 			TFTRemoved signals.
++ =
+
++ Signals		TFTAdded(object path, dict properties)
++ =
+
++ 			Signal that gets emitted when a new context has
++ 			been created.  It contains the context object path
++ 			and its properties.
++ =
+
++ 		TFTRemoved(object path)
++ =
+
++ 			Signal that gets emitted when a context has been
++ 			removed.  The object path of the context is only
++ 			included for reference.  Its properties are no
++ 			longer accessible at this point.			=
+
++ =
+
++ TFT hierarchy
++ =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++ Service		org.ofono
++ Interface	org.ofono.TFT
++ Object path	/modemX/contextX/secondaryY/TFTZ
++ =
+
++ Methods		dict GetProperties()
++ 			Returns all properties for the context object.
++ =
+
++ 			Possible Errors: [service].Error.InvalidArguments
++ =
+
++ 		void SetProperty(string property, variant value)
++ =
+
++ 			Sets the property to a desired value
++ =
+
++ 			Possible Errors: [service].Error.InvalidArguments
++ 					 [service].Error.InvalidFormat
++ 					 [service].Error.Failed
++ 					 =
+
++ 		object GetSecondaryContext()
++ 			=
+
++ 			Returns the related Secondary(dedicated) context
++ 				=
+
++ =
+
++ Signals		PropertyChanged(string property, variant value)
++ =
+
++ 			This signal indicates a changed value of the given
++ 			property.
++ =
+
++ Properties  string DestinationAddress [read]
++ =
+
++ 			Holds the destination Address
++ =
+
++ 		string SubnetMask [read]
++ 		=
+
++ 			Holds the SbunetMask
++ =
+
++ 		integer DestinationPortRangeStart [read]
++ 		=
+
++ 			Holds the destination port range start
++ 		=
+
++ 		integer DestinationPortRangeEnd [read]
++ 		=
+
++ 			Holds the destination port range end
++ 		=
+
++ 		integer SourcePortRangeStart [read]
++ 		=
+
++ 			Holds the source port range start
++ 			=
+
++ 		integer SourcePortRangeEnd [read]
++ 		=
+
++ 			Holds the source port range end
+
+
+Regards,
+Redouane.
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
+
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
+
+
+--===============8686837470456230962==--
 
