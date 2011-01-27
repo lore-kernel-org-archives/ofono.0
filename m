@@ -1,41 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============9052680186263664706=="
+Content-Type: multipart/mixed; boundary="===============3620096265172291949=="
 MIME-Version: 1.0
-From: oleg.zhurakivskyy@nokia.com
-Subject: RE: [PATCH 6/9] oFono smsagent enhancements to permit more	flexible
- parameter set to be dispatched.
-Date: Thu, 27 Jan 2011 14:38:12 +0000
-Message-ID: <CBAD88B23448774582E4323588D6B5D205F6B31E@008-AM1MPN1-007.mgdnok.nokia.com>
-In-Reply-To: <1296134302.1520.154.camel@aeonflux>
+From: =?unknown-8bit?q?Fr=C3=A9d=C3=A9ric?= Danis <frederic.danis@linux.intel.com>
+Subject: [PATCH v2 0/4] bluetooth: Add bluetooth server support
+Date: Thu, 27 Jan 2011 16:05:36 +0100
+Message-ID: <1296140740-11486-1-git-send-email-frederic.danis@linux.intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9052680186263664706==
+--===============3620096265172291949==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Marcel,
+It watches Bluetooth adapter property changes and adds SDP record to
+listen client connection request.
+It supports multiple adapters, servers and client connections.
 
-That's in order to include the uuid (so we can correlate sms_send_pending a=
-nd sms_send_status). Possibly, in order to include some other parameters, w=
-ithout affecting the other users of the sms_agent_dispatch_datagram().
+Use of GSList instead of GHashTable to store adapter path and address
+as we need to get address from adapter or vice-versa (during
+authorization phase).
 
-Please take a look into the messaging_agent_sms_send_pending(), messaging_a=
-gent_sms_send_status() in order to get a better understanding of the use.
+Fr=C3=A9d=C3=A9ric Danis (4):
+  bluetooth: only use bluetooth_refcount in
+    bluetooth_ref/bluetooth_unref
+  bluetooth: use GSList instead of GHashTable to store adapter
+    path/address
+  bluetooth: Add bluetooth server support
+  bluetooth: add Bluetooth service authorization support
 
-Regards,
-Oleg
-________________________________________
-From: ofono-bounces(a)ofono.org [ofono-bounces(a)ofono.org] on behalf of ex=
-t Marcel Holtmann [marcel(a)holtmann.org]
+ Makefile.am         |    1 +
+ plugins/bluetooth.c |  558 +++++++++++++++++++++++++++++++++++++++++++++++=
+++--
+ plugins/bluetooth.h |    9 +
+ 3 files changed, 551 insertions(+), 17 deletions(-)
 
-> diff --git a/src/smsagent.h b/src/smsagent.h
 
-I have a bunch of comments for the other patches, but what is this
-about? I don't see any need to it.
-
-Regards
-
-Marcel
---===============9052680186263664706==--
+--===============3620096265172291949==--
 
