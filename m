@@ -1,38 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============0283225327724750599=="
+Content-Type: multipart/mixed; boundary="===============1177212967860971116=="
 MIME-Version: 1.0
 From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: [PATCH 0/3] EF-SPN API to sim-atom
-Date: Thu, 27 Jan 2011 15:22:14 +0200
-Message-ID: <1296134537-16133-1-git-send-email-jukka.saunamaki@nokia.com>
+Subject: [PATCH 1/3] sim: add ofono_sim_get_spn API header
+Date: Thu, 27 Jan 2011 15:22:15 +0200
+Message-ID: <1296134537-16133-2-git-send-email-jukka.saunamaki@nokia.com>
+In-Reply-To: <1296134537-16133-1-git-send-email-jukka.saunamaki@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0283225327724750599==
+--===============1177212967860971116==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello
+---
+ include/sim.h |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-Here is an asynchronous implementation of SIM Service Provider Name (EF-SPN=
-) getter API.
-The trick is to delay setting sim ready until spn reading is finished.
+diff --git a/include/sim.h b/include/sim.h
+index 5e3ba5b..7e573fd 100644
+--- a/include/sim.h
++++ b/include/sim.h
+@@ -180,6 +180,8 @@ void *ofono_sim_get_data(struct ofono_sim *sim);
+ const char *ofono_sim_get_imsi(struct ofono_sim *sim);
+ const char *ofono_sim_get_mcc(struct ofono_sim *sim);
+ const char *ofono_sim_get_mnc(struct ofono_sim *sim);
++const char *ofono_sim_get_spn(struct ofono_sim *sim);
++unsigned char ofono_sim_get_spn_dc(struct ofono_sim *sim);
+ enum ofono_sim_phase ofono_sim_get_phase(struct ofono_sim *sim);
+ =
 
-Patch to use the new API in netreg is included.
+ enum ofono_sim_cphs_phase ofono_sim_get_cphs_phase(struct ofono_sim *sim);
+-- =
 
---Jukka
-
-Jukka Saunamaki (3):
-      sim: add ofono_sim_get_spn API header
-      sim: add ofono_sim_get_spn API implementation
-      netreg: use ofono_sim_get_spn()
-
- include/sim.h |    2 +
- src/network.c |   46 +++++------------------------------
- src/sim.c     |   73 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
-+++-
- 3 files changed, 81 insertions(+), 40 deletions(-)
+1.7.1
 
 
---===============0283225327724750599==--
+--===============1177212967860971116==--
 
