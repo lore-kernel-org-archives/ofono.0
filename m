@@ -1,38 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============6269022116703708312=="
+Content-Type: multipart/mixed; boundary="===============1139943454761778267=="
 MIME-Version: 1.0
 From: Zhigang Li <zhigang.li@intel.com>
-Subject: [PATCH] Enable Dell 5540 AGPS interface
-Date: Fri, 28 Jan 2011 12:56:04 +0800
-Message-ID: <1296190564-4450-1-git-send-email-zhigang.li@intel.com>
+Subject: [PATCH] Enable hs 2330 MBM modem
+Date: Fri, 28 Jan 2011 13:05:23 +0800
+Message-ID: <1296191123-4529-1-git-send-email-zhigang.li@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6269022116703708312==
+--===============1139943454761778267==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- plugins/udev.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ plugins/udev.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
 diff --git a/plugins/udev.c b/plugins/udev.c
-index 202b225..ce1efe6 100644
+index 202b225..810049a 100644
 --- a/plugins/udev.c
 +++ b/plugins/udev.c
-@@ -135,7 +135,7 @@ static void add_mbm(struct ofono_modem *modem,
+@@ -123,6 +123,7 @@ static void add_mbm(struct ofono_modem *modem,
+ 			g_str_has_suffix(desc, "Minicard Modem 2") ||
+ 			g_str_has_suffix(desc, "Mini-Card Modem") ||
+ 			g_str_has_suffix(desc, "Broadband Modem") ||
++			g_str_has_suffix(desc, "Module Modem") ||
+ 			g_str_has_suffix(desc, "Broadband USB Modem")) {
+ 		devnode =3D udev_device_get_devnode(udev_device);
+ 		if (ofono_modem_get_string(modem, MODEM_DEVICE) =3D=3D NULL)
+@@ -131,16 +132,19 @@ static void add_mbm(struct ofono_modem *modem,
+ 			ofono_modem_set_string(modem, DATA_DEVICE, devnode);
+ 	} else if (g_str_has_suffix(desc, "Minicard Data Modem") ||
+ 			g_str_has_suffix(desc, "Mini-Card Data Modem") ||
++			g_str_has_suffix(desc, "Data Modem") ||
+ 			g_str_has_suffix(desc, "Broadband Data Modem")) {
  		devnode =3D udev_device_get_devnode(udev_device);
  		ofono_modem_set_string(modem, DATA_DEVICE, devnode);
  	} else if (g_str_has_suffix(desc, "Minicard GPS Port") ||
--			g_str_has_suffix(desc, "Mini-Card GPRS Port") ||
-+			g_str_has_suffix(desc, "Mini-Card GPS Port") ||
+ 			g_str_has_suffix(desc, "Mini-Card GPRS Port") ||
++			g_str_has_suffix(desc, "Module NMEA") ||
  			g_str_has_suffix(desc, "Broadband GPS Port")) {
  		devnode =3D udev_device_get_devnode(udev_device);
  		ofono_modem_set_string(modem, GPS_DEVICE, devnode);
+ 	} else if (g_str_has_suffix(desc, "Minicard Network Adapter") ||
+ 			g_str_has_suffix(desc, "Mini-Card Network Adapter") ||
++			g_str_has_suffix(desc, "Module Network Adapter") ||
+ 			g_str_has_suffix(desc, "Broadband Network Adapter") ||
+ 			g_str_has_suffix(desc, "Minicard NetworkAdapter")) {
+ 		devnode =3D get_property(udev_device, "INTERFACE");
 -- =
 
 1.7.2.3
 
 
---===============6269022116703708312==--
+--===============1139943454761778267==--
 
