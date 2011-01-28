@@ -1,61 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============3184949374427503627=="
+Content-Type: multipart/mixed; boundary="===============8504566376348589753=="
 MIME-Version: 1.0
-From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
-Subject: Re: [RFC 1/5] gprs: Update documentation for IPv6
-Date: Fri, 28 Jan 2011 13:49:16 +0100
-Message-ID: <AANLkTi=wAzXyb7uqCCY-7sqhgoi_bSQeQAR1Kt6WoyVt@mail.gmail.com>
-In-Reply-To: <1296058970-11815-2-git-send-email-mika.liljeberg@nokia.com>
+From: Jarko Poutiainen <jarko.poutiainen@tieto.com>
+Subject: [PATCH] TODO: add CF state change task
+Date: Fri, 28 Jan 2011 15:14:04 +0200
+Message-ID: <1296220444-2680-1-git-send-email-jarko.poutiainen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3184949374427503627==
+--===============8504566376348589753==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 dict IPv6Settings [rea=
-donly, optional]
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 Holds all the IPv6 network settings.
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 string Interface [readonly, optional]
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 Holds the name of the IPv6 network inter=
-face
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 used by this context (e.g. "ppp0" "usb0"=
-).
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 For combined IPv4v6 context (3GPP rel 8)=
- the
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 same network interface may be used for b=
-oth
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 IPv4 and IPv6. IPv4 and IPv6 may also be
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 offered via separate network interfaces.
-> +
+---
+ TODO |   16 ++++++++++++++++
+ 1 files changed, 16 insertions(+), 0 deletions(-)
 
-I think it would be nice if we could keep only one interface here.
-It's a bit messy that the difference between R7 and R8
-networks will be visible to the users like this.
+diff --git a/TODO b/TODO
+index 41f1f7f..b62eb99 100644
+--- a/TODO
++++ b/TODO
+@@ -255,6 +255,22 @@ Supplementary Services
+   Priority: Low
+   Complexity: C8
+ =
 
-So when in a R7 network the uplink traffic should be filtered into the
-right ipv4 and ipv6 pdp-connection automagically.
-I know STE will support this in the modem firmware.
++- Call forwarding state handling change
++
++  At the moment call forwarding states are not always correct. Any active
++  conditional call forwarding should become quiescent while unconditional =
+call
++  forwarding is activate. If call forwarding unconditional is subsequently
++  deactivated, all the quiescent forwardings should become operative again.
++  I.e. No conditional call forwardin string should be returned while
++  unconditional call forwarding is active even if they exist.
++
++  If there is an successfull attempt to activate/deactivate conditional ca=
+ll
++  forwarding while unconditional call forwarding is active the conditional=
+ cache
++  flag should cleared.
++
++  Priority: Low
++  Complexity: C1
++
+ =
 
-If firmware doesn't support this perhaps this could also be handled
-in the kernel drivers. This should be doable for phonet (and Caif),
-maybe a little more tricky with ppp/pppd?
+ Voicecall
+ =3D=3D=3D=3D=3D=3D=3D=3D=3D
+-- =
 
-Regards,
-Sjur
+1.7.0.4
 
---===============3184949374427503627==--
+
+--===============8504566376348589753==--
 
