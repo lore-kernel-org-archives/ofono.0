@@ -1,57 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============1139943454761778267=="
+Content-Type: multipart/mixed; boundary="===============4137087387520167891=="
 MIME-Version: 1.0
-From: Zhigang Li <zhigang.li@intel.com>
-Subject: [PATCH] Enable hs 2330 MBM modem
-Date: Fri, 28 Jan 2011 13:05:23 +0800
-Message-ID: <1296191123-4529-1-git-send-email-zhigang.li@intel.com>
+From: cy xie <chengy.xie@gmail.com>
+Subject: Hi, use qtdbus to access Ofono method
+Date: Fri, 28 Jan 2011 13:47:26 +0800
+Message-ID: <AANLkTi=8=xRt=pkMRnanzMbTMxmNPtV9ZoPMNkKi70v9@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1139943454761778267==
+--===============4137087387520167891==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/udev.c |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+Hi,
+      Has anybody used qtdbus to access Ofono interface?
+I have faced some problem on it, the qdbusinterface create OK, but when call
+the ofono api, it will note the signature doesn't exist.
+please give me some info or show me and example.
+Thanks.
 
-diff --git a/plugins/udev.c b/plugins/udev.c
-index 202b225..810049a 100644
---- a/plugins/udev.c
-+++ b/plugins/udev.c
-@@ -123,6 +123,7 @@ static void add_mbm(struct ofono_modem *modem,
- 			g_str_has_suffix(desc, "Minicard Modem 2") ||
- 			g_str_has_suffix(desc, "Mini-Card Modem") ||
- 			g_str_has_suffix(desc, "Broadband Modem") ||
-+			g_str_has_suffix(desc, "Module Modem") ||
- 			g_str_has_suffix(desc, "Broadband USB Modem")) {
- 		devnode =3D udev_device_get_devnode(udev_device);
- 		if (ofono_modem_get_string(modem, MODEM_DEVICE) =3D=3D NULL)
-@@ -131,16 +132,19 @@ static void add_mbm(struct ofono_modem *modem,
- 			ofono_modem_set_string(modem, DATA_DEVICE, devnode);
- 	} else if (g_str_has_suffix(desc, "Minicard Data Modem") ||
- 			g_str_has_suffix(desc, "Mini-Card Data Modem") ||
-+			g_str_has_suffix(desc, "Data Modem") ||
- 			g_str_has_suffix(desc, "Broadband Data Modem")) {
- 		devnode =3D udev_device_get_devnode(udev_device);
- 		ofono_modem_set_string(modem, DATA_DEVICE, devnode);
- 	} else if (g_str_has_suffix(desc, "Minicard GPS Port") ||
- 			g_str_has_suffix(desc, "Mini-Card GPRS Port") ||
-+			g_str_has_suffix(desc, "Module NMEA") ||
- 			g_str_has_suffix(desc, "Broadband GPS Port")) {
- 		devnode =3D udev_device_get_devnode(udev_device);
- 		ofono_modem_set_string(modem, GPS_DEVICE, devnode);
- 	} else if (g_str_has_suffix(desc, "Minicard Network Adapter") ||
- 			g_str_has_suffix(desc, "Mini-Card Network Adapter") ||
-+			g_str_has_suffix(desc, "Module Network Adapter") ||
- 			g_str_has_suffix(desc, "Broadband Network Adapter") ||
- 			g_str_has_suffix(desc, "Minicard NetworkAdapter")) {
- 		devnode =3D get_property(udev_device, "INTERFACE");
--- =
+B.R
+Chengyong Xie
 
-1.7.2.3
+--===============4137087387520167891==
+Content-Type: text/html
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="attachment.html"
 
+PGRpdj5IaSw8L2Rpdj4KPGRpdj6goKCgoCBIYXMgYW55Ym9keSB1c2VkIHF0ZGJ1cyB0byBhY2Nl
+c3MgT2Zvbm8gaW50ZXJmYWNlPzwvZGl2Pgo8ZGl2PkkgaGF2ZSBmYWNlZCBzb21lIHByb2JsZW0g
+b24gaXQsIHRoZSBxZGJ1c2ludGVyZmFjZSBjcmVhdGUgT0ssIGJ1dCB3aGVuIGNhbGwgdGhlIG9m
+b25vIGFwaSwgaXQgd2lsbCBub3RlIHRoZSBzaWduYXR1cmUgZG9lc24mIzM5O3QgZXhpc3QuPC9k
+aXY+CjxkaXY+cGxlYXNlIGdpdmUgbWUgc29tZSBpbmZvIG9yIHNob3cgbWUgYW5kIGV4YW1wbGUu
+PC9kaXY+CjxkaXY+VGhhbmtzLjwvZGl2Pgo8ZGl2PqA8L2Rpdj4KPGRpdj5CLlI8L2Rpdj4KPGRp
+dj5DaGVuZ3lvbmcgWGllPC9kaXY+Cg==
 
---===============1139943454761778267==--
+--===============4137087387520167891==--
 
