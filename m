@@ -1,92 +1,55 @@
-Content-Type: multipart/mixed; boundary="===============8112102556496971058=="
+Content-Type: multipart/mixed; boundary="===============0271222904838234972=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [RFC 1/5] gprs: Update documentation for IPv6
-Date: Fri, 28 Jan 2011 16:04:18 +0100
-Message-ID: <1296227058.1520.186.camel@aeonflux>
-In-Reply-To: <CB0EE8641411214CBAFF8AEBB26ABCEC26B7C8@008-AM1MPN1-007.mgdnok.nokia.com>
+From: Pekka Pessi <ppessi@gmail.com>
+Subject: Re: [RFC] doc: Proposal for LTE/IMS API.
+Date: Fri, 28 Jan 2011 17:11:49 +0200
+Message-ID: <AANLkTi=+9Z=Xeywtj8TOcNwnD+AYNTPz9g4m_Di+e6Ef@mail.gmail.com>
+In-Reply-To: <4D42A866.5040604@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8112102556496971058==
+--===============0271222904838234972==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mika,
+Hi Arun,
 
-> > I am not sure it is a good idea to make ConnMan do that.
-> =
+2011/1/28 Arun Ravindran <ext-arun.1.ravindran@nokia.com>:
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0boolean ImsVoiceOverPs [readonly, opt=
+ional]
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0IMS voice is enabled by=
+ network
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Related AT command: AT+=
+CIREP.
+>> =C2=A0+
+>
+> Which specification details this AT command, searched in 27.007 rel 10, b=
+ut
+> it is not available there.
 
-> Why is that?
+According to the 27.007 CRs, it should be in 10.0.0:
 
-we need to chat with Samuel about this. I foresee a bunch of issues
-trying to handle two context properly. This needs a bit more deeper
-thinking on how things are done.
+http://www.3gpp.org/ftp/specs/html-info/27007-CRs.htm
 
-> > And to be honest for PPP, just doing IPv4 seems acceptable =
+My copy is 10.2., and it has CIREP along with +CIREPI,+ CIRPEH and +CISRVCC,
 
-> > since PPP is
-> > bad idea in the first place. It is a limitation I am willing =
+> Isn't ISR a property by default a UE should have when it is registered to
+> LTE?. 23.401 says ISR support is mandatory for E-UTRAN UEs that support
+> GERAN and/or UTRAN and optional for the network.
+> i don't think this setting should affect ISR behavior.
 
-> > to accept.
-> =
+The ISR means that device is registered to both 2G/3G and LTE. It
+might receive pagings from both of these radio networks. However, the
+network needs to know if the currently available radio network
+supports PS voice or not, so the device has to update its state when
+changing between LTE radio supporting PS voice and other radio not
+supporting it.
 
-> Yeah, PPP is not really a requirement for us, although it would be conven=
-ient to have it for testing. As a matter of fact, I would already have tria=
-led atmodem support for IPv6 but that was blocked because of the lack of IP=
-V6CP support in oFono PPP implementation. Too bad.
+-- =
 
-We have a TODO item open for that. So far nobody really bothered,
-because either the hardware did not support it or the network did not.
+Pekka.Pessi mail at nokia.com
 
-But hey, patches are welcome ;)
-
-> > My concern is also on how we handle the Tethering cases =
-
-> > properly. I have
-> > not yet spent enough time to think about it, but I have concerns here.
-> =
-
-> Ok. Can you outline your concerns so we can talk about them?
-
-We are currently Tethering to one specific service with the assumption
-that it maps to one interface of the kernel. If that assumption is not
-true anymore, then we have to re-think this. Not sure if we should be
-bothered.
-
-But then again, on the other hand for IPv6 Tethering, don't wanna use
-NAT anyway. So that might be not an issue after all. This really needs
-some more thinking. I have no clear answers at the moment.
-
-> > So right now I would prefer to sit ipv6 out until we have =
-
-> > proper ipv4v6
-> > context support in the network and the modems.
-> =
-
-> I'd like to progress with this. We also have people who are keen to help =
-out on the connman side. Just sitting and waiting for better times is not r=
-eally an approach I'd prefer to take.
-> =
-
-> Currently, we only discussing whether the "Interface" setting is needed s=
-eparately in IPv4 and IPv6 settings or not. That's a minor detail as far as=
- I am concerned. For now, allowing separate network interfaces for IPv4 and=
- IPv6 is convenient for testing the IPv6 support on current modems. If it t=
-urns out to be hugely difficult to manage separate interface on connman sid=
-e, we can always restrict the approach and drop support for older modems wh=
-en rel8 modems are available. =
-
-
-So I like the ST-Ericsson approach where this details is abstracted in
-the modem firmware.
-
-Regards
-
-Marcel
-
-
-
---===============8112102556496971058==--
+--===============0271222904838234972==--
 
