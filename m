@@ -1,166 +1,130 @@
-Content-Type: multipart/mixed; boundary="===============2743656079138535575=="
+Content-Type: multipart/mixed; boundary="===============6185123505460781345=="
 MIME-Version: 1.0
-From: Arun Ravindran <ext-arun.1.ravindran@nokia.com>
-Subject: Re: [RFC] doc: Proposal for LTE/IMS API.
-Date: Fri, 28 Jan 2011 13:28:38 +0200
-Message-ID: <4D42A866.5040604@nokia.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: [PATCH] doc: Assisted Satellite Navigation API and Agent API
+Date: Fri, 28 Jan 2011 12:32:50 +0100
+Message-ID: <1296214370-20127-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2743656079138535575==
+--===============6185123505460781345==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+From: Simon Lethbridge <simon.lethbridge@stericsson.com>
 
-Hi Sjur,
+This patch introduces support for Global Satellite Navigation System (GNSS),
+using the AT commands AT+CPOS and +CPOSR as specified 3GPP 27.007.
+---
+Hi Denis,
 
->  doc/ims-api.txt |  119
->  +++++++++++++++++++++++++++++++++++++++++++++++++++++++
->   1 files changed, 119 insertions(+), 0 deletions(-)
->   create mode 100644 doc/ims-api.txt
->
->
->  +Properties    boolean ImsVoiceRegistered [readwrite, optional]
->  +
->  +            Inform modem's radio stack that the IMS application
->  +            has registered for Voice over IMS. This impacts
->  +            "UE Mode of operation" and the ISR feature in the
->  +            radio stack. Related AT command: AT+EISR
->  +
->
->  +        boolean ImsSmsRegistered [readwrite, optional]
->  +
->  +            Inform modem's radio stack that the IMS application
->  +            has registered for SMS over IMS. This impacts
->  +            "UE Mode of operation" and the ISR feature in the
->  +            radio stack. Related AT command: AT+EISR
->  +
->  +        boolean ImsVoiceOverPs [readonly, optional]
->  +
->  +            IMS voice is enabled by network
->  +            Related AT command: AT+CIREP.
->  +
+2010/11/30 Denis Kenzior <denkenz@gmail.com>:
+>> +AssistedSatelliteNavigation hierarchy
+>What do you think of naming this AssistedNavigation?  I think the
+>current name might be a bit too long.
+See mail previous mail on this topic, I think we'd like to keep
+it as is for now.
 
-Which specification details this AT command, searched in 27.007 rel 10, but=
- it is
-not available there.
+>> +Methods              void SendPositioningControl(string xml_element)
+>What do you think of SendPositioningElement?
+Fixed,
 
-Isn't ISR a property by default a UE should have when it is registered to L=
-TE?. 23.401 says ISR support is mandatory for E-UTRAN UEs that support GERA=
-N and/or UTRAN and optional for the network.
-i don't think this setting should affect ISR behavior.
+>> +Methods      void PositioningRequest(string xml_element)
+>I think that 'Request' will be sufficient.  Positioning is already part
+>of the agent name.
+Fixed,
 
->
->  +        string  PrivateImsIdentity [readonly, optional]
->  +
->  +            Identity used for IMS registration.
->  +            Available if present on the ISIM.
->  +
->  +        string  PublicImsIdentity [readonly, optional]
->  +
->  +            Identity used for IMS registration.
->  +            Available if present on the ISIM.
->  +
->  +        string  HomeDomainName[readonly, optional]
->  +
->  +            Identity used for IMS registration.
->  +            Available if present on the ISIM.
->  +
+>> +             void AssistanceDataReset()
+>I suggest ResetAssistanceData here.
+Fixed,
 
-Will these not be known to the user?
-When does this interface becomes alive (org.ofono.ims)? post_sim or post_on=
-line?
+>The only other change I'd make is to mark the entire interface
+>'experimental', but I can take care of that as well.
+Fixed,
 
+>Otherwise the proposal looks good to me.
+Sorry for taking so long before responding on this.
+Let us know if you have any issues with this patch.
 
->  +        string  ImsToCsHandoverStatus [readonly, optional]
->  +
->  +            Indicate the handover progress status during a CS
->  +            fallback procedure. This property will only be present
->  +            when in LTE coverage. The possible values are:
->  +            "none", "started","complete", "failure".
->  +            Related AT URC: +CIREP
->  +
+Regards,
+Sjur and Simon.
 
-Again which specification details these AT commands?. Do we need a property=
- like this to show the CSFB?
+ doc/assisted-sattelite-navigation.txt |   56 +++++++++++++++++++++++++++++=
+++++
+ 1 files changed, 56 insertions(+), 0 deletions(-)
+ create mode 100644 doc/assisted-sattelite-navigation.txt
 
-why can't we...
+diff --git a/doc/assisted-sattelite-navigation.txt b/doc/assisted-sattelite=
+-navigation.txt
+new file mode 100644
+index 0000000..abacf54
+--- /dev/null
++++ b/doc/assisted-sattelite-navigation.txt
+@@ -0,0 +1,56 @@
++Assisted Satellite Navigation hierarchy [experimental]
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		org.ofono
++Interface	org.ofono.AssistedSatelliteNavigation
++Object path	[variable prefix]/{modem0,modem1,...}
++
++Methods		void SendPositioningElement(string xml_element)
++
++			Send an XML element conforming to the XML DTD for <pos>
++			as defined in 3GPP 27.007 Table 8.55-2. This xml is
++			used for transferring data associated with positioning
++			requests received via control plane from the network.
++			This includes assistance data requests and the results
++			of positioning procedures. This method maps directly to
++			the 3GPP 27.007 AT+CPOS command.
++
++		void RegisterPositioningRequestAgent(object path)
++
++			Registers an agent which will be called whenever a
++			CPOSR AT response is received. The Agent must respond
++			to requests using SendPositioningControl.
++
++		void UnregisterPositioningRequestAgent(object path)
++
++			Un-registers the agent.
++
++PositioningRequestAgent hierarchy
++=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++
++Service		unique name
++Interface	org.ofono.PositioningRequestAgent
++Object path	freely definable
++
++Methods	void Request(string xml_element)
++
++			Receive an XML element conforming to the XML DTD for
++			<pos> in 3GPP 27.007. This xml is used for transferring
++			data associated with positioning requests received, via
++			control plane, from the network. This includes
++			measurement requests and assistance data. This method
++			maps directly to the 3GPP defined +CPOSR unsolicited
++			result code.
++
++		void ResetAssistanceData()
++
++			A request has been received from the network that all
++			assistance data should be reset.  This is used for 3gpp
++			performance tests.
++
++		void Release()
++
++			Agent is being released, possibly because of oFono
++			terminating, AssistedSatelliteNavigation interface
++			is being torn down or modem off.
++			No UnregisterAgent call is needed.
+-- =
 
-while in LTE:
-     oFono has network registration, connection manager, SIM and LTE
-     specific interfaces
-
-while in CSFB :
-     oFono has all other interfaces too.
-
-
->  +        array{string}  PcscfAddresses[readonly]
->  +
->  +            Domain Name or IP Address of the P-CSCF servers.
->  +            (SIP Proxy).
->  +
-
-This should be optional property based on the service table information.
-
->  +        array{dict,array{dict}} QosFilters [readonly, optional]
->  +
->  +            Information about the QoSes and associated Packet
->  +            Filters for the Default PDN and it's dedicated bearers.
->  +            It is organized as a list of QoS definitions with
->  +            a list of corresponding packet filters.
->  +
->  +                uint8 QoSClassIdentifier [readonly]
->  +                    The numeric parameter that specifying
->  +                    the class of QoS. (3GPP TS 23.203 [85])
->  +                    0    QCI is selected by network
->  +                    [1 =E2=80=93 4] guaranteed bit rate
->  +                    [5 =E2=80=93 9] non-guaranteed bit rate
->  +
->  +                uint16 UplinkRate [readonly, optional]
->  +                    Guaranteed Uplink Bit-rate in kb/sec.
->  +
->  +                uint16 DownlinkRate [readonly, optional]
->  +                    Guaranteed Downlink Bit-rate in kb/sec.
->  +
->  +            For each QoS defined there may be a list of Packet
->  +            Filters. Each Packet Filter is a dictionary defining
->  +            the filter. An empty Packet Filter represents the
->  +            "default" filter (Default PDN connection).
->  +
->  +                string Direction [readonly]
->  +                    "uplink", "downlink", "bidirectional"
->  +
->  +                uint8 ProtocolNumber [readonly]
->  +                    IP protocol number (0-256)
->  +
->  +                string PeerAddress [readonly]
->  +                    The remote peer's IP address.
->  +
->  +                uint16 PeerPortMin [readonly]
->  +                    Remote peer's port number min. value
->  +
->  +                uint16 PeerPortMax [readonly]
->  +                    Remote peer's port number max. value
->  +
->  +                uint16 LocalePortMin [readonly]
->  +                    The local port number min. value
->  +
->  +                uint16 LocalPortMax [readonly]
->  +                    The local port number max. value
->
-
-Do we really need this?. What is the real usage of this information?.
-In 27.007 there are few AT commands for TFT, and are not used, may be becau=
-se no body (operator) supports this.
-
-In LTE will this be going to be different?
-
-regards
-Arun
+1.7.0.4
 
 
-
-
---===============2743656079138535575==--
+--===============6185123505460781345==--
 
