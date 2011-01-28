@@ -1,260 +1,100 @@
-Content-Type: multipart/mixed; boundary="===============2500518940536991151=="
+Content-Type: multipart/mixed; boundary="===============0508016116219154565=="
 MIME-Version: 1.0
-From: Pekka.Pessi@nokia.com
-Subject: [ss-notify FYI 5/6] voicecall: watch mt ssn events
-Date: Fri, 28 Jan 2011 19:38:18 +0200
-Message-ID: <1296236300-19189-6-git-send-email-Pekka.Pessi@nokia.com>
-In-Reply-To: <1296236300-19189-5-git-send-email-Pekka.Pessi@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC] voicecallmanager-api: call related SS signals (proposal)
+Date: Fri, 28 Jan 2011 12:19:12 -0600
+Message-ID: <4D4308A0.4090805@gmail.com>
+In-Reply-To: <4D42F937.3040307@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2500518940536991151==
+--===============0508016116219154565==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-From: Pekka Pessi <Pekka.Pessi@nokia.com>
+Hi Andras,
 
-Watch supplementary service notifications from barring services, remote
-party putting call on hold, retrieving or join call into a multiparty
-conference.
+On 01/28/2011 11:13 AM, Andras Domokos wrote:
+> Hi Denis,
+> =
 
-The barring indications augment the DisconnectReason and they contain
-additional information about the reason why a call is rejected or why it
-is not connected.
----
- src/voicecall.c |  147 +++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 147 insertions(+), 0 deletions(-)
+> On 01/27/2011 06:01 PM, ext Denis Kenzior wrote:
+>> Hi Andras,
+>>
+>>> This  becomes a problem when there are multiple calls since it is not
+>>> possible to determine to which call instance the indication is referring
+>>> to.
+>>> This raises the question where/how to show this type of properties?
+>> Have you seen the thread from Pekka's previous attempt to define such
+>> APIs?  Its been a while now but should be in the archives.
+> =
 
-diff --git a/src/voicecall.c b/src/voicecall.c
-index 6246787..e176e02 100644
---- a/src/voicecall.c
-+++ b/src/voicecall.c
-@@ -52,6 +52,12 @@ struct ofono_voicecall {
- 	struct ofono_sim *sim;
- 	unsigned int sim_watch;
- 	unsigned int sim_state_watch;
-+	struct ofono_ssn *ssn;
-+	unsigned int ssn_watch;
-+	unsigned int ssn_hold_watch;
-+	unsigned int ssn_retrieve_watch;
-+	unsigned int ssn_mpty_watch;
-+	unsigned int ssn_wait_watch;
- 	const struct ofono_voicecall_driver *driver;
- 	void *driver_data;
- 	struct ofono_atom *atom;
-@@ -69,6 +75,7 @@ struct voicecall {
- 	uint8_t icon_id;
- 	gboolean untracked;
- 	gboolean dial_result_handled;
-+	dbus_bool_t mt_hold;
- };
- =
+> It seems, we might have a bit work to do here.
+> =
 
- struct dial_request {
-@@ -399,6 +406,8 @@ static void append_voicecall_properties(struct voicecal=
-l *v,
- =
+> The first thing is to settle on  the APIs for handling the voice call SS
+> notifications, I am thinking about the DBus level API and the oFono
+> internal API.
+> =
 
- 	ofono_dbus_dict_append(dict, "Multiparty", DBUS_TYPE_BOOLEAN, &mpty);
- =
+> Currently the SSI notifications are handled in the call barring code, a
+> better place for handling those notifications would be under the voice
+> call atom.
+> =
 
-+	ofono_dbus_dict_append(dict, "OnHold", DBUS_TYPE_BOOLEAN, &v->mt_hold);
-+
- 	if (v->message)
- 		ofono_dbus_dict_append(dict, "Information",
- 						DBUS_TYPE_STRING, &v->message);
-@@ -655,6 +664,19 @@ static const char *voicecall_build_path(struct ofono_v=
-oicecall *vc,
- 	return path;
- }
- =
+> Some of the SSI/SSU notifications should be presented as DBus signals
+> on the VoiceCallManager interface, others converted to voice call
+> properties, visible on the VoiceCall interface. I compiled a list of
+> properties/signals based on the possible SSI/SSU notification. The list
+> is not complete, but can be expanded any time later, based on practical
+> needs.
+> =
 
-+static struct voicecall *voicecall_by_id(struct ofono_voicecall *vc, int i=
-d)
-+{
-+	GSList *l;
-+
-+	l =3D g_slist_find_custom(vc->call_list, GUINT_TO_POINTER(id),
-+				call_compare_by_id);
-+	if (l =3D=3D NULL)
-+		return NULL;
-+
-+	return l->data;
-+}
-+
-+
- static void voicecall_emit_disconnect_reason(struct voicecall *call,
- 					enum ofono_disconnect_reason reason)
- {
-@@ -2181,6 +2203,19 @@ static void voicecall_unregister(struct ofono_atom *=
-atom)
- 		vc->sim_watch =3D 0;
- 	}
- =
+> Here is the mapping between the properties/signals and SS notification
+> codes I considered essential to start with:
+> =
 
-+	if (vc->ssn_watch) {
-+		__ofono_modem_remove_atom_watch(modem, vc->ssn_watch);
-+		vc->ssn_watch =3D 0;
-+	}
-+
-+	if (vc->ssn) {
-+		__ofono_ssn_mt_watch_remove(vc->ssn, vc->ssn_hold_watch);
-+		__ofono_ssn_mt_watch_remove(vc->ssn, vc->ssn_retrieve_watch);
-+		__ofono_ssn_mt_watch_remove(vc->ssn, vc->ssn_mpty_watch);
-+		__ofono_ssn_mt_watch_remove(vc->ssn, vc->ssn_wait_watch);
-+		vc->ssn =3D NULL;
-+	}
-+
- 	if (vc->dial_req)
- 		dial_request_finish(vc);
- =
+> VoiceCall properties:
+> Forwarded (bool):: +CSSI: 2, +CSSU: 0
+> RemoteHold (bool):: +CSSU: 2, +CSSU: 3
+> Multiparty (bool): +CSSU: 4
+> =
 
-@@ -2278,6 +2313,108 @@ struct ofono_voicecall *ofono_voicecall_create(stru=
-ct ofono_modem *modem,
- 	return vc;
- }
- =
+> VoiceCallManager signals:
+> UnconditionalForwardingInEffect: +CSSI: 0
+> ConditionalForwardingInEffect: +CSSI: 1
+> OutgoingBarringInEffect: +CSSI: 5
+> IncomingBarringInEffect: +CSSI: 6
+> =
 
-+static void ssn_mo_watch(int index, int mo_code, void *user)
-+{
-+	struct ofono_voicecall *vc =3D user;
-+	struct voicecall *call;
-+	DBusConnection *conn;
-+	char const *path;
-+	char const *member;
-+
-+	call =3D voicecall_by_id(vc, index);
-+	if (call =3D=3D NULL) {
-+		ofono_error("Got MO SSN notify %u for unknown call", mo_code);
-+		return;
-+	}
-+
-+	conn =3D ofono_dbus_get_connection();
-+	path =3D voicecall_build_path(vc, call->call);
-+
-+	switch (mo_code) {
-+	case OFONO_SS_MO_CALL_WAITING:
-+		member =3D "Waiting";
-+		break;
-+	case OFONO_SS_MO_INCOMING_BARRING:
-+		member =3D "IncomingBarred";
-+		break;
-+	case OFONO_SS_MO_OUTGOING_BARRING:
-+		member =3D "OutgoingBarred";
-+		break;
-+	default:
-+		return;
-+	}
-+
-+	g_dbus_emit_signal(conn, path, OFONO_VOICECALL_INTERFACE,
-+				member, DBUS_TYPE_INVALID);
-+}
-+
-+static void ssn_mt_watch(int index, int mt_code,
-+				const struct ofono_phone_number *ph,
-+				void *user)
-+{
-+	struct ofono_voicecall *vc =3D user;
-+	struct voicecall *call;
-+	DBusConnection *conn;
-+	char const *path;
-+	dbus_bool_t mt_hold;
-+
-+	call =3D voicecall_by_id(vc, index);
-+	if (call =3D=3D NULL) {
-+		ofono_error("Got MT SSN notify %u for unknown call", mt_code);
-+		return;
-+	}
-+
-+	conn =3D ofono_dbus_get_connection();
-+	path =3D voicecall_build_path(vc, call->call);
-+
-+	switch (mt_code) {
-+	case OFONO_SS_MT_VOICECALL_ON_HOLD:
-+		call->mt_hold =3D mt_hold =3D TRUE;
-+		break;
-+
-+	case OFONO_SS_MT_VOICECALL_RETRIEVED:
-+		call->mt_hold =3D mt_hold =3D FALSE;
-+		break;
-+
-+	case OFONO_SS_MT_MULTIPARTY_VOICECALL:
-+		g_dbus_emit_signal(conn, path, OFONO_VOICECALL_INTERFACE,
-+					"JoinedMultiparty", DBUS_TYPE_INVALID);
-+		return;
-+
-+	default:
-+		return;
-+	}
-+
-+	ofono_dbus_signal_property_changed(conn, path,
-+				OFONO_VOICECALL_INTERFACE, "OnHold",
-+				DBUS_TYPE_BOOLEAN, &mt_hold);
-+}
-+
-+static void ssn_watch(struct ofono_atom *atom,
-+			enum ofono_atom_watch_condition cond, void *data)
-+{
-+	struct ofono_voicecall *vc =3D data;
-+
-+	if (cond =3D=3D OFONO_ATOM_WATCH_CONDITION_UNREGISTERED) {
-+		vc->ssn =3D NULL;
-+		return;
-+	}
-+
-+	vc->ssn =3D  __ofono_atom_get_data(atom);
-+
-+	vc->ssn_hold_watch =3D __ofono_ssn_mt_watch_add(vc->ssn,
-+		OFONO_SS_MT_VOICECALL_ON_HOLD, ssn_mt_watch, vc, NULL);
-+
-+	vc->ssn_retrieve_watch =3D __ofono_ssn_mt_watch_add(vc->ssn,
-+		OFONO_SS_MT_VOICECALL_RETRIEVED, ssn_mt_watch, vc, NULL);
-+
-+	vc->ssn_mpty_watch =3D __ofono_ssn_mt_watch_add(vc->ssn,
-+		OFONO_SS_MT_MULTIPARTY_VOICECALL, ssn_mt_watch, vc, NULL);
-+
-+	vc->ssn_wait_watch =3D __ofono_ssn_mo_watch_add(vc->ssn,
-+		OFONO_SS_MO_CALL_WAITING, ssn_mo_watch, vc, NULL);
-+}
-+
- static void sim_state_watch(enum ofono_sim_state new_state, void *user)
- {
- 	struct ofono_voicecall *vc =3D user;
-@@ -2338,6 +2475,7 @@ void ofono_voicecall_register(struct ofono_voicecall =
-*vc)
- 	struct ofono_modem *modem =3D __ofono_atom_get_modem(vc->atom);
- 	const char *path =3D __ofono_atom_get_path(vc->atom);
- 	struct ofono_atom *sim_atom;
-+	struct ofono_atom *ssn_atom;
- =
+> In the case of the VoiceCall properties, it is assumed that call instance
+> number (call id) is available either implicitly, or explicitly provided
+> by the
+> modem driver. Some of the SSN functions needs to be changed to
+> add call id to the function parameters list, so that modems supporting
+> the "call id" feature can deliver this information.
+> For cases when it's impossible to unambiguously determine the call id
+> for the SS notifications, the notification will be either discarded, or a
+> VoiceCallManager DBus could be emitted in connection with the
+> notification (+CSSU: 2, +CSSU: 3, +CSSU: 4 cases).
 
- 	if (!g_dbus_register_interface(conn, path,
- 					OFONO_VOICECALL_MANAGER_INTERFACE,
-@@ -2367,6 +2505,15 @@ void ofono_voicecall_register(struct ofono_voicecall=
- *vc)
- 	if (sim_atom && __ofono_atom_get_registered(sim_atom))
- 		sim_watch(sim_atom, OFONO_ATOM_WATCH_CONDITION_REGISTERED, vc);
- =
+Emitting a signal or setting a property depending on the circumstances
+is not a good idea.  You either do one or the other.
 
-+	vc->ssn_watch =3D __ofono_modem_add_atom_watch(modem,
-+						OFONO_ATOM_TYPE_SSN,
-+						ssn_watch, vc, NULL);
-+
-+	ssn_atom =3D __ofono_modem_find_atom(modem, OFONO_ATOM_TYPE_SIM);
-+
-+	if (ssn_atom && __ofono_atom_get_registered(ssn_atom))
-+		ssn_watch(ssn_atom, OFONO_ATOM_WATCH_CONDITION_REGISTERED, vc);
-+
- 	__ofono_atom_register(vc->atom, voicecall_unregister);
- }
- =
+> =
 
--- =
-
-1.7.1
+> I see no any need for the SSN atom, and my proposal is to remove it
+> completely.
+> =
 
 
---===============2500518940536991151==--
+If you read the earlier discussion you'll note that Pekka already
+proposed this.  I'm fine with this approach, removing ssn atom is just fine.
+
+Regards,
+-Denis
+
+
+--===============0508016116219154565==--
 
