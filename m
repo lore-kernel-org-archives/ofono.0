@@ -1,81 +1,94 @@
-Content-Type: multipart/mixed; boundary="===============8636201647290065722=="
+Content-Type: multipart/mixed; boundary="===============6866818678265831576=="
 MIME-Version: 1.0
-From: Andras Domokos <andras.domokos@nokia.com>
-Subject: Re: [RFC] voicecallmanager-api: call related SS signals (proposal)
-Date: Fri, 28 Jan 2011 19:13:27 +0200
-Message-ID: <4D42F937.3040307@nokia.com>
-In-Reply-To: <4D4196C8.9090306@gmail.com>
+From: Pekka.Pessi@nokia.com
+Subject: [ss-notify FYI 2/6] ssn: add ssn code argument to ssn notify callbacks
+Date: Fri, 28 Jan 2011 19:38:15 +0200
+Message-ID: <1296236300-19189-3-git-send-email-Pekka.Pessi@nokia.com>
+In-Reply-To: <1296236300-19189-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8636201647290065722==
+--===============6866818678265831576==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+From: Pekka Pessi <Pekka.Pessi@nokia.com>
 
-On 01/27/2011 06:01 PM, ext Denis Kenzior wrote:
-> Hi Andras,
->
->> This  becomes a problem when there are multiple calls since it is not
->> possible to determine to which call instance the indication is referring
->> to.
->> This raises the question where/how to show this type of properties?
-> Have you seen the thread from Pekka's previous attempt to define such
-> APIs?  Its been a while now but should be in the archives.
+Including the ssn code as an argument in notify callbacks allows
+handling of multiple notifications in single function.
+---
+ src/ofono.h |    4 ++--
+ src/ssn.c   |    8 ++++++--
+ 2 files changed, 8 insertions(+), 4 deletions(-)
 
-It seems, we might have a bit work to do here.
+diff --git a/src/ofono.h b/src/ofono.h
+index df20103..e8c24a9 100644
+--- a/src/ofono.h
++++ b/src/ofono.h
+@@ -313,8 +313,8 @@ int __ofono_sms_sim_download(struct ofono_stk *stk, con=
+st struct sms *msg,
+ =
 
-The first thing is to settle on  the APIs for handling the voice call SS
-notifications, I am thinking about the DBus level API and the oFono
-internal API.
+ #include <ofono/ssn.h>
+ =
 
-Currently the SSI notifications are handled in the call barring code, a
-better place for handling those notifications would be under the voice
-call atom.
+-typedef void (*ofono_ssn_mo_notify_cb)(int index, void *user);
+-typedef void (*ofono_ssn_mt_notify_cb)(int index,
++typedef void (*ofono_ssn_mo_notify_cb)(int index, int mo_code, void *user);
++typedef void (*ofono_ssn_mt_notify_cb)(int index, int mt_code,
+ 					const struct ofono_phone_number *ph,
+ 					void *user);
+ =
 
-Some of the SSI/SSU notifications should be presented as DBus signals
-on the VoiceCallManager interface, others converted to voice call
-properties, visible on the VoiceCall interface. I compiled a list of
-properties/signals based on the possible SSI/SSU notification. The list
-is not complete, but can be expanded any time later, based on practical
-needs.
+diff --git a/src/ssn.c b/src/ssn.c
+index 64c94b7..00da3a6 100644
+--- a/src/ssn.c
++++ b/src/ssn.c
+@@ -118,12 +118,14 @@ void ofono_ssn_cssi_notify(struct ofono_ssn *ssn, int=
+ code1, int index)
+ 	GSList *l;
+ 	ofono_ssn_mo_notify_cb notify;
+ =
 
-Here is the mapping between the properties/signals and SS notification
-codes I considered essential to start with:
++	DBG("ssn %p, code %u, index %u", (void *)ssn, code1, index);
++
+ 	for (l =3D ssn->mo_handler_list->items; l; l =3D l->next) {
+ 		h =3D l->data;
+ 		notify =3D h->item.notify;
+ =
 
-VoiceCall properties:
-Forwarded (bool):: +CSSI: 2, +CSSU: 0
-RemoteHold (bool):: +CSSU: 2, +CSSU: 3
-Multiparty (bool): +CSSU: 4
+ 		if (h->code =3D=3D code1)
+-			notify(index, h->item.notify_data);
++			notify(index, code1, h->item.notify_data);
+ 	}
+ }
+ =
 
-VoiceCallManager signals:
-UnconditionalForwardingInEffect: +CSSI: 0
-ConditionalForwardingInEffect: +CSSI: 1
-OutgoingBarringInEffect: +CSSI: 5
-IncomingBarringInEffect: +CSSI: 6
+@@ -134,12 +136,14 @@ void ofono_ssn_cssu_notify(struct ofono_ssn *ssn, int=
+ code2, int index,
+ 	GSList *l;
+ 	ofono_ssn_mt_notify_cb notify;
+ =
 
-In the case of the VoiceCall properties, it is assumed that call instance
-number (call id) is available either implicitly, or explicitly provided =
++	DBG("ssn %p, code %u, index %u", (void *)ssn, code2, index);
++
+ 	for (l =3D ssn->mt_handler_list->items; l; l =3D l->next) {
+ 		h =3D l->data;
+ 		notify =3D h->item.notify;
+ =
 
-by the
-modem driver. Some of the SSN functions needs to be changed to
-add call id to the function parameters list, so that modems supporting
-the "call id" feature can deliver this information.
-For cases when it's impossible to unambiguously determine the call id
-for the SS notifications, the notification will be either discarded, or a
-VoiceCallManager DBus could be emitted in connection with the
-notification (+CSSU: 2, +CSSU: 3, +CSSU: 4 cases).
+ 		if (h->code =3D=3D code2)
+-			notify(index, ph, h->item.notify_data);
++			notify(index, code2, ph, h->item.notify_data);
+ 	}
+ }
+ =
 
-I see no any need for the SSN atom, and my proposal is to remove it
-completely.
+-- =
 
-> Regards,
-> -Denis
+1.7.1
 
-Regrads,
-Andras
 
---===============8636201647290065722==--
+--===============6866818678265831576==--
 
