@@ -1,42 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============3404361561265117720=="
+Content-Type: multipart/mixed; boundary="===============3716610436531394482=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [PATCH 6/9] oFono smsagent enhancements to permit more flexible
- parameter set to be dispatched.
-Date: Thu, 27 Jan 2011 23:40:37 +0100
-Message-ID: <1296168037.1520.163.camel@aeonflux>
-In-Reply-To: <CBAD88B23448774582E4323588D6B5D205F6B31E@008-AM1MPN1-007.mgdnok.nokia.com>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH v3 0/3] Persist TX SMS messages
+Date: Fri, 28 Jan 2011 00:39:54 -0200
+Message-ID: <1296182397-31963-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3404361561265117720==
+--===============3716610436531394482==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Oleg,
+Third version. It includes some changes suggested by Denis:
 
-so first things first, please no top posting on this mailing list.
+- Get rid of the oldpath field in struct txq_backup_entry
+- Store the encoded uuid in struct txq_backup_entry
+- Use SMS_MSGID_FMT to get the file name
+- Some more cleanups
 
-> That's in order to include the uuid (so we can correlate sms_send_pending=
- and sms_send_status). Possibly, in order to include some other parameters,=
- without affecting the other users of the sms_agent_dispatch_datagram().
-> =
+Lucas De Marchi (3):
+  sms: store pending tx pdus on disk
+  sms: delete sent sms messages from backup
+  sms: restore pending tx messages from backup
 
-> Please take a look into the messaging_agent_sms_send_pending(), messaging=
-_agent_sms_send_status() in order to get a better understanding of the use.
+ src/ofono.h   |    1 +
+ src/sms.c     |   91 ++++++++++++++++++++
+ src/smsutil.c |  257 +++++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ src/smsutil.h |   17 ++++
+ 4 files changed, 366 insertions(+), 0 deletions(-)
 
-After talking to Kai I have an idea what you are aiming for. I think you
-are looking at the wrong API. You should look at the history API. Check
-out examples/history.c. That gives you the whole set of incoming and
-outgoing SMS and their status. It also includes the UUID for exactly the
-propose of proper tracking and storage.
+-- =
 
-Regards
-
-Marcel
+1.7.3.5
 
 
-
---===============3404361561265117720==--
+--===============3716610436531394482==--
 
