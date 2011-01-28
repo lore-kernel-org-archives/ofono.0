@@ -1,34 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============6177475833840818988=="
+Content-Type: multipart/mixed; boundary="===============0949705525283278021=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/1] gisi: Updated subscriptions and pipe handling to
- accomodate additional isimodem versions
-Date: Fri, 28 Jan 2011 12:42:33 +0100
-Message-ID: <1296214953.1520.169.camel@aeonflux>
-In-Reply-To: <1296214630-27822-1-git-send-email-jessica.j.nilsson@stericsson.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 0/5] Add missing NULL check
+Date: Fri, 28 Jan 2011 03:50:03 -0800
+Message-ID: <1296215408-4946-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6177475833840818988==
+--===============0949705525283278021==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jessica,
+Hi,
 
-> ---
-> This is needed in order for isimodem2.5 to work.
+ Following set of patches adds the missing NULL check in
+radio-setting atom driver for all the modems.
 
-you might wanna keep the subject line under 50 characters and have a
-more detailed explanation in the commit body. See M5.
+Regards,
+Jeevaka
 
-Also you might need a From line at the top.
+Jeevaka Badrappan (5):
+  ifxmodem: add NULL check
+  hsomodem: add NULL check
+  huaweimodem: add NULL check
+  stemodem: add NULL check
+  nwmodem: add NULL check
 
-Regards
+ drivers/hsomodem/radio-settings.c    |   15 ++++++++++-----
+ drivers/huaweimodem/radio-settings.c |   30 ++++++++++++++++++++----------
+ drivers/ifxmodem/radio-settings.c    |   15 ++++++++++-----
+ drivers/nwmodem/radio-settings.c     |   15 ++++++++++-----
+ drivers/stemodem/radio-settings.c    |   33 +++++++++++++++++++-----------=
+---
+ 5 files changed, 69 insertions(+), 39 deletions(-)
 
-Marcel
 
-
-
---===============6177475833840818988==--
+--===============0949705525283278021==--
 
