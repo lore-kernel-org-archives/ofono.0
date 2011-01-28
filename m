@@ -1,80 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============1069160069509463448=="
+Content-Type: multipart/mixed; boundary="===============8112102556496971058=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] plugins:ste:preparation for hotswap
-Date: Fri, 28 Jan 2011 15:59:49 +0100
-Message-ID: <1296226789.1520.182.camel@aeonflux>
-In-Reply-To: <1296226151-3432-1-git-send-email-jussi.kangas@tieto.com>
+Subject: RE: [RFC 1/5] gprs: Update documentation for IPv6
+Date: Fri, 28 Jan 2011 16:04:18 +0100
+Message-ID: <1296227058.1520.186.camel@aeonflux>
+In-Reply-To: <CB0EE8641411214CBAFF8AEBB26ABCEC26B7C8@008-AM1MPN1-007.mgdnok.nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1069160069509463448==
+--===============8112102556496971058==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jussi,
+Hi Mika,
 
-> ---
-> Hi, =
-
+> > I am not sure it is a good idea to make ConnMan do that.
 > =
 
-> This patch enables ste modem to handle hotswap situation. =
+> Why is that?
 
+we need to chat with Samuel about this. I foresee a bunch of issues
+trying to handle two context properly. This needs a bit more deeper
+thinking on how things are done.
 
-for the subject just ste: is enough.
+> > And to be honest for PPP, just doing IPv4 seems acceptable =
 
-> Br, =
+> > since PPP is
+> > bad idea in the first place. It is a limitation I am willing =
 
-> Jussi
+> > to accept.
 > =
 
->  plugins/ste.c |  109 +++++++++++++++++++++++++++++++++++++++++----------=
------
->  1 files changed, 80 insertions(+), 29 deletions(-)
+> Yeah, PPP is not really a requirement for us, although it would be conven=
+ient to have it for testing. As a matter of fact, I would already have tria=
+led atmodem support for IPv6 but that was blocked because of the lack of IP=
+V6CP support in oFono PPP implementation. Too bad.
+
+We have a TODO item open for that. So far nobody really bothered,
+because either the hardware did not support it or the network did not.
+
+But hey, patches are welcome ;)
+
+> > My concern is also on how we handle the Tethering cases =
+
+> > properly. I have
+> > not yet spent enough time to think about it, but I have concerns here.
 > =
 
-> diff --git a/plugins/ste.c b/plugins/ste.c
-> index 85d2d51..e183073 100644
-> --- a/plugins/ste.c
-> +++ b/plugins/ste.c
-> @@ -66,15 +66,23 @@
->  =
+> Ok. Can you outline your concerns so we can talk about them?
 
->  #define NUM_CHAT	1
->  =
+We are currently Tethering to one specific service with the assumption
+that it maps to one interface of the kernel. If that assumption is not
+true anymore, then we have to re-think this. Not sure if we should be
+bothered.
 
-> -static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
-> -
->  static char *chat_prefixes[NUM_CHAT] =3D { "Default: " };
->  =
+But then again, on the other hand for IPv6 Tethering, don't wanna use
+NAT anyway. So that might be not an issue after all. This really needs
+some more thinking. I have no clear answers at the moment.
 
->  struct ste_data {
->  	GAtChat *chat;
-> -	guint cpin_poll_source;
-> -	guint cpin_poll_count;
->  	gboolean have_sim;
-> +	struct ofono_sim *sim;
-> +};
-> +
-> +enum ste_sim_state {
-> +	SIM_STATE_NULL =3D 0,
-> +	SIM_STATE_AWAITING_APP,
-> +	SIM_STATE_BLOCKED,
-> +	SIM_STATE_BLOCKED_FOREVER,
-> +	SIM_STATE_WAIT_FOR_PIN,
-> +	SIM_STATE_ACTIVE,
-> +	SIM_STATE_TERMINATING,
-> +	SIM_STATE_POWER_OFF
->  };
+> > So right now I would prefer to sit ipv6 out until we have =
 
-I am a bit lost in how you fit this into the existing SIM pin check.
-Maybe it would be cleaner to remove that check first. And then add a
-patch for the SIM notification handling.
+> > proper ipv4v6
+> > context support in the network and the modems.
+> =
 
-Also this seems pretty much similar to what IFX does. Can we make sure
-that it is handled similar as well?
+> I'd like to progress with this. We also have people who are keen to help =
+out on the connman side. Just sitting and waiting for better times is not r=
+eally an approach I'd prefer to take.
+> =
+
+> Currently, we only discussing whether the "Interface" setting is needed s=
+eparately in IPv4 and IPv6 settings or not. That's a minor detail as far as=
+ I am concerned. For now, allowing separate network interfaces for IPv4 and=
+ IPv6 is convenient for testing the IPv6 support on current modems. If it t=
+urns out to be hugely difficult to manage separate interface on connman sid=
+e, we can always restrict the approach and drop support for older modems wh=
+en rel8 modems are available. =
+
+
+So I like the ST-Ericsson approach where this details is abstracted in
+the modem firmware.
 
 Regards
 
@@ -82,5 +88,5 @@ Marcel
 
 
 
---===============1069160069509463448==--
+--===============8112102556496971058==--
 
