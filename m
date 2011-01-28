@@ -1,65 +1,81 @@
-Content-Type: multipart/mixed; boundary="===============5546298145825970765=="
+Content-Type: multipart/mixed; boundary="===============8636201647290065722=="
 MIME-Version: 1.0
-From: Mika.Liljeberg@nokia.com
-Subject: RE: [RFC 1/5] gprs: Update documentation for IPv6
-Date: Fri, 28 Jan 2011 14:55:44 +0000
-Message-ID: <CB0EE8641411214CBAFF8AEBB26ABCEC26B7C8@008-AM1MPN1-007.mgdnok.nokia.com>
-In-Reply-To: <1296224224.1520.175.camel@aeonflux>
+From: Andras Domokos <andras.domokos@nokia.com>
+Subject: Re: [RFC] voicecallmanager-api: call related SS signals (proposal)
+Date: Fri, 28 Jan 2011 19:13:27 +0200
+Message-ID: <4D42F937.3040307@nokia.com>
+In-Reply-To: <4D4196C8.9090306@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5546298145825970765==
+--===============8636201647290065722==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel, =
+Hi Denis,
 
+On 01/27/2011 06:01 PM, ext Denis Kenzior wrote:
+> Hi Andras,
+>
+>> This  becomes a problem when there are multiple calls since it is not
+>> possible to determine to which call instance the indication is referring
+>> to.
+>> This raises the question where/how to show this type of properties?
+> Have you seen the thread from Pekka's previous attempt to define such
+> APIs?  Its been a while now but should be in the archives.
 
-> I am not sure it is a good idea to make ConnMan do that.
+It seems, we might have a bit work to do here.
 
-Why is that?
+The first thing is to settle on  the APIs for handling the voice call SS
+notifications, I am thinking about the DBus level API and the oFono
+internal API.
 
-> And to be honest for PPP, just doing IPv4 seems acceptable =
+Currently the SSI notifications are handled in the call barring code, a
+better place for handling those notifications would be under the voice
+call atom.
 
-> since PPP is
-> bad idea in the first place. It is a limitation I am willing =
+Some of the SSI/SSU notifications should be presented as DBus signals
+on the VoiceCallManager interface, others converted to voice call
+properties, visible on the VoiceCall interface. I compiled a list of
+properties/signals based on the possible SSI/SSU notification. The list
+is not complete, but can be expanded any time later, based on practical
+needs.
 
-> to accept.
+Here is the mapping between the properties/signals and SS notification
+codes I considered essential to start with:
 
-Yeah, PPP is not really a requirement for us, although it would be convenie=
-nt to have it for testing. As a matter of fact, I would already have triale=
-d atmodem support for IPv6 but that was blocked because of the lack of IPV6=
-CP support in oFono PPP implementation. Too bad.
+VoiceCall properties:
+Forwarded (bool):: +CSSI: 2, +CSSU: 0
+RemoteHold (bool):: +CSSU: 2, +CSSU: 3
+Multiparty (bool): +CSSU: 4
 
-> My concern is also on how we handle the Tethering cases =
+VoiceCallManager signals:
+UnconditionalForwardingInEffect: +CSSI: 0
+ConditionalForwardingInEffect: +CSSI: 1
+OutgoingBarringInEffect: +CSSI: 5
+IncomingBarringInEffect: +CSSI: 6
 
-> properly. I have
-> not yet spent enough time to think about it, but I have concerns here.
+In the case of the VoiceCall properties, it is assumed that call instance
+number (call id) is available either implicitly, or explicitly provided =
 
-Ok. Can you outline your concerns so we can talk about them?
+by the
+modem driver. Some of the SSN functions needs to be changed to
+add call id to the function parameters list, so that modems supporting
+the "call id" feature can deliver this information.
+For cases when it's impossible to unambiguously determine the call id
+for the SS notifications, the notification will be either discarded, or a
+VoiceCallManager DBus could be emitted in connection with the
+notification (+CSSU: 2, +CSSU: 3, +CSSU: 4 cases).
 
-> So right now I would prefer to sit ipv6 out until we have =
+I see no any need for the SSN atom, and my proposal is to remove it
+completely.
 
-> proper ipv4v6
-> context support in the network and the modems.
+> Regards,
+> -Denis
 
-I'd like to progress with this. We also have people who are keen to help ou=
-t on the connman side. Just sitting and waiting for better times is not rea=
-lly an approach I'd prefer to take.
+Regrads,
+Andras
 
-Currently, we only discussing whether the "Interface" setting is needed sep=
-arately in IPv4 and IPv6 settings or not. That's a minor detail as far as I=
- am concerned. For now, allowing separate network interfaces for IPv4 and I=
-Pv6 is convenient for testing the IPv6 support on current modems. If it tur=
-ns out to be hugely difficult to manage separate interface on connman side,=
- we can always restrict the approach and drop support for older modems when=
- rel8 modems are available. =
-
-
-Br,
-
-	MikaL
-
---===============5546298145825970765==--
+--===============8636201647290065722==--
 
