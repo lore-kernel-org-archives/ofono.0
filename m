@@ -1,60 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============5357546437014130457=="
+Content-Type: multipart/mixed; boundary="===============1996371871298509967=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/5] ifxmodem: add NULL check
-Date: Fri, 28 Jan 2011 12:59:38 +0100
-Message-ID: <1296215978.1520.171.camel@aeonflux>
-In-Reply-To: <1296215408-4946-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH] doc: Assisted Satellite Navigation API and Agent API
+Date: Fri, 28 Jan 2011 14:13:06 +0200
+Message-ID: <201101281413.06172.remi.denis-courmont@nokia.com>
+In-Reply-To: <1296214370-20127-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5357546437014130457==
+--===============1996371871298509967==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+On Friday 28 January 2011 13:32:50 ext Sjur Br=C3=A6ndeland, you wrote:
+> +		void RegisterPositioningRequestAgent(object path)
+> +
+> +			Registers an agent which will be called whenever a
+> +			CPOSR AT response is received. The Agent must respond
+> +			to requests using SendPositioningControl.
 
->  drivers/ifxmodem/radio-settings.c |   15 ++++++++++-----
->  1 files changed, 10 insertions(+), 5 deletions(-)
-> =
+Spelling is inconsistent ;)
 
-> diff --git a/drivers/ifxmodem/radio-settings.c b/drivers/ifxmodem/radio-s=
-ettings.c
-> index fd590ae..6771e00 100644
-> --- a/drivers/ifxmodem/radio-settings.c
-> +++ b/drivers/ifxmodem/radio-settings.c
-> @@ -104,11 +104,13 @@ static void ifx_query_rat_mode(struct ofono_radio_s=
-ettings *rs,
->  	struct radio_settings_data *rsd =3D ofono_radio_settings_get_data(rs);
->  	struct cb_data *cbd =3D cb_data_new(cb, data);
->  =
+-- =
 
-> -	if (g_at_chat_send(rsd->chat, "AT+XRAT?", xrat_prefix,
-> -					xrat_query_cb, cbd, g_free) =3D=3D 0) {
-> -		CALLBACK_WITH_FAILURE(cb, -1, data);
-> -		g_free(cbd);
-> -	}
-> +	if (cbd && g_at_chat_send(rsd->chat, "AT+XRAT?", xrat_prefix,
-> +					xrat_query_cb, cbd, g_free) > 0)
-> +		return;
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-I don't like these constructs. They quickly make the code unreadable and
-really complex. Using a
-
-	if (cbd =3D=3D NULL)
-		goto failure;
-
-would be a lot cleaner.
-
-It might be just better to make cb_data_new use g_new0 instead of
-g_try_new0 and remove all checks for cb_data.
-
-Regards
-
-Marcel
-
-
-
---===============5357546437014130457==--
+--===============1996371871298509967==--
 
