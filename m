@@ -1,31 +1,37 @@
-Content-Type: multipart/mixed; boundary="===============6529109504125363176=="
+Content-Type: multipart/mixed; boundary="===============8331061647386177954=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/5] simfs: Return from sim_fs_op_check_cached on error.
-Date: Sat, 29 Jan 2011 11:22:40 -0600
-Message-ID: <4D444CE0.5010404@gmail.com>
-In-Reply-To: <1296260961-15155-2-git-send-email-andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 00/11] Remove NULL check for call back data
+Date: Sat, 29 Jan 2011 11:23:02 -0600
+Message-ID: <4D444CF6.3060202@gmail.com>
+In-Reply-To: <1296308084-3726-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6529109504125363176==
+--===============8331061647386177954==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andrew,
+Hi Jeevaka,
 
-On 01/28/2011 06:29 PM, Andrzej Zaborowski wrote:
-> ---
->  src/simfs.c |    4 +++-
->  1 files changed, 3 insertions(+), 1 deletions(-)
+On 01/29/2011 07:34 AM, Jeevaka Badrappan wrote:
+> Hi,
+> =
+
+> Memory allocation function for callback data change from g_try_new0 to
+> g_new0. Due to this, NULL check done for callback data is removed.
+> =
+
+> Regards,
+> Jeevaka
 > =
 
 
-Patch has been applied, thanks.
+All 11 patches have been applied, thanks.
 
 Regards,
 -Denis
 
---===============6529109504125363176==--
+--===============8331061647386177954==--
 
