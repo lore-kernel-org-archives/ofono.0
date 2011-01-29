@@ -1,43 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============7942810940451855911=="
+Content-Type: multipart/mixed; boundary="===============3510902196870472978=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
-Subject: [PATCH 1/5] simfs: Reset op_source in simfs_read_block.
-Date: Sat, 29 Jan 2011 01:29:17 +0100
-Message-ID: <1296260961-15155-1-git-send-email-andrew.zaborowski@intel.com>
+Subject: [PATCH 2/5] simfs: Return from sim_fs_op_check_cached on error.
+Date: Sat, 29 Jan 2011 01:29:18 +0100
+Message-ID: <1296260961-15155-2-git-send-email-andrew.zaborowski@intel.com>
+In-Reply-To: <1296260961-15155-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7942810940451855911==
+--===============3510902196870472978==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-If the block is not in cache or if this is the last block of a last
-op in the queue, then fs->op_source might be left with the wrong
-value.
 ---
- src/simfs.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+ src/simfs.c |    4 +++-
+ 1 files changed, 3 insertions(+), 1 deletions(-)
 
 diff --git a/src/simfs.c b/src/simfs.c
-index b77e1dc..35045a1 100644
+index 35045a1..73da80c 100644
 --- a/src/simfs.c
 +++ b/src/simfs.c
-@@ -269,6 +269,8 @@ static gboolean sim_fs_op_read_block(gpointer user_data)
- 	int end_block;
- 	unsigned short read_bytes;
+@@ -600,8 +600,10 @@ static gboolean sim_fs_op_check_cached(struct sim_fs *=
+fs)
+ 	fs->fd =3D fd;
  =
 
-+	fs->op_source =3D 0;
-+
- 	start_block =3D op->offset / 256;
- 	end_block =3D (op->offset + (op->num_bytes - 1)) / 256;
+ 	if (error_type !=3D OFONO_ERROR_TYPE_NO_ERROR ||
+-			structure !=3D op->structure)
++			structure !=3D op->structure) {
+ 		sim_fs_op_error(fs);
++		return TRUE;
++	}
  =
 
+ 	if (structure =3D=3D OFONO_SIM_FILE_STRUCTURE_TRANSPARENT) {
+ 		if (op->num_bytes =3D=3D 0)
 -- =
 
 1.7.1.86.g0e460.dirty
 
 
---===============7942810940451855911==--
+--===============3510902196870472978==--
 
