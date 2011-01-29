@@ -1,42 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============7077401976962267651=="
+Content-Type: multipart/mixed; boundary="===============8026381763940692398=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] hfpmodem: fix memory leak
-Date: Sat, 29 Jan 2011 10:24:12 -0800
-Message-ID: <1296325452-7384-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH] atmodem: fix memory leak
+Date: Sat, 29 Jan 2011 12:43:45 -0600
+Message-ID: <4D445FE1.2030704@gmail.com>
+In-Reply-To: <1296325281-7224-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7077401976962267651==
+--===============8026381763940692398==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/hfpmodem/network-registration.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+Hi Jeevaka,
 
-diff --git a/drivers/hfpmodem/network-registration.c b/drivers/hfpmodem/net=
-work-registration.c
-index 23852e7..931ab67 100644
---- a/drivers/hfpmodem/network-registration.c
-+++ b/drivers/hfpmodem/network-registration.c
-@@ -267,6 +267,8 @@ static void hfp_current_operator(struct ofono_netreg *n=
-etreg,
- 	if (ok)
- 		return;
- =
-
-+	g_free(cbd);
-+
- 	CALLBACK_WITH_FAILURE(cb, NULL, data);
- }
- =
-
--- =
-
-1.7.0.4
+On 01/29/2011 12:21 PM, Jeevaka Badrappan wrote:
+> ---
+>  drivers/atmodem/sim.c |    2 ++
+>  1 files changed, 2 insertions(+), 0 deletions(-)
+> =
 
 
---===============7077401976962267651==--
+Patch has been applied, thanks.
+
+Regards,
+-Denis
+
+--===============8026381763940692398==--
 
