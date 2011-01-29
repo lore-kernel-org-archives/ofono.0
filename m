@@ -1,63 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============9161163865583121130=="
+Content-Type: multipart/mixed; boundary="===============8806959537633743750=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 07/11] ifxmodem: remove NULL check
-Date: Sat, 29 Jan 2011 05:34:40 -0800
-Message-ID: <1296308084-3726-8-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 04/11] hfpmodem: remove NULL check
+Date: Sat, 29 Jan 2011 05:34:37 -0800
+Message-ID: <1296308084-3726-5-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1296308084-3726-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9161163865583121130==
+--===============8806959537633743750==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/ifxmodem/ctm.c       |    8 --------
- drivers/ifxmodem/stk.c       |    4 ++--
- drivers/ifxmodem/voicecall.c |    7 -------
- 3 files changed, 2 insertions(+), 17 deletions(-)
+ drivers/hfpmodem/call-volume.c          |    8 --------
+ drivers/hfpmodem/network-registration.c |   12 ------------
+ drivers/hfpmodem/voicecall.c            |    4 ----
+ 3 files changed, 0 insertions(+), 24 deletions(-)
 
-diff --git a/drivers/ifxmodem/ctm.c b/drivers/ifxmodem/ctm.c
-index b70fe09..7b23a9b 100644
---- a/drivers/ifxmodem/ctm.c
-+++ b/drivers/ifxmodem/ctm.c
-@@ -88,14 +88,10 @@ static void ifx_query_tty(struct ofono_ctm *ctm, ofono_=
-ctm_query_cb_t cb,
- 	struct ctm_data *ctmd =3D ofono_ctm_get_data(ctm);
+diff --git a/drivers/hfpmodem/call-volume.c b/drivers/hfpmodem/call-volume.c
+index 19f57c4..ee4e352 100644
+--- a/drivers/hfpmodem/call-volume.c
++++ b/drivers/hfpmodem/call-volume.c
+@@ -73,9 +73,6 @@ static void hfp_speaker_volume(struct ofono_call_volume *=
+cv,
  	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	char buf[64];
  =
 
 -	if (cbd =3D=3D NULL)
 -		goto error;
 -
- 	if (g_at_chat_send(ctmd->chat, "AT+XCTMS?", xctms_prefix,
- 				xctms_query_cb, cbd, g_free) > 0)
- 		return;
+ 	vd->sp_volume =3D percent;
  =
 
--error:
- 	g_free(cbd);
- =
-
- 	CALLBACK_WITH_FAILURE(cb, -1, data);
-@@ -121,9 +117,6 @@ static void ifx_set_tty(struct ofono_ctm *ctm, ofono_bo=
-ol_t enable,
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[20];
- =
-
--	if (cbd =3D=3D NULL)
--		goto error;
--
- 	/* Only FULL TTY mode enabled/disabled */
- 	snprintf(buf, sizeof(buf), "AT+XCTMS=3D%i", enable ? 1 : 0);
- =
-
-@@ -131,7 +124,6 @@ static void ifx_set_tty(struct ofono_ctm *ctm, ofono_bo=
-ol_t enable,
- 				xctms_modify_cb, cbd, g_free) > 0)
+ 	snprintf(buf, sizeof(buf), "AT+VGS=3D%d",
+@@ -85,7 +82,6 @@ static void hfp_speaker_volume(struct ofono_call_volume *=
+cv,
+ 				cv_generic_set_cb, cbd, g_free) > 0)
  		return;
  =
 
@@ -66,41 +47,110 @@ ol_t enable,
  =
 
  	CALLBACK_WITH_FAILURE(cb, data);
-diff --git a/drivers/ifxmodem/stk.c b/drivers/ifxmodem/stk.c
-index 5951149..f08cf47 100644
---- a/drivers/ifxmodem/stk.c
-+++ b/drivers/ifxmodem/stk.c
-@@ -104,7 +104,7 @@ static void ifx_stk_envelope(struct ofono_stk *stk, int=
- length,
+@@ -100,9 +96,6 @@ static void hfp_microphone_volume(struct ofono_call_volu=
+me *cv,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	char buf[64];
  =
 
- 	DBG("");
+-	if (cbd =3D=3D NULL)
+-		goto error;
+-
+ 	vd->mic_volume =3D percent;
  =
 
--	if (cbd =3D=3D NULL || buf =3D=3D NULL)
-+	if (buf =3D=3D NULL)
- 		goto error;
+ 	snprintf(buf, sizeof(buf), "AT+VGM=3D%d",
+@@ -112,7 +105,6 @@ static void hfp_microphone_volume(struct ofono_call_vol=
+ume *cv,
+ 				cv_generic_set_cb, cbd, g_free) > 0)
+ 		return;
  =
 
- 	len =3D sprintf(buf, "AT+SATE=3D\"");
-@@ -150,7 +150,7 @@ static void ifx_stk_terminal_response(struct ofono_stk =
-*stk, int length,
+-error:
+ 	g_free(cbd);
  =
 
- 	DBG("");
+ 	CALLBACK_WITH_FAILURE(cb, data);
+diff --git a/drivers/hfpmodem/network-registration.c b/drivers/hfpmodem/net=
+work-registration.c
+index 273490e..23852e7 100644
+--- a/drivers/hfpmodem/network-registration.c
++++ b/drivers/hfpmodem/network-registration.c
+@@ -236,9 +236,6 @@ static void hfp_registration_status(struct ofono_netreg=
+ *netreg,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	gboolean ok;
  =
 
--	if (cbd =3D=3D NULL || buf =3D=3D NULL)
-+	if (buf =3D=3D NULL)
- 		goto error;
+-	if (cbd =3D=3D NULL)
+-		goto error;
+-
+ 	cbd->user =3D netreg;
  =
 
- 	len =3D sprintf(buf, "AT+SATR=3D\"");
-diff --git a/drivers/ifxmodem/voicecall.c b/drivers/ifxmodem/voicecall.c
-index fcd0c7e..716652c 100644
---- a/drivers/ifxmodem/voicecall.c
-+++ b/drivers/ifxmodem/voicecall.c
-@@ -305,9 +305,6 @@ static void ifx_dial(struct ofono_voicecall *vc,
+ 	ok =3D g_at_chat_send(nd->chat, "AT+CIND?", cind_prefix,
+@@ -246,7 +243,6 @@ static void hfp_registration_status(struct ofono_netreg=
+ *netreg,
+ 	if (ok)
+ 		return;
+ =
+
+-error:
+ 	g_free(cbd);
+ =
+
+ 	CALLBACK_WITH_FAILURE(cb, -1, -1, -1, -1, data);
+@@ -259,9 +255,6 @@ static void hfp_current_operator(struct ofono_netreg *n=
+etreg,
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ 	gboolean ok;
+ =
+
+-	if (cbd =3D=3D NULL)
+-		goto error;
+-
+ 	cbd->user =3D netreg;
+ =
+
+ 	ok =3D g_at_chat_send(nd->chat, "AT+COPS=3D3,0", NULL,
+@@ -274,7 +267,6 @@ static void hfp_current_operator(struct ofono_netreg *n=
+etreg,
+ 	if (ok)
+ 		return;
+ =
+
+-error:
+ 	CALLBACK_WITH_FAILURE(cb, NULL, data);
+ }
+ =
+
+@@ -284,16 +276,12 @@ static void hfp_signal_strength(struct ofono_netreg *=
+netreg,
+ 	struct netreg_data *nd =3D ofono_netreg_get_data(netreg);
+ 	struct cb_data *cbd =3D cb_data_new(cb, data);
+ =
+
+-	if (cbd =3D=3D NULL)
+-		goto error;
+-
+ 	cbd->user =3D netreg;
+ =
+
+ 	if (g_at_chat_send(nd->chat, "AT+CIND?", cind_prefix,
+ 				signal_strength_cb, cbd, g_free) > 0)
+ 		return;
+ =
+
+-error:
+ 	g_free(cbd);
+ =
+
+ 	CALLBACK_WITH_FAILURE(cb, -1, data);
+diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
+index d12a5ef..b9bee62 100644
+--- a/drivers/hfpmodem/voicecall.c
++++ b/drivers/hfpmodem/voicecall.c
+@@ -362,9 +362,6 @@ static void hfp_dial(struct ofono_voicecall *vc,
  	struct cb_data *cbd =3D cb_data_new(cb, data);
  	char buf[256];
  =
@@ -109,10 +159,9 @@ index fcd0c7e..716652c 100644
 -		goto error;
 -
  	cbd->user =3D vc;
- =
-
  	if (ph->type =3D=3D 145)
-@@ -332,7 +329,6 @@ static void ifx_dial(struct ofono_voicecall *vc,
+ 		snprintf(buf, sizeof(buf), "ATD+%s", ph->number);
+@@ -377,7 +374,6 @@ static void hfp_dial(struct ofono_voicecall *vc,
  				atd_cb, cbd, g_free) > 0)
  		return;
  =
@@ -122,22 +171,10 @@ index fcd0c7e..716652c 100644
  =
 
  	CALLBACK_WITH_FAILURE(cb, data);
-@@ -504,9 +500,6 @@ static void ifx_send_dtmf(struct ofono_voicecall *vc, c=
-onst char *dtmf,
- 	int i;
- 	char *buf;
- =
-
--	if (cbd =3D=3D NULL)
--		goto error;
--
- 	/* strlen("+VTS=3DT\;") =3D 7 + initial AT + null */
- 	buf =3D g_try_new(char, len * 7 + 3);
- 	if (buf =3D=3D NULL)
 -- =
 
 1.7.0.4
 
 
---===============9161163865583121130==--
+--===============8806959537633743750==--
 
