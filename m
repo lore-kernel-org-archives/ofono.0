@@ -1,34 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============4302425523783956711=="
+Content-Type: multipart/mixed; boundary="===============7942810940451855911=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] smsutil: do not allow larger file names
-Date: Fri, 28 Jan 2011 20:38:56 -0600
-Message-ID: <4D437DC0.9030403@gmail.com>
-In-Reply-To: <1296182939-32316-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: [PATCH 1/5] simfs: Reset op_source in simfs_read_block.
+Date: Sat, 29 Jan 2011 01:29:17 +0100
+Message-ID: <1296260961-15155-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4302425523783956711==
+--===============7942810940451855911==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+If the block is not in cache or if this is the last block of a last
+op in the queue, then fs->op_source might be left with the wrong
+value.
+---
+ src/simfs.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-On 01/27/2011 08:48 PM, Lucas De Marchi wrote:
-> If file name had anything in the name after addr-msgid, it would be
-> parsed as well. This is not what we want, since there could be temporary
-> files lying around.
-> ---
->  src/smsutil.c |    5 +++--
->  1 files changed, 3 insertions(+), 2 deletions(-)
-> =
+diff --git a/src/simfs.c b/src/simfs.c
+index b77e1dc..35045a1 100644
+--- a/src/simfs.c
++++ b/src/simfs.c
+@@ -269,6 +269,8 @@ static gboolean sim_fs_op_read_block(gpointer user_data)
+ 	int end_block;
+ 	unsigned short read_bytes;
+ =
+
++	fs->op_source =3D 0;
++
+ 	start_block =3D op->offset / 256;
+ 	end_block =3D (op->offset + (op->num_bytes - 1)) / 256;
+ =
+
+-- =
+
+1.7.1.86.g0e460.dirty
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============4302425523783956711==--
+--===============7942810940451855911==--
 
