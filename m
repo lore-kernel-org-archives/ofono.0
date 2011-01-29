@@ -1,37 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============8331061647386177954=="
+Content-Type: multipart/mixed; boundary="===============3071128607944981847=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 00/11] Remove NULL check for call back data
-Date: Sat, 29 Jan 2011 11:23:02 -0600
-Message-ID: <4D444CF6.3060202@gmail.com>
-In-Reply-To: <1296308084-3726-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH] atmodem: fix memory leak
+Date: Sat, 29 Jan 2011 10:21:21 -0800
+Message-ID: <1296325281-7224-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8331061647386177954==
+--===============3071128607944981847==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+---
+ drivers/atmodem/sim.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-On 01/29/2011 07:34 AM, Jeevaka Badrappan wrote:
-> Hi,
-> =
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 819864f..0938998 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -157,6 +157,8 @@ static void at_sim_read_info(struct ofono_sim *sim, int=
+ fileid,
+ 				at_crsm_info_cb, cbd, g_free) > 0)
+ 		return;
+ =
 
-> Memory allocation function for callback data change from g_try_new0 to
-> g_new0. Due to this, NULL check done for callback data is removed.
-> =
++	g_free(cbd);
++
+ 	CALLBACK_WITH_FAILURE(cb, -1, -1, -1, NULL,
+ 				EF_STATUS_INVALIDATED, data);
+ }
+-- =
 
-> Regards,
-> Jeevaka
-> =
+1.7.0.4
 
 
-All 11 patches have been applied, thanks.
-
-Regards,
--Denis
-
---===============8331061647386177954==--
+--===============3071128607944981847==--
 
