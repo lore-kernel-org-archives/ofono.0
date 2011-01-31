@@ -1,37 +1,40 @@
-Content-Type: multipart/mixed; boundary="===============4455350523628267681=="
+Content-Type: multipart/mixed; boundary="===============2528117617583973016=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [PATCH 0/3] EF-SPN API to sim-atom
-Date: Mon, 31 Jan 2011 08:13:29 +0200
-Message-ID: <1296454409.2204.6.camel@jsaunama-desktop>
-In-Reply-To: <1296134537-16133-1-git-send-email-jukka.saunamaki@nokia.com>
+From: Oleg Zhurakivskyy <oleg.zhurakivskyy@nokia.com>
+Subject: Re: [PATCH 6/9] oFono smsagent enhancements to permit more	flexible
+ parameter set to be dispatched.
+Date: Mon, 31 Jan 2011 10:30:41 +0200
+Message-ID: <4D467331.7060003@nokia.com>
+In-Reply-To: <1296168037.1520.163.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4455350523628267681==
+--===============2528117617583973016==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello
 
-On Thu, 2011-01-27 at 15:22 +0200, Jukka Saunamaki wrote:
-> Here is an asynchronous implementation of SIM Service Provider Name (EF-S=
-PN) getter API.
-> The trick is to delay setting sim ready until spn reading is finished.
+Hello Marcel,
 
-Any comments about this? =
+On 01/28/2011 12:40 AM, ext Marcel Holtmann wrote:
 
-So, yes, it slightly delays SIM initialisation (usually SPN value should
-come from disk cache), but then netreg can use it immediately when it
-registers. =
+> After talking to Kai I have an idea what you are aiming for. I think you
+> are looking at the wrong API. You should look at the history API. Check
+> out examples/history.c. That gives you the whole set of incoming and
+> outgoing SMS and their status. It also includes the UUID for exactly the
+> propose of proper tracking and storage.
 
-Alternative is still to create an asyncronous API now that there is a
-patch for safe SIM file reading.
+Please take a look into plugins/messaging-agent.c, this API is already =
 
---Jukka
+being used in order to receive the SMS events.
 
+The smsagent.c API is just used for dispatching those events to the =
 
+registered agents.
 
---===============4455350523628267681==--
+Regards,
+Oleg
+
+--===============2528117617583973016==--
 
