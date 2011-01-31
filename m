@@ -1,130 +1,284 @@
-Content-Type: multipart/mixed; boundary="===============1480252315791289765=="
+Content-Type: multipart/mixed; boundary="===============1689576909587867854=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH v6] ifx: Adding modem selftest for Infineon modem
-Date: Mon, 31 Jan 2011 17:08:19 +0100
-Message-ID: <1296490099.1520.231.camel@aeonflux>
-In-Reply-To: <1296086884-14687-1-git-send-email-robertino.benis@intel.com>
+From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
+Subject: Re: [PATCH 3/5] sim: Implement file watching and basic refresh.
+Date: Mon, 31 Jan 2011 18:23:04 +0100
+Message-ID: <AANLkTimOvh07RL3c_3KfOJBQhv-fDjCkPU0Z8b7cJBU=@mail.gmail.com>
+In-Reply-To: <4D2E235A.5000006@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1480252315791289765==
+--===============1689576909587867854==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Robertino,
+Hi Denis,
 
-> Infineon modem selftest, during ifx_enable().
-> Two steps trigger, with timeout. In case one
-> fails, modem will not power up.
-> =
+I took me a while to get back to this, but we need to work it out...
 
-> ---
->  plugins/ifx.c |  112 ++++++++++++++++++++++++++++++++++++++++++++++++---=
-------
->  1 files changed, 95 insertions(+), 17 deletions(-)
-> =
+On 12 January 2011 22:55, Denis Kenzior <denkenz@gmail.com> wrote:
+>> +void __ofono_sim_refresh(struct ofono_sim *sim, GSList *file_list,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+ofono_bool_t full_file_change, ofono_bool_t naa_init)
+>> +{
+>> + =C2=A0 =C2=A0 GSList *l, *filel;
+>> + =C2=A0 =C2=A0 enum sim_reset_state {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 RESET_STATE_NOT_PRESENT =3D =
+OFONO_SIM_STATE_NOT_PRESENT,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 RESET_STATE_INSERTED =C2=A0 =
+=C2=A0=3D OFONO_SIM_STATE_INSERTED,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 RESET_STATE_READY =C2=A0 =C2=
+=A0 =C2=A0 =3D OFONO_SIM_STATE_READY,
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 RESET_STATE_NONE,
+>> + =C2=A0 =C2=A0 } reset_state =3D RESET_STATE_NONE;
+>> +
+>> + =C2=A0 =C2=A0 /* Flush cached content for affected files */
+>> + =C2=A0 =C2=A0 if (full_file_change)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sim_fs_cache_flush(sim->simf=
+s);
+>> + =C2=A0 =C2=A0 else
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 for (filel =3D file_list; fi=
+lel; filel =3D filel->next) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+struct stk_file *file =3D filel->data;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+int id =3D (file->file[file->len - 2] << 8) |
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 (file->file[file->len - 1] << 0);
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+sim_file_changed_flush(sim, id);
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
+>
+> Just a nitpick, but when you have such compound statements inside
+> if/while/for, could you enclose them in parentheses? =C2=A0I think that m=
+akes
+> the code a bit more readable.
+>
+> e.g.
+> if (foo)
+> else {
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0for () {
+>
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0}
+> }
 
-> diff --git a/plugins/ifx.c b/plugins/ifx.c
-> index 0d31167..39f38ab 100644
-> --- a/plugins/ifx.c
-> +++ b/plugins/ifx.c
-> @@ -72,6 +72,8 @@
->  #define GPRS3_DLC   4
->  #define AUX_DLC     5
->  =
+Ok, good point.
 
-> +#define IFX_SETUP_TIMEOUT	10
-> +
->  static char *dlc_prefixes[NUM_DLC] =3D { "Voice: ", "Net: ", "GPRS1: ",
->  					"GPRS2: ", "GPRS3: ", "Aux: " };
->  =
+>
+>> +
+>> + =C2=A0 =C2=A0 if (naa_init)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 reset_state =3D RESET_STATE_=
+INSERTED;
+>> +
+>> + =C2=A0 =C2=A0 /*
+>> + =C2=A0 =C2=A0 =C2=A0* Check if we have file change handlers for all of=
+ the affected
+>> + =C2=A0 =C2=A0 =C2=A0* files. =C2=A0If not, we will fall back to re-ini=
+tialising the
+>> + =C2=A0 =C2=A0 =C2=A0* application which ensures that all files are re-=
+read.
+>> + =C2=A0 =C2=A0 =C2=A0*/
+>> + =C2=A0 =C2=A0 for (l =3D sim->fs_watches; l; l =3D l->next) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct fs_watch *w =3D l->da=
+ta;
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (full_file_change) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+if (w->notify)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 continue;
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+if (w->reset_state < reset_state)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 reset_state =3D reset_state;
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+continue;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 for (filel =3D file_list; fi=
+lel; filel =3D filel->next) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+struct stk_file *file =3D filel->data;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+int id =3D (file->file[file->len - 2] << 8) |
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 (file->file[file->len - 1] << 0);
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+if (id !=3D w->id)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 continue;
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+if (w->notify)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 break;
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+if (w->reset_state < reset_state)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 reset_state =3D reset_state;
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+break;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
+>> + =C2=A0 =C2=A0 }
+>> +
+>> + =C2=A0 =C2=A0 /*
+>> + =C2=A0 =C2=A0 =C2=A0* Notify the subscribers of files that have change=
+d unless we
+>> + =C2=A0 =C2=A0 =C2=A0* have determined that a re-initialisation is nece=
+ssary and
+>> + =C2=A0 =C2=A0 =C2=A0* will trigger re-reading of those files anyway.
+>> + =C2=A0 =C2=A0 =C2=A0*/
+>> + =C2=A0 =C2=A0 for (l =3D sim->fs_watches; l; l =3D l->next) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct fs_watch *w =3D l->da=
+ta;
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (full_file_change) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+if (w->reset_state < reset_state)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 w->notify(w->id, w->notify_data);
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+continue;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 for (filel =3D file_list; fi=
+lel; filel =3D filel->next) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+struct stk_file *file =3D filel->data;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+int id =3D (file->file[file->len - 2] << 8) |
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 (file->file[file->len - 1] << 0);
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+if (id !=3D w->id)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 continue;
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+if (w->reset_state < reset_state)
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 w->notify(w->id, w->notify_data);
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+break;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
+>> + =C2=A0 =C2=A0 }
+>> +
+>> + =C2=A0 =C2=A0 switch (reset_state) {
+>> + =C2=A0 =C2=A0 case RESET_STATE_NOT_PRESENT:
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_sim_inserted_notify(si=
+m, FALSE);
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_sim_inserted_notify(si=
+m, TRUE);
+>
+> Are you sure we can do it this way? =C2=A0I would assume that the modem m=
+ight
+> require some time to perform its own SIM initialization and would have
+> to signal the sim_inserted itself...
 
-> @@ -89,7 +91,7 @@ struct ifx_data {
->  	guint dlc_poll_count;
->  	guint dlc_poll_source;
->  	guint dlc_init_source;
-> -	guint mux_init_timeout;
-> +	guint cmd_setup_timeout;
->  	guint frame_size;
->  	int mux_ldisc;
->  	int saved_ldisc;
-> @@ -100,6 +102,9 @@ struct ifx_data {
->  	int audio_loopback;
->  	struct ofono_sim *sim;
->  	gboolean have_sim;
-> +	gboolean rtc_gti_selftest_timeout;
-> +	gboolean dev_ver_selftest_timeout;
-> +	gboolean mux_setup_timeout;
+I assume that the modem would send the refresh command only once it
+has done all its internal housekeeping and is ready for us to re-read
+the changed files.  If not then probably the AT interface will block
+for as much time as needed?
 
-what is this for? It is not a good idea.
+>
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 break;
+>> + =C2=A0 =C2=A0 case RESET_STATE_INSERTED:
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sim_free_state(sim);
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sim->state =3D OFONO_SIM_STA=
+TE_INSERTED;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sim_initialize(sim);
+>
+> What about removing all the post_sim / online atoms? =C2=A0In theory
+> something like EFfdn could have been changed and now we're stuck in
+> fixed dialing mode. =C2=A0We should not keep the atoms around in this cas=
+e.
 
->  };
->  =
+So in the next patch I add a "watch" for every file in the SIM that we
+care about.  Every watch has a sort of "reset level", which tells
+sim.c how much of our state needs to be reinitialised, so that we
+don't reset the atoms if that is not necessary.  For example for EFust
+/ EFest we set the level to RESET_STATE_INSERTED.
 
->  static void ifx_debug(const char *str, void *user_data)
-> @@ -475,9 +480,9 @@ static void mux_setup_cb(gboolean ok, GAtResult *resu=
-lt, gpointer user_data)
->  =
+This is the case for FDN, because will be re-read EFust/EFest as a
+result of sim_initialize() and later at some point we will signal
+OFONO_SIM_STATE_READY so all the concerned atoms will take note.  It's
+not necessary to remove the atoms in this case.
 
->  	DBG("");
->  =
+>
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 break;
+>> + =C2=A0 =C2=A0 case RESET_STATE_READY:
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sim->state =3D OFONO_SIM_STA=
+TE_INSERTED;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 for (l =3D sim->state_watche=
+s->items; l; l =3D l->next) {
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+struct ofono_watchlist_item *item =3D l->data;
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+ofono_sim_state_event_cb_t notify =3D item->notify;
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+notify(sim->state, item->notify_data);
+>
+> I'm having trouble understanding the need for this for loop. =C2=A0Isn't =
+the
+> SIM already inserted?
 
-> -	if (data->mux_init_timeout > 0) {
-> -		g_source_remove(data->mux_init_timeout);
-> -		data->mux_init_timeout =3D 0;
-> +	if (data->cmd_setup_timeout > 0) {
-> +		g_source_remove(data->cmd_setup_timeout);
-> +		data->cmd_setup_timeout =3D 0;
->  	}
+I initially didn't have this loop, but I thought it might be better to
+signal "INSERTED" just before "READY", so that atoms see a *change* if
+they though that the sim was READY before.  But looking at the current
+users of the sim state watch, it makes no difference.
 
-Why do you bother renaming this. Stick with mux_init_timeout.
- =
+>
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
+>> +
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 sim_set_ready(sim);
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 break;
+>> + =C2=A0 =C2=A0 case RESET_STATE_NONE:
+>> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 break;
+>> + =C2=A0 =C2=A0 }
+>> +}
+>
+> Overall it seems like there are two categories of files that we should
+> worry about:
+>
+> - Those handled inside sim.c that affect sim initialization:
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0- EFust, EFest, EFsst
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0- EFbdn, EFfdn
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0- EFphase, EFcphs_info (these ones are really =
+unlikely outside of a
+> full sim reset)
+> =C2=A0 =C2=A0 =C2=A0 =C2=A0- EFad (This one is unlikely as it would affec=
+t the IMSI)
+> - The ones that don't
+>
+> To me it sounds like we should just special case the ones affecting sim
+> initialization inside this function and use a simplified API for the rest.
 
->  	g_at_chat_unref(data->dlcs[AUX_DLC]);
-> @@ -519,26 +524,88 @@ error:
->  	ofono_modem_set_powered(modem, FALSE);
->  }
->  =
+So I think this wouldn't make the api much better because:
 
-> -static gboolean mux_timeout_cb(gpointer user_data)
-> +static gboolean cmd_setup_timeout_cb(gpointer user_data)
->  {
->  	struct ofono_modem *modem =3D user_data;
->  	struct ifx_data *data =3D ofono_modem_get_data(modem);
->  =
+* These files you listed are the majority of all files we read, so the
+"normal" users are in minority.
 
-> -	ofono_error("Timeout with multiplexer setup");
-> +	if (data->rtc_gti_selftest_timeout)
-> +		ofono_error("ERROR:IFX Selftest"
-> +			"at(a)rtc:rtc_gti_test_verify_32khz()-TIMEOUT");
-> +	else if (data->dev_ver_selftest_timeout)
-> +		ofono_error("ERROR:IFX Selftest"
-> +			"at(a)vers:device_version_id()-TIMEOUT");
-> +	else if (data->mux_setup_timeout)
-> +		ofono_error("ERROR:IFX Mux setup-TIMEOUT");
+* The only simplification I see would be removal of one parameter in
+add_file_watch_call
 
-I really thought that we cleared on how to do this. This is utterly
-complex and unneeded.
+int ofono_sim_add_file_watch(struct ofono_sim *sim, int id,
+                       enum ofono_sim_state reset_state,
+                       ofono_sim_file_notify_t notify, void *userdata);
 
-So GAtChat has a builtin queue. And new commands will only be send after
-the other has been processed. You can easily cancel pending commands
-from a callback these days.
+or are you thinking about a different simplifaction?
 
-So you can just call g_at_chat_send() three times initially and then be
-done with it. If any of these fail, you just cancel all pending commands
-and fail the init. That simple.
+Best regards
 
-There is no need for this complexity at all. Please re-work this patch
-as I described in the other review. It should be a really simple patch
-actually.
-
-Regards
-
-Marcel
-
-
-
---===============1480252315791289765==--
+--===============1689576909587867854==--
 
