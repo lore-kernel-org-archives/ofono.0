@@ -1,114 +1,89 @@
-Content-Type: multipart/mixed; boundary="===============8233361734431910267=="
+Content-Type: multipart/mixed; boundary="===============5305685408342289048=="
 MIME-Version: 1.0
-From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC] voice call API changes (proposal)
-Date: Mon, 31 Jan 2011 13:56:17 +0200
-Message-ID: <f05c513a9ca1d1a296a8e1dfc6af633e2fb058a1.1296474033.git.Andras.Domokos@nokia.com>
-In-Reply-To: <cover.1296474033.git.Andras.Domokos@nokia.com>
+From: Jessica Nilsson <nilsson.r.j@gmail.com>
+Subject: Re: [PATCH 1/1] gisi: Updated subscriptions and pipe handling to
+ accomodate additional isimodem versions
+Date: Mon, 31 Jan 2011 13:05:51 +0100
+Message-ID: <AANLkTinb2+-z_etsSfv7zqN0L=cMu=uQ266wmnqep0oP@mail.gmail.com>
+In-Reply-To: <201101281633.44721.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8233361734431910267==
+--===============5305685408342289048==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Here is a proposal for expanding the VoiceCallManager interface with =
+Hi R=C3=A9mi,
 
-call related Supplementary Services signals, and the VoiceCall
-interface with new properties.
+2011/1/28 R=C3=A9mi Denis-Courmont <remi.denis-courmont@nokia.com>
+>
+> It looks like you are mixing up services (PN_* from 0 to 255), with device
+> addresses (PN_DEV_* multiple of four from 0 to 252).
 
----
- doc/call-barring-api.txt     |   10 ----------
- doc/voicecall-api.txt        |   15 +++++++++++++++
- doc/voicecallmanager-api.txt |   21 +++++++++++++++++++++
- 3 files changed, 36 insertions(+), 10 deletions(-)
-
-diff --git a/doc/call-barring-api.txt b/doc/call-barring-api.txt
-index 41ae4b1..1534494 100644
---- a/doc/call-barring-api.txt
-+++ b/doc/call-barring-api.txt
-@@ -37,16 +37,6 @@ Signals		PropertyChanged(string property, variant value)
- 			Signal is emitted whenever a property has changed.
- 			The new value is passed as the signal argument.
- =
-
--		IncomingBarringInEffect()
--
--			Signal is emitted when a call is made and an
--			incoming call barring supplementary service is in use.
--
--		OutgoingBarringInEffect()
--
--			Signal is emitted when a call is made and an
--			outgoing call barring supplementary service is in use.
--
- Properties	string VoiceIncoming [readwrite]
- =
-
- 			Contains the value of the barrings for the incoming
-diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-index 047b8cb..e7276a3 100644
---- a/doc/voicecall-api.txt
-+++ b/doc/voicecall-api.txt
-@@ -145,3 +145,18 @@ Properties	string LineIdentification [readonly]
- =
-
- 			Contains the indication if the voice call is an
- 			emergency call or not.
-+
-+		boolean Forwarded
-+
-+			Contains the indication whether the voice call is a
-+			forwarded call or not.
-+
-+		boolean RemoteHold
-+
-+			Contains the indication whether the voice call has been
-+			put on hold by the remote party or not.
-+
-+		boolean Waiting
-+
-+			Contains the indication whether the outgoing voice call
-+			is waiting or not.
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 2bf9ded..bbd80db 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -144,6 +144,27 @@ Signals		CallAdded(object path, dict properties)
- 			Signal is emitted whenever a property has changed.
- 			The new value is passed as the signal argument.
- =
-
-+		UnconditionalForwardingInEffect
-+
-+			Signal is emitted when a call is made and unconditional
-+			call forwarding supplementary service is active.
-+
-+		ConditionalForwardingInEffect
-+
-+			Signal is emitted when a call is made and some of the
-+			conditional call forwarding supplementary services are
-+			active.
-+
-+		IncomingBarringInEffect()
-+
-+			Signal is emitted when a call is made and an
-+			incoming call barring supplementary service is in use.
-+
-+		OutgoingBarringInEffect()
-+
-+			Signal is emitted when a call is made and an
-+			outgoing call barring supplementary service is in use.
-+
- Properties	array{string} EmergencyNumbers [readonly]
- =
-
- 			Contains the list of emergency numbers recognized
--- =
-
-1.7.0.4
+Yes, you are right. We will change it.
 
 
---===============8233361734431910267==--
+
+>
+> > @@ -61,6 +61,7 @@ struct _GIsiModem {
+> > =C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned index;
+> > =C2=A0 =C2=A0 =C2=A0 =C2=A0 GHashTable *services;
+> > =C2=A0 =C2=A0 =C2=A0 =C2=A0 gboolean subs_source;
+> > + =C2=A0 =C2=A0 =C2=A0 GIsiVersion version;
+>
+> I can't see where this gets set?!
+
+In g_isi_modem_set_version() in plugins/u8500.c
+New file, that will hopefully be sent in a patch to the mailing list today.
+
+
+
+>
+> > +
+> > + =C2=A0 =C2=A0 =C2=A0 if (g_isi_modem_version_major(modem) =3D=3D 2 &&
+> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_isi_modem_version_=
+minor(modem) =3D=3D 5) {
+>
+> You really need to factor this check out. It's going to be a disaster when
+> there are more than two versions otherwise.
+
+Well, we really need the PNS_SUBSCRIBED_RESOURCES_EXTEND_IND because
+the other one doesn't work for us.
+
+Would a lookup function do the trick, with filling in the necessary
+values in msg depending on which version it is?
+If that is not satisfactory, could you please be a bit more specific
+in what you would like to see so we don't misunderstand?
+>
+> >
+> > @@ -363,13 +382,31 @@ static gboolean modem_subs_update(gpointer data)
+>
+>
+> That should probably be a separate patch.
+
+Yes, you are right.
+>
+> > diff --git a/gisi/pipe.c b/gisi/pipe.c
+>
+>
+> We already have this in kernel and I wonder why this needs to be duplicat=
+ed in
+> userspace now?! Furthermore pipe.c is about pipes. Pipe endpoints code be=
+longs
+> in pep.c. If you want to implement a pipe controller in gisi, then I thin=
+k it
+> really deserves a new file of its own.
+>
+
+isimodem2.5 needs this code, the kernel struct won't be applicable for
+us in the modem case.
+
+We will move the pep functions to the pep.c
+
+Best Regards,
+Jessica Nilsson
+ST-Ericsson
+
+--===============5305685408342289048==--
 
