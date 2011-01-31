@@ -1,38 +1,59 @@
-Content-Type: multipart/mixed; boundary="===============1366548912495707036=="
+Content-Type: multipart/mixed; boundary="===============8159676573304964454=="
 MIME-Version: 1.0
-From: Jessica Nilsson <nilsson.r.j@gmail.com>
-Subject: Re: [PATCH 1/1] ISI modem version detection with plugin
-Date: Mon, 31 Jan 2011 14:38:05 +0100
-Message-ID: <AANLkTinHVuv5gqVY0Tpbd2RU4uUcXnNikfvta9L0a6H5@mail.gmail.com>
-In-Reply-To: <1296480736.1520.215.camel@aeonflux>
+From: Paavo Leinonen <paavo.leinonen@tieto.com>
+Subject: Selecting multiple radio access technologies in oFono
+Date: Mon, 31 Jan 2011 15:59:14 +0200
+Message-ID: <4D46C032.60405@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1366548912495707036==
+--===============8159676573304964454==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi all,
 
-On Mon, Jan 31, 2011 at 2:32 PM, Marcel Holtmann <marcel@holtmann.org> wr=
-ote:
+Could it be possible to extend current TechnologyPreference setting in
+radio-settings-api in a way which would enable user to limit usage of =
 
->
-> you do need to split this. At least one for isimodem, one for udev
-> changes and one for the u8500 plugin.
+certain
+radio accesses? For example user could choose to limit technology usage to
+technologies like GSM and UMTS even if the LTE coverage would be available.
+Following value could be introduced to current API to enable this kind of
+selection:
+
+"gsm"      Only GSM used for radio access.
+"umts"     Only UMTS used for radio access.
+"gsm_umts" Only GSM or UMTS used for radio access.
+"lte"      Only LTE used for radio access.
+
+Other approach could be that we would rephrase existing API so that =
+
+instead of
+using "only" LTE, we would use LTE whenever available and some older =
+
+technology
+when LTE coverage is lacking. So user would select "highest" allowed radio
+access without restrictions to use only one technology which has been =
+
+selected.
+This would save us from polluting value selection with options like =
+
+"gsm_umts",
+a decision we'd be grateful when we'll run oFono on 10G modems. ;)
+
+Use case for this could be energy conservation. At least I have habit to set
+network preference to 'GSM' to conserve battery life when I know I'm =
+
+going to
+travel places where 3G coverage is not that good or I'm not going to =
+
+need it.
+
+Br,
+Paavo
 
 
-Ok,
-we will do that.
-
-We thought this was a good logical/functional split that would give
-you a good overview.
-
-Do you want them as a 1-3 series patch or should I send each separately?
-
-Best Regards,
-Jessica Nilsson
-
---===============1366548912495707036==--
+--===============8159676573304964454==--
 
