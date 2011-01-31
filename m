@@ -1,313 +1,142 @@
-Content-Type: multipart/mixed; boundary="===============3219158651132229939=="
+Content-Type: multipart/mixed; boundary="===============4845016056851964998=="
 MIME-Version: 1.0
 From: Gustavo F. Padovan <padovan@profusion.mobi>
-Subject: [PATCH 1/8] bluetooth: add server support
-Date: Mon, 31 Jan 2011 18:51:55 -0200
-Message-ID: <1296507122-10936-1-git-send-email-padovan@profusion.mobi>
+Subject: [PATCH 2/8] bluetooth: add support to register Bluetooth Service
+Date: Mon, 31 Jan 2011 18:51:56 -0200
+Message-ID: <1296507122-10936-2-git-send-email-padovan@profusion.mobi>
+In-Reply-To: <1296507122-10936-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3219158651132229939==
+--===============4845016056851964998==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Initial code to have support to listen over a RFCOMM socket for incoming
-connections.
 ---
- Makefile.am         |    1 +
- plugins/bluetooth.c |  165 +++++++++++++++++++++++++++++++++++++++++++++++=
+ plugins/bluetooth.c |   75 +++++++++++++++++++++++++++++++++++++++++++++++=
 ++++
- plugins/bluetooth.h |   11 ++++
- 3 files changed, 177 insertions(+), 0 deletions(-)
+ 1 files changed, 75 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index a38fcb9..77b1453 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -321,6 +321,7 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blueto=
-oth.h
- builtin_modules +=3D hfp
- builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
- =
-
-+builtin_sources +=3D $(btio_sources)
- builtin_cflags +=3D @BLUEZ_CFLAGS@
- builtin_libadd +=3D @BLUEZ_LIBS@
- endif
 diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
-index 93dd7a1..dcf75e6 100644
+index dcf75e6..0b5a021 100644
 --- a/plugins/bluetooth.c
 +++ b/plugins/bluetooth.c
-@@ -35,13 +35,58 @@
- =
-
- #include <ofono/dbus.h>
- =
-
-+#include <btio.h>
- #include "bluetooth.h"
- =
-
- static DBusConnection *connection;
- static GHashTable *uuid_hash =3D NULL;
- static GHashTable *adapter_address_hash =3D NULL;
-+static GSList *server_list =3D NULL;
+@@ -44,6 +44,43 @@ static GHashTable *adapter_address_hash =3D NULL;
+ static GSList *server_list =3D NULL;
  static gint bluetooth_refcount;
  =
 
-+struct server {
-+	guint16		service;
-+	gchar		*name;
-+	guint8		channel;
-+	GIOChannel	*io;
-+	char		*adapter;
-+	guint		handle;
-+	ConnectFunc	connect_cb;
-+	gpointer	user_data;
-+};
++static const gchar *dun_record =3D "<?xml version=3D\"1.0\" encoding=3D\"U=
+TF-8\" ?>	\
++<record>									\
++  <attribute id=3D\"0x0001\">							\
++    <sequence>									\
++      <uuid value=3D\"0x1103\"/>							\
++    </sequence>									\
++  </attribute>									\
++										\
++  <attribute id=3D\"0x0004\">							\
++    <sequence>									\
++      <sequence>								\
++        <uuid value=3D\"0x0100\"/>						\
++      </sequence>								\
++      <sequence>								\
++        <uuid value=3D\"0x0003\"/>						\
++        <uint8 value=3D\"%u\" name=3D\"channel\"/>					\
++      </sequence>								\
++      <sequence>								\
++        <uuid value=3D\"0x0008\"/>						\
++      </sequence>								\
++    </sequence>									\
++  </attribute>									\
++										\
++  <attribute id=3D\"0x0009\">							\
++    <sequence>									\
++      <sequence>								\
++        <uuid value=3D\"0x1103\"/>						\
++        <uint16 value=3D\"0x0100\" name=3D\"version\"/>				\
++      </sequence>								\
++    </sequence>									\
++  </attribute>									\
++										\
++  <attribute id=3D\"0x0100\">							\
++    <text value=3D\"%s\" name=3D\"name\"/>						\
++  </attribute>									\
++</record>";
 +
-+typedef struct {
-+	guint8 b[6];
-+} __attribute__((packed)) bdaddr_t;
-+
-+static void baswap(bdaddr_t *dst, const bdaddr_t *src)
-+{
-+	register unsigned char *d =3D (unsigned char *) dst;
-+	register const unsigned char *s =3D (const unsigned char *) src;
-+	register int i;
-+
-+	for (i =3D 0; i < 6; i++)
-+		d[i] =3D s[5-i];
-+}
-+
-+static int str2ba(const char *str, bdaddr_t *ba)
-+{
-+	guint8 b[6];
-+	const char *ptr =3D str;
-+	int i;
-+
-+	for (i =3D 0; i < 6; i++) {
-+		b[i] =3D (guint8) strtol(ptr, NULL, 16);
-+		if (i !=3D 5 && !(ptr =3D strchr(ptr, ':')))
-+			ptr =3D ":00:00:00:00:00";
-+		ptr++;
-+	}
-+
-+	baswap(ba, (bdaddr_t *) b);
-+
-+	return 0;
-+}
-+
- void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
- 				char *buf, int size)
- {
-@@ -371,6 +416,70 @@ static gboolean property_changed(DBusConnection *conne=
-ction, DBusMessage *msg,
- 	return TRUE;
+ struct server {
+ 	guint16		service;
+ 	gchar		*name;
+@@ -451,12 +488,40 @@ static void new_connection(GIOChannel *io, gpointer u=
+ser_data)
+ 	DBG("%p", server);
  }
  =
 
-+static void server_stop(gpointer data)
-+{
-+	struct server *server =3D data;
-+
-+	if (server->handle > 0) {
-+		DBusMessage *msg;
-+
-+		msg =3D dbus_message_new_method_call(BLUEZ_SERVICE,
-+						server->adapter,
-+						BLUEZ_SERVICE_INTERFACE,
-+						"RemoveRecord");
-+		dbus_message_append_args(msg, DBUS_TYPE_UINT32, &server->handle,
-+						DBUS_TYPE_INVALID);
-+		g_dbus_send_message(connection, msg);
-+
-+		server->handle =3D 0;
-+	}
-+
-+	if (server->io !=3D NULL) {
-+		g_io_channel_shutdown(server->io, TRUE, NULL);
-+		g_io_channel_unref(server->io);
-+		server->io =3D NULL;
-+	}
-+
-+	g_free(server->adapter);
-+	server->adapter =3D NULL;
-+}
-+
-+static void new_connection(GIOChannel *io, gpointer user_data)
++static void add_record_cb(DBusPendingCall *call, gpointer user_data)
 +{
 +	struct server *server =3D user_data;
++	DBusMessage *reply =3D dbus_pending_call_steal_reply(call);
++	DBusError derr;
++	guint32 handle;
 +
-+	DBG("%p", server);
-+}
++	dbus_error_init(&derr);
 +
-+static void server_start(gpointer data, gpointer user_data)
-+{
-+	struct server *server =3D data;
-+	char *addr, *path =3D user_data;
-+	bdaddr_t baddr;
-+	GError *err =3D NULL;
-+
-+	if (server->handle !=3D 0)
-+		return;
-+
-+	addr =3D g_hash_table_lookup(adapter_address_hash, path);
-+	str2ba(addr, &baddr);
-+	server->io =3D bt_io_listen(BT_IO_RFCOMM, NULL, new_connection,
-+					server, NULL, &err,
-+					BT_IO_OPT_SOURCE_BDADDR, &baddr,
-+					BT_IO_OPT_CHANNEL, server->channel,
-+					BT_IO_OPT_SEC_LEVEL, BT_IO_SEC_MEDIUM,
-+					BT_IO_OPT_INVALID);
-+	if (server->io =3D=3D NULL) {
-+		ofono_error("Bluetooth %s register failed: %s",
-+					server->name, err->message);
-+		g_error_free(err);
++	if (dbus_set_error_from_message(&derr, reply)) {
++		ofono_error("Replied with an error: %s, %s",
++					derr.name, derr.message);
++		dbus_error_free(&derr);
 +		server_stop(server);
-+		return;
++		goto done;
 +	}
 +
-+	server->adapter =3D g_strdup(path);
++	dbus_message_get_args(reply, NULL, DBUS_TYPE_UINT32, &handle,
++					DBUS_TYPE_INVALID);
++	server->handle =3D handle;
++
++	ofono_info("Registered: %s, handle: 0x%x", server->name, handle);
++
++done:
++	dbus_message_unref(reply);
 +}
 +
- static void adapter_properties_cb(DBusPendingCall *call, gpointer user_dat=
-a)
+ static void server_start(gpointer data, gpointer user_data)
  {
- 	const char *path =3D user_data;
-@@ -395,6 +504,9 @@ static void adapter_properties_cb(DBusPendingCall *call=
-, gpointer user_data)
- 	g_hash_table_insert(adapter_address_hash,
- 				g_strdup(path), g_strdup(addr));
+ 	struct server *server =3D data;
+ 	char *addr, *path =3D user_data;
+ 	bdaddr_t baddr;
+ 	GError *err =3D NULL;
++	gchar *xml;
  =
 
-+	if (server_list)
-+		g_slist_foreach(server_list, server_start, (gpointer)path);
-+
- 	for (l =3D device_list; l; l =3D l->next) {
- 		const char *device =3D l->data;
+ 	if (server->handle !=3D 0)
+ 		return;
+@@ -478,6 +543,16 @@ static void server_start(gpointer data, gpointer user_=
+data)
+ 	}
  =
 
-@@ -429,11 +541,26 @@ static gboolean adapter_removed(DBusConnection *conne=
-ction,
- 				DBusMessage *message, void *user_data)
- {
- 	const char *path;
-+	GSList *l;
- =
-
- 	if (dbus_message_get_args(message, NULL, DBUS_TYPE_OBJECT_PATH, &path,
- 				DBUS_TYPE_INVALID) =3D=3D TRUE)
- 		g_hash_table_remove(adapter_address_hash, path);
- =
-
-+	for (l =3D server_list; l; l =3D l->next) {
-+		struct server *server =3D l->data;
+ 	server->adapter =3D g_strdup(path);
 +
-+		if (!server->adapter)
-+			continue;
++	xml =3D g_markup_printf_escaped(dun_record, server->channel,
++					server->name);
 +
-+		if (!g_str_equal(path, server->adapter))
-+			continue;
-+
-+		/* Don't remove handle if the adapter has been removed */
-+		server->handle =3D 0;
-+		server_stop(server);
-+	}
-+
- 	return TRUE;
- }
- =
-
-@@ -590,5 +717,43 @@ void bluetooth_unregister_uuid(const char *uuid)
- 	bluetooth_unref();
- }
- =
-
-+struct server *bluetooth_register_server(guint16 service, char *name,
-+						guint8 channel, ConnectFunc cb,
-+						gpointer user_data)
-+{
-+	struct server *server;
-+
-+	server =3D g_try_new0(struct server, 1);
-+	if (!server)
-+		return NULL;
-+
-+	bluetooth_ref();
-+
-+	server->service =3D service;
-+	server->name =3D g_strdup(name);
-+	server->channel =3D channel;
-+	server->connect_cb =3D cb;
-+	server->user_data =3D user_data;
-+
-+	server_list =3D g_slist_prepend(server_list, server);
-+
-+	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
-+					manager_properties_cb, NULL, NULL, -1,
++	bluetooth_send_with_reply(path, BLUEZ_SERVICE_INTERFACE, "AddRecord",
++					add_record_cb, server, NULL, -1,
++					DBUS_TYPE_STRING, &xml,
 +					DBUS_TYPE_INVALID);
 +
-+	return server;
-+}
-+
-+void bluetooth_unregister_server(struct server *server)
-+{
-+	server_list =3D g_slist_remove(server_list, server);
-+
-+	server_stop(server);
-+	g_free(server->name);
-+	g_free(server);
-+
-+	bluetooth_unref();
-+}
-+
- OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
- 			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
-diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
-index 42b0d13..f6fc6a6 100644
---- a/plugins/bluetooth.h
-+++ b/plugins/bluetooth.h
-@@ -23,6 +23,7 @@
- #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
- #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
- #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
-+#define	BLUEZ_SERVICE_INTERFACE		BLUEZ_SERVICE ".Service"
++	g_free(xml);
+ }
  =
 
- #define DBUS_TIMEOUT 15
- =
-
-@@ -39,10 +40,20 @@ struct bluetooth_profile {
- 	void (*set_alias)(const char *device, const char *);
- };
- =
-
-+
-+typedef void (*ConnectFunc)(GIOChannel *io, GError *err, gpointer user_dat=
-a);
-+
-+struct server;
-+
- int bluetooth_register_uuid(const char *uuid,
- 				struct bluetooth_profile *profile);
- void bluetooth_unregister_uuid(const char *uuid);
- =
-
-+struct server *bluetooth_register_server(guint16 service, char *name,
-+						guint8 channel, ConnectFunc cb,
-+						gpointer user_data);
-+void bluetooth_unregister_server(struct server *server);
-+
- void bluetooth_create_path(const char *dev_addr, const char *adapter_addr,
- 							char *buf, int size);
- =
-
+ static void adapter_properties_cb(DBusPendingCall *call, gpointer user_dat=
+a)
 -- =
 
 1.7.4.rc3
 
 
---===============3219158651132229939==--
+--===============4845016056851964998==--
 
