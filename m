@@ -1,49 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============5447129569118073902=="
+Content-Type: multipart/mixed; boundary="===============8326256379116245858=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: Selecting multiple radio access technologies in oFono
-Date: Mon, 31 Jan 2011 16:08:05 +0200
-Message-ID: <201101311608.05402.remi.denis-courmont@nokia.com>
-In-Reply-To: <4D46C032.60405@tieto.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH 1/1] ISI modem version detection with plugin
+Date: Mon, 31 Jan 2011 15:10:27 +0100
+Message-ID: <1296483027.1520.216.camel@aeonflux>
+In-Reply-To: <AANLkTinHVuv5gqVY0Tpbd2RU4uUcXnNikfvta9L0a6H5@mail.gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5447129569118073902==
+--===============8326256379116245858==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Monday 31 January 2011 15:59:14 ext Paavo Leinonen, you wrote:
-> Hi all,
+Hi Jessica,
+
+> > you do need to split this. At least one for isimodem, one for udev
+> > changes and one for the u8500 plugin.
 > =
 
-> Could it be possible to extend current TechnologyPreference setting in
-> radio-settings-api in a way which would enable user to limit usage of
-> certain radio accesses?
-
-> For example user could choose to limit technology usage to
-> technologies like GSM and UMTS even if the LTE coverage would be availabl=
-e.
-> Following value could be introduced to current API to enable this kind of
-> selection:
 > =
 
-> "gsm"      Only GSM used for radio access.
-> "umts"     Only UMTS used for radio access.
-> "gsm_umts" Only GSM or UMTS used for radio access.
-> "lte"      Only LTE used for radio access.
+> Ok,
+> we will do that.
+> =
 
-Oh my, no.
+> We thought this was a good logical/functional split that would give
+> you a good overview.
+> =
 
-If you want to control technologies one by one, use a string and a boolean.=
- If =
+> Do you want them as a 1-3 series patch or should I send each separately?
 
-you really want atomicity w.r.t. D-Bus, then make it a dictionary.
+either way is fine with me. It is really up to you.
 
--- =
+Regards
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
+Marcel
 
---===============5447129569118073902==--
+
+
+--===============8326256379116245858==--
 
