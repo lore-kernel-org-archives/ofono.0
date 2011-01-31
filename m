@@ -1,106 +1,124 @@
-Content-Type: multipart/mixed; boundary="===============3094159869164482159=="
+Content-Type: multipart/mixed; boundary="===============1480252315791289765=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] TODO: SMS Validity Period
-Date: Mon, 31 Jan 2011 16:44:38 +0100
-Message-ID: <1296488678.1520.226.camel@aeonflux>
-In-Reply-To: <1296485665.2158.85.camel@miia-desktop>
+Subject: Re: [PATCH v6] ifx: Adding modem selftest for Infineon modem
+Date: Mon, 31 Jan 2011 17:08:19 +0100
+Message-ID: <1296490099.1520.231.camel@aeonflux>
+In-Reply-To: <1296086884-14687-1-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3094159869164482159==
+--===============1480252315791289765==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Miia,
+Hi Robertino,
 
-> > and what does this all buy you? There are so many funny ideas in GSM
-> > that having nothing to do with reality anymore since the world has moved
-> > on since 1995.
-> First of all, I don't think people stopped drinking and sending stupid
-> messages after 1995. Or that no one does any personal commerce with
-> questionable means any more. Are simple needs of a normal individual
-> funny? I guess many of them are but still it always feels nice when you
-> are able to get your needs met even if for someone else your need might
-> not make sense. Not everyone wants same things.
+> Infineon modem selftest, during ifx_enable().
+> Two steps trigger, with timeout. In case one
+> fails, modem will not power up.
+> =
+
+> ---
+>  plugins/ifx.c |  112 ++++++++++++++++++++++++++++++++++++++++++++++++---=
+------
+>  1 files changed, 95 insertions(+), 17 deletions(-)
+> =
+
+> diff --git a/plugins/ifx.c b/plugins/ifx.c
+> index 0d31167..39f38ab 100644
+> --- a/plugins/ifx.c
+> +++ b/plugins/ifx.c
+> @@ -72,6 +72,8 @@
+>  #define GPRS3_DLC   4
+>  #define AUX_DLC     5
 >  =
 
-> Of course if the aim here is to do an API that already decides in the
-> lower level the options for the device manufacturers so they don't need
-> to bother themselves with business decisions, then this is the way to
-> go. Good luck with serving people-of-today who value options and freedom
-> of choice. In the end, oFono is not providing the UI, if the device
-> manufacturer does not want its users to have the option to change the
-> validity period then they can omit the feature. But if this kind of
-> features are not supported even in the oFono level, then what purpose
-> does that serve? =
+> +#define IFX_SETUP_TIMEOUT	10
+> +
+>  static char *dlc_prefixes[NUM_DLC] =3D { "Voice: ", "Net: ", "GPRS1: ",
+>  					"GPRS2: ", "GPRS3: ", "Aux: " };
+>  =
 
+> @@ -89,7 +91,7 @@ struct ifx_data {
+>  	guint dlc_poll_count;
+>  	guint dlc_poll_source;
+>  	guint dlc_init_source;
+> -	guint mux_init_timeout;
+> +	guint cmd_setup_timeout;
+>  	guint frame_size;
+>  	int mux_ldisc;
+>  	int saved_ldisc;
+> @@ -100,6 +102,9 @@ struct ifx_data {
+>  	int audio_loopback;
+>  	struct ofono_sim *sim;
+>  	gboolean have_sim;
+> +	gboolean rtc_gti_selftest_timeout;
+> +	gboolean dev_ver_selftest_timeout;
+> +	gboolean mux_setup_timeout;
 
-there is no point in supporting some dreamed up use case that you are
-making up right now. You have no control over your SMS once it leaves
-your mobile phone and got accepted by the network for submission. No
-weird option is going to make this any better.
+what is this for? It is not a good idea.
 
-There is no control if the receiver has their mobile phone on or off.
-And there is certainly no control over when the network will deliver the
-SMS.
+>  };
+>  =
 
-Same as you can not recall an email once it got delivered to the
-receivers inbox. This is all just a wet dream ;)
+>  static void ifx_debug(const char *str, void *user_data)
+> @@ -475,9 +480,9 @@ static void mux_setup_cb(gboolean ok, GAtResult *resu=
+lt, gpointer user_data)
+>  =
 
-> > This is the worst explanation ever. You might wanna talk to some user
-> > interaction experts. They will tell you that they do exactly not want
-> > this in a mobile device. It needs to self explanatory and your are not
-> > suppose to read 600 pages of manual first.
-> A user interaction expert would be clever enough hide the menu for the
-> setting when it is not supported by the network. There are so many
-> decisions that UI guys can do to make the feature self explainable. So I
-> don't think it is required to drop the features only for the reason that
-> maybe some networks don't support it. =
+>  	DBG("");
+>  =
 
+> -	if (data->mux_init_timeout > 0) {
+> -		g_source_remove(data->mux_init_timeout);
+> -		data->mux_init_timeout =3D 0;
+> +	if (data->cmd_setup_timeout > 0) {
+> +		g_source_remove(data->cmd_setup_timeout);
+> +		data->cmd_setup_timeout =3D 0;
+>  	}
 
-oFono's API is clearly about what makes sense to be exposed to the
-actual user. It was never and will never be about adding any kind of
-feature that you can dream of in the GSM world.
+Why do you bother renaming this. Stick with mux_init_timeout.
+ =
 
-Until you really make a good case why the user should be exposed to such
-an option, I don't see it.
+>  	g_at_chat_unref(data->dlcs[AUX_DLC]);
+> @@ -519,26 +524,88 @@ error:
+>  	ofono_modem_set_powered(modem, FALSE);
+>  }
+>  =
 
-So I am clearly in favor of sensible defaults here. But that is a
-different story.
+> -static gboolean mux_timeout_cb(gpointer user_data)
+> +static gboolean cmd_setup_timeout_cb(gpointer user_data)
+>  {
+>  	struct ofono_modem *modem =3D user_data;
+>  	struct ifx_data *data =3D ofono_modem_get_data(modem);
+>  =
 
-> > I feel like being back in 1995 with my good old Nokia phone where I had
-> > no clue what half of the options where doing for me ;)
-> Come on! :D Here we can go back to the fact that not everything must be =
+> -	ofono_error("Timeout with multiplexer setup");
+> +	if (data->rtc_gti_selftest_timeout)
+> +		ofono_error("ERROR:IFX Selftest"
+> +			"at(a)rtc:rtc_gti_test_verify_32khz()-TIMEOUT");
+> +	else if (data->dev_ver_selftest_timeout)
+> +		ofono_error("ERROR:IFX Selftest"
+> +			"at(a)vers:device_version_id()-TIMEOUT");
+> +	else if (data->mux_setup_timeout)
+> +		ofono_error("ERROR:IFX Mux setup-TIMEOUT");
 
-> used that is available if you feel content as you are.
+I really thought that we cleared on how to do this. This is utterly
+complex and unneeded.
 
-Actually exposing things that can not be used or the end user can not
-make sense of is a pretty bad idea.
+So GAtChat has a builtin queue. And new commands will only be send after
+the other has been processed. You can easily cancel pending commands
+from a callback these days.
 
-> > And what would be the impact here with defaulting to the networks value?
-> > It would just work fine and normally it all depends on the network
-> > anyway. You can tell it to have 24 hours, but if it only wants to hold
-> > it for 6 hours, then there is nothing you can do about. SMS is not a
-> > reliable form of communication. I am pretty sure that all the terms of
-> > service regarding SMS are phrased properly by the network operators.
-> What comes to SMS not being reliable, can you honestly say that you are =
+So you can just call g_at_chat_send() three times initially and then be
+done with it. If any of these fail, you just cancel all pending commands
+and fail the init. That simple.
 
-> working to make a better phone but the features you support are not to
-> trust? Anyway, even if the user can not do anything to the value when
-> network does not support the setting, then is that enough reason to deny
-> the option from everyone? =
-
-
-I am not following here. What is an option good for if it does not give
-anything to the user. In fact it could potentially be actually lying to
-the user since we have no control whatsoever.
-
-But hey, let me ask you this part. When did you ever changed that option
-on your smartphone the last time. Maybe my last phone that had such an
-option was the Nokia 6210 with the Bluetooth battery pack and even back
-then it did not make sense to me.
+There is no need for this complexity at all. Please re-work this patch
+as I described in the other review. It should be a really simple patch
+actually.
 
 Regards
 
@@ -108,5 +126,5 @@ Marcel
 
 
 
---===============3094159869164482159==--
+--===============1480252315791289765==--
 
