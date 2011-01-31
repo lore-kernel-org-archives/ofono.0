@@ -1,48 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============1942581441190111463=="
+Content-Type: multipart/mixed; boundary="===============0065182796899889036=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH] mbm: add radio-settings support
-Date: Mon, 31 Jan 2011 00:30:51 -0800
-Message-ID: <1296462651-14991-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 2/2] Support for pkg-config
+Date: Mon, 31 Jan 2011 10:35:00 +0200
+Message-ID: <201101311035.01012.remi.denis-courmont@nokia.com>
+In-Reply-To: <1296041243.1520.128.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1942581441190111463==
+--===============0065182796899889036==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/mbm.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+On Wednesday 26 January 2011 13:27:23 ext Marcel Holtmann, you wrote:
+> Name: @PACKAGE@
+> Description: oFono - Open Source Telephony
+> Requires: glib-2.0 dbus-1
 
-diff --git a/plugins/mbm.c b/plugins/mbm.c
-index 600b358..2ab80b4 100644
---- a/plugins/mbm.c
-+++ b/plugins/mbm.c
-@@ -44,6 +44,7 @@
- #include <ofono/ussd.h>
- #include <ofono/gprs.h>
- #include <ofono/gprs-context.h>
-+#include <ofono/radio-settings.h>
- #include <ofono/log.h>
- =
+Hmm, wasn't the goal to not leak glib through the public API? I could not f=
+ind =
 
- #include <drivers/atmodem/atutil.h>
-@@ -500,6 +501,7 @@ static void mbm_post_sim(struct ofono_modem *modem)
- 	DBG("%p", modem);
- =
+any glib type from a quick check in include/ofono/ ...
 
- 	ofono_stk_create(modem, 0, "mbmmodem", data->modem_port);
-+	ofono_radio_settings_create(modem, 0, "stemodem", data->modem_port);
- =
 
- 	ofono_sms_create(modem, 0, "atmodem", data->modem_port);
- }
+
 -- =
 
-1.7.0.4
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-
---===============1942581441190111463==--
+--===============0065182796899889036==--
 
