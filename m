@@ -1,89 +1,45 @@
-Content-Type: multipart/mixed; boundary="===============5955932308791837298=="
+Content-Type: multipart/mixed; boundary="===============0541359129313468673=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: [PATCH] Support for pkg-config
-Date: Mon, 31 Jan 2011 10:37:22 +0200
-Message-ID: <1296463042-7321-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Jussi Kangas <jussi.kangas@tieto.com>
+Subject: Re: [PATCH] plugins:ste:preparation for hotswap
+Date: Mon, 31 Jan 2011 10:45:47 +0200
+Message-ID: <1296463547.2044.7.camel@jussi-desktop>
+In-Reply-To: <1296226789.1520.182.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5955932308791837298==
+--===============0541359129313468673==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- .gitignore   |    1 +
- Makefile.am  |    3 +++
- configure.ac |    2 +-
- ofono.pc.in  |   13 +++++++++++++
- 4 files changed, 18 insertions(+), 1 deletions(-)
- create mode 100644 ofono.pc.in
 
-diff --git a/.gitignore b/.gitignore
-index 7cfb1d9..ec26af3 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -23,6 +23,7 @@ missing
- stamp-h1
- autom4te.cache
- =
+Hi Marcel,
 
-+ofono.pc
- include/ofono
- include/version.h
- src/builtin.h
-diff --git a/Makefile.am b/Makefile.am
-index e6b308b..a38fcb9 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -22,6 +22,9 @@ local_headers =3D $(foreach file,$(pkginclude_HEADERS) \
- 				$(nodist_pkginclude_HEADERS), \
- 					include/ofono/$(notdir $(file)))
- =
+On Fri, 2011-01-28 at 16:59 +0200, Marcel Holtmann wrote:
 
-+pkgconfigdir =3D $(libdir)/pkgconfig
-+pkgconfig_DATA =3D ofono.pc
-+
- =
+> for the subject just ste: is enough.
 
- if DATAFILES
- dbusconfdir =3D @DBUS_CONFDIR@
-diff --git a/configure.ac b/configure.ac
-index 6e0d9d3..1b9867c 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -222,4 +222,4 @@ fi
- AC_DEFINE_UNQUOTED(CONFIGDIR, "${configdir}",
- 			[Directory for the configuration files])
- =
+Ok.
 
--AC_OUTPUT(Makefile include/version.h src/ofono.service)
-+AC_OUTPUT(Makefile include/version.h src/ofono.service ofono.pc)
-diff --git a/ofono.pc.in b/ofono.pc.in
-new file mode 100644
-index 0000000..b4d0a77
---- /dev/null
-+++ b/ofono.pc.in
-@@ -0,0 +1,13 @@
-+prefix=3D@prefix@
-+exec_prefix=3D@exec_prefix@
-+libdir=3D@libdir@
-+includedir=3D@includedir@
-+
-+plugindir=3D${libdir}/@PACKAGE@/plugins
-+
-+Name: @PACKAGE@
-+Description: oFono - Open Source Telephony
-+Version: @VERSION@
-+Requires: glib-2.0 dbus-1
-+Cflags: -I${includedir}
-+Libs: -module -avoid-version -export-symbols-regex '@PACKAGE(a)_plugin_des=
-c'
--- =
+> I am a bit lost in how you fit this into the existing SIM pin check.
+> Maybe it would be cleaner to remove that check first. And then add a
+> patch for the SIM notification handling.
 
-1.7.1
+I don't understand this comment. Patch in original mail shows how it
+fits to simpin_check. ( Line 91 ). =
 
 
---===============5955932308791837298==--
+> Also this seems pretty much similar to what IFX does. Can we make sure
+> that it is handled similar as well?
+
+I can't. I don't have such modem. =
+
+
+Br,
+
+-Jussi
+
+
+--===============0541359129313468673==--
 
