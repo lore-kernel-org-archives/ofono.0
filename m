@@ -1,33 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============1582068012067230888=="
+Content-Type: multipart/mixed; boundary="===============7412143300378893297=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 2/2] Support for pkg-config
-Date: Mon, 31 Jan 2011 10:53:51 +0100
-Message-ID: <1296467631.1520.196.camel@aeonflux>
-In-Reply-To: <201101311035.01012.remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 0/3] EF-SPN API to sim-atom
+Date: Mon, 31 Jan 2011 10:57:26 +0100
+Message-ID: <1296467846.1520.197.camel@aeonflux>
+In-Reply-To: <1296454409.2204.6.camel@jsaunama-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1582068012067230888==
+--===============7412143300378893297==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi Jukka,
 
-> > Name: @PACKAGE@
-> > Description: oFono - Open Source Telephony
-> > Requires: glib-2.0 dbus-1
+> > Here is an asynchronous implementation of SIM Service Provider Name (EF=
+-SPN) getter API.
+> > The trick is to delay setting sim ready until spn reading is finished.
 > =
 
-> Hmm, wasn't the goal to not leak glib through the public API? I could not=
- find =
+> Any comments about this? =
 
-> any glib type from a quick check in include/ofono/ ...
+> So, yes, it slightly delays SIM initialisation (usually SPN value should
+> come from disk cache), but then netreg can use it immediately when it
+> registers. =
 
-let's face it, you will integrate with glib one way or another in your
-plugin. That we don't wanna our API to be using glib types is a
-different story.
+
+I am actually fine with this. Denis had a concern about it. Check with
+him.
 
 Regards
 
@@ -35,5 +36,5 @@ Marcel
 
 
 
---===============1582068012067230888==--
+--===============7412143300378893297==--
 
