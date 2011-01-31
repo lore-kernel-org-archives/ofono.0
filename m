@@ -1,32 +1,114 @@
-Content-Type: multipart/mixed; boundary="===============5474136584499272668=="
+Content-Type: multipart/mixed; boundary="===============8233361734431910267=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH] TODO: SMS Validity Period
-Date: Mon, 31 Jan 2011 13:23:47 +0200
-Message-ID: <AANLkTim6-DRB76Mqpvi60ja+=+7SsEGY0CyH3Xd7RRFQ@mail.gmail.com>
-In-Reply-To: <1296469912.1520.199.camel@aeonflux>
+From: Andras Domokos <Andras.Domokos@nokia.com>
+Subject: [RFC] voice call API changes (proposal)
+Date: Mon, 31 Jan 2011 13:56:17 +0200
+Message-ID: <f05c513a9ca1d1a296a8e1dfc6af633e2fb058a1.1296474033.git.Andras.Domokos@nokia.com>
+In-Reply-To: <cover.1296474033.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5474136584499272668==
+--===============8233361734431910267==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Here is a proposal for expanding the VoiceCallManager interface with =
 
-2011/1/31 Marcel Holtmann <marcel@holtmann.org>:
-> How does a normal user actually know what this means for him and the
-> network he is using? Is the network actually honoring these values at
-> all these days?
+call related Supplementary Services signals, and the VoiceCall
+interface with new properties.
 
-These are not clear to me either, so I don't see the point in exposing
-this setting over the D-Bus interface. I would, however, err on the
-side of flexibility here, and make this a configuration option in
-main.conf (once that support is available in oFono).
+---
+ doc/call-barring-api.txt     |   10 ----------
+ doc/voicecall-api.txt        |   15 +++++++++++++++
+ doc/voicecallmanager-api.txt |   21 +++++++++++++++++++++
+ 3 files changed, 36 insertions(+), 10 deletions(-)
 
-Cheers,
-Aki
+diff --git a/doc/call-barring-api.txt b/doc/call-barring-api.txt
+index 41ae4b1..1534494 100644
+--- a/doc/call-barring-api.txt
++++ b/doc/call-barring-api.txt
+@@ -37,16 +37,6 @@ Signals		PropertyChanged(string property, variant value)
+ 			Signal is emitted whenever a property has changed.
+ 			The new value is passed as the signal argument.
+ =
 
---===============5474136584499272668==--
+-		IncomingBarringInEffect()
+-
+-			Signal is emitted when a call is made and an
+-			incoming call barring supplementary service is in use.
+-
+-		OutgoingBarringInEffect()
+-
+-			Signal is emitted when a call is made and an
+-			outgoing call barring supplementary service is in use.
+-
+ Properties	string VoiceIncoming [readwrite]
+ =
+
+ 			Contains the value of the barrings for the incoming
+diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
+index 047b8cb..e7276a3 100644
+--- a/doc/voicecall-api.txt
++++ b/doc/voicecall-api.txt
+@@ -145,3 +145,18 @@ Properties	string LineIdentification [readonly]
+ =
+
+ 			Contains the indication if the voice call is an
+ 			emergency call or not.
++
++		boolean Forwarded
++
++			Contains the indication whether the voice call is a
++			forwarded call or not.
++
++		boolean RemoteHold
++
++			Contains the indication whether the voice call has been
++			put on hold by the remote party or not.
++
++		boolean Waiting
++
++			Contains the indication whether the outgoing voice call
++			is waiting or not.
+diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
+index 2bf9ded..bbd80db 100644
+--- a/doc/voicecallmanager-api.txt
++++ b/doc/voicecallmanager-api.txt
+@@ -144,6 +144,27 @@ Signals		CallAdded(object path, dict properties)
+ 			Signal is emitted whenever a property has changed.
+ 			The new value is passed as the signal argument.
+ =
+
++		UnconditionalForwardingInEffect
++
++			Signal is emitted when a call is made and unconditional
++			call forwarding supplementary service is active.
++
++		ConditionalForwardingInEffect
++
++			Signal is emitted when a call is made and some of the
++			conditional call forwarding supplementary services are
++			active.
++
++		IncomingBarringInEffect()
++
++			Signal is emitted when a call is made and an
++			incoming call barring supplementary service is in use.
++
++		OutgoingBarringInEffect()
++
++			Signal is emitted when a call is made and an
++			outgoing call barring supplementary service is in use.
++
+ Properties	array{string} EmergencyNumbers [readonly]
+ =
+
+ 			Contains the list of emergency numbers recognized
+-- =
+
+1.7.0.4
+
+
+--===============8233361734431910267==--
 
