@@ -1,40 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============8968709592236795124=="
+Content-Type: multipart/mixed; boundary="===============1582068012067230888=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] plugins:ste:preparation for hotswap
-Date: Mon, 31 Jan 2011 10:52:18 +0100
-Message-ID: <1296467538.1520.194.camel@aeonflux>
-In-Reply-To: <1296463547.2044.7.camel@jussi-desktop>
+Subject: Re: [PATCH 2/2] Support for pkg-config
+Date: Mon, 31 Jan 2011 10:53:51 +0100
+Message-ID: <1296467631.1520.196.camel@aeonflux>
+In-Reply-To: <201101311035.01012.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8968709592236795124==
+--===============1582068012067230888==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jussi,
+Hi Remi,
 
-> > I am a bit lost in how you fit this into the existing SIM pin check.
-> > Maybe it would be cleaner to remove that check first. And then add a
-> > patch for the SIM notification handling.
+> > Name: @PACKAGE@
+> > Description: oFono - Open Source Telephony
+> > Requires: glib-2.0 dbus-1
 > =
 
-> I don't understand this comment. Patch in original mail shows how it
-> fits to simpin_check. ( Line 91 ). =
+> Hmm, wasn't the goal to not leak glib through the public API? I could not=
+ find =
 
+> any glib type from a quick check in include/ofono/ ...
 
-is the simpin_check still needed after your patch?
-
-> > Also this seems pretty much similar to what IFX does. Can we make sure
-> > that it is handled similar as well?
-> =
-
-> I can't. I don't have such modem. =
-
-
-You have the source code in plugins/ifx.c to look at how we did it
-there.
+let's face it, you will integrate with glib one way or another in your
+plugin. That we don't wanna our API to be using glib types is a
+different story.
 
 Regards
 
@@ -42,5 +35,5 @@ Marcel
 
 
 
---===============8968709592236795124==--
+--===============1582068012067230888==--
 
