@@ -1,89 +1,194 @@
-Content-Type: multipart/mixed; boundary="===============5305685408342289048=="
+Content-Type: multipart/mixed; boundary="===============4528436214091436756=="
 MIME-Version: 1.0
-From: Jessica Nilsson <nilsson.r.j@gmail.com>
-Subject: Re: [PATCH 1/1] gisi: Updated subscriptions and pipe handling to
- accomodate additional isimodem versions
-Date: Mon, 31 Jan 2011 13:05:51 +0100
-Message-ID: <AANLkTinb2+-z_etsSfv7zqN0L=cMu=uQ266wmnqep0oP@mail.gmail.com>
-In-Reply-To: <201101281633.44721.remi.denis-courmont@nokia.com>
+From: Sjur =?unknown-8bit?q?Br=C3=A6ndeland?= <sjurbren@gmail.com>
+Subject: Re: [RFC] doc: Proposal for LTE/IMS API.
+Date: Mon, 31 Jan 2011 13:15:06 +0100
+Message-ID: <AANLkTi=g4Eev-MpkpPgiPTFM1NazKKTiHAGvO3_O5cHy@mail.gmail.com>
+In-Reply-To: <4D42A866.5040604@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5305685408342289048==
+--===============4528436214091436756==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi R=C3=A9mi,
+Hi Arun,
 
-2011/1/28 R=C3=A9mi Denis-Courmont <remi.denis-courmont@nokia.com>
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0string =C2=A0PrivateImsIdentity [read=
+only, optional]
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Identity used for IMS r=
+egistration.
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Available if present on=
+ the ISIM.
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0string =C2=A0PublicImsIdentity [reado=
+nly, optional]
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Identity used for IMS r=
+egistration.
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Available if present on=
+ the ISIM.
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0string =C2=A0HomeDomainName[readonly,=
+ optional]
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Identity used for IMS r=
+egistration.
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Available if present on=
+ the ISIM.
+>> =C2=A0+
 >
-> It looks like you are mixing up services (PN_* from 0 to 255), with device
-> addresses (PN_DEV_* multiple of four from 0 to 252).
+> Will these not be known to the user?
+> When does this interface becomes alive (org.ofono.ims)? post_sim or
+> post_online?
 
-Yes, you are right. We will change it.
+These are read from the ISIM, so I believe this should be available post_si=
+m.
 
-
-
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0string =C2=A0ImsToCsHandoverStatus [r=
+eadonly, optional]
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Indicate the handover p=
+rogress status during a CS
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0fallback procedure. Thi=
+s property will only be present
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0when in LTE coverage. T=
+he possible values are:
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0"none", "started","comp=
+lete", "failure".
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Related AT URC: +CIREP
+>> =C2=A0+
 >
-> > @@ -61,6 +61,7 @@ struct _GIsiModem {
-> > =C2=A0 =C2=A0 =C2=A0 =C2=A0 unsigned index;
-> > =C2=A0 =C2=A0 =C2=A0 =C2=A0 GHashTable *services;
-> > =C2=A0 =C2=A0 =C2=A0 =C2=A0 gboolean subs_source;
-> > + =C2=A0 =C2=A0 =C2=A0 GIsiVersion version;
+> Again which specification details these AT commands?. Do we need a proper=
+ty
+> like this to show the CSFB?
+
+ImsToCsHandoverStatus is the progress notification of the actual
+handover from LTE to CS,
+I believe this information will be needed for setting up the CMT
+device (CS Audio) and
+knowing when to switch from IMS Audio to CS Audio streams.
+
+> why can't we...
 >
-> I can't see where this gets set?!
-
-In g_isi_modem_set_version() in plugins/u8500.c
-New file, that will hopefully be sent in a patch to the mailing list today.
-
-
-
+> while in LTE:
+> =C2=A0 =C2=A0oFono has network registration, connection manager, SIM and =
+LTE
+> =C2=A0 =C2=A0specific interfaces
 >
-> > +
-> > + =C2=A0 =C2=A0 =C2=A0 if (g_isi_modem_version_major(modem) =3D=3D 2 &&
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 g_isi_modem_version_=
-minor(modem) =3D=3D 5) {
->
-> You really need to factor this check out. It's going to be a disaster when
-> there are more than two versions otherwise.
+> while in CSFB :
+> =C2=A0 =C2=A0oFono has all other interfaces too.
 
-Well, we really need the PNS_SUBSCRIBED_RESOURCES_EXTEND_IND because
-the other one doesn't work for us.
+Yes, agree.
+CSFB will look similar to the case where you loose your LTE coverage
+and move to WCDMA/GSM. You will have the same oFono APIs available
+in both cases, regardless of how the change was initiated.
 
-Would a lookup function do the trick, with filling in the necessary
-values in msg depending on which version it is?
-If that is not satisfactory, could you please be a bit more specific
-in what you would like to see so we don't misunderstand?
->
-> >
-> > @@ -363,13 +382,31 @@ static gboolean modem_subs_update(gpointer data)
->
->
-> That should probably be a separate patch.
 
-Yes, you are right.
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0array{dict,array{dict}} QosFilters [r=
+eadonly, optional]
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Information about the Q=
+oSes and associated Packet
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Filters for the Default=
+ PDN and it's dedicated bearers.
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0It is organized as a li=
+st of QoS definitions with
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0a list of corresponding=
+ packet filters.
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0uint8 QoS=
+ClassIdentifier [readonly]
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0The numeric parameter that specifying
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0the class of QoS. (3GPP TS 23.203 [85])
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A00 =C2=A0 =C2=A0QCI is selected by network
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0[1 =E2=80=93 4] guaranteed bit rate
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0[5 =E2=80=93 9] non-guaranteed bit rate
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0uint16 Up=
+linkRate [readonly, optional]
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Guaranteed Uplink Bit-rate in kb/sec.
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0uint16 Do=
+wnlinkRate [readonly, optional]
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Guaranteed Downlink Bit-rate in kb/sec.
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0For each QoS defined th=
+ere may be a list of Packet
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0Filters. Each Packet Fi=
+lter is a dictionary defining
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0the filter. An empty Pa=
+cket Filter represents the
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0"default" filter (Defau=
+lt PDN connection).
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0string Di=
+rection [readonly]
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0"uplink", "downlink", "bidirectional"
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0uint8 Pro=
+tocolNumber [readonly]
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0IP protocol number (0-256)
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0string Pe=
+erAddress [readonly]
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0The remote peer's IP address.
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0uint16 Pe=
+erPortMin [readonly]
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Remote peer's port number min. value
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0uint16 Pe=
+erPortMax [readonly]
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0Remote peer's port number max. value
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0uint16 Lo=
+calePortMin [readonly]
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0The local port number min. value
+>> =C2=A0+
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0uint16 Lo=
+calPortMax [readonly]
+>> =C2=A0+ =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0The local port number max. value
+>>
 >
-> > diff --git a/gisi/pipe.c b/gisi/pipe.c
+> Do we really need this?. What is the real usage of this information?.
+> In 27.007 there are few AT commands for TFT, and are not used, may be
+> because no body (operator) supports this.
 >
->
-> We already have this in kernel and I wonder why this needs to be duplicat=
-ed in
-> userspace now?! Furthermore pipe.c is about pipes. Pipe endpoints code be=
-longs
-> in pep.c. If you want to implement a pipe controller in gisi, then I thin=
-k it
-> really deserves a new file of its own.
->
+> In LTE will this be going to be different?
 
-isimodem2.5 needs this code, the kernel struct won't be applicable for
-us in the modem case.
+In LTE the network will be responsible for setting up Dedicated
+Bearers (Secondary PDPs).
+And I believe the IMS application needs information about the
+TFT/QoSes when setting up a call.
 
-We will move the pep functions to the pep.c
+BTW, did you see the response from Kai earlier in this mail thread?
+[kai.vehmanen(a)nokia.com wrote:]
+>this is used e.g. for SDP preconditions mechanism used in IMS:
+>http://www.faqs.org/rfcs/rfc3312.html
+>The QoS is signalled on a per port/media basis, so relaying
+>the packet-filters seems like a sane approach to me (cannot really
+>say the same about 3312, but that's a different thing ;P).
 
-Best Regards,
-Jessica Nilsson
-ST-Ericsson
 
---===============5305685408342289048==--
+Regards,
+Sjur
+
+--===============4528436214091436756==--
 
