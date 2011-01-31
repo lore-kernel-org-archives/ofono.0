@@ -1,28 +1,38 @@
-Content-Type: multipart/mixed; boundary="===============3071880687459020577=="
+Content-Type: multipart/mixed; boundary="===============8636761794655320405=="
 MIME-Version: 1.0
 From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] Support for pkg-config
-Date: Mon, 31 Jan 2011 10:46:29 +0100
-Message-ID: <1296467189.1520.188.camel@aeonflux>
-In-Reply-To: <1296463042-7321-1-git-send-email-remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH] TODO: SMS Validity Period
+Date: Mon, 31 Jan 2011 10:47:46 +0100
+Message-ID: <1296467266.1520.189.camel@aeonflux>
+In-Reply-To: <1296464461-4287-1-git-send-email-miia.leinonen@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3071880687459020577==
+--===============8636761794655320405==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
+Hi Miia,
 
->  .gitignore   |    1 +
->  Makefile.am  |    3 +++
->  configure.ac |    2 +-
->  ofono.pc.in  |   13 +++++++++++++
->  4 files changed, 18 insertions(+), 1 deletions(-)
->  create mode 100644 ofono.pc.in
+>  TODO |   11 +++++++++++
+>  1 files changed, 11 insertions(+), 0 deletions(-)
+> =
 
-patch has been applied.
+> diff --git a/TODO b/TODO
+> index 3e8c91b..c27cec9 100644
+> --- a/TODO
+> +++ b/TODO
+> @@ -53,6 +53,17 @@ SMS
+>    Priority: Low
+>    Complexity: C2
+>  =
+
+> +- Add support for setting the SMS Validity Period (3GPP 23.040). Current=
+ly the
+> +  value is hard coded as 24 hours.
+
+didn't we actually change this to be the maximum value?
 
 Regards
 
@@ -30,5 +40,5 @@ Marcel
 
 
 
---===============3071880687459020577==--
+--===============8636761794655320405==--
 
