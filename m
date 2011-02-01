@@ -1,44 +1,42 @@
-Content-Type: multipart/mixed; boundary="===============6369503698002609408=="
+Content-Type: multipart/mixed; boundary="===============5574354766967372403=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 1/2] atmodem: convert dst from hours to seconds
-Date: Tue, 01 Feb 2011 13:44:04 +0200
-Message-ID: <1296560645-19062-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 2/2] isimodem: convert dst from hours to seconds
+Date: Tue, 01 Feb 2011 13:44:05 +0200
+Message-ID: <1296560645-19062-3-git-send-email-jeevaka.badrappan@elektrobit.com>
 In-Reply-To: <1296560645-19062-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6369503698002609408==
+--===============5574354766967372403==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/atmodem/network-registration.c |    2 +-
+ drivers/isimodem/network-registration.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
-rk-registration.c
-index 4913611..3df72af 100644
---- a/drivers/atmodem/network-registration.c
-+++ b/drivers/atmodem/network-registration.c
-@@ -741,7 +741,7 @@ static void ifx_ctzdst_notify(GAtResult *result, gpoint=
-er user_data)
+diff --git a/drivers/isimodem/network-registration.c b/drivers/isimodem/net=
+work-registration.c
+index 6518968..8711670 100644
+--- a/drivers/isimodem/network-registration.c
++++ b/drivers/isimodem/network-registration.c
+@@ -704,7 +704,7 @@ static gboolean parse_nettime(GIsiSubBlockIter *iter,
+ 	if (time->utc & 0x80)
+ 		info->utcoff *=3D -1;
  =
 
- 	DBG("dst %d", dst);
- =
-
--	nd->time.dst =3D dst;
-+	nd->time.dst =3D dst * 60 * 60;
- =
-
- 	ofono_netreg_time_notify(netreg, &nd->time);
+-	info->dst =3D time->dst !=3D NET_INVALID_TIME ? time->dst : -1;
++	info->dst =3D time->dst !=3D NET_INVALID_TIME ? time->dst * 60 * 60 : -1;
+ 	return TRUE;
  }
+ =
+
 -- =
 
 1.7.0.4
 
 
---===============6369503698002609408==--
+--===============5574354766967372403==--
 
