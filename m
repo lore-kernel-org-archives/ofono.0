@@ -1,53 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============3954483310197234856=="
+Content-Type: multipart/mixed; boundary="===============8259909238987592930=="
 MIME-Version: 1.0
-From: Essi Vehmersalo <essi.vehmersalo@nokia.com>
-Subject: [PATCH] Phonesim HACKING update to refer to phonesim.conf
-Date: Tue, 01 Feb 2011 13:15:54 +0200
-Message-ID: <1296558954-4038-1-git-send-email-essi.vehmersalo@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 0/2] Fix issue with DST
+Date: Tue, 01 Feb 2011 13:44:03 +0200
+Message-ID: <1296560645-19062-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3954483310197234856==
+--===============8259909238987592930==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- HACKING |   10 +++++-----
- 1 files changed, 5 insertions(+), 5 deletions(-)
+Hi,
 
-diff --git a/HACKING b/HACKING
-index 8316ed5..e9ff227 100644
---- a/HACKING
-+++ b/HACKING
-@@ -81,15 +81,15 @@ Running from within the source code repository
- When using "./configure --enable-maintainer-mode" the automake scripts will
- use the plugins directly from within the repository. This removes the need
- to use "make install" when testing "phonesim". The "bootstrap-configure"
--automatically includes this option.
-+automatically includes this option. See phonesim.conf sample configuration
-+under ofono/plugins on how to configure oFono to use phonesim.
- =
+ Following patch converts the DST from hours to seconds which is the
+expected outcome.
 
-   Run phonesim in foreground using the following options
-     # ./src/phonesim -p 12345 -gui src/default.xml
- =
+Regards,
+Jeevaka
 
--Check your modem.conf file and enable the phonesim configuration before
--executing the above command. Argument -p should be followed by the proper
--port number, in case you have changed the default "12345". Argument -gui
--will launch the gui once the modem is enabled.
-+Argument -p should be followed by the proper port number, in case you have
-+changed the default "12345". Argument -gui will launch the gui once the
-+modem is enabled.
- =
+Jeevaka Badrappan (2):
+  atmodem: convert dst from hours to seconds
+  isimodem: convert dst from hours to seconds
 
- To enable the modem, make sure the ofono daemon is running and execute the
- enable-modem script with /phonesim argument (default defined in modem.conf,
--- =
-
-1.7.1
+ drivers/atmodem/network-registration.c  |    2 +-
+ drivers/isimodem/network-registration.c |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
 
---===============3954483310197234856==--
+--===============8259909238987592930==--
 
