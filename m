@@ -1,291 +1,313 @@
-Content-Type: multipart/mixed; boundary="===============2401503003867345681=="
+Content-Type: multipart/mixed; boundary="===============0522138024836145944=="
 MIME-Version: 1.0
-From: Jessica Nilsson <jessica.j.nilsson@stericsson.com>
-Subject: [PATCH v2 3/3] isimodem: header updates for ISI2.5
-Date: Tue, 01 Feb 2011 15:13:19 +0100
-Message-ID: <ee97ff346483182ef6af8e5d023b10ffe12dd28f.1296569048.git.jessica.j.nilsson@stericsson.com>
-In-Reply-To: <cover.1296569048.git.jessica.j.nilsson@stericsson.com>
+From: Frederic Danis <frederic.danis@linux.intel.com>
+Subject: Re: [PATCH 1/8] bluetooth: add server support
+Date: Tue, 01 Feb 2011 15:17:56 +0100
+Message-ID: <4D481614.5090305@linux.intel.com>
+In-Reply-To: <1296507122-10936-1-git-send-email-padovan@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2401503003867345681==
+--===============0522138024836145944==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/isimodem/debug.c   |  132 ++++++++++++++++++++++++++++++++++++++++=
-++++
- drivers/isimodem/debug.h   |    9 +++
- drivers/isimodem/mtc.h     |   38 +++++++++++++
- drivers/isimodem/version.h |   26 +++++++++
- 4 files changed, 205 insertions(+), 0 deletions(-)
- create mode 100644 drivers/isimodem/version.h
+Hello Gustavo,
 
-diff --git a/drivers/isimodem/debug.c b/drivers/isimodem/debug.c
-index 3d667b4..8b5fa16 100644
---- a/drivers/isimodem/debug.c
-+++ b/drivers/isimodem/debug.c
-@@ -165,6 +165,138 @@ const char *mtc_modem_state_name(enum mtc_modem_state=
- value)
- 	return "MTC_<UNKNOWN>";
- }
- =
+Le 31/01/2011 21:51, Gustavo F. Padovan a =C3=A9crit :
+> Initial code to have support to listen over a RFCOMM socket for incoming
+> connections.
+> ---
+>   Makefile.am         |    1 +
+>   plugins/bluetooth.c |  165 ++++++++++++++++++++++++++++++++++++++++++++=
++++++++
+>   plugins/bluetooth.h |   11 ++++
+>   3 files changed, 177 insertions(+), 0 deletions(-)
+>
+> diff --git a/Makefile.am b/Makefile.am
+> index a38fcb9..77b1453 100644
+> --- a/Makefile.am
+> +++ b/Makefile.am
+> @@ -321,6 +321,7 @@ builtin_sources +=3D plugins/bluetooth.c plugins/blue=
+tooth.h
+>   builtin_modules +=3D hfp
+>   builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
+>
+> +builtin_sources +=3D $(btio_sources)
+>   builtin_cflags +=3D @BLUEZ_CFLAGS@
+>   builtin_libadd +=3D @BLUEZ_LIBS@
+>   endif
+> diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+> index 93dd7a1..dcf75e6 100644
+> --- a/plugins/bluetooth.c
+> +++ b/plugins/bluetooth.c
+> @@ -35,13 +35,58 @@
+>
+>   #include<ofono/dbus.h>
+>
+> +#include<btio.h>
+>   #include "bluetooth.h"
+>
+>   static DBusConnection *connection;
+>   static GHashTable *uuid_hash =3D NULL;
+>   static GHashTable *adapter_address_hash =3D NULL;
+> +static GSList *server_list =3D NULL;
+>   static gint bluetooth_refcount;
+>
+> +struct server {
+> +	guint16		service;
+> +	gchar		*name;
+> +	guint8		channel;
+> +	GIOChannel	*io;
+> +	char		*adapter;
+> +	guint		handle;
+> +	ConnectFunc	connect_cb;
+> +	gpointer	user_data;
+> +};
+> +
+> +typedef struct {
+> +	guint8 b[6];
+> +} __attribute__((packed)) bdaddr_t;
+> +
+> +static void baswap(bdaddr_t *dst, const bdaddr_t *src)
+> +{
+> +	register unsigned char *d =3D (unsigned char *) dst;
+> +	register const unsigned char *s =3D (const unsigned char *) src;
+> +	register int i;
+> +
+> +	for (i =3D 0; i<  6; i++)
+> +		d[i] =3D s[5-i];
+> +}
+> +
+> +static int str2ba(const char *str, bdaddr_t *ba)
+> +{
+> +	guint8 b[6];
+> +	const char *ptr =3D str;
+> +	int i;
+> +
+> +	for (i =3D 0; i<  6; i++) {
+> +		b[i] =3D (guint8) strtol(ptr, NULL, 16);
+> +		if (i !=3D 5&&  !(ptr =3D strchr(ptr, ':')))
+> +			ptr =3D ":00:00:00:00:00";
+> +		ptr++;
+> +	}
+> +
+> +	baswap(ba, (bdaddr_t *) b);
+> +
+> +	return 0;
+> +}
+> +
+>   void bluetooth_create_path(const char *dev_addr, const char *adapter_ad=
+dr,
+>   				char *buf, int size)
+>   {
+> @@ -371,6 +416,70 @@ static gboolean property_changed(DBusConnection *con=
+nection, DBusMessage *msg,
+>   	return TRUE;
+>   }
+>
+> +static void server_stop(gpointer data)
+> +{
+> +	struct server *server =3D data;
+> +
+> +	if (server->handle>  0) {
+> +		DBusMessage *msg;
+> +
+> +		msg =3D dbus_message_new_method_call(BLUEZ_SERVICE,
+> +						server->adapter,
+> +						BLUEZ_SERVICE_INTERFACE,
+> +						"RemoveRecord");
+> +		dbus_message_append_args(msg, DBUS_TYPE_UINT32,&server->handle,
+> +						DBUS_TYPE_INVALID);
+> +		g_dbus_send_message(connection, msg);
+> +
+> +		server->handle =3D 0;
+> +	}
+> +
+> +	if (server->io !=3D NULL) {
+> +		g_io_channel_shutdown(server->io, TRUE, NULL);
+> +		g_io_channel_unref(server->io);
+> +		server->io =3D NULL;
+> +	}
+> +
+> +	g_free(server->adapter);
+> +	server->adapter =3D NULL;
+> +}
+> +
+> +static void new_connection(GIOChannel *io, gpointer user_data)
+> +{
+> +	struct server *server =3D user_data;
+> +
+> +	DBG("%p", server);
+> +}
+> +
+> +static void server_start(gpointer data, gpointer user_data)
+> +{
+> +	struct server *server =3D data;
+> +	char *addr, *path =3D user_data;
+> +	bdaddr_t baddr;
+> +	GError *err =3D NULL;
+> +
+> +	if (server->handle !=3D 0)
+> +		return;
+> +
+> +	addr =3D g_hash_table_lookup(adapter_address_hash, path);
+> +	str2ba(addr,&baddr);
+> +	server->io =3D bt_io_listen(BT_IO_RFCOMM, NULL, new_connection,
+> +					server, NULL,&err,
+> +					BT_IO_OPT_SOURCE_BDADDR,&baddr,
+> +					BT_IO_OPT_CHANNEL, server->channel,
+> +					BT_IO_OPT_SEC_LEVEL, BT_IO_SEC_MEDIUM,
+> +					BT_IO_OPT_INVALID);
+> +	if (server->io =3D=3D NULL) {
+> +		ofono_error("Bluetooth %s register failed: %s",
+> +					server->name, err->message);
+> +		g_error_free(err);
+> +		server_stop(server);
+> +		return;
+> +	}
+> +
+> +	server->adapter =3D g_strdup(path);
+> +}
+> +
+This will not allows to start server on multiple adapters, as the test =
 
-+const char *mce_message_id_name(enum mce_message_id value)
-+{
-+	switch (value) {
-+		_(MCE_MODEM_STATE_IND);
-+		_(MCE_MODEM_STATE_QUERY_REQ);
-+		_(MCE_MODEM_STATE_QUERY_RESP);
-+		_(MCE_RF_STATE_REQ);
-+		_(MCE_RF_STATE_RESP);
-+		_(MCE_RF_STATE_IND);
-+		_(MCE_RF_STATE_QUERY_REQ);
-+		_(MCE_RF_STATE_QUERY_RESP);
-+		_(MCE_POWER_OFF_REQ);
-+		_(MCE_POWER_OFF_RESP);
-+	}
-+	return "MCE_<UNKNOWN>";
-+}
-+
-+const char *mce_modem_state_name(enum mce_modem_state value)
-+{
-+	switch (value) {
-+		_(MCE_NORMAL);
-+		_(MCE_LOCAL);
-+		_(MCE_SW_RESET);
-+		_(MCE_POWER_OFF);
-+	}
-+	return "MCE_<UNKNOWN>";
-+}
-+
-+const char *mce_status_info(enum mce_status_info value)
-+{
-+	switch (value) {
-+		_(MCE_OK);
-+		_(MCE_FAIL);
-+		_(MCE_ALREADY_ACTIVE);
-+		_(MCE_TRANSITION_ONGOING);
-+	}
-+	return "MCE_<UNKNOWN>";
-+}
-+
-+const char *mce_rf_state_name(enum mce_rf_state value)
-+{
-+	switch (value) {
-+		_(MCE_RF_OFF);
-+		_(MCE_RF_ON);
-+	}
-+	return "MCE_RF<UNKNOWN>";
-+}
-+
-+const char *uicc_status_name(uint8_t value)
-+{
-+	switch (value) {
-+		/* Request performed successfully */
-+		_(UICC_STATUS_OK);
-+		/* Error in performing the command */
-+		_(UICC_STATUS_FAIL);
-+		/* Status is Unknown */
-+		_(UICC_STATUS_UNKNOWN);
-+		/* Server is not ready */
-+		_(UICC_STATUS_NOT_READY);
-+		/* Server start up is completed */
-+		_(UICC_STATUS_START_UP_COMPLETED);
-+		/* Server is shutting down */
-+		_(UICC_STATUS_SHUTTING_DOWN);
-+		/* Smart card is not ready */
-+		_(UICC_STATUS_CARD_NOT_READY);
-+		/* Smart card is ready */
-+		_(UICC_STATUS_CARD_READY);
-+		/* Smart card is disconnected */
-+		_(UICC_STATUS_CARD_DISCONNECTED);
-+		/* Smart card is not present */
-+		_(UICC_STATUS_CARD_NOT_PRESENT);
-+		/* Smart card has been rejected */
-+		_(UICC_STATUS_CARD_REJECTED);
-+		/* Application is active */
-+		_(UICC_STATUS_APPL_ACTIVE);
-+		/* Application is not active */
-+		_(UICC_STATUS_APPL_NOT_ACTIVE);
-+		/* PIN verification used */
-+		_(UICC_STATUS_PIN_ENABLED);
-+		/* PIN verification not used */
-+		_(UICC_STATUS_PIN_DISABLED);
-+	}
-+	return "UICC_STATUS<UNKNOWN>";
-+}
-+
-+const char *uicc_subblock_name(uint8_t value)
-+{
-+	switch (value) {
-+		_(UICC_SB_SHUT_DOWN_CONFIG);
-+		_(UICC_SB_CARD_STATUS);
-+		_(UICC_SB_CARD_INFO);
-+		_(UICC_SB_CARD_REJECT_CAUSE);
-+		_(UICC_SB_CLIENT);
-+		_(UICC_SB_APPL_DATA_OBJECT);
-+		_(UICC_SB_APPLICATION);
-+		_(UICC_SB_APPL_INFO);
-+		_(UICC_SB_APPL_STATUS);
-+		_(UICC_SB_FCP);
-+		_(UICC_SB_FCI);
-+		_(UICC_SB_CHV);
-+		_(UICC_SB_PIN);
-+		_(UICC_SB_PIN_REF);
-+		_(UICC_SB_PUK);
-+		_(UICC_SB_PIN_SUBST);
-+		_(UICC_SB_PIN_INFO);
-+		_(UICC_SB_APPL_PATH);
-+		_(UICC_SB_SESSION);
-+		_(UICC_SB_FILE_DATA);
-+		_(UICC_SB_APDU);
-+		_(UICC_SB_TRANSPARENT_READ);
-+		_(UICC_SB_TRANSPARENT_UPDATE);
-+		_(UICC_SB_TRANSPARENT);
-+		_(UICC_SB_LINEAR_FIXED);
-+		_(UICC_SB_CYCLIC);
-+		_(UICC_SB_TERMINAL_PROFILE);
-+		_(UICC_SB_TERMINAL_RESPONSE);
-+		_(UICC_SB_ENVELOPE);
-+		_(UICC_SB_POLLING_SET);
-+		_(UICC_SB_REFRESH);
-+		_(UICC_SB_AID);
-+		_(UICC_SB_REFRESH_RESULT);
-+		_(UICC_SB_APDU_ACTIONS);
-+		_(UICC_SB_OBJECT_ID);
-+		_(UICC_SB_STATUS_WORD);
-+		_(UICC_SB_APDU_SAP_INFO);
-+		_(UICC_SB_ACCESS_MODE);
-+		_(UICC_SB_RESP_INFO);
-+		_(UICC_SB_APDU_SAP_CONFIG);
-+	}
-+	return "UICC_<UNKNOWN>";
-+}
-+
- const char *sms_isi_cause_name(enum sms_isi_cause value)
- {
- 	switch (value) {
-diff --git a/drivers/isimodem/debug.h b/drivers/isimodem/debug.h
-index e149c2c..db01f04 100644
---- a/drivers/isimodem/debug.h
-+++ b/drivers/isimodem/debug.h
-@@ -27,6 +27,7 @@
- #include "ss.h"
- #include "mtc.h"
- #include "sms.h"
-+#include "uicc.h"
- #include "sim.h"
- #include "info.h"
- #include "call.h"
-@@ -41,6 +42,14 @@ const char *ss_ussd_type_name(enum ss_ussd_type value);
- const char *mtc_isi_cause_name(enum mtc_isi_cause value);
- const char *mtc_message_id_name(enum mtc_message_id value);
- const char *mtc_modem_state_name(enum mtc_modem_state value);
-+const char *mce_rf_state_name(enum mce_rf_state value);
-+
-+const char *mce_message_id_name(enum mce_message_id value);
-+const char *mce_modem_state_name(enum mce_modem_state value);
-+const char *mce_status_info(enum mce_status_info value);
-+
-+const char *uicc_subblock_name(uint8_t value);
-+const char *uicc_status_name(uint8_t value);
- =
+of the SDP Record handle will prevent to bt_io_listen on other adapters.
 
- const char *sms_gsm_cause_name(enum sms_gsm_cause value);
- const char *sms_isi_cause_name(enum sms_isi_cause value);
-diff --git a/drivers/isimodem/mtc.h b/drivers/isimodem/mtc.h
-index 2db3e94..57e5040 100644
---- a/drivers/isimodem/mtc.h
-+++ b/drivers/isimodem/mtc.h
-@@ -27,9 +27,47 @@ extern "C" {
- #endif
- =
+I do not understand why you pass the adapter address, if it is omitted =
 
- #define PN_MTC				0x15
-+#define PN_MODEM_MCE			0xC2
- #define MTC_TIMEOUT			5
- #define MTC_STATE_REQ_TIMEOUT		(6 + 5)
- =
+the bt_io_listen will be done for all adapters.
 
-+enum mce_message_id {
-+	MCE_MODEM_STATE_IND =3D		0x00,
-+	MCE_MODEM_STATE_QUERY_REQ =3D     0x01,
-+	MCE_MODEM_STATE_QUERY_RESP =3D    0x02,
-+	MCE_RF_STATE_REQ =3D		0x03,
-+	MCE_RF_STATE_RESP =3D		0x04,
-+	MCE_RF_STATE_IND =3D		0x05,
-+	MCE_RF_STATE_QUERY_REQ =3D	0x06,
-+	MCE_RF_STATE_QUERY_RESP =3D       0x07,
-+	MCE_POWER_OFF_REQ =3D		0x08,
-+	MCE_POWER_OFF_RESP =3D		0x09
-+};
-+
-+enum mce_rf_state {
-+	MCE_RF_OFF =3D			0x00,
-+	MCE_RF_ON =3D			0x01
-+};
-+
-+enum mce_status_info {
-+	MCE_OK =3D			0x00,
-+	MCE_FAIL =3D			0x01,
-+	MCE_ALREADY_ACTIVE =3D		0x06,
-+	MCE_TRANSITION_ONGOING =3D	0x16
-+};
-+
-+enum mce_modem_state {
-+	MCE_NORMAL =3D			0x00,
-+	MCE_LOCAL =3D			0x01,
-+	MCE_SW_RESET =3D			0x80,
-+	MCE_POWER_OFF =3D			0x81
-+};
-+
-+enum mce_isi_action {
-+	MCE_START =3D			0x03,
-+	MCE_READY =3D			0x04
-+};
-+
- enum mtc_isi_cause {
- 	MTC_OK =3D			0x00,
- 	MTC_FAIL =3D			0x01,
-diff --git a/drivers/isimodem/version.h b/drivers/isimodem/version.h
-new file mode 100644
-index 0000000..9b0a993
---- /dev/null
-+++ b/drivers/isimodem/version.h
-@@ -0,0 +1,26 @@
-+
-+/*
-+ *
-+ *  oFono - Open Source Telephony
-+ *
-+ *  Copyright (C) ST-Ericsson SA 2011.
-+ *
-+ *  This program is free software; you can redistribute it and/or modify
-+ *  it under the terms of the GNU General Public License version 2 as
-+ *  published by the Free Software Foundation.
-+ *
-+ *  This program is distributed in the hope that it will be useful,
-+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ *  GNU General Public License for more details.
-+ *
-+ *  You should have received a copy of the GNU General Public License
-+ *  along with this program; if not, write to the Free Software
-+ *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 =
- USA
-+ *
-+ */
-+
-+enum isi_version {
-+	ISI_20 =3D 0,
-+	ISI_25 =3D 1
-+};
+>   static void adapter_properties_cb(DBusPendingCall *call, gpointer user_=
+data)
+>   {
+>   	const char *path =3D user_data;
+> @@ -395,6 +504,9 @@ static void adapter_properties_cb(DBusPendingCall *ca=
+ll, gpointer user_data)
+>   	g_hash_table_insert(adapter_address_hash,
+>   				g_strdup(path), g_strdup(addr));
+>
+> +	if (server_list)
+> +		g_slist_foreach(server_list, server_start, (gpointer)path);
+> +
+>   	for (l =3D device_list; l; l =3D l->next) {
+>   		const char *device =3D l->data;
+>
+> @@ -429,11 +541,26 @@ static gboolean adapter_removed(DBusConnection *con=
+nection,
+>   				DBusMessage *message, void *user_data)
+>   {
+>   	const char *path;
+> +	GSList *l;
+>
+>   	if (dbus_message_get_args(message, NULL, DBUS_TYPE_OBJECT_PATH,&path,
+>   				DBUS_TYPE_INVALID) =3D=3D TRUE)
+>   		g_hash_table_remove(adapter_address_hash, path);
+>
+> +	for (l =3D server_list; l; l =3D l->next) {
+> +		struct server *server =3D l->data;
+> +
+> +		if (!server->adapter)
+> +			continue;
+> +
+> +		if (!g_str_equal(path, server->adapter))
+> +			continue;
+> +
+> +		/* Don't remove handle if the adapter has been removed */
+> +		server->handle =3D 0;
+> +		server_stop(server);
+> +	}
+> +
+>   	return TRUE;
+>   }
+>
+> @@ -590,5 +717,43 @@ void bluetooth_unregister_uuid(const char *uuid)
+>   	bluetooth_unref();
+>   }
+>
+> +struct server *bluetooth_register_server(guint16 service, char *name,
+> +						guint8 channel, ConnectFunc cb,
+> +						gpointer user_data)
+> +{
+> +	struct server *server;
+> +
+> +	server =3D g_try_new0(struct server, 1);
+> +	if (!server)
+> +		return NULL;
+> +
+> +	bluetooth_ref();
+> +
+> +	server->service =3D service;
+> +	server->name =3D g_strdup(name);
+> +	server->channel =3D channel;
+> +	server->connect_cb =3D cb;
+> +	server->user_data =3D user_data;
+> +
+> +	server_list =3D g_slist_prepend(server_list, server);
+> +
+> +	bluetooth_send_with_reply("/", BLUEZ_MANAGER_INTERFACE, "GetProperties",
+> +					manager_properties_cb, NULL, NULL, -1,
+> +					DBUS_TYPE_INVALID);
+> +
+> +	return server;
+> +}
+> +
+> +void bluetooth_unregister_server(struct server *server)
+> +{
+> +	server_list =3D g_slist_remove(server_list, server);
+> +
+> +	server_stop(server);
+> +	g_free(server->name);
+> +	g_free(server);
+> +
+> +	bluetooth_unref();
+> +}
+> +
+>   OFONO_PLUGIN_DEFINE(bluetooth, "Bluetooth Utils Plugins", VERSION,
+>   			OFONO_PLUGIN_PRIORITY_DEFAULT, NULL, NULL)
+> diff --git a/plugins/bluetooth.h b/plugins/bluetooth.h
+> index 42b0d13..f6fc6a6 100644
+> --- a/plugins/bluetooth.h
+> +++ b/plugins/bluetooth.h
+> @@ -23,6 +23,7 @@
+>   #define	BLUEZ_MANAGER_INTERFACE		BLUEZ_SERVICE ".Manager"
+>   #define	BLUEZ_ADAPTER_INTERFACE		BLUEZ_SERVICE ".Adapter"
+>   #define	BLUEZ_DEVICE_INTERFACE		BLUEZ_SERVICE ".Device"
+> +#define	BLUEZ_SERVICE_INTERFACE		BLUEZ_SERVICE ".Service"
+>
+>   #define DBUS_TIMEOUT 15
+>
+> @@ -39,10 +40,20 @@ struct bluetooth_profile {
+>   	void (*set_alias)(const char *device, const char *);
+>   };
+>
+> +
+> +typedef void (*ConnectFunc)(GIOChannel *io, GError *err, gpointer user_d=
+ata);
+> +
+> +struct server;
+> +
+>   int bluetooth_register_uuid(const char *uuid,
+>   				struct bluetooth_profile *profile);
+>   void bluetooth_unregister_uuid(const char *uuid);
+>
+> +struct server *bluetooth_register_server(guint16 service, char *name,
+> +						guint8 channel, ConnectFunc cb,
+> +						gpointer user_data);
+> +void bluetooth_unregister_server(struct server *server);
+> +
+>   void bluetooth_create_path(const char *dev_addr, const char *adapter_ad=
+dr,
+>   							char *buf, int size);
+>
+
+
 -- =
 
-1.7.3.5
+Frederic Danis                            Open Source Technology Centre
+frederic.danis(a)intel.com                              Intel Corporation
 
 
---===============2401503003867345681==--
+--===============0522138024836145944==--
 
