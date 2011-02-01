@@ -1,43 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============6146488240111856499=="
+Content-Type: multipart/mixed; boundary="===============3242145837819172708=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH] atmodem: implement standard PIN retries
-Date: Tue, 01 Feb 2011 13:52:12 +0100
-Message-ID: <1296564732.1520.264.camel@aeonflux>
-In-Reply-To: <1296478100-24306-1-git-send-email-remi.denis-courmont@nokia.com>
+From: Miia Leinonen <miia.leinonen@tieto.com>
+Subject: Re: [PATCH] TODO: SMS Validity Period
+Date: Tue, 01 Feb 2011 15:01:31 +0200
+Message-ID: <1296565291.1719.58.camel@miia-desktop>
+In-Reply-To: <1296488678.1520.226.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6146488240111856499==
+--===============3242145837819172708==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Remi,
 
->  drivers/atmodem/sim.c |   48 +++++++++++++++++++++++++++++++++++++++++++=
-+++++
->  1 files changed, 48 insertions(+), 0 deletions(-)
-> =
+Hi Marcel,
 
-> diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
-> index 0938998..dfd40f8 100644
-> --- a/drivers/atmodem/sim.c
-> +++ b/drivers/atmodem/sim.c
-> @@ -57,6 +57,7 @@ static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
->  static const char *clck_prefix[] =3D { "+CLCK:", NULL };
->  static const char *huawei_cpin_prefix[] =3D { "^CPIN:", NULL };
->  static const char *xpincnt_prefix[] =3D { "+XPINCNT:", NULL };
-> +static const char *cpinr_prefixes[] =3D { "+CPINR:", "+CPINRE:", NULL };
->  static const char *none_prefix[] =3D { NULL };
+Seems that you are not going to go with me on this. I do understand your
+point that this is very marginal feature, me myself I only use it couple
+times a year (which also answers to your question) and I might be in a
+rare group. But I do appreciate the feature when I need it.
 
-let's leave it like this. Patch has been applied.
+> I am not following here. What is an option good for if it does not give
+> anything to the user. In fact it could potentially be actually lying to
+> the user since we have no control whatsoever.
+What I meant was that if the network does not support the setting, then
+it could be hidden from the UI. Then there would not be scenario that
+user has option that does nothing. I understand from the specification
+(23.040) that this should be possible to know:
 
-Regards
+"The SC shall reject any Unsupported/ Reserved values received by
+returning the =E2=80=98TP-VP not supported=E2=80=99 TP-FCS value in the Sub=
+mit SM Report
+for RP-Error."
 
-Marcel
+But when it comes to this SMS Validity Period being supported in oFono,
+I guess we are done. I asked for it and gave my arguments but you said
+no. I don't find I am able to do more to this for now at least.
+
+BR,
+Miia
+_______________________________________________
+ofono mailing list
+ofono(a)ofono.org
+http://lists.ofono.org/listinfo/ofono
 
 
 
---===============6146488240111856499==--
+--===============3242145837819172708==--
 
