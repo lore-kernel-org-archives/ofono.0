@@ -1,47 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============4626663024738193664=="
+Content-Type: multipart/mixed; boundary="===============6224614627602307073=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 7/9] ifxmodem: use ofono_call initializer
-Date: Tue, 01 Feb 2011 15:12:48 -0200
-Message-ID: <1296580370-2823-7-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 8/9] isimodem: use ofono_call initializer
+Date: Tue, 01 Feb 2011 15:12:49 -0200
+Message-ID: <1296580370-2823-8-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1296580370-2823-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4626663024738193664==
+--===============6224614627602307073==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/ifxmodem/voicecall.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
+ drivers/isimodem/voicecall.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/ifxmodem/voicecall.c b/drivers/ifxmodem/voicecall.c
-index 716652c..e7f72fc 100644
---- a/drivers/ifxmodem/voicecall.c
-+++ b/drivers/ifxmodem/voicecall.c
-@@ -87,10 +87,12 @@ static struct ofono_call *create_call(struct ofono_voic=
-ecall *vc, int type,
- 	struct ofono_call *call;
+diff --git a/drivers/isimodem/voicecall.c b/drivers/isimodem/voicecall.c
+index 6a1e582..12896f2 100644
+--- a/drivers/isimodem/voicecall.c
++++ b/drivers/isimodem/voicecall.c
+@@ -384,11 +384,11 @@ static int isi_call_status_to_clcc(const struct isi_c=
+all *call)
  =
 
- 	/* Generate a call structure for the waiting call */
--	call =3D g_try_new0(struct ofono_call, 1);
-+	call =3D g_try_new(struct ofono_call, 1);
- 	if (call =3D=3D NULL)
- 		return NULL;
+ static struct ofono_call isi_call_as_ofono_call(const struct isi_call *cal=
+l)
+ {
+-	struct ofono_call ocall =3D {
+-		call->id
+-	};
++	struct ofono_call ocall;
+ 	struct ofono_phone_number *number =3D &ocall.phone_number;
  =
 
-+	ofono_call_init(call);
-+
- 	call->id =3D ofono_voicecall_get_next_callid(vc);
- 	call->type =3D type;
- 	call->direction =3D direction;
++	ofono_call_init(&ocall);
++	ocall.id =3D call->id;
+ 	ocall.type =3D 0;	/* Voice call */
+ 	ocall.direction =3D call->mode_info & CALL_MODE_ORIGINATOR;
+ 	ocall.status =3D isi_call_status_to_clcc(call);
 -- =
 
 1.7.4
 
 
---===============4626663024738193664==--
+--===============6224614627602307073==--
 
