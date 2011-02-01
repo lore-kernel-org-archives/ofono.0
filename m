@@ -1,47 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============7399376908326638658=="
+Content-Type: multipart/mixed; boundary="===============0495706105462684222=="
 MIME-Version: 1.0
-From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
-Subject: [PATCH] ste: Add support for CBS interface
-Date: Tue, 01 Feb 2011 16:49:47 +0200
-Message-ID: <1296571787-21852-1-git-send-email-lasse.kunnasluoto@tieto.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: [PATCH 3/4] nettime: Documentation
+Date: Tue, 01 Feb 2011 16:54:50 +0200
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802DA147E@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <1296571771-26513-4-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7399376908326638658==
+--===============0495706105462684222==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-STE modems support standard AT commands in CBS
----
- plugins/ste.c |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
+Hi Antti,
 
-diff --git a/plugins/ste.c b/plugins/ste.c
-index 0b02a0d..cf8aed8 100644
---- a/plugins/ste.c
-+++ b/plugins/ste.c
-@@ -48,6 +48,7 @@
- #include <ofono/netreg.h>
- #include <ofono/phonebook.h>
- #include <ofono/sim.h>
-+#include <ofono/cbs.h>
- #include <ofono/sms.h>
- #include <ofono/ssn.h>
- #include <ofono/ussd.h>
-@@ -373,6 +374,7 @@ static void ste_post_online(struct ofono_modem *modem)
- 	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
- 	ofono_ssn_create(modem, 0, "atmodem", data->chat);
- 	ofono_call_volume_create(modem, 0, "atmodem", data->chat);
-+	ofono_cbs_create(modem, 0, "atmodem", data->chat);
- =
+ofono-bounces(a)ofono.org wrote:
+> ---
+>  doc/network-time-api.txt |   36 ++++++++++++++++++++++++++++++++++++
+>  1 files changed, 36 insertions(+), 0 deletions(-)  create
+> mode 100644 doc/network-time-api.txt
+> =
 
- 	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
- 					"atmodem", data->chat);
--- =
+> diff --git a/doc/network-time-api.txt
+> b/doc/network-time-api.txt new file mode 100644 index
+> 0000000..9133a73 --- /dev/null +++ b/doc/network-time-api.txt
+> @@ -0,0 +1,36 @@
+> +Network time hierarchy
+> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> +
+> +Interface	com.meego.NetworkTime
+> +Object path	[variable]
+> +
+> +Methods		void Notify(dict info)
+> +
+> +			Notifies the service of current time and date
+> +			as notified by the cellular network.  The info
+> +			argument contains a dictionary with the
+> +			following possible keys:
+> +
+> +			int64 UTC [optional]
+> +				Network time in seconds from epoch
+> +				normalized to device boot time.
+> +				Reveicing entity obtains current real
+> +				time by adding the value from monotonic
+> +				clock e.g.
+> +				clock_gettime(CLOCK_MONOTONIC,...).
+> +
+> +			int32 Timezone [optional]
+> +				Current timezone offset in seconds from
+> +				UTC.
+> +
+> +			int32 DST [optional]
+> +				Current daylight saving setting in
+> +				hours.
 
-1.7.0.4
+few hours back I delivered a patch for converting the DST from hours to
+seconds in ofono driver code.
+are we going to take that into consideration?
 
+Aki??
 
---===============7399376908326638658==--
+Regards,
+Jeevaka
+
+--===============0495706105462684222==--
 
