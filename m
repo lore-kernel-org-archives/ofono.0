@@ -1,52 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============4119860623992997342=="
+Content-Type: multipart/mixed; boundary="===============8351921410016905154=="
 MIME-Version: 1.0
-From: Andreas WESTIN <andreas.westin@stericsson.com>
-Subject: Re: [PATCH v2 3/3] isimodem: header updates for ISI2.5
-Date: Tue, 01 Feb 2011 17:29:41 +0100
-Message-ID: <4D4834F5.2030802@stericsson.com>
-In-Reply-To: <1296574993.1520.272.camel@aeonflux>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] atmodem: implement standard PIN retries
+Date: Tue, 01 Feb 2011 17:32:53 +0100
+Message-ID: <1296577973.1520.278.camel@aeonflux>
+In-Reply-To: <1296478100-24306-1-git-send-email-remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4119860623992997342==
+--===============8351921410016905154==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Hi Remi,
 
-On 2011-02-01 16:43, Marcel Holtmann wrote:
-> Hi Jessica,
->
->>   drivers/isimodem/debug.c   |  132 ++++++++++++++++++++++++++++++++++++=
-++++++++
->>   drivers/isimodem/debug.h   |    9 +++
->>   drivers/isimodem/mtc.h     |   38 +++++++++++++
->>   drivers/isimodem/version.h |   26 +++++++++
->>   4 files changed, 205 insertions(+), 0 deletions(-)
->>   create mode 100644 drivers/isimodem/version.h
->
-> <snip>
->
->> +enum isi_version {
->> +	ISI_20 =3D 0,
->> +	ISI_25 =3D 1
->> +};
->
-> so what is the final decision here now. ISI doing auto-detection and
-> this gets not exposed to the modem drivers or we do.
->
-> Aki, I remember you saying that this is not needed at all.
->
+>  drivers/atmodem/sim.c |   48 +++++++++++++++++++++++++++++++++++++++++++=
++++++
+>  1 files changed, 48 insertions(+), 0 deletions(-)
+> =
 
-We need to know which version of ISI we are using in the driver, =
+> diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+> index 0938998..dfd40f8 100644
+> --- a/drivers/atmodem/sim.c
+> +++ b/drivers/atmodem/sim.c
+> @@ -57,6 +57,7 @@ static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+>  static const char *clck_prefix[] =3D { "+CLCK:", NULL };
+>  static const char *huawei_cpin_prefix[] =3D { "^CPIN:", NULL };
+>  static const char *xpincnt_prefix[] =3D { "+XPINCNT:", NULL };
+> +static const char *cpinr_prefixes[] =3D { "+CPINR:", "+CPINRE:", NULL };
+>  static const char *none_prefix[] =3D { NULL };
 
-messages differ. But we are open to other suggestions.
+any chance we get a patch that also adds this to Phonesim for testing
+actually. Since it is a standard, it should be fine to add this as well
+to Phonesim.
 
-Marcel, as to your other comments we will correct them and send new patches.
+Lucas, are you willing to have a step here since you wrote the initial
+feature?
 
 Regards
-Andreas
 
---===============4119860623992997342==--
+Marcel
+
+
+
+--===============8351921410016905154==--
 
