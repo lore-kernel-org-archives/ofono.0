@@ -1,33 +1,101 @@
-Content-Type: multipart/mixed; boundary="===============6273501534886232489=="
+Content-Type: multipart/mixed; boundary="===============6915409371497537423=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [PATCH 0/2] Fix issue with DST
-Date: Tue, 01 Feb 2011 13:53:31 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802DA1420@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <201102011351.00348.remi.denis-courmont@nokia.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 1/1] atmodem: Add pin retry count support for mbm
+Date: Tue, 01 Feb 2011 04:37:52 -0800
+Message-ID: <1296563872-4920-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1296563872-4920-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6273501534886232489==
+--===============6915409371497537423==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-ofono-bounces(a)ofono.org wrote:
-> On Tuesday 01 February 2011 13:44:03 ext Jeevaka Badrappan, you wrote:
->> Hi,
->> =
+---
+ drivers/atmodem/sim.c |   46 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 46 insertions(+), 0 deletions(-)
 
->>  Following patch converts the DST from hours to seconds which is the
->> expected outcome.
-> =
+diff --git a/drivers/atmodem/sim.c b/drivers/atmodem/sim.c
+index 0938998..4a78b8d 100644
+--- a/drivers/atmodem/sim.c
++++ b/drivers/atmodem/sim.c
+@@ -57,6 +57,7 @@ static const char *cpin_prefix[] =3D { "+CPIN:", NULL };
+ static const char *clck_prefix[] =3D { "+CLCK:", NULL };
+ static const char *huawei_cpin_prefix[] =3D { "^CPIN:", NULL };
+ static const char *xpincnt_prefix[] =3D { "+XPINCNT:", NULL };
++static const char *epin_prefix[] =3D { "*EPIN:", NULL };
+ static const char *none_prefix[] =3D { NULL };
+ =
 
-> Is it? I think DST is just a boolean.
+ static void at_crsm_info_cb(gboolean ok, GAtResult *result, gpointer user_=
+data)
+@@ -554,6 +555,45 @@ error:
+ 	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
+ }
+ =
 
-Refere 3GPP TS 24.008 section 10.5.3.12
++static void at_epin_cb(gboolean ok, GAtResult *result, gpointer user_data)
++{
++	struct cb_data *cbd =3D user_data;
++	ofono_sim_pin_retries_cb_t cb =3D cbd->cb;
++	const char *final =3D g_at_result_final_response(result);
++	GAtResultIter iter;
++	struct ofono_error error;
++	int retries[OFONO_SIM_PASSWORD_INVALID];
++	size_t i;
++	static enum ofono_sim_password_type password_types[] =3D {
++		OFONO_SIM_PASSWORD_SIM_PIN,
++		OFONO_SIM_PASSWORD_SIM_PUK,
++		OFONO_SIM_PASSWORD_SIM_PIN2,
++		OFONO_SIM_PASSWORD_SIM_PUK2,
++	};
++
++	decode_at_error(&error, final);
++
++	if (!ok) {
++		cb(&error, NULL, cbd->data);
++		return;
++	}
++
++	g_at_result_iter_init(&iter, result);
++
++	if (!g_at_result_iter_next(&iter, "*EPIN:"))
++		goto error;
++
++	BUILD_PIN_RETRIES_ARRAY(password_types, ARRAY_SIZE(password_types),
++				retries);
++
++	cb(&error, retries, cbd->data);
++
++	return;
++
++error:
++	CALLBACK_WITH_FAILURE(cb, NULL, cbd->data);
++}
++
+ static void at_pin_retries_query(struct ofono_sim *sim,
+ 					ofono_sim_pin_retries_cb_t cb,
+ 					void *data)
+@@ -576,6 +616,12 @@ static void at_pin_retries_query(struct ofono_sim *sim,
+ 			return;
+ =
 
-Regards,
-Jeevaka
+ 		break;
++	case OFONO_VENDOR_MBM:
++		if (g_at_chat_send(sd->chat, "AT*EPIN?", epin_prefix,
++					at_epin_cb, cbd, g_free) > 0)
++			return;
++
++		break;
+ 	default:
+ 		break;
+ 	}
+-- =
 
---===============6273501534886232489==--
+1.7.0.4
+
+
+--===============6915409371497537423==--
 
