@@ -1,34 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============8421025021888673032=="
+Content-Type: multipart/mixed; boundary="===============4246325109287174141=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: Re: [PATCH] atmodem: implement standard PIN retries
-Date: Tue, 01 Feb 2011 14:34:30 -0200
-Message-ID: <AANLkTikLiqE36XFfkTe1ioDTOosbRCkZaAMJKjvctUjX@mail.gmail.com>
-In-Reply-To: <1296577973.1520.278.camel@aeonflux>
+Subject: [PATCH 1/9] include: define initializer for ofono_call
+Date: Tue, 01 Feb 2011 15:12:42 -0200
+Message-ID: <1296580370-2823-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8421025021888673032==
+--===============4246325109287174141==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel,
+Some fields in struct ofono_call such as cnap_validity and clip_validity
+are not correctly initialized as 0 since this means they are present. If
+driver does not implement the necessary handlers, it might send to core
+an ofono_call signalling that cnap and clip are available when they are
+actually not.
+---
+ include/types.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-On Tue, Feb 1, 2011 at 2:32 PM, Marcel Holtmann <marcel@holtmann.org> wro=
-te:
-> any chance we get a patch that also adds this to Phonesim for testing
-> actually. Since it is a standard, it should be fine to add this as well
-> to Phonesim.
->
-> Lucas, are you willing to have a step here since you wrote the initial
-> feature?
+diff --git a/include/types.h b/include/types.h
+index 0faff54..31f2682 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -116,6 +116,7 @@ struct ofono_uuid {
+ };
+ =
 
-Ok, I'm going to do it.
+ const char *ofono_uuid_to_str(const struct ofono_uuid *uuid);
++void ofono_call_init(struct ofono_call *call);
+ =
+
+ #ifdef __cplusplus
+ }
+-- =
+
+1.7.4
 
 
-regards,
-Lucas De Marchi
-
---===============8421025021888673032==--
+--===============4246325109287174141==--
 
