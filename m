@@ -1,68 +1,56 @@
-Content-Type: multipart/mixed; boundary="===============0495706105462684222=="
+Content-Type: multipart/mixed; boundary="===============0478124288159256874=="
 MIME-Version: 1.0
-From: Jeevaka.Badrappan@elektrobit.com
-Subject: RE: [PATCH 3/4] nettime: Documentation
-Date: Tue, 01 Feb 2011 16:54:50 +0200
-Message-ID: <B668883EB5DD7144ADFC248A72176EA802DA147E@fioues07.ebgroup.elektrobit.com>
-In-Reply-To: <1296571771-26513-4-git-send-email-antti.paila@nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 0/3] EF-SPN API to sim-atom
+Date: Tue, 01 Feb 2011 09:14:10 -0600
+Message-ID: <4D482342.6070205@gmail.com>
+In-Reply-To: <1296556685.1520.248.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0495706105462684222==
+--===============0478124288159256874==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antti,
+Hi Marcel,
 
-ofono-bounces(a)ofono.org wrote:
-> ---
->  doc/network-time-api.txt |   36 ++++++++++++++++++++++++++++++++++++
->  1 files changed, 36 insertions(+), 0 deletions(-)  create
-> mode 100644 doc/network-time-api.txt
+On 02/01/2011 04:38 AM, Marcel Holtmann wrote:
+> Hi Denis,
 > =
 
-> diff --git a/doc/network-time-api.txt
-> b/doc/network-time-api.txt new file mode 100644 index
-> 0000000..9133a73 --- /dev/null +++ b/doc/network-time-api.txt
-> @@ -0,0 +1,36 @@
-> +Network time hierarchy
-> +=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> +
-> +Interface	com.meego.NetworkTime
-> +Object path	[variable]
-> +
-> +Methods		void Notify(dict info)
-> +
-> +			Notifies the service of current time and date
-> +			as notified by the cellular network.  The info
-> +			argument contains a dictionary with the
-> +			following possible keys:
-> +
-> +			int64 UTC [optional]
-> +				Network time in seconds from epoch
-> +				normalized to device boot time.
-> +				Reveicing entity obtains current real
-> +				time by adding the value from monotonic
-> +				clock e.g.
-> +				clock_gettime(CLOCK_MONOTONIC,...).
-> +
-> +			int32 Timezone [optional]
-> +				Current timezone offset in seconds from
-> +				UTC.
-> +
-> +			int32 DST [optional]
-> +				Current daylight saving setting in
-> +				hours.
+>>> On Thu, 2011-01-27 at 15:22 +0200, Jukka Saunamaki wrote:
+>>>> Here is an asynchronous implementation of SIM Service Provider Name (E=
+F-SPN) getter API.
+>>>> The trick is to delay setting sim ready until spn reading is finished.
+>>>
+>>> Any comments about this? =
 
-few hours back I delivered a patch for converting the DST from hours to
-seconds in ofono driver code.
-are we going to take that into consideration?
+>>> So, yes, it slightly delays SIM initialisation (usually SPN value should
+>>> come from disk cache), but then netreg can use it immediately when it
+>>> registers. =
 
-Aki??
+>>> Alternative is still to create an asyncronous API now that there is a
+>>> patch for safe SIM file reading.
+>>
+>> So my main problem here is that you require the SPN a handful of times
+>> in the phone's lifetime, more likely once.  Yet you pay the cost of
+>> reading and delaying the initialization every time.  In my view this is
+>> not really acceptable.
+> =
+
+> does it really matter in the end? It gets read once and after that we
+> are caching it on disk anyway.
+> =
+
+
+Of course it does, while SIM is initializing everything else is blocked.
+ Once we're in sim ready you can have n atoms initializing at the same
+time.  On good hardware with proper muxing that can shave tremendous
+amount of time off your startup cost.
 
 Regards,
-Jeevaka
+-Denis
 
---===============0495706105462684222==--
+--===============0478124288159256874==--
 
