@@ -1,48 +1,57 @@
-Content-Type: multipart/mixed; boundary="===============4516062263200453111=="
+Content-Type: multipart/mixed; boundary="===============7774599304822395538=="
 MIME-Version: 1.0
-From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
-Subject: Re: [PATCH 0/3] EF-SPN API to sim-atom
-Date: Tue, 01 Feb 2011 09:25:32 +0200
-Message-ID: <1296545132.18320.12.camel@jsaunama-desktop>
-In-Reply-To: <4D4719FF.3060107@gmail.com>
+From: Essi Vehmersalo <essi.vehmersalo@nokia.com>
+Subject: [PATCH] Phonesim HACKING updated to refer to phonesim.conf instead of
+ modem.conf.
+Date: Tue, 01 Feb 2011 09:31:31 +0200
+Message-ID: <1296545491-474-1-git-send-email-essi.vehmersalo@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4516062263200453111==
+--===============7774599304822395538==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis, =
+---
+ HACKING |   10 +++++-----
+ 1 files changed, 5 insertions(+), 5 deletions(-)
 
+diff --git a/HACKING b/HACKING
+index 8316ed5..7997b06 100644
+--- a/HACKING
++++ b/HACKING
+@@ -81,15 +81,15 @@ Running from within the source code repository
+ When using "./configure --enable-maintainer-mode" the automake scripts will
+ use the plugins directly from within the repository. This removes the need
+ to use "make install" when testing "phonesim". The "bootstrap-configure"
+-automatically includes this option.
++automatically includes this option. See phonesim.conf sample configuration =
 
-On Mon, 2011-01-31 at 14:22 -0600, Denis Kenzior wrote:
-> So my main problem here is that you require the SPN a handful of times
-> in the phone's lifetime, more likely once.  Yet you pay the cost of
-> reading and delaying the initialization every time.  In my view this is
-> not really acceptable.
-> =
-
-> Perhaps a better approach would be to put the spn parser into simutil so
-> it can be shared by netreg and gprs.  Then go back to your original
-> proposal of delaying the gprs atom registration if provisioning is
-> required and SPN is needed.
-
-OK.
-
-SPN parser is basically a line =
-
-spn =3D sim_string_to_utf8(data + 1, length - 1);
-so I do not think it really needs a separate simutil routine.
-
-For reading SPN in gprs atom registration, it would make sense to make
-it with the new sim_context api. Any estimates when that will be in?
-
---Jukka
++under ofono/plugins on how to configure oFono to use phonesim.
  =
 
+   Run phonesim in foreground using the following options
+     # ./src/phonesim -p 12345 -gui src/default.xml
+ =
+
+-Check your modem.conf file and enable the phonesim configuration before
+-executing the above command. Argument -p should be followed by the proper
+-port number, in case you have changed the default "12345". Argument -gui
+-will launch the gui once the modem is enabled.
++Argument -p should be followed by the proper port number, in case you have =
+
++changed the default "12345". Argument -gui will launch the gui once the =
+
++modem is enabled.
+ =
+
+ To enable the modem, make sure the ofono daemon is running and execute the
+ enable-modem script with /phonesim argument (default defined in modem.conf,
+-- =
+
+1.7.1
 
 
-
---===============4516062263200453111==--
+--===============7774599304822395538==--
 
