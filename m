@@ -1,127 +1,53 @@
-Content-Type: multipart/mixed; boundary="===============7501808745257188681=="
+Content-Type: multipart/mixed; boundary="===============3954483310197234856=="
 MIME-Version: 1.0
-From: Kjetil ASDAL <kjetil.asdal@stericsson.com>
-Subject: RE: [RFC] doc: Proposal for LTE/IMS API.
-Date: Tue, 01 Feb 2011 12:01:14 +0100
-Message-ID: <24601CEAED63B94588D46990641D59241B7B4D855C@EXDCVYMBSTM005.EQ1STM.local>
-In-Reply-To: <AANLkTikRPOm=RG-wHKEyTBzF6tFKLpjb8hg-yYF3Jes1@mail.gmail.com>
+From: Essi Vehmersalo <essi.vehmersalo@nokia.com>
+Subject: [PATCH] Phonesim HACKING update to refer to phonesim.conf
+Date: Tue, 01 Feb 2011 13:15:54 +0200
+Message-ID: <1296558954-4038-1-git-send-email-essi.vehmersalo@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7501808745257188681==
+--===============3954483310197234856==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ HACKING |   10 +++++-----
+ 1 files changed, 5 insertions(+), 5 deletions(-)
 
-> ---------- Forwarded message ----------
-> From: =C2=A0<Jeevaka.Badrappan@elektrobit.com>
-> Date: Fri, Jan 28, 2011 at 11:22 AM
-> Subject: RE: [RFC] doc: Proposal for LTE/IMS API.
-> To: ofono(a)ofono.org
-> Cc: sjur.brandeland(a)stericsson.com
->
->
-> Hi Sjur,
->
-> ofono-bounces(a)ofono.org wrote:
-> >
-> > - SIM identities used for IMS registration such as:
-> > =C2=A0 PrivateImsIdentity, PublicImsIdentity, HomeDomainName.
->
-> Correct me if I'm wrong. Private Identity is the one used for
-> registration, authorisation, administration and billing purposes
-> whereas the Public Identity is the identity by which the other parties
-> know the subscriber. Basically, Public Identity is not used for IMS
-> registration.
+diff --git a/HACKING b/HACKING
+index 8316ed5..e9ff227 100644
+--- a/HACKING
++++ b/HACKING
+@@ -81,15 +81,15 @@ Running from within the source code repository
+ When using "./configure --enable-maintainer-mode" the automake scripts will
+ use the plugins directly from within the repository. This removes the need
+ to use "make install" when testing "phonesim". The "bootstrap-configure"
+-automatically includes this option.
++automatically includes this option. See phonesim.conf sample configuration
++under ofono/plugins on how to configure oFono to use phonesim.
+ =
 
-The Private Identity is used to allow the UE access to the IMS network (for=
-, =
+   Run phonesim in foreground using the following options
+     # ./src/phonesim -p 12345 -gui src/default.xml
+ =
 
-as you say, the purpose of registration, authorization, administration and =
+-Check your modem.conf file and enable the phonesim configuration before
+-executing the above command. Argument -p should be followed by the proper
+-port number, in case you have changed the default "12345". Argument -gui
+-will launch the gui once the modem is enabled.
++Argument -p should be followed by the proper port number, in case you have
++changed the default "12345". Argument -gui will launch the gui once the
++modem is enabled.
+ =
 
-billing). =
+ To enable the modem, make sure the ofono daemon is running and execute the
+ enable-modem script with /phonesim argument (default defined in modem.conf,
+-- =
+
+1.7.1
 
 
-The Public Identity is used to identify a specific IMS user (there may be m=
-ore =
-
-than one associated with one Private Identity). This information is conveye=
-d to =
-
-the IMS CN during registration so that the network can know what IMS users =
-that =
-
-are registered and available for service (e.g. a reception of a voice sessi=
-on).
-
-As far as I can see, the Home Network Domain Name is also part of the SIP =
-
-registration procedure.
-
->
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 string =C2=A0PrivateImsIden=
-tity [readonly, optional]
-> > +
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- Identity used for IMS registration.
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- Available if present on the ISIM.
-> > +
->
-> May I know whats the use of making it available to the user?
-> EFimpi is a mandatory file on the ISIM, so it is available always if
-> the ISIM is present in an UICC card.
->
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 string =C2=A0PublicImsIdent=
-ity [readonly, optional]
-> > +
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- Identity used for IMS registration.
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- Available if present on the ISIM.
->
-> There can be more than one public identity. And also public identity
-> is not used for IMS registration. same as EFimpi, EFimpu is a
-> mandatory file on the ISIM.
->
-> > +
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 string =C2=A0HomeDomainName=
-[readonly, optional]
-> > +
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- Identity used for IMS registration.
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- Available if present on the ISIM.
-> > +
->
-> same as EFimpi and EFimpu, EFdomain is a mandatory file.
-> Correct me if I'm wrong. Domain name just indicates the home network
-> of the subscriber.
-> Is it really used for registration?
->
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 array{string} =C2=A0PcscfAd=
-dresses[readonly]
-> > +
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- Domain Name or IP Address of the P-CSCF servers.
-> > + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
- (SIP Proxy).
->
-> If I'm correct, this information also comes from the sim file EFp-cscf
-> and it is optional.
->
-> Regards,
-> Jeevaka
-> _______________________________________________
-> ofono mailing list
-> ofono(a)ofono.org
-> http://lists.ofono.org/listinfo/ofono
->
-
-Regards,
-Kjetil
-
---===============7501808745257188681==--
+--===============3954483310197234856==--
 
