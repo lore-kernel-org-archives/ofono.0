@@ -1,27 +1,27 @@
-Content-Type: multipart/mixed; boundary="===============7656942581839374747=="
+Content-Type: multipart/mixed; boundary="===============4626663024738193664=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 5/9] hfpmodem: use ofono_call initializer
-Date: Tue, 01 Feb 2011 15:12:46 -0200
-Message-ID: <1296580370-2823-5-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 7/9] ifxmodem: use ofono_call initializer
+Date: Tue, 01 Feb 2011 15:12:48 -0200
+Message-ID: <1296580370-2823-7-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1296580370-2823-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7656942581839374747==
+--===============4626663024738193664==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- drivers/hfpmodem/voicecall.c |    4 +++-
+ drivers/ifxmodem/voicecall.c |    4 +++-
  1 files changed, 3 insertions(+), 1 deletions(-)
 
-diff --git a/drivers/hfpmodem/voicecall.c b/drivers/hfpmodem/voicecall.c
-index b9bee62..a87ddbe 100644
---- a/drivers/hfpmodem/voicecall.c
-+++ b/drivers/hfpmodem/voicecall.c
-@@ -96,10 +96,12 @@ static struct ofono_call *create_call(struct ofono_voic=
+diff --git a/drivers/ifxmodem/voicecall.c b/drivers/ifxmodem/voicecall.c
+index 716652c..e7f72fc 100644
+--- a/drivers/ifxmodem/voicecall.c
++++ b/drivers/ifxmodem/voicecall.c
+@@ -87,10 +87,12 @@ static struct ofono_call *create_call(struct ofono_voic=
 ecall *vc, int type,
  	struct ofono_call *call;
  =
@@ -43,5 +43,5 @@ ecall *vc, int type,
 1.7.4
 
 
---===============7656942581839374747==--
+--===============4626663024738193664==--
 
