@@ -1,66 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============2486420350165737927=="
+Content-Type: multipart/mixed; boundary="===============7399376908326638658=="
 MIME-Version: 1.0
-From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH 2/4] nettime: Makefile.am modification
-Date: Tue, 01 Feb 2011 16:49:29 +0200
-Message-ID: <1296571771-26513-3-git-send-email-antti.paila@nokia.com>
-In-Reply-To: <1296571771-26513-1-git-send-email-antti.paila@nokia.com>
+From: Lasse Kunnasluoto <lasse.kunnasluoto@tieto.com>
+Subject: [PATCH] ste: Add support for CBS interface
+Date: Tue, 01 Feb 2011 16:49:47 +0200
+Message-ID: <1296571787-21852-1-git-send-email-lasse.kunnasluoto@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2486420350165737927==
+--===============7399376908326638658==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
+STE modems support standard AT commands in CBS
 ---
- Makefile.am |    9 +++++++--
- 1 files changed, 7 insertions(+), 2 deletions(-)
+ plugins/ste.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/Makefile.am b/Makefile.am
-index a38fcb9..2d54025 100644
---- a/Makefile.am
-+++ b/Makefile.am
-@@ -337,6 +337,9 @@ builtin_modules +=3D example_provision
- builtin_sources +=3D examples/provision.c
- endif
+diff --git a/plugins/ste.c b/plugins/ste.c
+index 0b02a0d..cf8aed8 100644
+--- a/plugins/ste.c
++++ b/plugins/ste.c
+@@ -48,6 +48,7 @@
+ #include <ofono/netreg.h>
+ #include <ofono/phonebook.h>
+ #include <ofono/sim.h>
++#include <ofono/cbs.h>
+ #include <ofono/sms.h>
+ #include <ofono/ssn.h>
+ #include <ofono/ussd.h>
+@@ -373,6 +374,7 @@ static void ste_post_online(struct ofono_modem *modem)
+ 	ofono_call_barring_create(modem, 0, "atmodem", data->chat);
+ 	ofono_ssn_create(modem, 0, "atmodem", data->chat);
+ 	ofono_call_volume_create(modem, 0, "atmodem", data->chat);
++	ofono_cbs_create(modem, 0, "atmodem", data->chat);
  =
 
-+builtin_modules +=3D nettime
-+builtin_sources +=3D plugins/nettime.c
-+
- builtin_modules +=3D smart_messaging
- builtin_sources +=3D plugins/smart-messaging.c
- =
-
-@@ -404,7 +407,8 @@ doc_files =3D doc/overview.txt doc/ofono-paper.txt doc/=
-release-faq.txt \
- 			doc/phonebook-api.txt doc/radio-settings-api.txt \
- 			doc/sim-api.txt doc/stk-api.txt \
- 			doc/audio-settings-api.txt doc/text-telephony-api.txt \
--			doc/calypso-modem.txt doc/message-api.txt
-+			doc/calypso-modem.txt doc/message-api.txt \
-+			doc/network-time-api.txt
- =
-
- =
-
- test_scripts =3D test/backtrace \
-@@ -478,7 +482,8 @@ test_scripts =3D test/backtrace \
- 		test/cdma-dial-number \
- 		test/cdma-hangup \
- 		test/disable-call-forwarding \
--		test/list-messages
-+		test/list-messages \
-+		test/test-nettime
- =
-
- if TEST
- testdir =3D $(pkglibdir)/test
+ 	gprs =3D ofono_gprs_create(modem, OFONO_VENDOR_MBM,
+ 					"atmodem", data->chat);
 -- =
 
-1.7.1
+1.7.0.4
 
 
---===============2486420350165737927==--
+--===============7399376908326638658==--
 
