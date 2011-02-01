@@ -1,33 +1,43 @@
-Content-Type: multipart/mixed; boundary="===============5607067225712712889=="
+Content-Type: multipart/mixed; boundary="===============0975884850334101651=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: Re: [PATCH 1/9] include: define initializer for ofono_call
-Date: Tue, 01 Feb 2011 18:32:44 +0100
-Message-ID: <1296581564.1520.279.camel@aeonflux>
-In-Reply-To: <1296580370-2823-1-git-send-email-lucas.demarchi@profusion.mobi>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: [PATCH 1/5] TODO: fix misspelling
+Date: Tue, 01 Feb 2011 15:32:48 -0200
+Message-ID: <1296581572-3697-2-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1296581572-3697-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5607067225712712889==
+--===============0975884850334101651==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+---
+ TODO |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-> Some fields in struct ofono_call such as cnap_validity and clip_validity
-> are not correctly initialized as 0 since this means they are present. If
-> driver does not implement the necessary handlers, it might send to core
-> an ofono_call signalling that cnap and clip are available when they are
-> actually not.
+diff --git a/TODO b/TODO
+index 3e8c91b..1abaed8 100644
+--- a/TODO
++++ b/TODO
+@@ -255,7 +255,7 @@ Supplementary Services
+   I.e. No conditional call forwardin string should be returned while
+   unconditional call forwarding is active even if they exist.
+ =
 
-all 9 patches have been applied. Thanks.
+-  If there is an successfull attempt to activate/deactivate conditional ca=
+ll
++  If there is an successful attempt to activate/deactivate conditional call
+   forwarding while unconditional call forwarding is active the conditional=
+ cache
+   flag should cleared.
+ =
 
-Regards
+-- =
 
-Marcel
+1.7.4
 
 
-
---===============5607067225712712889==--
+--===============0975884850334101651==--
 
