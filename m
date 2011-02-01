@@ -1,69 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============1202095813827148621=="
+Content-Type: multipart/mixed; boundary="===============3654448993811471908=="
 MIME-Version: 1.0
 From: Antti Paila <antti.paila@nokia.com>
-Subject: [PATCH 3/4] nettime: Documentation
-Date: Tue, 01 Feb 2011 16:49:30 +0200
-Message-ID: <1296571771-26513-4-git-send-email-antti.paila@nokia.com>
+Subject: [PATCH 4/4] nettime: Mock Timed for testing
+Date: Tue, 01 Feb 2011 16:49:31 +0200
+Message-ID: <1296571771-26513-5-git-send-email-antti.paila@nokia.com>
 In-Reply-To: <1296571771-26513-1-git-send-email-antti.paila@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1202095813827148621==
+--===============3654448993811471908==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/network-time-api.txt |   36 ++++++++++++++++++++++++++++++++++++
- 1 files changed, 36 insertions(+), 0 deletions(-)
- create mode 100644 doc/network-time-api.txt
+ test/test-nettime |   35 +++++++++++++++++++++++++++++++++++
+ 1 files changed, 35 insertions(+), 0 deletions(-)
+ create mode 100755 test/test-nettime
 
-diff --git a/doc/network-time-api.txt b/doc/network-time-api.txt
-new file mode 100644
-index 0000000..9133a73
+diff --git a/test/test-nettime b/test/test-nettime
+new file mode 100755
+index 0000000..908a5db
 --- /dev/null
-+++ b/doc/network-time-api.txt
-@@ -0,0 +1,36 @@
-+Network time hierarchy
-+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
++++ b/test/test-nettime
+@@ -0,0 +1,35 @@
++#!/usr/bin/python
 +
-+Interface	com.meego.NetworkTime
-+Object path	[variable]
++import gobject
++import dbus
++import sys
++import time
++import dbus.service
++import dbus.mainloop.glib
 +
-+Methods		void Notify(dict info)
 +
-+			Notifies the service of current time and date
-+			as notified by the cellular network.  The info
-+			argument contains a dictionary with the
-+			following possible keys:
++class NetworkTime(dbus.service.Object):
++	def __init__(self):
++		busName =3D dbus.service.BusName('com.meego.time',
++					bus =3D dbus.SystemBus())
++		dbus.service.Object.__init__(self, busName, '/com/meego/time')
++	@dbus.service.method(dbus_interface=3D"com.meego.NetworkTime",
++					in_signature=3D"a{sv}", out_signature=3D"")
++	def Notify(self, arg):
++		print arg
++		print
++		print "Time from mobile: %d" % arg["UTC"]
++		print "DST: %d" % arg["DST"]
++		print "Timezone: %d" % arg["Timezone"]
++		print "MNC: %s" % arg["MobileNetworkCode"]
++		print "MCC: %s" % arg["MobileCountryCode"]
 +
-+			int64 UTC [optional]
-+				Network time in seconds from epoch
-+				normalized to device boot time.
-+				Reveicing entity obtains current real
-+				time by adding the value from monotonic
-+				clock e.g.
-+				clock_gettime(CLOCK_MONOTONIC,...).
++if __name__ =3D=3D '__main__':
++	dbus.mainloop.glib.DBusGMainLoop(set_as_default=3DTrue)
++	agent =3D NetworkTime()
 +
-+			int32 Timezone [optional]
-+				Current timezone offset in seconds from
-+				UTC.
++	mainloop =3D gobject.MainLoop()
++	mainloop.run()
 +
-+			int32 DST [optional]
-+				Current daylight saving setting in
-+				hours.
 +
-+			string MobileCountryCode
-+				The Mobile country code of the
-+				current network operator.
 +
-+			string MobileNetworkCode
-+				The Mobile network code of the
-+				current network operator.
 -- =
 
 1.7.1
 
 
---===============1202095813827148621==--
+--===============3654448993811471908==--
 
