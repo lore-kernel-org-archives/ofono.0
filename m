@@ -1,42 +1,31 @@
-Content-Type: multipart/mixed; boundary="===============5574354766967372403=="
+Content-Type: multipart/mixed; boundary="===============2937520082548227113=="
 MIME-Version: 1.0
-From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 2/2] isimodem: convert dst from hours to seconds
-Date: Tue, 01 Feb 2011 13:44:05 +0200
-Message-ID: <1296560645-19062-3-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
+Subject: Re: [PATCH 0/2] Fix issue with DST
+Date: Tue, 01 Feb 2011 13:51:00 +0200
+Message-ID: <201102011351.00348.remi.denis-courmont@nokia.com>
 In-Reply-To: <1296560645-19062-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5574354766967372403==
+--===============2937520082548227113==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- drivers/isimodem/network-registration.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+On Tuesday 01 February 2011 13:44:03 ext Jeevaka Badrappan, you wrote:
+> Hi,
+> =
 
-diff --git a/drivers/isimodem/network-registration.c b/drivers/isimodem/net=
-work-registration.c
-index 6518968..8711670 100644
---- a/drivers/isimodem/network-registration.c
-+++ b/drivers/isimodem/network-registration.c
-@@ -704,7 +704,7 @@ static gboolean parse_nettime(GIsiSubBlockIter *iter,
- 	if (time->utc & 0x80)
- 		info->utcoff *=3D -1;
- =
+>  Following patch converts the DST from hours to seconds which is the
+> expected outcome.
 
--	info->dst =3D time->dst !=3D NET_INVALID_TIME ? time->dst : -1;
-+	info->dst =3D time->dst !=3D NET_INVALID_TIME ? time->dst * 60 * 60 : -1;
- 	return TRUE;
- }
- =
+Is it? I think DST is just a boolean.
 
 -- =
 
-1.7.0.4
+R=C3=A9mi Denis-Courmont
+Nokia Devices R&D, Maemo Software, Helsinki
 
-
---===============5574354766967372403==--
+--===============2937520082548227113==--
 
