@@ -1,43 +1,68 @@
-Content-Type: multipart/mixed; boundary="===============2342451521502220809=="
+Content-Type: multipart/mixed; boundary="===============4815586089036163675=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH 2/9] common: implement initializer for ofono_call
-Date: Tue, 01 Feb 2011 15:12:43 -0200
-Message-ID: <1296580370-2823-2-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH 3/9] atmodem: use ofono_call initializer
+Date: Tue, 01 Feb 2011 15:12:44 -0200
+Message-ID: <1296580370-2823-3-git-send-email-lucas.demarchi@profusion.mobi>
 In-Reply-To: <1296580370-2823-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2342451521502220809==
+--===============4815586089036163675==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- src/common.c |    7 +++++++
- 1 files changed, 7 insertions(+), 0 deletions(-)
+ drivers/atmodem/atutil.c    |    4 +++-
+ drivers/atmodem/voicecall.c |    4 +++-
+ 2 files changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/src/common.c b/src/common.c
-index 8bf9dbb..f25f105 100644
---- a/src/common.c
-+++ b/src/common.c
-@@ -762,3 +762,10 @@ const char *ofono_uuid_to_str(const struct ofono_uuid =
-*uuid)
+diff --git a/drivers/atmodem/atutil.c b/drivers/atmodem/atutil.c
+index a55b3f5..01f5460 100644
+--- a/drivers/atmodem/atutil.c
++++ b/drivers/atmodem/atutil.c
+@@ -132,10 +132,12 @@ GSList *at_util_parse_clcc(GAtResult *result)
+ 		if (g_at_result_iter_next_string(&iter, &str))
+ 			g_at_result_iter_next_number(&iter, &number_type);
  =
 
- 	return encode_hex_own_buf(uuid->uuid, OFONO_SHA1_UUID_LEN, 0, buf);
- }
+-		call =3D g_try_new0(struct ofono_call, 1);
++		call =3D g_try_new(struct ofono_call, 1);
+ 		if (call =3D=3D NULL)
+ 			break;
+ =
+
++		ofono_call_init(call);
 +
-+void ofono_call_init(struct ofono_call *call)
-+{
-+	memset(call, 0, sizeof(struct ofono_call));
-+	call->cnap_validity =3D CNAP_VALIDITY_NOT_AVAILABLE;
-+	call->clip_validity =3D CLIP_VALIDITY_NOT_AVAILABLE;
-+}
+ 		call->id =3D id;
+ 		call->direction =3D dir;
+ 		call->status =3D status;
+diff --git a/drivers/atmodem/voicecall.c b/drivers/atmodem/voicecall.c
+index a64269d..583e037 100644
+--- a/drivers/atmodem/voicecall.c
++++ b/drivers/atmodem/voicecall.c
+@@ -112,10 +112,12 @@ static struct ofono_call *create_call(struct ofono_vo=
+icecall *vc, int type,
+ 	struct ofono_call *call;
+ =
+
+ 	/* Generate a call structure for the waiting call */
+-	call =3D g_try_new0(struct ofono_call, 1);
++	call =3D g_try_new(struct ofono_call, 1);
+ 	if (call =3D=3D NULL)
+ 		return NULL;
+ =
+
++	ofono_call_init(call);
++
+ 	call->id =3D ofono_voicecall_get_next_callid(vc);
+ 	call->type =3D type;
+ 	call->direction =3D direction;
 -- =
 
 1.7.4
 
 
---===============2342451521502220809==--
+--===============4815586089036163675==--
 
