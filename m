@@ -1,33 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============8259909238987592930=="
+Content-Type: multipart/mixed; boundary="===============6369503698002609408=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 0/2] Fix issue with DST
-Date: Tue, 01 Feb 2011 13:44:03 +0200
-Message-ID: <1296560645-19062-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 1/2] atmodem: convert dst from hours to seconds
+Date: Tue, 01 Feb 2011 13:44:04 +0200
+Message-ID: <1296560645-19062-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1296560645-19062-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8259909238987592930==
+--===============6369503698002609408==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ drivers/atmodem/network-registration.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
- Following patch converts the DST from hours to seconds which is the
-expected outcome.
+diff --git a/drivers/atmodem/network-registration.c b/drivers/atmodem/netwo=
+rk-registration.c
+index 4913611..3df72af 100644
+--- a/drivers/atmodem/network-registration.c
++++ b/drivers/atmodem/network-registration.c
+@@ -741,7 +741,7 @@ static void ifx_ctzdst_notify(GAtResult *result, gpoint=
+er user_data)
+ =
 
-Regards,
-Jeevaka
+ 	DBG("dst %d", dst);
+ =
 
-Jeevaka Badrappan (2):
-  atmodem: convert dst from hours to seconds
-  isimodem: convert dst from hours to seconds
+-	nd->time.dst =3D dst;
++	nd->time.dst =3D dst * 60 * 60;
+ =
 
- drivers/atmodem/network-registration.c  |    2 +-
- drivers/isimodem/network-registration.c |    2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ 	ofono_netreg_time_notify(netreg, &nd->time);
+ }
+-- =
+
+1.7.0.4
 
 
---===============8259909238987592930==--
+--===============6369503698002609408==--
 
