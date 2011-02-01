@@ -1,131 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============0095927734390214611=="
+Content-Type: multipart/mixed; boundary="===============4516062263200453111=="
 MIME-Version: 1.0
-From: Robertino Benis <robertino.benis@intel.com>
-Subject: [PATCH v7] ifx: Adding modem selftest for Infineon modem
-Date: Mon, 31 Jan 2011 19:49:51 -0800
-Message-ID: <1296532191-22449-1-git-send-email-robertino.benis@intel.com>
+From: Jukka Saunamaki <jukka.saunamaki@nokia.com>
+Subject: Re: [PATCH 0/3] EF-SPN API to sim-atom
+Date: Tue, 01 Feb 2011 09:25:32 +0200
+Message-ID: <1296545132.18320.12.camel@jsaunama-desktop>
+In-Reply-To: <4D4719FF.3060107@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0095927734390214611==
+--===============4516062263200453111==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Infineon modem selftest, during ifx_enable().
-Two steps trigger, with timeout. In case one
-fails, modem will not power up.
+Hi Denis, =
 
----
- plugins/ifx.c |   50 +++++++++++++++++++++++++++++++++++++++++++++++---
- 1 files changed, 47 insertions(+), 3 deletions(-)
 
-diff --git a/plugins/ifx.c b/plugins/ifx.c
-index 411c012..da8ed0b 100644
---- a/plugins/ifx.c
-+++ b/plugins/ifx.c
-@@ -72,6 +72,8 @@
- #define GPRS3_DLC   4
- #define AUX_DLC     5
+On Mon, 2011-01-31 at 14:22 -0600, Denis Kenzior wrote:
+> So my main problem here is that you require the SPN a handful of times
+> in the phone's lifetime, more likely once.  Yet you pay the cost of
+> reading and delaying the initialization every time.  In my view this is
+> not really acceptable.
+> =
+
+> Perhaps a better approach would be to put the spn parser into simutil so
+> it can be shared by netreg and gprs.  Then go back to your original
+> proposal of delaying the gprs atom registration if provisioning is
+> required and SPN is needed.
+
+OK.
+
+SPN parser is basically a line =
+
+spn =3D sim_string_to_utf8(data + 1, length - 1);
+so I do not think it really needs a separate simutil routine.
+
+For reading SPN in gprs atom registration, it would make sense to make
+it with the new sim_context api. Any estimates when that will be in?
+
+--Jukka
  =
 
-+#define IFX_SETUP_TIMEOUT	10
-+
- static char *dlc_prefixes[NUM_DLC] =3D { "Voice: ", "Net: ", "GPRS1: ",
- 					"GPRS2: ", "GPRS3: ", "Aux: " };
- =
-
-@@ -524,10 +526,12 @@ static gboolean mux_timeout_cb(gpointer user_data)
- 	struct ofono_modem *modem =3D user_data;
- 	struct ifx_data *data =3D ofono_modem_get_data(modem);
- =
-
--	ofono_error("Timeout with multiplexer setup");
-+	ofono_error("Timeout with AT command setup");
- =
-
- 	data->mux_init_timeout =3D 0;
- =
-
-+	g_at_chat_cancel_all(data->dlcs[AUX_DLC]);
-+
- 	g_at_chat_unref(data->dlcs[AUX_DLC]);
- 	data->dlcs[AUX_DLC] =3D NULL;
- =
-
-@@ -539,6 +543,35 @@ static gboolean mux_timeout_cb(gpointer user_data)
- 	return FALSE;
- }
- =
-
-+static void dev_ver_selftest_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+
-+	struct ofono_modem *modem =3D user_data;
-+	struct ifx_data *data =3D ofono_modem_get_data(modem);
-+
-+	if (!ok) {
-+		ofono_error("ERROR:IFX Selftest at(a)vers:device_version_id()"
-+				"-FAILED");
-+
-+		g_at_chat_cancel_all(data->dlcs[AUX_DLC]);
-+	}
-+}
-+
-+static void rtc_gti_selftest_cb(gboolean ok, GAtResult *result,
-+			gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct ifx_data *data =3D ofono_modem_get_data(modem);
-+
-+	if (!ok) {
-+		ofono_error("ERROR:IFX Selftest"
-+			"at(a)rtc:rtc_gti_test_verify_32khz()-FAILED");
-+
-+		g_at_chat_cancel_all(data->dlcs[AUX_DLC]);
-+	}
-+}
-+
- static int ifx_enable(struct ofono_modem *modem)
- {
- 	struct ifx_data *data =3D ofono_modem_get_data(modem);
-@@ -592,13 +625,24 @@ static int ifx_enable(struct ofono_modem *modem)
- 	g_at_chat_send(chat, "ATE0 +CMEE=3D1", NULL,
- 					NULL, NULL, NULL);
- =
-
-+	/* Execute Modem Self tests */
-+	data->dlcs[AUX_DLC] =3D chat;
-+
-+	g_at_chat_send(data->dlcs[AUX_DLC],
-+		"at(a)rtc:rtc_gti_test_verify_32khz()",
-+		NULL, rtc_gti_selftest_cb, modem, NULL);
-+
-+	g_at_chat_send(data->dlcs[AUX_DLC], "at(a)vers:device_version_id()",
-+		NULL, dev_ver_selftest_cb, modem, NULL);
-+
-+	/* Enable  MUX Channels */
- 	data->frame_size =3D 1509;
- =
-
- 	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
- 					mux_setup_cb, modem, NULL);
- =
-
--	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
--								modem);
-+	data->mux_init_timeout =3D g_timeout_add_seconds(
-+		IFX_SETUP_TIMEOUT, mux_timeout_cb, modem);
- =
-
- 	data->dlcs[AUX_DLC] =3D chat;
- =
-
--- =
-
-1.7.1
 
 
---===============0095927734390214611==--
+
+--===============4516062263200453111==--
 
