@@ -1,31 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============2937520082548227113=="
+Content-Type: multipart/mixed; boundary="===============6273501534886232489=="
 MIME-Version: 1.0
-From: =?unknown-8bit?q?R=C3=A9mi?= Denis-Courmont <remi.denis-courmont@nokia.com>
-Subject: Re: [PATCH 0/2] Fix issue with DST
-Date: Tue, 01 Feb 2011 13:51:00 +0200
-Message-ID: <201102011351.00348.remi.denis-courmont@nokia.com>
-In-Reply-To: <1296560645-19062-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Jeevaka.Badrappan@elektrobit.com
+Subject: RE: [PATCH 0/2] Fix issue with DST
+Date: Tue, 01 Feb 2011 13:53:31 +0200
+Message-ID: <B668883EB5DD7144ADFC248A72176EA802DA1420@fioues07.ebgroup.elektrobit.com>
+In-Reply-To: <201102011351.00348.remi.denis-courmont@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2937520082548227113==
+--===============6273501534886232489==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-On Tuesday 01 February 2011 13:44:03 ext Jeevaka Badrappan, you wrote:
-> Hi,
+ofono-bounces(a)ofono.org wrote:
+> On Tuesday 01 February 2011 13:44:03 ext Jeevaka Badrappan, you wrote:
+>> Hi,
+>> =
+
+>>  Following patch converts the DST from hours to seconds which is the
+>> expected outcome.
 > =
 
->  Following patch converts the DST from hours to seconds which is the
-> expected outcome.
+> Is it? I think DST is just a boolean.
 
-Is it? I think DST is just a boolean.
+Refere 3GPP TS 24.008 section 10.5.3.12
 
--- =
+Regards,
+Jeevaka
 
-R=C3=A9mi Denis-Courmont
-Nokia Devices R&D, Maemo Software, Helsinki
-
---===============2937520082548227113==--
+--===============6273501534886232489==--
 
