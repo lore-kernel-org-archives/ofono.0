@@ -1,62 +1,49 @@
-Content-Type: multipart/mixed; boundary="===============5139277306638184035=="
+Content-Type: multipart/mixed; boundary="===============5649155557947532833=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [RFC] voice call API changes (proposal)
-Date: Wed, 02 Feb 2011 09:32:28 -0600
-Message-ID: <4D49790C.4010807@gmail.com>
-In-Reply-To: <4D490D17.3040405@nokia.com>
+Subject: Re: [PATCH 0/3] EF-SPN API to sim-atom
+Date: Wed, 02 Feb 2011 10:01:40 -0600
+Message-ID: <4D497FE4.8070906@gmail.com>
+In-Reply-To: <1296631188.25947.27.camel@jsaunama-desktop>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5139277306638184035==
+--===============5649155557947532833==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Andras,
+Hi Jukka,
 
-On 02/02/2011 01:51 AM, Andras Domokos wrote:
+On 02/02/2011 01:19 AM, Jukka Saunamaki wrote:
 > Hi Denis,
 > =
 
-> On 02/01/2011 05:54 PM, ext Denis Kenzior wrote:
->> Hi Andras,
+> On Tue, 2011-02-01 at 19:20 -0600, ext Denis Kenzior wrote:
+>>> There is also this weird corner case when the SIM has no SPN available.
+>>> AFAIK, a failed read isn't cached, so bootstrapping that particular SIM
+>>> will incur a penalty every single time for information that isn't even
+>>> available, as opposed to the GPRS atom incurring it just once during its
+>>> lifetime.
 >>
->>>>> +
->>>>> +        boolean Forwarded
->>>>> +
->>>>> +            Contains the indication whether the voice call is a
->>>>> +            forwarded call or not.
->>>>> +
->>>> So just to clarify, this is usually set on a local Incoming / Waiting
->>>> call, correct?
->>> This property would apply to both, outgoing and incoming calls.
->>>
->>> When the incoming call is a forwarded call the call is accompanied
->>> by a "forwarded call" SS notification.
->>>
->>> When the call is an outgoing call and the call is forwarded due to the
->>> remote party having a conditional or unconditional forwarding enabled,
->>> the outgoing call is accompanied by a "call has been forwarded"
->>> SS notification.
->>>
->>> I think would be a good idea, if not mandatory, to have a voice call
->>> property indicating the call direction.
->> So why do we need the below two signals if the Forwarded property
->> applies to both incoming and outgoing calls?
-> These are optional in fact, let's ignore them for now.
-> What about the rest, are we OK now?
+>> The proposal from Jukka reads EFspn from the sim atom before obtaining
+>> the IMSI, so no caching is possible anyway.  But you are right that we
+>> do not cache if an error occurs during a file info request, so that is
+>> something else to watch out for.
+> =
 
-I don't really like this Forwarded property.  I think we should really
-break up the indications between the Incoming and Outgoing states.  If
-you want Forwarded as a property, then treat it as incoming calls only
-and keep the two signals for the outgoing conditions.
+> Actually the patch does read SPN after IMSI.
+> =
 
-Please re-send the entire proposal with all the feedback and extra
-documentation integrated in so we can have another look.
+
+Ah yes you're right.
+
+FYI: we have maintained an unwritten rule that the presence of IMSI
+indicates the sim is initialized to D-Bus clients; so it should be
+signaled immediately before post_sim atoms are added.
 
 Regards,
 -Denis
 
---===============5139277306638184035==--
+--===============5649155557947532833==--
 
