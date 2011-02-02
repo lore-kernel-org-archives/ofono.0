@@ -1,51 +1,41 @@
-Content-Type: multipart/mixed; boundary="===============7714904692468140304=="
+Content-Type: multipart/mixed; boundary="===============5299826384304177003=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 0/3] EF-SPN API to sim-atom
-Date: Tue, 01 Feb 2011 19:20:11 -0600
-Message-ID: <4D48B14B.8030108@gmail.com>
-In-Reply-To: <1296592705.2619.78.camel@tucson>
+Subject: Re: [PATCH 2/2] voicecall: try harder to avoid Dial mismatches
+Date: Tue, 01 Feb 2011 19:24:50 -0600
+Message-ID: <4D48B262.8060006@gmail.com>
+In-Reply-To: <1296598930-3093-2-git-send-email-Pekka.Pessi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7714904692468140304==
+--===============5299826384304177003==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi Pekka,
 
-On 02/01/2011 02:38 PM, Aki Niemi wrote:
-> Hi Denis,
+On 02/01/2011 04:22 PM, Pekka.Pessi(a)nokia.com wrote:
+> From: Pekka Pessi <Pekka.Pessi@nokia.com>
 > =
 
-> On Tue, 2011-02-01 at 09:14 -0600, ext Denis Kenzior wrote:
->>> does it really matter in the end? It gets read once and after that we
->>> are caching it on disk anyway.
->>>
->>
->> Of course it does, while SIM is initializing everything else is blocked.
->>  Once we're in sim ready you can have n atoms initializing at the same
->> time.  On good hardware with proper muxing that can shave tremendous
->> amount of time off your startup cost.
+> There were some cases where Dial returned an incorrect call object,
+> e.g., after oFono crash and recover.
+> ---
+>  src/voicecall.c |   15 +++++++++++++++
+>  1 files changed, 15 insertions(+), 0 deletions(-)
 > =
 
-> I agree.
-> =
 
-> There is also this weird corner case when the SIM has no SPN available.
-> AFAIK, a failed read isn't cached, so bootstrapping that particular SIM
-> will incur a penalty every single time for information that isn't even
-> available, as opposed to the GPRS atom incurring it just once during its
-> lifetime.
+So I'm guessing that you're restarting oFono and get
+ofono_voicecall_notify events without setting dial_result_handled properly.
 
-The proposal from Jukka reads EFspn from the sim atom before obtaining
-the IMSI, so no caching is possible anyway.  But you are right that we
-do not cache if an error occurs during a file info request, so that is
-something else to watch out for.
+Do you think it is a better idea to resurrect the old list_calls driver
+method and fire this off explicitly when the atom is registered?  The
+callback can then take care of setting dial_result_handled appropriately.
 
 Regards,
 -Denis
 
---===============7714904692468140304==--
+--===============5299826384304177003==--
 
