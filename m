@@ -1,38 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============1645328932135538457=="
+Content-Type: multipart/mixed; boundary="===============3332471482718270624=="
 MIME-Version: 1.0
-From: Andreas WESTIN <andreas.westin@stericsson.com>
-Subject: Re: [PATCH v2 3/3] isimodem: header updates for ISI2.5
-Date: Wed, 02 Feb 2011 10:03:26 +0100
-Message-ID: <4D491DDE.5000901@stericsson.com>
-In-Reply-To: <1296588776.2619.30.camel@tucson>
+From: Paavo Leinonen <paavo.leinonen@tieto.com>
+Subject: Re: Selecting multiple radio access technologies in oFono
+Date: Wed, 02 Feb 2011 11:33:11 +0200
+Message-ID: <4D4924D7.4060406@tieto.com>
+In-Reply-To: <1296591930.2619.60.camel@tucson>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1645328932135538457==
+--===============3332471482718270624==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Aki,
 
-On 2011-02-01 20:32, Aki Niemi wrote:
-> Like I replied earlier, I don't see the need for this. Also, it will not
-> work well with the isiusb plugin, which has the potential to work with
-> any ISI modem. I'm not willing to break that potential until we just
-> absolutely have to.
+On 02/01/2011 10:25 PM, Aki Niemi wrote:
+> The current API has 'gsm', 'umts', 'lte' and 'any'. I think you are
+> suggesting something like 'all-but-lte', right?
+I think it would be nice if user could be able to select multiple
+preferred  bands, not just only one. The use case I came up with was
+this 'all-but-lte'.
+>> Other approach could be that we would rephrase existing API so that
+>> instead of
+>> using "only" LTE, we would use LTE whenever available and some older
+>> technology
+>> when LTE coverage is lacking. So user would select "highest" allowed rad=
+io
+>> access without restrictions to use only one technology which has been
+>> selected.
+> This is what 'any' essentially is for.
+You can't limit preferred bands with 'any'. I was trying to find an
+alternative for polluting API by listing all the possible combinations
+('gsm_umts', 'gsm_lte', 'umts_lte') in API.
 
-U8500 uses shrm driver and will not be recognized via isiusb.
+However, I don't think we need this anymore as R=C3=A9mi kindly pointed out
+a solution earlierwhich involves dictionary with strings and booleans.
 
-> So, my stance holds: we quirk based on resource ID and based on the
-> server's ISI version.
+Br,
+Paavo
 
- From the information we have regarding ISI version from each server is =
-
-that it is not consistent, meaning the value you get is not really the =
-
-ISI version but the version of the server.
-
-/Andreas
-
---===============1645328932135538457==--
+--===============3332471482718270624==--
 
