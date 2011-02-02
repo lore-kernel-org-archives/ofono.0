@@ -1,107 +1,107 @@
-Content-Type: multipart/mixed; boundary="===============1235153105595982290=="
+Content-Type: multipart/mixed; boundary="===============5288143755539829786=="
 MIME-Version: 1.0
-From: Marcel Holtmann <marcel@holtmann.org>
-Subject: RE: [RFC 2/2] doc: Add description for history agent interface
-Date: Wed, 02 Feb 2011 20:32:28 +0100
-Message-ID: <1296675148.1520.346.camel@aeonflux>
-In-Reply-To: <A459777776EB4841B844E1134E7928740157A1C4@008-AM1MPN1-016.mgdnok.nokia.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [RFC] voicecall API changes (proposal 2)
+Date: Wed, 02 Feb 2011 14:01:07 -0600
+Message-ID: <4D49B803.8030108@gmail.com>
+In-Reply-To: <33f41837f16b650f6595e1004b82a7ea6ba2ed54.1296668679.git.Andras.Domokos@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============1235153105595982290==
+--===============5288143755539829786==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Mikhail,
+Hi Andras,
 
-> > How is this any better? If all messages get send when the agents
-> > registers to oFono. And we can easily use D-Bus results to either
-> > delete
-> > messages from the spool or not. Since D-Bus is asynchronous and that
-> > will just work out fine.
-> =
+> +
+> +		boolean ForwardedCall
+> +
+> +			Contains the indication whether the incoming voice call
+> +			is a redirected call due to a call forwarding operation
+> +			or not.
 
-> Am I right in assuming that the SMS history roundtrip is not performed be=
-fore acking the constituent TPDUs to the network? If it is, we have problem=
-s even regardless of D-Bus method call timeouts.
+Please drop the Call suffix, you are already on the VoiceCall interface,
+so putting 'Call' at the end is redundant.
 
-we are not delivering TPDUs to history, we are delivering messages.
-oFono will reassemble the segments for you. This is oFono's job.
+> +
+> +		boolean RemoteHoldActive
+> +
+> +			Contains the indication whether the voice call is put on
+> +			hold by the remote party or not.
+> +
 
-I am not really getting what you are saying. oFono will reassembly the
-message for you piece by piece. And we are making sure fragments are
-stored reliably. However once the message is complete we give it to
-history for further processing. Mainly to get it stored in the database.
+RemoteHeld might be a better name here, but I'm fine either way.
 
-> > This is not just about SMS actually. It is also for call history. So
-> > the
-> > history plugin needs to take care of the spooling and from there it can
-> > go directly into the database like Tracker.
-> =
+> +		boolean RemoteMultiparty
+> +
+> +			Contains the indication whether the voice call is joined
+> +			in a multiparty call by the remote party or not.
+> +
+> diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
+> index 5415345..7517a7c 100644
+> --- a/doc/voicecallmanager-api.txt
+> +++ b/doc/voicecallmanager-api.txt
+> @@ -144,6 +144,34 @@ Signals		CallAdded(object path, dict properties)
+>  			Signal is emitted whenever a property has changed.
+>  			The new value is passed as the signal argument.
+>  =
 
-> Is it necessary/more practical to register a history service callable by =
-oFono, rather than just signal change events and provide methods for a clie=
-nt to acknowledge that it has handled them?
-> =
+> +		RemoteCallBarringActive()
+> +
+> +			Signal is emitted when an outgoing voice call is made
+> +			and the call has been barred by the network due to the
+> +			remote party's "Call Barring" Supplementary Services
+> +			settings for incoming calls.
+> +
+> +		LocalCallBarringActive()
+> +
+> +			Signal is emitted when an outgoing voice call is made
+> +			and the call has been barred by the network due to the
+> +			local party's "Call Barring" Supplementary Services
+> +			settings for outgoing calls.
+> +
 
-> I can see a few reasons why the explicit history service API might be nee=
-ded:
-> =
+I suggest to combine these two signals into one:
+BarringActive(string type)
 
-> 1. The history service may be activated on demand by a well-known name.
-> If this is in fact mandatory, we'll have problems in making telepathy-rin=
-g serve as the history plugin. We want it in the storage path for architect=
-ural simplicity: commhistory daemon is by design a Telepathy logger that wo=
-rks basically the same way for all connection managers.
+where type is:
+"remote" or "local".
 
-oFono is running as system service. It can not interact directly with
-Tracker or Telepathy since both are only available on the session bus.
+The explanations you have should be applied to the type.  Another point
+is whether we want this signal on the call object itself.  Question is
+how reliably we can figure out the call index.  At what point does CSSI
+/ CSSU fire, before or after the call goes to active / disconnected state?
 
-If you wanna activate some session bus based history service then that
-is out of the scope of oFono.
+> +		OutgoingCallCondForwarded()
+> +
+> +			Signal is emitted when an outgoing voice call is made
+> +			and the call has been redirected to another number due
+> +			to the remote party's conditional "Call Forwarding"
+> +			Supplementary Service settings.
+> +
+> +		OutgoingCallUncondForwarded()
+> +
+> +			Signal is emitted when an outgoing voice call is made
+> +			and the call has been redirected to another number due
+> +			to the remote party's unconditional "Call Forwarding"
+> +			Supplementary Service settings.
+> +
 
-As I explained to Kai on IRC, I would personally not go via Telepathy
-since it is one extra (or even multiple) piece in the puzzle for the
-call history and the message history reaches your database. Which is
-Tracker I presume.
+Same with these two, lets call it CallForwarded(string type)
 
-If you can accept this extra risk factors in the architecture and ensure
-that everything is reliable that is fine with me. You do might have to
-design your unique history plugin that interacts directly with TP-ring
-then. And to that extend also has its own spool.
+where type is:
+"conditional" or "unconditional"
 
-> 2. You don't want multiple entities to observe events pertaining to oFono=
- communication history and be able to control spooling while not being regu=
-lated by oFono.
-> If this is a concern, I think it's outweighed by greater simplicity and f=
-lexibility, and the idea that access policy should be defined outside of th=
-e implementation.
+And the same question applies here as well, do we want this on the call
+object itself?  If so, then calling this signal Forwarded(string type)
+would be better.  Perhaps adding another type for incoming calls that
+are forwarded and removing the 'Forwarded' property would be a good idea
+as well.  e.g. something like "incoming" type.
 
-The example that I sent around here was clearly limited to one consumer
-and one consumer only. And that on purpose. I think that every storage
-entity. Being it commhistory alone, or Tracker alone or all together
-with TP-ring, they need a special history plugin to serve the exact
-purpose.
+Regards,
+-Denis
 
-> 3. For call history, you need reliable storage of call events before you =
-can proceed handling the call with the interactive client signaling.
-> I thought this is entirely up to the application and as such does not hav=
-e to be in scope for oFono. Correct me if I'm wrong.
-
-oFono is not decided on how this reliable storage of history is done. It
-is up to the history plugin. As said above, you might really need one
-exactly for your specific needs.
-
-I would be more than happy to be able to transfer this directly into
-Tracker or Telepathy, but as outlined above that is not possible because
-of the session vs system bus problem.
-
-Regards
-
-Marcel
-
-
-
---===============1235153105595982290==--
+--===============5288143755539829786==--
 
