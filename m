@@ -1,115 +1,91 @@
-Content-Type: multipart/mixed; boundary="===============0920625077431456575=="
+Content-Type: multipart/mixed; boundary="===============2217681729490948964=="
 MIME-Version: 1.0
 From: Kai.Vehmanen@nokia.com
 Subject: RE: [RFC 2/2] doc: Add description for history agent interface
-Date: Wed, 02 Feb 2011 22:55:58 +0000
-Message-ID: <E9010BA84901F04DBE0FC93A424E0E45010962D1@008-AM1MPN1-035.mgdnok.nokia.com>
-In-Reply-To: <1296665027.1520.332.camel@aeonflux>
+Date: Wed, 02 Feb 2011 22:56:00 +0000
+Message-ID: <E9010BA84901F04DBE0FC93A424E0E4501097604@008-AM1MPN1-035.mgdnok.nokia.com>
+In-Reply-To: <4D49AF0C.4030809@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0920625077431456575==
+--===============2217681729490948964==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hello Marcel,
+Hi Denis,
 
-On 02 Feb 2011, Marcel Holtmann wrote:
->> 	- This relates to another TODO -> persistant storage of RX-TPDUs
->> 	  for incomplete messages. If we've acked a TPDU to network,
->>  	  we must have stored it to persistant storage.
-> =
+On 02 Feb 2011, Denis Kenzior wrote:
+> Another fun fact about CMT delivery is that if you do not ack in a
+> 'reasonable' amount of time, the modem _silently_ turns off SMS
+> delivery.  So putting acks over D-Bus is simply a bad idea.
 
-> Where are we not doing this. We do store the fragments. If it is a
-> complete message, we signal it directly.
+ack, very much agreed. And now that I realized RX fragment spooling
+is in fact already done (sorry for the hassle), all is good =
 
-my mistake. I got this impression from some recent discussion on
-#ofono (related to the recent patches for TX spooling from Lucas =
+then for this part.
 
-De Marchi), and with that in mind, failed to look up what sms_assembly_add_=
-fragment() =
+> So oFono:
+>  1. Parses the SMS
+>  2. If the SMS is a multi-fragment SMS, it is written to store
+> 2a. If the SMS is the last missing fragment goes to step 2b, otherwise
+> goes to step 5
+> 2b. re-assembles the sms and removes intermediate store
+>  3. Signals the SMS over D-Bus / history
+>  4. Returns control to the driver which is responsible for acking the
+> SMS if needed.
 
-really does in the end. I thought it was in-memory stuff only,
-but oh no, commit 06ea6137a30944855ebafe0c8abfb2285eac74b5 =
+So as long as the history plugin spools the message before
+returning back in (4), the whole path is safe.
 
-added fragment spooling (already in 2009!), so forget this part.
+One corner case missing is:
 
->> - The history agent does not wait until the agent replies it has
->>   handled the message, but instead it calls agent_request_dispatch
->>   and then already returns to core (which acks the message to modem).
-> =
+> not tell you) turns off SMS delivery.  Of course you can send a negative
+> ack, however, there is no mechanism that I'm aware of to tell the
+> network you can receive SMS messages again -> disaster area.
 
-> I know this actually. The missing piece is the storing to disk here to
-> spool the SMS history and call history in case no agent is present.
+So as ofono_sms_deliver_notify() never returns an error,
+we can't handle the case where e.g. device has run out =
 
-Ok. I just didn't see any mention of disk/file spooling in this
-patchset (nor in other existing plugins except the out-of-tree
-smshistory) one, and was not sure whether it is proposed to have
-spooling before or after the DBus hop.
+of storage, or other severe malfunction (some system component
+crashed). I guess the main worry is to stop messages going
+to /dev/null, and less about how to recover. I think these cases
+are of such severity that the user must anyways at least reboot =
 
-But yes, if indeed your intention was specifically to add spooling
-to the ofono-side plugin already, I agree that would work.
+the device, or even have to take it to customer care (or something =
 
-Although, the plugin needs to store to disk _always_, even if agent =
+in between). Just with normal device usage (e.g. by trying to
+fill device with user content), this should never happen, so =
 
-is available. Or wait until the Dbus method reply is received (which
-I don't think is feasible). Otherwise following can happen:
- =
+the reason must be something more fatal.
 
- - history_sms_received() called
- - agent available, MessageReceived() called not async so not
-   waiting for reply
- - history_sms_received() returns to src/sms.c, TPUs cleared/acked
- -> zap, out of battery -> message potentially lost
+So handling this might still be useful even if reliable re-enabling =
 
-This can be solved by spooling always.
+of messages would not work reliably (assumption being that recycling and
+reregistering will reliably reenable message delivery). Or do you have =
 
->> I'd prefer to have something like:
->> http://people.freedesktop.org/~wjt/telepathy-spec-
->> import_stored_messages/spec/Connection_Interface_Stored_Messages.html
-> =
+practical experience of cases where even a power cycle won't help...
+(e.g. 23.040 specificly handles this scenario so modems should
+handle this correctly)?
 
-> How is this any better? If all messages get send when the agents
-> registers to oFono. And we can easily use D-Bus results to either
-> delete messages from the spool or not. Since D-Bus is asynchronous
-> and that will just work out fine.
+Oh well, I have to ask around about this as well... perhaps something
+we could ignore.
 
-Your plugin patch did not have/mention this functionality (message
-goes to /dev/null if no agent is registered), but if this is
-supposed to be there, then agreed, this'd work.
- =
+> So yes, there might be conditions where you crash before fsync really
+> completes and you lose the SMS.  However, there's nothing in the world
+> you can do about this case anyway, since both the write and the fsync
+> succeeded.
 
-So I think this comes down to how the history agent acknowledges
-the messages over DBus. E.g. single DBus MessageReceived method =
+I think this is perfectly reasonable. Even if some storage system =
 
-with ok/nok response, or an explicit acknowledge method/signal (the
-StoredMessages telepathy implements the latter approach).
+had some internal caches outside the kernel sync's reach, I'd imagine
+flushing these would be a prime candidate for last-minute actions done
+before battery dies (or some sensor detecting the device is about to
+hit a brick wall in about a few milliseconds ;)). =
 
-The main functional difference is the possibility to have
-multiple agents (as Mikhail noted), but this is perhaps something
-to debate whether it is really needed or not.
-
-Otherwise, what I'm still not sure about is whether it's sane to =
-
-have possibly very long req-reply roundtrips, and e.g. multiple pending =
-
-calls of e.g. MessageReceived waiting for reply. I know it _can_ be =
-
-done, but is it a robust design and will it cause grey hairs to agent =
-
-implementors.. (I know many dbus bindings have default timeouts of =
-
-roughly ~30s for method calls -> dunno if this can cause havoc). I freely =
-
-admit my dbus skills/experience is not sufficient, so feedback is =
-
-welcome.
-
-Based on my very informal poll, more people have voted for
-explicit acks in Telepathy style, but not all, so good arguments
-for/against are welcome.
+And in general, fsync should just be enough:
+http://thunk.org/tytso/blog/2009/03/15/dont-fear-the-fsync/
 
 
---===============0920625077431456575==--
+--===============2217681729490948964==--
 
