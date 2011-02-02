@@ -1,41 +1,133 @@
-Content-Type: multipart/mixed; boundary="===============5299826384304177003=="
+Content-Type: multipart/mixed; boundary="===============5654511337007675014=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 2/2] voicecall: try harder to avoid Dial mismatches
-Date: Tue, 01 Feb 2011 19:24:50 -0600
-Message-ID: <4D48B262.8060006@gmail.com>
-In-Reply-To: <1296598930-3093-2-git-send-email-Pekka.Pessi@nokia.com>
+From: Robertino Benis <robertino.benis@intel.com>
+Subject: [PATCH v8] ifx: Adding modem selftest for Infineon modem
+Date: Tue, 01 Feb 2011 17:36:24 -0800
+Message-ID: <1296610584-8450-1-git-send-email-robertino.benis@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5299826384304177003==
+--===============5654511337007675014==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+Infineon modem selftest, during ifx_enable().
+Two steps trigger, with timeout. In case one
+fails, modem will not power up.
 
-On 02/01/2011 04:22 PM, Pekka.Pessi(a)nokia.com wrote:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
-> =
+---
+ plugins/ifx.c |   58 ++++++++++++++++++++++++++++++++++++++++++++++++++---=
+---
+ 1 files changed, 51 insertions(+), 7 deletions(-)
 
-> There were some cases where Dial returned an incorrect call object,
-> e.g., after oFono crash and recover.
-> ---
->  src/voicecall.c |   15 +++++++++++++++
->  1 files changed, 15 insertions(+), 0 deletions(-)
-> =
+diff --git a/plugins/ifx.c b/plugins/ifx.c
+index 411c012..0250f64 100644
+--- a/plugins/ifx.c
++++ b/plugins/ifx.c
+@@ -524,21 +524,57 @@ static gboolean mux_timeout_cb(gpointer user_data)
+ 	struct ofono_modem *modem =3D user_data;
+ 	struct ifx_data *data =3D ofono_modem_get_data(modem);
+ =
+
+-	ofono_error("Timeout with multiplexer setup");
++	ofono_error("Timeout with modem and multiplexer setup");
+ =
+
+ 	data->mux_init_timeout =3D 0;
+ =
+
+-	g_at_chat_unref(data->dlcs[AUX_DLC]);
+-	data->dlcs[AUX_DLC] =3D NULL;
++	if(data->dlcs[AUX_DLC]) {
++		g_at_chat_unref(data->dlcs[AUX_DLC]);
++		data->dlcs[AUX_DLC] =3D NULL;
++	}
+ =
+
+-	g_io_channel_unref(data->device);
+-	data->device =3D NULL;
++	if(data->device) {
++		g_io_channel_unref(data->device);
++		data->device =3D NULL;
++	}
+ =
+
+ 	ofono_modem_set_powered(modem, FALSE);
+ =
+
+ 	return FALSE;
+ }
+ =
+
++static void dev_ver_selftest_cb(gboolean ok, GAtResult *result,
++				gpointer user_data)
++{
++
++	struct ofono_modem *modem =3D user_data;
++	struct ifx_data *data =3D ofono_modem_get_data(modem);
++
++	if (ok)
++		return;
++
++	ofono_error("ERROR:IFX Selftest at(a)vers:device_version_id()"
++			"-FAILED");
++	g_at_chat_cancel_all(data->dlcs[AUX_DLC]);
++		shutdown_device(data);
++}
++
++static void rtc_gti_selftest_cb(gboolean ok, GAtResult *result,
++			gpointer user_data)
++{
++	struct ofono_modem *modem =3D user_data;
++	struct ifx_data *data =3D ofono_modem_get_data(modem);
++
++	if (ok)
++		return;
++
++	ofono_error("ERROR:IFX Selftest"
++		"at(a)rtc:rtc_gti_test_verify_32khz()-FAILED");
++
++	g_at_chat_cancel_all(data->dlcs[AUX_DLC]);
++	shutdown_device(data);
++}
++
+ static int ifx_enable(struct ofono_modem *modem)
+ {
+ 	struct ifx_data *data =3D ofono_modem_get_data(modem);
+@@ -592,13 +628,21 @@ static int ifx_enable(struct ofono_modem *modem)
+ 	g_at_chat_send(chat, "ATE0 +CMEE=3D1", NULL,
+ 					NULL, NULL, NULL);
+ =
+
++	/* Execute Modem Self tests */
++	g_at_chat_send(chat, "at(a)rtc:rtc_gti_test_verify_32khz()",
++		NULL, rtc_gti_selftest_cb, modem, NULL);
++
++	g_at_chat_send(chat, "at(a)vers:device_version_id()",
++		NULL, dev_ver_selftest_cb, modem, NULL);
++
++	/* Enable  MUX Channels */
+ 	data->frame_size =3D 1509;
+ =
+
+ 	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
+ 					mux_setup_cb, modem, NULL);
+ =
+
+-	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
+-								modem);
++	data->mux_init_timeout =3D g_timeout_add_seconds(
++		10, mux_timeout_cb, modem);
+ =
+
+ 	data->dlcs[AUX_DLC] =3D chat;
+ =
+
+-- =
+
+1.7.1
 
 
-So I'm guessing that you're restarting oFono and get
-ofono_voicecall_notify events without setting dial_result_handled properly.
-
-Do you think it is a better idea to resurrect the old list_calls driver
-method and fire this off explicitly when the atom is registered?  The
-callback can then take care of setting dial_result_handled appropriately.
-
-Regards,
--Denis
-
---===============5299826384304177003==--
+--===============5654511337007675014==--
 
