@@ -1,147 +1,118 @@
-Content-Type: multipart/mixed; boundary="===============2455398666585390275=="
+Content-Type: multipart/mixed; boundary="===============0553792354594803977=="
 MIME-Version: 1.0
-From: mikhail.zabaluev@nokia.com
-Subject: RE: [RFC 2/2] doc: Add description for history agent interface
-Date: Wed, 02 Feb 2011 18:14:53 +0000
-Message-ID: <A459777776EB4841B844E1134E7928740157A1C4@008-AM1MPN1-016.mgdnok.nokia.com>
-In-Reply-To: <1296665027.1520.332.camel@aeonflux>
+From: Andras Domokos <Andras.Domokos@nokia.com>
+Subject: [RFC] voicecall API changes (proposal 2)
+Date: Wed, 02 Feb 2011 20:16:08 +0200
+Message-ID: <33f41837f16b650f6595e1004b82a7ea6ba2ed54.1296668679.git.Andras.Domokos@nokia.com>
+In-Reply-To: <4D49790C.4010807@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2455398666585390275==
+--===============0553792354594803977==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
+---
+ doc/call-barring-api.txt     |   10 ----------
+ doc/voicecall-api.txt        |   17 +++++++++++++++++
+ doc/voicecallmanager-api.txt |   28 ++++++++++++++++++++++++++++
+ 3 files changed, 45 insertions(+), 10 deletions(-)
 
-> -----Original Message-----
-> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On
-> Behalf Of ext Marcel Holtmann
-> Sent: Wednesday, February 02, 2011 6:44 PM
-> To: ofono(a)ofono.org
-> Subject: RE: [RFC 2/2] doc: Add description for history agent interface
-> =
+diff --git a/doc/call-barring-api.txt b/doc/call-barring-api.txt
+index 41ae4b1..1534494 100644
+--- a/doc/call-barring-api.txt
++++ b/doc/call-barring-api.txt
+@@ -37,16 +37,6 @@ Signals		PropertyChanged(string property, variant value)
+ 			Signal is emitted whenever a property has changed.
+ 			The new value is passed as the signal argument.
+ =
 
-> > here's a few comments about the SMS delivery part. These apply to
-> > the history plugin interface as well, so not specifically only about
-> > this patchset.
-> =
+-		IncomingBarringInEffect()
+-
+-			Signal is emitted when a call is made and an
+-			incoming call barring supplementary service is in use.
+-
+-		OutgoingBarringInEffect()
+-
+-			Signal is emitted when a call is made and an
+-			outgoing call barring supplementary service is in use.
+-
+ Properties	string VoiceIncoming [readwrite]
+ =
 
-> and this is just a RFC so I really want comments.
-> =
+ 			Contains the value of the barrings for the incoming
+diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
+index 047b8cb..9e1d90f 100644
+--- a/doc/voicecall-api.txt
++++ b/doc/voicecall-api.txt
+@@ -145,3 +145,20 @@ Properties	string LineIdentification [readonly]
+ =
 
-> > > +		void MessageReceived(dict info)
-> > > +
-> > > +			Incoming text message.
-> > > +
-> > > +			The info dictionary contains 'Identifier', 'Sender',
-> > > +			'Text', 'LocalTime' and 'RemoteTime' properties.
-> > > +
-> > > +			Possible Errors: None
-> >
-> > If this is the primary way to deliver SMS'es reliably, then this
-> > raises some problems. Take these more as discussion points. I'm
-> looking
-> > this in terms of gaps to what we have implemented in past
-> > products (e.g. N900).
-> =
+ 			Contains the indication if the voice call is an
+ 			emergency call or not.
++
++		boolean ForwardedCall
++
++			Contains the indication whether the incoming voice call
++			is a redirected call due to a call forwarding operation
++			or not.
++
++		boolean RemoteHoldActive
++
++			Contains the indication whether the voice call is put on
++			hold by the remote party or not.
++
++		boolean RemoteMultiparty
++
++			Contains the indication whether the voice call is joined
++			in a multiparty call by the remote party or not.
++
+diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
+index 5415345..7517a7c 100644
+--- a/doc/voicecallmanager-api.txt
++++ b/doc/voicecallmanager-api.txt
+@@ -144,6 +144,34 @@ Signals		CallAdded(object path, dict properties)
+ 			Signal is emitted whenever a property has changed.
+ 			The new value is passed as the signal argument.
+ =
 
-> The history API is the primary way to get messages stored reliable in a
-> database. This D-Bus API is intended to get accross the system/session
-> bus boundary and allow this for Tracker integration.
-> =
++		RemoteCallBarringActive()
++
++			Signal is emitted when an outgoing voice call is made
++			and the call has been barred by the network due to the
++			remote party's "Call Barring" Supplementary Services
++			settings for incoming calls.
++
++		LocalCallBarringActive()
++
++			Signal is emitted when an outgoing voice call is made
++			and the call has been barred by the network due to the
++			local party's "Call Barring" Supplementary Services
++			settings for outgoing calls.
++
++		OutgoingCallCondForwarded()
++
++			Signal is emitted when an outgoing voice call is made
++			and the call has been redirected to another number due
++			to the remote party's conditional "Call Forwarding"
++			Supplementary Service settings.
++
++		OutgoingCallUncondForwarded()
++
++			Signal is emitted when an outgoing voice call is made
++			and the call has been redirected to another number due
++			to the remote party's unconditional "Call Forwarding"
++			Supplementary Service settings.
++
+ Properties	array{string} EmergencyNumbers [readonly]
+ =
 
-> For example with commhistory-daemon or something similar.
-> =
+ 			Contains the list of emergency numbers recognized
+-- =
 
-> > - This history agent has no error handling for SMS storage. In case
-> >   device storage is full, or device is malfunctioning otherwise,
-> >   the messages should not be acked to network as stored.
-> > 	- This relates to another TODO -> persistant storage of RX-TPDUs
-> > 	  for incomplete messages. If we've acked a TPDU to network,
-> >  	  we must have stored it to persistant storage.
-> =
-
-> Where are we not doing this. We do store the fragments. If it is a
-> complete message, we signal it directly.
-> =
-
-> > - The history agent does not wait until the agent replies it has
-> >   handled the message, but instead it calls agent_request_dispatch
-> >   and then already returns to core (which acks the message to modem).
-> So
-> >   if you run out of battery (or some more abrupt cause) at this
-> >   point, you will lose messages.
-> > 	- The smshistory ofono plugin at
-> http://repo.meego.com/MeeGo/builds/trunk/daily/handset/repos/source/sms
-> history-0.1.8-1.7.src.rpm
-> > 	  ... solves this part, but I wonder whether it's ok to block
-> > 	  the ofono event loop until disk i/o is fully synced (this can
-> >         take suprisingly long on a loaded system).
-> =
-
-> I know this actually. The missing piece is the storing to disk here to
-> spool the SMS history and call history in case no agent is present.
-> =
-
-> > I'd prefer to have something like:
-> > http://people.freedesktop.org/~wjt/telepathy-spec-
-> import_stored_messages/spec/Connection_Interface_Stored_Messages.html
-> >
-> > This approach has many benefits:
-> >  - it allows more flexibility to how the persistant i/o is
-> >    implemented (you don't have to complete i/o during DBus
-> >    method->reply, or during a single function callback),
-> >  - the agent can recover if device is shutdown when there are
-> >    some messages in the TPDU spool, but not acked to message
-> >    store (upon restart, commhistory client will ask any pending
-> >    messages from the spool)
-> =
-
-> How is this any better? If all messages get send when the agents
-> registers to oFono. And we can easily use D-Bus results to either
-> delete
-> messages from the spool or not. Since D-Bus is asynchronous and that
-> will just work out fine.
-
-Am I right in assuming that the SMS history roundtrip is not performed befo=
-re acking the constituent TPDUs to the network? If it is, we have problems =
-even regardless of D-Bus method call timeouts.
-
-> This is not just about SMS actually. It is also for call history. So
-> the
-> history plugin needs to take care of the spooling and from there it can
-> go directly into the database like Tracker.
-
-Is it necessary/more practical to register a history service callable by oF=
-ono, rather than just signal change events and provide methods for a client=
- to acknowledge that it has handled them?
-
-I can see a few reasons why the explicit history service API might be neede=
-d:
-
-1. The history service may be activated on demand by a well-known name.
-If this is in fact mandatory, we'll have problems in making telepathy-ring =
-serve as the history plugin. We want it in the storage path for architectur=
-al simplicity: commhistory daemon is by design a Telepathy logger that work=
-s basically the same way for all connection managers.
-
-2. You don't want multiple entities to observe events pertaining to oFono c=
-ommunication history and be able to control spooling while not being regula=
-ted by oFono.
-If this is a concern, I think it's outweighed by greater simplicity and fle=
-xibility, and the idea that access policy should be defined outside of the =
-implementation.
-
-3. For call history, you need reliable storage of call events before you ca=
-n proceed handling the call with the interactive client signaling.
-I thought this is entirely up to the application and as such does not have =
-to be in scope for oFono. Correct me if I'm wrong.
-
-Best regards,
-  Mikhail
+1.7.0.4
 
 
---===============2455398666585390275==--
+--===============0553792354594803977==--
 
