@@ -1,118 +1,65 @@
-Content-Type: multipart/mixed; boundary="===============0553792354594803977=="
+Content-Type: multipart/mixed; boundary="===============2562502559231284417=="
 MIME-Version: 1.0
-From: Andras Domokos <Andras.Domokos@nokia.com>
-Subject: [RFC] voicecall API changes (proposal 2)
-Date: Wed, 02 Feb 2011 20:16:08 +0200
-Message-ID: <33f41837f16b650f6595e1004b82a7ea6ba2ed54.1296668679.git.Andras.Domokos@nokia.com>
-In-Reply-To: <4D49790C.4010807@gmail.com>
+From: Predon, Frederic <frederic.predon@intel.com>
+Subject: RE: [PATCH] ifx: remove setting to offline during modem enable
+Date: Wed, 02 Feb 2011 18:17:40 +0000
+Message-ID: <8250E4885F9967469CAC3FB5CBA2CE69934F1C6006@irsmsx501.ger.corp.intel.com>
+In-Reply-To: <1296670068.1520.335.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0553792354594803977==
+--===============2562502559231284417==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/call-barring-api.txt     |   10 ----------
- doc/voicecall-api.txt        |   17 +++++++++++++++++
- doc/voicecallmanager-api.txt |   28 ++++++++++++++++++++++++++++
- 3 files changed, 45 insertions(+), 10 deletions(-)
+Hi Marcel,
 
-diff --git a/doc/call-barring-api.txt b/doc/call-barring-api.txt
-index 41ae4b1..1534494 100644
---- a/doc/call-barring-api.txt
-+++ b/doc/call-barring-api.txt
-@@ -37,16 +37,6 @@ Signals		PropertyChanged(string property, variant value)
- 			Signal is emitted whenever a property has changed.
- 			The new value is passed as the signal argument.
- =
+> > > I toughth we talked about CFUN=3D4 in ifx_disable on IRC. This one is
+> > > needed to bring the modem up in offline mode. I'd rather not remove
+> > > this
+> > > one.
+> >
+> > In a ideal world, the CFUN=3D4 in the dlc_setup will not be needed
+> because the modem remembers is last state and will remain in offline
+> mode because we have sent CFUN=3D4 in the ifx_disable function.
+> > But, we could have some error cases where we are not able to send
+> this command anymore because of modem crash or SPI broken, etc..  so we
+> might have to keep the forced CFUN=3D4 in the dlc_setup
+> =
 
--		IncomingBarringInEffect()
--
--			Signal is emitted when a call is made and an
--			incoming call barring supplementary service is in use.
--
--		OutgoingBarringInEffect()
--
--			Signal is emitted when a call is made and an
--			outgoing call barring supplementary service is in use.
--
- Properties	string VoiceIncoming [readwrite]
- =
+> I agree. I do wanna keep the CFUN=3D4 in ifx_enable() to make the sure
+> the
+> modem is in init state and offline.
+> =
 
- 			Contains the value of the barrings for the incoming
-diff --git a/doc/voicecall-api.txt b/doc/voicecall-api.txt
-index 047b8cb..9e1d90f 100644
---- a/doc/voicecall-api.txt
-+++ b/doc/voicecall-api.txt
-@@ -145,3 +145,20 @@ Properties	string LineIdentification [readonly]
- =
+> Jeevaka and I discussed on IRC, or at least what I thought we
+> discussed ;), using CFUN=3D0 in ifx_disable().
 
- 			Contains the indication if the voice call is an
- 			emergency call or not.
-+
-+		boolean ForwardedCall
-+
-+			Contains the indication whether the incoming voice call
-+			is a redirected call due to a call forwarding operation
-+			or not.
-+
-+		boolean RemoteHoldActive
-+
-+			Contains the indication whether the voice call is put on
-+			hold by the remote party or not.
-+
-+		boolean RemoteMultiparty
-+
-+			Contains the indication whether the voice call is joined
-+			in a multiparty call by the remote party or not.
-+
-diff --git a/doc/voicecallmanager-api.txt b/doc/voicecallmanager-api.txt
-index 5415345..7517a7c 100644
---- a/doc/voicecallmanager-api.txt
-+++ b/doc/voicecallmanager-api.txt
-@@ -144,6 +144,34 @@ Signals		CallAdded(object path, dict properties)
- 			Signal is emitted whenever a property has changed.
- 			The new value is passed as the signal argument.
- =
+CFUN=3D0 is different because it will shutdown the modem. This is something=
+ we are willing to add in the ifx_disable but before that, we have to modif=
+y the spi driver to be able to start the modem and have a symmetric enable/=
+disable modem functionality.
+If disable shutdown the modem then enable should start it.
+I'll send you some diagrams in that direction during the week to have your =
+opinion.
 
-+		RemoteCallBarringActive()
-+
-+			Signal is emitted when an outgoing voice call is made
-+			and the call has been barred by the network due to the
-+			remote party's "Call Barring" Supplementary Services
-+			settings for incoming calls.
-+
-+		LocalCallBarringActive()
-+
-+			Signal is emitted when an outgoing voice call is made
-+			and the call has been barred by the network due to the
-+			local party's "Call Barring" Supplementary Services
-+			settings for outgoing calls.
-+
-+		OutgoingCallCondForwarded()
-+
-+			Signal is emitted when an outgoing voice call is made
-+			and the call has been redirected to another number due
-+			to the remote party's conditional "Call Forwarding"
-+			Supplementary Service settings.
-+
-+		OutgoingCallUncondForwarded()
-+
-+			Signal is emitted when an outgoing voice call is made
-+			and the call has been redirected to another number due
-+			to the remote party's unconditional "Call Forwarding"
-+			Supplementary Service settings.
-+
- Properties	array{string} EmergencyNumbers [readonly]
- =
+Regards
 
- 			Contains the list of emergency numbers recognized
--- =
+Fred
+---------------------------------------------------------------------
+Intel Corporation SAS (French simplified joint stock company)
+Registered headquarters: "Les Montalets"- 2, rue de Paris, =
 
-1.7.0.4
+92196 Meudon Cedex, France
+Registration Number:  302 456 199 R.C.S. NANTERRE
+Capital: 4,572,000 Euros
+
+This e-mail and any attachments may contain confidential material for
+the sole use of the intended recipient(s). Any review or distribution
+by others is strictly prohibited. If you are not the intended
+recipient, please contact the sender and delete all copies.
 
 
---===============0553792354594803977==--
+--===============2562502559231284417==--
 
