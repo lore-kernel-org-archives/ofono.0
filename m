@@ -1,54 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============3157457103291732859=="
+Content-Type: multipart/mixed; boundary="===============8812371769883613161=="
 MIME-Version: 1.0
-From: Kjetil ASDAL <kjetil.asdal@stericsson.com>
-Subject: RE: Selecting multiple radio access technologies in oFono
-Date: Wed, 02 Feb 2011 14:10:56 +0100
-Message-ID: <24601CEAED63B94588D46990641D59241B7B4D8E68@EXDCVYMBSTM005.EQ1STM.local>
-In-Reply-To: <AANLkTincQujFn0X8J5SuvJU4-1uJaK_Bd34pmuQvvsYh@mail.gmail.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 1/2] include: fix comment on dst value
+Date: Wed, 02 Feb 2011 15:10:45 +0200
+Message-ID: <1296652246-11801-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3157457103291732859==
+--===============8812371769883613161==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Lucas,
+---
+ include/types.h |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-Lucas wrote:
+diff --git a/include/types.h b/include/types.h
+index 31f2682..d25f409 100644
+--- a/include/types.h
++++ b/include/types.h
+@@ -105,7 +105,7 @@ struct ofono_network_time {
+ 	int mday;	/* Day of month [1..31], -1 if unavailable */
+ 	int mon;	/* Month [1..12], -1 if unavailable */
+ 	int year;	/* Current year, -1 if unavailable */
+-	int dst;	/* Current adjustment, in seconds */
++	int dst;	/* Current adjustment, in hours */
+ 	int utcoff;	/* Offset from UTC in seconds */
+ };
  =
 
-> I don't know about LTE, but I can effectively disable umts in my
-> huawei modem just by choosing a frequency not available in my country.
-> Then, when going online the modem is forced to use one of the GSM
-> ones.
- =
+-- =
 
-That may very well be so, but I still think this is at best a funny way =
+1.7.0.4
 
-to disable LTE (or any other RAT for that matter). I should come right =
 
-out and say that I am far from an expert on how the radio stack operates, =
-
-but I suspect that by doing what you propose, the radio will have to do =
-
-periodical "measurements" to see if the chosen frequency band has become =
-
-available, and this could result in some extra power consumption.
-
-> It depends on the modem. See the implementation for huawei in
-> drivers/huaweimodem/radio-settings.c:huawei_set_band(). It uses the
-> AT^SYSCFG command that is specific to huawei modems.
-
-Of course you are right; it definitely depends on the modem and what AT =
-
-commands are supported. What I meant (but did not write) was that there =
-
-are no standard AT commands (i.e. from 3GPP TS 27.007) for this.
-
-Regards, =
-
-Kjetil
-
---===============3157457103291732859==--
+--===============8812371769883613161==--
 
