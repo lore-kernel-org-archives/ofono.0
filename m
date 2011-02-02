@@ -1,133 +1,86 @@
-Content-Type: multipart/mixed; boundary="===============5654511337007675014=="
+Content-Type: multipart/mixed; boundary="===============6607180603515592481=="
 MIME-Version: 1.0
-From: Robertino Benis <robertino.benis@intel.com>
-Subject: [PATCH v8] ifx: Adding modem selftest for Infineon modem
-Date: Tue, 01 Feb 2011 17:36:24 -0800
-Message-ID: <1296610584-8450-1-git-send-email-robertino.benis@intel.com>
+From: Marcel Holtmann <marcel@holtmann.org>
+Subject: Re: [PATCH] TODO: SMS Validity Period
+Date: Wed, 02 Feb 2011 07:52:24 +0100
+Message-ID: <1296629544.1520.296.camel@aeonflux>
+In-Reply-To: <1296591582.2619.54.camel@tucson>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5654511337007675014==
+--===============6607180603515592481==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Infineon modem selftest, during ifx_enable().
-Two steps trigger, with timeout. In case one
-fails, modem will not power up.
+Hi Aki,
 
----
- plugins/ifx.c |   58 ++++++++++++++++++++++++++++++++++++++++++++++++++---=
----
- 1 files changed, 51 insertions(+), 7 deletions(-)
+> > > > How does a normal user actually know what this means for him and the
+> > > > network he is using? Is the network actually honoring these values =
+at
+> > > > all these days?
+> > > =
 
-diff --git a/plugins/ifx.c b/plugins/ifx.c
-index 411c012..0250f64 100644
---- a/plugins/ifx.c
-+++ b/plugins/ifx.c
-@@ -524,21 +524,57 @@ static gboolean mux_timeout_cb(gpointer user_data)
- 	struct ofono_modem *modem =3D user_data;
- 	struct ifx_data *data =3D ofono_modem_get_data(modem);
- =
+> > > These are not clear to me either, so I don't see the point in exposing
+> > > this setting over the D-Bus interface. I would, however, err on the
+> > > side of flexibility here, and make this a configuration option in
+> > > main.conf (once that support is available in oFono).
+> > =
 
--	ofono_error("Timeout with multiplexer setup");
-+	ofono_error("Timeout with modem and multiplexer setup");
- =
+> > we did talk a bit about expected operator defaults especially in the
+> > context of default character set etc. I think Portugal is such an
+> > exception where you have to start out with a proper character set if
+> > your SIM card is originated from there.
+> > =
 
- 	data->mux_init_timeout =3D 0;
- =
+> > Maybe this is another one case where just picking a proper operator
+> > default is better than actually providing any option to change it.
+> =
 
--	g_at_chat_unref(data->dlcs[AUX_DLC]);
--	data->dlcs[AUX_DLC] =3D NULL;
-+	if(data->dlcs[AUX_DLC]) {
-+		g_at_chat_unref(data->dlcs[AUX_DLC]);
-+		data->dlcs[AUX_DLC] =3D NULL;
-+	}
- =
+> Yes, some of these language variants are mandated by certain regulators,
+> some by operators. So certainly the default SMS alphabet should be a
+> main.conf item.
 
--	g_io_channel_unref(data->device);
--	data->device =3D NULL;
-+	if(data->device) {
-+		g_io_channel_unref(data->device);
-+		data->device =3D NULL;
-+	}
- =
+I don't think that main.conf is really what you want here. If I
+understand this requirement correctly, then the defaults have to be
+picked based on the SIM card you put into the device. You don't really
+wanna build country or operator specific main.conf and ship different
+software core software to every single operator.
 
- 	ofono_modem_set_powered(modem, FALSE);
- =
+So I think we need to approach this a little bit different to make it
+easy to handle and also easy to update if needed while still having the
+same distribution running on every device no matter what country it
+actually got manufactured for. And with GSM we are in the lucky position
+that every single SIM card has its MCC and MNC. My idea is that we go
+with sensible operator defaults here.
 
- 	return FALSE;
- }
- =
+My idea is to have /usr/lib/ofono/defaults/ directory where we can store
+a set of proper default values with operator variants. So any builtin
+default could be easily overwritten this way. An example would be to
+have a sms.conf file here.
 
-+static void dev_ver_selftest_cb(gboolean ok, GAtResult *result,
-+				gpointer user_data)
-+{
-+
-+	struct ofono_modem *modem =3D user_data;
-+	struct ifx_data *data =3D ofono_modem_get_data(modem);
-+
-+	if (ok)
-+		return;
-+
-+	ofono_error("ERROR:IFX Selftest at(a)vers:device_version_id()"
-+			"-FAILED");
-+	g_at_chat_cancel_all(data->dlcs[AUX_DLC]);
-+		shutdown_device(data);
-+}
-+
-+static void rtc_gti_selftest_cb(gboolean ok, GAtResult *result,
-+			gpointer user_data)
-+{
-+	struct ofono_modem *modem =3D user_data;
-+	struct ifx_data *data =3D ofono_modem_get_data(modem);
-+
-+	if (ok)
-+		return;
-+
-+	ofono_error("ERROR:IFX Selftest"
-+		"at(a)rtc:rtc_gti_test_verify_32khz()-FAILED");
-+
-+	g_at_chat_cancel_all(data->dlcs[AUX_DLC]);
-+	shutdown_device(data);
-+}
-+
- static int ifx_enable(struct ofono_modem *modem)
- {
- 	struct ifx_data *data =3D ofono_modem_get_data(modem);
-@@ -592,13 +628,21 @@ static int ifx_enable(struct ofono_modem *modem)
- 	g_at_chat_send(chat, "ATE0 +CMEE=3D1", NULL,
- 					NULL, NULL, NULL);
- =
+[bearer]
+default=3Dcs-preferred
+262=3Dps-preferred
+26202=3Dps-only
 
-+	/* Execute Modem Self tests */
-+	g_at_chat_send(chat, "at(a)rtc:rtc_gti_test_verify_32khz()",
-+		NULL, rtc_gti_selftest_cb, modem, NULL);
-+
-+	g_at_chat_send(chat, "at(a)vers:device_version_id()",
-+		NULL, dev_ver_selftest_cb, modem, NULL);
-+
-+	/* Enable  MUX Channels */
- 	data->frame_size =3D 1509;
- =
+[charset]
+...
 
- 	g_at_chat_send(chat, "AT+CMUX=3D0,0,,1509,10,3,30,,", NULL,
- 					mux_setup_cb, modem, NULL);
- =
+This way the atom could come in and read this file for a new SIM card
+and automatically set sensible defaults. And if not present we just use
+the hardcoded builtin defaults.
 
--	data->mux_init_timeout =3D g_timeout_add_seconds(5, mux_timeout_cb,
--								modem);
-+	data->mux_init_timeout =3D g_timeout_add_seconds(
-+		10, mux_timeout_cb, modem);
- =
+And we can keep this minimal since there will be only so many exceptions
+to the default here. The other advantage is that this can actually be
+maintained outside of oFono by the device manufacturer. In the end these
+might be all so trivial that we can just ship them with oFono directly.
 
- 	data->dlcs[AUX_DLC] =3D chat;
- =
+Regards
 
--- =
-
-1.7.1
+Marcel
 
 
---===============5654511337007675014==--
+
+--===============6607180603515592481==--
 
