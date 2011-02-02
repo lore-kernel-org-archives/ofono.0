@@ -1,48 +1,48 @@
-Content-Type: multipart/mixed; boundary="===============9023291020260896037=="
+Content-Type: multipart/mixed; boundary="===============1604197625032015008=="
 MIME-Version: 1.0
-From: Kjetil ASDAL <kjetil.asdal@stericsson.com>
-Subject: RE: Selecting multiple radio access technologies in oFono
-Date: Wed, 02 Feb 2011 13:00:21 +0100
-Message-ID: <24601CEAED63B94588D46990641D59241B7B4D8DB8@EXDCVYMBSTM005.EQ1STM.local>
-In-Reply-To: <1296643483.1520.319.camel@aeonflux>
+From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
+Subject: Re: Selecting multiple radio access technologies in oFono
+Date: Wed, 02 Feb 2011 10:46:10 -0200
+Message-ID: <AANLkTincQujFn0X8J5SuvJU4-1uJaK_Bd34pmuQvvsYh@mail.gmail.com>
+In-Reply-To: <24601CEAED63B94588D46990641D59241B7B4D8DB8@EXDCVYMBSTM005.EQ1STM.local>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============9023291020260896037==
+--===============1604197625032015008==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marcel, =
+Hi Kjetil,
+
+On Wed, Feb 2, 2011 at 10:00 AM, Kjetil ASDAL
+<kjetil.asdal@stericsson.com> wrote:
+> When you say "band selection", I assume you are talking about frequency b=
+ands.
+> AFAIK, the frequency band is a setting within the radio access technology=
+, and
+> I don't think it is possible to "disable" LTE by deselecting certain freq=
+uency
+
+I don't know about LTE, but I can effectively disable umts in my
+huawei modem just by choosing a frequency not available in my country.
+Then, when going online the modem is forced to use one of the GSM
+ones.
 
 
-Marcel wrote: =
+> bands. Furthermore, AFAIK, there are no AT commands for doing frequency b=
+and
+> selection.
 
-> Couldn't this be achieved by actual band selection if you really really
-> wanted this? Do we actually have different LTE band at all. I am still
-> not all that familiar with the low-level radio technology behind LTE.
+It depends on the modem. See the implementation for huawei in
+drivers/huaweimodem/radio-settings.c:huawei_set_band(). It uses the
+AT^SYSCFG command that is specific to huawei modems.
 
-When you say "band selection", I assume you are talking about frequency ban=
-ds. =
 
-AFAIK, the frequency band is a setting within the radio access technology, =
-and =
 
-I don't think it is possible to "disable" LTE by deselecting certain freque=
-ncy =
 
-bands. Furthermore, AFAIK, there are no AT commands for doing frequency ban=
-d =
+regards,
+Lucas De Marchi
 
-selection.
-
-Anyway, if you do not want to use LTE, then you should specifically tell th=
-e UE =
-
-to disable/deactivate the part of the radio stack that handles EUTRAN.
-
-Regards,
-Kjetil
-
---===============9023291020260896037==--
+--===============1604197625032015008==--
 
