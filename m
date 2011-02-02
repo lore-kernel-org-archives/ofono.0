@@ -1,44 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============3332471482718270624=="
+Content-Type: multipart/mixed; boundary="===============1943418512236003517=="
 MIME-Version: 1.0
-From: Paavo Leinonen <paavo.leinonen@tieto.com>
+From: Marcel Holtmann <marcel@holtmann.org>
 Subject: Re: Selecting multiple radio access technologies in oFono
-Date: Wed, 02 Feb 2011 11:33:11 +0200
-Message-ID: <4D4924D7.4060406@tieto.com>
-In-Reply-To: <1296591930.2619.60.camel@tucson>
+Date: Wed, 02 Feb 2011 10:42:42 +0100
+Message-ID: <1296639762.1520.314.camel@aeonflux>
+In-Reply-To: <4D4924D7.4060406@tieto.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3332471482718270624==
+--===============1943418512236003517==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi Paavo,
 
-On 02/01/2011 10:25 PM, Aki Niemi wrote:
-> The current API has 'gsm', 'umts', 'lte' and 'any'. I think you are
-> suggesting something like 'all-but-lte', right?
-I think it would be nice if user could be able to select multiple
-preferred  bands, not just only one. The use case I came up with was
-this 'all-but-lte'.
->> Other approach could be that we would rephrase existing API so that
->> instead of
->> using "only" LTE, we would use LTE whenever available and some older
->> technology
->> when LTE coverage is lacking. So user would select "highest" allowed rad=
-io
->> access without restrictions to use only one technology which has been
->> selected.
-> This is what 'any' essentially is for.
-You can't limit preferred bands with 'any'. I was trying to find an
-alternative for polluting API by listing all the possible combinations
-('gsm_umts', 'gsm_lte', 'umts_lte') in API.
+> > The current API has 'gsm', 'umts', 'lte' and 'any'. I think you are
+> > suggesting something like 'all-but-lte', right?
+> I think it would be nice if user could be able to select multiple
+> preferred  bands, not just only one. The use case I came up with was
+> this 'all-but-lte'.
 
-However, I don't think we need this anymore as R=C3=A9mi kindly pointed out
-a solution earlierwhich involves dictionary with strings and booleans.
+can we first be clear that we are talking about technology selection and
+not band selection. They are different.
 
-Br,
-Paavo
+Right now I have no idea on how the hardware will ever support this
+properly. RAT selection is already so different that I prefer to keep it
+like this. It is simple. We can cross the LTE bridge once this becomes a
+real problem.
 
---===============3332471482718270624==--
+Regards
+
+Marcel
+
+
+
+--===============1943418512236003517==--
 
