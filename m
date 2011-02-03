@@ -1,107 +1,51 @@
-Content-Type: multipart/mixed; boundary="===============2409353065467394471=="
+Content-Type: multipart/mixed; boundary="===============8383600958286862231=="
 MIME-Version: 1.0
-From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 12/12] phonesim: add IPv6 support
-Date: Thu, 03 Feb 2011 11:03:29 +0200
-Message-ID: <1296723809-32676-13-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1296723809-32676-1-git-send-email-mika.liljeberg@nokia.com>
+From: Andreas WESTIN <andreas.westin@stericsson.com>
+Subject: Re: [PATCH v2 3/3] isimodem: header updates for ISI2.5
+Date: Thu, 03 Feb 2011 10:32:17 +0100
+Message-ID: <4D4A7621.6030508@stericsson.com>
+In-Reply-To: <1296651827.2619.119.camel@tucson>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2409353065467394471==
+--===============8383600958286862231==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- plugins/phonesim.c |   32 +++++++++++++++++++++++++-------
- 1 files changed, 25 insertions(+), 7 deletions(-)
+Hi Aki,
 
-diff --git a/plugins/phonesim.c b/plugins/phonesim.c
-index 2b36fe0..2634d23 100644
---- a/plugins/phonesim.c
-+++ b/plugins/phonesim.c
-@@ -83,14 +83,17 @@ struct gprs_context_data {
- static void at_cgact_up_cb(gboolean ok, GAtResult *result, gpointer user_d=
-ata)
- {
- 	struct cb_data *cbd =3D user_data;
--	ofono_gprs_context_up_cb_t cb =3D cbd->cb;
-+	ofono_gprs_context_cb_t cb =3D cbd->cb;
- 	struct ofono_gprs_context *gc =3D cbd->user;
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	struct ofono_error error;
- =
+On 2011-02-02 14:03, Aki Niemi wrote:
+> I don't see what that has to do with the device supporting the "PC
+> suite" USB profile, which allows modem access using cdc_phonet.
 
- 	decode_at_error(&error, g_at_result_final_response(result));
--	cb(&error, ok ? gcd->interface : NULL, FALSE,
--			NULL, NULL, NULL, NULL, cbd->data);
-+
-+	if (ok)
-+		ofono_gprs_context_set_interface(gc, gcd->interface);
-+
-+	cb(&error, cbd->data);
- }
- =
+Currently our platform does not support this.
 
- static void at_cgact_down_cb(gboolean ok, GAtResult *result, gpointer user=
-_data)
-@@ -105,16 +108,31 @@ static void at_cgact_down_cb(gboolean ok, GAtResult *=
-result, gpointer user_data)
- =
+> That is exactly what I meant. This version allows building quirks inside
+> the drivers. An example in pseudo-code:
+>
+> if GIsiVersion.major =3D=3D 15 and GIsiVersion.minor>=3D 3:
+> 	send( { FOO, value, filler, filler}, callback1 )
+> else:
+> 	send( { FOO, value }, callback2 )
+>
 
- static void phonesim_activate_primary(struct ofono_gprs_context *gc,
- 				const struct ofono_gprs_primary_context *ctx,
--				ofono_gprs_context_up_cb_t cb, void *data)
-+				ofono_gprs_context_cb_t cb, void *data)
- {
- 	struct gprs_context_data *gcd =3D ofono_gprs_context_get_data(gc);
- 	struct cb_data *cbd =3D cb_data_new(cb, data);
- 	char buf[OFONO_GPRS_MAX_APN_LENGTH + 128];
--	int len;
-+	int len =3D 0;
- =
+Yes, we use a similar solution in gisi, but R=C3=A9mi pointed out that it =
 
- 	cbd->user =3D gc;
- =
+would be a maintenance problem once there are more versions to support =
 
--	len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"", ctx->cid);
-+	switch (ctx->proto) {
-+	case OFONO_GPRS_PROTO_IP:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IP\"",
-+				ctx->cid);
-+		break;
-+
-+	case OFONO_GPRS_PROTO_IPV6:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV6\"",
-+				ctx->cid);
-+		break;
-+
-+	case OFONO_GPRS_PROTO_IPV4V6:
-+		len =3D snprintf(buf, sizeof(buf), "AT+CGDCONT=3D%u,\"IPV4V6\"",
-+				ctx->cid);
-+		break;
-+	}
- =
+and I tend to agree. A solution could be to use a lookup function, but =
 
- 	if (ctx->apn)
- 		snprintf(buf + len, sizeof(buf) - len - 3, ",\"%s\"",
-@@ -132,7 +150,7 @@ static void phonesim_activate_primary(struct ofono_gprs=
-_context *gc,
- error:
- 	g_free(cbd);
- =
+this function would need to return something to compare with, an enum =
 
--	CALLBACK_WITH_FAILURE(cb, NULL, 0, NULL, NULL, NULL, NULL, data);
-+	CALLBACK_WITH_FAILURE(cb, data);
- }
- =
+perhaps.
+Also are you certain that e.g major =3D=3D 15 and minor =3D=3D 25 is still =
+the =
 
- static void phonesim_deactivate_primary(struct ofono_gprs_context *gc,
--- =
+same ISI version, if not then the lookup function could become messy.
 
-1.7.1
+Regards
+Andreas
 
-
---===============2409353065467394471==--
+--===============8383600958286862231==--
 
