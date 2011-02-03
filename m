@@ -1,27 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============8936458349140219588=="
+Content-Type: multipart/mixed; boundary="===============6081657270976392722=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] test: Find the active call and do hangup on that.
-Date: Thu, 03 Feb 2011 10:20:54 -0600
-Message-ID: <4D4AD5E6.5010500@gmail.com>
-In-Reply-To: <1296738848-23648-1-git-send-email-maritsofie.henriksen8@gmail.com>
+Subject: Re: [PATCHv2] doc: Assisted Satellite Navigation API and Agent API
+Date: Thu, 03 Feb 2011 10:25:50 -0600
+Message-ID: <4D4AD70E.5020205@gmail.com>
+In-Reply-To: <1296344683-7967-1-git-send-email-sjurbren@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8936458349140219588==
+--===============6081657270976392722==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Marit,
+Hi Sjur / Simon,
 
-On 02/03/2011 07:14 AM, Marit Henriksen wrote:
-> From: Marit Henriksen <marit.henriksen@stericsson.com>
+On 01/29/2011 05:44 PM, Sjur Br=C3=A6ndeland wrote:
+> From: Simon Lethbridge <simon.lethbridge@stericsson.com>
 > =
 
+> This patch introduces support for Global Satellite Navigation System (GNS=
+S),
+> using the AT commands AT+CPOS and +CPOSR as specified 3GPP 27.007.
 > ---
->  test/hangup-active |   12 +++++++++---
->  1 files changed, 9 insertions(+), 3 deletions(-)
 > =
 
 
@@ -30,5 +31,5 @@ Patch has been applied, thanks.
 Regards,
 -Denis
 
---===============8936458349140219588==--
+--===============6081657270976392722==--
 
