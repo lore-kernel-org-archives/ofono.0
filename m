@@ -1,342 +1,228 @@
-Content-Type: multipart/mixed; boundary="===============6721041705203886760=="
+Content-Type: multipart/mixed; boundary="===============0075192257194197688=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 1/4] nettime: Network time plugin implementation
-Date: Thu, 03 Feb 2011 17:17:47 +0200
-Message-ID: <AANLkTi=4Qofyq7exsfL=8gMhio=fHs+OttxQtkh2nqaP@mail.gmail.com>
-In-Reply-To: <1296571771-26513-2-git-send-email-antti.paila@nokia.com>
+From: Frederic Danis <frederic.danis@linux.intel.com>
+Subject: Re: [PATCH 1/8] bluetooth: add server support
+Date: Thu, 03 Feb 2011 16:56:14 +0100
+Message-ID: <4D4AD01E.9040800@linux.intel.com>
+In-Reply-To: <20110202182138.GK2273@joana>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6721041705203886760==
+--===============0075192257194197688==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Antti,
+Hello Gustavo,
 
-2011/2/1 Antti Paila <antti.paila@nokia.com>:
-> ---
-> =C2=A0plugins/nettime.c | =C2=A0326 +++++++++++++++++++++++++++++++++++++=
-++++++++++++++++
-> =C2=A01 files changed, 326 insertions(+), 0 deletions(-)
-> =C2=A0create mode 100644 plugins/nettime.c
+Le 02/02/2011 19:21, Gustavo F. Padovan a =C3=A9crit :
+> Hi Frederic,
 >
-> diff --git a/plugins/nettime.c b/plugins/nettime.c
-> new file mode 100644
-> index 0000000..894dce7
-> --- /dev/null
-> +++ b/plugins/nettime.c
-> @@ -0,0 +1,326 @@
-> +/*
-> + *
-> + * =C2=A0oFono - Open Source Telephony
-> + *
-> + * =C2=A0Copyright (C) 2008-2010 =C2=A0Nokia Corporation and/or its subs=
-idiary(-ies).
-> + *
-> + * =C2=A0This program is free software; you can redistribute it and/or m=
-odify
-> + * =C2=A0it under the terms of the GNU General Public License version 2 =
-as
-> + * =C2=A0published by the Free Software Foundation.
-> + *
-> + * =C2=A0This program is distributed in the hope that it will be useful,
-> + * =C2=A0but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * =C2=A0MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. =C2=A0See =
-the
-> + * =C2=A0GNU General Public License for more details.
-> + *
-> + * =C2=A0You should have received a copy of the GNU General Public Licen=
-se
-> + * =C2=A0along with this program; if not, write to the Free Software
-> + * =C2=A0Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA =C2=
-=A002110-1301 =C2=A0USA
-> + *
-> + */
-> +
-> +#ifdef HAVE_CONFIG_H
-> +#include <config.h>
-> +#endif
-> +
-> +#include <stdlib.h>
-> +#include <glib.h>
-> +
-> +#define OFONO_API_SUBJECT_TO_CHANGE
-> +#include <ofono/plugin.h>
-> +#include <ofono/log.h>
-> +#include <ofono/nettime.h>
-> +#include <ofono/types.h>
-> +#include <gdbus.h>
-> +#include "ofono.h"
-> +
-> +#include "common.h"
-> +
-> +#define TIMED_PATH "/com/meego/time"
-> +#define TIMED_SERVICE "com.meego.time"
+> * Frederic Danis<frederic.danis@linux.intel.com>  [2011-02-01 15:17:56 =
++0100]:
+>
+>> Hello Gustavo,
+>>
+>> Le 31/01/2011 21:51, Gustavo F. Padovan a =C3=A9crit :
+>>> Initial code to have support to listen over a RFCOMM socket for incoming
+>>> connections.
+>>> ---
+>>>    Makefile.am         |    1 +
+>>>    plugins/bluetooth.c |  165 +++++++++++++++++++++++++++++++++++++++++=
+++++++++++
+>>>    plugins/bluetooth.h |   11 ++++
+>>>    3 files changed, 177 insertions(+), 0 deletions(-)
+>>>
+>>> diff --git a/Makefile.am b/Makefile.am
+>>> index a38fcb9..77b1453 100644
+>>> --- a/Makefile.am
+>>> +++ b/Makefile.am
+>>> @@ -321,6 +321,7 @@ builtin_sources +=3D plugins/bluetooth.c plugins/bl=
+uetooth.h
+>>>    builtin_modules +=3D hfp
+>>>    builtin_sources +=3D plugins/hfp.c plugins/bluetooth.h
+>>>
+>>> +builtin_sources +=3D $(btio_sources)
+>>>    builtin_cflags +=3D @BLUEZ_CFLAGS@
+>>>    builtin_libadd +=3D @BLUEZ_LIBS@
+>>>    endif
+>>> diff --git a/plugins/bluetooth.c b/plugins/bluetooth.c
+>>> index 93dd7a1..dcf75e6 100644
+>>> --- a/plugins/bluetooth.c
+>>> +++ b/plugins/bluetooth.c
+>>> @@ -35,13 +35,58 @@
+>>>
+>>>    #include<ofono/dbus.h>
+>>>
+>>> +#include<btio.h>
+>>>    #include "bluetooth.h"
+>>>
+>>>    static DBusConnection *connection;
+>>>    static GHashTable *uuid_hash =3D NULL;
+>>>    static GHashTable *adapter_address_hash =3D NULL;
+>>> +static GSList *server_list =3D NULL;
+>>>    static gint bluetooth_refcount;
+>>>
+>>> +struct server {
+>>> +	guint16		service;
+>>> +	gchar		*name;
+>>> +	guint8		channel;
+>>> +	GIOChannel	*io;
+>>> +	char		*adapter;
+>>> +	guint		handle;
+>>> +	ConnectFunc	connect_cb;
+>>> +	gpointer	user_data;
+>>> +};
+>>> +
+>>> +typedef struct {
+>>> +	guint8 b[6];
+>>> +} __attribute__((packed)) bdaddr_t;
+>>> +
+>>> +static void baswap(bdaddr_t *dst, const bdaddr_t *src)
+>>> +{
+>>> +	register unsigned char *d =3D (unsigned char *) dst;
+>>> +	register const unsigned char *s =3D (const unsigned char *) src;
+>>> +	register int i;
+>>> +
+>>> +	for (i =3D 0; i<   6; i++)
+>>> +		d[i] =3D s[5-i];
+>>> +}
+>>> +
+>>> +static int str2ba(const char *str, bdaddr_t *ba)
+>>> +{
+>>> +	guint8 b[6];
+>>> +	const char *ptr =3D str;
+>>> +	int i;
+>>> +
+>>> +	for (i =3D 0; i<   6; i++) {
+>>> +		b[i] =3D (guint8) strtol(ptr, NULL, 16);
+>>> +		if (i !=3D 5&&   !(ptr =3D strchr(ptr, ':')))
+>>> +			ptr =3D ":00:00:00:00:00";
+>>> +		ptr++;
+>>> +	}
+>>> +
+>>> +	baswap(ba, (bdaddr_t *) b);
+>>> +
+>>> +	return 0;
+>>> +}
+>>> +
+>>>    void bluetooth_create_path(const char *dev_addr, const char *adapter=
+_addr,
+>>>    				char *buf, int size)
+>>>    {
+>>> @@ -371,6 +416,70 @@ static gboolean property_changed(DBusConnection *c=
+onnection, DBusMessage *msg,
+>>>    	return TRUE;
+>>>    }
+>>>
+>>> +static void server_stop(gpointer data)
+>>> +{
+>>> +	struct server *server =3D data;
+>>> +
+>>> +	if (server->handle>   0) {
+>>> +		DBusMessage *msg;
+>>> +
+>>> +		msg =3D dbus_message_new_method_call(BLUEZ_SERVICE,
+>>> +						server->adapter,
+>>> +						BLUEZ_SERVICE_INTERFACE,
+>>> +						"RemoveRecord");
+>>> +		dbus_message_append_args(msg, DBUS_TYPE_UINT32,&server->handle,
+>>> +						DBUS_TYPE_INVALID);
+>>> +		g_dbus_send_message(connection, msg);
+>>> +
+>>> +		server->handle =3D 0;
+>>> +	}
+>>> +
+>>> +	if (server->io !=3D NULL) {
+>>> +		g_io_channel_shutdown(server->io, TRUE, NULL);
+>>> +		g_io_channel_unref(server->io);
+>>> +		server->io =3D NULL;
+>>> +	}
+>>> +
+>>> +	g_free(server->adapter);
+>>> +	server->adapter =3D NULL;
+>>> +}
+>>> +
+>>> +static void new_connection(GIOChannel *io, gpointer user_data)
+>>> +{
+>>> +	struct server *server =3D user_data;
+>>> +
+>>> +	DBG("%p", server);
+>>> +}
+>>> +
+>>> +static void server_start(gpointer data, gpointer user_data)
+>>> +{
+>>> +	struct server *server =3D data;
+>>> +	char *addr, *path =3D user_data;
+>>> +	bdaddr_t baddr;
+>>> +	GError *err =3D NULL;
+>>> +
+>>> +	if (server->handle !=3D 0)
+>>> +		return;
+>>> +
+>>> +	addr =3D g_hash_table_lookup(adapter_address_hash, path);
+>>> +	str2ba(addr,&baddr);
+>>> +	server->io =3D bt_io_listen(BT_IO_RFCOMM, NULL, new_connection,
+>>> +					server, NULL,&err,
+>>> +					BT_IO_OPT_SOURCE_BDADDR,&baddr,
+>>> +					BT_IO_OPT_CHANNEL, server->channel,
+>>> +					BT_IO_OPT_SEC_LEVEL, BT_IO_SEC_MEDIUM,
+>>> +					BT_IO_OPT_INVALID);
+>>> +	if (server->io =3D=3D NULL) {
+>>> +		ofono_error("Bluetooth %s register failed: %s",
+>>> +					server->name, err->message);
+>>> +		g_error_free(err);
+>>> +		server_stop(server);
+>>> +		return;
+>>> +	}
+>>> +
+>>> +	server->adapter =3D g_strdup(path);
+>>> +}
+>>> +
+>> This will not allows to start server on multiple adapters, as the test
+>> of the SDP Record handle will prevent to bt_io_listen on other adapters.
+>
+> Yes, it will. The SDP record is per adapter, so I call bt_io_listen on th=
+at
+> adapter and and add the SDP record to the adapter records. The code does =
+that
+> for all adapters.
+>
+>>
+>> I do not understand why you pass the adapter address, if it is omitted
+>> the bt_io_listen will be done for all adapters.
+>
+> See above.
+>
 
-s/time/timed
+Without the second patch (which add the SDP record), I agree with you =
 
-> +struct nt_data {
-> + =C2=A0 =C2=A0 =C2=A0 gboolean time_available;
-> + =C2=A0 =C2=A0 =C2=A0 gboolean time_pending;
-> + =C2=A0 =C2=A0 =C2=A0 time_t nw_time_utc;
-> + =C2=A0 =C2=A0 =C2=A0 time_t received;
-> + =C2=A0 =C2=A0 =C2=A0 int dst;
-> + =C2=A0 =C2=A0 =C2=A0 int time_zone;
-> + =C2=A0 =C2=A0 =C2=A0 const char *mcc;
-> + =C2=A0 =C2=A0 =C2=A0 const char *mnc;
-> + =C2=A0 =C2=A0 =C2=A0 unsigned int timed_watch;
-> + =C2=A0 =C2=A0 =C2=A0 gboolean timed_present;
-> + =C2=A0 =C2=A0 =C2=A0 struct ofono_netreg *netreg;
-> + =C2=A0 =C2=A0 =C2=A0 unsigned int netreg_st_watch;
+that bt_io_listen will be called for each adapter path.
+But, you will lost reference to the io channel and to the path adapter =
 
-Let's call this just netereg_watch, as there is only one watch that is used.
+(resulting in memory leak).
 
-> +};
-> +
-> +static void nettime_register(struct ofono_nettime_context *);
-> +
-> +static gboolean encode_time_format(struct ofono_network_time *time,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0struct tm *tm)
-> +{
-> +
-> + =C2=A0 =C2=A0 =C2=A0 tm->tm_gmtoff =3D time->utcoff;
-> + =C2=A0 =C2=A0 =C2=A0 tm->tm_isdst =3D time->dst;
+With the second patch, this will only work if adapters are present =
 
-Why are you setting these? The values you are using in struct tm are
-UTC. Also, tm_isdst is a boolean, and time->dst can be any of -1, 0,
-1, 2.
+during ofono launch. But, if the adapter is added later, after the sdp =
 
-> + =C2=A0 =C2=A0 =C2=A0 if (time->year < 0)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return FALSE;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 tm->tm_year =3D time->year - 1900;
-> + =C2=A0 =C2=A0 =C2=A0 tm->tm_mon =3D time->mon - 1;
-> + =C2=A0 =C2=A0 =C2=A0 tm->tm_mday =3D time->mday;
-> + =C2=A0 =C2=A0 =C2=A0 tm->tm_hour =3D time->hour;
-> + =C2=A0 =C2=A0 =C2=A0 tm->tm_min =3D time->min;
-> + =C2=A0 =C2=A0 =C2=A0 tm->tm_sec =3D time->sec;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 return TRUE;
-> +}
-> +
-> +static time_t get_monotonic_time()
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 struct timespec ts;
-> + =C2=A0 =C2=A0 =C2=A0 clock_gettime(CLOCK_MONOTONIC, &ts);
-> + =C2=A0 =C2=A0 =C2=A0 return ts.tv_sec;
-> +}
-> +
-> +static int fill_time_notification(DBusMessage *msg,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 struct nt_data *ntd)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 DBusMessageIter iter, iter_array;
-> + =C2=A0 =C2=A0 =C2=A0 int64_t utc;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 dbus_message_iter_init_append(msg, &iter);
-> + =C2=A0 =C2=A0 =C2=A0 dbus_message_iter_open_container(&iter,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBUS_TYPE_AR=
-RAY,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "{sv}",
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &iter_array);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (ntd->time_pending) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 if (ntd->time_availabl=
-e) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 utc =3D ntd->nw_time_utc - ntd->received;
+record has been added for the first adapters, bt_io_listen will not be =
 
-I would just store the ofono_network_time struct, and check if year < 0.
+called as server->handle is non-null.
 
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 ofono_dbus_dict_append(&iter_array,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 "UTC",
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 DBUS_TYPE_INT64,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 &utc);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 }
-> +
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_dbus_dict_append=
-(&iter_array,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "DST",
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBUS_TYPE_IN=
-T32,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &ntd->dst);
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_dbus_dict_append=
-(&iter_array,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "Timezone",
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBUS_TYPE_IN=
-T32,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 &ntd->time_z=
-one);
-> + =C2=A0 =C2=A0 =C2=A0 }
-> +
-> + =C2=A0 =C2=A0 =C2=A0 ofono_dbus_dict_append(&iter_array,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 "MobileCountryCode",
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 DBUS_TYPE_STRING,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 &ntd->mcc);
-> + =C2=A0 =C2=A0 =C2=A0 ofono_dbus_dict_append(&iter_array,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 "MobileNetworkCode",
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 DBUS_TYPE_STRING,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 &ntd->mnc);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 dbus_message_iter_close_container(&iter, &iter_arr=
-ay);
-> + =C2=A0 =C2=A0 =C2=A0 return 0;
-> +}
-> +
-> +static DBusMessage *create_time_notification(
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 struct ofono_nettime_context *context)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 DBusMessage *message;
-> + =C2=A0 =C2=A0 =C2=A0 struct nt_data *ntd =3D context->data;
-> + =C2=A0 =C2=A0 =C2=A0 const char *path =3D ofono_modem_get_path(context-=
->modem);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (path =3D=3D NULL) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_error("Fetching =
-path for modem failed");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return NULL;
-> + =C2=A0 =C2=A0 =C2=A0 }
-> +
-> + =C2=A0 =C2=A0 =C2=A0 message =3D dbus_message_new_method_call(TIMED_SER=
-VICE, TIMED_PATH,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 "com.meego.N=
-etworkTime", "Notify");
-> + =C2=A0 =C2=A0 =C2=A0 if (message =3D=3D NULL)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return NULL;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 dbus_message_set_no_reply(message, TRUE);
-> + =C2=A0 =C2=A0 =C2=A0 fill_time_notification(message, ntd);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 return message;
-> +}
-> +
-> +static void init_time(struct ofono_nettime_context *context)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 struct nt_data *nt_data =3D g_new0(struct nt_data,=
- 1);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 nt_data->time_available =3D FALSE;
-> + =C2=A0 =C2=A0 =C2=A0 nt_data->time_pending =3D FALSE;
-> + =C2=A0 =C2=A0 =C2=A0 nt_data->dst =3D 0;
-> + =C2=A0 =C2=A0 =C2=A0 nt_data->time_zone =3D 0;
+One other thing, I do not understand why you use BT_IO_OPT_SOURCE_BDADDR =
 
-That '0' after new actually zeroes out the memory, so these are not necessa=
-ry.
+instead of BT_IO_OPT_SOURCE (this one accept Bluetooth address as string).
 
-> + =C2=A0 =C2=A0 =C2=A0 context->data =3D nt_data;
-> +}
-> +
-> +static int nettime_probe(struct ofono_nettime_context *context)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 DBG("Network Time Probe for modem: %p", context->m=
-odem);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 init_time(context);
+Regards
 
-As the function above reduces to just a g_new0() call and setting it
-to context->data, just move all that here.
+Fred
 
-> + =C2=A0 =C2=A0 =C2=A0 nettime_register(context);
-> +
-> + =C2=A0 =C2=A0 =C2=A0 return 0;
-> +}
-> +
-> +static void nettime_remove(struct ofono_nettime_context *context)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 struct nt_data *ntd =3D context->data;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 DBG("Network Time Remove for modem: %p", context->=
-modem);
-> + =C2=A0 =C2=A0 =C2=A0 g_dbus_remove_watch(ofono_dbus_get_connection(),
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ntd->timed_watch);
+-- =
 
-Just to be safe, you should check that ntd->timed_watch > 0 here. I
-think you should also do the same with the netreg_watch.
+Frederic Danis                            Open Source Technology Centre
+frederic.danis(a)intel.com                              Intel Corporation
 
-> + =C2=A0 =C2=A0 =C2=A0 g_free(ntd);
-> +}
-> +
-> +static void notify(int status, int lac, int ci, int tech, const char *mc=
-c,
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 const char *mnc, void *data)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 struct ofono_nettime_context *context =3D data;
-> + =C2=A0 =C2=A0 =C2=A0 struct nt_data *ntd =3D context->data;
-> + =C2=A0 =C2=A0 =C2=A0 DBusMessage *message;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 if (mcc =3D=3D NULL || mnc =3D=3D NULL)
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
-> +
-> + =C2=A0 =C2=A0 =C2=A0 ntd->mcc =3D mcc;
-> + =C2=A0 =C2=A0 =C2=A0 ntd->mnc =3D mnc;
 
-You're not checking whether MCC has changed since last time.
-
-> + =C2=A0 =C2=A0 =C2=A0 if (ntd->timed_present =3D=3D FALSE) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 DBG("Timed not present=
-. Caching time info");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
-> + =C2=A0 =C2=A0 =C2=A0 }
-
-What are you caching here?
-
-> + =C2=A0 =C2=A0 =C2=A0 message =3D create_time_notification(context);
-> + =C2=A0 =C2=A0 =C2=A0 if (message =3D=3D NULL) {
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 ofono_error("Failed to=
- create Notification message");
-> + =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 return;
-> + =C2=A0 =C2=A0 =C2=A0 }
-> +
-> + =C2=A0 =C2=A0 =C2=A0 g_dbus_send_message(ofono_dbus_get_connection(), m=
-essage);
-> + =C2=A0 =C2=A0 =C2=A0 ntd->time_pending =3D FALSE;
-> +}
-
-Please split the actual D-Bus message sending out to a separate
-function. That way, you don't need to call this function with (0, 0,
-0, 0, ... arguments all over the place, which looks weird.
-
-> +static void nr_st_watch_destroy(void *data)
-> +{
-> + =C2=A0 =C2=A0 =C2=A0 struct ofono_nettime_context *context =3D data;
-> + =C2=A0 =C2=A0 =C2=A0 struct nt_data *ntd =3D context->data;
-> + =C2=A0 =C2=A0 =C2=A0 DBG("");
-> +
-> + =C2=A0 =C2=A0 =C2=A0 ntd->netreg_st_watch =3D 0;
-> +}
-
-Don't give a destroy callback unless you have memory to clean up.
-
-Cheers,
-Aki
-
---===============6721041705203886760==--
+--===============0075192257194197688==--
 
