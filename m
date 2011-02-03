@@ -1,47 +1,34 @@
-Content-Type: multipart/mixed; boundary="===============2144871040808092888=="
+Content-Type: multipart/mixed; boundary="===============2199819881367645669=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH v2 1/2] doc: add Sim Toolkit overview
-Date: Thu, 03 Feb 2011 14:59:11 -0800
-Message-ID: <1296773952-5242-2-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1296773952-5242-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH v2 0/2] Add Sim Toolkit overview and feature list
+Date: Thu, 03 Feb 2011 14:59:10 -0800
+Message-ID: <1296773952-5242-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============2144871040808092888==
+--===============2199819881367645669==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- doc/overview.txt |    8 ++++++++
- 1 files changed, 8 insertions(+), 0 deletions(-)
+Hi,
 
-diff --git a/doc/overview.txt b/doc/overview.txt
-index e12427f..2a30e0b 100644
---- a/doc/overview.txt
-+++ b/doc/overview.txt
-@@ -130,6 +130,14 @@ Current implemented features:
- 		enabling and disabling fast dormancy on hardware that support
- 		this feature.
- =
+   This patch adds the Sim Toolkit overview and feature list table.
+Fixes the indentation issue observed in the 1st version.
 
-+	Sim Toolkit
-+
-+		The Sim Toolkit interface handles the SAT commands. Sim Toolkit
-+		relies on the SimToolkit agent not only to get confirmation
-+		from the user but also to inform user of the SAT initiated
-+		operation status. Information on the Sim Toolkit feature
-+		list can be found in features.txt.
-+
- Work in progress features:
- =
+Regards,
+Jeevaka
 
- 	USSD
--- =
+Jeevaka Badrappan (2):
+  doc: add Sim Toolkit overview
+  doc: add Sim Toolkit feature list table
 
-1.7.0.4
+ doc/features.txt |  249 ++++++++++++++++++++++++++++++++++++++++++++++++++=
+++++
+ doc/overview.txt |    8 ++
+ 2 files changed, 257 insertions(+), 0 deletions(-)
 
 
---===============2144871040808092888==--
+--===============2199819881367645669==--
 
