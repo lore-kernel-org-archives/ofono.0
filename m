@@ -1,54 +1,67 @@
-Content-Type: multipart/mixed; boundary="===============3201573605778823251=="
+Content-Type: multipart/mixed; boundary="===============6817302739231242546=="
 MIME-Version: 1.0
 From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH 6/6] doc: Add documentation for Alphabet property
-Date: Thu, 03 Feb 2011 14:40:10 -0600
-Message-ID: <4D4B12AA.8010502@gmail.com>
-In-Reply-To: <1296739236-24391-7-git-send-email-aki.niemi@nokia.com>
+Subject: Re: [PATCH 1/2] netreg: Add CPHS CSP implementation
+Date: Thu, 03 Feb 2011 15:06:08 -0600
+Message-ID: <4D4B18C0.9000809@gmail.com>
+In-Reply-To: <1296739688-26585-1-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============3201573605778823251==
+--===============6817302739231242546==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Hi Aki,
 
-On 02/03/2011 07:20 AM, Aki Niemi wrote:
-> ---
->  doc/message-api.txt |   14 ++++++++++++++
->  1 files changed, 14 insertions(+), 0 deletions(-)
-> =
+> @@ -838,6 +860,9 @@ static DBusMessage *network_register(DBusConnection *=
+conn,
+>  =
 
-> diff --git a/doc/message-api.txt b/doc/message-api.txt
-> index 1c68aee..d5a7b15 100644
-> --- a/doc/message-api.txt
-> +++ b/doc/message-api.txt
-> @@ -24,3 +24,17 @@ Properties	string State
->  				"pending",
->  				"sent",
->  				"failed"
-> +
-> +		string Alphabet
-> +
-> +			Contains the alphabet setting for outgoing SMSs.
-> +			Possible values are:
-> +
-> +				"default" - Default GSM alphabet
-> +				"turkish" - Turkish alphabet
-> +				"spanish" - Spanish alphabet
-> +				"portuguese" - Portuguese alphabet
-> +
-> +			The standard, language-specific alphabets are defined in
-> +			3GPP TS23.038, Annex A.  By default, oFono uses "default"
-> +			setting.
+>  	netreg->driver->register_auto(netreg, register_callback, netreg);
+>  =
 
-Before I look at patch 5, are you sure you want this as a property? I
-thought you were a proponent of hiding this in main.conf?
+> +	if (netreg->mode =3D=3D NETWORK_REGISTRATION_MODE_AUTO_ONLY)
+> +		return NULL;
+> +
+
+So we might just return access_denied here as well.
+
+>  	set_registration_mode(netreg, NETWORK_REGISTRATION_MODE_AUTO);
+>  =
+
+>  	return NULL;
+
+<snip>
+
+> @@ -1769,7 +1835,7 @@ static void netreg_load_settings(struct ofono_netre=
+g *netreg)
+>  	mode =3D g_key_file_get_integer(netreg->settings, SETTINGS_GROUP,
+>  					"Mode", NULL);
+>  =
+
+> -	if (mode >=3D 0 && mode <=3D 1)
+> +	if (mode !=3D NETWORK_REGISTRATION_MODE_AUTO_ONLY)
+>  		netreg->mode =3D mode;
+>  =
+
+
+This check is unnecessary, you already loaded the settings before you
+managed to load the sim file.  You're also removing a sanity check for
+no real reason.
+
+This brings up another point, since the CPHS CSP file is actually
+user-writeable (for some unknown reason) the user can remove the SIM,
+put it in another phone and modify the forced-auto settings.  If you
+store the forced-auto mode in the settings file, then there's no way to
+ever go back to non-forced auto, even though he should be able to.
+
+I suggest that when forced-auto is detected, that we only write
+NETWORK_REGISTRATION_MODE_AUTO to the settings store.
 
 Regards,
 -Denis
 
---===============3201573605778823251==--
+--===============6817302739231242546==--
 
