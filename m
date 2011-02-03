@@ -1,29 +1,28 @@
-Content-Type: multipart/mixed; boundary="===============0833641811597031335=="
+Content-Type: multipart/mixed; boundary="===============0222540894341254601=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
 Subject: [PATCH 5/5] Implement ofono_sim_context api.
-Date: Thu, 03 Feb 2011 07:58:55 +0100
-Message-ID: <1296716335-15886-1-git-send-email-andrew.zaborowski@intel.com>
+Date: Thu, 03 Feb 2011 08:37:37 +0100
+Message-ID: <1296718657-20756-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0833641811597031335==
+--===============0222540894341254601==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Rebased on top of Aki's changes.
 ---
  src/call-forwarding.c |   16 ++++++--
  src/cbs.c             |   14 +++++-
  src/message-waiting.c |   37 ++++++++++++------
  src/network.c         |   18 +++++++--
- src/sim.c             |   82 ++++++++++++++++++++++-----------------
- src/simfs.c           |  102 +++++++++++++++++++++++++++++++++++++++++++++=
-+---
+ src/sim.c             |   82 +++++++++++++++++++++++-----------------
+ src/simfs.c           |  100 +++++++++++++++++++++++++++++++++++++++++++++=
++--
  src/simfs.h           |    9 +++-
  src/voicecall.c       |   13 +++++-
- 8 files changed, 222 insertions(+), 69 deletions(-)
+ 8 files changed, 221 insertions(+), 68 deletions(-)
 
 diff --git a/src/call-forwarding.c b/src/call-forwarding.c
 index d300c69..ca6dad9 100644
@@ -632,7 +631,7 @@ nt record,
  =
 
 diff --git a/src/simfs.c b/src/simfs.c
-index 5ffa9f9..87132ee 100644
+index 6c0008a..0459447 100644
 --- a/src/simfs.c
 +++ b/src/simfs.c
 @@ -69,6 +69,7 @@ struct sim_fs_op {
@@ -760,7 +759,7 @@ a)
  	end_block =3D (op->offset + (op->num_bytes - 1)) / 256;
  =
 
-@@ -360,12 +423,17 @@ static void sim_fs_op_retrieve_cb(const struct ofono_=
+@@ -360,11 +423,16 @@ static void sim_fs_op_retrieve_cb(const struct ofono_=
 error *error,
  		return;
  	}
@@ -772,7 +771,6 @@ error *error,
  			data, op->record_length);
  =
 
--	if (op->current < total) {
 +	if (cb =3D=3D NULL) {
 +		sim_fs_end_current(fs);
 +		return;
@@ -780,10 +778,9 @@ error *error,
 +
 +	cb(1, op->length, op->current, data, op->record_length, op->userdata);
 +
-+  	if (op->current < total) {
+ 	if (op->current < total) {
  		op->current +=3D 1;
  		fs->op_source =3D g_idle_add(sim_fs_op_read_record, fs);
- 	} else {
 @@ -383,6 +451,11 @@ static gboolean sim_fs_op_read_record(gpointer user)
  =
 
@@ -798,10 +795,10 @@ error *error,
  	while (fs->fd !=3D -1 && op->current <=3D total) {
  		int offset =3D (op->current - 1) / 8;
  		int bit =3D 1 << ((op->current - 1) % 8);
-@@ -474,6 +547,11 @@ static void sim_fs_op_info_cb(const struct ofono_error=
+@@ -523,6 +596,11 @@ static void sim_fs_op_info_cb(const struct ofono_error=
  *error, int length,
- 	rehabilitate =3D file_access_condition_decode((access[2] >> 4) & 0xf);
- 	invalidate =3D file_access_condition_decode(access[2] & 0xf);
+ 		return;
+ 	}
  =
 
 +	if (op->cb =3D=3D NULL) {
@@ -813,7 +810,7 @@ error *error,
  	op->length =3D length;
  =
 
-@@ -639,6 +717,11 @@ static gboolean sim_fs_op_next(gpointer user_data)
+@@ -663,6 +741,11 @@ static gboolean sim_fs_op_next(gpointer user_data)
  =
 
  	op =3D g_queue_peek_head(fs->op_q);
@@ -827,7 +824,7 @@ error *error,
  	if (op->is_read =3D=3D TRUE) {
  		if (sim_fs_op_check_cached(fs))
  			return FALSE;
-@@ -673,10 +756,11 @@ static gboolean sim_fs_op_next(gpointer user_data)
+@@ -697,10 +780,11 @@ static gboolean sim_fs_op_next(gpointer user_data)
  	return FALSE;
  }
  =
@@ -842,7 +839,7 @@ error *error,
  =
 
  	if (cb =3D=3D NULL)
-@@ -701,6 +785,7 @@ int sim_fs_read_info(struct sim_fs *fs, int id,
+@@ -725,6 +809,7 @@ int sim_fs_read_info(struct sim_fs *fs, int id,
  	op->userdata =3D data;
  	op->is_read =3D TRUE;
  	op->info_only =3D TRUE;
@@ -852,7 +849,7 @@ error *error,
  	g_queue_push_tail(fs->op_q, op);
  =
 
-@@ -710,11 +795,12 @@ int sim_fs_read_info(struct sim_fs *fs, int id,
+@@ -734,11 +819,12 @@ int sim_fs_read_info(struct sim_fs *fs, int id,
  	return 0;
  }
  =
@@ -868,7 +865,7 @@ error *error,
  =
 
  	if (cb =3D=3D NULL)
-@@ -741,6 +827,7 @@ int sim_fs_read(struct sim_fs *fs, int id,
+@@ -765,6 +851,7 @@ int sim_fs_read(struct sim_fs *fs, int id,
  	op->offset =3D offset;
  	op->num_bytes =3D num_bytes;
  	op->info_only =3D FALSE;
@@ -878,7 +875,7 @@ error *error,
  	g_queue_push_tail(fs->op_q, op);
  =
 
-@@ -750,10 +837,12 @@ int sim_fs_read(struct sim_fs *fs, int id,
+@@ -774,10 +861,12 @@ int sim_fs_read(struct sim_fs *fs, int id,
  	return 0;
  }
  =
@@ -894,7 +891,7 @@ error *error,
  	gconstpointer fn =3D NULL;
  =
 
-@@ -795,6 +884,7 @@ int sim_fs_write(struct sim_fs *fs, int id, ofono_sim_f=
+@@ -819,6 +908,7 @@ int sim_fs_write(struct sim_fs *fs, int id, ofono_sim_f=
 ile_write_cb_t cb,
  	op->structure =3D structure;
  	op->length =3D length;
@@ -995,5 +992,5 @@ w_state, void *user)
 1.7.1.86.g0e460.dirty
 
 
---===============0833641811597031335==--
+--===============0222540894341254601==--
 
