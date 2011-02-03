@@ -1,51 +1,70 @@
-Content-Type: multipart/mixed; boundary="===============8383600958286862231=="
+Content-Type: multipart/mixed; boundary="===============2157376968325666641=="
 MIME-Version: 1.0
-From: Andreas WESTIN <andreas.westin@stericsson.com>
-Subject: Re: [PATCH v2 3/3] isimodem: header updates for ISI2.5
-Date: Thu, 03 Feb 2011 10:32:17 +0100
-Message-ID: <4D4A7621.6030508@stericsson.com>
-In-Reply-To: <1296651827.2619.119.camel@tucson>
+From: Kai.Vehmanen@nokia.com
+Subject: RE: [RFC 2/2] doc: Add description for history agent interface
+Date: Thu, 03 Feb 2011 10:11:33 +0000
+Message-ID: <E9010BA84901F04DBE0FC93A424E0E4501097910@008-AM1MPN1-035.mgdnok.nokia.com>
+In-Reply-To: <4D4A557C.1070302@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8383600958286862231==
+--===============2157376968325666641==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Aki,
+Hi,
 
-On 2011-02-02 14:03, Aki Niemi wrote:
-> I don't see what that has to do with the device supporting the "PC
-> suite" USB profile, which allows modem access using cdc_phonet.
-
-Currently our platform does not support this.
-
-> That is exactly what I meant. This version allows building quirks inside
-> the drivers. An example in pseudo-code:
+On 03 Feb 2011, Denis Kenzior wrote:
+>> So handling this might still be useful even if reliable re-enabling
+>> of messages would not work reliably (assumption being that recycling
+>> and reregistering will reliably reenable message delivery). Or do you
 >
-> if GIsiVersion.major =3D=3D 15 and GIsiVersion.minor>=3D 3:
-> 	send( { FOO, value, filler, filler}, callback1 )
-> else:
-> 	send( { FOO, value }, callback2 )
->
+> Last I checked 27.005 mentions nothing on the behavior of sms store
+> full conditions or naking.  So all of this would be highly entertaining f=
+or
+> someone to discover ;)
 
-Yes, we use a similar solution in gisi, but R=C3=A9mi pointed out that it =
+yeah true. I don't think implementing this with AT modems makes
+much sense. I was more thinking whether this should be possible with =
 
-would be a maintenance problem once there are more versions to support =
+oFono and modems, which provide a more sane interface (e.g. isimodem,
+see drivers/isimodem/sms.c:send_deliver_report()).
 
-and I tend to agree. A solution could be to use a lookup function, but =
+> There is still the practical considerations of when / if to start
+> naking messages. Remember you can have multiple history plugins, so =
 
-this function would need to return something to compare with, an enum =
+> what if the first one succeeds but the second one fails?  =
 
-perhaps.
-Also are you certain that e.g major =3D=3D 15 and minor =3D=3D 25 is still =
-the =
 
-same ISI version, if not then the lookup function could become messy.
+True. If (and that's potentially a big if) this is implemented,
+a separate method on org.ofono.MessageManager for stopping
+delivery might be a better option. Hmm, although, if this is now
+only used in case of device malfunction, then you could just as well
+put the modem offline (works with AT modems as well). So let's just =
 
-Regards
-Andreas
+drop this, unless someone feels more strongly.
 
---===============8383600958286862231==--
+> In the end the ack feature was meant for SIM/ME store and out of memory
+> conditions for the very limited storage those devices had.  Since the
+
+Yes, much of the specs have been written with this is mind, and
+I agree, this is out-of-scope for oFono.
+
+>>> So yes, there might be conditions where you crash before fsync
+>>> really completes and you lose the SMS.  However, there's nothing in the
+>>
+>> I think this is perfectly reasonable. Even if some storage system
+>> had some internal caches outside the kernel sync's reach, I'd imagine
+> =
+
+> Of course, fsync is the best you can do.  I'm just pointing out that
+> even with fsync you're not guaranteed to 'safely' receive the SMS.  You
+
+Bad wording on my side: I was trying to say that I very much
+agree with you on this. We are not controlling nuclear reactors
+with SMS messages (at least not yet ;)), so no need to go overboard.
+
+
+--===============2157376968325666641==--
 
