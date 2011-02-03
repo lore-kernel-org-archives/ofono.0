@@ -1,37 +1,44 @@
-Content-Type: multipart/mixed; boundary="===============5569785919881888637=="
+Content-Type: multipart/mixed; boundary="===============4546063351239842297=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 1/2] isimodem: fix problems in call state reporting
-Date: Thu, 03 Feb 2011 15:01:52 +0200
-Message-ID: <AANLkTi=ySjasQQNScdzmaQSqkScwXYqmCn=LNQOF2+K+@mail.gmail.com>
-In-Reply-To: <1296598930-3093-1-git-send-email-Pekka.Pessi@nokia.com>
+From: Marit Henriksen <maritsofie.henriksen8@gmail.com>
+Subject: [PATCH] stemodem: Check for ok in voicecall_initialize.
+Date: Thu, 03 Feb 2011 14:13:24 +0100
+Message-ID: <1296738804-23599-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============5569785919881888637==
+--===============4546063351239842297==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Pekka,
+From: Marit Henriksen <marit.henriksen@stericsson.com>
 
-2011/2/2  <Pekka.Pessi@nokia.com>:
-> From: Pekka Pessi <Pekka.Pessi@nokia.com>
->
-> Do not report early incoming calls.
->
-> Report "disconnected" state separately.
->
-> Call ofono_voicecall_disconnected() only after call id is released.
-> ---
-> =C2=A0drivers/isimodem/voicecall.c | =C2=A0 84 ++++++++++++++++++++++++++=
-++++------------
-> =C2=A01 files changed, 60 insertions(+), 24 deletions(-)
+---
+ drivers/stemodem/voicecall.c |    4 ++++
+ 1 files changed, 4 insertions(+), 0 deletions(-)
 
-Patch has been pushed. Thanks!
+diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
+index fa078a8..2eaba8c 100644
+--- a/drivers/stemodem/voicecall.c
++++ b/drivers/stemodem/voicecall.c
+@@ -522,6 +522,10 @@ static void ste_voicecall_initialized(gboolean ok, GAt=
+Result *result,
+ 	struct ofono_voicecall *vc =3D user_data;
+ 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+ =
 
-Cheers,
-Aki
++	if (!ok)
++		ofono_error("*ECAV not enabled. "
++				"Do not have proper call handling");
++
+ 	g_at_chat_register(vd->chat, "*ECAV:", ecav_notify, FALSE, vc, NULL);
+ 	ofono_voicecall_register(vc);
+ }
+-- =
 
---===============5569785919881888637==--
+1.7.1
+
+
+--===============4546063351239842297==--
 
