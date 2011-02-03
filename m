@@ -1,290 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============8771376941376051845=="
+Content-Type: multipart/mixed; boundary="===============2144871040808092888=="
 MIME-Version: 1.0
 From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
-Subject: [PATCH 2/2] doc: add Sim Toolkit feature list table
-Date: Thu, 03 Feb 2011 14:49:51 -0800
-Message-ID: <1296773391-4792-3-git-send-email-jeevaka.badrappan@elektrobit.com>
-In-Reply-To: <1296773391-4792-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH v2 1/2] doc: add Sim Toolkit overview
+Date: Thu, 03 Feb 2011 14:59:11 -0800
+Message-ID: <1296773952-5242-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1296773952-5242-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8771376941376051845==
+--===============2144871040808092888==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 ---
- doc/features.txt |  249 ++++++++++++++++++++++++++++++++++++++++++++++++++=
-++++
- 1 files changed, 249 insertions(+), 0 deletions(-)
+ doc/overview.txt |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-diff --git a/doc/features.txt b/doc/features.txt
-index 0862fa7..bad7648 100644
---- a/doc/features.txt
-+++ b/doc/features.txt
-@@ -175,6 +175,255 @@ The following commands are expected to be handled by =
-the modem:
-   display the necessary user information for this time period if this
-   information is included in the proactive command.
+diff --git a/doc/overview.txt b/doc/overview.txt
+index e12427f..2a30e0b 100644
+--- a/doc/overview.txt
++++ b/doc/overview.txt
+@@ -130,6 +130,14 @@ Current implemented features:
+ 		enabling and disabling fast dormancy on hardware that support
+ 		this feature.
  =
 
-+ -----------------------------------------------------------------------
-+|	Feature			|	Support	|	Implemented by	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Profile Download		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SMS-PP Data Download		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Cell Broadcast data Download	|	YES	|	BASEBAND or ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|CALL CONTROL BY SIM		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|DISPLAY TEXT			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET INPUT			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET INKEY			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|MORE TIME			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PLAY TONE			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|POLL INTERVAL			|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|POLLING OFF			|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|REFRESH			|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SELECT ITEM			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SEND SHORT MESSAGE		|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SEND SS			|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SEND USSD			|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SET UP CALL			|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SET UP MENU			|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(MCC, MNC, LAC, cellId &	|		|			|
-+|IMEI)				|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(NMR)				|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SET UP EVENT LIST		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: MT CALL		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: CALL CONNECTED		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: CALL DISCONNECTED	|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: LOCATION STATUS	|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: USER ACTIVITY		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: IDLE SCREEN AVAILABLE	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: CARD READER STATUS	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: LANGUAGE SELECTION	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: BROWSER TERMINATION	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: DATA AVAILABLE		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: CHANNEL STATUS		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: ACCESS TECHNOLOGY	|	YES	|	BASEBAND	|
-+|	CHANGE			|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: DISPLAY PARAMETERS	|	NO	|			|
-+|	CHANGED			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: LOCAL CONNECTION	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: NETWORK SEARCH MODE	|	YES	|	BASEBAND	|
-+|	CHANGE			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|POWER ON CARD			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|POWER OFF CARD		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PERFORM CARD APDU		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET READER STATUS		|	NO	|			|
-+|(Card reader status)		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET READER STATUS		|	NO	|			|
-+|(Card reader identifier)	|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|TIMER MANAGEMENT		|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	ME		|
-+|(Date, Time, & Time Zone)	|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SET UP IDLE MODE TEXT		|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|RUN AT COMMAND		|	YES	|	BASEBAND	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SEND DTMF			|	YES	|	BASEBAND-ME	|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	ME		|
-+|(Language)			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(Timing Advance)		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Language Notification		|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|LAUNCH BROWSER		|	YES	|	ME		|
-+|				|	(MIN)	|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(ACCESS TECHNOLOGY)		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|OPEN CHANNEL			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|CLOSE CHANNEL			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|RECEIVE DATA			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SEND DATA			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET CHANNEL STATUS		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SERVICE SEARCH		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET SERVICE INFORMATION	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|DECLARE SERVICE		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Text Attributes		|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|ICONS				|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Bearer Independent Protocol	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|VARIABLE TIMEOUT		|	YES	|	ME		|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(IMEISV)			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(SEARCH MODE CHANGE)		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|Extended Launch Browser	|	NO	|			|
-+|Capability			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(battery state)		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|RETRIEVE MULTIMEDIA MESSAGE	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SUBMIT MULTIMEDIA MESSAGE	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|DISPLAY MULTIMEDIA MESSAGE	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|SET FRAMES			|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|GET FRAMES STATUS		|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|PROVIDE LOCAL INFORMATION	|	YES	|	BASEBAND	|
-+|(NMR(UTRAN))			|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|USSD Data Download and	|	NO	|			|
-+|application mode		|		|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: BROWSING STATUS	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
-+|EVENT: MMS TRANSFER STATUS	|	NO	|			|
-+|				|		|			|
-+ -----------------------------------------------------------------------
++	Sim Toolkit
++
++		The Sim Toolkit interface handles the SAT commands. Sim Toolkit
++		relies on the SimToolkit agent not only to get confirmation
++		from the user but also to inform user of the SAT initiated
++		operation status. Information on the Sim Toolkit feature
++		list can be found in features.txt.
++
+ Work in progress features:
  =
 
- Modem
- =3D=3D=3D=3D=3D
+ 	USSD
 -- =
 
 1.7.0.4
 
 
---===============8771376941376051845==--
+--===============2144871040808092888==--
 
