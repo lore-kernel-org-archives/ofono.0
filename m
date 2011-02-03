@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============0430992458330865699=="
+Content-Type: multipart/mixed; boundary="===============0833641811597031335=="
 MIME-Version: 1.0
 From: Andrzej Zaborowski <andrew.zaborowski@intel.com>
 Subject: [PATCH 5/5] Implement ofono_sim_context api.
-Date: Thu, 03 Feb 2011 08:02:09 +0100
-Message-ID: <1296716529-16242-1-git-send-email-andrew.zaborowski@intel.com>
+Date: Thu, 03 Feb 2011 07:58:55 +0100
+Message-ID: <1296716335-15886-1-git-send-email-andrew.zaborowski@intel.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============0430992458330865699==
+--===============0833641811597031335==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -780,7 +780,7 @@ error *error,
 +
 +	cb(1, op->length, op->current, data, op->record_length, op->userdata);
 +
-+	if (op->current < total) {
++  	if (op->current < total) {
  		op->current +=3D 1;
  		fs->op_source =3D g_idle_add(sim_fs_op_read_record, fs);
  	} else {
@@ -995,5 +995,5 @@ w_state, void *user)
 1.7.1.86.g0e460.dirty
 
 
---===============0430992458330865699==--
+--===============0833641811597031335==--
 
