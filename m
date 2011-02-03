@@ -1,97 +1,106 @@
-Content-Type: multipart/mixed; boundary="===============8339067183203455516=="
+Content-Type: multipart/mixed; boundary="===============4620608869372832422=="
 MIME-Version: 1.0
 From: mikhail.zabaluev@nokia.com
 Subject: RE: [RFC 2/2] doc: Add description for history agent interface
-Date: Thu, 03 Feb 2011 11:57:59 +0000
-Message-ID: <A459777776EB4841B844E1134E7928740157B51C@008-AM1MPN1-016.mgdnok.nokia.com>
-In-Reply-To: <4D49AF0C.4030809@gmail.com>
+Date: Thu, 03 Feb 2011 12:22:57 +0000
+Message-ID: <A459777776EB4841B844E1134E7928740157B54B@008-AM1MPN1-016.mgdnok.nokia.com>
+In-Reply-To: <1296675148.1520.346.camel@aeonflux>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============8339067183203455516==
+--===============4620608869372832422==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi,
 
 > -----Original Message-----
-> From: ext Denis Kenzior [mailto:denkenz(a)gmail.com]
-> Sent: Wednesday, February 02, 2011 9:23 PM
+> From: ofono-bounces(a)ofono.org [mailto:ofono-bounces(a)ofono.org] On
+> Behalf Of ext Marcel Holtmann
+> Sent: Wednesday, February 02, 2011 9:32 PM
 > To: ofono(a)ofono.org
-> Cc: Zabaluev Mikhail (Nokia-MS/Helsinki)
-> Subject: Re: [RFC 2/2] doc: Add description for history agent interface
+> Subject: RE: [RFC 2/2] doc: Add description for history agent interface
 > =
 
-> This has been discussed to death a bazillion times.  So lets recap very
-> quickly:
+> > > How is this any better? If all messages get send when the agents
+> > > registers to oFono. And we can easily use D-Bus results to either
+> > > delete
+> > > messages from the spool or not. Since D-Bus is asynchronous and
+> that
+> > > will just work out fine.
+> >
+> > Am I right in assuming that the SMS history roundtrip is not
+> performed before acking the constituent TPDUs to the network? If it is,
+> we have problems even regardless of D-Bus method call timeouts.
 > =
 
-> AT modems have two ways of delivering SMS messages:
-> - CMTI
-> - CMT
+> we are not delivering TPDUs to history, we are delivering messages.
+> oFono will reassemble the segments for you. This is oFono's job.
 > =
 
-> CMTI delivery means the message goes to the SIM / ME store first, and
-> then signaled up.  The modem takes care of automatically acking the
-> message in this case.  CMT delivery gives the message straight to the
-> sms driver and expects messages to be acked.
-> =
+> I am not really getting what you are saying. oFono will reassembly the
+> message for you piece by piece. And we are making sure fragments are
+> stored reliably. However once the message is complete we give it to
+> history for further processing. Mainly to get it stored in the
+> database.
 
-> Here's the problem, half the modems in this world don't support CMTI
-> delivery, the other half does not support CMT delivery.  oFono core
-> does
-> not know or care what mechanism is used.  It is the driver's
-> responsibility to ack the received pdu.
+The part I don't get is, if you do store TPDUs reliably as you seem to be r=
+equired to do anyway, why not keep the assembled messages until the client =
+tells you that it is no longer interested in them?
+This will remove a whole class of issues with history agent's availability,=
+ reliability, and performance.
 
-Sorry, I'm quite new to oFono.
-My gut instinct tells me that oFono should be able to hide the difference b=
-y providing CMTI-like spool semantics to the client in all cases. But I mig=
-ht be missing quite a lot of background here.
-
-> If CMTI delivery is used, then the core has to care about SIM / ME
-> storage, reading of the SMS store and managing free space -> disaster
-> area.  Been there, got the t-shirt.
-
-So, it's less disastrous if you implement some file-backed spool for both m=
-odels.
-
-> If CMT delivery is used, you have to ack the message in a 'reasonable'
-> period of time.  If you do not, then the modem silently (e.g. it does
-> not tell you) turns off SMS delivery.  Of course you can send a
-> negative
-> ack, however, there is no mechanism that I'm aware of to tell the
-> network you can receive SMS messages again -> disaster area.
-> =
-
-> Another fun fact about CMT delivery is that if you do not ack in a
-> 'reasonable' amount of time, the modem _silently_ turns off SMS
-> delivery.  So putting acks over D-Bus is simply a bad idea.
-> =
-
-> So oFono:
->  1. Parses the SMS
->  2. If the SMS is a multi-fragment SMS, it is written to store
-> 2a. If the SMS is the last missing fragment goes to step 2b, otherwise
-> goes to step 5
-> 2b. re-assembles the sms and removes intermediate store
->  3. Signals the SMS over D-Bus / history
->  4. Returns control to the driver which is responsible for acking the
-> SMS if needed.
-
-But this means that you do put a D-Bus roundtrip (step 3) in the loop for a=
-cks --> bad idea?
-Also, the first fragment may not be acked until you got the whole message A=
-ND confirmed to have stored it? Can it even work reliably in all networks?
-
+> > Is it necessary/more practical to register a history service callable
+> by oFono, rather than just signal change events and provide methods for
+> a client to acknowledge that it has handled them?
+> >
+> > I can see a few reasons why the explicit history service API might be
+> needed:
+> >
 > > 1. The history service may be activated on demand by a well-known
 > name.
+> > If this is in fact mandatory, we'll have problems in making
+> telepathy-ring serve as the history plugin. We want it in the storage
+> path for architectural simplicity: commhistory daemon is by design a
+> Telepathy logger that works basically the same way for all connection
+> managers.
 > =
 
-> D-Bus service activation on system bus is not available, please stop
-> bringing this up.
+> oFono is running as system service. It can not interact directly with
+> Tracker or Telepathy since both are only available on the session bus.
+> =
 
-Really? OK, scratch that.
+> If you wanna activate some session bus based history service then that
+> is out of the scope of oFono.
+> =
+
+> As I explained to Kai on IRC, I would personally not go via Telepathy
+> since it is one extra (or even multiple) piece in the puzzle for the
+> call history and the message history reaches your database. Which is
+> Tracker I presume.
+
+It's a solved piece in the puzzle. We do it for other protocols this way an=
+d are reasonably happy with it.
+And sure, this is out of oFono scope.
+
+> If you can accept this extra risk factors in the architecture and
+> ensure
+> that everything is reliable that is fine with me. You do might have to
+> design your unique history plugin that interacts directly with TP-ring
+> then. And to that extend also has its own spool.
+
+It does not have to, if we can implement StoredMessages in terms of oFono.
+If we could expunge messages from oFono spool explicitly rather than by ser=
+ving a method call roundtrip, it would be natural. In all, we need three th=
+ings from the oFono SMS API:
+* a property listing the spooled messages;
+* a method to expunge some of the messages;
+* a signal notifying of a new message in the spool.
+
+And this obviates the need to have a history agent service, if I understood=
+ correct that you actually don't care about enforcing reliable storage for =
+call events on oFono side.
 
 > > 2. You don't want multiple entities to observe events pertaining to
 > oFono communication history and be able to control spooling while not
@@ -99,25 +108,42 @@ Really? OK, scratch that.
 > > If this is a concern, I think it's outweighed by greater simplicity
 > and flexibility, and the idea that access policy should be defined
 > outside of the implementation.
-> >
+> =
+
+> The example that I sent around here was clearly limited to one consumer
+> and one consumer only. And that on purpose. I think that every storage
+> entity. Being it commhistory alone, or Tracker alone or all together
+> with TP-ring, they need a special history plugin to serve the exact
+> purpose.
+
+So a platform integrating oFono cannot choose to implement call and message=
+ logging separately. It needs to supply the whole hog in one plugin, and fi=
+lter out the events it is not interested in at this level.
+
 > > 3. For call history, you need reliable storage of call events before
 > you can proceed handling the call with the interactive client
 > signaling.
 > > I thought this is entirely up to the application and as such does not
 > have to be in scope for oFono. Correct me if I'm wrong.
-> >
 > =
 
-> Sorry but I do not understand the above two points.  Can you clarify
-> what exactly you mean here?  The actual history storage is indeed not
-> in
-> scope of oFono.  That is up to the system integrator to figure out.
+> oFono is not decided on how this reliable storage of history is done.
+> It
+> is up to the history plugin. As said above, you might really need one
+> exactly for your specific needs.
+> =
 
-True. My point is, there is no real need for a dedicated "history storage" =
-service on the oFono level.
+> I would be more than happy to be able to transfer this directly into
+> Tracker or Telepathy, but as outlined above that is not possible
+> because
+> of the session vs system bus problem.
+
+It is certainly possible, if the client is the one responsible for the fina=
+l storage, and oFono simply keeps incoming SMSs until a client tells it to =
+drop them.
 
 Best regards,
   Mikhail
 
---===============8339067183203455516==--
+--===============4620608869372832422==--
 
