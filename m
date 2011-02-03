@@ -1,13 +1,13 @@
-Content-Type: multipart/mixed; boundary="===============4546063351239842297=="
+Content-Type: multipart/mixed; boundary="===============1522493313634529884=="
 MIME-Version: 1.0
 From: Marit Henriksen <maritsofie.henriksen8@gmail.com>
-Subject: [PATCH] stemodem: Check for ok in voicecall_initialize.
-Date: Thu, 03 Feb 2011 14:13:24 +0100
-Message-ID: <1296738804-23599-1-git-send-email-maritsofie.henriksen8@gmail.com>
+Subject: [PATCH] test: Find the active call and do hangup on that.
+Date: Thu, 03 Feb 2011 14:14:08 +0100
+Message-ID: <1296738848-23648-1-git-send-email-maritsofie.henriksen8@gmail.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4546063351239842297==
+--===============1522493313634529884==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
@@ -15,30 +15,40 @@ Content-Transfer-Encoding: quoted-printable
 From: Marit Henriksen <marit.henriksen@stericsson.com>
 
 ---
- drivers/stemodem/voicecall.c |    4 ++++
- 1 files changed, 4 insertions(+), 0 deletions(-)
+ test/hangup-active |   12 +++++++++---
+ 1 files changed, 9 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/stemodem/voicecall.c b/drivers/stemodem/voicecall.c
-index fa078a8..2eaba8c 100644
---- a/drivers/stemodem/voicecall.c
-+++ b/drivers/stemodem/voicecall.c
-@@ -522,6 +522,10 @@ static void ste_voicecall_initialized(gboolean ok, GAt=
-Result *result,
- 	struct ofono_voicecall *vc =3D user_data;
- 	struct voicecall_data *vd =3D ofono_voicecall_get_data(vc);
+diff --git a/test/hangup-active b/test/hangup-active
+index 52dd2c6..6444b23 100755
+--- a/test/hangup-active
++++ b/test/hangup-active
+@@ -15,9 +15,15 @@ manager =3D dbus.Interface(bus.get_object('org.ofono', p=
+ath),
+ 						'org.ofono.VoiceCallManager')
  =
 
-+	if (!ok)
-+		ofono_error("*ECAV not enabled. "
-+				"Do not have proper call handling");
+ calls =3D manager.GetCalls()
+-path =3D calls[0][0]
+ =
+
+-call =3D dbus.Interface(bus.get_object('org.ofono', path),
++for path, properties in calls:
++		state =3D properties["State"]
++		print "[ %s ] %s" % (path, state)
 +
- 	g_at_chat_register(vd->chat, "*ECAV:", ecav_notify, FALSE, vc, NULL);
- 	ofono_voicecall_register(vc);
- }
++		if state !=3D "active":
++			continue
++
++		call =3D dbus.Interface(bus.get_object('org.ofono', path),
+ 						'org.ofono.VoiceCall')
+ =
+
+-call.Hangup()
++		call.Hangup()
 -- =
 
 1.7.1
 
 
---===============4546063351239842297==--
+--===============1522493313634529884==--
 
