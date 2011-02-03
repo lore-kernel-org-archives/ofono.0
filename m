@@ -1,31 +1,47 @@
-Content-Type: multipart/mixed; boundary="===============7734363238440230287=="
+Content-Type: multipart/mixed; boundary="===============1248157205661381750=="
 MIME-Version: 1.0
-From: Denis Kenzior <denkenz@gmail.com>
-Subject: Re: [PATCH] doc: remove extra space in overview
-Date: Thu, 03 Feb 2011 15:59:10 -0600
-Message-ID: <4D4B252E.2030200@gmail.com>
-In-Reply-To: <1296769086-3439-1-git-send-email-jeevaka.badrappan@elektrobit.com>
+From: Jeevaka Badrappan <jeevaka.badrappan@elektrobit.com>
+Subject: [PATCH 1/2] doc: add Sim Toolkit overview
+Date: Thu, 03 Feb 2011 14:49:50 -0800
+Message-ID: <1296773391-4792-2-git-send-email-jeevaka.badrappan@elektrobit.com>
+In-Reply-To: <1296773391-4792-1-git-send-email-jeevaka.badrappan@elektrobit.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7734363238440230287==
+--===============1248157205661381750==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Jeevaka,
+---
+ doc/overview.txt |    8 ++++++++
+ 1 files changed, 8 insertions(+), 0 deletions(-)
 
-On 02/03/2011 03:38 PM, Jeevaka Badrappan wrote:
-> ---
->  doc/overview.txt |    2 +-
->  1 files changed, 1 insertions(+), 1 deletions(-)
-> =
+diff --git a/doc/overview.txt b/doc/overview.txt
+index e12427f..2a30e0b 100644
+--- a/doc/overview.txt
++++ b/doc/overview.txt
+@@ -130,6 +130,14 @@ Current implemented features:
+ 		enabling and disabling fast dormancy on hardware that support
+ 		this feature.
+ =
+
++	Sim Toolkit
++
++		The Sim Toolkit interface handles the SAT commands. Sim Toolkit
++		relies on the SimToolkit agent not only to get confirmation
++		from the user but also to inform user of the SAT initiated
++		operation status. Information on the Sim Toolkit feature
++		list can be found in features.txt.
++
+ Work in progress features:
+ =
+
+ 	USSD
+-- =
+
+1.7.0.4
 
 
-Patch has been applied, thanks.
-
-Regards,
--Denis
-
---===============7734363238440230287==--
+--===============1248157205661381750==--
 
