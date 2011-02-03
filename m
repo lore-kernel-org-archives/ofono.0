@@ -1,77 +1,76 @@
-Content-Type: multipart/mixed; boundary="===============6793732725242905324=="
+Content-Type: multipart/mixed; boundary="===============1998156436410471229=="
 MIME-Version: 1.0
 From: Mika Liljeberg <mika.liljeberg@nokia.com>
-Subject: [PATCH 02/12] gprs: driver interface changes for IPv6
-Date: Thu, 03 Feb 2011 11:03:19 +0200
-Message-ID: <1296723809-32676-3-git-send-email-mika.liljeberg@nokia.com>
-In-Reply-To: <1296723809-32676-1-git-send-email-mika.liljeberg@nokia.com>
+Subject: [PATCH 0/12] IPv6 support
+Date: Thu, 03 Feb 2011 11:03:17 +0200
+Message-ID: <1296723809-32676-1-git-send-email-mika.liljeberg@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============6793732725242905324==
+--===============1998156436410471229==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
----
- include/gprs-context.h |   21 +++++++++++++++++++++
- 1 files changed, 21 insertions(+), 0 deletions(-)
+Hi All,
 
-diff --git a/include/gprs-context.h b/include/gprs-context.h
-index c29c0dc..88530f6 100644
---- a/include/gprs-context.h
-+++ b/include/gprs-context.h
-@@ -37,6 +37,7 @@ struct ofono_gprs_context;
- enum ofono_gprs_proto {
- 	OFONO_GPRS_PROTO_IP =3D 0,
- 	OFONO_GPRS_PROTO_IPV6,
-+	OFONO_GPRS_PROTO_IPV4V6,
- };
- =
+Here a set of patches with IPv6 support for oFono. Based on
+feedback to the RFC patches, I've taken out the emulated ipv4v6
+context support for modems conforming to 3GPP rel7 or older.
+This simplifies the patches quite a bit and hopefully makes
+them more accetable at this stage. As a result, only a single
+network interface and a single set of interface configuration
+parameters is exposed via each oFono gprs context.
 
- enum ofono_gprs_context_type {
-@@ -47,6 +48,12 @@ enum ofono_gprs_context_type {
- 	OFONO_GPRS_CONTEXT_TYPE_IMS,
- };
- =
-
-+enum ofono_gprs_addrconf {
-+	OFONO_GPRS_ADDRCONF_NONE,
-+	OFONO_GPRS_ADDRCONF_STATIC,
-+	OFONO_GPRS_ADDRCONF_DHCP,
-+};
-+
- struct ofono_gprs_primary_context {
- 	unsigned int cid;
- 	int direction;
-@@ -94,6 +101,20 @@ struct ofono_modem *ofono_gprs_context_get_modem(struct=
- ofono_gprs_context *gc);
- =
-
- void ofono_gprs_context_set_type(struct ofono_gprs_context *gc,
- 					enum ofono_gprs_context_type type);
-+void ofono_gprs_context_set_interface(struct ofono_gprs_context *gc,
-+					const char *interface);
-+void ofono_gprs_context_set_ip_addrconf(struct ofono_gprs_context *gc,
-+					enum ofono_gprs_addrconf method);
-+void ofono_gprs_context_set_ip_address(struct ofono_gprs_context *gc,
-+					const char *address);
-+void ofono_gprs_context_set_ip_netmask(struct ofono_gprs_context *gc,
-+					const char *netmask);
-+void ofono_gprs_context_set_ip_gateway(struct ofono_gprs_context *gc,
-+					const char *netmask);
-+void ofono_gprs_context_set_ipv6_address(struct ofono_gprs_context *gc,
-+					const char *address);
-+void ofono_gprs_context_set_dns_servers(struct ofono_gprs_context *gc,
-+					const char **dns);
- =
-
- #ifdef __cplusplus
- }
--- =
-
-1.7.1
+It should be noted that the operator requirements I have seen so
+far state that IPv6 capable UEs should fall back to parallel
+IPv4 and IPv6 contexts if either the network or the UE does
+not support the rel8 IPv4v6 combined context. =
 
 
---===============6793732725242905324==--
+This has implications to any IPv6 capable product using a rel7
+(or older) modem. Either connman will have to support parallel
+IPv4 and IPv6 connections, or the specific oFono modem driver
+will have to fake it by providing an emulated ipv4v6 context
+underneath oFono.
+
+Whether oFono will be used in any IPv6 capable products with
+a rel7 modem is a topic for other forums. People should be aware
+of the limitation, though.
+
+Br,
+
+	MikaL
+
+[PATCH 01/12] gprs: Update documentation for IPv6
+[PATCH 02/12] gprs: driver interface changes for IPv6
+[PATCH 03/12] gprs: core support for IPv6
+[PATCH 04/12] test: modify test scripts for IPv6
+[PATCH 05/12] isimodem: IPv6 support
+[PATCH 06/12] atmodem: update to new gprs context interface
+[PATCH 07/12] huaweimodem: update to new gprs context interface
+[PATCH 08/12] mbmmodem: update to new gprs context interface
+[PATCH 09/12] hsomodem: update to new gprs context interface
+[PATCH 10/12] ifxmodem: update to new gprs context interface
+[PATCH 11/12] stemodem: update to new gprs context interface
+[PATCH 12/12] phonesim: add IPv6 support
+
+ Makefile.am                        |    3 +-
+ doc/connman-api.txt                |    9 +-
+ drivers/atmodem/gprs-context.c     |   41 +++---
+ drivers/hsomodem/gprs-context.c    |   48 ++++---
+ drivers/huaweimodem/gprs-context.c |   43 +++---
+ drivers/ifxmodem/gprs-context.c    |   36 +++--
+ drivers/isimodem/gprs-context.c    |  119 +++++++++------
+ drivers/mbmmodem/gprs-context.c    |   65 +++++---
+ drivers/stemodem/gprs-context.c    |   31 +++--
+ include/gprs-context.h             |   23 +++-
+ plugins/phonesim.c                 |   32 +++-
+ src/gprs.c                         |  296 +++++++++++++++++++++++---------=
+----
+ test/list-contexts                 |    6 +-
+ test/set-context-property          |   38 +++++
+ 14 files changed, 514 insertions(+), 276 deletions(-)
+
+--===============1998156436410471229==--
 
