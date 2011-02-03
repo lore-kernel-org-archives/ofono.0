@@ -1,44 +1,33 @@
-Content-Type: multipart/mixed; boundary="===============7912533913861929117=="
+Content-Type: multipart/mixed; boundary="===============6405056204541865292=="
 MIME-Version: 1.0
-From: Aki Niemi <aki@protocolpolice.com>
-Subject: Re: [PATCH 2/6] smsutil: Remove dialect checks from caller
-Date: Thu, 03 Feb 2011 22:29:43 +0200
-Message-ID: <AANLkTinRL6ehkYFHmyT7mSyKtyMcb4tybwKzAy_eLS-t@mail.gmail.com>
-In-Reply-To: <4D4B0993.1010607@gmail.com>
+From: Denis Kenzior <denkenz@gmail.com>
+Subject: Re: [PATCH 1/6] util: Refactor conversion table handling
+Date: Thu, 03 Feb 2011 14:38:02 -0600
+Message-ID: <4D4B122A.4080407@gmail.com>
+In-Reply-To: <1296739236-24391-2-git-send-email-aki.niemi@nokia.com>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============7912533913861929117==
+--===============6405056204541865292==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-Hi Denis,
+Hi Aki,
 
-2011/2/3 Denis Kenzior <denkenz@gmail.com>:
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 converted =3D convert_gsm_to_utf8_with_lang(buf, written,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 N=
-ULL, NULL, 0,
->> =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 l=
-ocking_shift,
->
-> I'm pretty sure you want to leave this check in, otherwise you will not
-> be compliant with 23.040. =C2=A0If the dialect used is not understood, we
-> have to fall-back to the default, not ignore the message.
+On 02/03/2011 07:20 AM, Aki Niemi wrote:
+> ---
+>  src/util.c |  205 +++++++++++++++++++++++++++++++++++++-----------------=
+------
+>  src/util.h |    1 -
+>  2 files changed, 126 insertions(+), 80 deletions(-)
+> =
 
-Uh, you're right. My intention was to implement the fallback inside
-convert_gsm_to_utf8_with_lang(), but then ended up factoring that
-fallback behavior out with conversion_table_init()...
 
-So maybe it's better done here anyway, and this patch can be ignored.
+Patch has been applied, but I pushed some minor style issues thereafter.
 
-Cheers,
-Aki
+Regards,
+-Denis
 
---===============7912533913861929117==--
+--===============6405056204541865292==--
 
