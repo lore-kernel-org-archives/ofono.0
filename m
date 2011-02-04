@@ -1,48 +1,39 @@
-Content-Type: multipart/mixed; boundary="===============4720377670969823784=="
+Content-Type: multipart/mixed; boundary="===============7310053273387752417=="
 MIME-Version: 1.0
 From: Lucas De Marchi <lucas.demarchi@profusion.mobi>
-Subject: [PATCH v2 0/8] sms: Cancel pending message
-Date: Fri, 04 Feb 2011 17:40:30 -0200
-Message-ID: <1296848438-5584-1-git-send-email-lucas.demarchi@profusion.mobi>
+Subject: [PATCH v2 1/8] history: add cancelled status
+Date: Fri, 04 Feb 2011 17:40:31 -0200
+Message-ID: <1296848438-5584-2-git-send-email-lucas.demarchi@profusion.mobi>
+In-Reply-To: <1296848438-5584-1-git-send-email-lucas.demarchi@profusion.mobi>
 List-Id: <ofono.ofono.org>
 To: ofono@ofono.org
 
---===============4720377670969823784==
+--===============7310053273387752417==
 Content-Type: text/plain; charset="utf-8"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
-In this version I fixed some issues pointed out by Andrzej and added another
-patch, not so related, but that would conflict with these ones if applied to
-current master branch. Difference from previous version:
-
-Tested with phonesim, slightly changing its plugin in oFono in order to hold
-messages for a certain period.
-
-Lucas De Marchi (8):
-  history: add cancelled status
-  examples: handle cancelled history status
-  message: add cancelled state
-  sms: factor out 'remove entry' from tx_finished()
-  sms: allow message submission to be cancelled
-  doc: add CancelMessage to MessageManager
-  TODO: mark task 'cancel pending SMS' as done
-  sms: remove check for impossible NULL condition
-
- TODO                       |    9 --
- doc/messagemanager-api.txt |   12 +++
- examples/history.c         |    5 +
- include/history.h          |    1 +
- src/message.c              |    2 +
- src/message.h              |    3 +-
- src/sms.c                  |  196 +++++++++++++++++++++++++++++++++-------=
+Based on patch from Yang Gu <gyagp0@gmail.com>
 ---
- 7 files changed, 172 insertions(+), 56 deletions(-)
+ include/history.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
+diff --git a/include/history.h b/include/history.h
+index c1c4aa1..756097e 100644
+--- a/include/history.h
++++ b/include/history.h
+@@ -35,6 +35,7 @@ enum ofono_history_sms_status {
+ 	OFONO_HISTORY_SMS_STATUS_PENDING,
+ 	OFONO_HISTORY_SMS_STATUS_SUBMITTED,
+ 	OFONO_HISTORY_SMS_STATUS_SUBMIT_FAILED,
++	OFONO_HISTORY_SMS_STATUS_SUBMIT_CANCELLED,
+ 	OFONO_HISTORY_SMS_STATUS_DELIVERED,
+ 	OFONO_HISTORY_SMS_STATUS_DELIVER_FAILED,
+ };
 -- =
 
 1.7.4
 
 
---===============4720377670969823784==--
+--===============7310053273387752417==--
 
